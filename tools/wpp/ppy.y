@@ -38,10 +38,7 @@
 #include <ctype.h>
 #include <string.h>
 
-#include "utils.h"
-#include "newstruc.h"
-#include "wrc.h"
-#include "preproc.h"
+#include "wpp_private.h"
 
 
 #define UNARY_OP(r, v, OP)					\
@@ -96,7 +93,7 @@
 	case SIZE_INT:		BIN_OP_INT(r, v1, v2, OP); break;	\
 	case SIZE_LONG:		BIN_OP_LONG(r, v1, v2, OP); break;	\
 	case SIZE_LONGLONG:	BIN_OP_LONGLONG(r, v1, v2, OP); break;	\
-	default: internal_error(__FILE__, __LINE__, "Invalid type indicator (0x%04x)", v1.type);	\
+	default: pp_internal_error(__FILE__, __LINE__, "Invalid type indicator (0x%04x)", v1.type);	\
 	}
 
 
@@ -186,91 +183,93 @@ pp_file	: /* Empty */
 	;
 
 preprocessor
-	: tINCLUDE tDQSTRING tNL	{ do_include($2, 1); }
-	| tINCLUDE tIQSTRING tNL	{ do_include($2, 0); }
-	| tIF pp_expr tNL	{ next_if_state(boolean(&$2)); }
-	| tIFDEF tIDENT tNL	{ next_if_state(pplookup($2) != NULL); free($2); }
+	: tINCLUDE tDQSTRING tNL	{ pp_do_include($2, 1); }
+	| tINCLUDE tIQSTRING tNL	{ pp_do_include($2, 0); }
+	| tIF pp_expr tNL	{ pp_next_if_state(boolean(&$2)); }
+	| tIFDEF tIDENT tNL	{ pp_next_if_state(pplookup($2) != NULL); free($2); }
 	| tIFNDEF tIDENT tNL	{
 		int t = pplookup($2) == NULL;
-		if(include_state == 0 && t && !seen_junk)
+		if(pp_incl_state.state == 0 && t && !pp_incl_state.seen_junk)
 		{
-			include_state	= 1;
-			include_ppp	= $2;
-			include_ifdepth	= get_if_depth();
+			pp_incl_state.state	= 1;
+			pp_incl_state.ppp	= $2;
+			pp_incl_state.ifdepth	= pp_get_if_depth();
 		}
-		else if(include_state != 1)
+		else if(pp_incl_state.state != 1)
 		{
-			include_state = -1;
+			pp_incl_state.state = -1;
 			free($2);
 		}
 		else
 			free($2);
-		next_if_state(t);
-		if(debuglevel & DEBUGLEVEL_PPMSG)
-			fprintf(stderr, "tIFNDEF: %s:%d: include_state=%d, include_ppp='%s', include_ifdepth=%d\n", input_name, line_number, include_state, include_ppp, include_ifdepth);
+		pp_next_if_state(t);
+		if(pp_status.debug)
+			fprintf(stderr, "tIFNDEF: %s:%d: include_state=%d, include_ppp='%s', include_ifdepth=%d\n",
+                                pp_status.input, pp_status.line_number, pp_incl_state.state, pp_incl_state.ppp, pp_incl_state.ifdepth);
 		}
 	| tELIF pp_expr tNL	{
-		if_state_t s = pop_if();
+		pp_if_state_t s = pp_pop_if();
 		switch(s)
 		{
 		case if_true:
 		case if_elif:
-			push_if(if_elif);
+			pp_push_if(if_elif);
 			break;
 		case if_false:
-			push_if(boolean(&$2) ? if_true : if_false);
+			pp_push_if(boolean(&$2) ? if_true : if_false);
 			break;
 		case if_ignore:
-			push_if(if_ignore);
+			pp_push_if(if_ignore);
 			break;
 		case if_elsetrue:
 		case if_elsefalse:
 			pperror("#elif cannot follow #else");
 		default:
-			internal_error(__FILE__, __LINE__, "Invalid if_state (%d) in #elif directive", s);
+			pp_internal_error(__FILE__, __LINE__, "Invalid pp_if_state (%d) in #elif directive", s);
 		}
 		}
 	| tELSE tNL		{
-		if_state_t s = pop_if();
+		pp_if_state_t s = pp_pop_if();
 		switch(s)
 		{
 		case if_true:
-			push_if(if_elsefalse);
+			pp_push_if(if_elsefalse);
 			break;
 		case if_elif:
-			push_if(if_elif);
+			pp_push_if(if_elif);
 			break;
 		case if_false:
-			push_if(if_elsetrue);
+			pp_push_if(if_elsetrue);
 			break;
 		case if_ignore:
-			push_if(if_ignore);
+			pp_push_if(if_ignore);
 			break;
 		case if_elsetrue:
 		case if_elsefalse:
 			pperror("#else clause already defined");
 		default:
-			internal_error(__FILE__, __LINE__, "Invalid if_state (%d) in #else directive", s);
+			pp_internal_error(__FILE__, __LINE__, "Invalid pp_if_state (%d) in #else directive", s);
 		}
 		}
 	| tENDIF tNL		{
-		pop_if();
-		if(include_ifdepth == get_if_depth() && include_state == 1)
+		pp_pop_if();
+		if(pp_incl_state.ifdepth == pp_get_if_depth() && pp_incl_state.state == 1)
 		{
-			include_state = 2;
-			seen_junk = 0;
+			pp_incl_state.state = 2;
+			pp_incl_state.seen_junk = 0;
 		}
-		else if(include_state != 1)
+		else if(pp_incl_state.state != 1)
 		{
-			include_state = -1;
+			pp_incl_state.state = -1;
 		}
-		if(debuglevel & DEBUGLEVEL_PPMSG)
-			fprintf(stderr, "tENDIF: %s:%d: include_state=%d, include_ppp='%s', include_ifdepth=%d\n", input_name, line_number, include_state, include_ppp, include_ifdepth);
+		if(pp_status.debug)
+			fprintf(stderr, "tENDIF: %s:%d: include_state=%d, include_ppp='%s', include_ifdepth=%d\n",
+                                pp_status.input, pp_status.line_number, pp_incl_state.state, pp_incl_state.ppp, pp_incl_state.ifdepth);
 		}
-	| tUNDEF tIDENT tNL	{ del_define($2); free($2); }
-	| tDEFINE opt_text tNL	{ add_define($1, $2); }
+	| tUNDEF tIDENT tNL	{ pp_del_define($2); free($2); }
+	| tDEFINE opt_text tNL	{ pp_add_define($1, $2); }
 	| tMACRO res_arg allmargs tMACROEND opt_mtexts tNL	{
-		add_macro($1, macro_args, nmacro_args, $5);
+		pp_add_macro($1, macro_args, nmacro_args, $5);
 		}
 	| tLINE tSINT tDQSTRING	tNL	{ fprintf(ppout, "# %d %s\n", $2 , $3); free($3); }
 	| tGCCLINE tSINT tDQSTRING tNL	{ fprintf(ppout, "# %d %s\n", $2 , $3); free($3); }
@@ -285,17 +284,17 @@ preprocessor
 	| tGCCLINE tNL		/* The null-token */
 	| tERROR opt_text tNL	{ pperror("#error directive: '%s'", $2); if($2) free($2); }
 	| tWARNING opt_text tNL	{ ppwarning("#warning directive: '%s'", $2); if($2) free($2); }
-	| tPRAGMA opt_text tNL	{ if(pedantic) ppwarning("#pragma ignored (arg: '%s')", $2); if($2) free($2); }
-	| tPPIDENT opt_text tNL	{ if(pedantic) ppwarning("#ident ignored (arg: '%s')", $2); if($2) free($2); }
+	| tPRAGMA opt_text tNL	{ if(pp_status.pedantic) ppwarning("#pragma ignored (arg: '%s')", $2); if($2) free($2); }
+	| tPPIDENT opt_text tNL	{ if(pp_status.pedantic) ppwarning("#ident ignored (arg: '%s')", $2); if($2) free($2); }
         | tRCINCLUDE tRCINCLUDEPATH {
                 int nl=strlen($2) +3;
-                char *fn=xmalloc(nl);
-                snprintf(fn,nl,"\"%s\"",$2);
+                char *fn=pp_xmalloc(nl);
+                sprintf(fn,"\"%s\"",$2);
 		free($2);
-		do_include(fn,1);
+		pp_do_include(fn,1);
 	}
 	| tRCINCLUDE tDQSTRING {
-		do_include($2,1);
+		pp_do_include($2,1);
 	}
 	/*| tNL*/
 	;
@@ -537,9 +536,10 @@ static int boolean(cval_t *v)
 
 static marg_t *new_marg(char *str, def_arg_t type)
 {
-	marg_t *ma = (marg_t *)xmalloc(sizeof(marg_t));
+	marg_t *ma = pp_xmalloc(sizeof(marg_t));
 	ma->arg = str;
 	ma->type = type;
+	ma->nnl = 0;
 	return ma;
 }
 
@@ -547,7 +547,7 @@ static marg_t *add_new_marg(char *str, def_arg_t type)
 {
 	marg_t *ma = new_marg(str, type);
 	nmacro_args++;
-	macro_args = (marg_t **)xrealloc(macro_args, nmacro_args * sizeof(macro_args[0]));
+	macro_args = pp_xrealloc(macro_args, nmacro_args * sizeof(macro_args[0]));
 	macro_args[nmacro_args-1] = ma;
 	return ma;
 }
@@ -565,12 +565,13 @@ static int marg_index(char *id)
 
 static mtext_t *new_mtext(char *str, int idx, def_exp_t type)
 {
-	mtext_t *mt = (mtext_t *)xmalloc(sizeof(mtext_t));
+	mtext_t *mt = pp_xmalloc(sizeof(mtext_t));
 	if(str == NULL)
 		mt->subst.argidx = idx;
 	else
 		mt->subst.text = str;
 	mt->type = type;
+	mt->next = mt->prev = NULL;
 	return mt;
 }
 
@@ -584,7 +585,7 @@ static mtext_t *combine_mtext(mtext_t *tail, mtext_t *mtp)
 
 	if(tail->type == exp_text && mtp->type == exp_text)
 	{
-		tail->subst.text = xrealloc(tail->subst.text, strlen(tail->subst.text)+strlen(mtp->subst.text)+1);
+		tail->subst.text = pp_xrealloc(tail->subst.text, strlen(tail->subst.text)+strlen(mtp->subst.text)+1);
 		strcat(tail->subst.text, mtp->subst.text);
 		free(mtp->subst.text);
 		free(mtp);
@@ -650,7 +651,7 @@ static char *merge_text(char *s1, char *s2)
 {
 	int l1 = strlen(s1);
 	int l2 = strlen(s2);
-	s1 = xrealloc(s1, l1+l2+1);
+	s1 = pp_xrealloc(s1, l1+l2+1);
 	memcpy(s1+l1, s2, l2+1);
 	free(s2);
 	return s1;

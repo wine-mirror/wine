@@ -18,21 +18,23 @@
 
 #include "config.h"
 
+#include <assert.h>
+#include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <assert.h>
+#include <stdarg.h>
+#include <unistd.h>
 
-#include "wrc.h"
-#include "utils.h"
-#include "preproc.h"
+#include "wpp_private.h"
 
+struct pp_status pp_status;
 
 #define HASHKEY		2039
 static pp_entry_t *pp_defines[HASHKEY];
 
 #define MAXIFSTACK	64
-static if_state_t if_stack[MAXIFSTACK];
+static pp_if_state_t if_stack[MAXIFSTACK];
 static int if_stack_idx = 0;
 
 #if 0
@@ -57,6 +59,43 @@ void pp_status(void)
 }
 #endif
 
+void *pp_xmalloc(size_t size)
+{
+    void *res;
+
+    assert(size > 0);
+    res = malloc(size);
+    if(res == NULL)
+    {
+        fprintf(stderr, "Virtual memory exhausted.\n");
+        exit(2);
+    }
+    return res;
+}
+
+void *pp_xrealloc(void *p, size_t size)
+{
+    void *res;
+
+    assert(size > 0);
+    res = realloc(p, size);
+    if(res == NULL)
+    {
+        fprintf(stderr, "Virtual memory exhausted.\n");
+        exit(2);
+    }
+    return res;
+}
+
+char *pp_xstrdup(const char *str)
+{
+	char *s;
+
+	assert(str != NULL);
+	s = pp_xmalloc(strlen(str)+1);
+	return strcpy(s, str);
+}
+
 /* Don't comment on the hash, its primitive but functional... */
 int pphash(char *str)
 {
@@ -79,27 +118,27 @@ pp_entry_t *pplookup(char *ident)
 	return NULL;
 }
 
-void del_define(char *name)
+void pp_del_define(char *name)
 {
 	int idx;
 	pp_entry_t *ppp;
 
 	if((ppp = pplookup(name)) == NULL)
 	{
-		if(pedantic)
-			yywarning("%s was not defined", name);
+		if(pp_status.pedantic)
+			ppwarning("%s was not defined", name);
 		return;
 	}
 
 	if(ppp->iep)
 	{
-		if(debuglevel & DEBUGLEVEL_PPMSG)
-			fprintf(stderr, "del_define: %s:%d: includelogic removed, include_ppp='%s', file=%s\n", input_name, line_number, name, ppp->iep->filename);
-		if(ppp->iep == includelogiclist)
+		if(pp_status.debug)
+			fprintf(stderr, "pp_del_define: %s:%d: includelogic removed, include_ppp='%s', file=%s\n", pp_status.input, pp_status.line_number, name, ppp->iep->filename);
+		if(ppp->iep == pp_includelogiclist)
 		{
-			includelogiclist = ppp->iep->next;
-			if(includelogiclist)
-				includelogiclist->prev = NULL;
+			pp_includelogiclist = ppp->iep->next;
+			if(pp_includelogiclist)
+				pp_includelogiclist->prev = NULL;
 		}
 		else
 		{
@@ -127,11 +166,11 @@ void del_define(char *name)
 
 	free(ppp);
 
-	if(debuglevel & DEBUGLEVEL_PPMSG)
-		printf("Deleted (%s, %d) <%s>\n", input_name, line_number, name);
+	if(pp_status.debug)
+		printf("Deleted (%s, %d) <%s>\n", pp_status.input, pp_status.line_number, name);
 }
 
-pp_entry_t *add_define(char *def, char *text)
+pp_entry_t *pp_add_define(char *def, char *text)
 {
 	int len;
 	char *cptr;
@@ -140,16 +179,17 @@ pp_entry_t *add_define(char *def, char *text)
 
 	if((ppp = pplookup(def)) != NULL)
 	{
-		if(pedantic)
-			yywarning("Redefinition of %s\n\tPrevious definition: %s:%d", def, ppp->filename, ppp->linenumber);
-		del_define(def);
+		if(pp_status.pedantic)
+			ppwarning("Redefinition of %s\n\tPrevious definition: %s:%d", def, ppp->filename, ppp->linenumber);
+		pp_del_define(def);
 	}
-	ppp = (pp_entry_t *)xmalloc(sizeof(pp_entry_t));
+	ppp = pp_xmalloc(sizeof(pp_entry_t));
+	memset( ppp, 0, sizeof(*ppp) );
 	ppp->ident = def;
 	ppp->type = def_define;
 	ppp->subst.text = text;
-	ppp->filename = input_name ? xstrdup(input_name) : "<internal or cmdline>";
-	ppp->linenumber = input_name ? line_number : 0;
+	ppp->filename = pp_status.input ? pp_xstrdup(pp_status.input) : "<internal or cmdline>";
+	ppp->linenumber = pp_status.input ? pp_status.line_number : 0;
 	ppp->next = pp_defines[idx];
 	pp_defines[idx] = ppp;
 	if(ppp->next)
@@ -168,55 +208,40 @@ pp_entry_t *add_define(char *def, char *text)
 		if(text != cptr)
 			memmove(text, cptr, strlen(cptr)+1);
 	}
-	if(debuglevel & DEBUGLEVEL_PPMSG)
-		printf("Added define (%s, %d) <%s> to <%s>\n", input_name, line_number, ppp->ident, text ? text : "(null)");
+	if(pp_status.debug)
+		printf("Added define (%s, %d) <%s> to <%s>\n", pp_status.input, pp_status.line_number, ppp->ident, text ? text : "(null)");
 
 	return ppp;
 }
 
-pp_entry_t *add_cmdline_define(char *set)
-{
-	char *cpy = xstrdup(set);	/* Because gcc passes a R/O string */
-	char *cptr = strchr(cpy, '=');
-	if(cptr)
-		*cptr = '\0';
-	return add_define(cpy, xstrdup(cptr ? cptr+1 : ""));
-}
-
-pp_entry_t *add_special_define(char *id)
-{
-	pp_entry_t *ppp = add_define(xstrdup(id), xstrdup(""));
-	ppp->type = def_special;
-	return ppp;
-}
-
-pp_entry_t *add_macro(char *id, marg_t *args[], int nargs, mtext_t *exp)
+pp_entry_t *pp_add_macro(char *id, marg_t *args[], int nargs, mtext_t *exp)
 {
 	int idx = pphash(id);
 	pp_entry_t *ppp;
 
 	if((ppp = pplookup(id)) != NULL)
 	{
-		if(pedantic)
-			yywarning("Redefinition of %s\n\tPrevious definition: %s:%d", id, ppp->filename, ppp->linenumber);
-		del_define(id);
+		if(pp_status.pedantic)
+			ppwarning("Redefinition of %s\n\tPrevious definition: %s:%d", id, ppp->filename, ppp->linenumber);
+		pp_del_define(id);
 	}
-	ppp = (pp_entry_t *)xmalloc(sizeof(pp_entry_t));
+	ppp = pp_xmalloc(sizeof(pp_entry_t));
+	memset( ppp, 0, sizeof(*ppp) );
 	ppp->ident	= id;
 	ppp->type	= def_macro;
 	ppp->margs	= args;
 	ppp->nargs	= nargs;
 	ppp->subst.mtext= exp;
-	ppp->filename = input_name ? xstrdup(input_name) : "<internal or cmdline>";
-	ppp->linenumber = input_name ? line_number : 0;
+	ppp->filename = pp_status.input ? pp_xstrdup(pp_status.input) : "<internal or cmdline>";
+	ppp->linenumber = pp_status.input ? pp_status.line_number : 0;
 	ppp->next	= pp_defines[idx];
 	pp_defines[idx] = ppp;
 	if(ppp->next)
 		ppp->next->prev = ppp;
 
-	if(debuglevel & DEBUGLEVEL_PPMSG)
+	if(pp_status.debug)
 	{
-		fprintf(stderr, "Added macro (%s, %d) <%s(%d)> to <", input_name, line_number, ppp->ident, nargs);
+		fprintf(stderr, "Added macro (%s, %d) <%s(%d)> to <", pp_status.input, pp_status.line_number, ppp->ident, nargs);
 		for(; exp; exp = exp->next)
 		{
 			switch(exp->type)
@@ -255,10 +280,10 @@ pp_entry_t *add_macro(char *id, marg_t *args[], int nargs, mtext_t *exp)
 static char **includepath;
 static int nincludepath = 0;
 
-void add_include_path(char *path)
+void wpp_add_include_path(const char *path)
 {
 	char *tok;
-	char *cpy = xstrdup(path);
+	char *cpy = pp_xstrdup(path);
 
 	tok = strtok(cpy, INCLUDESEPARATOR);
 	while(tok)
@@ -267,7 +292,7 @@ void add_include_path(char *path)
 		char *cptr;
 		if(strlen(tok) == 0)
 			continue;
-		dir = xstrdup(tok);
+		dir = pp_xstrdup(tok);
 		for(cptr = dir; *cptr; cptr++)
 		{
 			/* Convert to forward slash */
@@ -280,71 +305,78 @@ void add_include_path(char *path)
 
 		/* Add to list */
 		nincludepath++;
-		includepath = (char **)xrealloc(includepath, nincludepath * sizeof(*includepath));
+		includepath = pp_xrealloc(includepath, nincludepath * sizeof(*includepath));
 		includepath[nincludepath-1] = dir;
 		tok = strtok(NULL, INCLUDESEPARATOR);
 	}
 	free(cpy);
 }
 
-FILE *open_include(const char *name, int search, char **newpath)
+char *wpp_find_include(const char *name, int search)
 {
-	char *cpy = xstrdup(name);
-	char *cptr;
-	FILE *fp;
-	int i;
+    char *cpy = pp_xstrdup(name);
+    char *cptr;
+    int i, fd;
 
-	for(cptr = cpy; *cptr; cptr++)
-	{
-		/* kill double backslash */
-		if(*cptr == '\\' && *(cptr+1) == '\\')
-			memmove(cptr, cptr+1, strlen(cptr));
-		/* Convert to forward slash */
-		if(*cptr == '\\')
-			*cptr = '/';
-	}
+    for(cptr = cpy; *cptr; cptr++)
+    {
+        /* kill double backslash */
+        if(*cptr == '\\' && *(cptr+1) == '\\')
+            memmove(cptr, cptr+1, strlen(cptr));
+        /* Convert to forward slash */
+        if(*cptr == '\\')
+            *cptr = '/';
+    }
 
-	if(search)
-	{
-		/* Search current dir and then -I path */
-		fp = fopen(cpy, "rt");
-		if(fp)
-		{
-			if(debuglevel & DEBUGLEVEL_PPMSG)
-				printf("Going to include <%s>\n", name);
-			if(newpath)
-				*newpath = cpy;
-			else
-				free(cpy);
-			return fp;
-		}
-	}
-	/* Search -I path */
-	for(i = 0; i < nincludepath; i++)
-	{
-		char *path;
-		path = (char *)xmalloc(strlen(includepath[i]) + strlen(cpy) + 2);
-		strcpy(path, includepath[i]);
-		strcat(path, "/");
-		strcat(path, cpy);
-		fp = fopen(path, "rt");
-		if(fp && (debuglevel & DEBUGLEVEL_PPMSG))
-			printf("Going to include <%s>\n", path);
-		if(fp)
-		{
-			if(newpath)
-				*newpath = path;
-			else
-				free(path);
-			free(cpy);
-			return fp;
-		}
-		free(path);
-	}
-	free(cpy);
-	if(newpath)
-		*newpath = NULL;
-	return NULL;
+    if(search)
+    {
+        /* Search current dir and then -I path */
+        fd = open( cpy, O_RDONLY );
+        if (fd != -1)
+        {
+            close( fd );
+            return cpy;
+        }
+    }
+    /* Search -I path */
+    for(i = 0; i < nincludepath; i++)
+    {
+        char *path;
+        path = pp_xmalloc(strlen(includepath[i]) + strlen(cpy) + 2);
+        strcpy(path, includepath[i]);
+        strcat(path, "/");
+        strcat(path, cpy);
+        fd = open( path, O_RDONLY );
+        if (fd != -1)
+        {
+            close( fd );
+            free( cpy );
+            return path;
+        }
+        free( path );
+    }
+    free( cpy );
+    return NULL;
+}
+
+FILE *pp_open_include(const char *name, int search, char **newpath)
+{
+    char *path;
+    FILE *fp;
+
+    if (!(path = wpp_find_include( name, search ))) return NULL;
+    fp = fopen(path, "rt");
+
+    if (fp)
+    {
+        if (pp_status.debug)
+            printf("Going to include <%s>\n", path);
+        if (newpath) *newpath = path;
+        else free( path );
+        return fp;
+    }
+    free( path );
+    return NULL;
 }
 
 /*
@@ -395,7 +427,7 @@ FILE *open_include(const char *name, int search, char **newpath)
  *
  *-------------------------------------------------------------------------
  */
-static char *if_state_str[] = {
+static char *pp_if_state_str[] = {
 	"if_false",
 	"if_true",
 	"if_elif",
@@ -404,13 +436,13 @@ static char *if_state_str[] = {
 	"if_ignore"
 };
 
-void push_if(if_state_t s)
+void pp_push_if(pp_if_state_t s)
 {
 	if(if_stack_idx >= MAXIFSTACK)
-		internal_error(__FILE__, __LINE__, "#if-stack overflow; #{if,ifdef,ifndef} nested too deeply (> %d)", MAXIFSTACK);
+		pp_internal_error(__FILE__, __LINE__, "#if-stack overflow; #{if,ifdef,ifndef} nested too deeply (> %d)", MAXIFSTACK);
 
-	if(debuglevel & DEBUGLEVEL_PPLEX)
-		fprintf(stderr, "Push if %s:%d: %s(%d) -> %s(%d)\n", input_name, line_number, if_state_str[if_state()], if_stack_idx, if_state_str[s], if_stack_idx+1);
+	if(pp_flex_debug)
+		fprintf(stderr, "Push if %s:%d: %s(%d) -> %s(%d)\n", pp_status.input, pp_status.line_number, pp_if_state_str[pp_if_state()], if_stack_idx, pp_if_state_str[s], if_stack_idx+1);
 
 	if_stack[if_stack_idx++] = s;
 
@@ -423,17 +455,17 @@ void push_if(if_state_t s)
 	case if_elsefalse:
 	case if_elif:
 	case if_ignore:
-		push_ignore_state();
+		pp_push_ignore_state();
 		break;
 	}
 }
 
-if_state_t pop_if(void)
+pp_if_state_t pp_pop_if(void)
 {
 	if(if_stack_idx <= 0)
-		yyerror("#{endif,else,elif} without #{if,ifdef,ifndef} (#if-stack underflow)");
+		pperror("#{endif,else,elif} without #{if,ifdef,ifndef} (#if-stack underflow)");
 
-	switch(if_state())
+	switch(pp_if_state())
 	{
 	case if_true:
 	case if_elsetrue:
@@ -442,23 +474,23 @@ if_state_t pop_if(void)
 	case if_elsefalse:
 	case if_elif:
 	case if_ignore:
-		pop_ignore_state();
+		pp_pop_ignore_state();
 		break;
 	}
 
-	if(debuglevel & DEBUGLEVEL_PPLEX)
+	if(pp_flex_debug)
 		fprintf(stderr, "Pop if %s:%d: %s(%d) -> %s(%d)\n",
-				input_name,
-				line_number,
-				if_state_str[if_state()],
+				pp_status.input,
+				pp_status.line_number,
+				pp_if_state_str[pp_if_state()],
 				if_stack_idx,
-				if_state_str[if_stack[if_stack_idx <= 1 ? if_true : if_stack_idx-2]],
+				pp_if_state_str[if_stack[if_stack_idx <= 1 ? if_true : if_stack_idx-2]],
 				if_stack_idx-1);
 
 	return if_stack[--if_stack_idx];
 }
 
-if_state_t if_state(void)
+pp_if_state_t pp_if_state(void)
 {
 	if(!if_stack_idx)
 		return if_true;
@@ -467,27 +499,78 @@ if_state_t if_state(void)
 }
 
 
-void next_if_state(int i)
+void pp_next_if_state(int i)
 {
-	switch(if_state())
+	switch(pp_if_state())
 	{
 	case if_true:
 	case if_elsetrue:
-		push_if(i ? if_true : if_false);
+		pp_push_if(i ? if_true : if_false);
 		break;
 	case if_false:
 	case if_elsefalse:
 	case if_elif:
 	case if_ignore:
-		push_if(if_ignore);
+		pp_push_if(if_ignore);
 		break;
 	default:
-		internal_error(__FILE__, __LINE__, "Invalid if_state (%d) in #{if,ifdef,ifndef} directive", (int)if_state());
+		pp_internal_error(__FILE__, __LINE__, "Invalid pp_if_state (%d) in #{if,ifdef,ifndef} directive", (int)pp_if_state());
 	}
 }
 
-int get_if_depth(void)
+int pp_get_if_depth(void)
 {
 	return if_stack_idx;
 }
 
+/* #define WANT_NEAR_INDICATION */
+
+static void generic_msg(const char *s, const char *t, const char *n, va_list ap)
+{
+	fprintf(stderr, "%s:%d:%d: %s: ", pp_status.input ? pp_status.input : "stdin",
+                pp_status.line_number, pp_status.char_number, t);
+	vfprintf(stderr, s, ap);
+#ifdef WANT_NEAR_INDICATION
+	{
+		char *cpy, *p;
+		if(n)
+		{
+			cpy = pp_xstrdup(n);
+			for (p = cpy; *p; p++) if(!isprint(*p)) *p = ' ';
+			fprintf(stderr, " near '%s'", cpy);
+			free(cpy);
+		}
+	}
+#endif
+	fprintf(stderr, "\n");
+}
+
+int pperror(const char *s, ...)
+{
+	va_list ap;
+	va_start(ap, s);
+	generic_msg(s, "Error", pptext, ap);
+	va_end(ap);
+	exit(1);
+	return 1;
+}
+
+int ppwarning(const char *s, ...)
+{
+	va_list ap;
+	va_start(ap, s);
+	generic_msg(s, "Warning", pptext, ap);
+	va_end(ap);
+	return 0;
+}
+
+void pp_internal_error(const char *file, int line, const char *s, ...)
+{
+	va_list ap;
+	va_start(ap, s);
+	fprintf(stderr, "Internal error (please report) %s %d: ", file, line);
+	vfprintf(stderr, s, ap);
+	fprintf(stderr, "\n");
+	va_end(ap);
+	exit(3);
+}

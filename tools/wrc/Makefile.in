@@ -6,6 +6,8 @@ VPATH     = @srcdir@
 LEXOPT    = -Cf #-w -b
 YACCOPT   = #-v
 EXEEXT    = @EXEEXT@
+EXTRAINCL = -I$(TOPSRCDIR)/tools/wpp
+EXTRALIBS = -L$(TOPOBJDIR)/tools/wpp -lwpp
 
 PROGRAMS = wrc$(EXEEXT)
 MODULE   = none
@@ -14,13 +16,11 @@ C_SRCS = \
 	dumpres.c \
 	genres.c \
 	newstruc.c \
-	preproc.c \
 	readres.c \
 	utils.c \
 	wrc.c \
 	writeres.c
 
-GEN_C_SRCS = ppy.tab.c lex.ppl.c
 EXTRA_SRCS = parser.y parser.l
 EXTRA_OBJS = y.tab.o @LEX_OUTPUT_ROOT@.o
 
@@ -28,26 +28,20 @@ all: $(PROGRAMS)
 
 @MAKE_RULES@
 
-wrc: $(OBJS)
-	$(CC) $(CFLAGS) -o wrc $(OBJS) $(LIBWINE) $(LIBUNICODE) $(LEXLIB) $(LDFLAGS)
+wrc: $(OBJS) $(TOPOBJDIR)/tools/wpp/libwpp.a
+	$(CC) $(CFLAGS) -o wrc $(OBJS) $(EXTRALIBS) $(LIBWINE) $(LIBUNICODE) $(LEXLIB) $(LDFLAGS)
 
-wrc.exe: $(OBJS)
-	$(CC) $(CFLAGS) -o wrc.exe $(OBJS) $(LIBWINE) $(LIBUNICODE) $(LEXLIB) -liberty $(LDFLAGS)
+wrc.exe: $(OBJS) $(TOPOBJDIR)/tools/wpp/libwpp.a
+	$(CC) $(CFLAGS) -o wrc.exe $(OBJS) $(EXTRALIBS) $(LIBWINE) $(LIBUNICODE) $(LEXLIB) -liberty $(LDFLAGS)
 
 y.tab.c y.tab.h: parser.y
 	$(YACC) $(YACCOPT) -d -t $(SRCDIR)/parser.y
 
-ppy.tab.c ppy.tab.h: ppy.y
-	$(YACC) $(YACCOPT) -bppy -ppp -d -t $(SRCDIR)/ppy.y
-
 @LEX_OUTPUT_ROOT@.c: parser.l
 	$(LEX) $(LEXOPT) -d -8 $(SRCDIR)/parser.l
 
-lex.ppl.c: ppl.l
-	$(LEX) $(LEXOPT) -d -Ppp -8 -olex.ppl.c $(SRCDIR)/ppl.l
-
 clean::
-	$(RM) ppy.tab.h ppy.output parser.output parser.tab.h lex.backup y.output
+	$(RM) parser.output parser.tab.h lex.backup y.output
 
 install:: $(PROGRAMS)
 	$(MKINSTALLDIRS) $(bindir) $(mandir)/man$(prog_manext)

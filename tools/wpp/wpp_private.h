@@ -1,5 +1,6 @@
 /*
  * Copyright 1998 Bertho A. Stultiens (BS)
+ * Copyright 2002 Alexandre Julliard
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -16,8 +17,11 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#ifndef __WRC_PREPROC_H
-#define __WRC_PREPROC_H
+#ifndef __WINE_WPP_PRIVATE_H
+#define __WINE_WPP_PRIVATE_H
+
+#include <stdio.h>
+#include <string.h>
 
 struct pp_entry;	/* forward */
 /*
@@ -106,7 +110,27 @@ typedef enum {
 	if_elsefalse,
 	if_elsetrue,
 	if_ignore
-} if_state_t;
+} pp_if_state_t;
+
+
+/*
+ * Trace the include files to prevent double reading.
+ * This save 20..30% of processing time for most stuff
+ * that uses complex includes.
+ * States:
+ * -1	Don't track or seen junk
+ *  0	New include, waiting for "#ifndef __xxx_h"
+ *  1	Seen #ifndef, waiting for "#define __xxx_h ..."
+ *  2	Seen #endif, waiting for EOF
+ */
+typedef struct
+{
+    int state;
+    char *ppp;             /* The define to be set from the #ifndef */
+    int ifdepth;           /* The level of ifs at the #ifdef */
+    int seen_junk;         /* Set when junk is seen */
+} include_state_t;
+
 
 /*
  * I assume that 'long long' exists in the compiler when it has a size
@@ -167,19 +191,42 @@ typedef struct cval {
 
 
 
+void *pp_xmalloc(size_t);
+void *pp_xrealloc(void *, size_t);
+char *pp_xstrdup(const char *str);
 pp_entry_t *pplookup(char *ident);
-pp_entry_t *add_define(char *def, char *text);
-pp_entry_t *add_cmdline_define(char *set);
-pp_entry_t *add_special_define(char *id);
-pp_entry_t *add_macro(char *ident, marg_t *args[], int nargs, mtext_t *exp);
-void del_define(char *name);
-FILE *open_include(const char *name, int search, char **newpath);
-void add_include_path(char *path);
-void push_if(if_state_t s);
-void next_if_state(int);
-if_state_t pop_if(void);
-if_state_t if_state(void);
-int get_if_depth(void);
+pp_entry_t *pp_add_define(char *def, char *text);
+pp_entry_t *pp_add_macro(char *ident, marg_t *args[], int nargs, mtext_t *exp);
+void pp_del_define(char *name);
+FILE *pp_open_include(const char *name, int search, char **newpath);
+void pp_push_if(pp_if_state_t s);
+void pp_next_if_state(int);
+pp_if_state_t pp_pop_if(void);
+pp_if_state_t pp_if_state(void);
+int pp_get_if_depth(void);
+
+#ifndef __GNUC__
+#define __attribute__(x)  /*nothing*/
+#endif
+
+int pperror(const char *s, ...) __attribute__((format (printf, 1, 2)));
+int ppwarning(const char *s, ...) __attribute__((format (printf, 1, 2)));
+void pp_internal_error(const char *file, int line, const char *s, ...) __attribute__((format (printf, 3, 4)));
+
+/* current preprocessor state */
+/* everything is in this structure to avoid polluting the global symbol space */
+struct pp_status
+{
+    const char *input;  /* current input file name */
+    int line_number;    /* current line number */
+    int char_number;    /* current char number in line */
+    int pedantic;       /* pedantic option */
+    int debug;          /* debug messages flag */
+};
+
+extern struct pp_status pp_status;
+extern include_state_t pp_incl_state;
+extern includelogicentry_t *pp_includelogiclist;
 
 /*
  * From ppl.l
@@ -190,16 +237,10 @@ extern char *pptext;
 extern int pp_flex_debug;
 int pplex(void);
 
-void do_include(char *fname, int type);
-void push_ignore_state(void);
-void pop_ignore_state(void);
+void pp_do_include(char *fname, int type);
+void pp_push_ignore_state(void);
+void pp_pop_ignore_state(void);
 
-extern int include_state;
-extern char *include_ppp;
-extern char *include_filename;
-extern int include_ifdepth;
-extern int seen_junk;
-extern includelogicentry_t *includelogiclist;
 
 /*
  * From ppy.y
@@ -207,5 +248,4 @@ extern includelogicentry_t *includelogiclist;
 int ppparse(void);
 extern int ppdebug;
 
-#endif
-
+#endif  /* __WINE_WPP_PRIVATE_H */

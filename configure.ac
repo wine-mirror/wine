@@ -1378,6 +1378,7 @@ tools/winapi/Makefile
 tools/winebuild/Makefile
 tools/winedump/Makefile
 tools/wmc/Makefile
+tools/wpp/Makefile
 tools/wrc/Makefile
 tsx11/Makefile
 unicode/Makefile])

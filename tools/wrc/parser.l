@@ -102,7 +102,6 @@ cident	[a-zA-Z_][0-9a-zA-Z_]*
 
 #include "wrc.h"
 #include "utils.h"
-#include "preproc.h"
 #include "parser.h"
 #include "newstruc.h"
 

@@ -31,8 +31,6 @@ void *xmalloc(size_t);
 void *xrealloc(void *, size_t);
 char *xstrdup(const char *str);
 
-int pperror(const char *s, ...) __attribute__((format (printf, 1, 2)));
-int ppwarning(const char *s, ...) __attribute__((format (printf, 1, 2)));
 int yyerror(const char *s, ...) __attribute__((format (printf, 1, 2)));
 int yywarning(const char *s, ...) __attribute__((format (printf, 1, 2)));
 void internal_error(const char *file, int line, const char *s, ...) __attribute__((format (printf, 3, 4)));

@@ -64,8 +64,8 @@
 #include "dumpres.h"
 #include "genres.h"
 #include "newstruc.h"
-#include "preproc.h"
 #include "parser.h"
+#include "wpp.h"
 
 static char usage[] =
 	"Usage: wrc [options...] [infile[.rc|.res]]\n"
@@ -342,7 +342,7 @@ int main(int argc,char *argv[])
 			debuglevel = strtol(optarg, NULL, 0);
 			break;
 		case 'D':
-			add_cmdline_define(optarg);
+			wpp_add_cmdline_define(optarg);
 			break;
 		case 'e':
 			extensions = 0;
@@ -360,7 +360,7 @@ int main(int argc,char *argv[])
 			create_header = 1;
 			break;
 		case 'I':
-			add_include_path(optarg);
+			wpp_add_include_path(optarg);
 			break;
 		case 'l':
 			{
@@ -419,6 +419,7 @@ int main(int argc,char *argv[])
 			break;
 		case 'W':
 			pedantic = 1;
+			wpp_set_pedantic(1);
 			break;
 		default:
 			lose++;
@@ -571,27 +572,24 @@ int main(int argc,char *argv[])
 
 	yydebug = debuglevel & DEBUGLEVEL_TRACE ? 1 : 0;
 	yy_flex_debug = debuglevel & DEBUGLEVEL_TRACE ? 1 : 0;
-	ppdebug = debuglevel & DEBUGLEVEL_PPTRACE ? 1 : 0;
-	pp_flex_debug = debuglevel & DEBUGLEVEL_PPLEX ? 1 : 0;
+
+        wpp_set_debug( (debuglevel & DEBUGLEVEL_PPLEX) != 0,
+                       (debuglevel & DEBUGLEVEL_PPTRACE) != 0,
+                       (debuglevel & DEBUGLEVEL_PPMSG) != 0 );
 
 	/* Set the default defined stuff */
-	add_cmdline_define("__WRC__=" WRC_EXP_STRINGIZE(WRC_MAJOR_VERSION));
-	add_cmdline_define("__WRC_MINOR__=" WRC_EXP_STRINGIZE(WRC_MINOR_VERSION));
-	add_cmdline_define("__WRC_MICRO__=" WRC_EXP_STRINGIZE(WRC_MICRO_VERSION));
-	add_cmdline_define("__WRC_PATCH__=" WRC_EXP_STRINGIZE(WRC_MICRO_VERSION));
+	wpp_add_cmdline_define("__WRC__=" WRC_EXP_STRINGIZE(WRC_MAJOR_VERSION));
+	wpp_add_cmdline_define("__WRC_MINOR__=" WRC_EXP_STRINGIZE(WRC_MINOR_VERSION));
+	wpp_add_cmdline_define("__WRC_MICRO__=" WRC_EXP_STRINGIZE(WRC_MICRO_VERSION));
+	wpp_add_cmdline_define("__WRC_PATCH__=" WRC_EXP_STRINGIZE(WRC_MICRO_VERSION));
 
-	add_cmdline_define("RC_INVOKED=1");
+	wpp_add_cmdline_define("RC_INVOKED=1");
 
 	if(win32)
 	{
-		add_cmdline_define("__WIN32__=1");
-		add_cmdline_define("__FLAT__=1");
+		wpp_add_cmdline_define("__WIN32__=1");
+		wpp_add_cmdline_define("__FLAT__=1");
 	}
-
-	add_special_define("__FILE__");
-	add_special_define("__LINE__");
-	add_special_define("__DATE__");
-	add_special_define("__TIME__");
 
 	/* Check if the user set a language, else set default */
 	if(!currentlanguage)
@@ -624,7 +622,6 @@ int main(int argc,char *argv[])
 	/* Run the preprocessor on the input */
 	if(!no_preprocess && !binary)
 	{
-		char *real_name;
 		/*
 		 * Preprocess the input to a temp-file, or stdout if
 		 * no output was given.
@@ -632,54 +629,32 @@ int main(int argc,char *argv[])
 
 		chat("Starting preprocess");
 
-		if(preprocess_only && !output_name)
-		{
-			ppout = stdout;
-		}
-		else if(preprocess_only && output_name)
-		{
-			if(!(ppout = fopen(output_name, "wb")))
-				error("Could not open %s for writing\n", output_name);
-		}
-		else
-		{
-			if(!(temp_name = tmpnam(NULL)))
-				error("Could nor generate a temp-name\n");
-			temp_name = xstrdup(temp_name);
-			if(!(ppout = fopen(temp_name, "wb")))
-				error("Could not create a temp-file\n");
+                if (!preprocess_only)
+                {
+                    atexit(rm_tempfile);
+                    ret = wpp_parse_temp( input_name, &temp_name );
+                }
+                else if (output_name)
+                {
+                    FILE *output;
 
-			atexit(rm_tempfile);
-		}
-
-		real_name = input_name;	/* Because it gets overwritten */
-
-		if(!input_name)
-			ppin = stdin;
-		else
-		{
-			if(!(ppin = fopen(input_name, "rb")))
-				error("Could not open %s\n", input_name);
-		}
-
-		fprintf(ppout, "# 1 \"%s\" 1\n", input_name ? input_name : "");
-
-		ret = ppparse();
-
-		input_name = real_name;
-
-		if(input_name)
-			fclose(ppin);
-
-		fclose(ppout);
-
-		input_name = temp_name;
+                    if (!(output = fopen( output_name, "w" )))
+                        error( "Could not open %s for writing\n", output_name );
+                    ret = wpp_parse( input_name, output );
+                    fclose( output );
+                }
+                else
+                {
+                    ret = wpp_parse( input_name, stdout );
+                }
 
 		if(ret)
 			exit(1);	/* Error during preprocess */
 
 		if(preprocess_only)
 			exit(0);
+
+		input_name = temp_name;
 	}
 
 	if(!binary)
@@ -761,4 +736,3 @@ static void segvhandler(int sig)
 	fflush(stderr);
 	abort();
 }
-

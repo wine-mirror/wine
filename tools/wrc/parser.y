@@ -136,7 +136,7 @@
 #include "utils.h"
 #include "newstruc.h"
 #include "dumpres.h"
-#include "preproc.h"
+#include "wpp.h"
 #include "parser.h"
 #include "windef.h"
 #include "winbase.h"
@@ -2278,14 +2278,17 @@ static itemex_opt_t *new_itemex_opt(int id, int type, int state, int helpid)
 /* Raw data functions */
 static raw_data_t *load_file(string_t *name)
 {
-	FILE *fp;
+	FILE *fp = NULL;
+	char *path;
 	raw_data_t *rd;
 	if(name->type != str_char)
 		yyerror("Filename must be ASCII string");
 
-	fp = open_include(name->str.cstr, 1, NULL);
-	if(!fp)
+	if (!(path = wpp_find_include(name->str.cstr, 1)))
 		yyerror("Cannot open file %s", name->str.cstr);
+	if (!(fp = fopen( path, "rb" )))
+		yyerror("Cannot open file %s", name->str.cstr);
+	free( path );
 	rd = new_raw_data();
 	fseek(fp, 0, SEEK_END);
 	rd->size = ftell(fp);

@@ -159,11 +159,8 @@ ul	[uUlL]|[uUlL][lL]|[lL][uU]|[lL][lL][uU]|[uU][lL][lL]|[lL][uU][lL]
 #include <ctype.h>
 #include <assert.h>
 
-#include "utils.h"
-#include "wrc.h"
-#include "preproc.h"
-
-#include "ppy.tab.h"
+#include "wpp_private.h"
+#include "y.tab.h"
 
 /*
  * Make sure that we are running an appropriate version of flex.
@@ -182,7 +179,7 @@ ul	[uUlL]|[uUlL][lL]|[lL][uU]|[lL][lL][uU]|[uU][lL][lL]|[lL][uU][lL]
 /*
  * Always update the current character position within a line
  */
-#define YY_USER_ACTION	char_number+=ppleng;
+#define YY_USER_ACTION	pp_status.char_number+=ppleng;
 
 /*
  * Buffer management for includes and expansions
@@ -194,16 +191,13 @@ typedef struct bufferstackentry {
 	pp_entry_t	*define;	/* Points to expanding define or NULL if handling includes */
 	int		line_number;	/* Line that we were handling */
 	int		char_number;	/* The current position on that line */
-	char		*filename;	/* Filename that we were handling */
+	const char	*filename;	/* Filename that we were handling */
 	int		if_depth;	/* How many #if:s deep to check matching #endif:s */
 	int		ncontinuations;	/* Remember the continuation state */
 	int		should_pop;	/* Set if we must pop the start-state on EOF */
 	/* Include management */
-	int		include_state;
-	char		*include_ppp;
-	char		*include_filename;
-	int		include_ifdepth;
-	int		seen_junk;
+        include_state_t incl;
+	char 		*include_filename;
 	int 		pass_data;
 } bufferstackentry_t;
 
@@ -280,21 +274,15 @@ static int pass_data=1;
 /*
  * Global variables
  */
-/*
- * Trace the include files to prevent double reading.
- * This save 20..30% of processing time for most stuff
- * that uses complex includes.
- * States:
- * -1	Don't track or seen junk
- *  0	New include, waiting for "#ifndef __xxx_h"
- *  1	Seen #ifndef, waiting for "#define __xxx_h ..."
- *  2	Seen #endif, waiting for EOF
- */
-int include_state = -1;
-char *include_ppp = NULL;	/* The define to be set from the #ifndef */
-int include_ifdepth = 0;	/* The level of ifs at the #ifdef */
-int seen_junk = 0;		/* Set when junk is seen */
-includelogicentry_t *includelogiclist = NULL;
+include_state_t pp_incl_state =
+{
+    -1,    /* state */
+    NULL,  /* ppp */
+    0,     /* ifdepth */
+    0      /* seen_junk */
+};
+
+includelogicentry_t *pp_includelogiclist = NULL;
 
 %}
 
@@ -317,7 +305,7 @@ includelogicentry_t *includelogiclist = NULL;
 	/*
 	 * Detect the leading # of a preprocessor directive.
 	 */
-<INITIAL,pp_ignore>^{ws}*#	seen_junk++; yy_push_state(pp_pp);
+<INITIAL,pp_ignore>^{ws}*#	pp_incl_state.seen_junk++; yy_push_state(pp_pp);
 
 	/*
 	 * Scan for the preprocessor directives
@@ -330,7 +318,7 @@ includelogicentry_t *includelogiclist = NULL;
 <pp_pp>{ws}*ident{ws}*		yy_pp_state(pp_eol);	if(yy_top_state() != pp_ignore) return tPPIDENT;
 <pp_pp>{ws}*undef{ws}*		if(yy_top_state() != pp_ignore) {yy_pp_state(pp_ifd); return tUNDEF;} else {yy_pp_state(pp_eol);}
 <pp_pp>{ws}*ifdef{ws}*		yy_pp_state(pp_ifd);	return tIFDEF;
-<pp_pp>{ws}*ifndef{ws}*		seen_junk--; yy_pp_state(pp_ifd);	return tIFNDEF;
+<pp_pp>{ws}*ifndef{ws}*		pp_incl_state.seen_junk--; yy_pp_state(pp_ifd);	return tIFNDEF;
 <pp_pp>{ws}*if{ws}*		yy_pp_state(pp_if);	return tIF;
 <pp_pp>{ws}*elif{ws}*		yy_pp_state(pp_if);	return tELIF;
 <pp_pp>{ws}*else{ws}*		return tELSE;
@@ -395,7 +383,7 @@ includelogicentry_t *includelogiclist = NULL;
 	 * Handle #ifdef, #ifndef and #undef
 	 * to get only an untranslated/unexpanded identifier
 	 */
-<pp_ifd>{cident}	pplval.cptr = xstrdup(pptext); return tIDENT;
+<pp_ifd>{cident}	pplval.cptr = pp_xstrdup(pptext); return tIDENT;
 <pp_ifd>{ws}+		;
 <pp_ifd>\n		newline(1); yy_pop_state(); return tNL;
 <pp_ifd>\\\r?\n		newline(0);
@@ -406,7 +394,7 @@ includelogicentry_t *includelogiclist = NULL;
 	 * This is necessary to get the identifier prior to any
 	 * substitutions.
 	 */
-<pp_defined>{cident}		yy_pop_state(); pplval.cptr = xstrdup(pptext); return tIDENT;
+<pp_defined>{cident}		yy_pop_state(); pplval.cptr = pp_xstrdup(pptext); return tIDENT;
 <pp_defined>{ws}+		;
 <pp_defined>(\()|(\))		return *pptext;
 <pp_defined>\\\r?\n		newline(0);
@@ -418,17 +406,17 @@ includelogicentry_t *includelogiclist = NULL;
 	 * will act appropriately.
 	 * Comments are stripped from the literal text.
 	 */
-<pp_eol>[^/\\\n]+		if(yy_top_state() != pp_ignore) { pplval.cptr = xstrdup(pptext); return tLITERAL; }
-<pp_eol>\/[^/\\\n*]*		if(yy_top_state() != pp_ignore) { pplval.cptr = xstrdup(pptext); return tLITERAL; }
-<pp_eol>(\\\r?)|(\/[^/*])	if(yy_top_state() != pp_ignore) { pplval.cptr = xstrdup(pptext); return tLITERAL; }
+<pp_eol>[^/\\\n]+		if(yy_top_state() != pp_ignore) { pplval.cptr = pp_xstrdup(pptext); return tLITERAL; }
+<pp_eol>\/[^/\\\n*]*		if(yy_top_state() != pp_ignore) { pplval.cptr = pp_xstrdup(pptext); return tLITERAL; }
+<pp_eol>(\\\r?)|(\/[^/*])	if(yy_top_state() != pp_ignore) { pplval.cptr = pp_xstrdup(pptext); return tLITERAL; }
 <pp_eol>\n			newline(1); yy_pop_state(); if(yy_current_state() != pp_ignore) { return tNL; }
 <pp_eol>\\\r?\n			newline(0);
 
 	/*
 	 * Handle left side of #define
 	 */
-<pp_def>{cident}\(		pplval.cptr = xstrdup(pptext); pplval.cptr[ppleng-1] = '\0'; yy_pp_state(pp_macro);  return tMACRO;
-<pp_def>{cident}		pplval.cptr = xstrdup(pptext); yy_pp_state(pp_define); return tDEFINE;
+<pp_def>{cident}\(		pplval.cptr = pp_xstrdup(pptext); pplval.cptr[ppleng-1] = '\0'; yy_pp_state(pp_macro);  return tMACRO;
+<pp_def>{cident}		pplval.cptr = pp_xstrdup(pptext); yy_pp_state(pp_define); return tDEFINE;
 <pp_def>{ws}+			;
 <pp_def>\\\r?\n			newline(0);
 <pp_def>(\\\r?)|(\n)|(.)	perror("Identifier expected");
@@ -436,9 +424,9 @@ includelogicentry_t *includelogiclist = NULL;
 	/*
 	 * Scan the substitution of a define
 	 */
-<pp_define>[^'"/\\\n]+		pplval.cptr = xstrdup(pptext); return tLITERAL;
-<pp_define>(\\\r?)|(\/[^/*])	pplval.cptr = xstrdup(pptext); return tLITERAL;
-<pp_define>\\\r?\n{ws}+		newline(0); pplval.cptr = xstrdup(" "); return tLITERAL;
+<pp_define>[^'"/\\\n]+		pplval.cptr = pp_xstrdup(pptext); return tLITERAL;
+<pp_define>(\\\r?)|(\/[^/*])	pplval.cptr = pp_xstrdup(pptext); return tLITERAL;
+<pp_define>\\\r?\n{ws}+		newline(0); pplval.cptr = pp_xstrdup(" "); return tLITERAL;
 <pp_define>\\\r?\n		newline(0);
 <pp_define>\n			newline(1); yy_pop_state(); return tNL;
 <pp_define>\'			new_string(); add_string(pptext, ppleng); yy_push_state(pp_sqs);
@@ -449,7 +437,7 @@ includelogicentry_t *includelogiclist = NULL;
 	 */
 <pp_macro>\){ws}*		yy_pp_state(pp_mbody); return tMACROEND;
 <pp_macro>{ws}+			;
-<pp_macro>{cident}		pplval.cptr = xstrdup(pptext); return tIDENT;
+<pp_macro>{cident}		pplval.cptr = pp_xstrdup(pptext); return tIDENT;
 <pp_macro>,			return ',';
 <pp_macro>"..."			return tELIPSIS;
 <pp_macro>(\\\r?)|(\n)|(.)|(\.\.?)	pperror("Argument identifier expected");
@@ -458,13 +446,13 @@ includelogicentry_t *includelogiclist = NULL;
 	/*
 	 * Scan the substitution of a macro
 	 */
-<pp_mbody>[^a-zA-Z0-9'"#/\\\n]+	pplval.cptr = xstrdup(pptext); return tLITERAL;
-<pp_mbody>{cident}		pplval.cptr = xstrdup(pptext); return tIDENT;
+<pp_mbody>[^a-zA-Z0-9'"#/\\\n]+	pplval.cptr = pp_xstrdup(pptext); return tLITERAL;
+<pp_mbody>{cident}		pplval.cptr = pp_xstrdup(pptext); return tIDENT;
 <pp_mbody>\#\#			return tCONCAT;
 <pp_mbody>\#			return tSTRINGIZE;
-<pp_mbody>[0-9][^'"#/\\\n]*	pplval.cptr = xstrdup(pptext); return tLITERAL;
-<pp_mbody>(\\\r?)|(\/[^/*'"#\\\n]*)	pplval.cptr = xstrdup(pptext); return tLITERAL;
-<pp_mbody>\\\r?\n{ws}+		newline(0); pplval.cptr = xstrdup(" "); return tLITERAL;
+<pp_mbody>[0-9][^'"#/\\\n]*	pplval.cptr = pp_xstrdup(pptext); return tLITERAL;
+<pp_mbody>(\\\r?)|(\/[^/*'"#\\\n]*)	pplval.cptr = pp_xstrdup(pptext); return tLITERAL;
+<pp_mbody>\\\r?\n{ws}+		newline(0); pplval.cptr = pp_xstrdup(" "); return tLITERAL;
 <pp_mbody>\\\r?\n		newline(0);
 <pp_mbody>\n			newline(1); yy_pop_state(); return tNL;
 <pp_mbody>\'			new_string(); add_string(pptext, ppleng); yy_push_state(pp_sqs);
@@ -519,7 +507,7 @@ includelogicentry_t *includelogiclist = NULL;
 <pp_macscan>\"		new_string(); add_string(pptext, ppleng); yy_push_state(pp_dqs);
 <pp_macscan>\'		new_string(); add_string(pptext, ppleng); yy_push_state(pp_sqs);
 <pp_macscan>"/*"	yy_push_state(pp_comment); add_text_to_macro(" ", 1);
-<pp_macscan>\n		line_number++; char_number = 1; add_text_to_macro(pptext, ppleng);
+<pp_macscan>\n		pp_status.line_number++; pp_status.char_number = 1; add_text_to_macro(pptext, ppleng);
 <pp_macscan>([^/(),\\\n"']+)|(\/[^/*(),\\\n'"]*)|(\\\r?)|(.)	add_text_to_macro(pptext, ppleng);
 <pp_macscan>\\\r?\n	newline(0);
 
@@ -542,8 +530,8 @@ includelogicentry_t *includelogiclist = NULL;
 	/*
 	 * Single, double and <> quoted constants
 	 */
-<INITIAL,pp_macexp>\"		seen_junk++; new_string(); add_string(pptext, ppleng); yy_push_state(pp_dqs);
-<INITIAL,pp_macexp>\'		seen_junk++; new_string(); add_string(pptext, ppleng); yy_push_state(pp_sqs);
+<INITIAL,pp_macexp>\"		pp_incl_state.seen_junk++; new_string(); add_string(pptext, ppleng); yy_push_state(pp_dqs);
+<INITIAL,pp_macexp>\'		pp_incl_state.seen_junk++; new_string(); add_string(pptext, ppleng); yy_push_state(pp_sqs);
 <pp_dqs>[^"\\\n]+		add_string(pptext, ppleng);
 <pp_dqs>\"			{
 		add_string(pptext, ppleng);
@@ -621,7 +609,7 @@ includelogicentry_t *includelogiclist = NULL;
 	 */
 <INITIAL,pp_if,pp_inc,pp_macexp>{cident}	{
 		pp_entry_t *ppp;
-		seen_junk++;
+		pp_incl_state.seen_junk++;
 		if(!(ppp = pplookup(pptext)))
 		{
 			if(yy_current_state() == pp_inc)
@@ -629,7 +617,7 @@ includelogicentry_t *includelogiclist = NULL;
 
 			if(yy_current_state() == pp_if)
 			{
-				pplval.cptr = xstrdup(pptext);
+				pplval.cptr = pp_xstrdup(pptext);
 				return tIDENT;
 			}
 			else {
@@ -655,7 +643,7 @@ includelogicentry_t *includelogiclist = NULL;
 				push_macro(ppp);
 				break;
 			default:
-				internal_error(__FILE__, __LINE__, "Invalid define type %d\n", ppp->type);
+				pp_internal_error(__FILE__, __LINE__, "Invalid define type %d\n", ppp->type);
 			}
 		}
 	}
@@ -664,11 +652,11 @@ includelogicentry_t *includelogiclist = NULL;
 	 * Everything else that needs to be passed and
 	 * newline and continuation handling
 	 */
-<INITIAL,pp_macexp>[^a-zA-Z_#'"/\\\n \r\t\f\v]+|(\/|\\)[^a-zA-Z_/*'"\\\n \r\t\v\f]*	seen_junk++; put_buffer(pptext, ppleng);
+<INITIAL,pp_macexp>[^a-zA-Z_#'"/\\\n \r\t\f\v]+|(\/|\\)[^a-zA-Z_/*'"\\\n \r\t\v\f]*	pp_incl_state.seen_junk++; put_buffer(pptext, ppleng);
 <INITIAL,pp_macexp>{ws}+	put_buffer(pptext, ppleng);
 <INITIAL>\n			newline(1);
 <INITIAL>\\\r?\n		newline(0);
-<INITIAL>\\\r?			seen_junk++; put_buffer(pptext, ppleng);
+<INITIAL>\\\r?			pp_incl_state.seen_junk++; put_buffer(pptext, ppleng);
 
 	/*
 	 * Special catcher for macro argmument expansion to prevent
@@ -677,7 +665,7 @@ includelogicentry_t *includelogiclist = NULL;
 <pp_macexp>(\n)|(.)|(\\\r?(\n|.))	put_buffer(pptext, ppleng);
 
 <RCINCL>[A-Za-z0-9_\.\\/]+ {
-		pplval.cptr=xstrdup(pptext);
+		pplval.cptr=pp_xstrdup(pptext);
         	yy_pop_state();
 		return tRCINCLUDEPATH;
 	}
@@ -692,13 +680,13 @@ includelogicentry_t *includelogiclist = NULL;
 	 * This is a 'catch-all' rule to discover errors in the scanner
 	 * in an orderly manner.
 	 */
-<*>.		seen_junk++; ppwarning("Unmatched text '%c' (0x%02x); please report\n", isprint(*pptext & 0xff) ? *pptext : ' ', *pptext);
+<*>.		pp_incl_state.seen_junk++; ppwarning("Unmatched text '%c' (0x%02x); please report\n", isprint(*pptext & 0xff) ? *pptext : ' ', *pptext);
 
 <<EOF>>	{
 		YY_BUFFER_STATE b = YY_CURRENT_BUFFER;
 		bufferstackentry_t *bep = pop_buffer();
 
-		if((!bep && get_if_depth()) || (bep && get_if_depth() != bep->if_depth))
+		if((!bep && pp_get_if_depth()) || (bep && pp_get_if_depth() != bep->if_depth))
 			ppwarning("Unmatched #if/#endif at end of file");
 
 		if(!bep)
@@ -742,8 +730,8 @@ int ppwrap(void)
  */
 static void newline(int dowrite)
 {
-	line_number++;
-	char_number = 1;
+	pp_status.line_number++;
+	pp_status.char_number = 1;
 
 	if(dowrite == -1)
 		return;
@@ -819,7 +807,7 @@ static int make_number(int radix, YYSTYPE *val, char *str, int len)
 	}
 
 	if(is_ll)
-		internal_error(__FILE__, __LINE__, "long long constants not implemented yet");
+		pp_internal_error(__FILE__, __LINE__, "long long constants not implemented yet");
 
 	if(is_u && is_l)
 	{
@@ -834,24 +822,11 @@ static int make_number(int radix, YYSTYPE *val, char *str, int len)
 	else if(is_u && !is_l)
 	{
 		val->uint = (unsigned int)strtoul(str, NULL, radix);
-		if(!win32 && val->uint > 65535)
-		{
-			pperror("Constant overflow");
-		}
 		return tUINT;
 	}
 
 	/* Else it must be an int... */
 	val->sint = (int)strtol(str, NULL, radix);
-	if(!win32 && (val->sint < -32768 || val->sint > 32768))
-	{
-		/*
-		 * Note: test must be > 32768 because unary minus
-		 * is handled as an expression! This can result in
-		 * failure and must be checked in the parser.
-		 */
-		pperror("Constant overflow");
-	}
 	return tSINT;
 }
 
@@ -873,35 +848,23 @@ static void expand_special(pp_entry_t *ppp)
 	if(!strcmp(ppp->ident, "__LINE__"))
 	{
 		dbgtext = "def_special(__LINE__)";
-		buf = xrealloc(buf, 32);
-		sprintf(buf, "%d", line_number);
+		buf = pp_xrealloc(buf, 32);
+		sprintf(buf, "%d", pp_status.line_number);
 	}
 	else if(!strcmp(ppp->ident, "__FILE__"))
 	{
 		dbgtext = "def_special(__FILE__)";
-		buf = xrealloc(buf, strlen(input_name) + 3);
-		sprintf(buf, "\"%s\"", input_name);
-	}
-	else if(!strcmp(ppp->ident, "__DATE__"))
-	{
-		dbgtext = "def_special(__DATE__)";
-		buf = xrealloc(buf, 32);
-		strftime(buf, 32, "\"%b %d %Y\"", localtime(&now));
-	}
-	else if(!strcmp(ppp->ident, "__TIME__"))
-	{
-		dbgtext = "def_special(__TIME__)";
-		buf = xrealloc(buf, 32);
-		strftime(buf, 32, "\"%H:%M:%S\"", localtime(&now));
+		buf = pp_xrealloc(buf, strlen(pp_status.input) + 3);
+		sprintf(buf, "\"%s\"", pp_status.input);
 	}
 	else
-		internal_error(__FILE__, __LINE__, "Special macro '%s' not found...\n", ppp->ident);
+		pp_internal_error(__FILE__, __LINE__, "Special macro '%s' not found...\n", ppp->ident);
 
-	if(debuglevel & DEBUGLEVEL_PPLEX)
+	if(pp_flex_debug)
 		fprintf(stderr, "expand_special(%d): %s:%d: '%s' -> '%s'\n",
 			macexpstackidx,
-			input_name,
-			line_number,
+			pp_status.input,
+			pp_status.line_number,
 			ppp->ident,
 			buf ? buf : "");
 
@@ -916,11 +879,11 @@ static void expand_define(pp_entry_t *ppp)
 {
 	assert(ppp->type == def_define);
 
-	if(debuglevel & DEBUGLEVEL_PPLEX)
+	if(pp_flex_debug)
 		fprintf(stderr, "expand_define(%d): %s:%d: '%s' -> '%s'\n",
 			macexpstackidx,
-			input_name,
-			line_number,
+			pp_status.input,
+			pp_status.line_number,
 			ppp->ident,
 			ppp->subst.text);
 	if(ppp->subst.text && ppp->subst.text[0])
@@ -941,7 +904,7 @@ static void add_text(char *str, int len)
 	if(curdef_idx >= curdef_alloc || curdef_alloc - curdef_idx < len)
 	{
 		curdef_alloc += (len + ALLOCBLOCKSIZE-1) & ~(ALLOCBLOCKSIZE-1);
-		curdef_text = xrealloc(curdef_text, curdef_alloc * sizeof(curdef_text[0]));
+		curdef_text = pp_xrealloc(curdef_text, curdef_alloc * sizeof(curdef_text[0]));
 		if(curdef_alloc > 65536)
 			ppwarning("Reallocating macro-expansion buffer larger than 64kB");
 	}
@@ -962,13 +925,13 @@ static mtext_t *add_expand_text(mtext_t *mtp, macexpstackentry_t *mep, int *nnl)
 	switch(mtp->type)
 	{
 	case exp_text:
-		if(debuglevel & DEBUGLEVEL_PPLEX)
+		if(pp_flex_debug)
 			fprintf(stderr, "add_expand_text: exp_text: '%s'\n", mtp->subst.text);
 		add_text(mtp->subst.text, strlen(mtp->subst.text));
 		break;
 
 	case exp_stringize:
-		if(debuglevel & DEBUGLEVEL_PPLEX)
+		if(pp_flex_debug)
 			fprintf(stderr, "add_expand_text: exp_stringize(%d): '%s'\n",
 				mtp->subst.argidx,
 				mep->args[mtp->subst.argidx]);
@@ -985,7 +948,7 @@ static mtext_t *add_expand_text(mtext_t *mtp, macexpstackentry_t *mep, int *nnl)
 		break;
 
 	case exp_concat:
-		if(debuglevel & DEBUGLEVEL_PPLEX)
+		if(pp_flex_debug)
 			fprintf(stderr, "add_expand_text: exp_concat\n");
 		/* Remove trailing whitespace from current expansion text */
 		while(curdef_idx)
@@ -1036,12 +999,12 @@ static mtext_t *add_expand_text(mtext_t *mtp, macexpstackentry_t *mep, int *nnl)
 			}
 			mep->nnls[mtp->subst.argidx] = 0;
 		}
-		if(debuglevel & DEBUGLEVEL_PPLEX)
+		if(pp_flex_debug)
 			fprintf(stderr, "add_expand_text: exp_subst(%d): '%s'\n", mtp->subst.argidx, exp);
 		break;
 
 	default:
-		internal_error(__FILE__, __LINE__, "Invalid expansion type (%d) in macro expansion\n", mtp->type);
+		pp_internal_error(__FILE__, __LINE__, "Invalid expansion type (%d) in macro expansion\n", mtp->type);
 	}
 	return mtp;
 }
@@ -1064,11 +1027,11 @@ static void expand_macro(macexpstackentry_t *mep)
 	for(n = 0; n < nargs; n++)
 		nnl += mep->nnls[n];
 
-	if(debuglevel & DEBUGLEVEL_PPLEX)
+	if(pp_flex_debug)
 		fprintf(stderr, "expand_macro(%d): %s:%d: '%s'(%d,%d) -> ...\n",
 			macexpstackidx,
-			input_name,
-			line_number,
+			pp_status.input,
+			pp_status.line_number,
 			ppp->ident,
 			mep->nargs,
 			nnl);
@@ -1111,7 +1074,7 @@ static void expand_macro(macexpstackentry_t *mep)
 
 	if(k - n > 0)
 	{
-		if(debuglevel & DEBUGLEVEL_PPLEX)
+		if(pp_flex_debug)
 			fprintf(stderr, "expand_text: '%s'\n", curdef_text + n);
 		push_buffer(ppp, NULL, NULL, 0);
 		/*yy_scan_bytes(curdef_text + n, k - n);*/
@@ -1131,7 +1094,7 @@ static void new_string(void)
 		ppwarning("new_string: strbuf_idx != 0");
 #endif
 	strbuf_idx = 0;
-	str_startline = line_number;
+	str_startline = pp_status.line_number;
 }
 
 static void add_string(char *str, int len)
@@ -1141,7 +1104,7 @@ static void add_string(char *str, int len)
 	if(strbuf_idx >= strbuf_alloc || strbuf_alloc - strbuf_idx < len)
 	{
 		strbuf_alloc += (len + ALLOCBLOCKSIZE-1) & ~(ALLOCBLOCKSIZE-1);
-		strbuffer = xrealloc(strbuffer, strbuf_alloc * sizeof(strbuffer[0]));
+		strbuffer = pp_xrealloc(strbuffer, strbuf_alloc * sizeof(strbuffer[0]));
 		if(strbuf_alloc > 65536)
 			ppwarning("Reallocating string buffer larger than 64kB");
 	}
@@ -1151,7 +1114,7 @@ static void add_string(char *str, int len)
 
 static char *get_string(void)
 {
-	char *str = (char *)xmalloc(strbuf_idx + 1);
+	char *str = pp_xmalloc(strbuf_idx + 1);
 	memcpy(str, strbuffer, strbuf_idx);
 	str[strbuf_idx] = '\0';
 #ifdef DEBUG
@@ -1184,22 +1147,19 @@ static void push_buffer(pp_entry_t *ppp, char *filename, char *incname, int pop)
 	if(ppdebug)
 		printf("push_buffer(%d): %p %p %p %d\n", bufferstackidx, ppp, filename, incname, pop);
 	if(bufferstackidx >= MAXBUFFERSTACK)
-		internal_error(__FILE__, __LINE__, "Buffer stack overflow");
+		pp_internal_error(__FILE__, __LINE__, "Buffer stack overflow");
 
 	memset(&bufferstack[bufferstackidx], 0, sizeof(bufferstack[0]));
 	bufferstack[bufferstackidx].bufferstate	= YY_CURRENT_BUFFER;
 	bufferstack[bufferstackidx].define	= ppp;
-	bufferstack[bufferstackidx].line_number	= line_number;
-	bufferstack[bufferstackidx].char_number	= char_number;
-	bufferstack[bufferstackidx].if_depth	= get_if_depth();
+	bufferstack[bufferstackidx].line_number	= pp_status.line_number;
+	bufferstack[bufferstackidx].char_number	= pp_status.char_number;
+	bufferstack[bufferstackidx].if_depth	= pp_get_if_depth();
 	bufferstack[bufferstackidx].should_pop	= pop;
-	bufferstack[bufferstackidx].filename	= input_name;
+	bufferstack[bufferstackidx].filename	= pp_status.input;
 	bufferstack[bufferstackidx].ncontinuations	= ncontinuations;
-	bufferstack[bufferstackidx].include_state	= include_state;
-	bufferstack[bufferstackidx].include_ppp		= include_ppp;
+	bufferstack[bufferstackidx].incl		= pp_incl_state;
 	bufferstack[bufferstackidx].include_filename	= incname;
-	bufferstack[bufferstackidx].include_ifdepth	= include_ifdepth;
-	bufferstack[bufferstackidx].seen_junk		= seen_junk;
 	bufferstack[bufferstackidx].pass_data		= pass_data;
 
 	if(ppp)
@@ -1207,20 +1167,20 @@ static void push_buffer(pp_entry_t *ppp, char *filename, char *incname, int pop)
 	else if(filename)
 	{
 		/* These will track the pperror to the correct file and line */
-		line_number = 1;
-		char_number = 1;
-		input_name  = filename;
+		pp_status.line_number = 1;
+		pp_status.char_number = 1;
+		pp_status.input  = filename;
 		ncontinuations = 0;
 	}
 	else if(!pop)
-		internal_error(__FILE__, __LINE__, "Pushing buffer without knowing where to go to");
+		pp_internal_error(__FILE__, __LINE__, "Pushing buffer without knowing where to go to");
 	bufferstackidx++;
 }
 
 static bufferstackentry_t *pop_buffer(void)
 {
 	if(bufferstackidx < 0)
-		internal_error(__FILE__, __LINE__, "Bufferstack underflow?");
+		pp_internal_error(__FILE__, __LINE__, "Bufferstack underflow?");
 
 	if(bufferstackidx == 0)
 		return NULL;
@@ -1231,41 +1191,39 @@ static bufferstackentry_t *pop_buffer(void)
 		bufferstack[bufferstackidx].define->expanding = 0;
 	else
 	{
-		line_number = bufferstack[bufferstackidx].line_number;
-		char_number = bufferstack[bufferstackidx].char_number;
-		input_name  = bufferstack[bufferstackidx].filename;
+		pp_status.line_number = bufferstack[bufferstackidx].line_number;
+		pp_status.char_number = bufferstack[bufferstackidx].char_number;
+		pp_status.input  = bufferstack[bufferstackidx].filename;
 		ncontinuations = bufferstack[bufferstackidx].ncontinuations;
 		if(!bufferstack[bufferstackidx].should_pop)
 		{
 			fclose(ppin);
-			fprintf(ppout, "# %d \"%s\" 2\n", line_number, input_name);
+			fprintf(ppout, "# %d \"%s\" 2\n", pp_status.line_number, pp_status.input);
 
 			/* We have EOF, check the include logic */
-			if(include_state == 2 && !seen_junk && include_ppp)
+			if(pp_incl_state.state == 2 && !pp_incl_state.seen_junk && pp_incl_state.ppp)
 			{
-				pp_entry_t *ppp = pplookup(include_ppp);
+				pp_entry_t *ppp = pplookup(pp_incl_state.ppp);
 				if(ppp)
 				{
-					includelogicentry_t *iep = xmalloc(sizeof(includelogicentry_t));
+					includelogicentry_t *iep = pp_xmalloc(sizeof(includelogicentry_t));
 					iep->ppp = ppp;
 					ppp->iep = iep;
 					iep->filename = bufferstack[bufferstackidx].include_filename;
-					iep->next = includelogiclist;
+                                        iep->prev = NULL;
+					iep->next = pp_includelogiclist;
 					if(iep->next)
 						iep->next->prev = iep;
-					includelogiclist = iep;
-					if(debuglevel & DEBUGLEVEL_PPMSG)
-						fprintf(stderr, "pop_buffer: %s:%d: includelogic added, include_ppp='%s', file='%s'\n", input_name, line_number, include_ppp, iep->filename);
+					pp_includelogiclist = iep;
+					if(pp_status.debug)
+						fprintf(stderr, "pop_buffer: %s:%d: includelogic added, include_ppp='%s', file='%s'\n", pp_status.input, pp_status.line_number, pp_incl_state.ppp, iep->filename);
 				}
 				else if(bufferstack[bufferstackidx].include_filename)
 					free(bufferstack[bufferstackidx].include_filename);
 			}
-			if(include_ppp)
-				free(include_ppp);
-			include_state	= bufferstack[bufferstackidx].include_state;
-			include_ppp	= bufferstack[bufferstackidx].include_ppp;
-			include_ifdepth	= bufferstack[bufferstackidx].include_ifdepth;
-			seen_junk	= bufferstack[bufferstackidx].seen_junk;
+			if(pp_incl_state.ppp)
+				free(pp_incl_state.ppp);
+			pp_incl_state	= bufferstack[bufferstackidx].incl;
 			pass_data	= bufferstack[bufferstackidx].pass_data;
 
 		}
@@ -1289,7 +1247,7 @@ static bufferstackentry_t *pop_buffer(void)
 		if(yy_current_state() == pp_macexp)
 			macro_add_expansion();
 		else
-			internal_error(__FILE__, __LINE__, "Pop buffer and state without macro expansion state");
+			pp_internal_error(__FILE__, __LINE__, "Pop buffer and state without macro expansion state");
 		yy_pop_state();
 	}
 
@@ -1307,8 +1265,8 @@ static void push_macro(pp_entry_t *ppp)
 	if(macexpstackidx >= MAXMACEXPSTACK)
 		pperror("Too many nested macros");
 
-	macexpstack[macexpstackidx] = xmalloc(sizeof(macexpstack[0][0]));
-
+	macexpstack[macexpstackidx] = pp_xmalloc(sizeof(macexpstack[0][0]));
+        memset( macexpstack[macexpstackidx], 0, sizeof(macexpstack[0][0]));
 	macexpstack[macexpstackidx]->ppp = ppp;
 	macexpstackidx++;
 }
@@ -1321,7 +1279,7 @@ static macexpstackentry_t *top_macro(void)
 static macexpstackentry_t *pop_macro(void)
 {
 	if(macexpstackidx <= 0)
-		internal_error(__FILE__, __LINE__, "Macro expansion stack underflow\n");
+		pp_internal_error(__FILE__, __LINE__, "Macro expansion stack underflow\n");
 	return macexpstack[--macexpstackidx];
 }
 
@@ -1348,8 +1306,8 @@ static void add_text_to_macro(char *text, int len)
 
 	if(mep->curargalloc - mep->curargsize <= len+1)	/* +1 for '\0' */
 	{
-		mep->curargalloc += max(ALLOCBLOCKSIZE, len+1);
-		mep->curarg = xrealloc(mep->curarg, mep->curargalloc * sizeof(mep->curarg[0]));
+		mep->curargalloc += (ALLOCBLOCKSIZE > len+1) ? ALLOCBLOCKSIZE : len+1;
+		mep->curarg = pp_xrealloc(mep->curarg, mep->curargalloc * sizeof(mep->curarg[0]));
 	}
 	memcpy(mep->curarg + mep->curargsize, text, len);
 	mep->curargsize += len;
@@ -1364,10 +1322,10 @@ static void macro_add_arg(int last)
 
 	assert(mep->ppp->expanding == 0);
 
-	mep->args = xrealloc(mep->args, (mep->nargs+1) * sizeof(mep->args[0]));
-	mep->ppargs = xrealloc(mep->ppargs, (mep->nargs+1) * sizeof(mep->ppargs[0]));
-	mep->nnls = xrealloc(mep->nnls, (mep->nargs+1) * sizeof(mep->nnls[0]));
-	mep->args[mep->nargs] = xstrdup(mep->curarg ? mep->curarg : "");
+	mep->args = pp_xrealloc(mep->args, (mep->nargs+1) * sizeof(mep->args[0]));
+	mep->ppargs = pp_xrealloc(mep->ppargs, (mep->nargs+1) * sizeof(mep->ppargs[0]));
+	mep->nnls = pp_xrealloc(mep->nnls, (mep->nargs+1) * sizeof(mep->nnls[0]));
+	mep->args[mep->nargs] = pp_xstrdup(mep->curarg ? mep->curarg : "");
 	cptr = mep->args[mep->nargs]-1;
 	while((cptr = strchr(cptr+1, '\n')))
 	{
@@ -1379,10 +1337,10 @@ static void macro_add_arg(int last)
 	mep->curargalloc = mep->curargsize = 0;
 	mep->curarg = NULL;
 
-	if(debuglevel & DEBUGLEVEL_PPLEX)
+	if(pp_flex_debug)
 		fprintf(stderr, "macro_add_arg: %s:%d: %d -> '%s'\n",
-			input_name,
-			line_number,
+			pp_status.input,
+			pp_status.line_number,
 			mep->nargs-1,
 			mep->args[mep->nargs-1]);
 
@@ -1402,15 +1360,15 @@ static void macro_add_expansion(void)
 
 	assert(mep->ppp->expanding == 0);
 
-	mep->ppargs[mep->nargs-1] = xstrdup(mep->curarg ? mep->curarg : "");
+	mep->ppargs[mep->nargs-1] = pp_xstrdup(mep->curarg ? mep->curarg : "");
 	free(mep->curarg);
 	mep->curargalloc = mep->curargsize = 0;
 	mep->curarg = NULL;
 
-	if(debuglevel & DEBUGLEVEL_PPLEX)
+	if(pp_flex_debug)
 		fprintf(stderr, "macro_add_expansion: %s:%d: %d -> '%s'\n",
-			input_name,
-			line_number,
+			pp_status.input,
+			pp_status.line_number,
 			mep->nargs-1,
 			mep->ppargs[mep->nargs-1]);
 }
@@ -1437,7 +1395,7 @@ static void put_buffer(char *s, int len)
  * Include management
  *-------------------------------------------------------------------------
  */
-int is_c_h_include(char *fname)
+static int is_c_h_include(char *fname)
 {
 	int sl=strlen(fname);
 	if (sl < 2) return 0;
@@ -1446,13 +1404,13 @@ int is_c_h_include(char *fname)
 	return 1;
 }
 
-void do_include(char *fname, int type)
+void pp_do_include(char *fname, int type)
 {
 	char *newpath;
 	int n;
 	includelogicentry_t *iep;
 
-	for(iep = includelogiclist; iep; iep = iep->next)
+	for(iep = pp_includelogiclist; iep; iep = iep->next)
 	{
 		if(!strcmp(iep->filename, fname))
 		{
@@ -1473,19 +1431,20 @@ void do_include(char *fname, int type)
 	/* Undo the effect of the quotation */
 	fname[n-1] = '\0';
 
-	if((ppin = open_include(fname+1, type, &newpath)) == NULL)
+	if((ppin = pp_open_include(fname+1, type, &newpath)) == NULL)
 		pperror("Unable to open include file %s", fname+1);
 
 	fname[n-1] = *fname;	/* Redo the quotes */
 	push_buffer(NULL, newpath, fname, 0);
-	seen_junk = 0;
-	include_state = 0;
-	include_ppp = NULL;
+	pp_incl_state.seen_junk = 0;
+	pp_incl_state.state = 0;
+	pp_incl_state.ppp = NULL;
 	if (is_c_h_include(newpath)) pass_data=0;
 	else pass_data=1;
 
-	if(debuglevel & DEBUGLEVEL_PPMSG)
-		fprintf(stderr, "do_include: %s:%d: include_state=%d, include_ppp='%s', include_ifdepth=%d ,pass_data=%d\n", input_name, line_number, include_state, include_ppp, include_ifdepth,pass_data);
+	if(pp_status.debug)
+		fprintf(stderr, "pp_do_include: %s:%d: include_state=%d, include_ppp='%s', include_ifdepth=%d ,pass_data=%d\n",
+                        pp_status.input, pp_status.line_number, pp_incl_state.state, pp_incl_state.ppp, pp_incl_state.ifdepth, pass_data);
 	pp_switch_to_buffer(pp_create_buffer(ppin, YY_BUF_SIZE));
 
 	fprintf(ppout, "# 1 \"%s\" 1%s\n", newpath, type ? "" : " 3");
@@ -1497,12 +1456,12 @@ void do_include(char *fname, int type)
  * which are false.
  *-------------------------------------------------------------------------
  */
-void push_ignore_state(void)
+void pp_push_ignore_state(void)
 {
 	yy_push_state(pp_ignore);
 }
 
-void pop_ignore_state(void)
+void pp_pop_ignore_state(void)
 {
 	yy_pop_state();
 }

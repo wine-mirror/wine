@@ -33,7 +33,6 @@
 #include "wrc.h"
 #include "utils.h"
 #include "parser.h"
-#include "preproc.h"
 
 /* #define WANT_NEAR_INDICATION */
 
@@ -89,26 +88,6 @@ int yywarning(const char *s, ...)
 	va_end(ap);
 	return 0;
 }
-
-int pperror(const char *s, ...)
-{
-	va_list ap;
-	va_start(ap, s);
-	generic_msg(s, "Error", pptext, ap);
-	va_end(ap);
-	exit(1);
-	return 1;
-}
-
-int ppwarning(const char *s, ...)
-{
-	va_list ap;
-	va_start(ap, s);
-	generic_msg(s, "Warning", pptext, ap);
-	va_end(ap);
-	return 0;
-}
-
 
 void internal_error(const char *file, int line, const char *s, ...)
 {
