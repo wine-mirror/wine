@@ -18,6 +18,9 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+#define NONAMELESSUNION
+#define NONAMELESSSTRUCT
+#define COBJMACROS
 #define COM_NO_WINDOWS_H
 #include <stdarg.h>
 #include <string.h>
@@ -30,6 +33,7 @@
 
 #include "ole2.h"
 #include "uuids.h"
+#include "strmif.h"
 
 #include "wine/debug.h"
 
@@ -88,8 +92,33 @@ struct regsvr_mediatype_extension
     LPCSTR extension;
 };
 
+struct mediatype
+{
+    CLSID const *majortype;	/* NULL for end of list */
+    CLSID const *subtype;
+    DWORD fourcc;
+};
+
+struct pin
+{
+    DWORD flags;		/* 0xFFFFFFFF for end of list */
+    struct mediatype mediatypes[11];
+};
+
+struct regsvr_filter
+{
+    CLSID const *clsid;		/* NULL for end of list */
+    CLSID const *category;
+    WCHAR name[50];
+    DWORD merit;
+    struct pin pins[11];
+};
+
 static HRESULT register_mediatypes_extension(struct regsvr_mediatype_extension const *list);
 static HRESULT unregister_mediatypes_extension(struct regsvr_mediatype_extension const *list);
+
+static HRESULT register_filters(struct regsvr_filter const *list);
+static HRESULT unregister_filters(struct regsvr_filter const *list);
 
 /***********************************************************************
  *		static string constants
@@ -540,6 +569,104 @@ static HRESULT unregister_mediatypes_extension(struct regsvr_mediatype_extension
 }
 
 /***********************************************************************
+ *		register_filters
+ */
+static HRESULT register_filters(struct regsvr_filter const *list)
+{
+    HRESULT hr;
+    IFilterMapper2* pFM2 = NULL;
+
+    CoInitialize(NULL);
+    
+    hr = CoCreateInstance(&CLSID_FilterMapper2, NULL, CLSCTX_INPROC_SERVER, &IID_IFilterMapper2, (LPVOID*)&pFM2);
+
+    if (SUCCEEDED(hr)) {
+	for (; SUCCEEDED(hr) && list->clsid; ++list) {
+	    REGFILTER2 rf2;
+	    REGFILTERPINS2* prfp2;
+	    int i;
+	    for (i = 0; list->pins[i].flags != 0xFFFFFFFF; i++) ;
+	    rf2.dwVersion = 2;
+	    rf2.dwMerit = list->merit;
+	    rf2.u.s1.cPins2 = i;
+	    rf2.u.s1.rgPins2 = prfp2 = (REGFILTERPINS2*) CoTaskMemAlloc(i*sizeof(REGFILTERPINS2));
+	    if (!prfp2) {
+		hr = E_OUTOFMEMORY;
+		break;
+	    }
+	    for (i = 0; list->pins[i].flags != 0xFFFFFFFF; i++) {
+		REGPINTYPES* lpMediatype;
+		CLSID* lpClsid;
+		int j, nbmt;
+		for (nbmt = 0; list->pins[i].mediatypes[nbmt].majortype; nbmt++) ;
+		/* Allocate a single buffer for regpintypes struct and clsids */
+		lpMediatype = (REGPINTYPES*) CoTaskMemAlloc(nbmt*(sizeof(REGPINTYPES) + 2*sizeof(CLSID)));
+		if (!lpMediatype) {
+		    hr = E_OUTOFMEMORY;
+		    break;
+		}
+		lpClsid = (CLSID*) (lpMediatype + nbmt);
+		for (j = 0; j < nbmt; j++) {
+		    (lpMediatype + j)->clsMajorType = lpClsid + j*2;
+		    memcpy(lpClsid + j*2, list->pins[i].mediatypes[j].majortype, sizeof(CLSID));
+		    (lpMediatype + j)->clsMinorType = lpClsid + j*2 + 1;
+		    if (list->pins[i].mediatypes[j].subtype)
+			memcpy(lpClsid + j*2 + 1, list->pins[i].mediatypes[j].subtype, sizeof(CLSID));
+		    else {
+			/* Subtype are often a combination of major type + fourcc/tag */
+			memcpy(lpClsid + j*2 + 1, list->pins[i].mediatypes[j].majortype, sizeof(CLSID));
+			*(DWORD*)(lpClsid + j*2 + 1) = list->pins[i].mediatypes[j].fourcc;
+		    }
+		}
+		prfp2[i].dwFlags = list->pins[i].flags;
+		prfp2[i].cInstances = 0;
+		prfp2[i].nMediaTypes = j;
+		prfp2[i].lpMediaType = lpMediatype;
+		prfp2[i].nMediums = 0;
+		prfp2[i].lpMedium = NULL;
+		prfp2[i].clsPinCategory = NULL;
+	    }
+
+	    hr = IFilterMapper2_RegisterFilter(pFM2, list->clsid, list->name, NULL, list->category, NULL, &rf2);
+
+	    while (i--)
+		CoTaskMemFree((REGPINTYPES*)prfp2[i-1].lpMediaType);
+	    CoTaskMemFree(prfp2);
+	}
+    }
+
+    if (pFM2)
+	IFilterMapper2_Release(pFM2);
+
+    CoUninitialize();
+
+    return hr;
+}
+
+/***********************************************************************
+ *		unregister_filters
+ */
+static HRESULT unregister_filters(struct regsvr_filter const *list)
+{
+    HRESULT hr;
+    IFilterMapper2* pFM2;
+
+    CoInitialize(NULL);
+    
+    hr = CoCreateInstance(&CLSID_FilterMapper2, NULL, CLSCTX_INPROC_SERVER, &IID_IFilterMapper2, (LPVOID*)&pFM2);
+
+    if (SUCCEEDED(hr)) {
+	for (; SUCCEEDED(hr) && list->clsid; ++list)
+	    hr = IFilterMapper2_UnregisterFilter(pFM2, list->category, NULL, list->clsid);
+	IFilterMapper2_Release(pFM2);
+    }
+
+    CoUninitialize();
+    
+    return hr;
+}
+
+/***********************************************************************
  *		regsvr_key_guid
  */
 static LONG register_key_guid(HKEY base, WCHAR const *name, GUID const *guid)
@@ -860,6 +987,72 @@ static struct regsvr_mediatype_extension const mediatype_extension_list[] = {
 };
 
 /***********************************************************************
+ *		filter list
+ */
+
+static struct regsvr_filter const filter_list[] = {
+    {   &CLSID_AviSplitter,
+	&CLSID_LegacyAmFilterCategory,
+	{'A','V','I',' ','S','p','l','i','t','t','e','r',0},
+	0x600000,
+	{   {   0,
+		{   { &MEDIATYPE_Stream, &MEDIASUBTYPE_Avi },
+		    { NULL }
+		},
+	    },
+	    {   REG_PINFLAG_B_OUTPUT,
+		{   { &MEDIATYPE_Video, &GUID_NULL },
+		    { NULL }
+		},
+	    },
+	    { 0xFFFFFFFF },
+	}
+    },
+    {   &CLSID_VideoRenderer,
+	&CLSID_LegacyAmFilterCategory,
+	{'V','i','d','e','o',' ','R','e','n','d','e','r','e','r',0},
+	0x800000,
+	{   {   REG_PINFLAG_B_RENDERER,
+		{   { &MEDIATYPE_Video, &GUID_NULL },
+		    { NULL }
+		},
+	    },
+	    { 0xFFFFFFFF },
+	}
+    },
+    {   &CLSID_AVIDec,
+	&CLSID_LegacyAmFilterCategory,
+	{'A','V','I',' ','D','e','c','o','m','p','r','e','s','s','o','r',0},
+	0x600000,
+	{   {   0,
+		{   { &MEDIATYPE_Video, &GUID_NULL },
+		    { NULL }
+		},
+	    },
+	    {   REG_PINFLAG_B_OUTPUT,
+		{   { &MEDIATYPE_Video, &GUID_NULL },
+		    { NULL }
+		},
+	    },
+	    { 0xFFFFFFFF },
+	}
+    },
+    {   &CLSID_AsyncReader,
+	&CLSID_LegacyAmFilterCategory,
+	{'F','i','l','e',' ','S','o','u','r','c','e',' ','(','A','s','y','n','c','.',')',0},
+	0x400000,
+	{   {   REG_PINFLAG_B_OUTPUT,
+		{   { &MEDIATYPE_Stream, &GUID_NULL },
+		    { NULL }
+		},
+	    },
+	    { 0xFFFFFFFF },
+	}
+    },
+    { NULL }		/* list terminator */
+};
+
+/***********************************************************************
  *		DllRegisterServer (QUARTZ.@)
  */
 HRESULT WINAPI QUARTZ_DllRegisterServer(void)
@@ -875,6 +1068,8 @@ HRESULT WINAPI QUARTZ_DllRegisterServer(void)
         hr = register_mediatypes_parsing(mediatype_parsing_list);
     if (SUCCEEDED(hr))
         hr = register_mediatypes_extension(mediatype_extension_list);
+    if (SUCCEEDED(hr))
+        hr = register_filters(filter_list);
     return hr;
 }
 
@@ -887,7 +1082,9 @@ HRESULT WINAPI QUARTZ_DllUnregisterServer(void)
 
     TRACE("\n");
 
-    hr = unregister_coclasses(coclass_list);
+    hr = unregister_filters(filter_list);
+    if (SUCCEEDED(hr))
+	hr = unregister_coclasses(coclass_list);
     if (SUCCEEDED(hr))
 	hr = unregister_interfaces(interface_list);
     if (SUCCEEDED(hr))
