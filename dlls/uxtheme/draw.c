@@ -72,6 +72,9 @@ HRESULT WINAPI DrawThemeParentBackground(HWND hwnd, HDC hdc, RECT *prc)
     RECT rt;
     POINT org;
     HWND hParent;
+    HRGN clip = NULL;
+    int hasClip = -1;
+    
     TRACE("(%p,%p,%p)\n", hwnd, hdc, prc);
     hParent = GetParent(hwnd);
     if(!hParent)
@@ -79,6 +82,13 @@ HRESULT WINAPI DrawThemeParentBackground(HWND hwnd, HDC hdc, RECT *prc)
     if(prc) {
         CopyRect(&rt, prc);
         MapWindowPoints(hwnd, NULL, (LPPOINT)&rt, 2);
+        
+        clip = CreateRectRgn(0,0,1,1);
+        hasClip = GetClipRgn(hdc, clip);
+        if(hasClip == -1)
+            TRACE("Failed to get original clipping region\n");
+        else
+            IntersectClipRect(hdc, prc->left, prc->top, prc->right, prc->bottom);
     }
     else {
         GetClientRect(hParent, &rt);
@@ -91,6 +101,13 @@ HRESULT WINAPI DrawThemeParentBackground(HWND hwnd, HDC hdc, RECT *prc)
     SendMessageW(hParent, WM_PRINTCLIENT, (WPARAM)hdc, PRF_CLIENT);
 
     SetViewportOrgEx(hdc, org.x, org.y, NULL);
+    if(prc) {
+        if(hasClip == 0)
+            SelectClipRgn(hdc, NULL);
+        else if(hasClip == 1)
+            SelectClipRgn(hdc, clip);
+        DeleteObject(clip);
+    }
     return S_OK;
 }
 
