@@ -273,13 +273,16 @@ HRESULT  WINAPI  IDirect3D8Impl_CheckDeviceFormat          (LPDIRECT3D8 iface,
     FIXME("(%p)->(Adptr:%d, DevType: %x, AdptFmt: %d, Use: %ld, ResTyp: %x, CheckFmt: %d)\n", This, Adapter, DeviceType,
           AdapterFormat, Usage, RType, CheckFormat);
     switch(CheckFormat) {
-	case D3DFMT_UYVY:
-	case D3DFMT_YUY2:
-	case D3DFMT_DXT1:
-	case D3DFMT_DXT2:
-	case D3DFMT_DXT3:
-	case D3DFMT_DXT4:
-	case D3DFMT_DXT5:
+    case D3DFMT_UYVY:
+    case D3DFMT_YUY2:
+    case D3DFMT_DXT1:
+    case D3DFMT_DXT2:
+    case D3DFMT_DXT3:
+    case D3DFMT_DXT4:
+    case D3DFMT_DXT5:
+    case D3DFMT_X8L8V8U8:
+    case D3DFMT_L6V5U5:
+    case D3DFMT_V8U8:
 	   /* Since we do not support these formats right now, don't pretend to. */
 	   return D3DERR_NOTAVAILABLE;
 	default:
@@ -478,11 +481,7 @@ HRESULT  WINAPI  IDirect3D8Impl_CreateDevice               (LPDIRECT3D8 iface,
     *ppReturnedDeviceInterface = (LPDIRECT3DDEVICE8)object;
 
     /* Initialize settings */
-    memcpy(&object->PresentParms, pPresentationParameters, sizeof(D3DPRESENT_PARAMETERS));
-
     object->PresentParms.BackBufferCount = 1; /* Opengl only supports one? */
-    pPresentationParameters->BackBufferCount = 1;
-
     object->adapterNo = Adapter;
     object->devType = DeviceType;
 
@@ -574,6 +573,10 @@ HRESULT  WINAPI  IDirect3D8Impl_CreateDevice               (LPDIRECT3D8 iface,
            TRACE("Updating height to %d\n", pPresentationParameters->BackBufferHeight);
         }
     }
+
+    /* Save the presentation parms now filled in correctly */
+    memcpy(&object->PresentParms, pPresentationParameters, sizeof(D3DPRESENT_PARAMETERS));
+
 
     IDirect3DDevice8Impl_CreateRenderTarget((LPDIRECT3DDEVICE8) object,
                                             pPresentationParameters->BackBufferWidth,
