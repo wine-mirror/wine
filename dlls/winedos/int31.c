@@ -438,7 +438,8 @@ static void StartPM( CONTEXT86 *context )
     pm_ctx.SegFs = 0;
     pm_ctx.SegGs = 0;
 
-    TRACE("DOS program is now entering protected mode\n");
+    TRACE("DOS program is now entering %d-bit protected mode\n", 
+          DOSVM_IsDos32() ? 32 : 16);
     wine_call_to_16_regs_short(&pm_ctx, 0);
 
     /* in the current state of affairs, we won't ever actually return here... */
@@ -677,6 +678,32 @@ void WINAPI DOSVM_Int31Handler( CONTEXT86 *context )
     RESET_CFLAG(context);
     switch(AX_reg(context))
     {
+    case 0x0008:  /* Set selector limit */
+        {
+           DWORD limit = MAKELONG( DX_reg(context), CX_reg(context) );
+           TRACE( "set selector limit (0x%04x,0x%08lx)\n",
+                  BX_reg(context), limit );
+           SetSelectorLimit16( BX_reg(context), limit );
+       }
+        break;
+
+    case 0x0202:  /* Get Processor Exception Handler Vector */
+        FIXME( "Get Processor Exception Handler Vector (0x%02x)\n",
+               BL_reg(context) );
+        if (DOSVM_IsDos32()) {
+            SET_CX( context, 0 );
+            context->Edx = 0;
+        } else {
+            SET_CX( context, 0 );
+            SET_DX( context, 0 );
+        }
+        break;
+
+    case 0x0203:  /* Set Processor Exception Handler Vector */
+         FIXME( "Set Processor Exception Handler Vector (0x%02x)\n",
+               BL_reg(context) );
+         break;
+
     case 0x0204:  /* Get protected mode interrupt vector */
         TRACE("get protected mode interrupt handler (0x%02x)\n",
              BL_reg(context));

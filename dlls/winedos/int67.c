@@ -436,6 +436,21 @@ void WINAPI DOSVM_Int67Handler( CONTEXT86 *context )
   case 0x5b: /* EMS 4.0 - ALTERNATE MAP REGISTER SET */
   case 0x5c: /* EMS 4.0 - PREPARE EXPANDED MEMORY HARDWARE FOR WARM BOOT */
   case 0x5d: /* EMS 4.0 - ENABLE/DISABLE OS FUNCTION SET FUNCTIONS */
+    INT_BARF(context,0x67);
+    break;
+
+  case 0xde: /* Virtual Control Program Interface (VCPI) */
+    if(AL_reg(context) == 0x00) {
+      /*
+       * VCPI INSTALLATION CHECK
+       * (AH_reg() != 0) means VCPI is not present
+       */
+      TRACE("- VCPI installation check\n");
+      return;
+    } else
+      INT_BARF(context,0x67);
+    break;
+
   default:
     INT_BARF(context,0x67);
   }

@@ -104,6 +104,24 @@ void WINAPI XMS_Handler( CONTEXT86 *context )
 	if (move->Dest.Handle) GlobalUnlock16(move->Dest.Handle);
 	break;
     }
+    case 0x88:   /* Query Any Free Extended Memory */
+    {
+        MEMORYSTATUS status;
+        SYSTEM_INFO  info;
+
+        TRACE("query any free extended memory\n");
+
+        GlobalMemoryStatus( &status );
+        GetSystemInfo( &info );
+        context->Eax = status.dwAvailVirtual >> 10;
+        context->Edx = status.dwAvailVirtual >> 10;
+        context->Ecx = (DWORD)info.lpMaximumApplicationAddress;
+        SET_BL( context, 0 ); /* No errors. */
+
+        TRACE("returning largest %ldK, total %ldK, highest 0x%lx\n", 
+              context->Eax, context->Edx, context->Ecx);
+    }
+    break;
     default:
         INT_BARF( context, 0x31 );
         SET_AX( context, 0x0000 ); /* failure */
