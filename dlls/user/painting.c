@@ -71,6 +71,20 @@ static HRGN copy_rgn( HRGN hSrc )
 
 
 /***********************************************************************
+ *           get_update_region
+ *
+ * Return update region for a window.
+ */
+static HRGN get_update_region( WND *win )
+{
+    if (!win->hrgnUpdate) return CreateRectRgn( 0, 0, 0, 0 );
+    if (win->hrgnUpdate > (HRGN)1) return copy_rgn( win->hrgnUpdate );
+    return CreateRectRgn( 0, 0, win->rectWindow.right - win->rectWindow.left,
+                          win->rectWindow.bottom - win->rectWindow.top );
+}
+
+
+/***********************************************************************
  *           get_update_regions
  *
  * Return update regions for the whole window and for the client area.
@@ -257,4 +271,85 @@ BOOL WINAPI EndPaint( HWND hwnd, const PAINTSTRUCT *lps )
     ReleaseDC( hwnd, lps->hdc );
     ShowCaret( hwnd );
     return TRUE;
+}
+
+
+/***********************************************************************
+ *		GetUpdateRgn (USER32.@)
+ */
+INT WINAPI GetUpdateRgn( HWND hwnd, HRGN hrgn, BOOL erase )
+{
+    INT retval;
+    HRGN update_rgn;
+    WND *wndPtr = WIN_GetPtr( hwnd );
+
+    if (!wndPtr) return ERROR;
+    if (wndPtr == WND_OTHER_PROCESS)
+    {
+        FIXME( "not supported on other process window %p\n", hwnd );
+        return ERROR;
+    }
+
+    if ((update_rgn = get_update_region( wndPtr )))
+    {
+        /* map coordinates and clip to client area */
+        OffsetRgn( update_rgn, wndPtr->rectWindow.left - wndPtr->rectClient.left,
+                   wndPtr->rectWindow.top - wndPtr->rectClient.top );
+        SetRectRgn( hrgn, 0, 0, wndPtr->rectClient.right - wndPtr->rectClient.left,
+                    wndPtr->rectClient.bottom - wndPtr->rectClient.top );
+        retval = CombineRgn( hrgn, hrgn, update_rgn, RGN_AND );
+        DeleteObject( update_rgn );
+    }
+    else retval = ERROR;
+
+    WIN_ReleasePtr( wndPtr );
+
+    if (erase) RedrawWindow( hwnd, NULL, 0, RDW_ERASENOW | RDW_NOCHILDREN );
+    return retval;
+}
+
+
+/***********************************************************************
+ *		GetUpdateRect (USER32.@)
+ */
+BOOL WINAPI GetUpdateRect( HWND hwnd, LPRECT rect, BOOL erase )
+{
+    HRGN update_rgn = CreateRectRgn( 0, 0, 0, 0 );
+    INT retval = GetUpdateRgn( hwnd, update_rgn, erase );
+
+    if (rect)
+    {
+        GetRgnBox( update_rgn, rect );
+        if (GetClassLongA(hwnd, GCL_STYLE) & CS_OWNDC)
+        {
+            HDC hdc = GetDCEx( hwnd, 0, DCX_USESTYLE );
+            if (hdc)
+            {
+                if (GetMapMode(hdc) != MM_TEXT) DPtoLP(hdc, (LPPOINT)rect,  2);
+                ReleaseDC( hwnd, hdc );
+            }
+        }
+    }
+    DeleteObject( update_rgn );
+
+    return (retval != ERROR && retval != NULLREGION);
+}
+
+
+/***********************************************************************
+ *		ExcludeUpdateRgn (USER32.@)
+ */
+INT WINAPI ExcludeUpdateRgn( HDC hdc, HWND hwnd )
+{
+    HRGN update_rgn = CreateRectRgn( 0, 0, 0, 0 );
+    INT ret = GetUpdateRgn( hwnd, update_rgn, FALSE );
+
+    if (ret != ERROR)
+    {
+        /* do ugly coordinate translations in dce.c */
+
+        ret = DCE_ExcludeRgn( hdc, hwnd, update_rgn );
+        DeleteObject( update_rgn );
+    }
+    return ret;
 }
