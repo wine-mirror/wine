@@ -375,16 +375,20 @@ static void process_raw_mouse_message( MSG *msg, BOOL remove )
 
     pt = msg->pt;
     /* Note: windows has no concept of a non-client wheel message */
-    if (hittest != HTCLIENT && msg->message != WM_MOUSEWHEEL)
+    if (msg->message != WM_MOUSEWHEEL)
     {
-        msg->message += WM_NCMOUSEMOVE - WM_MOUSEMOVE;
-        msg->wParam = hittest;
-    }
-    else
-    {
-        /* coordinates don't get translated while tracking a menu */
-        /* FIXME: should differentiate popups and top-level menus */
-        if (!(info.flags & GUI_INMENUMODE)) ScreenToClient( msg->hwnd, &pt );
+        if (hittest != HTCLIENT)
+        {
+            msg->message += WM_NCMOUSEMOVE - WM_MOUSEMOVE;
+            msg->wParam = hittest;
+        }
+        else
+        {
+            /* coordinates don't get translated while tracking a menu */
+            /* FIXME: should differentiate popups and top-level menus */
+            if (!(info.flags & GUI_INMENUMODE))
+                ScreenToClient( msg->hwnd, &pt );
+        }
     }
     msg->lParam = MAKELONG( pt.x, pt.y );
 }
