@@ -249,20 +249,30 @@ static LRESULT MDISetMenu( HWND hwnd, HMENU hmenuFrame,
         if( ci->nActiveChildren )
         {
             INT j = i - ci->nActiveChildren + 1;
-            char buffer[100];
-            UINT id,state;
+            LPWSTR buffer = NULL;
+	    MENUITEMINFOW mii;
 
             for( ; i >= j ; i-- )
             {
-                id = GetMenuItemID(ci->hWindowMenu,i );
-                state = GetMenuState(ci->hWindowMenu,i,MF_BYPOSITION); 
+		memset(&mii, 0, sizeof(mii));
+		mii.cbSize = sizeof(mii);
+		mii.fMask = MIIM_CHECKMARKS | MIIM_DATA | MIIM_ID | MIIM_STATE
+		  | MIIM_SUBMENU | MIIM_TYPE | MIIM_BITMAP;
 
-                GetMenuStringA(ci->hWindowMenu, i, buffer, 100, MF_BYPOSITION);
-
-                DeleteMenu(ci->hWindowMenu, i , MF_BYPOSITION);
-                InsertMenuA(hmenuWindow, pos, MF_BYPOSITION | MF_STRING,
-                              id, buffer);
-                CheckMenuItem(hmenuWindow ,pos , MF_BYPOSITION | (state & MF_CHECKED));
+		GetMenuItemInfoW(ci->hWindowMenu, i, TRUE, &mii);
+		if(mii.cch) { /* Menu is MFT_STRING */
+		    mii.cch++; /* add room for '\0' */
+		    buffer = HeapAlloc(GetProcessHeap(), 0,
+				       mii.cch * sizeof(WCHAR));
+		    mii.dwTypeData = buffer;
+		    GetMenuItemInfoW(ci->hWindowMenu, i, TRUE, &mii);
+		}
+                DeleteMenu(ci->hWindowMenu, i, MF_BYPOSITION);
+                InsertMenuItemW(hmenuWindow, pos, TRUE, &mii);
+		if(buffer) {
+		    HeapFree(GetProcessHeap(), 0, buffer);
+		    buffer = NULL;
+		}
             }
         }
 
