@@ -52,7 +52,7 @@ mingwrap: mingwrap.o
 install::
 	$(MKINSTALLDIRS) $(bindir) $(mandir)/man$(prog_manext)
 	$(INSTALL_SCRIPT) $(SRCDIR)/winemaker $(bindir)/winemaker
-	$(INSTALL_SCRIPT) $(SRCDIR)/mingwrap $(bindir)/mingwrap
+	$(INSTALL_PROGRAM) mingwrap $(bindir)/mingwrap
 	$(INSTALL_DATA) $(SRCDIR)/winemaker.man $(mandir)/man$(prog_manext)/winemaker.$(prog_manext)
 
 uninstall::
