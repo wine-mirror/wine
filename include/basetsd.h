@@ -131,7 +131,7 @@ typedef ULONG_PTR SIZE_T, *PSIZE_T;
 # define WORDS_BIGENDIAN
 # define BITFIELDS_BIGENDIAN
 # undef  ALLOW_UNALIGNED_ACCESS
-#elif defined(__PPC__)
+#elif defined(__powerpc__)
 # define WORDS_BIGENDIAN
 # define BITFIELDS_BIGENDIAN
 # undef  ALLOW_UNALIGNED_ACCESS

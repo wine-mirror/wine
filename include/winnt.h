@@ -805,7 +805,7 @@ typedef struct _CONTEXT
 #endif  /* _MIPS_ */
 
 /* PowerPC context definitions */
-#ifdef __PPC__
+#ifdef __powerpc__
 
 #define CONTEXT_CONTROL         0x0001
 #define CONTEXT_FLOATING_POINT  0x0002
@@ -929,7 +929,7 @@ typedef struct _STACK_FRAME_HEADER
     DWORD Parameter7;
 } STACK_FRAME_HEADER,*PSTACK_FRAME_HEADER;
 
-#endif  /* __PPC__ */
+#endif  /* __powerpc__ */
 
 #ifdef __ALPHA__
 
@@ -1179,7 +1179,7 @@ static DWORD __builtin_return_address(int p_iDepth)
 
 #endif /* __sparc__ */
 
-#ifdef __PPC__
+#ifdef __powerpc__
 
 /* FIXME: use getcontext() to retrieve full context */
 #define _GET_CONTEXT \
@@ -1204,7 +1204,7 @@ static DWORD __builtin_return_address(int p_iDepth)
   void WINAPI name ( t1 a1, t2 a2, t3 a3, t4 a4 ) \
   { _GET_CONTEXT; fn( a1, a2, a3, a4, &context ); }
 
-#endif /* __PPC__ */
+#endif /* __powerpc__ */
 
 #ifdef __ALPHA__
 
@@ -1637,7 +1637,7 @@ extern inline struct _TEB * WINAPI NtCurrentTeb(void);
 extern inline struct _TEB * WINAPI NtCurrentTeb(void)
 {
     struct _TEB *teb;
-# ifdef __darwin__
+# ifdef __APPLE__
     __asm__("\tmr %0, r13" : "=r" (teb));
 # else
     __asm__("\tmr %0, 2" : "=r" (teb));
