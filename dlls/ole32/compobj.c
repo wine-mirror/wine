@@ -232,6 +232,7 @@ static APARTMENT *apartment_construct(DWORD model)
     apt->remunk_exported = FALSE;
     apt->oidc = 1;
     InitializeCriticalSection(&apt->cs);
+    DEBUG_SET_CRITSEC_NAME(&apt->cs, "apartment");
 
     apt->model = model;
 
@@ -329,6 +330,9 @@ DWORD apartment_release(struct apartment *apt)
 
         TRACE("destroying apartment %p, oxid %s\n", apt, wine_dbgstr_longlong(apt->oxid));
 
+        /* no locking is needed for this apartment, because no other thread
+         * can access it at this point */
+
         apartment_disconnectproxies(apt);
 
         if (apt->win) DestroyWindow(apt->win);
@@ -351,8 +355,10 @@ DWORD apartment_release(struct apartment *apt)
 
         if (apt->filter) IUnknown_Release(apt->filter);
 
+        DEBUG_CLEAR_CRITSEC_NAME(&apt->cs);
         DeleteCriticalSection(&apt->cs);
         CloseHandle(apt->thread);
+
         HeapFree(GetProcessHeap(), 0, apt);
     }
 
@@ -414,7 +420,7 @@ static LRESULT CALLBACK apartment_wndproc(HWND hWnd, UINT msg, WPARAM wParam, LP
     switch (msg)
     {
     case DM_EXECUTERPC:
-        return RPC_ExecuteCall((RPCOLEMESSAGE *)wParam, (IRpcStubBuffer *)lParam);
+        return RPC_ExecuteCall((struct dispatch_params *)lParam);
     default:
         return DefWindowProcW(hWnd, msg, wParam, lParam);
     }
@@ -2530,5 +2536,92 @@ HRESULT WINAPI CoCopyProxy(IUnknown *pProxy, IUnknown **ppCopy)
     }
 
     if (FAILED(hr)) ERR("-- failed with 0x%08lx\n", hr);
+    return hr;
+}
+
+
+/***********************************************************************
+ *           CoWaitForMultipleHandles [OLE32.@]
+ *
+ * Waits for one or more handles to become signaled.
+ *
+ * PARAMS
+ *  dwFlags   [I] Flags. See notes.
+ *  dwTimeout [I] Timeout in milliseconds.
+ *  cHandles  [I] Number of handles pointed to by pHandles.
+ *  pHandles  [I] Handles to wait for.
+ *  lpdwindex [O] Index of handle that was signaled.
+ *
+ * RETURNS
+ *  Success: S_OK.
+ *  Failure: RPC_S_CALLPENDING on timeout.
+ *
+ * NOTES
+ *
+ * The dwFlags parameter can be zero or more of the following:
+ *| COWAIT_WAITALL - Wait for all of the handles to become signaled.
+ *| COWAIT_ALERTABLE - Allows a queued APC to run during the wait.
+ *
+ * SEE ALSO
+ *  MsgWaitForMultipleObjects, WaitForMultipleObjects.
+ */
+HRESULT WINAPI CoWaitForMultipleHandles(DWORD dwFlags, DWORD dwTimeout,
+    ULONG cHandles, const HANDLE* pHandles, LPDWORD lpdwindex)
+{
+    HRESULT hr = S_OK;
+    DWORD wait_flags = (dwFlags & COWAIT_WAITALL) ? MWMO_WAITALL : 0 |
+                       (dwFlags & COWAIT_ALERTABLE ) ? MWMO_ALERTABLE : 0;
+    DWORD start_time = GetTickCount();
+
+    TRACE("(0x%08lx, 0x%08lx, %ld, %p, %p)\n", dwFlags, dwTimeout, cHandles,
+        pHandles, lpdwindex);
+
+    while (TRUE)
+    {
+        DWORD now = GetTickCount();
+        DWORD res;
+        
+        if ((dwTimeout != INFINITE) && (start_time + dwTimeout >= now))
+        {
+            hr = RPC_S_CALLPENDING;
+            break;
+        }
+
+        TRACE("waiting for rpc completion or window message\n");
+
+        res = MsgWaitForMultipleObjectsEx(cHandles, pHandles,
+            (dwTimeout == INFINITE) ? INFINITE : start_time + dwTimeout - now,
+            QS_ALLINPUT, wait_flags);
+
+        if (res == WAIT_OBJECT_0 + cHandles)  /* messages available */
+        {
+            MSG msg;
+            while (PeekMessageW(&msg, NULL, 0, 0, PM_REMOVE))
+            {
+                /* FIXME: filter the messages here */
+                TRACE("received message whilst waiting for RPC: 0x%04x\n", msg.message);
+                TranslateMessage(&msg);
+                DispatchMessageW(&msg);
+            }
+        }
+        else if ((res >= WAIT_OBJECT_0) && (res < WAIT_OBJECT_0 + cHandles))
+        {
+            /* handle signaled, store index */
+            *lpdwindex = (res - WAIT_OBJECT_0);
+            break;
+        }
+        else if (res == WAIT_TIMEOUT)
+        {
+            hr = RPC_S_CALLPENDING;
+            break;
+        }
+        else
+        {
+            ERR("Unexpected wait termination: %ld, %ld\n", res, GetLastError());
+            hr = E_UNEXPECTED;
+            break;
+        }
+    }
+    TRACE("-- 0x%08lx\n", hr);
     return hr;
 }

@@ -59,7 +59,10 @@ struct stub_manager *new_stub_manager(APARTMENT *apt, IUnknown *object, MSHLFLAG
     if (!sm) return NULL;
 
     list_init(&sm->ifstubs);
+
     InitializeCriticalSection(&sm->lock);
+    DEBUG_SET_CRITSEC_NAME(&sm->lock, "stub_manager");
+
     IUnknown_AddRef(object);
     sm->object = object;
     sm->apt    = apt;
@@ -111,6 +114,7 @@ static void stub_manager_delete(struct stub_manager *m)
 
     IUnknown_Release(m->object);
 
+    DEBUG_CLEAR_CRITSEC_NAME(&m->lock);
     DeleteCriticalSection(&m->lock);
 
     HeapFree(GetProcessHeap(), 0, m);

@@ -43,12 +43,15 @@ typedef struct apartment APARTMENT;
 
 /* Thread-safety Annotation Legend:
  *
- * RO   - The value is read only. It never changes after creation, so no
- *        locking is required.
- * LOCK - The value is written to only using Interlocked* functions.
- * CS   - The value is read or written to with a critical section held.
- *        The identifier following "CS" is the specific critical section that
- *        must be used.
+ * RO    - The value is read only. It never changes after creation, so no
+ *         locking is required.
+ * LOCK  - The value is written to only using Interlocked* functions.
+ * CS    - The value is read or written to inside a critical section.
+ *         The identifier following "CS" is the specific critical setion that
+ *         must be used.
+ * MUTEX - The value is read or written to with a mutex held.
+ *         The identifier following "MUTEX" is the specific mutex that
+ *         must be used.
  */
 
 typedef enum ifstub_state
@@ -96,7 +99,7 @@ struct ifproxy
   IID iid;                 /* interface ID (RO) */
   IPID ipid;               /* imported interface ID (RO) */
   LPRPCPROXYBUFFER proxy;  /* interface proxy (RO) */
-  DWORD refs;              /* imported (public) references (CS parent->cs) */
+  DWORD refs;              /* imported (public) references (MUTEX parent->remoting_mutex) */
   IRpcChannelBuffer *chan; /* channel to object (CS parent->cs) */
 };
 
@@ -113,6 +116,7 @@ struct proxy_manager
   CRITICAL_SECTION cs;      /* thread safety for this object and children */
   ULONG sorflags;           /* STDOBJREF flags (RO) */
   IRemUnknown *remunk;      /* proxy to IRemUnknown used for lifecycle management (CS cs) */
+  HANDLE remoting_mutex;    /* mutex used for synchronizing access to IRemUnknown */
 };
 
 /* this needs to become a COM object that implements IRemUnknown */
@@ -182,9 +186,11 @@ HRESULT marshal_object(APARTMENT *apt, STDOBJREF *stdobjref, REFIID riid, IUnkno
 
 /* RPC Backend */
 
+struct dispatch_params;
+
 void    RPC_StartRemoting(struct apartment *apt);
 HRESULT RPC_CreateClientChannel(const OXID *oxid, const IPID *ipid, IRpcChannelBuffer **pipebuf);
-HRESULT RPC_ExecuteCall(RPCOLEMESSAGE *msg, IRpcStubBuffer *stub);
+HRESULT RPC_ExecuteCall(struct dispatch_params *params);
 HRESULT RPC_RegisterInterface(REFIID riid);
 void    RPC_UnregisterInterface(REFIID riid);
 void    RPC_StartLocalServer(REFCLSID clsid, IStream *stream);
@@ -214,8 +220,9 @@ static inline HRESULT apartment_getoxid(struct apartment *apt, OXID *oxid)
     return S_OK;
 }
 
-/* messages used by the apartment window (not compatible with native) */
-#define DM_EXECUTERPC   (WM_USER + 0) /* WPARAM = (RPCOLEMESSAGE *), LPARAM = (IRpcStubBuffer *) */
+
+/* DCOM messages used by the apartment window (not compatible with native) */
+#define DM_EXECUTERPC   (WM_USER + 0) /* WPARAM = 0, LPARAM = (struct dispatch_params *) */
 
 /*
  * Per-thread values are stored in the TEB on offset 0xF80,
@@ -237,5 +244,14 @@ static inline APARTMENT* COM_CurrentApt(void)
 }
 
 #define ICOM_THIS_MULTI(impl,field,iface) impl* const This=(impl*)((char*)(iface) - offsetof(impl,field))
+
+/* helpers for debugging */
+#ifdef __i386__
+# define DEBUG_SET_CRITSEC_NAME(cs, name) (cs)->DebugInfo->Spare[1] = (DWORD)(__FILE__ ": " name)
+# define DEBUG_CLEAR_CRITSEC_NAME(cs) (cs)->DebugInfo->Spare[1] = 0
+#else
+# define DEBUG_SET_CRITSEC_NAME(cs, name)
+# define DEBUG_CLEAR_CRITSEC_NAME(cs)
+#endif
 
 #endif /* __WINE_OLE_COMPOBJ_H */

@@ -314,10 +314,13 @@ static const IMultiQIVtbl ClientIdentity_Vtbl =
 static HRESULT ifproxy_get_public_ref(struct ifproxy * This)
 {
     HRESULT hr = S_OK;
-    /* FIXME: as this call could possibly be going over the network, we
-     * are going to spend a long time in this CS. We might want to replace
-     * this with a mutex */
-    EnterCriticalSection(&This->parent->cs);
+
+    if (WAIT_OBJECT_0 != WaitForSingleObject(This->parent->remoting_mutex, INFINITE))
+    {
+        ERR("Wait failed for ifproxy %p\n", This);
+        return E_UNEXPECTED;
+    }
+
     if (This->refs == 0)
     {
         IRemUnknown *remunk = NULL;
@@ -339,7 +342,7 @@ static HRESULT ifproxy_get_public_ref(struct ifproxy * This)
                 ERR("IRemUnknown_RemAddRef returned with 0x%08lx, hrref = 0x%08lx\n", hr, hrref);
         }
     }
-    LeaveCriticalSection(&This->parent->cs);
+    ReleaseMutex(This->parent->remoting_mutex);
 
     return hr;
 }
@@ -348,10 +351,12 @@ static HRESULT ifproxy_release_public_refs(struct ifproxy * This)
 {
     HRESULT hr = S_OK;
 
-    /* FIXME: as this call could possibly be going over the network, we
-     * are going to spend a long time in this CS. We might want to replace
-     * this with a mutex */
-    EnterCriticalSection(&This->parent->cs);
+    if (WAIT_OBJECT_0 != WaitForSingleObject(This->parent->remoting_mutex, INFINITE))
+    {
+        ERR("Wait failed for ifproxy %p\n", This);
+        return E_UNEXPECTED;
+    }
+
     if (This->refs > 0)
     {
         IRemUnknown *remunk = NULL;
@@ -377,7 +382,7 @@ static HRESULT ifproxy_release_public_refs(struct ifproxy * This)
                 ERR("IRemUnknown_RemRelease failed with error 0x%08lx\n", hr);
         }
     }
-    LeaveCriticalSection(&This->parent->cs);
+    ReleaseMutex(This->parent->remoting_mutex);
 
     return hr;
 }
@@ -423,12 +428,20 @@ static HRESULT proxy_manager_construct(
     struct proxy_manager * This = HeapAlloc(GetProcessHeap(), 0, sizeof(*This));
     if (!This) return E_OUTOFMEMORY;
 
+    This->remoting_mutex = CreateMutexW(NULL, FALSE, NULL);
+    if (!This->remoting_mutex)
+    {
+        HeapFree(GetProcessHeap(), 0, This);
+        return HRESULT_FROM_WIN32(GetLastError());
+    }
+
     This->lpVtbl = &ClientIdentity_Vtbl;
 
     list_init(&This->entry);
     list_init(&This->interfaces);
 
     InitializeCriticalSection(&This->cs);
+    DEBUG_SET_CRITSEC_NAME(&This->cs, "proxy_manager");
 
     /* the apartment the object was unmarshaled into */
     This->parent = apt;
@@ -441,7 +454,7 @@ static HRESULT proxy_manager_construct(
 
     /* the DCOM draft specification states that the SORF_NOPING flag is
      * proxy manager specific, not ifproxy specific, so this implies that we
-     * should store the STDOBJREF flags in the proxy manager. */
+     * should store the STDOBJREF flags here in the proxy manager. */
     This->sorflags = sorflags;
 
     /* we create the IRemUnknown proxy on demand */
@@ -688,7 +701,10 @@ static void proxy_manager_destroy(struct proxy_manager * This)
 
     if (This->remunk) IRemUnknown_Release(This->remunk);
 
+    DEBUG_CLEAR_CRITSEC_NAME(&This->cs);
     DeleteCriticalSection(&This->cs);
+
+    CloseHandle(This->remoting_mutex);
 
     HeapFree(GetProcessHeap(), 0, This);
 }
@@ -721,13 +737,11 @@ HRESULT apartment_disconnectproxies(struct apartment *apt)
 {
     struct list * cursor;
 
-    EnterCriticalSection(&apt->cs);
     LIST_FOR_EACH(cursor, &apt->proxies)
     {
         struct proxy_manager * proxy = LIST_ENTRY(cursor, struct proxy_manager, entry);
         proxy_manager_disconnect(proxy);
     }
-    LeaveCriticalSection(&apt->cs);
 
     return S_OK;
 }

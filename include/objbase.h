@@ -392,6 +392,14 @@ BOOL WINAPI CoFileTimeToDosDateTime(FILETIME* lpFileTime, WORD* lpDosDate, WORD*
 HRESULT WINAPI CoFileTimeNow(FILETIME* lpFileTime);
 HRESULT WINAPI CoRegisterMessageFilter(LPMESSAGEFILTER lpMessageFilter,LPMESSAGEFILTER *lplpMessageFilter);
 
+typedef enum tagCOWAIT_FLAGS
+{
+    COWAIT_WAITALL   = 0x00000001,
+    COWAIT_ALERTABLE = 0x00000002
+} COWAIT_FLAGS;
+
+HRESULT WINAPI CoWaitForMultipleHandles(DWORD dwFlags,DWORD dwTimeout,ULONG cHandles,const HANDLE* pHandles,LPDWORD lpdwindex);
+
 /*****************************************************************************
  *	GUID API
  */
