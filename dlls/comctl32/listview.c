@@ -1439,9 +1439,9 @@ static BOOL LISTVIEW_GetItemMetrics(LISTVIEW_INFO *infoPtr, LVITEMW *lpLVItem,
     {
 	if (uView == LVS_ICON)
 	{
-     	    State.left = Box.left - infoPtr->iconStateSize.cx + 10;
+     	    State.left = Box.left - infoPtr->iconStateSize.cx - 2;
 	    if (infoPtr->himlNormal) 
-		State.left += (infoPtr->iconSpacing.cx - infoPtr->iconSize.cx) / 2 - ICON_LR_HALF;
+		State.left += (infoPtr->iconSpacing.cx - infoPtr->iconSize.cx) / 2 + ICON_LR_HALF;
 	    State.top  = Box.top + infoPtr->iconSize.cy - infoPtr->iconStateSize.cy + 4;
 	}
 	else
@@ -1472,14 +1472,14 @@ static BOOL LISTVIEW_GetItemMetrics(LISTVIEW_INFO *infoPtr, LVITEMW *lpLVItem,
 	{
 	    Icon.left   = Box.left;
 	    if (infoPtr->himlNormal) 
-		Icon.left += (infoPtr->iconSpacing.cx - infoPtr->iconSize.cx) / 2 - ICON_LR_HALF;
-	    Icon.top    = Box.top;
+		Icon.left += (infoPtr->iconSpacing.cx - infoPtr->iconSize.cx) / 2;
+	    Icon.top    = Box.top + ICON_TOP_PADDING;
 	    Icon.right  = Icon.left;
 	    Icon.bottom = Icon.top;
 	    if (infoPtr->himlNormal)
 	    {
-		Icon.right  += infoPtr->iconSize.cx + ICON_LR_PADDING;
-		Icon.bottom += infoPtr->iconSize.cy + ICON_TOP_PADDING;
+		Icon.right  += infoPtr->iconSize.cx;
+		Icon.bottom += infoPtr->iconSize.cy;
 	    }
 	}
 	else /* LVS_SMALLICON, LVS_LIST or LVS_REPORT */
@@ -3139,109 +3139,24 @@ postpaint:
  */
 static BOOL LISTVIEW_DrawItem(LISTVIEW_INFO *infoPtr, HDC hdc, INT nItem, POINT pos, DWORD cdmode)
 {
+    UINT uFormat, uView = infoPtr->dwStyle & LVS_TYPEMASK;
     WCHAR szDispText[DISP_TEXT_SIZE] = { '\0' };
     DWORD cditemmode = CDRF_DODEFAULT;
     RECT* lprcFocus, rcSelect, rcBox, rcState, rcIcon, rcLabel;
     NMLVCUSTOMDRAW nmlvcd;
+    HIMAGELIST himl;
     LVITEMW lvItem;
-
-    TRACE("(hdc=%x, nItem=%d)\n", hdc, nItem);
-
-    /* get information needed for drawing the item */
-    lvItem.mask = LVIF_TEXT | LVIF_IMAGE | LVIF_STATE | LVIF_INDENT;
-    lvItem.stateMask = LVIS_SELECTED | LVIS_FOCUSED | LVIS_STATEIMAGEMASK;
-    lvItem.iItem = nItem;
-    lvItem.iSubItem = 0;
-    lvItem.cchTextMax = DISP_TEXT_SIZE;
-    lvItem.pszText = szDispText;
-    if (!LISTVIEW_GetItemW(infoPtr, &lvItem)) return FALSE;
-    TRACE("   lvItem=%s\n", debuglvitem_t(&lvItem, TRUE));
-
-    /* now check if we need to update the focus rectangle */
-    lprcFocus = infoPtr->bFocus && (lvItem.state & LVIS_FOCUSED) ? &infoPtr->rcFocus : 0;
-    
-    if (!LISTVIEW_GetItemMetrics(infoPtr, &lvItem, &rcBox, NULL, &rcState, &rcIcon, &rcLabel)) return FALSE;
-    OffsetRect(&rcBox, pos.x, pos.y);
-    OffsetRect(&rcState, pos.x, pos.y);
-    OffsetRect(&rcIcon, pos.x, pos.y);
-    OffsetRect(&rcLabel, pos.x, pos.y);
-
-    customdraw_fill(&nmlvcd, infoPtr, hdc, &rcBox, &lvItem);
-    if (cdmode & CDRF_NOTIFYITEMDRAW)
-        cditemmode = notify_customdraw (infoPtr, CDDS_ITEMPREPAINT, &nmlvcd);
-    if (cditemmode & CDRF_SKIPDEFAULT) goto postpaint;
-
-    /* state icons */
-    if (infoPtr->himlState)
-    {
-        UINT uStateImage = (lvItem.state & LVIS_STATEIMAGEMASK) >> 12;
-        if (uStateImage)
-	     ImageList_Draw(infoPtr->himlState, uStateImage - 1, hdc, 
-			    rcState.left, rcState.top, ILD_NORMAL);
-    }
-
-    /* small icons */
-    if (infoPtr->himlSmall && lvItem.iImage >= 0)
-    {
-	ImageList_SetBkColor(infoPtr->himlSmall, CLR_NONE);
-	ImageList_Draw(infoPtr->himlSmall, lvItem.iImage, hdc, rcIcon.left, rcIcon.top,
-			(lvItem.state & LVIS_SELECTED) && (infoPtr->bFocus) ? ILD_SELECTED : ILD_NORMAL);
-    }
-
-    /* Don't bother painting item being edited */
-    if (infoPtr->bEditing && lprcFocus) goto postpaint;
-
-    select_text_attr(infoPtr, hdc, &nmlvcd);
-
-    rcSelect = rcLabel;
-    if ((infoPtr->dwStyle & LVS_TYPEMASK) == LVS_REPORT && (infoPtr->dwLvExStyle & LVS_EX_FULLROWSELECT))
-	rcSelect.right = rcBox.right;
-   
-    if (lvItem.state & LVIS_SELECTED) 
-        ExtTextOutW(hdc, rcSelect.left, rcSelect.top, ETO_OPAQUE, &rcSelect, 0, 0, 0);
-    if(lprcFocus) *lprcFocus = rcSelect;
-    
-    DrawTextW(hdc, lvItem.pszText, -1, &rcLabel, LV_SL_DT_FLAGS | DT_CENTER);
-
-postpaint:
-    if (cditemmode & CDRF_NOTIFYPOSTPAINT)
-        notify_customdraw(infoPtr, CDDS_ITEMPOSTPAINT, &nmlvcd);
-    return TRUE;
-}
-
-/***
- * DESCRIPTION:
- * Draws an item when in large icon display mode.
- *
- * PARAMETER(S):
- * [I] infoPtr : valid pointer to the listview structure
- * [I] hdc : device context handle
- * [I] nItem : item index
- * [I] pos : item position in client coordinates
- * [I] cdmode : custom draw mode
- *
- * RETURN:
- *   Success: TRUE
- *   Failure: FALSE
- */
-static BOOL LISTVIEW_DrawLargeItem(LISTVIEW_INFO *infoPtr, HDC hdc, INT nItem, POINT pos, DWORD cdmode)
-{
-    WCHAR szDispText[DISP_TEXT_SIZE] = { '\0' };
-    DWORD cditemmode = CDRF_DODEFAULT;
-    RECT rcBox, rcState, rcIcon, rcLabel, *lprcFocus;
-    NMLVCUSTOMDRAW nmlvcd;
-    LVITEMW lvItem;
-    UINT uFormat;
 
     TRACE("(hdc=%x, nItem=%d)\n", hdc, nItem);
 
     /* get information needed for drawing the item */
     lvItem.mask = LVIF_TEXT | LVIF_IMAGE | LVIF_STATE;
+    if (uView == LVS_REPORT) lvItem.mask |= LVIF_INDENT;
     lvItem.stateMask = LVIS_SELECTED | LVIS_FOCUSED | LVIS_STATEIMAGEMASK;
     lvItem.iItem = nItem;
     lvItem.iSubItem = 0;
-    lvItem.pszText = szDispText;
     lvItem.cchTextMax = DISP_TEXT_SIZE;
+    lvItem.pszText = szDispText;
     if (!LISTVIEW_GetItemW(infoPtr, &lvItem)) return FALSE;
     TRACE("   lvItem=%s\n", debuglvitem_t(&lvItem, TRUE));
 
@@ -3260,58 +3175,39 @@ static BOOL LISTVIEW_DrawLargeItem(LISTVIEW_INFO *infoPtr, HDC hdc, INT nItem, P
         cditemmode = notify_customdraw (infoPtr, CDDS_ITEMPREPAINT, &nmlvcd);
     if (cditemmode & CDRF_SKIPDEFAULT) goto postpaint;
 
-    /* Set the item to the boundary box for now */
-    TRACE("rcIcon=%s, rcLabel=%s\n", debugrect(&rcIcon), debugrect(&rcLabel));
-
     /* state icons */
     if (infoPtr->himlState)
     {
-     	UINT uStateImage = (lvItem.state & LVIS_STATEIMAGEMASK) >> 12;
-    	if (uStateImage > 0)
-	    ImageList_Draw(infoPtr->himlState, uStateImage - 1, hdc, rcState.left, rcState.top, ILD_NORMAL);
+        UINT uStateImage = (lvItem.state & LVIS_STATEIMAGEMASK) >> 12;
+        if (uStateImage)
+	     ImageList_Draw(infoPtr->himlState, uStateImage - 1, hdc, rcState.left, rcState.top, ILD_NORMAL);
     }
 
-    /* draw the icon */
-    if (infoPtr->himlNormal && lvItem.iImage >=0)
-	ImageList_Draw (infoPtr->himlNormal, lvItem.iImage, hdc, 
-		        rcIcon.left + ICON_LR_HALF, rcIcon.top + ICON_TOP_PADDING,
-                        (lvItem.state & LVIS_SELECTED) ? ILD_SELECTED : ILD_NORMAL);
-
-    /* Draw the text below the icon */
+    /* small icons */
+    himl = (uView == LVS_ICON ? infoPtr->himlNormal : infoPtr->himlSmall);
+    if (himl && lvItem.iImage >= 0)
+	ImageList_Draw(himl, lvItem.iImage, hdc, rcIcon.left, rcIcon.top,
+			(lvItem.state & LVIS_SELECTED) && (infoPtr->bFocus) ? ILD_SELECTED : ILD_NORMAL);
 
     /* Don't bother painting item being edited */
-    if ((infoPtr->bEditing && lprcFocus) || !lvItem.pszText || !lstrlenW(lvItem.pszText))
-    {
-        if(lprcFocus) SetRectEmpty(lprcFocus);
-        goto postpaint;
-    }
+    if (infoPtr->bEditing && lprcFocus) goto postpaint;
 
     select_text_attr(infoPtr, hdc, &nmlvcd);
 
-    uFormat = lprcFocus ? LV_FL_DT_FLAGS : LV_ML_DT_FLAGS;
+    rcSelect = rcLabel;
+    if (uView == LVS_REPORT && (infoPtr->dwLvExStyle & LVS_EX_FULLROWSELECT))
+	rcSelect.right = rcBox.right;
+   
+    if (lvItem.state & LVIS_SELECTED) 
+        ExtTextOutW(hdc, rcSelect.left, rcSelect.top, ETO_OPAQUE, &rcSelect, 0, 0, 0);
+    if(lprcFocus) *lprcFocus = rcSelect;
+    
+    uFormat = (uView == LVS_ICON ? (lprcFocus ? LV_FL_DT_FLAGS : LV_ML_DT_FLAGS) : LV_SL_DT_FLAGS | DT_CENTER);
+    DrawTextW(hdc, lvItem.pszText, -1, &rcLabel, uFormat);
 
-    /* draw label */
-
-    /* I am sure of most of the uFormat values.  However I am not sure about
-     * whether we need or do not need the following:
-     * DT_EXTERNALLEADING, DT_INTERNAL, DT_CALCRECT, DT_NOFULLWIDTHCHARBREAK,
-     * DT_PATH_ELLIPSIS, DT_RTLREADING,
-     * We certainly do not need
-     * DT_BOTTOM, DT_VCENTER, DT_MODIFYSTRING, DT_LEFT, DT_RIGHT, DT_PREFIXONLY,
-     * DT_SINGLELINE, DT_TABSTOP, DT_EXPANDTABS
-     */
-
-    if (lvItem.state & LVIS_SELECTED)
-        ExtTextOutW(hdc, rcLabel.left, rcLabel.top, ETO_OPAQUE, &rcLabel, 0, 0, 0);
-
-    DrawTextW (hdc, lvItem.pszText, -1, &rcLabel, uFormat);
-
-    if(lprcFocus) *lprcFocus = rcLabel;
-
-postpaint:    
+postpaint:
     if (cditemmode & CDRF_NOTIFYPOSTPAINT)
         notify_customdraw(infoPtr, CDDS_ITEMPOSTPAINT, &nmlvcd);
-
     return TRUE;
 }
 
@@ -3554,7 +3450,7 @@ static void LISTVIEW_RefreshIcon(LISTVIEW_INFO *infoPtr, HDC hdc, DWORD cdmode)
 	if (!LISTVIEW_GetItemListOrigin(infoPtr, i.nItem, &Position)) continue;
 	Position.x += Origin.x;
 	Position.y += Origin.y;
-        LISTVIEW_DrawLargeItem(infoPtr, hdc, i.nItem, Position, cdmode);
+        LISTVIEW_DrawItem(infoPtr, hdc, i.nItem, Position, cdmode);
     }
     iterator_destroy(&i);
 
@@ -3566,7 +3462,7 @@ static void LISTVIEW_RefreshIcon(LISTVIEW_INFO *infoPtr, HDC hdc, DWORD cdmode)
 	{
 	    Position.x += Origin.x;
 	    Position.y += Origin.y;
-	    LISTVIEW_DrawLargeItem(infoPtr, hdc, infoPtr->nFocusedItem, Position, cdmode);
+	    LISTVIEW_DrawItem(infoPtr, hdc, infoPtr->nFocusedItem, Position, cdmode);
 	}
     }
 }
