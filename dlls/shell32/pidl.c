@@ -129,7 +129,7 @@ BOOL WINAPI ILGetDisplayNameExW(LPSHELLFOLDER psf, LPCITEMIDLIST pidl, LPWSTR pa
 	      flag = SHGDN_FORPARSING | SHGDN_FORADDRESSBAR;
 	      break;
 	  }
-	  if (!*(LPWORD)pidl || type == ILGDN_FORPARSING)
+	  if (!*(const WORD*)pidl || type == ILGDN_FORPARSING)
 	  {
 	    ret = IShellFolder_GetDisplayNameOf(lsf, pidl, flag, &strret);
 	    if (SUCCEEDED(ret))
@@ -779,7 +779,7 @@ UINT WINAPI ILGetSize(LPCITEMIDLIST pidl)
 	if (pidl)
 	{ while (si->cb)
 	  { len += si->cb;
-	    si  = (LPSHITEMID)(((LPBYTE)si)+si->cb);
+	    si  = (LPCSHITEMID)(((const BYTE*)si)+si->cb);
 	  }
 	  len += 2;
 	}
@@ -814,7 +814,7 @@ LPITEMIDLIST WINAPI ILGetNext(LPCITEMIDLIST pidl)
 	  len =  pidl->mkid.cb;
 	  if (len)
 	  {
-	    pidl = (LPITEMIDLIST) (((LPBYTE)pidl)+len);
+	    pidl = (LPCITEMIDLIST) (((const BYTE*)pidl)+len);
 	    TRACE("-- %p\n", pidl);
 	    return (LPITEMIDLIST)pidl;
 	  }
@@ -1757,7 +1757,7 @@ BOOL _ILIsPidlSimple ( LPCITEMIDLIST pidl)
 	if(! _ILIsDesktop(pidl))	/* pidl=NULL or mkid.cb=0 */
 	{
 	  WORD len = pidl->mkid.cb;
-	  LPCITEMIDLIST pidlnext = (LPCITEMIDLIST) (((LPBYTE)pidl) + len );
+	  LPCITEMIDLIST pidlnext = (LPCITEMIDLIST) (((const BYTE*)pidl) + len );
 	  if (pidlnext->mkid.cb)
 	    ret = FALSE;
 	}

@@ -725,7 +725,7 @@ CreateServiceW( SC_HANDLE hSCManager, LPCWSTR lpServiceName,
 
     if(lpDisplayName)
     {
-        r = RegSetValueExW(hKey, szDisplayName, 0, REG_SZ, (LPBYTE)lpDisplayName,
+        r = RegSetValueExW(hKey, szDisplayName, 0, REG_SZ, (const BYTE*)lpDisplayName,
                            (strlenW(lpDisplayName)+1)*sizeof(WCHAR) );
         if (r!=ERROR_SUCCESS)
             goto error;
@@ -746,7 +746,7 @@ CreateServiceW( SC_HANDLE hSCManager, LPCWSTR lpServiceName,
 
     if(lpBinaryPathName)
     {
-        r = RegSetValueExW(hKey, szImagePath, 0, REG_SZ, (LPBYTE)lpBinaryPathName,
+        r = RegSetValueExW(hKey, szImagePath, 0, REG_SZ, (const BYTE*)lpBinaryPathName,
                            (strlenW(lpBinaryPathName)+1)*sizeof(WCHAR) );
         if (r!=ERROR_SUCCESS)
             goto error;
@@ -754,7 +754,7 @@ CreateServiceW( SC_HANDLE hSCManager, LPCWSTR lpServiceName,
 
     if(lpLoadOrderGroup)
     {
-        r = RegSetValueExW(hKey, szGroup, 0, REG_SZ, (LPBYTE)lpLoadOrderGroup,
+        r = RegSetValueExW(hKey, szGroup, 0, REG_SZ, (const BYTE*)lpLoadOrderGroup,
                            (strlenW(lpLoadOrderGroup)+1)*sizeof(WCHAR) );
         if (r!=ERROR_SUCCESS)
             goto error;
@@ -770,7 +770,7 @@ CreateServiceW( SC_HANDLE hSCManager, LPCWSTR lpServiceName,
         } while (lpDependencies[len++]);
 
         r = RegSetValueExW(hKey, szDependencies, 0, REG_MULTI_SZ,
-                           (LPBYTE)lpDependencies, len );
+                           (const BYTE*)lpDependencies, len );
         if (r!=ERROR_SUCCESS)
             goto error;
     }

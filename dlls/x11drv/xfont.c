@@ -1902,7 +1902,7 @@ static INT XFONT_IsSubset(const fontInfo* match, const fontInfo* fi)
   /* 0 - keep both, 1 - keep match, -1 - keep fi */
 
   /* Compare dfItalic, Underline, Strikeout, Weight, Charset */
-  m = (BYTE*)&fi->df.dfPixWidth - (BYTE*)&fi->df.dfItalic;
+  m = (const BYTE*)&fi->df.dfPixWidth - (const BYTE*)&fi->df.dfItalic;
   if( memcmp(&match->df.dfItalic, &fi->df.dfItalic, m )) return 0;
 
   if( (!((fi->fi_flags & FI_SCALABLE) + (match->fi_flags & FI_SCALABLE))

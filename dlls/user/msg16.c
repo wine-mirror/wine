@@ -242,7 +242,7 @@ BOOL16 WINAPI TranslateMessage32_16( const MSG32_16 *msg, BOOL16 wHaveParamHigh 
  */
 BOOL16 WINAPI TranslateMessage16( const MSG16 *msg )
 {
-    return TranslateMessage32_16( (MSG32_16 *)msg, FALSE );
+    return TranslateMessage32_16( (const MSG32_16 *)msg, FALSE );
 }
 
 

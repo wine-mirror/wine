@@ -1041,7 +1041,7 @@ DWORD WINAPI RegSetValueW( HKEY hkey, LPCWSTR name, DWORD type, LPCWSTR data, DW
         if ((ret = RegCreateKeyW( hkey, name, &subkey )) != ERROR_SUCCESS) return ret;
     }
 
-    ret = RegSetValueExW( subkey, NULL, 0, REG_SZ, (LPBYTE)data,
+    ret = RegSetValueExW( subkey, NULL, 0, REG_SZ, (const BYTE*)data,
                           (strlenW( data ) + 1) * sizeof(WCHAR) );
     if (subkey != hkey) RegCloseKey( subkey );
     return ret;
@@ -1066,7 +1066,7 @@ DWORD WINAPI RegSetValueA( HKEY hkey, LPCSTR name, DWORD type, LPCSTR data, DWOR
     {
         if ((ret = RegCreateKeyA( hkey, name, &subkey )) != ERROR_SUCCESS) return ret;
     }
-    ret = RegSetValueExA( subkey, NULL, 0, REG_SZ, (LPBYTE)data, strlen(data)+1 );
+    ret = RegSetValueExA( subkey, NULL, 0, REG_SZ, (const BYTE*)data, strlen(data)+1 );
     if (subkey != hkey) RegCloseKey( subkey );
     return ret;
 }

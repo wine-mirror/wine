@@ -901,11 +901,11 @@ void drawStridedFast(LPDIRECT3DDEVICE8 iface, Direct3DVertexStridedData *sd,
         TRACE("glElements(%x, %d, %ld, ...)\n", glPrimType, NumVertexes, minIndex);
 #if 1  /* FIXME: Want to use DrawRangeElements, but wrong calculation! */
         glDrawElements(glPrimType, NumVertexes, idxSize==2?GL_UNSIGNED_SHORT:GL_UNSIGNED_INT,
-                      (char *)idxData+(idxSize * startIdx));
+                      (const char *)idxData+(idxSize * startIdx));
 #else
         glDrawRangeElements(glPrimType, minIndex, minIndex+NumVertexes-1, NumVertexes, 
                       idxSize==2?GL_UNSIGNED_SHORT:GL_UNSIGNED_INT, 
-                      (char *)idxData+(idxSize * startIdx));
+                      (const char *)idxData+(idxSize * startIdx));
 #endif
         checkGLcall("glDrawRangeElements");
 
@@ -946,8 +946,8 @@ void drawStridedSlow(LPDIRECT3DDEVICE8 iface, Direct3DVertexStridedData *sd,
 
     /* Variable Initialization */
     if (idxData != NULL) {
-        if (idxSize == 2) pIdxBufS = (short *) idxData;
-        else pIdxBufL = (long *) idxData;
+        if (idxSize == 2) pIdxBufS = (const short *) idxData;
+        else pIdxBufL = (const long *) idxData;
     }
 
     /* Ok, Work out which primitive is requested and how many vertexes that will be */
@@ -1257,8 +1257,8 @@ void drawStridedSoftwareVS(LPDIRECT3DDEVICE8 iface, Direct3DVertexStridedData *s
 
     /* Variable Initialization */
     if (idxData != NULL) {
-        if (idxSize == 2) pIdxBufS = (short *) idxData;
-        else pIdxBufL = (long *) idxData;
+        if (idxSize == 2) pIdxBufS = (const short *) idxData;
+        else pIdxBufL = (const long *) idxData;
     }
 
     /* Ok, Work out which primitive is requested and how many vertexes that will be */
@@ -1409,11 +1409,11 @@ void drawStridedHardwareVS(LPDIRECT3DDEVICE8 iface, Direct3DVertexStridedData *s
         TRACE("glElements(%x, %d, %ld, ...)\n", glPrimType, NumVertexes, minIndex);
 #if 1  /* FIXME: Want to use DrawRangeElements, but wrong calculation! */
         glDrawElements(glPrimType, NumVertexes, idxSize==2?GL_UNSIGNED_SHORT:GL_UNSIGNED_INT,
-                      (char *)idxData+(idxSize * startIdx));
+                      (const char *)idxData+(idxSize * startIdx));
 #else
         glDrawRangeElements(glPrimType, minIndex, minIndex+NumVertexes-1, NumVertexes, 
                       idxSize==2?GL_UNSIGNED_SHORT:GL_UNSIGNED_INT, 
-                      (char *)idxData+(idxSize * startIdx));
+                      (const char *)idxData+(idxSize * startIdx));
 #endif
         checkGLcall("glDrawRangeElements");
 

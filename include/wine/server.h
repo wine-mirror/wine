@@ -67,7 +67,7 @@ inline static unsigned int wine_server_call_err( void *req_ptr )
 /* get the size of the variable part of the returned reply */
 inline static size_t wine_server_reply_size( const void *reply )
 {
-    return ((struct reply_header *)reply)->reply_size;
+    return ((const struct reply_header *)reply)->reply_size;
 }
 
 /* add some data to be sent along with the request */

@@ -157,10 +157,10 @@ static CONST char* VertexShaderDeclRegister[] = {
 #endif
 	TRACE("        c[%lu] = (%8f, %8f, %8f, %8f)\n", 
 		constaddress, 
-		 *(float*) pToken, 
-		 *(float*) (pToken + 1), 
-		 *(float*) (pToken + 2), 
-		 *(float*) (pToken + 3));
+		 *(const float*) pToken, 
+		 *(const float*) (pToken + 1), 
+		 *(const float*) (pToken + 2), 
+		 *(const float*) (pToken + 3));
 	pToken += 4; 
 	++constaddress;
       }
@@ -434,10 +434,10 @@ HRESULT WINAPI IDirect3DDeviceImpl_FillVertexShaderInputSW(IDirect3DDevice8Impl*
       DWORD constaddress = ((token & D3DVSD_CONSTADDRESSMASK) >> D3DVSD_CONSTADDRESSSHIFT);
       ++pToken;
       for (i = 0; i < count; ++i) {
-	vshader->data->C[constaddress + i].x = *(float*)pToken;
-	vshader->data->C[constaddress + i].y = *(float*)(pToken + 1);
-	vshader->data->C[constaddress + i].z = *(float*)(pToken + 2);
-	vshader->data->C[constaddress + i].w = *(float*)(pToken + 3);
+	vshader->data->C[constaddress + i].x = *(const float*)pToken;
+	vshader->data->C[constaddress + i].y = *(const float*)(pToken + 1);
+	vshader->data->C[constaddress + i].z = *(const float*)(pToken + 2);
+	vshader->data->C[constaddress + i].w = *(const float*)(pToken + 3);
 	pToken += 4;
       }
 
@@ -456,7 +456,7 @@ HRESULT WINAPI IDirect3DDeviceImpl_FillVertexShaderInputSW(IDirect3DDevice8Impl*
       TRACE(" type : %ld, reg = %ld\n", type, reg);
       switch (type) {
       case D3DVSDT_FLOAT1:
-	x = *(float*) curPos;
+	x = *(const float*) curPos;
 	curPos = curPos + sizeof(float);
 	/**/
 	vshader->input.V[reg].x = x;
@@ -466,9 +466,9 @@ HRESULT WINAPI IDirect3DDeviceImpl_FillVertexShaderInputSW(IDirect3DDevice8Impl*
 	break;
 
       case D3DVSDT_FLOAT2:
-	x = *(float*) curPos;
+	x = *(const float*) curPos;
 	curPos = curPos + sizeof(float);
-	y = *(float*) curPos;
+	y = *(const float*) curPos;
 	curPos = curPos + sizeof(float);
 	/**/
 	vshader->input.V[reg].x = x;
@@ -478,11 +478,11 @@ HRESULT WINAPI IDirect3DDeviceImpl_FillVertexShaderInputSW(IDirect3DDevice8Impl*
 	break;
 
       case D3DVSDT_FLOAT3: 
-	x = *(float*) curPos;
+	x = *(const float*) curPos;
 	curPos = curPos + sizeof(float);
-	y = *(float*) curPos;
+	y = *(const float*) curPos;
 	curPos = curPos + sizeof(float);
-	z = *(float*) curPos;
+	z = *(const float*) curPos;
 	curPos = curPos + sizeof(float);
 	/**/
 	vshader->input.V[reg].x = x;
@@ -492,13 +492,13 @@ HRESULT WINAPI IDirect3DDeviceImpl_FillVertexShaderInputSW(IDirect3DDevice8Impl*
 	break;
 
       case D3DVSDT_FLOAT4: 
-	x = *(float*) curPos;
+	x = *(const float*) curPos;
 	curPos = curPos + sizeof(float);
-	y = *(float*) curPos;
+	y = *(const float*) curPos;
 	curPos = curPos + sizeof(float);
-	z = *(float*) curPos;
+	z = *(const float*) curPos;
 	curPos = curPos + sizeof(float);
-	w = *(float*) curPos;
+	w = *(const float*) curPos;
 	curPos = curPos + sizeof(float);
 	/**/
 	vshader->input.V[reg].x = x;
@@ -508,7 +508,7 @@ HRESULT WINAPI IDirect3DDeviceImpl_FillVertexShaderInputSW(IDirect3DDevice8Impl*
 	break;
 
       case D3DVSDT_D3DCOLOR: 
-	dw = *(DWORD*) curPos;
+	dw = *(const DWORD*) curPos;
 	curPos = curPos + sizeof(DWORD);
 	/**/
 	vshader->input.V[reg].x = (float) (((dw >> 16) & 0xFF) / 255.0f);
@@ -518,9 +518,9 @@ HRESULT WINAPI IDirect3DDeviceImpl_FillVertexShaderInputSW(IDirect3DDevice8Impl*
 	break;
 
       case D3DVSDT_SHORT2: 
-	u = *(SHORT*) curPos;
+	u = *(const SHORT*) curPos;
 	curPos = curPos + sizeof(SHORT);
-	v = *(SHORT*) curPos;
+	v = *(const SHORT*) curPos;
 	curPos = curPos + sizeof(SHORT);
 	/**/
 	vshader->input.V[reg].x = (float) u;
@@ -530,13 +530,13 @@ HRESULT WINAPI IDirect3DDeviceImpl_FillVertexShaderInputSW(IDirect3DDevice8Impl*
 	break;
 
       case D3DVSDT_SHORT4: 
-	u = *(SHORT*) curPos;
+	u = *(const SHORT*) curPos;
 	curPos = curPos + sizeof(SHORT);
-	v = *(SHORT*) curPos;
+	v = *(const SHORT*) curPos;
 	curPos = curPos + sizeof(SHORT);
-	r = *(SHORT*) curPos;
+	r = *(const SHORT*) curPos;
 	curPos = curPos + sizeof(SHORT);
-	t = *(SHORT*) curPos;
+	t = *(const SHORT*) curPos;
 	curPos = curPos + sizeof(SHORT);
 	/**/
 	vshader->input.V[reg].x = (float) u;
@@ -546,7 +546,7 @@ HRESULT WINAPI IDirect3DDeviceImpl_FillVertexShaderInputSW(IDirect3DDevice8Impl*
 	break;
 
       case D3DVSDT_UBYTE4: 
-	dw = *(DWORD*) curPos;
+	dw = *(const DWORD*) curPos;
 	curPos = curPos + sizeof(DWORD);
 	/**/
 	vshader->input.V[reg].x = (float) ((dw & 0x000F) >>  0);
@@ -621,10 +621,10 @@ HRESULT WINAPI IDirect3DDeviceImpl_FillVertexShaderInputArbHW(IDirect3DDevice8Im
       for (i = 0; i < count; ++i) {
         FIXME("Confirm this is correct handling of consts inside the hw vertex shader\n");
         GL_EXTCALL(glProgramEnvParameter4fvARB(GL_VERTEX_PROGRAM_ARB, constaddress+i, (GLfloat *)pToken));
-	vshader->data->C[constaddress + i].x = *(float*)pToken;
-	vshader->data->C[constaddress + i].y = *(float*)(pToken + 1);
-	vshader->data->C[constaddress + i].z = *(float*)(pToken + 2);
-	vshader->data->C[constaddress + i].w = *(float*)(pToken + 3);
+	vshader->data->C[constaddress + i].x = *(const float*)pToken;
+	vshader->data->C[constaddress + i].y = *(const float*)(pToken + 1);
+	vshader->data->C[constaddress + i].z = *(const float*)(pToken + 2);
+	vshader->data->C[constaddress + i].w = *(const float*)(pToken + 3);
 	pToken += 4;
       }
 

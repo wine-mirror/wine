@@ -58,7 +58,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(opengl);
 #define APIENTRY    WINAPI
 
 
-static void dump_PIXELFORMATDESCRIPTOR(PIXELFORMATDESCRIPTOR *ppfd) {
+static void dump_PIXELFORMATDESCRIPTOR(const PIXELFORMATDESCRIPTOR *ppfd) {
   DPRINTF("  - size / version : %d / %d\n", ppfd->nSize, ppfd->nVersion);
   DPRINTF("  - dwFlags : ");
 #define TEST_AND_DUMP(t,tv) if ((t) & (tv)) DPRINTF(#tv " ")
@@ -172,7 +172,7 @@ int X11DRV_ChoosePixelFormat(X11DRV_PDEVICE *physDev,
   if (TRACE_ON(opengl)) {
     TRACE("(%p,%p)\n", physDev, ppfd);
 
-    dump_PIXELFORMATDESCRIPTOR((PIXELFORMATDESCRIPTOR *) ppfd);
+    dump_PIXELFORMATDESCRIPTOR((const PIXELFORMATDESCRIPTOR *) ppfd);
   }
 
   if (ppfd->dwFlags & PFD_DRAW_TO_BITMAP) {

@@ -301,13 +301,13 @@ int WINAPI wglGetLayerPaletteEntries(HDC hdc,
  *		wglGetProcAddress (OPENGL32.@)
  */
 static int compar(const void *elt_a, const void *elt_b) {
-  return strcmp(((OpenGL_extension *) elt_a)->name,
-		((OpenGL_extension *) elt_b)->name);
+  return strcmp(((const OpenGL_extension *) elt_a)->name,
+		((const OpenGL_extension *) elt_b)->name);
 }
 
 static int wgl_compar(const void *elt_a, const void *elt_b) {
-  return strcmp(((WGL_extension *) elt_a)->func_name,
-		((WGL_extension *) elt_b)->func_name);
+  return strcmp(((const WGL_extension *) elt_a)->func_name,
+		((const WGL_extension *) elt_b)->func_name);
 }
 
 void* WINAPI wglGetProcAddress(LPCSTR  lpszProc) {

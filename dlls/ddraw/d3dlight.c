@@ -112,7 +112,7 @@ Main_IDirect3DLightImpl_1_SetLight(LPDIRECT3DLIGHT iface,
     if ((((LPD3DLIGHT2)lpLight)->dwFlags & D3DLIGHT_NO_SPECULAR) != 0)	    
       light7->dcvSpecular    = lpLight->dcvColor;
     else
-      light7->dcvSpecular    = *(D3DCOLORVALUE*)zero_value;	    
+      light7->dcvSpecular    = *(const D3DCOLORVALUE*)zero_value;	    
     light7->dcvAmbient     = lpLight->dcvColor;
     light7->dvPosition     = lpLight->dvPosition;
     light7->dvDirection    = lpLight->dvDirection;

@@ -177,7 +177,7 @@ static void test_enum_value(void)
     /* Unicode tests */
 
     SetLastError(0);
-    res = RegSetValueExW( hkey_main, testW, 0, REG_SZ, (BYTE *)foobarW, 7*sizeof(WCHAR) );
+    res = RegSetValueExW( hkey_main, testW, 0, REG_SZ, (const BYTE *)foobarW, 7*sizeof(WCHAR) );
     if (res==0 && GetLastError()==ERROR_CALL_NOT_IMPLEMENTED)
         goto CLEANUP;
     ok( res == 0, "RegSetValueExW failed error %ld\n", res );

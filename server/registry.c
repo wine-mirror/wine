@@ -1709,7 +1709,7 @@ DECL_HANDLER(create_key)
         }
         else
         {
-            const WCHAR *class_ptr = (WCHAR *)((char *)get_req_data() + req->namelen);
+            const WCHAR *class_ptr = (const WCHAR *)((const char *)get_req_data() + req->namelen);
 
             if ((class = req_strdupW( req, class_ptr, get_req_data_size() - req->namelen )))
             {
@@ -1792,7 +1792,7 @@ DECL_HANDLER(set_key_value)
     if ((key = get_hkey_obj( req->hkey, KEY_SET_VALUE )))
     {
         size_t datalen = get_req_data_size() - req->namelen;
-        const char *data = (char *)get_req_data() + req->namelen;
+        const char *data = (const char *)get_req_data() + req->namelen;
 
         set_value( key, name, req->type, data, datalen );
         release_object( key );

@@ -401,7 +401,7 @@ DEVMODEW * WINAPI GdiConvertToDevmodeW(const DEVMODEA *dmA)
     WORD dmW_size;
 
     dmW_size = dmA->dmSize + CCHDEVICENAME;
-    if (dmA->dmSize >= (char *)dmA->dmFormName - (char *)dmA + CCHFORMNAME)
+    if (dmA->dmSize >= (const char *)dmA->dmFormName - (const char *)dmA + CCHFORMNAME)
         dmW_size += CCHFORMNAME;
 
     dmW = HeapAlloc(GetProcessHeap(), 0, dmW_size + dmA->dmDriverExtra);
@@ -412,16 +412,16 @@ DEVMODEW * WINAPI GdiConvertToDevmodeW(const DEVMODEA *dmA)
     /* copy slightly more, to avoid long computations */
     memcpy(&dmW->dmSpecVersion, &dmA->dmSpecVersion, dmA->dmSize - CCHDEVICENAME);
 
-    if (dmA->dmSize >= (char *)dmA->dmFormName - (char *)dmA + CCHFORMNAME)
+    if (dmA->dmSize >= (const char *)dmA->dmFormName - (const char *)dmA + CCHFORMNAME)
     {
         MultiByteToWideChar(CP_ACP, 0, dmA->dmFormName, CCHFORMNAME,
                                        dmW->dmFormName, CCHFORMNAME);
-        if (dmA->dmSize > (char *)&dmA->dmLogPixels - (char *)dmA)
-            memcpy(&dmW->dmLogPixels, &dmA->dmLogPixels, dmA->dmSize - ((char *)&dmA->dmLogPixels - (char *)dmA));
+        if (dmA->dmSize > (const char *)&dmA->dmLogPixels - (const char *)dmA)
+            memcpy(&dmW->dmLogPixels, &dmA->dmLogPixels, dmA->dmSize - ((const char *)&dmA->dmLogPixels - (const char *)dmA));
     }
 
     if (dmA->dmDriverExtra)
-        memcpy((char *)dmW + dmW_size, (char *)dmA + dmA->dmSize, dmA->dmDriverExtra);
+        memcpy((char *)dmW + dmW_size, (const char *)dmA + dmA->dmSize, dmA->dmDriverExtra);
 
     dmW->dmSize = dmW_size;
 
@@ -636,7 +636,7 @@ INT WINAPI Escape( HDC hdc, INT escape, INT in_count, LPCSTR in_data, LPVOID out
 
     case QUERYESCSUPPORT:
         {
-            INT *ptr = (INT *)in_data;
+            const INT *ptr = (const INT *)in_data;
             if (in_count < sizeof(INT)) return 0;
             switch(*ptr)
             {

@@ -357,7 +357,7 @@ static HRESULT register_clsids(int count, const register_info * pRegInfo, LPCWST
 	                   wcszThreadingModel,
 			   0,
 			   REG_SZ,
-			   (LPVOID)pszThreadingModel,
+			   (LPCVOID)pszThreadingModel,
 			   (lstrlenW(pszThreadingModel) + 1) * sizeof(WCHAR));
             RegCloseKey(hkeyInproc32);
         }

@@ -122,9 +122,9 @@ static LONG CRYPT_SIPWriteFunction( LPGUID guid, LPCWSTR szKey,
         return r;
 
     /* write the values */
-    RegSetValueExW( hKey, szFuncName, 0, REG_SZ, (LPBYTE) szFunction,
+    RegSetValueExW( hKey, szFuncName, 0, REG_SZ, (const BYTE*) szFunction,
                     ( lstrlenW( szFunction ) + 1 ) * sizeof (WCHAR) );
-    RegSetValueExW( hKey, szDllName, 0, REG_SZ, (LPBYTE) szDll,
+    RegSetValueExW( hKey, szDllName, 0, REG_SZ, (const BYTE*) szDll,
                     ( lstrlenW( szDll ) + 1) * sizeof (WCHAR) );
 
     RegCloseKey( hKey );
@@ -248,7 +248,7 @@ BOOL WINAPI CryptRegisterOIDFunction(DWORD dwEncodingType, LPCSTR pszFuncName,
         /* write the values */
         RegSetValueExA( hKey, "FuncName", 0, REG_SZ, pszOverrideFuncName,
                         lstrlenA( pszOverrideFuncName ) + 1 );
-        RegSetValueExW( hKey, szDllName, 0, REG_SZ, (LPBYTE) pwszDll,
+        RegSetValueExW( hKey, szDllName, 0, REG_SZ, (const BYTE*) pwszDll,
                         (lstrlenW( pwszDll ) + 1) * sizeof (WCHAR) );
 
         RegCloseKey( hKey );

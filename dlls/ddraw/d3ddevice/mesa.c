@@ -1288,7 +1288,7 @@ inline static void handle_diffuse_and_specular(STATEBLOCK *sb, BYTE *fog_table, 
 inline static void handle_texture(D3DVALUE *coords) {
     glTexCoord2fv(coords);
 }
-inline static void handle_textures(D3DVALUE *coords, int tex_stage) {
+inline static void handle_textures(const D3DVALUE *coords, int tex_stage) {
     if (GL_extensions.glMultiTexCoord2fv) {
 	GL_extensions.glMultiTexCoord2fv(GL_TEXTURE0_WINE + tex_stage, coords);
     } else {
@@ -1515,7 +1515,7 @@ static void draw_primitive_strided(IDirect3DDeviceImpl *This,
 		for (tex_stage = 0; tex_stage < num_active_stages; tex_stage++) {
 		    int tex_index = This->state_block.texture_stage_state[tex_stage][D3DTSS_TEXCOORDINDEX - 1] & 0x0000FFFF;
 		    if (tex_index >= num_tex_index) {
-			handle_textures((D3DVALUE *) no_index, tex_stage);
+			handle_textures((const D3DVALUE *) no_index, tex_stage);
 		    } else {
 			D3DVALUE *tex_coord =
 			    (D3DVALUE *) (((char *) lpD3DDrawPrimStrideData->textureCoords[tex_index].lpvData) + 

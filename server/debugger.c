@@ -641,7 +641,7 @@ DECL_HANDLER(queue_exception_event)
         struct debug_event_exception data;
         struct debug_event *event;
         const CONTEXT *context = get_req_data();
-        EXCEPTION_RECORD *rec = (EXCEPTION_RECORD *)(context + 1);
+        const EXCEPTION_RECORD *rec = (const EXCEPTION_RECORD *)(context + 1);
 
         if (get_req_data_size() < sizeof(*rec) + sizeof(*context))
         {

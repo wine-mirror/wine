@@ -153,14 +153,14 @@ HRESULT WINAPI DMORegister(
         goto lend;
 
     /* Set default Name value */
-    hres = RegSetValueExW(hkey, NULL, 0, REG_SZ, (LPBYTE) szName, 
+    hres = RegSetValueExW(hkey, NULL, 0, REG_SZ, (const BYTE*) szName, 
         (strlenW(szName) + 1)) * sizeof(WCHAR);
     /* Set InputTypes */
     hres = RegSetValueExW(hkey, szDMOInputType, 0, REG_BINARY, 
-        (LPBYTE) pInTypes, cInTypes * sizeof(DMO_PARTIAL_MEDIATYPE));
+        (const BYTE*) pInTypes, cInTypes * sizeof(DMO_PARTIAL_MEDIATYPE));
     /* Set OutputTypes */
     hres = RegSetValueExW(hkey, szDMOOutputType, 0, REG_BINARY, 
-        (LPBYTE) pOutTypes, cOutTypes * sizeof(DMO_PARTIAL_MEDIATYPE));
+        (const BYTE*) pOutTypes, cOutTypes * sizeof(DMO_PARTIAL_MEDIATYPE));
 
     if (dwFlags & DMO_REGISTERF_IS_KEYED)
     {

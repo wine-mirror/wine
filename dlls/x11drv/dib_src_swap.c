@@ -66,11 +66,11 @@ static void convert_5x5_asis_src_byteswap(int width, int height,
         }
         if(width&1) {
             /* And the odd pixel */
-            WORD srcval = *(WORD*)srcpixel;
+            WORD srcval = *(const WORD*)srcpixel;
             *(WORD*)dstpixel = ((srcval << 8) & 0xff00) |
                                ((srcval >> 8) & 0x00ff);
         }
-        srcbits = (char*)srcbits + srclinebytes;
+        srcbits = (const char*)srcbits + srclinebytes;
         dstbits = (char*)dstbits + dstlinebytes;
     }
 }
@@ -98,13 +98,13 @@ static void convert_555_reverse_src_byteswap(int width, int height,
         if (width&1) {
             /* And the the odd pixel */
             WORD srcval;
-            srcval=*((WORD*)srcpixel);
+            srcval=*((const WORD*)srcpixel);
             *((WORD*)dstpixel)=((srcval >>  2) & 0x001f) | /* h */
                                ((srcval <<  8) & 0x0300) | /* g - 2 bits */
                                ((srcval >>  8) & 0x00e0) | /* g - 3 bits */
                                ((srcval <<  2) & 0x7c00);  /* l */
         }
-        srcbits = (char*)srcbits + srclinebytes;
+        srcbits = (const char*)srcbits + srclinebytes;
         dstbits = (char*)dstbits + dstlinebytes;
     }
 }
@@ -132,13 +132,13 @@ static void convert_555_to_565_asis_src_byteswap(int width, int height,
         if (width&1) {
             /* And the the odd pixel */
             WORD srcval;
-            srcval=*((WORD*)srcpixel);
+            srcval=*((const WORD*)srcpixel);
             *((WORD*)dstpixel)=((srcval << 9) & 0xfe00) | /* h, g - 2bits*/
                                ((srcval >> 7) & 0x01c0) | /* g - 3 bits */
                                ((srcval << 4) & 0x0020) | /* g - 1 bit */
                                ((srcval >> 8) & 0x001f);  /* l */
         }
-        srcbits = (char*)srcbits + srclinebytes;
+        srcbits = (const char*)srcbits + srclinebytes;
         dstbits = (char*)dstbits + dstlinebytes;
     }
 }
@@ -167,14 +167,14 @@ static void convert_555_to_565_reverse_src_byteswap(int width, int height,
         if (width&1) {
             /* And the the odd pixel */
             WORD srcval;
-            srcval=*((WORD*)srcpixel);
+            srcval=*((const WORD*)srcpixel);
             *((WORD*)dstpixel)=((srcval >>  2) & 0x001f) | /* h */
                                ((srcval <<  9) & 0x0600) | /* g - 2 bits  */
                                ((srcval >>  7) & 0x01c0) | /* g - 3 bits */
                                ((srcval <<  4) & 0x0020) | /* g - 1 bit */
                                ((srcval <<  3) & 0xf800);  /* l */
         }
-        srcbits = (char*)srcbits + srclinebytes;
+        srcbits = (const char*)srcbits + srclinebytes;
         dstbits = (char*)dstbits + dstlinebytes;
     }
 }
@@ -203,7 +203,7 @@ static void convert_555_to_888_asis_src_byteswap(int width, int height,
                         ((srcval >>  4) & 0x07);  /* h - 3 bits */
             dstpixel+=3;
         }
-        srcbits = (char*)srcbits + srclinebytes;
+        srcbits = (const char*)srcbits + srclinebytes;
         dstbits = (char*)dstbits + dstlinebytes;
     }
 }
@@ -232,7 +232,7 @@ static void convert_555_to_888_reverse_src_byteswap(int width, int height,
                         ((srcval >> 10) & 0x07);  /* l - 3 bits */
             dstpixel+=3;
         }
-        srcbits = (char*)srcbits + srclinebytes;
+        srcbits = (const char*)srcbits + srclinebytes;
         dstbits = (char*)dstbits + dstlinebytes;
     }
 }
@@ -260,7 +260,7 @@ static void convert_555_to_0888_asis_src_byteswap(int width, int height,
                         ((srcval >>  5) & 0x0000f8) | /* l */
                         ((srcval >> 10) & 0x000007);  /* l - 3 bits */
         }
-        srcbits = (char*)srcbits + srclinebytes;
+        srcbits = (const char*)srcbits + srclinebytes;
         dstbits = (char*)dstbits + dstlinebytes;
     }
 }
@@ -288,7 +288,7 @@ static void convert_555_to_0888_reverse_src_byteswap(int width, int height,
                         ((srcval << 11) & 0xf80000) | /* l */
                         ((srcval <<  6) & 0x070000);  /* l - 3 bits */
         }
-        srcbits = (char*)srcbits + srclinebytes;
+        srcbits = (const char*)srcbits + srclinebytes;
         dstbits = (char*)dstbits + dstlinebytes;
     }
 }
@@ -351,7 +351,7 @@ static void convert_5x5_to_any0888_src_byteswap(int width, int height,
                         (green << gLeftShift) |
                         (blue  << bLeftShift);
         }
-        srcbits = (char*)srcbits + srclinebytes;
+        srcbits = (const char*)srcbits + srclinebytes;
         dstbits = (char*)dstbits + dstlinebytes;
     }
 }
@@ -383,13 +383,13 @@ static void convert_565_reverse_src_byteswap(int width, int height,
         if (width&1) {
             /* And the the odd pixel */
             WORD srcval;
-            srcval=*((WORD*)srcpixel);
+            srcval=*((const WORD*)srcpixel);
             *((WORD*)dstpixel)=((srcval <<  3) & 0xf800) | /* l */
                                ((srcval <<  8) & 0x0700) | /* g - 3 bits */
                                ((srcval >>  8) & 0x00e0) | /* g - 3 bits */
                                ((srcval >>  3) & 0x001f);  /* h */
         }
-        srcbits = (char*)srcbits + srclinebytes;
+        srcbits = (const char*)srcbits + srclinebytes;
         dstbits = (char*)dstbits + dstlinebytes;
     }
 }
@@ -416,12 +416,12 @@ static void convert_565_to_555_asis_src_byteswap(int width, int height,
         if (width&1) {
             /* And the the odd pixel */
             WORD srcval;
-            srcval=*((WORD*)srcpixel);
+            srcval=*((const WORD*)srcpixel);
             *((WORD*)dstpixel)=((srcval << 7) & 0x7f80) | /* h, g - 3 bits */
                                ((srcval >> 9) & 0x0060) | /* g - 2 bits */
                                ((srcval >> 8) & 0x001f);  /* l */
         }
-        srcbits = (char*)srcbits + srclinebytes;
+        srcbits = (const char*)srcbits + srclinebytes;
         dstbits = (char*)dstbits + dstlinebytes;
     }
 }
@@ -449,13 +449,13 @@ static void convert_565_to_555_reverse_src_byteswap(int width, int height,
         if (width&1) {
             /* And the the odd pixel */
             WORD srcval;
-            srcval=*((WORD*)srcpixel);
+            srcval=*((const WORD*)srcpixel);
             *((WORD*)dstpixel)=((srcval >>  3) & 0x001f) | /* h */
                                ((srcval >>  9) & 0x0060) | /* g - 2 bits */
                                ((srcval <<  7) & 0x0380) | /* g - 3 bits */
                                ((srcval <<  2) & 0x7c00);  /* l */
         }
-        srcbits = (char*)srcbits + srclinebytes;
+        srcbits = (const char*)srcbits + srclinebytes;
         dstbits = (char*)dstbits + dstlinebytes;
     }
 }
@@ -483,7 +483,7 @@ static void convert_565_to_888_asis_src_byteswap(int width, int height,
                         ((srcval >>  5) & 0x07);  /* h - 3 bits */
             dstpixel+=3;
         }
-        srcbits = (char*)srcbits + srclinebytes;
+        srcbits = (const char*)srcbits + srclinebytes;
         dstbits = (char*)dstbits + dstlinebytes;
     }
 }
@@ -511,7 +511,7 @@ static void convert_565_to_888_reverse_src_byteswap(int width, int height,
                         ((srcval >> 10) & 0x07);  /* l - 3 bits */
             dstpixel+=3;
         }
-        srcbits = (char*)srcbits + srclinebytes;
+        srcbits = (const char*)srcbits + srclinebytes;
         dstbits = (char*)dstbits + dstlinebytes;
     }
 }
@@ -538,7 +538,7 @@ static void convert_565_to_0888_asis_src_byteswap(int width, int height,
                         ((srcval >>  5) & 0x0000f8) | /* l */
                         ((srcval >> 10) & 0x000007);  /* l - 3 bits */
         }
-        srcbits = (char*)srcbits + srclinebytes;
+        srcbits = (const char*)srcbits + srclinebytes;
         dstbits = (char*)dstbits + dstlinebytes;
     }
 }
@@ -565,7 +565,7 @@ static void convert_565_to_0888_reverse_src_byteswap(int width, int height,
                         ((srcval << 11) & 0xf80000) | /* l */
                         ((srcval <<  6) & 0x070000);  /* l - 3 bits */
         }
-        srcbits = (char*)srcbits + srclinebytes;
+        srcbits = (const char*)srcbits + srclinebytes;
         dstbits = (char*)dstbits + dstlinebytes;
     }
 }
@@ -582,13 +582,13 @@ static void convert_888_asis_src_byteswap(int width, int height,
 
     for (y=0; y<height; y++) {
         for(x = 0; x < ((width+1)*3/4); x++) {
-            DWORD srcval = *((DWORD*)srcbits + x);
+            DWORD srcval = *((const DWORD*)srcbits + x);
             *((DWORD*)dstbits + x) = ((srcval << 24) & 0xff000000) |
                                      ((srcval <<  8) & 0x00ff0000) |
                                      ((srcval >>  8) & 0x0000ff00) |
                                      ((srcval >> 24) & 0x000000ff);
         }
-        srcbits = (char*)srcbits + srclinebytes;
+        srcbits = (const char*)srcbits + srclinebytes;
         dstbits = (char*)dstbits + dstlinebytes;
     }
 }
@@ -636,7 +636,7 @@ static void convert_888_reverse_src_byteswap(int width, int height,
             }
         }
 
-        srcbits = (char*)srcbits + srclinebytes;
+        srcbits = (const char*)srcbits + srclinebytes;
         dstbits = (char*)dstbits + dstlinebytes;
     }
 }
@@ -696,7 +696,7 @@ static void convert_888_to_555_asis_src_byteswap(int width, int height,
                 srcbyte+=3;
             }
         }
-        srcbits = (char*)srcbits + srclinebytes;
+        srcbits = (const char*)srcbits + srclinebytes;
         dstbits = (char*)dstbits + dstlinebytes;
     }
 }
@@ -755,7 +755,7 @@ static void convert_888_to_555_reverse_src_byteswap(int width, int height,
                 srcbyte+=3;
             }
         }
-        srcbits = (char*)srcbits + srclinebytes;
+        srcbits = (const char*)srcbits + srclinebytes;
         dstbits = (char*)dstbits + dstlinebytes;
     }
 }
@@ -814,7 +814,7 @@ static void convert_888_to_565_asis_src_byteswap(int width, int height,
                 srcbyte+=3;
             }
         }
-        srcbits = (char*)srcbits + srclinebytes;
+        srcbits = (const char*)srcbits + srclinebytes;
         dstbits = (char*)dstbits + dstlinebytes;
     }
 }
@@ -873,7 +873,7 @@ static void convert_888_to_565_reverse_src_byteswap(int width, int height,
                 srcbyte+=3;
             }
         }
-        srcbits = (char*)srcbits + srclinebytes;
+        srcbits = (const char*)srcbits + srclinebytes;
         dstbits = (char*)dstbits + dstlinebytes;
     }
 }
@@ -919,11 +919,11 @@ static void convert_888_to_0888_asis_src_byteswap(int width, int height,
                 DWORD srcval;
                 FLIP_DWORD(srcarray+x);
                 srcval=*srcpixel;
-                srcpixel=(LPDWORD)(((char*)srcpixel)+3);
+                srcpixel=(const DWORD*)(((const char*)srcpixel)+3);
                 *dstpixel++=( srcval         & 0x00ffffff); /* h, g, l */
             }
         }
-        srcbits = (char*)srcbits + srclinebytes;
+        srcbits = (const char*)srcbits + srclinebytes;
         dstbits = (char*)dstbits + dstlinebytes;
     }
 }
@@ -976,13 +976,13 @@ static void convert_888_to_0888_reverse_src_byteswap(int width, int height,
                 DWORD srcval;
                 FLIP_DWORD(srcarray+x);
                 srcval=*srcpixel;
-                srcpixel=(LPDWORD)(((char*)srcpixel)+3);
+                srcpixel=(const DWORD*)(((const char*)srcpixel)+3);
                 *dstpixel++=((srcval  >> 16) & 0x0000ff) | /* h */
                             ( srcval         & 0x00ff00) | /* g */
                             ((srcval  << 16) & 0xff0000);  /* l */
             }
         }
-        srcbits = (char*)srcbits + srclinebytes;
+        srcbits = (const char*)srcbits + srclinebytes;
         dstbits = (char*)dstbits + dstlinebytes;
     }
 }
@@ -1031,13 +1031,13 @@ static void convert_rgb888_to_any0888_src_byteswap(int width, int height,
                 DWORD srcval;
                 FLIP_DWORD(srcarray+x);
                 srcval=*srcpixel;
-                srcpixel=(LPDWORD)(((char*)srcpixel)+3);
+                srcpixel=(const DWORD*)(((const char*)srcpixel)+3);
                 *dstpixel++=(((srcval >>  0) & 0xff) << bLeftShift) | /* b */
                             (((srcval >>  8) & 0xff) << gLeftShift) | /* g */
                             (((srcval >> 16) & 0xff) << rLeftShift);  /* r */
             }
         }
-        srcbits = (char*)srcbits + srclinebytes;
+        srcbits = (const char*)srcbits + srclinebytes;
         dstbits = (char*)dstbits + dstlinebytes;
     }
 }
@@ -1086,13 +1086,13 @@ static void convert_bgr888_to_any0888_src_byteswap(int width, int height,
                 DWORD srcval;
                 FLIP_DWORD(srcarray+x);
                 srcval=*srcpixel;
-                srcpixel=(LPDWORD)(((char*)srcpixel)+3);
+                srcpixel=(const DWORD*)(((const char*)srcpixel)+3);
                 *dstpixel++=(((srcval >>  0) & 0xff) << rLeftShift) | /* r */
                             (((srcval >>  8) & 0xff) << gLeftShift) | /* g */
                             (((srcval >> 16) & 0xff) << bLeftShift);  /* b */
             }
         }
-        srcbits = (char*)srcbits + srclinebytes;
+        srcbits = (const char*)srcbits + srclinebytes;
         dstbits = (char*)dstbits + dstlinebytes;
     }
 }
@@ -1110,13 +1110,13 @@ static void convert_0888_asis_src_byteswap(int width, int height,
 
     for (y=0; y<height; y++) {
         for(x = 0; x < width; x++) {
-            DWORD srcval = *((DWORD*)srcbits + x);
+            DWORD srcval = *((const DWORD*)srcbits + x);
             *((DWORD*)dstbits + x) = ((srcval << 24) & 0xff000000) |
                                      ((srcval <<  8) & 0x00ff0000) |
                                      ((srcval >>  8) & 0x0000ff00) |
                                      ((srcval >> 24) & 0x000000ff);
         }
-        srcbits = (char*)srcbits + srclinebytes;
+        srcbits = (const char*)srcbits + srclinebytes;
         dstbits = (char*)dstbits + dstlinebytes;
     }
 }
@@ -1137,7 +1137,7 @@ static void convert_0888_reverse_src_byteswap(int width, int height,
             srcval=*srcpixel++;
             *dstpixel++=((srcval >> 8) & 0x00ffffff);
         }
-        srcbits = (char*)srcbits + srclinebytes;
+        srcbits = (const char*)srcbits + srclinebytes;
         dstbits = (char*)dstbits + dstlinebytes;
     }
 }
@@ -1171,7 +1171,7 @@ static void convert_0888_any_src_byteswap(int width, int height,
                         (((srcval >> gRightShift) & 0xff) << gLeftShift) |
                         (((srcval >> bRightShift) & 0xff) << bLeftShift);
         }
-        srcbits = (char*)srcbits + srclinebytes;
+        srcbits = (const char*)srcbits + srclinebytes;
         dstbits = (char*)dstbits + dstlinebytes;
     }
 }
@@ -1194,7 +1194,7 @@ static void convert_0888_to_555_asis_src_byteswap(int width, int height,
                         ((srcval >> 14) & 0x03e0) | /* g */
                         ((srcval >> 27) & 0x001f);  /* l */
         }
-        srcbits = (char*)srcbits + srclinebytes;
+        srcbits = (const char*)srcbits + srclinebytes;
         dstbits = (char*)dstbits + dstlinebytes;
     }
 }
@@ -1217,7 +1217,7 @@ static void convert_0888_to_555_reverse_src_byteswap(int width, int height,
                         ((srcval >> 14) & 0x03e0) | /* g */
                         ((srcval >> 17) & 0x7c00);  /* l */
         }
-        srcbits = (char*)srcbits + srclinebytes;
+        srcbits = (const char*)srcbits + srclinebytes;
         dstbits = (char*)dstbits + dstlinebytes;
     }
 }
@@ -1240,7 +1240,7 @@ static void convert_0888_to_565_asis_src_byteswap(int width, int height,
                         ((srcval >> 13) & 0x07e0) | /* g */
                         ((srcval >> 27) & 0x001f);  /* l */
         }
-        srcbits = (char*)srcbits + srclinebytes;
+        srcbits = (const char*)srcbits + srclinebytes;
         dstbits = (char*)dstbits + dstlinebytes;
     }
 }
@@ -1263,7 +1263,7 @@ static void convert_0888_to_565_reverse_src_byteswap(int width, int height,
                         ((srcval >> 13) & 0x07e0) | /* g */
                         ((srcval >> 16) & 0xf800);  /* l */
         }
-        srcbits = (char*)srcbits + srclinebytes;
+        srcbits = (const char*)srcbits + srclinebytes;
         dstbits = (char*)dstbits + dstlinebytes;
     }
 }
@@ -1314,7 +1314,7 @@ static void convert_any0888_to_5x5_src_byteswap(int width, int height,
                         (((srcval >> gRightShift) & gdst) << gLeftShift) |
                         (((srcval >> bRightShift) & bdst) << bLeftShift);
         }
-        srcbits = (char*)srcbits + srclinebytes;
+        srcbits = (const char*)srcbits + srclinebytes;
         dstbits = (char*)dstbits + dstlinebytes;
     }
 }
@@ -1364,7 +1364,7 @@ static void convert_0888_to_888_asis_src_byteswap(int width, int height,
             dstbyte+=sizeof(WORD);
             *dstbyte++=srcval >> 16;                    /* l */
         }
-        srcbits = (char*)srcbits + srclinebytes;
+        srcbits = (const char*)srcbits + srclinebytes;
         dstbits = (char*)dstbits + dstlinebytes;
     }
 }
@@ -1410,7 +1410,7 @@ static void convert_0888_to_888_reverse_src_byteswap(int width, int height,
             dstbyte+=sizeof(WORD);
             *dstbyte++= srcval >> 24;                     /* l */
         }
-        srcbits = (char*)srcbits + srclinebytes;
+        srcbits = (const char*)srcbits + srclinebytes;
         dstbits = (char*)dstbits + dstlinebytes;
     }
 }
@@ -1440,7 +1440,7 @@ static void convert_any0888_to_rgb888_src_byteswap(int width, int height,
             dstpixel[2]=(srcval >> rRightShift); /* r */
             dstpixel+=3;
         }
-        srcbits = (char*)srcbits + srclinebytes;
+        srcbits = (const char*)srcbits + srclinebytes;
         dstbits = (char*)dstbits + dstlinebytes;
     }
 }
@@ -1470,7 +1470,7 @@ static void convert_any0888_to_bgr888_src_byteswap(int width, int height,
             dstpixel[2]=(srcval >> bRightShift); /* b */
             dstpixel+=3;
         }
-        srcbits = (char*)srcbits + srclinebytes;
+        srcbits = (const char*)srcbits + srclinebytes;
         dstbits = (char*)dstbits + dstlinebytes;
     }
 }

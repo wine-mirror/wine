@@ -48,7 +48,7 @@ INT PSDRV_ExtEscape( PSDRV_PDEVICE *physDev, INT nEscape, INT cbInput, LPCVOID i
 	    WARN("cbInput < sizeof(INT) (=%d) for QUERYESCSUPPORT\n", cbInput);
 	    return 0;
 	} else {
-	    UINT num = *(UINT *)in_data;
+	    UINT num = *(const UINT *)in_data;
 	    TRACE("QUERYESCSUPPORT for %d\n", num);
 
 	    switch(num) {
@@ -120,7 +120,7 @@ INT PSDRV_ExtEscape( PSDRV_PDEVICE *physDev, INT nEscape, INT cbInput, LPCVOID i
 
     case SETLINECAP:
         {
-            INT newCap = *(INT *)in_data;
+            INT newCap = *(const INT *)in_data;
             if(cbInput != sizeof(INT)) {
                 WARN("cbInput != sizeof(INT) (=%d) for SETLINECAP\n", cbInput);
 		return 0;
@@ -131,7 +131,7 @@ INT PSDRV_ExtEscape( PSDRV_PDEVICE *physDev, INT nEscape, INT cbInput, LPCVOID i
 
     case SETLINEJOIN:
         {
-            INT newJoin = *(INT *)in_data;
+            INT newJoin = *(const INT *)in_data;
             if(cbInput != sizeof(INT)) {
                 WARN("cbInput != sizeof(INT) (=%d) for SETLINEJOIN\n", cbInput);
 		return 0;
@@ -142,7 +142,7 @@ INT PSDRV_ExtEscape( PSDRV_PDEVICE *physDev, INT nEscape, INT cbInput, LPCVOID i
 
     case SETMITERLIMIT:
         {
-            INT newLimit = *(INT *)in_data;
+            INT newLimit = *(const INT *)in_data;
             if(cbInput != sizeof(INT)) {
                 WARN("cbInput != sizeof(INT) (=%d) for SETMITERLIMIT\n", cbInput);
 		return 0;
@@ -172,7 +172,7 @@ INT PSDRV_ExtEscape( PSDRV_PDEVICE *physDev, INT nEscape, INT cbInput, LPCVOID i
 
     case EXT_DEVICE_CAPS:
         {
-            UINT cap = *(UINT *)in_data;
+            UINT cap = *(const UINT *)in_data;
             if(cbInput != sizeof(UINT)) {
                 WARN("cbInput != sizeof(UINT) (=%d) for EXT_DEVICE_CAPS\n", cbInput);
 		return 0;
@@ -195,7 +195,7 @@ INT PSDRV_ExtEscape( PSDRV_PDEVICE *physDev, INT nEscape, INT cbInput, LPCVOID i
 
     case EPSPRINTING:
 	{
-            UINT epsprint = *(UINT*)in_data;
+            UINT epsprint = *(const UINT*)in_data;
 	    /* FIXME: In this mode we do not need to send page intros and page
 	     * ends according to the doc. But I just ignore that detail
 	     * for now.
@@ -221,14 +221,14 @@ INT PSDRV_ExtEscape( PSDRV_PDEVICE *physDev, INT nEscape, INT cbInput, LPCVOID i
                 WriteSpool16(physDev->job.hJob, (LPSTR)psbegindocument, sizeof(psbegindocument)-1);
                 physDev->job.in_passthrough = TRUE;
             }
-            return WriteSpool16(physDev->job.hJob,((char*)in_data)+2,*(WORD*)in_data);
+            return WriteSpool16(physDev->job.hJob,((char*)in_data)+2,*(const WORD*)in_data);
         }
 
     case POSTSCRIPT_IGNORE:
       {
 	BOOL ret = physDev->job.quiet;
-        TRACE("POSTSCRIPT_IGNORE %d\n", *(short*)in_data);
-	physDev->job.quiet = *(short*)in_data;
+        TRACE("POSTSCRIPT_IGNORE %d\n", *(const short*)in_data);
+	physDev->job.quiet = *(const short*)in_data;
 	return ret;
       }
 
@@ -249,7 +249,7 @@ INT PSDRV_ExtEscape( PSDRV_PDEVICE *physDev, INT nEscape, INT cbInput, LPCVOID i
 
     case END_PATH:
       {
-	struct PATH_INFO *info = (struct PATH_INFO*)in_data;
+	const struct PATH_INFO *info = (const struct PATH_INFO*)in_data;
 
 	TRACE("END_PATH\n");
         if(!physDev->pathdepth) {
@@ -273,7 +273,7 @@ INT PSDRV_ExtEscape( PSDRV_PDEVICE *physDev, INT nEscape, INT cbInput, LPCVOID i
 
     case CLIP_TO_PATH:
       {
-	WORD mode = *(WORD*)in_data;
+	WORD mode = *(const WORD*)in_data;
 
 	switch(mode) {
 	case CLIP_SAVE:

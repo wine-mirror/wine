@@ -1340,7 +1340,7 @@ BOOL WINAPI ImmSetCompositionStringW(
                                                      dwCompLen);
              memcpy(root_context->CompositionString,lpComp,dwCompLen);
 
-             wParam = ((WCHAR*)lpComp)[0];
+             wParam = ((const WCHAR*)lpComp)[0];
              flags |= GCS_COMPCLAUSE | GCS_COMPATTR;
          }
          else

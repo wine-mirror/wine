@@ -175,7 +175,7 @@ void RPCSS_RegisterRpcEndpoints(RPC_SYNTAX_IDENTIFIER iface, int object_count,
 {
     const char *data = vardata;
     const char *end = data + vardata_size;
-    UUID *objects = (UUID *)data;
+    const UUID *objects = (const UUID *)data;
     int c;
 
     data += object_count * sizeof(UUID);
@@ -192,7 +192,7 @@ void RPCSS_UnregisterRpcEndpoints(RPC_SYNTAX_IDENTIFIER iface, int object_count,
 {
     const char *data = vardata;
     const char *end = data + vardata_size;
-    const UUID *objects = (UUID *)data;
+    const UUID *objects = (const UUID *)data;
     int c;
 
     data += object_count * sizeof(UUID);

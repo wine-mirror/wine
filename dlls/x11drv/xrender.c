@@ -975,14 +975,13 @@ BOOL X11DRV_XRender_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flag
     XGCValues xgcval;
     LOGFONTW lf;
     int render_op = PictOpOver;
-    WORD *glyphs;
+    const WORD *glyphs;
     POINT pt;
     gsCacheEntry *entry;
     BOOL retv = FALSE;
     HDC hdc = physDev->hdc;
     int textPixel, backgroundPixel;
-    INT *deltas = NULL;
-    INT char_extra;
+    INT *deltas = NULL, char_extra;
     HRGN saved_region = 0;
     UINT align = GetTextAlign( hdc );
 
@@ -990,10 +989,10 @@ BOOL X11DRV_XRender_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flag
 	  lprect, debugstr_wn(wstr, count), count, lpDx);
 
     if(flags & ETO_GLYPH_INDEX)
-        glyphs = (LPWORD)wstr;
+        glyphs = (const WORD*)wstr;
     else {
         glyphs = HeapAlloc(GetProcessHeap(), 0, count * sizeof(WCHAR));
-        GetGlyphIndicesW(hdc, wstr, count, glyphs, 0);
+        GetGlyphIndicesW(hdc, wstr, count, (WORD*)glyphs, 0);
     }
 
     if(lprect)
@@ -1543,7 +1542,7 @@ BOOL X11DRV_XRender_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flag
 
 done:
     X11DRV_UnlockDIBSection( physDev, TRUE );
-    if(glyphs != wstr) HeapFree(GetProcessHeap(), 0, glyphs);
+    if(glyphs != wstr) HeapFree(GetProcessHeap(), 0, (WORD*)glyphs);
     return retv;
 }
 

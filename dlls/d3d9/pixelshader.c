@@ -134,7 +134,7 @@ HRESULT WINAPI IDirect3DDevice9Impl_SetPixelShaderConstantF(LPDIRECT3DDEVICE9 if
       f += 4;
     }
   } else { 
-    FLOAT* f = (FLOAT*) pConstantData;
+    const FLOAT* f = (const FLOAT*) pConstantData;
     TRACE("(%p) : SetPixelShaderConstant, C[%u]={%f, %f, %f, %f}\n", This, Register, f[0], f[1], f[2], f[3]);
   }
   This->UpdateStateBlock->Changed.pixelShaderConstant = TRUE;

@@ -34,7 +34,8 @@ static int CALLBACK emf_enum_proc(HDC hdc, HANDLETABLE *handle_table,
 {
     static int n_record;
     DWORD i;
-    INT *dx, *orig_dx = (INT *)param;
+    const INT *dx;
+    INT *orig_dx = (INT *)param;
     LOGFONTA device_lf;
 
     trace("hdc %p, emr->iType %ld, emr->nSize %ld, param %p\n",
@@ -50,8 +51,8 @@ static int CALLBACK emf_enum_proc(HDC hdc, HANDLETABLE *handle_table,
 
     case EMR_EXTTEXTOUTA:
     {
-        EMREXTTEXTOUTA *emr_ExtTextOutA = (EMREXTTEXTOUTA *)emr;
-        dx = (INT *)((char *)emr + emr_ExtTextOutA->emrtext.offDx);
+        const EMREXTTEXTOUTA *emr_ExtTextOutA = (const EMREXTTEXTOUTA *)emr;
+        dx = (const INT *)((const char *)emr + emr_ExtTextOutA->emrtext.offDx);
 
         ok(GetObjectA(GetCurrentObject(hdc, OBJ_FONT), sizeof(device_lf), &device_lf) == sizeof(device_lf),
            "GetObjectA error %ld\n", GetLastError());
@@ -74,8 +75,8 @@ static int CALLBACK emf_enum_proc(HDC hdc, HANDLETABLE *handle_table,
 
     case EMR_EXTTEXTOUTW:
     {
-        EMREXTTEXTOUTW *emr_ExtTextOutW = (EMREXTTEXTOUTW *)emr;
-        dx = (INT *)((char *)emr + emr_ExtTextOutW->emrtext.offDx);
+        const EMREXTTEXTOUTW *emr_ExtTextOutW = (const EMREXTTEXTOUTW *)emr;
+        dx = (const INT *)((const char *)emr + emr_ExtTextOutW->emrtext.offDx);
 
         ok(GetObjectA(GetCurrentObject(hdc, OBJ_FONT), sizeof(device_lf), &device_lf) == sizeof(device_lf),
            "GetObjectA error %ld\n", GetLastError());

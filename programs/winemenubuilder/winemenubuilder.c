@@ -131,8 +131,8 @@ static BOOL SaveIconResAsXPM(const BITMAPINFO *pIcon, const char *szXPMFileName,
     int nANDWidthBytes;
     BOOL b8BitColors;
     int nColors;
-    BYTE *pXOR;
-    BYTE *pAND;
+    const BYTE *pXOR;
+    const BYTE *pAND;
     BOOL aColorUsed[256] = {0};
     int nColorsUsed = 0;
     int i,j;
@@ -151,7 +151,7 @@ static BOOL SaveIconResAsXPM(const BITMAPINFO *pIcon, const char *szXPMFileName,
     b8BitColors = pIcon->bmiHeader.biBitCount == 8;
     nColors = pIcon->bmiHeader.biClrUsed ? pIcon->bmiHeader.biClrUsed
         : 1 << pIcon->bmiHeader.biBitCount;
-    pXOR = (BYTE*) pIcon + sizeof (BITMAPINFOHEADER) + (nColors * sizeof (RGBQUAD));
+    pXOR = (const BYTE*) pIcon + sizeof (BITMAPINFOHEADER) + (nColors * sizeof (RGBQUAD));
     pAND = pXOR + nHeight * nXORWidthBytes;
 
 #define MASK(x,y) (pAND[(x) / 8 + (nHeight - (y) - 1) * nANDWidthBytes] & (1 << (7 - (x) % 8)))

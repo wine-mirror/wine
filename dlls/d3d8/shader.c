@@ -1892,10 +1892,10 @@ inline static VOID IDirect3DPixelShaderImpl_GenerateProgramArbHW(IDirect3DPixelS
             {
               DWORD reg = *pToken & 0x00001FFF;
               sprintf(tmpLine, "PARAM C%lu = { %f, %f, %f, %f };", reg,
-                              *((float*)(pToken+1)),
-                              *((float*)(pToken+2)),
-                              *((float*)(pToken+3)),
-                              *((float*)(pToken+4)) );
+                              *((const float*)(pToken+1)),
+                              *((const float*)(pToken+2)),
+                              *((const float*)(pToken+3)),
+                              *((const float*)(pToken+4)) );
               addline(&lineNum, pgmStr, tmpLine);
               constants[reg] = 1;
               autoparam = 0;
@@ -2267,7 +2267,7 @@ inline static VOID IDirect3DPixelShaderImpl_ParseProgram(IDirect3DPixelShaderImp
 	    if (D3DSIO_DEF != code) {
 	      pshader_program_dump_param(*pToken, 1);
 	    } else {
-	      TRACE("%f", *((float*) pToken));
+	      TRACE("%f", *((const float*) pToken));
 	    }
 	    ++pToken;
 	    ++len;

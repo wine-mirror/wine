@@ -694,7 +694,7 @@ extern HRESULT DPL_EnumAddress( LPDPENUMADDRESSCALLBACK lpEnumAddressCallback, L
 
   while ( dwTotalSizeEnumerated < dwAddressSize )
   {
-    LPDPADDRESS lpElements = (LPDPADDRESS)lpAddress;
+    const DPADDRESS* lpElements = (const DPADDRESS*)lpAddress;
     DWORD dwSizeThisEnumeration;
 
     /* Invoke the enum method. If false is returned, stop enumeration */
@@ -707,7 +707,7 @@ extern HRESULT DPL_EnumAddress( LPDPENUMADDRESSCALLBACK lpEnumAddressCallback, L
     }
 
     dwSizeThisEnumeration  = sizeof( DPADDRESS ) + lpElements->dwDataSize;
-    lpAddress = (BYTE*) lpAddress + dwSizeThisEnumeration;
+    lpAddress = (const BYTE*) lpAddress + dwSizeThisEnumeration;
     dwTotalSizeEnumerated += dwSizeThisEnumeration;
   }
 

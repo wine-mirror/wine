@@ -78,7 +78,7 @@ HACCEL WINAPI LoadAcceleratorsW(HINSTANCE instance,LPCWSTR lpTableName)
 
     if (HIWORD(lpTableName))
         TRACE_(accel)("%p '%s'\n",
-                      (LPVOID)instance, (char *)( lpTableName ) );
+                      (LPVOID)instance, (const char *)( lpTableName ) );
     else
         TRACE_(accel)("%p 0x%04x\n",
                        (LPVOID)instance, LOWORD(lpTableName) );

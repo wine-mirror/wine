@@ -200,7 +200,7 @@ int main( int argc, char *argv[])
 
 int cmp_by_name(const void *a, const void *b)
 {
-    return lstrcmpiW(((uninst_entry *)a)->descr, ((uninst_entry *)b)->descr);
+    return lstrcmpiW(((const uninst_entry *)a)->descr, ((const uninst_entry *)b)->descr);
 }
 
 int FetchUninstallInformation(void)

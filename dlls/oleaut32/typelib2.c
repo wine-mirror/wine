@@ -271,7 +271,7 @@ static int ctl2_hash_guid(
 
     hash = 0;
     for (i = 0; i < 8; i ++) {
-	hash ^= ((short *)guid)[i];
+	hash ^= ((const short *)guid)[i];
     }
 
     return (hash & 0xf) | ((hash & 0x10) & (0 - !!(hash & 0xe0)));

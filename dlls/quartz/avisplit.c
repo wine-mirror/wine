@@ -710,7 +710,7 @@ static HRESULT AVISplitter_QueryAccept(LPVOID iface, const AM_MEDIA_TYPE * pmt)
 static HRESULT AVISplitter_ProcessStreamList(AVISplitter * This, const BYTE * pData, DWORD cb)
 {
     PIN_INFO piOutput;
-    RIFFCHUNK * pChunk;
+    const RIFFCHUNK * pChunk;
     IPin ** ppOldPins;
     HRESULT hr;
     AM_MEDIA_TYPE amt;
@@ -730,7 +730,10 @@ static HRESULT AVISplitter_ProcessStreamList(AVISplitter * This, const BYTE * pD
     piOutput.pFilter = (IBaseFilter *)This;
     wsprintfW(piOutput.achName, wszStreamTemplate, This->cStreams);
 
-    for (pChunk = (RIFFCHUNK *)pData; ((BYTE *)pChunk >= pData) && ((BYTE *)pChunk + sizeof(RIFFCHUNK) < pData + cb) && (pChunk->cb > 0); pChunk = (RIFFCHUNK *)((BYTE*)pChunk + sizeof(RIFFCHUNK) + pChunk->cb))
+    for (pChunk = (const RIFFCHUNK *)pData; 
+         ((const BYTE *)pChunk >= pData) && ((const BYTE *)pChunk + sizeof(RIFFCHUNK) < pData + cb) && (pChunk->cb > 0); 
+         pChunk = (const RIFFCHUNK *)((const BYTE*)pChunk + sizeof(RIFFCHUNK) + pChunk->cb)     
+        )
     {
         switch (pChunk->fcc)
         {
@@ -758,7 +761,7 @@ static HRESULT AVISplitter_ProcessStreamList(AVISplitter * This, const BYTE * pD
                 amt.majortype.Data1 = pStrHdr->fccType;
                 memcpy(&amt.subtype, &MEDIATYPE_Video, sizeof(GUID));
                 amt.subtype.Data1 = pStrHdr->fccHandler;
-                TRACE("Subtype FCC: %.04s\n", (LPSTR)&pStrHdr->fccHandler);
+                TRACE("Subtype FCC: %.04s\n", (LPCSTR)&pStrHdr->fccHandler);
                 amt.lSampleSize = pStrHdr->dwSampleSize;
                 amt.bFixedSizeSamples = (amt.lSampleSize != 0);
 
@@ -821,7 +824,7 @@ static HRESULT AVISplitter_ProcessStreamList(AVISplitter * This, const BYTE * pD
             TRACE("JUNK chunk ignored\n");
             break;
         default:
-            FIXME("unknown chunk type \"%.04s\" ignored\n", (LPSTR)&pChunk->fcc);
+            FIXME("unknown chunk type \"%.04s\" ignored\n", (LPCSTR)&pChunk->fcc);
         }
     }
 

@@ -484,7 +484,7 @@ static BOOL X11DRV_PALETTE_BuildSharedMap( const PALETTEENTRY *sys_pal_template 
         sysPixel[i] = color.pixel;
 
         TRACE("syscolor(%lx) -> pixel %i\n",
-		      *(COLORREF*)(sys_pal_template+i), (int)color.pixel);
+		      *(const COLORREF*)(sys_pal_template+i), (int)color.pixel);
 
         /* Set EGA mapping if color in the first or last eight */
 
@@ -1039,7 +1039,7 @@ static BOOL X11DRV_PALETTE_CheckSysColor( const PALETTEENTRY *sys_pal_template, 
 {
   int i;
   for( i = 0; i < NB_RESERVED_COLORS; i++ )
-       if( c == (*(COLORREF*)(sys_pal_template + i) & 0x00ffffff) )
+       if( c == (*(const COLORREF*)(sys_pal_template + i) & 0x00ffffff) )
 	   return 0;
   return 1;
 }

@@ -262,7 +262,7 @@ BOOL pcheck (LPCITEMIDLIST pidl)
 		memset(szTemp, ' ', BYTES_PRINTED*4 + 1);
 		for ( i = 0; (i<pidltemp->mkid.cb) && (i<BYTES_PRINTED); i++)
 		{
-		  c = ((unsigned char *)pidltemp)[i];
+		  c = ((const unsigned char *)pidltemp)[i];
 
 		  szTemp[i*3+0] = ((c>>4)>9)? (c>>4)+55 : (c>>4)+48;
 		  szTemp[i*3+1] = ((0x0F&c)>9)? (0x0F&c)+55 : (0x0F&c)+48;

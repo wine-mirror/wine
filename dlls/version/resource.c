@@ -66,7 +66,7 @@ static const IMAGE_RESOURCE_DIRECTORY *find_entry_by_id( const IMAGE_RESOURCE_DI
     {
         pos = (min + max) / 2;
         if (entry[pos].u1.s2.Id == id)
-            return (IMAGE_RESOURCE_DIRECTORY *)((char *)root + entry[pos].u2.s3.OffsetToDirectory);
+            return (const IMAGE_RESOURCE_DIRECTORY *)((const char *)root + entry[pos].u2.s3.OffsetToDirectory);
         if (entry[pos].u1.s2.Id > id) max = pos - 1;
         else min = pos + 1;
     }
@@ -86,7 +86,7 @@ static const IMAGE_RESOURCE_DIRECTORY *find_entry_default( const IMAGE_RESOURCE_
     const IMAGE_RESOURCE_DIRECTORY_ENTRY *entry;
 
     entry = (const IMAGE_RESOURCE_DIRECTORY_ENTRY *)(dir + 1);
-    return (IMAGE_RESOURCE_DIRECTORY *)((char *)root + entry->u2.s3.OffsetToDirectory);
+    return (const IMAGE_RESOURCE_DIRECTORY *)((const char *)root + entry->u2.s3.OffsetToDirectory);
 }
 
 
@@ -124,11 +124,11 @@ static const IMAGE_RESOURCE_DIRECTORY *find_entry_by_name( const IMAGE_RESOURCE_
         while (min <= max)
         {
             pos = (min + max) / 2;
-            str = (IMAGE_RESOURCE_DIR_STRING_U *)((char *)root + entry[pos].u1.s1.NameOffset);
+            str = (const IMAGE_RESOURCE_DIR_STRING_U *)((const char *)root + entry[pos].u1.s1.NameOffset);
             res = strncmpiW( nameW, str->NameString, str->Length );
             if (!res && namelen == str->Length)
             {
-                ret = (IMAGE_RESOURCE_DIRECTORY *)((char *)root + entry[pos].u2.s3.OffsetToDirectory);
+                ret = (const IMAGE_RESOURCE_DIRECTORY *)((const char *)root + entry[pos].u2.s3.OffsetToDirectory);
                 break;
             }
             if (res < 0) max = pos - 1;
@@ -345,7 +345,7 @@ static BOOL find_pe_resource( HFILE lzfd, LPCSTR typeid, LPCSTR resid,
     /* Find resource */
     resDir = resSection + (resDataDir->VirtualAddress - sections[i].VirtualAddress);
 
-    resPtr = (PIMAGE_RESOURCE_DIRECTORY)resDir;
+    resPtr = (const IMAGE_RESOURCE_DIRECTORY*)resDir;
     resPtr = find_entry_by_name( resPtr, typeid, resDir );
     if ( !resPtr )
     {
@@ -366,7 +366,7 @@ static BOOL find_pe_resource( HFILE lzfd, LPCSTR typeid, LPCSTR resid,
     }
 
     /* Find resource data section */
-    resData = (PIMAGE_RESOURCE_DATA_ENTRY)resPtr;
+    resData = (const IMAGE_RESOURCE_DATA_ENTRY*)resPtr;
     for ( i = 0; i < nSections; i++ )
         if (    resData->OffsetToData >= sections[i].VirtualAddress
              && resData->OffsetToData <  sections[i].VirtualAddress +
@@ -475,4 +475,3 @@ DWORD WINAPI GetFileResource16( LPCSTR lpszFileName, LPCSTR lpszResType,
 
     return reslen;
 }
-

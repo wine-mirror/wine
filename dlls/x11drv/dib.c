@@ -167,7 +167,7 @@ int X11DRV_DIB_BitmapInfoSize( const BITMAPINFO * info, WORD coloruse )
 
     if (info->bmiHeader.biSize == sizeof(BITMAPCOREHEADER))
     {
-        BITMAPCOREHEADER *core = (BITMAPCOREHEADER *)info;
+        const BITMAPCOREHEADER *core = (const BITMAPCOREHEADER *)info;
         colors = (core->bcBitCount <= 8) ? 1 << core->bcBitCount : 0;
         return sizeof(BITMAPCOREHEADER) + colors *
              ((coloruse == DIB_RGB_COLORS) ? sizeof(RGBTRIPLE) : sizeof(WORD));
@@ -215,7 +215,7 @@ static int DIB_GetBitmapInfoEx( const BITMAPINFOHEADER *header, LONG *width,
 {
     if (header->biSize == sizeof(BITMAPCOREHEADER))
     {
-        BITMAPCOREHEADER *core = (BITMAPCOREHEADER *)header;
+        const BITMAPCOREHEADER *core = (const BITMAPCOREHEADER *)header;
         *width  = core->bcWidth;
         *height = core->bcHeight;
         *planes = core->bcPlanes;
@@ -271,7 +271,7 @@ int *X11DRV_DIB_GenColorMap( X11DRV_PDEVICE *physDev, int *colorMapping,
     {
         if (quads)
         {
-            RGBQUAD * rgb = (RGBQUAD *)colorPtr;
+            const RGBQUAD * rgb = (const RGBQUAD *)colorPtr;
 
             if (depth == 1)  /* Monochrome */
                 for (i = start; i < end; i++, rgb++)
@@ -285,7 +285,7 @@ int *X11DRV_DIB_GenColorMap( X11DRV_PDEVICE *physDev, int *colorMapping,
         }
         else
         {
-            RGBTRIPLE * rgb = (RGBTRIPLE *)colorPtr;
+            const RGBTRIPLE * rgb = (const RGBTRIPLE *)colorPtr;
 
             if (depth == 1)  /* Monochrome */
                 for (i = start; i < end; i++, rgb++)
@@ -301,7 +301,7 @@ int *X11DRV_DIB_GenColorMap( X11DRV_PDEVICE *physDev, int *colorMapping,
     else  /* DIB_PAL_COLORS */
     {
         if (colorPtr) {
-            WORD * index = (WORD *)colorPtr;
+            const WORD * index = (const WORD *)colorPtr;
 
             for (i = start; i < end; i++, index++)
                 colorMapping[i] = X11DRV_PALETTE_ToPhysical( physDev, PALETTEINDEX(*index) );
@@ -337,10 +337,10 @@ int *X11DRV_DIB_BuildColorMap( X11DRV_PDEVICE *physDev, WORD coloruse, WORD dept
     }
     else
     {
-        colors = 1 << ((BITMAPCOREHEADER *)info)->bcBitCount;
+        colors = 1 << ((const BITMAPCOREHEADER *)info)->bcBitCount;
     }
 
-    colorPtr = (LPBYTE) info + (WORD) info->bmiHeader.biSize;
+    colorPtr = (const BYTE*) info + (WORD) info->bmiHeader.biSize;
 
     if (colors > 256)
     {
@@ -641,7 +641,7 @@ static void X11DRV_DIB_GetImageBits_1( int lines, BYTE *dstbits,
                 if ((width&7)!=0) {
                     *dstbyte=dstval;
                 }
-                srcbits = (char*)srcbits - bmpImage->bytes_per_line;
+                srcbits = (const char*)srcbits - bmpImage->bytes_per_line;
                 dstbits += linebytes;
             }
         } else {
@@ -685,7 +685,7 @@ static void X11DRV_DIB_GetImageBits_1( int lines, BYTE *dstbits,
                         if ((width&7)!=0) {
                             *dstbyte=dstval;
                         }
-                        srcbits = (char*)srcbits - bmpImage->bytes_per_line;
+                        srcbits = (const char*)srcbits - bmpImage->bytes_per_line;
                         dstbits += linebytes;
                     }
                 } else if (bmpImage->blue_mask==0x7c00) {
@@ -714,7 +714,7 @@ static void X11DRV_DIB_GetImageBits_1( int lines, BYTE *dstbits,
                         if ((width&7)!=0) {
                             *dstbyte=dstval;
                         }
-                        srcbits = (char*)srcbits - bmpImage->bytes_per_line;
+                        srcbits = (const char*)srcbits - bmpImage->bytes_per_line;
                         dstbits += linebytes;
                     }
                 } else {
@@ -747,7 +747,7 @@ static void X11DRV_DIB_GetImageBits_1( int lines, BYTE *dstbits,
                         if ((width&7)!=0) {
                             *dstbyte=dstval;
                         }
-                        srcbits = (char*)srcbits - bmpImage->bytes_per_line;
+                        srcbits = (const char*)srcbits - bmpImage->bytes_per_line;
                         dstbits += linebytes;
                     }
                 } else if (bmpImage->blue_mask==0xf800) {
@@ -776,7 +776,7 @@ static void X11DRV_DIB_GetImageBits_1( int lines, BYTE *dstbits,
                         if ((width&7)!=0) {
                             *dstbyte=dstval;
                         }
-                        srcbits = (char*)srcbits - bmpImage->bytes_per_line;
+                        srcbits = (const char*)srcbits - bmpImage->bytes_per_line;
                         dstbits += linebytes;
                     }
                 } else {
@@ -824,7 +824,7 @@ static void X11DRV_DIB_GetImageBits_1( int lines, BYTE *dstbits,
                     if ((width&7)!=0) {
                         *dstbyte=dstval;
                     }
-                    srcbits = (char*)srcbits - bmpImage->bytes_per_line;
+                    srcbits = (const char*)srcbits - bmpImage->bytes_per_line;
                     dstbits += linebytes;
                 }
             } else {
@@ -849,7 +849,7 @@ static void X11DRV_DIB_GetImageBits_1( int lines, BYTE *dstbits,
                     if ((width&7)!=0) {
                         *dstbyte=dstval;
                     }
-                    srcbits = (char*)srcbits - bmpImage->bytes_per_line;
+                    srcbits = (const char*)srcbits - bmpImage->bytes_per_line;
                     dstbits += linebytes;
                 }
             }
@@ -1016,7 +1016,7 @@ static void X11DRV_DIB_GetImageBits_4( int lines, BYTE *dstbits,
                 if ((width&1)!=0) {
                     *dstbyte=dstval;
                 }
-                srcbits = (char*)srcbits - bmpImage->bytes_per_line;
+                srcbits = (const char*)srcbits - bmpImage->bytes_per_line;
                 dstbits += linebytes;
             }
         } else {
@@ -1060,7 +1060,7 @@ static void X11DRV_DIB_GetImageBits_4( int lines, BYTE *dstbits,
                         if ((width&1)!=0) {
                             *dstbyte=dstval;
                         }
-                        srcbits = (char*)srcbits - bmpImage->bytes_per_line;
+                        srcbits = (const char*)srcbits - bmpImage->bytes_per_line;
                         dstbits += linebytes;
                     }
                 } else if (bmpImage->blue_mask==0x7c00) {
@@ -1089,7 +1089,7 @@ static void X11DRV_DIB_GetImageBits_4( int lines, BYTE *dstbits,
                         if ((width&1)!=0) {
                             *dstbyte=dstval;
                         }
-                        srcbits = (char*)srcbits - bmpImage->bytes_per_line;
+                        srcbits = (const char*)srcbits - bmpImage->bytes_per_line;
                         dstbits += linebytes;
                     }
                 } else {
@@ -1122,7 +1122,7 @@ static void X11DRV_DIB_GetImageBits_4( int lines, BYTE *dstbits,
                         if ((width&1)!=0) {
                             *dstbyte=dstval;
                         }
-                        srcbits = (char*)srcbits - bmpImage->bytes_per_line;
+                        srcbits = (const char*)srcbits - bmpImage->bytes_per_line;
                         dstbits += linebytes;
                     }
                 } else if (bmpImage->blue_mask==0xf800) {
@@ -1151,7 +1151,7 @@ static void X11DRV_DIB_GetImageBits_4( int lines, BYTE *dstbits,
                         if ((width&1)!=0) {
                             *dstbyte=dstval;
                         }
-                        srcbits = (char*)srcbits - bmpImage->bytes_per_line;
+                        srcbits = (const char*)srcbits - bmpImage->bytes_per_line;
                         dstbits += linebytes;
                     }
                 } else {
@@ -1201,7 +1201,7 @@ static void X11DRV_DIB_GetImageBits_4( int lines, BYTE *dstbits,
                                      srcbyte[1],
                                      srcbyte[0]) << 4);
                     }
-                    srcbits = (char*)srcbits - bmpImage->bytes_per_line;
+                    srcbits = (const char*)srcbits - bmpImage->bytes_per_line;
                     dstbits += linebytes;
                 }
             } else {
@@ -1231,7 +1231,7 @@ static void X11DRV_DIB_GetImageBits_4( int lines, BYTE *dstbits,
                                      srcbyte[1],
                                      srcbyte[2]) << 4);
                     }
-                    srcbits = (char*)srcbits - bmpImage->bytes_per_line;
+                    srcbits = (const char*)srcbits - bmpImage->bytes_per_line;
                     dstbits += linebytes;
                 }
             }
@@ -1277,7 +1277,7 @@ static void X11DRV_DIB_GetImageBits_4( int lines, BYTE *dstbits,
                                      srcbyte[1],
                                      srcbyte[0]) << 4);
                     }
-                    srcbits = (char*)srcbits - bmpImage->bytes_per_line;
+                    srcbits = (const char*)srcbits - bmpImage->bytes_per_line;
                     dstbits += linebytes;
                 }
             } else {
@@ -1307,7 +1307,7 @@ static void X11DRV_DIB_GetImageBits_4( int lines, BYTE *dstbits,
                                      srcbyte[1],
                                      srcbyte[2]) << 4);
                     }
-                    srcbits = (char*)srcbits - bmpImage->bytes_per_line;
+                    srcbits = (const char*)srcbits - bmpImage->bytes_per_line;
                     dstbits += linebytes;
                 }
             }
@@ -1579,7 +1579,7 @@ static void X11DRV_DIB_GetImageBits_8( int lines, BYTE *dstbits,
                                                          srcval.peGreen,
                                                          srcval.peBlue);
                }
-               srcbits = (char*)srcbits - bmpImage->bytes_per_line;
+               srcbits = (const char*)srcbits - bmpImage->bytes_per_line;
                dstbits += linebytes;
            }
        } else {
@@ -1614,7 +1614,7 @@ static void X11DRV_DIB_GetImageBits_8( int lines, BYTE *dstbits,
                                  ((srcval <<  3) & 0xf8) | /* b */
                                  ((srcval >>  2) & 0x07) );
                         }
-                        srcbits = (char*)srcbits - bmpImage->bytes_per_line;
+                        srcbits = (const char*)srcbits - bmpImage->bytes_per_line;
                         dstbits += linebytes;
                     }
                 } else if (bmpImage->blue_mask==0x7c00) {
@@ -1634,7 +1634,7 @@ static void X11DRV_DIB_GetImageBits_8( int lines, BYTE *dstbits,
                                  ((srcval >>  7) & 0xf8) | /* b */
                                  ((srcval >> 12) & 0x07) );
                         }
-                        srcbits = (char*)srcbits - bmpImage->bytes_per_line;
+                        srcbits = (const char*)srcbits - bmpImage->bytes_per_line;
                         dstbits += linebytes;
                     }
                 } else {
@@ -1658,7 +1658,7 @@ static void X11DRV_DIB_GetImageBits_8( int lines, BYTE *dstbits,
                                  ((srcval <<  3) & 0xf8) | /* b */
                                  ((srcval >>  2) & 0x07) );
                         }
-                        srcbits = (char*)srcbits - bmpImage->bytes_per_line;
+                        srcbits = (const char*)srcbits - bmpImage->bytes_per_line;
                         dstbits += linebytes;
                     }
                 } else if (bmpImage->blue_mask==0xf800) {
@@ -1678,7 +1678,7 @@ static void X11DRV_DIB_GetImageBits_8( int lines, BYTE *dstbits,
                                  ((srcval >>  8) & 0xf8) | /* b */
                                  ((srcval >> 13) & 0x07) );
                         }
-                        srcbits = (char*)srcbits - bmpImage->bytes_per_line;
+                        srcbits = (const char*)srcbits - bmpImage->bytes_per_line;
                         dstbits += linebytes;
                     }
                 } else {
@@ -1717,7 +1717,7 @@ static void X11DRV_DIB_GetImageBits_8( int lines, BYTE *dstbits,
                              srcbyte[0]);
                         srcbyte+=bytes_per_pixel;
                     }
-                    srcbits = (char*)srcbits - bmpImage->bytes_per_line;
+                    srcbits = (const char*)srcbits - bmpImage->bytes_per_line;
                     dstbits += linebytes;
                 }
             } else {
@@ -1733,7 +1733,7 @@ static void X11DRV_DIB_GetImageBits_8( int lines, BYTE *dstbits,
                              srcbyte[2]);
                         srcbyte+=bytes_per_pixel;
                     }
-                    srcbits = (char*)srcbits - bmpImage->bytes_per_line;
+                    srcbits = (const char*)srcbits - bmpImage->bytes_per_line;
                     dstbits += linebytes;
                 }
             }
@@ -2809,7 +2809,7 @@ static void X11DRV_DIB_GetImageBits_24( int lines, BYTE *dstbits,
                     dstbyte[2]=srcval.peRed;
                     dstbyte+=3;
                 }
-                srcbits = (char*)srcbits - bmpImage->bytes_per_line;
+                srcbits = (const char*)srcbits - bmpImage->bytes_per_line;
                 dstbits += linebytes;
             }
         } else {
@@ -2859,7 +2859,8 @@ static void X11DRV_DIB_SetImageBits_32(int lines, const BYTE *srcbits,
                                        XImage *bmpImage,
                                        DWORD linebytes)
 {
-    DWORD x, *ptr;
+    DWORD x;
+    const DWORD *ptr;
     int h, width = min(srcwidth, dstwidth);
     const dib_conversions *convs = (bmpImage->byte_order == LSBFirst) ? &dib_normal : &dib_dst_byteswap;
 
@@ -2870,7 +2871,7 @@ static void X11DRV_DIB_SetImageBits_32(int lines, const BYTE *srcbits,
        linebytes = -linebytes;
     }
 
-    ptr = (DWORD *) srcbits + left;
+    ptr = (const DWORD *) srcbits + left;
 
     switch (bmpImage->depth)
     {
@@ -3390,7 +3391,7 @@ static void X11DRV_DIB_GetImageBits_32( int lines, BYTE *dstbits,
                                 (srcval.peGreen << gShift) |
                                 (srcval.peBlue  << bShift);
                 }
-                srcbits = (char*)srcbits - bmpImage->bytes_per_line;
+                srcbits = (const char*)srcbits - bmpImage->bytes_per_line;
                 dstbits += linebytes;
             }
         } else {
@@ -3768,17 +3769,17 @@ INT X11DRV_SetDIBitsToDevice( X11DRV_PDEVICE *physDev, INT xDest, INT yDest, DWO
                break;
        case 15:
        case 16:
-               descr.rMask = (descr.compression == BI_BITFIELDS) ? *(DWORD *) colorPtr      : 0x7c00;
-               descr.gMask = (descr.compression == BI_BITFIELDS) ? *((DWORD *)colorPtr + 1) : 0x03e0;
-               descr.bMask = (descr.compression == BI_BITFIELDS) ? *((DWORD *)colorPtr + 2) : 0x001f;
+               descr.rMask = (descr.compression == BI_BITFIELDS) ? *((const DWORD *)colorPtr    ) : 0x7c00;
+               descr.gMask = (descr.compression == BI_BITFIELDS) ? *((const DWORD *)colorPtr + 1) : 0x03e0;
+               descr.bMask = (descr.compression == BI_BITFIELDS) ? *((const DWORD *)colorPtr + 2) : 0x001f;
                descr.colorMap = 0;
                break;
 
        case 24:
        case 32:
-               descr.rMask = (descr.compression == BI_BITFIELDS) ? *(DWORD *) colorPtr      : 0xff0000;
-               descr.gMask = (descr.compression == BI_BITFIELDS) ? *((DWORD *)colorPtr + 1) : 0x00ff00;
-               descr.bMask = (descr.compression == BI_BITFIELDS) ? *((DWORD *)colorPtr + 2) : 0x0000ff;
+               descr.rMask = (descr.compression == BI_BITFIELDS) ? *((const DWORD *)colorPtr    ) : 0xff0000;
+               descr.gMask = (descr.compression == BI_BITFIELDS) ? *((const DWORD *)colorPtr + 1) : 0x00ff00;
+               descr.bMask = (descr.compression == BI_BITFIELDS) ? *((const DWORD *)colorPtr + 2) : 0x0000ff;
                descr.colorMap = 0;
                break;
     }
@@ -3859,17 +3860,17 @@ INT X11DRV_SetDIBits( X11DRV_PDEVICE *physDev, HBITMAP hbitmap, UINT startscan,
                break;
        case 15:
        case 16:
-               descr.rMask = (descr.compression == BI_BITFIELDS) ? *(DWORD *) colorPtr      : 0x7c00;
-               descr.gMask = (descr.compression == BI_BITFIELDS) ? *((DWORD *)colorPtr + 1) : 0x03e0;
-               descr.bMask = (descr.compression == BI_BITFIELDS) ? *((DWORD *)colorPtr + 2) : 0x001f;
+               descr.rMask = (descr.compression == BI_BITFIELDS) ? *((const DWORD*)colorPtr    ) : 0x7c00;
+               descr.gMask = (descr.compression == BI_BITFIELDS) ? *((const DWORD*)colorPtr + 1) : 0x03e0;
+               descr.bMask = (descr.compression == BI_BITFIELDS) ? *((const DWORD*)colorPtr + 2) : 0x001f;
                descr.colorMap = 0;
                break;
 
        case 24:
        case 32:
-               descr.rMask = (descr.compression == BI_BITFIELDS) ? *(DWORD *) colorPtr      : 0xff0000;
-               descr.gMask = (descr.compression == BI_BITFIELDS) ? *((DWORD *)colorPtr + 1) : 0x00ff00;
-               descr.bMask = (descr.compression == BI_BITFIELDS) ? *((DWORD *)colorPtr + 2) : 0x0000ff;
+               descr.rMask = (descr.compression == BI_BITFIELDS) ? *((const DWORD*)colorPtr    ) : 0xff0000;
+               descr.gMask = (descr.compression == BI_BITFIELDS) ? *((const DWORD*)colorPtr + 1) : 0x00ff00;
+               descr.bMask = (descr.compression == BI_BITFIELDS) ? *((const DWORD*)colorPtr + 2) : 0x0000ff;
                descr.colorMap = 0;
                break;
 
@@ -3984,13 +3985,13 @@ INT X11DRV_GetDIBits( X11DRV_PDEVICE *physDev, HBITMAP hbitmap, UINT startscan, 
           break;
       case 15:
       case 16:
-          descr.rMask = (descr.compression == BI_BITFIELDS) ? *(DWORD *) colorPtr      : 0x7c00;
+          descr.rMask = (descr.compression == BI_BITFIELDS) ? *((DWORD *)colorPtr    ) : 0x7c00;
           descr.gMask = (descr.compression == BI_BITFIELDS) ? *((DWORD *)colorPtr + 1) : 0x03e0;
           descr.bMask = (descr.compression == BI_BITFIELDS) ? *((DWORD *)colorPtr + 2) : 0x001f;
           break;
       case 24:
       case 32:
-          descr.rMask = (descr.compression == BI_BITFIELDS) ? *(DWORD *) colorPtr      : 0xff0000;
+          descr.rMask = (descr.compression == BI_BITFIELDS) ? *((DWORD *)colorPtr    ) : 0xff0000;
           descr.gMask = (descr.compression == BI_BITFIELDS) ? *((DWORD *)colorPtr + 1) : 0x00ff00;
           descr.bMask = (descr.compression == BI_BITFIELDS) ? *((DWORD *)colorPtr + 2) : 0x0000ff;
           break;
@@ -4784,16 +4785,16 @@ HBITMAP X11DRV_DIB_CreateDIBSection(
        {
            case 15:
            case 16:
-               dib->dibSection.dsBitfields[0] = (compression == BI_BITFIELDS) ? *(DWORD *) colorPtr      : 0x7c00;
-               dib->dibSection.dsBitfields[1] = (compression == BI_BITFIELDS) ? *((DWORD *)colorPtr + 1) : 0x03e0;
-               dib->dibSection.dsBitfields[2] = (compression == BI_BITFIELDS) ? *((DWORD *)colorPtr + 2) : 0x001f;
+               dib->dibSection.dsBitfields[0] = (compression == BI_BITFIELDS) ? *((const DWORD *)colorPtr    ) : 0x7c00;
+               dib->dibSection.dsBitfields[1] = (compression == BI_BITFIELDS) ? *((const DWORD *)colorPtr + 1) : 0x03e0;
+               dib->dibSection.dsBitfields[2] = (compression == BI_BITFIELDS) ? *((const DWORD *)colorPtr + 2) : 0x001f;
                break;
 
            case 24:
            case 32:
-               dib->dibSection.dsBitfields[0] = (compression == BI_BITFIELDS) ? *(DWORD *) colorPtr      : 0xff0000;
-               dib->dibSection.dsBitfields[1] = (compression == BI_BITFIELDS) ? *((DWORD *)colorPtr + 1) : 0x00ff00;
-               dib->dibSection.dsBitfields[2] = (compression == BI_BITFIELDS) ? *((DWORD *)colorPtr + 2) : 0x0000ff;
+               dib->dibSection.dsBitfields[0] = (compression == BI_BITFIELDS) ? *((const DWORD *)colorPtr    ) : 0xff0000;
+               dib->dibSection.dsBitfields[1] = (compression == BI_BITFIELDS) ? *((const DWORD *)colorPtr + 1) : 0x00ff00;
+               dib->dibSection.dsBitfields[2] = (compression == BI_BITFIELDS) ? *((const DWORD *)colorPtr + 2) : 0x0000ff;
                break;
        }
       dib->dibSection.dshSection = section;

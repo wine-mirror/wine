@@ -519,7 +519,7 @@ EMFDRV_PolyPolylinegon( PHYSDEV dev, const POINT* pt, const INT* counts, UINT po
 BOOL
 EMFDRV_PolyPolyline(PHYSDEV dev, const POINT* pt, const DWORD* counts, DWORD polys)
 {
-    return EMFDRV_PolyPolylinegon( dev, pt, (INT *)counts, polys,
+    return EMFDRV_PolyPolylinegon( dev, pt, (const INT *)counts, polys,
 				   EMR_POLYPOLYLINE );
 }
 

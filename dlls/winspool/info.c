@@ -394,7 +394,7 @@ PRINTCAP_LoadPrinters(void) {
 static inline DWORD set_reg_szW(HKEY hkey, const WCHAR *keyname, const WCHAR *value)
 {
     if (value)
-        return RegSetValueExW(hkey, keyname, 0, REG_SZ, (LPBYTE)value,
+        return RegSetValueExW(hkey, keyname, 0, REG_SZ, (const BYTE*)value,
                    lstrlenW(value) * sizeof(WCHAR));
     else
         return ERROR_FILE_NOT_FOUND;
@@ -595,7 +595,7 @@ static DWORD WINSPOOL_GetOpenedPrinterRegKey(HANDLE hPrinter, HKEY *phkey)
 static LPDEVMODEW DEVMODEcpyAtoW(DEVMODEW *dmW, const DEVMODEA *dmA)
 {
     BOOL Formname;
-    ptrdiff_t off_formname = (char *)dmA->dmFormName - (char *)dmA;
+    ptrdiff_t off_formname = (const char *)dmA->dmFormName - (const char *)dmA;
     DWORD size;
 
     Formname = (dmA->dmSize > off_formname);
@@ -614,7 +614,7 @@ static LPDEVMODEW DEVMODEcpyAtoW(DEVMODEW *dmW, const DEVMODEA *dmA)
 	     (off_formname + CCHFORMNAME));
     }
     dmW->dmSize = size;
-    memcpy((char *)dmW + dmW->dmSize, (char *)dmA + dmA->dmSize,
+    memcpy((char *)dmW + dmW->dmSize, (const char *)dmA + dmA->dmSize,
 	   dmA->dmDriverExtra);
     return dmW;
 }
@@ -628,7 +628,7 @@ static LPDEVMODEA DEVMODEdupWtoA(HANDLE heap, const DEVMODEW *dmW)
     LPDEVMODEA dmA;
     DWORD size;
     BOOL Formname;
-    ptrdiff_t off_formname = (char *)dmW->dmFormName - (char *)dmW;
+    ptrdiff_t off_formname = (const char *)dmW->dmFormName - (const char *)dmW;
 
     if(!dmW) return NULL;
     Formname = (dmW->dmSize > off_formname);
@@ -648,7 +648,7 @@ static LPDEVMODEA DEVMODEdupWtoA(HANDLE heap, const DEVMODEW *dmW)
 	     (off_formname + CCHFORMNAME * sizeof(WCHAR)));
     }
     dmA->dmSize = size;
-    memcpy((char *)dmA + dmA->dmSize, (char *)dmW + dmW->dmSize,
+    memcpy((char *)dmA + dmA->dmSize, (const char *)dmW + dmW->dmSize,
 	   dmW->dmDriverExtra);
     return dmA;
 }

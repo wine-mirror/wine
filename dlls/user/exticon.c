@@ -102,7 +102,7 @@ static const IMAGE_RESOURCE_DIRECTORY *find_entry_by_id( const IMAGE_RESOURCE_DI
     {
         pos = (min + max) / 2;
         if (entry[pos].u1.s2.Id == id)
-            return (IMAGE_RESOURCE_DIRECTORY *)((char *)root + entry[pos].u2.s3.OffsetToDirectory);
+            return (const IMAGE_RESOURCE_DIRECTORY *)((const char *)root + entry[pos].u2.s3.OffsetToDirectory);
         if (entry[pos].u1.s2.Id > id) max = pos - 1;
         else min = pos + 1;
     }
@@ -120,7 +120,7 @@ static const IMAGE_RESOURCE_DIRECTORY *find_entry_default( const IMAGE_RESOURCE_
 {
     const IMAGE_RESOURCE_DIRECTORY_ENTRY *entry;
     entry = (const IMAGE_RESOURCE_DIRECTORY_ENTRY *)(dir + 1);
-    return (IMAGE_RESOURCE_DIRECTORY *)((char *)root + entry->u2.s3.OffsetToDirectory);
+    return (const IMAGE_RESOURCE_DIRECTORY *)((const char *)root + entry->u2.s3.OffsetToDirectory);
 }
 
 /*************************************************************************
@@ -461,7 +461,7 @@ static UINT ICO_ExtractIconExW(
 	    /* search resource id */
 	    int n = 0;
 	    int iId = abs(nIconIndex);
-	    PIMAGE_RESOURCE_DIRECTORY_ENTRY xprdeTmp = (PIMAGE_RESOURCE_DIRECTORY_ENTRY)(icongroupresdir+1);
+	    const IMAGE_RESOURCE_DIRECTORY_ENTRY* xprdeTmp = (const IMAGE_RESOURCE_DIRECTORY_ENTRY*)(icongroupresdir+1);
 
 	    while(n<iconDirCount && xprdeTmp)
 	    {
@@ -494,7 +494,7 @@ static UINT ICO_ExtractIconExW(
 	    nIcons = iconDirCount - nIconIndex;
 
 	  /* starting from specified index */
-	  xresent = (PIMAGE_RESOURCE_DIRECTORY_ENTRY)(icongroupresdir+1) + nIconIndex;
+	  xresent = (const IMAGE_RESOURCE_DIRECTORY_ENTRY*)(icongroupresdir+1) + nIconIndex;
 
 	  for (i=0; i < nIcons; i++,xresent++)
 	  {
@@ -505,7 +505,7 @@ static UINT ICO_ExtractIconExW(
 
 	    /* default language (0) */
 	    resdir = find_entry_default(resdir,rootresdir);
-	    igdataent = (PIMAGE_RESOURCE_DATA_ENTRY)resdir;
+	    igdataent = (const IMAGE_RESOURCE_DATA_ENTRY*)resdir;
 
 	    /* lookup address in mapped image for virtual address */
 	    igdata = NULL;
@@ -550,7 +550,7 @@ static UINT ICO_ExtractIconExW(
 	      continue;
             }
 	    xresdir = find_entry_default(xresdir, rootresdir);
-	    idataent = (PIMAGE_RESOURCE_DATA_ENTRY)xresdir;
+	    idataent = (const IMAGE_RESOURCE_DATA_ENTRY*)xresdir;
 	    idata = NULL;
 
 	    /* map virtual to address in image */

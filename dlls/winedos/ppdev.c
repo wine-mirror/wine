@@ -61,7 +61,7 @@ static int PPDeviceNum=0;
 
 static int IO_pp_sort(const void *p1,const  void *p2)
 {
-  return ((PPDeviceStruct*)p1)->userbase - ((PPDeviceStruct*)p2)->userbase;
+    return ((const PPDeviceStruct*)p1)->userbase - ((const PPDeviceStruct*)p2)->userbase;
 }
 
 /* IO_pp_init

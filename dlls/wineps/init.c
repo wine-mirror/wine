@@ -264,7 +264,7 @@ static LPDEVMODEA DEVMODEdupWtoA(HANDLE heap, const DEVMODEW *dmW)
     LPDEVMODEA dmA;
     DWORD size;
     BOOL Formname;
-    ptrdiff_t off_formname = (char *)dmW->dmFormName - (char *)dmW;
+    ptrdiff_t off_formname = (const char *)dmW->dmFormName - (const char *)dmW;
 
     if(!dmW) return NULL;
     Formname = (dmW->dmSize > off_formname);
@@ -284,7 +284,7 @@ static LPDEVMODEA DEVMODEdupWtoA(HANDLE heap, const DEVMODEW *dmW)
 	     (off_formname + CCHFORMNAME * sizeof(WCHAR)));
     }
     dmA->dmSize = size;
-    memcpy((char *)dmA + dmA->dmSize, (char *)dmW + dmW->dmSize,
+    memcpy((char *)dmA + dmA->dmSize, (const char *)dmW + dmW->dmSize,
 	   dmW->dmDriverExtra);
     return dmA;
 }

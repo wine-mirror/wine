@@ -615,7 +615,7 @@ HRESULT WINAPI __CLSIDFromStringA(
 	LPCSTR idstr,	        /* [in] string representation of guid */
 	CLSID *id)		/* [out] GUID converted from string */
 {
-  const BYTE *s = (BYTE *) idstr;
+  const BYTE *s = (const BYTE *) idstr;
   int	i;
   BYTE table[256];
 

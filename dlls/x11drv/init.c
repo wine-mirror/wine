@@ -280,7 +280,7 @@ INT X11DRV_ExtEscape( X11DRV_PDEVICE *physDev, INT escape, INT in_count, LPCVOID
     case QUERYESCSUPPORT:
         if (in_data)
         {
-            switch (*(INT *)in_data)
+            switch (*(const INT *)in_data)
             {
             case DCICOMMAND:
                 return DD_HAL_VERSION;
@@ -302,7 +302,7 @@ INT X11DRV_ExtEscape( X11DRV_PDEVICE *physDev, INT escape, INT in_count, LPCVOID
     case X11DRV_ESCAPE:
         if (in_data && in_count >= sizeof(enum x11drv_escape_codes))
         {
-            switch(*(enum x11drv_escape_codes *)in_data)
+            switch(*(const enum x11drv_escape_codes *)in_data)
             {
             case X11DRV_GET_DISPLAY:
                 if (out_count >= sizeof(Display *))
@@ -330,7 +330,7 @@ INT X11DRV_ExtEscape( X11DRV_PDEVICE *physDev, INT escape, INT in_count, LPCVOID
             case X11DRV_SET_DRAWABLE:
                 if (in_count >= sizeof(struct x11drv_escape_set_drawable))
                 {
-                    struct x11drv_escape_set_drawable *data = (struct x11drv_escape_set_drawable *)in_data;
+                    const struct x11drv_escape_set_drawable *data = (const struct x11drv_escape_set_drawable *)in_data;
                     if(physDev->xrender) X11DRV_XRender_UpdateDrawable( physDev );
                     physDev->org = data->org;
                     physDev->drawable = data->drawable;

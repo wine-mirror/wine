@@ -334,7 +334,7 @@ static void DDRAW_dump_DWORD(const void *in) {
     DPRINTF("%ld", *((const DWORD *) in));
 }
 static void DDRAW_dump_PTR(const void *in) {
-    DPRINTF("%p", *((const void **) in));
+    DPRINTF("%p", *((const void * const*) in));
 }
 void DDRAW_dump_DDCOLORKEY(const DDCOLORKEY *ddck) {
     DPRINTF(" Low : %ld  - High : %ld", ddck->dwColorSpaceLowValue, ddck->dwColorSpaceHighValue);

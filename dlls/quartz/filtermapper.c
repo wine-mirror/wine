@@ -265,7 +265,7 @@ static HRESULT WINAPI FilterMapper2_CreateCategory(
 
     if (SUCCEEDED(hr))
     {
-        hr = HRESULT_FROM_WIN32(RegSetValueExW(hKey, wszFriendlyName, 0, REG_SZ, (LPBYTE)szDescription, (strlenW(szDescription) + 1) * sizeof(WCHAR)));
+        hr = HRESULT_FROM_WIN32(RegSetValueExW(hKey, wszFriendlyName, 0, REG_SZ, (const BYTE*)szDescription, (strlenW(szDescription) + 1) * sizeof(WCHAR)));
     }
 
     if (SUCCEEDED(hr))
@@ -411,9 +411,9 @@ static HRESULT FM2_WriteFilterData(IPropertyBag * pPropBag, const REGFILTER2 * p
         add_data(&mainStore, (LPBYTE)&rrfp, sizeof(rrfp));
         if (rrfp.bCategory)
         {
-            DWORD index = find_data(&clsidStore, (LPBYTE)rgPin2.clsPinCategory, sizeof(CLSID));
+            DWORD index = find_data(&clsidStore, (const BYTE*)rgPin2.clsPinCategory, sizeof(CLSID));
             if (index == -1)
-                index = add_data(&clsidStore, (LPBYTE)rgPin2.clsPinCategory, sizeof(CLSID));
+                index = add_data(&clsidStore, (const BYTE*)rgPin2.clsPinCategory, sizeof(CLSID));
             index += size;
 
             add_data(&mainStore, (LPBYTE)&index, sizeof(index));
@@ -429,13 +429,13 @@ static HRESULT FM2_WriteFilterData(IPropertyBag * pPropBag, const REGFILTER2 * p
             rt.signature[0] += j;
 
             rt.dwUnused = 0;
-            rt.dwOffsetMajor = find_data(&clsidStore, (LPBYTE)rgPin2.lpMediaType[j].clsMajorType, sizeof(CLSID));
+            rt.dwOffsetMajor = find_data(&clsidStore, (const BYTE*)rgPin2.lpMediaType[j].clsMajorType, sizeof(CLSID));
             if (rt.dwOffsetMajor == -1)
-                rt.dwOffsetMajor = add_data(&clsidStore, (LPBYTE)rgPin2.lpMediaType[j].clsMajorType, sizeof(CLSID));
+                rt.dwOffsetMajor = add_data(&clsidStore, (const BYTE*)rgPin2.lpMediaType[j].clsMajorType, sizeof(CLSID));
             rt.dwOffsetMajor += size;
-            rt.dwOffsetMinor = find_data(&clsidStore, (LPBYTE)rgPin2.lpMediaType[j].clsMinorType, sizeof(CLSID));
+            rt.dwOffsetMinor = find_data(&clsidStore, (const BYTE*)rgPin2.lpMediaType[j].clsMinorType, sizeof(CLSID));
             if (rt.dwOffsetMinor == -1)
-                rt.dwOffsetMinor = add_data(&clsidStore, (LPBYTE)rgPin2.lpMediaType[j].clsMinorType, sizeof(CLSID));
+                rt.dwOffsetMinor = add_data(&clsidStore, (const BYTE*)rgPin2.lpMediaType[j].clsMinorType, sizeof(CLSID));
             rt.dwOffsetMinor += size;
 
             add_data(&mainStore, (LPBYTE)&rt, sizeof(rt));
@@ -443,9 +443,9 @@ static HRESULT FM2_WriteFilterData(IPropertyBag * pPropBag, const REGFILTER2 * p
 
         for (j = 0; j < rgPin2.nMediums; j++)
         {
-            DWORD index = find_data(&clsidStore, (LPBYTE)(rgPin2.lpMedium + j), sizeof(REGPINMEDIUM));
+            DWORD index = find_data(&clsidStore, (const BYTE*)(rgPin2.lpMedium + j), sizeof(REGPINMEDIUM));
             if (index == -1)
-                index = add_data(&clsidStore, (LPBYTE)(rgPin2.lpMedium + j), sizeof(REGPINMEDIUM));
+                index = add_data(&clsidStore, (const BYTE*)(rgPin2.lpMedium + j), sizeof(REGPINMEDIUM));
             index += size;
 
             add_data(&mainStore, (LPBYTE)&index, sizeof(index));
@@ -826,8 +826,8 @@ static BOOL MatchTypes(
 /* internal helper function for qsort of MONIKER_MERIT array */
 static int mm_compare(const void * left, const void * right)
 {
-    const struct MONIKER_MERIT * mmLeft = (struct MONIKER_MERIT *)left;
-    const struct MONIKER_MERIT * mmRight = (struct MONIKER_MERIT *)right;
+    const struct MONIKER_MERIT * mmLeft = (const struct MONIKER_MERIT *)left;
+    const struct MONIKER_MERIT * mmRight = (const struct MONIKER_MERIT *)right;
 
     if (mmLeft->dwMerit == mmRight->dwMerit)
         return 0;
@@ -1225,7 +1225,7 @@ static HRESULT WINAPI FilterMapper_RegisterFilter(IFilterMapper * iface, CLSID c
 
     if (SUCCEEDED(hr))
     {
-        hr = HRESULT_FROM_WIN32(RegSetValueExW(hKey, NULL, 0, REG_SZ, (LPBYTE)szName, strlenW(szName) + 1));
+        hr = HRESULT_FROM_WIN32(RegSetValueExW(hKey, NULL, 0, REG_SZ, (const BYTE*)szName, strlenW(szName) + 1));
         CloseHandle(hKey);
     }
 

@@ -239,7 +239,7 @@ void setup_light(LPDIRECT3DDEVICE8 iface, LONG Index, PLIGHTINFOEL *lightInfo) {
 }
 
 /* Setup this textures matrix */
-static void set_texture_matrix(float *smat, DWORD flags)
+static void set_texture_matrix(const float *smat, DWORD flags)
 {
     float mat[16];
 
@@ -1531,7 +1531,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetTransform(LPDIRECT3DDEVICE8 iface, D3DT
             glActiveTextureARB(GL_TEXTURE0_ARB + tex);
             checkGLcall("glActiveTextureARB");
 #endif
-            set_texture_matrix((float *)lpmatrix, This->UpdateStateBlock->texture_state[tex][D3DTSS_TEXTURETRANSFORMFLAGS]);
+            set_texture_matrix((const float *)lpmatrix, This->UpdateStateBlock->texture_state[tex][D3DTSS_TEXTURETRANSFORMFLAGS]);
         }
 
     } else if (d3dts == D3DTS_VIEW) { /* handle the VIEW matrice */
@@ -1543,7 +1543,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetTransform(LPDIRECT3DDEVICE8 iface, D3DT
         glMatrixMode(GL_MODELVIEW);
         checkGLcall("glMatrixMode(GL_MODELVIEW)");
         glPushMatrix();
-        glLoadMatrixf((float *)lpmatrix);
+        glLoadMatrixf((const float *)lpmatrix);
         checkGLcall("glLoadMatrixf(...)");
 
         /* If we are changing the View matrix, reset the light and clipping planes to the new view   
@@ -4090,7 +4090,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetVertexShaderConstant(LPDIRECT3DDEVICE8 
     return D3DERR_INVALIDCALL;
   }
   if (ConstantCount > 1) {
-    FLOAT* f = (FLOAT*)pConstantData;
+    const FLOAT* f = (const FLOAT*)pConstantData;
     UINT i;
     TRACE_(d3d_shader)("(%p) : SetVertexShaderConstant C[%lu..%lu]=\n", This, Register, Register + ConstantCount - 1);
     for (i = 0; i < ConstantCount; ++i) {
@@ -4098,7 +4098,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetVertexShaderConstant(LPDIRECT3DDEVICE8 
       f += 4;
     }
   } else { 
-    FLOAT* f = (FLOAT*) pConstantData;
+    const FLOAT* f = (const FLOAT*) pConstantData;
     TRACE_(d3d_shader)("(%p) : SetVertexShaderConstant, C[%lu]={%f, %f, %f, %f}\n", This, Register, f[0], f[1], f[2], f[3]);
   }
   This->UpdateStateBlock->Changed.vertexShaderConstant = TRUE;
@@ -4262,7 +4262,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetPixelShaderConstant(LPDIRECT3DDEVICE8 i
     return D3DERR_INVALIDCALL;
   }
   if (ConstantCount > 1) {
-    FLOAT* f = (FLOAT*)pConstantData;
+    const FLOAT* f = (const FLOAT*)pConstantData;
     UINT i;
     TRACE_(d3d_shader)("(%p) : SetPixelShaderConstant C[%lu..%lu]=\n", This, Register, Register + ConstantCount - 1);
     for (i = 0; i < ConstantCount; ++i) {
@@ -4270,7 +4270,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetPixelShaderConstant(LPDIRECT3DDEVICE8 i
       f += 4;
     }
   } else { 
-    FLOAT* f = (FLOAT*) pConstantData;
+    const FLOAT* f = (const FLOAT*) pConstantData;
     TRACE_(d3d_shader)("(%p) : SetPixelShaderConstant, C[%lu]={%f, %f, %f, %f}\n", This, Register, f[0], f[1], f[2], f[3]);
   }
   This->UpdateStateBlock->Changed.pixelShaderConstant = TRUE;

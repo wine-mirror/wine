@@ -219,7 +219,7 @@ static int enum_channel(HANDLE hProcess, EnumChannelCB ce, void* user, unsigned 
     {
         for (i = 0; i < dol.nb_channels; i++)
         {
-            if (ReadProcessMemory(hProcess, (void*)(dol.channels + i), &buf_addr, sizeof(buf_addr), NULL) &&
+            if (ReadProcessMemory(hProcess, (void const *)(dol.channels + i), &buf_addr, sizeof(buf_addr), NULL) &&
                 ReadProcessMemory(hProcess, buf_addr, buffer, sizeof(buffer), NULL))
             {
                 if (unique)
