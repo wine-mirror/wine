@@ -52,6 +52,20 @@ DWORD WINAPI FreeLibrary32W16(DWORD);
 DWORD WINAPI CallProcExW16(VOID);
 DWORD WINAPI CallProcEx32W16(VOID);
 
+/* thunk for 16-bit CreateThread */
+struct thread_args
+{
+    FARPROC16 proc;
+    DWORD     param;
+};
+
+static DWORD CALLBACK start_thread16( LPVOID threadArgs )
+{
+    struct thread_args args = *(struct thread_args *)threadArgs;
+    HeapFree( GetProcessHeap(), 0, threadArgs );
+    return K32WOWCallback16( (DWORD)args.proc, args.param );
+}
+
 /*
  *  32-bit WOW routines (in WOW32, but actually forwarded to KERNEL32)
  */
@@ -284,7 +298,6 @@ BOOL WINAPI K32WOWCallback16Ex( DWORD vpfn16, DWORD dwFlags,
      * copy them to the 16-bit stack ...
      */
     memcpy( (LPBYTE)CURRENT_STACK16 - cbArgs, (LPBYTE)pArgs, cbArgs );
-
 
     /*
      * Actually, we should take care whether the called routine cleans up
@@ -536,4 +549,19 @@ DWORD WINAPI WOW16Call(WORD x,WORD y,WORD z)
         stack16_pop( x + sizeof(DWORD) );
         DPRINTF(") calling address was 0x%08lx\n",calladdr);
         return 0;
+}
+
+
+/***********************************************************************
+ *           CreateThread16   (KERNEL.441)
+ */
+HANDLE WINAPI CreateThread16( SECURITY_ATTRIBUTES *sa, DWORD stack,
+                              FARPROC16 start, SEGPTR param,
+                              DWORD flags, LPDWORD id )
+{
+    struct thread_args *args = HeapAlloc( GetProcessHeap(), 0, sizeof(*args) );
+    if (!args) return INVALID_HANDLE_VALUE;
+    args->proc = start;
+    args->param = param;
+    return CreateThread( sa, stack, start_thread16, args, flags, id );
 }

@@ -331,31 +331,6 @@ HANDLE WINAPI CreateThread( SECURITY_ATTRIBUTES *sa, SIZE_T stack,
 }
 
 /***********************************************************************
- *           CreateThread16   (KERNEL.441)
- */
-static DWORD CALLBACK THREAD_StartThread16( LPVOID threadArgs )
-{
-    FARPROC16 start = ((FARPROC16 *)threadArgs)[0];
-    DWORD     param = ((DWORD *)threadArgs)[1];
-    HeapFree( GetProcessHeap(), 0, threadArgs );
-
-    ((LPDWORD)CURRENT_STACK16)[-1] = param;
-    return wine_call_to_16( start, sizeof(DWORD) );
-}
-HANDLE WINAPI CreateThread16( SECURITY_ATTRIBUTES *sa, DWORD stack,
-                              FARPROC16 start, SEGPTR param,
-                              DWORD flags, LPDWORD id )
-{
-    DWORD *threadArgs = HeapAlloc( GetProcessHeap(), 0, 2*sizeof(DWORD) );
-    if (!threadArgs) return INVALID_HANDLE_VALUE;
-    threadArgs[0] = (DWORD)start;
-    threadArgs[1] = (DWORD)param;
-
-    return CreateThread( sa, stack, THREAD_StartThread16, threadArgs, flags, id );
-}
-
-
-/***********************************************************************
  * ExitThread [KERNEL32.@]  Ends a thread
  *
  * RETURNS
