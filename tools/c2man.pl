@@ -34,6 +34,7 @@ my $FLAG_I386       = 4;
 my $FLAG_REGISTER   = 8;
 my $FLAG_APAIR      = 16; # The A version of a matching W function
 my $FLAG_WPAIR      = 32; # The W version of a matching A function
+my $FLAG_64PAIR     = 64; # The 64 bit version of a matching 32 bit function
 
 
 # Options
@@ -441,7 +442,8 @@ sub process_source_file
     }
     elsif ($parse_state == 2) # Finished reading in a comment
     {
-      if ( /(WINAPI|__cdecl|PASCAL|CALLBACK|FARPROC16)/ )
+      if ( /(WINAPIV|WINAPI|__cdecl|PASCAL|CALLBACK|FARPROC16)/ ||
+           /.*?\(.*?\)/ )
       {
         # Comment is followed by a function definition
         $parse_state = 4; # Fall through to read prototype
@@ -577,6 +579,7 @@ sub process_comment_text
       # Common idioms
       s/^See ([A-Za-z0-9_]+)\.$/See $1\(\)\./;                # Referring to A version from W
       s/^Unicode version of ([A-Za-z0-9_]+)\.$/See $1\(\)\./; # Ditto
+      s/^64\-bit version of ([A-Za-z0-9_]+)\.$/See $1\(\)\./; # Referring to 32 bit version from 64
       s/^PARAMETERS$/PARAMS/;  # Name of parameter section should be 'PARAMS'
       # Trademarks
       s/( |\.)(MS|Microsoft|microsoft)( |\.)/$1Microsoft\(tm\)$3/g;
@@ -834,6 +837,11 @@ sub process_comment
             @$export[4] |= $FLAG_WPAIR; # Explicitly marked as W version
             $found_returns = 1;
           }
+          elsif ( /^64\-bit version of ([A-Za-z0-9_]+)\.$/ )
+          {
+            @$export[4] |= $FLAG_64PAIR; # Explicitly marked as 64 bit version
+            $found_returns = 1;
+          }
           $found_description_text = 1;
         }
         else
@@ -861,8 +869,18 @@ sub process_comment
   # (This leaves it as a list of types and names, or empty for void functions)
   my $prototype = join(" ", @{$comment->{PROTOTYPE}});
   $prototype =~ s/  / /g;
-  $prototype =~ s/^(.*?) (WINAPIV|WINAPI|__cdecl|PASCAL|CALLBACK|FARPROC16) (.*?)\( *(.*)/$4/;
-  $comment->{RETURNS} = $1;
+
+  if ( $prototype =~ /(WINAPIV|WINAPI|__cdecl|PASCAL|CALLBACK|FARPROC16)/ )
+  {
+    $prototype =~ s/^(.*?) (WINAPIV|WINAPI|__cdecl|PASCAL|CALLBACK|FARPROC16) (.*?)\( *(.*)/$4/;
+    $comment->{RETURNS} = $1;
+  }
+  else
+  {
+    $prototype =~ s/^(.*?)([A-Za-z0-9_]+)\( *(.*)/$3/;
+    $comment->{RETURNS} = $1;
+  }
+
   $prototype =~ s/ *\).*//;        # Strip end bracket
   $prototype =~ s/ *\* */\*/g;     # Strip space around pointers
   $prototype =~ s/ *\, */\,/g;     # Strip space around commas
