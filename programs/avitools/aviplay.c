@@ -31,7 +31,7 @@
 
 int PASCAL WinMain (HANDLE hInstance, HANDLE prev, LPSTR cmdline, int show)
 {
-    int			i,n,pos;
+    int			bytesline,i,n,pos;
     time_t		tstart,tend;
     LONG		cnt;
     BITMAPINFOHEADER	*bmi;
@@ -45,6 +45,9 @@ int PASCAL WinMain (HANDLE hInstance, HANDLE prev, LPSTR cmdline, int show)
     LPDIRECTDRAW	ddraw;
     DDSURFACEDESC	dsdesc;
     LPDIRECTDRAWSURFACE dsurf;
+    LPDIRECTDRAWPALETTE dpal;
+    PALETTEENTRY	palent[256];
+
 
 void	(WINAPI *fnAVIFileInit)(void);
 void	(WINAPI *fnAVIFileExit)(void);
@@ -81,6 +84,7 @@ HRESULT (WINAPI *fnAVIStreamGetFrameClose)(PGETFRAME pg);
 	XXT(AVIStreamInfo);
 #undef XX
 #undef XXT
+
     
     fnAVIFileInit();
     if (-1==GetFileAttributes(cmdline)) {
@@ -145,10 +149,14 @@ HRESULT (WINAPI *fnAVIStreamGetFrameClose)(PGETFRAME pg);
     	fprintf(stderr,"AVIStreamReadFormat vids: 0x%08lx\n",hres);
 	exit(1);
     }
+    vidgetframe = NULL;
     bmi->biCompression = 0; /* we want it in raw form, uncompressed */
+    /* recalculate the image size */
+    bmi->biSizeImage = ((bmi->biWidth*bmi->biBitCount+31)&~0x1f)*bmi->biPlanes*bmi->biHeight/8;
+    bytesline = ((bmi->biWidth*bmi->biBitCount+31)&~0x1f)*bmi->biPlanes/8;
     vidgetframe = fnAVIStreamGetFrameOpen(vids,bmi);
     if (!vidgetframe) {
-    	fprintf(stderr,"AVIStreamGetFrameOpen: failed.\n");
+    	fprintf(stderr,"AVIStreamGetFrameOpen: failed\n");
 	exit(1);
     }
 /********************* end video setup ***********************************/
@@ -172,6 +180,24 @@ HRESULT (WINAPI *fnAVIStreamGetFrameClose)(PGETFRAME pg);
     	fprintf(stderr,"ddraw.CreateSurface: 0x%08lx\n",hres);
 	exit(1);
     }
+    if (bmi->biBitCount==8) {
+    	RGBQUAD		*rgb = (RGBQUAD*)(bmi+1);
+	int		i;
+
+	hres = ddraw->lpvtbl->fnCreatePalette(ddraw,DDPCAPS_8BIT,NULL,&dpal,NULL);
+	if (hres) {
+	    fprintf(stderr,"ddraw.CreateSurface: 0x%08lx\n",hres);
+	    exit(1);
+	}
+	dsurf->lpvtbl->fnSetPalette(dsurf,dpal);
+	for (i=0;i<bmi->biClrUsed;i++) {
+	    palent[i].peRed = rgb[i].rgbRed;
+	    palent[i].peBlue = rgb[i].rgbBlue;
+	    palent[i].peGreen = rgb[i].rgbGreen;
+	}
+	dpal->lpvtbl->fnSetEntries(dpal,0,0,bmi->biClrUsed,palent);
+    } else
+	dpal = NULL;
 /********************* end display setup *******************************/
 
     tstart = time(NULL);
@@ -180,24 +206,48 @@ HRESULT (WINAPI *fnAVIStreamGetFrameClose)(PGETFRAME pg);
     	LPVOID		decodedframe;
 	LPBITMAPINFOHEADER lpbmi;
 	LPVOID		decodedbits;
-	int		bytesline;
 
 /* video stuff */
 	if (!(decodedframe=fnAVIStreamGetFrame(vidgetframe,pos++)))
 	    break;
 	lpbmi = (LPBITMAPINFOHEADER)decodedframe;
 	decodedbits = (LPVOID)(((DWORD)decodedframe)+lpbmi->biSize);
+	if (lpbmi->biBitCount == 8) {
+	/* cant detect palette change that way I think */
+	    RGBQUAD	*rgb = (RGBQUAD*)(lpbmi+1);
+	    int		i,palchanged;
+
+	    /* skip used colorentries. */
+	    decodedbits+=bmi->biClrUsed*sizeof(RGBQUAD);
+	    palchanged = 0;
+	    for (i=0;i<bmi->biClrUsed;i++) {
+	    	if (	(palent[i].peRed != rgb[i].rgbRed) ||
+	    		(palent[i].peBlue != rgb[i].rgbBlue) ||
+	    		(palent[i].peGreen != rgb[i].rgbGreen)
+		) {
+			palchanged = 1;
+			break;
+		}
+	    }
+	    if (palchanged) {
+		for (i=0;i<bmi->biClrUsed;i++) {
+		    palent[i].peRed = rgb[i].rgbRed;
+		    palent[i].peBlue = rgb[i].rgbBlue;
+		    palent[i].peGreen = rgb[i].rgbGreen;
+		}
+		dpal->lpvtbl->fnSetEntries(dpal,0,0,bmi->biClrUsed,palent);
+	    }
+	}
 	dsdesc.dwSize = sizeof(dsdesc);
 	hres = dsurf->lpvtbl->fnLock(dsurf,NULL,&dsdesc,DDLOCK_WRITEONLY,0);
 	if (hres) {
 	    fprintf(stderr,"dsurf.Lock: 0x%08lx\n",hres);
 	    exit(1);
 	}
-	bytesline = dsdesc.dwWidth * dsdesc.ddpfPixelFormat.x.dwRGBBitCount/8;
 	/* Argh. AVIs are upside down. */
 	for (i=0;i<dsdesc.dwHeight;i++) {
 	    memcpy( dsdesc.y.lpSurface+(i*dsdesc.lPitch),
-		    decodedbits+bytesline*(dsdesc.dwHeight-i),
+		    decodedbits+bytesline*(dsdesc.dwHeight-i-1),
 		    bytesline
 	    );
 	}
