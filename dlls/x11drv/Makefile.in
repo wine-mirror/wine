@@ -1,0 +1,16 @@
+TOPSRCDIR = @top_srcdir@
+TOPOBJDIR = ../..
+SRCDIR    = @srcdir@
+VPATH     = @srcdir@
+MODULE    = x11drv
+SOVERSION = 1.0
+
+SPEC_SRCS = x11drv.spec
+
+C_SRCS = \
+	x11drv_main.c
+
+@MAKE_DLL_RULES@
+
+### Dependencies:
+

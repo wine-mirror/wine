@@ -6,6 +6,10 @@
  */
 
 #include "message.h"
+#include "user.h"
+#include "x11drv.h"
+#include "ttydrv.h"
+#include "monitor.h"
 #include "debugtools.h"
 
 DECLARE_DEBUG_CHANNEL(event)
@@ -21,6 +25,10 @@ EVENT_DRIVER *EVENT_Driver = NULL;
  */
 BOOL EVENT_Init(void)
 {
+    USER_Driver->pInitialize();
+
+    MONITOR_Initialize(&MONITOR_PrimaryMonitor);
+
     return EVENT_Driver->pInit();
 }
 

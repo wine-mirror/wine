@@ -1,0 +1,16 @@
+TOPSRCDIR = @top_srcdir@
+TOPOBJDIR = ../..
+SRCDIR    = @srcdir@
+VPATH     = @srcdir@
+MODULE    = ttydrv
+SOVERSION = 1.0
+
+SPEC_SRCS = ttydrv.spec
+
+C_SRCS = \
+	ttydrv_main.c
+
+@MAKE_DLL_RULES@
+
+### Dependencies:
+

@@ -1,6 +1,6 @@
 name	user32
 type	win32
-init	MAIN_UserInit
+init	USER_Init
 rsrc	user32
 
   1 stdcall ActivateKeyboardLayout(long long) ActivateKeyboardLayout

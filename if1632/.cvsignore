@@ -3,7 +3,6 @@ call16.s
 comm.spec.c
 ddeml.spec.c
 dispdib.spec.c
-gdi.spec.c
 kernel.spec.c
 keyboard.spec.c
 ole2conv.spec.c
@@ -13,7 +12,5 @@ ole2thk.spec.c
 system.spec.c
 thunk.glue.c
 toolhelp.spec.c
-user.spec.c
 wineps.spec.c
-winsock.spec.c
 wprocs.spec.c

@@ -6190,6 +6190,7 @@ dlls/dinput/Makefile
 dlls/display/Makefile
 dlls/dplayx/Makefile
 dlls/dsound/Makefile
+dlls/gdi/Makefile
 dlls/icmp/Makefile
 dlls/imagehlp/Makefile
 dlls/imm32/Makefile
@@ -6215,6 +6216,8 @@ dlls/shell32/Makefile
 dlls/sound/Makefile
 dlls/stress/Makefile
 dlls/tapi32/Makefile
+dlls/ttydrv/Makefile
+dlls/user/Makefile
 dlls/version/Makefile
 dlls/win32s/Makefile
 dlls/win87em/Makefile
@@ -6233,6 +6236,8 @@ dlls/winmm/wavemap/Makefile
 dlls/winmm/wineoss/Makefile
 dlls/winsock/Makefile
 dlls/winspool/Makefile
+dlls/ttydrv/Makefile
+dlls/x11drv/Makefile
 documentation/Makefile
 documentation/wine.conf.man
 documentation/wine.man
@@ -6408,6 +6413,7 @@ dlls/dinput/Makefile
 dlls/display/Makefile
 dlls/dplayx/Makefile
 dlls/dsound/Makefile
+dlls/gdi/Makefile
 dlls/icmp/Makefile
 dlls/imagehlp/Makefile
 dlls/imm32/Makefile
@@ -6433,6 +6439,8 @@ dlls/shell32/Makefile
 dlls/sound/Makefile
 dlls/stress/Makefile
 dlls/tapi32/Makefile
+dlls/ttydrv/Makefile
+dlls/user/Makefile
 dlls/version/Makefile
 dlls/win32s/Makefile
 dlls/win87em/Makefile
@@ -6451,6 +6459,8 @@ dlls/winmm/wavemap/Makefile
 dlls/winmm/wineoss/Makefile
 dlls/winsock/Makefile
 dlls/winspool/Makefile
+dlls/ttydrv/Makefile
+dlls/x11drv/Makefile
 documentation/Makefile
 documentation/wine.conf.man
 documentation/wine.man

@@ -654,8 +654,8 @@ static void called_at_exit(void)
  *
  * Wine initialisation and command-line parsing
  */
-BOOL MAIN_WineInit( int *argc, char *argv[] )
-{    
+BOOL MAIN_WineInit( int argc, char *argv[] )
+{
     struct timeval tv;
 
 #ifdef MALLOC_DEBUGGING
@@ -680,17 +680,7 @@ BOOL MAIN_WineInit( int *argc, char *argv[] )
     gettimeofday( &tv, NULL);
     MSG_WineStartTicks = (tv.tv_sec * 1000) + (tv.tv_usec / 1000);
     
-    OPTIONS_ParseOptions( *argc, argv );
-
-#ifndef X_DISPLAY_MISSING
-    USER_Driver = &X11DRV_USER_Driver;
-#else /* !defined(X_DISPLAY_MISSING) */
-    USER_Driver = &TTYDRV_USER_Driver;
-#endif /* !defined(X_DISPLAY_MISSING) */
-
-    USER_Driver->pInitialize();
-
-    MONITOR_Initialize(&MONITOR_PrimaryMonitor);
+    OPTIONS_ParseOptions( argc, argv );
 
     atexit(called_at_exit);
     return TRUE;

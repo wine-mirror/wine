@@ -1,9 +1,4 @@
 Makefile
 call32.s
-ddraw.spec.c
-dinput.spec.c
-gdi32.spec.c
 kernel32.spec.c
-user32.spec.c
 wow32.spec.c
-wsock32.spec.c

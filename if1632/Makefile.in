@@ -9,7 +9,6 @@ SPEC_SRCS = \
 	comm.spec \
 	ddeml.spec \
 	dispdib.spec \
-	gdi.spec \
 	kernel.spec \
 	keyboard.spec \
 	ole2conv.spec \
@@ -18,7 +17,6 @@ SPEC_SRCS = \
 	ole2thk.spec \
 	system.spec \
 	toolhelp.spec \
-	user.spec \
 	wineps.spec \
 	wprocs.spec
 

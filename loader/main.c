@@ -60,7 +60,7 @@ DEFAULT_DEBUG_CHANNEL(server)
 /***********************************************************************
  *           Main initialisation routine
  */
-BOOL MAIN_MainInit( int *argc, char *argv[], BOOL win32 )
+BOOL MAIN_MainInit( int argc, char *argv[], BOOL win32 )
 {
     /* store the program name */
     argv0 = argv[0];
@@ -107,6 +107,8 @@ BOOL MAIN_MainInit( int *argc, char *argv[], BOOL win32 )
     /* Initialize KERNEL */
     if (!LoadLibrary16( "KRNL386.EXE" )) return FALSE;
     if (!LoadLibraryA( "KERNEL32" )) return FALSE;
+
+    if (!LoadLibraryA( "x11drv" )) return FALSE;
 
     /* Initialize event handling */
     if (!EVENT_Init()) return FALSE;
@@ -168,124 +170,6 @@ BOOL WINAPI MAIN_KernelInit(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReser
     return TRUE;
 }
 
-/***********************************************************************
- *           GDI initialisation routine
- */
-BOOL WINAPI MAIN_GdiInit(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
-{
-    NE_MODULE *pModule;
-
-    if ( GDI_HeapSel ) return TRUE;
-
-    /* Create GDI heap */
-    pModule = NE_GetPtr( GetModuleHandle16( "GDI" ) );
-    if ( pModule )
-    {
-        GDI_HeapSel = GlobalHandleToSel16( (NE_SEG_TABLE( pModule ) + 
-                                          pModule->dgroup - 1)->hSeg );
-    }
-    else
-    {
-        GDI_HeapSel = GlobalAlloc16( GMEM_FIXED, GDI_HEAP_SIZE );
-        LocalInit16( GDI_HeapSel, 0, GDI_HEAP_SIZE-1 );
-    }
-
-    if (!TWEAK_Init()) return FALSE;
-
-    /* GDI initialisation */
-    if(!GDI_Init()) return FALSE;
-
-    /* Create the Win16 printer driver */
-    if (!WIN16DRV_Init()) return FALSE;
-
-    /* PSDRV initialization */
-    if(!PSDRV_Init()) return FALSE;
-
-    return TRUE;
-}
-
-/***********************************************************************
- *           USER initialisation routine
- */
-BOOL WINAPI MAIN_UserInit(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
-{
-    NE_MODULE *pModule;
-    int queueSize;
-
-    if ( USER_HeapSel ) return TRUE;
-
-    /* Create USER heap */
-    pModule = NE_GetPtr( GetModuleHandle16( "USER" ) );
-    if ( pModule )
-    {
-        USER_HeapSel = GlobalHandleToSel16( (NE_SEG_TABLE( pModule ) + 
-                                           pModule->dgroup - 1)->hSeg );
-    }
-    else
-    {
-        USER_HeapSel = GlobalAlloc16( GMEM_FIXED, 0x10000 );
-        LocalInit16( USER_HeapSel, 0, 0xffff );
-    }
-
-     /* Global atom table initialisation */
-    if (!ATOM_Init( USER_HeapSel )) return FALSE;
-
-    /* Initialize window handling (critical section) */
-    WIN_Init();
-
-    /* Initialize system colors and metrics*/
-    SYSMETRICS_Init();
-    SYSCOLOR_Init();
-
-    /* Create the DCEs */
-    DCE_Init();
-
-    /* Initialize timers */
-    if (!TIMER_Init()) return FALSE;
-    
-    /* Initialize window procedures */
-    if (!WINPROC_Init()) return FALSE;
-
-    /* Initialize cursor/icons */
-    CURSORICON_Init();
-
-    /* Initialize built-in window classes */
-    if (!WIDGETS_Init()) return FALSE;
-
-    /* Initialize dialog manager */
-    if (!DIALOG_Init()) return FALSE;
-
-    /* Initialize menus */
-    if (!MENU_Init()) return FALSE;
-
-    /* Initialize message spying */
-    if (!SPY_Init()) return FALSE;
-
-    /* Create system message queue */
-    queueSize = GetProfileIntA( "windows", "TypeAhead", 120 );
-    if (!QUEUE_CreateSysMsgQueue( queueSize )) return FALSE;
-
-    /* Set double click time */
-    SetDoubleClickTime( GetProfileIntA("windows","DoubleClickSpeed",452) );
-
-    /* Create message queue of initial thread */
-    InitThreadInput16( 0, 0 );
-
-    /* Create desktop window */
-    if (!WIN_CreateDesktopWindow()) return FALSE;
-
-    /* Initialize keyboard driver */
-    KEYBOARD_Enable( keybd_event, InputKeyStateTable );
-
-    /* Initialize mouse driver */
-    MOUSE_Enable( mouse_event );
-
-    /* Start processing X events */
-    UserRepaintDisable16( FALSE );
-
-    return TRUE;
-}
-
 
 /***********************************************************************
  *           Winelib initialisation routine
@@ -296,7 +180,8 @@ HINSTANCE MAIN_WinelibInit( int *argc, char *argv[] )
     HMODULE16 hModule;
 
     /* Main initialization */
-    if (!MAIN_MainInit( argc, argv, TRUE )) return 0;
+    if (!MAIN_MainInit( *argc, argv, TRUE )) return 0;
+    *argc = Options.argc;
 
     /* Load WineLib EXE module */
     if ( (hModule = BUILTIN32_LoadExeModule()) < 32 ) return 0;

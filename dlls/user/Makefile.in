@@ -1,0 +1,17 @@
+TOPSRCDIR = @top_srcdir@
+TOPOBJDIR = ../..
+SRCDIR    = @srcdir@
+VPATH     = @srcdir@
+MODULE    = user32
+SOVERSION = 1.0
+ALTNAMES  = user
+
+SPEC_SRCS = user32.spec user.spec
+
+C_SRCS = \
+	user_main.c
+
+@MAKE_DLL_RULES@
+
+### Dependencies:
+

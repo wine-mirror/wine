@@ -1,0 +1,17 @@
+TOPSRCDIR = @top_srcdir@
+TOPOBJDIR = ../..
+SRCDIR    = @srcdir@
+VPATH     = @srcdir@
+MODULE    = gdi32
+SOVERSION = 1.0
+ALTNAMES  = gdi
+
+SPEC_SRCS = gdi32.spec gdi.spec
+
+C_SRCS = \
+	gdi_main.c
+
+@MAKE_DLL_RULES@
+
+### Dependencies:
+

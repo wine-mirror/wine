@@ -89,6 +89,7 @@ DLLS = \
 	dinput \
 	dplayx \
 	dsound \
+	gdi32 \
 	icmp \
 	imagehlp \
 	imm32 \
@@ -120,6 +121,8 @@ DLLS = \
 	sound \
 	stress \
 	tapi32 \
+	ttydrv \
+	user32 \
 	version \
 	w32skrnl \
 	win87em \
@@ -129,7 +132,8 @@ DLLS = \
 	winmm \
 	winspool \
 	wnaspi32 \
-	wsock32
+	wsock32 \
+	x11drv
 
 # Implicit rules
 

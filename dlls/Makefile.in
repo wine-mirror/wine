@@ -12,6 +12,7 @@ DLLFILES = \
 	dinput/libdinput.@LIBEXT@ \
 	dplayx/libdplayx.@LIBEXT@ \
 	dsound/libdsound.@LIBEXT@ \
+	gdi/libgdi32.@LIBEXT@ \
 	icmp/libicmp.@LIBEXT@ \
 	imagehlp/libimagehlp.@LIBEXT@ \
 	imm32/libimm32.@LIBEXT@ \
@@ -35,6 +36,8 @@ DLLFILES = \
 	sound/libsound.@LIBEXT@ \
 	stress/libstress.@LIBEXT@ \
 	tapi32/libtapi32.@LIBEXT@ \
+	ttydrv/libttydrv.@LIBEXT@ \
+	user/libuser32.@LIBEXT@ \
 	version/libversion.@LIBEXT@ \
 	win32s/libw32skrnl.@LIBEXT@ \
 	win87em/libwin87em.@LIBEXT@ \
@@ -52,7 +55,8 @@ DLLFILES = \
 	winmm/wavemap/libmsacm.drv.@LIBEXT@ \
 	winmm/wineoss/libwineoss.drv.@LIBEXT@ \
 	winsock/libwsock32.@LIBEXT@ \
-	winspool/libwinspool.@LIBEXT@
+	winspool/libwinspool.@LIBEXT@ \
+	x11drv/libx11drv.@LIBEXT@
 
 # extra names for dlls containing multiple spec files
 EXTRADLLNAMES = \
@@ -60,6 +64,7 @@ EXTRADLLNAMES = \
 	commdlg \
 	compobj \
 	dplay \
+	gdi \
 	lzexpand \
 	mmsystem \
 	msvideo \
@@ -72,6 +77,7 @@ EXTRADLLNAMES = \
 	shlwapi \
 	storage \
 	typelib \
+	user \
 	ver \
 	w32sys \
 	win32s16 \
@@ -107,6 +113,9 @@ libdplayx.@LIBEXT@ libdplay.@LIBEXT@: dplayx/libdplayx.@LIBEXT@
 
 libdsound.@LIBEXT@: dsound/libdsound.@LIBEXT@
 	$(RM) $@ && $(LN_S) dsound/libdsound.@LIBEXT@ $@
+
+libgdi32.@LIBEXT@ libgdi.@LIBEXT@: gdi/libgdi32.@LIBEXT@
+	$(RM) $@ && $(LN_S) gdi/libgdi32.@LIBEXT@ $@
 
 libicmp.@LIBEXT@: icmp/libicmp.@LIBEXT@
 	$(RM) $@ && $(LN_S) icmp/libicmp.@LIBEXT@ $@
@@ -201,6 +210,12 @@ libstress.@LIBEXT@: stress/libstress.@LIBEXT@
 libtapi32.@LIBEXT@: tapi32/libtapi32.@LIBEXT@
 	$(RM) $@ && $(LN_S) tapi32/libtapi32.@LIBEXT@ $@
 
+libttydrv.@LIBEXT@: ttydrv/libttydrv.@LIBEXT@
+	$(RM) $@ && $(LN_S) ttydrv/libttydrv.@LIBEXT@ $@
+
+libuser32.@LIBEXT@ libuser.@LIBEXT@: user/libuser32.@LIBEXT@
+	$(RM) $@ && $(LN_S) user/libuser32.@LIBEXT@ $@
+
 libversion.@LIBEXT@ libver.@LIBEXT@: version/libversion.@LIBEXT@
 	$(RM) $@ && $(LN_S) version/libversion.@LIBEXT@ $@
 
@@ -230,6 +245,9 @@ libwnaspi32.@LIBEXT@ libwinaspi.@LIBEXT@: winaspi/libwnaspi32.@LIBEXT@
 
 libwsock32.@LIBEXT@ libwinsock.@LIBEXT@: winsock/libwsock32.@LIBEXT@
 	$(RM) $@ && $(LN_S) winsock/libwsock32.@LIBEXT@ $@
+
+libx11drv.@LIBEXT@: x11drv/libx11drv.@LIBEXT@
+	$(RM) $@ && $(LN_S) x11drv/libx11drv.@LIBEXT@ $@
 
 $(DLLFILES): dummy
 	@cd `dirname $@` && $(MAKE)

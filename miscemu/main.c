@@ -109,7 +109,7 @@ int main( int argc, char *argv[] )
     NE_MODULE *pModule;
 
     /* Initialize everything */
-    if (!MAIN_MainInit( &argc, argv, FALSE )) return 1;
+    if (!MAIN_MainInit( argc, argv, FALSE )) return 1;
 
     /* Create initial task */
     if ( !(pModule = NE_GetPtr( GetModuleHandle16( "KERNEL" ) )) ) return 1;

@@ -6,12 +6,6 @@
 
 #include "config.h"
 
-#ifndef X_DISPLAY_MISSING
-#include "x11drv.h"
-#else /* !defined(X_DISPLAY_MISSING) */
-#include "ttydrv.h"
-#endif /* !defined(X_DISPLAY_MISSING */
-
 #include <stdlib.h>
 #include <stdio.h>
 
@@ -345,12 +339,6 @@ BOOL GDI_Init(void)
     ReadFontInformation("DefaultGui", &DefaultGuiFont, 0, 0, 0, 0, 0);
 
     /* Initialize drivers */
-
-#ifndef X_DISPLAY_MISSING
-    GDI_Driver = &X11DRV_GDI_Driver;
-#else /* !defined(X_DISPLAY_MISSING) */
-    GDI_Driver = &TTYDRV_GDI_Driver;
-#endif /* !defined(X_DISPLAY_MISSING */
 
     GDI_Driver->pInitialize();
 
