@@ -230,7 +230,6 @@ static HRESULT DEVENUM_CreateSpecialCategories()
     rf2.dwMerit = MERIT_PREFERRED;
     rf2.u.s1.cPins2 = 1;
     rf2.u.s1.rgPins2 = &rfp2;
-    rfp2.dwFlags = REG_PINFLAG_B_RENDERER;
     rfp2.cInstances = 1;
     rfp2.nMediums = 0;
     rfp2.lpMedium = NULL;
@@ -261,6 +260,7 @@ static HRESULT DEVENUM_CreateSpecialCategories()
         if (FAILED(res)) /* can't register any devices in this category */
             numDevs = 0;
 
+	rfp2.dwFlags = REG_PINFLAG_B_RENDERER;
 	for (i = 0; i < numDevs; i++)
 	{
 	    if (waveOutGetDevCapsW(i, &wocaps, sizeof(WAVEOUTCAPSW))
@@ -324,6 +324,7 @@ static HRESULT DEVENUM_CreateSpecialCategories()
         if (FAILED(res)) /* can't register any devices in this category */
             numDevs = 0;
 
+	rfp2.dwFlags = REG_PINFLAG_B_OUTPUT;
         for (i = 0; i < numDevs; i++)
         {
             if (waveInGetDevCapsW(i, &wicaps, sizeof(WAVEINCAPSW))
@@ -368,6 +369,7 @@ static HRESULT DEVENUM_CreateSpecialCategories()
         if (FAILED(res)) /* can't register any devices in this category */
             numDevs = 0;
 
+	rfp2.dwFlags = REG_PINFLAG_B_RENDERER;
 	for (i = 0; i < numDevs; i++)
 	{
 	    if (midiOutGetDevCapsW(i, &mocaps, sizeof(MIDIOUTCAPSW))
