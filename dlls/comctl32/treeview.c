@@ -357,26 +357,26 @@ TREEVIEW_RemoveItem (HWND hwnd, TREEVIEW_ITEM *wineItem)
 static void TREEVIEW_RemoveTree (HWND hwnd)
 					   
 {
- TREEVIEW_INFO *infoPtr = TREEVIEW_GetInfoPtr(hwnd);
- TREEVIEW_ITEM *killItem;
- int i;
+  TREEVIEW_INFO *infoPtr = TREEVIEW_GetInfoPtr(hwnd);
+  TREEVIEW_ITEM *killItem;
+  int i;
 
- for (i=1; i<=(INT)infoPtr->uMaxHandle; i++) 
-	if (!tv_test_bit (i, infoPtr->freeList)) {
-		killItem=& infoPtr->items [i];	
-		if (killItem->pszText!=LPSTR_TEXTCALLBACKA)
-			COMCTL32_Free (killItem->pszText);
-		TREEVIEW_SendTreeviewNotify 
-					(hwnd, TVN_DELETEITEMA, 0, killItem->hItem, 0);
-		} 
-
- if (infoPtr->uNumPtrsAlloced) {
-        COMCTL32_Free (infoPtr->items);
-        COMCTL32_Free (infoPtr->freeList);
-        infoPtr->uNumItems=0;
-        infoPtr->uNumPtrsAlloced=0;
-        infoPtr->uMaxHandle=0;
-    }   
+  for (i = 1; i <= (INT)infoPtr->uMaxHandle; i++) 
+    if (!tv_test_bit (i, infoPtr->freeList)) {
+      killItem = &infoPtr->items[i];	
+      if (killItem->pszText != LPSTR_TEXTCALLBACKA)
+	COMCTL32_Free (killItem->pszText);
+      TREEVIEW_SendTreeviewNotify(hwnd, TVN_DELETEITEMA, 0,
+				  killItem->hItem, 0);
+    } 
+  if (infoPtr->uNumPtrsAlloced) {
+    COMCTL32_Free (infoPtr->items);
+    COMCTL32_Free (infoPtr->freeList);
+    infoPtr->uNumItems = 0;
+    infoPtr->uNumPtrsAlloced = 0;
+    infoPtr->uMaxHandle = 0;
+    infoPtr->TopRootItem = 0;
+  }   
 }
 
 
@@ -1016,7 +1016,7 @@ tvItem->stateMask);
         len=lstrlenA (tvItem->pszText);
         if (len>wineItem->cchTextMax) 
 			wineItem->pszText= COMCTL32_ReAlloc (wineItem->pszText, len+1);
-        lstrcpynA (wineItem->pszText, tvItem->pszText,len);
+        lstrcpynA (wineItem->pszText, tvItem->pszText,len+1);
 		} else {
 			if (wineItem->cchTextMax) {
 				COMCTL32_Free (wineItem->pszText);
@@ -1309,68 +1309,76 @@ TREEVIEW_GetNextItem (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
   TREEVIEW_INFO *infoPtr = TREEVIEW_GetInfoPtr(hwnd);
   TREEVIEW_ITEM *wineItem, *returnItem;
-  INT iItem, retval, flag;
+  INT iItem = (INT)lParam, retval = 0, flag  = (INT)wParam;
   HDC hdc;
 
-  flag  = (INT) wParam;
-  iItem = (INT) lParam;
-  retval=0;
   switch (flag) {
-	case TVGN_ROOT: retval=(INT)infoPtr->TopRootItem;
-					break;
-	case TVGN_CARET:retval=(INT)infoPtr->selectedItem;
-					break;
-	case TVGN_FIRSTVISIBLE: /* FIXME:we should only recalculate, not redraw */
-  					hdc = GetDC (hwnd);
-  					TREEVIEW_Refresh (hwnd, hdc);
-  					ReleaseDC(hwnd,hdc);
-					retval=(INT)infoPtr->firstVisible;
-					break;
-	case TVGN_DROPHILITE:
-					retval=(INT)infoPtr->dropItem;
-					break;
-	}
-  if (retval) {
-  		TRACE("flags:%x, returns %u\n", flag, retval);
-		return retval;
-  }
+  case TVGN_ROOT:
+    retval = (INT)infoPtr->TopRootItem;
+    break;
+
+  case TVGN_CARET:
+    retval = (INT)infoPtr->selectedItem;
+    break;
+
+  case TVGN_FIRSTVISIBLE: /* FIXME:we should only recalculate, not redraw */
+    hdc = GetDC (hwnd);
+    TREEVIEW_Refresh (hwnd, hdc);
+    ReleaseDC(hwnd,hdc);
+    retval = (INT)infoPtr->firstVisible;
+    break;
+
+  case TVGN_DROPHILITE:
+    retval = (INT)infoPtr->dropItem;
+    break;
  
-  wineItem = TREEVIEW_ValidItem (infoPtr, (HTREEITEM)iItem);
-  returnItem = NULL;
-  if (!wineItem) return FALSE;
+  case TVGN_NEXT:
+    wineItem = TREEVIEW_ValidItem (infoPtr, (HTREEITEM)iItem);
+    retval = wineItem ? (INT)wineItem->sibling : 0;
+    break;
 
-  switch (flag)	{
-	case TVGN_NEXT: retval=(INT)wineItem->sibling;
-					break;
-	case TVGN_PREVIOUS:	
-					retval=(INT)wineItem->upsibling;
-					break;
-	case TVGN_PARENT:
-					retval=(INT)wineItem->parent;
-					break;
-	case TVGN_CHILD:
-					retval=(INT)wineItem->firstChild;
-					break;
-	case TVGN_LASTVISIBLE:  
-					returnItem=TREEVIEW_GetLastListItem (infoPtr,wineItem);
-					break;
-	case TVGN_NEXTVISIBLE:  
-					returnItem=TREEVIEW_GetNextListItem (infoPtr,wineItem);
-					break;
-	case TVGN_PREVIOUSVISIBLE: 
-					returnItem=TREEVIEW_GetPrevListItem (infoPtr, wineItem);
-					break;
-	default:		FIXME("Unknown msg %x,item %x\n", flag,iItem);
-					break;
-	}
+  case TVGN_PREVIOUS:	
+    wineItem = TREEVIEW_ValidItem (infoPtr, (HTREEITEM)iItem);
+    retval = wineItem ? (INT)wineItem->upsibling : 0;
+    break;
 
-  if (returnItem) {
-		  TRACE("flags:%x, item %d;returns %d\n", flag, iItem,
-							(INT)returnItem->hItem);
-		  return (INT)returnItem->hItem;
+  case TVGN_PARENT:
+    wineItem = TREEVIEW_ValidItem (infoPtr, (HTREEITEM)iItem);
+    retval = wineItem ? (INT)wineItem->parent : 0;
+    break;
+
+  case TVGN_CHILD:
+    wineItem = TREEVIEW_ValidItem (infoPtr, (HTREEITEM)iItem);
+    retval = wineItem ? (INT)wineItem->firstChild : 0;
+    break;
+
+  case TVGN_LASTVISIBLE:  
+    if((wineItem = TREEVIEW_ValidItem (infoPtr, (HTREEITEM)iItem))) {
+      returnItem = TREEVIEW_GetLastListItem (infoPtr,wineItem);
+      retval = returnItem ? (INT)returnItem->hItem : 0;
+    }
+    break;
+
+  case TVGN_NEXTVISIBLE:  
+    if((wineItem = TREEVIEW_ValidItem (infoPtr, (HTREEITEM)iItem))) {
+      returnItem = TREEVIEW_GetNextListItem (infoPtr,wineItem);
+      retval = returnItem ? (INT)returnItem->hItem : 0;
+    }
+    break;
+
+  case TVGN_PREVIOUSVISIBLE: 
+    if((wineItem = TREEVIEW_ValidItem (infoPtr, (HTREEITEM)iItem))) {
+      returnItem = TREEVIEW_GetPrevListItem (infoPtr, wineItem);
+      retval = returnItem ? (INT)returnItem->hItem : 0;
+    }
+    break;
+
+  default:
+    FIXME("Unknown msg %x,item %x\n", flag,iItem);
+    break;
   }
 
-  TRACE("flags:%x, item %d;returns %d\n", flag, iItem,retval);
+  TRACE("flags %x, item %d returns %d\n", flag, iItem, retval);
   return retval;
 }
 
@@ -2032,7 +2040,7 @@ TREEVIEW_DeleteItem (HWND hwnd, WPARAM wParam, LPARAM lParam)
   INT iItem;
   TREEVIEW_ITEM *wineItem;
 
-  TRACE("\n");
+  TRACE("item = %08lx\n", lParam);
 
   if (lParam == (INT)TVI_ROOT) {
 	TREEVIEW_RemoveTree (hwnd);
