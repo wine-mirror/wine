@@ -1124,13 +1124,13 @@ BOOL WINAPI GlobalMemoryStatusEx( LPMEMORYSTATUSEX lpmemex )
 	    lpmemex->ullAvailPhys = *tmp;
             lpmemex->ullTotalPageFile = *tmp;
 	    lpmemex->ullAvailPageFile = *tmp;
-	    lpmemex->ullMemoryLoad = lpmemex->ullTotalPhys - lpmemex->ullAvailPhys;
+	    lpmemex->dwMemoryLoad = lpmemex->ullTotalPhys - lpmemex->ullAvailPhys;
 	} else
 	{
 	    lpmemex->ullAvailPhys = lpmemex->ullTotalPhys;
 	    lpmemex->ullTotalPageFile = lpmemex->ullTotalPhys;
 	    lpmemex->ullAvailPageFile = lpmemex->ullTotalPhys;
-	    lpmemex->ullMemoryLoad = 0;
+	    lpmemex->dwMemoryLoad = 0;
 	}
 	free(tmp);
 
