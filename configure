@@ -4506,12 +4506,20 @@ rm -fr confdefs* $ac_clean_files
 test "$no_create" = yes || ${CONFIG_SHELL-/bin/sh} $CONFIG_STATUS || exit 1
 
 
+if test "$have_x" = "no"
+then
+  echo
+  echo "*** Warning: X development files not found. Wine will be built without"
+  echo "*** X support, which currently does not work, and would probably not be"
+  echo "*** what you want anyway. You will need to install devel packages of"
+  echo "*** Xlib/Xfree86 and Xpm at the very least."
+fi
+
 if test "$ac_cv_lib_ncurses_resizeterm" = "no" -a "$ac_cv_lib_ncurses_waddch" = "yes"
 then
   echo
   echo "*** Warning: resizeterm not found in ncurses. Wine will be built without"
   echo "*** terminal resize support. Consider upgrading ncurses."
-  echo
 fi
 
 if test "$wine_cv_libc_reentrant" = "no" 
@@ -4520,7 +4528,6 @@ then
   echo "*** Warning: non-reentrant libc detected. Wine will be build without"
   echo "*** thread support. Consider upgrading libc to a more recent"
   echo "*** reentrant version of libc."
-  echo
 fi
 
 echo
