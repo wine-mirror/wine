@@ -26,6 +26,7 @@ DECLARE_DEBUG_CHANNEL(pidl)
 DECLARE_DEBUG_CHANNEL(shell)
 
 static char * szMyComp = "My Computer";	/* for comparing */
+static char * szNetHood = "Network Neighbourhood";	/* for comparing */
 
 void pdump (LPCITEMIDLIST pidl)
 {	DWORD type;
@@ -53,7 +54,6 @@ void pdump (LPCITEMIDLIST pidl)
 	else
 	  TRACE_(pidl)("empty pidl (Desktop)\n");	
 }
-
 #define BYTES_PRINTED 32
 BOOL pcheck (LPCITEMIDLIST pidl)
 {       DWORD type, ret=TRUE;
@@ -68,14 +68,17 @@ BOOL pcheck (LPCITEMIDLIST pidl)
 	      case PT_MYCOMP:
 	      case PT_SPECIAL:
 	      case PT_DRIVE:
+	      case PT_DRIVE1:
+	      case PT_DRIVE2:
+	      case PT_DRIVE3:
 	      case PT_FOLDER:
 	      case PT_VALUE:
-	      case PT_DRIVE1:
 	      case PT_FOLDER1:
 	      case PT_WORKGRP:
 	      case PT_COMP:
 	      case PT_NETWORK:
 	      case PT_SHARE:
+	      case PT_IESPECIAL:
 		break;
 	      default:
 	      {
@@ -349,6 +352,11 @@ BOOL WINAPI ILIsEqual(LPCITEMIDLIST pidl1, LPCITEMIDLIST pidl2)
 	    ppidldata = _ILGetDataPointer(pidltemp2);    
 	    szData2 = _ILGetTextPointer(ppidldata->type, ppidldata);
 
+	    if (!szData1 || !szData2)
+	    { FIXME_(pidl)("Failure getting text pointer");
+	      return FALSE;
+	    }
+	    
 	    if (strcmp ( szData1, szData2 )!=0 )
 	      return FALSE;
 
@@ -367,10 +375,50 @@ BOOL WINAPI ILIsEqual(LPCITEMIDLIST pidl1, LPCITEMIDLIST pidl2)
 /*************************************************************************
  * ILIsParent [SHELL32.23]
  *
+ * parent=a/b	child=a/b/c -> true, c is in folder a/b
+ *		child=a/b/c/d -> false if bImmediate is true, d is not in folder a/b
+ *		child=a/b/c/d -> true if bImmediate is false, d is in a subfolder of a/b
  */
-DWORD WINAPI ILIsParent( DWORD x, DWORD y, DWORD z)
-{	FIXME_(pidl)("0x%08lx 0x%08lx 0x%08lx stub\n",x,y,z);
-	return 0;
+BOOL WINAPI ILIsParent( LPCITEMIDLIST pidlParent, LPCITEMIDLIST pidlChild, BOOL bImmediate)
+{
+	LPPIDLDATA ppidldata;
+	CHAR * szData1;
+	CHAR * szData2;
+
+	LPITEMIDLIST pParent = pidlParent;
+	LPITEMIDLIST pChild = pidlChild;
+	
+	TRACE_(pidl)("%p %p %x\n", pidlParent, pidlChild, bImmediate);
+
+	if (pParent->mkid.cb && pChild->mkid.cb)
+	{ do
+	  { ppidldata = _ILGetDataPointer(pParent);
+	    szData1 = _ILGetTextPointer(ppidldata->type, ppidldata);
+	    
+	    ppidldata = _ILGetDataPointer(pChild);    
+	    szData2 = _ILGetTextPointer(ppidldata->type, ppidldata);
+
+	    if (!szData1 || !szData2)
+	    { FIXME_(pidl)("Failure getting text pointer");
+	      return FALSE;
+	    }
+	    
+	    if (strcmp ( szData1, szData2 )!=0 )
+	      return FALSE;
+
+	    pParent = ILGetNext(pParent);
+	    pChild = ILGetNext(pChild);
+
+	  } while (pParent->mkid.cb && pChild->mkid.cb);
+	}	
+	
+	if ( pParent->mkid.cb || ! pChild->mkid.cb)	/* child shorter or has equal length to parent */
+	  return FALSE;
+	
+	if ( ILGetNext(pChild)->mkid.cb && bImmediate)	/* not immediate descent */
+	  return FALSE;
+	
+	return TRUE;
 }
 
 /*************************************************************************
@@ -848,7 +896,10 @@ BOOL WINAPI _ILIsMyComputer(LPCITEMIDLIST pidl)
 BOOL WINAPI _ILIsDrive(LPCITEMIDLIST pidl)
 {	LPPIDLDATA lpPData = _ILGetDataPointer(pidl);
 	TRACE_(pidl)("(%p)\n",pidl);
-	return (pidl && lpPData && (PT_DRIVE == lpPData->type || PT_DRIVE1 == lpPData->type));
+	return (pidl && lpPData && (PT_DRIVE == lpPData->type ||
+				    PT_DRIVE1 == lpPData->type ||
+				    PT_DRIVE2 == lpPData->type ||
+				    PT_DRIVE3 == lpPData->type));
 }
 
 BOOL WINAPI _ILIsFolder(LPCITEMIDLIST pidl)
@@ -1128,14 +1179,20 @@ LPSTR WINAPI _ILGetTextPointer(PIDLTYPE type, LPPIDLDATA pidldata)
 	switch (type)
 	{ case PT_DRIVE:
 	  case PT_DRIVE1:
+	  case PT_DRIVE2:
+	  case PT_DRIVE3:
 	    return (LPSTR)&(pidldata->u.drive.szDriveName);
 
 	  case PT_MYCOMP:
 	    return szMyComp;
 
+	  case PT_SPECIAL:
+	    return szNetHood;
+
 	  case PT_FOLDER:
 	  case PT_FOLDER1:
 	  case PT_VALUE:
+	  case PT_IESPECIAL:
 	    return (LPSTR)&(pidldata->u.file.szNames);
 
 	  case PT_WORKGRP:
@@ -1159,6 +1216,7 @@ LPSTR WINAPI _ILGetSTextPointer(PIDLTYPE type, LPPIDLDATA pidldata)
 	switch (type)
 	{ case PT_FOLDER:
 	  case PT_VALUE:
+	  case PT_IESPECIAL:
 	    return (LPSTR)(pidldata->u.file.szNames + strlen (pidldata->u.file.szNames) + 1);
 	  case PT_WORKGRP:
 	    return (LPSTR)(pidldata->u.network.szNames + strlen (pidldata->u.network.szNames) + 1);
@@ -1200,7 +1258,7 @@ BOOL WINAPI _ILGetFileSize (LPCITEMIDLIST pidl, LPSTR pOut, UINT uOutSize)
 
 BOOL WINAPI _ILGetExtension (LPCITEMIDLIST pidl, LPSTR pOut, UINT uOutSize)
 {	char pTemp[MAX_PATH];
-	int i;
+	const char * pPoint;
 
 	TRACE_(pidl)("pidl=%p\n",pidl);
 
@@ -1208,12 +1266,13 @@ BOOL WINAPI _ILGetExtension (LPCITEMIDLIST pidl, LPSTR pOut, UINT uOutSize)
 	{ return FALSE;
 	}
 
-	for (i=0; pTemp[i]!='.' && pTemp[i];i++);
+	pPoint = PathFindExtensionA(pTemp);
 
-	if (!pTemp[i])
+	if (! *pPoint)
 	  return FALSE;
-	  
-	strncpy(pOut, &pTemp[i], uOutSize);
+
+	pPoint++;
+	strncpy(pOut, pPoint, uOutSize);
 	TRACE_(pidl)("%s\n",pOut);
 
 	return TRUE;

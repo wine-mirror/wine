@@ -25,10 +25,13 @@
 * The structure of the pidl seems to be a union. The first byte of the
 * PIDLDATA desribes the type of pidl.
 *
-*	object        ! first byte    ! format       ! living space
+*	object        ! first byte /  ! format       ! living space
+*	              ! size
 *	----------------------------------------------------------------
-*	my computer	0x1F		mycomp (2)	(usual)
-*	drive		0x23		drive		(usual)
+*	my computer	0x1F/20		mycomp (2)	(usual)
+*	drive		0x23/25		drive		(usual)
+*	drive		0x25/25		drive		(lnk/persistant)
+*	drive		0x29/25		drive
 *	control/printer	0x2E
 *	drive		0x2F		drive		(lnk/persistant)
 *	folder/file	0x30		folder/file (1)	(lnk/persistant)
@@ -37,6 +40,7 @@
 *	workgroup	0x41		network (3)
 *	computer	0x42		network (4)
 *	whole network	0x47		network (5)
+*	history/favorites 0xb1		file
 *	share		0xc3		metwork (6)
 *
 * guess: the persistant elements are non tracking
@@ -52,6 +56,8 @@
 #define PT_DESKTOP	0x00 /* internal */
 #define PT_MYCOMP	0x1F
 #define PT_DRIVE	0x23
+#define PT_DRIVE2	0x25
+#define PT_DRIVE3	0x29
 #define PT_SPECIAL	0x2E
 #define PT_DRIVE1	0x2F
 #define PT_FOLDER1	0x30
@@ -60,6 +66,7 @@
 #define PT_WORKGRP	0x41
 #define PT_COMP		0x42
 #define PT_NETWORK	0x47
+#define PT_IESPECIAL	0xb1
 #define PT_SHARE	0xc3
 
 #include "pshpack1.h"
@@ -73,10 +80,9 @@ typedef struct tagPIDLDATA
 	    GUID guid;
 	  } mycomp;
 	  struct
-	  { CHAR szDriveName[4];	/*01*/
-	    /* end of MS compatible*/
-	    DWORD dwSFGAO;		/*05*/
-	    /* the drive seems to be 19 bytes every time */
+	  { CHAR szDriveName[20];	/*01*/
+	    DWORD dwUnknown;		/*21*/
+	    /* the drive seems to be 25 bytes every time */
 	  } drive;
 	  struct 
 	  { BYTE dummy;			/*01 is 0x00 for files or dirs */
