@@ -4232,12 +4232,18 @@ _copy_arg(	ITypeInfo2 *tinfo, TYPEDESC *tdesc,
 	ITypeInfo_GetTypeAttr(tinfo2,&tattr);
 	switch (tattr->typekind) {
 	case TKIND_ENUM:
-	    if (V_VT(arg) == VT_I4) {
-		memcpy(argpos, &V_UNION(arg,iVal), 4);
-		return S_OK;
-	    }
-	    FIXME("vt 0x%x -> TKIND_ENUM unhandled.\n",V_VT(arg));
-	    break;
+          switch ( V_VT( arg ) ) {
+          case VT_I2:
+             *argpos = V_UNION(arg,iVal);
+             return S_OK;
+          case VT_I4:
+             memcpy(argpos, &V_UNION(arg,lVal), 4);
+             return S_OK;
+          default:
+             FIXME("vt 0x%x -> TKIND_ENUM unhandled.\n",V_VT(arg));
+             break;
+          }
+
 	case TKIND_ALIAS:
 	    tdesc = &(tattr->tdescAlias);
 	    hres = _copy_arg((ITypeInfo2*)tinfo2, tdesc, argpos, arg, tdesc->vt);
@@ -4432,6 +4438,9 @@ static HRESULT WINAPI ITypeInfo_fnInvoke(
 		for (i=0;i<pFDesc->funcdesc.cParams-pDispParams->cArgs;i++) {
 		    int arglen = _argsize(pFDesc->funcdesc.lprgelemdescParam[i].tdesc.vt);
 		    TYPEDESC *tdesc = &(pFDesc->funcdesc.lprgelemdescParam[i+pDispParams->cArgs].tdesc);
+                   TYPEDESC i4_tdesc;
+                   i4_tdesc.vt = VT_I4;
+
 		    /* If we are a pointer to a variant, we are done already */
 		    if ((tdesc->vt==VT_PTR)&&(tdesc->u.lptdesc->vt==VT_VARIANT))
 			continue;
@@ -4453,7 +4462,8 @@ static HRESULT WINAPI ITypeInfo_fnInvoke(
 			ITypeInfo_GetTypeAttr(tinfo2,&tattr);
 			switch (tattr->typekind) {
 			case TKIND_ENUM:
-			    FIXME("TKIND_ENUM unhandled.\n");
+                           /* force the return type to be VT_I4 */
+                           tdesc = &i4_tdesc;
 			    break;
 			case TKIND_ALIAS:
 			    TRACE("TKIND_ALIAS to vt 0x%x\n",tattr->tdescAlias.vt);
