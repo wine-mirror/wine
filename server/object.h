@@ -165,6 +165,10 @@ extern int get_page_size(void);
 
 extern void close_registry(void);
 
+/* atom functions */
+
+extern void close_atom_table(void);
+
 /* global variables (command-line options) */
 
 extern int debug_level;

@@ -21,14 +21,15 @@
 #include "winuser.h"
 #include "wine/winbase16.h"
 #include "wine/winuser16.h"
-#include "global.h"
+#include "winerror.h"
 #include "instance.h"
 #include "ldt.h"
 #include "stackframe.h"
 #include "user.h"
 #include "debugtools.h"
+#include "server.h"
 
-DEFAULT_DEBUG_CHANNEL(atom)
+DEFAULT_DEBUG_CHANNEL(atom);
 
 #define DEFAULT_ATOMTABLE_SIZE    37
 #define MIN_STR_ATOM              0xc000
@@ -36,12 +37,6 @@ DEFAULT_DEBUG_CHANNEL(atom)
 
 #define ATOMTOHANDLE(atom)        ((HANDLE16)(atom) << 2)
 #define HANDLETOATOM(handle)      ((ATOM)(0xc000 | ((handle) >> 2)))
-
-#define HAS_ATOM_TABLE(sel)  \
-          ((INSTANCEDATA*)PTR_SEG_OFF_TO_LIN(sel,0))->atomtable != 0)
-
-#define GET_ATOM_TABLE(sel)  ((ATOMTABLE*)PTR_SEG_OFF_TO_LIN(sel, \
-          ((INSTANCEDATA*)PTR_SEG_OFF_TO_LIN(sel,0))->atomtable))
 
 typedef struct
 {
@@ -57,49 +52,7 @@ typedef struct
     HANDLE16    entries[1];
 } ATOMTABLE;
 		
-static WORD ATOM_GlobalTable = 0;
-
-/***********************************************************************
- *           ATOM_InitTable
- *
- * NOTES
- *	Should this validate the value of entries to be 0 < x < 0x3fff?
- *
- * RETURNS
- *	Handle: Success
- *	0: Failure
- */
-static HANDLE16 ATOM_InitTable(
-                WORD selector, /* [in] Segment */
-                WORD entries   /* [in] Size of atom table */
-) {
-    int i;
-    HANDLE16 handle;
-    ATOMTABLE *table;
-
-      /* We consider the first table to be initialized as the global table. 
-       * This works, as USER (both built-in and native) is the first one to 
-       * register ... 
-       */
-
-    if (!ATOM_GlobalTable) ATOM_GlobalTable = selector; 
-
-
-      /* Allocate the table */
-
-    handle = LOCAL_Alloc( selector, LMEM_FIXED,
-                          sizeof(ATOMTABLE) + (entries-1) * sizeof(HANDLE16) );
-    if (!handle) return 0;
-    table = (ATOMTABLE *)PTR_SEG_OFF_TO_LIN( selector, handle );
-    table->size = entries;
-    for (i = 0; i < entries; i++) table->entries[i] = 0;
-
-      /* Store a pointer to the table in the instance data */
-
-    ((INSTANCEDATA *)PTR_SEG_OFF_TO_LIN( selector, 0 ))->atomtable = handle;
-    return handle;
-}
-
+static WORD ATOM_UserDS = 0;  /* USER data segment */
 
 /***********************************************************************
  *           ATOM_Init
@@ -108,7 +61,8 @@ static HANDLE16 ATOM_InitTable(
  */
 BOOL ATOM_Init( WORD globalTableSel )
 {
-    return ATOM_InitTable( globalTableSel, DEFAULT_ATOMTABLE_SIZE ) != 0;
+    ATOM_UserDS = globalTableSel;
+    return TRUE;
 }
 
 
@@ -122,34 +76,19 @@ BOOL ATOM_Init( WORD globalTableSel )
  *	Pointer to table: Success
  *	NULL: Failure
  */
-static ATOMTABLE *ATOM_GetTable(
-                  WORD selector, /* [in] Segment */
-                  BOOL create  /* [in] Create */ )
+static ATOMTABLE *ATOM_GetTable( BOOL create  /* [in] Create */ )
 {
-    INSTANCEDATA *ptr = (INSTANCEDATA *)PTR_SEG_OFF_TO_LIN( selector, 0 );
+    INSTANCEDATA *ptr = (INSTANCEDATA *)PTR_SEG_OFF_TO_LIN( CURRENT_DS, 0 );
     if (ptr->atomtable)
     {
         ATOMTABLE *table = (ATOMTABLE *)((char *)ptr + ptr->atomtable);
         if (table->size) return table;
     }
     if (!create) return NULL;
-    if (!ATOM_InitTable( selector, DEFAULT_ATOMTABLE_SIZE )) return NULL;
+    if (!InitAtomTable16( 0 )) return NULL;
     /* Reload ptr in case it moved in linear memory */
-    ptr = (INSTANCEDATA *)PTR_SEG_OFF_TO_LIN( selector, 0 );
+    ptr = (INSTANCEDATA *)PTR_SEG_OFF_TO_LIN( CURRENT_DS, 0 );
     return (ATOMTABLE *)((char *)ptr + ptr->atomtable);
-}
-
-
-/***********************************************************************
- *           ATOM_MakePtr
- *
- * Make an ATOMENTRY pointer from a handle (obtained from GetAtomHandle()).
- */
-static ATOMENTRY *ATOM_MakePtr(
-                  WORD selector,  /* [in] Segment */
-                  HANDLE16 handle /* [in] Handle */
-) {
-    return (ATOMENTRY *)PTR_SEG_OFF_TO_LIN( selector, handle );
 }
 
 
@@ -171,206 +110,69 @@ static WORD ATOM_Hash(
     return hash % entries;
 }
 
-static BOOL ATOM_IsIntAtom(LPCSTR atomstr,WORD *atomid) {
-	LPSTR 	xend;
-
-	if (!HIWORD(atomstr)) {
-		*atomid = LOWORD(atomstr);
-		return TRUE;
-	}
-	if (atomstr[0]!='#')
-		return FALSE;
-	*atomid=strtol(atomstr+1,&xend,10);
-	if (*xend) {
-		/* atom has a name like '## some name ##'  */
-		return FALSE;
-	}
-	return TRUE;
-}
-
 
 /***********************************************************************
- *           ATOM_AddAtom
- *
- * Windows DWORD aligns the atom entry size.
- * The remaining unused string space created by the alignment
- * gets padded with '\0's in a certain way to ensure
- * that at least one trailing '\0' remains.
- *
- * RETURNS
- *	Atom: Success
- *	0: Failure
+ *           ATOM_IsIntAtomA
  */
-static ATOM ATOM_AddAtom(
-            WORD selector, /* [in] Segment */
-            LPCSTR str     /* [in] Pointer to the string to add */
-) {
-    WORD hash;
-    HANDLE16 entry;
-    ATOMENTRY * entryPtr;
-    ATOMTABLE * table;
-    int len, ae_len;
-    WORD	iatom;
-
-    TRACE("0x%x, %s\n", selector, str);
-    
-    if (ATOM_IsIntAtom(str,&iatom))
-    	return iatom;
-    if ((len = strlen( str )) > MAX_ATOM_LEN) len = MAX_ATOM_LEN;
-    if (!(table = ATOM_GetTable( selector, TRUE ))) return 0;
-    hash = ATOM_Hash( table->size, str, len );
-    entry = table->entries[hash];
-    while (entry)
-    {
-	entryPtr = ATOM_MakePtr( selector, entry );
-	if ((entryPtr->length == len) && 
-	    (!lstrncmpiA( entryPtr->str, str, len )))
-	{
-	    entryPtr->refCount++;
-            TRACE("-- existing 0x%x\n", entry);
-	    return HANDLETOATOM( entry );
-	}
-	entry = entryPtr->next;
-    }
-
-    ae_len = (sizeof(ATOMENTRY)+len+3) & ~3;
-    entry = LOCAL_Alloc( selector, LMEM_FIXED, ae_len);
-    if (!entry) return 0;
-    /* Reload the table ptr in case it moved in linear memory */
-    table = ATOM_GetTable( selector, FALSE );
-    entryPtr = ATOM_MakePtr( selector, entry );
-    entryPtr->next = table->entries[hash];
-    entryPtr->refCount = 1;
-    entryPtr->length = len;
-    /* Some applications _need_ the '\0' padding provided by this strncpy */
-    strncpy( entryPtr->str, str, ae_len - sizeof(ATOMENTRY) + 1 );
-    entryPtr->str[ae_len - sizeof(ATOMENTRY)] = '\0';
-    table->entries[hash] = entry;
-    TRACE("-- new 0x%x\n", entry);
-    return HANDLETOATOM( entry );
-}
-
-
-/***********************************************************************
- *           ATOM_DeleteAtom
- * RETURNS
- *	0: Success
- *	Atom: Failure
- */
-static ATOM ATOM_DeleteAtom(
-            WORD selector, /* [in] Segment */
-            ATOM atom      /* [in] Atom to delete */
-) {
-    ATOMENTRY * entryPtr;
-    ATOMTABLE * table;
-    HANDLE16 entry, *prevEntry;
-    WORD hash;
-
-    TRACE("0x%x, 0x%x\n", selector, atom);
-    
-    if (atom < MIN_STR_ATOM) return 0;  /* Integer atom */
-
-    if (!(table = ATOM_GetTable( selector, FALSE ))) return 0;
-    entry = ATOMTOHANDLE( atom );
-    entryPtr = ATOM_MakePtr( selector, entry );
-
-      /* Find previous atom */
-    hash = ATOM_Hash( table->size, entryPtr->str, entryPtr->length );
-    prevEntry = &table->entries[hash];
-    while (*prevEntry && *prevEntry != entry)
-    {
-	ATOMENTRY * prevEntryPtr = ATOM_MakePtr( selector, *prevEntry );
-	prevEntry = &prevEntryPtr->next;
-    }    
-    if (!*prevEntry) return atom;
-
-      /* Delete atom */
-    if (--entryPtr->refCount == 0)
-    {
-	*prevEntry = entryPtr->next;
-        LOCAL_Free( selector, entry );
-    }    
-    return 0;
-}
-
-
-/***********************************************************************
- *           ATOM_FindAtom
- * RETURNS
- *	Atom: Success
- *	0: Failure
- */
-static ATOM ATOM_FindAtom(
-            WORD selector, /* [in] Segment */
-            LPCSTR str     /* [in] Pointer to string to find */
-) {
-    ATOMTABLE * table;
-    WORD hash,iatom;
-    HANDLE16 entry;
-    int len;
-
-    TRACE("%x, %s\n", selector, str);
-    if (ATOM_IsIntAtom(str,&iatom))
-    	return iatom;
-    if ((len = strlen( str )) > 255) len = 255;
-    if (!(table = ATOM_GetTable( selector, FALSE ))) return 0;
-    hash = ATOM_Hash( table->size, str, len );
-    entry = table->entries[hash];
-    while (entry)
-    {
-	ATOMENTRY * entryPtr = ATOM_MakePtr( selector, entry );
-	if ((entryPtr->length == len) && 
-	    (!lstrncmpiA( entryPtr->str, str, len )))
-    {    TRACE("-- found %x\n", entry);
-	    return HANDLETOATOM( entry );
-    }
-	entry = entryPtr->next;
-    }
-    TRACE("-- not found\n");
-    return 0;
-}
-
-
-/***********************************************************************
- *           ATOM_GetAtomName
- * RETURNS
- *	Length of string copied to buffer: Success
- *	0: Failure
- */
-static UINT ATOM_GetAtomName(
-              WORD selector, /* [in]  Segment */
-              ATOM atom,     /* [in]  Atom identifier */
-              LPSTR buffer,  /* [out] Pointer to buffer for atom string */
-              INT count    /* [in]  Size of buffer */
-) {
-    ATOMTABLE * table;
-    ATOMENTRY * entryPtr;
-    HANDLE16 entry;
-    char * strPtr;
-    UINT len;
-    char text[8];
-    
-    TRACE("%x, %x\n", selector, atom);
-    
-    if (!count) return 0;
-    if (atom < MIN_STR_ATOM)
-    {
-	sprintf( text, "#%d", atom );
-	len = strlen(text);
-	strPtr = text;
-    }
+static BOOL ATOM_IsIntAtomA(LPCSTR atomstr,WORD *atomid)
+{
+    UINT atom = 0;
+    if (!HIWORD(atomstr)) atom = LOWORD(atomstr);
     else
     {
-       if (!(table = ATOM_GetTable( selector, FALSE ))) return 0;
-	entry = ATOMTOHANDLE( atom );
-	entryPtr = ATOM_MakePtr( selector, entry );
-	len = entryPtr->length;
-	strPtr = entryPtr->str;
+        if (*atomstr++ != '#') return FALSE;
+        while (*atomstr >= '0' && *atomstr <= '9')
+        {
+            atom = atom * 10 + *atomstr - '0';
+            atomstr++;
+        }
+        if (*atomstr) return FALSE;
     }
-    if (len >= count) len = count-1;
-    memcpy( buffer, strPtr, len );
-    buffer[len] = '\0';
-    return len;
+    if (!atom || (atom >= MIN_STR_ATOM))
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        atom = 0;
+    }
+    *atomid = atom;
+    return TRUE;
+}
+
+
+/***********************************************************************
+ *           ATOM_IsIntAtomW
+ */
+static BOOL ATOM_IsIntAtomW(LPCWSTR atomstr,WORD *atomid)
+{
+    UINT atom = 0;
+    if (!HIWORD(atomstr)) atom = LOWORD(atomstr);
+    else
+    {
+        if (*atomstr++ != '#') return FALSE;
+        while (*atomstr >= '0' && *atomstr <= '9')
+        {
+            atom = atom * 10 + *atomstr - '0';
+            atomstr++;
+        }
+        if (*atomstr) return FALSE;
+    }
+    if (!atom || (atom >= MIN_STR_ATOM))
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        atom = 0;
+    }
+    *atomid = atom;
+    return TRUE;
+}
+
+
+/***********************************************************************
+ *           ATOM_MakePtr
+ *
+ * Make an ATOMENTRY pointer from a handle (obtained from GetAtomHandle()).
+ */
+static inline ATOMENTRY *ATOM_MakePtr( HANDLE16 handle /* [in] Handle */ )
+{
+    return (ATOMENTRY *)PTR_SEG_OFF_TO_LIN( CURRENT_DS, handle );
 }
 
 
@@ -379,8 +181,35 @@ static UINT ATOM_GetAtomName(
  */
 WORD WINAPI InitAtomTable16( WORD entries )
 {
+    int i;
+    HANDLE16 handle;
+    ATOMTABLE *table;
+
+      /* We consider the first table to be initialized as the global table. 
+       * This works, as USER (both built-in and native) is the first one to 
+       * register ... 
+       */
+
+    if (!ATOM_UserDS)
+    {
+        ATOM_UserDS = CURRENT_DS; 
+        /* return dummy local handle */
+        return LocalAlloc16( LMEM_FIXED, 1 );
+    }
+
+      /* Allocate the table */
+
     if (!entries) entries = DEFAULT_ATOMTABLE_SIZE;  /* sanity check */
-    return ATOM_InitTable( CURRENT_DS, entries );
+    handle = LocalAlloc16( LMEM_FIXED, sizeof(ATOMTABLE) + (entries-1) * sizeof(HANDLE16) );
+    if (!handle) return 0;
+    table = (ATOMTABLE *)PTR_SEG_OFF_TO_LIN( CURRENT_DS, handle );
+    table->size = entries;
+    for (i = 0; i < entries; i++) table->entries[i] = 0;
+
+      /* Store a pointer to the table in the instance data */
+
+    ((INSTANCEDATA *)PTR_SEG_OFF_TO_LIN( CURRENT_DS, 0 ))->atomtable = handle;
+    return handle;
 }
 
 
@@ -396,23 +225,178 @@ HANDLE16 WINAPI GetAtomHandle16( ATOM atom )
 
 /***********************************************************************
  *           AddAtom16   (KERNEL.70)
+ *
+ * Windows DWORD aligns the atom entry size.
+ * The remaining unused string space created by the alignment
+ * gets padded with '\0's in a certain way to ensure
+ * that at least one trailing '\0' remains.
+ *
+ * RETURNS
+ *	Atom: Success
+ *	0: Failure
  */
-ATOM WINAPI AddAtom16( SEGPTR str )
+ATOM WINAPI AddAtom16( LPCSTR str )
 {
-    ATOM atom;
-    HANDLE16 ds = CURRENT_DS;
+    char buffer[MAX_ATOM_LEN+1];
+    WORD hash;
+    HANDLE16 entry;
+    ATOMENTRY * entryPtr;
+    ATOMTABLE * table;
+    int len, ae_len;
+    WORD	iatom;
 
-    if (!HIWORD(str)) return (ATOM)LOWORD(str);  /* Integer atom */
-    if (SELECTOR_TO_ENTRY(LOWORD(str)) == SELECTOR_TO_ENTRY(ds))
+    if (CURRENT_DS == ATOM_UserDS) return GlobalAddAtomA( str );
+    if (ATOM_IsIntAtomA( str, &iatom )) return iatom;
+
+    TRACE("%s\n",debugstr_a(buffer));
+    
+    /* Make a copy of the string to be sure it doesn't move in linear memory. */
+    lstrcpynA( buffer, str, sizeof(buffer) );
+
+    len = strlen( buffer );
+    if (!(table = ATOM_GetTable( TRUE ))) return 0;
+    hash = ATOM_Hash( table->size, buffer, len );
+    entry = table->entries[hash];
+    while (entry)
     {
-        /* If the string is in the same data segment as the atom table, make */
-        /* a copy of the string to be sure it doesn't move in linear memory. */
-        char buffer[MAX_ATOM_LEN+1];
-        lstrcpynA( buffer, (char *)PTR_SEG_TO_LIN(str), sizeof(buffer) );
-        atom = ATOM_AddAtom( ds, buffer );
+	entryPtr = ATOM_MakePtr( entry );
+	if ((entryPtr->length == len) && 
+	    (!lstrncmpiA( entryPtr->str, buffer, len )))
+	{
+	    entryPtr->refCount++;
+            TRACE("-- existing 0x%x\n", entry);
+	    return HANDLETOATOM( entry );
+	}
+	entry = entryPtr->next;
     }
-    else atom = ATOM_AddAtom( ds, (LPCSTR)PTR_SEG_TO_LIN(str) );
-    return atom;
+
+    ae_len = (sizeof(ATOMENTRY)+len+3) & ~3;
+    entry = LocalAlloc16( LMEM_FIXED, ae_len );
+    if (!entry) return 0;
+    /* Reload the table ptr in case it moved in linear memory */
+    table = ATOM_GetTable( FALSE );
+    entryPtr = ATOM_MakePtr( entry );
+    entryPtr->next = table->entries[hash];
+    entryPtr->refCount = 1;
+    entryPtr->length = len;
+    /* Some applications _need_ the '\0' padding provided by this strncpy */
+    strncpy( entryPtr->str, buffer, ae_len - sizeof(ATOMENTRY) + 1 );
+    entryPtr->str[ae_len - sizeof(ATOMENTRY)] = '\0';
+    table->entries[hash] = entry;
+    TRACE("-- new 0x%x\n", entry);
+    return HANDLETOATOM( entry );
+}
+
+
+/***********************************************************************
+ *           DeleteAtom16   (KERNEL.71)
+ */
+ATOM WINAPI DeleteAtom16( ATOM atom )
+{
+    ATOMENTRY * entryPtr;
+    ATOMTABLE * table;
+    HANDLE16 entry, *prevEntry;
+    WORD hash;
+
+    if (atom < MIN_STR_ATOM) return 0;  /* Integer atom */
+    if (CURRENT_DS == ATOM_UserDS) return GlobalDeleteAtom( atom );
+
+    TRACE("0x%x\n",atom);
+
+    if (!(table = ATOM_GetTable( FALSE ))) return 0;
+    entry = ATOMTOHANDLE( atom );
+    entryPtr = ATOM_MakePtr( entry );
+
+    /* Find previous atom */
+    hash = ATOM_Hash( table->size, entryPtr->str, entryPtr->length );
+    prevEntry = &table->entries[hash];
+    while (*prevEntry && *prevEntry != entry)
+    {
+	ATOMENTRY * prevEntryPtr = ATOM_MakePtr( *prevEntry );
+	prevEntry = &prevEntryPtr->next;
+    }    
+    if (!*prevEntry) return atom;
+
+    /* Delete atom */
+    if (--entryPtr->refCount == 0)
+    {
+	*prevEntry = entryPtr->next;
+        LocalFree16( entry );
+    }    
+    return 0;
+}
+
+
+/***********************************************************************
+ *           FindAtom16   (KERNEL.69)
+ */
+ATOM WINAPI FindAtom16( LPCSTR str )
+{
+    ATOMTABLE * table;
+    WORD hash,iatom;
+    HANDLE16 entry;
+    int len;
+
+    if (CURRENT_DS == ATOM_UserDS) return GlobalFindAtomA( str );
+
+    TRACE("%s\n",debugres_a(str));
+
+    if (ATOM_IsIntAtomA( str, &iatom )) return iatom;
+    if ((len = strlen( str )) > 255) len = 255;
+    if (!(table = ATOM_GetTable( FALSE ))) return 0;
+    hash = ATOM_Hash( table->size, str, len );
+    entry = table->entries[hash];
+    while (entry)
+    {
+	ATOMENTRY * entryPtr = ATOM_MakePtr( entry );
+	if ((entryPtr->length == len) && 
+	    (!lstrncmpiA( entryPtr->str, str, len )))
+        {
+            TRACE("-- found %x\n", entry);
+	    return HANDLETOATOM( entry );
+        }
+	entry = entryPtr->next;
+    }
+    TRACE("-- not found\n");
+    return 0;
+}
+
+
+/***********************************************************************
+ *           GetAtomName16   (KERNEL.72)
+ */
+UINT16 WINAPI GetAtomName16( ATOM atom, LPSTR buffer, INT16 count )
+{
+    ATOMTABLE * table;
+    ATOMENTRY * entryPtr;
+    HANDLE16 entry;
+    char * strPtr;
+    UINT len;
+    char text[8];
+
+    if (CURRENT_DS == ATOM_UserDS) return GlobalGetAtomNameA( atom, buffer, count );
+    
+    TRACE("%x\n",atom);
+    
+    if (!count) return 0;
+    if (atom < MIN_STR_ATOM)
+    {
+	sprintf( text, "#%d", atom );
+	len = strlen(text);
+	strPtr = text;
+    }
+    else
+    {
+       if (!(table = ATOM_GetTable( FALSE ))) return 0;
+	entry = ATOMTOHANDLE( atom );
+	entryPtr = ATOM_MakePtr( entry );
+	len = entryPtr->length;
+	strPtr = entryPtr->str;
+    }
+    if (len >= count) len = count-1;
+    memcpy( buffer, strPtr, len );
+    buffer[len] = '\0';
+    return len;
 }
 
 
@@ -443,15 +427,6 @@ ATOM WINAPI AddAtomW( LPCWSTR str )
 
 
 /***********************************************************************
- *           DeleteAtom16   (KERNEL.71)
- */
-ATOM WINAPI DeleteAtom16( ATOM atom )
-{
-    return ATOM_DeleteAtom( CURRENT_DS, atom );
-}
-
-
-/***********************************************************************
  *           DeleteAtom32   (KERNEL32.69)
  * Decrements the reference count of a string atom.  If count becomes
  * zero, the string associated with the atom is removed from the table.
@@ -464,16 +439,6 @@ ATOM WINAPI DeleteAtom(
             ATOM atom /* [in] Atom to delete */
 ) {
     return GlobalDeleteAtom( atom );  /* FIXME */
-}
-
-
-/***********************************************************************
- *           FindAtom16   (KERNEL.69)
- */
-ATOM WINAPI FindAtom16( SEGPTR str )
-{
-    if (!HIWORD(str)) return (ATOM)LOWORD(str);  /* Integer atom */
-    return ATOM_FindAtom( CURRENT_DS, (LPCSTR)PTR_SEG_TO_LIN(str) );
 }
 
 
@@ -500,15 +465,6 @@ ATOM WINAPI FindAtomA(
 ATOM WINAPI FindAtomW( LPCWSTR str )
 {
     return GlobalFindAtomW( str );  /* FIXME */
-}
-
-
-/***********************************************************************
- *           GetAtomName16   (KERNEL.72)
- */
-UINT16 WINAPI GetAtomName16( ATOM atom, LPSTR buffer, INT16 count )
-{
-    return (UINT16)ATOM_GetAtomName( CURRENT_DS, atom, buffer, count );
 }
 
 
@@ -540,17 +496,8 @@ UINT WINAPI GetAtomNameW( ATOM atom, LPWSTR buffer, INT count )
 
 
 /***********************************************************************
- *           GlobalAddAtom16   (USER.268)
- */
-ATOM WINAPI GlobalAddAtom16( SEGPTR str )
-{
-    if (!HIWORD(str)) return (ATOM)LOWORD(str);  /* Integer atom */
-    return ATOM_AddAtom( ATOM_GlobalTable, (LPCSTR)PTR_SEG_TO_LIN(str) );
-}
-
-
-/***********************************************************************
- *           GlobalAddAtom32A   (KERNEL32.313)
+ *           GlobalAddAtomA   (USER.268) (KERNEL32.313)
+ *
  * Adds a character string to the global atom table and returns a unique
  * value identifying the string.
  *
@@ -558,24 +505,34 @@ ATOM WINAPI GlobalAddAtom16( SEGPTR str )
  *	Atom: Success
  *	0: Failure
  */
-ATOM WINAPI GlobalAddAtomA(
-            LPCSTR str /* [in] Pointer to string to add */
-) {
-    if (!HIWORD(str)) return (ATOM)LOWORD(str);  /* Integer atom */
-    return ATOM_AddAtom( ATOM_GlobalTable, str );
+ATOM WINAPI GlobalAddAtomA( LPCSTR str /* [in] Pointer to string to add */ )
+{
+    ATOM atom = 0;
+    if (!ATOM_IsIntAtomA( str, &atom ))
+    {
+        struct add_atom_request *req = get_req_buffer();
+        server_strcpyAtoW( req->name, str );
+        if (!server_call( REQ_ADD_ATOM )) atom = req->atom + MIN_STR_ATOM;
+    }
+    TRACE( "%s -> %x\n", debugres_a(str), atom );
+    return atom;
 }
 
 
 /***********************************************************************
- *           GlobalAddAtom32W   (KERNEL32.314)
- * See GlobalAddAtom32A
+ *           GlobalAddAtomW   (KERNEL32.314)
  */
 ATOM WINAPI GlobalAddAtomW( LPCWSTR str )
 {
-    char buffer[MAX_ATOM_LEN+1];
-    if (!HIWORD(str)) return (ATOM)LOWORD(str);  /* Integer atom */
-    lstrcpynWtoA( buffer, str, sizeof(buffer) );
-    return ATOM_AddAtom( ATOM_GlobalTable, buffer );
+    ATOM atom = 0;
+    if (!ATOM_IsIntAtomW( str, &atom ))
+    {
+        struct add_atom_request *req = get_req_buffer();
+        server_strcpyW( req->name, str );
+        if (!server_call( REQ_ADD_ATOM )) atom = req->atom + MIN_STR_ATOM;
+    }
+    TRACE( "%s -> %x\n", debugres_w(str), atom );
+    return atom;
 }
 
 
@@ -588,25 +545,23 @@ ATOM WINAPI GlobalAddAtomW( LPCWSTR str )
  *	0: Success
  *	Atom: Failure
  */
-ATOM WINAPI GlobalDeleteAtom(
-            ATOM atom /* [in] Atom to delete */
-) {
-    return ATOM_DeleteAtom( ATOM_GlobalTable, atom );
-}
-
-
-/***********************************************************************
- *           GlobalFindAtom16   (USER.270)
- */
-ATOM WINAPI GlobalFindAtom16( SEGPTR str )
+ATOM WINAPI GlobalDeleteAtom( ATOM atom /* [in] Atom to delete */ )
 {
-    if (!HIWORD(str)) return (ATOM)LOWORD(str);  /* Integer atom */
-    return ATOM_FindAtom( ATOM_GlobalTable, (LPCSTR)PTR_SEG_TO_LIN(str) );
+    TRACE( "%x\n", atom );
+    if (atom < MIN_STR_ATOM) atom = 0;
+    else
+    {
+        struct delete_atom_request *req = get_req_buffer();
+        req->atom = atom - MIN_STR_ATOM;
+        if (!server_call( REQ_DELETE_ATOM )) atom = 0;
+    }
+    return atom;
 }
 
 
 /***********************************************************************
- *           GlobalFindAtom32A   (KERNEL32.318)
+ *           GlobalFindAtomA   (USER.270) (KERNEL32.318)
+ *
  * Searches the atom table for the string and returns the atom
  * associated with it.
  *
@@ -614,38 +569,40 @@ ATOM WINAPI GlobalFindAtom16( SEGPTR str )
  *	Atom: Success
  *	0: Failure
  */
-ATOM WINAPI GlobalFindAtomA(
-            LPCSTR str /* [in] Pointer to string to search for */
-) {
-    if (!HIWORD(str)) return (ATOM)LOWORD(str);  /* Integer atom */
-    return ATOM_FindAtom( ATOM_GlobalTable, str );
+ATOM WINAPI GlobalFindAtomA( LPCSTR str /* [in] Pointer to string to search for */ )
+{
+    ATOM atom = 0;
+    if (!ATOM_IsIntAtomA( str, &atom ))
+    {
+        struct find_atom_request *req = get_req_buffer();
+        server_strcpyAtoW( req->name, str );
+        if (!server_call( REQ_FIND_ATOM )) atom = req->atom + MIN_STR_ATOM;
+    }
+    TRACE( "%s -> %x\n", debugres_a(str), atom );
+    return atom;
 }
 
 
 /***********************************************************************
- *           GlobalFindAtom32W   (KERNEL32.319)
- * See GlobalFindAtom32A
+ *           GlobalFindAtomW   (KERNEL32.319)
  */
 ATOM WINAPI GlobalFindAtomW( LPCWSTR str )
 {
-    char buffer[MAX_ATOM_LEN+1];
-    if (!HIWORD(str)) return (ATOM)LOWORD(str);  /* Integer atom */
-    lstrcpynWtoA( buffer, str, sizeof(buffer) );
-    return ATOM_FindAtom( ATOM_GlobalTable, buffer );
+    ATOM atom = 0;
+    if (!ATOM_IsIntAtomW( str, &atom ))
+    {
+        struct find_atom_request *req = get_req_buffer();
+        server_strcpyW( req->name, str );
+        if (!server_call( REQ_FIND_ATOM )) atom = req->atom + MIN_STR_ATOM;
+    }
+    TRACE( "%s -> %x\n", debugres_w(str), atom );
+    return atom;
 }
 
 
 /***********************************************************************
- *           GlobalGetAtomName16   (USER.271)
- */
-UINT16 WINAPI GlobalGetAtomName16( ATOM atom, LPSTR buffer, INT16 count )
-{
-    return (UINT16)ATOM_GetAtomName( ATOM_GlobalTable, atom, buffer, count );
-}
-
-
-/***********************************************************************
- *           GlobalGetAtomName32A   (KERNEL32.323)
+ *           GlobalGetAtomNameA   (USER.271) (KERNEL32.323)
+ *
  * Retrieves a copy of the string associated with an atom.
  *
  * RETURNS
@@ -655,20 +612,68 @@ UINT16 WINAPI GlobalGetAtomName16( ATOM atom, LPSTR buffer, INT16 count )
 UINT WINAPI GlobalGetAtomNameA(
               ATOM atom,    /* [in]  Atom identifier */
               LPSTR buffer, /* [out] Pointer to buffer for atom string */
-              INT count   /* [in]  Size of buffer */
-) {
-    return ATOM_GetAtomName( ATOM_GlobalTable, atom, buffer, count );
+              INT count )   /* [in]  Size of buffer */
+{
+    INT len;
+    if (atom < MIN_STR_ATOM)
+    {
+        char name[8];
+        if (!atom)
+        {
+            SetLastError( ERROR_INVALID_PARAMETER );
+            return 0;
+        }
+        len = sprintf( name, "#%d", atom );
+        lstrcpynA( buffer, name, count );
+    }
+    else
+    {
+        struct get_atom_name_request *req = get_req_buffer();
+        req->atom = atom - MIN_STR_ATOM;
+        if (server_call( REQ_GET_ATOM_NAME )) return 0;
+        lstrcpynWtoA( buffer, req->name, count );
+        len = lstrlenW( req->name );
+    }
+    if (count <= len)
+    {
+        SetLastError( ERROR_MORE_DATA );
+        return 0;
+    }
+    TRACE( "%x -> %s\n", atom, debugstr_a(buffer) );
+    return len;
 }
 
 
 /***********************************************************************
- *           GlobalGetAtomName32W   (KERNEL32.324)
- * See GlobalGetAtomName32A
+ *           GlobalGetAtomNameW   (KERNEL32.324)
  */
 UINT WINAPI GlobalGetAtomNameW( ATOM atom, LPWSTR buffer, INT count )
 {
-    char tmp[MAX_ATOM_LEN+1];
-    ATOM_GetAtomName( ATOM_GlobalTable, atom, tmp, sizeof(tmp) );
-    lstrcpynAtoW( buffer, tmp, count );
-    return lstrlenW( buffer );
+    INT len;
+    if (atom < MIN_STR_ATOM)
+    {
+        char name[8];
+        if (!atom)
+        {
+            SetLastError( ERROR_INVALID_PARAMETER );
+            return 0;
+        }
+        len = sprintf( name, "#%d", atom );
+        lstrcpynAtoW( buffer, name, count );
+    }
+    else
+    {
+        struct get_atom_name_request *req = get_req_buffer();
+        req->atom = atom - MIN_STR_ATOM;
+        if (server_call( REQ_GET_ATOM_NAME )) return 0;
+        lstrcpynW( buffer, req->name, count );
+        len = lstrlenW( req->name );
+    }
+    if (count <= len)
+    {
+        SetLastError( ERROR_MORE_DATA );
+        return 0;
+    }
+    TRACE( "%x -> %s\n", atom, debugstr_w(buffer) );
+    return len;
 }

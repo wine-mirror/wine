@@ -417,7 +417,7 @@ ATOM WINAPI RegisterClass16( const WNDCLASS16 *wc )
     int iSmIconWidth, iSmIconHeight;
     HINSTANCE16 hInstance=GetExePtr(wc->hInstance);
 
-    if (!(atom = GlobalAddAtom16( wc->lpszClassName ))) return 0;
+    if (!(atom = GlobalAddAtomA( PTR_SEG_TO_LIN(wc->lpszClassName) ))) return 0;
     if (!(classPtr = CLASS_RegisterClass( atom, hInstance, wc->style,
                                           wc->cbClsExtra, wc->cbWndExtra,
                                           wc->lpfnWndProc, WIN_PROC_16 )))
@@ -556,7 +556,7 @@ ATOM WINAPI RegisterClassEx16( const WNDCLASSEX16 *wc )
     CLASS *classPtr;
     HINSTANCE16 hInstance = GetExePtr( wc->hInstance );
 
-    if (!(atom = GlobalAddAtom16( wc->lpszClassName ))) return 0;
+    if (!(atom = GlobalAddAtomA( PTR_SEG_TO_LIN(wc->lpszClassName) ))) return 0;
     if (!(classPtr = CLASS_RegisterClass( atom, hInstance, wc->style,
                                           wc->cbClsExtra, wc->cbWndExtra,
                                           wc->lpfnWndProc, WIN_PROC_16 )))
@@ -662,16 +662,9 @@ ATOM WINAPI RegisterClassExW( const WNDCLASSEXW* wc )
 /***********************************************************************
  *           UnregisterClass16    (USER.403)
  */
-BOOL16 WINAPI UnregisterClass16( SEGPTR className, HINSTANCE16 hInstance )
+BOOL16 WINAPI UnregisterClass16( LPCSTR className, HINSTANCE16 hInstance )
 {
-    CLASS *classPtr;
-    ATOM atom;
-
-    hInstance = GetExePtr( hInstance );
-    if (!(atom = GlobalFindAtom16( className ))) return FALSE;
-    if (!(classPtr = CLASS_FindClassByAtom( atom, hInstance )) ||
-        (classPtr->hInstance != hInstance)) return FALSE;
-    return CLASS_FreeClass( classPtr );
+    return UnregisterClassA( className, GetExePtr( hInstance ) );
 }
 
 
@@ -1076,12 +1069,7 @@ LONG WINAPI SetClassLongW( HWND hwnd, INT offset, LONG newval )
  */
 INT16 WINAPI GetClassName16( HWND16 hwnd, LPSTR buffer, INT16 count )
 {
-    WND *wndPtr;
-    INT16 retvalue;
-    if (!(wndPtr = WIN_FindWndPtr(hwnd))) return 0;
-    retvalue = GlobalGetAtomName16( wndPtr->class->atomName, buffer, count );
-    WIN_ReleaseWndPtr(wndPtr);
-    return retvalue;
+    return GetClassNameA( hwnd, buffer, count );
 }
 
 
@@ -1120,16 +1108,15 @@ INT WINAPI GetClassNameW( HWND hwnd, LPWSTR buffer, INT count )
 /***********************************************************************
  *           GetClassInfo16      (USER.404)
  */
-BOOL16 WINAPI GetClassInfo16( HINSTANCE16 hInstance, SEGPTR name,
-                              WNDCLASS16 *wc )
+BOOL16 WINAPI GetClassInfo16( HINSTANCE16 hInstance, LPCSTR name, WNDCLASS16 *wc )
 {
     ATOM atom;
     CLASS *classPtr;
 
-    TRACE("%x %p %p\n",hInstance, PTR_SEG_TO_LIN (name), wc);
+    TRACE("%x %s %p\n",hInstance, debugres_a(name), wc);
     
     hInstance = GetExePtr( hInstance );
-    if (!(atom = GlobalFindAtom16( name )) ||
+    if (!(atom = GlobalFindAtomA( name )) ||
         !(classPtr = CLASS_FindClassByAtom( atom, hInstance )))
         return FALSE;
     if ((hInstance != classPtr->hInstance) &&
@@ -1237,16 +1224,15 @@ BOOL WINAPI GetClassInfoW( HINSTANCE hInstance, LPCWSTR name,
  * FIXME: this is just a guess, I have no idea if GetClassInfoEx() is the
  * same in Win16 as in Win32. --AJ
  */
-BOOL16 WINAPI GetClassInfoEx16( HINSTANCE16 hInstance, SEGPTR name,
-                                WNDCLASSEX16 *wc )
+BOOL16 WINAPI GetClassInfoEx16( HINSTANCE16 hInstance, LPCSTR name, WNDCLASSEX16 *wc )
 {
     ATOM atom;
     CLASS *classPtr;
 
-    TRACE("%x %p %p\n",hInstance,PTR_SEG_TO_LIN( name ), wc);
+    TRACE("%x %s %p\n",hInstance,debugres_a( name ), wc);
     
     hInstance = GetExePtr( hInstance );
-    if (!(atom = GlobalFindAtom16( name )) ||
+    if (!(atom = GlobalFindAtomA( name )) ||
         !(classPtr = CLASS_FindClassByAtom( atom, hInstance )) ||
         (hInstance != classPtr->hInstance)) return FALSE;
     wc->style         = classPtr->style;

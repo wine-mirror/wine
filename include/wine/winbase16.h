@@ -107,14 +107,14 @@ VOID        WINAPI hmemcpy16(LPVOID,LPCVOID,LONG);
 #endif  /* __WINE__ */
 
 INT16       WINAPI AccessResource16(HINSTANCE16,HRSRC16);
-ATOM        WINAPI AddAtom16(SEGPTR);
+ATOM        WINAPI AddAtom16(LPCSTR);
 BOOL16      WINAPI CreateDirectory16(LPCSTR,LPVOID);
 BOOL16      WINAPI DefineHandleTable16(WORD);
 ATOM        WINAPI DeleteAtom16(ATOM);
 BOOL16      WINAPI DeleteFile16(LPCSTR);
 void        WINAPI ExitKernel16(void);
 void        WINAPI FatalAppExit16(UINT16,LPCSTR);
-ATOM        WINAPI FindAtom16(SEGPTR);
+ATOM        WINAPI FindAtom16(LPCSTR);
 BOOL16      WINAPI FindClose16(HANDLE16);
 HRSRC16     WINAPI FindResource16(HINSTANCE16,SEGPTR,SEGPTR);
 BOOL16      WINAPI FreeModule16(HMODULE16);

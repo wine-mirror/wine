@@ -51,7 +51,7 @@ file	user.exe
 47  pascal16 IsWindow(word) IsWindow16
 48  pascal16 IsChild(word word) IsChild16
 49  pascal16 IsWindowVisible(word) IsWindowVisible16
-50  pascal16 FindWindow(segstr str) FindWindow16
+50  pascal16 FindWindow(str str) FindWindow16
 51  stub BEAR51 # IsTwoByteCharPrefix
 52  pascal16 AnyPopup() AnyPopup16
 53  pascal16 DestroyWindow(word) DestroyWindow16
@@ -118,7 +118,7 @@ file	user.exe
 114 pascal   DispatchMessage(ptr) DispatchMessage16
 115 pascal16 ReplyMessage(long) ReplyMessage16
 116 pascal16 PostAppMessage(word word word long) PostAppMessage16
-118 pascal16 RegisterWindowMessage(segstr) RegisterWindowMessage16
+118 pascal16 RegisterWindowMessage(str) RegisterWindowMessageA
 117 pascal16 WindowFromDC(word) WindowFromDC16
 119 pascal   GetMessagePos() GetMessagePos
 120 pascal   GetMessageTime() GetMessageTime
@@ -273,10 +273,10 @@ file	user.exe
 265 pascal16 ShowOwnedPopups(word word) ShowOwnedPopups16
 266 pascal16 SetMessageQueue(word) SetMessageQueue16
 267 pascal16 ShowScrollBar(word word word) ShowScrollBar16
-268 pascal16 GlobalAddAtom(segstr) GlobalAddAtom16
+268 pascal16 GlobalAddAtom(str) GlobalAddAtomA
 269 pascal16 GlobalDeleteAtom(word) GlobalDeleteAtom
-270 pascal16 GlobalFindAtom(segstr) GlobalFindAtom16
-271 pascal16 GlobalGetAtomName(word ptr s_word) GlobalGetAtomName16
+270 pascal16 GlobalFindAtom(str) GlobalFindAtomA
+271 pascal16 GlobalGetAtomName(word ptr s_word) GlobalGetAtomNameA
 272 pascal16 IsZoomed(word) IsZoomed16
 273 stub ControlPanelInfo
 274 stub GetNextQueueWindow
@@ -366,12 +366,12 @@ file	user.exe
 394 pascal16 DrawIconEx(word word word word word word word word word) DrawIconEx16
 395 pascal16 GetIconInfo(word ptr) GetIconInfo16
 397 pascal16 RegisterClassEx(ptr) RegisterClassEx16
-398 pascal16 GetClassInfoEx(word segstr ptr) GetClassInfoEx16
+398 pascal16 GetClassInfoEx(word str ptr) GetClassInfoEx16
 399 pascal16 ChildWindowFromPointEx(word long word) ChildWindowFromPointEx16
 400 pascal16 FinalUserInit() FinalUserInit16
 402 pascal16 GetPriorityClipboardFormat(ptr s_word) GetPriorityClipboardFormat16
-403 pascal16 UnregisterClass(segstr word) UnregisterClass16
-404 pascal16 GetClassInfo(word segstr ptr) GetClassInfo16
+403 pascal16 UnregisterClass(str word) UnregisterClass16
+404 pascal16 GetClassInfo(word str ptr) GetClassInfo16
 406 pascal16 CreateCursor(word word word word word ptr ptr) CreateCursor16
 407 pascal16 CreateIcon(word word word word word ptr ptr) CreateIcon16
 408 pascal16 CreateCursorIconIndirect(word ptr ptr ptr)
@@ -390,7 +390,7 @@ file	user.exe
 421 pascal16 wvsprintf(ptr str ptr) wvsprintf16
 422 pascal16 DlgDirSelectEx(word ptr word word) DlgDirSelectEx16
 423 pascal16 DlgDirSelectComboBoxEx(word ptr word word) DlgDirSelectComboBoxEx16
-427 pascal16 FindWindowEx(word word segstr str) FindWindowEx16
+427 pascal16 FindWindowEx(word word str str) FindWindowEx16
 428 stub TileWindows
 429 stub CascadeWindows
 430 pascal16 lstrcmp(str str) lstrcmp16

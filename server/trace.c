@@ -1182,6 +1182,45 @@ static void dump_get_selector_entry_reply( const struct get_selector_entry_reque
     fprintf( stderr, " flags=%02x", req->flags );
 }
 
+static void dump_add_atom_request( const struct add_atom_request *req )
+{
+    fprintf( stderr, " name=" );
+    dump_unicode_string( req->name );
+}
+
+static void dump_add_atom_reply( const struct add_atom_request *req )
+{
+    fprintf( stderr, " atom=%d", req->atom );
+}
+
+static void dump_delete_atom_request( const struct delete_atom_request *req )
+{
+    fprintf( stderr, " atom=%d", req->atom );
+}
+
+static void dump_find_atom_request( const struct find_atom_request *req )
+{
+    fprintf( stderr, " name=" );
+    dump_unicode_string( req->name );
+}
+
+static void dump_find_atom_reply( const struct find_atom_request *req )
+{
+    fprintf( stderr, " atom=%d", req->atom );
+}
+
+static void dump_get_atom_name_request( const struct get_atom_name_request *req )
+{
+    fprintf( stderr, " atom=%d", req->atom );
+}
+
+static void dump_get_atom_name_reply( const struct get_atom_name_request *req )
+{
+    fprintf( stderr, " count=%d,", req->count );
+    fprintf( stderr, " name=" );
+    dump_unicode_string( req->name );
+}
+
 static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_new_process_request,
     (dump_func)dump_new_thread_request,
@@ -1276,6 +1315,10 @@ static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_get_thread_context_request,
     (dump_func)dump_set_thread_context_request,
     (dump_func)dump_get_selector_entry_request,
+    (dump_func)dump_add_atom_request,
+    (dump_func)dump_delete_atom_request,
+    (dump_func)dump_find_atom_request,
+    (dump_func)dump_get_atom_name_request,
 };
 
 static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
@@ -1372,6 +1415,10 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_get_thread_context_reply,
     (dump_func)0,
     (dump_func)dump_get_selector_entry_reply,
+    (dump_func)dump_add_atom_reply,
+    (dump_func)0,
+    (dump_func)dump_find_atom_reply,
+    (dump_func)dump_get_atom_name_reply,
 };
 
 static const char * const req_names[REQ_NB_REQUESTS] = {
@@ -1468,6 +1515,10 @@ static const char * const req_names[REQ_NB_REQUESTS] = {
     "get_thread_context",
     "set_thread_context",
     "get_selector_entry",
+    "add_atom",
+    "delete_atom",
+    "find_atom",
+    "get_atom_name",
 };
 
 /* ### make_requests end ### */

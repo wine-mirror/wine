@@ -69,8 +69,8 @@ file	krnl386.exe
 66  pascal16 AllocResource(word word long) AllocResource16
 67  pascal SetResourceHandler(word segstr segptr) SetResourceHandler16
 68  pascal16 InitAtomTable(word) InitAtomTable16
-69  pascal16 FindAtom(segstr) FindAtom16
-70  pascal16 AddAtom(segstr) AddAtom16
+69  pascal16 FindAtom(str) FindAtom16
+70  pascal16 AddAtom(str) AddAtom16
 71  pascal16 DeleteAtom(word) DeleteAtom16
 72  pascal16 GetAtomName(word ptr word) GetAtomName16
 73  pascal16 GetAtomHandle(word) GetAtomHandle16

@@ -6,6 +6,7 @@ VPATH     = @srcdir@
 MODULE    = none
 
 C_SRCS = \
+	atom.c \
 	change.c \
 	console.c \
 	context_i386.c \

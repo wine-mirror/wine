@@ -45,10 +45,10 @@ static inline int strcmpiW( const WCHAR *str1, const WCHAR *str2 )
     return towupper(*str1) - towupper(*str2);
 }
 
-static inline WCHAR *strcpyW( WCHAR *src, const WCHAR *dst ) 
+static inline WCHAR *strcpyW( WCHAR *dst, const WCHAR *src ) 
 {
     const WCHAR *ret = dst;
-    while ((*src++ = *dst++));
+    while ((*dst++ = *src++));
     return (WCHAR *)ret;
 }
 

@@ -284,7 +284,7 @@ void WIN_WalkWindows( HWND hwnd, int indent )
     {
         DPRINTF( "%*s%04x%*s", indent, "", ptr->hwndSelf, 13-indent,"");
 
-        GlobalGetAtomName16(ptr->class->atomName,className,sizeof(className));
+        GlobalGetAtomNameA(ptr->class->atomName,className,sizeof(className));
         
         DPRINTF( "%08lx %-6.4x %-17.17s %08x %08x %.14s\n",
                  (DWORD)ptr, ptr->hmemTaskQ, className,
@@ -1560,31 +1560,18 @@ end:
 /***********************************************************************
  *           FindWindow16   (USER.50)
  */
-HWND16 WINAPI FindWindow16( SEGPTR className, LPCSTR title )
+HWND16 WINAPI FindWindow16( LPCSTR className, LPCSTR title )
 {
-    return FindWindowEx16( 0, 0, className, title );
+    return FindWindowA( className, title );
 }
 
 
 /***********************************************************************
  *           FindWindowEx16   (USER.427)
  */
-HWND16 WINAPI FindWindowEx16( HWND16 parent, HWND16 child,
-                              SEGPTR className, LPCSTR title )
+HWND16 WINAPI FindWindowEx16( HWND16 parent, HWND16 child, LPCSTR className, LPCSTR title )
 {
-    ATOM atom = 0;
-
-    TRACE("%04x %04x '%s' '%s'\n", parent,
-		child, HIWORD(className)?(char *)PTR_SEG_TO_LIN(className):"",
-		title ? title : "");
-
-    if (className)
-    {
-        /* If the atom doesn't exist, then no class */
-        /* with this name exists either. */
-        if (!(atom = GlobalFindAtom16( className ))) return 0;
-    }
-    return WIN_FindWindow( parent, child, atom, title );
+    return FindWindowExA( parent, child, className, title );
 }
 
 

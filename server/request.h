@@ -163,6 +163,10 @@ DECL_HANDLER(cancel_timer);
 DECL_HANDLER(get_thread_context);
 DECL_HANDLER(set_thread_context);
 DECL_HANDLER(get_selector_entry);
+DECL_HANDLER(add_atom);
+DECL_HANDLER(delete_atom);
+DECL_HANDLER(find_atom);
+DECL_HANDLER(get_atom_name);
 
 #ifdef WANT_REQUEST_HANDLERS
 
@@ -263,6 +267,10 @@ static const struct handler {
     { (void(*)())req_get_thread_context, sizeof(struct get_thread_context_request) },
     { (void(*)())req_set_thread_context, sizeof(struct set_thread_context_request) },
     { (void(*)())req_get_selector_entry, sizeof(struct get_selector_entry_request) },
+    { (void(*)())req_add_atom, sizeof(struct add_atom_request) },
+    { (void(*)())req_delete_atom, sizeof(struct delete_atom_request) },
+    { (void(*)())req_find_atom, sizeof(struct find_atom_request) },
+    { (void(*)())req_get_atom_name, sizeof(struct get_atom_name_request) },
 };
 #endif  /* WANT_REQUEST_HANDLERS */
 

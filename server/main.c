@@ -95,6 +95,7 @@ int main( int argc, char *argv[] )
 
 #ifdef DEBUG_OBJECTS
     close_registry();
+    close_atom_table();
     dump_objects();  /* dump any remaining objects */
 #endif
     exit(0);

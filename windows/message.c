@@ -2452,17 +2452,7 @@ END:
 
 
 /***********************************************************************
- *           RegisterWindowMessage16   (USER.118)
- */
-WORD WINAPI RegisterWindowMessage16( SEGPTR str )
-{
-    TRACE("%08lx\n", (DWORD)str );
-    return GlobalAddAtom16( str );
-}
-
-
-/***********************************************************************
- *           RegisterWindowMessage32A   (USER32.437)
+ *           RegisterWindowMessageA   (USER.118) (USER32.437)
  */
 WORD WINAPI RegisterWindowMessageA( LPCSTR str )
 {

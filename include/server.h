@@ -1044,6 +1044,37 @@ struct get_selector_entry_request
 };
 
 
+/* Add a global atom */
+struct add_atom_request
+{
+    OUT int           atom;        /* resulting atom */
+    IN  WCHAR         name[1];     /* atom name */
+};
+
+
+/* Delete a global atom */
+struct delete_atom_request
+{
+    IN  int           atom;        /* atom handle */
+};
+
+
+/* Find a global atom */
+struct find_atom_request
+{
+    OUT int          atom;         /* atom handle */
+    IN  WCHAR        name[1];      /* atom name */
+};
+
+
+/* Get a global atom name */
+struct get_atom_name_request
+{
+    IN  int          atom;         /* atom handle */
+    OUT int          count;        /* atom lock count */
+    OUT WCHAR        name[1];      /* atom name */
+};
+
 /* Everything below this line is generated automatically by tools/make_requests */
 /* ### make_requests begin ### */
 
@@ -1142,6 +1173,10 @@ enum request
     REQ_GET_THREAD_CONTEXT,
     REQ_SET_THREAD_CONTEXT,
     REQ_GET_SELECTOR_ENTRY,
+    REQ_ADD_ATOM,
+    REQ_DELETE_ATOM,
+    REQ_FIND_ATOM,
+    REQ_GET_ATOM_NAME,
     REQ_NB_REQUESTS
 };
 
