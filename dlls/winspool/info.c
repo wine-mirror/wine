@@ -305,10 +305,14 @@ INT WINAPI DeviceCapabilitiesA(LPCSTR pDevice,LPCSTR pPort, WORD cap,
     /* If DC_PAPERSIZE map POINT16s to POINTs */
     if(ret != -1 && cap == DC_PAPERSIZE && pOutput) {
         POINT16 *tmp = HeapAlloc( GetProcessHeap(), 0, ret * sizeof(POINT16) );
+        POINT *pt = (POINT *)pOutput;
 	INT i;
 	memcpy(tmp, pOutput, ret * sizeof(POINT16));
-	for(i = 0; i < ret; i++)
-	    CONV_POINT16TO32(tmp + i, (POINT*)pOutput + i);
+	for(i = 0; i < ret; i++, pt++)
+        {
+            pt->x = tmp[i].x;
+            pt->y = tmp[i].y;
+        }
 	HeapFree( GetProcessHeap(), 0, tmp );
     }
     return ret;
@@ -680,11 +684,11 @@ static HKEY WINSPOOL_OpenDriverReg( LPVOID pEnvironment, BOOL unicode)
         ver.dwOSVersionInfoSize = sizeof(OSVERSIONINFOA);
 
         if(!GetVersionExA( &ver))
-            return NULL;
+            return 0;
 
         switch (ver.dwPlatformId) {
              case VER_PLATFORM_WIN32s:
-                  return NULL;
+                  return 0;
              case VER_PLATFORM_WIN32_NT:
                   p = "Windows NT x86";
                   break;
@@ -703,7 +707,7 @@ static HKEY WINSPOOL_OpenDriverReg( LPVOID pEnvironment, BOOL unicode)
 
     if(RegCreateKeyA(HKEY_LOCAL_MACHINE, lpKey, &retval) !=
        ERROR_SUCCESS)
-       retval = NULL;
+       retval = 0;
 
     if(pEnvironment && unicode)
        HeapFree( GetProcessHeap(), 0, p);

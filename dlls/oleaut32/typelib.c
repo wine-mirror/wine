@@ -683,7 +683,7 @@ BSTR TLB_ReadName( TLBContext *pcx, int offset)
     name[niName.namelen & 0xff]='\0';
 
     lengthInChars = MultiByteToWideChar(CP_ACP, MB_PRECOMPOSED | MB_ERR_INVALID_CHARS,
-                                        name, -1, NULL, NULL);
+                                        name, -1, NULL, 0);
 
     /* no invalid characters in string */
     if (lengthInChars)
@@ -717,7 +717,7 @@ BSTR TLB_ReadString( TLBContext *pcx, int offset)
     string[length]='\0';
 
     lengthInChars = MultiByteToWideChar(CP_ACP, MB_PRECOMPOSED | MB_ERR_INVALID_CHARS,
-                                        string, -1, NULL, NULL);
+                                        string, -1, NULL, 0);
 
     /* no invalid characters in string */
     if (lengthInChars)

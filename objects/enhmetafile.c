@@ -589,7 +589,7 @@ BOOL WINAPI PlayEnhMetaFileRecord(
 				pPolyPoly->cpts * sizeof(POINT) );
 	DWORD i;
 	for(i = 0; i < pPolyPoly->cpts; i++)
-	  CONV_POINT16TO32((POINTS*) (pPolyPoly->aPolyCounts +
+	  CONV_POINT16TO32((POINT16*) (pPolyPoly->aPolyCounts +
 				      pPolyPoly->nPolys) + i, pts + i);
 
 	PolyPolygon(hdc, pts, (INT*)pPolyPoly->aPolyCounts, pPolyPoly->nPolys);
@@ -606,7 +606,7 @@ BOOL WINAPI PlayEnhMetaFileRecord(
 				pPolyPoly->cpts * sizeof(POINT) );
 	DWORD i;
 	for(i = 0; i < pPolyPoly->cpts; i++)
-	  CONV_POINT16TO32((POINTS*) (pPolyPoly->aPolyCounts +
+	  CONV_POINT16TO32((POINT16*) (pPolyPoly->aPolyCounts +
 				      pPolyPoly->nPolys) + i, pts + i);
 
 	PolyPolyline(hdc, pts, pPolyPoly->aPolyCounts, pPolyPoly->nPolys);

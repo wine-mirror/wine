@@ -281,7 +281,7 @@ HEADER_DrawItem (HWND hwnd, HDC hdc, INT iItem, BOOL bHotTrack)
 	  r.left +=3;
 	  /* FIXME: (r.bottom- (infoPtr->himl->cy))/2 should horicontal center the image
 	     It looks like it doesn't work as expected*/
-	  ImageList_Draw (infoPtr->himl, phdi->iImage,hdc,r.left, (r.bottom- (infoPtr->himl->cy))/2,NULL);
+	  ImageList_Draw (infoPtr->himl, phdi->iImage,hdc,r.left, (r.bottom- (infoPtr->himl->cy))/2,0);
 	  r.left += infoPtr->himl->cx;
 	}
 

@@ -458,7 +458,7 @@ BOOL WINAPI SERIALUI_SetDefaultCommConfig(
     if(r == ERROR_SUCCESS)
     {
         dwDCBSize = sizeof (DCB);
-        r = RegSetValueExA( hKeyPort, lpszDCB, NULL, REG_BINARY, 
+        r = RegSetValueExA( hKeyPort, lpszDCB, 0, REG_BINARY,
                             (LPSTR)&lpCommConfig->dcb,dwDCBSize);
         TRACE("write key r=%ld\n",r);
         RegCloseKey(hKeyPort);

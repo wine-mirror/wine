@@ -70,7 +70,7 @@ STRING     \"[^\n"]+\"
 {DIGIT}+             			{ sscanf(yytext, "%d", &yylval.integer); return tNUM; }
 
 <FORMAT_EXPECTED>"/"{DIGIT}+{FORMAT}	{ char* last;
-                                          yylval.integer = strtol( yytext+1, &last, NULL ) << 8;
+                                          yylval.integer = strtol( yytext+1, &last, 0 ) << 8;
                                           yylval.integer |= *last;
                                           return tFORMAT; }
 

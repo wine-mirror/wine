@@ -25,8 +25,6 @@
 #include "dce.h"
 #include "nonclient.h"
 #include "debugtools.h"
-#include "local.h"
-#include "ldt.h"
 #include "input.h"
 
 DEFAULT_DEBUG_CHANNEL(win);
@@ -323,7 +321,7 @@ int WINAPI SetWindowRgn( HWND hwnd, HRGN hrgn, BOOL bRedraw )
 
     /* Size the window to the rectangle of the new region 
        (if it isn't NULL) */
-    SetWindowPos( hwnd, NULL, tempRect.left, tempRect.top,
+    SetWindowPos( hwnd, 0, tempRect.left, tempRect.top,
                   tempRect.right  - tempRect.left, tempRect.bottom - tempRect.top,
                   SWP_NOSIZE | SWP_FRAMECHANGED | SWP_NOMOVE |
                   SWP_NOZORDER | (bRedraw ? 0 : SWP_NOREDRAW) );
@@ -335,7 +333,7 @@ int WINAPI SetWindowRgn( HWND hwnd, HRGN hrgn, BOOL bRedraw )
         DeleteObject(wndPtr->hrgnWnd);
         wndPtr->hrgnWnd = 0;
     }
-    else if (hrgn == NULL)
+    else if (!hrgn)
     {
         /* if there was no previous region (stored in wndPtr->hrgnWnd) and 
            the region to be set is also NULL, there is nothing more to do
