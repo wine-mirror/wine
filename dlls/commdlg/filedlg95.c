@@ -928,8 +928,8 @@ INT_PTR CALLBACK FileOpenDlgProc95(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM l
      	   CreateTemplateDialog((FileOpenDlgInfos *)lParam, hwnd);
 
          FILEDLG95_InitControls(hwnd);
-         SendCustomDlgNotificationMessage(hwnd,CDN_INITDONE);
       	 FILEDLG95_FillControls(hwnd, wParam, lParam);
+         SendCustomDlgNotificationMessage(hwnd,CDN_INITDONE);
          SendCustomDlgNotificationMessage(hwnd,CDN_FOLDERCHANGE);
          SendCustomDlgNotificationMessage(hwnd,CDN_SELCHANGE);
          SetWindowPos(fodInfos->DlgInfos.hwndCustomDlg, HWND_BOTTOM,
