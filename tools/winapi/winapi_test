@@ -49,7 +49,7 @@ if ($options->pack) {
 
 my @files = ();
 {
-    my %files;    
+    my %files;
 
     my %test_dirs;
     foreach my $test (@tests) {
@@ -57,11 +57,23 @@ my @files = ();
 	foreach my $test_dir (@test_dirs) {
 	    my @includes = $tests->get_section($test_dir, $test, "include");
 	    foreach my $include (@includes) {
-		$files{"include/$include"}++;
+		$files{"include/$include"} = 1;
 	    }
 	}
     }
-    @files = sort(keys(%files));
+
+    foreach my $test (@tests) {
+	my @test_dirs = $tests->get_test_dirs($test);
+	foreach my $test_dir (@test_dirs) {
+	    my @includes = $tests->get_section($test_dir, $test, "include");
+	    foreach my $include (@includes) {
+		if($files{"include/$include"}) {
+		    push @files, "include/$include";
+		    $files{"include/$include"} = 0;
+		}
+	    }
+	}
+    }
 }
 
 my %file2types;
@@ -69,6 +81,114 @@ my %file2types;
 my $progress_output;
 my $progress_current = 0;
 my $progress_max = scalar(@files);
+
+########################################################################
+# find_type
+
+my %type_name2type;
+
+my %defines = (
+    "ANYSIZE_ARRAY" => 1,
+    "CCHDEVICENAME" => 32,
+    "ELF_VENDOR_SIZE" => 4,
+    "EXCEPTION_MAXIMUM_PARAMETERS" => 15,
+    "HW_PROFILE_GUIDLEN" => 39,
+    "IMAGE_NUMBEROF_DIRECTORY_ENTRIES" => 16,
+    "IMAGE_SIZEOF_SHORT_NAME" => 8,
+    "LF_FACESIZE" => 32,
+    "LF_FULLFACESIZE" => 64,
+    "MAXIMUM_SUPPORTED_EXTENSION" => 512,
+    "MAX_PATH" => 260,
+    "MAX_PROFILE_LEN" => 80, 
+    "OFS_MAXPATHNAME" => 128,
+    "SIZE_OF_80387_REGISTERS" => 80,
+);
+
+my %kludge_reported = ("FILETIME" => 1, "LARGE_INTEGER" => 1);
+my %parse_reported;
+
+sub find_size {
+    my $type_name = shift;
+
+    local $_ = $type_name;
+
+    my $count;
+    my $bits;
+    if (s/^(.*?)\s*(?:\[\s*(.*?)\s*\]|:(\d+))?$/$1/) {
+	$count = $2;
+	$bits = $3;
+    }
+
+    my $size;
+    if (0) {
+	# Nothing
+    } elsif (/\*+$/) {
+	$size = 4;
+    } elsif(/^(?:(?:signed\s+|unsigned\s+)?char)$/) {
+	$size = 1;
+    } elsif (/^(?:(?:signed\s+|unsigned\s+)?short)$/) {
+	$size = 2;
+    } elsif (/^(?:wchar_t)$/) {
+	$size = 2;
+    } elsif (/^(?:(?:signed\s+|unsigned\s+)?(?:__int32|int|long(?:\s+int)?)|unsigned|signed)$/) {
+	$size = 4;
+    } elsif (/^(?:float)$/) {
+	$size = 4;
+    } elsif (/^(?:signed\s+|unsigned\s+)?__int64$/) {
+	$size = 8;
+    } elsif (/^(?:double)$/) {
+	$size = 8;
+    } elsif (/^(?:long\s+double)$/) {
+	$size = 10; # ???
+    } elsif (/^H(?:DC|BITMAP|BRUSH|ICON|INSTANCE|MENU|METAFILE|WND)$/) {
+	$size = 4;
+    } elsif (/^LP(?:CSTR|CWSTR|DWORD|STR|VOID|THREAD_START_ROUTINE|WSTR)$/) {
+	$size = 4;
+    } elsif (/^(?:(?:MSGBOX)CALLBACK[AW]?|(?:FAR|WND)PROC[AW]?)$/) {
+	$size = 4;
+    } elsif (/^(?:FILETIME|LARGE_INTEGER|LONGLONG)$/) {
+	$size = 8;
+    } elsif (/^(?:CRITICAL_SECTION)$/) {
+	$size = 24;
+    } elsif (/^(?:struct|union)$/) {
+	if (!$parse_reported{$_}) {
+	    $output->write("$type_name: can't parse type\n");
+	    $parse_reported{$_} = 1;
+	}
+	$size = undef;
+    } else {
+	$size = undef;
+    }
+
+    my $size2;
+    if (defined(my $type = $type_name2type{$_})) {
+	$size2 = $type->size;
+    }
+
+    if (!defined($size)) {
+	$size = $size2;
+    } elsif (defined($size2) && !$kludge_reported{$_}) {
+	$kludge_reported{$_} = 1;
+	$output->write("$type_name: type needn't be kludged\n");
+    }
+
+    if (!defined($size)) {
+	# $output->write("$type_name: can't find type\n");
+    } elsif (defined($count)) {
+	if ($count =~ /^\d+$/) {
+	    $size *= int($count);
+	} elsif (defined($count = $defines{$count})) {
+	    $size *= int($count);
+	} else {
+	    $output->write("$type_name: can't parse type\n");
+	    $size = undef;
+	}
+    } elsif (defined($bits)) {
+	$size = -$bits;
+    }
+
+    return $size;
+}
 
 foreach my $file (@files) {
     $progress_current++;
@@ -136,13 +256,32 @@ foreach my $file (@files) {
     my $found_type = sub {
 	$type = shift;
 
-	my $pack = $packs[$#packs];
-	$type->pack($pack);
+	&$update_output();
+
+	if (!defined($type->pack)) {
+	    my $pack = $packs[$#packs];
+	    $type->pack($pack);
+	}
 
 	my $name = $type->name;
 	$file2types{$file}{$name} = $type;
 
-	&$update_output();
+	my $size = $type->size(\&find_size);
+	if (defined($size)) {
+	    foreach my $field ($type->fields(\&find_size)) {
+		my $field_type_name = $field->type_name;
+		my $field_name = $field->name;
+		my $field_size = $field->size;
+		my $field_offset = $field->offset;
+
+		# $output->write("$name: $field_type_name: $field_name: $field_offset: $field_size\n");
+	    }
+	    # $output->write("$name: $size\n");
+
+	    $type_name2type{$name} = $type;
+	} else {
+	    # $output->write("$name: can't find size\n");
+	}
 
 	return 1;
     };
@@ -212,67 +351,6 @@ sub output_footer {
 }
 
 ########################################################################
-# output_field_size
-
-my %type_name2size;
-
-sub field_size {
-    my $name = shift;
-    my $field_type = shift;
-    my $field_name = shift;
-
-    local $_ = $field_type;
-
-    my $count;
-    my $bits;
-    if (s/^(.*?)\s*(?:\[\s*(.*?)\s*\]|:(\d+))?$/$1/) {
-	$count = $2;
-	$bits = $3;
-    }
-
-    my $size;
-    if (defined($size = $type_name2size{$field_type})) {
-	# Nothing
-    } elsif(/^(?:(?:signed\s+|unsigned\s+)?char|CHAR|BYTE|UCHAR)$/) {
-	$size = 1;
-    } elsif (/^(?:(?:signed\s+|unsigned\s+)?short|ATOM|UWORD|WCHAR|WORD)$/) {
-	$size = 2;
-    } elsif (/^(?:FILETIME|LARGE_INTEGER|LONGLONG|ULONGLONG)$/) {
-	$size = 8;
-    } elsif (/^(?:EMR|POINTL?|SIZEL)$/) {
-	$size = 8;
-    } elsif (/^(?:RECTL?|SYSTEMTIME)$/) {
-	$size = 16;
-    } elsif (/^(?:CRITICAL_SECTION|XFORM)$/) {
-	$size = 24;
-    } elsif (/^(?:DCB)$/) {
-	$size = 28;
-    } elsif (/^(?:EXCEPTION_RECORD)$/) {
-	$size = 80;
-    } elsif (/^(?:struct|union)$/) {
-	$output->write("$name:$field_name: can't parse type '$field_type'\n");
-	$size = 4;
-    } else {
-	$size = 4;
-    }
-
-    if (defined($count)) {
-	if ($count =~ /^\d+$/) {
-	    return $size * int($count);
-	} elsif ($count =~ /^ANYSIZE_ARRAY$/) {
-	    return $size;
-	} else {
-	    $output->write("$name:$field_name: can't parse type '$field_type'\n");
-	    return $size; # Not correct.
-	}
-    } elsif (defined($bits)) {
-	return -$bits;
-    } else {
-	return $size;
-    }
-}
-
-########################################################################
 # output_test_pack
 
 sub output_test_pack {
@@ -290,57 +368,54 @@ sub output_test_pack {
 	$type_name_not_used{$type_name} = 1;
     }
 
-    # FIXME: Topological sort of @type_names
-
     foreach my $include (@includes) {
 	my $types = $file2types{"include/$include"};
 	
-	foreach my $type_name (@type_names) {	    
+	foreach my $type_name (@type_names) {
 	    my $type = $$types{$type_name};
 	    if (!defined($type)) {
 		next;
 	    }
 	    $type_name_not_used{$type_name} = 0;
-
+	    
 	    my $pack = $type->pack;
 
-	    my $offset = 0;
-	    my $offset_bits = 0;
-	    
 	    print OUT "    /* $type_name */\n";
-	    foreach my $field ($type->fields) {
-		(my $field_type, my $field_name) = @$field;
-		
-		my $field_size = field_size($type_name, $field_type, $field_name);
-		if ($field_size >= 0) {
-		    if ($offset_bits) {
-			$offset += $pack * int(($offset_bits + 8 * $pack - 1 ) / (8 * $pack));
-			$offset_bits = 0;
+
+	    foreach my $field ($type->fields(\&find_size)) {
+		my $field_type_name = $field->type_name;
+		my $field_name = $field->name;
+		my $field_size = $field->size;
+		my $field_offset = $field->offset;
+		my $field_align = $field->align;
+
+		next if $field_name eq "" || (defined($field_size) && $field_size < 0);
+
+		if (defined($field_size) && defined($field_offset)) {
+		    print OUT "    ok(FIELD_OFFSET($type_name, $field_name) == $field_offset,\n";
+		    print OUT "       \"FIELD_OFFSET($type_name, $field_name) == %ld (expected $field_offset)\",\n";
+		    print OUT "       FIELD_OFFSET($type_name, $field_name)); /* $field_type_name */\n";
+
+		    if (0) {
+			print OUT "    ok(TYPE_ALIGNMENT($field_type_name) == $field_align,\n";
+			print OUT "       \"TYPE_ALIGNMENT($field_type_name) == %d (expected $field_align)\",\n";
+			print OUT "       TYPE_ALIGNMENT($field_type_name)); /* $field_name */\n";
 		    }
-		    
-		    my $field_offset = $offset;
-		    if ($field_name ne "") {
-			print OUT "    ok(FIELD_OFFSET($type_name, $field_name) == $field_offset,\n";
-			print OUT "       \"FIELD_OFFSET($type_name, $field_name) == %ld (expected $field_offset)\",\n";
-			print OUT "       FIELD_OFFSET($type_name, $field_name)); /* $field_type */\n";
-		    }
-		    
-		    $offset += $field_size;
 		} else {
-		    $offset_bits += -$field_size;
+		    $output->write("$type_name: $field_type_name: $field_name: test not generated (offset not defined)\n");
 		}
 	    }
-	    
-	    my $type_size = $offset;
-	    if ($type_size % $pack != 0) {
-		$type_size = (int($type_size / $pack) + 1) * $pack;
-	    }
-	    $type_name2size{$type_name} = $type_size;
 
-	    print OUT "    ok(sizeof($type_name) == $type_size, ";
-	    print OUT "\"sizeof($type_name) == %d (expected $type_size)\", ";
-	    print OUT "sizeof($type_name));\n";
-	    print OUT "\n";
+	    my $type_size = $type->size;
+
+	    if (defined($type_size)) {
+		print OUT "    ok(sizeof($type_name) == $type_size, ";
+		print OUT "\"sizeof($type_name) == %d (expected $type_size)\", ";
+		print OUT "sizeof($type_name));\n";
+		print OUT "\n";
+	    } else {
+		$output->write("$type_name: test not generated (size not defined)\n");
+	    }
 	}
     }
 

@@ -1112,8 +1112,8 @@ sub parse_c_function {
 
     my $match;
     while($self->_parse_c('(?:const|inline|extern(?:\s+\"C\")?|EXTERN_C|static|volatile|' .
-			  'signed(?=\s+char\b|\s+int\b|\s+long(?:\s+long)?\b|\s+short\b)|' .
-			  'unsigned(?=\s+char\b|\s+int\b|\s+long(?:\s+long)?\b|\s+short\b)|' .
+			  'signed(?=\s+__int64\b|\s+char\b|\s+int\b|\s+long(?:\s+long)?\b|\s+short\b)|' .
+			  'unsigned(?=\s+__int64\b|\s+char\b|\s+int\b|\s+long(?:\s+long)?\b|\s+short\b)|' .
 			  'long(?=\s+double\b|\s+int\b|\s+long\b))(?=\b)',
 			  \$_, \$line, \$column, \$match))
     {
@@ -1654,22 +1654,22 @@ sub parse_c_typedef {
 
 	if ($kind =~ /^struct|union$/) {
 	    my $name = "";
-	    my @field_types = ();
+	    my @field_type_names = ();
 	    my @field_names = ();
 
 	    my $match;
-	    while ($self->_parse_c_on_same_level_until_one_of(';', \$_, \$line, \$column, \$match))
+	    while ($_ && $self->_parse_c_on_same_level_until_one_of(';', \$_, \$line, \$column, \$match))
 	    {
 		my $field_linkage;
-		my $field_type;
+		my $field_type_name;
 		my $field_name;
 
-		if ($self->parse_c_variable(\$match, \$line, \$column, \$field_linkage, \$field_type, \$field_name)) {
-		    $field_type =~ s/\s+/ /g;
+		if ($self->parse_c_variable(\$match, \$line, \$column, \$field_linkage, \$field_type_name, \$field_name)) {
+		    $field_type_name =~ s/\s+/ /g;
 		    
-		    push @field_types, $field_type;
+		    push @field_type_names, $field_type_name;
 		    push @field_names, $field_name;
-		    # $output->write("$kind:$_name:$field_type:$field_name\n");
+		    # $output->write("$kind:$_name:$field_type_name:$field_name\n");
 		} elsif ($match) {
 		    $self->_parse_c_error($_, $line, $column, "typedef $kind: '$match'");
 		}
@@ -1708,7 +1708,7 @@ sub parse_c_typedef {
 	    $type->kind($kind);
 	    $type->_name($_name);
 	    $type->name($name);
-	    $type->field_types([@field_types]);
+	    $type->field_type_names([@field_type_names]);
 	    $type->field_names([@field_names]);
 
 	    &$$found_type($type);
@@ -1759,9 +1759,43 @@ sub parse_c_typedef {
 	    # FIXME: Not correct
 	    # $output->write("typedef:$name:$_name\n");
 	}
-
     } elsif ($self->_parse_c("typedef", \$_, \$line, \$column)) {
-	# Nothing
+	my $linkage;
+	my $type_name;
+	my $name;
+	
+	if ($self->parse_c_variable(\$_, \$line, \$column, \$linkage, \$type_name, \$name)) {
+	    $type_name =~ s/\s+/ /g;
+
+	    if(defined($type_name) && defined($name)) {
+		my $type = &$$create_type();
+		
+		if (length($name) == 0) {
+		    $self->_parse_c_error($_, $line, $column, "typedef");
+		}
+
+		$type->kind("");
+		$type->name($name);
+		$type->pack(1);
+		$type->field_type_names([$type_name]);
+		$type->field_names([""]);
+
+		&$$found_type($type);
+	    }
+
+	    if (0 && $_ && !/^,/) {
+		$self->_parse_c_error($_, $line, $column, "typedef");
+	    }   
+	} else {
+	    $self->_parse_c_error($_, $line, $column, "typedef");
+	}
+    } elsif (0 && $self->_parse_c("typedef", \$_, \$line, \$column)) {
+	my $type_name;
+	$self->_parse_c('\w+', \$_, \$line, \$column, \$type_name);
+
+	my $name;
+	$self->_parse_c('\w+', \$_, \$line, \$column, \$name);
+
     } else {
 	return 0;
     }
@@ -1808,8 +1842,8 @@ sub parse_c_variable {
 
     my $match;
     while($self->_parse_c('(?:const|inline|extern(?:\s+\"C\")?|EXTERN_C|static|volatile|' .
-			  'signed(?=\s+char\b|\s+int\b|\s+long(?:\s+long)?\b|\s+short\b)|' .
-			  'unsigned(?=\s+char\b|\s+int\b|\s+long(?:\s+long)?\b|\s+short\b)|' .
+			  'signed(?=\s+__int64\b|\s+char\b|\s+int\b|\s+long(?:\s+long)?\b|\s+short\b)|' .
+			  'unsigned(?=\s+__int64\b|\s+char\b|\s+int\b|\s+long(?:\s+long)?\b|\s+short\b)|' .
 			  'long(?=\s+double\b|\s+int\b|\s+long\b))(?=\b)',
 			  \$_, \$line, \$column, \$match))
     {
@@ -1824,6 +1858,8 @@ sub parse_c_variable {
 
     if($finished) {
 	# Nothing
+    } elsif(/^$/) {
+	return 0;
     } elsif(s/^(enum|struct|union)(?:\s+(\w+))?\s*\{//s) {
 	my $kind = $1;
 	my $_name = $2;
@@ -1865,6 +1901,8 @@ sub parse_c_variable {
 	$name = $2;
 
 	$finished = 1;
+    } else {
+	$self->_parse_c_warning($_, $line, $column, "variable", "'$_'");
     }
 
     if($finished) {

@@ -328,13 +328,14 @@ foreach my $file (@h_files, @c_files) {
 	my $name = $type->name;
 	
 	foreach my $field ($type->fields) {
-	    (my $field_type, my $field_name) = @$field;
+	    my $field_type_name = $field->type_name;
+	    my $field_name = $field->name;
 
 	    if ($options->struct) {
 		if ($name) {
-		    $output->write("$name:$field_type:$field_name\n");
+		    $output->write("$name:$field_type_name:$field_name\n");
 		} else {
-		    $output->write("$kind $_name:$field_type:$field_name\n");
+		    $output->write("$kind $_name:$field_type_name:$field_name\n");
 		}
 	    }
 	}
