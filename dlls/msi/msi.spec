@@ -76,8 +76,8 @@
 76 stub MsiGetSourcePathW
 77 stdcall MsiGetSummaryInformationA(long str long ptr)
 78 stdcall MsiGetSummaryInformationW(long wstr long ptr)
-79 stub MsiGetTargetPathA
-80 stub MsiGetTargetPathW
+79 stdcall MsiGetTargetPathA(long str ptr ptr)
+80 stdcall MsiGetTargetPathW(long wstr ptr ptr)
 81 stub MsiGetUserInfoA
 82 stub MsiGetUserInfoW
 83 stub MsiInstallMissingComponentA

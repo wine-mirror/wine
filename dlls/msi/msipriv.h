@@ -35,6 +35,8 @@
 #define MSITYPE_NULLABLE 0x1000
 #define MSITYPE_KEY      0x2000
 
+#define MSITYPE_BINARY 0x8900
+
 struct tagMSITABLE;
 typedef struct tagMSITABLE MSITABLE;
 

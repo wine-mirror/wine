@@ -62,7 +62,7 @@ typedef struct {
     } internal_property;
 
 static internal_property PropTableHack[MAX_PROP];
-static INT PropCount = 0;
+static INT PropCount = -1;
 
 WINE_DEFAULT_DEBUG_CHANNEL(msi);
 
@@ -70,6 +70,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(msi);
  * Prototypes
  */
 UINT ACTION_PerformAction(MSIHANDLE hPackage, const WCHAR *action);
+static UINT ACTION_CostInitialize(MSIHANDLE hPackage);
 static UINT ACTION_CreateFolders(MSIHANDLE hPackage);
 static UINT ACTION_CostFinalize(MSIHANDLE hPackage);
 static UINT ACTION_InstallFiles(MSIHANDLE hPackage);
@@ -79,11 +80,10 @@ static UINT ACTION_CustomAction(MSIHANDLE hPackage,const WCHAR *action);
 
 static UINT set_property(MSIHANDLE hPackage, const WCHAR* prop, 
                           const WCHAR* value);
-UINT get_property(MSIHANDLE hPackage, const WCHAR* prop, WCHAR* value);
+UINT get_property(MSIHANDLE hPackage, const WCHAR* prop, WCHAR* value, 
+                  DWORD* size);
 static VOID blitz_propertytable();
-static VOID set_installer_properties(MSIHANDLE hPackage, 
-                                     const WCHAR* szPackagePath,
-                                     const WCHAR* szCommandLine);
+static VOID set_installer_properties(MSIHANDLE hPackage);
 static DWORD deformat_string(MSIHANDLE hPackage, WCHAR* ptr,WCHAR** data);
 
 /*
@@ -104,7 +104,12 @@ static const WCHAR cszbs[]={'\\',0};
 
 static VOID blitz_propertytable()
 {
-    if (PropCount > 0)
+    if (PropCount == -1)
+    {
+        PropCount = 0;
+        memset(&PropTableHack,0,sizeof(PropTableHack));
+    }
+    else if (PropCount > 0)
     {
         int i;
         TRACE("Clearing %i properties\n",PropCount);
@@ -113,14 +118,15 @@ static VOID blitz_propertytable()
             HeapFree(GetProcessHeap(), 0, PropTableHack[i].prop_name);
             HeapFree(GetProcessHeap(), 0, PropTableHack[i].prop_value);
         }
+        memset(&PropTableHack,0,sizeof(PropTableHack));
         PropCount = 0;
     }
 }
 
-UINT get_property(MSIHANDLE hPackage, const WCHAR* prop, WCHAR* value)
+UINT get_property(MSIHANDLE hPackage, const WCHAR* prop, WCHAR* value, 
+                  DWORD* size)
 {
     UINT rc = 1;
-    DWORD sz=0x100;
     int index = 0;
     WCHAR* pName = PropTableHack[0].prop_name;
 
@@ -134,14 +140,24 @@ UINT get_property(MSIHANDLE hPackage, const WCHAR* prop, WCHAR* value)
         pName = PropTableHack[index].prop_name;
     }
 
-    if (pName)
+    if (pName && index < PropCount)
     {
-        strcpyW(value,PropTableHack[index].prop_value);
-        TRACE("    found value %s\n",debugstr_w(value));
-        return 0;
+        if (*size > strlenW(PropTableHack[index].prop_value))
+        {
+            *size = strlenW(PropTableHack[index].prop_value)+1;
+            TRACE("    index %i\n", index);
+            strcpyW(value , PropTableHack[index].prop_value);
+            TRACE("    found value %s\n",debugstr_w(value));
+            return 0;
+        }
+        else
+        {
+            *size = strlenW(PropTableHack[index].prop_value);
+            return ERROR_MORE_DATA;
+        }
     }
 
-    rc = MsiGetPropertyW(hPackage,prop,value,&sz);
+    rc = MsiGetPropertyW(hPackage,prop,value,size);
 
     if (rc == ERROR_SUCCESS)
         TRACE("    found value %s\n",debugstr_w(value));
@@ -157,24 +173,30 @@ static UINT set_property(MSIHANDLE hPackage, const WCHAR* prop,
     /* prop table hacks take precedence */
     UINT rc;
     int index = 0;
-    WCHAR* pName = PropTableHack[0].prop_name;
+    WCHAR* pName;
+
+    if (PropCount == -1)
+        blitz_propertytable();
+
+    pName = PropTableHack[0].prop_name;
 
     TRACE("Setting property %s to %s\n",debugstr_w(prop),debugstr_w(value));
 
-    while (pName && strcmpW(pName,prop) && index < PropCount)
+    while (pName  && strcmpW(pName,prop) &&  index < MAX_PROP)
     {
         index ++;
         pName = PropTableHack[index].prop_name;
     }
 
-    if (pName)
+    if (pName && index < MAX_PROP)
     {
+        TRACE("property index %i\n",index);
         strcpyW(PropTableHack[index].prop_value,value);
         return 0;
     }
     else
     {
-        if (index > MAX_PROP)
+        if (index >= MAX_PROP)
         {
             ERR("EXCEEDING MAX PROP!!!!\n");
             return ERROR_FUNCTION_FAILED;
@@ -184,6 +206,7 @@ static UINT set_property(MSIHANDLE hPackage, const WCHAR* prop,
         strcpyW(PropTableHack[index].prop_name,prop);
         strcpyW(PropTableHack[index].prop_value,value);
         PropCount++;
+        TRACE("new property index %i (%i)\n",index,PropCount);
         return 0;
     }
 
@@ -199,16 +222,10 @@ static UINT set_property(MSIHANDLE hPackage, const WCHAR* prop,
 http://msdn.microsoft.com/library/default.asp?url=/library/en-us/msi/setup/properties.asp
  */
 
-static VOID set_installer_properties(MSIHANDLE hPackage, 
-                                     const WCHAR* szPackagePath,
-                                     const WCHAR* szCommandLine)
+static VOID set_installer_properties(MSIHANDLE hPackage)
 {
     WCHAR pth[MAX_PATH];
-    WCHAR *p;
-    WCHAR check[MAX_PATH];
 
-    static const WCHAR OriginalDatabase[] =
-{'O','r','i','g','i','n','a','l','D','a','t','a','b','a','s','e',0};
     static const WCHAR c_col[] = 
 {'C',':','\\',0};
     static const WCHAR CFF[] = 
@@ -257,20 +274,8 @@ TemplateFolder
  *
  *  GlobalAssemblyCache
  */
-   
-    set_property(hPackage, OriginalDatabase, szPackagePath);
+
     set_property(hPackage, cszRootDrive, c_col);
-
-    strcpyW(pth,szPackagePath);
-    p = strrchrW(pth,'\\');    
-    if (p)
-    {
-        p++;
-        *p=0;
-    }
-
-    if (get_property(hPackage,cszSourceDir,check) != ERROR_SUCCESS )
-        set_property(hPackage, cszSourceDir, pth);
 
     SHGetFolderPathW(NULL,CSIDL_PROGRAM_FILES_COMMON,NULL,0,pth);
     strcatW(pth,cszbs);
@@ -329,9 +334,31 @@ UINT ACTION_DoTopLevelINSTALL(MSIHANDLE hPackage, LPCWSTR szPackagePath,
     FIXME("****We do not do any of the UI level stuff yet***\n");
 
     /* reset our properties */
-    /* HACK ! */
-    memset (&PropTableHack, sizeof(PropTableHack),0);
-    set_installer_properties(hPackage, szPackagePath, szCommandLine);    
+    blitz_propertytable();
+
+    if (szPackagePath)   
+    {
+        static const WCHAR OriginalDatabase[] =
+{'O','r','i','g','i','n','a','l','D','a','t','a','b','a','s','e',0};
+        LPWSTR p;
+        WCHAR check[MAX_PATH];
+        WCHAR pth[MAX_PATH];
+        DWORD size;
+ 
+        set_property(hPackage, OriginalDatabase, szPackagePath);
+
+        strcpyW(pth,szPackagePath);
+        p = strrchrW(pth,'\\');    
+        if (p)
+        {
+            p++;
+            *p=0;
+        }
+
+        size = MAX_PATH;
+        if (get_property(hPackage,cszSourceDir,check,&size) != ERROR_SUCCESS )
+            set_property(hPackage, cszSourceDir, pth);
+    }
 
     rc = MsiDatabaseOpenViewA(hPackage, ExecSeqQuery, &view);
     
@@ -437,9 +464,13 @@ UINT ACTION_PerformAction(MSIHANDLE hPackage, const WCHAR *action)
         {'D','u','p','l','i','c','a','t','e','F','i','l','e','s',0};
     const static WCHAR szWriteRegistryValues[] = 
 {'W','r','i','t','e','R','e','g','i','s','t','r','y','V','a','l','u','e','s',0};
+    const static WCHAR szCostInitialize[] = 
+        {'C','o','s','t','I','n','i','t','i','a','l','i','z','e',0};
 
     TRACE("Performing action (%s)\n",debugstr_w(action));
 
+    if (strcmpW(action,szCostInitialize)==0)
+        return ACTION_CostInitialize(hPackage);
     if (strcmpW(action,szCreateFolders)==0)
         return ACTION_CreateFolders(hPackage);
     if (strcmpW(action,szCostFinalize)==0)
@@ -625,7 +656,8 @@ static UINT ACTION_CreateFolders(MSIHANDLE hPackage)
             continue;
         }
 
-        rc = get_property(hPackage, dir,full_path);
+        sz = MAX_PATH;
+        rc = get_property(hPackage, dir,full_path,&sz);
 
         if (rc != ERROR_SUCCESS)
         {
@@ -673,8 +705,9 @@ static UINT resolve_directory(MSIHANDLE hPackage, const WCHAR* dir,
     MSIHANDLE row = 0;
     WCHAR full_path[MAX_PATH];
     WCHAR name_source[0x100];
- 
-    if (get_property(hPackage,dir,path)==ERROR_SUCCESS)
+
+    sz = MAX_PATH; 
+    if (get_property(hPackage,dir,path,&sz)==ERROR_SUCCESS)
         return ERROR_SUCCESS;
 
     TRACE("Working to resolve %s\n",debugstr_w(dir));
@@ -684,7 +717,8 @@ static UINT resolve_directory(MSIHANDLE hPackage, const WCHAR* dir,
     {
         if (!source)
         {
-            if(!get_property(hPackage,cszRootDrive,buffer))
+            sz = 0x100;
+            if(!get_property(hPackage,cszRootDrive,buffer,&sz))
             {
                 set_property(hPackage,cszTargetDir,buffer);
                 strcpyW(path,buffer);
@@ -808,6 +842,16 @@ static UINT resolve_directory(MSIHANDLE hPackage, const WCHAR* dir,
     return rc;
 }
 
+/*
+ * This is the action where all the features and components are loaded into
+ * memory... so when we start doing that that will be important.
+ * 
+ */
+static UINT ACTION_CostInitialize(MSIHANDLE hPackage)
+{
+    return ERROR_SUCCESS;
+}
+
 /* 
  * Alot is done in this function aside from just the costing.
  * The costing needs to be implemented at some point but for now i am going
@@ -822,6 +866,11 @@ static UINT ACTION_CostFinalize(MSIHANDLE hPackage)
     static const CHAR *ExecSeqQuery = "select * from Directory";
     UINT rc;
     MSIHANDLE view;
+
+    /* According to MSDN these properties are set when CostFinalize is run  
+     * or MsiSetInstallLevel is called */
+    TRACE("Setting installer properties\n");
+    set_installer_properties(hPackage);    
 
     TRACE("Building Directory properties\n");
 
@@ -885,7 +934,8 @@ static UINT writeout_cabinet_stream(MSIHANDLE hPackage, WCHAR* stream_name,
     if (rc != ERROR_SUCCESS)
         return rc;
 
-    if (get_property(hPackage, cszSourceDir, source))
+    write = 0x100;
+    if (get_property(hPackage, cszSourceDir, source, &write))
     {
         ERR("No Source dir defined \n");
         rc = ERROR_FUNCTION_FAILED;
@@ -1021,7 +1071,8 @@ static UINT ready_media_for_file(MSIHANDLE hPackage, UINT sequence,
         }
         else
         {
-            if (get_property(hPackage, cszSourceDir, source))
+            sz = 0x100;
+            if (get_property(hPackage, cszSourceDir, source, &sz))
             {
                 ERR("No Source dir defined \n");
                 rc = ERROR_FUNCTION_FAILED;
@@ -1091,7 +1142,8 @@ static UINT get_directory_for_component(MSIHANDLE hPackage,
 
     sz=0x100;
     MsiRecordGetStringW(row,3,dir,&sz);
-    rc = get_property(hPackage, dir, install_path);
+    sz=MAX_PATH;
+    rc = get_property(hPackage, dir, install_path, &sz);
 
     MsiCloseHandle(row);
     MsiViewClose(view);
@@ -1261,7 +1313,8 @@ static UINT ACTION_DuplicateFiles(MSIHANDLE hPackage)
             break;
         }
 
-        rc = get_property(hPackage,file_key,file_source);
+        sz = 0x100;
+        rc = get_property(hPackage,file_key,file_source,&sz);
         if (rc != ERROR_SUCCESS)
         {
             ERR("Original file unknown %s\n",debugstr_w(file_key));
@@ -1288,7 +1341,8 @@ static UINT ACTION_DuplicateFiles(MSIHANDLE hPackage)
             WCHAR destkey[0x100];
             sz=0x100;
             MsiRecordGetStringW(row,5,destkey,&sz);
-            rc = get_property(hPackage, destkey, dest_path);
+            sz = 0x100;
+            rc = get_property(hPackage, destkey, dest_path, &sz);
             if (rc != ERROR_SUCCESS)
             {
                 ERR("Unable to get destination folder\n");
@@ -1456,6 +1510,7 @@ static DWORD deformat_string(MSIHANDLE hPackage, WCHAR* ptr,WCHAR** data)
     DWORD chunk=0;
     WCHAR key[0x100];
     WCHAR value[0x100];
+    DWORD sz;
 
     /* scan for special characters */
     if (!strchrW(ptr,'[') || (strchrW(ptr,'[') && !strchrW(ptr,']')))
@@ -1491,7 +1546,8 @@ static DWORD deformat_string(MSIHANDLE hPackage, WCHAR* ptr,WCHAR** data)
     mark = strchrW(mark,']');
     mark++;
     TRACE("Current %s .. %s\n",debugstr_w(*data),debugstr_w(mark));
-    if (get_property(hPackage, key, value) == ERROR_SUCCESS)
+    sz = 0x100;
+    if (get_property(hPackage, key, value,&sz) == ERROR_SUCCESS)
     {
         LPWSTR newdata;
         chunk = (strlenW(value)+1) * sizeof(WCHAR);
@@ -1522,6 +1578,79 @@ static DWORD deformat_string(MSIHANDLE hPackage, WCHAR* ptr,WCHAR** data)
     return size;
 }
 
+/* Msi functions that seem approperate here */
+UINT WINAPI MsiDoActionA( MSIHANDLE hInstall, LPCSTR szAction )
+{
+    LPWSTR szwAction;
+    UINT len,rc;
+
+    TRACE(" exteral attempt at action %s\n",szAction);
+
+    if (!szAction)
+        return ERROR_FUNCTION_FAILED;
+    if (hInstall == 0)
+        return ERROR_FUNCTION_FAILED;
+
+    len = MultiByteToWideChar( CP_ACP, 0, szAction, -1, NULL, 0);
+    szwAction = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR));
+
+    if (!szwAction)
+        return ERROR_FUNCTION_FAILED; 
+
+    MultiByteToWideChar( CP_ACP, 0, szAction, -1, szwAction, len);
+
+    rc = MsiDoActionW(hInstall, szwAction);
+    HeapFree(GetProcessHeap(),0,szwAction);
+    return rc;
+}
+
+UINT WINAPI MsiDoActionW( MSIHANDLE hInstall, LPCWSTR szAction )
+{
+    TRACE(" exteral attempt at action %s \n",debugstr_w(szAction));
+    return ACTION_PerformAction(hInstall,szAction);
+}
+
+UINT WINAPI MsiGetTargetPathA( MSIHANDLE hInstall, LPCSTR szFolder, 
+                               LPSTR szPathBuf, DWORD* pcchPathBuf) 
+{
+    LPWSTR szwFolder;
+    LPWSTR szwPathBuf;
+    UINT len,rc;
+
+    TRACE("getting folder %s %p %li\n",szFolder,szPathBuf, *pcchPathBuf);
+
+    if (!szFolder)
+        return ERROR_FUNCTION_FAILED;
+    if (hInstall == 0)
+        return ERROR_FUNCTION_FAILED;
+
+    len = MultiByteToWideChar( CP_ACP, 0, szFolder, -1, NULL, 0);
+    szwFolder= HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR));
+
+    if (!szwFolder)
+        return ERROR_FUNCTION_FAILED; 
+
+    szwPathBuf = HeapAlloc( GetProcessHeap(), 0 , *pcchPathBuf * sizeof(WCHAR));
+
+    MultiByteToWideChar( CP_ACP, 0, szFolder, -1, szwFolder, len);
+
+    rc = MsiGetTargetPathW(hInstall, szwFolder, szwPathBuf,pcchPathBuf);
+
+    WideCharToMultiByte( CP_ACP, 0, szwPathBuf, *pcchPathBuf, szPathBuf,
+                         *pcchPathBuf, NULL, NULL );
+
+    HeapFree(GetProcessHeap(),0,szwFolder);
+    HeapFree(GetProcessHeap(),0,szwPathBuf);
+
+    return rc;
+}
+
+UINT WINAPI MsiGetTargetPathW( MSIHANDLE hInstall, LPCWSTR szFolder, LPWSTR
+                                szPathBuf, DWORD* pcchPathBuf) 
+{
+    TRACE("(%s %p %li)\n",debugstr_w(szFolder),szPathBuf,*pcchPathBuf);
+    return get_property(hInstall,szFolder,szPathBuf,pcchPathBuf);
+}
 
 
 #if 0

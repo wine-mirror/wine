@@ -211,7 +211,7 @@ UINT WINAPI MsiViewFetch(MSIHANDLE hView, MSIHANDLE *record)
         {
             LPWSTR sval;
 
-            if( type & MSI_DATASIZEMASK )
+            if( type != MSITYPE_BINARY)
             {
                 sval = MSI_makestring( query->db, ival );
                 MsiRecordSetStringW( handle, i, sval );
@@ -342,19 +342,6 @@ UINT WINAPI MsiViewGetColumnInfo(MSIHANDLE hView, MSICOLINFO info, MSIHANDLE *hR
     *hRec = handle;
 
     return ERROR_SUCCESS;
-}
-
-
-UINT WINAPI MsiDoActionA( MSIHANDLE hInstall, LPCSTR szAction )
-{
-    FIXME("%ld %s\n", hInstall, debugstr_a(szAction) );
-    return ERROR_CALL_NOT_IMPLEMENTED;
-}
-
-UINT WINAPI MsiDoActionW( MSIHANDLE hInstall, LPCWSTR szAction )
-{
-    FIXME("%ld %s\n", hInstall, debugstr_w(szAction) );
-    return ERROR_CALL_NOT_IMPLEMENTED;
 }
 
 UINT WINAPI MsiDatabaseApplyTransformA( MSIHANDLE hdb, 

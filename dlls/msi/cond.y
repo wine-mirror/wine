@@ -56,7 +56,8 @@ struct cond_str {
 
 static LPWSTR COND_GetString( struct cond_str *str );
 static int COND_lex( void *COND_lval, COND_input *info);
-UINT get_property(MSIHANDLE hPackage, const WCHAR* prop, WCHAR* value);
+UINT get_property(MSIHANDLE hPackage, const WCHAR* prop, WCHAR* value, 
+                  DWORD* size);
 
 typedef INT (*comp_int)(INT a, INT b);
 typedef INT (*comp_str)(LPWSTR a, LPWSTR b, BOOL caseless);
@@ -443,6 +444,7 @@ symbol_i:
 symbol_s:
     identifier
         {
+            DWORD sz;
             COND_input* cond = (COND_input*) info;
             $$ = HeapAlloc( GetProcessHeap(), 0, 0x100*sizeof (WCHAR) );
 
@@ -450,7 +452,8 @@ symbol_s:
             /* This will not really work until we have write access to the table*/
             /* HACK ALERT HACK ALERT... */
 
-            if (get_property(cond->hInstall,$1,$$) != ERROR_SUCCESS)
+            sz=0x100;
+            if (get_property(cond->hInstall,$1,$$,&sz) != ERROR_SUCCESS)
             {
                 $$[0]=0;
             }
