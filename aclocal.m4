@@ -68,6 +68,16 @@ CFLAGS="$CFLAGS $1"
 AC_TRY_LINK([],[],[$2],[$3])
 CFLAGS=$ac_wine_try_cflags_saved])
 
+dnl **** Check if we can link an empty shared lib (no main) with special CFLAGS ****
+dnl
+dnl Usage: WINE_TRY_SHLIB_FLAGS(flags,[action-if-yes,[action-if-no]])
+dnl
+AC_DEFUN([WINE_TRY_SHLIB_FLAGS],
+[ac_wine_try_cflags_saved=$CFLAGS
+CFLAGS="$CFLAGS $1"
+AC_LINK_IFELSE([void myfunc() {}],[$2],[$3])
+CFLAGS=$ac_wine_try_cflags_saved])
+
 dnl **** Check whether we need to define a symbol on the compiler command line ****
 dnl
 dnl Usage: WINE_CHECK_DEFINE(name),[action-if-yes,[action-if-no]])

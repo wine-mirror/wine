@@ -878,8 +878,8 @@ case $host_os in
       DLLFLAGS="$DLLFLAGS -fPIC"
       DLLEXT=".so"
       AC_CACHE_CHECK([whether we can build a GNU style ELF dll], ac_cv_c_dll_gnuelf,
-          [WINE_TRY_CFLAGS([-fPIC -shared -Wl,-soname,conftest.so.1.0,-Bsymbolic],
-                           ac_cv_c_dll_gnuelf="yes",ac_cv_c_dll_gnuelf="no")])
+          [WINE_TRY_SHLIB_FLAGS([-fPIC -shared -Wl,-soname,conftest.so.1.0,-Bsymbolic],
+                                ac_cv_c_dll_gnuelf="yes",ac_cv_c_dll_gnuelf="no")])
       if test "$ac_cv_c_dll_gnuelf" = "yes"
       then
         LDSHARED="\$(CC) -shared \$(SONAME:%=-Wl,-soname,%)"
@@ -932,8 +932,8 @@ case $host_os in
 
       else
         AC_CACHE_CHECK(whether we can build a UnixWare (Solaris) dll, ac_cv_c_dll_unixware,
-            [WINE_TRY_CFLAGS([-fPIC -Wl,-G,-h,conftest.so.1.0,-B,symbolic],
-                             ac_cv_c_dll_unixware="yes",ac_cv_c_dll_unixware="no")])
+            [WINE_TRY_SHLIB_FLAGS([-fPIC -Wl,-G,-h,conftest.so.1.0,-B,symbolic],
+                                  ac_cv_c_dll_unixware="yes",ac_cv_c_dll_unixware="no")])
         if test "$ac_cv_c_dll_unixware" = "yes"
         then
           LDSHARED="\$(CC) -Wl,-G \$(SONAME:%=-Wl,-h,%)"
@@ -941,7 +941,7 @@ case $host_os in
 
         else
           AC_CACHE_CHECK(whether we can build a Mach-O (Mac OS X/Darwin) dll, ac_cv_c_dll_macho,
-            [WINE_TRY_CFLAGS([-bundle], ac_cv_c_dll_macho="yes", ac_cv_c_dll_macho="no")])
+            [WINE_TRY_SHLIB_FLAGS([-bundle], ac_cv_c_dll_macho="yes", ac_cv_c_dll_macho="no")])
           if test "$ac_cv_c_dll_macho" = "yes"
           then
             LIBEXT="dylib"
@@ -958,6 +958,15 @@ case $host_os in
             AC_SUBST(IOKITLIB,"-framework IOKit")
 	    dnl using IOKit imply we use CoreFoundation too
 	    IOKITLIB = "$IOKITLIB $COREFOUNDATIONLIB"
+          else
+            AC_CACHE_CHECK(whether we can build an HP-UX dll, ac_cv_c_dll_hpux,
+              [WINE_TRY_SHLIB_FLAGS([-shared], ac_cv_c_dll_hpux="yes", ac_cv_c_dll_hpux="no")])
+            if test "$ac_cv_c_dll_hpux" = "yes"
+            then
+              LIBEXT="sl"
+              LDDLLFLAGS="-shared"
+              LDSHARED="\$(CC) -shared"
+            fi
           fi
         fi
       fi
