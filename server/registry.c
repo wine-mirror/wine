@@ -1639,11 +1639,11 @@ static int save_branch( struct key *key, const char *path )
         /* if successfully written, rename to final name */
         if (ret) ret = !rename( tmp, path );
         if (!ret) unlink( tmp );
-        free( tmp );
     }
 
 done:
-    if (real) free( real );
+    free( tmp );
+    free( real );
     if (ret) make_clean( key );
     return ret;
 }
