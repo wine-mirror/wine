@@ -23,17 +23,21 @@
 
 #include "config.h"
 
-#define NONAMELESSUNION
-#define NONAMELESSSTRUCT
-
-#include <windows.h>
-#include <commctrl.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include <wine/debug.h>
+#include <stdarg.h>
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
+
+#define NONAMELESSUNION
+#define NONAMELESSSTRUCT
+
+#include <windef.h>
+#include <winbase.h>
+#include <winuser.h>
+#include <commctrl.h>
+#include <wine/debug.h>
 
 #include "properties.h"
 #include "resource.h"
