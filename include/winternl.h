@@ -171,7 +171,7 @@ typedef struct _TEB
     WCHAR           StaticUnicodeBuffer[261];   /* c00 used by advapi32 */
     PVOID           DeallocationStack;          /* e0c */
     PVOID           TlsSlots[64];               /* e10 */
-    BYTE            Reserved3[8];               /* f10 */
+    LIST_ENTRY      TlsLinks;                   /* f10 */
     PVOID           Reserved4[26];              /* f18 */
     PVOID           ReservedForOle;             /* f80 Windows 2000 only */
     PVOID           Reserved5[4];               /* f84 */
@@ -1019,6 +1019,7 @@ NTSTATUS  WINAPI NtSetEvent(HANDLE,PULONG);
 NTSTATUS  WINAPI NtSetInformationFile(HANDLE,PIO_STATUS_BLOCK,PVOID,ULONG,FILE_INFORMATION_CLASS);
 NTSTATUS  WINAPI NtSetInformationKey(HKEY,const int,PVOID,ULONG);
 NTSTATUS  WINAPI NtSetInformationObject(HANDLE, OBJECT_INFORMATION_CLASS, PVOID, ULONG);
+NTSTATUS  WINAPI NtSetInformationThread(HANDLE,THREADINFOCLASS,LPCVOID,ULONG);
 NTSTATUS  WINAPI NtSetSecurityObject(HANDLE,SECURITY_INFORMATION,PSECURITY_DESCRIPTOR);
 NTSTATUS  WINAPI NtSetSystemTime(const LARGE_INTEGER*,LARGE_INTEGER*);
 NTSTATUS  WINAPI NtSetTimer(HANDLE, const LARGE_INTEGER*, PTIMERAPCROUTINE, PVOID, BOOLEAN, ULONG, BOOLEAN*);

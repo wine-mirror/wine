@@ -1502,8 +1502,7 @@ BOOL WINAPI TlsFree(
         return FALSE;
     }
     *bits &= ~mask;
-    NtCurrentTeb()->TlsSlots[index] = 0;
-    /* FIXME: should zero all other thread values */
+    NtSetInformationThread( GetCurrentThread(), ThreadZeroTlsCell, &index, sizeof(index) );
     RtlReleasePebLock();
     return TRUE;
 }

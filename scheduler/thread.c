@@ -70,6 +70,7 @@ static BOOL THREAD_InitTEB( TEB *teb )
     teb->wait_fd[1] = -1;
     teb->StaticUnicodeString.MaximumLength = sizeof(teb->StaticUnicodeBuffer);
     teb->StaticUnicodeString.Buffer = (PWSTR)teb->StaticUnicodeBuffer;
+    InitializeListHead(&teb->TlsLinks);
     teb->teb_sel = wine_ldt_alloc_fs();
     return (teb->teb_sel != 0);
 }
@@ -268,12 +269,18 @@ HANDLE WINAPI CreateThread( SECURITY_ATTRIBUTES *sa, SIZE_T stack,
     teb->entry_point = start;
     teb->entry_arg   = param;
     teb->htask16     = GetCurrentTask();
+    RtlAcquirePebLock();
+    InsertHeadList( &NtCurrentTeb()->TlsLinks, &teb->TlsLinks );
+    RtlReleasePebLock();
 
     if (id) *id = tid;
     if (SYSDEPS_SpawnThread( THREAD_Start, teb ) == -1)
     {
         CloseHandle( handle );
         close( request_pipe[1] );
+        RtlAcquirePebLock();
+        RemoveEntryList( &teb->TlsLinks );
+        RtlReleasePebLock();
         THREAD_FreeTEB( teb );
         return 0;
     }
@@ -307,6 +314,9 @@ void WINAPI ExitThread( DWORD code ) /* [in] Exit code for this thread */
     else
     {
         LdrShutdownThread();
+        RtlAcquirePebLock();
+        RemoveEntryList( &NtCurrentTeb()->TlsLinks );
+        RtlReleasePebLock();
         SYSDEPS_ExitThread( code );
     }
 }

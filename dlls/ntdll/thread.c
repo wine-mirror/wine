@@ -107,7 +107,13 @@ NTSTATUS WINAPI NtTerminateThread( HANDLE handle, LONG exit_code )
     if (self)
     {
         if (last) exit( exit_code );
-        else SYSDEPS_ExitThread( exit_code );
+        else
+        {
+            RtlAcquirePebLock();
+            RemoveEntryList( &NtCurrentTeb()->TlsLinks );
+            RtlReleasePebLock();
+            SYSDEPS_ExitThread( exit_code );
+        }
     }
     return ret;
 }
@@ -224,6 +230,60 @@ NTSTATUS WINAPI NtQueryInformationThread( HANDLE handle, THREADINFOCLASS class,
     case ThreadEventPair_Reusable:
     case ThreadQuerySetWin32StartAddress:
     case ThreadZeroTlsCell:
+    case ThreadPerformanceCount:
+    case ThreadAmILastThread:
+    case ThreadIdealProcessor:
+    case ThreadPriorityBoost:
+    case ThreadSetTlsArrayAddress:
+    case ThreadIsIoPending:
+    default:
+        FIXME( "info class %d not supported yet\n", class );
+        return STATUS_NOT_IMPLEMENTED;
+    }
+}
+
+
+/******************************************************************************
+ *              NtSetInformationThread  (NTDLL.@)
+ *              ZwSetInformationThread  (NTDLL.@)
+ */
+NTSTATUS WINAPI NtSetInformationThread( HANDLE handle, THREADINFOCLASS class,
+                                        LPCVOID data, ULONG length )
+{
+    switch(class)
+    {
+    case ThreadZeroTlsCell:
+        if (handle == GetCurrentThread())
+        {
+            LIST_ENTRY *entry = &NtCurrentTeb()->TlsLinks;
+            DWORD index;
+
+            if (length != sizeof(DWORD)) return STATUS_INVALID_PARAMETER;
+            index = *(DWORD *)data;
+            if (index >= 64) return STATUS_INVALID_PARAMETER;
+            RtlAcquirePebLock();
+            do
+            {
+                TEB *teb = CONTAINING_RECORD(entry, TEB, TlsLinks);
+                teb->TlsSlots[index] = 0;
+                entry = entry->Flink;
+            } while (entry != &NtCurrentTeb()->TlsLinks);
+            RtlReleasePebLock();
+            return STATUS_SUCCESS;
+        }
+        FIXME( "ZeroTlsCell not supported on other threads\n" );
+        return STATUS_NOT_IMPLEMENTED;
+
+    case ThreadBasicInformation:
+    case ThreadTimes:
+    case ThreadPriority:
+    case ThreadBasePriority:
+    case ThreadAffinityMask:
+    case ThreadImpersonationToken:
+    case ThreadDescriptorTableEntry:
+    case ThreadEnableAlignmentFaultFixup:
+    case ThreadEventPair_Reusable:
+    case ThreadQuerySetWin32StartAddress:
     case ThreadPerformanceCount:
     case ThreadAmILastThread:
     case ThreadIdealProcessor:

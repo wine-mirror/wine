@@ -128,7 +128,8 @@ typedef struct _TEB
     USHORT       StaticUnicodeBuffer[261];   /* -2- c00 used by advapi32 */
     PVOID        DeallocationStack;          /* -2- e0c Base of the stack */
     LPVOID       TlsSlots[64];               /* -2- e10 Thread local storage */
-    DWORD        pad8[3];                    /* --n f10 */
+    LIST_ENTRY   TlsLinks;                   /* -2- f10 */
+    DWORD        pad8[1];                    /* --n f18 */
     PVOID        ReservedForNtRpc;           /* -2- f1c used by rpcrt4 */
     DWORD        pad9[24];                   /* --n f20 */
     PVOID        ReservedForOle;             /* -2- f80 used by ole32 (IErrorInfo*) */

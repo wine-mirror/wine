@@ -217,7 +217,7 @@
 @ stdcall NtSetInformationKey(long long ptr long)
 @ stdcall NtSetInformationObject(long long ptr long)
 @ stdcall NtSetInformationProcess(long long long long)
-@ stdcall NtSetInformationThread(long long long long)
+@ stdcall NtSetInformationThread(long long ptr long)
 @ stub NtSetInformationToken
 @ stdcall NtSetIntervalProfile(long long)
 @ stub NtSetIoCompletion
@@ -746,7 +746,7 @@
 @ stdcall ZwSetInformationKey(long long ptr long) NtSetInformationKey
 @ stdcall ZwSetInformationObject(long long ptr long) NtSetInformationObject
 @ stdcall ZwSetInformationProcess(long long long long) NtSetInformationProcess
-@ stdcall ZwSetInformationThread(long long long long) NtSetInformationThread
+@ stdcall ZwSetInformationThread(long long ptr long) NtSetInformationThread
 @ stub ZwSetInformationToken
 @ stdcall ZwSetIntervalProfile(long long) NtSetIntervalProfile
 @ stub ZwSetIoCompletion
