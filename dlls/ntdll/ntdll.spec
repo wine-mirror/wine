@@ -185,6 +185,7 @@ debug_channels (aspi atom cdrom console ddraw debug delayhlp dll dosfs dosmem
 @ stdcall NtQueryTimerResolution(long long long) NtQueryTimerResolution
 @ stdcall NtQueryValueKey(long long long long long long) NtQueryValueKey
 @ stub NtQueryVirtualMemory
+@ stdcall NtQueryVolumeInformationFile(long ptr ptr long long) NtQueryVolumeInformationFile
 @ stdcall NtRaiseException(ptr ptr long) NtRaiseException
 @ stub NtRaiseHardError
 @ stdcall NtReadFile(long long long long long long long long long) NtReadFile
@@ -686,7 +687,7 @@ debug_channels (aspi atom cdrom console ddraw debug delayhlp dll dosfs dosmem
 @ stub ZwQueryTimerResolution
 @ stub ZwQueryValueKey
 @ stub ZwQueryVirtualMemory
-@ stub ZwQueryVolumeInformationFile
+@ stdcall ZwQueryVolumeInformationFile(long ptr ptr long long) NtQueryVolumeInformationFile
 @ stub ZwRaiseException
 @ stub ZwRaiseHardError
 @ stdcall ZwReadFile(long long long long long long long long long) NtReadFile
@@ -894,7 +895,7 @@ debug_channels (aspi atom cdrom console ddraw debug delayhlp dll dosfs dosmem
 @ cdecl _strnicmp(str str long) strncasecmp
 @ cdecl _strupr(str) _strupr
 @ cdecl _ultoa(long ptr long) _ultoa
-@ stub _ultow
+@ cdecl _ultow(long ptr long) _ultow
 @ cdecl _vsnprintf(ptr long ptr ptr) vsnprintf
 @ cdecl _wcsicmp(wstr wstr) NTDLL__wcsicmp
 @ cdecl _wcslwr(wstr) NTDLL__wcslwr

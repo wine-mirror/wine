@@ -301,3 +301,36 @@ INT __cdecl NTDLL_iswalpha( WCHAR wc )
 {
     return get_char_typeW(wc) & C1_ALPHA;
 }
+
+
+/*********************************************************************
+ *           _ultow    (NTDLL)
+ * Like _ultoa, but for wide character strings.
+ */
+LPWSTR __cdecl _ultow(ULONG value, LPWSTR string, INT radix)
+{
+    WCHAR tmp[33];
+    LPWSTR tp = tmp;
+    LPWSTR sp;
+    LONG i;
+    ULONG v = value;
+
+    if (radix > 36 || radix <= 1)
+	return 0;
+
+    while (v || tp == tmp)
+    {
+	i = v % radix;
+	v = v / radix;
+	if (i < 10)
+	    *tp++ = i + '0';
+	else
+	    *tp++ = i + 'a' - 10;
+    }
+
+    sp = string;
+    while (tp > tmp)
+	*sp++ = *--tp;
+    *sp = 0;
+    return string;
+}

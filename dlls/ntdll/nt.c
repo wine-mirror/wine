@@ -2,7 +2,7 @@
  * NT basis DLL
  * 
  * This file contains the Nt* API functions of NTDLL.DLL.
- * In the original ntdll.dll they all seem to just call int 0x2e (down to the HAL)
+ * In the original ntdll.dll they all seem to just call int 0x2e (down to the NTOSKRNL)
  *
  * Copyright 1996-1998 Marcus Meissner
  */
