@@ -154,8 +154,7 @@ inline static void setup_dsound_options(void)
         ExitProcess(1);
     }
 
-    if (GetModuleFileName16( GetCurrentTask(), buffer, MAX_PATH ) ||
-        GetModuleFileNameA( 0, buffer, MAX_PATH ))
+    if (GetModuleFileNameA( 0, buffer, MAX_PATH ))
     {
         HKEY tmpkey;
 

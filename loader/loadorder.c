@@ -381,8 +381,7 @@ static HKEY open_app_key( const char *module )
     HKEY hkey, appkey;
     char buffer[MAX_PATH+16], *appname;
 
-    if (!GetModuleFileName16( GetCurrentTask(), buffer, MAX_PATH ) &&
-        !GetModuleFileNameA( 0, buffer, MAX_PATH ))
+    if (!GetModuleFileNameA( 0, buffer, MAX_PATH ))
     {
         WARN( "could not get module file name loading %s\n", module );
         return 0;

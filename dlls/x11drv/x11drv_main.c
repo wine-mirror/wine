@@ -196,8 +196,7 @@ static void setup_options(void)
 
     /* open the app-specific key */
 
-    if (GetModuleFileName16( GetCurrentTask(), buffer, MAX_PATH ) ||
-        GetModuleFileNameA( 0, buffer, MAX_PATH ))
+    if (GetModuleFileNameA( 0, buffer, MAX_PATH ))
     {
         HKEY tmpkey;
         char *p, *appname = buffer;

@@ -278,8 +278,7 @@ static void VERSION_Init(void)
     static BOOL init_done;
 
     if (init_done) return;
-    if (!GetModuleFileName16( GetCurrentTask(), buffer, MAX_PATH ) &&
-        !GetModuleFileNameA( 0, buffer, MAX_PATH ))
+    if (!GetModuleFileNameA( 0, buffer, MAX_PATH ))
     {
         WARN( "could not get module file name\n" );
         return;
