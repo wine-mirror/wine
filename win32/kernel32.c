@@ -1138,5 +1138,19 @@ BOOL32 WINAPI UpdateResource32W(
 }
 
 
-
-
+/***********************************************************************
+ *           WaitNamedPipe32A                 [KERNEL32.725]
+ */
+BOOL32 WINAPI WaitNamedPipe32A (LPCSTR lpNamedPipeName, DWORD nTimeOut)
+{	FIXME (win32,"%s 0x%08lx\n",lpNamedPipeName,nTimeOut);
+	SetLastError(ERROR_PIPE_NOT_CONNECTED);
+	return FALSE;
+}
+/***********************************************************************
+ *           WaitNamedPipe32W                 [KERNEL32.726]
+ */
+BOOL32 WINAPI WaitNamedPipe32W (LPCWSTR lpNamedPipeName, DWORD nTimeOut)
+{	FIXME (win32,"%s 0x%08lx\n",debugstr_w(lpNamedPipeName),nTimeOut);
+	SetLastError(ERROR_PIPE_NOT_CONNECTED);
+	return FALSE;
+}

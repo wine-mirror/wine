@@ -109,6 +109,10 @@ extern int WIN32_LastError;
 #define ERROR_BAD_EXE_FORMAT        193
 #define ERROR_FILENAME_EXCED_RANGE  206
 #define ERROR_META_EXPANSION_TOO_LONG 208
+#define ERROR_BAD_PIPE              230
+#define ERROR_PIPE_BUSY             231
+#define ERROR_NO_DATA               232
+#define ERROR_PIPE_NOT_CONNECTED    233
 #define ERROR_MORE_DATA             234
 #define ERROR_NO_MORE_ITEMS         259
 #define ERROR_DIRECTORY             267

@@ -741,8 +741,8 @@ init	MAIN_KernelInit
 722 stdcall WaitForMultipleObjectsEx(long ptr long long long) WaitForMultipleObjectsEx
 723 stdcall WaitForSingleObject(long long) WaitForSingleObject
 724 stdcall WaitForSingleObjectEx(long long long) WaitForSingleObjectEx
-725 stub WaitNamedPipeA
-726 stub WaitNamedPipeW
+725 stdcall WaitNamedPipeA (str long) WaitNamedPipe32A
+726 stdcall WaitNamedPipeW (wstr long) WaitNamedPipe32W
 727 stdcall WideCharToMultiByte(long long wstr long ptr long ptr ptr) WideCharToMultiByte
 728 stdcall WinExec(str long) WinExec32
 729 stdcall WriteConsoleA(long ptr long ptr ptr) WriteConsole32A
