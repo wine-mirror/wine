@@ -154,29 +154,6 @@ typedef struct DMUSIC_PRIVATE_PCHANNEL_ {
 	IDirectMusicPort *port; /* ... at this port */
 } DMUSIC_PRIVATE_PCHANNEL, *LPDMUSIC_PRIVATE_PCHANNEL;
 
-typedef struct DMUS_PMSGItem DMUS_PMSGItem;
-struct DMUS_PMSGItem {
-  DMUS_PMSGItem* next;
-  DMUS_PMSGItem* prev;
-
-  REFERENCE_TIME rtItemTime;
-  BOOL bInUse;
-  DWORD cb;
-  DMUS_PMSG pMsg;
-};
-
-#define DMUS_PMSGToItem(pMSG)   ((DMUS_PMSGItem*) (((unsigned char*) pPMSG) -  offsetof(DMUS_PMSGItem, pMsg)))
-#define DMUS_ItemToPMSG(pItem)  (&(pItem->pMsg))
-#define DMUS_ItemRemoveFromQueue(This,pItem) \
-{\
-  if (pItem->prev) pItem->prev->next = pItem->next;\
-  if (pItem->next) pItem->next->prev = pItem->prev;\
-  if (This->head == pItem) This->head = pItem->next;\
-  if (This->imm_head == pItem) This->imm_head = pItem->next;\
-  pItem->bInUse = FALSE;\
-}
-
-
 /*****************************************************************************
  * IDirectMusicPerformance8Impl implementation structure
  */
@@ -205,12 +182,17 @@ struct IDirectMusicPerformance8Impl {
   HANDLE hNotification;
   REFERENCE_TIME rtMinimum;
 
+  REFERENCE_TIME rtLatencyTime;
+  DWORD dwBumperLength;
+  DWORD dwPrepareTime;
   /** Message Processing */
   HANDLE         procThread;
+  DWORD          procThreadId;
   REFERENCE_TIME procThreadStartTime;
   BOOL           procThreadTicStarted;
-  DMUS_PMSGItem* head; 
-  DMUS_PMSGItem* imm_head; 
+  CRITICAL_SECTION safe;
+  struct DMUS_PMSGItem* head; 
+  struct DMUS_PMSGItem* imm_head; 
 };
 
 /* IUnknown: */
