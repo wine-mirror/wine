@@ -655,9 +655,9 @@ BOOL NC_DrawSysButton (HWND hwnd, HDC hdc, BOOL down)
     {
         RECT rect;
         NC_GetInsideRect( hwnd, &rect );
-        DrawIconEx (hdc, rect.left + 1, rect.top + 1, hIcon,
-                    GetSystemMetrics(SM_CXSIZE) - 1,
-                    GetSystemMetrics(SM_CYSIZE) - 1, 0, 0, DI_NORMAL);
+        DrawIconEx (hdc, rect.left + 2, rect.top + 1, hIcon,
+                    GetSystemMetrics(SM_CXSMICON),
+                    GetSystemMetrics(SM_CYSMICON), 0, 0, DI_NORMAL);
     }
     return (hIcon != 0);
 }
@@ -871,7 +871,7 @@ static void  NC_DrawCaption( HDC  hdc, RECT *rect, HWND hwnd, DWORD  style,
 
     if ((style & WS_SYSMENU) && !(exStyle & WS_EX_TOOLWINDOW)) {
 	if (NC_DrawSysButton (hwnd, hdc, FALSE))
-	    r.left += GetSystemMetrics(SM_CYCAPTION) - 1;
+	    r.left += GetSystemMetrics(SM_CXSMICON) + 2;
     }
 
     if (style & WS_SYSMENU)
