@@ -2894,9 +2894,11 @@ static BOOL EDIT_EM_Undo(WND *wnd, EDITSTATE *es)
 static void EDIT_WM_Char(WND *wnd, EDITSTATE *es, CHAR c, DWORD key_data)
 {
         BOOL control = GetKeyState(VK_CONTROL) & 0x8000;
-
 	switch (c) {
 	case '\r':
+	    /* If the edit doesn't want the return, do nothing */
+	    if(!(es->style & ES_WANTRETURN))
+		break;
 	case '\n':
 		if (es->style & ES_MULTILINE) {
 			if (es->style & ES_READONLY) {
@@ -3436,6 +3438,20 @@ static LRESULT EDIT_WM_KeyDown(WND *wnd, EDITSTATE *es, INT key, DWORD key_data)
 		} else if (control)
 			EDIT_WM_Copy(wnd, es);
 		break;
+	case VK_RETURN:
+	    /* If the edit doesn't want the return send a message to the default object */
+	    if(!(es->style & ES_WANTRETURN))
+	    {
+		HWND hwndParent = GetParent(wnd->hwndSelf);
+		DWORD dw = SendMessage16( hwndParent, DM_GETDEFID, 0, 0 );
+		if (HIWORD(dw) == DC_HASDEFID)
+		{
+		    SendMessageA( hwndParent, WM_COMMAND, 
+				  MAKEWPARAM( LOWORD(dw), BN_CLICKED ),
+ 			      (LPARAM)GetDlgItem( hwndParent, LOWORD(dw) ) );
+		}
+	    }
+	    break;
 	}
 	return 0;
 }
