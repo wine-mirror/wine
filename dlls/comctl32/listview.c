@@ -720,13 +720,32 @@ static inline LRESULT notify_listview(LISTVIEW_INFO *infoPtr, INT code, LPNMLIST
 static LRESULT notify_click(LISTVIEW_INFO *infoPtr,  INT code, LVHITTESTINFO *lvht)
 {
     NMLISTVIEW nmlv;
+    LVITEMW item;
    
     TRACE("code=%d, lvht=%s\n", code, debuglvhittestinfo(lvht)); 
     ZeroMemory(&nmlv, sizeof(nmlv));
     nmlv.iItem = lvht->iItem;
     nmlv.iSubItem = lvht->iSubItem;
     nmlv.ptAction = lvht->pt;
+    item.mask = LVIF_PARAM;
+    item.iItem = lvht->iItem;
+    item.iSubItem = 0;
+    if (LISTVIEW_GetItemT(infoPtr, &item, TRUE)) nmlv.lParam = item.lParam;
     return notify_listview(infoPtr, code, &nmlv);
+}
+
+static void notify_deleteitem(LISTVIEW_INFO *infoPtr, INT nItem)
+{
+    NMLISTVIEW nmlv;
+    LVITEMW item;
+   
+    ZeroMemory(&nmlv, sizeof (NMLISTVIEW));
+    nmlv.iItem = nItem;
+    item.mask = LVIF_PARAM;
+    item.iItem = nItem;
+    item.iSubItem = 0;
+    if (LISTVIEW_GetItemT(infoPtr, &item, TRUE)) nmlv.lParam = item.lParam;
+    notify_listview(infoPtr, LVN_DELETEITEM, &nmlv);
 }
 
 static int get_ansi_notification(INT unicodeNotificationCode)
@@ -3901,11 +3920,7 @@ static BOOL LISTVIEW_DeleteAllItems(LISTVIEW_INFO *infoPtr)
     for (i = infoPtr->nItemCount - 1; i >= 0; i--)
     {
         /* send LVN_DELETEITEM notification, if not supressed */
-	if (!bSuppress)
-	{
-	    nmlv.iItem = i;
-	    notify_listview(infoPtr, LVN_DELETEITEM, &nmlv);
-	}
+	if (!bSuppress) notify_deleteitem(infoPtr, i);
 	if (!(infoPtr->dwStyle & LVS_OWNERDATA))
 	{
 	    hdpaSubItems = (HDPA)DPA_GetPtr(infoPtr->hdpaItems, i);
@@ -4147,7 +4162,6 @@ static void LISTVIEW_ScrollOnInsert(LISTVIEW_INFO *infoPtr, INT nItem, INT dir)
 static BOOL LISTVIEW_DeleteItem(LISTVIEW_INFO *infoPtr, INT nItem)
 {
     UINT uView = infoPtr->dwStyle & LVS_TYPEMASK;
-    NMLISTVIEW nmlv;
     LVITEMW item;
 
     TRACE("(nItem=%d)\n", nItem);
@@ -4160,9 +4174,7 @@ static BOOL LISTVIEW_DeleteItem(LISTVIEW_INFO *infoPtr, INT nItem)
     LISTVIEW_SetItemState(infoPtr, nItem, &item);
 	    
     /* send LVN_DELETEITEM notification. */
-    ZeroMemory(&nmlv, sizeof (NMLISTVIEW));
-    nmlv.iItem = nItem;
-    notify_listview(infoPtr, LVN_DELETEITEM, &nmlv);
+    notify_deleteitem(infoPtr, nItem);
 
     /* we need to do this here, because we'll be deleting stuff */  
     if (uView == LVS_SMALLICON || uView == LVS_ICON)
