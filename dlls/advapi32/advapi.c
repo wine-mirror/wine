@@ -143,3 +143,29 @@ BOOL WINAPI AbortSystemShutdownW( LPCWSTR lpMachineName )
     TRACE("stub %s (harmless)\n", debugstr_w(lpMachineName));
     return TRUE;
 }
+
+/******************************************************************************
+ * InitiateSystemShutdownExA [ADVAPI32.@]
+ */
+BOOL WINAPI InitiateSystemShutdownExA( LPSTR lpMachineName, LPSTR lpMessage,
+         DWORD dwTimeout, BOOL bForceAppsClosed, BOOL bRebootAfterShutdown,
+         DWORD dwReason)
+{
+     FIXME("%s %s %ld %d %d %ld\n", debugstr_a(lpMachineName),
+            debugstr_a(lpMessage), dwTimeout, bForceAppsClosed,
+            bRebootAfterShutdown, dwReason);
+     return TRUE;
+} 
+
+/******************************************************************************
+ * InitiateSystemShutdownExA [ADVAPI32.@]
+ */
+BOOL WINAPI InitiateSystemShutdownExW( LPWSTR lpMachineName, LPWSTR lpMessage,
+         DWORD dwTimeout, BOOL bForceAppsClosed, BOOL bRebootAfterShutdown,
+         DWORD dwReason)
+{
+     FIXME("%s %s %ld %d %d %ld\n", debugstr_w(lpMachineName),
+            debugstr_w(lpMessage), dwTimeout, bForceAppsClosed,
+            bRebootAfterShutdown, dwReason);
+     return TRUE;
+} 

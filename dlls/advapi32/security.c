@@ -1350,3 +1350,47 @@ VOID WINAPI BuildTrusteeWithSidW(PTRUSTEEW pTrustee, PSID pSid)
 {
     FIXME("%p %p\n", pTrustee, pSid);
 }
+
+/******************************************************************************
+ * SetEntriesInAclA [ADVAPI32.@]
+ */
+DWORD WINAPI SetEntriesInAclA( ULONG count, PEXPLICIT_ACCESSA pEntries,
+                               PACL OldAcl, PACL* NewAcl )
+{
+    FIXME("%ld %p %p %p\n",count,pEntries,OldAcl,NewAcl);
+    return ERROR_CALL_NOT_IMPLEMENTED;
+}
+
+/******************************************************************************
+ * SetEntriesInAclW [ADVAPI32.@]
+ */
+DWORD WINAPI SetEntriesInAclW( ULONG count, PEXPLICIT_ACCESSW pEntries,
+                               PACL OldAcl, PACL* NewAcl )
+{
+    FIXME("%ld %p %p %p\n",count,pEntries,OldAcl,NewAcl);
+    return ERROR_CALL_NOT_IMPLEMENTED;
+}
+
+/******************************************************************************
+ * SetNamedSecurityInfoA [ADVAPI32.@]
+ */
+DWORD WINAPI SetNamedSecurityInfoA(LPSTR pObjectName,
+        SE_OBJECT_TYPE ObjectType, SECURITY_INFORMATION SecurityInfo,
+        PSID psidOwner, PSID psidGroup, PACL pDacl, PACL pSacl)
+{
+    FIXME("%s %d %ld %p %p %p %p\n", debugstr_a(pObjectName), ObjectType,
+           SecurityInfo, psidOwner, psidGroup, pDacl, pSacl);
+    return ERROR_CALL_NOT_IMPLEMENTED;
+}
+
+/******************************************************************************
+ * SetNamedSecurityInfoW [ADVAPI32.@]
+ */
+DWORD WINAPI SetNamedSecurityInfoW(LPWSTR pObjectName,
+        SE_OBJECT_TYPE ObjectType, SECURITY_INFORMATION SecurityInfo,
+        PSID psidOwner, PSID psidGroup, PACL pDacl, PACL pSacl)
+{
+    FIXME("%s %d %ld %p %p %p %p\n", debugstr_w(pObjectName), ObjectType,
+           SecurityInfo, psidOwner, psidGroup, pDacl, pSacl);
+    return ERROR_CALL_NOT_IMPLEMENTED;
+}

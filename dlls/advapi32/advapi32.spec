@@ -134,6 +134,8 @@
 @ stdcall InitializeSid(ptr ptr long)
 @ stub InitiateSystemShutdownA
 @ stub InitiateSystemShutdownW
+@ stdcall InitiateSystemShutdownExA(wstr wstr long long long long)
+@ stdcall InitiateSystemShutdownExW(wstr wstr long long long long)
 @ stub InstallApplication
 @ stub IsProcessRestricted
 @ stdcall IsTextUnicode(ptr long ptr) ntdll.RtlIsTextUnicode
@@ -245,9 +247,13 @@
 @ stdcall ReportEventW (long long long long ptr long long wstr ptr)
 @ stdcall RevertToSelf()
 @ stub SetAclInformation
+@ stdcall SetEntriesInAclA(long ptr ptr ptr)
+@ stdcall SetEntriesInAclW(long ptr ptr ptr)
 @ stdcall SetFileSecurityA(str long ptr )
 @ stdcall SetFileSecurityW(wstr long ptr)
 @ stdcall SetKernelObjectSecurity(long long ptr)
+@ stdcall SetNamedSecurityInfoA(str long ptr ptr ptr ptr ptr)
+@ stdcall SetNamedSecurityInfoW(wstr long ptr ptr ptr ptr ptr)
 @ stub SetPrivateObjectSecurity
 @ stub SetSecurityDescriptorControl #(ptr long long)
 @ stdcall SetSecurityDescriptorDacl(ptr long ptr long)
