@@ -1029,7 +1029,7 @@ static void draw_primitive_strided(IDirect3DDeviceImpl *This,
 				   DWORD dwIndexCount,
 				   DWORD dwFlags)
 {
-    BOOLEAN vertex_lighted = (d3dvtVertexType & D3DFVF_NORMAL) == 0;
+    BOOLEAN vertex_lighted = FALSE;
     IDirect3DDeviceGLImpl* glThis = (IDirect3DDeviceGLImpl*) This;
 
     if (TRACE_ON(ddraw)) {
@@ -1037,6 +1037,14 @@ static void draw_primitive_strided(IDirect3DDeviceImpl *This,
     }
 
     ENTER_GL();
+    
+    /* Just a hack for now.. Will have to find better algorithm :-/ */
+    if ((d3dvtVertexType & D3DFVF_POSITION_MASK) != D3DFVF_XYZ) {
+        vertex_lighted = TRUE;
+    } else {
+        if ((d3dvtVertexType & D3DFVF_NORMAL) == 0) glNormal3f(0.0, 0.0, 0.0);
+    }
+    
     draw_primitive_handle_GL_state(This,
 				   (d3dvtVertexType & D3DFVF_POSITION_MASK) != D3DFVF_XYZ,
 				   vertex_lighted);
