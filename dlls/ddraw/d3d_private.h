@@ -32,7 +32,6 @@
 typedef struct IDirect3DImpl IDirect3DImpl;
 typedef struct IDirect3DLightImpl IDirect3DLightImpl;
 typedef struct IDirect3DMaterialImpl IDirect3DMaterialImpl;
-typedef struct IDirect3DTextureImpl IDirect3DTextureImpl;
 typedef struct IDirect3DViewportImpl IDirect3DViewportImpl;
 typedef struct IDirect3DExecuteBufferImpl IDirect3DExecuteBufferImpl;
 typedef struct IDirect3DDeviceImpl IDirect3DDeviceImpl;
@@ -53,6 +52,9 @@ struct IDirect3DImpl
     DWORD                   ref;
     /* IDirect3D fields */
     IDirectDrawImpl*	ddraw;
+
+    /* Used as a callback function to create a texture */
+    HRESULT (*create_texture)(IDirect3DImpl *d3d, IDirectDrawSurfaceImpl *tex, BOOLEAN at_creation, IDirectDrawSurfaceImpl *main, DWORD mipmap_level);
 };
 
 /*****************************************************************************
@@ -92,21 +94,6 @@ struct IDirect3DMaterialImpl
     D3DMATERIAL mat;
 
     void (*activate)(IDirect3DMaterialImpl* this);
-};
-
-/*****************************************************************************
- * IDirect3DTexture implementation structure
- */
-struct IDirect3DTextureImpl
-{
-    ICOM_VFIELD_MULTI(IDirect3DTexture2);
-    ICOM_VFIELD_MULTI(IDirect3DTexture);
-    DWORD ref;
-    /* IDirect3DTexture fields */
-    IDirect3DImpl *d3d;
-    IDirect3DDeviceImpl *d3ddevice;
-    IDirectDrawSurfaceImpl *surface;
-    BOOL loaded;
 };
 
 /*****************************************************************************
@@ -183,7 +170,7 @@ struct IDirect3DDeviceImpl
 
     IDirect3DViewportImpl *viewport_list;
     IDirect3DViewportImpl *current_viewport;
-    IDirect3DTextureImpl *current_texture[MAX_TEXTURES];
+    IDirectDrawSurfaceImpl *current_texture[MAX_TEXTURES];
 
     void (*set_context)(IDirect3DDeviceImpl*);
 };

@@ -26,6 +26,7 @@
 #include "wingdi.h"
 #include "winuser.h"
 #include "ddraw.h"
+#include "d3d.h"
 #include "ddcomimpl.h"
 #include "ddrawi.h"
 
@@ -220,6 +221,8 @@ struct IDirectDrawSurfaceImpl
     ICOM_VFIELD_MULTI(IDirectDrawSurface7);
     ICOM_VFIELD_MULTI(IDirectDrawSurface3);
     ICOM_VFIELD_MULTI(IDirectDrawGammaControl);
+    ICOM_VFIELD_MULTI(IDirect3DTexture2);
+    ICOM_VFIELD_MULTI(IDirect3DTexture);
     DWORD ref;
 
     struct IDirectDrawSurfaceImpl* attached; /* attached surfaces */
@@ -289,10 +292,10 @@ struct IDirectDrawSurfaceImpl
     void (*aux_release)(LPVOID ctx, LPVOID data);
     BOOL (*aux_flip)(LPVOID ctx, LPVOID data);
     void (*aux_unlock)(LPVOID ctx, LPVOID data, LPRECT lpRect);
-    struct IDirect3DTextureImpl *texture;
-    HRESULT (WINAPI *SetColorKey_cb)(struct IDirect3DTextureImpl *texture, DWORD dwFlags, LPDDCOLORKEY ckey ) ;
+    HRESULT (WINAPI *SetColorKey_cb)(struct IDirectDrawSurfaceImpl *texture, DWORD dwFlags, LPDDCOLORKEY ckey ) ;
     /* This is to get the D3DDevice object associated to this surface */
     struct IDirect3DDeviceImpl *d3ddevice;
+    LPVOID tex_private;
 };
 
 /*****************************************************************************

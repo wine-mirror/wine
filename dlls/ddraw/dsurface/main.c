@@ -81,7 +81,7 @@ Main_DirectDrawSurface_Construct(IDirectDrawSurfaceImpl *This,
 			DDRAW_IDDS3_Thunk_VTable);
     ICOM_INIT_INTERFACE(This, IDirectDrawGammaControl,
 			DDRAW_IDDGC_VTable);
-    /* There is no generic implementation of IDDS7 */
+    /* There is no generic implementation of IDDS7 or texture */
 
     Main_DirectDraw_AddSurface(pDD, This);
     return DD_OK;
@@ -101,6 +101,7 @@ static void Main_DirectDrawSurface_Destroy(IDirectDrawSurfaceImpl* This)
 {
     This->final_release(This);
     if (This->private != This+1) HeapFree(GetProcessHeap(), 0, This->private);
+    if (This->tex_private) HeapFree(GetProcessHeap(), 0, This->tex_private);
     HeapFree(GetProcessHeap(), 0, This);
 }
 
@@ -146,6 +147,8 @@ Main_DirectDrawSurface_QueryInterface(LPDIRECTDRAWSURFACE7 iface, REFIID riid,
     ICOM_THIS(IDirectDrawSurfaceImpl, iface);
     TRACE("(%p)->(%s,%p)\n", This, debugstr_guid(riid), ppObj);
 
+    *ppObj = NULL;
+
     if (IsEqualGUID(&IID_IUnknown, riid)
 	|| IsEqualGUID(&IID_IDirectDrawSurface7, riid)
 	|| IsEqualGUID(&IID_IDirectDrawSurface4, riid))
@@ -184,32 +187,38 @@ Main_DirectDrawSurface_QueryInterface(LPDIRECTDRAWSURFACE7 iface, REFIID riid,
 	This->ref++; /* No idea if this is correct.. Need to check using real Windows */
 	return ret_value;
     }
-    else if (IsEqualGUID( &IID_IDirect3DTexture, riid ))
+    else if (IsEqualGUID( &IID_IDirect3DTexture, riid ) ||
+	     IsEqualGUID( &IID_IDirect3DTexture2, riid ))
     {
-        IDirect3DTextureImpl *d3dteximpl;
-	HRESULT ret_value;
+	HRESULT ret_value = S_OK;
 
-	ret_value = d3dtexture_create(&d3dteximpl, NULL, This);
-	if (FAILED(ret_value)) return ret_value;
+	/* In case the texture surface was created before the D3D creation */
+	if ((This->surface_desc.ddsCaps.dwCaps & DDSCAPS_TEXTURE) == 0) return E_NOINTERFACE;
+	/* Create a 'delayed' private field only if it is not an offscreen texture... */
+	if ((This->tex_private == NULL) && 
+	    ((This->surface_desc.ddsCaps.dwCaps & (DDSCAPS_OFFSCREENPLAIN|DDSCAPS_SYSTEMMEMORY)) == 0)) {
+   	    if (This->ddraw_owner->d3d == NULL) {
+	        ERR("Texture created with no D3D object yet.. Not supported !\n");
+		return E_NOINTERFACE;
+	    }
 
-	*ppObj = ICOM_INTERFACE(d3dteximpl, IDirect3DTexture);
-	TRACE(" returning Direct3DTexture interface at %p.\n", *ppObj);
-	
-	This->ref++; /* No idea if this is correct.. Need to check using real Windows */
-	return ret_value;
-    }    
-    else if (IsEqualGUID( &IID_IDirect3DTexture2, riid ))
-    {
-        IDirect3DTextureImpl *d3dteximpl;
-	HRESULT ret_value;
+	    if (((This->surface_desc.dwFlags & DDSD_MIPMAPCOUNT) &&
+		 (This->surface_desc.u2.dwMipMapCount > 1)) ||
+		(This->surface_desc.ddsCaps.dwCaps2 & DDSCAPS2_MIPMAPSUBLEVEL)) {
+	        ERR(" need to fix mipmaping in this case !!\n");
+	    }
 
-	ret_value = d3dtexture_create(&d3dteximpl, NULL, This);
-	if (FAILED(ret_value)) return ret_value;
-
-	*ppObj = ICOM_INTERFACE(d3dteximpl, IDirect3DTexture2);
-	TRACE(" returning Direct3DTexture2 interface at %p.\n", *ppObj);
-	
-	This->ref++; /* No idea if this is correct.. Need to check using real Windows */
+	    ret_value = This->ddraw_owner->d3d->create_texture(This->ddraw_owner->d3d, This, FALSE, NULL, 0);
+	    if (FAILED(ret_value)) return ret_value;
+	}
+	if (IsEqualGUID( &IID_IDirect3DTexture, riid )) {
+	    *ppObj = ICOM_INTERFACE(This, IDirect3DTexture);
+	    TRACE(" returning Direct3DTexture interface at %p.\n", *ppObj);
+	} else {
+	    *ppObj = ICOM_INTERFACE(This, IDirect3DTexture2);
+	    TRACE(" returning Direct3DTexture2 interface at %p.\n", *ppObj);
+	}
+	This->ref++;
 	return ret_value;
     }    
 #endif

@@ -177,7 +177,10 @@ HRESULT WINAPI Main_DirectDraw_QueryInterface(
 	*obj = ICOM_INTERFACE(This, IDirectDraw4);
     }
 #ifdef HAVE_OPENGL
-    else if ( IsEqualGUID( &IID_IDirect3D , refiid ) )
+    else if ( IsEqualGUID( &IID_IDirect3D  , refiid ) ||
+	      IsEqualGUID( &IID_IDirect3D2 , refiid ) ||
+	      IsEqualGUID( &IID_IDirect3D3 , refiid ) ||
+	      IsEqualGUID( &IID_IDirect3D7 , refiid ) )
     {
         IDirect3DImpl *d3d_impl;
 	HRESULT ret_value;
@@ -185,48 +188,22 @@ HRESULT WINAPI Main_DirectDraw_QueryInterface(
 	ret_value = direct3d_create(&d3d_impl, This);
 	if (FAILED(ret_value)) return ret_value;
 
-	*obj = ICOM_INTERFACE(d3d_impl, IDirect3D);
+	if ( IsEqualGUID( &IID_IDirect3D  , refiid ) ) {
+  	    *obj = ICOM_INTERFACE(d3d_impl, IDirect3D);
+	    TRACE(" returning Direct3D interface at %p.\n", *obj);	    
+	} else 	if ( IsEqualGUID( &IID_IDirect3D2  , refiid ) ) {
+  	    *obj = ICOM_INTERFACE(d3d_impl, IDirect3D2);
+	    TRACE(" returning Direct3D2 interface at %p.\n", *obj);	    
+	} else 	if ( IsEqualGUID( &IID_IDirect3D3  , refiid ) ) {
+  	    *obj = ICOM_INTERFACE(d3d_impl, IDirect3D3);
+	    TRACE(" returning Direct3D3 interface at %p.\n", *obj);	    
+	} else {
+  	    *obj = ICOM_INTERFACE(d3d_impl, IDirect3D7);
+	    TRACE(" returning Direct3D7 interface at %p.\n", *obj);	    
+	}
 
 	/* And store the D3D object */
 	This->d3d = d3d_impl;
-	
-	TRACE(" returning Direct3D interface at %p.\n", *obj);
-    }
-    else if ( IsEqualGUID( &IID_IDirect3D2 , refiid ) )
-    {
-        IDirect3DImpl *d3d_impl;
-	HRESULT ret_value;
-
-	ret_value = direct3d_create(&d3d_impl, This);
-	if (FAILED(ret_value)) return ret_value;
-
-	*obj = ICOM_INTERFACE(d3d_impl, IDirect3D2);
-
-	TRACE(" returning Direct3D2 interface at %p.\n", *obj);
-    }
-    else if ( IsEqualGUID( &IID_IDirect3D3 , refiid ) )
-    {
-        IDirect3DImpl *d3d_impl;
-	HRESULT ret_value;
-
-	ret_value = direct3d_create(&d3d_impl, This);
-	if (FAILED(ret_value)) return ret_value;
-
-	*obj = ICOM_INTERFACE(d3d_impl, IDirect3D3);
-
-	TRACE(" returning Direct3D3 interface at %p.\n", *obj);
-    }
-    else if ( IsEqualGUID( &IID_IDirect3D7 , refiid ) )
-    {
-        IDirect3DImpl *d3d_impl;
-	HRESULT ret_value;
-
-	ret_value = direct3d_create(&d3d_impl, This);
-	if (FAILED(ret_value)) return ret_value;
-
-	*obj = ICOM_INTERFACE(d3d_impl, IDirect3D7);
-
-	TRACE(" returning Direct3D7 interface at %p.\n", *obj);
     }
 #endif
     else
@@ -375,6 +352,9 @@ create_texture(IDirectDrawImpl* This, const DDSURFACEDESC2 *pDDSD,
     hr = This->create_texture(This, &ddsd, ppSurf, pUnkOuter, mipmap_level);
     if (FAILED(hr)) return hr;
 
+    if (This->d3d) This->d3d->create_texture(This->d3d, ICOM_OBJECT(IDirectDrawSurfaceImpl, IDirectDrawSurface7, *ppSurf), TRUE, 
+					     ICOM_OBJECT(IDirectDrawSurfaceImpl, IDirectDrawSurface7, *ppSurf), mipmap_level);
+
     /* Create attached mipmaps if required. */
     if (more_mipmaps(&ddsd))
     {
@@ -411,6 +391,8 @@ create_texture(IDirectDrawImpl* This, const DDSURFACEDESC2 *pDDSD,
 		IDirectDrawSurface7_Release(*ppSurf);
 		return hr;
 	    }
+	    if (This->d3d) This->d3d->create_texture(This->d3d, ICOM_OBJECT(IDirectDrawSurfaceImpl, IDirectDrawSurface7, *ppSurf), TRUE,
+						     ICOM_OBJECT(IDirectDrawSurfaceImpl, IDirectDrawSurface7, *ppSurf), mipmap_level);
 
 	    IDirectDrawSurface7_AddAttachedSurface(prev_mipmap, mipmap);
 	    IDirectDrawSurface7_Release(prev_mipmap);
@@ -1130,6 +1112,11 @@ Main_DirectDraw_GetAvailableVidMem(LPDIRECTDRAW7 iface, LPDDSCAPS2 ddscaps,
 {
     ICOM_THIS(IDirectDrawImpl,iface);
     TRACE("(%p)->(%p,%p,%p)\n", This,ddscaps,total,free);
+
+    if (TRACE_ON(ddraw)) {
+        TRACE(" Asking for memory of type : \n");
+        DDRAW_dump_DDSCAPS2(ddscaps);
+    }
 
     /* We have 16 MB videomemory */
     if (total)	*total= This->total_vidmem;

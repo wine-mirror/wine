@@ -387,6 +387,7 @@ HRESULT direct3d_create(IDirect3DImpl **obj, IDirectDrawImpl *ddraw)
 
     object->ref = 1;
     object->ddraw = ddraw;
+    object->create_texture = d3dtexture_create;
     
     ICOM_INIT_INTERFACE(object, IDirect3D,  VTABLE_IDirect3D);
     ICOM_INIT_INTERFACE(object, IDirect3D2, VTABLE_IDirect3D2);

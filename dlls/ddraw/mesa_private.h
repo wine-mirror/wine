@@ -82,10 +82,17 @@ typedef struct IDirect3DLightGLImpl
     GLenum light_num;
 } IDirect3DLightGLImpl;
 
+/* This structure is used for the 'private' field of the IDirectDrawSurfaceImpl structure */
 typedef struct IDirect3DTextureGLImpl
 {
-    struct IDirect3DTextureImpl parent;
     GLuint tex_name;
+    BOOLEAN loaded; /* For the moment, this is here.. Should be part of surface management though */
+    BOOLEAN first_unlock;
+    DWORD mipmap_level;
+    /* This is for now used to override 'standard' surface stuff to be as transparent as possible */
+    void (*final_release)(struct IDirectDrawSurfaceImpl *This);
+    void (*lock_update)(IDirectDrawSurfaceImpl* This, LPCRECT pRect, DWORD dwFlags);
+    void (*unlock_update)(IDirectDrawSurfaceImpl* This, LPCRECT pRect);
 } IDirect3DTextureGLImpl;
 
 typedef struct IDirect3DDeviceGLImpl
@@ -111,7 +118,7 @@ typedef struct IDirect3DDeviceGLImpl
 
 /* All non-static functions 'exported' by various sub-objects */
 extern HRESULT direct3d_create(IDirect3DImpl **obj, IDirectDrawImpl *ddraw);
-extern HRESULT d3dtexture_create(IDirect3DTextureImpl **obj, IDirect3DImpl *d3d, IDirectDrawSurfaceImpl *surf);
+extern HRESULT d3dtexture_create(IDirect3DImpl *d3d, IDirectDrawSurfaceImpl *surf, BOOLEAN at_creation, IDirectDrawSurfaceImpl *main_surf, DWORD mipmap_level);
 extern HRESULT d3dlight_create(IDirect3DLightImpl **obj, IDirect3DImpl *d3d, GLenum light_num);
 extern HRESULT d3dexecutebuffer_create(IDirect3DExecuteBufferImpl **obj, IDirect3DImpl *d3d, IDirect3DDeviceImpl *d3ddev, LPD3DEXECUTEBUFFERDESC lpDesc);
 extern HRESULT d3dmaterial_create(IDirect3DMaterialImpl **obj, IDirect3DImpl *d3d);
@@ -126,7 +133,7 @@ extern HRESULT d3ddevice_find(IDirect3DImpl *d3d, LPD3DFINDDEVICESEARCH lpD3DDFS
 
 /* Some helper functions.. Would need to put them in a better place */
 extern void dump_flexible_vertex(DWORD d3dvtVertexType);
-extern DWORD get_flexible_vertex_size(DWORD d3dvtVertexType);
+extern DWORD get_flexible_vertex_size(DWORD d3dvtVertexType, DWORD *elements);
 
 /* Matrix copy WITH transposition */
 #define conv_mat2(mat,gl_mat)			\

@@ -303,7 +303,7 @@ HRESULT d3dvertexbuffer_create(IDirect3DVertexBufferImpl **obj, IDirect3DImpl *d
     object->ref = 1;
     object->d3d = d3d;
     object->desc = *lpD3DVertBufDesc;
-    object->vertex_buffer_size = get_flexible_vertex_size(lpD3DVertBufDesc->dwFVF) * lpD3DVertBufDesc->dwNumVertices;
+    object->vertex_buffer_size = get_flexible_vertex_size(lpD3DVertBufDesc->dwFVF, NULL) * lpD3DVertBufDesc->dwNumVertices;
     object->vertices = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, object->vertex_buffer_size);
     
     ICOM_INIT_INTERFACE(object, IDirect3DVertexBuffer,  VTABLE_IDirect3DVertexBuffer);

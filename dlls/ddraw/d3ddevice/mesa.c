@@ -160,7 +160,7 @@ static void fill_opengl_caps(D3DDEVICEDESC *d1)
     fill_opengl_primcaps(&(d1->dpcLineCaps));
     fill_opengl_primcaps(&(d1->dpcTriCaps));
     d1->dwDeviceRenderBitDepth  = DDBD_16|DDBD_24|DDBD_32;
-    d1->dwDeviceZBufferBitDepth = DDBD_16;
+    d1->dwDeviceZBufferBitDepth = DDBD_16|DDBD_24|DDBD_32;
     d1->dwMaxBufferSize = 0;
     d1->dwMaxVertexCount = 65536;
     d1->dwMinTextureWidth  = 1;
@@ -842,19 +842,23 @@ GL_IDirect3DDeviceImpl_1_CreateExecuteBuffer(LPDIRECT3DDEVICE iface,
     return ret_value;
 }
 
-DWORD get_flexible_vertex_size(DWORD d3dvtVertexType)
+DWORD get_flexible_vertex_size(DWORD d3dvtVertexType, DWORD *elements)
 {
     DWORD size = 0;
+    DWORD elts = 0;
     
-    if (d3dvtVertexType & D3DFVF_NORMAL) size += 3 * sizeof(D3DVALUE);
-    if (d3dvtVertexType & D3DFVF_DIFFUSE) size += sizeof(DWORD);
-    if (d3dvtVertexType & D3DFVF_SPECULAR) size += sizeof(DWORD);
+    if (d3dvtVertexType & D3DFVF_NORMAL) { size += 3 * sizeof(D3DVALUE); elts += 1; }
+    if (d3dvtVertexType & D3DFVF_DIFFUSE) { size += sizeof(DWORD); elts += 1; }
+    if (d3dvtVertexType & D3DFVF_SPECULAR) { size += sizeof(DWORD); elts += 1; }
     switch (d3dvtVertexType & D3DFVF_POSITION_MASK) {
-        case D3DFVF_XYZ: size += 3 * sizeof(D3DVALUE); break;
-        case D3DFVF_XYZRHW: size += 4 * sizeof(D3DVALUE); break;
+        case D3DFVF_XYZ: size += 3 * sizeof(D3DVALUE); elts += 1; break;
+        case D3DFVF_XYZRHW: size += 4 * sizeof(D3DVALUE); elts += 1; break;
 	default: TRACE(" matrix weighting not handled yet...\n");
     }
     size += 2 * sizeof(D3DVALUE) * ((d3dvtVertexType & D3DFVF_TEXCOUNT_MASK) >> D3DFVF_TEXCOUNT_SHIFT);
+    elts += (d3dvtVertexType & D3DFVF_TEXCOUNT_MASK) >> D3DFVF_TEXCOUNT_SHIFT;
+
+    if (elements) *elements = elts;
 
     return size;
 }
@@ -908,6 +912,48 @@ typedef struct {
     float tu1, tv1;
 } D3DFVF_TLVERTEX_1;
 
+typedef struct {
+    int offset;
+    int extra;
+    void (*handler)(char *vertex, int offset, int extra);
+} D3DFVF_GENERIC;
+
+/* These are the various handler used in the generic path */
+static void handle_xyz(char *vertex, int offset, int extra) {
+    glVertex3fv((float *) (vertex + offset));
+}
+static void handle_xyzrhw(char *vertex, int offset, int extra) {
+    float *coords = (float *) (vertex + offset);
+    if (coords[3] < 0.00001)
+        glVertex3f(coords[0], coords[1], coords[2]);
+    else
+        glVertex4f(coords[0] / coords[3],
+		   coords[1] / coords[3],
+		   coords[2] / coords[3],
+		   1.0 / coords[3]);
+}
+static void handle_normal(char *vertex, int offset, int extra) {
+    glNormal3fv((float *) (vertex + offset));
+}
+static void handle_specular(char *vertex, int offset, int extra) {
+    /* Specular not handled yet properly... */
+}
+static void handle_diffuse(char *vertex, int offset, int extra) {
+    DWORD color = *((DWORD *) (vertex + offset));
+    glColor4ub((color >> 24) & 0xFF,
+	       (color >> 16) & 0xFF,
+	       (color >>  8) & 0xFF,
+	       (color >>  0) & 0xFF);
+}
+static void handle_texture(char *vertex, int offset, int extra) {
+    if (extra == 0xFF) {
+        /* Special case for single texture... */
+        glTexCoord2fv((float *) (vertex + offset));
+    } else {
+        /* Multitexturing not handled yet */
+    }
+}
+
 static void draw_primitive_7(IDirect3DDeviceImpl *This,
 			     D3DPRIMITIVETYPE d3dptPrimitiveType,
 			     DWORD d3dvtVertexType,
@@ -936,9 +982,9 @@ static void draw_primitive_7(IDirect3DDeviceImpl *This,
 	for (index = 0; index < dwIndexCount; index++) {
 	    int i = (dwIndices == NULL) ? index : dwIndices[index];
 	  
-	    glNormal3f(vertices[i].nx, vertices[i].ny, vertices[i].nz);
-	    glTexCoord2f(vertices[i].tu1, vertices[i].tv1);
-	    glVertex3f(vertices[i].x, vertices[i].y, vertices[i].z);
+	    glNormal3fv(&(vertices[i].nx));
+	    glTexCoord2fv(&(vertices[i].tu1));
+	    glVertex3fv(&(vertices[i].x));
 	    TRACE(" %f %f %f / %f %f %f (%f %f)\n",
 		  vertices[i].x, vertices[i].y, vertices[i].z,
 		  vertices[i].nx, vertices[i].ny, vertices[i].nz,
@@ -956,7 +1002,7 @@ static void draw_primitive_7(IDirect3DDeviceImpl *This,
 		       (vertices[i].diffuse >>  8) & 0xFF,
 		       (vertices[i].diffuse >>  0) & 0xFF);
 	    /* Todo : handle specular... */
-	    glTexCoord2f(vertices[i].tu1, vertices[i].tv1);
+	    glTexCoord2fv(&(vertices[i].tu1));
 	    if (vertices[i].rhw < 0.00001)
 	        glVertex3f(vertices[i].x, vertices[i].y, vertices[i].z);
 	    else
@@ -976,6 +1022,76 @@ static void draw_primitive_7(IDirect3DDeviceImpl *This,
 		  (vertices[i].specular >>  0) & 0xFF,
 		  vertices[i].tu1, vertices[i].tv1);
 	} 
+    } else if (((d3dvtVertexType & D3DFVF_POSITION_MASK) == D3DFVF_XYZ) ||
+	       ((d3dvtVertexType & D3DFVF_POSITION_MASK) == D3DFVF_XYZRHW)) {
+        /* This is the 'slow path' but that should support all possible vertex formats out there...
+	   Note that people should write a fast path for all vertex formats out there...
+	*/
+        DWORD elements;
+	DWORD size = get_flexible_vertex_size(d3dvtVertexType, &elements);
+	char *vertices = (char *) lpvVertices;
+	int index;
+	int current_offset = 0;
+	int current_position = 0;
+	D3DFVF_GENERIC *handler = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, elements * sizeof(D3DFVF_GENERIC));
+
+	WARN(" using draw_primitive generic path - for better performance, add a fast path for your vertex case !\n");
+	
+	if ((d3dvtVertexType & D3DFVF_POSITION_MASK) == D3DFVF_XYZ) {
+	    handler[elements - 1].handler = handle_xyz;
+	    handler[elements - 1].offset = current_offset;
+	    current_offset += 3 * sizeof(D3DVALUE);
+	} else {
+	    handler[elements - 1].handler = handle_xyzrhw;
+	    handler[elements - 1].offset = current_offset;
+	    current_offset += 4 * sizeof(D3DVALUE);
+	}
+	if (d3dvtVertexType & D3DFVF_NORMAL) { 
+	    handler[current_position].handler = handle_normal;
+	    handler[current_position].offset = current_offset;
+	    current_position += 1;
+	    current_offset += 3 * sizeof(D3DVALUE);
+	}
+	if (d3dvtVertexType & D3DFVF_DIFFUSE) { 
+	    handler[current_position].handler = handle_diffuse;
+	    handler[current_position].offset = current_offset;
+	    current_position += 1;
+	    current_offset += sizeof(DWORD);
+	}
+	if (d3dvtVertexType & D3DFVF_SPECULAR) { 
+	    handler[current_position].handler = handle_specular;
+	    handler[current_position].offset = current_offset;
+	    current_position += 1;
+	    current_offset += sizeof(DWORD);
+	}
+	if (((d3dvtVertexType & D3DFVF_TEXCOUNT_MASK) >> D3DFVF_TEXCOUNT_SHIFT) == 1) {
+	    handler[current_position].handler = handle_texture;
+	    handler[current_position].offset = current_offset;
+	    handler[current_position].extra = 0xFF;
+	    current_position += 1;
+	    current_offset += 2 * sizeof(D3DVALUE);
+	} else {
+	    int tex_index;
+	    for (tex_index = 0; tex_index < ((d3dvtVertexType & D3DFVF_TEXCOUNT_MASK) >> D3DFVF_TEXCOUNT_SHIFT); tex_index++) {
+	        handler[current_position].handler = handle_texture;
+		handler[current_position].offset = current_offset;
+		handler[current_position].extra = tex_index;
+		current_position += 1;
+		current_offset += 2 * sizeof(D3DVALUE);
+	    }
+	}
+
+	for (index = 0; index < dwIndexCount; index++) {
+	    int i = (dwIndices == NULL) ? index : dwIndices[index];
+	    int elt;
+	    char *vertex = vertices + (i * size);
+
+	    for (elt = 0; elt < elements; elt++) {
+	        handler[elt].handler(vertex, handler[elt].offset, handler[elt].extra);
+	    }
+	}
+    } else {
+        ERR(" matrix weighting not handled yet....\n");
     }
     
     glEnd();
@@ -1130,11 +1246,11 @@ GL_IDirect3DDeviceImpl_3_SetTexture(LPDIRECT3DDEVICE3 iface,
 	glBindTexture(GL_TEXTURE_2D, 0);
         glDisable(GL_TEXTURE_2D);
     } else {
-        IDirect3DTextureImpl *tex_impl = ICOM_OBJECT(IDirect3DTextureImpl, IDirect3DTexture2, lpTexture2);
-	IDirect3DTextureGLImpl *tex_glimpl = (IDirect3DTextureGLImpl *) tex_impl;
+        IDirectDrawSurfaceImpl *tex_impl = ICOM_OBJECT(IDirectDrawSurfaceImpl, IDirect3DTexture2, lpTexture2);
+	IDirect3DTextureGLImpl *tex_glimpl = (IDirect3DTextureGLImpl *) tex_impl->tex_private;
 	
 	This->current_texture[dwStage] = tex_impl;
-	IDirect3DTexture2_AddRef(lpTexture2);
+	IDirectDrawSurface7_AddRef(ICOM_INTERFACE(tex_impl, IDirectDrawSurface7));
 
 	TRACE(" activating OpenGL texture %d.\n", tex_glimpl->tex_name);
 	
@@ -1453,7 +1569,6 @@ static void d3ddevice_unlock_update(IDirectDrawSurfaceImpl* This, LPCRECT pRect)
 	    LEAVE_GL();
 	    return;
 	}
-
 	glRasterPos2f(0.0, 0.0);
 	glDrawPixels(This->surface_desc.dwWidth, This->surface_desc.dwHeight, 
 		     GL_RGB, buffer_type, This->surface_desc.lpSurface);

@@ -46,14 +46,14 @@ void set_render_state(D3DRENDERSTATETYPE dwRenderStateType,
 	/* All others state variables */
 	switch (dwRenderStateType) {
 	    case D3DRENDERSTATE_TEXTUREHANDLE: {    /*  1 */
-	        IDirect3DTextureImpl *tex = (IDirect3DTextureImpl*) dwRenderState;
+	        IDirectDrawSurfaceImpl *tex = (IDirectDrawSurfaceImpl*) dwRenderState;
 		
 		if (tex == NULL) {
 		    glBindTexture(GL_TEXTURE_2D, 0);
 		    glDisable(GL_TEXTURE_2D);
 		    TRACE("disabling texturing\n");
 		} else {
-		    IDirect3DTextureGLImpl *gl_tex = (IDirect3DTextureGLImpl *) tex;
+		    IDirect3DTextureGLImpl *gl_tex = (IDirect3DTextureGLImpl *) tex->tex_private;
 		    
 		    glEnable(GL_TEXTURE_2D);
 		    /* Default parameters */
