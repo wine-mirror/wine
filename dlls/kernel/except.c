@@ -415,6 +415,7 @@ inline static BOOL check_resource_write( const EXCEPTION_RECORD *rec )
     MEMORY_BASIC_INFORMATION info;
 
     if (rec->ExceptionCode != EXCEPTION_ACCESS_VIOLATION) return FALSE;
+    if (rec->NumberParameters < 2) return FALSE;
     if (!rec->ExceptionInformation[0]) return FALSE;  /* not a write access */
     addr = (void *)rec->ExceptionInformation[1];
     if (!VirtualQuery( addr, &info, sizeof(info) )) return FALSE;
