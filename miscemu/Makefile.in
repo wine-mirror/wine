@@ -20,7 +20,7 @@ $(MODULE): $(ALL_OBJS)
 	$(CC) -o $@ $(LDEXECFLAGS) $(ALL_OBJS) -L$(DLLDIR) $(LDIMPORTS:%=-l%) $(LIBWINE) $(LIBUNICODE) $(LIBPORT) $(LIBS) $(LDFLAGS)
 
 $(MODULE).spec.c: $(WINEBUILD)
-	$(LDPATH) $(WINEBUILD) $(DEFS) -o $@ --exe $(MODULE) --exe-mode gui --entry wine_initial_task -L$(DLLDIR) $(IMPORTS:%=-l%)
+	$(WINEBUILD) $(DEFS) -o $@ --exe $(MODULE) --exe-mode gui --entry wine_initial_task -L$(DLLDIR) $(IMPORTS:%=-l%)
 
 install:: $(MODULE)
 	$(MKINSTALLDIRS) $(bindir)

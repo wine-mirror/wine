@@ -251,7 +251,7 @@ EXTRASUBDIRS = bitmaps msvcrt msvcrt/sys wine
 .SUFFIXES: .idl .h
 
 .idl.h:
-	$(LDPATH) $(WIDL) $(DEFS) -b -h -H $@ $<
+	$(WIDL) $(DEFS) -b -h -H $@ $<
 
 .PHONY: idl
 

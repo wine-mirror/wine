@@ -122,10 +122,10 @@ LINTS  = $(C_SRCS:.c=.ln)
 	$(WINDRES) -i $< -o $@
 
 .spec.spec.c:
-	$(LDPATH) $(WINEBUILD) $(DEFS) -o $@ --main-module $(MODULE) --spec $<
+	$(WINEBUILD) $(DEFS) -o $@ --main-module $(MODULE) --spec $<
 
 .spec.spec.def:
-	$(LDPATH) $(WINEBUILD) $(DEFS) -o $@ --def $<
+	$(WINEBUILD) $(DEFS) -o $@ --def $<
 
 .c.ln:
 	$(LINT) -c $(ALLLINTFLAGS) $< || ( $(RM) $@ && exit 1 )
@@ -145,7 +145,7 @@ filter:
 # Rule for main module debug channels
 
 $(MODULE).dbg.c: $(C_SRCS) $(C_SRCS16) $(WINEBUILD)
-	$(LDPATH) $(WINEBUILD) $(DEFS) -o $@ --debug -C$(SRCDIR) $(C_SRCS) $(C_SRCS16)
+	$(WINEBUILD) $(DEFS) -o $@ --debug -C$(SRCDIR) $(C_SRCS) $(C_SRCS16)
 
 # Rule to rebuild the tools
 

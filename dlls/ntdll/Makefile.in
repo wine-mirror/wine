@@ -121,10 +121,10 @@ EXTRASUBDIRS = \
 @MAKE_DLL_RULES@
 
 relay16.s: $(WINEBUILD)
-	$(LDPATH) $(WINEBUILD) $(DEFS) -o $@ --relay16
+	$(WINEBUILD) $(DEFS) -o $@ --relay16
 
 relay32.s: $(WINEBUILD)
-	$(LDPATH) $(WINEBUILD) $(DEFS) -o $@ --relay32
+	$(WINEBUILD) $(DEFS) -o $@ --relay32
 
 clean::
 	$(RM) $(ASM_SRCS)
