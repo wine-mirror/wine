@@ -24,13 +24,14 @@
   - ACO_AUTOSUGGEST style
   - ACO_UPDOWNKEYDROPSLIST style
 
+  - Handle pwzsRegKeyPath and pwszQuickComplete in Init
+
   TODO:
   - implement ACO_SEARCH style
   - implement ACO_FILTERPREFIXES style
   - implement ACO_USETAB style
   - implement ACO_RTLREADING style
   
-  - Handle pwzsRegKeyPath and pwszQuickComplete in Init.
  */
 #include "config.h"
 
@@ -61,12 +62,13 @@ typedef struct
     ICOM_VFIELD(IAutoComplete);
     ICOM_VTABLE (IAutoComplete2) * lpvtblAutoComplete2;
     DWORD ref;
-    BOOL  enable;
+    BOOL  enabled;
     HWND hwndEdit;
     HWND hwndListBox;
     WNDPROC wpOrigEditProc;
     WNDPROC wpOrigLBoxProc;
     WCHAR *txtbackup;
+    WCHAR *quickComplete;
     IEnumString *enumstr;
     AUTOCOMPLETEOPTIONS options;
 } IAutoCompleteImpl;
@@ -104,12 +106,13 @@ HRESULT WINAPI IAutoComplete_Constructor(IUnknown * pUnkOuter, REFIID riid, LPVO
     lpac->ref = 1;
     lpac->lpVtbl = &acvt;
     lpac->lpvtblAutoComplete2 = &ac2vt;
-    lpac->enable = TRUE;
+    lpac->enabled = TRUE;
     lpac->enumstr = NULL;
     lpac->options = ACO_AUTOAPPEND;
     lpac->wpOrigEditProc = NULL;
     lpac->hwndListBox = NULL;
     lpac->txtbackup = NULL;
+    lpac->quickComplete = NULL;
     
     if (!SUCCEEDED (IUnknown_QueryInterface (_IUnknown_ (lpac), riid, ppv))) {
 	IUnknown_Release (_IUnknown_ (lpac));
@@ -181,6 +184,8 @@ static ULONG WINAPI IAutoComplete_fnRelease(
 
     if (!--(This->ref)) {
 	TRACE(" destroying IAutoComplete(%p)\n",This);
+	if (This->quickComplete)
+	    HeapFree(GetProcessHeap(), 0, This->quickComplete);
 	if (This->txtbackup)
 	    HeapFree(GetProcessHeap(), 0, This->txtbackup);
 	if (This->hwndListBox)
@@ -206,7 +211,7 @@ static HRESULT WINAPI IAutoComplete_fnEnable(
 
     TRACE("(%p)->(%s)\n", This, (fEnable)?"true":"false");
 
-    This->enable = fEnable;
+    This->enabled = fEnable;
 
     return hr;
 }
@@ -247,7 +252,6 @@ static HRESULT WINAPI IAutoComplete_fnInit(
 
     if (This->options & ACO_AUTOSUGGEST) {
 	HWND hwndParent;
-	TRACE("Creating ListBox\n");
 
 	hwndParent = GetParent(This->hwndEdit);
 	
@@ -258,15 +262,47 @@ static HRESULT WINAPI IAutoComplete_fnInit(
 					    hwndParent, NULL, 
 					    (HINSTANCE)GetWindowLongA( hwndParent, GWL_HINSTANCE ), NULL);
 					    
-	if (!This->hwndListBox) {
-	    TRACE("Problem creating ListBox\n");
-	    return S_FALSE;
+	if (This->hwndListBox) {
+	    This->wpOrigLBoxProc = (WNDPROC) SetWindowLongPtrW( This->hwndListBox, GWLP_WNDPROC, (LONG_PTR) ACLBoxSubclassProc);
+	    SetWindowLongPtrW( This->hwndListBox, GWLP_USERDATA, (LONG_PTR)This);
 	}
-	
-	This->wpOrigLBoxProc = (WNDPROC) SetWindowLongPtrW( This->hwndListBox, GWLP_WNDPROC, (LONG_PTR) ACLBoxSubclassProc);
-	SetWindowLongPtrW( This->hwndListBox, GWLP_USERDATA, (LONG_PTR)This);
     }
 
+    if (pwzsRegKeyPath) {
+	WCHAR *key;
+	WCHAR result[MAX_PATH];
+	WCHAR *value;
+	HKEY hKey = 0;
+	LONG res;
+	LONG len;
+
+	/* pwszRegKeyPath contains the key as well as the value, so we split */
+	key = (WCHAR*)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, lstrlenW(pwzsRegKeyPath)*sizeof(WCHAR));
+	strcpyW(key, pwzsRegKeyPath);
+	value = strrchrW(key, '\\');
+	*value = 0;
+	value++;
+	/* Now value contains the value and buffer the key */
+	res = RegOpenKeyExW(HKEY_CURRENT_USER, key, 0, KEY_READ, &hKey);
+	if (res != ERROR_SUCCESS) {
+	    /* if the key is not found, MSDN states we must seek in HKEY_LOCAL_MACHINE */
+	    res = RegOpenKeyExW(HKEY_LOCAL_MACHINE, key, 0, KEY_READ, &hKey);  
+	}
+	if (res == ERROR_SUCCESS) {
+	    res = RegQueryValueW(hKey, value, result, &len);
+	    if (res == ERROR_SUCCESS) {
+		This->quickComplete = (WCHAR*)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, len*sizeof(WCHAR));
+		strcpyW(This->quickComplete, result);
+	    }
+	    RegCloseKey(hKey);
+	}
+	HeapFree(GetProcessHeap(), 0, key);
+    }
+
+    if ((pwszQuickComplete) && (!This->quickComplete)) {
+	This->quickComplete = (WCHAR*)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, (lstrlenW(pwszQuickComplete)+1)*sizeof(WCHAR));
+	lstrcpyW(This->quickComplete, pwszQuickComplete);
+    }
 
     return S_OK;
 }
@@ -364,6 +400,7 @@ static HRESULT WINAPI IAutoComplete2_fnGetOptions(
     DWORD *pdwFlag)
 {
     HRESULT hr = S_OK;
+
     _ICOM_THIS_From_IAutoComplete2(IAutoCompleteImpl, iface);
 
     TRACE("(%p) -> (%p)\n", This, pdwFlag);
@@ -416,22 +453,23 @@ static LRESULT APIENTRY ACEditSubclassProc(HWND hwnd, UINT uMsg, WPARAM wParam, 
     LPOLESTR strs;
     HRESULT hr;
     WCHAR hwndText[255];
+    WCHAR *hwndQCText;
     RECT r;
-    BOOL filled, displayall = FALSE;
+    BOOL control, filled, displayall = FALSE;
     int cpt, height, sel;
+
+    if (!This->enabled) return CallWindowProcW(This->wpOrigEditProc, hwnd, uMsg, wParam, lParam);
 
     switch (uMsg)
     {
 	case CB_SHOWDROPDOWN:
 	    ShowWindow(This->hwndListBox, SW_HIDE);
-	    SendMessageW(This->hwndListBox, LB_RESETCONTENT, 0, 0);
 	    break;
 	case WM_KILLFOCUS:
 	    if ((This->options && ACO_AUTOSUGGEST) && 
 		((HWND)wParam != This->hwndListBox))
 	    {
 		ShowWindow(This->hwndListBox, SW_HIDE);
-		SendMessageW(This->hwndListBox, LB_RESETCONTENT, 0, 0);
 	    }
 	    break;
 	case WM_KEYUP:
@@ -439,6 +477,23 @@ static LRESULT APIENTRY ACEditSubclassProc(HWND hwnd, UINT uMsg, WPARAM wParam, 
 	    GetWindowTextW( hwnd, (LPWSTR)hwndText, 255);
       
 	    switch(wParam) {
+		case VK_RETURN:
+		    /* If quickComplete is set and control is pressed, replace the string */
+		    control = GetKeyState(VK_CONTROL) & 0x8000;		    
+		    if (control && This->quickComplete) {
+			hwndQCText = (WCHAR*)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, 
+						       (lstrlenW(This->quickComplete)+lstrlenW(hwndText))*sizeof(WCHAR));
+			sel = sprintfW(hwndQCText, This->quickComplete, hwndText);
+			SendMessageW(hwnd, WM_SETTEXT, 0, (LPARAM)hwndQCText);
+			SendMessageW(hwnd, EM_SETSEL, 0, sel);
+			HeapFree(GetProcessHeap(), 0, hwndQCText);
+		    }
+
+		    ShowWindow(This->hwndListBox, SW_HIDE);
+		    return 0;
+		case VK_LEFT:
+		case VK_RIGHT:
+		    return 0;
 		case VK_UP:	      
 		case VK_DOWN:
 		    /* Two cases here : 
@@ -453,40 +508,39 @@ static LRESULT APIENTRY ACEditSubclassProc(HWND hwnd, UINT uMsg, WPARAM wParam, 
 			 /* We must dispays all the entries */
 			 displayall = TRUE;
 		    } else {
-			int count;
+			if (IsWindowVisible(This->hwndListBox)) {
+			    int count;
 
-			count = SendMessageW(This->hwndListBox, LB_GETCOUNT, 0, 0);
-			/* Change the selection */
-			sel = SendMessageW(This->hwndListBox, LB_GETCURSEL, 0, 0);
-			if (wParam == VK_UP)
-			    sel = ((sel-1)<0)?count-1:sel-1;
-			else
-			    sel = ((sel+1)>= count)?-1:sel+1;
-			SendMessageW(This->hwndListBox, LB_SETCURSEL, sel, 0);
-			if (sel != -1) {
-			    WCHAR *msg;
-			    int len;
-
-			    len = SendMessageW(This->hwndListBox, LB_GETTEXTLEN, sel, (LPARAM)NULL);
-			    msg = (WCHAR*) HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, (len+1)*sizeof(WCHAR));
-			    SendMessageW(This->hwndListBox, LB_GETTEXT, sel, (LPARAM)msg);
-			    SendMessageW(hwnd, WM_SETTEXT, 0, (LPARAM)msg);
-			    SendMessageW(hwnd, EM_SETSEL, lstrlenW(msg), lstrlenW(msg));
-			    HeapFree(GetProcessHeap(), 0, msg);
-			} else {
-			    SendMessageW(hwnd, WM_SETTEXT, 0, (LPARAM)This->txtbackup);
-			    SendMessageW(hwnd, EM_SETSEL, lstrlenW(This->txtbackup), lstrlenW(This->txtbackup));
-			}
-
+			    count = SendMessageW(This->hwndListBox, LB_GETCOUNT, 0, 0);
+			    /* Change the selection */
+			    sel = SendMessageW(This->hwndListBox, LB_GETCURSEL, 0, 0);
+			    if (wParam == VK_UP)
+				sel = ((sel-1)<0)?count-1:sel-1;
+			    else
+				sel = ((sel+1)>= count)?-1:sel+1;
+			    SendMessageW(This->hwndListBox, LB_SETCURSEL, sel, 0);
+			    if (sel != -1) {
+				WCHAR *msg;
+				int len;
+				
+				len = SendMessageW(This->hwndListBox, LB_GETTEXTLEN, sel, (LPARAM)NULL);
+				msg = (WCHAR*) HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, (len+1)*sizeof(WCHAR));
+				SendMessageW(This->hwndListBox, LB_GETTEXT, sel, (LPARAM)msg);
+				SendMessageW(hwnd, WM_SETTEXT, 0, (LPARAM)msg);
+				SendMessageW(hwnd, EM_SETSEL, lstrlenW(msg), lstrlenW(msg));
+				HeapFree(GetProcessHeap(), 0, msg);
+			    } else {
+				SendMessageW(hwnd, WM_SETTEXT, 0, (LPARAM)This->txtbackup);
+				SendMessageW(hwnd, EM_SETSEL, lstrlenW(This->txtbackup), lstrlenW(This->txtbackup));
+			    }			
+			} 		
 			return 0;
-		    } 
-
+		    }
 		    break;
 		case VK_BACK:
 		case VK_DELETE:
 		    if ((! *hwndText) && (This->options & ACO_AUTOSUGGEST)) {
 			ShowWindow(This->hwndListBox, SW_HIDE);
-			SendMessageW(This->hwndListBox, LB_RESETCONTENT, 0, 0);
 			return CallWindowProcW(This->wpOrigEditProc, hwnd, uMsg, wParam, lParam);
 		    }
 		    if (This->options & ACO_AUTOAPPEND) {
