@@ -2234,7 +2234,7 @@ HGLOBAL16 WINAPI OleMetaFilePictFromIconAndLabel16(
 ) {
     METAFILEPICT16 *mf;
     HGLOBAL16 hmf;
-    HDC16 hdc;
+    HDC hdc;
 
     FIXME("(%04x, '%s', '%s', %d): incorrect metrics, please try to correct them !\n\n\n", hIcon, lpszLabel, lpszSourceFile, iIconIndex);
 
@@ -2249,15 +2249,15 @@ HGLOBAL16 WINAPI OleMetaFilePictFromIconAndLabel16(
 	    return (HGLOBAL)NULL;
     }
 
-    hdc = CreateMetaFile16(NULL);
-    DrawIcon(HDC_32(hdc), 0, 0, HICON_32(hIcon)); /* FIXME */
-    TextOutA(HDC_32(hdc), 0, 0, lpszLabel, 1); /* FIXME */
+    hdc = CreateMetaFileA(NULL);
+    DrawIcon(hdc, 0, 0, HICON_32(hIcon)); /* FIXME */
+    TextOutA(hdc, 0, 0, lpszLabel, 1); /* FIXME */
     hmf = GlobalAlloc16(0, sizeof(METAFILEPICT16));
     mf = (METAFILEPICT16 *)GlobalLock16(hmf);
     mf->mm = MM_ANISOTROPIC;
     mf->xExt = 20; /* FIXME: bogus */
     mf->yExt = 20; /* dito */
-    mf->hMF = CloseMetaFile16(hdc);
+    mf->hMF = CloseMetaFile16(HDC_16(hdc));
     return hmf;
 }
 

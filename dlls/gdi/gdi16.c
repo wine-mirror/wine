@@ -800,6 +800,19 @@ HRGN16 WINAPI CreateEllipticRgnIndirect16( const RECT16 *rect )
 
 
 /***********************************************************************
+ *           CreateFont    (GDI.56)
+ */
+HFONT16 WINAPI CreateFont16(INT16 height, INT16 width, INT16 esc, INT16 orient,
+                            INT16 weight, BYTE italic, BYTE underline,
+                            BYTE strikeout, BYTE charset, BYTE outpres,
+                            BYTE clippres, BYTE quality, BYTE pitch,
+                            LPCSTR name )
+{
+    return HFONT_16( CreateFontA( height, width, esc, orient, weight, italic, underline,
+                                  strikeout, charset, outpres, clippres, quality, pitch, name ));
+}
+
+/***********************************************************************
  *           CreateFontIndirect   (GDI.57)
  */
 HFONT16 WINAPI CreateFontIndirect16( const LOGFONT16 *plf16 )

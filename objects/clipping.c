@@ -21,6 +21,7 @@
 #include <stdlib.h>
 #include "windef.h"
 #include "wingdi.h"
+#include "wownt32.h"
 #include "wine/winuser16.h"
 #include "gdi.h"
 #include "wine/debug.h"
@@ -131,7 +132,7 @@ INT16 WINAPI SelectVisRgn16( HDC16 hdc, HRGN16 hrgn )
 
     dc->flags &= ~DC_DIRTY;
 
-    retval = CombineRgn16( dc->hVisRgn, hrgn, 0, RGN_COPY );
+    retval = CombineRgn( dc->hVisRgn, HRGN_32(hrgn), 0, RGN_COPY );
     CLIPPING_UpdateGCRegion( dc );
     GDI_ReleaseObj( hdc );
     return retval;

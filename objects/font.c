@@ -340,39 +340,6 @@ HFONT WINAPI CreateFontIndirectW( const LOGFONTW *plf )
     return hFont;
 }
 
-/***********************************************************************
- *           CreateFont    (GDI.56)
- */
-HFONT16 WINAPI CreateFont16(INT16 height, INT16 width, INT16 esc, INT16 orient,
-                            INT16 weight, BYTE italic, BYTE underline,
-                            BYTE strikeout, BYTE charset, BYTE outpres,
-                            BYTE clippres, BYTE quality, BYTE pitch,
-                            LPCSTR name )
-{
-    LOGFONT16 logfont;
-
-    logfont.lfHeight = height;
-    logfont.lfWidth = width;
-    logfont.lfEscapement = esc;
-    logfont.lfOrientation = orient;
-    logfont.lfWeight = weight;
-    logfont.lfItalic = italic;
-    logfont.lfUnderline = underline;
-    logfont.lfStrikeOut = strikeout;
-    logfont.lfCharSet = charset;
-    logfont.lfOutPrecision = outpres;
-    logfont.lfClipPrecision = clippres;
-    logfont.lfQuality = quality;
-    logfont.lfPitchAndFamily = pitch;
-
-    if (name)
-	lstrcpynA(logfont.lfFaceName,name,sizeof(logfont.lfFaceName));
-    else
-	logfont.lfFaceName[0] = '\0';
-
-    return CreateFontIndirect16( &logfont );
-}
-
 /*************************************************************************
  *           CreateFontA    (GDI32.@)
  */

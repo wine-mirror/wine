@@ -418,13 +418,10 @@ init    MAIN_GdiInit
 #
 @ stdcall CloseJob16(long) CloseJob16
 @ stdcall CloseMetaFile16(long) CloseMetaFile16
-@ stdcall CreateMetaFile16(str) CreateMetaFile16
 @ stdcall DeleteMetaFile16(long) DeleteMetaFile16
 @ stdcall DrvGetPrinterData16(str str ptr ptr long ptr) DrvGetPrinterData16
 @ stdcall DrvSetPrinterData16(str str long ptr long) DrvSetPrinterData16
 @ stdcall ExcludeVisRect16(long long long long long) ExcludeVisRect16
-@ stdcall GDIRealizePalette16(long) GDIRealizePalette16
-@ stdcall GDISelectPalette16(long long long) GDISelectPalette16
 @ stdcall GetDCState16(long) GetDCState16
 @ stdcall InquireVisRgn16(long) InquireVisRgn16
 @ stdcall IntersectVisRect16(long long long long long) IntersectVisRect16
