@@ -19,21 +19,6 @@
  *
  */
 
-/*---------------------------------------------------------------------------*\
- * Modul : cap20wxx.h created at Thu 06-Jul-2000 19:58:17 by RStolz
- *
- * Id: cap20wxx.h 1.3 2002/12/04 09:43:22Z rstolz Exp 
- *
- * Log: cap20wxx.h 
- * Revision 1.3  2002/12/04 09:43:22Z  rstolz
- * - RStolz: CCDI interface removed
- * Revision 1.2  2002/08/27 09:32:15Z  rstolz
- * - RStolz: new incarnation AVMCDDI.dll supports PNP notifications
- * Revision 1.1  2000/09/07 11:02:40Z  DFriedel
- * Initial revision
- *
- * CAPI 2.0-Schnittstelle fÅr Windows-Programme 32 und 64 Bit
-\*---------------------------------------------------------------------------*/
 #ifndef _cap20wxx_h
 #define _cap20wxx_h
 /*---------------------------------------------------------------------------*\

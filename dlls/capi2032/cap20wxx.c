@@ -19,31 +19,6 @@
  *
  */
 
-/*---------------------------------------------------------------------------*\
- * Modul : cap20wxx.cpp created at Thu 06-Jul-2000 14:54:47 by RStolz/DFriedel
- *
- * Id: cap20wxx.cpp 1.9 2002/12/04 09:43:07Z rstolz Exp 
- *
- * Log: cap20wxx.cpp 
- * Revision 1.9  2002/12/04 09:43:07Z  rstolz
- * - RStolz: max. MessageBufferSize 65535; CCDI interface removed
- * Revision 1.8  2002/08/27 11:44:31Z  rstolz
- * - RStolz: crt bugfix for CAPI2032
- * Revision 1.7  2002/08/27 09:32:15Z  rstolz
- * - RStolz: new incarnation AVMCDDI.dll supports PNP notifications
- * Revision 1.6  2001/10/24 12:01:50Z  rstolz
- * - RStolz: Bugfix - Release failed.
- * Revision 1.5  2001/08/24 11:14:10Z  rstolz
- * - RStolz: Failure with error status interpretion in Release fixed
- * Revision 1.4  2000/12/05 15:52:10Z  rstolz
- * -RStolz: CAppl-Objekt wurde nicht richtig geloescht
- * Revision 1.3  2000/10/18 14:53:48Z  rstolz
- * - RStolz: PnP-Unterstuetzung
- * Revision 1.2  2000/09/07 12:19:32Z  DFriedel
- * - Diego: Klammer fehlte
- * Revision 1.1  2000/09/07 11:02:41Z  DFriedel
- * Initial revision
-\*---------------------------------------------------------------------------*/
 #define __NO_CAPIUTILS__
 
 #include "config.h"
@@ -70,11 +45,11 @@ DWORD APIENTRY wrapCAPI_REGISTER (DWORD MessageBufferSize, DWORD maxLogicalConne
 #ifdef HAVE_CAPI4LINUX
     unsigned aid = 0;
     DWORD fret = capi20_register (maxLogicalConnection, maxBDataBlocks, maxBDataLen, &aid);
-    FIXME ( "(), no CAPI4LINUX support compiled into WINE.\n" );
     *pApplID   = aid;
     TRACE ( "(%lx) -> %lx\n", *pApplID, fret);
     return fret;
 #else
+    FIXME ( "(), no CAPI4LINUX support compiled into WINE.\n" );
     return 0x1009;
 #endif
 }
@@ -119,11 +94,8 @@ DWORD APIENTRY wrapCAPI_GET_MESSAGE (DWORD ApplID, PVOID *ppCAPIMessage) {
 \*---------------------------------------------------------------------------*/
 DWORD APIENTRY wrapCAPI_WAIT_FOR_SIGNAL (DWORD ApplID) {
 #ifdef HAVE_CAPI4LINUX
-    struct timeval tv;
     TRACE ("(%lx)\n", ApplID);
-    tv.tv_sec  = 5;
-    tv.tv_usec = 0;
-    return capi20_waitformessage (ApplID, &tv);
+    return capi20_waitformessage (ApplID, NULL);
 #else
     return 0x1109;
 #endif
