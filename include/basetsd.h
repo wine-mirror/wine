@@ -86,10 +86,10 @@ typedef unsigned __int32 UHALF_PTR, *PUHALF_PTR;
 #else /* FIXME: defined(_WIN32) */
 
 typedef signed __int32   INT_PTR, *PINT_PTR;
-typedef signed __int32   LONG_PTR, *PLONG_PTR;
+typedef long LONG_PTR, *PLONG_PTR;
 typedef unsigned __int32 UINT_PTR, *PUINT_PTR;
-typedef unsigned __int32 ULONG_PTR, *PULONG_PTR;
-typedef unsigned __int32 DWORD_PTR, *PDWORD_PTR;
+typedef unsigned long ULONG_PTR, *PULONG_PTR;
+typedef ULONG_PTR DWORD_PTR, *PDWORD_PTR;
 
 #define MAXINT_PTR 0x7fffffff
 #define MININT_PTR 0x80000000
@@ -104,8 +104,8 @@ typedef unsigned __int16 UHALF_PTR, *PUHALF_PTR;
 
 #endif /* defined(_WIN64) || defined(_WIN32) */
 
-typedef INT_PTR SSIZE_T, *PSSIZE_T;
-typedef UINT_PTR SIZE_T, *PSIZE_T;
+typedef LONG_PTR SSIZE_T, *PSSIZE_T;
+typedef ULONG_PTR SIZE_T, *PSIZE_T;
 
 /* Some Wine-specific definitions */
 

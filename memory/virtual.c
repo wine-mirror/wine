@@ -60,7 +60,7 @@ static WINE_EXCEPTION_FILTER(page_fault)
  */
 LPVOID WINAPI VirtualAlloc(
               LPVOID addr,  /* [in] Address of region to reserve or commit */
-              DWORD size,   /* [in] Size of region */
+              SIZE_T size,  /* [in] Size of region */
               DWORD type,   /* [in] Type of allocation */
               DWORD protect)/* [in] Type of access protection */
 {
@@ -76,7 +76,7 @@ LPVOID WINAPI VirtualAlloc(
 LPVOID WINAPI VirtualAllocEx(
               HANDLE hProcess, /* [in] Handle of process to do mem operation */
               LPVOID addr,     /* [in] Address of region to reserve or commit */
-              DWORD size,      /* [in] Size of region */
+              SIZE_T size,     /* [in] Size of region */
               DWORD type,      /* [in] Type of allocation */
               DWORD protect )  /* [in] Type of access protection */
 {
@@ -102,7 +102,7 @@ LPVOID WINAPI VirtualAllocEx(
  */
 BOOL WINAPI VirtualFree(
               LPVOID addr, /* [in] Address of region of committed pages */
-              DWORD size,  /* [in] Size of region */
+              SIZE_T size, /* [in] Size of region */
               DWORD type   /* [in] Type of operation */
 ) {
     return VirtualFreeEx( GetCurrentProcess(), addr, size, type );
@@ -117,7 +117,7 @@ BOOL WINAPI VirtualFree(
  *	TRUE: Success
  *	FALSE: Failure
  */
-BOOL WINAPI VirtualFreeEx( HANDLE process, LPVOID addr, DWORD size, DWORD type )
+BOOL WINAPI VirtualFreeEx( HANDLE process, LPVOID addr, SIZE_T size, DWORD type )
 {
     NTSTATUS status = NtFreeVirtualMemory( process, &addr, &size, type );
     if (status) SetLastError( RtlNtStatusToDosError(status) );
@@ -137,7 +137,7 @@ BOOL WINAPI VirtualFreeEx( HANDLE process, LPVOID addr, DWORD size, DWORD type )
  *	FALSE: Failure
  */
 BOOL WINAPI VirtualLock( LPVOID addr, /* [in] Address of first byte of range to lock */
-                         DWORD size ) /* [in] Number of bytes in range to lock */
+                         SIZE_T size ) /* [in] Number of bytes in range to lock */
 {
     NTSTATUS status = NtLockVirtualMemory( GetCurrentProcess(), &addr, &size, 1 );
     if (status) SetLastError( RtlNtStatusToDosError(status) );
@@ -157,7 +157,7 @@ BOOL WINAPI VirtualLock( LPVOID addr, /* [in] Address of first byte of range to 
  *	FALSE: Failure
  */
 BOOL WINAPI VirtualUnlock( LPVOID addr, /* [in] Address of first byte of range */
-                           DWORD size ) /* [in] Number of bytes in range */
+                           SIZE_T size ) /* [in] Number of bytes in range */
 {
     NTSTATUS status = NtUnlockVirtualMemory( GetCurrentProcess(), &addr, &size, 1 );
     if (status) SetLastError( RtlNtStatusToDosError(status) );
@@ -175,7 +175,7 @@ BOOL WINAPI VirtualUnlock( LPVOID addr, /* [in] Address of first byte of range *
  */
 BOOL WINAPI VirtualProtect(
               LPVOID addr,     /* [in] Address of region of committed pages */
-              DWORD size,      /* [in] Size of region */
+              SIZE_T size,     /* [in] Size of region */
               DWORD new_prot,  /* [in] Desired access protection */
               LPDWORD old_prot /* [out] Address of variable to get old protection */
 ) {
@@ -195,7 +195,7 @@ BOOL WINAPI VirtualProtect(
 BOOL WINAPI VirtualProtectEx(
               HANDLE process,  /* [in]  Handle of process */
               LPVOID addr,     /* [in]  Address of region of committed pages */
-              DWORD size,      /* [in]  Size of region */
+              SIZE_T size,     /* [in]  Size of region */
               DWORD new_prot,  /* [in]  Desired access protection */
               LPDWORD old_prot /* [out] Address of variable to get old protection */ )
 {
@@ -213,10 +213,10 @@ BOOL WINAPI VirtualProtectEx(
  *	Number of bytes returned in information buffer
  *	or 0 if addr is >= 0xc0000000 (kernel space).
  */
-DWORD WINAPI VirtualQuery(
+SIZE_T WINAPI VirtualQuery(
              LPCVOID addr,                    /* [in]  Address of region */
              LPMEMORY_BASIC_INFORMATION info, /* [out] Address of info buffer */
-             DWORD len                        /* [in]  Size of buffer */
+             SIZE_T len                       /* [in]  Size of buffer */
 ) {
     return VirtualQueryEx( GetCurrentProcess(), addr, info, len );
 }
@@ -230,11 +230,11 @@ DWORD WINAPI VirtualQuery(
  * RETURNS
  *	Number of bytes returned in information buffer
  */
-DWORD WINAPI VirtualQueryEx(
+SIZE_T WINAPI VirtualQueryEx(
              HANDLE process,                  /* [in] Handle of process */
              LPCVOID addr,                    /* [in] Address of region */
              LPMEMORY_BASIC_INFORMATION info, /* [out] Address of info buffer */
-             DWORD len                        /* [in] Size of buffer */ )
+             SIZE_T len                       /* [in] Size of buffer */ )
 {
     DWORD ret;
     NTSTATUS status;
@@ -420,7 +420,7 @@ LPVOID WINAPI MapViewOfFile(
               DWORD access,      /* [in] Access mode */
               DWORD offset_high, /* [in] High-order 32 bits of file offset */
               DWORD offset_low,  /* [in] Low-order 32 bits of file offset */
-              DWORD count        /* [in] Number of bytes to map */
+              SIZE_T count       /* [in] Number of bytes to map */
 ) {
     return MapViewOfFileEx( mapping, access, offset_high,
                             offset_low, count, NULL );
@@ -440,7 +440,7 @@ LPVOID WINAPI MapViewOfFileEx(
               DWORD access,      /* [in] Access mode */
               DWORD offset_high, /* [in] High-order 32 bits of file offset */
               DWORD offset_low,  /* [in] Low-order 32 bits of file offset */
-              DWORD count,       /* [in] Number of bytes to map */
+              SIZE_T count,      /* [in] Number of bytes to map */
               LPVOID addr        /* [in] Suggested starting address for mapped view */
 ) {
     NTSTATUS status;
@@ -493,7 +493,7 @@ BOOL WINAPI UnmapViewOfFile( LPVOID addr ) /* [in] Address where mapped view beg
  *	FALSE: Failure
  */
 BOOL WINAPI FlushViewOfFile( LPCVOID base,  /* [in] Start address of byte range to flush */
-                             DWORD size )   /* [in] Number of bytes in range */
+                             SIZE_T size )   /* [in] Number of bytes in range */
 {
     NTSTATUS status = NtFlushVirtualMemory( GetCurrentProcess(), &base, &size, 0 );
     if (status)

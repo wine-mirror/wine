@@ -1834,7 +1834,7 @@ BOOL16 WINAPI LocalNext16( LOCALENTRY *pLocalEntry )
  */
 HLOCAL WINAPI LocalAlloc(
                 UINT flags, /* [in] Allocation attributes */
-                DWORD size    /* [in] Number of bytes to allocate */
+                SIZE_T size /* [in] Number of bytes to allocate */
 ) {
     return (HLOCAL)GlobalAlloc( flags, size );
 }
@@ -1843,7 +1843,7 @@ HLOCAL WINAPI LocalAlloc(
 /***********************************************************************
  *           LocalCompact   (KERNEL32.@)
  */
-UINT WINAPI LocalCompact( UINT minfree )
+SIZE_T WINAPI LocalCompact( UINT minfree )
 {
     return 0;  /* LocalCompact does nothing in Win32 */
 }
@@ -1912,7 +1912,7 @@ LPVOID WINAPI LocalLock(
  */
 HLOCAL WINAPI LocalReAlloc(
                 HLOCAL handle, /* [in] Handle of memory object */
-                DWORD size,      /* [in] New size of block */
+                SIZE_T size,   /* [in] New size of block */
                 UINT flags     /* [in] How to reallocate object */
 ) {
     return (HLOCAL)GlobalReAlloc( (HGLOBAL)handle, size, flags );
@@ -1922,7 +1922,7 @@ HLOCAL WINAPI LocalReAlloc(
 /***********************************************************************
  *           LocalShrink   (KERNEL32.@)
  */
-UINT WINAPI LocalShrink( HGLOBAL handle, UINT newsize )
+SIZE_T WINAPI LocalShrink( HGLOBAL handle, UINT newsize )
 {
     return 0;  /* LocalShrink does nothing in Win32 */
 }
@@ -1934,7 +1934,7 @@ UINT WINAPI LocalShrink( HGLOBAL handle, UINT newsize )
  *	Size: Success
  *	0: Failure
  */
-UINT WINAPI LocalSize(
+SIZE_T WINAPI LocalSize(
               HLOCAL handle /* [in] Handle of memory object */
 ) {
     return GlobalSize( (HGLOBAL)handle );

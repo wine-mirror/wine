@@ -1625,11 +1625,11 @@ DWORD WINAPI GetProcessFlags( DWORD processid )
  *
  * RETURNS  STD
  */
-BOOL WINAPI SetProcessWorkingSetSize(HANDLE hProcess,DWORD minset,
-                                       DWORD maxset)
+BOOL WINAPI SetProcessWorkingSetSize(HANDLE hProcess, SIZE_T minset,
+                                     SIZE_T maxset)
 {
     FIXME("(0x%08x,%ld,%ld): stub - harmless\n",hProcess,minset,maxset);
-    if(( minset == (DWORD)-1) && (maxset == (DWORD)-1)) {
+    if(( minset == (SIZE_T)-1) && (maxset == (SIZE_T)-1)) {
         /* Trim the working set to zero */
         /* Swap the process out of physical RAM */
     }
@@ -1639,8 +1639,8 @@ BOOL WINAPI SetProcessWorkingSetSize(HANDLE hProcess,DWORD minset,
 /***********************************************************************
  *           GetProcessWorkingSetSize    (KERNEL32.@)
  */
-BOOL WINAPI GetProcessWorkingSetSize(HANDLE hProcess,LPDWORD minset,
-                                       LPDWORD maxset)
+BOOL WINAPI GetProcessWorkingSetSize(HANDLE hProcess, PSIZE_T minset,
+                                     PSIZE_T maxset)
 {
 	FIXME("(0x%08x,%p,%p): stub\n",hProcess,minset,maxset);
 	/* 32 MB working set size */
@@ -1693,8 +1693,8 @@ BOOL WINAPI SetProcessPriorityBoost(HANDLE hprocess,BOOL disableboost)
 /***********************************************************************
  *		ReadProcessMemory (KERNEL32.@)
  */
-BOOL WINAPI ReadProcessMemory( HANDLE process, LPCVOID addr, LPVOID buffer, DWORD size,
-                               LPDWORD bytes_read )
+BOOL WINAPI ReadProcessMemory( HANDLE process, LPCVOID addr, LPVOID buffer, SIZE_T size,
+                               SIZE_T *bytes_read )
 {
     DWORD res;
 
@@ -1714,8 +1714,8 @@ BOOL WINAPI ReadProcessMemory( HANDLE process, LPCVOID addr, LPVOID buffer, DWOR
 /***********************************************************************
  *           WriteProcessMemory    		(KERNEL32.@)
  */
-BOOL WINAPI WriteProcessMemory( HANDLE process, LPVOID addr, LPCVOID buffer, DWORD size,
-                                LPDWORD bytes_written )
+BOOL WINAPI WriteProcessMemory( HANDLE process, LPVOID addr, LPCVOID buffer, SIZE_T size,
+                                SIZE_T *bytes_written )
 {
     static const int zero;
     unsigned int first_offset, last_offset, first_mask, last_mask;
@@ -1753,7 +1753,7 @@ BOOL WINAPI WriteProcessMemory( HANDLE process, LPVOID addr, LPCVOID buffer, DWO
     if (bytes_written) *bytes_written = size;
     {
         char dummy[32];
-        DWORD read;
+        SIZE_T read;
         ReadProcessMemory( process, addr, dummy, sizeof(dummy), &read );
     }
     return !res;

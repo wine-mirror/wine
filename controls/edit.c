@@ -2616,7 +2616,7 @@ static HLOCAL EDIT_EM_GetHandle(EDITSTATE *es)
 	    hLocal = es->hloc32A;
 	}
 
-	TRACE("Returning %04X, LocalSize() = %d\n", hLocal, LocalSize(hLocal));
+	TRACE("Returning %04X, LocalSize() = %ld\n", hLocal, LocalSize(hLocal));
 	return hLocal;
 }
 

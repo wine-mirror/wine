@@ -135,8 +135,8 @@ inline static HANDLE HEAP_CreateSystemHeap(void)
  */
 HANDLE WINAPI HeapCreate(
                 DWORD flags,       /* [in] Heap allocation flag */
-                DWORD initialSize, /* [in] Initial heap size */
-                DWORD maxSize      /* [in] Maximum heap size */
+                SIZE_T initialSize, /* [in] Initial heap size */
+                SIZE_T maxSize      /* [in] Maximum heap size */
 ) {
     HANDLE ret;
 
@@ -176,7 +176,7 @@ BOOL WINAPI HeapDestroy( HANDLE heap /* [in] Handle of heap */ )
 /***********************************************************************
  *           HeapCompact   (KERNEL32.@)
  */
-DWORD WINAPI HeapCompact( HANDLE heap, DWORD flags )
+SIZE_T WINAPI HeapCompact( HANDLE heap, DWORD flags )
 {
     return RtlCompactHeap( heap, flags );
 }
@@ -782,7 +782,7 @@ BOOL16 WINAPI Local32Next16( LOCAL32ENTRY *pLocal32Entry )
 
 /* FIXME: these functions are needed for dlls that aren't properly separated yet */
 
-LPVOID WINAPI HeapAlloc( HANDLE heap, DWORD flags, DWORD size )
+LPVOID WINAPI HeapAlloc( HANDLE heap, DWORD flags, SIZE_T size )
 {
     return RtlAllocateHeap( heap, flags, size );
 }
@@ -792,12 +792,12 @@ BOOL WINAPI HeapFree( HANDLE heap, DWORD flags, LPVOID ptr )
     return RtlFreeHeap( heap, flags, ptr );
 }
 
-LPVOID WINAPI HeapReAlloc( HANDLE heap, DWORD flags, LPVOID ptr, DWORD size )
+LPVOID WINAPI HeapReAlloc( HANDLE heap, DWORD flags, LPVOID ptr, SIZE_T size )
 {
     return RtlReAllocateHeap( heap, flags, ptr, size );
 }
 
-DWORD WINAPI HeapSize( HANDLE heap, DWORD flags, LPVOID ptr )
+SIZE_T WINAPI HeapSize( HANDLE heap, DWORD flags, LPVOID ptr )
 {
     return RtlSizeHeap( heap, flags, ptr );
 }

@@ -415,7 +415,7 @@ DWORD WINAPI DOSVM_Loop( HANDLE hThread )
                       /* (sort of like APC, but we signal the completion) */
                       {
                           DOS_SPC *spc = (DOS_SPC *)msg.lParam;
-                          TRACE_(int)("calling %p with arg %08x\n", spc->proc, spc->arg);
+                          TRACE_(int)("calling %p with arg %08lx\n", spc->proc, spc->arg);
                           (spc->proc)(spc->arg);
                           TRACE_(int)("done, signalling event %d\n", msg.wParam);
                           SetEvent(msg.wParam);

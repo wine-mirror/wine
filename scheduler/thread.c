@@ -271,7 +271,7 @@ static void THREAD_Start(void)
 /***********************************************************************
  *           CreateThread   (KERNEL32.@)
  */
-HANDLE WINAPI CreateThread( SECURITY_ATTRIBUTES *sa, DWORD stack,
+HANDLE WINAPI CreateThread( SECURITY_ATTRIBUTES *sa, SIZE_T stack,
                             LPTHREAD_START_ROUTINE start, LPVOID param,
                             DWORD flags, LPDWORD id )
 {

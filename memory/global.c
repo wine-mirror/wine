@@ -1046,7 +1046,7 @@ typedef struct __GLOBAL32_INTERN
  */
 HGLOBAL WINAPI GlobalAlloc(
                  UINT flags, /* [in] Object allocation attributes */
-                 DWORD size    /* [in] Number of bytes to allocate */
+                 SIZE_T size /* [in] Number of bytes to allocate */
 ) {
    PGLOBAL32_INTERN     pintern;
    DWORD		hpflags;
@@ -1239,7 +1239,7 @@ HGLOBAL WINAPI GlobalHandle(
  */
 HGLOBAL WINAPI GlobalReAlloc(
                  HGLOBAL hmem, /* [in] Handle of global memory object */
-                 DWORD size,     /* [in] New size of block */
+                 SIZE_T size,  /* [in] New size of block */
                  UINT flags    /* [in] How to reallocate object */
 ) {
    LPVOID               palloc;
@@ -1395,7 +1395,7 @@ HGLOBAL WINAPI GlobalFree(
  *	Size in bytes of the global memory object
  *	0: Failure
  */
-DWORD WINAPI GlobalSize(
+SIZE_T WINAPI GlobalSize(
              HGLOBAL hmem /* [in] Handle of global memory object */
 ) {
    DWORD                retval;
@@ -1512,7 +1512,7 @@ UINT WINAPI GlobalFlags(
 /***********************************************************************
  *           GlobalCompact   (KERNEL32.@)
  */
-DWORD WINAPI GlobalCompact( DWORD minfree )
+SIZE_T WINAPI GlobalCompact( DWORD minfree )
 {
     return 0;  /* GlobalCompact does nothing in Win32 */
 }
