@@ -306,6 +306,7 @@ static void wave_out_test_deviceOut(int device, double duration, LPWAVEFORMATEX 
        "waveOutPrepareHeader: device=%s rc=%s\n",dev_name(device),wave_out_error(rc));
 
     if (winetest_interactive && rc==MMSYSERR_NOERROR) {
+        DWORD start,end;
         trace("Playing %g second 440Hz tone at %5ldx%2dx%d %s\n",duration,
               pwfx->nSamplesPerSec, pwfx->wBitsPerSample,pwfx->nChannels,
               flags & WAVE_FORMAT_DIRECT ? "WAVE_FORMAT_DIRECT" :
@@ -314,9 +315,15 @@ static void wave_out_test_deviceOut(int device, double duration, LPWAVEFORMATEX 
         ok(rc==MMSYSERR_NOERROR,"waveOutSetVolume: device=%s rc=%s\n",dev_name(device),wave_out_error(rc));
         WaitForSingleObject(hevent,INFINITE);
 
+        start=GetTickCount();
         rc=waveOutWrite(wout, &frag, sizeof(frag));
         ok(rc==MMSYSERR_NOERROR,"waveOutWrite: device=%s rc=%s\n",dev_name(device),wave_out_error(rc));
         WaitForSingleObject(hevent,INFINITE);
+
+        /* Check the sound duration was within 10% of the expected value */
+        end=GetTickCount();
+        trace("sound duration=%ld\n",end-start);
+        ok(fabs(1000*duration-end+start)<=100*duration,"The sound played for %ld ms instead of %g ms\n",end-start,1000*duration);
 
         rc=waveOutSetVolume(wout,volume);
         ok(rc==MMSYSERR_NOERROR,"waveOutSetVolume: device=%s rc=%s\n",dev_name(device),wave_out_error(rc));
