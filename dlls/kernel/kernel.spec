@@ -31,7 +31,7 @@ file	krnl386.exe
 24  pascal16 UnlockSegment(word) UnlockSegment16
 25  pascal GlobalCompact(long) GlobalCompact16
 26  pascal16 GlobalFreeAll(word) GlobalFreeAll16
-27  pascal16 GetModuleName(word ptr word) GetModuleName16
+27  pascal16 GetModuleName(word ptr word) GetModuleName16 # W1.1: SETSWAPHOOK, W2.0: nothing !
 28  pascal   GlobalMasterHandle() GlobalMasterHandle16
 29  pascal16 Yield() Yield16
 30  pascal16 WaitEvent(word) WaitEvent16
@@ -43,8 +43,12 @@ file	krnl386.exe
 36  pascal   GetCurrentTask() WIN16_GetCurrentTask
 37  pascal GetCurrentPDB() GetCurrentPDB16
 38  pascal   SetTaskSignalProc(word segptr) SetTaskSignalProc
+39  stub     SetTaskSwitchProc      # W1.1, W2.0
+40  stub     SetTaskInterchange     # W1.1, W2.0
 41  pascal16 EnableDos() KERNEL_nop
 42  pascal16 DisableDos() KERNEL_nop
+43  stub     IsScreenGrab           # W1.1, W2.0
+44  stub     BuildPDB               # W1.1, W2.0
 45  pascal16 LoadModule(str ptr) LoadModule16
 46  pascal16 FreeModule(word) FreeModule16
 47  pascal   GetModuleHandle(segstr) WIN16_GetModuleHandle
@@ -109,8 +113,8 @@ file	krnl386.exe
 105 pascal16 GetExeVersion() GetExeVersion16
 106 pascal SetSwapAreaSize(word) SetSwapAreaSize16
 107 pascal16 SetErrorMode(word) SetErrorMode16
-108 pascal16 SwitchStackTo(word word word) SwitchStackTo16
-109 register SwitchStackBack() SwitchStackBack16
+108 pascal16 SwitchStackTo(word word word) SwitchStackTo16 # STO in W2.0
+109 register SwitchStackBack() SwitchStackBack16 # SBACK in W2.0
 110 pascal   PatchCodeHandle(word) PatchCodeHandle16
 111 pascal   GlobalWire(word) GlobalWire16
 112 pascal16 GlobalUnWire(word) GlobalUnWire16

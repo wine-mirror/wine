@@ -18,3 +18,4 @@ type	win16
 15 pascal16 GetThresholdStatus() GetThresholdStatus16
 16 pascal16 SetVoiceThreshold(word word) SetVoiceThreshold16
 17 pascal16 DoBeep() DoBeep16
+18 stub MYOPENSOUND # W1.1, W2.0

@@ -118,7 +118,7 @@ file	user.exe
 114 pascal   DispatchMessage(ptr) DispatchMessage16
 115 pascal16 ReplyMessage(long) ReplyMessage16
 116 pascal16 PostAppMessage(word word word long) PostAppMessage16
-117 pascal16 WindowFromDC(word) WindowFromDC16
+117 pascal16 WindowFromDC(word) WindowFromDC16 # not in W1.1, W2.0
 118 pascal16 RegisterWindowMessage(str) RegisterWindowMessageA
 119 pascal   GetMessagePos() GetMessagePos
 120 pascal   GetMessageTime() GetMessageTime
@@ -171,9 +171,9 @@ file	user.exe
 167 pascal16 ShowCaret(word) ShowCaret16
 168 pascal16 SetCaretBlinkTime(word) SetCaretBlinkTime16
 169 pascal16 GetCaretBlinkTime() GetCaretBlinkTime16
-170 pascal16 ArrangeIconicWindows(word) ArrangeIconicWindows16
-171 pascal16 WinHelp(word str word long) WinHelp16
-172 pascal16 SwitchToThisWindow(word word) SwitchToThisWindow16
+170 pascal16 ArrangeIconicWindows(word) ArrangeIconicWindows16 # W1.1: CREATECONVERTWINDOW, W2.0: nothing !
+171 pascal16 WinHelp(word str word long) WinHelp16 # W1.1: SHOWCONVERTWINDOW, W2.0: nothing !
+172 pascal16 SwitchToThisWindow(word word) SwitchToThisWindow16 # W1.1: SETCONVERTWINDOWHEIGHT, W2.0: nothing !
 173 pascal16 LoadCursor(word segstr) LoadCursor16
 174 pascal16 LoadIcon(word segstr) LoadIcon16
 175 pascal16 LoadBitmap(word segstr) LoadBitmap16
@@ -185,7 +185,7 @@ file	user.exe
 181 pascal16 SetSysColors(word ptr ptr) SetSysColors16
 182 pascal16 KillSystemTimer(word word) KillSystemTimer16 # BEAR182
 183 pascal16 GetCaretPos(ptr) GetCaretPos16
-184 stub QuerySendMessage
+184 stub QuerySendMessage # W1.1, W2.0: SYSHASKANJI
 185 pascal16 GrayString(word word segptr segptr s_word s_word s_word s_word s_word) THUNK_GrayString16
 186 pascal16 SwapMouseButton(word) SwapMouseButton16
 187 pascal16 EndMenu() EndMenu
@@ -218,7 +218,8 @@ file	user.exe
 213 pascal16 BuildCommDCB(ptr ptr) BuildCommDCB16
 214 pascal   EscapeCommFunction(word word) EscapeCommFunction16
 215 pascal16 FlushComm(word word) FlushComm16
-216 pascal   UserSeeUserDo(word word word word) UserSeeUserDo16
+216 pascal   UserSeeUserDo(word word word word) UserSeeUserDo16 # W1.1, W2.0: MYOPENCOMM
+#217-299 not in W1.1
 217 pascal16 LookupMenuHandle(word s_word) LookupMenuHandle16
 218 pascal16 DialogBoxIndirect(word word word segptr) DialogBoxIndirect16
 219 pascal16 CreateDialogIndirect(word ptr word segptr) CreateDialogIndirect16
@@ -228,7 +229,7 @@ file	user.exe
 223 pascal16 SetKeyboardState(ptr) SetKeyboardState
 224 pascal16 GetWindowTask(word) GetWindowTask16
 225 pascal16 EnumTaskWindows(word segptr long) THUNK_EnumTaskWindows16
-226 stub LockInput
+226 stub LockInput # not in W2.0
 227 pascal16 GetNextDlgGroupItem(word word word) GetNextDlgGroupItem16
 228 pascal16 GetNextDlgTabItem(word word word) GetNextDlgTabItem16
 229 pascal16 GetTopWindow(word) GetTopWindow16
@@ -301,17 +302,18 @@ file	user.exe
 293 pascal   CallNextHookEx(segptr s_word word long) CallNextHookEx16
 294 pascal16 LockWindowUpdate(word) LockWindowUpdate16
 299 register mouse_event() WIN16_mouse_event
-300 stub UnloadInstalledDrivers
-#301 BOZOSLIVEHERE :-))	<- this is actually EditWndProc
+300 stub UnloadInstalledDrivers # W1.1: USER_FARFRAME
+301 stub EDITWNDPROC # BOZOSLIVEHERE :-))
 302 stub STATICWNDPROC
 303 stub BUTTONWNDPROC
 304 stub SBWNDPROC
-305 stub DESKTOPWNDPROC
-#306 BEAR306
+305 stub DESKTOPWNDPROC # W1.1: ICONWNDPROC
+306 stub MENUWNDPROC # BEAR306
 307 stub LBOXCTLWNDPROC
-308 pascal   DefDlgProc(word word word long) DefDlgProc16
-309 pascal16 GetClipCursor(ptr) GetClipCursor16
+308 pascal   DefDlgProc(word word word long) DefDlgProc16 # W1.1, W2.0: DLGWNDPROC
+309 pascal16 GetClipCursor(ptr) GetClipCursor16 # W1.1, W2.0: MESSAGEBOXWNDPROC
 #310 ContScroll
+#311 CaretBlinkProc # W1.1
 #312 SendMessage2
 #313 PostMessage2
 314 pascal16 SignalProc(word word word word word) USER_SignalProc
@@ -319,16 +321,17 @@ file	user.exe
 #316 CompUpdateRect
 #317 CompUpdateRgn
 #318 GetWC2
-319 pascal16 ScrollWindowEx(word s_word s_word ptr ptr word ptr word) ScrollWindowEx16
-320 stub SysErrorBox
-321 pascal   SetEventHook(segptr) SetEventHook16
-322 stub WinOldAppHackOMatic
+319 pascal16 ScrollWindowEx(word s_word s_word ptr ptr word ptr word) ScrollWindowEx16 # W1.1, W2.0: SETWC2
+320 stub SysErrorBox # W1.1: ICONNAMEWNDPROC, W2.0: nothing !
+321 pascal   SetEventHook(segptr) SetEventHook16 # W1.1, W2.0: DESTROYTASKWINDOWS2
+322 stub WinOldAppHackOMatic # W1.1, W2.0: POSTSYSERROR
 323 stub GetMessage2
 324 pascal16 FillWindow(word word word word) FillWindow16
 325 pascal16 PaintRect(word word word word ptr) PaintRect16
 326 pascal16 GetControlBrush(word word word) GetControlBrush16
 #327 KillTimer2
 #328 SetTimer2
+#329 MenuItemState # W1.1
 #330 SetGetKbdState
 331 pascal16 EnableHardwareInput(word) EnableHardwareInput16
 332 pascal16 UserYield() UserYield16
@@ -337,6 +340,7 @@ file	user.exe
 335 pascal16 GetInputState() GetInputState16
 336 pascal16 LoadCursorIconHandler(word word word) LoadCursorIconHandler16
 337 pascal   GetMouseEventProc() GetMouseEventProc16
+338 stub ECGETDS # W2.0 (only ?)
 #340 WinFarFrame
 #341 _FFFE_FARFRAME
 343 stub GetFilePortName
@@ -356,7 +360,7 @@ file	user.exe
 371 pascal16 SetWindowPlacement(word ptr) SetWindowPlacement16
 372 stub GetInternalIconHeader
 373 pascal16 SubtractRect(ptr ptr ptr) SubtractRect16
-374 pascal DllEntryPoint(long word word word long word) USER_DllEntryPoint
+374 pascal   DllEntryPoint(long word word word long word) USER_DllEntryPoint
 375 stub DrawTextEx
 376 stub SetMessageExtraInfo
 378 stub SetPropEx
@@ -367,7 +371,7 @@ file	user.exe
 383 stub GetWindowContextHelpID
 384 pascal16 SetMenuContextHelpId(word word) SetMenuContextHelpId16
 385 pascal16 GetMenuContextHelpId(word) GetMenuContextHelpId16
-389 pascal LoadImage(word segstr word word word word) LoadImage16
+389 pascal   LoadImage(word segstr word word word word) LoadImage16
 390 pascal16 CopyImage(word word word word word) CopyImage16
 391 pascal16 SignalProc32(long long long word) UserSignalProc
 394 pascal16 DrawIconEx(word word word word word word word word word) DrawIconEx16
@@ -532,10 +536,10 @@ file	user.exe
 803 stub PRINTDLG_CALLBACK16
 804 stub CHOOSECOLOR_CALLBACK16
 819 pascal16 PeekMessage32(ptr word word word word word) PeekMessage32_16
-820 pascal GetMessage32(segptr word word word word) GetMessage32_16
+820 pascal   GetMessage32(segptr word word word word) GetMessage32_16
 821 pascal16 TranslateMessage32(ptr word) TranslateMessage32_16 
 #821 stub IsDialogMessage32		# FIXME: two ordinal 821???
-822 pascal DispatchMessage32(ptr word) DispatchMessage32_16
+822 pascal   DispatchMessage32(ptr word) DispatchMessage32_16
 823 pascal16 CallMsgFilter32(segptr word word) CallMsgFilter32_16
 825 stub PostMessage32
 826 stub PostThreadMessage32
@@ -554,17 +558,17 @@ file	user.exe
 909 pascal16 SetWindowTextEx(word str word) SetWindowTextEx16
 910 pascal16 BiDiMessageBoxEx() BiDiMessageBoxEx16
 911 pascal16 SetDlgItemTextEx(word word str word) SetDlgItemTextEx16
-912 pascal ChangeKeyboardLanguage(word word) ChangeKeyboardLanguage16
+912 pascal   ChangeKeyboardLanguage(word word) ChangeKeyboardLanguage16
 913 pascal16 GetCodePageSystemFont(word word) GetCodePageSystemFont16
 914 pascal16 QueryCodePage(word word word long) QueryCodePage16
-915 pascal GetAppCodePage(word) GetAppCodePage16
+915 pascal   GetAppCodePage(word) GetAppCodePage16
 916 pascal16 CreateDialogIndirectParamML(word ptr word ptr long word word str word) CreateDialogIndirectParamML16
 918 pascal16 DialogBoxIndirectParamML(word word word ptr long word word str word) DialogBoxIndirectParamML16
 919 pascal16 LoadLanguageString(word word word ptr word) LoadLanguageString16
-920 pascal SetAppCodePage(word word word word) SetAppCodePage16
-922 pascal GetBaseCodePage() GetBaseCodePage16
+920 pascal   SetAppCodePage(word word word word) SetAppCodePage16
+922 pascal   GetBaseCodePage() GetBaseCodePage16
 923 pascal16 FindLanguageResource(word str str word) FindLanguageResource16
-924 pascal ChangeKeyboardCodePage(word word) ChangeKeyboardCodePage16
+924 pascal   ChangeKeyboardCodePage(word word) ChangeKeyboardCodePage16
 930 pascal16 MessageBoxEx(word str str word word) MessageBoxEx16
 1000 pascal16 SetProcessDefaultLayout(long) SetProcessDefaultLayout16
 1001 pascal16 GetProcessDefaultLayout(ptr) GetProcessDefaultLayout16
