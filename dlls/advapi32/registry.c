@@ -83,7 +83,7 @@ DWORD WINAPI RegCreateKeyExA( HKEY hkey, LPCSTR name, DWORD reserved, LPSTR clas
                               LPHKEY retkey, LPDWORD dispos )
 {
     OBJECT_ATTRIBUTES attr;
-    UNICODE_STRING nameW, classW;
+    UNICODE_STRING classW;
     ANSI_STRING nameA, classA;
     NTSTATUS status;
 
@@ -92,22 +92,21 @@ DWORD WINAPI RegCreateKeyExA( HKEY hkey, LPCSTR name, DWORD reserved, LPSTR clas
 
     attr.Length = sizeof(attr);
     attr.RootDirectory = hkey;
-    attr.ObjectName = &nameW;
+    attr.ObjectName = &NtCurrentTeb()->StaticUnicodeString;
     attr.Attributes = 0;
     attr.SecurityDescriptor = NULL;
     attr.SecurityQualityOfService = NULL;
     RtlInitAnsiString( &nameA, name );
     RtlInitAnsiString( &classA, class );
 
-    /* FIXME: should use Unicode buffer in TEB */
-    if (!(status = RtlAnsiStringToUnicodeString( &nameW, &nameA, TRUE )))
+    if (!(status = RtlAnsiStringToUnicodeString( &NtCurrentTeb()->StaticUnicodeString,
+                                                 &nameA, FALSE )))
     {
         if (!(status = RtlAnsiStringToUnicodeString( &classW, &classA, TRUE )))
         {
             status = NtCreateKey( retkey, access, &attr, 0, &classW, options, dispos );
             RtlFreeUnicodeString( &classW );
         }
-        RtlFreeUnicodeString( &nameW );
     }
     return RtlNtStatusToDosError( status );
 }
@@ -179,23 +178,21 @@ DWORD WINAPI RegOpenKeyExW( HKEY hkey, LPCWSTR name, DWORD reserved, REGSAM acce
 DWORD WINAPI RegOpenKeyExA( HKEY hkey, LPCSTR name, DWORD reserved, REGSAM access, LPHKEY retkey )
 {
     OBJECT_ATTRIBUTES attr;
-    UNICODE_STRING nameW;
     STRING nameA;
     NTSTATUS status;
 
     attr.Length = sizeof(attr);
     attr.RootDirectory = hkey;
-    attr.ObjectName = &nameW;
+    attr.ObjectName = &NtCurrentTeb()->StaticUnicodeString;
     attr.Attributes = 0;
     attr.SecurityDescriptor = NULL;
     attr.SecurityQualityOfService = NULL;
 
     RtlInitAnsiString( &nameA, name );
-    /* FIXME: should use Unicode buffer in TEB */
-    if (!(status = RtlAnsiStringToUnicodeString( &nameW, &nameA, TRUE )))
+    if (!(status = RtlAnsiStringToUnicodeString( &NtCurrentTeb()->StaticUnicodeString,
+                                                 &nameA, FALSE )))
     {
         status = NtOpenKey( retkey, access, &attr );
-        RtlFreeUnicodeString( &nameW );
     }
     return RtlNtStatusToDosError( status );
 }
@@ -662,7 +659,6 @@ DWORD WINAPI RegSetValueExW( HKEY hkey, LPCWSTR name, DWORD reserved,
 DWORD WINAPI RegSetValueExA( HKEY hkey, LPCSTR name, DWORD reserved, DWORD type,
                              CONST BYTE *data, DWORD count )
 {
-    UNICODE_STRING nameW;
     ANSI_STRING nameA;
     WCHAR *dataW = NULL;
     NTSTATUS status;
@@ -684,11 +680,10 @@ DWORD WINAPI RegSetValueExA( HKEY hkey, LPCSTR name, DWORD reserved, DWORD type,
     }
 
     RtlInitAnsiString( &nameA, name );
-    /* FIXME: should use Unicode buffer in TEB */
-    if (!(status = RtlAnsiStringToUnicodeString( &nameW, &nameA, TRUE )))
+    if (!(status = RtlAnsiStringToUnicodeString( &NtCurrentTeb()->StaticUnicodeString,
+                                                 &nameA, FALSE )))
     {
-        status = NtSetValueKey( hkey, &nameW, 0, type, data, count );
-        RtlFreeUnicodeString( &nameW );
+        status = NtSetValueKey( hkey, &NtCurrentTeb()->StaticUnicodeString, 0, type, data, count );
     }
     if (dataW) HeapFree( GetProcessHeap(), 0, dataW );
     return RtlNtStatusToDosError( status );
@@ -834,7 +829,6 @@ DWORD WINAPI RegQueryValueExA( HKEY hkey, LPCSTR name, LPDWORD reserved, LPDWORD
 {
     NTSTATUS status;
     ANSI_STRING nameA;
-    UNICODE_STRING nameW;
     DWORD total_size;
     char buffer[256], *buf_ptr = buffer;
     KEY_VALUE_PARTIAL_INFORMATION *info = (KEY_VALUE_PARTIAL_INFORMATION *)buffer;
@@ -846,12 +840,12 @@ DWORD WINAPI RegQueryValueExA( HKEY hkey, LPCSTR name, LPDWORD reserved, LPDWORD
     if ((data && !count) || reserved) return ERROR_INVALID_PARAMETER;
 
     RtlInitAnsiString( &nameA, name );
-    /* FIXME: should use Unicode buffer in TEB */
-    if ((status = RtlAnsiStringToUnicodeString( &nameW, &nameA, TRUE )))
+    if ((status = RtlAnsiStringToUnicodeString( &NtCurrentTeb()->StaticUnicodeString,
+                                                &nameA, FALSE )))
         return RtlNtStatusToDosError(status);
 
-    status = NtQueryValueKey( hkey, &nameW, KeyValuePartialInformation,
-                              buffer, sizeof(buffer), &total_size );
+    status = NtQueryValueKey( hkey, &NtCurrentTeb()->StaticUnicodeString,
+                              KeyValuePartialInformation, buffer, sizeof(buffer), &total_size );
     if (status && status != STATUS_BUFFER_OVERFLOW) goto done;
 
     /* we need to fetch the contents for a string type even if not requested,
@@ -868,8 +862,8 @@ DWORD WINAPI RegQueryValueExA( HKEY hkey, LPCSTR name, LPDWORD reserved, LPDWORD
                 goto done;
             }
             info = (KEY_VALUE_PARTIAL_INFORMATION *)buf_ptr;
-            status = NtQueryValueKey( hkey, &nameW, KeyValuePartialInformation,
-                                      buf_ptr, total_size, &total_size );
+            status = NtQueryValueKey( hkey, &NtCurrentTeb()->StaticUnicodeString,
+                                    KeyValuePartialInformation, buf_ptr, total_size, &total_size );
         }
 
         if (status) goto done;
@@ -907,7 +901,6 @@ DWORD WINAPI RegQueryValueExA( HKEY hkey, LPCSTR name, LPDWORD reserved, LPDWORD
 
  done:
     if (buf_ptr != buffer) HeapFree( GetProcessHeap(), 0, buf_ptr );
-    RtlFreeUnicodeString( &nameW );
     return RtlNtStatusToDosError(status);
 }
 
@@ -1178,16 +1171,14 @@ DWORD WINAPI RegDeleteValueW( HKEY hkey, LPCWSTR name )
  */
 DWORD WINAPI RegDeleteValueA( HKEY hkey, LPCSTR name )
 {
-    UNICODE_STRING nameW;
     STRING nameA;
     NTSTATUS status;
 
     RtlInitAnsiString( &nameA, name );
-    /* FIXME: should use Unicode buffer in TEB */
-    if (!(status = RtlAnsiStringToUnicodeString( &nameW, &nameA, TRUE )))
+    if (!(status = RtlAnsiStringToUnicodeString( &NtCurrentTeb()->StaticUnicodeString,
+                                                 &nameA, FALSE )))
     {
-        status = NtDeleteValueKey( hkey, &nameW );
-        RtlFreeUnicodeString( &nameW );
+        status = NtDeleteValueKey( hkey, &NtCurrentTeb()->StaticUnicodeString );
     }
     return RtlNtStatusToDosError( status );
 }
