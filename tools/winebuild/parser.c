@@ -51,8 +51,7 @@ static const char * const TypeNames[TYPE_NBTYPES] =
     "stdcall",      /* TYPE_STDCALL */
     "cdecl",        /* TYPE_CDECL */
     "varargs",      /* TYPE_VARARGS */
-    "extern",       /* TYPE_EXTERN */
-    "forward"       /* TYPE_FORWARD */
+    "extern"        /* TYPE_EXTERN */
 };
 
 static const char * const FlagNames[] =
@@ -302,19 +301,6 @@ static void ParseExtern( ORDDEF *odp )
 
 
 /*******************************************************************
- *         ParseForward
- *
- * Parse a 'forward' definition.
- */
-static void ParseForward( ORDDEF *odp )
-{
-    if (SpecType == SPEC_WIN16) fatal_error( "'forward' not supported for Win16\n" );
-    odp->link_name = xstrdup( GetToken(0) );
-    odp->flags |= FLAG_FORWARD;
-}
-
-
-/*******************************************************************
  *         ParseFlags
  *
  * Parse the optional flags for an entry point
@@ -401,9 +387,6 @@ static void ParseOrdinal(int ordinal)
         break;
     case TYPE_EXTERN:
         ParseExtern( odp );
-        break;
-    case TYPE_FORWARD:
-        ParseForward( odp );
         break;
     default:
         assert( 0 );

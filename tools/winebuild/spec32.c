@@ -168,12 +168,6 @@ static int output_exports( FILE *outfile, int nr_exports )
         else switch(odp->type)
         {
         case TYPE_EXTERN:
-            if (!(odp->flags & FLAG_FORWARD))
-            {
-                fprintf( outfile, "    \"\\t.long " __ASM_NAME("%s") "\\n\"\n", odp->link_name );
-                break;
-            }
-            /* else fall through */
         case TYPE_STDCALL:
         case TYPE_VARARGS:
         case TYPE_CDECL:
@@ -181,12 +175,12 @@ static int output_exports( FILE *outfile, int nr_exports )
             {
                 fprintf( outfile, "    \"\\t.long " __ASM_NAME("%s") "\\n\"\n",
                          (odp->flags & FLAG_REGISTER) ? make_internal_name(odp,"regs") : odp->link_name );
-                break;
             }
-            /* else fall through */
-        case TYPE_FORWARD:
-            fprintf( outfile, "    \"\\t.long __wine_spec_forwards+%d\\n\"\n", fwd_size );
-            fwd_size += strlen(odp->link_name) + 1;
+            else
+            {
+                fprintf( outfile, "    \"\\t.long __wine_spec_forwards+%d\\n\"\n", fwd_size );
+                fwd_size += strlen(odp->link_name) + 1;
+            }
             break;
         case TYPE_STUB:
             fprintf( outfile, "    \"\\t.long " __ASM_NAME("%s") "\\n\"\n", make_internal_name( odp, "stub" ) );
@@ -855,9 +849,6 @@ void BuildDef32File(FILE *outfile)
             }
             break;
         }
-        case TYPE_FORWARD:
-            fprintf(outfile, "=%s", odp->link_name);
-            break;
         default:
             assert(0);
         }

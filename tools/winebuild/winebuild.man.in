@@ -205,9 +205,6 @@ syntax is the following:
 .IB ordinal\  equate
 .RI [ flags ]\  exportname\ data
 .br
-.IB ordinal\  forward
-.RI [ flags ]\  exportname\ forwardname
-.br
 .BI #\  comments
 .PP
 Lines whose first character is a
@@ -393,21 +390,6 @@ This declaration defines an ordinal as an absolute value.
 will be the name available for dynamic linking.
 .I data
 can be a decimal number or a hex number preceeded by "0x".
-.SS "Forwarded ordinals"
-Syntax:
-.br
-.IB ordinal\  forward
-.RI [ flags ]\  exportname\ forwardname
-.PP
-This declaration defines an entry that is forwarded to another entry
-point (kind of a symbolic link).
-.I exportname
-will forward to the
-entry point
-.I forwardname
-that must be of the form
-.B DLL.Function.
-This declaration only works in Win32 spec files.
 .SH "GLUE FUNCTIONS"
 Glue functions are used to call down to 16-bit code from a 32-bit
 function. This is done by declaring a special type of function

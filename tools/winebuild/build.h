@@ -48,7 +48,6 @@ typedef enum
     TYPE_CDECL,        /* cdecl function (Win32) */
     TYPE_VARARGS,      /* varargs function (Win32) */
     TYPE_EXTERN,       /* external symbol (Win32) */
-    TYPE_FORWARD,      /* forwarded function (Win32) */
     TYPE_NBTYPES
 } ORD_TYPE;
 
