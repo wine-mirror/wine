@@ -522,20 +522,31 @@ HRESULT WINAPI GetActiveObject(REFCLSID rcid,LPVOID preserved,LPUNKNOWN *ppunk)
 /***********************************************************************
  *           OaBuildVersion           [OLEAUT32.170]
  *
- * known OLEAUT32.DLL versions:
- * OLE 2.1  NT				1993-95	10     3023
- * OLE 2.1					10     3027
- * Win32s 1.1e					20     4049
- * OLE 2.20 W95/NT			1993-96	20     4112
- * OLE 2.20 W95/NT			1993-96	20     4118
- * OLE 2.20 W95/NT			1993-96	20     4122
- * OLE 2.30 W95/NT			1993-98	30     4265
- * OLE 2.40 NT??			1993-98	40     4267
- * OLE 2.40 W98 SE orig. file		1993-98	40     4275
- * OLE 2.40 W2K orig. file		1993-XX 40     4514
+ * Get the Ole Automation build version.
  *
- * I just decided to use version 2.20 for Win3.1, 2.30 for Win95 & NT 3.51,
- * and 2.40 for all newer OSs. The build number is maximum, i.e. 0xffff.
+ * PARAMS
+ *  None
+ *
+ * RETURNS
+ *  The build version.
+ *
+ * NOTES
+ *  Known oleaut32.dll versions:
+ *| OLE Ver.  Comments                   Date     Build Ver.
+ *| --------  -------------------------  ----     ---------
+ *| OLE 2.1   NT                         1993-95  10 3023
+ *| OLE 2.1                                       10 3027
+ *| Win32s    Ver 1.1e                            20 4049
+ *| OLE 2.20  W95/NT                     1993-96  20 4112
+ *| OLE 2.20  W95/NT                     1993-96  20 4118
+ *| OLE 2.20  W95/NT                     1993-96  20 4122
+ *| OLE 2.30  W95/NT                     1993-98  30 4265
+ *| OLE 2.40  NT??                       1993-98  40 4267
+ *| OLE 2.40  W98 SE orig. file          1993-98  40 4275
+ *| OLE 2.40  W2K orig. file             1993-XX  40 4514
+ *
+ * Currently the versions returned are 2.20 for Win3.1, 2.30 for Win95 & NT 3.51,
+ * and 2.40 for all later versions. The build number is maximum, i.e. 0xffff.
  */
 UINT WINAPI OaBuildVersion()
 {
@@ -564,10 +575,19 @@ UINT WINAPI OaBuildVersion()
 /******************************************************************************
  *		OleTranslateColor	[OLEAUT32.421]
  *
- * Converts an OLE_COLOR to a COLORREF.
- * See the documentation for conversion rules.
- * pColorRef can be NULL. In that case the user only wants to test the
- * conversion.
+ * Convert an OLE_COLOR to a COLORREF.
+ *
+ * PARAMS
+ *  clr       [I] Color to convert
+ *  hpal      [I] Handle to a palette for the conversion
+ *  pColorRef [O] Destination for converted color, or NULL to test if the conversion is ok
+ *
+ * RETURNS
+ *  Success: S_OK. The conversion is ok, and pColorRef contains the converted color if non-NULL.
+ *  Failure: E_INVALIDARG, if any argument is invalid.
+ *
+ * FIXME
+ *  Document the conversion rules.
  */
 HRESULT WINAPI OleTranslateColor(
   OLE_COLOR clr,
@@ -681,8 +701,16 @@ HRESULT WINAPI OLEAUT32_DllGetClassObject(REFCLSID rclsid, REFIID iid, LPVOID *p
 
 /***********************************************************************
  *		DllCanUnloadNow (OLEAUT32.410)
+ *
+ * Determine if this dll can be unloaded from the callers address space.
+ *
+ * PARAMS
+ *  None.
+ *
+ * RETURNS
+ *  Always returns S_FALSE. This dll cannot be unloaded.
  */
-HRESULT WINAPI OLEAUT32_DllCanUnloadNow() {
-    FIXME("(), stub!\n");
+HRESULT WINAPI OLEAUT32_DllCanUnloadNow()
+{
     return S_FALSE;
 }
