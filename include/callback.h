@@ -123,6 +123,7 @@ typedef struct
 
     WORD WINAPI (*UserSignalProc)( UINT uCode, DWORD dwThreadOrProcessID,
                                    DWORD dwFlags, HMODULE16 hModule );
+    void WINAPI (*FinalUserInit16)( void );
 
     INT16 WINAPI (*InitApp16)( HINSTANCE16 hInst );
     HQUEUE16 WINAPI (*InitThreadInput16)( WORD unknown, WORD flags );

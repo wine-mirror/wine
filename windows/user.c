@@ -191,6 +191,14 @@ void WINAPI USER_SignalProc( HANDLE16 hTaskOrModule, UINT16 uCode,
 }
 
 /***********************************************************************
+ *           FinalUserInit (USER.400)
+ */
+void WINAPI FinalUserInit16( void )
+{
+    /* FIXME: Should chain to FinalGdiInit now. */
+}
+
+/***********************************************************************
  *           UserSignalProc     (USER.610) (USER32.559)
  *
  * For comments about the meaning of uCode and dwFlags 

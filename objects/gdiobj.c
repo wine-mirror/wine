@@ -980,6 +980,12 @@ WORD WINAPI GdiSignalProc( UINT uCode, DWORD dwThreadOrProcessID,
     return 0;
 }
 
+/***********************************************************************
+ *           FinalGdiInit16     (GDI.405)
+ */
+void WINAPI FinalGdiInit16( HANDLE16 unknown )
+{
+}
 
 /***********************************************************************
  *           GdiFreeResources   (GDI.609)

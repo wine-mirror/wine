@@ -266,7 +266,7 @@ file	gdi.exe
 401 stub GDIMOVEBITMAP
 403 stub GDIINIT2
 404 stub GetTTGlyphIndexMap
-405 stub FINALGDIINIT
+405 pascal16 FinalGdiInit(word) FinalGdiInit16
 407 pascal16 CreateUserBitmap(word word word word ptr) CreateUserBitmap16
 409 pascal16 CreateUserDiscardableBitmap(word word word) CreateUserDiscardableBitmap16
 410 pascal16 IsValidMetaFile (word) IsValidMetaFile16

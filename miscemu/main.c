@@ -41,6 +41,9 @@ void MAIN_EmulatorRun( void )
     /* Get pointers to USER routines called by KERNEL */
     THUNK_InitCallout();
 
+    /* Call FinalUserInit routine */
+    Callout.FinalUserInit16();
+
     /* Call InitApp for initial task */
     Callout.InitApp16( MapHModuleLS( 0 ) );
 
