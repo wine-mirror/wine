@@ -758,6 +758,8 @@ static void CBPaintText(
 	    pText[size] = '\0';	/* just in case */
 	} else return;
    }
+   else
+       return;
 
    if( lphc->wState & CBF_EDIT )
    {
@@ -943,32 +945,19 @@ static LRESULT COMBO_EraseBackground(
   HDC         hParamDC)
 {
   HBRUSH  hBkgBrush;
-  RECT    clientRect;
   HDC 	  hDC;
+
+  if(lphc->wState & CBF_EDIT)
+      return TRUE;
   
   hDC = (hParamDC) ? hParamDC
 		   : GetDC(hwnd);
-
-  /*
-   * Calculate the area that we want to erase.
-   */
-  if (CB_GETTYPE(lphc) != CBS_SIMPLE)
-  {
-    GetClientRect(hwnd, &clientRect);
-  }
-  else
-  {
-    CopyRect(&clientRect, &lphc->textRect);
-
-    InflateRect(&clientRect, COMBO_XBORDERSIZE(), COMBO_YBORDERSIZE());
-  }
-
   /*
    * Retrieve the background brush
    */
   hBkgBrush = COMBO_PrepareColors(lphc, hDC);
   
-  FillRect(hDC, &clientRect, hBkgBrush);
+  FillRect(hDC, &lphc->textRect, hBkgBrush);
 
   if (!hParamDC)
     ReleaseDC(hwnd, hDC);
@@ -1069,14 +1058,12 @@ static INT CBUpdateLBox( LPHEADCOMBO lphc, BOOL bSelect )
        HeapFree( GetProcessHeap(), 0, pText );
    }
 
-   if (idx >= 0)
-   {
-       SendMessageW(lphc->hWndLBox, LB_SETCURSEL, (WPARAM)(bSelect ? idx : -1), 0);
+   SendMessageW(lphc->hWndLBox, LB_SETCURSEL, (WPARAM)(bSelect ? idx : -1), 0);
 
-       /* probably superfluous but Windows sends this too */
-       SendMessageW(lphc->hWndLBox, LB_SETCARETINDEX, (WPARAM)(idx < 0 ? 0 : idx), 0);
-       SendMessageW(lphc->hWndLBox, LB_SETTOPINDEX, (WPARAM)(idx < 0 ? 0 : idx), 0);
-   }
+   /* probably superfluous but Windows sends this too */
+   SendMessageW(lphc->hWndLBox, LB_SETCARETINDEX, (WPARAM)(idx < 0 ? 0 : idx), 0);
+   SendMessageW(lphc->hWndLBox, LB_SETTOPINDEX, (WPARAM)(idx < 0 ? 0 : idx), 0);
+
    return idx;
 }
 
@@ -1139,7 +1126,8 @@ static void CBDropDown( LPHEADCOMBO lphc )
    {
        lphc->droppedIndex = CBUpdateLBox( lphc, TRUE );
 
-       if( !(lphc->wState & CBF_CAPTURE) ) 
+       /* Update edit only if item is in the list */
+       if( !(lphc->wState & CBF_CAPTURE) && lphc->droppedIndex >= 0)
 	 CBUpdateEdit( lphc, lphc->droppedIndex );
    }
    else
@@ -1777,13 +1765,16 @@ static void COMBO_LButtonUp( LPHEADCOMBO lphc )
        if( CB_GETTYPE(lphc) == CBS_DROPDOWN )
        {
 	   INT index = CBUpdateLBox( lphc, TRUE );
-           lphc->wState |= CBF_NOLBSELECT;
-	   CBUpdateEdit( lphc, index );
-           lphc->wState &= ~CBF_NOLBSELECT;
+	   /* Update edit only if item is in the list */
+	   if(index >= 0)
+	   {
+	       lphc->wState |= CBF_NOLBSELECT;
+	       CBUpdateEdit( lphc, index );
+	       lphc->wState &= ~CBF_NOLBSELECT;
+	   }
        }
        ReleaseCapture();
        SetCapture(lphc->hWndLBox);
-
    }
 
    if( lphc->wState & CBF_BUTTONDOWN )
@@ -2170,15 +2161,13 @@ static LRESULT ComboWndProc_locked( WND* pWnd, UINT message,
 		lParam = SendMessageW(lphc->hWndLBox, LB_SETCURSEL, wParam, 0);
 	        if( lParam >= 0 )
 	            SendMessageW(lphc->hWndLBox, LB_SETTOPINDEX, wParam, 0);
-   	        if( lphc->wState & CBF_SELCHANGE )
-		{
-		    /* no LBN_SELCHANGE in this case, update manually */
-		    if( lphc->wState & CBF_EDIT )
-			CBUpdateEdit( lphc, (INT)wParam );
-		    else
-			InvalidateRect(CB_HWND(lphc), &lphc->textRect, TRUE);
-		    lphc->wState &= ~CBF_SELCHANGE;
-		}
+
+		/* no LBN_SELCHANGE in this case, update manually */
+		if( lphc->wState & CBF_EDIT )
+		    CBUpdateEdit( lphc, (INT)wParam );
+		else
+		    InvalidateRect(CB_HWND(lphc), &lphc->textRect, TRUE);
+		lphc->wState &= ~CBF_SELCHANGE;
 	        return  lParam;
 	case CB_GETLBTEXT16: 
 		wParam = (INT)(INT16)wParam;
