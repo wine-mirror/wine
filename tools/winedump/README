@@ -543,7 +543,7 @@ needed to the code).
 
 Now uncomment the line that winedump inserted into msvcrt.spec:
 
-#inport ms_msvcrt.dll
+#import ms_msvcrt.dll
 
 And recompile Wine.
 
