@@ -128,6 +128,7 @@ void VERSION_ParseWinVersion( const char *arg )
     for (i = 0; i < NB_WINDOWS_VERSIONS; i++)
         MESSAGE(" '%s'%c", WinVersionNames[i],
 	    (i == NB_WINDOWS_VERSIONS - 1) ? '\n' : ',' );
+    ExitProcess(1);
 }
 
 
@@ -144,7 +145,10 @@ void VERSION_ParseDosVersion( const char *arg )
                      (hi<<8) + lo);
     }
     else
-        fprintf( stderr, "-dosver: Wrong version format. Use \"-dosver x.xx\"\n");
+    {
+        MESSAGE("--dosver: Wrong version format. Use \"--dosver x.xx\"\n");
+        ExitProcess(1);
+    }
 }
 
 /**********************************************************************

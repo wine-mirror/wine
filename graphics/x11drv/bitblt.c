@@ -524,6 +524,18 @@ main()
 
 
 /***********************************************************************
+ *           perfect_graphics
+ *
+ * Favor correctness or speed?
+ */
+static inline int perfect_graphics(void)
+{
+    static int perfect = -1;
+    if (perfect == -1) perfect = PROFILE_GetWineIniBool( "x11drv", "PerfectGraphics", 0 );
+    return perfect;
+}
+
+/***********************************************************************
  *           BITBLT_StretchRow
  *
  * Stretch a row of pixels. Helper function for BITBLT_StretchImage.
@@ -1207,7 +1219,7 @@ static BOOL BITBLT_InternalStretchBlt( DC *dcDst, INT xDst, INT yDst,
 
     case DSTINVERT:  /* 0x55 */
         if ((dcDst->w.bitsPerPixel == 1) || !X11DRV_PALETTE_PaletteToXPixel ||
-            !Options.perfectGraphics)
+            !perfect_graphics())
         {
             XSetFunction( display, physDevDst->gc, GXinvert );
 
@@ -1231,7 +1243,7 @@ static BOOL BITBLT_InternalStretchBlt( DC *dcDst, INT xDst, INT yDst,
         break;
 
     case PATINVERT:  /* 0x5a */
-	if (Options.perfectGraphics) break;
+	if (perfect_graphics()) break;
         if (X11DRV_SetupGCForBrush( dcDst ))
         {
             XSetFunction( display, physDevDst->gc, GXxor );
@@ -1241,7 +1253,7 @@ static BOOL BITBLT_InternalStretchBlt( DC *dcDst, INT xDst, INT yDst,
         return TRUE;
 
     case 0xa50065:
-	if (Options.perfectGraphics) break;
+	if (perfect_graphics()) break;
 	if (X11DRV_SetupGCForBrush( dcDst ))
 	{
 	    XSetFunction( display, physDevDst->gc, GXequiv );

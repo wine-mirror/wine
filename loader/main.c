@@ -95,9 +95,6 @@ BOOL MAIN_MainInit( int *argc, char *argv[], BOOL win32 )
     /* Initialize DOS memory */
     if (!DOSMEM_Init(0)) return FALSE;
 
-    /* Initialize event handling */
-    if (!EVENT_Init()) return FALSE;
-
     /* Initialize communications */
     COMM_Init();
 
@@ -110,6 +107,11 @@ BOOL MAIN_MainInit( int *argc, char *argv[], BOOL win32 )
     /* Initialize KERNEL */
     if (!LoadLibrary16( "KRNL386.EXE" )) return FALSE;
     if (!LoadLibraryA( "KERNEL32" )) return FALSE;
+
+    /* Initialize event handling */
+    if (!EVENT_Init()) return FALSE;
+
+    SHELL_InitRegistrySaving();
 
     return TRUE;
 }

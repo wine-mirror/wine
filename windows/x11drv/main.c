@@ -36,41 +36,8 @@
 
 /**********************************************************************/
 
-void X11DRV_USER_ParseOptions(int *argc, char *argv[]);
-void X11DRV_USER_Create(void);
-void X11DRV_USER_SaveSetup(void);
-void X11DRV_USER_RestoreSetup(void);
-
-/**********************************************************************/
-
-#define WINE_CLASS        "Wine"    /* Class name for resources */
-#define WINE_APP_DEFAULTS "/usr/lib/X11/app-defaults/Wine"
-
-static XrmOptionDescRec optionsTable[] =
-{
-    { "-desktop",       ".desktop",         XrmoptionSepArg, (caddr_t)NULL },
-    { "-depth",         ".depth",           XrmoptionSepArg, (caddr_t)NULL },
-    { "-display",       ".display",         XrmoptionSepArg, (caddr_t)NULL },
-    { "-iconic",        ".iconic",          XrmoptionNoArg,  (caddr_t)"on" },
-    { "-language",      ".language",        XrmoptionSepArg, (caddr_t)"En" },
-    { "-name",          ".name",            XrmoptionSepArg, (caddr_t)NULL },
-    { "-perfect",       ".perfect",         XrmoptionNoArg,  (caddr_t)"on" },
-    { "-privatemap",    ".privatemap",      XrmoptionNoArg,  (caddr_t)"on" },
-    { "-synchronous",   ".synchronous",     XrmoptionNoArg,  (caddr_t)"on" },
-    { "-debug",         ".debug",           XrmoptionNoArg,  (caddr_t)"on" },
-    { "-debugmsg",      ".debugmsg",        XrmoptionSepArg, (caddr_t)NULL },
-    { "-dll",           ".dll",             XrmoptionSepArg, (caddr_t)NULL },
-    { "-failreadonly",  ".failreadonly",    XrmoptionNoArg,  (caddr_t)"on" },
-    { "-managed",       ".managed",         XrmoptionNoArg,  (caddr_t)"off"},
-    { "-winver",        ".winver",          XrmoptionSepArg, (caddr_t)NULL },
-    { "-config",        ".config",          XrmoptionSepArg, (caddr_t)NULL },
-    { "-nodga",         ".nodga",           XrmoptionNoArg,  (caddr_t)"off"},
-    { "-noxshm",        ".noxshm",          XrmoptionNoArg,  (caddr_t)"off"},
-    { "-dxgrab",        ".dxgrab",          XrmoptionNoArg,  (caddr_t)"on" },
-    { "-dosver",        ".dosver",          XrmoptionSepArg, (caddr_t)NULL }
-};
-
-#define NB_OPTIONS  (sizeof(optionsTable) / sizeof(optionsTable[0]))
+static void X11DRV_USER_SaveSetup(void);
+static void X11DRV_USER_RestoreSetup(void);
 
 /**********************************************************************/
 
@@ -98,6 +65,15 @@ Window X11DRV_GetXRootWindow()
 }
 
 /***********************************************************************
+ *		X11DRV_USER_ErrorHandler
+ */
+static int X11DRV_USER_ErrorHandler(Display *display, XErrorEvent *error_evt)
+{
+    DebugBreak();  /* force an entry in the debugger */
+    return 0;
+}
+
+/***********************************************************************
  *              X11DRV_USER_Initialize
  */
 BOOL X11DRV_USER_Initialize(void)
@@ -114,12 +90,28 @@ BOOL X11DRV_USER_Initialize(void)
   InitializeCriticalSection( &X11DRV_CritSection );
   MakeCriticalSectionGlobal( &X11DRV_CritSection );
   
-  TSXrmInitialize();
-  
   putenv("XKB_DISABLE="); /* Disable XKB extension if present. */
 
-  X11DRV_USER_ParseOptions( Options.argc, Options.argv );
-  X11DRV_USER_Create();
+  /* Open display */
+  
+  if (!(display = TSXOpenDisplay( Options.display )))
+  {
+      MESSAGE( "%s: Can't open display: %s\n",
+               argv0, Options.display ? Options.display : "(none specified)" );
+      ExitProcess(1);
+  }
+  
+  /* tell the libX11 that we will do input method handling ourselves
+   * that keep libX11 from doing anything whith dead keys, allowing Wine
+   * to have total control over dead keys, that is this line allows
+   * them to work in Wine, even whith a libX11 including the dead key
+   * patches from Th.Quinot (http://Web.FdN.FR/~tquinot/dead-keys.en.html)
+   */
+  TSXOpenIM(display,NULL,NULL,NULL);
+
+  if (Options.synchronous) XSetErrorHandler( X11DRV_USER_ErrorHandler );
+  if (Options.desktopGeometry && Options.managed) Options.managed = FALSE;
+
   X11DRV_USER_SaveSetup();
 
   return TRUE;
@@ -150,161 +142,9 @@ void X11DRV_USER_EndDebugging(void)
 }
 
 /***********************************************************************
- *		 X11DRV_USER_GetResource
- *
- * Fetch the value of resource 'name' using the correct instance name.
- * 'name' must begin with '.' or '*'
- */
-static int X11DRV_USER_GetResource( XrmDatabase db, char *name, XrmValue *value )
-{
-  char *buff_instance, *buff_class;
-  char *dummy;
-  int retval;
-  
-  buff_instance = (char *)xmalloc(strlen(Options.programName)+strlen(name)+1);
-  buff_class    = (char *)xmalloc( strlen(WINE_CLASS) + strlen(name) + 1 );
-    
-  strcpy( buff_instance, Options.programName );
-  strcat( buff_instance, name );
-  strcpy( buff_class, WINE_CLASS );
-  strcat( buff_class, name );
-  retval = TSXrmGetResource( db, buff_instance, buff_class, &dummy, value );
-  free( buff_instance );
-  free( buff_class );
-  return retval;
-}
-
-/***********************************************************************
- *              X11DRV_USER_ParseOptions
- * Parse command line options and open display.
- */
-void X11DRV_USER_ParseOptions(int *argc, char *argv[])
-{
-  int i;
-  char *display_name = NULL;
-  XrmValue value;
-  XrmDatabase db = TSXrmGetFileDatabase(WINE_APP_DEFAULTS);
-  char *xrm_string;
-
-  /* Get display name from command line */
-  for (i = 1; i < *argc; i++)
-    {
-      if (!strcmp( argv[i], "-display" )) display_name = argv[i+1];
-    }
-
-  /* Open display */
-  
-  if (display_name == NULL &&
-      X11DRV_USER_GetResource( db, ".display", &value )) display_name = value.addr;
-  
-  if (!(display = TSXOpenDisplay( display_name )))
-    {
-      MESSAGE( "%s: Can't open display: %s\n",
-	   argv[0], display_name ? display_name : "(none specified)" );
-      exit(1);
-    }
-  
-  /* tell the libX11 that we will do input method handling ourselves
-   * that keep libX11 from doing anything whith dead keys, allowing Wine
-   * to have total control over dead keys, that is this line allows
-   * them to work in Wine, even whith a libX11 including the dead key
-   * patches from Th.Quinot (http://Web.FdN.FR/~tquinot/dead-keys.en.html)
-   */
-  TSXOpenIM(display,NULL,NULL,NULL);
-  
-  /* Merge file and screen databases */
-  if ((xrm_string = TSXResourceManagerString( display )) != NULL)
-    {
-      XrmDatabase display_db = TSXrmGetStringDatabase( xrm_string );
-      TSXrmMergeDatabases( display_db, &db );
-    }
-  
-  /* Parse command line */
-  TSXrmParseCommand( &db, optionsTable, NB_OPTIONS,
-		     Options.programName, argc, argv );
-  
-  /* Get all options */
-  if (X11DRV_USER_GetResource( db, ".privatemap", &value ))
-    Options.usePrivateMap = TRUE;
-  if (X11DRV_USER_GetResource( db, ".synchronous", &value ))
-    Options.synchronous = TRUE;
-  if (X11DRV_USER_GetResource( db, ".debug", &value ))
-    Options.debug = TRUE;
-  if (X11DRV_USER_GetResource( db, ".failreadonly", &value ))
-    Options.failReadOnly = TRUE;
-  if (X11DRV_USER_GetResource( db, ".perfect", &value ))
-    Options.perfectGraphics = TRUE;
-  if (X11DRV_USER_GetResource( db, ".depth", &value))
-    Options.screenDepth = atoi( value.addr );
-  if (X11DRV_USER_GetResource( db, ".desktop", &value))
-    Options.desktopGeometry = value.addr;
-  if (X11DRV_USER_GetResource( db, ".language", &value))
-    MAIN_ParseLanguageOption( (char *)value.addr );
-  if (X11DRV_USER_GetResource( db, ".managed", &value))
-    Options.managed = TRUE;
-  if (X11DRV_USER_GetResource( db, ".debugoptions", &value))
-    MAIN_ParseDebugOptions((char*)value.addr);
-  if (X11DRV_USER_GetResource( db, ".debugmsg", &value))
-    MAIN_ParseDebugOptions((char*)value.addr);
-  
-  if (X11DRV_USER_GetResource( db, ".dll", &value))
-  {
-      if (Options.dllFlags)
-      {
-          /* don't overwrite previous value. Should we
-           * automatically add the ',' between multiple DLLs ?
-           */
-          MESSAGE("Only one -dll flag is allowed. Use ',' between multiple DLLs\n");
-      }
-      else Options.dllFlags = xstrdup((char *)value.addr);
-  }
-  
-  if (X11DRV_USER_GetResource( db, ".winver", &value))
-    VERSION_ParseWinVersion( (char*)value.addr );
-  if (X11DRV_USER_GetResource( db, ".dosver", &value))
-    VERSION_ParseDosVersion( (char*)value.addr );
-  if (X11DRV_USER_GetResource( db, ".config", &value))
-    Options.configFileName = xstrdup((char *)value.addr);
-  if (X11DRV_USER_GetResource( db, ".nodga", &value))
-    Options.noDGA = TRUE;
-  if (X11DRV_USER_GetResource( db, ".noxshm", &value))
-    Options.noXSHM = TRUE;
-  if (X11DRV_USER_GetResource( db, ".dxgrab", &value))
-    Options.DXGrab = TRUE;
-}
-
-/***********************************************************************
- *		X11DRV_USER_ErrorHandler
- */
-static int X11DRV_USER_ErrorHandler(Display *display, XErrorEvent *error_evt)
-{
-    DebugBreak();  /* force an entry in the debugger */
-    return 0;
-}
-
-/***********************************************************************
- *		X11DRV_USER_Create
- */
-void X11DRV_USER_Create()
-{
-  if (Options.synchronous) XSetErrorHandler( X11DRV_USER_ErrorHandler );
-  
-  if (Options.desktopGeometry && Options.managed)
-    {
-#if 0
-      MESSAGE( "%s: -managed and -desktop options cannot be used together\n",
-	   Options.programName );
-      exit(1);
-#else
-      Options.managed = FALSE;
-#endif
-    }
-}
-
-/***********************************************************************
  *           X11DRV_USER_SaveSetup
  */
-void X11DRV_USER_SaveSetup()
+static void X11DRV_USER_SaveSetup()
 {
   TSXGetKeyboardControl(display, &X11DRV_XKeyboardState);
 }
@@ -312,7 +152,7 @@ void X11DRV_USER_SaveSetup()
 /***********************************************************************
  *           X11DRV_USER_RestoreSetup
  */
-void X11DRV_USER_RestoreSetup()
+static void X11DRV_USER_RestoreSetup()
 {
   XKeyboardControl keyboard_value;
   

@@ -18,10 +18,30 @@
 #include "wine/exception.h"
 #include "debugtools.h"
 
-static int MAIN_argc;
-static char **MAIN_argv;
+extern DWORD DEBUG_WinExec(LPCSTR lpCmdLine, int sw);
 
-extern DWORD DEBUG_WinExec(LPSTR lpCmdLine, int sw);
+
+static BOOL exec_program( LPCSTR cmdline )
+{
+    HINSTANCE handle;
+
+    if (Options.debug) 
+        handle = DEBUG_WinExec( cmdline, SW_SHOWNORMAL );
+    else
+        handle = WinExec( cmdline, SW_SHOWNORMAL );
+       
+    if (handle < 32) 
+    {
+        MESSAGE( "%s: can't exec '%s': ", argv0, cmdline );
+        switch (handle) 
+        {
+        case  2: MESSAGE("file not found\n" ); break;
+        case 11: MESSAGE("invalid exe file\n" ); break;
+        default: MESSAGE("error=%d\n", handle ); break;
+        }
+    }
+    return (handle >= 32);
+}
 
 /***********************************************************************
  *           Main loop of initial task
@@ -29,10 +49,8 @@ extern DWORD DEBUG_WinExec(LPSTR lpCmdLine, int sw);
 void MAIN_EmulatorRun( void )
 {
     char startProg[256], defProg[256];
-    HINSTANCE handle;
     int i, tasks = 0;
     MSG msg;
-    BOOL err_msg = FALSE;
 
     /* Load system DLLs into the initial process (and initialize them) */
     if (   !LoadLibrary16("GDI.EXE" ) || !LoadLibraryA("GDI32.DLL" )
@@ -48,55 +66,28 @@ void MAIN_EmulatorRun( void )
     /* Call InitApp for initial task */
     Callout.InitApp16( MapHModuleLS( 0 ) );
 
-    /* Add the Default Program if no program on the command line */
-    if (!MAIN_argv[1])
-    {
-        PROFILE_GetWineIniString( "programs", "Default", "",
-                                  defProg, sizeof(defProg) );
-        if (defProg[0]) MAIN_argv[MAIN_argc++] = defProg;
-    }
-    
     /* Add the Startup Program to the run list */
     PROFILE_GetWineIniString( "programs", "Startup", "", 
 			       startProg, sizeof(startProg) );
-    if (startProg[0]) MAIN_argv[MAIN_argc++] = startProg;
+    if (startProg[0]) tasks += exec_program( startProg );
 
-    /* Abort if no executable on command line */
-    if (MAIN_argc <= 1) 
+    /* Add the Default Program if no program on the command line */
+    if (!Options.argv[1])
     {
-    	MAIN_Usage(MAIN_argv[0]);
-        ExitProcess( 1 );
+        PROFILE_GetWineIniString( "programs", "Default", "",
+                                  defProg, sizeof(defProg) );
+        if (defProg[0]) tasks += exec_program( defProg );
+        else if (!tasks && !startProg[0]) OPTIONS_Usage();
     }
-
-    /* Load and run executables given on command line */
-    for (i = 1; i < MAIN_argc; i++)
+    else
     {
-       if (Options.debug) 
-       {
-	  handle = DEBUG_WinExec( MAIN_argv[i], SW_SHOWNORMAL );
-       } else {
-	  handle = WinExec( MAIN_argv[i], SW_SHOWNORMAL );
-       }
-       
-       if (handle < 32) 
-       {
-	    err_msg = TRUE;
-	    MESSAGE("wine: can't exec '%s': ", MAIN_argv[i]);
-	    switch (handle) 
-	    {
-	    case  2: MESSAGE("file not found\n" ); break;
-	    case 11: MESSAGE("invalid exe file\n" ); break;
-	    default: MESSAGE("error=%d\n", handle ); break;
-	    }
+        /* Load and run executables given on command line */
+        for (i = 1; Options.argv[i]; i++)
+        {
+            tasks += exec_program( Options.argv[i] );
         }
-	else tasks++;
     }
-
-    if (!tasks)
-    {
-	if (!err_msg) MESSAGE("wine: no executable file found.\n" );
-        ExitProcess( 0 );
-    }
+    if (!tasks) ExitProcess( 0 );
 
     /* Start message loop for desktop window */
 
@@ -119,7 +110,6 @@ int main( int argc, char *argv[] )
 
     /* Initialize everything */
     if (!MAIN_MainInit( &argc, argv, FALSE )) return 1;
-    MAIN_argc = argc; MAIN_argv = argv;
 
     /* Create initial task */
     if ( !(pModule = NE_GetPtr( GetModuleHandle16( "KERNEL" ) )) ) return 1;

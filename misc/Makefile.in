@@ -17,6 +17,7 @@ C_SRCS = \
 	lstr.c \
 	main.c \
 	network.c \
+	options.c \
 	port.c \
 	printdrv.c \
 	registry.c \

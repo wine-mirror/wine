@@ -7,14 +7,12 @@
 
 #include "windef.h"
 
-extern void MAIN_Usage(char*);
 extern BOOL MAIN_MainInit( int *argc, char *argv[], BOOL win32 );
 extern BOOL MAIN_WineInit( int *argc, char *argv[] );
 extern HINSTANCE MAIN_WinelibInit( int *argc, char *argv[] );
 extern int MAIN_GetLanguageID(char*lang, char*country, char*charset, char*dialect);
-extern BOOL MAIN_ParseDebugOptions(char *options);
-
-extern void MAIN_ParseLanguageOption( char *arg );
+extern void MAIN_ParseDebugOptions(const char *options);
+extern void MAIN_ParseLanguageOption( const char *arg );
 
 extern BOOL RELAY_Init(void);
 extern void THUNK_InitCallout(void);

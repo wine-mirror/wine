@@ -94,93 +94,24 @@ struct options Options =
     0,              /* argc */
     NULL,           /* argv */
     NULL,           /* desktopGeometry */
-    NULL,           /* programName */
+    NULL,           /* display */
     NULL,           /* dllFlags */
-    FALSE,          /* usePrivateMap */
     FALSE,          /* synchronous */
-    FALSE,
+    FALSE,          /* debug */
     FALSE,          /* failReadOnly */
-#ifdef DEFAULT_LANG
-    DEFAULT_LANG,   /* Default language */
-#else
-    LANG_En,
-#endif
+    0,              /* language */
     FALSE,          /* Managed windows */
-    FALSE,          /* Perfect graphics */
-    FALSE,          /* No DGA */
-    FALSE,          /* No XSHM */
-    FALSE,          /* DXGrab */
-    NULL,           /* Alternate config file name */
-    0               /* screenDepth */
+    NULL            /* Alternate config file name */
 };
 
 const char *argv0;
-
-static const char szUsage[] =
-  "Options:\n"
-  "    -config name    Specify config file to use\n"
-  "    -debug          Enter debugger before starting application\n"
-  "    -debugmsg name  Turn debugging-messages on or off\n"
-  "    -depth n        Change the depth to use for multiple-depth screens\n"
-  "    -desktop geom   Use a desktop window of the given geometry\n"
-  "    -display name   Use the specified display\n"
-  "    -dll name       Enable or disable built-in DLLs\n"
-  "    -failreadonly   Read only files may not be opened in write mode\n"
-  "    -help           Show this help message\n"
-  "    -language xx    Set the language (one of Br,Ca,Cs,Cy,Da,De,En,Eo,Es,Fi,Fr,Ga,Gd,Gv\n"
-  "                    Hu,It,Ja,Ko,Kw,Nl,No,Pl,Pt,Sk,Sv,Ru,Wa)\n"
-  "    -managed        Allow the window manager to manage created windows\n"
-  "    -name name      Set the application name\n"
-  "    -nodga          Disable XFree86 DGA extensions\n"
-  "    -noxshm         Disable XSHM extension\n"
-  "    -dxgrab         Enable DirectX mouse grab\n"
-  "    -perfect        Favor correctness over speed for graphical operations\n"
-  "    -privatemap     Use a private color map\n"
-  "    -synchronous    Turn on synchronous display mode\n"
-  "    -version        Display the Wine version\n"
-  "    -winver         Version to imitate (one of win31,win95,nt351,nt40)\n"
-  "    -dosver         DOS version to imitate (x.xx, e.g. 6.22). Only valid with -winver win31\n"
-  ;
-
-/***********************************************************************
- *           MAIN_Usage
- */
-void MAIN_Usage( char *name )
-{
-    MESSAGE( WINE_RELEASE_INFO "\nUsage:  %s [options] \"program_name [arguments]\"\n\n", name );
-    write( 2, szUsage, sizeof(szUsage)-1 );  /* too large for MESSAGE() */
-    ExitProcess(1);
-}
-
-/***********************************************************************
- *           MAIN_GetProgramName
- *
- * Get the program name. The name is specified by (in order of precedence):
- * - the option '-name'.
- * - the environment variable 'WINE_NAME'.
- * - the last component of argv[0].
- */
-static char *MAIN_GetProgramName( int argc, char *argv[] )
-{
-    int i;
-    char *p;
-
-    for (i = 1; i < argc-1; i++)
-	if (!strcmp( argv[i], "-name" )) return argv[i+1];
-    if ((p = getenv( "WINE_NAME" )) != NULL) return p;
-    if ((p = strrchr( argv[0], '/' )) != NULL) return p+1;
-    return argv[0];
-}
 
 /***********************************************************************
  *          MAIN_ParseDebugOptions
  *
  *  Turns specific debug messages on or off, according to "options".
- *  
- *  RETURNS
- *    TRUE if parsing was successful
  */
-BOOL MAIN_ParseDebugOptions(char *options)
+void MAIN_ParseDebugOptions( const char *arg )
 {
   /* defined in relay32/relay386.c */
   extern char **debug_relay_includelist;
@@ -192,9 +123,11 @@ BOOL MAIN_ParseDebugOptions(char *options)
   int i;
   int l, cls, dotracerelay = TRACE_ON(relay);
 
+  char *options = strdup(arg);
+
   l = strlen(options);
-  if (l<2)
-    return FALSE;
+  if (l<2) goto error;
+
   if (options[l-1]=='\n') options[l-1]='\0';
   do
   {
@@ -295,12 +228,11 @@ BOOL MAIN_ParseDebugOptions(char *options)
   if (dotracerelay != TRACE_ON(relay))
   	BUILTIN32_SwitchRelayDebug( TRACE_ON(relay) );
 
-  if (!*options)
-    return TRUE;
+  if (!*options) return;
 
  error:  
   MESSAGE("%s: Syntax: -debugmsg [class]+xxx,...  or "
-      "-debugmsg [class]-xxx,...\n",Options.argv[0]);
+      "-debugmsg [class]-xxx,...\n",argv0);
   MESSAGE("Example: -debugmsg +all,warn-heap\n"
       "  turn on all messages except warning heap messages\n");
   MESSAGE("Special case: -debugmsg +relay=DLL:DLL.###:FuncName\n"
@@ -321,7 +253,6 @@ BOOL MAIN_ParseDebugOptions(char *options)
 	  (((i+2)%8==0)?'\n':' '));
   MESSAGE("\n\n");
   ExitProcess(1);
-  return FALSE;
 }
 
 /***********************************************************************
@@ -684,14 +615,9 @@ end_MAIN_GetLanguageID:
  *
  * Parse -language option.
  */
-void MAIN_ParseLanguageOption( char *arg )
+void MAIN_ParseLanguageOption( const char *arg )
 {
     const WINE_LANGUAGE_DEF *p = Languages;
-
-/* for compatibility whith non-iso names previously used */
-    if (!strcmp("Sw",arg)) { strcpy(arg,"Sv"); FIXME_(system)("use 'Sv' instead of 'Sw'\n");}
-    if (!strcmp("Cz",arg)) { strcpy(arg,"Cs"); FIXME_(system)("use 'Cs' instead of 'Cz'\n");}
-    if (!strcmp("Po",arg)) { strcpy(arg,"Pt"); FIXME_(system)("use 'Pt' instead of 'Po'\n");}
 
     Options.language = LANG_Xx;  /* First (dummy) language */
     for (;p->name;p++)
@@ -709,42 +635,6 @@ void MAIN_ParseLanguageOption( char *arg )
     ExitProcess(1);
 }
 
-
-/***********************************************************************
- *           MAIN_ParseOptions
- *
- * Parse command line options and open display.
- */
-static void MAIN_ParseOptions( int *argc, char *argv[] )
-{
-    int i;
-    char *pcDot;
-
-    Options.argc = argc;
-    Options.argv = argv;
-    Options.programName = MAIN_GetProgramName( *argc, argv );
-
-    /* initialise Options.language to 0 to tell "no language choosen yet" */
-    Options.language = 0;
-  
-    /* make sure there is no "." in Options.programName to confuse the X
-       resource database lookups */
-    if ((pcDot = strchr(Options.programName, '.'))) *pcDot = '\0';
-
-    for (i = 1; i < *argc; i++)
-    {
-        if (!strcmp( argv[i], "-v" ) || !strcmp( argv[i], "-version" ))
-        {
-            MESSAGE( "%s\n", WINE_RELEASE_INFO );
-            ExitProcess(0);
-        }
-        if (!strcmp( argv[i], "-h" ) || !strcmp( argv[i], "-help" ))
-        {
-            MAIN_Usage(argv[0]);
-            ExitProcess(0);
-        }
-    }
-}
 
 /***********************************************************************
  *           called_at_exit
@@ -790,7 +680,7 @@ BOOL MAIN_WineInit( int *argc, char *argv[] )
     gettimeofday( &tv, NULL);
     MSG_WineStartTicks = (tv.tv_sec * 1000) + (tv.tv_usec / 1000);
     
-    MAIN_ParseOptions(argc, argv);
+    OPTIONS_ParseOptions( *argc, argv );
 
 #ifndef X_DISPLAY_MISSING
     USER_Driver = &X11DRV_USER_Driver;

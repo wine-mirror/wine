@@ -174,6 +174,11 @@ static XF86VidModeModeInfo *orig_mode = NULL;
 static int XShmErrorFlag = 0;
 #endif
 
+static inline BOOL get_option( const char *name, BOOL def )
+{
+    return PROFILE_GetWineIniBool( "x11drv", name, def );
+}
+
 static BYTE
 DDRAW_DGA_Available(void)
 {
@@ -185,7 +190,7 @@ DDRAW_DGA_Available(void)
 	if (return_value != 0xFF)
 	  return return_value;
 	
-   	if (Options.noDGA) {
+   	if (!get_option( "UseDGA", 1 )) {
 	  return_value = 0;
      	  return 0;
 	}
@@ -4118,7 +4123,7 @@ static HRESULT WINAPI Xlib_IDirectDrawImpl_SetDisplayMode(
         }
 	TRACE("Setting drawable to %ld\n", This->d.drawable);
 
-	if (Options.DXGrab) {
+	if (get_option( "DXGrab", 0 )) {
 	    /* Confine cursor movement (risky, but the user asked for it) */
 	    TSXGrabPointer(display, This->d.drawable, True, 0, GrabModeAsync, GrabModeAsync, This->d.drawable, None, CurrentTime);
 	}
@@ -5488,24 +5493,19 @@ static HRESULT WINAPI DGA_DirectDrawCreate( LPDIRECTDRAW *lplpDD, LPUNKNOWN pUnk
 
 static BOOL
 DDRAW_XSHM_Available(void)
-   {
+{
 #ifdef HAVE_LIBXXSHM
-  if (TSXShmQueryExtension(display))
-      {
-      int major, minor;
-      Bool shpix;
-
-      if ((TSXShmQueryVersion(display, &major, &minor, &shpix)) &&
-	  (Options.noXSHM != 1))
-	return 1;
-      else
-	return 0;
+    if (get_option( "UseXShm", 1 ))
+    {
+        if (TSXShmQueryExtension(display))
+        {
+            int major, minor;
+            Bool shpix;
+            if (TSXShmQueryVersion(display, &major, &minor, &shpix)) return TRUE;
+        }
     }
-    else
-    return 0;
-#else
-  return 0;
 #endif
+    return FALSE;
 }
 
 static HRESULT WINAPI Xlib_DirectDrawCreate( LPDIRECTDRAW *lplpDD, LPUNKNOWN pUnkOuter) {

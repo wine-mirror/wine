@@ -119,7 +119,7 @@ static void X11DRV_MONITOR_CreateDesktop(MONITOR *pMonitor)
 
   TSXStringListToTextProperty( &name, 1, &window_name );
   TSXSetWMProperties( display, pX11Monitor->rootWindow, &window_name, &window_name,
-                      Options.argv, *Options.argc, size_hints, wm_hints, class_hints );
+                      Options.argv, Options.argc, size_hints, wm_hints, class_hints );
   XA_WM_DELETE_WINDOW = TSXInternAtom( display, "WM_DELETE_WINDOW", False );
   TSXSetWMProtocols( display, pX11Monitor->rootWindow, &XA_WM_DELETE_WINDOW, 1 );
   TSXFree( size_hints );
@@ -149,8 +149,8 @@ void X11DRV_MONITOR_Initialize(MONITOR *pMonitor)
   pX11Monitor->width   = WidthOfScreen( pX11Monitor->screen );
   pX11Monitor->height  = HeightOfScreen( pX11Monitor->screen );
 
-  pX11Monitor->depth   = Options.screenDepth;
-  if (pX11Monitor->depth)  /* -depth option specified */
+  pX11Monitor->depth   = PROFILE_GetWineIniInt( "x11drv", "ScreenDepth", 0 );
+  if (pX11Monitor->depth)  /* depth specified */
     {
       depth_list = TSXListDepths(display, DefaultScreen(display), &depth_count);
       for (i = 0; i < depth_count; i++)
@@ -158,8 +158,7 @@ void X11DRV_MONITOR_Initialize(MONITOR *pMonitor)
       TSXFree( depth_list );
       if (i >= depth_count)
 	{
-	  MESSAGE( "%s: Depth %d not supported on this screen.\n",
-	       Options.programName, pX11Monitor->depth );
+	  MESSAGE( "%s: Depth %d not supported on this screen.\n", argv0, pX11Monitor->depth );
 	  exit(1);
 	}
     }

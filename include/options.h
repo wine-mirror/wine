@@ -55,28 +55,25 @@ extern const WINE_LANGUAGE_DEF Languages[];
 
 struct options
 {
-    int  *argc;
+    int    argc;
     char **argv;
     char * desktopGeometry; /* NULL when no desktop */
-    char * programName;     /* To use when loading resources */
+    char * display;         /* display name */
     char  *dllFlags;        /* -dll flags (hack for Winelib support) */
-    int    usePrivateMap;
     int    synchronous;     /* X synchronous mode */
     int    debug;
     int    failReadOnly;    /* Opening a read only file will fail
 			       if write access is requested */
     WINE_LANGUAGE language; /* Current language */
     int    managed;	    /* Managed windows */
-    int    perfectGraphics; /* Favor correctness over speed for graphics */
-    int    noDGA;           /* Disable XFree86 DGA extensions */
-    int    noXSHM;          /* Disable use of XSHM extension */
-    int    DXGrab;          /* Enable DirectX mouse grab */
     char * configFileName;  /* Command line config file */
-    int screenDepth;
 };
 
 extern struct options Options;
 extern const char *argv0;
+
+extern void OPTIONS_Usage(void) WINE_NORETURN;
+extern void OPTIONS_ParseOptions( int argc, char *argv[] );
 
 /* Profile functions */
 

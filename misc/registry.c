@@ -1561,7 +1561,6 @@ static void SetLoadLevel(int level)
 
 void SHELL_LoadRegistry( void )
 {
-  int	save_timeout;
   char	*fn, *home;
   HKEY	hkey;
   char windir[MAX_PATHNAME_LEN];
@@ -1787,28 +1786,14 @@ void SHELL_LoadRegistry( void )
       free (fn);
   }
   
-  /* 
-   * Make sure the update mode is there
-   */
-  if (ERROR_SUCCESS==RegCreateKey16(HKEY_CURRENT_USER,KEY_REGISTRY,&hkey)) 
-  {
-    DWORD	junk,type,len;
-    char	data[5];
+}
 
-    len=4;
-    if ((	RegQueryValueExA(
-            hkey,
-            VAL_SAVEUPDATED,
-            &junk,
-            &type,
-            data,
-            &len) != ERROR_SUCCESS) || (type != REG_SZ))
-    {
-      RegSetValueExA(hkey,VAL_SAVEUPDATED,0,REG_SZ,"yes",4);
-    }
+/* start the periodic saving timer */
+void SHELL_InitRegistrySaving(void)
+{
+  int	save_timeout;
 
-    RegCloseKey(hkey);
-  }
+  if (!CLIENT_IsBootThread()) return;
 
   if ((save_timeout = PROFILE_GetWineIniInt( "registry", "PeriodicSave", 0 )))
   {

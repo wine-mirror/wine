@@ -153,9 +153,6 @@ For more information on debugging messages, see the file
 in the source distribution.
 .RE
 .TP
-.I -depth n
-Change the depth to use for multiple-depth screens
-.TP
 .I -desktop geom
 Use a desktop window of the given geometry, e.g. "640x480"
 .TP
@@ -215,12 +212,6 @@ It, Ko, Kw, No, Pl, Pt, Ru, Sk, Sv, Wa)
 .I -managed
 Create each top-level window as a properly managed X window instead of
 creating our own "sticky" window.
-.TP
-.I -name name
-Set the application name
-.TP
-.I -privatemap
-Use a private color map
 .TP
 .I -synchronous
 Turn on synchronous display mode. Useful for debugging X11 graphics problems.

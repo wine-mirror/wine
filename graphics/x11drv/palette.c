@@ -120,7 +120,7 @@ BOOL X11DRV_PALETTE_Init(void)
 	X11DRV_PALETTE_PaletteFlags |= X11DRV_PALETTE_VIRTUAL;
     case GrayScale:
     case PseudoColor:
-	if (Options.usePrivateMap)
+	if (PROFILE_GetWineIniBool( "x11drv", "PrivateColorMap", 0 ))
 	{
 	    XSetWindowAttributes win_attr;
 
@@ -316,7 +316,7 @@ static BOOL X11DRV_PALETTE_BuildSharedMap(void)
 
    /* read "AllocSystemColors" from wine.conf */
 
-   COLOR_max = PROFILE_GetWineIniInt( "options", "AllocSystemColors", 256);
+   COLOR_max = PROFILE_GetWineIniInt( "x11drv", "AllocSystemColors", 256);
    if (COLOR_max > 256) COLOR_max = 256;
    else if (COLOR_max < 20) COLOR_max = 20;
    TRACE("%d colors configured.\n", COLOR_max);
