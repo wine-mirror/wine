@@ -808,14 +808,16 @@ WORD WINAPI GlobalPageUnlock( HGLOBAL16 handle )
 /***********************************************************************
  *           GlobalFix16   (KERNEL.197)
  */
-void WINAPI GlobalFix16( HGLOBAL16 handle )
+WORD WINAPI GlobalFix16( HGLOBAL16 handle )
 {
     TRACE(global, "%04x\n", handle );
     if (!VALID_HANDLE(handle)) {
 	WARN(global,"Invalid handle 0x%04x passed to GlobalFix16!\n",handle);
-	return;
+	return 0;
     }
     GET_ARENA_PTR(handle)->lockCount++;
+
+    return GlobalHandleToSel(handle);
 }
 
 

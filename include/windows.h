@@ -8234,7 +8234,7 @@ UINT32      WINAPI GlobalGetAtomName32W(ATOM,LPWSTR,INT32);
 DWORD       WINAPI GlobalHandle16(WORD);
 HGLOBAL32   WINAPI GlobalHandle32(LPCVOID);
 #define     GlobalHandle WINELIB_NAME(GlobalHandle)
-VOID        WINAPI GlobalFix16(HGLOBAL16);
+WORD        WINAPI GlobalFix16(HGLOBAL16);
 VOID        WINAPI GlobalFix32(HGLOBAL32);
 #define     GlobalFix WINELIB_NAME(GlobalFix)
 LPVOID      WINAPI GlobalLock16(HGLOBAL16);
