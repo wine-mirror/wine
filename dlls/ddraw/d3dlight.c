@@ -13,11 +13,11 @@
 #include "d3d.h"
 #include "debugtools.h"
 
-#include "d3d_private.h"
+#include "mesa_private.h"
 
 DEFAULT_DEBUG_CHANNEL(ddraw)
-
-#ifdef HAVE_MESAGL
+    
+#define D3DLPRIVATE(x) mesa_d3dl_private*dlpriv=((mesa_d3dl_private*)x->private)
 
 static ICOM_VTABLE(IDirect3DLight) light_vtable;
 
@@ -34,6 +34,7 @@ static const float zero_value[] = {
 };
 
 static void update(IDirect3DLightImpl* This) {
+  D3DLPRIVATE(This);
   switch (This->light.dltType) {
   case D3DLIGHT_POINT:         /* 1 */
     TRACE("Activating POINT\n");
@@ -53,21 +54,15 @@ static void update(IDirect3DLightImpl* This) {
 	  This->light.dvDirection.z.z);
     _dump_colorvalue(" color    ", This->light.dcvColor);
 
-    glLightfv(This->light_num,
-	      GL_AMBIENT,
-	      (float *) zero_value);
-
-    glLightfv(This->light_num,
-	      GL_DIFFUSE,
-	      (float *) &(This->light.dcvColor));
+    glLightfv(dlpriv->light_num, GL_AMBIENT, (float *) zero_value);
+    glLightfv(dlpriv->light_num, GL_DIFFUSE, (float *) &(This->light.dcvColor));
 
     direction[0] = -This->light.dvDirection.x.x;
     direction[1] = -This->light.dvDirection.y.y;
     direction[2] = -This->light.dvDirection.z.z;
     direction[3] = 0.0; /* This is a directional light */
-    glLightfv(This->light_num,
-	      GL_POSITION,
-	      (float *) direction);
+
+    glLightfv(dlpriv->light_num, GL_POSITION, (float *) direction);
   } break;
     
   case D3DLIGHT_PARALLELPOINT:  /* 4 */
@@ -75,19 +70,19 @@ static void update(IDirect3DLightImpl* This) {
     break;
 
   default:
-    TRACE("Not a know Light Type\n");
+    TRACE("Not a known Light Type: %d\n",This->light.dltType);
     break;
   }
 }
 
 static void activate(IDirect3DLightImpl* This) {
+  D3DLPRIVATE(This);
+
   ENTER_GL();
   update(This);
-
   /* If was not active, activate it */
   if (This->is_active == 0) {
-    glEnable(This->light_num);
-
+    glEnable(dlpriv->light_num);
     This->is_active = 1;
   }
   LEAVE_GL();
@@ -254,18 +249,3 @@ static ICOM_VTABLE(IDirect3DLight) light_vtable =
   IDirect3DLightImpl_SetLight,
   IDirect3DLightImpl_GetLight
 };
-
-#else /* HAVE_MESAGL */
-
-/* These function should never be called if MesaGL is not present */
-LPDIRECT3DLIGHT d3dlight_create_dx3(IDirect3DImpl* d3d1) {
-  ERR("Should not be called...\n");
-  return NULL;
-}
-
-LPDIRECT3DLIGHT d3dlight_create(IDirect3D2Impl* d3d2) {
-  ERR("Should not be called...\n");
-  return NULL;
-}
-
-#endif /* HAVE_MESAGL */

@@ -1,11 +1,15 @@
 name ddraw
 type win32
 
+import kernel32.dll
+import user32.dll
+import ole32.dll
+
 @ stub DDHAL32_VidMemAlloc
 @ stub DDHAL32_VidMemFree
 @ stub DDInternalLock
 @ stub DDInternalUnlock
-@ stdcall DSoundHelp(long long long) DSoundHelp
+@ stub DSoundHelp
 @ stdcall DirectDrawCreate(ptr ptr ptr) DirectDrawCreate
 @ stdcall DirectDrawCreateClipper(long ptr ptr) DirectDrawCreateClipper
 @ stdcall DirectDrawEnumerateA(ptr ptr) DirectDrawEnumerateA

@@ -14,11 +14,11 @@
 #include "d3d.h"
 #include "debugtools.h"
 
-#include "d3d_private.h"
+#include "mesa_private.h"
+
+#define D3DDPRIVATE(x) mesa_d3dd_private *odev=((mesa_d3dd_private*)(x)->private)
 
 DEFAULT_DEBUG_CHANNEL(ddraw)
-
-#ifdef HAVE_MESAGL
 
 /* Structure to store the 'semi transformed' vertices */
 typedef struct {
@@ -180,7 +180,7 @@ static void execute(LPDIRECT3DEXECUTEBUFFER lpBuff,
   /* DWORD il = ilpBuff->data.dwInstructionLength; */
   
   void *instr = ilpBuff->desc.lpData + is;
-  OpenGL_IDirect3DDevice *odev = (OpenGL_IDirect3DDevice *) dev;
+  D3DDPRIVATE((IDirect3DDeviceImpl*)dev);
   
   TRACE("ExecuteData : \n");
   if (TRACE_ON(ddraw))
@@ -857,5 +857,3 @@ static ICOM_VTABLE(IDirect3DExecuteBuffer) executebuffer_vtable =
   IDirect3DExecuteBufferImpl_Validate,
   IDirect3DExecuteBufferImpl_Optimize
 };
-
-#endif /* HAVE_MESAGL */

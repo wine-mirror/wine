@@ -1,3 +1,4 @@
 Makefile
-ddraw.spec.c
+*.spec.c
+*.spec.s
 libddraw.so.1.0

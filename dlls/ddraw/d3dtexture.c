@@ -14,11 +14,12 @@
 #include "d3d.h"
 #include "debugtools.h"
 
-#include "d3d_private.h"
+#include "mesa_private.h"
+
+#define D3DDPRIVATE(x) mesa_d3dd_private*odev=(mesa_d3dd_private*)(x)->private
+#define D3DTPRIVATE(x) mesa_d3dt_private*dtpriv=(mesa_d3dt_private*)(x)->private
 
 DEFAULT_DEBUG_CHANNEL(ddraw)
-
-#ifdef HAVE_MESAGL
 
 /* Define this if you want to save to a file all the textures used by a game
    (can be funny to see how they managed to cram all the pictures in
@@ -34,7 +35,7 @@ DEFAULT_DEBUG_CHANNEL(ddraw)
 	char buf[32];										\
 	int x, y;										\
 												\
-	sprintf(buf, "%ld.pnm", This->tex_name);							\
+	sprintf(buf, "%ld.pnm", dtpriv->tex_name);							\
 	f = fopen(buf, "wb");									\
 	fprintf(f, "P6\n%ld %ld\n255\n", src_d->dwWidth, src_d->dwHeight);			\
 	for (y = 0; y < src_d->dwHeight; y++) {							\
@@ -54,7 +55,7 @@ DEFAULT_DEBUG_CHANNEL(ddraw)
 	    char buf[32];										\
 	    int x, y;											\
 	    												\
-	    sprintf(buf, "%ld.pnm", This->tex_name);							\
+	    sprintf(buf, "%ld.pnm", dtpriv->tex_name);							\
 	    f = fopen(buf, "wb");									\
 	    fprintf(f, "P6\n%ld %ld\n255\n", src_d->dwWidth, src_d->dwHeight);				\
 	    for (y = 0; y < src_d->dwHeight; y++) {							\
@@ -74,7 +75,7 @@ DEFAULT_DEBUG_CHANNEL(ddraw)
 	    char buf[32];										\
 	    int x, y;											\
 	    												\
-	    sprintf(buf, "%ld.pnm", This->tex_name);							\
+	    sprintf(buf, "%ld.pnm", dtpriv->tex_name);							\
 	    f = fopen(buf, "wb");									\
 	    fprintf(f, "P6\n%ld %ld\n255\n", src_d->dwWidth, src_d->dwHeight);				\
 	    for (y = 0; y < src_d->dwHeight; y++) {							\
@@ -132,6 +133,7 @@ LPDIRECT3DTEXTURE d3dtexture_create(IDirectDrawSurface4Impl* surf)
 HRESULT WINAPI  SetColorKey_cb(IDirect3DTexture2Impl *texture, DWORD dwFlags, LPDDCOLORKEY ckey )
 {
   DDSURFACEDESC	*tex_d;
+  D3DTPRIVATE(texture);
   int bpp;
   GLuint current_texture;
   
@@ -148,12 +150,12 @@ HRESULT WINAPI  SetColorKey_cb(IDirect3DTexture2Impl *texture, DWORD dwFlags, LP
   glGetIntegerv(GL_TEXTURE_BINDING_2D, &current_texture);
 
   /* If the GetHandle was not done yet, it's an error */
-  if (texture->tex_name == 0) {
+  if (dtpriv->tex_name == 0) {
     ERR("Unloaded texture !\n");
     LEAVE_GL();
     return DD_OK;
   }
-  glBindTexture(GL_TEXTURE_2D, texture->tex_name);
+  glBindTexture(GL_TEXTURE_2D, dtpriv->tex_name);
 
   if (tex_d->ddpfPixelFormat.dwFlags & DDPF_PALETTEINDEXED8) {
     FIXME("Todo Paletted\n");
@@ -219,7 +221,7 @@ HRESULT WINAPI  SetColorKey_cb(IDirect3DTexture2Impl *texture, DWORD dwFlags, LP
  *				IDirect3DTexture2 methods
  */
 
-static HRESULT WINAPI IDirect3DTexture2Impl_QueryInterface(LPDIRECT3DTEXTURE2 iface,
+HRESULT WINAPI IDirect3DTexture2Impl_QueryInterface(LPDIRECT3DTEXTURE2 iface,
 							REFIID riid,
 							LPVOID* ppvObj)
 {
@@ -232,7 +234,7 @@ static HRESULT WINAPI IDirect3DTexture2Impl_QueryInterface(LPDIRECT3DTEXTURE2 if
 
 
 
-static ULONG WINAPI IDirect3DTexture2Impl_AddRef(LPDIRECT3DTEXTURE2 iface)
+ULONG WINAPI IDirect3DTexture2Impl_AddRef(LPDIRECT3DTEXTURE2 iface)
 {
   ICOM_THIS(IDirect3DTexture2Impl,iface);
   TRACE("(%p)->()incrementing from %lu.\n", This, This->ref );
@@ -242,15 +244,16 @@ static ULONG WINAPI IDirect3DTexture2Impl_AddRef(LPDIRECT3DTEXTURE2 iface)
 
 
 
-static ULONG WINAPI IDirect3DTexture2Impl_Release(LPDIRECT3DTEXTURE2 iface)
+ULONG WINAPI IDirect3DTexture2Impl_Release(LPDIRECT3DTEXTURE2 iface)
 {
   ICOM_THIS(IDirect3DTexture2Impl,iface);
+  D3DTPRIVATE(This);
   FIXME("(%p)->() decrementing from %lu.\n", This, This->ref );
   
   if (!--(This->ref)) {
     /* Delete texture from OpenGL */
     ENTER_GL();
-    glDeleteTextures(1, &(This->tex_name));
+    glDeleteTextures(1, &(dtpriv->tex_name));
     LEAVE_GL();
     
     /* Release surface */
@@ -264,30 +267,31 @@ static ULONG WINAPI IDirect3DTexture2Impl_Release(LPDIRECT3DTEXTURE2 iface)
 }
 
 /*** IDirect3DTexture methods ***/
-static HRESULT WINAPI IDirect3DTextureImpl_GetHandle(LPDIRECT3DTEXTURE iface,
+HRESULT WINAPI IDirect3DTextureImpl_GetHandle(LPDIRECT3DTEXTURE iface,
 						 LPDIRECT3DDEVICE lpD3DDevice,
 						 LPD3DTEXTUREHANDLE lpHandle)
 {
-  ICOM_THIS(IDirect3DTexture2Impl,iface);
-  IDirect3DDeviceImpl* ilpD3DDevice=(IDirect3DDeviceImpl*)lpD3DDevice;
-  FIXME("(%p)->(%p,%p): stub\n", This, ilpD3DDevice, lpHandle);
+    ICOM_THIS(IDirect3DTexture2Impl,iface);
+    D3DTPRIVATE(This);
+    IDirect3DDeviceImpl* ilpD3DDevice=(IDirect3DDeviceImpl*)lpD3DDevice;
+    FIXME("(%p)->(%p,%p): stub\n", This, ilpD3DDevice, lpHandle);
 
-  *lpHandle = (D3DTEXTUREHANDLE) This;
-  
-  /* Now, bind a new texture */
-  ENTER_GL();
-  ilpD3DDevice->set_context(ilpD3DDevice);
-  This->D3Ddevice = (void *) ilpD3DDevice;
-  if (This->tex_name == 0)
-    glGenTextures(1, &(This->tex_name));
-  LEAVE_GL();
+    *lpHandle = (D3DTEXTUREHANDLE) This;
 
-  TRACE("OpenGL texture handle is : %ld\n", This->tex_name);
-  
-  return D3D_OK;
+    /* Now, bind a new texture */
+    ENTER_GL();
+    ilpD3DDevice->set_context(ilpD3DDevice);
+    This->D3Ddevice = (void *) ilpD3DDevice;
+    if (dtpriv->tex_name == 0)
+	glGenTextures(1, &(dtpriv->tex_name));
+    LEAVE_GL();
+
+    TRACE("OpenGL texture handle is : %d\n", dtpriv->tex_name);
+
+    return D3D_OK;
 }
 
-static HRESULT WINAPI IDirect3DTextureImpl_Initialize(LPDIRECT3DTEXTURE iface,
+HRESULT WINAPI IDirect3DTextureImpl_Initialize(LPDIRECT3DTEXTURE iface,
 						  LPDIRECT3DDEVICE lpD3DDevice,
 						  LPDIRECTDRAWSURFACE lpSurface)
 {
@@ -297,7 +301,7 @@ static HRESULT WINAPI IDirect3DTextureImpl_Initialize(LPDIRECT3DTEXTURE iface,
   return DDERR_ALREADYINITIALIZED;
 }
 
-static HRESULT WINAPI IDirect3DTextureImpl_Unload(LPDIRECT3DTEXTURE iface)
+HRESULT WINAPI IDirect3DTextureImpl_Unload(LPDIRECT3DTEXTURE iface)
 {
   ICOM_THIS(IDirect3DTexture2Impl,iface);
   FIXME("(%p)->(): stub\n", This);
@@ -306,35 +310,35 @@ static HRESULT WINAPI IDirect3DTextureImpl_Unload(LPDIRECT3DTEXTURE iface)
 }
 
 /*** IDirect3DTexture2 methods ***/
-static HRESULT WINAPI IDirect3DTexture2Impl_GetHandle(LPDIRECT3DTEXTURE2 iface,
+HRESULT WINAPI IDirect3DTexture2Impl_GetHandle(LPDIRECT3DTEXTURE2 iface,
 						  LPDIRECT3DDEVICE2 lpD3DDevice2,
 						  LPD3DTEXTUREHANDLE lpHandle)
 {
-  ICOM_THIS(IDirect3DTexture2Impl,iface);
-  IDirect3DDevice2Impl* ilpD3DDevice2=(IDirect3DDevice2Impl*)lpD3DDevice2;
-  TRACE("(%p)->(%p,%p)\n", This, ilpD3DDevice2, lpHandle);
+    ICOM_THIS(IDirect3DTexture2Impl,iface);
+    D3DTPRIVATE(This);
+    IDirect3DDevice2Impl* ilpD3DDevice2=(IDirect3DDevice2Impl*)lpD3DDevice2;
+    TRACE("(%p)->(%p,%p)\n", This, ilpD3DDevice2, lpHandle);
 
-  /* For 32 bits OSes, handles = pointers */
-  *lpHandle = (D3DTEXTUREHANDLE) This;
-  
-  /* Now, bind a new texture */
-  ENTER_GL();
-  ilpD3DDevice2->set_context(ilpD3DDevice2);
-  This->D3Ddevice = (void *) ilpD3DDevice2;
-  if (This->tex_name == 0)
-  glGenTextures(1, &(This->tex_name));
-  LEAVE_GL();
+    /* For 32 bits OSes, handles = pointers */
+    *lpHandle = (D3DTEXTUREHANDLE) This;
 
-  TRACE("OpenGL texture handle is : %ld\n", This->tex_name);
-  
-  return D3D_OK;
+    /* Now, bind a new texture */
+    ENTER_GL();
+    ilpD3DDevice2->set_context(ilpD3DDevice2);
+    This->D3Ddevice = (void *) ilpD3DDevice2;
+    if (dtpriv->tex_name == 0)
+	glGenTextures(1, &(dtpriv->tex_name));
+    LEAVE_GL();
+
+    TRACE("OpenGL texture handle is : %d\n", dtpriv->tex_name);
+
+    return D3D_OK;
 }
 
 /* Common methods */
-static HRESULT WINAPI IDirect3DTexture2Impl_PaletteChanged(LPDIRECT3DTEXTURE2 iface,
-						       DWORD dwStart,
-						       DWORD dwCount)
-{
+HRESULT WINAPI IDirect3DTexture2Impl_PaletteChanged(
+    LPDIRECT3DTEXTURE2 iface, DWORD dwStart, DWORD dwCount
+) {
   ICOM_THIS(IDirect3DTexture2Impl,iface);
   FIXME("(%p)->(%8ld,%8ld): stub\n", This, dwStart, dwCount);
 
@@ -343,10 +347,11 @@ static HRESULT WINAPI IDirect3DTexture2Impl_PaletteChanged(LPDIRECT3DTEXTURE2 if
 
 /* NOTE : if you experience crashes in this function, you must have a buggy
           version of Mesa. See the file d3dtexture.c for a cure */
-static HRESULT WINAPI IDirect3DTexture2Impl_Load(LPDIRECT3DTEXTURE2 iface,
-					     LPDIRECT3DTEXTURE2 lpD3DTexture2)
-{
+HRESULT WINAPI IDirect3DTexture2Impl_Load(
+    LPDIRECT3DTEXTURE2 iface, LPDIRECT3DTEXTURE2 lpD3DTexture2
+) {
   ICOM_THIS(IDirect3DTexture2Impl,iface);
+  D3DTPRIVATE(This);
   IDirect3DTexture2Impl* ilpD3DTexture2=(IDirect3DTexture2Impl*)lpD3DTexture2;
   DDSURFACEDESC	*src_d, *dst_d;
   TRACE("(%p)->(%p)\n", This, ilpD3DTexture2);
@@ -387,9 +392,9 @@ static HRESULT WINAPI IDirect3DTexture2Impl_Load(LPDIRECT3DTEXTURE2 iface,
     glGetIntegerv(GL_TEXTURE_BINDING_2D, &current_texture);
 
     /* If the GetHandle was not done, get the texture name here */
-    if (This->tex_name == 0)
-      glGenTextures(1, &(This->tex_name));
-    glBindTexture(GL_TEXTURE_2D, This->tex_name);
+    if (dtpriv->tex_name == 0)
+      glGenTextures(1, &(dtpriv->tex_name));
+    glBindTexture(GL_TEXTURE_2D, dtpriv->tex_name);
 
     if (src_d->ddpfPixelFormat.dwFlags & DDPF_PALETTEINDEXED8) {
       /* ****************
@@ -530,7 +535,7 @@ static HRESULT WINAPI IDirect3DTexture2Impl_Load(LPDIRECT3DTEXTURE2 iface,
 /*******************************************************************************
  *				IDirect3DTexture2 VTable
  */
-static ICOM_VTABLE(IDirect3DTexture2) texture2_vtable = 
+ICOM_VTABLE(IDirect3DTexture2) mesa_texture2_vtable = 
 {
   ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
   /*** IUnknown methods ***/
@@ -546,7 +551,7 @@ static ICOM_VTABLE(IDirect3DTexture2) texture2_vtable =
 /*******************************************************************************
  *				IDirect3DTexture VTable
  */
-static ICOM_VTABLE(IDirect3DTexture) texture_vtable = 
+ICOM_VTABLE(IDirect3DTexture) mesa_texture_vtable = 
 {
   ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
   /*** IUnknown methods ***/
@@ -560,18 +565,3 @@ static ICOM_VTABLE(IDirect3DTexture) texture_vtable =
   IDirect3DTexture2Impl_Load,
   IDirect3DTextureImpl_Unload
 };
-
-#else /* HAVE_MESAGL */
-
-/* These function should never be called if MesaGL is not present */
-LPDIRECT3DTEXTURE2 d3dtexture2_create(IDirectDrawSurface4Impl* surf) {
-  ERR("Should not be called...\n");
-  return NULL;
-}
-
-LPDIRECT3DTEXTURE d3dtexture_create(IDirectDrawSurface4Impl* surf) {
-  ERR("Should not be called...\n");
-  return NULL;
-}
-
-#endif /* HAVE_MESAGL */

@@ -7,12 +7,9 @@
 #ifndef __GRAPHICS_WINE_D3D_PRIVATE_H
 #define __GRAPHICS_WINE_D3D_PRIVATE_H
 
-#include "wine_gl.h"
+/* THIS FILE MUST NOT CONTAIN X11 or MESA DEFINES */
+
 #include "d3d.h"
-
-#include "x11drv.h"
-
-#undef USE_OSMESA
 
 /*****************************************************************************
  * Predeclare the interface implementation structures
@@ -29,6 +26,9 @@ typedef struct IDirect3DDevice2Impl IDirect3DDevice2Impl;
 
 #include "ddraw_private.h"
 
+extern ICOM_VTABLE(IDirect3D)	mesa_d3dvt;
+extern ICOM_VTABLE(IDirect3D2)	mesa_d3d2vt;
+
 /*****************************************************************************
  * IDirect3D implementation structure
  */
@@ -38,7 +38,8 @@ struct IDirect3DImpl
     ICOM_VFIELD(IDirect3D);
     DWORD                   ref;
     /* IDirect3D fields */
-    IDirectDrawImpl* ddraw;
+    IDirectDrawImpl*	ddraw;
+    LPVOID		private;
 };
 
 /*****************************************************************************
@@ -50,8 +51,54 @@ struct IDirect3D2Impl
     ICOM_VFIELD(IDirect3D2);
     DWORD                    ref;
     /* IDirect3D2 fields */
-    IDirectDrawImpl* ddraw;
+    IDirectDrawImpl*	ddraw;
+    LPVOID		private;
 };
+
+extern HRESULT WINAPI IDirect3DImpl_QueryInterface(
+    LPDIRECT3D iface,REFIID refiid,LPVOID *obj
+);
+extern ULONG WINAPI IDirect3DImpl_AddRef(LPDIRECT3D iface);
+extern ULONG WINAPI IDirect3DImpl_Release(LPDIRECT3D iface)
+;
+extern HRESULT WINAPI IDirect3DImpl_Initialize(LPDIRECT3D iface,REFIID refiid);
+extern HRESULT WINAPI IDirect3DImpl_EnumDevices(
+    LPDIRECT3D iface, LPD3DENUMDEVICESCALLBACK cb, LPVOID context
+);
+extern HRESULT WINAPI IDirect3DImpl_CreateLight(
+    LPDIRECT3D iface, LPDIRECT3DLIGHT *lplight, IUnknown *lpunk
+);
+extern HRESULT WINAPI IDirect3DImpl_CreateMaterial(
+    LPDIRECT3D iface, LPDIRECT3DMATERIAL *lpmaterial, IUnknown *lpunk
+);
+extern HRESULT WINAPI IDirect3DImpl_CreateViewport(
+    LPDIRECT3D iface, LPDIRECT3DVIEWPORT *lpviewport, IUnknown *lpunk
+);
+extern HRESULT WINAPI IDirect3DImpl_FindDevice(
+    LPDIRECT3D iface, LPD3DFINDDEVICESEARCH lpfinddevsrc,
+    LPD3DFINDDEVICERESULT lpfinddevrst)
+;
+extern HRESULT WINAPI IDirect3D2Impl_QueryInterface(LPDIRECT3D2 iface,REFIID refiid,LPVOID *obj);  
+extern ULONG WINAPI IDirect3D2Impl_AddRef(LPDIRECT3D2 iface);
+extern ULONG WINAPI IDirect3D2Impl_Release(LPDIRECT3D2 iface);
+extern HRESULT WINAPI IDirect3D2Impl_EnumDevices(
+    LPDIRECT3D2 iface,LPD3DENUMDEVICESCALLBACK cb, LPVOID context
+);
+extern HRESULT WINAPI IDirect3D2Impl_CreateLight(
+    LPDIRECT3D2 iface, LPDIRECT3DLIGHT *lplight, IUnknown *lpunk
+);
+extern HRESULT WINAPI IDirect3D2Impl_CreateMaterial(
+    LPDIRECT3D2 iface, LPDIRECT3DMATERIAL2 *lpmaterial, IUnknown *lpunk
+);
+extern HRESULT WINAPI IDirect3D2Impl_CreateViewport(
+    LPDIRECT3D2 iface, LPDIRECT3DVIEWPORT2 *lpviewport, IUnknown *lpunk
+);
+extern HRESULT WINAPI IDirect3D2Impl_FindDevice(
+    LPDIRECT3D2 iface, LPD3DFINDDEVICESEARCH lpfinddevsrc,
+    LPD3DFINDDEVICERESULT lpfinddevrst);
+extern HRESULT WINAPI IDirect3D2Impl_CreateDevice(
+    LPDIRECT3D2 iface, REFCLSID rguid, LPDIRECTDRAWSURFACE surface,
+    LPDIRECT3DDEVICE2 *device);
 
 /*****************************************************************************
  * IDirect3DLight implementation structure
@@ -77,10 +124,7 @@ struct IDirect3DLightImpl
     void (*activate)(IDirect3DLightImpl*);
     int                 is_active;
   
-    /* Awful OpenGL code !!! */
-#ifdef HAVE_MESAGL
-    GLenum              light_num;
-#endif
+    LPVOID		private;
 };
 
 /*****************************************************************************
@@ -105,6 +149,7 @@ struct IDirect3DMaterial2Impl
     D3DMATERIAL               mat;
 
     void (*activate)(IDirect3DMaterial2Impl* this);
+    LPVOID			private;
 };
 
 /*****************************************************************************
@@ -116,13 +161,36 @@ struct IDirect3DTexture2Impl
     ICOM_VFIELD(IDirect3DTexture2);
     DWORD                           ref;
     /* IDirect3DTexture2 fields */
-    void*                    D3Ddevice; /* I put (void *) to use the same pointer for both
-		                           Direct3D and Direct3D2 */
-#ifdef HAVE_MESAGL
-    GLuint                   tex_name;
-#endif  
-    IDirectDrawSurface4Impl* surface;
+    void*			D3Ddevice; /* (void *) to use the same pointer
+					    * for both Direct3D and Direct3D2 */
+    IDirectDrawSurface4Impl*	surface;
+    LPVOID			private;
 };
+
+extern HRESULT WINAPI IDirect3DTexture2Impl_QueryInterface(
+    LPDIRECT3DTEXTURE2 iface, REFIID riid, LPVOID* ppvObj
+);
+extern ULONG WINAPI IDirect3DTexture2Impl_AddRef(LPDIRECT3DTEXTURE2 iface);
+extern ULONG WINAPI IDirect3DTexture2Impl_Release(LPDIRECT3DTEXTURE2 iface);
+extern HRESULT WINAPI IDirect3DTextureImpl_GetHandle(LPDIRECT3DTEXTURE iface,
+						 LPDIRECT3DDEVICE lpD3DDevice,
+						 LPD3DTEXTUREHANDLE lpHandle)
+;
+extern HRESULT WINAPI IDirect3DTextureImpl_Initialize(LPDIRECT3DTEXTURE iface,
+					  LPDIRECT3DDEVICE lpD3DDevice,
+					  LPDIRECTDRAWSURFACE lpSurface)
+;
+extern HRESULT WINAPI IDirect3DTextureImpl_Unload(LPDIRECT3DTEXTURE iface);
+extern HRESULT WINAPI IDirect3DTexture2Impl_GetHandle(
+    LPDIRECT3DTEXTURE2 iface, LPDIRECT3DDEVICE2 lpD3DDevice2,
+    LPD3DTEXTUREHANDLE lpHandle
+);
+extern HRESULT WINAPI IDirect3DTexture2Impl_PaletteChanged(
+    LPDIRECT3DTEXTURE2 iface, DWORD dwStart, DWORD dwCount
+);
+extern HRESULT WINAPI IDirect3DTexture2Impl_Load(
+    LPDIRECT3DTEXTURE2 iface, LPDIRECT3DTEXTURE2 lpD3DTexture2
+);
 
 /*****************************************************************************
  * IDirect3DViewport2 implementation structure
@@ -139,31 +207,83 @@ struct IDirect3DViewport2Impl
     } d3d;
     /* If this viewport is active for one device, put the device here */
     union {
-        IDirect3DDeviceImpl*  active_device1;
-        IDirect3DDevice2Impl* active_device2;
+        IDirect3DDeviceImpl*	active_device1;
+        IDirect3DDevice2Impl*	active_device2;
     } device;
-    int                       use_d3d2;
+    int				use_d3d2;
 
     union {
-        D3DVIEWPORT           vp1;
-        D3DVIEWPORT2          vp2;
+        D3DVIEWPORT		vp1;
+        D3DVIEWPORT2		vp2;
     } viewport;
-    int                       use_vp2;
+    int				use_vp2;
 
   /* Activation function */
   void (*activate)(IDirect3DViewport2Impl*);
   
   /* Field used to chain viewports together */
-  IDirect3DViewport2Impl*     next;
+  IDirect3DViewport2Impl*	next;
 
   /* Lights list */
-  IDirect3DLightImpl*         lights;
-
-  /* OpenGL code */
-#ifdef HAVE_MESAGL
-  GLenum                      nextlight;
-#endif
+  IDirect3DLightImpl*		lights;
+  
+  LPVOID			private;
 };
+
+extern HRESULT WINAPI IDirect3DViewport2Impl_QueryInterface(
+    LPDIRECT3DVIEWPORT2 iface, REFIID riid, LPVOID* ppvObj
+);
+extern ULONG WINAPI IDirect3DViewport2Impl_AddRef(LPDIRECT3DVIEWPORT2 iface)
+;
+extern ULONG WINAPI IDirect3DViewport2Impl_Release(LPDIRECT3DVIEWPORT2 iface)
+;
+extern HRESULT WINAPI IDirect3DViewport2Impl_Initialize(
+    LPDIRECT3DVIEWPORT2 iface, LPDIRECT3D d3d
+);
+extern HRESULT WINAPI IDirect3DViewport2Impl_GetViewport(
+    LPDIRECT3DVIEWPORT2 iface, LPD3DVIEWPORT lpvp
+);
+extern HRESULT WINAPI IDirect3DViewport2Impl_SetViewport(
+    LPDIRECT3DVIEWPORT2 iface,LPD3DVIEWPORT lpvp
+);
+extern HRESULT WINAPI IDirect3DViewport2Impl_TransformVertices(
+    LPDIRECT3DVIEWPORT2 iface,DWORD dwVertexCount,LPD3DTRANSFORMDATA lpData,
+    DWORD dwFlags,LPDWORD lpOffScreen
+);
+extern HRESULT WINAPI IDirect3DViewport2Impl_LightElements(
+    LPDIRECT3DVIEWPORT2 iface,DWORD dwElementCount,LPD3DLIGHTDATA lpData
+);
+extern HRESULT WINAPI IDirect3DViewport2Impl_SetBackground(
+    LPDIRECT3DVIEWPORT2 iface, D3DMATERIALHANDLE hMat
+);
+extern HRESULT WINAPI IDirect3DViewport2Impl_GetBackground(
+    LPDIRECT3DVIEWPORT2 iface,LPD3DMATERIALHANDLE lphMat,LPBOOL lpValid
+);
+extern HRESULT WINAPI IDirect3DViewport2Impl_SetBackgroundDepth(
+    LPDIRECT3DVIEWPORT2 iface,LPDIRECTDRAWSURFACE lpDDSurface
+);
+extern HRESULT WINAPI IDirect3DViewport2Impl_GetBackgroundDepth(
+    LPDIRECT3DVIEWPORT2 iface,LPDIRECTDRAWSURFACE* lplpDDSurface,LPBOOL lpValid
+);
+extern HRESULT WINAPI IDirect3DViewport2Impl_Clear(
+    LPDIRECT3DVIEWPORT2 iface, DWORD dwCount, LPD3DRECT lpRects, DWORD dwFlags
+);
+extern HRESULT WINAPI IDirect3DViewport2Impl_AddLight(
+    LPDIRECT3DVIEWPORT2 iface,LPDIRECT3DLIGHT lpLight
+);
+extern HRESULT WINAPI IDirect3DViewport2Impl_DeleteLight(
+    LPDIRECT3DVIEWPORT2 iface,LPDIRECT3DLIGHT lpLight
+);
+extern HRESULT WINAPI IDirect3DViewport2Impl_NextLight(
+    LPDIRECT3DVIEWPORT2 iface, LPDIRECT3DLIGHT lpLight,
+    LPDIRECT3DLIGHT* lplpLight, DWORD dwFlags
+);
+extern HRESULT WINAPI IDirect3DViewport2Impl_GetViewport2(
+    LPDIRECT3DVIEWPORT2 iface, LPD3DVIEWPORT2 lpViewport2
+);
+extern HRESULT WINAPI IDirect3DViewport2Impl_SetViewport2(
+    LPDIRECT3DVIEWPORT2 iface, LPD3DVIEWPORT2 lpViewport2
+);
 
 /*****************************************************************************
  * IDirect3DExecuteBuffer implementation structure
@@ -190,7 +310,9 @@ struct IDirect3DExecuteBufferImpl
     void (*execute)(IDirect3DExecuteBuffer* this,
                     IDirect3DDevice* dev,
                     IDirect3DViewport2* vp);
+    LPVOID private;
 };
+extern LPDIRECT3DEXECUTEBUFFER d3dexecutebuffer_create(IDirect3DDeviceImpl* d3ddev, LPD3DEXECUTEBUFFERDESC lpDesc);
 
 /*****************************************************************************
  * IDirect3DDevice implementation structure
@@ -208,6 +330,7 @@ struct IDirect3DDeviceImpl
     IDirect3DViewport2Impl*  current_viewport;
 
     void (*set_context)(IDirect3DDeviceImpl*);
+    LPVOID		private;
 };
 
 /*****************************************************************************
@@ -226,118 +349,175 @@ struct IDirect3DDevice2Impl
     IDirect3DViewport2Impl* current_viewport;
 
     void (*set_context)(IDirect3DDevice2Impl*);
+    LPVOID		private;
 };
-
-
-
-#ifdef HAVE_MESAGL
-
-#ifdef USE_OSMESA
-#define LEAVE_GL() ;
-#define ENTER_GL() ;
-#else
-#define LEAVE_GL() LeaveCriticalSection( &X11DRV_CritSection )
-#define ENTER_GL() EnterCriticalSection( &X11DRV_CritSection )
-#endif
-
-/* Matrix copy WITH transposition */
-#define conv_mat2(mat,gl_mat)			\
-{						\
-  TRACE("%f %f %f %f\n", (mat)->_11, (mat)->_12, (mat)->_13, (mat)->_14); \
-  TRACE("%f %f %f %f\n", (mat)->_21, (mat)->_22, (mat)->_23, (mat)->_24); \
-  TRACE("%f %f %f %f\n", (mat)->_31, (mat)->_32, (mat)->_33, (mat)->_34); \
-  TRACE("%f %f %f %f\n", (mat)->_41, (mat)->_42, (mat)->_43, (mat)->_44); \
-  (gl_mat)[ 0] = (mat)->_11;			\
-  (gl_mat)[ 1] = (mat)->_21;			\
-  (gl_mat)[ 2] = (mat)->_31;			\
-  (gl_mat)[ 3] = (mat)->_41;			\
-  (gl_mat)[ 4] = (mat)->_12;			\
-  (gl_mat)[ 5] = (mat)->_22;			\
-  (gl_mat)[ 6] = (mat)->_32;			\
-  (gl_mat)[ 7] = (mat)->_42;			\
-  (gl_mat)[ 8] = (mat)->_13;			\
-  (gl_mat)[ 9] = (mat)->_23;			\
-  (gl_mat)[10] = (mat)->_33;			\
-  (gl_mat)[11] = (mat)->_43;			\
-  (gl_mat)[12] = (mat)->_14;			\
-  (gl_mat)[13] = (mat)->_24;			\
-  (gl_mat)[14] = (mat)->_34;			\
-  (gl_mat)[15] = (mat)->_44;			\
-};
-
-/* Matrix copy WITHOUT transposition */
-#define conv_mat(mat,gl_mat)			\
-{                                               \
-  TRACE("%f %f %f %f\n", (mat)->_11, (mat)->_12, (mat)->_13, (mat)->_14); \
-  TRACE("%f %f %f %f\n", (mat)->_21, (mat)->_22, (mat)->_23, (mat)->_24); \
-  TRACE("%f %f %f %f\n", (mat)->_31, (mat)->_32, (mat)->_33, (mat)->_34); \
-  TRACE("%f %f %f %f\n", (mat)->_41, (mat)->_42, (mat)->_43, (mat)->_44); \
-  memcpy(gl_mat, (mat), 16 * sizeof(float));      \
-};
-
-#define dump_mat(mat) \
-  TRACE("%f %f %f %f\n", (mat)->_11, (mat)->_12, (mat)->_13, (mat)->_14); \
-  TRACE("%f %f %f %f\n", (mat)->_21, (mat)->_22, (mat)->_23, (mat)->_24); \
-  TRACE("%f %f %f %f\n", (mat)->_31, (mat)->_32, (mat)->_33, (mat)->_34); \
-  TRACE("%f %f %f %f\n", (mat)->_41, (mat)->_42, (mat)->_43, (mat)->_44);
-
-typedef struct render_state {
-  /* This is used for the device mode */
-  GLenum src, dst;
-  /* This is used for textures */
-  GLenum mag, min;
-} RenderState;
-
-typedef struct OpenGL_IDirect3DDevice2 {
-  IDirect3DDevice2Impl common;
-  
-  /* These are the OpenGL-specific variables */
-#ifdef USE_OSMESA
-  OSMesaContext ctx;
-  unsigned char *buffer;
-#else
-  GLXContext ctx;
-#endif
-  
-  /* The current render state */
-  RenderState rs;
-
-  /* The last type of vertex drawn */
-  D3DVERTEXTYPE vt;
-  
-  float world_mat[16];
-  float view_mat[16];
-  float proj_mat[16];
-} OpenGL_IDirect3DDevice2;
-
-typedef struct OpenGL_IDirect3DDevice {
-  IDirect3DDeviceImpl common;
-  
-  /* These are the OpenGL-specific variables */
-#ifdef USE_OSMESA
-  OSMesaContext ctx;
-  unsigned char *buffer;
-#else
-  GLXContext ctx;
-#endif
-  
-  /* The current render state */
-  RenderState rs;
-  
-  D3DMATRIX *world_mat;
-  D3DMATRIX *view_mat;
-  D3DMATRIX *proj_mat;
-} OpenGL_IDirect3DDevice;
-
-#define _dump_colorvalue(s,v)               \
-  TRACE(" " s " : %f %f %f %f\n",           \
-	(v).r.r, (v).g.g, (v).b.b, (v).a.a);
-
-/* Common functions defined in d3dcommon.c */
-void set_render_state(D3DRENDERSTATETYPE dwRenderStateType,
-		      DWORD dwRenderState, RenderState *rs) ;
-
-#endif /* HAVE_MESAGL */
+extern HRESULT WINAPI IDirect3DDevice2Impl_QueryInterface(
+    LPDIRECT3DDEVICE2 iface, REFIID riid, LPVOID* ppvObj
+);
+extern ULONG WINAPI IDirect3DDevice2Impl_AddRef(LPDIRECT3DDEVICE2 iface);
+extern ULONG WINAPI IDirect3DDevice2Impl_Release(LPDIRECT3DDEVICE2 iface)
+;
+extern HRESULT WINAPI IDirect3DDevice2Impl_GetCaps(
+    LPDIRECT3DDEVICE2 iface, LPD3DDEVICEDESC lpdescsoft,
+    LPD3DDEVICEDESC lpdeschard
+);
+extern HRESULT WINAPI IDirect3DDevice2Impl_SwapTextureHandles(
+    LPDIRECT3DDEVICE2 iface,LPDIRECT3DTEXTURE2 lptex1,LPDIRECT3DTEXTURE2 lptex2
+);
+extern HRESULT WINAPI IDirect3DDevice2Impl_GetStats(
+    LPDIRECT3DDEVICE2 iface, LPD3DSTATS lpstats)
+;
+extern HRESULT WINAPI IDirect3DDevice2Impl_AddViewport(
+    LPDIRECT3DDEVICE2 iface, LPDIRECT3DVIEWPORT2 lpvp
+);
+extern HRESULT WINAPI IDirect3DDevice2Impl_DeleteViewport(
+    LPDIRECT3DDEVICE2 iface, LPDIRECT3DVIEWPORT2 lpvp)
+;
+extern HRESULT WINAPI IDirect3DDevice2Impl_NextViewport(
+    LPDIRECT3DDEVICE2 iface, LPDIRECT3DVIEWPORT2 lpvp,
+    LPDIRECT3DVIEWPORT2* lplpvp, DWORD dwFlags
+);
+extern HRESULT WINAPI IDirect3DDevice2Impl_EnumTextureFormats(
+    LPDIRECT3DDEVICE2 iface, LPD3DENUMTEXTUREFORMATSCALLBACK cb, LPVOID context
+);
+extern HRESULT WINAPI IDirect3DDevice2Impl_BeginScene(LPDIRECT3DDEVICE2 iface);
+extern HRESULT WINAPI IDirect3DDevice2Impl_EndScene(LPDIRECT3DDEVICE2 iface);
+extern HRESULT WINAPI IDirect3DDevice2Impl_GetDirect3D(
+    LPDIRECT3DDEVICE2 iface, LPDIRECT3D2 *lpd3d2
+);
+extern HRESULT WINAPI IDirect3DDevice2Impl_SetCurrentViewport(
+    LPDIRECT3DDEVICE2 iface, LPDIRECT3DVIEWPORT2 lpvp
+);
+extern HRESULT WINAPI IDirect3DDevice2Impl_GetCurrentViewport(
+    LPDIRECT3DDEVICE2 iface, LPDIRECT3DVIEWPORT2 *lplpvp
+);
+extern HRESULT WINAPI IDirect3DDevice2Impl_SetRenderTarget(
+    LPDIRECT3DDEVICE2 iface, LPDIRECTDRAWSURFACE lpdds, DWORD dwFlags
+);
+extern HRESULT WINAPI IDirect3DDevice2Impl_GetRenderTarget(
+    LPDIRECT3DDEVICE2 iface, LPDIRECTDRAWSURFACE *lplpdds
+);
+extern HRESULT WINAPI IDirect3DDevice2Impl_Begin(
+    LPDIRECT3DDEVICE2 iface, D3DPRIMITIVETYPE d3dp, D3DVERTEXTYPE d3dv,
+    DWORD dwFlags
+);
+extern HRESULT WINAPI IDirect3DDevice2Impl_BeginIndexed(
+    LPDIRECT3DDEVICE2 iface, D3DPRIMITIVETYPE d3dp, D3DVERTEXTYPE d3dv,
+    LPVOID lpvert, DWORD numvert, DWORD dwFlags
+);
+extern HRESULT WINAPI IDirect3DDevice2Impl_Vertex(
+    LPDIRECT3DDEVICE2 iface,LPVOID lpvert
+);
+extern HRESULT WINAPI IDirect3DDevice2Impl_Index(LPDIRECT3DDEVICE2 iface, WORD index);
+extern HRESULT WINAPI IDirect3DDevice2Impl_End(LPDIRECT3DDEVICE2 iface,DWORD dwFlags);
+extern HRESULT WINAPI IDirect3DDevice2Impl_GetRenderState(
+    LPDIRECT3DDEVICE2 iface, D3DRENDERSTATETYPE d3drs, LPDWORD lprstate
+);
+extern HRESULT WINAPI IDirect3DDevice2Impl_SetRenderState(
+    LPDIRECT3DDEVICE2 iface, D3DRENDERSTATETYPE dwRenderStateType,
+    DWORD dwRenderState
+);
+extern HRESULT WINAPI IDirect3DDevice2Impl_GetLightState(
+    LPDIRECT3DDEVICE2 iface, D3DLIGHTSTATETYPE d3dls, LPDWORD lplstate
+);
+extern HRESULT WINAPI IDirect3DDevice2Impl_SetLightState(
+    LPDIRECT3DDEVICE2 iface, D3DLIGHTSTATETYPE dwLightStateType,
+    DWORD dwLightState
+);
+extern HRESULT WINAPI IDirect3DDevice2Impl_SetTransform(
+    LPDIRECT3DDEVICE2 iface, D3DTRANSFORMSTATETYPE d3dts, LPD3DMATRIX lpmatrix
+);
+extern HRESULT WINAPI IDirect3DDevice2Impl_GetTransform(
+    LPDIRECT3DDEVICE2 iface, D3DTRANSFORMSTATETYPE d3dts, LPD3DMATRIX lpmatrix
+);
+extern HRESULT WINAPI IDirect3DDevice2Impl_MultiplyTransform(
+    LPDIRECT3DDEVICE2 iface, D3DTRANSFORMSTATETYPE d3dts, LPD3DMATRIX lpmatrix
+);
+extern HRESULT WINAPI IDirect3DDevice2Impl_DrawPrimitive(
+    LPDIRECT3DDEVICE2 iface, D3DPRIMITIVETYPE d3dp, D3DVERTEXTYPE d3dv,
+    LPVOID lpvertex, DWORD vertcount, DWORD dwFlags
+);
+extern HRESULT WINAPI IDirect3DDevice2Impl_DrawIndexedPrimitive(
+    LPDIRECT3DDEVICE2 iface, D3DPRIMITIVETYPE d3dp, D3DVERTEXTYPE d3dv,
+    LPVOID lpvertex, DWORD vertcount, LPWORD lpindexes, DWORD indexcount,
+    DWORD dwFlags
+);
+extern HRESULT WINAPI IDirect3DDevice2Impl_SetClipStatus(
+    LPDIRECT3DDEVICE2 iface, LPD3DCLIPSTATUS lpcs
+);
+extern HRESULT WINAPI IDirect3DDevice2Impl_GetClipStatus(
+    LPDIRECT3DDEVICE2 iface, LPD3DCLIPSTATUS lpcs
+);
+extern HRESULT WINAPI IDirect3DDeviceImpl_QueryInterface(
+    LPDIRECT3DDEVICE iface, REFIID riid, LPVOID* ppvObj
+);
+extern ULONG WINAPI IDirect3DDeviceImpl_AddRef(LPDIRECT3DDEVICE iface);
+extern ULONG WINAPI IDirect3DDeviceImpl_Release(LPDIRECT3DDEVICE iface);
+extern HRESULT WINAPI IDirect3DDeviceImpl_Initialize(
+    LPDIRECT3DDEVICE iface, LPDIRECT3D lpd3d, LPGUID lpGUID,
+    LPD3DDEVICEDESC lpd3ddvdesc
+);
+extern HRESULT WINAPI IDirect3DDeviceImpl_GetCaps(
+    LPDIRECT3DDEVICE iface, LPD3DDEVICEDESC lpD3DHWDevDesc,
+    LPD3DDEVICEDESC lpD3DSWDevDesc
+);
+extern HRESULT WINAPI IDirect3DDeviceImpl_SwapTextureHandles(
+    LPDIRECT3DDEVICE iface, LPDIRECT3DTEXTURE lpD3DTex1,
+    LPDIRECT3DTEXTURE lpD3DTex2
+);
+extern HRESULT WINAPI IDirect3DDeviceImpl_CreateExecuteBuffer(
+    LPDIRECT3DDEVICE iface, LPD3DEXECUTEBUFFERDESC lpDesc,
+    LPDIRECT3DEXECUTEBUFFER *lplpDirect3DExecuteBuffer, IUnknown *pUnkOuter
+);
+extern HRESULT WINAPI IDirect3DDeviceImpl_GetStats(
+    LPDIRECT3DDEVICE iface, LPD3DSTATS lpD3DStats
+);
+extern HRESULT WINAPI IDirect3DDeviceImpl_Execute(
+    LPDIRECT3DDEVICE iface, LPDIRECT3DEXECUTEBUFFER lpDirect3DExecuteBuffer,
+    LPDIRECT3DVIEWPORT lpDirect3DViewport, DWORD dwFlags
+);
+extern HRESULT WINAPI IDirect3DDeviceImpl_AddViewport(
+    LPDIRECT3DDEVICE iface, LPDIRECT3DVIEWPORT lpvp
+);
+extern HRESULT WINAPI IDirect3DDeviceImpl_DeleteViewport(
+    LPDIRECT3DDEVICE iface, LPDIRECT3DVIEWPORT lpvp
+);
+extern HRESULT WINAPI IDirect3DDeviceImpl_NextViewport(
+    LPDIRECT3DDEVICE iface, LPDIRECT3DVIEWPORT lpvp,
+    LPDIRECT3DVIEWPORT* lplpvp, DWORD dwFlags
+);
+extern HRESULT WINAPI IDirect3DDeviceImpl_Pick(
+    LPDIRECT3DDEVICE iface, LPDIRECT3DEXECUTEBUFFER lpDirect3DExecuteBuffer,
+    LPDIRECT3DVIEWPORT lpDirect3DViewport, DWORD dwFlags, LPD3DRECT lpRect
+);
+extern HRESULT WINAPI IDirect3DDeviceImpl_GetPickRecords(
+    LPDIRECT3DDEVICE iface, LPDWORD lpCount, LPD3DPICKRECORD lpD3DPickRec
+);
+extern HRESULT WINAPI IDirect3DDeviceImpl_EnumTextureFormats(
+    LPDIRECT3DDEVICE iface,LPD3DENUMTEXTUREFORMATSCALLBACK lpd3dEnumTextureProc,
+    LPVOID lpArg
+);
+extern HRESULT WINAPI IDirect3DDeviceImpl_CreateMatrix(
+    LPDIRECT3DDEVICE iface, LPD3DMATRIXHANDLE lpD3DMatHandle
+)
+;
+extern HRESULT WINAPI IDirect3DDeviceImpl_SetMatrix(
+    LPDIRECT3DDEVICE iface, D3DMATRIXHANDLE d3dMatHandle,
+    const LPD3DMATRIX lpD3DMatrix)
+;
+extern HRESULT WINAPI IDirect3DDeviceImpl_GetMatrix(
+    LPDIRECT3DDEVICE iface,D3DMATRIXHANDLE D3DMatHandle,LPD3DMATRIX lpD3DMatrix
+);
+extern HRESULT WINAPI IDirect3DDeviceImpl_DeleteMatrix(
+    LPDIRECT3DDEVICE iface, D3DMATRIXHANDLE d3dMatHandle
+);
+extern HRESULT WINAPI IDirect3DDeviceImpl_BeginScene(LPDIRECT3DDEVICE iface)
+;
+extern HRESULT WINAPI IDirect3DDeviceImpl_EndScene(LPDIRECT3DDEVICE iface)
+;
+extern HRESULT WINAPI IDirect3DDeviceImpl_GetDirect3D(
+    LPDIRECT3DDEVICE iface, LPDIRECT3D *lpDirect3D
+);
 
 /* All non-static functions 'exported' by various sub-objects */
 extern LPDIRECT3DTEXTURE2 d3dtexture2_create(IDirectDrawSurface4Impl* surf);
@@ -359,5 +539,13 @@ extern int d3d_OpenGL_dx3(LPD3DENUMDEVICESCALLBACK cb, LPVOID context) ;
 extern int d3d_OpenGL(LPD3DENUMDEVICESCALLBACK cb, LPVOID context) ;
 extern int is_OpenGL(REFCLSID rguid, IDirectDrawSurfaceImpl* surface, IDirect3DDevice2Impl** device, IDirect3D2Impl* d3d);
 
+
+extern void _dump_renderstate(D3DRENDERSTATETYPE type, DWORD value);
+
+#define dump_mat(mat) \
+    TRACE("%f %f %f %f\n", (mat)->_11, (mat)->_12, (mat)->_13, (mat)->_14); \
+    TRACE("%f %f %f %f\n", (mat)->_21, (mat)->_22, (mat)->_23, (mat)->_24); \
+    TRACE("%f %f %f %f\n", (mat)->_31, (mat)->_32, (mat)->_33, (mat)->_34); \
+    TRACE("%f %f %f %f\n", (mat)->_41, (mat)->_42, (mat)->_43, (mat)->_44);
 
 #endif /* __GRAPHICS_WINE_D3D_PRIVATE_H */

@@ -12,11 +12,9 @@
 #include "d3d.h"
 #include "debugtools.h"
 
-#include "d3d_private.h"
+#include "mesa_private.h"
 
 DEFAULT_DEBUG_CHANNEL(ddraw)
-
-#ifdef HAVE_MESAGL
 
 static ICOM_VTABLE(IDirect3DMaterial2) material2_vtable;
 static ICOM_VTABLE(IDirect3DMaterial) material_vtable;
@@ -250,18 +248,3 @@ static ICOM_VTABLE(IDirect3DMaterial2) material2_vtable =
   IDirect3DMaterial2Impl_GetMaterial,
   IDirect3DMaterial2Impl_GetHandle
 };
-
-#else /* HAVE_MESAGL */
-
-LPDIRECT3DMATERIAL d3dmaterial_create(IDirect3DImpl* d3d1) {
-  ERR("Should not be called...\n");
-  return NULL;
-}
-
-LPDIRECT3DMATERIAL2 d3dmaterial2_create(IDirect3D2Impl* d3d2) {
-  ERR("Should not be called...\n");
-  return NULL;
-}
-
-
-#endif /* HAVE_MESAGL */

@@ -8,17 +8,55 @@ IMPORTS   = x11drv
 
 SPEC_SRCS = ddraw.spec
 
-C_SRCS = \
+
+MESA_SRCS = \
 	d3dcommon.c \
-	d3ddevices.c \
+	d3ddevice/mesa.c \
 	d3dexecutebuffer.c \
 	d3dlight.c \
 	d3dmaterial.c \
 	d3dtexture.c \
 	d3dviewport.c \
-	ddraw_main.c
+	direct3d/mesa.c \
+	mesa.c
+
+DGA_SRCS = \
+	ddraw/dga.c \
+	dpalette/dga.c \
+	dsurface/dga.c \
+	dga.c
+
+X_SRCS = \
+	@DGA_SRCS@ \
+	@MESA_SRCS@ \
+	ddraw/x11.c \
+	dpalette/x11.c \
+	dsurface/x11.c \
+	x11.c 
+
+C_SRCS = \
+	@X_SRCS@ \
+	convert.c \
+	d3ddevice/main.c \
+	dclipper/main.c \
+	ddraw/main.c \
+	direct3d/main.c \
+	dpalette/main.c \
+	dsurface/main.c \
+	helper.c \
+	main.c
+
+SUBDIRS = \
+	d3ddevice \
+	dclipper \
+	ddraw \
+	direct3d \
+	dpalette \
+	dsurface
 
 @MAKE_DLL_RULES@
 
-### Dependencies:
+clean::
+	for i in $(SUBDIRS); do (cd $$i && $(RM) $(CLEAN_FILES)); done
 
+### Dependencies:
