@@ -396,7 +396,7 @@
 421 stdcall OleTranslateColor(long long long)
 422 stub OleLoadPictureFile
 423 stub OleSavePictureFile
-424 stub OleLoadPicturePath
+424 stdcall OleLoadPicturePath(wstr ptr long long ptr ptr)
 425 stdcall VarUI4FromI8(long long ptr)
 426 stdcall VarUI4FromUI8(long long ptr)
 427 stdcall VarI8FromUI8(long long ptr)

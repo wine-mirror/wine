@@ -163,6 +163,10 @@ HRESULT WINAPI OleCreatePropertyFrame(
 HRESULT WINAPI OleLoadPicture(	LPSTREAM lpstream, LONG lSize, BOOL fRunmode,
 		REFIID reed, LPVOID *lplpvObj );
 
+HRESULT WINAPI OleLoadPicturePath( LPOLESTR szURLorPath, LPUNKNOWN punkCaller,
+		DWORD dwReserved, OLE_COLOR clrReserved, REFIID riid,
+		LPVOID *ppvRet );
+
 HRESULT WINAPI OleCreatePictureIndirect(LPPICTDESC lpPictDesc, REFIID riid,
 		BOOL fOwn, LPVOID * lplpvObj );
 

@@ -1991,6 +1991,20 @@ HRESULT WINAPI OleLoadPictureEx( LPSTREAM lpstream, LONG lSize, BOOL fRunmode,
   return hr;
 }
 
+/***********************************************************************
+ * OleLoadPicturePath (OLEAUT32.424)
+ */
+HRESULT WINAPI OleLoadPicturePath( LPOLESTR szURLorPath, LPUNKNOWN punkCaller,
+		DWORD dwReserved, OLE_COLOR clrReserved, REFIID riid,
+		LPVOID *ppvRet )
+{
+  FIXME("(%s,%p,%ld,%08lx,%s,%p): stub\n",
+        debugstr_w(szURLorPath), punkCaller, dwReserved, clrReserved,
+        debugstr_guid(riid), ppvRet);
+
+  return E_NOTIMPL;
+}
+
 /*******************************************************************************
  * StdPic ClassFactory
  */
