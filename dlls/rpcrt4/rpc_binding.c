@@ -93,13 +93,209 @@ void RPCRT4_strfree(LPSTR src)
   if (src) HeapFree(GetProcessHeap(), 0, src);
 }
 
-RPC_STATUS RPCRT4_CreateBindingA(RpcBinding** Binding, BOOL server, LPSTR Protseq)
+RPC_STATUS RPCRT4_CreateConnection(RpcConnection** Connection, BOOL server, LPSTR Protseq, LPSTR NetworkAddr, LPSTR Endpoint, LPSTR NetworkOptions)
+{
+  RpcConnection* NewConnection;
+
+  NewConnection = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(RpcConnection));
+  NewConnection->server = server;
+  NewConnection->Protseq = RPCRT4_strdupA(Protseq);
+  NewConnection->NetworkAddr = RPCRT4_strdupA(NetworkAddr);
+  NewConnection->Endpoint = RPCRT4_strdupA(Endpoint);
+
+  TRACE("connection: %p\n", NewConnection);
+  *Connection = NewConnection;
+
+  return RPC_S_OK;
+}
+
+RPC_STATUS RPCRT4_DestroyConnection(RpcConnection* Connection)
+{
+  TRACE("connection: %p\n", Connection);
+  if (Connection->Used) ERR("connection is still in use\n");
+  RPCRT4_CloseConnection(Connection);
+  RPCRT4_strfree(Connection->Endpoint);
+  RPCRT4_strfree(Connection->NetworkAddr);
+  RPCRT4_strfree(Connection->Protseq);
+  HeapFree(GetProcessHeap(), 0, Connection);
+  return RPC_S_OK;
+}
+
+RPC_STATUS RPCRT4_OpenConnection(RpcConnection* Connection)
+{
+  TRACE("(Connection == ^%p)\n", Connection);
+  if (!Connection->conn) {
+    if (Connection->server) { /* server */
+      /* protseq=ncalrpc: supposed to use NT LPC ports,
+       * but we'll implement it with named pipes for now */
+      if (strcmp(Connection->Protseq, "ncalrpc") == 0) {
+        static LPSTR prefix = "\\\\.\\pipe\\lrpc\\";
+        LPSTR pname;
+        pname = HeapAlloc(GetProcessHeap(), 0, strlen(prefix) + strlen(Connection->Endpoint) + 1);
+        strcat(strcpy(pname, prefix), Connection->Endpoint);
+        TRACE("listening on %s\n", pname);
+        Connection->conn = CreateNamedPipeA(pname, PIPE_ACCESS_DUPLEX | FILE_FLAG_OVERLAPPED,
+                                         0, PIPE_UNLIMITED_INSTANCES, 0, 0, 5000, NULL);
+        HeapFree(GetProcessHeap(), 0, pname);
+        memset(&Connection->ovl, 0, sizeof(Connection->ovl));
+        Connection->ovl.hEvent = CreateEventA(NULL, TRUE, FALSE, NULL);
+        if (!ConnectNamedPipe(Connection->conn, &Connection->ovl)) {
+          DWORD err = GetLastError();
+          if (err == ERROR_PIPE_CONNECTED) {
+            SetEvent(Connection->ovl.hEvent);
+            return RPC_S_OK;
+          }
+          return err;
+        }
+      }
+      /* protseq=ncacn_np: named pipes */
+      else if (strcmp(Connection->Protseq, "ncacn_np") == 0) {
+        static LPSTR prefix = "\\\\.";
+        LPSTR pname;
+        pname = HeapAlloc(GetProcessHeap(), 0, strlen(prefix) + strlen(Connection->Endpoint) + 1);
+        strcat(strcpy(pname, prefix), Connection->Endpoint);
+        TRACE("listening on %s\n", pname);
+        Connection->conn = CreateNamedPipeA(pname, PIPE_ACCESS_DUPLEX | FILE_FLAG_OVERLAPPED,
+                                         0, PIPE_UNLIMITED_INSTANCES, 0, 0, 5000, NULL);
+        HeapFree(GetProcessHeap(), 0, pname);
+        memset(&Connection->ovl, 0, sizeof(Connection->ovl));
+        Connection->ovl.hEvent = CreateEventA(NULL, TRUE, FALSE, NULL);
+        if (!ConnectNamedPipe(Connection->conn, &Connection->ovl)) {
+          DWORD err = GetLastError();
+          if (err == ERROR_PIPE_CONNECTED) {
+            SetEvent(Connection->ovl.hEvent);
+            return RPC_S_OK;
+          }
+          return err;
+        }
+      }
+      else {
+        ERR("protseq %s not supported\n", Connection->Protseq);
+        return RPC_S_PROTSEQ_NOT_SUPPORTED;
+      }
+    }
+    else { /* client */
+      /* protseq=ncalrpc: supposed to use NT LPC ports,
+       * but we'll implement it with named pipes for now */
+      if (strcmp(Connection->Protseq, "ncalrpc") == 0) {
+        static LPSTR prefix = "\\\\.\\pipe\\lrpc\\";
+        LPSTR pname;
+        HANDLE conn;
+        DWORD err;
+
+        pname = HeapAlloc(GetProcessHeap(), 0, strlen(prefix) + strlen(Connection->Endpoint) + 1);
+        strcat(strcpy(pname, prefix), Connection->Endpoint);
+        TRACE("connecting to %s\n", pname);
+        while (TRUE) {
+          if (WaitNamedPipeA(pname, NMPWAIT_WAIT_FOREVER)) {
+            conn = CreateFileA(pname, GENERIC_READ|GENERIC_WRITE, 0, NULL,
+                               OPEN_EXISTING, FILE_FLAG_OVERLAPPED, 0);
+            if (conn != INVALID_HANDLE_VALUE) break;
+            err = GetLastError();
+            if (err == ERROR_PIPE_BUSY) continue;
+            TRACE("connection failed, error=%lx\n", err);
+            HeapFree(GetProcessHeap(), 0, pname);
+            return err;
+          } else {
+            err = GetLastError();
+            TRACE("connection failed, error=%lx\n", err);
+            HeapFree(GetProcessHeap(), 0, pname);
+            return err;
+          }
+        }
+
+        /* success */
+        HeapFree(GetProcessHeap(), 0, pname);
+        memset(&Connection->ovl, 0, sizeof(Connection->ovl));
+        Connection->ovl.hEvent = CreateEventA(NULL, TRUE, FALSE, NULL);
+        Connection->conn = conn;
+      }
+      /* protseq=ncacn_np: named pipes */
+      else if (strcmp(Connection->Protseq, "ncacn_np") == 0) {
+        static LPSTR prefix = "\\\\.";
+        LPSTR pname;
+        HANDLE conn;
+        DWORD err;
+
+        pname = HeapAlloc(GetProcessHeap(), 0, strlen(prefix) + strlen(Connection->Endpoint) + 1);
+        strcat(strcpy(pname, prefix), Connection->Endpoint);
+        TRACE("connecting to %s\n", pname);
+        conn = CreateFileA(pname, GENERIC_READ|GENERIC_WRITE, 0, NULL,
+                           OPEN_EXISTING, FILE_FLAG_OVERLAPPED, 0);
+        if (conn == INVALID_HANDLE_VALUE) {
+          err = GetLastError();
+          /* we don't need to handle ERROR_PIPE_BUSY here,
+           * the doc says that it is returned to the app */
+          TRACE("connection failed, error=%lx\n", err);
+          HeapFree(GetProcessHeap(), 0, pname);
+          return err;
+        }
+
+        /* success */
+        HeapFree(GetProcessHeap(), 0, pname);
+        memset(&Connection->ovl, 0, sizeof(Connection->ovl));
+        Connection->ovl.hEvent = CreateEventA(NULL, TRUE, FALSE, NULL);
+        Connection->conn = conn;
+      } else {
+        ERR("protseq %s not supported\n", Connection->Protseq);
+        return RPC_S_PROTSEQ_NOT_SUPPORTED;
+      }
+    }
+  }
+  return RPC_S_OK;
+}
+
+RPC_STATUS RPCRT4_CloseConnection(RpcConnection* Connection)
+{
+  TRACE("(Connection == ^%p)\n", Connection);
+  if (Connection->conn) {
+    CancelIo(Connection->conn);
+    CloseHandle(Connection->conn);
+    Connection->conn = 0;
+  }
+  if (Connection->ovl.hEvent) {
+    CloseHandle(Connection->ovl.hEvent);
+    Connection->ovl.hEvent = 0;
+  }
+  return RPC_S_OK;
+}
+
+RPC_STATUS RPCRT4_SpawnConnection(RpcConnection** Connection, RpcConnection* OldConnection)
+{
+  RpcConnection* NewConnection;
+  RPC_STATUS err = RPCRT4_CreateConnection(&NewConnection, OldConnection->server, OldConnection->Protseq,
+                                           OldConnection->NetworkAddr, OldConnection->Endpoint, NULL);
+  if (err == RPC_S_OK) {
+    /* because of the way named pipes work, we'll transfer the connected pipe
+     * to the child, then reopen the server binding to continue listening */
+    NewConnection->conn = OldConnection->conn;
+    NewConnection->ovl = OldConnection->ovl;
+    OldConnection->conn = 0;
+    memset(&OldConnection->ovl, 0, sizeof(OldConnection->ovl));
+    *Connection = NewConnection;
+    RPCRT4_OpenConnection(OldConnection);
+  }
+  return err;
+}
+
+RPC_STATUS RPCRT4_AllocBinding(RpcBinding** Binding, BOOL server)
 {
   RpcBinding* NewBinding;
 
   NewBinding = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(RpcBinding));
   NewBinding->refs = 1;
   NewBinding->server = server;
+
+  *Binding = NewBinding;
+
+  return RPC_S_OK;
+}
+
+RPC_STATUS RPCRT4_CreateBindingA(RpcBinding** Binding, BOOL server, LPSTR Protseq)
+{
+  RpcBinding* NewBinding;
+
+  RPCRT4_AllocBinding(&NewBinding, server);
   NewBinding->Protseq = RPCRT4_strdupA(Protseq);
 
   TRACE("binding: %p\n", NewBinding);
@@ -111,16 +307,8 @@ RPC_STATUS RPCRT4_CreateBindingA(RpcBinding** Binding, BOOL server, LPSTR Protse
 RPC_STATUS RPCRT4_CreateBindingW(RpcBinding** Binding, BOOL server, LPWSTR Protseq)
 {
   RpcBinding* NewBinding;
-  if (Binding)
-    TRACE("(*Binding == ^%p, server == %s, Protseq == \"%s\")\n", *Binding, server ? "Yes" : "No", debugstr_w(Protseq));
-  else {
-    ERR("!RpcBinding?\n"); 
-    assert(FALSE); /* we will crash below anyhow... */
-  }
 
-  NewBinding = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(RpcBinding));
-  NewBinding->refs = 1;
-  NewBinding->server = server;
+  RPCRT4_AllocBinding(&NewBinding, server);
   NewBinding->Protseq = RPCRT4_strdupWtoA(Protseq);
 
   TRACE("binding: %p\n", NewBinding);
@@ -131,8 +319,8 @@ RPC_STATUS RPCRT4_CreateBindingW(RpcBinding** Binding, BOOL server, LPWSTR Prots
 
 RPC_STATUS RPCRT4_CompleteBindingA(RpcBinding* Binding, LPSTR NetworkAddr,  LPSTR Endpoint,  LPSTR NetworkOptions)
 {
-  
-  TRACE("(RpcBinding == ^%p, NetworkAddr == \"%s\", EndPoint == \"%s\", NetworkOptions == \"%s\")\n", Binding, NetworkAddr, Endpoint, NetworkOptions);
+  TRACE("(RpcBinding == ^%p, NetworkAddr == \"%s\", EndPoint == \"%s\", NetworkOptions == \"%s\")\n", Binding,
+   debugstr_a(NetworkAddr), debugstr_a(Endpoint), debugstr_a(NetworkOptions));
 
   RPCRT4_strfree(Binding->NetworkAddr);
   Binding->NetworkAddr = RPCRT4_strdupA(NetworkAddr);
@@ -183,31 +371,19 @@ RPC_STATUS RPCRT4_SetBindingObject(RpcBinding* Binding, UUID* ObjectUuid)
   return RPC_S_OK;
 }
 
-RPC_STATUS RPCRT4_SpawnBinding(RpcBinding** Binding, RpcBinding* OldBinding)
+RPC_STATUS RPCRT4_MakeBinding(RpcBinding** Binding, RpcConnection* Connection)
 {
   RpcBinding* NewBinding;
-  if (Binding)
-    TRACE("(*RpcBinding == ^%p, OldBinding == ^%p)\n", *Binding, OldBinding);
-  else {
-    ERR("!RpcBinding?"); 
-    /* we will crash below anyhow... */
-    *((char *)0) = 0;
-  }
+  TRACE("(*RpcBinding == ^%p, Connection == ^%p)\n", *Binding, Connection);
 
-  NewBinding = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(RpcBinding));
-  NewBinding->refs = 1;
-  NewBinding->server = OldBinding->server;
-  NewBinding->Protseq = RPCRT4_strdupA(OldBinding->Protseq);
-  NewBinding->NetworkAddr = RPCRT4_strdupA(OldBinding->NetworkAddr);
-  NewBinding->Endpoint = RPCRT4_strdupA(OldBinding->Endpoint);
-  /* because of the way named pipes work, we'll transfer the connected pipe
-   * to the child, then reopen the server binding to continue listening */
-  NewBinding->conn = OldBinding->conn;
-  NewBinding->ovl = OldBinding->ovl;
-  OldBinding->conn = 0;
-  memset(&OldBinding->ovl, 0, sizeof(OldBinding->ovl));
+  RPCRT4_AllocBinding(&NewBinding, Connection->server);
+  NewBinding->Protseq = RPCRT4_strdupA(Connection->Protseq);
+  NewBinding->NetworkAddr = RPCRT4_strdupA(Connection->NetworkAddr);
+  NewBinding->Endpoint = RPCRT4_strdupA(Connection->Endpoint);
+  NewBinding->FromConn = Connection;
+
+  TRACE("binding: %p\n", NewBinding);
   *Binding = NewBinding;
-  RPCRT4_OpenBinding(OldBinding);
 
   return RPC_S_OK;
 }
@@ -225,7 +401,7 @@ RPC_STATUS RPCRT4_DestroyBinding(RpcBinding* Binding)
     return RPC_S_OK;
 
   TRACE("binding: %p\n", Binding);
-  RPCRT4_CloseBinding(Binding);
+  /* FIXME: release connections */
   RPCRT4_strfree(Binding->Endpoint);
   RPCRT4_strfree(Binding->NetworkAddr);
   RPCRT4_strfree(Binding->Protseq);
@@ -233,143 +409,29 @@ RPC_STATUS RPCRT4_DestroyBinding(RpcBinding* Binding)
   return RPC_S_OK;
 }
 
-RPC_STATUS RPCRT4_OpenBinding(RpcBinding* Binding)
+RPC_STATUS RPCRT4_OpenBinding(RpcBinding* Binding, RpcConnection** Connection)
 {
+  RpcConnection* NewConnection;
   TRACE("(Binding == ^%p)\n", Binding);
-  if (!Binding->conn) {
-    if (Binding->server) { /* server */
-      /* protseq=ncalrpc: supposed to use NT LPC ports,
-       * but we'll implement it with named pipes for now */
-      if (strcmp(Binding->Protseq, "ncalrpc") == 0) {
-        static LPSTR prefix = "\\\\.\\pipe\\lrpc\\";
-        LPSTR pname;
-        pname = HeapAlloc(GetProcessHeap(), 0, strlen(prefix) + strlen(Binding->Endpoint) + 1);
-        strcat(strcpy(pname, prefix), Binding->Endpoint);
-        TRACE("listening on %s\n", pname);
-        Binding->conn = CreateNamedPipeA(pname, PIPE_ACCESS_DUPLEX | FILE_FLAG_OVERLAPPED,
-                                         0, PIPE_UNLIMITED_INSTANCES, 0, 0, 5000, NULL);
-        HeapFree(GetProcessHeap(), 0, pname);
-        memset(&Binding->ovl, 0, sizeof(Binding->ovl));
-        Binding->ovl.hEvent = CreateEventA(NULL, TRUE, FALSE, NULL);
-        if (!ConnectNamedPipe(Binding->conn, &Binding->ovl)) {
-          DWORD err = GetLastError();
-          if (err == ERROR_PIPE_CONNECTED) {
-            SetEvent(Binding->ovl.hEvent);
-            return RPC_S_OK;
-          }
-          return err;
-        }
-      }
-      /* protseq=ncacn_np: named pipes */
-      else if (strcmp(Binding->Protseq, "ncacn_np") == 0) {
-        static LPSTR prefix = "\\\\.";
-        LPSTR pname;
-        pname = HeapAlloc(GetProcessHeap(), 0, strlen(prefix) + strlen(Binding->Endpoint) + 1);
-        strcat(strcpy(pname, prefix), Binding->Endpoint);
-        TRACE("listening on %s\n", pname);
-        Binding->conn = CreateNamedPipeA(pname, PIPE_ACCESS_DUPLEX | FILE_FLAG_OVERLAPPED,
-                                         0, PIPE_UNLIMITED_INSTANCES, 0, 0, 5000, NULL);
-        HeapFree(GetProcessHeap(), 0, pname);
-        memset(&Binding->ovl, 0, sizeof(Binding->ovl));
-        Binding->ovl.hEvent = CreateEventA(NULL, TRUE, FALSE, NULL);
-        if (!ConnectNamedPipe(Binding->conn, &Binding->ovl)) {
-          DWORD err = GetLastError();
-          if (err == ERROR_PIPE_CONNECTED) {
-            SetEvent(Binding->ovl.hEvent);
-            return RPC_S_OK;
-          }
-          return err;
-        }
-      }
-      else {
-        ERR("protseq %s not supported\n", Binding->Protseq);
-        return RPC_S_PROTSEQ_NOT_SUPPORTED;
-      }
-    }
-    else { /* client */
-      /* protseq=ncalrpc: supposed to use NT LPC ports,
-       * but we'll implement it with named pipes for now */
-      if (strcmp(Binding->Protseq, "ncalrpc") == 0) {
-        static LPSTR prefix = "\\\\.\\pipe\\lrpc\\";
-        LPSTR pname;
-        HANDLE conn;
-        DWORD err;
-
-        pname = HeapAlloc(GetProcessHeap(), 0, strlen(prefix) + strlen(Binding->Endpoint) + 1);
-        strcat(strcpy(pname, prefix), Binding->Endpoint);
-        TRACE("connecting to %s\n", pname);
-        while (TRUE) {
-          if (WaitNamedPipeA(pname, NMPWAIT_WAIT_FOREVER)) {
-            conn = CreateFileA(pname, GENERIC_READ|GENERIC_WRITE, 0, NULL,
-                               OPEN_EXISTING, FILE_FLAG_OVERLAPPED, 0);
-            if (conn != INVALID_HANDLE_VALUE) break;
-            err = GetLastError();
-            if (err == ERROR_PIPE_BUSY) continue;
-            TRACE("connection failed, error=%lx\n", err);
-            HeapFree(GetProcessHeap(), 0, pname);
-            return err;
-          } else {
-            err = GetLastError();
-            TRACE("connection failed, error=%lx\n", err);
-            HeapFree(GetProcessHeap(), 0, pname);
-            return err;
-          }
-        }
-
-        /* success */
-        HeapFree(GetProcessHeap(), 0, pname);
-        memset(&Binding->ovl, 0, sizeof(Binding->ovl));
-        Binding->ovl.hEvent = CreateEventA(NULL, TRUE, FALSE, NULL);
-        Binding->conn = conn;
-      }
-      /* protseq=ncacn_np: named pipes */
-      else if (strcmp(Binding->Protseq, "ncacn_np") == 0) {
-        static LPSTR prefix = "\\\\.";
-        LPSTR pname;
-        HANDLE conn;
-        DWORD err;
-
-        pname = HeapAlloc(GetProcessHeap(), 0, strlen(prefix) + strlen(Binding->Endpoint) + 1);
-        strcat(strcpy(pname, prefix), Binding->Endpoint);
-        TRACE("connecting to %s\n", pname);
-        conn = CreateFileA(pname, GENERIC_READ|GENERIC_WRITE, 0, NULL,
-                           OPEN_EXISTING, FILE_FLAG_OVERLAPPED, 0);
-        if (conn == INVALID_HANDLE_VALUE) {
-          err = GetLastError();
-          /* we don't need to handle ERROR_PIPE_BUSY here,
-           * the doc says that it is returned to the app */
-          TRACE("connection failed, error=%lx\n", err);
-          HeapFree(GetProcessHeap(), 0, pname);
-          return err;
-        }
-
-        /* success */
-        HeapFree(GetProcessHeap(), 0, pname);
-        memset(&Binding->ovl, 0, sizeof(Binding->ovl));
-        Binding->ovl.hEvent = CreateEventA(NULL, TRUE, FALSE, NULL);
-        Binding->conn = conn;
-      } else {
-        ERR("protseq %s not supported\n", Binding->Protseq);
-        return RPC_S_PROTSEQ_NOT_SUPPORTED;
-      }
-    }
+  if (Binding->FromConn) {
+    *Connection = Binding->FromConn;
+    return RPC_S_OK;
   }
-  return RPC_S_OK;
+
+  /* FIXME: cache connections */
+  RPCRT4_CreateConnection(&NewConnection, Binding->server, Binding->Protseq, Binding->NetworkAddr, Binding->Endpoint, NULL);
+  NewConnection->Used = Binding;
+  *Connection = NewConnection;
+  return RPCRT4_OpenConnection(NewConnection);
 }
 
-RPC_STATUS RPCRT4_CloseBinding(RpcBinding* Binding)
+RPC_STATUS RPCRT4_CloseBinding(RpcBinding* Binding, RpcConnection* Connection)
 {
   TRACE("(Binding == ^%p)\n", Binding);
-  if (Binding->conn) {
-    CancelIo(Binding->conn);
-    CloseHandle(Binding->conn);
-    Binding->conn = 0;
-  }
-  if (Binding->ovl.hEvent) {
-    CloseHandle(Binding->ovl.hEvent);
-    Binding->ovl.hEvent = 0;
-  }
-  return RPC_S_OK;
+  if (!Connection) return RPC_S_OK;
+  if (Binding->FromConn == Connection) return RPC_S_OK;
+  Connection->Used = NULL;
+  return RPCRT4_DestroyConnection(Connection);
 }
 
 /* utility functions for string composing and parsing */
@@ -862,7 +924,7 @@ RPC_STATUS WINAPI RpcBindingToStringBindingW( RPC_BINDING_HANDLE Binding, LPWSTR
   RpcStringFreeA((unsigned char**)&str);
   return ret;
 }
-  
+
 /***********************************************************************
  *             I_RpcBindingSetAsync (RPCRT4.@)
  * NOTES

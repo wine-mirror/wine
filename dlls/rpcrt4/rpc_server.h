@@ -29,7 +29,7 @@ typedef struct _RpcServerProtseq
   LPSTR Protseq;
   LPSTR Endpoint;
   UINT MaxCalls;
-  RpcBinding* bind;
+  RpcConnection* conn;
 } RpcServerProtseq;
 
 typedef struct _RpcServerInterface

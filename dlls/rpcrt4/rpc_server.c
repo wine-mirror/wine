@@ -37,7 +37,17 @@
 #include "rpc_server.h"
 #include "rpc_defs.h"
 
+#define MAX_THREADS 128
+
 WINE_DEFAULT_DEBUG_CHANNEL(ole);
+
+typedef struct _RpcPacket
+{
+  struct _RpcPacket* next;
+  struct _RpcConnection* conn;
+  RpcPktHdr hdr;
+  void* buf;
+} RpcPacket;
 
 static RpcServerProtseq* protseqs;
 static RpcServerInterface* ifs;
@@ -47,6 +57,13 @@ static CRITICAL_SECTION listen_cs = CRITICAL_SECTION_INIT("RpcListen");
 static BOOL std_listen;
 static LONG listen_count = -1;
 static HANDLE mgr_event, server_thread;
+
+static CRITICAL_SECTION spacket_cs = CRITICAL_SECTION_INIT("RpcServerPacket");
+static RpcPacket* spacket_head;
+static RpcPacket* spacket_tail;
+static HANDLE server_sem;
+
+static DWORD worker_count, worker_free;
 
 static RpcServerInterface* RPCRT4_find_interface(UUID* object, UUID* if_id)
 {
@@ -67,31 +84,168 @@ static RpcServerInterface* RPCRT4_find_interface(UUID* object, UUID* if_id)
   return cif;
 }
 
-static DWORD CALLBACK RPCRT4_io_thread(LPVOID the_arg)
+static void RPCRT4_push_packet(RpcPacket* packet)
 {
-  RpcBinding* bind = (RpcBinding*)the_arg;
-  RpcPktHdr hdr;
-  DWORD dwRead;
+  packet->next = NULL;
+  EnterCriticalSection(&spacket_cs);
+  if (spacket_tail) spacket_tail->next = packet;
+  else {
+    spacket_head = packet;
+    spacket_tail = packet;
+  }
+  LeaveCriticalSection(&spacket_cs);
+}
+
+static RpcPacket* RPCRT4_pop_packet(void)
+{
+  RpcPacket* packet;
+  EnterCriticalSection(&spacket_cs);
+  packet = spacket_head;
+  if (packet) {
+    spacket_head = packet->next;
+    if (!spacket_head) spacket_tail = NULL;
+  }
+  LeaveCriticalSection(&spacket_cs);
+  if (packet) packet->next = NULL;
+  return packet;
+}
+
+static void RPCRT4_process_packet(RpcConnection* conn, RpcPktHdr* hdr, void* buf)
+{
+  RpcBinding* pbind;
   RPC_MESSAGE msg;
   RpcServerInterface* sif;
   RPC_DISPATCH_FUNCTION func;
 
   memset(&msg, 0, sizeof(msg));
-  msg.Handle = (RPC_BINDING_HANDLE)bind;
+  msg.BufferLength = hdr->len;
+  msg.Buffer = buf;
+  sif = RPCRT4_find_interface(&hdr->object, &hdr->if_id);
+  if (sif) {
+    TRACE("packet received for interface %s\n", debugstr_guid(&hdr->if_id));
+    msg.RpcInterfaceInformation = sif->If;
+    /* create temporary binding for dispatch */
+    RPCRT4_MakeBinding(&pbind, conn);
+    RPCRT4_SetBindingObject(pbind, &hdr->object);
+    msg.Handle = (RPC_BINDING_HANDLE)pbind;
+    /* process packet */
+    switch (hdr->ptype) {
+    case PKT_REQUEST:
+      /* find dispatch function */
+      msg.ProcNum = hdr->opnum;
+      if (sif->Flags & RPC_IF_OLE) {
+        /* native ole32 always gives us a dispatch table with a single entry
+         * (I assume that's a wrapper for IRpcStubBuffer::Invoke) */
+        func = *sif->If->DispatchTable->DispatchTable;
+      } else {
+        if (msg.ProcNum >= sif->If->DispatchTable->DispatchTableCount) {
+          ERR("invalid procnum\n");
+          func = NULL;
+        }
+        func = sif->If->DispatchTable->DispatchTable[msg.ProcNum];
+      }
+
+      /* put in the drep. FIXME: is this more universally applicable?
+         perhaps we should move this outward... */
+      msg.DataRepresentation = 
+        MAKELONG( MAKEWORD(hdr->drep[0], hdr->drep[1]),
+                  MAKEWORD(hdr->drep[2], 0));
+
+      /* dispatch */
+      if (func) func(&msg);
+
+      /* send response packet */
+      I_RpcSend(&msg);
+      break;
+    default:
+      ERR("unknown packet type\n");
+      break;
+    }
+
+    RPCRT4_DestroyBinding(pbind);
+    msg.Handle = 0;
+    msg.RpcInterfaceInformation = NULL;
+  }
+  else {
+    ERR("got RPC packet to unregistered interface %s\n", debugstr_guid(&hdr->if_id));
+  }
+
+  /* clean up */
+  HeapFree(GetProcessHeap(), 0, msg.Buffer);
+  msg.Buffer = NULL;
+}
+
+static DWORD CALLBACK RPCRT4_worker_thread(LPVOID the_arg)
+{
+  DWORD obj;
+  RpcPacket* pkt;
+
+  for (;;) {
+    /* idle timeout after 5s */
+    obj = WaitForSingleObject(server_sem, 5000);
+    if (obj == WAIT_TIMEOUT) {
+      /* if another idle thread exist, self-destruct */
+      if (worker_free > 1) break;
+      continue;
+    }
+    pkt = RPCRT4_pop_packet();
+    if (!pkt) continue;
+    InterlockedDecrement(&worker_free);
+    for (;;) {
+      RPCRT4_process_packet(pkt->conn, &pkt->hdr, pkt->buf);
+      HeapFree(GetProcessHeap(), 0, pkt);
+      /* try to grab another packet here without waiting
+       * on the semaphore, in case it hits max */
+      pkt = RPCRT4_pop_packet();
+      if (!pkt) break;
+      /* decrement semaphore */
+      WaitForSingleObject(server_sem, 0);
+    }
+    InterlockedIncrement(&worker_free);
+  }
+  InterlockedDecrement(&worker_free);
+  InterlockedDecrement(&worker_count);
+  return 0;
+}
+
+static void RPCRT4_create_worker_if_needed(void)
+{
+  if (!worker_free && worker_count < MAX_THREADS) {
+    HANDLE thread;
+    InterlockedIncrement(&worker_count);
+    InterlockedIncrement(&worker_free);
+    thread = CreateThread(NULL, 0, RPCRT4_worker_thread, NULL, 0, NULL);
+    if (thread) CloseHandle(thread);
+    else {
+      InterlockedDecrement(&worker_free);
+      InterlockedDecrement(&worker_count);
+    }
+  }
+}
+
+static DWORD CALLBACK RPCRT4_io_thread(LPVOID the_arg)
+{
+  RpcConnection* conn = (RpcConnection*)the_arg;
+  RpcPktHdr hdr;
+  DWORD dwRead;
+  void* buf = NULL;
+  RpcPacket* packet;
+
+  TRACE("(%p)\n", conn);
 
   for (;;) {
     /* read packet header */
 #ifdef OVERLAPPED_WORKS
-    if (!ReadFile(bind->conn, &hdr, sizeof(hdr), &dwRead, &bind->ovl)) {
+    if (!ReadFile(conn->conn, &hdr, sizeof(hdr), &dwRead, &conn->ovl)) {
       DWORD err = GetLastError();
       if (err != ERROR_IO_PENDING) {
         TRACE("connection lost, error=%08lx\n", err);
         break;
       }
-      if (!GetOverlappedResult(bind->conn, &bind->ovl, &dwRead, TRUE)) break;
+      if (!GetOverlappedResult(conn->conn, &conn->ovl, &dwRead, TRUE)) break;
     }
 #else
-    if (!ReadFile(bind->conn, &hdr, sizeof(hdr), &dwRead, NULL)) {
+    if (!ReadFile(conn->conn, &hdr, sizeof(hdr), &dwRead, NULL)) {
       TRACE("connection lost, error=%08lx\n", GetLastError());
       break;
     }
@@ -102,19 +256,20 @@ static DWORD CALLBACK RPCRT4_io_thread(LPVOID the_arg)
     }
 
     /* read packet body */
-    msg.BufferLength = hdr.len;
-    msg.Buffer = HeapAlloc(GetProcessHeap(), 0, msg.BufferLength);
+    buf = HeapAlloc(GetProcessHeap(), 0, hdr.len);
+    TRACE("receiving payload=%d\n", hdr.len);
+    if (!hdr.len) dwRead = 0; else
 #ifdef OVERLAPPED_WORKS
-    if (!ReadFile(bind->conn, msg.Buffer, msg.BufferLength, &dwRead, &bind->ovl)) {
+    if (!ReadFile(conn->conn, buf, hdr.len, &dwRead, &conn->ovl)) {
       DWORD err = GetLastError();
       if (err != ERROR_IO_PENDING) {
         TRACE("connection lost, error=%08lx\n", err);
         break;
       }
-      if (!GetOverlappedResult(bind->conn, &bind->ovl, &dwRead, TRUE)) break;
+      if (!GetOverlappedResult(conn->conn, &conn->ovl, &dwRead, TRUE)) break;
     }
 #else
-    if (!ReadFile(bind->conn, msg.Buffer, msg.BufferLength, &dwRead, NULL)) {
+    if (!ReadFile(conn->conn, buf, hdr.len, &dwRead, NULL)) {
       TRACE("connection lost, error=%08lx\n", GetLastError());
       break;
     }
@@ -124,72 +279,31 @@ static DWORD CALLBACK RPCRT4_io_thread(LPVOID the_arg)
       break;
     }
 
-    sif = RPCRT4_find_interface(&hdr.object, &hdr.if_id);
-    if (sif) {
-      msg.RpcInterfaceInformation = sif->If;
-      /* associate object with binding (this is a bit of a hack...
-       * a new binding should probably be created for each object) */
-      RPCRT4_SetBindingObject(bind, &hdr.object);
-      /* process packet*/
-      switch (hdr.ptype) {
-      case PKT_REQUEST:
-       /* find dispatch function */
-       msg.ProcNum = hdr.opnum;
-       if (sif->Flags & RPC_IF_OLE) {
-         /* native ole32 always gives us a dispatch table with a single entry
-          * (I assume that's a wrapper for IRpcStubBuffer::Invoke) */
-         func = *sif->If->DispatchTable->DispatchTable;
-       } else {
-         if (msg.ProcNum >= sif->If->DispatchTable->DispatchTableCount) {
-           ERR("invalid procnum\n");
-           func = NULL;
-         }
-         func = sif->If->DispatchTable->DispatchTable[msg.ProcNum];
-       }
-       
-       /* put in the drep. FIXME: is this more universally applicable?
-          perhaps we should move this outward... */
-       msg.DataRepresentation = 
-         MAKELONG( MAKEWORD(hdr.drep[0], hdr.drep[1]),
-                   MAKEWORD(hdr.drep[2], 0));
-
-       /* dispatch */
-       if (func) func(&msg);
-
-       /* prepare response packet */
-       hdr.ptype = PKT_RESPONSE;
-       break;
-      default:
-       ERR("unknown packet type\n");
-       goto no_reply;
-      }
-
-      /* write reply packet */
-      hdr.len = msg.BufferLength;
-      WriteFile(bind->conn, &hdr, sizeof(hdr), NULL, NULL);
-      WriteFile(bind->conn, msg.Buffer, msg.BufferLength, NULL, NULL);
-
-    no_reply:
-      /* un-associate object */
-      RPCRT4_SetBindingObject(bind, NULL);
-      msg.RpcInterfaceInformation = NULL;
-    }
-    else {
-      ERR("got RPC packet to unregistered interface %s\n", debugstr_guid(&hdr.if_id));
-    }
-
-    /* clean up */
-    HeapFree(GetProcessHeap(), 0, msg.Buffer);
-    msg.Buffer = NULL;
+#if 0
+    RPCRT4_process_packet(conn, &hdr, buf);
+#else
+    packet = HeapAlloc(GetProcessHeap(), 0, sizeof(RpcPacket));
+    packet->conn = conn;
+    packet->hdr = hdr;
+    packet->buf = buf;
+    RPCRT4_create_worker_if_needed();
+    RPCRT4_push_packet(packet);
+    ReleaseSemaphore(server_sem, 1, NULL);
+#endif
+    buf = NULL;
   }
-  if (msg.Buffer) HeapFree(GetProcessHeap(), 0, msg.Buffer);
-  RPCRT4_DestroyBinding(bind);
+  if (buf) HeapFree(GetProcessHeap(), 0, buf);
+  RPCRT4_DestroyConnection(conn);
   return 0;
 }
 
-static void RPCRT4_new_client(RpcBinding* bind)
+static void RPCRT4_new_client(RpcConnection* conn)
 {
-  bind->thread = CreateThread(NULL, 0, RPCRT4_io_thread, bind, 0, NULL);
+  conn->thread = CreateThread(NULL, 0, RPCRT4_io_thread, conn, 0, NULL);
+  if (!conn->thread) {
+    DWORD err = GetLastError();
+    ERR("failed to create thread, error=%08lx\n", err);
+  }
 }
 
 static DWORD CALLBACK RPCRT4_server_thread(LPVOID the_arg)
@@ -198,33 +312,33 @@ static DWORD CALLBACK RPCRT4_server_thread(LPVOID the_arg)
   HANDLE *objs = NULL;
   DWORD count, res;
   RpcServerProtseq* cps;
-  RpcBinding* bind;
-  RpcBinding* cbind;
+  RpcConnection* conn;
+  RpcConnection* cconn;
 
   for (;;) {
     EnterCriticalSection(&server_cs);
-    /* open and count bindings */
+    /* open and count connections */
     count = 1;
     cps = protseqs;
     while (cps) {
-      bind = cps->bind;
-      while (bind) {
-       RPCRT4_OpenBinding(bind);
-        if (bind->ovl.hEvent) count++;
-        bind = bind->Next;
+      conn = cps->conn;
+      while (conn) {
+        RPCRT4_OpenConnection(conn);
+        if (conn->ovl.hEvent) count++;
+        conn = conn->Next;
       }
       cps = cps->Next;
     }
-    /* make array of bindings */
+    /* make array of connings */
     objs = HeapReAlloc(GetProcessHeap(), 0, objs, count*sizeof(HANDLE));
     objs[0] = m_event;
     count = 1;
     cps = protseqs;
     while (cps) {
-      bind = cps->bind;
-      while (bind) {
-        if (bind->ovl.hEvent) objs[count++] = bind->ovl.hEvent;
-        bind = bind->Next;
+      conn = cps->conn;
+      while (conn) {
+        if (conn->ovl.hEvent) objs[count++] = conn->ovl.hEvent;
+        conn = conn->Next;
       }
       cps = cps->Next;
     }
@@ -241,37 +355,37 @@ static DWORD CALLBACK RPCRT4_server_thread(LPVOID the_arg)
     }
     else {
       b_handle = objs[res - WAIT_OBJECT_0];
-      /* find which binding got a RPC */
+      /* find which connection got a RPC */
       EnterCriticalSection(&server_cs);
-      bind = NULL;
+      conn = NULL;
       cps = protseqs;
       while (cps) {
-        bind = cps->bind;
-        while (bind) {
-          if (bind->ovl.hEvent == b_handle) break;
-          bind = bind->Next;
+        conn = cps->conn;
+        while (conn) {
+          if (conn->ovl.hEvent == b_handle) break;
+          conn = conn->Next;
         }
-        if (bind) break;
+        if (conn) break;
         cps = cps->Next;
       }
-      cbind = NULL;
-      if (bind) RPCRT4_SpawnBinding(&cbind, bind);
+      cconn = NULL;
+      if (conn) RPCRT4_SpawnConnection(&cconn, conn);
       LeaveCriticalSection(&server_cs);
-      if (!bind) {
-        ERR("failed to locate binding for handle %p\n", b_handle);
+      if (!conn) {
+        ERR("failed to locate connection for handle %p\n", b_handle);
       }
-      if (cbind) RPCRT4_new_client(cbind);
+      if (cconn) RPCRT4_new_client(cconn);
     }
   }
   HeapFree(GetProcessHeap(), 0, objs);
   EnterCriticalSection(&server_cs);
-  /* close bindings */
+  /* close connections */
   cps = protseqs;
   while (cps) {
-    bind = cps->bind;
-    while (bind) {
-      RPCRT4_CloseBinding(bind);
-      bind = bind->Next;
+    conn = cps->conn;
+    while (conn) {
+      RPCRT4_CloseConnection(conn);
+      conn = conn->Next;
     }
     cps = cps->Next;
   }
@@ -286,6 +400,7 @@ static void RPCRT4_start_listen(void)
   EnterCriticalSection(&listen_cs);
   if (! ++listen_count) {
     if (!mgr_event) mgr_event = CreateEventA(NULL, TRUE, FALSE, NULL);
+    if (!server_sem) server_sem = CreateSemaphoreA(NULL, 0, MAX_THREADS, NULL);
     std_listen = TRUE;
     server_thread = CreateThread(NULL, 0, RPCRT4_server_thread, NULL, 0, NULL);
     LeaveCriticalSection(&listen_cs);
@@ -311,8 +426,7 @@ static void RPCRT4_stop_listen(void)
 
 static RPC_STATUS RPCRT4_use_protseq(RpcServerProtseq* ps)
 {
-  RPCRT4_CreateBindingA(&ps->bind, TRUE, ps->Protseq);
-  RPCRT4_CompleteBindingA(ps->bind, NULL, ps->Endpoint, NULL);
+  RPCRT4_CreateConnection(&ps->conn, TRUE, ps->Protseq, NULL, ps->Endpoint, NULL);
 
   EnterCriticalSection(&server_cs);
   ps->Next = protseqs;
@@ -332,7 +446,7 @@ RPC_STATUS WINAPI RpcServerInqBindings( RPC_BINDING_VECTOR** BindingVector )
   RPC_STATUS status;
   DWORD count;
   RpcServerProtseq* ps;
-  RpcBinding* bind;
+  RpcConnection* conn;
 
   if (BindingVector)
     TRACE("(*BindingVector == ^%p)\n", *BindingVector);
@@ -340,14 +454,14 @@ RPC_STATUS WINAPI RpcServerInqBindings( RPC_BINDING_VECTOR** BindingVector )
     ERR("(BindingVector == ^null!!?)\n");
 
   EnterCriticalSection(&server_cs);
-  /* count bindings */
+  /* count connections */
   count = 0;
   ps = protseqs;
   while (ps) {
-    bind = ps->bind;
-    while (bind) {
+    conn = ps->conn;
+    while (conn) {
       count++;
-      bind = bind->Next;
+      conn = conn->Next;
     }
     ps = ps->Next;
   }
@@ -360,12 +474,12 @@ RPC_STATUS WINAPI RpcServerInqBindings( RPC_BINDING_VECTOR** BindingVector )
     count = 0;
     ps = protseqs;
     while (ps) {
-      bind = ps->bind;
-      while (bind) {
-       RPCRT4_ExportBinding((RpcBinding**)&(*BindingVector)->BindingH[count],
-                            bind);
+      conn = ps->conn;
+      while (conn) {
+       RPCRT4_MakeBinding((RpcBinding**)&(*BindingVector)->BindingH[count],
+                          conn);
        count++;
-       bind = bind->Next;
+       conn = conn->Next;
       }
       ps = ps->Next;
     }

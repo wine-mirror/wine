@@ -48,9 +48,10 @@ RPC_STATUS WINAPI I_RpcGetBuffer(PRPC_MESSAGE pMsg)
 {
   void* buf;
 
-  TRACE("(%p)\n", pMsg);
+  TRACE("(%p): BufferLength=%d\n", pMsg, pMsg->BufferLength);
   /* FIXME: pfnAllocate? */
   buf = HeapReAlloc(GetProcessHeap(), 0, pMsg->Buffer, pMsg->BufferLength);
+  TRACE("Buffer=%p\n", buf);
   if (buf) pMsg->Buffer = buf;
   /* FIXME: which errors to return? */
   return buf ? S_OK : E_OUTOFMEMORY;
@@ -74,13 +75,22 @@ RPC_STATUS WINAPI I_RpcFreeBuffer(PRPC_MESSAGE pMsg)
 RPC_STATUS WINAPI I_RpcSend(PRPC_MESSAGE pMsg)
 {
   RpcBinding* bind = (RpcBinding*)pMsg->Handle;
+  RpcConnection* conn;
   RPC_CLIENT_INTERFACE* cif = NULL;
   RPC_SERVER_INTERFACE* sif = NULL;
+  UUID* obj;
+  UUID* act;
   RPC_STATUS status;
   RpcPktHdr hdr;
 
   TRACE("(%p)\n", pMsg);
   if (!bind) return RPC_S_INVALID_BINDING;
+
+  status = RPCRT4_OpenBinding(bind, &conn);
+  if (status != RPC_S_OK) return status;
+
+  obj = &bind->ObjectUuid;
+  act = &bind->ActiveUuid;
 
   if (bind->server) {
     sif = pMsg->RpcInterfaceInformation;
@@ -90,19 +100,17 @@ RPC_STATUS WINAPI I_RpcSend(PRPC_MESSAGE pMsg)
     if (!cif) return RPC_S_INTERFACE_NOT_FOUND; /* ? */
   }
 
-  status = RPCRT4_OpenBinding(bind);
-  if (status != RPC_S_OK) return status;
-
   /* initialize packet header */
   memset(&hdr, 0, sizeof(hdr));
   hdr.rpc_ver = 4;
-  hdr.ptype = PKT_REQUEST;
-  hdr.object = bind->ObjectUuid; /* FIXME: IIRC iff no object, the header structure excludes this elt */
+  hdr.ptype = bind->server ? PKT_RESPONSE : PKT_REQUEST;
+  hdr.object = *obj; /* FIXME: IIRC iff no object, the header structure excludes this elt */
   hdr.if_id = (bind->server) ? sif->InterfaceId.SyntaxGUID : cif->InterfaceId.SyntaxGUID;
   hdr.if_vers = 
     (bind->server) ?
     MAKELONG(sif->InterfaceId.SyntaxVersion.MinorVersion, sif->InterfaceId.SyntaxVersion.MajorVersion) :
     MAKELONG(cif->InterfaceId.SyntaxVersion.MinorVersion, cif->InterfaceId.SyntaxVersion.MajorVersion);
+  hdr.act_id = *act;
   hdr.opnum = pMsg->ProcNum;
   /* only the low-order 3 octets of the DataRepresentation go in the header */
   hdr.drep[0] = LOBYTE(LOWORD(pMsg->DataRepresentation));
@@ -111,13 +119,26 @@ RPC_STATUS WINAPI I_RpcSend(PRPC_MESSAGE pMsg)
   hdr.len = pMsg->BufferLength;
 
   /* transmit packet */
-  if (!WriteFile(bind->conn, &hdr, sizeof(hdr), NULL, NULL))
-    return GetLastError();
-  if (!WriteFile(bind->conn, pMsg->Buffer, pMsg->BufferLength, NULL, NULL))
-    return GetLastError();
+  if (!WriteFile(conn->conn, &hdr, sizeof(hdr), NULL, NULL)) {
+    status = GetLastError();
+    goto fail;
+  }
+  if (pMsg->BufferLength && !WriteFile(conn->conn, pMsg->Buffer, pMsg->BufferLength, NULL, NULL)) {
+    status = GetLastError();
+    goto fail;
+  }
 
   /* success */
-  return RPC_S_OK;
+  if (!bind->server) {
+    /* save the connection, so the response can be read from it */
+    pMsg->ReservedForRuntime = conn;
+    return RPC_S_OK;
+  }
+  RPCRT4_CloseBinding(bind, conn);
+  status = RPC_S_OK;
+fail:
+
+  return status;
 }
 
 /***********************************************************************
@@ -126,6 +147,8 @@ RPC_STATUS WINAPI I_RpcSend(PRPC_MESSAGE pMsg)
 RPC_STATUS WINAPI I_RpcReceive(PRPC_MESSAGE pMsg)
 {
   RpcBinding* bind = (RpcBinding*)pMsg->Handle;
+  RpcConnection* conn;
+  UUID* act;
   RPC_STATUS status;
   RpcPktHdr hdr;
   DWORD dwRead;
@@ -133,44 +156,78 @@ RPC_STATUS WINAPI I_RpcReceive(PRPC_MESSAGE pMsg)
   TRACE("(%p)\n", pMsg);
   if (!bind) return RPC_S_INVALID_BINDING;
 
-  status = RPCRT4_OpenBinding(bind);
-  if (status != RPC_S_OK) return status;
-
-  /* read packet header */
-#ifdef OVERLAPPED_WORKS
-  if (!ReadFile(bind->conn, &hdr, sizeof(hdr), &dwRead, &bind->ovl)) {
-    DWORD err = GetLastError();
-    if (err != ERROR_IO_PENDING) {
-      return err;
-    }
-    if (!GetOverlappedResult(bind->conn, &bind->ovl, &dwRead, TRUE)) return GetLastError();
+  if (pMsg->ReservedForRuntime) {
+    conn = pMsg->ReservedForRuntime;
+    pMsg->ReservedForRuntime = NULL;
+  } else {
+    status = RPCRT4_OpenBinding(bind, &conn);
+    if (status != RPC_S_OK) return status;
   }
-#else
-  if (!ReadFile(bind->conn, &hdr, sizeof(hdr), &dwRead, NULL))
-    return GetLastError();
-#endif
-  if (dwRead != sizeof(hdr)) return RPC_S_PROTOCOL_ERROR;
 
-  /* read packet body */
-  pMsg->BufferLength = hdr.len;
-  status = I_RpcGetBuffer(pMsg);
-  if (status != RPC_S_OK) return status;
+  act = &bind->ActiveUuid;
+
+  for (;;) {
+    /* read packet header */
 #ifdef OVERLAPPED_WORKS
-  if (!ReadFile(bind->conn, pMsg->Buffer, hdr.len, &dwRead, &bind->ovl)) {
-    DWORD err = GetLastError();
-    if (err != ERROR_IO_PENDING) {
-      return err;
+    if (!ReadFile(conn->conn, &hdr, sizeof(hdr), &dwRead, &conn->ovl)) {
+      DWORD err = GetLastError();
+      if (err != ERROR_IO_PENDING) {
+        status = err;
+        goto fail;
+      }
+      if (!GetOverlappedResult(conn->conn, &conn->ovl, &dwRead, TRUE)) {
+        status = GetLastError();
+        goto fail;
+      }
     }
-    if (!GetOverlappedResult(bind->conn, &bind->ovl, &dwRead, TRUE)) return GetLastError();
-  }
 #else
-  if (!ReadFile(bind->conn, pMsg->Buffer, hdr.len, &dwRead, NULL))
-    return GetLastError();
+    if (!ReadFile(conn->conn, &hdr, sizeof(hdr), &dwRead, NULL)) {
+      status = GetLastError();
+      goto fail;
+    }
 #endif
-  if (dwRead != hdr.len) return RPC_S_PROTOCOL_ERROR;
+    if (dwRead != sizeof(hdr)) {
+      status = RPC_S_PROTOCOL_ERROR;
+      goto fail;
+    }
 
-  /* success */
-  return RPC_S_OK;
+    /* read packet body */
+    pMsg->BufferLength = hdr.len;
+    status = I_RpcGetBuffer(pMsg);
+    if (status != RPC_S_OK) goto fail;
+    if (!pMsg->BufferLength) dwRead = 0; else
+#ifdef OVERLAPPED_WORKS
+    if (!ReadFile(conn->conn, pMsg->Buffer, hdr.len, &dwRead, &conn->ovl)) {
+      DWORD err = GetLastError();
+      if (err != ERROR_IO_PENDING) {
+        status = err;
+        goto fail;
+      }
+      if (!GetOverlappedResult(conn->conn, &conn->ovl, &dwRead, TRUE)) {
+        status = GetLastError();
+        goto fail;
+      }
+    }
+#else
+    if (!ReadFile(conn->conn, pMsg->Buffer, hdr.len, &dwRead, NULL)) {
+      status = GetLastError();
+      goto fail;
+    }
+#endif
+    if (dwRead != hdr.len) {
+      status = RPC_S_PROTOCOL_ERROR;
+      goto fail;
+    }
+
+    /* success */
+    status = RPC_S_OK;
+
+    /* FIXME: check packet type, destination, etc? */
+    break;
+  }
+fail:
+  RPCRT4_CloseBinding(bind, conn);
+  return status;
 }
 
 /***********************************************************************
