@@ -49,7 +49,7 @@ COMBOEX_GetEditControl (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
     if ((wndPtr->dwStyle & CBS_DROPDOWNLIST) != CBS_DROPDOWN)
 	return 0;
 
-    FIXME (comboex, "-- 0x%x\n", GetDlgItem32 (infoPtr->hwndCombo, ID_CB_EDIT));
+    TRACE (comboex, "-- 0x%x\n", GetDlgItem32 (infoPtr->hwndCombo, ID_CB_EDIT));
 
     return (LRESULT)GetDlgItem32 (infoPtr->hwndCombo, ID_CB_EDIT);
 }
@@ -126,6 +126,32 @@ COMBOEX_SetImageList (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 }
 
 
+static LRESULT
+COMBOEX_SetItem32A (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
+{
+    COMBOEX_INFO *infoPtr = COMBOEX_GetInfoPtr(wndPtr);
+
+    FIXME (comboex, "(%p): stub\n", (LPVOID)lParam);
+
+    return TRUE;
+}
+
+
+// << COMBOEX_SetItem32W >>
+
+
+__inline__ static LRESULT
+COMBOEX_Forward (WND *wndPtr, UINT32 uMsg, WPARAM32 wParam, LPARAM lParam)
+{
+    COMBOEX_INFO *infoPtr = COMBOEX_GetInfoPtr(wndPtr);
+
+    FIXME (comboex, "(0x%lx 0x%lx 0x%lx): stub\n", uMsg, wParam, lParam);
+
+    if (infoPtr->hwndCombo)    
+	return SendMessage32A (infoPtr->hwndCombo, uMsg, wParam, lParam);
+
+    return 0;
+}
 
 
 static LRESULT
@@ -238,9 +264,33 @@ COMBOEX_WindowProc (HWND32 hwnd, UINT32 uMsg, WPARAM32 wParam, LPARAM lParam)
 	case CBEM_SETIMAGELIST:
 	    return COMBOEX_SetImageList (wndPtr, wParam, lParam);
 
-//	case CBEM_SETITEM32A:
+	case CBEM_SETITEM32A:
+	    return COMBOEX_SetItem32A (wndPtr, wParam, lParam);
+
 //	case CBEM_SETITEM32W:
 //	case CBEM_SETUNICODEFORMAT:
+
+	case CB_DELETESTRING32:
+	case CB_FINDSTRINGEXACT32:
+	case CB_GETCOUNT32:
+	case CB_GETCURSEL32:
+	case CB_GETDROPPEDCONTROLRECT32:
+	case CB_GETDROPPEDSTATE32:
+	case CB_GETITEMDATA32:
+	case CB_GETITEMHEIGHT32:
+	case CB_GETLBTEXT32:
+	case CB_GETLBTEXTLEN32:
+	case CB_GETEXTENDEDUI32:
+	case CB_LIMITTEXT32:
+	case CB_RESETCONTENT32:
+	case CB_SELECTSTRING32:
+	case CB_SETCURSEL32:
+	case CB_SETDROPPEDWIDTH32:
+	case CB_SETEXTENDEDUI32:
+	case CB_SETITEMDATA32:
+	case CB_SETITEMHEIGHT32:
+	case CB_SHOWDROPDOWN32:
+	    return COMBOEX_Forward (wndPtr, uMsg, wParam, lParam);
 
 
 	case WM_CREATE:
