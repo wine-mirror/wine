@@ -333,7 +333,7 @@
 @ stdcall RtlCreateUnicodeStringFromAsciiz(ptr str)
 @ stub RtlCreateUserProcess
 @ stub RtlCreateUserSecurityObject
-@ stub RtlCreateUserThread
+@ stdcall RtlCreateUserThread(long ptr long ptr long long ptr ptr ptr ptr)
 @ stub RtlCustomCPToUnicodeN
 @ stub RtlCutoverTimeToSystemTime
 @ stdcall RtlDeNormalizeProcessParams(ptr)
@@ -1065,7 +1065,6 @@
 
 # Server interface
 @ cdecl -norelay wine_server_call(ptr)
-@ cdecl wine_server_init_thread()
 @ cdecl wine_server_fd_to_handle(long long long ptr)
 @ cdecl wine_server_handle_to_fd(long long ptr ptr ptr)
 @ cdecl wine_server_send_fd(long)
@@ -1084,9 +1083,6 @@
 @ cdecl MODULE_DllThreadAttach(ptr)
 @ cdecl MODULE_GetLoadOrderA(ptr str str long)
 @ cdecl MODULE_GetLoadOrderW(ptr wstr wstr long)
-@ cdecl SIGNAL_Init()
 @ cdecl SYSDEPS_ExitThread(long)
-@ cdecl SYSDEPS_SetCurThread(ptr)
-@ cdecl SYSDEPS_SpawnThread(ptr ptr)
 @ cdecl VERSION_Init(wstr)
 @ cdecl VIRTUAL_SetFaultHandler(ptr ptr ptr)

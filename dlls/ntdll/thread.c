@@ -79,6 +79,149 @@ DECL_GLOBAL_CONSTRUCTOR(thread_init)
 }
 
 
+/* startup routine for a newly created thread */
+static void start_thread( TEB *teb )
+{
+    LPTHREAD_START_ROUTINE func = (LPTHREAD_START_ROUTINE)teb->entry_point;
+    struct debug_info info;
+
+    info.str_pos = info.strings;
+    info.out_pos = info.output;
+    teb->debug_info = &info;
+
+    SYSDEPS_SetCurThread( teb );
+    SIGNAL_Init();
+    wine_server_init_thread();
+
+    NtTerminateThread( GetCurrentThread(), func( NtCurrentTeb()->entry_arg ) );
+}
+
+
+/***********************************************************************
+ *              RtlCreateUserThread   (NTDLL.@)
+ */
+NTSTATUS WINAPI RtlCreateUserThread( HANDLE process, const SECURITY_DESCRIPTOR *descr,
+                                     BOOLEAN suspended, PVOID stack_addr,
+                                     SIZE_T stack_reserve, SIZE_T stack_commit,
+                                     PRTL_THREAD_START_ROUTINE start, void *param,
+                                     HANDLE *handle_ptr, CLIENT_ID *id )
+{
+    HANDLE handle = 0;
+    TEB *teb;
+    DWORD tid = 0;
+    SIZE_T total_size;
+    SIZE_T page_size = getpagesize();
+    void *ptr, *base = NULL;
+    int request_pipe[2];
+    NTSTATUS status;
+
+    if (pipe( request_pipe ) == -1) return STATUS_TOO_MANY_OPENED_FILES;
+    fcntl( request_pipe[1], F_SETFD, 1 ); /* set close on exec flag */
+    wine_server_send_fd( request_pipe[0] );
+
+    SERVER_START_REQ( new_thread )
+    {
+        req->suspend    = suspended;
+        req->inherit    = 0;  /* FIXME */
+        req->request_fd = request_pipe[0];
+        if (!(status = wine_server_call( req )))
+        {
+            handle = reply->handle;
+            tid = reply->tid;
+        }
+        close( request_pipe[0] );
+    }
+    SERVER_END_REQ;
+
+    if (status) goto error;
+
+    if (!stack_reserve || !stack_commit)
+    {
+        IMAGE_NT_HEADERS *nt = RtlImageNtHeader( NtCurrentTeb()->Peb->ImageBaseAddress );
+        if (!stack_reserve) stack_reserve = nt->OptionalHeader.SizeOfStackReserve;
+        if (!stack_commit) stack_commit = nt->OptionalHeader.SizeOfStackCommit;
+    }
+    if (stack_reserve < stack_commit) stack_reserve = stack_commit;
+    stack_reserve = (stack_reserve + 0xffff) & ~0xffff;  /* round to 64K boundary */
+
+    /* Memory layout in allocated block:
+     *
+     *   size                 contents
+     * SIGNAL_STACK_SIZE   signal stack
+     * stack_size          normal stack (including a PAGE_GUARD page at the bottom)
+     * 1 page              TEB (except for initial thread)
+     */
+
+    total_size = stack_reserve + SIGNAL_STACK_SIZE + page_size;
+    if ((status = NtAllocateVirtualMemory( GetCurrentProcess(), &base, NULL, &total_size,
+                                           MEM_COMMIT, PAGE_EXECUTE_READWRITE )) != STATUS_SUCCESS)
+        goto error;
+
+    teb = (TEB *)((char *)base + total_size - page_size);
+
+    if (!(teb->teb_sel = wine_ldt_alloc_fs()))
+    {
+        status = STATUS_TOO_MANY_THREADS;
+        goto error;
+    }
+
+    teb->Tib.ExceptionList          = (void *)~0UL;
+    teb->Tib.StackBase              = (char *)base + SIGNAL_STACK_SIZE + stack_reserve;
+    teb->Tib.StackLimit             = base;  /* limit is lower than base since the stack grows down */
+    teb->Tib.Self                   = &teb->Tib;
+    teb->ClientId.UniqueProcess     = (HANDLE)GetCurrentProcessId();
+    teb->ClientId.UniqueThread      = (HANDLE)tid;
+    teb->Peb                        = NtCurrentTeb()->Peb;
+    teb->DeallocationStack          = base;
+    teb->StaticUnicodeString.Buffer = teb->StaticUnicodeBuffer;
+    teb->StaticUnicodeString.MaximumLength = sizeof(teb->StaticUnicodeBuffer);
+    RtlAcquirePebLock();
+    InsertHeadList( &NtCurrentTeb()->TlsLinks, &teb->TlsLinks );
+    RtlReleasePebLock();
+
+    teb->tibflags    = TEBF_WIN32;
+    teb->exit_code   = STILL_ACTIVE;
+    teb->request_fd  = request_pipe[1];
+    teb->reply_fd    = -1;
+    teb->wait_fd[0]  = -1;
+    teb->wait_fd[1]  = -1;
+    teb->entry_point = start;
+    teb->entry_arg   = param;
+    teb->htask16     = NtCurrentTeb()->htask16;
+
+    /* setup the guard page */
+    ptr = (char *)base + SIGNAL_STACK_SIZE;
+    NtProtectVirtualMemory( GetCurrentProcess(), &ptr, &page_size,
+                            PAGE_EXECUTE_READWRITE | PAGE_GUARD, NULL );
+
+    if (SYSDEPS_SpawnThread( start_thread, teb ) == -1)
+    {
+        RtlAcquirePebLock();
+        RemoveEntryList( &teb->TlsLinks );
+        RtlReleasePebLock();
+        wine_ldt_free_fs( teb->teb_sel );
+        status = STATUS_TOO_MANY_THREADS;
+        goto error;
+    }
+
+    if (id) id->UniqueThread = (HANDLE)tid;
+    if (handle_ptr) *handle_ptr = handle;
+    else NtClose( handle );
+
+    return STATUS_SUCCESS;
+
+error:
+    if (base)
+    {
+        total_size = 0;
+        NtFreeVirtualMemory( GetCurrentProcess(), &base, &total_size, MEM_RELEASE );
+    }
+    if (handle) NtClose( handle );
+    close( request_pipe[1] );
+    return status;
+}
+
+
 /***********************************************************************
  *              NtOpenThread   (NTDLL.@)
  *              ZwOpenThread   (NTDLL.@)
@@ -159,13 +302,7 @@ NTSTATUS WINAPI NtTerminateThread( HANDLE handle, LONG exit_code )
     if (self)
     {
         if (last) exit( exit_code );
-        else
-        {
-            RtlAcquirePebLock();
-            RemoveEntryList( &NtCurrentTeb()->TlsLinks );
-            RtlReleasePebLock();
-            SYSDEPS_ExitThread( exit_code );
-        }
+        else SYSDEPS_AbortThread( exit_code );
     }
     return ret;
 }
