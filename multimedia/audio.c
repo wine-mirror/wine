@@ -169,7 +169,7 @@ static	BOOL	wodPlayer_WriteFragments(WINE_WAVEOUT* wwo)
 	    LeaveCriticalSection(&wwo->critSect);
 	    ExitThread(-1);
 	}
-	TRACE(wave, "Can write %d fragments\n", abinfo.fragments);
+	TRACE(wave, "Can write %d fragments on fd %d\n", abinfo.fragments, wwo->unixdev);
 
 	if (abinfo.fragments == 0)	/* output queue is full, wait a bit */
 	    return FALSE;
@@ -180,6 +180,7 @@ static	BOOL	wodPlayer_WriteFragments(WINE_WAVEOUT* wwo)
 		wwo->dwNotifiedBytes >= wwo->dwFragmentSize &&  /* first fragment has been played */
 		abinfo.fragstotal - abinfo.fragments < 2) {     /* done with all waveOutWrite()' fragments */
 		    
+		/* FIXME: should do better handling here */
 		TRACE(wave, "Oooch, buffer underrun !\n");
 		return TRUE; /* force resetting of waveOut device */
 	    }
@@ -245,7 +246,7 @@ static	void	wodPlayer_Notify(WINE_WAVEOUT* wwo, WORD uDevID, BOOL force)
 	    LeaveCriticalSection(&wwo->critSect);
 	    ExitThread(-1);
 	}
-	TRACE(wave, "Played %d bytes\n", cinfo.bytes);
+	TRACE(wave, "Played %d bytes on fd %d\n", cinfo.bytes, wwo->unixdev);
 	/* FIXME: this will not work if a RESET or SYNC occurs somewhere */
 	wwo->dwTotalPlayed = cinfo.bytes;
     }
@@ -347,6 +348,7 @@ static	DWORD	WINAPI	wodPlayer(LPVOID pmt)
 		    WARN(wave, "can't notify client !\n");
 		}
 	    }
+	    wwo->lpQueueHdr = 0;
 	    wwo->state = WINE_WS_STOPPED;
 	    break;
 	case WINE_WS_CLOSING:
@@ -475,8 +477,12 @@ static DWORD wodGetDevCaps(WORD wDevID, LPWAVEOUTCAPS16 lpCaps, DWORD dwSize)
  */
 static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
 {
-    int 	 	audio, abuf_size, smplrate, samplesize, dsp_stereo;
-    LPWAVEFORMAT	lpFormat;
+    int 	 	audio;
+    int			sample_rate;
+    int			sample_size;
+    int			dsp_stereo;
+    int			audio_fragment;
+    int			fragment_size;
     
     TRACE(wave, "(%u, %p, %08lX);\n", wDevID, lpDesc, dwFlags);
     if (lpDesc == NULL) {
@@ -487,6 +493,19 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
 	TRACE(wave, "MAX_WAVOUTDRV reached !\n");
 	return MMSYSERR_BADDEVICEID;
     }
+    /* only PCM format is supported so far... */
+    if (lpDesc->lpFormat->wFormatTag != WAVE_FORMAT_PCM ||
+	lpDesc->lpFormat->nChannels == 0 ||
+	lpDesc->lpFormat->nSamplesPerSec == 0) {
+	WARN(wave, "Bad format: tag=%04X nChannels=%d nSamplesPerSec=%ld !\n", 
+	     lpDesc->lpFormat->wFormatTag, lpDesc->lpFormat->nChannels,
+	     lpDesc->lpFormat->nSamplesPerSec);
+	return WAVERR_BADFORMAT;
+    }
+
+    if (dwFlags & WAVE_FORMAT_QUERY)
+	return MMSYSERR_NOERROR;
+
     WOutDev[wDevID].unixdev = 0;
     if (access(SOUND_DEV, 0) != 0) 
 	return MMSYSERR_NOTENABLED;
@@ -495,31 +514,11 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
 	WARN(wave, "can't open !\n");
 	return MMSYSERR_ALLOCATED ;
     }
-    IOCTL(audio, SNDCTL_DSP_GETBLKSIZE, abuf_size);
-    if (abuf_size < 1024 || abuf_size > 65536) {
-	if (abuf_size == -1)
-	    WARN(wave, "IOCTL can't 'SNDCTL_DSP_GETBLKSIZE' !\n");
-	else
-	    WARN(wave, "SNDCTL_DSP_GETBLKSIZE Invalid dwFragmentSize !\n");
-	return MMSYSERR_NOTENABLED;
-    }
+
     WOutDev[wDevID].wFlags = HIWORD(dwFlags & CALLBACK_TYPEMASK);
     
-    /* FIXME: copy lpFormat too? */
-    memcpy(&WOutDev[wDevID].waveDesc, lpDesc, sizeof(WAVEOPENDESC));
-    TRACE(wave, "lpDesc->lpFormat = %p\n", lpDesc->lpFormat);
-    lpFormat = lpDesc->lpFormat; 
-    TRACE(wave, "lpFormat = %p\n", lpFormat);
-    if (lpFormat->wFormatTag != WAVE_FORMAT_PCM) {
-	WARN(wave, "Bad format %04X !\n", lpFormat->wFormatTag);
-	WARN(wave, "Bad nChannels %d !\n", lpFormat->nChannels);
-	WARN(wave, "Bad nSamplesPerSec %ld !\n", lpFormat->nSamplesPerSec);
-	return WAVERR_BADFORMAT;
-    }
-    memcpy(&WOutDev[wDevID].format, lpFormat, sizeof(PCMWAVEFORMAT));
-    if (WOutDev[wDevID].format.wf.nChannels == 0) return WAVERR_BADFORMAT;
-    if (WOutDev[wDevID].format.wf.nSamplesPerSec == 0) return WAVERR_BADFORMAT;
-    TRACE(wave, "wBitsPerSample=%u !\n", WOutDev[wDevID].format.wBitsPerSample);
+    memcpy(&WOutDev[wDevID].waveDesc, lpDesc, 		sizeof(WAVEOPENDESC));
+    memcpy(&WOutDev[wDevID].format,   lpDesc->lpFormat, sizeof(PCMWAVEFORMAT));
     
     if (WOutDev[wDevID].format.wBitsPerSample == 0) {
 	WOutDev[wDevID].format.wBitsPerSample = 8 *
@@ -528,30 +527,41 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
 	    WOutDev[wDevID].format.wf.nChannels;
     }
     
+    /* shockwave player uses only 4 1k-fragments at a rate of 22050 bytes/sec
+     * thus leading to 46ms per fragment, and a turnaround time of 185ms
+     */
+    /* 2^10=1024 bytes per fragment, 16 fragments max */
+    audio_fragment = 0x000F000A;
+    sample_size = WOutDev[wDevID].format.wBitsPerSample;
+    sample_rate = WOutDev[wDevID].format.wf.nSamplesPerSec;
+    dsp_stereo = (WOutDev[wDevID].format.wf.nChannels > 1) ? TRUE : FALSE;
+
+    IOCTL(audio, SNDCTL_DSP_SETFRAGMENT, audio_fragment);
+    /* First size and stereo then samplerate */
+    IOCTL(audio, SNDCTL_DSP_SAMPLESIZE, sample_size);
+    IOCTL(audio, SNDCTL_DSP_STEREO, dsp_stereo);
+    IOCTL(audio, SNDCTL_DSP_SPEED, sample_rate);
+
+    /* even if we set fragment size above, read it again, just in case */
+    IOCTL(audio, SNDCTL_DSP_GETBLKSIZE, fragment_size);
+
     WOutDev[wDevID].lpQueueHdr = NULL;
     WOutDev[wDevID].unixdev = audio;
     WOutDev[wDevID].dwTotalPlayed = 0;
-    WOutDev[wDevID].dwFragmentSize = abuf_size;
+    WOutDev[wDevID].dwFragmentSize = fragment_size;
     WOutDev[wDevID].state = WINE_WS_STOPPED;
     WOutDev[wDevID].hThread = 0;
-    
-    samplesize = WOutDev[wDevID].format.wBitsPerSample;
-    smplrate = WOutDev[wDevID].format.wf.nSamplesPerSec;
-    dsp_stereo = (WOutDev[wDevID].format.wf.nChannels > 1) ? TRUE : FALSE;
-    
-    /* First size and stereo then samplerate */
-    IOCTL(audio, SNDCTL_DSP_SAMPLESIZE, samplesize);
-    IOCTL(audio, SNDCTL_DSP_STEREO, dsp_stereo);
-    IOCTL(audio, SNDCTL_DSP_SPEED, smplrate);
-    
+
     /* FIXME: do we need to make critsect global ? */
     InitializeCriticalSection(&WOutDev[wDevID].critSect);
     MakeCriticalSectionGlobal(&WOutDev[wDevID].critSect);
     
-    TRACE(wave, "wBitsPerSample=%u !\n", WOutDev[wDevID].format.wBitsPerSample);
-    TRACE(wave, "nAvgBytesPerSec=%lu !\n", WOutDev[wDevID].format.wf.nAvgBytesPerSec);
-    TRACE(wave, "nSamplesPerSec=%lu !\n", WOutDev[wDevID].format.wf.nSamplesPerSec);
-    TRACE(wave, "nChannels=%u !\n", WOutDev[wDevID].format.wf.nChannels);
+    TRACE(wave, "fd=%d fragmentSize=%ld\n", 
+	  WOutDev[wDevID].unixdev, WOutDev[wDevID].dwFragmentSize);
+
+    TRACE(wave, "wBitsPerSample=%u, nAvgBytesPerSec=%lu, nSamplesPerSec=%lu, nChannels=%u !\n", 
+	  WOutDev[wDevID].format.wBitsPerSample, WOutDev[wDevID].format.wf.nAvgBytesPerSec, 
+	  WOutDev[wDevID].format.wf.nSamplesPerSec, WOutDev[wDevID].format.wf.nChannels);
     
     if (WAVE_NotifyClient(wDevID, WOM_OPEN, 0L, 0L) != MMSYSERR_NOERROR) {
 	WARN(wave, "can't notify client !\n");
@@ -574,7 +584,7 @@ static DWORD wodClose(WORD wDevID)
 	return MMSYSERR_BADDEVICEID;
     }
     
-    if (WOutDev[wDevID].lpQueueHdr != NULL) {
+    if (WOutDev[wDevID].lpQueueHdr != NULL || WOutDev[wDevID].lpNotifyHdr != NULL) {
 	WARN(wave, "buffers still playing !\n");
 	ret = WAVERR_STILLPLAYING;
     } else {
@@ -636,8 +646,8 @@ static DWORD wodWrite(WORD wDevID, LPWAVEHDR lpWaveHdr, DWORD dwSize)
 	/* nothing to do */ 
 	break;
     case WINE_WS_STOPPED:
+	WOutDev[wDevID].state = WINE_WS_PLAYING;
 	if (WOutDev[wDevID].hThread == 0) {
-	    WOutDev[wDevID].state = WINE_WS_PLAYING;
 	    WOutDev[wDevID].hThread = CreateThread(NULL, 0, wodPlayer, (LPVOID)(DWORD)wDevID, 0, NULL);
 	}
 	break;
