@@ -24,6 +24,7 @@ EXPORTS
     wine_dbgstr_w
     wine_dbgstr_wn
     wine_dlclose
+    wine_dll_get_owner
     wine_dll_load
     wine_dll_load_main_exe
     wine_dll_set_callback

@@ -47,6 +47,7 @@ extern void *wine_dll_load( const char *filename, char *error, int errorsize, in
 extern void *wine_dll_load_main_exe( const char *name, char *error, int errorsize,
                                      int test_only, int *file_exists );
 extern void wine_dll_unload( void *handle );
+extern int wine_dll_get_owner( const char *name, char *buffer, int size, int *file_exists );
 
 extern int __wine_main_argc;
 extern char **__wine_main_argv;

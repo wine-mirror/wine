@@ -47,6 +47,12 @@ char **__wine_main_argv = NULL;
 WCHAR **__wine_main_wargv = NULL;
 char **__wine_main_environ = NULL;
 
+struct dll_path_context
+{
+    int   index;
+    char *buffer;
+};
+
 #define MAX_DLLS 100
 
 static struct
@@ -121,33 +127,64 @@ inline static int file_exists( const char *name )
     return (fd != -1);
 }
 
+
+/* get a filename from the next entry in the dll path */
+static char *next_dll_path( struct dll_path_context *context )
+{
+    int index = context->index++;
+
+    if (index < nb_dll_paths)
+    {
+        int len = strlen( dll_paths[index] );
+        char *path = context->buffer + dll_path_maxlen - len;
+        memcpy( path, dll_paths[index], len );
+        return path;
+    }
+    return NULL;
+}
+
+
+/* get a filename from the first entry in the dll path */
+static char *first_dll_path( const char *name, const char *ext, struct dll_path_context *context )
+{
+    char *p;
+    int namelen = strlen( name );
+
+    context->buffer = p = malloc( dll_path_maxlen + namelen + strlen(ext) + 2 );
+    context->index = 0;
+
+    /* store the name at the end of the buffer, followed by extension */
+    p += dll_path_maxlen;
+    *p++ = '/';
+    memcpy( p, name, namelen );
+    strcpy( p + namelen, ext );
+    return next_dll_path( context );
+}
+
+
+/* free the dll path context created by first_dll_path */
+inline static void free_dll_path( struct dll_path_context *context )
+{
+    free( context->buffer );
+}
+
+
 /* open a library for a given dll, searching in the dll path
  * 'name' must be the Windows dll name (e.g. "kernel32.dll") */
 static void *dlopen_dll( const char *name, char *error, int errorsize,
                          int test_only, int *exists )
 {
-    int i, namelen = strlen(name);
-    char *buffer, *p;
+    struct dll_path_context context;
+    char *path;
     void *ret = NULL;
 
-    buffer = malloc( dll_path_maxlen + namelen + 5 );
-
-    /* store the name at the end of the buffer, followed by .so */
-    p = buffer + dll_path_maxlen;
-    *p++ = '/';
-    memcpy( p, name, namelen );
-    strcpy( p + namelen, ".so" );
     *exists = 0;
-
-    for (i = 0; i < nb_dll_paths; i++)
+    for (path = first_dll_path( name, ".so", &context ); path; path = next_dll_path( &context ))
     {
-        int len = strlen(dll_paths[i]);
-        p = buffer + dll_path_maxlen - len;
-        memcpy( p, dll_paths[i], len );
-        if (!test_only && (ret = wine_dlopen( p, RTLD_NOW, error, errorsize ))) break;
-        if ((*exists = file_exists( p ))) break; /* exists but cannot be loaded, return the error */
+        if (!test_only && (ret = wine_dlopen( path, RTLD_NOW, error, errorsize ))) break;
+        if ((*exists = file_exists( path ))) break; /* exists but cannot be loaded, return the error */
     }
-    free( buffer );
+    free_dll_path( &context );
     return ret;
 }
 
@@ -408,6 +445,40 @@ void *wine_dll_load_main_exe( const char *name, char *error, int errorsize,
                               int test_only, int *file_exists )
 {
     return dlopen_dll( name, error, errorsize, test_only, file_exists );
+}
+
+
+/***********************************************************************
+ *           wine_dll_get_owner
+ *
+ * Retrieve the name of the 32-bit owner dll for a 16-bit dll.
+ * Return 0 if OK, -1 on error.
+ */
+int wine_dll_get_owner( const char *name, char *buffer, int size, int *exists )
+{
+    int ret = -1;
+    char *path;
+    struct dll_path_context context;
+
+    *exists = 0;
+    for (path = first_dll_path( name, ".so", &context ); path; path = next_dll_path( &context ))
+    {
+        int res = readlink( path, buffer, size );
+        if (res != -1) /* got a symlink */
+        {
+            *exists = 1;
+            if (res < 4 || res >= size) break;
+            buffer[res] = 0;
+            if (strchr( buffer, '/' )) break;  /* contains a path, not valid */
+            if (strcmp( buffer + res - 3, ".so" )) break;  /* does not end in .so, not valid */
+            buffer[res - 3] = 0;  /* remove .so */
+            ret = 0;
+            break;
+        }
+        if ((*exists = file_exists( path ))) break; /* exists but not a symlink, return the error */
+    }
+    free_dll_path( &context );
+    return ret;
 }
 
 
