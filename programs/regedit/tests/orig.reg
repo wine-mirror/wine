@@ -1,8 +1,8 @@
 REGEDIT4
 
-[HKEY_CURRENT_USER\Test Regapi]
+[HKEY_CURRENT_USER\Test Regedit]
 
-[HKEY_CURRENT_USER\Test Regapi\New Key #1]
+[HKEY_CURRENT_USER\Test Regedit\New Key #1]
 @="222Sample default value data, very long, very long, very long, very long, very long, very long, very long, very long, very long, very long, very long, very long, very long, very long, very long, very long, very long,end"
 "A- \" Binary Value #1, long name \\ []= long long long long long long long long long long long long end"=hex:30,\
   31,32,33,34,35,36,37,38,39,30,31,32,33,34,35,36,37,38,39,30,31,32,33,34,35,\
@@ -26,23 +26,23 @@ REGEDIT4
 "New String Value #2"=""
 "v1"="\" \\,=[]"
 
-[HKEY_CURRENT_USER\Test Regapi\New Key #1\New Key #2]
+[HKEY_CURRENT_USER\Test Regedit\New Key #1\New Key #2]
 "Empty Value1"=hex(7):00
 "Empty Value2"=hex(7):00,00
 "Empty Value3"=hex(7):00,00,00
 
-[HKEY_CURRENT_USER\Test Regapi\New Key #1\New Key #2\New Key #3]
+[HKEY_CURRENT_USER\Test Regedit\New Key #1\New Key #2\New Key #3]
 
-[HKEY_CURRENT_USER\Test Regapi\New Key #1\New Key #2\New Key #3\New Key #4]
+[HKEY_CURRENT_USER\Test Regedit\New Key #1\New Key #2\New Key #3\New Key #4]
 @=""
 
-[HKEY_CURRENT_USER\Test Regapi\New Key #1\New Key #2\New Key #3\New Key #4\New Key #5]
+[HKEY_CURRENT_USER\Test Regedit\New Key #1\New Key #2\New Key #3\New Key #4\New Key #5]
 
-[HKEY_CURRENT_USER\Test Regapi\New Key #1\New Key #2\New Key #3\New Key #4.1]
+[HKEY_CURRENT_USER\Test Regedit\New Key #1\New Key #2\New Key #3\New Key #4.1]
 
-[HKEY_CURRENT_USER\Test Regapi\New Key #1\New Key #2\New Key #3\New Key #6]
+[HKEY_CURRENT_USER\Test Regedit\New Key #1\New Key #2\New Key #3\New Key #6]
 
-[HKEY_CURRENT_USER\Test Regapi\New Key #7]
+[HKEY_CURRENT_USER\Test Regedit\New Key #7]
 "Presentation Cache"=hex:64,00,00,00,01,00,00,00,00,00,00,00,00,00,00,00,00,00,\
   00,00,60,60,03,00,64,00,00,00,1b,00,00,00,23,00,00,00,43,3a,5c,57,49,4e,44,\
   4f,57,53,5c,53,59,53,54,45,4d,5c,44,45,53,4b,2e,43,50,4c,00,44,69,73,70,6c,\

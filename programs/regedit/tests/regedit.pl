@@ -1,6 +1,6 @@
 #!/usr/bin/perl -w
 #
-# This script tests regapi functionality
+# This script tests regedit functionality
 #
 # Copyright 2002 Andriy Palamarchuk
 #
@@ -91,7 +91,7 @@ sub test_regedit
     my $error_bad_reg_class_name = 'regedit: Incorrect registry class specification in';
     my $error_dont_delete_class = 'regedit: Can\'t delete registry class';
 
-    my $test_reg_key = 'HKEY_CURRENT_USER\Test Regapi';
+    my $test_reg_key = 'HKEY_CURRENT_USER\Test Regedit';
 
     my $s;
     my $regedit = -e "./regedit.exe" ? ".\\regedit.exe" : "./regedit";
