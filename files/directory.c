@@ -56,8 +56,6 @@ WINE_DECLARE_DEBUG_CHANNEL(file);
 static DOS_FULL_NAME DIR_Windows;
 static DOS_FULL_NAME DIR_System;
 
-static const WCHAR wineW[] = {'w','i','n','e',0};
-
 /***********************************************************************
  *           FILE_contains_pathW
  */
