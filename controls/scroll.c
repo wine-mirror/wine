@@ -1251,7 +1251,7 @@ BOOL WINAPI GetScrollInfo(
     if (info->fMask & SIF_PAGE) info->nPage = infoPtr->Page;
     if (info->fMask & SIF_POS) info->nPos = infoPtr->CurVal;
     if ((info->fMask & SIF_TRACKPOS) && (info->cbSize == sizeof(*info)))
-        info->nTrackPos = (SCROLL_TrackingWin==hwnd) ? SCROLL_TrackingVal : 0;
+        info->nTrackPos = (SCROLL_TrackingWin==hwnd) ? SCROLL_TrackingVal : infoPtr->CurVal;
     if (info->fMask & SIF_RANGE)
     {
 	info->nMin = infoPtr->MinVal;
