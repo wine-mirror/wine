@@ -870,6 +870,16 @@ void WINAPI OldYield16(void)
     if (pCurTask) pCurTask->nEvents--;
 }
 
+/***********************************************************************
+ *           WIN32_OldYield16  (KERNEL.447)
+ */
+void WINAPI WIN32_OldYield16(void)
+{
+   DWORD count;
+
+   ReleaseThunkLock(&count);
+   RestoreThunkLock(count);
+}
 
 /***********************************************************************
  *           DirectedYield  (KERNEL.150)

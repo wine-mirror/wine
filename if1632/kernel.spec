@@ -351,7 +351,7 @@ file	krnl386.exe
 444 pascal16 Local32Info(ptr word) Local32Info16
 445 pascal16 Local32First(ptr word) Local32First16
 446 pascal16 Local32Next(ptr) Local32Next16
-447 pascal16 KERNEL_447() KERNEL_nop
+447 pascal16 WIN32_OldYield() WIN32_OldYield16
 448 stub KERNEL_448
 449 pascal GetpWin16Lock() GetpWin16Lock16
 450 pascal VWin32_EventWait(long) VWin32_EventWait

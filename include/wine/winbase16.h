@@ -93,6 +93,7 @@ HMODULE   WINAPI LoadLibraryEx32W16(LPCSTR,HANDLE16,DWORD);
 FARPROC16   WINAPI LocalNotify16(FARPROC16);
 HTASK16     WINAPI LockCurrentTask16(BOOL16);
 VOID        WINAPI OldYield16(void);
+VOID        WINAPI WIN32_OldYield16(void);
 VOID        WINAPI PostEvent16(HTASK16);
 WORD        WINAPI PrestoChangoSelector16(WORD,WORD);
 WORD        WINAPI SelectorAccessRights16(WORD,WORD,WORD);

@@ -1533,12 +1533,7 @@ void WINAPI UserYield16(void)
     if ( THREAD_IsWin16( NtCurrentTeb() ) )
         OldYield16();
     else
-    {
-        DWORD  count;
-
-       ReleaseThunkLock(&count);
-       RestoreThunkLock(count);
-    }
+        WIN32_OldYield16();
 
     /* Handle sent messages again */
     queue = (MESSAGEQUEUE *)QUEUE_Lock( GetFastQueue16() );
