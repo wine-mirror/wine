@@ -23,6 +23,22 @@
 
 #include <stdarg.h>
 
+#define FORMAT_STRING_PARANOIA 20
+#define TYPE_FORMAT_STRING_SIZE (5 + FORMAT_STRING_PARANOIA)
+#define PROC_FORMAT_STRING_SIZE (9 + FORMAT_STRING_PARANOIA) 
+
+typedef struct _MIDL_TYPE_FORMAT_STRING
+{
+  short Pad;
+  unsigned char Format[TYPE_FORMAT_STRING_SIZE];
+} MIDL_TYPE_FORMAT_STRING;
+
+typedef struct _MIDL_PROC_FORMAT_STRING
+{
+  short Pad;
+  unsigned char Format[PROC_FORMAT_STRING_SIZE];
+} MIDL_PROC_FORMAT_STRING;
+
 struct IPSFactoryBuffer;
 
 LONG_PTR RPCRT4_NdrClientCall2(PMIDL_STUB_DESC pStubDesc,
