@@ -182,47 +182,47 @@ then
     dnl *** All of the following tests require X11/Xlib.h
     AC_CHECK_HEADERS(X11/Xlib.h,
       [
+        AC_CHECK_HEADERS([X11/XKBlib.h \
+                          X11/Xutil.h \
+                          X11/extensions/shape.h \
+                          X11/extensions/XShm.h \
+                          X11/extensions/Xrandr.h \
+                          X11/extensions/Xrender.h \
+                          X11/extensions/Xvlib.h \
+                          X11/extensions/xf86dga.h \
+                          X11/extensions/xf86vmode.h],,,
+                         [#include <X11/Xlib.h>
+                          #ifdef HAVE_X11_XUTIL_H
+                          # include <X11/Xutil.h>
+                          #endif])
+
         dnl *** Check for X keyboard extension
-        AC_CHECK_HEADERS(X11/XKBlib.h,
-            [ dnl *** If X11/XKBlib.h exists...
+        if test "$ac_cv_header_X11_XKBlib_h" = "yes"
+        then
               AC_CHECK_LIB(X11, XkbQueryExtension,
               AC_DEFINE(HAVE_XKB, 1, [Define if you have the XKB extension]),,
               $X_LIBS -lXext -lX11 $X_EXTRA_LIBS)
-            ],
-            AC_MSG_WARN([[Xkb extension not found, Wine will be built without it]]),
-            [#include <X11/Xlib.h>])
+        fi
 
         dnl *** Check for X Shm extension
-        AC_CHECK_HEADERS(X11/extensions/XShm.h,
-            [ dnl *** If X11/extensions/XShm.h exists...
+        if test "$ac_cv_header_X11_extensions_XShm_h" = "yes"
+        then
               AC_CHECK_LIB(Xext, XShmQueryExtension,
               AC_DEFINE(HAVE_LIBXXSHM, 1, [Define if you have the X Shm extension]),,
               $X_LIBS -lXext -lX11 $X_EXTRA_LIBS)
-            ],
-            AC_MSG_WARN([[XShm extension not found, Wine will be built without it]]),
-            [#include <X11/Xlib.h>])
-
-        dnl *** Check for Xutil
-        AC_CHECK_HEADERS(X11/Xutil.h,,,
-            [#include <X11/Xlib.h>])
+        fi
 
         dnl *** Check for X shape extension
-        AC_CHECK_HEADERS(X11/extensions/shape.h,
-            [ dnl *** If X11/extensions/shape.h exists...
+        if test "$ac_cv_header_X11_extensions_shape_h" = "yes"
+        then
               AC_CHECK_LIB(Xext,XShapeQueryExtension,
 	      AC_DEFINE(HAVE_LIBXSHAPE, 1, [Define if you have the X Shape extension]),,
 	      $X_LIBS -lXext -lX11 $X_EXTRA_LIBS)
-	    ],
-	    AC_MSG_WARN([[XShape extension not found, Wine will be built without it]]),
-            [#include <X11/Xlib.h>
-             #ifdef HAVE_X11_XUTIL_H
-             # include <X11/Xutil.h>
-             #endif])
+        fi
 
         dnl *** Check for XFree86 DGA / DGA 2.0 extension
-        AC_CHECK_HEADERS(X11/extensions/xf86dga.h,
-            [ dnl *** If X11/extensions/xf86dga.h exists, check
-              dnl *** for XDGAQueryExtension()...
+        if test "$ac_cv_header_X11_extensions_xf86dga_h" = "yes"
+        then
               AC_CHECK_LIB(Xxf86dga, XDGAQueryExtension,
                 [ dnl *** If found...
                   AC_DEFINE(HAVE_LIBXXF86DGA2, 1,
@@ -239,53 +239,38 @@ then
                     $X_LIBS -lXext -lX11 $X_EXTRA_LIBS
                   )
                 ],
-                $X_LIBS -lXext -lX11 $X_EXTRA_LIBS
-              )
-            ],
-            AC_MSG_WARN([[DGA extension not found, Wine will be built without it]]),
-            [#include <X11/Xlib.h>])
+                $X_LIBS -lXext -lX11 $X_EXTRA_LIBS)
+        fi
 
         dnl *** Check for XFree86 VMODE extension
-        AC_CHECK_HEADERS(X11/extensions/xf86vmode.h,
-            [ dnl *** If X11/extensions/xf86vmode.h exists...
+        if test "$ac_cv_header_X11_extensions_xf86vmode_h" = "yes"
+        then
                 AC_CHECK_LIB(Xxf86vm, XF86VidModeQueryExtension,
                   [ AC_DEFINE(HAVE_LIBXXF86VM, 1, [Define if you have the Xxf86vm library])
                      X_PRE_LIBS="$X_PRE_LIBS -lXxf86vm"
                   ],,
-                  $X_LIBS -lXext -lX11 $X_EXTRA_LIBS
-                )
-            ],
-            AC_MSG_WARN([[XFree86 VMODE extension not found, Wine will be built without it]]),
-            [#include <X11/Xlib.h>])
+                  $X_LIBS -lXext -lX11 $X_EXTRA_LIBS)
+        fi
 
         dnl *** Check for X RandR extension
-        AC_CHECK_HEADERS(X11/extensions/Xrandr.h,
-            [ dnl *** If X11/extensions/Xrandr.h exists...
+        if test "$ac_cv_header_X11_extensions_Xrandr_h" = "yes"
+        then
                 AC_CHECK_LIB(Xrandr, XRRSetScreenConfigAndRate,
                   [ AC_DEFINE(HAVE_LIBXRANDR, 1, [Define if you have the Xrandr library])
                      X_PRE_LIBS="$X_PRE_LIBS -lXrandr"
                   ],,
-                  $X_LIBS -lXext -lX11 $X_EXTRA_LIBS
-                )
-            ],
-            AC_MSG_WARN([[Xrandr extension not found, Wine will be built without it]]),
-            [#include <X11/Xlib.h>])
+                  $X_LIBS -lXext -lX11 $X_EXTRA_LIBS)
+        fi
 
         dnl *** Check for XVideo extension supporting XvImages
-        AC_CHECK_HEADERS(X11/extensions/Xvlib.h,
-            [ dnl *** If X11/extensions/Xvlib.h exists...
+        if test "$ac_cv_header_X11_extensions_Xvlib_h" = "yes"
+        then
                 AC_CHECK_LIB(Xv, XvShmCreateImage,
                   [ AC_DEFINE(HAVE_XVIDEO, 1, [Define if the X libraries support XVideo])
                      X_PRE_LIBS="$X_PRE_LIBS -lXv"
                   ],,
-                  $X_LIBS -lXext -lX11 $X_EXTRA_LIBS
-                )
-            ],
-            AC_MSG_WARN([[XVideo extension not found, Wine will be built without it]]),
-            [#include <X11/Xlib.h>])
-
-        dnl *** Check for XRender include file
-        AC_CHECK_HEADERS(X11/extensions/Xrender.h,,,[#include <X11/Xlib.h>])
+                  $X_LIBS -lXext -lX11 $X_EXTRA_LIBS)
+        fi
       ]
     ) dnl *** End of X11/Xlib.h check
 

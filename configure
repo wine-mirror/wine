@@ -6831,7 +6831,23 @@ if test `eval echo '${'$as_ac_Header'}'` = yes; then
 _ACEOF
 
 
-for ac_header in X11/XKBlib.h
+
+
+
+
+
+
+
+
+for ac_header in X11/XKBlib.h \
+                          X11/Xutil.h \
+                          X11/extensions/shape.h \
+                          X11/extensions/XShm.h \
+                          X11/extensions/Xrandr.h \
+                          X11/extensions/Xrender.h \
+                          X11/extensions/Xvlib.h \
+                          X11/extensions/xf86dga.h \
+                          X11/extensions/xf86vmode.h
 do
 as_ac_Header=`echo "ac_cv_header_$ac_header" | $as_tr_sh`
 echo "$as_me:$LINENO: checking for $ac_header" >&5
@@ -6847,6 +6863,9 @@ cat confdefs.h >>conftest.$ac_ext
 cat >>conftest.$ac_ext <<_ACEOF
 /* end confdefs.h.  */
 #include <X11/Xlib.h>
+                          #ifdef HAVE_X11_XUTIL_H
+                          # include <X11/Xutil.h>
+                          #endif
 
 #include <$ac_header>
 _ACEOF
@@ -6877,7 +6896,15 @@ if test `eval echo '${'$as_ac_Header'}'` = yes; then
   cat >>confdefs.h <<_ACEOF
 #define `echo "HAVE_$ac_header" | $as_tr_cpp` 1
 _ACEOF
-                echo "$as_me:$LINENO: checking for XkbQueryExtension in -lX11" >&5
+
+fi
+
+done
+
+
+                if test "$ac_cv_header_X11_XKBlib_h" = "yes"
+        then
+              echo "$as_me:$LINENO: checking for XkbQueryExtension in -lX11" >&5
 echo $ECHO_N "checking for XkbQueryExtension in -lX11... $ECHO_C" >&6
 if test "${ac_cv_lib_X11_XkbQueryExtension+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
@@ -6939,63 +6966,11 @@ _ACEOF
 
 fi
 
+        fi
 
-else
-  { echo "$as_me:$LINENO: WARNING: Xkb extension not found, Wine will be built without it" >&5
-echo "$as_me: WARNING: Xkb extension not found, Wine will be built without it" >&2;}
-fi
-
-done
-
-
-
-for ac_header in X11/extensions/XShm.h
-do
-as_ac_Header=`echo "ac_cv_header_$ac_header" | $as_tr_sh`
-echo "$as_me:$LINENO: checking for $ac_header" >&5
-echo $ECHO_N "checking for $ac_header... $ECHO_C" >&6
-if eval "test \"\${$as_ac_Header+set}\" = set"; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  cat >conftest.$ac_ext <<_ACEOF
-#line $LINENO "configure"
-/* confdefs.h.  */
-_ACEOF
-cat confdefs.h >>conftest.$ac_ext
-cat >>conftest.$ac_ext <<_ACEOF
-/* end confdefs.h.  */
-#include <X11/Xlib.h>
-
-#include <$ac_header>
-_ACEOF
-rm -f conftest.$ac_objext
-if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
-  (eval $ac_compile) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); } &&
-         { ac_try='test -s conftest.$ac_objext'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; }; then
-  eval "$as_ac_Header=yes"
-else
-  echo "$as_me: failed program was:" >&5
-sed 's/^/| /' conftest.$ac_ext >&5
-
-eval "$as_ac_Header=no"
-fi
-rm -f conftest.$ac_objext conftest.$ac_ext
-fi
-echo "$as_me:$LINENO: result: `eval echo '${'$as_ac_Header'}'`" >&5
-echo "${ECHO_T}`eval echo '${'$as_ac_Header'}'`" >&6
-if test `eval echo '${'$as_ac_Header'}'` = yes; then
-  cat >>confdefs.h <<_ACEOF
-#define `echo "HAVE_$ac_header" | $as_tr_cpp` 1
-_ACEOF
-                echo "$as_me:$LINENO: checking for XShmQueryExtension in -lXext" >&5
+                if test "$ac_cv_header_X11_extensions_XShm_h" = "yes"
+        then
+              echo "$as_me:$LINENO: checking for XShmQueryExtension in -lXext" >&5
 echo $ECHO_N "checking for XShmQueryExtension in -lXext... $ECHO_C" >&6
 if test "${ac_cv_lib_Xext_XShmQueryExtension+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
@@ -7057,119 +7032,11 @@ _ACEOF
 
 fi
 
+        fi
 
-else
-  { echo "$as_me:$LINENO: WARNING: XShm extension not found, Wine will be built without it" >&5
-echo "$as_me: WARNING: XShm extension not found, Wine will be built without it" >&2;}
-fi
-
-done
-
-
-
-for ac_header in X11/Xutil.h
-do
-as_ac_Header=`echo "ac_cv_header_$ac_header" | $as_tr_sh`
-echo "$as_me:$LINENO: checking for $ac_header" >&5
-echo $ECHO_N "checking for $ac_header... $ECHO_C" >&6
-if eval "test \"\${$as_ac_Header+set}\" = set"; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  cat >conftest.$ac_ext <<_ACEOF
-#line $LINENO "configure"
-/* confdefs.h.  */
-_ACEOF
-cat confdefs.h >>conftest.$ac_ext
-cat >>conftest.$ac_ext <<_ACEOF
-/* end confdefs.h.  */
-#include <X11/Xlib.h>
-
-#include <$ac_header>
-_ACEOF
-rm -f conftest.$ac_objext
-if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
-  (eval $ac_compile) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); } &&
-         { ac_try='test -s conftest.$ac_objext'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; }; then
-  eval "$as_ac_Header=yes"
-else
-  echo "$as_me: failed program was:" >&5
-sed 's/^/| /' conftest.$ac_ext >&5
-
-eval "$as_ac_Header=no"
-fi
-rm -f conftest.$ac_objext conftest.$ac_ext
-fi
-echo "$as_me:$LINENO: result: `eval echo '${'$as_ac_Header'}'`" >&5
-echo "${ECHO_T}`eval echo '${'$as_ac_Header'}'`" >&6
-if test `eval echo '${'$as_ac_Header'}'` = yes; then
-  cat >>confdefs.h <<_ACEOF
-#define `echo "HAVE_$ac_header" | $as_tr_cpp` 1
-_ACEOF
-
-fi
-
-done
-
-
-
-for ac_header in X11/extensions/shape.h
-do
-as_ac_Header=`echo "ac_cv_header_$ac_header" | $as_tr_sh`
-echo "$as_me:$LINENO: checking for $ac_header" >&5
-echo $ECHO_N "checking for $ac_header... $ECHO_C" >&6
-if eval "test \"\${$as_ac_Header+set}\" = set"; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  cat >conftest.$ac_ext <<_ACEOF
-#line $LINENO "configure"
-/* confdefs.h.  */
-_ACEOF
-cat confdefs.h >>conftest.$ac_ext
-cat >>conftest.$ac_ext <<_ACEOF
-/* end confdefs.h.  */
-#include <X11/Xlib.h>
-             #ifdef HAVE_X11_XUTIL_H
-             # include <X11/Xutil.h>
-             #endif
-
-#include <$ac_header>
-_ACEOF
-rm -f conftest.$ac_objext
-if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
-  (eval $ac_compile) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); } &&
-         { ac_try='test -s conftest.$ac_objext'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; }; then
-  eval "$as_ac_Header=yes"
-else
-  echo "$as_me: failed program was:" >&5
-sed 's/^/| /' conftest.$ac_ext >&5
-
-eval "$as_ac_Header=no"
-fi
-rm -f conftest.$ac_objext conftest.$ac_ext
-fi
-echo "$as_me:$LINENO: result: `eval echo '${'$as_ac_Header'}'`" >&5
-echo "${ECHO_T}`eval echo '${'$as_ac_Header'}'`" >&6
-if test `eval echo '${'$as_ac_Header'}'` = yes; then
-  cat >>confdefs.h <<_ACEOF
-#define `echo "HAVE_$ac_header" | $as_tr_cpp` 1
-_ACEOF
-                echo "$as_me:$LINENO: checking for XShapeQueryExtension in -lXext" >&5
+                if test "$ac_cv_header_X11_extensions_shape_h" = "yes"
+        then
+              echo "$as_me:$LINENO: checking for XShapeQueryExtension in -lXext" >&5
 echo $ECHO_N "checking for XShapeQueryExtension in -lXext... $ECHO_C" >&6
 if test "${ac_cv_lib_Xext_XShapeQueryExtension+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
@@ -7231,70 +7098,17 @@ _ACEOF
 
 fi
 
+        fi
 
-else
-  { echo "$as_me:$LINENO: WARNING: XShape extension not found, Wine will be built without it" >&5
-echo "$as_me: WARNING: XShape extension not found, Wine will be built without it" >&2;}
-fi
-
-done
-
-
-
-for ac_header in X11/extensions/xf86dga.h
-do
-as_ac_Header=`echo "ac_cv_header_$ac_header" | $as_tr_sh`
-echo "$as_me:$LINENO: checking for $ac_header" >&5
-echo $ECHO_N "checking for $ac_header... $ECHO_C" >&6
-if eval "test \"\${$as_ac_Header+set}\" = set"; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  cat >conftest.$ac_ext <<_ACEOF
-#line $LINENO "configure"
-/* confdefs.h.  */
-_ACEOF
-cat confdefs.h >>conftest.$ac_ext
-cat >>conftest.$ac_ext <<_ACEOF
-/* end confdefs.h.  */
-#include <X11/Xlib.h>
-
-#include <$ac_header>
-_ACEOF
-rm -f conftest.$ac_objext
-if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
-  (eval $ac_compile) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); } &&
-         { ac_try='test -s conftest.$ac_objext'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; }; then
-  eval "$as_ac_Header=yes"
-else
-  echo "$as_me: failed program was:" >&5
-sed 's/^/| /' conftest.$ac_ext >&5
-
-eval "$as_ac_Header=no"
-fi
-rm -f conftest.$ac_objext conftest.$ac_ext
-fi
-echo "$as_me:$LINENO: result: `eval echo '${'$as_ac_Header'}'`" >&5
-echo "${ECHO_T}`eval echo '${'$as_ac_Header'}'`" >&6
-if test `eval echo '${'$as_ac_Header'}'` = yes; then
-  cat >>confdefs.h <<_ACEOF
-#define `echo "HAVE_$ac_header" | $as_tr_cpp` 1
-_ACEOF
-                              echo "$as_me:$LINENO: checking for XDGAQueryExtension in -lXxf86dga" >&5
+                if test "$ac_cv_header_X11_extensions_xf86dga_h" = "yes"
+        then
+              echo "$as_me:$LINENO: checking for XDGAQueryExtension in -lXxf86dga" >&5
 echo $ECHO_N "checking for XDGAQueryExtension in -lXxf86dga... $ECHO_C" >&6
 if test "${ac_cv_lib_Xxf86dga_XDGAQueryExtension+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   ac_check_lib_save_LIBS=$LIBS
-LIBS="-lXxf86dga $X_LIBS -lXext -lX11 $X_EXTRA_LIBS
-               $LIBS"
+LIBS="-lXxf86dga $X_LIBS -lXext -lX11 $X_EXTRA_LIBS $LIBS"
 cat >conftest.$ac_ext <<_ACEOF
 #line $LINENO "configure"
 /* confdefs.h.  */
@@ -7419,70 +7233,17 @@ fi
 
 fi
 
+        fi
 
-else
-  { echo "$as_me:$LINENO: WARNING: DGA extension not found, Wine will be built without it" >&5
-echo "$as_me: WARNING: DGA extension not found, Wine will be built without it" >&2;}
-fi
-
-done
-
-
-
-for ac_header in X11/extensions/xf86vmode.h
-do
-as_ac_Header=`echo "ac_cv_header_$ac_header" | $as_tr_sh`
-echo "$as_me:$LINENO: checking for $ac_header" >&5
-echo $ECHO_N "checking for $ac_header... $ECHO_C" >&6
-if eval "test \"\${$as_ac_Header+set}\" = set"; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  cat >conftest.$ac_ext <<_ACEOF
-#line $LINENO "configure"
-/* confdefs.h.  */
-_ACEOF
-cat confdefs.h >>conftest.$ac_ext
-cat >>conftest.$ac_ext <<_ACEOF
-/* end confdefs.h.  */
-#include <X11/Xlib.h>
-
-#include <$ac_header>
-_ACEOF
-rm -f conftest.$ac_objext
-if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
-  (eval $ac_compile) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); } &&
-         { ac_try='test -s conftest.$ac_objext'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; }; then
-  eval "$as_ac_Header=yes"
-else
-  echo "$as_me: failed program was:" >&5
-sed 's/^/| /' conftest.$ac_ext >&5
-
-eval "$as_ac_Header=no"
-fi
-rm -f conftest.$ac_objext conftest.$ac_ext
-fi
-echo "$as_me:$LINENO: result: `eval echo '${'$as_ac_Header'}'`" >&5
-echo "${ECHO_T}`eval echo '${'$as_ac_Header'}'`" >&6
-if test `eval echo '${'$as_ac_Header'}'` = yes; then
-  cat >>confdefs.h <<_ACEOF
-#define `echo "HAVE_$ac_header" | $as_tr_cpp` 1
-_ACEOF
-                  echo "$as_me:$LINENO: checking for XF86VidModeQueryExtension in -lXxf86vm" >&5
+                if test "$ac_cv_header_X11_extensions_xf86vmode_h" = "yes"
+        then
+                echo "$as_me:$LINENO: checking for XF86VidModeQueryExtension in -lXxf86vm" >&5
 echo $ECHO_N "checking for XF86VidModeQueryExtension in -lXxf86vm... $ECHO_C" >&6
 if test "${ac_cv_lib_Xxf86vm_XF86VidModeQueryExtension+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   ac_check_lib_save_LIBS=$LIBS
-LIBS="-lXxf86vm $X_LIBS -lXext -lX11 $X_EXTRA_LIBS
-                 $LIBS"
+LIBS="-lXxf86vm $X_LIBS -lXext -lX11 $X_EXTRA_LIBS $LIBS"
 cat >conftest.$ac_ext <<_ACEOF
 #line $LINENO "configure"
 /* confdefs.h.  */
@@ -7540,70 +7301,17 @@ _ACEOF
 
 fi
 
+        fi
 
-else
-  { echo "$as_me:$LINENO: WARNING: XFree86 VMODE extension not found, Wine will be built without it" >&5
-echo "$as_me: WARNING: XFree86 VMODE extension not found, Wine will be built without it" >&2;}
-fi
-
-done
-
-
-
-for ac_header in X11/extensions/Xrandr.h
-do
-as_ac_Header=`echo "ac_cv_header_$ac_header" | $as_tr_sh`
-echo "$as_me:$LINENO: checking for $ac_header" >&5
-echo $ECHO_N "checking for $ac_header... $ECHO_C" >&6
-if eval "test \"\${$as_ac_Header+set}\" = set"; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  cat >conftest.$ac_ext <<_ACEOF
-#line $LINENO "configure"
-/* confdefs.h.  */
-_ACEOF
-cat confdefs.h >>conftest.$ac_ext
-cat >>conftest.$ac_ext <<_ACEOF
-/* end confdefs.h.  */
-#include <X11/Xlib.h>
-
-#include <$ac_header>
-_ACEOF
-rm -f conftest.$ac_objext
-if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
-  (eval $ac_compile) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); } &&
-         { ac_try='test -s conftest.$ac_objext'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; }; then
-  eval "$as_ac_Header=yes"
-else
-  echo "$as_me: failed program was:" >&5
-sed 's/^/| /' conftest.$ac_ext >&5
-
-eval "$as_ac_Header=no"
-fi
-rm -f conftest.$ac_objext conftest.$ac_ext
-fi
-echo "$as_me:$LINENO: result: `eval echo '${'$as_ac_Header'}'`" >&5
-echo "${ECHO_T}`eval echo '${'$as_ac_Header'}'`" >&6
-if test `eval echo '${'$as_ac_Header'}'` = yes; then
-  cat >>confdefs.h <<_ACEOF
-#define `echo "HAVE_$ac_header" | $as_tr_cpp` 1
-_ACEOF
-                  echo "$as_me:$LINENO: checking for XRRSetScreenConfigAndRate in -lXrandr" >&5
+                if test "$ac_cv_header_X11_extensions_Xrandr_h" = "yes"
+        then
+                echo "$as_me:$LINENO: checking for XRRSetScreenConfigAndRate in -lXrandr" >&5
 echo $ECHO_N "checking for XRRSetScreenConfigAndRate in -lXrandr... $ECHO_C" >&6
 if test "${ac_cv_lib_Xrandr_XRRSetScreenConfigAndRate+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   ac_check_lib_save_LIBS=$LIBS
-LIBS="-lXrandr $X_LIBS -lXext -lX11 $X_EXTRA_LIBS
-                 $LIBS"
+LIBS="-lXrandr $X_LIBS -lXext -lX11 $X_EXTRA_LIBS $LIBS"
 cat >conftest.$ac_ext <<_ACEOF
 #line $LINENO "configure"
 /* confdefs.h.  */
@@ -7661,70 +7369,17 @@ _ACEOF
 
 fi
 
+        fi
 
-else
-  { echo "$as_me:$LINENO: WARNING: Xrandr extension not found, Wine will be built without it" >&5
-echo "$as_me: WARNING: Xrandr extension not found, Wine will be built without it" >&2;}
-fi
-
-done
-
-
-
-for ac_header in X11/extensions/Xvlib.h
-do
-as_ac_Header=`echo "ac_cv_header_$ac_header" | $as_tr_sh`
-echo "$as_me:$LINENO: checking for $ac_header" >&5
-echo $ECHO_N "checking for $ac_header... $ECHO_C" >&6
-if eval "test \"\${$as_ac_Header+set}\" = set"; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  cat >conftest.$ac_ext <<_ACEOF
-#line $LINENO "configure"
-/* confdefs.h.  */
-_ACEOF
-cat confdefs.h >>conftest.$ac_ext
-cat >>conftest.$ac_ext <<_ACEOF
-/* end confdefs.h.  */
-#include <X11/Xlib.h>
-
-#include <$ac_header>
-_ACEOF
-rm -f conftest.$ac_objext
-if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
-  (eval $ac_compile) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); } &&
-         { ac_try='test -s conftest.$ac_objext'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; }; then
-  eval "$as_ac_Header=yes"
-else
-  echo "$as_me: failed program was:" >&5
-sed 's/^/| /' conftest.$ac_ext >&5
-
-eval "$as_ac_Header=no"
-fi
-rm -f conftest.$ac_objext conftest.$ac_ext
-fi
-echo "$as_me:$LINENO: result: `eval echo '${'$as_ac_Header'}'`" >&5
-echo "${ECHO_T}`eval echo '${'$as_ac_Header'}'`" >&6
-if test `eval echo '${'$as_ac_Header'}'` = yes; then
-  cat >>confdefs.h <<_ACEOF
-#define `echo "HAVE_$ac_header" | $as_tr_cpp` 1
-_ACEOF
-                  echo "$as_me:$LINENO: checking for XvShmCreateImage in -lXv" >&5
+                if test "$ac_cv_header_X11_extensions_Xvlib_h" = "yes"
+        then
+                echo "$as_me:$LINENO: checking for XvShmCreateImage in -lXv" >&5
 echo $ECHO_N "checking for XvShmCreateImage in -lXv... $ECHO_C" >&6
 if test "${ac_cv_lib_Xv_XvShmCreateImage+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   ac_check_lib_save_LIBS=$LIBS
-LIBS="-lXv $X_LIBS -lXext -lX11 $X_EXTRA_LIBS
-                 $LIBS"
+LIBS="-lXv $X_LIBS -lXext -lX11 $X_EXTRA_LIBS $LIBS"
 cat >conftest.$ac_ext <<_ACEOF
 #line $LINENO "configure"
 /* confdefs.h.  */
@@ -7782,67 +7437,7 @@ _ACEOF
 
 fi
 
-
-else
-  { echo "$as_me:$LINENO: WARNING: XVideo extension not found, Wine will be built without it" >&5
-echo "$as_me: WARNING: XVideo extension not found, Wine will be built without it" >&2;}
-fi
-
-done
-
-
-
-for ac_header in X11/extensions/Xrender.h
-do
-as_ac_Header=`echo "ac_cv_header_$ac_header" | $as_tr_sh`
-echo "$as_me:$LINENO: checking for $ac_header" >&5
-echo $ECHO_N "checking for $ac_header... $ECHO_C" >&6
-if eval "test \"\${$as_ac_Header+set}\" = set"; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  cat >conftest.$ac_ext <<_ACEOF
-#line $LINENO "configure"
-/* confdefs.h.  */
-_ACEOF
-cat confdefs.h >>conftest.$ac_ext
-cat >>conftest.$ac_ext <<_ACEOF
-/* end confdefs.h.  */
-#include <X11/Xlib.h>
-
-#include <$ac_header>
-_ACEOF
-rm -f conftest.$ac_objext
-if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
-  (eval $ac_compile) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); } &&
-         { ac_try='test -s conftest.$ac_objext'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; }; then
-  eval "$as_ac_Header=yes"
-else
-  echo "$as_me: failed program was:" >&5
-sed 's/^/| /' conftest.$ac_ext >&5
-
-eval "$as_ac_Header=no"
-fi
-rm -f conftest.$ac_objext conftest.$ac_ext
-fi
-echo "$as_me:$LINENO: result: `eval echo '${'$as_ac_Header'}'`" >&5
-echo "${ECHO_T}`eval echo '${'$as_ac_Header'}'`" >&6
-if test `eval echo '${'$as_ac_Header'}'` = yes; then
-  cat >>confdefs.h <<_ACEOF
-#define `echo "HAVE_$ac_header" | $as_tr_cpp` 1
-_ACEOF
-
-fi
-
-done
-
+        fi
 
 
 fi
