@@ -48,7 +48,7 @@
 #define DIALOG_OK                    "OK"
 #define DIALOG_CANCEL                "Annuller"
 #define DIALOG_BROWSE                "&Gennemse..."
-#define DIALOG_HELP                  "&Help"
+#define DIALOG_HELP                  "&Hjælp"
 
 #define DIALOG_NEW_CAPTION           "Nyt programobject"
 #define DIALOG_NEW_NEW               "Nyt"
