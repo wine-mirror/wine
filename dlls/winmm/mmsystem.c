@@ -1485,7 +1485,9 @@ DWORD WINAPI waveOutMessage16(HWAVEOUT16 hWaveOut, UINT16 uMessage,
 
     if ((wmld = MMDRV_Get(HWAVEOUT_32(hWaveOut), MMDRV_WAVEOUT, FALSE)) == NULL) {
 	if ((wmld = MMDRV_Get(HWAVEOUT_32(hWaveOut), MMDRV_WAVEOUT, TRUE)) != NULL) {
-	    return MMDRV_PhysicalFeatures(wmld, uMessage, dwParam1, dwParam2, FALSE);
+            if (uMessage == DRV_QUERYDRVENTRY || uMessage == DRV_QUERYDEVNODE)
+                dwParam1 = (DWORD)MapSL(dwParam1);
+	    return MMDRV_PhysicalFeatures(wmld, uMessage, dwParam1, dwParam2);
 	}
 	return MMSYSERR_INVALHANDLE;
     }
@@ -1726,7 +1728,9 @@ DWORD WINAPI waveInMessage16(HWAVEIN16 hWaveIn, UINT16 uMessage,
 
     if ((wmld = MMDRV_Get(HWAVEIN_32(hWaveIn), MMDRV_WAVEIN, FALSE)) == NULL) {
 	if ((wmld = MMDRV_Get(HWAVEIN_32(hWaveIn), MMDRV_WAVEIN, TRUE)) != NULL) {
-	    return MMDRV_PhysicalFeatures(wmld, uMessage, dwParam1, dwParam2, FALSE);
+            if (uMessage == DRV_QUERYDRVENTRY || uMessage == DRV_QUERYDEVNODE)
+                dwParam1 = (DWORD)MapSL(dwParam1);
+	    return MMDRV_PhysicalFeatures(wmld, uMessage, dwParam1, dwParam2);
 	}
 	return MMSYSERR_INVALHANDLE;
     }

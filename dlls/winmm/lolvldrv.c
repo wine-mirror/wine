@@ -461,25 +461,19 @@ LPWINE_MLD	MMDRV_GetRelated(HANDLE hndl, UINT srcType,
  * 				MMDRV_PhysicalFeatures		[internal]
  */
 UINT	MMDRV_PhysicalFeatures(LPWINE_MLD mld, UINT uMsg, DWORD dwParam1,
-			       DWORD dwParam2, BOOL bFrom32)
+			       DWORD dwParam2)
 {
     WINE_MM_DRIVER*	lpDrv = &MMDrvs[mld->mmdIndex];
 
-    TRACE("(%p, %04x, %08lx, %08lx, %d)\n", mld, uMsg, dwParam1, dwParam2, bFrom32);
+    TRACE("(%p, %04x, %08lx, %08lx)\n", mld, uMsg, dwParam1, dwParam2);
 
     /* all those function calls are undocumented */
     switch (uMsg) {
     case DRV_QUERYDRVENTRY:
-	if (bFrom32)
-	    lstrcpynA((LPSTR)dwParam1, lpDrv->drvname, LOWORD(dwParam2));
-	else
-	    lstrcpynA((LPSTR)MapSL(dwParam1), lpDrv->drvname, LOWORD(dwParam2));
+        lstrcpynA((LPSTR)dwParam1, lpDrv->drvname, LOWORD(dwParam2));
 	break;
     case DRV_QUERYDEVNODE:
-	if (bFrom32)
-	    *(LPDWORD)dwParam1 = 0L; /* should be DevNode */
-	else
-	    *(DWORD*)MapSL(dwParam1) = 0L;
+        *(LPDWORD)dwParam1 = 0L; /* should be DevNode */
 	break;
     case DRV_QUERYNAME:
 	WARN("NIY QueryName\n");
@@ -496,18 +490,12 @@ UINT	MMDRV_PhysicalFeatures(LPWINE_MLD mld, UINT uMsg, DWORD dwParam1,
 
     case DRVM_MAPPER_PREFERRED_GET:
 	/* FIXME: get from registry someday */
-	if (bFrom32) {
-	    *((LPDWORD)dwParam1) = -1;      /* No preferred device */
-	    break;
-	}
-	return MMSYSERR_INVALPARAM;
+        *((LPDWORD)dwParam1) = -1;      /* No preferred device */
+        break;
 
     case DRV_QUERYDEVICEINTERFACE:
     case DRV_QUERYDEVICEINTERFACESIZE:
-	if (bFrom32)
-	    return MMDRV_Message(mld, uMsg, dwParam1, dwParam2, TRUE);
-	
-	return MMSYSERR_INVALPARAM;
+        return MMDRV_Message(mld, uMsg, dwParam1, dwParam2, TRUE);
 
     case DRV_QUERYDSOUNDIFACE: /* Wine-specific: Retrieve DirectSound interface */
     case DRV_QUERYDSOUNDDESC: /* Wine-specific: Retrieve DirectSound driver description*/
