@@ -1184,7 +1184,39 @@ LsaQueryInformationPolicy(
 	      SID_IDENTIFIER_AUTHORITY localSidAuthority = {SECURITY_NT_AUTHORITY};
 
 	      struct di * xdi = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(xdi));
-	      RtlCreateUnicodeStringFromAsciiz(&(xdi->ppdi.Name), "DOMAIN");
+              HKEY key;
+              BOOL useDefault = TRUE;
+              LONG ret;
+
+              if ((ret = RegOpenKeyExA(HKEY_LOCAL_MACHINE,
+               "System\\CurrentControlSet\\Services\\VxD\\VNETSUP", 0,
+               KEY_READ, &key)) == ERROR_SUCCESS)
+              {
+                  DWORD size = 0;
+                  WCHAR wg[] = { 'W','o','r','k','g','r','o','u','p',0 };
+
+                  ret = RegQueryValueExW(key, wg, NULL, NULL, NULL, &size);
+                  if (ret == ERROR_MORE_DATA || ret == ERROR_SUCCESS)
+                  {
+                      xdi->ppdi.Name.Buffer = HeapAlloc(GetProcessHeap(),
+                       HEAP_ZERO_MEMORY, size);
+                      if ((ret = RegQueryValueExW(key, wg, NULL, NULL,
+                       (LPBYTE)xdi->ppdi.Name.Buffer, &size)) == ERROR_SUCCESS)
+                      {
+                          xdi->ppdi.Name.Length = (USHORT)size;
+                          useDefault = FALSE;
+                      }
+                      else
+                      {
+                          HeapFree(GetProcessHeap(), 0, xdi->ppdi.Name.Buffer);
+                          xdi->ppdi.Name.Buffer = NULL;
+                      }
+                  }
+                  RegCloseKey(key);
+              }
+              if (useDefault)
+                  RtlCreateUnicodeStringFromAsciiz(&(xdi->ppdi.Name), "DOMAIN");
+              TRACE("setting domain to %s\n", debugstr_w(xdi->ppdi.Name.Buffer));
 
 	      xdi->ppdi.Sid = &(xdi->sid);
 	      xdi->sid.Revision = SID_REVISION;
