@@ -483,25 +483,25 @@ void print_address(const ADDRESS* addr, BOOLEAN with_line)
     char                buffer[sizeof(SYMBOL_INFO) + 256];
     SYMBOL_INFO*        si = (SYMBOL_INFO*)buffer;
     void*               lin = memory_to_linear_addr(addr);
-    DWORD               disp;
+    DWORD64             disp;
 
     print_bare_address(addr);
 
     si->SizeOfStruct = sizeof(*si);
     si->MaxNameLen   = 256;
-    if (!SymFromAddr(dbg_curr_process->handle, (unsigned long)lin, &disp, si)) return;
+    if (!SymFromAddr(dbg_curr_process->handle, (DWORD_PTR)lin, &disp, si)) return;
     dbg_printf(" %s", si->Name);
-    if (disp) dbg_printf("+0x%lx", disp);
+    if (disp) dbg_printf("+0x%lx", (DWORD_PTR)disp);
     if (with_line)
     {
         IMAGEHLP_LINE               il;
         IMAGEHLP_MODULE             im;
 
         il.SizeOfStruct = sizeof(il);
-        if (SymGetLineFromAddr(dbg_curr_process->handle, (unsigned long)lin, NULL, &il))
+        if (SymGetLineFromAddr(dbg_curr_process->handle, (DWORD_PTR)lin, NULL, &il))
             dbg_printf(" [%s:%lu]", il.FileName, il.LineNumber);
         im.SizeOfStruct = sizeof(im);
-        if (SymGetModuleInfo(dbg_curr_process->handle, (unsigned long)lin, &im))
+        if (SymGetModuleInfo(dbg_curr_process->handle, (DWORD_PTR)lin, &im))
             dbg_printf(" in %s", im.ModuleName);
     }
 }
@@ -544,15 +544,15 @@ void print_addr_and_args(const ADDRESS* pc, const ADDRESS* frame)
     IMAGEHLP_MODULE             im;
     struct sym_enum             se;
     char                        tmp[1024];
-    DWORD                       disp;
+    DWORD64                     disp;
 
     if (pc->Mode != AddrModeFlat) 
         dbg_printf("0x%04x:0x%04lx", pc->Segment, pc->Offset);
     else
         dbg_printf("0x%08lx", pc->Offset);
 
-    isf.InstructionOffset = (unsigned long)memory_to_linear_addr(pc);
-    isf.FrameOffset       = (unsigned long)memory_to_linear_addr(frame);
+    isf.InstructionOffset = (DWORD_PTR)memory_to_linear_addr(pc);
+    isf.FrameOffset       = (DWORD_PTR)memory_to_linear_addr(frame);
 
     si->SizeOfStruct = sizeof(*si);
     si->MaxNameLen   = 256;
@@ -560,7 +560,7 @@ void print_addr_and_args(const ADDRESS* pc, const ADDRESS* frame)
         return;
 
     dbg_printf(" %s", si->Name);
-    if (disp) dbg_printf("+0x%lx", disp);
+    if (disp) dbg_printf("+0x%lx", (DWORD_PTR)disp);
 
     SymSetContext(dbg_curr_process->handle, &isf, NULL);
     se.tmp = tmp;

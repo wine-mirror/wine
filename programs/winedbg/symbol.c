@@ -614,7 +614,7 @@ static BOOL CALLBACK symbols_info_cb(SYMBOL_INFO* sym, ULONG size, void* ctx)
             mi.ModuleName[len - 5] = '\0';
     }
 
-    dbg_printf("%08lx: %s!%s", sym->Address, mi.ModuleName, sym->Name);
+    dbg_printf("%08lx: %s!%s", (ULONG_PTR)sym->Address, mi.ModuleName, sym->Name);
     type.id = sym->TypeIndex;
     type.module = sym->ModBase;
 

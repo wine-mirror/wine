@@ -154,7 +154,7 @@ typedef struct _SOURCEFILE
 
 typedef struct _IMAGEHLP_CBA_READ_MEMORY
 {
-    DWORD     addr;
+    DWORD64   addr;
     PVOID     buf;
     DWORD     bytes;
     DWORD    *bytesread;
@@ -219,14 +219,14 @@ typedef struct _IMAGEHLP_DUPLICATE_SYMBOL
 
 typedef struct _IMAGEHLP_STACK_FRAME
 {
-    ULONG       InstructionOffset;
-    ULONG       ReturnOffset;
-    ULONG       FrameOffset;
-    ULONG       StackOffset;
-    ULONG       BackingStoreOffset;
-    ULONG       FuncTableEntry;
-    ULONG       Params[4];
-    ULONG       Reserved[5];
+    ULONG64     InstructionOffset;
+    ULONG64     ReturnOffset;
+    ULONG64     FrameOffset;
+    ULONG64     StackOffset;
+    ULONG64     BackingStoreOffset;
+    ULONG64     FuncTableEntry;
+    ULONG64     Params[4];
+    ULONG64     Reserved[5];
     BOOL        Virtual;
     ULONG       Reserved2;
 } IMAGEHLP_STACK_FRAME, *PIMAGEHLP_STACK_FRAME;
@@ -542,25 +542,25 @@ BOOL WINAPI MiniDumpReadDumpStream(PVOID,ULONG,PMINIDUMP_DIRECTORY*,PVOID*,ULONG
  *************************/
 typedef BOOL (CALLBACK *PENUMLOADED_MODULES_CALLBACK)(PSTR ModuleName, DWORD ModuleBase,
                                                       ULONG ModuleSize, PVOID UserContext);
-extern BOOL  WINAPI EnumerateLoadedModules(HANDLE hProcess,
-                                           PENUMLOADED_MODULES_CALLBACK EnumLoadedModulesCallback,
-                                           PVOID UserContext);
+BOOL   WINAPI EnumerateLoadedModules(HANDLE hProcess,
+                                     PENUMLOADED_MODULES_CALLBACK EnumLoadedModulesCallback,
+                                     PVOID UserContext);
 typedef BOOL (CALLBACK *PSYM_ENUMMODULES_CALLBACK)(PSTR ModuleName, DWORD BaseOfDll,
                                                    PVOID UserContext);
-extern BOOL  WINAPI SymEnumerateModules(HANDLE hProcess,
-                                        PSYM_ENUMMODULES_CALLBACK EnumModulesCallback,
-                                        PVOID UserContext);
-extern BOOL  WINAPI SymGetModuleInfo(HANDLE hProcess, DWORD dwAddr, 
-                                     PIMAGEHLP_MODULE ModuleInfo);
-extern BOOL  WINAPI SymGetModuleInfoW(HANDLE hProcess, DWORD dwAddr,
-                                      PIMAGEHLP_MODULEW ModuleInfo);
-extern DWORD WINAPI SymGetModuleBase(HANDLE hProcess, DWORD dwAddr);
-extern DWORD WINAPI SymLoadModule(HANDLE hProcess, HANDLE hFile, PSTR ImageName,
-                                  PSTR ModuleName, DWORD BaseOfDll, DWORD SizeOfDll);
-extern DWORD WINAPI SymLoadModuleEx(HANDLE hProcess, HANDLE hFile, PSTR ImageName,
-                                    PSTR ModuleName, DWORD BaseOfDll, DWORD DllSize,
-                                    PMODLOAD_DATA Data, DWORD Flags);
-extern BOOL  WINAPI SymUnloadModule(HANDLE hProcess, DWORD BaseOfDll);
+BOOL    WINAPI SymEnumerateModules(HANDLE hProcess,
+                                   PSYM_ENUMMODULES_CALLBACK EnumModulesCallback,
+                                    PVOID UserContext);
+BOOL    WINAPI SymGetModuleInfo(HANDLE hProcess, DWORD dwAddr, 
+                                PIMAGEHLP_MODULE ModuleInfo);
+BOOL    WINAPI SymGetModuleInfoW(HANDLE hProcess, DWORD dwAddr,
+                                 PIMAGEHLP_MODULEW ModuleInfo);
+DWORD   WINAPI SymGetModuleBase(HANDLE hProcess, DWORD dwAddr);
+DWORD   WINAPI SymLoadModule(HANDLE hProcess, HANDLE hFile, PSTR ImageName,
+                             PSTR ModuleName, DWORD BaseOfDll, DWORD SizeOfDll);
+DWORD64 WINAPI SymLoadModuleEx(HANDLE hProcess, HANDLE hFile, PSTR ImageName,
+                               PSTR ModuleName, DWORD64 BaseOfDll, DWORD DllSize,
+                               PMODLOAD_DATA Data, DWORD Flags);
+BOOL    WINAPI SymUnloadModule(HANDLE hProcess, DWORD BaseOfDll);
 
 /*************************
  *    Symbol Handling    *
@@ -593,13 +593,13 @@ typedef struct _SYMBOL_INFO
 {
     ULONG       SizeOfStruct;
     ULONG       TypeIndex;
-    ULONG       Reserved[2];
+    ULONG64     Reserved[2];
     ULONG       info;   /* sdk states info, while MSDN says it's Index... */
     ULONG       Size;
-    ULONG       ModBase;
+    ULONG64     ModBase;
     ULONG       Flags;
-    ULONG       Value;
-    ULONG       Address;
+    ULONG64     Value;
+    ULONG64     Address;
     ULONG       Register;
     ULONG       Scope;
     ULONG       Tag;
@@ -664,23 +664,23 @@ typedef struct _TI_FINDCHILDREN_PARAMS
 #define UNDNAME_NO_ARGUMENTS             (0x2000)
 #define UNDNAME_NO_SPECIAL_SYMS          (0x4000)
 
-BOOL WINAPI SymGetTypeInfo(HANDLE hProcess, DWORD ModBase, ULONG TypeId,
+BOOL WINAPI SymGetTypeInfo(HANDLE hProcess, DWORD64 ModBase, ULONG TypeId,
                            IMAGEHLP_SYMBOL_TYPE_INFO GetType, PVOID);
 typedef BOOL (CALLBACK *PSYM_ENUMERATESYMBOLS_CALLBACK)(PSYMBOL_INFO pSymInfo,
                                                         ULONG SymbolSize, PVOID UserContext);
-BOOL WINAPI SymEnumTypes(HANDLE hProcess, DWORD BaseOfDll,
+BOOL WINAPI SymEnumTypes(HANDLE hProcess, ULONG64 BaseOfDll,
                          PSYM_ENUMERATESYMBOLS_CALLBACK EnumSymbolsCallback,
                          PVOID UserContext);
-BOOL WINAPI SymFromAddr(HANDLE hProcess, DWORD addr, DWORD* displacement, 
+BOOL WINAPI SymFromAddr(HANDLE hProcess, DWORD64 addr, DWORD64* displacement, 
                         SYMBOL_INFO* sym_info);
 BOOL WINAPI SymFromName(HANDLE hProcess, LPSTR Name, PSYMBOL_INFO Symbol);
 BOOL WINAPI SymGetSymFromAddr(HANDLE,DWORD,PDWORD,PIMAGEHLP_SYMBOL);
 BOOL WINAPI SymGetSymFromName(HANDLE,PSTR,PIMAGEHLP_SYMBOL);
-BOOL WINAPI SymGetTypeFromName(HANDLE hProcess, DWORD BaseOfDll, LPSTR Name,
+BOOL WINAPI SymGetTypeFromName(HANDLE hProcess, ULONG64 BaseOfDll, LPSTR Name,
                                PSYMBOL_INFO Symbol);
 BOOL WINAPI SymGetSymNext(HANDLE,PIMAGEHLP_SYMBOL);
 BOOL WINAPI SymGetSymPrev(HANDLE,PIMAGEHLP_SYMBOL);
-BOOL WINAPI SymEnumSymbols(HANDLE hProcess, ULONG BaseOfDll, PCSTR Mask,
+BOOL WINAPI SymEnumSymbols(HANDLE hProcess, ULONG64 BaseOfDll, PCSTR Mask,
                            PSYM_ENUMERATESYMBOLS_CALLBACK EnumSymbolsCallback,
                            PVOID UserContext);
 typedef BOOL (CALLBACK *PSYM_ENUMSYMBOLS_CALLBACK)(PSTR SymbolName, DWORD SymbolAddress,
@@ -703,7 +703,7 @@ DWORD WINAPI UnDecorateSymbolName(LPCSTR DecoratedName, LPSTR UnDecoratedName,
 typedef BOOL (CALLBACK *PSYM_ENUMSOURCFILES_CALLBACK)(PSOURCEFILE pSourceFile,
                                                       PVOID UserContext);
 
-BOOL WINAPI SymEnumSourceFiles(HANDLE hProcess, ULONG ModBase, LPSTR Mask,
+BOOL WINAPI SymEnumSourceFiles(HANDLE hProcess, ULONG64 ModBase, LPSTR Mask,
                                PSYM_ENUMSOURCFILES_CALLBACK cbSrcFiles,
                                PVOID UserContext);
 BOOL WINAPI SymGetLineFromAddr(HANDLE hProcess, DWORD dwAddr, 

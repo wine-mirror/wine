@@ -359,7 +359,7 @@ struct symt_typedef* symt_new_typedef(struct module* module, struct symt* ref,
  *		SymEnumTypes (DBGHELP.@)
  *
  */
-BOOL WINAPI SymEnumTypes(HANDLE hProcess, unsigned long BaseOfDll,
+BOOL WINAPI SymEnumTypes(HANDLE hProcess, ULONG64 BaseOfDll,
                          PSYM_ENUMERATESYMBOLS_CALLBACK EnumSymbolsCallback,
                          void* UserContext)
 {
@@ -371,8 +371,9 @@ BOOL WINAPI SymEnumTypes(HANDLE hProcess, unsigned long BaseOfDll,
     struct symt*        type;
     void*               pos = NULL;
     
-    TRACE("(%p %08lx %p %p)\n",
-          hProcess, BaseOfDll, EnumSymbolsCallback, UserContext);
+    TRACE("(%p %s %p %p)\n",
+          hProcess, wine_dbgstr_longlong(BaseOfDll), EnumSymbolsCallback,
+          UserContext);
 
     if (!(pcs = process_find_by_handle(hProcess))) return FALSE;
     module = module_find_by_addr(pcs, BaseOfDll, DMT_UNKNOWN);
@@ -742,7 +743,7 @@ BOOL symt_get_info(const struct symt* type, IMAGEHLP_SYMBOL_TYPE_INFO req,
  *		SymGetTypeInfo (DBGHELP.@)
  *
  */
-BOOL WINAPI SymGetTypeInfo(HANDLE hProcess, unsigned long ModBase,
+BOOL WINAPI SymGetTypeInfo(HANDLE hProcess, DWORD64 ModBase,
                            ULONG TypeId, IMAGEHLP_SYMBOL_TYPE_INFO GetType,
                            PVOID pInfo)
 {
@@ -754,7 +755,7 @@ BOOL WINAPI SymGetTypeInfo(HANDLE hProcess, unsigned long ModBase,
     module = module_find_by_addr(pcs, ModBase, DMT_UNKNOWN);
     if (!(module = module_get_debug(pcs, module)))
     {
-        FIXME("Someone didn't properly set ModBase (0x%08lx)\n", ModBase);
+        FIXME("Someone didn't properly set ModBase (%s)\n", wine_dbgstr_longlong(ModBase));
         return FALSE;
     }
 
@@ -765,7 +766,7 @@ BOOL WINAPI SymGetTypeInfo(HANDLE hProcess, unsigned long ModBase,
  *		SymGetTypeFromName (DBGHELP.@)
  *
  */
-BOOL WINAPI SymGetTypeFromName(HANDLE hProcess, unsigned long BaseOfDll,
+BOOL WINAPI SymGetTypeFromName(HANDLE hProcess, ULONG64 BaseOfDll,
                                LPSTR Name, PSYMBOL_INFO Symbol)
 {
     struct process*     pcs = process_find_by_handle(hProcess);

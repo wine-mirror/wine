@@ -535,8 +535,9 @@ static void symt_fill_sym_info(const struct module* module,
         strncpy(sym_info->Name, name, min(sym_info->NameLen, sym_info->MaxNameLen));
         sym_info->Name[sym_info->MaxNameLen - 1] = '\0';
     }
-    TRACE_(dbghelp_symt)("%p => %s %lu %lx\n",
-                         sym, sym_info->Name, sym_info->Size, sym_info->Address);
+    TRACE_(dbghelp_symt)("%p => %s %lu %s\n",
+                         sym, sym_info->Name, sym_info->Size,
+                         wine_dbgstr_longlong(sym_info->Address));
 }
 
 static BOOL symt_enum_module(struct module* module, regex_t* regex,
@@ -759,7 +760,7 @@ static BOOL symt_enum_locals(struct process* pcs, const char* mask,
  *      !foo fails always (despite what MSDN states)
  *      RE1!RE2 gets RE2 from BaseOfDll (whatever RE1 is)
  */
-BOOL WINAPI SymEnumSymbols(HANDLE hProcess, ULONG BaseOfDll, PCSTR Mask,
+BOOL WINAPI SymEnumSymbols(HANDLE hProcess, ULONG64 BaseOfDll, PCSTR Mask,
                            PSYM_ENUMERATESYMBOLS_CALLBACK EnumSymbolsCallback,
                            PVOID UserContext)
 {
@@ -769,8 +770,9 @@ BOOL WINAPI SymEnumSymbols(HANDLE hProcess, ULONG BaseOfDll, PCSTR Mask,
     const char*         bang;
     regex_t             mod_regex, sym_regex;
 
-    TRACE("(%p %08lx %s %p %p)\n", 
-          hProcess, BaseOfDll, debugstr_a(Mask), EnumSymbolsCallback, UserContext);
+    TRACE("(%p %s %s %p %p)\n", 
+          hProcess, wine_dbgstr_longlong(BaseOfDll), debugstr_a(Mask),
+          EnumSymbolsCallback, UserContext);
 
     if (!pcs) return FALSE;
 
@@ -864,8 +866,8 @@ BOOL WINAPI SymEnumerateSymbols(HANDLE hProcess, DWORD BaseOfDll,
  *		SymFromAddr (DBGHELP.@)
  *
  */
-BOOL WINAPI SymFromAddr(HANDLE hProcess, DWORD Address, 
-                        DWORD* Displacement, PSYMBOL_INFO Symbol)
+BOOL WINAPI SymFromAddr(HANDLE hProcess, DWORD64 Address, 
+                        DWORD64* Displacement, PSYMBOL_INFO Symbol)
 {
     struct process*     pcs = process_find_by_handle(hProcess);
     struct module*      module;
@@ -894,13 +896,16 @@ BOOL WINAPI SymGetSymFromAddr(HANDLE hProcess, DWORD Address,
     char        buffer[sizeof(SYMBOL_INFO) + 256];
     SYMBOL_INFO*si = (SYMBOL_INFO*)buffer;
     size_t      len;
+    DWORD64     Displacement64;
 
     if (Symbol->SizeOfStruct < sizeof(*Symbol)) return FALSE;
     si->SizeOfStruct = sizeof(*si);
     si->MaxNameLen = 256;
-    if (!SymFromAddr(hProcess, Address, Displacement, si))
+    if (!SymFromAddr(hProcess, Address, &Displacement64, si))
         return FALSE;
 
+    if (Displacement)
+        *Displacement = Displacement64;
     Symbol->Address = si->Address;
     Symbol->Size    = si->Size;
     Symbol->Flags   = si->Flags;

@@ -173,7 +173,7 @@ void* get_symbol(HANDLE hProcess, char* name, char* lib)
         si->MaxNameLen = sizeof(buffer) - sizeof(IMAGEHLP_SYMBOL);
         if (pSymLoadModule(hProcess, NULL, lib, NULL, 0, 0) &&
             pSymFromName(hProcess, name, si))
-            ret = (void*)si->Address;
+            ret = (void*)(ULONG_PTR)si->Address;
         pSymCleanup(hProcess);
     }
     return ret;

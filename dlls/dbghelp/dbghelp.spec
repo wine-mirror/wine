@@ -26,10 +26,10 @@
 @ stdcall StackWalk(long long long ptr ptr ptr ptr ptr ptr)
 @ stub StackWalk64
 @ stdcall SymCleanup(long)
-@ stdcall SymEnumSourceFiles(long long str ptr ptr)
+@ stdcall SymEnumSourceFiles(ptr long long str ptr ptr)
 @ stub SymEnumSym
 @ stdcall SymEnumSymbols(long long str ptr ptr)
-@ stdcall SymEnumTypes(long long ptr ptr)
+@ stdcall SymEnumTypes(ptr long long ptr ptr)
 @ stdcall SymEnumerateModules(long ptr ptr)
 @ stub SymEnumerateModules64
 @ stdcall SymEnumerateSymbols(long long ptr ptr)
@@ -37,7 +37,7 @@
 @ stub SymEnumerateSymbolsW
 @ stub SymEnumerateSymbolsW64
 @ stdcall SymFindFileInPath(long str str ptr long long long ptr ptr ptr)
-@ stdcall SymFromAddr(long long ptr ptr)
+@ stdcall SymFromAddr(ptr long long ptr ptr)
 @ stdcall SymFromName(long str ptr)
 @ stdcall SymFunctionTableAccess(long long)
 @ stub SymFunctionTableAccess64
@@ -66,8 +66,8 @@
 @ stub SymGetSymNext64
 @ stdcall SymGetSymPrev(long ptr)
 @ stub SymGetSymPrev64
-@ stdcall SymGetTypeFromName(long long str ptr)
-@ stdcall SymGetTypeInfo(long long long long ptr)
+@ stdcall SymGetTypeFromName(ptr long long str ptr)
+@ stdcall SymGetTypeInfo(ptr long long long long ptr)
 @ stdcall SymInitialize(long str long)
 @ stdcall SymLoadModule(long long str str long long)
 @ stub SymLoadModule64
