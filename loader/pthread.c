@@ -91,6 +91,7 @@ int wine_pthread_create_thread( struct wine_pthread_thread_info *info )
 
     pthread_attr_init( &attr );
     pthread_attr_setstacksize( &attr, info->stack_size );
+    pthread_attr_setdetachstate( &attr, PTHREAD_CREATE_DETACHED );
     if (pthread_create( &id, &attr, (void * (*)(void *))info->entry, info )) ret = -1;
     pthread_attr_destroy( &attr );
     return ret;
@@ -144,27 +145,8 @@ void *wine_pthread_get_current_teb(void)
  */
 void wine_pthread_exit_thread( struct wine_pthread_thread_info *info )
 {
-    struct cleanup_info
-    {
-        pthread_t self;
-        struct wine_pthread_thread_info thread_info;
-    };
-
-    static struct cleanup_info *previous_info;
-    struct cleanup_info *cleanup_info, *free_info;
-    void *ptr;
-
-    /* store it at the end of the TEB structure */
-    cleanup_info = (struct cleanup_info *)((char *)info->teb_base + info->teb_size) - 1;
-    cleanup_info->self = pthread_self();
-    cleanup_info->thread_info = *info;
-
-    if ((free_info = interlocked_xchg_ptr( (void **)&previous_info, cleanup_info )) != NULL)
-    {
-        pthread_join( free_info->self, &ptr );
-        wine_ldt_free_fs( free_info->thread_info.teb_sel );
-        munmap( free_info->thread_info.teb_base, free_info->thread_info.teb_size );
-    }
+    wine_ldt_free_fs( info->teb_sel );
+    munmap( info->teb_base, info->teb_size );
     pthread_exit( (void *)info->exit_status );
 }
 
@@ -174,7 +156,6 @@ void wine_pthread_exit_thread( struct wine_pthread_thread_info *info )
  */
 void wine_pthread_abort_thread( int status )
 {
-    pthread_detach( pthread_self() );  /* no one will be joining with us */
     pthread_exit( (void *)status );
 }
 
