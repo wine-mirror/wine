@@ -1460,8 +1460,15 @@ static LRESULT COMBO_Command( LPHEADCOMBO lphc, WPARAM wParam, HWND hWnd )
 		     CBRollUp( lphc, (HIWORD(wParam) == LBN_SELCHANGE), TRUE );
 		else lphc->wState &= ~CBF_NOROLLUP;
 
+		if( lphc->wState & CBF_EDIT )
+		{
+		    INT index = SendMessageA(lphc->hWndLBox, LB_GETCURSEL, 0, 0);
+		    CBUpdateEdit( lphc, index );
+		}
+		else
+		    InvalidateRect(CB_HWND(lphc), &lphc->textRect, TRUE);
+
 		CB_NOTIFY( lphc, CBN_SELCHANGE );
-		InvalidateRect(CB_HWND(lphc), &lphc->textRect, TRUE);
 		/* fall through */
 
 	   case LBN_SETFOCUS:
@@ -2078,7 +2085,10 @@ static inline LRESULT WINAPI ComboWndProc_locked( WND* pWnd, UINT message,
 		if( lphc->wState & CBF_SELCHANGE )
 		{
 		    /* no LBN_SELCHANGE in this case, update manually */
-		    InvalidateRect(CB_HWND(lphc), &lphc->textRect, TRUE);
+		    if( lphc->wState & CBF_EDIT )
+			CBUpdateEdit( lphc, (INT)wParam );
+		    else
+			InvalidateRect(CB_HWND(lphc), &lphc->textRect, TRUE);
 		    lphc->wState &= ~CBF_SELCHANGE;
 		}
 	        return  lParam;
