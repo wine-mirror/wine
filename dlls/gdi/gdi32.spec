@@ -226,8 +226,8 @@
 @ stdcall GetGlyphOutlineW(long long long ptr long ptr ptr)
 @ stub GetGlyphOutlineWow
 @ stdcall GetGraphicsMode(long)
-@ stdcall GetICMProfileA(long ptr ptr)
-@ stub GetICMProfileW
+@ stdcall GetICMProfileA(long ptr str)
+@ stdcall GetICMProfileW(long ptr wstr)
 @ stub GetKerningPairs
 @ stdcall GetKerningPairsA(long long ptr)
 @ stdcall GetKerningPairsW(long long ptr)
@@ -363,8 +363,8 @@
 @ stub SetFontEnumeration
 @ stdcall SetGraphicsMode(long long)
 @ stdcall SetICMMode(long long)
-@ stdcall SetICMProfileA (long ptr)
-@ stub SetICMProfileW
+@ stdcall SetICMProfileA(long str)
+@ stdcall SetICMProfileW(long wstr)
 @ stdcall SetLayout(long long)
 @ stub SetMagicColors
 @ stdcall SetMapMode(long long)
@@ -408,9 +408,9 @@
 @ stub UnloadNetworkFonts
 @ stdcall UnrealizeObject(long)
 @ stdcall UpdateColors(long)
-@ stub UpdateICMRegKey
-@ stub UpdateICMRegKeyA
-@ stub UpdateICMRegKeyW
+@ stdcall UpdateICMRegKey(long str str long) UpdateICMRegKeyA
+@ stdcall UpdateICMRegKeyA(long str str long)
+@ stdcall UpdateICMRegKeyW(long wstr wstr long)
 @ stdcall WidenPath(long)
 @ stub gdiPlaySpoolStream
 @ extern pfnRealizePalette

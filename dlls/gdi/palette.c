@@ -927,34 +927,60 @@ VOID WINAPI SetMagicColors16(HDC16 hDC, COLORREF color, UINT16 index)
  *    How does Windows assign these?  Some registry key?
  */
 
-#define WINEICM "winefake.icm"  /* easy-to-identify fake filename */
 
 /*********************************************************************/
 
 BOOL WINAPI GetICMProfileA(HDC hDC, LPDWORD lpcbName, LPSTR lpszFilename)
 {
     DWORD callerLen;
+    static const char icm[] = "winefake.icm";
 
     FIXME("(%p, %p, %p): partial stub\n", hDC, lpcbName, lpszFilename);
 
     callerLen = *lpcbName;
 
     /* all 3 behaviors require the required buffer size to be set */
-    *lpcbName = strlen(WINEICM);
+    *lpcbName = sizeof(icm);
 
     /* behavior 1: if lpszFilename is NULL, return size of string and no error */
-    if ((DWORD)lpszFilename == (DWORD)0x00000000)
- 	return TRUE;
+    if (!lpszFilename) return TRUE;
 
     /* behavior 2: if buffer size too small, return size of string and error */
-    if (callerLen < strlen(WINEICM))
+    if (callerLen < sizeof(icm))
     {
 	SetLastError(ERROR_INSUFFICIENT_BUFFER);
 	return FALSE;
     }
 
     /* behavior 3: if buffer size OK and pointer not NULL, copy and return size */
-    strcpy(lpszFilename, WINEICM);
+    memcpy(lpszFilename, icm, sizeof(icm));
+    return TRUE;
+}
+
+BOOL WINAPI GetICMProfileW(HDC hDC, LPDWORD lpcbName, LPWSTR lpszFilename)
+{
+    DWORD callerLen;
+    static const WCHAR icm[] = { 'w','i','n','e','f','a','k','e','.','i','c','m', 0 };
+
+    FIXME("(%p, %p, %p): partial stub\n", hDC, lpcbName, lpszFilename);
+
+    callerLen = *lpcbName;
+
+    /* all 3 behaviors require the required buffer size to be set */
+    *lpcbName = sizeof(icm) / sizeof(WCHAR);
+
+    /* behavior 1: if lpszFilename is NULL, return size of string and no error */
+    if (!lpszFilename) return TRUE;
+
+    /* behavior 2: if buffer size too small, return size of string and error */
+    if (callerLen < sizeof(icm)/sizeof(WCHAR))
+    {
+        SetLastError(ERROR_INSUFFICIENT_BUFFER);
+        return FALSE;
+    }
+
+    /* behavior 3: if buffer size OK and pointer not NULL, copy and return size */
+    memcpy(lpszFilename, icm, sizeof(icm));
     return TRUE;
 }
 
@@ -965,5 +991,37 @@ BOOL WINAPI GetICMProfileA(HDC hDC, LPDWORD lpcbName, LPSTR lpszFilename)
 BOOL WINAPI SetICMProfileA(HDC hDC, LPSTR lpszFilename)
 {
     FIXME("hDC %p filename '%s': stub!\n", hDC, debugstr_a(lpszFilename));
+    return TRUE; /* success */
+}
+
+/**********************************************************************
+ * SetICMProfileA [GDI32.@]
+ *
+ */
+BOOL WINAPI SetICMProfileW(HDC hDC, LPWSTR lpszFilename)
+{
+    FIXME("hDC %p filename '%s': stub!\n", hDC, debugstr_w(lpszFilename));
+    return TRUE; /* success */
+}
+
+/**********************************************************************
+ * UpdateICMRegKeyA [GDI32.@]
+ *
+ */
+BOOL WINAPI UpdateICMRegKeyA(DWORD dwReserved, LPSTR lpszCMID, LPSTR lpszFileName, UINT nCommand)
+{
+    FIXME("(0x%08lx, %s, %s, 0x%08x): stub!\n", dwReserved, debugstr_a(lpszCMID),
+          debugstr_a(lpszFileName), nCommand);
+    return TRUE; /* success */
+}
+
+/**********************************************************************
+ * UpdateICMRegKeyW [GDI32.@]
+ *
+ */
+BOOL WINAPI UpdateICMRegKeyW(DWORD dwReserved, LPWSTR lpszCMID, LPWSTR lpszFileName, UINT nCommand)
+{
+    FIXME("(0x%08lx, %s, %s, 0x%08x): stub!\n", dwReserved, debugstr_w(lpszCMID),
+          debugstr_w(lpszFileName), nCommand);
     return TRUE; /* success */
 }
