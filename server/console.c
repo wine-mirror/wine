@@ -612,7 +612,7 @@ static int set_console_input_info( const struct set_console_input_info_request *
         WCHAR *new_title = mem_alloc( len + sizeof(WCHAR) );
         if (new_title)
         {
-            memcpy( new_title, title, len + sizeof(WCHAR) );
+            memcpy( new_title, title, len );
             new_title[len / sizeof(WCHAR)] = 0;
             if (console->title) free( console->title );
             console->title = new_title;
