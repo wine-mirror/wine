@@ -19,6 +19,9 @@
  */
 
 #include "ntdll_test.h"
+
+#ifdef __WINE_WINTERNL_H
+
 #define TICKSPERSEC        10000000
 #define TICKSPERMSEC       10000
 #define SECSPERDAY         86400
@@ -79,11 +82,14 @@ static void test_pRtlTimeToTimeFields()
         litime.QuadPart +=  (LONGLONG) tftest.Day * TICKSPERSEC * SECSPERDAY;
     }
 }
+#endif
 
 START_TEST(time)
 {
+#ifdef __WINE_WINTERNL_H
     HMODULE mod = GetModuleHandleA("ntdll.dll");
     pRtlTimeToTimeFields = (void *)GetProcAddress(mod,"RtlTimeToTimeFields");
     if (pRtlTimeToTimeFields)
         test_pRtlTimeToTimeFields();
+#endif
 }
