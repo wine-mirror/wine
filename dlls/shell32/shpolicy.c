@@ -39,6 +39,7 @@
 #include "winreg.h"
 
 #include "shell32_main.h"
+#include "shlobj.h"
 
 #include "wine/debug.h"
 
@@ -100,11 +101,11 @@ static const char strNoActiveDesktop[] = {"NoActiveDesktop"};
 static const char strNoRecentDocMenu[] = {"NoRecentDocsMenu"};
 static const char strNoRecentDocHistory[] = {"NoRecentDocsHistory"};
 static const char strNoInetIcon[] = {"NoInternetIcon"};
-static const char strNoStngsWizard[] = {"NoSettingsWizards"};
+static const char strNoSettingsWizard[] = {"NoSettingsWizards"};
 static const char strNoLogoff[] = {"NoLogoff"};
 static const char strNoNetConDis[] = {"NoNetConnectDisconnect"};
-static const char strNoContextMenu[] = {"NoViewContextMenu"};
-static const char strNoTryContextMenu[] = {"NoTrayContextMenu"};
+static const char strNoViewContextMenu[] = {"NoViewContextMenu"};
+static const char strNoTrayContextMenu[] = {"NoTrayContextMenu"};
 static const char strNoWebMenu[] = {"NoWebMenu"};
 static const char strLnkResolveIgnoreLnkInfo[] = {"LinkResolveIgnoreLinkInfo"};
 static const char strNoCommonGroups[] = {"NoCommonGroups"};
@@ -120,13 +121,14 @@ static const char strNoStartBanner[] = {"NoStartBanner"};
 static const char strNoNetworkNeighborhood[] = {"NoNetHood"};
 static const char strNoDriveTypeAtRun[] = {"NoDriveTypeAutoRun"};
 static const char strNoDrivesAutoRun[] = {"NoDriveAutoRun"};
+static const char strSeparateProcess[] = {"SeparateProcess"};
 static const char strNoDrives[] = {"NoDrives"};
 static const char strNoFind[] = {"NoFind"};
 static const char strNoDesktop[] = {"NoDesktop"};
 static const char strNoSetTaskBar[] = {"NoSetTaskbar"};
 static const char strNoSetFld[] = {"NoSetFolders"};
 static const char strNoFileMenu[] = {"NoFileMenu"};
-static const char strNoSavSetng[] = {"NoSaveSettings"};
+static const char strNoSaveSetting[] = {"NoSaveSettings"};
 static const char strNoClose[] = {"NoClose"};
 static const char strNoRun[] = {"NoRun"};
 
@@ -134,633 +136,653 @@ static const char strNoRun[] = {"NoRun"};
 POLICYDATA sh32_policy_table[] =
 {
   {
-    0x1,
+    REST_NORUN,
     strExplorer,
     strNoRun,
     SHELL_NO_POLICY
   },
   {
-    0x2,
+    REST_NOCLOSE,
     strExplorer,
     strNoClose,
     SHELL_NO_POLICY
   },
   {
-    0x4,
+    REST_NOSAVESET,
     strExplorer,
-    strNoSavSetng,
+    strNoSaveSetting,
     SHELL_NO_POLICY
   },
   {
-    0x8,
+    REST_NOFILEMENU,
     strExplorer,
     strNoFileMenu,
     SHELL_NO_POLICY
   },
   {
-    0x10,
+    REST_NOSETFOLDERS,
     strExplorer,
     strNoSetFld,
     SHELL_NO_POLICY
   },
   {
-    0x20,
+    REST_NOSETTASKBAR,
     strExplorer,
     strNoSetTaskBar,
     SHELL_NO_POLICY
   },
   {
-    0x40,
+    REST_NODESKTOP,
     strExplorer,
     strNoDesktop,
     SHELL_NO_POLICY
   },
   {
-    0x80,
+    REST_NOFIND,
     strExplorer,
     strNoFind,
     SHELL_NO_POLICY
   },
   {
-    0x100,
+    REST_NODRIVES,
     strExplorer,
     strNoDrives,
     SHELL_NO_POLICY
   },
   {
-    0x200,
+    REST_NODRIVEAUTORUN,
     strExplorer,
     strNoDrivesAutoRun,
     SHELL_NO_POLICY
   },
   {
-    0x400,
+    REST_NODRIVETYPEAUTORUN,
     strExplorer,
     strNoDriveTypeAtRun,
     SHELL_NO_POLICY
   },
   {
-    0x800,
+    REST_NONETHOOD,
     strExplorer,
     strNoNetworkNeighborhood,
     SHELL_NO_POLICY
   },
   {
-    0x1000,
+    REST_STARTBANNER,
     strExplorer,
     strNoStartBanner,
     SHELL_NO_POLICY
   },
   {
-    0x2000,
+    REST_RESTRICTRUN,
     strExplorer,
     strRestrictRun,
     SHELL_NO_POLICY
   },
   {
-    0x4000,
+    REST_NOPRINTERTABS,
     strExplorer,
     strNoPrintTab,
     SHELL_NO_POLICY
   },
   {
-    0x8000,
+    REST_NOPRINTERDELETE,
     strExplorer,
     strNoDeletePrinters,
     SHELL_NO_POLICY
   },
   {
-    0x10000,
+    REST_NOPRINTERADD,
     strExplorer,
     strNoAddPrinters,
     SHELL_NO_POLICY
   },
   {
-    0x20000,
+    REST_NOSTARTMENUSUBFOLDERS,
     strExplorer,
     strNoStartMenuSubfolder,
     SHELL_NO_POLICY
   },
   {
-    0x40000,
+    REST_MYDOCSONNET,
     strExplorer,
     strMyDocsOnNet,
     SHELL_NO_POLICY
   },
   {
-    0x80000,
+    REST_NOEXITTODOS,
     strWinOldApp,
     strNoRealMode,
     SHELL_NO_POLICY
   },
   {
-    0x100000,
+    REST_ENFORCESHELLEXTSECURITY,
     strExplorer,
     strEnforceShlExtSecurity,
     SHELL_NO_POLICY
   },
   {
-    0x200000,
+    REST_LINKRESOLVEIGNORELINKINFO,
     strExplorer,
     strLnkResolveIgnoreLnkInfo,
     SHELL_NO_POLICY
   },
   {
-    0x400000,
+    REST_NOCOMMONGROUPS,
     strExplorer,
     strNoCommonGroups,
     SHELL_NO_POLICY
   },
   {
-    0x800000,
+    REST_SEPARATEDESKTOPPROCESS,
     strExplorer,
-    "SeparateProcess",
+    strSeparateProcess,
     SHELL_NO_POLICY
   },
   {
-    0x1000000,
+    REST_NOWEB,
     strExplorer,
     strNoWebMenu,
     SHELL_NO_POLICY
   },
   {
-    0x2000000,
+    REST_NOTRAYCONTEXTMENU,
     strExplorer,
-    strNoTryContextMenu,
+    strNoTrayContextMenu,
     SHELL_NO_POLICY
   },
   {
-    0x4000000,
+    REST_NOVIEWCONTEXTMENU,
     strExplorer,
-    strNoContextMenu,
+    strNoViewContextMenu,
     SHELL_NO_POLICY
   },
   {
-    0x8000000,
+    REST_NONETCONNECTDISCONNECT,
     strExplorer,
     strNoNetConDis,
     SHELL_NO_POLICY
   },
   {
-    0x10000000,
+    REST_STARTMENULOGOFF,
     strExplorer,
     strNoLogoff,
     SHELL_NO_POLICY
   },
   {
-    0x20000000,
+    REST_NOSETTINGSASSIST,
     strExplorer,
-    strNoStngsWizard,
+    strNoSettingsWizard,
     SHELL_NO_POLICY
   },
   {
-    0x40000001,
+    REST_NOINTERNETICON,
     strExplorer,
     strNoInetIcon,
     SHELL_NO_POLICY
   },
   {
-    0x40000002,
+    REST_NORECENTDOCSHISTORY,
     strExplorer,
     strNoRecentDocHistory,
     SHELL_NO_POLICY
   },
   {
-    0x40000003,
+    REST_NORECENTDOCSMENU,
     strExplorer,
     strNoRecentDocMenu,
     SHELL_NO_POLICY
   },
   {
-    0x40000004,
+    REST_NOACTIVEDESKTOP,
     strExplorer,
     strNoActiveDesktop,
     SHELL_NO_POLICY
   },
   {
-    0x40000005,
+    REST_NOACTIVEDESKTOPCHANGES,
     strExplorer,
     strNoActiveDesktopChanges,
     SHELL_NO_POLICY
   },
   {
-    0x40000006,
+    REST_NOFAVORITESMENU,
     strExplorer,
     strNoFavoritesMenu,
     SHELL_NO_POLICY
   },
   {
-    0x40000007,
+    REST_CLEARRECENTDOCSONEXIT,
     strExplorer,
     strClearRecentDocs,
     SHELL_NO_POLICY
   },
   {
-    0x40000008,
+    REST_CLASSICSHELL,
     strExplorer,
     strClassicShell,
     SHELL_NO_POLICY
   },
   {
-    0x40000009,
+    REST_NOCUSTOMIZEWEBVIEW,
     strExplorer,
     strNoCustomWebView,
     SHELL_NO_POLICY
   },
   {
-    0x40000010,
+    REST_NOHTMLWALLPAPER,
     strActiveDesk,
     strNoHTMLWallpaper,
     SHELL_NO_POLICY
   },
   {
-    0x40000011,
+    REST_NOCHANGINGWALLPAPER,
     strActiveDesk,
     strNoChangeWallpaper,
     SHELL_NO_POLICY
   },
   {
-    0x40000012,
+    REST_NODESKCOMP,
     strActiveDesk,
     strNoComponent,
     SHELL_NO_POLICY
   },
   {
-    0x40000013,
+    REST_NOADDDESKCOMP,
     strActiveDesk,
     strNoAddComponent,
     SHELL_NO_POLICY
   },
   {
-    0x40000014,
+    REST_NODELDESKCOMP,
     strActiveDesk,
     strNoDelComponent,
     SHELL_NO_POLICY
   },
   {
-    0x40000015,
+    REST_NOCLOSEDESKCOMP,
     strActiveDesk,
     strNoCloseComponent,
     SHELL_NO_POLICY
   },
   {
-    0x40000016,
+    REST_NOCLOSE_DRAGDROPBAND,
     strActiveDesk,
     strNoCloseDragDrop,
     SHELL_NO_POLICY
   },
   {
-    0x40000017,
+    REST_NOMOVINGBAND,
     strActiveDesk,
     strNoMovingBand,
     SHELL_NO_POLICY
   },
   {
-    0x40000018,
+    REST_NOEDITDESKCOMP,
     strActiveDesk,
     strNoEditComponent,
     SHELL_NO_POLICY
   },
   {
-    0x40000019,
+    REST_NORESOLVESEARCH,
     strExplorer,
     strNoResolveSearch,
     SHELL_NO_POLICY
   },
   {
-    0x4000001a,
+    REST_NORESOLVETRACK,
     strExplorer,
     strNoResolveTrk,
     SHELL_NO_POLICY
   },
   {
-    0x4000001b,
+    REST_FORCECOPYACLWITHFILE,
     strExplorer,
     strForceCopyACLW,
     SHELL_NO_POLICY
   },
   {
-    0x4000001c,
+    REST_NOLOGO3CHANNELNOTIFY,
     strExplorer,
     strNoMSAppLogo,
     SHELL_NO_POLICY
   },
   {
-    0x4000001d,
+    REST_NOFORGETSOFTWAREUPDATE,
     strExplorer,
     strNoForgetSoftwareUpdate,
     SHELL_NO_POLICY
   },
   {
-    0x4000001e,
+    REST_NOSETACTIVEDESKTOP,
     strExplorer,
     strNoSetActiveDesktop,
     SHELL_NO_POLICY
   },
   {
-    0x4000001f,
+    REST_NOUPDATEWINDOWS,
     strExplorer,
     strNoWindowsUpdate,
     SHELL_NO_POLICY
   },
   {
-    0x40000020,
+    REST_NOCHANGESTARMENU,
     strExplorer,
     strNoChangeStartMenu,
     SHELL_NO_POLICY
   },
   {
-    0x40000021,
+    REST_NOFOLDEROPTIONS,
     strExplorer,
     strNoFolderOptions,
+    SHELL_NO_POLICY
+  },
+  {
+    REST_HASFINDCOMPUTERS,
+    strExplorer,
+    "FindComputers",
+    SHELL_NO_POLICY
+  },
+  {
+    REST_INTELLIMENUS,
+    strExplorer,
+    "IntelliMenus",
+    SHELL_NO_POLICY
+  },
+  {
+    REST_RUNDLGMEMCHECKBOX,
+    strExplorer,
+    "MemCheckBoxInRunDlg",
+    SHELL_NO_POLICY
+  },
+  {
+    REST_ARP_ShowPostSetup,
+    strAddRemoveProgs,
+    "ShowPostSetup",
+    SHELL_NO_POLICY
+  },
+  {
+    REST_NOCSC,
+    strExplorer,
+    "NoSyncAll",
+    SHELL_NO_POLICY
+  },
+  {
+    REST_NOCONTROLPANEL,
+    strExplorer,
+    "NoControlPanel",
+    SHELL_NO_POLICY
+  },
+  {
+    REST_ENUMWORKGROUP,
+    strExplorer,
+    "EnumWorkgroup",
+    SHELL_NO_POLICY
+  },
+  {
+    REST_ARP_NOARP,
+    strAddRemoveProgs,
+    "NoAddRemovePrograms",
+    SHELL_NO_POLICY
+  },
+  {
+    REST_ARP_NOREMOVEPAGE,
+    strAddRemoveProgs,
+    "NoRemovePage",
+    SHELL_NO_POLICY
+  },
+  {
+    REST_ARP_NOADDPAGE,
+    strAddRemoveProgs,
+    "NoAddPage",
+    SHELL_NO_POLICY
+  },
+  {
+    REST_ARP_NOWINSETUPPAGE,
+    strAddRemoveProgs,
+    "NoWindowsSetupPage",
+    SHELL_NO_POLICY
+  },
+  {
+    REST_GREYMSIADS,
+    strExplorer,
+    "",
+    SHELL_NO_POLICY
+  },
+  {
+    REST_NOCHANGEMAPPEDDRIVELABEL,
+    strExplorer,
+    "NoChangeMappedDriveLabel",
+    SHELL_NO_POLICY
+  },
+  {
+    REST_NOCHANGEMAPPEDDRIVECOMMENT,
+    strExplorer,
+    "NoChangeMappedDriveComment",
+    SHELL_NO_POLICY
+  },
+  {
+    REST_MaxRecentDocs,
+    strExplorer,
+    "MaxRecentDocs",
+    SHELL_NO_POLICY
+  },
+  {
+    REST_NONETWORKCONNECTIONS,
+    strExplorer,
+    "NoNetworkConnections",
+    SHELL_NO_POLICY
+  },
+  {
+    REST_FORCESTARTMENULOGOFF,
+    strExplorer,
+    "ForceStartMenuLogoff",
+    SHELL_NO_POLICY
+  },
+  {
+    REST_NOWEBVIEW,
+    strExplorer,
+     "NoWebView",
+    SHELL_NO_POLICY
+  },
+  {
+    REST_NOCUSTOMIZETHISFOLDER,
+    strExplorer,
+    "NoCustomizeThisFolder",
+    SHELL_NO_POLICY
+  },
+  {
+    REST_NOENCRYPTION,
+    strExplorer,
+    "NoEncryption",
+    SHELL_NO_POLICY
+  },
+  {
+    REST_ALLOWFRENCHENCRYPTION,
+    strExplorer,
+    "AllowFrenchEncryption",
+    SHELL_NO_POLICY
+  },
+  {
+    REST_DONTSHOWSUPERHIDDEN,
+    strExplorer,
+    "DontShowSuperHidden",
+    SHELL_NO_POLICY
+  },
+  {
+    REST_NOSHELLSEARCHBUTTON,
+    strExplorer,
+    "NoShellSearchButton",
+    SHELL_NO_POLICY
+  },
+  {
+    REST_NOHARDWARETAB,
+    strExplorer,
+    "NoHardwareTab",
+    SHELL_NO_POLICY
+  },
+  {
+    REST_NORUNASINSTALLPROMPT,
+    strExplorer,
+    "NoRunasInstallPrompt",
+    SHELL_NO_POLICY
+  },
+  {
+    REST_PROMPTRUNASINSTALLNETPATH,
+    strExplorer,
+    "PromptRunasInstallNetPath",
+    SHELL_NO_POLICY
+  },
+  {
+    REST_NOMANAGEMYCOMPUTERVERB,
+    strExplorer,
+    "NoManageMyComputerVerb",
+    SHELL_NO_POLICY
+  },
+  {
+    REST_NORECENTDOCSNETHOOD,
+    strExplorer,
+    "NoRecentDocsNetHood",
+    SHELL_NO_POLICY
+  },
+  {
+    REST_DISALLOWRUN,
+    strExplorer,
+    "DisallowRun",
+    SHELL_NO_POLICY
+  },
+  {
+    REST_NOWELCOMESCREEN,
+    strExplorer,
+    "NoWelcomeScreen",
+    SHELL_NO_POLICY
+  },
+  {
+    REST_RESTRICTCPL,
+    strExplorer,
+    "RestrictCpl",
+    SHELL_NO_POLICY
+  },
+  {
+    REST_DISALLOWCPL,
+    strExplorer,
+    "DisallowCpl",
+    SHELL_NO_POLICY
+  },
+  {
+    REST_NOSMBALLOONTIP,
+    strExplorer,
+    "NoSMBalloonTip",
+    SHELL_NO_POLICY
+  },
+  {
+    REST_NOSMHELP,
+    strExplorer,
+    "NoSMHelp",
+    SHELL_NO_POLICY
+  },
+  {
+    REST_NOWINKEYS,
+    strExplorer,
+    "NoWinKeys",
+    SHELL_NO_POLICY
+  },
+  {
+    REST_NOENCRYPTONMOVE,
+    strExplorer,
+    "NoEncryptOnMove",
+    SHELL_NO_POLICY
+  },
+  {
+    REST_NOLOCALMACHINERUN,
+    strExplorer,
+    "DisableLocalMachineRun",
+    SHELL_NO_POLICY
+  },
+  {
+    REST_NOCURRENTUSERRUN,
+    strExplorer,
+    "DisableCurrentUserRun",
+    SHELL_NO_POLICY
+  },
+  {
+    REST_NOLOCALMACHINERUNONCE,
+    strExplorer,
+    "DisableLocalMachineRunOnce",
+    SHELL_NO_POLICY
+  },
+  {
+    REST_NOCURRENTUSERRUNONCE,
+    strExplorer,
+    "DisableCurrentUserRunOnce",
+    SHELL_NO_POLICY
+  },
+  {
+    REST_FORCEACTIVEDESKTOPON,
+    strExplorer,
+    "ForceActiveDesktopOn",
+    SHELL_NO_POLICY
+  },
+  {
+    REST_NOCOMPUTERSNEARME,
+    strExplorer,
+    "NoComputersNearMe",
+    SHELL_NO_POLICY
+  },
+  {
+    REST_NOVIEWONDRIVE,
+    strExplorer,
+    "NoViewOnDrive",
+    SHELL_NO_POLICY
+  },
+  {
+    REST_NONETCRAWL,
+    strExplorer,
+    "NoNetCrawl",
+    SHELL_NO_POLICY
+  },
+  {
+    REST_NOSHAREDDOCUMENTS,
+    strExplorer,
+    "NoSharedDocs",
+    SHELL_NO_POLICY
+  },
+  {
+    REST_NOSMMYDOCS,
+    strExplorer,
+    "NoSMMyDocs",
+    SHELL_NO_POLICY
+  },
+/* 0x4000050 - 0x4000060 */
+  {
+    REST_STARTRUNNOHOMEPATH,
+    strExplorer,
+    "StartRunNoHOMEPATH",
+    SHELL_NO_POLICY
+  },
+/* 0x4000061 - 0x4000086 */
+  {
+    REST_NODISCONNECT,
+    strExplorer,
+    "NoDisconnect",
+    SHELL_NO_POLICY
+  },
+  {
+    REST_NOSECURITY,
+    strExplorer,
+    "NoNTSecurity",
+    SHELL_NO_POLICY
+  },
+  {
+    REST_NOFILEASSOCIATE,
+    strExplorer,
+    "NoFileAssociate",
     SHELL_NO_POLICY
   },
   {
     0x50000024,
     strExplorer,
     strNoFileURL,
-    SHELL_NO_POLICY
-  },
-  {
-    0x40000022,
-    strExplorer,
-    "FindComputers",
-    SHELL_NO_POLICY
-  },
-  {
-    0x40000023,
-    strExplorer,
-    "IntelliMenus",
-    SHELL_NO_POLICY
-  },
-  {
-    0x40000024,
-    strExplorer,
-    "MemCheckBoxInRunDlg",
-    SHELL_NO_POLICY
-  },
-  {
-    0x40000025,
-    strAddRemoveProgs,
-    "ShowPostSetup",
-    SHELL_NO_POLICY
-  },
-  {
-    0x40000026,
-    strExplorer,
-    "NoSyncAll",
-    SHELL_NO_POLICY
-  },
-  {
-    0x40000027,
-    strExplorer,
-    "NoControlPanel",
-    SHELL_NO_POLICY
-  },
-  {
-    0x40000028,
-    strExplorer,
-    "EnumWorkgroup",
-    SHELL_NO_POLICY
-  },
-  {
-    0x40000029,
-    strAddRemoveProgs,
-    "NoAddRemovePrograms",
-    SHELL_NO_POLICY
-  },
-  {
-    0x4000002A,
-    strAddRemoveProgs,
-    "NoRemovePage",
-    SHELL_NO_POLICY
-  },
-  {
-    0x4000002B,
-    strAddRemoveProgs,
-    "NoAddPage",
-    SHELL_NO_POLICY
-  },
-  {
-    0x4000002C,
-    strAddRemoveProgs,
-    "NoWindowsSetupPage",
-    SHELL_NO_POLICY
-  },
-  {
-    0x4000002E,
-    strExplorer,
-    "NoChangeMappedDriveLabel",
-    SHELL_NO_POLICY
-  },
-  {
-    0x4000002F,
-    strExplorer,
-    "NoChangeMappedDriveComment",
-    SHELL_NO_POLICY
-  },
-  {
-    0x40000030,
-    strExplorer,
-    "MaxRecentDocs",
-    SHELL_NO_POLICY
-  },
-  {
-    0x40000031,
-    strExplorer,
-    "NoNetworkConnections",
-    SHELL_NO_POLICY
-  },
-  {
-    0x40000032,
-    strExplorer,
-    "ForceStartMenuLogoff",
-    SHELL_NO_POLICY
-  },
-  {
-    0x40000033,
-    strExplorer,
-     "NoWebView",
-    SHELL_NO_POLICY
-  },
-  {
-    0x40000034,
-    strExplorer,
-    "NoCustomizeThisFolder",
-    SHELL_NO_POLICY
-  },
-  {
-    0x40000035,
-    strExplorer,
-    "NoEncryption",
-    SHELL_NO_POLICY
-  },
-  {
-    0x40000036,
-    strExplorer,
-    "AllowFrenchEncryption",
-    SHELL_NO_POLICY
-  },
-  {
-    0x40000037,
-    strExplorer,
-    "DontShowSuperHidden",
-    SHELL_NO_POLICY
-  },
-  {
-    0x40000038,
-    strExplorer,
-    "NoShellSearchButton",
-    SHELL_NO_POLICY
-  },
-  {
-    0x40000039,
-    strExplorer,
-    "NoHardwareTab",
-    SHELL_NO_POLICY
-  },
-  {
-    0x4000003A,
-    strExplorer,
-    "NoRunasInstallPrompt",
-    SHELL_NO_POLICY
-  },
-  {
-    0x4000003B,
-    strExplorer,
-    "PromptRunasInstallNetPath",
-    SHELL_NO_POLICY
-  },
-  {
-    0x4000003C,
-    strExplorer,
-    "NoManageMyComputerVerb",
-    SHELL_NO_POLICY
-  },
-  {
-    0x4000003D,
-    strExplorer,
-    "NoRecentDocsNetHood",
-    SHELL_NO_POLICY
-  },
-  {
-    0x4000003E,
-    strExplorer,
-    "DisallowRun",
-    SHELL_NO_POLICY
-  },
-  {
-    0x4000003F,
-    strExplorer,
-    "NoWelcomeScreen",
-    SHELL_NO_POLICY
-  },
-  {
-    0x40000040,
-    strExplorer,
-    "RestrictCpl",
-    SHELL_NO_POLICY
-  },
-  {
-    0x40000041,
-    strExplorer,
-    "DisallowCpl",
-    SHELL_NO_POLICY
-  },
-  {
-    0x40000042,
-    strExplorer,
-    "NoSMBalloonTip",
-    SHELL_NO_POLICY
-  },
-  {
-    0x40000043,
-    strExplorer,
-    "NoSMHelp",
-    SHELL_NO_POLICY
-  },
-  {
-    0x40000044,
-    strExplorer,
-    "NoWinKeys",
-    SHELL_NO_POLICY
-  },
-  {
-    0x40000045,
-    strExplorer,
-    "NoEncryptOnMove",
-    SHELL_NO_POLICY
-  },
-  {
-    0x40000046,
-    strExplorer,
-    "DisableLocalMachineRun",
-    SHELL_NO_POLICY
-  },
-  {
-    0x40000047,
-    strExplorer,
-    "DisableCurrentUserRun",
-    SHELL_NO_POLICY
-  },
-  {
-    0x40000048,
-    strExplorer,
-    "DisableLocalMachineRunOnce",
-    SHELL_NO_POLICY
-  },
-  {
-    0x40000049,
-    strExplorer,
-    "DisableCurrentUserRunOnce",
-    SHELL_NO_POLICY
-  },
-  {
-    0x4000004A,
-    strExplorer,
-    "ForceActiveDesktopOn",
-    SHELL_NO_POLICY
-  },
-  {
-    0x4000004B,
-    strExplorer,
-    "NoComputersNearMe",
-    SHELL_NO_POLICY
-  },
-  {
-    0x4000004C,
-    strExplorer,
-    "NoViewOnDrive",
-    SHELL_NO_POLICY
-  },
-  {
-    0x4000004F,
-    strExplorer,
-    "NoSMMyDocs",
-    SHELL_NO_POLICY
-  },
-  {
-    0x40000061,
-    strExplorer,
-    "StartRunNoHOMEPATH",
-    SHELL_NO_POLICY
-  },
-  {
-    0x41000001,
-    strExplorer,
-    "NoDisconnect",
-    SHELL_NO_POLICY
-  },
-  {
-    0x41000002,
-    strExplorer,
-    "NoNTSecurity",
-    SHELL_NO_POLICY
-  },
-  {
-    0x41000003,
-    strExplorer,
-    "NoFileAssociate",
     SHELL_NO_POLICY
   },
   {
@@ -792,14 +814,14 @@ POLICYDATA sh32_policy_table[] =
  *     b: 98Lite 2.0 (which uses many of these policy keys) http://www.98lite.net/
  *     c: 'The Windows 95 Registry', by John Woram, 1996 MIS: Press
  */
-DWORD WINAPI SHRestricted (DWORD policy)
+DWORD WINAPI SHRestricted (RESTRICTIONS policy)
 {
 	char regstr[256];
 	HKEY    xhkey;
 	DWORD   retval, datsize = 4;
 	LPPOLICYDATA p;
 
-	TRACE("(%08lx)\n", policy);
+	TRACE("(%08x)\n", policy);
 
 	/* scan to see if we know this policy ID */
 	for (p = sh32_policy_table; p->policy; p++)
@@ -813,7 +835,7 @@ DWORD WINAPI SHRestricted (DWORD policy)
 	if (p->policy == 0)
 	{
 	    /* we don't know this policy, return 0 */
-	    TRACE("unknown policy: (%08lx)\n", policy);
+	    TRACE("unknown policy: (%08x)\n", policy);
 		return 0;
 	}
 

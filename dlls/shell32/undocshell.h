@@ -23,9 +23,7 @@
 
 #include "windef.h"
 #include "winbase.h"
-#include "wingdi.h"
 #include "winuser.h"
-#include "winnls.h"
 #include "commctrl.h"
 #include "shlobj.h"
 
@@ -885,7 +883,6 @@ DWORD WINAPI CheckEscapesW(LPWSTR string, DWORD len);
 
 /* policy functions */
 BOOL WINAPI SHInitRestricted(LPCVOID unused, LPCVOID inpRegKey);
-DWORD WINAPI SHRestricted (DWORD policy);
 
 /* cabinet functions */
 
