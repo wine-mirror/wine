@@ -418,19 +418,25 @@ HMODULE BUILTIN32_LoadImage( LPCSTR name, OFSTRUCT *ofs)
 
     if ((p = strrchr( name, '\\' ))) name = p + 1;
     lstrcpynA( dllname, name, sizeof(dllname) );
-    if ((p = strrchr( dllname, '.' ))) *p = '\0';
+
+    p = strrchr( dllname, '.' );
+	 
+    if (!p) strcat( dllname, ".dll" );
 
     for (table = BuiltinDLLs; table->descr; table++)
-        if (!lstrcmpiA( table->descr->name, dllname )) break;
+    {
+       if (!lstrcmpiA( table->descr->filename, dllname )) break;
+    }
+
     if (!table->descr) return 0;
 
     if ( (table->flags & BI32_INSTANTIATED) && (table->flags & BI32_DANGER) )
     {
 	ERR_(module)("Attemp to instantiate built-in dll '%s' twice in the same address-space. Expect trouble!\n",
-		table->descr->name);
+		     table->descr->name);
     }
 
-    sprintf( ofs->szPathName, "%s.DLL", table->descr->name );
+    strcpy( ofs->szPathName, table->descr->filename );
 
     if ( !table->hModule )
         table->hModule = BUILTIN32_DoLoadImage( table );

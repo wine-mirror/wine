@@ -233,11 +233,19 @@ HMODULE16 BUILTIN_LoadModule( LPCSTR name, BOOL force )
 
     if ((p = strrchr( name, '\\' ))) name = p + 1;
     lstrcpynA( dllname, name, sizeof(dllname) );
-    if ((p = strrchr( dllname, '.' ))) *p = '\0';
+    p = strrchr( dllname, '.' );
+	 
+    if (!p) strcat( dllname, ".dll" );
 
     for (table = BuiltinDLLs; table->descr; table++)
-        if (!lstrcmpiA( table->descr->name, dllname )) break;
+    {
+       NE_MODULE *pModule = (NE_MODULE *)table->descr->module_start;
+       OFSTRUCT *pOfs = (OFSTRUCT *)((LPBYTE)pModule + pModule->fileinfo);
+       if (!lstrcmpiA( pOfs->szPathName, dllname )) break;
+    }
+
     if (!table->descr) return (HMODULE16)2;
+
     if ((table->flags & DLL_FLAG_NOT_USED) && !force) return (HMODULE16)2;
 
     return BUILTIN_DoLoadModule16( table->descr );
