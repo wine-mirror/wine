@@ -211,8 +211,7 @@ struct IDirectSoundCaptureImpl
     DWORD                              buflen;
     DWORD                              read_position;
 
-    /* FIXME: this should be a pointer because it can be bigger */
-    WAVEFORMATEX                       wfx;
+    PWAVEFORMATEX                      pwfx;
 
     IDirectSoundCaptureBufferImpl*     capture_buffer;
     DWORD                              state;
@@ -400,7 +399,6 @@ void DSOUND_Calc3DBuffer(IDirectSoundBufferImpl *dsb);
 #define DSOUND_FREQSHIFT (14)
 
 extern IDirectSoundImpl* dsound;
-extern IDirectSoundCaptureImpl* dsound_capture;
 
 extern HRESULT mmErr(UINT err);
 extern void setup_dsound_options(void);

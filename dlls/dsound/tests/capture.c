@@ -25,11 +25,13 @@
 
 #include <math.h>
 #include <stdlib.h>
+#include <stdio.h>
 
 #include "wine/test.h"
 #include "windef.h"
 #include "wingdi.h"
 #include "dsound.h"
+#include "mmreg.h"
 
 static const unsigned int formats[][3]={
     { 8000,  8, 1},
@@ -61,15 +63,30 @@ static const unsigned int formats[][3]={
 
 #define NOTIFICATIONS    5
 
-static void init_format(WAVEFORMATEX* wfx, int rate, int depth, int channels)
+static void init_format(WAVEFORMATEX* wfx, int format, int rate, int depth, int channels)
 {
-    wfx->wFormatTag=WAVE_FORMAT_PCM;
+    wfx->wFormatTag=format;
     wfx->nChannels=channels;
     wfx->wBitsPerSample=depth;
     wfx->nSamplesPerSec=rate;
     wfx->nBlockAlign=wfx->nChannels*wfx->wBitsPerSample/8;
-    wfx->nAvgBytesPerSec=wfx->nSamplesPerSec*wfx->nBlockAlign;
+    if (wfx->nBlockAlign==0)	/* align compressed formats to byte boundry */
+	wfx->nBlockAlign=1;
+    wfx->nAvgBytesPerSec=wfx->nSamplesPerSec*wfx->nChannels*wfx->wBitsPerSample/8;
     wfx->cbSize=0;
+}
+
+static char * format_string(WAVEFORMATEX* wfx)
+{
+    static char str[64];
+
+    sprintf(str, "%ldx%dx%d %s",
+	wfx->nSamplesPerSec, wfx->wBitsPerSample, wfx->nChannels,
+	wfx->wFormatTag == WAVE_FORMAT_PCM ? "PCM" :
+	wfx->wFormatTag == WAVE_FORMAT_MULAW ? "MULAW" :
+	wfx->wFormatTag == WAVE_FORMAT_IMA_ADPCM ? "IMA ADPCM" : "Unknown");
+
+    return str;
 }
 
 typedef struct {
@@ -325,7 +342,7 @@ static BOOL WINAPI dscenum_callback(LPGUID lpGuid, LPCSTR lpcstrDescription,
 
     /* Private dsound.dll: Error: Invalid buffer size */
     /* Private dsound.dll: Error: Invalid capture buffer description */
-    init_format(&wfx,11025,8,1);
+    init_format(&wfx,WAVE_FORMAT_PCM,11025,8,1);
     ZeroMemory(&bufdesc, sizeof(bufdesc));
     bufdesc.dwSize=sizeof(bufdesc);
     bufdesc.dwFlags=0;
@@ -341,15 +358,14 @@ static BOOL WINAPI dscenum_callback(LPGUID lpGuid, LPCSTR lpcstrDescription,
 
     for (f=0;f<NB_FORMATS;f++) {
 	dscbo=NULL;
-	init_format(&wfx,formats[f][0],formats[f][1],formats[f][2]);
+	init_format(&wfx,WAVE_FORMAT_PCM,formats[f][0],formats[f][1],formats[f][2]);
 	ZeroMemory(&bufdesc, sizeof(bufdesc));
 	bufdesc.dwSize=sizeof(bufdesc);
 	bufdesc.dwFlags=0;
 	bufdesc.dwBufferBytes=wfx.nAvgBytesPerSec;
 	bufdesc.dwReserved=0;
 	bufdesc.lpwfxFormat=&wfx;
-	trace("  Testing the capture buffer at %ldx%dx%d\n",
-	    wfx.nSamplesPerSec,wfx.wBitsPerSample,wfx.nChannels);
+	trace("  Testing the capture buffer at %s\n", format_string(&wfx));
 	rc=IDirectSoundCapture_CreateCaptureBuffer(dsco,&bufdesc,&dscbo,NULL);
 	ok((rc==DS_OK)&&(dscbo!=NULL),"CreateCaptureBuffer failed to create a capture buffer 0x%lx\n",rc);
 	if (rc==DS_OK) {
@@ -359,17 +375,35 @@ static BOOL WINAPI dscenum_callback(LPGUID lpGuid, LPCSTR lpcstrDescription,
 	}
     }
 
-    /* Try an invalid format to test error handling */
+    /* try a non PCM format */
 #if 0
-    init_format(&wfx,2000000,16,2);
+    init_format(&wfx,WAVE_FORMAT_MULAW,8000,8,1);
     ZeroMemory(&bufdesc, sizeof(bufdesc));
     bufdesc.dwSize=sizeof(bufdesc);
     bufdesc.dwFlags=DSCBCAPS_WAVEMAPPED;
     bufdesc.dwBufferBytes=wfx.nAvgBytesPerSec;
     bufdesc.dwReserved=0;
     bufdesc.lpwfxFormat=&wfx;
-    trace("  Testing the capture buffer at %ldx%dx%d\n",
-	wfx.nSamplesPerSec,wfx.wBitsPerSample,wfx.nChannels);
+    trace("  Testing the capture buffer at %s\n", format_string(&wfx));
+    rc=IDirectSoundCapture_CreateCaptureBuffer(dsco,&bufdesc,&dscbo,NULL);
+    ok((rc==DS_OK)&&(dscbo!=NULL),"CreateCaptureBuffer failed to create a capture buffer 0x%lx\n",rc);
+    if ((rc==DS_OK)&&(dscbo!=NULL)) {
+	test_capture_buffer(dsco, dscbo, winetest_interactive);
+	ref=IDirectSoundCaptureBuffer_Release(dscbo);
+	ok(ref==0,"IDirectSoundCaptureBuffer_Release has %d references, should have 0\n",ref);
+    }
+#endif
+
+    /* Try an invalid format to test error handling */
+#if 0
+    init_format(&wfx,WAVE_FORMAT_PCM,2000000,16,2);
+    ZeroMemory(&bufdesc, sizeof(bufdesc));
+    bufdesc.dwSize=sizeof(bufdesc);
+    bufdesc.dwFlags=DSCBCAPS_WAVEMAPPED;
+    bufdesc.dwBufferBytes=wfx.nAvgBytesPerSec;
+    bufdesc.dwReserved=0;
+    bufdesc.lpwfxFormat=&wfx;
+    trace("  Testing the capture buffer at %s\n", format_string(&wfx));
     rc=IDirectSoundCapture_CreateCaptureBuffer(dsco,&bufdesc,&dscbo,NULL);
     ok(rc!=DS_OK,"CreateCaptureBuffer should have failed at 2 MHz 0x%lx\n",rc);
 #endif
