@@ -378,6 +378,30 @@ AC_CHECK_LIB(cups,cupsGetPPD,
 )
 AC_SUBST(CUPSLIBS)
 
+dnl **** Check for FreeType 2 ****
+AC_CHECK_LIB(freetype,FT_Init_FreeType,ft_lib=yes,ft_lib=no)
+if test "$ft_lib" = "no"
+then
+    FREETYPELIBS=""
+    FREETYPEINCL=""
+    wine_cv_msg_freetype=no
+else
+    AC_CHECK_PROG(ft_devel,freetype-config,yes,no)
+    if test "$ft_devel" = "no"
+    then
+    	FREETYPELIBS=""
+	FREETYPEINCL=""
+	wine_cv_msg_freetype=yes
+    else
+    	AC_DEFINE(HAVE_FREETYPE)
+	FREETYPELIBS=`freetype-config --libs`
+	FREETYPEINCL=`freetype-config --cflags`
+	wine_cv_msg_freetype=no
+    fi
+fi
+AC_SUBST(FREETYPELIBS)
+AC_SUBST(FREETYPEINCL)
+
 dnl **** Check for IPX (currently Linux only) ****
 AC_CACHE_CHECK("for GNU style IPX support", ac_cv_c_ipx_gnu,
  AC_TRY_COMPILE(
@@ -1360,6 +1384,15 @@ then
   echo "*** Note: You have cups runtime libraries, but no development"
   echo "*** libraries. Install the cups-devel package or whichever package"
   echo "*** contains cups.h to enable CUPS support in WINE."
+fi
+
+if test "$wine_cv_msg_freetype" = "yes"
+then
+  echo
+  echo "*** Note: Your system appears to have the FreeType 2 runtime libraries"
+  echo "*** installed, but 'freetype-config' is not in your PATH. Install the"
+  echo "*** freetype-devel package (or its equivalent on your distribution) to"
+  echo "*** enable Wine to use TrueType fonts."
 fi
 
 echo

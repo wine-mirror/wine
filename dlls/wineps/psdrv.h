@@ -418,6 +418,7 @@ VOID PSDRV_DrawLine( DC *dc );
 INT PSDRV_GlyphListInit();
 GLYPHNAME *PSDRV_GlyphName(LPCSTR szName);
 VOID PSDRV_IndexGlyphList();
+BOOL PSDRV_GetTrueTypeMetrics();
 
 #endif
 

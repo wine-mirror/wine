@@ -654,8 +654,9 @@ static void PSDRV_DumpFontList(void)
 	{
 	    INT i;
 	    
-	    TRACE("\tFontName '%s' (%i glyphs):\n", afmle->afm->FontName,
-	    	    afmle->afm->NumofMetrics);
+	    TRACE("\tFontName '%s' (%i glyphs) - '%s' encoding:\n",
+	    	    afmle->afm->FontName, afmle->afm->NumofMetrics,
+		    afmle->afm->EncodingScheme);
 	    
 	    for (i = 0; i < afmle->afm->NumofMetrics; ++i)
 	    {
@@ -671,7 +672,10 @@ static void PSDRV_DumpFontList(void)
  *  SortFontMetrics
  *
  *  Initializes the UV member of each glyph's AFMMETRICS and sorts each font's
- *  Metrics by Unicode Value.
+ *  Metrics by Unicode Value.  If the font has a standard encoding (i.e. it is
+ *  using the Adobe Glyph List encoding vector), look up each glyph's Unicode
+ *  Value based on it's glyph name.  If the font has a font-specific encoding,
+ *  map the default PostScript encodings into the Unicode private use area.
  *
  */
 static int UnicodeGlyphByNameIndex(const UNICODEGLYPH *a, const UNICODEGLYPH *b)
@@ -965,10 +969,17 @@ BOOL PSDRV_GetFontMetrics(void)
 	if (PSDRV_ReadAFMDir (value) == FALSE)
 	    return FALSE;
 
-    PSDRV_IndexGlyphList();
+    PSDRV_IndexGlyphList(); 	    	/* So SortFontMetrics will work */
     if (SortFontMetrics() == FALSE)
     	return FALSE;
     CalcWindowsMetrics();
+
+#ifdef HAVE_FREETYPE   
+    if (PSDRV_GetTrueTypeMetrics() == FALSE)
+    	return FALSE;
+    PSDRV_IndexGlyphList();
+#endif
+
     PSDRV_DumpFontList();
     return TRUE;
 }

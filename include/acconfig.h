@@ -123,6 +123,9 @@
 /* Define if we have CUPS */
 #undef HAVE_CUPS
 
+/* Define if FreeType 2 is installed */
+#undef HAVE_FREETYPE
+
 /* Define if we have 64 bit file offsets */
 #undef HAVE_OFF64_T
 

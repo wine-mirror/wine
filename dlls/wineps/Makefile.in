@@ -6,7 +6,8 @@ MODULE    = wineps
 SOVERSION = 1.0
 ALTNAMES  = wineps16
 IMPORTS   = user32 gdi32 winspool.drv kernel32 ntdll
-EXTRALIBS = @CUPSLIBS@
+EXTRALIBS = @CUPSLIBS@ @FREETYPELIBS@
+EXTRAINCL = @FREETYPEINCL@
 
 C_SRCS = \
 	afm.c \
@@ -26,7 +27,8 @@ C_SRCS = \
 	pen.c \
 	ppd.c \
 	ps.c \
-	text.c
+	text.c \
+	truetype.c
 
 RC_SRCS= \
 	rsrc.rc
