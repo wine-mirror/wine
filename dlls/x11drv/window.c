@@ -456,16 +456,20 @@ void X11DRV_set_wm_hints( Display *display, struct x11drv_win_data *data )
     if (style & WS_MINIMIZEBOX) mwm_hints.functions |= MWM_FUNC_MINIMIZE;
     if (style & WS_MAXIMIZEBOX) mwm_hints.functions |= MWM_FUNC_MAXIMIZE;
     if (style & WS_SYSMENU)    mwm_hints.functions |= MWM_FUNC_CLOSE;
+    if (ex_style & WS_EX_APPWINDOW) mwm_hints.functions |= MWM_FUNC_MOVE;
     mwm_hints.decorations = 0;
-    if ((style & WS_CAPTION) == WS_CAPTION) mwm_hints.decorations |= MWM_DECOR_TITLE;
+    if ((style & WS_CAPTION) == WS_CAPTION) 
+    {
+	mwm_hints.decorations |= MWM_DECOR_TITLE;
+	if (style & WS_SYSMENU) mwm_hints.decorations |= MWM_DECOR_MENU;
+	if (style & WS_MINIMIZEBOX) mwm_hints.decorations |= MWM_DECOR_MINIMIZE;
+	if (style & WS_MAXIMIZEBOX) mwm_hints.decorations |= MWM_DECOR_MAXIMIZE;
+    }
     if (ex_style & WS_EX_DLGMODALFRAME) mwm_hints.decorations |= MWM_DECOR_BORDER;
     else if (style & WS_THICKFRAME) mwm_hints.decorations |= MWM_DECOR_BORDER | MWM_DECOR_RESIZEH;
     else if ((style & (WS_DLGFRAME|WS_BORDER)) == WS_DLGFRAME) mwm_hints.decorations |= MWM_DECOR_BORDER;
     else if (style & WS_BORDER) mwm_hints.decorations |= MWM_DECOR_BORDER;
     else if (!(style & (WS_CHILD|WS_POPUP))) mwm_hints.decorations |= MWM_DECOR_BORDER;
-    if (style & WS_SYSMENU)  mwm_hints.decorations |= MWM_DECOR_MENU;
-    if (style & WS_MINIMIZEBOX) mwm_hints.decorations |= MWM_DECOR_MINIMIZE;
-    if (style & WS_MAXIMIZEBOX) mwm_hints.decorations |= MWM_DECOR_MAXIMIZE;
 
     XChangeProperty( display, data->whole_window, x11drv_atom(_MOTIF_WM_HINTS),
                      x11drv_atom(_MOTIF_WM_HINTS), 32, PropModeReplace,
