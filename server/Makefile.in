@@ -6,6 +6,7 @@ VPATH     = @srcdir@
 MODULE    = server
 
 C_SRCS = \
+	change.c \
 	console.c \
 	event.c \
 	file.c \

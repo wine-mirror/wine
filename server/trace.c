@@ -172,8 +172,9 @@ static int dump_create_semaphore_request( struct create_semaphore_request *req, 
 {
     printf( " initial=%08x,", req->initial );
     printf( " max=%08x,", req->max );
-    printf( " inherit=%d", req->inherit );
-    return (int)sizeof(*req);
+    printf( " inherit=%d,", req->inherit );
+    printf( " name=\"%.*s\"", len - (int)sizeof(*req), (char *)(req+1) );
+    return len;
 }
 
 static int dump_create_semaphore_reply( struct create_semaphore_reply *req, int len )
@@ -199,8 +200,9 @@ static int dump_open_named_obj_request( struct open_named_obj_request *req, int 
 {
     printf( " type=%d,", req->type );
     printf( " access=%08x,", req->access );
-    printf( " inherit=%d", req->inherit );
-    return (int)sizeof(*req);
+    printf( " inherit=%d,", req->inherit );
+    printf( " name=\"%.*s\"", len - (int)sizeof(*req), (char *)(req+1) );
+    return len;
 }
 
 static int dump_open_named_obj_reply( struct open_named_obj_reply *req, int len )
@@ -321,6 +323,19 @@ static int dump_set_console_fd_request( struct set_console_fd_request *req, int 
     return (int)sizeof(*req);
 }
 
+static int dump_create_change_notification_request( struct create_change_notification_request *req, int len )
+{
+    printf( " subtree=%d,", req->subtree );
+    printf( " filter=%d", req->filter );
+    return (int)sizeof(*req);
+}
+
+static int dump_create_change_notification_reply( struct create_change_notification_reply *req, int len )
+{
+    printf( " handle=%d", req->handle );
+    return (int)sizeof(*req);
+}
+
 struct dumper
 {
     int (*dump_req)( void *data, int len );
@@ -387,6 +402,8 @@ static const struct dumper dumpers[REQ_NB_REQUESTS] =
       (void(*)())dump_create_console_reply },
     { (int(*)(void *,int))dump_set_console_fd_request,
       (void(*)())0 },
+    { (int(*)(void *,int))dump_create_change_notification_request,
+      (void(*)())dump_create_change_notification_reply },
 };
 
 static const char * const req_names[REQ_NB_REQUESTS] =
@@ -420,6 +437,7 @@ static const char * const req_names[REQ_NB_REQUESTS] =
     "create_pipe",
     "create_console",
     "set_console_fd",
+    "create_change_notification",
 };
 
 void trace_request( enum request req, void *data, int len, int fd )

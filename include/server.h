@@ -127,6 +127,9 @@ struct dup_handle_request
     int          inherit;      /* inherit flag */
     int          options;      /* duplicate options (see below) */
 };
+#define DUP_HANDLE_CLOSE_SOURCE  DUPLICATE_CLOSE_SOURCE
+#define DUP_HANDLE_SAME_ACCESS   DUPLICATE_SAME_ACCESS
+#define DUP_HANDLE_MAKE_GLOBAL   0x80000000  /* Not a Windows flag */
 struct dup_handle_reply
 {
     int          handle;       /* duplicated handle in dst process */
@@ -212,7 +215,7 @@ struct create_semaphore_request
     unsigned int initial;       /* initial count */
     unsigned int max;           /* maximum count */
     int          inherit;       /* inherit flag */
-    /* char name[] */
+    char         name[0];       /* semaphore name */
 };
 struct create_semaphore_reply
 {
@@ -235,10 +238,10 @@ struct release_semaphore_reply
 /* Open a named object (event, mutex, semaphore) */
 struct open_named_obj_request
 {
-    int          type;         /* object type (see below) */
-    unsigned int access;       /* wanted access rights */
-    int          inherit;      /* inherit flag */
-    /* char name[] */
+    int          type;          /* object type (see below) */
+    unsigned int access;        /* wanted access rights */
+    int          inherit;       /* inherit flag */
+    char         name[0];       /* object name */
 };
 enum open_named_obj { OPEN_EVENT, OPEN_MUTEX, OPEN_SEMAPHORE };
 
@@ -361,12 +364,25 @@ struct set_console_fd_request
 };
 
 
+/* Create a console */
+struct create_change_notification_request
+{
+    int          subtree;       /* watch all the subtree */
+    int          filter;        /* notification filter */
+};
+struct create_change_notification_reply
+{
+    int          handle;        /* handle to the change notification */
+};
+
+
 /* client-side functions */
 
 #ifndef __WINE_SERVER__
 
+#include "server/request.h"
+
 /* client communication functions */
-enum request;
 #define CHECK_LEN(len,wanted) \
   if ((len) == (wanted)) ; \
   else CLIENT_ProtocolError( __FUNCTION__ ": len %d != %d\n", (len), (wanted) );
@@ -380,8 +396,6 @@ struct _THDB;
 extern int CLIENT_NewThread( struct _THDB *thdb, int *thandle, int *phandle );
 extern int CLIENT_SetDebug( int level );
 extern int CLIENT_InitThread(void);
-extern int CLIENT_TerminateProcess( int handle, int exit_code );
-extern int CLIENT_TerminateThread( int handle, int exit_code );
 extern int CLIENT_CloseHandle( int handle );
 extern int CLIENT_DuplicateHandle( int src_process, int src_handle, int dst_process,
                                    int dst_handle, DWORD access, BOOL32 inherit, DWORD options );

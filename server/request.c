@@ -204,14 +204,19 @@ DECL_HANDLER(dup_handle)
 
     if ((src = get_process_from_handle( req->src_process, PROCESS_DUP_HANDLE )))
     {
-        if ((dst = get_process_from_handle( req->dst_process, PROCESS_DUP_HANDLE )))
+        if (req->options & DUP_HANDLE_MAKE_GLOBAL)
+        {
+            reply.handle = duplicate_handle( src, req->src_handle, NULL, -1,
+                                             req->access, req->inherit, req->options );
+        }
+        else if ((dst = get_process_from_handle( req->dst_process, PROCESS_DUP_HANDLE )))
         {
             reply.handle = duplicate_handle( src, req->src_handle, dst, req->dst_handle,
                                              req->access, req->inherit, req->options );
             release_object( dst );
         }
         /* close the handle no matter what happened */
-        if (req->options & DUPLICATE_CLOSE_SOURCE)
+        if (req->options & DUP_HANDLE_CLOSE_SOURCE)
             close_handle( src, req->src_handle );
         release_object( src );
     }
@@ -531,3 +536,19 @@ DECL_HANDLER(set_console_fd)
     set_console_fd( req->handle, fd );
     send_reply( current, -1, 0 );
 }
+
+/* create a change notification */
+DECL_HANDLER(create_change_notification)
+{
+    struct object *obj;
+    struct create_change_notification_reply reply = { -1 };
+
+    if ((obj = create_change_notification( req->subtree, req->filter )))
+    {
+        reply.handle = alloc_handle( current->process, obj,
+                                     STANDARD_RIGHTS_REQUIRED|SYNCHRONIZE, 0 );
+        release_object( obj );
+    }
+    send_reply( current, -1, 1, &reply, sizeof(reply) );
+}
+

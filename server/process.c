@@ -25,6 +25,12 @@
 #define RESERVED_CLOSE_PROTECT (HANDLE_FLAG_PROTECT_FROM_CLOSE << RESERVED_SHIFT)
 #define RESERVED_ALL           (RESERVED_INHERIT | RESERVED_CLOSE_PROTECT)
 
+/* global handle macros */
+#define HANDLE_OBFUSCATOR         0x544a4def
+#define HANDLE_IS_GLOBAL(h)       (((h) ^ HANDLE_OBFUSCATOR) < 0x10000)
+#define HANDLE_LOCAL_TO_GLOBAL(h) ((h) ^ HANDLE_OBFUSCATOR)
+#define HANDLE_GLOBAL_TO_LOCAL(h) ((h) ^ HANDLE_OBFUSCATOR)
+
 struct handle_entry
 {
     struct object *ptr;
@@ -49,6 +55,7 @@ struct process
 };
 
 static struct process *first_process;
+static struct process *initial_process;
 
 #define MIN_HANDLE_ENTRIES  32
 
@@ -94,6 +101,11 @@ struct process *create_process(void)
 
     if (first_process) first_process->prev = process;
     first_process = process;
+    if (!initial_process)
+    {
+        initial_process = process;
+        grab_object( initial_process ); /* so that we never free it */
+    }
 
     gettimeofday( &process->start_time, NULL );
     /* alloc a handle for the process itself */
@@ -106,6 +118,7 @@ static void process_destroy( struct object *obj )
 {
     struct process *process = (struct process *)obj;
     assert( obj->ops == &process_ops );
+    assert( process != initial_process );
 
     /* we can't have a thread remaining */
     assert( !process->thread_list );
@@ -288,6 +301,11 @@ static struct handle_entry *get_handle( struct process *process, int handle )
 {
     struct handle_entry *entry;
 
+    if (HANDLE_IS_GLOBAL(handle))
+    {
+        handle = HANDLE_GLOBAL_TO_LOCAL(handle);
+        process = initial_process;
+    }
     handle--;  /* handles start at 1 */
     if ((handle < 0) || (handle > process->handle_last)) goto error;
     entry = process->entries + handle;
@@ -370,6 +388,11 @@ int close_handle( struct process *process, int handle )
     struct handle_entry *entry;
     struct object *obj;
 
+    if (HANDLE_IS_GLOBAL(handle))
+    {
+        handle = HANDLE_GLOBAL_TO_LOCAL(handle);
+        process = initial_process;
+    }
     if (!(entry = get_handle( process, handle ))) return 0;
     if (entry->access & RESERVED_CLOSE_PROTECT) return 0;  /* FIXME: error code */
     obj = entry->ptr;
@@ -429,12 +452,16 @@ int set_handle_info( struct process *process, int handle, int mask, int flags )
 int duplicate_handle( struct process *src, int src_handle, struct process *dst,
                       int dst_handle, unsigned int access, int inherit, int options )
 {
+    int res;
     struct handle_entry *entry = get_handle( src, src_handle );
     if (!entry) return -1;
 
-    if (options & DUPLICATE_SAME_ACCESS) access = entry->access;
+    if (options & DUP_HANDLE_SAME_ACCESS) access = entry->access;
+    if (options & DUP_HANDLE_MAKE_GLOBAL) dst = initial_process;
     access &= ~RESERVED_ALL;
-    return alloc_specific_handle( dst, entry->ptr, dst_handle, access, inherit );
+    res = alloc_specific_handle( dst, entry->ptr, dst_handle, access, inherit );
+    if (options & DUP_HANDLE_MAKE_GLOBAL) res = HANDLE_LOCAL_TO_GLOBAL(res);
+    return res;
 }
 
 /* open a new handle to an existing object */

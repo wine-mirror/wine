@@ -34,6 +34,7 @@ enum request
     REQ_CREATE_PIPE,
     REQ_CREATE_CONSOLE,
     REQ_SET_CONSOLE_FD,
+    REQ_CREATE_CHANGE_NOTIFICATION,
     REQ_NB_REQUESTS
 };
 
@@ -71,6 +72,7 @@ DECL_HANDLER(get_file_info);
 DECL_HANDLER(create_pipe);
 DECL_HANDLER(create_console);
 DECL_HANDLER(set_console_fd);
+DECL_HANDLER(create_change_notification);
 
 static const struct handler {
     void       (*handler)();
@@ -105,6 +107,7 @@ static const struct handler {
     { (void(*)())req_create_pipe, sizeof(struct create_pipe_request) },
     { (void(*)())req_create_console, sizeof(struct create_console_request) },
     { (void(*)())req_set_console_fd, sizeof(struct set_console_fd_request) },
+    { (void(*)())req_create_change_notification, sizeof(struct create_change_notification_request) },
 };
 #endif  /* WANT_REQUEST_HANDLERS */
 

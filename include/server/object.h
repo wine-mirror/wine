@@ -189,6 +189,11 @@ extern int create_console( int fd, struct object *obj[2] );
 extern int set_console_fd( int handle, int fd );
 
 
+/* change notification functions */
+
+extern struct object *create_change_notification( int subtree, int filter );
+
+
 extern int debug_level;
 
 #endif  /* __WINE_SERVER_OBJECT_H */
