@@ -899,9 +899,12 @@ sym_not_found:
 static LONG calc_ppem_for_height(FT_Face ft_face, LONG height)
 {
     TT_OS2 *pOS2;
+    TT_HoriHeader *pHori;
+
     LONG ppem;
 
     pOS2 = pFT_Get_Sfnt_Table(ft_face, ft_sfnt_os2);
+    pHori = pFT_Get_Sfnt_Table(ft_face, ft_sfnt_hhea);
 
     if(height == 0) height = 16;
 
@@ -919,9 +922,14 @@ static LONG calc_ppem_for_height(FT_Face ft_face, LONG height)
      *
      */
 
-    if(height > 0)
-        ppem = ft_face->units_per_EM * height /
-	    (pOS2->usWinAscent + pOS2->usWinDescent);
+    if(height > 0) {
+        if(pOS2->usWinAscent + pOS2->usWinDescent == 0)
+            ppem = ft_face->units_per_EM * height /
+                (pHori->Ascender - pHori->Descender);
+        else
+            ppem = ft_face->units_per_EM * height /
+                (pOS2->usWinAscent + pOS2->usWinDescent);
+    }
     else
         ppem = -height;
 
@@ -2109,6 +2117,7 @@ UINT WineEngGetOutlineTextMetrics(GdiFont font, UINT cbSize,
     WCHAR *family_nameW, *style_nameW;
     WCHAR spaceW[] = {' ', '\0'};
     char *cp;
+    INT ascent, descent;
 
     TRACE("font=%p\n", font);
 
@@ -2179,14 +2188,22 @@ UINT WineEngGetOutlineTextMetrics(GdiFont font, UINT cbSize,
 
 #define TM font->potm->otmTextMetrics
 
+    if(pOS2->usWinAscent + pOS2->usWinDescent == 0) {
+        ascent = pHori->Ascender;
+        descent = -pHori->Descender;
+    } else {
+        ascent = pOS2->usWinAscent;
+        descent = pOS2->usWinDescent;
+    }
+
     if(font->yMax) {
 	TM.tmAscent = font->yMax;
 	TM.tmDescent = -font->yMin;
 	TM.tmInternalLeading = (TM.tmAscent + TM.tmDescent) - ft_face->size->metrics.y_ppem;
     } else {
-	TM.tmAscent = (pFT_MulFix(pOS2->usWinAscent, y_scale) + 32) >> 6;
-	TM.tmDescent = (pFT_MulFix(pOS2->usWinDescent, y_scale) + 32) >> 6;
-	TM.tmInternalLeading = (pFT_MulFix(pOS2->usWinAscent + pOS2->usWinDescent
+	TM.tmAscent = (pFT_MulFix(ascent, y_scale) + 32) >> 6;
+	TM.tmDescent = (pFT_MulFix(descent, y_scale) + 32) >> 6;
+	TM.tmInternalLeading = (pFT_MulFix(ascent + descent
 					    - ft_face->units_per_EM, y_scale) + 32) >> 6;
     }
 
@@ -2196,7 +2213,7 @@ UINT WineEngGetOutlineTextMetrics(GdiFont font, UINT cbSize,
      el = MAX(0, LineGap - ((WinAscent + WinDescent) - (Ascender - Descender)))
     */
     TM.tmExternalLeading = max(0, (pFT_MulFix(pHori->Line_Gap -
-       		 ((pOS2->usWinAscent + pOS2->usWinDescent) -
+       		 ((ascent + descent) -
 		  (pHori->Ascender - pHori->Descender)), y_scale) + 32) >> 6);
 
     TM.tmAveCharWidth = (pFT_MulFix(pOS2->xAvgCharWidth, x_scale) + 32) >> 6;
