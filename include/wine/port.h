@@ -10,6 +10,7 @@
 # error You must include config.h to use this header  
 #endif  
 
+#define _GNU_SOURCE  /* for pread/pwrite */
 #include <fcntl.h>
 #include <sys/types.h>
 #include <sys/time.h>
@@ -134,6 +135,14 @@ int usleep (unsigned int useconds);
 #ifndef HAVE_LSTAT
 int lstat(const char *file_name, struct stat *buf);
 #endif /* HAVE_LSTAT */
+
+#ifndef HAVE_PREAD
+ssize_t pread( int fd, void *buf, size_t count, off_t offset );
+#endif /* HAVE_PREAD */
+
+#ifndef HAVE_PWRITE
+ssize_t pwrite( int fd, const void *buf, size_t count, off_t offset );
+#endif /* HAVE_PWRITE */
 
 #ifndef S_ISLNK
 #define S_ISLNK(mod) (0)

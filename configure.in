@@ -818,6 +818,8 @@ AC_CHECK_FUNCS(\
 	lstat \
 	memmove \
 	mmap \
+	pread \
+	pwrite \
 	rfork \
 	select \
 	sendmsg \

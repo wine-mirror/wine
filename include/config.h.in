@@ -121,6 +121,12 @@
 /* Define if you have the openpty function.  */
 #undef HAVE_OPENPTY
 
+/* Define if you have the pread function.  */
+#undef HAVE_PREAD
+
+/* Define if you have the pwrite function.  */
+#undef HAVE_PWRITE
+
 /* Define if you have the resizeterm function.  */
 #undef HAVE_RESIZETERM
 

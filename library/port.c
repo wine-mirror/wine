@@ -379,6 +379,59 @@ int lstat(const char *file_name, struct stat *buf)
 }
 #endif /* HAVE_LSTAT */
 
+
+/***********************************************************************
+ *		pread
+ *
+ * FIXME: this is not thread-safe
+ */
+#ifndef HAVE_PREAD
+ssize_t pread( int fd, void *buf, size_t count, off_t offset )
+{
+    ssize_t ret;
+    off_t old_pos;
+
+    if ((old_pos = lseek( fd, 0, SEEK_CUR )) == -1) return -1;
+    if (lseek( fd, offset, SEEK_SET ) == -1) return -1;
+    if ((ret = read( fd, buf, count )) == -1)
+    {
+        int err = errno;  /* save errno */
+        lseek( fd, old_pos, SEEK_SET );
+        errno = err;
+        return -1;
+    }
+    if (lseek( fd, old_pos, SEEK_SET ) == -1) return -1;
+    return ret;
+}
+#endif /* HAVE_PREAD */
+
+
+/***********************************************************************
+ *		pwrite
+ *
+ * FIXME: this is not thread-safe
+ */
+#ifndef HAVE_PWRITE
+ssize_t pwrite( int fd, const void *buf, size_t count, off_t offset )
+{
+    ssize_t ret;
+    off_t old_pos;
+
+    if ((old_pos = lseek( fd, 0, SEEK_CUR )) == -1) return -1;
+    if (lseek( fd, offset, SEEK_SET ) == -1) return -1;
+    if ((ret = write( fd, buf, count )) == -1)
+    {
+        int err = errno;  /* save errno */
+        lseek( fd, old_pos, SEEK_SET );
+        errno = err;
+        return -1;
+    }
+    if (lseek( fd, old_pos, SEEK_SET ) == -1) return -1;
+    return ret;
+}
+#endif /* HAVE_PWRITE */
+
+
 /***********************************************************************
  *		getrlimit
  */
