@@ -832,6 +832,10 @@ static void CB_Paint( WND *wndPtr, HDC hDC, WORD action )
     /* Draw the check-box bitmap */
     if (action == ODA_DRAWENTIRE || action == ODA_SELECT)
     { 
+	/* Since WM_ERASEBKGND does nothing, first prepare background */
+	if (action == ODA_SELECT) FillRect( hDC, &rbox, hBrush );
+	else FillRect( hDC, &client, hBrush );
+
         if( TWEAK_WineLook == WIN31_LOOK )
         {
         HDC hMemDC = CreateCompatibleDC( hDC );
@@ -840,9 +844,6 @@ static void CB_Paint( WND *wndPtr, HDC hDC, WORD action )
 
 	/* Check in case the client area is smaller than the checkbox bitmap */
 	if (delta < 0) delta = 0;
-
-        if (action == ODA_SELECT) FillRect( hDC, &rbox, hBrush );
-        else FillRect( hDC, &client, hBrush );
 
         if (infoPtr->state & BUTTON_HIGHLIGHTED) x += 2 * checkBoxWidth;
         if (infoPtr->state & (BUTTON_CHECKED | BUTTON_3STATE)) x += checkBoxWidth;
