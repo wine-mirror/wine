@@ -207,7 +207,7 @@ void WINAPI DebugBreak16( CONTEXT86 *context )
     rec.ExceptionCode    = EXCEPTION_BREAKPOINT;
     rec.ExceptionFlags   = 0;
     rec.ExceptionRecord  = NULL;
-    rec.ExceptionAddress = GET_IP(context); 
+    rec.ExceptionAddress = (LPVOID)context->Eip;
     rec.NumberParameters = 0;
     NtRaiseException( &rec, context, TRUE );
 #endif  /* defined(__i386__) */

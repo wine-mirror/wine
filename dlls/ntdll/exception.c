@@ -27,7 +27,16 @@ typedef struct
     EXCEPTION_FRAME *prevFrame;
 } EXC_NESTED_FRAME;
 
- 
+#ifdef __i386__
+# define GET_IP(context) ((LPVOID)(context)->Eip)
+#endif
+#ifdef __sparc__
+# define GET_IP(context) ((LPVOID)(context)->pc)
+#endif
+#ifndef GET_IP
+# error You must define GET_IP for this CPU
+#endif
+
 /*******************************************************************
  *         EXC_RaiseHandler
  *
