@@ -93,6 +93,12 @@ char string[8], outpath[MAX_PATH], inpath[MAX_PATH], *infile;
     WCMD_output ("Wildcards not yet supported\n");
     return;
   }
+
+  /* If no destination supplied, assume current directory */
+  if (param2[0] == 0x00) {
+      strcpy(param2, ".");
+  }
+
   GetFullPathName (param2, sizeof(outpath), outpath, NULL);
   hff = FindFirstFile (outpath, &fd);
   if (hff != INVALID_HANDLE_VALUE) {
@@ -103,6 +109,7 @@ char string[8], outpath[MAX_PATH], inpath[MAX_PATH], *infile;
     }
     FindClose (hff);
   }
+
   force = (strstr (quals, "/Y") != NULL);
   if (!force) {
     hff = FindFirstFile (outpath, &fd);
@@ -402,12 +409,33 @@ char condition[MAX_PATH], *command, *s;
 void WCMD_move () {
 
 int status;
+char outpath[MAX_PATH], inpath[MAX_PATH], *infile;
+WIN32_FIND_DATA fd;
+HANDLE hff;
 
   if ((strchr(param1,'*') != NULL) || (strchr(param1,'%') != NULL)) {
     WCMD_output ("Wildcards not yet supported\n");
     return;
-}
-  status = MoveFile (param1, param2);
+  }
+
+  /* If no destination supplied, assume current directory */
+  if (param2[0] == 0x00) {
+      strcpy(param2, ".");
+  }
+
+  /* If 2nd parm is directory, then use original filename */
+  GetFullPathName (param2, sizeof(outpath), outpath, NULL);
+  hff = FindFirstFile (outpath, &fd);
+  if (hff != INVALID_HANDLE_VALUE) {
+    if (fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
+      GetFullPathName (param1, sizeof(inpath), inpath, &infile);
+      strcat (outpath, "\\");
+      strcat (outpath, infile);
+    }
+    FindClose (hff);
+  }
+
+  status = MoveFile (param1, outpath);
   if (!status) WCMD_print_error ();
 }
 
