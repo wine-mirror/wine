@@ -17,7 +17,7 @@ type win32
 @  stdcall wglShareLists(long long) wglShareLists
 @  stdcall wglSwapLayerBuffers(long long) wglSwapLayerBuffers
 @  stdcall wglUseFontBitmapsA(long long long long) wglUseFontBitmapsA
-@  stdcall wglUseFontOutlinesA(long long long long long long long) wglUseFontOutlinesA
+@  stdcall wglUseFontOutlinesA(long long long long long long long ptr) wglUseFontOutlinesA
 @  stub    glGetLevelParameterfv
 @  stub    glGetLevelParameteriv
 @  stub    wglUseFontBitmapsW
@@ -70,10 +70,10 @@ type win32
 @  stdcall glFinish() wine_glFinish
 @  stdcall glFlush() wine_glFlush
 @  stdcall glHint(long long ) wine_glHint
-@  stdcall glClearDepth(long ) wine_glClearDepth
+@  stdcall glClearDepth(double ) wine_glClearDepth
 @  stdcall glDepthFunc(long ) wine_glDepthFunc
 @  stdcall glDepthMask(long ) wine_glDepthMask
-@  stdcall glDepthRange(long long ) wine_glDepthRange
+@  stdcall glDepthRange(double double ) wine_glDepthRange
 @  stdcall glClearAccum(long long long long ) wine_glClearAccum
 @  stdcall glAccum(long long ) wine_glAccum
 @  stdcall glMatrixMode(long ) wine_glMatrixMode

@@ -22,7 +22,7 @@ type win32
 @  stdcall wglShareLists(long long) wglShareLists
 @  stdcall wglSwapLayerBuffers(long long) wglSwapLayerBuffers
 @  stdcall wglUseFontBitmapsA(long long long long) wglUseFontBitmapsA
-@  stdcall wglUseFontOutlinesA(long long long long long long long) wglUseFontOutlinesA
+@  stdcall wglUseFontOutlinesA(long long long long long long long ptr) wglUseFontOutlinesA
 @  stub    glGetLevelParameterfv
 @  stub    glGetLevelParameteriv
 @  stub    wglUseFontBitmapsW
@@ -63,7 +63,8 @@ while ($line = <INC>) {
 			print "ptr ";
 		    } elsif ($_ =~ /[a-zA-Z]/) {
 			($type) = ($_ =~ /^ *(.*) +.*/);
-			if ($type =~ /double/) {
+			if (($type =~ /double/) ||
+			    ($type =~ /clampd/)) {
 			    print "double ";
 			} elsif ($type !~ /void/) {
 			    print "long ";

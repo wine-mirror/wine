@@ -5,11 +5,14 @@
 
 #include <stdlib.h>
 
+#include "wine/exception.h"
+
 #include "config.h"
 #include "debugtools.h"
 #include "gdi.h"
 #include "dc.h"
 #include "windef.h"
+#include "winerror.h"
 #include "wine_gl.h"
 #include "x11drv.h"
 #include "x11font.h"
@@ -18,6 +21,17 @@
 #include "opengl_ext.h"
 
 DEFAULT_DEBUG_CHANNEL(opengl);
+
+static int XGLErrorFlag = 0;
+static int XGLErrorHandler(Display *dpy, XErrorEvent *event) {
+    XGLErrorFlag = 1;
+    return 0;
+}
+/* filter for page-fault exceptions */
+static WINE_EXCEPTION_FILTER(page_fault)
+{
+  return EXCEPTION_EXECUTE_HANDLER;
+}
 
 /***********************************************************************
  *		wglCreateContext
@@ -78,13 +92,36 @@ BOOL WINAPI wglCopyContext(HGLRC hglrcSrc,
  *		wglDeleteContext
  */
 BOOL WINAPI wglDeleteContext(HGLRC hglrc) {
+  int (*WineXHandler)(Display *, XErrorEvent *);
+  BOOL ret = TRUE;
+  
   TRACE("(%p)\n", hglrc);
-
+  
   ENTER_GL();
-  glXDestroyContext(display, (GLXContext) hglrc);
+  /* A game (Half Life not to name it) deletes twice the same context. To prevent
+     crashes, run with our own error function enabled */
+  XSync(display, False);
+  XGLErrorFlag = 0;
+  WineXHandler = XSetErrorHandler(XGLErrorHandler);
+  __TRY {
+    glXDestroyContext(display, (GLXContext) hglrc);
+    XSync(display, False);
+    XFlush(display);
+  }
+  __EXCEPT(page_fault) {
+    XGLErrorFlag = 1;
+  }
+  __ENDTRY
+
+  XSetErrorHandler(WineXHandler);
+  if (XGLErrorFlag) {
+    TRACE("Error deleting context !\n");
+    SetLastError(ERROR_INVALID_HANDLE);
+    ret = FALSE;
+  }
   LEAVE_GL();
   
-  return TRUE;
+  return ret;
 }
 
 /***********************************************************************
@@ -220,25 +257,35 @@ void* WINAPI wglGetProcAddress(LPCSTR  lpszProc) {
  */
 BOOL WINAPI wglMakeCurrent(HDC hdc,
 			   HGLRC hglrc) {
-  DC * dc = DC_GetDCPtr( hdc );
-  X11DRV_PDEVICE *physDev;
   BOOL ret;
 
   TRACE("(%08x,%p)\n", hdc, hglrc);
-
-  if (dc == NULL) {
-    ERR("Null DC !!!\n");
-    return FALSE;
+  
+  if (hglrc == NULL) {
+    ENTER_GL();
+    ret = glXMakeCurrent(display,
+			 None,
+			 NULL);
+    LEAVE_GL();
+  } else {
+    DC * dc = DC_GetDCPtr( hdc );
+    
+    if (dc == NULL) {
+      ERR("Null DC !!!\n");
+      ret = FALSE;
+    } else {
+      X11DRV_PDEVICE *physDev;
+      
+      physDev =(X11DRV_PDEVICE *)dc->physDev;
+      
+      ENTER_GL();
+      ret = glXMakeCurrent(display,
+			   physDev->drawable,
+			   (GLXContext) hglrc);
+      LEAVE_GL();
+    }
   }
-  
-  physDev =(X11DRV_PDEVICE *)dc->physDev;
-
-  ENTER_GL();
-  ret = glXMakeCurrent(display,
-		       (hglrc == NULL ? None : physDev->drawable),
-		       (GLXContext) hglrc);
-  LEAVE_GL();
-  
+  TRACE("Returning %s\n", (ret ? "True" : "False"));
   return ret;
 }
 
