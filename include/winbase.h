@@ -1496,6 +1496,7 @@ BOOL        WINAPI SetupComm(HANDLE,DWORD,DWORD);
 VOID        WINAPI Sleep(DWORD);
 DWORD       WINAPI SleepEx(DWORD,BOOL);
 DWORD       WINAPI SuspendThread(HANDLE);
+BOOL        WINAPI SwitchToThread(void);
 BOOL        WINAPI SystemTimeToFileTime(const SYSTEMTIME*,LPFILETIME);
 DWORD       WINAPI TlsAlloc(void);
 BOOL        WINAPI TlsFree(DWORD);
