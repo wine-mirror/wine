@@ -128,8 +128,8 @@ type win32
 125 stub mmioRenameA
 126 stub mmioRenameW
 127 stdcall mmioSeek(long long long) mmioSeek32
-128 stub mmioSendMessage
-129 stub mmioSetBuffer
+128 stdcall mmioSendMessage(long long long long) mmioSendMessage
+129 stdcall mmioSetBuffer(long ptr long long) mmioSetBuffer32
 130 stdcall mmioSetInfo(long ptr long) mmioSetInfo32
 131 stdcall mmioStringToFOURCCA(str long) mmioStringToFOURCC32A
 132 stdcall mmioStringToFOURCCW(wstr long) mmioStringToFOURCC32W

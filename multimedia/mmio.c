@@ -286,14 +286,14 @@ static HMMIO16 MMIO_Open(LPSTR szFileName, MMIOINFO16 * lpmmioinfo,
 	}
 
 	if (dwOpenFlags & MMIO_ALLOCBUF) {
-		if ((result = mmioSetBuffer(hmmio, NULL, MMIO_DEFAULTBUFFER, 0))) {
+		if ((result = mmioSetBuffer16(hmmio, NULL, MMIO_DEFAULTBUFFER, 0))) {
 			if (lpmmioinfo)
 				lpmmioinfo->wErrorRet = result;
 			return 0;
 		}
 	} else
 	if (lpmminfo->fccIOProc == FOURCC_MEM) {
-		if ((result = mmioSetBuffer(hmmio, lpmmioinfo->pchBuffer, lpmmioinfo->cchBuffer, 0))) {
+		if ((result = mmioSetBuffer16(hmmio, lpmmioinfo->pchBuffer, lpmmioinfo->cchBuffer, 0))) {
 			if (lpmmioinfo)
 				lpmmioinfo->wErrorRet = result;
 			return 0;
@@ -368,7 +368,7 @@ MMRESULT32 WINAPI mmioClose32(HMMIO32 hmmio, UINT32 uFlags)
 
 	result = mmioSendMessage(hmmio,MMIOM_CLOSE,(LPARAM)uFlags,(LPARAM)0);
 
-	mmioSetBuffer(hmmio, NULL, 0, 0);
+	mmioSetBuffer16(hmmio, NULL, 0, 0);
 
 	GlobalUnlock16(hmmio);
 	GlobalFree16(hmmio);
@@ -388,7 +388,7 @@ MMRESULT16 WINAPI mmioClose16(HMMIO16 hmmio, UINT16 uFlags)
 
 
 /**************************************************************************
- * 				mmioRead	       	[WINM.124]
+ * 				mmioRead	       	[WINMM.124]
  */
 LONG WINAPI mmioRead32(HMMIO32 hmmio, HPSTR pch, LONG cch)
 {
@@ -627,10 +627,10 @@ UINT32 WINAPI mmioSetInfo32(HMMIO32 hmmio, const MMIOINFO32 * lpmmioinfo, UINT32
 }
 
 /**************************************************************************
-* 				mmioSetBuffer		[MMSYSTEM.1217]
+* 				mmioSetBuffer		[WINMM.129]
 */
-UINT16 WINAPI mmioSetBuffer(HMMIO16 hmmio, LPSTR pchBuffer, 
-                            LONG cchBuffer, UINT16 uFlags)
+UINT32 WINAPI mmioSetBuffer32(HMMIO32 hmmio, LPSTR pchBuffer, 
+										LONG cchBuffer, UINT32 uFlags)
 {
 	LPMMIOINFO16	lpmminfo;
 
@@ -649,8 +649,7 @@ UINT16 WINAPI mmioSetBuffer(HMMIO16 hmmio, LPSTR pchBuffer,
 	}
 	if (pchBuffer) {
 		lpmminfo->pchBuffer = pchBuffer;
-	} else
-	if (lpmminfo->dwFlags&MMIO_ALLOCBUF) {
+	} else if (lpmminfo->dwFlags&MMIO_ALLOCBUF) {
 		HGLOBAL16 hNewBuf;
 		GlobalUnlock16(lpmminfo->dwReserved1);
 		hNewBuf = GlobalReAlloc16(lpmminfo->dwReserved1, cchBuffer, 0);
@@ -662,8 +661,7 @@ UINT16 WINAPI mmioSetBuffer(HMMIO16 hmmio, LPSTR pchBuffer,
 		}
 		lpmminfo->dwReserved1 = hNewBuf;
 		lpmminfo->pchBuffer = GlobalLock16(hNewBuf);
-	} else
-	if (cchBuffer) {
+	} else if (cchBuffer) {
 		HGLOBAL16 hNewBuf = GlobalAlloc16(GMEM_MOVEABLE, cchBuffer);
 		if (!hNewBuf) {
 			GlobalUnlock16(hmmio);
@@ -682,6 +680,15 @@ UINT16 WINAPI mmioSetBuffer(HMMIO16 hmmio, LPSTR pchBuffer,
 
 	GlobalUnlock16(hmmio);
 	return (UINT16) 0;
+}
+
+/**************************************************************************
+* 				mmioSetBuffer		[MMSYSTEM.1217]
+*/
+UINT16 WINAPI mmioSetBuffer16(HMMIO16 hmmio, LPSTR pchBuffer, 
+										LONG cchBuffer, UINT16 uFlags)
+{
+	return mmioSetBuffer32(hmmio, pchBuffer, cchBuffer, uFlags);
 }
 
 /**************************************************************************

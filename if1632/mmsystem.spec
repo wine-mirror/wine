@@ -156,7 +156,7 @@ type	win16
 1214   pascal  mmioSeek(word long word) mmioSeek16
 1215   pascal  mmioGetInfo(word ptr word) mmioGetInfo16
 1216   pascal  MMIOSETINFO(word ptr word) mmioSetInfo16
-1217   pascal  MMIOSETBUFFER(word ptr long word) mmioSetBuffer
+1217   pascal  MMIOSETBUFFER(word ptr long word) mmioSetBuffer16
 1218   pascal  mmioFlush(word word) mmioFlush16
 1219   pascal  mmioAdvance(word ptr word) mmioAdvance16
 1220   pascal  mmioStringToFOURCC(str word) mmioStringToFOURCC16
