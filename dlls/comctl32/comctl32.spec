@@ -187,8 +187,8 @@ debug_channels (animate comboex commctrl datetime header hotkey imagelist ipaddr
 386 stdcall DPA_DestroyCallback(ptr ptr long) DPA_DestroyCallback
 387 stdcall DSA_EnumCallback(ptr ptr long) DSA_EnumCallback
 388 stdcall DSA_DestroyCallback(ptr ptr long) DSA_DestroyCallback
-389 stub COMCTL32_389
-390 stub COMCTL32_390
+389 stub @
+390 stub @
 
 400 stub CreateMRUListW@4
 401 stub AddMRUStringW@8
@@ -196,15 +196,15 @@ debug_channels (animate comboex commctrl datetime header hotkey imagelist ipaddr
 403 stub EnumMRUListW@16
 404 stub CreateMRUListLazyW@16
 
-410 stdcall COMCTL32_410(long long long long) COMCTL32_410
-411 stdcall COMCTL32_411(long long long) COMCTL32_411
-412 stdcall COMCTL32_412(long long long) COMCTL32_412
-413 stdcall COMCTL32_413(long long long long) COMCTL32_413
-414 stub COMCTL32_414
-415 stdcall COMCTL32_415(long long long long long) COMCTL32_415
-416 stub COMCTL32_416
-417 stub COMCTL32_417
-418 stub COMCTL32_418
-419 stub COMCTL32_419
-420 stub COMCTL32_420
-421 stub COMCTL32_421
+410 stdcall @(long long long long) COMCTL32_410
+411 stdcall @(long long long) COMCTL32_411
+412 stdcall @(long long long) COMCTL32_412
+413 stdcall @(long long long long) COMCTL32_413
+414 stub @
+415 stdcall @(long long long long long) COMCTL32_415
+416 stub @
+417 stub @
+418 stub @
+419 stub @
+420 stub @
+421 stub @

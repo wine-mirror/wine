@@ -103,7 +103,7 @@ debug_channels (comm debugstr dll int resource stress thunk toolhelp win32)
  83 forward K32RtlLargeIntegerSubtract ntdll.RtlLargeIntegerSubtract
  84 forward K32RtlConvertLongToLargeInteger ntdll.RtlConvertLongToLargeInteger
  85 forward K32RtlConvertUlongToLargeInteger ntdll.RtlConvertUlongToLargeInteger
- 86 stdcall _KERNEL32_86(ptr) _KERNEL32_86
+ 86 stdcall @(ptr) _KERNEL32_86
  87 stdcall SSOnBigStack() SSOnBigStack
  88 varargs SSCall(long long ptr) SSCall
  89 register -i386 FT_PrologPrime() FT_PrologPrime
@@ -116,9 +116,9 @@ debug_channels (comm debugstr dll int resource stress thunk toolhelp win32)
  96 stdcall _ConfirmWin16Lock() _ConfirmWin16Lock
  97 stdcall _EnterSysLevel(ptr) _EnterSysLevel
  98 stdcall _LeaveSysLevel(ptr) _LeaveSysLevel
- 99 stdcall _KERNEL32_99(long) _KERNEL32_99
-100 stdcall _KERNEL32_100(long long long) _KERNEL32_100
-101 stub _KERNEL32_101
+ 99 stdcall @(long) _KERNEL32_99
+100 stdcall @(long long long) _KERNEL32_100
+101 stub @
 
 102 stdcall AddAtomW(wstr) AddAtomW
 103 stdcall AllocConsole() AllocConsole

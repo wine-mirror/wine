@@ -212,7 +212,7 @@ debug_channels (exec pidl shell)
  213 stub Printers_RegisterWindowW
  214 stub Printers_UnregisterWindow
  215 stub SHStartNetConnectionDialog@12
- 243 stdcall shell32_243(long long) shell32_243
+ 243 stdcall @(long long) shell32_243
  244 stdcall SHInitRestricted(ptr ptr) SHInitRestricted
  247 stdcall SHGetDataFromIDListA (ptr ptr long ptr long) SHGetDataFromIDListA
  248 stdcall SHGetDataFromIDListW (ptr ptr long ptr long) SHGetDataFromIDListW
@@ -311,12 +311,12 @@ debug_channels (exec pidl shell)
  653 stdcall PathProcessCommand (long long long long) PathProcessCommandAW
 
 # win98
- 654 stdcall shell32_654(long long)shell32_654 # ReadCabinetState@8
+ 654 stdcall @(long long)shell32_654 # ReadCabinetState@8
  660 stdcall FileIconInit(long)FileIconInit
  680 stdcall IsUserAdmin()IsUserAdmin
 
 # >= NT5
- 714 stdcall SHELL32_714(ptr)SHELL32_714 # PathIsTemporaryW
+ 714 stdcall @(ptr)SHELL32_714 # PathIsTemporaryW
 
 1217 stub FOOBAR1217   # no joke! This is the real name!!
 
