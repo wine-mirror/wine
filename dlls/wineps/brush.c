@@ -122,6 +122,7 @@ static BOOL PSDRV_Clip(DC *dc, BOOL EO)
 BOOL PSDRV_Brush(DC *dc, BOOL EO)
 {
     BRUSHOBJ *brush = (BRUSHOBJ *)GDI_GetObjPtr( dc->w.hBrush, BRUSH_MAGIC );
+    PSDRV_PDEVICE *physDev = dc->physDev;
 
     if(!brush) {
         ERR("Can't get BRUSHOBJ\n");
@@ -204,11 +205,15 @@ BOOL PSDRV_Brush(DC *dc, BOOL EO)
 	    GetBitmapBits(brush->logbrush.lbHatch,
 			  bm.bmWidthBytes * bm.bmHeight, bits);
 
-	    PSDRV_WriteGSave(dc);
-	    PSDRV_WritePatternDict(dc, &bm, bits);
+	    if(physDev->pi->ppd->LanguageLevel > 1) {
+	        PSDRV_WriteGSave(dc);
+	        PSDRV_WritePatternDict(dc, &bm, bits);
+		PSDRV_Fill(dc, EO);
+		PSDRV_WriteGRestore(dc);
+	    } else {
+	        FIXME("Trying to set a pattern brush on a level 1 printer\n");
+	    }
 	    HeapFree(PSDRV_Heap, 0, bits);	
-	    PSDRV_Fill(dc, EO);
-	    PSDRV_WriteGRestore(dc);
 	    return TRUE;
 	}
 	break;
