@@ -892,7 +892,6 @@ static void OB_Paint( WND *wndPtr, HDC hDC, WORD action )
     GetClientRect( wndPtr->hwndSelf, &dis.rcItem );
 
     SetBkColor( hDC, GetSysColor( COLOR_BTNFACE ) );
-    FillRect( hDC,  &dis.rcItem, GetSysColorBrush( COLOR_BTNFACE ) );
 
     SendMessageA( GetParent(wndPtr->hwndSelf), WM_DRAWITEM,
                     wndPtr->wIDmenu, (LPARAM)&dis );
