@@ -791,8 +791,8 @@ StartServiceW( SC_HANDLE hService, DWORD dwNumServiceArgs,
     ZeroMemory(&startupinfo,sizeof(STARTUPINFOW));
     startupinfo.cb = sizeof(STARTUPINFOW);
 
-    r = CreateProcessW(path,
-                   NULL,
+    r = CreateProcessW(NULL,
+                   path,
                    NULL,  /* process security attribs */
                    NULL,  /* thread security attribs */
                    FALSE, /* inherit handles */
