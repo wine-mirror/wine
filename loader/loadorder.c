@@ -34,7 +34,7 @@ static struct tagDllOverride {
 	char *key,*value;
 } DefaultDllOverrides[] = {
 	{"kernel32,gdi32,user32",	"builtin"},
-	{"kernel,gdi,user",		"builtin"},
+	{"krnl386,gdi,user",		"builtin"},
 	{"toolhelp",			"builtin"},
 	{"comdlg32,commdlg",		"elfdll,builtin,native"},
 	{"version,ver",			"elfdll,builtin,native"},

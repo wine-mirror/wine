@@ -132,7 +132,7 @@ int main( int argc, char *argv[] )
     if (!MAIN_MainInit()) return 1;
 
     /* Load kernel modules */
-    if (!LoadLibrary16(  "KERNEL" )) return 1;
+    if (!LoadLibrary16( "KRNL386.EXE" )) return 1;
     if (!LoadLibraryA( "KERNEL32" )) return 1;
 
     /* Create initial task */

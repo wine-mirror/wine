@@ -298,7 +298,7 @@ HINSTANCE MAIN_WinelibInit( int *argc, char *argv[] )
     if (!MAIN_MainInit()) return 0;
 
     /* Initialize KERNEL */
-    if (!LoadLibrary16(  "KERNEL" )) return 0;
+    if (!LoadLibrary16( "KRNL386.EXE" )) return 0;
     if (!LoadLibraryA( "KERNEL32" )) return 0;
 
     /* Create and switch to initial task */
