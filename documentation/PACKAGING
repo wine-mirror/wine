@@ -50,7 +50,7 @@ There are two types of dependencies: hard and soft dependencies.
 A hard dependency must be available at runtime for Wine to function,
 if  compiled into the code. Soft dependencies on the other hand
 will degrade gracefully at runtime if unavailable on the runtime system.
-Ideally, we should eliminate all hard dependencies in favour of
+Ideally, we should eliminate all hard dependencies in favor of
 soft dependencies.
 
 To enable a soft dependency, it must be available at compile time.
@@ -68,6 +68,10 @@ they should appear as "Suggests" or "Recommends", as the case may be.
       better support of fonts than using the X11 fonts engine. It is 
       only needed for the X11 back end engine. Used from GDI.
 
+    * fontconfig
+      Used to find TrueType fonts for rendering with freetype. Used by
+      GDI.
+
     * Alsa: http://sourceforge.net/projects/alsa (Linux only)
       This library gives sound support to the Windows environment.
 
@@ -75,7 +79,8 @@ they should appear as "Suggests" or "Recommends", as the case may be.
       Similar to Alsa, it allow Wine to use the JACK audio server.
 
     * CUPS: http://www.cups.org
-      This library allows Windows to see CUPS defined printers.
+      This library allows Windows to see CUPS defined printers. Used
+      by WINEPS and WINSPOOL.
 
     * OpenGL
       This is used for both OpenGL and Direct3D (and some other 
@@ -90,6 +95,30 @@ they should appear as "Suggests" or "Recommends", as the case may be.
     * LittleCMS: http://www.littlecms.com
       This library is used to implement MSCMS (Color Management System)
       which is needed by an increasing number of graphics applications.
+    
+    * libjpeg
+      This library is used to load JPEG files within OLE automation.
+
+    * libungif or gif_lib
+      One of these two libraries is used to load GIF files within OLE
+      automation.
+
+    * ICU
+      Used for bidirectional character output. Linked statically, used
+      by GDI.
+
+    * sane
+      Used for basic scanner support in our TWAIN32 library.
+
+    * openssl
+      Used for some cryptographic support in ADVAPI32.
+ 
+    * Xrandr, Xrender, Xi, Xext
+      X11 extension libraries used by the x11drv.
+      Xrandr - resolution switching
+      Xrender - client side font rendering
+      Xi - X Input handling (for asian input methods mostly)
+      Xext - X extensions
 
 GOALS
 ~~~~~
@@ -101,10 +130,10 @@ An installation from a Wine package should:
         should suffice for initial installation.
                 
     * Work quickly and simply:
-        The user should be able to launch Solitaire
-        within minutes of downloading the Wine package.
+        The user should be able to launch Solitaire within seconds
+	of downloading the Wine package.
               
-    * Comply with Filesystem Hierarchy Standard
+    * Comply with File system Hierarchy Standard
         A Wine installation should, as much as possible, comply
         with the FHS standard (http://www.pathname.com/fhs/).
                 
@@ -117,7 +146,7 @@ An installation from a Wine package should:
         not need to change any configuration files.
 
     * Small footprint
-        Use only as much diskspace as needed per user.
+        Use only as much disk space as needed per user.
 
     * Reduce support requirements.
         A packaged version of Wine should be sufficiently easy to use and
@@ -129,32 +158,27 @@ REQUIREMENTS
 ~~~~~~~~~~~~
 
 Successfully installing Wine requires:
-    * Much thought and work from the packager (1x)
 
-    * A configuration file
-        Wine will not run without a configuration file.  Wine provides a
-        a sample config file and it can be found in documentation/samples.
+    * Install the RPM.
+
+    * No longer: A configuration file
+
+        Wine will run without a configuration file at this time.  Wine
+	provides a sample config file and it can be found in
+	documentation/samples.
+
         Some packagers may attempt to provide (or dynamically generate) a 
-	default configuration file. Some packagers may wish to rely on 
-	winesetup to generate the configuration file.
+	default configuration file. Some packagers may copy this on
+	startup, but it is no longer necessary.
 
-    * A writeable C drive
-        A writeable C:\ directory structure on a per-user basis. 
-	Applications do dump .ini file into C:\WINDOWS, installer
-	dump .exe/.dll/etc. files into C:\WINDOWS or C:\Program Files.
+    * No longer: Preparing a fake windows setup.
 
-    * An initial set of registry entries.
-	For custom changes to the default registry, tools/wine.inf
-	can be modified as needed. The current preferred method of 
-	configuring/installing Wine is to run /tools/wineinstall.  
-	There are several other choices that could be made; registries 
-	can be imported from a Windows partition.  At this time, Wine 
-	does not completely support a complex multi-user installation 
-	ala Windows NT, but it could fairly readily.
+	If WINEPREFIX is not present, wine will generate a setup
+	by itself by calling wineprefixcreate.
 
-     * Special files
-        Some special .dll and .exe files in the C:\WINDOWS\SYSTEM
-	directory, since applications directly check for their presence.
+        This will load all default registry entries, and register dlls
+	where necessary. A special "wine.inf" file is provided with
+	the WINE sources and installed to /usr/share/wine/.
 
 WINE COMPONENTS
 ~~~~~~~~~~~~~~~
@@ -187,7 +211,7 @@ WINE COMPONENTS
 		debugging of Wine or Winelib applications as well as Wine itself 
 		(kernel and all DLLs).
 	- winedump : Dumps the imports and exports of NE and PE files.
-	- winefile : A clone of the win3x filemanager.
+	- winefile : A clone of the win3x file manager.
 	- winegcc/wineg++: Wrappers for gcc/g++ respectively, to make them behave 
 		as MinGW's gcc. Used for porting apps over to Winelib.
 	- winemaker : Winemaker is a perl script which is designed to help you 
@@ -218,7 +242,8 @@ WINE COMPONENTS
 	it the root of the Wine _build_ tree, after you have run ./configure.
 
     * Include Files
-	An up to date list of includes can be found in the include/Makefile.in file.
+	An up to date list of includes can be found in the include/Makefile.in
+	file.
 
     * Documentation files
 	After building the documentation with:
@@ -239,22 +264,10 @@ WINE COMPONENTS
             At the time of this writing, if this file exists,
             then no other configuration file is loaded.
 
-        - ETCDIR/wine.conf
-            This is the global Wine configuration file. It is only used
-	    if the user running Wine has no local configuration file.
-	    Global wine configuration is currently not possible;
-	    this might get reenabled at some time.
-            Some packagers feel that this file should not be supplied, 
-	    and that only a wine.conf.default should be given here.
-            Other packagers feel that this file should be the predominant
-	    file used, and that users should only shift to a local 
-	    configuration file if they need to.  An argument has been
-            made that the local configuration file should inherit the 
-	    global configuration file.  At this time, Wine does not do this;
-            please refer to the WineHQ discussion archives for the debate 
-	    concerning this.
-            This debate is addressed more completely below, in the
-	    'Packaging Strategy' section.
+        - PREFIX/share/wine.inf
+	
+            This is the global Wine setup information file
+	    in the format of a MS Installer .INF file.
 
     * Registry Files
             In order to replicate the Windows registry system,
@@ -271,8 +284,7 @@ WINE COMPONENTS
             registry entries is extremely important,
             as it affects what registry entries are
             actually present.  The order is roughly that
-            .dat files from a Windows partion are loaded,
-            then global registry settings from ETCDIR,
+            .dat files from a Windows partition are loaded,
             and then finally local registry settings are
             loaded from WINEPREFIX.  As each set are loaded,
             they can override the prior entries.  Thus,
@@ -307,7 +319,7 @@ WINE COMPONENTS
 	    - ETCDIR/wine.systemreg 
                 This file contains the global values for HKEY_LOCAL_MACHINE. 
 		The values in this file can be overridden by the user's 
-		local settings. The location of this directory is hardcoded 
+		local settings. The location of this directory is hard coded 
 		within wine, generally to /etc. 
 
 	    - ETCDIR/wine.userreg
@@ -324,7 +336,7 @@ WINE COMPONENTS
 
         This is probably the most important configuration detail.
         The use of Windows registry and DLL files dramatically alters the 
-	behaviour of Wine. If nothing else, pacakager have to make this 
+	behavior of Wine. If nothing else, packager have to make this 
 	distinction clear to the end user, so that they can intelligently
         choose their configuration.
 
@@ -341,22 +353,26 @@ WINE COMPONENTS
 PACKAGING STRATEGIES
 ~~~~~~~~~~~~~~~~~~~~
 
-There has recently been a lot of discussion on the Wine
-development mailing list about the best way to build Wine packages.
+There has recently been a lot of discussion on the Wine development
+mailing list about the best way to build Wine packages.
 
 There was a lot of discussion, and several diverging points of view.
-This section of the document attempts to present the areas of common 
-agreement, and also to present the different approaches advocated on 
+This section of the document attempts to present the areas of common
+agreement, and also to present the different approaches advocated on
 the mailing list.
 
     * Distribution of Wine into packages
         The most basic question to ask is given the Wine CVS tree,
         what physical files are you, the packager, going to produce?
-        Are you going to produce only a wine.rpm (as Marcus has done),
-        or are you going to produce 6 Debian files (libwine, libwine-dev,
-	wine, wine-doc, wine-utils and winesetuptk) as Ove has done?
+        Are you going to produce only a wine.rpm, or are you going to
+	produce 6 Debian files (libwine, libwine-dev, wine, wine-doc,
+	wine-utils and winesetuptk) as Ove has done?
         At this point, common practice is to adopt to the conventions
-	of the targeted distribution. 
+	of the targeted distribution.
+
+	Also, experience shows that you should not create a huge set
+	of packages, since later upgrades and obsoleting will be
+	painful.
 
     * Where to install files
         This question is not really contested.  It will vary
@@ -379,62 +395,32 @@ the mailing list.
         should be installed to /opt/wine.  None of the existing packages 
 	follow this guideline (today; check again tomorrow).
 
+	(Since most are upgrades of the distro packages, this is still
+	 on the safe side I think - Marcus Meissner)
+
     * What files to create
         After installing the static and shareable files, the next
         question the packager needs to ask is how much dynamic
         configuration will be done, and what configuration
         files should be created.
-        There are several approaches to this:
-            - Rely completely on user file space - install nothing
-                This approach relies upon the new winesetup utility
-                and the new ability of Wine to launch winesetup if no
-                configuration file is found.  The basic concept is
-                that no global configuration files are created at
-                install time.  Instead, Wine configuration files are
-                created on the fly by the winesetup program when Wine
-                is invoked.  Further, winesetup creates default
-                Windows directories and paths that are stored
-                completely in the user's WINEPREFIX.  This approach
-                has the benefit of simplicity in that all Wine files
-                are either stored under /opt/wine or under ~/.wine.
-                Further, there is only ever one Wine configuration
-                file.  This approach, however, adds another level of
-                complexity.  It does not allow Wine to run Solitaire
-                'out of the box'; the user must run the configuration
-                program first.  Further, winesetup requires Tcl/Tk, a
-                requirement not beloved by some.  Additionally, this
-                approach closes the door on multi user configurations
-                and presumes a single user approach.
 
-	    - Build a reasonable set of defaults for the global wine.conf,
-	      facilitate creation of a user's local Wine configuration.
-                This approach, best shown by Marcus, causes the
-                installation process to auto scan the system,
-                and generate a global wine.conf file with best
-                guess defaults.  The OpenLinux packages follow
-                this behaviour.
-                The keys to this approach are always putting
-                an existing Windows partition into the
-                path, and being able to run Solitaire
-                right out of the box.
-                Another good thing that Marcus does is he
-                detects a first time installation and
-                does some clever things to improve the
-                user's Wine experience.
-                A flaw with this approach, however, is it doesn't
-                give the user an obvious way to choose not to
-                use a Windows partition.
+        The best current approach to this is:
+	- Leave it alone and make a "wineprefixcreate" call available
+	  to the user via a menu item or similar.
 
-	    - Build a reasonable set of defaults for the global wine.conf,
-              and ask the user if possible
-                This approach, demonstrated by Ove, causes the
-                installation process to auto scan the system,
-                and generate a global wine.conf file with best
-                guess defaults.  Because Ove built a Debian
-                package, he was able to further query debconf and
-                get permission to ask the user some questions,
-                allowing the user to decide whether or not to
-                use a Windows partition.
+        - Setup a fake windows setup automatically.
+		
+		This is done by simply calling wineprefixcreate, 
+		which will setup a fake windows root for the user.
+
+		If no arguments are passed, defaults will be 
+		assumed for WINEPREFIX (~/.wine) and similar
+		variables.
+
+		After this, WINE is immediately usable by the
+		end user.
+
+	- Others might be possible.
 
 IMPLEMENTATION
 ~~~~~~~~~~~~~~
@@ -448,108 +434,51 @@ Wine is configured the usual way (depending on your build environment).
 The PREFIX is chosen using your application placement policy
 (/usr/, /usr/X11R6/, /opt/wine/, or similar).  The configuration files
 (wine.conf, wine.userreg, wine.systemreg) are targeted for /etc/wine/
-(rationale: FHS 2.2, multiple readonly configuration files of a package).
+(rationale: FHS 2.2, multiple read only configuration files of a package).
 
 Example (split this into %build and %install section for rpm:
 
 
-	CFLAGS=$RPM_OPT_FLAGS ./configure --prefix=/usr/X11R6 --sysconfdir=/etc/wine/ --enable-dll
+	CFLAGS="$RPM_OPT_FLAGS" ./configure --prefix=/usr/X11R6 --sysconfdir=/etc/wine/ --enable-dll
 	make
 	BR=$RPM_BUILD_ROOT
 	make install prefix=$BR/usr/X11R6/ sysconfdir=$BR/etc/wine/
-	install -d $BR/etc/wine/
-	install -m 644 wine.ini $BR/etc/wine/wine.conf
 
-	# Put all our DLLs in a separate directory. (this works only if you have a buildroot)
-	install -d $BR/usr/X11R6/lib/wine
-	mv $BR/usr/X11R6/lib/lib* $BR/usr/X11R6/lib/wine/
-
-	# The Wine server is needed.
-	install -m 755 server/wineserver $BR/usr/X11R6/bin/
-
-
-There are now a lot of libraries generated by the build process, so a 
-separate library directory should be used.
-
-	install -d 755 $BR/usr/X11R6/lib/
-	mv $BR/
-        
 You will need to package the files:
 
-	$prefix/bin/wine, $prefix/lib/wine/*
-	$prefix/man/man1/wine.1, $prefix/include/wine/*,
-	$prefix/bin/wineserver
+	$prefix/bin/wine*
+	$prefix/lib/libwine*
+	$prefix/lib/wine/*,
+	$prefix/share/wine/wine.inf
+
+	$prefix/man/man1/wine.1
+	$prefix/include/wine/*
+	$prefix/bin/notepad
+	$prefix/bin/progman
+	$prefix/bin/regedit
+	$prefix/bin/rundll32
+	$prefix/bin/regsvr32
+	$prefix/bin/wcmd
+	$prefix/bin/widl
+	$prefix/bin/winhelp
 
 	%config /etc/wine/*
-	%doc ... choose from the toplevel directory and documentation/
-
-The post-install script:
-
-	if ! grep /usr/X11R6/lib/wine /etc/ld.so.conf &gt;/dev/null; then
-	    echo "/usr/X11R6/lib/wine" &gt;&gt; /etc/ld.so.conf
-	fi
-	/sbin/ldconfig
-
-The post-uninstall script:
-
-	if [ "$1" = 0 ]; then
-	    perl -ni -e 'print unless m:/usr/X11R6/lib/wine:;' /etc/ld.so.conf
-	fi
-	/sbin/ldconfig
+	%doc ... choose from the top level directory and documentation/
 
 2. Creating a good default configuration file. 
 
-For the rationales of needing as less input from the user as possible arises 
-the need for a very good configuration file. The one supplied with Wine is 
-currently lacking. We need:
+This is no longer necessary, most of this work is now done
+by wineprefixcreate itself
 
-    * [Drive X]: 
-	- A for the floppy. Specify your distribution's default floppy mountpoint.
-		Path=/auto/floppy
-	- C for the C:\ directory. Here we use the user's home directory, for most
-	  applications do see C:\ as root-writeable directory of every windows
-	  installation and this basically is it in the UNIX-user context.
-	  Don't forget to identify environment variables as DOS ones (ie, surrounded by '%').
-		Path=%HOME%
-	- R for the CD-Rom drive. Specify your distribution's default CD-ROM mountpoint.
-		Path=/auto/cdrom
-	- T for temporary storage. We do use /tmp/ (rationale: between process 
-	  temporary data belongs to /tmp/ , FHS 2.0)
-		Path=/tmp/
-	- W for the original Windows installation. This drive points to the
-	  WINDOWSDIR subdirectory of the original windows installation.
-	  This avoids problems with renamed WINDOWSDIR directories (as for 
-	  instance lose95, win or sys\win95). During compile/package/install
-	  we leave this to be / , it has to be configured after the package install.
-	- Z for the UNIX Root directory. This avoids any roblems with 
-	  "could not find drive for current directory" users occasionally complain
-	  about in the newsgroup and the irc channel. It also makes the whole 
-	  directory structure browseable. The type of Z should be network,
-	  so applications expect it to be readonly.
-		Path=/
-	  
-    * [wine]:
-	Windows=c:\windows\ 		(the windows/ subdirectory in the user's
-				 home directory)
-	System=c:\windows\system\	(the windows/system subdirectory in the user's
-  					 home directory)
-	Path=c:\windows;c:\windows\system;c:\windows\system32;w:\;w:\system;w:\system32;
-	; Using this trick we have in fact two windows installations in one, we
-	; get the stuff from the readonly installation and can write to our own.
-	Temp=t:\			(the TEMP directory)
-
-    * Possibly modify the [spooler], [serialports] and [parallelports] sections.
-      FIXME: possibly more, including printer stuff.
-
-Add this prepared configuration file to the package.
 
 3. Installing Wine for the system administrator
                 
 Install the package using the usual packager 'rpm -i wine.rpm'.
-You may edit /etc/wine/wine.conf , [Drive W], to point to a
-possible Windows installation right after the install. That's it.
 
-Note that on Linux you should somehow try to add the unhide mount optioni
+Adapting the $prefix/share/wine/wine.inf file used by wineprefixcreate is not
+necessary.
+
+Note that on Linux you should somehow try to add the unhide mount option
 (see 'man mount') to the CD-ROM entry in /etc/fstab during package install,
 as several stupid Windows programs mark some setup (!) files as hidden 
 (ISO9660) on CD-ROMs, which will greatly confuse users as they won't find 
@@ -564,24 +493,14 @@ Joliet, files not found).
               
 4. Installing Wine for the user
 
-The user will need to run a setup script before the first invocation of Wine. 
-This script should:
-    * Copy /etc/wine/wine.conf for user modification.
-    * Allow specification of the original windows installation to use
-      (which modifies the copied wine.conf file).
-    * Create the windows directory structure (c:\windows, c:\windows\system,
-      c:\windows\Start Menu\Programs, c:\Program Files, c:\Desktop, etc.)
-    * Symlink all .dll and .exe files from the original windows installation
-      to the windows directory. Why? Some programs reference 
-      "%windowsdir%/file.dll" or "%systemdir%/file.dll" directly and fail
-      if they are not present.  This will give a huge number of symlinks, yes.
-      However, if an installer later overwrites one of those files, it will 
-      overwrite the symlink (so that the file now lies in the windows/
-      subdirectory). FIXME: Not sure this is needed for all files.
-    * On later invocation the script might want to compare regular files in 
-      the user's windows directories and in the global windows directories
-      and replace same files by symlinks (to avoid diskspace problems).
-    
+The user will need to run a wineprefixcreate before the first invocation
+of Wine.
+
+A packager might provide a wrapper for wine to do that automatically,
+like if the WINEPREFIX directory (~/.wine) is not present.
+
+Thats it.
+
 AUTHORS
 ~~~~~~~
 
@@ -590,3 +509,4 @@ Updated in 2000 by Jeremy White <jwhite@codeweavers.com>
 Updated in 2002 by Andreas Mohr <andi@rhlx01.fht-esslingen.de>
 Updated in 2003 by Tom Wickline <twickline2@triad.rr.com>
 Updated in 2003 by Dimitrie O. Paun <dpaun@rogers.com>
+Updated in 2004 by Marcus Meissner <marcus@jet.franken.de>
