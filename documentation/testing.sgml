@@ -187,6 +187,14 @@ thread.c: 86 tests executed, 5 marked as todo, 0 failures.
       </sect2>
       <sect2>
         <title>With Visual C++</title>
+	<screen>
+	Visual Studio 6 users:
+	- MSVC headers may not work well, try with Wine headers
+	- Ensure that you have the "processor pack" from
+	  <ulink url="http://msdn.microsoft.com/vstudio/downloads/tools/ppack/default.aspx">http://msdn.microsoft.com/vstudio/downloads/tools/ppack/default.aspx</>
+	  as well as the latest service packs.  The processor pack fixes <emphasis>"error C2520: conversion from unsigned
+	   __int64 to double not implemented, use signed __int64"</>
+	</screen>
         <itemizedlist>
           <listitem><para>
             get the Wine sources
