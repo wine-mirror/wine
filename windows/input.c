@@ -972,7 +972,8 @@ static void CALLBACK TrackMouseEventProc(HWND hwndUnused, UINT uMsg, UINT_PTR id
             /* has the mouse hovered long enough? */
             if(TrackingList[i].iHoverTime <= TrackingList[i].tme.dwHoverTime)
              {
-                PostMessageA(TrackingList[i].tme.hwndTrack, WM_MOUSEHOVER, 0, 0);
+                PostMessageW(TrackingList[i].tme.hwndTrack, WM_MOUSEHOVER,
+                             get_key_state(), MAKELPARAM( pos.x, pos.y ));
 
                 /* stop tracking mouse hover */
                 TrackingList[i].tme.dwFlags ^= TME_HOVER;
