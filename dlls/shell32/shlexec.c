@@ -746,6 +746,7 @@ static unsigned dde_connect(WCHAR* key, WCHAR* start, WCHAR* ddeexec,
     DWORD       tid;
     HSZ         hszApp, hszTopic;
     HCONV       hConv;
+    HDDEDATA    hDdeData;
     unsigned    ret = 31;
 
     strcpyW(endkey, wApplication);
@@ -803,8 +804,17 @@ static unsigned dde_connect(WCHAR* key, WCHAR* start, WCHAR* ddeexec,
     SHELL_ArgifyW(res, sizeof(res)/sizeof(WCHAR), exec, lpFile, pidl, szCommandline);
     TRACE("%s %s => %s\n", debugstr_w(exec), debugstr_w(lpFile), debugstr_w(res));
 
-    ret = (DdeClientTransaction((LPBYTE)res, (strlenW(res) + 1) * sizeof(WCHAR), hConv, 0L, 0,
-                                XTYP_EXECUTE, 10000, &tid) == 0) ? 31 : 33;
+    /* It's documented in the KB 330337 that IE has a bug and returns
+     * error DMLERR_NOTPROCESSED on XTYP_EXECUTE request.
+     */
+    hDdeData = DdeClientTransaction((LPBYTE)res, (strlenW(res) + 1) * sizeof(WCHAR), hConv, 0L, 0,
+                                     XTYP_EXECUTE, 10000, &tid);
+    if (hDdeData)
+        DdeFreeDataHandle(hDdeData);
+    else
+        WARN("DdeClientTransaction failed with error %04x\n", DdeGetLastError(ddeInst));
+    ret = 33;
+
     DdeDisconnect(hConv);
 
  error:
