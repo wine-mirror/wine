@@ -43,15 +43,17 @@ static void PSDRV_AFMGetCharMetrics(AFM *afm, FILE *fp)
                                        afm->NumofMetrics * sizeof(AFMMETRICS) );
     for(i = 0; i < afm->NumofMetrics; i++, metric++) {
 
-        if(!fgets(line, sizeof(line), fp)) {
-	   ERR("Unexpected EOF\n");
-	   return;
-	}
-	cp = line + strlen(line);
 	do {
-	    *cp = '\0';
-	    cp--;
-	} while(cp >= line && isspace(*cp));
+            if(!fgets(line, sizeof(line), fp)) {
+		ERR("Unexpected EOF\n");
+		return;
+	    }
+	    cp = line + strlen(line);
+	    do {
+		*cp = '\0';
+		cp--;
+	    } while(cp >= line && isspace(*cp));
+	} while (!(*line));
 
 	curpos = line;
 	while(*curpos) {
@@ -103,11 +105,9 @@ static void PSDRV_AFMGetCharMetrics(AFM *afm, FILE *fp)
 	    curpos = endpos + 1;
 	}
 
-#if 0	
 	TRACE("Metrics for '%s' WX = %f B = %f,%f - %f,%f\n",
 	      metric->N, metric->WX, metric->B.llx, metric->B.lly,
 	      metric->B.urx, metric->B.ury);
-#endif
     }
 
     return;
