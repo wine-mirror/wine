@@ -201,7 +201,7 @@ typedef struct
 typedef struct
 {
   LPLOGFONTW		lpLogFontParam;
-  FONTENUMPROCW	lpEnumFunc;
+  FONTENUMPROCEXW	lpEnumFunc;
   LPARAM		lpData;
 
   LPNEWTEXTMETRICEXW  lpTextMetric;

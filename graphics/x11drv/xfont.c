@@ -1109,6 +1109,12 @@ static UINT XFONT_GetFontMetric( const fontInfo* pfi, const LPENUMLOGFONTEX16 pL
     lstrcpynA( plf->lfFaceName, pfi->df.dfFace, LF_FACESIZE );
 #undef plf
 
+    /* FIXME: fill in rest of plF values
+    lstrcpynA(plF->elfFullName, , LF_FULLFACESIZE);
+    lstrcpynA(plF->elfStyle, , LF_FACESIZE);
+    lstrcpynA(plF->elfScript, , LF_FACESIZE);
+    */
+
     pTM->tmAscent = pfi->df.dfAscent;
     pTM->tmDescent = pTM->tmHeight - pTM->tmAscent;
     pTM->tmInternalLeading = pfi->df.dfInternalLeading;
@@ -2996,7 +3002,7 @@ BOOL	X11DRV_EnumDeviceFonts( DC* dc, LPLOGFONT16 plf,
 		   release the crit section, font list will
 		   have to be retraversed on return */
 
-		if( (b = (*proc)( (LPENUMLOGFONT16)&lf, &tm, 
+		if( (b = (*proc)( &lf, &tm, 
 			XFONT_GetFontMetric( pfi, &lf, &tm ), lp )) )
 		     bRet = b;
 		else break;
@@ -3008,7 +3014,7 @@ BOOL	X11DRV_EnumDeviceFonts( DC* dc, LPLOGFONT16 plf,
 	{
             if(pfr->fi)
             {
-		if( (b = (*proc)( (LPENUMLOGFONT16)&lf, &tm, 
+		if( (b = (*proc)( &lf, &tm, 
 			XFONT_GetFontMetric( pfr->fi, &lf, &tm ), lp )) )
 		     bRet = b;
 		else break;

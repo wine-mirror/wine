@@ -165,7 +165,7 @@ typedef struct tagDC
 
 /* Device functions for the Wine driver interface */
 
-typedef INT (*DEVICEFONTENUMPROC)(LPENUMLOGFONT16,LPNEWTEXTMETRIC16,UINT16,LPARAM);
+typedef INT (*DEVICEFONTENUMPROC)(LPENUMLOGFONTEX16,LPNEWTEXTMETRIC16,UINT16,LPARAM);
 
 typedef struct tagDC_FUNCS
 {

@@ -36,7 +36,7 @@ typedef struct
 typedef struct
 {
   LPLOGFONTW          lpLogFontParam;
-  FONTENUMPROCW       lpEnumFunc;
+  FONTENUMPROCEXW     lpEnumFunc;
   LPARAM                lpData;
 
   LPNEWTEXTMETRICEXW  lpTextMetric;
@@ -130,6 +130,22 @@ void FONT_LogFont16To32W( const LPLOGFONT16 font16, LPLOGFONTW font32 )
 {
   __logfont16to32( (INT*)font32, (const INT16*)font16 );
     lstrcpynAtoW( font32->lfFaceName, font16->lfFaceName, LF_FACESIZE );
+}
+
+void FONT_EnumLogFontEx16To32A( const LPENUMLOGFONTEX16 font16, LPENUMLOGFONTEXA font32 )
+{
+    FONT_LogFont16To32A( (LPLOGFONT16)font16, (LPLOGFONTA)font32);
+    lstrcpynA( font32->elfFullName, font16->elfFullName, LF_FULLFACESIZE );
+    lstrcpynA( font32->elfStyle, font16->elfStyle, LF_FACESIZE );
+    lstrcpynA( font32->elfScript, font16->elfScript, LF_FACESIZE );
+}
+
+void FONT_EnumLogFontEx16To32W( const LPENUMLOGFONTEX16 font16, LPENUMLOGFONTEXW font32 )
+{
+    FONT_LogFont16To32W( (LPLOGFONT16)font16, (LPLOGFONTW)font32);
+    lstrcpynAtoW( font32->elfFullName, font16->elfFullName, LF_FULLFACESIZE );
+    lstrcpynAtoW( font32->elfStyle, font16->elfStyle, LF_FACESIZE );
+    lstrcpynAtoW( font32->elfScript, font16->elfScript, LF_FACESIZE );
 }
 
 /***********************************************************************
@@ -429,7 +445,7 @@ INT FONT_GetObjectW( FONTOBJ *font, INT count, LPSTR buffer )
  * Called by the device driver layer to pass font info
  * down to the application.
  */
-static INT FONT_EnumInstance16( LPENUMLOGFONT16 plf, 
+static INT FONT_EnumInstance16( LPENUMLOGFONTEX16 plf, 
 				  LPNEWTEXTMETRIC16 ptm, UINT16 fType, LPARAM lp )
 {
 #define pfe ((fontEnum16*)lp)
@@ -448,7 +464,7 @@ static INT FONT_EnumInstance16( LPENUMLOGFONT16 plf,
 /***********************************************************************
  *              FONT_EnumInstance
  */
-static INT FONT_EnumInstance( LPENUMLOGFONT16 plf,
+static INT FONT_EnumInstance( LPENUMLOGFONTEX16 plf,
 				  LPNEWTEXTMETRIC16 ptm, UINT16 fType, LPARAM lp )
 {
     /* lfCharSet is at the same offset in both LOGFONT32A and LOGFONT32W */
@@ -461,17 +477,21 @@ static INT FONT_EnumInstance( LPENUMLOGFONT16 plf,
 
 	if( pfe->dwFlags & ENUM_UNICODE )
 	{
-	    FONT_LogFont16To32W( &plf->elfLogFont, (LPLOGFONTW)(pfe->lpLogFont) );
+	    FONT_EnumLogFontEx16To32W( plf, pfe->lpLogFont );
 	    FONT_TextMetric16to32W( (LPTEXTMETRIC16)ptm, (LPTEXTMETRICW)(pfe->lpTextMetric) );
+        
+	    return pfe->lpEnumFunc( pfe->lpLogFont, pfe->lpTextMetric, fType, pfe->lpData );
 	}
 	else
 	{
-	    FONT_LogFont16To32A( &plf->elfLogFont, (LPLOGFONTA)pfe->lpLogFont );
-	    FONT_TextMetric16to32A( (LPTEXTMETRIC16)ptm, (LPTEXTMETRICA)pfe->lpTextMetric );
-	}
+	    ENUMLOGFONTEXA logfont;
 
-        return pfe->lpEnumFunc( (LPENUMLOGFONTW)pfe->lpLogFont, 
-				(LPNEWTEXTMETRICW)pfe->lpTextMetric, fType, pfe->lpData );
+	    FONT_EnumLogFontEx16To32A( plf, &logfont);
+	    FONT_TextMetric16to32A( (LPTEXTMETRIC16)ptm, (LPTEXTMETRICA)pfe->lpTextMetric );
+
+	    return pfe->lpEnumFunc( (LPENUMLOGFONTEXW)&logfont, 
+				pfe->lpTextMetric, fType, pfe->lpData );
+	}
     }
 #undef pfe
     return 1;
@@ -519,7 +539,7 @@ INT16 WINAPI EnumFontFamiliesEx16( HDC16 hDC, LPLOGFONT16 plf,
 /***********************************************************************
  *		FONT_EnumFontFamiliesEx
  */
-static INT FONT_EnumFontFamiliesEx( HDC hDC, LPLOGFONTW plf, FONTENUMPROCW efproc, 
+static INT FONT_EnumFontFamiliesEx( HDC hDC, LPLOGFONTW plf, FONTENUMPROCEXW efproc, 
 					           LPARAM lParam, DWORD dwUnicode)
 {
     DC*		dc = (DC*) GDI_GetObjPtr( hDC, DC_MAGIC );
@@ -563,8 +583,7 @@ INT WINAPI EnumFontFamiliesExW( HDC hDC, LPLOGFONTW plf,
                                     FONTENUMPROCEXW efproc, 
                                     LPARAM lParam, DWORD dwFlags )
 {
-    return  FONT_EnumFontFamiliesEx( hDC, plf, (FONTENUMPROCW)efproc, 
-						  lParam, ENUM_UNICODE );
+    return  FONT_EnumFontFamiliesEx( hDC, plf, efproc, lParam, ENUM_UNICODE );
 }
 
 /***********************************************************************
@@ -575,7 +594,7 @@ INT WINAPI EnumFontFamiliesExA( HDC hDC, LPLOGFONTA plf,
                                     LPARAM lParam, DWORD dwFlags)
 {
     return  FONT_EnumFontFamiliesEx( hDC, (LPLOGFONTW)plf, 
-				      (FONTENUMPROCW)efproc, lParam, 0);
+				      (FONTENUMPROCEXW)efproc, lParam, 0);
 }
 
 /***********************************************************************
@@ -606,7 +625,7 @@ INT WINAPI EnumFontFamiliesA( HDC hDC, LPCSTR lpFamily,
     else lf.lfFaceName[0] = lf.lfFaceName[1] = '\0';
 
     return FONT_EnumFontFamiliesEx( hDC, (LPLOGFONTW)&lf, 
-					   (FONTENUMPROCW)efproc, lpData, 0 );
+					   (FONTENUMPROCEXW)efproc, lpData, 0 );
 }
 
 /***********************************************************************
@@ -621,7 +640,8 @@ INT WINAPI EnumFontFamiliesW( HDC hDC, LPCWSTR lpFamily,
     if( lpFamily ) lstrcpynW( lf.lfFaceName, lpFamily, LF_FACESIZE );
     else lf.lfFaceName[0] = 0;
 
-    return FONT_EnumFontFamiliesEx( hDC, &lf, efproc, lpData, ENUM_UNICODE );
+    return FONT_EnumFontFamiliesEx( hDC, &lf, (FONTENUMPROCEXW)efproc, 
+	    					lpData, ENUM_UNICODE );
 }
 
 /***********************************************************************
