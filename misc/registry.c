@@ -947,6 +947,14 @@ static void _find_or_add_value( LPKEYSTRUCT lpkey, LPWSTR name, DWORD type,
 	if (val->lastmodified<lastmodified) {
 		val->lastmodified=lastmodified;
 		val->type = type;
+
+                if ((type == REG_SZ || type == REG_EXPAND_SZ) && !data){
+
+                    data=xmalloc(sizeof(WCHAR));
+                    memset(data,0,sizeof(WCHAR));
+                    len =sizeof(WCHAR);
+                }
+
 		val->len  = len;
 		if (val->data) 
 			free(val->data);
@@ -2504,9 +2512,6 @@ DWORD WINAPI RegQueryValueExW( HKEY hkey, LPWSTR lpValueName,
 	if ((lpbData && ! lpcbData) || lpdwReserved)
 	  return ERROR_INVALID_PARAMETER;
 
-        if (lpbData && lpcbData)
-            memset(lpbData,0,*lpcbData);
-
 	/* An empty name string is equivalent to NULL */
 	if (lpValueName && !*lpValueName)
 	  lpValueName = NULL;
@@ -2576,9 +2581,6 @@ DWORD WINAPI RegQueryValueW( HKEY hkey, LPCWSTR lpszSubKey, LPWSTR lpszData,
     TRACE(reg,"(%x,%s,%p,%ld)\n",hkey,debugstr_w(lpszSubKey),lpszData,
           lpcbData?*lpcbData:0);
 
-    if (lpszData && lpcbData)
-        memset(lpszData,0,*lpcbData);
-
     /* Only open subkey, if we really do descend */
     if (lpszSubKey && *lpszSubKey) {
         ret = RegOpenKeyW( hkey, lpszSubKey, &xhkey );
@@ -2620,9 +2622,6 @@ DWORD WINAPI RegQueryValueExA( HKEY hkey, LPSTR lpszValueName,
 	if (!lpcbData && lpbData)			/* buffer without size is illegal */
 	{  return ERROR_INVALID_PARAMETER;
 	}
-
-        if (lpbData && lpcbData)
-            memset(lpbData,0,*lpcbData);
 
 	lpszValueNameW = lpszValueName ? strdupA2W(lpszValueName) : NULL;	
 	
@@ -2694,9 +2693,6 @@ DWORD WINAPI RegQueryValueA( HKEY hkey, LPCSTR lpszSubKey, LPSTR lpszData,
     TRACE(reg,"(%x,%s,%p,%ld)\n",hkey,debugstr_a(lpszSubKey),lpszData,
           lpcbData?*lpcbData:0);
 
-    if (lpszData && lpcbData)
-        memset(lpszData,0,*lpcbData);
-    
     if (lpszSubKey && *lpszSubKey) {
         ret = RegOpenKey16( hkey, lpszSubKey, &xhkey );
         if( ret != ERROR_SUCCESS )
