@@ -107,7 +107,7 @@ static void test_RtlInitUnicodeString(void)
 	pRtlInitUnicodeString(&uni, teststring);
 	ok(uni.Length == sizeof(teststring) - sizeof(WCHAR), "Length uninitialized");
 	ok(uni.MaximumLength == sizeof(teststring), "MaximumLength uninitialized");
-	ok(wcscmp(uni.Buffer, originalstring) == 0, "Buffer written to");
+	ok(lstrcmpW(uni.Buffer, originalstring) == 0, "Buffer written to");
 }
 
 static void test_RtlCopyString(void)
