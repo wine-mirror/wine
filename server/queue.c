@@ -204,6 +204,22 @@ static struct thread_input *create_thread_input(void)
     return input;
 }
 
+/* release the thread input data of a given thread */
+static void release_thread_input( struct thread *thread )
+{
+    struct thread_input *input = thread->queue->input;
+
+    if (!input) return;
+    if (input->msg_thread == thread)
+    {
+        release_object( input->msg_thread );
+        input->msg_thread = NULL;
+        input->msg = NULL;
+    }
+    release_object( input );
+    thread->queue->input = NULL;
+}
+
 /* create a message queue object */
 static struct msg_queue *create_msg_queue( struct thread *thread, struct thread_input *input )
 {
@@ -257,6 +273,7 @@ void free_msg_queue( struct thread *thread )
             process->idle_event = NULL;
         }
     }
+    release_thread_input( thread );
     release_object( thread->queue );
     thread->queue = NULL;
 }
@@ -807,7 +824,7 @@ int attach_thread_input( struct thread *thread_from, struct thread *thread_to )
 
     if (thread_from->queue)
     {
-        release_object( thread_from->queue->input );
+        release_thread_input( thread_from );
         thread_from->queue->input = input;
     }
     else
@@ -831,7 +848,7 @@ static void detach_thread_input( struct thread *thread_from, struct thread *thre
     }
     if ((input = create_thread_input()))
     {
-        release_object( thread_from->queue->input );
+        release_thread_input( thread_from );
         thread_from->queue->input = input;
     }
 }
