@@ -848,9 +848,10 @@ typedef struct tagITypeLibImpl
 				   libary. Only used while read MSFT
 				   typelibs */
 
-    /* typelibs are cached, keyed by path, so store the linked list info within them */
+    /* typelibs are cached, keyed by path and index, so store the linked list info within them */
     struct tagITypeLibImpl *next, *prev;
     WCHAR *path;
+    INT index;
 } ITypeLibImpl;
 
 static struct ITypeLib2Vtbl tlbvt;
@@ -2169,7 +2170,7 @@ int TLB_ReadTypeLib(LPCWSTR pszFileName, INT index, ITypeLib2 **ppTypeLib)
     EnterCriticalSection(&cache_section);
     for (entry = tlb_cache_first; entry != NULL; entry = entry->next)
     {
-        if (!strcmpiW(entry->path, pszFileName))
+        if (!strcmpiW(entry->path, pszFileName) && entry->index == index)
         {
             TRACE("cache hit\n");
             *ppTypeLib = (ITypeLib2*)entry;
@@ -2263,6 +2264,7 @@ int TLB_ReadTypeLib(LPCWSTR pszFileName, INT index, ITypeLib2 **ppTypeLib)
 	impl->path = HeapAlloc(GetProcessHeap(), 0, (strlenW(pszFileName)+1) * sizeof(WCHAR));
 	lstrcpyW(impl->path, pszFileName);
 	/* We should really canonicalise the path here. */
+        impl->index = index;
 
         /* FIXME: check if it has added already in the meantime */
         EnterCriticalSection(&cache_section);
