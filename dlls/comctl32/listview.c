@@ -6400,7 +6400,7 @@ static DWORD LISTVIEW_SetIconSpacing(LISTVIEW_INFO *infoPtr, DWORD spacing)
     return oldspacing;
 }
 
-inline void update_icon_size(HIMAGELIST himl, BOOL small, SIZE *size)
+inline void set_icon_size(SIZE *size, HIMAGELIST himl, BOOL small)
 {
     INT cx, cy;
     
@@ -6440,20 +6440,20 @@ static HIMAGELIST LISTVIEW_SetImageList(LISTVIEW_INFO *infoPtr, INT nType, HIMAG
     case LVSIL_NORMAL:
         himlOld = infoPtr->himlNormal;
         infoPtr->himlNormal = himl;
-        if (uView == LVS_ICON) update_icon_size(himl, FALSE, &infoPtr->iconSize);
+        if (uView == LVS_ICON) set_icon_size(&infoPtr->iconSize, himl, FALSE);
         LISTVIEW_SetIconSpacing(infoPtr, 0);
     break;
 
     case LVSIL_SMALL:
         himlOld = infoPtr->himlSmall;
         infoPtr->himlSmall = himl;
-         if (uView != LVS_ICON) update_icon_size(himl, TRUE, &infoPtr->iconSize);
+         if (uView != LVS_ICON) set_icon_size(&infoPtr->iconSize, himl, TRUE);
     break;
 
     case LVSIL_STATE:
         himlOld = infoPtr->himlState;
         infoPtr->himlState = himl;
-        update_icon_size(himl, TRUE, &infoPtr->iconStateSize);
+        set_icon_size(&infoPtr->iconStateSize, himl, TRUE);
         ImageList_SetBkColor(infoPtr->himlState, CLR_NONE);
     break;
 
@@ -6892,6 +6892,7 @@ static LRESULT LISTVIEW_Create(HWND hwnd, LPCREATESTRUCTW lpcs)
   infoPtr->iconSpacing.cx = GetSystemMetrics(SM_CXICONSPACING);
   infoPtr->iconSpacing.cy = GetSystemMetrics(SM_CYICONSPACING);
   infoPtr->nEditLabelItem = -1;
+  infoPtr->dwHoverTime = -1; /* default system hover time */
 
   /* get default font (icon title) */
   SystemParametersInfoW(SPI_GETICONTITLELOGFONT, 0, &logFont, 0);
@@ -6914,14 +6915,21 @@ static LRESULT LISTVIEW_Create(HWND hwnd, LPCREATESTRUCTW lpcs)
   /* allocate memory for the selection ranges */
   if (!(infoPtr->selectionRanges = ranges_create(10))) return -1;
 
+  /* allocate memory for the data structure */
+  /* FIXME: what if we fail? */
+  infoPtr->hdpaItems = DPA_Create(10);
+  infoPtr->hdpaPosX  = DPA_Create(10);
+  infoPtr->hdpaPosY  = DPA_Create(10);
   infoPtr->hdpaColumns = DPA_Create(10);
 
-  if (uView == LVS_ICON)
-  {
-    infoPtr->iconSize.cx = GetSystemMetrics(SM_CXICON);
-    infoPtr->iconSize.cy = GetSystemMetrics(SM_CYICON);
-  }
-  else if (uView == LVS_REPORT)
+  /* initialize the icon sizes */
+  set_icon_size(&infoPtr->iconSize, infoPtr->himlNormal, uView != LVS_ICON);
+  set_icon_size(&infoPtr->iconStateSize, infoPtr->himlState, TRUE);
+
+  /* init item size to avoid division by 0 */
+  LISTVIEW_UpdateItemSize (infoPtr);
+  
+  if (uView == LVS_REPORT)
   {
     if (!(LVS_NOCOLUMNHEADER & lpcs->style))
     {
@@ -6933,27 +6941,7 @@ static LRESULT LISTVIEW_Create(HWND hwnd, LPCREATESTRUCTW lpcs)
       SetWindowLongW(infoPtr->hwndHeader, GWL_STYLE,
                     GetWindowLongW(infoPtr->hwndHeader, GWL_STYLE) | HDS_HIDDEN);
     }
-
-
-    infoPtr->iconSize.cx = GetSystemMetrics(SM_CXSMICON);
-    infoPtr->iconSize.cy = GetSystemMetrics(SM_CYSMICON);
   }
-  else
-  {
-    infoPtr->iconSize.cx = GetSystemMetrics(SM_CXSMICON);
-    infoPtr->iconSize.cy = GetSystemMetrics(SM_CYSMICON);
-  }
-
-  infoPtr->iconStateSize.cx = GetSystemMetrics(SM_CXSMICON);
-  infoPtr->iconStateSize.cy = GetSystemMetrics(SM_CYSMICON);
-
-  /* allocate memory for the data structure */
-  infoPtr->hdpaItems = DPA_Create(10);
-  infoPtr->hdpaPosX  = DPA_Create(10);
-  infoPtr->hdpaPosY  = DPA_Create(10);
-
-  /* initialize the hover time to -1(indicating the default system hover time) */
-  infoPtr->dwHoverTime = -1;
 
   return 0;
 }
@@ -8102,7 +8090,7 @@ static INT LISTVIEW_StyleChanged(LISTVIEW_INFO *infoPtr, WPARAM wStyleType,
         SetRectEmpty(&infoPtr->rcFocus);
 
         himl = (uNewView == LVS_ICON ? infoPtr->himlNormal : infoPtr->himlSmall);
-        update_icon_size(himl, uNewView != LVS_ICON, &infoPtr->iconSize);
+        set_icon_size(&infoPtr->iconSize, himl, uNewView != LVS_ICON);
     
         if (uNewView == LVS_ICON)
         {
