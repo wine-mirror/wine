@@ -8,13 +8,10 @@ MODULE    = if1632
 C_SRCS = \
 	builtin.c \
 	relay.c \
-	snoop.c \
-	thunk.c
+	snoop.c
 
 GEN_ASM_SRCS = \
 	relay16.s
-
-GLUE = thunk.c
 
 all: $(MODULE).o
 
