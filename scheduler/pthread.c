@@ -38,13 +38,18 @@
 
 /* adapt as necessary (a construct like this is used in glibc sources) */
 #define strong_alias(orig, alias) \
- asm(".globl " PSTR(alias) "\n\t.set " PSTR(alias) "," PSTR(orig))
+ asm(".globl " PSTR(alias) "\n" \
+     "\t.set " PSTR(alias) "," PSTR(orig))
 
 /* strong_alias does not work on external symbols (.o format limitation?),
  * so for those, we need to use the pogo stick */
-#ifdef __i386__
+#if defined(__i386__) && !defined(__PIC__)
+/* FIXME: PIC */
 #define jump_alias(orig, alias) \
- asm(".globl " PSTR(alias) "\n\t" PSTR(alias) ":\n\tjmp " PSTR(orig))
+ asm(".globl " PSTR(alias) "\n" \
+     "\t.type " PSTR(alias) ",@function\n" \
+     PSTR(alias) ":\n" \
+     "\tjmp " PSTR(orig))
 #endif
 
 /* get necessary libc symbols */
