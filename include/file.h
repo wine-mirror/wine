@@ -118,10 +118,4 @@ extern int PROFILE_GetWineIniBool( LPCWSTR section, LPCWSTR key_name, int def );
 /* win32/device.c */
 extern HANDLE DEVICE_Open( LPCWSTR filename, DWORD access, LPSECURITY_ATTRIBUTES sa );
 
-/* ntdll/cdrom.c.c */
-extern NTSTATUS CDROM_DeviceIoControl(DWORD clientID, HANDLE hDevice, DWORD dwIoControlCode,
-                                      LPVOID lpInBuffer, DWORD nInBufferSize,
-                                      LPVOID lpOutBuffer, DWORD nOutBufferSize,
-                                      LPDWORD lpBytesReturned, LPOVERLAPPED lpOverlapped);
-
 #endif  /* __WINE_FILE_H */

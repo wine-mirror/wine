@@ -433,63 +433,33 @@ BOOL WINAPI DeviceIoControl(HANDLE hDevice, DWORD dwIoControlCode,
 		}
 	}
 	else
-	{
-                char str[3];
+	{       
+            NTSTATUS            status;
 
-                strcpy(str,  "A:");
-                str[0] += LOBYTE(clientID);
-                if (GetDriveTypeA(str) == DRIVE_CDROM)
-                {
-                    NTSTATUS status;
-                    status = CDROM_DeviceIoControl(clientID, hDevice, dwIoControlCode, lpvInBuffer, cbInBuffer,
-                                                   lpvOutBuffer, cbOutBuffer, lpcbBytesReturned,
-                                                   lpOverlapped);
-                    if (status) SetLastError(RtlNtStatusToDosError(status));
-                    return !status;
-                }
-                else switch( dwIoControlCode )
-		{
-		case FSCTL_DELETE_REPARSE_POINT:
-		case FSCTL_DISMOUNT_VOLUME:
-		case FSCTL_GET_COMPRESSION:
-		case FSCTL_GET_REPARSE_POINT:
-		case FSCTL_LOCK_VOLUME:
-		case FSCTL_QUERY_ALLOCATED_RANGES:
-		case FSCTL_SET_COMPRESSION:
-		case FSCTL_SET_REPARSE_POINT:
-		case FSCTL_SET_SPARSE:
-		case FSCTL_SET_ZERO_DATA:
-		case FSCTL_UNLOCK_VOLUME:
-		case IOCTL_DISK_CHECK_VERIFY:
-		case IOCTL_DISK_EJECT_MEDIA:
-		case IOCTL_DISK_FORMAT_TRACKS:
-		case IOCTL_DISK_GET_DRIVE_GEOMETRY:
-		case IOCTL_DISK_GET_DRIVE_LAYOUT:
-		case IOCTL_DISK_GET_MEDIA_TYPES:
-		case IOCTL_DISK_GET_PARTITION_INFO:
-		case IOCTL_DISK_LOAD_MEDIA:
-		case IOCTL_DISK_MEDIA_REMOVAL:
-		case IOCTL_DISK_PERFORMANCE:
-		case IOCTL_DISK_REASSIGN_BLOCKS:
-		case IOCTL_DISK_SET_DRIVE_LAYOUT:
-		case IOCTL_DISK_SET_PARTITION_INFO:
-		case IOCTL_DISK_VERIFY:
-		case IOCTL_SERIAL_LSRMST_INSERT:
-		case IOCTL_STORAGE_CHECK_VERIFY:
-		case IOCTL_STORAGE_EJECT_MEDIA:
-		case IOCTL_STORAGE_GET_MEDIA_TYPES:
-		case IOCTL_STORAGE_LOAD_MEDIA:
-		case IOCTL_STORAGE_MEDIA_REMOVAL:
-    			FIXME( "unimplemented dwIoControlCode=%08lx\n", dwIoControlCode);
-    			SetLastError( ERROR_CALL_NOT_IMPLEMENTED );
-    			return FALSE;
-    			break;
-		default:
-    			FIXME( "ignored dwIoControlCode=%08lx\n",dwIoControlCode);
-    			SetLastError( ERROR_CALL_NOT_IMPLEMENTED );
-    			return FALSE;
-    			break;
-		}
+            if (lpOverlapped)
+            {
+                status = NtDeviceIoControlFile(hDevice, lpOverlapped->hEvent, 
+                                               NULL, NULL, 
+                                               (PIO_STATUS_BLOCK)lpOverlapped,
+                                               dwIoControlCode, 
+                                               lpvInBuffer, cbInBuffer,
+                                               lpvOutBuffer, cbOutBuffer);
+                if (status) SetLastError(RtlNtStatusToDosError(status));
+                if (lpcbBytesReturned) *lpcbBytesReturned = lpOverlapped->InternalHigh;
+                return !status;
+            }
+            else
+            {
+                IO_STATUS_BLOCK     iosb;
+
+                status = NtDeviceIoControlFile(hDevice, NULL, NULL, NULL, &iosb,
+                                               dwIoControlCode, 
+                                               lpvInBuffer, cbInBuffer,
+                                               lpvOutBuffer, cbOutBuffer);
+                if (status) SetLastError(RtlNtStatusToDosError(status));
+                if (lpcbBytesReturned) *lpcbBytesReturned = iosb.Information;
+                return !status;
+            }
 	}
    	return FALSE;
 }

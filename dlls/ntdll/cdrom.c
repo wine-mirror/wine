@@ -615,12 +615,14 @@ static NTSTATUS CDROM_GetStatusCode(int io)
 #ifdef ENOMEDIUM
     case ENOMEDIUM:
 #endif
-	    return STATUS_NO_MEDIA_IN_DEVICE;
+        return STATUS_NO_MEDIA_IN_DEVICE;
     case EPERM:
-	    return STATUS_ACCESS_DENIED;
+        return STATUS_ACCESS_DENIED;
     case EINVAL:
-	    return STATUS_INVALID_PARAMETER;
+        return STATUS_INVALID_PARAMETER;
     /* case EBADF: Bad file descriptor */
+    case EOPNOTSUPP:
+        return STATUS_NOT_SUPPORTED;
     }
     FIXME("Unmapped error code %d: %s\n", errno, strerror(errno));
     return STATUS_IO_DEVICE_ERROR;
@@ -1684,20 +1686,23 @@ static NTSTATUS CDROM_GetAddress(int dev, SCSI_ADDRESS* address)
  *
  *
  */
-NTSTATUS CDROM_DeviceIoControl(DWORD clientID, HANDLE hDevice, DWORD dwIoControlCode,
+NTSTATUS CDROM_DeviceIoControl(DWORD clientID, HANDLE hDevice, 
+                               HANDLE hEvent, PIO_APC_ROUTINE UserApcRoutine,
+                               PVOID UserApcContext, 
+                               PIO_STATUS_BLOCK piosb, 
+                               ULONG dwIoControlCode,
                                LPVOID lpInBuffer, DWORD nInBufferSize,
-                               LPVOID lpOutBuffer, DWORD nOutBufferSize,
-                               LPDWORD lpBytesReturned, LPOVERLAPPED lpOverlapped)
+                               LPVOID lpOutBuffer, DWORD nOutBufferSize)
 {
     DWORD       sz;
     NTSTATUS    status = STATUS_SUCCESS;
     int         dev;
 
-    TRACE("%lx[%c] %s %lx %ld %lx %ld %lx %lx\n",
+    TRACE("%lx[%c] %s %lx %ld %lx %ld %p\n",
           (DWORD)hDevice, 'A' + LOWORD(clientID), iocodex(dwIoControlCode), (DWORD)lpInBuffer, nInBufferSize,
-          (DWORD)lpOutBuffer, nOutBufferSize, (DWORD)lpBytesReturned, (DWORD)lpOverlapped);
+          (DWORD)lpOutBuffer, nOutBufferSize, piosb);
 
-    if (lpBytesReturned) *lpBytesReturned = 0;
+    piosb->Information = 0;
 
     if ((status = CDROM_Open(hDevice, clientID, &dev))) goto error;
 
@@ -1889,13 +1894,10 @@ NTSTATUS CDROM_DeviceIoControl(DWORD clientID, HANDLE hDevice, DWORD dwIoControl
         break;
     }
  error:
-    if (lpOverlapped)
-    {
-        lpOverlapped->Internal = status;
-        lpOverlapped->InternalHigh = sz;
-        NtSetEvent(lpOverlapped->hEvent, NULL);
-    }
-    if (lpBytesReturned) *lpBytesReturned = sz;
+    piosb->u.Status = status;
+    piosb->Information = sz;
+    if (hEvent) NtSetEvent(hEvent, NULL);
+
     CDROM_Close(clientID);
     return status;
 }

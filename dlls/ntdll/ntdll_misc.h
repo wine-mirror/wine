@@ -49,4 +49,15 @@ static inline RTL_USER_PROCESS_PARAMETERS* ntdll_get_process_pmts(void)
 {
     return NtCurrentTeb()->Peb->ProcessParameters;
 }
+
+/* Device IO */
+/* ntdll/cdrom.c.c */
+extern NTSTATUS CDROM_DeviceIoControl(DWORD clientID, HANDLE hDevice, 
+                                      HANDLE hEvent, PIO_APC_ROUTINE UserApcRoutine,
+                                      PVOID UserApcContext, 
+                                      PIO_STATUS_BLOCK piosb, 
+                                      ULONG IoControlCode,
+                                      LPVOID lpInBuffer, DWORD nInBufferSize,
+                                      LPVOID lpOutBuffer, DWORD nOutBufferSize);
+
 #endif

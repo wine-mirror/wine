@@ -285,22 +285,51 @@ NTSTATUS WINAPI NtWriteFile (
  *		NtDeviceIoControlFile			[NTDLL.@]
  *		ZwDeviceIoControlFile			[NTDLL.@]
  */
-NTSTATUS WINAPI NtDeviceIoControlFile(
-	IN HANDLE DeviceHandle,
-	IN HANDLE Event OPTIONAL,
-	IN PIO_APC_ROUTINE UserApcRoutine OPTIONAL,
-	IN PVOID UserApcContext OPTIONAL,
-	OUT PIO_STATUS_BLOCK IoStatusBlock,
-	IN ULONG IoControlCode,
-	IN PVOID InputBuffer,
-	IN ULONG InputBufferSize,
-	OUT PVOID OutputBuffer,
-	IN ULONG OutputBufferSize)
+NTSTATUS WINAPI NtDeviceIoControlFile(HANDLE DeviceHandle, HANDLE hEvent,
+                                      PIO_APC_ROUTINE UserApcRoutine, 
+                                      PVOID UserApcContext,
+                                      PIO_STATUS_BLOCK IoStatusBlock,
+                                      ULONG IoControlCode,
+                                      PVOID InputBuffer,
+                                      ULONG InputBufferSize,
+                                      PVOID OutputBuffer,
+                                      ULONG OutputBufferSize)
 {
-	FIXME("(%p,%p,%p,%p,%p,0x%08lx,%p,0x%08lx,%p,0x%08lx): empty stub\n",
-	DeviceHandle, Event, UserApcRoutine, UserApcContext,
-	IoStatusBlock, IoControlCode, InputBuffer, InputBufferSize, OutputBuffer, OutputBufferSize);
-	return 0;
+    DWORD               clientID = 0;
+    char                str[3];
+
+    TRACE("(%p,%p,%p,%p,%p,0x%08lx,%p,0x%08lx,%p,0x%08lx)\n",
+          DeviceHandle, hEvent, UserApcRoutine, UserApcContext,
+          IoStatusBlock, IoControlCode, 
+          InputBuffer, InputBufferSize, OutputBuffer, OutputBufferSize);
+
+    /* FIXME: clientID hack should disappear */
+    SERVER_START_REQ( get_device_id )
+    {
+        req->handle = DeviceHandle;
+        if (!wine_server_call( req )) clientID = reply->id;
+    }
+    SERVER_END_REQ;
+
+    if (!clientID) return STATUS_INVALID_PARAMETER;
+    strcpy(str,  "A:");
+    str[0] += LOBYTE(clientID);
+    
+    /* FIXME: should use the NTDLL equivalent */
+    if (GetDriveTypeA(str) == DRIVE_CDROM)
+    {
+        return CDROM_DeviceIoControl(clientID, DeviceHandle, hEvent, 
+                                     UserApcRoutine, UserApcContext, 
+                                     IoStatusBlock, IoControlCode,
+                                     InputBuffer, InputBufferSize,
+                                     OutputBuffer, OutputBufferSize);
+    }
+    
+    FIXME("Unimplemented dwIoControlCode=%08lx\n", IoControlCode);
+    IoStatusBlock->u.Status = STATUS_NOT_IMPLEMENTED;
+    IoStatusBlock->Information = 0;
+    if (hEvent) NtSetEvent(hEvent, NULL);
+    return STATUS_NOT_IMPLEMENTED;
 }
 
 /******************************************************************************
