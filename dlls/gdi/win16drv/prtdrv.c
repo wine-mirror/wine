@@ -27,7 +27,6 @@
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
 #endif
-#include <errno.h>
 #include "wine/winbase16.h"
 #include "winuser.h"
 #include "wownt32.h"

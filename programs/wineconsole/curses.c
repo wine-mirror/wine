@@ -29,7 +29,6 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <errno.h>
 #ifdef HAVE_CURSES_H
 #include <curses.h>
 #endif

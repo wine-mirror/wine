@@ -46,7 +46,6 @@
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
 #endif
-#include <errno.h>
 #include <fcntl.h>
 #include "windef.h"
 #include "wingdi.h"

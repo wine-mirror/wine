@@ -27,7 +27,6 @@
 
 #include <time.h>
 #include <fcntl.h>
-#include <errno.h>
 #include <stdlib.h>
 #include <stdio.h>
 #ifdef HAVE_SYS_FILE_H

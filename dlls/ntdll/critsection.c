@@ -22,7 +22,6 @@
 #include "wine/port.h"
 
 #include <assert.h>
-#include <errno.h>
 #include <stdio.h>
 #include <sys/types.h>
 #include "winerror.h"
