@@ -519,6 +519,8 @@ static void test_CopyFileA(void)
     char temp_path[MAX_PATH];
     char source[MAX_PATH], dest[MAX_PATH];
     static const char prefix[] = "pfx";
+    HANDLE hfile;
+    char buf[10];
     DWORD ret;
 
     ret = GetTempPathA(MAX_PATH, temp_path);
@@ -528,15 +530,43 @@ static void test_CopyFileA(void)
     ret = GetTempFileNameA(temp_path, prefix, 0, source);
     ok(ret != 0, "GetTempFileNameA error %ld\n", GetLastError());
 
+    /* make the source have not zero size */
+    hfile = CreateFileA(source, GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, 0 );
+    ok(hfile != INVALID_HANDLE_VALUE, "failed to open source file\n");
+    ok(WriteFile(hfile, prefix, sizeof(prefix), &ret, NULL ) && ret == sizeof(prefix),
+       "WriteFile error %ld\n", GetLastError());
+    ok(GetFileSize(hfile, NULL) == sizeof(prefix), "source file has wrong size\n");
+    CloseHandle(hfile);
+
     ret = GetTempFileNameA(temp_path, prefix, 0, dest);
     ok(ret != 0, "GetTempFileNameA error %ld\n", GetLastError());
 
+    SetLastError(0xdeadbeef);
     ret = CopyFileA(source, dest, TRUE);
     ok(!ret && GetLastError() == ERROR_FILE_EXISTS,
        "CopyFileA: unexpected error %ld\n", GetLastError());
 
     ret = CopyFileA(source, dest, FALSE);
-    ok(ret,  "CopyFileA: error %ld\n", GetLastError());
+    ok(ret, "CopyFileA: error %ld\n", GetLastError());
+
+    /* make sure that destination has correct size */
+    hfile = CreateFileA(dest, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, 0);
+    ok(hfile != INVALID_HANDLE_VALUE, "failed to open destination file\n");
+    ret = GetFileSize(hfile, NULL);
+    ok(ret == sizeof(prefix), "destination file has wrong size %ld\n", ret);
+
+    SetLastError(0xdeadbeef);
+    ret = CopyFileA(source, dest, FALSE);
+    ok(!ret && GetLastError() == ERROR_SHARING_VIOLATION,
+       "CopyFileA: ret = %ld, unexpected error %ld\n", ret, GetLastError());
+
+    /* make sure that destination still has correct size */
+    ret = GetFileSize(hfile, NULL);
+    ok(ret == sizeof(prefix), "destination file has wrong size %ld\n", ret);
+    ok(ReadFile(hfile, buf, sizeof(buf), &ret, NULL) && ret == sizeof(prefix),
+       "ReadFile: error %ld\n", GetLastError());
+    ok(!memcmp(prefix, buf, sizeof(prefix)), "buffer contents mismatch\n");
+    CloseHandle(hfile);
 
     ret = DeleteFileA(source);
     ok(ret, "DeleteFileA: error %ld\n", GetLastError());
@@ -568,7 +598,7 @@ static void test_CopyFileW(void)
        "CopyFileW: unexpected error %ld\n", GetLastError());
 
     ret = CopyFileW(source, dest, FALSE);
-    ok(ret,  "CopyFileW: error %ld\n", GetLastError());
+    ok(ret, "CopyFileW: error %ld\n", GetLastError());
 
     ret = DeleteFileW(source);
     ok(ret, "DeleteFileW: error %ld\n", GetLastError());
