@@ -68,7 +68,7 @@ TEB *THREAD_IdToTEB( DWORD id )
         /* Allow task handles to be used; convert to main thread */
         if ( IsTask16( id ) )
         {
-            TDB *pTask = (TDB *)GlobalLock16( id );
+            TDB *pTask = TASK_GetPtr( id );
             if (pTask) return pTask->teb;
         }
         SetLastError( ERROR_INVALID_PARAMETER );

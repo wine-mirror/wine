@@ -1602,7 +1602,7 @@ BOOL MENU_PatchResidentPopup( HQUEUE16 checkQueue, WND* checkWnd )
 
 	if( hTask )
 	{
-	    TDB* task = (TDB*)GlobalLock16( hTask );
+	    TDB* task = TASK_GetPtr( hTask );
 	    if( task )
 	    {
 		pTPWnd->hInstance = task->hInstance;

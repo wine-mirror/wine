@@ -521,7 +521,7 @@ static void MZ_Launch(void)
 {
   LPDOSTASK lpDosTask = MZ_Current();
   CONTEXT context;
-  TDB *pTask = (TDB *)GlobalLock16( GetCurrentTask() );
+  TDB *pTask = TASK_GetCurrent();
   BYTE *psp_start = PTR_REAL_TO_LIN( lpDosTask->psp_seg, 0 );
 
   MZ_FillPSP(psp_start, GetCommandLineA());

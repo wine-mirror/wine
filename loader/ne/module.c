@@ -1002,7 +1002,7 @@ static HINSTANCE16 NE_CreateThread( NE_MODULE *pModule, WORD cmdShow, LPCSTR cmd
             CloseHandle( hThread );
             return exit_code;
         }
-        if (!(pTask = (TDB *)GlobalLock16( hTask ))) break;
+        if (!(pTask = TASK_GetPtr( hTask ))) break;
         instance = pTask->hInstance;
         GlobalUnlock16( hTask );
     } while (!instance);
@@ -1113,7 +1113,7 @@ HINSTANCE16 NE_StartMain( LPCSTR name, HANDLE file )
  */
 DWORD NE_StartTask(void)
 {
-    TDB *pTask = (TDB *)GlobalLock16( GetCurrentTask() );
+    TDB *pTask = TASK_GetCurrent();
     NE_MODULE *pModule = NE_GetPtr( pTask->hModule );
     HINSTANCE16 hInstance, hPrevInstance;
     SEGTABLEENTRY *pSegTable = NE_SEG_TABLE( pModule );
@@ -1685,7 +1685,7 @@ HMODULE16 WINAPI MapHModuleLS(HMODULE hmod) {
 	NE_MODULE	*pModule;
 
 	if (!hmod)
-		return ((TDB*)GlobalLock16(GetCurrentTask()))->hInstance;
+		return TASK_GetCurrent()->hInstance;
 	if (!HIWORD(hmod))
 		return hmod; /* we already have a 16 bit module handle */
 	pModule = (NE_MODULE*)GlobalLock16(hFirstModule);
@@ -1704,8 +1704,7 @@ HMODULE WINAPI MapHModuleSL(HMODULE16 hmod) {
 	NE_MODULE	*pModule;
 
 	if (!hmod) {
-		TDB *pTask = (TDB*)GlobalLock16(GetCurrentTask());
-
+		TDB *pTask = TASK_GetCurrent();
 		hmod = pTask->hModule;
 	}
 	pModule = (NE_MODULE*)GlobalLock16(hmod);

@@ -130,7 +130,7 @@ static BOOL INT21_CreateHeap(void)
 
 static BYTE *GetCurrentDTA( CONTEXT86 *context )
 {
-    TDB *pTask = (TDB *)GlobalLock16( GetCurrentTask() );
+    TDB *pTask = TASK_GetCurrent();
 
     /* FIXME: This assumes DTA was set correctly! */
     return (BYTE *)CTX_SEG_OFF_TO_LIN( context, SELECTOROF(pTask->dta), 
@@ -1300,7 +1300,7 @@ void WINAPI DOS3Call( CONTEXT86 *context )
 
     case 0x1a: /* SET DISK TRANSFER AREA ADDRESS */
         {
-            TDB *pTask = (TDB *)GlobalLock16( GetCurrentTask() );
+            TDB *pTask = TASK_GetCurrent();
             pTask->dta = MAKESEGPTR(context->SegDs,DX_reg(context));
             TRACE("Set DTA: %08lx\n", pTask->dta);
         }
@@ -1352,7 +1352,7 @@ void WINAPI DOS3Call( CONTEXT86 *context )
     case 0x2f: /* GET DISK TRANSFER AREA ADDRESS */
         TRACE("GET DISK TRANSFER AREA ADDRESS\n");
         {
-            TDB *pTask = (TDB *)GlobalLock16( GetCurrentTask() );
+            TDB *pTask = TASK_GetCurrent();
             context->SegEs = SELECTOROF( pTask->dta );
             BX_reg(context) = OFFSETOF( pTask->dta );
         }
