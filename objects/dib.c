@@ -415,6 +415,85 @@ UINT WINAPI GetDIBColorTable( HDC hdc, UINT startpos, UINT entries,
     return entries;
 }
 
+/* FIXME the following two structs should be combined with __sysPalTemplate in
+   objects/color.c - this should happen after de-X11-ing both of these
+   files.
+   NB. RGBQUAD and PALETTENTRY have different orderings of red, green
+   and blue - sigh */
+
+static RGBQUAD EGAColors[16] = { 
+/* rgbBlue, rgbGreen, rgbRed, rgbReserverd */
+    { 0x00, 0x00, 0x00, 0x00 },
+    { 0x00, 0x00, 0x80, 0x00 },
+    { 0x00, 0x80, 0x00, 0x00 },
+    { 0x00, 0x80, 0x80, 0x00 },
+    { 0x80, 0x00, 0x00, 0x00 },
+    { 0x80, 0x00, 0x80, 0x00 },
+    { 0x80, 0x80, 0x00, 0x00 },
+    { 0x80, 0x80, 0x80, 0x00 },
+    { 0xc0, 0xc0, 0xc0, 0x00 },
+    { 0x00, 0x00, 0xff, 0x00 },
+    { 0x00, 0xff, 0x00, 0x00 },
+    { 0x00, 0xff, 0xff, 0x00 },
+    { 0xff, 0x00, 0x00, 0x00 },
+    { 0xff, 0x00, 0xff, 0x00 },
+    { 0xff, 0xff, 0x00, 0x00 },
+    { 0xff, 0xff, 0xff, 0x00 }
+};
+
+
+static RGBQUAD DefLogPalette[20] = { /* Copy of Default Logical Palette */
+/* rgbBlue, rgbGreen, rgbRed, rgbReserverd */
+    { 0x00, 0x00, 0x00, 0x00 },
+    { 0x00, 0x00, 0x80, 0x00 },
+    { 0x00, 0x80, 0x00, 0x00 },
+    { 0x00, 0x80, 0x80, 0x00 },
+    { 0x80, 0x00, 0x00, 0x00 },
+    { 0x80, 0x00, 0x80, 0x00 },
+    { 0x80, 0x80, 0x00, 0x00 },
+    { 0xc0, 0xc0, 0xc0, 0x00 },
+    { 0xc0, 0xdc, 0xc0, 0x00 },
+    { 0xf0, 0xca, 0xa6, 0x00 },
+    { 0xf0, 0xfb, 0xff, 0x00 },
+    { 0xa4, 0xa0, 0xa0, 0x00 },
+    { 0x80, 0x80, 0x80, 0x00 },
+    { 0x00, 0x00, 0xf0, 0x00 },
+    { 0x00, 0xff, 0x00, 0x00 },
+    { 0x00, 0xff, 0xff, 0x00 },
+    { 0xff, 0x00, 0x00, 0x00 },
+    { 0xff, 0x00, 0xff, 0x00 },
+    { 0xff, 0xff, 0x00, 0x00 },
+    { 0xff, 0xff, 0xff, 0x00 }
+};
+
+/*********************************************************************
+ *         DIB_GetNearestIndex
+ *
+ * Helper for GetDIBits.
+ * Returns the nearest colour table index for a given RGB.
+ * Nearest is defined by minimizing the sum of the squares.
+ */
+static INT DIB_GetNearestIndex(BITMAPINFO *info, BYTE r, BYTE g, BYTE b)
+{
+    INT i, best = -1, diff, bestdiff = -1;
+    RGBQUAD *color;
+
+    for(color = info->bmiColors, i = 0; i < (1 << info->bmiHeader.biBitCount);
+	color++, i++) {
+        diff = (r - color->rgbRed) * (r - color->rgbRed) +
+	       (g - color->rgbGreen) * (g - color->rgbGreen) +
+	       (b - color->rgbBlue) * (b - color->rgbBlue);
+	if(diff == 0)
+	    return i;
+	if(best == -1 || diff < bestdiff) {
+	    best = i;
+	    bestdiff = diff;
+	}
+    }
+    return best;
+}
+
+
 /***********************************************************************
  *           GetDIBits16    (GDI.441)
  */
@@ -452,6 +531,7 @@ INT WINAPI GetDIBits(
     int i, x, y;
 
     if (!lines) return 0;
+    if (!info) return 0;
     dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
     if (!dc) 
     {
@@ -466,24 +546,59 @@ INT WINAPI GetDIBits(
         return 0;
     }
 
-    /* Transfer color info (FIXME) */
-    
-    if (info && (info->bmiHeader.biBitCount <= 8) &&
-        (bmp->bitmap.bmBitsPixel <= 8))
-    {
-        int colors = 1 << info->bmiHeader.biBitCount;
+    /* Transfer color info */
+
+    if (info->bmiHeader.biBitCount <= 8 && info->bmiHeader.biBitCount > 0 ) {
+
 	info->bmiHeader.biClrUsed = 0;
-	palEntry = palette->logpalette.palPalEntry;
-	for (i = 0; i < colors; i++, palEntry++)
-	{
-	    if (coloruse == DIB_RGB_COLORS)
-	    {
-		info->bmiColors[i].rgbRed      = palEntry->peRed;
-		info->bmiColors[i].rgbGreen    = palEntry->peGreen;
-		info->bmiColors[i].rgbBlue     = palEntry->peBlue;
-		info->bmiColors[i].rgbReserved = 0;
+
+	if(info->bmiHeader.biBitCount >= bmp->bitmap.bmBitsPixel) {
+	    palEntry = palette->logpalette.palPalEntry;
+	    for (i = 0; i < (1 << bmp->bitmap.bmBitsPixel); i++, palEntry++) {
+		if (coloruse == DIB_RGB_COLORS) {
+		    info->bmiColors[i].rgbRed      = palEntry->peRed;
+		    info->bmiColors[i].rgbGreen    = palEntry->peGreen;
+		    info->bmiColors[i].rgbBlue     = palEntry->peBlue;
+		    info->bmiColors[i].rgbReserved = 0;
+		}
+		else ((WORD *)info->bmiColors)[i] = (WORD)i;
 	    }
-	    else ((WORD *)info->bmiColors)[i] = (WORD)i;
+	} else {
+	    switch (info->bmiHeader.biBitCount) {
+	    case 1:
+	        info->bmiColors[0].rgbRed = info->bmiColors[0].rgbGreen =
+		  info->bmiColors[0].rgbBlue = 0;
+		info->bmiColors[0].rgbReserved = 0;
+		info->bmiColors[1].rgbRed = info->bmiColors[1].rgbGreen =
+		  info->bmiColors[1].rgbBlue = 0xff;
+		info->bmiColors[1].rgbReserved = 0;
+		break;
+
+	    case 4:
+	        memcpy(info->bmiColors, EGAColors, sizeof(EGAColors));
+		break;
+
+	    case 8:
+	        {
+	        INT r, g, b;
+		RGBQUAD *color;
+
+		memcpy(info->bmiColors, DefLogPalette,
+		       10 * sizeof(RGBQUAD));
+		memcpy(info->bmiColors + 246, DefLogPalette + 10,
+		       10 * sizeof(RGBQUAD));
+		color = info->bmiColors + 10;
+		for(r = 0; r <= 5; r++) /* FIXME */
+		    for(g = 0; g <= 5; g++)
+		        for(b = 0; b <= 5; b++) {
+			    color->rgbRed =   (r * 0xff) / 5;
+			    color->rgbGreen = (g * 0xff) / 5;
+			    color->rgbBlue =  (b * 0xff) / 5;
+			    color->rgbReserved = 0;
+			    color++;
+			}
+		}
+	    }
 	}
     }
 
@@ -499,7 +614,9 @@ INT WINAPI GetDIBits(
 
 	/* adjust number of scanlines to copy */
 
-	if( lines > info->bmiHeader.biHeight ) lines = info->bmiHeader.biHeight;
+	if( lines > info->bmiHeader.biHeight )
+	    lines = info->bmiHeader.biHeight;
+
 	yend = startscan + lines;
 	if( startscan >= bmp->bitmap.bmHeight ) 
         {
@@ -525,82 +642,334 @@ INT WINAPI GetDIBits(
 	bmpImage = (XImage *)CALL_LARGE_STACK( X11DRV_BITMAP_GetXImage, bmp );
 
 	linestart = bbits;
-	switch( info->bmiHeader.biBitCount )
-	{
-	   case 8:
-		for( y = yend - 1; (int)y >= (int)startscan; y-- )
-		{
-		   for( x = 0; x < xend; x++ )
-			*bbits++ = XGetPixel( bmpImage, x, y );
-		   bbits = (linestart += dstwidth);
-		}
-		break;
-	   case 1:
-		for( y = yend - 1; (int)y >= (int)startscan; y-- )
-		{
-		   for( x = 0; x < xend; x++ ) {
-		   	if (!(x&7)) *bbits = 0;
-			*bbits |= XGetPixel( bmpImage, x, y)<<(7-(x&7));
+	switch( info->bmiHeader.biBitCount ) {
+
+	case 1: /* 1 bit DIB */
+	    {
+	        unsigned long white = (1 << bmp->bitmap.bmBitsPixel) - 1;
+
+		for( y = yend - 1; (int)y >= (int)startscan; y-- ) {
+		    for( x = 0; x < xend; x++ ) {
+		        if (!(x&7)) *bbits = 0;
+			*bbits |= (XGetPixel( bmpImage, x, y) >= white) 
+			  << (7 - (x&7));
 			if ((x&7)==7) bbits++;
-		   }
-		   bbits = (linestart += dstwidth);
+		    }
+		    bbits = (linestart += dstwidth);
 		}
-		break;
-	   case 4:
-		for( y = yend - 1; (int)y >= (int)startscan; y-- )
-		{
-		   for( x = 0; x < xend; x++ ) {
-		   	if (!(x&1)) *bbits = 0;
+	    }
+	    break;
+
+
+	case 4: /* 4 bit DIB */
+	    switch(bmp->bitmap.bmBitsPixel) {
+
+	    case 1: /* 1/4 bit bmp -> 4 bit DIB */
+	    case 4:
+	        for( y = yend - 1; (int)y >= (int)startscan; y-- ) {
+		    for( x = 0; x < xend; x++ ) {
+		        if (!(x&1)) *bbits = 0;
 			*bbits |= XGetPixel( bmpImage, x, y)<<(4*(1-(x&1)));
 			if ((x&1)==1) bbits++;
-		   }
-		   bbits = (linestart += dstwidth);
+		    }
+		    bbits = (linestart += dstwidth);
 		}
 		break;
-	   case 15:
-           case 16:
-		for( y = yend - 1; (int)y >= (int)startscan; y-- )
-		{
-		   for( x = 0; x < xend; x++ ) {
-		   	unsigned long pixel=XGetPixel( bmpImage, x, y);
+
+	    case 8: /* 8 bit bmp -> 4 bit DIB */
+	        palEntry = palette->logpalette.palPalEntry;
+	        for( y = yend - 1; (int)y >= (int)startscan; y-- ) {
+		    for( x = 0; x < xend; x++ ) {
+		        unsigned long pixel = XGetPixel( bmpImage, x, y );
+			if (!(x&1)) *bbits = 0;
+			*bbits |= ( DIB_GetNearestIndex(info,
+				    palEntry[pixel].peRed,
+				    palEntry[pixel].peGreen,
+				    palEntry[pixel].peBlue )
+					  << (4*(1-(x&1))) );
+			if ((x&1)==1) bbits++;
+		    }
+		    bbits = (linestart += dstwidth);
+		}
+		break;
+
+	    case 15: /* 15/16 bit bmp -> 4 bit DIB */
+	    case 16:
+	        for( y = yend - 1; (int)y >= (int)startscan; y-- ) {
+		    for( x = 0; x < xend; x++ ) {
+		        unsigned long pixel = XGetPixel( bmpImage, x, y );
+			if (!(x&1)) *bbits = 0;
+			*bbits |= ( DIB_GetNearestIndex(info,
+				     ((pixel << 3) & 0xf8) |
+				     ((pixel >> 2) &  0x7),
+				     ((pixel >> 2) & 0xf8) |
+				     ((pixel >> 7) & 0x7),
+				     ((pixel >> 7) & 0xf8) |
+				     ((pixel >> 12) & 0x7) ) 
+					  << (4*(1-(x&1))) );
+			if ((x&1)==1) bbits++;
+		    }
+		    bbits = (linestart += dstwidth);
+		}
+		break;
+
+	    case 24: /* 24/32 bit bmp -> 4 bit DIB */
+	    case 32:
+	        for( y = yend - 1; (int)y >= (int)startscan; y-- ) {
+		    for( x = 0; x < xend; x++ ) {
+		        unsigned long pixel = XGetPixel( bmpImage, x, y );
+			if (!(x&1)) *bbits = 0;
+			*bbits |= ( DIB_GetNearestIndex( info,
+				     (pixel >> 16) & 0xff,
+				     (pixel >>  8) & 0xff,
+				      pixel & 0xff )
+					  << (4*(1-(x&1))) );
+			if ((x&1)==1) bbits++;
+		    }
+		    bbits = (linestart += dstwidth);
+		}
+		break;
+
+	    default: /* ? bit bmp -> 4 bit DIB */
+	        FIXME(bitmap, "4 bit DIB %d bit bitmap\n",
+				  bmp->bitmap.bmBitsPixel);
+		break;
+	    }
+	    break;
+
+
+	case 8: /* 8 bit DIB */
+	    switch(bmp->bitmap.bmBitsPixel) {
+
+	    case 1: /* 1/4/8 bit bmp -> 8 bit DIB */
+	    case 4:
+	    case 8:
+	        for( y = yend - 1; (int)y >= (int)startscan; y-- ) {
+		    for( x = 0; x < xend; x++ )
+		        *bbits++ = XGetPixel( bmpImage, x, y );
+		    bbits = (linestart += dstwidth);
+		}
+		break;
+
+	    case 15: /* 15/16 bit bmp -> 8 bit DIB */
+	    case 16:
+	        for( y = yend - 1; (int)y >= (int)startscan; y-- ) {
+		    for( x = 0; x < xend; x++ ) {
+		        unsigned long pixel = XGetPixel( bmpImage, x, y );
+		        *bbits++ = DIB_GetNearestIndex( info, 
+					 ((pixel << 3) & 0xf8) |
+					 ((pixel >> 2) &  0x7),
+					 ((pixel >> 2) & 0xf8) |
+					 ((pixel >> 7) & 0x7),
+					 ((pixel >> 7) & 0xf8) |
+					 ((pixel >> 12) & 0x7) );
+		    }
+		    bbits = (linestart += dstwidth);
+		}
+		break;
+
+	    case 24: /* 24/32 bit bmp -> 8 bit DIB */
+	    case 32:
+	        for( y = yend - 1; (int)y >= (int)startscan; y-- ) {
+		    for( x = 0; x < xend; x++ ) {
+		        unsigned long pixel = XGetPixel( bmpImage, x, y );
+		        *bbits++ = DIB_GetNearestIndex( info,
+					 (pixel >> 16) & 0xff,
+					 (pixel >>  8) & 0xff,
+					  pixel & 0xff );
+		    }
+		    bbits = (linestart += dstwidth);
+		}
+		break;
+
+	    default: /* ? bit bmp -> 8 bit DIB */
+	        FIXME(bitmap, "8 bit DIB %d bit bitmap\n",
+				  bmp->bitmap.bmBitsPixel);
+		break;
+	    }
+	    break;
+
+
+	case 15: /* 15/16 bit DIB */
+	case 16:
+	    switch(bmp->bitmap.bmBitsPixel) {
+
+	    case 15: /* 15/16 bit bmp -> 16 bit DIB */
+	    case 16:
+	        for( y = yend - 1; (int)y >= (int)startscan; y-- ) {
+		    for( x = 0; x < xend; x++ ) {
+		        unsigned long pixel=XGetPixel( bmpImage, x, y);
 			*bbits++ = pixel & 0xff;
 			*bbits++ = (pixel >> 8) & 0xff;
-		   }
-		   bbits = (linestart += dstwidth);
+		    }
+		    bbits = (linestart += dstwidth);
 		}
 		break;
-	   case 24:
-		for( y = yend - 1; (int)y >= (int)startscan; y-- )
-		{
-		   for( x = 0; x < xend; x++ ) {
-		   	unsigned long pixel=XGetPixel( bmpImage, x, y);
+		   
+	    case 24: /* 24/32 bit bmp -> 16 bit DIB */
+	    case 32:
+	        for( y = yend - 1; (int)y >= (int)startscan; y-- ) {
+		    for( x = 0; x < xend; x++ ) {
+		        unsigned long pixel=XGetPixel( bmpImage, x, y);
+			*bbits++ = ((pixel >> 6) & 0xe0) |
+			           ((pixel >> 3) & 0x1f);
+			*bbits++ = ((pixel >> 17) & 0x7c) |
+			           ((pixel >> 14) & 0x3);
+		    }
+		    bbits = (linestart += dstwidth);
+		}
+		break;
+
+	    case 1: /* 1/4/8 bit bmp -> 16 bit DIB */
+	    case 4:
+	    case 8:
+	        palEntry = palette->logpalette.palPalEntry;
+	        for( y = yend - 1; (int)y >= (int)startscan; y-- ) {
+		    for( x = 0; x < xend; x++ ) {
+		        unsigned long pixel=XGetPixel( bmpImage, x, y);
+			*bbits++ = ((palEntry[pixel].peBlue >> 3) & 0x1f) |
+			           ((palEntry[pixel].peGreen << 2) & 0xe0); 
+			*bbits++ = ((palEntry[pixel].peGreen >> 6) & 0x3) |
+			           ((palEntry[pixel].peRed >> 1) & 0x7c);
+		    }
+		    bbits = (linestart += dstwidth);
+		}
+		break;
+
+	    default: /* ? bit bmp -> 16 bit DIB */
+	        FIXME(bitmap, "15/16 bit DIB %d bit bitmap\n",
+				  bmp->bitmap.bmBitsPixel);
+		break;
+	    }
+	    break;
+
+
+	case 24: /* 24 bit DIB */
+	    switch(bmp->bitmap.bmBitsPixel) {
+
+	    case 24: /* 24/32 bit bmp -> 24 bit DIB */
+	    case 32:
+	        for( y = yend - 1; (int)y >= (int)startscan; y-- ) {
+		    for( x = 0; x < xend; x++ ) {
+		        unsigned long pixel=XGetPixel( bmpImage, x, y);
 			*bbits++ = (pixel >>16) & 0xff;
 			*bbits++ = (pixel >> 8) & 0xff;
 			*bbits++ =  pixel       & 0xff;
-		   }
-		   bbits = (linestart += dstwidth);
+		    }
+		    bbits = (linestart += dstwidth);
 		}
 		break;
-	   case 32:
-		for( y = yend - 1; (int)y >= (int)startscan; y-- )
-		{
-		   for( x = 0; x < xend; x++ ) {
-		   	unsigned long pixel=XGetPixel( bmpImage, x, y);
+
+	    case 15: /* 15/16 bit bmp -> 24 bit DIB */
+	    case 16:
+	        for( y = yend - 1; (int)y >= (int)startscan; y-- ) {
+		    for( x = 0; x < xend; x++ ) {
+		        unsigned long pixel=XGetPixel( bmpImage, x, y);
+		        *bbits++ = ((pixel >> 7) & 0xf8) |
+			           ((pixel >> 12) & 0x7);
+			*bbits++ = ((pixel >> 2) & 0xf8) |
+			           ((pixel >> 7) & 0x7);
+			*bbits++ = ((pixel << 3) & 0xf8) |
+			           ((pixel >> 2) & 0x7);
+		    }
+		    bbits = (linestart += dstwidth);
+		}
+		break;
+
+	    case 1: /* 1/4/8 bit bmp -> 24 bit DIB */
+	    case 4:
+	    case 8:
+	        palEntry = palette->logpalette.palPalEntry;
+	        for( y = yend - 1; (int)y >= (int)startscan; y-- ) {
+		    for( x = 0; x < xend; x++ ) {
+		        unsigned long pixel=XGetPixel( bmpImage, x, y);
+			*bbits++ = palEntry[pixel].peBlue;
+			*bbits++ = palEntry[pixel].peGreen;
+			*bbits++ = palEntry[pixel].peRed;
+		    }
+		    bbits = (linestart += dstwidth);
+		}
+		break;
+
+	    default: /* ? bit bmp -> 24 bit DIB */
+	        FIXME(bitmap, "24 bit DIB %d bit bitmap\n",
+		      bmp->bitmap.bmBitsPixel);
+		break;
+	    }
+	    break;
+
+
+	case 32: /* 32 bit DIB */
+	    switch(bmp->bitmap.bmBitsPixel) {
+
+	    case 24: /* 24/32 bit bmp -> 32 bit DIB */
+	    case 32:
+	        for( y = yend - 1; (int)y >= (int)startscan; y-- ) {
+		    for( x = 0; x < xend; x++ ) {
+		        unsigned long pixel=XGetPixel( bmpImage, x, y);
 			*bbits++ = (pixel >>16) & 0xff;
 			*bbits++ = (pixel >> 8) & 0xff;
 			*bbits++ =  pixel       & 0xff;
-		   }
-		   bbits = (linestart += dstwidth);
+			*bbits++ = 0;
+		    }
+		    bbits = (linestart += dstwidth);
 		}
 		break;
-	   default:
-	   	WARN(bitmap,"Unsupported depth %d\n",
-                   info->bmiHeader.biBitCount);
-	   	break;
+
+	    case 15: /* 15/16 bit bmp -> 32 bit DIB */
+	    case 16:
+	        for( y = yend - 1; (int)y >= (int)startscan; y-- ) {
+		    for( x = 0; x < xend; x++ ) {
+		        unsigned long pixel=XGetPixel( bmpImage, x, y);
+		        *bbits++ = ((pixel >> 7) & 0xf8) |
+			           ((pixel >> 12) & 0x7);
+			*bbits++ = ((pixel >> 2) & 0xf8) |
+			           ((pixel >> 7) & 0x7);
+			*bbits++ = ((pixel << 3) & 0xf8) |
+			           ((pixel >> 2) & 0x7);
+			*bbits++ = 0;
+		    }
+		    bbits = (linestart += dstwidth);
+		}
+		break;
+
+	    case 1: /* 1/4/8 bit bmp -> 32 bit DIB */
+	    case 4:
+	    case 8:
+	        palEntry = palette->logpalette.palPalEntry;
+	        for( y = yend - 1; (int)y >= (int)startscan; y-- ) {
+		    for( x = 0; x < xend; x++ ) {
+		        unsigned long pixel=XGetPixel( bmpImage, x, y);
+			*bbits++ = palEntry[pixel].peBlue;
+			*bbits++ = palEntry[pixel].peGreen;
+			*bbits++ = palEntry[pixel].peRed;
+			*bbits++ = 0;
+		    }
+		    bbits = (linestart += dstwidth);
+		}
+		break;
+
+	    default: /* ? bit bmp -> 32 bit DIB */
+	        FIXME(bitmap, "32 bit DIB %d bit bitmap\n",
+		      bmp->bitmap.bmBitsPixel);
+		break;
+	    }
+	    break;
+
+
+	default: /* ? bit DIB */
+	    FIXME(bitmap,"Unsupported DIB depth %d\n",
+		  info->bmiHeader.biBitCount);
+	    break;
 	}
 
 	XDestroyImage( bmpImage );
         LeaveCriticalSection( &X11DRV_CritSection );
+
+	if(info->bmiHeader.biSizeImage == 0) /* Fill in biSizeImage */
+	    info->bmiHeader.biSizeImage = info->bmiHeader.biHeight *
+	                    DIB_GetDIBWidthBytes( info->bmiHeader.biWidth,
+						  info->bmiHeader.biBitCount );
 
 	if(bbits - (BYTE *)bits > info->bmiHeader.biSizeImage)
 	    ERR(bitmap, "Buffer overrun. Please investigate.\n");
@@ -610,16 +979,26 @@ INT WINAPI GetDIBits(
     else if( info->bmiHeader.biSize >= sizeof(BITMAPINFOHEADER) ) 
     {
 	/* fill in struct members */
-	
-	info->bmiHeader.biWidth = bmp->bitmap.bmWidth;
-	info->bmiHeader.biHeight = bmp->bitmap.bmHeight;
-	info->bmiHeader.biPlanes = 1;
-	info->bmiHeader.biBitCount = bmp->bitmap.bmBitsPixel;
-	info->bmiHeader.biSizeImage = bmp->bitmap.bmHeight *
+
+        if( info->bmiHeader.biBitCount == 0)
+	{
+	    info->bmiHeader.biWidth = bmp->bitmap.bmWidth;
+	    info->bmiHeader.biHeight = bmp->bitmap.bmHeight;
+	    info->bmiHeader.biPlanes = 1;
+	    info->bmiHeader.biBitCount = bmp->bitmap.bmBitsPixel;
+	    info->bmiHeader.biSizeImage = bmp->bitmap.bmHeight *
                              DIB_GetDIBWidthBytes( bmp->bitmap.bmWidth,
                                                    bmp->bitmap.bmBitsPixel );
-	info->bmiHeader.biCompression = 0;
+	    info->bmiHeader.biCompression = 0;
+	}
+	else
+	{
+	    info->bmiHeader.biSizeImage = info->bmiHeader.biHeight *
+	                    DIB_GetDIBWidthBytes( info->bmiHeader.biWidth,
+						  info->bmiHeader.biBitCount );
+	}
     }
+
     TRACE(bitmap, "biSizeImage = %ld, biWidth = %ld, biHeight = %ld\n",
 	  info->bmiHeader.biSizeImage, info->bmiHeader.biWidth,
 	  info->bmiHeader.biHeight);
