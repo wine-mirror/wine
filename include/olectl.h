@@ -4,12 +4,7 @@
 #include "windef.h"
 #include "ocidl.h"
 
-#ifdef __cplusplus
-#define DUMMY_UNION_NAME
-#else
-#define DUMMY_UNION_NAME u
-#endif
- 
+
 /*
  * Ole Control Interfaces
  */
@@ -108,7 +103,7 @@ typedef struct tagPICTDESC {
 			struct {
 					HENHMETAFILE hemf;
 			} emf;
-	} DUMMY_UNION_NAME;
+	} DUMMYUNIONNAME;
 } PICTDESC, *LPPICTDESC;
 
 typedef long OLE_XPOS_PIXELS;
