@@ -2518,7 +2518,7 @@ BOOL WineEngDestroyFontInstance(HFONT hfont)
     return FALSE;
 }
 
-DWORD WineEngEnumFonts(LPLOGFONTW plf, DEVICEFONTENUMPROC proc, LPARAM lparam)
+DWORD WineEngEnumFonts(LPLOGFONTW plf, FONTENUMPROCW proc, LPARAM lparam)
 {
     return 1;
 }
