@@ -1483,8 +1483,11 @@ LRESULT WINAPI DefMDIChildProc16( HWND16 hwnd, UINT16 message,
     WND                 *clientWnd,*tmpWnd = 0;
     LRESULT             retvalue;
 
-    clientWnd  = WIN_FindWndPtr(GetParent16(hwnd));
+    tmpWnd     = WIN_FindWndPtr(hwnd);
+    if (!tmpWnd) return 0;
+    clientWnd  = WIN_FindWndPtr(tmpWnd->parent->hwndSelf);
     ci         = (MDICLIENTINFO *) clientWnd->wExtra;
+    WIN_ReleaseWndPtr(tmpWnd);
 
     switch (message)
     {
@@ -1666,6 +1669,7 @@ LRESULT WINAPI DefMDIChildProcA( HWND hwnd, UINT message,
     LRESULT             retvalue;
 
     tmpWnd     = WIN_FindWndPtr(hwnd);
+    if (!tmpWnd) return 0;
     clientWnd  = WIN_FindWndPtr(tmpWnd->parent->hwndSelf);
     ci         = (MDICLIENTINFO *) clientWnd->wExtra;
     WIN_ReleaseWndPtr(tmpWnd);
@@ -1731,11 +1735,14 @@ LRESULT WINAPI DefMDIChildProcW( HWND hwnd, UINT message,
                                    WPARAM wParam, LPARAM lParam )
 {
     MDICLIENTINFO       *ci;
-    WND                 *clientWnd;
+    WND                 *clientWnd,*tmpWnd;
     LRESULT             retvalue;
 
-    clientWnd  = WIN_FindWndPtr(GetParent16(hwnd));
+    tmpWnd     = WIN_FindWndPtr(hwnd);
+    if (!tmpWnd) return 0;
+    clientWnd  = WIN_FindWndPtr(tmpWnd->parent->hwndSelf);
     ci         = (MDICLIENTINFO *) clientWnd->wExtra;
+    WIN_ReleaseWndPtr(tmpWnd);
 
     switch (message)
     {
