@@ -1,0 +1,286 @@
+/*
+ * Regedit resources
+ *
+ * Copyright 2002 Robert Dickenson
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ */
+
+LANGUAGE LANG_POLISH, SUBLANG_DEFAULT
+
+/*
+ * Menu
+ */
+
+IDC_REGEDIT MENU DISCARDABLE
+BEGIN
+    POPUP "&Plik"
+    BEGIN
+        MENUITEM "Za&koÅÒcz",                       ID_REGISTRY_EXIT
+    END
+    POPUP "&Help"
+    BEGIN
+        MENUITEM "&About ...",                  ID_HELP_ABOUT
+    END
+END
+
+IDR_REGEDIT_MENU MENU DISCARDABLE
+BEGIN
+    POPUP "&Rejestr"
+    BEGIN
+        MENUITEM "&Importuj rejestr...",        ID_REGISTRY_IMPORTREGISTRYFILE
+        MENUITEM "&Eksportuj rejestr...",       ID_REGISTRY_EXPORTREGISTRYFILE
+        MENUITEM SEPARATOR
+        MENUITEM "&PodÅ≥Åπcz rejestr sieciowy...",ID_REGISTRY_CONNECTNETWORKREGISTRY, GRAYED
+        MENUITEM "&OdÅ≥Åπcz rejestr sieciowy...", ID_REGISTRY_DISCONNECTNETWORKREGISTRY, GRAYED
+        MENUITEM SEPARATOR
+        MENUITEM "&Drukuj\tCtrl+P",             ID_REGISTRY_PRINT, GRAYED
+        MENUITEM SEPARATOR
+        MENUITEM "Za&koÅÒcz",                    ID_REGISTRY_EXIT
+    END
+    POPUP "&Edycja"
+    BEGIN
+        MENUITEM "&Modyfikuj",                  ID_EDIT_MODIFY
+        MENUITEM SEPARATOR
+        POPUP "&Nowy"
+        BEGIN
+            MENUITEM "&Klucz",                  ID_EDIT_NEW_KEY
+            MENUITEM SEPARATOR
+            MENUITEM "&Dana tekstowa",       ID_EDIT_NEW_STRINGVALUE
+            MENUITEM "&Dana binarna",        ID_EDIT_NEW_BINARYVALUE
+            MENUITEM "&Dana liczbowa (DWORD)",ID_EDIT_NEW_DWORDVALUE
+        END
+        MENUITEM SEPARATOR
+        MENUITEM "U&suÅÒ\tDel",                  ID_EDIT_DELETE
+        MENUITEM "Z&mieÅÒ nazwÅÍ",                ID_EDIT_RENAME
+        MENUITEM SEPARATOR
+        MENUITEM "&Kopiuj nazwÅÍ klucza",         ID_EDIT_COPYKEYNAME
+        MENUITEM SEPARATOR
+        MENUITEM "&Znajdü...\tCtrl+F",          ID_EDIT_FIND, GRAYED
+        MENUITEM "Zn&ajdü nastÅÍpny\tF3",        ID_EDIT_FINDNEXT, GRAYED
+    END
+    POPUP "&Widok"
+    BEGIN
+        MENUITEM "&Pasek stanu",                ID_VIEW_STATUSBAR
+        MENUITEM SEPARATOR
+        MENUITEM "Po&dziel",                    ID_VIEW_SPLIT
+        MENUITEM SEPARATOR
+        MENUITEM "&OdúwieÅø\tF5",                ID_VIEW_REFRESH
+    END
+    POPUP "&Ulubione"
+    BEGIN
+        MENUITEM "&Dodaj do ulubionych",        ID_FAVOURITES_ADDTOFAVOURITES
+        , GRAYED
+        MENUITEM "&UsuÅÒ ulubiony",              ID_FAVOURITES_REMOVEFAVOURITE
+        , GRAYED
+    END
+    POPUP "Pomo&c"
+    BEGIN
+        MENUITEM "&Tematy Pomocy\tF1",          ID_HELP_HELPTOPICS
+        MENUITEM SEPARATOR
+        MENUITEM "Edytor rejestru - i&nformacje",ID_HELP_ABOUT
+    END
+END
+
+IDR_POPUP_MENUS MENU DISCARDABLE
+BEGIN
+  POPUP ""
+  BEGIN
+	MENUITEM "&Modyfikuj",                     ID_EDIT_MODIFY
+	MENUITEM "Modyfikuj dane binarne",         ID_EDIT_MODIFY_BIN
+	MENUITEM SEPARATOR
+	MENUITEM "&UsuÅÒ\tDel",                     ID_EDIT_DELETE
+	MENUITEM "&ZmieÅÒ nazwÅÍ",                   ID_EDIT_RENAME
+  END
+  POPUP ""
+  BEGIN
+        POPUP "&Nowy"
+        BEGIN
+            MENUITEM "&Klucz",                ID_EDIT_NEW_KEY
+            MENUITEM SEPARATOR
+            MENUITEM "&Dana tekstowa",        ID_EDIT_NEW_STRINGVALUE
+            MENUITEM "&Dana binarna",         ID_EDIT_NEW_BINARYVALUE
+            MENUITEM "&Dana liczbowa (DWORD)",ID_EDIT_NEW_DWORDVALUE
+        END
+  END
+END
+
+
+/*
+ * Dialog
+ */
+
+IDD_ABOUTBOX DIALOG DISCARDABLE  22, 17, 230, 75
+STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
+CAPTION "Edytor rejestru - informacje"
+FONT 8, "System"
+BEGIN
+    ICON            IDI_REGEDIT,IDI_REGEDIT,14,9,16,16
+    LTEXT           "ReactOS regedit Version 1.0",IDC_STATIC,49,10,119,8,
+                    SS_NOPREFIX
+    LTEXT           "Copyright (C) 2002 ReactOS Team",IDC_STATIC,49,20,119,8
+    DEFPUSHBUTTON   "OK",IDOK,195,6,30,11,WS_GROUP
+END
+
+IDD_EDIT_STRING DIALOG DISCARDABLE  22, 17, 210, 75
+STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
+CAPTION "Edycja danej tekstowej"
+FONT 8, "System"
+BEGIN
+    LTEXT           "Nazwa:",IDC_STATIC,5,5,119,8
+    EDITTEXT        IDC_VALUE_NAME,5,15,200,12, WS_BORDER | WS_TABSTOP | WS_DISABLED
+    LTEXT           "WartoúÅÊ:",IDC_STATIC,5,30,119,8
+    EDITTEXT        IDC_VALUE_DATA,5,40,200,12, WS_BORDER | WS_TABSTOP
+    DEFPUSHBUTTON   "OK",IDOK,140,60,30,11,WS_GROUP
+    PUSHBUTTON   "Anuluj",IDCANCEL,175,60,30,11,WS_GROUP
+END
+
+IDD_EDIT_DWORD DIALOG DISCARDABLE  22, 17, 210, 100
+STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
+CAPTION "Edycja danej liczbowej (DWORD)"
+FONT 8, "System"
+BEGIN
+    LTEXT           "Nazwa:",IDC_STATIC,5,5,119,8
+    EDITTEXT        IDC_VALUE_NAME,5,15,200,12, WS_BORDER | WS_TABSTOP | WS_DISABLED
+    LTEXT           "WartoúÅÊ:",IDC_STATIC,5,30,90,8
+    EDITTEXT        IDC_VALUE_DATA,5,40,90,12, WS_BORDER | WS_TABSTOP
+    GROUPBOX        "System", IDC_DWORD_BASE, 120, 30, 85, 37, BS_GROUPBOX
+    AUTORADIOBUTTON "Szesnastkowy", IDC_DWORD_HEX, 130, 40, 60, 10, WS_TABSTOP
+    AUTORADIOBUTTON "DziesiÅÍtny", IDC_DWORD_DEC, 130, 52, 60, 10, WS_TABSTOP
+    DEFPUSHBUTTON   "OK",IDOK,140,80,30,11,WS_GROUP
+    PUSHBUTTON   "Anuluj",IDCANCEL,175,80,30,11,WS_GROUP
+END
+
+/*
+ * String Table
+ */
+
+STRINGTABLE DISCARDABLE
+BEGIN
+    IDS_LIST_COLUMN_NAME    "Nazwa"
+    IDS_LIST_COLUMN_TYPE    "Typ"
+    IDS_LIST_COLUMN_DATA    "WartoúÅÊ"
+END
+
+STRINGTABLE DISCARDABLE
+BEGIN
+    IDS_APP_TITLE           "Edytor rejestru"
+    IDC_REGEDIT             "REGEDIT"
+    IDC_REGEDIT_FRAME       "REGEDIT_FRAME"
+END
+
+STRINGTABLE DISCARDABLE
+BEGIN
+    ID_REGISTRY_MENU        "Zawiera polecenia operujÅπce na caÅ≥ym rejestrze"
+    ID_EDIT_MENU            "Zawiera polecenia dotyczÅπce edycji kluczy i danych"
+    ID_VIEW_MENU            "Zawiera polecenia dotyczÅπce wyglÅπdu programu"
+    ID_FAVOURITES_MENU      "Zawiera polecenia dotyczÅπce skrÅÛtÅÛw do kluczy rejestru"
+    ID_HELP_MENU            "Zawiera polecenia wyúwietlajÅπce informacje o programie"
+    ID_EDIT_NEW_MENU        "Zawiera polecenia tworzÅπce nowe klucze i dane"
+END
+
+STRINGTABLE DISCARDABLE
+BEGIN
+    ID_EDIT_MODIFY          "Pozwala zmodyfikowaÅÊ wartoúÅÊ danej"
+    ID_EDIT_NEW_KEY         "Dodaje nowy klucz"
+    ID_EDIT_NEW_STRINGVALUE "Dodaje nowÅπ danÅπ tekstowÅπ"
+    ID_EDIT_NEW_BINARYVALUE "Dodaje nowÅπ danÅπ binarnÅπ"
+    ID_EDIT_NEW_DWORDVALUE  "Dodaje nowÅπ danÅπ liczbowÅπ"
+    ID_REGISTRY_IMPORTREGISTRYFILE "Importuje plik tekstowy do rejestru"
+    ID_REGISTRY_EXPORTREGISTRYFILE
+                            "Eksportuje czÅÍúÅÊ lub caÅ≥oúÅÊ rejestru do pliku tekstowego"
+    ID_REGISTRY_CONNECTNETWORKREGISTRY
+                            "Å£Åπczy siÅÍ do rejestru innego komputera"
+    ID_REGISTRY_DISCONNECTNETWORKREGISTRY
+                            "OdÅ≥Åπcza siÅÍ od rejestru innego komputera"
+    ID_REGISTRY_PRINT       "Drukuje caÅ≥oúÅÊ lub czÅÍúÅÊ rejestru"
+/*    ID_HELP_HELPTOPICS      "Opens registry editor help" */
+    ID_HELP_ABOUT           "Wyúwietla informacjÅÍ o programie, numerze wersji i prawach autorskich"
+END
+
+STRINGTABLE DISCARDABLE
+BEGIN
+    ID_REGISTRY_EXIT        "KoÅÒczy dziaÅ≥anie edytora rejestru"
+    ID_FAVOURITES_ADDTOFAVOURITES "Dodaje klucze do listy ulubionych"
+    ID_FAVOURITES_REMOVEFAVOURITE "Usuwa klucze z listy ulubionych"
+    ID_VIEW_STATUSBAR       "Wyúwietla lub ukrywa pasek stanu"
+    ID_VIEW_SPLIT           "Zmienia proporcje szerokoúci paneli"
+    ID_VIEW_REFRESH         "OdúwieÅøa zawartoúÅÊ okien"
+    ID_EDIT_DELETE          "Kasuje zaznaczony obiekt"
+    ID_EDIT_RENAME          "Zmienia nazwÅÍ zaznaczonego obiektu"
+    ID_EDIT_COPYKEYNAME     "Kopiuje nazwÅÍ zaznaczonego klucza do schowka"
+    ID_EDIT_FIND            "Znajduje ciÅπg znakÅÛw w kluczu lub danej"
+    ID_EDIT_FINDNEXT        "Znajduje nastÅÍpne wystÅπpienie ostatnio szukanego ciÅπgu"
+END
+
+STRINGTABLE DISCARDABLE
+BEGIN
+    IDS_ERROR		    "BÅ≥Åπd"
+    IDS_BAD_KEY		    "Nie udaÅ≥o sie przeczytaÅÊ klucza '%s'"
+    IDS_BAD_VALUE           "Nie udaÅ≥o sie przeczytaÅÊ danej '%s'"
+    IDS_UNSUPPORTED_TYPE    "Nie da siÅÍ modyfikowaÅÊ kluczy tego typu (%ld)"
+    IDS_TOO_BIG_VALUE       "WartoúÅÊ jest zbyt duÅøa (%ld)"
+    IDS_DELETE_BOX_TITLE    "Potwierdzenie kasowania"
+    IDS_DELETE_BOX_TEXT     "Jesteú pewien, Åøe chcesz usunÅπÅÊ danÅπ '%s'?"
+    IDS_NEWKEY              "Nowy klucz #%d"
+    IDS_NEWVALUE            "Nowa dana #%d"
+END
+
+/*****************************************************************/
+
+
+/*
+ * Dialog
+ */
+
+IDD_DIALOG1 DIALOG DISCARDABLE  50, 50, 268, 98
+STYLE DS_3DLOOK | DS_CONTROL | WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS |
+    WS_BORDER
+FONT 8, "MS Sans Serif"
+BEGIN
+END
+
+IDD_DIALOG2 DIALOG DISCARDABLE  0, 0, 187, 95
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Dialog"
+FONT 8, "MS Sans Serif"
+BEGIN
+    DEFPUSHBUTTON   "OK",IDOK,130,7,50,14
+    PUSHBUTTON      "Anuluj",IDCANCEL,130,24,50,14
+END
+
+
+/*
+ * TEXTINCLUDE
+ */
+
+1 TEXTINCLUDE DISCARDABLE
+BEGIN
+    "resource.h\0"
+END
+
+
+
+/*
+ * String Table
+ */
+
+/*
+ *STRINGTABLE DISCARDABLE
+ *BEGIN
+ *    ID_HELP_HELPTOPICS      "Opens Registry Editor Help."
+ *    ID_HELP_ABOUT           "Displays program information, version number, and copyright."
+ *END
+ */
