@@ -1971,6 +1971,7 @@ TOOLTIPS_Create (HWND hwnd, WPARAM wParam, LPARAM lParam)
     TOOLTIPS_INFO *infoPtr;
     NONCLIENTMETRICSA nclm;
     INT nResult;
+    HWND hParent;
 
     /* allocate memory for info structure */
     infoPtr = (TOOLTIPS_INFO *)COMCTL32_Alloc (sizeof(TOOLTIPS_INFO));
@@ -1993,18 +1994,21 @@ TOOLTIPS_Create (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
     TOOLTIPS_SetDelayTime(hwnd, TTDT_AUTOMATIC, 0L);
 
-    nResult = (INT) SendMessageA (GetParent (hwnd), WM_NOTIFYFORMAT,
+    hParent = GetParent(hwnd);
+    if (hParent) {
+        nResult = (INT) SendMessageA (hParent, WM_NOTIFYFORMAT,
 				  (WPARAM)hwnd, (LPARAM)NF_QUERY);
-    if (nResult == NFR_ANSI) {
-	infoPtr->bNotifyUnicode = FALSE;
+        if (nResult == NFR_ANSI) {
+            infoPtr->bNotifyUnicode = FALSE;
 	TRACE(" -- WM_NOTIFYFORMAT returns: NFR_ANSI\n");
-    }
-    else if (nResult == NFR_UNICODE) {
-	infoPtr->bNotifyUnicode = TRUE;
-	TRACE(" -- WM_NOTIFYFORMAT returns: NFR_UNICODE\n");
-    }
-    else {
-	ERR (" -- WM_NOTIFYFORMAT returns: error!\n");
+        }
+        else if (nResult == NFR_UNICODE) {
+	    infoPtr->bNotifyUnicode = TRUE;
+	    TRACE(" -- WM_NOTIFYFORMAT returns: NFR_UNICODE\n");
+        }
+        else {
+	    ERR (" -- WM_NOTIFYFORMAT returns: error!\n");
+        }
     }
 
     SetWindowPos (hwnd, HWND_TOP, 0, 0, 0, 0, SWP_NOZORDER | SWP_HIDEWINDOW | SWP_NOACTIVATE);
