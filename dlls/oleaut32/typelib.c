@@ -2283,6 +2283,9 @@ static ITypeLib2* ITypeLib2_Constructor_MSFT(LPVOID pLib, DWORD dwTLBLength)
 
         while(offset < tlbSegDir.pImpFiles.offset +tlbSegDir.pImpFiles.length)
 	{
+            char *name;
+            DWORD len;
+
             *ppImpLib = TLB_Alloc(sizeof(TLBImpLib));
             (*ppImpLib)->offset = offset - tlbSegDir.pImpFiles.offset;
             MSFT_ReadLEDWords(&oGuid, sizeof(INT), &cx, offset);
@@ -2293,10 +2296,15 @@ static ITypeLib2* ITypeLib2_Constructor_MSFT(LPVOID pLib, DWORD dwTLBLength)
             MSFT_ReadLEWords(& size,                      sizeof(UINT16), &cx, DO_NOT_SEEK);
 
             size >>= 2;
-            (*ppImpLib)->name = TLB_Alloc(size+1);
-            MSFT_Read((*ppImpLib)->name, size, &cx, DO_NOT_SEEK);
+            name = TLB_Alloc(size+1);
+            MSFT_Read(name, size, &cx, DO_NOT_SEEK);
+            len = MultiByteToWideChar(CP_ACP, 0, name, -1, NULL, 0 );
+            (*ppImpLib)->name = TLB_Alloc(len * sizeof(WCHAR));
+            MultiByteToWideChar(CP_ACP, 0, name, -1, (*ppImpLib)->name, len );
+            TLB_Free(name);
+
             MSFT_ReadGuid(&(*ppImpLib)->guid, oGuid, &cx);
-            offset = (offset + sizeof(INT) + sizeof(DWORD) + sizeof(LCID) + sizeof(UINT16) + size + 3) & 0xfffffffc;
+            offset = (offset + sizeof(INT) + sizeof(DWORD) + sizeof(LCID) + sizeof(UINT16) + size + 3) & ~3;
 
             ppImpLib = &(*ppImpLib)->next;
         }
