@@ -179,7 +179,7 @@ COMCTL32_ReAlloc (LPVOID lpSrc, DWORD dwSize)
 
 /**************************************************************************
  * Free [COMCTL32.73]
-.*
+ *
  * Frees an allocated memory block from the dll's private heap.
  *
  * PARAMS
@@ -1115,8 +1115,8 @@ DPA_InsertPtr (const HDPA hdpa, INT32 i, LPVOID p)
 	}
 	else {
 	    TRACE (commctrl, "-- inserting at %d\n", i);
-	    lpTemp = hdpa->ptrs + (sizeof(LPVOID) * i);
-	    lpDest = lpTemp + sizeof(LPVOID);
+	    lpTemp = hdpa->ptrs + i;
+	    lpDest = lpTemp + 1;
 	    nSize  = (hdpa->nItemCount - i) * sizeof(LPVOID);
 	    TRACE (commctrl, "-- move dest=%p src=%p size=%x\n",
 		   lpDest, lpTemp, nSize);
@@ -1216,8 +1216,8 @@ DPA_DeletePtr (const HDPA hdpa, INT32 i)
 
     /* do we need to move ?*/
     if (i < hdpa->nItemCount - 1) {
-	lpDest = hdpa->ptrs + (i * sizeof (LPVOID));
-	lpSrc = lpDest + sizeof(LPVOID);
+	lpDest = hdpa->ptrs + i;
+	lpSrc = lpDest + 1;
 	nSize = (hdpa->nItemCount - i - 1) * sizeof(LPVOID);
 	TRACE (commctrl,"-- move dest=%p src=%p size=%x\n",
 	       lpDest, lpSrc, nSize);
