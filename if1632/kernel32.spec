@@ -222,7 +222,7 @@ base	1
 0217 stdcall GetFileAttributesA(ptr) GetFileAttributes32A
 0218 stdcall GetFileAttributesW(ptr) GetFileAttributes32W
 0219 stdcall GetFileInformationByHandle(long ptr) GetFileInformationByHandle
-0220 stdcall GetFileSize(long ptr ptr) GetFileSize
+0220 stdcall GetFileSize(long ptr) GetFileSize
 0221 stdcall GetFileTime(long ptr ptr ptr) GetFileTime
 0222 stdcall GetFileType(long) GetFileType
 0223 stdcall GetFullPathNameA(ptr long ptr ptr) GetFullPathName32A

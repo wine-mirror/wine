@@ -140,7 +140,7 @@ $gs     { yylval.reg = REG_GS;  return tREG; }
 <INITIAL>mode				{ BEGIN(NOCMD); return tMODE; }
 <INITIAL>show|sho|sh			{ BEGIN(SHOW_CMD); return tSHOW; }
 
-<INFO_CMD,INITIAL>break|brea|bre|br|b	{ BEGIN(PATH_EXPECTED); return tBREAK; }
+<INITIAL,INFO_CMD,DEL_CMD>break|brea|bre|br|b	{ BEGIN(PATH_EXPECTED); return tBREAK; }
 
 <INFO_CMD>share|shar|sha		{ return tSHARE; }
 <INFO_CMD>locals|local|loca|loc		{ return tLOCAL; }
@@ -150,6 +150,7 @@ $gs     { yylval.reg = REG_GS;  return tREG; }
 <INFO_CMD>registers|regs|reg|re		{ return tREGS; }
 <INFO_CMD>segments|segment|segm|seg|se	{ return tSEGMENTS; }
 <INFO_CMD>stack|stac|sta|st     		{ return tSTACK; }
+<INFO_CMD>maps|map			{ return tMAPS; }
 <INFO_CMD,WALK_CMD>window|windo|wind|win|wnd	{ return tWND; }
 <HELP_CMD>info|inf|in                   { return tINFO; }
 

@@ -175,6 +175,7 @@ void DEBUG_HelpInfo(void)
 "  info break           Dumps information about breakpoints",
 "  info display         Shows auto-display expressions in use",
 "  info locals          Displays values of all local vars for current frame",
+"  info maps            Dumps all virtual memory mappings",
 "  info module          Displays information about all modules",
 "  info queue <handle>  Dumps queue information",
 "  info reg             Displays values in all registers at top of stack",

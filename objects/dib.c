@@ -19,6 +19,47 @@
 extern void CLIPPING_UpdateGCRegion(DC* );
 
 /***********************************************************************
+ *           DIB_GetImageWidthBytesX11
+ *
+ * Return the width of an X image in bytes
+ */
+int DIB_GetImageWidthBytesX11( int width, int depth )
+{
+    int		wbits;
+    XImage	*testimage;
+
+#define DEPTHCASE(depth) 						\
+    case depth: {							\
+	static int w##depth = 0;					\
+	if (! w##depth ) {						\
+	    testimage=XCreateImage(display,DefaultVisualOfScreen(screen),\
+		   depth,ZPixmap,0,NULL,1,1,32,20);			\
+	    w##depth = testimage->bits_per_pixel;			\
+	    XDestroyImage(testimage);					\
+	}								\
+	wbits = width*w##depth;						\
+	break;								\
+    }
+
+    switch(depth)
+    {
+    	DEPTHCASE(1);
+	DEPTHCASE(4);
+	DEPTHCASE(8);
+	DEPTHCASE(15);
+	DEPTHCASE(16);
+	DEPTHCASE(24);
+	DEPTHCASE(32);
+	default:
+        	fprintf(stderr, "DIB: unsupported depth %d.\n", depth );
+	/* assume 32 bits/pixel */
+	        wbits = width*32;
+		break;
+    }
+    return 4 * ((wbits+31)/32);
+}
+
+/***********************************************************************
  *           DIB_GetImageWidthBytes
  *
  * Return the width of an X image in bytes
@@ -840,7 +881,7 @@ INT32 GetDIBits32( HDC32 hdc, HBITMAP32 hbitmap, UINT32 startscan,
 		dibImage = XCreateImage(display, DefaultVisualOfScreen( screen ),
 			   info->bmiHeader.biBitCount, ZPixmap, 0, bits,
 			   info->bmiHeader.biWidth, info->bmiHeader.biHeight,
-			   32, DIB_GetImageWidthBytes( info->bmiHeader.biWidth,
+			   32, DIB_GetImageWidthBytesX11(info->bmiHeader.biWidth,
                                                 info->bmiHeader.biBitCount ) );
 		if( dibImage )
 		{

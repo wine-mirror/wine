@@ -690,14 +690,48 @@ void PlayMetaFileRecord16( HDC16 hdc, HANDLETABLE16 *ht, METARECORD *mr,
        DeleteDC32(hdcSrc);		    
       }
       break;
+
+       /* --- Begin of new metafile operations. April, 1997 (ak) ----*/
+    case META_CREATEREGION:
+	 {
+	    int i;
+	    HRGN32 h1,h2,hrgn=CreateRectRgn32(mr->rdParam[7],mr->rdParam[8],
+					      mr->rdParam[9],mr->rdParam[10]);
+	    for (i=0,h1=CreateRectRgn32(0,0,0,0);i<mr->rdParam[5];i++)
+	    {
+	     if (mr->rdParam[11+i*6]==2)
+	     { 
+	       h2=CreateRectRgn32(mr->rdParam[14+i*6],mr->rdParam[12+i*6],
+				  mr->rdParam[15+i*6],mr->rdParam[13+i*6]);
+	       CombineRgn32(hrgn,h1,h2,mr->rdParam[16+i*6]);	/* e.g. RGN_OR */
+	       h1=hrgn;
+	     }
+	    }
+	    MF_AddHandle(ht, nHandles,hrgn);
+         }
+       break;
+
+     case META_FILLREGION:
+        FillRgn16(hdc, *(ht->objectHandle + *(mr->rdParam)),
+		       *(ht->objectHandle + *(mr->rdParam+1)));
+        break;
+
+     case META_INVERTREGION:
+        InvertRgn16(hdc, *(ht->objectHandle + *(mr->rdParam)));
+        break; 
+
+     case META_PAINTREGION:
+        PaintRgn16(hdc, *(ht->objectHandle + *(mr->rdParam)));
+        break;
+
+     case META_SELECTCLIPREGION:
+       	SelectClipRgn32(hdc, *(ht->objectHandle + *(mr->rdParam)));
+	break;
+
 #define META_UNIMP(x) case x: fprintf(stderr,"PlayMetaFileRecord:record type "#x" not implemented.\n");break;
     META_UNIMP(META_SETTEXTCHAREXTRA)
     META_UNIMP(META_SETTEXTJUSTIFICATION)
-    META_UNIMP(META_FILLREGION)
     META_UNIMP(META_FRAMEREGION)
-    META_UNIMP(META_INVERTREGION)
-    META_UNIMP(META_PAINTREGION)
-    META_UNIMP(META_SELECTCLIPREGION)
     META_UNIMP(META_DRAWTEXT)
     META_UNIMP(META_SETDIBTODEV)
     META_UNIMP(META_ANIMATEPALETTE)

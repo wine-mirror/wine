@@ -23,6 +23,7 @@ static const DC_FUNCTIONS MFDRV_Funcs =
     MFDRV_DeleteDC,                  /* pDeleteDC */
     NULL,                            /* pDeleteObject */
     MFDRV_Ellipse,                   /* pEllipse */
+    NULL,                            /* pEnumDeviceFonts */
     NULL,                            /* pEscape */
     NULL,                            /* pExcludeClipRect */
     NULL,                            /* pExcludeVisRect */

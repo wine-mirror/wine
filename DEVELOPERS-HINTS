@@ -1,6 +1,66 @@
 This is intended to be a document to help new developers get started.
 Existing developers should feel free to add their comments.
 
+SOURCE TREE STRUCTURE
+=====================
+
+Source tree is loosely based on the original Windows modules.  Most
+directories are shared between the binary emulator and the library.
+
+Shared directories:
+-------------------
+
+KERNEL:
+
+	files/			- file I/O
+	loader/			- Win16-, Win32-binary loader
+	memory/			- memory management
+	msdos/			- DOS and BIOS emulation
+	scheduler/		- process and thread management
+
+GDI:
+
+	graphics/		- graphics drivers
+	graphics/x11drv/	- X11 display driver
+	graphics/metafiledrv/	- metafile driver
+	objects/		- logical objects
+
+USER:
+
+	controls/		- built-in widgets
+	resources/		- built-in dialog resources
+	windows/		- window management
+
+Miscellaneous:
+
+	misc/			- shell, registry, winsock, etc...
+	multimedia/		- multimedia driver
+	ipc/			- SysV IPC management
+	win32/			- misc Win32 functions
+
+Tools:
+
+	rc/			- resource compiler
+	tools/			- relay code builder + misc tools
+	documentation/		- some documentation
+
+
+Emulator-specific directories:
+------------------------------
+
+	debugger/		- built-in debugger
+	if1632/			- relay code
+	miscemu/		- hardware instruction emulation
+	graphics/win16drv/	- Win16 printer driver
+
+Winelib-specific directories:
+-----------------------------
+
+	library/		- Winelib-specific routines (should disappear)
+	programs/		- utilities (Progman, WinHelp)
+	libtest/		- Winelib test samples
+
+
 MEMORY AND SEGMENTS
 ===================
 

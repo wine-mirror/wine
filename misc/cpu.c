@@ -33,7 +33,7 @@ GetSystemInfo(LPSYSTEM_INFO si)
 	cachedsi.dwActiveProcessorMask		= 1;
 	cachedsi.dwNumberOfProcessors		= 1;
 	cachedsi.dwProcessorType		= PROCESSOR_INTEL_386;
-	cachedsi.dwAllocationGranularity	= 8;
+	cachedsi.dwAllocationGranularity	= 0x10000;
 	cachedsi.wProcessorLevel		= 3; /* 386 */
 	cachedsi.wProcessorRevision		= 0;
 

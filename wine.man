@@ -65,15 +65,15 @@ Enter the debugger before starting application
 .I -debugmsg name[,name]
 Turn debugging messages on or off - for instance, 
 .I -debugmsg +dll,+heap
-will turn on DLL and heap debugging messages.  The full list is:
-all, accel, atom, bitblt, bitmap, caret, cdaudio, class, clipboard, clipping,
-combo, comm, commdlg, crtdll, cursor, dc, dde, dialog, dll, dosfs, driver, edit,
-env, event, exec, file, fixup, font, gdi, global, graphics, heap, hook, icon,
-int, key, keyboard, ldt, listbox, local, mci, mcianim, mciwave, mdi, menu,
-message, metafile, midi, mmio, mmsys, mmtime, module, msg, nonclient, ole,
-palette, profile, prop, reg, region, relay, resource, scroll, selector,
-sem, sendmsg, shm, stress, syscolor, task, text, timer, toolhelp, ver, vxd, win,
-win32, winsock.
+will turn on DLL and heap debugging messages.  The full list is: all, accel,
+atom, bitblt, bitmap, caret, cdaudio, class, clipboard, clipping, combo,
+comm, commdlg, crtdll, cursor, dc, dde, dialog, dll, dosfs, driver, edit,
+env, event, exec, file, fixup, font, gdi, global, graphics, heap, hook,
+icon, int, key, keyboard, ldt, listbox, local, mci, mcianim, mciwave, mdi,
+menu, message, metafile, midi, mmio, mmsys, mmtime, module, msg, nonclient,
+ole, palette, profile, prop, reg, region, relay, resource, scroll, selector,
+sem, sendmsg, shm, stress, string, syscolor, task, text, timer, toolhelp,
+ver, vxd, win, win32, winsock.
 .TP
 .I -depth n
 Change the depth to use for multiple-depth screens

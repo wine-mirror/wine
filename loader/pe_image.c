@@ -420,15 +420,17 @@ problem needs to be fixed properly at some stage */
 	for(i=0; i < pe->pe_header->FileHeader.NumberOfSections; i++)
 	{
 		/* load only non-BSS segments */
-		if(pe->pe_seg[i].Characteristics & 
-			~ IMAGE_SCN_CNT_UNINITIALIZED_DATA)
-		if(lseek(fd,pe->pe_seg[i].PointerToRawData,SEEK_SET) == -1
-		|| read(fd,(char*)RVA(pe->pe_seg[i].VirtualAddress),
-			   pe->pe_seg[i].SizeOfRawData) != pe->pe_seg[i].SizeOfRawData)
-		{
+		if(!(pe->pe_seg[i].Characteristics & 
+			IMAGE_SCN_CNT_UNINITIALIZED_DATA))
+                {
+                    if(lseek(fd,pe->pe_seg[i].PointerToRawData,SEEK_SET) == -1
+                       || read(fd,(char*)RVA(pe->pe_seg[i].VirtualAddress),
+                               pe->pe_seg[i].SizeOfRawData) != pe->pe_seg[i].SizeOfRawData)
+                    {
 			fprintf(stderr,"Failed to load section %x\n", i);
 			exit(0);
-		}
+                    }
+                }
 		result = RVA (pe->pe_seg[i].VirtualAddress);
 #if 1
 		/* not needed, memory is zero */
@@ -568,21 +570,26 @@ problem needs to be fixed properly at some stage */
 
 HINSTANCE16 MODULE_CreateInstance(HMODULE16 hModule,LOADPARAMS *params);
 
-HINSTANCE16 PE_LoadModule( int fd, OFSTRUCT *ofs, LOADPARAMS* params )
+HINSTANCE16 PE_LoadModule( HFILE32 hFile, OFSTRUCT *ofs, LOADPARAMS* params )
 {
     HMODULE16 hModule;
     HINSTANCE16 hInstance;
     NE_MODULE *pModule;
     struct mz_header_s mz_header;
+    int fd;
 
     if ((hModule = MODULE_CreateDummyModule( ofs )) < 32) return hModule;
     pModule = (NE_MODULE *)GlobalLock16( hModule );
     pModule->flags = NE_FFLAGS_WIN32;
 
+    /* FIXME: Hack because PE_LoadModule is recursive */
+    fd = dup( FILE_GetUnixHandle(hFile) );
+    _lclose32( hFile );
     lseek( fd, 0, SEEK_SET );
     read( fd, &mz_header, sizeof(mz_header) );
 
     pModule->pe_module = PE_LoadImage( fd, hModule, mz_header.ne_offset );
+    close( fd );
 
     hInstance = MODULE_CreateInstance( hModule, params );
 
@@ -653,8 +660,7 @@ void PE_InitializeDLLs(HMODULE16 hModule,DWORD type,LPVOID lpReserved)
 	
 		for (pDLL = (HMODULE16 *)GlobalLock16( to_init ); *pDLL; pDLL++)
 		{
-			PE_InitializeDLLs( *pDLL, type, lpReserved);
-			PE_InitDLL( *pDLL, type, lpReserved );
+                    PE_InitializeDLLs( *pDLL, type, lpReserved);
 		}
 		GlobalFree16( to_init );
 	}

@@ -169,7 +169,8 @@ BOOL32 ResizePalette32( HPALETTE32 hPal, UINT32 cEntries )
     int*	 mapping = NULL;
 
     dprintf_palette(stddeb,"ResizePalette: hpal = %04x, prev = %i, new = %i\n",
-		    hPal, (palPtr)? -1: palPtr->logpalette.palNumEntries, cEntries );
+		    hPal, palPtr ? palPtr->logpalette.palNumEntries : -1,
+                    cEntries );
     if( !palPtr ) return FALSE;
     cPrevEnt = palPtr->logpalette.palNumEntries;
     prevVer = palPtr->logpalette.palVersion;
@@ -178,7 +179,7 @@ BOOL32 ResizePalette32( HPALETTE32 hPal, UINT32 cEntries )
     size += sizeof(int*) + sizeof(GDIOBJHDR);
     mapping = palPtr->mapping;
 
-    GDI_HEAP_REALLOC( hPal, size );
+    hPal = GDI_HEAP_REALLOC( hPal, size );
     palPtr = (PALETTEOBJ *) GDI_GetObjPtr( hPal, PALETTE_MAGIC );
     if( !palPtr ) return FALSE;
 

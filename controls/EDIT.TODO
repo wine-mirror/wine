@@ -1,3 +1,16 @@
+/*
+ *	Outdated !!!
+ *
+ *	The edit control is under reconstruction
+ *	New documentation will be provided when I'm done
+ *
+ *	Please contact me before you send in bug fixes, as the code
+ *	might have changed already.  However, keep reporting those
+ *	bugs ... I might not know about them, yet.
+ *
+ *	Frans van Dorsselaer
+ *	dorssel@MolPhys.LeidenUniv.nl
+ */
 This file gives some information about the code in edit.c.  If you want to
 change, add, or fix code, please read this text.  If you're not interested
 in doing actual work on edit.c only C & D will be of interest to you.

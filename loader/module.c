@@ -1054,11 +1054,11 @@ HINSTANCE16 MODULE_Load( LPCSTR name, LPVOID paramBlock, BOOL32 first )
         hModule = MODULE_LoadExeHeader( hFile, &ofs );
         if (hModule < 32)
         {
-            /* FIXME: Hack because PE_LoadModule is recursive */
-            int fd = dup( FILE_GetUnixHandle(hFile) );
-            _lclose32( hFile );
-            if (hModule == 21) hModule = PE_LoadModule( fd, &ofs, paramBlock );
-            close( fd );
+            /* Note: PE_LoadModule closes the file */
+            if (hModule == 21)
+                hModule = PE_LoadModule( hFile, &ofs, paramBlock );
+            else _lclose32( hFile );
+
             if (hModule < 32)
                 fprintf( stderr, "LoadModule: can't load '%s', error=%d\n",
                          name, hModule );

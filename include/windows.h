@@ -4786,6 +4786,34 @@ DECL_WINELIB_TYPE_AW(ENUMRESLANGPROC);
 #define	LOAD_LIBRARY_AS_DATAFILE	0x00000002
 #define	LOAD_WITH_ALTERED_SEARCH_PATH	0x00000008
 
+typedef struct 
+{
+    INT16    cbSize;
+    SEGPTR   lpszDocName WINE_PACKED;
+    SEGPTR   lpszOutput WINE_PACKED;
+} DOCINFO16, *LPDOCINFO16;
+
+typedef struct 
+{
+    INT32    cbSize;
+    LPCSTR   lpszDocName;
+    LPCSTR   lpszOutput;
+    LPCSTR   lpszDatatype;
+    DWORD    fwType;
+} DOCINFO32A, *LPDOCINFO32A;
+
+typedef struct 
+{
+    INT32    cbSize;
+    LPCWSTR  lpszDocName;
+    LPCWSTR  lpszOutput;
+    LPCWSTR  lpszDatatype;
+    DWORD    fwType;
+} DOCINFO32W, *LPDOCINFO32W;
+
+DECL_WINELIB_TYPE_AW(DOCINFO);
+DECL_WINELIB_TYPE_AW(LPDOCINFO);
+
 #pragma pack(4)
 
 /* Declarations for functions that exist only in Win16 */
@@ -4886,6 +4914,7 @@ VOID       PostEvent(HTASK16);
 WORD       PrestoChangoSelector(WORD,WORD);
 INT16      ReadComm(INT16,LPSTR,INT16);
 UINT16     RealizeDefaultPalette(HDC16);
+BOOL32     RegisterShellHook(HWND16,UINT16);
 INT16      RestoreVisRgn(HDC16);
 HRGN16     SaveVisRgn(HDC16);
 DWORD      ScaleViewportExt(HDC16,INT16,INT16,INT16,INT16);
@@ -5647,6 +5676,9 @@ BOOL32     EndDeferWindowPos32(HDWP32);
 BOOL16     EndDialog16(HWND16,INT16);
 BOOL32     EndDialog32(HWND32,INT32);
 #define    EndDialog WINELIB_NAME(EndDialog)
+INT16      EndDoc16(HDC16);
+INT32      EndDoc32(HDC32);
+#define    EndDoc WINELIB_NAME(EndDoc)
 BOOL16     EndPaint16(HWND16,const PAINTSTRUCT16*);
 BOOL32     EndPaint32(HWND32,const PAINTSTRUCT32*);
 #define    EndPaint WINELIB_NAME(EndPaint)
@@ -7061,6 +7093,10 @@ BOOL32     ShowWindow32(HWND32,INT32);
 DWORD      SizeofResource16(HMODULE16,HRSRC16);
 DWORD      SizeofResource32(HMODULE32,HRSRC32);
 #define    SizeofResource WINELIB_NAME(SizeofResource)
+INT16      StartDoc16(HDC16,const DOCINFO16*);
+INT32      StartDoc32A(HDC32,const DOCINFO32A*);
+INT32      StartDoc32W(HDC32,const DOCINFO32W*);
+#define    StartDoc WINELIB_NAME_AW(StartDoc)
 INT16      StartSound16(void);
 VOID       StartSound32(void);
 #define    StartSound WINELIB_NAME(StartSound)

@@ -1,11 +1,7 @@
 #ifndef WINELIB
 #include <stdio.h>
 #include <stdlib.h>
-#ifdef __GLIBC__
-#include <linux/signal.h>
-#else
 #include <signal.h>
-#endif
 #include <string.h>
 #include <errno.h>
 #include <time.h>
@@ -39,11 +35,21 @@ char * cstack[4096];
 extern void ___sig_restore();
 extern void ___masksig_restore();
 
+/* This is the sigaction structure from the Linux 2.1.20 kernel.  */
+
+struct kernel_sigaction {
+	__sighandler_t sa_handler;
+	unsigned long sa_mask;
+	unsigned long sa_flags;
+	void (*sa_restorer) __P ((void));
+};
+
 /* Similar to the sigaction function in libc, except it leaves alone the
    restorer field */
 
 static int
-wine_sigaction(int sig,struct sigaction * new, struct sigaction * old)
+wine_sigaction(int sig,struct kernel_sigaction * new, 
+               struct kernel_sigaction * old)
 {
 	__asm__("int $0x80":"=a" (sig)
 		:"0" (SYS_sigaction),"b" (sig),"c" (new),"d" (old));
@@ -166,9 +172,9 @@ HANDLER_DEF(SIGNAL_fault)
 static void SIGNAL_SetHandler( int sig, void (*func)(), int flags )
 {
     int ret;
-    struct sigaction sig_act;
 
 #ifdef linux
+    struct kernel_sigaction sig_act;
     sig_act.sa_handler = func;
     sig_act.sa_flags = SA_RESTART | (flags) ? SA_NOMASK : 0;
     /* Point to the top of the stack, minus 4 just in case, and make
@@ -179,6 +185,7 @@ static void SIGNAL_SetHandler( int sig, void (*func)(), int flags )
 #endif  /* linux */
 
 #if defined(__NetBSD__) || defined(__FreeBSD__)
+    struct sigaction sig_act;
     sigset_t sig_mask;
     sigemptyset(&sig_mask);
     sig_act.sa_handler = func;
@@ -188,6 +195,7 @@ static void SIGNAL_SetHandler( int sig, void (*func)(), int flags )
 #endif  /* __FreeBSD__ || __NetBSD__ */
 
 #if defined (__svr4__) || defined(_SCO_DS)
+    struct sigaction sig_act;
     sigset_t sig_mask;
     sigemptyset(&sig_mask);
     sig_act.sa_handler = func;
@@ -197,6 +205,7 @@ static void SIGNAL_SetHandler( int sig, void (*func)(), int flags )
 #endif  /* __svr4__ || _SCO_DS */
 
 #if defined(__EMX__)
+    struct sigaction sig_act;
     sigset_t sig_mask;
     sigemptyset(&sig_mask);
     sig_act.sa_handler = func;

@@ -23,6 +23,7 @@ static const DC_FUNCTIONS X11DRV_Funcs =
     X11DRV_DeleteDC,                 /* pDeleteDC */
     NULL,                            /* pDeleteObject */
     X11DRV_Ellipse,                  /* pEllipse */
+    NULL,                            /* pEnumDeviceFonts */
     NULL,                            /* pEscape */
     NULL,                            /* pExcludeClipRect */
     NULL,                            /* pExcludeVisRect */

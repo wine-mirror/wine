@@ -143,6 +143,7 @@
 #undef DEBUG_SENDMSG
 #undef DEBUG_SHM
 #undef DEBUG_STRESS
+#undef DEBUG_STRING
 #undef DEBUG_TASK
 #undef DEBUG_TEXT
 #undef DEBUG_TIMER
@@ -224,6 +225,7 @@
 #define DEBUG_SENDMSG
 #define DEBUG_SHM
 #define DEBUG_STRESS
+#define DEBUG_STRING
 #define DEBUG_TASK
 #define DEBUG_TEXT
 #define DEBUG_TIMER

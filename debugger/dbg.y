@@ -32,6 +32,8 @@ void flush_symbols(void);
 int yylex(void);
 int yyerror(char *);
 
+extern void VIRTUAL_Dump(void);  /* memory/virtual.c */
+
 %}
 
 %union
@@ -47,7 +49,7 @@ int yyerror(char *);
 
 %token tCONT tSTEP tLIST tNEXT tQUIT tHELP tBACKTRACE tINFO tWALK tUP tDOWN
 %token tENABLE tDISABLE tBREAK tDELETE tSET tMODE tPRINT tEXAM tABORT
-%token tCLASS tMODULE tSTACK tSEGMENTS tREGS tWND tQUEUE tLOCAL
+%token tCLASS tMAPS tMODULE tSTACK tSEGMENTS tREGS tWND tQUEUE tLOCAL
 %token tEOL tSTRING
 %token tFRAME tSHARE tCOND tDISPLAY tUNDISPLAY tDISASSEMBLE
 %token tSTEPI tNEXTI tFINISH tSHOW tDIR
@@ -259,6 +261,7 @@ info_command:
  					     DEBUG_FreeExprMem(); }
     | tINFO tSEGMENTS tEOL      { LDT_Print( 0, -1 ); }
     | tINFO tSTACK tEOL         { DEBUG_InfoStack(); }
+    | tINFO tMAPS tEOL          { VIRTUAL_Dump(); }
     | tINFO tWND expr_value tEOL      { WIN_DumpWindow( $3 ); 
  					     DEBUG_FreeExprMem(); }
     | tINFO tLOCAL tEOL         { DEBUG_InfoLocals(); }

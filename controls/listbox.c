@@ -1517,7 +1517,7 @@ static LRESULT LISTBOX_Directory( WND *wnd, LB_DESCR *descr, UINT32 attrib,
         FindClose32( handle );
     }
 
-    if ((ret == LB_OKAY) && (attrib & DDL_DRIVES))
+    if ((ret >= 0) && (attrib & DDL_DRIVES))
     {
         char buffer[] = "[-a-]";
         int drive;

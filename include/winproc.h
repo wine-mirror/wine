@@ -26,6 +26,20 @@ typedef enum
 
 typedef void *HWINDOWPROC;  /* Really a pointer to a WINDOWPROC */
 
+typedef struct
+{
+    WPARAM16	wParam;
+    LPARAM	lParam;
+    LRESULT	lResult;
+} MSGPARAM16;
+
+typedef struct
+{
+    WPARAM32    wParam;
+    LPARAM	lParam;
+    LRESULT	lResult;
+} MSGPARAM32;
+
 extern BOOL32 WINPROC_Init(void);
 extern WNDPROC16 WINPROC_GetProc( HWINDOWPROC proc, WINDOWPROCTYPE type );
 extern BOOL32 WINPROC_SetProc( HWINDOWPROC *pFirst, WNDPROC16 func,
@@ -57,9 +71,9 @@ extern void WINPROC_UnmapMsg16To32A( UINT32 msg, WPARAM32 wParam,
                                      LPARAM lParam );
 extern void WINPROC_UnmapMsg16To32W( UINT32 msg, WPARAM32 wParam,
                                      LPARAM lParam );
-extern void WINPROC_UnmapMsg32ATo16( UINT32 msg, WPARAM16 wParam,
-                                     LPARAM lParam, LRESULT lResult );
-extern void WINPROC_UnmapMsg32WTo16( UINT32 msg, WPARAM16 wParam,
-                                     LPARAM lParam, LRESULT lResult );
+extern void WINPROC_UnmapMsg32ATo16( UINT32 msg, WPARAM32 wParam,
+                                     LPARAM lParam, MSGPARAM16* pm16 );
+extern void WINPROC_UnmapMsg32WTo16( UINT32 msg, WPARAM32 wParam,
+                                     LPARAM lParam, MSGPARAM16* pm16 );
 
 #endif  /* __WINE_WINPROC_H */

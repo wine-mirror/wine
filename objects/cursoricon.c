@@ -693,7 +693,7 @@ BOOL32 DestroyIcon32( HICON32 hIcon )
 {
     dprintf_icon( stddeb, "DestroyIcon: %04x\n", hIcon );
     /* FIXME: should check for OEM icon here */
-    return (GlobalFree16( hIcon ) != 0);
+    return (GlobalFree16( hIcon ) == 0);
 }
 
 

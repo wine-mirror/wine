@@ -1035,50 +1035,76 @@ INT32 ToAscii32(
 	switch (keysym)
 	    {
 	/* symbolic ASCII is the same as defined in rfc1345 */
+#ifdef XK_dead_tilde
 	    case XK_dead_tilde :
+#endif
 	    case 0x1000FE7E : /* Xfree's XK_Dtilde */
 		dead_char = '~';	/* '? */
 		break;
+#ifdef XK_dead_acute
 	    case XK_dead_acute :
+#endif
 	    case 0x1000FE27 : /* Xfree's XK_Dacute_accent */
 		dead_char = 0xb4;	/* '' */
 		break;
+#ifdef XK_dead_circumflex
 	    case XK_dead_circumflex :
+#endif
 	    case 0x1000FE5E : /* Xfree's XK_Dcircumflex_accent */
 		dead_char = '^';	/* '> */
 		break;
+#ifdef XK_dead_grave
 	    case XK_dead_grave :
+#endif
 	    case 0x1000FE60 : /* Xfree's XK_Dgrave_accent */
 		dead_char = '`';	/* '! */
 		break;
+#ifdef XK_dead_diaeresis
 	    case XK_dead_diaeresis :
+#endif
 	    case 0x1000FE22 : /* Xfree's XK_Ddiaeresis */
 		dead_char = 0xa8;	/* ': */
 		break;
+#ifdef XK_dead_cedilla
 	    case XK_dead_cedilla :
 	        dead_char = 0xb8;	/* ', */
 	        break;
+#endif
+#ifdef XK_dead_macron
 	    case XK_dead_macron :
 	        dead_char = '-';	/* 'm isn't defined on iso-8859-x */
 	        break;
+#endif
+#ifdef XK_dead_breve
 	    case XK_dead_breve :
 	        dead_char = 0xa2;	/* '( */
 	        break;
+#endif
+#ifdef XK_dead_abovedot
 	    case XK_dead_abovedot :
 	        dead_char = 0xff;	/* '. */
 	        break;
+#endif
+#ifdef XK_dead_abovering
 	    case XK_dead_abovering :
 	        dead_char = '0';	/* '0 isn't defined on iso-8859-x */
 	        break;
+#endif
+#ifdef XK_dead_doubleacute
 	    case XK_dead_doubleacute :
 	        dead_char = 0xbd;	/* '" */
 	        break;
+#endif
+#ifdef XK_dead_caron
 	    case XK_dead_caron :
 	        dead_char = 0xb7;	/* '< */
 	        break;
+#endif
+#ifdef XK_dead_ogonek
 	    case XK_dead_ogonek :
 	        dead_char = 0xb2;	/* '; */
 	        break;
+#endif
 /* FIXME: I don't know this three.
 	    case XK_dead_iota :
 	        dead_char = 'i';	 

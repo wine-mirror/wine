@@ -23,7 +23,16 @@
 #include "debug.h"
 
 #define SUPPORT_REALIZED_FONTS 1
-
+#pragma pack(1)
+typedef struct
+{
+  SHORT nSize;
+  LPVOID lpindata;
+  LPVOID lpFont;
+  LPVOID lpXForm;
+  LPVOID lpDrawMode;
+} EXTTEXTDATA, *LPEXTTEXTDATA;
+#pragma pack(4)
 
 #if 0
 static BOOL16 windrvExtTextOut16( DC *dc, INT16 x, INT16 y, UINT16 flags, const RECT16 * lprect,
@@ -45,6 +54,7 @@ static const DC_FUNCTIONS WIN16DRV_Funcs =
     NULL,                            /* pDeleteDC */
     NULL,                            /* pDeleteObject */
     NULL,                            /* pEllipse */
+    NULL,                            /* pEnumDeviceFonts */
     WIN16DRV_Escape,                 /* pEscape */
     NULL,                            /* pExcludeClipRect */
     NULL,                            /* pExcludeVisRect */
@@ -382,7 +392,18 @@ static INT32 WIN16DRV_Escape( DC *dc, INT32 nEscape, INT32 cbInput,
 	  case 0x9:
 	    printf("Escape: SetAbortProc ignored\n");
 	    break;
-
+	case 0x100:
+	  {
+	    LPEXTTEXTDATA textData =  PTR_SEG_TO_LIN(lpInData);
+	    printf("Got in data 0x%x textData 0x%x\n",lpInData, textData);
+	    printf("size %d in 0x%x:0x%x font 0x%x:0x%x xform 0x%x:0x%x drawm 0x%x:0x%x\n",
+		   textData->nSize,
+		   textData->lpindata,PTR_SEG_TO_LIN(textData->lpindata),
+		   textData->lpFont,PTR_SEG_TO_LIN(textData->lpFont),
+		   textData->lpXForm,PTR_SEG_TO_LIN(textData->lpXForm),
+		   textData->lpDrawMode,PTR_SEG_TO_LIN(textData->lpDrawMode));
+	  }
+	    break;
 	  default:
 	    nRet = PRTDRV_Control(physDev->segptrPDEVICE, nEscape, 
 				  lpInData, lpOutData);

@@ -29,6 +29,12 @@
 #define MEM_MAPPED              0x00040000
 #define MEM_TOP_DOWN            0x00100000
 
+#define SEC_FILE                0x00800000
+#define SEC_IMAGE               0x01000000
+#define SEC_RESERVE             0x04000000
+#define SEC_COMMIT              0x08000000
+#define SEC_NOCACHE             0x10000000
+
 #define FILE_BEGIN              0
 #define FILE_CURRENT            1
 #define FILE_END                2
@@ -37,6 +43,11 @@
 #define FILE_CASE_PRESERVED_NAMES       0x00000002
 #define FILE_UNICODE_ON_DISK            0x00000004
 #define FILE_PERSISTENT_ACLS            0x00000008
+
+#define FILE_MAP_COPY                   0x00000001
+#define FILE_MAP_WRITE                  0x00000002
+#define FILE_MAP_READ                   0x00000004
+#define FILE_MAP_ALL_ACCESS             0x000f001f
 
 #define FS_CASE_SENSITIVE               FILE_CASE_SENSITIVE_SEARCH
 #define FS_CASE_IS_PRESERVED            FILE_CASE_PRESERVED_NAMES

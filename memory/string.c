@@ -9,6 +9,8 @@
 #include <string.h>
 #include "windows.h"
 #include "ldt.h"
+#include "stddebug.h"
+#include "debug.h"
 
 static const BYTE STRING_Oem2Ansi[256] =
 "\000\001\002\003\004\005\006\007\010\011\012\013\014\015\016\244"
@@ -74,6 +76,8 @@ SEGPTR lstrcat16( SEGPTR dst, SEGPTR src )
  */
 LPSTR lstrcat32A( LPSTR dst, LPCSTR src )
 {
+    dprintf_string(stddeb,"strcat: Append '%s' to '%s'\n",
+		 (src)?src:"NULL",(dst)?dst:"NULL");
     strcat( dst, src );
     return dst;
 }
@@ -107,6 +111,8 @@ SEGPTR lstrcatn16( SEGPTR dst, SEGPTR src, INT16 n )
 LPSTR lstrcatn32A( LPSTR dst, LPCSTR src, INT32 n )
 {
     register LPSTR p = dst;
+    dprintf_string(stddeb,"strcatn add %d chars from '%s' to '%s'\n",
+		 n,(src)?src:"NULL",(dst)?dst:"NULL");
     while (*p) p++;
     if ((n -= (INT32)(p - dst)) <= 0) return dst;
     lstrcpyn32A( p, src, n );
@@ -141,6 +147,8 @@ INT16 lstrcmp16( LPCSTR str1, LPCSTR str2 )
  */
 INT32 lstrcmp32A( LPCSTR str1, LPCSTR str2 )
 {
+    dprintf_string(stddeb,"strcmp: '%s' and '%s'\n",
+		 (str1)?str1:"NULL",(str2)?str2:"NULL");
     return (INT32)strcmp( str1, str2 );
 }
 
@@ -171,6 +179,8 @@ INT32 lstrcmpi32A( LPCSTR str1, LPCSTR str2 )
 {
     INT32 res;
 
+    dprintf_string(stddeb,"strcmpi '%s' and '%s'\n",
+		 (str1)?str1:"NULL",(str2)?str2:"NULL");
     while (*str1)
     {
         if ((res = toupper(*str1) - toupper(*str2)) != 0) return res;
@@ -214,6 +224,8 @@ SEGPTR lstrcpy16( SEGPTR dst, SEGPTR src )
  */
 LPSTR lstrcpy32A( LPSTR dst, LPCSTR src )
 {
+    dprintf_string(stddeb,"strcpy '%s'\n",
+		 (src)?src:"NULL");
     if (!src || !dst) return NULL;
     strcpy( dst, src );
     return dst;
@@ -247,6 +259,8 @@ SEGPTR lstrcpyn16( SEGPTR dst, SEGPTR src, INT16 n )
 LPSTR lstrcpyn32A( LPSTR dst, LPCSTR src, INT32 n )
 {
     LPSTR p = dst;
+    dprintf_string(stddeb,"strcpyn '%s' for %d chars\n",
+		 (src)?src:"NULL",n);
     while ((n-- > 1) && *src) *p++ = *src++;
     *p = 0;
     return dst;
@@ -283,6 +297,7 @@ INT32 lstrlen32A( LPCSTR str )
      * in lstrlen() ... we check only for NULL pointer reference.
      * - Marcus Meissner
      */
+    dprintf_string(stddeb,"strlen '%s'\n", (str)?str:"NULL");
     if (!str) return 0;
     return (INT32)strlen(str);
 }
@@ -305,6 +320,8 @@ INT32 lstrlen32W( LPCWSTR str )
  */
 INT32 lstrncmp32A( LPCSTR str1, LPCSTR str2, INT32 n )
 {
+    dprintf_string(stddeb,"strncmp '%s' and '%s' for %d chars\n",
+		 (str1)?str1:"NULL",(str2)?str2:"NULL",n);
     return (INT32)strncmp( str1, str2, n );
 }
 
@@ -327,6 +344,8 @@ INT32 lstrncmpi32A( LPCSTR str1, LPCSTR str2, INT32 n )
 {
     INT32 res;
 
+    dprintf_string(stddeb,"strncmpi '%s' and '%s' for %d chars\n",
+		 (str1)?str1:"NULL",(str2)?str2:"NULL",n);
     if (!n) return 0;
     while ((--n > 0) && *str1)
       if ( (res = toupper(*str1++) - toupper(*str2++)) ) return res;
@@ -480,7 +499,9 @@ void OemToAnsiBuff16( LPCSTR s, LPSTR d, UINT16 len )
 BOOL32 CharToOem32A( LPCSTR s, LPSTR d )
 {
     if (!s || !d) return TRUE;
+    dprintf_string(stddeb,"CharToOem '%s'\n", (s)?s:"NULL");
     while ((*d++ = ANSI_TO_OEM(*s++)));
+    dprintf_string(stddeb," to '%s'\n", (d)?d:"NULL");
     return TRUE;
 }
 
@@ -520,7 +541,9 @@ BOOL32 CharToOem32W( LPCWSTR s, LPSTR d )
  */
 BOOL32 OemToChar32A( LPCSTR s, LPSTR d )
 {
+    dprintf_string(stddeb,"OemToChar '%s'\n", (s)?s:"NULL");
     while ((*d++ = OEM_TO_ANSI(*s++)));
+    dprintf_string(stddeb," to '%s'\n", (d)?d:"NULL");
     return TRUE;
 }
 
@@ -530,6 +553,7 @@ BOOL32 OemToChar32A( LPCSTR s, LPSTR d )
  */
 BOOL32 OemToCharBuff32A( LPCSTR s, LPSTR d, DWORD len )
 {
+    dprintf_string(stddeb,"OemToCharBuff '%s' for %ld chars\n", (s)?s:"NULL",len);
     while (len--) *d++ = OEM_TO_ANSI(*s++);
     return TRUE;
 }

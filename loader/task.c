@@ -679,10 +679,10 @@ static void TASK_DeleteTask( HTASK16 hTask )
  */
 void TASK_KillCurrentTask( INT16 exitCode )
 {
-    extern void EXEC_ExitWindows(void);
+    extern void USER_ExitWindows(void);
 
     TDB* pTask = (TDB*) GlobalLock16( hCurrentTask );
-    if (!pTask) EXEC_ExitWindows();  /* No current task yet */
+    if (!pTask) USER_ExitWindows();  /* No current task yet */
 
     /* Perform USER cleanup */
 
@@ -698,7 +698,7 @@ void TASK_KillCurrentTask( INT16 exitCode )
     if (nTaskCount <= 1)
     {
         dprintf_task( stddeb, "Killing the last task, exiting\n" );
-        EXEC_ExitWindows();
+        USER_ExitWindows();
     }
 
     /* Remove the task from the list to be sure we never switch back to it */

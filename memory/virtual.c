@@ -38,6 +38,7 @@ typedef struct _FV
     UINT32        base;     /* Base address */
     UINT32        size;     /* Size in bytes */
     UINT32        flags;    /* Allocation flags */
+    UINT32        offset;   /* Offset from start of mapped file */
     FILE_MAPPING *mapping;  /* File mapping */
     BYTE          protect;  /* Protection for all pages at allocation time */
     BYTE          prot[1];  /* Protection byte for each page */
@@ -81,28 +82,13 @@ static FILE_VIEW *VIRTUAL_FirstView;
 
 static UINT32 page_shift;
 static UINT32 page_mask;
+static UINT32 granularity_mask;  /* Allocation granularity (usually 64k) */
 
 #define ROUND_ADDR(addr) \
    ((UINT32)(addr) & ~page_mask)
 
 #define ROUND_SIZE(addr,size) \
    (((UINT32)(size) + ((UINT32)(addr) & page_mask) + page_mask) & ~page_mask)
-
-
-/***********************************************************************
- *           VIRTUAL_DestroyMapping
- *
- * Destroy a FILE_MAPPING object.
- */
-void VIRTUAL_DestroyMapping( K32OBJ *ptr )
-{
-    FILE_MAPPING *mapping = (FILE_MAPPING *)ptr;
-    assert( ptr->type == K32OBJ_MEM_MAPPED_FILE );
-
-    if (mapping->file) K32OBJ_DecCount( &mapping->file->header );
-    ptr->type = K32OBJ_UNKNOWN;
-    HeapFree( SystemHeap, 0, mapping );
-}
 
 
 /***********************************************************************
@@ -131,24 +117,29 @@ static void VIRTUAL_DumpView( FILE_VIEW *view )
     UINT32 addr = view->base;
     BYTE prot = view->prot[0];
 
-    dprintf_virtual( stddeb, "View: %08x - %08x%s\n",
-                     view->base, view->base + view->size - 1,
-                     (view->flags & VFLAG_SYSTEM) ? " (system)" : "" );
+    fprintf( stderr, "View: %08x - %08x%s",
+             view->base, view->base + view->size - 1,
+             (view->flags & VFLAG_SYSTEM) ? " (system)" : "" );
+    if (view->mapping && view->mapping->file)
+        fprintf( stderr, " %s @ %08x\n",
+                 view->mapping->file->unix_name, view->offset );
+    else
+        fprintf( stderr, " (anonymous)\n");
 
     for (count = i = 1; i < view->size >> page_shift; i++, count++)
     {
         if (view->prot[i] == prot) continue;
-        dprintf_virtual( stddeb, "    %08x - %08x %s\n",
-                         addr, addr + (count << page_shift) - 1,
-                         VIRTUAL_GetProtStr(prot) );
+        fprintf( stderr, "      %08x - %08x %s\n",
+                 addr, addr + (count << page_shift) - 1,
+                 VIRTUAL_GetProtStr(prot) );
         addr += (count << page_shift);
         prot = view->prot[i];
         count = 0;
     }
     if (count)
-        dprintf_virtual( stddeb, "    %08x - %08x %s\n",
-                         addr, addr + (count << page_shift) - 1,
-                         VIRTUAL_GetProtStr(prot) );
+        fprintf( stderr, "      %08x - %08x %s\n",
+                 addr, addr + (count << page_shift) - 1,
+                 VIRTUAL_GetProtStr(prot) );
 }
 
 
@@ -158,7 +149,7 @@ static void VIRTUAL_DumpView( FILE_VIEW *view )
 void VIRTUAL_Dump(void)
 {
     FILE_VIEW *view = VIRTUAL_FirstView;
-    dprintf_virtual( stddeb, "\nDump of all virtual memory views:\n\n" );
+    fprintf( stderr, "\nDump of all virtual memory views:\n\n" );
     while (view)
     {
         VIRTUAL_DumpView( view );
@@ -190,18 +181,21 @@ static FILE_VIEW *VIRTUAL_FindView( UINT32 addr )
  *
  * Create a new view and add it in the linked list.
  */
-static FILE_VIEW *VIRTUAL_CreateView( UINT32 base, UINT32 size,
-                                      UINT32 flags, BYTE vprot )
+static FILE_VIEW *VIRTUAL_CreateView( UINT32 base, UINT32 size, UINT32 offset,
+                                      UINT32 flags, BYTE vprot,
+                                      FILE_MAPPING *mapping )
 {
     FILE_VIEW *view, *prev;
 
     /* Create the view structure */
 
     size >>= page_shift;
-    view = (FILE_VIEW *)xmalloc( sizeof(*view) + size - 1 );
+    if (!(view = (FILE_VIEW *)malloc( sizeof(*view) + size - 1 ))) return NULL;
     view->base    = base;
     view->size    = size << page_shift;
     view->flags   = flags;
+    view->offset  = offset;
+    view->mapping = mapping;
     view->protect = vprot;
     memset( view->prot, vprot, size );
 
@@ -239,6 +233,7 @@ static void VIRTUAL_DeleteView( FILE_VIEW *view )
     if (view->next) view->next->prev = view->prev;
     if (view->prev) view->prev->next = view->next;
     else VIRTUAL_FirstView = view->next;
+    if (view->mapping) K32OBJ_DecCount( &view->mapping->header );
     free( view );
 }
 
@@ -369,8 +364,10 @@ BOOL32 VIRTUAL_Init(void)
     GetSystemInfo( &sysinfo );
 
     page_mask = sysinfo.dwPageSize - 1;
+    granularity_mask = sysinfo.dwAllocationGranularity - 1;
     /* Make sure we have a power of 2 */
     assert( !(sysinfo.dwPageSize & page_mask) );
+    assert( !(sysinfo.dwAllocationGranularity & granularity_mask) );
     page_shift = 0;
     while ((1 << page_shift) != sysinfo.dwPageSize) page_shift++;
 
@@ -392,7 +389,8 @@ BOOL32 VIRTUAL_Init(void)
                 if (w == 'w') vprot |= VPROT_WRITE;
                 if (x == 'x') vprot |= VPROT_EXEC;
                 if (p == 'p') vprot |= VPROT_WRITECOPY;
-                VIRTUAL_CreateView( start, end - start, VFLAG_SYSTEM, vprot );
+                VIRTUAL_CreateView( start, end - start, 0,
+                                    VFLAG_SYSTEM, vprot, NULL );
             }
             fclose( f );
         }
@@ -424,7 +422,7 @@ LPVOID VirtualAlloc( LPVOID addr, DWORD size, DWORD type, DWORD protect )
     if (addr)
     {
         if (type & MEM_RESERVE) /* Round down to 64k boundary */
-            base = ((UINT32)addr + 0xffff) & ~0xffff;
+            base = ((UINT32)addr + granularity_mask) & ~granularity_mask;
         else
             base = ROUND_ADDR( addr );
         size = (((UINT32)addr + size + page_mask) & ~page_mask) - base;
@@ -456,7 +454,7 @@ LPVOID VirtualAlloc( LPVOID addr, DWORD size, DWORD type, DWORD protect )
 
     if ((type & MEM_RESERVE) || !base)
     {
-        view_size = size + (base ? 0 : 0x10000);
+        view_size = size + (base ? 0 : granularity_mask + 1);
         ptr = (UINT32)FILE_mmap( NULL, (LPVOID)base, 0, view_size, 0, 0,
                                  VIRTUAL_GetUnixProt( vprot ), MAP_PRIVATE );
         if (ptr == (UINT32)-1)
@@ -469,19 +467,21 @@ LPVOID VirtualAlloc( LPVOID addr, DWORD size, DWORD type, DWORD protect )
             /* Release the extra memory while keeping the range */
             /* starting on a 64k boundary. */
 
-            if (ptr & 0xffff0000)
+            if (ptr & granularity_mask)
             {
-                munmap( (void *)ptr, 0x10000 - (ptr & 0xffff) );
-                view_size -= (ptr & 0xffff);
-                ptr = (ptr + 0x10000) & 0xffff0000;
+                UINT32 extra = granularity_mask + 1 - (ptr & granularity_mask);
+                munmap( (void *)ptr, extra );
+                ptr += extra;
+                view_size -= extra;
             }
             if (view_size > size)
                 munmap( (void *)(ptr + size), view_size - size );
         }
-        if (!(view = VIRTUAL_CreateView( ptr, size, 0, vprot )))
+        if (!(view = VIRTUAL_CreateView( ptr, size, 0, 0, vprot, NULL )))
         {
             munmap( (void *)ptr, size );
-            return NULL;  /* FIXME: last error */
+            SetLastError( ERROR_OUTOFMEMORY );
+            return NULL;
         }
         if (debugging_virtual) VIRTUAL_DumpView( view );
         return (LPVOID)ptr;
@@ -827,6 +827,9 @@ HANDLE32 CreateFileMapping32A( HFILE32 hFile, LPSECURITY_ATTRIBUTES attr,
 {
     FILE_MAPPING *mapping = NULL;
     HANDLE32 handle;
+    BYTE vprot;
+
+    /* First search for an object with the same name */
 
     K32OBJ *obj = K32OBJ_FindName( name );
     if (obj)
@@ -840,8 +843,24 @@ HANDLE32 CreateFileMapping32A( HFILE32 hFile, LPSECURITY_ATTRIBUTES attr,
         return 0;
     }
 
-    printf( "CreateFileMapping32A(%x,%p,%08lx,%08lx%08lx,%s)\n",
-            hFile, attr, protect, size_high, size_low, name );
+    /* Check parameters */
+
+    dprintf_virtual(stddeb,"CreateFileMapping32A(%x,%p,%08lx,%08lx%08lx,%s)\n",
+                    hFile, attr, protect, size_high, size_low, name );
+
+    vprot = VIRTUAL_GetProt( protect );
+    if (protect & SEC_RESERVE)
+    {
+        if (hFile != INVALID_HANDLE_VALUE32)
+        {
+            SetLastError( ERROR_INVALID_PARAMETER );
+            return 0;
+        }
+    }
+    else vprot |= VPROT_COMMITTED;
+    if (protect & SEC_NOCACHE) vprot |= VPROT_NOCACHE;
+
+    /* Compute the size and extend the file if necessary */
 
     if (hFile == INVALID_HANDLE_VALUE32)
     {
@@ -856,6 +875,8 @@ HANDLE32 CreateFileMapping32A( HFILE32 hFile, LPSECURITY_ATTRIBUTES attr,
     {
         BY_HANDLE_FILE_INFORMATION info;
         if (!(obj = PROCESS_GetObjPtr( hFile, K32OBJ_FILE ))) goto error;
+        /* FIXME: should check if the file permissions agree
+         *        with the required protection flags */
         if (!GetFileInformationByHandle( hFile, &info )) goto error;
         if (!size_high && !size_low)
         {
@@ -873,12 +894,14 @@ HANDLE32 CreateFileMapping32A( HFILE32 hFile, LPSECURITY_ATTRIBUTES attr,
         }
     }
 
+    /* Allocate the mapping object */
+
     if (!(mapping = HeapAlloc( SystemHeap, 0, sizeof(*mapping) ))) goto error;
     mapping->header.type = K32OBJ_MEM_MAPPED_FILE;
     mapping->header.refcount = 1;
-    mapping->protect   = VIRTUAL_GetProt( protect ) | VPROT_COMMITTED;
+    mapping->protect   = vprot;
     mapping->size_high = size_high;
-    mapping->size_low  = size_low;
+    mapping->size_low  = ROUND_SIZE( 0, size_low );
     mapping->file      = (FILE_OBJECT *)obj;
 
     handle = PROCESS_AllocHandle( &mapping->header, 0 );
@@ -930,6 +953,22 @@ HANDLE32 OpenFileMapping32W( DWORD access, BOOL32 inherit, LPCWSTR name )
 
 
 /***********************************************************************
+ *           VIRTUAL_DestroyMapping
+ *
+ * Destroy a FILE_MAPPING object.
+ */
+void VIRTUAL_DestroyMapping( K32OBJ *ptr )
+{
+    FILE_MAPPING *mapping = (FILE_MAPPING *)ptr;
+    assert( ptr->type == K32OBJ_MEM_MAPPED_FILE );
+
+    if (mapping->file) K32OBJ_DecCount( &mapping->file->header );
+    ptr->type = K32OBJ_UNKNOWN;
+    HeapFree( SystemHeap, 0, mapping );
+}
+
+
+/***********************************************************************
  *             MapViewOfFile   (KERNEL32.385)
  */
 LPVOID MapViewOfFile( HANDLE32 mapping, DWORD access, DWORD offset_high,
@@ -947,17 +986,81 @@ LPVOID MapViewOfFileEx( HANDLE32 handle, DWORD access, DWORD offset_high,
                         DWORD offset_low, DWORD count, LPVOID addr )
 {
     FILE_MAPPING *mapping;
-    LPVOID ret;
+    FILE_VIEW *view;
+    UINT32 ptr = (UINT32)-1, size = 0;
+    int flags = MAP_PRIVATE;
+
+    /* Check parameters */
+
+    if ((offset_low & granularity_mask) ||
+        (addr && ((UINT32)addr & granularity_mask)))
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return NULL;
+    }
 
     if (!(mapping = (FILE_MAPPING *)PROCESS_GetObjPtr( handle,
                                                      K32OBJ_MEM_MAPPED_FILE )))
         return NULL;
 
-    ret = FILE_mmap(mapping->file, addr, mapping->size_high, mapping->size_low,
-                    offset_high, offset_low, mapping->protect, MAP_PRIVATE );
+    if (mapping->size_high || offset_high)
+        fprintf( stderr, "MapViewOfFileEx: offsets larger than 4Gb not supported\n");
 
+    if ((offset_low >= mapping->size_low) ||
+        (count > mapping->size_low - offset_low))
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        goto error;
+    }
+    if (count) size = ROUND_SIZE( offset_low, count );
+    else size = mapping->size_low - offset_low;
+
+    switch(access)
+    {
+    case FILE_MAP_ALL_ACCESS:
+    case FILE_MAP_WRITE:
+        if (!(mapping->protect & VPROT_WRITE))
+        {
+            SetLastError( ERROR_INVALID_PARAMETER );
+            goto error;
+        }
+        flags = MAP_SHARED;
+        /* fall through */
+    case FILE_MAP_READ:
+    case FILE_MAP_COPY:
+        if (mapping->protect & VPROT_READ) break;
+        /* fall through */
+    default:
+        SetLastError( ERROR_INVALID_PARAMETER );
+        goto error;
+    }
+
+    /* Map the file */
+
+    dprintf_virtual( stddeb, "MapViewOfFile: handle=%x size=%x offset=%lx\n",
+                     handle, size, offset_low );
+
+    ptr = (UINT32)FILE_mmap( mapping->file, addr, 0, size, 0, offset_low,
+                             VIRTUAL_GetUnixProt( mapping->protect ),
+                             flags );
+    if (ptr == (UINT32)-1)
+    {
+        SetLastError( ERROR_OUTOFMEMORY );
+        goto error;
+    }
+
+    if (!(view = VIRTUAL_CreateView( ptr, size, offset_low, 0,
+                                     mapping->protect, mapping )))
+    {
+        SetLastError( ERROR_OUTOFMEMORY );
+        goto error;
+    }
+    return (LPVOID)ptr;
+
+error:
+    if (ptr != (UINT32)-1) munmap( (void *)ptr, size );
     K32OBJ_DecCount( &mapping->header );
-    return ret;
+    return NULL;
 }
 
 

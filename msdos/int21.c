@@ -1346,6 +1346,8 @@ void DOS3Call( CONTEXT *context )
             AX_reg(context) = DOS_ExtendedError;
             SET_CFLAG(context);
         }
+       else AX_reg(context) = 0x0100; 
+        /* intlist: many Microsoft products for Windows rely on this */
         break;
 
     case 0x47: /* "CWD" - GET CURRENT DIRECTORY */

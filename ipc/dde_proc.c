@@ -249,7 +249,7 @@ static BOOL32 DDE_DoOneMessage (int proc_idx, int size, struct msgbuf *msgbuf)
 }
 
 /* Do some sort of premitive hash table */
-static HWND HWND_Local2Remote(HWND orig)
+static HWND16 HWND_Local2Remote(HWND16 orig)
 {
   int dde_wnd_idx;
   int deleted_idx= -1;
@@ -309,10 +309,10 @@ static BOOL32 DDE_DoMessage( MSG16 *msg, int type )
   }
 
 
-  if (msg->wParam == (HWND)-1)
+  if (msg->wParam == (HWND16)-1)
      return FALSE;
 
-  if ( ! DDE_IsRemoteWindow(msg->hwnd) && msg->hwnd!= (HWND)-1)
+  if ( ! DDE_IsRemoteWindow(msg->hwnd) && msg->hwnd!= (HWND16)-1)
      return FALSE;
 
   dprintf_msg(stddeb, "%s: DDE_DoMessage(hwnd=0x%x,msg=0x%x,..)\n",
@@ -331,7 +331,7 @@ static BOOL32 DDE_DoMessage( MSG16 *msg, int type )
   
   msg_dat.dat.mtype=type;
 
-  if (msg->hwnd == (HWND)-1) {
+  if (msg->hwnd == (HWND16)-1) {
      success= FALSE;
      for ( proc_idx=0; proc_idx < DDE_PROCS ; proc_idx++) {
 	if (proc_idx == curr_proc_idx)
@@ -357,7 +357,7 @@ BOOL32 DDE_PostMessage( MSG16 *msg)
 }
 
 
-void dde_proc_send_ack(HWND wnd, BOOL32 val) {
+void dde_proc_send_ack(HWND16 wnd, BOOL32 val) {
    int proc,msg;
 
    static struct msgbuf msg_ack={DDE_ACK,{'0'}};
@@ -441,8 +441,8 @@ int DDE_GetRemoteMessage()
      print_dde_message(title, remote_message);
   }
 
-  if (remote_message->hwnd != (HWND) -1 ) {
-    HWND dde_window= DDE_WIN_INFO(remote_message->hwnd).wnd;
+  if (remote_message->hwnd != (HWND16) -1 ) {
+    HWND16 dde_window= DDE_WIN_INFO(remote_message->hwnd).wnd;
      /* we should know exactly where to send the message (locally)*/
      if (was_sent) {
 	dprintf_dde(stddeb,
@@ -459,7 +459,7 @@ int DDE_GetRemoteMessage()
 	dde_proc_send_ack(remote_message->wParam, passed);
      }
      else {
-	passed= PostMessage(dde_window, remote_message->message,
+	passed= PostMessage16(dde_window, remote_message->message,
 			    remote_message->wParam, remote_message->lParam);
 	if (passed == FALSE) {
 	   /* Tell the sender, that the message is here, and failed */
@@ -475,7 +475,7 @@ int DDE_GetRemoteMessage()
   }
 
   /* iterate through all the windows */
-  for (wndPtr = WIN_FindWndPtr(GetTopWindow(GetDesktopWindow32()));
+  for (wndPtr = WIN_FindWndPtr(GetTopWindow32(GetDesktopWindow32()));
        wndPtr != NULL;
        wndPtr = wndPtr->next)
   {
@@ -484,7 +484,7 @@ int DDE_GetRemoteMessage()
 	   SendMessage16( wndPtr->hwndSelf, remote_message->message,
 			remote_message->wParam, remote_message->lParam );
 	else
-	   PostMessage( wndPtr->hwndSelf, remote_message->message,
+	   PostMessage16( wndPtr->hwndSelf, remote_message->message,
                         remote_message->wParam, remote_message->lParam );
      } /* if */
   } /* for */
@@ -519,7 +519,7 @@ void dde_msg_setup(int *msg_ptr)
  * If we have, atom usage will make this instance of wine set up
  * it's IPC stuff.
  */
-void DDE_TestDDE(HWND hwnd)	   
+void DDE_TestDDE(HWND16 hwnd)	   
 {
   static in_test = 0;
   if (in_test++) return;
@@ -688,7 +688,7 @@ static BOOL32 DDE_ProcHasWindows(int proc_idx)
  * This is inefficient, but who cares for the efficiency of this rare
  * operation... 
  */
-void DDE_DestroyWindow(HWND hwnd)
+void DDE_DestroyWindow(HWND16 hwnd)
 {
   int dde_wnd_idx;
   WND_DATA *tested;

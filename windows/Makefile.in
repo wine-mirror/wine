@@ -8,10 +8,12 @@ MODULE    = windows
 C_SRCS = \
 	caret.c \
 	class.c \
+	clipboard.c \
 	dce.c \
 	defdlg.c \
 	defwnd.c \
 	dialog.c \
+	driver.c \
 	event.c \
 	focus.c \
 	graphics.c \
@@ -24,11 +26,14 @@ C_SRCS = \
 	painting.c \
 	property.c \
 	queue.c \
+	rect.c \
 	scroll.c \
 	syscolor.c \
 	sysmetrics.c \
 	timer.c \
+	user.c \
 	win.c \
+	winhelp.c \
 	winpos.c \
 	winproc.c
 

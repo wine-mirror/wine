@@ -56,7 +56,7 @@ extern LONG CallTo16_long_lwwllwlllllw( FARPROC16, LONG, WORD, WORD, LONG,
     CallTo16_word_w( func, nExitType )
 #define CallWndProc16( func, hwnd, msg, wParam, lParam ) \
     CallTo16_long_wwwl( (FARPROC16)(func), hwnd, msg, wParam, lParam )
-#define CallWordBreakProc( func, lpch, ichCurrent, cch, code ) \
+#define CallWordBreakProc16( func, lpch, ichCurrent, cch, code ) \
     CallTo16_word_lwww( func, lpch, ichCurrent, cch, code )
 #define CallWndProcNCCREATE16( func, exStyle, clsName, winName, style, \
                                x, y, cx, cy, hparent, hmenu, instance, \
@@ -83,6 +83,8 @@ extern LONG CallTo32_5( FARPROC32, DWORD, DWORD, DWORD, DWORD, DWORD );
     CallTo32_3( func, hmodule, a, b )
 #define CallWndProc32( func, hwnd, msg, wParam, lParam ) \
     CallTo32_4( func, hwnd, msg, wParam, lParam )
+#define CallWordBreakProc32A( func, lpch, ichCurrent, cch, code ) \
+    CallTo32_4( func, (DWORD)lpch, ichCurrent, cch, code )
 
 
 #else  /* WINELIB */
@@ -97,7 +99,9 @@ extern LONG CallTo32_5( FARPROC32, DWORD, DWORD, DWORD, DWORD, DWORD );
     (*func)( hwnd, msg, wParam, lParam )
 #define CallWndProc32( func, hwnd, msg, wParam, lParam ) \
     (*func)( hwnd, msg, wParam, lParam )
-#define CallWordBreakProc( func, lpch, ichCurrent, cch, code ) \
+#define CallWordBreakProc16( func, lpch, ichCurrent, cch, code ) \
+    (*func)( lpch, ichCurrent, cch, code )
+#define CallWordBreakProc32A( func, lpch, ichCurrent, cch, code ) \
     (*func)( lpch, ichCurrent, cch, code )
 
 #endif  /* WINELIB */

@@ -2325,7 +2325,9 @@ UINT32 GetMenuState32( HMENU32 hMenu, UINT32 wItemID, UINT32 wFlags )
 	if (!menu) return -1;
 	else return (menu->nItems << 8) | (menu->wFlags & 0xff);
     }
-    else return item->item_flags;
+    else
+      /* Non POPUP Menus only return flags in the lower byte */
+      return (item->item_flags & 0x00ff);
 }
 
 

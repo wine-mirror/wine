@@ -1,4 +1,74 @@
 ----------------------------------------------------------------------
+Mon Apr 14 11:22:54 1997  John Harvey <john@division.co.uk>
+
+	* [graphics/win16drv/init.c]
+	Minor changes to help debug problems.
+
+	* [if1632/dummy.c] [if1632/gdi.spec]
+	Dummy routines for StartPage, EndPage, SetAbortProc, AbortProc.
+
+	* [misc/printdrv.c] [if1632/gdi.spec] [include/windows.h]
+	StartDoc16, EndDoc16 new functions.
+
+Sun Apr 13 11:18:35 1997  Alexandre Julliard  <julliard@lrc.epfl.ch>
+
+	* [memory/virtual.c]
+	Implemented MapViewOfFile.
+
+	* [debugger/dbg.y]
+	Added 'info maps' command.
+
+Fri Apr 11 16:34:08 1997  Frans van Dorsselaer <devel@rulhmpc58.LeidenUniv.nl>
+
+	* [controls/edit.c] [controls/EDIT.TODO]
+	Started restructuring.  Performance improvements.
+	Fixed:	wordwrap, scrollbar handling, scrolling, painting,
+		EditWndProc() is now reentrant, wordbreak procs,
+		better compliance to specs.
+	New:	margins, format rectangle.
+
+	* [controls/widgets.c]
+	Changed the cursor for the edit control class to an I-beam.
+
+	* [include/callback.h]
+	Added 32 bit wordbreak callback.
+
+Mon Apr  7 20:53:28 1997  Albrecht Kleine  <kleine@ak.sax.de>
+
+	* [objects/metafile.c]
+	Added handling of some more metafile records: 
+	META_CREATEREGION, META_INVERTREGION etc.
+
+Sat Apr  5 09:23:02 MET DST 1997 Sven Verdoolaege <skimo@breughel.ufsia.ac.be>
+
+	* [loader/signal.c]
+	Define kernel sigaction ourselves instead of getting it
+	from the kernel source.
+
+Wed Apr  2 21:05:00 1997  Uwe Bonnes <bon@elektron.ikp.physik.th-darmstadt.de>
+
+	* [control/menu.c]
+	Fix return value range for GetMenuState.
+
+	* [files/file.c]
+	Always fill out ofs->szPathName in FILE_DoOpenFile.
+
+	* [memory/string.c]
+	Add debug option string.
+
+	* [objects/cursoricon.c]
+	Fix return value for DestroyIcon32.
+
+Mon Mar 31 17:16:12 1997  Alex Korobka <alex@trantor.pharm.sunysb.edu>
+
+	* [DEVELOPERS-HINTS] [misc/*] [windows/*] [graphics/*]
+	Added description of the source tree. Moved several
+	files to fit it.
+
+	* [misc/shell.c]
+	Use Win32 heap functions.
+
+----------------------------------------------------------------------
 Fri Mar 28 14:18:32 1997  Alexandre Julliard  <julliard@lrc.epfl.ch>
 
 	* [misc/main.c] [ANNOUNCE]

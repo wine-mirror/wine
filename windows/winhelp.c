@@ -1,5 +1,5 @@
 /*
- *     Windows Exec & Help
+ * Windows Help
  */
 
 #include <stdlib.h>
@@ -8,76 +8,7 @@
 #include <unistd.h>
 #include "windows.h"
 #include "heap.h"
-#include "neexe.h"
-#include "shell.h"
-#include "stddebug.h"
-#include "debug.h"
-#include "win.h"
-
-
-/***********************************************************************
- *           EXEC_ExitWindows
- *
- * Clean-up everything and exit the Wine process.
- * This is the back-end of ExitWindows(), called when all windows
- * have agreed to be terminated.
- */
-void EXEC_ExitWindows(void)
-{
-    /* Do the clean-up stuff */
-
-    WriteOutProfiles();
-    SHELL_SaveRegistry();
-
-    exit(0);
-}
-
-
-/***********************************************************************
- *           ExitWindows16   (USER.7)
- */
-BOOL16 ExitWindows16( DWORD dwReturnCode, UINT16 wReserved )
-{
-    return ExitWindowsEx( EWX_LOGOFF, 0xffffffff );
-}
-
-
-/***********************************************************************
- *           ExitWindowsEx   (USER32.195)
- */
-BOOL32 ExitWindowsEx( UINT32 flags, DWORD reserved )
-{
-    int i;
-    BOOL32 result;
-    WND **list, **ppWnd;
-        
-    /* We have to build a list of all windows first, as in EnumWindows */
-
-    if (!(list = WIN_BuildWinArray( WIN_GetDesktop() ))) return FALSE;
-
-    /* Send a WM_QUERYENDSESSION message to every window */
-
-    for (ppWnd = list, i = 0; *ppWnd; ppWnd++, i++)
-    {
-        /* Make sure that the window still exists */
-        if (!IsWindow32( (*ppWnd)->hwndSelf )) continue;
-	if (!SendMessage16( (*ppWnd)->hwndSelf, WM_QUERYENDSESSION, 0, 0 ))
-            break;
-    }
-    result = !(*ppWnd);
-
-    /* Now notify all windows that got a WM_QUERYENDSESSION of the result */
-
-    for (ppWnd = list; i > 0; i--, ppWnd++)
-    {
-        if (!IsWindow32( (*ppWnd)->hwndSelf )) continue;
-	SendMessage16( (*ppWnd)->hwndSelf, WM_ENDSESSION, result, 0 );
-    }
-    HeapFree( SystemHeap, 0, list );
-
-    if (result) EXEC_ExitWindows();
-    return FALSE;
-}
+#include "ldt.h"
 
 
 /**********************************************************************

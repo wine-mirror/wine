@@ -8,7 +8,10 @@ MODULE    = graphics
 C_SRCS = \
 	bitblt.c \
 	driver.c \
+	escape.c \
+	fontengine.c \
 	mapping.c \
+	painting.c \
 	wing.c
 
 all: $(MODULE).o

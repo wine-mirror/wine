@@ -575,12 +575,13 @@ static void HOOK_UnMap32To16Common(INT32 id, INT32 code, WPARAM32 wParamOrig,
 
       case WH_CALLWNDPROC:
       {
-          void          (*localUnMap)(UINT32, WPARAM16, LPARAM, LRESULT)
+          void          (*localUnMap)(UINT32, WPARAM32, LPARAM, MSGPARAM16* )
                           = (bA) ? WINPROC_UnmapMsg32ATo16 : WINPROC_UnmapMsg32WTo16;
           LPCWPSTRUCT16   lpcwp16 = (LPCWPSTRUCT16)PTR_SEG_TO_LIN(lParam);
 	  LPCWPSTRUCT32   lpcwp32 = (LPCWPSTRUCT32)lParamOrig;
+	  MSGPARAM16	  mp16 = { lpcwp16->wParam, lpcwp16->lParam, 0 };
 
-          (*localUnMap)(lpcwp32->message, lpcwp16->wParam, lpcwp16->lParam, 0 );
+          (*localUnMap)(lpcwp32->message, lpcwp32->wParam, lpcwp32->lParam, &mp16 );
 	  SEGPTR_FREE( PTR_SEG_TO_LIN(lParam) );
           break;
       }

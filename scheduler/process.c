@@ -751,7 +751,16 @@ HANDLE32 GetStdHandle( DWORD std_handle )
         return INVALID_HANDLE_VALUE32;
     }
     hFile = FILE_DupUnixHandle( fd );
-    if (hFile != HFILE_ERROR32) FILE_SetFileType( hFile, FILE_TYPE_CHAR );
+    if (hFile != HFILE_ERROR32)
+    {
+        FILE_SetFileType( hFile, FILE_TYPE_CHAR );
+        switch(std_handle)
+        {
+        case STD_INPUT_HANDLE: pCurrentProcess->env_db->hStdin=hFile; break;
+        case STD_OUTPUT_HANDLE: pCurrentProcess->env_db->hStdout=hFile; break;
+        case STD_ERROR_HANDLE: pCurrentProcess->env_db->hStderr=hFile; break;
+        }
+    }
     return hFile;
 }
 

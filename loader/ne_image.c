@@ -527,7 +527,6 @@ void NE_InitializeDLLs( HMODULE16 hModule )
         for (pDLL = (HMODULE16 *)GlobalLock16( to_init ); *pDLL; pDLL++)
         {
             NE_InitializeDLLs( *pDLL );
-            NE_InitDLL( *pDLL );
         }
         GlobalFree16( to_init );
     }

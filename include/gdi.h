@@ -153,6 +153,7 @@ typedef struct tagDC_FUNCS
     BOOL32     (*pDeleteDC)(DC*);
     BOOL32     (*pDeleteObject)(HGDIOBJ16);
     BOOL32     (*pEllipse)(DC*,INT32,INT32,INT32,INT32);
+    BOOL32     (*pEnumDeviceFonts)(DC*,LPLOGFONT32A,FONTENUMPROCEX32A,LPARAM);
     INT32      (*pEscape)(DC*,INT32,INT32,SEGPTR,SEGPTR);
     INT32      (*pExcludeClipRect)(DC*,INT32,INT32,INT32,INT32);
     INT32      (*pExcludeVisRect)(DC*,INT32,INT32,INT32,INT32);

@@ -18,7 +18,6 @@
 #include "cursoricon.h"
 #include "stddebug.h"
 #include "debug.h"
-#include "xmalloc.h"
 #include "winreg.h"
 
 /* .ICO file ICONDIR definitions */
@@ -48,7 +47,17 @@ typedef struct
 #pragma pack(4)
 
 extern HGLOBAL16 CURSORICON_LoadHandler( HGLOBAL16, HINSTANCE16, BOOL32);
-extern WORD 	GetIconID( HGLOBAL16 hResource, DWORD resType );
+extern WORD 	 GetIconID( HGLOBAL16 hResource, DWORD resType );
+
+static const char*	lpstrMsgWndCreated = "OTHERWINDOWCREATED";
+static const char*	lpstrMsgWndDestroyed = "OTHERWINDOWDESTROYED";
+static const char*	lpstrMsgShellActivate = "ACTIVATESHELLWINDOW";
+
+static HWND16	SHELL_hWnd = 0;
+static HHOOK	SHELL_hHook = 0;
+static UINT16	uMsgWndCreated = 0;
+static UINT16	uMsgWndDestroyed = 0;
+static UINT16	uMsgShellActivate = 0;
 
 /*************************************************************************
  *				DragAcceptFiles		[SHELL.9]
@@ -466,9 +475,10 @@ BOOL32 ShellAbout32W( HWND32 hWnd, LPCWSTR szApp, LPCWSTR szOtherStuff,
  */
 static BYTE* SHELL_GetResourceTable(HFILE32 hFile)
 {
+  BYTE*              pTypeInfo = NULL;
   struct mz_header_s mz_header;
   struct ne_header_s ne_header;
-  int		size;
+  int		     size;
   
   _llseek32( hFile, 0, SEEK_SET );
   if ((_lread32(hFile,&mz_header,sizeof(mz_header)) != sizeof(mz_header)) ||
@@ -487,19 +497,21 @@ static BYTE* SHELL_GetResourceTable(HFILE32 hFile)
   size = ne_header.rname_tab_offset - ne_header.resource_tab_offset;
 
   if( size > sizeof(NE_TYPEINFO) )
-    {
-      BYTE* pTypeInfo = (BYTE*)xmalloc(size);
-
-      if( !pTypeInfo ) return NULL;
-
-      _llseek32(hFile, mz_header.ne_offset+ne_header.resource_tab_offset, SEEK_SET);
-      if( _lread32( hFile, (char*)pTypeInfo, size) != size )
-	{ free(pTypeInfo); return NULL; }
-      return pTypeInfo;
-    }
+  {
+      pTypeInfo = (BYTE*)HeapAlloc( GetProcessHeap(), 0, size);
+      if( pTypeInfo ) 
+      {
+          _llseek32(hFile, mz_header.ne_offset+ne_header.resource_tab_offset, SEEK_SET);
+          if( _lread32( hFile, (char*)pTypeInfo, size) != size )
+          { 
+	      HeapFree( GetProcessHeap(), 0, pTypeInfo); 
+	      pTypeInfo = NULL;
+          }
+      }
+  }
   /* no resources */
 
-  return NULL;
+  return pTypeInfo;
 }
 
 /*************************************************************************
@@ -559,7 +571,7 @@ static HGLOBAL16 ICO_GetIconDirectory(HINSTANCE16 hInst, HFILE32 hFile, LPicoICO
 
   i = id[2]*sizeof(icoICONDIRENTRY) + sizeof(id);
 
-  lpiID = (LPicoICONDIR)xmalloc(i);
+  lpiID = (LPicoICONDIR)HeapAlloc( GetProcessHeap(), 0, i);
 
   if( _lread32(hFile,(char*)lpiID->idEntries,i) == i )
   {  
@@ -583,7 +595,7 @@ static HGLOBAL16 ICO_GetIconDirectory(HINSTANCE16 hInst, HFILE32 hFile, LPicoICO
   }
   /* fail */
 
-  free(lpiID);
+  HeapFree( GetProcessHeap(), 0, lpiID);
   return 0;
 }
 
@@ -610,28 +622,25 @@ HGLOBAL16 InternalExtractIcon(HINSTANCE16 hInstance, LPCSTR lpszExeFileName, UIN
 
  *RetPtr = (n == 0xFFFF)? 0: 1;				/* error return values */
 
-  pData = SHELL_GetResourceTable(hFile);
-  if( pData ) 
+  if( (pData = SHELL_GetResourceTable(hFile)) )
   {
     HICON16	 hIcon = 0;
-    BOOL32	 icoFile = FALSE;
-    UINT16         iconDirCount = 0;
-    UINT16         iconCount = 0;
+    UINT16       iconDirCount = 0;
+    UINT16       iconCount = 0;
     NE_TYPEINFO* pTInfo = (NE_TYPEINFO*)(pData + 2);
     NE_NAMEINFO* pIconStorage = NULL;
     NE_NAMEINFO* pIconDir = NULL;
     LPicoICONDIR lpiID = NULL;
  
     if( pData == (BYTE*)-1 )
-      {
+    {
 	/* check for .ICO file */
 
 	hIcon = ICO_GetIconDirectory(hInstance, hFile, &lpiID);
-	if( hIcon )
-	  { icoFile = TRUE; iconDirCount = 1; iconCount = lpiID->idCount; }
-      }
+	if( hIcon ) { iconDirCount = 1; iconCount = lpiID->idCount; }
+    }
     else while( pTInfo->type_id && !(pIconStorage && pIconDir) )
-      {
+    {
 	/* find icon directory and icon repository */
 
 	if( pTInfo->type_id == NE_RSCTYPE_GROUP_ICON ) 
@@ -647,45 +656,46 @@ HGLOBAL16 InternalExtractIcon(HINSTANCE16 hInstance, LPCSTR lpszExeFileName, UIN
 	     dprintf_reg(stddeb,"\ttotal icons - %i\n", iconCount);
 	  }
   	pTInfo = (NE_TYPEINFO *)((char*)(pTInfo+1)+pTInfo->count*sizeof(NE_NAMEINFO));
-      }
+    }
 
     /* load resources and create icons */
 
-    if( (pIconStorage && pIconDir) || icoFile )
+    if( (pIconStorage && pIconDir) || lpiID )
       if( nIconIndex == (UINT16)-1 ) RetPtr[0] = iconDirCount;
       else if( nIconIndex < iconDirCount )
-        {
+      {
 	   UINT16   i, icon;
 
 	   if( n > iconDirCount - nIconIndex ) n = iconDirCount - nIconIndex;
 
 	   for( i = nIconIndex; i < nIconIndex + n; i++ ) 
-	     {
+	   {
 	       /* .ICO files have only one icon directory */
 
-	       if( !icoFile )
-	         hIcon = SHELL_LoadResource( hInstance, hFile, pIconDir + i, 
-							    *(WORD*)pData );
+	       if( lpiID == NULL )
+	           hIcon = SHELL_LoadResource( hInstance, hFile, pIconDir + i, 
+							      *(WORD*)pData );
 	       RetPtr[i-nIconIndex] = GetIconID( hIcon, 3 );
 	       GlobalFree16(hIcon); 
-             }
+           }
 
 	   for( icon = nIconIndex; icon < nIconIndex + n; icon++ )
-	     {
+	   {
 	       hIcon = 0;
-	       if( icoFile )
-		 hIcon = ICO_LoadIcon( hInstance, hFile, lpiID->idEntries + RetPtr[icon-nIconIndex]);
+	       if( lpiID )
+		   hIcon = ICO_LoadIcon( hInstance, hFile, 
+					 lpiID->idEntries + RetPtr[icon-nIconIndex]);
 	       else
 	         for( i = 0; i < iconCount; i++ )
-		    if( pIconStorage[i].id == (RetPtr[icon-nIconIndex] | 0x8000) )
-		      hIcon = SHELL_LoadResource( hInstance, hFile, pIconStorage + i,
-								     *(WORD*)pData );
+		   if( pIconStorage[i].id == (RetPtr[icon-nIconIndex] | 0x8000) )
+		     hIcon = SHELL_LoadResource( hInstance, hFile, pIconStorage + i,
+								    *(WORD*)pData );
 	       RetPtr[icon-nIconIndex] = (hIcon)?CURSORICON_LoadHandler( hIcon, hInstance, FALSE ):0;
-	     }
-        }
-    if( icoFile ) free(lpiID);
-    else free(pData);
- } 
+	   }
+      }
+    if( lpiID ) HeapFree( GetProcessHeap(), 0, lpiID);
+    else HeapFree( GetProcessHeap(), 0, pData);
+  } 
  _lclose32( hFile );
  
   /* return array with icon handles */
@@ -806,7 +816,7 @@ SEGPTR FindEnvironmentString(LPSTR str)
 DWORD DoEnvironmentSubst(LPSTR str,WORD length)
 {
   LPSTR   lpEnv = (LPSTR)PTR_SEG_TO_LIN(GetDOSEnvironment());
-  LPSTR   lpBuffer = (LPSTR)xmalloc(length);
+  LPSTR   lpBuffer = (LPSTR)HeapAlloc( GetProcessHeap(), 0, length);
   LPSTR   lpstr = str;
   LPSTR   lpbstr = lpBuffer;
 
@@ -864,7 +874,7 @@ DWORD DoEnvironmentSubst(LPSTR str,WORD length)
   dprintf_reg(stddeb," return %s\n", str);
 
   OemToChar32A(str,str);
-  free(lpBuffer);
+  HeapFree( GetProcessHeap(), 0, lpBuffer);
 
   /*  Return str length in the LOWORD
    *  and 1 in HIWORD if subst was successful.
@@ -873,23 +883,67 @@ DWORD DoEnvironmentSubst(LPSTR str,WORD length)
 }
 
 /*************************************************************************
- *				RegisterShellHook	[SHELL.102]
+ *				ShellHookProc		[SHELL.103]
+ * System-wide WH_SHELL hook.
  */
-int RegisterShellHook(void *ptr) 
+LRESULT ShellHookProc(INT16 code, WPARAM16 wParam, LPARAM lParam)
 {
-	fprintf(stdnimp, "RegisterShellHook( %p ) : Empty Stub !!!\n", ptr);
-	return 0;
+    dprintf_reg(stddeb,"ShellHookProc: %i, %04x, %08x\n", code, wParam, 
+						      (unsigned)lParam );
+    if( SHELL_hHook && SHELL_hWnd )
+    {
+	UINT16	uMsg = 0;
+        switch( code )
+        {
+	    case HSHELL_WINDOWCREATED:		uMsg = uMsgWndCreated;   break;
+	    case HSHELL_WINDOWDESTROYED:	uMsg = uMsgWndDestroyed; break;
+	    case HSHELL_ACTIVATESHELLWINDOW: 	uMsg = uMsgShellActivate;
+        }
+	PostMessage16( SHELL_hWnd, uMsg, wParam, 0 );
+    }
+    return CallNextHookEx16( WH_SHELL, code, wParam, lParam );
 }
-
 
 /*************************************************************************
- *				ShellHookProc		[SHELL.103]
+ *				RegisterShellHook	[SHELL.102]
  */
-int ShellHookProc(void) 
+BOOL32 RegisterShellHook(HWND16 hWnd, UINT16 uAction)
 {
-	fprintf(stdnimp, "ShellHookProc : Empty Stub !!!\n");
-        return 0;
+    dprintf_reg(stddeb,"RegisterShellHook: %04x [%u]\n", hWnd, uAction );
+
+    switch( uAction )
+    {
+	case 2:	/* register hWnd as a shell window */
+
+	     if( !SHELL_hHook )
+	     {
+		HMODULE16 hShell = GetModuleHandle16( "SHELL" );
+
+		SHELL_hHook = SetWindowsHookEx16( WH_SHELL, ShellHookProc,
+                                                  hShell, 0 );
+		if( SHELL_hHook )
+		{
+		    uMsgWndCreated = RegisterWindowMessage32A( lpstrMsgWndCreated );
+		    uMsgWndDestroyed = RegisterWindowMessage32A( lpstrMsgWndDestroyed );
+		    uMsgShellActivate = RegisterWindowMessage32A( lpstrMsgShellActivate );
+		} 
+		else fprintf( stderr, "\tunable to install ShellHookProc()!\n");
+	     }
+
+	     if( SHELL_hHook ) return ((SHELL_hWnd = hWnd) != 0);
+	     break;
+
+	default:
+
+	     fprintf( stderr, "RegisterShellHook: unknown code %i\n", uAction );
+
+	     /* just in case */
+
+	     SHELL_hWnd = 0;
+    }
+    return FALSE;
 }
+
 
 /*************************************************************************
  *				SHGetFileInfoA		[SHELL32.54]

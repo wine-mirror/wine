@@ -6,16 +6,11 @@ VPATH     = @srcdir@
 MODULE    = misc
 
 C_SRCS = \
-	clipboard.c \
 	comm.c \
 	commdlg.c \
 	compobj.c \
 	crtdll.c \
 	cpu.c \
-	driver.c \
-	exec.c \
-	escape.c \
-	fontengine.c \
 	lstr.c \
 	lzexpand.c \
 	main.c \
@@ -29,7 +24,6 @@ C_SRCS = \
 	olesvr.c \
 	port.c \
 	printdrv.c \
-	rect.c \
 	registry.c \
 	shell.c \
 	sound.c \
@@ -37,7 +31,6 @@ C_SRCS = \
 	stress.c \
 	system.c \
 	toolhelp.c \
-	user.c \
 	ver.c \
 	w32sys.c \
 	winsock.c \

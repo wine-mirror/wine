@@ -1,4 +1,8 @@
 #include <stdio.h>
+long stub_GDI_379(void) { fprintf(stderr, "Warning: GDI_379:STARTPAGE unimplemented stub\n"); return 1; }
+long stub_GDI_380(void) { fprintf(stderr, "Warning: GDI_380:ENDPAGE unimplemented stub\n"); return 1; }
+long stub_GDI_381(void) { fprintf(stderr, "Warning: GDI_381:SETABORTPROC unimplemented stub\n"); return 1; }
+long stub_GDI_382(void) { fprintf(stderr, "Warning: GDI_382:ABORTPROC unimplemented stub\n"); return 1; }
 long stub_GDI_530(void) { fprintf(stderr, "Warning: GDI_530: unimplemented stub\n"); return 0; }
 long stub_GDI_531(void) { fprintf(stderr, "Warning: GDI_531: unimplemented stub\n"); return 0; }
 long stub_GDI_532(void) { fprintf(stderr, "Warning: GDI_532: unimplemented stub\n"); return 0; }

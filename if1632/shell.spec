@@ -29,8 +29,8 @@ type	win16
 #101   8  010e  FINDEXEDLGPROC exported, shared data
 #101 DLLENTRYPOINT #win95 SHELL.DLL
 
-102 pascal16 RegisterShellHook(ptr) RegisterShellHook
-103 pascal16 ShellHookProc() ShellHookProc
+102 pascal16 RegisterShellHook(word word) RegisterShellHook
+103 pascal   ShellHookProc(word word long) ShellHookProc
 
 #  157 RESTARTDIALOG
 #  166 PICKICONDLG

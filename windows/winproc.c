@@ -17,7 +17,7 @@
 #include "stddebug.h"
 #include "debug.h"
 
-/* Window procedure 16--to-32-bit thunk,
+/* Window procedure 16-to-32-bit thunk,
  * see BuildSpec16Files() in tools/build.c */
 
 typedef struct
@@ -1416,8 +1416,8 @@ INT32 WINPROC_MapMsg32ATo16( UINT32 msg32, WPARAM32 wParam32, UINT16 *pmsg16,
  *
  * Unmap a message that was mapped from 32-bit Ansi to 16-bit.
  */
-void WINPROC_UnmapMsg32ATo16( UINT32 msg, WPARAM16 wParam, 
-					  LPARAM lParam, LRESULT lResult )
+void WINPROC_UnmapMsg32ATo16( UINT32 msg, WPARAM32 wParam, 
+					  LPARAM lParam, MSGPARAM16* p16 ) 
 {
     switch(msg)
     {
@@ -1439,15 +1439,15 @@ void WINPROC_UnmapMsg32ATo16( UINT32 msg, WPARAM16 wParam,
     case WM_DELETEITEM:
     case WM_DRAWITEM:
     case WM_SETTEXT:
-        SEGPTR_FREE( PTR_SEG_TO_LIN(lParam) );
+        SEGPTR_FREE( PTR_SEG_TO_LIN(p16->lParam) );
         break;
 
     case CB_GETDROPPEDCONTROLRECT32:
     case LB_GETITEMRECT32:
         {
-            RECT16 *rect = (RECT16 *)PTR_SEG_TO_LIN(lParam);
-            lParam = *(LPARAM *)(rect + 1);
-            CONV_RECT16TO32( rect, (RECT32 *)lParam );
+            RECT16 *rect = (RECT16 *)PTR_SEG_TO_LIN(p16->lParam);
+            p16->lParam = *(LPARAM *)(rect + 1);
+            CONV_RECT16TO32( rect, (RECT32 *)(p16->lParam));
             SEGPTR_FREE( rect );
         }
         break;
@@ -1455,29 +1455,27 @@ void WINPROC_UnmapMsg32ATo16( UINT32 msg, WPARAM16 wParam,
         {
             INT32 i;
             LPINT16 items = (LPINT16)PTR_SEG_TO_LIN(lParam);
-            lParam = *((LPARAM *)items - 1);
-            for (i = 0; i < wParam; i++) *((LPINT32)lParam + i) = items[i];
+            p16->lParam = *((LPARAM *)items - 1);
+            for (i = 0; i < p16->wParam; i++) *((LPINT32)(p16->lParam) + i) = items[i];
             SEGPTR_FREE( (LPARAM *)items - 1 );
         }
         break;
 
     case CB_GETEDITSEL32:
-/*
 	if( wParam )
-	    *((LPUINT32)wParam) = LOWORD(lResult);
+	    *((LPUINT32)(wParam)) = LOWORD(p16->lResult);
 	if( lParam )
-	    *((LPUINT32)lParam) = HIWORD(lResult);
-*/
+	    *((LPUINT32)(lParam)) = HIWORD(p16->lResult);	/* FIXME: substract 1? */
 	break;
 
     case LB_GETTEXT32:
     case CB_GETLBTEXT32:
-	UnMapLS( (SEGPTR)lParam );
+	UnMapLS( (SEGPTR)(p16->lParam) );
 	break;
 
     case WM_MEASUREITEM:
         {
-            MEASUREITEMSTRUCT16 *mis = (MEASUREITEMSTRUCT16 *)PTR_SEG_TO_LIN(lParam);
+            MEASUREITEMSTRUCT16 *mis = (MEASUREITEMSTRUCT16 *)PTR_SEG_TO_LIN(p16->lParam);
             MEASUREITEMSTRUCT32 *mis32 = *(MEASUREITEMSTRUCT32 **)(mis + 1);
             mis32->itemWidth  = mis->itemWidth;
             mis32->itemHeight = mis->itemHeight;
@@ -1486,23 +1484,23 @@ void WINPROC_UnmapMsg32ATo16( UINT32 msg, WPARAM16 wParam,
         break;
     case WM_GETMINMAXINFO:
         {
-            MINMAXINFO16 *mmi = (MINMAXINFO16 *)PTR_SEG_TO_LIN(lParam);
-            lParam = *(LPARAM *)(mmi + 1);
-            STRUCT32_MINMAXINFO16to32( mmi, (MINMAXINFO32 *)lParam );
+            MINMAXINFO16 *mmi = (MINMAXINFO16 *)PTR_SEG_TO_LIN(p16->lParam);
+            p16->lParam = *(LPARAM *)(mmi + 1);
+            STRUCT32_MINMAXINFO16to32( mmi, (MINMAXINFO32 *)(p16->lParam) );
             SEGPTR_FREE(mmi);
         }
         break;
     case WM_GETTEXT:
         {
-            LPSTR str = (LPSTR)PTR_SEG_TO_LIN(lParam);
-            lParam = *((LPARAM *)str - 1);
-            lstrcpyn32A( (LPSTR)lParam, str, wParam );
+            LPSTR str = (LPSTR)PTR_SEG_TO_LIN(p16->lParam);
+            p16->lParam = *((LPARAM *)str - 1);
+            lstrcpyn32A( (LPSTR)(p16->lParam), str, p16->wParam );
             SEGPTR_FREE( (LPARAM *)str - 1 );
         }
         break;
     case WM_MDICREATE:
         {
-            MDICREATESTRUCT16 *cs = (MDICREATESTRUCT16*)PTR_SEG_TO_LIN(lParam);
+            MDICREATESTRUCT16 *cs = (MDICREATESTRUCT16*)PTR_SEG_TO_LIN(p16->lParam);
             SEGPTR_FREE( PTR_SEG_TO_LIN(cs->szTitle) );
             SEGPTR_FREE( PTR_SEG_TO_LIN(cs->szClass) );
             SEGPTR_FREE( cs );
@@ -1511,11 +1509,11 @@ void WINPROC_UnmapMsg32ATo16( UINT32 msg, WPARAM16 wParam,
     case WM_NCCALCSIZE:
         {
             NCCALCSIZE_PARAMS32 *nc32;
-            NCCALCSIZE_PARAMS16 *nc = (NCCALCSIZE_PARAMS16 *)PTR_SEG_TO_LIN(lParam);
-            lParam = *(LPARAM *)(nc + 1);
-            nc32 = (NCCALCSIZE_PARAMS32 *)lParam;
+            NCCALCSIZE_PARAMS16 *nc = (NCCALCSIZE_PARAMS16 *)PTR_SEG_TO_LIN(p16->lParam);
+            p16->lParam = *(LPARAM *)(nc + 1);
+            nc32 = (NCCALCSIZE_PARAMS32 *)(p16->lParam);
             CONV_RECT16TO32( &nc->rgrc[0], &nc32->rgrc[0] );
-            if (wParam)
+            if (p16->wParam)
             {
                 CONV_RECT16TO32( &nc->rgrc[1], &nc32->rgrc[1] );
                 CONV_RECT16TO32( &nc->rgrc[2], &nc32->rgrc[2] );
@@ -1529,7 +1527,7 @@ void WINPROC_UnmapMsg32ATo16( UINT32 msg, WPARAM16 wParam,
     case WM_NCCREATE:
     case WM_CREATE:
         {
-            CREATESTRUCT16 *cs = (CREATESTRUCT16 *)PTR_SEG_TO_LIN(lParam);
+            CREATESTRUCT16 *cs = (CREATESTRUCT16 *)PTR_SEG_TO_LIN(p16->lParam);
             SEGPTR_FREE( PTR_SEG_TO_LIN(cs->lpszName) );
             SEGPTR_FREE( PTR_SEG_TO_LIN(cs->lpszClass) );
             SEGPTR_FREE( cs );
@@ -1538,9 +1536,9 @@ void WINPROC_UnmapMsg32ATo16( UINT32 msg, WPARAM16 wParam,
     case WM_WINDOWPOSCHANGING:
     case WM_WINDOWPOSCHANGED:
         {
-            WINDOWPOS16 *wp = (WINDOWPOS16 *)PTR_SEG_TO_LIN(lParam);
-            lParam = *(LPARAM *)(wp + 1);
-            STRUCT32_WINDOWPOS16to32( wp, (WINDOWPOS32 *)lParam );
+            WINDOWPOS16 *wp = (WINDOWPOS16 *)PTR_SEG_TO_LIN(p16->lParam);
+            p16->lParam = *(LPARAM *)(wp + 1);
+            STRUCT32_WINDOWPOS16to32( wp, (WINDOWPOS32 *)p16->lParam );
             SEGPTR_FREE(wp);
         }
         break;
@@ -1646,21 +1644,21 @@ INT32 WINPROC_MapMsg32WTo16( UINT32 msg32, WPARAM32 wParam32, UINT16 *pmsg16,
  *
  * Unmap a message that was mapped from 32-bit Unicode to 16-bit.
  */
-void WINPROC_UnmapMsg32WTo16( UINT32 msg, WPARAM16 wParam, 
-					  LPARAM lParam, LRESULT lResult )
+void WINPROC_UnmapMsg32WTo16( UINT32 msg, WPARAM32 wParam, 
+					  LPARAM lParam, MSGPARAM16* p16 )
 {
     switch(msg)
     {
     case WM_GETTEXT:
         {
-            LPSTR str = (LPSTR)PTR_SEG_TO_LIN(lParam);
-            lParam = *((LPARAM *)str - 1);
-            lstrcpyAtoW( (LPWSTR)lParam, str );
+            LPSTR str = (LPSTR)PTR_SEG_TO_LIN(p16->lParam);
+            p16->lParam = *((LPARAM *)str - 1);
+            lstrcpyAtoW( (LPWSTR)(p16->lParam), str );
             SEGPTR_FREE( (LPARAM *)str - 1 );
         }
         break;
     default:
-        WINPROC_UnmapMsg32ATo16( msg, wParam, lParam, lResult );
+        WINPROC_UnmapMsg32ATo16( msg, wParam, lParam, p16 );
         break;
     }
 }
@@ -1753,19 +1751,20 @@ static LRESULT WINPROC_CallProc32ATo16( WNDPROC16 func, HWND32 hwnd,
                                         UINT32 msg, WPARAM32 wParam,
                                         LPARAM lParam )
 {
-    LRESULT result;
     UINT16 msg16;
-    WPARAM16 wParam16;
+    MSGPARAM16 mp16;
     WND *wndPtr = WIN_FindWndPtr( hwnd );
     WORD ds = CURRENT_DS;
 
-    if (WINPROC_MapMsg32ATo16( msg, wParam, &msg16, &wParam16, &lParam ) == -1)
+    mp16.lParam = lParam;
+    if (WINPROC_MapMsg32ATo16( msg, wParam, 
+			      &msg16, &mp16.wParam, &mp16.lParam ) == -1)
         return 0;
     if (wndPtr) CURRENT_DS = wndPtr->hInstance;
-    result = CallWndProc16( func, hwnd, msg16, wParam16, lParam );
+    mp16.lResult = CallWndProc16( func, hwnd, msg16, mp16.wParam, mp16.lParam );
     CURRENT_DS = ds;
-    WINPROC_UnmapMsg32ATo16( msg, wParam16, lParam, result );
-    return result;
+    WINPROC_UnmapMsg32ATo16( msg, wParam, lParam, &mp16 );
+    return mp16.lResult;
 }
 
 
@@ -1778,19 +1777,19 @@ static LRESULT WINPROC_CallProc32WTo16( WNDPROC16 func, HWND32 hwnd,
                                         UINT32 msg, WPARAM32 wParam,
                                         LPARAM lParam )
 {
-    LRESULT result;
     UINT16 msg16;
-    WPARAM16 wParam16;
+    MSGPARAM16 mp16;
     WND *wndPtr = WIN_FindWndPtr( hwnd );
     WORD ds = CURRENT_DS;
 
-    if (WINPROC_MapMsg32WTo16( msg, wParam, &msg16, &wParam16, &lParam ) == -1)
+    mp16.lParam = lParam;
+    if (WINPROC_MapMsg32WTo16( msg, wParam, &msg16, &mp16.wParam, &mp16.lParam ) == -1)
         return 0;
     if (wndPtr) CURRENT_DS = wndPtr->hInstance;
-    result = CallWndProc16( func, hwnd, msg16, wParam16, lParam );
+    mp16.lResult = CallWndProc16( func, hwnd, msg16, mp16.wParam, mp16.lParam );
     CURRENT_DS = ds;
-    WINPROC_UnmapMsg32WTo16( msg, wParam16, lParam, result );
-    return result;
+    WINPROC_UnmapMsg32WTo16( msg, wParam, lParam, &mp16 );
+    return mp16.lResult;
 }
 
 

@@ -608,12 +608,16 @@ static HFILE32 FILE_DoOpenFile( LPCSTR name, OFSTRUCT *ofs, UINT32 mode,
     if (mode & OF_REOPEN) name = ofs->szPathName;
     dprintf_file( stddeb, "OpenFile: %s %04x\n", name, mode );
 
+    /* the watcom 10.6 IDE relies on a valid path returned in ofs->szPathName
+       Are there any cases where getting the path here is wrong? 
+       Uwe Bonnes 1997 Apr 2 */
+    if (!GetFullPathName32A( name, sizeof(ofs->szPathName),
+			     ofs->szPathName, NULL )) goto error;
+
     /* OF_PARSE simply fills the structure */
 
     if (mode & OF_PARSE)
     {
-        if (!GetFullPathName32A( name, sizeof(ofs->szPathName),
-                                 ofs->szPathName, NULL )) goto error;
         ofs->fFixedDisk = (GetDriveType16( ofs->szPathName[0]-'A' )
                            != DRIVE_REMOVABLE);
         dprintf_file( stddeb, "OpenFile(%s): OF_PARSE, res = '%s'\n",
@@ -628,8 +632,6 @@ static HFILE32 FILE_DoOpenFile( LPCSTR name, OFSTRUCT *ofs, UINT32 mode,
     {
         if ((hFileRet = FILE_Create(name,0666,FALSE))== INVALID_HANDLE_VALUE32)
             goto error;
-        GetFullPathName32A( name, sizeof(ofs->szPathName),
-                            ofs->szPathName, NULL );
         goto success;
     }
 
@@ -704,7 +706,8 @@ not_found:  /* We get here if the file does not exist */
 
 error:  /* We get here if there was an error opening the file */
     ofs->nErrCode = DOS_ExtendedError;
-    dprintf_file( stddeb, "OpenFile(%s): return = HFILE_ERROR\n", name );
+    dprintf_file( stddeb, "OpenFile(%s): return = HFILE_ERROR error= %d\n", 
+		  name,ofs->nErrCode );
     return HFILE_ERROR32;
 }
 
