@@ -1373,6 +1373,29 @@ static BOOL HTTP_HandleRedirect(LPWININETHTTPREQW lpwhr, LPCWSTR lpszUrl, LPCWST
 }
 
 /***********************************************************************
+ *           HTTP_build_req (internal)
+ *
+ *  concatenate all the strings in the request together
+ */
+static LPWSTR HTTP_build_req( LPCWSTR *list, int len )
+{
+    LPCWSTR *t;
+    LPWSTR str;
+
+    for( t = list; *t ; t++  )
+        len += strlenW( *t );
+    len++;
+
+    str = HeapAlloc( GetProcessHeap(), 0, len*sizeof(WCHAR) );
+    *str = 0;
+
+    for( t = list; *t ; t++ )
+        strcatW( str, *t );
+
+    return str;
+}
+
+/***********************************************************************
  *           HTTP_HttpSendRequestW (internal)
  *
  * Sends the specified request to the HTTP server
@@ -1389,10 +1412,7 @@ BOOL WINAPI HTTP_HttpSendRequestW(HINTERNET hHttpRequest, LPCWSTR lpszHeaders,
     INT i;
     BOOL bSuccess = FALSE;
     LPWSTR requestString = NULL;
-    LPWSTR lpszHeaders_r_n = NULL; /* lpszHeaders with atleast one pair of \r\n at the end */
-    INT requestStringLen;
     INT responseLen;
-    INT headerLength = 0;
     LPWININETHTTPREQW lpwhr;
     LPWININETHTTPSESSIONW lpwhs = NULL;
     LPWININETAPPINFOW hIC = NULL;
@@ -1451,6 +1471,12 @@ BOOL WINAPI HTTP_HttpSendRequestW(HINTERNET hHttpRequest, LPCWSTR lpszHeaders,
         static const WCHAR szcrlf[] = {'\r','\n', 0};
         static const WCHAR sztwocrlf[] = {'\r','\n','\r','\n', 0};
         static const WCHAR szSetCookie[] = {'S','e','t','-','C','o','o','k','i','e',0 };
+        static const WCHAR szColon[] = { ':',' ',0 };
+        LPCWSTR *req;
+        LPWSTR p;
+        int len, n;
+        char *ascii_req;
+
 
         TRACE("Going to url %s %s\n", debugstr_w(lpwhr->lpszHostName), debugstr_w(lpwhr->lpszPath));
         loop_next = FALSE;
@@ -1471,104 +1497,27 @@ BOOL WINAPI HTTP_HttpSendRequestW(HINTERNET hHttpRequest, LPCWSTR lpszHeaders,
             lpwhr->lpszPath = fixurl;
         }
 
-        /* Calculate length of request string */
-        requestStringLen =
-            strlenW(lpwhr->lpszVerb) +
-            strlenW(lpwhr->lpszPath) +
-            strlenW(HTTPHEADER) +
-            5; /* " \r\n\r\n" */
+        /* allocate space for an array of all the string pointers to be added */
+        len = (1 + HTTP_QUERY_MAX + lpwhr->nCustHeaders)*4 + 3;
+        req = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, len*sizeof(LPCWSTR) );
 
-	/* add "\r\n" to end of lpszHeaders if needed */
-	if (lpszHeaders)
-	{
-	    int len = strlenW(lpszHeaders);
-
-	    /* Check if the string is terminated with \r\n, but not if
-	     * the string is less that 2 characters long, because then
-	     * we would be looking at memory before the beginning of
-	     * the string. Besides, if it is less than 2 characters
-	     * long, then clearly, its not terminated with \r\n.
-	     */
-	    if ((len > 2) && (memcmp(lpszHeaders + (len - 2), szcrlf, sizeof szcrlf) == 0))
-	    {
-		lpszHeaders_r_n = WININET_strdupW(lpszHeaders);
-	    }
-	    else
-	    {
-		TRACE("Adding \r\n to lpszHeaders.\n");
-		lpszHeaders_r_n =  HeapAlloc( GetProcessHeap(), 0, 
-                                             (len + 3)*sizeof(WCHAR) );
-		strcpyW( lpszHeaders_r_n, lpszHeaders );
-		strcatW( lpszHeaders_r_n, szcrlf );
-	    }
-	}
-
-        /* Add length of passed headers */
-        if (lpszHeaders)
-        {
-            headerLength = -1 == dwHeaderLength ? strlenW(lpszHeaders_r_n) : dwHeaderLength;
-            requestStringLen += headerLength +  2; /* \r\n */
-        }
-
-
-        /* if there isa proxy username and password, add it to the headers */
-        if( hIC && (hIC->lpszProxyUsername || hIC->lpszProxyPassword ) )
-        {
-            HTTP_InsertProxyAuthorization( lpwhr, hIC->lpszProxyUsername, hIC->lpszProxyPassword );
-        }
-
-        /* Calculate length of custom request headers */
-        for (i = 0; i < lpwhr->nCustHeaders; i++)
-        {
-	    if (lpwhr->pCustHeaders[i].wFlags & HDR_ISREQUEST)
-	    {
-                requestStringLen += strlenW(lpwhr->pCustHeaders[i].lpszField) +
-                    strlenW(lpwhr->pCustHeaders[i].lpszValue) + 4; /*: \r\n */
-	    }
-        }
-
-        /* Calculate the length of standard request headers */
-        for (i = 0; i <= HTTP_QUERY_MAX; i++)
-        {
-            if (lpwhr->StdHeaders[i].wFlags & HDR_ISREQUEST)
-            {
-                requestStringLen += strlenW(lpwhr->StdHeaders[i].lpszField) +
-                    strlenW(lpwhr->StdHeaders[i].lpszValue) + 4; /*: \r\n */
-            }
-        }
-
-        if (lpwhr->lpszHostName)
-            requestStringLen += (strlenW(HTTPHOSTHEADER) + strlenW(lpwhr->lpszHostName));
-
-        /* if there is optional data to send, add the length */
-        if (lpOptional)
-        {
-            requestStringLen += dwOptionalLength;
-        }
-
-        /* Allocate string to hold entire request */
-        requestString = HeapAlloc(GetProcessHeap(), 0, (requestStringLen + 1)*sizeof(WCHAR));
-        if (NULL == requestString)
-        {
-            INTERNET_SetLastError(ERROR_OUTOFMEMORY);
-            goto lend;
-        }
-
-        /* Build request string */
-        strcpyW(requestString, lpwhr->lpszVerb);
-        strcatW(requestString, szSpace);
-        strcatW(requestString, lpwhr->lpszPath);
-        strcatW(requestString, HTTPHEADER );
-        cnt = strlenW(requestString);
+        /* add the verb, path and HTTP/1.0 */
+        n = 0;
+        req[n++] = lpwhr->lpszVerb;
+        req[n++] = szSpace;
+        req[n++] = lpwhr->lpszPath;
+        req[n++] = HTTPHEADER;
 
         /* Append standard request headers */
         for (i = 0; i <= HTTP_QUERY_MAX; i++)
         {
             if (lpwhr->StdHeaders[i].wFlags & HDR_ISREQUEST)
             {
-                static const WCHAR szFmt[] = { '\r','\n','%','s',':',' ','%','s', 0};
-                cnt += sprintfW(requestString + cnt, szFmt,
-                               lpwhr->StdHeaders[i].lpszField, lpwhr->StdHeaders[i].lpszValue);
+                req[n++] = szcrlf;
+                req[n++] = lpwhr->StdHeaders[i].lpszField;
+                req[n++] = szColon;
+                req[n++] = lpwhr->StdHeaders[i].lpszValue;
+
                 TRACE("Adding header %s (%s)\n",
                        debugstr_w(lpwhr->StdHeaders[i].lpszField),
                        debugstr_w(lpwhr->StdHeaders[i].lpszValue));
@@ -1580,9 +1529,11 @@ BOOL WINAPI HTTP_HttpSendRequestW(HINTERNET hHttpRequest, LPCWSTR lpszHeaders,
         {
             if (lpwhr->pCustHeaders[i].wFlags & HDR_ISREQUEST)
             {
-                static const WCHAR szFmt[] = { '\r','\n','%','s',':',' ','%','s', 0};
-                cnt += sprintfW(requestString + cnt, szFmt,
-                               lpwhr->pCustHeaders[i].lpszField, lpwhr->pCustHeaders[i].lpszValue);
+                req[n++] = szcrlf;
+                req[n++] = lpwhr->pCustHeaders[i].lpszField;
+                req[n++] = szColon;
+                req[n++] = lpwhr->pCustHeaders[i].lpszValue;
+
                 TRACE("Adding custom header %s (%s)\n",
                        debugstr_w(lpwhr->pCustHeaders[i].lpszField),
                        debugstr_w(lpwhr->pCustHeaders[i].lpszValue));
@@ -1591,53 +1542,27 @@ BOOL WINAPI HTTP_HttpSendRequestW(HINTERNET hHttpRequest, LPCWSTR lpszHeaders,
 
         if (lpwhr->lpszHostName)
         {
-            static const WCHAR szFmt[] = { '%','s','%','s',0 };
-            cnt += sprintfW(requestString + cnt, szFmt, HTTPHOSTHEADER, lpwhr->lpszHostName);
+            req[n++] = HTTPHOSTHEADER;
+            req[n++] = lpwhr->lpszHostName;
         }
 
-        /* Append passed request headers */
-        if (lpszHeaders_r_n)
-        {
-            strcpyW(requestString + cnt, szcrlf);
-            cnt += 2;
-            strcpyW(requestString + cnt, lpszHeaders_r_n);
-            cnt += headerLength;
-	    /* only add \r\n if not already present */
-	    if (memcmp((requestString + cnt) - 2, szcrlf, sizeof szcrlf) != 0)
-	    {
-                strcpyW(requestString + cnt, szcrlf);
-                cnt += 2;
-	    }
-        }
+        if( n > len )
+            ERR("oops. buffer overrun\n");
 
-        /* Set (header) termination string for request */
-        if (memcmp((requestString + cnt) - 4, sztwocrlf, sizeof sztwocrlf) != 0)
-        { /* only add it if the request string doesn't already
-             have the thing.. (could happen if the custom header
-             added it */
-                strcpyW(requestString + cnt, szcrlf);
-                cnt += 2;
-        }
-        else
-            requestStringLen -= 2;
+        requestString = HTTP_build_req( req, 4 );
+        HeapFree( GetProcessHeap(), 0, req );
  
-        /* if optional data, append it */
-        if (lpOptional)
-        {
-            memcpy(requestString + cnt, lpOptional, dwOptionalLength*sizeof(WCHAR));
-            cnt += dwOptionalLength;
-            /* we also have to decrease the expected string length by two,
-             * since we won't be adding on those following \r\n's */
-	    requestStringLen -= 2;
-        }
-        else
-        { /* if there is no optional data, add on another \r\n just to be safe */
-                /* termination for request */
-                strcpyW(requestString + cnt, szcrlf);
-                cnt += 2;
-        }
+        /*
+         * Set (header) termination string for request
+         * Make sure there's exactly two new lines at the end of the request
+         */
+        p = &requestString[strlenW(requestString)-1];
+        while ( (*p == '\n') || (*p == '\r') )
+           p--;
+        strcpyW( p+1, sztwocrlf );
+ 
+        TRACE("Request header -> %s\n", debugstr_w(requestString) );
 
-        TRACE("(%s) len(%d)\n", debugstr_w(requestString), requestStringLen);
         /* Send the request and store the results */
         if (!HTTP_OpenConnection(lpwhr))
             goto lend;
@@ -1645,24 +1570,23 @@ BOOL WINAPI HTTP_HttpSendRequestW(HINTERNET hHttpRequest, LPCWSTR lpszHeaders,
         SendAsyncCallback(hIC, hHttpRequest, lpwhr->hdr.dwContext,
                           INTERNET_STATUS_SENDING_REQUEST, NULL, 0);
 
-        /* send the request as ASCII */
-        {
-            int ascii_len;
-            char *ascii_req;
-
-            ascii_len = WideCharToMultiByte( CP_ACP, 0, requestString,
-                            requestStringLen, NULL, 0, NULL, NULL );
-            ascii_req = HeapAlloc( GetProcessHeap(), 0, ascii_len );
-            WideCharToMultiByte( CP_ACP, 0, requestString, requestStringLen,
-                            ascii_req, ascii_len, NULL, NULL );
-            NETCON_send(&lpwhr->netConnection, ascii_req, ascii_len, 0, &cnt);
-            HeapFree( GetProcessHeap(), 0, ascii_req );
-        }
-
+        /* send the request as ASCII, tack on the optional data */
+        if( !lpOptional )
+            dwOptionalLength = 0;
+        len = WideCharToMultiByte( CP_ACP, 0, requestString, -1,
+                                   NULL, 0, NULL, NULL );
+        ascii_req = HeapAlloc( GetProcessHeap(), 0, len + dwOptionalLength );
+        WideCharToMultiByte( CP_ACP, 0, requestString, -1,
+                             ascii_req, len, NULL, NULL );
+        if( lpOptional )
+            memcpy( &ascii_req[len], lpOptional, dwOptionalLength );
+        len += dwOptionalLength;
+        NETCON_send(&lpwhr->netConnection, ascii_req, len, 0, &cnt);
+        HeapFree( GetProcessHeap(), 0, ascii_req );
 
         SendAsyncCallback(hIC, hHttpRequest, lpwhr->hdr.dwContext,
                           INTERNET_STATUS_REQUEST_SENT,
-                          &requestStringLen,sizeof(DWORD));
+                          &len,sizeof(DWORD));
 
         SendAsyncCallback(hIC, hHttpRequest, lpwhr->hdr.dwContext,
                           INTERNET_STATUS_RECEIVING_RESPONSE, NULL, 0);
@@ -1760,9 +1684,6 @@ lend:
 
     if (requestString)
         HeapFree(GetProcessHeap(), 0, requestString);
-
-    if (lpszHeaders)
-	HeapFree(GetProcessHeap(), 0, lpszHeaders_r_n);
 
     /* TODO: send notification for P3P header */
     
