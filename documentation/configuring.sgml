@@ -1701,6 +1701,7 @@ And here is a setup for Drive A, a generic floppy drive:
       	The CD-ROM label can be read only if the data track of
       	the disk resides in the first track and the cdrom is
       	iso9660.
+            </para> </listitem>
           <listitem> <para>
       	Support for labels/serial nums WRITING.
             </para> </listitem>
