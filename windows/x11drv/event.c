@@ -694,15 +694,15 @@ static void EVENT_MotionNotify( HWND hWnd, XMotionEvent *event )
     int yOffset = pWnd? pWnd->rectWindow.top  : 0;
     WIN_ReleaseWndPtr(pWnd);
     
-    MOUSE_SendEvent( MOUSEEVENTF_MOVE | MOUSEEVENTF_ABSOLUTE, 
-		     xOffset + event->x, yOffset + event->y,
-		     X11DRV_EVENT_XStateToKeyState( event->state ), 
-		     event->time, hWnd);
+    X11DRV_MOUSE_SendEvent( MOUSEEVENTF_MOVE | MOUSEEVENTF_ABSOLUTE, 
+                            xOffset + event->x, yOffset + event->y,
+                            X11DRV_EVENT_XStateToKeyState( event->state ), 
+                            event->time, hWnd);
   } else {
-    MOUSE_SendEvent( MOUSEEVENTF_MOVE,
-                     event->x_root, event->y_root,
-                     X11DRV_EVENT_XStateToKeyState( event->state ), 
-                     event->time, hWnd);
+    X11DRV_MOUSE_SendEvent( MOUSEEVENTF_MOVE,
+                            event->x_root, event->y_root,
+                            X11DRV_EVENT_XStateToKeyState( event->state ), 
+                            event->time, hWnd);
   }
 }
 
@@ -753,10 +753,10 @@ static void EVENT_ButtonPress( HWND hWnd, XButtonEvent *event )
         break;
   }
   
-  MOUSE_SendEvent( statusCodes[buttonNum], 
-		   xOffset + event->x, yOffset + event->y,
-		   MAKEWPARAM(keystate,wData),
-		   event->time, hWnd);
+  X11DRV_MOUSE_SendEvent( statusCodes[buttonNum], 
+                          xOffset + event->x, yOffset + event->y,
+                          MAKEWPARAM(keystate,wData),
+                          event->time, hWnd);
 }
 
 
@@ -801,9 +801,9 @@ static void EVENT_ButtonRelease( HWND hWnd, XButtonEvent *event )
       return;
   }
 
-  MOUSE_SendEvent( statusCodes[buttonNum], 
-		   xOffset + event->x, yOffset + event->y,
-		   keystate, event->time, hWnd);
+  X11DRV_MOUSE_SendEvent( statusCodes[buttonNum], 
+                          xOffset + event->x, yOffset + event->y,
+                          keystate, event->time, hWnd);
 }
 
 

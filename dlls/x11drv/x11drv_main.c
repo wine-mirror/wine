@@ -54,7 +54,6 @@ static USER_DRIVER user_driver =
     X11DRV_MOUSE_Init,
     X11DRV_MOUSE_SetCursor,
     X11DRV_MOUSE_MoveCursor,
-    X11DRV_MOUSE_EnableWarpPointer,
     /* screen saver functions */
     X11DRV_GetScreenSaveActive,
     X11DRV_SetScreenSaveActive,

@@ -15,9 +15,10 @@
 # include <X11/extensions/XShm.h>
 #endif /* defined(HAVE_LIBXXSHM) */
 
-#include "gdi.h"
-#include "winbase.h"
 #include "windef.h"
+#include "winbase.h"
+#include "gdi.h"
+#include "user.h"
 
 #define MAX_PIXELFORMATS 8
 
@@ -393,10 +394,11 @@ extern void X11DRV_KEYBOARD_HandleEvent(struct tagWND *pWnd, XKeyEvent *event);
 
 /* X11 mouse driver */
 
-extern void X11DRV_MOUSE_Init();
+extern void X11DRV_MOUSE_Init(LPMOUSE_EVENT_PROC);
 extern void X11DRV_MOUSE_SetCursor(struct tagCURSORICONINFO *lpCursor);
 extern void X11DRV_MOUSE_MoveCursor(WORD wAbsX, WORD wAbsY);
-extern LONG X11DRV_MOUSE_EnableWarpPointer(BOOL bEnable);
+extern void X11DRV_MOUSE_SendEvent( DWORD mouseStatus, DWORD posX, DWORD posY,
+                                    DWORD keyState, DWORD time, HWND hWnd );
 
 /* X11 windows driver */
 

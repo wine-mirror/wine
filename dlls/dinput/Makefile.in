@@ -4,6 +4,7 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = dinput
 SOVERSION = 1.0
+IMPORTS   = user32
 
 SPEC_SRCS = dinput.spec
 

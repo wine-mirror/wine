@@ -4,24 +4,27 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = user32
 SOVERSION = 1.0
-WRCEXTRA  = -s -w16 -pdisplay
-ALTNAMES  = user keyboard ddeml display
+WRCEXTRA  = -w16
+ALTNAMES  = user keyboard ddeml display mouse
 
 SPEC_SRCS = \
 	user32.spec \
 	user.spec \
 	keyboard.spec \
 	ddeml.spec \
-	display.spec
+	display.spec \
+	mouse.spec
 
 C_SRCS = \
 	ddeml.c \
 	display.c \
+	mouse.c \
 	user_main.c \
 	thunk.c
 
 RC_SRCS = \
-	disp.rc
+	disp.rc \
+	mouserc.rc
 
 GLUE = thunk.c
 

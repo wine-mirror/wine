@@ -85,6 +85,7 @@ EXTRADLLNAMES = \
 	keyboard \
 	lzexpand \
 	mmsystem \
+	mouse \
 	msvideo \
 	ole2 \
 	ole2conv \
@@ -303,7 +304,7 @@ libttydrv.@LIBEXT@: ttydrv/libttydrv.@LIBEXT@
 liburlmon.@LIBEXT@: urlmon/liburlmon.@LIBEXT@
 	$(RM) $@ && $(LN_S) urlmon/liburlmon.@LIBEXT@ $@
 
-libuser32.@LIBEXT@ libuser.@LIBEXT@ libkeyboard.@LIBEXT@ libddeml.@LIBEXT@ libdisplay.@LIBEXT@: user/libuser32.@LIBEXT@
+libuser32.@LIBEXT@ libuser.@LIBEXT@ libkeyboard.@LIBEXT@ libddeml.@LIBEXT@ libdisplay.@LIBEXT@ libmouse.@LIBEXT@: user/libuser32.@LIBEXT@
 	$(RM) $@ && $(LN_S) user/libuser32.@LIBEXT@ $@
 
 libversion.@LIBEXT@ libver.@LIBEXT@: version/libversion.@LIBEXT@

@@ -18,6 +18,7 @@
 #include "wingdi.h"
 #include "wine/winuser16.h"
 #include "wine/wingdi16.h"
+#include "user.h"
 
 struct tagBITMAPOBJ;
 struct tagCLASS;
@@ -170,10 +171,9 @@ extern void TTYDRV_KEYBOARD_SetKeyboardConfig(struct tagKEYBOARD_CONFIG *cfg, DW
 
 /* TTY mouse driver */
 
-extern void TTYDRV_MOUSE_Init();
+extern void TTYDRV_MOUSE_Init(LPMOUSE_EVENT_PROC);
 extern void TTYDRV_MOUSE_SetCursor(struct tagCURSORICONINFO *lpCursor);
 extern void TTYDRV_MOUSE_MoveCursor(WORD wAbsX, WORD wAbsY);
-extern LONG TTYDRV_MOUSE_EnableWarpPointer(BOOL bEnable);
 
 /* TTY windows driver */
 

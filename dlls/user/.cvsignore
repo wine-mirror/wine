@@ -3,4 +3,5 @@
 Makefile
 disp.s
 libuser32.so.1.0
+mouserc.s
 thunk.glue.c

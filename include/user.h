@@ -37,6 +37,8 @@ typedef struct tagKEYBOARD_CONFIG {
   BOOL auto_repeat;
 } KEYBOARD_CONFIG;
 
+typedef VOID (CALLBACK *LPMOUSE_EVENT_PROC)(DWORD,DWORD,DWORD,DWORD,DWORD);
+
 typedef struct tagUSER_DRIVER {
     /* event functions */
     void   (*pSynchronize)(void);
@@ -56,10 +58,9 @@ typedef struct tagUSER_DRIVER {
     void   (*pGetKeyboardConfig)(KEYBOARD_CONFIG *);
     void   (*pSetKeyboardConfig)(KEYBOARD_CONFIG *, DWORD);
     /* mouse functions */
-    void   (*pInitMouse)(void);
+    void   (*pInitMouse)(LPMOUSE_EVENT_PROC);
     void   (*pSetCursor)(struct tagCURSORICONINFO *);
     void   (*pMoveCursor)(WORD, WORD);
-    LONG   (*pEnableWarpPointer)(BOOL);
     /* screen saver functions */
     BOOL   (*pGetScreenSaveActive)(void);
     void   (*pSetScreenSaveActive)(BOOL);
@@ -73,5 +74,8 @@ extern USER_DRIVER *USER_Driver;
 
 WORD WINAPI UserSignalProc( UINT uCode, DWORD dwThreadOrProcessID,
                             DWORD dwFlags, HMODULE16 hModule );
+
+VOID WINAPI MOUSE_Enable(LPMOUSE_EVENT_PROC lpMouseEventProc);
+VOID WINAPI MOUSE_Disable(VOID);
 
 #endif  /* __WINE_USER_H */

@@ -14,7 +14,6 @@
 #include "keyboard.h"
 #include "menu.h"
 #include "message.h"
-#include "mouse.h"
 #include "queue.h"
 #include "spy.h"
 #include "sysmetrics.h"

@@ -8,29 +8,7 @@
 #define __WINE_MOUSE_H
 
 #include "windef.h"
-
-struct tagCURSORICONINFO;
-
-#include "pshpack1.h"
-typedef struct _MOUSEINFO
-{
-    BYTE msExist;
-    BYTE msRelative;
-    WORD msNumButtons;
-    WORD msRate;
-    WORD msXThreshold;
-    WORD msYThreshold;
-    WORD msXRes;
-    WORD msYRes;
-    WORD msMouseCommPort;
-} MOUSEINFO, *LPMOUSEINFO;
-#include "poppack.h"
-
-typedef VOID (CALLBACK *LPMOUSE_EVENT_PROC)(DWORD,DWORD,DWORD,DWORD,DWORD);
-
-WORD WINAPI MOUSE_Inquire(LPMOUSEINFO lpMouseInfo);
-VOID WINAPI MOUSE_Enable(LPMOUSE_EVENT_PROC lpMouseEventProc);
-VOID WINAPI MOUSE_Disable(VOID);
+#include "user.h"
 
 /* Wine internals */
 
@@ -43,9 +21,6 @@ typedef struct _WINE_MOUSEEVENT
     HWND hWnd;
 
 } WINE_MOUSEEVENT;
-
-extern void MOUSE_SendEvent( DWORD mouseStatus, DWORD posX, DWORD posY,
-			     DWORD keyState, DWORD time, HWND hWnd );
 
 /***********************************
  * 	MouseWheel support (defines)

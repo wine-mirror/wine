@@ -1,6 +1,8 @@
 name dinput
 type win32
 
+import user32.dll
+
 @ stdcall DirectInputCreateA(long long ptr ptr) DirectInputCreateA
 @ stub DirectInputCreateW
 @ stdcall DllCanUnloadNow() DINPUT_DllCanUnloadNow

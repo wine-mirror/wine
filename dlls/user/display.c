@@ -6,7 +6,6 @@
  */
 
 #include "debugtools.h"
-#include "mouse.h"
 #include "windef.h"
 #include "user.h"
 #include "wine/winuser16.h"

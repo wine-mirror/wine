@@ -12,7 +12,6 @@
 #include "gdi.h"
 #include "message.h"
 #include "monitor.h"
-#include "mouse.h"
 #include "user.h"
 #include "win.h"
 #include "debugtools.h"
@@ -43,7 +42,6 @@ static USER_DRIVER user_driver =
     TTYDRV_MOUSE_Init,
     TTYDRV_MOUSE_SetCursor,
     TTYDRV_MOUSE_MoveCursor,
-    TTYDRV_MOUSE_EnableWarpPointer,
     /* screen saver functions */
     TTYDRV_GetScreenSaveActive,
     TTYDRV_SetScreenSaveActive,

@@ -21,16 +21,8 @@ void TTYDRV_MOUSE_MoveCursor(WORD wAbsX, WORD wAbsY)
 }
 
 /***********************************************************************
- *           TTYDRV_MOUSE_EnableWarpPointer
- */
-LONG TTYDRV_MOUSE_EnableWarpPointer(BOOL bEnable)
-{
-  return 0;
-}
-
-/***********************************************************************
  *           TTYDRV_MOUSE_Init
  */
-void TTYDRV_MOUSE_Init()
+void TTYDRV_MOUSE_Init(LPMOUSE_EVENT_PROC proc)
 {
 }
