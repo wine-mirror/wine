@@ -1164,11 +1164,27 @@ int _rmtmp(void)
 }
 
 /*********************************************************************
+ * (internal) remove_cr
+ *
+ *    Remove all \r inplace.
+ * return the number of \r removed
+ */
+static unsigned int remove_cr(char *buf, unsigned int count)
+{
+    unsigned int i, j;
+
+    for (i = 0; i < count; i++) if (buf[i] == '\r') break;
+    for (j = i + 1; j < count; j++) if (buf[j] != '\r') buf[i++] = buf[j];
+    return count - i;
+}
+
+/*********************************************************************
  *		_read (MSVCRT.@)
  */
 int _read(int fd, void *buf, unsigned int count)
 {
-  DWORD num_read;
+  DWORD num_read, all_read =0;
+  char *bufstart = buf;
   HANDLE hand = msvcrt_fdtoh(fd);
 
   /* Dont trace small reads, it gets *very* annoying */
@@ -1177,56 +1193,49 @@ int _read(int fd, void *buf, unsigned int count)
   if (hand == INVALID_HANDLE_VALUE)
     return -1;
 
-  if (MSVCRT_flags[fd]& _O_BINARY)
-    {
-      if (ReadFile(hand, buf, count, &num_read, NULL))
-	{
-	  if (num_read != count && MSVCRT_files[fd])
-	    {
-	      TRACE(":EOF\n");
-	      MSVCRT_flags[fd] |= MSVCRT__IOEOF;
-	      /*
-		MSVCRT_files[fd]->_flag |= MSVCRT__IOEOF;
-	      */
-	    }
-	  TRACE("%s\n",debugstr_an(buf,num_read));
-	  return num_read;
-	}
-      TRACE(":failed-last error (%ld)\n",GetLastError());
-      if (MSVCRT_files[fd])
-	MSVCRT_files[fd]->_flag |= MSVCRT__IOERR;
-      return -1;
-    }
-  else
-    {
-      char cc, *s=(char*)buf,* buf_start=(char*)buf;
-      unsigned int i;
-      
-      for (i = 0 , num_read = 1; i < count && (num_read == 1);)
-	{
-	  if (ReadFile(hand, &cc, 1, &num_read, NULL))
-	    if (num_read == 1)
-	      if ((cc != '\r') || MSVCRT_flags[fd] & _O_BINARY)
-		{
-		  *s++ = (char)cc;
-		  i++;
-		}
-	}
-      if (num_read != 1)
-	{
-	  TRACE(":EOF\n");
-	  if (MSVCRT_files[fd])
-	    MSVCRT_flags[fd] |= MSVCRT__IOEOF;
-	  /*
-	    MSVCRT_files[fd]->_flag |= MSVCRT__IOEOF;
-	  */
-	}
-  
-      if (count > 4)
-	TRACE("%s\n",debugstr_an(buf_start, s-buf_start));
-      return s-buf_start;
-    }
-  return 0;
+  /* Reading single bytes in O_TEXT mode makes things slow
+   * So read big chunks, then remove the \r in memory and try reading
+   * the rest until the request is satisfied or EOF is met
+   */
+  while (  all_read < count)
+  {
+      if (ReadFile(hand, bufstart+all_read, count - all_read, &num_read, NULL))
+      {
+          if (num_read != (count- all_read))
+          {
+              TRACE(":EOF\n");
+              if ( MSVCRT_files[fd])
+              {
+                  MSVCRT_flags[fd] |= MSVCRT__IOEOF;
+                  /*
+                    MSVCRT_files[fd]->_flag |= MSVCRT__IOEOF;
+                  */
+              }
+              if ((MSVCRT_flags[fd]& _O_BINARY ) !=  _O_BINARY )
+                  num_read -= remove_cr(bufstart+all_read,num_read);
+              all_read += num_read;
+              if (count > 4)
+                  TRACE("%s\n",debugstr_an(buf,all_read));
+              return all_read;
+          }
+          if ((MSVCRT_flags[fd]& _O_BINARY ) !=  _O_BINARY )
+          {
+              num_read -= remove_cr(bufstart+all_read,num_read);
+          }
+          all_read += num_read;
+      }
+      else
+      {
+          TRACE(":failed-last error (%ld)\n",GetLastError());
+          if (MSVCRT_files[fd])
+              MSVCRT_files[fd]->_flag |= MSVCRT__IOERR;
+          return -1;
+      }
+  }
+
+  if (count > 4)
+      TRACE("%s\n",debugstr_an(buf, all_read));
+  return all_read;
 }
 
 /*********************************************************************
