@@ -518,7 +518,7 @@ IClassFactory * IDefClF_fnConstructor(LPFNCREATEINSTANCE lpfnCI, PLONG pcRefDll,
 {
 	IDefClFImpl* lpclf;
 
-	lpclf = (IDefClFImpl*)HeapAlloc(GetProcessHeap(),0,sizeof(IDefClFImpl));
+	lpclf = HeapAlloc(GetProcessHeap(),0,sizeof(IDefClFImpl));
 	lpclf->ref = 1;
 	lpclf->lpVtbl = &dclfvt;
 	lpclf->lpfnCI = lpfnCI;
@@ -713,7 +713,7 @@ UINT WINAPI DragQueryFileA(
             LPWSTR lpszFileW = NULL;
 
             if(lpszFile) {
-                lpszFileW = (LPWSTR) HeapAlloc(GetProcessHeap(), 0, lLength*sizeof(WCHAR));
+                lpszFileW = HeapAlloc(GetProcessHeap(), 0, lLength*sizeof(WCHAR));
                 if(lpszFileW == NULL) {
                     goto end;
                 }
@@ -770,7 +770,7 @@ UINT WINAPI DragQueryFileW(
             LPSTR lpszFileA = NULL;
 
             if(lpszwFile) {
-                lpszFileA = (LPSTR) HeapAlloc(GetProcessHeap(), 0, lLength);
+                lpszFileA = HeapAlloc(GetProcessHeap(), 0, lLength);
                 if(lpszFileA == NULL) {
                     goto end;
                 }

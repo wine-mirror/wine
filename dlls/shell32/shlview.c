@@ -172,7 +172,7 @@ typedef void (CALLBACK *PFNSHGETSETTINGSPROC)(LPSHELLFLAGSTATE lpsfs, DWORD dwMa
  */
 IShellView * IShellView_Constructor( IShellFolder * pFolder)
 {	IShellViewImpl * sv;
-	sv=(IShellViewImpl*)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IShellViewImpl));
+	sv=HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IShellViewImpl));
 	sv->ref=1;
 	sv->lpVtbl=&svvt;
 	sv->lpvtblOleCommandTarget=&ctvt;

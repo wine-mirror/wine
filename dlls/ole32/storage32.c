@@ -3416,7 +3416,7 @@ BlockChainStream* Storage32Impl_SmallBlocksToBigBlocks(
   cbTotalRead = 0;
   cbTotalWritten = 0;
 
-  buffer = (BYTE *) HeapAlloc(GetProcessHeap(),0,DEF_SMALL_BLOCK_SIZE);
+  buffer = HeapAlloc(GetProcessHeap(),0,DEF_SMALL_BLOCK_SIZE);
   do
   {
     successRead = SmallBlockChainStream_ReadAt(*ppsbChain,
@@ -6331,7 +6331,7 @@ HRESULT OLECONVERT_LoadOLE10(LPOLESTREAM pOleStream, OLECONVERT_OLESTREAM_DATA *
 			{
 					if(pData->dwOleObjFileNameLength < 1) /* there is no file name exist */
 						pData->dwOleObjFileNameLength = sizeof(pData->dwOleObjFileNameLength);
-					pData->pstrOleObjFileName = (CHAR *)HeapAlloc(GetProcessHeap(), 0, pData->dwOleObjFileNameLength);
+					pData->pstrOleObjFileName = HeapAlloc(GetProcessHeap(), 0, pData->dwOleObjFileNameLength);
 					if(pData->pstrOleObjFileName)
 					{
 						dwSize = pOleStream->lpstbl->Get(pOleStream, (void *)(pData->pstrOleObjFileName),pData->dwOleObjFileNameLength);
@@ -6388,7 +6388,7 @@ HRESULT OLECONVERT_LoadOLE10(LPOLESTREAM pOleStream, OLECONVERT_OLESTREAM_DATA *
 			{
 				if(pData->dwDataLength > 0)
 				{
-					pData->pData = (BYTE *)HeapAlloc(GetProcessHeap(),0,pData->dwDataLength);
+					pData->pData = HeapAlloc(GetProcessHeap(),0,pData->dwDataLength);
 
 					/* Get Data (ex. IStorage, Metafile, or BMP) */
 					if(pData->pData)
@@ -6615,7 +6615,7 @@ DWORD OLECONVERT_WriteOLE20ToBuffer(LPSTORAGE pStorage, BYTE **pData)
         if(hFile != INVALID_HANDLE_VALUE)
         {
             nDataLength = GetFileSize(hFile, NULL);
-            *pData = (BYTE *) HeapAlloc(GetProcessHeap(),0,nDataLength);
+            *pData = HeapAlloc(GetProcessHeap(),0,nDataLength);
             ReadFile(hFile, *pData, nDataLength, &nDataLength, 0);
             CloseHandle(hFile);
         }
@@ -7294,7 +7294,7 @@ void OLECONVERT_GetOle10PresData(LPSTORAGE pStorage, OLECONVERT_OLESTREAM_DATA *
         IStream_Read(pStream, &(pOleStreamData->dwDataLength), sizeof(pOleStreamData->dwDataLength), NULL);
         if(pOleStreamData->dwDataLength > 0)
         {
-            pOleStreamData->pData = (LPSTR) HeapAlloc(GetProcessHeap(),0,pOleStreamData->dwDataLength);
+            pOleStreamData->pData = HeapAlloc(GetProcessHeap(),0,pOleStreamData->dwDataLength);
             IStream_Read(pStream, pOleStreamData->pData, pOleStreamData->dwDataLength, NULL);
         }
         IStream_Release(pStream);
@@ -7383,7 +7383,7 @@ void OLECONVERT_GetOle20PresData(LPSTORAGE pStorage, OLECONVERT_OLESTREAM_DATA *
             MetaFilePict.hMF = 0;
 
             /* Get Metafile Data */
-            pOleStreamData[1].pData = (BYTE *) HeapAlloc(GetProcessHeap(),0,pOleStreamData[1].dwDataLength);
+            pOleStreamData[1].pData = HeapAlloc(GetProcessHeap(),0,pOleStreamData[1].dwDataLength);
             memcpy(pOleStreamData[1].pData, &MetaFilePict, sizeof(MetaFilePict));
             IStream_Read(pStream, &(pOleStreamData[1].pData[sizeof(MetaFilePict)]), pOleStreamData[1].dwDataLength-sizeof(METAFILEPICT16), NULL);
         }

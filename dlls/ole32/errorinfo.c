@@ -63,8 +63,7 @@ static BSTR WINAPI ERRORINFO_SysAllocString(const OLECHAR* in)
      * buffer for the character count and an extra character at the
      * end for the '\0'.
      */
-    newBuffer = (DWORD*)HeapAlloc(GetProcessHeap(),
-                                 0,
+    newBuffer = HeapAlloc(GetProcessHeap(), 0,
                                  bufferSize + sizeof(WCHAR) + sizeof(DWORD));
 
     /*

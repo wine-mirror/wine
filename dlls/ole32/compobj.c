@@ -441,7 +441,7 @@ static void COMPOBJ_DLLList_Add(HANDLE hLibrary)
 
     if (openDllList == NULL) {
         /* empty list -- add first node */
-        openDllList = (OpenDll*)HeapAlloc(GetProcessHeap(),0, sizeof(OpenDll));
+        openDllList = HeapAlloc(GetProcessHeap(),0, sizeof(OpenDll));
 	openDllList->hLibrary=hLibrary;
 	openDllList->next = NULL;
     } else {
@@ -456,7 +456,7 @@ static void COMPOBJ_DLLList_Add(HANDLE hLibrary)
 	if (!found) {
 	    /* dll not found, add it */
  	    tmp = openDllList;
-	    openDllList = (OpenDll*)HeapAlloc(GetProcessHeap(),0, sizeof(OpenDll));
+	    openDllList = HeapAlloc(GetProcessHeap(),0, sizeof(OpenDll));
 	    openDllList->hLibrary = hLibrary;
 	    openDllList->next = tmp;
 	}

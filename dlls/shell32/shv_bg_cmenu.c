@@ -59,7 +59,7 @@ IContextMenu2 *ISvBgCm_Constructor(IShellFolder* pSFParent, BOOL bDesktop)
 {
 	BgCmImpl* cm;
 
-	cm = (BgCmImpl*)HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(BgCmImpl));
+	cm = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(BgCmImpl));
 	cm->lpVtbl = &cmvt;
 	cm->ref = 1;
 	cm->pSFParent = pSFParent;

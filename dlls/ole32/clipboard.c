@@ -1448,7 +1448,7 @@ static HRESULT WINAPI OLEClipbrd_IDataObject_EnumFormatEtc(
    * and create an IEnumFORMATETC enumerator from this list.
    */
   cfmt = CountClipboardFormats();
-  afmt = (FORMATETC *)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
+  afmt = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
                                 sizeof(FORMATETC) * cfmt);
   /*
    * Open the Windows clipboard, associating it with our hidden window
@@ -1576,9 +1576,7 @@ LPENUMFORMATETC OLEClipbrd_IEnumFORMATETC_Construct(UINT cfmt, const FORMATETC a
   DWORD size=cfmt * sizeof(FORMATETC);
   LPMALLOC pIMalloc;
 
-  ef = (IEnumFORMATETCImpl*)HeapAlloc(GetProcessHeap(),
-                                      HEAP_ZERO_MEMORY,
-                                      sizeof(IEnumFORMATETCImpl));
+  ef = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IEnumFORMATETCImpl));
   if (!ef)
     return NULL;
 
