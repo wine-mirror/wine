@@ -145,7 +145,8 @@ typedef struct _OFSTRUCT
     BYTE cBytes;
     BYTE fFixedDisk;
     WORD nErrCode;
-    BYTE reserved[4];
+    WORD Reserved1;
+    WORD Reserved2;
     BYTE szPathName[OFS_MAXPATHNAME];
 } OFSTRUCT, *POFSTRUCT, *LPOFSTRUCT;
 
@@ -651,7 +652,7 @@ typedef struct _SYSTEM_POWER_STATUS
   BYTE    ACLineStatus;
   BYTE    BatteryFlag;
   BYTE    BatteryLifePercent;
-  BYTE    reserved;
+  BYTE    Reserved1;
   DWORD   BatteryLifeTime;
   DWORD   BatteryFullLifeTime;
 } SYSTEM_POWER_STATUS, *LPSYSTEM_POWER_STATUS;
@@ -923,10 +924,17 @@ ULONGLONG WINAPI VerSetConditionMask(ULONGLONG,DWORD,BYTE);
 
 typedef struct tagCOMSTAT
 {
-    DWORD status;
+    DWORD fCtsHold : 1;
+    DWORD fDsrHold : 1;
+    DWORD fRlsdHold : 1;
+    DWORD fXoffHold : 1;
+    DWORD fXoffSent : 1;
+    DWORD fEof : 1;
+    DWORD fTxim : 1;
+    DWORD fReserved : 25;
     DWORD cbInQue;
     DWORD cbOutQue;
-} COMSTAT,*LPCOMSTAT;
+} COMSTAT, *LPCOMSTAT;
 
 typedef struct tagDCB
 {
@@ -1938,14 +1946,23 @@ int WINAPI WinMain(HINSTANCE,HINSTANCE,LPSTR,int);
 #define DOCKINFO_USER_UNDOCKED	(DOCKINFO_USER_SUPPLIED | DOCKINFO_UNDOCKED)
 #define DOCKINFO_USER_DOCKED	(DOCKINFO_USER_SUPPLIED | DOCKINFO_DOCKED)
 
-typedef struct HW_PROFILE_INFOAtag {
+typedef struct tagHW_PROFILE_INFOA {
     DWORD dwDockInfo;
     CHAR  szHwProfileGuid[HW_PROFILE_GUIDLEN];
     CHAR  szHwProfileName[MAX_PROFILE_LEN];
 } HW_PROFILE_INFOA, *LPHW_PROFILE_INFOA;
 
+typedef struct tagHW_PROFILE_INFOW {
+    DWORD dwDockInfo;
+    WCHAR szHwProfileGuid[HW_PROFILE_GUIDLEN];
+    WCHAR szHwProfileName[MAX_PROFILE_LEN];
+} HW_PROFILE_INFOW, *LPHW_PROFILE_INFOW;
+
+DECL_WINELIB_TYPE_AW(HW_PROFILE_INFO)
+DECL_WINELIB_TYPE_AW(LPHW_PROFILE_INFO)
+
 /* Stream data structures and defines */
-/*the types of backup data -- WIN32_STREAM_ID.dwStreamID below*/
+/*the types of backup data -- WIN32_STREAM_ID.dwStreamId below*/
 #define BACKUP_INVALID        0
 #define BACKUP_DATA           1
 #define BACKUP_EA_DATA        2
@@ -1965,7 +1982,7 @@ typedef struct HW_PROFILE_INFOAtag {
 #define STREAM_SPARSE_ATTRIBUTE    8
 
 typedef struct _WIN32_STREAM_ID {
-	DWORD   dwStreamID;
+	DWORD   dwStreamId;
 	DWORD   dwStreamAttributes;
 	LARGE_INTEGER Size;
 	DWORD   dwStreamNameSize;

@@ -1694,7 +1694,7 @@ typedef struct
     LONG         bV4Height;
     WORD         bV4Planes;
     WORD         bV4BitCount;
-    DWORD        bV4Compression;
+    DWORD        bV4V4Compression;
     DWORD        bV4SizeImage;
     LONG         bV4XPelsPerMeter;
     LONG         bV4YPelsPerMeter;
@@ -1949,15 +1949,10 @@ typedef struct {
     DWORD nPalEntries;
     SIZEL szlDevice;
     SIZEL szlMillimeters;
-
-    /* Fields for winver >= win95 */
     DWORD cbPixelFormat;
     DWORD offPixelFormat;
     DWORD bOpenGL;
-
-    /* Fields for winver >= win98 */
     SIZEL szlMicrometers;
-
 } ENHMETAHEADER, *PENHMETAHEADER, *LPENHMETAHEADER;
 
 typedef struct {
@@ -2170,7 +2165,7 @@ typedef struct {
 } EMRFILLRGN, *PEMRFILLRGN;
 
 typedef struct {
-    DWORD signature;
+    DWORD dSignature;
     DWORD nVersion;
     DWORD cbData;
     DWORD offData;
@@ -2256,7 +2251,7 @@ typedef struct {
 typedef struct {
     EMR      emr;
     RECTL    rclBounds;
-    POINTL   aptlDst[3];
+    POINTL   aptlDest[3];
     LONG     xSrc;
     LONG     ySrc;
     LONG     cxSrc;

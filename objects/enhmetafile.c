@@ -1346,9 +1346,9 @@ BOOL WINAPI PlayEnhMetaFileRecord(
 
 	SetWorldTransform(hdcSrc, &pPlgBlt->xformSrc);
 
-	pts[0].x = pPlgBlt->aptlDst[0].x; pts[0].y = pPlgBlt->aptlDst[0].y;
-	pts[1].x = pPlgBlt->aptlDst[1].x; pts[1].y = pPlgBlt->aptlDst[1].y;
-	pts[2].x = pPlgBlt->aptlDst[2].x; pts[2].y = pPlgBlt->aptlDst[2].y;
+	pts[0].x = pPlgBlt->aptlDest[0].x; pts[0].y = pPlgBlt->aptlDest[0].y;
+	pts[1].x = pPlgBlt->aptlDest[1].x; pts[1].y = pPlgBlt->aptlDest[1].y;
+	pts[2].x = pPlgBlt->aptlDest[2].x; pts[2].y = pPlgBlt->aptlDest[2].y;
 
 	hBrush = CreateSolidBrush(pPlgBlt->crBkColorSrc);
 	hBrushOld = SelectObject(hdcSrc, hBrush);

@@ -49,8 +49,8 @@ static void dump_ne_header( const IMAGE_OS2_HEADER *ne )
     printf( "Non-resident table:  %lx\n", ne->ne_nrestab );
     printf( "Exe type:            %x\n", ne->ne_exetyp );
     printf( "Other flags:         %x\n", ne->ne_flagsothers );
-    printf( "Fast load area:      %x-%x\n", ne->fastload_offset << ne->ne_align,
-            (ne->fastload_offset+ne->fastload_length) << ne->ne_align );
+    printf( "Fast load area:      %x-%x\n", ne->ne_pretthunks << ne->ne_align,
+            (ne->ne_pretthunks+ne->ne_psegrefbytes) << ne->ne_align );
     printf( "Expected version:    %d.%d\n", HIBYTE(ne->ne_expver), LOBYTE(ne->ne_expver) );
 }
 

@@ -129,7 +129,7 @@ static int DIB_GetBitmapInfo( const BITMAPINFOHEADER *header, DWORD *width,
         *width  = v4hdr->bV4Width;
         *height = v4hdr->bV4Height;
         *bpp    = v4hdr->bV4BitCount;
-        *compr  = v4hdr->bV4Compression;
+        *compr  = v4hdr->bV4V4Compression;
         return 4;
     }
     if (header->biSize == sizeof(BITMAPV5HEADER))

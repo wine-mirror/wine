@@ -757,7 +757,14 @@ BOOL WINAPI ClearCommError(
 
     if (lpStat)
     {
-	lpStat->status = 0;
+        lpStat->fCtsHold = 0;
+	lpStat->fDsrHold = 0;
+	lpStat->fRlsdHold = 0;
+	lpStat->fXoffHold = 0;
+	lpStat->fXoffSent = 0;
+	lpStat->fEof = 0;
+	lpStat->fTxim = 0;
+	lpStat->fReserved = 0;
 
 #ifdef TIOCOUTQ
 	if(ioctl(fd, TIOCOUTQ, &lpStat->cbOutQue))

@@ -523,8 +523,8 @@ static HMODULE16 NE_LoadExeHeader( HANDLE hFile, LPCSTR path )
 
     if (ne_header.ne_flagsothers & NE_AFLAGS_FASTLOAD)
     {
-        fastload_offset=ne_header.fastload_offset << ne_header.ne_align;
-        fastload_length=ne_header.fastload_length << ne_header.ne_align;
+        fastload_offset=ne_header.ne_pretthunks << ne_header.ne_align;
+        fastload_length=ne_header.ne_psegrefbytes << ne_header.ne_align;
         TRACE("Using fast-load area offset=%x len=%d\n",
                         fastload_offset, fastload_length );
         if ((fastload = HeapAlloc( GetProcessHeap(), 0, fastload_length )) != NULL)

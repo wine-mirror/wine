@@ -325,10 +325,10 @@ typedef struct
 
 typedef struct
 {
-    HWND    hWnd;
-    UINT    wMessage;
+    HWND    hwnd;
+    UINT    message;
     WPARAM  wParam;
-    LPARAM    lParam;
+    LPARAM  lParam;
 } HARDWAREHOOKSTRUCT, *PHARDWAREHOOKSTRUCT, *LPHARDWAREHOOKSTRUCT;
 
 
@@ -1683,14 +1683,14 @@ typedef struct {
 typedef struct
 {
     DWORD   mkSize;
-    CHAR    mkKeyList;
+    CHAR    mkKeylist;
     CHAR    szKeyphrase[1];
 } MULTIKEYHELPA, *PMULTIKEYHELPA, *LPMULTIKEYHELPA;
 
 typedef struct
 {
     DWORD   mkSize;
-    WCHAR   mkKeyList;
+    WCHAR   mkKeylist;
     WCHAR   szKeyphrase[1];
 } MULTIKEYHELPW, *PMULTIKEYHELPW, *LPMULTIKEYHELPW;
 

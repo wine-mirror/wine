@@ -1736,6 +1736,7 @@ extern struct _TEB * WINAPI NtCurrentTeb(void);
  * File formats definitions
  */
 
+#include "pshpack2.h"
 typedef struct _IMAGE_DOS_HEADER {
     WORD  e_magic;      /* 00: MZ Header signature */
     WORD  e_cblp;       /* 02: Bytes on last page of file */
@@ -1757,6 +1758,7 @@ typedef struct _IMAGE_DOS_HEADER {
     WORD  e_res2[10];   /* 28: Reserved words */
     DWORD e_lfanew;     /* 3c: Offset to extended header */
 } IMAGE_DOS_HEADER, *PIMAGE_DOS_HEADER;
+#include "poppack.h"
 
 #define IMAGE_DOS_SIGNATURE    0x5A4D     /* MZ   */
 #define IMAGE_OS2_SIGNATURE    0x454E     /* NE   */
@@ -1769,6 +1771,7 @@ typedef struct _IMAGE_DOS_HEADER {
  * This is the Windows executable (NE) header.
  * the name IMAGE_OS2_HEADER is misleading, but in the SDK this way.
  */
+#include "pshpack2.h"
 typedef struct
 {
     WORD  ne_magic;             /* 00 NE signature 'NE' */
@@ -1797,12 +1800,14 @@ typedef struct
     WORD  ne_cres;              /* 34 # of resource segments */
     BYTE  ne_exetyp;            /* 36 Flags indicating target OS */
     BYTE  ne_flagsothers;       /* 37 Additional information flags */
-    WORD  fastload_offset;      /* 38 Offset to fast load area (should be ne_pretthunks)*/
-    WORD  fastload_length;      /* 3a Length of fast load area (should be ne_psegrefbytes) */
+    WORD  ne_pretthunks;        /* 38 Offset to return thunks */
+    WORD  ne_psegrefbytes;      /* 3a Offset to segment ref. bytes */
     WORD  ne_swaparea;          /* 3c Reserved by Microsoft */
     WORD  ne_expver;            /* 3e Expected Windows version number */
-} IMAGE_OS2_HEADER,*PIMAGE_OS2_HEADER;
+} IMAGE_OS2_HEADER, *PIMAGE_OS2_HEADER;
+#include "poppack.h"
 
+#include "pshpack2.h"
 typedef struct _IMAGE_VXD_HEADER {
   WORD  e32_magic;
   BYTE  e32_border;
@@ -1850,13 +1855,13 @@ typedef struct _IMAGE_VXD_HEADER {
   DWORD e32_instpreload;
   DWORD e32_instdemand;
   DWORD e32_heapsize;
-  BYTE   e32_res3[12];
+  BYTE  e32_res3[12];
   DWORD e32_winresoff;
   DWORD e32_winreslen;
   WORD  e32_devid;
   WORD  e32_ddkver;
 } IMAGE_VXD_HEADER, *PIMAGE_VXD_HEADER;
-
+#include "poppack.h"
 
 /* These defines describe the meanings of the bits in the Characteristics
    field */
@@ -2325,11 +2330,10 @@ typedef struct _IMAGE_RELOCATION
     union {
         DWORD   VirtualAddress;
         DWORD   RelocCount;
-    } u;
+    } DUMMYUNIONNAME;
     DWORD   SymbolTableIndex;
     WORD    Type;
-} IMAGE_RELOCATION;
-typedef IMAGE_RELOCATION *PIMAGE_RELOCATION;
+} IMAGE_RELOCATION, *PIMAGE_RELOCATION;
 
 #include "poppack.h"
 
@@ -3053,8 +3057,10 @@ typedef struct _TOKEN_DEFAULT_DACL {
  * TOKEN_SOURCEL
  */
 
+#define TOKEN_SOURCE_LENGTH 8
+
 typedef struct _TOKEN_SOURCE {
-  char Sourcename[8];
+  char SourceName[TOKEN_SOURCE_LENGTH];
   LUID SourceIdentifier;
 } TOKEN_SOURCE;
 

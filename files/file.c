@@ -1326,7 +1326,7 @@ found:
     FileTimeToDosDateTime( &filetime, &filedatetime[0], &filedatetime[1] );
     if ((mode & OF_VERIFY) && (mode & OF_REOPEN))
     {
-        if (memcmp( ofs->reserved, filedatetime, sizeof(ofs->reserved) ))
+        if (ofs->Reserved1 != filedatetime[0] || ofs->Reserved2 != filedatetime[1] )
         {
             CloseHandle( handle );
             WARN("(%s): OF_VERIFY failed\n", name );
@@ -1335,7 +1335,8 @@ found:
             goto error;
         }
     }
-    memcpy( ofs->reserved, filedatetime, sizeof(ofs->reserved) );
+    ofs->Reserved1 = filedatetime[0];
+    ofs->Reserved2 = filedatetime[1];
 
 success:  /* We get here if the open was successful */
     TRACE("(%s): OK, return = %x\n", name, handle );
