@@ -91,7 +91,11 @@ int _putenv(const char *str)
   *dst++ = *str++;
  *dst = '\0';
 
- ret = !SetEnvironmentVariableA(name, value[0] ? value : NULL);
+ ret = SetEnvironmentVariableA(name, value[0] ? value : NULL) ? 0 : -1;
+
+ /* _putenv returns success on deletion of non-existent variable, unlike [Rtl]SetEnvironmentVariable */
+ if ((ret == -1) && (GetLastError() == ERROR_ENVVAR_NOT_FOUND)) ret = 0;
+
  /* Update the __p__environ array only when already initialized */
  if (_environ)
    _environ = msvcrt_SnapshotOfEnvironmentA(_environ);
@@ -123,7 +127,11 @@ int _wputenv(const MSVCRT_wchar_t *str)
   *dst++ = *str++;
  *dst = 0;
 
- ret = !SetEnvironmentVariableW(name, value[0] ? value : NULL);
+ ret = SetEnvironmentVariableW(name, value[0] ? value : NULL) ? 0 : -1;
+
+ /* _putenv returns success on deletion of non-existent variable, unlike [Rtl]SetEnvironmentVariable */
+ if ((ret == -1) && (GetLastError() == ERROR_ENVVAR_NOT_FOUND)) ret = 0;
+
  /* Update the __p__environ array only when already initialized */
  if (_environ)
    _environ = msvcrt_SnapshotOfEnvironmentA(_environ);
