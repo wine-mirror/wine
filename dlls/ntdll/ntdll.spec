@@ -347,6 +347,7 @@
 @ stub RtlDoesFileExists_U
 @ stdcall RtlDosPathNameToNtPathName_U(ptr ptr long long) RtlDosPathNameToNtPathName_U
 @ stub RtlDosSearchPath_U
+@ stdcall RtlDowncaseUnicodeChar(long) RtlDowncaseUnicodeChar
 @ stdcall RtlDumpResource(ptr) RtlDumpResource
 @ stdcall -ret64 RtlEnlargedIntegerMultiply(long long) RtlEnlargedIntegerMultiply
 @ stdcall RtlEnlargedUnsignedDivide(long long long ptr) RtlEnlargedUnsignedDivide
@@ -355,8 +356,8 @@
 @ stub RtlEnumProcessHeaps
 @ stub RtlEnumerateGenericTable
 @ stub RtlEnumerateGenericTableWithoutSplaying
-@ stub RtlEqualComputerName
-@ stub RtlEqualDomainName
+@ stdcall RtlEqualComputerName(ptr ptr) RtlEqualComputerName
+@ stdcall RtlEqualDomainName(ptr ptr) RtlEqualDomainName
 @ stub RtlEqualLuid
 @ stdcall RtlEqualPrefixSid(ptr ptr) RtlEqualPrefixSid
 @ stdcall RtlEqualSid (long long) RtlEqualSid

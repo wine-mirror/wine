@@ -261,6 +261,16 @@ LONG WINAPI RtlCompareUnicodeString( const UNICODE_STRING *s1, const UNICODE_STR
 
 /**************************************************************************
  *	RtlEqualString   (NTDLL.@)
+ *
+ * Determine if two strings are equal.
+ *
+ * PARAMS
+ *  s1              [I] Source string
+ *  s2              [I] String to compare to s1
+ *  CaseInsensitive [I] TRUE = Case insensitive, FALSE = Case sensitive
+ *
+ * RETURNS
+ *  Non-zero if s1 is equal to s2, 0 otherwise.
  */
 BOOLEAN WINAPI RtlEqualString( const STRING *s1, const STRING *s2, BOOLEAN CaseInsensitive )
 {
@@ -271,6 +281,8 @@ BOOLEAN WINAPI RtlEqualString( const STRING *s1, const STRING *s2, BOOLEAN CaseI
 
 /**************************************************************************
  *	RtlEqualUnicodeString   (NTDLL.@)
+ *
+ * Unicode version of RtlEqualString.
  */
 BOOLEAN WINAPI RtlEqualUnicodeString( const UNICODE_STRING *s1, const UNICODE_STRING *s2,
                                       BOOLEAN CaseInsensitive )
@@ -283,7 +295,15 @@ BOOLEAN WINAPI RtlEqualUnicodeString( const UNICODE_STRING *s1, const UNICODE_ST
 /**************************************************************************
  *	RtlPrefixString   (NTDLL.@)
  *
- * Test if s1 is a prefix in s2
+ * Determine if one string is a prefix of another.
+ *
+ * PARAMS
+ *  s1          [I] Prefix to look for in s2
+ *  s2          [I] String that may contain s1 as a prefix
+ *  ignore_case [I] TRUE = Case insensitive, FALSE = Case sensitive
+ *
+ * RETURNS
+ *  TRUE if s2 contains s1 as a prefix, FALSE otherwise.
  */
 BOOLEAN WINAPI RtlPrefixString( const STRING *s1, const STRING *s2, BOOLEAN ignore_case )
 {
@@ -307,7 +327,7 @@ BOOLEAN WINAPI RtlPrefixString( const STRING *s1, const STRING *s2, BOOLEAN igno
 /**************************************************************************
  *	RtlPrefixUnicodeString   (NTDLL.@)
  *
- * Test if s1 is a prefix in s2
+ * Unicode version of RtlPrefixString.
  */
 BOOLEAN WINAPI RtlPrefixUnicodeString( const UNICODE_STRING *s1,
                                        const UNICODE_STRING *s2,
@@ -330,6 +350,60 @@ BOOLEAN WINAPI RtlPrefixUnicodeString( const UNICODE_STRING *s1,
 }
 
 
+/**************************************************************************
+ *	RtlEqualComputerName   (NTDLL.@)
+ *
+ * Determine if two computer names are the same.
+ *
+ * PARAMS
+ *  left  [I] First computer name
+ *  right [I] Second computer name
+ *
+ * RETURNS
+ *  0 if the names are equal, non-zero otherwise.
+ *
+ * NOTES
+ *  The comparason is case insensitive.
+ */
+NTSTATUS WINAPI RtlEqualComputerName(const UNICODE_STRING *left,
+                                     const UNICODE_STRING *right)
+{
+    NTSTATUS ret;
+    STRING upLeft, upRight;
+
+    if (!(ret = RtlUpcaseUnicodeStringToOemString( &upLeft, left, TRUE )))
+    {
+       if (!(ret = RtlUpcaseUnicodeStringToOemString( &upRight, right, TRUE )))
+       {
+         ret = RtlEqualString( &upLeft, &upRight, FALSE );
+         RtlFreeOemString( &upRight );
+       }
+       RtlFreeOemString( &upLeft );
+    }
+    return ret;
+}
+
+/**************************************************************************
+ *	RtlEqualDomainName   (NTDLL.@)
+ *
+ * Determine if two domain names are the same.
+ *
+ * PARAMS
+ *  left  [I] First domain name
+ *  right [I] Second domain name
+ *
+ * RETURNS
+ *  0 if the names are equal, non-zero otherwise.
+ *
+ * NOTES
+ *  The comparason is case insensitive.
+ */
+NTSTATUS WINAPI RtlEqualDomainName(const UNICODE_STRING *left,
+                                   const UNICODE_STRING *right)
+{
+    return RtlEqualComputerName(left, right);
+}
+
 /*
 	COPY BETWEEN ANSI_STRING or UNICODE_STRING
 	there is no parameter checking, it just crashes
@@ -339,8 +413,8 @@ BOOLEAN WINAPI RtlPrefixUnicodeString( const UNICODE_STRING *s1,
 /**************************************************************************
  *	RtlAnsiStringToUnicodeString   (NTDLL.@)
  *
- * NOTES:
- *  writes terminating 0
+ * NOTES
+ *  This function always writes a terminating NUL.
  */
 NTSTATUS WINAPI RtlAnsiStringToUnicodeString( PUNICODE_STRING uni,
                                               PCANSI_STRING ansi,
@@ -368,8 +442,8 @@ NTSTATUS WINAPI RtlAnsiStringToUnicodeString( PUNICODE_STRING uni,
  *	RtlOemStringToUnicodeString   (NTDLL.@)
  *
  * NOTES
- *  writes terminating 0
- *  if resulting length > 0xffff it returns STATUS_INVALID_PARAMETER_2
+ *  This function always writes a terminating NUL.
+ *  If the resulting length > 0xffff it returns STATUS_INVALID_PARAMETER_2
  */
 NTSTATUS WINAPI RtlOemStringToUnicodeString( UNICODE_STRING *uni,
                                              const STRING *oem,
@@ -397,8 +471,8 @@ NTSTATUS WINAPI RtlOemStringToUnicodeString( UNICODE_STRING *uni,
  *	RtlUnicodeStringToAnsiString   (NTDLL.@)
  *
  * NOTES
- *  writes terminating 0
- *  copies a part if the buffer is too small
+ *  This function always writes a terminating NUL.
+ *  Performs a partial copy if ansi is too small.
  */
 NTSTATUS WINAPI RtlUnicodeStringToAnsiString( STRING *ansi,
                                               const UNICODE_STRING *uni,
@@ -430,9 +504,21 @@ NTSTATUS WINAPI RtlUnicodeStringToAnsiString( STRING *ansi,
 /**************************************************************************
  *	RtlUnicodeStringToOemString   (NTDLL.@)
  *
+ * Convert a Rtl Unicode string to an OEM string.
+ *
+ * PARAMS
+ *  oem     [O] Destination for OEM string
+ *  uni     [I] Source Unicode string
+ *  doalloc [I] TRUE=Allocate new buffer for oem,FALSE=Use existing buffer
+ *
+ * RETURNS
+ *  Success: STATUS_SUCCESS. oem contains the converted string
+ *  Failure: STATUS_BUFFER_OVERFLOW if doalloc is FALSE and oem is too small.
+ *           STATUS_NO_MEMORY if doalloc is TRUE and allocation fails.
+ *
  * NOTES
- *   allocates uni->Length+1
- *   writes terminating 0
+ *   If doalloc is TRUE, the length allocated is uni->Length + 1.
+ *   This function always NUL terminates the string returned.
  */
 NTSTATUS WINAPI RtlUnicodeStringToOemString( STRING *oem,
                                              const UNICODE_STRING *uni,
@@ -465,7 +551,7 @@ NTSTATUS WINAPI RtlUnicodeStringToOemString( STRING *oem,
  *	RtlMultiByteToUnicodeN   (NTDLL.@)
  *
  * NOTES
- *  if unistr is too small a part is copied
+ *  Performs a partial copy if dst is too small.
  */
 NTSTATUS WINAPI RtlMultiByteToUnicodeN( LPWSTR dst, DWORD dstlen, LPDWORD reslen,
                                         LPCSTR src, DWORD srclen )
@@ -526,6 +612,14 @@ NTSTATUS WINAPI RtlUnicodeToOemN( LPSTR dst, DWORD dstlen, LPDWORD reslen,
 
 /**************************************************************************
  *	RtlUpperChar   (NTDLL.@)
+ *
+ * Convert an Ascii character to uppercase.
+ *
+ * PARAMS
+ *  ch [I] Character to convert
+ *
+ * RETURNS
+ *  The uppercase character value.
  */
 CHAR WINAPI RtlUpperChar( CHAR ch )
 {
@@ -539,6 +633,15 @@ CHAR WINAPI RtlUpperChar( CHAR ch )
 
 /**************************************************************************
  *	RtlUpperString   (NTDLL.@)
+ *
+ * Convert an Ascii string to uppercase.
+ *
+ * PARAMS
+ *  dst [O] Destination for converted string
+ *  src [I] Source string to convert
+ *
+ * RETURNS
+ *  Nothing.
  */
 void WINAPI RtlUpperString( STRING *dst, const STRING *src )
 {
@@ -551,20 +654,48 @@ void WINAPI RtlUpperString( STRING *dst, const STRING *src )
 
 /**************************************************************************
  *	RtlUpcaseUnicodeChar   (NTDLL.@)
+ *
+ * Unicode version of of RtlUpperChar.
  */
 WCHAR WINAPI RtlUpcaseUnicodeChar( WCHAR wch )
 {
     return toupperW(wch);
 }
 
+/**************************************************************************
+ *	RtlDowncaseUnicodeChar   (NTDLL.@)
+ *
+ * Convert a Unicode character to lowercase.
+ *
+ * PARAMS
+ *  wch [I] Character to convert
+ *
+ * RETURNS
+ *  The lowercase character value.
+ */
+WCHAR WINAPI RtlDowncaseUnicodeChar(WCHAR wch)
+{
+    return tolowerW(wch);
+}
 
 /**************************************************************************
  *	RtlUpcaseUnicodeString   (NTDLL.@)
  *
- * NOTES:
- *  destination string is never 0-terminated because dest can be equal to src
- *  and src might be not 0-terminated
- *  dest.Length only set when success
+ * Convert a Unicode string to uppercase.
+ *
+ * PARAMS
+ *  dest    [O] Destination for converted string
+ *  src     [I] Source string to convert
+ *  doalloc [I] TRUE=Allocate a buffer for dest if it doesn't have one
+ *
+ * RETURNS
+ *  Success: STATUS_SUCCESS. dest contains the converted string.
+ *  Failure: STATUS_NO_MEMORY, if doalloc is TRUE and memory allocation fails, or
+ *           STATUS_BUFFER_OVERFLOW, if doalloc is FALSE and dest is too small.
+ *
+ * NOTES
+ *  dest is never NUL terminated because it may be equal to src, and src
+ *  might not be NUL terminated. dest->Length is only set upon success.
  */
 NTSTATUS WINAPI RtlUpcaseUnicodeString( UNICODE_STRING *dest,
                                         const UNICODE_STRING *src,
@@ -675,8 +806,14 @@ NTSTATUS WINAPI RtlUpcaseUnicodeToOemN( LPSTR dst, DWORD dstlen, LPDWORD reslen,
  *      RtlOemStringToUnicodeSize   (NTDLL.@)
  *      RtlxOemStringToUnicodeSize  (NTDLL.@)
  *
- * Return the size in bytes necessary for the Unicode conversion of 'str',
- * including the terminating NULL.
+ * Calculate the size in bytes necessary for the Unicode conversion of str,
+ * including the terminating NUL.
+ *
+ * PARAMS
+ *  str [I] String to calculate the size of
+ *
+ * RETURNS
+ *  The calculated size.
  */
 UINT WINAPI RtlOemStringToUnicodeSize( const STRING *str )
 {
@@ -689,8 +826,14 @@ UINT WINAPI RtlOemStringToUnicodeSize( const STRING *str )
  *      RtlAnsiStringToUnicodeSize   (NTDLL.@)
  *      RtlxAnsiStringToUnicodeSize  (NTDLL.@)
  *
- * Return the size in bytes necessary for the Unicode conversion of 'str',
- * including the terminating NULL.
+ * Calculate the size in bytes necessary for the Unicode conversion of str,
+ * including the terminating NUL.
+ *
+ * PARAMS
+ *  str [I] String to calculate the size of
+ *
+ * RETURNS
+ *  The calculated size.
  */
 DWORD WINAPI RtlAnsiStringToUnicodeSize( const STRING *str )
 {
@@ -703,8 +846,16 @@ DWORD WINAPI RtlAnsiStringToUnicodeSize( const STRING *str )
 /**************************************************************************
  *      RtlMultiByteToUnicodeSize   (NTDLL.@)
  *
- * Compute the size in bytes necessary for the Unicode conversion of 'str',
- * without the terminating NULL.
+ * Compute the size in bytes necessary for the Unicode conversion of str,
+ * without the terminating NUL.
+ *
+ * PARAMS
+ *  size [O] Destination for size
+ *  str  [I] String to calculate the size of
+ *  len  [I] Length of str
+ *
+ * RETURNS
+ *  STATUS_SUCCESS.
  */
 NTSTATUS WINAPI RtlMultiByteToUnicodeSize( DWORD *size, LPCSTR str, UINT len )
 {
@@ -716,8 +867,16 @@ NTSTATUS WINAPI RtlMultiByteToUnicodeSize( DWORD *size, LPCSTR str, UINT len )
 /**************************************************************************
  *      RtlUnicodeToMultiByteSize   (NTDLL.@)
  *
- * Compute the size necessary for the multibyte conversion of 'str',
+ * Calculate the size necessary for the multibyte conversion of str,
  * without the terminating NULL.
+ *
+ * PARAMS
+ *  size [O] Destination for size
+ *  str  [I] String to calculate the size of
+ *  len  [I] Length of str
+ *
+ * RETURNS
+ *  STATUS_SUCCESS.
  */
 NTSTATUS WINAPI RtlUnicodeToMultiByteSize( PULONG size, LPCWSTR str, ULONG len )
 {
@@ -730,8 +889,14 @@ NTSTATUS WINAPI RtlUnicodeToMultiByteSize( PULONG size, LPCWSTR str, ULONG len )
  *      RtlUnicodeStringToAnsiSize   (NTDLL.@)
  *      RtlxUnicodeStringToAnsiSize  (NTDLL.@)
  *
- * Return the size in bytes necessary for the Ansi conversion of 'str',
- * including the terminating NULL.
+ * Calculate the size in bytes necessary for the Ansi conversion of str,
+ * including the terminating NUL.
+ *
+ * PARAMS
+ *  str [I] String to calculate the size of
+ *
+ * RETURNS
+ *  The calculated size.
  */
 DWORD WINAPI RtlUnicodeStringToAnsiSize( const UNICODE_STRING *str )
 {
@@ -745,8 +910,14 @@ DWORD WINAPI RtlUnicodeStringToAnsiSize( const UNICODE_STRING *str )
  *      RtlUnicodeStringToOemSize   (NTDLL.@)
  *      RtlxUnicodeStringToOemSize  (NTDLL.@)
  *
- * Return the size in bytes necessary for the OEM conversion of 'str',
- * including the terminating NULL.
+ * Calculate the size in bytes necessary for the OEM conversion of str,
+ * including the terminating NUL.
+ *
+ * PARAMS
+ *  str [I] String to calculate the size of
+ *
+ * RETURNS
+ *  The calculated size.
  */
 DWORD WINAPI RtlUnicodeStringToOemSize( const UNICODE_STRING *str )
 {
@@ -823,13 +994,21 @@ NTSTATUS WINAPI RtlAppendUnicodeStringToString( UNICODE_STRING *dst, const UNICO
 	MISC
 */
 
-
 /**************************************************************************
  *	RtlIsTextUnicode (NTDLL.@)
  *
- *	Apply various feeble heuristics to guess whether
- *	the text buffer contains Unicode.
- *	FIXME: should implement more tests.
+ * Attempt to guess whether a text buffer is Unicode.
+ *
+ * PARAMS
+ *  buf [I] Text buffer to test
+ *  len [I] Length of buf
+ *  pf  [O] Destination for test results
+ *
+ * RETURNS
+ *  The length of the string if all tests were passed, 0 otherwise.
+ *
+ * FIXME
+ *  Should implement more tests.
  */
 DWORD WINAPI RtlIsTextUnicode(
 	LPVOID buf,
@@ -960,6 +1139,7 @@ NTSTATUS WINAPI RtlCharToInteger(
  *
  * Convert an unsigned integer to a character string.
  *
+ * NOTES
  * On success assign a string and return STATUS_SUCCESS.
  * If base is not 0 (=10), 2, 8, 10 or 16 return STATUS_INVALID_PARAMETER
  * Writes at most length characters to the string str.
@@ -1018,6 +1198,7 @@ NTSTATUS WINAPI RtlIntegerToChar(
  *
  * Convert an unicode string into its integer equivalent.
  *
+ * NOTES
  * On success assign an integer value and return STATUS_SUCCESS.
  * For base 0 accept: {whitespace} [+|-] [0[x|o|b]] {digits}
  * For bases 2, 8, 10 and 16 accept: {whitespace} [+|-] {digits}
@@ -1113,6 +1294,7 @@ NTSTATUS WINAPI RtlUnicodeStringToInteger(
  *
  * Convert an unsigned integer to a NULL terminated unicode string.
  *
+ * NOTES
  * On success assign a NULL terminated string and return STATUS_SUCCESS.
  * If base is not 0 (=10), 2, 8, 10 or 16 return STATUS_INVALID_PARAMETER.
  * If str is too small to hold the string (with the NULL termination):
