@@ -431,6 +431,14 @@ DECL_WINELIB_TYPE_AW(LOGCOLORSPACE)
 
 #define CMYK(c,m,y,k)       ((COLORREF)((((BYTE)(k)|((WORD)((BYTE)(y))<<8))|(((DWORD)(BYTE)(m))<<16))|(((DWORD)(BYTE)(c))<<24)))
 
+/* ICM stuff */
+typedef INT (CALLBACK *EnumICMProfilesProcCallbackA)(LPSTR lpszFilename,LPARAM lParam);
+typedef INT (CALLBACK *EnumICMProfilesProcCallbackW)(LPWSTR lpszFilename,LPARAM lParam);
+DECL_WINELIB_TYPE_AW(EnumICMProfilesProcCallback)
+typedef EnumICMProfilesProcCallbackA ICMENUMPROCA;
+typedef EnumICMProfilesProcCallbackW ICMENUMPROCW;
+DECL_WINELIB_TYPE_AW(ICMENUMPROC)
+
 
 #define ICM_OFF   1
 #define ICM_ON    2
@@ -3216,6 +3224,9 @@ INT       WINAPI EnumFontFamiliesExW(HDC,LPLOGFONTW,FONTENUMPROCW,LPARAM,DWORD);
 INT       WINAPI EnumFontsA(HDC,LPCSTR,FONTENUMPROCA,LPARAM);
 INT       WINAPI EnumFontsW(HDC,LPCWSTR,FONTENUMPROCW,LPARAM);
 #define     EnumFonts WINELIB_NAME_AW(EnumFonts)
+INT         WINAPI EnumICMProfilesA(HDC,ICMENUMPROCA,LPARAM);
+INT         WINAPI EnumICMProfilesW(HDC,ICMENUMPROCW,LPARAM);
+#define     EnumICMProfiles WINELIB_NAME_AW(EnumICMProfiles)
 BOOL      WINAPI EnumMetaFile(HDC,HMETAFILE,MFENUMPROC,LPARAM);
 INT       WINAPI EnumObjects(HDC,INT,GOBJENUMPROC,LPARAM);
 BOOL      WINAPI EqualRgn(HRGN,HRGN);

@@ -48,6 +48,7 @@ C_SRCS = \
 	enhmfdrv/objects.c \
 	freetype.c \
 	gdi_main.c \
+	icm.c \
 	mfdrv/bitblt.c \
 	mfdrv/dc.c \
 	mfdrv/graphics.c \

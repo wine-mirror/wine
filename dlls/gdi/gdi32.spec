@@ -97,8 +97,8 @@
 @ stdcall EnumFontFamiliesW(long wstr ptr long)
 @ stdcall EnumFontsA(long str ptr long)
 @ stdcall EnumFontsW(long wstr ptr long)
-@ stub EnumICMProfilesA
-@ stub EnumICMProfilesW
+@ stdcall EnumICMProfilesA(long ptr long)
+@ stdcall EnumICMProfilesW(long ptr long)
 @ stdcall EnumMetaFile(long long ptr ptr)
 @ stdcall EnumObjects(long long ptr long)
 @ stdcall EqualRgn(long long)
