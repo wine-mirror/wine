@@ -7,13 +7,11 @@
  */
 
 #include <string.h>
-#include <stdlib.h>
 
 #include "winbase.h"
 #include "winuser.h"
 #include "heap.h"
 #include "driver.h"
-#include "mmsystem.h"
 #include "multimedia.h"
 #include "selectors.h"
 #include "digitalv.h"
@@ -23,34 +21,33 @@
 
 DEFAULT_DEBUG_CHANNEL(mci)
 
-WINE_MCIDRIVER mciDrv[MAXMCIDRIVERS];
-
-int	mciInstalledCount;
-int	mciInstalledListLen;
-LPSTR	lpmciInstallNames = NULL;
+static	int			mciInstalledCount;
+static	int			mciInstalledListLen;
+static	LPSTR			lpmciInstallNames = NULL;
 
 static	struct MCI_StringType {
     LPCSTR	str;
     UINT	type;
+    LPVOID	lpCmdTable;
 } MCI_StringType_List[] = {
     /* MCI types that are working */
-    {"CDAUDIO", MCI_DEVTYPE_CD_AUDIO},
-    {"WAVEAUDIO", MCI_DEVTYPE_WAVEFORM_AUDIO},
-    {"SEQUENCER", MCI_DEVTYPE_SEQUENCER},
+    {"CDAUDIO", 	MCI_DEVTYPE_CD_AUDIO,		NULL},
+    {"WAVEAUDIO", 	MCI_DEVTYPE_WAVEFORM_AUDIO,	NULL},
+    {"SEQUENCER", 	MCI_DEVTYPE_SEQUENCER,		NULL},
 
     /* MCI types that should be working */
-    {"ANIMATION1", MCI_DEVTYPE_ANIMATION},
-    {"MPEGVIDEO", MCI_DEVTYPE_DIGITAL_VIDEO},
-    {"AVIVIDEO", MCI_DEVTYPE_DIGITAL_VIDEO},
+    {"ANIMATION1", 	MCI_DEVTYPE_ANIMATION,		NULL},
+    {"MPEGVIDEO", 	MCI_DEVTYPE_DIGITAL_VIDEO, 	NULL},
+    {"AVIVIDEO", 	MCI_DEVTYPE_DIGITAL_VIDEO, 	NULL},
 
     /* MCI types not likely to be supported */
-    {"VCR", MCI_DEVTYPE_VCR},
-    {"VIDEODISC", MCI_DEVTYPE_VIDEODISC},
-    {"OVERLAY", MCI_DEVTYPE_OVERLAY},
-    {"DAT", MCI_DEVTYPE_DAT},
-    {"SCANNER", MCI_DEVTYPE_SCANNER},
+    {"VCR", 		MCI_DEVTYPE_VCR,		NULL},
+    {"VIDEODISC", 	MCI_DEVTYPE_VIDEODISC,		NULL},
+    {"OVERLAY", 	MCI_DEVTYPE_OVERLAY,		NULL},
+    {"DAT", 		MCI_DEVTYPE_DAT, 		NULL},
+    {"SCANNER", 	MCI_DEVTYPE_SCANNER,		NULL},
 
-    {NULL, 0}
+    {NULL, 		0, 				NULL}
 };
 
 WORD	MCI_GetDevTypeFromString(LPCSTR str)
@@ -69,6 +66,7 @@ LPCSTR	MCI_GetStringFromDevType(WORD type)
     return mst->str;
 }
 
+/* FIXME: comment is obsolete */
 /* The wDevID's returned by wine were originally in the range 
  * 0 - (MAXMCIDRIVERS - 1) and used directly as array indices.
  * Unfortunately, ms-windows uses wDevID of zero to indicate
@@ -78,38 +76,53 @@ LPCSTR	MCI_GetStringFromDevType(WORD type)
  * by the windows programs.
  */
 
-#define MCI_MAGIC 0x0F00
+#define MCI_MAGIC 0x0001
 
 /**************************************************************************
- * 				MCI_DevIDToIndex		[internal]
+ * 				MCI_GetDriver			[internal]
  */
-int MCI_DevIDToIndex(UINT16 wDevID) 
+LPWINE_MCIDRIVER	MCI_GetDriver(UINT16 wDevID) 
 {
-    return wDevID - MCI_MAGIC;
+    LPWINE_MCIDRIVER	wmd = 0;
+    LPWINE_MM_IDATA	iData = MULTIMEDIA_GetIData();
+
+    if (iData) {
+	for (wmd = iData->lpMciDrv; wmd; wmd = wmd->lpNext) {
+	    if (wmd->wDeviceID == wDevID)
+		break;
+	}
+    }
+    return wmd;
 }
 
 /**************************************************************************
- * 				MCI_FirstDevId			[internal]
+ * 				MCI_GetDriverFromString		[internal]
  */
-UINT16 MCI_FirstDevID(void)
+UINT	MCI_GetDriverFromString(LPCSTR lpstrName)
 {
-    return MCI_MAGIC;
-}
+    LPWINE_MCIDRIVER	wmd;
+    LPWINE_MM_IDATA	iData;
 
-/**************************************************************************
- * 				MCI_NextDevId			[internal]
- */
-UINT16 MCI_NextDevID(UINT16 wDevID) 
-{
-    return wDevID + 1;
-}
-
-/**************************************************************************
- * 				MCI_DevIDValid			[internal]
- */
-BOOL MCI_DevIDValid(UINT16 wDevID) 
-{
-    return wDevID >= MCI_MAGIC && wDevID < (MCI_MAGIC + MAXMCIDRIVERS);
+    if (!lpstrName)
+	return 0;
+    
+    if (!lstrcmpiA(lpstrName, "ALL"))
+	return MCI_ALL_DEVICE_ID;
+    
+    if ((iData = MULTIMEDIA_GetIData())) {
+	for (wmd = iData->lpMciDrv; wmd; wmd = wmd->lpNext) {
+	    if (wmd->lpstrElementName && strcmp(wmd->lpstrElementName, lpstrName) == 0)
+		return wmd->wDeviceID;
+	
+	    if (wmd->lpstrDeviceType && strcmp(wmd->lpstrDeviceType, lpstrName) == 0)
+		return wmd->wDeviceID;
+	
+	    if (wmd->lpstrAlias && strcmp(wmd->lpstrAlias, lpstrName) == 0)
+		return wmd->wDeviceID;
+	}
+    }
+    
+    return 0;
 }
 
 /**************************************************************************
@@ -1014,16 +1027,17 @@ MCI_MapType	MCI_UnMapMsg32ATo16(WORD uDevType, WORD wMsg, DWORD dwFlags, DWORD l
 DWORD MCI_SendCommandFrom32(UINT wDevID, UINT16 wMsg, DWORD dwParam1, DWORD dwParam2)
 {
     DWORD		dwRet = MCIERR_DEVICE_NOT_INSTALLED;
-    
-    if (!MCI_DevIDValid(wDevID)) {
+    LPWINE_MCIDRIVER	wmd = MCI_GetDriver(wDevID);
+
+    if (!wmd) {
 	dwRet = MCIERR_INVALID_DEVICE_ID;
     } else {
-	switch (DRIVER_GetType(MCI_GetDrv(wDevID)->hDrv)) {
+	switch (DRIVER_GetType(wmd->hDrv)) {
 	case WINE_DI_TYPE_16:
 	    {
 		MCI_MapType	res;
 		
-		switch (res = MCI_MapMsg32ATo16(MCI_GetDrv(wDevID)->modp.wType, wMsg, dwParam1, &dwParam2)) {
+		switch (res = MCI_MapMsg32ATo16(wmd->wType, wMsg, dwParam1, &dwParam2)) {
 		case MCI_MAP_MSGERROR:
 		    TRACE("Not handled yet (%s)\n", MCI_CommandToString(wMsg));
 		    dwRet = MCIERR_DRIVER_INTERNAL;
@@ -1034,21 +1048,21 @@ DWORD MCI_SendCommandFrom32(UINT wDevID, UINT16 wMsg, DWORD dwParam1, DWORD dwPa
 		    break;
 		case MCI_MAP_OK:
 		case MCI_MAP_OKMEM:
-		    dwRet = SendDriverMessage16(MCI_GetDrv(wDevID)->hDrv, wMsg, dwParam1, dwParam2);
+		    dwRet = SendDriverMessage16(wmd->hDrv, wMsg, dwParam1, dwParam2);
 		    if (res ==  MCI_MAP_OKMEM)
-			MCI_UnMapMsg32ATo16(MCI_GetDrv(wDevID)->modp.wType, wMsg, dwParam1, dwParam2);
+			MCI_UnMapMsg32ATo16(wmd->wType, wMsg, dwParam1, dwParam2);
 		    break;
 		case MCI_MAP_PASS:
-		    dwRet = SendDriverMessage(MCI_GetDrv(wDevID)->hDrv, wMsg, dwParam1, dwParam2);
+		    dwRet = SendDriverMessage(wmd->hDrv, wMsg, dwParam1, dwParam2);
 		    break;
 		}
 	    }
 	    break;
 	case WINE_DI_TYPE_32:
-	    dwRet = SendDriverMessage(MCI_GetDrv(wDevID)->hDrv, wMsg, dwParam1, dwParam2);
+	    dwRet = SendDriverMessage(wmd->hDrv, wMsg, dwParam1, dwParam2);
 	    break;
 	default:
-	    WARN("Unknown driver type=%u\n", DRIVER_GetType(MCI_GetDrv(wDevID)->hDrv));
+	    WARN("Unknown driver type=%u\n", DRIVER_GetType(wmd->hDrv));
 	    dwRet = MCIERR_DRIVER_INTERNAL;
 	}
     }
@@ -1061,18 +1075,19 @@ DWORD MCI_SendCommandFrom32(UINT wDevID, UINT16 wMsg, DWORD dwParam1, DWORD dwPa
 DWORD MCI_SendCommandFrom16(UINT wDevID, UINT16 wMsg, DWORD dwParam1, DWORD dwParam2)
 {
     DWORD		dwRet = MCIERR_DEVICE_NOT_INSTALLED;
-    
-    if (!MCI_DevIDValid(wDevID)) {
+    LPWINE_MCIDRIVER	wmd = MCI_GetDriver(wDevID);
+
+    if (!wmd) {
 	dwRet = MCIERR_INVALID_DEVICE_ID;
     } else {
 	MCI_MapType		res;
 	
-	switch (DRIVER_GetType(MCI_GetDrv(wDevID)->hDrv)) {
+	switch (DRIVER_GetType(wmd->hDrv)) {
 	case WINE_DI_TYPE_16:		
-	    dwRet = SendDriverMessage16(MCI_GetDrv(wDevID)->hDrv, wMsg, dwParam1, dwParam2);
+	    dwRet = SendDriverMessage16(wmd->hDrv, wMsg, dwParam1, dwParam2);
 	    break;
 	case WINE_DI_TYPE_32:
-	    switch (res = MCI_MapMsg16To32A(MCI_GetDrv(wDevID)->modp.wType, wMsg, &dwParam2)) {
+	    switch (res = MCI_MapMsg16To32A(wmd->wType, wMsg, &dwParam2)) {
 	    case MCI_MAP_MSGERROR:
 		TRACE("Not handled yet (%s)\n", MCI_CommandToString(wMsg));
 		dwRet = MCIERR_DRIVER_INTERNAL;
@@ -1085,15 +1100,15 @@ DWORD MCI_SendCommandFrom16(UINT wDevID, UINT16 wMsg, DWORD dwParam1, DWORD dwPa
 	    case MCI_MAP_OKMEM:
 		dwRet = SendDriverMessage(wDevID, wMsg, dwParam1, dwParam2);
 		if (res == MCI_MAP_OKMEM)
-		    MCI_UnMapMsg16To32A(MCI_GetDrv(wDevID)->modp.wType, wMsg, dwParam2);
+		    MCI_UnMapMsg16To32A(wmd->wType, wMsg, dwParam2);
 		break;
 	    case MCI_MAP_PASS:
-		dwRet = SendDriverMessage16(MCI_GetDrv(wDevID)->hDrv, wMsg, dwParam1, dwParam2);
+		dwRet = SendDriverMessage16(wmd->hDrv, wMsg, dwParam1, dwParam2);
 		break;
 	    }
 	    break;
 	default:
-	    WARN("Unknown driver type=%u\n", DRIVER_GetType(MCI_GetDrv(wDevID)->hDrv));
+	    WARN("Unknown driver type=%u\n", DRIVER_GetType(wmd->hDrv));
 	    dwRet = MCIERR_DRIVER_INTERNAL;
 	}
     }
@@ -1107,14 +1122,18 @@ DWORD MCI_Open(DWORD dwParam, LPMCI_OPEN_PARMSA lpParms)
 {
     char			strDevTyp[128];
     UINT16			uDevType = 0;
-    UINT16			wDevID = MCI_FirstDevID();
+    UINT16			wDevID = MCI_MAGIC;
     DWORD 			dwRet; 
     HDRVR			hDrv;
     MCI_OPEN_DRIVER_PARMSA	modp;
-	    
-   
+    LPWINE_MCIDRIVER		wmd;
+    LPWINE_MM_IDATA		iData;
+
     TRACE("(%08lX, %p)\n", dwParam, lpParms);
     if (lpParms == NULL) return MCIERR_NULL_PARAMETER_BLOCK;
+
+    if (!(iData = MULTIMEDIA_GetIData()))
+	return MCIERR_INTERNAL;
 
     /* only two low bytes are generic, the other ones are dev type specific */
 #define WINE_MCI_SUPP	(0xFFFF0000|MCI_OPEN_SHAREABLE|MCI_OPEN_ELEMENT|MCI_OPEN_ALIAS|MCI_OPEN_TYPE|MCI_OPEN_TYPE_ID|MCI_NOTIFY|MCI_WAIT)
@@ -1123,53 +1142,65 @@ DWORD MCI_Open(DWORD dwParam, LPMCI_OPEN_PARMSA lpParms)
     }
 #undef WINE_MCI_SUPP
 
-    while (MCI_GetDrv(wDevID)->modp.wType != 0) {
-	wDevID = MCI_NextDevID(wDevID);
-	if (!MCI_DevIDValid(wDevID)) {
-	    TRACE("MAXMCIDRIVERS reached !\n");
-	    return MCIERR_OUT_OF_MEMORY;
-	}
+    wmd = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*wmd));
+    if (!wmd) {
+	return MCIERR_OUT_OF_MEMORY;
     }
 
+    while (MCI_GetDriver(wDevID) != 0) {
+	wDevID++;
+    }
     TRACE("wDevID=%04X \n", wDevID);
-    memcpy(MCI_GetOpenDrv(wDevID), lpParms, sizeof(*lpParms));
-    
+
     strDevTyp[0] = 0;
 
     if (dwParam & MCI_OPEN_ELEMENT) {
 	char*	t;
 	
 	TRACE("lpstrElementName='%s'\n", lpParms->lpstrElementName);
+	if (!lpParms->lpstrElementName) {
+	    dwRet = MCIERR_NULL_PARAMETER_BLOCK;
+	    goto errCleanUp;
+	}
+
 	t = strrchr(lpParms->lpstrElementName, '.');
 	if (t) {
 	    GetProfileStringA("mci extensions", t+1, "*", strDevTyp, sizeof(strDevTyp));
 	    if (strcmp(strDevTyp, "*") == 0) {
 		TRACE("No [mci extensions] entry for %s found.\n", t);
-		return MCIERR_EXTENSION_NOT_FOUND;
+		dwRet = MCIERR_EXTENSION_NOT_FOUND;
+		goto errCleanUp;
 	    }
 	    TRACE("Extension %s is mapped to type %s\n", t, strDevTyp);
+
+	    wmd->lpstrElementName = HEAP_strdupA(GetProcessHeap(), 0, lpParms->lpstrElementName);
 	} else if (GetDriveTypeA(lpParms->lpstrElementName) == DRIVE_CDROM) {
 	    /* FIXME: this will not work if several CDROM drives are installed on the machine */
 	    strcpy(strDevTyp, "CDAUDIO");
 	} else {
-	    return MCIERR_EXTENSION_NOT_FOUND;
+	    dwRet = MCIERR_EXTENSION_NOT_FOUND;
+	    goto errCleanUp;
 	}
     }
     
     if (dwParam & MCI_OPEN_ALIAS) {
 	TRACE("Alias='%s' !\n", lpParms->lpstrAlias);
-	/* FIXME is there any memory leak here ? */
-	MCI_GetOpenDrv(wDevID)->lpstrAlias = strdup(lpParms->lpstrAlias);
+
+	if (!lpParms->lpstrAlias) {
+	    dwRet = MCIERR_NULL_PARAMETER_BLOCK;
+	    goto errCleanUp;
+	}
+
+	wmd->lpstrAlias = HEAP_strdupA(GetProcessHeap(), 0, lpParms->lpstrAlias);
 	/* mplayer does allocate alias to CDAUDIO */
-    } else {
-	MCI_GetOpenDrv(wDevID)->lpstrAlias = NULL;
     }
+
     if (dwParam & MCI_OPEN_TYPE) {
 	if (dwParam & MCI_OPEN_TYPE_ID) {
 #if 0
 	    TRACE("Dev=%08lx!\n", (DWORD)lpParms->lpstrDeviceType);
 	    uDevType = LOWORD((DWORD)lpParms->lpstrDeviceType);
-	    MCI_GetOpenDrv(wDevID)->lpstrDeviceType = lpParms->lpstrDeviceType;
+	    wmd->lpstrDeviceType = lpParms->lpstrDeviceType;
 #endif
 	    if (LOWORD((DWORD)lpParms->lpstrDeviceType) != MCI_DEVTYPE_CD_AUDIO) {
 		FIXME("MCI_OPEN_TYPE_ID is no longer properly supported\n");
@@ -1185,7 +1216,8 @@ DWORD MCI_Open(DWORD dwParam, LPMCI_OPEN_PARMSA lpParms)
 
     if (strDevTyp[0] == 0) {
 	FIXME("Couldn't load driver\n");
-	return MCIERR_DRIVER_INTERNAL;
+	dwRet = MCIERR_DRIVER_INTERNAL;
+	goto errCleanUp;
     }
 
     CharUpperA(strDevTyp);
@@ -1193,50 +1225,73 @@ DWORD MCI_Open(DWORD dwParam, LPMCI_OPEN_PARMSA lpParms)
     modp.wDeviceID = wDevID;
     modp.lpstrParams = NULL;
     
-    /* FIXME: this is a hack... some MCI drivers, while being open, call
-     * mciSetData, which lookup for non empty slots in MCI table list
-     * Unfortunatly, open slots are known when wType == 0...
-     * so use a dummy type, just to keep on going. May be wType == 0 is 
-     * not the best solution to indicate empty slot in MCI drivers table
+    wmd->wDeviceID = wDevID;
+    wmd->lpfnYieldProc = MCI_DefYieldProc;
+    wmd->dwYieldData = VK_CANCEL;
+    wmd->hCreatorTask = GetCurrentTask();
+
+    /* wmd must be inserted in list before sending opening the driver, coz' it
+     * may want to lookup at wDevID
      */
-    MCI_GetDrv(wDevID)->modp.wType = MCI_DEVTYPE_CD_AUDIO;
+    wmd->lpNext = iData->lpMciDrv;
+    iData->lpMciDrv = wmd;
+    
     hDrv = OpenDriverA(strDevTyp, "mci", (LPARAM)&modp);
     
     if (!hDrv) {
 	FIXME("Couldn't load driver for type %s.\n", strDevTyp);
-	return MCIERR_DEVICE_NOT_INSTALLED;
+	dwRet = MCIERR_DEVICE_NOT_INSTALLED;
+	goto errCleanUp;
     }				
     uDevType = modp.wType;
-    MCI_GetDrv(wDevID)->hDrv = hDrv;
+    wmd->hDrv = hDrv;
     
     TRACE("Loaded driver %u (%s), type is %d\n", hDrv, strDevTyp, uDevType);
     
-    MCI_GetDrv(wDevID)->mop.lpstrDeviceType = strdup(strDevTyp);
-    MCI_GetDrv(wDevID)->modp.wType = uDevType;
-    MCI_GetDrv(wDevID)->modp.wDeviceID = 0;  /* FIXME? for multiple devices */
+    wmd->lpstrDeviceType = HEAP_strdupA(GetProcessHeap(), 0, strDevTyp);
+    wmd->wType = uDevType;
 
     lpParms->wDeviceID = wDevID;
 
     TRACE("mcidev=%d, uDevType=%04X wDeviceID=%04X !\n", 
 	  wDevID, uDevType, lpParms->wDeviceID);
 
-    MCI_GetDrv(wDevID)->lpfnYieldProc = MCI_DefYieldProc;
-    MCI_GetDrv(wDevID)->dwYieldData = VK_CANCEL;
-    MCI_GetDrv(wDevID)->hCreatorTask = GetCurrentTask();
-    MCI_GetDrv(wDevID)->dwPrivate = 0;
-    
     dwRet = MCI_SendCommandFrom32(wDevID, MCI_OPEN_DRIVER, dwParam, (DWORD)lpParms);
 
-    if (dwRet == 0) {
-	/* only handled devices fall through */
-	TRACE("wDevID = %04X wDeviceID = %d dwRet = %ld\n", wDevID, lpParms->wDeviceID, dwRet);
-    } else {
+    if (dwRet) {
 	TRACE("Failed to open driver (MCI_OPEN_DRIVER msg) [%08lx], closing\n", dwRet);
-	MCI_GetDrv(wDevID)->modp.wType = 0;
+
+	/* FIXME: is dwRet the correct ret code ? */
+	goto errCleanUp;
     }
+
+    /* only handled devices fall through */
+    TRACE("wDevID = %04X wDeviceID = %d dwRet = %ld\n", wDevID, lpParms->wDeviceID, dwRet);
+
     if (dwParam & MCI_NOTIFY)
-	mciDriverNotify16(lpParms->dwCallback, wDevID, dwRet == 0 ? MCI_NOTIFY_SUCCESSFUL : MCI_NOTIFY_FAILURE);
+	mciDriverNotify16(lpParms->dwCallback, wDevID, MCI_NOTIFY_SUCCESSFUL);
     
+    return 0;
+errCleanUp:
+    if (wmd->hDrv)
+	CloseDriver(wmd->hDrv, 0, 0);
+	
+    /* remove wmd from list if it has been inserted */
+    {
+	LPWINE_MCIDRIVER*	tmp;
+	for (tmp = &iData->lpMciDrv; *tmp; tmp = &(*tmp)->lpNext) {
+	    if (*tmp == wmd) {
+		*tmp = wmd->lpNext;
+		break;
+	    }
+	}
+    }
+    HeapFree(GetProcessHeap(), 0, wmd->lpstrDeviceType);
+    HeapFree(GetProcessHeap(), 0, wmd->lpstrElementName);
+    HeapFree(GetProcessHeap(), 0, wmd->lpstrAlias);
+    HeapFree(GetProcessHeap(), 0, wmd);
+    if (dwParam & MCI_NOTIFY)
+	mciDriverNotify16(lpParms->dwCallback, wDevID, MCI_NOTIFY_FAILURE);
     return dwRet;
 }
 
@@ -1245,24 +1300,57 @@ DWORD MCI_Open(DWORD dwParam, LPMCI_OPEN_PARMSA lpParms)
  */
 DWORD MCI_Close(UINT16 wDevID, DWORD dwParam, LPMCI_GENERIC_PARMS lpParms)
 {
-    DWORD	dwRet;
-    
+    DWORD		dwRet;
+    LPWINE_MCIDRIVER	wmd;
+    LPWINE_MCIDRIVER*	tmp;
+    LPWINE_MM_IDATA	iData;
+
     TRACE("(%04x, %08lX, %p)\n", wDevID, dwParam, lpParms);
 
+    if (!(iData = MULTIMEDIA_GetIData()))
+	return MCIERR_INTERNAL;
+
     if (wDevID == MCI_ALL_DEVICE_ID) {
-	FIXME("unhandled MCI_ALL_DEVICE_ID\n");
-	return MCIERR_CANNOT_USE_ALL;
+	LPWINE_MCIDRIVER	next;
+
+	/* FIXME: shall I notify once after all is done, or for 
+	 * each of the open drivers ? if the latest, which notif
+	 * to return when only one fails ?
+	 */
+	for (wmd = iData->lpMciDrv; wmd; ) {
+	    next = wmd->lpNext;
+	    MCI_Close(wmd->wDeviceID, dwParam, lpParms);
+	    wmd = next;
+	}	
+	return 0;
+    }
+
+    if (!(wmd = MCI_GetDriver(wDevID))) {
+	return MCIERR_INVALID_DEVICE_ID;
     }
 
     dwRet = MCI_SendCommandFrom32(wDevID, MCI_CLOSE_DRIVER, dwParam, (DWORD)lpParms);
-    if (MCI_GetDrv(wDevID)->hDrv) {
-#if 1
-	CloseDriver(MCI_GetDrv(wDevID)->hDrv, 0, 0);
-#endif
+
+    if (wmd->hDrv) {
+	CloseDriver(wmd->hDrv, 0, 0);
     }
-    MCI_GetDrv(wDevID)->modp.wType = 0;
-    free(MCI_GetDrv(wDevID)->mop.lpstrDeviceType);
-    free(MCI_GetDrv(wDevID)->mop.lpstrAlias);
+
+    if (wmd->dwPrivate != 0) {
+	WARN("Closing mci driver with non nul dwPrivate field\n");
+    }
+
+    for (tmp = &iData->lpMciDrv; *tmp; tmp = &(*tmp)->lpNext) {
+	if (*tmp == wmd) {
+	    *tmp = wmd->lpNext;
+	    break;
+	}
+    }
+
+    HeapFree(GetProcessHeap(), 0, wmd->lpstrDeviceType);
+    HeapFree(GetProcessHeap(), 0, wmd->lpstrAlias);
+    HeapFree(GetProcessHeap(), 0, wmd->lpstrElementName);
+
+    HeapFree(GetProcessHeap(), 0, wmd);
 
     if (dwParam & MCI_NOTIFY)
 	mciDriverNotify16(lpParms->dwCallback, wDevID,
@@ -1293,10 +1381,13 @@ DWORD	MCI_WriteString(LPSTR lpDstStr, DWORD dstSize, LPCSTR lpSrcStr)
  */
 DWORD MCI_SysInfo(UINT uDevID, DWORD dwFlags, LPMCI_SYSINFO_PARMSA lpParms)
 {
-    DWORD	ret = MCIERR_INVALID_DEVICE_ID;
-    
-    if (lpParms == NULL)	return MCIERR_NULL_PARAMETER_BLOCK;
-    
+    DWORD		ret = MCIERR_INVALID_DEVICE_ID;
+    LPWINE_MCIDRIVER	wmd;
+    LPWINE_MM_IDATA	iData;
+
+    if (lpParms == NULL)			return MCIERR_NULL_PARAMETER_BLOCK;
+    if (!(iData = MULTIMEDIA_GetIData()))	return MCIERR_INTERNAL;
+
     TRACE("(%08x, %08lX, %08lX[num=%ld, wDevTyp=%u])\n", 
 	  uDevID, dwFlags, (DWORD)lpParms, lpParms->dwNumber, lpParms->wDeviceType);
     
@@ -1304,13 +1395,12 @@ DWORD MCI_SysInfo(UINT uDevID, DWORD dwFlags, LPMCI_SYSINFO_PARMSA lpParms)
     case MCI_SYSINFO_QUANTITY:
 	{
 	    DWORD	cnt = 0;
-	    WORD	i;
 	    
 	    if (lpParms->wDeviceType < MCI_DEVTYPE_FIRST || lpParms->wDeviceType > MCI_DEVTYPE_LAST) {
 		if (dwFlags & MCI_SYSINFO_OPEN) {
 		    TRACE("MCI_SYSINFO_QUANTITY: # of open MCI drivers\n");
-		    for (i = 0; i < MAXMCIDRIVERS; i++) {
-			if (mciDrv[i].modp.wType != 0) cnt++;
+		    for (wmd = iData->lpMciDrv; wmd; wmd = wmd->lpNext) {
+			cnt++;
 		    }
 		} else {
 		    TRACE("MCI_SYSINFO_QUANTITY: # of installed MCI drivers\n");
@@ -1319,8 +1409,9 @@ DWORD MCI_SysInfo(UINT uDevID, DWORD dwFlags, LPMCI_SYSINFO_PARMSA lpParms)
 	    } else {
 		if (dwFlags & MCI_SYSINFO_OPEN) {
 		    TRACE("MCI_SYSINFO_QUANTITY: # of open MCI drivers of type %u\n", lpParms->wDeviceType);
-		    for (i = 0; i < MAXMCIDRIVERS; i++) {
-			if (mciDrv[i].modp.wType == lpParms->wDeviceType) cnt++;
+		    for (wmd = iData->lpMciDrv; wmd; wmd = wmd->lpNext) {
+			if (wmd->wType == lpParms->wDeviceType)
+			    cnt++;
 		    }
 		} else {
 		    TRACE("MCI_SYSINFO_QUANTITY: # of installed MCI drivers of type %u\n", lpParms->wDeviceType);
@@ -1335,8 +1426,8 @@ DWORD MCI_SysInfo(UINT uDevID, DWORD dwFlags, LPMCI_SYSINFO_PARMSA lpParms)
 	break;
     case MCI_SYSINFO_INSTALLNAME:
 	TRACE("MCI_SYSINFO_INSTALLNAME \n");
-	if (MCI_DevIDValid(uDevID)) {
-	    ret = MCI_WriteString(lpParms->lpstrReturn, lpParms->dwRetSize, MCI_GetDrv(uDevID)->mop.lpstrDeviceType);
+	if ((wmd = MCI_GetDriver(uDevID))) {
+	    ret = MCI_WriteString(lpParms->lpstrReturn, lpParms->dwRetSize, wmd->lpstrDeviceType);
 	} else {
 	    *lpParms->lpstrReturn = 0;
 	    ret = MCIERR_INVALID_DEVICE_ID;
@@ -1496,7 +1587,7 @@ LRESULT		MCI_CleanUp(LRESULT dwRet, UINT wMsg, DWORD dwParam2, BOOL bIs32)
 		LPMCI_STATUS_PARMS	lsp = (LPMCI_STATUS_PARMS)(bIs32 ? (void*)dwParam2 : PTR_SEG_TO_LIN(dwParam2));
 
 		dwRet = LOWORD(dwRet);
-		TRACE("Changing %08lx to %08lx\n", lsp->dwReturn,(DWORD) LOWORD(lsp->dwReturn));
+		TRACE("Changing %08lx to %08lx\n", lsp->dwReturn, (DWORD)LOWORD(lsp->dwReturn));
 		lsp->dwReturn = LOWORD(lsp->dwReturn);
 	    }
 	    break;
@@ -1505,6 +1596,10 @@ LRESULT		MCI_CleanUp(LRESULT dwRet, UINT wMsg, DWORD dwParam2, BOOL bIs32)
 	}
 	break;
     default:
+	if (dwRet & 0xFFFF0000ul) {
+	    FIXME("Got non null hiword for dwRet=0x%08lx for command %s\n", 
+		  dwRet, MCI_CommandToString(wMsg));
+	}
 	break;
     }
     return dwRet;
@@ -1521,7 +1616,7 @@ BOOL MULTIMEDIA_MciInit(void)
     LPSTR	ptr1, ptr2;
 
     mciInstalledCount = 0;
-    ptr1 = lpmciInstallNames = malloc(2048);
+    ptr1 = lpmciInstallNames = HeapAlloc(SystemHeap, 0, 2048);
 
     if (!lpmciInstallNames)
 	return FALSE;
