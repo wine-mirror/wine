@@ -162,6 +162,7 @@ WINDOWS_INCLUDES = \
 	mscat.h \
 	mshtmdid.h \
 	msi.h \
+	msidefs.h \
 	msiquery.h \
 	mssip.h \
 	mswsock.h \
