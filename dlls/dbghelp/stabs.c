@@ -1094,6 +1094,7 @@ BOOL stabs_parse(struct module* module, const char* addr,
     unsigned int                stabbufflen;
     const struct stab_nlist*    stab_ptr;
     const char*                 strs;
+    const char*                 strs_end;
     int                         strtabinc;
     char                        symname[4096];
     unsigned                    incl[32];
@@ -1107,6 +1108,7 @@ BOOL stabs_parse(struct module* module, const char* addr,
     nstab = stablen / sizeof(struct stab_nlist);
     stab_ptr = (const struct stab_nlist*)(addr + staboff);
     strs = (const char*)(addr + strtaboff);
+    strs_end = strs + strtablen;
 
     memset(srcpath, 0, sizeof(srcpath));
     memset(stabs_basic, 0, sizeof(stabs_basic));
@@ -1123,6 +1125,11 @@ BOOL stabs_parse(struct module* module, const char* addr,
     for (i = 0; i < nstab; i++, stab_ptr++)
     {
         ptr = strs + stab_ptr->n_un.n_strx;
+        if ((ptr > strs_end) || (ptr + strlen(ptr) > strs_end))
+        {
+            WARN("Bad stabs string %p\n", ptr);
+            continue;
+        }
         if (ptr[strlen(ptr) - 1] == '\\')
         {
             /*
@@ -1145,23 +1152,33 @@ BOOL stabs_parse(struct module* module, const char* addr,
             ptr = stabbuff;
         }
 
-        if (strchr(ptr, '=') != NULL)
+        /* only symbol entries contain a typedef */
+        switch (stab_ptr->n_type)
         {
-            /*
-             * The stabs aren't in writable memory, so copy it over so we are
-             * sure we can scribble on it.
-             */
-            if (ptr != stabbuff)
+        case N_GSYM:
+        case N_LCSYM:
+        case N_STSYM:
+        case N_RSYM:
+        case N_LSYM:
+        case N_ROSYM:
+            if (strchr(ptr, '=') != NULL)
             {
-                strcpy(stabbuff, ptr);
-                ptr = stabbuff;
-            }
-            stab_strcpy(symname, sizeof(symname), ptr);
-            if (!stabs_parse_typedef(module, ptr, symname))
-            {
-                /* skip this definition */
-                stabbuff[0] = '\0';
-                continue;
+                /*
+                 * The stabs aren't in writable memory, so copy it over so we are
+                 * sure we can scribble on it.
+                 */
+                if (ptr != stabbuff)
+                {
+                    strcpy(stabbuff, ptr);
+                    ptr = stabbuff;
+                }
+                stab_strcpy(symname, sizeof(symname), ptr);
+                if (!stabs_parse_typedef(module, ptr, symname))
+                {
+                    /* skip this definition */
+                    stabbuff[0] = '\0';
+                    continue;
+                }
             }
         }
 
