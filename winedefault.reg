@@ -238,6 +238,26 @@
 @=""
 
 #
+# Entries for quartz.dll
+#
+
+# CLSID_FilterGraph
+[HKEY_CLASSES_ROOT\CLSID\{E436EBB3-524F-11CE-9F53-0020AF0BA770}\InprocServer32]
+@="quartz.dll"
+"ThreadingModel"="Both"
+
+# CLSID_SystemClock
+[HKEY_CLASSES_ROOT\CLSID\{E436EBB1-524F-11CE-9F53-0020AF0BA770}\InprocServer32]
+@="quartz.dll"
+"ThreadingModel"="Both"
+
+# CLSID_MemoryAllocator
+[HKEY_CLASSES_ROOT\CLSID\{1E651CC0-B199-11D0-8212-00C04FC32C45}\InprocServer32]
+@="quartz.dll"
+"ThreadingModel"="Both"
+
+
+#
 # Entries for Mozilla ActiveX control support
 #
 

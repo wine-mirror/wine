@@ -9,7 +9,14 @@ LDDLLFLAGS = @LDDLLFLAGS@
 SYMBOLFILE = $(MODULE).tmp.o
 
 C_SRCS = \
-	main.c
+	fgraph.c \
+	ifgraph.c \
+	imem.c \
+	irclock.c \
+	iunk.c \
+	main.c \
+	memalloc.c \
+	sysclock.c
 
 @MAKE_DLL_RULES@
 
