@@ -165,17 +165,18 @@ void EVENT_ProcessEvent( XEvent *event )
 	if (TSXFindContext( display, child, winContext, (char **)&pWnd ) != 0)
 	  return;
       } else {
-	return;  /* Not for a registered window */
+	pWnd = NULL;  /* Not for a registered window */
       }
     }
 
     TRACE(event, "Got event %s for hwnd %04x\n",
-	  event_names[event->type], pWnd->hwndSelf );
+	  event_names[event->type], pWnd? pWnd->hwndSelf : 0 );
 
     switch(event->type)
     {
     case KeyPress:
     case KeyRelease:
+        if (!pWnd) return;
         if (InputEnabled) EVENT_Key( pWnd, (XKeyEvent*)event );
 	break;
 	
@@ -207,38 +208,47 @@ void EVENT_ProcessEvent( XEvent *event )
 	break;
 
     case FocusIn:
+        if (!pWnd) return;
         EVENT_FocusIn( pWnd, (XFocusChangeEvent*)event );
 	break;
 
     case FocusOut:
+        if (!pWnd) return;
 	EVENT_FocusOut( pWnd, (XFocusChangeEvent*)event );
 	break;
 
     case Expose:
+        if (!pWnd) return;
 	EVENT_Expose( pWnd, (XExposeEvent *)event );
 	break;
 
     case GraphicsExpose:
+        if (!pWnd) return;
 	EVENT_GraphicsExpose( pWnd, (XGraphicsExposeEvent *)event );
         break;
 
     case ConfigureNotify:
+        if (!pWnd) return;
 	EVENT_ConfigureNotify( pWnd, (XConfigureEvent*)event );
 	break;
 
     case SelectionRequest:
+        if (!pWnd) return;
 	EVENT_SelectionRequest( pWnd, (XSelectionRequestEvent *)event );
 	break;
 
     case SelectionNotify:
+        if (!pWnd) return;
 	EVENT_SelectionNotify( (XSelectionEvent *)event );
 	break;
 
     case SelectionClear:
+        if (!pWnd) return;
 	EVENT_SelectionClear( pWnd, (XSelectionClearEvent*) event );
 	break;
 
     case ClientMessage:
+        if (!pWnd) return;
 	EVENT_ClientMessage( pWnd, (XClientMessageEvent *) event );
 	break;
 
@@ -259,12 +269,13 @@ void EVENT_ProcessEvent( XEvent *event )
 	break;
 
     case MapNotify:
+        if (!pWnd) return;
 	EVENT_MapNotify( pWnd->hwndSelf, (XMapEvent *)event );
 	break;
 
     default:    
 	WARN(event, "Unprocessed event %s for hwnd %04x\n",
-	        event_names[event->type], pWnd->hwndSelf );
+	        event_names[event->type], pWnd? pWnd->hwndSelf : 0 );
 	break;
     }
 }
@@ -443,7 +454,7 @@ BOOL32 EVENT_WaitNetEvent( BOOL32 sleep, BOOL32 peek )
 
           if (TSXFindContext( display, ((XAnyEvent *)&event)->window, winContext,
                             (char **)&pWnd ) || (event.type == NoExpose))
-              continue;
+              pWnd = NULL;
 
 	  if( pWnd )
           {
@@ -669,14 +680,18 @@ static void EVENT_Key( WND *pWnd, XKeyEvent *event )
  */
 static void EVENT_MotionNotify( WND *pWnd, XMotionEvent *event )
 {
-    hardware_event( WM_MOUSEMOVE, EVENT_XStateToKeyState( event->state ), 0L,
-                    pWnd->rectWindow.left + event->x,
-                    pWnd->rectWindow.top + event->y,
-                    event->time - MSG_WineStartTicks, pWnd->hwndSelf );
+    int xOffset = pWnd? pWnd->rectWindow.left : 0;
+    int yOffset = pWnd? pWnd->rectWindow.top  : 0;
+
+    if (pWnd)
+        hardware_event( WM_MOUSEMOVE, EVENT_XStateToKeyState( event->state ), 0L,
+                        xOffset + event->x,
+                        yOffset + event->y,
+                        event->time - MSG_WineStartTicks, pWnd->hwndSelf );
 
     EVENT_SendMouseEvent( ME_MOVE, 
-                          pWnd->rectWindow.left + event->x,
-                          pWnd->rectWindow.top + event->y,
+                          xOffset + event->x,
+                          yOffset + event->y,
                           0, 0 );
 }
 
@@ -712,19 +727,24 @@ static void EVENT_ButtonPress( WND *pWnd, XButtonEvent *event )
         { ME_LDOWN, 0, ME_RDOWN };
     int buttonNum = event->button - 1;
 
+    int xOffset = pWnd? pWnd->rectWindow.left : 0;
+    int yOffset = pWnd? pWnd->rectWindow.top  : 0;
+
     if (buttonNum >= NB_BUTTONS) return;
     if (SwappedButtons) buttonNum = NB_BUTTONS - 1 - buttonNum;
     MouseButtonsStates[buttonNum] = TRUE;
     AsyncMouseButtonsStates[buttonNum] = TRUE;
-    hardware_event( messages[buttonNum],
-		    EVENT_XStateToKeyState( event->state ), 0L,
-                    pWnd->rectWindow.left + event->x,
-                    pWnd->rectWindow.top + event->y,
-		    event->time - MSG_WineStartTicks, pWnd->hwndSelf );
+
+    if (pWnd)
+        hardware_event( messages[buttonNum],
+		        EVENT_XStateToKeyState( event->state ), 0L,
+                        xOffset + event->x,
+                        yOffset + event->y,
+		        event->time - MSG_WineStartTicks, pWnd->hwndSelf );
 
     EVENT_SendMouseEvent( statusCodes[buttonNum], 
-                          pWnd->rectWindow.left + event->x,
-                          pWnd->rectWindow.top + event->y,
+                          xOffset + event->x,
+                          yOffset + event->y,
                           0, 0 );
 }
 
@@ -740,18 +760,23 @@ static void EVENT_ButtonRelease( WND *pWnd, XButtonEvent *event )
         { ME_LUP, 0, ME_RUP };
     int buttonNum = event->button - 1;
 
+    int xOffset = pWnd? pWnd->rectWindow.left : 0;
+    int yOffset = pWnd? pWnd->rectWindow.top  : 0;
+
     if (buttonNum >= NB_BUTTONS) return;    
     if (SwappedButtons) buttonNum = NB_BUTTONS - 1 - buttonNum;
     MouseButtonsStates[buttonNum] = FALSE;
-    hardware_event( messages[buttonNum],
-		    EVENT_XStateToKeyState( event->state ), 0L,
-                    pWnd->rectWindow.left + event->x,
-                    pWnd->rectWindow.top + event->y,
-		    event->time - MSG_WineStartTicks, pWnd->hwndSelf );
+
+    if (pWnd)
+        hardware_event( messages[buttonNum],
+		        EVENT_XStateToKeyState( event->state ), 0L,
+                        xOffset + event->x,
+                        yOffset + event->y,
+		        event->time - MSG_WineStartTicks, pWnd->hwndSelf );
 
     EVENT_SendMouseEvent( statusCodes[buttonNum], 
-                          pWnd->rectWindow.left + event->x,
-                          pWnd->rectWindow.top + event->y,
+                          xOffset + event->x,
+                          yOffset + event->y,
                           0, 0 );
 }
 
@@ -1500,11 +1525,11 @@ static void EVENT_SendMouseEvent( WORD mouseStatus, WORD deltaX, WORD deltaY,
 
     if ( !MouseEventProc ) return;
 
-    TRACE( keyboard, "(%04X,%d,%d,%d,%ld)\n", mouseStatus, deltaX, deltaY, buttonCount, extraInfo );
+    TRACE( event, "(%04X,%d,%d,%d,%ld)\n", mouseStatus, deltaX, deltaY, buttonCount, extraInfo );
 
     mouseStatus |= 0x8000;
-    deltaX = (((long)deltaX << 16) + screenWidth/2)  / screenWidth;
-    deltaY = (((long)deltaY << 16) + screenHeight/2) / screenHeight;
+    deltaX = (((long)deltaX << 16) + screenWidth-1)  / screenWidth;
+    deltaY = (((long)deltaY << 16) + screenHeight-1) / screenHeight;
 
     memset( &context, 0, sizeof(context) );
     CS_reg(&context)  = SELECTOROF( MouseEventProc );
