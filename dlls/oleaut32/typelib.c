@@ -1331,6 +1331,50 @@ static void TLB_Free(void * ptr)
     HeapFree(GetProcessHeap(), 0, ptr);
 }
 
+/* deep copy a typedesc */
+static void copy_typedesc(TYPEDESC *out, const TYPEDESC *in)
+{
+    out->vt = in->vt;
+    switch(in->vt) {
+    case VT_PTR:
+	out->u.lptdesc = HeapAlloc(GetProcessHeap(), 0, sizeof(TYPEDESC));
+	copy_typedesc(out->u.lptdesc, in->u.lptdesc);
+	break;
+    case VT_USERDEFINED:
+	out->u.hreftype = in->u.hreftype;
+	break;
+    case VT_CARRAY:
+	out->u.lpadesc = HeapAlloc(GetProcessHeap(), 0, sizeof(ARRAYDESC) +
+				   (in->u.lpadesc->cDims - 1) * sizeof(SAFEARRAYBOUND));
+	copy_typedesc(&out->u.lpadesc->tdescElem, &in->u.lpadesc->tdescElem);
+	out->u.lpadesc->cDims = in->u.lpadesc->cDims;
+	memcpy(out->u.lpadesc->rgbounds, in->u.lpadesc->rgbounds, in->u.lpadesc->cDims * sizeof(SAFEARRAYBOUND));
+	break;
+    default:
+	break;
+    }
+}
+
+/* free()s any allocated memory pointed to by the tdesc.  NB does not
+   free the tdesc itself - this is because the tdesc is typically part
+   of a larger structure */
+static void free_deep_typedesc(TYPEDESC *tdesc)
+{
+    switch(tdesc->vt) {
+    case VT_PTR:
+	free_deep_typedesc(tdesc->u.lptdesc);
+	HeapFree(GetProcessHeap(), 0, tdesc->u.lptdesc);
+	tdesc->u.lptdesc = NULL;
+	break;
+    case VT_CARRAY:
+	free_deep_typedesc(&tdesc->u.lpadesc->tdescElem);
+	HeapFree(GetProcessHeap(), 0, tdesc->u.lpadesc);
+	tdesc->u.lpadesc = NULL;
+	break;
+    default:
+	break;
+    }
+}
 
 /**********************************************************************
  *
@@ -4129,6 +4173,10 @@ static HRESULT WINAPI ITypeInfo_fnGetTypeAttr( ITypeInfo2 *iface,
     TRACE("(%p)\n",This);
     *ppTypeAttr = HeapAlloc(GetProcessHeap(), 0, sizeof(**ppTypeAttr));
     memcpy(*ppTypeAttr, &This->TypeAttr, sizeof(**ppTypeAttr));
+
+    if(This->TypeAttr.typekind == TKIND_ALIAS) /* need to deep copy typedesc */
+	copy_typedesc(&(*ppTypeAttr)->tdescAlias, &This->TypeAttr.tdescAlias);
+
     if((*ppTypeAttr)->typekind == TKIND_DISPATCH && (*ppTypeAttr)->wTypeFlags & TYPEFLAG_FDUAL) {
         (*ppTypeAttr)->cFuncs = (*ppTypeAttr)->cbSizeVft / 4; /* This should include all the inherited
                                                                  funcs */
@@ -5182,6 +5230,8 @@ static void WINAPI ITypeInfo_fnReleaseTypeAttr( ITypeInfo2 *iface,
 {
     ITypeInfoImpl *This = (ITypeInfoImpl *)iface;
     TRACE("(%p)->(%p)\n", This, pTypeAttr);
+    if(This->TypeAttr.typekind == TKIND_ALIAS)
+	free_deep_typedesc(&pTypeAttr->tdescAlias);
     HeapFree(GetProcessHeap(), 0, pTypeAttr);
 }
 
