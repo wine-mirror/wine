@@ -128,8 +128,10 @@ static BOOL db_display = FALSE;
 #define	STI	32			/* FP stack */
 #define	X	33			/* extended FP op */
 #define	XA	34			/* for 'fstcw %ax' */
-#define	MX	35			/* special register (mmx) */
-#define	EMX	36			/* special register (mmx) */
+#define	MX	35			/* special register (MMX reg %mm0-7) */
+#define	EMX	36			/* special register (MMX reg %mm0-7) */
+#define	XMM	37			/* special register (floating point reg %xmm0-7) */
+#define	EXMM	38			/* special register (floating point reg %xmm0-7) */
 
 struct inst {
 	const char *i_name;		/* name */
@@ -258,23 +260,23 @@ static const struct inst db_inst_0f2x[] = {
 };
 
 static const struct inst db_inst_0f3x[] = {
-/*20*/	{ "wrmsr", FALSE, NONE,  0,   0 },
-/*21*/	{ "rdtsc", FALSE, NONE,  0,   0 },
-/*22*/	{ "rdmsr", FALSE, NONE,  0,   0 },
-/*23*/	{ "rdpmc", FALSE, NONE,  0,   0 },
-/*24*/	{ "sysenter",FALSE,NONE, 0,   0 },
-/*25*/	{ "sysexit",FALSE,NONE,  0,   0 },
-/*26*/	{ "(bad)", FALSE, NONE,  0,   0 },
-/*27*/	{ "(bad)", FALSE, NONE,  0,   0 },
+/*30*/	{ "wrmsr", FALSE, NONE,  0,   0 },
+/*31*/	{ "rdtsc", FALSE, NONE,  0,   0 },
+/*32*/	{ "rdmsr", FALSE, NONE,  0,   0 },
+/*33*/	{ "rdpmc", FALSE, NONE,  0,   0 },
+/*34*/	{ "sysenter",FALSE,NONE, 0,   0 },
+/*35*/	{ "sysexit",FALSE,NONE,  0,   0 },
+/*36*/	{ "(bad)", FALSE, NONE,  0,   0 },
+/*37*/	{ "(bad)", FALSE, NONE,  0,   0 },
 
-/*28*/	{ "(bad)",FALSE, NONE,  0,	      0 },
-/*29*/	{ "(bad)",FALSE, NONE,  0,	      0 },
-/*2a*/	{ "(bad)",FALSE, NONE,  0,	      0 },
-/*2b*/	{ "(bad)",FALSE, NONE,  0,	      0 },
-/*2c*/	{ "(bad)",FALSE, NONE,  0,	      0 },
-/*2d*/	{ "(bad)",FALSE, NONE,  0,	      0 },
-/*2e*/	{ "(bad)",FALSE, NONE,  0,	      0 },
-/*2f*/	{ "(bad)",FALSE, NONE,  0,	      0 },
+/*38*/	{ "(bad)",FALSE, NONE,  0,	      0 },
+/*39*/	{ "(bad)",FALSE, NONE,  0,	      0 },
+/*3a*/	{ "(bad)",FALSE, NONE,  0,	      0 },
+/*3b*/	{ "(bad)",FALSE, NONE,  0,	      0 },
+/*3c*/	{ "(bad)",FALSE, NONE,  0,	      0 },
+/*3d*/	{ "(bad)",FALSE, NONE,  0,	      0 },
+/*3e*/	{ "(bad)",FALSE, NONE,  0,	      0 },
+/*3f*/	{ "(bad)",FALSE, NONE,  0,	      0 },
 };
 
 static const struct inst db_inst_0f4x[] = {
@@ -295,6 +297,26 @@ static const struct inst db_inst_0f4x[] = {
 /*4d*/	{ "cmovge", TRUE, NONE,  op2(E, R), 0 }, 
 /*4e*/	{ "cmovle", TRUE, NONE,  op2(E, R), 0 }, 
 /*4f*/	{ "cmovnle",TRUE, NONE,  op2(E, R), 0 }, 
+};
+
+static const struct inst db_inst_0f5x[] = {
+/*50*/	{ "movmskps",TRUE, NONE, op2(E, XMM), 0 },
+/*51*/	{ "sqrtps",  TRUE, NONE, op2(XMM, EXMM), 0 },
+/*52*/	{ "rsqrtps", TRUE, NONE, op2(XMM, EXMM), 0 },
+/*53*/	{ "rcpps",   TRUE, NONE, op2(XMM, EXMM), 0 },
+/*54*/	{ "andps",   TRUE, NONE, op2(XMM, EXMM), 0 },
+/*55*/	{ "andnps",  TRUE, NONE, op2(XMM, EXMM), 0 },
+/*56*/	{ "orps",    TRUE, NONE, op2(XMM, EXMM), 0 },
+/*57*/	{ "xorps",   TRUE, NONE, op2(XMM, EXMM), 0 },
+
+/*58*/	{ "addps",   TRUE, NONE, op2(XMM, EXMM), 0 },
+/*59*/	{ "mulps",   TRUE, NONE, op2(XMM, EXMM), 0 },
+/*5a*/	{ "(bad)",   FALSE, NONE,  0,   0 },
+/*5b*/	{ "(bad)",   FALSE, NONE,  0,   0 },
+/*5c*/	{ "subps",   TRUE, NONE, op2(XMM, EXMM), 0 },
+/*5d*/	{ "minps",   TRUE, NONE, op2(XMM, EXMM), 0 },
+/*5e*/	{ "divps",   TRUE, NONE, op2(XMM, EXMM), 0 },
+/*5f*/	{ "maxps",   TRUE, NONE, op2(XMM, EXMM), 0 },
 };
 
 static const struct inst db_inst_0f6x[] = {
@@ -499,7 +521,7 @@ static const struct inst * const db_inst_0f[] = {
 	db_inst_0f2x,
 	db_inst_0f3x,
 	db_inst_0f4x,
-	0,
+	db_inst_0f5x,
 	db_inst_0f6x,
 	db_inst_0f7x,
 	db_inst_0f8x,
@@ -1552,6 +1574,18 @@ void DEBUG_Disasm( DBG_ADDR *addr, int display )
 		  if( db_display )
 		    {
 		      DEBUG_Printf(DBG_CHN_MESG,"%%mm%d", f_rm(regmodrm));
+		    }
+		    break;
+		case XMM:
+		  if( db_display )
+		    {
+		      DEBUG_Printf(DBG_CHN_MESG,"%%xmm%d", f_reg(regmodrm));
+		    }
+		    break;
+		case EXMM:
+		  if( db_display )
+		    {
+		      DEBUG_Printf(DBG_CHN_MESG,"%%xmm%d", f_rm(regmodrm));
 		    }
 		    break;
 
