@@ -51,8 +51,7 @@ void  output_spec_preamble (void)
     puts ("Creating .spec preamble");
 
   fprintf (specfile,
-           "# Generated from %s by winedump\ninit    %s_Init\n\n",
-	   globals.input_name, OUTPUT_UC_DLL_NAME);
+           "# Generated from %s by winedump\n\n", globals.input_name);
 }
 
 
@@ -228,11 +227,10 @@ void  output_c_preamble (void)
          " (\"movl %%ecx, %0\" : \"=m\" (p))\n#endif\n\n\n", cfile);
 
   fprintf (cfile,
-           "BOOL WINAPI %s_Init(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID "
+           "BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID "
            "lpvReserved)\n{\n\tTRACE(\"(0x%%08x, %%ld, %%p)\\n\",hinstDLL,"
            "fdwReason,lpvReserved);\n\n\t"
-           "if (fdwReason == DLL_PROCESS_ATTACH)\n\t{\n\t\t",
-           OUTPUT_UC_DLL_NAME);
+           "if (fdwReason == DLL_PROCESS_ATTACH)\n\t{\n\t\t");
 
   if (globals.forward_dll)
   {
