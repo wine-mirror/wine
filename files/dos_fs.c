@@ -843,6 +843,12 @@ BOOL DOSFS_GetFullName( LPCSTR name, BOOL check_last, DOS_FULL_NAME *full )
 
     TRACE("%s (last=%d)\n", name, check_last );
 
+    if ((!*name) || (*name=='\n'))
+    { /* error code for Win98 */
+        SetLastError(ERROR_BAD_PATHNAME);
+        return FALSE;
+    }
+
     if ((full->drive = DOSFS_GetPathDrive( &name )) == -1) return FALSE;
     flags = DRIVE_GetFlags( full->drive );
 

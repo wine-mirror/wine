@@ -44,7 +44,7 @@ static DOS_FULL_NAME DIR_System;
  * Get a path name from the wine.ini file and make sure it is valid.
  */
 static int DIR_GetPath( const char *keyname, const char *defval,
-                        DOS_FULL_NAME *full_name )
+                        DOS_FULL_NAME *full_name, BOOL warn )
 {
     char path[MAX_PATHNAME_LEN];
     BY_HANDLE_FILE_INFORMATION info;
@@ -55,7 +55,8 @@ static int DIR_GetPath( const char *keyname, const char *defval,
         (!FILE_Stat( full_name->long_name, &info ) && (mess=strerror(errno)))||
         (!(info.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) && (mess="not a directory")))
     {
-        MESSAGE("Invalid path '%s' for %s directory: %s\n", path, keyname, mess);
+        if (warn)
+           MESSAGE("Invalid path '%s' for %s directory: %s\n", path, keyname, mess);
         return 0;
     }
     return 1;
@@ -90,9 +91,9 @@ int DIR_Init(void)
         DRIVE_Chdir( drive, cwd );
     }
 
-    if (!(DIR_GetPath( "windows", "c:\\windows", &DIR_Windows )) ||
-	!(DIR_GetPath( "system", "c:\\windows\\system", &DIR_System )) ||
-	!(DIR_GetPath( "temp", "c:\\windows", &tmp_dir )))
+    if (!(DIR_GetPath( "windows", "c:\\windows", &DIR_Windows, TRUE )) ||
+	!(DIR_GetPath( "system", "c:\\windows\\system", &DIR_System, TRUE )) ||
+	!(DIR_GetPath( "temp", "c:\\windows", &tmp_dir, TRUE )))
     {
 	PROFILE_UsageWineIni();
         return 0;
@@ -147,7 +148,7 @@ int DIR_Init(void)
     TRACE("Cwd        = %c:\\%s\n",
           'A' + drive, DRIVE_GetDosCwd( drive ) );
 
-    if (DIR_GetPath( "profile", "", &profile_dir ))
+    if (DIR_GetPath( "profile", "", &profile_dir, FALSE ))
     {
         TRACE("USERPROFILE= %s\n", profile_dir.short_name );
         SetEnvironmentVariableA( "USERPROFILE", profile_dir.short_name );
