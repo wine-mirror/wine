@@ -120,10 +120,57 @@ DWORD WINAPI GetFileNameFromBrowse(HWND howner, LPSTR targetbuf, DWORD len, DWOR
 /*************************************************************************
  * SHGetSettings				[SHELL32.68]
  * 
+ * NOTES
+ *  the registry path are for win98 (tested)
+ *  and possibly are the same in nt40
  */
-DWORD WINAPI SHGetSettings(DWORD x,DWORD y,DWORD z) 
-{	FIXME(shell,"(0x%08lx,0x%08lx,0x%08lx):stub.\n",x,y,z);
-	return 0;
+void WINAPI SHGetSettings(LPSHELLFLAGSTATE lpsfs, DWORD dwMask)
+{
+	HKEY	hKey;
+	DWORD	dwData;
+	DWORD	dwDataSize = sizeof (DWORD);
+
+	TRACE(shell,"(%p,0x%08lx)\n",lpsfs,dwMask);
+	
+	if (RegCreateKeyExA(HKEY_CURRENT_USER, "Software\\Microsoft\\Windows\\CurrentVersion\\Policies\\Advanced",
+				 0, 0, 0, KEY_ALL_ACCESS, 0, &hKey, 0))
+	  return;
+	
+	if ( (SSF_SHOWEXTENSIONS & dwMask) && !RegQueryValueExA(hKey, "HideFileExt", 0, 0, (LPBYTE)&dwData, &dwDataSize))
+	  lpsfs->fShowExtensions  = ((dwData == 0) ?  0 : 1);
+
+	if ( (SSF_SHOWINFOTIP & dwMask) && !RegQueryValueExA(hKey, "ShowInfoTip", 0, 0, (LPBYTE)&dwData, &dwDataSize))
+	  lpsfs->fShowInfoTip  = ((dwData == 0) ?  0 : 1);
+
+	if ( (SSF_DONTPRETTYPATH & dwMask) && !RegQueryValueExA(hKey, "DontPrettyPath", 0, 0, (LPBYTE)&dwData, &dwDataSize))
+	  lpsfs->fDontPrettyPath  = ((dwData == 0) ?  0 : 1);
+
+	if ( (SSF_HIDEICONS & dwMask) && !RegQueryValueExA(hKey, "HideIcons", 0, 0, (LPBYTE)&dwData, &dwDataSize))
+	  lpsfs->fHideIcons  = ((dwData == 0) ?  0 : 1);
+
+	if ( (SSF_MAPNETDRVBUTTON & dwMask) && !RegQueryValueExA(hKey, "MapNetDrvBtn", 0, 0, (LPBYTE)&dwData, &dwDataSize))
+	  lpsfs->fMapNetDrvBtn  = ((dwData == 0) ?  0 : 1);
+
+	if ( (SSF_SHOWATTRIBCOL & dwMask) && !RegQueryValueExA(hKey, "ShowAttribCol", 0, 0, (LPBYTE)&dwData, &dwDataSize))
+	  lpsfs->fShowAttribCol  = ((dwData == 0) ?  0 : 1);
+
+	if (((SSF_SHOWALLOBJECTS | SSF_SHOWSYSFILES) & dwMask) && !RegQueryValueExA(hKey, "Hidden", 0, 0, (LPBYTE)&dwData, &dwDataSize))
+	{ if (dwData == 0)
+	  { if (SSF_SHOWALLOBJECTS & dwMask)	lpsfs->fShowAllObjects  = 0;
+	    if (SSF_SHOWSYSFILES & dwMask)	lpsfs->fShowSysFiles  = 0;
+	  }
+	  else if (dwData == 1)
+	  { if (SSF_SHOWALLOBJECTS & dwMask)	lpsfs->fShowAllObjects  = 1;
+	    if (SSF_SHOWSYSFILES & dwMask)	lpsfs->fShowSysFiles  = 0;
+	  }
+	  else if (dwData == 2)
+	  { if (SSF_SHOWALLOBJECTS & dwMask)	lpsfs->fShowAllObjects  = 0;
+	    if (SSF_SHOWSYSFILES & dwMask)	lpsfs->fShowSysFiles  = 1;
+	  }
+	}
+	RegCloseKey (hKey);
+
+	TRACE(shell,"-- 0x%04x\n", *(WORD*)lpsfs);
 }
 
 /*************************************************************************
@@ -333,7 +380,7 @@ LPVOID WINAPI SHAlloc(DWORD len) {
  */
 DWORD WINAPI SHRegisterDragDrop(HWND hWnd,IDropTarget * pDropTarget) 
 {
-	FIXME (shell, "(0x%08x,0x%08lx):stub.\n", hWnd, pDropTarget);
+	FIXME (shell, "(0x%08x,%p):stub.\n", hWnd, pDropTarget);
 	return     RegisterDragDrop(hWnd, pDropTarget);
 }
 
@@ -369,11 +416,12 @@ RunFileDlg (HWND hwndOwner, DWORD dwParam1, DWORD dwParam2,
  * NOTES
  *     exported by ordinal
  */
-DWORD WINAPI
-ExitWindowsDialog (HWND hwndOwner)
+void WINAPI ExitWindowsDialog (HWND hWndOwner)
 {
-    FIXME (shell,"(0x%08x):stub.\n", hwndOwner);
-    return 0;
+	TRACE (shell,"(0x%08x)\n", hWndOwner);
+	if (MessageBoxA( hWndOwner, "Do you want to exit WINE?", "Shutdown", MB_YESNO|MB_ICONQUESTION) == IDOK)
+	{ SendMessageA ( hWndOwner, WM_QUIT, 0, 0);
+	}
 }
 
 /*************************************************************************
