@@ -66,7 +66,7 @@ CmdlgtstMenu MENU
 Color_Flags_Dialog DIALOG 11, 20, 207, 107
 STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION
 CAPTION "Drapeaux de la boîte de dialogue de choix de la couleur"
-FONT 8, "MS Sans Serif"
+FONT 8, "MS Shell Dlg"
 {
  DEFPUSHBUTTON "OK", IDOK, 148, 6, 50, 14, BS_DEFPUSHBUTTON | WS_GROUP | WS_TABSTOP
  PUSHBUTTON "Annuler", IDCANCEL, 148, 24, 50, 14, WS_GROUP | WS_TABSTOP
@@ -83,7 +83,7 @@ FONT 8, "MS Sans Serif"
 Font_Flags_Dialog DIALOG 9, 20, 207, 313
 STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION
 CAPTION "Drapeaux de la boîte de dialogue de choix de la police"
-FONT 8, "MS Sans Serif"
+FONT 8, "MS Shell Dlg"
 {
  DEFPUSHBUTTON "OK", IDOK, 148, 6, 50, 14
  PUSHBUTTON "Annuler", IDCANCEL, 148, 24, 50, 14
@@ -117,7 +117,7 @@ FONT 8, "MS Sans Serif"
 Find_Flags_Dialog DIALOG 8, 24, 207, 306
 STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION
 CAPTION "Drapeaux de la fenêtre de recherche/remplacement"
-FONT 8, "MS Sans Serif"
+FONT 8, "MS Shell Dlg"
 {
  DEFPUSHBUTTON "OK", IDOK, 148, 6, 50, 14
  PUSHBUTTON "Annuler", IDCANCEL, 148, 24, 50, 14
@@ -150,7 +150,7 @@ FONT 8, "MS Sans Serif"
 Print_Flags_Dialog DIALOG 4, 17, 239, 287
 STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
 CAPTION "Drapeaux de la boîte de dialogue d'impression"
-FONT 8, "MS Sans Serif"
+FONT 8, "MS Shell Dlg"
 {
  DEFPUSHBUTTON "OK", IDOK, 180, 6, 50, 14
  PUSHBUTTON "Annuler", IDCANCEL, 180, 24, 50, 14
@@ -182,7 +182,7 @@ FONT 8, "MS Sans Serif"
 File_Flags_Dialog DIALOG 6, 15, 207, 227
 STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
 CAPTION "Drapeaux de la boîte de dialogue d'ouverture et d'enregistrement de fichier"
-FONT 8, "MS Sans Serif"
+FONT 8, "MS Shell Dlg"
 {
  DEFPUSHBUTTON "OK", IDOK, 148, 6, 50, 14
  PUSHBUTTON "Annuler", IDCANCEL, 148, 24, 50, 14
@@ -209,7 +209,7 @@ FONT 8, "MS Sans Serif"
 AboutDialog DIALOG 6, 15, 194, 119
 STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
 CAPTION "À propos"
-FONT 8, "MS Sans Serif"
+FONT 8, "MS Shell Dlg"
 {
  DEFPUSHBUTTON "OK", IDOK, 72, 96, 50, 14
  LTEXT "Gabarit de test des boîtes de dialogue standards, version 1.20", -1, 13, 36, 168, 12
@@ -220,7 +220,7 @@ FONT 8, "MS Sans Serif"
 UsageDialog DIALOG 183, 22, 190, 300
 STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
 CAPTION "Usage"
-FONT 8, "MS Sans Serif"
+FONT 8, "MS Shell Dlg"
 {
  DEFPUSHBUTTON "OK", IDOK, 70, 276, 50, 14
  LTEXT "Gabarit de test des boîtes de dialogue standards, version 1.20", -1, 13, 48, 168, 12

@@ -21,7 +21,7 @@ LANGUAGE LANG_SPANISH, SUBLANG_DEFAULT
 IDD_PROXYDLG DIALOG LOADONCALL MOVEABLE DISCARDABLE 36, 24, 250, 154
 STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "Introduzca contraseña de red"
-FONT 8, "Helv"
+FONT 8, "MS Shell Dlg"
 {
  LTEXT "Por favor introduzca su nombre de usuario y contraseña:", -1, 40, 6, 150, 15
  LTEXT "Proxy", -1, 40, 26, 50, 10

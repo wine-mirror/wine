@@ -3597,7 +3597,7 @@ static void InitInstance(HINSTANCE hinstance)
 
 	Globals.haccel = LoadAccelerators(hinstance, MAKEINTRESOURCE(IDA_WINEFILE));
 
-	Globals.hfont = CreateFont(-MulDiv(8,GetDeviceCaps(hdc,LOGPIXELSY),72), 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, TEXT("MS Sans Serif"));
+	Globals.hfont = CreateFont(-MulDiv(8,GetDeviceCaps(hdc,LOGPIXELSY),72), 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, TEXT("MS Shell Dlg"));
 
 	ReleaseDC(0, hdc);
 
