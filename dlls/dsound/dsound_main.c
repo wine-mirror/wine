@@ -347,10 +347,63 @@ HRESULT WINAPI DirectSoundEnumerateW(
 	LPDSENUMCALLBACKW lpDSEnumCallback,
 	LPVOID lpContext )
 {
-        FIXME("lpDSEnumCallback = %p, lpContext = %p: stub\n",
-                lpDSEnumCallback, lpContext);
+    unsigned devs, wod;
+    DSDRIVERDESC desc;
+    GUID guid;
+    int err;
+    WCHAR wDesc[MAXPNAMELEN];
+    WCHAR wName[MAXPNAMELEN];
 
-        return DS_OK;
+    TRACE("lpDSEnumCallback = %p, lpContext = %p\n",
+	lpDSEnumCallback, lpContext);
+
+    if (lpDSEnumCallback == NULL) {
+	WARN("invalid parameter\n");
+	return DSERR_INVALIDPARAM;
+    }
+
+    devs = waveOutGetNumDevs();
+    if (devs > 0) {
+	if (GetDeviceID(&DSDEVID_DefaultPlayback, &guid) == DS_OK) {
+	    GUID temp;
+	    for (wod = 0; wod < devs; ++wod) {
+		err = mmErr(waveOutMessage((HWAVEOUT)wod,DRV_QUERYDSOUNDGUID,(DWORD)&temp,0));
+		if (err == DS_OK) {
+		    if (IsEqualGUID( &guid, &temp ) ) {
+			err = mmErr(waveOutMessage((HWAVEOUT)wod,DRV_QUERYDSOUNDDESC,(DWORD)&desc,0));
+			if (err == DS_OK) {
+			    TRACE("calling lpDSEnumCallback(%s,\"%s\",\"%s\",%p)\n",
+				debugstr_guid(&DSDEVID_DefaultPlayback),"Primary Sound Driver",desc.szDrvName,lpContext);
+			    MultiByteToWideChar( CP_ACP, 0, "Primary Sound Driver", -1,
+				wDesc, sizeof(wDesc)/sizeof(WCHAR) );
+				MultiByteToWideChar( CP_ACP, 0, desc.szDrvName, -1,
+				wName, sizeof(wName)/sizeof(WCHAR) );
+			    if (lpDSEnumCallback((LPGUID)&DSDEVID_DefaultPlayback, wDesc, wName, lpContext) == FALSE)
+				return DS_OK;
+			}
+		    }
+		}
+	    }
+	}
+    }
+
+    for (wod = 0; wod < devs; ++wod) {
+	err = mmErr(waveOutMessage((HWAVEOUT)wod,DRV_QUERYDSOUNDDESC,(DWORD)&desc,0));
+	if (err == DS_OK) {
+	    err = mmErr(waveOutMessage((HWAVEOUT)wod,DRV_QUERYDSOUNDGUID,(DWORD)&guid,0));
+	    if (err == DS_OK) {
+		TRACE("calling lpDSEnumCallback(%s,\"%s\",\"%s\",%p)\n",
+		    debugstr_guid(&guid),desc.szDesc,desc.szDrvName,lpContext);
+		MultiByteToWideChar( CP_ACP, 0, desc.szDesc, -1,
+		    wDesc, sizeof(wDesc)/sizeof(WCHAR) );
+		    MultiByteToWideChar( CP_ACP, 0, desc.szDrvName, -1,
+		    wName, sizeof(wName)/sizeof(WCHAR) );
+		if (lpDSEnumCallback(&guid, wDesc, wName, lpContext) == FALSE)
+		    return DS_OK;
+	    }
+	}
+    }
+    return DS_OK;
 }
 
 
@@ -873,6 +926,23 @@ static HRESULT WINAPI DSCF_CreateInstance(
 		/* FIXME: reuse already created dsound if present? */
 		return DirectSoundCreate8(riid,(LPDIRECTSOUND8*)ppobj,pOuter);
 	}
+	if ( IsEqualGUID( &IID_IDirectSoundCapture, riid ) ||
+	     IsEqualGUID( &IID_IDirectSoundCapture8, riid ) ) {
+		return DirectSoundCaptureCreate8(0,(LPDIRECTSOUNDCAPTURE8*)ppobj,pOuter);
+	}
+	/* DxDiag tries to create this */
+	if ( IsEqualGUID( &IID_IKsPropertySet, riid ) ) {
+		FIXME("(%p,%p,%s,%p) IID_IKsPropertySet not implemented\n",
+			This,pOuter,debugstr_guid(riid),ppobj);
+		/* FIXME: what is DxDiag looking for here? */
+#if 0
+		return IKsPropertySetImpl_Create(0,(IKsPropertySetImpl**)ppobj);
+#else
+		return E_NOINTERFACE;
+#endif
+	}
+
+	FIXME("(%p,%p,%s,%p) Interface not found!\n",This,pOuter,debugstr_guid(riid),ppobj);	
 	return E_NOINTERFACE;
 }
 
