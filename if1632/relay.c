@@ -461,7 +461,9 @@ static DWORD RELAY_CallProc32W(int Ex)
 	dsprintf(relay,"])");
         VA_END16( valist );
 
-	switch (nrofargs) {
+        if (!proc32) ret = 0;
+        else switch (nrofargs)
+        {
 	case 0: ret = proc32();
 		break;
 	case 1:	ret = proc32(args[0]);
