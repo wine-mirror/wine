@@ -25,34 +25,24 @@
 #include "properties.h"
 
 static VERSION_DESC sWinVersions[] = {
-    {"", "Use default(Global setting)"},
-    {"win20", "Windows 2.0"},
-    {"win30", "Windows 3.0"},
-    {"win31", "Windows 3.1"},
-    {"nt351", "Windows NT 3.5"},
-    {"nt40", "Windows NT 4.0"},
-    {"win95", "Windows 95"},
-    {"win98", "Windows 98"},
-    {"winme", "Windows ME"},
-    {"win2k", "Windows 2000"},
-    {"winxp", "Windows XP"},
     {"win2003", "Windows 2003"},
+    {"winxp", "Windows XP"},
+    {"win2k", "Windows 2000"},
+    {"winme", "Windows ME"},
+    {"win98", "Windows 98"},
+    {"win95", "Windows 95"},
+    {"nt40", "Windows NT 4.0"},
+    {"nt351", "Windows NT 3.5"},
+    {"win31", "Windows 3.1"},
+    {"win30", "Windows 3.0"},
+    {"win20", "Windows 2.0"},
     {"", ""}
 };
 
 static VERSION_DESC sDOSVersions[] = {
-    {"", "Use default(Global setting)"},
     {"6.22", "MS-DOS 6.22"},
     {"", ""}
 };
-
-#if 0
-static VERSION_DESC sWineDrivers[] = {
-    {"x11drv", "X11 Interface"},
-    {"ttydrv", "TTY Interface"},
-    {"", ""}
-};
-#endif
 
 static DLL_DESC sDLLType[] = {
     {"oleaut32", DLL_BUILTIN},

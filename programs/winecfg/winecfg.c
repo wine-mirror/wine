@@ -3,7 +3,7 @@
  *
  * Copyright 2002 Jaco Greeff
  * Copyright 2003 Dimitrie O. Paun
- * Copyright 2003 Mike Hearn
+ * Copyright 2003-2004 Mike Hearn
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -86,7 +86,7 @@ char *getConfigValue (const char *subkey, const char *valueName, const char *def
         if( res==ERROR_FILE_NOT_FOUND )
         {
             WINE_TRACE("Section key not present - using default\n");
-            return strdup(defaultResult);
+            return defaultResult ? strdup(defaultResult) : NULL;
         }
         else
         {
@@ -98,7 +98,7 @@ char *getConfigValue (const char *subkey, const char *valueName, const char *def
     res = RegQueryValueExA( hSubKey, valueName, NULL, NULL, NULL, &dataLength);
     if( res == ERROR_FILE_NOT_FOUND ) {
         WINE_TRACE("Value not present - using default\n");
-        buffer = strdup(defaultResult);
+        buffer = defaultResult ? strdup(defaultResult) : NULL;
 	goto end;
     } else if( res!=ERROR_SUCCESS )  {
         WINE_ERR("Couldn't query value's length (res=%ld)\n", res );
@@ -123,7 +123,8 @@ end:
 }
 
 /*****************************************************************************
- * setConfigValue : Sets a configuration key in the registry. Section will be created if it doesn't already exist
+ * setConfigValue : Sets a configuration key in the registry. Section
+ * will be created if it doesn't already exist
  *
  * HKEY  hCurrent : the registry key that the configuration is rooted at
  * const char *subKey : the name of the config section
@@ -284,6 +285,28 @@ void processTransQueue(void)
 }
 
 /* ================================== utility functions ============================ */
+
+char *currentApp = NULL; /* the app we are currently editing, or NULL if editing global */
+
+/* returns a registry key path suitable for passing to addTransaction  */
+char *keypath(char *section)
+{
+    static char *result = NULL;
+    
+    if (result) release(result);
+
+    if (currentApp)
+    {
+        result = alloc(strlen("AppDefaults\\") + strlen(currentApp) + 2 /* \\ */ + strlen(section) + 1 /* terminator */);
+        sprintf(result, "AppDefaults\\%s\\%s", currentApp, section);
+    }
+    else
+    {
+        result = strdupA(section);
+    }
+    
+    return result;
+}
 
 /* returns a string with the window text of the dialog item. user is responsible for freeing the result */
 char *getDialogItemText(HWND hDlg, WORD controlID) {

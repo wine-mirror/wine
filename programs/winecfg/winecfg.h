@@ -3,6 +3,7 @@
  *
  * Copyright 2002 Jaco Greeff
  * Copyright 2003 Dimitrie O. Paun
+ * Copyright 2004 Mike Hearn
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -67,9 +68,14 @@ extern int instantApply; /* non-zero means apply all changes instantly */
 #define EDITING_APP    1
 extern int appSettings;  /* non-zero means we are editing appdefault settings */
 
-/* returns a string of the form AppDefaults\\appname.exe\\section */
-/* no explicit free is needed of the string returned by this function */
-char *getSectionForApp(char *section); 
+extern char *currentApp; /* NULL means editing global settings  */
+
+/* returns a string of the form "AppDefaults\\appname.exe\\section", or just "section" if
+ * the user is editing the global settings.
+ *
+ * no explicit free is needed of the string returned by this function
+ */
+char *keypath(char *section); 
 
 /* Commits a transaction to the registry */
 void processTransaction(struct transaction *trans);
@@ -91,6 +97,7 @@ void destroyTransaction(struct transaction *trans);
 int initialize(void);
 extern HKEY configKey;
 
+/* don't use these directly!  */
 int setConfigValue (const char *subkey, const char *valueName, const char *value);
 char *getConfigValue (const char *subkey, const char *valueName, const char *defaultResult);
 HRESULT doesConfigValueExist (const char *subkey, const char *valueName);
@@ -118,7 +125,17 @@ INT_PTR CALLBACK AudioDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lPara
 char *getDialogItemText(HWND hDlg, WORD controlID);
 #define disable(id) EnableWindow(GetDlgItem(dialog, id), 0);
 #define enable(id) EnableWindow(GetDlgItem(dialog, id), 1);
+#define alloc(size) HeapAlloc(GetProcessHeap(), 0, size);
+#define release(ptr) HeapFree(GetProcessHeap(), 0, ptr);
 void PRINTERROR(void); /* WINE_TRACE() the plaintext error message from GetLastError() */
+
+/* returns a string in the win32 heap  */
+static inline char *strdupA(char *s)
+{
+    char *r = alloc(strlen(s));
+    return strcpy(r, s);
+}
+
 
 #define WINE_KEY_ROOT "Software\\Wine\\Wine\\Config"
 

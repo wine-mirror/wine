@@ -4,6 +4,7 @@
  *
  * Copyright 2002 Jaco Greeff
  * Copyright 2003 Dimitrie O. Paun
+ * Copyright 2003-2004 Mike Hearn
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -42,15 +43,16 @@ STYLE WS_CHILD | WS_DISABLED
 FONT 8, "MS Shell Dlg"
 BEGIN
     GROUPBOX        "Application Settings",IDC_STATIC, 8,4,244,240
-    LTEXT           "Wine provides the ability for Windows applications to mimic various Windows versions and styles",
+    LTEXT           "Wine can mimic different Windows versions for each application.",
                     IDC_STATIC,15,20,227,20
-    CONTROL         "Applications",IDC_APP_TREEVIEW,"SysTreeView32",WS_BORDER | WS_TABSTOP | TVS_LINESATROOT | TVS_HASLINES | TVS_SHOWSELALWAYS | TVS_HASBUTTONS, 15,40,142,145
-    PUSHBUTTON	    "Add application...",IDC_APP_ADDAPP, 163,40,82,60
-    PUSHBUTTON	    "Remove application",IDC_APP_REMOVEAPP, 163,125,82,60
-    LTEXT           "Windows Version:",IDC_STATIC,17,192,58,8
-    LTEXT           "DOS Version:",IDC_STATIC,17,211,57,8
-    COMBOBOX        IDC_WINVER,83,190,158,56,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    COMBOBOX        IDC_DOSVER,83,208,158,56,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    CONTROL         "Applications",IDC_APP_LISTVIEW,"SysListView32",WS_BORDER | WS_TABSTOP | LVS_LIST | LVS_SINGLESEL | LVS_SHOWSELALWAYS,
+                    15,40,230,140
+    PUSHBUTTON	    "&Add application...",IDC_APP_ADDAPP, 90,184,75,14
+    PUSHBUTTON	    "&Remove application",IDC_APP_REMOVEAPP, 170,184,75,14
+    LTEXT           "&Windows Version:",IDC_STATIC,17,204,58,8
+    COMBOBOX        IDC_WINVER,83,202,163,56,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP    
+    LTEXT           "&DOS Version:",IDC_STATIC,17,223,57,8
+    COMBOBOX        IDC_DOSVER,83,224,163,56,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
 END
 
 IDD_GRAPHCFG DIALOG DISCARDABLE  0, 0, 260, 250

@@ -2,7 +2,8 @@
  * WineCfg app settings tabsheet
  *
  * Copyright 2004 Robert van Herk
- *                Chris Morgan
+ * Copyright 2004 Chris Morgan
+ * Copyright 2004 Mike Hearn
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -25,181 +26,30 @@
 #include <commdlg.h>
 #include <wine/debug.h>
 #include <stdio.h>
+#include <assert.h>
 #include "winecfg.h"
 #include "resource.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(winecfg);
 
-typedef struct _APPL
-{
-  BOOL isGlobal;
-  char* lpcApplication;
-  char* lpcVersionSection;
-} APPL, *LPAPPL;
-
-static LPAPPL CreateAppl(BOOL isGlobal, char* application, char* version_section)
-{
-  LPAPPL out;
-  WINE_TRACE("application: '%s', version_section: '%s'\n", application, version_section);
-  out = HeapAlloc(GetProcessHeap(),0,sizeof(APPL));
-  out->lpcApplication = strdup(application);
-  out->lpcVersionSection = strdup(version_section);
-  out->isGlobal = isGlobal;
-  return out;
-}
-
-static VOID FreeAppl(LPAPPL lpAppl)
-{
- /* The strings were strdup-ped, so we use "free" */
-  if (lpAppl->lpcApplication) free(lpAppl->lpcApplication);
-  if (lpAppl->lpcVersionSection) free(lpAppl->lpcVersionSection);
-  HeapFree(GetProcessHeap(),0,lpAppl);
-}
-
-/* section can be "Version" */
-/* key can be "Windows"/"Dos" */
-/* value can be appropriate values for the above keys */
-typedef struct _APPSETTING
-{
-  char* section;
-  char* lpcKey;
-  char* value;
-} APPSETTING, *LPAPPSETTING;
-
-static LPAPPSETTING CreateAppSetting(char* lpcKey, char* value)
-{
-	LPAPPSETTING out = HeapAlloc(GetProcessHeap(),0,sizeof(APPSETTING));
-	out->lpcKey = strdup (lpcKey);
-	out->value = strdup(value);
-	return out;
-}
-
-static VOID FreeAppSetting(LPAPPSETTING las)
-{
-  if (las->lpcKey) free(las->lpcKey);
-  if (las->value) free(las->value);
-  HeapFree(GetProcessHeap(),0,las);
-}
-
-typedef struct _ITEMTAG
-{
-  LPAPPL lpAppl;
-  LPAPPSETTING lpSetting;
-} ITEMTAG, *LPITEMTAG;
-
-static LPITEMTAG CreateItemTag()
-{
-  LPITEMTAG out;
-  out = HeapAlloc(GetProcessHeap(),0,sizeof(ITEMTAG));
-  out->lpAppl = 0;
-  out->lpSetting = 0;
-  return out;
-}
-
-static VOID FreeItemTag(LPITEMTAG lpit)
-{
-  /* if child, only free the lpSetting, the lpAppl will be freed when we free the parents item tag */
-  if (lpit->lpSetting)
-  {
-    FreeAppSetting(lpit->lpSetting);
-  } else
-  {
-    if (lpit->lpAppl)
-      FreeAppl(lpit->lpAppl);
-  }
-  HeapFree(GetProcessHeap(), 0, lpit);
-}
-
-static VOID LoadAppSettings(LPAPPL appl /*DON'T FREE, treeview will own this*/, HWND hDlg, HWND hwndTV)
-{
-  HKEY key;
-  int i;
-  DWORD size;
-  DWORD readSize;
-  char name [255];
-  char read [255];
-  char *description;
-  LPITEMTAG lpIt;
-  TVINSERTSTRUCT tis;	
-  HTREEITEM hParent;
-  LPAPPSETTING lpas;
-	
-  WINE_TRACE("opening '%s'\n", appl->lpcVersionSection);
-  if (RegOpenKey (configKey, appl->lpcVersionSection, &key) == ERROR_SUCCESS)
-  {
-     i = 0;
-     size = 255;
-     readSize = 255;
-
-     lpIt = CreateItemTag();
-     lpIt->lpAppl = appl;
-
-     tis.hParent = NULL;
-     tis.hInsertAfter = TVI_LAST;
-     tis.u.item.mask = TVIF_TEXT | TVIF_PARAM;
-     tis.u.item.pszText = appl->lpcApplication;
-     tis.u.item.lParam = (LPARAM)lpIt;
-     hParent = TreeView_InsertItem(hwndTV,&tis);
-     tis.hParent = hParent;
-
-     /* insert version entries */
-     if(RegOpenKey (configKey, appl->lpcVersionSection, &key) == ERROR_SUCCESS)
-     {
-       while (RegEnumValue(key, i, name, &size, NULL, NULL, read, &readSize) == ERROR_SUCCESS)
-       {
-	 char itemtext[128];
-
-	 WINE_TRACE("Reading value %s, namely %s\n", name, read);
-			
-	 lpIt = CreateItemTag();
-	 lpas = CreateAppSetting(name, read);
-	 lpIt->lpSetting = lpas;
-	 lpIt->lpAppl = appl;
-	 tis.u.item.lParam = (LPARAM)lpIt;
-
-	 /* convert the value for 'dosver or winver' to human readable form */
-	 description = getDescriptionFromVersion(getWinVersions(), read);
-	 if(!description)
-	 {
-	   description = getDescriptionFromVersion(getDOSVersions(), read);
-	   if(!description)
-	     description = "Not found";
-	 }
-
-	 sprintf(itemtext, "%s - %s", name, description);
-	 tis.u.item.pszText = itemtext;
-
-	 TreeView_InsertItem(hwndTV,&tis);
-	 i++; size = 255; readSize = 255;
-       }
-       RegCloseKey(key);
-     } else
-     {
-       WINE_TRACE("no version section found\n");
-     }
-  }
-}
-
-static VOID SetEnabledAppControls(HWND dialog)
-{
-}
-
-static VOID UpdateComboboxes(HWND hDlg, LPAPPL lpAppl)
+static void update_comboboxes(HWND dialog)
 {
   int i;
   const VERSION_DESC *pVer = NULL;
 
-  /* retrieve the registry values for this application */
-  char *curWinVer = getConfigValue(lpAppl->lpcVersionSection, "Windows", "");
-  char *curDOSVer = getConfigValue(lpAppl->lpcVersionSection, "DOS", "");
+  char *winver, *dosver;
+  
+  /* retrieve the registry values */
+  winver = getConfigValue(keypath("Version"), "Windows", NULL);
+  dosver = getConfigValue(keypath("Version"), "DOS", NULL);
 
-  if(curWinVer) WINE_TRACE("curWinVer is '%s'\n", curWinVer);
-  else WINE_TRACE("curWinVer is null\n");
-  if(curDOSVer) WINE_TRACE("curDOSVer is '%s'\n", curDOSVer);
-  else WINE_TRACE("curDOSVer is null\n");
+  /* NULL winver/dosver means use automatic mode (ie the builtin dll linkage heuristics)  */
+  
+  WINE_TRACE("winver is %s\n", winver ? winver : "null (automatic mode)");
+  WINE_TRACE("dosver is %s\n", dosver ? dosver : "null (automatic mode)");
 
   /* normalize the version strings */
-  if(strlen(curWinVer) != 0)
+  if (winver && strlen(winver))
   {
     if ((pVer = getWinVersions ()))
     {
@@ -207,22 +57,21 @@ static VOID UpdateComboboxes(HWND hDlg, LPAPPL lpAppl)
       for (i = 0; *pVer->szVersion || *pVer->szDescription; i++, pVer++)
       {
 	WINE_TRACE("pVer->szVersion == %s\n", pVer->szVersion);
-	if (!strcasecmp (pVer->szVersion, curWinVer))
+	if (!strcasecmp (pVer->szVersion, winver))
 	{
-	  SendDlgItemMessage (hDlg, IDC_WINVER, CB_SETCURSEL,
-			      (WPARAM) i, 0);
+	  SendDlgItemMessage (dialog, IDC_WINVER, CB_SETCURSEL, (WPARAM) (i + 1), 0);
 	  WINE_TRACE("match with %s\n", pVer->szVersion);
 	}
       }
     }
-  } else /* clear selection */
+  }
+  else /* no explicit setting */
   {
-    WINE_TRACE("setting winver to nothing\n");
-    SendDlgItemMessage (hDlg, IDC_WINVER, CB_SETCURSEL,
-			-1, 0);
+    WINE_TRACE("setting winver combobox to automatic/default\n");
+    SendDlgItemMessage (dialog, IDC_WINVER, CB_SETCURSEL, 0, 0);
   }
 
-  if(strlen(curDOSVer) != 0)
+  if (dosver && strlen(dosver))
   {
     if ((pVer = getDOSVersions ()))
     {
@@ -230,288 +79,312 @@ static VOID UpdateComboboxes(HWND hDlg, LPAPPL lpAppl)
       for (i = 0; *pVer->szVersion || *pVer->szDescription; i++, pVer++)
       {
 	WINE_TRACE("pVer->szVersion == %s\n", pVer->szVersion);
-	if (!strcasecmp (pVer->szVersion, curDOSVer))
+	if (!strcasecmp (pVer->szVersion, dosver))
 	{
-	  SendDlgItemMessage (hDlg, IDC_DOSVER, CB_SETCURSEL,
-			      (WPARAM) i, 0);
+	  SendDlgItemMessage (dialog, IDC_DOSVER, CB_SETCURSEL,
+			      (WPARAM) (i + 1), 0);
 	  WINE_TRACE("match with %s\n", pVer->szVersion);
 	}
       }
     }
-  } else
+  }
+  else
   {
-    WINE_TRACE("setting dosver to nothing\n");
-    SendDlgItemMessage (hDlg, IDC_DOSVER, CB_SETCURSEL,
-			-1, 0);
+    WINE_TRACE("setting dosver combobox to automatic/default\n");
+    SendDlgItemMessage (dialog, IDC_DOSVER, CB_SETCURSEL, 0, 0);
   }
 
-  if(curWinVer) free(curWinVer);
-  if(curDOSVer) free(curDOSVer);
+  if (winver) free(winver);
+  if (dosver) free(dosver);
 }
 
 void
-initAppDlgComboboxes (HWND hDlg)
+init_comboboxes (HWND dialog)
 {
   int i;
-  const VERSION_DESC *pVer = NULL;
+  const VERSION_DESC *ver = NULL;
 
-  if ((pVer = getWinVersions ()))
+  
+  SendDlgItemMessage(dialog, IDC_WINVER, CB_RESETCONTENT, 0, 0);
+  SendDlgItemMessage(dialog, IDC_DOSVER, CB_RESETCONTENT, 0, 0);  
+  
+  /* add the default entries (automatic) which correspond to no setting  */
+  if (currentApp)
   {
-    for (i = 0; *pVer->szVersion || *pVer->szDescription; i++, pVer++)
+      SendDlgItemMessage(dialog, IDC_WINVER, CB_ADDSTRING, 0, (LPARAM) "Use global settings");
+      SendDlgItemMessage(dialog, IDC_DOSVER, CB_ADDSTRING, 0, (LPARAM) "Use global settings");      
+  }
+  else
+  {
+      SendDlgItemMessage(dialog, IDC_WINVER, CB_ADDSTRING, 0, (LPARAM) "Automatically detect required version");
+      SendDlgItemMessage(dialog, IDC_DOSVER, CB_ADDSTRING, 0, (LPARAM) "Automatically detect required version");
+  }
+
+  if ((ver = getWinVersions ()))
+  {
+    for (i = 0; *ver->szVersion || *ver->szDescription; i++, ver++)
     {
-      SendDlgItemMessage (hDlg, IDC_WINVER, CB_ADDSTRING,
-			  0, (LPARAM) pVer->szDescription);
+      SendDlgItemMessage (dialog, IDC_WINVER, CB_ADDSTRING,
+			  0, (LPARAM) ver->szDescription);
     }
   }
-  if ((pVer = getDOSVersions ()))
+  if ((ver = getDOSVersions ()))
   {
-    for (i = 0; *pVer->szVersion || *pVer->szDescription ; i++, pVer++)
+    for (i = 0; *ver->szVersion || *ver->szDescription ; i++, ver++)
     {
-      SendDlgItemMessage (hDlg, IDC_DOSVER, CB_ADDSTRING,
-			  0, (LPARAM) pVer->szDescription);
+      SendDlgItemMessage (dialog, IDC_DOSVER, CB_ADDSTRING,
+			  0, (LPARAM) ver->szDescription);
     }
   }
 }
 
-
-static VOID OnInitAppDlg(HWND hDlg)
+static void add_listview_item(HWND listview, char *text, void *association)
 {
-  HWND hwndTV;
-  LPAPPL lpAppl;
-  HKEY applKey;
+  LVITEM item;
+
+  ZeroMemory(&item, sizeof(LVITEM));
+
+  item.mask = LVIF_TEXT | LVIF_PARAM;
+  item.pszText = text;
+  item.cchTextMax = strlen(text);
+  item.lParam = (LPARAM) association;
+  item.iItem = ListView_GetItemCount(listview);
+
+  ListView_InsertItem(listview, &item);
+}
+
+static void init_appsheet(HWND dialog)
+{
+  HWND listview;
+  HKEY key;
   int i;
   DWORD size;
-  char appl [255];
-  char lpcVersionKey [255];
+  char appname[1024];
   FILETIME ft;
 
-  hwndTV = GetDlgItem(hDlg,IDC_APP_TREEVIEW);
-  lpAppl = CreateAppl(TRUE, "Global Settings", "Version");
-  LoadAppSettings(lpAppl, hDlg, hwndTV);
-	
-  /*And now the application specific stuff:*/
-  if (RegOpenKey(configKey, "AppDefaults", &applKey) == ERROR_SUCCESS)
+  WINE_TRACE("()\n");
+  
+  listview = GetDlgItem(dialog, IDC_APP_LISTVIEW);
+
+  /* we use the lparam field of the item so we can alter the presentation later and not change code
+   * for instance, to use the tile view or to display the EXEs embedded 'display name' */
+  add_listview_item(listview, "Default Settings", NULL);
+  
+  /* do the application specific stuff, then add the default item last */
+  if (RegOpenKey(configKey, "AppDefaults", &key) == ERROR_SUCCESS)
   {
-    i = 0;
-    size = 255;
-    while (RegEnumKeyEx(applKey, i, appl, &size, NULL, NULL, NULL, &ft) == ERROR_SUCCESS)
-    {
-      sprintf(lpcVersionKey, "AppDefaults\\%s\\Version", appl);
-      lpAppl = CreateAppl(FALSE, appl, lpcVersionKey);
-      LoadAppSettings(lpAppl, hDlg, hwndTV);
-      i++; size = 255;
-    }
-    RegCloseKey(applKey);
+      i = 0;
+      size = sizeof(appname);
+      while (RegEnumKeyEx(key, i, appname, &size, NULL, NULL, NULL, &ft) == ERROR_SUCCESS)
+      {
+          add_listview_item(listview, appname, strdup(appname));
+
+          i++;
+          size = sizeof(appname);
+      }
+
+      RegCloseKey(key);
   }
-  SetEnabledAppControls(hDlg);
-}
 
-static VOID OnTreeViewChangeItem(HWND hDlg, HWND hTV)
-{
-  TVITEM ti;
-  LPITEMTAG lpit;
-
-  ti.mask = TVIF_PARAM;
-  ti.hItem = TreeView_GetSelection(hTV);
-  if (TreeView_GetItem (hTV, &ti))
+  init_comboboxes(dialog);
+  
+  /* Select the default settings listview item  */
   {
-    lpit = (LPITEMTAG) ti.lParam;
-    if (lpit->lpAppl)
-    {
-      WINE_TRACE("lpit->lpAppl is non-null\n");
-      /* update comboboxes to reflect settings for this app */
-      UpdateComboboxes(hDlg, lpit->lpAppl);
-    } else
-    {
-      WINE_TRACE("lpit->lpAppl is null\n");
-    }
+      LVITEM item;
+      
+      ZeroMemory(&item, sizeof(item));
+      
+      item.mask = LVIF_STATE;
+      item.iItem = 0;
+      item.state = LVIS_SELECTED | LVIS_FOCUSED;
+      item.stateMask = LVIS_SELECTED | LVIS_FOCUSED;
+
+      ListView_SetItem(listview, &item);
   }
+  
 }
 
-static VOID OnTreeViewDeleteItem(NMTREEVIEW* nmt)
+/* there has to be an easier way than this  */
+static int get_listview_selection(HWND listview)
 {
-  FreeItemTag((LPITEMTAG)(nmt->itemOld.lParam));
+  int count = ListView_GetItemCount(listview);
+  int i;
+  
+  for (i = 0; i < count; i++)
+  {
+    if (ListView_GetItemState(listview, i, LVIS_SELECTED)) return i;
+  }
+
+  return -1;
 }
 
-static VOID OnAddApplicationClick(HWND hDlg)
+/* called when the user selects a different application */
+static void on_selection_change(HWND dialog, HWND listview)
 {
-  char szFileTitle [255];
-  char szFile [255];
-  char lpcVersionKey [255];
+  LVITEM item;
+  char *oldapp = currentApp;
 
-  TVINSERTSTRUCT tis;
-  LPITEMTAG lpit;
+  WINE_TRACE("()\n");
+  
+  item.iItem = get_listview_selection(listview);
+  item.mask = LVIF_PARAM;
+  
+  if (item.iItem == -1) return;
+  
+  ListView_GetItem(listview, &item);
+
+  currentApp = (char *) item.lParam;
+
+  if (currentApp)
+  {
+      WINE_TRACE("currentApp is now %s\n", currentApp);
+      enable(IDC_APP_REMOVEAPP);
+  }
+  else
+  {
+      WINE_TRACE("currentApp=NULL, editing global settings\n");
+      /* focus will never be on the button in this callback so it's safe  */
+      disable(IDC_APP_REMOVEAPP);
+  }
+
+  /* reset the combo boxes if we changed from/to global/app-specific  */
+
+  if ((oldapp && !currentApp) || (!oldapp && currentApp))
+      init_comboboxes(dialog);
+  
+  update_comboboxes(dialog);
+}
+
+static void on_add_app_click(HWND dialog)
+{
+  char filetitle[MAX_PATH];
+  char file[MAX_PATH];
+
   OPENFILENAME ofn = { sizeof(OPENFILENAME),
 		       0, /*hInst*/0, "Wine Programs (*.exe,*.exe.so)\0*.exe;*.exe.so\0", NULL, 0, 0, NULL,
-		       0, NULL, 0, NULL, NULL,
-		       OFN_SHOWHELP, 0, 0, NULL, 0, NULL };
+		       0, NULL, 0, "c:\\", "Select a Windows executable file",
+		       OFN_SHOWHELP | OFN_HIDEREADONLY, 0, 0, NULL, 0, NULL };
 
-  ofn.lpstrFileTitle = szFileTitle;
+  ofn.lpstrFileTitle = filetitle;
   ofn.lpstrFileTitle[0] = '\0';
-  ofn.nMaxFileTitle = sizeof(szFileTitle);
-  ofn.lpstrFile = szFile;
+  ofn.nMaxFileTitle = sizeof(filetitle);
+  ofn.lpstrFile = file;
   ofn.lpstrFile[0] = '\0';
-  ofn.nMaxFile = sizeof(szFile);
+  ofn.nMaxFile = sizeof(file);
 
   if (GetOpenFileName(&ofn))
   {
-    tis.hParent = NULL;
-    tis.hInsertAfter = TVI_LAST;
-    tis.u.item.mask = TVIF_TEXT | TVIF_PARAM;
-    tis.u.item.pszText = szFileTitle;
-    lpit = CreateItemTag();
-    sprintf(lpcVersionKey, "AppDefaults\\%s\\Version", szFileTitle);
-    lpit->lpAppl = CreateAppl(FALSE, szFileTitle, lpcVersionKey);
-    tis.u.item.lParam = (LPARAM)lpit;
-    TreeView_InsertItem(GetDlgItem(hDlg, IDC_APP_TREEVIEW), &tis);
+      HWND listview = GetDlgItem(dialog, IDC_APP_LISTVIEW);
+      int count = ListView_GetItemCount(listview);
+      
+      if (currentApp) free(currentApp);
+      currentApp = strdup(filetitle);
 
-    /* add the empty entries for the Version section for this app */
-    setConfigValue(lpcVersionKey,NULL,NULL);
+      WINE_TRACE("adding %s\n", currentApp);
+      
+      add_listview_item(listview, currentApp, currentApp);
+
+      ListView_SetItemState(listview, count, LVIS_SELECTED | LVIS_FOCUSED, LVIS_SELECTED | LVIS_FOCUSED);
+
+      SetFocus(listview);
   }
+  else WINE_TRACE("user cancelled\n");
 }
 
-static VOID OnRemoveApplicationClick(HWND hDlg)
+static void on_remove_app_click(HWND dialog)
 {
-  HWND hTV;
-  TVITEM ti;
-  LPITEMTAG lpit;
+    HWND listview = GetDlgItem(dialog, IDC_APP_LISTVIEW);
+    int selection = get_listview_selection(listview);
+    char *section = keypath("");
 
-  hTV = GetDlgItem(hDlg, IDC_APP_TREEVIEW);
-  ti.mask = TVIF_PARAM;
-  ti.hItem = TreeView_GetSelection(hTV);
-  if (TreeView_GetItem (hTV, &ti))
-  {
-    lpit = (LPITEMTAG) ti.lParam;
-    if (lpit->lpAppl)
-    {
-      /* add transactions to remove all entries for this application */
-      addTransaction(lpit->lpAppl->lpcVersionSection, NULL, ACTION_REMOVE, NULL);
-      TreeView_DeleteItem(hTV,ti.hItem);
-    }
-  }
+    WINE_TRACE("selection=%d, section=%s\n", selection, section);
+    
+    assert( selection != 0 ); /* user cannot click this button when "default settings" is selected  */
+
+    section[strlen(section)] = '\0'; /* remove last backslash  */
+    addTransaction(section, NULL, ACTION_REMOVE, NULL);
+    ListView_DeleteItem(listview, selection);
+
+    SetFocus(listview);
 }
 
-static void UpdateWinverSelection(HWND hDlg, int selection)
+static void on_winver_change(HWND dialog)
 {
-  TVITEM ti;
-  LPITEMTAG lpit;
-  VERSION_DESC *pVer = NULL;
-  HWND hTV = GetDlgItem(hDlg, IDC_APP_TREEVIEW);
+    int selection = SendDlgItemMessage(dialog, IDC_WINVER, CB_GETCURSEL, 0, 0);
+    VERSION_DESC *ver = getWinVersions();
 
-  ti.mask = TVIF_PARAM;
-  ti.hItem = TreeView_GetSelection(hTV);
-  if (TreeView_GetItem (hTV, &ti))
-  {
-    lpit = (LPITEMTAG) ti.lParam;
-
-    if(lpit->lpAppl)
+    if (selection == 0)
     {
-      pVer = getWinVersions();
-
-      /* if no item is selected OR if our version string is null */
-      /* remove this applications setting */
-      if((selection == CB_ERR) || !(*pVer[selection].szVersion))
-      {
-	WINE_TRACE("removing section '%s'\n", lpit->lpAppl->lpcVersionSection);
-	addTransaction(lpit->lpAppl->lpcVersionSection, "Windows", ACTION_REMOVE, NULL); /* change registry entry */
-      } else
-      {
-	WINE_TRACE("setting section '%s', key '%s', value '%s'\n", lpit->lpAppl->lpcVersionSection, "Windows", pVer[selection].szVersion);
-	addTransaction(lpit->lpAppl->lpcVersionSection, "Windows", ACTION_SET, pVer[selection].szVersion); /* change registry entry */
-      }
-
-      TreeView_DeleteAllItems(hTV); /* delete all items from the treeview */
-      OnInitAppDlg(hDlg);
+        WINE_TRACE("automatic/default selected so removing current setting\n");
+        addTransaction(keypath("Version"), "Windows", ACTION_REMOVE, NULL);
     }
-  }
+    else
+    {
+        WINE_TRACE("setting Version\\Windows key to value '%s'\n", ver[selection - 1].szVersion);
+        addTransaction(keypath("Version"), "Windows", ACTION_SET,  ver[selection - 1].szVersion);
+    }
 }
 
-static void UpdateDosverSelection(HWND hDlg, int selection)
+static void on_dosver_change(HWND dialog)
 {
-  TVITEM ti;
-  LPITEMTAG lpit;
-  VERSION_DESC *pVer = NULL;
-  HWND hTV = GetDlgItem(hDlg, IDC_APP_TREEVIEW);
+    int selection = SendDlgItemMessage(dialog, IDC_DOSVER, CB_GETCURSEL, 0, 0);
+    VERSION_DESC *ver = getDOSVersions();
 
-  ti.mask = TVIF_PARAM;
-  ti.hItem = TreeView_GetSelection(hTV);
-  if (TreeView_GetItem (hTV, &ti))
-  {
-    lpit = (LPITEMTAG) ti.lParam;
-
-    if(lpit->lpAppl)
+    if (selection == 0)
     {
-      pVer = getDOSVersions();
-
-      /* if no item is selected OR if our version string is null */
-      /* remove this applications setting */
-      if((selection == CB_ERR) || !(*pVer[selection].szVersion))
-      {
-	WINE_TRACE("removing section '%s'\n", lpit->lpAppl->lpcVersionSection);
-	addTransaction(lpit->lpAppl->lpcVersionSection, "DOS", ACTION_REMOVE, NULL); /* change registry entry */
-      } else
-      {
-	WINE_TRACE("setting section '%s', key '%s', value '%s'\n", lpit->lpAppl->lpcVersionSection, "DOS", pVer[selection].szVersion);
-	addTransaction(lpit->lpAppl->lpcVersionSection, "DOS", ACTION_SET, pVer[selection].szVersion); /* change registry entry */
-      }
-
-      TreeView_DeleteAllItems(hTV); /* delete all items from the treeview */
-      OnInitAppDlg(hDlg);
+        WINE_TRACE("automatic/default selected so removing current setting\n");
+        addTransaction(keypath("Version"), "DOS", ACTION_REMOVE, NULL);
     }
-  }
+    else
+    {
+        WINE_TRACE("setting Version\\DOS key to value '%s'\n", ver[selection - 1].szVersion);
+        addTransaction(keypath("Version"), "DOS", ACTION_SET,  ver[selection - 1].szVersion);
+    }
 }
 
 INT_PTR CALLBACK
 AppDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-  int selection;
   switch (uMsg)
   {
-  case WM_INITDIALOG:
-    OnInitAppDlg(hDlg);
-    initAppDlgComboboxes(hDlg);
-    break;  
-  case WM_NOTIFY:
-    switch (((LPNMHDR)lParam)->code) {
-    case TVN_SELCHANGED: {
-      switch(LOWORD(wParam)) {
-      case IDC_APP_TREEVIEW:
-	OnTreeViewChangeItem(hDlg, GetDlgItem(hDlg,IDC_APP_TREEVIEW));
-	break;
-      }
-    }
+    case WM_INITDIALOG:
+      init_appsheet(hDlg);
       break;
-    case TVN_DELETEITEM:
-      OnTreeViewDeleteItem ((LPNMTREEVIEW)lParam);
-      break;
-    }
-    break;
-  case WM_COMMAND:
-    switch(HIWORD(wParam)) {
-    case CBN_SELCHANGE:
-      switch(LOWORD(wParam)) {
-      case IDC_WINVER:
-	selection = SendDlgItemMessage( hDlg, IDC_WINVER, CB_GETCURSEL, 0, 0);
-	UpdateWinverSelection(hDlg, selection);
-	break;
-      case IDC_DOSVER:
-	selection = SendDlgItemMessage( hDlg, IDC_DOSVER, CB_GETCURSEL, 0, 0);
-	UpdateDosverSelection(hDlg, selection);
-	break;
-      }
-    case BN_CLICKED:
-      switch(LOWORD(wParam)) {
-      case IDC_APP_ADDAPP:
-	OnAddApplicationClick(hDlg);
-	break;
-      case IDC_APP_REMOVEAPP:
-	OnRemoveApplicationClick(hDlg);
-	break;
-      }
-      break;
-    }
-    break;
-  }
 
+    case WM_NOTIFY:
+    
+      switch (((LPNMHDR)lParam)->code)
+      {
+        case LVN_ITEMCHANGED:
+          on_selection_change(hDlg, GetDlgItem(hDlg, IDC_APP_LISTVIEW));
+          break;
+      }
+      break;
+    
+    case WM_COMMAND:
+      switch(HIWORD(wParam)) {
+        case CBN_SELCHANGE:
+          switch(LOWORD(wParam)) {
+            case IDC_WINVER:
+              on_winver_change(hDlg);
+              break;
+            case IDC_DOSVER:
+              on_dosver_change(hDlg);
+              break;
+          }
+        case BN_CLICKED:
+          switch(LOWORD(wParam)) {
+            case IDC_APP_ADDAPP:
+              on_add_app_click(hDlg);
+              break;
+            case IDC_APP_REMOVEAPP:
+              on_remove_app_click(hDlg);
+              break;
+          }
+          break;
+      }
+      break;
+  }
+  
   return 0;
 }

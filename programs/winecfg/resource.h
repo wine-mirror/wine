@@ -4,6 +4,7 @@
  * Copyright 2002 Jaco Greeff
  * Copyright 2003 Dimitrie O. Paun
  * Copyright 2003 Mark Westcott
+ * Copyright 2004 Mike Hearn
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -119,7 +120,7 @@
 #define IDC_DOUBLE_BUFFER               1104
 
 /* applications tab */
-#define IDC_APP_TREEVIEW                1200
+#define IDC_APP_LISTVIEW                1200
 #define IDC_APP_ADDAPP                  1201
 #define IDC_APP_REMOVEAPP               1202
 

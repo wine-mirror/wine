@@ -2,7 +2,7 @@
  * Graphics configuration code
  *
  * Copyright 2003 Mark Westcott
- * Copyright 2003 Mike Hearn
+ * Copyright 2003-2004 Mike Hearn
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -35,21 +35,10 @@
 WINE_DEFAULT_DEBUG_CHANNEL(winecfg);
 
 #define RES_MAXLEN 5 /* the maximum number of characters in a screen dimension. 5 digits should be plenty, what kind of crazy person runs their screen >10,000 pixels across? */
-#define section (appSettings == EDITING_GLOBAL ? "graphics" : (getSectionForApp("graphics")))
 
 int updatingUI;
 
 int appSettings = EDITING_GLOBAL; /* start by editing global */
-char *currentApp; /* the app we are currently editing, or NULL if editing global */
-
-char *getSectionForApp(char *pSection)
-{
-    static char *lastResult = NULL;
-    if (lastResult) HeapFree(GetProcessHeap(), 0, lastResult);
-    lastResult = HeapAlloc(GetProcessHeap(), 0, strlen("AppDefaults\\") + strlen(currentApp) + 2 /* \\ */ + strlen(pSection) + 1 /* terminator */);
-    sprintf(lastResult, "AppDefaults\\%s\\%s", currentApp, pSection);
-    return lastResult;
-}
 
 void updateGUIForDesktopMode(HWND dialog) {
     WINE_TRACE("\n");
@@ -57,7 +46,7 @@ void updateGUIForDesktopMode(HWND dialog) {
     updatingUI = TRUE;
     
     /* do we have desktop mode enabled? */
-    if (doesConfigValueExist(section, "Desktop") == S_OK) {
+    if (doesConfigValueExist(keypath("x11drv"), "Desktop") == S_OK) {
 	CheckDlgButton(dialog, IDC_ENABLE_DESKTOP, BST_CHECKED);
 	/* enable the controls */
 	enable(IDC_DESKTOP_WIDTH);
@@ -95,7 +84,7 @@ void initGraphDlg (HWND hDlg)
     updatingUI = TRUE;
     
     /* desktop size */
-    buf = getConfigValue(section, "Desktop", default_desktop);
+    buf = getConfigValue(keypath("x11drv"), "Desktop", default_desktop);
     bufindex = strchr(buf, 'x');
     if(!bufindex) /* handle invalid "Desktop" values */
     {
@@ -115,7 +104,7 @@ void initGraphDlg (HWND hDlg)
     SendDlgItemMessage(hDlg, IDC_SCREEN_DEPTH, CB_ADDSTRING, 0, (LPARAM) "24 bit");
     SendDlgItemMessage(hDlg, IDC_SCREEN_DEPTH, CB_ADDSTRING, 0, (LPARAM) "32 bit"); /* is this valid? */
 
-    buf = getConfigValue(section, "ScreenDepth", "24");
+    buf = getConfigValue(keypath("x11drv"), "ScreenDepth", "24");
     if (strcmp(buf, "8") == 0)
 	SendDlgItemMessage(hDlg, IDC_SCREEN_DEPTH, CB_SETCURSEL, 0, 0);
     else if (strcmp(buf, "16") == 0)
@@ -131,14 +120,14 @@ void initGraphDlg (HWND hDlg)
     SendDlgItemMessage(hDlg, IDC_DESKTOP_WIDTH, EM_LIMITTEXT, RES_MAXLEN, 0);
     SendDlgItemMessage(hDlg, IDC_DESKTOP_HEIGHT, EM_LIMITTEXT, RES_MAXLEN, 0);
 
-    buf = getConfigValue(section, "DXGrab", "Y");
+    buf = getConfigValue(keypath("x11drv"), "DXGrab", "Y");
     if (IS_OPTION_TRUE(*buf))
 	CheckDlgButton(hDlg, IDC_DX_MOUSE_GRAB, BST_CHECKED);
     else
 	CheckDlgButton(hDlg, IDC_DX_MOUSE_GRAB, BST_UNCHECKED);
     free(buf);
 
-    buf = getConfigValue(section, "DesktopDoubleBuffered", "Y");
+    buf = getConfigValue(keypath("x11drv"), "DesktopDoubleBuffered", "Y");
     if (IS_OPTION_TRUE(*buf))
 	CheckDlgButton(hDlg, IDC_DOUBLE_BUFFER, BST_CHECKED);
     else
@@ -166,7 +155,7 @@ void setFromDesktopSizeEdits(HWND hDlg) {
     if (strcmp(height, "") == 0) strcpy(height, "480");
     
     sprintf(newStr, "%sx%s", width, height);
-    addTransaction(section, "Desktop", ACTION_SET, newStr);
+    addTransaction(keypath("x11drv"), "Desktop", ACTION_SET, newStr);
 
     free(width);
     free(height);
@@ -180,7 +169,7 @@ void onEnableDesktopClicked(HWND hDlg) {
 	setFromDesktopSizeEdits(hDlg);
     } else {
 	/* it was just checked, so remove the config values */
-	addTransaction(section, "Desktop", ACTION_REMOVE, NULL);
+	addTransaction(keypath("x11drv"), "Desktop", ACTION_REMOVE, NULL);
     }
     updateGUIForDesktopMode(hDlg);
 }
@@ -193,23 +182,23 @@ void onScreenDepthChanged(HWND hDlg) {
     if (updatingUI) return;
 
     *spaceIndex = '\0';
-    addTransaction(section, "ScreenDepth", ACTION_SET, newvalue);
+    addTransaction(keypath("x11drv"), "ScreenDepth", ACTION_SET, newvalue);
     free(newvalue);
 }
 
 void onDXMouseGrabClicked(HWND hDlg) {
     if (IsDlgButtonChecked(hDlg, IDC_DX_MOUSE_GRAB) == BST_CHECKED)
-	addTransaction(section, "DXGrab", ACTION_SET, "Y");
+	addTransaction(keypath("x11drv"), "DXGrab", ACTION_SET, "Y");
     else
-	addTransaction(section, "DXGrab", ACTION_SET, "N");
+	addTransaction(keypath("x11drv"), "DXGrab", ACTION_SET, "N");
 }
 
 
 void onDoubleBufferClicked(HWND hDlg) {
     if (IsDlgButtonChecked(hDlg, IDC_DOUBLE_BUFFER) == BST_CHECKED)
-	addTransaction(section, "DesktopDoubleBuffered", ACTION_SET, "Y");
+	addTransaction(keypath("x11drv"), "DesktopDoubleBuffered", ACTION_SET, "Y");
     else
-	addTransaction(section, "DesktopDoubleBuffered", ACTION_SET, "N");
+	addTransaction(keypath("x11drv"), "DesktopDoubleBuffered", ACTION_SET, "N");
 }
 
 INT_PTR CALLBACK
