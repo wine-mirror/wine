@@ -77,7 +77,11 @@ BOOL WINAPI SetFileAttributesA(LPCSTR lpFileName, DWORD attributes)
     }
     if (attributes & FILE_ATTRIBUTE_READONLY)
     {
-        buf.st_mode &= ~0222; /* octal!, clear write permission bits */
+        if(S_ISDIR(buf.st_mode))
+            /* FIXME */
+            WARN("FILE_ATTRIBUTE_READONLY ignored for directory.\n");
+        else
+            buf.st_mode &= ~0222; /* octal!, clear write permission bits */
         attributes &= ~FILE_ATTRIBUTE_READONLY;
     }
     else
