@@ -1939,6 +1939,9 @@ static LONG NC_StartSizeMove( WND* wndPtr, WPARAM16 wParam,
     LONG hittest = 0;
     POINT16 pt;
     MSG msg;
+    RECT rectWindow;
+
+    GetWindowRect(wndPtr->hwndSelf,&rectWindow);
 
     if ((wParam & 0xfff0) == SC_MOVE)
     {
@@ -1954,8 +1957,8 @@ static LONG NC_StartSizeMove( WND* wndPtr, WPARAM16 wParam,
 	    rect.right -= GetSystemMetrics(SM_CXSIZE) + 1;
 	if (wndPtr->dwStyle & WS_MAXIMIZEBOX)
 	    rect.right -= GetSystemMetrics(SM_CXSIZE) + 1;
-	pt.x = wndPtr->rectWindow.left + (rect.right - rect.left) / 2;
-	pt.y = wndPtr->rectWindow.top + rect.top + GetSystemMetrics(SM_CYSIZE)/2;
+	pt.x = rectWindow.left + (rect.right - rect.left) / 2;
+	pt.y = rectWindow.top + rect.top + GetSystemMetrics(SM_CYSIZE)/2;
 	hittest = HTCAPTION;
 	*capturePoint = pt;
     }
@@ -1981,23 +1984,23 @@ static LONG NC_StartSizeMove( WND* wndPtr, WPARAM16 wParam,
 		{
 		case VK_UP:
 		    hittest = HTTOP;
-		    pt.x =(wndPtr->rectWindow.left+wndPtr->rectWindow.right)/2;
-		    pt.y = wndPtr->rectWindow.top + GetSystemMetrics(SM_CYFRAME) / 2;
+		    pt.x =(rectWindow.left+rectWindow.right)/2;
+		    pt.y = rectWindow.top + GetSystemMetrics(SM_CYFRAME) / 2;
 		    break;
 		case VK_DOWN:
 		    hittest = HTBOTTOM;
-		    pt.x =(wndPtr->rectWindow.left+wndPtr->rectWindow.right)/2;
-		    pt.y = wndPtr->rectWindow.bottom - GetSystemMetrics(SM_CYFRAME) / 2;
+		    pt.x =(rectWindow.left+rectWindow.right)/2;
+		    pt.y = rectWindow.bottom - GetSystemMetrics(SM_CYFRAME) / 2;
 		    break;
 		case VK_LEFT:
 		    hittest = HTLEFT;
-		    pt.x = wndPtr->rectWindow.left + GetSystemMetrics(SM_CXFRAME) / 2;
-		    pt.y =(wndPtr->rectWindow.top+wndPtr->rectWindow.bottom)/2;
+		    pt.x = rectWindow.left + GetSystemMetrics(SM_CXFRAME) / 2;
+		    pt.y =(rectWindow.top+rectWindow.bottom)/2;
 		    break;
 		case VK_RIGHT:
 		    hittest = HTRIGHT;
-		    pt.x = wndPtr->rectWindow.right - GetSystemMetrics(SM_CXFRAME) / 2;
-		    pt.y =(wndPtr->rectWindow.top+wndPtr->rectWindow.bottom)/2;
+		    pt.x = rectWindow.right - GetSystemMetrics(SM_CXFRAME) / 2;
+		    pt.y =(rectWindow.top+rectWindow.bottom)/2;
 		    break;
 		case VK_RETURN:
 		case VK_ESCAPE: return 0;
