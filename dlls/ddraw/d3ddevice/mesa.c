@@ -281,7 +281,9 @@ GL_IDirect3DDeviceImpl_7_3T_2T_1T_Release(LPDIRECT3DDEVICE7 iface)
 	/* Release texture associated with the device */ 
 	if (This->current_texture[0] != NULL)
 	    IDirect3DTexture2_Release(ICOM_INTERFACE(This->current_texture[0], IDirect3DTexture2));
-	    	  
+
+	if (glThis->handler) HeapFree(GetProcessHeap(), 0, This);
+	
 	ENTER_GL();
 	glXDestroyContext(glThis->display, glThis->gl_context);
 	LEAVE_GL();
@@ -902,12 +904,6 @@ typedef struct {
     float tu1, tv1;
 } D3DFVF_TLVERTEX_1;
 
-typedef struct {
-    int offset;
-    int extra;
-    void (*handler)(char *vertex, int offset, int extra);
-} D3DFVF_GENERIC;
-
 /* These are the various handler used in the generic path */
 static void handle_xyz(char *vertex, int offset, int extra) {
     glVertex3fv((float *) (vertex + offset));
@@ -1018,59 +1014,74 @@ static void draw_primitive_7(IDirect3DDeviceImpl *This,
 	   Note that people should write a fast path for all vertex formats out there...
 	*/
         DWORD elements;
-	DWORD size = get_flexible_vertex_size(d3dvtVertexType, &elements);
+	DWORD size;
 	char *vertices = (char *) lpvVertices;
 	int index;
 	int current_offset = 0;
 	int current_position = 0;
-	D3DFVF_GENERIC *handler = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, elements * sizeof(D3DFVF_GENERIC));
+	D3DFVF_GENERIC *handler;
 
-	WARN(" using draw_primitive generic path - for better performance, add a fast path for your vertex case !\n");
-	
-	if ((d3dvtVertexType & D3DFVF_POSITION_MASK) == D3DFVF_XYZ) {
-	    handler[elements - 1].handler = handle_xyz;
-	    handler[elements - 1].offset = current_offset;
-	    current_offset += 3 * sizeof(D3DVALUE);
-	} else {
-	    handler[elements - 1].handler = handle_xyzrhw;
-	    handler[elements - 1].offset = current_offset;
-	    current_offset += 4 * sizeof(D3DVALUE);
-	}
-	if (d3dvtVertexType & D3DFVF_NORMAL) { 
-	    handler[current_position].handler = handle_normal;
-	    handler[current_position].offset = current_offset;
-	    current_position += 1;
-	    current_offset += 3 * sizeof(D3DVALUE);
-	}
-	if (d3dvtVertexType & D3DFVF_DIFFUSE) { 
-	    handler[current_position].handler = handle_diffuse;
-	    handler[current_position].offset = current_offset;
-	    current_position += 1;
-	    current_offset += sizeof(DWORD);
-	}
-	if (d3dvtVertexType & D3DFVF_SPECULAR) { 
-	    handler[current_position].handler = handle_specular;
-	    handler[current_position].offset = current_offset;
-	    current_position += 1;
-	    current_offset += sizeof(DWORD);
-	}
-	if (((d3dvtVertexType & D3DFVF_TEXCOUNT_MASK) >> D3DFVF_TEXCOUNT_SHIFT) == 1) {
-	    handler[current_position].handler = handle_texture;
-	    handler[current_position].offset = current_offset;
-	    handler[current_position].extra = 0xFF;
-	    current_position += 1;
-	    current_offset += 2 * sizeof(D3DVALUE);
-	} else {
-	    int tex_index;
-	    for (tex_index = 0; tex_index < ((d3dvtVertexType & D3DFVF_TEXCOUNT_MASK) >> D3DFVF_TEXCOUNT_SHIFT); tex_index++) {
+	if ((glThis->last_vertex_format != d3dvtVertexType) ||
+	    (glThis->handler == NULL)) {
+	    if (glThis->handler == NULL) HeapFree(GetProcessHeap(), 0, glThis->handler);
+	    size = get_flexible_vertex_size(d3dvtVertexType, &elements);
+	    
+	    glThis->handler = handler = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, elements * sizeof(D3DFVF_GENERIC));
+	    glThis->last_vertex_format = d3dvtVertexType;
+	    glThis->last_vertex_format_size = size;
+	    glThis->last_vertex_format_elements = elements;
+	    
+	    if ((d3dvtVertexType & D3DFVF_POSITION_MASK) == D3DFVF_XYZ) {
+	        handler[elements - 1].handler = handle_xyz;
+		handler[elements - 1].offset = current_offset;
+		current_offset += 3 * sizeof(D3DVALUE);
+	    } else {
+	        handler[elements - 1].handler = handle_xyzrhw;
+		handler[elements - 1].offset = current_offset;
+		current_offset += 4 * sizeof(D3DVALUE);
+	    }
+	    if (d3dvtVertexType & D3DFVF_NORMAL) { 
+	        handler[current_position].handler = handle_normal;
+		handler[current_position].offset = current_offset;
+		current_position += 1;
+		current_offset += 3 * sizeof(D3DVALUE);
+	    }
+	    if (d3dvtVertexType & D3DFVF_DIFFUSE) { 
+	        handler[current_position].handler = handle_diffuse;
+		handler[current_position].offset = current_offset;
+		current_position += 1;
+		current_offset += sizeof(DWORD);
+	    }
+	    if (d3dvtVertexType & D3DFVF_SPECULAR) { 
+	        handler[current_position].handler = handle_specular;
+		handler[current_position].offset = current_offset;
+		current_position += 1;
+		current_offset += sizeof(DWORD);
+	    }
+	    if (((d3dvtVertexType & D3DFVF_TEXCOUNT_MASK) >> D3DFVF_TEXCOUNT_SHIFT) == 1) {
 	        handler[current_position].handler = handle_texture;
 		handler[current_position].offset = current_offset;
-		handler[current_position].extra = tex_index;
+		handler[current_position].extra = 0xFF;
 		current_position += 1;
 		current_offset += 2 * sizeof(D3DVALUE);
+	    } else {
+	        int tex_index;
+		for (tex_index = 0; tex_index < ((d3dvtVertexType & D3DFVF_TEXCOUNT_MASK) >> D3DFVF_TEXCOUNT_SHIFT); tex_index++) {
+		    handler[current_position].handler = handle_texture;
+		    handler[current_position].offset = current_offset;
+		    handler[current_position].extra = tex_index;
+		    current_position += 1;
+		    current_offset += 2 * sizeof(D3DVALUE);
+		}
 	    }
+	} else {
+	    handler = glThis->handler;
+	    size = glThis->last_vertex_format_size;
+	    elements = glThis->last_vertex_format_elements;
 	}
-
+	
+	WARN(" using draw_primitive generic path - for better performance, add a fast path for your vertex case !\n");
+	
 	for (index = 0; index < dwIndexCount; index++) {
 	    int i = (dwIndices == NULL) ? index : dwIndices[index];
 	    int elt;
