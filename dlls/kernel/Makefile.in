@@ -34,15 +34,13 @@ C_SRCS = \
 	$(TOPOBJDIR)/misc/registry.c \
 	$(TOPOBJDIR)/msdos/dpmi.c \
 	$(TOPOBJDIR)/msdos/int21.c \
-	$(TOPOBJDIR)/scheduler/handle.c \
-	$(TOPOBJDIR)/win32/device.c \
-	$(TOPOBJDIR)/win32/newfns.c \
 	atom.c \
 	change.c \
 	comm.c \
 	computername.c \
 	console.c \
 	debugger.c \
+	device.c \
 	dosmem.c \
 	editline.c \
 	except.c \
@@ -108,8 +106,6 @@ EXTRASUBDIRS = \
 	$(TOPOBJDIR)/memory \
 	$(TOPOBJDIR)/misc \
 	$(TOPOBJDIR)/msdos \
-	$(TOPOBJDIR)/scheduler \
-	$(TOPOBJDIR)/win32 \
 	messages \
 	nls
 

@@ -1487,6 +1487,31 @@ BOOL WINAPI SetMailslotInfo( HANDLE hMailslot, DWORD dwReadTimeout)
 }
 
 
+/******************************************************************************
+ *		CreateIoCompletionPort (KERNEL32.@)
+ */
+HANDLE WINAPI CreateIoCompletionPort(HANDLE hFileHandle, HANDLE hExistingCompletionPort,
+                                     DWORD dwCompletionKey, DWORD dwNumberOfConcurrentThreads)
+{
+    FIXME("(%p, %p, %08lx, %08lx): stub.\n",
+          hFileHandle, hExistingCompletionPort, dwCompletionKey, dwNumberOfConcurrentThreads);
+    return NULL;
+}
+
+
+/******************************************************************************
+ *		GetQueuedCompletionStatus (KERNEL32.@)
+ */
+BOOL WINAPI GetQueuedCompletionStatus( HANDLE CompletionPort, LPDWORD lpNumberOfBytesTransferred,
+                                       LPDWORD lpCompletionKey, LPOVERLAPPED *lpOverlapped,
+                                       DWORD dwMilliseconds )
+{
+    FIXME("(%p,%p,%p,%p,%ld), stub!\n",
+          CompletionPort,lpNumberOfBytesTransferred,lpCompletionKey,lpOverlapped,dwMilliseconds);
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return FALSE;
+}
+
 #ifdef __i386__
 
 /***********************************************************************

@@ -2075,6 +2075,145 @@ DWORD WINAPI MapProcessHandle( HANDLE handle )
 }
 
 
+/*********************************************************************
+ *           CloseW32Handle (KERNEL.474)
+ *           CloseHandle    (KERNEL32.@)
+ */
+BOOL WINAPI CloseHandle( HANDLE handle )
+{
+    NTSTATUS status;
+
+    /* stdio handles need special treatment */
+    if ((handle == (HANDLE)STD_INPUT_HANDLE) ||
+        (handle == (HANDLE)STD_OUTPUT_HANDLE) ||
+        (handle == (HANDLE)STD_ERROR_HANDLE))
+        handle = GetStdHandle( (DWORD)handle );
+
+    if (is_console_handle(handle))
+        return CloseConsoleHandle(handle);
+
+    status = NtClose( handle );
+    if (status) SetLastError( RtlNtStatusToDosError(status) );
+    return !status;
+}
+
+
+/*********************************************************************
+ *           GetHandleInformation   (KERNEL32.@)
+ */
+BOOL WINAPI GetHandleInformation( HANDLE handle, LPDWORD flags )
+{
+    BOOL ret;
+    SERVER_START_REQ( set_handle_info )
+    {
+        req->handle = handle;
+        req->flags  = 0;
+        req->mask   = 0;
+        req->fd     = -1;
+        ret = !wine_server_call_err( req );
+        if (ret && flags) *flags = reply->old_flags;
+    }
+    SERVER_END_REQ;
+    return ret;
+}
+
+
+/*********************************************************************
+ *           SetHandleInformation   (KERNEL32.@)
+ */
+BOOL WINAPI SetHandleInformation( HANDLE handle, DWORD mask, DWORD flags )
+{
+    BOOL ret;
+    SERVER_START_REQ( set_handle_info )
+    {
+        req->handle = handle;
+        req->flags  = flags;
+        req->mask   = mask;
+        req->fd     = -1;
+        ret = !wine_server_call_err( req );
+    }
+    SERVER_END_REQ;
+    return ret;
+}
+
+
+/*********************************************************************
+ *           DuplicateHandle   (KERNEL32.@)
+ */
+BOOL WINAPI DuplicateHandle( HANDLE source_process, HANDLE source,
+                             HANDLE dest_process, HANDLE *dest,
+                             DWORD access, BOOL inherit, DWORD options )
+{
+    NTSTATUS status;
+
+    if (is_console_handle(source))
+    {
+        /* FIXME: this test is not sufficient, we need to test process ids, not handles */
+        if (source_process != dest_process ||
+            source_process != GetCurrentProcess())
+        {
+            SetLastError(ERROR_INVALID_PARAMETER);
+            return FALSE;
+        }
+        *dest = DuplicateConsoleHandle( source, access, inherit, options );
+        return (*dest != INVALID_HANDLE_VALUE);
+    }
+    status = NtDuplicateObject( source_process, source, dest_process, dest,
+                                access, inherit ? OBJ_INHERIT : 0, options );
+    if (status) SetLastError( RtlNtStatusToDosError(status) );
+    return !status;
+}
+
+
+/***********************************************************************
+ *           ConvertToGlobalHandle   (KERNEL.476)
+ *           ConvertToGlobalHandle  (KERNEL32.@)
+ */
+HANDLE WINAPI ConvertToGlobalHandle(HANDLE hSrc)
+{
+    HANDLE ret = INVALID_HANDLE_VALUE;
+    DuplicateHandle( GetCurrentProcess(), hSrc, GetCurrentProcess(), &ret, 0, FALSE,
+                     DUP_HANDLE_MAKE_GLOBAL | DUP_HANDLE_SAME_ACCESS | DUP_HANDLE_CLOSE_SOURCE );
+    return ret;
+}
+
+
+/***********************************************************************
+ *           SetHandleContext   (KERNEL32.@)
+ */
+BOOL WINAPI SetHandleContext(HANDLE hnd,DWORD context)
+{
+    FIXME("(%p,%ld), stub. In case this got called by WSOCK32/WS2_32: "
+          "the external WINSOCK DLLs won't work with WINE, don't use them.\n",hnd,context);
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return FALSE;
+}
+
+
+/***********************************************************************
+ *           GetHandleContext   (KERNEL32.@)
+ */
+DWORD WINAPI GetHandleContext(HANDLE hnd)
+{
+    FIXME("(%p), stub. In case this got called by WSOCK32/WS2_32: "
+          "the external WINSOCK DLLs won't work with WINE, don't use them.\n",hnd);
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return 0;
+}
+
+
+/***********************************************************************
+ *           CreateSocketHandle   (KERNEL32.@)
+ */
+HANDLE WINAPI CreateSocketHandle(void)
+{
+    FIXME("(), stub. In case this got called by WSOCK32/WS2_32: "
+          "the external WINSOCK DLLs won't work with WINE, don't use them.\n");
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return INVALID_HANDLE_VALUE;
+}
+
+
 /***********************************************************************
  *           SetPriorityClass   (KERNEL32.@)
  */

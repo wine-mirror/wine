@@ -50,6 +50,8 @@ EXTRA_OBJS = $(ASM_SRCS:.s=.o)
 
 SUBDIRS = tests
 
+EXTRASUBDIRS = $(TOPOBJDIR)/scheduler
+
 @MAKE_DLL_RULES@
 
 relay32.s: $(WINEBUILD)
