@@ -918,6 +918,7 @@ DWORD     WINAPI RtlDestroyEnvironment(DWORD);
 HANDLE    WINAPI RtlDestroyHeap(HANDLE);
 BOOLEAN   WINAPI RtlDosPathNameToNtPathName_U(LPWSTR,PUNICODE_STRING,DWORD,DWORD);
 WCHAR     WINAPI RtlDowncaseUnicodeChar(WCHAR);
+NTSTATUS  WINAPI RtlDowncaseUnicodeString(UNICODE_STRING*,const UNICODE_STRING*,BOOLEAN);
 void      WINAPI RtlDumpResource(LPRTL_RWLOCK);
 
 LONGLONG  WINAPI RtlEnlargedIntegerMultiply(INT,INT);

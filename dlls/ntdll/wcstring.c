@@ -331,10 +331,76 @@ INT __cdecl NTDLL_iswctype( WCHAR wc, WCHAR wct )
 
 /*********************************************************************
  *           iswalpha    (NTDLL.@)
+ *
+ * Checks if an unicode char wc is a letter
+ *
+ * RETURNS
+ *  TRUE: The unicode char wc is a letter.
+ *  FALSE: Otherwise
  */
 INT __cdecl NTDLL_iswalpha( WCHAR wc )
 {
-    return get_char_typeW(wc) & C1_ALPHA;
+    return isalphaW(wc);
+}
+
+
+/*********************************************************************
+ *		iswdigit (NTDLL.@)
+ *
+ * Checks if an unicode char wc is a digit
+ *
+ * RETURNS
+ *  TRUE: The unicode char wc is a digit.
+ *  FALSE: Otherwise
+ */
+INT __cdecl NTDLL_iswdigit( WCHAR wc )
+{
+    return isdigitW(wc);
+}
+
+
+/*********************************************************************
+ *		iswlower (NTDLL.@)
+ *
+ * Checks if an unicode char wc is a lower case letter
+ *
+ * RETURNS
+ *  TRUE: The unicode char wc is a lower case letter.
+ *  FALSE: Otherwise
+ */
+INT __cdecl NTDLL_iswlower( WCHAR wc )
+{
+    return islowerW(wc);
+}
+
+
+/*********************************************************************
+ *		iswspace (NTDLL.@)
+ *
+ * Checks if an unicode char wc is a white space character
+ *
+ * RETURNS
+ *  TRUE: The unicode char wc is a white space character.
+ *  FALSE: Otherwise
+ */
+INT __cdecl NTDLL_iswspace( WCHAR wc )
+{
+    return isspaceW(wc);
+}
+
+
+/*********************************************************************
+ *		iswxdigit (NTDLL.@)
+ *
+ * Checks if an unicode char wc is an extended digit
+ *
+ * RETURNS
+ *  TRUE: The unicode char wc is an extended digit.
+ *  FALSE: Otherwise
+ */
+INT __cdecl NTDLL_iswxdigit( WCHAR wc )
+{
+    return isxdigitW(wc);
 }
 
 
@@ -343,11 +409,19 @@ INT __cdecl NTDLL_iswalpha( WCHAR wc )
  *
  * Converts an unsigned long integer to an unicode string.
  *
- * Assigns a '\0' terminated string to str and returns str.
- * Does not check if radix is in the range of 2 to 36 (as native DLL).
- * For str == NULL just returns NULL (as native DLL).
+ * RETURNS
+ *  Always returns str.
+ *
+ * NOTES
+ *  Converts value to a '\0' terminated wstring which is copied to str.
+ *  The maximum length of the copied str is 33 bytes.
+ *  Does not check if radix is in the range of 2 to 36.
+ *  If str is NULL it just returns NULL.
  */
-LPWSTR __cdecl _ultow( unsigned long value, LPWSTR str, INT radix )
+LPWSTR __cdecl _ultow(
+    unsigned long value, /* [I] Value to be converted */
+    LPWSTR str,          /* [O] Destination for the converted value */
+    INT radix)           /* [I] Number base for conversion */
 {
     WCHAR buffer[33];
     PWCHAR pos;
@@ -378,12 +452,20 @@ LPWSTR __cdecl _ultow( unsigned long value, LPWSTR str, INT radix )
  *
  * Converts a long integer to an unicode string.
  *
- * Assigns a '\0' terminated string to str and returns str. If radix
- * is 10 and value is negative, the value is converted with sign.
- * Does not check if radix is in the range of 2 to 36 (as native DLL).
- * For str == NULL just returns NULL (as native DLL).
+ * RETURNS
+ *  Always returns str.
+ *
+ * NOTES
+ *  Converts value to a '\0' terminated wstring which is copied to str.
+ *  The maximum length of the copied str is 33 bytes. If radix
+ *  is 10 and value is negative, the value is converted with sign.
+ *  Does not check if radix is in the range of 2 to 36.
+ *  If str is NULL it just returns NULL.
  */
-LPWSTR __cdecl _ltow( long value, LPWSTR str, INT radix )
+LPWSTR __cdecl _ltow(
+    long value, /* [I] Value to be converted */
+    LPWSTR str, /* [O] Destination for the converted value */
+    INT radix)  /* [I] Number base for conversion */
 {
     unsigned long val;
     int negative;
@@ -428,16 +510,24 @@ LPWSTR __cdecl _ltow( long value, LPWSTR str, INT radix )
  *
  * Converts an integer to an unicode string.
  *
- * Assigns a '\0' terminated wstring to str and returns str. If radix
- * is 10 and value is negative, the value is converted with sign.
- * Does not check if radix is in the range of 2 to 36 (as native DLL).
- * For str == NULL just returns NULL (as native DLL).
+ * RETURNS
+ *  Always returns str.
  *
- * Difference:
- * - The native DLL crashes when the string is longer than 19 chars.
+ * NOTES
+ *  Converts value to a '\0' terminated wstring which is copied to str.
+ *  The maximum length of the copied str is 33 bytes. If radix
+ *  is 10 and value is negative, the value is converted with sign.
+ *  Does not check if radix is in the range of 2 to 36.
+ *  If str is NULL it just returns NULL.
+ *
+ * DIFFERENCES
+ * - The native function crashes when the string is longer than 19 chars.
  *   This function does not have this bug.
  */
-LPWSTR __cdecl _itow( int value, LPWSTR str, INT radix )
+LPWSTR __cdecl _itow(
+    int value,  /* [I] Value to be converted */
+    LPWSTR str, /* [O] Destination for the converted value */
+    INT radix)  /* [I] Number base for conversion */
 {
     return _ltow(value, str, radix);
 }
@@ -448,16 +538,24 @@ LPWSTR __cdecl _itow( int value, LPWSTR str, INT radix )
  *
  * Converts a large unsigned integer to an unicode string.
  *
- * Assigns a '\0' terminated wstring to str and returns str.
- * Does not check if radix is in the range of 2 to 36 (as native DLL).
- * For str == NULL just returns NULL (as native DLL).
+ * RETURNS
+ *  Always returns str.
  *
- * Difference:
+ * NOTES
+ *  Converts value to a '\0' terminated wstring which is copied to str.
+ *  The maximum length of the copied str is 33 bytes.
+ *  Does not check if radix is in the range of 2 to 36.
+ *  If str is NULL it just returns NULL.
+ *
+ * DIFFERENCES
  * - This function does not exist in the native DLL (but in msvcrt).
  *   But since the maintenance of all these functions is better done
  *   in one place we implement it here.
  */
-LPWSTR __cdecl _ui64tow( ULONGLONG value, LPWSTR str, INT radix )
+LPWSTR __cdecl _ui64tow(
+    ULONGLONG value, /* [I] Value to be converted */
+    LPWSTR str,      /* [O] Destination for the converted value */
+    INT radix)       /* [I] Number base for conversion */
 {
     WCHAR buffer[65];
     PWCHAR pos;
@@ -488,12 +586,17 @@ LPWSTR __cdecl _ui64tow( ULONGLONG value, LPWSTR str, INT radix )
  *
  * Converts a large integer to an unicode string.
  *
- * Assigns a '\0' terminated wstring to str and returns str. If radix
- * is 10 and value is negative, the value is converted with sign.
- * Does not check if radix is in the range of 2 to 36 (as native DLL).
- * For str == NULL just returns NULL (as native DLL).
+ * RETURNS
+ *  Always returns str.
  *
- * Difference:
+ * NOTES
+ *  Converts value to a '\0' terminated wstring which is copied to str.
+ *  The maximum length of the copied str is 33 bytes. If radix
+ *  is 10 and value is negative, the value is converted with sign.
+ *  Does not check if radix is in the range of 2 to 36.
+ *  If str is NULL it just returns NULL.
+ *
+ * DIFFERENCES
  * - The native DLL converts negative values (for base 10) wrong:
  *                     -1 is converted to -18446744073709551615
  *                     -2 is converted to -18446744073709551614
@@ -502,7 +605,10 @@ LPWSTR __cdecl _ui64tow( ULONGLONG value, LPWSTR str, INT radix )
  *   The native msvcrt _i64tow function and our ntdll function do
  *   not have this bug.
  */
-LPWSTR __cdecl _i64tow( LONGLONG value, LPWSTR str, INT radix )
+LPWSTR __cdecl _i64tow(
+    LONGLONG value, /* [I] Value to be converted */
+    LPWSTR str,     /* [O] Destination for the converted value */
+    INT radix)      /* [I] Number base for conversion */
 {
     ULONGLONG val;
     int negative;
@@ -547,10 +653,16 @@ LPWSTR __cdecl _i64tow( LONGLONG value, LPWSTR str, INT radix )
  *
  * Converts an unicode string to a long integer.
  *
- * On success it returns the integer value otherwise it returns 0.
- * Accepts: {whitespace} [+|-] {digits}
- * No check of overflow: Just assigns lower 32 bits (as native DLL).
- * Does not check for str != NULL (as native DLL).
+ * PARAMS
+ *  str [I] Wstring to be converted
+ *
+ * RETURNS
+ *  On success it returns the integer value otherwise it returns 0.
+ *
+ * NOTES
+ *  Accepts: {whitespace} [+|-] {digits}
+ *  No check is made for value overflow, only the lower 32 bits are assigned.
+ *  If str is NULL it crashes, as the native function does.
  */
 LONG __cdecl _wtol( LPWSTR str )
 {
@@ -582,14 +694,20 @@ LONG __cdecl _wtol( LPWSTR str )
  *
  * Converts an unicode string to an integer.
  *
- * On success it returns the integer value otherwise it returns 0.
- * Accepts: {whitespace} [+|-] {digits}
- * No check of overflow: Just assigns lower 32 bits (as native DLL).
- * Does not check for str != NULL (as native DLL).
+ * PARAMS
+ *  str [I] Wstring to be converted
+ *
+ * RETURNS
+ *  On success it returns the integer value otherwise it returns 0.
+ *
+ * NOTES
+ *  Accepts: {whitespace} [+|-] {digits}
+ *  No check is made for value overflow, only the lower 32 bits are assigned.
+ *  If str is NULL it crashes, as the native function does.
  */
-int __cdecl _wtoi( LPWSTR string )
+int __cdecl _wtoi( LPWSTR str )
 {
-    return _wtol(string);
+    return _wtol(str);
 }
 
 
@@ -598,10 +716,16 @@ int __cdecl _wtoi( LPWSTR string )
  *
  * Converts an unicode string to a large integer.
  *
- * On success it returns the integer value otherwise it returns 0.
- * Accepts: {whitespace} [+|-] {digits}
- * No check of overflow: Just assigns lower 64 bits (as native DLL).
- * Does not check for str != NULL (as native DLL).
+ * PARAMS
+ *  str [I] Wstring to be converted
+ *
+ * RETURNS
+ *  On success it returns the integer value otherwise it returns 0.
+ *
+ * NOTES
+ *  Accepts: {whitespace} [+|-] {digits}
+ *  No check is made for value overflow, only the lower 64 bits are assigned.
+ *  If str is NULL it crashes, as the native function does.
  */
 LONGLONG  __cdecl _wtoi64( LPWSTR str )
 {
@@ -626,7 +750,6 @@ LONGLONG  __cdecl _wtoi64( LPWSTR str )
 
     return bMinus ? -RunningTotal : RunningTotal;
 }
-
 
 
 /***********************************************************************

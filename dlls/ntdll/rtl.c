@@ -4,7 +4,8 @@
  * This file contains the Rtl* API functions. These should be implementable.
  *
  * Copyright 1996-1998 Marcus Meissner
- *		  1999 Alex Korobka
+ * Copyright 1999      Alex Korobka
+ * Copyright 2003      Thomas Mertes
  * Crc32 code Copyright 1986 Gary S. Brown (Public domain)
  *
  * This library is free software; you can redistribute it and/or
@@ -729,3 +730,40 @@ __ASM_GLOBAL_FUNC(NTDLL_RtlUshortByteSwap,
                   "movb %cl,%ah\n\t"
                   "ret");
 #endif
+
+
+/*************************************************************************
+ * RtlUniform   [NTDLL.@]
+ *
+ * Generates an uniform random number
+ *
+ * PARAMS
+ *  seed [O] The seed of the Random function
+ *
+ * RETURNS
+ *  It returns a random number uniformly distributed over [0..MAXLONG].
+ *
+ * NOTES
+ *  Generates an uniform random number using a modified version of
+ *  D.H. Lehmer's 1948 algorithm. The original algorithm would be:
+ *
+ *  result = *seed * 0xffffffed + 0x7fffffc3;
+ *  *seed = result;
+ */
+ULONG WINAPI RtlUniform (PULONG seed)
+{
+    ULONG result;
+
+    result = *seed * 0xffffffed + 0x7fffffc3;
+    if (result == 0xffffffff || result == 0x7ffffffe) {
+	result = (result + 2) & MAXLONG;
+    } else if (result == 0x7fffffff) {
+	result = (result + 1) & MAXLONG;
+    } else if ((result & 0x80000000) == 0) {
+	result = result + (~result & 1);
+    } else {
+	result = (result + (result & 1)) & MAXLONG;
+    } /* if */
+    *seed = result;
+    return result;
+}

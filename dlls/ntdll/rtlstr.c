@@ -383,6 +383,7 @@ NTSTATUS WINAPI RtlEqualComputerName(const UNICODE_STRING *left,
     return ret;
 }
 
+
 /**************************************************************************
  *	RtlEqualDomainName   (NTDLL.@)
  *
@@ -403,6 +404,7 @@ NTSTATUS WINAPI RtlEqualDomainName(const UNICODE_STRING *left,
 {
     return RtlEqualComputerName(left, right);
 }
+
 
 /*
 	COPY BETWEEN ANSI_STRING or UNICODE_STRING
@@ -504,7 +506,7 @@ NTSTATUS WINAPI RtlUnicodeStringToAnsiString( STRING *ansi,
 /**************************************************************************
  *	RtlUnicodeStringToOemString   (NTDLL.@)
  *
- * Convert a Rtl Unicode string to an OEM string.
+ * Converts a Rtl Unicode string to an OEM string.
  *
  * PARAMS
  *  oem     [O] Destination for OEM string
@@ -613,13 +615,18 @@ NTSTATUS WINAPI RtlUnicodeToOemN( LPSTR dst, DWORD dstlen, LPDWORD reslen,
 /**************************************************************************
  *	RtlUpperChar   (NTDLL.@)
  *
- * Convert an Ascii character to uppercase.
+ * Converts an Ascii character to uppercase.
  *
  * PARAMS
  *  ch [I] Character to convert
  *
  * RETURNS
  *  The uppercase character value.
+ *
+ * NOTES
+ *  For the input characters from 'a' .. 'z' it returns 'A' .. 'Z'.
+ *  All other input characters are returned unchanged. The locale and
+ *  multibyte characters are not taken into account (as native DLL).
  */
 CHAR WINAPI RtlUpperChar( CHAR ch )
 {
@@ -627,14 +634,14 @@ CHAR WINAPI RtlUpperChar( CHAR ch )
         return ch - 'a' + 'A';
     } else {
         return ch;
-    }
+    } /* if */
 }
 
 
 /**************************************************************************
  *	RtlUpperString   (NTDLL.@)
  *
- * Convert an Ascii string to uppercase.
+ * Converts an Ascii string to uppercase.
  *
  * PARAMS
  *  dst [O] Destination for converted string
@@ -642,6 +649,13 @@ CHAR WINAPI RtlUpperChar( CHAR ch )
  *
  * RETURNS
  *  Nothing.
+ *
+ * NOTES
+ *  For the src characters from 'a' .. 'z' it assigns 'A' .. 'Z' to dst.
+ *  All other src characters are copied unchanged to dst. The locale and
+ *  multibyte characters are not taken into account (as native DLL).
+ *  The number of character copied is the minimum of src->Length and
+ *  the dst->MaximumLength.
  */
 void WINAPI RtlUpperString( STRING *dst, const STRING *src )
 {
@@ -655,17 +669,24 @@ void WINAPI RtlUpperString( STRING *dst, const STRING *src )
 /**************************************************************************
  *	RtlUpcaseUnicodeChar   (NTDLL.@)
  *
- * Unicode version of of RtlUpperChar.
+ * Converts an Unicode character to uppercase.
+ *
+ * PARAMS
+ *  wch [I] Character to convert
+ *
+ * RETURNS
+ *  The uppercase character value.
  */
 WCHAR WINAPI RtlUpcaseUnicodeChar( WCHAR wch )
 {
     return toupperW(wch);
 }
 
+
 /**************************************************************************
  *	RtlDowncaseUnicodeChar   (NTDLL.@)
  *
- * Convert a Unicode character to lowercase.
+ * Converts an Unicode character to lowercase.
  *
  * PARAMS
  *  wch [I] Character to convert
@@ -678,10 +699,11 @@ WCHAR WINAPI RtlDowncaseUnicodeChar(WCHAR wch)
     return tolowerW(wch);
 }
 
+
 /**************************************************************************
  *	RtlUpcaseUnicodeString   (NTDLL.@)
  *
- * Convert a Unicode string to uppercase.
+ * Converts an Unicode string to uppercase.
  *
  * PARAMS
  *  dest    [O] Destination for converted string
@@ -712,6 +734,50 @@ NTSTATUS WINAPI RtlUpcaseUnicodeString( UNICODE_STRING *dest,
     else if (len > dest->MaximumLength) return STATUS_BUFFER_OVERFLOW;
 
     for (i = 0; i < len/sizeof(WCHAR); i++) dest->Buffer[i] = toupperW(src->Buffer[i]);
+    dest->Length = len;
+    return STATUS_SUCCESS;
+}
+
+
+/**************************************************************************
+ *	RtlDowncaseUnicodeString   (NTDLL.@)
+ *
+ * Converts an Unicode string to lowercase.
+ *
+ * PARAMS
+ *  dest    [O] Destination for converted string
+ *  src     [I] Source string to convert
+ *  doalloc [I] TRUE=Allocate a buffer for dest if it doesn't have one
+ *
+ * RETURNS
+ *  Success: STATUS_SUCCESS. dest contains the converted string.
+ *  Failure: STATUS_NO_MEMORY, if doalloc is TRUE and memory allocation fails, or
+ *           STATUS_BUFFER_OVERFLOW, if doalloc is FALSE and dest is too small.
+ *
+ * NOTES
+ *  dest is never NUL terminated because it may be equal to src, and src
+ *  might not be NUL terminated. dest->Length is only set upon success.
+ */
+NTSTATUS WINAPI RtlDowncaseUnicodeString(
+	UNICODE_STRING *dest,
+	const UNICODE_STRING *src,
+	BOOLEAN doalloc)
+{
+    DWORD i;
+    DWORD len = src->Length;
+
+    if (doalloc) {
+        dest->MaximumLength = len;
+        if (!(dest->Buffer = RtlAllocateHeap( ntdll_get_process_heap(), 0, len ))) {
+	    return STATUS_NO_MEMORY;
+	} /* if */
+    } else if (len > dest->MaximumLength) {
+	return STATUS_BUFFER_OVERFLOW;
+    } /* if */
+
+    for (i = 0; i < len/sizeof(WCHAR); i++) {
+	dest->Buffer[i] = tolowerW(src->Buffer[i]);
+    } /* for */
     dest->Length = len;
     return STATUS_SUCCESS;
 }
@@ -867,7 +933,7 @@ NTSTATUS WINAPI RtlMultiByteToUnicodeSize( DWORD *size, LPCSTR str, UINT len )
 /**************************************************************************
  *      RtlUnicodeToMultiByteSize   (NTDLL.@)
  *
- * Calculate the size necessary for the multibyte conversion of str,
+ * Calculate the size in bytes necessary for the multibyte conversion of str,
  * without the terminating NULL.
  *
  * PARAMS
@@ -981,6 +1047,7 @@ NTSTATUS WINAPI RtlAppendUnicodeToString( UNICODE_STRING *dst, LPCWSTR src )
 NTSTATUS WINAPI RtlAppendUnicodeStringToString( UNICODE_STRING *dst, const UNICODE_STRING *src )
 {
     unsigned int len = src->Length + dst->Length;
+    if (src->Length == 0) return STATUS_SUCCESS;
     if (len > dst->MaximumLength) return STATUS_BUFFER_TOO_SMALL;
     memcpy( dst->Buffer + dst->Length/sizeof(WCHAR), src->Buffer, src->Length );
     dst->Length = len;
@@ -993,6 +1060,7 @@ NTSTATUS WINAPI RtlAppendUnicodeStringToString( UNICODE_STRING *dst, const UNICO
 /*
 	MISC
 */
+
 
 /**************************************************************************
  *	RtlIsTextUnicode (NTDLL.@)
@@ -1053,23 +1121,28 @@ out:
 /**************************************************************************
  *      RtlCharToInteger   (NTDLL.@)
  *
- * Convert a character string into its integer equivalent.
+ * Converts a character string into its integer equivalent.
  *
- * On success assign an integer value and return STATUS_SUCCESS.
- * For base 0 accept: {whitespace} [+|-] [0[x|o|b]] {digits}
- * For bases 2, 8, 10 and 16 accept: {whitespace} [+|-] {digits}
- * For other bases return STATUS_INVALID_PARAMETER.
- * For value == NULL return STATUS_ACCESS_VIOLATION.
- * No check of value overflow: Just assign lower 32 bits (as native DLL).
- * Do not check for str != NULL (as native DLL).
+ * RETURNS
+ *  Success: STATUS_SUCCESS. value contains the converted number
+ *  Failure: STATUS_INVALID_PARAMETER, if base is not 0, 2, 8, 10 or 16.
+ *           STATUS_ACCESS_VIOLATION, if value is NULL.
  *
- * Difference:
- * - Do not read garbage behind '\0' as native DLL does.
+ * NOTES
+ *  For base 0 it uses 10 as base and the string should be in the format
+ *      "{whitespace} [+|-] [0[x|o|b]] {digits}".
+ *  For other bases the string should be in the format
+ *      "{whitespace} [+|-] {digits}".
+ *  No check is made for value overflow, only the lower 32 bits are assigned.
+ *  If str is NULL it crashes, as the native function does.
+ *
+ * DIFFERENCES
+ *  This function does not read garbage behind '\0' as the native version does.
  */
 NTSTATUS WINAPI RtlCharToInteger(
-	PCSZ str,
-	ULONG base,
-	ULONG *value)
+    PCSZ str,      /* [I] '\0' terminated single-byte string containing a number */
+    ULONG base,    /* [I] Number base for conversion (allowed 0, 2, 8, 10 or 16) */
+    ULONG *value)  /* [O] Destination for the converted value */
 {
     CHAR chCurrent;
     int digit;
@@ -1137,22 +1210,25 @@ NTSTATUS WINAPI RtlCharToInteger(
 /**************************************************************************
  *      RtlIntegerToChar   (NTDLL.@)
  *
- * Convert an unsigned integer to a character string.
+ * Converts an unsigned integer to a character string.
+ *
+ * RETURNS
+ *  Success: STATUS_SUCCESS. str contains the converted number
+ *  Failure: STATUS_INVALID_PARAMETER, if base is not 0, 2, 8, 10 or 16.
+ *           STATUS_BUFFER_OVERFLOW, if str would be larger than length.
+ *           STATUS_ACCESS_VIOLATION, if str is NULL.
  *
  * NOTES
- * On success assign a string and return STATUS_SUCCESS.
- * If base is not 0 (=10), 2, 8, 10 or 16 return STATUS_INVALID_PARAMETER
- * Writes at most length characters to the string str.
- * Str is '\0' terminated when length allowes it.
- * When str fits exactly in length characters the '\0' is ommitted.
- * When str would be larger than length: return STATUS_BUFFER_OVERFLOW
- * For str == NULL return STATUS_ACCESS_VIOLATION.
+ *  Instead of base 0 it uses 10 as base.
+ *  Writes at most length characters to the string str.
+ *  Str is '\0' terminated when length allowes it.
+ *  When str fits exactly in length characters the '\0' is ommitted.
  */
 NTSTATUS WINAPI RtlIntegerToChar(
-	ULONG value,
-	ULONG base,
-	ULONG length,
-	PCHAR str)
+    ULONG value,   /* [I] Value to be converted */
+    ULONG base,    /* [I] Number base for conversion (allowed 0, 2, 8, 10 or 16) */
+    ULONG length,  /* [I] Length of the str buffer in bytes */
+    PCHAR str)     /* [O] Destination for the converted value */
 {
     CHAR buffer[33];
     PCHAR pos;
@@ -1196,24 +1272,29 @@ NTSTATUS WINAPI RtlIntegerToChar(
 /**************************************************************************
  *      RtlUnicodeStringToInteger (NTDLL.@)
  *
- * Convert an unicode string into its integer equivalent.
+ * Converts an unicode string into its integer equivalent.
+ *
+ * RETURNS
+ *  Success: STATUS_SUCCESS. value contains the converted number
+ *  Failure: STATUS_INVALID_PARAMETER, if base is not 0, 2, 8, 10 or 16.
+ *           STATUS_ACCESS_VIOLATION, if value is NULL.
  *
  * NOTES
- * On success assign an integer value and return STATUS_SUCCESS.
- * For base 0 accept: {whitespace} [+|-] [0[x|o|b]] {digits}
- * For bases 2, 8, 10 and 16 accept: {whitespace} [+|-] {digits}
- * For other bases return STATUS_INVALID_PARAMETER.
- * For value == NULL return STATUS_ACCESS_VIOLATION.
- * No check of value overflow: Just assign lower 32 bits (as native DLL).
- * Do not check for str != NULL (as native DLL).
+ *  For base 0 it uses 10 as base and the string should be in the format
+ *      "{whitespace} [+|-] [0[x|o|b]] {digits}".
+ *  For other bases the string should be in the format
+ *      "{whitespace} [+|-] {digits}".
+ *  No check is made for value overflow, only the lower 32 bits are assigned.
+ *  If str is NULL it crashes, as the native function does.
  *
- * Difference:
- * - Do not read garbage on string length 0 as native DLL does.
+ * DIFFERENCES
+ *  This function does not read garbage on string length 0 as the native
+ *  version does.
  */
 NTSTATUS WINAPI RtlUnicodeStringToInteger(
-	const UNICODE_STRING *str,
-	ULONG base,
-	ULONG *value)
+    const UNICODE_STRING *str, /* [I] Unicode string to be converted */
+    ULONG base,                /* [I] Number base for conversion (allowed 0, 2, 8, 10 or 16) */
+    ULONG *value)              /* [O] Destination for the converted value */
 {
     LPWSTR lpwstr = str->Buffer;
     USHORT CharsRemaining = str->Length / sizeof(WCHAR);
@@ -1292,25 +1373,29 @@ NTSTATUS WINAPI RtlUnicodeStringToInteger(
 /**************************************************************************
  *	RtlIntegerToUnicodeString (NTDLL.@)
  *
- * Convert an unsigned integer to a NULL terminated unicode string.
+ * Converts an unsigned integer to a '\0' terminated unicode string.
+ *
+ * RETURNS
+ *  Success: STATUS_SUCCESS. str contains the converted number
+ *  Failure: STATUS_INVALID_PARAMETER, if base is not 0, 2, 8, 10 or 16.
+ *           STATUS_BUFFER_OVERFLOW, if str is too small to hold the string
+ *                  (with the '\0' termination). In this case str->Length
+ *                  is set to the length, the string would have (which can
+ *                  be larger than the MaximumLength).
  *
  * NOTES
- * On success assign a NULL terminated string and return STATUS_SUCCESS.
- * If base is not 0 (=10), 2, 8, 10 or 16 return STATUS_INVALID_PARAMETER.
- * If str is too small to hold the string (with the NULL termination):
- * Set str->Length to the length the string would have (which can be
- * larger than the MaximumLength) and return STATUS_BUFFER_OVERFLOW.
- * Do not check for str != NULL (as native DLL).
+ *  Instead of base 0 it uses 10 as base.
+ *  If str is NULL it crashes, as the native function does.
  *
- * Difference:
- * - Do not return STATUS_BUFFER_OVERFLOW when the string is long enough.
- *   The native DLL does this when the string would be longer than 16
- *   characters even when the string parameter is long enough.
+ * DIFFERENCES
+ *  Do not return STATUS_BUFFER_OVERFLOW when the string is long enough.
+ *  The native function does this when the string would be longer than 16
+ *  characters even when the string parameter is long enough.
  */
 NTSTATUS WINAPI RtlIntegerToUnicodeString(
-	ULONG value,
-	ULONG base,
-	UNICODE_STRING *str)
+    ULONG value,         /* [I] Value to be converted */
+    ULONG base,          /* [I] Number base for conversion (allowed 0, 2, 8, 10 or 16) */
+    UNICODE_STRING *str) /* [O] Destination for the converted value */
 {
     WCHAR buffer[33];
     PWCHAR pos;
@@ -1340,7 +1425,7 @@ NTSTATUS WINAPI RtlIntegerToUnicodeString(
     if (str->Length >= str->MaximumLength) {
 	return STATUS_BUFFER_OVERFLOW;
     } else {
-	memcpy(str->Buffer, pos, str->Length + 1);
+	memcpy(str->Buffer, pos, str->Length + sizeof(WCHAR));
     } /* if */
     return STATUS_SUCCESS;
 }

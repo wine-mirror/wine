@@ -185,21 +185,25 @@ LONGLONG WINAPI RtlExtendedIntegerMultiply( LONGLONG a, INT b )
  *
  * This function computes (a * b) >> (64 + shift)
  *
- * This allows replacing a division by a longlong constant
- * by a multiplication by the inverse constant.
+ * RETURNS
+ *  (a * b) >> (64 + shift)
  *
- * If 'c' is the constant divisor, the constants 'b' and 'shift'
- * must be chosen such that b = 2^(64+shift) / c.
- * Then we have RtlExtendedMagicDivide(a,b,shift) == a * b / 2^(64+shift) == a / c.
+ * NOTES
+ *  This allows replacing a division by a longlong constant
+ *  by a multiplication by the inverse constant.
  *
- * Parameter b although defined as LONGLONG is used as ULONGLONG.
+ *  If 'c' is the constant divisor, the constants 'b' and 'shift'
+ *  must be chosen such that b = 2^(64+shift) / c.
+ *  Then we have RtlExtendedMagicDivide(a,b,shift) == a * b / 2^(64+shift) == a / c.
+ *
+ *  The Parameter b although defined as LONGLONG is used as ULONGLONG.
  */
 #define LOWER_32(A) ((A) & 0xffffffff)
 #define UPPER_32(A) ((A) >> 32)
 LONGLONG WINAPI RtlExtendedMagicDivide(
-	LONGLONG a,
-	LONGLONG b,
-	INT shift)
+    LONGLONG a, /* [I] Dividend to be divided by the constant divisor */
+    LONGLONG b, /* [I] Constant computed manually as 2^(64+shift) / divisor */
+    INT shift)  /* [I] Constant shift chosen to make b as big as possible for 64 bits */
 {
     ULONGLONG a_high;
     ULONGLONG a_low;
@@ -243,25 +247,29 @@ LONGLONG WINAPI RtlExtendedMagicDivide(
  *
  * Convert an unsigned large integer to a character string.
  *
- * On success assign a string and return STATUS_SUCCESS.
- * If base is not 0 (=10), 2, 8, 10 or 16 return STATUS_INVALID_PARAMETER
- * Writes at most length characters to the string str.
- * Str is '\0' terminated when length allowes it.
- * When str fits exactly in length characters the '\0' is ommitted.
- * When str would be larger than length: return STATUS_BUFFER_OVERFLOW
- * For str == NULL return STATUS_ACCESS_VIOLATION.
- * Do not check for value_ptr != NULL (as native DLL).
+ * RETURNS
+ *  Success: STATUS_SUCCESS. str contains the converted number
+ *  Failure: STATUS_INVALID_PARAMETER, if base is not 0, 2, 8, 10 or 16.
+ *           STATUS_BUFFER_OVERFLOW, if str would be larger than length.
+ *           STATUS_ACCESS_VIOLATION, if str is NULL.
  *
- * Difference:
- * - Accept base 0 as 10 instead of crashing as native DLL does.
- * - The native DLL does produce garbage or STATUS_BUFFER_OVERFLOW for
+ * NOTES
+ *  Instead of base 0 it uses 10 as base.
+ *  Writes at most length characters to the string str.
+ *  Str is '\0' terminated when length allowes it.
+ *  When str fits exactly in length characters the '\0' is ommitted.
+ *  If value_ptr is NULL it crashes, as the native function does.
+ *
+ * DIFFERENCES
+ * - Accept base 0 as 10 instead of crashing as native function does.
+ * - The native function does produce garbage or STATUS_BUFFER_OVERFLOW for
  *   base 2, 8 and 16 when the value is larger than 0xFFFFFFFF. 
  */
 NTSTATUS WINAPI RtlLargeIntegerToChar(
-	const ULONGLONG *value_ptr,
-	ULONG base,
-	ULONG length,
-	PCHAR str)
+    const ULONGLONG *value_ptr, /* [I] Pointer to the value to be converted */
+    ULONG base,                 /* [I] Number base for conversion (allowed 0, 2, 8, 10 or 16) */
+    ULONG length,               /* [I] Length of the str buffer in bytes */
+    PCHAR str)                  /* [O] Destination for the converted value */
 {
     ULONGLONG value = *value_ptr;
     CHAR buffer[65];
@@ -306,27 +314,32 @@ NTSTATUS WINAPI RtlLargeIntegerToChar(
 /**************************************************************************
  *      RtlInt64ToUnicodeString (NTDLL.@)
  *
- * Convert a large unsigned integer to a NULL terminated unicode string.
+ * Convert a large unsigned integer to a '\0' terminated unicode string.
  *
- * On success assign a NULL terminated string and return STATUS_SUCCESS.
- * If base is not 0 (=10), 2, 8, 10 or 16 return STATUS_INVALID_PARAMETER.
- * If str is too small to hold the string (with the NULL termination):
- * Set str->Length to the length the string would have (which can be
- * larger than the MaximumLength) and return STATUS_BUFFER_OVERFLOW.
- * Do not check for str != NULL (as native DLL).
+ * RETURNS
+ *  Success: STATUS_SUCCESS. str contains the converted number
+ *  Failure: STATUS_INVALID_PARAMETER, if base is not 0, 2, 8, 10 or 16.
+ *           STATUS_BUFFER_OVERFLOW, if str is too small to hold the string
+ *                  (with the '\0' termination). In this case str->Length
+ *                  is set to the length, the string would have (which can
+ *                  be larger than the MaximumLength).
  *
- * Difference:
- * - Accept base 0 as 10 instead of crashing as native DLL does.
+ * NOTES
+ *  Instead of base 0 it uses 10 as base.
+ *  If str is NULL it crashes, as the native function does.
+ *
+ * DIFFERENCES
+ * - Accept base 0 as 10 instead of crashing as native function does.
  * - Do not return STATUS_BUFFER_OVERFLOW when the string is long enough.
- *   The native DLL does this when the string would be longer than 31
+ *   The native function does this when the string would be longer than 31
  *   characters even when the string parameter is long enough.
- * - The native DLL does produce garbage or STATUS_BUFFER_OVERFLOW for
+ * - The native function does produce garbage or STATUS_BUFFER_OVERFLOW for
  *   base 2, 8 and 16 when the value is larger than 0xFFFFFFFF. 
  */
 NTSTATUS WINAPI RtlInt64ToUnicodeString(
-	ULONGLONG value,
-	ULONG base,
-	UNICODE_STRING *str)
+    ULONGLONG value,     /* [I] Value to be converted */
+    ULONG base,          /* [I] Number base for conversion (allowed 0, 2, 8, 10 or 16) */
+    UNICODE_STRING *str) /* [O] Destination for the converted value */
 {
     WCHAR buffer[65];
     PWCHAR pos;
@@ -356,7 +369,7 @@ NTSTATUS WINAPI RtlInt64ToUnicodeString(
     if (str->Length >= str->MaximumLength) {
 	return STATUS_BUFFER_OVERFLOW;
     } else {
-	memcpy(str->Buffer, pos, str->Length + 1);
+	memcpy(str->Buffer, pos, str->Length + sizeof(WCHAR));
     } /* if */
     return STATUS_SUCCESS;
 }

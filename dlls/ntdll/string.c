@@ -74,11 +74,19 @@ LPSTR __cdecl _strlwr( LPSTR str )
  *
  * Converts an unsigned long integer to a string.
  *
- * Assigns a '\0' terminated string to str and returns str.
- * Does not check if radix is in the range of 2 to 36 (as native DLL).
- * For str == NULL just crashes (as native DLL).
+ * RETURNS
+ *  Always returns str.
+ *
+ * NOTES
+ *  Converts value to a '\0' terminated string which is copied to str.
+ *  The maximum length of the copied str is 33 bytes.
+ *  Does not check if radix is in the range of 2 to 36.
+ *  If str is NULL it crashes, as the native function does.
  */
-char * __cdecl _ultoa( unsigned long value, char *str, int radix )
+char * __cdecl _ultoa(
+    unsigned long value, /* [I] Value to be converted */
+    char *str,           /* [O] Destination for the converted value */
+    int radix)           /* [I] Number base for conversion */
 {
     char buffer[33];
     char *pos;
@@ -107,12 +115,20 @@ char * __cdecl _ultoa( unsigned long value, char *str, int radix )
  *
  * Converts a long integer to a string.
  *
- * Assigns a '\0' terminated string to str and returns str. If radix
- * is 10 and value is negative, the value is converted with sign.
- * Does not check if radix is in the range of 2 to 36 (as native DLL).
- * For str == NULL just crashes (as native DLL).
+ * RETURNS
+ *  Always returns str.
+ *
+ * NOTES
+ *  Converts value to a '\0' terminated string which is copied to str.
+ *  The maximum length of the copied str is 33 bytes. If radix
+ *  is 10 and value is negative, the value is converted with sign.
+ *  Does not check if radix is in the range of 2 to 36.
+ *  If str is NULL it crashes, as the native function does.
  */
-char * __cdecl _ltoa( long value, char *str, int radix )
+char * __cdecl _ltoa(
+    long value, /* [I] Value to be converted */
+    char *str,  /* [O] Destination for the converted value */
+    int radix)  /* [I] Number base for conversion */
 {
     unsigned long val;
     int negative;
@@ -155,12 +171,20 @@ char * __cdecl _ltoa( long value, char *str, int radix )
  *
  * Converts an integer to a string.
  *
- * Assigns a '\0' terminated wstring to str and returns str. If radix
- * is 10 and value is negative, the value is converted with sign.
- * Does not check if radix is in the range of 2 to 36 (as native DLL).
- * For str == NULL just crashes (as native DLL).
+ * RETURNS
+ *  Always returns str.
+ *
+ * NOTES
+ *  Converts value to a '\0' terminated string which is copied to str.
+ *  The maximum length of the copied str is 33 bytes. If radix
+ *  is 10 and value is negative, the value is converted with sign.
+ *  Does not check if radix is in the range of 2 to 36.
+ *  If str is NULL it crashes, as the native function does.
  */
-char * __cdecl _itoa( int value, char *str, int radix )
+char * __cdecl _itoa(
+    int value, /* [I] Value to be converted */
+    char *str, /* [O] Destination for the converted value */
+    int radix) /* [I] Number base for conversion */
 {
     return _ltoa(value, str, radix);
 }
@@ -171,11 +195,19 @@ char * __cdecl _itoa( int value, char *str, int radix )
  *
  * Converts a large unsigned integer to a string.
  *
- * Assigns a '\0' terminated string to str and returns str.
- * Does not check if radix is in the range of 2 to 36 (as native DLL).
- * For str == NULL just crashes (as native DLL).
+ * RETURNS
+ *  Always returns str.
+ *
+ * NOTES
+ *  Converts value to a '\0' terminated string which is copied to str.
+ *  The maximum length of the copied str is 65 bytes.
+ *  Does not check if radix is in the range of 2 to 36.
+ *  If str is NULL it crashes, as the native function does.
  */
-char * __cdecl _ui64toa( ULONGLONG value, char *str, int radix )
+char * __cdecl _ui64toa(
+    ULONGLONG value, /* [I] Value to be converted */
+    char *str,       /* [O] Destination for the converted value */
+    int radix)       /* [I] Number base for conversion */
 {
     char buffer[65];
     char *pos;
@@ -204,21 +236,29 @@ char * __cdecl _ui64toa( ULONGLONG value, char *str, int radix )
  *
  * Converts a large integer to a string.
  *
- * Assigns a '\0' terminated string to str and returns str. If radix
- * is 10 and value is negative, the value is converted with sign.
- * Does not check if radix is in the range of 2 to 36 (as native DLL).
- * For str == NULL just crashes (as native DLL).
+ * RETURNS
+ *  Always returns str.
  *
- * Difference:
+ * NOTES
+ *  Converts value to a '\0' terminated string which is copied to str.
+ *  The maximum length of the copied str is 65 bytes. If radix
+ *  is 10 and value is negative, the value is converted with sign.
+ *  Does not check if radix is in the range of 2 to 36.
+ *  If str is NULL it crashes, as the native function does.
+ *
+ * DIFFERENCES
  * - The native DLL converts negative values (for base 10) wrong:
  *                     -1 is converted to -18446744073709551615
  *                     -2 is converted to -18446744073709551614
  *   -9223372036854775807 is converted to  -9223372036854775809
  *   -9223372036854775808 is converted to  -9223372036854775808
- *   The native msvcrt _i64toa function and our ntdll function do
- *   not have this bug.
+ *   The native msvcrt _i64toa function and our ntdll _i64toa function
+ *   do not have this bug.
  */
-char * __cdecl _i64toa( LONGLONG value, char *str, int radix )
+char * __cdecl _i64toa(
+    LONGLONG value, /* [I] Value to be converted */
+    char *str,      /* [O] Destination for the converted value */
+    int radix)      /* [I] Number base for conversion */
 {
     ULONGLONG val;
     int negative;
@@ -261,10 +301,16 @@ char * __cdecl _i64toa( LONGLONG value, char *str, int radix )
  *
  * Converts a string to a large integer.
  *
- * On success it returns the integer value otherwise it returns 0.
- * Accepts: {whitespace} [+|-] {digits}
- * No check of overflow: Just assigns lower 64 bits (as native DLL).
- * Does not check for str != NULL (as native DLL).
+ * PARAMS
+ *  str [I] Wstring to be converted
+ *
+ * RETURNS
+ *  On success it returns the integer value otherwise it returns 0.
+ *
+ * NOTES
+ *  Accepts: {whitespace} [+|-] {digits}
+ *  No check is made for value overflow, only the lower 64 bits are assigned.
+ *  If str is NULL it crashes, as the native function does.
  */
 LONGLONG __cdecl _atoi64( char *str )
 {

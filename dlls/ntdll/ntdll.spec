@@ -351,6 +351,7 @@
 @ stdcall RtlDosPathNameToNtPathName_U(ptr ptr long long)
 @ stub RtlDosSearchPath_U
 @ stdcall RtlDowncaseUnicodeChar(long)
+@ stdcall RtlDowncaseUnicodeString(ptr ptr long)
 @ stdcall RtlDumpResource(ptr)
 @ stdcall -ret64 RtlEnlargedIntegerMultiply(long long)
 @ stdcall RtlEnlargedUnsignedDivide(long long long ptr)
@@ -544,7 +545,7 @@
 @ stdcall RtlUnicodeToMultiByteN(ptr long ptr ptr long)
 @ stdcall RtlUnicodeToMultiByteSize(ptr wstr long)
 @ stdcall RtlUnicodeToOemN(ptr long ptr ptr long)
-@ stub RtlUniform
+@ stdcall RtlUniform(ptr)
 @ stdcall RtlUnlockHeap(long)
 @ stdcall RtlUnwind(ptr ptr ptr long)
 @ stdcall RtlUpcaseUnicodeChar(long)
@@ -946,6 +947,10 @@
 @ cdecl isupper(long)
 @ cdecl iswalpha(long) NTDLL_iswalpha
 @ cdecl iswctype(long long) NTDLL_iswctype
+@ cdecl iswdigit(long) NTDLL_iswdigit
+@ cdecl iswlower(long) NTDLL_iswlower
+@ cdecl iswspace(long) NTDLL_iswspace
+@ cdecl iswxdigit(long) NTDLL_iswxdigit
 @ cdecl isxdigit(long)
 @ cdecl labs(long)
 @ cdecl log(double)
