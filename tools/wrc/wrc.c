@@ -73,6 +73,10 @@
 #include "parser.h"
 #include "../wpp/wpp.h"
 
+#ifndef INCLUDEDIR
+#define INCLUDEDIR "/usr/local/include/wine"
+#endif
+
 static char usage[] =
 	"Usage: wrc [options...] [infile[.rc|.res]] [outfile]\n"
 	"   -a n        Alignment of resource (win16 only, default is 4)\n"
@@ -98,6 +102,7 @@ static char usage[] =
 	"   -H file     Same as -h but written to file\n"
 	"   -i file	The name of the input file.\n"
 	"   -I path     Set include search dir to path (multiple -I allowed)\n"
+	"   -J		Do not search the standard include path\n"
 	"   -l lan      Set default language to lan (default is neutral {0, 0})\n"
 	"   -L          Leave case of embedded filenames as is\n"
 	"   -m          Do not remap numerical resource IDs\n"
@@ -119,6 +124,7 @@ static char usage[] =
 	"   --target		Synonym for -F.\n"
 	"   --format		Synonym for -O.\n"
 	"   --include-dir	Synonym for -I.\n"
+	"   --nostdinc		Synonym for -J.\n"
 	"   --define		Synonym for -D.\n"
 	"   --language		Synonym for -l.\n"
 	"   --preprocessor	Specify the preprocessor to use, including arguments.\n"
@@ -293,6 +299,7 @@ static struct option long_options[] = {
 	{ "target", 1, 0, 'F' },
 	{ "format", 1, 0, 'O' },
 	{ "include-dir", 1, 0, 'I' },
+	{ "nostdinc", 0, 0, 'J' },
 	{ "define", 1, 0, 'D' },
 	{ "language", 1, 0, 'l' },
 	{ "preprocessor", 1, 0, 1 },
@@ -307,6 +314,7 @@ int main(int argc,char *argv[])
 	extern char* optarg;
 	extern int   optind;
 	int optc, opti = 0;
+	int stdinc = 1;
 	int lose = 0;
 	int ret;
 	int a;
@@ -332,9 +340,9 @@ int main(int argc,char *argv[])
 	}
 
 #ifdef HAVE_GETOPT_LONG
-	while((optc = getopt_long(argc, argv, "a:AbB:cC:d:D:eEF:ghH:i:I:l:LmnNo:O:p:rstTVw:W", long_options, &opti)) != EOF)
+	while((optc = getopt_long(argc, argv, "a:AbB:cC:d:D:eEF:ghH:i:I:Jl:LmnNo:O:p:rstTVw:W", long_options, &opti)) != EOF)
 #else
-	while((optc = getopt(argc, argv, "a:AbB:cC:d:D:eEF:ghH:i:I:l:LmnNo:O:p:rstTVw:W")) != EOF)
+	while((optc = getopt(argc, argv, "a:AbB:cC:d:D:eEF:ghH:i:I:Jl:LmnNo:O:p:rstTVw:W")) != EOF)
 #endif
 	{
 		switch(optc)
@@ -414,6 +422,9 @@ int main(int argc,char *argv[])
 		case 'I':
 			wpp_add_include_path(optarg);
 			break;
+		case 'J':
+			stdinc = 0;
+			break;
 		case 'l':
 			{
 				int lan;
@@ -486,6 +497,13 @@ int main(int argc,char *argv[])
 		return 1;
 	}
 
+	/* If we do need to search standard includes, add them to the path */
+	if (stdinc)
+	{
+		wpp_add_include_path(INCLUDEDIR"/msvcrt");
+		wpp_add_include_path(INCLUDEDIR"/windows");
+	}
+	
 	/* Check for input file on command-line */
 	if(optind < argc)
 	{
