@@ -282,20 +282,27 @@ HRESULT d3ddevice_enumerate(LPD3DENUMDEVICESCALLBACK cb, LPVOID context)
 {
     D3DDEVICEDESC dref, d1, d2;
     HRESULT ret_value;
-    
+
+    /* Some games (Motoracer 2 demo) have the bad idea to modify the device name string.
+       Let's put the string in a sufficiently sized array in writable memory. */
+    char device_name[50];
+    strcpy(device_name,"direct3d");
+
     fill_opengl_caps(&dref);
 
+#if 0 /* FIXME: Reference device enumeration should be enable/disable in the configuration file */
     TRACE(" enumerating OpenGL D3DDevice interface using reference IID (IID %s).\n", debugstr_guid(&IID_IDirect3DRefDevice));
     d1 = dref;
     d2 = dref;
-    ret_value = cb((LPIID) &IID_IDirect3DRefDevice, "WINE Reference Direct3DX using OpenGL", "direct3d", &d1, &d2, context);
+    ret_value = cb((LPIID) &IID_IDirect3DRefDevice, "WINE Reference Direct3DX using OpenGL", device_name, &d1, &d2, context);
     if (ret_value != D3DENUMRET_OK)
         return ret_value;
-
+#endif
+    
     TRACE(" enumerating OpenGL D3DDevice interface (IID %s).\n", debugstr_guid(&IID_D3DDEVICE_OpenGL));
     d1 = dref;
     d2 = dref;
-    ret_value = cb((LPIID) &IID_D3DDEVICE_OpenGL, "WINE Direct3DX using OpenGL", "direct3d", &d1, &d2, context);
+    ret_value = cb((LPIID) &IID_D3DDEVICE_OpenGL, "WINE Direct3DX using OpenGL", device_name, &d1, &d2, context);
     if (ret_value != D3DENUMRET_OK)
         return ret_value;
 
