@@ -216,6 +216,32 @@ HRESULT WINAPI IDirectMusicAudioPathImpl_GetObjectInPath (LPDIRECTMUSICAUDIOPATH
 	FIXME("(%p, %ld, %ld, %ld, %s, %d, %s, %p): stub\n", This, dwPChannel, dwStage, dwBuffer, debugstr_guid(guidObject), dwIndex, debugstr_guid(iidInterface), ppObject);
 
 	switch (dwStage) {
+	case DMUS_PATH_BUFFER:
+	  {
+	    if (IsEqualGUID(iidInterface,&IID_IDirectSoundBuffer8)) {
+	      IDirectSoundBuffer8_QueryInterface(This->buffer, &IID_IDirectSoundBuffer8, ppObject);
+	      TRACE("returning %p\n",*ppObject);
+	      return S_OK;
+	    } else if (IsEqualGUID(iidInterface,&IID_IDirectSound3DBuffer)) {
+	      IDirectSoundBuffer8_QueryInterface(This->buffer, &IID_IDirectSound3DBuffer, ppObject);
+	      TRACE("returning %p\n",*ppObject);
+	      return S_OK;
+	    } else {
+	      FIXME("Bad iid\n");
+	    }
+	  }
+	  break;
+
+	case DMUS_PATH_PRIMARY_BUFFER: {
+	  if (IsEqualGUID(iidInterface,&IID_IDirectSound3DListener)) {
+	    IDirectSoundBuffer8_QueryInterface(This->primary, &IID_IDirectSound3DListener, ppObject);
+	    return S_OK;
+	  }else {
+	    FIXME("bad iid...\n");
+	  }
+	}
+	break;
+
 	case DMUS_PATH_AUDIOPATH_GRAPH:
 	  {
 	    if (IsEqualGUID(iidInterface, &IID_IDirectMusicGraph)) {
@@ -257,7 +283,7 @@ HRESULT WINAPI IDirectMusicAudioPathImpl_GetObjectInPath (LPDIRECTMUSICAUDIOPATH
 	      pGraph = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirectMusicGraphImpl));		
 	      pGraph->lpVtbl = &DirectMusicGraph_Vtbl;
 	      pGraph->ref = 1;
-	      IDirectMusicPerformanceImpl_SetGraph((LPDIRECTMUSICPERFORMANCE) This->perfo, pGraph);
+	      IDirectMusicPerformanceImpl_SetGraph((LPDIRECTMUSICPERFORMANCE) This->perfo, (IDirectMusicGraph*) pGraph);
 	      /* we need release as SetGraph do an AddRef */
 	      IDirectMusicGraphImpl_Release((LPDIRECTMUSICGRAPH) pGraph);
 	      pPerfoGraph = (LPDIRECTMUSICGRAPH) pGraph;

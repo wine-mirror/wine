@@ -303,6 +303,9 @@ HRESULT WINAPI IDirectMusicLoader8Impl_ReleaseObjectByUnknown (LPDIRECTMUSICLOAD
 	return S_OK;
 }
 
+extern ICOM_VTABLE(IDirectMusicSegment) DirectMusicSegment_Vtbl;
+extern ICOM_VTABLE(IDirectMusicSegment8) DirectMusicSegment8_Vtbl;
+
 HRESULT WINAPI IDirectMusicLoader8Impl_LoadObjectFromFile (LPDIRECTMUSICLOADER8 iface, 
 							   REFGUID rguidClassID, 
 							   REFIID iidInterfaceID, 
@@ -319,6 +322,24 @@ HRESULT WINAPI IDirectMusicLoader8Impl_LoadObjectFromFile (LPDIRECTMUSICLOADER8 
 	  FIXME("wanted 'spt'\n");
 	} else if (IsEqualGUID(iidInterfaceID, &CLSID_DirectMusicContainer)) {
 	  FIXME("wanted 'con'\n");
+	}
+
+	if (IsEqualGUID(iidInterfaceID,&IID_IDirectMusicSegment)) {
+	  IDirectMusicSegmentImpl* segment;
+	  segment = (IDirectMusicSegmentImpl*)HeapAlloc(GetProcessHeap(),0,sizeof(IDirectMusicImpl));
+	  segment->lpVtbl = &DirectMusicSegment_Vtbl;
+	  segment->ref = 1;
+	  *ppObject = segment;
+	  return S_OK;
+	} else if (IsEqualGUID(iidInterfaceID,&IID_IDirectMusicSegment8)) {
+	  IDirectMusicSegmentImpl* segment;
+	  segment = (IDirectMusicSegmentImpl*)HeapAlloc(GetProcessHeap(),0,sizeof(IDirectMusicImpl));
+	  segment->lpVtbl = &DirectMusicSegment8_Vtbl;
+	  segment->ref = 1;
+	  *ppObject = segment;
+	  return S_OK;
+	} else {
+	  FIXME("bad iid\n");
 	}
 	
 	/** for now alway return not supported for avoiding futur crash */

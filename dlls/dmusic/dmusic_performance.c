@@ -557,37 +557,31 @@ HRESULT WINAPI IDirectMusicPerformance8Impl_Init (LPDIRECTMUSICPERFORMANCE8 ifac
 
 	FIXME("(iface = %p, dmusic = %p, dsound = %p, hwnd = %p): forward to IDirectMusicPerformanceImpl::Init\n", This, ppDirectMusic, pDirectSound, hWnd);
 
-	if (NULL != ppDirectMusic) {
+        if (This->dmusic || This->dsound)
+	  return DMUS_E_ALREADY_INITED;
+	
+	if (NULL != ppDirectMusic && NULL != *ppDirectMusic) {
 	  /* app creates it's own dmusic object and gives it to performance */
-	  if (NULL != *ppDirectMusic) {
-	    if (NULL != This->dmusic) {
-	    }
-	    This->dmusic = (IDirectMusic*) *ppDirectMusic;
-	    IDirectMusicImpl_AddRef((LPDIRECTMUSIC) This->dmusic);
-	  } else { /* app allows the performance to initialise itfself and needs a pointer to object*/
-	    /* maybe IID_IDirectMusic8 must be used here */
-	    DMUSIC_CreateDirectMusic(&IID_IDirectMusic, (LPDIRECTMUSIC*) &This->dmusic, NULL);
-	    *ppDirectMusic = (LPDIRECTMUSIC) This->dmusic;
-	    if (NULL != *ppDirectMusic) {
-	      IDirectMusic_AddRef(*ppDirectMusic);
-	    }
-	  }
+	  This->dmusic = (IDirectMusic*) *ppDirectMusic;
+	  IDirectMusicImpl_AddRef((LPDIRECTMUSIC) This->dmusic);
 	} else {
-	  TRACE("DirectMusic to be created; not needed\n");
+	  /* app allows the performance to initialise itfself and needs a pointer to object*/
+	  /* maybe IID_IDirectMusic8 must be used here */
+	  DMUSIC_CreateDirectMusic(&IID_IDirectMusic, (LPDIRECTMUSIC*) &This->dmusic, NULL);
+	  if (ppDirectMusic) {
+	    *ppDirectMusic = (LPDIRECTMUSIC) This->dmusic;
+	    IDirectMusic_AddRef(*ppDirectMusic);
+	  }
 	}
 
 	if (NULL != pDirectSound) {
-	  if (NULL != This->dsound) {
-	  }
 	  This->dsound = (IDirectSound*) pDirectSound;
 	  IDirectSound_AddRef((LPDIRECTSOUND) This->dsound);
 	} else {
-	  DirectSoundCreate8(&IID_IDirectSound8, (LPDIRECTSOUND8*) This->dsound, NULL);
+	  DirectSoundCreate8(&IID_IDirectSound8, (LPDIRECTSOUND8*) &This->dsound, NULL);
 	}
 	
 	return S_OK;
-
-
 }
 
 HRESULT WINAPI IDirectMusicPerformance8Impl_PlaySegment (LPDIRECTMUSICPERFORMANCE8 iface, IDirectMusicSegment* pSegment, DWORD dwFlags, __int64 i64StartTime, IDirectMusicSegmentState** ppSegmentState)
@@ -1021,18 +1015,23 @@ HRESULT WINAPI IDirectMusicPerformance8ImplInitAudio (LPDIRECTMUSICPERFORMANCE8 
         ICOM_THIS(IDirectMusicPerformance8Impl,iface);
 	FIXME("(%p, %p, %p, %p, %lx, %lu, %lx, %p): to check\n", This, ppDirectMusic, ppDirectSound, hWnd, dwDefaultPathType, dwPChannelCount, dwFlags, pParams);
 
+        if (This->dmusic || This->dsound)
+	  return DMUS_E_ALREADY_INITED;
+
 	if (NULL != ppDirectSound && NULL != *ppDirectSound) {
 	  This->dsound = *ppDirectSound;
 	} else {
-	  This->dsound = NULL;
+	  DirectSoundCreate8(&IID_IDirectSound8, (LPDIRECTSOUND8*) &This->dsound, NULL);
+	  if (ppDirectSound)
+	    *ppDirectSound = This->dsound;  
 	}
+	
 	IDirectMusicPerformance8Impl_Init(iface, ppDirectMusic, This->dsound, hWnd);
-	if (NULL != ppDirectSound && NULL == *ppDirectSound) {
-	  *ppDirectSound = (IDirectSound*) This->dsound;
-	  if (NULL != *ppDirectSound) {
-	    IDirectSound_AddRef(*ppDirectSound);
-	  }
-	}
+
+	/* Init increases the ref count of the dsound object. Decremente it if the app don't want a pointer to the object. */
+        if (!ppDirectSound)
+	  IDirectSound_Release(*ppDirectSound);
+	
 	/* as seen in msdn we need params init before audio path creation */
 	if (NULL != pParams) {
 	  memcpy(&This->params, pParams, sizeof(DMUS_AUDIOPARAMS));
@@ -1082,27 +1081,74 @@ HRESULT WINAPI IDirectMusicPerformance8ImplCreateAudioPath (LPDIRECTMUSICPERFORM
 
 HRESULT WINAPI IDirectMusicPerformance8ImplCreateStandardAudioPath (LPDIRECTMUSICPERFORMANCE8 iface, DWORD dwType, DWORD dwPChannelCount, BOOL fActivate, IDirectMusicAudioPath** ppNewPath)
 {
-        IDirectMusicAudioPathImpl* default_path;
-        ICOM_THIS(IDirectMusicPerformance8Impl,iface);
+	IDirectMusicAudioPathImpl *default_path;
+	DSBUFFERDESC desc;
+	WAVEFORMATEX format;
+	LPDIRECTSOUNDBUFFER8 buffer;
 
-	FIXME("(%p, %ld, %ld, %d, %p): semi-stub\n", This, dwType, dwPChannelCount, fActivate, ppNewPath);
-
-	switch (dwType) {
-	case DMUS_APATH_DYNAMIC_3D:
-	case DMUS_APATH_DYNAMIC_MONO:
-	case DMUS_APATH_DYNAMIC_STEREO:
-	case DMUS_APATH_SHARED_STEREOPLUSREVERB:
-	  break;
-	default:
-	  break;
-	}
+	ICOM_THIS(IDirectMusicPerformance8Impl,iface);
+	
+	FIXME("(%p)->(%ld, %ld, %d, %p): semi-stub\n", This, dwType, dwPChannelCount, fActivate, ppNewPath);
 
 	default_path = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirectMusicAudioPathImpl));
+	if (NULL == default_path)
+	{
+		*ppNewPath = (LPDIRECTMUSICAUDIOPATH)NULL;
+		return E_OUTOFMEMORY;
+	}
 	default_path->lpVtbl = &DirectMusicAudioPath_Vtbl;
 	default_path->ref = 1;
 	default_path->perfo = (IDirectMusicPerformance*) This;
 
-	*ppNewPath = (IDirectMusicAudioPath*) default_path;
+	/* Secondary buffer description */
+	format.wFormatTag = WAVE_FORMAT_PCM;
+	format.nChannels = 1;
+	format.nSamplesPerSec = 44000;
+	format.nAvgBytesPerSec = 44000*2;
+	format.nBlockAlign = 2;
+	format.wBitsPerSample = 16;
+	format.cbSize = 0;
+	
+	desc.dwSize = sizeof(desc);
+	desc.dwFlags = 0;
+	desc.dwBufferBytes = DSBSIZE_MIN;
+	desc.dwReserved = 0;
+	desc.lpwfxFormat = &format;
+	desc.guid3DAlgorithm = GUID_NULL;
+	
+	switch(dwType) {
+	case DMUS_APATH_DYNAMIC_3D:
+		desc.dwFlags |= DSBCAPS_CTRL3D;
+		break;
+	case DMUS_APATH_DYNAMIC_MONO:
+		break;
+	case DMUS_APATH_SHARED_STEREOPLUSREVERB:	
+	case DMUS_APATH_DYNAMIC_STEREO:
+		format.nChannels = 2;
+		format.nBlockAlign *= 2;
+		format.nAvgBytesPerSec *=2;
+		break;
+	default:
+		break;
+	}
+	
+	/* FIXME: Should we create one secondary buffer for each PChannel? */
+	IDirectSound8_CreateSoundBuffer((LPDIRECTSOUND8)This->dsound, &desc, &buffer, NULL);
+	default_path->buffer = (IDirectSoundBuffer*) buffer;
+
+	/* Update description for creating primary buffer */
+	desc.dwFlags |= DSBCAPS_PRIMARYBUFFER;
+	desc.dwBufferBytes = 0;
+	desc.lpwfxFormat = NULL;
+
+	IDirectSound8_CreateSoundBuffer((LPDIRECTSOUND8)This->dsound, &desc, &buffer, NULL);
+
+	default_path->primary = (IDirectSoundBuffer*) buffer;
+
+	*ppNewPath = (LPDIRECTMUSICAUDIOPATH) default_path;
+	
+	TRACE(" returning IDirectMusicPerformance interface at %p.\n", *ppNewPath);
+
 	return DS_OK;
 }
 

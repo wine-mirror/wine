@@ -923,6 +923,8 @@ struct IDirectMusicAudioPathImpl
   /* IDirectMusicAudioPathImpl fields */
   IDirectMusicPerformance* perfo;
   IDirectMusicGraph*       toolGraph;
+  IDirectSoundBuffer*      buffer;
+  IDirectSoundBuffer*      primary;
 };
 
 /* IUnknown: */
