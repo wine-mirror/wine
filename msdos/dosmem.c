@@ -364,7 +364,7 @@ BOOL32 DOSMEM_Init(HMODULE16 hModule)
     if (!hModule)
     {
         /* Allocate 1 MB dosmemory 
-         * - it is mostly wasted but we use can some of it to 
+         * - it is mostly wasted but we can use some of it to 
          *   store internal translation tables, etc...
          */
         DOSMEM_dosmem = VirtualAlloc( NULL, 0x100000, MEM_COMMIT,
