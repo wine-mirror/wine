@@ -22,7 +22,7 @@ int PASCAL WinMain (HANDLE inst, HANDLE prev, LPSTR cmdline, int show)
 	}
 	fnGetSystemInfo(&si);
 	fprintf(stderr,"QuerySystemInfo returns:\n");
-	fprintf(stderr,"	wProcessorArchitecture: %d\n",si.u.x.wProcessorArchitecture);
+	fprintf(stderr,"	wProcessorArchitecture: %d\n",si.u.s.wProcessorArchitecture);
 	fprintf(stderr,"	dwPageSize: %ld\n",si.dwPageSize);
 	fprintf(stderr,"	lpMinimumApplicationAddress: %p\n",si.lpMinimumApplicationAddress);
 	fprintf(stderr,"	lpMaximumApplicationAddress: %p\n",si.lpMaximumApplicationAddress);
