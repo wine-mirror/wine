@@ -456,6 +456,17 @@ WCHAR towlower(WCHAR);
 #define	C3_ALPHA		0x8000
 #define	C3_NOTAPPLICABLE	0x0000
 
+typedef DWORD CALTYPE;
+typedef DWORD CALID;
+
+typedef BOOL (CALLBACK* CALINFO_ENUMPROCA)(LPSTR);
+typedef BOOL (CALLBACK* CALINFO_ENUMPROCW)(LPWSTR);
+DECL_WINELIB_TYPE_AW(CALINFO_ENUMPROC);
+
+BOOL	WINAPI EnumCalendarInfoA(CALINFO_ENUMPROCA lpCalInfoEnumProc,LCID Locale,CALID Calendar,CALTYPE CalType);
+BOOL	WINAPI EnumCalendarInfoW(CALINFO_ENUMPROCW lpCalInfoEnumProc,LCID Locale,CALID Calendar,CALTYPE CalType);
+#define EnumCalendarInfo WINELIB_NAME_AW(EnumCalendarInfo)
+
         /* FIXME: This does not belong to an interface file */
 UINT16      WINAPI CompareString16(DWORD,DWORD,LPCSTR,DWORD,LPCSTR,DWORD);
 INT16       WINAPI GetLocaleInfo16(LCID,LCTYPE,LPSTR,INT16);

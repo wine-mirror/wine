@@ -3198,3 +3198,13 @@ GetTimeFormatW(LCID locale,        /* in  */
   			 timestr, timelen);
 	return ret;
 }
+
+/******************************************************************************
+ *		EnumCalendarInfoA	[KERNEL32.196]
+ */
+BOOL WINAPI EnumCalendarInfoA(
+	CALINFO_ENUMPROCA calinfoproc,LCID locale,CALID calendar,CALTYPE caltype
+) {
+	FIXME(ole,"(%p,0x%04lx,0x%08lx,0x%08lx),stub!\n",calinfoproc,locale,calendar,caltype);
+	return FALSE;
+}

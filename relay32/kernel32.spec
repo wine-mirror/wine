@@ -211,7 +211,7 @@ init	MAIN_KernelInit
 193 stub EndUpdateResourceA
 194 stub EndUpdateResourceW
 195 stdcall EnterCriticalSection(ptr) EnterCriticalSection
-196 stub EnumCalendarInfoA
+196 stdcall EnumCalendarInfoA(ptr long long long) EnumCalendarInfoA
 197 stub EnumCalendarInfoW
 198 stdcall EnumDateFormatsA(ptr long long) EnumDateFormatsA
 199 stdcall EnumDateFormatsW(ptr long long) EnumDateFormatsW
