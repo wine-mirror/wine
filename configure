@@ -13249,8 +13249,10 @@ fi
 
 
 
+
 for ac_func in \
 	_lwp_create \
+	_lwp_self \
 	_pclose \
 	_popen \
 	_snprintf \

@@ -317,6 +317,25 @@ void SYSDEPS_AbortThread( int status )
         _exit( status );
 }
 
+/***********************************************************************
+ *           SYSDEPS_GetUnixTid
+ *
+ * Get the Unix tid of the current thread.
+ */
+int SYSDEPS_GetUnixTid(void)
+{
+#ifdef HAVE__LWP_SELF
+    return _lwp_self();
+#elif defined(__linux__) && defined(__i386__)
+    int ret;
+    __asm__("int $0x80" : "=a" (ret) : "0" (224) /* SYS_gettid */);
+    if (ret < 0) ret = -1;
+    return ret;
+#else
+    return -1;
+#endif
+}
+
 
 /* default errno before threading is initialized */
 static int *default_errno_location(void)

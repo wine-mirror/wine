@@ -694,7 +694,7 @@ void CLIENT_InitThread(void)
     SERVER_START_REQ( init_thread )
     {
         req->unix_pid    = getpid();
-        req->unix_tid    = -1;
+        req->unix_tid    = SYSDEPS_GetUnixTid();
         req->teb         = teb;
         req->entry       = teb->entry_point;
         req->reply_fd    = reply_pipe[1];

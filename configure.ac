@@ -943,6 +943,7 @@ dnl **** Check for functions ****
 AC_FUNC_ALLOCA()
 AC_CHECK_FUNCS(\
 	_lwp_create \
+	_lwp_self \
 	_pclose \
 	_popen \
 	_snprintf \
