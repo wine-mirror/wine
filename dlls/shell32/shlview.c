@@ -140,7 +140,7 @@ static HRESULT IncludeObject(IShellViewImpl * This, LPCITEMIDLIST pidl)
 	{
 	  TRACE("ICommDlgBrowser::IncludeObject pidl=%p\n", pidl);
 	  ret = ICommDlgBrowser_IncludeObject(This->pCommDlgBrowser, (IShellView*)This, pidl);
-	  TRACE("--0x%08x\n", ret);
+	  TRACE("--0x%08lx\n", ret);
 	}
 	return ret;
 }

@@ -42,7 +42,7 @@ static ULONG   WINAPI FileMonikerImpl_AddRef(IMoniker* iface);
 static ULONG   WINAPI FileMonikerImpl_Release(IMoniker* iface);
 
 /* IPersist prototype functions */
-static HRESULT WINAPI FileMonikerImpl_GetClassID(const IMoniker* iface, CLSID *pClassID);
+static HRESULT WINAPI FileMonikerImpl_GetClassID(IMoniker* iface, CLSID *pClassID);
 
 /* IPersistStream prototype functions */
 static HRESULT WINAPI FileMonikerImpl_IsDirty(IMoniker* iface);
@@ -199,7 +199,7 @@ ULONG WINAPI FileMonikerImpl_Release(IMoniker* iface)
 /******************************************************************************
  *        FileMoniker_GetClassID
  ******************************************************************************/
-HRESULT WINAPI FileMonikerImpl_GetClassID(const IMoniker* iface,
+HRESULT WINAPI FileMonikerImpl_GetClassID(IMoniker* iface,
                                           CLSID *pClassID)/* Pointer to CLSID of object */
 {
     TRACE("(%p,%p),stub!\n",iface,pClassID);

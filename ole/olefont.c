@@ -152,7 +152,7 @@ static HRESULT WINAPI OLEFontImpl_IPersistStream_QueryInterface(IPersistStream* 
 						    VOID**     ppvoid);
 static ULONG   WINAPI OLEFontImpl_IPersistStream_AddRef(IPersistStream* iface);
 static ULONG   WINAPI OLEFontImpl_IPersistStream_Release(IPersistStream* iface);
-static HRESULT WINAPI OLEFontImpl_GetClassID(const IPersistStream* iface, 
+static HRESULT WINAPI OLEFontImpl_GetClassID(IPersistStream* iface, 
 					     CLSID*                pClassID);
 static HRESULT WINAPI OLEFontImpl_IsDirty(IPersistStream*  iface);
 static HRESULT WINAPI OLEFontImpl_Load(IPersistStream*  iface,
@@ -1136,7 +1136,7 @@ static ULONG WINAPI OLEFontImpl_IPersistStream_AddRef(
  * See Windows documentation for more details on IPersistStream methods.
  */
 static HRESULT WINAPI OLEFontImpl_GetClassID(
-  const IPersistStream* iface, 
+  IPersistStream* iface, 
   CLSID*                pClassID)
 {
   if (pClassID==0)

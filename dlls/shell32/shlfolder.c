@@ -1742,7 +1742,7 @@ static ULONG WINAPI ISFPersistFolder_Release(
  * ISFPersistFolder_GetClassID (IPersist)
  */
 static HRESULT WINAPI ISFPersistFolder_GetClassID(
-	const IPersistFolder *	iface,
+	IPersistFolder *	iface,
 	CLSID *			lpClassId)
 {
 	_ICOM_THIS_From_IPersistFolder(IGenericSFImpl, iface);

@@ -213,7 +213,7 @@ static ULONG WINAPI DataCache_IPersistStorage_AddRef(
 static ULONG WINAPI DataCache_IPersistStorage_Release( 
             IPersistStorage* iface);
 static HRESULT WINAPI DataCache_GetClassID( 
-            const IPersistStorage* iface,
+            IPersistStorage* iface,
 	    CLSID*           pClassID);
 static HRESULT WINAPI DataCache_IsDirty( 
             IPersistStorage* iface);
@@ -1189,7 +1189,7 @@ static ULONG WINAPI DataCache_IPersistStorage_Release(
  * See Windows documentation for more details on IPersistStorage methods.
  */
 static HRESULT WINAPI DataCache_GetClassID( 
-            const IPersistStorage* iface,
+            IPersistStorage* iface,
 	    CLSID*           pClassID)
 {
   TRACE("(%p, %p)\n", iface, pClassID);

@@ -39,7 +39,7 @@ static ULONG   WINAPI AntiMonikerImpl_AddRef(IMoniker* iface);
 static ULONG   WINAPI AntiMonikerImpl_Release(IMoniker* iface);
 
 /* IPersist prototype functions */
-static HRESULT WINAPI AntiMonikerImpl_GetClassID(const IMoniker* iface, CLSID *pClassID);
+static HRESULT WINAPI AntiMonikerImpl_GetClassID(IMoniker* iface, CLSID *pClassID);
 
 /* IPersistStream prototype functions */
 static HRESULT WINAPI AntiMonikerImpl_IsDirty(IMoniker* iface);
@@ -193,7 +193,7 @@ ULONG WINAPI AntiMonikerImpl_Release(IMoniker* iface)
 /******************************************************************************
  *        AntiMoniker_GetClassID
  ******************************************************************************/
-HRESULT WINAPI AntiMonikerImpl_GetClassID(const IMoniker* iface,CLSID *pClassID)
+HRESULT WINAPI AntiMonikerImpl_GetClassID(IMoniker* iface,CLSID *pClassID)
 {
     TRACE("(%p,%p),stub!\n",iface,pClassID);
 

@@ -287,8 +287,8 @@ static ULONG WINAPI IEIPersistFile_fnRelease(
  * IEIPersistFile_GetClassID (IPersist)
  */
 static HRESULT WINAPI IEIPersistFile_fnGetClassID(
-	const IPersistFile	*iface,
-	LPCLSID			lpClassId)
+	IPersistFile	*iface,
+	LPCLSID		lpClassId)
 {
 	CLSID StdFolderID = { 0x00000000, 0x0000, 0x0000, {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00} };
 

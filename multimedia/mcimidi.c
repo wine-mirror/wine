@@ -24,6 +24,8 @@
 
 DEFAULT_DEBUG_CHANNEL(mcimidi)
 
+#ifdef SNDCTL_MIDI_INFO
+
 typedef struct {
     DWORD		dwFirst;		/* offset in file of track */
     DWORD		dwLast;			/* number of bytes in file of track */
@@ -59,6 +61,8 @@ typedef struct tagWINE_MCIMIDI {
     DWORD		dwStartTicks;
 } WINE_MCIMIDI;
 
+
+#endif /* defined(SNDCTL_MIDI_INFO) */
 
 /*======================================================================*
  *                  	    MCI MIDI implemantation			*

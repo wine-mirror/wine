@@ -65,7 +65,7 @@ static ULONG   WINAPI CompositeMonikerImpl_AddRef(IMoniker* iface);
 static ULONG   WINAPI CompositeMonikerImpl_Release(IMoniker* iface);
 
 /* IPersist prototype functions */
-static HRESULT WINAPI CompositeMonikerImpl_GetClassID(const IMoniker* iface, CLSID *pClassID);
+static HRESULT WINAPI CompositeMonikerImpl_GetClassID(IMoniker* iface, CLSID *pClassID);
 
 /* IPersistStream prototype functions */
 static HRESULT WINAPI CompositeMonikerImpl_IsDirty(IMoniker* iface);
@@ -255,7 +255,7 @@ ULONG WINAPI CompositeMonikerImpl_Release(IMoniker* iface)
 /******************************************************************************
  *        CompositeMoniker_GetClassID
  ******************************************************************************/
-HRESULT WINAPI CompositeMonikerImpl_GetClassID(const IMoniker* iface,CLSID *pClassID)
+HRESULT WINAPI CompositeMonikerImpl_GetClassID(IMoniker* iface,CLSID *pClassID)
 {
     TRACE("(%p,%p),stub!\n",iface,pClassID);
 

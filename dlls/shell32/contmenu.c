@@ -311,9 +311,6 @@ static HRESULT WINAPI IContextMenu_fnInvokeCommand(
 	ICOM_THIS(IContextMenuImpl, iface);
 
 	LPITEMIDLIST	pidlFQ;
-	LPSHELLBROWSER	lpSB;
-	LPSHELLVIEW	lpSV;
-	HWND	hWndSV;
 	SHELLEXECUTEINFOA	sei;
 	int   i;
 

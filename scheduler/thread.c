@@ -4,6 +4,8 @@
  * Copyright 1996 Alexandre Julliard
  */
 
+#include "config.h"
+
 #include <assert.h>
 #include <fcntl.h>
 #include <sys/types.h>

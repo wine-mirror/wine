@@ -132,13 +132,13 @@ static ULONG WINAPI IPersistFile_fnRelease(IPersistFile* iface)
 	return IShellLink_Release((IShellLink*)This);
 }
 
-static HRESULT WINAPI IPersistFile_fnGetClassID(const IPersistFile* iface, CLSID *pClassID)
+static HRESULT WINAPI IPersistFile_fnGetClassID(IPersistFile* iface, CLSID *pClassID)
 {
 	_ICOM_THIS_From_IPersistFile(IShellLinkImpl, iface)
 	FIXME("(%p)\n",This);
 	return NOERROR;
 }
-static HRESULT WINAPI IPersistFile_fnIsDirty(const IPersistFile* iface)
+static HRESULT WINAPI IPersistFile_fnIsDirty(IPersistFile* iface)
 {
 	_ICOM_THIS_From_IPersistFile(IShellLinkImpl, iface)
 	FIXME("(%p)\n",This);
@@ -181,7 +181,7 @@ static HRESULT WINAPI IPersistFile_fnSaveCompleted(IPersistFile* iface, LPCOLEST
 	FIXME("(%p)->(%s)\n",This,debugstr_w(pszFileName));
 	return NOERROR;
 }
-static HRESULT WINAPI IPersistFile_fnGetCurFile(const IPersistFile* iface, LPOLESTR *ppszFileName)
+static HRESULT WINAPI IPersistFile_fnGetCurFile(IPersistFile* iface, LPOLESTR *ppszFileName)
 {
 	_ICOM_THIS_From_IPersistFile(IShellLinkImpl, iface);
 	FIXME("(%p)\n",This);
@@ -248,7 +248,7 @@ static ULONG WINAPI IPersistStream_fnAddRef(
  *
  */
 static HRESULT WINAPI IPersistStream_fnGetClassID(
-	const IPersistStream* iface,
+	IPersistStream* iface,
 	CLSID* pClassID)
 {
 	_ICOM_THIS_From_IPersistStream(IShellLinkImpl, iface);
