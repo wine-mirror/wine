@@ -1988,7 +1988,7 @@ GetCharacterPlacementW(
 		 * -1 - right to left
 		 * 0 - neutral
 		 */
-		static const int chardir[]={ 0, 1, -1, 1, 1, 1, -1, 1, 0, 0, 0, 0 };
+		static const int chardir[]={ 0, 1, -1, 1, 0, 0, -1, 0, 0, 0, 0, 0 };
 
 		WARN("The BiDi algorythm doesn't conform to Windows' yet\n");
 		if( (pwCharType=HeapAlloc(GetProcessHeap(), 0, uCount * sizeof(WORD)))==NULL )
