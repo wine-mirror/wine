@@ -42,6 +42,51 @@ for configurable values. Those terms are described here.
 		importance of WINDOWSDIR and convey this information and 
 		choice to the end user.
 
+DEPENDENCIES
+~~~~~~~~~~~~
+
+There are two types of dependencies: hard and soft dependencies.
+
+A hard dependency must be available at runtime for Wine to function,
+if  compiled into the code. Soft dependencies on the other hand
+will degrade gracefully at runtime if unavailable on the runtime system.
+Ideally, we should eliminate all hard dependencies in favour of
+soft dependencies.
+
+To enable a soft dependency, it must be available at compile time.
+As a packager, please do your best to make sure that as many soft 
+dependencies  are available during compilation. Failing to have a 
+soft dependency available means that users cannot benefit
+from a Wine capability.
+
+Here is a list of the soft dependencies. We suggest packagers
+install each and every last of those before building the package. 
+These libraries are not dependencies in the RPM sense. In DEB packages, 
+they should appear as "Suggests" or "Recommends", as the case may be.
+    * FreeType: http://www.freetype.org
+      This library is used for direct rendering of fonts. It provides 
+      better support of fonts than using the X11 fonts engine. It is 
+      only needed for the X11 back end engine. Used from GDI.
+
+    * Alsa: "http://sourceforge.net/projects/alsa (Linux only)
+      This library gives sound support to the Windows environment.
+
+    * JACK: http://jackit.sourceforge.net
+      Similar to Alsa, it allow Wine to use the JACK audio server.
+
+    * CUPS: http://www.cups.org
+      This library allows Windows to see CUPS defined printers.
+
+    * OpenGL
+      This is used for both OpenGL and Direct3D (and some other 
+      DirectX functions as well) support in Wine. There are many many 
+      libraries for providing this functionality. It is enough for one
+      of them to be available when compiling Wine. Wine can work with 
+      any other library during runtime.
+      If no library is available, packagers are encouraged to compile 
+      Wine with Mesa3D (http://www.mesa3d.org), which requires no 
+      hardware support to install.
+
 GOALS
 ~~~~~
 
