@@ -54,6 +54,7 @@ static int sock_signaled( struct object *obj, struct thread *thread );
 static int sock_get_poll_events( struct object *obj );
 static void sock_poll_event( struct object *obj, int event );
 static int sock_get_fd( struct object *obj );
+static int sock_get_info( struct object *obj, struct get_file_info_request *req );
 static void sock_destroy( struct object *obj );
 static int sock_get_error( int err );
 static void sock_set_error(void);
@@ -70,7 +71,7 @@ static const struct object_ops sock_ops =
     sock_poll_event,              /* poll_event */
     sock_get_fd,                  /* get_fd */
     no_flush,                     /* flush */
-    no_get_file_info,             /* get_file_info */
+    sock_get_info,                /* get_file_info */
     sock_destroy                  /* destroy */
 };
 
@@ -264,6 +265,24 @@ static int sock_get_fd( struct object *obj )
     struct sock *sock = (struct sock *)obj;
     assert( obj->ops == &sock_ops );
     return sock->obj.fd;
+}
+
+static int sock_get_info( struct object *obj, struct get_file_info_request *req )
+{
+    if (req)
+    {
+        req->type        = FILE_TYPE_PIPE;
+        req->attr        = 0;
+        req->access_time = 0;
+        req->write_time  = 0;
+        req->size_high   = 0;
+        req->size_low    = 0;
+        req->links       = 0;
+        req->index_high  = 0;
+        req->index_low   = 0;
+        req->serial      = 0;
+    }
+    return FD_TYPE_DEFAULT;
 }
 
 static void sock_destroy( struct object *obj )

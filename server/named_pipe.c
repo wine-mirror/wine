@@ -84,6 +84,7 @@ static const struct object_ops named_pipe_ops =
 static void pipe_user_dump( struct object *obj, int verbose );
 static void pipe_user_destroy( struct object *obj);
 static int pipe_user_get_fd( struct object *obj );
+static int pipe_user_get_info( struct object *obj, struct get_file_info_request *req );
 
 static const struct object_ops pipe_user_ops =
 {
@@ -97,7 +98,7 @@ static const struct object_ops pipe_user_ops =
     default_poll_event,           /* poll_event */
     pipe_user_get_fd,             /* get_fd */
     no_flush,                     /* flush */
-    no_get_file_info,             /* get_file_info */
+    pipe_user_get_info,           /* get_file_info */
     pipe_user_destroy             /* destroy */
 };
 
@@ -165,6 +166,24 @@ static int pipe_user_get_fd( struct object *obj )
     struct pipe_user *user = (struct pipe_user *)obj;
     assert( obj->ops == &pipe_user_ops );
     return user->obj.fd;
+}
+
+static int pipe_user_get_info( struct object *obj, struct get_file_info_request *req )
+{
+    if (req)
+    {
+        req->type        = FILE_TYPE_PIPE;
+        req->attr        = 0;
+        req->access_time = 0;
+        req->write_time  = 0;
+        req->size_high   = 0;
+        req->size_low    = 0;
+        req->links       = 0;
+        req->index_high  = 0;
+        req->index_low   = 0;
+        req->serial      = 0;
+    }
+    return FD_TYPE_DEFAULT;
 }
 
 static struct named_pipe *create_named_pipe( const WCHAR *name, size_t len )
