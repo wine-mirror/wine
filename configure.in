@@ -625,6 +625,14 @@ then
     AC_DEFINE(HAVE_MSGHDR_ACCRIGHTS)
 fi
 
+dnl $GCC is set by autoconf
+GCC_NO_BUILTIN=""
+if test "$GCC" = "yes"
+then
+    GCC_NO_BUILTIN="-fno-builtin"
+fi
+AC_SUBST(GCC_NO_BUILTIN)
+
 dnl **** Generate output files ****
 
 MAKE_RULES=Make.rules

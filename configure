@@ -4511,6 +4511,13 @@ EOF
 
 fi
 
+GCC_NO_BUILTIN=""
+if test "$GCC" = "yes"
+then
+    GCC_NO_BUILTIN="-fno-builtin"
+fi
+
+
 
 MAKE_RULES=Make.rules
 
@@ -4738,6 +4745,7 @@ s%@C2MAN@%$C2MAN%g
 s%@XLIB@%$XLIB%g
 s%@DLLFLAGS@%$DLLFLAGS%g
 s%@LDSHARED@%$LDSHARED%g
+s%@GCC_NO_BUILTIN@%$GCC_NO_BUILTIN%g
 /@MAKE_RULES@/r $MAKE_RULES
 s%@MAKE_RULES@%%g
 
