@@ -1283,6 +1283,8 @@ const char* debug_d3dformat(D3DFORMAT fmt);
 const char* debug_d3dressourcetype(D3DRESOURCETYPE res);
 const char* debug_d3dprimitivetype(D3DPRIMITIVETYPE PrimitiveType);
 const char* debug_d3dpool(D3DPOOL Pool);
+const char *debug_d3drenderstate(DWORD State);
+const char *debug_d3dtexturestate(DWORD State);
 
 /* Some #defines for additional diagnostics */
 #if 0 /* NOTE: Must be 0 in cvs */

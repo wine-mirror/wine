@@ -193,13 +193,15 @@ HRESULT WINAPI IDirect3DSurface8Impl_LockRect(LPDIRECT3DSURFACE8 iface, D3DLOCKE
 
 	{
 	  long j;
+          GLenum format = D3DFmt2GLFmt(This->Device, This->myDesc.Format);
+          GLenum type   = D3DFmt2GLType(This->Device, This->myDesc.Format);
 	  for (j = This->lockedRect.top; j < This->lockedRect.bottom - This->lockedRect.top; ++j) {
 	    glReadPixels(This->lockedRect.left, 
 			 This->lockedRect.bottom - j - 1, 
 			 This->lockedRect.right - This->lockedRect.left, 
 			 1,
-			 D3DFmt2GLFmt(This->Device, This->myDesc.Format), 
-                         D3DFmt2GLType(This->Device, This->myDesc.Format), 
+			 format, 
+                         type, 
                          (char *)pLockedRect->pBits + (pLockedRect->Pitch * (j-This->lockedRect.top)));
 	    vcheckGLcall("glReadPixels");
 	  }

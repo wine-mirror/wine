@@ -83,7 +83,20 @@ void setupTextureStates(LPDIRECT3DDEVICE8 iface, DWORD Stage) {
 
     TRACE("-----------------------> Updating the texture at stage %ld to have new texture state information\n", Stage);
     for (i = 1; i < HIGHEST_TEXTURE_STATE; i++) {
-        IDirect3DDevice8Impl_SetTextureStageState(iface, Stage, i, This->StateBlock->texture_state[Stage][i]);
+
+        /* Performance: For texture states where multiples effect the outcome, only bother
+              applying the last one as it will pick up all the other values                */
+        switch (i) {
+        case D3DTSS_COLORARG0:  /* Will be picked up when setting color op */
+        case D3DTSS_COLORARG1:  /* Will be picked up when setting color op */
+        case D3DTSS_COLORARG2:  /* Will be picked up when setting color op */
+        case D3DTSS_ALPHAARG0:  /* Will be picked up when setting alpha op */
+        case D3DTSS_ALPHAARG1:  /* Will be picked up when setting alpha op */
+        case D3DTSS_ALPHAARG2:  /* Will be picked up when setting alpha op */
+           break;
+        default:
+           IDirect3DDevice8Impl_SetTextureStageState(iface, Stage, i, This->StateBlock->texture_state[Stage][i]);
+        }
     }
 
     /* Note the D3DRS value applies to all textures, but GL has one
@@ -1883,7 +1896,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetRenderState(LPDIRECT3DDEVICE8 iface, D3
     ICOM_THIS(IDirect3DDevice8Impl,iface);
     DWORD OldValue = This->StateBlock->renderstate[State];
         
-    TRACE("(%p)->state = %d, value = %ld\n", This, State, Value);
+    TRACE("(%p)->state = %s(%d), value = %ld\n", This, debug_d3drenderstate(State), State, Value);
     This->UpdateStateBlock->Changed.renderstate[State] = TRUE;
     This->UpdateStateBlock->Set.renderstate[State] = TRUE;
     This->UpdateStateBlock->renderstate[State] = Value;
@@ -2237,7 +2250,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetRenderState(LPDIRECT3DDEVICE8 iface, D3
 		} else {
 		  TRACE("Specular colors cannot be enabled in this version of opengl\n");
 		}
-                checkGLcall("glEnable(GL_COLOR_SUM)\n");
+                checkGLcall("glEnable(GL_COLOR_SUM)");
               } else {
                 float black[4] = {0.0f, 0.0f, 0.0f, 0.0f};
 
@@ -2251,7 +2264,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetRenderState(LPDIRECT3DDEVICE8 iface, D3
 		} else {
 		  TRACE("Specular colors cannot be disabled in this version of opengl\n");
 		}
-                checkGLcall("glDisable(GL_COLOR_SUM)\n");
+                checkGLcall("glDisable(GL_COLOR_SUM)");
 	      }
         }
         break;
@@ -2380,10 +2393,10 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetRenderState(LPDIRECT3DDEVICE8 iface, D3
         {
             if (Value && This->StateBlock->renderstate[D3DRS_FOGTABLEMODE] != D3DFOG_NONE) {
                glEnable(GL_FOG);
-               checkGLcall("glEnable GL_FOG\n");
+               checkGLcall("glEnable GL_FOG");
             } else {
                glDisable(GL_FOG);
-               checkGLcall("glDisable GL_FOG\n");
+               checkGLcall("glDisable GL_FOG");
             }
         }
         break;
@@ -2467,7 +2480,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetRenderState(LPDIRECT3DDEVICE8 iface, D3
 
             if (This->StateBlock->renderstate[D3DRS_COLORVERTEX]) {
                 glEnable(GL_COLOR_MATERIAL);
-                checkGLcall("glEnable GL_GL_COLOR_MATERIAL\n");
+                checkGLcall("glEnable GL_COLOR_MATERIAL");
 
                 TRACE("diff %ld, amb %ld, emis %ld, spec %ld\n",
                       This->StateBlock->renderstate[D3DRS_DIFFUSEMATERIALSOURCE],
@@ -2493,16 +2506,16 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetRenderState(LPDIRECT3DDEVICE8 iface, D3
 
                 if (Parm == -1) {
                     glDisable(GL_COLOR_MATERIAL);
-                    checkGLcall("glDisable GL_GL_COLOR_MATERIAL\n");
+                    checkGLcall("glDisable GL_COLOR_MATERIAL");
                 } else {
                     TRACE("glColorMaterial Parm=%d\n", Parm);
                     glColorMaterial(GL_FRONT_AND_BACK, Parm);
-                    checkGLcall("glColorMaterial(GL_FRONT_AND_BACK, Parm)\n");
+                    checkGLcall("glColorMaterial(GL_FRONT_AND_BACK, Parm)");
                 }
 
             } else {
                 glDisable(GL_COLOR_MATERIAL);
-                checkGLcall("glDisable GL_GL_COLOR_MATERIAL\n");
+                checkGLcall("glDisable GL_COLOR_MATERIAL");
             }
         }
         break; 
@@ -2514,12 +2527,12 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetRenderState(LPDIRECT3DDEVICE8 iface, D3
 
             if (pattern->wRepeatFactor) {
                 glLineStipple(pattern->wRepeatFactor, pattern->wLinePattern);
-                checkGLcall("glLineStipple(repeat, linepattern)\n");
+                checkGLcall("glLineStipple(repeat, linepattern)");
                 glEnable(GL_LINE_STIPPLE);
-                checkGLcall("glEnable(GL_LINE_STIPPLE);\n");
+                checkGLcall("glEnable(GL_LINE_STIPPLE);");
             } else {
                 glDisable(GL_LINE_STIPPLE);
-                checkGLcall("glDisable(GL_LINE_STIPPLE);\n");
+                checkGLcall("glDisable(GL_LINE_STIPPLE);");
             }
         }
         break;
@@ -2560,13 +2573,13 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetRenderState(LPDIRECT3DDEVICE8 iface, D3
     case D3DRS_POINTSIZE                 :
         TRACE("Set point size to %f\n", *((float*)&Value));
         glPointSize(*((float*)&Value));
-        checkGLcall("glPointSize(...);\n");
+        checkGLcall("glPointSize(...);");
         break;
 
     case D3DRS_POINTSIZE_MIN             :
         if (GL_SUPPORT(EXT_POINT_PARAMETERS)) {
 	  GL_EXTCALL(glPointParameterfEXT)(GL_POINT_SIZE_MIN_EXT, *((float*)&Value));
-	  checkGLcall("glPointParameterfEXT(...);\n");
+	  checkGLcall("glPointParameterfEXT(...);");
 	} else {
 	  FIXME("D3DRS_POINTSIZE_MIN not supported on this opengl\n");
 	}
@@ -2575,7 +2588,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetRenderState(LPDIRECT3DDEVICE8 iface, D3
     case D3DRS_POINTSIZE_MAX             :
         if (GL_SUPPORT(EXT_POINT_PARAMETERS)) {
 	  GL_EXTCALL(glPointParameterfEXT)(GL_POINT_SIZE_MAX_EXT, *((float*)&Value));
-	  checkGLcall("glPointParameterfEXT(...);\n");
+	  checkGLcall("glPointParameterfEXT(...);");
 	} else {
 	  FIXME("D3DRS_POINTSIZE_MAX not supported on this opengl\n");
 	}
@@ -2595,7 +2608,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetRenderState(LPDIRECT3DDEVICE8 iface, D3
 
 		if (GL_SUPPORT(EXT_POINT_PARAMETERS)) {
                   GL_EXTCALL(glPointParameterfvEXT)(GL_DISTANCE_ATTENUATION_EXT, att);
-		  checkGLcall("glPointParameterfvEXT(GL_DISTANCE_ATTENUATION_EXT, ...);\n");
+		  checkGLcall("glPointParameterfvEXT(GL_DISTANCE_ATTENUATION_EXT, ...);");
 		} else {
 		  TRACE("D3DRS_POINTSCALEENABLE not supported on this opengl\n");
 		}
@@ -2603,7 +2616,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetRenderState(LPDIRECT3DDEVICE8 iface, D3
                 GLfloat att[3] = {1.0f, 0.0f, 0.0f};
 		if (GL_SUPPORT(EXT_POINT_PARAMETERS)) {
 		  GL_EXTCALL(glPointParameterfvEXT)(GL_DISTANCE_ATTENUATION_EXT, att);
-		  checkGLcall("glPointParameterfvEXT(GL_DISTANCE_ATTENUATION_EXT, ...);\n");
+		  checkGLcall("glPointParameterfvEXT(GL_DISTANCE_ATTENUATION_EXT, ...);");
 		} else {
 		  TRACE("D3DRS_POINTSCALEENABLE not supported, but not on either\n");
 		}
@@ -2621,7 +2634,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetRenderState(LPDIRECT3DDEVICE8 iface, D3
                     Value & D3DCOLORWRITEENABLE_GREEN,
 		    Value & D3DCOLORWRITEENABLE_BLUE, 
                     Value & D3DCOLORWRITEENABLE_ALPHA);
-        checkGLcall("glColorMask(...)\n");
+        checkGLcall("glColorMask(...)");
 		break;
 
         /* Unhandled yet...! */
@@ -2853,7 +2866,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetTextureStageState(LPDIRECT3DDEVICE8 ifa
 
     /* FIXME: Handle 3d textures? What if TSS value set before set texture? Need to reapply all values? */
    
-    TRACE("(%p) : stub, Stage=%ld, Type=%d, Value=%ld\n", This, Stage, Type, Value);
+    TRACE("(%p) : Stage=%ld, Type=%s(%d), Value=%ld\n", This, Stage, debug_d3dtexturestate(Type), Type, Value);
 
     /* Reject invalid texture units */
     if (Stage >= GL_LIMITS(textures)) {

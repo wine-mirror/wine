@@ -165,6 +165,133 @@ const char* debug_d3dpool(D3DPOOL Pool) {
   }
 }
 
+const char* debug_d3drenderstate(DWORD state) {
+  switch (state) {
+#define D3DSTATE_TO_STR(u) case u: return #u
+    D3DSTATE_TO_STR(D3DRS_ZENABLE                   );
+    D3DSTATE_TO_STR(D3DRS_FILLMODE                  );
+    D3DSTATE_TO_STR(D3DRS_SHADEMODE                 );
+    D3DSTATE_TO_STR(D3DRS_LINEPATTERN               );
+    D3DSTATE_TO_STR(D3DRS_ZWRITEENABLE              );
+    D3DSTATE_TO_STR(D3DRS_ALPHATESTENABLE           );
+    D3DSTATE_TO_STR(D3DRS_LASTPIXEL                 );
+    D3DSTATE_TO_STR(D3DRS_SRCBLEND                  );
+    D3DSTATE_TO_STR(D3DRS_DESTBLEND                 );
+    D3DSTATE_TO_STR(D3DRS_CULLMODE                  );
+    D3DSTATE_TO_STR(D3DRS_ZFUNC                     );
+    D3DSTATE_TO_STR(D3DRS_ALPHAREF                  );
+    D3DSTATE_TO_STR(D3DRS_ALPHAFUNC                 );
+    D3DSTATE_TO_STR(D3DRS_DITHERENABLE              );
+    D3DSTATE_TO_STR(D3DRS_ALPHABLENDENABLE          );
+    D3DSTATE_TO_STR(D3DRS_FOGENABLE                 );
+    D3DSTATE_TO_STR(D3DRS_SPECULARENABLE            );
+    D3DSTATE_TO_STR(D3DRS_ZVISIBLE                  );
+    D3DSTATE_TO_STR(D3DRS_FOGCOLOR                  );
+    D3DSTATE_TO_STR(D3DRS_FOGTABLEMODE              );
+    D3DSTATE_TO_STR(D3DRS_FOGSTART                  );
+    D3DSTATE_TO_STR(D3DRS_FOGEND                    );
+    D3DSTATE_TO_STR(D3DRS_FOGDENSITY                );
+    D3DSTATE_TO_STR(D3DRS_EDGEANTIALIAS             );
+    D3DSTATE_TO_STR(D3DRS_ZBIAS                     );
+    D3DSTATE_TO_STR(D3DRS_RANGEFOGENABLE            );
+    D3DSTATE_TO_STR(D3DRS_STENCILENABLE             );
+    D3DSTATE_TO_STR(D3DRS_STENCILFAIL               );
+    D3DSTATE_TO_STR(D3DRS_STENCILZFAIL              );
+    D3DSTATE_TO_STR(D3DRS_STENCILPASS               );
+    D3DSTATE_TO_STR(D3DRS_STENCILFUNC               );
+    D3DSTATE_TO_STR(D3DRS_STENCILREF                );
+    D3DSTATE_TO_STR(D3DRS_STENCILMASK               );
+    D3DSTATE_TO_STR(D3DRS_STENCILWRITEMASK          );
+    D3DSTATE_TO_STR(D3DRS_TEXTUREFACTOR             );
+    D3DSTATE_TO_STR(D3DRS_WRAP0                     );
+    D3DSTATE_TO_STR(D3DRS_WRAP1                     );
+    D3DSTATE_TO_STR(D3DRS_WRAP2                     );
+    D3DSTATE_TO_STR(D3DRS_WRAP3                     );
+    D3DSTATE_TO_STR(D3DRS_WRAP4                     );
+    D3DSTATE_TO_STR(D3DRS_WRAP5                     );
+    D3DSTATE_TO_STR(D3DRS_WRAP6                     );
+    D3DSTATE_TO_STR(D3DRS_WRAP7                     );
+    D3DSTATE_TO_STR(D3DRS_CLIPPING                  );
+    D3DSTATE_TO_STR(D3DRS_LIGHTING                  );
+    D3DSTATE_TO_STR(D3DRS_AMBIENT                   );
+    D3DSTATE_TO_STR(D3DRS_FOGVERTEXMODE             );
+    D3DSTATE_TO_STR(D3DRS_COLORVERTEX               );
+    D3DSTATE_TO_STR(D3DRS_LOCALVIEWER               );
+    D3DSTATE_TO_STR(D3DRS_NORMALIZENORMALS          );
+    D3DSTATE_TO_STR(D3DRS_DIFFUSEMATERIALSOURCE     );
+    D3DSTATE_TO_STR(D3DRS_SPECULARMATERIALSOURCE    );
+    D3DSTATE_TO_STR(D3DRS_AMBIENTMATERIALSOURCE     );
+    D3DSTATE_TO_STR(D3DRS_EMISSIVEMATERIALSOURCE    );
+    D3DSTATE_TO_STR(D3DRS_VERTEXBLEND               );
+    D3DSTATE_TO_STR(D3DRS_CLIPPLANEENABLE           );
+    D3DSTATE_TO_STR(D3DRS_SOFTWAREVERTEXPROCESSING  );
+    D3DSTATE_TO_STR(D3DRS_POINTSIZE                 );
+    D3DSTATE_TO_STR(D3DRS_POINTSIZE_MIN             );
+    D3DSTATE_TO_STR(D3DRS_POINTSPRITEENABLE         );
+    D3DSTATE_TO_STR(D3DRS_POINTSCALEENABLE          );
+    D3DSTATE_TO_STR(D3DRS_POINTSCALE_A              );
+    D3DSTATE_TO_STR(D3DRS_POINTSCALE_B              );
+    D3DSTATE_TO_STR(D3DRS_POINTSCALE_C              );
+    D3DSTATE_TO_STR(D3DRS_MULTISAMPLEANTIALIAS      );
+    D3DSTATE_TO_STR(D3DRS_MULTISAMPLEMASK           );
+    D3DSTATE_TO_STR(D3DRS_PATCHEDGESTYLE            );
+    D3DSTATE_TO_STR(D3DRS_PATCHSEGMENTS             );
+    D3DSTATE_TO_STR(D3DRS_DEBUGMONITORTOKEN         );
+    D3DSTATE_TO_STR(D3DRS_POINTSIZE_MAX             );
+    D3DSTATE_TO_STR(D3DRS_INDEXEDVERTEXBLENDENABLE  );
+    D3DSTATE_TO_STR(D3DRS_COLORWRITEENABLE          );
+    D3DSTATE_TO_STR(D3DRS_TWEENFACTOR               );
+    D3DSTATE_TO_STR(D3DRS_BLENDOP                   );
+    D3DSTATE_TO_STR(D3DRS_POSITIONORDER             );
+    D3DSTATE_TO_STR(D3DRS_NORMALORDER               );
+#undef D3DSTATE_TO_STR
+  default:
+    FIXME("Unrecognized %lu render state!\n", state);
+    return "unrecognized";
+  }
+}
+
+const char* debug_d3dtexturestate(DWORD state) {
+  switch (state) {
+#define D3DSTATE_TO_STR(u) case u: return #u
+    D3DSTATE_TO_STR(D3DTSS_COLOROP               );
+    D3DSTATE_TO_STR(D3DTSS_COLORARG1             );
+    D3DSTATE_TO_STR(D3DTSS_COLORARG2             );
+    D3DSTATE_TO_STR(D3DTSS_ALPHAOP               );
+    D3DSTATE_TO_STR(D3DTSS_ALPHAARG1             );
+    D3DSTATE_TO_STR(D3DTSS_ALPHAARG2             );
+    D3DSTATE_TO_STR(D3DTSS_BUMPENVMAT00          );
+    D3DSTATE_TO_STR(D3DTSS_BUMPENVMAT01          );
+    D3DSTATE_TO_STR(D3DTSS_BUMPENVMAT10          );
+    D3DSTATE_TO_STR(D3DTSS_BUMPENVMAT11          );
+    D3DSTATE_TO_STR(D3DTSS_TEXCOORDINDEX         );
+    D3DSTATE_TO_STR(D3DTSS_ADDRESSU              );
+    D3DSTATE_TO_STR(D3DTSS_ADDRESSV              );
+    D3DSTATE_TO_STR(D3DTSS_BORDERCOLOR           );
+    D3DSTATE_TO_STR(D3DTSS_MAGFILTER             );
+    D3DSTATE_TO_STR(D3DTSS_MINFILTER             );
+    D3DSTATE_TO_STR(D3DTSS_MIPFILTER             );
+    D3DSTATE_TO_STR(D3DTSS_MIPMAPLODBIAS         );
+    D3DSTATE_TO_STR(D3DTSS_MAXMIPLEVEL           );
+    D3DSTATE_TO_STR(D3DTSS_MAXANISOTROPY         );
+    D3DSTATE_TO_STR(D3DTSS_BUMPENVLSCALE         );
+    D3DSTATE_TO_STR(D3DTSS_BUMPENVLOFFSET        );
+    D3DSTATE_TO_STR(D3DTSS_TEXTURETRANSFORMFLAGS );
+    D3DSTATE_TO_STR(D3DTSS_ADDRESSW              );
+    D3DSTATE_TO_STR(D3DTSS_COLORARG0             );
+    D3DSTATE_TO_STR(D3DTSS_ALPHAARG0             );
+    D3DSTATE_TO_STR(D3DTSS_RESULTARG             );
+#undef D3DSTATE_TO_STR
+  case 12:
+    /* Note D3DTSS are not consecutive, so skip these */
+    return "unused";
+    break;
+  default:
+    FIXME("Unrecognized %lu texture state!\n", state);
+    return "unrecognized";
+  }
+}
+
 /*
  * Simple utility routines used for dx -> gl mapping of byte formats
  */
@@ -564,6 +691,17 @@ void set_tex_op(LPDIRECT3DDEVICE8 iface, BOOL isAlpha, int Stage, D3DTEXTUREOP o
         TRACE("Alpha?(%d), Stage:%d Op(%d), a1(%ld), a2(%ld), a3(%ld)\n", isAlpha, Stage, op, arg1, arg2, arg3);
         if (op == D3DTOP_DISABLE) return;
 
+        /* Note: Operations usually involve two ars, src0 and src1 and are operations of
+           the form (a1 <operation> a2). However, some of the more complex operations
+           take 3 parameters. Instead of the (sensible) addition of a3, Microsoft added  
+           in a third parameter called a0. Therefore these are operations of the form
+           a0 <operation> a1 <operation> a2, ie the new parameter goes to the front.
+           
+           However, below we treat the new (a0) parameter as src2/opr2, so in the actual
+           functions below, expect their syntax to differ slightly to those listed in the
+           manuals, ie replace arg1 with arg3, arg2 with arg1 and arg3 with arg2
+           This affects D3DTOP_MULTIPLYADD and D3DTOP_LERP                               */
+           
 	if (isAlpha) {
 		comb_target = useext(GL_COMBINE_ALPHA);
 		src0_target = useext(GL_SOURCE0_ALPHA);
@@ -589,7 +727,7 @@ void set_tex_op(LPDIRECT3DDEVICE8 iface, BOOL isAlpha, int Stage, D3DTEXTUREOP o
            The default argument is D3DTA_TEXTURE. If no texture is set for this stage, 
                    then the default argument is D3DTA_DIFFUSE.
                    FIXME? If texture added/removed, may need to reset back as well?    */
-        if (isAlpha && Stage==0 && This->StateBlock->textures[Stage] == NULL && arg1 == D3DTA_TEXTURE) {
+        if (isAlpha && This->StateBlock->textures[Stage] == NULL && arg1 == D3DTA_TEXTURE) {
             GetSrcAndOpFromValue(D3DTA_DIFFUSE, isAlpha, &src1, &opr1);  
         } else {
             GetSrcAndOpFromValue(arg1, isAlpha, &src1, &opr1);
@@ -817,17 +955,17 @@ void set_tex_op(LPDIRECT3DDEVICE8 iface, BOOL isAlpha, int Stage, D3DTEXTUREOP o
 	case D3DTOP_LERP:
 		glTexEnvi(GL_TEXTURE_ENV, comb_target, useext(GL_INTERPOLATE));
 		checkGLcall("GL_TEXTURE_ENV, comb_target, useext(GL_INTERPOLATE)");
-		glTexEnvi(GL_TEXTURE_ENV, src0_target, src2);
+		glTexEnvi(GL_TEXTURE_ENV, src0_target, src1);
 		checkGLcall("GL_TEXTURE_ENV, src0_target, src2");
-		glTexEnvi(GL_TEXTURE_ENV, opr0_target, opr2);
+		glTexEnvi(GL_TEXTURE_ENV, opr0_target, opr1);
 		checkGLcall("GL_TEXTURE_ENV, opr0_target, opr2");
-		glTexEnvi(GL_TEXTURE_ENV, src1_target, src3);
+		glTexEnvi(GL_TEXTURE_ENV, src1_target, src2);
 		checkGLcall("GL_TEXTURE_ENV, src1_target, src3");
-		glTexEnvi(GL_TEXTURE_ENV, opr1_target, opr3);
+		glTexEnvi(GL_TEXTURE_ENV, opr1_target, opr2);
 		checkGLcall("GL_TEXTURE_ENV, opr1_target, opr3");
-		glTexEnvi(GL_TEXTURE_ENV, src2_target, src1);
+		glTexEnvi(GL_TEXTURE_ENV, src2_target, src3);
 		checkGLcall("GL_TEXTURE_ENV, src2_target, src1");
-		glTexEnvi(GL_TEXTURE_ENV, opr2_target, src1);
+		glTexEnvi(GL_TEXTURE_ENV, opr2_target, src3);
 		checkGLcall("GL_TEXTURE_ENV, opr2_target, src1");
 		glTexEnvi(GL_TEXTURE_ENV, scal_target, 1);
 		checkGLcall("GL_TEXTURE_ENV, scal_target, 1");
@@ -835,43 +973,95 @@ void set_tex_op(LPDIRECT3DDEVICE8 iface, BOOL isAlpha, int Stage, D3DTEXTUREOP o
 	default:
 		Handled = FALSE;
 	}
+
         if (Handled) {
+            BOOL  combineOK = TRUE;
 #if defined(GL_NV_texture_env_combine4)
+            DWORD op2;
+
+            if (isAlpha) {
+                op2 = This->UpdateStateBlock->texture_state[Stage][D3DTSS_COLOROP];
+            } else {
+                op2 = This->UpdateStateBlock->texture_state[Stage][D3DTSS_ALPHAOP];
+            }
+
            /* Note: If COMBINE4 in effect cant go back to combine! */
-           if (isAlpha) {
-               switch (This->UpdateStateBlock->texture_state[Stage][D3DTSS_COLOROP])
-               {
-               case D3DTOP_ADDSMOOTH:
-               case D3DTOP_BLENDTEXTUREALPHAPM:
-               case D3DTOP_MODULATEALPHA_ADDCOLOR:
-               case D3DTOP_MODULATECOLOR_ADDALPHA:
-               case D3DTOP_MODULATEINVALPHA_ADDCOLOR:
-               case D3DTOP_MODULATEINVCOLOR_ADDALPHA:
-               case D3DTOP_MULTIPLYADD:
-                   FIXME("Cant have COMBINE4 and COMBINE in efferct together, alphaop=%d\n", op);
+           switch (op2)
+           {
+           case D3DTOP_ADDSMOOTH:
+           case D3DTOP_BLENDTEXTUREALPHAPM:
+           case D3DTOP_MODULATEALPHA_ADDCOLOR:
+           case D3DTOP_MODULATECOLOR_ADDALPHA:
+           case D3DTOP_MODULATEINVALPHA_ADDCOLOR:
+           case D3DTOP_MODULATEINVCOLOR_ADDALPHA:
+           case D3DTOP_MULTIPLYADD:
+               /* Ignore those implemented in both cases */
+               switch (op) {
+               case D3DTOP_SELECTARG1:
+               case D3DTOP_SELECTARG2:
+                   combineOK = FALSE;
+                   Handled   = FALSE;
+                   break;
+               default:
+                   FIXME("Cant have COMBINE4 and COMBINE in efferct together, thisop=%d, otherop=%ld, isAlpha(%d)\n", 
+                              op, op2, isAlpha);
                    return;
                }
            }
 #endif
-	   glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, useext(GL_COMBINE));
-	   checkGLcall("GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, useext(GL_COMBINE)");
-	   return;
+
+           if (combineOK == TRUE) {
+	       glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, useext(GL_COMBINE));
+	       checkGLcall("GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, useext(GL_COMBINE)");
+	       return;
+           }
         }
 
         /* Other texture operations require special extensions: */
 #if defined(GL_NV_texture_env_combine4)
 	if (isAlpha) {
+                opr = GL_SRC_ALPHA;
 		invopr = GL_ONE_MINUS_SRC_ALPHA;
 		src3_target = GL_SOURCE3_ALPHA_NV;
 		opr3_target = GL_OPERAND3_ALPHA_NV;
 	}
 	else {
+                opr = GL_SRC_COLOR;
 		invopr = GL_ONE_MINUS_SRC_COLOR;
 		src3_target = GL_SOURCE3_RGB_NV;
 		opr3_target = GL_OPERAND3_RGB_NV;
 	}
         Handled = TRUE; /* Again, assume handled */
 	switch (op) {
+        case D3DTOP_SELECTARG1:                                          /* = a1 * 1 + 0 * 0 */
+        case D3DTOP_SELECTARG2:                                          /* = a2 * 1 + 0 * 0 */
+                glTexEnvi(GL_TEXTURE_ENV, comb_target, GL_ADD);
+                checkGLcall("GL_TEXTURE_ENV, comb_target, GL_ADD");
+                if (op == D3DTOP_SELECTARG1) {
+                    glTexEnvi(GL_TEXTURE_ENV, src0_target, src1);                
+                    checkGLcall("GL_TEXTURE_ENV, src0_target, src1");
+                    glTexEnvi(GL_TEXTURE_ENV, opr0_target, opr1);        
+                    checkGLcall("GL_TEXTURE_ENV, opr0_target, opr1");  
+                } else {
+                    glTexEnvi(GL_TEXTURE_ENV, src0_target, src2);                
+                    checkGLcall("GL_TEXTURE_ENV, src0_target, src2");
+                    glTexEnvi(GL_TEXTURE_ENV, opr0_target, opr2);        
+                    checkGLcall("GL_TEXTURE_ENV, opr0_target, opr2");  
+                }
+                glTexEnvi(GL_TEXTURE_ENV, src1_target, GL_ZERO);             
+                checkGLcall("GL_TEXTURE_ENV, src1_target, GL_ZERO");
+                glTexEnvi(GL_TEXTURE_ENV, opr1_target, invopr);              
+                checkGLcall("GL_TEXTURE_ENV, opr1_target, invopr");  
+                glTexEnvi(GL_TEXTURE_ENV, src2_target, GL_ZERO);             
+                checkGLcall("GL_TEXTURE_ENV, src2_target, GL_ZERO");
+                glTexEnvi(GL_TEXTURE_ENV, opr2_target, opr);
+                checkGLcall("GL_TEXTURE_ENV, opr2_target, opr");  
+                glTexEnvi(GL_TEXTURE_ENV, src3_target, GL_ZERO);             
+                checkGLcall("GL_TEXTURE_ENV, src3_target, GL_ZERO");
+                glTexEnvi(GL_TEXTURE_ENV, opr3_target, opr);
+                checkGLcall("GL_TEXTURE_ENV, opr3_target, opr");  
+                break;
+
 	case D3DTOP_ADDSMOOTH:
 		glTexEnvi(GL_TEXTURE_ENV, comb_target, GL_ADD);
 		checkGLcall("GL_TEXTURE_ENV, comb_target, GL_ADD");
@@ -1037,21 +1227,21 @@ void set_tex_op(LPDIRECT3DDEVICE8 iface, BOOL isAlpha, int Stage, D3DTEXTUREOP o
 	case D3DTOP_MULTIPLYADD:
 		glTexEnvi(GL_TEXTURE_ENV, comb_target, GL_ADD);
 		checkGLcall("GL_TEXTURE_ENV, comb_target, GL_ADD");
-		glTexEnvi(GL_TEXTURE_ENV, src0_target, src1);
+		glTexEnvi(GL_TEXTURE_ENV, src0_target, src3);
 		checkGLcall("GL_TEXTURE_ENV, src0_target, src1");
-		glTexEnvi(GL_TEXTURE_ENV, opr0_target, opr1);
+		glTexEnvi(GL_TEXTURE_ENV, opr0_target, opr3);
 		checkGLcall("GL_TEXTURE_ENV, opr0_target, opr1");
 		glTexEnvi(GL_TEXTURE_ENV, src1_target, GL_ZERO);
 		checkGLcall("GL_TEXTURE_ENV, src1_target, GL_ZERO");
 		glTexEnvi(GL_TEXTURE_ENV, opr1_target, invopr);
 		checkGLcall("GL_TEXTURE_ENV, opr1_target, invopr");
-		glTexEnvi(GL_TEXTURE_ENV, src2_target, src2);
+		glTexEnvi(GL_TEXTURE_ENV, src2_target, src1);
 		checkGLcall("GL_TEXTURE_ENV, src2_target, src2");
-		glTexEnvi(GL_TEXTURE_ENV, opr2_target, opr2);
+		glTexEnvi(GL_TEXTURE_ENV, opr2_target, opr1);
 		checkGLcall("GL_TEXTURE_ENV, opr2_target, opr2");
-		glTexEnvi(GL_TEXTURE_ENV, src3_target, src3);
+		glTexEnvi(GL_TEXTURE_ENV, src3_target, src2);
 		checkGLcall("GL_TEXTURE_ENV, src3_target, src3");
-		glTexEnvi(GL_TEXTURE_ENV, opr3_target, opr3);
+		glTexEnvi(GL_TEXTURE_ENV, opr3_target, opr2);
 		checkGLcall("GL_TEXTURE_ENV, opr3_target, opr3");
 		glTexEnvi(GL_TEXTURE_ENV, scal_target, 1);
 		checkGLcall("GL_TEXTURE_ENV, scal_target, 1");
