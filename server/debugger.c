@@ -28,8 +28,7 @@ struct debug_event
     struct thread         *debugger;  /* debugger thread receiving the event */
     enum debug_event_state state;     /* event state */
     int                    status;    /* continuation status */
-    int                    code;      /* event code */
-    union debug_event_data data;      /* event data */
+    debug_event_t          data;      /* event data */
 };
 
 /* debug context */
@@ -84,21 +83,6 @@ static const struct object_ops debug_ctx_ops =
     debug_ctx_destroy              /* destroy */
 };
 
-/* size of the event data */
-static const int event_sizes[] =
-{
-    0,
-    sizeof(struct debug_event_exception),       /* EXCEPTION_DEBUG_EVENT */
-    sizeof(struct debug_event_create_thread),   /* CREATE_THREAD_DEBUG_EVENT */
-    sizeof(struct debug_event_create_process),  /* CREATE_PROCESS_DEBUG_EVENT */
-    sizeof(struct debug_event_exit),            /* EXIT_THREAD_DEBUG_EVENT */
-    sizeof(struct debug_event_exit),            /* EXIT_PROCESS_DEBUG_EVENT */
-    sizeof(struct debug_event_load_dll),        /* LOAD_DLL_DEBUG_EVENT */
-    sizeof(struct debug_event_unload_dll),      /* UNLOAD_DLL_DEBUG_EVENT */
-    sizeof(struct debug_event_output_string),   /* OUTPUT_DEBUG_STRING_EVENT */
-    sizeof(struct debug_event_rip_info)         /* RIP_EVENT */
-};
-
 
 /* initialise the fields that do not need to be filled by the client */
 static int fill_debug_event( struct thread *debugger, struct thread *thread,
@@ -107,45 +91,45 @@ static int fill_debug_event( struct thread *debugger, struct thread *thread,
     int handle;
 
     /* some events need special handling */
-    switch(event->code)
+    switch(event->data.code)
     {
     case CREATE_THREAD_DEBUG_EVENT:
-        if ((event->data.create_thread.handle = alloc_handle( debugger->process, thread,
+        if ((event->data.info.create_thread.handle = alloc_handle( debugger->process, thread,
                /* documented: THREAD_GET_CONTEXT | THREAD_SET_CONTEXT | THREAD_SUSPEND_RESUME */
                                                               THREAD_ALL_ACCESS, FALSE )) == -1)
             return 0;
         break;
     case CREATE_PROCESS_DEBUG_EVENT:
-        if ((handle = event->data.create_process.file) != -1)
+        if ((handle = event->data.info.create_process.file) != -1)
         {
             if ((handle = duplicate_handle( thread->process, handle, debugger->process,
                                             GENERIC_READ, FALSE, 0 )) == -1)
                 return 0;
-            event->data.create_process.file = handle;
+            event->data.info.create_process.file = handle;
         }
-        if ((event->data.create_process.process = alloc_handle( debugger->process, thread->process,
+        if ((event->data.info.create_process.process = alloc_handle( debugger->process, thread->process,
                                            /* documented: PROCESS_VM_READ | PROCESS_VM_WRITE */
                                                                 PROCESS_ALL_ACCESS, FALSE )) == -1)
         {
             if (handle != -1) close_handle( debugger->process, handle );
             return 0;
         }
-        if ((event->data.create_process.thread = alloc_handle( debugger->process, thread,
+        if ((event->data.info.create_process.thread = alloc_handle( debugger->process, thread,
                /* documented: THREAD_GET_CONTEXT | THREAD_SET_CONTEXT | THREAD_SUSPEND_RESUME */
                                                                THREAD_ALL_ACCESS, FALSE )) == -1)
         {
             if (handle != -1) close_handle( debugger->process, handle );
-            close_handle( debugger->process, event->data.create_process.process );
+            close_handle( debugger->process, event->data.info.create_process.process );
             return 0;
         }
         break;
     case LOAD_DLL_DEBUG_EVENT:
-        if ((handle = event->data.load_dll.handle) != -1)
+        if ((handle = event->data.info.load_dll.handle) != -1)
         {
             if ((handle = duplicate_handle( thread->process, handle, debugger->process,
                                             GENERIC_READ, FALSE, 0 )) == -1)
                 return 0;
-            event->data.load_dll.handle = handle;
+            event->data.info.load_dll.handle = handle;
         }
         break;
     }
@@ -196,14 +180,14 @@ static void build_wait_debug_reply( struct thread *thread, struct object *obj, i
 
         event->state = EVENT_SENT;
         debug_ctx->to_send = event->next;
-        req->code = event->code;
+        req->event.code = event->data.code;
         req->pid  = event->sender->process;
         req->tid  = event->sender;
-        memcpy( req + 1, &event->data, event_sizes[event->code] );
+        memcpy( &req->event, &event->data, sizeof(req->event) );
     }
     else  /* timeout or error */
     {
-        req->code = 0;
+        req->event.code = 0;
         req->pid  = 0;
         req->tid  = 0;
         thread->error = signaled;
@@ -219,8 +203,10 @@ static void build_send_event_reply( struct thread *thread, struct object *obj, i
 
     req->status = event->status;
     /* copy the context into the reply */
-    if (event->code == EXCEPTION_DEBUG_EVENT)
-        memcpy( req + 1, &event->data, event_sizes[event->code] );
+    if (event->data.code == EXCEPTION_DEBUG_EVENT)
+        memcpy( &req->event.info.exception.context,
+                &event->data.info.exception.context,
+                sizeof(req->event.info.exception.context) );
 }
 
 static void debug_event_dump( struct object *obj, int verbose )
@@ -228,7 +214,7 @@ static void debug_event_dump( struct object *obj, int verbose )
     struct debug_event *debug_event = (struct debug_event *)obj;
     assert( obj->ops == &debug_event_ops );
     fprintf( stderr, "Debug event sender=%p code=%d state=%d\n",
-             debug_event->sender, debug_event->code, debug_event->state );
+             debug_event->sender, debug_event->data.code, debug_event->state );
 }
 
 static int debug_event_signaled( struct object *obj, struct thread *thread )
@@ -252,20 +238,20 @@ static void debug_event_destroy( struct object *obj )
     if (event->state == EVENT_QUEUED)
     {
         struct process *debugger = event->debugger->process;
-        switch(event->code)
+        switch(event->data.code)
         {
         case CREATE_THREAD_DEBUG_EVENT:
-            close_handle( debugger, event->data.create_thread.handle );
+            close_handle( debugger, event->data.info.create_thread.handle );
             break;
         case CREATE_PROCESS_DEBUG_EVENT:
-            if (event->data.create_process.file != -1)
-                close_handle( debugger, event->data.create_process.file );
-            close_handle( debugger, event->data.create_process.thread );
-            close_handle( debugger, event->data.create_process.process );
+            if (event->data.info.create_process.file != -1)
+                close_handle( debugger, event->data.info.create_process.file );
+            close_handle( debugger, event->data.info.create_process.thread );
+            close_handle( debugger, event->data.info.create_process.process );
             break;
         case LOAD_DLL_DEBUG_EVENT:
-            if (event->data.load_dll.handle != -1)
-                close_handle( debugger, event->data.load_dll.handle );
+            if (event->data.info.load_dll.handle != -1)
+                close_handle( debugger, event->data.info.load_dll.handle );
             break;
         }
     }
@@ -346,7 +332,7 @@ static int continue_debug_event( struct process *process, struct thread *thread,
 
 /* queue a debug event for a debugger */
 static struct debug_event *queue_debug_event( struct thread *debugger, struct thread *thread,
-                                              int code, void *data )
+                                              debug_event_t *data )
 {
     struct debug_ctx *debug_ctx = debugger->debug_ctx;
     struct debug_event *event;
@@ -360,14 +346,13 @@ static struct debug_event *queue_debug_event( struct thread *debugger, struct th
     event->next     = NULL;
     event->prev     = NULL;
     event->state    = EVENT_QUEUED;
-    event->code     = code;
     event->sender   = (struct thread *)grab_object( thread );
     event->debugger = (struct thread *)grab_object( debugger );
-    memcpy( &event->data, data, event_sizes[code] );
+    memcpy( &event->data, data, sizeof(event->data) );
 
     if (!fill_debug_event( debugger, thread, event ))
     {
-        event->code = -1;  /* make sure we don't attempt to close handles */
+        event->data.code = -1;  /* make sure we don't attempt to close handles */
         release_object( event );
         return NULL;
     }
@@ -375,6 +360,22 @@ static struct debug_event *queue_debug_event( struct thread *debugger, struct th
     link_event( debug_ctx, event );
     suspend_process( thread->process );
     return event;
+}
+
+/* return a pointer to the context in case the thread is inside an exception event */
+CONTEXT *get_debug_context( struct thread *thread )
+{
+    struct debug_event *event;
+    struct thread *debugger = thread->process->debugger;
+
+    if (!debugger) return NULL;  /* not being debugged */
+    assert( debugger->debug_ctx );
+
+    /* find the exception event in the debugger's queue */
+    for (event = debugger->debug_ctx->event_head; event; event = event->next)
+        if (event->sender == thread && (event->data.code == EXCEPTION_DEBUG_EVENT))
+            return &event->data.info.exception.context;
+    return NULL;
 }
 
 /* attach a process to a debugger thread */
@@ -417,13 +418,12 @@ void debug_exit_thread( struct thread *thread, int exit_code )
     if (debugger)  /* being debugged -> send an event to the debugger */
     {
         struct debug_event *event;
-        struct debug_event_exit exit;
-        exit.exit_code = exit_code;
-        if (thread->process->running_threads == 1)
-            /* this is the last thread, send an exit process event */
-            event = queue_debug_event( debugger, thread, EXIT_PROCESS_DEBUG_EVENT, &exit );
-        else
-            event = queue_debug_event( debugger, thread, EXIT_THREAD_DEBUG_EVENT, &exit );
+        debug_event_t exit;
+        exit.info.exit.exit_code = exit_code;
+        /* if this is the last thread, send an exit process event */
+        exit.code = ((thread->process->running_threads == 1) ?
+                     EXIT_PROCESS_DEBUG_EVENT : EXIT_THREAD_DEBUG_EVENT);
+        event = queue_debug_event( debugger, thread, &exit );
         if (event) release_object( event );
     }
 
@@ -441,9 +441,9 @@ DECL_HANDLER(wait_debug_event)
 {
     if (!wait_for_debug_event( req->timeout ))
     {
-        req->code = 0;
-        req->pid  = NULL;
-        req->tid  = NULL;
+        req->event.code = 0;
+        req->pid = NULL;
+        req->tid = NULL;
     }
 }
 
@@ -481,13 +481,13 @@ DECL_HANDLER(send_debug_event)
     struct thread *debugger = current->process->debugger;
     struct debug_event *event;
 
-    if ((req->code <= 0) || (req->code > RIP_EVENT))
+    if ((req->event.code <= 0) || (req->event.code > RIP_EVENT))
     {
-        fatal_protocol_error( current, "send_debug_event: bad code %d\n", req->code );
+        fatal_protocol_error( current, "send_debug_event: bad code %d\n", req->event.code );
         return;
     }
     req->status = 0;
-    if (debugger && ((event = queue_debug_event( debugger, current, req->code, req + 1 ))))
+    if (debugger && ((event = queue_debug_event( debugger, current, &req->event ))))
     {
         /* wait for continue_debug_event */
         struct object *obj = &event->obj;

@@ -516,13 +516,16 @@ BOOL WINAPI TlsSetValue(
  *    Success: TRUE
  *    Failure: FALSE
  */
-BOOL WINAPI SetThreadContext(
-    HANDLE handle,  /* [in]  Handle to thread with context */
-    const CONTEXT *context) /* [out] Address of context structure */
+BOOL WINAPI SetThreadContext( HANDLE handle,           /* [in]  Handle to thread with context */
+                              const CONTEXT *context ) /* [in] Address of context structure */
 {
-    FIXME("not implemented\n" );
-    return TRUE;
+    struct set_thread_context_request *req = get_req_buffer();
+    req->handle = handle;
+    req->flags = context->ContextFlags;
+    memcpy( &req->context, context, sizeof(*context) );
+    return !server_call( REQ_SET_THREAD_CONTEXT );
 }
+
 
 /***********************************************************************
  * GetThreadContext [KERNEL32.294]  Retrieves context of thread.
@@ -531,25 +534,15 @@ BOOL WINAPI SetThreadContext(
  *    Success: TRUE
  *    Failure: FALSE
  */
-BOOL WINAPI GetThreadContext(
-    HANDLE handle,  /* [in]  Handle to thread with context */
-    CONTEXT *context) /* [out] Address of context structure */
+BOOL WINAPI GetThreadContext( HANDLE handle,     /* [in]  Handle to thread with context */
+                              CONTEXT *context ) /* [out] Address of context structure */
 {
-#ifdef __i386__
-    WORD cs, ds;
-
-    FIXME("returning dummy info\n" );
-
-    /* make up some plausible values for segment registers */
-    GET_CS(cs);
-    GET_DS(ds);
-    context->SegCs   = cs;
-    context->SegDs   = ds;
-    context->SegEs   = ds;
-    context->SegGs   = ds;
-    context->SegSs   = ds;
-    context->SegFs   = ds;
-#endif
+    struct get_thread_context_request *req = get_req_buffer();
+    req->handle = handle;
+    req->flags = context->ContextFlags;
+    memcpy( &req->context, context, sizeof(*context) );
+    if (server_call( REQ_GET_THREAD_CONTEXT )) return FALSE;
+    memcpy( context, &req->context, sizeof(*context) );
     return TRUE;
 }
 

@@ -157,6 +157,8 @@ DECL_HANDLER(create_timer);
 DECL_HANDLER(open_timer);
 DECL_HANDLER(set_timer);
 DECL_HANDLER(cancel_timer);
+DECL_HANDLER(get_thread_context);
+DECL_HANDLER(set_thread_context);
 
 #ifdef WANT_REQUEST_HANDLERS
 
@@ -254,6 +256,8 @@ static const struct handler {
     { (void(*)())req_open_timer, sizeof(struct open_timer_request) },
     { (void(*)())req_set_timer, sizeof(struct set_timer_request) },
     { (void(*)())req_cancel_timer, sizeof(struct cancel_timer_request) },
+    { (void(*)())req_get_thread_context, sizeof(struct get_thread_context_request) },
+    { (void(*)())req_set_thread_context, sizeof(struct set_thread_context_request) },
 };
 #endif  /* WANT_REQUEST_HANDLERS */
 

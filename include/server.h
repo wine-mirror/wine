@@ -27,6 +27,86 @@
 /* a path name for server requests (Unicode) */
 typedef WCHAR path_t[MAX_PATH+1];
 
+
+/* definitions of the event data depending on the event code */
+struct debug_event_exception
+{
+    int        code;           /* exception code */
+    int        flags;          /* exception flags */
+    void      *record;         /* exception record ptr */
+    void      *addr;           /* exception address */
+    int        nb_params;      /* exceptions parameters */
+    int        params[15];
+    int        first_chance;   /* first chance to handle it? */
+    CONTEXT    context;        /* thread context */
+};
+struct debug_event_create_thread
+{
+    int         handle;     /* handle to the new thread */
+    void       *teb;        /* thread teb (in debugged process address space) */
+    void       *start;      /* thread startup routine */
+};
+struct debug_event_create_process
+{
+    int         file;       /* handle to the process exe file */
+    int         process;    /* handle to the new process */
+    int         thread;     /* handle to the new thread */
+    void       *base;       /* base of executable image */
+    int         dbg_offset; /* offset of debug info in file */
+    int         dbg_size;   /* size of debug info */
+    void       *teb;        /* thread teb (in debugged process address space) */
+    void       *start;      /* thread startup routine */
+    void       *name;       /* image name (optional) */
+    int         unicode;    /* is it Unicode? */
+};
+struct debug_event_exit
+{
+    int         exit_code;  /* thread or process exit code */
+};
+struct debug_event_load_dll
+{
+    int         handle;     /* file handle for the dll */
+    void       *base;       /* base address of the dll */
+    int         dbg_offset; /* offset of debug info in file */
+    int         dbg_size;   /* size of debug info */
+    void       *name;       /* image name (optional) */
+    int         unicode;    /* is it Unicode? */
+};
+struct debug_event_unload_dll
+{
+    void       *base;       /* base address of the dll */
+};
+struct debug_event_output_string
+{
+    void       *string;     /* string to display (in debugged process address space) */
+    int         unicode;    /* is it Unicode? */
+    int         length;     /* string length */
+};
+struct debug_event_rip_info
+{
+    int         error;      /* ??? */
+    int         type;       /* ??? */
+};
+union debug_event_data
+{
+    struct debug_event_exception      exception;
+    struct debug_event_create_thread  create_thread;
+    struct debug_event_create_process create_process;
+    struct debug_event_exit           exit;
+    struct debug_event_load_dll       load_dll;
+    struct debug_event_unload_dll     unload_dll;
+    struct debug_event_output_string  output_string;
+    struct debug_event_rip_info       rip_info;
+};
+
+/* debug event data */
+typedef struct
+{
+    int                      code;   /* event code */
+    union debug_event_data   info;   /* event information */
+} debug_event_t;
+
+
 /* Create a new process from the context of the parent */
 struct new_process_request
 {
@@ -707,92 +787,18 @@ struct next_process_request
 /* Wait for a debug event */
 struct wait_debug_event_request
 {
-    IN  int          timeout;      /* timeout in ms */
-    OUT int          code;         /* event code */
-    OUT void*        pid;          /* process id */
-    OUT void*        tid;          /* thread id */
-/*  OUT union debug_event_data data; */
+    IN  int           timeout;     /* timeout in ms */
+    OUT void*         pid;         /* process id */
+    OUT void*         tid;         /* thread id */
+    OUT debug_event_t event;       /* debug event data */
 };
 
 
 /* Send a debug event */
 struct send_debug_event_request
 {
-    IN  int          code;         /* event code */
-    OUT int          status;       /* event continuation status */
-/*  IN  union debug_event_data data; */
-};
-
-
-/* definitions of the event data depending on the event code */
-struct debug_event_exception
-{
-    int        code;           /* exception code */
-    int        flags;          /* exception flags */
-    void      *record;         /* exception record ptr */
-    void      *addr;           /* exception address */
-    int        nb_params;      /* exceptions parameters */
-    int        params[15];
-    int        first_chance;   /* first chance to handle it? */
-    CONTEXT    context;        /* thread context */
-};
-struct debug_event_create_thread
-{
-    int         handle;     /* handle to the new thread */
-    void       *teb;        /* thread teb (in debugged process address space) */
-    void       *start;      /* thread startup routine */
-};
-struct debug_event_create_process
-{
-    int         file;       /* handle to the process exe file */
-    int         process;    /* handle to the new process */
-    int         thread;     /* handle to the new thread */
-    void       *base;       /* base of executable image */
-    int         dbg_offset; /* offset of debug info in file */
-    int         dbg_size;   /* size of debug info */
-    void       *teb;        /* thread teb (in debugged process address space) */
-    void       *start;      /* thread startup routine */
-    void       *name;       /* image name (optional) */
-    int         unicode;    /* is it Unicode? */
-};
-struct debug_event_exit
-{
-    int         exit_code;  /* thread or process exit code */
-};
-struct debug_event_load_dll
-{
-    int         handle;     /* file handle for the dll */
-    void       *base;       /* base address of the dll */
-    int         dbg_offset; /* offset of debug info in file */
-    int         dbg_size;   /* size of debug info */
-    void       *name;       /* image name (optional) */
-    int         unicode;    /* is it Unicode? */
-};
-struct debug_event_unload_dll
-{
-    void       *base;       /* base address of the dll */
-};
-struct debug_event_output_string
-{
-    void       *string;     /* string to display (in debugged process address space) */
-    int         unicode;    /* is it Unicode? */
-    int         length;     /* string length */
-};
-struct debug_event_rip_info
-{
-    int         error;      /* ??? */
-    int         type;       /* ??? */
-};
-union debug_event_data
-{
-    struct debug_event_exception      exception;
-    struct debug_event_create_thread  create_thread;
-    struct debug_event_create_process create_process;
-    struct debug_event_exit           exit;
-    struct debug_event_load_dll       load_dll;
-    struct debug_event_unload_dll     unload_dll;
-    struct debug_event_output_string  output_string;
-    struct debug_event_rip_info       rip_info;
+    OUT int           status;      /* event continuation status */
+    IN  debug_event_t event;       /* debug event data */
 };
 
 
@@ -1005,6 +1011,24 @@ struct cancel_timer_request
 };
 
 
+/* Retrieve the current context of a thread */
+struct get_thread_context_request
+{
+    IN  int          handle;       /* thread handle */
+    IN  unsigned int flags;        /* context flags */
+    OUT CONTEXT      context;      /* thread context */
+};
+
+
+/* Set the current context of a thread */
+struct set_thread_context_request
+{
+    IN  int          handle;       /* thread handle */
+    IN  unsigned int flags;        /* context flags */
+    IN  CONTEXT      context;      /* thread context */
+};
+
+
 /* Everything below this line is generated automatically by tools/make_requests */
 /* ### make_requests begin ### */
 
@@ -1100,6 +1124,8 @@ enum request
     REQ_OPEN_TIMER,
     REQ_SET_TIMER,
     REQ_CANCEL_TIMER,
+    REQ_GET_THREAD_CONTEXT,
+    REQ_SET_THREAD_CONTEXT,
     REQ_NB_REQUESTS
 };
 

@@ -8,15 +8,17 @@
 
 %formats =
 (
-    "int"          => "%d",
-    "long"         => "%ld",
-    "char"         => "%c",
-    "unsigned int" => "%08x",
-    "void*"        => "%p",
-    "time_t"       => "%ld",
-    "path_t"       => "&dump_unicode_string",
-    "char[1]"      => "\\\"%s\\\"",
-    "WCHAR[1]"     => "&dump_unicode_string"
+    "int"           => "%d",
+    "long"          => "%ld",
+    "char"          => "%c",
+    "unsigned int"  => "%08x",
+    "void*"         => "%p",
+    "time_t"        => "%ld",
+    "path_t"        => "&dump_path_t",
+    "debug_event_t" => "&dump_debug_event_t",
+    "CONTEXT"       => "&dump_context",
+    "char[1]"       => "\\\"%s\\\"",
+    "WCHAR[1]"      => "&dump_unicode_string"
 );
 
 my @requests = ();
@@ -123,7 +125,7 @@ sub DO_DUMP_FUNC
 {
     my $name = shift;
     my $req = shift;
-    push @trace_lines, "static void dump_${name}_$req( struct ${name}_request *req )\n{\n";
+    push @trace_lines, "static void dump_${name}_$req( const struct ${name}_request *req )\n{\n";
     while ($#_ >= 0)
     {
 	my $type = shift;
@@ -134,7 +136,8 @@ sub DO_DUMP_FUNC
             {
                 my $func = $1;
                 push @trace_lines, "    fprintf( stderr, \" $var=\" );\n";
-                push @trace_lines, "    $func( req->$var );\n";
+                if ($type =~ /[1]/) { push @trace_lines, "    $func( req->$var );\n"; }
+                else { push @trace_lines, "    $func( &req->$var );\n"; }
                 push @trace_lines, "    fprintf( stderr, \",\" );\n" if ($#_ > 0);
             }
             else
