@@ -654,7 +654,7 @@ int __pthread_mutexattr_settype(pthread_mutexattr_t *attr, int kind)
 }
 strong_alias(__pthread_mutexattr_settype, pthread_mutexattr_settype);
 
-int __pthread_mutexattr_gettype(pthread_mutexattr_t *attr, int *kind)
+int __pthread_mutexattr_gettype(const pthread_mutexattr_t *attr, int *kind)
 {
   *kind = PTHREAD_MUTEX_RECURSIVE;
   return 0;
