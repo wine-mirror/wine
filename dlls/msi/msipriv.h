@@ -311,6 +311,7 @@ extern void enum_stream_names( IStorage *stg );
 /* database internals */
 extern UINT MSI_OpenDatabaseW( LPCWSTR, LPCWSTR, MSIDATABASE ** );
 extern UINT MSI_DatabaseOpenViewW(MSIDATABASE *, LPCWSTR, MSIQUERY ** );
+extern UINT MSI_OpenQuery( MSIDATABASE *, MSIQUERY **, LPCWSTR, ... );
 
 /* view internals */
 extern UINT MSI_ViewExecute( MSIQUERY*, MSIRECORD * );

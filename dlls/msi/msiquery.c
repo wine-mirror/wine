@@ -134,6 +134,54 @@ UINT MSI_DatabaseOpenViewW(MSIDATABASE *db,
     return r;
 }
 
+UINT MSI_OpenQuery( MSIDATABASE *db, MSIQUERY **view, LPCWSTR fmt, ... )
+{
+    LPWSTR szQuery;
+    LPCWSTR p;
+    UINT sz, rc;
+    va_list va;
+
+    /* figure out how much space we need to allocate */
+    va_start(va, fmt);
+    sz = strlenW(fmt) + 1;
+    p = fmt;
+    while (*p)
+    {
+        p = strchrW(p, '%');
+        if (!p)
+            break;
+        p++;
+        switch (*p)
+        {
+        case 's':  /* a string */
+            sz += strlenW(va_arg(va,LPCWSTR));
+            break;
+        case 'd':
+        case 'i':  /* an integer -2147483648 seems to be longest */
+            sz += 3*sizeof(int);
+            (void)va_arg(va,int);
+            break;
+        case '%':  /* a single % - leave it alone */
+            break;
+        default:
+            FIXME("Unhandled character type %c\n",*p);
+        }
+        p++;
+    }
+    va_end(va);
+
+    /* construct the string */
+    szQuery = HeapAlloc(GetProcessHeap(), 0, sz*sizeof(WCHAR));
+    va_start(va, fmt);
+    vsnprintfW(szQuery, sz, fmt, va);
+    va_end(va);
+
+    /* perform the query */
+    rc = MSI_DatabaseOpenViewW(db, szQuery, view);
+    HeapFree(GetProcessHeap(), 0, szQuery);
+    return rc;
+}
+
 UINT WINAPI MsiDatabaseOpenViewW(MSIHANDLE hdb,
               LPCWSTR szQuery, MSIHANDLE *phView)
 {

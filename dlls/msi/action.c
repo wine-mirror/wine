@@ -501,54 +501,6 @@ extern void ACTION_free_package_structures( MSIPACKAGE* package)
     HeapFree(GetProcessHeap(),0,package->PackagePath);
 }
 
-static UINT ACTION_OpenQuery( MSIDATABASE *db, MSIQUERY **view, LPCWSTR fmt, ... )
-{
-    LPWSTR szQuery;
-    LPCWSTR p;
-    UINT sz, rc;
-    va_list va;
-
-    /* figure out how much space we need to allocate */
-    va_start(va, fmt);
-    sz = strlenW(fmt) + 1;
-    p = fmt;
-    while (*p)
-    {
-        p = strchrW(p, '%');
-        if (!p)
-            break;
-        p++;
-        switch (*p)
-        {
-        case 's':  /* a string */
-            sz += strlenW(va_arg(va,LPCWSTR));
-            break;
-        case 'd':
-        case 'i':  /* an integer -2147483648 seems to be longest */
-            sz += 3*sizeof(int);
-            (void)va_arg(va,int);
-            break;
-        case '%':  /* a single % - leave it alone */
-            break;
-        default:
-            FIXME("Unhandled character type %c\n",*p);
-        }
-        p++;
-    }
-    va_end(va);
-
-    /* construct the string */
-    szQuery = HeapAlloc(GetProcessHeap(), 0, sz*sizeof(WCHAR));
-    va_start(va, fmt);
-    vsnprintfW(szQuery, sz, fmt, va);
-    va_end(va);
-
-    /* perform the query */
-    rc = MSI_DatabaseOpenViewW(db, szQuery, view);
-    HeapFree(GetProcessHeap(), 0, szQuery);
-    return rc;
-}
-
 static void ui_progress(MSIPACKAGE *package, int a, int b, int c, int d )
 {
     MSIRECORD * row;
@@ -576,7 +528,7 @@ static void ui_actiondata(MSIPACKAGE *package, LPCWSTR action, MSIRECORD * recor
 
     if (!package->LastAction || strcmpW(package->LastAction,action))
     {
-        rc = ACTION_OpenQuery(package->db, &view, Query_t, action);
+        rc = MSI_OpenQuery(package->db, &view, Query_t, action);
         if (rc != ERROR_SUCCESS)
             return;
 
@@ -673,7 +625,7 @@ static void ui_actionstart(MSIPACKAGE *package, LPCWSTR action)
 
     GetTimeFormatW(LOCALE_USER_DEFAULT, 0, NULL, format, timet, 0x100);
 
-    rc = ACTION_OpenQuery(package->db, &view, Query_t, action);
+    rc = MSI_OpenQuery(package->db, &view, Query_t, action);
     if (rc != ERROR_SUCCESS)
         return;
     rc = MSI_ViewExecute(view, 0);
@@ -920,7 +872,7 @@ static UINT ACTION_PerformActionSequence(MSIPACKAGE *package, UINT seq)
    'w','h','e','r','e',' ','S','e','q','u','e','n','c','e',' ',
        '=',' ','%','i',0};
 
-    rc = ACTION_OpenQuery(package->db, &view, ExecSeqQuery, seq);
+    rc = MSI_OpenQuery(package->db, &view, ExecSeqQuery, seq);
 
     if (rc == ERROR_SUCCESS)
     {
@@ -1031,7 +983,7 @@ static UINT ACTION_ProcessExecSequence(MSIPACKAGE *package, BOOL UIran)
         msiobj_release(&view->hdr);
     }
 
-    rc = ACTION_OpenQuery(package->db, &view, ExecSeqQuery, seq);
+    rc = MSI_OpenQuery(package->db, &view, ExecSeqQuery, seq);
     if (rc == ERROR_SUCCESS)
     {
         rc = MSI_ViewExecute(view, 0);
@@ -1306,7 +1258,7 @@ static UINT ACTION_CustomAction(MSIPACKAGE *package,const WCHAR *action,
     LPWSTR target;
     WCHAR *deformated=NULL;
 
-    rc = ACTION_OpenQuery(package->db, &view, ExecSeqQuery, action);
+    rc = MSI_OpenQuery(package->db, &view, ExecSeqQuery, action);
     if (rc != ERROR_SUCCESS)
         return rc;
 
@@ -1480,7 +1432,7 @@ static UINT store_binary_to_temp(MSIPACKAGE *package, const LPWSTR source,
         if (the_file == INVALID_HANDLE_VALUE)
             return ERROR_FUNCTION_FAILED;
 
-        rc = ACTION_OpenQuery(package->db, &view, fmt, source);
+        rc = MSI_OpenQuery(package->db, &view, fmt, source);
         if (rc != ERROR_SUCCESS)
             return rc;
 
@@ -2084,7 +2036,7 @@ static void load_feature(MSIPACKAGE* package, MSIRECORD * row)
 
     /* load feature components */
 
-    rc = ACTION_OpenQuery(package->db, &view, Query1, package->features[index].Feature);
+    rc = MSI_OpenQuery(package->db, &view, Query1, package->features[index].Feature);
     if (rc != ERROR_SUCCESS)
         return;
     rc = MSI_ViewExecute(view,0);
@@ -2120,7 +2072,7 @@ static void load_feature(MSIPACKAGE* package, MSIRECORD * row)
             continue;
         }
 
-        rc = ACTION_OpenQuery(package->db, &view2, Query2, buffer);
+        rc = MSI_OpenQuery(package->db, &view2, Query2, buffer);
         if (rc != ERROR_SUCCESS)
         {
             msiobj_release( &row2->hdr );
@@ -2342,7 +2294,7 @@ static INT load_folder(MSIPACKAGE *package, const WCHAR* dir)
 
     package->folders[index].Directory = dupstrW(dir);
 
-    rc = ACTION_OpenQuery(package->db, &view, Query, dir);
+    rc = MSI_OpenQuery(package->db, &view, Query, dir);
     if (rc != ERROR_SUCCESS)
         return -1;
 
@@ -4068,7 +4020,7 @@ static LPWSTR resolve_keypath( MSIPACKAGE* package, INT
         static const WCHAR fmt[]={'%','0','2','i',':','%','s',0};
         static const WCHAR fmt2[]={'%','0','2','i',':','%','s','\\','%','s',0};
 
-        rc = ACTION_OpenQuery(package->db,&view,ExecSeqQuery,cmp->KeyPath);
+        rc = MSI_OpenQuery(package->db,&view,ExecSeqQuery,cmp->KeyPath);
 
         if (rc!=ERROR_SUCCESS)
             return NULL;
@@ -4345,7 +4297,7 @@ static UINT register_appid(MSIPACKAGE *package, LPCWSTR clsid, LPCWSTR app )
     if (!package)
         return ERROR_INVALID_HANDLE;
 
-    rc = ACTION_OpenQuery(package->db, &view, ExecSeqQuery, clsid);
+    rc = MSI_OpenQuery(package->db, &view, ExecSeqQuery, clsid);
     if (rc != ERROR_SUCCESS)
         return rc;
 
@@ -4673,7 +4625,7 @@ static UINT register_parent_progid(MSIPACKAGE *package, LPCWSTR parent,
     if (!package)
         return ERROR_INVALID_HANDLE;
 
-    rc = ACTION_OpenQuery(package->db, &view, Query_t, parent);
+    rc = MSI_OpenQuery(package->db, &view, Query_t, parent);
     if (rc != ERROR_SUCCESS)
         return rc;
 
