@@ -41,9 +41,9 @@ int Image_Root;
 
 static LPTSTR pathBuffer;
 
-#define CX_BITMAP    16
-#define CY_BITMAP    16
-#define NUM_BITMAPS  3
+#define CX_ICON    16
+#define CY_ICON    16
+#define NUM_ICONS    3
 
 static BOOL get_item_path(HWND hwndTV, HTREEITEM hItem, HKEY* phKey, LPTSTR* pKeyPath, int* pPathLen, int* pMaxLen)
 {
@@ -165,28 +165,28 @@ static BOOL InitTreeViewItems(HWND hwndTV, LPTSTR pHostName)
 static BOOL InitTreeViewImageLists(HWND hwndTV)
 {
     HIMAGELIST himl;  /* handle to image list  */
-    HBITMAP hbmp;     /* handle to bitmap  */
+    HICON hico;       /* handle to icon  */
 
     /* Create the image list.  */
-    if ((himl = ImageList_Create(CX_BITMAP, CY_BITMAP,
-                                 FALSE, NUM_BITMAPS, 0)) == NULL)
+    if ((himl = ImageList_Create(CX_ICON, CY_ICON,
+                                 ILC_MASK, 0, NUM_ICONS)) == NULL)
         return FALSE;
 
     /* Add the open file, closed file, and document bitmaps.  */
-    hbmp = LoadBitmap(hInst, MAKEINTRESOURCE(IDB_OPEN_FILE));
-    Image_Open = ImageList_Add(himl, hbmp, NULL);
-    DeleteObject(hbmp);
+    hico = LoadIcon(hInst, MAKEINTRESOURCE(IDI_OPEN_FILE));
+    Image_Open = ImageList_AddIcon(himl, hico);
 
-    hbmp = LoadBitmap(hInst, MAKEINTRESOURCE(IDB_CLOSED_FILE));
-    Image_Closed = ImageList_Add(himl, hbmp, NULL);
-    DeleteObject(hbmp);
+    hico = LoadIcon(hInst, MAKEINTRESOURCE(IDI_CLOSED_FILE));
+    Image_Closed = ImageList_AddIcon(himl, hico);
 
-    hbmp = LoadBitmap(hInst, MAKEINTRESOURCE(IDB_ROOT));
-    Image_Root = ImageList_Add(himl, hbmp, NULL);
-    DeleteObject(hbmp);
+    hico = LoadIcon(hInst, MAKEINTRESOURCE(IDI_ROOT));
+    Image_Root = ImageList_AddIcon(himl, hico);
 
     /* Fail if not all of the images were added.  */
-    if (ImageList_GetImageCount(himl) < 3) return FALSE;
+    if (ImageList_GetImageCount(himl) < NUM_ICONS)
+    {
+      return FALSE;
+    }
 
     /* Associate the image list with the tree view control.  */
     TreeView_SetImageList(hwndTV, himl, TVSIL_NORMAL);

@@ -1,7 +1,10 @@
 Makefile
-folder1.bmp
-folder2.bmp
-folder3.bmp
+bin.ico
+computer.ico
+folder.ico
+folderopen.ico
 regedit.exe.dbg.c
 regedit.exe.spec.c
+regedit.ico
 rsrc.res
+string.ico

@@ -23,9 +23,12 @@ C_SRCS = \
 RC_SRCS = rsrc.rc
 RC_BINSRC = resource.rc
 RC_BINARIES = \
-	folder1.bmp \
-	folder2.bmp \
-	folder3.bmp 
+	bin.ico \
+	computer.ico \
+	folder.ico \
+	folderopen.ico \
+	regedit.ico \
+	string.ico
 
 PLTESTS = \
 	tests/regedit.pl
