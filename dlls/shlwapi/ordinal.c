@@ -447,34 +447,6 @@ DWORD WINAPI SHLWAPI_437 (DWORD x)
 	return 0xabba1247;
 }
 
-/*************************************************************************
- *      UrlEscapeA	[SHLWAPI]
- */
-HRESULT WINAPI UrlEscapeA(
-	LPCSTR pszUrl,
-	LPSTR pszEscaped,
-	LPDWORD pcchEscaped,
-	DWORD dwFlags)
-{
-	FIXME("(%s %p %p 0x%08lx)stub\n",debugstr_a(pszUrl),
-	  pszEscaped, pcchEscaped, dwFlags);
-	return 0;
-}	
-
-/*************************************************************************
- *      UrlEscapeW	[SHLWAPI]
- */
-HRESULT WINAPI UrlEscapeW(
-	LPCWSTR pszUrl,
-	LPWSTR pszEscaped,
-	LPDWORD pcchEscaped,
-	DWORD dwFlags)
-{
-	FIXME("(%s %p %p 0x%08lx)stub\n",debugstr_w(pszUrl),
-	  pszEscaped, pcchEscaped, dwFlags);
-	return 0;
-}	
-
 
 /*************************************************************************
  *      SHCreateShellPalette	[SHLWAPI.@]

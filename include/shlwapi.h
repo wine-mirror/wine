@@ -7,6 +7,27 @@
 extern "C" {
 #endif /* defined(__cplusplus) */
 
+
+/*
+ * The URL_ defines were determined by trial and error.  If they become
+ * documented please check them and add the missing ones including:
+ *
+ * URL_ESCAPE_PERCENT
+ * URL_PLUGGABLE_PROTOCOL
+ * URL_DONT_ESCAPE_EXTRA_INFO
+ * URL_ESCAPE_SEGMENT_ONLY
+ */
+
+#define URL_UNESCAPE_INPLACE         0x00100000
+#define URL_DONT_UNESCAPE_EXTRA_INFO 0x02000000
+ 
+#define URL_ESCAPE_SPACES_ONLY       0x04000000
+
+#define URL_UNESCAPE                 0x10000000
+#define URL_ESCAPE_UNSAFE            0x20000000
+#define URL_DONT_SIMPLIFY            0x40000000
+
+
 BOOL WINAPI PathAppendA(LPSTR lpszPath1,LPCSTR lpszPath2);
 BOOL WINAPI PathAppendW(LPWSTR lpszPath1,LPCWSTR lpszPath2);
 
@@ -129,6 +150,24 @@ HRESULT WINAPI SHDeleteKeyW(HKEY hkey, LPCWSTR pszSubKey);
 DWORD WINAPI SHDeleteEmptyKeyA(HKEY hKey, LPCSTR lpszSubKey);
 DWORD WINAPI SHDeleteEmptyKeyW(HKEY hKey, LPCWSTR lpszSubKey);
 #define  SHDeleteEmptyKey WINELIB_NAME_AW(SHDeleteEmptyKey)
+
+HRESULT WINAPI UrlCanonicalizeA(LPCSTR pszUrl, LPSTR pszCanonicalized, 
+				LPDWORD pcchCanonicalized, DWORD dwFlags);
+HRESULT WINAPI UrlCanonicalizeW(LPCWSTR pszUrl, LPWSTR pszCanonicalized, 
+				LPDWORD pcchCanonicalized, DWORD dwFlags);
+#define UrlCanonicalize WINELIB_NAME_AW(UrlCanoncalize)
+
+HRESULT WINAPI UrlEscapeA(LPCSTR pszUrl, LPSTR pszEscaped, LPDWORD pcchEscaped,
+			  DWORD dwFlags);
+HRESULT WINAPI UrlEscapeW(LPCWSTR pszUrl, LPWSTR pszEscaped,
+			  LPDWORD pcchEscaped, DWORD dwFlags);
+#define UrlEscape WINELIB_NAME_AW(UrlEscape)
+
+HRESULT WINAPI UrlUnescapeA(LPCSTR pszUrl, LPSTR pszUnescaped,
+			    LPDWORD pcchUnescaped, DWORD dwFlags);
+HRESULT WINAPI UrlUnescapeW(LPCWSTR pszUrl, LPWSTR pszUnescaped,
+			    LPDWORD pcchUnescaped, DWORD dwFlags);
+#define UrlUnescape WINELIB_AW_NAME(UrlUnescape)
 
 typedef struct _DllVersionInfo {
     DWORD cbSize;

@@ -663,8 +663,8 @@ debug_channels (shell)
 @ stub    StrTrimW
 @ stub    UrlApplySchemeA
 @ stub    UrlApplySchemeW
-@ stub    UrlCanonicalizeA
-@ stub    UrlCanonicalizeW
+@ stdcall UrlCanonicalizeA(str ptr ptr long) UrlCanonicalizeA
+@ stdcall UrlCanonicalizeW(wstr ptr ptr long) UrlCanonicalizeW
 @ stub    UrlCombineA
 @ stub    UrlCombineW
 @ stub    UrlCompareA
@@ -685,8 +685,8 @@ debug_channels (shell)
 @ stub    UrlIsOpaqueA
 @ stub    UrlIsOpaqueW
 @ stub    UrlIsW
-@ stub    UrlUnescapeA
-@ stub    UrlUnescapeW
+@ stdcall UrlUnescapeA(str ptr ptr long) UrlUnescapeA
+@ stdcall UrlUnescapeW(wstr ptr ptr long) UrlUnescapeW
 @ varargs wnsprintfA(ptr long str)wnsprintfA
 @ varargs wnsprintfW(ptr long wstr)wnsprintfW
 
