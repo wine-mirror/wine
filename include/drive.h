@@ -54,8 +54,6 @@ extern int DRIVE_Disable( int drive  );
 extern int DRIVE_Enable( int drive  );
 extern int DRIVE_SetLogicalMapping ( int existing_drive, int new_drive );
 extern int DRIVE_OpenDevice( int drive, int flags );
-extern int DRIVE_RawRead(BYTE drive, DWORD begin, DWORD length, BYTE *dataptr, BOOL fake_success );
-extern int DRIVE_RawWrite(BYTE drive, DWORD begin, DWORD length, BYTE *dataptr, BOOL fake_success );
 extern char *DRIVE_BuildEnv(void);
 
 #endif  /* __WINE_DRIVE_H */

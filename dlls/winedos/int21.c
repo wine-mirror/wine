@@ -154,6 +154,22 @@ static BYTE INT21_MapDrive( BYTE drive )
 
 
 /***********************************************************************
+ *           INT21_SetCurrentDrive
+ *
+ * Set current drive. Uses scheme (0=A:, 1=B:, 2=C:, ...).
+ */
+static void INT21_SetCurrentDrive( BYTE drive )
+{
+    WCHAR drivespec[3] = {'A', ':', 0};
+
+    drivespec[0] += drive;
+
+    if (!SetCurrentDirectoryW( drivespec ))
+        TRACE( "Failed to set current drive.\n" );
+}
+
+
+/***********************************************************************
  *           INT21_ReadChar
  *
  * Reads a character from the standard input.
@@ -1584,7 +1600,139 @@ static void INT21_GetPSP( CONTEXT86 *context )
  */
 static void INT21_Ioctl_Block( CONTEXT86 *context )
 {
-    INT_Int21Handler( context );
+    BYTE *dataptr;
+    BYTE  drive = INT21_MapDrive( BL_reg(context) );
+    WCHAR drivespec[4] = {'A', ':', '\\', 0};
+    UINT  drivetype;
+
+    drivespec[0] += drive;
+    drivetype = GetDriveTypeW( drivespec );
+
+    if (drivetype == DRIVE_UNKNOWN || drivetype == DRIVE_NO_ROOT_DIR)
+    {
+        TRACE( "IOCTL - SUBFUNCTION %d - INVALID DRIVE %c:\n", 
+               AL_reg(context), 'A' + drive );
+        SetLastError( ERROR_INVALID_DRIVE );
+        SET_AX( context, ERROR_INVALID_DRIVE );
+        SET_CFLAG( context );
+        return;
+    }
+
+    switch (AL_reg(context))
+    {
+    case 0x04: /* READ FROM BLOCK DEVICE CONTROL CHANNEL */
+    case 0x05: /* WRITE TO BLOCK DEVICE CONTROL CHANNEL */
+        INT_BARF( context, 0x21 );
+        break;
+
+    case 0x08: /* CHECK IF BLOCK DEVICE REMOVABLE */
+        TRACE( "IOCTL - CHECK IF BLOCK DEVICE REMOVABLE - %c:\n",
+               'A' + drive );
+
+        if (drivetype == DRIVE_REMOVABLE)
+            SET_AX( context, 0 ); /* removable */
+        else
+            SET_AX( context, 1 ); /* not removable */
+        break;
+
+    case 0x09: /* CHECK IF BLOCK DEVICE REMOTE */
+        TRACE( "IOCTL - CHECK IF BLOCK DEVICE REMOTE - %c:\n",
+               'A' + drive );
+
+        if (drivetype == DRIVE_REMOTE)
+            SET_DX( context, (1<<9) | (1<<12) ); /* remote + no direct IO */
+        else
+            SET_DX( context, 0 ); /* FIXME: use driver attr here */
+        break;
+
+    case 0x0d: /* GENERIC BLOCK DEVICE REQUEST */
+        /* Get pointer to IOCTL parameter block. */
+        dataptr = CTX_SEG_OFF_TO_LIN(context, context->SegDs, context->Edx);
+
+        switch (CX_reg(context))
+        {
+        case 0x0841: /* write logical device track */
+            TRACE( "GENERIC IOCTL - Write logical device track - %c:\n",
+                   'A' + drive);
+            {
+                WORD head   = *(WORD *)dataptr+1;
+                WORD cyl    = *(WORD *)dataptr+3;
+                WORD sect   = *(WORD *)dataptr+5;
+                WORD nrsect = *(WORD *)dataptr+7;
+                BYTE *data  =  (BYTE *)dataptr+9; /* FIXME: is this correct? */
+
+                if (!DOSVM_RawWrite(drive, head*cyl*sect, nrsect, data, FALSE))
+                {
+                    SET_AX( context, ERROR_WRITE_FAULT );
+                    SET_CFLAG(context);
+                }
+            }
+            break;
+
+        case 0x084a: /* lock logical volume */
+            TRACE( "GENERIC IOCTL - Lock logical volume, level %d mode %d - %c:\n",
+                   BH_reg(context), DX_reg(context), 'A' + drive );
+            break;
+
+        case 0x0860: /* get device parameters */
+            INT_Int21Handler( context );
+            break;
+
+        case 0x0861: /* read logical device track */
+            TRACE( "GENERIC IOCTL - Read logical device track - %c:\n",
+                   'A' + drive);
+            {
+                WORD head   = *(WORD *)dataptr+1;
+                WORD cyl    = *(WORD *)dataptr+3;
+                WORD sect   = *(WORD *)dataptr+5;
+                WORD nrsect = *(WORD *)dataptr+7;
+                BYTE *data  =  (BYTE *)dataptr+9; /* FIXME: is this correct? */
+
+                if (!DOSVM_RawRead(drive, head*cyl*sect, nrsect, data, FALSE))
+                {
+                    SET_AX( context, ERROR_READ_FAULT );
+                    SET_CFLAG(context);
+                }
+            }
+            break;
+
+        case 0x0866: /* get volume serial number */
+            INT_Int21Handler( context );
+            break;
+
+        case 0x086a: /* unlock logical volume */
+            TRACE( "GENERIC IOCTL - Logical volume unlocked - %c:\n", 
+                   'A' + drive );
+            break;
+
+        case 0x086f: /* get drive map information */
+            INT_Int21Handler( context );
+            break;
+
+        case 0x0872:
+            INT_Int21Handler( context );
+            break;
+
+        default:
+            INT_BARF( context, 0x21 );            
+        }
+        break;
+
+    case 0x0e: /* GET LOGICAL DRIVE MAP */
+        TRACE( "IOCTL - GET LOGICAL DRIVE MAP - %c:\n",
+               'A' + drive );
+        /* FIXME: this is not correct if drive has mappings */
+        SET_AL( context, 0 ); /* drive has no mapping */
+        break;
+
+    case 0x0f: /* SET LOGICAL DRIVE MAP */
+        INT_Int21Handler( context );
+        break;
+
+    case 0x11: /* QUERY GENERIC IOCTL CAPABILITY */
+    default:
+        INT_BARF( context, 0x21 );
+    }
 }
 
 
@@ -1613,7 +1761,74 @@ static void INT21_Ioctl_Char( CONTEXT86 *context )
         return;
     }
 
-    INT_Int21Handler( context );
+    switch (AL_reg(context))
+    {
+    case 0x00: /* GET DEVICE INFORMATION */
+        TRACE( "IOCTL - GET DEVICE INFORMATION - %d\n", BX_reg(context) );
+        if (dev)
+        {
+            /*
+             * Returns attribute word in DX: 
+             *   Bit 14 - Device driver can process IOCTL requests.
+             *   Bit 13 - Output until busy supported.
+             *   Bit 11 - Driver supports OPEN/CLOSE calls.
+             *   Bit  8 - Unknown.
+             *   Bit  7 - Set (indicates device).
+             *   Bit  6 - EOF on input.
+             *   Bit  5 - Raw (binary) mode.
+             *   Bit  4 - Device is special (uses int29).
+             *   Bit  3 - Clock device.
+             *   Bit  2 - NUL device.
+             *   Bit  1 - Standard output.
+             *   Bit  0 - Standard input.
+             */
+            SET_DX( context, dev->flags );
+        }
+        else
+        {
+            /*
+             * Returns attribute word in DX: 
+             *   Bit 15    - File is remote.
+             *   Bit 14    - Don't set file date/time on closing.
+             *   Bit 11    - Media not removable.
+             *   Bit  8    - Generate int24 if no disk space on write 
+             *               or read past end of file
+             *   Bit  7    - Clear (indicates file).
+             *   Bit  6    - File has not been written.
+             *   Bit  5..0 - Drive number (0=A:,...)
+             *
+             * FIXME: Should check if file is on remote or removable drive.
+             * FIXME: Should use drive file is located on (and not current).
+             */
+            SET_DX( context, 0x0140 + INT21_GetCurrentDrive() );
+        }
+        break;
+
+    case 0x01: /* SET DEVICE INFORMATION */
+    case 0x02: /* READ FROM CHARACTER DEVICE CONTROL CHANNEL */
+    case 0x03: /* WRITE TO CHARACTER DEVICE CONTROL CHANNEL */
+    case 0x06: /* GET INPUT STATUS */
+    case 0x07: /* GET OUTPUT STATUS */
+        INT_BARF( context, 0x21 );
+        break;
+
+    case 0x0a: /* CHECK IF HANDLE IS REMOTE */
+        TRACE( "IOCTL - CHECK IF HANDLE IS REMOTE - %d\n", BX_reg(context) );
+        /*
+         * Returns attribute word in DX:
+         *   Bit 15 - Set if remote.
+         *   Bit 14 - Set if date/time not set on close.
+         *
+         * FIXME: Should check if file is on remote drive.
+         */
+        SET_DX( context, 0 );
+        break;
+
+    case 0x0c: /* GENERIC CHARACTER DEVICE REQUEST */
+    case 0x10: /* QUERY GENERIC IOCTL CAPABILITY */
+    default:
+        INT_BARF( context, 0x21 );
+    }
 }
 
 
@@ -2211,7 +2426,9 @@ void WINAPI DOSVM_Int21Handler( CONTEXT86 *context )
         break;
 
     case 0x0e: /* SELECT DEFAULT DRIVE */
-        INT_Int21Handler( context );
+        TRACE( "SELECT DEFAULT DRIVE - %c:\n", 'A' + DL_reg(context) );
+        INT21_SetCurrentDrive( DL_reg(context) );
+        SET_AL( context, MAX_DOS_DRIVES );
         break;
 
     case 0x0f: /* OPEN FILE USING FCB */

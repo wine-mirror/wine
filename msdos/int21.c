@@ -275,35 +275,6 @@ static void GetDrivePB( CONTEXT86 *context, int drive )
 }
 
 
-static void ioctlGetDeviceInfo( CONTEXT86 *context )
-{
-    int curr_drive;
-    const DOS_DEVICE *dev;
-
-    TRACE("(%d)\n", BX_reg(context));
-
-    RESET_CFLAG(context);
-
-    /* DOS device ? */
-    if ((dev = DOSFS_GetDeviceByHandle( DosFileHandleToWin32Handle(BX_reg(context)) )))
-    {
-        SET_DX( context, dev->flags );
-        return;
-    }
-
-    /* it seems to be a file */
-    curr_drive = DRIVE_GetCurrentDrive();
-    SET_DX( context, 0x0140 + curr_drive + ((curr_drive > 1) ? 0x0800 : 0) );
-    /* no floppy */
-    /* bits 0-5 are current drive
-     * bit 6 - file has NOT been written..FIXME: correct?
-     * bit 8 - generate int24 if no diskspace on write/ read past end of file
-     * bit 11 - media not removable
-     * bit 14 - don't set file date/time on closing
-     * bit 15 - file is remote
-     */
-}
-
 static BOOL ioctlGenericBlkDevReq( CONTEXT86 *context )
 {
 	BYTE *dataptr = CTX_SEG_OFF_TO_LIN(context, context->SegDs, context->Edx);
@@ -323,10 +294,6 @@ static BOOL ioctlGenericBlkDevReq( CONTEXT86 *context )
 
 	switch (CL_reg(context))
 	{
-		case 0x4a: /* lock logical volume */
-			TRACE("lock logical volume (%d) level %d mode %d\n",drive,BH_reg(context),DX_reg(context));
-			break;
-
 		case 0x60: /* get device parameters */
 			   /* used by w4wgrp's winfile */
 			memset(dataptr, 0, 0x20); /* DOS 6.22 uses 0x20 bytes */
@@ -348,30 +315,6 @@ static BOOL ioctlGenericBlkDevReq( CONTEXT86 *context )
 			RESET_CFLAG(context);
 			break;
 
-		case 0x41: /* write logical device track */
-		case 0x61: /* read logical device track */
-			{
-				BYTE drive = BL_reg(context) ?
-						BL_reg(context) : DRIVE_GetCurrentDrive();
-				WORD head   = *(WORD *)dataptr+1;
-				WORD cyl    = *(WORD *)dataptr+3;
-				WORD sect   = *(WORD *)dataptr+5;
-				WORD nrsect = *(WORD *)dataptr+7;
-				BYTE *data  =  (BYTE *)dataptr+9;
-				int (*raw_func)(BYTE, DWORD, DWORD, BYTE *, BOOL);
-
-				raw_func = (CL_reg(context) == 0x41) ?
-								DRIVE_RawWrite : DRIVE_RawRead;
-
-				if (raw_func(drive, head*cyl*sect, nrsect, data, FALSE))
-					RESET_CFLAG(context);
-				else
-				{
-					SET_AX( context, 0x1e ); /* read fault */
-					SET_CFLAG(context);
-				}
-			}
-			break;
 		case 0x66:/*  get disk serial number */
 			{
 				char	label[12],fsname[9],path[4];
@@ -386,10 +329,6 @@ static BOOL ioctlGenericBlkDevReq( CONTEXT86 *context )
 				memcpy(dataptr+6,label	,11);
 				memcpy(dataptr+17,fsname,8);
 			}
-			break;
-
-		case 0x6a:
-			TRACE("logical volume %d unlocked.\n",drive);
 			break;
 
 		case 0x6f:
@@ -911,12 +850,6 @@ void WINAPI INT_Int21Handler( CONTEXT86 *context )
 
     switch(AH_reg(context))
     {
-    case 0x0e: /* SELECT DEFAULT DRIVE */
-	TRACE("SELECT DEFAULT DRIVE %d\n", DL_reg(context));
-        DRIVE_SetCurrentDrive( DL_reg(context) );
-        SET_AL( context, MAX_DOS_DRIVES );
-        break;
-
     case 0x11: /* FIND FIRST MATCHING FILE USING FCB */
 	TRACE("FIND FIRST MATCHING FILE USING FCB %p\n",
 	      CTX_SEG_OFF_TO_LIN(context, context->SegDs, context->Edx));
@@ -981,81 +914,11 @@ void WINAPI INT_Int21Handler( CONTEXT86 *context )
     case 0x44: /* IOCTL */
         switch (AL_reg(context))
         {
-        case 0x00:
-            ioctlGetDeviceInfo(context);
-            break;
-
-        case 0x01:
-            break;
-  
-	case 0x05:{	/* IOCTL - WRITE TO BLOCK DEVICE CONTROL CHANNEL */
-	    /*BYTE *dataptr = CTX_SEG_OFF_TO_LIN(context, context->SegDs,context->Edx);*/
-	    int	drive = DOS_GET_DRIVE(BL_reg(context));
-
-	    FIXME("program tried to write to block device control channel of drive %d:\n",drive);
-	    /* for (i=0;i<CX_reg(context);i++)
-	    	fprintf(stdnimp,"%02x ",dataptr[i]);
-	    fprintf(stdnimp,"\n");*/
-	    SET_AX( context, context->Ecx );
-	    break;
-	}
-        case 0x08:   /* Check if drive is removable. */
-            TRACE("IOCTL - CHECK IF BLOCK DEVICE REMOVABLE for drive %s\n",
-		 INT21_DriveName( BL_reg(context)));
-            switch(GetDriveType16( DOS_GET_DRIVE( BL_reg(context) )))
-            {
-            case DRIVE_UNKNOWN:
-                SetLastError( ERROR_INVALID_DRIVE );
-                SET_AX( context, ERROR_INVALID_DRIVE );
-                SET_CFLAG(context);
-                break;
-            case DRIVE_REMOVABLE:
-                SET_AX( context, 0 );      /* removable */
-                break;
-            default:
-                SET_AX( context, 1 );   /* not removable */
-                break;
-            }
-            break;
-
-        case 0x09:   /* CHECK IF BLOCK DEVICE REMOTE */
-            TRACE("IOCTL - CHECK IF BLOCK DEVICE REMOTE for drive %s\n",
-		 INT21_DriveName( BL_reg(context)));
-            switch(GetDriveType16( DOS_GET_DRIVE( BL_reg(context) )))
-            {
-            case DRIVE_UNKNOWN:
-                SetLastError( ERROR_INVALID_DRIVE );
-                SET_AX( context, ERROR_INVALID_DRIVE );
-                SET_CFLAG(context);
-                break;
-            case DRIVE_REMOTE:
-                SET_DX( context, (1<<9) | (1<<12) );  /* remote */
-                break;
-            default:
-                SET_DX( context, 0 );  /* FIXME: use driver attr here */
-                break;
-            }
-            break;
-
-        case 0x0a: /* check if handle (BX) is remote */
-            TRACE("IOCTL - CHECK IF HANDLE %d IS REMOTE\n",BX_reg(context));
-            /* returns DX, bit 15 set if remote, bit 14 set if date/time
-             * not set on close
-             */
-            SET_DX( context, 0 );
-            break;
-
         case 0x0d:
             TRACE("IOCTL - GENERIC BLOCK DEVICE REQUEST %s\n",
 		  INT21_DriveName( BL_reg(context)));
             bSetDOSExtendedError = ioctlGenericBlkDevReq(context);
             break;
-
-	case 0x0e: /* get logical drive mapping */
-            TRACE("IOCTL - GET LOGICAL DRIVE MAP for drive %s\n",
-		  INT21_DriveName( BL_reg(context)));
-	    SET_AL( context, 0 ); /* drive has no mapping - FIXME: may be wrong*/
-	    break;
 
         case 0x0F:   /* Set logical drive mapping */
 	    {
@@ -1070,10 +933,6 @@ void WINAPI INT_Int21Handler( CONTEXT86 *context )
 	    }
             break;
 	    }
-
-        default:
-            INT_BARF( context, 0x21 );
-            break;
         }
         break;
 
