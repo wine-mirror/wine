@@ -134,3 +134,13 @@ void WINAPI ReinitializeCriticalSection( CRITICAL_SECTION *crit )
     DeleteCriticalSection( crit );
     InitializeCriticalSection( crit );
 }
+
+
+/***********************************************************************
+ *           UninitializeCriticalSection   (KERNEL32.703)
+ */
+void WINAPI UninitializeCriticalSection( CRITICAL_SECTION *crit )
+{
+    FIXME(win32, "(%p) half a stub\n", crit);
+    DeleteCriticalSection( crit );
+}

@@ -719,7 +719,7 @@ init	MAIN_KernelInit
 700 stdcall UnMapLS(long) UnMapLS
 701 register UnMapSLFixArray() UnMapSLFixArray
 702 stdcall UnhandledExceptionFilter(ptr) UnhandledExceptionFilter
-703 stub UninitializeCriticalSection
+703 stdcall UninitializeCriticalSection(ptr) UninitializeCriticalSection
 704 stdcall UnlockFile(long long long long long) UnlockFile
 705 stub UnlockFileEx
 706 stdcall UnmapViewOfFile(ptr) UnmapViewOfFile
