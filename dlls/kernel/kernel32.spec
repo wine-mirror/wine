@@ -357,7 +357,7 @@ debug_channels (comm debugstr dll int resource stress thunk toolhelp win32)
 336 stdcall GetHandleInformation(long ptr) GetHandleInformation
 337 stub GetLSCallbackTarget
 338 stub GetLSCallbackTemplate
-339 stdcall GetLargestConsoleWindowSize(long) WIN32_GetLargestConsoleWindowSize
+339 stdcall GetLargestConsoleWindowSize(long) GetLargestConsoleWindowSize
 340 stdcall GetLastError() GetLastError
 341 stdcall GetLocalTime(ptr) GetLocalTime
 342 stdcall GetLocaleInfoA(long long ptr long) GetLocaleInfoA

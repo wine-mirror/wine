@@ -137,7 +137,22 @@ typedef struct tagINPUT_RECORD
 #define MENU_EVENT			0x08
 #define FOCUS_EVENT 			0x10
 
-COORD       WINAPI GetLargestConsoleWindowSize(HANDLE);
+#ifdef __i386__
+/* Note: this should return a COORD, but calling convention for returning
+ * structures is different between Windows and gcc on i386. */
+DWORD WINAPI GetLargestConsoleWindowSize(HANDLE);
+
+inline static COORD __wine_GetLargestConsoleWindowSize_wrapper(HANDLE h)
+{
+    DWORD dw = GetLargestConsoleWindowSize(h);
+    return *(COORD *)&dw;
+}
+#define GetLargestConsoleWindowSize(h) __wine_GetLargestConsoleWindowSize_wrapper(h)
+
+#else  /* __i386__ */
+COORD WINAPI GetLargestConsoleWindowSize(HANDLE);
+#endif  /* __i386__ */
+
 BOOL        WINAPI ReadConsoleOutputCharacterA(HANDLE,LPSTR,DWORD,COORD,LPDWORD);
 BOOL        WINAPI ReadConsoleOutputCharacterW(HANDLE,LPWSTR,DWORD,COORD,LPDWORD);
 #define     ReadConsoleOutputCharacter WINELIB_NAME_AW(ReadConsoleOutputCharacter)
