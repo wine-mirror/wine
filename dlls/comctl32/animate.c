@@ -686,7 +686,8 @@ static LRESULT ANIMATE_OpenA(HWND hWnd, WPARAM wParam, LPARAM lParam)
 
     if (!lParam) {
 	TRACE("Closing avi!\n");
-	return TRUE;
+        /* installer of thebat! v1.62 requires FALSE here */
+	return (infoPtr->hMMio != 0);
     }
 
     if (!hInstance)
