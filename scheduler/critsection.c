@@ -196,3 +196,46 @@ void WINAPI UninitializeCriticalSection( CRITICAL_SECTION *crit )
     }
 }
 
+#ifdef __i386__
+
+/* PVOID WINAPI InterlockedCompareExchange( PVOID *dest, PVOID xchg, PVOID compare ); */
+__ASM_GLOBAL_FUNC(InterlockedCompareExchange,
+                  "movl 12(%esp),%eax\n\t"
+                  "movl 8(%esp),%ecx\n\t"
+                  "movl 4(%esp),%edx\n\t"
+                  "lock; cmpxchgl %ecx,(%edx)\n\t"
+                  "ret $12");
+
+/* LONG WINAPI InterlockedExchange( PLONG dest, LONG val ); */
+__ASM_GLOBAL_FUNC(InterlockedExchange,
+                  "movl 8(%esp),%eax\n\t"
+                  "movl 4(%esp),%edx\n\t"
+                  "lock; xchgl %eax,(%edx)\n\t"
+                  "ret $8");
+
+/* LONG WINAPI InterlockedExchangeAdd( PLONG dest, LONG incr ); */
+__ASM_GLOBAL_FUNC(InterlockedExchangeAdd,
+                  "movl 8(%esp),%eax\n\t"
+                  "movl 4(%esp),%edx\n\t"
+                  "lock; xaddl %eax,(%edx)\n\t"
+                  "ret $8");
+
+/* LONG WINAPI InterlockedIncrement( PLONG dest ); */
+__ASM_GLOBAL_FUNC(InterlockedIncrement,
+                  "movl 4(%esp),%edx\n\t"
+                  "movl $1,%eax\n\t"
+                  "lock; xaddl %eax,(%edx)\n\t"
+                  "incl %eax\n\t"
+                  "ret $4");
+
+/* LONG WINAPI InterlockedDecrement( PLONG dest ); */
+__ASM_GLOBAL_FUNC(InterlockedDecrement,
+                  "movl 4(%esp),%edx\n\t"
+                  "movl $-1,%eax\n\t"
+                  "lock; xaddl %eax,(%edx)\n\t"
+                  "decl %eax\n\t"
+                  "ret $4");
+
+#else /* __i386__ */
+#error You must implement the Interlocked* functions for your CPU
+#endif /* __i386__ */

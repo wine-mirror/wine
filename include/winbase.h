@@ -1356,11 +1356,6 @@ BOOL        WINAPI InitializeSid(PSID,PSID_IDENTIFIER_AUTHORITY,BYTE);
 BOOL        WINAPI IsValidSecurityDescriptor(PSECURITY_DESCRIPTOR);
 BOOL        WINAPI IsValidSid(PSID);
 BOOL        WINAPI ImpersonateSelf(SECURITY_IMPERSONATION_LEVEL);
-PVOID       WINAPI InterlockedCompareExchange(PVOID*,PVOID,PVOID);
-LONG        WINAPI InterlockedDecrement(LPLONG);
-LONG        WINAPI InterlockedExchange(LPLONG,LONG);
-LONG        WINAPI InterlockedExchangeAdd(PLONG,LONG);
-LONG        WINAPI InterlockedIncrement(LPLONG);
 BOOL        WINAPI IsDBCSLeadByteEx(UINT,BYTE);
 BOOL        WINAPI IsProcessorFeaturePresent(DWORD);
 BOOL        WINAPI IsValidLocale(DWORD,DWORD);
@@ -1509,7 +1504,6 @@ BOOL      WINAPI WriteConsoleA(HANDLE,LPCVOID,DWORD,LPDWORD,LPVOID);
 BOOL      WINAPI WriteConsoleW(HANDLE,LPCVOID,DWORD,LPDWORD,LPVOID);
 #define     WriteConsole WINELIB_NAME_AW(WriteConsole)
 BOOL      WINAPI WriteFile(HANDLE,LPCVOID,DWORD,LPDWORD,LPOVERLAPPED);
-DWORD       WINAPI GetLastError(void);
 LANGID      WINAPI GetSystemDefaultLangID(void);
 LCID        WINAPI GetSystemDefaultLCID(void);
 LANGID      WINAPI GetUserDefaultLangID(void);
@@ -1763,13 +1757,74 @@ INT       WINAPI lstrcmpiW(LPCWSTR,LPCWSTR);
 #define     ZeroMemory RtlZeroMemory
 #define     CopyMemory RtlCopyMemory
 
-/* the following may be macros when compiling Wine */
-#ifndef SetLastError
-VOID WINAPI SetLastError(DWORD);
-#endif
-#ifndef GetCurrentThreadId
-DWORD WINAPI GetCurrentThreadId(void);
-#endif
+/* a few optimizations for i386/gcc */
+
+#if defined(__i386__) && defined(__GNUC__)
+
+static inline PVOID WINAPI InterlockedCompareExchange( PVOID *dest, PVOID xchg, PVOID compare )
+{
+    PVOID ret;
+    __asm__ __volatile__( "lock; cmpxchgl %2,(%1)"
+                          : "=a" (ret) : "r" (dest), "r" (xchg), "0" (compare) : "memory" );
+    return ret;
+}
+
+static inline LONG WINAPI InterlockedExchange( PLONG dest, LONG val )
+{
+    LONG ret;
+    __asm__ __volatile__( "lock; xchgl %0,(%1)"
+                          : "=r" (ret) :"r" (dest), "0" (val) : "memory" );
+    return ret;
+}
+
+static inline LONG WINAPI InterlockedExchangeAdd( PLONG dest, LONG incr )
+{
+    LONG ret;
+    __asm__ __volatile__( "lock; xaddl %0,(%1)"
+                          : "=r" (ret) : "r" (dest), "0" (incr) : "memory" );
+    return ret;
+}
+
+static inline LONG WINAPI InterlockedIncrement( PLONG dest )
+{
+    return InterlockedExchangeAdd( dest, 1 ) + 1;
+}
+
+static inline LONG WINAPI InterlockedDecrement( PLONG dest )
+{
+    return InterlockedExchangeAdd( dest, -1 ) - 1;
+}
+
+static inline DWORD WINAPI GetLastError(void)
+{
+    DWORD ret;
+    __asm__ __volatile__( ".byte 0x64\n\tmovl 0x60,%0" : "=r" (ret) );
+    return ret;
+}
+
+static inline DWORD WINAPI GetCurrentThreadId(void)
+{
+    DWORD ret;
+    __asm__ __volatile__( ".byte 0x64\n\tmovl 0x24,%0" : "=r" (ret) );
+    return ret;
+}
+
+static inline void WINAPI SetLastError( DWORD err )
+{
+    __asm__ __volatile__( ".byte 0x64\n\tmovl %0,0x60" : : "r" (err) : "memory" );
+}
+
+#else  /* __i386__ && __GNUC__ */
+DWORD       WINAPI GetCurrentThreadId(void);
+DWORD       WINAPI GetLastError(void);
+PVOID       WINAPI InterlockedCompareExchange(PVOID*,PVOID,PVOID);
+LONG        WINAPI InterlockedDecrement(PLONG);
+LONG        WINAPI InterlockedExchange(PLONG,LONG);
+LONG        WINAPI InterlockedExchangeAdd(PLONG,LONG);
+LONG        WINAPI InterlockedIncrement(PLONG);
+VOID        WINAPI SetLastError(DWORD);
+#endif  /* __i386__ && __GNUC__ */
+
 
 #ifdef __cplusplus
 }

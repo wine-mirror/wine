@@ -132,7 +132,4 @@ extern int SYSDEPS_SpawnThread( TEB *teb );
 extern void SYSDEPS_SetCurThread( TEB *teb );
 extern void SYSDEPS_ExitThread(void);
 
-#define SetLastError(err)    ((void)(NtCurrentTeb()->last_error = (err)))
-#define GetCurrentThreadId() ((DWORD)NtCurrentTeb()->tid)
-
 #endif  /* __WINE_THREAD_H */

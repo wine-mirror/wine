@@ -357,18 +357,6 @@ HANDLE WINAPI GetCurrentThread(void)
 
 
 /**********************************************************************
- * GetLastError [KERNEL.148] [KERNEL32.227]  Returns last-error code.
- *
- * RETURNS
- *     Calling thread's last error code value.
- */
-DWORD WINAPI GetLastError(void)
-{
-    return NtCurrentTeb()->last_error;
-}
-
-
-/**********************************************************************
  * SetLastErrorEx [USER32.485]  Sets the last-error code.
  *
  * RETURNS
@@ -829,27 +817,45 @@ BOOL WINAPI SetThreadLocale(
 }
 
 
+#ifdef __i386__
+
+/* void WINAPI SetLastError( DWORD error ); */
+__ASM_GLOBAL_FUNC( SetLastError,
+                   "movl 4(%esp),%eax\n\t"
+                   ".byte 0x64\n\t"
+                   "movl %eax,0x60\n\t"
+                   "ret $4" );
+
+/* DWORD WINAPI GetLastError(void); */
+__ASM_GLOBAL_FUNC( GetLastError, ".byte 0x64\n\tmovl 0x60,%eax\n\tret" );
+
+/* DWORD WINAPI GetCurrentThreadId(void) */
+__ASM_GLOBAL_FUNC( GetCurrentThreadId, ".byte 0x64\n\tmovl 0x24,%eax\n\tret" );
+                   
+#else  /* __i386__ */
+
 /**********************************************************************
  * SetLastError [KERNEL.147] [KERNEL32.497]  Sets the last-error code.
- *
- * RETURNS
- *    None.
  */
-#undef SetLastError
 void WINAPI SetLastError( DWORD error ) /* [in] Per-thread error code */
 {
     NtCurrentTeb()->last_error = error;
 }
 
+/**********************************************************************
+ * GetLastError [KERNEL.148] [KERNEL32.227]  Returns last-error code.
+ */
+DWORD WINAPI GetLastError(void)
+{
+    return NtCurrentTeb()->last_error;
+}
 
 /***********************************************************************
  * GetCurrentThreadId [KERNEL32.201]  Returns thread identifier.
- *
- * RETURNS
- *    Thread identifier of calling thread
  */
-#undef GetCurrentThreadId
 DWORD WINAPI GetCurrentThreadId(void)
 {
     return (DWORD)NtCurrentTeb()->tid;
 }
+
+#endif  /* __i386__ */

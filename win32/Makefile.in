@@ -18,7 +18,6 @@ C_SRCS = \
 	ordinals.c \
 	process.c \
 	struct32.c \
-	thread.c \
 	time.c
 
 all: $(MODULE).o
