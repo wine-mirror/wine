@@ -153,6 +153,7 @@ extern void BuildRelays16( FILE *outfile );
 extern void BuildRelays32( FILE *outfile );
 extern void BuildSpec16File( FILE *outfile );
 extern void BuildSpec32File( FILE *outfile );
+extern void BuildDef32File( FILE *outfile );
 extern SPEC_TYPE ParseTopLevel( FILE *file );
 
 /* global variables */

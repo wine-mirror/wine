@@ -55,7 +55,15 @@ static FILE *input_file;
 static FILE *output_file;
 
 /* execution mode */
-static enum { MODE_NONE, MODE_SPEC, MODE_GLUE, MODE_RELAY16, MODE_RELAY32 } exec_mode = MODE_NONE;
+static enum
+{
+    MODE_NONE,
+    MODE_SPEC,
+    MODE_GLUE,
+    MODE_DEF,
+    MODE_RELAY16,
+    MODE_RELAY32
+} exec_mode = MODE_NONE;
 
 /* open the input file */
 static void open_input( const char *name )
@@ -91,6 +99,7 @@ static void do_pic(void);
 static void do_output( const char *arg );
 static void do_usage(void);
 static void do_spec( const char *arg );
+static void do_def( const char *arg );
 static void do_glue( const char *arg );
 static void do_relay16(void);
 static void do_relay32(void);
@@ -105,6 +114,7 @@ static const struct option_descr option_table[] =
     { "-o",       1, do_output,  "-o name          Set the output file name (default: stdout)" },
     { "-sym",     1, do_sym,     "-sym file.o      Read the list of undefined symbols from 'file.o'" },
     { "-spec",    1, do_spec,    "-spec file.spec  Build a .c file from a spec file" },
+    { "-def",     1, do_def,     "-def file.spec   Build a .def file from a spec file" },
     { "-glue",    1, do_glue,    "-glue file.c     Build the 16-bit glue for a .c file" },
     { "-relay16", 0, do_relay16, "-relay16         Build the 16-bit relay assembly routines" },
     { "-relay32", 0, do_relay32, "-relay32         Build the 32-bit relay assembly routines" },
@@ -146,6 +156,13 @@ static void do_spec( const char *arg )
 {
     if (exec_mode != MODE_NONE || !arg[0]) do_usage();
     exec_mode = MODE_SPEC;
+    open_input( arg );
+}
+
+static void do_def( const char *arg )
+{
+    if (exec_mode != MODE_NONE || !arg[0]) do_usage();
+    exec_mode = MODE_DEF;
     open_input( arg );
 }
 
@@ -240,6 +257,18 @@ int main(int argc, char **argv)
                 break;
             case SPEC_WIN32:
                 BuildSpec32File( output_file );
+                break;
+            default: assert(0);
+        }
+        break;
+    case MODE_DEF:
+        switch (ParseTopLevel( input_file ))
+        {
+            case SPEC_WIN16:
+                fatal_error( "Cannot yet build .def file for 16-bit dlls\n" );
+                break;
+            case SPEC_WIN32:
+                BuildDef32File( output_file );
                 break;
             default: assert(0);
         }

@@ -502,6 +502,9 @@
 /* Define if symbols declared in assembly code need an underscore prefix */
 #undef NEED_UNDERSCORE_PREFIX
 
+/* Define if stdcall symbols need to be decorated */
+#undef NEED_STDCALL_DECORATION
+
 /* Define to use .string instead of .ascii */
 #undef HAVE_ASM_STRING
 

@@ -510,7 +510,6 @@ SPEC_TYPE ParseTopLevel( FILE *file )
 	else if (strcmp(token, "file") == 0)
 	{
 	    strcpy(DLLFileName, GetToken(0));
-	    strupper(DLLFileName);
 	}
         else if (strcmp(token, "type") == 0)
         {
@@ -612,7 +611,12 @@ SPEC_TYPE ParseTopLevel( FILE *file )
     if (!DLLFileName[0])
     {
         if (SpecMode == SPEC_MODE_DLL)
-            sprintf( DLLFileName, "%s.dll", DLLName );
+	{
+	    strcpy( DLLFileName, DLLName );
+	    /* Append .dll to name if no extension present */
+	    if (!strrchr( DLLFileName, '.'))
+		strcat( DLLFileName, ".dll" );
+	}
         else
             sprintf( DLLFileName, "%s.exe", DLLName );
     }

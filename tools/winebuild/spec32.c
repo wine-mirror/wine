@@ -759,3 +759,70 @@ void BuildSpec32File( FILE *outfile )
                  "}\n", DLLName );
     }
 }
+
+
+/*******************************************************************
+ *         BuildDef32File
+ *
+ * Build a Win32 def file from a spec file.
+ */
+void BuildDef32File(FILE *outfile)
+{
+    int i;
+
+    AssignOrdinals();
+
+    fprintf(outfile, "; File generated automatically from %s; do not edit!\n\n",
+            input_file_name );
+
+    fprintf(outfile, "LIBRARY lib%s\n\n", DLLFileName);
+
+    fprintf(outfile, "EXPORTS\n");
+
+    /* Output the exports and relay entry points */
+
+    for(i = 0; i < nb_entry_points; i++)
+    {
+        ORDDEF *odp = EntryPoints[i];
+        if(!odp || !*odp->name || (odp->flags & FLAG_NOIMPORT)) continue;
+
+        fprintf(outfile, "  %s", odp->name);
+
+        switch(odp->type)
+        {
+        case TYPE_EXTERN:
+        case TYPE_VARARGS:
+        case TYPE_CDECL:
+        case TYPE_VARIABLE:
+            /* try to reduce output */
+            if(strcmp(odp->name, odp->link_name))
+                fprintf(outfile, "=%s", odp->link_name);
+            break;
+        case TYPE_STDCALL:
+        {
+#ifdef NEED_STDCALL_DECORATION
+            int at_param = strlen(odp->u.func.arg_types) * sizeof(int);
+            fprintf(outfile, "@%d", at_param);
+#endif /* NEED_STDCALL_DECORATION */
+            /* try to reduce output */
+            if(strcmp(odp->name, odp->link_name))
+            {
+                fprintf(outfile, "=%s", odp->link_name);
+#ifdef NEED_STDCALL_DECORATION
+                fprintf(outfile, "@%d", at_param);
+#endif /* NEED_STDCALL_DECORATION */
+            }
+            break;
+        }
+        case TYPE_STUB:
+            fprintf(outfile, "=%s", make_internal_name( odp, "stub" ));
+            break;
+        case TYPE_FORWARD:
+            fprintf(outfile, "=lib%s", odp->link_name);
+            break;
+        default:
+            assert(0);
+        }
+        fprintf(outfile, " @%d\n", odp->ordinal);
+    }
+}

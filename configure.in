@@ -652,6 +652,34 @@ then
             [Define if symbols declared in assembly code need an underscore prefix])
 fi
 
+dnl **** Check whether stdcall symbols need to be decorated ****
+
+AC_CACHE_CHECK([whether stdcall symbols need to be decorated],
+               ac_cv_c_stdcall_decoration,
+[saved_libs=$LIBS
+LIBS="conftest_asm.s $LIBS"
+if test "$ac_cv_c_extern_prefix" = "yes"
+then
+cat > conftest_asm.s <<EOF
+	.globl _ac_test@0
+_ac_test@0:
+EOF
+else
+cat > conftest_asm.s <<EOF
+	.globl ac_test@0
+ac_test@0:
+EOF
+fi
+AC_TRY_LINK([extern void __attribute__((__stdcall__)) ac_test(void);],
+            [ac_test(); return 0],
+            ac_cv_c_stdcall_decoration="yes",ac_cv_c_stdcall_decoration="no")
+LIBS=$saved_libs])
+if test "$ac_cv_c_stdcall_decoration" = "yes"
+then
+  AC_DEFINE(NEED_STDCALL_DECORATION, 1,
+            [Define if stdcall symbols need to be decorated])
+fi
+
 dnl **** Check for .string in assembler ****
 
 AC_CACHE_CHECK([whether assembler accepts .string],

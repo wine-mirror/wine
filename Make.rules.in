@@ -92,7 +92,7 @@ prog_manext     = 1
 conf_manext     = 5
 includedir      = @includedir@/wine
 CLEAN_FILES     = *.o *.a *.so *.ln \\\#*\\\# *~ *% .\\\#* *.bak *.orig *.rej \
-                  *.flc *.spec.c *.glue.c y.tab.c y.tab.h lex.yy.c core
+                  *.flc *.spec.c *.spec.def *.glue.c y.tab.c y.tab.h lex.yy.c core
 
 OBJS = $(SPEC_SRCS:.spec=.spec.o) $(C_SRCS:.c=.o) $(GEN_C_SRCS:.c=.o) $(GEN_ASM_SRCS:.s=.o) \
        $(ASM_SRCS:.S=.o) $(GLUE:.c=.glue.o) $(EXTRA_OBJS)
@@ -101,7 +101,7 @@ LINTS = $(C_SRCS:.c=.ln)
 
 # Implicit rules
 
-.SUFFIXES: .mc .rc .mc.rc .res .spec .spec.c .glue.c .pl .ok
+.SUFFIXES: .mc .rc .mc.rc .res .spec .spec.c .spec.def .glue.c .pl .ok
 
 .c.o:
 	$(CC) -c $(ALLCFLAGS) -o $@ $<
@@ -120,6 +120,9 @@ LINTS = $(C_SRCS:.c=.ln)
 
 .spec.spec.c:
 	$(LDPATH) $(WINEBUILD) @DLLFLAGS@ -L$(DLLDIR) -o $@ -spec $<
+
+.spec.spec.def:
+	$(LDPATH) $(WINEBUILD) @DLLFLAGS@ -L$(DLLDIR) -o $@ -def $<
 
 .c.glue.c:
 	$(LDPATH) $(WINEBUILD) @DLLFLAGS@ -o $@ -glue $<
@@ -253,6 +256,8 @@ $(WINETEST):
 # Misc. rules
 
 $(SPEC_SRCS:.spec=.spec.c): $(WINEBUILD)
+
+$(SPEC_SRCS:.spec=.spec.def): $(WINEBUILD)
 
 $(GLUE:.c=.glue.c): $(WINEBUILD)
 
