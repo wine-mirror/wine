@@ -84,7 +84,7 @@ void winapi_test(int flags)
     CHAR buffer[4000];
     DWORD length;
     DWORD out;
-    char *types;
+    const char *types[2] = { "*", NULL };
     HINTERNET hi,hic,hor;
 
     trace("Starting with flags 0x%x\n",flags);
@@ -105,13 +105,10 @@ void winapi_test(int flags)
 
     if (hic == 0x0) goto abort;
 
-    types = (char*)malloc(100);
-    strcpy(types,"*");
-
     trace("HttpOpenRequestA <--\n");
     hor = HttpOpenRequestA(hic, "GET",
                           "/about/",
-                          0x0,0x0,(const char**)&types,0x00400800,0xdeadbead);
+                          0x0,0x0,types,0x00400800,0xdeadbead);
     if (hor == 0x0 && GetLastError() == 12007 /* ERROR_INTERNET_NAME_NOT_RESOLVED */) {
         /*
          * If the internet name can't be resolved we are probably behind
