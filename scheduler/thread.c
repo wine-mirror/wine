@@ -90,6 +90,7 @@ static BOOL THREAD_InitTEB( TEB *teb )
     teb->StaticUnicodeString.MaximumLength = sizeof(teb->StaticUnicodeBuffer);
     teb->StaticUnicodeString.Buffer = (PWSTR)teb->StaticUnicodeBuffer;
     teb->teb_sel = SELECTOR_AllocBlock( teb, 0x1000, SEGMENT_DATA, TRUE, FALSE );
+    teb->CurrentLocale = GetUserDefaultLCID(); /* for threads in user context */
     return (teb->teb_sel != 0);
 }
 
@@ -271,6 +272,10 @@ static void THREAD_Start(void)
 
 /***********************************************************************
  *           CreateThread   (KERNEL32.63)
+ *
+ * NOTE
+ *  this function is not called for the first thread of a process
+ *  do initializations in THREAD_InitTEB
  */
 HANDLE WINAPI CreateThread( SECURITY_ATTRIBUTES *sa, DWORD stack,
                             LPTHREAD_START_ROUTINE start, LPVOID param,
@@ -297,7 +302,6 @@ HANDLE WINAPI CreateThread( SECURITY_ATTRIBUTES *sa, DWORD stack,
     teb->entry_arg   = param;
     teb->startup     = THREAD_Start;
     teb->htask16     = GetCurrentTask();
-    teb->CurrentLocale = GetUserDefaultLCID(); /* for threads in user context */
     if (id) *id = (DWORD)tid;
     if (SYSDEPS_SpawnThread( teb ) == -1)
     {
