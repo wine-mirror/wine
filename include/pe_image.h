@@ -36,8 +36,9 @@ extern HGLOBAL PE_LoadResource(struct _wine_modref *wm,HRSRC);
 extern HMODULE PE_LoadImage( HFILE hFile, OFSTRUCT *ofs, LPCSTR *modName );
 extern struct _wine_modref *PE_CreateModule( HMODULE hModule, OFSTRUCT *ofs, 
                                              DWORD flags, BOOL builtin );
-extern BOOL PE_CreateProcess( HFILE hFile, OFSTRUCT *ofs, LPCSTR cmd_line,
-                              LPCSTR env, BOOL inherit, LPSTARTUPINFOA startup,
+extern BOOL PE_CreateProcess( HFILE hFile, OFSTRUCT *ofs, LPCSTR cmd_line, LPCSTR env, 
+                              LPSECURITY_ATTRIBUTES psa, LPSECURITY_ATTRIBUTES tsa,
+                              BOOL inherit, LPSTARTUPINFOA startup,
                               LPPROCESS_INFORMATION info );
 
 struct _THDB; /* forward definition */

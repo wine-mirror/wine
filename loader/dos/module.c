@@ -415,8 +415,9 @@ BOOL MZ_InitTask( LPDOSTASK lpDosTask )
  return TRUE;
 }
 
-BOOL MZ_CreateProcess( HFILE hFile, OFSTRUCT *ofs, LPCSTR cmdline, 
-                       LPCSTR env, BOOL inherit, LPSTARTUPINFOA startup, 
+BOOL MZ_CreateProcess( HFILE hFile, OFSTRUCT *ofs, LPCSTR cmdline, LPCSTR env, 
+                       LPSECURITY_ATTRIBUTES psa, LPSECURITY_ATTRIBUTES tsa,
+                       BOOL inherit, LPSTARTUPINFOA startup, 
                        LPPROCESS_INFORMATION info )
 {
  LPDOSTASK lpDosTask = NULL; /* keep gcc from complaining */
@@ -463,7 +464,8 @@ BOOL MZ_CreateProcess( HFILE hFile, OFSTRUCT *ofs, LPCSTR cmdline,
    SetLastError(ERROR_GEN_FAILURE);
    return FALSE;
   }
-  if (!PROCESS_Create( pModule, cmdline, env, 0, 0, inherit, startup, info ))
+  if (!PROCESS_Create( pModule, cmdline, env, 0, 0, 
+                       psa, tsa, inherit, startup, info ))
    return FALSE;
  }
  return TRUE;
@@ -491,8 +493,9 @@ void MZ_KillModule( LPDOSTASK lpDosTask )
 
 #else /* !MZ_SUPPORTED */
 
-BOOL MZ_CreateProcess( HFILE hFile, OFSTRUCT *ofs, LPCSTR cmdline, 
-                       LPCSTR env, BOOL inherit, LPSTARTUPINFOA startup, 
+BOOL MZ_CreateProcess( HFILE hFile, OFSTRUCT *ofs, LPCSTR cmdline, LPCSTR env, 
+                       LPSECURITY_ATTRIBUTES psa, LPSECURITY_ATTRIBUTES tsa,
+                       BOOL inherit, LPSTARTUPINFOA startup, 
                        LPPROCESS_INFORMATION info )
 {
  WARN(module,"DOS executables not supported on this architecture\n");

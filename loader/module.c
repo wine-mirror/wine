@@ -847,10 +847,6 @@ BOOL WINAPI CreateProcessA( LPCSTR lpApplicationName, LPSTR lpCommandLine,
 
     /* Warn if unsupported features are used */
 
-    if (lpProcessAttributes)
-        FIXME(module, "(%s,...): lpProcessAttributes ignored\n", name);
-    if (lpThreadAttributes)
-        FIXME(module, "(%s,...): lpThreadAttributes ignored\n", name);
     if (dwCreationFlags & DEBUG_PROCESS)
         FIXME(module, "(%s,...): DEBUG_PROCESS ignored\n", name);
     if (dwCreationFlags & DEBUG_ONLY_THIS_PROCESS)
@@ -922,6 +918,7 @@ BOOL WINAPI CreateProcessA( LPCSTR lpApplicationName, LPSTR lpCommandLine,
 
     lstrcpynA( ofs.szPathName, name, sizeof( ofs.szPathName ) );
     retv = NE_CreateProcess( HFILE_ERROR, &ofs, cmdline, lpEnvironment, 
+                             lpProcessAttributes, lpThreadAttributes,
                              bInheritHandles, lpStartupInfo, lpProcessInfo );
 
     /* Load file and create process */
@@ -956,16 +953,19 @@ BOOL WINAPI CreateProcessA( LPCSTR lpApplicationName, LPSTR lpCommandLine,
         {
         case SCS_32BIT_BINARY:
             retv = PE_CreateProcess( hFile, &ofs, cmdline, lpEnvironment, 
+                                     lpProcessAttributes, lpThreadAttributes,
                                      bInheritHandles, lpStartupInfo, lpProcessInfo );
             break;
     
         case SCS_DOS_BINARY:
             retv = MZ_CreateProcess( hFile, &ofs, cmdline, lpEnvironment, 
+                                     lpProcessAttributes, lpThreadAttributes,
                                      bInheritHandles, lpStartupInfo, lpProcessInfo );
             break;
 
         case SCS_WOW_BINARY:
             retv = NE_CreateProcess( hFile, &ofs, cmdline, lpEnvironment, 
+                                     lpProcessAttributes, lpThreadAttributes,
                                      bInheritHandles, lpStartupInfo, lpProcessInfo );
             break;
 

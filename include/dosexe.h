@@ -40,8 +40,9 @@ extern LPDOSTASK MZ_AllocDPMITask( HMODULE16 hModule );
 
 extern void MZ_Tick( WORD handle );
 
-extern BOOL MZ_CreateProcess( HFILE hFile, OFSTRUCT *ofs, LPCSTR cmdline, 
-                              LPCSTR env, BOOL inherit, LPSTARTUPINFOA startup, 
+extern BOOL MZ_CreateProcess( HFILE hFile, OFSTRUCT *ofs, LPCSTR cmdline, LPCSTR env, 
+                              LPSECURITY_ATTRIBUTES psa, LPSECURITY_ATTRIBUTES tsa,
+                              BOOL inherit, LPSTARTUPINFOA startup, 
                               LPPROCESS_INFORMATION info );
 extern int DOSVM_Enter( PCONTEXT context );
 extern void DOSVM_SetTimer( unsigned ticks );

@@ -914,7 +914,8 @@ HINSTANCE16 WINAPI LoadModule16( LPCSTR name, LPVOID paramBlock )
     }
 
     pdb = PROCESS_Create( pModule, new_cmd_line, env,
-                          hInstance, hPrevInstance, TRUE, &startup, &info );
+                          hInstance, hPrevInstance, 
+                          NULL, NULL, TRUE, &startup, &info );
 
     CloseHandle( info.hThread );
     CloseHandle( info.hProcess );
@@ -932,8 +933,9 @@ HINSTANCE16 WINAPI LoadModule16( LPCSTR name, LPVOID paramBlock )
 /**********************************************************************
  *          NE_CreateProcess
  */
-BOOL NE_CreateProcess( HFILE hFile, OFSTRUCT *ofs, LPCSTR cmd_line,
-                       LPCSTR env, BOOL inherit, LPSTARTUPINFOA startup,
+BOOL NE_CreateProcess( HFILE hFile, OFSTRUCT *ofs, LPCSTR cmd_line, LPCSTR env, 
+                       LPSECURITY_ATTRIBUTES psa, LPSECURITY_ATTRIBUTES tsa,
+                       BOOL inherit, LPSTARTUPINFOA startup,
                        LPPROCESS_INFORMATION info )
 {
     HINSTANCE16 hInstance, hPrevInstance = 0;
@@ -1004,7 +1006,8 @@ BOOL NE_CreateProcess( HFILE hFile, OFSTRUCT *ofs, LPCSTR cmd_line,
     pModule->flags |= NE_FFLAGS_GUI;  /* FIXME: is this necessary? */
 
     if ( !PROCESS_Create( pModule, cmd_line, env,
-                          hInstance, hPrevInstance, inherit, startup, info ) )
+                          hInstance, hPrevInstance, 
+                          psa, tsa, inherit, startup, info ) )
         return FALSE;
 
     return TRUE;

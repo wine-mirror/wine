@@ -879,8 +879,9 @@ HMODULE PE_LoadLibraryExA (LPCSTR name,
  * FIXME: this function should use PE_LoadLibraryExA, but currently can't
  * due to the PROCESS_Create stuff.
  */
-BOOL PE_CreateProcess( HFILE hFile, OFSTRUCT *ofs, LPCSTR cmd_line,
-                       LPCSTR env, BOOL inherit, LPSTARTUPINFOA startup,
+BOOL PE_CreateProcess( HFILE hFile, OFSTRUCT *ofs, LPCSTR cmd_line, LPCSTR env, 
+                       LPSECURITY_ATTRIBUTES psa, LPSECURITY_ATTRIBUTES tsa,
+                       BOOL inherit, LPSTARTUPINFOA startup,
                        LPPROCESS_INFORMATION info )
 {
     LPCSTR modName = NULL;
@@ -914,7 +915,7 @@ BOOL PE_CreateProcess( HFILE hFile, OFSTRUCT *ofs, LPCSTR cmd_line,
 
     /* Create new process */
     if ( !PROCESS_Create( pModule, cmd_line, env,
-                          0, 0, inherit, startup, info ) )
+                          0, 0, psa, tsa, inherit, startup, info ) )
         return FALSE;
 
     /* Note: PE_CreateModule and the remaining process initialization will
