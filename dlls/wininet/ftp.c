@@ -1233,6 +1233,15 @@ lend:
     return bSuccess;
 }
 
+DWORD WINAPI FtpGetFileSize( HINTERNET hFile, LPDWORD lpdwFileSizeHigh )
+{
+    FIXME("(%p, %p)\n", hFile, lpdwFileSizeHigh);
+
+    if (lpdwFileSizeHigh)
+        *lpdwFileSizeHigh = 0;
+
+    return 0;
+}
 
 /***********************************************************************
  *           FtpDeleteFileA  (WININET.@)
@@ -1602,6 +1611,23 @@ lend:
     return bSuccess;
 }
 
+BOOL WINAPI FtpCommandA( HINTERNET hConnect, BOOL fExpectResponse, DWORD dwFlags,
+                         LPCSTR lpszCommand, DWORD_PTR dwContext, HINTERNET* phFtpCommand )
+{
+    FIXME("%p %d 0x%08lx %s 0x%08lx %p\n", hConnect, fExpectResponse, dwFlags,
+          debugstr_a(lpszCommand), dwContext, phFtpCommand);
+
+    return TRUE;
+}
+
+BOOL WINAPI FtpCommandW( HINTERNET hConnect, BOOL fExpectResponse, DWORD dwFlags,
+                         LPCWSTR lpszCommand, DWORD_PTR dwContext, HINTERNET* phFtpCommand )
+{
+    FIXME("%p %d 0x%08lx %s 0x%08lx %p\n", hConnect, fExpectResponse, dwFlags,
+          debugstr_w(lpszCommand), dwContext, phFtpCommand);
+
+    return TRUE;
+}
 
 /***********************************************************************
  *           FTP_Connect (internal)
@@ -1623,7 +1649,8 @@ HINTERNET FTP_Connect(LPWININETAPPINFOW hIC, LPCWSTR lpszServerName,
     static const WCHAR szDefaultPassword[] = {'u','s','e','r','@','s','e','r','v','e','r','\0'};
     struct sockaddr_in socketAddr;
     struct hostent *phe = NULL;
-    INT nsocket = -1, sock_namelen;
+    INT nsocket = -1;
+    UINT sock_namelen;
     BOOL bSuccess = FALSE;
     LPWININETFTPSESSIONW lpwfs = NULL;
     HINTERNET handle = NULL;

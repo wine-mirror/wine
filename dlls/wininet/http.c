@@ -1205,6 +1205,22 @@ BOOL WINAPI HttpSendRequestExA(HINTERNET hRequest,
 }
 
 /***********************************************************************
+ *           HttpSendRequestExW (WININET.@)
+ *
+ * Sends the specified request to the HTTP server and allows chunked
+ * transfers
+ */
+BOOL WINAPI HttpSendRequestExW(HINTERNET hRequest,
+                   LPINTERNET_BUFFERSW lpBuffersIn,
+                   LPINTERNET_BUFFERSW lpBuffersOut,
+                   DWORD dwFlags, DWORD dwContext)
+{
+  FIXME("(%p, %p, %p, %08lx, %08lx): stub\n", hRequest, lpBuffersIn,
+    lpBuffersOut, dwFlags, dwContext);
+  return FALSE;
+}
+
+/***********************************************************************
  *           HttpSendRequestW (WININET.@)
  *
  * Sends the specified request to the HTTP server

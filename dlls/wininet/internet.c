@@ -600,8 +600,8 @@ BOOL WINAPI InternetGetLastResponseInfoA(LPDWORD lpdwError,
     *lpdwError = lpwite->dwError;
     if (lpwite->dwError)
     {
-        strncpy(lpszBuffer, lpwite->response, *lpdwBufferLength);
-	*lpdwBufferLength = strlen(lpszBuffer);
+        memcpy(lpszBuffer, lpwite->response, *lpdwBufferLength);
+        *lpdwBufferLength = strlen(lpszBuffer);
     }
     else
         *lpdwBufferLength = 0;
@@ -609,6 +609,34 @@ BOOL WINAPI InternetGetLastResponseInfoA(LPDWORD lpdwError,
     return TRUE;
 }
 
+/***********************************************************************
+ *           InternetGetLastResponseInfoW (WININET.@)
+ *
+ * Return last wininet error description on the calling thread
+ *
+ * RETURNS
+ *    TRUE on success of writing to buffer
+ *    FALSE on failure
+ *
+ */
+BOOL WINAPI InternetGetLastResponseInfoW(LPDWORD lpdwError,
+    LPWSTR lpszBuffer, LPDWORD lpdwBufferLength)
+{
+    LPWITHREADERROR lpwite = (LPWITHREADERROR)TlsGetValue(g_dwTlsErrIndex);
+
+    TRACE("\n");
+
+    *lpdwError = lpwite->dwError;
+    if (lpwite->dwError)
+    {
+        memcpy(lpszBuffer, lpwite->response, *lpdwBufferLength);
+        *lpdwBufferLength = lstrlenW(lpszBuffer);
+    }
+    else
+        *lpdwBufferLength = 0;
+
+    return TRUE;
+}
 
 /***********************************************************************
  *           InternetGetConnectedState (WININET.@)
@@ -2127,14 +2155,14 @@ BOOL WINAPI InternetTimeToSystemTimeW( LPCWSTR string, SYSTEMTIME* time, DWORD r
      */
 
     while (*s && !isalphaW( *s )) s++;
-    if (*s == '\0' || *(s + 1) == '\0' || *(s + 2) == '\0') return FALSE;
+    if (s[0] == '\0' || s[1] == '\0' || s[2] == '\0') return FALSE;
     time->wDayOfWeek = 7;
 
     for (i = 0; i < 7; i++)
     {
-        if (toupperW( WININET_wkday[i][0] ) == toupperW( *s ) &&
-            toupperW( WININET_wkday[i][1] ) == toupperW( *(s + 1) ) &&
-            toupperW( WININET_wkday[i][2] ) == toupperW( *(s + 2) ) )
+        if (toupperW( WININET_wkday[i][0] ) == toupperW( s[0] ) &&
+            toupperW( WININET_wkday[i][1] ) == toupperW( s[1] ) &&
+            toupperW( WININET_wkday[i][2] ) == toupperW( s[2] ) )
         {
             time->wDayOfWeek = i;
             break;
@@ -2146,14 +2174,14 @@ BOOL WINAPI InternetTimeToSystemTimeW( LPCWSTR string, SYSTEMTIME* time, DWORD r
     time->wDay = strtolW( s, &s, 10 );
 
     while (*s && !isalphaW( *s )) s++;
-    if (*s == '\0' || *(s + 1) == '\0' || *(s + 2) == '\0') return FALSE;
+    if (s[0] == '\0' || s[1] == '\0' || s[2] == '\0') return FALSE;
     time->wMonth = 0;
 
     for (i = 0; i < 12; i++)
     {
-        if (toupperW( WININET_month[i][0]) == toupperW( *s ) &&
-            toupperW( WININET_month[i][1]) == toupperW( *(s + 1) ) &&
-            toupperW( WININET_month[i][2]) == toupperW( *(s + 2) ) )
+        if (toupperW( WININET_month[i][0]) == toupperW( s[0] ) &&
+            toupperW( WININET_month[i][1]) == toupperW( s[1] ) &&
+            toupperW( WININET_month[i][2]) == toupperW( s[2] ) )
         {
             time->wMonth = i + 1;
             break;
@@ -3153,6 +3181,148 @@ BOOL WINAPI InternetCreateUrlA(LPURL_COMPONENTSA lpUrlComponents, DWORD dwFlags,
     return FALSE;
 }
 
+DWORD WINAPI InternetConfirmZoneCrossingA( HWND hWnd, LPSTR szUrlPrev, LPSTR szUrlNew, BOOL bPost )
+{
+    FIXME("(%p, %s, %s, %x) stub\n", hWnd, debugstr_a(szUrlPrev), debugstr_a(szUrlNew), bPost);
+    return ERROR_SUCCESS;
+}
+
+DWORD WINAPI InternetConfirmZoneCrossingW( HWND hWnd, LPWSTR szUrlPrev, LPWSTR szUrlNew, BOOL bPost )
+{
+    FIXME("(%p, %s, %s, %x) stub\n", hWnd, debugstr_w(szUrlPrev), debugstr_w(szUrlNew), bPost);
+    return ERROR_SUCCESS;
+}
+
+DWORD WINAPI InternetDialA( HWND hwndParent, LPSTR lpszConnectoid, DWORD dwFlags,
+                            LPDWORD lpdwConnection, DWORD dwReserved )
+{
+    FIXME("(%p, %p, 0x%08lx, %p, 0x%08lx) stub\n", hwndParent, lpszConnectoid, dwFlags,
+          lpdwConnection, dwReserved);
+    return ERROR_SUCCESS;
+}
+
+DWORD WINAPI InternetDialW( HWND hwndParent, LPWSTR lpszConnectoid, DWORD dwFlags,
+                            LPDWORD lpdwConnection, DWORD dwReserved )
+{
+    FIXME("(%p, %p, 0x%08lx, %p, 0x%08lx) stub\n", hwndParent, lpszConnectoid, dwFlags,
+          lpdwConnection, dwReserved);
+    return ERROR_SUCCESS;
+}
+
+BOOL WINAPI InternetGoOnlineA( LPSTR lpszURL, HWND hwndParent, DWORD dwReserved )
+{
+    FIXME("(%s, %p, 0x%08lx) stub\n", debugstr_a(lpszURL), hwndParent, dwReserved);
+    return TRUE;
+}
+
+BOOL WINAPI InternetGoOnlineW( LPWSTR lpszURL, HWND hwndParent, DWORD dwReserved )
+{
+    FIXME("(%s, %p, 0x%08lx) stub\n", debugstr_w(lpszURL), hwndParent, dwReserved);
+    return TRUE;
+}
+
+DWORD WINAPI InternetHangUp( DWORD dwConnection, DWORD dwReserved )
+{
+    FIXME("(0x%08lx, 0x%08lx) stub\n", dwConnection, dwReserved);
+    return ERROR_SUCCESS;
+}
+
+BOOL WINAPI CreateMD5SSOHash( PWSTR pszChallengeInfo, PWSTR pwszRealm, PWSTR pwszTarget,
+                              PBYTE pbHexHash )
+{
+    FIXME("(%s, %s, %s, %p) stub\n", debugstr_w(pszChallengeInfo), debugstr_w(pwszRealm),
+          debugstr_w(pwszTarget), pbHexHash);
+    return FALSE;
+}
+
+BOOL WINAPI InternetClearAllPerSiteCookieDecisions( VOID )
+{
+    FIXME("stub\n");
+    return TRUE;
+}
+
+BOOL WINAPI InternetEnumPerSiteCookieDecisionA( LPSTR pszSiteName, unsigned long *pcSiteNameSize,
+                                                unsigned long *pdwDecision, unsigned long dwIndex )
+{
+    FIXME("(%s, %p, %p, 0x%08lx) stub\n",
+          debugstr_a(pszSiteName), pcSiteNameSize, pdwDecision, dwIndex);
+    return FALSE;
+}
+
+BOOL WINAPI InternetEnumPerSiteCookieDecisionW( LPWSTR pszSiteName, unsigned long *pcSiteNameSize,
+                                                unsigned long *pdwDecision, unsigned long dwIndex )
+{
+    FIXME("(%s, %p, %p, 0x%08lx) stub\n",
+          debugstr_w(pszSiteName), pcSiteNameSize, pdwDecision, dwIndex);
+    return FALSE;
+}
+
+BOOL WINAPI InternetGetCookieExA( LPCSTR pchURL, LPCSTR pchCookieName, LPSTR pchCookieData,
+                                  LPDWORD pcchCookieData, DWORD dwFlags, LPVOID lpReserved)
+{
+    FIXME("(%s, %s, %s, %p, 0x%08lx, %p) stub\n",
+          debugstr_a(pchURL), debugstr_a(pchCookieName), debugstr_a(pchCookieData),
+          pcchCookieData, dwFlags, lpReserved);
+    return FALSE;
+}
+
+BOOL WINAPI InternetGetCookieExW( LPCWSTR pchURL, LPCWSTR pchCookieName, LPWSTR pchCookieData,
+                                  LPDWORD pcchCookieData, DWORD dwFlags, LPVOID lpReserved)
+{
+    FIXME("(%s, %s, %s, %p, 0x%08lx, %p) stub\n",
+          debugstr_w(pchURL), debugstr_w(pchCookieName), debugstr_w(pchCookieData),
+          pcchCookieData, dwFlags, lpReserved);
+    return FALSE;
+}
+
+BOOL WINAPI InternetGetPerSiteCookieDecisionA( LPCSTR pwchHostName, unsigned long *pResult )
+{
+    FIXME("(%s, %p) stub\n", debugstr_a(pwchHostName), pResult);
+    return FALSE;
+}
+
+BOOL WINAPI InternetGetPerSiteCookieDecisionW( LPCWSTR pwchHostName, unsigned long *pResult )
+{
+    FIXME("(%s, %p) stub\n", debugstr_w(pwchHostName), pResult);
+    return FALSE;
+}
+
+BOOL WINAPI InternetSetPerSiteCookieDecisionA( LPCSTR pchHostName, DWORD dwDecision )
+{
+    FIXME("(%s, 0x%08lx) stub\n", debugstr_a(pchHostName), dwDecision);
+    return FALSE;
+}
+
+BOOL WINAPI InternetSetPerSiteCookieDecisionW( LPCWSTR pchHostName, DWORD dwDecision )
+{
+    FIXME("(%s, 0x%08lx) stub\n", debugstr_w(pchHostName), dwDecision);
+    return FALSE;
+}
+
+DWORD WINAPI InternetSetCookieExA( LPCSTR lpszURL, LPCSTR lpszCookieName, LPCSTR lpszCookieData,
+                                   DWORD dwFlags, DWORD_PTR dwReserved)
+{
+    FIXME("(%s, %s, %s, 0x%08lx, 0x%08lx) stub\n",
+          debugstr_a(lpszURL), debugstr_a(lpszCookieName), debugstr_a(lpszCookieData),
+          dwFlags, dwReserved);
+    return TRUE;
+}
+
+DWORD WINAPI InternetSetCookieExW( LPCWSTR lpszURL, LPCWSTR lpszCookieName, LPCWSTR lpszCookieData,
+                                   DWORD dwFlags, DWORD_PTR dwReserved)
+{
+    FIXME("(%s, %s, %s, 0x%08lx, 0x%08lx) stub\n",
+          debugstr_w(lpszURL), debugstr_w(lpszCookieName), debugstr_w(lpszCookieData),
+          dwFlags, dwReserved);
+    return TRUE;
+}
+
+BOOL WINAPI ResumeSuspendedDownload( HINTERNET hInternet, DWORD dwError )
+{
+    FIXME("(%p, 0x%08lx) stub\n", hInternet, dwError);
+    return FALSE;
+}
+ 
 /***********************************************************************
  *
  *         InternetCreateUrlW
