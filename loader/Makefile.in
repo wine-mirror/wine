@@ -12,16 +12,14 @@ C_SRCS = \
 KTHREAD_OBJS = main.o kthread.o
 PTHREAD_OBJS = main.o pthread.o
 
-BINARIES = \
-	wine-kthread \
-	wine-pthread
+WINE_BINARIES = @WINE_BINARIES@
+MAIN_BINARY   = @MAIN_BINARY@
 
-all: $(BINARIES) $(MODULE)
+all: $(WINE_BINARIES) $(MODULE)
 
 @MAKE_RULES@
 
 LIBPTHREAD  = @LIBPTHREAD@
-MAIN_BINARY = @MAIN_BINARY@
 LDEXECFLAGS = @LDEXECFLAGS@
 
 wine-kthread: $(KTHREAD_OBJS) Makefile.in
@@ -33,16 +31,19 @@ wine-pthread: $(PTHREAD_OBJS) Makefile.in
 $(MODULE): $(MAIN_BINARY)
 	$(RM) $(MODULE) && $(LN_S) $(MAIN_BINARY) $(MODULE)
 
-install:: $(BINARIES)
+install:: $(WINE_BINARIES)
 	$(MKINSTALLDIRS) $(bindir)
-	$(INSTALL_PROGRAM) wine-kthread $(bindir)/wine-kthread
-	$(INSTALL_PROGRAM) wine-pthread $(bindir)/wine-pthread
-	cd $(bindir) && $(RM) $(MODULE) && $(LN_S) $(MAIN_BINARY) $(MODULE)
+	for f in $(WINE_BINARIES); do \
+	  if [ "$(MAIN_BINARY)" = "$$f" ]; \
+	  then $(INSTALL_PROGRAM) $$f $(bindir)/$(MODULE); \
+	  else $(INSTALL_PROGRAM) $$f $(bindir)/$$f; \
+	  fi; \
+	done
 
 uninstall::
-	$(RM) $(BINARIES:%=$(bindir)/%) $(bindir)/$(MODULE)
+	$(RM) $(WINE_BINARIES:%=$(bindir)/%) $(bindir)/$(MODULE)
 
 clean::
-	$(RM) $(BINARIES) $(MODULE)
+	$(RM) $(WINE_BINARIES) $(MODULE)
 
 ### Dependencies:

@@ -36,12 +36,6 @@ if test "x$enable_trace" = "xno" -o "x$enable_debug" = "xno"
 then
     AC_DEFINE(NO_TRACE_MSGS,1,[Define to disable trace messages.])
 fi
-if test "x$with_nptl" = "xyes"
-then
-    AC_SUBST(MAIN_BINARY,"wine-pthread")
-else
-    AC_SUBST(MAIN_BINARY,"wine-kthread")
-fi
 
 dnl **** Check for some programs ****
 
@@ -918,10 +912,25 @@ case $build_os in
 esac
 
 dnl Mingw needs explicit msvcrt for linking libwine
-AC_SUBST(CRTLIBS,"")
 case $host_os in
   mingw32*)
-    CRTLIBS="-lmsvcrt" ;;
+    AC_SUBST(CRTLIBS,"-lmsvcrt") ;;
+esac
+
+case $host_os in
+  linux*)
+    AC_SUBST(WINE_BINARIES,"wine-kthread wine-pthread")
+    if test "x$with_nptl" = "xyes"
+    then
+        AC_SUBST(MAIN_BINARY,"wine-pthread")
+    else
+        AC_SUBST(MAIN_BINARY,"wine-kthread")
+    fi
+    ;;
+  *)
+    AC_SUBST(WINE_BINARIES,"wine-kthread")
+    AC_SUBST(MAIN_BINARY,"wine-kthread")
+    ;;
 esac
 
 dnl **** Get the soname for libraries that we load dynamically ****
