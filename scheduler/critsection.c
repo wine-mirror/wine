@@ -28,9 +28,17 @@ typedef struct
     BOOL32        signaled;
 } CRIT_SECTION;
 
+/* On some systems this is supposed to be defined in the program */
+#ifndef HAVE_UNION_SEMUN
+union semun {
+    int val;
+    struct semid_ds *buf;
+    ushort *array;
+};
+#endif
 
 static BOOL32 CRIT_SECTION_Signaled( K32OBJ *obj, DWORD thread_id );
-static void CRIT_SECTION_Satisfied( K32OBJ *obj, DWORD thread_id );
+static BOOL32 CRIT_SECTION_Satisfied( K32OBJ *obj, DWORD thread_id );
 static void CRIT_SECTION_AddWait( K32OBJ *obj, DWORD thread_id );
 static void CRIT_SECTION_RemoveWait( K32OBJ *obj, DWORD thread_id );
 static void CRIT_SECTION_Destroy( K32OBJ *obj );
@@ -237,12 +245,13 @@ static BOOL32 CRIT_SECTION_Signaled( K32OBJ *obj, DWORD thread_id )
  *
  * Wait on this object has been satisfied.
  */
-static void CRIT_SECTION_Satisfied( K32OBJ *obj, DWORD thread_id )
+static BOOL32 CRIT_SECTION_Satisfied( K32OBJ *obj, DWORD thread_id )
 {
     CRIT_SECTION *crit = (CRIT_SECTION *)obj;
     assert( obj->type == K32OBJ_CRITICAL_SECTION );
     /* Only one thread is allowed to wake up */
     crit->signaled = FALSE;
+    return FALSE;  /* Not abandoned */
 }
 
 

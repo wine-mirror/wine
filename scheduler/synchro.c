@@ -88,7 +88,8 @@ static BOOL32 SYNC_CheckCondition( WAIT_STRUCT *wait, DWORD thread_id )
         /* Wait satisfied: tell it to all objects */
         wait->signaled = WAIT_OBJECT_0;
         for (i = 0, ptr = wait->objs; i < wait->count; i++, ptr++)
-            K32OBJ_OPS( *ptr )->satisfied( *ptr, thread_id );
+            if (K32OBJ_OPS( *ptr )->satisfied( *ptr, thread_id ))
+                wait->signaled = WAIT_ABANDONED_0;
         SYSTEM_UNLOCK();
         return TRUE;
     }
@@ -100,7 +101,8 @@ static BOOL32 SYNC_CheckCondition( WAIT_STRUCT *wait, DWORD thread_id )
             {
                 /* Wait satisfied: tell it to the object */
                 wait->signaled = WAIT_OBJECT_0 + i;
-                K32OBJ_OPS( *ptr )->satisfied( *ptr, thread_id );
+                if (K32OBJ_OPS( *ptr )->satisfied( *ptr, thread_id ))
+                    wait->signaled = WAIT_ABANDONED_0 + i;
                 SYSTEM_UNLOCK();
                 return TRUE;
             }

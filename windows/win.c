@@ -2128,7 +2128,7 @@ BOOL16 WINAPI EnumTaskWindows16( HTASK16 hTask, WNDENUMPROC16 func,
  */
 BOOL32 WINAPI EnumThreadWindows( DWORD id, WNDENUMPROC32 func, LPARAM lParam )
 {
-    THDB	*tdb = (THDB*)id;
+    THDB	*tdb = THREAD_ID_TO_THDB(id);
 
     return (BOOL16)EnumTaskWindows16(tdb->teb.htask16, (WNDENUMPROC16)func, lParam);
 }

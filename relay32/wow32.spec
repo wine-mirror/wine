@@ -1,13 +1,13 @@
 name	wow32
 type	win32
 
-  1 stub    WOW_1
-  2 stub    WOWCallback16
+  1 stdcall WOW_1(long long) WOW32_1
+  2 stdcall WOWCallback16(long long) WOWCallback16
   3 stub    WOWCallback16Ex
   4 stub    WOWDirectedYield16
-  5 stub    WOWGetVDMPointer
-  6 stub    WOWGetVDMPointerFix
-  7 stub    WOWGetVDMPointerUnfix
+  5 stdcall WOWGetVDMPointer(long long long) WOWGetVDMPointer
+  6 stdcall WOWGetVDMPointerFix(long long long) WOWGetVDMPointerFix
+  7 stdcall WOWGetVDMPointerUnfix(long) WOWGetVDMPointerUnfix
   8 stub    WOWGlobalAlloc16
   9 stub    WOWGlobalAllocLock16
  10 stub    WOWGlobalFree16

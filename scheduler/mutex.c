@@ -12,16 +12,19 @@
 #include "thread.h"
 #include "heap.h"
 
-typedef struct
+typedef struct _MUTEX
 {
-    K32OBJ        header;
-    THREAD_QUEUE  wait_queue;
-    DWORD         owner;
-    DWORD         count;
+    K32OBJ         header;
+    THREAD_QUEUE   wait_queue;
+    DWORD          owner;
+    DWORD          count;
+    BOOL32         abandoned;
+    struct _MUTEX *next;
+    struct _MUTEX *prev;
 } MUTEX;
 
 static BOOL32 MUTEX_Signaled( K32OBJ *obj, DWORD thread_id );
-static void MUTEX_Satisfied( K32OBJ *obj, DWORD thread_id );
+static BOOL32 MUTEX_Satisfied( K32OBJ *obj, DWORD thread_id );
 static void MUTEX_AddWait( K32OBJ *obj, DWORD thread_id );
 static void MUTEX_RemoveWait( K32OBJ *obj, DWORD thread_id );
 static void MUTEX_Destroy( K32OBJ *obj );
@@ -34,6 +37,40 @@ const K32OBJ_OPS MUTEX_Ops =
     MUTEX_RemoveWait,  /* remove_wait */
     MUTEX_Destroy      /* destroy */
 };
+
+
+/***********************************************************************
+ *           MUTEX_Release
+ *
+ * Release a mutex once the count is 0.
+ * Helper function for MUTEX_Abandon and ReleaseMutex.
+ */
+static void MUTEX_Release( MUTEX *mutex )
+{
+    /* Remove the mutex from the thread list of owned mutexes */
+    if (mutex->next) mutex->next->prev = mutex->prev;
+    if (mutex->prev) mutex->prev->next = mutex->next;
+    else THREAD_Current()->mutex_list = &mutex->next->header;
+    mutex->next = mutex->prev = NULL;
+    mutex->owner = 0;
+    SYNC_WakeUp( &mutex->wait_queue, INFINITE32 );
+}
+
+
+/***********************************************************************
+ *           MUTEX_Abandon
+ *
+ * Abandon a mutex.
+ */
+void MUTEX_Abandon( K32OBJ *obj )
+{
+    MUTEX *mutex = (MUTEX *)obj;
+    assert( obj->type == K32OBJ_MUTEX );
+    assert( mutex->count && (mutex->owner == GetCurrentThreadId()) );
+    mutex->count = 0;
+    mutex->abandoned = TRUE;
+    MUTEX_Release( mutex );
+}
 
 
 /***********************************************************************
@@ -52,18 +89,27 @@ HANDLE32 WINAPI CreateMutex32A( SECURITY_ATTRIBUTES *sa, BOOL32 owner,
     {
         /* Finish initializing it */
         mutex->wait_queue = NULL;
+        mutex->abandoned  = FALSE;
+        mutex->prev       = NULL;
         if (owner)
         {
+            K32OBJ **list;
             mutex->owner = GetCurrentThreadId();
             mutex->count = 1;
+            /* Add the mutex in the thread list of owned mutexes */
+            list = &THREAD_Current()->mutex_list;
+            if ((mutex->next = (MUTEX *)*list)) mutex->next->prev = mutex;
+            *list = &mutex->header;
         }
         else
         {
             mutex->owner = 0;
             mutex->count = 0;
+            mutex->next  = NULL;
         }
         K32OBJ_DecCount( &mutex->header );
     }
+    SetLastError(0); /* FIXME */
     SYSTEM_UNLOCK();
     return handle;
 }
@@ -130,11 +176,7 @@ BOOL32 WINAPI ReleaseMutex( HANDLE32 handle )
         SetLastError( ERROR_NOT_OWNER );
         return FALSE;
     }
-    if (!--mutex->count)
-    {
-        mutex->owner = 0;
-        SYNC_WakeUp( &mutex->wait_queue, INFINITE32 );
-    }
+    if (!--mutex->count) MUTEX_Release( mutex );
     K32OBJ_DecCount( &mutex->header );
     SYSTEM_UNLOCK();
     return TRUE;
@@ -157,13 +199,25 @@ static BOOL32 MUTEX_Signaled( K32OBJ *obj, DWORD thread_id )
  *
  * Wait on this object has been satisfied.
  */
-static void MUTEX_Satisfied( K32OBJ *obj, DWORD thread_id )
+static BOOL32 MUTEX_Satisfied( K32OBJ *obj, DWORD thread_id )
 {
+    BOOL32 ret;
     MUTEX *mutex = (MUTEX *)obj;
     assert( obj->type == K32OBJ_MUTEX );
     assert( !mutex->count || (mutex->owner == thread_id) );
     mutex->owner = thread_id;
-    mutex->count++;
+    if (!mutex->count++)
+    {
+        /* Add the mutex in the thread list of owned mutexes */
+        K32OBJ **list = &THREAD_ID_TO_THDB( thread_id )->mutex_list;
+        assert( !mutex->next );
+        if ((mutex->next = (MUTEX *)*list)) mutex->next->prev = mutex;
+        *list = &mutex->header;
+        mutex->prev = NULL;
+    }
+    ret = mutex->abandoned;
+    mutex->abandoned = FALSE;
+    return ret;
 }
 
 

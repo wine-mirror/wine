@@ -59,7 +59,6 @@ struct options
 			       if write access is requested */
     WINE_MODE mode;         /* Start Wine in selected mode
 			       (standard/enhanced) */
-    int    ipc;             /* Use IPC mechanisms */
     WINE_LANGUAGE language; /* Current language */
     int    managed;	    /* Managed windows */
     int    perfectGraphics; /* Favor correctness over speed for graphics */

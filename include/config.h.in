@@ -18,6 +18,18 @@
 /* Define if symbols declared in assembly code need an underscore prefix */
 #undef NEED_UNDERSCORE_PREFIX
 
+/* Define to use .string instead of .ascii */
+#undef HAVE_ASM_STRING
+
+/* Define if union semun is defined in sys/sem.h */
+#undef HAVE_UNION_SEMUN
+
+/* Define if you have the Xxf86dga library (-lXxf86dga).  */
+#undef HAVE_LIBXXF86DGA
+
+/* Define if you have the Open Sound system.  */
+#undef HAVE_OSS
+
 /* Define if you have the clone function.  */
 #undef HAVE_CLONE
 
@@ -41,9 +53,6 @@
 
 /* Define if you have the <wctype.h> header file.  */
 #undef HAVE_WCTYPE_H
-
-/* Define if you have the Xxf86dga library (-lXxf86dga).  */
-#undef HAVE_LIBXXF86DGA
 
 /* Define if you have the i386 library (-li386).  */
 #undef HAVE_LIBI386

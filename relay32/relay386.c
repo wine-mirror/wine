@@ -14,6 +14,22 @@
 #include "stddebug.h"
 #include "debug.h"
 
+static void _dumpstr(unsigned char *s) {
+	fputs("\"",stdout);
+	while (*s) {
+		if (*s<' ') {
+			printf("\\0x%02x",*s++);
+			continue;
+		}
+		if (*s=='\\') {
+			fputs("\\\\",stdout);
+			s++;
+			continue;
+		}
+		fputc(*s++,stdout);
+	}
+	fputs("\"",stdout);
+}
 
 /***********************************************************************
  *           RELAY_CallFrom32
@@ -52,9 +68,14 @@ int RELAY_CallFrom32( int ret_addr, ... )
             {
                 char buff[80];
                 lstrcpynWtoA( buff, (LPWSTR)args[i], sizeof(buff) );
-	    	printf( "%08x L\"%s\"", args[i], buff );
+		buff[sizeof(buff)-1]='\0';
+	    	printf( "%08x L", args[i] );
+		_dumpstr((unsigned char*)buff);
 	    }
-            else printf( "%08x \"%s\"", args[i], (char *)args[i] );
+            else {
+	    	printf( "%08x ", args[i] );
+		_dumpstr((unsigned char*)args[i]);
+	    }
 	}
         else printf( "%08x", args[i] );
     }

@@ -440,15 +440,20 @@ X11DRV_PaintRgn( DC *dc, HRGN32 hrgn )
     HRGN32 tmpVisRgn, prevVisRgn;
     HDC32  hdc = dc->hSelf; /* FIXME: should not mix dc/hdc this way */
 
-      /* Modify visible region */
+    if (!(tmpVisRgn = CreateRectRgn32( 0, 0, 0, 0 ))) return FALSE;
 
-    if (!(prevVisRgn = SaveVisRgn( hdc ))) return FALSE;
-    if (!(tmpVisRgn = CreateRectRgn32( 0, 0, 0, 0 )))
-    {
-        RestoreVisRgn( hdc );
-        return FALSE;
+      /* Transform region into device co-ords */
+    if (!REGION_LPTODP( hdc, tmpVisRgn, hrgn )) {
+        DeleteObject32( tmpVisRgn );
+	return FALSE;
     }
-    CombineRgn32( tmpVisRgn, prevVisRgn, hrgn, RGN_AND );
+
+      /* Modify visible region */
+    if (!(prevVisRgn = SaveVisRgn( hdc ))) {
+        DeleteObject32( tmpVisRgn );
+	return FALSE;
+    }
+    CombineRgn32( tmpVisRgn, prevVisRgn, tmpVisRgn, RGN_AND );
     SelectVisRgn( hdc, tmpVisRgn );
     DeleteObject32( tmpVisRgn );
 

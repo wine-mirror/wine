@@ -20,6 +20,12 @@ typedef struct IDirectDrawPalette IDirectDrawPalette,*LPDIRECTDRAWPALETTE;
 typedef struct IDirectDrawSurface IDirectDrawSurface,*LPDIRECTDRAWSURFACE;
 typedef struct IDirectDrawSurface2 IDirectDrawSurface2,*LPDIRECTDRAWSURFACE2;
 
+#define DDENUMRET_CANCEL	0
+#define DDENUMRET_OK		1
+
+#define DD_OK			0
+
+
 #define _FACDD		0x876
 #define MAKE_DDHRESULT( code )  MAKE_HRESULT( 1, _FACDD, code )
 
@@ -681,7 +687,7 @@ typedef struct IDirectDraw_VTable {
     STDMETHOD(Compact)(THIS) PURE;
     STDMETHOD(CreateClipper)(THIS_ DWORD, LPDIRECTDRAWCLIPPER FAR*, IUnknown FAR * ) PURE;
     STDMETHOD(CreatePalette)(THIS_ DWORD, LPPALETTEENTRY, LPDIRECTDRAWPALETTE FAR*, IUnknown FAR * ) PURE;
-    STDMETHOD(CreateSurface)(THIS_  LPDDSURFACEDESC *lpddsd, LPDIRECTDRAWSURFACE FAR *,
+    STDMETHOD(CreateSurface)(THIS_  LPDDSURFACEDESC, LPDIRECTDRAWSURFACE FAR *,
 IUnknown FAR *) PURE;
     STDMETHOD(DuplicateSurface)( THIS_ LPDIRECTDRAWSURFACE, LPDIRECTDRAWSURFACE
 FAR * ) PURE;
@@ -706,9 +712,10 @@ struct _directdrawdata {
     DWORD			depth;
     DWORD			vp_width,vp_height; /* viewport dimension */
     DWORD			height,width;	/* SetDisplayMode */
-    DWORD			current_height,fb_width,fb_height,fb_banksize,fb_memsize;
+    DWORD			fb_width,fb_height,fb_banksize,fb_memsize;
     HWND32			mainwindow;
     void			*fb_addr;
+    unsigned int		vpmask;
 };
 
 
@@ -830,6 +837,7 @@ struct IDirectDrawSurface {
     LPDIRECTDRAWPALETTE	palette;
     DWORD		fb_height,lpitch,width,height;
     LPDIRECTDRAW	ddraw;
+    LPDIRECTDRAWSURFACE	backbuffer;
 };
 #undef THIS
 #define THIS LPDIRECTDRAWSURFACE2 this
@@ -885,6 +893,7 @@ struct IDirectDrawSurface2 {
     LPDIRECTDRAWPALETTE	palette;
     DWORD		fb_height,lpitch,width,height;
     LPDIRECTDRAW	ddraw;
+    LPDIRECTDRAWSURFACE	backbuffer;
 };
 #undef THIS
 

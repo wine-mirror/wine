@@ -98,7 +98,7 @@ type	win32
  91 stdcall Escape(long long long ptr ptr) Escape32
  92 stdcall ExcludeClipRect(long long long long long) ExcludeClipRect32
  93 stdcall ExtCreatePen(long long ptr long ptr) ExtCreatePen32
- 94 stub ExtCreateRegion
+ 94 stdcall ExtCreateRegion(ptr long ptr) ExtCreateRegion
  95 stdcall ExtEscape(long long long ptr long ptr) ExtEscape32
  96 stdcall ExtFloodFill(long long long long long) ExtFloodFill32
  97 stub ExtSelectClipRgn

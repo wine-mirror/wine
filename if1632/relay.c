@@ -112,8 +112,25 @@ void RELAY_DebugCallFrom16( int func_type, char *args,
         case 't':
             args16 -= 4;
 	    printf( "0x%08x", *(int *)args16 );
-            if (HIWORD(*(int *)args16))
-                printf( " \"%s\"", (char *)PTR_SEG_TO_LIN(*(int *)args16) );
+            if (HIWORD(*(int *)args16)) {
+	    	LPBYTE s = (LPBYTE)PTR_SEG_TO_LIN(*(int*)args16);
+
+		/* filter out non printable chars, which would destroy output */
+		fputs(" \"",stdout);
+		while (*s) {
+			if (*s < ' ') {
+				printf( "\\0x%02x",*s++);
+				continue;
+			}
+			if (*s=='\\') {
+				fputs( "\\\\",stdout);
+				s++;
+				continue;
+			}
+			fputc(*s++,stdout);
+		}
+		fputs("\"",stdout);
+	    }
             break;
         case 'p':
             args16 -= 4;
@@ -122,8 +139,25 @@ void RELAY_DebugCallFrom16( int func_type, char *args,
         case 'T':
             args16 -= 4;
             printf( "%04x:%04x", *(WORD *)(args16+2), *(WORD *)args16 );
-            if (HIWORD(*(int *)args16))
-                printf( " \"%s\"", (char *)PTR_SEG_TO_LIN(*(int *)args16) );
+            if (HIWORD(*(int *)args16)) {
+	    	LPBYTE s = (LPBYTE)PTR_SEG_TO_LIN(*(int*)args16);
+
+		/* filter out non printable chars, which would destroy output */
+		fputs(" \"",stdout);
+		while (*s) {
+			if (*s < ' ') {
+				printf( "\\0x%02x",*s++);
+				continue;
+			}
+			if (*s=='\\') {
+				fputs( "\\\\",stdout);
+				s++;
+				continue;
+			}
+			fputc(*s++,stdout);
+		}
+		fputs("\"",stdout);
+	    }
             break;
         }
         args++;
@@ -209,10 +243,10 @@ void RELAY_DebugCallTo16( int* stack, int nb_args )
     if (nb_args == -1)  /* Register function */
     {
         CONTEXT *context = (CONTEXT *)stack[0];
-        WORD *stack16 = (WORD *)CURRENT_STACK16 - 2 /* for saved %%esp */;
+        WORD *stack16 = (WORD *)CURRENT_STACK16;
         printf( "CallTo16(func=%04lx:%04x,ds=%04lx",
                 CS_reg(context), IP_reg(context), DS_reg(context) );
-        nb_args = -stack[1] / sizeof(WORD);
+        nb_args = stack[1] / sizeof(WORD);
         while (nb_args--) printf( ",0x%04x", *(--stack16) );
         printf( ")\n" );
         printf( "     AX=%04x BX=%04x CX=%04x DX=%04x SI=%04x DI=%04x BP=%04x ES=%04x\n",
@@ -268,13 +302,13 @@ void WINAPI Catch( CONTEXT *context )
 
     lpbuf[0] = IP_reg(context);
     lpbuf[1] = CS_reg(context);
-    lpbuf[2] = LOWORD(pFrame->saved_ss_sp);
+    lpbuf[2] = LOWORD(pFrame->frame32);
     lpbuf[3] = BP_reg(context);
     lpbuf[4] = SI_reg(context);
     lpbuf[5] = DI_reg(context);
     lpbuf[6] = DS_reg(context);
     lpbuf[7] = OFFSETOF(IF1632_Saved16_ss_sp);
-    lpbuf[8] = HIWORD(pFrame->saved_ss_sp);
+    lpbuf[8] = HIWORD(pFrame->frame32);
     AX_reg(context) = 0;  /* Return 0 */
 }
 
@@ -301,7 +335,7 @@ void WINAPI Throw( CONTEXT *context )
     IF1632_Saved16_ss_sp = MAKELONG( lpbuf[7] - sizeof(WORD),
                                      HIWORD(IF1632_Saved16_ss_sp) );
     pFrame = CURRENT_STACK16;
-    pFrame->saved_ss_sp = MAKELONG( lpbuf[2], lpbuf[8] );
+    pFrame->frame32 = MAKELONG( lpbuf[2], lpbuf[8] );
     IP_reg(context) = lpbuf[0];
     CS_reg(context) = lpbuf[1];
     BP_reg(context) = lpbuf[3];
@@ -374,6 +408,14 @@ static DWORD RELAY_CallProc32W(int Ex)
 	case 6:	ret = proc32(args[0],args[1],args[2],args[3],args[4],args[5]);
 		break;
 	case 7:	ret = proc32(args[0],args[1],args[2],args[3],args[4],args[5],args[6]);
+		break;
+	case 8:	ret = proc32(args[0],args[1],args[2],args[3],args[4],args[5],args[6],args[7]);
+		break;
+	case 9:	ret = proc32(args[0],args[1],args[2],args[3],args[4],args[5],args[6],args[7],args[8]);
+		break;
+	case 10:	ret = proc32(args[0],args[1],args[2],args[3],args[4],args[5],args[6],args[7],args[8],args[9]);
+		break;
+	case 11:	ret = proc32(args[0],args[1],args[2],args[3],args[4],args[5],args[6],args[7],args[8],args[9],args[10]);
 		break;
 	default:
 		/* FIXME: should go up to 32  arguments */

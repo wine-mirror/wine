@@ -120,6 +120,7 @@ static HMODULE32 BUILTIN32_DoLoadModule( BUILTIN32_DLL *dll )
     DEBUG_ENTRY_POINT *debug;
     REG_ENTRY_POINT *regs;
     PE_MODREF *pem;
+    PDB32 *pdb = PROCESS_Current();
     INT32 i, size;
     BYTE *addr;
 
@@ -278,8 +279,8 @@ static HMODULE32 BUILTIN32_DoLoadModule( BUILTIN32_DLL *dll )
                                   sizeof(*pem) );
     pem->module = (HMODULE32)addr;
     pem->pe_export = exp;
-    pem->next = pCurrentProcess->modref_list;
-    pCurrentProcess->modref_list = pem;
+    pem->next = pdb->modref_list;
+    pdb->modref_list = pem;
 
     /* Create a Win16 dummy module */
 

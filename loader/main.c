@@ -48,6 +48,7 @@ int __winelib = 1;  /* Winelib run-time flag */
 BOOL32 MAIN_KernelInit(void)
 {
     extern BOOL32 EVENT_Init(void);
+    extern BOOL32 PROCESS_Init(void);
     extern BOOL32 VIRTUAL_Init(void);
 
     /* Initialize virtual memory management */
@@ -57,14 +58,17 @@ BOOL32 MAIN_KernelInit(void)
     if (!(SystemHeap = HeapCreate( HEAP_GROWABLE, 0x10000, 0 ))) return FALSE;
     if (!(SegptrHeap = HeapCreate( HEAP_WINE_SEGPTR, 0, 0 ))) return FALSE;
 
+    /* Create the initial process */
+    if (!PROCESS_Init()) return FALSE;
+
+    /* Initialize signal handling */
+    if (!SIGNAL_Init()) return FALSE;
+
     /* Load the configuration file */
     if (!PROFILE_LoadWineIni()) return FALSE;
 
       /* Initialize DOS memory */
     if (!DOSMEM_Init()) return FALSE;
-
-      /* Initialize signal handling */
-    if (!SIGNAL_Init()) return FALSE;
 
     /* Initialise DOS drives */
     if (!DRIVE_Init()) return FALSE;

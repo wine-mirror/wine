@@ -347,9 +347,7 @@ void DEBUG_AddModuleBreakpoints(void)
 
         if (pModule->flags & NE_FFLAGS_WIN32)  /* PE module */
         {
-            PE_MODREF *pem;
-            if (!pCurrentProcess) continue;
-            pem = pCurrentProcess->modref_list;
+            PE_MODREF *pem = PROCESS_Current()->modref_list;
             while (pem)
             {
 		if (pem->module == pModule->module32) break;

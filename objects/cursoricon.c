@@ -42,6 +42,7 @@
 #include "debug.h"
 #include "task.h"
 #include "user.h"
+#include "keyboard.h"
 
 extern UINT16 COLOR_GetSystemPaletteSize();
 
@@ -1243,6 +1244,18 @@ void WINAPI GetCursorPos16( POINT16 *pt )
     {
 	pt->x = childX;
 	pt->y = childY;
+        if (mousebut & Button1Mask)
+            AsyncMouseButtonsStates[0] = MouseButtonsStates[0] = TRUE;
+        else
+            MouseButtonsStates[0] = FALSE;
+        if (mousebut & Button2Mask)
+            AsyncMouseButtonsStates[1] = MouseButtonsStates[1] = TRUE;
+        else       
+            MouseButtonsStates[1] = FALSE;
+        if (mousebut & Button3Mask)
+            AsyncMouseButtonsStates[2] = MouseButtonsStates[2] = TRUE;
+        else
+            MouseButtonsStates[2] = FALSE;
     }
     dprintf_cursor(stddeb, "GetCursorPos: ret=%d,%d\n", pt->x, pt->y );
 }

@@ -98,20 +98,12 @@ typedef struct _PDB32
     LCID             locale;           /* c4 Locale to be queried by GetThreadLocale (NT) */
 } PDB32;
 
-/* PDB <-> Process id conversion macros */
-#define PROCESS_OBFUSCATOR     ((DWORD)0xdeadbeef)
-#define PROCESS_ID_TO_PDB(id)  ((PDB32 *)((id) ^ PROCESS_OBFUSCATOR))
-#define PDB_TO_PROCESS_ID(pdb) ((DWORD)(pdb) ^ PROCESS_OBFUSCATOR)
-
 /* scheduler/process.c */
+extern PDB32 *PROCESS_Current(void);
+extern PDB32 *PROCESS_IdToPDB( DWORD id );
 extern HANDLE32 PROCESS_AllocHandle( K32OBJ *ptr, DWORD flags);
 extern K32OBJ *PROCESS_GetObjPtr( HANDLE32 handle, K32OBJ_TYPE type );
 extern BOOL32 PROCESS_SetObjPtr( HANDLE32 handle, K32OBJ *ptr, DWORD flags );
 extern PDB32 *PROCESS_Create( TDB *pTask, LPCSTR cmd_line );
-extern PDB32 *pCurrentProcess;
-
-/* scheduler/event.c */
-extern void EVENT_Set( K32OBJ *obj );
-extern K32OBJ *EVENT_Create( BOOL32 manual_reset, BOOL32 initial_state );
 
 #endif  /* __WINE_PROCESS_H */

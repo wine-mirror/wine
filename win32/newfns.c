@@ -8,7 +8,10 @@
 at a later date. */
 
 #include <stdio.h>
+#include <sys/time.h>
+#include <unistd.h>
 #include "windows.h"
+#include "winnt.h"
 #include "winerror.h"
 #include "stddebug.h"
 #include "debug.h"
@@ -37,16 +40,18 @@ BOOL32 WINAPI UTUnRegister(HMODULE32 hModule)
     return TRUE;
 }
 
+
 /****************************************************************************
  *		QueryPerformanceCounter (KERNEL32.564)
  */
 BOOL32 WINAPI QueryPerformanceCounter(LPLARGE_INTEGER counter)
 {
-	/* FIXME: don't know what are good values */
-	counter->LowPart	= 0;
-	counter->HighPart	= 0;
-	/* FIXME: Set appropriate error */
-	return FALSE;
+    struct timeval tv;
+
+    gettimeofday(&tv,NULL);
+    counter->LowPart = tv.tv_usec+tv.tv_sec*1000000;
+    counter->HighPart = 0;
+    return TRUE;
 }
 
 HANDLE32 WINAPI FindFirstChangeNotification32A(LPCSTR lpPathName,BOOL32 bWatchSubtree,DWORD dwNotifyFilter) {
@@ -66,11 +71,9 @@ BOOL32 WINAPI FindNextChangeNotification(HANDLE32 fcnhandle) {
  */
 BOOL32 WINAPI QueryPerformanceFrequency(LPLARGE_INTEGER frequency)
 {
-	/* FIXME: don't know what are good values */
-	frequency->LowPart	= 0;
+	frequency->LowPart	= 1000000;
 	frequency->HighPart	= 0;
-	/* FIXME: Set appropriate error */
-	return FALSE;
+	return TRUE;
 }
 
 /****************************************************************************

@@ -803,7 +803,7 @@ static void DEBUG_LoadEntryPoints32( HMODULE32 hModule, const char *name )
     void **functions;
     const char **names;
 
-    PE_MODREF *pem = pCurrentProcess->modref_list;
+    PE_MODREF *pem = PROCESS_Current()->modref_list;
     while (pem && (pem->module != hModule)) pem = pem->next;
     if (!pem) return;
     exports = pem->pe_export;

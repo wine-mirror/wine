@@ -33,7 +33,7 @@
 static PE_MODREF*
 HMODULE32toPE_MODREF(HMODULE32 hmod) {
 	NE_MODULE	*pModule;
-	PDB32		*pdb = pCurrentProcess;
+	PDB32		*pdb = PROCESS_Current();
 	PE_MODREF	*pem;
 
 	if (!hmod) hmod = GetTaskDS(); /* FIXME: correct? */

@@ -56,7 +56,7 @@ static HGLOBAL16 hDOSEnvironment = 0;
 static HGLOBAL16 TASK_CreateDOSEnvironment(void);
 static void	 TASK_YieldToSystem(TDB*);
 
-static THDB TASK_SystemTHDB;
+
 /***********************************************************************
  *           TASK_Init
  */
@@ -64,8 +64,6 @@ BOOL32 TASK_Init(void)
 {
     if (!(hDOSEnvironment = TASK_CreateDOSEnvironment()))
         fprintf( stderr, "Not enough memory for DOS Environment\n" );
-    TASK_SystemTHDB.teb_sel = SELECTOR_AllocBlock( &TASK_SystemTHDB, 0x1000, SEGMENT_DATA, TRUE, FALSE );
-    SET_FS( TASK_SystemTHDB.teb_sel );
     return (hDOSEnvironment != 0);
 }
 
@@ -340,6 +338,8 @@ static void TASK_CallToStart(void)
     SEGTABLEENTRY *pSegTable = NE_SEG_TABLE( pModule );
 
     IF1632_Saved16_ss_sp = pTask->ss_sp;
+    /* Terminate the stack frame */
+    CURRENT_STACK16->frame32 = NULL;
     SET_CUR_THREAD( pTask->thdb );
     if (pModule->flags & NE_FFLAGS_WIN32)
     {
@@ -347,11 +347,11 @@ static void TASK_CallToStart(void)
 
         extern void InitTask( CONTEXT *context );
 
-        FARPROC32 entry = (FARPROC32)RVA_PTR( pCurrentProcess->exe_modref->module, OptionalHeader.AddressOfEntryPoint );
+        FARPROC32 entry = (FARPROC32)RVA_PTR( PROCESS_Current()->exe_modref->module, OptionalHeader.AddressOfEntryPoint );
 
         InitTask( NULL );
         InitApp( pTask->hModule );
-        PE_InitializeDLLs( pCurrentProcess, DLL_PROCESS_ATTACH, (LPVOID)-1 );
+        PE_InitializeDLLs( PROCESS_Current(), DLL_PROCESS_ATTACH, (LPVOID)-1 );
         dprintf_relay( stddeb, "CallTo32(entryproc=%p)\n", entry );
         exit_code = entry();
         TASK_KillCurrentTask( exit_code );
@@ -514,7 +514,7 @@ HTASK16 TASK_CreateTask( HMODULE16 hModule, HINSTANCE16 hInstance,
 
     /* Create the Win32 part of the task */
 
-    pCurrentProcess = pdb32 = PROCESS_Create( pTask, cmdLine );
+    pdb32 = PROCESS_Create( pTask, cmdLine );
     /* FIXME: check for pdb32 == NULL.  */
     pdb32->task = hTask;
     if (pModule->flags & NE_FFLAGS_WIN32)
@@ -522,8 +522,8 @@ HTASK16 TASK_CreateTask( HMODULE16 hModule, HINSTANCE16 hInstance,
     /*
         LPTHREAD_START_ROUTINE start =
             (LPTHREAD_START_ROUTINE)(
-	    	pCurrentProcess->exe_modref->load_addr +
-		pCurrentProcess->exe_modref->pe_module->pe_header->OptionalHeader.AddressOfEntryPoint);
+	    	PROCESS_Current()->exe_modref->load_addr +
+		PROCESS_Current()->exe_modref->pe_module->pe_header->OptionalHeader.AddressOfEntryPoint);
      */
         pTask->thdb = THREAD_Create( pdb32,
           PE_HEADER(pModule->module32)->OptionalHeader.SizeOfStackReserve,
@@ -541,11 +541,11 @@ HTASK16 TASK_CreateTask( HMODULE16 hModule, HINSTANCE16 hInstance,
 
     stack32Top = (char*)pTask->thdb->teb.stack_top;
     frame32 = (STACK32FRAME *)stack32Top - 1;
-    frame32->edi = 0;
-    frame32->esi = 0;
-    frame32->edx = 0;
-    frame32->ecx = 0;
-    frame32->ebx = 0;
+    frame32->edi     = 0;
+    frame32->esi     = 0;
+    frame32->edx     = 0;
+    frame32->ecx     = 0;
+    frame32->ebx     = 0;
     frame32->retaddr = (DWORD)TASK_CallToStart;
     /* The remaining fields will be initialized in TASK_Reschedule */
 
@@ -555,17 +555,15 @@ HTASK16 TASK_CreateTask( HMODULE16 hModule, HINSTANCE16 hInstance,
         sp = pSegTable[pModule->ss-1].minsize + pModule->stack_size;
     sp &= ~1;
     pTask->ss_sp = PTR_SEG_OFF_TO_SEGPTR( hInstance, sp );
-    pTask->ss_sp -= sizeof(STACK16FRAME) + sizeof(DWORD) /* for saved %esp */;
+    pTask->ss_sp -= sizeof(STACK16FRAME);
     frame16 = (STACK16FRAME *)PTR_SEG_TO_LIN( pTask->ss_sp );
-    frame16->saved_ss_sp = 0;
+    frame16->frame32 = frame32;
     frame16->ebp = sp + (int)&((STACK16FRAME *)0)->bp;
     frame16->bp = LOWORD(frame16->ebp);
     frame16->ds = frame16->es = pTask->hInstance;
     frame16->entry_point = 0;
     frame16->entry_cs = 0;
     /* The remaining fields will be initialized in TASK_Reschedule */
-
-    *(STACK32FRAME **)(frame16 + 1) = frame32; /* Store the 32-bit %esp */
 
       /* If there's no 16-bit stack yet, use a part of the new task stack */
       /* This is only needed to have a stack to switch from on the first  */
@@ -775,8 +773,8 @@ void TASK_Reschedule(void)
     if (!newframe16->entry_cs)
     {
         STACK16FRAME *oldframe16 = CURRENT_STACK16;
-        STACK32FRAME *oldframe32 = *(STACK32FRAME **)(oldframe16 + 1);
-        STACK32FRAME *newframe32 = *(STACK32FRAME **)(newframe16 + 1);
+        STACK32FRAME *oldframe32 = oldframe16->frame32;
+        STACK32FRAME *newframe32 = newframe16->frame32;
         newframe16->entry_ip     = oldframe16->entry_ip;
         newframe16->entry_cs     = oldframe16->entry_cs;
         newframe16->ip           = oldframe16->ip;
@@ -790,7 +788,6 @@ void TASK_Reschedule(void)
 
     hCurrentTask = hTask;
     SET_CUR_THREAD( pNewTask->thdb );
-    pCurrentProcess = pNewTask->thdb->process;
     IF1632_Saved16_ss_sp = pNewTask->ss_sp;
 }
 
@@ -1197,7 +1194,7 @@ void WINAPI SwitchStackBack(void)
     /* Build a stack frame for the return */
 
     newFrame = CURRENT_STACK16;
-    newFrame->saved_ss_sp = oldFrame->saved_ss_sp;
+    newFrame->frame32 = oldFrame->frame32;
     if (debugging_relay)
     {
         newFrame->entry_ip = oldFrame->entry_ip;

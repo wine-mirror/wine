@@ -871,13 +871,24 @@ INT16 WINAPI GetPriorityClipboardFormat16( UINT16 *lpPriorityList, INT16 nCount)
 
 
 /**************************************************************************
- *             GetPriorityClipboardFormat32   (USER32
+ *             GetPriorityClipboardFormat32   (USER32.279)
  */
 INT32 WINAPI GetPriorityClipboardFormat32( UINT32 *lpPriorityList, INT32 nCount )
 {
-    fprintf( stderr, "GetPriorityClipboardFormat32(%p, %d): stub\n",
-             lpPriorityList, nCount );
-    return 0;
+    int Counter;
+
+    if(CountClipboardFormats32() == 0) 
+    { 
+        return 0;
+    }
+
+    for(Counter = 0; Counter <= nCount; Counter++)
+    {
+        if(IsClipboardFormatAvailable32(*(lpPriorityList+sizeof(INT32)*Counter)))
+            return *(lpPriorityList+sizeof(INT32)*Counter);
+    }
+
+    return -1;
 }
 
 

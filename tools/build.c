@@ -25,6 +25,12 @@
 # define PREFIX
 #endif
 
+#ifdef HAVE_ASM_STRING
+# define STRING ".string"
+#else
+# define STRING ".ascii"
+#endif
+
 #if defined(__GNUC__) && !defined(__svr4__)
 # define USE_STABS
 #else
@@ -1240,7 +1246,7 @@ static int BuildSpec16File( char * specfile, FILE *outfile )
     /* Output the DLL descriptor */
 
     fprintf( outfile, "\t.text\n" );
-    fprintf( outfile, "DLLName:\t.string \"%s\\0\"\n", DLLName );
+    fprintf( outfile, "DLLName:\t" STRING " \"%s\\0\"\n", DLLName );
     fprintf( outfile, "\t.align 4\n" );
     fprintf( outfile, "\t.globl " PREFIX "%s_Descriptor\n", DLLName );
     fprintf( outfile, PREFIX "%s_Descriptor:\n", DLLName );
@@ -1299,14 +1305,6 @@ static int TransferArgs16To32( FILE *outfile, char *args )
 {
     int i, pos16, pos32;
 
-    /* Save ebx first */
-
-    fprintf( outfile, "\tpushl %%ebx\n" );
-
-    /* Get the 32-bit stack pointer */
-
-    fprintf( outfile, "\tmovl " PREFIX "CALLTO16_Saved32_esp,%%ebx\n" );
-
     /* Copy the arguments */
 
     pos16 = 6;  /* skip bp and return address */
@@ -1355,10 +1353,6 @@ static int TransferArgs16To32( FILE *outfile, char *args )
         }
     }
 
-    /* Restore ebx */
-    
-    fprintf( outfile, "\tpopl %%ebx\n" );
-
     return pos16 - 6;  /* Return the size of the 16-bit args */
 }
 
@@ -1370,18 +1364,8 @@ static int TransferArgs16To32( FILE *outfile, char *args )
  */
 static void BuildContext16( FILE *outfile )
 {
-    /* Save ebx first */
-
-    fprintf( outfile, "\tpushl %%ebx\n" );
-
-    /* Get the 32-bit stack pointer */
-
-    fprintf( outfile, "\tmovl " PREFIX "CALLTO16_Saved32_esp,%%ebx\n" );
-
     /* Store the registers */
 
-    fprintf( outfile, "\tpopl %d(%%ebx)\n", /* Get ebx from stack*/
-             CONTEXTOFFSET(Ebx) - sizeof(CONTEXT) );
     fprintf( outfile, "\tmovl %%eax,%d(%%ebx)\n",
              CONTEXTOFFSET(Eax) - sizeof(CONTEXT) );
     fprintf( outfile, "\tmovl %%ecx,%d(%%ebx)\n",
@@ -1393,6 +1377,9 @@ static void BuildContext16( FILE *outfile )
     fprintf( outfile, "\tmovl %%edi,%d(%%ebx)\n",
              CONTEXTOFFSET(Edi) - sizeof(CONTEXT) );
 
+    fprintf( outfile, "\tmovl -20(%%ebp),%%eax\n" ); /* Get %ebx from stack*/
+    fprintf( outfile, "\tmovl %%eax,%d(%%ebx)\n",
+             CONTEXTOFFSET(Ebx) - sizeof(CONTEXT) );
     fprintf( outfile, "\tmovzwl -10(%%ebp),%%eax\n" ); /* Get %ds from stack*/
     fprintf( outfile, "\tmovl %%eax,%d(%%ebx)\n",
              CONTEXTOFFSET(SegDs) - sizeof(CONTEXT) );
@@ -1437,7 +1424,8 @@ static void RestoreContext16( FILE *outfile )
 {
     /* Get the 32-bit stack pointer */
 
-    fprintf( outfile, "\tmovl %%edx,%%ebx\n" );
+    fprintf( outfile, "\tleal -%d(%%ebp),%%ebx\n",
+             STRUCTOFFSET(STACK32FRAME,ebp) );
 
     /* Remove everything up to the return address from the 16-bit stack */
 
@@ -1500,8 +1488,7 @@ static void RestoreContext16( FILE *outfile )
  *
  * Added on the stack:
  * (sp-4)  long   ebp
- * (sp-6)  word   saved previous sp
- * (sp-8)  word   saved previous ss
+ * (sp-8)  long   saved previous stack
  */
 static void BuildCallFrom16Func( FILE *outfile, char *profile )
 {
@@ -1544,16 +1531,28 @@ static void BuildCallFrom16Func( FILE *outfile, char *profile )
     /* fprintf( outfile, "\tmovw %%es,-6(%%ebp)\n" ); */
     fprintf( outfile, "\t.byte 0x66,0x8c,0x45,0xfa\n" );
 
+    /* Save %ebx */
+
+    fprintf( outfile, "\tpushl %%ebx\n" );
+
     /* Restore 32-bit ds and es */
 
-    fprintf( outfile, "\tpushl $0x%04x%04x\n", Data_Selector, Data_Selector );
-    fprintf( outfile, "\t.byte 0x66\n\tpopl %%ds\n" );
-    fprintf( outfile, "\t.byte 0x66\n\tpopl %%es\n" );
+    fprintf( outfile, "\tmovw $0x%04x,%%bx\n", Data_Selector );
+#ifdef __svr4__
+    fprintf( outfile, "\tdata16\n");
+#endif
+    fprintf( outfile, "\tmovw %%bx,%%ds\n" );
+#ifdef __svr4__
+    fprintf( outfile, "\tdata16\n");
+#endif
+    fprintf( outfile, "\tmovw %%bx,%%es\n" );
 
+    /* Get the 32-bit stack pointer */
+
+    fprintf( outfile, "\tmovl " PREFIX "CALLTO16_Saved32_esp,%%ebx\n" );
 
     /* Save the 16-bit stack */
 
-    fprintf( outfile, "\tpushl " PREFIX "IF1632_Saved16_ss_sp\n" );
 #ifdef __svr4__
     fprintf( outfile,"\tdata16\n");
 #endif
@@ -1574,9 +1573,14 @@ static void BuildCallFrom16Func( FILE *outfile, char *profile )
     if (!reg_func && short_ret)
         fprintf( outfile, "\tmovl %%edx,-4(%%ebp)\n" );
 
+    /* Restore %ebx and store the 32-bit stack pointer instead */
+
+    fprintf( outfile, "\tmovl %%ebx,%%ebp\n" );
+    fprintf( outfile, "\tpopl %%ebx\n" );
+    fprintf( outfile, "\tpushl %%ebp\n" );
+
     /* Switch to the 32-bit stack */
 
-    fprintf( outfile, "\tmovl " PREFIX "CALLTO16_Saved32_esp,%%ebp\n" );
     fprintf( outfile, "\tpushl %%ds\n" );
     fprintf( outfile, "\tpopl %%ss\n" );
     fprintf( outfile, "\tleal -%d(%%ebp),%%esp\n",
@@ -1624,12 +1628,6 @@ static void BuildCallFrom16Func( FILE *outfile, char *profile )
         fprintf( outfile, "\tpopl %%eax\n" );
     }
 
-    /* Restore the value of the saved 32-bit stack pointer */
-
-    fprintf( outfile, "\tleal -%d(%%ebp),%%edx\n",
-             STRUCTOFFSET(STACK32FRAME,ebp) );
-    fprintf( outfile, "movl %%edx," PREFIX "CALLTO16_Saved32_esp\n" );
-
     /* Restore the 16-bit stack */
 
 #ifdef __svr4__
@@ -1637,7 +1635,7 @@ static void BuildCallFrom16Func( FILE *outfile, char *profile )
 #endif
     fprintf( outfile, "\tmovw " PREFIX "IF1632_Saved16_ss_sp+2,%%ss\n" );
     fprintf( outfile, "\tmovw " PREFIX "IF1632_Saved16_ss_sp,%%sp\n" );
-    fprintf( outfile, "\tpopl " PREFIX "IF1632_Saved16_ss_sp\n" );
+    fprintf( outfile, "\tpopl " PREFIX "CALLTO16_Saved32_esp\n" );
 
     if (reg_func)
     {
@@ -1722,8 +1720,8 @@ static void BuildCallFrom16Func( FILE *outfile, char *profile )
  * Prototypes for the CallTo16 functions:
  *   extern WINAPI WORD CallTo16_word_xxx( FARPROC16 func, args... );
  *   extern WINAPI LONG CallTo16_long_xxx( FARPROC16 func, args... );
- *   extern WINAPI void CallTo16_sreg_( const CONTEXT *context );
- *   extern WINAPI void CallTo16_lreg_( const CONTEXT *context );
+ *   extern WINAPI void CallTo16_sreg_( const CONTEXT *context, int nb_args );
+ *   extern WINAPI void CallTo16_lreg_( const CONTEXT *context, int nb_args );
  */
 static void BuildCallTo16Func( FILE *outfile, char *profile )
 {
@@ -1782,11 +1780,6 @@ static void BuildCallTo16Func( FILE *outfile, char *profile )
     fprintf( outfile, "\tpushl %%esi\n" );
     fprintf( outfile, "\tpushl %%edi\n" );
 
-    /* Save the 32-bit stack */
-
-    fprintf( outfile, "\tmovl %%esp," PREFIX "CALLTO16_Saved32_esp\n" );
-    fprintf( outfile, "\tmovl %%ebp,%%ebx\n" );
-
     /* Print debugging info */
 
     if (debugging)
@@ -1800,21 +1793,23 @@ static void BuildCallTo16Func( FILE *outfile, char *profile )
         fprintf( outfile, "\tpopl %%eax\n" );
     }
 
+    /* Save the 32-bit stack */
+
+    fprintf( outfile, "\tpushl " PREFIX "IF1632_Saved16_ss_sp\n" );
+    fprintf( outfile, "\tmovl %%esp," PREFIX "CALLTO16_Saved32_esp\n" );
+    fprintf( outfile, "\tmovl %%ebp,%%ebx\n" );
+
     if (reg_func)
     {
         /* Switch to the 16-bit stack, saving the current %%esp, */
         /* and adding the specified offset to the new sp */
-        fprintf( outfile, "\tmovzwl " PREFIX "IF1632_Saved16_ss_sp,%%edx\n" );
-        fprintf( outfile, "\tleal -4(%%edx),%%edx\n" );
-        fprintf( outfile, "\tmovl 12(%%ebx),%%eax\n" ); /* Get the offset */
-        fprintf( outfile, "\taddl %%edx,%%eax\n" );
+        fprintf( outfile, "\tmovzwl " PREFIX "IF1632_Saved16_ss_sp,%%eax\n" );
+        fprintf( outfile, "\tsubl 12(%%ebx),%%eax\n" ); /* Get the offset */
 #ifdef __svr4__
         fprintf( outfile,"\tdata16\n");
 #endif
         fprintf( outfile, "\tmovw " PREFIX "IF1632_Saved16_ss_sp+2,%%ss\n" );
-        fprintf( outfile, "\txchgl %%esp,%%eax\n" );
-        fprintf( outfile, "\t.byte 0x36\n" /* %ss: */ );
-        fprintf( outfile, "\tmovl %%eax,0(%%edx)\n" );
+        fprintf( outfile, "\tmovl %%eax,%%esp\n" );
 
         /* Get the registers. ebx is handled later on. */
 
@@ -1858,19 +1853,17 @@ static void BuildCallTo16Func( FILE *outfile, char *profile )
     {
         int pos = 12;  /* first argument position */
 
-        /* Switch to the 16-bit stack, saving the current %%esp */
-        fprintf( outfile, "\tmovl %%esp,%%eax\n" );
+        /* Switch to the 16-bit stack */
 #ifdef __svr4__
         fprintf( outfile,"\tdata16\n");
 #endif
         fprintf( outfile, "\tmovw " PREFIX "IF1632_Saved16_ss_sp+2,%%ss\n" );
         fprintf( outfile, "\tmovw " PREFIX "IF1632_Saved16_ss_sp,%%sp\n" );
-        fprintf( outfile, "\tpushl %%eax\n" );
 
         /* Make %bp point to the previous stackframe (built by CallFrom16) */
         fprintf( outfile, "\tmovzwl %%sp,%%ebp\n" );
         fprintf( outfile, "\tleal %d(%%ebp),%%ebp\n",
-                 STRUCTOFFSET(STACK16FRAME,bp) + 4 /* for saved %%esp */ );
+                 STRUCTOFFSET(STACK16FRAME,bp) );
 
         /* Transfer the arguments */
 
@@ -1931,8 +1924,6 @@ static void BuildRet16Func( FILE *outfile )
     /* Remove the arguments just in case */
 
     fprintf( outfile, PREFIX "CALLTO16_Ret_long:\n" );
-    fprintf( outfile, "\tleal -%d(%%ebp),%%esp\n",
-                 STRUCTOFFSET(STACK16FRAME,bp) + 4 /* for saved %%esp */ );
 
     /* Put return value into %eax */
 
@@ -1943,7 +1934,6 @@ static void BuildRet16Func( FILE *outfile )
 
     /* Restore 32-bit segment registers */
 
-    fprintf( outfile, "\tpopl %%ecx\n" );  /* Get the saved %%esp */
     fprintf( outfile, "\tmovw $0x%04x,%%bx\n", Data_Selector );
 #ifdef __svr4__
     fprintf( outfile, "\tdata16\n");
@@ -1960,7 +1950,8 @@ static void BuildRet16Func( FILE *outfile )
     fprintf( outfile, "\tdata16\n");
 #endif
     fprintf( outfile, "\tmovw %%bx,%%ss\n" );
-    fprintf( outfile, "\tmovl %%ecx,%%esp\n" );
+    fprintf( outfile, "\tmovl " PREFIX "CALLTO16_Saved32_esp,%%esp\n" );
+    fprintf( outfile, "\tpopl " PREFIX "IF1632_Saved16_ss_sp\n" );
 
     /* Restore the 32-bit registers */
 
@@ -2216,8 +2207,8 @@ static int BuildCallFrom16( FILE *outfile, char * outname, int argc, char *argv[
         fprintf( outfile, "/* Argument strings */\n" );
         for (i = 2; i < argc; i++)
         {
-            fprintf( outfile, "Profile_%s:\n", argv[i] );
-            fprintf( outfile, "\t.string \"%s\\0\"\n", argv[i] + 5 );
+            fprintf( outfile, "Profile_%s:\t", argv[i] );
+            fprintf( outfile, STRING " \"%s\\0\"\n", argv[i] + 5 );
         }
     }
 

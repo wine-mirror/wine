@@ -281,7 +281,7 @@ type	win32
 276 stdcall GetNextDlgTabItem(long long long) GetNextDlgTabItem32
 277 stdcall GetOpenClipboardWindow() GetOpenClipboardWindow32
 278 stdcall GetParent(long) GetParent32
-279 stub GetPriorityClipboardFormat
+279 stdcall GetPriorityClipboardFormat(ptr long) GetPriorityClipboardFormat32
 280 stub GetProcessWindowStation
 281 stdcall GetPropA(long ptr) GetProp32A
 282 stdcall GetPropW(long ptr) GetProp32W

@@ -188,3 +188,18 @@ MFDRV_ExtFloodFill( DC *dc, INT32 x, INT32 y, COLORREF color, UINT32 fillType )
 {
     return MF_MetaParam4(dc,META_FLOODFILL,x,y,HIWORD(color),LOWORD(color)); 
 }
+
+
+/**********************************************************************
+ *          MFDRV_PaintRgn
+ */
+BOOL32
+MFDRV_PaintRgn( DC *dc, HRGN32 hrgn )
+{
+    INT16 index;
+    index = MF_CreateRegion( dc, hrgn );
+    if(index == -1)
+        return FALSE;
+    return MF_MetaParam1( dc, META_PAINTREGION, index );
+}
+

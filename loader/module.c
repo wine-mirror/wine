@@ -1437,7 +1437,7 @@ HMODULE32 WINAPI LoadLibraryEx32A(LPCSTR libname,HFILE32 hfile,DWORD flags)
 	hmod = PE_LoadLibraryEx32A(buffer,hfile,flags);
     }
     /* initialize all DLLs, which haven't been initialized yet. */
-    PE_InitializeDLLs( pCurrentProcess, DLL_PROCESS_ATTACH, NULL);
+    PE_InitializeDLLs( PROCESS_Current(), DLL_PROCESS_ATTACH, NULL);
     return hmod;
 }
 

@@ -188,12 +188,13 @@ void EXC_RaiseException( CONTEXT *context )
 DWORD WINAPI UnhandledExceptionFilter(PEXCEPTION_POINTERS epointers)
 {
     char message[80];
+    PDB32 *pdb = PROCESS_Current();
 
     /* FIXME: Should check if the process is being debugged */
 
-    if (pCurrentProcess && pCurrentProcess->top_filter)
+    if (pdb->top_filter)
     {
-        DWORD ret = pCurrentProcess->top_filter( epointers );
+        DWORD ret = pdb->top_filter( epointers );
         if (ret != EXCEPTION_CONTINUE_SEARCH) return ret;
     }
 
@@ -213,7 +214,8 @@ DWORD WINAPI UnhandledExceptionFilter(PEXCEPTION_POINTERS epointers)
 LPTOP_LEVEL_EXCEPTION_FILTER WINAPI SetUnhandledExceptionFilter(
                                           LPTOP_LEVEL_EXCEPTION_FILTER filter )
 {
-    LPTOP_LEVEL_EXCEPTION_FILTER old = pCurrentProcess->top_filter;
-    pCurrentProcess->top_filter = filter;
+    PDB32 *pdb = PROCESS_Current();
+    LPTOP_LEVEL_EXCEPTION_FILTER old = pdb->top_filter;
+    pdb->top_filter = filter;
     return old;
 }

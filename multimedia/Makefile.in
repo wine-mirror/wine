@@ -15,6 +15,7 @@ C_SRCS = \
 	midi.c \
 	mixer.c \
 	mmaux.c \
+	mmio.c \
 	mmsystem.c \
 	time.c
 

@@ -36,6 +36,6 @@ BOOL32 MF_BitBlt(DC *dcDest, short xDest, short yDest, short width,
 BOOL32 MF_StretchBlt(DC *dcDest, short xDest, short yDest, short widthDest,
 		   short heightDest, DC *dcSrc, short xSrc, short ySrc, 
 		   short widthSrc, short heightSrc, DWORD rop);
-
+INT16 MF_CreateRegion(DC *dc, HRGN32 hrgn);
 #endif   /* __WINE_METAFILE_H */
 

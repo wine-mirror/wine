@@ -1837,7 +1837,7 @@ static BOOL32 MENU_ExecFocusedItem( MTRACKER* pmt, HMENU32 hMenu )
 	{
 	    if( menu->wFlags & MF_SYSMENU )
 	    {
-		PostMessage16( pmt->hOwnerWnd, WM_SYSCOMMAND, item->hSubMenu,
+		PostMessage16( pmt->hOwnerWnd, WM_SYSCOMMAND, item->wID,
 			       MAKELPARAM((INT16)pmt->pt.x, (INT16)pmt->pt.y) );
 	    }
 	    else

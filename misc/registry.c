@@ -18,6 +18,7 @@
 #include <sys/fcntl.h>
 #include <sys/stat.h>
 #include <pwd.h>
+#include <assert.h>
 #include <time.h>
 #include "windows.h"
 #include "win.h"
@@ -587,6 +588,11 @@ _find_or_add_value(
 	LPKEYVALUE	val=NULL;
 	int		i;
 
+	if (name && !*name) {/* empty string equals default (NULL) value */
+		free(name);
+		name = NULL;
+	}
+
 	for (i=0;i<lpkey->nrofvalues;i++) {
 		val=lpkey->values+i;
 		if (name==NULL) {
@@ -711,7 +717,10 @@ _wine_read_USTRING(char *buf,LPWSTR *str) {
 	}
 	*ws	= 0;
 	ws	= *str;
-	*str	= strdupW(*str);
+	if (*ws)
+		*str	= strdupW(*str);
+	else
+		*str	= NULL;
 	free(ws);
 	return s;
 }
@@ -1038,7 +1047,10 @@ _w95_walk_tree(LPKEYSTRUCT lpkey,struct _w95key *key) {
 			int	len;
 
 			name = strdupA2W(key->values[i].name);
-			if (!*name) name = NULL;
+			if (!*name) {
+				free(name);
+				name = NULL;
+			}
 			free(key->values[i].name);
 
 			len	= key->values[i].datalen;
@@ -2085,6 +2097,8 @@ DWORD WINAPI RegQueryValueEx32W(
 	lpkey	= lookup_hkey(hkey);
 	if (!lpkey)
 		return SHELL_ERROR_BADKEY;
+	if (lpszValueName && !*lpszValueName)
+		lpszValueName = NULL;
 	if (lpszValueName==NULL) {
 		for (i=0;i<lpkey->nrofvalues;i++)
 			if (lpkey->values[i].name==NULL)
@@ -2726,9 +2740,8 @@ DWORD WINAPI RegEnumValue32W(
 		memcpy(lpszValue,val->name,2*lstrlen32W(val->name)+2);
 		*lpcchValue=lstrlen32W(val->name)*2+2;
 	} else {
-		/* how to handle NULL value? */
 		*lpszValue	= 0;
-		*lpcchValue	= 2;
+		*lpcchValue	= 0;
 	}
 	if (lpdwType)
 		*lpdwType=val->type;

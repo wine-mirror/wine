@@ -52,11 +52,7 @@ DWORD WINAPI _KERNEL32_18(DWORD processid,DWORD action)
 	fprintf(stderr,"KERNEL32_18(%ld,%ld+0x38)\n",processid,action);
 	if (action>56)
 		return 0;
-	if (!processid) {
-		process=pCurrentProcess;
-		/* check if valid process */
-	} else
-		process=(PDB32*)pCurrentProcess; /* decrypt too, if needed */
+        if (!(process = PROCESS_IdToPDB( processid ))) return 0;
 	switch (action) {
 	case 0:	/* return app compat flags */
 		pTask = (TDB*)GlobalLock16(process->task);

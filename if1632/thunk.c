@@ -240,15 +240,14 @@ static LRESULT WINAPI THUNK_CallWndProc16( WNDPROC16 proc, HWND16 hwnd,
 	}
     }
 
-    args = (WORD *)CURRENT_STACK16 - 7;
+    args = (WORD *)CURRENT_STACK16 - 5;
     args[0] = LOWORD(lParam);
     args[1] = HIWORD(lParam);
     args[2] = wParam;
     args[3] = msg;
     args[4] = hwnd;
-    /* args[5] and args[6] are used by relay code to store the stack pointer */
 
-    ret = CallTo16_sreg_( &context, -(5 * sizeof(WORD)) );
+    ret = CallTo16_sreg_( &context, 5 * sizeof(WORD) );
     if (offset) STACK16_POP(offset);
     return ret;
 }

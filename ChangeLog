@@ -1,4 +1,93 @@
 ----------------------------------------------------------------------
+Sun Jan 18 17:05:58 1998  Alexandre Julliard  <julliard@lrc.epfl.ch>
+
+	* [include/stackframe.h] [tools/build.c]
+	Some cleanups in stack frame building.
+
+	* [misc/port.c]
+	Implemented clone() wrapper for libc5 users.
+
+	* [scheduler/mutex.c] [scheduler/synchro.c]
+	Implemented abandoned mutexes.
+
+	* [scheduler/process.c] [scheduler/thread.c]
+	We now create a process and a thread structure as soon as possible
+	during initialization.
+
+	* [scheduler/thread.c] [scheduler/sysdeps.c]
+	Moved system-specific thread handling to sysdeps.c.
+
+Fri Jan 16 10:45:15 1998  Marcus Meissner <msmeissn@cip.informatik.uni-erlangen.de>
+
+	* [graphics/ddraw.c][include/ddraw.h]
+	Surface handling enhanced. Some stuff already works ;)
+
+	* [multimedia/dsound.c][include/dsound.h]
+	Implemented using the Open Sound System.
+	Slowly starts to work (sounds terrible for some programs).
+
+	* [configure.in][multimedia/audio.c][include/config.h.in]
+	Added check for OpenSoundSystem, fixed -lXxf86dga check.
+	Replaced OS #ifdefs by #ifdef HAVE_OSS in mm/audio.c.
+
+	* [if1632/relay.c][relay32/relay386.c]
+	Do not print control characters for 'str' or 'wstr' args.
+
+	* [misc/registry.c]
+	"" seems to equals NULL in keynames. Replace where needed. Seems
+	to help the win95 regedit.exe...
+
+	* [win32/newfns.c]
+	Implemented QueryPerformance* using gettimeofday(2)
+	(should be done using the pentium timers probably).
+
+	* [tools/ipcl]
+	Removed useless open_pipe construct.
+
+Sun Jan 11 17:10:02 1998  Huw D M Davies <h.davies1@physics.oxford.ac.uk>
+
+	* [objects/region.c] [include/region.h] [graphics/x11drv/clipping.c]
+	Regions are now internal to Wine. The basis of this code is taken
+	from the X11 distribution. GetRegionData() is implemented as is 
+	ExtCreateRegion() (without Xforms). CreatePolyPolygonRgn() should
+	behave correctly now. 
+
+	* [objects/metafile.c] [graphics/metafiledrv/graphics.c]
+	  [graphics/metafiledrv/init.c] [include/metafile.h]
+	  [include/metafiledrv.h]
+	Playback of META_CREATEREGION should now work. Implemented recording
+	of META_CREATEREGION and META_PAINTREGION.
+
+	* [graphics/x11drv/graphics.c]
+	FillRgn() (and therefore its friends) respect logical co-ords.
+
+Wed Jan  7 01:21:45 1998  Steinar Hamre  <steinarh@stud.fim.ntnu.no>
+
+	* [configure.in] [include/acconfig.h] [tools/build.c]
+	Now checking whether to use .string or .ascii.
+
+	* [configure.in] [include/acconfig.h] [scheduler/critsection.c]
+	Defining union semun if this is not available from header files.
+
+	* [misc/lstr.c]
+	Moved wine's own header files below <wctype.h> to avoid
+	parse error on Solaris.
+
+Sun Jan  4 15:38:07 1998  Andrew Taylor <ataylor@cadvision.com>
+
+	* [multimedia/mmsystem.c] [multimedia/mmio.c]
+	Implemented mmioSendMessage and rearranged the mmio
+	subsystem in terms of this function.
+
+Wed Dec 24 00:51:29 1997  Charles Duffy <cduffy@bigfoot.com>
+
+	* [windows/clipboard.c] [relay32/user32.spec]
+	GetPriorityClipboardFormat32 now has something other than just
+	a stub. I have no idea if it works (can't test until
+	SetClipboardData is finished) but HEdit likes things a lot more
+	this way.
+
+----------------------------------------------------------------------
 Sat Jan  3 17:15:56 1998  Alexandre Julliard  <julliard@lrc.epfl.ch>
 
 	* [debugger/db_disasm.c]
@@ -148,6 +237,13 @@ Mon Dec 22 18:55:19 1997  Marcus Meissner <msmeissn@cip.informatik.uni-erlangen.
 
 	* [files/drive.c]
 	Return correct "CDFS" fsname so Diablo is a bit happier.
+
+Sun Dec 21 21:45:48 1997  Kevin Cozens <kcozens@interlog.com>
+
+	* [misc/registry.c]
+	Fixed bugs in the routines which read the Windows '95 registry
+	files. Added extra information regarding the format of the Windows
+	'95 registry files.
 
 ----------------------------------------------------------------------
 Fri Dec 19 10:50:46 1997  Douglas Ridgway  <ridgway@winehq.com>
@@ -1232,7 +1328,7 @@ Thu Aug 28 19:30:08 1997  Morten Welinder  <terra@diku.dk>
  	Add error checks for SYSCOLOR_SetColor, SYSCOLOR_Init,
 	GetSysColor16, GetSysColor32.  Add support for above colors.
 
-Sun Aug 24 16:22:57 1997  Andrew Taylor <andrew@riscan.com>
+Sun Aug 24 16:22:57 1997  Andrew Taylor <ataylor@cadvision.com>
 
 	* [multimedia/mmsystem.c]
 	Changed mmioDescend to use mmio functions for file I/O, neccessary
@@ -1731,7 +1827,7 @@ Wed Jun 11 09:14:20 1997  Alex Korobka <alex@trantor.pharm.sunysb.edu>
 	* [windows/mdi.c] [windows/win.c]
 	Replaced WCL lists with WIN_BuildWinArray().
 
-Mon Jun  9 23:51:16 1997  Andrew Taylor <andrew@riscan.com>
+Mon Jun  9 23:51:16 1997  Andrew Taylor <ataylor@cadvision.com>
 
 	* [misc/error.c] [include/windows.h] [if1632/kernel.spec]
 	Implemented LogParamError, LogError functions.
@@ -1973,7 +2069,7 @@ Mon Apr 21 13:10:24 1997  Marcus Meissner <msmeissn@immd4.informatik.uni-erlange
 	Another ximage!=bitmap memory layout bug. 
 	All _XinitImageFuncPtrs except one removed.
 
-Sun Apr 20 17:12:30 1997  Andrew Taylor <andrew@riscan.com>
+Sun Apr 20 17:12:30 1997  Andrew Taylor <ataylor@cadvision.com>
 
 	* [multimedia/audio.c]
 	Fixed some regression bugs.
@@ -2309,7 +2405,7 @@ Fri Feb 21 20:37:50 1997  Huw D M Davies <h.davies1@physics.oxford.ac.uk>
 	* [controls/edit.c]
 	Fix incorrect arg order in LOCAL_Alloc() call.
 
-Fri Feb 21 18:19:17 1997  Andrew Taylor  <andrew@riscan.com>
+Fri Feb 21 18:19:17 1997  Andrew Taylor  <ataylor@cadvision.com>
 
 	* [multimedia/mmsystem.c] [multimedia/mcistring.c]
 	Fixed bug related to device IDs returned by multimedia
@@ -2351,7 +2447,7 @@ Fri Feb 14 00:24:39 1997  Alex Korobka <alex@trantor.pharm.sunysb.edu>
 	* [msdos/dosmem.c] [memory/global.c]
 	Some changes in DOS memory allocation.
 
-Fri Feb  7 21:46:03 1997  Andrew Taylor  <andrew@riscan.com>
+Fri Feb  7 21:46:03 1997  Andrew Taylor  <ataylor@cadvision.com>
 
 	* [win32/security.c]
 	Added SID manipulation functions.
@@ -3020,7 +3116,7 @@ Sat Dec 7 12:07:07 1996  Andrew Lewycky <plewycky@oise.utoronto.ca>
 	* [windows/win.c]
 	SetWindowWord(): call SetParent on GWW_HWNDPARENT.
 
-Wed Dec  4 22:03:05 1996  Andrew Taylor <andrew@riscan.com>
+Wed Dec  4 22:03:05 1996  Andrew Taylor <ataylor@cadvision.com>
 
 	* [files/dos_fs.c]
 	Check if buf is NULL before copying string in GetFullPathName32A().
@@ -6870,7 +6966,7 @@ Sat Dec 16 19:39:14 MET 1995  Steffen Moeller <smoe0024@rz.uni-hildesheim.de>
 	* [controls/edit.c]
 	Almost rewrote EDIT_GetLineMsg.
 
-Sat Dec 16 13:51:48 MST 1995  Andrew Taylor <andrew@riscan.com>
+Sat Dec 16 13:51:48 MST 1995  Andrew Taylor <ataylor@cadvision.com>
 
 	* [windows/mdi.c]
 	Fixed MDITile() bug that occurs when 0 windows are present or all
@@ -7883,7 +7979,7 @@ Sat Aug 19 01:31:23 1995  Graham Menhennitt <gfm@werple.mira.net.au>
 	* [loader/ne_image.c]
 	Preliminary support for iterated segments.
 
-Sat Aug 19 00:43:04 1995  Andrew Taylor  (andrew@riscan.com)
+Sat Aug 19 00:43:04 1995  Andrew Taylor  (ataylor@cadvision.com)
 
 	* [windows/mapping.c]
 	In function MAPPING_FixIsotropic(), VportExt[XY] is multiplied by

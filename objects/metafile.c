@@ -8,6 +8,7 @@
 
 #include <string.h>
 #include <fcntl.h>
+#include "windows.h"
 #include "gdi.h"
 #include "bitmap.h"
 #include "file.h"
@@ -233,16 +234,15 @@ BOOL16 WINAPI IsValidMetaFile(HMETAFILE16 hmf)
 
 
 /******************************************************************
- *         PlayMetafile16   (GDI.123)
+ *         PlayMetaFile16   (GDI.123)
  */
 BOOL16 WINAPI PlayMetaFile16( HDC16 hdc, HMETAFILE16 hmf )
 {
     return PlayMetaFile32( hdc, hmf );
 }
 
-
 /******************************************************************
- *         PlayMetafile32   (GDI32.265)
+ *         PlayMetaFile32   (GDI32.265)
  */
 BOOL32 WINAPI PlayMetaFile32( HDC32 hdc, HMETAFILE32 hmf )
 {
@@ -256,9 +256,8 @@ BOOL32 WINAPI PlayMetaFile32( HDC32 hdc, HMETAFILE32 hmf )
     HBRUSH32 hBrush;
     HFONT32 hFont;
     DC *dc;
-
+    
     dprintf_metafile(stddeb,"PlayMetaFile(%04x %04x)\n",hdc,hmf);
-
     if (!mh) return FALSE;
     if (!(dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC ))) return 0;
     hPen = dc->w.hPen;
@@ -270,13 +269,14 @@ BOOL32 WINAPI PlayMetaFile32( HDC32 hdc, HMETAFILE32 hmf )
 		      sizeof(HANDLETABLE16) * mh->mtNoObjects);
     ht = (HANDLETABLE16 *)GlobalLock16(hHT);
 
+    
     /* loop through metafile playing records */
     offset = mh->mtHeaderSize * 2;
     while (offset < mh->mtSize * 2)
     {
-	mr = (METARECORD *)((char *)mh + offset);
-	dprintf_metafile(stddeb,"offset = %04x size = %08lx function = %04x\n",
-			 offset,mr->rdSize,mr->rdFunction);
+        mr = (METARECORD *)((char *)mh + offset);
+	dprintf_metafile(stddeb,"offset = %04x size = %08lx\n",
+			 offset, mr->rdSize);
 	if (!mr->rdSize) {
 		fprintf(stderr,"METAFILE entry got size 0 at offset %d, total mf length is %ld\n",offset,mh->mtSize*2);
 		break; /* would loop endlessly otherwise */
@@ -368,6 +368,7 @@ BOOL16 WINAPI EnumMetaFile16( HDC16 hdc, HMETAFILE16 hmf,
     return TRUE;
 }
 
+static BOOL32 MF_Meta_CreateRegion( METARECORD *mr, HRGN32 hrgn );
 
 /******************************************************************
  *             PlayMetaFileRecord16   (GDI.176)
@@ -380,8 +381,9 @@ void WINAPI PlayMetaFileRecord16( HDC16 hdc, HANDLETABLE16 *ht, METARECORD *mr,
     char *ptr;
     BITMAPINFOHEADER *infohdr;
 
-    dprintf_metafile(stddeb,"PlayMetaFileRecord(%04x %08lx %08lx %04x)\n",
-		     hdc,(LONG)ht, (LONG)mr, nHandles);
+    dprintf_metafile(stddeb,
+"PlayMetaFileRecord(%04x %08lx %08lx %04x) function %04x\n",
+		     hdc,(LONG)ht, (LONG)mr, nHandles, mr->rdFunction);
     
     switch (mr->rdFunction)
     {
@@ -420,6 +422,7 @@ void WINAPI PlayMetaFileRecord16( HDC16 hdc, HANDLETABLE16 *ht, METARECORD *mr,
     case META_SETSTRETCHBLTMODE:
 	SetStretchBltMode16(hdc, *(mr->rdParam));
 	break;
+
     case META_SETTEXTCOLOR:
 	SetTextColor16(hdc, MAKELONG(*(mr->rdParam), *(mr->rdParam + 1)));
 	break;
@@ -732,23 +735,13 @@ void WINAPI PlayMetaFileRecord16( HDC16 hdc, HANDLETABLE16 *ht, METARECORD *mr,
 
        /* --- Begin of new metafile operations. April, 1997 (ak) ----*/
     case META_CREATEREGION:
-	 {
-	    int i;
-	    HRGN32 h2,hrgn=CreateRectRgn32(mr->rdParam[7],mr->rdParam[8],
-                                           mr->rdParam[9],mr->rdParam[10]);
-	    for (i = 0; i < mr->rdParam[5]; i++)
-	    {
-	     if (mr->rdParam[11+i*6]==2)
-	     { 
-	       h2=CreateRectRgn32(mr->rdParam[14+i*6],mr->rdParam[12+i*6],
-				  mr->rdParam[15+i*6],mr->rdParam[13+i*6]);
-	       CombineRgn32(hrgn,hrgn,h2,mr->rdParam[16+i*6]);	/* e.g. RGN_OR */
-               DeleteObject32( h2 );
-	     }
-	    }
-	    MF_AddHandle(ht, nHandles,hrgn);
-         }
-       break;
+      {
+	HRGN32 hrgn = CreateRectRgn32(0,0,0,0);
+ 
+	MF_Meta_CreateRegion(mr, hrgn);
+	MF_AddHandle(ht, nHandles, hrgn);
+      }
+      break;
 
      case META_FILLREGION:
         FillRgn16(hdc, *(ht->objectHandle + *(mr->rdParam)),
@@ -859,6 +852,79 @@ HMETAFILE16 WINAPI SetMetaFileBitsBetter( HMETAFILE16 hMeta )
 			   GMEM_SHARE | GMEM_NODISCARD | GMEM_MODIFY);
    return (HMETAFILE16)0;
 }
+
+/******************************************************************
+ *         MF_Meta_CreateRegion
+ *
+ *  Handles META_CREATEREGION for PlayMetaFileRecord().
+ */
+
+/*
+ *	The layout of the record looks something like this:
+ *	 
+ *	 rdParam	meaning
+ *	 0		Always 0?
+ *	 1		Always 6?
+ *	 2		Looks like a handle? - not constant
+ *	 3		0 or 1 ??
+ *	 4		Total number of bytes
+ *	 5		No. of seperate bands = n [see below]
+ *	 6		Largest number of x co-ords in a band
+ *	 7-10		Bounding box x1 y1 x2 y2
+ *	 11-...		n bands
+ *
+ *	 Regions are divided into bands that are uniform in the
+ *	 y-direction. Each band consists of pairs of on/off x-coords and is
+ *	 written as
+ *		m y0 y1 x1 x2 x3 ... xm m
+ *	 into successive rdParam[]s.
+ *
+ *	 This is probably just a dump of the internal RGNOBJ?
+ *
+ *	 HDMD - 18/12/97
+ *
+ */
+
+static BOOL32 MF_Meta_CreateRegion( METARECORD *mr, HRGN32 hrgn )
+{
+    WORD band, pair;
+    WORD *start, *end;
+    INT16 y0, y1;
+    HRGN32 hrgn2 = CreateRectRgn32( 0, 0, 0, 0 );
+
+    for(band  = 0, start = &(mr->rdParam[11]); band < mr->rdParam[5];
+ 					        band++, start = end + 1) {
+        if(*start / 2 != (*start + 1) / 2) {
+ 	    fprintf(stderr, "META_CREATEREGION: delimiter not even.\n");
+	    DeleteObject32( hrgn2 );
+ 	    return FALSE;
+        }
+
+	end = start + *start + 3;
+	if(end > (WORD *)mr + mr->rdSize) {
+	    fprintf(stderr, "META_CREATEREGION: end points outside record.\n");
+	    DeleteObject32( hrgn2 );
+	    return FALSE;
+        }
+
+	if(*start != *end) {
+	    fprintf(stderr, "META_CREATEREGION: mismatched delimiters.\n");
+	    DeleteObject32( hrgn2 );
+	    return FALSE;
+	}
+
+	y0 = *(INT16 *)(start + 1);
+	y1 = *(INT16 *)(start + 2);
+	for(pair = 0; pair < *start / 2; pair++) {
+	    SetRectRgn32( hrgn2, *(INT16 *)(start + 3 + 2*pair), y0,
+				 *(INT16 *)(start + 4 + 2*pair), y1 );
+	    CombineRgn32(hrgn, hrgn, hrgn2, RGN_OR);
+        }
+    }
+    DeleteObject32( hrgn2 );
+    return TRUE;
+ }
+ 
 
 /******************************************************************
  *         MF_WriteRecord
@@ -1389,3 +1455,88 @@ BOOL32 MF_StretchBlt(DC *dcDest, short xDest, short yDest, short widthDest,
 }
 
 
+/******************************************************************
+ *         MF_CreateRegion
+ */
+INT16 MF_CreateRegion(DC *dc, HRGN32 hrgn)
+{
+    DWORD len;
+    METARECORD *mr;
+    RGNDATA *rgndata;
+    RECT32 *pCurRect, *pEndRect;
+    WORD Bands = 0, MaxBands = 0;
+    WORD *Param, *StartBand;
+    BOOL32 ret;
+
+    len = GetRegionData( hrgn, 0, NULL );
+    if( !(rgndata = HeapAlloc( SystemHeap, 0, len )) ) {
+        fprintf(stderr, "MF_CreateRegion: can't alloc rgndata buffer\n");
+	return -1;
+    }
+    GetRegionData( hrgn, len, rgndata );
+
+    /* Overestimate of length:
+     * Assume every rect is a separate band -> 6 WORDs per rect
+     */
+    len = sizeof(METARECORD) + 20 + (rgndata->rdh.nCount * 12);
+    if( !(mr = HeapAlloc( SystemHeap, 0, len )) ) {
+        fprintf(stderr, "MF_CreateRegion: can't alloc METARECORD buffer\n");
+	HeapFree( SystemHeap, 0, rgndata );
+	return -1;
+    }
+
+    memset(mr, 0, len);
+        
+    Param = mr->rdParam + 11;
+    StartBand = NULL;
+
+    pEndRect = (RECT32 *)rgndata->Buffer + rgndata->rdh.nCount;
+    for(pCurRect = (RECT32 *)rgndata->Buffer; pCurRect < pEndRect; pCurRect++)
+    {
+        if( StartBand && pCurRect->top == *(StartBand + 1) )
+        {
+	    *Param++ = pCurRect->left;
+	    *Param++ = pCurRect->right;
+	}
+	else
+	{
+	    if(StartBand)
+	    {
+	        *StartBand = Param - StartBand - 3;
+		*Param++ = *StartBand;
+		if(*StartBand > MaxBands)
+		    MaxBands = *StartBand;
+		Bands++;
+	    }
+	    StartBand = Param++;
+	    *Param++ = pCurRect->top;
+	    *Param++ = pCurRect->bottom;
+	    *Param++ = pCurRect->left;
+	    *Param++ = pCurRect->right;
+	}
+    }
+    len = Param - (WORD *)mr;
+    
+    mr->rdParam[0] = 0;
+    mr->rdParam[1] = 6;
+    mr->rdParam[2] = 0x1234;
+    mr->rdParam[3] = 0;
+    mr->rdParam[4] = len * 2;
+    mr->rdParam[5] = Bands;
+    mr->rdParam[6] = MaxBands;
+    mr->rdParam[7] = rgndata->rdh.rcBound.left;
+    mr->rdParam[8] = rgndata->rdh.rcBound.top;
+    mr->rdParam[9] = rgndata->rdh.rcBound.right;
+    mr->rdParam[10] = rgndata->rdh.rcBound.bottom;
+    mr->rdFunction = META_CREATEREGION;
+    mr->rdSize = len / 2;
+    ret = MF_WriteRecord( dc, mr, mr->rdSize * 2 );	
+    HeapFree( SystemHeap, 0, mr );
+    HeapFree( SystemHeap, 0, rgndata );
+    if(!ret) 
+    {
+        fprintf(stderr, "MF_CreateRegion: MF_WriteRecord failed\n");
+	return -1;
+    }
+    return MF_AddHandleDC( dc );
+}

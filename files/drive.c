@@ -949,7 +949,7 @@ BOOL32 WINAPI GetVolumeInformation32A( LPCSTR root, LPSTR label,
     	if (DRIVE_GetType(drive)==TYPE_CDROM)
 	    lstrcpyn32A( fsname, "CDFS", fsname_len );
 	else
-	    lstrcpyn32A( fsname, "FAT16", fsname_len );
+	    lstrcpyn32A( fsname, "FAT", fsname_len );
     }
     return TRUE;
 }

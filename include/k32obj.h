@@ -44,7 +44,7 @@ typedef struct
 typedef struct
 {
     BOOL32 (*signaled)(K32OBJ*,DWORD);    /* Is object signaled? */
-    void   (*satisfied)(K32OBJ*,DWORD);   /* Wait on object is satisfied */
+    BOOL32 (*satisfied)(K32OBJ*,DWORD);   /* Wait on object is satisfied */
     void   (*add_wait)(K32OBJ*,DWORD);    /* Add thread to wait queue */
     void   (*remove_wait)(K32OBJ*,DWORD); /* Remove thread from wait queue */
     void   (*destroy)(K32OBJ *);          /* Destroy object on refcount==0 */

@@ -13,6 +13,7 @@ C_SRCS = \
 	process.c \
 	semaphore.c \
 	synchro.c \
+	sysdeps.c \
 	thread.c
 
 all: $(MODULE).o

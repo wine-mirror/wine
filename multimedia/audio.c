@@ -1,5 +1,5 @@
 /*				   
- * Sample Wine Driver for Linux
+ * Sample Wine Driver for Open Sound System (featured in Linux and FreeBSD)
  *
  * Copyright 1994 Martin Ayotte
  */
@@ -24,17 +24,12 @@
 #include "mmsystem.h"
 #include "heap.h"
 #include "ldt.h"
-
-#ifdef linux
-#include <linux/soundcard.h>
-#elif __FreeBSD__
-#include <machine/soundcard.h>
-#endif
-
 #include "stddebug.h"
 #include "debug.h"
 
-#if defined(linux) || defined(__FreeBSD__)
+#ifdef HAVE_OSS
+#include <sys/soundcard.h>
+
 #define SOUND_DEV "/dev/dsp"
 #define MIXER_DEV "/dev/mixer"
 
@@ -62,7 +57,7 @@ typedef struct {
 typedef struct {
 	int		unixdev;
 	int		state;
-	DWORD		bufsize;	/* Linux '/dev/dsp' give us that size */
+	DWORD		bufsize;	/* OpenSound '/dev/dsp' give us that size */
 	WAVEOPENDESC	waveDesc;
 	WORD		wFlags;
 	PCMWAVEFORMAT	Format;
@@ -749,17 +744,17 @@ static DWORD WAVE_mciInfo(UINT16 wDevID, DWORD dwFlags, LPMCI_INFO_PARMS16 lpPar
 	lpParms->lpstrReturn = NULL;
 	switch(dwFlags) {
 	case MCI_INFO_PRODUCT:
-		lpParms->lpstrReturn = "Linux Sound System 0.5";
+		lpParms->lpstrReturn = "Open Sound System 0.5";
 		break;
 	case MCI_INFO_FILE:
 		lpParms->lpstrReturn = 
 			(LPSTR)MCIWavDev[wDevID].openParms.lpstrElementName;
 		break;
 	case MCI_WAVE_INPUT:
-		lpParms->lpstrReturn = "Linux Sound System 0.5";
+		lpParms->lpstrReturn = "Open Sound System 0.5";
 		break;
 	case MCI_WAVE_OUTPUT:
-		lpParms->lpstrReturn = "Linux Sound System 0.5";
+		lpParms->lpstrReturn = "Open Sound System 0.5";
 		break;
 	default:
 		return MCIERR_UNRECOGNIZED_COMMAND;
@@ -799,7 +794,7 @@ static DWORD wodGetDevCaps(WORD wDevID, LPWAVEOUTCAPS16 lpCaps, DWORD dwSize)
 #else
 	lpCaps->wMid = 0x00FF; 	/* Manufac ID */
 	lpCaps->wPid = 0x0001; 	/* Product ID */
-	strcpy(lpCaps->szPname, "Linux WAVOUT Driver");
+	strcpy(lpCaps->szPname, "OpenSoundSystem WAVOUT Driver");
 #endif
 	lpCaps->vDriverVersion = 0x0100;
 	lpCaps->dwFormats = 0x00000000;
@@ -1213,8 +1208,6 @@ static DWORD wodSetVolume(WORD wDevID, DWORD dwParam)
 	return MMSYSERR_NOERROR;
 }
 
-#endif /* linux || __FreeBSD__*/
-
 /**************************************************************************
  * 				wodMessage			[sample driver]
  */
@@ -1223,7 +1216,6 @@ DWORD wodMessage(WORD wDevID, WORD wMsg, DWORD dwUser,
 {
 	dprintf_mciwave(stddeb,"wodMessage(%u, %04X, %08lX, %08lX, %08lX);\n",
 			wDevID, wMsg, dwUser, dwParam1, dwParam2);
-#if defined(linux) || defined(__FreeBSD__)
         switch(wMsg) {
 	case WODM_OPEN:
 		return wodOpen(wDevID, (LPWAVEOPENDESC)dwParam1, dwParam2);
@@ -1267,15 +1259,10 @@ DWORD wodMessage(WORD wDevID, WORD wMsg, DWORD dwUser,
 		dprintf_mciwave(stddeb,"wodMessage // unknown message !\n");
 	}
 	return MMSYSERR_NOTSUPPORTED;
-#else
-	return MMSYSERR_NOTENABLED;
-#endif
 }
 
 
 /*-----------------------------------------------------------------------*/
-
-#if defined(linux) || defined(__FreeBSD__)
 
 /**************************************************************************
  * 			widGetDevCaps				[internal]
@@ -1297,7 +1284,7 @@ static DWORD widGetDevCaps(WORD wDevID, LPWAVEINCAPS16 lpCaps, DWORD dwSize)
 #else
 	lpCaps->wMid = 0x00FF; 	/* Manufac ID */
 	lpCaps->wPid = 0x0001; 	/* Product ID */
-	strcpy(lpCaps->szPname, "Linux WAVIN Driver");
+	strcpy(lpCaps->szPname, "OpenSoundSystem WAVIN Driver");
 #endif
 	lpCaps->dwFormats = 0x00000000;
 	lpCaps->wChannels = (IOCTL(audio, SNDCTL_DSP_STEREO, dsp_stereo) != 0) ? 1 : 2;
@@ -1688,8 +1675,6 @@ dprintf_mciwave(stddeb,"widGetPosition // TIME_SMPTE=%02u:%02u:%02u:%02u\n",
 	return MMSYSERR_NOERROR;
 }
 
-#endif /* linux || __FreeBSD__ */
-
 /**************************************************************************
  * 				widMessage			[sample driver]
  */
@@ -1698,7 +1683,6 @@ DWORD widMessage(WORD wDevID, WORD wMsg, DWORD dwUser,
 {
 	dprintf_mciwave(stddeb,"widMessage(%u, %04X, %08lX, %08lX, %08lX);\n",
 			wDevID, wMsg, dwUser, dwParam1, dwParam2);
-#if defined(linux) || defined(__FreeBSD__)
 	switch(wMsg) {
 	case WIDM_OPEN:
 		return widOpen(wDevID, (LPWAVEOPENDESC)dwParam1, dwParam2);
@@ -1728,9 +1712,6 @@ DWORD widMessage(WORD wDevID, WORD wMsg, DWORD dwUser,
 		dprintf_mciwave(stddeb,"widMessage // unknown message !\n");
 	}
 	return MMSYSERR_NOTSUPPORTED;
-#else
-	return MMSYSERR_NOTENABLED;
-#endif
 }
 
 
@@ -1740,7 +1721,6 @@ DWORD widMessage(WORD wDevID, WORD wMsg, DWORD dwUser,
 LONG WAVE_DriverProc(DWORD dwDevID, HDRVR16 hDriv, WORD wMsg, 
 		     DWORD dwParam1, DWORD dwParam2)
 {
-#if defined(linux) || defined(__FreeBSD__)
 	dprintf_mciwave(stddeb,"WAVE_DriverProc(%08lX, %04X, %04X, %08lX, %08lX)\n", 
 		dwDevID, hDriv, wMsg, dwParam1, dwParam2);
 	switch(wMsg) {
@@ -1831,7 +1811,39 @@ LONG WAVE_DriverProc(DWORD dwDevID, HDRVR16 hDriv, WORD wMsg,
 	default:
 		return DefDriverProc(dwDevID, hDriv, wMsg, dwParam1, dwParam2);
 	}
-#else
 	return MMSYSERR_NOTENABLED;
-#endif
 }
+
+#else /* !HAVE_OSS */
+
+/**************************************************************************
+ * 				wodMessage			[sample driver]
+ */
+DWORD wodMessage(WORD wDevID, WORD wMsg, DWORD dwUser, 
+					DWORD dwParam1, DWORD dwParam2)
+{
+	fprintf(stderr,"wodMessage(%u, %04X, %08lX, %08lX, %08lX);\n",
+			wDevID, wMsg, dwUser, dwParam1, dwParam2);
+	return MMSYSERR_NOTENABLED;
+}
+
+/**************************************************************************
+ * 				widMessage			[sample driver]
+ */
+DWORD widMessage(WORD wDevID, WORD wMsg, DWORD dwUser, 
+					DWORD dwParam1, DWORD dwParam2)
+{
+	fprintf(stderr,"widMessage(%u, %04X, %08lX, %08lX, %08lX);\n",
+			wDevID, wMsg, dwUser, dwParam1, dwParam2);
+	return MMSYSERR_NOTENABLED;
+}
+
+/**************************************************************************
+ * 				AUDIO_DriverProc		[sample driver]
+ */
+LONG WAVE_DriverProc(DWORD dwDevID, HDRVR16 hDriv, WORD wMsg, 
+		     DWORD dwParam1, DWORD dwParam2)
+{
+	return MMSYSERR_NOTENABLED;
+}
+#endif /* HAVE_OSS */

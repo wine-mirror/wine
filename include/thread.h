@@ -55,9 +55,9 @@ typedef struct _THDB
     DWORD          exit_code;      /*  48 Termination status */
     WORD           teb_sel;        /*  4c Selector to TEB */
     WORD           emu_sel;        /*  4e 80387 emulator selector */
-    DWORD          unknown1;       /*  50 Unknown */
+    int            thread_errno;   /*  50 Per-thread errno (was: unknown) */
     WAIT_STRUCT   *wait_list;      /*  54 Event waiting list */
-    DWORD          unknown2;       /*  58 Unknown */
+    int            thread_h_errno; /*  50 Per-thread h_errno (was: unknown) */
     void          *ring0_thread;   /*  5c Pointer to ring 0 thread */
     void          *ptdbx;          /*  60 Pointer to TDBX structure */
     void          *stack_base;     /*  64 Base of the stack */
@@ -86,7 +86,8 @@ typedef struct _THDB
     K32OBJ        *win16_mutex;    /* 1e8 Pointer to Win16 mutex */
     K32OBJ        *win32_mutex;    /* 1ec Pointer to KERNEL32 mutex */
     K32OBJ        *crit_section2;  /* 1f0 Another critical section */
-    DWORD          unknown6[3];    /* 1f4 Unknown */
+    K32OBJ        *mutex_list;     /* 1f4 List of owned mutex (was: unknown)*/
+    DWORD          unknown6[2];    /* 1f8 Unknown */
     /* The following are Wine-specific fields */
     CONTEXT        context;        /* 200 Thread context */
     WAIT_STRUCT    wait_struct;    /*     Event wait structure */
@@ -124,8 +125,20 @@ extern THDB *THREAD_Current(void);
 extern void THREAD_AddQueue( THREAD_QUEUE *queue, THDB *thread );
 extern void THREAD_RemoveQueue( THREAD_QUEUE *queue, THDB *thread );
 
+/* scheduler/event.c */
+extern void EVENT_Set( K32OBJ *obj );
+extern K32OBJ *EVENT_Create( BOOL32 manual_reset, BOOL32 initial_state );
+
+/* scheduler/mutex.c */
+extern void MUTEX_Abandon( K32OBJ *obj );
+
 /* scheduler/synchro.c */
 extern void SYNC_WaitForCondition( WAIT_STRUCT *wait, DWORD timeout );
 extern void SYNC_WakeUp( THREAD_QUEUE *queue, DWORD max );
+
+/* scheduler/sysdeps.c */
+extern int SYSDEPS_SpawnThread( THDB *thread );
+extern void SYSDEPS_ExitThread(void);
+extern TEB * WINAPI NtCurrentTeb(void);
 
 #endif  /* __WINE_THREAD_H */

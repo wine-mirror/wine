@@ -38,7 +38,7 @@ static const DC_FUNCTIONS MFDRV_Funcs =
     NULL,                            /* pOffsetClipRgn */
     MFDRV_OffsetViewportOrg,         /* pOffsetViewportOrg */
     MFDRV_OffsetWindowOrg,           /* pOffsetWindowOrg */
-    NULL,                            /* pPaintRgn */
+    MFDRV_PaintRgn,                  /* pPaintRgn */
     MFDRV_PatBlt,                    /* pPatBlt */
     MFDRV_Pie,                       /* pPie */
     MFDRV_PolyPolygon,               /* pPolyPolygon */

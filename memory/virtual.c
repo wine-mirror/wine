@@ -660,7 +660,7 @@ BOOL32 WINAPI VirtualProtectEx( HANDLE32 handle, LPVOID addr, DWORD size,
     PDB32 *pdb = (PDB32 *)PROCESS_GetObjPtr( handle, K32OBJ_PROCESS );
     if (pdb)
     {
-        if (pdb == pCurrentProcess)
+        if (pdb == PROCESS_Current())
             ret = VirtualProtect( addr, size, new_prot, old_prot );
         else
             fprintf(stderr,"Unsupported: VirtualProtectEx on other process\n");
@@ -743,7 +743,7 @@ BOOL32 WINAPI VirtualQueryEx( HANDLE32 handle, LPCVOID addr,
     PDB32 *pdb = (PDB32 *)PROCESS_GetObjPtr( handle, K32OBJ_PROCESS );
     if (pdb)
     {
-        if (pdb == pCurrentProcess)
+        if (pdb == PROCESS_Current())
             ret = VirtualQuery( addr, info, len );
         else
             fprintf(stderr,"Unsupported: VirtualQueryEx on other process\n");

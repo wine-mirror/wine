@@ -1420,6 +1420,8 @@ HBITMAP32 WINAPI CreateDIBSection32 (HDC32 hdc, BITMAPINFO *bmi, UINT32 usage,
 	  hdc,bmi->bmiHeader.biWidth,bmi->bmiHeader.biHeight,
 	  usage,bits,section,offset
 	);
+  if (bmi->bmiHeader.biHeight < 0 ) bmi->bmiHeader.biHeight = -bmi->bmiHeader.biHeight;
+  if (bmi->bmiHeader.biWidth < 0 ) bmi->bmiHeader.biWidth = -bmi->bmiHeader.biWidth;
   /* FIXME.  The following line isn't quite right.  */
   res = CreateDIBitmap32 (hdc, &bmi->bmiHeader, 0, NULL, bmi, 0);
   if (res)
@@ -1429,6 +1431,9 @@ HBITMAP32 WINAPI CreateDIBSection32 (HDC32 hdc, BITMAPINFO *bmi, UINT32 usage,
 	{
             /* FIXME: this is wrong! (bmBits is always NULL) */
             if (bits) *bits = bmp.bmBits;
+	    /* hmpf */
+	    fprintf(stderr,"allocating %d bytes of memory\n",bmi->bmiHeader.biWidth*bmi->bmiHeader.biHeight*4);
+	    if (bits) *bits = (LPBYTE)HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,bmi->bmiHeader.biWidth*bmi->bmiHeader.biHeight*4);
             return res;
 	}
     }

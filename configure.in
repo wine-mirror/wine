@@ -51,7 +51,33 @@ AC_CHECK_LIB(i386,i386_set_ldt)
 dnl Check for -lw for Solaris
 AC_CHECK_LIB(w,iswalnum)
 dnl Check for XFree86 DGA extension
-AC_CHECK_LIB(Xxf86dga,XF86DGAQueryExtension,,,-lXext -lX11)
+AC_CHECK_LIB(Xxf86dga,XF86DGAQueryExtension,AC_DEFINE(HAVE_LIBXXF86DGA) X_PRE_LIBS="$X_PRE_LIBS -lXxf86dga",,$X_LIBS -lXext -lX11)
+
+dnl **** Check for Open Sound System ****
+
+AC_CACHE_CHECK("for Open Sound System",
+	ac_cv_c_opensoundsystem,
+	AC_TRY_COMPILE([#include <sys/soundcard.h>],[
+/* check for open sound system and one of the SNDCTL_ defines to be sure */
+#if !defined(OPEN_SOUND_SYSTEM) || !defined(SNDCTL_DSP_STEREO)
+#error No open sound system
+#endif
+],ac_cv_c_opensoundsystem="yes",ac_cv_c_opensoundsystem="no"))
+
+if test "$ac_cv_c_opensoundsystem" = "yes"
+then
+    AC_DEFINE(HAVE_OSS)
+fi
+
+dnl **** Check for union semun ****
+
+AC_CACHE_CHECK("for union semun", ac_cv_c_union_semun,
+ AC_TRY_COMPILE([#include <sys/sem.h>],[union semun foo],
+                ac_cv_c_union_semun="yes", ac_cv_c_union_semun="no"))
+if test "$ac_cv_c_union_semun" = "yes"
+then
+    AC_DEFINE(HAVE_UNION_SEMUN)
+fi
 
 dnl **** If ln -s doesn't work, use cp instead ****
 if test "$ac_cv_prog_LN_S" = "ln -s"; then : ; else LN_S=cp ; fi
@@ -96,6 +122,22 @@ LIBS=$saved_libs])
 if test "$ac_cv_c_extern_prefix" = "yes"
 then
   AC_DEFINE(NEED_UNDERSCORE_PREFIX)
+fi
+
+dnl **** Check for .string in assembler ****
+
+AC_CACHE_CHECK("whether assembler accepts .string",
+               ac_cv_c_asm_string,
+[saved_libs=$LIBS
+LIBS="conftest_asm.s $LIBS"
+cat > conftest_asm.s <<EOF
+	.string "test"
+EOF
+AC_TRY_LINK(,,ac_cv_c_asm_string="yes",ac_cv_c_asm_string="no")
+LIBS=$saved_libs])
+if test "$ac_cv_c_asm_string" = "yes"
+then
+  AC_DEFINE(HAVE_ASM_STRING)
 fi
 
 dnl **** Check for working dll ****

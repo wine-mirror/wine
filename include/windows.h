@@ -5689,6 +5689,7 @@ BOOL32      WINAPI ExitWindowsEx(UINT32,DWORD);
 DWORD       WINAPI ExpandEnvironmentStrings32A(LPCSTR,LPSTR,DWORD);
 DWORD       WINAPI ExpandEnvironmentStrings32W(LPCWSTR,LPWSTR,DWORD);
 #define     ExpandEnvironmentStrings WINELIB_NAME_AW(ExpandEnvironmentStrings)
+HRGN32      WINAPI ExtCreateRegion(LPXFORM,DWORD,LPRGNDATA);
 BOOL32      WINAPI FileTimeToDosDateTime(const FILETIME*,LPWORD,LPWORD);
 BOOL32      WINAPI FileTimeToLocalFileTime(const FILETIME*,LPFILETIME);
 BOOL32      WINAPI FileTimeToSystemTime(const FILETIME*,LPSYSTEMTIME);
@@ -5752,6 +5753,7 @@ INT32       WINAPI GetPrivateProfileSection32A(LPCSTR,LPSTR,INT32,LPCSTR);
 INT32       WINAPI GetPrivateProfileSection32W(LPCWSTR,LPWSTR,INT32,LPCWSTR);
 #define     GetPrivateProfileSection WINELIB_NAME_AW(GetPrivateProfileSection)
 HANDLE32    WINAPI GetProcessHeap(void);
+DWORD       WINAPI GetRegionData(HRGN32,DWORD,LPRGNDATA);
 DWORD       WINAPI GetShortPathName32A(LPCSTR,LPSTR,DWORD);
 DWORD       WINAPI GetShortPathName32W(LPCWSTR,LPWSTR,DWORD);
 #define     GetShortPathName WINELIB_NAME_AW(GetShortPathName)

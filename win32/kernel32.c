@@ -161,23 +161,22 @@ UINT32 WINAPI ThunkConnect32( struct thunkstruct *ths, LPSTR thunkfun16,
  */
 VOID WINAPI QT_Thunk(CONTEXT *context)
 {
-	CONTEXT	context16;
-	DWORD	argsize;
+    CONTEXT context16;
+    DWORD argsize;
 
-	memcpy(&context16,context,sizeof(context16));
+    memcpy(&context16,context,sizeof(context16));
 
-	CS_reg(&context16)	 = HIWORD(EDX_reg(context));
-	IP_reg(&context16)	 = LOWORD(EDX_reg(context));
+    CS_reg(&context16)  = HIWORD(EDX_reg(context));
+    IP_reg(&context16)  = LOWORD(EDX_reg(context));
+    EBP_reg(&context16) = OFFSETOF(IF1632_Saved16_ss_sp)
+                           + (WORD)&((STACK16FRAME*)0)->bp;
 
-	argsize = EBP_reg(context)-ESP_reg(context)-0x44;
+    argsize = EBP_reg(context)-ESP_reg(context)-0x44;
 
-	/* additional 4 bytes used by the relaycode for storing the stackptr */
-	memcpy(	((LPBYTE)CURRENT_STACK16)-argsize-4,
-		(LPBYTE)ESP_reg(context)+4,
-		argsize
-	);
-	EAX_reg(context) = Callbacks->CallRegisterShortProc(&context16,
-                                                            -argsize);
+    memcpy( ((LPBYTE)CURRENT_STACK16)-argsize,
+            (LPBYTE)ESP_reg(context)+4, argsize );
+
+    EAX_reg(context) = Callbacks->CallRegisterShortProc( &context16, argsize );
 }
 
 
@@ -569,7 +568,7 @@ AllocSLCallback(DWORD finalizer,DWORD callback) {
 	*x++=0x66;*x++=0x52;				/* pushl edx */
 	*x++=0xea;*(DWORD*)x=callback;x+=4;		/* jmpf callback */
 
-	*(PDB32**)(thunk+18) = pCurrentProcess;
+	*(PDB32**)(thunk+18) = PROCESS_Current();
 
 	sel = SELECTOR_AllocBlock( thunk , 32, SEGMENT_CODE, FALSE, FALSE );
 	return (sel<<16)|0;

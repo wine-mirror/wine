@@ -21,7 +21,7 @@ typedef struct
 } EVENT;
 
 static BOOL32 EVENT_Signaled( K32OBJ *obj, DWORD thread_id );
-static void EVENT_Satisfied( K32OBJ *obj, DWORD thread_id );
+static BOOL32 EVENT_Satisfied( K32OBJ *obj, DWORD thread_id );
 static void EVENT_AddWait( K32OBJ *obj, DWORD thread_id );
 static void EVENT_RemoveWait( K32OBJ *obj, DWORD thread_id );
 static void EVENT_Destroy( K32OBJ *obj );
@@ -219,12 +219,13 @@ static BOOL32 EVENT_Signaled( K32OBJ *obj, DWORD thread_id )
  *
  * Wait on this object has been satisfied.
  */
-static void EVENT_Satisfied( K32OBJ *obj, DWORD thread_id )
+static BOOL32 EVENT_Satisfied( K32OBJ *obj, DWORD thread_id )
 {
     EVENT *event = (EVENT *)obj;
     assert( obj->type == K32OBJ_EVENT );
     /* Reset if it's an auto-reset event */
     if (!event->manual_reset) event->signaled = FALSE;
+    return FALSE;  /* Not abandoned */
 }
 
 

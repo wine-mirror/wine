@@ -26,9 +26,6 @@
   /* GCs used for B&W and color bitmap operations */
 GC BITMAP_monoGC = 0, BITMAP_colorGC = 0;
 
-extern void CLIPPING_UpdateGCRegion( DC * dc );  /* objects/clipping.c */
-
-
 /***********************************************************************
  *           XPutImage_wrapper
  *

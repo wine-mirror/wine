@@ -13,7 +13,7 @@
 #include "task.h"
 #include "stddebug.h"
 #include "debug.h"
-#include "process.h"  /* for pCurrentProcess */
+#include "process.h"  /* for PROCESS_Current() */
 
 
 /***********************************************************************
@@ -21,7 +21,7 @@
  */
 LPCSTR WINAPI GetCommandLine32A(void)
 {
-    return pCurrentProcess->env_db->cmd_line;
+    return PROCESS_Current()->env_db->cmd_line;
 }
 
 /***********************************************************************

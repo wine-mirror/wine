@@ -21,7 +21,7 @@ typedef struct
 } SEMAPHORE;
 
 static BOOL32 SEMAPHORE_Signaled( K32OBJ *obj, DWORD thread_id );
-static void SEMAPHORE_Satisfied( K32OBJ *obj, DWORD thread_id );
+static BOOL32 SEMAPHORE_Satisfied( K32OBJ *obj, DWORD thread_id );
 static void SEMAPHORE_AddWait( K32OBJ *obj, DWORD thread_id );
 static void SEMAPHORE_RemoveWait( K32OBJ *obj, DWORD thread_id );
 static void SEMAPHORE_Destroy( K32OBJ *obj );
@@ -165,12 +165,13 @@ static BOOL32 SEMAPHORE_Signaled( K32OBJ *obj, DWORD thread_id )
  *
  * Wait on this object has been satisfied.
  */
-static void SEMAPHORE_Satisfied( K32OBJ *obj, DWORD thread_id )
+static BOOL32 SEMAPHORE_Satisfied( K32OBJ *obj, DWORD thread_id )
 {
     SEMAPHORE *sem = (SEMAPHORE *)obj;
     assert( obj->type == K32OBJ_SEMAPHORE );
     assert( sem->count > 0 );
     sem->count--;
+    return FALSE;  /* Not abandoned */
 }
 
 

@@ -13,35 +13,36 @@
 
 #pragma pack(1)
 
+  /* 32-bit stack layout after CallTo16() */
+typedef struct _STACK32FRAME
+{
+    SEGPTR  frame16;        /* 00 16-bit frame from last CallFrom16() */
+    DWORD   edi;            /* 04 saved registers */
+    DWORD   esi;            /* 08 */
+    DWORD   edx;            /* 0c */
+    DWORD   ecx;            /* 10 */
+    DWORD   ebx;            /* 14 */
+    DWORD   restore_addr;   /* 18 return address for restoring code selector */
+    DWORD   codeselector;   /* 1c code selector to restore */
+    DWORD   ebp;            /* 20 saved 32-bit frame pointer */
+    DWORD   retaddr;        /* 24 actual return address */
+    DWORD   args[1];        /* 28 arguments to 16-bit function */
+} STACK32FRAME;
+
   /* 16-bit stack layout after CallFrom16() */
 typedef struct
 {
-    DWORD   saved_ss_sp;    /* 00 saved previous 16-bit stack */
-    DWORD   ebp;            /* 04 full 32-bit content of ebp */
-    WORD    entry_ip;       /* 08 ip of entry point */
-    WORD    ds;             /* 0a ds */
-    WORD    entry_cs;       /* 0c cs of entry point */
-    WORD    es;             /* 0e es */
-    DWORD   entry_point;    /* 10 32-bit entry point to call */
-    WORD    bp;             /* 14 16-bit bp */
-    WORD    ip;             /* 16 return address */
-    WORD    cs;             /* 18 */
+    STACK32FRAME *frame32;        /* 00 32-bit frame from last CallTo16() */
+    DWORD         ebp;            /* 04 full 32-bit content of ebp */
+    WORD          entry_ip;       /* 08 ip of entry point */
+    WORD          ds;             /* 0a ds */
+    WORD          entry_cs;       /* 0c cs of entry point */
+    WORD          es;             /* 0e es */
+    DWORD         entry_point;    /* 10 32-bit entry point to call */
+    WORD          bp;             /* 14 16-bit bp */
+    WORD          ip;             /* 16 return address */
+    WORD          cs;             /* 18 */
 } STACK16FRAME;
-
-  /* 32-bit stack layout after CallTo16() */
-typedef struct
-{
-    DWORD   edi;            /* 00 saved registers */
-    DWORD   esi;            /* 04 */
-    DWORD   edx;            /* 08 */
-    DWORD   ecx;            /* 0c */
-    DWORD   ebx;            /* 10 */
-    DWORD   restore_addr;   /* 14 return address for restoring code selector */
-    DWORD   codeselector;   /* 18 code selector to restore */
-    DWORD   ebp;            /* 1c saved 32-bit frame pointer */
-    DWORD   retaddr;        /* 20 actual return address */
-    DWORD   args[1];        /* 24 arguments to 16-bit function */
-} STACK32FRAME;
 
 #pragma pack(4)
 

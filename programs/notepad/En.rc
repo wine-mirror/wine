@@ -2,7 +2,7 @@
  * Notepad (English resources)
  *
  * Copyright 1997 Marcel Baur <mbaur@g26.ethz.ch>
- * FIXME: See TODO about how to fix weak translations.
+ * Proofread 1998 by David Lee Lambert <lamber45@egr.msu.edu>
  */
 
 #define LANGUAGE_ID                  En
@@ -13,9 +13,9 @@
 
 #define MENU_FILE                    "&File"
 #define MENU_FILE_NEW                "&New..."
-#define MENU_FILE_OPEN               "O&pen"
+#define MENU_FILE_OPEN               "&Open"
 #define MENU_FILE_SAVE               "&Save"
-#define MENU_FILE_SAVEAS             "&Save as..."
+#define MENU_FILE_SAVEAS             "Save &as..."
 #define MENU_FILE_PRINT              "&Print"
 #define MENU_FILE_PAGESETUP          "Page Se&tup..."
 #define MENU_FILE_PRINTSETUP         "P&rinter Setup..."
@@ -23,7 +23,7 @@
 
 #define MENU_EDIT                    "&Edit"
 #define MENU_EDIT_UNDO               "&Undo\tCtrl+Z"
-#define MENU_EDIT_CUT                "Cu&t\Ctrl+X"
+#define MENU_EDIT_CUT                "Cu&t\tCtrl+X"
 #define MENU_EDIT_COPY               "&Copy\tCtrl+C"
 #define MENU_EDIT_PASTE              "&Paste\tCtrl+V"
 #define MENU_EDIT_DELETE             "&Delete\tDel"
@@ -57,7 +57,7 @@
 #define DIALOG_PAGESETUP_CAPTION     "Page Setup"
 #define DIALOG_PAGESETUP_HEAD        "&Header:"
 #define DIALOG_PAGESETUP_TAIL        "&Footer:"
-#define DIALOG_PAGESETUP_BORDER      "Borders:"
+#define DIALOG_PAGESETUP_BORDER      "&Margins:"
 #define DIALOG_PAGESETUP_LEFT        "&Left:"
 #define DIALOG_PAGESETUP_RIGHT       "&Right:"
 #define DIALOG_PAGESETUP_TOP         "&Top:"
@@ -75,7 +75,7 @@
 #define STRING_ALLFILES              "All files (*.*)"
 #define STRING_TEXTFILES             "Text files (*.txt)"
 
-#define STRING_TOOLARGE         "File '%s' ist too large for notepad.\n \
+#define STRING_TOOLARGE         "File '%s' is too large for notepad.\n \
 Please use a different editor."
 
 #define STRING_NOTEXT           "You didn't enter any text. \
@@ -88,4 +88,8 @@ task. \nClose one or more applications to increase the amount of \nfree \
 memory."
 
 #include "notepad.rc"
+
+
+
+
 

@@ -18,7 +18,6 @@
 #include "dde_mem.h"
 #include "stackframe.h"
 #include "module.h"
-#include "options.h"
 #include "stddebug.h"
 #include "debug.h"
 #include "winerror.h"
@@ -124,7 +123,7 @@ HGLOBAL16 GLOBAL_CreateBlock( WORD flags, const void *ptr, DWORD size,
     pArena->size = GET_SEL_LIMIT(sel) + 1;
 
 #ifdef CONFIG_IPC
-    if ((flags & GMEM_DDESHARE) && Options.ipc)
+    if (flags & GMEM_DDESHARE)
     {
 	pArena->handle = shmdata->handle;
 	pArena->shmid  = shmdata->shmid;
@@ -200,7 +199,7 @@ HGLOBAL16 GLOBAL_Alloc( UINT16 flags, DWORD size, HGLOBAL16 hOwner,
       /* Allocate the linear memory */
 
 #ifdef CONFIG_IPC
-    if ((flags & GMEM_DDESHARE) && Options.ipc)
+    if (flags & GMEM_DDESHARE)
         ptr = DDE_malloc(flags, size, &shmdata);
     else 
 #endif  /* CONFIG_IPC */
@@ -297,7 +296,8 @@ HGLOBAL16 WINAPI GlobalReAlloc16( HGLOBAL16 handle, DWORD size, UINT16 flags )
     if (!handle) return 0;
     
 #ifdef CONFIG_IPC
-    if (Options.ipc && (flags & GMEM_DDESHARE || is_dde_handle(handle))) {
+    if (flags & GMEM_DDESHARE || is_dde_handle(handle))
+    {
 	fprintf(stdnimp,
                "GlobalReAlloc16: shared memory reallocating unimplemented\n"); 
 	return 0;

@@ -78,7 +78,7 @@ BOOL32 NE_LoadSegment( NE_MODULE *pModule, WORD segnum )
  	IF1632_Saved16_ss_sp = PTR_SEG_OFF_TO_SEGPTR(pModule->self_loading_sel,
                                                  0xff00 - sizeof(*stack16Top));
         stack16Top = CURRENT_STACK16;
-        stack16Top->saved_ss_sp = 0;
+        stack16Top->frame32 = 0;
         stack16Top->ds = stack16Top->es = pModule->self_loading_sel;
         stack16Top->entry_point = 0;
         stack16Top->entry_ip = 0;
@@ -386,7 +386,7 @@ BOOL32 NE_LoadAllSegments( NE_MODULE *pModule )
         IF1632_Saved16_ss_sp = PTR_SEG_OFF_TO_SEGPTR(pModule->self_loading_sel,
                                                 0xff00 - sizeof(*stack16Top) );
         stack16Top = CURRENT_STACK16;
-        stack16Top->saved_ss_sp = 0;
+        stack16Top->frame32 = 0;
         stack16Top->ebp = 0;
         stack16Top->ds = stack16Top->es = pModule->self_loading_sel;
         stack16Top->entry_point = 0;

@@ -81,7 +81,6 @@ struct options Options =
     FALSE,
     FALSE,          /* failReadOnly */
     MODE_ENHANCED,  /* Enhanced mode */
-    FALSE,          /* IPC enabled */
 #ifdef DEFAULT_LANG
     DEFAULT_LANG,   /* Default language */
 #else
@@ -99,7 +98,6 @@ static XrmOptionDescRec optionsTable[] =
     { "-depth",         ".depth",           XrmoptionSepArg, (caddr_t)NULL },
     { "-display",       ".display",         XrmoptionSepArg, (caddr_t)NULL },
     { "-iconic",        ".iconic",          XrmoptionNoArg,  (caddr_t)"on" },
-    { "-ipc",           ".ipc",             XrmoptionNoArg,  (caddr_t)"off"},
     { "-language",      ".language",        XrmoptionSepArg, (caddr_t)"En" },
     { "-name",          ".name",            XrmoptionSepArg, (caddr_t)NULL },
     { "-perfect",       ".perfect",         XrmoptionNoArg,  (caddr_t)"on" },
@@ -131,7 +129,6 @@ static XrmOptionDescRec optionsTable[] =
   "    -failreadonly   Read only files may not be opened in write mode\n" \
   "    -fixedmap       Use a \"standard\" color map\n" \
   "    -iconic         Start as an icon\n" \
-  "    -ipc            Enable IPC facilities\n" \
   "    -language xx    Set the language (one of En,Es,De,No,Fr,Fi,Da,Cz,Eo,It,Ko,\n                    Hu,Pl,Po)\n" \
   "    -managed        Allow the window manager to manage created windows\n" \
   "    -mode mode      Start Wine in a particular mode (standard or enhanced)\n" \
@@ -359,8 +356,6 @@ static void MAIN_ParseOptions( int *argc, char *argv[] )
 	Options.debug = TRUE;
     if (MAIN_GetResource( db, ".failreadonly", &value ))
         Options.failReadOnly = TRUE;
-    if (MAIN_GetResource( db, ".ipc", &value ))
-        Options.ipc = TRUE;
     if (MAIN_GetResource( db, ".perfect", &value ))
 	Options.perfectGraphics = TRUE;
     if (MAIN_GetResource( db, ".depth", &value))
@@ -536,8 +531,6 @@ BOOL32 MAIN_WineInit( int *argc, char *argv[] )
     int depth_count, i;
     int *depth_list;
     struct timeval tv;
-
-    extern int _WinMain(int argc, char **argv);
 
 #ifdef MALLOC_DEBUGGING
     char *trace;

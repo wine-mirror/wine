@@ -72,5 +72,6 @@ extern BOOL32 MFDRV_ExtFloodFill( struct tagDC *dc, INT32 x, INT32 y,
 extern BOOL32 MFDRV_ExtTextOut( struct tagDC *dc, INT32 x, INT32 y,
 				UINT32 flags, const RECT32 *lprect, LPCSTR str,
 				UINT32 count, const INT32 *lpDx );
+extern BOOL32 MFDRV_PaintRgn( DC *dc, HRGN32 hrgn );
 
 #endif  /* __WINE_METAFILEDRV_H */

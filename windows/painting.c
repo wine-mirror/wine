@@ -340,6 +340,15 @@ BOOL32 PAINT_RedrawWindow( HWND32 hwnd, const RECT32 *rectUpdate,
 	
         if (flags & RDW_FRAME) wndPtr->flags |= WIN_NEEDS_NCPAINT;
 
+        /* restrict update region to client area (FIXME: correct?) */
+        if (wndPtr->hrgnUpdate)
+        {
+            HRGN32 clientRgn = CreateRectRgnIndirect32( &rectClient );
+            rgnNotEmpty = CombineRgn32( wndPtr->hrgnUpdate, clientRgn, 
+                                        wndPtr->hrgnUpdate, RGN_AND );
+            DeleteObject32( clientRgn );
+        }
+
 	/* check for bogus update region */ 
 	if ( rgnNotEmpty == NULLREGION )
 	   {

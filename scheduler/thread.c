@@ -18,27 +18,12 @@
 #include "debug.h"
 #include "stddebug.h"
 
-#ifdef HAVE_CLONE
-# ifdef HAVE_SCHED_H
-#  include <sched.h>
-# endif
-# ifndef CLONE_VM
-#  define CLONE_VM      0x00000100
-#  define CLONE_FS      0x00000200
-#  define CLONE_FILES   0x00000400
-#  define CLONE_SIGHAND 0x00000800
-#  define CLONE_PID     0x00001000
-/* If we didn't get the flags, we probably didn't get the prototype either */
-extern int clone( int (*fn)(void *arg), void *stack, int flags, void *arg );
-# endif  /* CLONE_VM */
-#endif  /* HAVE_CLONE */
-
 #ifndef __i386__
 THDB *pCurrentThread;
 #endif
 
 static BOOL32 THREAD_Signaled( K32OBJ *obj, DWORD thread_id );
-static void THREAD_Satisfied( K32OBJ *obj, DWORD thread_id );
+static BOOL32 THREAD_Satisfied( K32OBJ *obj, DWORD thread_id );
 static void THREAD_AddWait( K32OBJ *obj, DWORD thread_id );
 static void THREAD_RemoveWait( K32OBJ *obj, DWORD thread_id );
 static void THREAD_Destroy( K32OBJ *obj );
@@ -70,28 +55,6 @@ static THDB *THREAD_GetPtr( HANDLE32 handle )
     }
     else thread = (THDB *)PROCESS_GetObjPtr( handle, K32OBJ_THREAD );
     return thread;
-}
-
-
-/**********************************************************************
- *           NtCurrentTeb   (NTDLL.89)
- */
-TEB * WINAPI NtCurrentTeb(void)
-{
-#ifdef __i386__
-    TEB *teb;
-    WORD ds, fs;
-
-    /* Check if we have a current thread */
-    GET_DS( ds );
-    GET_FS( fs );
-    if (fs == ds) return NULL; /* FIXME: should be an assert */
-    __asm__( "movl %%fs:(24),%0" : "=r" (teb) );
-    return teb;
-#else
-    if (!pCurrentThread) return NULL;
-    return &pCurrentThread->teb;
-#endif  /* __i386__ */
 }
 
 
@@ -181,7 +144,6 @@ THDB *THREAD_Create( PDB32 *pdb, DWORD stack_size,
     thdb->teb.self        = &thdb->teb;
     thdb->teb.tls_ptr     = thdb->tls_array;
     thdb->wait_list       = &thdb->wait_struct;
-    thdb->process2        = pdb;
     thdb->exit_code       = 0x103; /* STILL_ACTIVE */
     thdb->entry_point     = start_addr;
     thdb->entry_arg       = param;
@@ -234,20 +196,6 @@ error:
 
 
 /***********************************************************************
- *           THREAD_Start
- *
- * Startup routine for a new thread.
- */
-static void THREAD_Start( THDB *thdb )
-{
-    LPTHREAD_START_ROUTINE func = (LPTHREAD_START_ROUTINE)thdb->entry_point;
-    thdb->unix_pid = getpid();
-    SET_FS( thdb->teb_sel );
-    ExitThread( func( thdb->entry_arg ) );
-}
-
-
-/***********************************************************************
  *           THREAD_Signaled
  */
 static BOOL32 THREAD_Signaled( K32OBJ *obj, DWORD thread_id )
@@ -263,7 +211,7 @@ static BOOL32 THREAD_Signaled( K32OBJ *obj, DWORD thread_id )
  *
  * Wait on this object has been satisfied.
  */
-static void THREAD_Satisfied( K32OBJ *obj, DWORD thread_id )
+static BOOL32 THREAD_Satisfied( K32OBJ *obj, DWORD thread_id )
 {
     THDB *thdb = (THDB *)obj;
     assert( obj->type == K32OBJ_THREAD );
@@ -336,26 +284,17 @@ HANDLE32 WINAPI CreateThread( LPSECURITY_ATTRIBUTES attribs, DWORD stack,
                               DWORD flags, LPDWORD id )
 {
     HANDLE32 handle;
-    THDB *thread = THREAD_Create( pCurrentProcess, stack, start, param );
+    THDB *thread = THREAD_Create( PROCESS_Current(), stack, start, param );
     if (!thread) return INVALID_HANDLE_VALUE32;
     handle = PROCESS_AllocHandle( &thread->header, 0 );
-    if (handle == INVALID_HANDLE_VALUE32)
-    {
-        K32OBJ_DecCount( &thread->header );
-        return INVALID_HANDLE_VALUE32;
-    }
-#ifdef HAVE_CLONE
-    if (clone( (int (*)(void *))THREAD_Start, thread->teb.stack_top,
-               CLONE_VM | CLONE_FS | CLONE_FILES | SIGCHLD, thread ) < 0)
-    {
-        K32OBJ_DecCount( &thread->header );
-        return INVALID_HANDLE_VALUE32;
-    }
-#else
-    fprintf( stderr, "CreateThread: stub\n" );
-#endif  /* __linux__ */
+    if (handle == INVALID_HANDLE_VALUE32) goto error;
+    if (SYSDEPS_SpawnThread( thread ) == -1) goto error;
     *id = THDB_TO_THREAD_ID( thread );
     return handle;
+
+error:
+    K32OBJ_DecCount( &thread->header );
+    return INVALID_HANDLE_VALUE32;
 }
 
 
@@ -370,12 +309,16 @@ void WINAPI ExitThread( DWORD code )
     SYSTEM_LOCK();
     thdb->exit_code = code;
     EVENT_Set( thdb->event );
+
+    /* Abandon all owned mutexes */
+    while (thdb->mutex_list) MUTEX_Abandon( thdb->mutex_list );
+
     /* FIXME: should free the stack somehow */
     K32OBJ_DecCount( &thdb->header );
     /* Completely unlock the system lock just in case */
     count = SYSTEM_LOCK_COUNT();
     while (count--) SYSTEM_UNLOCK();
-    _exit( 0 );
+    SYSDEPS_ExitThread();
 }
 
 

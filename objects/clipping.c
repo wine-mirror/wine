@@ -505,6 +505,8 @@ INT16 WINAPI RestoreVisRgn( HDC16 hdc )
     HRGN32 saved;
     RGNOBJ *obj, *savedObj;
     DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
+    INT16 ret;
+
     if (!dc) return ERROR;    
     if (!dc->w.hVisRgn)
     {
@@ -533,6 +535,7 @@ INT16 WINAPI RestoreVisRgn( HDC16 hdc )
     dc->w.hVisRgn = saved;
     CLIPPING_UpdateGCRegion( dc );
     GDI_HEAP_UNLOCK( hdc );
+    ret = savedObj->rgn->type; /* FIXME */
     GDI_HEAP_UNLOCK( saved );
-    return savedObj->xrgn ? COMPLEXREGION : NULLREGION;
+    return ret;
 }

@@ -41,6 +41,25 @@ void WINAPI INT_Int2fHandler( CONTEXT *context )
         do_int2f_16( context );
         break;
 
+    case 0x45:
+       switch (AL_reg(context)) 
+       {
+       case 0x00:
+       case 0x01:
+       case 0x02:
+       case 0x03:
+       case 0x04:
+       case 0x05:
+       case 0x06:
+       case 0x07:
+       case 0x08:
+           /* Microsoft Profiler - not installed */
+           break;
+       default:
+            INT_BARF( context, 0x2f );
+       }
+       break;
+
     case 0x4a:
         switch(AL_reg(context))
         {

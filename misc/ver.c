@@ -168,7 +168,7 @@ static int  testFileExclusiveExistence(
 
 static int read_xx_header(HFILE32 lzfd) {
 	IMAGE_DOS_HEADER	mzh;
-	char			magic[2];
+	char			magic[3];
 
 	LZSeek32(lzfd,0,SEEK_SET);
 	if (sizeof(mzh)!=LZRead32(lzfd,&mzh,sizeof(mzh)))
@@ -183,7 +183,8 @@ static int read_xx_header(HFILE32 lzfd) {
 		return IMAGE_OS2_SIGNATURE;
 	if (magic[0] == 'P' && magic[1] == 'E')
 		return IMAGE_NT_SIGNATURE;
-	fprintf(stderr,"misc/ver.c:read_ne_header:can't handle %*s files.\n",2,magic);
+	magic[2]='\0';
+	fprintf(stderr,"misc/ver.c:read_ne_header:can't handle %s files.\n",magic);
 	return 0;
 }
 
@@ -727,7 +728,7 @@ DWORD WINAPI VerFindFile16(
     strcpy(curDir, "");
     strcpy(destDir, "");
 
-    if(flags & VFFF_ISSHAREDFILE && !getuid()) {
+    if(flags & VFFF_ISSHAREDFILE) {
 	GetSystemDirectory32A(destDir, 256);
 
 	/* Were we given a filename?  If so, try to find the file. */

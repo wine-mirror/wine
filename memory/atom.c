@@ -24,7 +24,6 @@
 
 #ifdef CONFIG_IPC
 #include "dde_atom.h"
-#include "options.h"
 #endif
 
 #define DEFAULT_ATOMTABLE_SIZE    37
@@ -399,9 +398,10 @@ ATOM WINAPI GlobalAddAtom16( SEGPTR str )
 {
     if (!HIWORD(str)) return (ATOM)LOWORD(str);  /* Integer atom */
 #ifdef CONFIG_IPC
-    if (Options.ipc) return DDE_GlobalAddAtom( str );
-#endif
+    return DDE_GlobalAddAtom( str );
+#else
     return ATOM_AddAtom( USER_HeapSel, (LPCSTR)PTR_SEG_TO_LIN(str) );
+#endif
 }
 
 
@@ -433,9 +433,10 @@ ATOM WINAPI GlobalAddAtom32W( LPCWSTR str )
 ATOM WINAPI GlobalDeleteAtom( ATOM atom )
 {
 #ifdef CONFIG_IPC
-    if (Options.ipc) return DDE_GlobalDeleteAtom( atom );
-#endif
+    return DDE_GlobalDeleteAtom( atom );
+#else
     return ATOM_DeleteAtom( USER_HeapSel, atom );
+#endif
 }
 
 
@@ -446,9 +447,10 @@ ATOM WINAPI GlobalFindAtom16( SEGPTR str )
 {
     if (!HIWORD(str)) return (ATOM)LOWORD(str);  /* Integer atom */
 #ifdef CONFIG_IPC
-    if (Options.ipc) return DDE_GlobalFindAtom( str );
-#endif
+    return DDE_GlobalFindAtom( str );
+#else
     return ATOM_FindAtom( USER_HeapSel, (LPCSTR)PTR_SEG_TO_LIN(str) );
+#endif
 }
 
 
@@ -480,9 +482,10 @@ ATOM WINAPI GlobalFindAtom32W( LPCWSTR str )
 UINT16 WINAPI GlobalGetAtomName16( ATOM atom, LPSTR buffer, INT16 count )
 {
 #ifdef CONFIG_IPC
-    if (Options.ipc) return DDE_GlobalGetAtomName( atom, buffer, count );
-#endif
+    return DDE_GlobalGetAtomName( atom, buffer, count );
+#else
     return (UINT16)ATOM_GetAtomName( USER_HeapSel, atom, buffer, count );
+#endif
 }
 
 
