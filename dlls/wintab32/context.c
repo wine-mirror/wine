@@ -203,10 +203,10 @@ LPOPENCONTEXT AddPacketToContextQueue(LPWTPACKET packet, HWND hwnd)
 
             DUMPPACKET(*packet);
 
-            if (tgt + 1 == ptr->QueueSize)
+            if (tgt == ptr->QueueSize)
             {
                 TRACE("Queue Overflow %p\n",ptr->handle);
-                packet->pkStatus = TPS_QUEUE_ERR;
+                ptr->PacketQueue[tgt-1].pkStatus |= TPS_QUEUE_ERR;
             }
             else
             {
