@@ -2504,8 +2504,10 @@ DWORD WINAPI RegQueryValueExW( HKEY hkey, LPCWSTR lpValueName,
 	if (lpbData)					/* data required ?*/
 	{ if (*lpcbData >= lpkey->values[i].len)	/* buffer large enought ?*/
 	    memcpy(lpbData,lpkey->values[i].data,lpkey->values[i].len);
-	  else
+	  else {
+	    *lpcbData = lpkey->values[i].len;
 	    ret = ERROR_MORE_DATA;
+	  }
 	}
 
 	if (lpcbData) 					/* size required ?*/
@@ -2956,8 +2958,10 @@ DWORD WINAPI RegEnumKeyExW( HKEY hkey, DWORD iSubkey, LPWSTR lpszName,
 
 	if (iSubkey || !lpxkey)
 		return ERROR_NO_MORE_ITEMS;
-	if (lstrlenW(lpxkey->keyname)+1>*lpcchName)
+	if (lstrlenW(lpxkey->keyname)+1>*lpcchName) {
+		*lpcchName = lstrlenW(lpxkey->keyname)+1;
 		return ERROR_MORE_DATA;
+	}
 	memcpy(lpszName,lpxkey->keyname,lstrlenW(lpxkey->keyname)*2+2);
 
         if (*lpcchName)
@@ -3130,8 +3134,10 @@ DWORD WINAPI RegEnumValueW( HKEY hkey, DWORD iValue, LPWSTR lpszValue,
 		*lpdwType = val->type;
 
 	if (lpbData) {
-		if (val->len>*lpcbData)
+		if (val->len>*lpcbData) {
+			*lpcbData = val->len;
 			return ERROR_MORE_DATA;
+		}
 		memcpy(lpbData,val->data,val->len);
 		*lpcbData = val->len;
 	}
@@ -3176,9 +3182,10 @@ DWORD WINAPI RegEnumValueA( HKEY hkey, DWORD iValue, LPSTR lpszValue,
 			if ((1<<dwType) & UNICONVMASK) {
 				lstrcpyWtoA(lpbData,(LPWSTR)lpbDataW);
 			} else {
-				if (lpcbDataW > *lpcbData)
+				if (lpcbDataW > *lpcbData) {
+					*lpcbData = lpcbDataW;
 					ret	= ERROR_MORE_DATA;
-				else
+				} else
 					memcpy(lpbData,lpbDataW,lpcbDataW);
 			}
 			*lpcbData = lpcbDataW;
