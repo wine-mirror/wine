@@ -558,7 +558,7 @@ void X11DRV_WND_SetWindowPos(WND *wndPtr, const WINDOWPOS *winpos, BOOL bChangeP
               WIN_ReleaseWndPtr(insertPtr);
 	    }
 	}
-	if (changeMask)
+	if (changeMask && X11DRV_WND_GetXWindow(winposPtr))
 	{
 	    TSXReconfigureWMWindow( display, X11DRV_WND_GetXWindow(winposPtr), 0, changeMask, &winChanges );
 	    if( winposPtr->class->style & (CS_VREDRAW | CS_HREDRAW) )
