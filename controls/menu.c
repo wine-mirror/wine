@@ -2224,7 +2224,13 @@ static BOOL MENU_ButtonDown( MTRACKER* pmt, HMENU hPtMenu )
 
 	    /* If the popup menu is not already "popped" */
 	    if(!(item->fState & MF_MOUSESELECT ))
+	    {
 		pmt->hCurrentMenu = MENU_ShowSubPopup( pmt->hOwnerWnd, hPtMenu, FALSE );
+
+		/* In win31, a newly popped menu always remain opened for the next buttonup */
+		if(TWEAK_WineLook == WIN31_LOOK)
+		    ptmenu->bTimeToHide = FALSE;		    
+	    }
 
 	    return TRUE;
 	} 
