@@ -768,6 +768,10 @@ UINT MSI_GetPropertyW(MSIPACKAGE *package, LPCWSTR szName,
     UINT rc;
 
     rc = MSI_GetPropertyRow(package, szName, &row);
+
+    if (*pchValueBuf > 0)
+        szValueBuf[0] = 0;
+
     if (rc == ERROR_SUCCESS)
     {
         rc = MSI_RecordGetStringW(row,1,szValueBuf,pchValueBuf);
@@ -796,6 +800,9 @@ UINT MSI_GetPropertyA(MSIPACKAGE *package, LPCSTR szName,
     UINT rc, len;
     LPWSTR szwName;
 
+    if (*pchValueBuf > 0)
+        szValueBuf[0] = 0;
+    
     len = MultiByteToWideChar( CP_ACP, 0, szName, -1, NULL, 0 );
     szwName = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) );
     if (!szwName)
@@ -811,6 +818,9 @@ UINT MSI_GetPropertyA(MSIPACKAGE *package, LPCSTR szName,
 
     if (rc == ERROR_SUCCESS)
         TRACE("returning %s for property %s\n", debugstr_a(szValueBuf),
+            debugstr_a(szName));
+    else if (rc == ERROR_MORE_DATA)
+        TRACE("need %ld sized buffer for %s\n", *pchValueBuf,
             debugstr_a(szName));
     else
     {
