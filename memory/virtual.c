@@ -365,7 +365,14 @@ static BYTE VIRTUAL_GetProt(
         vprot = VPROT_READ | VPROT_WRITE;
         break;
     case PAGE_WRITECOPY:
-        vprot = VPROT_READ | VPROT_WRITE | VPROT_WRITECOPY;
+        /* MSDN CreateFileMapping() states that if PAGE_WRITECOPY is given,
+	 * that the hFile must have been opened with GENERIC_READ and
+	 * GENERIC_WRITE access.  This is WRONG as tests show that you
+	 * only need GENERIC_READ access (at least for Win9x,
+	 * FIXME: what about NT?).  Thus, we don't put VPROT_WRITE in
+	 * PAGE_WRITECOPY and PAGE_EXECUTE_WRITECOPY.
+	 */
+        vprot = VPROT_READ | VPROT_WRITECOPY;
         break;
     case PAGE_EXECUTE:
         vprot = VPROT_EXEC;
@@ -377,7 +384,8 @@ static BYTE VIRTUAL_GetProt(
         vprot = VPROT_EXEC | VPROT_READ | VPROT_WRITE;
         break;
     case PAGE_EXECUTE_WRITECOPY:
-        vprot = VPROT_EXEC | VPROT_READ | VPROT_WRITE | VPROT_WRITECOPY;
+        /* See comment for PAGE_WRITECOPY above */
+        vprot = VPROT_EXEC | VPROT_READ | VPROT_WRITECOPY;
         break;
     case PAGE_NOACCESS:
     default:
