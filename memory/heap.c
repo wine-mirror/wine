@@ -1413,6 +1413,11 @@ BOOL WINAPI HeapValidate(
 /***********************************************************************
  *           HeapWalk   (KERNEL32.344)
  * Enumerates the memory blocks in a specified heap.
+ * See HEAP_Dump() for info on heap structure.
+ *
+ * TODO
+ *   - handling of PROCESS_HEAP_ENTRY_MOVEABLE and
+ *     PROCESS_HEAP_ENTRY_DDESHARE (needs heap.c support)
  *
  * RETURNS
  *	TRUE: Success
@@ -1420,10 +1425,112 @@ BOOL WINAPI HeapValidate(
  */
 BOOL WINAPI HeapWalk(
               HANDLE heap,               /* [in]  Handle to heap to enumerate */
-              LPPROCESS_HEAP_ENTRY entry  /* [out] Pointer to structure of enumeration info */
+              LPPROCESS_HEAP_ENTRY entry /* [out] Pointer to structure of enumeration info */
 ) {
-    FIXME("(%08x): stub.\n", heap );
-    return FALSE;
+    HEAP *heapPtr = HEAP_GetPtr(heap);
+    SUBHEAP *sub, *currentheap = NULL;
+    BOOL ret = FALSE;
+    char *ptr;
+    int region_index = 0;
+
+    if (!heapPtr || !entry)
+    {
+	SetLastError(ERROR_INVALID_PARAMETER);
+	return FALSE;
+    }
+
+    if (!(heapPtr->flags & HEAP_NO_SERIALIZE)) HeapLock( heap );
+
+    /* set ptr to the next arena to be examined */
+
+    if (!entry->lpData) /* first call (init) ? */
+    {
+	TRACE("begin walking of heap 0x%08x.\n", heap);
+	/*HEAP_Dump(heapPtr);*/
+	currentheap = &heapPtr->subheap;
+	ptr = (char*)currentheap + currentheap->headerSize;
+    }
+    else
+    {
+	ptr = entry->lpData;
+	sub = &heapPtr->subheap;
+	while (sub)
+	{
+	    if (((char *)ptr >= (char *)sub) &&
+		((char *)ptr < (char *)sub + sub->size))
+	    {
+		currentheap = sub;
+		break;
+	    }
+	    sub = sub->next;
+	    region_index++;
+	}
+	if (currentheap == NULL)
+	{
+	    ERR("no matching subheap found, shouldn't happen !\n");
+	    SetLastError(ERROR_NO_MORE_ITEMS);
+	    goto HW_end;
+	}
+
+	ptr += entry->cbData; /* point to next arena */
+	if (ptr > (char *)currentheap + currentheap->size - 1)
+	{   /* proceed with next subheap */
+	    if (!(currentheap = currentheap->next))
+	    {  /* successfully finished */
+		TRACE("end reached.\n");
+		SetLastError(ERROR_NO_MORE_ITEMS);
+		goto HW_end;
+	    }
+	    ptr = (char*)currentheap + currentheap->headerSize;
+	}
+    }
+
+    entry->wFlags = 0;
+    if (*(DWORD *)ptr & ARENA_FLAG_FREE)
+    {
+	ARENA_FREE *pArena = (ARENA_FREE *)ptr;
+
+	/*TRACE("free, magic: %04x\n", pArena->magic);*/
+
+	entry->lpData = pArena + 1;
+	entry->cbData = pArena->size & ARENA_SIZE_MASK;
+	entry->cbOverhead = sizeof(ARENA_FREE);
+	entry->wFlags = PROCESS_HEAP_UNCOMMITTED_RANGE;
+    }
+    else
+    {
+	ARENA_INUSE *pArena = (ARENA_INUSE *)ptr;
+
+	/*TRACE("busy, magic: %04x\n", pArena->magic);*/
+	
+	entry->lpData = pArena + 1;
+	entry->cbData = pArena->size & ARENA_SIZE_MASK;
+	entry->cbOverhead = sizeof(ARENA_INUSE);
+	entry->wFlags = PROCESS_HEAP_ENTRY_BUSY;
+	/* FIXME: can't handle PROCESS_HEAP_ENTRY_MOVEABLE
+	and PROCESS_HEAP_ENTRY_DDESHARE yet */
+    }
+
+    entry->iRegionIndex = region_index;
+
+    /* first element of heap ? */
+    if (ptr == (char *)(currentheap + currentheap->headerSize))
+    {
+	entry->wFlags |= PROCESS_HEAP_REGION;
+	entry->Foo.Region.dwCommittedSize = currentheap->commitSize;
+	entry->Foo.Region.dwUnCommittedSize =
+		currentheap->size - currentheap->commitSize;
+	entry->Foo.Region.lpFirstBlock = /* first valid block */
+		currentheap + currentheap->headerSize;
+	entry->Foo.Region.lpLastBlock  = /* first invalid block */
+		currentheap + currentheap->size;
+    }
+    ret = TRUE;
+
+HW_end:
+    if (!(heapPtr->flags & HEAP_NO_SERIALIZE)) HeapUnlock( heap );
+
+    return ret;
 }
 
 
