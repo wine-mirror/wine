@@ -1,5 +1,6 @@
 name winedos
 type win32
+init DOSVM_Init
 
 import user32.dll
 import kernel32.dll
@@ -20,3 +21,5 @@ debug_channels (int module relay)
 @ stdcall OutPIC(long long) DOSVM_PIC_ioport_out
 @ stdcall SetTimer(long) DOSVM_SetTimer
 @ stdcall GetTimer() DOSVM_GetTimer
+
+@ stdcall KbdReadScan(ptr) INT_Int09ReadScan

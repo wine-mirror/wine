@@ -42,13 +42,10 @@ void WINAPI INT_Int09Handler( CONTEXT86 *context )
       ch[0] = ascii;
       cnt = 1;
     } else {
-#if 0  /* FIXME: cannot call USER functions here */
       UINT vkey = MapVirtualKeyA(scan&0x7f, 1);
-      /* as in TranslateMessage, windows/input.c */
-      cnt = ToAscii(vkey, scan, QueueKeyStateTable, (LPWORD)ch, 0);
-#else
-      cnt = 0;
-#endif
+      BYTE keystate[256];
+      GetKeyboardState(keystate);
+      cnt = ToAscii(vkey, scan, keystate, (LPWORD)ch, 0);
     }
     if (cnt>0) {
       for (c2=0; c2<cnt; c2++)

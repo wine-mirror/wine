@@ -8,6 +8,7 @@ IMPORTS   = user32 kernel32 ntdll
 
 C_SRCS = \
 	dosvm.c \
+	int09.c \
 	module.c
 
 @MAKE_DLL_RULES@

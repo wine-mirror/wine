@@ -16,7 +16,7 @@ DEFAULT_DEBUG_CHANNEL(int);
 
 static INTPROC INT_WineHandler[256] = {
  0, 0, 0, 0, 0, 0, 0, 0,
- 0, INT_Int09Handler, 0, 0, 0, 0, 0, 0,
+ 0, 0, 0, 0, 0, 0, 0, 0,
  INT_Int10Handler, INT_Int11Handler, INT_Int12Handler, INT_Int13Handler,
  0, INT_Int15Handler, INT_Int16Handler, INT_Int17Handler,
  0, 0, INT_Int1aHandler, 0, 0, 0, 0, 0,

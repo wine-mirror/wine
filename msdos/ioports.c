@@ -37,9 +37,9 @@ static struct {
     BYTE	ctrlbyte_ch;
     WORD	oldval;
 } tmr_8253[3] = {
-    {0xFFFF,	FALSE,	0,	FALSE,	0x06,	0},
-    {0x0012,	FALSE,	0,	FALSE,	0x44,	0},
-    {0x0001,	FALSE,	0,	FALSE,	0x86,	0},
+    {0xFFFF,	FALSE,	0,	FALSE,	0x36,	0},
+    {0x0012,	FALSE,	0,	FALSE,	0x74,	0},
+    {0x0001,	FALSE,	0,	FALSE,	0xB6,	0},
 };
 
 static int dummy_ctr = 0;
@@ -345,7 +345,7 @@ DWORD IO_inport( int port, int size )
     }
     break;
     case 0x60:
-        res = INT_Int09ReadScan(NULL);
+        res = Dosvm.KbdReadScan ? Dosvm.KbdReadScan(NULL) : 0;
 #if 0 /* what's this port got to do with parport ? */
         res = (DWORD)parport_8255[0];
 #endif

@@ -693,3 +693,18 @@ void WINAPI DOSVM_QueueEvent( INT irq, INT priority, DOSRELAY relay, LPVOID data
 }
 
 #endif
+
+BOOL WINAPI DOSVM_Init( HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved )
+{
+  TRACE_(module)("(0x%08x,%ld,%p)\n", hinstDLL, fdwReason, lpvReserved);
+
+  if (fdwReason == DLL_PROCESS_ATTACH) {
+    INT_SetWineHandler(9, INT_Int09Handler);
+  }
+  else if (fdwReason == DLL_PROCESS_DETACH)
+  {
+    INT_SetWineHandler(9, NULL);
+  }
+
+  return TRUE;
+}
