@@ -186,8 +186,12 @@ struct {
     {"c:\\foo\\bar", "file:///c:/foo/bar", S_OK},
     {"c:foo\\bar", "file:///c:foo/bar", S_OK},
     {"c:\\foo/b a%r", "file:///c:/foo/b%20a%25r", S_OK},
-
+#if 0
+    /* The following test fails on native shlwapi as distributed with Win95/98.
+     * Wine matches the behaviour of later versions.
+     */
     {"xx:c:\\foo\\bar", "xx:c:\\foo\\bar", S_FALSE}
+#endif
 };
 
 struct {
@@ -451,7 +455,7 @@ static void test_UrlCombine(void)
 
 static void test_UrlCreateFromPath(void)
 {
-    int i;
+    size_t i;
     char ret_url[INTERNET_MAX_URL_LENGTH];
     DWORD len, ret;
     WCHAR ret_urlW[INTERNET_MAX_URL_LENGTH];
@@ -469,7 +473,8 @@ static void test_UrlCreateFromPath(void)
         urlW = GetWideString(TEST_URLFROMPATH[i].url);
         ret = UrlCreateFromPathW(pathW, ret_urlW, &len, 0);
         WideCharToMultiByte(CP_ACP, 0, ret_urlW, -1, ret_url, sizeof(ret_url),0,0);
-        ok(ret == TEST_URLFROMPATH[i].ret, "ret %08lx from path L\"%s\"\n", ret, TEST_URLFROMPATH[i].path);
+        ok(ret == TEST_URLFROMPATH[i].ret, "ret %08lx from path L\"%s\", expected %08lx\n",
+           ret, TEST_URLFROMPATH[i].path, TEST_URLFROMPATH[i].ret);
         ok(!lstrcmpiW(ret_urlW, urlW), "got %s expected %s from path L\"%s\"\n", ret_url, TEST_URLFROMPATH[i].url, TEST_URLFROMPATH[i].path);
         ok(len == strlenW(ret_urlW), "ret len %ld from path L\"%s\"\n", len, TEST_URLFROMPATH[i].path);
         FreeWideString(urlW);
@@ -480,7 +485,7 @@ static void test_UrlCreateFromPath(void)
 static void test_UrlIs(void)
 {
     BOOL ret;
-    INT i;
+    size_t i;
 
     for(i = 0; i < sizeof(TEST_PATH_IS_URL) / sizeof(TEST_PATH_IS_URL[0]); i++) {
         ret = UrlIsA( TEST_PATH_IS_URL[i].path, URLIS_URL );
@@ -496,7 +501,7 @@ static void test_UrlUnescape(void)
     WCHAR ret_urlW[INTERNET_MAX_URL_LENGTH];
     WCHAR *urlW, *expected_urlW; 
     DWORD dwEscaped;
-    unsigned int i;
+    size_t i;
 
     for(i=0; i<sizeof(TEST_URL_UNESCAPE)/sizeof(TEST_URL_UNESCAPE[0]); i++) { 
         dwEscaped=INTERNET_MAX_URL_LENGTH;
@@ -567,7 +572,7 @@ static void test_PathSearchAndQualify(void)
 
 static void test_PathCreateFromUrl(void)
 {
-    int i;
+    size_t i;
     char ret_path[INTERNET_MAX_URL_LENGTH];
     DWORD len, ret;
     WCHAR ret_pathW[INTERNET_MAX_URL_LENGTH];
@@ -599,7 +604,7 @@ static void test_PathCreateFromUrl(void)
 
 static void test_PathIsUrl(void)
 {
-    int i;
+    size_t i;
     BOOL ret;
 
     for(i = 0; i < sizeof(TEST_PATH_IS_URL)/sizeof(TEST_PATH_IS_URL[0]); i++) {
@@ -702,6 +707,29 @@ static void test_PathIsValidCharW(void)
     }
 }
 
+static void test_PathMakePretty(void)
+{
+   char buff[MAX_PATH];
+
+   ok (PathMakePrettyA(NULL) == FALSE, "PathMakePretty: NULL path succeeded\n");
+   buff[0] = '\0';
+   ok (PathMakePrettyA(buff) == TRUE, "PathMakePretty: Empty path failed\n");
+
+   strcpy(buff, "C:\\A LONG FILE NAME WITH \\SPACES.TXT");
+   ok (PathMakePrettyA(buff) == TRUE, "PathMakePretty: Long UC name failed\n");
+   ok (strcmp(buff, "C:\\a long file name with \\spaces.txt") == 0,
+       "PathMakePretty: Long UC name not changed\n");
+
+   strcpy(buff, "C:\\A LONG FILE NAME WITH \\MixedCase.TXT");
+   ok (PathMakePrettyA(buff) == FALSE, "PathMakePretty: Long MC name succeeded\n");
+   ok (strcmp(buff, "C:\\A LONG FILE NAME WITH \\MixedCase.TXT") == 0,
+       "PathMakePretty: Failed but modified path\n");
+
+   strcpy(buff, "TEST");
+   ok (PathMakePrettyA(buff) == TRUE,  "PathMakePretty: Short name failed\n");
+   ok (strcmp(buff, "Test") == 0,  "PathMakePretty: 1st char lowercased %s\n", buff);
+}
+
 START_TEST(path)
 {
   hShlwapi = LoadLibraryA("shlwapi.dll");
@@ -719,10 +747,18 @@ START_TEST(path)
   test_PathSearchAndQualify();
   test_PathCreateFromUrl();
   test_PathIsUrl();
+  
+  test_PathMakePretty();
 
+  /* For whatever reason, PathIsValidCharA and PathAppendA share the same
+   * ordinal number in some native versions. Check this to prevent a crash.
+   */
   pPathIsValidCharA = (void*)GetProcAddress(hShlwapi, (LPSTR)455);
-  if (pPathIsValidCharA) test_PathIsValidCharA();
+  if (pPathIsValidCharA && pPathIsValidCharA != (void*)GetProcAddress(hShlwapi, "PathAppendA"))
+  {
+    test_PathIsValidCharA();
 
-  pPathIsValidCharW = (void*)GetProcAddress(hShlwapi, (LPSTR)456);
-  if (pPathIsValidCharW) test_PathIsValidCharW();
+     pPathIsValidCharW = (void*)GetProcAddress(hShlwapi, (LPSTR)456);
+     if (pPathIsValidCharW) test_PathIsValidCharW();
+  }
 }

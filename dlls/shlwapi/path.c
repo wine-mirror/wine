@@ -1687,7 +1687,8 @@ BOOL WINAPI PathFileExistsA(LPCSTR lpszPath)
   if (!lpszPath)
     return FALSE;
 
-  iPrevErrMode = SetErrorMode(1);
+  /* Prevent a dialog box if path is on a disk that has been ejected. */
+  iPrevErrMode = SetErrorMode(SEM_FAILCRITICALERRORS);
   dwAttr = GetFileAttributesA(lpszPath);
   SetErrorMode(iPrevErrMode);
   return dwAttr == INVALID_FILE_ATTRIBUTES ? FALSE : TRUE;
@@ -1708,7 +1709,7 @@ BOOL WINAPI PathFileExistsW(LPCWSTR lpszPath)
   if (!lpszPath)
     return FALSE;
 
-  iPrevErrMode = SetErrorMode(1);
+  iPrevErrMode = SetErrorMode(SEM_FAILCRITICALERRORS);
   dwAttr = GetFileAttributesW(lpszPath);
   SetErrorMode(iPrevErrMode);
   return dwAttr == INVALID_FILE_ATTRIBUTES ? FALSE : TRUE;
@@ -2580,20 +2581,23 @@ BOOL WINAPI PathMakePrettyA(LPSTR lpszPath)
 
   TRACE("(%s)\n", debugstr_a(lpszPath));
 
-  if (!pszIter || !*pszIter)
+  if (!pszIter)
     return FALSE;
 
-  while (*pszIter)
+  if (*pszIter)
   {
-    if (islower(*pszIter) || IsDBCSLeadByte(*pszIter))
-      return FALSE; /* Not DOS path */
-    pszIter++;
-  }
-  pszIter = lpszPath + 1;
-  while (*pszIter)
-  {
-    *pszIter = tolower(*pszIter);
-    pszIter++;
+    do
+    {
+      if (islower(*pszIter) || IsDBCSLeadByte(*pszIter))
+        return FALSE; /* Not DOS path */
+      pszIter++;
+    } while (*pszIter);
+    pszIter = lpszPath + 1;
+    while (*pszIter)
+    {
+      *pszIter = tolower(*pszIter);
+      pszIter++;
+    }
   }
   return TRUE;
 }
@@ -2609,20 +2613,23 @@ BOOL WINAPI PathMakePrettyW(LPWSTR lpszPath)
 
   TRACE("(%s)\n", debugstr_w(lpszPath));
 
-  if (!pszIter || !*pszIter)
+  if (!pszIter)
     return FALSE;
 
-  while (*pszIter)
+  if (*pszIter)
   {
-    if (islowerW(*pszIter))
-      return FALSE; /* Not DOS path */
-    pszIter++;
-  }
-  pszIter = lpszPath + 1;
-  while (*pszIter)
-  {
-    *pszIter = tolowerW(*pszIter);
-    pszIter++;
+    do
+    {
+      if (islowerW(*pszIter))
+        return FALSE; /* Not DOS path */
+      pszIter++;
+    } while (*pszIter);
+    pszIter = lpszPath + 1;
+    while (*pszIter)
+    {
+      *pszIter = tolowerW(*pszIter);
+      pszIter++;
+    }
   }
   return TRUE;
 }
