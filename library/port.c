@@ -389,8 +389,8 @@ int lstat(const char *file_name, struct stat *buf)
 }
 #endif /* HAVE_LSTAT */
 
-static void
-_convert_stat_stat64(struct stat64 *stto,struct stat *stfrom)
+#if !defined(HAVE_STAT64) || !defined(HAVE_LSTAT64) || !defined(HAVE_FSTAT64)
+static void _convert_stat_stat64(struct stat64 *stto,struct stat *stfrom)
 {
     stto->st_dev     = stfrom->st_dev;
     stto->st_ino     = stfrom->st_ino;
@@ -406,6 +406,7 @@ _convert_stat_stat64(struct stat64 *stto,struct stat *stfrom)
     stto->st_ctime   = stfrom->st_ctime;
     stto->st_size    = (off64_t)stfrom->st_size;
 }
+#endif  /* HAVE_STAT64 || HAVE_LSTAT64 || HAVE_FSTAT64 */
 
 /***********************************************************************
  *		stat64
