@@ -24,8 +24,10 @@ PLTESTPROGRAM = $(MODULE)$(DLLEXT)
 PLTESTS = \
 	tests/wine.pl
 
+CROSSTEST = wtmain.cross.o
+
 # override all: target so that we don't build the Perl stuff by default
-test_environment: wtmain.o
+test_environment: wtmain.o @CROSSTEST@
 
 @MAKE_PROG_RULES@
 

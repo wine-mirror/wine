@@ -138,6 +138,8 @@ $(TESTSUBDIRS:%=%/__test__): test_environment
 
 check test:: $(TESTSUBDIRS:%=%/__test__)
 
+crosstest:: $(TESTSUBDIRS:%=%/__crosstest__)
+
 .PHONY: test_environment
 
 # Misc rules

@@ -51,6 +51,8 @@ checklink:: $(MODULE)$(DLLEXT) $(SUBDIRS:%=%/__checklink__)
 
 check test:: $(SUBDIRS:%=%/__test__)
 
+crosstest:: $(SUBDIRS:%=%/__crosstest__)
+
 $(TESTRESULTS): $(MODULE)$(DLLEXT)
 
 # Sanity check

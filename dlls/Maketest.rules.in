@@ -24,6 +24,10 @@ GEN_C_SRCS   = $(TESTLIST)
 EXTRA_OBJS   = $(TESTMAIN)
 ALL_LIBS     = $(LIBWINE) $(EXTRALIBS) $(LIBS)
 
+CROSSTEST    = $(TESTDLL:%.dll=%)_crosstest.exe
+CROSSTESTMAIN= $(TOPOBJDIR)/programs/winetest/wtmain.cross.o
+CROSSOBJS    = $(C_SRCS:.c=.cross.o) $(GEN_C_SRCS:.c=.cross.o) $(CROSSTESTMAIN)
+
 @MAKE_RULES@
 
 # Rule for main module spec file
@@ -62,10 +66,20 @@ $(TESTRESULTS): $(MODULE)$(DLLEXT) $(TOPOBJDIR)/dlls/$(TESTDLL)$(DLLEXT)
 $(TESTMAIN):
 	cd $(TOPOBJDIR)/programs/winetest && $(MAKE) wtmain.o
 
+# Rules for cross-compiling tests
+
+crosstest:: @CROSSTEST@
+
+$(CROSSTEST): $(CROSSOBJS) Makefile.in
+	$(CROSSCC) $(CROSSOBJS) -o $@ $(DELAYIMPORTS:%=-l%) $(IMPORTS:%=-l%) $(LIBS)
+
+$(CROSSTESTMAIN):
+	cd $(TOPOBJDIR)/programs/winetest && $(MAKE) wtmain.cross.o
+
 # Rules for cleaning
 
 testclean::
 	$(RM) $(TESTRESULTS)
 
 clean::
-	$(RM) $(MODULE) $(TESTLIST) $(TESTRESULTS)
+	$(RM) $(MODULE) $(TESTLIST) $(TESTRESULTS) $(CROSSTEST)

@@ -799,6 +799,15 @@ case $host_os in
         fi
       fi
     fi
+
+    dnl Check for cross compiler to build test programs
+    AC_SUBST(CROSSTEST,"")
+    if test "$cross_compiling" = "no"
+    then
+      AC_CHECK_PROGS(CROSSCC,i586-mingw32msvc-gcc,false)
+      AC_CHECK_PROGS(DLLTOOL,i586-mingw32msvc-dlltool,false)
+      if test "$CROSSCC" != "false"; then CROSSTEST="\$(CROSSTEST)"; fi
+    fi
     ;;
 esac
 
@@ -1547,7 +1556,7 @@ if test "$wine_cv_opengl_version_threadsafe" = "yes" -a "x$enable_opengl" = "x"
 then
   echo
   echo "*** Warning: the OpenGL version you have installed relies on libpthread for"
-  echo "*** thread-safety. To prevent crashes, OpenGL support has been removed."
+  echo "*** thread-safety. To prevent crashes, OpenGL support has been disabled."
   echo "*** A fix for glibc 2.1.3 that seems to work is included in this version of Wine,"
   echo "*** start configure with '--enable-opengl' to force OpenGL support."
 fi

@@ -39,6 +39,7 @@ EXEEXT    = @EXEEXT@
 OBJEXT    = @OBJEXT@
 LIBEXT    = @LIBEXT@
 DLLEXT    = @DLLEXT@
+CROSSCC   = @CROSSCC@
 LDSHARED  = @LDSHARED@
 DLLWRAP   = @DLLWRAP@
 DLLWRAPFLAGS = --add-stdcall-alias
@@ -110,10 +111,13 @@ LINTS  = $(C_SRCS:.c=.ln)
 
 # Implicit rules
 
-.SUFFIXES: .mc .rc .mc.rc .res .res.o .spec .spec.c .spec.def .pl .ok
+.SUFFIXES: .mc .rc .mc.rc .res .res.o .spec .spec.c .spec.def .pl .ok .cross.o
 
 .c.o:
 	$(CC) -c $(ALLCFLAGS) -o $@ $<
+
+.c.cross.o:
+	$(CROSSCC) -c $(ALLCFLAGS) -o $@ $<
 
 .s.o:
 	$(AS) -o $@ $<
@@ -265,7 +269,10 @@ $(SUBDIRS:%=%/__checklink__): dummy
 $(SUBDIRS:%=%/__test__): dummy
 	@cd `dirname $@` && $(MAKE) test
 
-.PHONY: check test $(SUBDIRS:%=%/__test__)
+$(SUBDIRS:%=%/__crosstest__): dummy
+	@cd `dirname $@` && $(MAKE) crosstest
+
+.PHONY: check test crosstest $(SUBDIRS:%=%/__test__) $(SUBDIRS:%=%/__crosstest__)
 
 # Misc. rules
 
