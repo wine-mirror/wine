@@ -967,7 +967,8 @@ case $host_os in
             if test "$ac_cv_c_dll_hpux" = "yes"
             then
               LIBEXT="sl"
-              LDDLLFLAGS="-shared"
+              DLLEXT=".sl"
+              LDDLLFLAGS="-shared -fPIC"
               LDSHARED="\$(CC) -shared"
             fi
           fi
