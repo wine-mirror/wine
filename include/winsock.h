@@ -783,6 +783,7 @@ typedef struct WS(WSAData)
 #define WSAEDQUOT                  (WSABASEERR+69)
 #define WSAESTALE                  (WSABASEERR+70)
 #define WSAEREMOTE                 (WSABASEERR+71)
+#define WSAEDISCON                 (WSABASEERR+101)
 
 /*
  * Extended Windows Sockets error constant definitions
