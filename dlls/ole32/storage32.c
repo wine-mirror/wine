@@ -6401,11 +6401,7 @@ HRESULT OLECONVERT_CreateCompObjStream(LPSTORAGE pStorage, LPCSTR strOleTypeName
         /* Get the CLSID */
         hRes = CLSIDFromProgID16(IStorageCompObj.strProgIDName, &(IStorageCompObj.clsid));
 
-        if(hRes != S_OK)
-        {
-            hRes = REGDB_E_CLASSNOTREG;
-        }
-        else
+        if(hRes == S_OK)
         {
             HKEY hKey;
             LONG hErr;
@@ -6422,34 +6418,29 @@ HRESULT OLECONVERT_CreateCompObjStream(LPSTORAGE pStorage, LPCSTR strOleTypeName
                 }
                 RegCloseKey(hKey);
             }
-            if(hErr != ERROR_SUCCESS)
-            {
-                hRes = REGDB_E_CLASSNOTREG;
-            }
         }
 
-        if(hRes == S_OK )
+        /* Write CompObj Structure to stream */
+        hRes = IStream_Write(pStream, IStorageCompObj.byUnknown1, sizeof(IStorageCompObj.byUnknown1), NULL);
+
+        WriteClassStm(pStream,&(IStorageCompObj.clsid));
+
+        hRes = IStream_Write(pStream, &(IStorageCompObj.dwCLSIDNameLength), sizeof(IStorageCompObj.dwCLSIDNameLength), NULL);
+        if(IStorageCompObj.dwCLSIDNameLength > 0)
         {
-            /* Write CompObj Structure to stream */
-            hRes = IStream_Write(pStream, IStorageCompObj.byUnknown1, sizeof(IStorageCompObj.byUnknown1), NULL);
-            hRes = IStream_Write(pStream, &(IStorageCompObj.clsid) , sizeof(IStorageCompObj.clsid ), NULL);
-            hRes = IStream_Write(pStream, &(IStorageCompObj.dwCLSIDNameLength), sizeof(IStorageCompObj.dwCLSIDNameLength), NULL);
-            if(IStorageCompObj.dwCLSIDNameLength > 0)
-            {
-                hRes = IStream_Write(pStream, IStorageCompObj.strCLSIDName, IStorageCompObj.dwCLSIDNameLength, NULL);
-            }
-            hRes = IStream_Write(pStream, &(IStorageCompObj.dwOleTypeNameLength) , sizeof(IStorageCompObj.dwOleTypeNameLength), NULL);
-            if(IStorageCompObj.dwOleTypeNameLength > 0)
-            {
-                hRes = IStream_Write(pStream, IStorageCompObj.strOleTypeName , IStorageCompObj.dwOleTypeNameLength, NULL);
-            }
-            hRes = IStream_Write(pStream, &(IStorageCompObj.dwProgIDNameLength) , sizeof(IStorageCompObj.dwProgIDNameLength), NULL);
-            if(IStorageCompObj.dwProgIDNameLength > 0)
-            {
-                hRes = IStream_Write(pStream, IStorageCompObj.strProgIDName , IStorageCompObj.dwProgIDNameLength, NULL);
-            }
-            hRes = IStream_Write(pStream, IStorageCompObj.byUnknown2 , sizeof(IStorageCompObj.byUnknown2), NULL);
+            hRes = IStream_Write(pStream, IStorageCompObj.strCLSIDName, IStorageCompObj.dwCLSIDNameLength, NULL);
         }
+        hRes = IStream_Write(pStream, &(IStorageCompObj.dwOleTypeNameLength) , sizeof(IStorageCompObj.dwOleTypeNameLength), NULL);
+        if(IStorageCompObj.dwOleTypeNameLength > 0)
+        {
+            hRes = IStream_Write(pStream, IStorageCompObj.strOleTypeName , IStorageCompObj.dwOleTypeNameLength, NULL);
+        }
+        hRes = IStream_Write(pStream, &(IStorageCompObj.dwProgIDNameLength) , sizeof(IStorageCompObj.dwProgIDNameLength), NULL);
+        if(IStorageCompObj.dwProgIDNameLength > 0)
+        {
+            hRes = IStream_Write(pStream, IStorageCompObj.strProgIDName , IStorageCompObj.dwProgIDNameLength, NULL);
+        }
+        hRes = IStream_Write(pStream, IStorageCompObj.byUnknown2 , sizeof(IStorageCompObj.byUnknown2), NULL);
         IStream_Release(pStream);
     }
     return hRes;

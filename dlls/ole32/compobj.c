@@ -457,6 +457,24 @@ HRESULT WINAPI CLSIDFromString16(
 
   if (!s)
 	  s = "{00000000-0000-0000-0000-000000000000}";
+  else {  /* validate the CLSID string */
+
+      if (strlen(s) != 38)
+          return CO_E_CLASSSTRING;
+
+      if ((s[0]!='{') || (s[9]!='-') || (s[14]!='-') || (s[19]!='-') || (s[24]!='-') || (s[37]!='}'))
+          return CO_E_CLASSSTRING;
+
+      for (i=1; i<37; i++)
+      {
+          if ((i == 9)||(i == 14)||(i == 19)||(i == 24)) continue;
+          if (!(((s[i] >= '0') && (s[i] <= '9'))  ||
+                ((s[i] >= 'a') && (s[i] <= 'f'))  ||
+                ((s[i] >= 'A') && (s[i] <= 'F')))
+             )
+              return CO_E_CLASSSTRING;
+      }
+  }
 
   TRACE("%s -> %p\n", s, id);
 
@@ -472,9 +490,6 @@ HRESULT WINAPI CLSIDFromString16(
   }
 
   /* in form {XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX} */
-
-  if (strlen(s) != 38)
-    return OLE_ERROR_OBJECT;
 
   p = (BYTE *) id;
 
@@ -933,13 +948,13 @@ HRESULT WINAPI CLSIDFromProgID16(
 	sprintf(buf,"%s\\CLSID",progid);
 	if ((err=RegOpenKeyA(HKEY_CLASSES_ROOT,buf,&xhkey))) {
 		HeapFree(GetProcessHeap(),0,buf);
-		return OLE_ERROR_GENERIC;
+                return CO_E_CLASSSTRING;
 	}
 	HeapFree(GetProcessHeap(),0,buf);
 	buf2len = sizeof(buf2);
 	if ((err=RegQueryValueA(xhkey,NULL,buf2,&buf2len))) {
 		RegCloseKey(xhkey);
-		return OLE_ERROR_GENERIC;
+                return CO_E_CLASSSTRING;
 	}
 	RegCloseKey(xhkey);
 	return CLSIDFromString16(buf2,riid);
