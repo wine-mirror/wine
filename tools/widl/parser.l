@@ -213,6 +213,7 @@ static struct keyword {
 	{"double",			tDOUBLE},
 	{"dual",			tDUAL},
 /* ... */
+	{"endpoint",			tENDPOINT},
 	{"entry",			tENTRY},
 	{"enum",			tENUM},
 	{"error_status_t",		tERRORSTATUST},
@@ -282,6 +283,7 @@ static struct keyword {
 	{"switch_is",			tSWITCHIS},
 	{"switch_type",			tSWITCHTYPE},
 /* ... */
+	{"transmit_as",			tTRANSMITAS},
 	{"typedef",			tTYPEDEF},
 	{"union",			tUNION},
 /* ... */

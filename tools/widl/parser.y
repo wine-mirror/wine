@@ -132,6 +132,7 @@ static type_t std_uhyper = { "MIDL_uhyper" };
 %token tDEFAULT
 %token tDISPINTERFACE
 %token tDLLNAME tDOUBLE tDUAL
+%token tENDPOINT
 %token tENTRY tENUM tERRORSTATUST
 %token tEXTERN
 %token tFLOAT
@@ -164,6 +165,7 @@ static type_t std_uhyper = { "MIDL_uhyper" };
 %token tSTDCALL
 %token tSTRING tSTRUCT
 %token tSWITCH tSWITCHIS tSWITCHTYPE
+%token tTRANSMITAS
 %token tTYPEDEF
 %token tUNION
 %token tUNIQUE
@@ -327,6 +329,7 @@ attribute:
 	| tDEFAULT				{ $$ = make_attr(ATTR_DEFAULT); }
 	| tDLLNAME '(' aSTRING ')'		{ $$ = make_attrp(ATTR_DLLNAME, $3); }
 	| tDUAL					{ $$ = make_attr(ATTR_DUAL); }
+	| tENDPOINT '(' aSTRING ')'		{ $$ = make_attrp(ATTR_ENDPOINT, $3); }
 	| tENTRY '(' aSTRING ')'		{ $$ = make_attrp(ATTR_ENTRY_STRING, $3); }
 	| tENTRY '(' expr_const ')'		{ $$ = make_attrp(ATTR_ENTRY_ORDINAL, $3); }
 	| tHANDLE				{ $$ = make_attr(ATTR_HANDLE); }
@@ -351,6 +354,7 @@ attribute:
 	| tSTRING				{ $$ = make_attr(ATTR_STRING); }
 	| tSWITCHIS '(' expr ')'		{ $$ = make_attrp(ATTR_SWITCHIS, $3); }
 	| tSWITCHTYPE '(' type ')'		{ $$ = make_attrp(ATTR_SWITCHTYPE, type_ref($3)); }
+	| tTRANSMITAS '(' type ')'		{ $$ = make_attrp(ATTR_TRANSMITAS, type_ref($3)); }
 	| tUUID '(' aUUID ')'			{ $$ = make_attrp(ATTR_UUID, $3); }
 	| tV1ENUM				{ $$ = make_attr(ATTR_V1ENUM); }
 	| tVERSION '(' version ')'		{ $$ = make_attrv(ATTR_VERSION, $3); }
