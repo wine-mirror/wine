@@ -334,6 +334,26 @@ static const char main_key_FI[MAIN_LEN][4] =
  "<>|"
 };
 
+/*** Bulgarian bds keyboard layout */
+static const char main_key_BG_bds[MAIN_LEN][4] =
+{
+ "`~()","1!","2@2?","3#3+","4$4\"","5%","6^6=","7&7:","8*8/","9(","0)","-_-I","=+.V",
+ "qQ,û","wWóÓ","eEåÅ","rRèÈ","tTøØ","yYùÙ","uUêÊ","iIñÑ","oOäÄ","pPçÇ","[{öÖ","]};",
+ "aAüÜ","sSÿß","dDàÀ","fFîÎ","gGæÆ","hHãÃ","jJòÒ","kKíÍ","lLâÂ",";:ìÌ","'\"÷×","\\|'Û",
+ "zZşŞ","xXéÉ","cCúÚ","vVıİ","bBôÔ","nNõÕ","mMïÏ",",<ğĞ",".>ëË","/?áÁ",
+ "<>" /* the phantom key */
+};
+
+/*** Bulgarian phonetic keyboard layout */
+static const char main_key_BG_phonetic[MAIN_LEN][4] =
+{
+ "`~÷×","1!","2@","3#","4$","5%","6^","7&","8*","9(","0)","-_","=+",
+ "qQÿß","wWâÂ","eEåÅ","rRğĞ","tTòÒ","yYúÚ","uUóÓ","iIèÈ","oOîÎ","pPïÏ","[{øØ","]}ùÙ",
+ "aAàÀ","sSñÑ","dDäÄ","fFôÔ","gGãÃ","hHõÕ","jJéÉ","kKêÊ","lLëË",";:","'\"","\\|şŞ",
+ "zZçÇ","xXüÜ","cCöÖ","vVæÆ","bBáÁ","nNíÍ","mMìÌ",",<",".>","/?",
+ "<>" /* the phantom key */
+};
+
 /*** Russian keyboard layout (contributed by Pavel Roskin) */
 static const char main_key_RU[MAIN_LEN][4] =
 {
@@ -486,11 +506,11 @@ static const char main_key_US_intl[MAIN_LEN][4] =
   - brokenbar replaced with bar					*/
 static const char main_key_SK[MAIN_LEN][4] =
 {
- ";°`'","+1","µ2","¹3","è4","»5","¾6","ı7","á8","í9","é0)","=%","",
- "qQ\\","wW|","eE","rR","tT","yY","uU","iI","oO","pP","ú/÷","ä(×",
- "aA","sSğ","dDĞ","fF[","gG]","hH","jJ","kK³","lL£","ô\"$","§!ß","ò)¤",
- "zZ>","xX#","cC&","vV@","bB{","nN}","mM",",?<",".:>","-_*",
- "<>\\|"
+ ";0","+1","µ2","¹3","è4","»5","¾6","ı7","á8","í9","é0","=%","'v",
+ "qQ","wW","eE","rR","tT","yY","uU","iI","oO","pP","ú/","ä(",
+ "aA","sS","dD","fF","gG","hH","jJ","kK","lL","ô\"","§!","ò)",
+ "zZ","xX","cC","vV","bB","nN","mM",",?",".:","-_",
+ "<>"
 };
 
 /*** Slovak and Czech (programmer's) keyboard layout (see cssk_dual(cs_sk_ucw)) */
@@ -600,6 +620,8 @@ static const struct {
  {"Brazilian ABNT-2 keyboard layout", 28591, &main_key_PT_br, &main_key_scan_qwerty, &main_key_vkey_qwerty},
  {"United States International keyboard layout", 28591, &main_key_US_intl, &main_key_scan_qwerty, &main_key_vkey_qwerty},
  {"Finnish keyboard layout", 28591, &main_key_FI, &main_key_scan_qwerty, &main_key_vkey_qwerty},
+ {"Bulgarian bds keyboard layout", 1251, &main_key_BG_bds, &main_key_scan_qwerty, &main_key_vkey_qwerty},
+ {"Bulgarian phonetic keyboard layout", 1251, &main_key_BG_phonetic, &main_key_scan_qwerty, &main_key_vkey_qwerty},
  {"Russian keyboard layout", 20866, &main_key_RU, &main_key_scan_qwerty, &main_key_vkey_qwerty},
  {"Russian keyboard layout (phantom key version)", 20866, &main_key_RU_phantom, &main_key_scan_qwerty, &main_key_vkey_qwerty},
  {"Russian keyboard layout KOI8-R", 20866, &main_key_RU_koi8r, &main_key_scan_qwerty, &main_key_vkey_qwerty},
