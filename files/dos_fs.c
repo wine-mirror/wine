@@ -1937,7 +1937,6 @@ HANDLE WINAPI FindFirstFileExW(
           UINT codepage;
 
           data->dwReserved0 = data->dwReserved1 = 0x0;
-          if (!lpFileName) return 0;
           if (lpFileName[0] == '\\' && lpFileName[1] == '\\')
           {
               ERR("UNC path name\n");
@@ -1960,6 +1959,16 @@ HANDLE WINAPI FindFirstFileExW(
           {
             DOS_FULL_NAME full_name;
 
+            if (lpFileName[0] && lpFileName[1] == ':')
+            {
+                /* don't allow root directories */
+                if (!lpFileName[2] ||
+                    ((lpFileName[2] == '/' || lpFileName[2] == '\\') && !lpFileName[3]))
+                {
+                    SetLastError(ERROR_FILE_NOT_FOUND);
+                    return INVALID_HANDLE_VALUE;
+                }
+            }
             if (!DOSFS_GetFullName( lpFileName, FALSE, &full_name )) break;
             if (!(handle = GlobalAlloc(GMEM_MOVEABLE, sizeof(FIND_FIRST_INFO)))) break;
             info = (FIND_FIRST_INFO *)GlobalLock( handle );

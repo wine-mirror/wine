@@ -746,6 +746,26 @@ static void test_LockFile(void)
     DeleteFileA( filename );
 }
 
+void test_FindFirstFileA()
+{
+    HANDLE handle;
+    WIN32_FIND_DATAA search_results;
+    int err;
+
+    handle = FindFirstFileA("C:",&search_results);
+    err = GetLastError();
+    ok ( handle == INVALID_HANDLE_VALUE , "FindFirstFile on Root directory should Fail");
+    if (handle == INVALID_HANDLE_VALUE)
+      ok ( err == ERROR_FILE_NOT_FOUND, "Bad Error number\n");
+    handle = FindFirstFileA("C:\\",&search_results);
+    err = GetLastError();
+    ok ( handle == INVALID_HANDLE_VALUE , "FindFirstFile on Root directory should Fail");
+    if (handle == INVALID_HANDLE_VALUE)
+      ok ( err == ERROR_FILE_NOT_FOUND, "Bad Error number\n");
+    handle = FindFirstFileA("C:\\*",&search_results);
+    ok ( handle != INVALID_HANDLE_VALUE, "FindFirstFile on C:\\* should succeed" );
+    ok ( FindClose(handle) == TRUE, "Failed to close handle");
+}
 
 START_TEST(file)
 {
@@ -763,6 +783,7 @@ START_TEST(file)
     test_CreateFileW();
     test_DeleteFileA();
     test_DeleteFileW();
+    test_FindFirstFileA();
     test_LockFile();
     test_offset_in_overlapped_structure();
 }
