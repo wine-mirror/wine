@@ -28,6 +28,15 @@
 # include <unistd.h>
 #endif
 #include <sys/types.h>
+#ifdef HAVE_SYS_SOCKET_H
+# include <sys/socket.h>
+#endif
+#ifdef HAVE_NETINET_IN_H
+# include <netinet/in.h>
+#endif
+#ifdef HAVE_ARPA_INET_H
+# include <arpa/inet.h>
+#endif
 #include <string.h>
 #include <stdarg.h>
 #include <time.h>
@@ -41,6 +50,7 @@
 #include "file.h"
 #include "winioctl.h"
 #include "winnt.h"
+#include "iphlpapi.h"
 #include "kernel_private.h"
 #include "wine/server.h"
 #include "wine/debug.h"
@@ -82,6 +92,12 @@ static BOOL DeviceIo_VWin32(DWORD dwIoControlCode,
 			      LPDWORD lpcbBytesReturned,
 			      LPOVERLAPPED lpOverlapped);
 
+static BOOL DeviceIo_DHCP(DWORD dwIoControlCode,
+			      LPVOID lpvInBuffer, DWORD cbInBuffer,
+			      LPVOID lpvOutBuffer, DWORD cbOutBuffer,
+			      LPDWORD lpcbBytesReturned,
+			      LPOVERLAPPED lpOverlapped);
+
 static BOOL DeviceIo_PCCARD (DWORD dwIoControlCode,
 			      LPVOID lpvInBuffer, DWORD cbInBuffer,
 			      LPVOID lpvOutBuffer, DWORD cbOutBuffer,
@@ -93,6 +109,19 @@ static BOOL DeviceIo_HASP (DWORD dwIoControlCode,
 			      LPVOID lpvOutBuffer, DWORD cbOutBuffer,
 			      LPDWORD lpcbBytesReturned,
 			      LPOVERLAPPED lpOverlapped);
+
+static BOOL DeviceIo_NetBIOS(DWORD dwIoControlCode,
+			      LPVOID lpvInBuffer, DWORD cbInBuffer,
+			      LPVOID lpvOutBuffer, DWORD cbOutBuffer,
+			      LPDWORD lpcbBytesReturned,
+			      LPOVERLAPPED lpOverlapped);
+
+static BOOL DeviceIo_VNB(DWORD dwIoControlCode,
+			      LPVOID lpvInBuffer, DWORD cbInBuffer,
+			      LPVOID lpvOutBuffer, DWORD cbOutBuffer,
+			      LPDWORD lpcbBytesReturned,
+			      LPOVERLAPPED lpOverlapped);
+
 /*
  * VxD names are taken from the Win95 DDK
  */
@@ -127,7 +156,7 @@ static const struct VxDInfo VxDList[] =
     { "VMCPD",    0x0011, NULL },
     { "EBIOS",    0x0012, NULL },
     { "BIOSXLAT", 0x0013, NULL },
-    { "VNETBIOS", 0x0014, NULL },
+    { "VNETBIOS", 0x0014, DeviceIo_NetBIOS },
     { "DOSMGR",   0x0015, NULL },
     { "WINLOAD",  0x0016, NULL },
     { "SHELL",    0x0017, NULL },
@@ -155,7 +184,7 @@ static const struct VxDInfo VxDList[] =
     { "WIN32S",   0x002D, NULL },
     { "DEBUGCMD", 0x002E, NULL },
 
-    { "VNB",      0x0031, NULL },
+    { "VNB",      0x0031, DeviceIo_VNB },
     { "SERVER",   0x0032, NULL },
     { "CONFIGMG", 0x0033, NULL },
     { "DWCFGMG",  0x0034, NULL },
@@ -223,7 +252,7 @@ static const struct VxDInfo VxDList[] =
     { "MSODISUP", 0x0497, NULL },
     { "Splitter", 0x0498, NULL },
     { "PPP",      0x0499, NULL },
-    { "VDHCP",    0x049A, NULL },
+    { "VDHCP",    0x049A, DeviceIo_DHCP },
     { "VNBT",     0x049B, NULL },
     { "LOGGER",   0x049D, NULL },
     { "EFILTER",  0x049E, NULL },
@@ -736,6 +765,7 @@ static BOOL DeviceIo_MONODEBG(DWORD dwIoControlCode,
 	}
 	return TRUE;
 }
+
 /* pccard */
 static BOOL DeviceIo_PCCARD (DWORD dwIoControlCode,
 			      LPVOID lpvInBuffer, DWORD cbInBuffer,
@@ -773,4 +803,227 @@ static BOOL DeviceIo_HASP(DWORD dwIoControlCode, LPVOID lpvInBuffer, DWORD cbInB
 			lpOverlapped);
 
     return retv;
+}
+
+typedef UCHAR (WINAPI *NetbiosFunc)(LPVOID);
+
+static BOOL DeviceIo_NetBIOS(DWORD dwIoControlCode,
+			      LPVOID lpvInBuffer, DWORD cbInBuffer,
+			      LPVOID lpvOutBuffer, DWORD cbOutBuffer,
+			      LPDWORD lpcbBytesReturned,
+			      LPOVERLAPPED lpOverlapped)
+{
+    static HMODULE netapi;
+    static NetbiosFunc pNetbios;
+
+    if (dwIoControlCode != 256)
+    {
+        FIXME("(%ld,%p,%ld,%p,%ld,%p,%p): stub\n",
+                dwIoControlCode,
+                lpvInBuffer,cbInBuffer,
+                lpvOutBuffer,cbOutBuffer,
+                lpcbBytesReturned,
+                lpOverlapped);
+    }
+    else
+    {
+        if (!pNetbios)
+        {
+            if (!netapi) netapi = LoadLibraryA("netapi32.dll");
+            if (netapi) pNetbios = (NetbiosFunc)GetProcAddress(netapi, "Netbios");
+        }
+        if (pNetbios)
+        {
+            pNetbios(lpvInBuffer);
+            return TRUE;
+        }
+    }
+    return FALSE;
+}
+
+static BOOL DeviceIo_DHCP(DWORD dwIoControlCode, LPVOID lpvInBuffer,
+                          DWORD cbInBuffer,
+                          LPVOID lpvOutBuffer, DWORD cbOutBuffer,
+                          LPDWORD lpcbBytesReturned,
+                          LPOVERLAPPED lpOverlapped)
+{
+    DWORD error;
+
+    switch (dwIoControlCode) {
+    case 1:
+    {
+        /* since IpReleaseAddress/IpRenewAddress are not implemented, say there
+         * are no DHCP adapters
+         */
+        error = ERROR_FILE_NOT_FOUND;
+        break;
+    }
+
+    /* FIXME: don't know what this means */
+    case 5:
+        if (lpcbBytesReturned)
+            *lpcbBytesReturned = sizeof(DWORD);
+        if (lpvOutBuffer && cbOutBuffer >= 4)
+        {
+            *(LPDWORD)lpvOutBuffer = 0;
+            error = NO_ERROR;
+        }
+        else
+            error = ERROR_BUFFER_OVERFLOW;
+        break;
+
+    default:
+        FIXME("(%ld,%p,%ld,%p,%ld,%p,%p): stub\n",
+                dwIoControlCode,
+                lpvInBuffer,cbInBuffer,
+                lpvOutBuffer,cbOutBuffer,
+                lpcbBytesReturned,
+                lpOverlapped);
+        error = ERROR_NOT_SUPPORTED;
+        break;
+    }
+    if (error)
+        SetLastError(error);
+    return error == NO_ERROR;
+}
+
+typedef DWORD (WINAPI *GetNetworkParamsFunc)(PFIXED_INFO, PDWORD);
+typedef DWORD (WINAPI *GetAdaptersInfoFunc)(PIP_ADAPTER_INFO, PDWORD);
+
+typedef struct _nbtInfo
+{
+    DWORD ip;
+    DWORD winsPrimary;
+    DWORD winsSecondary;
+    DWORD dnsPrimary;
+    DWORD dnsSecondary;
+    DWORD unk0;
+} nbtInfo;
+
+#define MAX_NBT_ENTRIES 7
+
+typedef struct _nbtTable
+{
+    DWORD   numEntries;
+    nbtInfo table[MAX_NBT_ENTRIES];
+    UCHAR   pad[6];
+    WORD    nodeType;
+    WORD    scopeLen;
+    char    scope[254];
+} nbtTable;
+
+static BOOL DeviceIo_VNB(DWORD dwIoControlCode,
+                         LPVOID lpvInBuffer, DWORD cbInBuffer,
+                         LPVOID lpvOutBuffer, DWORD cbOutBuffer,
+                         LPDWORD lpcbBytesReturned,
+                         LPOVERLAPPED lpOverlapped)
+{
+    static HMODULE iphlpapi;
+    static GetNetworkParamsFunc pGetNetworkParams;
+    static GetAdaptersInfoFunc pGetAdaptersInfo;
+    DWORD error;
+
+    switch (dwIoControlCode)
+    {
+        case 116:
+            if (lpcbBytesReturned)
+                *lpcbBytesReturned = sizeof(nbtTable);
+            if (!lpvOutBuffer || cbOutBuffer < sizeof(nbtTable))
+                error = ERROR_BUFFER_OVERFLOW;
+            else
+            {
+                nbtTable *info = (nbtTable *)lpvOutBuffer;
+
+                memset(info, 0, sizeof(nbtTable));
+                if (!iphlpapi)
+                {
+                    iphlpapi = LoadLibraryA("iphlpapi.dll");
+                    pGetNetworkParams = (GetNetworkParamsFunc)GetProcAddress(iphlpapi,"GetNetworkParams");
+                    pGetAdaptersInfo = (GetAdaptersInfoFunc)GetProcAddress(iphlpapi, "GetAdaptersInfo");
+                }
+                if (iphlpapi)
+                {
+                    DWORD size = 0;
+
+                    error = pGetNetworkParams(NULL, &size);
+                    if (ERROR_BUFFER_OVERFLOW == error)
+                    {
+                        PFIXED_INFO fixedInfo = (PFIXED_INFO)HeapAlloc(
+                         GetProcessHeap(), 0, size);
+
+                        error = pGetNetworkParams(fixedInfo, &size);
+                        if (NO_ERROR == error)
+                        {
+                            info->nodeType = (WORD)fixedInfo->NodeType;
+                            info->scopeLen = max(strlen(fixedInfo->ScopeId) + 1,
+                             sizeof(info->scope) - 1);
+                            memcpy(info->scope, fixedInfo->ScopeId,
+                             info->scopeLen);
+                            info->scope[info->scopeLen] = '\0';
+                            /* FIXME: gotta L2-encode the scope ID */
+                            /* could set DNS servers here too, but since
+                             * ipconfig.exe and winipcfg.exe read these from the
+                             * registry, there's no point */
+                        }
+                        if (fixedInfo)
+                            HeapFree(GetProcessHeap(), 0, fixedInfo);
+                    }
+                    size = 0;
+                    error = pGetAdaptersInfo(NULL, &size);
+                    if (ERROR_BUFFER_OVERFLOW == error)
+                    {
+                        PIP_ADAPTER_INFO adapterInfo = (PIP_ADAPTER_INFO)
+                         HeapAlloc(GetProcessHeap(), 0, size);
+
+                        error = pGetAdaptersInfo(adapterInfo, &size);
+                        if (NO_ERROR == error)
+                        {
+                            PIP_ADAPTER_INFO ptr = adapterInfo;
+
+                            for (ptr = adapterInfo; ptr && info->numEntries <
+                             MAX_NBT_ENTRIES; ptr = ptr->Next)
+                            {
+                                unsigned long addr;
+
+                                addr = inet_addr(
+                                 ptr->IpAddressList.IpAddress.String);
+                                if (addr != 0 && addr != INADDR_NONE)
+                                    info->table[info->numEntries].ip =
+                                     ntohl(addr);
+                                addr = inet_addr(
+                                 ptr->PrimaryWinsServer.IpAddress.String);
+                                if (addr != 0 && addr != INADDR_NONE)
+                                    info->table[info->numEntries].winsPrimary
+                                     = ntohl(addr);
+                                addr = inet_addr(
+                                 ptr->SecondaryWinsServer.IpAddress.String);
+                                if (addr != 0 && addr != INADDR_NONE)
+                                    info->table[info->numEntries].winsSecondary
+                                     = ntohl(addr);
+                                info->numEntries++;
+                            }
+                        }
+                        if (adapterInfo)
+                            HeapFree(GetProcessHeap(), 0, adapterInfo);
+                    }
+                }
+                else
+                    error = GetLastError();
+            }
+            break;
+
+        case 119:
+            /* nbtstat.exe uses this, but the return seems to be a bunch of
+             * pointers, so it's not so easy to reverse engineer.  Fall through
+             * to unimplemented...
+             */
+        default:
+            FIXME( "Unimplemented control %ld for VxD device VNB\n",
+                               dwIoControlCode );
+            error = ERROR_NOT_SUPPORTED;
+            break;
+    }
+    if (error)
+        SetLastError(error);
+    return error == NO_ERROR;
 }
