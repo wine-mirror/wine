@@ -318,11 +318,6 @@ BOOL WINAPI HeapFree( HGLOBAL handle, DWORD flags, void* ptr )
 
 char __wine_dbch_winhelp[] = "\003winhelp";
 
-static char * const debug_channels[1] =
-{
-    __wine_dbch_winhelp
-};
-
 int wine_dbg_log( int cls, const char *channel, const char *func, const char *format, ... )
 {
     return 1;
