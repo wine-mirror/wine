@@ -172,7 +172,7 @@ DWORD WINAPI SHGetValueW(
 /*************************************************************************
  *      SHSetValueA   [SHLWAPI.@]
  */
-DWORD WINAPI SHSetValueA(
+HRESULT WINAPI SHSetValueA(
 	HKEY hkey,
 	LPCSTR pszSubKey,
 	LPCSTR pszValue,
@@ -180,8 +180,37 @@ DWORD WINAPI SHSetValueA(
 	LPCVOID pvData,
 	DWORD cbData)
 {
-	FIXME("(%s %s)stub\n",pszSubKey, pszValue);
-	return 1;
+    HKEY	subkey;
+    HRESULT	hres;
+
+    hres = RegCreateKeyA(hkey,pszSubKey,&subkey);
+    if (!hres)
+	return hres;
+    hres = RegSetValueExA(subkey,pszValue,0,dwType,pvData,cbData);
+    RegCloseKey(subkey);
+    return hres;
+}
+
+/*************************************************************************
+ *      SHSetValueW   [SHLWAPI.@]
+ */
+HRESULT WINAPI SHSetValueW(
+	HKEY hkey,
+	LPCWSTR pszSubKey,
+	LPCWSTR pszValue,
+	DWORD dwType,
+	LPCVOID pvData,
+	DWORD cbData)
+{
+    HKEY	subkey;
+    HRESULT	hres;
+
+    hres = RegCreateKeyW(hkey,pszSubKey,&subkey);
+    if (!hres)
+	return hres;
+    hres = RegSetValueExW(subkey,pszValue,0,dwType,pvData,cbData);
+    RegCloseKey(subkey);
+    return hres;
 }
 
 /*************************************************************************
@@ -302,6 +331,40 @@ HRESULT WINAPI SHDeleteKeyW(
 {
 	FIXME("hkey=0x%08x, %s\n", hkey, debugstr_w(pszSubKey));
 	return 0;
+}
+
+/*************************************************************************
+ * SHDeleteValueA   [SHLWAPI.@]
+ *
+ * Function opens the key, get/set/delete the value, then close the key.
+ */
+HRESULT WINAPI SHDeleteValueA(HKEY hkey, LPCSTR pszSubKey, LPCSTR pszValue) {
+    HKEY	subkey;
+    HRESULT	hres;
+
+    hres = RegOpenKeyA(hkey,pszSubKey,&subkey);
+    if (hres)
+	return hres;
+    hres = RegDeleteValueA(subkey,pszValue);
+    RegCloseKey(subkey);
+    return hres;
+}
+
+/*************************************************************************
+ * SHDeleteValueW   [SHLWAPI.@]
+ *
+ * Function opens the key, get/set/delete the value, then close the key.
+ */
+HRESULT WINAPI SHDeleteValueW(HKEY hkey, LPCWSTR pszSubKey, LPCWSTR pszValue) {
+    HKEY	subkey;
+    HRESULT	hres;
+
+    hres = RegOpenKeyW(hkey,pszSubKey,&subkey);
+    if (hres)
+	return hres;
+    hres = RegDeleteValueW(subkey,pszValue);
+    RegCloseKey(subkey);
+    return hres;
 }
 
 /*************************************************************************

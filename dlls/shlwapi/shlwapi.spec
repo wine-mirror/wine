@@ -11,7 +11,7 @@ import ntdll.dll
 debug_channels (shell)
 
 1   stdcall @(ptr ptr) SHLWAPI_1
-2   stub @
+2   stdcall @(wstr ptr) SHLWAPI_2
 3   stub @
 4   stub @
 5   stub @
@@ -47,7 +47,7 @@ debug_channels (shell)
 35  stub @
 36  stub @
 37  stub @
-38  stub @
+38  stdcall @(long) SHLWAPI_38
 39  stub @
 40  stub @
 41  stub @
@@ -150,7 +150,7 @@ debug_channels (shell)
 138 stub @
 139 stub @
 140 stub @
-141 stub @
+141 stdcall @(ptr long ptr) SHLWAPI_141
 142 stub @
 143 stub @
 144 stub @
@@ -385,7 +385,7 @@ debug_channels (shell)
 373 stub @
 374 stub @
 375 stub @
-376 stub @
+376 stdcall @(long) SHLWAPI_376
 377 stdcall @(long long long) SHLWAPI_377
 378 stdcall @(long long long) SHLWAPI_378
 379 stub @
@@ -567,8 +567,8 @@ debug_channels (shell)
 @ stdcall SHDeleteKeyW(long wstr) SHDeleteKeyW
 @ stub    SHDeleteOrphanKeyA
 @ stub    SHDeleteOrphanKeyW
-@ stub    SHDeleteValueA
-@ stub    SHDeleteValueW
+@ stdcall SHDeleteValueA(long  str  str) SHDeleteValueA
+@ stdcall SHDeleteValueW(long wstr wstr) SHDeleteValueW
 @ stub    SHEnumKeyExA
 @ stub    SHEnumKeyExW
 @ stub    SHEnumValueA
@@ -610,8 +610,8 @@ debug_channels (shell)
 @ stub    SHRegSetUSValueW
 @ stub    SHRegWriteUSValueA
 @ stub    SHRegWriteUSValueW
-@ stdcall SHSetValueA (long str str long ptr long) SHSetValueA
-@ stub    SHSetValueW
+@ stdcall SHSetValueA (long  str  str long ptr long) SHSetValueA
+@ stdcall SHSetValueW (long wstr wstr long ptr long) SHSetValueW
 @ stdcall StrCSpnA (str str) StrCSpnA
 @ stub    StrCSpnIA
 @ stub    StrCSpnIW
@@ -698,3 +698,5 @@ debug_channels (shell)
 #@ stdcall StrRetToStrW (ptr ptr ptr) StrRetToStrW
 @ stdcall SHRegGetPathA(long str str ptr long)SHRegGetPathA
 @ stdcall SHRegGetPathW(long wstr wstr ptr long)SHRegGetPathW
+@ stub    SHCopyKeyW
+@ stub    SHAutoComplete

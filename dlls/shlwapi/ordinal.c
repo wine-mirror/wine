@@ -36,6 +36,15 @@ DWORD WINAPI SHLWAPI_1 (
 }
 
 /*************************************************************************
+ *      SHLWAPI_2	[SHLWAPI.2]
+ */
+DWORD WINAPI SHLWAPI_2 (LPCWSTR x,LPVOID y)
+{
+	FIXME("(%s,%p)\n",debugstr_w(x),y);
+	return 0;
+}
+
+/*************************************************************************
  *      SHLWAPI_16	[SHLWAPI.16]
  */
 HRESULT WINAPI SHLWAPI_16 (
@@ -92,6 +101,15 @@ DWORD WINAPI SHLWAPI_24 (
              guid->Data4[4], guid->Data4[5], guid->Data4[6], guid->Data4[7] );
     return MultiByteToWideChar( CP_ACP, 0, xguid, -1, str, cmax );
 }
+
+/*************************************************************************
+ *      SHLWAPI_38	[SHLWAPI.38]
+ *
+ */
+DWORD WINAPI SHLWAPI_38 ( DWORD x) {
+    FIXME("(%lx),stub!\n",x);
+    return 0;
+}
 /*************************************************************************
  *	SHLWAPI_137
  */
@@ -99,6 +117,14 @@ DWORD WINAPI SHLWAPI_137(
 	UINT  what)
 {
   FIXME("(%#x)stub\n", what);
+  return 0;
+}  
+/*************************************************************************
+ *	SHLWAPI_141
+ */
+DWORD WINAPI SHLWAPI_141( LPVOID ptr, DWORD x , LPVOID ptr2)
+{
+  FIXME("(%p,%ld,%p), stub\n", ptr,x,ptr2);
   return 0;
 }  
 /*************************************************************************
@@ -372,6 +398,14 @@ DWORD WINAPI SHLWAPI_346 (
 	return lstrlenW(dest)+1;
 }
 
+/*************************************************************************
+ *      SHLWAPI_376	[SHLWAPI.377]
+ */
+DWORD WINAPI SHLWAPI_376 (LONG x)
+{
+	FIXME("(0x%08lx)stub\n", x );
+	return 0xabba1245;
+}
 
 /*************************************************************************
  *      SHLWAPI_377	[SHLWAPI.377]
