@@ -35,86 +35,15 @@ void WINAPI ScrollWindow16(HWND16 hwnd, INT16 dx, INT16 dy, const RECT16 *rect,
 /*************************************************************************
  *             ScrollWindow32   (USER32.450)
  *
- * FIXME: verify clipping region calculations
  */
 BOOL32 WINAPI ScrollWindow32( HWND32 hwnd, INT32 dx, INT32 dy,
                               const RECT32 *rect, const RECT32 *clipRect )
 {
-    HDC32  	hdc;
-    HRGN32 	hrgnUpdate,hrgnClip;
-    RECT32 	rc, cliprc;
-    HWND32 	hCaretWnd = CARET_GetHwnd();
-    WND*	wndScroll = WIN_FindWndPtr( hwnd );
-
-    TRACE(scroll,"hwnd=%04x, dx=%d, dy=%d, lpRect =%p clipRect=%i,%i,%i,%i\n", 
-                   hwnd, dx, dy, rect,
-                   clipRect ? clipRect->left : 0,
-                   clipRect ? clipRect->top : 0,
-                   clipRect ? clipRect->right : 0, 
-                   clipRect ? clipRect->bottom : 0 );
-
-    if ( !wndScroll || !WIN_IsWindowDrawable( wndScroll, TRUE ) ) return TRUE;
-
-    if ( !rect ) /* do not clip children */
-       {
-	  GetClientRect32(hwnd, &rc);
-	  hrgnClip = CreateRectRgnIndirect32( &rc );
-
-          if ((hCaretWnd == hwnd) || IsChild32(hwnd,hCaretWnd))
-              HideCaret32(hCaretWnd);
-          else hCaretWnd = 0;
- 
-	  hdc = GetDCEx32(hwnd, hrgnClip, DCX_CACHE | DCX_CLIPSIBLINGS);
-          DeleteObject32( hrgnClip );
-       }
-    else	/* clip children */
-       {
-	  CopyRect32(&rc, rect);
-
-          if (hCaretWnd == hwnd) HideCaret32(hCaretWnd);
-          else hCaretWnd = 0;
-
-	  hdc = GetDCEx32( hwnd, 0, DCX_CACHE | DCX_USESTYLE );
-       }
-
-    if (clipRect == NULL)
-	GetClientRect32(hwnd, &cliprc);
-    else
-	CopyRect32(&cliprc, clipRect);
-
-    hrgnUpdate = CreateRectRgn32( 0, 0, 0, 0 );
-    ScrollDC32( hdc, dx, dy, &rc, &cliprc, hrgnUpdate, NULL );
-    ReleaseDC32(hwnd, hdc);
-
-    if( !rect )		/* move child windows and update region */
-    { 
-      WND*	wndPtr;
-
-      if( wndScroll->hrgnUpdate > 1 )
-	OffsetRgn32( wndScroll->hrgnUpdate, dx, dy );
-
-      for (wndPtr = wndScroll->child; wndPtr; wndPtr = wndPtr->next)
-        SetWindowPos32(wndPtr->hwndSelf, 0, wndPtr->rectWindow.left + dx,
-                       wndPtr->rectWindow.top  + dy, 0,0, SWP_NOZORDER |
-                       SWP_NOSIZE | SWP_NOACTIVATE | SWP_NOREDRAW |
-                       SWP_DEFERERASE );
-    }
-
-    PAINT_RedrawWindow( hwnd, NULL, hrgnUpdate, RDW_ALLCHILDREN |
-                 RDW_INVALIDATE | RDW_ERASE | RDW_ERASENOW, RDW_C_USEHRGN );
-
-    DeleteObject32( hrgnUpdate );
-    if( hCaretWnd ) 
-    {
-	POINT32	pt;
-	GetCaretPos32(&pt);
-	pt.x += dx; pt.y += dy;
-	SetCaretPos32(pt.x, pt.y);
-	ShowCaret32(hCaretWnd);
-    }
-    return TRUE;
+    return
+        (ERROR != ScrollWindowEx32( hwnd, dx, dy, rect, clipRect, 0, NULL,
+                                    (rect ? 0 : SW_SCROLLCHILDREN) |
+                                    SW_INVALIDATE ));
 }
-
 
 /*************************************************************************
  *             ScrollDC16   (USER.221)
@@ -145,9 +74,8 @@ BOOL32 WINAPI ScrollDC32( HDC32 hdc, INT32 dx, INT32 dy, const RECT32 *rc,
                           const RECT32 *prLClip, HRGN32 hrgnUpdate,
                           LPRECT32 rcUpdate )
 {
-    RECT32 rClip;
+    RECT32 rect, rClip, rSrc;
     POINT32 src, dest;
-    INT32  ldx, ldy;
     DC *dc = (DC *)GDI_GetObjPtr(hdc, DC_MAGIC);
 
     TRACE(scroll,"%04x %d,%d hrgnUpdate=%04x rcUpdate = %p cliprc = (%d,%d-%d,%d), rc=(%d,%d-%d,%d)\n",
@@ -167,81 +95,69 @@ BOOL32 WINAPI ScrollDC32( HDC32 hdc, INT32 dx, INT32 dy, const RECT32 *rc,
     /* compute device clipping region */
 
     if ( rc )
-	rClip = *rc;
+	rect = *rc;
     else /* maybe we should just return FALSE? */
-	GetClipBox32( hdc, &rClip );
+	GetClipBox32( hdc, &rect );
 
     if (prLClip)
-	IntersectRect32(&rClip,&rClip,prLClip);
-
-    if( rClip.left >= rClip.right || rClip.top >= rClip.bottom )
-    {
-        GDI_HEAP_UNLOCK( hdc );
-	return FALSE;
-    }
-   
-    SaveVisRgn( hdc );
-    IntersectVisRect( hdc, rClip.left, rClip.top, 
-                           rClip.right, rClip.bottom ); 
-
-
-    /* translate coordinates */
-
-    ldx = dx * dc->wndExtX / dc->vportExtX;
-    ldy = dy * dc->wndExtY / dc->vportExtY;
-
-    if (dx > 0)
-	dest.x = (src.x = rClip.left) + ldx;
+	IntersectRect32( &rClip,&rect,prLClip );
     else
-	src.x = (dest.x = rClip.left) - ldx;
+        rClip = rect;
 
-    if (dy > 0)
-	dest.y = (src.y = rClip.top) + ldy;
-    else
-	src.y = (dest.y = rClip.top) - ldy;
+    rSrc = rClip;
+    OffsetRect32( &rSrc, -dx, -dy );
+    IntersectRect32( &rSrc, &rSrc, &rect );
 
-    /* copy bits */
-
-    if( rClip.right - rClip.left > ldx &&
-	rClip.bottom - rClip.top > ldy )
+    if(dc->w.hVisRgn)
     {
-	ldx = rClip.right - rClip.left - ldx;
-	ldy = rClip.bottom - rClip.top - ldy;
+        if (!IsRectEmpty32(&rSrc))
+        {
+            dest.x = (src.x = rSrc.left) + dx;
+            dest.y = (src.y = rSrc.top) + dy;
 
-	if (!BitBlt32( hdc, dest.x, dest.y, ldx, ldy,
-		       hdc, src.x, src.y, SRCCOPY))
-	{
-	    GDI_HEAP_UNLOCK( hdc );
-	    return FALSE;
-	}
+            /* copy bits */
+
+            if (!BitBlt32( hdc, dest.x, dest.y,
+                           rSrc.right - rSrc.left, rSrc.bottom - rSrc.top,
+                           hdc, src.x, src.y, SRCCOPY))
+            {
+                GDI_HEAP_UNLOCK( hdc );
+                return FALSE;
+            }
+        }
+
+        /* compute update areas */
+
+        if (hrgnUpdate || rcUpdate)
+        {
+            HRGN32 hrgn =
+              (hrgnUpdate) ? hrgnUpdate : CreateRectRgn32( 0,0,0,0 );
+            HRGN32 hrgn2;
+
+            dx = XLPTODP ( dc, rect.left + dx) - XLPTODP ( dc, rect.left);
+            dy = YLPTODP ( dc, rect.top + dy) - YLPTODP ( dc, rect.top);
+            LPtoDP32( hdc, (LPPOINT32)&rect, 2 );
+            LPtoDP32( hdc, (LPPOINT32)&rClip, 2 );
+            hrgn2 = CreateRectRgnIndirect32( &rect );
+            OffsetRgn32( hrgn2, dc->w.DCOrgX, dc->w.DCOrgY );
+            CombineRgn32( hrgn2, hrgn2, dc->w.hVisRgn, RGN_AND );
+            OffsetRgn32( hrgn2, -dc->w.DCOrgX, -dc->w.DCOrgY );
+            SetRectRgn32( hrgn, rClip.left, rClip.top,
+                          rClip.right, rClip.bottom );
+            CombineRgn32( hrgn, hrgn, hrgn2, RGN_AND );
+            OffsetRgn32( hrgn2, dx, dy );
+            CombineRgn32( hrgn, hrgn, hrgn2, RGN_DIFF );
+
+            if( rcUpdate ) GetRgnBox32( hrgn, rcUpdate );
+
+            if (!hrgnUpdate) DeleteObject32( hrgn );
+            DeleteObject32( hrgn2 );
+        }
     }
-
-    /* restore clipping region */
-
-    RestoreVisRgn( hdc );
-
-
-    /* compute update areas */
-
-    if ( (hrgnUpdate || rcUpdate) && dc->w.hVisRgn )
+    else
     {
-	HRGN32 hrgn = (hrgnUpdate) ? hrgnUpdate : CreateRectRgn32( 0,0,0,0 );
-        HRGN32 hrgnClip;
-
-        LPtoDP32( hdc, (LPPOINT32)&rClip, 2 );
-        OffsetRect32( &rClip, dc->w.DCOrgX, dc->w.DCOrgY );
-        hrgnClip = CreateRectRgnIndirect32( &rClip );
-        
-        CombineRgn32( hrgn, dc->w.hVisRgn, hrgnClip, RGN_AND );
-        OffsetRgn32( hrgn, dx, dy );
-        CombineRgn32( hrgn, dc->w.hVisRgn, hrgn, RGN_DIFF );
-        CombineRgn32( hrgn, hrgn, hrgnClip, RGN_AND );
-        OffsetRgn32( hrgn, -dc->w.DCOrgX, -dc->w.DCOrgY );
-
-        if( rcUpdate ) GetRgnBox32( hrgnUpdate, rcUpdate );
-
-	if (!hrgnUpdate) DeleteObject32( hrgn );
-        DeleteObject32( hrgnClip );     
+       if (hrgnUpdate) SetRectRgn32(hrgnUpdate, 0, 0, 0, 0);
+       if (rcUpdate) SetRectEmpty32(rcUpdate);
     }
 
     GDI_HEAP_UNLOCK( hdc );
@@ -315,8 +231,8 @@ INT32 WINAPI ScrollWindowEx32( HWND32 hwnd, INT32 dx, INT32 dy,
 
     if( !wnd || !WIN_IsWindowDrawable( wnd, TRUE )) return ERROR;
 
-    if (rect == NULL) GetClientRect32(hwnd, &rc);
-    else rc = *rect;
+    GetClientRect32(hwnd, &rc);
+    if (rect) IntersectRect32(&rc, &rc, rect);
 
     if (clipRect) IntersectRect32(&cliprc,&rc,clipRect);
     else cliprc = rc;
@@ -327,54 +243,57 @@ INT32 WINAPI ScrollWindowEx32( HWND32 hwnd, INT32 dx, INT32 dy,
 	HDC32	hDC;
 	BOOL32  bUpdate = (rcUpdate || hrgnUpdate || flags & (SW_INVALIDATE | SW_ERASE));
 	HRGN32  hrgnClip = CreateRectRgnIndirect32(&cliprc);
+        HRGN32  hrgnTemp = CreateRectRgnIndirect32(&rc);
+        RECT32  caretrc;
 
 TRACE(scroll,"%04x, %d,%d hrgnUpdate=%04x rcUpdate = %p \
 cliprc = (%d,%d-%d,%d), rc=(%d,%d-%d,%d) %04x\n",             
 (HWND16)hwnd, dx, dy, hrgnUpdate, rcUpdate,
 clipRect?clipRect->left:0, clipRect?clipRect->top:0, clipRect?clipRect->right:0, clipRect?clipRect->bottom:0,
-rect?rect->left:0, rect?rect->top:0, rect ?rect->right:0, rect ?rect->bottom:0, (UINT16)flags );
+rc.left, rc.top, rc.right, rc.bottom, (UINT16)flags );
 
-	rc = cliprc;
-	bCaret = SCROLL_FixCaret(hwnd, &rc, flags);
+        caretrc = rc; 
+	bCaret = SCROLL_FixCaret(hwnd, &caretrc, flags);
 
 	if( hrgnUpdate ) bOwnRgn = FALSE;
         else if( bUpdate ) hrgnUpdate = CreateRectRgn32( 0, 0, 0, 0 );
 
-	hDC = GetDCEx32( hwnd, hrgnClip, DCX_CACHE | DCX_USESTYLE | 
+	hDC = GetDCEx32( hwnd, hrgnClip, DCX_CACHE | DCX_USESTYLE |
+                         DCX_KEEPCLIPRGN | DCX_INTERSECTRGN |
 		       ((flags & SW_SCROLLCHILDREN) ? DCX_NOCLIPCHILDREN : 0) );
 	if( (dc = (DC *)GDI_GetObjPtr(hDC, DC_MAGIC)) )
 	{
-	    wnd->pDriver->pScrollWindow(wnd,dc,dx,dy,&cliprc,bUpdate);
+            if (dc->w.hVisRgn) {
+                wnd->pDriver->pScrollWindow(wnd,dc,dx,dy,&rc,bUpdate);
 
-	    if( dc->w.hVisRgn && bUpdate )
-	    {
-                OffsetRgn32( hrgnClip, dc->w.DCOrgX, dc->w.DCOrgY );
-		CombineRgn32( hrgnUpdate, dc->w.hVisRgn, hrgnClip, RGN_AND );
-		OffsetRgn32( hrgnUpdate, dx, dy );
-		CombineRgn32( hrgnUpdate, dc->w.hVisRgn, hrgnUpdate, RGN_DIFF );
-		CombineRgn32( hrgnUpdate, hrgnUpdate, hrgnClip, RGN_AND );
-                OffsetRgn32( hrgnUpdate, -dc->w.DCOrgX, -dc->w.DCOrgY );
+                if( bUpdate )
+                    {
+                        OffsetRgn32( hrgnTemp, dc->w.DCOrgX, dc->w.DCOrgY );
+                        CombineRgn32( hrgnTemp, hrgnTemp, dc->w.hVisRgn,
+                                      RGN_AND );
+                        OffsetRgn32( hrgnTemp, -dc->w.DCOrgX, -dc->w.DCOrgY );
+                        CombineRgn32( hrgnUpdate, hrgnTemp, hrgnClip,
+                                      RGN_AND );
+                        OffsetRgn32( hrgnTemp, dx, dy );
+                        retVal =
+                            CombineRgn32( hrgnUpdate, hrgnUpdate, hrgnTemp,
+                                          RGN_DIFF );
 
-		if( rcUpdate ) GetRgnBox32( hrgnUpdate, rcUpdate );
-	    }
-	    ReleaseDC32(hwnd, hDC);
-	    GDI_HEAP_UNLOCK( hDC );
-	}
+                        if( rcUpdate ) GetRgnBox32( hrgnUpdate, rcUpdate );
+                    }
+            }
+            ReleaseDC32(hwnd, hDC);
+            GDI_HEAP_UNLOCK( hDC );
+        }
 
 	if( wnd->hrgnUpdate > 1 )
 	{
-	    if( rect || clipRect )
-	    {
-		if( (CombineRgn32( hrgnClip, hrgnClip, 
-				   wnd->hrgnUpdate, RGN_AND ) != NULLREGION) )
-		{
-		    CombineRgn32( wnd->hrgnUpdate, wnd->hrgnUpdate, hrgnClip, RGN_DIFF );
-		    OffsetRgn32( hrgnClip, dx, dy );
-		    CombineRgn32( wnd->hrgnUpdate, wnd->hrgnUpdate, hrgnClip, RGN_OR );
-		}
-	    }
-	    else  
-		OffsetRgn32( wnd->hrgnUpdate, dx, dy );
+            /* Takes into account the fact that some damages may have
+               occured during the scroll. */
+            CombineRgn32( hrgnTemp, wnd->hrgnUpdate, 0, RGN_COPY );
+            OffsetRgn32( hrgnTemp, dx, dy );
+            CombineRgn32( hrgnTemp, hrgnTemp, hrgnClip, RGN_AND );
+            CombineRgn32( wnd->hrgnUpdate, wnd->hrgnUpdate, hrgnTemp, RGN_OR );
 	}
 
 	if( flags & SW_SCROLLCHILDREN )
@@ -384,7 +303,7 @@ rect?rect->left:0, rect?rect->top:0, rect ?rect->right:0, rect ?rect->bottom:0, 
 	    for( w = wnd->child; w; w = w->next )
 	    {
 		 CONV_RECT16TO32( &w->rectWindow, &r );
-	         if( !clipRect || IntersectRect32(&r, &r, &cliprc) )
+	         if( IntersectRect32(&r, &r, &rc) )
 		     SetWindowPos32(w->hwndSelf, 0, w->rectWindow.left + dx,
 				    w->rectWindow.top  + dy, 0,0, SWP_NOZORDER |
 				    SWP_NOSIZE | SWP_NOACTIVATE | SWP_NOREDRAW |
@@ -398,13 +317,13 @@ rect?rect->left:0, rect?rect->top:0, rect ?rect->right:0, rect ?rect->bottom:0, 
 
 	if( bCaret )
 	{
-	    SetCaretPos32( rc.left + dx, rc.top + dy );
+	    SetCaretPos32( caretrc.left + dx, caretrc.top + dy );
 	    ShowCaret32(0);
 	}
 
 	if( bOwnRgn && hrgnUpdate ) DeleteObject32( hrgnUpdate );
 	DeleteObject32( hrgnClip );
+        DeleteObject32( hrgnTemp );
     }
     return retVal;
 }
-

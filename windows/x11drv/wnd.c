@@ -536,42 +536,36 @@ void X11DRV_WND_PreSizeMove(WND *wndPtr)
 void X11DRV_WND_PostSizeMove(WND *wndPtr)
 {
   if (!(wndPtr->dwStyle & WS_CHILD) && 
-      (X11DRV_GetXRootWindow(wndPtr) == DefaultRootWindow(display)))
+      (X11DRV_GetXRootWindow() == DefaultRootWindow(display)))
     TSXUngrabServer( display );
 }
-
 
 /*****************************************************************
  *		 X11DRV_WND_ScrollWindow
  */
 void X11DRV_WND_ScrollWindow(
   WND *wndPtr, DC *dcPtr, INT32 dx, INT32 dy, 
-  const RECT32 *clipRect, BOOL32 bUpdate)
+  const RECT32 *rect, BOOL32 bUpdate)
 {
   X11DRV_PDEVICE *physDev = (X11DRV_PDEVICE *)dcPtr->physDev;
   POINT32 dst, src;
   
-  if( dx > 0 ) dst.x = (src.x = dcPtr->w.DCOrgX + clipRect->left) + dx;
-  else src.x = (dst.x = dcPtr->w.DCOrgX + clipRect->left) - dx;
+  dst.x = (src.x = dcPtr->w.DCOrgX + rect->left) + dx;
+  dst.y = (src.y = dcPtr->w.DCOrgY + rect->top) + dy;
   
-  if( dy > 0 ) dst.y = (src.y = dcPtr->w.DCOrgY + clipRect->top) + dy;
-  else src.y = (dst.y = dcPtr->w.DCOrgY + clipRect->top) - dy;
-  
-  
-  if ((clipRect->right - clipRect->left > abs(dx)) &&
-      (clipRect->bottom - clipRect->top > abs(dy)))
-    {
-      if (bUpdate) /* handles non-Wine windows hanging over the scrolled area */
-	TSXSetGraphicsExposures( display, physDev->gc, True );
-      TSXSetFunction( display, physDev->gc, GXcopy );
-      TSXCopyArea( display, physDev->drawable, physDev->drawable,
-		   physDev->gc, src.x, src.y,
-		   clipRect->right - clipRect->left - abs(dx),
-		   clipRect->bottom - clipRect->top - abs(dy),
-		   dst.x, dst.y );
-      if (bUpdate)
-	TSXSetGraphicsExposures( display, physDev->gc, False );
-    }
+  if (bUpdate) /* handles non-Wine windows hanging over the scrolled area */
+    TSXSetGraphicsExposures( display, physDev->gc, True );
+  TSXSetFunction( display, physDev->gc, GXcopy );
+  TSXCopyArea( display, physDev->drawable, physDev->drawable,
+               physDev->gc, src.x, src.y,
+               rect->right - rect->left,
+               rect->bottom - rect->top,
+               dst.x, dst.y );
+  if (bUpdate)
+    TSXSetGraphicsExposures( display, physDev->gc, False );
+
+  if (bUpdate) /* Make sure exposure events have been processed */
+    EVENT_Synchronize();
 }
 
 /***********************************************************************
