@@ -7272,6 +7272,7 @@ static BOOL LISTVIEW_SortItems(LISTVIEW_INFO *infoPtr, PFNLVCOMPARE pfnCompare, 
 
     if (infoPtr->dwStyle & LVS_OWNERDATA) return FALSE;
 
+    if (!pfnCompare) return FALSE;
     if (!infoPtr->hdpaItems) return FALSE;
 
     /* if there are 0 or 1 items, there is no need to sort */
