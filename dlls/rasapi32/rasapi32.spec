@@ -41,7 +41,7 @@
 69  stub RasSetOldPassword
 70  stub RasSetSubEntryPropertiesA
 71  stub RasSetSubEntryPropertiesW
-72  stub RasValidateEntryNameA
+72  stdcall RasValidateEntryNameA(str str) RasValidateEntryNameA
 73  stub RasValidateEntryNameW
 
 11  stub RasDialWow

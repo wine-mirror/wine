@@ -252,3 +252,11 @@ DWORD WINAPI RasSetAutodialParamW(DWORD a, LPVOID b, DWORD c)
 	FIXME("(%lx,%p,%lx),stub!\n",a,b,c);
 	return 0;
 }
+
+/**************************************************************************
+ *                 RasValidateEntryNameA	[RASAPI32.72]
+ */
+DWORD WINAPI RasValidateEntryNameA(LPSTR lpszPhonebook, LPSTR lpszEntry) {
+	FIXME("(%s,%s), stub!\n",lpszPhonebook,lpszEntry);
+	return 0;
+}
