@@ -1170,13 +1170,34 @@ void WINAPI DOS3Call( CONTEXT *context )
         break;
 
     case 0x06: /* DIRECT CONSOLE IN/OUTPUT */
-        TRACE(int21, "Direct Console Input/Output\n");
         if (DL_reg(context) == 0xff) {
-            FIXME(int21,"Direct Console Input should not block\n");
-            AL_reg(context) = CONSOLE_GetCharacter();
-            FL_reg(context) &= ~0x40; /* clear ZF */
-        } else
+            static char scan = 0;
+            TRACE(int21, "Direct Console Input\n");
+            if (scan) {
+                /* return pending scancode */
+                AL_reg(context) = scan;
+                FL_reg(context) &= ~0x40; /* clear ZF */
+                scan = 0;
+            } else {
+                char ascii;
+                if (CONSOLE_CheckForKeystroke(&scan,&ascii)) {
+                    CONSOLE_GetKeystroke(&scan,&ascii);
+                    /* return ASCII code */
+                    AL_reg(context) = ascii;
+                    FL_reg(context) &= ~0x40; /* clear ZF */
+                    /* return scan code on next call only if ascii==0 */
+                    if (ascii) scan = 0;
+                } else {
+                    /* nothing pending, clear everything */
+                    AL_reg(context) = 0;
+                    FL_reg(context) |= 0x40; /* set ZF */
+                    scan = 0; /* just in case */
+                }
+            }
+        } else {
+            TRACE(int21, "Direct Console Output\n");
     	    CONSOLE_Write(DL_reg(context), 0, 0, 0);
+    	}
         break;
 
     case 0x07: /* DIRECT CHARACTER INPUT WITHOUT ECHO */
