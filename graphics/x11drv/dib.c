@@ -3079,10 +3079,11 @@ INT X11DRV_DIB_GetDIBits(
   {
      descr.ySrc = startscan;
   }
-
+#ifdef HAVE_LIBXXSHM
   if (dib)
     descr.useShm = (dib->shminfo.shmid != -1);
   else
+#endif
     descr.useShm = FALSE;
 
   EnterCriticalSection( &X11DRV_CritSection );
@@ -3176,7 +3177,11 @@ static void X11DRV_DIB_DoUpdateDIBSection(BITMAPOBJ *bmp, BOOL toDIB)
   descr.yDest     = 0;
   descr.width     = bmp->bitmap.bmWidth;
   descr.height    = bmp->bitmap.bmHeight;
+#ifdef HAVE_LIBXXSHM
   descr.useShm = (dib->shminfo.shmid != -1);
+#else
+  descr.useShm = FALSE;
+#endif
 
   if (toDIB)
     {
@@ -3388,6 +3393,7 @@ static int XShmErrorHandler(Display *dpy, XErrorEvent *event)
  *
  */
 
+#ifdef HAVE_LIBXXSHM
 extern BOOL X11DRV_XShmCreateImage(XImage** image, int width, int height, int bpp,
 		                                   XShmSegmentInfo* shminfo)
 {
@@ -3435,7 +3441,7 @@ extern BOOL X11DRV_XShmCreateImage(XImage** image, int width, int height, int bp
     }
     return FALSE;
 }
-
+#endif /* HAVE_LIBXXSHM */
 
  
 
@@ -3557,6 +3563,7 @@ HBITMAP X11DRV_DIB_CreateDIBSection(
   /* Create XImage */
   if (dib && bmp)
   {
+#ifdef HAVE_LIBXXSHM
       if (TSXShmQueryExtension(display) &&
           X11DRV_XShmCreateImage( &dib->image, bm.bmWidth, effHeight,
                                   bmp->bitmap.bmBitsPixel, &dib->shminfo ) )
@@ -3566,6 +3573,9 @@ HBITMAP X11DRV_DIB_CreateDIBSection(
           XCREATEIMAGE( dib->image, bm.bmWidth, effHeight, bmp->bitmap.bmBitsPixel );
           dib->shminfo.shmid = -1;
       }
+#else
+      XCREATEIMAGE( dib->image, bm.bmWidth, effHeight, bmp->bitmap.bmBitsPixel );
+#endif
   }
   
   /* Clean up in case of errors */
@@ -3621,6 +3631,7 @@ void X11DRV_DIB_DeleteDIBSection(BITMAPOBJ *bmp)
 
   if (dib->image) 
   {
+#ifdef HAVE_LIBXXSHM
       if (dib->shminfo.shmid != -1)
       {
           TSXShmDetach (display, &(dib->shminfo));
@@ -3629,6 +3640,7 @@ void X11DRV_DIB_DeleteDIBSection(BITMAPOBJ *bmp)
           dib->shminfo.shmid = -1;
       }
       else
+#endif
           XDestroyImage( dib->image );
   }
   

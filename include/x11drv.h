@@ -226,8 +226,10 @@ typedef struct
     /* Selector for 16-bit access to bits */
     WORD selector;
 
+#ifdef HAVE_LIBXXSHM
     /* Shared memory segment info */
     XShmSegmentInfo shminfo;
+#endif
 
 } X11DRV_DIBSECTION;
 
