@@ -85,12 +85,12 @@ _FUNCTION_ {
     if (!*format) return 0;
 #ifndef WIDE_SCANF
 #ifdef CONSOLE
-    WARN("(%s): semi-stub\n", debugstr_a(format));
+    TRACE("(%s): \n", debugstr_a(format));
 #else /* CONSOLE */
 #ifdef STRING
-    WARN("%s (%s): semi-stub\n", file, debugstr_a(format));
+    TRACE("%s (%s)\n", file, debugstr_a(format));
 #else /* STRING */
-    WARN("%p (%s): semi-stub\n", file, debugstr_a(format));
+    TRACE("%p (%s)\n", file, debugstr_a(format));
 #endif /* STRING */
 #endif /* CONSOLE */
 #endif /* WIDE_SCANF */
@@ -120,7 +120,7 @@ _FUNCTION_ {
 	    int L_prefix = 0;
 	    int w_prefix = 0;
 	    int prefix_finished = 0;
-	    /* int I64_prefix = 0; */
+	    int I64_prefix = 0;
             format++;
 	    /* look for leading asterisk, which means 'suppress assignment of
 	     * this field'. */
@@ -144,9 +144,8 @@ _FUNCTION_ {
 		case 'I':
 		    if (*(format + 1) == '6' &&
 			*(format + 2) == '4') {
-			/* I64_prefix = 1; */
+			I64_prefix = 1;
 			format += 2;
-			FIXME("I64 prefix currently not implemented in fscanf/fwscanf");
 		    }
 		    break;
 		default:
@@ -173,7 +172,7 @@ _FUNCTION_ {
 		base = 10; number_signed = 1;
 	    number: {
 		    /* read an integer */
-                    long unsigned int cur = 0;
+		    ULONGLONG cur = 0;
 		    int negative = 0;
 		    int seendigit=0;
                     /* skip initial whitespace */
@@ -227,7 +226,8 @@ _FUNCTION_ {
                     if (!suppress) {
 #define _SET_NUMBER_(type) *va_arg(ap, type*) = negative ? -cur : cur
 			if (number_signed) {
-			    if (l_prefix) _SET_NUMBER_(long int);
+			    if (I64_prefix) _SET_NUMBER_(LONGLONG);
+			    else if (l_prefix) _SET_NUMBER_(long int);
 			    else if (h_prefix) _SET_NUMBER_(short int);
 			    else _SET_NUMBER_(int);
 			} else {
@@ -235,7 +235,8 @@ _FUNCTION_ {
 				WARN("Dropping sign in reading a negative number into an unsigned value");
 				negative = 0;
 			    }
-			    if (l_prefix) _SET_NUMBER_(unsigned long int);
+			    if (I64_prefix) _SET_NUMBER_(ULONGLONG);
+			    else if (l_prefix) _SET_NUMBER_(unsigned long int);
 			    else if (h_prefix)
 				_SET_NUMBER_(unsigned short int);
 			    else _SET_NUMBER_(unsigned int);
