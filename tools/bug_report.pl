@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 ##Wine Quick Debug Report Maker Thingy (WQDRMK)
-## Copyright (c) 1998-1999 Adam Sacarny
+## Copyright (c) 1998-1999 Adam Sacarny jazz@cscweb.net ICQ: 19617831
 ##Do not say this is yours without my express permisson, or I will
 ##hunt you down and kill you like the savage animal I am.
 ##
@@ -39,10 +39,6 @@
 ##January 26, 1999 - Fixed various bugs...
 ##                 - Made newbie mode easier
 ##January 25, 1999 - Initial Release
-## -------------------------------------------
-##| IRCNET/UNDERNET: jazzfan AOL: Jazzrock12  |
-##| ICQ: 19617831|
-## -------------------------------------------
 sub do_var {
 	$var=$_[0];
 	$var =~ s/\t//g;
@@ -54,10 +50,10 @@ $var0 = qq{
 	What is your level of Wine expertise? 1-newbie 2-intermediate 3-advanced
 
 	1 - Makes a debug report as defined in the Wine documentation. Best
-	    for new Wine users. If you're not sure what -debugmsg is, then
+	    for new Wine users. If you're not sure what --debugmsg is, then
 	    use this mode.
 	2 - Makes a debug report that is more customizable (Example: you can
-	    choose what -debugmsg 's to use). You are asked more questions in
+	    choose what --debugmsg's to use). You are asked more questions in
 	    this mode. May intimidate newbies.
 	3 - Just like 2, but not corner cutting. Assumes you know what you're
 	    doing so it leaves out the long descriptions.
@@ -308,20 +304,20 @@ if ($debuglevel > 1) {
 		$var11 = qq{
 		Enter any extra debug options. Default is +relay - If you don't
 		know what options to use, just hit enter, and I'll use those (Example, the
-		developer tells you to re-run with -debugmsg +dosfs,+module you would type
+		developer tells you to re-run with --debugmsg +dosfs,+module you would type
 		in +dosfs,+module). Hit enter if you're not sure what to do:
 		};
 		print do_var($var11);
 	} elsif ($debuglevel =~ 3) {
 		$var12 = qq{
 		Enter any debug options you would like to use. Just enter parts after
-		-debugmsg. Default is +relay:
+		--debugmsg. Default is +relay:
 		};
 		print do_var($var12);
 	}
 	$debugopts=<STDIN>;
 	chomp $debugopts;
-	if ($debugopts =~ /-debugmsg /) {
+	if ($debugopts =~ /--debugmsg /) {
 		($crap, $debugopts) = split / /,$debugopts;
 	}
 	if ($debugopts =~ /^\s*$/) {
@@ -477,7 +473,7 @@ if ($dbgoutfile ne "no file") {
 	}
 	elsif (defined $pid) {
 		close(0);close(1);close(2);
-		exec "echo quit | $wineloc -debugmsg $debugopts $extraops \"$program\" > $dbgoutfile 2>&1";
+		exec "echo quit | $wineloc --debugmsg $debugopts $extraops \"$program\" > $dbgoutfile 2>&1";
 	}
 	else {
 		die "couldn't fork";
@@ -504,7 +500,7 @@ elsif ($outfile ne "no file" and $dbgoutfile eq "no file") {
 	}
 	elsif (defined $pid) {
 		close(0);close(1);close(2);
-		exec "echo quit | $wineloc -debugmsg $debugopts $extraops \"$program\" 2>&1| tee $tmpoutfile | tail -n $lastnlines > $outfile";
+		exec "echo quit | $wineloc --debugmsg $debugopts $extraops \"$program\" 2>&1| tee $tmpoutfile | tail -n $lastnlines > $outfile";
 	}
 	else {
 		die "couldn't fork";
@@ -536,7 +532,7 @@ else {
 	};
 	print do_var($var27);
 	$blah=<STDIN>;
-	system("$wineloc -debugmsg $debugmsg $extraops \"$program\"");
+	system("$wineloc --debugmsg $debugmsg $extraops \"$program\"");
 }
 sub generate_outfile {
 open(OUTFILE,">$outfile");
@@ -551,7 +547,7 @@ CPU:                         $cpu
 GCC Version:                 $gccver
 Program:                     $progname
 Program Type:                $progbits
-Debug Options:               -debugmsg $debugopts
+Debug Options:               --debugmsg $debugopts
 Other Extra Commands Passed: $extraops
 Extra ./configure Commands:  $configopts
 Wine Dependencies:
