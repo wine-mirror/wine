@@ -50,8 +50,7 @@ struct process_dll
 struct process
 {
     struct object        obj;             /* object header */
-    struct process      *next;            /* system-wide process list */
-    struct process      *prev;
+    struct list          entry;           /* entry in system-wide process list */
     struct process      *parent;          /* parent process */
     struct thread       *thread_list;     /* head of the thread list */
     struct thread       *debugger;        /* thread debugging this process */

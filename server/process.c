@@ -48,7 +48,7 @@
 
 /* process structure */
 
-static struct process *first_process;
+static struct list process_list = LIST_INIT(process_list);
 static int running_processes;
 
 /* process operations */
@@ -249,8 +249,6 @@ struct thread *create_process( int fd )
     int request_pipe[2];
 
     if (!(process = alloc_object( &process_ops ))) goto error;
-    process->next            = NULL;
-    process->prev            = NULL;
     process->parent          = NULL;
     process->thread_list     = NULL;
     process->debugger        = NULL;
@@ -283,8 +281,7 @@ struct thread *create_process( int fd )
     list_init( &process->classes );
 
     gettimeofday( &process->start_time, NULL );
-    if ((process->next = first_process) != NULL) process->next->prev = process;
-    first_process = process;
+    list_add_head( &process_list, &process->entry );
 
     if (!(process->id = alloc_ptid( process ))) goto error;
     if (!(process->msg_fd = create_anonymous_fd( &process_fd_ops, fd, &process->obj ))) goto error;
@@ -409,9 +406,7 @@ static void process_destroy( struct object *obj )
     if (process->console) release_object( process->console );
     if (process->parent) release_object( process->parent );
     if (process->msg_fd) release_object( process->msg_fd );
-    if (process->next) process->next->prev = process->prev;
-    if (process->prev) process->prev->next = process->next;
-    else first_process = process->next;
+    list_remove( &process->entry );
     if (process->idle_event) release_object( process->idle_event );
     if (process->queue) release_object( process->queue );
     if (process->atom_table) release_object( process->atom_table );
@@ -427,8 +422,7 @@ static void process_dump( struct object *obj, int verbose )
     struct process *process = (struct process *)obj;
     assert( obj->ops == &process_ops );
 
-    fprintf( stderr, "Process id=%04x next=%p prev=%p handles=%p\n",
-             process->id, process->next, process->prev, process->handles );
+    fprintf( stderr, "Process id=%04x handles=%p\n", process->id, process->handles );
 }
 
 static int process_signaled( struct object *obj, struct thread *thread )
@@ -548,11 +542,14 @@ void kill_all_processes( struct process *skip, int exit_code )
 {
     for (;;)
     {
-        struct process *process = first_process;
+        struct process *process;
 
-        while (process && (!process->running_threads || process == skip))
-            process = process->next;
-        if (!process) break;
+        LIST_FOR_EACH_ENTRY( process, &process_list, struct process, entry )
+        {
+            if (process == skip) continue;
+            if (process->running_threads) break;
+        }
+        if (&process->entry == &process_list) break;  /* no process found */
         kill_process( process, NULL, exit_code );
     }
 }
@@ -562,16 +559,16 @@ void kill_console_processes( struct thread *renderer, int exit_code )
 {
     for (;;)  /* restart from the beginning of the list every time */
     {
-        struct process *process = first_process;
+        struct process *process;
 
         /* find the first process being attached to 'renderer' and still running */
-        while (process &&
-               (process == renderer->process || !process->console ||
-                process->console->renderer != renderer || !process->running_threads))
+        LIST_FOR_EACH_ENTRY( process, &process_list, struct process, entry )
         {
-            process = process->next;
+            if (process == renderer->process) continue;
+            if (!process->running_threads) continue;
+            if (process->console && process->console->renderer == renderer) break;
         }
-        if (!process) break;
+        if (&process->entry == &process_list) break;  /* no process found */
         kill_process( process, NULL, exit_code );
     }
 }
@@ -685,11 +682,15 @@ void kill_debugged_processes( struct thread *debugger, int exit_code )
 {
     for (;;)  /* restart from the beginning of the list every time */
     {
-        struct process *process = first_process;
+        struct process *process;
+
         /* find the first process being debugged by 'debugger' and still running */
-        while (process && (process->debugger != debugger || !process->running_threads))
-            process = process->next;
-        if (!process) return;
+        LIST_FOR_EACH_ENTRY( process, &process_list, struct process, entry )
+        {
+            if (!process->running_threads) continue;
+            if (process->debugger == debugger) break;
+        }
+        if (&process->entry == &process_list) break;  /* no process found */
         process->debugger = NULL;
         kill_process( process, NULL, exit_code );
     }
@@ -700,7 +701,8 @@ void kill_debugged_processes( struct thread *debugger, int exit_code )
 void detach_debugged_processes( struct thread *debugger )
 {
     struct process *process;
-    for (process = first_process; process; process = process->next)
+
+    LIST_FOR_EACH_ENTRY( process, &process_list, struct process, entry )
     {
         if (process->debugger == debugger && process->running_threads)
         {
@@ -712,9 +714,11 @@ void detach_debugged_processes( struct thread *debugger )
 
 void enum_processes( int (*cb)(struct process*, void*), void *user )
 {
-    struct process *process;
-    for (process = first_process; process; process = process->next)
+    struct list *ptr, *next;
+
+    LIST_FOR_EACH_SAFE( ptr, next, &process_list )
     {
+        struct process *process = LIST_ENTRY( ptr, struct process, entry );
         if ((cb)(process, user)) break;
     }
 }
@@ -828,7 +832,7 @@ struct process_snapshot *process_snap( int *count )
     if (!(snapshot = mem_alloc( sizeof(*snapshot) * running_processes )))
         return NULL;
     ptr = snapshot;
-    for (process = first_process; process; process = process->next)
+    LIST_FOR_EACH_ENTRY( process, &process_list, struct process, entry )
     {
         if (!process->running_threads) continue;
         ptr->process  = process;
