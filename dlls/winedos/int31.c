@@ -675,11 +675,11 @@ void WINAPI DPMI_FreeInternalRMCB( FARPROC16 proc )
 
 
 /**********************************************************************
- *	    RawModeSwitch   (WINEDOS.@)
+ *	    DOSVM_RawModeSwitchHandler
  *
  * DPMI Raw Mode Switch handler
  */
-void WINAPI DOSVM_RawModeSwitch( CONTEXT86 *context )
+void WINAPI DOSVM_RawModeSwitchHandler( CONTEXT86 *context )
 {
   CONTEXT86 rm_ctx;
   int ret;
@@ -764,23 +764,6 @@ void WINAPI DOSVM_FreeRMCB( CONTEXT86 *context )
 	SET_AX( context, 0x8024 ); /* invalid callback address */
 	SET_CFLAG(context);
     }
-}
-
-
-/**********************************************************************
- *          DOSVM_RawModeSwitchHandler
- *
- * DPMI Raw Mode Switch handler.
- * This routine does all the stack manipulation tricks needed
- * to return from protected mode interrupt using modified 
- * code and stack pointers.
- */
-void WINAPI DOSVM_RawModeSwitchHandler( CONTEXT86 *context )
-{
-    STACK16FRAME frame;
-    DOSVM_SaveCallFrame( context, &frame );
-    DOSVM_RawModeSwitch( context );
-    DOSVM_RestoreCallFrame( context, &frame );
 }
 
 

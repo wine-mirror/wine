@@ -28,7 +28,6 @@
 #include "miscemu.h"
 
 struct _DOSEVENT;
-struct _STACK16FRAME;
 
 /* amount of space reserved for relay stack */
 #define DOSVM_RELAY_DATA_SIZE 4096
@@ -256,8 +255,6 @@ extern void        DOSVM_SetRMHandler( BYTE, FARPROC16 );
 
 /* relay.c */
 void DOSVM_RelayHandler( CONTEXT86 * );
-void DOSVM_SaveCallFrame( CONTEXT86 *, struct _STACK16FRAME * );
-void DOSVM_RestoreCallFrame( CONTEXT86 *, struct _STACK16FRAME * );
 void DOSVM_BuildCallFrame( CONTEXT86 *, DOSRELAY, LPVOID );
 
 /* soundblaster.c */
