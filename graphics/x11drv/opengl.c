@@ -176,6 +176,11 @@ int X11DRV_DescribePixelFormat(X11DRV_PDEVICE *physDev,
   int rb,gb,bb,ab;
   
   TRACE("(%p,%d,%d,%p)\n", physDev, iPixelFormat, nBytes, ppfd);
+
+  if (ppfd == NULL) {
+    /* The application is only querying the number of visuals */
+    return MAX_PIXELFORMATS;
+  }
   
   if (nBytes < sizeof(PIXELFORMATDESCRIPTOR)) {
     ERR("Wrong structure size !\n");
