@@ -268,11 +268,12 @@ static void destroy_window( struct window *win )
 }
 
 /* create a new window structure (note: the window is not linked in the window tree) */
-static struct window *create_window( struct window *parent, struct window *owner, atom_t atom,
-                                     void *instance, int extra_bytes )
+static struct window *create_window( struct window *parent, struct window *owner,
+                                     atom_t atom, void *instance )
 {
+    int extra_bytes;
     struct window *win;
-    struct window_class *class = grab_class( current->process, atom, instance );
+    struct window_class *class = grab_class( current->process, atom, instance, &extra_bytes );
 
     if (!class) return NULL;
 
@@ -474,25 +475,22 @@ struct window_class* get_window_class( user_handle_t window )
 /* create a window */
 DECL_HANDLER(create_window)
 {
+    struct window *win;
+
     reply->handle = 0;
-    if (req->extra < 0 || req->extra > 4096)  /* don't allow stupid values here */
-    {
-        set_error( STATUS_INVALID_PARAMETER );
-        return;
-    }
     if (!req->parent)  /* return desktop window */
     {
         if (!top_window)
         {
-            if (!(top_window = create_window( NULL, NULL, req->atom, req->instance, req->extra ))) return;
+            if (!(top_window = create_window( NULL, NULL, req->atom, req->instance ))) return;
             top_window->thread = NULL;  /* no thread owns the desktop */
             top_window->style  = WS_POPUP | WS_VISIBLE | WS_CLIPSIBLINGS | WS_CLIPCHILDREN;
         }
-        reply->handle = top_window->handle;
+        win = top_window;
     }
     else
     {
-        struct window *win, *parent, *owner = NULL;
+        struct window *parent, *owner = NULL;
 
         if (!(parent = get_window( req->parent ))) return;
         if (req->owner && !(owner = get_window( req->owner ))) return;
@@ -503,9 +501,11 @@ DECL_HANDLER(create_window)
             set_error( STATUS_ACCESS_DENIED );
             return;
         }
-        if (!(win = create_window( parent, owner, req->atom, req->instance, req->extra ))) return;
-        reply->handle = win->handle;
+        if (!(win = create_window( parent, owner, req->atom, req->instance ))) return;
     }
+    reply->handle    = win->handle;
+    reply->extra     = win->nb_extra_bytes;
+    reply->class_ptr = get_class_client_ptr( win->class );
 }
 
 

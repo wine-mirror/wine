@@ -2096,13 +2096,14 @@ static void dump_create_window_request( const struct create_window_request *req 
     fprintf( stderr, " parent=%p,", req->parent );
     fprintf( stderr, " owner=%p,", req->owner );
     fprintf( stderr, " atom=%04x,", req->atom );
-    fprintf( stderr, " instance=%p,", req->instance );
-    fprintf( stderr, " extra=%d", req->extra );
+    fprintf( stderr, " instance=%p", req->instance );
 }
 
 static void dump_create_window_reply( const struct create_window_reply *req )
 {
-    fprintf( stderr, " handle=%p", req->handle );
+    fprintf( stderr, " handle=%p,", req->handle );
+    fprintf( stderr, " extra=%d,", req->extra );
+    fprintf( stderr, " class_ptr=%p", req->class_ptr );
 }
 
 static void dump_link_window_request( const struct link_window_request *req )
@@ -2511,13 +2512,19 @@ static void dump_create_class_request( const struct create_class_request *req )
     fprintf( stderr, " style=%08x,", req->style );
     fprintf( stderr, " instance=%p,", req->instance );
     fprintf( stderr, " extra=%d,", req->extra );
-    fprintf( stderr, " win_extra=%d", req->win_extra );
+    fprintf( stderr, " win_extra=%d,", req->win_extra );
+    fprintf( stderr, " client_ptr=%p", req->client_ptr );
 }
 
 static void dump_destroy_class_request( const struct destroy_class_request *req )
 {
     fprintf( stderr, " atom=%04x,", req->atom );
     fprintf( stderr, " instance=%p", req->instance );
+}
+
+static void dump_destroy_class_reply( const struct destroy_class_reply *req )
+{
+    fprintf( stderr, " client_ptr=%p", req->client_ptr );
 }
 
 static void dump_set_class_info_request( const struct set_class_info_request *req )
@@ -2952,7 +2959,7 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)0,
     (dump_func)dump_get_next_hook_reply,
     (dump_func)0,
-    (dump_func)0,
+    (dump_func)dump_destroy_class_reply,
     (dump_func)dump_set_class_info_reply,
     (dump_func)dump_set_clipboard_info_reply,
     (dump_func)dump_open_token_reply,

@@ -2526,12 +2526,13 @@ struct create_window_request
     user_handle_t  owner;
     atom_t         atom;
     void*          instance;
-    int            extra;
 };
 struct create_window_reply
 {
     struct reply_header __header;
     user_handle_t  handle;
+    int            extra;
+    void*          class_ptr;
 };
 
 
@@ -3062,6 +3063,7 @@ struct create_class_request
     void*          instance;
     int            extra;
     int            win_extra;
+    void*          client_ptr;
 };
 struct create_class_reply
 {
@@ -3079,6 +3081,7 @@ struct destroy_class_request
 struct destroy_class_reply
 {
     struct reply_header __header;
+    void*          client_ptr;
 };
 
 
@@ -3744,6 +3747,6 @@ union generic_reply
     struct set_global_windows_reply set_global_windows_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 129
+#define SERVER_PROTOCOL_VERSION 130
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

@@ -44,9 +44,14 @@ struct window_class
     void           *instance;        /* module instance */
     unsigned int    style;           /* class style */
     int             win_extra;       /* number of window extra bytes */
+    void           *client_ptr;      /* pointer to class in client address space */
     int             nb_extra_bytes;  /* number of extra bytes */
     char            extra_bytes[1];  /* extra bytes storage */
 };
+
+#define DESKTOP_ATOM  ((atom_t)32769)
+
+static struct window_class *desktop_class;
 
 static struct window_class *create_class( struct process *process, int extra_bytes, int local )
 {
@@ -64,6 +69,25 @@ static struct window_class *create_class( struct process *process, int extra_byt
     /* local classes have priority so we put them first in the list */
     if (local) list_add_head( &process->classes, &class->entry );
     else list_add_tail( &process->classes, &class->entry );
+    return class;
+}
+
+static struct window_class *create_desktop_class( unsigned int style, int win_extra )
+{
+    struct window_class *class;
+
+    if (!(class = mem_alloc( sizeof(*class) - 1 ))) return NULL;
+
+    class->process        = NULL;
+    class->count          = 0;
+    class->local          = 0;
+    class->nb_extra_bytes = 0;
+    class->atom           = DESKTOP_ATOM;
+    class->instance       = NULL;
+    class->style          = style;
+    class->win_extra      = win_extra;
+    class->client_ptr     = NULL;
+    desktop_class = class;
     return class;
 }
 
@@ -95,13 +119,19 @@ static struct window_class *find_class( struct process *process, atom_t atom, vo
         if (class->atom != atom) continue;
         if (!instance || !class->local || class->instance == instance) return class;
     }
+    if (atom == DESKTOP_ATOM) return desktop_class;
     return NULL;
 }
 
-struct window_class *grab_class( struct process *process, atom_t atom, void *instance )
+struct window_class *grab_class( struct process *process, atom_t atom,
+                                 void *instance, int *extra_bytes )
 {
     struct window_class *class = find_class( process, atom, instance );
-    if (class) class->count++;
+    if (class)
+    {
+        class->count++;
+        *extra_bytes = class->win_extra;
+    }
     else set_error( STATUS_INVALID_HANDLE );
     return class;
 }
@@ -117,18 +147,31 @@ atom_t get_class_atom( struct window_class *class )
     return class->atom;
 }
 
+void *get_class_client_ptr( struct window_class *class )
+{
+    return class->client_ptr;
+}
+
 /* create a window class */
 DECL_HANDLER(create_class)
 {
-    struct window_class *class = find_class( current->process, req->atom, req->instance );
+    struct window_class *class;
 
+    if (!req->local && req->atom == DESKTOP_ATOM)
+    {
+        if (!desktop_class) create_desktop_class( req->style, req->win_extra );
+        return;  /* silently ignore further attempts to create the desktop class */
+    }
+
+    class = find_class( current->process, req->atom, req->instance );
     if (class && !class->local == !req->local)
     {
         set_win32_error( ERROR_CLASS_ALREADY_EXISTS );
         return;
     }
-    if (req->extra < 0 || req->extra > 4096)  /* don't allow stupid values here */
+    if (req->extra < 0 || req->extra > 4096 || req->win_extra < 0 || req->win_extra > 4096)
     {
+        /* don't allow stupid values here */
         set_error( STATUS_INVALID_PARAMETER );
         return;
     }
@@ -139,10 +182,11 @@ DECL_HANDLER(create_class)
         release_global_atom( req->atom );
         return;
     }
-    class->atom      = req->atom;
-    class->instance  = req->instance;
-    class->style     = req->style;
-    class->win_extra = req->win_extra;
+    class->atom       = req->atom;
+    class->instance   = req->instance;
+    class->style      = req->style;
+    class->win_extra  = req->win_extra;
+    class->client_ptr = req->client_ptr;
 }
 
 /* destroy a window class */
@@ -151,11 +195,14 @@ DECL_HANDLER(destroy_class)
     struct window_class *class = find_class( current->process, req->atom, req->instance );
 
     if (!class)
-        set_error( STATUS_INVALID_HANDLE );
+        set_win32_error( ERROR_CLASS_DOES_NOT_EXIST );
     else if (class->count)
         set_win32_error( ERROR_CLASS_HAS_WINDOWS );
     else
-        destroy_class( class );
+    {
+        reply->client_ptr = class->client_ptr;
+        if (class != desktop_class) destroy_class( class );
+    }
 }
 
 
@@ -166,11 +213,22 @@ DECL_HANDLER(set_class_info)
 
     if (!class) return;
 
+    if (req->flags && class->process != current->process)
+    {
+        set_error( STATUS_ACCESS_DENIED );
+        return;
+    }
+
     if (req->extra_size > sizeof(req->extra_value) ||
         req->extra_offset < -1 ||
         req->extra_offset > class->nb_extra_bytes - (int)req->extra_size)
     {
         set_win32_error( ERROR_INVALID_INDEX );
+        return;
+    }
+    if ((req->flags & SET_CLASS_WINEXTRA) && (req->win_extra < 0 || req->win_extra > 4096))
+    {
+        set_error( STATUS_INVALID_PARAMETER );
         return;
     }
     if (req->extra_offset != -1)
@@ -201,4 +259,3 @@ DECL_HANDLER(set_class_info)
     if (req->flags & SET_CLASS_EXTRA) memcpy( class->extra_bytes + req->extra_offset,
                                               &req->extra_value, req->extra_size );
 }
-

@@ -65,23 +65,13 @@ static void *user_handles[NB_USER_HANDLES];
 static WND *create_window_handle( HWND parent, HWND owner, ATOM atom,
                                   HINSTANCE instance, WINDOWPROCTYPE type )
 {
-    BOOL res;
     WORD index;
     WND *win;
-    DCE *dce;
-    INT extra_bytes;
-    DWORD clsStyle;
-    WNDPROC winproc;
-    struct tagCLASS *class;
+    struct tagCLASS *class = NULL;
     user_handle_t handle = 0;
+    int extra_bytes = 0;
 
-    if (!(class = CLASS_AddWindow( atom, instance, type, &extra_bytes, &winproc, &clsStyle, &dce )))
-        return NULL;
-
-    if (!(win = HeapAlloc( GetProcessHeap(), 0, sizeof(WND) + extra_bytes - sizeof(win->wExtra) )))
-        return NULL;
-
-    USER_Lock();
+    if (type == WIN_PROC_16) instance = HINSTANCE_32(GetExePtr(HINSTANCE_16(instance)));
 
     SERVER_START_REQ( create_window )
     {
@@ -89,29 +79,44 @@ static WND *create_window_handle( HWND parent, HWND owner, ATOM atom,
         req->owner    = owner;
         req->atom     = atom;
         req->instance = instance;
-        req->extra    = extra_bytes;
-        if ((res = !wine_server_call_err( req ))) handle = reply->handle;
+        if (!wine_server_call_err( req ))
+        {
+            handle = reply->handle;
+            extra_bytes = reply->extra;
+            class = reply->class_ptr;
+        }
     }
     SERVER_END_REQ;
 
-    if (!res)
+    if (!handle)
     {
-        USER_Unlock();
-        HeapFree( GetProcessHeap(), 0, win );
+        WARN( "error %ld creating window\n", GetLastError() );
         return NULL;
     }
+
+    if (!(win = HeapAlloc( GetProcessHeap(), 0, sizeof(WND) + extra_bytes - sizeof(win->wExtra) )))
+    {
+        SERVER_START_REQ( destroy_window )
+        {
+            req->handle = handle;
+            wine_server_call( req );
+        }
+        SERVER_END_REQ;
+        SetLastError( ERROR_NOT_ENOUGH_MEMORY );
+        return NULL;
+    }
+
+    USER_Lock();
+
     index = LOWORD(handle) - FIRST_USER_HANDLE;
     assert( index < NB_USER_HANDLES );
     user_handles[index] = win;
     win->hwndSelf   = handle;
     win->dwMagic    = WND_MAGIC;
     win->irefCount  = 1;
-    win->class      = class;
-    win->winproc    = winproc;
-    win->dce        = dce;
-    win->clsStyle   = clsStyle;
     win->cbWndExtra = extra_bytes;
     memset( win->wExtra, 0, extra_bytes );
+    CLASS_AddWindow( class, win, type );
     return win;
 }
 

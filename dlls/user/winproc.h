@@ -137,11 +137,9 @@ inline static void unmap_str_16_to_32W( LPCWSTR str )
 
 /* Class functions */
 struct tagCLASS;  /* opaque structure */
-struct tagDCE;
+struct tagWND;
 extern void CLASS_RegisterBuiltinClasses( HINSTANCE inst );
-extern struct tagCLASS *CLASS_AddWindow( ATOM atom, HINSTANCE inst, WINDOWPROCTYPE type,
-                                         INT *winExtra, WNDPROC *winproc,
-                                         DWORD *style, struct tagDCE **dce );
+extern void CLASS_AddWindow( struct tagCLASS *class, struct tagWND *win, WINDOWPROCTYPE type );
 extern void CLASS_FreeModuleClasses( HMODULE16 hModule );
 
 /* Timer functions */

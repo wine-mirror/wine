@@ -1781,9 +1781,10 @@ enum message_type
     user_handle_t  owner;       /* owner window */
     atom_t         atom;        /* class atom */
     void*          instance;    /* module instance */
-    int            extra;       /* number of extra bytes */
 @REPLY
     user_handle_t  handle;      /* created window */
+    int            extra;       /* number of extra bytes */
+    void*          class_ptr;   /* pointer to class in client address space */
 @END
 
 
@@ -2138,6 +2139,7 @@ enum message_type
     void*          instance;       /* module instance */
     int            extra;          /* number of extra class bytes */
     int            win_extra;      /* number of window extra bytes */
+    void*          client_ptr;     /* pointer to class in client address space */
 @END
 
 
@@ -2145,6 +2147,8 @@ enum message_type
 @REQ(destroy_class)
     atom_t         atom;           /* class atom */
     void*          instance;       /* module instance */
+@REPLY
+    void*          client_ptr;     /* pointer to class in client address space */
 @END
 
 
