@@ -1923,7 +1923,7 @@ void __wine_process_init( int argc, char *argv[] )
     WINE_MODREF *wm;
     NTSTATUS status;
     ANSI_STRING func_name;
-    void (DECLSPEC_NORETURN *init_func)();
+    void (* DECLSPEC_NORETURN init_func)();
 
     /* setup the server connection */
     wine_server_init_process();
