@@ -864,10 +864,10 @@ DWORD WINAPI GetRegionData(HRGN hrgn, DWORD count, LPRGNDATA rgndata)
     if(count < (size + sizeof(RGNDATAHEADER)) || rgndata == NULL)
     {
         GDI_ReleaseObj( hrgn );
-	if (rgndata)
-	    return size + sizeof(RGNDATAHEADER);
-	else
+	if (rgndata) /* buffer is too small, signal it by return 0 */
 	    return 0;
+	else		/* user requested buffer size with rgndata NULL */
+	    return size + sizeof(RGNDATAHEADER);
     }
 
     rgndata->rdh.dwSize = sizeof(RGNDATAHEADER);
