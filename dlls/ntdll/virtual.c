@@ -1449,7 +1449,12 @@ NTSTATUS WINAPI NtQueryVirtualMemory( HANDLE process, LPCVOID addr,
     UINT size = 0;
     MEMORY_BASIC_INFORMATION *info = buffer;
 
-    if (info_class != MemoryBasicInformation) return STATUS_INVALID_INFO_CLASS;
+    if (info_class != MemoryBasicInformation)
+    {
+        FIXME("(%p, %p, %ld, %p, %ld, %p) Unimplemented information class\n", process, addr,
+              info_class, buffer, len, res_len);
+        return STATUS_INVALID_INFO_CLASS;
+    }
     if (ADDRESS_SPACE_LIMIT && addr >= ADDRESS_SPACE_LIMIT)
         return STATUS_WORKING_SET_LIMIT_RANGE;
 

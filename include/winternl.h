@@ -617,9 +617,11 @@ typedef enum _WINSTATIONINFOCLASS {
     WinStationInformation = 8
 } WINSTATIONINFOCLASS;
 
-typedef enum
-{
-    MemoryBasicInformation = 0
+typedef enum _MEMORY_INFORMATION_CLASS {
+    MemoryBasicInformation,
+    MemoryWorkingSetList,
+    MemorySectionName,
+    MemoryBasicVlmInformation
 } MEMORY_INFORMATION_CLASS;
 
 typedef enum _MUTANT_INFORMATION_CLASS

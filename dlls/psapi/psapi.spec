@@ -1,7 +1,7 @@
 @ stdcall EmptyWorkingSet(long)
 @ stdcall EnumDeviceDrivers(ptr long ptr)
-@ stub    EnumPageFilesA
-@ stub    EnumPageFilesW
+@ stdcall EnumPageFilesA(ptr ptr)
+@ stdcall EnumPageFilesW(ptr ptr)
 @ stdcall EnumProcessModules(long ptr long ptr)
 @ stdcall EnumProcesses(ptr long ptr)
 @ stdcall GetDeviceDriverBaseNameA(ptr str long)
@@ -15,10 +15,11 @@
 @ stdcall GetModuleFileNameExA(long long str long)
 @ stdcall GetModuleFileNameExW(long long wstr long)
 @ stdcall GetModuleInformation(long long ptr long)
-@ stub    GetPerformanceInfo
-@ stub    GetProcessImageFileNameA
-@ stub    GetProcessImageFileNameW
+@ stdcall GetPerformanceInfo(ptr long)
+@ stdcall GetProcessImageFileNameA(long ptr long)
+@ stdcall GetProcessImageFileNameW(long ptr long)
 @ stdcall GetProcessMemoryInfo(long ptr long)
 @ stdcall GetWsChanges(long ptr long)
 @ stdcall InitializeProcessForWsWatch(long)
 @ stdcall QueryWorkingSet(long ptr long)
+@ stdcall QueryWorkingSetEx(long ptr long)

@@ -28,6 +28,7 @@
 #include "wine/unicode.h"
 #include "wine/debug.h"
 #include "winnls.h"
+#include "ntstatus.h"
 #include "psapi.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(psapi);
@@ -53,6 +54,23 @@ BOOL WINAPI EnumDeviceDrivers(LPVOID *lpImageBase, DWORD cb, LPDWORD lpcbNeeded)
     return TRUE;
 }
 
+/***********************************************************************
+ *           EnumPageFilesA (PSAPI.@)
+ */
+BOOL WINAPI EnumPageFilesA( PENUM_PAGE_FILE_CALLBACKA callback, LPVOID context )
+{
+    FIXME("(%p, %p) stub\n", callback, context );
+    return FALSE;
+}
+
+/***********************************************************************
+ *           EnumPageFilesW (PSAPI.@)
+ */
+BOOL WINAPI EnumPageFilesW( PENUM_PAGE_FILE_CALLBACKW callback, LPVOID context )
+{
+    FIXME("(%p, %p) stub\n", callback, context );
+    return FALSE;
+}
 
 /***********************************************************************
  *           EnumProcesses (PSAPI.@)
@@ -443,15 +461,75 @@ BOOL WINAPI GetModuleInformation(HANDLE hProcess, HMODULE hModule,
 }
 
 /***********************************************************************
- *           GetProcessMemoryInfo (PSAPI.@)
+ *           GetPerformanceInfo (PSAPI.@)
  */
-BOOL WINAPI GetProcessMemoryInfo(HANDLE Process, 
-                                 PPROCESS_MEMORY_COUNTERS ppsmemCounters, DWORD cb)
+BOOL WINAPI GetPerformanceInfo( PPERFORMANCE_INFORMATION info, DWORD size )
 {
-    FIXME("(hProcess=%p, %p, %ld): stub\n",
-          Process, ppsmemCounters, cb);
-    
-    memset(ppsmemCounters, 0, cb);
+    NTSTATUS status;
+
+    TRACE( "(%p, %ld)\n", info, size );
+
+    status = NtQueryInformationProcess( GetCurrentProcess(), SystemPerformanceInformation, info, size, NULL );
+
+    if (status)
+    {
+        SetLastError( RtlNtStatusToDosError( status ) );
+        return FALSE;
+    }
+    return TRUE;
+}
+
+/***********************************************************************
+ *           GetProcessImageFileNameA (PSAPI.@)
+ */
+DWORD WINAPI GetProcessImageFileNameA( HANDLE process, LPSTR file, DWORD size )
+{
+    FIXME("(%p, %p, %ld) stub\n", process, file, size );
+    return 0;
+}
+
+/***********************************************************************
+ *           GetProcessImageFileNameW (PSAPI.@)
+ */
+DWORD WINAPI GetProcessImageFileNameW( HANDLE process, LPWSTR file, DWORD size )
+{
+    FIXME("(%p, %p, %ld) stub\n", process, file, size );
+    return 0;
+}
+
+/***********************************************************************
+ *           GetProcessMemoryInfo (PSAPI.@)
+ *
+ * Retrieve memory usage information for a given process
+ *
+ */
+BOOL WINAPI GetProcessMemoryInfo( HANDLE process, PPROCESS_MEMORY_COUNTERS counters, DWORD size )
+{
+    NTSTATUS status;
+    VM_COUNTERS vmc;
+
+    TRACE( "(%p, %p, %ld)\n", process, counters, size );
+
+    status = NtQueryInformationProcess( process, ProcessVmCounters, &vmc, sizeof(vmc), NULL );
+
+    if (status)
+    {
+        SetLastError( RtlNtStatusToDosError( status ) );
+        return FALSE;
+    }
+
+    /* FIXME: check size */
+
+    counters->cb = sizeof(PROCESS_MEMORY_COUNTERS);
+    counters->PageFaultCount = vmc.PageFaultCount;
+    counters->PeakWorkingSetSize = vmc.PeakWorkingSetSize;
+    counters->WorkingSetSize = vmc.WorkingSetSize;
+    counters->QuotaPeakPagedPoolUsage = vmc.QuotaPeakPagedPoolUsage;
+    counters->QuotaPagedPoolUsage = vmc.QuotaPagedPoolUsage;
+    counters->QuotaPeakNonPagedPoolUsage = vmc.QuotaPeakNonPagedPoolUsage;
+    counters->QuotaNonPagedPoolUsage = vmc.QuotaNonPagedPoolUsage;
+    counters->PagefileUsage = vmc.PagefileUsage;
+    counters->PeakPagefileUsage = vmc.PeakPagefileUsage;
 
     return TRUE;
 }
@@ -459,14 +537,19 @@ BOOL WINAPI GetProcessMemoryInfo(HANDLE Process,
 /***********************************************************************
  *           GetWsChanges (PSAPI.@)
  */
-BOOL WINAPI GetWsChanges(HANDLE hProcess, 
-                         PPSAPI_WS_WATCH_INFORMATION lpWatchInfo, DWORD cb)
+BOOL WINAPI GetWsChanges( HANDLE process, PPSAPI_WS_WATCH_INFORMATION watchinfo, DWORD size )
 {
-    FIXME("(hProcess=%p, %p, %ld): stub\n",
-          hProcess, lpWatchInfo, cb);
+    NTSTATUS status;
 
-    memset(lpWatchInfo, 0, cb);
+    TRACE( "(%p, %p, %ld)\n", process, watchinfo, size );
 
+    status = NtQueryVirtualMemory( process, NULL, ProcessWorkingSetWatch, watchinfo, size, NULL );
+
+    if (status)
+    {
+        SetLastError( RtlNtStatusToDosError( status ) );
+        return FALSE;
+    }
     return TRUE;
 }
 
@@ -483,12 +566,37 @@ BOOL WINAPI InitializeProcessForWsWatch(HANDLE hProcess)
 /***********************************************************************
  *           QueryWorkingSet (PSAPI.@)
  */
-BOOL WINAPI QueryWorkingSet(HANDLE hProcess, LPVOID pv, DWORD cb)
+BOOL WINAPI QueryWorkingSet( HANDLE process, LPVOID buffer, DWORD size )
 {
-    FIXME("(hProcess=%p, %p, %ld)\n", hProcess, pv, cb);
+    NTSTATUS status;
 
-    if (pv && cb)
-        ((DWORD *) pv)[0] = 0; /* Empty WorkingSet */
+    TRACE( "(%p, %p, %ld)\n", process, buffer, size );
 
+    status = NtQueryVirtualMemory( process, NULL, MemoryWorkingSetList, buffer, size, NULL );
+
+    if (status)
+    {
+        SetLastError( RtlNtStatusToDosError( status ) );
+        return FALSE;
+    }
+    return TRUE;
+}
+
+/***********************************************************************
+ *           QueryWorkingSetEx (PSAPI.@)
+ */
+BOOL WINAPI QueryWorkingSetEx( HANDLE process, LPVOID buffer, DWORD size )
+{
+    NTSTATUS status;
+
+    TRACE( "(%p, %p, %ld)\n", process, buffer, size );
+
+    status = NtQueryVirtualMemory( process, NULL, MemoryWorkingSetList, buffer,  size, NULL );
+
+    if (status)
+    {
+        SetLastError( RtlNtStatusToDosError( status ) );
+        return FALSE;
+    }
     return TRUE;
 }
