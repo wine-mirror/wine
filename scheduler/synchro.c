@@ -24,15 +24,21 @@ static void call_apcs(void)
 #define MAX_APCS 16
     int i;
     void *buffer[MAX_APCS * 2];
+    int count;
     struct get_apcs_request *req = get_req_buffer();
 
     if (server_call( REQ_GET_APCS ) || !req->count) return;
     assert( req->count <= MAX_APCS );
+
+    /* make a copy of the request buffer... it may get trashed *
+     * when the apcs are called                                */
     memcpy( buffer, req->apcs, req->count * 2 * sizeof(req->apcs[0]) );
-    for (i = 0; i < req->count * 2; i += 2)
+    count = req->count;
+
+    for (i = 0; i < count * 2; i += 2)
     {
-        PAPCFUNC func = (PAPCFUNC)req->apcs[i];
-        if (func) func( (ULONG_PTR)req->apcs[i+1] );
+        PAPCFUNC func = (PAPCFUNC)buffer[i];
+        if (func) func( (ULONG_PTR)buffer[i+1] );
     }
 }
 
