@@ -1141,9 +1141,14 @@ static int WS2_recv ( int fd, struct iovec* iov, int count,
 
     hdr.msg_iov = iov;
     hdr.msg_iovlen = count;
+#ifdef HAVE_MSGHDR_ACCRIGHTS
+    hdr.msg_accrights = NULL;
+    hdr.msg_accrightslen = 0;
+#else
     hdr.msg_control = NULL;
     hdr.msg_controllen = 0;
     hdr.msg_flags = 0;
+#endif
 
     if ( (n = recvmsg (fd, &hdr, *lpFlags)) == -1 )
     {
@@ -1245,9 +1250,14 @@ static int WS2_send ( int fd, struct iovec* iov, int count,
 
     hdr.msg_iov = iov;
     hdr.msg_iovlen = count;
+#ifdef HAVE_MSGHDR_ACCRIGHTS
+    hdr.msg_accrights = NULL;
+    hdr.msg_accrightslen = 0;
+#else
     hdr.msg_control = NULL;
     hdr.msg_controllen = 0;
     hdr.msg_flags = 0;
+#endif
 
     n = sendmsg (fd, &hdr, dwFlags);
 
