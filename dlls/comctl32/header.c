@@ -763,11 +763,8 @@ HEADER_InsertItemA (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
     if (phdi->mask & HDI_TEXT) {
 	if (!phdi->pszText) /* null pointer check */
-	{
-	    lpItem->pszText = COMCTL32_Alloc(sizeof(WCHAR));
-	    lstrcpyAtoW(lpItem->pszText, "");
-	} 
-	else if (phdi->pszText != LPSTR_TEXTCALLBACKA) {
+	    phdi->pszText = "";
+	if (phdi->pszText != LPSTR_TEXTCALLBACKA) {
 	    len = lstrlenA (phdi->pszText);
 	    lpItem->pszText = COMCTL32_Alloc ((len+1)*sizeof(WCHAR));
 	    lstrcpyAtoW (lpItem->pszText, phdi->pszText);
@@ -851,12 +848,10 @@ HEADER_InsertItemW (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	lpItem->cxy = phdi->cxy;
 
     if (phdi->mask & HDI_TEXT) {
+	WCHAR wide_null_char = 0;
 	if (!phdi->pszText) /* null pointer check */
-	{	
-	    lpItem->pszText = COMCTL32_Alloc(sizeof(WCHAR));
-	    lstrcpyAtoW(lpItem->pszText, "");
-	}
-	else if (phdi->pszText != LPSTR_TEXTCALLBACKW) {
+	    phdi->pszText = &wide_null_char;	
+	if (phdi->pszText != LPSTR_TEXTCALLBACKW) {
 	    len = lstrlenW (phdi->pszText);
 	    lpItem->pszText = COMCTL32_Alloc ((len+1)*sizeof(WCHAR));
 	    lstrcpyW (lpItem->pszText, phdi->pszText);
