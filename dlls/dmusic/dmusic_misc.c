@@ -215,7 +215,65 @@ HRESULT WINAPI IDirectMusicAudioPathImpl_GetObjectInPath (LPDIRECTMUSICAUDIOPATH
 
 	FIXME("(%p, %ld, %ld, %ld, %s, %d, %s, %p): stub\n", This, dwPChannel, dwStage, dwBuffer, debugstr_guid(guidObject), dwIndex, debugstr_guid(iidInterface), ppObject);
 
-	return S_OK;
+	switch (dwStage) {
+	case DMUS_PATH_AUDIOPATH_GRAPH:
+	  {
+	    if (IsEqualGUID(iidInterface, &IID_IDirectMusicGraph)) {
+	      if (NULL == This->toolGraph) {
+		IDirectMusicGraphImpl* pGraph;
+		pGraph = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirectMusicGraphImpl));		
+		pGraph->lpVtbl = &DirectMusicGraph_Vtbl;
+		pGraph->ref = 1;
+		This->toolGraph = (IDirectMusicGraph*) pGraph;
+	      }
+	      *ppObject = (LPDIRECTMUSICGRAPH) This->toolGraph; 
+	      IDirectMusicGraphImpl_AddRef((LPDIRECTMUSICGRAPH) *ppObject);
+	      return S_OK;
+	    }
+	  }
+	  break;
+
+	case DMUS_PATH_AUDIOPATH_TOOL:
+	  {
+	    /* TODO */
+	  }
+	  break;
+
+	case DMUS_PATH_PERFORMANCE:
+	  {
+	    /* TODO check wanted GUID */
+	    *ppObject = (LPDIRECTMUSICPERFORMANCE) This->perfo; 
+	    IDirectMusicPerformanceImpl_AddRef((LPDIRECTMUSICPERFORMANCE) *ppObject);
+	    return S_OK;
+	  }
+	  break;
+
+	case DMUS_PATH_PERFORMANCE_GRAPH:
+	  {
+	    IDirectMusicGraph* pPerfoGraph = NULL; 
+	    IDirectMusicPerformanceImpl_GetGraph((LPDIRECTMUSICPERFORMANCE) This->perfo, &pPerfoGraph);
+	    if (NULL == pPerfoGraph) {
+	      IDirectMusicGraphImpl* pGraph = NULL; 
+	      pGraph = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirectMusicGraphImpl));		
+	      pGraph->lpVtbl = &DirectMusicGraph_Vtbl;
+	      pGraph->ref = 1;
+	      IDirectMusicPerformanceImpl_SetGraph((LPDIRECTMUSICPERFORMANCE) This->perfo, pGraph);
+	      /* we need release as SetGraph do an AddRef */
+	      IDirectMusicGraphImpl_Release((LPDIRECTMUSICGRAPH) pGraph);
+	      pPerfoGraph = (LPDIRECTMUSICGRAPH) pGraph;
+	    }
+	    *ppObject = (LPDIRECTMUSICGRAPH) pPerfoGraph; 
+	    return S_OK;
+	  }
+	  break;
+
+	case DMUS_PATH_PERFORMANCE_TOOL:
+	default:
+	  break;
+	}
+
+	*ppObject = NULL;
+	return E_INVALIDARG;
 }
 
 HRESULT WINAPI IDirectMusicAudioPathImpl_Activate (LPDIRECTMUSICAUDIOPATH iface, BOOL fActivate)
@@ -704,20 +762,66 @@ HRESULT WINAPI IDirectMusicGraphImpl_StampPMsg (LPDIRECTMUSICGRAPH iface, DMUS_P
 
 HRESULT WINAPI IDirectMusicGraphImpl_InsertTool (LPDIRECTMUSICGRAPH iface, IDirectMusicTool* pTool, DWORD* pdwPChannels, DWORD cPChannels, LONG lIndex)
 {
-	ICOM_THIS(IDirectMusicGraphImpl,iface);
+        int i;
+	IDirectMusicToolImpl* p;
+	IDirectMusicToolImpl* toAdd = (IDirectMusicToolImpl*) pTool;
+        ICOM_THIS(IDirectMusicGraphImpl,iface);
 
-	FIXME("(%p, %p, %p, %ld, %li): stub\n", This, pTool, pdwPChannels, cPChannels, lIndex);
+	FIXME("(%p, %p, %p, %ld, %li): use of pdwPChannels\n", This, pTool, pdwPChannels, cPChannels, lIndex);
 
-	return S_OK;
+	if (0 == This->num_tools) {
+	  This->first = This->last = toAdd;
+	  toAdd->prev = toAdd->next = NULL;
+	} else if (lIndex == 0 || lIndex <= -This->num_tools) {
+	  This->first->prev = toAdd;
+	  toAdd->next = This->first;
+	  toAdd->prev = NULL;
+	  This->first = toAdd;
+	} else if (lIndex < 0) {
+	  p = This->last;
+	  for (i = 0; i < -lIndex; ++i) {
+	    p = p->prev;
+	  }
+	  toAdd->next = p->next;
+	  if (p->next) p->next->prev = toAdd;
+	  p->next = toAdd;
+	  toAdd->prev = p;
+	} else if (lIndex >= This->num_tools) {
+	  This->last->next = toAdd;
+	  toAdd->prev = This->last;
+	  toAdd->next = NULL;
+	  This->last = toAdd;
+	} else if (lIndex > 0) {
+	  p = This->first;
+	  for (i = 0; i < lIndex; ++i) {
+	    p = p->next;
+	  }
+	  toAdd->prev = p->prev;
+	  if (p->prev) p->prev->next = toAdd;
+	  p->prev = toAdd;
+	  toAdd->next = p;
+	}
+	++This->num_tools;
+	return DS_OK;
 }
 
 HRESULT WINAPI IDirectMusicGraphImpl_GetTool (LPDIRECTMUSICGRAPH iface, DWORD dwIndex, IDirectMusicTool** ppTool)
 {
-	ICOM_THIS(IDirectMusicGraphImpl,iface);
-
+        int i;
+        IDirectMusicToolImpl* p = NULL;
+        ICOM_THIS(IDirectMusicGraphImpl,iface);
+	
 	FIXME("(%p, %ld, %p): stub\n", This, dwIndex, ppTool);
 
-	return S_OK;
+	p = This->first;
+	for (i = 0; i < dwIndex && i < This->num_tools; ++i) {
+	  p = p->next;
+	}
+	*ppTool = (IDirectMusicTool*) p;
+	if (NULL != *ppTool) {
+	  IDirectMusicToolImpl_AddRef(*ppTool);
+	}
+	return DS_OK;
 }
 
 HRESULT WINAPI IDirectMusicGraphImpl_RemoveTool (LPDIRECTMUSICGRAPH iface, IDirectMusicTool* pTool)

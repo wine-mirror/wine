@@ -60,32 +60,30 @@ static HRESULT WINAPI DMCF_CreateInstance(LPCLASSFACTORY iface, LPUNKNOWN pOuter
 {
 	ICOM_THIS(IClassFactoryImpl,iface);
 
-	TRACE ("(%p)->(%p,%s,%p)\n",This,pOuter,debugstr_guid(riid),ppobj);
-	if (IsEqualGUID (&IID_IDirectMusic, riid))
-	{
-		return DMUSIC_CreateDirectMusic (riid, (LPDIRECTMUSIC*)ppobj, pOuter);
+	TRACE ("(%p)->(%p,%s,%p)\n", This, pOuter, debugstr_guid(riid), ppobj);
+	if (IsEqualGUID (&IID_IDirectMusic, riid)) {
+	  return DMUSIC_CreateDirectMusic (riid, (LPDIRECTMUSIC*) ppobj, pOuter);
 	}
-	if (IsEqualGUID (&IID_IDirectMusicPerformance, riid))
+	if (IsEqualGUID (&IID_IDirectMusicPerformance, riid) ||
+	    IsEqualGUID (&IID_IDirectMusicPerformance8, riid))
 	{
-		return DMUSIC_CreateDirectMusicPerformance (riid, (LPDIRECTMUSICPERFORMANCE*)ppobj, pOuter);
+	  /*return DMUSIC_CreateDirectMusicPerformance (riid, (LPDIRECTMUSICPERFORMANCE*) ppobj, pOuter);*/
+	  return DMUSIC_CreateDirectMusicPerformance8(riid, (LPDIRECTMUSICPERFORMANCE8*) ppobj, pOuter);
+
 	}
-	if (IsEqualGUID (&IID_IDirectMusicPerformance8, riid))
-	{
-		return DMUSIC_CreateDirectMusicPerformance8 (riid, (LPDIRECTMUSICPERFORMANCE8*)ppobj, pOuter);
+	if (IsEqualGUID (&IID_IDirectMusicLoader, riid) ||
+	    IsEqualGUID (&IID_IDirectMusicLoader8, riid)) {
+	  return DMUSIC_CreateDirectMusicLoader8(riid, (LPDIRECTMUSICLOADER8*) ppobj, pOuter);
 	}
-	/*if (IsEqualGUID (&IID_IDirectMusicLoader8, riid))
-	{
-		return DMUSIC_CreateDirectMusicLoader8 (riid, (LPDIRECTMUSICLOADER8*)ppobj, pOuter);
-	}*/
 	
-    WARN("(%p)->(%s,%p),not found\n",This,debugstr_guid(riid),ppobj);
+	WARN("(%p)->(%s,%p),not found\n", This, debugstr_guid(riid), ppobj);
 	return E_NOINTERFACE;
 }
 
 static HRESULT WINAPI DMCF_LockServer(LPCLASSFACTORY iface,BOOL dolock)
 {
 	ICOM_THIS(IClassFactoryImpl,iface);
-	FIXME("(%p)->(%d),stub!\n",This,dolock);
+	FIXME("(%p)->(%d),stub!\n", This, dolock);
 	return S_OK;
 }
 
@@ -141,13 +139,11 @@ HRESULT WINAPI DMUSIC_DllCanUnloadNow(void)
 HRESULT WINAPI DMUSIC_DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv)
 {
     TRACE("(%p,%p,%p)\n", debugstr_guid(rclsid), debugstr_guid(riid), ppv);
-    if (IsEqualCLSID (&IID_IClassFactory, riid))
-	{
-    	*ppv = (LPVOID)&DMUSIC_CF;
-		IClassFactory_AddRef((IClassFactory*)*ppv);
-		return S_OK;
+    if (IsEqualCLSID (&IID_IClassFactory, riid)) {
+      *ppv = (LPVOID) &DMUSIC_CF;
+      IClassFactory_AddRef((IClassFactory*)*ppv);
+      return S_OK;
     }
-
     WARN("(%p,%p,%p): no interface found.\n", debugstr_guid(rclsid), debugstr_guid(riid), ppv);
     return CLASS_E_CLASSNOTAVAILABLE;
 }

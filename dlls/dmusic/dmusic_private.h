@@ -543,6 +543,8 @@ struct IDirectMusicToolImpl
   DWORD          ref;
 
   /* IDirectMusicToolImpl fields */
+  IDirectMusicToolImpl* prev;
+  IDirectMusicToolImpl* next;
 };
 
 /* IUnknown: */
@@ -567,6 +569,8 @@ struct IDirectMusicTool8Impl
   DWORD          ref;
 
   /* IDirectMusicTool8Impl fields */
+  IDirectMusicToolImpl* prev;
+  IDirectMusicToolImpl* next;
 };
 
 /* IUnknown: */
@@ -698,6 +702,7 @@ struct IDirectMusicLoaderImpl
   DWORD          ref;
 
   /* IDirectMusicLoaderImpl fields */
+  WCHAR          searchPath[MAX_PATH];
 };
 
 /* IUnknown: */
@@ -725,6 +730,8 @@ struct IDirectMusicLoader8Impl
   DWORD          ref;
 
   /* IDirectMusicLoader8Impl fields */
+  WCHAR          searchPath[MAX_PATH];
+  /* IDirectMusicLoader8Impl fields */ 
 };
 
 /* IUnknown: */
@@ -914,6 +921,8 @@ struct IDirectMusicAudioPathImpl
   DWORD          ref;
 
   /* IDirectMusicAudioPathImpl fields */
+  IDirectMusicPerformance* perfo;
+  IDirectMusicGraph*       toolGraph;
 };
 
 /* IUnknown: */
@@ -933,17 +942,19 @@ struct IDirectMusicPerformanceImpl
 {
   /* IUnknown fields */
   ICOM_VFIELD(IDirectMusicPerformance);
-  DWORD          ref;
+  DWORD              ref;
 
   /* IDirectMusicPerformanceImpl fields */
-  IDirectMusicImpl *dmusic;
-  IDirectSound *dsound;
+  IDirectMusic*      dmusic;
+  IDirectSound*      dsound;
+  IDirectMusicGraph* toolGraph;
+  DMUS_AUDIOPARAMS   params;
 	
   /* global parameters */
-  BOOL AutoDownload;
-  char MasterGrooveLevel;
+  BOOL  AutoDownload;
+  char  MasterGrooveLevel;
   float MasterTempo;
-  long MasterVolume;
+  long  MasterVolume;
 	
   /* performance channels */
   DMUSIC_PRIVATE_PCHANNEL PChannel[1];
@@ -1005,11 +1016,25 @@ struct IDirectMusicPerformance8Impl
 {
   /* IUnknown fields */
   ICOM_VFIELD(IDirectMusicPerformance8);
-  DWORD          ref;
+  DWORD                  ref;
 
-  /* IDirectMusicPerformance8Impl fields */
-  IDirectMusicImpl *dmusic;
-  IDirectSound *dsound;
+  /* IDirectMusicPerformanceImpl fields */
+  IDirectMusic*          dmusic;
+  IDirectSound*          dsound;
+  IDirectMusicGraph*     toolGraph;
+  DMUS_AUDIOPARAMS       params;
+
+  /* global parameters */
+  BOOL  AutoDownload;
+  char  MasterGrooveLevel;
+  float MasterTempo;
+  long  MasterVolume;
+	
+  /* performance channels */
+  DMUSIC_PRIVATE_PCHANNEL PChannel[1];
+
+   /* IDirectMusicPerformance8Impl fields */
+  IDirectMusicAudioPath* default_path;
 };
 
 /* IUnknown: */
@@ -1081,6 +1106,9 @@ struct IDirectMusicGraphImpl
   DWORD          ref;
 
   /* IDirectMusicGraphImpl fields */
+  IDirectMusicToolImpl* first;
+  IDirectMusicToolImpl* last;
+  WORD                  num_tools;
 };
 
 /* IUnknown: */

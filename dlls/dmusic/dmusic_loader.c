@@ -24,6 +24,7 @@
 #include "winuser.h"
 #include "wingdi.h"
 #include "wine/debug.h"
+#include "wine/unicode.h"
 
 #include "dmusic_private.h"
 
@@ -64,12 +65,13 @@ ULONG WINAPI IDirectMusicLoaderImpl_Release (LPDIRECTMUSICLOADER iface)
 }
 
 /* IDirectMusicLoader Interface follow: */
-HRESULT WINAPI IDirectMusicLoaderImpl_GetObject (LPDIRECTMUSICLOADER iface, LPDMUS_OBJECTDESC pDesc, REFIID riid, LPVOID*ppv)
+HRESULT WINAPI IDirectMusicLoaderImpl_GetObject (LPDIRECTMUSICLOADER iface, LPDMUS_OBJECTDESC pDesc, REFIID riid, LPVOID* ppv)
 {
 	ICOM_THIS(IDirectMusicLoaderImpl,iface);
 
 	FIXME("(%p, %p, %s, %p): stub\n", This, pDesc, debugstr_guid(riid), ppv);
 
+	*ppv = NULL;
 	return S_OK;
 }
 
@@ -84,11 +86,15 @@ HRESULT WINAPI IDirectMusicLoaderImpl_SetObject (LPDIRECTMUSICLOADER iface, LPDM
 
 HRESULT WINAPI IDirectMusicLoaderImpl_SetSearchDirectory (LPDIRECTMUSICLOADER iface, REFGUID rguidClass, WCHAR* pwzPath, BOOL fClear)
 {
-	ICOM_THIS(IDirectMusicLoaderImpl,iface);
+       ICOM_THIS(IDirectMusicLoaderImpl,iface);
+       
+	FIXME("(%p, %s, %p, %d): to check\n", This, debugstr_guid(rguidClass), pwzPath, fClear);
 
-	FIXME("(%p, %s, %p, %d): stub\n", This, debugstr_guid(rguidClass), pwzPath, fClear);
-
-	return S_OK;
+        if (0 == strncmpW(This->searchPath, pwzPath, MAX_PATH)) {
+         return S_FALSE;
+       } 
+       strncpyW(This->searchPath, pwzPath, MAX_PATH);
+       return DS_OK;
 }
 
 HRESULT WINAPI IDirectMusicLoaderImpl_ScanDirectory (LPDIRECTMUSICLOADER iface, REFGUID rguidClass, WCHAR* pwzFileExtension, WCHAR* pwzScanFileName)
@@ -201,10 +207,11 @@ ULONG WINAPI IDirectMusicLoader8Impl_Release (LPDIRECTMUSICLOADER8 iface)
 HRESULT WINAPI IDirectMusicLoader8Impl_GetObject (LPDIRECTMUSICLOADER8 iface, LPDMUS_OBJECTDESC pDesc, REFIID riid, LPVOID*ppv)
 {
 	ICOM_THIS(IDirectMusicLoader8Impl,iface);
-
+	
 	FIXME("(%p, %p, %s, %p): stub\n", This, pDesc, debugstr_guid(riid), ppv);
 
-	return S_OK;
+	*ppv = NULL;
+	return DS_OK;
 }
 
 HRESULT WINAPI IDirectMusicLoader8Impl_SetObject (LPDIRECTMUSICLOADER8 iface, LPDMUS_OBJECTDESC pDesc)
@@ -220,9 +227,9 @@ HRESULT WINAPI IDirectMusicLoader8Impl_SetSearchDirectory (LPDIRECTMUSICLOADER8 
 {
 	ICOM_THIS(IDirectMusicLoader8Impl,iface);
 
-	FIXME("(%p, %s, %p, %d): stub\n", This, debugstr_guid(rguidClass), pwzPath, fClear);
+	FIXME("(%p, %s, %p, %d): forward to IDirectMusicLoaderImpl::SetSearchDirectory\n", This, debugstr_guid(rguidClass), pwzPath, fClear);
 
-	return S_OK;
+        return IDirectMusicLoaderImpl_SetSearchDirectory((LPDIRECTMUSICLOADER) iface, rguidClass, pwzPath, fClear);
 }
 
 HRESULT WINAPI IDirectMusicLoader8Impl_ScanDirectory (LPDIRECTMUSICLOADER8 iface, REFGUID rguidClass, WCHAR* pwzFileExtension, WCHAR* pwzScanFileName)
@@ -296,13 +303,26 @@ HRESULT WINAPI IDirectMusicLoader8Impl_ReleaseObjectByUnknown (LPDIRECTMUSICLOAD
 	return S_OK;
 }
 
-HRESULT WINAPI IDirectMusicLoader8Impl_LoadObjectFromFile (LPDIRECTMUSICLOADER8 iface, REFGUID rguidClassID, REFIID iidInterfaceID, WCHAR* pwzFilePath, void** ppObject)
+HRESULT WINAPI IDirectMusicLoader8Impl_LoadObjectFromFile (LPDIRECTMUSICLOADER8 iface, 
+							   REFGUID rguidClassID, 
+							   REFIID iidInterfaceID, 
+							   WCHAR* pwzFilePath, 
+							   void** ppObject)
 {
 	ICOM_THIS(IDirectMusicLoader8Impl,iface);
 
-	FIXME("(%p, %s, %s, %p, %p): stub\n", This, debugstr_guid(rguidClassID), debugstr_guid(iidInterfaceID), pwzFilePath, ppObject);
+	FIXME("(%p, %s, %s, %s, %p): stub\n", This, debugstr_guid(rguidClassID), debugstr_guid(iidInterfaceID), debugstr_w(pwzFilePath), ppObject);
 
-	return S_OK;
+	if (IsEqualGUID(iidInterfaceID, &CLSID_DirectSoundWave)) {
+	  FIXME("wanted 'wav'\n");
+	} else if (IsEqualGUID(iidInterfaceID, &CLSID_DirectMusicScript)) {
+	  FIXME("wanted 'spt'\n");
+	} else if (IsEqualGUID(iidInterfaceID, &CLSID_DirectMusicContainer)) {
+	  FIXME("wanted 'con'\n");
+	}
+	
+	/** for now alway return not supported for avoiding futur crash */
+	return DMUS_E_LOADER_FORMATNOTSUPPORTED;
 }
 
 ICOM_VTABLE(IDirectMusicLoader8) DirectMusicLoader8_Vtbl =
@@ -330,7 +350,8 @@ HRESULT WINAPI DMUSIC_CreateDirectMusicLoader8 (LPCGUID lpcGUID, LPDIRECTMUSICLO
 	IDirectMusicLoader8Impl *dmloader8;
 
 	TRACE("(%p,%p,%p)\n",lpcGUID, ppDMLoad8, pUnkOuter);
-	if (IsEqualGUID(lpcGUID, &IID_IDirectMusicLoader8))
+	if (IsEqualGUID(lpcGUID, &IID_IDirectMusicLoader)
+	  || IsEqualGUID(lpcGUID, &IID_IDirectMusicLoader8))
 	{
 		dmloader8 = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirectMusicImpl));
 		if (NULL == dmloader8)
