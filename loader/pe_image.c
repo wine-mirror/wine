@@ -221,7 +221,7 @@ static FARPROC PE_FindExportedFunction(
         }
         else  /* forward entry point */
         {
-                WINE_MODREF *wm;
+                WINE_MODREF *wm_fw;
                 FARPROC proc;
                 char *forward = RVA(addr);
 		char module[256];
@@ -231,13 +231,13 @@ static FARPROC PE_FindExportedFunction(
                 if (end - forward >= sizeof(module)) return NULL;
                 memcpy( module, forward, end - forward );
 		module[end-forward] = 0;
-                if (!(wm = MODULE_FindModule( module )))
+                if (!(wm_fw = MODULE_FindModule( module )))
                 {
-                    ERR("module not found for forward '%s'\n", forward );
+                    ERR("module not found for forward '%s' used by '%s'\n", forward, wm->modname );
                     return NULL;
                 }
-		if (!(proc = MODULE_GetProcAddress( wm->module, end + 1, snoop )))
-                    ERR("function not found for forward '%s'\n", forward );
+		if (!(proc = MODULE_GetProcAddress( wm_fw->module, end + 1, snoop )))
+                    ERR("function not found for forward '%s' used by '%s'. If you are using builtin '%s', try using the native one instead.\n", forward, wm->modname, wm->modname );
 		return proc;
 	}
 }
