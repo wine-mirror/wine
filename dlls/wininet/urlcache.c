@@ -1594,25 +1594,80 @@ BOOL WINAPI CreateUrlCacheEntryA(
     IN DWORD dwReserved
 )
 {
+    DWORD len;
+    WCHAR *url_name;
+    WCHAR *file_extension;
+    WCHAR file_name[MAX_PATH];
+    BOOL bSuccess = FALSE;
+    DWORD dwError = 0;
+
+    if ((len = MultiByteToWideChar(CP_ACP, 0, lpszUrlName, -1, NULL, 0)) != 0 &&
+        (url_name = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR))) != 0)
+    {
+	MultiByteToWideChar(CP_ACP, 0, lpszUrlName, -1, url_name, len);
+	if ((len = MultiByteToWideChar(CP_ACP, 0, lpszFileExtension, -1, NULL, 0)) != 0 &&
+	    (file_extension = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR))) != 0)
+	{
+            MultiByteToWideChar(CP_ACP, 0, lpszFileExtension, -1, file_extension, len);
+	    if (CreateUrlCacheEntryW(url_name, dwExpectedFileSize, file_extension, file_name, dwReserved))
+	    {
+		if (WideCharToMultiByte(CP_ACP, 0, file_name, -1, lpszFileName, MAX_PATH, NULL, NULL) < MAX_PATH)
+		{
+		    bSuccess = TRUE;
+		}
+		else
+		{
+		    dwError = GetLastError();
+		}
+	    }
+	    else
+	    {
+		dwError = GetLastError();
+	    }
+	    HeapFree(GetProcessHeap(), 0, file_extension);
+	}
+	else
+	{
+	    dwError = GetLastError();
+	}
+        HeapFree(GetProcessHeap(), 0, url_name);
+	if (!bSuccess)
+	    SetLastError(dwError);
+    }
+    return bSuccess;
+}
+/***********************************************************************
+ *           CreateUrlCacheEntryW (WININET.@)
+ *
+ */
+BOOL WINAPI CreateUrlCacheEntryW(
+    IN LPCWSTR lpszUrlName,
+    IN DWORD dwExpectedFileSize,
+    IN LPCWSTR lpszFileExtension,
+    OUT LPWSTR lpszFileName,
+    IN DWORD dwReserved
+)
+{
     URLCACHECONTAINER * pContainer;
     LPURLCACHE_HEADER pHeader;
     CHAR szFile[MAX_PATH];
-    CHAR szExtension[MAX_PATH];
-    LPCSTR lpszUrlPart;
-    LPCSTR lpszUrlEnd;
-    LPCSTR lpszFileNameExtension;
-    LPSTR lpszFileNameNoPath;
+    WCHAR szExtension[MAX_PATH];
+    LPCWSTR lpszUrlPart;
+    LPCWSTR lpszUrlEnd;
+    LPCWSTR lpszFileNameExtension;
+    LPWSTR lpszFileNameNoPath;
     int i;
     int countnoextension;
     BYTE CacheDir;
     LONG lBufferSize;
     BOOL bFound = FALSE;
     int count;
+    static WCHAR szWWW[] = {'w','w','w',0};
 
     TRACE("(%s, 0x%08lx, %s, %p, 0x%08lx)\n",
-        debugstr_a(lpszUrlName),
+        debugstr_w(lpszUrlName),
         dwExpectedFileSize,
-        debugstr_a(lpszFileExtension),
+        debugstr_w(lpszFileExtension),
         lpszFileName,
         dwReserved);
 
@@ -1626,31 +1681,33 @@ BOOL WINAPI CreateUrlCacheEntryA(
     for (lpszUrlEnd = lpszUrlName; *lpszUrlEnd; lpszUrlEnd++)
         ;
     
-    if (((lpszUrlEnd - lpszUrlName) > 1) && (*(lpszUrlEnd - 1) == '/'))
+    if (((lpszUrlEnd - lpszUrlName) > 1) && (*(lpszUrlEnd - 1) == '/' || *(lpszUrlEnd - 1) == '\\'))
         lpszUrlEnd--;
 
     for (lpszUrlPart = lpszUrlEnd; 
         (lpszUrlPart >= lpszUrlName); 
         lpszUrlPart--)
     {
-        if ((*lpszUrlPart == '/') && ((lpszUrlEnd - lpszUrlPart) > 1))
+        if ((*lpszUrlPart == '/' || *lpszUrlPart == '\\') && ((lpszUrlEnd - lpszUrlPart) > 1))
         {
             bFound = TRUE;
             lpszUrlPart++;
             break;
         }
     }
-    if (!strcmp(lpszUrlPart, "www"))
+    if (!lstrcmpW(lpszUrlPart, szWWW))
     {
-        lpszUrlPart += strlen("www");
+        lpszUrlPart += lstrlenW(szWWW);
     }
 
     count = lpszUrlEnd - lpszUrlPart;
 
     if (bFound && (count < MAX_PATH))
     {
-        memcpy(szFile, lpszUrlPart, count * sizeof(CHAR));
-        szFile[count] = '\0';
+	int len = WideCharToMultiByte(CP_ACP, 0, lpszUrlPart, count, szFile, sizeof(szFile) - 1, NULL, NULL);
+	if (!len)
+	    return FALSE;
+        szFile[len] = '\0';
         /* FIXME: get rid of illegal characters like \, / and : */
     }
     else
@@ -1658,9 +1715,9 @@ BOOL WINAPI CreateUrlCacheEntryA(
         FIXME("need to generate a random filename\n");
     }
 
-    TRACE("File name: %s\n", szFile);
+    TRACE("File name: %s\n", debugstr_a(szFile));
 
-    if (!URLCacheContainers_FindContainerA(lpszUrlName, &pContainer))
+    if (!URLCacheContainers_FindContainerW(lpszUrlName, &pContainer))
         return FALSE;
 
     if (!URLCacheContainer_OpenIndex(pContainer))
@@ -1672,31 +1729,37 @@ BOOL WINAPI CreateUrlCacheEntryA(
     CacheDir = (BYTE)(rand() % pHeader->DirectoryCount);
 
     lBufferSize = MAX_PATH * sizeof(CHAR);
-    URLCache_LocalFileNameToPathA(pContainer, pHeader, szFile, CacheDir, lpszFileName, &lBufferSize);
+    URLCache_LocalFileNameToPathW(pContainer, pHeader, szFile, CacheDir, lpszFileName, &lBufferSize);
 
     URLCacheContainer_UnlockIndex(pContainer, pHeader);
 
-    lpszFileNameNoPath = lpszFileName + lBufferSize / sizeof(CHAR) + DIR_LENGTH + 1;
+    for (lpszFileNameNoPath = lpszFileName + lBufferSize / sizeof(CHAR) - 2; 
+        lpszFileNameNoPath >= lpszFileName; 
+        --lpszFileNameNoPath)
+    {
+        if (*lpszFileNameNoPath == '/' || *lpszFileNameNoPath == '\\')
+            break;
+    }
 
-    countnoextension = strlen(lpszFileNameNoPath);
-    lpszFileNameExtension = PathFindExtensionA(lpszFileNameNoPath);
+    countnoextension = lstrlenW(lpszFileNameNoPath);
+    lpszFileNameExtension = PathFindExtensionW(lpszFileNameNoPath);
     if (lpszFileNameExtension)
-        countnoextension -= strlen(lpszFileNameExtension);
+        countnoextension -= lstrlenW(lpszFileNameExtension);
     *szExtension = '\0';
 
     if (lpszFileExtension)
     {
         szExtension[0] = '.';
-        strcpy(szExtension+1, lpszFileExtension);
+        lstrcpyW(szExtension+1, lpszFileExtension);
     }
 
     for (i = 0; i < 255; i++)
     {
+	static WCHAR szFormat[] = {'[','%','u',']','%','s',0};
         HANDLE hFile;
-        strncpy(lpszFileNameNoPath, szFile, countnoextension);
-        sprintf(lpszFileNameNoPath + countnoextension, "[%u]%s", i, szExtension);
-        TRACE("Trying: %s\n", lpszFileName);
-        hFile = CreateFileA(lpszFileName, GENERIC_READ, 0, NULL, CREATE_NEW, 0, NULL);
+        wsprintfW(lpszFileNameNoPath + countnoextension, szFormat, i, szExtension);
+        TRACE("Trying: %s\n", debugstr_w(lpszFileName));
+        hFile = CreateFileW(lpszFileName, GENERIC_READ, 0, NULL, CREATE_NEW, 0, NULL);
         if (hFile != INVALID_HANDLE_VALUE)
         {
             CloseHandle(hFile);
@@ -1707,42 +1770,31 @@ BOOL WINAPI CreateUrlCacheEntryA(
     return FALSE;
 }
 
+
 /***********************************************************************
- *           CreateUrlCacheEntryW (WININET.@)
+ *           CommitUrlCacheEntryInternal (Compensates for an MS bug)
+ *
+ *   The bug we are compensating for is that some drongo at Microsoft
+ *   used lpHeaderInfo to pass binary data to CommitUrlCacheEntryA.
+ *   As a consequence, CommitUrlCacheEntryA has been effectively
+ *   redefined as LPBYTE rather than LPCSTR. But CommitUrlCacheEntryW
+ *   is still defined as LPCWSTR. The result (other than madness) is
+ *   that we always need to store lpHeaderInfo in CP_ACP rather than
+ *   in UTF16, and we need to avoid converting lpHeaderInfo in
+ *   CommitUrlCacheEntryA to UTF16 and then back to CP_ACP, since the
+ *   result will lose data for arbitrary binary data.
  *
  */
-BOOL WINAPI CreateUrlCacheEntryW(
+static BOOL WINAPI CommitUrlCacheEntryInternal(
     IN LPCWSTR lpszUrlName,
-    IN DWORD dwExpectedFileSize,
-    IN LPCWSTR lpszFileExtension,
-    OUT LPWSTR lpszFileName,
-    IN DWORD dwReserved
-)
-{
-    FIXME("(%s, 0x%08lx, %s, %p, 0x%08lx) stub\n",
-        debugstr_w(lpszUrlName),
-        dwExpectedFileSize,
-        debugstr_w(lpszFileExtension),
-        lpszFileName,
-        dwReserved);
-
-    return TRUE;
-}
-
-/***********************************************************************
- *           CommitUrlCacheEntryA (WININET.@)
- *
- */
-BOOL WINAPI CommitUrlCacheEntryA(
-    IN LPCSTR lpszUrlName,
-    IN LPCSTR lpszLocalFileName,
+    IN LPCWSTR lpszLocalFileName,
     IN FILETIME ExpireTime,
     IN FILETIME LastModifiedTime,
     IN DWORD CacheEntryType,
     IN LPBYTE lpHeaderInfo,
     IN DWORD dwHeaderSize,
-    IN LPCSTR lpszFileExtension,
-    IN LPCSTR dwReserved
+    IN LPCWSTR lpszFileExtension,
+    IN LPCWSTR lpszOriginalUrl
     )
 {
     URLCACHECONTAINER * pContainer;
@@ -1755,34 +1807,30 @@ BOOL WINAPI CommitUrlCacheEntryA(
     DWORD dwFileSizeLow = 0;
     DWORD dwFileSizeHigh = 0;
     BYTE cDirectory = 0;
+    char achFile[MAX_PATH];
+    char achUrl[MAX_PATH];
+    char *pchLocalFileName = 0;
 
-    TRACE("(%s, %s, ..., ..., %lx, %p, %ld, %s, %p)\n",
-        debugstr_a(lpszUrlName),
-        debugstr_a(lpszLocalFileName),
+    TRACE("(%s, %s, ..., ..., %lx, %p, %ld, %s, %s)\n",
+        debugstr_w(lpszUrlName),
+        debugstr_w(lpszLocalFileName),
         CacheEntryType,
         lpHeaderInfo,
         dwHeaderSize,
-        debugstr_a(lpszFileExtension),
-        dwReserved);
+        debugstr_w(lpszFileExtension),
+        debugstr_w(lpszOriginalUrl));
 
-    if (dwReserved)
-    {
-        ERR("dwReserved != 0\n");
-        SetLastError(ERROR_INVALID_PARAMETER);
-        return FALSE;
-    }
-    if (lpHeaderInfo == NULL)
-    {
-        FIXME("lpHeaderInfo == NULL - will crash at the moment\n");
-    }
+    if (lpszOriginalUrl)
+        WARN(": lpszOriginalUrl ignored\n");
  
     if (lpszLocalFileName)
     {
         HANDLE hFile;
-        hFile = CreateFileA(lpszLocalFileName, GENERIC_READ, 0, NULL, OPEN_EXISTING, 0, NULL);
+
+        hFile = CreateFileW(lpszLocalFileName, FILE_READ_ATTRIBUTES, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, NULL, OPEN_EXISTING, 0, NULL);
         if (hFile == INVALID_HANDLE_VALUE)
         {
-            ERR("couldn't open file %s (error is %ld)\n", debugstr_a(lpszLocalFileName), GetLastError());
+            ERR("couldn't open file %s (error is %ld)\n", debugstr_w(lpszLocalFileName), GetLastError());
             return FALSE;
         }
 
@@ -1798,7 +1846,7 @@ BOOL WINAPI CommitUrlCacheEntryA(
         CloseHandle(hFile);
     }
 
-    if (!URLCacheContainers_FindContainerA(lpszUrlName, &pContainer))
+    if (!URLCacheContainers_FindContainerW(lpszUrlName, &pContainer))
         return FALSE;
 
     if (!URLCacheContainer_OpenIndex(pContainer))
@@ -1807,7 +1855,9 @@ BOOL WINAPI CommitUrlCacheEntryA(
     if (!(pHeader = URLCacheContainer_LockIndex(pContainer)))
         return FALSE;
 
-    if (URLCache_FindEntryInHash(pHeader, lpszUrlName, &pEntry))
+    WideCharToMultiByte(CP_ACP, 0, lpszUrlName, -1, achUrl, -1, NULL, NULL);
+
+    if (URLCache_FindEntryInHash(pHeader, achUrl, &pEntry))
     {
         URLCacheContainer_UnlockIndex(pContainer, pHeader);
         FIXME("entry already in cache - don't know what to do!\n");
@@ -1821,29 +1871,24 @@ BOOL WINAPI CommitUrlCacheEntryA(
     if (lpszLocalFileName)
     {
         BOOL bFound = FALSE;
-        char szContainerPath[MAX_PATH];
-        int container_path_len;
-        container_path_len = WideCharToMultiByte(CP_ACP, 0, pContainer->path, -1, szContainerPath, sizeof(szContainerPath), NULL, NULL);
-        if (!container_path_len)
-        {
-            /* WideCharToMultiByte should have called SetLastError */
-            return FALSE;
-        }
 
-        if (strncmp(lpszLocalFileName, szContainerPath, container_path_len))
+        if (strncmpW(lpszLocalFileName, pContainer->path, lstrlenW(pContainer->path)))
         {
             URLCacheContainer_UnlockIndex(pContainer, pHeader);
-            ERR("path %s must begin with cache content path %s\n", debugstr_a(lpszLocalFileName), debugstr_a(szContainerPath));
+            ERR("path %s must begin with cache content path %s\n", debugstr_w(lpszLocalFileName), debugstr_w(pContainer->path));
             SetLastError(ERROR_INVALID_PARAMETER);
             return FALSE;
         }
 
         /* skip container path prefix */
-        lpszLocalFileName += container_path_len;
+        lpszLocalFileName += lstrlenW(pContainer->path);
+
+        WideCharToMultiByte(CP_ACP, 0, lpszLocalFileName, -1, achFile, -1, NULL, NULL);
+	pchLocalFileName = achFile;
 
         for (cDirectory = 0; cDirectory < pHeader->DirectoryCount; cDirectory++)
         {
-            if (!strncmp(pHeader->directory_data[cDirectory].filename, lpszLocalFileName, DIR_LENGTH))
+            if (!strncmp(pHeader->directory_data[cDirectory].filename, pchLocalFileName, DIR_LENGTH))
             {
                 bFound = TRUE;
                 break;
@@ -1853,7 +1898,7 @@ BOOL WINAPI CommitUrlCacheEntryA(
         if (!bFound)
         {
             URLCacheContainer_UnlockIndex(pContainer, pHeader);
-            ERR("cache directory not found in path %s\n", lpszLocalFileName);
+            ERR("cache directory not found in path %s\n", debugstr_w(lpszLocalFileName));
             SetLastError(ERROR_INVALID_PARAMETER);
             return FALSE;
         }
@@ -1861,11 +1906,11 @@ BOOL WINAPI CommitUrlCacheEntryA(
         lpszLocalFileName += (DIR_LENGTH + 1); /* "1234WXYZ\" */
     }
 
-    dwBytesNeeded = DWORD_ALIGN(dwBytesNeeded + strlen(lpszUrlName) + 1);
+    dwBytesNeeded = DWORD_ALIGN(dwBytesNeeded + strlen(achUrl) + 1);
     if (lpszLocalFileName)
     {
         dwOffsetLocalFileName = dwBytesNeeded;
-        dwBytesNeeded = DWORD_ALIGN(dwBytesNeeded + strlen(lpszLocalFileName) + 1);
+        dwBytesNeeded = DWORD_ALIGN(dwBytesNeeded + strlen(pchLocalFileName) + 1);
     }
     if (lpHeaderInfo)
     {
@@ -1919,13 +1964,14 @@ BOOL WINAPI CommitUrlCacheEntryA(
     pUrlEntry->dwUnknown7 = 0;
     pUrlEntry->dwUnknown8 = 0;
 
-    strcpy(pUrlEntry->szSourceUrlName, lpszUrlName);
-    if (dwOffsetLocalFileName)
-        strcpy((LPSTR)((LPBYTE)pUrlEntry + dwOffsetLocalFileName), lpszLocalFileName);
-    if (dwOffsetHeader)
-        memcpy((LPSTR)((LPBYTE)pUrlEntry + dwOffsetHeader), lpHeaderInfo, dwHeaderSize);
 
-    if (!URLCache_AddEntryToHash(pHeader, lpszUrlName, (DWORD)((LPBYTE)pUrlEntry - (LPBYTE)pHeader)))
+    strcpy(pUrlEntry->szSourceUrlName, achUrl);
+    if (dwOffsetLocalFileName)
+        strcpy((LPSTR)((LPBYTE)pUrlEntry + dwOffsetLocalFileName), pchLocalFileName);
+    if (dwOffsetHeader)
+	memcpy((LPBYTE)pUrlEntry + dwOffsetHeader, lpHeaderInfo, dwHeaderSize);
+
+    if (!URLCache_AddEntryToHash(pHeader, achUrl, (DWORD)((LPBYTE)pUrlEntry - (LPBYTE)pHeader)))
     {
         URLCacheContainer_UnlockIndex(pContainer, pHeader);
         return FALSE;
@@ -1934,6 +1980,87 @@ BOOL WINAPI CommitUrlCacheEntryA(
     URLCacheContainer_UnlockIndex(pContainer, pHeader);
 
     return TRUE;
+}
+
+/***********************************************************************
+ *           CommitUrlCacheEntryA (WININET.@)
+ *
+ */
+BOOL WINAPI CommitUrlCacheEntryA(
+    IN LPCSTR lpszUrlName,
+    IN LPCSTR lpszLocalFileName,
+    IN FILETIME ExpireTime,
+    IN FILETIME LastModifiedTime,
+    IN DWORD CacheEntryType,
+    IN LPBYTE lpHeaderInfo,
+    IN DWORD dwHeaderSize,
+    IN LPCSTR lpszFileExtension,
+    IN LPCSTR lpszOriginalUrl
+    )
+{
+    DWORD len;
+    WCHAR *url_name;
+    WCHAR *local_file_name;
+    WCHAR *original_url = NULL;
+    BOOL bSuccess = FALSE;
+    DWORD dwError = 0;
+
+    TRACE("(%s, %s, ..., ..., %lx, %p, %ld, %s, %s)\n",
+        debugstr_a(lpszUrlName),
+        debugstr_a(lpszLocalFileName),
+        CacheEntryType,
+        lpHeaderInfo,
+        dwHeaderSize,
+        debugstr_a(lpszFileExtension),
+        debugstr_a(lpszOriginalUrl));
+
+    if (lpszFileExtension != 0)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+	return FALSE;
+    }
+    if ((len = MultiByteToWideChar(CP_ACP, 0, lpszUrlName, -1, NULL, 0)) != 0 &&
+        (url_name = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR))) != 0)
+    {
+	MultiByteToWideChar(CP_ACP, 0, lpszUrlName, -1, url_name, len);
+	if ((len = MultiByteToWideChar(CP_ACP, 0, lpszLocalFileName, -1, NULL, 0)) != 0 &&
+	    (local_file_name = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR))) != 0)
+	{
+            MultiByteToWideChar(CP_ACP, 0, lpszLocalFileName, -1, local_file_name, len);
+	    if (!lpszOriginalUrl ||
+		((len = MultiByteToWideChar(CP_ACP, 0, lpszOriginalUrl, -1, NULL, 0)) != 0 &&
+		  (original_url = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR))) != 0))
+	    {
+		if (original_url)
+		    MultiByteToWideChar(CP_ACP, 0, lpszOriginalUrl, -1, original_url, len);
+	        if (CommitUrlCacheEntryInternal(url_name, local_file_name, ExpireTime, LastModifiedTime,
+					CacheEntryType, lpHeaderInfo, dwHeaderSize,
+					NULL, original_url))
+	        {
+	            bSuccess = TRUE;
+	        }
+	        else
+	        {
+	        dwError = GetLastError();
+                }
+	        if (original_url)
+	    	HeapFree(GetProcessHeap(), 0, original_url);
+	    }
+		else
+	    {
+	        dwError = GetLastError();
+	    }
+	    HeapFree(GetProcessHeap(), 0, local_file_name);
+	}
+	else
+	{
+	    dwError = GetLastError();
+	}
+        HeapFree(GetProcessHeap(), 0, url_name);
+	if (!bSuccess)
+	    SetLastError(dwError);
+    }
+    return bSuccess;
 }
 
 /***********************************************************************
@@ -1946,22 +2073,49 @@ BOOL WINAPI CommitUrlCacheEntryW(
     IN FILETIME ExpireTime,
     IN FILETIME LastModifiedTime,
     IN DWORD CacheEntryType,
-    IN LPBYTE lpHeaderInfo,
+    IN LPWSTR lpHeaderInfo,
     IN DWORD dwHeaderSize,
     IN LPCWSTR lpszFileExtension,
-    IN LPCWSTR dwReserved
+    IN LPCWSTR lpszOriginalUrl
     )
 {
-    FIXME("(%s, %s, ..., ..., %lx, %p, %ld, %s, %p) stub\n",
+    DWORD dwError = 0;
+    BOOL bSuccess = FALSE;
+    DWORD len = 0;
+    CHAR *header_info = NULL;
+
+    TRACE("(%s, %s, ..., ..., %lx, %p, %ld, %s, %s)\n",
         debugstr_w(lpszUrlName),
         debugstr_w(lpszLocalFileName),
         CacheEntryType,
         lpHeaderInfo,
         dwHeaderSize,
         debugstr_w(lpszFileExtension),
-        dwReserved);
+        debugstr_w(lpszOriginalUrl));
 
-    return TRUE;
+    if (!lpHeaderInfo ||
+	((len = WideCharToMultiByte(CP_ACP, 0, lpHeaderInfo, -1, NULL, 0, NULL, NULL)) != 0 &&
+         (header_info = HeapAlloc(GetProcessHeap(), 0, sizeof(CHAR) * len)) != 0))
+    {
+	if (header_info)
+            WideCharToMultiByte(CP_ACP, 0, lpHeaderInfo, -1, header_info, len, NULL, NULL);
+	if (CommitUrlCacheEntryInternal(lpszUrlName, lpszLocalFileName, ExpireTime, LastModifiedTime,
+				CacheEntryType, header_info, len, lpszFileExtension, lpszOriginalUrl))
+	{
+		bSuccess = TRUE;
+	}
+	else
+	{
+		dwError = GetLastError();
+	}
+	if (header_info)
+	{
+	    HeapFree(GetProcessHeap(), 0, header_info);
+	    if (!bSuccess)
+		SetLastError(dwError);
+	}
+    }
+    return bSuccess;
 }
 
 /***********************************************************************
