@@ -47,6 +47,17 @@ typedef struct
     SEGPTR    reserved WINE_PACKED;
 } LOADPARAMS16;
 
+/* Debugging support (DEBUG SYSTEM ONLY) */
+typedef struct
+{
+    WORD    flags;
+    DWORD   dwOptions WINE_PACKED;
+    DWORD   dwFilter WINE_PACKED;
+    CHAR    achAllocModule[8] WINE_PACKED;
+    DWORD   dwAllocBreak WINE_PACKED;
+    DWORD   dwAllocCount WINE_PACKED;
+} WINDEBUGINFO16, *LPWINDEBUGINFO16;
+
 #include "poppack.h"
 
 #define INVALID_HANDLE_VALUE16  ((HANDLE16) -1)
@@ -266,7 +277,7 @@ UINT16      WINAPI GetSystemDirectory16(LPSTR,UINT16);
 UINT16      WINAPI GetTempFileName16(BYTE,LPCSTR,UINT16,LPSTR);
 LONG        WINAPI GetVersion16(void);
 BOOL16      WINAPI GetVersionEx16(OSVERSIONINFO16*);
-BOOL16      WINAPI GetWinDebugInfo16(LPWINDEBUGINFO,UINT16);
+BOOL16      WINAPI GetWinDebugInfo16(LPWINDEBUGINFO16,UINT16);
 UINT16      WINAPI GetWindowsDirectory16(LPSTR,UINT16);
 HGLOBAL16   WINAPI GlobalAlloc16(UINT16,DWORD);
 DWORD       WINAPI GlobalCompact16(DWORD);
@@ -324,7 +335,7 @@ BOOL16      WINAPI SetFileAttributes16(LPCSTR,DWORD);
 UINT16      WINAPI SetHandleCount16(UINT16);
 WORD        WINAPI SetSelectorBase(WORD,DWORD);
 LONG        WINAPI SetSwapAreaSize16(WORD);
-BOOL16      WINAPI SetWinDebugInfo16(LPWINDEBUGINFO);
+BOOL16      WINAPI SetWinDebugInfo16(LPWINDEBUGINFO16);
 DWORD       WINAPI SizeofResource16(HMODULE16,HRSRC16);
 void        WINAPI UnlockSegment16(HGLOBAL16);
 BOOL16      WINAPI WritePrivateProfileString16(LPCSTR,LPCSTR,LPCSTR,LPCSTR);

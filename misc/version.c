@@ -492,10 +492,53 @@ DWORD WINAPI GetWinFlags16(void)
 }
 
 
+#if 0
+/* Not used at this time. This is here for documentation only */
+
+/* WINDEBUGINFO flags values */
+#define WDI_OPTIONS         0x0001
+#define WDI_FILTER          0x0002
+#define WDI_ALLOCBREAK      0x0004
+
+/* dwOptions values */
+#define DBO_CHECKHEAP       0x0001
+#define DBO_BUFFERFILL      0x0004
+#define DBO_DISABLEGPTRAPPING 0x0010
+#define DBO_CHECKFREE       0x0020
+
+#define DBO_SILENT          0x8000
+
+#define DBO_TRACEBREAK      0x2000
+#define DBO_WARNINGBREAK    0x1000
+#define DBO_NOERRORBREAK    0x0800
+#define DBO_NOFATALBREAK    0x0400
+#define DBO_INT3BREAK       0x0100
+
+/* DebugOutput flags values */
+#define DBF_TRACE           0x0000
+#define DBF_WARNING         0x4000
+#define DBF_ERROR           0x8000
+#define DBF_FATAL           0xc000
+
+/* dwFilter values */
+#define DBF_KERNEL          0x1000
+#define DBF_KRN_MEMMAN      0x0001
+#define DBF_KRN_LOADMODULE  0x0002
+#define DBF_KRN_SEGMENTLOAD 0x0004
+#define DBF_USER            0x0800
+#define DBF_GDI             0x0400
+#define DBF_MMSYSTEM        0x0040
+#define DBF_PENWIN          0x0020
+#define DBF_APPLICATION     0x0008
+#define DBF_DRIVER          0x0010
+
+#endif /* NOLOGERROR */
+
+
 /***********************************************************************
  *	    GetWinDebugInfo   (KERNEL.355)
  */
-BOOL16 WINAPI GetWinDebugInfo16(WINDEBUGINFO *lpwdi, UINT16 flags)
+BOOL16 WINAPI GetWinDebugInfo16(WINDEBUGINFO16 *lpwdi, UINT16 flags)
 {
     FIXME("(%8lx,%d): stub returning 0\n",
 	  (unsigned long)lpwdi, flags);
@@ -509,7 +552,7 @@ BOOL16 WINAPI GetWinDebugInfo16(WINDEBUGINFO *lpwdi, UINT16 flags)
 /***********************************************************************
  *	    SetWinDebugInfo   (KERNEL.356)
  */
-BOOL16 WINAPI SetWinDebugInfo16(WINDEBUGINFO *lpwdi)
+BOOL16 WINAPI SetWinDebugInfo16(WINDEBUGINFO16 *lpwdi)
 {
     FIXME("(%8lx): stub returning 0\n", (unsigned long)lpwdi);
     /* 0 means not in debugging mode/version */
