@@ -28,8 +28,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(dmusic);
  *
  */
  
-extern HRESULT WINAPI DMUSIC_CreateDirectMusic (LPCGUID lpcGUID, LPDIRECTMUSIC *ppDM, LPUNKNOWN pUnkOuter);
-
 typedef struct
 {
     /* IUnknown fields */
@@ -67,6 +65,10 @@ static HRESULT WINAPI DMCF_CreateInstance(LPCLASSFACTORY iface, LPUNKNOWN pOuter
 	{
 		return DMUSIC_CreateDirectMusic (riid, (LPDIRECTMUSIC*)ppobj, pOuter);
 	}
+	if (IsEqualGUID (&IID_IDirectMusicPerformance, riid))
+	{
+		return DMUSIC_CreateDirectMusicPerformance (riid, (LPDIRECTMUSICPERFORMANCE*)ppobj, pOuter);
+	}
 	
     WARN("(%p)->(%s,%p),not found\n",This,debugstr_guid(riid),ppobj);
 	return E_NOINTERFACE;
@@ -100,12 +102,10 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 	if (fdwReason == DLL_PROCESS_ATTACH)
 	{
 		/* FIXME: Initialisation */
-		FIXME("stub\n");
 	}
 	else if (fdwReason == DLL_PROCESS_DETACH)
 	{
 		/* FIXME: Cleanup */
-		FIXME("stub\n");
 	}
 
 	return TRUE;

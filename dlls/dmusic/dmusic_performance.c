@@ -65,8 +65,36 @@ ULONG WINAPI IDirectMusicPerformanceImpl_Release (LPDIRECTMUSICPERFORMANCE iface
 /* IDirectMusicPerformance Interface follow: */
 HRESULT WINAPI IDirectMusicPerformanceImpl_Init (LPDIRECTMUSICPERFORMANCE iface, IDirectMusic** ppDirectMusic, LPDIRECTSOUND pDirectSound, HWND hWnd)
 {
-	FIXME("stub\n");
-	return DS_OK;
+	ICOM_THIS(IDirectMusicPerformanceImpl,iface);
+	FIXME("(iface = %p, dmusic = %p (*dmusic = %p), dsound = %p, hwnd = %p): semi-stub\n", This, ppDirectMusic, *ppDirectMusic, pDirectSound, hWnd);
+	
+	/* app creates it's own dmusic object and gives it to performance */
+	if (*ppDirectMusic)
+	{
+		TRACE("App provides DirectMusic\n");
+		/* FIXME: is this correct? */
+		memcpy(This->dmusic, *ppDirectMusic, sizeof(*ppDirectMusic));
+		IDirectMusic_AddRef(This->dmusic);
+		/* app is supposed to be in charge of everything else */
+		return S_OK;
+	}
+	/* app allows the performance to initialise itfself and needs a pointer to object*/
+	if (!*ppDirectMusic)
+	{
+		TRACE("DirectMusic to be created; needed\n");
+		if (!This->dmusic)
+			DMUSIC_CreateDirectMusic(&IID_IDirectMusic, &This->dmusic, NULL);
+		*ppDirectMusic = This->dmusic;
+		if (*ppDirectMusic)
+			IDirectMusic_AddRef(*ppDirectMusic);
+	}
+	/* app allows the performance to initialise itself and does not need a pointer to object*/
+	if (!ppDirectMusic)
+	{
+		TRACE("DirectMusic to be created; not needed\n");
+	}
+	
+	return S_OK;
 }
 
 HRESULT WINAPI IDirectMusicPerformanceImpl_PlaySegment (LPDIRECTMUSICPERFORMANCE iface, IDirectMusicSegment* pSegment, DWORD dwFlags, __int64 i64StartTime, IDirectMusicSegmentState** ppSegmentState)
@@ -275,8 +303,9 @@ HRESULT WINAPI IDirectMusicPerformanceImpl_AdjustTime (LPDIRECTMUSICPERFORMANCE 
 
 HRESULT WINAPI IDirectMusicPerformanceImpl_CloseDown (LPDIRECTMUSICPERFORMANCE iface)
 {
-	FIXME("stub\n");
-	return DS_OK;
+ 	ICOM_THIS(IDirectMusicPerformanceImpl,iface);
+	FIXME("(%p): semi-stub\n", This);
+	return S_OK;
 }
 
 HRESULT WINAPI IDirectMusicPerformanceImpl_GetResolvedTime (LPDIRECTMUSICPERFORMANCE iface, REFERENCE_TIME rtTime, REFERENCE_TIME* prtResolved, DWORD dwTimeResolveFlags)
@@ -358,6 +387,30 @@ ICOM_VTABLE(IDirectMusicPerformance) DirectMusicPerformance_Vtbl =
 	IDirectMusicPerformanceImpl_RhythmToTime
 };
 
+HRESULT WINAPI DMUSIC_CreateDirectMusicPerformance (LPCGUID lpcGUID, LPDIRECTMUSICPERFORMANCE *ppDMPerf, LPUNKNOWN pUnkOuter)
+{
+	IDirectMusicPerformanceImpl *pPerf;
+
+	TRACE("(%p,%p,%p)\n",lpcGUID, ppDMPerf, pUnkOuter);
+
+	if (IsEqualGUID(lpcGUID, &IID_IDirectMusicPerformance))
+	{
+		pPerf = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirectMusicPerformanceImpl));
+		if (NULL == pPerf)
+		{
+			*ppDMPerf = (LPDIRECTMUSICPERFORMANCE)NULL;
+			return E_OUTOFMEMORY;
+		}
+
+		pPerf->lpVtbl = &DirectMusicPerformance_Vtbl;
+		pPerf->ref = 1;
+		*ppDMPerf = (LPDIRECTMUSICPERFORMANCE)pPerf;
+		return S_OK;
+	}
+
+	WARN("No interface found\n");
+	return E_NOINTERFACE;
+}
 
 /* IDirectMusicPerformance8 IUnknown parts follow: */
 HRESULT WINAPI IDirectMusicPerformance8Impl_QueryInterface (LPDIRECTMUSICPERFORMANCE8 iface, REFIID riid, LPVOID *ppobj)
