@@ -613,9 +613,9 @@ static LPWINE_CLIPFORMAT CLIPBOARD_RenderText( UINT wFormat )
 
 	/* Text always NULL terminated */
 	if(lpSource->wFormatID == CF_UNICODETEXT)
-	    src_chars = strlenW((LPCWSTR)lpstrS);
+	    src_chars = strlenW((LPCWSTR)lpstrS)+1;
 	else
-	    src_chars = strlen(lpstrS);
+	    src_chars = strlen(lpstrS)+1;
 
 	/* Calculate number of characters in the destination buffer */
 	dst_chars = CLIPBOARD_ConvertText(lpSource->wFormatID, lpstrS, src_chars,
