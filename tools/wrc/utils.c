@@ -346,26 +346,34 @@ static const struct lang2cp lang2cps[] =
     { LANG_AZERI,          SUBLANG_AZERI_CYRILLIC,       1251 },
     { LANG_BASQUE,         SUBLANG_NEUTRAL,              1252 },
     { LANG_BELARUSIAN,     SUBLANG_NEUTRAL,              1251 },
+#ifdef LANG_BRETON
     { LANG_BRETON,         SUBLANG_NEUTRAL,              1252 },
+#endif /* LANG_BRETON */
     { LANG_BULGARIAN,      SUBLANG_NEUTRAL,              1251 },
     { LANG_CATALAN,        SUBLANG_NEUTRAL,              1252 },
     { LANG_CHINESE,        SUBLANG_NEUTRAL,              950  },
     { LANG_CHINESE,        SUBLANG_CHINESE_SINGAPORE,    936  },
     { LANG_CHINESE,        SUBLANG_CHINESE_SIMPLIFIED,   936  },
+#ifdef LANG_CORNISH
     { LANG_CORNISH,        SUBLANG_NEUTRAL,              1252 },
+#endif /* LANG_CORNISH */
     { LANG_CROATIAN,       SUBLANG_NEUTRAL,              1250 },
     { LANG_CZECH,          SUBLANG_NEUTRAL,              1250 },
     { LANG_DANISH,         SUBLANG_NEUTRAL,              1252 },
     { LANG_DIVEHI,         SUBLANG_NEUTRAL,              0    },
     { LANG_DUTCH,          SUBLANG_NEUTRAL,              1252 },
     { LANG_ENGLISH,        SUBLANG_NEUTRAL,              1252 },
+#ifdef LANG_ESPERANTO
     { LANG_ESPERANTO,      SUBLANG_NEUTRAL,              1252 },
+#endif /* LANG_ESPERANTO */
     { LANG_ESTONIAN,       SUBLANG_NEUTRAL,              1257 },
     { LANG_FAEROESE,       SUBLANG_NEUTRAL,              1252 },
     { LANG_FARSI,          SUBLANG_NEUTRAL,              1256 },
     { LANG_FINNISH,        SUBLANG_NEUTRAL,              1252 },
     { LANG_FRENCH,         SUBLANG_NEUTRAL,              1252 },
+#ifdef LANG_GAELIC
     { LANG_GAELIC,         SUBLANG_NEUTRAL,              1252 },
+#endif /* LANG_GAELIC */
     { LANG_GALICIAN,       SUBLANG_NEUTRAL,              1252 },
     { LANG_GEORGIAN,       SUBLANG_NEUTRAL,              0    },
     { LANG_GERMAN,         SUBLANG_NEUTRAL,              1252 },
@@ -414,9 +422,13 @@ static const struct lang2cp lang2cps[] =
     { LANG_URDU,           SUBLANG_NEUTRAL,              1256 },
     { LANG_UZBEK,          SUBLANG_NEUTRAL,              1254 },
     { LANG_UZBEK,          SUBLANG_UZBEK_CYRILLIC,       1251 },
-    { LANG_VIETNAMESE,     SUBLANG_NEUTRAL,              1258 },
-    { LANG_WALON,          SUBLANG_NEUTRAL,              1252 },
-    { LANG_WELSH,          SUBLANG_NEUTRAL,              1252 }
+    { LANG_VIETNAMESE,     SUBLANG_NEUTRAL,              1258 }
+#ifdef LANG_WALON
+    , { LANG_WALON,          SUBLANG_NEUTRAL,              1252 }
+#endif /* LANG_WALON */
+#ifdef LANG_WELSH
+    , { LANG_WELSH,          SUBLANG_NEUTRAL,              1252 }
+#endif /* LANG_WELSH */
 };
 
 int get_language_codepage( unsigned short lang, unsigned short sublang )
