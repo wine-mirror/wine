@@ -108,7 +108,7 @@ static void test_GetAcceptLanguagesA(void)
 		"ERROR_PROC_NOT_FOUND(NT4)/ERROR_NO_IMPERSONATION_TOKEN(XP)\n", GetLastError());
             ok(exactsize == strlen(buffer),
                  "buffer content (length) wrong: got %08x, expected %08lx \n", strlen(buffer), exactsize);
-            } else if((buffersize -1) == exactsize) {
+            } else if((buffersize +1) == buffersize2) {
                 ok(ERROR_SUCCESS == GetLastError(),
                     "last error wrong: got %08lx; expected ERROR_SUCCESS\n", GetLastError());
                 ok(buffersize == strlen(buffer),
@@ -140,7 +140,7 @@ static void test_GetAcceptLanguagesA(void)
             ok(ERROR_SUCCESS == GetLastError(),
                  "last error wrong: got %08lx; expected ERROR_SUCCESS\n", GetLastError());
             if((buffersize == exactsize) /* XP */ ||
-               ((buffersize -1)== exactsize) /* 98 */)
+               ((buffersize +1)== exactsize) /* 98 */)
                 ok(buffersize == strlen(buffer),
                     "buffer content (length) wrong: got %08x, expected %08lx \n", strlen(buffer), buffersize);
             else
