@@ -3159,6 +3159,10 @@ TOOLBAR_LButtonUp (HWND hwnd, WPARAM wParam, LPARAM lParam)
     pt.y = (INT)HIWORD(lParam);
     nHit = TOOLBAR_InternalHitTest (hwnd, &pt);
 
+    /* restore hot effect to hot button disabled by TOOLBAR_LButtonDown() */
+    if(infoPtr->nHotItem >= 0)
+        infoPtr->buttons[infoPtr->nHotItem].bHot = TRUE;
+
     if ((infoPtr->bCaptured) && (infoPtr->nButtonDown >= 0)) {
 	infoPtr->bCaptured = FALSE;
 	ReleaseCapture ();
@@ -3317,10 +3321,14 @@ TOOLBAR_MouseMove (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	    btnPtr = &infoPtr->buttons[nHit];
 	    btnPtr->bHot = TRUE;
 
-            RedrawWindow(hwnd,&btnPtr->rect,NULL,
-                         RDW_ERASE|RDW_INVALIDATE|RDW_UPDATENOW);
-
 	    infoPtr->nHotItem = nHit;
+
+            /* only enabled buttons show hot effect */            
+            if(infoPtr->buttons[nHit].fsState & TBSTATE_ENABLED)
+            {
+                RedrawWindow(hwnd,&btnPtr->rect,NULL,
+                         RDW_ERASE|RDW_INVALIDATE|RDW_UPDATENOW);
+            }
 	}
 
     if (infoPtr->bCaptured) {
