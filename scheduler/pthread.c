@@ -8,6 +8,7 @@
  */
 
 #include "config.h"
+#define _GNU_SOURCE /* we may need to override some GNU extensions */
 
 #include <assert.h>
 #include <errno.h>
@@ -393,6 +394,85 @@ int pthread_condattr_destroy(pthread_condattr_t *attr)
 {
   return 0;
 }
+
+#if (__GLIBC__ == 2) && (__GLIBC_MINOR__ >= 2)
+/***** READ-WRITE LOCKS *****/
+/* not implemented right now */
+
+int __pthread_rwlock_init(pthread_rwlock_t *rwlock, const pthread_rwlockattr_t *rwlock_attr)
+{
+  P_OUTPUT("FIXME:pthread_rwlock_init\n");
+  return 0;
+}
+strong_alias(__pthread_rwlock_init, pthread_rwlock_init);
+
+int __pthread_rwlock_destroy(pthread_rwlock_t *rwlock)
+{
+  P_OUTPUT("FIXME:pthread_rwlock_destroy\n");
+  return 0;
+}
+strong_alias(__pthread_rwlock_destroy, pthread_rwlock_destroy);
+
+int __pthread_rwlock_rdlock(pthread_rwlock_t *rwlock)
+{
+  P_OUTPUT("FIXME:pthread_rwlock_rdlock\n");
+  return 0;
+}
+strong_alias(__pthread_rwlock_rdlock, pthread_rwlock_rdlock);
+
+int __pthread_rwlock_tryrdlock(pthread_rwlock_t *rwlock)
+{
+  P_OUTPUT("FIXME:pthread_rwlock_tryrdlock\n");
+  return 0;
+}
+strong_alias(__pthread_rwlock_tryrdlock, pthread_rwlock_tryrdlock);
+
+int __pthread_rwlock_wrlock(pthread_rwlock_t *rwlock)
+{
+  P_OUTPUT("FIXME:pthread_wrlock_rdlock\n");
+  return 0;
+}
+strong_alias(__pthread_rwlock_wrlock, pthread_rwlock_wrlock);
+
+int __pthread_rwlock_trywrlock(pthread_rwlock_t *rwlock)
+{
+  P_OUTPUT("FIXME:pthread_rwlock_trywrlock\n");
+  return 0;
+}
+strong_alias(__pthread_rwlock_trywrlock, pthread_rwlock_trywrlock);
+
+int __pthread_rwlock_unlock(pthread_rwlock_t *rwlock)
+{
+  P_OUTPUT("FIXME:pthread_rwlock_unlock\n");
+  return 0;
+}
+strong_alias(__pthread_rwlock_unlock, pthread_rwlock_unlock);
+
+/**** READ-WRITE LOCK ATTRIBUTES *****/
+/* not implemented right now */
+
+int pthread_rwlockattr_init(pthread_rwlockattr_t *attr)
+{
+  return 0;
+}
+
+int __pthread_rwlockattr_destroy(pthread_rwlockattr_t *attr)
+{
+  return 0;
+}
+strong_alias(__pthread_rwlockattr_destroy, pthread_rwlockattr_destroy);
+
+int pthread_rwlockattr_getkind_np(const pthread_rwlockattr_t *attr, int *pref)
+{
+  *pref = 0;
+  return 0;
+}
+
+int pthread_rwlockattr_setkind_np(pthread_rwlockattr_t *attr, int pref)
+{
+  return 0;
+}
+#endif /* glibc 2.2 */
 
 /***** MISC *****/
 
