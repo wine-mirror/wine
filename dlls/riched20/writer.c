@@ -524,9 +524,10 @@ ME_StreamOutRTFCharProps(ME_TextEditor *editor, CHARFORMAT2W *fmt)
             || fmt->bCharSet == editor->pStream->fonttbl[i].bCharSet)
           break;
     }
-    if (i < editor->pStream->nFontTblLen && i != editor->pStream->nDefaultFont)
+    if (i < editor->pStream->nFontTblLen)
     {
-      sprintf(props + strlen(props), "\\f%u", i);
+      if (i != editor->pStream->nDefaultFont)
+        sprintf(props + strlen(props), "\\f%u", i);
 
       /* In UTF-8 mode, charsets/codepages are not used */
       if (editor->pStream->nDefaultCodePage != CP_UTF8)
@@ -582,14 +583,19 @@ ME_StreamOutRTFText(ME_TextEditor *editor, WCHAR *text, LONG nChars)
       buffer[pos++] = (char)(*text++);
       nChars--;
     } else {
-      BOOL unknown;
+      BOOL unknown = FALSE;
       BYTE letter[3];
       int nBytes, i;
       
+      /* FIXME: In the MS docs for WideCharToMultiByte there is a big list of
+       * codepages including CP_SYMBOL for which the last parameter must be set
+       * to NULL for the function to succeed. But in Wine we need to care only
+       * about CP_SYMBOL */
       nBytes = WideCharToMultiByte(editor->pStream->nCodePage, 0, text, 1,
-                                   letter, 3, NULL, &unknown);
+                                   letter, 3, NULL,
+                                   (editor->pStream->nCodePage == CP_SYMBOL) ? NULL : &unknown);
       if (unknown)
-        pos += sprintf(buffer + pos, "\\u%d?", (int)*text);
+        pos += sprintf(buffer + pos, "\\u%d?", (short)*text);
       else if (*letter < 128) {
         if (*letter == '{' || *letter == '}' || *letter == '\\')
           buffer[pos++] = '\\';
