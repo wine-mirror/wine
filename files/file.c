@@ -1410,7 +1410,8 @@ BOOL WINAPI GetOverlappedResult(
     if(lpTransferred)
         *lpTransferred = lpOverlapped->InternalHigh;
 
-    SetLastError(lpOverlapped->Internal);
+    SetLastError ( lpOverlapped->Internal == STATUS_PENDING ?
+                   ERROR_IO_INCOMPLETE : lpOverlapped->Internal );
 
     return (r==WAIT_OBJECT_0);
 }
@@ -1598,41 +1599,21 @@ BOOL WINAPI ReadFile( HANDLE hFile, LPVOID buffer, DWORD bytesToRead,
             SetLastError(ERROR_INVALID_PARAMETER);
             return FALSE;
         }
-
-        /* see if we can read some data already (this shouldn't block) */
-        result = pread( unix_handle, buffer, bytesToRead, OVERLAPPED_OFFSET(overlapped) );
-        if ((result < 0) && (errno == ESPIPE))
-            result = read( unix_handle, buffer, bytesToRead );
-        close(unix_handle);
-
-        if(result<0)
-        {
-            if( (errno!=EAGAIN) && (errno!=EINTR) &&
-                ((errno != EFAULT) || IsBadWritePtr( buffer, bytesToRead )) )
-            {
-                FILE_SetDosError();
-                return FALSE;
-            }
-            else
-                result = 0;
-        }
         
-        /* if we read enough to keep the app happy, then return now */
-        if(result>=bytesToRead)
-        {
-            *bytesRead = result;
-            return TRUE;
-        }
-
-        /* at last resort, do an overlapped read */
-        overlapped->InternalHigh = result;
+        close(unix_handle);
+        overlapped->InternalHigh = 0;
         
         if(!FILE_ReadFileEx(hFile, buffer, bytesToRead, overlapped, NULL, overlapped->hEvent))
             return FALSE;
 
-        /* fail on return, with ERROR_IO_PENDING */
-        SetLastError(ERROR_IO_PENDING);
-        return FALSE;
+        if ( !GetOverlappedResult (hFile, overlapped, bytesRead, FALSE) )
+        {
+            if ( GetLastError() == ERROR_IO_INCOMPLETE )
+                SetLastError ( ERROR_IO_PENDING );
+            return FALSE;
+        }
+
+        return TRUE;
     }
     if (flags & FD_FLAG_TIMEOUT)
     {
@@ -1817,43 +1798,20 @@ BOOL WINAPI WriteFile( HANDLE hFile, LPCVOID buffer, DWORD bytesToWrite,
             return FALSE;
         }
 
-        /* see if we can write some data already (this shouldn't block) */
-
-        result = pwrite( unix_handle, buffer, bytesToWrite, OVERLAPPED_OFFSET (overlapped) );
-        if ((result < 0) && (errno == ESPIPE))
-            result = write( unix_handle, buffer, bytesToWrite );
-
         close(unix_handle);
+        overlapped->InternalHigh = 0;
 
-        if(result<0)
-        {
-            if( (errno!=EAGAIN) && (errno!=EINTR) &&
-                ((errno != EFAULT) || IsBadReadPtr( buffer, bytesToWrite )) )
-            {
-                FILE_SetDosError();
-                return FALSE;
-            }
-            else
-                result = 0;
-        }
-
-        /* if we wrote enough to keep the app happy, then return now */
-        if(result>=bytesToWrite)
-        {
-            *bytesWritten = result;
-            return TRUE;
-        }
-
-        /* at last resort, do an overlapped read */
-        overlapped->Internal     = STATUS_PENDING;
-        overlapped->InternalHigh = result;
-        
         if(!FILE_WriteFileEx(hFile, buffer, bytesToWrite, overlapped, NULL, overlapped->hEvent))
             return FALSE;
 
-        /* fail on return, with ERROR_IO_PENDING */
-        SetLastError(ERROR_IO_PENDING);
-        return FALSE;
+        if ( !GetOverlappedResult (hFile, overlapped, bytesWritten, FALSE) )
+        {
+            if ( GetLastError() == ERROR_IO_INCOMPLETE )
+                SetLastError ( ERROR_IO_PENDING );
+            return FALSE;
+        }
+
+        return TRUE;
     }
 
     switch(type)
