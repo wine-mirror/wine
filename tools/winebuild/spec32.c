@@ -534,14 +534,16 @@ void BuildSpec32File( FILE *outfile )
                  "extern void __stdcall ExitProcess(unsigned int);\n"
                  "static void __wine_exe_main(void)\n"
                  "{\n"
-                 "    extern int __wine_get_main_args( char ***argv );\n"
+                 "    extern int __wine_main_argc;\n"
+                 "    extern char **__wine_main_argv;\n"
                  "    STARTUPINFOA info;\n"
                  "    char *cmdline = GetCommandLineA();\n"
                  "    while (*cmdline && *cmdline != ' ') cmdline++;\n"
                  "    if (*cmdline) cmdline++;\n"
                  "    GetStartupInfoA( &info );\n"
                  "    if (!(info.dwFlags & 1)) info.wShowWindow = 1;\n"
-                 "    _ARGC = __wine_get_main_args( &_ARGV );\n"
+                 "    _ARGC = __wine_main_argc;\n"
+                 "    _ARGV = __wine_main_argv;\n"
                  "    ExitProcess( %s( GetModuleHandleA(0), 0, cmdline, info.wShowWindow ) );\n"
                  "}\n\n", init_func, init_func );
         init_func = "__wine_exe_main";
@@ -569,14 +571,16 @@ void BuildSpec32File( FILE *outfile )
                  "extern void __stdcall ExitProcess(unsigned int);\n"
                  "static void __wine_exe_main(void)\n"
                  "{\n"
-                 "    extern int __wine_get_wmain_args( WCHAR ***argv );\n"
+                 "    extern int __wine_main_argc;\n"
+                 "    extern WCHAR **__wine_main_wargv;\n"
                  "    STARTUPINFOA info;\n"
                  "    char *cmdline = GetCommandLineA();\n"
                  "    while (*cmdline && *cmdline != ' ') cmdline++;\n"
                  "    if (*cmdline) cmdline++;\n"
                  "    GetStartupInfoA( &info );\n"
                  "    if (!(info.dwFlags & 1)) info.wShowWindow = 1;\n"
-                 "    _ARGC = __wine_get_wmain_args( &_ARGV );\n"
+                 "    _ARGC = __wine_main_argc;\n"
+                 "    _ARGV = __wine_main_wargv;\n"
                  "    ExitProcess( %s( GetModuleHandleA(0), 0, cmdline, info.wShowWindow ) );\n"
                  "}\n\n", init_func, init_func );
         init_func = "__wine_exe_main";
@@ -591,8 +595,10 @@ void BuildSpec32File( FILE *outfile )
                  "static void __wine_exe_main(void)\n"
                  "{\n"
                  "    extern int %s( int argc, char *argv[] );\n"
-                 "    extern int __wine_get_main_args( char ***argv );\n"
-                 "    _ARGC = __wine_get_main_args( &_ARGV );\n"
+                 "    extern int __wine_main_argc;\n"
+                 "    extern char **__wine_main_argv;\n"
+                 "    _ARGC = __wine_main_argc;\n"
+                 "    _ARGV = __wine_main_argv;\n"
                  "    ExitProcess( %s( _ARGC, _ARGV ) );\n"
                  "}\n\n", init_func, init_func );
         init_func = "__wine_exe_main";
@@ -608,8 +614,10 @@ void BuildSpec32File( FILE *outfile )
                  "static void __wine_exe_main(void)\n"
                  "{\n"
                  "    extern int %s( int argc, WCHAR *argv[] );\n"
-                 "    extern int __wine_get_wmain_args( WCHAR ***argv );\n"
-                 "    _ARGC = __wine_get_wmain_args( &_ARGV );\n"
+                 "    extern int __wine_main_argc;\n"
+                 "    extern WCHAR **__wine_main_wargv;\n"
+                 "    _ARGC = __wine_main_argc;\n"
+                 "    _ARGV = __wine_main_wargv;\n"
                  "    ExitProcess( %s( _ARGC, _ARGV ) );\n"
                  "}\n\n", init_func, init_func );
         init_func = "__wine_exe_main";

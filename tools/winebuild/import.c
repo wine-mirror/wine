@@ -241,13 +241,20 @@ static int remove_symbol_holes(void)
 static void add_extra_undef_symbols(void)
 {
     const char *extras[10];
-    int i, count = 0;
+    int i, count = 0, nb_stubs = 0, nb_regs = 0;
 
 #define ADD_SYM(name) \
     do { if (!find_symbol( extras[count] = (name), undef_symbols, \
                            nb_undef_symbols )) count++; } while(0)
 
     sort_symbols( undef_symbols, nb_undef_symbols );
+
+    for (i = 0; i < nb_entry_points; i++)
+    {
+        ORDDEF *odp = EntryPoints[i];
+        if (odp->type == TYPE_STUB) nb_stubs++;
+        if (odp->flags & FLAG_REGISTER) nb_regs++;
+    }
 
     /* add symbols that will be contained in the spec file itself */
     switch (SpecMode)
@@ -260,7 +267,6 @@ static void add_extra_undef_symbols(void)
         ADD_SYM( "GetModuleHandleA" );
         /* fall through */
     case SPEC_MODE_CUIEXE:
-        ADD_SYM( "__wine_get_main_args" );
         ADD_SYM( "ExitProcess" );
         break;
     case SPEC_MODE_GUIEXE_UNICODE:
@@ -269,26 +275,20 @@ static void add_extra_undef_symbols(void)
         ADD_SYM( "GetModuleHandleA" );
         /* fall through */
     case SPEC_MODE_CUIEXE_UNICODE:
-        ADD_SYM( "__wine_get_wmain_args" );
         ADD_SYM( "ExitProcess" );
         break;
     }
-    ADD_SYM( "RtlRaiseException" );
     if (nb_delayed)
     {
        ADD_SYM( "LoadLibraryA" );
        ADD_SYM( "GetProcAddress" );
     }
+    if (nb_regs) ADD_SYM( "__wine_call_from_32_regs" );
+    if (nb_delayed || nb_stubs) ADD_SYM( "RtlRaiseException" );
 
-    for (i = 0; i < nb_entry_points; i++)
-    {
-        ORDDEF *odp = EntryPoints[i];
-        if (odp->flags & FLAG_REGISTER)
-        {
-            ADD_SYM( "__wine_call_from_32_regs" );
-            break;
-        }
-    }
+    /* make sure we import the dlls that contain these functions */
+    if (SpecMode != SPEC_MODE_DLL || nb_delayed) add_import_dll( "kernel32", 0 );
+    if (nb_delayed || nb_stubs || nb_regs) add_import_dll( "ntdll", 0 );
 
     if (count)
     {
