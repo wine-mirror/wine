@@ -30,7 +30,7 @@
 
 #include "d3d8_private.h"
 
-WINE_DEFAULT_DEBUG_CHANNEL(d3d);
+WINE_DEFAULT_DEBUG_CHANNEL(d3d_shader);
 
 /* Shader debugging - Change the following line to enable debugging of software
       vertex shaders                                                             */
@@ -41,6 +41,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(d3d);
 # define VSTRACE(A) 
 # define TRACE_VECTOR(name)
 #endif
+
 
 /**
  * DirectX9 SDK download
@@ -582,12 +583,16 @@ HRESULT WINAPI IDirect3DVertexShaderImpl_ExecuteSW(IDirect3DVertexShaderImpl* vs
 
   /* vshader_program_parse(vshader); */
 #if 0
+  TRACE("Input:\n");
   TRACE_VECTOR(vshader->data->C[0]);
   TRACE_VECTOR(vshader->data->C[1]);
   TRACE_VECTOR(vshader->data->C[2]);
   TRACE_VECTOR(vshader->data->C[3]);
   TRACE_VECTOR(vshader->data->C[4]);
+  TRACE_VECTOR(vshader->data->C[5]);
+  TRACE_VECTOR(vshader->data->C[6]);
   TRACE_VECTOR(vshader->data->C[7]);
+  TRACE_VECTOR(vshader->data->C[8]);
   TRACE_VECTOR(input->V[D3DVSDE_POSITION]);
   TRACE_VECTOR(input->V[D3DVSDE_BLENDWEIGHT]);
   TRACE_VECTOR(input->V[D3DVSDE_BLENDINDICES]);
@@ -762,8 +767,8 @@ HRESULT WINAPI IDirect3DVertexShaderImpl_ExecuteSW(IDirect3DVertexShaderImpl* vs
       /* to next opcode token */
       pToken += curOpcode->num_params;
     }
-
 #if 0
+    TRACE("End of current instruction:\n");
     TRACE_VECTOR(output->oPos);
     TRACE_VECTOR(output->oD[0]);
     TRACE_VECTOR(output->oD[1]);
@@ -777,6 +782,14 @@ HRESULT WINAPI IDirect3DVertexShaderImpl_ExecuteSW(IDirect3DVertexShaderImpl* vs
     TRACE_VECTOR(R[5]);
 #endif
   }
+#if 0
+    TRACE("Output:\n");
+    TRACE_VECTOR(output->oPos);
+    TRACE_VECTOR(output->oD[0]);
+    TRACE_VECTOR(output->oD[1]);
+    TRACE_VECTOR(output->oT[0]);
+    TRACE_VECTOR(output->oT[1]);
+#endif
   return D3D_OK;
 }
 
