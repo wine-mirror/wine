@@ -41,6 +41,7 @@ C_SRCS = \
 	$(TOPOBJDIR)/objects/pen.c \
 	$(TOPOBJDIR)/objects/region.c \
 	$(TOPOBJDIR)/objects/text.c \
+	bidi.c \
 	driver.c \
 	enhmfdrv/bitblt.c \
 	enhmfdrv/dc.c \

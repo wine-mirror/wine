@@ -2,6 +2,7 @@
  * text functions
  *
  * Copyright 1993, 1994 Alexandre Julliard
+ * Copyright 2003 Shachar Shemesh
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -155,34 +156,26 @@ BOOL WINAPI ExtTextOutW( HDC hdc, INT x, INT y, UINT flags,
     {
         if(PATH_IsPathOpen(dc->path))
             FIXME("called on an open path\n");
-		else if(dc->funcs->pExtTextOut)
-		{
-			if( !(flags&(ETO_GLYPH_INDEX|ETO_IGNORELANGUAGE)) )
-			{
-				/* The caller did not specify that language processing was already done,
-				 * and the font idetifies iteself as requiring language processing.
-				 */
-				GCP_RESULTSW gcp;
+        else if(dc->funcs->pExtTextOut)
+        {
+            if( !(flags&(ETO_GLYPH_INDEX|ETO_IGNORELANGUAGE)) && BidiAvail )
+            {
+                /* The caller did not specify that language processing was already done.
+                 */
+                LPWSTR lpReorderedString=HeapAlloc(GetProcessHeap(), 0, count*sizeof(WCHAR));
 
-				gcp.lStructSize=sizeof(gcp);
-				gcp.lpOutString=HeapAlloc(GetProcessHeap(), 0, count*sizeof(WCHAR));
-				gcp.lpOrder=NULL;
-				gcp.lpDx=NULL;
-				gcp.lpCaretPos=NULL;
-				gcp.lpClass=NULL;
-				gcp.lpGlyphs=NULL;
-				gcp.nGlyphs=0;
-				gcp.nMaxFit=0;
+                BIDI_Reorder( str, count, GCP_REORDER,
+                              ((flags&ETO_RTLREADING)!=0 || (GetTextAlign(hdc)&TA_RTLREADING)!=0)?
+                              WINE_GCPW_FORCE_RTL:WINE_GCPW_FORCE_LTR,
+                              lpReorderedString, count, NULL );
 
-				GetCharacterPlacementW(hdc, str, count, 0, &gcp, GCP_REORDER );
-
-				ret = dc->funcs->pExtTextOut(dc->physDev,x,y,flags|ETO_IGNORELANGUAGE,
-					lprect,gcp.lpOutString,count,lpDx);
-				HeapFree(GetProcessHeap(), 0, gcp.lpOutString);
-			} else
-				ret = dc->funcs->pExtTextOut(dc->physDev,x,y,flags,lprect,str,count,lpDx);
-		}
-		GDI_ReleaseObj( hdc );
+                ret = dc->funcs->pExtTextOut(dc->physDev,x,y,flags|ETO_IGNORELANGUAGE,
+                                             lprect,lpReorderedString,count,lpDx);
+                HeapFree(GetProcessHeap(), 0, lpReorderedString);
+            } else
+                ret = dc->funcs->pExtTextOut(dc->physDev,x,y,flags,lprect,str,count,lpDx);
+        }
+        GDI_ReleaseObj( hdc );
     }
     return ret;
 }

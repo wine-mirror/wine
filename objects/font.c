@@ -3,6 +3,7 @@
  *
  * Copyright 1993 Alexandre Julliard
  *           1997 Alex Korobka
+ * Copyright 2002,2003 Shachar Shemesh
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -1989,105 +1990,22 @@ GetCharacterPlacementW(
 	/* return number of initialized fields */
 	lpResults->nGlyphs = nSet;
 
-	if(dwFlags==0)
+	if((dwFlags&GCP_REORDER)==0 || !BidiAvail)
 	{
 		/* Treat the case where no special handling was requested in a fastpath way */
 		/* copy will do if the GCP_REORDER flag is not set */
 		if(lpResults->lpOutString)
-			for(i=0; i<nSet && lpString[i]!=0; ++i )
-				lpResults->lpOutString[i]=lpString[i];
+                    strncpyW( lpResults->lpOutString, lpString, nSet );
 
 		if(lpResults->lpOrder)
 		{
 			for(i = 0; i < nSet; i++)
 				lpResults->lpOrder[i] = i;
 		}
-	}
-
-	if((dwFlags&GCP_REORDER)!=0)
+	} else
 	{
-		WORD *pwCharType;
-		int run_end;
-		/* Keep a static table that translates the C2 types to something meaningful */
-		/* 1 - left to right
-		 * -1 - right to left
-		 * 0 - neutral
-		 */
-		static const int chardir[]={ 0, 1, -1, 1, 0, 0, -1, 0, 0, 0, 0, 0 };
-
-		WARN("The BiDi algorythm doesn't conform to Windows' yet\n");
-		if( (pwCharType=HeapAlloc(GetProcessHeap(), 0, uCount * sizeof(WORD)))==NULL )
-		{
-			SetLastError(ERROR_NOT_ENOUGH_MEMORY);
-
-			return 0;
-		}
-
-		/* Fill in the order array with directionality values */
-		GetStringTypeW(CT_CTYPE2, lpString, uCount, pwCharType);
-
-		/* The complete and correct (at least according to MS) BiDi algorythm is not
-		 * yet implemented here. Instead, we just make sure that consecutive runs of
-		 * the same direction (or neutral) are ordered correctly. We also assign Neutrals
-		 * that are between runs of opposing directions the base (ok, always LTR) dir.
-		 * While this is a LONG way from a BiDi algorithm, it does produce more or less
-		 * readable results.
-		 */
-		for( i=0; i<uCount; i+=run_end )
-		{
-			for( run_end=1; i+run_end<uCount &&
-			     (chardir[pwCharType[i+run_end]]==chardir[pwCharType[i]] ||
-			     chardir[pwCharType[i+run_end]]==0); ++run_end )
-				;
-
-			if( chardir[pwCharType[i]]==1 || chardir[pwCharType[i]]==0 )
-			{
-				/* A LTR run */
-				if(lpResults->lpOutString)
-				{
-					int j;
-					for( j=0; j<run_end; j++ )
-					{
-						lpResults->lpOutString[i+j]=lpString[i+j];
-					}
-				}
-
-				if(lpResults->lpOrder)
-				{
-					int j;
-					for( j=0; j<run_end; j++ )
-						lpResults->lpOrder[i+j] = i+j;
-				}
-			} else
-			{
-				/* A RTL run */
-
-				/* Since, at this stage, the paragraph context is always LTR,
-				 * remove any neutrals from the end of this run.
-				 */
-				if( chardir[pwCharType[i]]!=0 )
-					while( chardir[pwCharType[i+run_end-1]]==0 )
-						--run_end;
-
-				if(lpResults->lpOutString)
-				{
-					int j;
-					for( j=0; j<run_end; j++ )
-					{
-						lpResults->lpOutString[i+j]=lpString[i+run_end-j-1];
-					}
-				}
-
-				if(lpResults->lpOrder)
-				{
-					int j;
-					for( j=0; j<run_end; j++ )
-						lpResults->lpOrder[i+j] = i+run_end-j-1;
-				}
-			}
-		}
-
-		HeapFree(GetProcessHeap(), 0, pwCharType);
+            BIDI_Reorder( lpString, uCount, dwFlags, WINE_GCPW_FORCE_LTR, lpResults->lpOutString,
+                          nSet, lpResults->lpOrder );
 	}
 
 	/* FIXME: Will use the placement chars */
