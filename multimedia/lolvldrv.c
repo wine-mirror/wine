@@ -657,8 +657,6 @@ static	MMDRV_MapType	MMDRV_WaveIn_Map16To32A  (UINT wMsg, LPDWORD lpdwUser, LPDW
 		/* FIXME: nothing on wh32->lpNext */
 		/* could link the wh32->lpNext at this level for memory house keeping */
 		wh16->lpNext = wh32; /* for reuse in unprepare and write */
-		wh32->reserved = (DWORD)wh32;	/* hack in audio.c */
-	       
 		*lpParam1 = (DWORD)wh32;
 		*lpParam2 = sizeof(WAVEHDR);
 
@@ -837,8 +835,6 @@ static	MMDRV_MapType	MMDRV_WaveIn_Map32ATo16  (UINT wMsg, LPDWORD lpdwUser, LPDW
 		/* FIXME: nothing on wh32->lpNext */
 		/* could link the wh32->lpNext at this level for memory house keeping */
 		wh32->lpNext = wh16; /* for reuse in unprepare and write */
-		wh16->reserved = (DWORD)SEGPTR_GET(ptr) + sizeof(LPWAVEHDR);	/* hack in audio.c */
-	       
 		TRACE("wh16=%08lx wh16->lpData=%08lx wh32->buflen=%lu wh32->lpData=%08lx\n", 
 		      (DWORD)SEGPTR_GET(ptr) + sizeof(LPWAVEHDR), (DWORD)wh16->lpData,
 		      wh32->dwBufferLength, (DWORD)wh32->lpData);
@@ -1128,8 +1124,6 @@ static	MMDRV_MapType	MMDRV_WaveOut_Map16To32A  (UINT wMsg, LPDWORD lpdwUser, LPD
 		/* FIXME: nothing on wh32->lpNext */
 		/* could link the wh32->lpNext at this level for memory house keeping */
 		wh16->lpNext = wh32; /* for reuse in unprepare and write */
-		wh32->reserved = (DWORD)wh32;	/* hack in audio.c */
-	       
 		*lpParam1 = (DWORD)wh32;
 		*lpParam2 = sizeof(WAVEHDR);
 
@@ -1368,8 +1362,6 @@ static	MMDRV_MapType	MMDRV_WaveOut_Map32ATo16  (UINT wMsg, LPDWORD lpdwUser, LPD
 		/* FIXME: nothing on wh32->lpNext */
 		/* could link the wh32->lpNext at this level for memory house keeping */
 		wh32->lpNext = wh16; /* for reuse in unprepare and write */
-		wh16->reserved = (DWORD)SEGPTR_GET(ptr) + sizeof(LPWAVEHDR);	/* hack in audio.c */
-	       
 		TRACE("wh16=%08lx wh16->lpData=%08lx wh32->buflen=%lu wh32->lpData=%08lx\n", 
 		      (DWORD)SEGPTR_GET(ptr) + sizeof(LPWAVEHDR), (DWORD)wh16->lpData,
 		      wh32->dwBufferLength, (DWORD)wh32->lpData);
@@ -1882,12 +1874,13 @@ UINT	MMDRV_PhysicalFeatures(LPWINE_MLD mld, UINT uMsg, DWORD dwParam1,
 /**************************************************************************
  * 				MMDRV_InitPerType		[internal]
  */
-static  void	MMDRV_InitPerType(LPWINE_MM_DRIVER lpDrv, UINT num, 
+static  BOOL	MMDRV_InitPerType(LPWINE_MM_DRIVER lpDrv, UINT num, 
 				  UINT type, UINT wMsg)
 {
     WINE_MM_DRIVER_PART*	part = &lpDrv->parts[type];
-    DWORD		ret;
-    UINT		count = 0;
+    DWORD			ret;
+    UINT			count = 0;
+    int				i, k;
 
     part->nIDMin = part->nIDMax = 0;
 
@@ -1918,24 +1911,48 @@ static  void	MMDRV_InitPerType(LPWINE_MM_DRIVER lpDrv, UINT num,
     }
 
     TRACE("Got %u dev for (%s:%s)\n", count, lpDrv->name, llTypes[type].name);
-    if (count != 0) {
-	/* got some drivers */
-	if (lpDrv->bIsMapper) {
-	    if (llTypes[type].nMapper != -1)
-		ERR("Two mappers for type %s (%d, %s)\n", 
-		    llTypes[type].name, llTypes[type].nMapper, lpDrv->name);
-	    if (count > 1)
-		ERR("Strange: mapper with %d > 1 devices\n", count);
-	    llTypes[type].nMapper = num;
-	} else {
-	    part->nIDMin = llTypes[type].wMaxId;
-	    llTypes[type].wMaxId += count;
-	    part->nIDMax = llTypes[type].wMaxId;
-	}
-	TRACE("Setting min=%d max=%d (ttop=%d) for (%s:%s)\n",
-	      part->nIDMin, part->nIDMax, llTypes[type].wMaxId, 
-	      lpDrv->name, llTypes[type].name);
+    if (count == 0)
+	return FALSE;
+
+    /* got some drivers */
+    if (lpDrv->bIsMapper) {
+	if (llTypes[type].nMapper != -1)
+	    ERR("Two mappers for type %s (%d, %s)\n", 
+		llTypes[type].name, llTypes[type].nMapper, lpDrv->name);
+	if (count > 1)
+	    ERR("Strange: mapper with %d > 1 devices\n", count);
+	llTypes[type].nMapper = num;
+    } else {
+	part->nIDMin = llTypes[type].wMaxId;
+	llTypes[type].wMaxId += count;
+	part->nIDMax = llTypes[type].wMaxId;
     }
+    TRACE("Setting min=%d max=%d (ttop=%d) for (%s:%s)\n",
+	  part->nIDMin, part->nIDMax, llTypes[type].wMaxId, 
+	  lpDrv->name, llTypes[type].name);
+    /* realloc translation table */
+    llTypes[type].lpMlds = (LPWINE_MLD)
+	HeapReAlloc(SystemHeap, 0, (llTypes[type].lpMlds) ? llTypes[type].lpMlds - 1 : NULL,
+		    sizeof(WINE_MLD) * (llTypes[type].wMaxId + 1)) + 1;
+    /* re-build the translation table */
+    if (llTypes[type].nMapper != -1) {
+	TRACE("%s:Trans[%d] -> %s\n", llTypes[type].name, -1, MMDrvs[llTypes[type].nMapper].name);
+	llTypes[type].lpMlds[-1].uDeviceID = -1;
+	llTypes[type].lpMlds[-1].type = type;
+	llTypes[type].lpMlds[-1].mmdIndex = llTypes[type].nMapper;
+	llTypes[type].lpMlds[-1].dwDriverInstance = 0;
+    }
+    for (i = k = 0; i <= num; i++) {
+	while (MMDrvs[i].parts[type].nIDMin <= k && k < MMDrvs[i].parts[type].nIDMax) {
+	    TRACE("%s:Trans[%d] -> %s\n", llTypes[type].name, k, MMDrvs[i].name);
+	    llTypes[type].lpMlds[k].uDeviceID = k;
+	    llTypes[type].lpMlds[k].type = type;
+	    llTypes[type].lpMlds[k].mmdIndex = i;
+	    llTypes[type].lpMlds[k].dwDriverInstance = 0;
+	    k++;
+	}
+    }
+    return TRUE;
 }
 
 /**************************************************************************
@@ -1947,7 +1964,6 @@ static	BOOL	MMDRV_Install(LPCSTR name, int num, BOOL bIsMapper)
     char		buffer[128];
     HMODULE		hModule;
     LPWINE_MM_DRIVER	lpDrv = &MMDrvs[num];
-    int			i, j, k;
 
     TRACE("('%s');\n", name);
     
@@ -2043,36 +2059,7 @@ static	BOOL	MMDRV_Install(LPCSTR name, int num, BOOL bIsMapper)
     MMDRV_InitPerType(lpDrv, num, MMDRV_MIDIOUT, 	MODM_GETNUMDEVS);
     MMDRV_InitPerType(lpDrv, num, MMDRV_WAVEIN, 	WIDM_GETNUMDEVS);
     MMDRV_InitPerType(lpDrv, num, MMDRV_WAVEOUT, 	WODM_GETNUMDEVS);
-
-    /* re-build the translation tables */
-    for (j = 0; j < MMDRV_MAX; j++) {
-	if (llTypes[j].nMapper != -1) {
-	    llTypes[j].lpMlds = (LPWINE_MLD)
-		HeapReAlloc(SystemHeap, 0, llTypes[j].lpMlds, 
-			    sizeof(WINE_MLD) * (llTypes[j].wMaxId + 1)) + 1;
-	    TRACE("%s:Trans[%d] -> %s\n", llTypes[j].name, -1, MMDrvs[llTypes[j].nMapper].name);
-	    llTypes[j].lpMlds[-1].uDeviceID = -1;
-	    llTypes[j].lpMlds[-1].type = j;
-	    llTypes[j].lpMlds[-1].mmdIndex = llTypes[j].nMapper;
-	    llTypes[j].lpMlds[-1].dwDriverInstance = 0;
-
-	} else {
-	    llTypes[j].lpMlds = (LPWINE_MLD)
-		HeapReAlloc(SystemHeap, 0, llTypes[j].lpMlds, 
-			    sizeof(WINE_MLD) * llTypes[j].wMaxId);
-	}
-	for (i = k = 0; i <= num; i++) {
-	    while (MMDrvs[i].parts[j].nIDMin <= k && k < MMDrvs[i].parts[j].nIDMax) {
-		TRACE("%s:Trans[%d] -> %s\n", llTypes[j].name, k, MMDrvs[i].name);
-		llTypes[j].lpMlds[k].uDeviceID = k;
-		llTypes[j].lpMlds[k].type = j;
-		llTypes[j].lpMlds[k].mmdIndex = i;
-		llTypes[j].lpMlds[k].dwDriverInstance = 0;
-		k++;
-	    }
-	}
-    }
-
+    /* FIXME: if all those func calls return FALSE, then the driver must be unloaded */
     return TRUE;
 }
 
