@@ -258,8 +258,6 @@ SNOOP_PrintArg(DWORD x) {
 
 #define CALLER1REF (*(DWORD*)context->Esp)
 
-void WINAPI SNOOP_DoEntry( CONTEXT86 *context );
-DEFINE_REGS_ENTRYPOINT_0( SNOOP_Entry, SNOOP_DoEntry );
 void WINAPI SNOOP_DoEntry( CONTEXT86 *context )
 {
 	DWORD		ordinal=0,entry = context->Eip - 5;
@@ -340,8 +338,7 @@ void WINAPI SNOOP_DoEntry( CONTEXT86 *context )
 	DPRINTF(") ret=%08lx fs=%04lx\n",(DWORD)ret->origreturn,context->SegFs);
 }
 
-void WINAPI SNOOP_DoReturn( CONTEXT86 *context );
-DEFINE_REGS_ENTRYPOINT_0( SNOOP_Return, SNOOP_DoReturn );
+
 void WINAPI SNOOP_DoReturn( CONTEXT86 *context )
 {
 	SNOOP_RETURNENTRY	*ret = (SNOOP_RETURNENTRY*)(context->Eip - 5);
@@ -373,6 +370,15 @@ void WINAPI SNOOP_DoReturn( CONTEXT86 *context )
 			context->Eax,(DWORD)ret->origreturn,context->SegFs );
 	ret->origreturn = NULL; /* mark as empty */
 }
+
+/* assembly wrappers that save the context */
+__ASM_GLOBAL_FUNC( SNOOP_Entry,
+                   "call " __ASM_NAME("CALL32_Regs") "\n\t"
+                   ".long " __ASM_NAME("SNOOP_DoEntry") ",0" );
+__ASM_GLOBAL_FUNC( SNOOP_Return,
+                   "call " __ASM_NAME("CALL32_Regs") "\n\t"
+                   ".long " __ASM_NAME("SNOOP_DoReturn") ",0" );
+
 #else	/* !__i386__ */
 void SNOOP_RegisterDLL(HMODULE hmod,LPCSTR name,DWORD nrofordinals) {
 	FIXME("snooping works only on i386 for now.\n");

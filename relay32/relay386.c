@@ -14,7 +14,6 @@
 #include "selectors.h"
 #include "stackframe.h"
 #include "syslevel.h"
-#include "main.h"
 #include "module.h"
 #include "debugtools.h"
 
@@ -304,9 +303,6 @@ static LONGLONG RELAY_CallFrom32( int ret_addr, ... )
  * (esp-8) ptr to relay entry code for RELAY_CallFrom32Regs
  *  ...    >128 bytes space free to be modified (ensured by the assembly glue)
  */
-
-void WINAPI RELAY_DoCallFrom32Regs( CONTEXT86 *context );
-DEFINE_REGS_ENTRYPOINT_0( RELAY_CallFrom32Regs, RELAY_DoCallFrom32Regs )
 void WINAPI RELAY_DoCallFrom32Regs( CONTEXT86 *context )
 {
     char buffer[80];
@@ -390,6 +386,10 @@ void WINAPI RELAY_DoCallFrom32Regs( CONTEXT86 *context )
     SYSLEVEL_CheckNotLevel( 2 );
 }
 
+void WINAPI RELAY_CallFrom32Regs(void);
+__ASM_GLOBAL_FUNC( RELAY_CallFrom32Regs,
+                   "call " __ASM_NAME("CALL32_Regs") "\n\t"
+                   ".long " __ASM_NAME("RELAY_DoCallFrom32Regs") ",0" );
 
 /***********************************************************************
  *           RELAY_SetupDLL
