@@ -557,6 +557,7 @@ typedef struct _DDPIXELFORMAT {
 #define DDPCAPS_VSYNC			0x00000080
 #define DDPCAPS_1BIT			0x00000100
 #define DDPCAPS_2BIT			0x00000200
+#define DDPCAPS_ALPHA                   0x00000400
 
 /* DDCAPS.dwSVCaps */
 #define DDSVCAPS_ENIGMA			0x00000001l

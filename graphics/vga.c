@@ -36,7 +36,7 @@ int VGA_SetMode(unsigned Xres,unsigned Yres,unsigned Depth)
             lpddraw=NULL;
             return 1;
         }
-        lpddraw->lpvtbl->fnCreatePalette(lpddraw,0,NULL,&lpddpal,NULL);
+        lpddraw->lpvtbl->fnCreatePalette(lpddraw,DDPCAPS_8BIT,NULL,&lpddpal,NULL);
         memset(&sdesc,0,sizeof(sdesc));
         sdesc.dwSize=sizeof(sdesc);
 	sdesc.dwFlags = DDSD_CAPS;

@@ -232,6 +232,7 @@ static void _dump_DDBLT(DWORD flagmask) {
 	for (i=0;i<sizeof(flags)/sizeof(flags[0]);i++)
 		if (flags[i].mask & flagmask)
 			DUMP("%s ",flags[i].name);
+	DUMP("\n");
 }
 
 static void _dump_DDSCAPS(DWORD flagmask) {
@@ -333,6 +334,31 @@ static void _dump_DDCOLORKEY(DWORD flagmask) {
 		if (flags[i].mask & flagmask)
 			DUMP("%s ",flags[i].name);
 	DUMP("\n");
+}
+
+static void _dump_paletteformat(DWORD dwFlags) {
+  int	i;
+  const struct {
+    DWORD	mask;
+    char	*name;
+  } flags[] = {
+#define FE(x) { x, #x},
+    FE(DDPCAPS_4BIT)
+    FE(DDPCAPS_8BITENTRIES)
+    FE(DDPCAPS_8BIT)
+    FE(DDPCAPS_INITIALIZE)
+    FE(DDPCAPS_PRIMARYSURFACE)
+    FE(DDPCAPS_PRIMARYSURFACELEFT)
+    FE(DDPCAPS_ALLOW256)
+    FE(DDPCAPS_VSYNC)
+    FE(DDPCAPS_1BIT)
+    FE(DDPCAPS_2BIT)
+    FE(DDPCAPS_ALPHA)
+  };
+  for (i=0;i<sizeof(flags)/sizeof(flags[0]);i++)
+    if (flags[i].mask & dwFlags)
+      DUMP("%s ",flags[i].name);
+  DUMP("\n");
 }
 
 static void _dump_pixelformat(LPDDPIXELFORMAT pf) {
@@ -2792,6 +2818,9 @@ static HRESULT WINAPI common_IDirectDraw2_CreatePalette(
 ) {
 	int size = 0;
 	  
+	if (TRACE_ON(ddraw))
+	  _dump_paletteformat(dwFlags);
+	
 	*lpddpal = (LPDIRECTDRAWPALETTE)HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(IDirectDrawPalette));
 	if (*lpddpal == NULL) return E_OUTOFMEMORY;
 	(*lpddpal)->ref = 1;
