@@ -204,6 +204,9 @@ DLLS = \
 
 all: Makefile
 
+filter:
+	@$(TOPSRCDIR)/tools/winapi/make_filter --make $(MAKE) all
+
 # Rule for main module intermediate object
 
 $(MODULE).tmp.o: $(OBJS) Makefile.in
