@@ -1,0 +1,396 @@
+  <chapter id="portability-issues">
+    <title id="portability-issues.title">Portability issues</title>
+
+    <sect1 id="anon">
+      <title id="anon.title">Anonymous unions/structs</title>
+      <para>
+        Anonymous structs and unions support depends heavily on the compiler. 
+        The best support is provided by gcc/g++ 2.96 and later. But these 
+        versions of gcc come from the development branch so you may want to 
+        hold off before using them in production. g++ 2.95 supports anonymous 
+        unions but not anonymous structs and gcc 2.95 supports neither. Older 
+        versions of gcc/g++ have no support for either.
+        since it is anonymous unions that are the most frequent in the 
+        windows headers, you should at least try to use gcc/g++ 2.95.
+      </para>
+      <para>
+        But you are stuck with a compiler that does not support anonymous 
+        structs/unions all is not lost. The Wine headers should detect this 
+        automatically and define <varname>NONAMELESSUNION</varname> / 
+        <varname>NONAMELESSSTRUCT</varname>. Then any anonymous union will 
+        be given a name 
+        <literal>u</literal> or <literal>u2</literal>, <literal>u3</literal>, 
+        etc. to avoid name clashes. You will then have to modify your code to 
+        include those names where appropriate.
+      </para>
+      <para>
+        The name that Wine adds to anonymous unions should match that used 
+        by the Windows headers. So all you have to do to compile your 
+        modified code in Windows is to explicitly define the 
+        <varname>NONAMELESSUNION</varname> macro. Note that it would be wise 
+        to also explicitly define this macro on in your Unix makefile
+        (<filename>Makefile.in</filename>) to make sure your code will 
+        compile even if the compiler does support anonymous unions.
+      </para>
+      <para>
+        Things are not as nice when dealing with anonymous structs. 
+        Unfortunately the Windows headers make no provisions for compilers 
+        that do not support anonymous structs. So you will need to be more 
+        subtle when modifying your code if you still want it to compile in 
+        Windows. Here's a way to do it:
+      </para>
+      <programlisting>
+#ifdef WINELIB
+#define ANONS .s
+#else
+#define ANONS
+#endif
+
+. . .
+
+{
+SYSTEM_INFO si;
+GetSystemInfo(&amp;si);
+printf("Processor architecture=%d\n",si ANONS .wProcessorArchitecture);
+}
+      </programlisting>
+      <para>
+        You may put the <literal>#define</literal> directive directly in the 
+        source if only few files are impacted. Otherwise it's probably best 
+        to put it in one of your project's widely used headers. 
+        Fortunately usage of an anonymous struct is much rarer than usage of 
+        an anonymous union so these modifications should not be too much work.
+      </para>
+    </sect1>
+
+    <sect1 id="unicode">
+      <title id="unicode.title">Unicode</title>
+
+      <para>
+        Because gcc and glibc use 4 byte unicode characters, the
+        compiler intrinsic <literal>L"foo"</literal> generates unicode
+        strings which cannot be used by Winelib (Win32 code expects 16
+        bit unicode characters). There are 3 workarounds for this:
+      </para>
+
+      <orderedlist>
+        <listitem>
+          <para>
+            Use the latest gcc version (2.9.7 or later), and pass the
+            <parameter>-fshort-wchar</parameter> option to every file
+            that is built.
+          </para>
+        </listitem>
+        <listitem>
+          <para>
+            Use the <function>__TEXT("foo")</function> macro, define
+            <constant>WINE_UNICODE_REWRITE</constant> for each file
+            that is built, and add
+            <parameter>-fwritable-strings</parameter> to the compiler
+            command line. You should replace all occurances of
+            <type>wchar_t</type> with <type>WCHAR</type> also, since
+            <type>wchar_t</type> is the native (32 bit) type. These
+            changes allow Wine to modify the native unicode strings
+            created by the compiler in place, so that they are 16 bit
+            by the time any functions get to use them. This scheme
+            works with older versions of gcc (2.95.x+).
+          </para>
+        </listitem>
+        <listitem>
+          <para>
+            Use the compiler default, but don't call any Win32 unicode
+            functions without converting the strings first!
+          </para>
+        </listitem>
+      </orderedlist>
+
+      <para>
+        If you are using Unicode and you want to be able to use
+        standard library calls (e.g. <function>wcslen</function>,
+        <function>wsprintf</function>) as well as Win32 unicode calls
+        (API functions ending in W, or having
+        <constant>_UNICODE</constant> defined), then you should use
+        the msvcrt runtime library instead of glibc. The functions in
+        glibc will not work correctly with 16 bit strings.
+      </para>
+      <para>
+        If you need a Unicode string even when
+        _<constant>UNICODE</constant> isn't defined, use
+        <function>WINE_UNICODE_TEXT("foo")</function>. This will need
+        to be wrapped in <function>#ifdef WINELIB</function> to
+        prevent breaking your source for windows compiles.
+      </para>
+      <para>
+        To prevent warnings when declaring a single unicode character
+        in C, use <function>(WCHAR)L'x'</function>, rather than
+        <function>__TEXT('x')</function>.  This works on Windows also.
+      </para>
+    </sect1>
+
+    <sect1 id="C-library">
+      <title id="C-library.title">C library</title>
+
+      <!-- *** Is all of this covered now?  Make sure before deleting ***
+      <para>
+        Winelib currently only supports on C library: that of your
+        compiler.  three solutions: native, mixed or msvcrt except we
+        only have native right now, using the native C library ->
+        different behavior: fopen, O_TEXT, unicode support,
+        reimplement msvcrt
+      </para>
+      -->
+
+      <para>
+        There are 3 choices available to you regarding which C library
+        to use:
+      </para>
+
+      <orderedlist>
+        <listitem>
+          <para>
+            Use the glibc native C library.
+          </para>
+        </listitem>
+        <listitem>
+          <para>
+            Use the msvcrt C library.
+          </para>
+        </listitem>
+        <listitem>
+          <para>
+            Use a custom mixture of both.
+          </para>
+        </listitem>
+      </orderedlist>
+
+      <para>
+        Note that under Wine, the crtdll library is implemented using
+        msvcrt, so there is no benefit in trying to use it.
+      </para>
+      <para>
+        Using glibc in general has the lowest overhead, but this is
+        really only important for file I/O. Many of the functions in
+        msvcrt are simply resolved to glibc, so in reality options 2
+        and 3 are fairly similar choices.
+      </para>
+      <para>
+        To use glibc, you don't need to make changes to your
+        application; it should work straight away. There are a few
+        situations in which using glibc is not possible:
+      </para>
+      <orderedlist>
+        <listitem>
+          <para>
+            Your application uses Win32 and C library unicode
+            functions.
+          </para>
+        </listitem>
+        <listitem>
+          <para>
+            Your application uses MS specific calls like
+            <function>beginthread()</function>,
+            <function>loadlibrary()</function>, etc.
+          </para>
+        </listitem>
+        <listitem>
+          <para>
+            You rely on the precise semantics of the calls, for
+            example, returning <literal>-1</literal> rather than
+            non-zero. More likely, your application will rely on calls
+            like <function>fopen()</function> taking a Windows path
+            rather than a Unix one.
+          </para>
+        </listitem>
+      </orderedlist>
+      <para>
+        In these cases you should use msvcrt to provide your C runtime
+        calls. To do this, add a line:
+      </para>
+
+      <programlisting>import msvcrt.dll</programlisting>
+
+      <para>
+        to your applications <filename>.spec</filename> file. This
+        will cause <command>winebuild</command> to resolve your c
+        library calls to <filename>msvcrt.dll</filename>. Many simple
+        calls which behave the same have been specified as
+        non-importable from msvcrt; in these cases
+        <command>winebuild</command> will not resolve them and the
+        standard linker <command>ld</command> will link to the glibc
+        version instead.
+      </para>
+      <para>
+        In order to avoid warnings in C (and potential errors in C++)
+        from not having prototypes, you may need to use a set of MS
+        compatable header files. These are scheduled for inclusion
+        into Wine but at the time of writing are not available. Until
+        they are, you can try prototyping the functions you need, or
+        just live with the warnings.
+      </para>
+      <para>
+        If you have a set of include files (or when they are available
+        in Wine), you need to use the <parameter>-isystem
+        "include_path"</parameter> flag to gcc to tell it to use your
+        headers in preference to the local system headers.
+      </para>
+      <para>
+        To use option 3, add the names of any symbols that you don't
+        want to use from msvcrt into your applications
+        <filename>.spec</filename> file. For example, if you wanted
+        the MS specific functions, but not file I/O, you could have a
+        list like:
+      </para>
+
+      <programlisting>@ignore = ( fopen fclose fwrite fread fputs fgets )</programlisting>
+      <para>
+        Obviously, the complete list would be much longer. Remember
+        too that some functions are implemented with an underscore in
+        their name and <function>#define</function>d to that name in
+        the MS headers. So you may need to find out the name by
+        examing <filename>dlls/msvcrt/msvcrt.spec</filename> to get
+        the correct name for your <function>@ignore</function> entry.
+      </para>
+    </sect1>
+
+    <sect1 id="porting-compiling">
+      <title id="porting-compiling.title">Compiling Problems</title>
+      <para>
+        If you get undefined references to Win32 API calls when
+        building your application: if you have a VC++
+        <filename>.dsp</filename> file, check it for all the
+        <filename>.lib</filename> files it imports, and add them to
+        your applications <filename>.spec</filename>
+        file. <command>winebuild</command> gives you a warning for
+        unused imports so you can delete the ones you don't need
+        later. Failing that, just import all the DLL's you can find in
+        the <filename>dlls/</filename> directory of the Wine source
+        tree.
+      </para>
+      <para>
+        If you are missing GUIDs at the link stage, add
+        <parameter>-lwine_uuid</parameter> to the link line.
+      </para>
+      <para>
+        gcc is more strict than VC++, especially whan compiling
+        C++. This may require you to add casts to your C++ to prevent
+        overloading abiguities between similar types (such as two
+        overloads that take int and char respectively).
+      </para>
+      <para>
+        If you come across a difference between the Windows headers
+        and Wine's that breaks compilation, try asking for help on
+        <email>wine-devel@winehq.com</email>.
+      </para>
+    </sect1>
+
+    <sect1 id="init-problems">
+      <title id="init-problems.title">Initialization problems</title>
+      <para>
+        Initialization problems occur when the application calls the Win32 API 
+        before Winelib has been initialized. How can this happen?
+      </para>
+      <para>
+        Winelib is initialized by the application's <function>main</function> 
+        before it calls the regular <function>WinMain</function>. But, in C++, 
+        the constructors of static class variables are called before the 
+        <function>main</function> (by the module's initializer). So if such 
+        a constructor makes calls to the Win32 API, Winelib will not be 
+        initialized at the time of the call and you may get a crash. This 
+        problem is much more frequent in C++ because of these class 
+        constructors but could also, at least in theory, happen in C if you 
+        were to specify an initializer making calls to Winelib. But of 
+        course, now that you are aware of this problem you won't do it :-).
+      </para>
+      <para>
+        Further compounding the problem is the fact that Linux's (GNU's?) 
+        current dynamic library loader does not call the module 
+        initializers in their dependency order. So even if Winelib were to 
+        have its own initializer there would be no garantee that it would be 
+        called before the initializer of the library containing this static 
+        variable. Finally even if the variable is in a library that your 
+        application links with, that library's initializer may be called 
+        before Winelib has been initialized. One such library is the MFC.
+      </para>
+      <para>
+        The current workaround is to move all the application's code in a 
+        library and to use a small Winelib application to dynamically load 
+        this library. Tus the initialization sequence becomes:
+      </para>
+      <itemizedlist>
+        <listitem>
+          <para>
+            the wrapper application starts.
+          </para>
+        </listitem>
+        <listitem>
+          <para>
+            its empty initializer is run.
+          </para>
+        </listitem>
+        <listitem>
+          <para>
+            its <function>main</function> is run. Its first task is to 
+            initialize Winelib.
+          </para>
+        </listitem>
+        <listitem>
+          <para>
+            it then loads the application's main library, plus all its 
+            dependent libraries.
+          </para>
+        </listitem>
+        <listitem>
+          <para>
+            which triggers the execution of all these libraries initializers 
+            in some unknown order. But all is fine because Winelib has 
+            already been initialized anyway.
+          </para>
+        </listitem>
+        <listitem>
+          <para>
+            finally the main function calls the <function>WinMain</function> 
+            of the application's library.
+          </para>
+        </listitem>
+      </itemizedlist>
+      <para>
+        This may sound complex by Winemaker makes it simple. Just specify 
+        <option>--wrap</option> or <option>--mfc</option> on the command line 
+        and it will adapt its makefiles to build the wrapper and the 
+        application library.
+      </para>
+    </sect1>
+
+    <sect1 id="com-support">
+      <title id="com-support.title">VC's native COM support</title>
+      <para>
+        don't use it, 
+        guide on how to replace it with normal C++ code (yes, how???):
+        extracting a .h and .lib from a COM dll
+        Can '-fno-rtti' be of some use or even required?
+      </para>
+    </sect1>
+
+    <sect1 id="SEH">
+      <title id="SEH.title">SEH</title>
+      <para>
+        how to modify the syntax so that it works both with gcc's macros and Wine's macros,
+        is it even possible?
+      </para>
+    </sect1>
+
+    <sect1 id="others">
+      <title id="others.title">Others</title>
+      <para>
+        -fpermissive and -fno-for-scope, 
+        maybe other options
+      </para>
+    </sect1>
+  </chapter>
+
+<!-- Keep this comment at the end of the file
+Local variables:
+mode: sgml
+sgml-parent-document:("wine-doc.sgml" "book" "chapter" "")
+End:
+-->

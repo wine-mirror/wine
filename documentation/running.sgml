@@ -101,8 +101,8 @@ Options:
 
     <sect1 id="command-line-options">
       <title>Command-Line Options</title>
+
       <sect2 id="config-parameter">
-      <sect2>
         <title>--debugmsg [channels]</title>
         <para>
           Wine isn't perfect, and many Windows applications still

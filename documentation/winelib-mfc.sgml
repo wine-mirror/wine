@@ -1,0 +1,168 @@
+  <chapter id="mfc">
+    <title id="mfc.title">Dealing with the MFC</title>
+
+    <sect1 id="mfc-introduction">
+      <title id="mfc-introduction.title">Introduction</title>
+      <para>
+        To use the MFC in a Winelib application you will first have to 
+        recompile the MFC with Winelib. In theory it should be possible to 
+        write a wrapper for the Windows MFC as described in 
+        <xref linkend="bindlls" endterm="bindlls.title">. But in practice 
+        it does not seem to be a realistic approach for the MFC: 
+      </para>
+      <itemizedlist>
+        <listitem>
+          <para>
+            the huge number of APIs makes writing the wrapper a big task in 
+            itself.
+          </para>
+        </listitem>
+        <listitem>
+          <para>
+            furthermore the MFC contain a huge number of APIs which are tricky 
+            to deal with when making a wrapper.
+          </para>
+        </listitem>
+        <listitem>
+          <para>
+            even once you have written the wrapper you will need to modify 
+            the MFC headers so that the compiler does not choke on them.
+          </para>
+        </listitem>
+        <listitem>
+          <para>
+            a big part of the MFC code is actually in your application in 
+            the form of macros. This means even more of the MFC headers have 
+            to actually work to in order for you to be able to compile an 
+            MFC based application.
+          </para>
+        </listitem>
+      </itemizedlist>
+      <para>
+        This is why this guide includes a section dedicated to helping you 
+        compile the MFC with Winelib.
+      </para>
+    </sect1>
+
+    <sect1 id="mfc-legal-issues">
+      <title id="mfc-legal-issues.title">Legal issues</title>
+      <para>
+        (Extracted from the HOWTO-Winelib written by Wilbur Dale 
+        &lt;wilbur.dale@lumin.nl&gt;)
+      </para>
+      <para>
+        The purpose of this section is to make you aware of potential legal 
+        problems. Be sure to read your licenses and to consult your lawyers. 
+        In any case you should not consider the remainder of this section to 
+        be authoritative since it has not been written by a lawyer.
+      </para>
+      <para>
+        Well, let's try to have a look at the situation anyway.
+      </para>
+      <para>
+        During the compilation of your program, you will be combining code 
+        from several sources: your code, Winelib code, Microsoft MFC code, 
+        and possibly code from other vendor sources. As a result, you must 
+        ensure that the licenses of all code sources are obeyed. What you are 
+        allowed and not allowed to do can vary depending on how you compile 
+        your program and if you will be distributing it. For example, if you 
+        are releasing your code under the GPL, you cannot link your code to 
+        MFC code because the GPL requires that you provide ALL sources to your 
+        users. The MFC license forbids you from distributing the MFC source so 
+        you cannot both distribute your program and comply with the GPL 
+        license. On the other hand, if your code is released under the LGPL, 
+        you cannot statically link your program to the MFC and distribute it, 
+        but you can dynamically link your LGPL code and the MFC library and 
+        distribute it.
+      </para>
+      <para>
+        Wine/Winelib is distributed under an X11-like license. It places few 
+        restrictions on the use and distribution of Wine/Winelib code. I doubt 
+        the Wine license will cause you any problems. On the other hand, MFC 
+        is distributed under a very restrictive license and the restrictions 
+        vary from version to version and between service packs. There are 
+        basically three aspects you must be aware of when using the MFC.
+      </para>
+      <para>
+        First you must legally get MFC source code on your computer. The MFC 
+        source code comes as a part of Visual Studio. The license for 
+        Visual Studio implies it is a single product that can not
+        be broken up into its components. So the cleanest way to get MFC on 
+        your system is to buy Visual Studio and install it on a dual boot 
+        Linux box.
+      </para>
+      <para>
+        Then you must check that you are allowed to recompile MFC on a
+        non-Microsoft operating system! This varies with the version of MFC. 
+        The MFC license from Visual Studio 6.0 reads in part:
+      </para>
+      <blockquote>
+        <para>
+          1.1 General License Grant. Microsoft grants to you as an
+          individual, a personal, nonexclusive license to make and use
+          copies of the SOFTWARE PRODUCT for the sole purposes of designing,
+          developing, and testing your software product(s) that are designed
+          to operate in conjunction with any Microsoft operating system
+          product. [Other unrelated stuff deleted.]
+        </para>
+      </blockquote>
+      <para>
+        So it appears you cannot even compile MFC for Winelib using this
+        license. Fortunately the Visual Studio 6.0 service pack 3 license 
+        reads (the Visual Studio 5.0 license is similar):
+      </para>
+      <blockquote>
+        <para>
+          1.1 General License Grant. Microsoft grants to you as an
+          individual, a personal, nonexclusive license to make and use
+          copies of the SOFTWARE PRODUCT for the purpose of designing,
+          developing, and testing your software product(s). [Other unrelated
+          stuff deleted]
+        </para>
+      </blockquote>
+      <para>
+        So under this license it appears you can compile MFC for Winelib.
+      </para>
+      <para>
+        Finally you must check whether you have the right to distribute an 
+        MFC library. Check the relevant section of the license on 
+        <quote>redistributables and your redistribution rights</quote>. The 
+        license seems to specify that you only have the right to distribute 
+        binaries of the MFC library if it has no debug information and if 
+        you distribute it with an application that provides significant 
+        added functionality to the MFC library.
+        <!-- FIXME: quote relevant sections of EULA in above paragraph. -->
+      </para>
+    </sect1>
+
+    <sect1 id="mfc-compiling">
+      <title id="mfc-compiling.title">Compiling the MFC</title>
+      <para>
+        Things to disable, 
+        why we have to disable them (lack of Wine support), 
+        where things don't compile, 
+        why, 
+        how to solve it, 
+        what to put in the Makefile, 
+        maybe try to point to a place with a ready-made makefile...
+      </para>
+    </sect1>
+
+    <sect1 id="mfc-using">
+      <title id="mfc-using.title">Using the MFC</title>
+      <para>
+      </para>
+      <para>
+        Specific winemaker options, 
+        the configure options, 
+        the initialization problem...
+      </para>
+    </sect1>
+  </chapter>
+
+<!-- Keep this comment at the end of the file
+Local variables:
+mode: sgml
+sgml-parent-document:("wine-doc.sgml" "book" "chapter" "")
+End:
+-->

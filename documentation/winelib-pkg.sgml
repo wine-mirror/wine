@@ -1,0 +1,15 @@
+  <chapter id="packaging">
+    <title id="packaging.title">Packaging your Winelib application</title>
+    <para>
+      Selecting which libraries to deliver,
+      how to avoid interference with other Winelib applications, 
+      how to play nice with other Winelib applications
+    </para>
+  </chapter>
+
+<!-- Keep this comment at the end of the file
+Local variables:
+mode: sgml
+sgml-parent-document:("wine-doc.sgml" "book" "chapter" "")
+End:
+-->

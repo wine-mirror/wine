@@ -35,7 +35,14 @@ BOOK_SRCS = \
 	registry.sgml \
 	running.sgml \
 	tools.sgml \
-	wine-doc.sgml
+	wine-doc.sgml \
+	winelib-bindlls.sgml \
+	winelib-intro.sgml \
+	winelib-mfc.sgml \
+	winelib-pkg.sgml \
+	winelib-porting.sgml \
+	winelib-toolkit.sgml \
+	winelib-user.sgml
 
 BOOK_TARGETS = \
 	$(BOOKNAME)/index.html \

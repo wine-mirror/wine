@@ -1,0 +1,976 @@
+  <chapter id="winelib-toolkit">
+    <title id="winelib-toolkit.title">The Winelib development toolkit</title>
+
+    <sect1 id="winemaker">
+      <title id="winemaker.title">Winemaker</title>
+
+      <sect2 id="vc-projects">
+        <title id="vc-projects.title">Support for Visual C++ projects</title>
+        <para>
+          Unfortunately Winemaker does not support the Visual C++ project 
+          files, ...yet. Supporting Visual C++ project files (the 
+          <filename>.dsp</filename> and some <filename>.mak</filename> files 
+          for older versions of Visual C++) is definitely on 
+          the list of important Winemaker improvements as it will allow it to 
+          properly detect the defines to be used, any custom include path, the 
+          list of libraries to link with, and exactly which source files to use
+          to build a specific target. All things that the current version of 
+          Winemaker has to guess or that you have to tell it as will become 
+          clear in the next section.
+        </para>
+        <para>
+          When the time comes Winemaker, and its associated build system, will 
+          need some extensions to support:
+        </para>
+        <itemizedlist>
+          <listitem>
+            <para>
+              per file defines and include paths. Visual C++ projects allow 
+              the user to specify compiler options for each individual file 
+              being compiled. But this is probably not very frequent so it 
+              might not be that important.
+            </para>
+          </listitem>
+          <listitem>
+            <para>
+              multiple configurations. Visual C++ projects usually have at 
+              least a 'Debug' and a 'Release' configuration which are compiled 
+              with different compiler options. How exactly we deal with these 
+              configurations remains to be determined.
+            </para>
+          </listitem>
+        </itemizedlist>
+      </sect2>
+
+      <sect2 id="source-analysis">
+        <title id="source-analysis.title">Winemaker's source analysis</title>
+        <para>
+          Winemaker can do its work even without a Windows makefile or a 
+          Visual Studio project to start from (it would not know what to do 
+          with a windows makefile anyway). This involves doing many educated 
+          guesses which may be wrong. But by and large it works. The purpose 
+          of this section is to describe in more details how winemaker 
+          proceeds so that you can better understand why it gets things 
+          wrong and how to fix it/avoid it.
+        </para>
+        <para>
+          At the core winemaker does a recursive traversal of 
+          your source tree looking for targets (things to build) and source 
+          files. Let's start with the targets.
+        </para>
+        <para>
+          First are executables and dlls. Each time it finds one of these in 
+          a directory, winemaker puts it in the list of things to build and 
+          will later generate a <filename>Makefile.in</filename> file in this 
+          directory. Note that Winemaker also knows about the commonly used 
+          <filename>Release</filename> and <filename>Debug</filename> 
+          directories, so it will attribute the executables and libraries 
+          found in these to their parent directory. When it finds an 
+          executable or a dll winemaker is happy because these give it more 
+          information than the other cases described below.
+        </para>
+        <para>
+          If it does not find any executable or dll winemaker will look for 
+          files with a <filename>.mak</filename> extension. If they are not 
+          disguised Visual C++ projects (and currently even if they are), 
+          winemaker will assume that a target by that name should be built 
+          in this directory. But it will not know whether this target is an 
+          executable or a library. So it will assume it is of the default 
+          type, i.e. a graphical application, which you can override by using 
+          the <option>--cuiexe</option> and <option>--dll</option> options.
+        </para>
+        <para>
+          Finally winemaker will check to see if there is a file called 
+          <filename>makefile</filename>. If there is, then it will assume 
+          that there is exactly one target to build for this directory. But 
+          it will not know the name or type of this target. For the type it 
+          will do as in the above case. And for the name it will use the 
+          directory's name. Actually, if the directory starts with 
+          <filename>src</filename> winemaker will try to make use of the name 
+          of the parent directory instead.
+        </para>
+        <para>
+          Once the target list for a directory has been established, 
+          winemaker will check whether it contains a mix of executables and 
+          libraries. If it is so, then winemaker will make it so that each 
+          executable is linked with all the libraries of that directory.
+        </para>
+        <para>
+          If the previous two steps don't produce the expected results (or 
+          you think they will not) then you should put winemaker in 
+          interactive mode (see <xref linkend="interactive" 
+          endterm="interactive.title">). This will allow you to specify the 
+          target list (and more) for each directory.
+        </para>
+        <para>
+          In each directory winemaker also looks for source files: C, C++ 
+          or resource files. If it also found targets to build in this 
+          directory it will then try to assign each source file to one of 
+          these targets based on their names. Source files that do not seem 
+          to match any specific target are put in a global list for this 
+          directory, see the <literal>EXTRA_xxx</literal> variables in the 
+          <filename>Makefile.in</filename>, and linked with each of the 
+          targets. The assumption here is that these source files contain 
+          common code which is shared by all the targets.
+          If no targets were found in the directory where these files are 
+          located, then they are assigned to the parent's directory. So if a 
+          target is found in the parent directory it will also 'inherit' the 
+          source files found in its subdirectories.
+        </para>
+        <para>
+          Finally winemaker also looks for more exotic files like 
+          <filename>.h</filename> headers, <filename>.inl</filename> files 
+          containing inline functions and a few others. These are not put in 
+          the regular source file lists since they are not compiled directly. 
+          But winemaker will still remember them so that they are processed 
+          when the time comes to fix the source files.
+        </para>
+        <para>
+          Fixing the source files is done as soon as winemaker has finished 
+          its recursive directory traversal. The two main tasks in this step 
+          are fixing the CRLF issues and verifying the case of the include 
+          statements.
+        </para>
+        <para>
+          Winemaker makes a backup of each source file (in such a way that 
+          symbolic links are preserved), then reads it fixing the CRLF 
+          issues and the other issues as it goes. Once it has finished 
+          working on a file it checks whether it has done any non 
+          CRLF-related modification and deletes the backup file if it did 
+          not (or if you used <option>--nobackup</option>).
+        </para>
+        <para>
+          Checking the case of the include statements (of any form, 
+          including files referenced by resource files), is done in the 
+          context of that source file's project. This way winemaker can use 
+          the proper include path when looking for the file that is included. 
+          If winemaker fails to find a file in any of the directories of the 
+          include path, it will rename it to lowercase on the basis that it 
+          is most likely a system header and that all system headers names 
+          are lowercase (this can be overriden by using 
+          <option>--nolower-include</option>).
+        </para>
+        <para>
+          Finally winemaker generates the <filename>Makefile.in</filename> 
+          files and other support files (wrapper files, spec files, 
+          <filename>configure.in</filename>, 
+          <filename>Make.rules.in</filename>). From the above description 
+          you can guess at the items that winemaker may get wrong in 
+          this phase: macro definitions, include path, library path, 
+          list of libraries to import. You can deal with these issues by 
+          using winemaker's <option>-D</option>, <option>-I</option>, 
+          <option>-L</option> and <option>-i</option> options if they are 
+          homogeneous enough between all your targets. Otherwise you may 
+          want to use winemaker's <link linkend="interactive">interactive 
+          mode</link> so that you can specify different settings for each 
+          project / target.
+        </para>
+        <para>
+          For instance, one of the problems you are likely to encounter is 
+          that of the <varname>STRICT</varname> macro. Some programs will 
+          not compile if <varname>STRICT</varname> is not turned on, and 
+          others will not compile if it is. Fortunately all the files in a 
+          given source tree use the same setting so that all you have to do 
+          is add <literal>-DSTRICT</literal> on winemaker's command line 
+          or in the <filename>Makefile.in</filename> file(s).
+        </para>
+        <para>
+          Finally the most likely reasons for missing or duplicate symbols 
+          are:
+        </para>
+        <itemizedlist>
+          <listitem>
+            <para>
+              The target is not being linked with the right set of libraries.  
+              You can avoid this by using winemaker's <option>-L</option> and 
+              <option>-i</option> options or adding these libraries to the 
+              <filename>Makefile.in</filename> file.
+            </para>
+          </listitem>
+          <listitem>
+            <para>
+              Maybe you have multiple targets in a single directory and 
+              winemaker guessed wrong when trying to match the source files 
+              with the targets. The only way to fix this kind of problem is 
+              to edit the <filename>Makefile.in</filename> file manually.
+            </para>
+          </listitem>
+          <listitem>
+            <para>
+              Winemaker assumes you have organized your source files 
+              hierarchically. If a target uses source files that are in a 
+              sibling directory, e.g. if you link with 
+              <filename>../hello/world.o</filename> then you will get missing 
+              symbols. Again the only solution is to manually edit the 
+              <filename>Makefile.in</filename> file.
+            </para>
+          </listitem>
+        </itemizedlist>
+      </sect2>
+
+      <sect2 id="interactive">
+        <title id="interactive.title">The interactive mode</title>
+        <para>
+          what is it, 
+          when to use it,
+          how to use it
+        </para>
+      </sect2>
+
+      <sect2 id="Makefile.in">
+        <title id="Makefile.in.title">The Makefile.in files</title>
+        <para>
+          The <filename>Makefile.in</filename> is your makefile. More 
+          precisely it is the template from which the actual makefile will 
+          be generated by the <filename>configure</filename> script. It also 
+          relies on the <filename>Make.rules</filename> file for most of 
+          the actual logic. This way it only contains a relatively simple 
+          description of what needs to be built, not the complex logic of 
+          how things are actually built.
+        </para>
+        <para>
+          So this is the file to modify if you want to customize things. 
+          Here's a detailed description of its content:
+        </para>
+        <programlisting>
+### Generic autoconf variables
+
+TOPSRCDIR             = @top_srcdir@
+TOPOBJDIR             = .
+SRCDIR                = @srcdir@
+VPATH                 = @srcdir@
+        </programlisting>
+        <para>
+          The above is part of the standard autoconf boiler-plate. These 
+          variables make it possible to have per-architecture directories for 
+          compiled files and other similar goodies (But note that this kind 
+          of functionality has not been tested with winemaker generated 
+          <filename>Makefile.in</filename> files yet).
+        </para>
+        <programlisting>
+SUBDIRS               =
+DLLS                  =
+EXES                  = hello
+        </programlisting>
+        <para>
+          This is where the targets for this directory are listed. The names 
+          are pretty self-explanatory. <varname>SUBDIRS</varname> is usually 
+          only present in the top-level makefile. For libraries you should 
+          put the full Unix name, e.g. <literal>libfoo.so</literal>.
+        </para>
+        <programlisting>
+### Global settings
+
+DEFINES               = -DSTRICT
+INCLUDE_PATH          =
+LIBRARY_PATH          =
+LIBRARIES             =
+        </programlisting>
+        <para>
+          This section contains the global compilation settings: they apply 
+          to all the targets in this makefile. The <varname>LIBRARIES</varname> 
+          variable allows you to specify additional Unix libraries to link with. 
+          Note that you would normally not specify Winelib libraries there. To 
+          link with a Winelib library, one uses the 'import' statement of the 
+          <link linkend="spec-file">spec files</link>. The exception is when you 
+          have not explicitly exported the functions of a Winelib library. One 
+          library you are likely to find here is <literal>mfc</literal> (note, 
+          the '-l' is omitted).
+        </para>
+        <para>
+          The other variable 
+          names should be self-explanatory. You can also use three additional 
+          variables that are usually not present in the file: 
+          <varname>CEXTRA</varname>, <varname>CXXEXTRA</varname> and 
+          <varname>WRCEXTRA</varname> which allow you to specify additional 
+          flags for, respectively, the C compiler, the C++ compiler and the 
+          resource compiler. Finally note that all these variable contain 
+          the option's name except <varname>IMPORTS</varname>. So you should 
+          put <literal>-DSTRICT</literal> in <varname>DEFINES</varname> but 
+          <literal>winmm</literal> in <varname>IMPORTS</varname>.
+        </para>
+        <para>
+          Then come one section per target, each describing the various 
+          components that target is made of.
+        </para>
+        <programlisting>
+### hello sources and settings
+
+hello_C_SRCS          = hello.c
+hello_CXX_SRCS        =
+hello_RC_SRCS         =
+hello_SPEC_SRCS       = hello.spec
+        </programlisting>
+        <para>
+          Each section will start with a comment indicating the name of the 
+          target. Then come a series of variables prefixed with the name of 
+          that target. Note that the name of the prefix may be slightly 
+          different from that of the target because of restrictions on the 
+          variable names.
+        </para>
+        <para>
+          The above variables list the sources that are used togenerate the 
+          target. Note that there should only be one resource file in 
+          <varname>RC_SRCS</varname>, and that <varname>SPEC_SRCS</varname> 
+          will always contain a single spec file.
+        </para>
+        <programlisting>
+hello_LIBRARY_PATH    =
+hello_LIBRARIES       =
+hello_DEPENDS         =
+        </programlisting>
+        <para>
+          The above variables specify how to link the target. Note that they 
+          add to the global settings we saw at the beginning of this file.
+        </para>
+        <para>
+          <varname>DEPENDS</varname>, when present, specifies a list of other 
+          targets that this target depends on. Winemaker will automatically 
+          fill this field, and the <varname>LIBRARIES</varname> field, when an 
+          executable and a library are built in the same directory.
+        </para>
+        <para>
+          The reason why winemaker also links with libraries in the Unix sense 
+          in the case above is because functions will not be properly exported. 
+          Once you have exported all the functions in the library's spec file 
+          you should remove them from the <varname>LIBRARIES</varname> field.
+        </para>
+        <programlisting>
+hello_OBJS            = $(hello_C_SRCS:.c=.o) \
+                        $(hello_CXX_SRCS:.cpp=.o) \
+                        $(EXTRA_OBJS)
+        </programlisting>
+        <para>
+          The above just builds a list of all the object files that 
+          correspond to this target. This list is later used for the link 
+          command.
+        </para>
+        <programlisting>
+### Global source lists
+
+C_SRCS                = $(hello_C_SRCS)
+CXX_SRCS              = $(hello_CXX_SRCS)
+RC_SRCS               = $(hello_RC_SRCS)
+SPEC_SRCS             = $(hello_SPEC_SRCS)
+        </programlisting>
+        <para>
+          This section builds 'summary' lists of source files. These lists are 
+          used by the <filename>Make.rules</filename> file.
+        </para>
+        <programlisting>
+### Generic autoconf targets
+
+all: $(DLLS) $(EXES:%=%.so)
+
+@MAKE_RULES@
+
+install::
+        for i in $(EXES); do $(INSTALL_PROGRAM) $$i $(bindir); done
+        for i in $(EXES:%=%.so) $(DLLS); do $(INSTALL_LIBRARY) $$i $(libdir); done
+
+uninstall::
+        for i in $(EXES); do $(RM) $(bindir)/$$i;done
+        for i in $(EXES:%=%.so) $(DLLS); do $(RM) $(libdir)/$$i;done
+        </programlisting>
+        <para>
+          The above first defines the default target for this makefile. Here 
+          it consists in trying to build all the targets. Then it includes 
+          the <filename>Make.rules</filename> file which contains the build 
+          logic, and provides a few more standard targets to install / 
+          uninstall the targets. 
+        </para>
+        <programlisting>
+### Target specific build rules
+
+$(hello_SPEC_SRCS:.spec=.tmp.o): $(hello_OBJS)
+        $(LDCOMBINE) $(hello_OBJS) -o $@
+        -$(STRIP) $(STRIPFLAGS) $@
+
+$(hello_SPEC_SRCS:.spec=.spec.c): $(hello_SPEC_SRCS:.spec) $(hello_SPEC_SRCS:.spec=.tmp.o) $(hello_RC_SRCS:.rc=.res)
+        $(WINEBUILD) -fPIC $(hello_LIBRARY_PATH) $(WINE_LIBRARY_PATH) -sym $(hello_SPEC_SRCS:.spec=.tmp.o) -o $@ -spec $(hello_SPEC_SRCS)
+
+hello.so: $(hello_SPEC_SRCS:.spec=.spec.o) $(hello_OBJS) $(hello_DEP
+ENDS) 
+        $(LDSHARED) $(LDDLLFLAGS) -o $@ $(hello_OBJS) $(hello_SPEC_SRCS:.spec=.spec.o) $(hello_LIBRARY_PATH) $(hello_LIBRARIES:%=-l%) $(DLL_LINK) $(LIBS)
+        test -e hello || $(LN_S) $(WINE) hello
+        </programlisting>
+        <para>
+          Then come additional directives to link the executables and 
+          libraries. These are pretty much standard and you should not need 
+          to modify them.
+        </para>
+      </sect2>
+
+      <sect2 id="Make.rules.in">
+        <title id="Make.rules.in.title">The Make.rules.in file</title>
+        <para>
+          What's in the Make.rules.in...
+        </para>
+      </sect2>
+
+      <sect2 id="configure.in">
+        <title id="configure.in.title">The configure.in file</title>
+        <para>
+          What's in the configure.in...
+        </para>
+      </sect2>
+    </sect1>
+
+    <sect1 id="wrc">
+      <title id="wrc.title">Compiling resource files: WRC</title>
+      <para>
+        To compile resources you should use the Wine Resource Compiler, 
+        wrc for short, which produces a binary <filename>.res</filename> 
+        file. This resource file is then used by winebuild when compiling 
+        the spec file (see <xref linkend="spec-file" 
+        endterm="spec-file.title">).
+      </para>
+      <para>
+        Again the makefiles generated by winemaker take care of this for you. 
+        But if you were to write your own makefile you would put something 
+        like the following:
+      </para>
+      <programlisting>
+WRC=$(WINE_DIR)/tools/wrc/wrc
+
+WINELIB_FLAGS = -I$(WINE_DIR)/include -DWINELIB -D_REENTRANT
+WRCFLAGS      = -r -L
+
+.SUFFIXES: .rc .res
+
+.rc.res:
+	$(WRC) $(WRCFLAGS) $(WINELIB_FLAGS) -o $@ $<
+      </programlisting>
+      <para>
+        There are two issues you are likely to encounter with resource files.
+      </para>
+      <para>
+        The first problem is with the C library headers. WRC does not know 
+        where these headers are located. So if an RC file, of a file it 
+        includes, references such a header you will get a 'file not found' 
+        error from wrc. Here are a few ways to deal with this:
+      </para>
+      <itemizedlist>
+        <listitem>
+          <para>
+            The solution traditionally used by the Winelib headers is to 
+            enclose the offending include statement in an 
+            <literal>#ifndef RC_INVOKED</literal> statement where 
+            <varname>RC_INVOKED</varname> is a macro name which is 
+            automatically defined by wrc.
+          </para>
+        </listitem>
+        <listitem>
+          <para>
+            Alternately you can add one or more <option>-I</option> directive 
+            to your wrc command so that it finds you system files. For 
+            instance you may add <literal>-I/usr/include 
+            -I/usr/lib/gcc-lib/i386-linux/2.95.2/include</literal> to cater 
+            to both C and C++ headers. But this supposes that you know where 
+            these header files reside which decreases the portability of your 
+            makefiles to other platforms (unless you automatically detect all 
+            the necessary directories in the autoconf script).
+          </para>
+          <para>
+            Or you could use the C/C++ compiler to perform the preprocessing. 
+            To do so, simply modify your makefile as follows:
+          </para>
+          <programlisting>
+.rc.res:
+	$(CC) $(CC_OPTS) -DRC_INVOKED -E -x c $< | $(WRC) -N $(WRCFLAGS) $(WINELIB_FLAGS) -o $@
+
+          </programlisting>
+          <!-- FIXME: does this still cause problems for the line numbers? -->
+        </listitem>
+      </itemizedlist>
+      <para>
+        The second problem is that the headers may contain constructs that 
+        WRC fails to understand. A typical example is a function which return 
+        a 'const' type. WRC expects a function to be two identifiers followed 
+        by an opening parenthesis. With the const this is three identifiers 
+        followed by a parenthesis and thus WRC is confused (note: WRC should 
+        in fact ignore all this like the windows resource compiler does). 
+        The current work-around is to enclose offending statement(s) in an 
+        <literal>#ifndef RC_INVOKED</literal>.
+      </para>
+
+      <para>
+        Using GIF files in resources is problematic. For best results,
+        convert them to BMP and change your <filename>.res</filename>
+        file.
+      </para>
+      <para>
+        If you use common controls/dialogs in your resource files, you
+        will need to add <function>#include &lt;commctrl.h></function>
+        after the <function>#include &lt;windows.h></function> line,
+        so that <command>wrc</command> knows the values of control
+        specific flags.
+      </para>
+    </sect1>
+
+    <sect1 id="wmc">
+      <title id="wmc.title">Compiling message files: WMC</title>
+      <para>
+        how does one use it???
+      </para>
+    </sect1>
+
+    <sect1 id="spec-file">
+      <title id="spec-file.title">The Spec file</title>
+
+      <sect2 id="spec-intro">
+        <title id="spec-intro.title">Introduction</title>
+        <para>
+          In Windows the program's life starts either when its 
+          <function>main</function> is called,  for console applications, or 
+          when its <function>WinMain</function> is called, for windows 
+          applications in the 'windows' subsystem. On Unix it is always 
+          <function>main</function> that is called. Furthermore in Winelib it 
+          has some special tasks to accomplish, such as initializing Winelib, 
+          that a normal <function>main</function> does not have to do.
+        </para>
+        <para>
+          Furthermore windows applications and libraries contain some 
+          information which are necessary to make APIs such as 
+          <function>GetProcAddress</function> work. So it is necessary to 
+          duplicate these data structures in the Unix world to make these 
+          same APIs work with Winelib applications and libraries.
+        </para>
+        <para>
+          The spec file is there to solve the semantic gap described above. 
+          It provides the <function>main</function> function that initializes 
+          Winelib and calls the module's <function>WinMain</function> / 
+          <function>DllMain</function>, and it contains information about 
+          each API exported from a Dll so that the appropriate tables can be 
+          generated.
+        </para>
+        <para>
+          A typical spec file will look something like this:
+        </para>
+        <screen>
+name    hello
+type    win32
+mode    guiexe
+init    WinMain
+rsrc    resource.res
+
+import  winmm.dll
+        </screen>
+        <para>
+          And here are the entries you will probably want to change: 
+        </para>
+        <variablelist>
+          <varlistentry>
+            <term>name</term>
+            <listitem>
+              <para>
+                This is the name of the Win32 module. Usually this is the 
+                same as that of the application or library (but without the 
+                'lib' and the '.so').
+              </para>
+            </listitem>
+          </varlistentry>
+          <varlistentry>
+            <term>mode</term>
+            <term>init</term>
+            <listitem>
+              <para>
+                <literal>mode</literal> defines whether what you are 
+                building is a library, <literal>dll</literal>, a console 
+                application, <literal>cuiexe</literal> or a regular 
+                graphical application <literal>guiexe</literal>. Then 
+                <literal>init</literal> defines what is the entry point of 
+                that module. For a library this is customarily set to 
+                <literal>DllMain</literal>, for a console application this 
+                is <literal>main</literal> and for a graphical application 
+                this is <literal>WinMain</literal>.
+              </para>
+            </listitem>
+          </varlistentry>
+          <varlistentry>
+            <term>import</term>
+            <listitem>
+              <para>
+                Add an 'import' statement for each library that this 
+                executable depends on. If you don't, these libraries will 
+                not get initialized in which case they may very well not 
+                work (e.g. winmm).
+              </para>
+            </listitem>
+          </varlistentry>
+          <varlistentry>
+            <term>rsrc</term>
+            <listitem>
+              <para>
+                This item specifies the name of the compiled resource file 
+                to link with your module. If your resource file is called 
+                <filename>hello.rc</filename> then the wrc compilation step
+                (see <xref linkend="wrc" endterm="wrc.title">) will generate 
+                a file called <filename>hello.res</filename>. This is the 
+                name you must provide here. Note that because of this you 
+                cannot compile the spec file before you have compiled the 
+                resource file. So you should put a rule like the following 
+                in your makefile:
+              </para>
+              <programlisting>
+hello.spec.c: hello.res
+              </programlisting>
+              <para>
+                If your project does not have a resource file then you must 
+                omit this entry altogether.
+              </para>
+            </listitem>
+          </varlistentry>
+          <varlistentry>
+            <term>@</term>
+            <listitem>
+              <para>
+                This entry is not shown above because it is not always 
+                necessary. In fact it is only necessary to export functions 
+                when you plan to dynamically load the library with 
+                <function>LoadLibrary</function> and then do a 
+                <function>GetProcAddress</function> on these functions. 
+                This is not necessary if you just plan on linking with the 
+                library and calling the functions normally. For more details 
+                about this see: <xref linkend="spec-reference" 
+                endterm="spec-reference.title">.
+              </para>
+            </listitem>
+          </varlistentry>
+        </variablelist>
+      </sect2>
+
+      <sect2 id="spec-compiling">
+        <title id="spec-compiling.title">Compiling it</title>
+          <para>
+            Compiling a spec file is a two step process. It is first 
+            converted into a C file by winebuild, and then compiled into an 
+            object file using your regular C compiler. This is all taken 
+            care of by the winemaker generated makefiles of course. But 
+            here's what it would like if you had to do it by hand:
+          </para>
+          <screen>
+WINEBUILD=$(WINE_DIR)/tools/winebuild
+
+.SUFFIXES: .spec .spec.c .spec.o
+
+.spec.spec.c:
+	$(WINEBUILD) -fPIC -o $@ -spec $<
+
+.spec.c.spec.o:
+	$(CC) -c -o $*.spec.o $<
+          </screen>
+          <para>
+            Nothing really complex there. Just don't forget the 
+            <literal>.SUFFIXES</literal> statement, and beware of the tab if 
+            you copy this straight to your Makefile.
+          </para>
+      </sect2>
+
+      <sect2 id="spec-reference">
+        <title id="spec-reference.title">More details</title>
+        <para>
+          (Extracted from tools/winebuild/README)
+          <!-- FIXME: this seems to be rather outdated and sometimes even incorrect, check with the source! -->
+        </para>
+
+        <para>
+          Here is a more detailed description of the spec file's format.
+        </para>
+
+        <programlisting>
+# comment text
+        </programlisting>
+        <para>
+          Anything after a '#' will be ignored as comments.
+        </para>
+
+        <programlisting>
+name    NAME
+type    win16|win32 &lt;--- the |'s mean it's one or the other
+        </programlisting>
+        <para>
+            These two fields are mandatory. <literal>name</literal> 
+            defines the name of your module and <literal>type</literal> 
+            whether it is a Win16 or Win32 module. Note that for Winelib 
+            you should only be using Win32 modules.
+        </para>
+
+        <programlisting>
+file    WINFILENAME
+        </programlisting>
+        <para>
+          This field is optional. It gives the name of the Windows file that 
+          is replaced by the builtin. <literal>&lt;name&gt;.DLL</literal> 
+          is assumed if none is given. This is important for kernel, which 
+          lives in the Windows file <filename>KRNL386.EXE</filename>.
+        </para>
+
+        <programlisting>
+heap    SIZE
+        </programlisting>
+        <para>
+          This field is optional and specific to Win16 modules. It defines 
+          the size of the module local heap. The default is no local heap.
+        </para>
+
+        <programlisting>
+mode    dll|cuiexe|guiexe
+        </programlisting>
+        <para>
+          This field is optional. It specifies specifies whether it is the 
+          spec file for a dll or the main exe. This is only valid for Win32 
+          spec files.
+        </para>
+
+        <programlisting>
+init    FUNCTION
+        </programlisting>
+        <para>
+          This field is optional and specific to Win32 modules. It 
+          specifies a function which will be called when the dll is loaded 
+          or the executable started.
+        </para>
+
+        <programlisting>
+import  DLL
+        </programlisting>
+        <para>
+          This field can be present zero or more times.
+          Each instance names a dll that this module depends on (only for 
+          Win32 modules at the present).
+        </para>
+
+        <programlisting>
+rsrc    RES_FILE
+        </programlisting>
+        <para>
+          This field is optional. If present it specifies the name of the 
+          .res file containing the compiled resources. See <xref 
+          linkend="wrc" endterm="wrc.title"> for details on compiling a 
+          resource file.
+        </para>
+
+        <programlisting>
+ORDINAL VARTYPE EXPORTNAME (DATA [DATA [DATA [...]]])
+2 byte Variable(-1 0xff 0 0)
+        </programlisting>
+        <para>
+          This field can be present zero or more times.
+          Each instance defines data storage at the ordinal specified. You 
+          may store items as bytes, 16-bit words, or 32-bit words.
+          <literal>ORDINAL</literal> is replaced by the ordinal number 
+          corresponding to the variable. <literal>VARTYPE</literal> should 
+          be <literal>byte</literal>, <literal>word</literal> or 
+          <literal>long</literal> for 8, 16, or 32 bits respectively. 
+          <literal>EXPORTNAME</literal> will be the name available for
+          dynamic linking. <literal>DATA</literal> can be a decimal number 
+          or a hex number preceeded by "0x". The example defines the 
+          variable <literal>Variable</literal> at ordinal 2 and containing 
+          4 bytes.
+        </para>
+
+        <programlisting>
+ORDINAL equate EXPORTNAME DATA
+        </programlisting>
+        <para>
+          This field can be present zero or more times.
+          Each instance defines an ordinal as an absolute value.
+          <literal>ORDINAL</literal> is replaced by the ordinal number 
+          corresponding to the variable. <literal>EXPORTNAME</literal> will 
+          be the name available for dynamic linking. 
+          <literal>DATA</literal> can be a decimal number or a hex number 
+          preceeded by "0x".
+        </para>
+
+        <programlisting>
+ORDINAL FUNCTYPE EXPORTNAME([ARGTYPE [ARGTYPE [...]]]) HANDLERNAME
+100 pascal CreateWindow(ptr ptr long s_word s_word s_word s_word
+                        word word word ptr)
+           WIN_CreateWindow
+101 pascal GetFocus() WIN_GetFocus()
+        </programlisting>
+        <para>
+          This field can be present zero or more times.
+          Each instance defines a function entry point. The prototype 
+          defined by <literal>EXPORTNAME ([ARGTYPE [ARGTYPE [...]]])</literal> 
+          specifies the name available for dynamic linking and the format 
+          of the arguments. <literal>"ORDINAL</literal>" is replaced
+          by the ordinal number corresponding to the function, or 
+          <literal>@</literal> for automatic ordinal allocation (Win32 only).
+        </para>
+        <para>
+          <literal>FUNCTYPE</literal> should be one of:
+        </para>
+        <variablelist>
+          <varlistentry>
+            <term>pascal16</term>
+            <listitem><para>for a Win16 function returning a 16-bit value</para></listitem>
+          </varlistentry>
+          <varlistentry>
+            <term>pascal</term>
+            <listitem><para>for a Win16 function returning a 32-bit value</para></listitem>
+          </varlistentry>
+          <varlistentry>
+            <term>register</term>
+            <listitem><para>for a function using CPU register to pass arguments</para></listitem>
+          </varlistentry>
+          <varlistentry>
+            <term>interrupt</term>
+            <listitem><para>for a Win16 interrupt handler routine</para></listitem>
+          </varlistentry>
+          <varlistentry>
+            <term>stdcall</term>
+            <listitem><para>for a normal Win32 function</para></listitem>
+          </varlistentry>
+          <varlistentry>
+            <term>cdecl</term>
+            <listitem><para>for a Win32 function using the C calling convention</para></listitem>
+          </varlistentry>
+          <varlistentry>
+            <term>varargs</term>
+            <listitem><para>for a Win32 function taking a variable number of arguments</para></listitem>
+          </varlistentry>
+        </variablelist>
+
+        <para>
+          <literal>ARGTYPE</literal> should be one of:
+        </para>
+        <variablelist>
+          <varlistentry>
+            <term>word</term>
+            <listitem><para>for a 16 bit word</para></listitem>
+          </varlistentry>
+          <varlistentry>
+            <term>long</term>
+            <listitem><para>a 32 bit value</para></listitem>
+          </varlistentry>
+          <varlistentry>
+            <term>ptr</term>
+            <listitem><para>for a linear pointer</para></listitem>
+          </varlistentry>
+          <varlistentry>
+            <term>str</term>
+            <listitem><para>for a linear pointer to a null-terminated string</para></listitem>
+          </varlistentry>
+          <varlistentry>
+            <term>s_word</term>
+            <listitem><para>for a 16 bit signed word</para></listitem>
+          </varlistentry>
+          <varlistentry>
+            <term>segptr</term>
+            <listitem><para>for a segmented pointer</para></listitem>
+          </varlistentry>
+          <varlistentry>
+            <term>segstr</term>
+            <listitem><para>for a segmented pointer to a null-terminated string</para></listitem>
+          </varlistentry>
+        </variablelist>
+
+        <para>
+          Only <literal>ptr</literal>, <literal>str</literal> and 
+          <literal>long</literal> are valid for Win32 functions.
+          <literal>HANDLERNAME</literal> is the name of the actual Wine 
+          function that will process the request in 32-bit mode.
+        </para>
+        <para>
+          The two examples define an entry point for the 
+          <function>CreateWindow</function> and <function>GetFocus</function> 
+          calls respectively. The ordinals used are just examples.
+        </para>
+        <para>
+          To declare a function using a variable number of arguments in 
+          Win16, specify the function as taking no arguments. The arguments 
+          are then available with CURRENT_STACK16->args. In Win32, specify 
+          the function as <literal>varargs</literal> and declare it with a 
+          '...' parameter in the C file.  See the wsprintf* functions in 
+          <filename>user.spec</filename> and 
+          <filename>user32.spec</filename> for an example.
+        </para>
+
+        <programlisting>
+ORDINAL stub EXPORTNAME
+        </programlisting>
+        <para>
+          This field can be present zero or more times.
+          Each instance defines a stub function. It makes the ordinal 
+          available for dynamic linking, but will terminate execution with 
+          an error message if the function is ever called.
+        </para>
+
+        <programlisting>
+ORDINAL extern EXPORTNAME SYMBOLNAME
+        </programlisting>
+        <para>
+          This field can be present zero or more times.
+          Each instance defines an entry that simply maps to a Wine symbol
+          (variable or function); <literal>EXPORTNAME</literal> will point 
+          to the symbol <literal>SYMBOLNAME</literal> that must be defined 
+          in C code. This type only works with Win32.
+        </para>
+
+        <programlisting>
+ORDINAL forward EXPORTNAME SYMBOLNAME
+        </programlisting>
+        <para>
+          This field can be present zero or more times.
+          Each instance defines an entry that is forwarded to another entry
+          point (kind of a symbolic link). <literal>EXPORTNAME</literal>
+          will forward to the entry point <literal>SYMBOLNAME</literal> 
+          that must be of the form <literal>DLL.Function</literal>. This 
+          type only works with Win32.
+        </para>
+      </sect2>
+    </sect1>
+
+    <sect1 id="linking">
+      <title id="linking.title">Linking it all together</title>
+      <!-- FIXME: This is outdated -->
+      <para>
+        To link an executable you need to link together: your object files, 
+        the spec file, any Windows libraries that your application depends
+        on, gdi32 for instance, and any additional library that you use. All 
+        the libraries you link with should be available as '.so' libraries. 
+        If one of them is available only in '.dll' form then consult 
+        <xref linkend="bindlls" endterm="bindlls.title">.
+      </para>
+      <para>
+        It is also when attempting to link your executable that you will 
+        discover whether you have missing symbols or not in your custom 
+        libraries. On Windows when you build a library, the linker will 
+        immediately tell you if a symbol it is supposed to export is 
+        undefined. In Unix, and in Winelib, this is not the case. The symbol 
+        will silently be marked as undefined and it is only when you try to 
+        produce an executable that the linker will verify all the symbols are 
+        accounted for.
+      </para>
+      <para>
+        So before declaring victory when first converting a library to 
+        Winelib, you should first try to link it to an executable (but you 
+        would have done that to test it anyway, right?). At this point you 
+        may discover some undefined symbols that you thought were implemented 
+        by the library. Then, you to the library sources and fix it. But you 
+        may also discover that the missing symbols are defined in, say, 
+        gdi32. This is because you did not link the said library with gdi32. 
+        One way to fix it is to link this executable, and any other that also 
+        uses your library, with gdi32. But it is better to go back to your 
+        library's makefile and explicitly link it with gdi32.
+      </para>
+      <para>
+        As you will quickly notice, this has unfortunately not been 
+        (completely) done for Winelib's own libraries. So if an application 
+        must link with ole32, you will also need to link with advapi32, 
+        rpcrt4 and others even if you don't use them directly. This can be 
+        annoying and hopefully will be fixed soon (feel free to submit a 
+        patch).
+      </para>
+      <!-- FIXME: try to give some sort of concrete example -->
+    </sect1>
+  </chapter>
+
+<!-- Keep this comment at the end of the file
+Local variables:
+mode: sgml
+sgml-parent-document:("wine-doc.sgml" "book" "chapter" "")
+End:
+-->

@@ -1,0 +1,38 @@
+  <chapter id="bindlls">
+    <title id="bindlls.title">Dealing with binary only dlls</title>
+    <sect1 id="bindlls-intro">
+      <title id="binary-dlls-intro.title">Introduction</title>
+      <para>
+        describe the problem, 
+        use an example and reuse it in the following sections...
+      </para>
+    </sect1>
+
+    <sect1 id="bindlls-spec">
+      <title id="bindlls-spec.title">Writing the spec file</title>
+      <para>
+        give an example...
+      </para>
+    </sect1>
+
+    <sect1 id="bindlls-cxx-apis">
+      <title id="bindlls-cxx-apis.title">How to deal with C++ APIs</title>
+      <para>
+        names are mangled, how to demangle them, how to call them
+      </para>
+    </sect1>
+
+    <sect1 id="bindlls-wrapper">
+      <title id="bindlls-wrapper.title">Writing the wrapper</title>
+      <para>
+        give an example
+      </para>
+    </sect1>
+  </chapter>
+
+<!-- Keep this comment at the end of the file
+Local variables:
+mode: sgml
+sgml-parent-document:("wine-doc.sgml" "book" "chapter" "")
+End:
+-->
