@@ -433,7 +433,7 @@ static void RPCRT4_stop_listen(void)
 
 static RPC_STATUS RPCRT4_use_protseq(RpcServerProtseq* ps)
 {
-  RPCRT4_CreateConnection(&ps->conn, TRUE, ps->Protseq, NULL, ps->Endpoint, NULL);
+  RPCRT4_CreateConnection(&ps->conn, TRUE, ps->Protseq, NULL, ps->Endpoint, NULL, NULL);
 
   EnterCriticalSection(&server_cs);
   ps->Next = protseqs;

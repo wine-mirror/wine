@@ -40,6 +40,9 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(ole);
 
+static RpcConnection* conn_cache;
+static CRITICAL_SECTION conn_cache_cs = CRITICAL_SECTION_INIT("conn_cache_cs");
+
 LPSTR RPCRT4_strndupA(LPSTR src, INT slen)
 {
   DWORD len;
@@ -93,7 +96,7 @@ void RPCRT4_strfree(LPSTR src)
   if (src) HeapFree(GetProcessHeap(), 0, src);
 }
 
-RPC_STATUS RPCRT4_CreateConnection(RpcConnection** Connection, BOOL server, LPSTR Protseq, LPSTR NetworkAddr, LPSTR Endpoint, LPSTR NetworkOptions)
+RPC_STATUS RPCRT4_CreateConnection(RpcConnection** Connection, BOOL server, LPSTR Protseq, LPSTR NetworkAddr, LPSTR Endpoint, LPSTR NetworkOptions, RpcBinding* Binding)
 {
   RpcConnection* NewConnection;
 
@@ -102,6 +105,12 @@ RPC_STATUS RPCRT4_CreateConnection(RpcConnection** Connection, BOOL server, LPST
   NewConnection->Protseq = RPCRT4_strdupA(Protseq);
   NewConnection->NetworkAddr = RPCRT4_strdupA(NetworkAddr);
   NewConnection->Endpoint = RPCRT4_strdupA(Endpoint);
+  NewConnection->Used = Binding;
+
+  EnterCriticalSection(&conn_cache_cs);
+  NewConnection->Next = conn_cache;
+  conn_cache = NewConnection;
+  LeaveCriticalSection(&conn_cache_cs);
 
   TRACE("connection: %p\n", NewConnection);
   *Connection = NewConnection;
@@ -111,14 +120,62 @@ RPC_STATUS RPCRT4_CreateConnection(RpcConnection** Connection, BOOL server, LPST
 
 RPC_STATUS RPCRT4_DestroyConnection(RpcConnection* Connection)
 {
+  RpcConnection* PrevConnection;
+
   TRACE("connection: %p\n", Connection);
   if (Connection->Used) ERR("connection is still in use\n");
+
+  EnterCriticalSection(&conn_cache_cs);
+  PrevConnection = conn_cache;
+  while (PrevConnection && PrevConnection->Next != Connection)
+    PrevConnection = PrevConnection->Next;
+  if (PrevConnection) PrevConnection->Next = Connection->Next;
+  LeaveCriticalSection(&conn_cache_cs);
+
   RPCRT4_CloseConnection(Connection);
   RPCRT4_strfree(Connection->Endpoint);
   RPCRT4_strfree(Connection->NetworkAddr);
   RPCRT4_strfree(Connection->Protseq);
   HeapFree(GetProcessHeap(), 0, Connection);
   return RPC_S_OK;
+}
+
+RPC_STATUS RPCRT4_GetConnection(RpcConnection** Connection, BOOL server, LPSTR Protseq, LPSTR NetworkAddr, LPSTR Endpoint, LPSTR NetworkOptions, RpcBinding* Binding)
+{
+  RpcConnection* NewConnection;
+
+  if (!server) {
+    EnterCriticalSection(&conn_cache_cs);
+    for (NewConnection = conn_cache; NewConnection; NewConnection = NewConnection->Next) {
+      if (NewConnection->Used) continue;
+      if (NewConnection->server != server) continue;
+      if (Protseq && strcmp(NewConnection->Protseq, Protseq)) continue;
+      if (NetworkAddr && strcmp(NewConnection->NetworkAddr, NetworkAddr)) continue;
+      if (Endpoint && strcmp(NewConnection->Endpoint, Endpoint)) continue;
+      /* this connection fits the bill */
+      NewConnection->Used = Binding;
+      break;
+    }
+    LeaveCriticalSection(&conn_cache_cs);
+    if (NewConnection) {
+      TRACE("cached connection: %p\n", NewConnection);
+      *Connection = NewConnection;
+      return RPC_S_OK;
+    }
+  }
+  return RPCRT4_CreateConnection(Connection, server, Protseq, NetworkAddr, Endpoint, NetworkOptions, Binding);
+}
+
+RPC_STATUS RPCRT4_ReleaseConnection(RpcConnection* Connection)
+{
+  TRACE("connection: %p\n", Connection);
+  Connection->Used = NULL;
+  if (!Connection->server) {
+    /* cache the open connection for reuse later */
+    /* FIXME: we should probably clean the cache someday */
+    return RPC_S_OK;
+  }
+  return RPCRT4_DestroyConnection(Connection);
 }
 
 RPC_STATUS RPCRT4_OpenConnection(RpcConnection* Connection)
@@ -264,7 +321,7 @@ RPC_STATUS RPCRT4_SpawnConnection(RpcConnection** Connection, RpcConnection* Old
 {
   RpcConnection* NewConnection;
   RPC_STATUS err = RPCRT4_CreateConnection(&NewConnection, OldConnection->server, OldConnection->Protseq,
-                                           OldConnection->NetworkAddr, OldConnection->Endpoint, NULL);
+                                           OldConnection->NetworkAddr, OldConnection->Endpoint, NULL, NULL);
   if (err == RPC_S_OK) {
     /* because of the way named pipes work, we'll transfer the connected pipe
      * to the child, then reopen the server binding to continue listening */
@@ -418,9 +475,7 @@ RPC_STATUS RPCRT4_OpenBinding(RpcBinding* Binding, RpcConnection** Connection)
     return RPC_S_OK;
   }
 
-  /* FIXME: cache connections */
-  RPCRT4_CreateConnection(&NewConnection, Binding->server, Binding->Protseq, Binding->NetworkAddr, Binding->Endpoint, NULL);
-  NewConnection->Used = Binding;
+  RPCRT4_GetConnection(&NewConnection, Binding->server, Binding->Protseq, Binding->NetworkAddr, Binding->Endpoint, NULL, Binding);
   *Connection = NewConnection;
   return RPCRT4_OpenConnection(NewConnection);
 }
@@ -430,8 +485,7 @@ RPC_STATUS RPCRT4_CloseBinding(RpcBinding* Binding, RpcConnection* Connection)
   TRACE("(Binding == ^%p)\n", Binding);
   if (!Connection) return RPC_S_OK;
   if (Binding->FromConn == Connection) return RPC_S_OK;
-  Connection->Used = NULL;
-  return RPCRT4_DestroyConnection(Connection);
+  return RPCRT4_ReleaseConnection(Connection);
 }
 
 /* utility functions for string composing and parsing */
