@@ -229,7 +229,7 @@ HKEY getDataType(LPSTR *lpValue)
   for (; counter < LAST_TYPE_MAP; counter++)
   {
     LONG len = strlen(typeMap[counter].mask);
-    if ( strncmpi( *lpValue, typeMap[counter].mask, len) == IDENTICAL)
+    if ( lstrncmpi( *lpValue, typeMap[counter].mask, len) == IDENTICAL)
     {
       /*
        * We found it, modify the value's pointer in order to skip the data 
