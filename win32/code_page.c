@@ -182,7 +182,7 @@ INT WINAPI WideCharToMultiByte(UINT page, DWORD flags, LPCWSTR src,
     int care_for_eos=0;
     int dont_copy= (dstlen==0);
 
-    if ((!src) | ((!dst) && (!dont_copy)) )
+    if ((!src) || ((!dst) && (!dont_copy)) )
     {	SetLastError(ERROR_INVALID_PARAMETER);
 	return 0;
     }

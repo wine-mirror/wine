@@ -1248,7 +1248,7 @@ BOOL WINAPI DdeFreeStringHandle( DWORD idInst, HSZ hsz )
   /*  First check instance 
   */
   reference_inst = Find_Instance_Entry(idInst);
-  if ( (reference_inst == NULL) | (reference_inst->Node_list == NULL))
+  if ( (reference_inst == NULL) || (reference_inst->Node_list == NULL))
   {
         if ( Release_reserved_mutex(handle_mutex,"handle_mutex",FALSE,FALSE)) return TRUE;
           /*  Nothing has been initialised - exit now ! can return TRUE since effect is the same */
