@@ -140,6 +140,17 @@ typedef struct tagMSIHANDLEINFO
     struct tagMSIHANDLEINFO *prev;
 } MSIHANDLEINFO;
 
+typedef struct tagMSIPACKAGE
+{
+    MSIHANDLE db;
+    struct tagMSIFEATURE *features;
+    UINT loaded_features;
+    struct tagMSIFOLDER  *folders;
+    UINT loaded_folders;
+    struct tagMSICOMPONENT *components;
+    UINT loaded_components;
+} MSIPACKAGE;
+
 #define MSIHANDLETYPE_ANY 0
 #define MSIHANDLETYPE_DATABASE 1
 #define MSIHANDLETYPE_SUMMARYINFO 2

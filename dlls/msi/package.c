@@ -50,16 +50,20 @@ WINE_DEFAULT_DEBUG_CHANNEL(msi);
 
 void MSI_FreePackage( VOID *arg);
 
-typedef struct tagMSIPACKAGE
-{
-    MSIHANDLE db;
-} MSIPACKAGE;
-
 void MSI_FreePackage( VOID *arg)
 {
     MSIPACKAGE *package= arg;
 
     MsiCloseHandle(package->db);
+
+    if (package->features && package->loaded_features > 0)
+        HeapFree(GetProcessHeap(),0,package->features);
+
+    if (package->folders && package->loaded_folders > 0)
+        HeapFree(GetProcessHeap(),0,package->folders);
+    
+    if (package->components && package->loaded_components > 0)
+        HeapFree(GetProcessHeap(),0,package->components);
 }
 
 UINT WINAPI MsiOpenPackageA(LPCSTR szPackage, MSIHANDLE *phPackage)
@@ -292,6 +296,12 @@ UINT WINAPI MsiOpenPackageW(LPCWSTR szPackage, MSIHANDLE *phPackage)
     }
 
     package->db = db;
+    package->features = NULL;
+    package->folders = NULL;
+    package->components = NULL;
+    package->loaded_features = 0;
+    package->loaded_folders = 0;
+    package->loaded_components= 0;
 
     /* ok here is where we do a slew of things to the database to 
      * prep for all that is to come as a package */
@@ -341,7 +351,9 @@ INT WINAPI MsiProcessMessage( MSIHANDLE hInstall, INSTALLMESSAGE eMessageType,
     DWORD log_type = 0;
     LPSTR message;
     DWORD sz;
+    DWORD total_size = 0;
     INT msg_field=1;
+    INT i;
     FIXME("STUB: %x \n",eMessageType);
 
     if ((eMessageType & 0xff000000) == INSTALLMESSAGE_ERROR)
@@ -355,24 +367,40 @@ INT WINAPI MsiProcessMessage( MSIHANDLE hInstall, INSTALLMESSAGE eMessageType,
     if ((eMessageType & 0xff000000) == INSTALLMESSAGE_COMMONDATA)
         log_type |= INSTALLLOGMODE_COMMONDATA;
     if ((eMessageType & 0xff000000) == INSTALLMESSAGE_ACTIONSTART)
-    {
         log_type |= INSTALLLOGMODE_ACTIONSTART;
-        msg_field = 2;
-    }
     if ((eMessageType & 0xff000000) == INSTALLMESSAGE_ACTIONDATA)
         log_type |= INSTALLLOGMODE_ACTIONDATA;
 
-    sz = 0;
-    MsiRecordGetStringA(hRecord,msg_field,NULL,&sz);
-    sz++;
-    message = HeapAlloc(GetProcessHeap(),0,sz);
-    MsiRecordGetStringA(hRecord,msg_field,message,&sz);
+    message = HeapAlloc(GetProcessHeap(),0,1);
+    message[0]=0;
+    msg_field = MsiRecordGetFieldCount(hRecord);
+    for (i = 1; i <= msg_field; i++)
+    {
+        LPSTR tmp;
+        CHAR number[3];
+        sz = 0;
+        MsiRecordGetStringA(hRecord,i,NULL,&sz);
+        sz+=4;
+        total_size+=sz;
+        tmp = HeapAlloc(GetProcessHeap(),0,sz);
+        message = HeapReAlloc(GetProcessHeap(),0,message,total_size);
 
-    TRACE("(%p %lx %lx)\n",gUIHandler, gUIFilter, log_type);
+        MsiRecordGetStringA(hRecord,i,tmp,&sz);
+
+        if (msg_field > 1)
+        {
+            sprintf(number,"%i: ",i);
+            strcat(message,number);
+        }
+        strcat(message,tmp);
+        HeapFree(GetProcessHeap(),0,tmp);
+    }
+
+    TRACE("(%p %lx %lx %s)\n",gUIHandler, gUIFilter, log_type,
+                             debugstr_a(message));
+
     if (gUIHandler && (gUIFilter & log_type))
         gUIHandler(gUIContext,eMessageType,message);
-    else
-        TRACE("%s\n",debugstr_a(message));
 
     HeapFree(GetProcessHeap(),0,message);
     return ERROR_SUCCESS;
