@@ -192,11 +192,18 @@ static HRESULT do_preprocess(Registrar *This, LPCOLESTR data, strbuf *buf)
 static HRESULT do_process_key(LPCOLESTR *pstr, HKEY parent_key, strbuf *buf, BOOL do_register)
 {
     LPCOLESTR iter = *pstr;
-    BOOL no_remove = FALSE, is_val = FALSE, force_remove = FALSE, do_delete = FALSE;
     HRESULT hres;
     LONG lres;
     HKEY hkey = 0;
     strbuf name;
+    
+    enum {
+        NORMAL,
+        NO_REMOVE,
+        IS_VAL,
+        FORCE_REMOVE,
+        DO_DELETE
+    } key_type = NORMAL; 
 
     static const WCHAR wstrNoRemove[] = {'N','o','R','e','m','o','v','e',0};
     static const WCHAR wstrForceRemove[] = {'F','o','r','c','e','R','e','m','o','v','e',0};
@@ -210,128 +217,134 @@ static HRESULT do_process_key(LPCOLESTR *pstr, HKEY parent_key, strbuf *buf, BOO
     strbuf_init(&name);
 
     while(buf->str[1] || buf->str[0] != '}') {
-        if(!lstrcmpW(buf->str, wstrNoRemove)) {
-            no_remove = TRUE;
-        }else if(!lstrcmpW(buf->str, wstrForceRemove)) {
-            force_remove = TRUE;
-        }else if(!lstrcmpW(buf->str, wstrval)) {
-            is_val = TRUE;
-        }else if(!lstrcmpW(buf->str, wstrDelete)) {
-            do_delete = TRUE;
-        }else {
-            TRACE("name = %s\n", debugstr_w(buf->str));
-            if(do_register) {
-                if(is_val) {
-                    if(force_remove || no_remove || do_delete) {
-                        WARN("Attribites for value!\n");
-                        hres = DISP_E_EXCEPTION;
-                        break;
-                    }
-                    hkey = parent_key;
-                    strbuf_write(buf->str, &name, -1);
-                }else if(do_delete) {
-                    TRACE("Deleting %s\n", debugstr_w(buf->str));
-                    lres = SHDeleteKeyW(parent_key, buf->str);
-                }else {
-                    if(force_remove)
-                        SHDeleteKeyW(parent_key, buf->str);
-                    lres = RegCreateKeyW(parent_key, buf->str, &hkey);
-                    if(lres != ERROR_SUCCESS) {
-                        WARN("Could not create(open) key: %08lx\n", lres);
-                        hres = HRESULT_FROM_WIN32(lres);
-                        break;
-                    }
-                }
-            }else if(!is_val && !do_delete) {
+        key_type = NORMAL;
+        if(!lstrcmpW(buf->str, wstrNoRemove))
+            key_type = NO_REMOVE;
+        else if(!lstrcmpW(buf->str, wstrForceRemove))
+            key_type = FORCE_REMOVE;
+        else if(!lstrcmpW(buf->str, wstrval))
+            key_type = IS_VAL;
+        else if(!lstrcmpW(buf->str, wstrDelete))
+            key_type = DO_DELETE;
+
+        if(key_type != NORMAL) {
+            hres = get_word(&iter, buf);
+            if(FAILED(hres))
+                break;
+        }
+        TRACE("name = %s\n", debugstr_w(buf->str));
+    
+        if(do_register) {
+            if(key_type == IS_VAL) {
+                hkey = parent_key;
                 strbuf_write(buf->str, &name, -1);
-                lres = RegOpenKeyW(parent_key, buf->str, &hkey);
-                if(lres != ERROR_SUCCESS)
-                    WARN("Could not open key %s: %08lx\n", debugstr_w(name.str), lres);
+            }else if(key_type == DO_DELETE) {
+                TRACE("Deleting %s\n", debugstr_w(buf->str));
+                lres = SHDeleteKeyW(parent_key, buf->str);
+            }else {
+                if(key_type == FORCE_REMOVE)
+                    SHDeleteKeyW(parent_key, buf->str);
+                lres = RegCreateKeyW(parent_key, buf->str, &hkey);
+                if(lres != ERROR_SUCCESS) {
+                    WARN("Could not create(open) key: %08lx\n", lres);
+                    hres = HRESULT_FROM_WIN32(lres);
+                    break;
+                }
             }
-            if(!do_delete && *iter == '=') {
-                iter++;
-                hres = get_word(&iter, buf);
-                if(FAILED(hres))
-                    break;
-                if(buf->len != 1) {
-                    WARN("Wrong registry type: %s\n", debugstr_w(buf->str));
-                    hres = DISP_E_EXCEPTION;
-                    break;
-                }
-                if(do_register) {
-                    switch(buf->str[0]) {
-                    case 's':
-                        hres = get_word(&iter, buf);
-                        if(FAILED(hres))
-                            break;
-                        lres = RegSetValueExW(hkey, name.len ? name.str :  NULL, 0, REG_SZ, (PBYTE)buf->str,
-                                (lstrlenW(buf->str)+1)*sizeof(WCHAR));
-                        if(lres != ERROR_SUCCESS) {
-                            WARN("Could set value of key: %08lx\n", lres);
-                            hres = HRESULT_FROM_WIN32(lres);
-                            break;
-                        }
-                        break;
-                    case 'd': {
-                        DWORD dw;
-                        if(*iter == '0' && iter[1] == 'x') {
-                            iter += 2;
-                            dw = strtolW(iter, (WCHAR**)&iter, 16);
-                        }else {
-                            dw = strtolW(iter, (WCHAR**)&iter, 10);
-                        }
-                        lres = RegSetValueExW(hkey, name.len ? name.str :  NULL, 0, REG_DWORD,
-                                (PBYTE)&dw, sizeof(dw));
-                        if(lres != ERROR_SUCCESS) {
-                            WARN("Could set value of key: %08lx\n", lres);
-                            hres = HRESULT_FROM_WIN32(lres);
-                            break;
-                        }
-                        break;
-                    }
-                    default:
-                        WARN("Wrong resource type: %s\n", debugstr_w(buf->str));
-                        hres = DISP_E_EXCEPTION;
-                    };
-                    if(FAILED(hres))
-                        break;
-                }else {
-                    if(*iter == '-')
-                        iter++;
-                    hres = get_word(&iter, buf);
-                    if(FAILED(hres))
-                        break;
-                }
-            }else if(is_val) {
-                WARN("value not set!\n");
+        }else if(key_type != IS_VAL && key_type != DO_DELETE) {
+            strbuf_write(buf->str, &name, -1);
+            lres = RegOpenKeyW(parent_key, buf->str, &hkey);
+              if(lres != ERROR_SUCCESS)
+                WARN("Could not open key %s: %08lx\n", debugstr_w(name.str), lres);
+        }
+
+        if(key_type != DO_DELETE && *iter == '=') {
+            iter++;
+            hres = get_word(&iter, buf);
+            if(FAILED(hres))
+                break;
+            if(buf->len != 1) {
+                WARN("Wrong registry type: %s\n", debugstr_w(buf->str));
                 hres = DISP_E_EXCEPTION;
                 break;
             }
-            if(!is_val && !do_delete && *iter == '{') {
+            if(do_register) {
+                switch(buf->str[0]) {
+                case 's':
+                    hres = get_word(&iter, buf);
+                    if(FAILED(hres))
+                        break;
+                    lres = RegSetValueExW(hkey, name.len ? name.str :  NULL, 0, REG_SZ, (PBYTE)buf->str,
+                            (lstrlenW(buf->str)+1)*sizeof(WCHAR));
+                    if(lres != ERROR_SUCCESS) {
+                        WARN("Could set value of key: %08lx\n", lres);
+                        hres = HRESULT_FROM_WIN32(lres);
+                        break;
+                    }
+                    break;
+                case 'd': {
+                    DWORD dw;
+                    if(*iter == '0' && iter[1] == 'x') {
+                        iter += 2;
+                        dw = strtolW(iter, (WCHAR**)&iter, 16);
+                    }else {
+                        dw = strtolW(iter, (WCHAR**)&iter, 10);
+                    }
+                    lres = RegSetValueExW(hkey, name.len ? name.str :  NULL, 0, REG_DWORD,
+                            (PBYTE)&dw, sizeof(dw));
+                    if(lres != ERROR_SUCCESS) {
+                        WARN("Could set value of key: %08lx\n", lres);
+                        hres = HRESULT_FROM_WIN32(lres);
+                        break;
+                    }
+                    break;
+                }
+                default:
+                    WARN("Wrong resource type: %s\n", debugstr_w(buf->str));
+                    hres = DISP_E_EXCEPTION;
+                };
+                if(FAILED(hres))
+                    break;
+            }else {
+                if(*iter == '-')
+                    iter++;
                 hres = get_word(&iter, buf);
                 if(FAILED(hres))
                     break;
-                hres = do_process_key(&iter, hkey, buf, do_register);
-                if(FAILED(hres))
-                    break;
             }
-            if(!do_register && !do_delete && !is_val && !no_remove) {
-                TRACE("Deleting %s\n", debugstr_w(name.str));
-                RegDeleteKeyW(parent_key, name.str);
-            }
-            if(hkey && !is_val)
-                RegCloseKey(hkey);
-            hkey = 0;
-            name.len = 0;
-            no_remove = is_val = force_remove = do_delete = FALSE;
+        }else if(key_type == IS_VAL) {
+            WARN("value not set!\n");
+            hres = DISP_E_EXCEPTION;
+            break;
         }
+
+        if(key_type != IS_VAL && key_type != DO_DELETE && *iter == '{') {
+            hres = get_word(&iter, buf);
+            if(FAILED(hres))
+                break;
+            hres = do_process_key(&iter, hkey, buf, do_register);
+            if(FAILED(hres))
+                break;
+        }
+
+        TRACE("%x %x\n", do_register, key_type);
+        if(!do_register && (key_type == NORMAL || key_type == FORCE_REMOVE)) {
+            TRACE("Deleting %s\n", debugstr_w(name.str));
+            RegDeleteKeyW(parent_key, name.str);
+        }
+
+        if(hkey && key_type != IS_VAL)
+            RegCloseKey(hkey);
+        hkey = 0;
+        name.len = 0;
+        
         hres = get_word(&iter, buf);
         if(FAILED(hres))
             break;
     }
 
     HeapFree(GetProcessHeap(), 0, name.str);
-    if(hkey && !is_val)
+    if(hkey && key_type != IS_VAL)
         RegCloseKey(hkey);
     *pstr = iter;
     return hres;
