@@ -689,4 +689,3 @@ dlls/wintrust
 % dlls/x11drv/x11drv.spec
 
 dlls/x11drv
-graphics/x11drv

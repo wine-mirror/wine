@@ -9,43 +9,40 @@ EXTRAINCL = @X_CFLAGS@
 EXTRALIBS = $(LIBUNICODE) @X_LIBS@ @X_PRE_LIBS@ @XLIB@ @X_EXTRA_LIBS@
 
 C_SRCS = \
-	$(TOPOBJDIR)/graphics/x11drv/bitblt.c \
-	$(TOPOBJDIR)/graphics/x11drv/bitmap.c \
-	$(TOPOBJDIR)/graphics/x11drv/brush.c \
-	$(TOPOBJDIR)/graphics/x11drv/clipping.c \
-	$(TOPOBJDIR)/graphics/x11drv/codepage.c \
-	$(TOPOBJDIR)/graphics/x11drv/dib.c \
-	$(TOPOBJDIR)/graphics/x11drv/graphics.c \
-	$(TOPOBJDIR)/graphics/x11drv/init.c \
-	$(TOPOBJDIR)/graphics/x11drv/opengl.c \
-	$(TOPOBJDIR)/graphics/x11drv/palette.c \
-	$(TOPOBJDIR)/graphics/x11drv/pen.c \
-	$(TOPOBJDIR)/graphics/x11drv/text.c \
-	$(TOPOBJDIR)/graphics/x11drv/xfont.c \
+	bitblt.c \
+	bitmap.c \
+	brush.c \
 	clipboard.c \
+	clipping.c \
+	codepage.c \
 	desktop.c \
 	dga2.c \
+	dib.c \
 	dib_convert.c \
 	dib_dst_swap.c \
 	dib_src_swap.c \
 	event.c \
+	graphics.c \
+	init.c \
 	keyboard.c \
 	mouse.c \
+	opengl.c \
+	palette.c \
+	pen.c \
 	scroll.c \
 	settings.c \
+	text.c \
 	window.c \
 	winpos.c \
 	x11ddraw.c \
 	x11drv_main.c \
 	xdnd.c \
+	xfont.c \
 	xrandr.c \
 	xrender.c \
 	xvidmode.c
 
 PROGRAMS = wineclipsrv
-
-EXTRASUBDIRS = \
-	$(TOPOBJDIR)/graphics/x11drv
 
 @MAKE_DLL_RULES@
 
