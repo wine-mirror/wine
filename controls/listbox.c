@@ -2307,7 +2307,7 @@ static LRESULT LISTBOX_HandleKeyDown( WND *wnd, LB_DESCR *descr, WPARAM wParam )
         LISTBOX_SetSelection( wnd, descr, caret, TRUE, FALSE);
         if (descr->style & LBS_NOTIFY)
         {
-	    if( descr->lphc && CB_GETTYPE(descr->lphc) != CBS_SIMPLE )
+	    if( descr->lphc )
             {
 		/* make sure that combo parent doesn't hide us */
 		descr->lphc->wState |= CBF_NOROLLUP;

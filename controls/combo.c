@@ -1422,9 +1422,7 @@ static LRESULT COMBO_Command( LPHEADCOMBO lphc, WPARAM wParam, HWND hWnd )
 
 		/* do not roll up if selection is being tracked 
 		 * by arrowkeys in the dropdown listbox */
-
-                if( (lphc->dwStyle & CBS_SIMPLE) ||
-                    ((lphc->wState & CBF_DROPPED) && !(lphc->wState & CBF_NOROLLUP)) )
+                if( ((lphc->wState & CBF_DROPPED) && !(lphc->wState & CBF_NOROLLUP)) )
                 {
                    CBRollUp( lphc, (HIWORD(wParam) == LBN_SELCHANGE), TRUE );
                 }
