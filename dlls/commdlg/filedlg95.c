@@ -2374,7 +2374,7 @@ void FILEDLG95_FILENAME_FillFromSelection (HWND hwnd)
 	{
           /* get the total length of the selected file names*/
           lpstrTemp[0] = '\0';
-          GetName( fodInfos->Shell.FOIShellFolder, pidl, SHGDN_INFOLDER, lpstrTemp );
+          GetName( fodInfos->Shell.FOIShellFolder, pidl, SHGDN_INFOLDER|SHGDN_FORPARSING, lpstrTemp );
 
           if ( ! IsPidlFolder(fodInfos->Shell.FOIShellFolder, pidl) ) /* Ignore folders */
 	  {
@@ -2403,7 +2403,7 @@ void FILEDLG95_FILENAME_FillFromSelection (HWND hwnd)
 	{
 	  /* get the file name */
           lpstrTemp[0] = '\0';
-          GetName( fodInfos->Shell.FOIShellFolder, pidl, SHGDN_INFOLDER, lpstrTemp );
+          GetName( fodInfos->Shell.FOIShellFolder, pidl, SHGDN_INFOLDER|SHGDN_FORPARSING, lpstrTemp );
 
           if (! IsPidlFolder(fodInfos->Shell.FOIShellFolder, pidl)) /* Ignore folders */
 	  {
