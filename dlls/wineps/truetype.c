@@ -10,10 +10,10 @@
 #ifdef HAVE_FREETYPE
 
 #include <freetype/freetype.h>
-#include <freetype/ftnames.h>
-#include <freetype/ttnameid.h>
-#include <freetype/tttables.h>
-#include <freetype/ftglyph.h>
+#include FT_NAMES_H
+#include FT_TRUETYPE_NAMES_H
+#include FT_TRUETYPE_TABLES_H
+#include FT_GLYPH_H
 #include <sys/types.h>
 #include <dirent.h>
 #include <string.h>
