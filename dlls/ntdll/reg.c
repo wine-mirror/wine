@@ -57,31 +57,36 @@ static BOOLEAN _NtKeyToWinKey(
 		'\\','C','L','A','S','S','E','S',0};
 	int len;
 	PUNICODE_STRING ObjectName = ObjectAttributes->ObjectName;
-	
-	if((ObjectName->Length > (len=lstrlenW(KeyPath_HKLM)))
-	&& (0==CRTDLL_wcsncmp(ObjectName->Buffer,KeyPath_HKLM,len)))
+
+	if(ObjectAttributes->RootDirectory)
+	{
+	  len = 0;
+	  *KeyHandle = ObjectAttributes->RootDirectory;
+	}
+	else if((ObjectName->Length > (len=lstrlenW(KeyPath_HKLM)))
+	&& (0==CRTDLL__wcsnicmp(ObjectName->Buffer,KeyPath_HKLM,len)))
 	{  *KeyHandle = HKEY_LOCAL_MACHINE;
 	}
 	else if((ObjectName->Length > (len=lstrlenW(KeyPath_HKU)))
-	&& (0==CRTDLL_wcsncmp(ObjectName->Buffer,KeyPath_HKU,len)))
+	&& (0==CRTDLL__wcsnicmp(ObjectName->Buffer,KeyPath_HKU,len)))
 	{  *KeyHandle = HKEY_USERS;
 	}
 	else if((ObjectName->Length > (len=lstrlenW(KeyPath_HCR)))
-	&& (0==CRTDLL_wcsncmp(ObjectName->Buffer,KeyPath_HCR,len)))
+	&& (0==CRTDLL__wcsnicmp(ObjectName->Buffer,KeyPath_HCR,len)))
 	{  *KeyHandle = HKEY_CLASSES_ROOT;
 	}
 	else if((ObjectName->Length > (len=lstrlenW(KeyPath_HCC)))
-	&& (0==CRTDLL_wcsncmp(ObjectName->Buffer,KeyPath_HCC,len)))
+	&& (0==CRTDLL__wcsnicmp(ObjectName->Buffer,KeyPath_HCC,len)))
 	{  *KeyHandle = HKEY_CURRENT_CONFIG;
 	}
 	else
 	{
-	  *KeyHandle = ObjectAttributes->RootDirectory;
+	  *KeyHandle = 0;
 	  *Offset = 0;
 	  return FALSE;
 	}
 
-	if (ObjectName->Buffer[len] == (WCHAR)'\\') len++;
+	if (len > 0 && ObjectName->Buffer[len] == (WCHAR)'\\') len++;
 	*Offset = len;
 
 	TRACE("off=%u hkey=0x%08x\n", *Offset, *KeyHandle);
