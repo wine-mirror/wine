@@ -509,6 +509,18 @@ static struct regsvr_coclass const coclass_list[] = {
 	"quartz.dll",
 	"Both"
     },
+    {   &CLSID_FilterMapper,
+	"Filter Mapper",
+	NULL,
+	"quartz.dll",
+	"Both"
+    },
+    {   &CLSID_FilterMapper2,
+	"Filter Mapper 2",
+	NULL,
+	"quartz.dll",
+	"Both"
+    },
     { NULL }			/* list terminator */
 };
 

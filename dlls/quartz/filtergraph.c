@@ -261,15 +261,31 @@ static HRESULT WINAPI Graphbuilder_FindFilterByName(IGraphBuilder *iface,
     return E_FAIL; /* FIXME: check this error code */
 }
 
+/* NOTE: despite the implication, it doesn't matter which
+ * way round you put in the input and output pins */
 static HRESULT WINAPI Graphbuilder_ConnectDirect(IGraphBuilder *iface,
 						 IPin *ppinIn,
 						 IPin *ppinOut,
 						 const AM_MEDIA_TYPE *pmt) {
+    PIN_DIRECTION dir;
+    HRESULT hr;
+
     ICOM_THIS_MULTI(IFilterGraphImpl, IGraphBuilder_vtbl, iface);
 
     TRACE("(%p/%p)->(%p, %p, %p)\n", This, iface, ppinIn, ppinOut, pmt);
 
-    return IPin_Connect(ppinOut, ppinIn, pmt);
+    /* FIXME: check pins are in graph */
+
+    hr = IPin_QueryDirection(ppinIn, &dir);
+    if (SUCCEEDED(hr))
+    {
+        if (dir == PINDIR_INPUT)
+            hr = IPin_Connect(ppinOut, ppinIn, pmt);
+        else
+            hr = IPin_Connect(ppinIn, ppinOut, pmt);
+    }
+
+    return hr;
 }
 
 static HRESULT WINAPI Graphbuilder_Reconnect(IGraphBuilder *iface,
