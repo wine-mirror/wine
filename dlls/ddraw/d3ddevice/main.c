@@ -412,27 +412,27 @@ Main_IDirect3DDeviceImpl_7_3T_2T_GetTransform(LPDIRECT3DDEVICE7 iface,
 
     switch (dtstTransformStateType) {
         case D3DTRANSFORMSTATE_WORLD: {
+	    memcpy(lpD3DMatrix, This->world_mat, 16 * sizeof(D3DVALUE));
 	    if (TRACE_ON(ddraw)) {
 	        TRACE(" returning D3DTRANSFORMSTATE_WORLD :\n");
 		dump_D3DMATRIX(lpD3DMatrix);
 	    }
-	    memcpy(lpD3DMatrix, This->world_mat, 16 * sizeof(D3DVALUE));
 	} break;
 
 	case D3DTRANSFORMSTATE_VIEW: {
+	    memcpy(lpD3DMatrix, This->view_mat, 16 * sizeof(D3DVALUE));
 	    if (TRACE_ON(ddraw)) {
 	        TRACE(" returning D3DTRANSFORMSTATE_VIEW :\n");
 		dump_D3DMATRIX(lpD3DMatrix);
 	    }
-	    memcpy(lpD3DMatrix, This->view_mat, 16 * sizeof(D3DVALUE));
 	} break;
 
 	case D3DTRANSFORMSTATE_PROJECTION: {
+	    memcpy(lpD3DMatrix, This->proj_mat, 16 * sizeof(D3DVALUE));
 	    if (TRACE_ON(ddraw)) {
 	        TRACE(" returning D3DTRANSFORMSTATE_PROJECTION :\n");
 		dump_D3DMATRIX(lpD3DMatrix);
 	    }
-	    memcpy(lpD3DMatrix, This->proj_mat, 16 * sizeof(D3DVALUE));
 	} break;
 
 	default:
