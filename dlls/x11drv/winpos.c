@@ -86,9 +86,6 @@ static int clip_children( HWND parent, HWND last, HRGN hrgn, int whole_window )
 
     /* first check if we have anything to do */
     if (!(list = WIN_ListChildren( parent ))) return ret;
-    for (i = 0; list[i] && list[i] != last; i++)
-        if (GetWindowLongW( list[i], GWL_STYLE ) & WS_VISIBLE) break;
-    if (!list[i] || list[i] == last) goto done; /* no children to clip */
 
     if (whole_window)
     {
@@ -101,10 +98,10 @@ static int clip_children( HWND parent, HWND last, HRGN hrgn, int whole_window )
 
     rectRgn = CreateRectRgn( 0, 0, 0, 0 );
 
-    for ( ; list[i] && list[i] != last; i++)
+    for (i = 0; list[i] && list[i] != last; i++)
     {
         if (!(ptr = WIN_FindWndPtr( list[i] ))) continue;
-        if (ptr->dwStyle & WS_VISIBLE)
+        if ((ptr->dwStyle & WS_VISIBLE) && !(ptr->dwExStyle & WS_EX_TRANSPARENT))
         {
             SetRectRgn( rectRgn, ptr->rectWindow.left + x, ptr->rectWindow.top + y,
                         ptr->rectWindow.right + x, ptr->rectWindow.bottom + y );
@@ -117,7 +114,6 @@ static int clip_children( HWND parent, HWND last, HRGN hrgn, int whole_window )
         WIN_ReleaseWndPtr( ptr );
     }
     DeleteObject( rectRgn );
- done:
     HeapFree( GetProcessHeap(), 0, list );
     return ret;
 }
