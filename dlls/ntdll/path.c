@@ -323,12 +323,19 @@ ULONG WINAPI RtlDosSearchPath_U(LPCWSTR paths, LPCWSTR search, LPCWSTR ext,
  * Helper for RtlGetFullPathName_U.
  * Get rid of . and .. components in the path.
  */
-static inline void collapse_path( WCHAR *path )
+static inline void collapse_path( WCHAR *path, UINT mark )
 {
     WCHAR *p, *next;
 
-    p = path;
+    /* convert every / into a \ */
+    for (p = path; *p; p++) if (*p == '/') *p = '\\';
 
+    /* collapse duplicate backslashes */
+    next = path + max( 1, mark );
+    for (p = next; *p; p++) if (*p != '\\' || next[-1] != '\\') *next++ = *p;
+    *next = 0;
+
+    p = path + mark;
     while (*p)
     {
         if (*p == '.')
@@ -337,28 +344,32 @@ static inline void collapse_path( WCHAR *path )
             {
             case '\\': /* .\ component */
                 next = p + 2;
-                while (*next == '\\') next++;
                 memmove( p, next, (strlenW(next) + 1) * sizeof(WCHAR) );
                 continue;
             case 0:  /* final . */
-                while (p > path && p[-1] == '\\') p--;
+                if (p > path + mark) p--;
                 *p = 0;
                 continue;
             case '.':
                 if (p[2] == '\\')  /* ..\ component */
                 {
                     next = p + 3;
-                    while (*next == '\\') next++;
-                    while (p > path && p[-1] == '\\') p--;
-                    while (p > path && p[-1] != '\\') p--;
+                    if (p > path + mark)
+                    {
+                        p--;
+                        while (p > path + mark && p[-1] != '\\') p--;
+                    }
                     memmove( p, next, (strlenW(next) + 1) * sizeof(WCHAR) );
                     continue;
                 }
                 else if (!p[2])  /* final .. */
                 {
-                    while (p > path && p[-1] == '\\') p--;
-                    while (p > path && p[-1] != '\\') p--;
-                    while (p > path && p[-1] == '\\') p--;
+                    if (p > path + mark)
+                    {
+                        p--;
+                        while (p > path + mark && p[-1] != '\\') p--;
+                        if (p > path + mark) p--;
+                    }
                     *p = 0;
                     continue;
                 }
@@ -367,10 +378,9 @@ static inline void collapse_path( WCHAR *path )
         }
         /* skip to the next component */
         while (*p && *p != '\\') p++;
-        while (*p == '\\') p++;
+        if (*p == '\\') p++;
     }
 }
-
 
 /******************************************************************
  *		get_full_path_helper
@@ -382,7 +392,7 @@ static ULONG get_full_path_helper(LPCWSTR name, LPWSTR buffer, ULONG size)
 {
     ULONG                       reqsize = 0, mark = 0, dep = 0, deplen;
     DOS_PATHNAME_TYPE           type;
-    LPWSTR                      p, ins_str = NULL;
+    LPWSTR                      ins_str = NULL;
     LPCWSTR                     ptr;
     const UNICODE_STRING*       cd;
     WCHAR                       tmp[4];
@@ -524,10 +534,7 @@ static ULONG get_full_path_helper(LPCWSTR name, LPWSTR buffer, ULONG size)
     if (ins_str && ins_str != tmp && ins_str != cd->Buffer)
         RtlFreeHeap(GetProcessHeap(), 0, ins_str);
 
-    /* convert every / into a \ */
-    for (p = buffer; *p; p++) if (*p == '/') *p = '\\';
-
-    collapse_path( buffer + mark );
+    collapse_path( buffer, mark );
     reqsize = strlenW(buffer) * sizeof(WCHAR);
 
 done:
