@@ -846,7 +846,7 @@ UINT16 WINAPI mixerGetDevCaps16(UINT16 devid, LPMIXERCAPS16 mixcaps,
 static	UINT  MMSYSTEM_mixerOpen(LPHMIXER lphMix, UINT uDeviceID, DWORD dwCallback,
 				 DWORD dwInstance, DWORD fdwOpen, BOOL bFrom32) 
 {
-    HANDLE		hMix;
+    HMIXER		hMix;
     LPWINE_MLD		wmld;
     DWORD		dwRet = 0;
     MIXEROPENDESC	mod;
@@ -2080,7 +2080,7 @@ static	LPWINE_MIDI	MIDI_OutAlloc(HMIDIOUT* lphMidiOut, LPDWORD lpdwCallback,
 				      LPDWORD lpdwInstance, LPDWORD lpdwFlags, 
 				      DWORD cIDs, MIDIOPENSTRMID* lpIDs, BOOL bFrom32)
 {
-    HANDLE	      	hMidiOut;
+    HMIDIOUT	      	hMidiOut;
     LPWINE_MIDI		lpwm;
     UINT		size;
     
@@ -2620,7 +2620,7 @@ UINT16 WINAPI midiInGetErrorText16(UINT16 uError, LPSTR lpText, UINT16 uSize)
 static	UINT MMSYSTEM_midiInOpen(HMIDIIN* lphMidiIn, UINT uDeviceID, DWORD dwCallback, 
 				 DWORD dwInstance, DWORD dwFlags, BOOL bFrom32)
 {
-    HMIDI		hMidiIn;
+    HMIDIIN		hMidiIn;
     LPWINE_MIDI		lpwm;
     DWORD		dwRet = 0;
     
