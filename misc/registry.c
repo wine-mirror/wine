@@ -2272,8 +2272,8 @@ DWORD WINAPI RegQueryValueEx32W( HKEY hkey, LPWSTR lpValueName,
 /******************************************************************************
  * RegQueryValue32W [ADVAPI32.159]
  */
-DWORD WINAPI RegQueryValue32W( HKEY hkey, LPWSTR lpszSubKey, LPWSTR lpszData,
-                               LPDWORD lpcbData )
+DWORD WINAPI RegQueryValue32W( HKEY hkey, LPCWSTR lpszSubKey, LPWSTR lpszData,
+                               LPLONG lpcbData )
 {
 	HKEY	xhkey;
 	DWORD	ret,lpdwType;
@@ -2384,8 +2384,8 @@ DWORD WINAPI RegQueryValueEx16( HKEY hkey, LPSTR lpszValueName,
 /******************************************************************************
  * RegQueryValue32A [ADVAPI32.156]
  */
-DWORD WINAPI RegQueryValue32A( HKEY hkey, LPSTR lpszSubKey, LPSTR lpszData,
-                               LPDWORD lpcbData )
+DWORD WINAPI RegQueryValue32A( HKEY hkey, LPCSTR lpszSubKey, LPSTR lpszData,
+                               LPLONG lpcbData )
 {
     HKEY xhkey;
     DWORD ret, dwType;
@@ -3434,7 +3434,7 @@ LONG WINAPI RegGetKeySecurity( HKEY hkey,
 
     /* FIXME: Check for valid SecurityInformation values */
 
-    if (*lpcbSecurityDescriptor < sizeof(*pSecurityDescriptor))
+    if (*lpcbSecurityDescriptor < sizeof(SECURITY_DESCRIPTOR))
         return ERROR_INSUFFICIENT_BUFFER;
 
     FIXME(reg, "(%x,%ld,%p,%ld): stub\n",hkey,SecurityInformation,
