@@ -107,6 +107,9 @@ $gen_traces = 1;
      "GLubyte" => "%d",
      "GLuint" => "%d",
      "GLushort" => "%d",
+     "GLhalfNV" => "%d",
+     "GLintptrARB" => "%d",
+     "GLsizeiptrARB" => "%d",
      "GLvoid" => "(void)",
      "_GLfuncptr" => "%p");
 
@@ -130,6 +133,9 @@ $gen_traces = 1;
      "GLubyte" => [ "long", 4 ],
      "GLuint" => [ "long", 4 ],
      "GLushort" => [ "long", 4 ],
+     "GLhalfNV" => [ "long", 4 ],
+     "GLintptrARB" => [ "long", 4 ],
+     "GLsizeiptrARB" => [ "long", 4 ],
      "GLvoid" => [ "void", 4 ],
      "_GLfuncptr" => [ "ptr", 4 ]);
 
@@ -230,8 +236,10 @@ open(REGISTRY, $registry_path . "/gl.spec") || die "Could not open 'gl.spec'. Pl
 #
 %pseudo_to_opengl = ();
 while ($line = <TYPES>) {
-    ($pseudo, $opengl) = ($line =~ /(\w*),\*,\*,\s*(.*),\*,\*/);
-    $pseudo_to_opengl{$pseudo} = $opengl;
+    if ($line !~ /\w*\#/) {
+	($pseudo, $opengl) = ($line =~ /(\w*),\*,\*,\s*(.*),\*,\*/);
+	$pseudo_to_opengl{$pseudo} = $opengl;
+    }
 }
 # This is to override the 'void' -> '*' bogus conversion
 $pseudo_to_opengl{"void"} = "void";
@@ -594,6 +602,10 @@ print EXT "
 typedef const GLubyte * GLstring;
 
 WINE_DEFAULT_DEBUG_CHANNEL(opengl);
+
+typedef ptrdiff_t GLintptrARB;
+typedef ptrdiff_t GLsizeiptrARB;
+typedef unsigned short GLhalfNV;
 
 ";
 
