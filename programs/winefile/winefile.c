@@ -52,7 +52,7 @@
 #endif
 
 #ifdef NONAMELESSUNION
-#define	UNION_MEMBER(x) DUMMYUNIONNAME.##x
+#define	UNION_MEMBER(x) DUMMYUNIONNAME.x
 #else
 #define	UNION_MEMBER(x) x
 #endif
