@@ -52,7 +52,6 @@
 #include "winerror.h"
 #include "wine/unicode.h"
 #include "ole2.h"
-#include "wine/obj_oleview.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(ole);
@@ -1701,4 +1700,3 @@ static HRESULT WINAPI DefaultHandler_SetContainedObject(
   TRACE("()\n");
   return S_OK;
 }
-
