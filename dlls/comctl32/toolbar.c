@@ -109,6 +109,7 @@ typedef struct
     INT      nButtonDown;
     INT      nOldHit;
     INT      nHotItem;        /* index of the "hot" item */
+    SIZE     szPadding;       /* padding values around button */
     HFONT    hDefaultFont;
     HFONT    hFont;           /* text font */
     HIMAGELIST himlInt;         /* image list created internally */
@@ -160,6 +161,13 @@ typedef struct
 #define TOOLBAR_GetInfoPtr(hwnd) ((TOOLBAR_INFO *)GetWindowLongA(hwnd,0))
 #define TOOLBAR_HasText(x, y) (TOOLBAR_GetText(x, y) ? TRUE : FALSE)
 #define TOOLBAR_HasDropDownArrows(exStyle) ((exStyle & TBSTYLE_EX_DRAWDDARROWS) ? TRUE : FALSE)
+
+/* Used to find undocumented extended styles */
+#define TBSTYLE_EX_ALL (TBSTYLE_EX_DRAWDDARROWS | \
+                        TBSTYLE_EX_UNDOC1 | \
+                        TBSTYLE_EX_MIXEDBUTTONS | \
+                        TBSTYLE_EX_HIDECLIPPEDBUTTONS)
+
 
 
 static LPWSTR
@@ -632,6 +640,10 @@ TOOLBAR_DrawButton (HWND hwnd, TBUTTON_INFO *btnPtr, HDC hdc)
 	    else
 		TOOLBAR_DrawFlatSeparator (&rc, hdc);
 	}
+	else {
+	    FIXME("Draw some kind of separator: fsStyle=%x\n",
+		  btnPtr->fsStyle);
+	}
 	return;
     }
 
@@ -907,8 +919,8 @@ TOOLBAR_CalcStrings (HWND hwnd, LPSIZE lpSize)
 * the toolbar wrapping on its own, it can use the TBSTYLE_WRAPABLE 
 * flag, and set the TBSTATE_WRAP flags manually on the appropriate items.
 *
-* Note: TBSTYLE_WRAPABLE or CCS_VERT can be used also to allow vertical
-* toolbar lists. 
+* Note: TBSTYLE_WRAPABLE or TBSTYLE_EX_UNDOC1 can be used also to allow 
+* vertical toolbar lists. 
 */ 
 
 static void
@@ -923,8 +935,8 @@ TOOLBAR_WrapToolbar( HWND hwnd, DWORD dwStyle )
     /* 	When the toolbar window style is not TBSTYLE_WRAPABLE,	*/ 
     /*	no layout is necessary. Applications may use this style */
     /*	to perform their own layout on the toolbar. 		*/
-    if( !(dwStyle & TBSTYLE_WRAPABLE) && !(dwStyle & CCS_VERT) )
-	return;
+    if( !(dwStyle & TBSTYLE_WRAPABLE) && 
+	!(infoPtr->dwExStyle & TBSTYLE_EX_UNDOC1) )  return;
 
     btnPtr = infoPtr->buttons;
     x  = infoPtr->nIndent;
@@ -990,8 +1002,9 @@ TOOLBAR_WrapToolbar( HWND hwnd, DWORD dwStyle )
 	    /* 	If the current button is a separator and not hidden,  */ 
 	    /*	go to the next until it reaches a non separator.      */
 	    /*	Wrap the last separator if it is before a button.     */
-	    while( ( (btnPtr[i].fsStyle & TBSTYLE_SEP) || 
-			(btnPtr[i].fsState & TBSTATE_HIDDEN) ) && 
+	    while( ( ((btnPtr[i].fsStyle & TBSTYLE_SEP) &&
+		      !(btnPtr[i].fsStyle & TBSTYLE_DROPDOWN)) || 
+		     (btnPtr[i].fsState & TBSTATE_HIDDEN) ) &&
 			i < infoPtr->nNumButtons )
 	    {
 		i++;
@@ -2951,7 +2964,17 @@ TOOLBAR_GetMaxSize (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
 
 /* << TOOLBAR_GetObject >> */
-/* << TOOLBAR_GetPadding >> */
+
+
+static LRESULT
+TOOLBAR_GetPadding (HWND hwnd)
+{
+    TOOLBAR_INFO *infoPtr = TOOLBAR_GetInfoPtr (hwnd);
+    DWORD oldPad;
+
+    oldPad = MAKELONG(infoPtr->szPadding.cx, infoPtr->szPadding.cy);
+    return (LRESULT) oldPad;
+}
 
 
 static LRESULT
@@ -3629,10 +3652,11 @@ static LRESULT
 TOOLBAR_SetButtonSize (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
     TOOLBAR_INFO *infoPtr = TOOLBAR_GetInfoPtr (hwnd);
+    INT cx = LOWORD(lParam), cy = HIWORD(lParam);
 
-    if ((LOWORD(lParam) <= 0) || (HIWORD(lParam)<=0))
+    if ((cx < 0) || (cy < 0))
     {
-        ERR("invalid parameter\n");
+        ERR("invalid parameter 0x%08lx\n", (DWORD)lParam);
 	return FALSE;
     }
 
@@ -3642,8 +3666,13 @@ TOOLBAR_SetButtonSize (HWND hwnd, WPARAM wParam, LPARAM lParam)
      * it to the toolbar, and it checks that the return value is nonzero - mjm
      * Further testing shows that we must actually perform the change too.
      */
-    infoPtr->nButtonWidth = (INT)LOWORD(lParam);
-    infoPtr->nButtonHeight = (INT)HIWORD(lParam);
+    /*
+     * The documentation also does not mention that if 0 is supplied for
+     * either size, the system changes it to the default of 24 wide and
+     * 22 high. Demonstarted in ControlSpy Toolbar. GLA 3/02 
+     */
+    infoPtr->nButtonWidth = (cx) ? cx : 24;
+    infoPtr->nButtonHeight = (cy) ? cy : 22;
     return TRUE;
 }
 
@@ -3748,7 +3777,6 @@ TOOLBAR_SetDrawTextFlags (HWND hwnd, WPARAM wParam, LPARAM lParam)
     return (LRESULT)dwTemp;
 }
 
-
 static LRESULT
 TOOLBAR_SetExtendedStyle (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
@@ -3757,6 +3785,19 @@ TOOLBAR_SetExtendedStyle (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
     dwTemp = infoPtr->dwExStyle;
     infoPtr->dwExStyle = (DWORD)lParam;
+
+    if (infoPtr->dwExStyle & (TBSTYLE_EX_MIXEDBUTTONS |
+			      TBSTYLE_EX_HIDECLIPPEDBUTTONS)) {
+	FIXME("Extended style not implemented %s %s\n",
+	      (infoPtr->dwExStyle & TBSTYLE_EX_MIXEDBUTTONS) ?
+	      "TBSTYLE_EX_MIXEDBUTTONS" : "",
+	      (infoPtr->dwExStyle & TBSTYLE_EX_HIDECLIPPEDBUTTONS) ?
+	      "TBSTYLE_EX_HIDECLIPPEDBUTTONS" : "");
+    }
+
+    if (infoPtr->dwExStyle & ~TBSTYLE_EX_ALL)
+	FIXME("Unknown Toolbar Extended Style 0x%08lx. Please report.\n",
+	      (infoPtr->dwExStyle & ~TBSTYLE_EX_ALL));
 
     return (LRESULT)dwTemp; 
 }
@@ -3899,7 +3940,19 @@ TOOLBAR_SetMaxTextRows (HWND hwnd, WPARAM wParam, LPARAM lParam)
 }
 
 
-/* << TOOLBAR_SetPadding >> */
+static LRESULT
+TOOLBAR_SetPadding (HWND hwnd, WPARAM wParam, LPARAM lParam)
+{
+    TOOLBAR_INFO *infoPtr = TOOLBAR_GetInfoPtr (hwnd);
+    DWORD  oldPad;
+
+    oldPad = MAKELONG(infoPtr->szPadding.cx, infoPtr->szPadding.cy);
+    infoPtr->szPadding.cx = LOWORD((DWORD)lParam);
+    infoPtr->szPadding.cy = HIWORD((DWORD)lParam);
+    FIXME("stub - nothing done with values, cx=%ld, cy=%ld\n",
+	  infoPtr->szPadding.cx, infoPtr->szPadding.cy);
+    return (LRESULT) oldPad;
+}
 
 
 static LRESULT
@@ -4053,6 +4106,60 @@ TOOLBAR_SetVersion (HWND hwnd, INT iVersion)
     infoPtr->iVersion = iVersion;
 
     return iOldVersion;
+}
+
+static LRESULT
+TOOLBAR_Unkwn463 (HWND hwnd, WPARAM wParam, LPARAM lParam)
+{
+    TOOLBAR_INFO *infoPtr = TOOLBAR_GetInfoPtr (hwnd);
+    LPSIZE lpsize = (LPSIZE)lParam;
+
+    if (lpsize == NULL)
+	return FALSE;
+
+    /*
+     * Testing shows the following:
+     *   wParam    = 0 adjust cx value
+     *             = 1 set cy value to max size.
+     *   lParam    pointer to SIZE structure
+     *
+     */
+    TRACE("[0463] wParam %d, lParam 0x%08lx -> 0x%08lx 0x%08lx\n",
+	  wParam, lParam, lpsize->cx, lpsize->cy);
+
+    switch(wParam) {
+    case 0:
+	if (lpsize->cx == -1) {
+	    /* **** this is wrong, native measures each button and sets it */
+	    lpsize->cx = infoPtr->rcBound.right - infoPtr->rcBound.left;
+	}
+	else if(HIWORD(lpsize->cx)) {
+	    RECT rc;
+	    HWND hwndParent = GetParent(hwnd);
+
+	    InvalidateRect(hwnd, 0, 1);
+	    GetWindowRect(hwnd, &rc);
+	    MapWindowPoints(0, hwndParent, (LPPOINT)&rc, 2);
+	    TRACE("mapped to (%d,%d)-(%d,%d)\n",
+		rc.left, rc.top, rc.right, rc.bottom);
+	    lpsize->cx = max(rc.right-rc.left,
+			     infoPtr->rcBound.right - infoPtr->rcBound.left);
+	}
+	else {
+	    lpsize->cx = infoPtr->rcBound.right - infoPtr->rcBound.left;
+	}
+	break;
+    case 1:
+	lpsize->cy = infoPtr->rcBound.bottom - infoPtr->rcBound.top;
+	break;
+    default:
+	ERR("Unknown wParam %d for Toolbar message [0463]. Please report\n",
+	    wParam);
+	return 0;
+    }
+    TRACE("[0463] set to -> 0x%08lx 0x%08lx\n",
+	  lpsize->cx, lpsize->cy);
+    return 1;
 }
 
 
@@ -5046,7 +5153,9 @@ ToolbarWindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	    return TOOLBAR_GetMaxSize (hwnd, wParam, lParam);
 
 /*	case TB_GETOBJECT:			*/ /* 4.71 */
-/*	case TB_GETPADDING:			*/ /* 4.71 */
+
+	case TB_GETPADDING:
+	    return TOOLBAR_GetPadding (hwnd);
 
 	case TB_GETRECT:
 	    return TOOLBAR_GetRect (hwnd, wParam, lParam);
@@ -5179,7 +5288,8 @@ ToolbarWindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	case TB_SETMAXTEXTROWS:
 	    return TOOLBAR_SetMaxTextRows (hwnd, wParam, lParam);
 
-/*	case TB_SETPADDING:			*/ /* 4.71 */
+	case TB_SETPADDING:
+	    return TOOLBAR_SetPadding (hwnd, wParam, lParam);
 
 	case TB_SETPARENT:
 	    return TOOLBAR_SetParent (hwnd, wParam, lParam);
@@ -5198,6 +5308,9 @@ ToolbarWindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 	case TB_SETUNICODEFORMAT:
 	    return TOOLBAR_SetUnicodeFormat (hwnd, wParam, lParam);
+
+	case TB_UNKWN463:
+	    return TOOLBAR_Unkwn463 (hwnd, wParam, lParam);
 
 	case CCM_SETVERSION:
 	    return TOOLBAR_SetVersion (hwnd, (INT)wParam);
