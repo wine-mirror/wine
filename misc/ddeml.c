@@ -82,11 +82,6 @@ static const char	handle_string[] = "DDEHandleAccess";
 static LPCWSTR      	DDEHandleAccess = (LPCWSTR)&handle_string;
 static HANDLE	     	inst_count_mutex = 0;
 static HANDLE	     	handle_mutex = 0;
-       DDE_HANDLE_ENTRY *this_instance;
-       SECURITY_ATTRIBUTES *s_att= NULL;
-       DWORD 	     	err_no = 0;
-       DWORD		prev_err = 0;
-       DDE_HANDLE_ENTRY *reference_inst;
 
 #define TRUE	1
 #define FALSE	0
@@ -107,7 +102,7 @@ static HANDLE	     	handle_mutex = 0;
  *  1.1      Mar 1999  Keith Matthews      Added multiple instance handling
  *
  */
-static void RemoveHSZNode( HSZ hsz )
+static void RemoveHSZNode( HSZ hsz, DDE_HANDLE_ENTRY * reference_inst )
 {
     HSZNode* pPrev = NULL;
     HSZNode* pCurrent = NULL;
@@ -169,7 +164,7 @@ static void RemoveHSZNode( HSZ hsz )
  *  1.1      Mar 1999  Keith Matthews      Added multiple instance handling
  *
  */
-static void FreeAndRemoveHSZNodes( DWORD idInst )
+static void FreeAndRemoveHSZNodes( DWORD idInst, DDE_HANDLE_ENTRY * reference_inst )
 {
     /* Free any strings created in this instance.
      */
@@ -195,7 +190,7 @@ static void FreeAndRemoveHSZNodes( DWORD idInst )
  *  1.2	     Jun 1999  Keith Matthews	   Added Usage count handling
  *
  */
-static void InsertHSZNode( HSZ hsz )
+static void InsertHSZNode( HSZ hsz, DDE_HANDLE_ENTRY * reference_inst )
 {
     if( hsz != 0 )
     {
@@ -239,6 +234,7 @@ static void InsertHSZNode( HSZ hsz )
              */
  DDE_HANDLE_ENTRY *Find_Instance_Entry (DWORD InstId)
 {
+	DDE_HANDLE_ENTRY * reference_inst;
 	reference_inst =  DDE_Handle_Table_Base;
 	while ( reference_inst != NULL )
 	{
@@ -302,8 +298,10 @@ static void InsertHSZNode( HSZ hsz )
  *  1.1	     Mar 1999  Keith Matthews	     Corrected Heap handling. Corrected re-initialisation handling
  *
  */
-static DWORD Release_reserved_mutex (HANDLE mutex, LPSTR mutex_name, BOOL release_handle_m, BOOL release_this_i )
+static DWORD Release_reserved_mutex (HANDLE mutex, LPSTR mutex_name, BOOL release_handle_m, BOOL release_this_i , 
+    DDE_HANDLE_ENTRY *this_instance)
 {
+       DWORD 	     	err_no = 0;
 	ReleaseMutex(mutex);
         if ( (err_no=GetLastError()) != 0 )
         {
@@ -336,9 +334,10 @@ static DWORD Release_reserved_mutex (HANDLE mutex, LPSTR mutex_name, BOOL releas
  *  1.0      Jan 1999  Keith Matthews        Initial version
  *
  */
-DWORD IncrementInstanceId()
+DWORD IncrementInstanceId( DDE_HANDLE_ENTRY *this_instance)
 {
     	SECURITY_ATTRIBUTES s_attrib;
+       DWORD 	     	err_no = 0;
 	/*  Need to set up Mutex in case it is not already present */
 	/* increment handle count & get value */
 	if ( !inst_count_mutex )
@@ -354,13 +353,13 @@ DWORD IncrementInstanceId()
 	if ( (err_no=GetLastError()) != 0 )
 	{
 		ERR("CreateMutex failed - inst_count %li\n",err_no);
-		err_no=Release_reserved_mutex (handle_mutex,"handle_mutex",0,1);
+		err_no=Release_reserved_mutex (handle_mutex,"handle_mutex",0,1,this_instance);
 		return DMLERR_SYS_ERROR;
 	}
 	DDE_Max_Assigned_Instance++;
 	this_instance->Instance_id = DDE_Max_Assigned_Instance;
         TRACE("New instance id %ld allocated\n",DDE_Max_Assigned_Instance);
-	if (Release_reserved_mutex(inst_count_mutex,"instance_count",1,0)) return DMLERR_SYS_ERROR;
+	if (Release_reserved_mutex(inst_count_mutex,"instance_count",1,0,this_instance)) return DMLERR_SYS_ERROR;
 	return DMLERR_NO_ERROR;
 }
 
@@ -510,7 +509,11 @@ UINT WINAPI DdeInitializeW( LPDWORD pidInst, PFNCALLBACK pfnCallback,
 /*  probably not really capable of handling mutliple processes, but should handle
  *	multiple instances within one process */
 
+    SECURITY_ATTRIBUTES *s_att= NULL;
     SECURITY_ATTRIBUTES s_attrib;
+    DWORD 	     	err_no = 0;
+    DDE_HANDLE_ENTRY *this_instance;
+    DDE_HANDLE_ENTRY *reference_inst;
     s_att = &s_attrib;
 
     if( ulRes )
@@ -618,7 +621,8 @@ UINT WINAPI DdeInitializeW( LPDWORD pidInst, PFNCALLBACK pfnCallback,
 		this_instance->CBF_Flags=this_instance->CBF_Flags|APPCMD_FILTERINITS;
  		TRACE("First application instance detected OK\n");
 		/*	allocate new instance ID */
-		if ((err_no = IncrementInstanceId()) ) return err_no;
+		if ((err_no = IncrementInstanceId( this_instance)) ) return err_no;
+
    	} else {
                 /* really need to chain the new one in to the latest here, but after checking conditions
                  *	such as trying to start a conversation from an application trying to monitor */
@@ -639,7 +643,7 @@ UINT WINAPI DdeInitializeW( LPDWORD pidInst, PFNCALLBACK pfnCallback,
 
                                 if ( this_instance->Client_only != reference_inst->Client_only)
 				{
-					if ( Release_reserved_mutex(handle_mutex,"handle_mutex",0,1))
+					if ( Release_reserved_mutex(handle_mutex,"handle_mutex",0,1,this_instance))
 						return DMLERR_SYS_ERROR;
                                         return DMLERR_DLL_USAGE;
                                 }
@@ -648,7 +652,7 @@ UINT WINAPI DdeInitializeW( LPDWORD pidInst, PFNCALLBACK pfnCallback,
 
                                 if ( this_instance->Monitor != reference_inst->Monitor) 
 				{
-					if ( Release_reserved_mutex(handle_mutex,"handle_mutex",0,1))
+					if ( Release_reserved_mutex(handle_mutex,"handle_mutex",0,1,this_instance))
 						return DMLERR_SYS_ERROR;
                                         return DMLERR_INVALIDPARAMETER;
                                 }
@@ -657,7 +661,7 @@ UINT WINAPI DdeInitializeW( LPDWORD pidInst, PFNCALLBACK pfnCallback,
 
 				if ( this_instance->CallBack == reference_inst->CallBack)
 				{
-					if ( Release_reserved_mutex(handle_mutex,"handle_mutex",0,1))
+					if ( Release_reserved_mutex(handle_mutex,"handle_mutex",0,1,this_instance))
 						return DMLERR_SYS_ERROR;
                                         return DMLERR_DLL_USAGE;
 				}
@@ -667,8 +671,8 @@ UINT WINAPI DdeInitializeW( LPDWORD pidInst, PFNCALLBACK pfnCallback,
 		/*  All cleared, add to chain */
 
 		TRACE("Application Instance checks finished\n");
-                if ((err_no = IncrementInstanceId())) return err_no;
-		if ( Release_reserved_mutex(handle_mutex,"handle_mutex",0,0)) return DMLERR_SYS_ERROR;
+		if ((err_no = IncrementInstanceId( this_instance)) ) return err_no;
+		if ( Release_reserved_mutex(handle_mutex,"handle_mutex",0,0,this_instance)) return DMLERR_SYS_ERROR;
 		reference_inst->Next_Entry = this_instance;
         }
 	*pidInst = this_instance->Instance_id;
@@ -688,7 +692,7 @@ UINT WINAPI DdeInitializeW( LPDWORD pidInst, PFNCALLBACK pfnCallback,
         }
         if (DDE_Handle_Table_Base == NULL ) 
 	{
-		if ( Release_reserved_mutex(handle_mutex,"handle_mutex",0,1)) return DMLERR_SYS_ERROR;
+		if ( Release_reserved_mutex(handle_mutex,"handle_mutex",0,1,this_instance)) return DMLERR_SYS_ERROR;
         	return DMLERR_DLL_USAGE;
  	}
         HeapFree(SystemHeap, 0, this_instance); /* finished - release heap space used as work store */
@@ -713,7 +717,7 @@ UINT WINAPI DdeInitializeW( LPDWORD pidInst, PFNCALLBACK pfnCallback,
 
 				if ( ! ( afCmd & APPCMD_CLIENTONLY))
 				{
-					if ( Release_reserved_mutex(handle_mutex,"handle_mutex",0,1))
+					if ( Release_reserved_mutex(handle_mutex,"handle_mutex",0,1,this_instance))
 						return DMLERR_SYS_ERROR;
                                 	return DMLERR_DLL_USAGE;
 				}
@@ -723,7 +727,7 @@ UINT WINAPI DdeInitializeW( LPDWORD pidInst, PFNCALLBACK pfnCallback,
 
                         if ( this_instance->Monitor != reference_inst->Monitor) 
 			{
-				if ( Release_reserved_mutex(handle_mutex,"handle_mutex",0,1))
+				if ( Release_reserved_mutex(handle_mutex,"handle_mutex",0,1,this_instance))
 					return DMLERR_SYS_ERROR;
                                 return DMLERR_DLL_USAGE;
                         }
@@ -732,7 +736,7 @@ UINT WINAPI DdeInitializeW( LPDWORD pidInst, PFNCALLBACK pfnCallback,
 
 			if (( afCmd&APPCMD_CLIENTONLY) && ! reference_inst->Client_only )
 			{
-				if ( Release_reserved_mutex(handle_mutex,"handle_mutex",0,1))
+				if ( Release_reserved_mutex(handle_mutex,"handle_mutex",0,1,this_instance))
 					return DMLERR_SYS_ERROR;
                                 return DMLERR_DLL_USAGE;
 			}
@@ -746,7 +750,7 @@ UINT WINAPI DdeInitializeW( LPDWORD pidInst, PFNCALLBACK pfnCallback,
 		*	
 		*	Manual does not say what we do, cannot return DMLERR_NOT_INITIALIZED so what ?
 		*/
-		if ( Release_reserved_mutex(handle_mutex,"handle_mutex",0,1))
+		if ( Release_reserved_mutex(handle_mutex,"handle_mutex",0,1,this_instance))
 			return DMLERR_SYS_ERROR;
 		return DMLERR_INVALIDPARAMETER;
 	}
@@ -755,7 +759,7 @@ UINT WINAPI DdeInitializeW( LPDWORD pidInst, PFNCALLBACK pfnCallback,
 	reference_inst->CBF_Flags = this_instance->CBF_Flags;
 	reference_inst->Client_only = this_instance->Client_only;
 	reference_inst->Monitor_flags = this_instance->Monitor_flags;
-	if ( Release_reserved_mutex(handle_mutex,"handle_mutex",0,1))
+	if ( Release_reserved_mutex(handle_mutex,"handle_mutex",0,1,this_instance))
 		return DMLERR_SYS_ERROR;
      }
 
@@ -788,7 +792,11 @@ BOOL WINAPI DdeUninitialize( DWORD idInst )
 {
 	/*  Stage one - check if we have a handle for this instance
 									*/
+        DWORD 	     	err_no = 0;
+        SECURITY_ATTRIBUTES *s_att= NULL;
   	SECURITY_ATTRIBUTES s_attrib;
+        DDE_HANDLE_ENTRY *this_instance;
+        DDE_HANDLE_ENTRY *reference_inst;
   	s_att = &s_attrib;
 
 	if ( DDE_Max_Assigned_Instance == 0 )
@@ -810,7 +818,7 @@ BOOL WINAPI DdeUninitialize( DWORD idInst )
   	this_instance = Find_Instance_Entry(idInst);
   	if ( this_instance == NULL )
   	{
-		if ( Release_reserved_mutex(handle_mutex,"handle_mutex",FALSE,FALSE)) return FALSE;
+		if ( Release_reserved_mutex(handle_mutex,"handle_mutex",FALSE,FALSE,this_instance)) return FALSE;
 		/*
 		  *	Needs something here to record NOT_INITIALIZED ready for DdeGetLastError
 		*/
@@ -825,7 +833,7 @@ BOOL WINAPI DdeUninitialize( DWORD idInst )
     /* Free the nodes that were not freed by this instance
      * and remove the nodes from the list of HSZ nodes.
      */
-    FreeAndRemoveHSZNodes( idInst );
+        FreeAndRemoveHSZNodes( idInst, this_instance );
     
 	/* OK now delete the instance handle itself */
 
@@ -838,7 +846,7 @@ BOOL WINAPI DdeUninitialize( DWORD idInst )
 	{
 		/* general case
 		*/
-		reference_inst->Next_Entry = DDE_Handle_Table_Base;
+		reference_inst = DDE_Handle_Table_Base;
 		while ( reference_inst->Next_Entry != this_instance )
 		{
 			reference_inst = this_instance->Next_Entry;
@@ -847,7 +855,7 @@ BOOL WINAPI DdeUninitialize( DWORD idInst )
     	}
 	/* release the mutex and the heap entry
 	*/
-      	if ( Release_reserved_mutex(handle_mutex,"handle_mutex",FALSE,TRUE)) 
+      	if ( Release_reserved_mutex(handle_mutex,"handle_mutex",FALSE,TRUE,this_instance)) 
 	{
 		/* should record something here, but nothing left to hang it from !!
 		*/
@@ -925,8 +933,10 @@ HCONV WINAPI DdeQueryNextServer( HCONVLIST hConvList, HCONV hConvPrev )
  */
 DWORD WINAPI DdeQueryStringA(DWORD idInst, HSZ hsz, LPSTR psz, DWORD cchMax, INT iCodePage)
 {
+       DWORD 	     	err_no = 0;
     DWORD ret = 0;
     CHAR pString[MAX_BUFFER_LEN];
+    DDE_HANDLE_ENTRY *reference_inst;
 
     FIXME(
          "(%ld, 0x%lx, %p, %ld, %d): partial stub\n",
@@ -957,7 +967,7 @@ DWORD WINAPI DdeQueryStringA(DWORD idInst, HSZ hsz, LPSTR psz, DWORD cchMax, INT
   reference_inst = Find_Instance_Entry(idInst);
   if ( reference_inst == NULL )
   {
-        if ( Release_reserved_mutex(handle_mutex,"handle_mutex",FALSE,FALSE)) return FALSE;
+        if ( Release_reserved_mutex(handle_mutex,"handle_mutex",FALSE,FALSE,reference_inst)) return FALSE;
         /*
         Needs something here to record NOT_INITIALIZED ready for DdeGetLastError
         */
@@ -977,7 +987,7 @@ DWORD WINAPI DdeQueryStringA(DWORD idInst, HSZ hsz, LPSTR psz, DWORD cchMax, INT
 
         ret = GlobalGetAtomNameA( hsz, (LPSTR)psz, cchMax );
   } else {
-  	Release_reserved_mutex(handle_mutex,"handle_mutex",FALSE,FALSE);
+  	Release_reserved_mutex(handle_mutex,"handle_mutex",FALSE,FALSE,reference_inst);
     }
    TRACE("returning pointer\n"); 
     return ret;
@@ -1218,7 +1228,9 @@ HSZ WINAPI DdeCreateStringHandle16( DWORD idInst, LPCSTR str, INT16 codepage )
  */
 HSZ WINAPI DdeCreateStringHandleA( DWORD idInst, LPCSTR psz, INT codepage )
 {
+       DWORD 	     	err_no = 0;
   HSZ hsz = 0;
+  DDE_HANDLE_ENTRY *reference_inst;
   TRACE("(%ld,%s,%d): partial stub\n",idInst,debugstr_a(psz),codepage);
   
 
@@ -1242,7 +1254,7 @@ HSZ WINAPI DdeCreateStringHandleA( DWORD idInst, LPCSTR psz, INT codepage )
   reference_inst = Find_Instance_Entry(idInst);
   if ( reference_inst == NULL )
   {
-	if ( Release_reserved_mutex(handle_mutex,"handle_mutex",FALSE,FALSE)) return 0;
+	if ( Release_reserved_mutex(handle_mutex,"handle_mutex",FALSE,FALSE,reference_inst)) return 0;
 	/*
 	Needs something here to record NOT_INITIALIZED ready for DdeGetLastError
 	*/
@@ -1256,8 +1268,8 @@ HSZ WINAPI DdeCreateStringHandleA( DWORD idInst, LPCSTR psz, INT codepage )
        * uninitialize is called.
        */
       TRACE("added atom %s with HSZ 0x%lx, \n",debugstr_a(psz),hsz);
-      InsertHSZNode( hsz );
-      if ( Release_reserved_mutex(handle_mutex,"handle_mutex",FALSE,FALSE)) 
+      InsertHSZNode( hsz, reference_inst );
+      if ( Release_reserved_mutex(handle_mutex,"handle_mutex",FALSE,FALSE,reference_inst)) 
 	{
 		reference_inst->Last_Error = DMLERR_SYS_ERROR;
 		return 0;
@@ -1265,7 +1277,7 @@ HSZ WINAPI DdeCreateStringHandleA( DWORD idInst, LPCSTR psz, INT codepage )
       TRACE("Returning pointer\n");
       return hsz;
   } else {
-  	Release_reserved_mutex(handle_mutex,"handle_mutex",FALSE,FALSE);
+  	Release_reserved_mutex(handle_mutex,"handle_mutex",FALSE,FALSE,reference_inst);
   }
     TRACE("Returning error\n");
     return 0;  
@@ -1294,6 +1306,8 @@ HSZ WINAPI DdeCreateStringHandleW(
     LPCWSTR psz,    /* [in] Pointer to string */
     INT codepage) /* [in] Code page identifier */
 {
+       DWORD 	     	err_no = 0;
+    DDE_HANDLE_ENTRY *reference_inst;
   HSZ hsz = 0;
 
    TRACE("(%ld,%s,%d): partial stub\n",idInst,debugstr_w(psz),codepage);
@@ -1319,7 +1333,7 @@ HSZ WINAPI DdeCreateStringHandleW(
   reference_inst = Find_Instance_Entry(idInst);
   if ( reference_inst == NULL )
   {
-	if ( Release_reserved_mutex(handle_mutex,"handle_mutex",FALSE,FALSE)) return 0;
+	if ( Release_reserved_mutex(handle_mutex,"handle_mutex",FALSE,FALSE,reference_inst)) return 0;
 	/*
 	Needs something here to record NOT_INITIALIZED ready for DdeGetLastError
 	*/
@@ -1337,8 +1351,8 @@ HSZ WINAPI DdeCreateStringHandleW(
       /* Save the handle so we know to clean it when
        * uninitialize is called.
        */
-      InsertHSZNode( hsz );
-      if ( Release_reserved_mutex(handle_mutex,"handle_mutex",FALSE,FALSE)) 
+      InsertHSZNode( hsz, reference_inst );
+      if ( Release_reserved_mutex(handle_mutex,"handle_mutex",FALSE,FALSE,reference_inst)) 
 	{
 		reference_inst->Last_Error = DMLERR_SYS_ERROR;
 		return 0;
@@ -1346,7 +1360,7 @@ HSZ WINAPI DdeCreateStringHandleW(
       TRACE("Returning pointer\n");
       return hsz;
    } else {
-  	Release_reserved_mutex(handle_mutex,"handle_mutex",FALSE,FALSE);
+  	Release_reserved_mutex(handle_mutex,"handle_mutex",FALSE,FALSE,reference_inst);
 }
     TRACE("Returning error\n");
   return 0;
@@ -1380,6 +1394,9 @@ BOOL16 WINAPI DdeFreeStringHandle16( DWORD idInst, HSZ hsz )
  */
 BOOL WINAPI DdeFreeStringHandle( DWORD idInst, HSZ hsz )
 {
+    DWORD 	     	err_no = 0;
+    DWORD		prev_err = 0;
+    DDE_HANDLE_ENTRY *reference_inst;
     TRACE("(%ld,%ld): \n",idInst,hsz);
   if ( DDE_Max_Assigned_Instance == 0 )
 {
@@ -1406,7 +1423,7 @@ BOOL WINAPI DdeFreeStringHandle( DWORD idInst, HSZ hsz )
   reference_inst = Find_Instance_Entry(idInst);
   if ( (reference_inst == NULL) || (reference_inst->Node_list == NULL))
   {
-        if ( Release_reserved_mutex(handle_mutex,"handle_mutex",FALSE,FALSE)) return TRUE;
+        if ( Release_reserved_mutex(handle_mutex,"handle_mutex",FALSE,FALSE,reference_inst)) return TRUE;
           /*  Nothing has been initialised - exit now ! can return TRUE since effect is the same */
           return TRUE;
 
@@ -1414,10 +1431,10 @@ BOOL WINAPI DdeFreeStringHandle( DWORD idInst, HSZ hsz )
 
     /* Remove the node associated with this HSZ.
      */
-    RemoveHSZNode( hsz );
+    RemoveHSZNode( hsz , reference_inst);
     /* Free the string associated with this HSZ.
      */
-  Release_reserved_mutex(handle_mutex,"handle_mutex",FALSE,FALSE);
+  Release_reserved_mutex(handle_mutex,"handle_mutex",FALSE,FALSE,reference_inst);
     return GlobalDeleteAtom (hsz) ? 0 : hsz;
 }
 
@@ -1471,6 +1488,9 @@ BOOL16 WINAPI DdeKeepStringHandle16( DWORD idInst, HSZ hsz )
 BOOL WINAPI DdeKeepStringHandle( DWORD idInst, HSZ hsz )
 {
 
+   DWORD		prev_err = 0;
+   DWORD 	     	err_no = 0;
+    DDE_HANDLE_ENTRY *reference_inst;
    TRACE("(%ld,%ld): \n",idInst,hsz);
   if ( DDE_Max_Assigned_Instance == 0 )
   {
@@ -1497,13 +1517,13 @@ BOOL WINAPI DdeKeepStringHandle( DWORD idInst, HSZ hsz )
   reference_inst = Find_Instance_Entry(idInst);
   if ( (reference_inst == NULL) || (reference_inst->Node_list == NULL))
   {
-        if ( Release_reserved_mutex(handle_mutex,"handle_mutex",FALSE,FALSE)) return FALSE;
+        if ( Release_reserved_mutex(handle_mutex,"handle_mutex",FALSE,FALSE,reference_inst)) return FALSE;
           /*  Nothing has been initialised - exit now ! can return FALSE since effect is the same */
           return FALSE;
     return FALSE;
    }
   DdeReserveAtom(reference_inst,hsz);
-  Release_reserved_mutex(handle_mutex,"handle_mutex",FALSE,FALSE);
+  Release_reserved_mutex(handle_mutex,"handle_mutex",FALSE,FALSE,reference_inst);
     return TRUE;
 }
 
@@ -1806,6 +1826,9 @@ HDDEDATA WINAPI DdeNameService( DWORD idInst, HSZ hsz1, HSZ hsz2,
   ServiceNode* this_service, *reference_service ;
   CHAR SNameBuffer[MAX_BUFFER_LEN];
   UINT rcode;
+  DWORD      	err_no = 0;
+  DDE_HANDLE_ENTRY *this_instance;
+  DDE_HANDLE_ENTRY *reference_inst;
   this_service = NULL;
     FIXME("(%ld,%ld,%ld,%d): stub\n",idInst,hsz1,hsz2,afCmd);
   if ( DDE_Max_Assigned_Instance == 0 )
@@ -1815,7 +1838,7 @@ HDDEDATA WINAPI DdeNameService( DWORD idInst, HSZ hsz1, HSZ hsz2,
           return 0L;
   }
    WaitForSingleObject(handle_mutex,1000);
-   if ( ((err_no=GetLastError()) != 0 ) && (err_no != prev_err ))
+   if ( (err_no=GetLastError()) != 0 )
    {
           /*  FIXME  - needs refinement with popup for timeout, also is timeout interval OK */
 
@@ -1831,7 +1854,7 @@ HDDEDATA WINAPI DdeNameService( DWORD idInst, HSZ hsz1, HSZ hsz2,
    if  (reference_inst == NULL)
    {
 	TRACE("Instance not found as initialised\n");
-        if ( Release_reserved_mutex(handle_mutex,"handle_mutex",FALSE,FALSE)) return TRUE;
+        if ( Release_reserved_mutex(handle_mutex,"handle_mutex",FALSE,FALSE,this_instance)) return TRUE;
           /*  Nothing has been initialised - exit now ! can return TRUE since effect is the same */
           return FALSE;
 
@@ -1842,7 +1865,7 @@ HDDEDATA WINAPI DdeNameService( DWORD idInst, HSZ hsz1, HSZ hsz2,
 	/*	Illegal, reserved parameter
 	 */
 	reference_inst->Last_Error = DMLERR_INVALIDPARAMETER;
-  	Release_reserved_mutex(handle_mutex,"handle_mutex",FALSE,FALSE);
+  	Release_reserved_mutex(handle_mutex,"handle_mutex",FALSE,FALSE,this_instance);
 	FIXME("Reserved parameter no-zero !!\n");
 	return FALSE;
   }
@@ -1858,7 +1881,7 @@ HDDEDATA WINAPI DdeNameService( DWORD idInst, HSZ hsz1, HSZ hsz2,
 		 */
    		TRACE("General unregister unexpected flags\n");
 		reference_inst->Last_Error = DMLERR_DLL_USAGE;
-  		Release_reserved_mutex(handle_mutex,"handle_mutex",FALSE,FALSE);
+  		Release_reserved_mutex(handle_mutex,"handle_mutex",FALSE,FALSE,this_instance);
 		return FALSE;
 	}
 	/*	Loop to find all registered service and de-register them
@@ -1869,22 +1892,25 @@ HDDEDATA WINAPI DdeNameService( DWORD idInst, HSZ hsz1, HSZ hsz2,
 		 */
 		TRACE("General de-register - nothing registered\n");
 		reference_inst->Last_Error = DMLERR_DLL_USAGE;
-  		Release_reserved_mutex(handle_mutex,"handle_mutex",FALSE,FALSE);
+  		Release_reserved_mutex(handle_mutex,"handle_mutex",FALSE,FALSE,this_instance);
 		return FALSE;
 	}  else
 	{
 		this_service = reference_inst->ServiceNames;
 		while ( this_service->next != NULL)
 		{
+			TRACE("general deregister - iteration\n");
 			reference_service = this_service;
 			this_service = this_service->next;
 			DdeReleaseAtom(reference_inst,reference_service->hsz);
-        		HeapFree(SystemHeap, 0, this_service); /* finished - release heap space used as work store */
+        		HeapFree(SystemHeap, 0, reference_service); /* finished - release heap space used as work store */
 		}
+		DdeReleaseAtom(reference_inst,this_service->hsz);
         	HeapFree(SystemHeap, 0, this_service); /* finished - release heap space used as work store */
+		reference_inst->ServiceNames = NULL;
 		TRACE("General de-register - finished\n");
 	}
-  	Release_reserved_mutex(handle_mutex,"handle_mutex",FALSE,FALSE);
+  	Release_reserved_mutex(handle_mutex,"handle_mutex",FALSE,FALSE,this_instance);
   	return TRUE;
   }
   TRACE("Specific name action detected\n");
@@ -1986,7 +2012,7 @@ HDDEDATA WINAPI DdeNameService( DWORD idInst, HSZ hsz1, HSZ hsz2,
 		/*  trying to filter where no service names !!
 		 */
 		reference_inst->Last_Error = DMLERR_DLL_USAGE;
-  		Release_reserved_mutex(handle_mutex,"handle_mutex",FALSE,FALSE);
+  		Release_reserved_mutex(handle_mutex,"handle_mutex",FALSE,FALSE,this_instance);
 		return FALSE;
 	} else 
 	{
@@ -2003,14 +2029,14 @@ HDDEDATA WINAPI DdeNameService( DWORD idInst, HSZ hsz1, HSZ hsz2,
 		/*  trying to filter where no service names !!
 		 */
 		reference_inst->Last_Error = DMLERR_DLL_USAGE;
-  		Release_reserved_mutex(handle_mutex,"handle_mutex",FALSE,FALSE);
+  		Release_reserved_mutex(handle_mutex,"handle_mutex",FALSE,FALSE,this_instance);
 		return FALSE;
 	} else 
 	{
 		this_service->FilterOn = FALSE;
 	}
   }
-  Release_reserved_mutex(handle_mutex,"handle_mutex",FALSE,FALSE);
+  Release_reserved_mutex(handle_mutex,"handle_mutex",FALSE,FALSE,this_instance);
   return TRUE;
 }
 
@@ -2048,6 +2074,9 @@ UINT16 WINAPI DdeGetLastError16( DWORD idInst )
 UINT WINAPI DdeGetLastError( DWORD idInst )
 {
     DWORD	error_code;
+    DWORD 	err_no = 0;
+    DWORD	prev_err = 0;
+    DDE_HANDLE_ENTRY *reference_inst;
     FIXME("(%ld): stub\n",idInst);
     if ( DDE_Max_Assigned_Instance == 0 )
     {
@@ -2074,14 +2103,14 @@ UINT WINAPI DdeGetLastError( DWORD idInst )
    reference_inst = Find_Instance_Entry(idInst);
    if  (reference_inst == NULL) 
    {
-        if ( Release_reserved_mutex(handle_mutex,"handle_mutex",FALSE,FALSE)) return TRUE;
+        if ( Release_reserved_mutex(handle_mutex,"handle_mutex",FALSE,FALSE,reference_inst)) return TRUE;
           /*  Nothing has been initialised - exit now ! can return TRUE since effect is the same */
           return DMLERR_DLL_NOT_INITIALIZED;
 
    }
-   error_code = this_instance->Last_Error;
-   this_instance->Last_Error = 0;
-    Release_reserved_mutex(handle_mutex,"handle_mutex",FALSE,FALSE);
+    error_code = reference_inst->Last_Error;
+    reference_inst->Last_Error = 0;
+    Release_reserved_mutex(handle_mutex,"handle_mutex",FALSE,FALSE,reference_inst);
    return error_code;
 }
 
