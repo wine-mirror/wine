@@ -1025,6 +1025,7 @@ HRESULT  WINAPI  IDirect3D8Impl_CreateDevice               (LPDIRECT3D8 iface,
     } else {
       object->depthStencilBuffer = NULL;
     }
+    TRACE("FrontBuf @ %p, BackBuf @ %p, DepthStencil @ %p\n",object->frontBuffer, object->backBuffer, object->depthStencilBuffer);
 
     /* init the default renderTarget management */
     object->drawable = object->win;

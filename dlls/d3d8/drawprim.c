@@ -158,6 +158,58 @@ DWORD primitiveToGl(D3DPRIMITIVETYPE PrimitiveType,
     return NumVertexes;
 }
 
+/* Ensure the appropriate material states are set up - only change
+   state if really required                                        */
+void init_materials(LPDIRECT3DDEVICE8 iface, BOOL isDiffuseSupplied) {
+
+    BOOL requires_material_reset = FALSE;
+    ICOM_THIS(IDirect3DDevice8Impl,iface);
+
+    if (This->tracking_color == NEEDS_TRACKING && isDiffuseSupplied == TRUE) {
+        /* If we have not set up the material color tracking, do it now as required */
+        glDisable(GL_COLOR_MATERIAL); /* Note: Man pages state must enable AFTER calling glColorMaterial! Required?*/
+        checkGLcall("glDisable GL_COLOR_MATERIAL");
+        TRACE("glColorMaterial Parm=%x\n", This->tracking_parm);
+        glColorMaterial(GL_FRONT_AND_BACK, This->tracking_parm);
+        checkGLcall("glColorMaterial(GL_FRONT_AND_BACK, Parm)");
+        glEnable(GL_COLOR_MATERIAL); 
+        checkGLcall("glEnable GL_COLOR_MATERIAL");
+        This->tracking_color = IS_TRACKING;
+        requires_material_reset = TRUE; /* Restore material settings as will be used */
+
+    } else if ((This->tracking_color == IS_TRACKING && isDiffuseSupplied == FALSE) ||
+               (This->tracking_color == NEEDS_TRACKING && isDiffuseSupplied == FALSE)) {
+        /* If we are tracking the current color but one isnt supplied, dont! */
+        glDisable(GL_COLOR_MATERIAL);
+        checkGLcall("glDisable GL_COLOR_MATERIAL");
+        This->tracking_color = NEEDS_TRACKING;
+        requires_material_reset = TRUE; /* Restore material settings as will be used */
+
+    } else if (This->tracking_color == IS_TRACKING && isDiffuseSupplied == TRUE) {
+        /* No need to reset material colors since no change to gl_color_material */
+        requires_material_reset = FALSE;
+
+    } else if (This->tracking_color == NEEDS_DISABLE) {
+        glDisable(GL_COLOR_MATERIAL);
+        checkGLcall("glDisable GL_COLOR_MATERIAL");
+        This->tracking_color = DISABLED_TRACKING;
+        requires_material_reset = TRUE; /* Restore material settings as will be used */
+    }
+
+    /* Reset the material colors which may have been tracking the color*/
+    if (requires_material_reset == TRUE) {
+        glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, (float*) &This->StateBlock->material.Ambient);
+        checkGLcall("glMaterialfv");
+        glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, (float*) &This->StateBlock->material.Diffuse);
+        checkGLcall("glMaterialfv");
+        glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, (float*) &This->StateBlock->material.Specular);
+        checkGLcall("glMaterialfv");
+        glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, (float*) &This->StateBlock->material.Emissive);
+        checkGLcall("glMaterialfv");
+    }
+
+}
+
 /* Setup views - Transformed & lit if RHW, else untransformed.
        Only unlit if Normals are supplied                       
     Returns: Whether to restore lighting afterwards           */
@@ -679,6 +731,8 @@ void drawStridedFast(LPDIRECT3DDEVICE8 iface, Direct3DVertexStridedData *sd,
 
         glDisableClientState(GL_COLOR_ARRAY);
         checkGLcall("glDisableClientState(GL_COLOR_ARRAY)");
+        glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+        checkGLcall("glColor4f(1, 1, 1, 1)");
     }
 
     /* Specular Colour ------------------------------------------*/
@@ -1062,13 +1116,52 @@ void drawStridedSlow(LPDIRECT3DDEVICE8 iface, Direct3DVertexStridedData *sd,
                     ((diffuseColor >>  8) & 0xFF) / 255.0f,
                     ((diffuseColor >>  0) & 0xFF) / 255.0f, 
                     ((diffuseColor >> 24) & 0xFF) / 255.0f));
+        } else {
+            if (vx_index == 0) glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
         }
+
+#if 1
+        /* Specular ------------------------------- */
+        if (sd->u.s.diffuse.lpData != NULL) {
+            VTRACE(("glSecondaryColor4ub: r,g,b=%f,%f,%f\n", 
+                    ((specularColor >> 16) & 0xFF) / 255.0f, 
+                    ((specularColor >>  8) & 0xFF) / 255.0f,
+                    ((specularColor >>  0) & 0xFF) / 255.0f));
+#if defined(GL_VERSION_1_4)
+            glSecondaryColor3ub((specularColor >> 16) & 0xFF,
+                                (specularColor >>  8) & 0xFF,
+                                (specularColor >>  0) & 0xFF);
+#elif defined(GL_EXT_secondary_color)
+            if (GL_SUPPORT(EXT_SECONDARY_COLOR)) {
+                GL_EXTCALL(glSecondaryColor3ubEXT)(
+                           (specularColor >> 16) & 0xFF,
+                           (specularColor >>  8) & 0xFF,
+                           (specularColor >>  0) & 0xFF);
+            }
+#else
+            /* Do not worry if specular colour missing and disable request */
+            VTRACE(("Specular color extensions not supplied\n"));
+#endif
+        } else {
+#if defined(GL_VERSION_1_4)
+            if (vx_index == 0) glSecondaryColor3f(0, 0, 0);
+#elif defined(GL_EXT_secondary_color)
+            if (vx_index == 0 && GL_SUPPORT(EXT_SECONDARY_COLOR)) {
+                GL_EXTCALL(glSecondaryColor3fEXT)(0, 0, 0);
+            }
+#else
+            /* Do not worry if specular colour missing and disable request */
+#endif
+        }
+#endif
 
         /* Normal -------------------------------- */
         if (sd->u.s.normal.lpData != NULL) {
             VTRACE(("glNormal:nx,ny,nz=%f,%f,%f\n", nx,ny,nz));
             glNormal3f(nx, ny, nz);
-        } 
+        } else {
+            if (vx_index == 0) glNormal3f(0, 0, 1);
+        }
         
         /* Position -------------------------------- */
         if (sd->u.s.position.lpData != NULL) {
@@ -1294,6 +1387,9 @@ void drawPrimitive(LPDIRECT3DDEVICE8 iface,
         TRACE_STRIDED((&dataLocations), texCoords[6]);
         TRACE_STRIDED((&dataLocations), texCoords[7]);
     }
+
+    /* Now initialize the materials state */
+    init_materials(iface, (dataLocations.u.s.diffuse.lpData != NULL));
 
     /* Now draw the graphics to the screen */
     if  (useVertexShaderFunction == TRUE) {

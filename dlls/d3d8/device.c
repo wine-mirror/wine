@@ -2402,9 +2402,6 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetRenderState(LPDIRECT3DDEVICE8 iface, D3
             GLenum Parm = GL_AMBIENT_AND_DIFFUSE;
 
             if (This->StateBlock->renderstate[D3DRS_COLORVERTEX]) {
-                glEnable(GL_COLOR_MATERIAL);
-                checkGLcall("glEnable GL_COLOR_MATERIAL");
-
                 TRACE("diff %ld, amb %ld, emis %ld, spec %ld\n",
                       This->StateBlock->renderstate[D3DRS_DIFFUSEMATERIALSOURCE],
                       This->StateBlock->renderstate[D3DRS_AMBIENTMATERIALSOURCE],
@@ -2428,17 +2425,14 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetRenderState(LPDIRECT3DDEVICE8 iface, D3
                 }
 
                 if (Parm == -1) {
-                    glDisable(GL_COLOR_MATERIAL);
-                    checkGLcall("glDisable GL_COLOR_MATERIAL");
+                    if (This->tracking_color != DISABLED_TRACKING) This->tracking_color = NEEDS_DISABLE;
                 } else {
-                    TRACE("glColorMaterial Parm=%d\n", Parm);
-                    glColorMaterial(GL_FRONT_AND_BACK, Parm);
-                    checkGLcall("glColorMaterial(GL_FRONT_AND_BACK, Parm)");
+                    This->tracking_color = NEEDS_TRACKING;
+                    This->tracking_parm  = Parm;
                 }
 
             } else {
-                glDisable(GL_COLOR_MATERIAL);
-                checkGLcall("glDisable GL_COLOR_MATERIAL");
+                if (This->tracking_color != DISABLED_TRACKING) This->tracking_color = NEEDS_DISABLE;
             }
         }
         break; 
