@@ -165,7 +165,7 @@ rsrc	shell32
  156 stdcall ILGlobalFree (ptr) ILGlobalFree
  157 stdcall ILCreateFromPath (ptr) ILCreateFromPathAW
  158 stdcall PathGetExtension(str long long) PathGetExtensionAW
- 159 stub PathIsDirectory
+ 159 stdcall PathIsDirectory(ptr)PathIsDirectoryAW
  160 stub SHNetConnectionDialog
  161 stdcall SHRunControlPanel (long long) SHRunControlPanel
  162 stdcall SHSimpleIDListFromPath (ptr) SHSimpleIDListFromPathAW
@@ -308,34 +308,34 @@ rsrc	shell32
  298 stdcall Shell_NotifyIconW(long ptr) Shell_NotifyIconW
  299 stub Shl1632_ThunkData32
  300 stub Shl3216_ThunkData32
- 301 stub StrChrA # proper ordinal unknown
- 302 stub StrChrIA # proper ordinal unknown
- 303 stub StrChrIW # proper ordinal unknown
- 304 stdcall StrChrW (ptr ptr) StrChrW # proper ordinal unknown
- 305 stub StrCmpNA # proper ordinal unknown
- 306 stub StrCmpNIA # proper ordinal unknown
- 307 stdcall StrCmpNIW (wstr wstr long) StrCmpNIW  # proper ordinal unknown
- 308 stub StrCmpNW # proper ordinal unknown
- 309 stub StrCpyNA # proper ordinal unknown
- 310 stub StrCpyNW # proper ordinal unknown
- 311 stub StrNCmpA # proper ordinal unknown
- 312 stub StrNCmpIA # proper ordinal unknown
- 313 stub StrNCmpIW # proper ordinal unknown
- 314 stub StrNCmpW # proper ordinal unknown
- 315 stdcall StrNCpyA (ptr str long) lstrcpynA	# proper ordinal unknown
- 316 stdcall StrNCpyW (ptr wstr long)lstrcpynW	# proper ordinal unknown
- 317 stdcall StrRChrA (str str long) StrRChrA # proper ordinal unknown
- 318 stub StrRChrIA # proper ordinal unknown
- 319 stub StrRChrIW # proper ordinal unknown
- 320 stdcall StrRChrW (wstr wstr long) StrRChrW # proper ordinal unknown
- 321 stub StrRStrA # proper ordinal unknown
- 322 stub StrRStrIA # proper ordinal unknown
- 323 stub StrRStrIW # proper ordinal unknown
- 324 stub StrRStrW # proper ordinal unknown
- 325 stub StrStrA # proper ordinal unknown
- 326 stub StrStrIA # proper ordinal unknown
- 327 stub StrStrIW # proper ordinal unknown
- 328 stub StrStrW # proper ordinal unknown 
+ 301 stub StrChrA
+ 302 stub StrChrIA
+ 303 stub StrChrIW
+ 304 stdcall StrChrW (wstr long) StrChrW
+ 305 stub StrCmpNA
+ 306 stub StrCmpNIA
+ 307 stdcall StrCmpNIW (wstr wstr long) StrCmpNIW
+ 308 stub StrCmpNW
+ 309 stdcall StrCpyNA (ptr str long) lstrcpynA
+ 310 stdcall StrCpyNW (ptr wstr long)lstrcpynW
+ 311 stub StrNCmpA
+ 312 stub StrNCmpIA
+ 313 stub StrNCmpIW
+ 314 stub StrNCmpW
+ 315 stdcall StrNCpyA (ptr str long) lstrcpynA
+ 316 stdcall StrNCpyW (ptr wstr long)lstrcpynW
+ 317 stdcall StrRChrA (str str long) lstrrchr
+ 318 stub StrRChrIA
+ 319 stub StrRChrIW
+ 320 stdcall StrRChrW (wstr wstr long) lstrrchrw
+ 321 stub StrRStrA
+ 322 stub StrRStrIA
+ 323 stub StrRStrIW
+ 324 stub StrRStrW
+ 325 stub StrStrA
+ 326 stub StrStrIA
+ 327 stub StrStrIW
+ 328 stub StrStrW
  329 stub WOWShellExecute # proper ordinal unknown
 
  505 stdcall SHRegCloseKey (long) SHRegCloseKey
@@ -345,7 +345,7 @@ rsrc	shell32
  509 stdcall SHRegQueryValueExA(long str ptr ptr ptr ptr) SHRegQueryValueExA
  510 stdcall SHRegQueryValueW (long long long long) SHRegQueryValueW
  511 stdcall SHRegQueryValueExW (long wstr ptr ptr ptr ptr) SHRegQueryValueExW
- 512 stub SHRegDeleteKeyW@8
+ 512 stdcall SHRegDeleteKeyW (long wstr) SHRegDeleteKeyW
 
  520 stdcall SHAllocShared (long long long) SHAllocShared
  521 stdcall SHLockShared (long long) SHLockShared 

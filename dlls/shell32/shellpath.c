@@ -1037,16 +1037,6 @@ LPWSTR WINAPI PathRemoveBackslashW( LPWSTR lpPath )
 	return p;
 }
 
-/*
-   shlwapi functions that have found their way in because most of
-   shlwapi is unimplemented and doesn't have a home.  
-
-   FIXME: move to a more appropriate file( when one exists )
-*/
-   
- /* SHGetValue: Gets a value from the registry */
-
-
 BOOL WINAPI PathIsURLA(LPCSTR lpstrPath)
 {
   LPSTR lpstrRes;
@@ -1078,66 +1068,23 @@ BOOL WINAPI PathIsURLA(LPCSTR lpstrPath)
   return FALSE;
 }  
 
-DWORD WINAPI SHGetValueA(
-    HKEY     hkey,
-    LPCSTR   pSubKey,
-    LPCSTR   pValue,
-    LPDWORD  pwType,
-    LPVOID   pvData,
-    LPDWORD  pbData
-    )
+/*************************************************************************
+ * PathIsDirectory
+ *
+ */
+BOOL WINAPI PathIsDirectoryA(LPCSTR pszPath)
 {
-    FIXME("(%p),stub!\n", pSubKey);
-
-	return ERROR_SUCCESS;  /* return success */
+	FIXME("%s\n", debugstr_a(pszPath));
+	return TRUE;
 }
-
-DWORD WINAPI SHGetValueW(
-    HKEY     hkey,
-    LPCWSTR  pSubKey,
-    LPCWSTR  pValue,
-    LPDWORD  pwType,
-    LPVOID   pvData,
-    LPDWORD  pbData
-    )
+BOOL WINAPI PathIsDirectoryW(LPCWSTR pszPath)
 {
-    FIXME("(%p),stub!\n", pSubKey);
-
-	return ERROR_SUCCESS;  /* return success */
+	FIXME("%s\n", debugstr_w(pszPath));
+	return TRUE;
 }
-
-/* gets a user-specific registry value. */
-
-LONG WINAPI SHRegGetUSValueA(
-    LPCSTR   pSubKey,
-    LPCSTR   pValue,
-    LPDWORD  pwType,
-    LPVOID   pvData,
-    LPDWORD  pbData,
-    BOOL     fIgnoreHKCU,
-    LPVOID   pDefaultData,
-    DWORD    wDefaultDataSize
-    )
+BOOL WINAPI PathIsDirectoryAW (LPCVOID pszPath)
 {
-    FIXME("(%p),stub!\n", pSubKey);
-
-	return ERROR_SUCCESS;  /* return success */
+	if (VERSION_OsIsUnicode())
+	  return PathIsDirectoryW (pszPath);
+	return PathIsDirectoryA (pszPath);
 }
-
-LONG WINAPI SHRegGetUSValueW(
-    LPCWSTR  pSubKey,
-    LPCWSTR  pValue,
-    LPDWORD  pwType,
-    LPVOID   pvData,
-    LPDWORD  pbData,
-    BOOL     flagIgnoreHKCU,
-    LPVOID   pDefaultData,
-    DWORD    wDefaultDataSize
-    )
-{
-    FIXME("(%p),stub!\n", pSubKey);
-
-	return ERROR_SUCCESS;  /* return success */
-}
-  
-  
