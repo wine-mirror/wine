@@ -50,8 +50,8 @@ static const BYTE NTDLL_leastSignificant[16] = {
 };
 
 /* Last set bit in a nibble; used for determining most significant bit */
-static const BYTE NTDLL_mostSignificant[16] = {
-  0, 0, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3
+static const signed char NTDLL_mostSignificant[16] = {
+  -1, 0, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3
 };
 
 /*************************************************************************
@@ -568,37 +568,35 @@ ULONG WINAPI RtlNumberOfClearBits(PCRTL_BITMAP lpBits)
  *
  * Find the most significant bit in a 64 bit integer.
  *
- * PARAMS
- *  lpBits  [I] Bitmap pointer
- *  ulStart [I] First bit to search from
- *
  * RETURNS
  *  The position of the most significant bit.
  */
 CCHAR WINAPI RtlFindMostSignificantBit(ULONGLONG ulLong)
 {
-  LONG lCount = 64;
-  LPBYTE lpOut = (LPBYTE)&ulLong + 7;
+    signed char ret = 32;
+    DWORD dw;
 
-  TRACE("(%lld)\n", ulLong);
-
-  if (!(ulLong & 0xffffffff00000000ul))
-  {
-    lpOut -= 4;
-    lCount -= 32;
-  }
-
-  for (; lCount > 0; lCount -= 8)
-  {
-    if (*lpOut)
+    if (!(dw = (ulLong >> 32)))
     {
-      if (*lpOut & 0xf0)
-        return lCount - 4 + NTDLL_mostSignificant[*lpOut >> 4];
-      return lCount - 8 + NTDLL_mostSignificant[*lpOut & 0x0f];
+        ret = 0;
+        dw = (DWORD)ulLong;
     }
-    lpOut--;
-  }
-  return -1;
+    if (dw & 0xffff0000)
+    {
+        dw >>= 16;
+        ret += 16;
+    }
+    if (dw & 0xff00)
+    {
+        dw >>= 8;
+        ret += 8;
+    }
+    if (dw & 0xf0)
+    {
+        dw >>= 4;
+        ret += 4;
+    }
+    return ret + NTDLL_mostSignificant[dw];
 }
 
 /*************************************************************************
@@ -606,37 +604,35 @@ CCHAR WINAPI RtlFindMostSignificantBit(ULONGLONG ulLong)
  *
  * Find the least significant bit in a 64 bit integer.
  *
- * PARAMS
- *  lpBits  [I] Bitmap pointer
- *  ulStart [I] First bit to search from
- *
  * RETURNS
  *  The position of the least significant bit.
  */
 CCHAR WINAPI RtlFindLeastSignificantBit(ULONGLONG ulLong)
 {
-  ULONG ulCount = 0;
-  LPBYTE lpOut = (LPBYTE)&ulLong;
+    signed char ret = 0;
+    DWORD dw;
 
-  TRACE("(%lld)\n", ulLong);
-
-  if (!(ulLong & 0xffffffff))
-  {
-    lpOut += 4;
-    ulCount = 32;
-  }
-
-  for (; ulCount < 64; ulCount += 8)
-  {
-    if (*lpOut)
+    if (!(dw = (DWORD)ulLong))
     {
-      if (*lpOut & 0x0f)
-        return ulCount + NTDLL_leastSignificant[*lpOut & 0x0f];
-      return ulCount + 4 + NTDLL_leastSignificant[*lpOut >> 4];
+        ret = 32;
+        if (!(dw = ulLong >> 32)) return -1;
     }
-    lpOut++;
-  }
-  return -1;
+    if (!(dw & 0xffff))
+    {
+        dw >>= 16;
+        ret += 16;
+    }
+    if (!(dw & 0xff))
+    {
+        dw >>= 8;
+        ret += 8;
+    }
+    if (!(dw & 0x0f))
+    {
+        dw >>= 4;
+        ret += 4;
+    }
+    return ret + NTDLL_leastSignificant[dw & 0x0f];
 }
 
 /*************************************************************************
