@@ -30,7 +30,6 @@ DEFAULT_DEBUG_CHANNEL(thunk)
 
 /* ### start build ### */
 extern WORD CALLBACK THUNK_CallTo16_word_     (FARPROC16);
-extern LONG CALLBACK THUNK_CallTo16_long_     (FARPROC16);
 extern WORD CALLBACK THUNK_CallTo16_word_w    (FARPROC16,WORD);
 extern WORD CALLBACK THUNK_CallTo16_word_l    (FARPROC16,LONG);
 extern LONG CALLBACK THUNK_CallTo16_long_l    (FARPROC16,LONG);
@@ -49,8 +48,6 @@ extern WORD CALLBACK THUNK_CallTo16_word_wwwl (FARPROC16,WORD,WORD,WORD,LONG);
 extern LONG CALLBACK THUNK_CallTo16_long_wwwl (FARPROC16,WORD,WORD,WORD,LONG);
 extern WORD CALLBACK THUNK_CallTo16_word_wllwl(FARPROC16,WORD,LONG,LONG,WORD,LONG);
 extern WORD CALLBACK THUNK_CallTo16_word_lwwww(FARPROC16,LONG,WORD,WORD,WORD,WORD);
-extern LONG CALLBACK THUNK_CallTo16_long_lwwll(FARPROC16,LONG,WORD,WORD,LONG,LONG);
-extern WORD CALLBACK THUNK_CallTo16_word_wwlll(FARPROC16,WORD,WORD,LONG,LONG,LONG);
 /* ### stop build ### */
 
 
@@ -93,9 +90,6 @@ static const CALLBACKS_TABLE CALLBACK_EmulatorTable =
 {
     (void *)CallTo16RegisterShort,               /* CallRegisterShortProc */
     (void *)CallTo16RegisterLong,                /* CallRegisterLongProc */
-    (void *)THUNK_CallTo16_long_lwwll,           /* CallDriverProc */
-    (void *)THUNK_CallTo16_word_wwlll,           /* CallDriverCallback */
-    (void *)THUNK_CallTo16_word_wwlll,           /* CallTimeFuncProc */
     (void *)THUNK_CallTo16_word_w,               /* CallWindowsExitProc */
     (void *)THUNK_CallTo16_word_lwww,            /* CallWordBreakProc */
     (void *)THUNK_CallTo16_word_ww,              /* CallBootAppProc */

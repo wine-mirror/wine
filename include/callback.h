@@ -26,12 +26,6 @@ typedef struct
 {
     LONG (CALLBACK *CallRegisterShortProc)( CONTEXT86 *, INT );
     LONG (CALLBACK *CallRegisterLongProc)( CONTEXT86 *, INT );
-    LRESULT (CALLBACK *CallDriverProc)( DRIVERPROC16, DWORD, HDRVR16,
-                                        UINT16, LPARAM, LPARAM );
-    LRESULT (CALLBACK *CallDriverCallback)( FARPROC16, HANDLE16, UINT16,
-                                            DWORD, LPARAM, LPARAM );
-    LRESULT (CALLBACK *CallTimeFuncProc)( FARPROC16, WORD, UINT16,
-                                          DWORD, LPARAM, LPARAM );
     INT16 (CALLBACK *CallWindowsExitProc)( FARPROC16, INT16 );
     INT16 (CALLBACK *CallWordBreakProc)( EDITWORDBREAKPROC16, SEGPTR, INT16,
                                          INT16, INT16 );
