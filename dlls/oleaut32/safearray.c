@@ -60,8 +60,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(ole);
  * using the IRecordInfo interface.
  *
  * There are two types of SafeArray, normal and vectors. Normal arrays can have
- * multiple dimensions and the data for the array is allocated seperately from
- * the array header. This is the most flexable type of array. Vectors, on the
+ * multiple dimensions and the data for the array is allocated separately from
+ * the array header. This is the most flexible type of array. Vectors, on the
  * other hand, are fixed in size and consist of a single allocated block, and a
  * single dimension.
  *

@@ -1292,7 +1292,7 @@ wine
 	<para>
 	  In general, most Windows installations contain vast quantities of garbage
 	  that can confuse Wine and make it less reliable. If you can, it's best to
-	  install the programs you want into Wines fake windows drive.
+	  install the programs you want into Wine's fake windows drive.
 	</para>
       </answer>
       </qandaentry>
@@ -1325,7 +1325,7 @@ wine
       <answer>
         <para>
           Make sure you have all the VB run time libraries installed. You can
-          get the latest version from the microsoft web site.
+          get the latest version from the Microsoft web site.
         </para>
       </answer>
       </qandaentry>
@@ -1358,7 +1358,7 @@ wine myprogram.exe
       </question>
       <answer>
         <para>
-          Try to re login into bash. That might fix it.
+          Try to logout and login again into bash. That might fix it.
         </para>
         <para>
           If it doesn't, then make sure the wine binary is in your 

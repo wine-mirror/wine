@@ -1034,7 +1034,7 @@ void set_tex_op(LPDIRECT3DDEVICE8 iface, BOOL isAlpha, int Stage, D3DTEXTUREOP o
 		Handled   = FALSE;
 		break;
 	      default:
-		FIXME("Cant have COMBINE4 and COMBINE in effect together, thisop=%d, otherop=%ld, isAlpha(%d)\n", op, op2, isAlpha);
+		FIXME("Can't use COMBINE4 and COMBINE together, thisop=%d, otherop=%ld, isAlpha(%d)\n", op, op2, isAlpha);
 		LEAVE_GL();
 		return;
 	      }
