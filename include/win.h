@@ -7,6 +7,8 @@
 #ifndef __WINE_WIN_H
 #define __WINE_WIN_H
 
+#include "windef.h"
+#include "wingdi.h"
 #include "winuser.h"
 #include "queue.h"
 #include "class.h"

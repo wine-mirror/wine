@@ -10,6 +10,7 @@
 
 #include "desktop.h"
 #include "windef.h"
+#include "wingdi.h"
 #include "heap.h"
 #include "monitor.h"
 #include "win.h"

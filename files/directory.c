@@ -8,6 +8,7 @@
 
 #include <ctype.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include <string.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -20,6 +21,8 @@
 #include "winbase.h"
 #include "wine/winbase16.h"
 #include "wine/winestring.h"
+#include "windef.h"
+#include "wingdi.h"
 #include "wine/winuser16.h"
 #include "winerror.h"
 #include "process.h"
@@ -30,8 +33,8 @@
 #include "options.h"
 #include "debugtools.h"
 
-DEFAULT_DEBUG_CHANNEL(dosfs)
-DECLARE_DEBUG_CHANNEL(file)
+DEFAULT_DEBUG_CHANNEL(dosfs);
+DECLARE_DEBUG_CHANNEL(file);
 
 static DOS_FULL_NAME DIR_Windows;
 static DOS_FULL_NAME DIR_System;

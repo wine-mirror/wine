@@ -28,6 +28,8 @@
 #include "windef.h"
 #include "class.h"
 #include "x11drv.h"
+#include "windef.h"
+#include "wingdi.h"
 #include "wine/winuser16.h"
 
 DEFAULT_DEBUG_CHANNEL(win)

@@ -7,12 +7,14 @@
 #include <assert.h>
 #include <fcntl.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include <string.h>
 #include <sys/types.h>
 #include <unistd.h>
-#include "wine/winuser16.h"
-#include "wine/winbase16.h"
 #include "windef.h"
+#include "wingdi.h"
+#include "wine/winbase16.h"
+#include "wine/winuser16.h"
 #include "winerror.h"
 #include "file.h"
 #include "global.h"

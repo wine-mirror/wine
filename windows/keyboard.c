@@ -13,6 +13,8 @@
 #include <string.h>
 #include <ctype.h>
 
+#include "windef.h"
+#include "wingdi.h"
 #include "winuser.h"
 #include "wine/keyboard16.h"
 #include "win.h"

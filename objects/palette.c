@@ -12,6 +12,8 @@
 #include <string.h>
 
 #include "winbase.h"
+#include "windef.h"
+#include "wingdi.h"
 #include "wine/winuser16.h"
 #include "gdi.h"
 #include "color.h"

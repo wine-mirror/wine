@@ -3,6 +3,8 @@
 #define __WINE_STRUCT32_H
 
 #include "winbase.h"
+#include "windef.h"
+#include "wingdi.h"
 #include "wine/winuser16.h"
 #include "queue.h"
 

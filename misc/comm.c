@@ -35,6 +35,7 @@
 #include "config.h"
 
 #include <stdlib.h>
+#include <stdio.h>
 #include <termios.h>
 #include <fcntl.h>
 #include <string.h>
@@ -50,6 +51,8 @@
 #include <sys/ioctl.h>
 #include <unistd.h>
 
+#include "windef.h"
+#include "wingdi.h"
 #include "wine/winuser16.h"
 #include "comm.h"
 #ifdef HAVE_SYS_MODEM_H
@@ -69,7 +72,7 @@
 
 #include "debugtools.h"
 
-DEFAULT_DEBUG_CHANNEL(comm)
+DEFAULT_DEBUG_CHANNEL(comm);
 
 #ifndef TIOCINQ
 #define	TIOCINQ FIONREAD

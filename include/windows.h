@@ -5,10 +5,10 @@
 extern "C" {
 #endif
 
+#include "windef.h"
 #include "winbase.h"
 #include "wingdi.h"
 #include "winuser.h"
-#include "windef.h"
 #include "shell.h"
 #include "winreg.h"
 #include "winnetwk.h"

@@ -29,6 +29,8 @@
  *****************************************************************************/
 
 #include <string.h>
+#include "windef.h"
+#include "wingdi.h"
 #include "winuser.h"
 #include "tweak.h"
 #include "options.h"

@@ -62,6 +62,8 @@
 #include <string.h>
 #include <math.h>	/* Insomnia - pow() function */
 #include "dsound.h"
+#include "windef.h"
+#include "wingdi.h"
 #include "winuser.h"
 #include "winerror.h"
 #include "wine/obj_base.h"
@@ -236,7 +238,7 @@ static void _dump_DSBCAPS(DWORD xmask) {
 
 	for (i=0;i<sizeof(flags)/sizeof(flags[0]);i++)
 		if (flags[i].mask & xmask)
-			fprintf(stderr,"%s ",flags[i].name);
+			DPRINTF("%s ",flags[i].name);
 }
 
 /*******************************************************************************

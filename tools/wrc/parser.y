@@ -106,6 +106,8 @@
 #include "dumpres.h"
 #include "preproc.h"
 #include "parser.h"
+#include "windef.h"
+#include "wingdi.h"
 #include "winuser.h"
 
 #ifdef __BORLANDC__

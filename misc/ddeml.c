@@ -11,6 +11,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include "winbase.h"
+#include "windef.h"
+#include "wingdi.h"
 #include "winuser.h"
 #include "ddeml.h"
 #include "winerror.h"

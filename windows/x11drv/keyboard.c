@@ -21,6 +21,8 @@
 #include "ts_xresource.h"
 #include "ts_xutil.h"
 
+#include "windef.h"
+#include "wingdi.h"
 #include "wine/winuser16.h"
 #include "dinput.h"
 #include "debugtools.h"

@@ -22,6 +22,7 @@
 #include "config.h"
 
 #include <stdlib.h>
+#include <stdio.h>
 #include <unistd.h>
 #include <termios.h>
 #include <string.h>
@@ -37,6 +38,8 @@
 #include <assert.h>
 
 #include "winbase.h"
+#include "windef.h"
+#include "wingdi.h"
 #include "wine/winuser16.h"
 #include "wine/keyboard16.h"
 #include "thread.h"

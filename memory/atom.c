@@ -16,9 +16,11 @@
 #include <string.h>
 #include <ctype.h>
 
+#include "windef.h"
+#include "wingdi.h"
+#include "winuser.h"
 #include "wine/winbase16.h"
 #include "wine/winuser16.h"
-#include "winuser.h"
 #include "global.h"
 #include "instance.h"
 #include "ldt.h"

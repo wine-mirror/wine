@@ -41,6 +41,8 @@
 #include "keyboard.h"
 #include "gdi.h"
 #include "user.h"
+#include "windef.h"
+#include "wingdi.h"
 #include "wine/winuser16.h"
 #include "tweak.h"
 

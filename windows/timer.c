@@ -4,6 +4,8 @@
  * Copyright 1993 Alexandre Julliard
  */
 
+#include "windef.h"
+#include "wingdi.h"
 #include "wine/winuser16.h"
 #include "winuser.h"
 #include "queue.h"

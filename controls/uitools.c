@@ -5,6 +5,8 @@
  * Copyright 1997 Bertho A. Stultiens
  */
 
+#include "windef.h"
+#include "wingdi.h"
 #include "wine/winuser16.h"
 #include "winuser.h"
 #include "debugtools.h"

@@ -21,6 +21,8 @@
 #include "font.h"
 #include "callback.h"
 #include "winerror.h"
+#include "windef.h"
+#include "wingdi.h"
 #include "wine/winuser16.h"
 
 DEFAULT_DEBUG_CHANNEL(dc)

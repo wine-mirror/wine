@@ -6,6 +6,8 @@
 #include <string.h>
 #include <signal.h>
 #include <assert.h>
+#include "windef.h"
+#include "wingdi.h"
 #include "wine/winbase16.h"
 #include "wine/winuser16.h"
 #include "miscemu.h"

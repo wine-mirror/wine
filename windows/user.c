@@ -7,6 +7,8 @@
 
 #include <stdlib.h>
 #include "wine/winbase16.h"
+#include "windef.h"
+#include "wingdi.h"
 #include "winuser.h"
 #include "heap.h"
 #include "user.h"

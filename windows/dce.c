@@ -29,6 +29,8 @@
 #include "local.h"
 #include "module.h"
 #include "debugtools.h"
+#include "windef.h"
+#include "wingdi.h"
 #include "wine/winbase16.h"
 #include "wine/winuser16.h"
 

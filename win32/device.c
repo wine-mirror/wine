@@ -22,6 +22,8 @@
 #include <string.h>
 #include <stdarg.h>
 #include <time.h>
+#include "windef.h"
+#include "wingdi.h"
 #include "winbase.h"
 #include "winuser.h"
 #include "winreg.h"
@@ -39,7 +41,7 @@
 #include "debugtools.h"
 #include "global.h"
 
-DEFAULT_DEBUG_CHANNEL(win32)
+DEFAULT_DEBUG_CHANNEL(win32);
 
 
 static BOOL DeviceIo_VTDAPI(DWORD dwIoControlCode, 
@@ -1195,7 +1197,7 @@ static BOOL DeviceIo_MONODEBG(DWORD dwIoControlCode,
 		*(LPDWORD)lpvOutBuffer = 0x20004; /* WC SecretOps */
 		break;
 	case 9: /* debug output */
-		fprintf(stderr,"MONODEBG: %s\n",debugstr_a(lpvInBuffer));
+		ERR("MONODEBG: %s\n",debugstr_a(lpvInBuffer));
 		break;
 	default:
 		FIXME("(%ld,%p,%ld,%p,%ld,%p,%p): stub\n",

@@ -7,6 +7,8 @@
  *
  */
 
+#include "windef.h"
+#include "wingdi.h"
 #include "wine/winuser16.h"
 #include "win.h"
 #include "winpos.h"

@@ -3,6 +3,8 @@
  */
 
 #include <stdlib.h>
+#include "windef.h"
+#include "wingdi.h"
 #include "winuser.h"
 #include "miscemu.h"
 #include "dosexe.h"

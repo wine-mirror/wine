@@ -10,6 +10,8 @@
  *	- record/play should and must be done asynchronous
  */
 
+#include "windef.h"
+#include "wingdi.h"
 #include "winuser.h"
 #include "driver.h"
 #include "mmddk.h"

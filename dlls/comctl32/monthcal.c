@@ -17,8 +17,11 @@
  */
 
 #include <math.h>
+#include <stdio.h>
 
 #include "winbase.h"
+#include "windef.h"
+#include "wingdi.h"
 #include "winuser.h"
 #include "wingdi.h"
 #include "win.h"
@@ -28,7 +31,7 @@
 #include "monthcal.h"
 #include "debugtools.h"
 
-DEFAULT_DEBUG_CHANNEL(monthcal)
+DEFAULT_DEBUG_CHANNEL(monthcal);
 
 /* take #days/month from ole/parsedt.c;
  * we want full month-names, and abbreviated weekdays, so these are

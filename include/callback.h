@@ -9,6 +9,7 @@
 
 #include "windef.h"
 #include "winnt.h"
+#include "wingdi.h"
 #include "wine/winuser16.h"
 
 extern int (*IF1632_CallLargeStack)( int (*func)(void), void *arg );

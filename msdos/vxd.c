@@ -6,7 +6,11 @@
 
 #include <fcntl.h>
 #include <memory.h>
+#include <sys/types.h>
+#include <unistd.h>
 #include "winbase.h"
+#include "windef.h"
+#include "wingdi.h"
 #include "winuser.h"
 #include "wine/winbase16.h"
 #include "wine/winuser16.h"

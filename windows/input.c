@@ -11,9 +11,12 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include <stdio.h>
 #include <ctype.h>
 #include <assert.h>
 
+#include "windef.h"
+#include "wingdi.h"
 #include "winuser.h"
 #include "wine/winbase16.h"
 #include "wine/winuser16.h"
@@ -30,11 +33,11 @@
 #include "winerror.h"
 #include "task.h"
 
-DECLARE_DEBUG_CHANNEL(accel)
-DECLARE_DEBUG_CHANNEL(event)
-DECLARE_DEBUG_CHANNEL(key)
-DECLARE_DEBUG_CHANNEL(keyboard)
-DECLARE_DEBUG_CHANNEL(win)
+DECLARE_DEBUG_CHANNEL(accel);
+DECLARE_DEBUG_CHANNEL(event);
+DECLARE_DEBUG_CHANNEL(key);
+DECLARE_DEBUG_CHANNEL(keyboard);
+DECLARE_DEBUG_CHANNEL(win);
 
 static BOOL InputEnabled = TRUE;
 BOOL SwappedButtons = FALSE;

@@ -8,6 +8,8 @@
 #include "dc.h"
 #include "region.h"
 #include "debugtools.h"
+#include "windef.h"
+#include "wingdi.h"
 #include "wine/winuser16.h"
 
 DEFAULT_DEBUG_CHANNEL(clipping)

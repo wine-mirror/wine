@@ -5,6 +5,8 @@
  */
 
 #include "winbase.h"
+#include "windef.h"
+#include "wingdi.h"
 #include "winuser.h"
 #include "winerror.h"
 #include "windef.h"

@@ -7,9 +7,12 @@
  */
 
 #include <stdlib.h>
+#include <stdio.h>
 #include <string.h>
 
 #include "winbase.h"
+#include "windef.h"
+#include "wingdi.h"
 #include "winuser.h"
 #include "heap.h"
 #include "driver.h"
@@ -20,7 +23,7 @@
 #include "wine/winbase16.h"
 #include "debugtools.h"
 
-DEFAULT_DEBUG_CHANNEL(mci)
+DEFAULT_DEBUG_CHANNEL(mci);
 
 static	int			MCI_InstalledCount;
 static	LPSTR			MCI_lpInstallNames = NULL;

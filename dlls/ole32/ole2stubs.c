@@ -5,6 +5,8 @@
  */
 
 #include "ole2.h"
+#include "windef.h"
+#include "wingdi.h"
 #include "winuser.h"
 #include "debugtools.h"
 

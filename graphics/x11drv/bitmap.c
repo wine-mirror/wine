@@ -24,6 +24,8 @@
 #include "xmalloc.h"
 #include "local.h"
 #include "x11drv.h"
+#include "wingdi.h"
+#include "windef.h"
 #include "wine/winuser16.h"
 
 DEFAULT_DEBUG_CHANNEL(x11drv)

@@ -8,6 +8,8 @@
 #include <string.h>
 #include "win.h"
 #include "button.h"
+#include "windef.h"
+#include "wingdi.h"
 #include "wine/winuser16.h"
 #include "tweak.h"
 

@@ -8,6 +8,7 @@
 #define __WINE_QUEUE_H
 
 #include "windef.h"
+#include "wingdi.h"
 #include "winuser.h"
 #include "thread.h"
 

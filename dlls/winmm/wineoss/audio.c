@@ -16,11 +16,14 @@
 #include "config.h"
 
 #include <stdlib.h>
+#include <stdio.h>
 #include <string.h>
 #include <unistd.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <sys/ioctl.h>
+#include "windef.h"
+#include "wingdi.h"
 #include "wine/winuser16.h"
 #include "driver.h"
 #include "mmddk.h"
@@ -29,7 +32,7 @@
 #include "ldt.h"
 #include "debugtools.h"
 
-DEFAULT_DEBUG_CHANNEL(wave)
+DEFAULT_DEBUG_CHANNEL(wave);
 
 /* Allow 1% deviation for sample rates (some ES137x cards) */
 #define NEAR_MATCH(rate1,rate2) (((100*((int)(rate1)-(int)(rate2)))/(rate1))==0)

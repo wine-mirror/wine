@@ -52,11 +52,14 @@
 #include <errno.h>
 #include <X11/Xatom.h>
 #include <string.h>
+#include <stdio.h>
 #include <unistd.h>
 #include <fcntl.h>
 
 #include "ts_xlib.h"
 
+#include "windef.h"
+#include "wingdi.h"
 #include "wine/winuser16.h"
 #include "clipboard.h"
 #include "message.h"
@@ -68,7 +71,7 @@
 #include "options.h"
 #include "debugtools.h"
 
-DEFAULT_DEBUG_CHANNEL(clipboard)
+DEFAULT_DEBUG_CHANNEL(clipboard);
 
 /* Selection masks */
 
@@ -255,10 +258,10 @@ BOOL X11DRV_CLIPBOARD_LaunchServer()
         /* Build the debug class mask to pass to the server, by inheriting
          * the settings for the clipboard debug channel.
          */
-        dbgClasses |= __GET_DEBUGGING(__DBCL_FIXME, dbch_clipboard) ? 1 : 0;
-        dbgClasses |= __GET_DEBUGGING(__DBCL_ERR, dbch_clipboard) ? 2 : 0;
-        dbgClasses |= __GET_DEBUGGING(__DBCL_WARN, dbch_clipboard) ? 4 : 0;
-        dbgClasses |= __GET_DEBUGGING(__DBCL_TRACE, dbch_clipboard) ? 8 : 0;
+        dbgClasses |= FIXME_ON(clipboard) ? 1 : 0;
+        dbgClasses |= ERR_ON(clipboard) ? 2 : 0;
+        dbgClasses |= WARN_ON(clipboard) ? 4 : 0;
+        dbgClasses |= TRACE_ON(clipboard) ? 8 : 0;
         sprintf(dbgClassMask, "%d", dbgClasses);
 
         /* Get the clear selection preference */

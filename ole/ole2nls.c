@@ -7,8 +7,11 @@
  */
 
 #include <string.h>
+#include <stdio.h>
 #include <ctype.h>
 #include <stdlib.h>
+#include "windef.h"
+#include "wingdi.h"
 #include "winuser.h"
 #include "heap.h"
 #include "options.h"
@@ -20,10 +23,9 @@
 #include "crtdll.h"
 #include "main.h"
 
-DEFAULT_DEBUG_CHANNEL(ole)
-DECLARE_DEBUG_CHANNEL(file)
-DECLARE_DEBUG_CHANNEL(string)
-DECLARE_DEBUG_CHANNEL(win32)
+DEFAULT_DEBUG_CHANNEL(ole);
+DECLARE_DEBUG_CHANNEL(string);
+DECLARE_DEBUG_CHANNEL(win32);
 
 struct NLS_langlocale {
 	const int lang;
@@ -3418,7 +3420,7 @@ INT WINAPI GetNumberFormatW(LCID locale, DWORD dwflags,
 			       LPCWSTR lpvalue,  const NUMBERFMTW * lpFormat,
 			       LPWSTR lpNumberStr, int cchNumber)
 {
- FIXME_(file)("%s: stub, no reformating done\n",debugstr_w(lpvalue));
+ FIXME("%s: stub, no reformating done\n",debugstr_w(lpvalue));
 
  lstrcpynW( lpNumberStr, lpvalue, cchNumber );
  return cchNumber? lstrlenW( lpNumberStr ) : 0;

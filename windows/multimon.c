@@ -5,6 +5,8 @@
  */
 
 #include "monitor.h"
+#include "windef.h"
+#include "wingdi.h"
 #include "winbase.h"
 #include "winuser.h"
 

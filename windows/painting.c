@@ -5,17 +5,19 @@
  *			 1999 Alex Korobka
  */
 
+#include "windef.h"
+#include "wingdi.h"
+#include "wine/winuser16.h"
 #include "region.h"
 #include "win.h"
 #include "queue.h"
 #include "dce.h"
 #include "heap.h"
 #include "debugtools.h"
-#include "wine/winuser16.h"
 #include "cache.h"
 
-DEFAULT_DEBUG_CHANNEL(win)
-DECLARE_DEBUG_CHANNEL(nonclient)
+DEFAULT_DEBUG_CHANNEL(win);
+DECLARE_DEBUG_CHANNEL(nonclient);
 
 /* client rect in window coordinates */
 

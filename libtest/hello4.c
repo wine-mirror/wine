@@ -2,6 +2,8 @@
 #include <windows.h>
 /* Win32 counterpart for CalcChildScroll16 is not implemented */
 /* even in MS Visual C++ */
+#include "windef.h"
+#include "wingdi.h"
 #include <wine/winuser16.h>
 
 void Write (HDC dc, int x, int y, char *s)

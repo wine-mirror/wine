@@ -6,7 +6,10 @@
 
 #include <assert.h>
 #include <string.h>
+#include <stdio.h>
 #include <ctype.h>
+#include "windef.h"
+#include "wingdi.h"
 #include "winuser.h"
 #include "builtin32.h"
 #include "peexe.h"

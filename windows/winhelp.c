@@ -7,6 +7,8 @@
 #include <string.h>
 #include <unistd.h>
 #include "debugtools.h"
+#include "windef.h"
+#include "wingdi.h"
 #include "wine/winuser16.h"
 #include "wine/winbase16.h"
 #include "winversion.h"

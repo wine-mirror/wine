@@ -16,6 +16,8 @@
  */
 
 #include <stdlib.h>
+#include "windef.h"
+#include "wingdi.h"
 #include "winuser.h"
 #include "mmddk.h"
 #include "driver.h"

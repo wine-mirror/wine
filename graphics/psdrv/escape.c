@@ -3,6 +3,8 @@
  *
  *	Copyright 1998  Huw D M Davies
  */
+#include "windef.h"
+#include "wingdi.h"
 #include "wine/winuser16.h"
 #include "psdrv.h"
 #include "debugtools.h"

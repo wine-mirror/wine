@@ -6,6 +6,8 @@
  */
 
 #include "winbase.h"
+#include "windef.h"
+#include "wingdi.h"
 #include "winuser.h"
 #include "commdlg.h"
 #include "cderr.h"

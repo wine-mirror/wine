@@ -32,6 +32,7 @@ AJ 990101:
 #include <stdlib.h>
 #include <stdarg.h>
 #include <string.h>
+#include <stdio.h>
 #include <sys/stat.h>
 #include <sys/times.h>
 #include <unistd.h>
@@ -41,6 +42,8 @@ AJ 990101:
 #include <fcntl.h>
 #include <setjmp.h>
 #include "winbase.h"
+#include "windef.h"
+#include "wingdi.h"
 #include "winuser.h"
 #include "winerror.h"
 #include "ntddk.h"
@@ -53,7 +56,7 @@ AJ 990101:
 #include "options.h"
 #include "winnls.h"
 
-DEFAULT_DEBUG_CHANNEL(crtdll)
+DEFAULT_DEBUG_CHANNEL(crtdll);
 
 /* windows.h RAND_MAX is smaller than normal RAND_MAX */
 #define CRTDLL_RAND_MAX         0x7fff 

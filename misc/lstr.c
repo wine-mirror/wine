@@ -9,6 +9,7 @@
 
 #include <stdarg.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include <string.h>
 #include <ctype.h>
 
@@ -21,10 +22,12 @@
 # define iswlower(c) islower(c)
 #endif  /* HAVE_WCTYPE_H */
 
+#include "windef.h"
+#include "winbase.h"
+#include "wingdi.h"
+#include "winuser.h"
 #include "wine/winbase16.h"
 #include "wine/winuser16.h"
-#include "winbase.h"
-#include "winuser.h"
 #include "winnls.h"
 #include "task.h"
 #include "heap.h"
@@ -33,7 +36,7 @@
 #include "module.h"
 #include "debugtools.h"
 
-DEFAULT_DEBUG_CHANNEL(resource)
+DEFAULT_DEBUG_CHANNEL(resource);
 
 extern const WORD OLE2NLS_CT_CType3_LUT[]; /* FIXME: does not belong here */
 

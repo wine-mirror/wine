@@ -22,6 +22,7 @@
 #include <unistd.h>
 
 #include "windef.h"
+#include "wingdi.h"
 #include "winuser.h"
 #include "wine/winbase16.h"
 #include "winerror.h"

@@ -5,6 +5,8 @@
  * Copyright 1996 Frans van Dorsselaer
  */
 
+#include "windef.h"
+#include "wingdi.h"
 #include "wine/wingdi16.h"
 #include "wine/winuser16.h"
 #include "module.h"

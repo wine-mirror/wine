@@ -13,6 +13,8 @@
 #include "module.h"
 #include "mouse.h"
 #include "monitor.h"
+#include "windef.h"
+#include "wingdi.h"
 #include "winuser.h"
 #include "win.h"
 #include "wine/winbase16.h"

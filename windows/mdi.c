@@ -13,8 +13,11 @@
  */
 
 #include <stdlib.h>
+#include <stdio.h>
 #include <string.h>
 #include <math.h>
+#include "windef.h"
+#include "wingdi.h"
 #include "winuser.h"
 #include "win.h"
 #include "heap.h"
@@ -27,7 +30,7 @@
 #include "tweak.h"
 #include "debugtools.h"
 
-DEFAULT_DEBUG_CHANNEL(mdi)
+DEFAULT_DEBUG_CHANNEL(mdi);
 
 #define MDIF_NEEDUPDATE		0x0001
 

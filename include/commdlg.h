@@ -10,6 +10,7 @@ extern "C" {
 #endif
 
 #include "windef.h"		/* needed for CHOOSEFONT structure */
+#include "wingdi.h"
 #include "winuser.h"
 #include "pshpack1.h"
 

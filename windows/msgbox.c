@@ -6,6 +6,8 @@
 
 #include <string.h>
 
+#include "windef.h"
+#include "wingdi.h"
 #include "wine/winbase16.h"
 #include "wine/winuser16.h"
 #include "dlgs.h"

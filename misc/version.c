@@ -9,7 +9,10 @@
 
 #include <string.h>
 #include <stdlib.h>
+#include <stdio.h>
+#include "windef.h"
 #include "winbase.h"
+#include "wingdi.h"
 #include "winuser.h"
 #include "wine/winbase16.h"
 #include "process.h"

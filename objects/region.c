@@ -83,13 +83,15 @@ SOFTWARE.
 
 #include <stdlib.h>
 #include <string.h>
-#include "region.h"
+#include "windef.h"
+#include "wingdi.h"
 #include "winuser.h"
 #include "debugtools.h"
+#include "region.h"
 #include "heap.h"
 #include "dc.h"
 
-DEFAULT_DEBUG_CHANNEL(region) 
+DEFAULT_DEBUG_CHANNEL(region);
 
 typedef void (*voidProcp)();
 

@@ -16,6 +16,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "windef.h"
+#include "wingdi.h"
 #include "wine/winuser16.h"
 #include "shpolicy.h"
 

@@ -5,11 +5,13 @@
  */
 
 #include <string.h>
+#include "windef.h"
+#include "wingdi.h"
 #include "wine/winuser16.h"
 #include "module.h"
 #include "debugtools.h"
 
-DEFAULT_DEBUG_CHANNEL(resource)
+DEFAULT_DEBUG_CHANNEL(resource);
 
 /**********************************************************************
  *	    ConvertDialog32To16   (KERNEL.615)

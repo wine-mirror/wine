@@ -27,6 +27,8 @@
 #include <string.h>
 
 #include "winbase.h"
+#include "windef.h"
+#include "wingdi.h"
 #include "winuser.h"
 #include "wingdi.h"
 #include "commctrl.h"

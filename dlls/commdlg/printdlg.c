@@ -8,8 +8,11 @@
 
 #include <ctype.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include <string.h>
+#include "windef.h"
 #include "winbase.h"
+#include "wingdi.h"
 #include "wine/winbase16.h"
 #include "wine/winuser16.h"
 #include "ldt.h"
@@ -23,7 +26,7 @@
 #include "winspool.h"
 #include "winerror.h"
 
-DEFAULT_DEBUG_CHANNEL(commdlg)
+DEFAULT_DEBUG_CHANNEL(commdlg);
 
 #include "cdlg.h"
 

@@ -10,6 +10,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "windef.h"
+#include "wingdi.h"
 #include "wine/winbase16.h"
 #include "wine/winuser16.h"
 #include "sysmetrics.h"

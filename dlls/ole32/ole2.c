@@ -8,8 +8,11 @@
 
 #include <assert.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include <string.h>
 
+#include "windef.h"
+#include "wingdi.h"
 #include "winuser.h"
 #include "winerror.h"
 #include "ole2.h"

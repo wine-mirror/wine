@@ -20,6 +20,8 @@
 #include <ctype.h>
 #include "windef.h"
 #include "winbase.h"
+#include "windef.h"
+#include "wingdi.h"
 #include "winuser.h" /* SW_NORMAL */
 #include "wine/winbase16.h"
 #include "winerror.h"

@@ -23,6 +23,7 @@
 #include "config.h"
 
 #include <unistd.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <fcntl.h>
@@ -34,12 +35,14 @@
 #ifdef HAVE_SYS_ERRNO_H
 #include <sys/errno.h>
 #endif
+#include "windef.h"
+#include "wingdi.h"
 #include "winuser.h"
 #include "winbase.h"
 #include "mmsystem.h"
 #include "debugtools.h"
 
-DEFAULT_DEBUG_CHANNEL(mmsys)
+DEFAULT_DEBUG_CHANNEL(mmsys);
 
 #define MAXJOYSTICK	(JOYSTICKID2 + 1)
 #define JOY_PERIOD_MIN	(10)	/* min Capture time period */

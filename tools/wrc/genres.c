@@ -18,6 +18,8 @@
 #include "wrc.h"
 #include "genres.h"
 #include "utils.h"
+#include "windef.h"
+#include "wingdi.h"
 #include "winuser.h"
 
 #define SetResSize(res, tag)	*(DWORD *)&((res)->data[(tag)]) = \

@@ -6,6 +6,8 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include "windef.h"
+#include "wingdi.h"
 #include "wine/winbase16.h"
 #include "wine/winuser16.h"
 #include "options.h"
@@ -1040,9 +1042,7 @@ HWND16 WINAPI CreateWindowEx16( DWORD exStyle, LPCSTR className,
 
     if (!(classAtom = GlobalFindAtomA( className )))
     {
-        fprintf( stderr, "CreateWindowEx16: bad class name " );
-        if (!HIWORD(className)) fprintf( stderr, "%04x\n", LOWORD(className) );
-        else fprintf( stderr, "'%s'\n", className );
+        ERR( "bad class name %s\n", debugres_a(className) );
         return 0;
     }
 
@@ -1096,9 +1096,7 @@ HWND WINAPI CreateWindowExA( DWORD exStyle, LPCSTR className,
 
     if (!(classAtom = GlobalFindAtomA( className )))
     {
-        fprintf( stderr, "CreateWindowEx32A: bad class name " );
-        if (!HIWORD(className)) fprintf( stderr, "%04x\n", LOWORD(className) );
-        else fprintf( stderr, "'%s'\n", className );
+        ERR( "bad class name %s\n", debugres_a(className) );
         return 0;
     }
 
@@ -1150,14 +1148,7 @@ HWND WINAPI CreateWindowExW( DWORD exStyle, LPCWSTR className,
 
     if (!(classAtom = GlobalFindAtomW( className )))
     {
-    	if (HIWORD(className))
-        {
-            LPSTR cn = HEAP_strdupWtoA( GetProcessHeap(), 0, className );
-            WARN("Bad class name '%s'\n",cn);
-            HeapFree( GetProcessHeap(), 0, cn );
-	}
-        else
-            WARN("Bad class name %p\n", className );
+        ERR( "bad class name %s\n", debugres_w(className) );
         return 0;
     }
 

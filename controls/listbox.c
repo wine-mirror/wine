@@ -6,6 +6,9 @@
 
 #include <string.h>
 #include <stdlib.h>
+#include <stdio.h>
+#include "windef.h"
+#include "wingdi.h"
 #include "wine/winuser16.h"
 #include "wine/winbase16.h"
 #include "winuser.h"
@@ -18,8 +21,8 @@
 #include "debugtools.h"
 #include "tweak.h"
 
-DEFAULT_DEBUG_CHANNEL(listbox)
-DECLARE_DEBUG_CHANNEL(combo)
+DEFAULT_DEBUG_CHANNEL(listbox);
+DECLARE_DEBUG_CHANNEL(combo);
 
 /* Unimplemented yet:
  * - LBS_NOSEL

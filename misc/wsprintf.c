@@ -6,7 +6,10 @@
 
 #include <stdarg.h>
 #include <string.h>
+#include <stdio.h>
 #include "wine/winbase16.h"
+#include "windef.h"
+#include "wingdi.h"
 #include "winuser.h"
 #include "ldt.h"
 #include "stackframe.h"

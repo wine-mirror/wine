@@ -23,6 +23,8 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <string.h>
+#include "windef.h"
+#include "wingdi.h"
 #include "winuser.h"
 #include "wine/winuser16.h"
 #include "wine/winbase16.h"

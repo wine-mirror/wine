@@ -8,6 +8,7 @@
 #include <ctype.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdio.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <pwd.h>
@@ -16,6 +17,8 @@
 #include "winbase.h"
 #include "winerror.h"
 #include "wine/winbase16.h"
+#include "windef.h"
+#include "wingdi.h"
 #include "winuser.h"
 #include "winnls.h"
 #include "file.h"
@@ -24,7 +27,7 @@
 #include "xmalloc.h"
 #include "options.h"
 
-DEFAULT_DEBUG_CHANNEL(profile)
+DEFAULT_DEBUG_CHANNEL(profile);
 
 typedef struct tagPROFILEKEY
 {

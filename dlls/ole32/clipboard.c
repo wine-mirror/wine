@@ -44,6 +44,8 @@
  */
 
 #include <assert.h>
+#include "windef.h"
+#include "wingdi.h"
 #include "winuser.h"
 #include "winbase.h"
 #include "winerror.h"

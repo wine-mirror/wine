@@ -19,6 +19,8 @@
 #include <unistd.h>
 #include <fcntl.h>
 
+#include "windef.h"
+#include "wingdi.h"
 #include "winuser.h"
 #include "fnt2bdf.h"
 #include "neexe.h"

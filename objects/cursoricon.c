@@ -32,6 +32,8 @@
 #include <string.h>
 #include <stdlib.h>
 
+#include "windef.h"
+#include "wingdi.h"
 #include "wine/winbase16.h"
 #include "wine/winuser16.h"
 #include "heap.h"

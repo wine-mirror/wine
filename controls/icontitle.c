@@ -7,6 +7,8 @@
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
+#include "windef.h"
+#include "wingdi.h"
 #include "winuser.h"
 #include "wine/winuser16.h"
 #include "win.h"

@@ -29,15 +29,18 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include <stdio.h>
 
+#include "windef.h"
 #include "winbase.h"
+#include "wingdi.h"
 #include "winuser.h"
 #include "commctrl.h"
 #include "winnls.h"
 #include "updown.h"
 #include "debugtools.h"
 
-DEFAULT_DEBUG_CHANNEL(updown)
+DEFAULT_DEBUG_CHANNEL(updown);
 
 /* Control configuration constants */
 

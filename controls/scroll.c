@@ -5,6 +5,8 @@
  * Copyright 1994, 1996 Alexandre Julliard
  */
 
+#include "windef.h"
+#include "wingdi.h"
 #include "wine/winuser16.h"
 #include "scroll.h"
 #include "heap.h"

@@ -4,6 +4,8 @@
  * Copyright 1995 Alexandre Julliard
  */
 
+#include "windef.h"
+#include "wingdi.h"
 #include "wine/winuser16.h"
 #include "ldt.h"
 #include "global.h"
@@ -13,8 +15,8 @@
 #include "selectors.h"
 #include "debugtools.h"
 
-DEFAULT_DEBUG_CHANNEL(int)
-DECLARE_DEBUG_CHANNEL(io)
+DEFAULT_DEBUG_CHANNEL(int);
+DECLARE_DEBUG_CHANNEL(io);
 
 #ifdef __i386__
 
@@ -472,9 +474,8 @@ BOOL INSTR_EmulateInstruction( CONTEXT86 *context )
 	    case 0x22: /* mov eax, crX */
 	    	switch (instr[2]) {
 		case 0xc0:
-			fprintf(stderr,"mov eax,cr0 at 0x%08lx, EAX=0x%08lx\n",
-				EIP_reg(context),EAX_reg(context)
-			);
+			ERR("mov eax,cr0 at 0x%08lx, EAX=0x%08lx\n",
+                            EIP_reg(context),EAX_reg(context) );
 			EIP_reg(context) += prefixlen+3;
 			return TRUE;
 		default:
@@ -495,12 +496,12 @@ BOOL INSTR_EmulateInstruction( CONTEXT86 *context )
 		     * bit 7: PGE   Enable global pages
 		     * bit 8: PCE	Enable performance counters at IPL3
 		     */
-		    fprintf(stderr,"mov cr4,eax at 0x%08lx\n",EIP_reg(context));
+		    ERR("mov cr4,eax at 0x%08lx\n",EIP_reg(context));
 		    EAX_reg(context) = 0;
 		    EIP_reg(context) += prefixlen+3;
 		    return TRUE;
 		case 0xc0: /* mov cr0, eax */
-		    fprintf(stderr,"mov cr0,eax at 0x%08lx\n",EIP_reg(context));
+		    ERR("mov cr0,eax at 0x%08lx\n",EIP_reg(context));
 		    EAX_reg(context) = 0x10; /* FIXME: set more bits ? */
 		    EIP_reg(context) += prefixlen+3;
 		    return TRUE;

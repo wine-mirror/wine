@@ -2,6 +2,8 @@
 #define __WINE_DOCOBJ_H
 
 #include "winbase.h"
+#include "windef.h"
+#include "wingdi.h"
 #include "winuser.h"
 #include "ole2.h"
 #include "wine/obj_oleaut.h"

@@ -4,6 +4,8 @@
  * Copyright 1996 Alexandre Julliard
  */
 
+#include "windef.h"
+#include "wingdi.h"
 #include "wine/winbase16.h"
 #include "wine/winuser16.h"
 #include "services.h"

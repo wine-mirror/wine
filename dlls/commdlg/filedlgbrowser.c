@@ -7,6 +7,8 @@
 #include <stdio.h>
 #include "unknwn.h"
 #include "filedlgbrowser.h"
+#include "windef.h"
+#include "wingdi.h"
 #include "winuser.h"
 #include "heap.h"
 #include "wine/obj_dataobject.h"

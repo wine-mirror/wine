@@ -8,6 +8,8 @@
 
 #include <time.h>
 #include <sys/time.h>
+#include "windef.h"
+#include "wingdi.h"
 #include "winuser.h"
 #include "winemm.h"
 #include "services.h"

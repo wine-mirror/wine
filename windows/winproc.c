@@ -6,9 +6,10 @@
  */
 
 #include <string.h>
+#include "windef.h"
+#include "wingdi.h"
 #include "wine/winbase16.h"
 #include "wine/winuser16.h"
-#include "winuser.h"
 #include "stackframe.h"
 #include "builtin16.h"
 #include "heap.h"

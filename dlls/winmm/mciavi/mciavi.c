@@ -7,6 +7,8 @@
  */
 
 #include <string.h>
+#include "windef.h"
+#include "wingdi.h"
 #include "winuser.h"
 #include "mmddk.h"
 #include "user.h"

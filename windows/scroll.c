@@ -9,6 +9,8 @@
 
 #include <stdlib.h>
 
+#include "windef.h"
+#include "wingdi.h"
 #include "wine/winuser16.h"
 #include "winuser.h"
 #include "dc.h"

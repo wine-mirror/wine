@@ -16,6 +16,8 @@
 #include "path.h"
 #include "debugtools.h"
 #include "winerror.h"
+#include "windef.h"
+#include "wingdi.h"
 #include "winuser.h"
 #include "wine/winuser16.h"
 

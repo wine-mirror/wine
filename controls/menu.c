@@ -17,9 +17,11 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "win.h"
+#include "windef.h"
+#include "wingdi.h"
 #include "wine/winbase16.h"
 #include "wine/winuser16.h"
+#include "win.h"
 #include "task.h"
 #include "heap.h"
 #include "menu.h"

@@ -6,6 +6,8 @@
  */
 
 #include <string.h>
+#include "windef.h"
+#include "wingdi.h"
 #include "wine/winuser16.h"
 #include "heap.h"
 #include "module.h"

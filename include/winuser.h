@@ -4,8 +4,6 @@
 #ifndef RC_INVOKED
 #include <stdarg.h>
 #endif
-#include "windef.h"
-#include "wingdi.h"
 
 #ifdef __cplusplus
 extern "C" {

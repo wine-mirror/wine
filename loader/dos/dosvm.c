@@ -21,6 +21,8 @@
 
 #include "wine/winbase16.h"
 #include "wine/exception.h"
+#include "windef.h"
+#include "wingdi.h"
 #include "winuser.h"
 #include "winnt.h"
 #include "msdos.h"

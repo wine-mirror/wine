@@ -3,7 +3,11 @@
  *
  */
 #include <string.h>
+#include <sys/types.h>
+#include <unistd.h>
 #include "winbase.h"
+#include "windef.h"
+#include "wingdi.h"
 #include "winuser.h"
 #include "wingdi.h"
 #include "wine/winuser16.h"

@@ -14,6 +14,8 @@
  * handle in the low 16 bits and of a HOOK_MAGIC value in the high 16 bits.
  */
 
+#include "windef.h"
+#include "wingdi.h"
 #include "winuser.h"
 #include "wine/winuser16.h"
 #include "wine/winbase16.h"

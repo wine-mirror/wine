@@ -13,6 +13,7 @@
 #endif /* !defined(X_DISPLAY_MISSING */
 
 #include <stdlib.h>
+#include <stdio.h>
 
 #include "bitmap.h"
 #include "brush.h"
@@ -26,6 +27,8 @@
 #include "debugtools.h"
 #include "gdi.h"
 #include "tweak.h"
+#include "windef.h"
+#include "wingdi.h"
 #include "winuser.h"
 
 DEFAULT_DEBUG_CHANNEL(gdi)

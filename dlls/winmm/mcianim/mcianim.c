@@ -5,6 +5,8 @@
  * Copyright 1994 Martin Ayotte
  */
 
+#include "windef.h"
+#include "wingdi.h"
 #include "winuser.h"
 #include "driver.h"
 #include "mmddk.h"

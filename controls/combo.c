@@ -9,8 +9,9 @@
 #include <string.h>
 
 #include "winbase.h"
-#include "winuser.h"
+#include "windef.h"
 #include "wingdi.h"
+#include "winuser.h"
 #include "wine/winuser16.h"
 #include "win.h"
 #include "spy.h"

@@ -8,7 +8,10 @@
 #include <errno.h>
 #include <limits.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include <string.h>
+#include "windef.h"
+#include "wingdi.h"
 #include "winuser.h"
 #include "windowsx.h"
 #include "wine/winuser16.h"
@@ -23,7 +26,7 @@
 #include "message.h"
 #include "debugtools.h"
 
-DEFAULT_DEBUG_CHANNEL(dialog)
+DEFAULT_DEBUG_CHANNEL(dialog);
 
 
   /* Dialog control information */

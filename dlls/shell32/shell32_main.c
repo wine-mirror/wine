@@ -6,7 +6,10 @@
  */
 #include <stdlib.h>
 #include <string.h>
+#include <stdio.h>
 
+#include "windef.h"
+#include "wingdi.h"
 #include "wine/winuser16.h"
 #include "winerror.h"
 #include "heap.h"
@@ -27,8 +30,7 @@
 #include "wine/undocshell.h"
 #include "shpolicy.h"
 
-DEFAULT_DEBUG_CHANNEL(shell)
-DECLARE_DEBUG_CHANNEL(exec)
+DEFAULT_DEBUG_CHANNEL(shell);
 
 #define MORE_DEBUG 1
 /*************************************************************************
@@ -422,7 +424,7 @@ UINT WINAPI SHAppBarMessage(DWORD msg, PAPPBARDATA data)
  *
  */
 DWORD WINAPI SHHelpShortcuts_RunDLL (DWORD dwArg1, DWORD dwArg2, DWORD dwArg3, DWORD dwArg4)
-{ FIXME_(exec)("(%lx, %lx, %lx, %lx) empty stub!\n",
+{ FIXME("(%lx, %lx, %lx, %lx) empty stub!\n",
 	dwArg1, dwArg2, dwArg3, dwArg4);
 
   return 0;
