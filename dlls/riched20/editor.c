@@ -107,12 +107,12 @@
   - EM_UNDO
   + WM_CHAR
   + WM_CLEAR
-  - WM_COPY (lame implementation, no RTF support)
-  - WM_CUT (lame implementation, no RTF support)
+  + WM_COPY
+  + WM_CUT
   + WM_GETDLGCODE (the current implementation is incomplete)
   + WM_GETTEXT (ANSI&Unicode)
   + WM_GETTEXTLENGTH (ANSI version sucks)
-  - WM_PASTE
+  + WM_PASTE
   - WM_SETFONT
   + WM_SETTEXT (resets undo stack !) (proper style?) ANSI&Unicode
   - WM_STYLECHANGING
@@ -270,7 +270,8 @@ static LRESULT ME_StreamInText(ME_TextEditor *editor, DWORD dwFormat, EDITSTREAM
     if (nDataSize<STREAMIN_BUFFER_SIZE)
       break;
   } while(1);
-  ME_CommitUndo(editor);    
+  ME_CommitUndo(editor);
+  ME_Repaint(editor);
   return 0;
 }
 
@@ -282,6 +283,11 @@ void ME_RTFCharAttrHook(RTF_Info *info)
   
   switch(info->rtfMinor)
   {
+    case rtfPlain:
+      FIXME("rtfPlain: how plain should it be ?\n");
+      fmt.dwMask = CFM_BOLD | CFM_ITALIC | CFM_UNDERLINE | CFM_STRIKEOUT | CFM_COLOR | CFM_BACKCOLOR;
+      fmt.dwEffects = CFE_AUTOCOLOR | CFE_AUTOBACKCOLOR;
+      break;
     case rtfBold:
       fmt.dwMask = CFM_BOLD;
       fmt.dwEffects = info->rtfParam ? fmt.dwMask : 0;
@@ -449,7 +455,7 @@ static LRESULT ME_StreamIn(ME_TextEditor *editor, DWORD format, EDITSTREAM *stre
   
   editor->nUndoMode = nUndoMode;
   pUI = ME_AddUndoItem(editor, diUndoDeleteRun, NULL);
-  FIXME("from %d to %d\n", from, to);
+  TRACE("from %d to %d\n", from, to);
   if (pUI && from < to)
   {
     pUI->nStart = from;
@@ -528,6 +534,70 @@ ME_TextEditor *ME_MakeEditor(HWND hWnd) {
   }
   ME_CheckCharOffsets(ed);
   return ed;
+}
+
+typedef struct tagME_GlobalDestStruct
+{
+  HGLOBAL hData;
+  int nLength;
+} ME_GlobalDestStruct;
+
+static DWORD CALLBACK ME_AppendToHGLOBAL(DWORD_PTR dwCookie, LPBYTE lpBuff, LONG cb, LONG *pcb)
+{
+  ME_GlobalDestStruct *pData = (ME_GlobalDestStruct *)dwCookie;
+  int nMaxSize;
+  BYTE *pDest;
+  
+  nMaxSize = GlobalSize(pData->hData);
+  if (pData->nLength+cb+1 >= cb)
+  {
+    /* round up to 2^17 */
+    int nNewSize = (((nMaxSize+cb+1)|0x1FFFF)+1) & 0xFFFE0000;
+    pData->hData = GlobalReAlloc(pData->hData, nNewSize, 0);
+  }
+  pDest = (BYTE *)GlobalLock(pData->hData);
+  memcpy(pDest + pData->nLength, lpBuff, cb);
+  pData->nLength += cb;
+  pDest[pData->nLength] = '\0';
+  GlobalUnlock(pData->hData);
+  *pcb = cb;
+  
+  return 0;
+}
+
+static DWORD CALLBACK ME_ReadFromHGLOBALUnicode(DWORD_PTR dwCookie, LPBYTE lpBuff, LONG cb, LONG *pcb)
+{
+  ME_GlobalDestStruct *pData = (ME_GlobalDestStruct *)dwCookie;
+  int i;
+  WORD *pSrc, *pDest;
+  
+  cb = cb >> 1;
+  pDest = (WORD *)lpBuff;
+  pSrc = (WORD *)GlobalLock(pData->hData);
+  for (i = 0; i<cb && pSrc[pData->nLength+i]; i++) {
+    pDest[i] = pSrc[pData->nLength+i];
+  }    
+  pData->nLength += i;
+  *pcb = 2*i;
+  GlobalUnlock(pData->hData);
+  return 0;
+}
+
+static DWORD CALLBACK ME_ReadFromHGLOBALRTF(DWORD_PTR dwCookie, LPBYTE lpBuff, LONG cb, LONG *pcb)
+{
+  ME_GlobalDestStruct *pData = (ME_GlobalDestStruct *)dwCookie;
+  int i;
+  BYTE *pSrc, *pDest;
+  
+  pDest = lpBuff;
+  pSrc = (BYTE *)GlobalLock(pData->hData);
+  for (i = 0; i<cb && pSrc[pData->nLength+i]; i++) {
+    pDest[i] = pSrc[pData->nLength+i];
+  }    
+  pData->nLength += i;
+  *pcb = i;
+  GlobalUnlock(pData->hData);
+  return 0;
 }
 
 void ME_DestroyEditor(ME_TextEditor *editor)
@@ -618,7 +688,6 @@ LRESULT WINAPI RichEditANSIWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lP
   UNSUPPORTED_MSG(EM_SETWORDBREAKPROC)
   UNSUPPORTED_MSG(EM_SETWORDBREAKPROCEX)
   UNSUPPORTED_MSG(WM_SETFONT)
-  UNSUPPORTED_MSG(WM_PASTE)
   UNSUPPORTED_MSG(WM_STYLECHANGING)
   UNSUPPORTED_MSG(WM_STYLECHANGED)
 /*  UNSUPPORTED_MSG(WM_UNICHAR) FIXME missing in Wine headers */
@@ -805,12 +874,40 @@ LRESULT WINAPI RichEditANSIWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lP
     ME_UpdateRepaint(editor);
     return 0;
   }
+  case WM_PASTE:
+  {    
+    DWORD dwFormat = 0;
+    EDITSTREAM es;
+    ME_GlobalDestStruct gds;
+    UINT nRTFFormat = RegisterClipboardFormatA("Rich Text Format");
+    UINT cf = 0;
+
+    if (!OpenClipboard(hWnd))
+      return 0;
+    if (IsClipboardFormatAvailable(nRTFFormat))
+      cf = nRTFFormat, dwFormat = SF_RTF;
+    else if (IsClipboardFormatAvailable(CF_UNICODETEXT))
+      cf = CF_UNICODETEXT, dwFormat = SF_TEXT|SF_UNICODE;
+    else
+      return 0;
+
+    gds.hData = GetClipboardData(cf);
+    gds.nLength = 0;
+    es.dwCookie = (DWORD)&gds;
+    es.pfnCallback = dwFormat == SF_RTF ? ME_ReadFromHGLOBALRTF : ME_ReadFromHGLOBALUnicode;
+    SendMessageW(hWnd, EM_STREAMIN, dwFormat|SFF_SELECTION, (LPARAM)&es);
+    
+    CloseClipboard();
+    return 0;
+  }
   case WM_CUT:
   case WM_COPY:
   {
     int from, to, pars;
     WCHAR *data;
     HANDLE hData;
+    EDITSTREAM es;
+    ME_GlobalDestStruct gds;
     
     if (!OpenClipboard(hWnd))
       return 0;
@@ -822,7 +919,17 @@ LRESULT WINAPI RichEditANSIWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lP
     data = (WCHAR *)GlobalLock(hData);
     ME_GetTextW(editor, data, from, to-from, TRUE);
     GlobalUnlock(hData);
-    SetClipboardData(CF_UNICODETEXT, hData);
+
+    gds.hData = GlobalAlloc(GMEM_MOVEABLE, 0);
+    gds.nLength = 0;
+    es.dwCookie = (DWORD)&gds;
+    es.pfnCallback = ME_AppendToHGLOBAL;
+    SendMessageW(hWnd, EM_STREAMOUT, SFF_SELECTION|SF_RTF, (LPARAM)&es);
+    GlobalReAlloc(gds.hData, gds.nLength+1, 0);
+    
+    SetClipboardData(CF_UNICODETEXT, hData);    
+    SetClipboardData(RegisterClipboardFormatA("Rich Text Format"), gds.hData);
+    
     CloseClipboard();
     if (msg == WM_CUT)
     {

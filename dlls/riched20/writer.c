@@ -107,7 +107,7 @@ ME_StreamOutPrint(ME_TextEditor *editor, char *format, ...)
 static BOOL
 ME_StreamOutRTFHeader(ME_TextEditor *editor, int dwFormat)
 {
-  char *cCharSet;
+  char *cCharSet = NULL;
   UINT nCodePage;
   LANGID language;
   BOOL success;
@@ -171,10 +171,9 @@ ME_StreamOutRTFHeader(ME_TextEditor *editor, int dwFormat)
 
 
 static BOOL
-ME_StreamOutRTFFontAndColorTbl(ME_TextEditor *editor, ME_DisplayItem *pFirstRun, LONG to)
+ME_StreamOutRTFFontAndColorTbl(ME_TextEditor *editor, ME_DisplayItem *pFirstRun, ME_DisplayItem *pLastRun)
 {
   ME_DisplayItem *item = pFirstRun;
-  ME_DisplayItem *pLastRun = ME_FindItemAtOffset(editor, diRun, to, NULL);
   ME_FontTableItem *table = editor->pStream->fonttbl;
   int i;
   
@@ -485,15 +484,15 @@ ME_StreamOutRTFText(ME_TextEditor *editor, WCHAR *text, LONG nChars)
 static BOOL
 ME_StreamOutRTF(ME_TextEditor *editor, int nStart, int nChars, int dwFormat)
 {
-  int nTo;
-  ME_DisplayItem *para = ME_FindItemAtOffset(editor, diParagraph, nStart, NULL);
-  ME_DisplayItem *item = ME_FindItemAtOffset(editor, diRun, nStart, &nStart);
-  ME_DisplayItem *last_item = ME_FindItemAtOffset(editor, diRun, nStart + nChars, &nTo);
-
+  ME_DisplayItem *p, *pEnd;
+  int nOffset, nEndLen;
+  ME_RunOfsFromCharOfs(editor, nStart, &p, &nOffset);
+  ME_RunOfsFromCharOfs(editor, nStart+nChars, &pEnd, &nEndLen);
+  
   if (!ME_StreamOutRTFHeader(editor, dwFormat))
     return FALSE;
 
-  if (!ME_StreamOutRTFFontAndColorTbl(editor, item, nStart + nChars))
+  if (!ME_StreamOutRTFFontAndColorTbl(editor, p, pEnd))
     return FALSE;
   
   /* TODO: stylesheet table */
@@ -510,48 +509,51 @@ ME_StreamOutRTF(ME_TextEditor *editor, int nStart, int nChars, int dwFormat)
 
   /* TODO: section formatting properties */
 
-  while (para) {
-    ME_DisplayItem *p;
-    int nLen;
-    
-    if (!ME_StreamOutRTFParaProps(editor, para))
-      return FALSE;
-    
-    if (!item) {
-       item = ME_FindItemFwd(para, diRun);
-       nStart = 0;
-    }
-    for (p = item; p && p != para->member.para.next_para; p = p->next) {
-      TRACE("type %d\n", p->type);
-      if (p->type == diRun) {
+  if (!ME_StreamOutRTFParaProps(editor, ME_GetParagraph(p)))
+    return FALSE;
+
+  while(1)
+  {
+    switch(p->type)
+    {
+      case diParagraph:
+        if (!ME_StreamOutRTFParaProps(editor, p))
+          return FALSE;
+        break;
+      case diRun:
+        if (p == pEnd && !nEndLen)
+          break;
         TRACE("flags %xh\n", p->member.run.nFlags);
+        /* TODO: emit embedded objects */
+        if (p->member.run.nFlags & MERF_GRAPHICS)
+          FIXME("embedded objects are not handled\n");
         if (p->member.run.nFlags & MERF_ENDPARA) {
           if (!ME_StreamOutPrint(editor, "\r\n\\par"))
             return FALSE;
           nChars--;
         } else {
+          int nEnd;
+          
           if (!ME_StreamOutPrint(editor, "{"))
             return FALSE;
           TRACE("style %p\n", p->member.run.style);
           if (!ME_StreamOutRTFCharProps(editor, &p->member.run.style->fmt))
             return FALSE;
         
-          /* TODO: emit embedded objects as well as text */
-          nLen = ME_StrLen(p->member.run.strText) - nStart;
-          if (!ME_StreamOutRTFText(editor, p->member.run.strText->szData + nStart,
-                                   (p == last_item ? nTo - nStart : nLen)))
+          nEnd = (p == pEnd) ? nEndLen : ME_StrLen(p->member.run.strText);
+          if (!ME_StreamOutRTFText(editor, p->member.run.strText->szData + nOffset, nEnd - nOffset))
             return FALSE;
+          nOffset = 0;
           if (!ME_StreamOutPrint(editor, "}"))
             return FALSE;
         }
-      }
-      if (p == last_item)
         break;
+      default: /* we missed the last item */
+        assert(0);
     }
-    para = para->member.para.next_para;
-    item = NULL;
-    if (p == last_item)
+    if (p == pEnd)
       break;
+    p = ME_FindItemFwd(p, diRunOrParagraphOrEnd);
   }
   if (!ME_StreamOutPrint(editor, "}"))
     return FALSE;
@@ -562,6 +564,7 @@ ME_StreamOutRTF(ME_TextEditor *editor, int nStart, int nChars, int dwFormat)
 static BOOL
 ME_StreamOutText(ME_TextEditor *editor, int nStart, int nChars, DWORD dwFormat)
 {
+  /* FIXME: use ME_RunOfsFromCharOfs */
   ME_DisplayItem *item = ME_FindItemAtOffset(editor, diRun, nStart, &nStart);
   int nLen;
   UINT nCodePage = CP_ACP;
