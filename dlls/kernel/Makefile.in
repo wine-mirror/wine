@@ -92,4 +92,7 @@ krnl386.exe.spec.c: krnl386.exe.spec version16.res
 version16.res: version16.rc
 	$(LDPATH) $(RC16) $(RC16FLAGS) -fo$@ $(SRCDIR)/version16.rc
 
+clean::
+	$(RM) $(ASM_SRCS)
+
 ### Dependencies:
