@@ -1732,7 +1732,7 @@ static const SPY_NOTIFY spnfy_array[] = {
     SPNFY(TBN_GETINFOTIPW,       NMTBGETINFOTIPW),
     SPNFY(TBN_GETBUTTONINFOW,    NMTOOLBARW),
     /* Up/Down        0U-721U  to  0U-740U  */
-    SPNFY(UDN_DELTAPOS,          NMHDR),
+    SPNFY(UDN_DELTAPOS,          NM_UPDOWN),
     /* Month Calendar 0U-750U  to  0U-759U  */
     /* ******************* WARNING ***************************** */
     /* The following appear backwards but needs to be this way.  */
