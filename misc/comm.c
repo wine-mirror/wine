@@ -89,6 +89,10 @@ DEFAULT_DEBUG_CHANNEL(comm);
 
 #define FLAG_LPT 0x80
 
+#ifdef linux
+#define CMSPAR 0x40000000 /* stick parity */
+#endif
+
 struct DosDeviceStruct COM[MAX_PORTS];
 struct DosDeviceStruct LPT[MAX_PORTS];
 /* pointers to unknown(==undocumented) comm structure */ 
@@ -850,6 +854,8 @@ INT16 WINAPI SetCommState16(LPDCB16 lpdcb)
 {
 	struct termios port;
 	struct DosDeviceStruct *ptr;
+        int bytesize, stopbits;
+        int fail=0;
 
     	TRACE("cid %d, ptr %p\n", lpdcb->Id, lpdcb);
 	if ((ptr = GetDeviceStruct(lpdcb->Id)) == NULL) {
@@ -931,7 +937,7 @@ INT16 WINAPI SetCommState16(LPDCB16 lpdcb)
 #endif
 		default:
 			ptr->commerror = IE_BAUDRATE;
-			return -1;
+			fail=1;
 	}
 #elif !defined(__EMX__)
         switch (lpdcb->BaudRate) {
@@ -973,13 +979,69 @@ INT16 WINAPI SetCommState16(LPDCB16 lpdcb)
                         break;
                 default:
                         ptr->commerror = IE_BAUDRATE;
-                        return -1;
+                        fail=1;
         }
         port.c_ispeed = port.c_ospeed;
 #endif
-    	TRACE("bytesize %d\n",lpdcb->ByteSize);
+        bytesize=lpdcb->ByteSize;
+        stopbits=lpdcb->StopBits;
+
+    	TRACE("fParity %d Parity %d\n",lpdcb->fParity, lpdcb->Parity);
+#ifdef CMSPAR
+	port.c_cflag &= ~(PARENB | PARODD | CMSPAR);
+#else
+	port.c_cflag &= ~(PARENB | PARODD);
+#endif
+	if (lpdcb->fParity)
+            port.c_iflag |= INPCK;
+        else
+            port.c_iflag &= ~INPCK;
+        switch (lpdcb->Parity) {
+                case NOPARITY:
+                        break;
+                case ODDPARITY:
+                        port.c_cflag |= (PARENB | PARODD);
+                        break;
+                case EVENPARITY:
+                        port.c_cflag |= PARENB;
+                        break;
+#ifdef CMSPAR
+                /* Linux defines mark/space (stick) parity */
+                case MARKPARITY:
+                        port.c_cflag |= (PARENB | CMSPAR);
+                        break;
+                case SPACEPARITY:
+                        port.c_cflag |= (PARENB | PARODD |  CMSPAR);
+                        break;
+#else
+                /* try the POSIX way */
+                case MARKPARITY:
+                        if( stopbits == ONESTOPBIT) {
+                            stopbits = TWOSTOPBITS;
+                            port.c_iflag &= ~INPCK;
+                        } else {
+                            ptr->commerror = IE_BYTESIZE;
+                            fail=1;
+                        }
+                        break;
+                case SPACEPARITY:
+                        if( bytesize < 8) {
+                            bytesize +=1;
+                            port.c_iflag &= ~INPCK;
+                        } else {
+                            ptr->commerror = IE_BYTESIZE;
+                            fail=1;
+                        }
+                        break;
+#endif
+                default:
+                        ptr->commerror = IE_BYTESIZE;
+                        fail=1;
+        }
+	
+    	TRACE("bytesize %d\n",bytesize);
 	port.c_cflag &= ~CSIZE;
-	switch (lpdcb->ByteSize) {
+	switch (bytesize) {
 		case 5:
 			port.c_cflag |= CS5;
 			break;
@@ -994,42 +1056,22 @@ INT16 WINAPI SetCommState16(LPDCB16 lpdcb)
 			break;
 		default:
 			ptr->commerror = IE_BYTESIZE;
-			return -1;
+			fail=1;
 	}
 
-    	TRACE("fParity %d Parity %d\n",lpdcb->fParity, lpdcb->Parity);
-	port.c_cflag &= ~(PARENB | PARODD);
-	if (lpdcb->fParity)
-            port.c_iflag |= INPCK;
-        else
-            port.c_iflag &= ~INPCK;
-        switch (lpdcb->Parity) {
-                case NOPARITY:
-                        break;
-                case ODDPARITY:
-                        port.c_cflag |= (PARENB | PARODD);
-                        break;
-                case EVENPARITY:
-                        port.c_cflag |= PARENB;
-                        break;
-                default:
-                        ptr->commerror = IE_BYTESIZE;
-                        return -1;
-        }
-	
+    	TRACE("stopbits %d\n",stopbits);
 
-    	TRACE("stopbits %d\n",lpdcb->StopBits);
-
-	switch (lpdcb->StopBits) {
+	switch (stopbits) {
 		case ONESTOPBIT:
 				port.c_cflag &= ~CSTOPB;
 				break;
+		case ONE5STOPBITS: /* wil be selected if bytesize is 5 */
 		case TWOSTOPBITS:
 				port.c_cflag |= CSTOPB;
 				break;
 		default:
 			ptr->commerror = IE_BYTESIZE;
-			return -1;
+			fail=1;
 	}
 #ifdef CRTSCTS
 
@@ -1050,9 +1092,12 @@ INT16 WINAPI SetCommState16(LPDCB16 lpdcb)
 
 	ptr->evtchar = lpdcb->EvtChar;
 
+        if(fail)
+            return -1;
+        
 	if (tcsetattr(ptr->fd, TCSADRAIN, &port) == -1) {
 		ptr->commerror = WinError();	
-		return FALSE;
+		return -1;
 	} else {
 		ptr->commerror = 0;
 		return 0;
@@ -1143,7 +1188,11 @@ INT16 WINAPI GetCommState16(INT16 cid, LPDCB16 lpdcb)
             lpdcb->fParity = TRUE;
         else
             lpdcb->fParity = FALSE;
+#ifdef CMSPAR
+	switch (port.c_cflag & (PARENB | PARODD | CMSPAR)) {
+#else
 	switch (port.c_cflag & (PARENB | PARODD)) {
+#endif
 		case 0:
 			lpdcb->Parity = NOPARITY;
 			break;
@@ -1153,12 +1202,23 @@ INT16 WINAPI GetCommState16(INT16 cid, LPDCB16 lpdcb)
 		case (PARENB | PARODD):
 			lpdcb->Parity = ODDPARITY;		
 			break;
+#ifdef CMSPAR
+		case (PARENB | CMSPAR):
+			lpdcb->Parity = MARKPARITY;		
+			break;
+                case (PARENB | PARODD | CMSPAR):
+			lpdcb->Parity = SPACEPARITY;		
+			break;
+#endif
 	}
 
 	if (port.c_cflag & CSTOPB)
-		lpdcb->StopBits = TWOSTOPBITS;
+            if(lpdcb->ByteSize == 5)
+                lpdcb->StopBits = ONE5STOPBITS;
+            else
+                lpdcb->StopBits = TWOSTOPBITS;
 	else
-		lpdcb->StopBits = ONESTOPBIT;
+            lpdcb->StopBits = ONESTOPBIT;
 
 	lpdcb->RlsTimeout = 50;
 	lpdcb->CtsTimeout = 50; 
@@ -1910,6 +1970,7 @@ BOOL WINAPI SetCommState(INT handle,LPDCB lpdcb)
 {
      struct termios port;
      int fd;
+     int bytesize, stopbits;
 
      TRACE("handle %d, ptr %p\n", handle, lpdcb);
      TRACE("bytesize %d baudrate %ld fParity %d Parity %d stopbits %d\n",
@@ -2069,8 +2130,70 @@ BOOL WINAPI SetCommState(INT handle,LPDCB lpdcb)
         }
         port.c_ispeed = port.c_ospeed;
 #endif
+        bytesize=lpdcb->ByteSize;
+        stopbits=lpdcb->StopBits;
+
+#ifdef CMSPAR
+	port.c_cflag &= ~(PARENB | PARODD | CMSPAR);
+#else
+	port.c_cflag &= ~(PARENB | PARODD);
+#endif
+	if (lpdcb->fParity)
+            port.c_iflag |= INPCK;
+        else
+            port.c_iflag &= ~INPCK;
+        switch (lpdcb->Parity) {
+                case NOPARITY:
+                        break;
+                case ODDPARITY:
+                        port.c_cflag |= (PARENB | PARODD);
+                        break;
+                case EVENPARITY:
+                        port.c_cflag |= PARENB;
+                        break;
+#ifdef CMSPAR
+                /* Linux defines mark/space (stick) parity */
+                case MARKPARITY:
+                        port.c_cflag |= (PARENB | CMSPAR);
+                        break;
+                case SPACEPARITY:
+                        port.c_cflag |= (PARENB | PARODD |  CMSPAR);
+                        break;
+#else
+                /* try the POSIX way */
+                case MARKPARITY:
+                        if( stopbits == ONESTOPBIT) {
+                            stopbits = TWOSTOPBITS;
+                            port.c_iflag &= ~INPCK;
+                        } else {
+                            commerror = IE_BYTESIZE;
+                            close( fd );
+                            ERR("Cannot set MARK Parity\n");
+                            return FALSE;
+                        }
+                        break;
+                case SPACEPARITY:
+                        if( bytesize < 8) {
+                            bytesize +=1;
+                            port.c_iflag &= ~INPCK;
+                        } else {
+                            commerror = IE_BYTESIZE;
+                            close( fd );
+                            ERR("Cannot set SPACE Parity\n");
+                            return FALSE;
+                        }
+                        break;
+#endif
+               default:
+                        commerror = IE_BYTESIZE;
+                        close( fd );
+			ERR("Parity\n");
+                        return FALSE;
+        }
+	
+
 	port.c_cflag &= ~CSIZE;
-	switch (lpdcb->ByteSize) {
+	switch (bytesize) {
 		case 5:
 			port.c_cflag |= CS5;
 			break;
@@ -2089,33 +2212,12 @@ BOOL WINAPI SetCommState(INT handle,LPDCB lpdcb)
 			ERR("ByteSize\n");
 			return FALSE;
 	}
-
-	port.c_cflag &= ~(PARENB | PARODD);
-	if (lpdcb->fParity)
-            port.c_iflag |= INPCK;
-        else
-            port.c_iflag &= ~INPCK;
-        switch (lpdcb->Parity) {
-                case NOPARITY:
-                        break;
-                case ODDPARITY:
-                        port.c_cflag |= (PARENB | PARODD);
-                        break;
-                case EVENPARITY:
-                        port.c_cflag |= PARENB;
-                        break;
-                default:
-                        commerror = IE_BYTESIZE;
-                        close( fd );
-			ERR("Parity\n");
-                        return FALSE;
-        }
-	
-
-	switch (lpdcb->StopBits) {
+        
+	switch (stopbits) {
 		case ONESTOPBIT:
 				port.c_cflag &= ~CSTOPB;
 				break;
+		case ONE5STOPBITS: /* wil be selected if bytesize is 5 */
 		case TWOSTOPBITS:
 				port.c_cflag |= CSTOPB;
 				break;
@@ -2275,7 +2377,11 @@ BOOL WINAPI GetCommState(INT handle, LPDCB lpdcb)
             lpdcb->fParity = TRUE;
         else
             lpdcb->fParity = FALSE;
+#ifdef CMSPAR
+	switch (port.c_cflag & (PARENB | PARODD | CMSPAR)) {
+#else
 	switch (port.c_cflag & (PARENB | PARODD)) {
+#endif
 		case 0:
 			lpdcb->Parity = NOPARITY;
 			break;
@@ -2285,12 +2391,23 @@ BOOL WINAPI GetCommState(INT handle, LPDCB lpdcb)
 		case (PARENB | PARODD):
 			lpdcb->Parity = ODDPARITY;		
 			break;
+#ifdef CMSPAR
+		case (PARENB | CMSPAR):
+			lpdcb->Parity = MARKPARITY;		
+			break;
+                case (PARENB | PARODD | CMSPAR):
+			lpdcb->Parity = SPACEPARITY;		
+			break;
+#endif
 	}
 
 	if (port.c_cflag & CSTOPB)
-		lpdcb->StopBits = TWOSTOPBITS;
+            if(lpdcb->ByteSize == 5)
+                lpdcb->StopBits = ONE5STOPBITS;
+            else
+                lpdcb->StopBits = TWOSTOPBITS;
 	else
-		lpdcb->StopBits = ONESTOPBIT;
+            lpdcb->StopBits = ONESTOPBIT;
 
 	lpdcb->fNull = 0;
 	lpdcb->fBinary = 1;
