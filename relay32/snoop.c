@@ -23,6 +23,9 @@ DEFAULT_DEBUG_CHANNEL(snoop)
 
 char **debug_snoop_excludelist = NULL, **debug_snoop_includelist = NULL;
 
+extern void SNOOP_Entry();
+extern void SNOOP_Return();
+
 #ifdef __i386__
 
 #ifdef NEED_UNDERSCORE_PREFIX
@@ -30,27 +33,6 @@ char **debug_snoop_excludelist = NULL, **debug_snoop_includelist = NULL;
 #else
 # define PREFIX
 #endif
-
-/* Well, not exactly extern since they are in the same file (in the lines
- * below). But the C Compiler doesn't see them there, so we have to help a bit.
- */
-extern void SNOOP_Return();
-extern void SNOOP_Entry();
-__asm__(".align 4\n\t"
-        ".globl "PREFIX"SNOOP_Entry\n\t"
-        ".type "PREFIX"SNOOP_Entry,@function\n\t"
-        PREFIX"SNOOP_Entry:\n\t"
-        "pushl $"PREFIX"__regs_SNOOP_Entry\n\t"
-        "pushl $"PREFIX"CALL32_Regs\n\t"
-        "ret\n\t"
-	".align 4\n\t"
-        ".globl "PREFIX"SNOOP_Return\n\t"
-        ".type "PREFIX"SNOOP_Return,@function\n\t"
-        PREFIX"SNOOP_Return:\n\t"
-        "pushl $"PREFIX"__regs_SNOOP_Return\n\t"
-        "pushl $"PREFIX"CALL32_Regs\n\t"
-        "ret"
-);
 
 #include "pshpack1.h"
 
@@ -267,8 +249,9 @@ SNOOP_PrintArg(DWORD x) {
 	return buf;
 }
 
-#define CALLER1REF (*(DWORD*)(ESP_reg(context)+4))
-REGS_ENTRYPOINT(SNOOP_Entry) {
+#define CALLER1REF (*(DWORD*)ESP_reg(context))
+void WINAPI REGS_FUNC(SNOOP_Entry)( CONTEXT *context )
+{
 	DWORD		ordinal=0,entry = EIP_reg(context)-5;
 	SNOOP_DLL	*dll = firstdll;
 	SNOOP_FUN	*fun = NULL;
@@ -336,18 +319,19 @@ REGS_ENTRYPOINT(SNOOP_Entry) {
 	if (fun->nrofargs>0) {
 		max = fun->nrofargs; if (max>16) max=16;
 		for (i=0;i<max;i++)
-			DPRINTF("%s%s",SNOOP_PrintArg(*(DWORD*)(ESP_reg(context)+8+sizeof(DWORD)*i)),(i<fun->nrofargs-1)?",":"");
+			DPRINTF("%s%s",SNOOP_PrintArg(*(DWORD*)(ESP_reg(context)+4+sizeof(DWORD)*i)),(i<fun->nrofargs-1)?",":"");
 		if (max!=fun->nrofargs)
 			DPRINTF(" ...");
 	} else if (fun->nrofargs<0) {
 		DPRINTF("<unknown, check return>");
 		ret->args = HeapAlloc(SystemHeap,0,16*sizeof(DWORD));
-		memcpy(ret->args,(LPBYTE)(ESP_reg(context)+8),sizeof(DWORD)*16);
+		memcpy(ret->args,(LPBYTE)(ESP_reg(context)+4),sizeof(DWORD)*16);
 	}
 	DPRINTF(") ret=%08lx fs=%04lx\n",(DWORD)ret->origreturn,FS_reg(context));
 }
 
-REGS_ENTRYPOINT(SNOOP_Return) {
+void WINAPI REGS_FUNC(SNOOP_Return)( CONTEXT *context )
+{
 	SNOOP_RETURNENTRY	*ret = (SNOOP_RETURNENTRY*)(EIP_reg(context)-5);
 
 	/* We haven't found out the nrofargs yet. If we called a cdecl
@@ -388,4 +372,8 @@ void SNOOP_RegisterDLL(HMODULE hmod,LPCSTR name,DWORD nrofordinals) {
 FARPROC SNOOP_GetProcAddress(HMODULE hmod,LPCSTR name,DWORD ordinal,FARPROC origfun) {
 	return origfun;
 }
+
+REGS_ENTRYPOINT(SNOOP_Entry) { }
+REGS_ENTRYPOINT(SNOOP_Return) { }
+
 #endif	/* !__i386__ */

@@ -719,7 +719,7 @@ import  ntdll.dll
 698 stdcall UTRegister(long str str str ptr ptr ptr) UTRegister
 699 stdcall UTUnRegister(long) UTUnRegister
 700 stdcall UnMapLS(long) UnMapLS
-701 register UnMapSLFixArray() UnMapSLFixArray
+701 register UnMapSLFixArray(long long) UnMapSLFixArray
 702 stdcall UnhandledExceptionFilter(ptr) UnhandledExceptionFilter
 703 stdcall UninitializeCriticalSection(ptr) UninitializeCriticalSection
 704 stdcall UnlockFile(long long long long long) UnlockFile
@@ -926,3 +926,8 @@ import  ntdll.dll
 
 #1599 wrong ordinal (249 in Win32s's W32SCOMB.DLL) !
 1599 stdcall Get16DLLAddress(long str) Get16DLLAddress
+
+# Wine internal functions
+1600 register SNOOP_Entry() SNOOP_Entry
+1601 register SNOOP_Return() SNOOP_Return
+1602 register RELAY_CallFrom32Regs() RELAY_CallFrom32Regs

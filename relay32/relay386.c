@@ -10,9 +10,10 @@
 #include "winnt.h"
 #include "builtin32.h"
 #include "selectors.h"
+#include "stackframe.h"
 #include "debugstr.h"
-#include "debug.h"
 #include "main.h"
+#include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(relay)
 
@@ -59,6 +60,29 @@ int RELAY_ShowDebugmsgRelay(const char *func) {
   return 1;
 }
 
+
+/***********************************************************************
+ *           RELAY_PrintArgs
+ */
+static inline void RELAY_PrintArgs( int *args, int nb_args, unsigned int typemask )
+{
+    while (nb_args--)
+    {
+	if ((typemask & 3) && HIWORD(*args))
+        {
+	    if (typemask & 2)
+	    	DPRINTF( "%08x L%s", *args, debugstr_w((LPWSTR)*args) );
+            else
+	    	DPRINTF( "%08x %s", *args, debugstr_a((LPCSTR)*args) );
+	}
+        else DPRINTF( "%08x", *args );
+        if (nb_args) DPRINTF( "," );
+        args++;
+        typemask >>= 2;
+    }
+}
+
+
 /***********************************************************************
  *           RELAY_CallFrom32
  *
@@ -71,36 +95,23 @@ int RELAY_ShowDebugmsgRelay(const char *func) {
  */
 int RELAY_CallFrom32( int ret_addr, ... )
 {
-    int i, ret;
+    int ret;
     char buffer[80];
+    unsigned int typemask;
     FARPROC func;
-    unsigned int mask, typemask;
     WORD fs;
 
-    int *args = &ret_addr;
+    int *args = &ret_addr + 1;
     /* Relay addr is the return address for this function */
-    BYTE *relay_addr = (BYTE *)args[-1];
+    BYTE *relay_addr = (BYTE *)__builtin_return_address(0);
     WORD nb_args = *(WORD *)(relay_addr + 1) / sizeof(int);
 
     assert(TRACE_ON(relay));
-    func = (FARPROC)BUILTIN32_GetEntryPoint( buffer, relay_addr - 5,
-                                               &typemask );
-      DPRINTF( "Call %s(", buffer );
-      args++;
-      for (i = 0, mask = 3; i < nb_args; i++, mask <<= 2)
-      {
-        if (i) DPRINTF( "," );
-	if ((typemask & mask) && HIWORD(args[i]))
-        {
-	    if (typemask & (2<<(2*i)))
-	    	DPRINTF( "%08x L%s", args[i], debugstr_w((LPWSTR)args[i]) );
-            else
-	    	DPRINTF( "%08x %s", args[i], debugstr_a((LPCSTR)args[i]) );
-	}
-        else DPRINTF( "%08x", args[i] );
-      }
-      GET_FS( fs );
-      DPRINTF( ") ret=%08x fs=%04x\n", ret_addr, fs );
+    func = (FARPROC)BUILTIN32_GetEntryPoint( buffer, relay_addr - 5, &typemask );
+    DPRINTF( "Call %s(", buffer );
+    RELAY_PrintArgs( args, nb_args, typemask );
+    GET_FS( fs );
+    DPRINTF( ") ret=%08x fs=%04x\n", ret_addr, fs );
 
     if (*relay_addr == 0xc3) /* cdecl */
     {
@@ -141,8 +152,7 @@ int RELAY_CallFrom32( int ret_addr, ... )
                              args[6],args[7],args[8],args[9],args[10],args[11],
                              args[12],args[13],args[14],args[15]); break;
         default:
-            ERR(relay, "Unsupported nb args %d\n",
-                     nb_args );
+            ERR( "Unsupported nb of args %d\n", nb_args );
             assert(FALSE);
         }
     }
@@ -184,7 +194,7 @@ int RELAY_CallFrom32( int ret_addr, ... )
                             args[6],args[7],args[8],args[9],args[10],args[11],
                             args[12],args[13],args[14],args[15]); break;
         default:
-            ERR(relay, "Unsupported nb args %d\n",nb_args );
+            ERR( "Unsupported nb of args %d\n", nb_args );
             assert(FALSE);
         }
     }
@@ -197,101 +207,94 @@ int RELAY_CallFrom32( int ret_addr, ... )
 /***********************************************************************
  *           RELAY_CallFrom32Regs
  *
- * 'context' contains the register contents at the point of call of
- * the REG_ENTRY_POINT. The stack layout of the stack pointed to by
- * ESP_reg(&context) is as follows:
+ * Stack layout (esp is ESP_reg(context), not the current %esp):
  *
- * If debugmsg(relay) is OFF:
- *  ...    ...
- * (esp+4) args
+ * ...
+ * (esp+4) first arg
  * (esp)   return addr to caller
- * (esp-4) function entry point
- *
- * If debugmsg(relay) is ON:
- *  ...    ...
- * (esp+8) args
- * (esp+4) return addr to caller
- * (esp)   return addr to DEBUG_ENTRY_POINT
- * (esp-4) function entry point
- *
- * As the called function might change the stack layout
- * (e.g. FT_Prolog, FT_ExitNN), we remove all modifications to the stack,
- * so that the called function sees (in both cases):
- *
- *  ...    ...
- * (esp+4) args
- * (esp)   return addr to caller
+ * (esp-4) return addr to DEBUG_ENTRY_POINT
+ * (esp-8) ptr to relay entry code for RELAY_CallFrom32Regs
  *  ...    >128 bytes space free to be modified (ensured by the assembly glue)
- *
- * NOTE: This routine makes no assumption about the relative position of
- *       its own stack to the stack pointed to by ESP_reg(&context),
- *	 except that the latter must have >128 bytes space to grow.
- *	 This means the assembly glue could even switch stacks completely
- *	 (e.g. to allow for large stacks).
- *
  */
 
-void RELAY_CallFrom32Regs( CONTEXT context )
+void WINAPI REGS_FUNC(RELAY_CallFrom32Regs)( CONTEXT *context )
 {
-    typedef void (CALLBACK *entry_point_t)(CONTEXT *);
-    entry_point_t entry_point = *(entry_point_t*) (ESP_reg(&context) - 4);
+    unsigned int typemask;
+    char buffer[80];
+    int* args;
+    FARPROC func;
+    BYTE *entry_point;
 
-    __RESTORE_ES;
+    BYTE *relay_addr = *((BYTE **)ESP_reg(context) - 1);
+    WORD nb_args = *(WORD *)(relay_addr + 1) / sizeof(int);
 
-    if (!TRACE_ON(relay))
+    /* remove extra stuff from the stack */
+    EIP_reg(context) = STACK32_POP(context);
+    args = (int *)ESP_reg(context);
+    ESP_reg(context) += 4 * nb_args;
+
+    assert(TRACE_ON(relay));
+
+    entry_point = (BYTE *)BUILTIN32_GetEntryPoint( buffer, relay_addr - 5, &typemask );
+    assert( *entry_point == 0xe8 /* lcall */ );
+    func = *(FARPROC *)(entry_point + 5);
+
+    DPRINTF( "Call %s(", buffer );
+    RELAY_PrintArgs( args, nb_args, typemask );
+    DPRINTF( ") ret=%08lx fs=%04lx\n", EIP_reg(context), FS_reg(context) );
+
+    DPRINTF(" eax=%08lx ebx=%08lx ecx=%08lx edx=%08lx esi=%08lx edi=%08lx\n",
+            EAX_reg(context), EBX_reg(context), ECX_reg(context),
+            EDX_reg(context), ESI_reg(context), EDI_reg(context) );
+    DPRINTF(" ebp=%08lx esp=%08lx ds=%04lx es=%04lx gs=%04lx flags=%08lx\n",
+            EBP_reg(context), ESP_reg(context), DS_reg(context),
+            ES_reg(context), GS_reg(context), EFL_reg(context) );
+
+    /* Now call the real function */
+    switch(nb_args)
     {
-        /* Simply call the entry point */
-        entry_point( &context );
+    case 0: func(context); break;
+    case 1: func(args[0],context); break;
+    case 2: func(args[0],args[1],context); break;
+    case 3: func(args[0],args[1],args[2],context); break;
+    case 4: func(args[0],args[1],args[2],args[3],context); break;
+    case 5: func(args[0],args[1],args[2],args[3],args[4],context); break;
+    case 6: func(args[0],args[1],args[2],args[3],args[4],args[5],context); break;
+    case 7: func(args[0],args[1],args[2],args[3],args[4],args[5],args[6],context); break;
+    case 8: func(args[0],args[1],args[2],args[3],args[4],args[5],args[6],args[7],context); break;
+    case 9: func(args[0],args[1],args[2],args[3],args[4],args[5],args[6],args[7],args[8],
+                 context); break;
+    case 10: func(args[0],args[1],args[2],args[3],args[4],args[5],args[6],args[7],args[8],
+                  args[9],context); break;
+    case 11: func(args[0],args[1],args[2],args[3],args[4],args[5],args[6],args[7],args[8],
+                  args[9],args[10],context); break;
+    case 12: func(args[0],args[1],args[2],args[3],args[4],args[5],args[6],args[7],args[8],
+                  args[9],args[10],args[11],context); break;
+    case 13: func(args[0],args[1],args[2],args[3],args[4],args[5],args[6],args[7],args[8],
+                  args[9],args[10],args[11],args[12],context); break;
+    case 14: func(args[0],args[1],args[2],args[3],args[4],args[5],args[6],args[7],args[8],
+                  args[9],args[10],args[11],args[12],args[13],context); break;
+    case 15: func(args[0],args[1],args[2],args[3],args[4],args[5],args[6],args[7],args[8],
+                  args[9],args[10],args[11],args[12],args[13],args[14],context); break;
+    case 16: func(args[0],args[1],args[2],args[3],args[4],args[5], args[6],args[7],args[8],
+                  args[9],args[10],args[11],args[12],args[13],args[14],args[15],context); break;
+    default:
+        ERR( "Unsupported nb of args %d\n", nb_args );
+        assert(FALSE);
     }
-    else
-    {
-        char buffer[80];
-        unsigned int typemask;
-	BYTE *relay_addr;
 
-        /*
-	 * Fixup the context structure because of the extra parameter
-         * pushed by the relay debugging code.
-	 * Note that this implicitly does a RET on the CALL from the
-	 * DEBUG_ENTRY_POINT to the REG_ENTRY_POINT;  setting the EIP register
-	 * ensures that the assembly glue will directly return to the
-	 * caller, just as in the non-debugging case.
-	 */
-
-        relay_addr = *(BYTE **) ESP_reg(&context); 
-        if (BUILTIN32_GetEntryPoint( buffer, relay_addr - 5, &typemask )) {
-	    /* correct win32 spec generated register function found. 
-	     * remove extra call stuff from stack
-	     */
-            ESP_reg(&context) += sizeof(BYTE *);
-	    EIP_reg(&context) = *(DWORD *)ESP_reg(&context);
-	    DPRINTF("Call %s(regs) ret=%08x\n", buffer, *(int *)ESP_reg(&context) );
-	    DPRINTF(" EAX=%08lx EBX=%08lx ECX=%08lx EDX=%08lx ESI=%08lx EDI=%08lx\n",
-		    EAX_reg(&context), EBX_reg(&context), ECX_reg(&context),
-		    EDX_reg(&context), ESI_reg(&context), EDI_reg(&context) );
-	    DPRINTF(" EBP=%08lx ESP=%08lx EIP=%08lx DS=%04lx ES=%04lx FS=%04lx GS=%04lx EFL=%08lx\n",
-		    EBP_reg(&context), ESP_reg(&context), EIP_reg(&context),
-		    DS_reg(&context), ES_reg(&context), FS_reg(&context),
-		    GS_reg(&context), EFL_reg(&context) );
-
-	    /* Now call the real function */
-	    entry_point( &context );
-
-
-	    DPRINTF("Ret  %s() retval=regs ret=%08x\n", buffer, *(int *)ESP_reg(&context) );
-	    DPRINTF(" EAX=%08lx EBX=%08lx ECX=%08lx EDX=%08lx ESI=%08lx EDI=%08lx\n",
-		    EAX_reg(&context), EBX_reg(&context), ECX_reg(&context),
-		    EDX_reg(&context), ESI_reg(&context), EDI_reg(&context) );
-	    DPRINTF(" EBP=%08lx ESP=%08lx EIP=%08lx DS=%04lx ES=%04lx FS=%04lx GS=%04lx EFL=%08lx\n",
-		    EBP_reg(&context), ESP_reg(&context), EIP_reg(&context),
-		    DS_reg(&context), ES_reg(&context), FS_reg(&context),
-		    GS_reg(&context), EFL_reg(&context) );
-	} else
-	    /* WINE internal register function found. Do not remove anything.
-	     * Do not print any debuginfo (it is not a normal relayed one).
-	     * Currently only used for snooping.
-	     */
-	   entry_point( &context );
-    }
+    DPRINTF( "Ret  %s() retval=%08lx ret=%08lx fs=%04lx\n",
+             buffer, EAX_reg(context), EIP_reg(context), FS_reg(context) );
+    DPRINTF(" eax=%08lx ebx=%08lx ecx=%08lx edx=%08lx esi=%08lx edi=%08lx\n",
+            EAX_reg(context), EBX_reg(context), ECX_reg(context),
+            EDX_reg(context), ESI_reg(context), EDI_reg(context) );
+    DPRINTF(" ebp=%08lx esp=%08lx ds=%04lx es=%04lx gs=%04lx flags=%08lx\n",
+            EBP_reg(context), ESP_reg(context), DS_reg(context),
+            ES_reg(context), GS_reg(context), EFL_reg(context) );
 }
+
+#else  /* __i386__ */
+
+REGS_ENTRYPOINT(RELAY_CallFrom32Regs) { }
+
 #endif  /* __i386__ */

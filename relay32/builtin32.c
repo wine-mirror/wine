@@ -145,6 +145,7 @@ static BUILTIN32_DLL BuiltinDLLs[] =
 };
 
 extern void RELAY_CallFrom32();
+extern void RELAY_CallFrom32Regs();
 
 /***********************************************************************
  *           BUILTIN32_DoLoadImage
@@ -362,29 +363,25 @@ static HMODULE BUILTIN32_DoLoadImage( BUILTIN32_DLL *dll )
 	}
         switch(args)
         {
-        case 0xfe:  /* register func */
-            debug->call       = 0xe8;
-            debug->callfrom32 = (DWORD)dll->descr->functions[i] -
-                                (DWORD)&debug->ret;
-            debug->ret        = 0x90;  /* nop */
-            debug->args       = 0;
-            *funcs = (LPVOID)((BYTE *)debug - addr);
-            break;
         case 0xfd:  /* forward */
         case 0xff:  /* stub or extern */
             break;
-        default:  /* normal function (stdcall or cdecl) */
+        default:  /* normal function (stdcall or cdecl or register) */
 	    if (TRACE_ON(relay)) {
 		debug->call       = 0xe8; /* lcall relative */
-		debug->callfrom32 = (DWORD)RELAY_CallFrom32 -
-				    (DWORD)&debug->ret;
+                if (args & 0x40)  /* register func */
+                    debug->callfrom32 = (DWORD)RELAY_CallFrom32Regs -
+                        (DWORD)&debug->ret;
+                else
+                    debug->callfrom32 = (DWORD)RELAY_CallFrom32 -
+                        (DWORD)&debug->ret;
 	    } else {
 		debug->call       = 0xe9; /* ljmp relative */
 		debug->callfrom32 = (DWORD)dll->descr->functions[i] -
 				    (DWORD)&debug->ret;
 	    }
 	    debug->ret        = (args & 0x80) ? 0xc3 : 0xc2; /*ret/ret $n*/
-	    debug->args       = (args & 0x7f) * sizeof(int);
+	    debug->args       = (args & 0x3f) * sizeof(int);
             *funcs = (LPVOID)((BYTE *)debug - addr);
             break;
         }

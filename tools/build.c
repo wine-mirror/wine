@@ -458,12 +458,6 @@ static int ParseExportFunction( ORDDEF *odp )
     odp->u.func.arg_types[i] = '\0';
     if ((odp->type == TYPE_STDCALL) && !i)
         odp->type = TYPE_CDECL; /* stdcall is the same as cdecl for 0 args */
-    if ((odp->type == TYPE_REGISTER) && (SpecType == SPEC_WIN32) && i)
-    {
-        fprintf( stderr, "%s:%d: register functions cannot have arguments in Win32\n",
-                 SpecName, Line );
-        return -1;
-    }
     strcpy(odp->u.func.link_name, GetToken());
     return 0;
 }
@@ -1074,11 +1068,13 @@ static int BuildSpec32File( char * specfile, FILE *outfile )
                  "        \".globl " PREFIX "%s\\n\\t\"\n"
                  "        \".type " PREFIX "%s,@function\\n\\t\"\n"
                  "        \"" PREFIX "%s:\\n\\t\"\n"
-                 "        \"pushl $" PREFIX "__regs_%s\\n\\t\"\n"
-                 "        \"pushl $" PREFIX "CALL32_Regs\\n\\t\"\n"
-                 "        \"ret\");\n",
+                 "        \"call " PREFIX "CALL32_Regs\\n\\t\"\n"
+                 "        \".long " PREFIX "__regs_%s\\n\\t\"\n"
+                 "        \".byte %d,%d\");\n",
                  odp->u.func.link_name, odp->u.func.link_name,
-                 odp->u.func.link_name, odp->u.func.link_name );
+                 odp->u.func.link_name, odp->u.func.link_name,
+                 4 * strlen(odp->u.func.arg_types),
+                 4 * strlen(odp->u.func.arg_types) );
     }
     fprintf( outfile, "#ifndef __GNUC__\n" );
     fprintf( outfile, "}\n" );
@@ -1173,7 +1169,8 @@ static int BuildSpec32File( char * specfile, FILE *outfile )
     for (i = Base, odp = OrdinalDefinitions + Base; i <= Limit; i++, odp++)
     {
     	unsigned int j, mask = 0;
-	if ((odp->type == TYPE_STDCALL) || (odp->type == TYPE_CDECL))
+	if ((odp->type == TYPE_STDCALL) || (odp->type == TYPE_CDECL) ||
+            (odp->type == TYPE_REGISTER))
 	    for (j = 0; odp->u.func.arg_types[j]; j++)
             {
                 if (odp->u.func.arg_types[j] == 't') mask |= 1<< (j*2);
@@ -1211,11 +1208,11 @@ static int BuildSpec32File( char * specfile, FILE *outfile )
         case TYPE_CDECL:
             args = 0x80 | (unsigned char)strlen(odp->u.func.arg_types);
             break;
+        case TYPE_REGISTER:
+            args = 0x40 | (unsigned char)strlen(odp->u.func.arg_types);
+            break;
         case TYPE_FORWARD:
             args = 0xfd;
-            break;
-        case TYPE_REGISTER:
-            args = 0xfe;
             break;
         default:
             args = 0xff;
@@ -2542,15 +2539,25 @@ static void BuildCallTo32LargeStack( FILE *outfile )
  * 'args' is the number of dword arguments.
  *
  * Stack layout:
- *   ...     ...
- * (esp+336) ret addr (or relay addr when debugging(relay) is on)
- * (esp+332) entry point
- * (esp+204) buffer area to allow stack frame manipulation
- * (esp+0)   CONTEXT struct
+ *   ...
+ * (ebp+12)  first arg
+ * (ebp+8)   ret addr to user code
+ * (ebp+4)   ret addr to relay code
+ * (ebp+0)   saved ebp
+ * (ebp-128) buffer area to allow stack frame manipulation
+ * (ebp-332) CONTEXT struct
+ * (ebp-336) CONTEXT *argument
+ *  ....     other arguments copied from (ebp+12)
+ *
+ * The entry point routine is called with a CONTEXT* extra argument,
+ * following the normal args. In this context structure, EIP_reg
+ * contains the return address to user code, and ESP_reg the stack
+ * pointer on return (with the return address and arguments already
+ * removed).
  */
 static void BuildCallFrom32Regs( FILE *outfile )
 {
-#define STACK_SPACE 128
+    static const int STACK_SPACE = 128 + sizeof(CONTEXT);
 
     /* Function header */
 
@@ -2562,85 +2569,102 @@ static void BuildCallFrom32Regs( FILE *outfile )
     fprintf( outfile, PREFIX "CALL32_Regs:\n" );
 
     /* Allocate some buffer space on the stack */
-   
+
+    fprintf( outfile, "\tpushl %%ebp\n" );
+    fprintf( outfile, "\tmovl %%esp,%%ebp\n ");
     fprintf( outfile, "\tleal -%d(%%esp), %%esp\n", STACK_SPACE );
     
     /* Build the context structure */
 
-    fprintf( outfile, "\tpushw $0\n" );
-    fprintf( outfile, "\t.byte 0x66\n\tpushl %%ss\n" );
-    fprintf( outfile, "\tpushl %%eax\n" );  /* %esp place holder */
+    fprintf( outfile, "\tmovl %%eax,%d(%%ebp)\n", CONTEXTOFFSET(Eax) - STACK_SPACE );
     fprintf( outfile, "\tpushfl\n" );
-    fprintf( outfile, "\tpushw $0\n" );
-    fprintf( outfile, "\t.byte 0x66\n\tpushl %%cs\n" );
-    fprintf( outfile, "\tpushl %d(%%esp)\n", 16+STACK_SPACE+4 );  /* %eip at time of call */
-    fprintf( outfile, "\tpushl %%ebp\n" );
-
-    fprintf( outfile, "\tpushl %%eax\n" );
-    fprintf( outfile, "\tpushl %%ecx\n" );
-    fprintf( outfile, "\tpushl %%edx\n" );
-    fprintf( outfile, "\tpushl %%ebx\n" );
-    fprintf( outfile, "\tpushl %%esi\n" );
-    fprintf( outfile, "\tpushl %%edi\n" );
+    fprintf( outfile, "\tpopl %%eax\n" );
+    fprintf( outfile, "\tmovl %%eax,%d(%%ebp)\n", CONTEXTOFFSET(EFlags) - STACK_SPACE );
+    fprintf( outfile, "\tmovl 0(%%ebp),%%eax\n" );
+    fprintf( outfile, "\tmovl %%eax,%d(%%ebp)\n", CONTEXTOFFSET(Ebp) - STACK_SPACE );
+    fprintf( outfile, "\tmovl %%ebx,%d(%%ebp)\n", CONTEXTOFFSET(Ebx) - STACK_SPACE );
+    fprintf( outfile, "\tmovl %%ecx,%d(%%ebp)\n", CONTEXTOFFSET(Ecx) - STACK_SPACE );
+    fprintf( outfile, "\tmovl %%edx,%d(%%ebp)\n", CONTEXTOFFSET(Edx) - STACK_SPACE );
+    fprintf( outfile, "\tmovl %%esi,%d(%%ebp)\n", CONTEXTOFFSET(Esi) - STACK_SPACE );
+    fprintf( outfile, "\tmovl %%edi,%d(%%ebp)\n", CONTEXTOFFSET(Edi) - STACK_SPACE );
 
     fprintf( outfile, "\txorl %%eax,%%eax\n" );
-    fprintf( outfile, "\tmovw %%ds,%%ax\n" );
-    fprintf( outfile, "\tpushl %%eax\n" );
+    fprintf( outfile, "\tmovw %%cs,%%ax\n" );
+    fprintf( outfile, "\tmovl %%eax,%d(%%ebp)\n", CONTEXTOFFSET(SegCs) - STACK_SPACE );
     fprintf( outfile, "\tmovw %%es,%%ax\n" );
-    fprintf( outfile, "\tpushl %%eax\n" );
+    fprintf( outfile, "\tmovl %%eax,%d(%%ebp)\n", CONTEXTOFFSET(SegEs) - STACK_SPACE );
     fprintf( outfile, "\tmovw %%fs,%%ax\n" );
-    fprintf( outfile, "\tpushl %%eax\n" );
+    fprintf( outfile, "\tmovl %%eax,%d(%%ebp)\n", CONTEXTOFFSET(SegFs) - STACK_SPACE );
     fprintf( outfile, "\tmovw %%gs,%%ax\n" );
-    fprintf( outfile, "\tpushl %%eax\n" );
+    fprintf( outfile, "\tmovl %%eax,%d(%%ebp)\n", CONTEXTOFFSET(SegGs) - STACK_SPACE );
+    fprintf( outfile, "\tmovw %%ss,%%ax\n" );
+    fprintf( outfile, "\tmovl %%eax,%d(%%ebp)\n", CONTEXTOFFSET(SegSs) - STACK_SPACE );
+    fprintf( outfile, "\tmovw %%ds,%%ax\n" );
+    fprintf( outfile, "\tmovl %%eax,%d(%%ebp)\n", CONTEXTOFFSET(SegDs) - STACK_SPACE );
+    fprintf( outfile, "\tmovw %%ax,%%es\n" );  /* set %es equal to %ds just in case */
 
-    fprintf( outfile, "\tleal -%d(%%esp),%%esp\n",
-             sizeof(FLOATING_SAVE_AREA) + 6 * sizeof(DWORD) /* DR regs */ );
-    fprintf( outfile, "\tpushl $0x0001001f\n" );  /* ContextFlags */
+    fprintf( outfile, "\tmovl $0x%x,%%eax\n", CONTEXT_FULL );
+    fprintf( outfile, "\tmovl %%eax,%d(%%ebp)\n", CONTEXTOFFSET(ContextFlags) - STACK_SPACE );
 
-    fprintf( outfile, "\tfsave %d(%%esp)\n", CONTEXTOFFSET(FloatSave) );
+    fprintf( outfile, "\tmovl 8(%%ebp),%%eax\n" ); /* Get %eip at time of call */
+    fprintf( outfile, "\tmovl %%eax,%d(%%ebp)\n", CONTEXTOFFSET(Eip) - STACK_SPACE );
 
-    fprintf( outfile, "\tleal %d(%%esp),%%eax\n",
-             sizeof(CONTEXT) + STACK_SPACE + 4 ); /* %esp at time of call */
-    fprintf( outfile, "\tmovl %%eax,%d(%%esp)\n", CONTEXTOFFSET(Esp) );
+    /* Transfer the arguments */
 
-    fprintf( outfile, "\tcall " PREFIX "RELAY_CallFrom32Regs\n" );
+    fprintf( outfile, "\tmovl 4(%%ebp),%%ebx\n" );   /* get relay code addr */
+    fprintf( outfile, "\tpushl %%esp\n" );           /* push ptr to context struct */
+    fprintf( outfile, "\tmovzbl 4(%%ebx),%%ecx\n" ); /* fetch number of args to copy */
+    fprintf( outfile, "\tjecxz 1f\n" );
+    fprintf( outfile, "\tsubl %%ecx,%%esp\n" );
+    fprintf( outfile, "\tleal 12(%%ebp),%%esi\n" );  /* get %esp at time of call */
+    fprintf( outfile, "\tmovl %%esp,%%edi\n" );
+    fprintf( outfile, "\tshrl $2,%%ecx\n" );
+    fprintf( outfile, "\tcld\n" );
+    fprintf( outfile, "\trep\n\tmovsl\n" );  /* copy args */
+
+    fprintf( outfile, "1:\tmovzbl 5(%%ebx),%%eax\n" ); /* fetch number of args to remove */
+    fprintf( outfile, "\tleal 12(%%ebp,%%eax),%%eax\n" );
+    fprintf( outfile, "\tmovl %%eax,%d(%%ebp)\n", CONTEXTOFFSET(Esp) - STACK_SPACE );
+
+    /* Call the entry point */
+
+    fprintf( outfile, "\tcall *0(%%ebx)\n" );
+
+    /* Store %eip and %ebp onto the new stack */
+
+    fprintf( outfile, "\tmovl %d(%%ebp),%%edx\n", CONTEXTOFFSET(Esp) - STACK_SPACE );
+    fprintf( outfile, "\tmovl %d(%%ebp),%%eax\n", CONTEXTOFFSET(Eip) - STACK_SPACE );
+    fprintf( outfile, "\tmovl %%eax,-4(%%edx)\n" );
+    fprintf( outfile, "\tmovl %d(%%ebp),%%eax\n", CONTEXTOFFSET(Ebp) - STACK_SPACE );
+    fprintf( outfile, "\tmovl %%eax,-8(%%edx)\n" );
 
     /* Restore the context structure */
 
-    fprintf( outfile, "\tfrstor %d(%%esp)\n", CONTEXTOFFSET(FloatSave) );
-
-    /* Store %eip value onto the new stack */
-
-    fprintf( outfile, "\tmovl %d(%%esp),%%eax\n", CONTEXTOFFSET(Eip) );
-    fprintf( outfile, "\tmovl %d(%%esp),%%ebx\n", CONTEXTOFFSET(Esp) );
-    fprintf( outfile, "\tmovl %%eax,0(%%ebx)\n" );
-
-    /* Restore all registers */
-
-    fprintf( outfile, "\tleal %d(%%esp),%%esp\n",
-             sizeof(FLOATING_SAVE_AREA) + 7 * sizeof(DWORD) );
-    fprintf( outfile, "\tpopl %%eax\n" );
-    fprintf( outfile, "\tmovw %%ax,%%gs\n" );
-    fprintf( outfile, "\tpopl %%eax\n" );
-    fprintf( outfile, "\tmovw %%ax,%%fs\n" );
-    fprintf( outfile, "\tpopl %%eax\n" );
+    /* Note: we don't bother to restore %cs, %ds and %ss
+     *       changing them in 32-bit code is a recipe for disaster anyway
+     */
+    fprintf( outfile, "\tmovl %d(%%ebp),%%eax\n", CONTEXTOFFSET(SegEs) - STACK_SPACE );
     fprintf( outfile, "\tmovw %%ax,%%es\n" );
-    fprintf( outfile, "\tpopl %%eax\n" );
-    fprintf( outfile, "\tmovw %%ax,%%ds\n" );
+    fprintf( outfile, "\tmovl %d(%%ebp),%%eax\n", CONTEXTOFFSET(SegFs) - STACK_SPACE );
+    fprintf( outfile, "\tmovw %%ax,%%fs\n" );
+    fprintf( outfile, "\tmovl %d(%%ebp),%%eax\n", CONTEXTOFFSET(SegGs) - STACK_SPACE );
+    fprintf( outfile, "\tmovw %%ax,%%gs\n" );
 
-    fprintf( outfile, "\tpopl %%edi\n" );
-    fprintf( outfile, "\tpopl %%esi\n" );
-    fprintf( outfile, "\tpopl %%ebx\n" );
-    fprintf( outfile, "\tpopl %%edx\n" );
-    fprintf( outfile, "\tpopl %%ecx\n" );
-    fprintf( outfile, "\tpopl %%eax\n" );
-    fprintf( outfile, "\tpopl %%ebp\n" );
-    fprintf( outfile, "\tleal 8(%%esp),%%esp\n" );  /* skip %eip and %cs */
+    fprintf( outfile, "\tmovl %d(%%ebp),%%edi\n", CONTEXTOFFSET(Edi) - STACK_SPACE );
+    fprintf( outfile, "\tmovl %d(%%ebp),%%esi\n", CONTEXTOFFSET(Esi) - STACK_SPACE );
+    fprintf( outfile, "\tmovl %d(%%ebp),%%edx\n", CONTEXTOFFSET(Edx) - STACK_SPACE );
+    fprintf( outfile, "\tmovl %d(%%ebp),%%ecx\n", CONTEXTOFFSET(Ecx) - STACK_SPACE );
+    fprintf( outfile, "\tmovl %d(%%ebp),%%ebx\n", CONTEXTOFFSET(Ebx) - STACK_SPACE );
+
+    fprintf( outfile, "\tmovl %d(%%ebp),%%eax\n", CONTEXTOFFSET(EFlags) - STACK_SPACE );
+    fprintf( outfile, "\tpushl %%eax\n" );
     fprintf( outfile, "\tpopfl\n" );
-    fprintf( outfile, "\tpopl %%esp\n" );
-    fprintf( outfile, "\tret\n" );
+    fprintf( outfile, "\tmovl %d(%%ebp),%%eax\n", CONTEXTOFFSET(Eax) - STACK_SPACE );
 
-#undef STACK_SPACE
+    fprintf( outfile, "\tmovl %d(%%ebp),%%ebp\n", CONTEXTOFFSET(Esp) - STACK_SPACE );
+    fprintf( outfile, "\tleal -8(%%ebp),%%esp\n" );
+    fprintf( outfile, "\tpopl %%ebp\n" );
+    fprintf( outfile, "\tret\n" );
 }
 
 
