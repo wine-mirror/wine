@@ -1772,8 +1772,8 @@ static int fetch_data(struct gdb_context* gdbctx)
 static BOOL gdb_startup(struct gdb_context* gdbctx, DEBUG_EVENT* de, unsigned flags)
 {
     int                 sock;
-    struct sockaddr_in  s_addr;
-    socklen_t           s_len = sizeof(s_addr);
+    struct sockaddr_in  s_addrs;
+    socklen_t           s_len = sizeof(s_addrs);
     struct pollfd       pollfd;
     char                wine_path[MAX_PATH];
     char*               ptr;
@@ -1787,7 +1787,7 @@ static BOOL gdb_startup(struct gdb_context* gdbctx, DEBUG_EVENT* de, unsigned fl
     }
 
     if (listen(sock, 1) == -1 ||
-        getsockname(sock, (struct sockaddr*)&s_addr, &s_len) == -1)
+        getsockname(sock, (struct sockaddr*)&s_addrs, &s_len) == -1)
         return FALSE;
 
     /* step 2: find out wine executable location (as a Unix filename) */
@@ -1799,7 +1799,7 @@ static BOOL gdb_startup(struct gdb_context* gdbctx, DEBUG_EVENT* de, unsigned fl
 
     /* step 3: fire up gdb (if requested) */
     if (flags & 1)
-        fprintf(stderr, "target remote localhost:%d\n", ntohs(s_addr.sin_port));
+        fprintf(stderr, "target remote localhost:%d\n", ntohs(s_addrs.sin_port));
     else
         switch (fork())
         {
@@ -1822,7 +1822,7 @@ static BOOL gdb_startup(struct gdb_context* gdbctx, DEBUG_EVENT* de, unsigned fl
 		if (fd == -1) return FALSE;
                 if ((f = fdopen(fd, "w+")) == NULL) return FALSE;
                 fprintf(f, "file %s\n", wine_path);
-                fprintf(f, "target remote localhost:%d\n", ntohs(s_addr.sin_port));
+                fprintf(f, "target remote localhost:%d\n", ntohs(s_addrs.sin_port));
                 fprintf(f, "monitor trace=0\n");
                 fprintf(f, "set prompt Wine-gdb>\\ \n");
                 /* tell gdb to delete this file when done handling it... */
@@ -1852,7 +1852,7 @@ static BOOL gdb_startup(struct gdb_context* gdbctx, DEBUG_EVENT* de, unsigned fl
         if (pollfd.revents & POLLIN)
         {
             int dummy = 1;
-            gdbctx->sock = accept(sock, (struct sockaddr*)&s_addr, &s_len);
+            gdbctx->sock = accept(sock, (struct sockaddr*)&s_addrs, &s_len);
             if (gdbctx->sock == -1)
                 break;
             if (gdbctx->trace & GDBPXY_TRC_LOWLEVEL)
