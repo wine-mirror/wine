@@ -478,7 +478,7 @@ static ULONG get_full_path_helper(LPCWSTR name, LPWSTR buffer, ULONG size)
     strcatW(buffer, name);
 
     /* convert every / into a \ */
-    for (ptr = buffer; ptr < buffer + size / sizeof(WCHAR); ptr++) 
+    for (ptr = buffer; *ptr; ptr++)
         if (*ptr == '/') *ptr = '\\';
 
     reqsize -= sizeof(WCHAR); /* don't count trailing \0 */
