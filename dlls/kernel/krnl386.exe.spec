@@ -403,7 +403,7 @@
 
 # 500-544 are WinNT extensions; some are also available in Win95
 
-500 pascal WOW16Call(word word word) WOW16Call
+500 varargs WOW16Call(word word word) WOW16Call
 501 stub KDDBGOUT                                               # Both NT/95 (?)
 502 stub WOWGETNEXTVDMCOMMAND
 503 stub WOWREGISTERSHELLWINDOWHANDLE
@@ -422,8 +422,8 @@
 514 pascal FreeLibrary32W(long) FreeLibrary32W16                # Both NT/95
 515 pascal GetProcAddress32W(long str) GetProcAddress32W16      # Both NT/95
 516 pascal GetVDMPointer32W(segptr word) GetVDMPointer32W16     # Both NT/95
-517 pascal CallProc32W() CallProc32W16                          # Both NT/95
-518 pascal _CallProcEx32W() CallProcEx32W16                     # Both NT/95
+517 varargs CallProc32W(long long long) CallProc32W16           # Both NT/95
+518 varargs _CallProcEx32W(long long long) CallProcEx32W16      # Both NT/95
 519 stub EXITKERNELTHUNK
 # the __MOD_ variables are WORD datareferences, the current values are invented.
 520 equate __MOD_KERNEL 4200

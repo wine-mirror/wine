@@ -55,9 +55,6 @@ DWORD WINAPI FreeLibrary32W16(DWORD);
 #define CPEX_DEST_STDCALL   0x00000000L
 #define CPEX_DEST_CDECL     0x80000000L
 
-DWORD WINAPI CallProcExW16(VOID);
-DWORD WINAPI CallProcEx32W16(VOID);
-
 /* thunk for 16-bit CreateThread */
 struct thread_args
 {
@@ -634,47 +631,12 @@ DWORD WINAPI FreeLibrary32W16( DWORD hLibModule )
 /**********************************************************************
  *           WOW_CallProc32W
  */
-static DWORD WOW_CallProc32W16( BOOL Ex )
+static DWORD WOW_CallProc32W16( FARPROC proc32, DWORD nrofargs, DWORD *args )
 {
-    DWORD nrofargs, argconvmask;
-    FARPROC proc32;
-    DWORD *args, ret;
+    DWORD ret;
     DWORD mutex_count;
-    VA_LIST16 valist;
-    unsigned int i;
-    int aix;
 
     ReleaseThunkLock( &mutex_count );
-
-    VA_START16( valist );
-    nrofargs    = VA_ARG16( valist, DWORD );
-    argconvmask = VA_ARG16( valist, DWORD );
-    proc32      = VA_ARG16( valist, FARPROC );
-    TRACE("(%ld,%ld,%p, Ex%d args[",nrofargs,argconvmask,proc32,Ex);
-    args = (DWORD*)HeapAlloc( GetProcessHeap(), 0, sizeof(DWORD)*nrofargs );
-    if(args == NULL) proc32 = NULL; /* maybe we should WARN here? */
-    /* CallProcEx doesn't need its args reversed */
-    for (i=0;i<nrofargs;i++) {
-            if (Ex) {
-               aix = i;
-            } else {
-               aix = nrofargs - i - 1;
-            }
-            if (argconvmask & (1<<i))
-            {
-                SEGPTR ptr = VA_ARG16( valist, SEGPTR );
-                if (args) args[aix] = (DWORD)MapSL(ptr);
-                if (TRACE_ON(thunk)) DPRINTF("%08lx(%p),",ptr,MapSL(ptr));
-            }
-            else
-            {
-		DWORD arg = VA_ARG16( valist, DWORD );
-                if (args) args[aix] = arg;
-                if (TRACE_ON(thunk)) DPRINTF("%ld,", arg);
-            }
-    }
-    if (TRACE_ON(thunk)) DPRINTF("])\n");
-    VA_END16( valist );
 
     /*
      * FIXME:  If ( nrofargs & CPEX_DEST_CDECL ) != 0, we should call a
@@ -723,36 +685,74 @@ static DWORD WOW_CallProc32W16( BOOL Ex )
             break;
     }
 
-    /* POP nrofargs DWORD arguments and 3 DWORD parameters */
-    if (!Ex) stack16_pop( (3 + nrofargs) * sizeof(DWORD) );
+    RestoreThunkLock( mutex_count );
 
     TRACE("returns %08lx\n",ret);
-    HeapFree( GetProcessHeap(), 0, args );
-
-    RestoreThunkLock( mutex_count );
     return ret;
 }
 
 /**********************************************************************
  *           CallProc32W           (KERNEL.517)
- *
- * DWORD PASCAL CallProc32W( DWORD p1, ... , DWORD lpProcAddress,
- *                           DWORD fAddressConvert, DWORD cParams );
  */
-DWORD WINAPI CallProc32W16( void )
+DWORD WINAPIV CallProc32W16( DWORD nrofargs, DWORD argconvmask, FARPROC proc32, VA_LIST16 valist )
 {
-    return WOW_CallProc32W16( FALSE );
+    DWORD args[32];
+    unsigned int i;
+
+    TRACE("(%ld,%ld,%p args[",nrofargs,argconvmask,proc32);
+
+    for (i=0;i<nrofargs;i++)
+    {
+        if (argconvmask & (1<<i))
+        {
+            SEGPTR ptr = VA_ARG16( valist, SEGPTR );
+            /* pascal convention, have to reverse the arguments order */
+            args[nrofargs - i - 1] = (DWORD)MapSL(ptr);
+            TRACE("%08lx(%p),",ptr,MapSL(ptr));
+        }
+        else
+        {
+            DWORD arg = VA_ARG16( valist, DWORD );
+            /* pascal convention, have to reverse the arguments order */
+            args[nrofargs - i - 1] = arg;
+            TRACE("%ld,", arg);
+        }
+    }
+    TRACE("])\n");
+
+    /* POP nrofargs DWORD arguments and 3 DWORD parameters */
+    stack16_pop( (3 + nrofargs) * sizeof(DWORD) );
+
+    return WOW_CallProc32W16( proc32, nrofargs, args );
 }
 
 /**********************************************************************
  *           _CallProcEx32W         (KERNEL.518)
- *
- * DWORD CallProcEx32W( DWORD cParams, DWORD fAddressConvert,
- *                      DWORD lpProcAddress, DWORD p1, ... );
  */
-DWORD WINAPI CallProcEx32W16( void )
+DWORD WINAPIV CallProcEx32W16( DWORD nrofargs, DWORD argconvmask, FARPROC proc32, VA_LIST16 valist )
 {
-    return WOW_CallProc32W16( TRUE );
+    DWORD args[32];
+    unsigned int i;
+
+    TRACE("(%ld,%ld,%p args[",nrofargs,argconvmask,proc32);
+
+    for (i=0;i<nrofargs;i++)
+    {
+        if (argconvmask & (1<<i))
+        {
+            SEGPTR ptr = VA_ARG16( valist, SEGPTR );
+            args[i] = (DWORD)MapSL(ptr);
+            TRACE("%08lx(%p),",ptr,MapSL(ptr));
+        }
+        else
+        {
+            DWORD arg = VA_ARG16( valist, DWORD );
+            args[i] = arg;
+            TRACE("%ld,", arg);
+        }
+    }
+    TRACE("])\n");
+    return WOW_CallProc32W16( proc32, nrofargs, args );
 }
 
 
@@ -762,21 +762,18 @@ DWORD WINAPI CallProcEx32W16( void )
  * FIXME!!!
  *
  */
-DWORD WINAPI WOW16Call(WORD x,WORD y,WORD z)
+DWORD WINAPIV WOW16Call(WORD x, WORD y, WORD z, VA_LIST16 args)
 {
         int     i;
         DWORD   calladdr;
-        VA_LIST16 args;
         FIXME("(0x%04x,0x%04x,%d),calling (",x,y,z);
 
-        VA_START16(args);
         for (i=0;i<x/2;i++) {
                 WORD    a = VA_ARG16(args,WORD);
                 DPRINTF("%04x ",a);
         }
         calladdr = VA_ARG16(args,DWORD);
-        VA_END16(args);
-        stack16_pop( x + sizeof(DWORD) );
+        stack16_pop( 3*sizeof(WORD) + x + sizeof(DWORD) );
         DPRINTF(") calling address was 0x%08lx\n",calladdr);
         return 0;
 }
