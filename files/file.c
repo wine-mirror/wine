@@ -1284,15 +1284,30 @@ static void add_timeout( struct timeval *when, int timeout )
 }
 
 /***********************************************************************
- *             FILE_StartAsyncRead      (INTERNAL)
- *
- * Don't need thread safety, because the list of asyncs 
- * will only be modified in this thread.
+ *              ReadFileEx                (KERNEL32.@)
  */
-static BOOL FILE_StartAsyncRead( HANDLE hFile, LPOVERLAPPED overlapped, LPVOID buffer, DWORD count)
+BOOL WINAPI ReadFileEx(HANDLE hFile, LPVOID buffer, DWORD bytesToRead,
+			 LPOVERLAPPED overlapped, 
+			 LPOVERLAPPED_COMPLETION_ROUTINE lpCompletionRoutine)
 {
     async_private *ovp;
     int fd, timeout, ret;
+
+    TRACE("file %d to buf %p num %ld %p func %p\n",
+	  hFile, buffer, bytesToRead, overlapped, lpCompletionRoutine);
+
+    /* check that there is an overlapped struct with an event flag */
+    if ( (overlapped==NULL) || NtResetEvent( overlapped->hEvent, NULL ) )
+    {
+        TRACE("Overlapped not specified or invalid event flag\n");
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+
+    overlapped->Offset       = 0;
+    overlapped->OffsetHigh   = bytesToRead; /* FIXME: wrong */
+    overlapped->Internal     = STATUS_PENDING;
+    overlapped->InternalHigh = 0;
 
     /* 
      * Although the overlapped transfer will be done in this thread
@@ -1301,7 +1316,7 @@ static BOOL FILE_StartAsyncRead( HANDLE hFile, LPOVERLAPPED overlapped, LPVOID b
      */
     SERVER_START_REQ(create_async)
     {
-        req->count = count;
+        req->count = bytesToRead;
         req->type = ASYNC_TYPE_READ;
         req->file_handle = hFile;
         ret = SERVER_CALL();
@@ -1325,6 +1340,7 @@ static BOOL FILE_StartAsyncRead( HANDLE hFile, LPOVERLAPPED overlapped, LPVOID b
     if(!ovp)
     {
         TRACE("HeapAlloc Failed\n");
+        SetLastError(ERROR_NOT_ENOUGH_MEMORY);
         close(fd);
         return FALSE;
     }
@@ -1346,21 +1362,8 @@ static BOOL FILE_StartAsyncRead( HANDLE hFile, LPOVERLAPPED overlapped, LPVOID b
 
     SetLastError(ERROR_IO_PENDING);
 
-    return TRUE;
-}
-
-/***********************************************************************
- *              ReadFileEx                (KERNEL32.@)
- */
-BOOL WINAPI ReadFileEx(HANDLE hFile, LPVOID lpBuffer, DWORD numtoread,
-			 LPOVERLAPPED lpOverlapped, 
-			 LPOVERLAPPED_COMPLETION_ROUTINE lpCompletionRoutine)
-{
-
-    FIXME("file %d to buf %p num %ld %p func %p stub\n",
-	  hFile, lpBuffer, numtoread, lpOverlapped, lpCompletionRoutine);
-    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-    return 0;
+    /* always fail on return, either ERROR_IO_PENDING or other error */
+    return FALSE;
 }
 
 /***********************************************************************
@@ -1379,27 +1382,7 @@ BOOL WINAPI ReadFile( HANDLE hFile, LPVOID buffer, DWORD bytesToRead,
 
     /* this will only have impact if the overlapped structure is specified */
     if ( overlapped )
-    {
-        /* if overlapped, check that there is an event flag */
-        if ( (overlapped->hEvent == 0) ||
-           (overlapped->hEvent == INVALID_HANDLE_VALUE) )
-        {
-            SetLastError(ERROR_INVALID_PARAMETER);
-            return FALSE;
-        }
-
-        overlapped->Offset       = 0;
-        overlapped->OffsetHigh   = bytesToRead;
-        overlapped->Internal = STATUS_PENDING;
-        overlapped->InternalHigh = 0;
-
-        NtResetEvent( overlapped->hEvent, NULL );
-
-        FILE_StartAsyncRead(hFile, overlapped, buffer, bytesToRead);
-
-        /* always fail on return, either ERROR_IO_PENDING or other error */
-        return FALSE;
-    }
+        return ReadFileEx(hFile, buffer, bytesToRead, overlapped, NULL);
 
     unix_handle = FILE_GetUnixHandle( hFile, GENERIC_READ );
     if (unix_handle == -1) return FALSE;
@@ -1479,17 +1462,33 @@ async_end:
 }
 
 /***********************************************************************
- *             FILE_StartAsyncWrite      (INTERNAL)
+ *              WriteFileEx                (KERNEL32.@)
  */
-static BOOL FILE_StartAsyncWrite(HANDLE hFile, LPOVERLAPPED overlapped, LPCVOID buffer,DWORD count)
+BOOL WINAPI WriteFileEx(HANDLE hFile, LPCVOID buffer, DWORD bytesToWrite,
+			 LPOVERLAPPED overlapped, 
+			 LPOVERLAPPED_COMPLETION_ROUTINE lpCompletionRoutine)
 {
-    /* don't need thread safety, because the list will only be modified in this thread */
-    async_private *ovp = (async_private*) HeapAlloc(GetProcessHeap(), 0, sizeof (async_private));
+    async_private *ovp;
     int timeout,ret;
 
+    TRACE("file %d to buf %p num %ld %p func %p stub\n",
+	  hFile, buffer, bytesToWrite, overlapped, lpCompletionRoutine);
+
+    if ( (overlapped == NULL) || NtResetEvent( overlapped->hEvent, NULL ) )
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+
+    overlapped->Offset       = 0;
+    overlapped->OffsetHigh   = bytesToWrite;
+    overlapped->Internal     = STATUS_PENDING;
+    overlapped->InternalHigh = 0;
+
+    /* need to check the server to get the timeout info */
     SERVER_START_REQ(create_async)
     {
-        req->count = count;
+        req->count = bytesToWrite;
         req->type = ASYNC_TYPE_WRITE;
         req->file_handle = hFile;
         ret = SERVER_CALL();
@@ -1497,9 +1496,18 @@ static BOOL FILE_StartAsyncWrite(HANDLE hFile, LPOVERLAPPED overlapped, LPCVOID 
     }
     SERVER_END_REQ;
     if (ret)
+    {
+        TRACE("server call failed\n");
         return FALSE;
+    }
 
-    /* need to register the overlapped with the server, get a file handle and the timeout info */
+    ovp = (async_private*) HeapAlloc(GetProcessHeap(), 0, sizeof (async_private));
+    if(!ovp)
+    {
+        TRACE("HeapAlloc Failed\n");
+        SetLastError(ERROR_NOT_ENOUGH_MEMORY);
+        return FALSE;
+    }
     ovp->lpOverlapped = overlapped;
     ovp->timeout = timeout;
     gettimeofday(&ovp->tv,NULL);
@@ -1523,20 +1531,8 @@ static BOOL FILE_StartAsyncWrite(HANDLE hFile, LPOVERLAPPED overlapped, LPCVOID 
 
     SetLastError(ERROR_IO_PENDING);
 
-    return TRUE;
-}
-
-/***********************************************************************
- *              WriteFileEx                (KERNEL32.@)
- */
-BOOL WINAPI WriteFileEx(HANDLE hFile, LPCVOID lpBuffer, DWORD numtowrite,
-			 LPOVERLAPPED lpOverlapped, 
-			 LPOVERLAPPED_COMPLETION_ROUTINE lpCompletionRoutine)
-{
-    FIXME("file %d to buf %p num %ld %p func %p stub\n",
-	  hFile, lpBuffer, numtowrite, lpOverlapped, lpCompletionRoutine);
-    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-    return 0;
+    /* always fail on return, either ERROR_IO_PENDING or other error */
+    return FALSE;
 }
 
 /***********************************************************************
@@ -1555,26 +1551,7 @@ BOOL WINAPI WriteFile( HANDLE hFile, LPCVOID buffer, DWORD bytesToWrite,
 
     /* this will only have impact if the overlappd structure is specified */
     if ( overlapped )
-    {
-        if ( (overlapped->hEvent == 0) ||
-             (overlapped->hEvent == INVALID_HANDLE_VALUE) )
-        {
-            SetLastError(ERROR_INVALID_PARAMETER);
-            return FALSE;
-        }
-
-        overlapped->Offset       = 0;
-        overlapped->OffsetHigh   = bytesToWrite;
-        overlapped->Internal = STATUS_PENDING;
-        overlapped->InternalHigh = 0;
-
-        NtResetEvent( overlapped->hEvent, NULL );
-
-        FILE_StartAsyncWrite(hFile, overlapped, buffer, bytesToWrite);
-
-        /* always fail on return, either ERROR_IO_PENDING or other error */
-        return FALSE;
-    }
+        return WriteFileEx(hFile, buffer, bytesToWrite, overlapped, NULL);
 
     unix_handle = FILE_GetUnixHandle( hFile, GENERIC_WRITE );
     if (unix_handle == -1) return FALSE;
