@@ -28,13 +28,13 @@
 WINE_DEFAULT_DEBUG_CHANNEL(reg);
 
 DWORD (WINAPI *pRegCloseKey)(HKEY);
-DWORD (WINAPI *pRegCreateKeyA)(HKEY,LPCSTR,LPHKEY);
+DWORD (WINAPI *pRegCreateKeyA)(HKEY,LPCSTR,PHKEY);
 DWORD (WINAPI *pRegDeleteKeyA)(HKEY,LPCSTR);
 DWORD (WINAPI *pRegDeleteValueA)(HKEY,LPCSTR);
 DWORD (WINAPI *pRegEnumKeyA)(HKEY,DWORD,LPSTR,DWORD);
 DWORD (WINAPI *pRegEnumValueA)(HKEY,DWORD,LPSTR,LPDWORD,LPDWORD,LPDWORD,LPBYTE,LPDWORD);
 DWORD (WINAPI *pRegFlushKey)(HKEY);
-DWORD (WINAPI *pRegOpenKeyA)(HKEY,LPCSTR,LPHKEY);
+DWORD (WINAPI *pRegOpenKeyA)(HKEY,LPCSTR,PHKEY);
 DWORD (WINAPI *pRegQueryValueA)(HKEY,LPCSTR,LPSTR,LPLONG);
 DWORD (WINAPI *pRegQueryValueExA)(HKEY,LPCSTR,LPDWORD,LPDWORD,LPBYTE,LPDWORD);
 DWORD (WINAPI *pRegSetValueA)(HKEY,LPCSTR,DWORD,LPCSTR,DWORD);
@@ -88,7 +88,7 @@ DWORD WINAPI RegEnumKey16( HKEY hkey, DWORD index, LPSTR name, DWORD name_len )
 /******************************************************************************
  *           RegOpenKey   [KERNEL.217]
  */
-DWORD WINAPI RegOpenKey16( HKEY hkey, LPCSTR name, LPHKEY retkey )
+DWORD WINAPI RegOpenKey16( HKEY hkey, LPCSTR name, PHKEY retkey )
 {
     if (!advapi32) init_func_ptrs();
     fix_win16_hkey( &hkey );
@@ -98,7 +98,7 @@ DWORD WINAPI RegOpenKey16( HKEY hkey, LPCSTR name, LPHKEY retkey )
 /******************************************************************************
  *           RegCreateKey   [KERNEL.218]
  */
-DWORD WINAPI RegCreateKey16( HKEY hkey, LPCSTR name, LPHKEY retkey )
+DWORD WINAPI RegCreateKey16( HKEY hkey, LPCSTR name, PHKEY retkey )
 {
     if (!advapi32) init_func_ptrs();
     fix_win16_hkey( &hkey );

@@ -74,7 +74,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(setupapi);
 /***********************************************************************
  *		SURegOpenKey (SETUPX.47)
  */
-DWORD WINAPI SURegOpenKey( HKEY hkey, LPCSTR lpszSubKey, LPHKEY retkey )
+DWORD WINAPI SURegOpenKey( HKEY hkey, LPCSTR lpszSubKey, PHKEY retkey )
 {
     FIXME("(%x,%s,%p), semi-stub.\n",hkey,debugstr_a(lpszSubKey),retkey);
     return RegOpenKeyA( hkey, lpszSubKey, retkey );

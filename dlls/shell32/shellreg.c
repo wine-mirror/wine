@@ -44,7 +44,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(shell);
 HRESULT WINAPI SHRegOpenKeyA(
 	HKEY hKey,
 	LPSTR lpSubKey,
-	LPHKEY phkResult)
+	PHKEY phkResult)
 {
 	TRACE("(0x%08x, %s, %p)\n", hKey, debugstr_a(lpSubKey), phkResult);
 	return RegOpenKeyA(hKey, lpSubKey, phkResult);
@@ -57,7 +57,7 @@ HRESULT WINAPI SHRegOpenKeyA(
 HRESULT WINAPI SHRegOpenKeyW (
 	HKEY hkey,
 	LPCWSTR lpszSubKey,
-	LPHKEY retkey)
+	PHKEY retkey)
 {
 	WARN("0x%04x %s %p\n",hkey,debugstr_w(lpszSubKey),retkey);
 	return RegOpenKeyW( hkey, lpszSubKey, retkey );
@@ -162,7 +162,7 @@ static inline void fix_win16_hkey( HKEY *hkey )
 /******************************************************************************
  *           RegOpenKey   [SHELL.1]
  */
-DWORD WINAPI RegOpenKey16( HKEY hkey, LPCSTR name, LPHKEY retkey )
+DWORD WINAPI RegOpenKey16( HKEY hkey, LPCSTR name, PHKEY retkey )
 {
     fix_win16_hkey( &hkey );
     return RegOpenKeyA( hkey, name, retkey );
@@ -171,7 +171,7 @@ DWORD WINAPI RegOpenKey16( HKEY hkey, LPCSTR name, LPHKEY retkey )
 /******************************************************************************
  *           RegCreateKey   [SHELL.2]
  */
-DWORD WINAPI RegCreateKey16( HKEY hkey, LPCSTR name, LPHKEY retkey )
+DWORD WINAPI RegCreateKey16( HKEY hkey, LPCSTR name, PHKEY retkey )
 {
     fix_win16_hkey( &hkey );
     return RegCreateKeyA( hkey, name, retkey );

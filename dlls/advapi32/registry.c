@@ -160,7 +160,7 @@ inline static HKEY get_special_root_hkey( HKEY hkey )
  */
 DWORD WINAPI RegCreateKeyExW( HKEY hkey, LPCWSTR name, DWORD reserved, LPWSTR class,
                               DWORD options, REGSAM access, SECURITY_ATTRIBUTES *sa,
-                              LPHKEY retkey, LPDWORD dispos )
+                              PHKEY retkey, LPDWORD dispos )
 {
     OBJECT_ATTRIBUTES attr;
     UNICODE_STRING nameW, classW;
@@ -190,7 +190,7 @@ DWORD WINAPI RegCreateKeyExW( HKEY hkey, LPCWSTR name, DWORD reserved, LPWSTR cl
  */
 DWORD WINAPI RegCreateKeyExA( HKEY hkey, LPCSTR name, DWORD reserved, LPSTR class,
                               DWORD options, REGSAM access, SECURITY_ATTRIBUTES *sa,
-                              LPHKEY retkey, LPDWORD dispos )
+                              PHKEY retkey, LPDWORD dispos )
 {
     OBJECT_ATTRIBUTES attr;
     UNICODE_STRING classW;
@@ -227,7 +227,7 @@ DWORD WINAPI RegCreateKeyExA( HKEY hkey, LPCSTR name, DWORD reserved, LPSTR clas
 /******************************************************************************
  *           RegCreateKeyW   [ADVAPI32.@]
  */
-DWORD WINAPI RegCreateKeyW( HKEY hkey, LPCWSTR name, LPHKEY retkey )
+DWORD WINAPI RegCreateKeyW( HKEY hkey, LPCWSTR name, PHKEY retkey )
 {
     /* FIXME: previous implementation converted ERROR_INVALID_HANDLE to ERROR_BADKEY, */
     /* but at least my version of NT (4.0 SP5) doesn't do this.  -- AJ */
@@ -239,7 +239,7 @@ DWORD WINAPI RegCreateKeyW( HKEY hkey, LPCWSTR name, LPHKEY retkey )
 /******************************************************************************
  *           RegCreateKeyA   [ADVAPI32.@]
  */
-DWORD WINAPI RegCreateKeyA( HKEY hkey, LPCSTR name, LPHKEY retkey )
+DWORD WINAPI RegCreateKeyA( HKEY hkey, LPCSTR name, PHKEY retkey )
 {
     return RegCreateKeyExA( hkey, name, 0, NULL, REG_OPTION_NON_VOLATILE,
                             KEY_ALL_ACCESS, NULL, retkey, NULL );
@@ -268,7 +268,7 @@ DWORD WINAPI RegCreateKeyA( HKEY hkey, LPCSTR name, LPHKEY retkey )
  * NOTES
  *  in case of failing is retkey = 0
  */
-DWORD WINAPI RegOpenKeyExW( HKEY hkey, LPCWSTR name, DWORD reserved, REGSAM access, LPHKEY retkey )
+DWORD WINAPI RegOpenKeyExW( HKEY hkey, LPCWSTR name, DWORD reserved, REGSAM access, PHKEY retkey )
 {
     OBJECT_ATTRIBUTES attr;
     UNICODE_STRING nameW;
@@ -289,7 +289,7 @@ DWORD WINAPI RegOpenKeyExW( HKEY hkey, LPCWSTR name, DWORD reserved, REGSAM acce
 /******************************************************************************
  *           RegOpenKeyExA   [ADVAPI32.@]
  */
-DWORD WINAPI RegOpenKeyExA( HKEY hkey, LPCSTR name, DWORD reserved, REGSAM access, LPHKEY retkey )
+DWORD WINAPI RegOpenKeyExA( HKEY hkey, LPCSTR name, DWORD reserved, REGSAM access, PHKEY retkey )
 {
     OBJECT_ATTRIBUTES attr;
     STRING nameA;
@@ -331,7 +331,7 @@ DWORD WINAPI RegOpenKeyExA( HKEY hkey, LPCSTR name, DWORD reserved, REGSAM acces
  * NOTES
  *  in case of failing is retkey = 0
  */
-DWORD WINAPI RegOpenKeyW( HKEY hkey, LPCWSTR name, LPHKEY retkey )
+DWORD WINAPI RegOpenKeyW( HKEY hkey, LPCWSTR name, PHKEY retkey )
 {
     return RegOpenKeyExW( hkey, name, 0, KEY_ALL_ACCESS, retkey );
 }
@@ -340,7 +340,7 @@ DWORD WINAPI RegOpenKeyW( HKEY hkey, LPCWSTR name, LPHKEY retkey )
 /******************************************************************************
  *           RegOpenKeyA   [ADVAPI32.@]
  */
-DWORD WINAPI RegOpenKeyA( HKEY hkey, LPCSTR name, LPHKEY retkey )
+DWORD WINAPI RegOpenKeyA( HKEY hkey, LPCSTR name, PHKEY retkey )
 {
     return RegOpenKeyExA( hkey, name, 0, KEY_ALL_ACCESS, retkey );
 }
@@ -1793,7 +1793,7 @@ DWORD WINAPI RegFlushKey( HKEY hkey )
  *    phkResult     [I] Address of buffer for remote registry handle
  */
 LONG WINAPI RegConnectRegistryW( LPCWSTR lpMachineName, HKEY hKey,
-                                   LPHKEY phkResult )
+                                   PHKEY phkResult )
 {
     TRACE("(%s,%x,%p): stub\n",debugstr_w(lpMachineName),hKey,phkResult);
 
@@ -1810,7 +1810,7 @@ LONG WINAPI RegConnectRegistryW( LPCWSTR lpMachineName, HKEY hKey,
 /******************************************************************************
  * RegConnectRegistryA [ADVAPI32.@]
  */
-LONG WINAPI RegConnectRegistryA( LPCSTR machine, HKEY hkey, LPHKEY reskey )
+LONG WINAPI RegConnectRegistryA( LPCSTR machine, HKEY hkey, PHKEY reskey )
 {
     LPWSTR machineW = HEAP_strdupAtoW( GetProcessHeap(), 0, machine );
     DWORD ret = RegConnectRegistryW( machineW, hkey, reskey );

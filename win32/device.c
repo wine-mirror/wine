@@ -662,7 +662,7 @@ inline static HKEY get_special_root_hkey( HKEY hkey )
 /******************************************************************************
  *           VMM_RegCreateKeyA
  */
-static DWORD VMM_RegCreateKeyA( HKEY hkey, LPCSTR name, LPHKEY retkey )
+static DWORD VMM_RegCreateKeyA( HKEY hkey, LPCSTR name, PHKEY retkey )
 {
     OBJECT_ATTRIBUTES attr;
     UNICODE_STRING nameW;
@@ -692,7 +692,7 @@ static DWORD VMM_RegCreateKeyA( HKEY hkey, LPCSTR name, LPHKEY retkey )
 /******************************************************************************
  *           VMM_RegOpenKeyExA
  */
-DWORD WINAPI VMM_RegOpenKeyExA(HKEY hkey, LPCSTR name, DWORD reserved, REGSAM access, LPHKEY retkey)
+DWORD WINAPI VMM_RegOpenKeyExA(HKEY hkey, LPCSTR name, DWORD reserved, REGSAM access, PHKEY retkey)
 {
     OBJECT_ATTRIBUTES attr;
     UNICODE_STRING nameW;
@@ -1125,7 +1125,7 @@ static DWORD VxDCall_VMM( DWORD service, CONTEXT86 *context )
     {
         HKEY    hkey       = (HKEY)  stack32_pop( context );
         LPCSTR  lpszSubKey = (LPCSTR)stack32_pop( context );
-        LPHKEY  retkey     = (LPHKEY)stack32_pop( context );
+        PHKEY   retkey     = (PHKEY)stack32_pop( context );
         return VMM_RegOpenKeyExA( hkey, lpszSubKey, 0, KEY_ALL_ACCESS, retkey );
     }
 
@@ -1133,7 +1133,7 @@ static DWORD VxDCall_VMM( DWORD service, CONTEXT86 *context )
     {
         HKEY    hkey       = (HKEY)  stack32_pop( context );
         LPCSTR  lpszSubKey = (LPCSTR)stack32_pop( context );
-        LPHKEY  retkey     = (LPHKEY)stack32_pop( context );
+        PHKEY   retkey     = (PHKEY)stack32_pop( context );
         return VMM_RegCreateKeyA( hkey, lpszSubKey, retkey );
     }
 

@@ -1129,7 +1129,7 @@ BOOL WINAPI SHLWAPI_171(LPVOID x, LPVOID y)
  *   IInternetSecurityMgrSite
  *   IShellView
  */
-HRESULT WINAPI SHLWAPI_172(IUnknown *lpUnknown, LPHWND lphWnd)
+HRESULT WINAPI SHLWAPI_172(IUnknown *lpUnknown, PHWND lphWnd)
 {
   /* FIXME: Wine has no header for this object */
   static const GUID IID_IInternetSecurityMgrSite = { 0x79eac9ed,

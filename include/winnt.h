@@ -564,24 +564,23 @@ typedef DWORD		EXECUTION_STATE;
 typedef VOID*           HANDLE;
 #define DECLARE_OLD_HANDLE(a) \
     typedef struct a##__ { int unused; } *a; \
-    typedef a          *P##a,       *LP##a
-
+    typedef a *P##a
 #else
 typedef UINT            HANDLE;
 #define DECLARE_OLD_HANDLE(a) \
-    typedef HANDLE      a; \
-    typedef a          *P##a,       *LP##a
+    typedef HANDLE a; \
+    typedef a *P##a
 #endif
 typedef HANDLE         *PHANDLE,    *LPHANDLE;
 
 #ifdef STRICT
 #define DECLARE_HANDLE(a) \
     typedef struct a##__ { int unused; } *a; \
-    typedef a          *P##a,       *LP##a
+    typedef a *P##a
 #else /*STRICT*/
 #define DECLARE_HANDLE(a) \
-    typedef HANDLE      a; \
-    typedef a          *P##a,       *LP##a
+    typedef HANDLE a; \
+    typedef a *P##a
 #endif /*STRICT*/
 
 /* Defines */
