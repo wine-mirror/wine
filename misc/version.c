@@ -311,18 +311,18 @@ DWORD VERSION_GetLinkedDllVersion(PDB *pdb)
  */
 WINDOWS_VERSION VERSION_GetVersion(void)
 {
-	PDB *pdb = PROCESS_Current();
+        static WORD winver = 0xffff;
+
 	if (versionForced) /* user has overridden any sensible checks */
 	  return defaultWinVersion;
 
-	if (pdb->winver == 0xffff) /* to be determined */ {
-	  WINDOWS_VERSION retver = VERSION_GetLinkedDllVersion(pdb);
+	if (winver == 0xffff) /* to be determined */ {
+	  WINDOWS_VERSION retver = VERSION_GetLinkedDllVersion( PROCESS_Current() );
 
-	  if (retver != WIN31)
-	    pdb->winver = retver;
+	  if (retver != WIN31) winver = retver;
 	  return retver;
 	}
-	return pdb->winver;
+	return winver;
 }
 
 /**********************************************************************

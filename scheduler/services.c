@@ -8,10 +8,9 @@
 #include <unistd.h>
 
 #include "services.h"
-#include "process.h"
 #include "debugtools.h"
 
-DEFAULT_DEBUG_CHANNEL(timer)
+DEFAULT_DEBUG_CHANNEL(timer);
 
 typedef struct _SERVICE
 {
@@ -25,19 +24,15 @@ typedef struct _SERVICE
    HANDLE         	object;
 } SERVICE;
 
-typedef struct _SERVICETABLE
-{
-   HANDLE	     	thread;
 
-   SERVICE 		*first;
-   DWORD    		counter;
-
-} SERVICETABLE;
+static HANDLE service_thread;
+static SERVICE *service_first;
+static DWORD service_counter;
  
 /***********************************************************************
  *           SERVICE_Loop
  */
-static DWORD CALLBACK SERVICE_Loop( SERVICETABLE *service )
+static DWORD CALLBACK SERVICE_Loop( void *dummy )
 {
     HANDLE 	handles[MAXIMUM_WAIT_OBJECTS];
     int 	count = 0;
@@ -55,7 +50,7 @@ static DWORD CALLBACK SERVICE_Loop( SERVICETABLE *service )
 
         callback = NULL;
         callback_arg = 0L;
-        for ( s = service->first; s; s = s->next )
+        for ( s = service_first; s; s = s->next )
         {
             if (s->disabled) continue;
 
@@ -86,7 +81,7 @@ static DWORD CALLBACK SERVICE_Loop( SERVICETABLE *service )
         HeapLock( GetProcessHeap() );
 
         count = 0;
-        for ( s = service->first; s; s = s->next )
+        for ( s = service_first; s; s = s->next )
         {
             if (s->disabled) continue;
 
@@ -114,33 +109,19 @@ static DWORD CALLBACK SERVICE_Loop( SERVICETABLE *service )
  */
 static	BOOL	SERVICE_CreateServiceTable( void )
 {
-    HANDLE 		thread;
-    SERVICETABLE	*service_table;
-    PDB			*pdb = PROCESS_Current();
-
-    service_table = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(SERVICETABLE) );
-    if ( !service_table )
-    {
-        return FALSE;
-    }
-
-    /* service_table field in PDB must be set *BEFORE* calling CreateThread
+    /* service_thread must be set *BEFORE* calling CreateThread
      * otherwise the thread cleanup service will cause an infinite recursion
      * when installed
      */
-    pdb->service_table = service_table;
+    service_thread = INVALID_HANDLE_VALUE;
 
-    thread = CreateThread( NULL, 0, (LPTHREAD_START_ROUTINE)SERVICE_Loop, 
-                           service_table, 0, NULL );
-    if ( thread == INVALID_HANDLE_VALUE )
+    service_thread = CreateThread( NULL, 0, (LPTHREAD_START_ROUTINE)SERVICE_Loop, 
+                                   NULL, 0, NULL );
+    if ( service_thread == INVALID_HANDLE_VALUE )
     {
-        pdb->service_table = 0;
-	HeapFree( GetProcessHeap(), 0, service_table );
+        service_thread = 0;
         return FALSE;
     }
-    
-    service_table->thread = thread;
-
     return TRUE;
 }
 
@@ -155,15 +136,12 @@ HANDLE SERVICE_AddObject( HANDLE object,
                           PAPCFUNC callback, ULONG_PTR callback_arg )
 {
     SERVICE 		*s;
-    SERVICETABLE 	*service_table;
     HANDLE 		handle;
 
     if ( object == INVALID_HANDLE_VALUE || !callback ) 
         return INVALID_HANDLE_VALUE;
 
-    if (PROCESS_Current()->service_table == 0 && !SERVICE_CreateServiceTable())
-       return INVALID_HANDLE_VALUE;
-    service_table = PROCESS_Current()->service_table;
+    if (!service_thread && !SERVICE_CreateServiceTable()) return INVALID_HANDLE_VALUE;
 
     s = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(SERVICE) );
     if ( !s ) return INVALID_HANDLE_VALUE;
@@ -175,13 +153,13 @@ HANDLE SERVICE_AddObject( HANDLE object,
 
     HeapLock( GetProcessHeap() );
 
-    s->self = handle = (HANDLE)++service_table->counter;
-    s->next = service_table->first;
-    service_table->first = s;
+    s->self = handle = (HANDLE)++service_counter;
+    s->next = service_first;
+    service_first = s;
 
     HeapUnlock( GetProcessHeap() );
 
-    QueueUserAPC( NULL, service_table->thread, 0L );
+    QueueUserAPC( NULL, service_thread, 0L );
 
     return handle;
 }
@@ -225,15 +203,10 @@ BOOL SERVICE_Delete( HANDLE service )
     HANDLE 		handle = INVALID_HANDLE_VALUE;
     BOOL 		retv = FALSE;
     SERVICE 		**s, *next;
-    SERVICETABLE 	*service_table;
-
-    /* service table must have been created on previous SERVICE_Add??? call */
-    if ((service_table = PROCESS_Current()->service_table) == 0)
-       return retv;
 
     HeapLock( GetProcessHeap() );
 
-    for ( s = &service_table->first; *s; s = &(*s)->next )
+    for ( s = &service_first; *s; s = &(*s)->next )
     {
         if ( (*s)->self == service )
         {
@@ -251,7 +224,7 @@ BOOL SERVICE_Delete( HANDLE service )
     if ( handle != INVALID_HANDLE_VALUE )
         CloseHandle( handle );
 
-    QueueUserAPC( NULL, service_table->thread, 0L );
+    QueueUserAPC( NULL, service_thread, 0L );
 
     return retv;
 }
@@ -263,15 +236,10 @@ BOOL SERVICE_Enable( HANDLE service )
 {
     BOOL 		retv = FALSE;
     SERVICE 		*s;
-    SERVICETABLE 	*service_table;
-
-    /* service table must have been created on previous SERVICE_Add??? call */
-    if ((service_table = PROCESS_Current()->service_table) == 0)
-       return retv;
 
     HeapLock( GetProcessHeap() );
 
-    for ( s = service_table->first; s; s = s->next ) 
+    for ( s = service_first; s; s = s->next ) 
     {
         if ( s->self == service )
         {
@@ -283,7 +251,7 @@ BOOL SERVICE_Enable( HANDLE service )
 
     HeapUnlock( GetProcessHeap() );
 
-    QueueUserAPC( NULL, service_table->thread, 0L );
+    QueueUserAPC( NULL, service_thread, 0L );
 
     return retv;
 }
@@ -295,15 +263,10 @@ BOOL SERVICE_Disable( HANDLE service )
 {
     BOOL 		retv = TRUE;
     SERVICE 		*s;
-    SERVICETABLE 	*service_table;
-
-    /* service table must have been created on previous SERVICE_Add??? call */
-    if ((service_table = PROCESS_Current()->service_table) == 0)
-       return retv;
 
     HeapLock( GetProcessHeap() );
 
-    for ( s = service_table->first; s; s = s->next ) 
+    for ( s = service_first; s; s = s->next ) 
     {
         if ( s->self == service )
         {
@@ -315,7 +278,7 @@ BOOL SERVICE_Disable( HANDLE service )
 
     HeapUnlock( GetProcessHeap() );
 
-    QueueUserAPC( NULL, service_table->thread, 0L );
+    QueueUserAPC( NULL, service_thread, 0L );
 
     return retv;
 }
