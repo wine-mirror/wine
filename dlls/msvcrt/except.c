@@ -84,7 +84,7 @@ inline static DWORD call_filter( void *func, void *arg, void *ebp )
 
 static DWORD MSVCRT_nested_handler(PEXCEPTION_RECORD rec,
                                    EXCEPTION_REGISTRATION_RECORD* frame,
-                                   PCONTEXT context WINE_UNUSED,
+                                   PCONTEXT context,
                                    EXCEPTION_REGISTRATION_RECORD** dispatch)
 {
   if (rec->ExceptionFlags & 0x6)

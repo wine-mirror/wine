@@ -129,8 +129,7 @@ static int compare_info(LCID lcid, DWORD flags, char* buff, const char* cmp)
 }
 
 static BOOL CALLBACK
-find_best_locale_proc(HMODULE hModule WINE_UNUSED, LPCSTR type WINE_UNUSED,
-                      LPCSTR name WINE_UNUSED, WORD LangID, LONG lParam)
+find_best_locale_proc(HMODULE hModule, LPCSTR type, LPCSTR name, WORD LangID, LONG lParam)
 {
   locale_search_t *res = (locale_search_t *)lParam;
   const LCID lcid = MAKELCID(LangID, SORT_DEFAULT);
