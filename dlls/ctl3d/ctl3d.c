@@ -21,13 +21,17 @@
 #include "wine/winbase16.h"
 #include "wine/winuser16.h"
 
+static BOOL16 CTL3D16_is_auto_subclass = FALSE;
+
 BOOL16 WINAPI Ctl3dAutoSubclass16(HINSTANCE16 hInst)
 {
+    CTL3D16_is_auto_subclass = TRUE;
     return TRUE;
 }
 
 BOOL16 WINAPI Ctl3dAutoSubclassEx16(HINSTANCE16 hInst, DWORD type)
 {
+    CTL3D16_is_auto_subclass = TRUE;
     return TRUE;
 }
 
@@ -46,7 +50,6 @@ HBRUSH WINAPI Ctl3dCtlColorEx16(UINT16 msg, WPARAM16 wParam, LPARAM lParam)
     return 0;
 }
 
-
 LONG WINAPI Ctl3dDlgFramePaint16(HWND16 hwnd, UINT16 msg, WPARAM16 wParam, LPARAM lParam)
 {
     return DefWindowProc16(hwnd, msg, wParam, lParam);
@@ -64,7 +67,7 @@ WORD WINAPI Ctl3dGetVer16(void)
 
 BOOL16 WINAPI Ctl3dIsAutoSubclass16(void)
 {
-    return FALSE;
+    return CTL3D16_is_auto_subclass;
 }
 
 BOOL16 WINAPI Ctl3dRegister16(HINSTANCE16 hInst)
@@ -94,14 +97,15 @@ BOOL16 WINAPI Ctl3dSubclassDlgEx16(HWND16 hwnd, DWORD types)
 
 BOOL16 WINAPI Ctl3dUnAutoSubclass16(void)
 {
+    CTL3D16_is_auto_subclass = FALSE;
     return FALSE;
 }
 
 BOOL16 WINAPI Ctl3dUnregister16(HINSTANCE16 hInst)
 {
+    CTL3D16_is_auto_subclass = FALSE;
     return TRUE;
 }
-
 
 BOOL16 WINAPI Ctl3dUnsubclassCtl16(HWND16 hwnd)
 {

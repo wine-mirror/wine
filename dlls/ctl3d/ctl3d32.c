@@ -21,13 +21,17 @@
 #include "winbase.h"
 #include "winuser.h"
 
+static BOOL CTL3D_is_auto_subclass = FALSE;
+
 BOOL WINAPI Ctl3dAutoSubclass(HINSTANCE hInst)
 {
+    CTL3D_is_auto_subclass = TRUE;
     return TRUE;
 }
 
 BOOL WINAPI Ctl3dAutoSubclassEx(HINSTANCE hInst, DWORD type)
 {
+    CTL3D_is_auto_subclass = TRUE;
     return TRUE;
 }
 
@@ -46,7 +50,6 @@ HBRUSH WINAPI Ctl3dCtlColorEx(UINT msg, WPARAM wParam, LPARAM lParam)
     return 0;
 }
 
-
 LONG WINAPI Ctl3dDlgFramePaint(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
     return DefWindowProcA(hwnd, msg, wParam, lParam);
@@ -64,7 +67,7 @@ WORD WINAPI Ctl3dGetVer(void)
 
 BOOL WINAPI Ctl3dIsAutoSubclass(void)
 {
-    return FALSE;
+    return CTL3D_is_auto_subclass;
 }
 
 BOOL WINAPI Ctl3dRegister(HINSTANCE hInst)
@@ -94,14 +97,15 @@ BOOL WINAPI Ctl3dSubclassDlgEx(HWND hwnd, DWORD types)
 
 BOOL WINAPI Ctl3dUnAutoSubclass(void)
 {
+    CTL3D_is_auto_subclass = FALSE;
     return FALSE;
 }
 
 BOOL WINAPI Ctl3dUnregister(HINSTANCE hInst)
 {
+    CTL3D_is_auto_subclass = FALSE;
     return TRUE;
 }
-
 
 BOOL WINAPI Ctl3dUnsubclassCtl(HWND hwnd)
 {
