@@ -287,7 +287,7 @@ static void test_lookupPrivilegeName(void)
         luid.LowPart = i;
         cchName = sizeof(buf);
         ret = pLookupPrivilegeNameA(NULL, &luid, buf, &cchName);
-        ok( ret,
+        ok( ret && GetLastError() != ERROR_NO_SUCH_PRIVILEGE,
          "LookupPrivilegeNameA(0.%ld) failed: %ld\n", i, GetLastError());
     }
     /* check a bogus LUID */
