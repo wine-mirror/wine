@@ -985,6 +985,26 @@ BOOL WINAPI GetICMProfileW(HDC hDC, LPDWORD lpcbName, LPWSTR lpszFilename)
 }
 
 /**********************************************************************
+ * GetLogColorSpaceA [GDI32.@]
+ *
+ */
+BOOL WINAPI GetLogColorSpaceA(HCOLORSPACE hColorSpace, LPLOGCOLORSPACEA lpBuffer, DWORD nSize)
+{
+    FIXME("%p %p 0x%08lx: stub!\n", hColorSpace, lpBuffer, nSize);
+    return FALSE;
+}
+
+/**********************************************************************
+ * GetLogColorSpaceW [GDI32.@]
+ *
+ */
+BOOL WINAPI GetLogColorSpaceW(HCOLORSPACE hColorSpace, LPLOGCOLORSPACEW lpBuffer, DWORD nSize)
+{
+    FIXME("%p %p 0x%08lx: stub!\n", hColorSpace, lpBuffer, nSize);
+    return FALSE;
+}
+
+/**********************************************************************
  * SetICMProfileA [GDI32.@]
  *
  */

@@ -232,8 +232,8 @@
 @ stdcall GetKerningPairsA(long long ptr)
 @ stdcall GetKerningPairsW(long long ptr)
 @ stdcall GetLayout(long)
-@ stub GetLogColorSpaceA
-@ stub GetLogColorSpaceW
+@ stdcall GetLogColorSpaceA(long ptr long)
+@ stdcall GetLogColorSpaceW(long ptr long)
 @ stdcall GetMapMode(long)
 @ stdcall GetMetaFileA(str)
 @ stdcall GetMetaFileBitsEx(long long ptr)
