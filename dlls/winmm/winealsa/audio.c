@@ -664,7 +664,7 @@ static void ALSA_TraceParameters(snd_pcm_hw_params_t * hw_params, snd_pcm_sw_par
 	err = snd_pcm_hw_params_get_channels_max(hw_params, &max); 
         TRACE("channels_min=%u, channels_min_max=%u\n", min, max);
       } else {
-        TRACE("channels_min=%d\n", val);
+        TRACE("channels=%d\n", val);
       }
     } while(0);
     do {
@@ -678,7 +678,7 @@ static void ALSA_TraceParameters(snd_pcm_hw_params_t * hw_params, snd_pcm_sw_par
 	err = snd_pcm_hw_params_get_buffer_size_max(hw_params, &max); 
         TRACE("buffer_size_min=%lu, buffer_size_min_max=%lu\n", min, max);
       } else {
-        TRACE("buffer_size_min=%lu\n", val);
+        TRACE("buffer_size=%lu\n", val);
       }
     } while(0);
 
@@ -712,7 +712,7 @@ if (err<0) { \
 	err = snd_pcm_hw_params_get_period_size_max(hw_params, &max, &dir); 
         TRACE("period_size_min=%lu, period_size_min_max=%lu\n", min, max);
       } else {
-        TRACE("period_size_min=%lu\n", val);
+        TRACE("period_size=%lu\n", val);
       }
     } while(0);
 
@@ -1980,7 +1980,7 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
     snd_pcm_hw_params_malloc(&(wwo->hw_params));
     snd_pcm_hw_params_copy(wwo->hw_params, hw_params);
 
-    wwo->dwBufferSize = buffer_size;
+    wwo->dwBufferSize = snd_pcm_frames_to_bytes(pcm, buffer_size);
     wwo->lpQueuePtr = wwo->lpPlayPtr = wwo->lpLoopPtr = NULL;
     wwo->handle = pcm;
     wwo->dwPlayedTotal = wwo->dwWrittenTotal = 0;
@@ -3414,7 +3414,7 @@ static DWORD widOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
     snd_pcm_hw_params_malloc(&(wwi->hw_params));
     snd_pcm_hw_params_copy(wwi->hw_params, hw_params);
 
-    wwi->dwBufferSize = buffer_size;
+    wwi->dwBufferSize = snd_pcm_frames_to_bytes(pcm, buffer_size);
     wwi->lpQueuePtr = wwi->lpPlayPtr = wwi->lpLoopPtr = NULL;
     wwi->handle = pcm;
 
