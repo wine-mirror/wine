@@ -165,6 +165,35 @@ static BOOL decode_streamname(LPWSTR in, LPWSTR out)
     *out = 0;
     return count;
 }
+
+void enum_stream_names( IStorage *stg )
+{
+    IEnumSTATSTG *stgenum = NULL;
+    HRESULT r;
+    STATSTG stat;
+    ULONG n, count;
+    WCHAR name[0x40];
+
+    r = IStorage_EnumElements( stg, 0, NULL, 0, &stgenum );
+    if( FAILED( r ) )
+        return;
+
+    n = 0;
+    while( 1 )
+    {
+        count = 0;
+        r = IEnumSTATSTG_Next( stgenum, 1, &stat, &count );
+        if( FAILED( r ) || !count )
+            break;
+        decode_streamname( stat.pwcsName, name );
+        ERR("stream %2ld -> %s %s\n", n, 
+            debugstr_w(stat.pwcsName), debugstr_w(name) );
+        n++;
+    }
+
+    IEnumSTATSTG_Release( stgenum );
+}
+
 #endif
 
 static UINT read_stream_data( IStorage *stg, LPCWSTR stname,
@@ -190,6 +219,91 @@ static UINT read_stream_data( IStorage *stg, LPCWSTR stname,
         return ret;
     }
 
+    r = IStream_Stat(stm, &stat, STATFLAG_NONAME );
+    if( FAILED( r ) )
+    {
+        ERR("open stream failed r = %08lx!\n",r);
+        goto end;
+    }
+
+    if( stat.cbSize.QuadPart >> 32 )
+    {
+        ERR("Too big!\n");
+        goto end;
+    }
+        
+    sz = stat.cbSize.QuadPart;
+    data = HeapAlloc( GetProcessHeap(), 0, sz );
+    if( !data )
+    {
+        ERR("couldn't allocate memory r=%08lx!\n",r);
+        ret = ERROR_NOT_ENOUGH_MEMORY;
+        goto end;
+    }
+        
+    r = IStream_Read(stm, data, sz, &count );
+    if( FAILED( r ) || ( count != sz ) )
+    {
+        HeapFree( GetProcessHeap(), 0, data );
+        ERR("read stream failed r = %08lx!\n",r);
+        goto end;
+    }
+
+    *pdata = data;
+    *psz = sz;
+    ret = ERROR_SUCCESS;
+
+end:
+    IStream_Release( stm );
+
+    return ret;
+}
+
+UINT db_get_raw_stream( MSIDATABASE *db, LPCWSTR stname, IStream **stm )
+{
+    WCHAR encname[0x20];
+    HRESULT r;
+
+    encode_streamname(FALSE, stname, encname);
+
+    TRACE("%s -> %s\n",debugstr_w(stname),debugstr_w(encname));
+
+    r = IStorage_OpenStream(db->storage, encname, NULL, 
+            STGM_READ | STGM_SHARE_EXCLUSIVE, 0, stm);
+    if( FAILED( r ) )
+    {
+        WARN("open stream failed r = %08lx - empty table?\n",r);
+        return ERROR_FUNCTION_FAILED;
+    }
+
+    return ERROR_SUCCESS;
+}
+
+/* FIXME: we should be passing around pointers to db structures internally */
+UINT get_raw_stream( MSIHANDLE hdb, LPCWSTR stname, IStream **stm )
+{
+    MSIDATABASE *db = msihandle2msiinfo(hdb, MSIHANDLETYPE_DATABASE );
+
+    if ( !db )
+        return ERROR_INVALID_HANDLE;
+
+    return db_get_raw_stream( db, stname, stm );
+}
+
+UINT read_raw_stream_data( MSIHANDLE hdb, LPCWSTR stname,
+                              USHORT **pdata, UINT *psz )
+{
+    HRESULT r;
+    UINT ret = ERROR_FUNCTION_FAILED;
+    VOID *data;
+    ULONG sz, count;
+    IStream *stm = NULL;
+    STATSTG stat;
+
+    r = get_raw_stream( hdb, stname, &stm );
+    if( r != ERROR_SUCCESS)
+        goto end;
+    ret = ERROR_FUNCTION_FAILED;
     r = IStream_Stat(stm, &stat, STATFLAG_NONAME );
     if( FAILED( r ) )
     {
@@ -1253,77 +1367,4 @@ UINT MSI_CommitTables( MSIDATABASE *db )
     free_cached_tables( db );
 
     return ERROR_SUCCESS;
-}
-
-
-UINT read_raw_stream_data( MSIHANDLE hdb, LPCWSTR stname,
-                              USHORT **pdata, UINT *psz )
-{
-    HRESULT r;
-    UINT ret = ERROR_FUNCTION_FAILED;
-    VOID *data;
-    ULONG sz, count;
-    IStream *stm = NULL;
-    IStorage *stg = NULL;
-    STATSTG stat;
-    WCHAR encname[0x20];
-    MSIDATABASE *db;
-
-    db = msihandle2msiinfo(hdb, MSIHANDLETYPE_DATABASE );
-
-    if ( !db )
-        return ERROR_INVALID_HANDLE;
-
-    stg = db->storage;
-
-    encode_streamname(FALSE, stname, encname);
-
-    TRACE("%s -> %s\n",debugstr_w(stname),debugstr_w(encname));
-
-    r = IStorage_OpenStream(stg, encname, NULL, 
-            STGM_READ | STGM_SHARE_EXCLUSIVE, 0, &stm);
-    if( FAILED( r ) )
-    {
-        WARN("open stream failed r = %08lx - empty table?\n",r);
-        return ret;
-    }
-
-    r = IStream_Stat(stm, &stat, STATFLAG_NONAME );
-    if( FAILED( r ) )
-    {
-        ERR("open stream failed r = %08lx!\n",r);
-        goto end;
-    }
-
-    if( stat.cbSize.QuadPart >> 32 )
-    {
-        ERR("Too big!\n");
-        goto end;
-    }
-        
-    sz = stat.cbSize.QuadPart;
-    data = HeapAlloc( GetProcessHeap(), 0, sz );
-    if( !data )
-    {
-        ERR("couldn't allocate memory r=%08lx!\n",r);
-        ret = ERROR_NOT_ENOUGH_MEMORY;
-        goto end;
-    }
-        
-    r = IStream_Read(stm, data, sz, &count );
-    if( FAILED( r ) || ( count != sz ) )
-    {
-        HeapFree( GetProcessHeap(), 0, data );
-        ERR("read stream failed r = %08lx!\n",r);
-        goto end;
-    }
-
-    *pdata = data;
-    *psz = sz;
-    ret = ERROR_SUCCESS;
-
-end:
-    IStream_Release( stm );
-
-    return ret;
 }

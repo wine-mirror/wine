@@ -206,4 +206,10 @@ UINT read_raw_stream_data( MSIHANDLE hdb, LPCWSTR stname,
 UINT ACTION_DoTopLevelINSTALL(MSIHANDLE hPackage, LPCWSTR szPackagePath,
                               LPCWSTR szCommandLine);
 
+extern UINT WINAPI MSI_RecordSetIStream( MSIHANDLE handle, 
+              unsigned int iField, IStream *stm );
+extern UINT get_raw_stream( MSIHANDLE hdb, LPCWSTR stname, IStream **stm );
+extern UINT db_get_raw_stream( MSIDATABASE *db, LPCWSTR stname, IStream **stm );
+
+
 #endif /* __WINE_MSI_PRIVATE__ */

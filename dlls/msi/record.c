@@ -434,6 +434,73 @@ UINT WINAPI MsiRecordSetStreamW(MSIHANDLE hRecord, unsigned int iField, LPCWSTR 
 
 UINT WINAPI MsiRecordReadStream(MSIHANDLE handle, unsigned int iField, char *buf, DWORD *sz)
 {
-    FIXME("%ld %d %p %p\n",handle,iField,buf,sz);
-    return ERROR_CALL_NOT_IMPLEMENTED;
+    MSIRECORD *rec;
+    ULONG count;
+    HRESULT r;
+    IStream *stm;
+
+    TRACE("%ld %d %p %p\n", handle, iField, buf, sz);
+
+    rec = msihandle2msiinfo( handle, MSIHANDLETYPE_RECORD );
+    if( !rec )
+        return ERROR_INVALID_HANDLE;
+
+    if( iField > rec->count )
+        return ERROR_INVALID_FIELD;
+
+    if( rec->fields[iField].type != MSIFIELD_STREAM )
+        return ERROR_INVALID_FIELD;
+
+    stm = rec->fields[iField].u.stream;
+    if( !stm )
+        return ERROR_INVALID_FIELD;
+
+    /* if there's no buffer pointer, calculate the length to the end */
+    if( !buf )
+    {
+        LARGE_INTEGER ofs;
+        ULARGE_INTEGER end, cur;
+
+        ofs.QuadPart = cur.QuadPart = 0;
+        end.QuadPart = 0;
+        r = IStream_Seek( stm, ofs, STREAM_SEEK_SET, &cur );
+        IStream_Seek( stm, ofs, STREAM_SEEK_END, &end );
+        ofs.QuadPart = cur.QuadPart;
+        IStream_Seek( stm, ofs, STREAM_SEEK_SET, &cur );
+        *sz = end.QuadPart - cur.QuadPart;
+
+        return ERROR_SUCCESS;
+    }
+
+    /* read the data */
+    count = 0;
+    r = IStream_Read( stm, buf, *sz, &count );
+    if( FAILED( r ) )
+        return ERROR_FUNCTION_FAILED;
+
+    *sz = count;
+
+    return ERROR_SUCCESS;
+}
+
+UINT WINAPI MSI_RecordSetIStream( MSIHANDLE handle, unsigned int iField, IStream *stm )
+{
+    MSIRECORD *rec;
+
+    TRACE("%ld %d %p\n", handle, iField, stm);
+
+    rec = msihandle2msiinfo( handle, MSIHANDLETYPE_RECORD );
+    if( !rec )
+        return ERROR_INVALID_HANDLE;
+
+    if( iField > rec->count )
+        return ERROR_INVALID_FIELD;
+
+    MSI_FreeField( &rec->fields[iField] );
+
+    rec->fields[iField].type = MSIFIELD_STREAM;
+    rec->fields[iField].u.stream = stm;
+    IStream_AddRef( stm );
+
+    return ERROR_SUCCESS;
 }

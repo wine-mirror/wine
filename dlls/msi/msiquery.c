@@ -24,6 +24,7 @@
 #include "winbase.h"
 #include "winerror.h"
 #include "wine/debug.h"
+#include "wine/unicode.h"
 #include "msi.h"
 #include "msiquery.h"
 #include "objbase.h"
@@ -208,9 +209,38 @@ UINT WINAPI MsiViewFetch(MSIHANDLE hView, MSIHANDLE *record)
 
         if( type & MSITYPE_STRING )
         {
-            LPWSTR sval = MSI_makestring( query->db, ival );
-            MsiRecordSetStringW( handle, i, sval );
-            HeapFree( GetProcessHeap(), 0, sval );
+            LPWSTR sval;
+
+            if( type & MSI_DATASIZEMASK )
+            {
+                sval = MSI_makestring( query->db, ival );
+                MsiRecordSetStringW( handle, i, sval );
+                HeapFree( GetProcessHeap(), 0, sval );
+            }
+            else
+            {
+                UINT refcol = 0;
+                IStream *stm = NULL;
+                WCHAR full_name[0x40];
+                static const WCHAR szBinary[] = { 'B','i','n','a','r','y','.', 0};
+                const int maxlen = (sizeof full_name - sizeof szBinary)/sizeof(WCHAR);
+
+                ret = view->ops->fetch_int( view, query->row, ival, &refcol );
+                sval = MSI_makestring( query->db, refcol );
+
+                if( sval && ( strlenW( sval ) < maxlen ) )
+                {
+                    strcpyW( full_name, szBinary );
+                    strcatW( full_name, sval );
+
+                    db_get_raw_stream( query->db, full_name, &stm );
+                    if( stm )
+                        MSI_RecordSetIStream( handle, i, stm );
+                    else
+                        ERR("failed to get stream\n");
+                    HeapFree( GetProcessHeap(), 0, sval );
+                }
+            }
         }
         else
         {
