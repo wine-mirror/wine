@@ -1424,7 +1424,7 @@ static int save_branch( struct key *key, const char *path )
     else p = tmp;
     for (;;)
     {
-        sprintf( p, "reg%x%04x.tmp", getpid(), count++ );
+        sprintf( p, "reg%lx%04x.tmp", (long) getpid(), count++ );
         if ((fd = open( tmp, O_CREAT | O_EXCL | O_WRONLY, 0666 )) != -1) break;
         if (errno != EEXIST) goto done;
         close( fd );

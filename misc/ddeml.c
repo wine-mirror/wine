@@ -910,7 +910,7 @@ HCONVLIST WINAPI DdeConnectList16( DWORD idInst, HSZ hszService, HSZ hszTopic,
 HCONVLIST WINAPI DdeConnectList( DWORD idInst, HSZ hszService, HSZ hszTopic,
                  HCONVLIST hConvList, LPCONVCONTEXT pCC )
 {
-    FIXME("(%ld,%ld,%ld,%ld,%p): stub\n", idInst, hszService, hszTopic,
+    FIXME("(%ld,%d,%d,%d,%p): stub\n", idInst, hszService, hszTopic,
           hConvList,pCC);
     return 1;
 }
@@ -930,7 +930,7 @@ HCONV WINAPI DdeQueryNextServer16( HCONVLIST hConvList, HCONV hConvPrev )
  */
 HCONV WINAPI DdeQueryNextServer( HCONVLIST hConvList, HCONV hConvPrev )
 {
-    FIXME("(%ld,%ld): stub\n",hConvList,hConvPrev);
+    FIXME("(%d,%d): stub\n",hConvList,hConvPrev);
     return 0;
 }
 
@@ -954,7 +954,7 @@ DWORD WINAPI DdeQueryStringA(DWORD idInst, HSZ hsz, LPSTR psz, DWORD cchMax, INT
     DDE_HANDLE_ENTRY *reference_inst;
 
     FIXME(
-         "(%ld, 0x%lx, %p, %ld, %d): partial stub\n",
+         "(%ld, 0x%x, %p, %ld, %d): partial stub\n",
          idInst,
          hsz,
          psz, 
@@ -1025,7 +1025,7 @@ DWORD WINAPI DdeQueryStringW(DWORD idInst, HSZ hsz, LPWSTR psz, DWORD cchMax, IN
     int factor = 1;
 
     FIXME(
-         "(%ld, 0x%lx, %p, %ld, %d): stub\n",
+         "(%ld, 0x%x, %p, %ld, %d): stub\n",
          idInst,
          hsz,
          psz, 
@@ -1066,7 +1066,7 @@ DWORD WINAPI DdeQueryStringW(DWORD idInst, HSZ hsz, LPWSTR psz, DWORD cchMax, IN
 
 DWORD WINAPI DdeQueryString16(DWORD idInst, HSZ hsz, LPSTR lpsz, DWORD cchMax, INT16 codepage)
 {
-	FIXME("(%ld, 0x%lx, %p, %ld, %d): stub \n", 
+	FIXME("(%ld, 0x%x, %p, %ld, %d): stub \n", 
          idInst,
          hsz,
          lpsz, 
@@ -1095,7 +1095,7 @@ BOOL16 WINAPI DdeDisconnectList16( HCONVLIST hConvList )
 BOOL WINAPI DdeDisconnectList(
     HCONVLIST hConvList) /* [in] Handle to conversation list */
 {
-    FIXME("(%ld): stub\n", hConvList);
+    FIXME("(%d): stub\n", hConvList);
     return TRUE;
 }
 
@@ -1117,7 +1117,7 @@ HCONV WINAPI DdeConnect16( DWORD idInst, HSZ hszService, HSZ hszTopic,
 HCONV WINAPI DdeConnect( DWORD idInst, HSZ hszService, HSZ hszTopic,
                            LPCONVCONTEXT pCC )
 {
-    FIXME("(0x%lx,%ld,%ld,%p): stub\n",idInst,hszService,hszTopic,
+    FIXME("(0x%lx,%d,%d,%p): stub\n",idInst,hszService,hszTopic,
           pCC);
     return 0;
 }
@@ -1136,7 +1136,7 @@ BOOL16 WINAPI DdeDisconnect16( HCONV hConv )
  */
 BOOL16 WINAPI DdeSetUserHandle16( HCONV hConv, DWORD id, DWORD hUser )
 {
-    FIXME("(%ld,%ld,%ld): stub\n",hConv,id, hUser );
+    FIXME("(%d,%ld,%ld): stub\n",hConv,id, hUser );
     return 0;
 }
 
@@ -1164,7 +1164,7 @@ HDDEDATA WINAPI DdeCreateDataHandle( DWORD idInst, LPBYTE pSrc, DWORD cb,
                                        UINT afCmd )
 {
     FIXME(
-          "(%ld,%p,%ld,%ld,0x%lx,%d,%d): stub\n",
+          "(%ld,%p,%ld,%ld,0x%x,%d,%d): stub\n",
           idInst,
           pSrc,
           cb,
@@ -1276,7 +1276,7 @@ HSZ WINAPI DdeCreateStringHandleA( DWORD idInst, LPCSTR psz, INT codepage )
       /* Save the handle so we know to clean it when
        * uninitialize is called.
        */
-      TRACE("added atom %s with HSZ 0x%lx, \n",debugstr_a(psz),hsz);
+      TRACE("added atom %s with HSZ 0x%x, \n",debugstr_a(psz),hsz);
       InsertHSZNode( hsz, reference_inst );
       if ( Release_reserved_mutex(handle_mutex,"handle_mutex",FALSE,FALSE,reference_inst)) 
 	{
@@ -1378,7 +1378,7 @@ HSZ WINAPI DdeCreateStringHandleW(
  */
 BOOL16 WINAPI DdeFreeStringHandle16( DWORD idInst, HSZ hsz )
 {
-	FIXME("idInst %ld hsz 0x%lx\n",idInst,hsz);
+	FIXME("idInst %ld hsz 0x%x\n",idInst,hsz);
     return (BOOL)DdeFreeStringHandle( idInst, hsz );
 }
 
@@ -1401,7 +1401,7 @@ BOOL16 WINAPI DdeFreeStringHandle16( DWORD idInst, HSZ hsz )
 BOOL WINAPI DdeFreeStringHandle( DWORD idInst, HSZ hsz )
 {
     DDE_HANDLE_ENTRY *reference_inst;
-    TRACE("(%ld,%ld): \n",idInst,hsz);
+    TRACE("(%ld,%d): \n",idInst,hsz);
   if ( DDE_Max_Assigned_Instance == 0 )
 {
           /*  Nothing has been initialised - exit now ! can return TRUE since effect is the same */
@@ -1486,7 +1486,7 @@ BOOL WINAPI DdeKeepStringHandle( DWORD idInst, HSZ hsz )
 {
 
   DDE_HANDLE_ENTRY *reference_inst;
-  TRACE("(%ld,%ld): \n",idInst,hsz);
+  TRACE("(%ld,%d): \n",idInst,hsz);
   if ( DDE_Max_Assigned_Instance == 0 )
   {
           /*  Nothing has been initialised - exit now ! can return FALSE since effect is the same */
@@ -1595,7 +1595,7 @@ BOOL WINAPI DdePostAdvise(
     HSZ hszTopic, /* [in] Handle to topic name string */
     HSZ hszItem)  /* [in] Handle to item name string */
 {
-    FIXME("(%ld,%ld,%ld): stub\n",idInst,hszTopic,hszItem);
+    FIXME("(%ld,%d,%d): stub\n",idInst,hszTopic,hszItem);
     return TRUE;
 }
 
@@ -1701,7 +1701,7 @@ DWORD WINAPI DdeGetData(
     DWORD cbMax,    /* [in] Amount of data to copy */
     DWORD cbOff)    /* [in] Offset to beginning of data */
 {
-    FIXME("(%ld,%p,%ld,%ld): stub\n",hData,pDst,cbMax,cbOff);
+    FIXME("(%d,%p,%ld,%ld): stub\n",hData,pDst,cbMax,cbOff);
     return cbMax;
 }
 
@@ -1732,7 +1732,7 @@ LPBYTE WINAPI DdeAccessData16( HDDEDATA hData, LPDWORD pcbDataSize )
  */
 LPBYTE WINAPI DdeAccessData( HDDEDATA hData, LPDWORD pcbDataSize )
 {
-     FIXME("(%ld,%p): stub\n", hData, pcbDataSize);
+     FIXME("(%d,%p): stub\n", hData, pcbDataSize);
      return 0;
 }
 
@@ -1749,7 +1749,7 @@ BOOL16 WINAPI DdeUnaccessData16( HDDEDATA hData )
  */
 BOOL WINAPI DdeUnaccessData( HDDEDATA hData )
 {
-     FIXME("(0x%lx): stub\n", hData);
+     FIXME("(0x%x): stub\n", hData);
 
      return 0;
 }
@@ -1767,7 +1767,7 @@ BOOL16 WINAPI DdeEnableCallback16( DWORD idInst, HCONV hConv, UINT16 wCmd )
  */
 BOOL WINAPI DdeEnableCallback( DWORD idInst, HCONV hConv, UINT wCmd )
 {
-     FIXME("(%ld, 0x%lx, %d) stub\n", idInst, hConv, wCmd);
+     FIXME("(%ld, 0x%x, %d) stub\n", idInst, hConv, wCmd);
 
      return 0;
 }
@@ -1816,7 +1816,7 @@ HDDEDATA WINAPI DdeNameService( DWORD idInst, HSZ hsz1, HSZ hsz2,
   DDE_HANDLE_ENTRY *reference_inst;
   this_service = NULL;
 
-  FIXME("(%ld,%ld,%ld,%d): stub\n",idInst,hsz1,hsz2,afCmd);
+  FIXME("(%ld,%d,%d,%d): stub\n",idInst,hsz1,hsz2,afCmd);
 
   if ( DDE_Max_Assigned_Instance == 0 )
   {
