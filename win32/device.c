@@ -677,7 +677,7 @@ static DWORD VxDCall_VMM( DWORD service, CONTEXT86 *context )
 	ULONG npages = (ULONG) stack32_pop( context );
 	ULONG flags  = (ULONG) stack32_pop( context );
 
-	FIXME("PageReserve: page: %08lx, npages: %08lx, flags: %08lx partial stub!\n",
+	TRACE("PageReserve: page: %08lx, npages: %08lx, flags: %08lx partial stub!\n",
 	      page, npages, flags );
 
 	if ( page == PR_SYSTEM ) {
@@ -690,7 +690,7 @@ static DWORD VxDCall_VMM( DWORD service, CONTEXT86 *context )
 	/* FIXME: Handle flags in some way */
 	address = (LPVOID )(page * psize); 
 	ret = VirtualAlloc ( address, ( npages * psize ), MEM_RESERVE, 0 );
-	FIXME("PageReserve: returning: %08lx\n", (DWORD )ret );
+	TRACE("PageReserve: returning: %08lx\n", (DWORD )ret );
 	if ( ret == NULL )
 	  return -1;
 	else
@@ -709,7 +709,7 @@ static DWORD VxDCall_VMM( DWORD service, CONTEXT86 *context )
 	ULONG pagerdata   = (ULONG) stack32_pop( context );
 	ULONG flags  = (ULONG) stack32_pop( context );
 
-	FIXME("PageCommit: page: %08lx, npages: %08lx, hpd: %08lx pagerdata: "
+	TRACE("PageCommit: page: %08lx, npages: %08lx, hpd: %08lx pagerdata: "
 	      "%08lx, flags: %08lx partial stub\n",
 	      page, npages, hpd, pagerdata, flags );
 	
@@ -723,7 +723,7 @@ static DWORD VxDCall_VMM( DWORD service, CONTEXT86 *context )
 
 	address = (LPVOID )(page * psize); 
 	ret = VirtualAlloc ( address, ( npages * psize ), MEM_COMMIT, virt_perm );
-	FIXME("PageCommit: Returning: %08lx\n", (DWORD )ret );
+	TRACE("PageCommit: Returning: %08lx\n", (DWORD )ret );
 	return (DWORD )ret;
 
       }
@@ -736,11 +736,11 @@ static DWORD VxDCall_VMM( DWORD service, CONTEXT86 *context )
 	ULONG npages = (ULONG) stack32_pop( context );
 	ULONG flags = (ULONG) stack32_pop( context );
 
-	FIXME("PageDecommit: page: %08lx, npages: %08lx, flags: %08lx partial stub\n",
+	TRACE("PageDecommit: page: %08lx, npages: %08lx, flags: %08lx partial stub\n",
 	      page, npages, flags );
 	address = (LPVOID )( page * psize );
 	ret = VirtualFree ( address, ( npages * psize ), MEM_DECOMMIT ); 
-	FIXME("PageDecommit: Returning: %s\n", ret ? "TRUE" : "FALSE" );
+	TRACE("PageDecommit: Returning: %s\n", ret ? "TRUE" : "FALSE" );
 	return ret;
       }
     case 0x000d: /* PageModifyPermissions */
@@ -757,7 +757,7 @@ static DWORD VxDCall_VMM( DWORD service, CONTEXT86 *context )
 	ULONG permand = stack32_pop ( context );
 	ULONG permor = stack32_pop ( context );
 
-	FIXME("PageModifyPermissions %08lx %08lx %08lx %08lx partial stub\n",
+	TRACE("PageModifyPermissions %08lx %08lx %08lx %08lx partial stub\n",
 	      page, npages, permand, permor );
 	address = (LPVOID )( page * psize );
 
@@ -798,7 +798,7 @@ static DWORD VxDCall_VMM( DWORD service, CONTEXT86 *context )
 	  ERR("Can't change page permissions for %08lx\n", (DWORD )address );
 	  return 0xffffffff;
 	}
-	FIXME("Returning: %08lx\n", pg_old_perm );
+	TRACE("Returning: %08lx\n", pg_old_perm );
 	return pg_old_perm;
       }
     case 0x000a: /* PageFree */
@@ -807,12 +807,12 @@ static DWORD VxDCall_VMM( DWORD service, CONTEXT86 *context )
 	LPVOID hmem = (LPVOID) stack32_pop( context );
 	DWORD flags = (DWORD ) stack32_pop( context );
 	
-	FIXME("PageFree: hmem: %08lx, flags: %08lx partial stub\n",
+	TRACE("PageFree: hmem: %08lx, flags: %08lx partial stub\n",
 	      (DWORD )hmem, flags );
 
 	ret = VirtualFree ( hmem, 0, MEM_RELEASE );
 	context->Eax = ret;
-	FIXME("Returning: %d\n", ret );
+	TRACE("Returning: %d\n", ret );
 
 	return 0;
       }
