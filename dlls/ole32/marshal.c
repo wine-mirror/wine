@@ -363,6 +363,11 @@ static HRESULT ifproxy_release_public_refs(struct ifproxy * This)
             hr = IRemUnknown_RemRelease(remunk, 1, &rif);
             if (hr == S_OK)
                 This->refs = 0;
+            else if (hr == RPC_E_DISCONNECTED)
+                WARN("couldn't release references because object was "
+                     "disconnected: oxid = %s, oid = %s\n",
+                     wine_dbgstr_longlong(This->parent->oxid),
+                     wine_dbgstr_longlong(This->parent->oid));
             else
                 ERR("IRemUnknown_RemRelease failed with error 0x%08lx\n", hr);
         }
@@ -490,8 +495,11 @@ static HRESULT proxy_manager_create_ifproxy(
     ifproxy->proxy = NULL;
 
     /* the IUnknown interface is special because it does not have a
-     * proxy associated with the ifproxy as we handle IUnknown ourselves */
-    if (IsEqualIID(riid, &IID_IUnknown))
+     * proxy associated with the ifproxy as we handle IUnknown ourselves.
+     * IID_NULL is a placeholder for IID_IUnknown used by the DCOM part of
+     * the rpc runtime. */
+    if (IsEqualIID(riid, &IID_NULL) ||
+        IsEqualIID(riid, &IID_IUnknown))
     {
         ifproxy->iface = (void *)&This->lpVtbl;
         hr = S_OK;

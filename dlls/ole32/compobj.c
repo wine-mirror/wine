@@ -202,6 +202,19 @@ void COMPOBJ_UninitProcess( void )
     UnregisterClassA(aptWinClass, OLE32_hInstance);
 }
 
+void COM_TlsDestroy()
+{
+    struct oletls *info = NtCurrentTeb()->ReservedForOle;
+    if (info)
+    {
+        if (info->apt) COM_ApartmentRelease(info->apt);
+        if (info->errorinfo) IErrorInfo_Release(info->errorinfo);
+        if (info->state) IUnknown_Release(info->state);
+        HeapFree(GetProcessHeap(), 0, info);
+        NtCurrentTeb()->ReservedForOle = NULL;
+    }
+}
+
 /******************************************************************************
  * Manage apartments.
  */
@@ -585,7 +598,6 @@ HRESULT WINAPI CoInitializeEx(LPVOID lpReserved, DWORD dwCoInit)
     /* Changing the threading model after it's been set is illegal. If this warning is triggered by Wine
        code then we are probably using the wrong threading model to implement that API. */
     ERR("Attempt to change threading model of this apartment from 0x%lx to 0x%lx\n", apt->model, dwCoInit);
-    COM_ApartmentRelease(apt);
     return RPC_E_CHANGED_MODE;
   }
   else

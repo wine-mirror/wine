@@ -188,7 +188,7 @@ static DWORD CALLBACK host_object_proc(LPVOID p)
     HRESULT hr;
     MSG msg;
 
-    CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
+    pCoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
 
     if (data->filter)
     {
@@ -436,7 +436,7 @@ static void test_marshal_stub_apartment_shutdown()
     
     IStream_Seek(pStream, ullZero, STREAM_SEEK_SET, NULL);
     hr = CoUnmarshalInterface(pStream, &IID_IClassFactory, (void **)&pProxy);
-    ok_ole_success(hr, CoReleaseMarshalData);
+    ok_ole_success(hr, CoUnmarshalInterface);
     IStream_Release(pStream);
 
     ok_more_than_one_lock();
@@ -469,7 +469,7 @@ static void test_marshal_proxy_apartment_shutdown()
     
     IStream_Seek(pStream, ullZero, STREAM_SEEK_SET, NULL);
     hr = CoUnmarshalInterface(pStream, &IID_IClassFactory, (void **)&pProxy);
-    ok_ole_success(hr, CoReleaseMarshalData);
+    ok_ole_success(hr, CoUnmarshalInterface);
     IStream_Release(pStream);
 
     ok_more_than_one_lock();
@@ -484,7 +484,7 @@ static void test_marshal_proxy_apartment_shutdown()
 
     end_host_object(tid, thread);
 
-    CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
+    pCoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
 }
 
 /* tests that proxies are released when the containing mta apartment is destroyed */
@@ -509,7 +509,7 @@ static void test_marshal_proxy_mta_apartment_shutdown()
 	
     IStream_Seek(pStream, ullZero, STREAM_SEEK_SET, NULL);
     hr = CoUnmarshalInterface(pStream, &IID_IClassFactory, (void **)&pProxy);
-    ok_ole_success(hr, CoReleaseMarshalData);
+    ok_ole_success(hr, CoUnmarshalInterface);
     IStream_Release(pStream);
 
     ok_more_than_one_lock();
@@ -619,7 +619,7 @@ static void test_tableweak_marshal_and_unmarshal_twice()
 
     IStream_Seek(pStream, ullZero, STREAM_SEEK_SET, NULL);
     hr = CoUnmarshalInterface(pStream, &IID_IClassFactory, (void **)&pProxy1);
-    ok_ole_success(hr, CoReleaseMarshalData);
+    ok_ole_success(hr, CoUnmarshalInterface);
 
     ok_more_than_one_lock();
 
@@ -750,7 +750,7 @@ static void test_tablestrong_marshal_and_unmarshal_twice()
 
     IStream_Seek(pStream, ullZero, STREAM_SEEK_SET, NULL);
     hr = CoUnmarshalInterface(pStream, &IID_IClassFactory, (void **)&pProxy1);
-    ok_ole_success(hr, CoReleaseMarshalData);
+    ok_ole_success(hr, CoUnmarshalInterface);
 
     ok_more_than_one_lock();
 
@@ -947,7 +947,7 @@ static void test_proxy_used_in_wrong_thread()
     
     IStream_Seek(pStream, ullZero, STREAM_SEEK_SET, NULL);
     hr = CoUnmarshalInterface(pStream, &IID_IClassFactory, (void **)&pProxy);
-    ok_ole_success(hr, CoReleaseMarshalData);
+    ok_ole_success(hr, CoUnmarshalInterface);
     IStream_Release(pStream);
 
     ok_more_than_one_lock();
@@ -1139,7 +1139,7 @@ static void test_proxy_interfaces()
 	
     IStream_Seek(pStream, ullZero, STREAM_SEEK_SET, NULL);
     hr = CoUnmarshalInterface(pStream, &IID_IUnknown, (void **)&pProxy);
-    ok_ole_success(hr, CoReleaseMarshalData);
+    ok_ole_success(hr, CoUnmarshalInterface);
     IStream_Release(pStream);
 
     ok_more_than_one_lock();
