@@ -147,6 +147,7 @@ DWORD WINAPI FormatMessageA(
 	BOOL    eos = FALSE;
 	INT	bufsize;
 	HMODULE	hmodule = (HMODULE)lpSource;
+	CHAR	ch;
 
 	TRACE("(0x%lx,%p,%ld,0x%lx,%p,%ld,%p)\n",
 		     dwFlags,lpSource,dwMessageId,dwLanguageId,lpBuffer,nSize,args);
@@ -290,17 +291,23 @@ DWORD WINAPI FormatMessageA(
 				        ADD_TO_T(*f++);
 					break;
 				}
-			} else { /* '\n' or '\r' gets mapped to "\r\n" */
-			    if(*f == '\n' || *f == '\r') {
-			        if (width == 0) {
-				    ADD_TO_T('\r');
-				    ADD_TO_T('\n');
-				    if(*f++ == '\r' && *f == '\n')
-				        f++;
-				}
-			    } else {
-			        ADD_TO_T(*f++);
+			} else {
+			    ch = *f;
+			    f++;
+			    if (ch == '\r')
+			    {
+				if (*f == '\n')
+				    f++;
+				ADD_TO_T(' ');
 			    }
+			    else
+			    if (ch == '\n')
+			    {
+				ADD_TO_T('\r');
+				ADD_TO_T('\n');
+			    }
+			    else
+				ADD_TO_T(ch);
 			}
 		}
 		*t='\0';
@@ -350,6 +357,7 @@ DWORD WINAPI FormatMessageW(
 	BOOL	eos = FALSE;
 	INT	bufsize;
 	HMODULE	hmodule = (HMODULE)lpSource;
+	CHAR	ch;
 
 	TRACE("(0x%lx,%p,%ld,0x%lx,%p,%ld,%p)\n",
 		     dwFlags,lpSource,dwMessageId,dwLanguageId,lpBuffer,nSize,args);
@@ -496,17 +504,23 @@ DWORD WINAPI FormatMessageW(
 				        ADD_TO_T(*f++);
 					break;
 				}
-			} else { /* '\n' or '\r' gets mapped to "\r\n" */
-			    if(*f == '\n' || *f == '\r') {
-			        if (width == 0) {
-				    ADD_TO_T('\r');
-				    ADD_TO_T('\n');
-				    if(*f++ == '\r' && *f == '\n')
-				       f++;
-				}
-			    } else {
-				ADD_TO_T(*f++);
+			} else {
+			    ch = *f;
+			    f++;
+			    if (ch == '\r')
+			    {
+				if (*f == '\n')
+				    f++;
+				ADD_TO_T(' ');
 			    }
+			    else
+			    if (ch == '\n')
+			    {
+				ADD_TO_T('\r');
+				ADD_TO_T('\n');
+			    }
+			    else
+				ADD_TO_T(ch);
 			}
 		}
 		*t='\0';
