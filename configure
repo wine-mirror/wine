@@ -6966,6 +6966,7 @@ scheduler/Makefile
 server/Makefile
 tools/Makefile
 tools/cvdump/Makefile
+tools/specmaker/Makefile
 tools/winebuild/Makefile
 tools/winelauncher
 tools/wmc/Makefile
@@ -7209,6 +7210,7 @@ scheduler/Makefile
 server/Makefile
 tools/Makefile
 tools/cvdump/Makefile
+tools/specmaker/Makefile
 tools/winebuild/Makefile
 tools/winelauncher
 tools/wmc/Makefile

@@ -1,0 +1,35 @@
+DEFS      = -D__WINE__
+TOPSRCDIR = @top_srcdir@
+TOPOBJDIR = ../..
+SRCDIR    = @srcdir@
+VPATH     = @srcdir@
+
+PROGRAMS = specmaker
+MODULE   = none
+
+C_SRCS = \
+	dll.c  \
+	main.c  \
+	misc.c  \
+	msmangle.c  \
+	output.c  \
+	search.c  \
+	symbol.c
+
+all: $(PROGRAMS)
+
+@MAKE_RULES@
+
+specmaker: $(OBJS)
+	$(CC) $(CFLAGS) -o specmaker $(OBJS) $(LDFLAGS)
+
+install:: $(PROGRAMS)
+	[ -d $(bindir) ] || $(MKDIR) $(bindir)
+	$(INSTALL_PROGRAM) specmaker $(bindir)/specmaker
+	$(INSTALL_PROGRAM) function_grep.pl $(bindir)/function_grep.pl
+
+uninstall::
+	$(RM) $(bindir)/specmaker
+	$(RM) $(bindir)/function_grep.pl
+
+### Dependencies:

@@ -1,0 +1,560 @@
+Specmaker - A Wine DLL tool
+---------------------------
+
+Background
+----------
+
+Most of the functions available in Windows, and in Windows applications, are
+made available to applications from DLL's. Wine implements the Win32 API by
+providing replacement's for the essential Windows DLLs in the form of Unix
+shared library (.so) files, and provides a tool, winebuild, to allow Winelib
+applications to link to functions exported from shared libraries/DLLs.
+
+The first thing to note is that there are many DLLs that aren't yet
+implemented in Wine. Mostly this doesn't present a problem because the native
+Win32 versions of lots of DLLs can be used without problems, at least on
+x86 platforms. However, one of Wine's goals is the eventual replacement of
+every essential O/S DLL so that the whole API is implemented. This not only
+means that a copy of the real O/S is not needed, but also that non-x86
+platforms can run most Win32 programs after recompiling.
+
+The second thing to note is that applications commonly use their own or 3rd
+party DLLs to provide functionality. In order to call these functions with
+a Winelib program, some 'glue' is needed. This 'glue' comes in the form of
+a .spec file. The .spec file, along with some dummy code, is used to create
+a Wine .so corresponding to the Windows DLL. The winebuild program can then
+resolve calls made to DLL functions to call your dummy DLL. You then tell
+Wine to only use the native Win32 version of the DLL, and at runtime your
+calls will be made to the Win32 DLL. If you want to reimplement the dll,
+you simply add the code for the DLL calls to your stub .so, and then tell
+Wine to use the .so version instead [1].
+
+These two factors mean that if you are:
+
+A: Reimplementing a Win32 DLL for use within Wine, or
+B: Compiling a Win32 application with Winelib that uses x86 DLLs
+
+Then you will need to create a .spec file (amongst other things). If you
+won't be doing either of the above, then you won't need specmaker.
+
+Creating a .spec file is a labour intensive task during which it is easy
+to make a mistake. The idea of specmaker is to automate this task and create
+the majority of the support code needed for your DLL. In addition you can
+have specmaker create code to help you reimplement a DLL, by providing
+tracing of calls to the DLL, and (in some cases) automatically determining
+the parameters, calling conventions, and return values of the DLLs functions.
+
+You can think of specmaker as somewhat similar to the IMPLIB tool when
+only its basic functionality is used.
+
+
+Usage
+-----
+
+Specmaker is a command line tool. Running it with no arguments or passing
+it '-h' on the command line lists the available options:
+
+Usage: specmaker [options] -d dll
+
+Options:
+   -d dll   Use dll for input file (mandatory)
+   -h       Display this help message
+   -I dir   Look for prototypes in 'dir' (implies -c)
+   -o name  Set the output dll name (default: dll)
+   -c       Generate skeleton code (requires -I)
+   -t       TRACE arguments (implies -c)
+   -f dll   Forward calls to 'dll' (implies -t)
+   -D       Generate documentation
+   -C       Assume __cdecl calls (default: __stdcall)
+   -s num   Start prototype search after symbol 'num'
+   -e num   End prototype search after symbol 'num'
+   -q       Don't show progress (quiet).
+   -v       Show lots of detail while working (verbose).
+
+
+Basic options
+-------------
+
+OPTION: -d dll   Use dll for input file (mandatory)
+
+The -d option tells specmaker which DLL you want to create a .spec file
+for. You *must* give this option.
+
+16 bit DLL's are not currently supported (Note that Winelib is intended
+only for Win32 programs).
+
+OPTION: -o name  Set the output dll name (default: dll)
+
+By default, if specmaker is run on DLL 'foo', it creates files called
+'foo.spec', 'foo_main.c' etc, and prefixes any functions generated
+with 'FOO_'. If '-o bar' is given, these will become 'bar.spec',
+'bar_main.c' and 'BAR_' respectively.
+
+This option is mostly useful when generating a forwarding DLL. See below
+for more information.
+
+OPTION: -q       Don't show progress (quiet).
+        -v       Show lots of detail while working (verbose).
+
+There are 3 levels of output while specmaker is running. The default level,
+when neither -q or -v are given, prints the number of exported functions
+found in the dll, followed by the name of each function as it is processed,
+and a status indication of whether it was processed OK. With -v given, a
+lot of information is dumped while specmaker works: this is intended to help
+debug any problems. Giving -q means nothing will be printed unless a fatal
+error occurs, and could be used when calling specmaker from a script.
+
+
+OPTION: -C       Assume __cdecl calls (default: __stdcall)
+
+This option determines the default calling convention used by the functions
+in the DLL. If specbuild cannot determine the convention, __stdcall is
+used by default, unless this option has been given.
+
+Unless -q is given, a warning will be printed for every function that
+specmaker determines the calling convention for and which does not match
+the assumed calling convention.
+
+
+Generating stub DLLS
+--------------------
+
+If all you want to do is generate a stub DLL to allow you to link your
+Winelib application to an x86 DLL, the above options are all you need.
+
+As an example, lets assume the application you are porting uses functions
+from a 3rd party dll called 'zipextra.dll', and the functions in the DLL
+use the __stdcall calling convention. Copy zipextra.dll to an empty directory,
+change to it, and run specmaker as follows:
+
+specmaker -d zipextra  (Note: this assumes specmaker is in your path)
+
+The output will look something like the following:
+
+22 exported symbols in DLL ...
+Export    1 - '_OpenZipFile' ... [Ignoring]
+Export    2 - '_UnZipFile' ... [Ignoring]
+...
+
+"[Ignoring]" Just tells you that specmaker isn't trying to determine the
+parameters or return types of the functions, its just creating stubs.
+
+The following files are created:
+
+zipextra.spec
+This is the .spec file. Each exported function is listed as a stub:
+
+@ stub _OpenZipFile
+@ stub _UnZipFile
+...
+
+This means that winebuild will generate dummy code for this function. That
+doesn't concern us, because all we want is for winebuild to allow the
+symbols to be resolved. At run-time, the functions in the native DLL will
+be called; this just allows us to link.
+
+zipextra_dll.h zipextra_main.c
+These are source code files containing the minimum set of code to build
+a stub DLL. The C file contains one function, ZIPEXTRA_Init, which does
+nothing.
+
+Makefile.in
+This is a template for 'configure' to produce a makefile. It is designed
+for a DLL that will be inserted into the Wine source tree. If your DLL
+will not be part of Wine, or you don't wish to build it this way,
+you should look at the Wine tool 'winemaker' to generate a DLL project.
+
+FIXME: winemaker could run this tool automatically when generating projects
+that use extra DLL's (*.lib in the "ADD LINK32" line in .dsp) ....
+
+zipextra_install
+A shell script for adding zipextra to the Wine source tree (see below).
+
+
+Inserting a stub DLL into the Wine tree
+---------------------------------------
+
+To build your stub DLL as part of Wine, do the following:
+
+ chmod a+x ./zipextra_install
+ ./zipextra_install <wine-path>
+ cd <wine-path>
+ autoconf
+ ./configure
+ make depend && make
+ make install
+
+Your application can now link with the DLL.
+
+NOTE: **DO NOT** submit patches to Wine for 3rd party DLLs! Building DLLs
+      into your copy of the tree is just a simple way for you to link. When
+      you release your application you won't be distributing the Unix .so
+      anyway, just the Win32 DLL. As you update your version of Wine
+      you can simply re-run the procedure above (Since no patches are
+      involved, it should be pretty resiliant to changes).
+
+
+Advanced Options
+----------------
+
+This section discusses features of specmaker that are useful to Wine Hackers
+or developers looking to reimplement a Win32 DLL for Unix. Using these
+features means you will need to be able to resolve compilation problems and
+have a general understanding of Wine programming.
+
+
+OPTION: -I dir   Look for prototypes in 'dir' (implies -c)
+
+For all advanced functionality, you must give specmaker a directoryor file that
+contains prototypes for the DLL. In the case of Windows DLLs, this could be
+either the standard include directory from your compiler, or an SDK include
+directory. If you have a text document with prototypes (such as documentation)
+that can be used also, however you may need to delete some non-code lines to
+ensure that prototypes are parsed correctly.
+
+The 'dir' argument can also be a file specification (e.g. "include/*"). If
+it contains wildcards you must quote it to prevent the shell from expanding it.
+
+If you have no prototypes, specify /dev/null for 'dir'. Specmaker may still
+be able to generate some working stub code for you.
+
+Once you have created your DLL, if you generated code (see below), you can
+backup the DLL header file created and use it for rebuilding the DLL (you
+should remove the DLLNAME_ prefix from the prototypes to make this work). This
+allows you to add names to the function arguments, for example, so that the
+comments and prototype in the regenerated DLL will be clearer.
+
+Specmaker searches for prototypes using 'grep', and then retrieves each
+prototype by calling 'function_grep.pl', a Perl script. When you pass the -v
+option on the command line, the calls to both of these programs are logged.
+This allows you to see where each function definition has come from. Should
+specmaker take an excessively long time to locate a prototype, you can check
+that it is searching the right files; you may want to limit the number of files
+searched if locating the prototype takes too long.
+
+You can compile function_grep.pl for a slight increase in performance; see
+'man perlcc' for details.
+
+
+OPTION: -s num   Start prototype search after symbol 'num'
+        -e num   End prototype search after symbol 'num'
+
+By passing the -s or -e options you can have specmaker try to generate code
+for only some functions in your DLL. This may be used to generate a single
+function, for example, if you wanted to add functionality to an existing DLL.
+
+They is also useful for debugging problems, in conjunction with -v.
+
+
+OPTION: -D       Generate documentation
+
+By default, specmaker generates a standard comment at the header of each
+function it generates. Passing this option makes specmaker output a full
+header template for standard Wine documentation, listing the parameters
+and return value of the function.
+
+
+OPTION: -c       Generate skeleton code (requires -I)
+
+This option tells specmaker that you want to create function stubs for
+each function in the DLL. This is the most basic level of code generation.
+As specmaker reads each exported symbol from the source DLL, it first tries
+to demangle the name. If the name is a C++ symbol, the arguments, class and
+return value are all encoded into the symbol name. Specmaker converts this
+information into a C function prototype. If this fails, the file(s) specified
+in the -I argument are scanned for a function prototype. If one is found it
+is used for the next step of the process, code generation.
+
+Note: C++ name demangling is currently under development. Since the algorithm
+used is not documented, it must be decoded. Many simple prototypes are already
+working however.
+
+If specmaker does not find a prototype, it emits code like the following:
+
+In the .spec file:
+
+@stub _OpenZipFile
+
+in the header file:
+
+/* __cdecl ZIPEXTRA__OpenZipFile() */
+
+in the C source file:
+
+/*********************************************************************
+ *      _OpenZipFile     (ZIPEXTRA.@)
+ *
+ */
+#if 0
+__stdcall ZIPEXTRA__OpenZipFile()
+{
+    /* '@Stubbed'ed in .spec */
+}
+#endif
+
+If a prototype is found, or correctly demangled, the following is emitted:
+
+.spec:
+@ stdcall _OpenZipFile ZIPEXTRA__OpenZipFile
+
+.h:
+BOOL __stdcall ZIPEXTRA__OpenZipFile(LPCSTR pszFileName);
+
+.c:
+BOOL __stdcall ZIPEXTRA__OpenZipFile(LPCSTR pszFileName)
+{
+  TRACE("stub");
+  return 0;
+}
+
+Note that if the prototype does not contain argument names, specmaker will
+add them following the convention arg0, arg1 ... argN. If the function is
+demangled C++, the first argument will be called '_this' if an implicit this
+pointer is passed (i.e. the function is a non-static class member function).
+
+
+OPTION: -t       TRACE arguments (implies -c)
+
+This option produces the same code as -c, except that arguments are printed
+out when the function is called, so the FIXME in the above example becomes:
+
+  FIXME("(%s) stub", pszFileName);
+
+Structs that are passed by value are printed as "struct", and functions
+that take variable argument lists print "...".
+
+
+OPTION: -f dll   Forward calls to 'dll' (implies -t)
+
+This is the most complicated level of code generation. The same code is
+generated as -t, however support is added for forwarding calls to another
+DLL. The DLL to forward to is given as 'dll'. Lets suppose we built the
+examples above using "-f real_zipextra". The code generated will look like
+the following:
+
+.spec
+As for -c, except if a function prototype was not found:
+
+@ forward _OpenZipFile real_zipextra._OpenZipFile
+
+In this case the function is forwarded to the destination DLL rather
+than stubbed.
+
+.h
+As for -c.
+
+.c
+
+A variable "hDLL" is added to hold a pointer to the DLL to forward to, and
+the initialisation code in ZIPEXTRA_Init is changed to load and free the
+forward DLL automatically:
+
+HMODULE hDLL = 0; /* DLL to call through to */
+
+BOOL WINAPI ZIPEXTRA_Init(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
+{
+    TRACE("(0x%08x, %ld, %p)\n", hinstDLL, fdwReason, lpvReserved);
+
+    if (fdwReason == DLL_PROCESS_ATTACH)
+    {
+        hDLL = LoadLibraryA( "real_zipextra" );
+        TRACE ("Forwarding DLL (real_zipextra) loaded\n" );
+    }
+    else if (fdwReason == DLL_PROCESS_DETACH)
+    {
+        FreeLibrary( hDLL );
+        TRACE ("Forwarding DLL (real_zipextra) freed\n" );
+    }
+
+    return TRUE;
+}
+
+The stub function is changed to call the forwarding DLL and return that value.
+
+BOOL __stdcall ZIPEXTRA__OpenZipFile(LPCSTR pszFileName)
+{
+  BOOL (__stdcall *pFunc)(LPCSTR) = (void*)GetProcAddress(hDLL,"_OpenZipFile");
+  BOOL retVal;
+  TRACE("((LPCSTR)%s) stub", pszFileName);
+  retVal = pFunc(pszFileName);
+  TRACE("returned (%ld)\n",(LONG)retVal));
+  return retVal;
+}
+
+This allows you to investigate the workings of a DLL without interfering in
+its operation in any way (unless you want to).
+
+In the example I have been using, we probably should have used the -o option
+to change the ouput name of our DLL to something else, and used the -f
+option to forward to the real zipextra DLL:
+
+specmaker -d zipextra -f zipextra -o myzipextra -I "~/zipextra/include/*h"
+
+Then in the .spec file for our Winelib application, we add the line:
+
+import myzipextra
+
+When we build our application, winebuild resolves the calls to our Unix .so.
+As our application runs we can see the values of all parameters passed to
+the DLL, and any values returned, without having to write code to dump
+them ourselves (see below for a better way to wrap a DLL for forwarding).
+
+This isn't a very realistic example of the usefulness of this feature,
+however, since we could print out the results anyway, because it is our
+application making the calls to the DLL. Where DLL forwarding is most useful
+is where an application or DLL we didn't write calls functions in the DLL.
+In this case we can capture the sequence of calls made, and the values passed
+around. This is an aid in reimplementing the DLL, since we can add code for a
+function, print the results, and then call the real DLL and compare. Only
+when our code is the same do we need to remove the function pointer and the
+call to the real DLL. A similar feature in wine is +relay debugging. Using a
+fowarding DLL allows more granular reporting of arguments, because you can
+write code to dump out the contents of types/structures rather than just
+their address in memory. A future version of specmaker may generate this
+code automatically for common Win32 types.
+
+See below for more information on setting up a forwarding DLL.
+
+
+Problems compiling a DLL containing generated code
+--------------------------------------------------
+
+Unless you are very lucky, you will need to do a small amount of work to
+get a DLL generated with -c, -t or -f to compile. The reason for this is
+that most DLLs will use custom types such as structs whose definition
+is not known to the code in the DLL.
+
+Heres an example prototype from crtdll:
+
+double __cdecl _cabs(struct _complex arg0)
+
+The definition for the _complex struct needs to be given. Since it is passed
+by value, its size also needs to be correct in order to forward the call
+correctly to a native DLL. In this case the structure is 8 bytes in size, which
+means that the gcc compile flag -freg-struct-return must be given when
+compiling the function in order to be compatable with the native DLL. (In 
+general this is not an issue, but you need to be aware of such issues if you
+encounter problems with your forwarding DLL).
+
+For third party (non C++) DLL's, the header(s) supplied with the DLL  can
+normally be added as an include to the generated DLL header. For other DLLs
+I suggest creating a seperate header in the DLL directory and adding any
+needed types to that. This allows you to rebuild the DLL at whim, for example
+if a new version of specmaker brings increased functionality, then you
+only have to overwrite the generated files and re-include the header to take
+advantage of it.
+
+Usually there isn't much work to do to get the DLL to compile if you have
+headers. As an example, building a forwarded crtdll, which contains 520
+functions, required 20 types to be defined before it compiled. Of these,
+about half were structures, so about 35 lines of code were needed. The only
+change to the generated code was one line in the header to include the type
+definitions.
+
+To save some typing in case you don't have headers for your DLL type, specmaker
+will dump dummy declarations for unknown classes and types it encounters,
+if you use the -v option. These can be piped directly into a fix-up header
+file for use in compiling your DLL. For example, if specmaker encounters the
+(C++ ) symbol:
+
+??0foobar@@QAE@ABV0@@Z   (Which is a constructor for a foobar object)
+
+It will emit the following with -v set:
+
+struct foobar { int _FIXME; };
+
+(Classes are mapped to C structs when generating code).
+
+The output should be piped through 'sort' and 'uniq' to remove multiple
+declarations, e.g:
+
+specmaker -d foo -c -I "inc/*.h" -v | grep FIXME | sort | uniq > fixup.h
+
+By adding '#include "fixup.h"' to foobar_dll.h your compile errors will be
+greatly reduced.
+
+If specmaker encounters a type it doesnt know that is passed by value (as in
+the _cabs example above), it also prints a FIXME message like:
+
+/* FIXME: By value type: Assumed 'int' */ typedef int ldiv_t;
+ 
+If the type is not an int, you will need to change the code and possibly
+the .spec entry in order to forward correctly. Otherwise, include the typedef
+in your fixup header to avoid compile errors.
+
+
+Using a forwarding DLL
+----------------------
+
+To create and use a forwarding DLL to trace DLL calls, you need to first
+create a DLL using the -f option as outlined above, and get it to compile.
+In order to forward calls the following procedure can be used (for this
+example we are going to build a forwarding msvcrt.dll for the purpose
+of reimplementing it).
+
+First we create the forwarding DLL. We will rename the real msvcrt.dll on our
+system to ms_msvcrt.dll, and our msvcrt implementation will call it:
+
+specmaker -d msvcrt -C -f ms_msvcrt -I "inc/*.h"
+
+We then install this DLL into the Wine tree and add the types we need to
+make it compile. Once the DLL compiles, we create a dummy ms_msvcrt DLL so
+winebuild will resolve our forward calls to it (for the cases where specmaker
+couldn't generate code and has placed an '@forward' line in the .spec file):
+
+specmaker -d msvcrt -C -o ms_msvcrt
+
+Install this DLL into the wine tree (since its a stub DLL, no changes are
+needed to the code).
+
+Now uncomment the line that specmaker inserted into msvcrt.spec:
+
+#inport ms_msvcrt.dll
+
+And recompile Wine.
+
+Finally, we must tell Wine to only use the builtin msvcrt.dll and to only use
+the native (Win32) ms_msvcrt.dll. Add the following two lines to ~/.wine/config
+under the [DllOverrides] section:
+
+;Use our implmentation of msvcrt
+"msvcrt" = "builtin, so"
+;Use only the Win32 ms_msvcrt
+"ms_msvcrt" = "native"
+
+At this point, when any call is made to msvcrt.dll, Our libmsvcrt.so recieves
+the call. It then forwards or calls ms_msvcrt.dll, which is the native dll. We
+recieve a return value and pass it back to our caller, having TRACEd the
+arguments on the way.
+
+At this point you are ready to start reimplementing the calls.
+
+
+Final comments
+--------------
+
+If you have any suggestions for improving this tool, please let me know.
+If anyone can help answer the FIXME questions in msmangle.c or can fill me in
+on any aspect of the C++ mangling scheme, I would appreciate it. In particular
+I want to know what _E and _G represent.
+
+If you encounter a C++ symbol that doesn't demangle **AND** you have the
+prototype for it, please send me the symbol as reported by specmaker and the
+prototype. The more examples I have the easier it is to decypher the scheme,
+and generating them myself is very slow.
+
+Finally, although it is easy to generate a DLL, I _very strongly_ suggest that
+you dont submit a generated DLL for inclusion into Wine unless you have
+actually implemented a fairly reasonable portion of it. Even then, you should
+only send the portions of the DLL you have implemented. Thousands of lines of
+stub code don't help the project at all.
+
+Please send questions and bug reports to jon_p_griffiths@yahoo.com.
+
+
+References
+----------
+
+[1] See the Wine and Wine.conf man pages for details on how to tell Wine
+    whether to use native (Win32) or internal DLLs.
+
