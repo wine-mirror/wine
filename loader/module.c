@@ -1252,7 +1252,8 @@ WINE_MODREF *MODULE_LoadLibraryExA( LPCSTR libname, HFILE hfile, DWORD flags )
 	/* Check for already loaded module */
 	if((pwm = MODULE_FindModule(libname))) 
 	{
-		pwm->refCount++;
+		if(!(pwm->flags & WINE_MODREF_MARKER))
+			pwm->refCount++;
 		TRACE(module, "Already loaded module '%s' at 0x%08x, count=%d, \n", libname, pwm->module, pwm->refCount);
 		LeaveCriticalSection(&PROCESS_Current()->crit_section);
 		return pwm;
