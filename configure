@@ -13164,6 +13164,8 @@ fi
             LIBEXT="dll"
     fi
     IMPLIBEXT="a"
+        WIN16_FILES=""
+    WIN16_INSTALL=""
     ;;
   *)
 

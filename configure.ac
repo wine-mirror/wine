@@ -848,6 +848,9 @@ case $host_os in
       LIBEXT="dll"
     fi
     IMPLIBEXT="a"
+    dnl We can't build 16-bit NE dlls
+    WIN16_FILES=""
+    WIN16_INSTALL=""
     ;;
   *)
     AC_CHECK_HEADERS(dlfcn.h,
