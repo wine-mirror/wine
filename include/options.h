@@ -58,7 +58,6 @@ struct options
     char **argv;
     char * desktopGeometry; /* NULL when no desktop */
     char * programName;     /* To use when loading resources */
-    char * argv0;           /* argv[0] of Wine process */
     char  *dllFlags;        /* -dll flags (hack for Winelib support) */
     int    usePrivateMap;
     int    useFixedMap;
@@ -81,6 +80,7 @@ struct options
 };
 
 extern struct options Options;
+extern const char *argv0;
 
 /* Profile functions */
 

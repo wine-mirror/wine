@@ -199,7 +199,6 @@ test_pdbstuff()
 int
 main(int argc, char * argv[])
 {
-  extern char * DEBUG_argv0;
   SIGCONTEXT  reg;
   
   strcpy(vdv, "This is a test");
@@ -207,7 +206,7 @@ main(int argc, char * argv[])
   vvv.whatsup = 0;
   vvv.flag3 = 0;
   vvv.remain = 0x401;
-  DEBUG_argv0 = argv[0];
+  argv0 = argv[0];
   xxx = (unsigned int*) &vvv;
   yyy = xxx + 5;
   xxx3[5] = 7;

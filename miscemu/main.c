@@ -107,13 +107,6 @@ void MAIN_EmulatorRun( void )
 int main( int argc, char *argv[] )
 {
     NE_MODULE *pModule;
-    extern char * DEBUG_argv0;
-
-    /*
-     * Save this so that the internal debugger can get a hold of it if
-     * it needs to.
-     */
-    DEBUG_argv0 = argv[0];
 
     /* Set up debugger hook */
     EXC_SetDebugEventHook( wine_debugger );

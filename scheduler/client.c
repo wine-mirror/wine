@@ -307,9 +307,22 @@ static void start_server( const char *oldcwd )
         if (pid == -1) fatal_perror( "fork" );
         if (!pid)
         {
+            char *path, *p;
+            /* first try the installation dir */
             execl( BINDIR "/wineserver", "wineserver", NULL );
             if (oldcwd) chdir( oldcwd );
+            /* now try the dir we were launched from */
+            path = xmalloc( strlen(argv0) + 20 );
+            if ((p = strrchr( strcpy( path, argv0 ), '/' )))
+            {
+                strcpy( p, "/wineserver" );
+                execl( path, "wineserver", NULL );
+                strcpy( p, "/server/wineserver" );
+                execl( path, "wineserver", NULL );
+            }
+            /* now try the path */
             execlp( "wineserver", "wineserver", NULL );
+            /* and finally the current dir */
             execl( "./server/wineserver", "wineserver", NULL );
             fatal_error( "could not exec wineserver\n" );
         }

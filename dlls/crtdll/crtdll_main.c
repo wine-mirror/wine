@@ -971,7 +971,7 @@ INT __cdecl CRTDLL_system(LPSTR x)
   unsigned char *bp;
   int i;
 
-  sprintf( buffer, "%s \"", Options.argv0 );
+  sprintf( buffer, "%s \"", argv0 );
   bp = buffer + strlen(buffer);
   i = strlen(buffer) + strlen(x) +2;
 

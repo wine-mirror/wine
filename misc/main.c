@@ -84,7 +84,6 @@ struct options Options =
     NULL,           /* argv */
     NULL,           /* desktopGeometry */
     NULL,           /* programName */
-    NULL,           /* argv0 */
     NULL,           /* dllFlags */
     FALSE,          /* usePrivateMap */
     FALSE,          /* useFixedMap */
@@ -107,7 +106,9 @@ struct options Options =
     0               /* screenDepth */
 };
 
-static char szUsage[] =
+const char *argv0;
+
+static const char szUsage[] =
   "%s\n"
   "Usage:  %s [options] \"program_name [arguments]\"\n"
   "\n"
@@ -737,7 +738,6 @@ static void MAIN_ParseOptions( int *argc, char *argv[] )
     Options.argc = argc;
     Options.argv = argv;
     Options.programName = MAIN_GetProgramName( *argc, argv );
-    Options.argv0 = argv[0];
 
     /* initialise Options.language to 0 to tell "no language choosen yet" */
     Options.language = 0;

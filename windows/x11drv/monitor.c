@@ -114,7 +114,7 @@ static void X11DRV_MONITOR_CreateDesktop(MONITOR *pMonitor)
   wm_hints->flags = InputHint | StateHint;
   wm_hints->input = True;
   wm_hints->initial_state = NormalState;
-  class_hints->res_name = Options.argv[0]; /* FIXME: Options.argv0 insteed? */
+  class_hints->res_name = argv0;
   class_hints->res_class = "Wine";
 
   TSXStringListToTextProperty( &name, 1, &window_name );

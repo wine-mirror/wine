@@ -58,6 +58,9 @@ DEFAULT_DEBUG_CHANNEL(server)
  */
 BOOL MAIN_MainInit( int *argc, char *argv[] )
 {
+    /* store the program name */
+    argv0 = argv[0];
+
     /* Create the initial process */
     if (!PROCESS_Init()) return 0;
 

@@ -24,6 +24,7 @@
 #define PATH_MAX _MAX_PATH
 #endif
 
+#include "options.h"
 #include "debugger.h"
 
 #if defined(__svr4__) || defined(__sun)
@@ -70,10 +71,6 @@
 #define N_EXCL		0xc2
 #define N_RBRAC		0xe0
 
-/*
- * Set so that we know the main executable name and path.
- */
-char * DEBUG_argv0;
 
 struct stab_nlist {
   union {
@@ -1317,7 +1314,7 @@ int
 DEBUG_ReadExecutableDbgInfo(void)
 {
   Elf32_Ehdr	      * ehdr;
-  char		      * exe_name;
+  const char	      * exe_name;
   Elf32_Dyn	      * dynpnt;
   struct r_debug      * dbg_hdr;
   struct link_map     * lpnt = NULL;
@@ -1329,7 +1326,7 @@ DEBUG_ReadExecutableDbgInfo(void)
   int			rtn = FALSE;
   int                   rowcount;
 
-  exe_name = DEBUG_argv0;
+  exe_name = argv0;
 
   /*
    * Make sure we can stat and open this file.
@@ -1426,7 +1423,7 @@ DEBUG_ReadExecutableDbgInfo(void)
   int			status;
   unsigned int		stroff;
 
-  exe_name = DEBUG_argv0;
+  exe_name = argv0;
 
   /*
    * Make sure we can stat and open this file.
