@@ -383,7 +383,7 @@
 
 /* BUTTON RADIOBUTTON states */
 #define RBS_UNCHECKEDNORMAL   1
-#define RBS_UNCHECEDHOT       2
+#define RBS_UNCHECKEDHOT      2
 #define RBS_UNCHECKEDPRESSED  3
 #define RBS_UNCHECKEDDISABLED 4
 #define RBS_CHECKEDNORMAL     5
@@ -531,9 +531,8 @@
 #define HIRS_PRESSED 3
 
 /* HEADER HEADERSORTARROW states */
-#define HSAS_NORMAL  1
-#define HSAS_HOT     2
-#define HSAS_PRESSED 3
+#define HSAS_SORTEDUP   1
+#define HSAS_SORTEDDOWN 2
 
 /* LISTVIEW parts */
 #define LVP_LISTITEM         1

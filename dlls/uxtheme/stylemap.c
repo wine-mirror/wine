@@ -356,7 +356,7 @@ static const MSSTYLES_CLASS_MAP classButton[] = {
     {BP_PUSHBUTTON,PBS_DEFAULTED,{'D','E','F','A','U','L','T','E','D','\0'}},
     {BP_RADIOBUTTON,0,{'R','A','D','I','O','B','U','T','T','O','N','\0'}},
     {BP_RADIOBUTTON,RBS_UNCHECKEDNORMAL,{'U','N','C','H','E','C','K','E','D','N','O','R','M','A','L','\0'}},
-    {BP_RADIOBUTTON,RBS_UNCHECEDHOT,{'U','N','C','H','E','C','E','D','H','O','T','\0'}},
+    {BP_RADIOBUTTON,RBS_UNCHECKEDHOT,{'U','N','C','H','E','C','K','E','D','H','O','T','\0'}},
     {BP_RADIOBUTTON,RBS_UNCHECKEDPRESSED,{'U','N','C','H','E','C','K','E','D','P','R','E','S','S','E','D','\0'}},
     {BP_RADIOBUTTON,RBS_UNCHECKEDDISABLED,{'U','N','C','H','E','C','K','E','D','D','I','S','A','B','L','E','D','\0'}},
     {BP_RADIOBUTTON,RBS_CHECKEDNORMAL,{'C','H','E','C','K','E','D','N','O','R','M','A','L','\0'}},
@@ -465,9 +465,8 @@ static const MSSTYLES_CLASS_MAP classHeader[] = {
     {HP_HEADERITEMRIGHT,HIRS_HOT,{'H','O','T','\0'}},
     {HP_HEADERITEMRIGHT,HIRS_PRESSED,{'P','R','E','S','S','E','D','\0'}},
     {HP_HEADERSORTARROW,0,{'H','E','A','D','E','R','S','O','R','T','A','R','R','O','W','\0'}},
-    {HP_HEADERSORTARROW,HSAS_NORMAL,{'N','O','R','M','A','L','\0'}},
-    {HP_HEADERSORTARROW,HSAS_HOT,{'H','O','T','\0'}},
-    {HP_HEADERSORTARROW,HSAS_PRESSED,{'P','R','E','S','S','E','D','\0'}},
+    {HP_HEADERSORTARROW,HSAS_SORTEDUP,{'S','O','R','T','E','D','U','P','\0'}},
+    {HP_HEADERSORTARROW,HSAS_SORTEDDOWN,{'S','O','R','T','E','D','D','O','W','N','\0'}},
     {0,0,{'\0'}}
 };
 
