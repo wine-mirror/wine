@@ -343,8 +343,8 @@
 @ stdcall GetBinaryTypeA(ptr ptr)
 @ stdcall GetBinaryTypeW(ptr ptr)
 @ stdcall GetCPInfo(long ptr)
-@ stub GetCPInfoExA
-@ stub GetCPInfoExW
+@ stdcall GetCPInfoExA(long long ptr)
+@ stdcall GetCPInfoExW(long long ptr)
 @ stdcall GetCommConfig(long ptr long)
 @ stdcall GetCommMask(long ptr)
 @ stdcall GetCommModemStatus(long ptr)

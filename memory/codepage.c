@@ -207,6 +207,16 @@ LANGID WINAPI GetSystemDefaultUILanguage(void)
 
 /***********************************************************************
  *           IsDBCSLeadByteEx   (KERNEL32.@)
+ *
+ * Determine if a character is a lead byte in a given code page.
+ *
+ * PARAMS
+ *  codepage [I] Code page for the test.
+ *  testchar [I] Character to test
+ *
+ * RETURNS
+ *  TRUE, if testchar is a lead byte in codepage,
+ *  FALSE otherwise.
  */
 BOOL WINAPI IsDBCSLeadByteEx( UINT codepage, BYTE testchar )
 {
@@ -218,6 +228,15 @@ BOOL WINAPI IsDBCSLeadByteEx( UINT codepage, BYTE testchar )
 /***********************************************************************
  *           IsDBCSLeadByte   (KERNEL32.@)
  *           IsDBCSLeadByte   (KERNEL.207)
+ *
+ * Determine if a character is a lead byte.
+ *
+ * PARAMS
+ *  testchar [I] Character to test
+ *
+ * RETURNS
+ *  TRUE, if testchar is a lead byte in the Ansii code page,
+ *  FALSE otherwise.
  */
 BOOL WINAPI IsDBCSLeadByte( BYTE testchar )
 {
@@ -228,6 +247,16 @@ BOOL WINAPI IsDBCSLeadByte( BYTE testchar )
 
 /***********************************************************************
  *           GetCPInfo   (KERNEL32.@)
+ *
+ * Get information about a code page.
+ *
+ * PARAMS
+ *  codepage [I] Code page number
+ *  cpinfo   [O] Destination for code page information
+ *
+ * RETURNS
+ *  Success: TRUE. cpinfo is updated with the information about codepage.
+ *  Failure: FALSE, if codepage is invalid or cpinfo is NULL.
  */
 BOOL WINAPI GetCPInfo( UINT codepage, LPCPINFO cpinfo )
 {
@@ -256,6 +285,51 @@ BOOL WINAPI GetCPInfo( UINT codepage, LPCPINFO cpinfo )
     return TRUE;
 }
 
+/***********************************************************************
+ *           GetCPInfoExA   (KERNEL32.@)
+ *
+ * Get extended information about a code page.
+ *
+ * PARAMS
+ *  codepage [I] Code page number
+ *  dwFlags  [I] Reserved, must to 0.
+ *  cpinfo   [O] Destination for code page information
+ *
+ * RETURNS
+ *  Success: TRUE. cpinfo is updated with the information about codepage.
+ *  Failure: FALSE, if codepage is invalid or cpinfo is NULL.
+ */
+BOOL WINAPI GetCPInfoExA( UINT codepage, DWORD dwFlags, LPCPINFOEXA cpinfo )
+{
+    const union cptable *table = get_codepage_table( codepage );
+
+    if (!GetCPInfo( codepage, (LPCPINFO)cpinfo ))
+      return FALSE;
+
+    cpinfo->CodePage = codepage;
+    cpinfo->UnicodeDefaultChar = table->info.def_unicode_char;
+    strcpy(cpinfo->CodePageName, table->info.name);
+    return TRUE;
+}
+
+/***********************************************************************
+ *           GetCPInfoExW   (KERNEL32.@)
+ *
+ * Unicode version of GetCPInfoExA.
+ */
+BOOL WINAPI GetCPInfoExW( UINT codepage, DWORD dwFlags, LPCPINFOEXW cpinfo )
+{
+    const union cptable *table = get_codepage_table( codepage );
+
+    if (!GetCPInfo( codepage, (LPCPINFO)cpinfo ))
+      return FALSE;
+
+    cpinfo->CodePage = codepage;
+    cpinfo->UnicodeDefaultChar = table->info.def_unicode_char;
+    MultiByteToWideChar( CP_ACP, 0, table->info.name, -1, cpinfo->CodePageName,
+                         sizeof(cpinfo->CodePageName)/sizeof(WCHAR));
+    return TRUE;
+}
 
 /***********************************************************************
  *              EnumSystemCodePagesA   (KERNEL32.@)
@@ -305,28 +379,25 @@ BOOL WINAPI EnumSystemCodePagesW( CODEPAGE_ENUMPROCW lpfnCodePageEnum, DWORD fla
 /***********************************************************************
  *              MultiByteToWideChar   (KERNEL32.@)
  *
- * PARAMS
- *   page [in]    Codepage character set to convert from
- *   flags [in]   Character mapping flags
- *   src [in]     Source string buffer
- *   srclen [in]  Length of source string buffer
- *   dst [in]     Destination buffer
- *   dstlen [in]  Length of destination buffer
+ * Convert a multibyte character string into a Unicode string.
  *
- * NOTES
- *   The returned length includes the null terminator character.
+ * PARAMS
+ *   page   [I] Codepage character set to convert from
+ *   flags  [I] Character mapping flags
+ *   src    [I] Source string buffer
+ *   srclen [I] Length of src, or -1 if src is NUL terminated
+ *   dst    [O] Destination buffer
+ *   dstlen [I] Length of dst, or 0 to compute the required length
  *
  * RETURNS
- *   Success: If dstlen > 0, number of characters written to destination
- *            buffer.  If dstlen == 0, number of characters needed to do
- *            conversion.
- *   Failure: 0. Occurs if not enough space is available.
- *
- * ERRORS
- *   ERROR_INSUFFICIENT_BUFFER
- *   ERROR_INVALID_PARAMETER
- *   ERROR_NO_UNICODE_TRANSLATION
- *
+ *   Success: If dstlen > 0, the number of characters written to dst.
+ *            If dstlen == 0, the number of characters needed to perform the
+ *            conversion. In both cases the count includes the terminating NUL.
+ *   Failure: 0. Use GetLastError() to determine the cause. Possible errors are
+ *            ERROR_INSUFFICIENT_BUFFER, if not enough space is available in dst
+ *            and dstlen != 0; ERROR_INVALID_PARAMETER,  if an invalid parameter
+ *            is passed, and ERROR_NO_UNICODE_TRANSLATION if no translation is
+ *            possible for src.
  */
 INT WINAPI MultiByteToWideChar( UINT page, DWORD flags, LPCSTR src, INT srclen,
                                 LPWSTR dst, INT dstlen )
@@ -386,29 +457,27 @@ INT WINAPI MultiByteToWideChar( UINT page, DWORD flags, LPCSTR src, INT srclen,
 /***********************************************************************
  *              WideCharToMultiByte   (KERNEL32.@)
  *
- * PARAMS
- *   page [in]    Codepage character set to convert to
- *   flags [in]   Character mapping flags
- *   src [in]     Source string buffer
- *   srclen [in]  Length of source string buffer
- *   dst [in]     Destination buffer
- *   dstlen [in]  Length of destination buffer
- *   defchar [in] Default character to use for conversion if no exact
- *		    conversion can be made
- *   used [out]   Set if default character was used in the conversion
+ * Convert a Unicode character string into a multibyte string.
  *
- * NOTES
- *   The returned length includes the null terminator character.
+ * PARAMS
+ *   page    [I] Code page character set to convert to
+ *   flags   [I] Mapping Flags (MB_ constants from "winnls.h").
+ *   src     [I] Source string buffer
+ *   srclen  [I] Length of src, or -1 if src is NUL terminated
+ *   dst     [O] Destination buffer
+ *   dstlen  [I] Length of dst, or 0 to compute the required length
+ *   defchar [I] Default character to use for conversion if no exact
+ *		    conversion can be made
+ *   used    [O] Set if default character was used in the conversion
  *
  * RETURNS
- *   Success: If dstlen > 0, number of characters written to destination
- *            buffer.  If dstlen == 0, number of characters needed to do
- *            conversion.
- *   Failure: 0. Occurs if not enough space is available.
- *
- * ERRORS
- *   ERROR_INSUFFICIENT_BUFFER
- *   ERROR_INVALID_PARAMETER
+ *   Success: If dstlen > 0, the number of characters written to dst.
+ *            If dstlen == 0, number of characters needed to perform the
+ *            conversion. In both cases the count includes the terminating NUL.
+ *   Failure: 0. Use GetLastError() to determine the cause. Possible errors are
+ *            ERROR_INSUFFICIENT_BUFFER, if not enough space is available in dst
+ *            and dstlen != 0, and ERROR_INVALID_PARAMETER, if an invalid
+ *            parameter was given.
  */
 INT WINAPI WideCharToMultiByte( UINT page, DWORD flags, LPCWSTR src, INT srclen,
                                 LPSTR dst, INT dstlen, LPCSTR defchar, BOOL *used )
