@@ -280,15 +280,15 @@ LONG WINAPI DispatchMessage16( const MSG16* msg )
         }
     }
 
-    if (!(wndPtr = WIN_GetPtr( HWND_32(msg->hwnd) )))
+    if (!(wndPtr = WIN_GetPtr( hwnd )))
     {
         if (msg->hwnd) SetLastError( ERROR_INVALID_WINDOW_HANDLE );
         return 0;
     }
     if (wndPtr == WND_OTHER_PROCESS)
     {
-        if (IsWindow16( msg->hwnd ))
-            ERR( "cannot dispatch msg to other process window %x\n", msg->hwnd );
+        if (IsWindow( hwnd ))
+            ERR( "cannot dispatch msg to other process window %x\n", hwnd );
         SetLastError( ERROR_INVALID_WINDOW_HANDLE );
         return 0;
     }
@@ -313,7 +313,7 @@ LONG WINAPI DispatchMessage16( const MSG16* msg )
         WIN_ReleasePtr( wndPtr );
         if (validate)
         {
-            ERR( "BeginPaint not called on WM_PAINT for hwnd %04x!\n", msg->hwnd );
+            ERR( "BeginPaint not called on WM_PAINT for hwnd %x!\n", hwnd );
             /* Validate the update region to avoid infinite WM_PAINT loop */
             RedrawWindow( hwnd, NULL, 0,
                           RDW_NOFRAME | RDW_VALIDATE | RDW_NOCHILDREN | RDW_NOINTERNALPAINT );

@@ -1064,7 +1064,6 @@ LRESULT WINAPI DefHookProc16( INT16 code, WPARAM16 wParam, LPARAM lParam,
  */
 BOOL16 WINAPI CallMsgFilter16( SEGPTR msg, INT16 code )
 {
-    if (GetSysModalWindow16()) return FALSE;
     if (HOOK_CallHooks16( WH_SYSMSGFILTER, code, 0, (LPARAM)msg )) return TRUE;
     return HOOK_CallHooks16( WH_MSGFILTER, code, 0, (LPARAM)msg );
 }
@@ -1120,7 +1119,6 @@ BOOL16 WINAPI CallMsgFilter32_16( SEGPTR msg16_32, INT16 code, BOOL16 wHaveParam
  */
 BOOL WINAPI CallMsgFilterA( LPMSG msg, INT code )
 {
-    if (GetSysModalWindow16()) return FALSE;	/* ??? */
     if (HOOK_CallHooksA( WH_SYSMSGFILTER, code, 0, (LPARAM)msg ))
       return TRUE;
     return HOOK_CallHooksA( WH_MSGFILTER, code, 0, (LPARAM)msg );
@@ -1132,7 +1130,6 @@ BOOL WINAPI CallMsgFilterA( LPMSG msg, INT code )
  */
 BOOL WINAPI CallMsgFilterW( LPMSG msg, INT code )
 {
-    if (GetSysModalWindow16()) return FALSE;	/* ??? */
     if (HOOK_CallHooksW( WH_SYSMSGFILTER, code, 0, (LPARAM)msg ))
       return TRUE;
     return HOOK_CallHooksW( WH_MSGFILTER, code, 0, (LPARAM)msg );

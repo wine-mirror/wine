@@ -73,13 +73,13 @@ C_SRCS = \
 	resource.c \
 	text.c \
 	user_main.c \
-	wnd16.c \
 	wsprintf.c
 
 C_SRCS16 = \
 	bidi16.c \
 	network.c \
-	user16.c
+	user16.c \
+	wnd16.c
 
 RC_SRCS = resources/user32.rc
 

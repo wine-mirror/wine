@@ -29,7 +29,6 @@
 #include "controls.h"
 #include "user.h"
 #include "win.h"
-#include "hook.h"
 #include "message.h"
 #include "queue.h"
 #include "winpos.h"
@@ -852,23 +851,6 @@ BOOL WINAPI ShowWindow( HWND hwnd, INT cmd )
     if ((full_handle = WIN_IsCurrentThread( hwnd )))
         return USER_Driver.pShowWindow( full_handle, cmd );
     return SendMessageW( hwnd, WM_WINE_SHOWWINDOW, cmd, 0 );
-}
-
-
-/***********************************************************************
- *		GetInternalWindowPos (USER.460)
- */
-UINT16 WINAPI GetInternalWindowPos16( HWND16 hwnd, LPRECT16 rectWnd,
-                                      LPPOINT16 ptIcon )
-{
-    WINDOWPLACEMENT16 wndpl;
-    if (GetWindowPlacement16( hwnd, &wndpl ))
-    {
-	if (rectWnd) *rectWnd = wndpl.rcNormalPosition;
-	if (ptIcon)  *ptIcon = wndpl.ptMinPosition;
-	return wndpl.showCmd;
-    }
-    return 0;
 }
 
 

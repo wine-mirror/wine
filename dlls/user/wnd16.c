@@ -333,7 +333,7 @@ BOOL16 WINAPI IsWindow16( HWND16 hwnd )
 {
     CURRENT_STACK16->es = USER_HeapSel;
     /* don't use WIN_Handle32 here, we don't care about the full handle */
-    return IsWindow( WIN_Handle32(hwnd) );
+    return IsWindow( HWND_32(hwnd) );
 }
 
 
@@ -1491,6 +1491,20 @@ BOOL16 WINAPI DrawAnimatedRects16( HWND16 hwnd, INT16 idAni,
     rcTo32.right    = lprcTo->right;
     rcTo32.bottom   = lprcTo->bottom;
     return DrawAnimatedRects( WIN_Handle32(hwnd), idAni, &rcFrom32, &rcTo32 );
+}
+
+
+/***********************************************************************
+ *		GetInternalWindowPos (USER.460)
+ */
+UINT16 WINAPI GetInternalWindowPos16( HWND16 hwnd, LPRECT16 rectWnd, LPPOINT16 ptIcon )
+{
+    WINDOWPLACEMENT16 wndpl;
+
+    if (!GetWindowPlacement16( hwnd, &wndpl )) return 0;
+    if (rectWnd) *rectWnd = wndpl.rcNormalPosition;
+    if (ptIcon)  *ptIcon = wndpl.ptMinPosition;
+    return wndpl.showCmd;
 }
 
 

@@ -26,8 +26,6 @@
 #include "wingdi.h"
 #include "winreg.h"
 #include "wownt32.h"
-#include "wine/winuser16.h"
-#include "wine/winbase16.h"
 #include "wine/unicode.h"
 #include "win.h"
 #include "wine/debug.h"
@@ -2272,16 +2270,11 @@ void SPY_EnterMessage( INT iFlag, HWND hWnd, UINT msg,
     case SPY_SENDMESSAGE16:
     case SPY_SENDMESSAGE:
         {
-            char taskName[30];
-            HTASK16 hTask = GetWindowTask16( HWND_16(hWnd) );
+            char taskName[20];
+            DWORD tid = GetWindowThreadProcessId( hWnd, NULL );
 
-            if (hTask == GetCurrentTask()) strcpy( taskName, "self" );
-            else if (!hTask) strcpy( taskName, "Wine" );
-            else
-            {
-                sprintf( taskName, "task %04x ???", hTask );
-                GetModuleName16( hTask, taskName + 10, sizeof(taskName) - 10 );
-            }
+            if (tid == GetCurrentThreadId()) strcpy( taskName, "self" );
+            else sprintf( taskName, "tid %08lx", GetCurrentThreadId() );
 
             if (iFlag == SPY_SENDMESSAGE16)
                 TRACE("%*s(%04x) %-16s message [%04x] %s sent from %s wp=%04x lp=%08lx\n",

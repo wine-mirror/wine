@@ -3144,7 +3144,7 @@ BOOL WINAPI SetWindowContextHelpId( HWND hwnd, DWORD id )
 static BOOL16 DRAG_QueryUpdate16( HWND hQueryWnd, SEGPTR spDragInfo )
 {
     BOOL16 wParam, bResult = 0;
-    POINT pt;
+    POINT pt, client_pt;
     LPDRAGINFO16 ptrDragInfo = MapSL(spDragInfo);
     RECT tempRect;
 
@@ -3191,8 +3191,10 @@ static BOOL16 DRAG_QueryUpdate16( HWND hQueryWnd, SEGPTR spDragInfo )
     }
     else wParam = 1;
 
-    ScreenToClient16(HWND_16(hQueryWnd),&ptrDragInfo->pt);
-
+    client_pt = pt;
+    ScreenToClient( hQueryWnd, &client_pt );
+    ptrDragInfo->pt.x = client_pt.x;
+    ptrDragInfo->pt.y = client_pt.y;
     ptrDragInfo->hScope = HWND_16(hQueryWnd);
 
     bResult = SendMessage16( HWND_16(hQueryWnd), WM_QUERYDROPOBJECT, (WPARAM16)wParam, spDragInfo );

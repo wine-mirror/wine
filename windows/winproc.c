@@ -209,7 +209,7 @@ static LRESULT WINAPI WINPROC_CallWndProc16( WNDPROC16 proc, HWND16 hwnd,
 
     memset(&context, '\0', sizeof(context));
     context.SegDs = context.SegEs = SELECTOROF(teb->cur_stack);
-    if (!(context.Eax = GetWindowWord16( hwnd, GWL_HINSTANCE ))) context.Eax = context.SegDs;
+    if (!(context.Eax = GetWindowWord( HWND_32(hwnd), GWL_HINSTANCE ))) context.Eax = context.SegDs;
     context.SegCs = SELECTOROF(proc);
     context.Eip   = OFFSETOF(proc);
     context.Ebp   = OFFSETOF(teb->cur_stack)
