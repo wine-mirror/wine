@@ -1422,6 +1422,7 @@ GL_IDirect3DDeviceImpl_7_3T_SetTexture(LPDIRECT3DDEVICE7 iface,
 				       LPDIRECTDRAWSURFACE7 lpTexture2)
 {
     ICOM_THIS_FROM(IDirect3DDeviceImpl, IDirect3DDevice7, iface);
+    IDirect3DDeviceGLImpl *glThis = (IDirect3DDeviceGLImpl *) This;
     
     TRACE("(%p/%p)->(%08lx,%p)\n", This, iface, dwStage, lpTexture2);
     
@@ -1441,11 +1442,13 @@ GL_IDirect3DDeviceImpl_7_3T_SetTexture(LPDIRECT3DDEVICE7 iface,
 	
 	This->current_texture[dwStage] = tex_impl;
 	IDirectDrawSurface7_AddRef(ICOM_INTERFACE(tex_impl, IDirectDrawSurface7)); /* Not sure about this either */
-
+	
 	TRACE(" activating OpenGL texture %d.\n", tex_glimpl->tex_name);
 	
         glEnable(GL_TEXTURE_2D);
 	glBindTexture(GL_TEXTURE_2D, tex_glimpl->tex_name);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, glThis->render_state.mag);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, glThis->render_state.min);
     }
     LEAVE_GL();
     
