@@ -3383,3 +3383,24 @@ DWORD WINAPI DragObject16( HWND16 hwndScope, HWND16 hWnd, UINT16 wObj,
 
     return (DWORD)(msg.lParam);
 }
+
+
+/******************************************************************************
+ *		GetWindowModuleFileNameA (USER32.@)
+ */
+UINT WINAPI GetWindowModuleFileNameA( HWND hwnd, LPSTR lpszFileName, UINT cchFileNameMax)
+{
+    FIXME("GetWindowModuleFileNameA(hwnd 0x%x, lpszFileName %p, cchFileNameMax %u) stub!\n",
+          hwnd, lpszFileName, cchFileNameMax);
+    return 0;
+}
+
+/******************************************************************************
+ *		GetWindowModuleFileNameW (USER32.@)
+ */
+UINT WINAPI GetWindowModuleFileNameW( HWND hwnd, LPSTR lpszFileName, UINT cchFileNameMax)
+{
+    FIXME("GetWindowModuleFileNameW(hwnd 0x%x, lpszFileName %p, cchFileNameMax %u) stub!\n",
+          hwnd, lpszFileName, cchFileNameMax);
+    return 0;
+}

@@ -655,6 +655,8 @@ debug_channels (accel caret class clipboard combo cursor dc ddeml dialog driver
 @ stdcall DrawMenuBarTemp(long long) DrawMenuBarTemp
 @ stdcall EnumDisplaySettingsExA(str long ptr long) EnumDisplaySettingsExA
 @ stdcall EnumDisplaySettingsExW(wstr long ptr long) EnumDisplaySettingsExW
+@ stdcall GetWindowModuleFileNameA(long ptr long) GetWindowModuleFileNameA
+@ stdcall GetWindowModuleFileNameW(long ptr long) GetWindowModuleFileNameW
 
 ################################################################
 # Wine extensions: Win16 functions that are needed by other dlls
