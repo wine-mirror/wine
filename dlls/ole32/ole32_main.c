@@ -3,6 +3,7 @@
  *
  */
 #include "windef.h"
+#include "winerror.h"
 #include "ole32_main.h"
 #include "debugtools.h"
 
@@ -34,4 +35,10 @@ BOOL WINAPI OLE32_DllEntryPoint(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID fImp
 	break;
     }
     return TRUE;
+}
+
+HRESULT WINAPI OLE32_DllRegisterServer() {
+    /* FIXME: what Interfaces should we register ... */
+    FIXME("(), stub!\n");
+    return S_OK;
 }

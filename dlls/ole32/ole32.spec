@@ -205,7 +205,7 @@ debug_channels (ole relay storage)
 191 stub CoSwitchCallContext
 192 stdcall CreateErrorInfo(ptr) CreateErrorInfo
 193 stub CreateObjrefMoniker
-194 stub DllRegisterServer
+194 stdcall DllRegisterServer() OLE32_DllRegisterServer
 195 stdcall FreePropVariantArray(long ptr) FreePropVariantArray
 196 stdcall GetErrorInfo(long ptr) GetErrorInfo
 197 stub HACCEL_UserFree
