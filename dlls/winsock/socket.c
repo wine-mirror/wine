@@ -1872,17 +1872,22 @@ static INT __ws_select(BOOL b32,
     fd_set      readfds, writefds, exceptfds;
     fd_set     *p_read, *p_write, *p_except;
     int         readfd[FD_SETSIZE], writefd[FD_SETSIZE], exceptfd[FD_SETSIZE];
-    struct timeval timeout;
+    struct timeval timeout, *timeoutaddr = NULL;
 
-    TRACE("read %p, write %p, excp %p\n", ws_readfds, ws_writefds, ws_exceptfds);
+    TRACE("read %p, write %p, excp %p timeout %p\n", 
+           ws_readfds, ws_writefds, ws_exceptfds, ws_timeout);
 
     p_read = fd_set_import(&readfds, ws_readfds, &highfd, readfd, b32);
     p_write = fd_set_import(&writefds, ws_writefds, &highfd, writefd, b32);
     p_except = fd_set_import(&exceptfds, ws_exceptfds, &highfd, exceptfd, b32);
-    timeout.tv_sec=ws_timeout->tv_sec;
-    timeout.tv_usec=ws_timeout->tv_usec;
+    if (ws_timeout)
+    {
+        timeoutaddr = &timeout;
+        timeout.tv_sec=ws_timeout->tv_sec;
+        timeout.tv_usec=ws_timeout->tv_usec;
+    }
 
-    if( (highfd = select(highfd + 1, p_read, p_write, p_except, &timeout)) > 0 )
+    if( (highfd = select(highfd + 1, p_read, p_write, p_except, timeoutaddr)) > 0 )
     {
         fd_set_export(&readfds, p_except, ws_readfds, readfd, b32);
         fd_set_export(&writefds, p_except, ws_writefds, writefd, b32);
