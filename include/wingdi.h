@@ -3458,8 +3458,6 @@ BOOL        WINAPI LPtoDP(HDC,LPPOINT,INT);
 BOOL        WINAPI MaskBlt(HDC,INT,INT,INT,INT,HDC,INT,INT,HBITMAP,INT,INT,DWORD);
 BOOL        WINAPI ModifyWorldTransform(HDC,const XFORM *, DWORD);
 BOOL        WINAPI MoveToEx(HDC,INT,INT,LPPOINT);
-/* FIXME This is defined in kernel32.spec !?*/
-INT       WINAPI MulDiv(INT,INT,INT);
 INT       WINAPI OffsetClipRgn(HDC,INT,INT);
 INT       WINAPI OffsetRgn(HRGN,INT,INT);
 BOOL      WINAPI OffsetViewportOrgEx(HDC,INT,INT,LPPOINT);
