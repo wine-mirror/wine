@@ -134,7 +134,7 @@ HRESULT QUARTZ_CreateAsyncSourcePin(
 HRESULT QUARTZ_CreateAsyncReader(IUnknown* punkOuter,void** ppobj);
 HRESULT QUARTZ_CreateURLReader(IUnknown* punkOuter,void** ppobj);
 
-#define ASYNCSRC_FILE_BLOCKSIZE	4096
+#define ASYNCSRC_FILE_BLOCKSIZE	16384
 
 
 #endif	/* WINE_DSHOW_ASYNCSRC_H */

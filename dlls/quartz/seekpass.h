@@ -57,6 +57,7 @@ typedef struct CSeekingPassThru
 #define	CSeekingPassThru_THIS(iface,member)		CSeekingPassThru*	This = ((CSeekingPassThru*)(((char*)iface)-offsetof(CSeekingPassThru,member)))
 
 HRESULT QUARTZ_CreateSeekingPassThru(IUnknown* punkOuter,void** ppobj);
+HRESULT QUARTZ_CreateSeekingPassThruInternal(IUnknown* punkOuter,CSeekingPassThru** ppobj,BOOL bRendering,IPin* pPin);
 
 
 #endif  /* WINE_DSHOW_SEEKPASS_H */

@@ -112,7 +112,10 @@ HRESULT QUARTZ_IMediaSample_SetProperties(
 		hr = IMediaSample_SetDiscontinuity(pSample,
 			(prop.dwSampleFlags & AM_SAMPLE_DATADISCONTINUITY) ? TRUE : FALSE);
 	if ( SUCCEEDED(hr) )
+	{
+		TRACE("length = %ld/%ld\n",prop.lActual,pProp->cbBuffer);
 		hr = IMediaSample_SetActualDataLength(pSample,prop.lActual);
+	}
 	if ( SUCCEEDED(hr) )
 	{
 		if ( ( prop.dwSampleFlags & AM_SAMPLE_TIMEVALID) &&
@@ -142,6 +145,8 @@ HRESULT QUARTZ_IMediaSample_Copy(
 	hr = QUARTZ_IMediaSample_GetProperties( pSrcSample, &prop );
 	if ( FAILED(hr) )
 		return hr;
+	if ( !bCopyData )
+		prop.lActual = 0;
 	hr = QUARTZ_IMediaSample_SetProperties( pDstSample, &prop );
 	if ( prop.pMediaType != NULL )
 		QUARTZ_MediaType_Destroy( prop.pMediaType );

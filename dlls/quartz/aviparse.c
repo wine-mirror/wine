@@ -14,6 +14,7 @@
 #include "vfw.h"
 #include "winerror.h"
 #include "strmif.h"
+#include "control.h"
 #include "vfwmsgs.h"
 #include "amvideo.h"
 #include "uuids.h"
@@ -385,10 +386,9 @@ static HRESULT CAVIParseImpl_GetStreamType( CParserImpl* pImpl, ULONG nStreamInd
 		if ( hr != S_OK )
 			QUARTZ_MediaSubType_FromFourCC( &pmt->subtype, (DWORD)pbi->biCompression );
 
-		pmt->bFixedSizeSamples = ( pbi->biCompression == 0 || pbi->biCompression == 3 ) ? 1 : 0;
-		pmt->bTemporalCompression = 0;
-		pmt->lSampleSize = ( pbi->biCompression == 0 || pbi->biCompression == 3 ) ?
-			DIBSIZE(*pbi) : pbi->biSize;
+		pmt->bFixedSizeSamples = QUARTZ_BitmapHasFixedSample( pbi ) ? 1 : 0;
+		pmt->bTemporalCompression = 0; /* FIXME - 1 if inter-frame compression is used */
+		pmt->lSampleSize = ( pbi->biCompression == 0 ) ? DIBSIZE(*pbi) : pbi->biSizeImage;
 		memcpy( &pmt->formattype, &FORMAT_VideoInfo, sizeof(GUID) );
 
 		cb = sizeof(VIDEOINFOHEADER) + cbFmt;
@@ -545,6 +545,7 @@ static HRESULT CAVIParseImpl_GetAllocProp( CParserImpl* pImpl, ALLOCATOR_PROPERT
 {
 	CAVIParseImpl*	This = (CAVIParseImpl*)pImpl->m_pUserData;
 
+	TRACE("(%p,%p)\n",This,pReqProp);
 	if ( This == NULL )
 		return E_UNEXPECTED;
 

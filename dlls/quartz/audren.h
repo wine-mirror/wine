@@ -12,6 +12,7 @@
 
 #include "iunk.h"
 #include "basefilt.h"
+#include "seekpass.h"
 
 #define WINE_QUARTZ_WAVEOUT_COUNT	4
 
@@ -29,7 +30,9 @@ struct CAudioRendererImpl
 	QUARTZ_IUnkImpl	unk;
 	CBaseFilterImpl	basefilter;
 	AudRen_IBasicAudioImpl	basaud;
+	QUARTZ_IFDelegation	qiext;
 
+	CSeekingPassThru*	pSeekPass;
 	CAudioRendererPinImpl* pPin;
 
 	BOOL	m_fInFlush;

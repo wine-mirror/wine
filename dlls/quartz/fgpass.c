@@ -1,8 +1,6 @@
 /*
  * Implementation of IBasicAudio, IBasicVideo2, IVideoWindow for FilterGraph.
  *
- * FIXME - stub.
- *
  * hidenori@a2.ctktv.ne.jp
  */
 
@@ -24,33 +22,53 @@ DEFAULT_DEBUG_CHANNEL(quartz);
 #include "fgraph.h"
 
 
+static HRESULT CFilterGraph_QIFilters(
+	CFilterGraph* This, REFIID riid, void** ppvobj )
+{
+	QUARTZ_CompListItem*	pItem;
+	HRESULT hr = E_NOINTERFACE;
+
+	TRACE( "(%p,%p,%p)\n",This,riid,ppvobj);
+
+	QUARTZ_CompList_Lock( This->m_pFilterList );
+	pItem = QUARTZ_CompList_GetLast( This->m_pFilterList );
+	while ( pItem != NULL )
+	{
+		if ( IUnknown_QueryInterface( QUARTZ_CompList_GetItemPtr(pItem),riid,ppvobj) == S_OK )
+		{
+			hr = S_OK;
+			break;
+		}
+		pItem = QUARTZ_CompList_GetPrev( This->m_pFilterList, pItem );
+	}
+	QUARTZ_CompList_Unlock( This->m_pFilterList );
+
+	return hr;
+}
+
 
 static HRESULT CFilterGraph_QueryBasicAudio(
 	CFilterGraph* This, IBasicAudio** ppAudio )
 {
-	FIXME("(%p,%p) stub!\n",This,ppAudio);
-	return E_NOTIMPL;
+	return CFilterGraph_QIFilters(This,&IID_IBasicAudio,(void**)ppAudio);
 }
 
 static HRESULT CFilterGraph_QueryBasicVideo(
 	CFilterGraph* This, IBasicVideo** ppVideo )
 {
-	FIXME("(%p,%p) stub!\n",This,ppVideo);
-	return E_NOTIMPL;
+	return CFilterGraph_QIFilters(This,&IID_IBasicVideo,(void**)ppVideo);
 }
 
 static HRESULT CFilterGraph_QueryBasicVideo2(
 	CFilterGraph* This, IBasicVideo2** ppVideo )
 {
-	FIXME("(%p,%p) stub!\n",This,ppVideo);
-	return E_NOTIMPL;
+	return CFilterGraph_QIFilters(This,&IID_IBasicVideo2,(void**)ppVideo);
 }
 
 static HRESULT CFilterGraph_QueryVideoWindow(
 	CFilterGraph* This, IVideoWindow** ppVidWin )
 {
-	FIXME("(%p,%p) stub!\n",This,ppVidWin);
-	return E_NOTIMPL;
+	return CFilterGraph_QIFilters(This,&IID_IVideoWindow,(void**)ppVidWin);
 }
 
 

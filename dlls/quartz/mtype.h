@@ -25,6 +25,9 @@ BOOL QUARTZ_MediaSubType_IsFourCC(
 HRESULT QUARTZ_MediaSubType_FromBitmap(
 	GUID* psubtype, const BITMAPINFOHEADER* pbi );
 
+BOOL QUARTZ_BitmapHasFixedSample( const BITMAPINFOHEADER* pbi );
+
+
 HRESULT QUARTZ_CreateEnumMediaTypes(
 	IEnumMediaTypes** ppobj,
 	const AM_MEDIA_TYPE* pTypes, ULONG cTypes );

@@ -64,11 +64,15 @@ CPinBaseImpl_fnConnect(IPin* iface,IPin* pPin,const AM_MEDIA_TYPE* pmt)
 	ICOM_THIS(CPinBaseImpl,iface);
 	HRESULT	hr = E_NOTIMPL;
 	ULONG	i;
+	FILTER_STATE	fs;
 
-	FIXME("(%p)->(%p,%p)\n",This,pPin,pmt);
+	TRACE("(%p)->(%p,%p)\n",This,pPin,pmt);
 
 	if ( !This->bOutput )
+	{
+		TRACE("Connect() should not be sent to input pins\n");
 		return E_UNEXPECTED;
+	}
 	if ( pPin == NULL )
 		return E_POINTER;
 
@@ -82,13 +86,23 @@ CPinBaseImpl_fnConnect(IPin* iface,IPin* pPin,const AM_MEDIA_TYPE* pmt)
 		goto err;
 	}
 
-	/* FIXME - return fail if running */
+	/* return fail if running */
+	hr = IBaseFilter_GetState((IBaseFilter*)(This->pFilter),0,&fs);
+	if ( hr != S_OK || fs != State_Stopped )
+	{
+		TRACE("not stopped\n");
+		hr = VFW_E_NOT_STOPPED;
+		goto err;
+	}
 
 	if ( This->pHandlers->pOnPreConnect != NULL )
 	{
 		hr = This->pHandlers->pOnPreConnect(This,pPin);
 		if ( FAILED(hr) )
+		{
+			TRACE("OnPreconnect() failed hr = %08lx\n",hr);
 			goto err;
+		}
 	}
 
 	if ( pmt != NULL )
@@ -109,6 +123,7 @@ CPinBaseImpl_fnConnect(IPin* iface,IPin* pPin,const AM_MEDIA_TYPE* pmt)
 			if ( SUCCEEDED(hr) )
 			{
 				hr = IPin_ReceiveConnection(pPin,iface,pmt);
+				TRACE("ReceiveConnection - %08lx\n",hr);
 				if ( SUCCEEDED(hr) )
 				{
 					goto connected;
@@ -133,6 +148,7 @@ connected:;
 	hr = IPin_QueryInterface(pPin,&IID_IMemInputPin,(void**)&This->pMemInputPinConnectedTo);
 	if ( FAILED(hr) )
 	{
+		TRACE("no IMemInputPin\n");
 		IPin_Disconnect(pPin);
 		goto err;
 	}
@@ -142,6 +158,7 @@ connected:;
 		hr = This->pHandlers->pOnPostConnect(This,pPin);
 		if ( FAILED(hr) )
 		{
+			TRACE("OnPostConnect() failed hr = %08lx\n",hr);
 			IPin_Disconnect(pPin);
 			goto err;
 		}
@@ -156,6 +173,8 @@ err:
 	}
 	LeaveCriticalSection( This->pcsPin );
 
+	TRACE("return %08lx\n",hr);
+
 	return hr;
 }
 
@@ -164,11 +183,15 @@ CPinBaseImpl_fnReceiveConnection(IPin* iface,IPin* pPin,const AM_MEDIA_TYPE* pmt
 {
 	ICOM_THIS(CPinBaseImpl,iface);
 	HRESULT	hr = E_NOTIMPL;
+	FILTER_STATE fs;
 
-	FIXME("(%p)->(%p,%p)\n",This,pPin,pmt);
+	TRACE("(%p)->(%p,%p)\n",This,pPin,pmt);
 
 	if ( This->bOutput )
+	{
+		TRACE("ReceiveConnection() should not be sent to output pins\n");
 		return E_UNEXPECTED;
+	}
 	if ( pPin == NULL || pmt == NULL )
 		return E_POINTER;
 
@@ -180,13 +203,23 @@ CPinBaseImpl_fnReceiveConnection(IPin* iface,IPin* pPin,const AM_MEDIA_TYPE* pmt
 		goto err;
 	}
 
-	/* FIXME - return fail if running */
+	/* return fail if running */
+	hr = IBaseFilter_GetState((IBaseFilter*)(This->pFilter),0,&fs);
+	if ( hr != S_OK || fs != State_Stopped )
+	{
+		TRACE("not stopped\n");
+		hr = VFW_E_NOT_STOPPED;
+		goto err;
+	}
 
 	if ( This->pHandlers->pOnPreConnect != NULL )
 	{
 		hr = This->pHandlers->pOnPreConnect(This,pPin);
 		if ( FAILED(hr) )
+		{
+			TRACE("OnPreConnect() failed hr = %08lx\n",hr);
 			goto err;
+		}
 	}
 
 	hr = IPin_QueryAccept(iface,pmt);
@@ -204,7 +237,10 @@ CPinBaseImpl_fnReceiveConnection(IPin* iface,IPin* pPin,const AM_MEDIA_TYPE* pmt
 	{
 		hr = This->pHandlers->pOnPostConnect(This,pPin);
 		if ( FAILED(hr) )
+		{
+			TRACE("OnPostConnect() failed hr = %08lx\n",hr);
 			goto err;
+		}
 	}
 
 	hr = S_OK;
@@ -223,12 +259,20 @@ CPinBaseImpl_fnDisconnect(IPin* iface)
 {
 	ICOM_THIS(CPinBaseImpl,iface);
 	HRESULT hr = NOERROR;
+	FILTER_STATE fs;
 
-	FIXME("(%p)->() stub!\n",This);
+	TRACE("(%p)->()\n",This);
 
 	EnterCriticalSection( This->pcsPin );
 
-	/* FIXME - return fail if running */
+	/* return fail if running */
+	hr = IBaseFilter_GetState((IBaseFilter*)(This->pFilter),0,&fs);
+	if ( hr != S_OK || fs != State_Stopped )
+	{
+		TRACE("not stopped\n");
+		hr = VFW_E_NOT_STOPPED;
+		goto err;
+	}
 
 	if ( This->pHandlers->pOnDisconnect != NULL )
 		hr = This->pHandlers->pOnDisconnect(This);
@@ -256,6 +300,7 @@ CPinBaseImpl_fnDisconnect(IPin* iface)
 		hr = S_FALSE; /* FIXME - is this correct??? */
 	}
 
+err:
 	LeaveCriticalSection( This->pcsPin );
 
 	return hr;
@@ -741,8 +786,6 @@ CMemInputPinBaseImpl_fnReceiveMultiple(IMemInputPin* iface,IMediaSample** ppSamp
 	if ( ppSample == NULL || pnSampleProcessed == NULL )
 		return E_POINTER;
 
-	EnterCriticalSection( This->pPin->pcsPin );
-
 	hr = NOERROR;
 	for ( n = 0; n < nSample; n++ )
 	{
@@ -750,8 +793,6 @@ CMemInputPinBaseImpl_fnReceiveMultiple(IMemInputPin* iface,IMediaSample** ppSamp
 		if ( FAILED(hr) )
 			break;
 	}
-
-	LeaveCriticalSection( This->pPin->pcsPin );
 
 	*pnSampleProcessed = n;
 	return hr;
@@ -939,6 +980,14 @@ HRESULT CPinBaseImpl_SendSample( CPinBaseImpl* This, IMediaSample* pSample )
 		return E_NOTIMPL;
 
 	return This->pHandlers->pReceive( This, pSample );
+}
+
+HRESULT CPinBaseImpl_SendReceiveCanBlock( CPinBaseImpl* This )
+{
+	if ( This->pHandlers->pReceiveCanBlock == NULL )
+		return E_NOTIMPL;
+
+	return This->pHandlers->pReceiveCanBlock( This );
 }
 
 HRESULT CPinBaseImpl_SendEndOfStream( CPinBaseImpl* This )

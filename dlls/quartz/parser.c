@@ -3,7 +3,8 @@
  *
  * hidenori@a2.ctktv.ne.jp
  *
- * FIXME - save the array of pSample and handle errors/flushing correctly.
+ * FIXME - handle errors/flushing correctly.
+ * FIXME - handle seeking.
  */
 
 #include "config.h"
@@ -15,6 +16,7 @@
 #include "mmsystem.h"
 #include "winerror.h"
 #include "strmif.h"
+#include "control.h"
 #include "vfwmsgs.h"
 #include "uuids.h"
 
@@ -26,10 +28,14 @@ DEFAULT_DEBUG_CHANNEL(quartz);
 #include "mtype.h"
 #include "memalloc.h"
 
-#define	QUARTZ_MSG_BEGINFLUSH	(WM_APP+1)
-#define	QUARTZ_MSG_ENDFLUSH	(WM_APP+2)
-#define	QUARTZ_MSG_EXITTHREAD		(WM_APP+3)
-#define	QUARTZ_MSG_SEEK		(WM_APP+0)
+#define	QUARTZ_MSG_FLUSH	(WM_APP+1)
+#define	QUARTZ_MSG_EXITTHREAD	(WM_APP+2)
+#define	QUARTZ_MSG_SEEK			(WM_APP+3)
+
+HRESULT CParserOutPinImpl_InitIMediaSeeking( CParserOutPinImpl* This );
+void CParserOutPinImpl_UninitIMediaSeeking( CParserOutPinImpl* This );
+HRESULT CParserOutPinImpl_InitIMediaPosition( CParserOutPinImpl* This );
+void CParserOutPinImpl_UninitIMediaPosition( CParserOutPinImpl* This );
 
 /***************************************************************************
  *
@@ -74,36 +80,189 @@ void CParserImpl_ReleaseOutPins( CParserImpl* This )
 }
 
 static
+BOOL CParserImpl_OutPinsAreConnected( CParserImpl* This )
+{
+	QUARTZ_CompListItem*	pItem;
+	IPin*	pPin;
+	IPin*	pPinPeer;
+	HRESULT hr;
+
+	QUARTZ_CompList_Lock( This->basefilter.pOutPins );
+	pItem = QUARTZ_CompList_GetFirst( This->basefilter.pOutPins );
+	while ( pItem != NULL )
+	{
+		if ( pItem == NULL )
+			break;
+		pPin = (IPin*)QUARTZ_CompList_GetItemPtr(pItem);
+		pPinPeer = NULL;
+		hr = IPin_ConnectedTo(pPin,&pPinPeer);
+		if ( hr == S_OK && pPinPeer != NULL )
+		{
+			IPin_Release(pPinPeer);
+			return TRUE;
+		}
+		pItem = QUARTZ_CompList_GetNext( This->basefilter.pOutPins, pItem );
+	}
+	QUARTZ_CompList_Unlock( This->basefilter.pOutPins );
+
+	return FALSE;
+}
+
+static
+void CParserImpl_ReleaseListOfOutPins( CParserImpl* This )
+{
+	QUARTZ_CompListItem*	pItem;
+
+	QUARTZ_CompList_Lock( This->basefilter.pOutPins );
+	while ( 1 )
+	{
+		pItem = QUARTZ_CompList_GetFirst( This->basefilter.pOutPins );
+		if ( pItem == NULL )
+			break;
+		QUARTZ_CompList_RemoveComp(
+			This->basefilter.pOutPins,
+			QUARTZ_CompList_GetItemPtr(pItem) );
+	}
+	QUARTZ_CompList_Unlock( This->basefilter.pOutPins );
+}
+
+static
 void CParserImpl_ClearAllRequests( CParserImpl* This )
 {
 	ULONG	nIndex;
 
+	TRACE("(%p)\n",This);
+
 	for ( nIndex = 0; nIndex < This->m_cOutStreams; nIndex++ )
+	{
 		This->m_ppOutPins[nIndex]->m_bReqUsed = FALSE;
+		This->m_ppOutPins[nIndex]->m_pReqSample = NULL;
+	}
 }
 
+static
+void CParserImpl_ReleaseAllRequests( CParserImpl* This )
+{
+	ULONG	nIndex;
+
+	TRACE("(%p)\n",This);
+
+	for ( nIndex = 0; nIndex < This->m_cOutStreams; nIndex++ )
+	{
+		if ( This->m_ppOutPins[nIndex]->m_bReqUsed )
+		{
+			if ( This->m_ppOutPins[nIndex]->m_pReqSample != NULL )
+			{
+				IMediaSample_Release(This->m_ppOutPins[nIndex]->m_pReqSample);
+				This->m_ppOutPins[nIndex]->m_pReqSample = NULL;
+			}
+			This->m_ppOutPins[nIndex]->m_bReqUsed = FALSE;
+		}
+	}
+}
 
 static
-HRESULT CParserImpl_ReleaseAllPendingSamples( CParserImpl* This )
+BOOL CParserImpl_HasPendingSamples( CParserImpl* This )
+{
+	ULONG	nIndex;
+
+	for ( nIndex = 0; nIndex < This->m_cOutStreams; nIndex++ )
+	{
+		if ( This->m_ppOutPins[nIndex]->m_bReqUsed &&
+			 This->m_ppOutPins[nIndex]->m_pReqSample != NULL )
+			return TRUE;
+	}
+
+	return FALSE;
+}
+
+static
+HRESULT CParserImpl_FlushAllPendingSamples( CParserImpl* This )
 {
 	HRESULT hr;
 	IMediaSample*	pSample;
 	DWORD_PTR	dwContext;
 
-	IAsyncReader_BeginFlush(This->m_pReader);
+	TRACE("(%p)\n",This);
+
+	/* remove all samples from queue */
+	hr = IAsyncReader_BeginFlush(This->m_pReader);
+	if ( FAILED(hr) )
+		return hr;
+	IAsyncReader_EndFlush(This->m_pReader);
+
 	while ( 1 )
 	{
 		hr = IAsyncReader_WaitForNext(This->m_pReader,0,&pSample,&dwContext);
 		if ( hr != S_OK )
 			break;
-		IMediaSample_Release(pSample);
 	}
-	IAsyncReader_EndFlush(This->m_pReader);
+	CParserImpl_ReleaseAllRequests(This);
 
-	if ( hr == VFW_E_TIMEOUT )
-		hr = NOERROR;
+	return NOERROR;
+}
 
-	return hr;
+static HRESULT CParserImpl_SendEndOfStream( CParserImpl* This )
+{
+	ULONG	nIndex;
+	HRESULT hr;
+	HRESULT hrRet;
+	CParserOutPinImpl*	pOutPin;
+
+	TRACE("(%p)\n",This);
+	if ( This->m_bSendEOS )
+		return NOERROR;
+	This->m_bSendEOS = TRUE;
+
+	hrRet = S_OK;
+	for ( nIndex = 0; nIndex < This->m_cOutStreams; nIndex++ )
+	{
+		pOutPin = This->m_ppOutPins[nIndex];
+		hr = CPinBaseImpl_SendEndOfStream(&pOutPin->pin);
+		if ( FAILED(hr) )
+		{
+			if ( SUCCEEDED(hrRet) )
+				hrRet = hr;
+		}
+		else
+		{
+			if ( hr != S_OK && hrRet == S_OK )
+				hrRet = hr;
+		}
+	}
+
+	return hrRet;
+}
+
+static HRESULT CParserImpl_SendFlush( CParserImpl* This )
+{
+	ULONG	nIndex;
+	HRESULT hr;
+	HRESULT hrRet;
+	CParserOutPinImpl*	pOutPin;
+
+	TRACE("(%p)\n",This);
+	hrRet = S_OK;
+	for ( nIndex = 0; nIndex < This->m_cOutStreams; nIndex++ )
+	{
+		pOutPin = This->m_ppOutPins[nIndex];
+		hr = CPinBaseImpl_SendBeginFlush(&pOutPin->pin);
+		if ( FAILED(hr) )
+		{
+			if ( SUCCEEDED(hrRet) )
+				hrRet = hr;
+		}
+		else
+		{
+			if ( hr != S_OK && hrRet == S_OK )
+				hrRet = hr;
+			hr = CPinBaseImpl_SendEndFlush(&pOutPin->pin);
+			if ( FAILED(hr) )
+				hrRet = hr;
+		}
+	}
+
+	return hrRet;
 }
 
 static
@@ -123,23 +282,22 @@ HRESULT CParserImpl_ProcessNextSample( CParserImpl* This )
 			hr = NOERROR;
 			switch ( msg.message )
 			{
-			case QUARTZ_MSG_BEGINFLUSH:
-				FIXME("BeginFlush\n");
-				hr = IAsyncReader_BeginFlush(This->m_pReader);
-				/* send to all output pins */
-				break;
-			case QUARTZ_MSG_ENDFLUSH:
-				FIXME("EndFlush\n");
-				hr = IAsyncReader_EndFlush(This->m_pReader);
-				/* send to all output pins */
+			case QUARTZ_MSG_FLUSH:
+				TRACE("Flush\n");
+				CParserImpl_FlushAllPendingSamples(This);
+				hr = CParserImpl_SendFlush(This);
 				break;
 			case QUARTZ_MSG_EXITTHREAD:
-				FIXME("EndThread\n");
-				CParserImpl_ReleaseAllPendingSamples(This);
+				TRACE("(%p) EndThread\n",This);
+				CParserImpl_FlushAllPendingSamples(This);
 				CParserImpl_ClearAllRequests(This);
+				CParserImpl_SendFlush(This);
+				CParserImpl_SendEndOfStream(This);
+				TRACE("(%p) exit thread\n",This);
 				return S_FALSE;
 			case QUARTZ_MSG_SEEK:
 				FIXME("Seek\n");
+				CParserImpl_FlushAllPendingSamples(This);
 				break;
 			default:
 				FIXME( "invalid message %04u\n", (unsigned)msg.message );
@@ -156,30 +314,51 @@ HRESULT CParserImpl_ProcessNextSample( CParserImpl* This )
 			break;
 	}
 	if ( FAILED(hr) )
+	{
 		return hr;
+	}
 
 	pOutPin = This->m_ppOutPins[nIndex];
 	if ( pOutPin != NULL && pOutPin->m_bReqUsed )
 	{
 		if ( This->m_pHandler->pProcessSample != NULL )
-			hr = This->m_pHandler->pProcessSample(This,nIndex,pOutPin->m_llReqStart,pOutPin->m_lReqLength,pSample);
+			hr = This->m_pHandler->pProcessSample(This,nIndex,pOutPin->m_llReqStart,pOutPin->m_lReqLength,pOutPin->m_pReqSample);
+
+		if ( SUCCEEDED(hr) )
+		{
+			if ( pOutPin->m_pOutPinAllocator != NULL &&
+				 pOutPin->m_pOutPinAllocator != This->m_pAllocator )
+			{
+				/* if pin has its own allocator, sample must be copied */
+				hr = IMemAllocator_GetBuffer( This->m_pAllocator, &pSample, NULL, NULL, 0 );
+				if ( SUCCEEDED(hr) )
+				{
+					hr = QUARTZ_IMediaSample_Copy(
+						pSample, pOutPin->m_pReqSample, TRUE );
+					if ( SUCCEEDED(hr) )
+						hr = CPinBaseImpl_SendSample(&pOutPin->pin,pSample);
+					IMediaSample_Release(pSample);
+				}
+			}
+			else
+			{
+				hr = CPinBaseImpl_SendSample(&pOutPin->pin,pOutPin->m_pReqSample);
+			}
+		}
 
 		if ( FAILED(hr) )
 		{
 			/* Notify (ABORT) */
 		}
-		else
-		{
-			/* FIXME - if pin has its own allocator, sample must be copied */
-			hr = CPinBaseImpl_SendSample(&pOutPin->pin,pSample);
-		}
+
+		IMediaSample_Release(pOutPin->m_pReqSample);
+		pOutPin->m_pReqSample = NULL;
 		pOutPin->m_bReqUsed = FALSE;
 	}
 
 	if ( SUCCEEDED(hr) )
 		hr = NOERROR;
 
-	IMediaSample_Release(pSample);
 	TRACE("return %08lx\n",hr);
 
 	return hr;
@@ -223,10 +402,29 @@ DWORD WINAPI CParserImpl_ThreadEntry( LPVOID pv )
 			}
 			if ( hr != S_OK )
 			{
-				/* Flush */
-				/* Notify (COMPLETE) */
+				/* Flush pending samples. */
+				hr = S_OK;
+				while ( CParserImpl_HasPendingSamples(This) )
+				{
+					hr = CParserImpl_ProcessNextSample(This);
+					if ( hr != S_OK )
+						break;
+				}
+				if ( hr != S_OK )
+				{
+					/* notification is already sent */
+					break;
+				}
 
-				/* Waiting... */
+				/* Send End Of Stream. */
+				hr = CParserImpl_SendEndOfStream(This);
+				if ( hr != S_OK )
+				{
+					/* notification is already sent */
+					break;
+				}
+
+				/* Blocking... */
 				hr = CParserImpl_ProcessNextSample(This);
 				if ( hr != S_OK )
 				{
@@ -238,7 +436,7 @@ DWORD WINAPI CParserImpl_ThreadEntry( LPVOID pv )
 			if ( This->m_ppOutPins[nIndex]->pin.pPinConnectedTo == NULL )
 				continue;
 
-			rtSampleTimeStart = llReqStart * QUARTZ_TIMEUNITS;
+			rtSampleTimeStart = This->basefilter.rtStart + llReqStart * QUARTZ_TIMEUNITS;
 			rtSampleTimeEnd = (llReqStart + lReqLength) * QUARTZ_TIMEUNITS;
 			bReqNext = FALSE;
 		}
@@ -261,6 +459,7 @@ DWORD WINAPI CParserImpl_ThreadEntry( LPVOID pv )
 			}
 
 			This->m_ppOutPins[nIndex]->m_bReqUsed = TRUE;
+			This->m_ppOutPins[nIndex]->m_pReqSample = pSample;
 			This->m_ppOutPins[nIndex]->m_llReqStart = llReqStart;
 			This->m_ppOutPins[nIndex]->m_lReqLength = lReqLength;
 			This->m_ppOutPins[nIndex]->m_rtReqStart = rtSampleTimeStart;
@@ -286,9 +485,9 @@ HRESULT CParserImpl_BeginThread( CParserImpl* This )
 	DWORD dwRes;
 	HANDLE hEvents[2];
 
-	if ( This->m_hEventInit != (HANDLE)NULL ||
+	if ( This->m_hEventInit != (HANDLE)NULL &&
 		 This->m_hThread != (HANDLE)NULL )
-		return E_UNEXPECTED;
+		return NOERROR;
 
 	This->m_hEventInit = CreateEventA(NULL,TRUE,FALSE,NULL);
 	if ( This->m_hEventInit == (HANDLE)NULL )
@@ -316,6 +515,7 @@ HRESULT CParserImpl_BeginThread( CParserImpl* This )
 static
 void CParserImpl_EndThread( CParserImpl* This )
 {
+	TRACE("(%p)\n",This);
 	if ( This->m_hThread != (HANDLE)NULL )
 	{
 		if ( PostThreadMessageA(
@@ -340,6 +540,8 @@ HRESULT CParserImpl_MemCommit( CParserImpl* This )
 	HRESULT hr;
 	ULONG	nIndex;
 	IMemAllocator*	pAlloc;
+
+	TRACE("(%p)\n",This);
 
 	if ( This->m_pAllocator == NULL )
 		return E_UNEXPECTED;
@@ -371,6 +573,8 @@ void CParserImpl_MemDecommit( CParserImpl* This )
 	ULONG	nIndex;
 	IMemAllocator*	pAlloc;
 
+	TRACE("(%p)\n",This);
+
 	if ( This->m_pAllocator != NULL )
 		IMemAllocator_Decommit( This->m_pAllocator );
 
@@ -396,16 +600,11 @@ void CParserImpl_MemDecommit( CParserImpl* This )
 static HRESULT CParserImpl_OnActive( CBaseFilterImpl* pImpl )
 {
 	CParserImpl_THIS(pImpl,basefilter);
-	HRESULT hr;
 
 	TRACE( "(%p)\n", This );
 
-	hr = CParserImpl_MemCommit(This);
-	if ( FAILED(hr) )
-		return hr;
-	hr = CParserImpl_BeginThread(This);
-	if ( FAILED(hr) )
-		return hr;
+	if ( !CParserImpl_OutPinsAreConnected(This) )
+		return NOERROR;
 
 	return NOERROR;
 }
@@ -413,11 +612,22 @@ static HRESULT CParserImpl_OnActive( CBaseFilterImpl* pImpl )
 static HRESULT CParserImpl_OnInactive( CBaseFilterImpl* pImpl )
 {
 	CParserImpl_THIS(pImpl,basefilter);
+	HRESULT hr;
 
 	TRACE( "(%p)\n", This );
 
-	CParserImpl_EndThread(This);
-	CParserImpl_MemDecommit(This);
+	if ( !CParserImpl_OutPinsAreConnected(This) )
+		return NOERROR;
+
+	hr = CParserImpl_MemCommit(This);
+	if ( FAILED(hr) )
+		return hr;
+	hr = CParserImpl_BeginThread(This);
+	if ( FAILED(hr) )
+	{
+		CParserImpl_EndThread(This);
+		return hr;
+	}
 
 	return NOERROR;
 }
@@ -427,6 +637,10 @@ static HRESULT CParserImpl_OnStop( CBaseFilterImpl* pImpl )
 	CParserImpl_THIS(pImpl,basefilter);
 
 	FIXME( "(%p)\n", This );
+
+	CParserImpl_EndThread(This);
+	CParserImpl_MemDecommit(This);
+	This->m_bSendEOS = FALSE;
 
 	/* FIXME - reset streams. */
 
@@ -473,6 +687,12 @@ static HRESULT CParserInPinImpl_OnPreConnect( CPinBaseImpl* pImpl, IPin* pPin )
 		return E_NOTIMPL;
 	}
 
+	/* at first, release all output pins. */
+	if ( CParserImpl_OutPinsAreConnected(This->pParser) )
+		return E_FAIL;
+	CParserImpl_ReleaseListOfOutPins(This->pParser);
+	CParserImpl_ReleaseOutPins(This->pParser);
+
 	CParserImpl_SetAsyncReader( This->pParser, NULL );
 	hr = IPin_QueryInterface( pPin, &IID_IAsyncReader, (void**)&pReader );
 	if ( FAILED(hr) )
@@ -495,6 +715,9 @@ static HRESULT CParserInPinImpl_OnPreConnect( CPinBaseImpl* pImpl, IPin* pPin )
 	hr = This->pParser->m_pHandler->pGetAllocProp(This->pParser,&This->pParser->m_propAlloc);
 	if ( FAILED(hr) )
 		return hr;
+	if ( This->pParser->m_propAlloc.cbAlign == 0 )
+		This->pParser->m_propAlloc.cbAlign = 1;
+
 	if ( This->pParser->m_pAllocator == NULL )
 	{
 		hr = QUARTZ_CreateMemoryAllocator(NULL,(void**)&punk);
@@ -524,7 +747,7 @@ static HRESULT CParserInPinImpl_OnPreConnect( CPinBaseImpl* pImpl, IPin* pPin )
 			&This->pParser->m_ppOutPins[nIndex],
 			nIndex, pwszOutPinName );
 		if ( SUCCEEDED(hr) )
-			hr = QUARTZ_CompList_AddComp(
+			hr = QUARTZ_CompList_AddTailComp(
 				This->pParser->basefilter.pOutPins,
 				(IUnknown*)&(This->pParser->m_ppOutPins[nIndex]->pin),
 				NULL, 0 );
@@ -557,6 +780,7 @@ static HRESULT CParserInPinImpl_OnDisconnect( CPinBaseImpl* pImpl )
 	CParserImpl_SetAsyncReader( This->pParser, NULL );
 	if ( This->pParser->m_pAllocator != NULL )
 	{
+		IMemAllocator_Decommit(This->pParser->m_pAllocator);
 		IMemAllocator_Release(This->pParser->m_pAllocator);
 		This->pParser->m_pAllocator = NULL;
 	}
@@ -601,6 +825,7 @@ static HRESULT CParserOutPinImpl_OnPostConnect( CPinBaseImpl* pImpl, IPin* pPin 
 {
 	CParserOutPinImpl_THIS(pImpl,pin);
 	ALLOCATOR_PROPERTIES	propReq;
+	ALLOCATOR_PROPERTIES	propActual;
 	IMemAllocator*	pAllocator;
 	HRESULT hr;
 	BOOL	bNewAllocator = FALSE;
@@ -644,7 +869,9 @@ static HRESULT CParserOutPinImpl_OnPostConnect( CPinBaseImpl* pImpl, IPin* pPin 
 			This->pin.pMemInputPinConnectedTo, &pAllocator );
 	if ( FAILED(hr) )
 		return hr;
-	hr = IMemInputPin_NotifyAllocator(
+	hr = IMemAllocator_SetProperties( pAllocator, &This->pParser->m_propAlloc, &propActual );
+	if ( SUCCEEDED(hr) )
+		hr = IMemInputPin_NotifyAllocator(
 			This->pin.pMemInputPinConnectedTo, pAllocator, FALSE );
 	if ( FAILED(hr) )
 	{
@@ -761,6 +988,7 @@ HRESULT QUARTZ_CreateParser(
 		QUARTZ_AllocObj( sizeof(CParserImpl) );
 	if ( This == NULL )
 		return E_OUTOFMEMORY;
+	ZeroMemory( This, sizeof(CParserImpl) );
 
 	This->m_pInPin = NULL;
 	This->m_cOutStreams = 0;
@@ -771,6 +999,7 @@ HRESULT QUARTZ_CreateParser(
 	This->m_hEventInit = (HANDLE)NULL;
 	This->m_hThread = (HANDLE)NULL;
 	This->m_dwThreadId = 0;
+	This->m_bSendEOS = FALSE;
 	This->m_pHandler = pHandler;
 	This->m_pUserData = NULL;
 
@@ -919,6 +1148,8 @@ static QUARTZ_IFEntry OutPinIFEntries[] =
 {
   { &IID_IPin, offsetof(CParserOutPinImpl,pin)-offsetof(CParserOutPinImpl,unk) },
   { &IID_IQualityControl, offsetof(CParserOutPinImpl,qcontrol)-offsetof(CParserOutPinImpl,unk) },
+  { &IID_IMediaSeeking, offsetof(CParserOutPinImpl,mediaseeking)-offsetof(CParserOutPinImpl,unk) },
+  { &IID_IMediaPosition, offsetof(CParserOutPinImpl,mediaposition)-offsetof(CParserOutPinImpl,unk) },
 };
 
 static void QUARTZ_DestroyParserOutPin(IUnknown* punk)
@@ -931,8 +1162,11 @@ static void QUARTZ_DestroyParserOutPin(IUnknown* punk)
 	if ( This->m_pOutPinAllocator != NULL )
 		IMemAllocator_Release(This->m_pOutPinAllocator);
 
-	CPinBaseImpl_UninitIPin( &This->pin );
+	CParserOutPinImpl_UninitIMediaPosition(This);
+	CParserOutPinImpl_UninitIMediaSeeking(This);
 	CQualityControlPassThruImpl_UninitIQualityControl( &This->qcontrol );
+	CPinBaseImpl_UninitIPin( &This->pin );
+
 }
 
 HRESULT QUARTZ_CreateParserOutPin(
@@ -959,6 +1193,7 @@ HRESULT QUARTZ_CreateParserOutPin(
 	This->m_pOutPinAllocator = NULL;
 	This->m_pUserData = NULL;
 	This->m_bReqUsed = FALSE;
+	This->m_pReqSample = NULL;
 	This->m_llReqStart = 0;
 	This->m_lReqLength = 0;
 	This->m_rtReqStart = 0;
@@ -980,6 +1215,22 @@ HRESULT QUARTZ_CreateParserOutPin(
 			&This->qcontrol,
 			This->unk.punkControl,
 			&This->pin );
+		if ( SUCCEEDED(hr) )
+		{
+			hr = CParserOutPinImpl_InitIMediaSeeking(This);
+			if ( SUCCEEDED(hr) )
+			{
+				hr = CParserOutPinImpl_InitIMediaPosition(This);
+				if ( FAILED(hr) )
+				{
+					CParserOutPinImpl_UninitIMediaSeeking(This);
+				}
+			}
+			if ( FAILED(hr) )
+			{
+				CQualityControlPassThruImpl_UninitIQualityControl( &This->qcontrol );
+			}
+		}
 		if ( FAILED(hr) )
 		{
 			CPinBaseImpl_UninitIPin( &This->pin );
@@ -1001,5 +1252,481 @@ HRESULT QUARTZ_CreateParserOutPin(
 	TRACE("returned successfully.\n");
 
 	return S_OK;
+}
+
+
+/***************************************************************************
+ *
+ *	IMediaSeeking for CParserOutPinImpl
+ *
+ */
+
+static HRESULT WINAPI
+IMediaSeeking_fnQueryInterface(IMediaSeeking* iface,REFIID riid,void** ppobj)
+{
+	CParserOutPinImpl_THIS(iface,mediaseeking);
+
+	TRACE("(%p)->()\n",This);
+
+	return IUnknown_QueryInterface(This->unk.punkControl,riid,ppobj);
+}
+
+static ULONG WINAPI
+IMediaSeeking_fnAddRef(IMediaSeeking* iface)
+{
+	CParserOutPinImpl_THIS(iface,mediaseeking);
+
+	TRACE("(%p)->()\n",This);
+
+	return IUnknown_AddRef(This->unk.punkControl);
+}
+
+static ULONG WINAPI
+IMediaSeeking_fnRelease(IMediaSeeking* iface)
+{
+	CParserOutPinImpl_THIS(iface,mediaseeking);
+
+	TRACE("(%p)->()\n",This);
+
+	return IUnknown_Release(This->unk.punkControl);
+}
+
+
+static HRESULT WINAPI
+IMediaSeeking_fnGetCapabilities(IMediaSeeking* iface,DWORD* pdwCaps)
+{
+	CParserOutPinImpl_THIS(iface,mediaseeking);
+
+	FIXME("(%p)->() stub!\n",This);
+
+	return E_NOTIMPL;
+}
+
+static HRESULT WINAPI
+IMediaSeeking_fnCheckCapabilities(IMediaSeeking* iface,DWORD* pdwCaps)
+{
+	CParserOutPinImpl_THIS(iface,mediaseeking);
+
+	FIXME("(%p)->() stub!\n",This);
+
+	return E_NOTIMPL;
+}
+
+static HRESULT WINAPI
+IMediaSeeking_fnIsFormatSupported(IMediaSeeking* iface,const GUID* pidFormat)
+{
+	CParserOutPinImpl_THIS(iface,mediaseeking);
+
+	FIXME("(%p)->() stub!\n",This);
+
+	return E_NOTIMPL;
+}
+
+static HRESULT WINAPI
+IMediaSeeking_fnQueryPreferredFormat(IMediaSeeking* iface,GUID* pidFormat)
+{
+	CParserOutPinImpl_THIS(iface,mediaseeking);
+
+	FIXME("(%p)->() stub!\n",This);
+
+	return E_NOTIMPL;
+}
+
+static HRESULT WINAPI
+IMediaSeeking_fnGetTimeFormat(IMediaSeeking* iface,GUID* pidFormat)
+{
+	CParserOutPinImpl_THIS(iface,mediaseeking);
+
+	FIXME("(%p)->() stub!\n",This);
+
+	return E_NOTIMPL;
+}
+
+static HRESULT WINAPI
+IMediaSeeking_fnIsUsingTimeFormat(IMediaSeeking* iface,const GUID* pidFormat)
+{
+	CParserOutPinImpl_THIS(iface,mediaseeking);
+
+	FIXME("(%p)->() stub!\n",This);
+
+	return E_NOTIMPL;
+}
+
+static HRESULT WINAPI
+IMediaSeeking_fnSetTimeFormat(IMediaSeeking* iface,const GUID* pidFormat)
+{
+	CParserOutPinImpl_THIS(iface,mediaseeking);
+
+	FIXME("(%p)->() stub!\n",This);
+
+	return E_NOTIMPL;
+}
+
+static HRESULT WINAPI
+IMediaSeeking_fnGetDuration(IMediaSeeking* iface,LONGLONG* pllDuration)
+{
+	CParserOutPinImpl_THIS(iface,mediaseeking);
+
+	/* the following line may produce too many FIXMEs... */
+	FIXME("(%p)->() stub!\n",This);
+
+	return E_NOTIMPL;
+}
+
+static HRESULT WINAPI
+IMediaSeeking_fnGetStopPosition(IMediaSeeking* iface,LONGLONG* pllPos)
+{
+	CParserOutPinImpl_THIS(iface,mediaseeking);
+
+	FIXME("(%p)->() stub!\n",This);
+
+	return E_NOTIMPL;
+}
+
+static HRESULT WINAPI
+IMediaSeeking_fnGetCurrentPosition(IMediaSeeking* iface,LONGLONG* pllPos)
+{
+	CParserOutPinImpl_THIS(iface,mediaseeking);
+
+	FIXME("(%p)->() stub!\n",This);
+
+	return E_NOTIMPL;
+}
+
+static HRESULT WINAPI
+IMediaSeeking_fnConvertTimeFormat(IMediaSeeking* iface,LONGLONG* pllOut,const GUID* pidFmtOut,LONGLONG llIn,const GUID* pidFmtIn)
+{
+	CParserOutPinImpl_THIS(iface,mediaseeking);
+
+	FIXME("(%p)->() stub!\n",This);
+
+	return E_NOTIMPL;
+}
+
+static HRESULT WINAPI
+IMediaSeeking_fnSetPositions(IMediaSeeking* iface,LONGLONG* pllCur,DWORD dwCurFlags,LONGLONG* pllStop,DWORD dwStopFlags)
+{
+	CParserOutPinImpl_THIS(iface,mediaseeking);
+
+	FIXME("(%p)->() stub!\n",This);
+
+	return E_NOTIMPL;
+}
+
+static HRESULT WINAPI
+IMediaSeeking_fnGetPositions(IMediaSeeking* iface,LONGLONG* pllCur,LONGLONG* pllStop)
+{
+	CParserOutPinImpl_THIS(iface,mediaseeking);
+
+	FIXME("(%p)->() stub!\n",This);
+
+	return E_NOTIMPL;
+}
+
+static HRESULT WINAPI
+IMediaSeeking_fnGetAvailable(IMediaSeeking* iface,LONGLONG* pllFirst,LONGLONG* pllLast)
+{
+	CParserOutPinImpl_THIS(iface,mediaseeking);
+
+	FIXME("(%p)->() stub!\n",This);
+
+	return E_NOTIMPL;
+}
+
+static HRESULT WINAPI
+IMediaSeeking_fnSetRate(IMediaSeeking* iface,double dblRate)
+{
+	CParserOutPinImpl_THIS(iface,mediaseeking);
+
+	FIXME("(%p)->() stub!\n",This);
+
+	return E_NOTIMPL;
+}
+
+static HRESULT WINAPI
+IMediaSeeking_fnGetRate(IMediaSeeking* iface,double* pdblRate)
+{
+	CParserOutPinImpl_THIS(iface,mediaseeking);
+
+	FIXME("(%p)->() stub!\n",This);
+
+	return E_NOTIMPL;
+}
+
+static HRESULT WINAPI
+IMediaSeeking_fnGetPreroll(IMediaSeeking* iface,LONGLONG* pllPreroll)
+{
+	CParserOutPinImpl_THIS(iface,mediaseeking);
+
+	FIXME("(%p)->() stub!\n",This);
+
+	return E_NOTIMPL;
+}
+
+
+
+
+static ICOM_VTABLE(IMediaSeeking) imediaseeking =
+{
+	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
+	/* IUnknown fields */
+	IMediaSeeking_fnQueryInterface,
+	IMediaSeeking_fnAddRef,
+	IMediaSeeking_fnRelease,
+	/* IMediaSeeking fields */
+	IMediaSeeking_fnGetCapabilities,
+	IMediaSeeking_fnCheckCapabilities,
+	IMediaSeeking_fnIsFormatSupported,
+	IMediaSeeking_fnQueryPreferredFormat,
+	IMediaSeeking_fnGetTimeFormat,
+	IMediaSeeking_fnIsUsingTimeFormat,
+	IMediaSeeking_fnSetTimeFormat,
+	IMediaSeeking_fnGetDuration,
+	IMediaSeeking_fnGetStopPosition,
+	IMediaSeeking_fnGetCurrentPosition,
+	IMediaSeeking_fnConvertTimeFormat,
+	IMediaSeeking_fnSetPositions,
+	IMediaSeeking_fnGetPositions,
+	IMediaSeeking_fnGetAvailable,
+	IMediaSeeking_fnSetRate,
+	IMediaSeeking_fnGetRate,
+	IMediaSeeking_fnGetPreroll,
+};
+
+HRESULT CParserOutPinImpl_InitIMediaSeeking( CParserOutPinImpl* This )
+{
+	TRACE("(%p)\n",This);
+	ICOM_VTBL(&This->mediaseeking) = &imediaseeking;
+
+	return NOERROR;
+}
+
+void CParserOutPinImpl_UninitIMediaSeeking( CParserOutPinImpl* This )
+{
+	TRACE("(%p)\n",This);
+}
+
+/***************************************************************************
+ *
+ *	IMediaPosition for CParserOutPinImpl
+ *
+ */
+
+static HRESULT WINAPI
+IMediaPosition_fnQueryInterface(IMediaPosition* iface,REFIID riid,void** ppobj)
+{
+	CParserOutPinImpl_THIS(iface,mediaposition);
+
+	TRACE("(%p)->()\n",This);
+
+	return IUnknown_QueryInterface(This->unk.punkControl,riid,ppobj);
+}
+
+static ULONG WINAPI
+IMediaPosition_fnAddRef(IMediaPosition* iface)
+{
+	CParserOutPinImpl_THIS(iface,mediaposition);
+
+	TRACE("(%p)->()\n",This);
+
+	return IUnknown_AddRef(This->unk.punkControl);
+}
+
+static ULONG WINAPI
+IMediaPosition_fnRelease(IMediaPosition* iface)
+{
+	CParserOutPinImpl_THIS(iface,mediaposition);
+
+	TRACE("(%p)->()\n",This);
+
+	return IUnknown_Release(This->unk.punkControl);
+}
+
+static HRESULT WINAPI
+IMediaPosition_fnGetTypeInfoCount(IMediaPosition* iface,UINT* pcTypeInfo)
+{
+	CParserOutPinImpl_THIS(iface,mediaposition);
+
+	FIXME("(%p)->() stub!\n",This);
+
+	return E_NOTIMPL;
+}
+
+static HRESULT WINAPI
+IMediaPosition_fnGetTypeInfo(IMediaPosition* iface,UINT iTypeInfo, LCID lcid, ITypeInfo** ppobj)
+{
+	CParserOutPinImpl_THIS(iface,mediaposition);
+
+	FIXME("(%p)->() stub!\n",This);
+
+	return E_NOTIMPL;
+}
+
+static HRESULT WINAPI
+IMediaPosition_fnGetIDsOfNames(IMediaPosition* iface,REFIID riid, LPOLESTR* ppwszName, UINT cNames, LCID lcid, DISPID* pDispId)
+{
+	CParserOutPinImpl_THIS(iface,mediaposition);
+
+	FIXME("(%p)->() stub!\n",This);
+
+	return E_NOTIMPL;
+}
+
+static HRESULT WINAPI
+IMediaPosition_fnInvoke(IMediaPosition* iface,DISPID DispId, REFIID riid, LCID lcid, WORD wFlags, DISPPARAMS* pDispParams, VARIANT* pVarRes, EXCEPINFO* pExcepInfo, UINT* puArgErr)
+{
+	CParserOutPinImpl_THIS(iface,mediaposition);
+
+	FIXME("(%p)->() stub!\n",This);
+
+	return E_NOTIMPL;
+}
+
+
+static HRESULT WINAPI
+IMediaPosition_fnget_Duration(IMediaPosition* iface,REFTIME* prefTime)
+{
+	CParserOutPinImpl_THIS(iface,mediaposition);
+
+	FIXME("(%p)->() stub!\n",This);
+
+	return E_NOTIMPL;
+}
+
+static HRESULT WINAPI
+IMediaPosition_fnput_CurrentPosition(IMediaPosition* iface,REFTIME refTime)
+{
+	CParserOutPinImpl_THIS(iface,mediaposition);
+
+	FIXME("(%p)->() stub!\n",This);
+
+	return E_NOTIMPL;
+}
+
+static HRESULT WINAPI
+IMediaPosition_fnget_CurrentPosition(IMediaPosition* iface,REFTIME* prefTime)
+{
+	CParserOutPinImpl_THIS(iface,mediaposition);
+
+	FIXME("(%p)->() stub!\n",This);
+
+	return E_NOTIMPL;
+}
+
+static HRESULT WINAPI
+IMediaPosition_fnget_StopTime(IMediaPosition* iface,REFTIME* prefTime)
+{
+	CParserOutPinImpl_THIS(iface,mediaposition);
+
+	FIXME("(%p)->() stub!\n",This);
+
+	return E_NOTIMPL;
+}
+
+static HRESULT WINAPI
+IMediaPosition_fnput_StopTime(IMediaPosition* iface,REFTIME refTime)
+{
+	CParserOutPinImpl_THIS(iface,mediaposition);
+
+	FIXME("(%p)->() stub!\n",This);
+
+	return E_NOTIMPL;
+}
+
+static HRESULT WINAPI
+IMediaPosition_fnget_PrerollTime(IMediaPosition* iface,REFTIME* prefTime)
+{
+	CParserOutPinImpl_THIS(iface,mediaposition);
+
+	FIXME("(%p)->() stub!\n",This);
+
+	return E_NOTIMPL;
+}
+
+static HRESULT WINAPI
+IMediaPosition_fnput_PrerollTime(IMediaPosition* iface,REFTIME refTime)
+{
+	CParserOutPinImpl_THIS(iface,mediaposition);
+
+	FIXME("(%p)->() stub!\n",This);
+
+	return E_NOTIMPL;
+}
+
+static HRESULT WINAPI
+IMediaPosition_fnput_Rate(IMediaPosition* iface,double dblRate)
+{
+	CParserOutPinImpl_THIS(iface,mediaposition);
+
+	return IMediaSeeking_SetRate(CParserOutPinImpl_IMediaSeeking(This),dblRate);
+}
+
+static HRESULT WINAPI
+IMediaPosition_fnget_Rate(IMediaPosition* iface,double* pdblRate)
+{
+	CParserOutPinImpl_THIS(iface,mediaposition);
+
+	return IMediaSeeking_GetRate(CParserOutPinImpl_IMediaSeeking(This),pdblRate);
+}
+
+static HRESULT WINAPI
+IMediaPosition_fnCanSeekForward(IMediaPosition* iface,LONG* pCanSeek)
+{
+	CParserOutPinImpl_THIS(iface,mediaposition);
+
+	FIXME("(%p)->() stub!\n",This);
+
+	return E_NOTIMPL;
+}
+
+static HRESULT WINAPI
+IMediaPosition_fnCanSeekBackward(IMediaPosition* iface,LONG* pCanSeek)
+{
+	CParserOutPinImpl_THIS(iface,mediaposition);
+
+	FIXME("(%p)->() stub!\n",This);
+
+	return E_NOTIMPL;
+}
+
+
+static ICOM_VTABLE(IMediaPosition) imediaposition =
+{
+	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
+	/* IUnknown fields */
+	IMediaPosition_fnQueryInterface,
+	IMediaPosition_fnAddRef,
+	IMediaPosition_fnRelease,
+	/* IDispatch fields */
+	IMediaPosition_fnGetTypeInfoCount,
+	IMediaPosition_fnGetTypeInfo,
+	IMediaPosition_fnGetIDsOfNames,
+	IMediaPosition_fnInvoke,
+	/* IMediaPosition fields */
+	IMediaPosition_fnget_Duration,
+	IMediaPosition_fnput_CurrentPosition,
+	IMediaPosition_fnget_CurrentPosition,
+	IMediaPosition_fnget_StopTime,
+	IMediaPosition_fnput_StopTime,
+	IMediaPosition_fnget_PrerollTime,
+	IMediaPosition_fnput_PrerollTime,
+	IMediaPosition_fnput_Rate,
+	IMediaPosition_fnget_Rate,
+	IMediaPosition_fnCanSeekForward,
+	IMediaPosition_fnCanSeekBackward,
+};
+
+
+HRESULT CParserOutPinImpl_InitIMediaPosition( CParserOutPinImpl* This )
+{
+	TRACE("(%p)\n",This);
+	ICOM_VTBL(&This->mediaposition) = &imediaposition;
+
+	return NOERROR;
+}
+
+void CParserOutPinImpl_UninitIMediaPosition( CParserOutPinImpl* This )
+{
+	TRACE("(%p)\n",This);
 }
 

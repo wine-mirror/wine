@@ -35,8 +35,9 @@ struct CParserImpl
 	HANDLE	m_hEventInit;
 	DWORD	m_dwThreadId;
 	HANDLE	m_hThread;
-	const ParserHandlers*	m_pHandler;
+	BOOL	m_bSendEOS;
 
+	const ParserHandlers*	m_pHandler;
 	void*	m_pUserData;
 };
 
@@ -54,6 +55,8 @@ struct CParserOutPinImpl
 	QUARTZ_IUnkImpl	unk;
 	CPinBaseImpl	pin;
 	CQualityControlPassThruImpl	qcontrol;
+	struct { ICOM_VFIELD(IMediaSeeking); } mediaseeking;
+	struct { ICOM_VFIELD(IMediaPosition); } mediaposition;
 
 	CParserImpl*	pParser;
 	ULONG	nStreamIndex;
@@ -64,6 +67,7 @@ struct CParserOutPinImpl
 
 	/* for parser */
 	BOOL	m_bReqUsed;
+	IMediaSample*	m_pReqSample;
 	LONGLONG	m_llReqStart;
 	LONG	m_lReqLength;
 	REFERENCE_TIME	m_rtReqStart;
@@ -104,6 +108,9 @@ struct ParserHandlers
 #define	CParserInPinImpl_THIS(iface,member)	CParserInPinImpl*	This = ((CParserInPinImpl*)(((char*)iface)-offsetof(CParserInPinImpl,member)))
 #define	CParserOutPinImpl_THIS(iface,member)	CParserOutPinImpl*	This = ((CParserOutPinImpl*)(((char*)iface)-offsetof(CParserOutPinImpl,member)))
 
+
+#define CParserOutPinImpl_IMediaSeeking(th)	((IMediaSeeking*)&((th)->mediaseeking))
+#define CParserOutPinImpl_IMediaPosition(th)	((IMediaPosition*)&((th)->mediaposition))
 
 HRESULT QUARTZ_CreateParser(
 	IUnknown* punkOuter,void** ppobj,

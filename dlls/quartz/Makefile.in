@@ -13,10 +13,12 @@ C_SRCS = \
 	asyncsrc.c \
 	audioutl.c \
 	audren.c \
+	avidec.c \
 	aviparse.c \
 	basefilt.c \
 	basepin.c \
 	complist.c \
+	csconv.c \
 	devenum.c \
 	devmon.c \
 	enumunk.c \
@@ -38,8 +40,10 @@ C_SRCS = \
 	sample.c \
 	seekpass.c \
 	sysclock.c \
+	videoblt.c \
 	vidren.c \
-	wavparse.c
+	wavparse.c \
+	xform.c
 
 @MAKE_DLL_RULES@
 

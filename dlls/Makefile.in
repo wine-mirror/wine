@@ -566,8 +566,8 @@ psapi/libpsapi.$(LIBEXT): dummy libkernel32.$(LIBEXT) libntdll.$(LIBEXT)
 	@cd psapi && $(MAKE) libpsapi.$(LIBEXT)
 
 quartz/libquartz.$(LIBEXT): dummy liboleaut32.$(LIBEXT) libole32.$(LIBEXT) \
-  libwinmm.$(LIBEXT) libuser32.$(LIBEXT) libgdi32.$(LIBEXT) libadvapi32.$(LIBEXT) \
-  libkernel32.$(LIBEXT) libntdll.$(LIBEXT)
+  libmsvfw32.$(LIBEXT) libwinmm.$(LIBEXT) libuser32.$(LIBEXT) libgdi32.$(LIBEXT) \
+  libadvapi32.$(LIBEXT) libkernel32.$(LIBEXT) libntdll.$(LIBEXT)
 	@cd quartz && $(MAKE) libquartz.$(LIBEXT)
 
 rasapi32/librasapi32.$(LIBEXT): dummy libkernel32.$(LIBEXT) libntdll.$(LIBEXT)

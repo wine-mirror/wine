@@ -27,6 +27,7 @@ DEFAULT_DEBUG_CHANNEL(quartz);
 
 #include "quartz_private.h"
 #include "audren.h"
+#include "seekpass.h"
 
 
 static const WCHAR QUARTZ_AudioRender_Name[] =
@@ -132,7 +133,7 @@ HRESULT CAudioRendererImpl_waveOutInit(
 	DWORD dwBlockSize;
 
 	if ( This->m_fWaveOutInit )
-		return E_UNEXPECTED;
+		return NOERROR;
 
 	if ( pwfx == NULL )
 		return E_POINTER;
@@ -192,6 +193,24 @@ HRESULT CAudioRendererImpl_waveOutInit(
 err:
 	CAudioRendererImpl_waveOutUninit(This);
 	return hr;
+}
+
+static HRESULT CAudioRendererImpl_waveOutPause( CAudioRendererImpl* This )
+{
+	if ( !This->m_fWaveOutInit )
+		return E_UNEXPECTED;
+
+	return QUARTZ_HRESULT_From_MMRESULT( waveOutPause(
+			This->m_hWaveOut ) );
+}
+
+static HRESULT CAudioRendererImpl_waveOutRun( CAudioRendererImpl* This )
+{
+	if ( !This->m_fWaveOutInit )
+		return E_UNEXPECTED;
+
+	return QUARTZ_HRESULT_From_MMRESULT( waveOutRestart(
+			This->m_hWaveOut ) );
 }
 
 static
@@ -329,7 +348,29 @@ HRESULT CAudioRendererImpl_waveOutSetVolume(
 static HRESULT CAudioRendererImpl_OnActive( CBaseFilterImpl* pImpl )
 {
 	CAudioRendererImpl_THIS(pImpl,basefilter);
+	HRESULT hr;
+
+	FIXME( "(%p)\n", This );
+
+	if ( This->pPin->pin.pmtConn == NULL )
+		return NOERROR;
+
+	This->m_fInFlush = FALSE;
+
+	/* FIXME - don't work correctly.
+	hr = CAudioRendererImpl_waveOutRun(This);
+	if ( FAILED(hr) )
+		return hr;
+	*/
+
+	return NOERROR;
+}
+
+static HRESULT CAudioRendererImpl_OnInactive( CBaseFilterImpl* pImpl )
+{
+	CAudioRendererImpl_THIS(pImpl,basefilter);
 	WAVEFORMATEX*	pwfx;
+	HRESULT hr;
 
 	FIXME( "(%p)\n", This );
 
@@ -342,10 +383,20 @@ static HRESULT CAudioRendererImpl_OnActive( CBaseFilterImpl* pImpl )
 
 	This->m_fInFlush = FALSE;
 
-	return CAudioRendererImpl_waveOutInit(This,pwfx);
+	hr = CAudioRendererImpl_waveOutInit(This,pwfx);
+	if ( FAILED(hr) )
+		return hr;
+
+	/* FIXME - may cause deadlock.
+	hr = CAudioRendererImpl_waveOutPause(This);
+	if ( FAILED(hr) )
+		return hr;
+	*/
+
+	return NOERROR;
 }
 
-static HRESULT CAudioRendererImpl_OnInactive( CBaseFilterImpl* pImpl )
+static HRESULT CAudioRendererImpl_OnStop( CBaseFilterImpl* pImpl )
 {
 	CAudioRendererImpl_THIS(pImpl,basefilter);
 
@@ -364,7 +415,7 @@ static const CBaseFilterHandlers filterhandlers =
 {
 	CAudioRendererImpl_OnActive, /* pOnActive */
 	CAudioRendererImpl_OnInactive, /* pOnInactive */
-	NULL, /* pOnStop */
+	CAudioRendererImpl_OnStop, /* pOnStop */
 };
 
 /***************************************************************************
@@ -372,6 +423,23 @@ static const CBaseFilterHandlers filterhandlers =
  *	CAudioRendererPinImpl methods
  *
  */
+
+static HRESULT CAudioRendererPinImpl_OnDisconnect( CPinBaseImpl* pImpl )
+{
+	CAudioRendererPinImpl_THIS(pImpl,pin);
+
+	TRACE("(%p)\n",This);
+
+	if ( This->meminput.pAllocator != NULL )
+	{
+		IMemAllocator_Decommit(This->meminput.pAllocator);
+		IMemAllocator_Release(This->meminput.pAllocator);
+		This->meminput.pAllocator = NULL;
+	}
+
+	return NOERROR;
+}
+
 
 static HRESULT CAudioRendererPinImpl_CheckMediaType( CPinBaseImpl* pImpl, const AM_MEDIA_TYPE* pmt )
 {
@@ -381,11 +449,24 @@ static HRESULT CAudioRendererPinImpl_CheckMediaType( CPinBaseImpl* pImpl, const 
 	TRACE("(%p,%p)\n",This,pmt);
 
 	if ( !IsEqualGUID( &pmt->majortype, &MEDIATYPE_Audio ) )
+	{
+		TRACE("not audio\n");
 		return E_FAIL;
-	if ( !IsEqualGUID( &pmt->subtype, &MEDIASUBTYPE_PCM ) )
+	}
+	if ( !IsEqualGUID( &pmt->subtype, &MEDIASUBTYPE_NULL ) &&
+		 !IsEqualGUID( &pmt->subtype, &MEDIASUBTYPE_PCM ) )
+	{
+		TRACE("not PCM\n");
 		return E_FAIL;
+	}
 	if ( !IsEqualGUID( &pmt->formattype, &FORMAT_WaveFormatEx ) )
+	{
+		TRACE("not WAVE\n");
 		return E_FAIL;
+	}
+
+	TRACE("testing WAVE header\n");
+
 	if ( pmt->cbFormat < (sizeof(WAVEFORMATEX)-sizeof(WORD)) )
 		return E_FAIL;
 
@@ -394,6 +475,8 @@ static HRESULT CAudioRendererPinImpl_CheckMediaType( CPinBaseImpl* pImpl, const 
 		return E_FAIL;
 	if ( pwfx->wFormatTag != 1 )
 		return E_FAIL;
+
+	TRACE("returned successfully.\n");
 
 	return NOERROR;
 }
@@ -508,7 +591,7 @@ static const CBasePinHandlers pinhandlers =
 {
 	NULL, /* pOnPreConnect */
 	NULL, /* pOnPostConnect */
-	NULL, /* pOnDisconnect */
+	CAudioRendererPinImpl_OnDisconnect, /* pOnDisconnect */
 	CAudioRendererPinImpl_CheckMediaType, /* pCheckMediaType */
 	NULL, /* pQualityNotify */
 	CAudioRendererPinImpl_Receive, /* pReceive */
@@ -535,6 +618,24 @@ static QUARTZ_IFEntry FilterIFEntries[] =
   { &IID_IBasicAudio, offsetof(CAudioRendererImpl,basaud)-offsetof(CAudioRendererImpl,unk) },
 };
 
+static HRESULT CAudioRendererImpl_OnQueryInterface(
+	IUnknown* punk, const IID* piid, void** ppobj )
+{
+	CAudioRendererImpl_THIS(punk,unk);
+
+	if ( This->pSeekPass == NULL )
+		return E_NOINTERFACE;
+
+	if ( IsEqualGUID( &IID_IMediaPosition, piid ) ||
+		 IsEqualGUID( &IID_IMediaSeeking, piid ) )
+	{
+		TRACE( "IMediaSeeking(or IMediaPosition) is queried\n" );
+		return IUnknown_QueryInterface( (IUnknown*)(&This->pSeekPass->unk), piid, ppobj );
+	}
+
+	return E_NOINTERFACE;
+}
+
 static void QUARTZ_DestroyAudioRenderer(IUnknown* punk)
 {
 	CAudioRendererImpl_THIS(punk,unk);
@@ -545,6 +646,11 @@ static void QUARTZ_DestroyAudioRenderer(IUnknown* punk)
 	{
 		IUnknown_Release(This->pPin->unk.punkControl);
 		This->pPin = NULL;
+	}
+	if ( This->pSeekPass != NULL )
+	{
+		IUnknown_Release((IUnknown*)&This->pSeekPass->unk);
+		This->pSeekPass = NULL;
 	}
 
 	CAudioRendererImpl_UninitIBasicAudio(This);
@@ -562,12 +668,16 @@ HRESULT QUARTZ_CreateAudioRenderer(IUnknown* punkOuter,void** ppobj)
 		QUARTZ_AllocObj( sizeof(CAudioRendererImpl) );
 	if ( This == NULL )
 		return E_OUTOFMEMORY;
+	This->pSeekPass = NULL;
 	This->pPin = NULL;
 	This->m_fInFlush = FALSE;
 	This->m_fWaveOutInit = FALSE;
 	This->m_hEventRender = (HANDLE)NULL;
 
 	QUARTZ_IUnkInit( &This->unk, punkOuter );
+	This->qiext.pNext = NULL;
+	This->qiext.pOnQueryInterface = &CAudioRendererImpl_OnQueryInterface;
+	QUARTZ_IUnkAddDelegation( &This->unk, &This->qiext );
 
 	hr = CBaseFilterImpl_InitIBaseFilter(
 		&This->basefilter,
@@ -603,6 +713,11 @@ HRESULT QUARTZ_CreateAudioRenderer(IUnknown* punkOuter,void** ppobj)
 			This->basefilter.pInPins,
 			(IUnknown*)&This->pPin->pin,
 			NULL, 0 );
+	if ( SUCCEEDED(hr) )
+		hr = QUARTZ_CreateSeekingPassThruInternal(
+			(IUnknown*)&(This->unk), &This->pSeekPass,
+			TRUE, (IPin*)&(This->pPin->pin) );
+
 	if ( FAILED(hr) )
 	{
 		IUnknown_Release( This->unk.punkControl );

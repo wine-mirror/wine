@@ -159,6 +159,7 @@ void CQualityControlPassThruImpl_UninitIQualityControl(
 
 
 HRESULT CPinBaseImpl_SendSample( CPinBaseImpl* This, IMediaSample* pSample );
+HRESULT CPinBaseImpl_SendReceiveCanBlock( CPinBaseImpl* This );
 HRESULT CPinBaseImpl_SendEndOfStream( CPinBaseImpl* This );
 HRESULT CPinBaseImpl_SendBeginFlush( CPinBaseImpl* This );
 HRESULT CPinBaseImpl_SendEndFlush( CPinBaseImpl* This );

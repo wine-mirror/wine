@@ -40,6 +40,7 @@ HRESULT CFilterGraph_PollGraphState(
 	IBaseFilter*	pFilter;
 
 	hr = S_OK;
+	*pState = State_Stopped;
 
 	EnterCriticalSection( &This->m_csGraphState );
 	QUARTZ_CompList_Lock( This->m_pFilterList );

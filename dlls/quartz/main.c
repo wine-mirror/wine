@@ -35,6 +35,8 @@ DEFAULT_DEBUG_CHANNEL(quartz);
 #include "vidren.h"
 #include "parser.h"
 #include "asyncsrc.h"
+#include "xform.h"
+
 
 typedef struct QUARTZ_CLASSENTRY
 {
@@ -84,6 +86,8 @@ static const QUARTZ_CLASSENTRY QUARTZ_ClassList[] =
 	{ &CLSID_AviSplitter, &QUARTZ_CreateAVISplitter },
 	{ &CLSID_AsyncReader, &QUARTZ_CreateAsyncReader },
 	{ &CLSID_URLReader, &QUARTZ_CreateURLReader },
+	{ &CLSID_AVIDec, &QUARTZ_CreateAVIDec },
+	{ &CLSID_Colour, &QUARTZ_CreateColour },
 	{ NULL, NULL },
 };
 

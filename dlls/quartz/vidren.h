@@ -9,6 +9,7 @@
 
 #include "iunk.h"
 #include "basefilt.h"
+#include "seekpass.h"
 
 typedef struct CVideoRendererImpl CVideoRendererImpl;
 typedef struct CVideoRendererPinImpl CVideoRendererPinImpl;
@@ -30,7 +31,9 @@ struct CVideoRendererImpl
 	CBaseFilterImpl	basefilter;
 	VidRen_IBasicVideo	basvid;
 	VidRen_IVideoWindow	vidwin;
+	QUARTZ_IFDelegation	qiext;
 
+	CSeekingPassThru*	pSeekPass;
 	CVideoRendererPinImpl*	pPin;
 
 	BOOL	m_fInFlush;

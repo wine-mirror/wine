@@ -14,6 +14,7 @@
 #include "mmreg.h"
 #include "winerror.h"
 #include "strmif.h"
+#include "control.h"
 #include "vfwmsgs.h"
 #include "uuids.h"
 

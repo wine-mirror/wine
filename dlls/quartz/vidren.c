@@ -27,6 +27,7 @@ DEFAULT_DEBUG_CHANNEL(quartz);
 
 #include "quartz_private.h"
 #include "vidren.h"
+#include "seekpass.h"
 
 
 static const WCHAR QUARTZ_VideoRenderer_Name[] =
@@ -392,6 +393,13 @@ static HRESULT CVideoRendererPinImpl_OnDisconnect( CPinBaseImpl* pImpl )
 	This->pRender->m_cbSampleData = 0;
 	This->pRender->m_bSampleIsValid = FALSE;
 
+	if ( This->meminput.pAllocator != NULL )
+	{
+		IMemAllocator_Decommit(This->meminput.pAllocator);
+		IMemAllocator_Release(This->meminput.pAllocator);
+		This->meminput.pAllocator = NULL;
+	}
+
 	return NOERROR;
 }
 
@@ -577,6 +585,24 @@ static QUARTZ_IFEntry FilterIFEntries[] =
   { &IID_IVideoWindow, offsetof(CVideoRendererImpl,vidwin)-offsetof(CVideoRendererImpl,unk) },
 };
 
+static HRESULT CVideoRendererImpl_OnQueryInterface(
+	IUnknown* punk, const IID* piid, void** ppobj )
+{
+	CVideoRendererImpl_THIS(punk,unk);
+
+	if ( This->pSeekPass == NULL )
+		return E_NOINTERFACE;
+
+	if ( IsEqualGUID( &IID_IMediaPosition, piid ) ||
+		 IsEqualGUID( &IID_IMediaSeeking, piid ) )
+	{
+		TRACE( "IMediaSeeking(or IMediaPosition) is queried\n" );
+		return IUnknown_QueryInterface( (IUnknown*)(&This->pSeekPass->unk), piid, ppobj );
+	}
+
+	return E_NOINTERFACE;
+}
+
 static void QUARTZ_DestroyVideoRenderer(IUnknown* punk)
 {
 	CVideoRendererImpl_THIS(punk,unk);
@@ -589,6 +615,11 @@ static void QUARTZ_DestroyVideoRenderer(IUnknown* punk)
 	{
 		IUnknown_Release(This->pPin->unk.punkControl);
 		This->pPin = NULL;
+	}
+	if ( This->pSeekPass != NULL )
+	{
+		IUnknown_Release((IUnknown*)&This->pSeekPass->unk);
+		This->pSeekPass = NULL;
 	}
 
 	CVideoRendererImpl_UninitIBasicVideo2(This);
@@ -609,6 +640,7 @@ HRESULT QUARTZ_CreateVideoRenderer(IUnknown* punkOuter,void** ppobj)
 		QUARTZ_AllocObj( sizeof(CVideoRendererImpl) );
 	if ( This == NULL )
 		return E_OUTOFMEMORY;
+	This->pSeekPass = NULL;
 	This->pPin = NULL;
 	This->m_fInFlush = FALSE;
 
@@ -620,6 +652,9 @@ HRESULT QUARTZ_CreateVideoRenderer(IUnknown* punkOuter,void** ppobj)
 	This->m_cbSampleData = 0;
 
 	QUARTZ_IUnkInit( &This->unk, punkOuter );
+	This->qiext.pNext = NULL;
+	This->qiext.pOnQueryInterface = &CVideoRendererImpl_OnQueryInterface;
+	QUARTZ_IUnkAddDelegation( &This->unk, &This->qiext );
 
 	hr = CBaseFilterImpl_InitIBaseFilter(
 		&This->basefilter,
@@ -654,6 +689,8 @@ HRESULT QUARTZ_CreateVideoRenderer(IUnknown* punkOuter,void** ppobj)
 	This->unk.dwEntries = sizeof(FilterIFEntries)/sizeof(FilterIFEntries[0]);
 	This->unk.pOnFinalRelease = QUARTZ_DestroyVideoRenderer;
 
+	InitializeCriticalSection( &This->m_csSample );
+
 	hr = QUARTZ_CreateVideoRendererPin(
 		This,
 		&This->basefilter.csFilter,
@@ -663,13 +700,16 @@ HRESULT QUARTZ_CreateVideoRenderer(IUnknown* punkOuter,void** ppobj)
 			This->basefilter.pInPins,
 			(IUnknown*)&This->pPin->pin,
 			NULL, 0 );
+	if ( SUCCEEDED(hr) )
+		hr = QUARTZ_CreateSeekingPassThruInternal(
+			(IUnknown*)&(This->unk), &This->pSeekPass,
+			TRUE, (IPin*)&(This->pPin->pin) );
+
 	if ( FAILED(hr) )
 	{
 		IUnknown_Release( This->unk.punkControl );
 		return hr;
 	}
-
-	InitializeCriticalSection( &This->m_csSample );
 
 	*ppobj = (void*)&(This->unk);
 

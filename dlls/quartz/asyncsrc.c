@@ -142,10 +142,13 @@ void CAsyncReaderImpl_PostReply( CAsyncReaderImpl* This, AsyncSourceRequest* pRe
 }
 
 static
-void CAsyncReaderImpl_ReleaseReqList( CAsyncReaderImpl* This, AsyncSourceRequest* pReq, BOOL bReleaseMem )
+void CAsyncReaderImpl_ReleaseReqList( CAsyncReaderImpl* This, AsyncSourceRequest** ppReq, BOOL bReleaseMem )
 {
+	AsyncSourceRequest* pReq;
 	AsyncSourceRequest* pReqNext;
 
+	TRACE("(%p,%p,%d)\n",This,*ppReq,bReleaseMem);
+	pReq = *ppReq; *ppReq = NULL;
 	while ( pReq != NULL )
 	{
 		pReqNext = pReq->pNext;
@@ -544,7 +547,7 @@ CAsyncReaderImpl_fnBeginFlush(IAsyncReader* iface)
 	EnterCriticalSection( &This->m_csRequest );
 	This->m_bInFlushing = TRUE;
 	SetEvent( This->m_hEventCancel );
-	CAsyncReaderImpl_ReleaseReqList(This,This->m_pRequestFirst,FALSE);
+	CAsyncReaderImpl_ReleaseReqList(This,&This->m_pRequestFirst,FALSE);
 	LeaveCriticalSection( &This->m_csRequest );
 
 	return NOERROR;
@@ -622,16 +625,18 @@ HRESULT CAsyncReaderImpl_InitIAsyncReader(
 void CAsyncReaderImpl_UninitIAsyncReader(
 	CAsyncReaderImpl* This )
 {
-	TRACE("(%p)\n",This);
+	TRACE("(%p) enter\n",This);
 
-	CAsyncReaderImpl_ReleaseReqList(This,This->m_pRequestFirst,TRUE);
-	CAsyncReaderImpl_ReleaseReqList(This,This->m_pReplyFirst,TRUE);
-	CAsyncReaderImpl_ReleaseReqList(This,This->m_pFreeFirst,TRUE);
+	CAsyncReaderImpl_ReleaseReqList(This,&This->m_pRequestFirst,TRUE);
+	CAsyncReaderImpl_ReleaseReqList(This,&This->m_pReplyFirst,TRUE);
+	CAsyncReaderImpl_ReleaseReqList(This,&This->m_pFreeFirst,TRUE);
 
 	DeleteCriticalSection( &This->m_csReader );
 	DeleteCriticalSection( &This->m_csRequest );
 	DeleteCriticalSection( &This->m_csReply );
 	DeleteCriticalSection( &This->m_csFree );
+
+	TRACE("(%p) leave\n",This);
 }
 
 /***************************************************************************

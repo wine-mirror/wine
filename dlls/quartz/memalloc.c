@@ -13,6 +13,7 @@
 #include "winerror.h"
 #include "strmif.h"
 #include "uuids.h"
+#include "vfwmsgs.h"
 
 #include "debugtools.h"
 DEFAULT_DEBUG_CHANNEL(quartz);
@@ -75,6 +76,91 @@ HRESULT QUARTZ_CreateMemoryAllocator(IUnknown* punkOuter,void** ppobj)
  *
  */
 
+static HRESULT
+IMemAllocator_LockUnusedBuffer(CMemoryAllocator* This,IMediaSample** ppSample)
+{
+	HRESULT hr = E_FAIL;
+	LONG	i;
+
+	TRACE("(%p) try to enter critical section\n",This);
+	EnterCriticalSection( &This->csMem );
+	TRACE("(%p) enter critical section\n",This);
+
+	if ( This->pData == NULL || This->ppSamples == NULL ||
+	     This->prop.cBuffers <= 0 )
+	{
+		hr = VFW_E_NOT_COMMITTED;
+		goto end;
+	}
+
+
+	for ( i = 0; i < This->prop.cBuffers; i++ )
+	{
+		if ( This->ppSamples[i] == NULL )
+		{
+			hr = VFW_E_NOT_COMMITTED;
+			goto end;
+		}
+		if ( This->ppSamples[i]->ref == 0 )
+		{
+			*ppSample = (IMediaSample*)(This->ppSamples[i]);
+			IMediaSample_AddRef( *ppSample );
+			hr = NOERROR;
+			goto end;
+		}
+	}
+
+	hr = VFW_E_TIMEOUT;
+end:
+	LeaveCriticalSection( &This->csMem );
+	TRACE("(%p) leave critical section\n",This);
+
+	return hr;
+}
+
+/* TRUE = all samples are released */
+static BOOL
+IMemAllocator_ReleaseUnusedBuffer(CMemoryAllocator* This)
+{
+	LONG	i;
+	BOOL	bRet = TRUE;
+
+	TRACE("(%p) try to enter critical section\n",This);
+	EnterCriticalSection( &This->csMem );
+	TRACE("(%p) enter critical section\n",This);
+
+	if ( This->pData == NULL || This->ppSamples == NULL ||
+	     This->prop.cBuffers <= 0 )
+		goto end;
+
+	for ( i = 0; i < This->prop.cBuffers; i++ )
+	{
+		if ( This->ppSamples[i]->ref == 0 )
+		{
+			QUARTZ_DestroyMemMediaSample( This->ppSamples[i] );
+			This->ppSamples[i] = NULL;
+		}
+		else
+		{
+			bRet = FALSE;
+		}
+	}
+
+	if ( bRet )
+	{
+		QUARTZ_FreeMem(This->ppSamples);
+		This->ppSamples = NULL;
+		QUARTZ_FreeMem(This->pData);
+		This->pData = NULL;
+	}
+
+end:
+	LeaveCriticalSection( &This->csMem );
+	TRACE("(%p) leave critical section\n",This);
+
+	return bRet;
+}
+
 
 static HRESULT WINAPI
 IMemAllocator_fnQueryInterface(IMemAllocator* iface,REFIID riid,void** ppobj)
@@ -121,10 +207,17 @@ IMemAllocator_fnSetProperties(IMemAllocator* iface,ALLOCATOR_PROPERTIES* pPropRe
 	     pPropReq->cbBuffer < 0 ||
 	     pPropReq->cbAlign < 0 ||
 	     pPropReq->cbPrefix < 0 )
+	{
+		TRACE("pPropReq is invalid\n");
 		return E_INVALIDARG;
+	}
 
-	if ( ( pPropReq->cbAlign & (pPropReq->cbAlign-1) ) != 0 )
-		return E_INVALIDARG;
+	if ( pPropReq->cbAlign == 0 ||
+	     ( pPropReq->cbAlign & (pPropReq->cbAlign-1) ) != 0 )
+	{
+		WARN("cbAlign is invalid - %ld\n",pPropReq->cbAlign);
+		return VFW_E_BADALIGN;
+	}
 
 	hr = NOERROR;
 
@@ -133,6 +226,7 @@ IMemAllocator_fnSetProperties(IMemAllocator* iface,ALLOCATOR_PROPERTIES* pPropRe
 	if ( This->pData != NULL || This->ppSamples != NULL )
 	{
 		/* if commited, properties must not be changed. */
+		TRACE("already commited\n");
 		hr = E_UNEXPECTED;
 		goto end;
 	}
@@ -153,6 +247,8 @@ IMemAllocator_fnSetProperties(IMemAllocator* iface,ALLOCATOR_PROPERTIES* pPropRe
 
 end:
 	LeaveCriticalSection( &This->csMem );
+
+	TRACE("returned successfully.\n");
 
 	return hr;
 }
@@ -190,6 +286,7 @@ IMemAllocator_fnCommit(IMemAllocator* iface)
 	EnterCriticalSection( &This->csMem );
 
 	hr = NOERROR;
+	/* FIXME - handle in Decommitting */
 	if ( This->pData != NULL || This->ppSamples != NULL ||
 	     This->prop.cBuffers <= 0 )
 		goto end;
@@ -244,70 +341,27 @@ static HRESULT WINAPI
 IMemAllocator_fnDecommit(IMemAllocator* iface)
 {
 	CMemoryAllocator_THIS(iface,memalloc);
-	HRESULT	hr;
-	LONG	i;
-	BOOL	bBlock;
 
 	TRACE( "(%p)->()\n", This );
 
-	EnterCriticalSection( &This->csMem );
-
-	hr = NOERROR;
-
-	if ( This->pData == NULL && This->ppSamples == NULL )
-		goto end;
-
 	while ( 1 )
 	{
-		bBlock = FALSE;
-		i = 0;
-
 		ResetEvent( This->hEventSample );
 
-		while ( 1 )
-		{
-			if ( i >= This->prop.cBuffers )
-				break;
-
-			if ( This->ppSamples[i] != NULL )
-			{
-				if ( This->ppSamples[i]->ref == 0 )
-				{
-					QUARTZ_DestroyMemMediaSample( This->ppSamples[i] );
-					This->ppSamples[i] = NULL;
-				}
-				else
-				{
-					bBlock = TRUE;
-				}
-			}
-			i++;
-		}
-
-		if ( !bBlock )
-		{
-			QUARTZ_FreeMem(This->ppSamples);
-			This->ppSamples = NULL;
-			QUARTZ_FreeMem(This->pData);
-			This->pData = NULL;
-			hr = NOERROR;
+		/* to avoid deadlock, don't hold critical section while blocking */
+		if ( IMemAllocator_ReleaseUnusedBuffer(This) )
 			break;
-		}
 
 		WaitForSingleObject( This->hEventSample, INFINITE );
 	}
 
-end:
-	LeaveCriticalSection( &This->csMem );
-
-	return hr;
+	return NOERROR;
 }
 
 static HRESULT WINAPI
 IMemAllocator_fnGetBuffer(IMemAllocator* iface,IMediaSample** ppSample,REFERENCE_TIME* prtStart,REFERENCE_TIME* prtEnd,DWORD dwFlags)
 {
 	CMemoryAllocator_THIS(iface,memalloc);
-	LONG	i;
 	HRESULT	hr;
 
 	TRACE( "(%p)->(%p,%p,%p,%lu)\n", This, ppSample, prtStart, prtEnd, dwFlags );
@@ -315,46 +369,19 @@ IMemAllocator_fnGetBuffer(IMemAllocator* iface,IMediaSample** ppSample,REFERENCE
 	if ( ppSample == NULL )
 		return E_POINTER;
 
-	EnterCriticalSection( &This->csMem );
-
-	TRACE("(%p) enter critical section\n",This);
-
-	hr = NOERROR;
-
-	if ( This->pData == NULL || This->ppSamples == NULL ||
-	     This->prop.cBuffers <= 0 )
-	{
-		hr = E_FAIL; /* FIXME? */
-		goto end;
-	}
-
 	while ( 1 )
 	{
 		ResetEvent( This->hEventSample );
 
-		for ( i = 0; i < This->prop.cBuffers; i++ )
-		{
-			if ( This->ppSamples[i]->ref == 0 )
-			{
-				*ppSample = (IMediaSample*)(This->ppSamples[i]);
-				IMediaSample_AddRef( *ppSample );
-				hr = NOERROR;
-				goto end;
-			}
-		}
-
-		if ( dwFlags & AM_GBF_NOWAIT )
-		{
-			hr = E_FAIL; /* FIXME? */
+		/* to avoid deadlock, don't hold critical section while blocking */
+		hr = IMemAllocator_LockUnusedBuffer(This,ppSample);
+		if ( ( hr != VFW_E_TIMEOUT ) || ( dwFlags & AM_GBF_NOWAIT ) )
 			goto end;
-		}
 
 		WaitForSingleObject( This->hEventSample, INFINITE );
 	}
 
 end:
-	LeaveCriticalSection( &This->csMem );
-	TRACE("(%p) leave critical section\n",This);
 
 	return hr;
 }

@@ -137,15 +137,35 @@ static void QUARTZ_DestroySeekingPassThru(IUnknown* punk)
 {
 	CSeekingPassThru_THIS(punk,unk);
 
+	TRACE("(%p)\n",This);
+
+	CPassThruImpl_UninitIMediaSeeking( &This->passthru );
+	CPassThruImpl_UninitIMediaPosition( &This->passthru );
 	CSeekingPassThru_UninitISeekingPassThru(This);
 }
 
 HRESULT QUARTZ_CreateSeekingPassThru(IUnknown* punkOuter,void** ppobj)
 {
+	HRESULT	hr;
+	CSeekingPassThru*	This;
+
+	TRACE("(%p,%p)\n",punkOuter,ppobj);
+
+	hr = QUARTZ_CreateSeekingPassThruInternal(punkOuter,&This,FALSE,NULL);
+	if ( hr != S_OK )
+		return hr;
+
+	ppobj = (void*)(&This->unk);
+
+	return NOERROR;
+}
+
+HRESULT QUARTZ_CreateSeekingPassThruInternal(IUnknown* punkOuter,CSeekingPassThru** ppobj,BOOL bRendering,IPin* pPin)
+{
 	CSeekingPassThru*	This;
 	HRESULT	hr;
 
-	TRACE("(%p,%p)\n",punkOuter,ppobj);
+	TRACE("(%p,%p,%d,%p)\n",punkOuter,ppobj,(int)bRendering,pPin);
 
 	This = (CSeekingPassThru*)QUARTZ_AllocObj( sizeof(CSeekingPassThru) );
 	if ( This == NULL )
@@ -153,6 +173,23 @@ HRESULT QUARTZ_CreateSeekingPassThru(IUnknown* punkOuter,void** ppobj)
 
 	QUARTZ_IUnkInit( &This->unk, punkOuter );
 	hr = CSeekingPassThru_InitISeekingPassThru(This);
+	if ( SUCCEEDED(hr) )
+	{
+		hr = CPassThruImpl_InitIMediaPosition( &This->passthru );
+		if ( SUCCEEDED(hr) )
+		{
+			hr = CPassThruImpl_InitIMediaSeeking( &This->passthru );
+			if ( FAILED(hr) )
+			{
+				CPassThruImpl_UninitIMediaPosition( &This->passthru );
+			}
+		}
+		else
+		{
+			CSeekingPassThru_UninitISeekingPassThru(This);
+		}
+	}
+
 	if ( FAILED(hr) )
 	{
 		QUARTZ_FreeObj( This );
@@ -163,7 +200,17 @@ HRESULT QUARTZ_CreateSeekingPassThru(IUnknown* punkOuter,void** ppobj)
 	This->unk.dwEntries = sizeof(IFEntries)/sizeof(IFEntries[0]);
 	This->unk.pOnFinalRelease = QUARTZ_DestroySeekingPassThru;
 
-	*ppobj = (void*)(&This->unk);
+	*ppobj = This;
+
+	if ( pPin != NULL )
+	{
+		hr = ISeekingPassThru_Init((ISeekingPassThru*)(&This->seekpass),bRendering,pPin);
+		if ( FAILED(hr) )
+		{
+			IUnknown_Release(This->unk.punkControl);
+			return hr;
+		}
+	}
 
 	return S_OK;
 }

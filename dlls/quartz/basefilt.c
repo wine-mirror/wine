@@ -85,6 +85,7 @@ CBaseFilterImpl_fnStop(IBaseFilter* iface)
 	hr = NOERROR;
 
 	EnterCriticalSection( &This->csFilter );
+	TRACE("(%p) state = %d\n",This,This->fstate);
 
 	if ( This->fstate == State_Running )
 	{
@@ -117,6 +118,8 @@ CBaseFilterImpl_fnPause(IBaseFilter* iface)
 	hr = NOERROR;
 
 	EnterCriticalSection( &This->csFilter );
+	TRACE("(%p) state = %d\n",This,This->fstate);
+
 	if ( This->fstate != State_Paused )
 	{
 		if ( This->pHandlers->pOnInactive != NULL )
@@ -142,6 +145,7 @@ CBaseFilterImpl_fnRun(IBaseFilter* iface,REFERENCE_TIME rtStart)
 	hr = NOERROR;
 
 	EnterCriticalSection( &This->csFilter );
+	TRACE("(%p) state = %d\n",This,This->fstate);
 
 	This->rtStart = rtStart;
 
@@ -178,7 +182,7 @@ CBaseFilterImpl_fnGetState(IBaseFilter* iface,DWORD dw,FILTER_STATE* pState)
 	/* FIXME - ignore 'intermediate state' now */
 
 	EnterCriticalSection( &This->csFilter );
-	TRACE("state %d\n",This->fstate);
+	TRACE("(%p) state = %d\n",This,This->fstate);
 	*pState = This->fstate;
 	LeaveCriticalSection( &This->csFilter );
 

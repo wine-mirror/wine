@@ -219,6 +219,28 @@ HRESULT QUARTZ_MediaSubType_FromBitmap(
 	return hr;
 }
 
+BOOL QUARTZ_BitmapHasFixedSample( const BITMAPINFOHEADER* pbi )
+{
+	switch ( pbi->biCompression )
+	{
+	case 0:
+	case 3:
+	case mmioFOURCC('I','4','2','0'):
+	case mmioFOURCC('I','Y','U','V'):
+	case mmioFOURCC('Y','U','Y','V'):
+	case mmioFOURCC('Y','V','U','9'):
+	case mmioFOURCC('Y','4','1','1'):
+	case mmioFOURCC('Y','4','1','P'):
+	case mmioFOURCC('Y','U','Y','2'):
+	case mmioFOURCC('Y','V','Y','U'):
+	case mmioFOURCC('U','Y','V','Y'):
+	case mmioFOURCC('Y','2','1','1'):
+	case mmioFOURCC('Y','V','1','2'):
+		return TRUE;
+	}
+
+	return FALSE;
+}
 
 
 /****************************************************************************/
