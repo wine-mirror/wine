@@ -441,8 +441,11 @@ INT WINAPI MessageBoxIndirectW( LPMSGBOXPARAMSW msgbox )
 {
     LPVOID tmplate;
     HRSRC hRes;
-    HMODULE hUser32 = GetModuleHandleA("user32.dll");
+    HMODULE hUser32;
+    static const WCHAR user32_res_nameW[] = { 'u','s','e','r','3','2','.','d','l','l',0 };
     static const WCHAR msg_box_res_nameW[] = { 'M','S','G','B','O','X',0 };
+
+    hUser32 = GetModuleHandleW(user32_res_nameW);
     if (!(hRes = FindResourceExW(hUser32, RT_DIALOGW, msg_box_res_nameW, msgbox->dwLanguageId)))
         return 0;
     if (!(tmplate = (LPVOID)LoadResource(hUser32, hRes)))

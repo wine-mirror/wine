@@ -1705,8 +1705,8 @@ LRESULT WINAPI DefMDIChildProcW( HWND hwnd, UINT message,
             break;
         case SC_RESTORE:
         case SC_MINIMIZE:
-            SetWindowLongA( hwnd, GWL_STYLE,
-                            GetWindowLongA( hwnd, GWL_STYLE ) | WS_SYSMENU );
+            SetWindowLongW( hwnd, GWL_STYLE,
+                            GetWindowLongW( hwnd, GWL_STYLE ) | WS_SYSMENU );
             break;
         case SC_MAXIMIZE:
             if (ci->hwndChildMaximized == hwnd)

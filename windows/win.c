@@ -1335,7 +1335,7 @@ HWND WINAPI CreateWindowExW( DWORD exStyle, LPCWSTR className,
     WCHAR buffer[256];
 
     if(!instance)
-        instance=GetModuleHandleA(NULL);
+        instance=GetModuleHandleW(NULL);
 
     if(exStyle & WS_EX_MDICHILD)
         return CreateMDIWindowW(className, windowName, style, x, y, width, height, parent, instance, (LPARAM)data);

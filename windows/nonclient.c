@@ -345,11 +345,11 @@ BOOL WINAPI DrawCaptionTempW (HWND hwnd, HDC hdc, const RECT *rect, HFONT hFont,
 	if (hFont)
 	    hOldFont = SelectObject (hdc, hFont);
 	else {
-	    NONCLIENTMETRICSA nclm;
+	    NONCLIENTMETRICSW nclm;
 	    HFONT hNewFont;
 	    nclm.cbSize = sizeof(NONCLIENTMETRICSA);
-	    SystemParametersInfoA (SPI_GETNONCLIENTMETRICS, 0, &nclm, 0);
-	    hNewFont = CreateFontIndirectA ((uFlags & DC_SMALLCAP) ?
+	    SystemParametersInfoW (SPI_GETNONCLIENTMETRICS, 0, &nclm, 0);
+	    hNewFont = CreateFontIndirectW ((uFlags & DC_SMALLCAP) ?
 		&nclm.lfSmCaptionFont : &nclm.lfCaptionFont);
 	    hOldFont = SelectObject (hdc, hNewFont);
 	}
