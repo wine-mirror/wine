@@ -158,7 +158,7 @@ static INT GlyphListSearch(LPCSTR szName, INT loIndex, INT hiIndex)
  *  necessary, and returns a pointer to it (NULL if unable to add it)
  *
  */
-const GLYPHNAME *PSDRV_GlyphName(LPCSTR szName)
+GLYPHNAME *PSDRV_GlyphName(LPCSTR szName)
 {
     INT index;
 
@@ -172,17 +172,20 @@ const GLYPHNAME *PSDRV_GlyphName(LPCSTR szName)
 }
 
 /*******************************************************************************
- *	PSDRV_DumpGlyphList
+ *	PSDRV_IndexGlyphList
  *
- *  Print contents of glyph list for debugging purposes
+ *  Initializes index member of all GLYPHNAME structures
  *
  */
-VOID PSDRV_DumpGlyphList()
+VOID PSDRV_IndexGlyphList()
 {
     INT i;
 
     TRACE("%i glyph names:\n", glyphListSize);
 
     for (i = 0; i < glyphListSize; ++i)
+    {
+    	glyphList[i]->index = i;
 	TRACE("  glyphList[%i] -> '%s'\n", i, glyphList[i]->sz);
+    }
 }

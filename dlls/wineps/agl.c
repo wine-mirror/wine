@@ -3179,4 +3179,4 @@ static const UNICODEGLYPH encoding[1051] =
     { 0xfb4b, PSDRV_AGLGlyphNames +  515 }	/* afii57700 */
 };
 
-const UNICODEVECTOR PSDRV_AdobeGlyphList = { 1051, encoding };
+UNICODEVECTOR PSDRV_AdobeGlyphList = { 1051, encoding };

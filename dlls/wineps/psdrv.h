@@ -15,23 +15,23 @@
 #include "winspool.h"
 
 typedef struct {
-    INT		index;
-    LPCSTR	sz;
+    INT		    index;
+    LPCSTR	    sz;
 } GLYPHNAME;
 
 typedef struct {
-    LONG		UV;
-    const GLYPHNAME    *name;
+    LONG	    UV;
+    GLYPHNAME	    *name;
 } UNICODEGLYPH;
 
 typedef struct {
-    INT			size;
-    const UNICODEGLYPH *glyphs;
+    INT		    	size;
+    const UNICODEGLYPH  *glyphs;
 } UNICODEVECTOR;
 
-extern const INT	    PSDRV_AGLGlyphNamesSize;
-extern GLYPHNAME	    PSDRV_AGLGlyphNames[];
-extern const UNICODEVECTOR  PSDRV_AdobeGlyphList;
+extern const INT	PSDRV_AGLGlyphNamesSize;
+extern GLYPHNAME    	PSDRV_AGLGlyphNames[];
+extern UNICODEVECTOR  	PSDRV_AdobeGlyphList;
 
 typedef struct {
     float	llx, lly, urx, ury;
@@ -44,12 +44,22 @@ typedef struct _tagAFMLIGS {
 } AFMLIGS;
 
 typedef struct _tagAFMMETRICS {
-    int				C;			/* character */  
-    float			WX;
-    const GLYPHNAME		*N;		/* name */
-    AFMBBOX			B;
-    AFMLIGS			*L;			/* Ligatures */
+    int			C;		/* character */  
+    LONG     	    	UV;
+    float		WX;
+    GLYPHNAME		*N;		/* name */
+    AFMBBOX		B;
+    AFMLIGS		*L;		/* Ligatures */
 } AFMMETRICS;
+
+typedef struct {
+    USHORT    	    	usUnitsPerEm; 	    	/* 1000 for Type 1 fonts */
+    SHORT   	    	sTypoAscender;	    	/* AFM Ascender */
+    SHORT   	    	sTypoDescender;     	/* AFM Descender */
+    SHORT   	    	sTypoLineGap;	    	/* guess for Type 1 fonts */
+    USHORT  	    	usWinAscent;
+    USHORT  	    	usWinDescent;
+} WINMETRICS;
 
 typedef struct _tagAFM {
     char		*FontName;
@@ -67,9 +77,11 @@ typedef struct _tagAFM {
     float		Ascender;
     float		Descender;
     float		FullAscender;		/* Ascent of Aring character */
+    WINMETRICS	    	WinMetrics;
     float		CharWidths[256];
     int			NumofMetrics;
     AFMMETRICS		*Metrics;
+    UNICODEVECTOR   	*Encoding;
 } AFM; /* CharWidths is a shortcut to the WX values of numbered glyphs */
 
 /* Note no 'next' in AFM. Use AFMLISTENTRY as a container. This allow more than
@@ -401,8 +413,8 @@ extern DWORD PSDRV_DeviceCapabilities(LPSTR lpszDriver, LPCSTR lpszDevice,
 				      LPDEVMODEA lpdm);
 VOID PSDRV_DrawLine( DC *dc );
 INT PSDRV_GlyphListInit();
-const GLYPHNAME *PSDRV_GlyphName(LPCSTR szName);
-VOID PSDRV_DumpGlyphList();
+GLYPHNAME *PSDRV_GlyphName(LPCSTR szName);
+VOID PSDRV_IndexGlyphList();
 
 #endif
 

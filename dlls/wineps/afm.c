@@ -7,6 +7,7 @@
  */
 
 #include <string.h>
+#include <stdlib.h> 	/* qsort() & bsearch() */
 #include <stdio.h>
 #include <sys/stat.h>
 #include <dirent.h>
@@ -28,12 +29,13 @@ FONTFAMILY *PSDRV_AFMFontList = NULL;
  *  	CheckMetrics
  *
  *  Check an AFMMETRICS structure to make sure all elements have been properly
- *  filled in.
+ *  filled in.  (Don't check UV or L.)
  *
  */
 static const AFMMETRICS badMetrics =
 {
     INT_MIN,	    	    	    	    	/* C */
+    INT_MIN,	    	    	    	    	/* UV */
     FLT_MAX,	    	    	    	    	/* WX */
     NULL,   	    	    	    	    	/* N */
     { FLT_MAX, FLT_MAX, FLT_MAX, FLT_MAX }, 	/* B */
@@ -55,9 +57,10 @@ inline static BOOL CheckMetrics(const AFMMETRICS *metrics)
 }
 
 /*******************************************************************************
- *  	FreeAFM
+ *  FreeAFM
  *
- *  Free an AFM structure and any subsidiary objects that have been allocated
+ *  Free an AFM structure and any subsidiary objects that have been allocated.
+ *  AFM must have been allocated with HEAP_ZERO_MEMORY.
  *
  */
 static void FreeAFM(AFM *afm)
@@ -75,7 +78,6 @@ static void FreeAFM(AFM *afm)
 	
     HeapFree(PSDRV_Heap, 0, afm);
 }
-
 
 /***********************************************************
  *
@@ -190,6 +192,55 @@ static BOOL PSDRV_AFMGetCharMetrics(AFM *afm, FILE *fp)
 
     return TRUE;
 }
+
+/*******************************************************************************
+ *  BuildEncoding
+ *
+ *  Builds a custom encoding vector if necessary.  Leaves vector in the same
+ *  order as the afm->Metrics array; see SortFontMetrics().
+ *
+ */
+static BOOL BuildEncoding(AFM *afm)
+{
+    UNICODEVECTOR   *uv;
+    UNICODEGLYPH    *ug;
+    int     	    i;
+
+    if (strcmp(afm->EncodingScheme, "FontSpecific") != 0)
+    {
+    	afm->Encoding = &PSDRV_AdobeGlyphList;
+	return TRUE;
+    }
+    
+    uv = HeapAlloc(PSDRV_Heap, 0, sizeof(UNICODEVECTOR) +
+    	    afm->NumofMetrics * sizeof(UNICODEGLYPH));
+    if (uv == NULL)
+    	return FALSE;
+	
+    afm->Encoding = uv;
+    ug = (UNICODEGLYPH *)(uv + 1);
+    uv->glyphs = ug;
+    uv->size = afm->NumofMetrics;
+    
+    for (i = 0; i < afm->NumofMetrics; ++i)
+    {
+    	ug[i].name = afm->Metrics[i].N;
+	
+    	if (afm->Metrics[i].C < 0)	    /* unencoded glyph */
+	{
+	    WARN("Glyph '%s' in font '%s' has no encoding\n", ug[i].name->sz,
+	    	    afm->FullName);
+	    ug[i].UV = -1;
+	}
+	else
+	{
+	    ug[i].UV = afm->Metrics[i].C | 0xf000;  /* private use area? */
+	}
+    }
+    
+    return TRUE;
+}
+    
 
 /***********************************************************
  *
@@ -410,6 +461,12 @@ static AFM *PSDRV_AFMParse(char const *file)
         afm->FullAscender = afm->Ascender;
     if(afm->Weight == 0)
         afm->Weight = FW_NORMAL;
+	
+    if (BuildEncoding(afm) == FALSE)
+    {
+    	FreeAFM(afm);
+	return NULL;
+    }
 
     return afm;
 }
@@ -554,18 +611,141 @@ static void PSDRV_ReencodeCharWidths(AFM *afm)
  */
 static void PSDRV_DumpFontList(void)
 {
-    FONTFAMILY *family;
-    AFMLISTENTRY *afmle;
+    FONTFAMILY      *family;
+    AFMLISTENTRY    *afmle;
 
     for(family = PSDRV_AFMFontList; family; family = family->next) {
         TRACE("Family '%s'\n", family->FamilyName);
-	for(afmle = family->afmlist; afmle; afmle = afmle->next) {
-	    TRACE("\tFontName '%s'\n", afmle->afm->FontName);
+	for(afmle = family->afmlist; afmle; afmle = afmle->next)
+	{
+	    INT i;
+	    
+	    TRACE("\tFontName '%s' (%i glyphs):\n", afmle->afm->FontName,
+	    	    afmle->afm->NumofMetrics);
+	    
+	    for (i = 0; i < afmle->afm->NumofMetrics; ++i)
+	    {
+	    	TRACE("\t\tU+%.4lX; C %i; N '%s'\n", afmle->afm->Metrics[i].UV,
+		    	afmle->afm->Metrics[i].C, afmle->afm->Metrics[i].N->sz);
+	    }
 	}
     }
     return;
 }
 
+/*******************************************************************************
+ *  SortFontMetrics
+ *
+ *  Initializes the UV member of each glyph's AFMMETRICS and sorts each font's
+ *  Metrics by Unicode Value.
+ *
+ */
+static int UnicodeGlyphByNameIndex(const UNICODEGLYPH *a, const UNICODEGLYPH *b)
+{
+    return a->name->index - b->name->index;
+}
+
+static int UnicodeGlyphByUV(const UNICODEGLYPH *a, const UNICODEGLYPH *b)
+{
+    return a->UV - b->UV;
+}
+ 
+static int AFMMetricsByUV(const AFMMETRICS *a, const AFMMETRICS *b)
+{
+    return a->UV - b->UV;
+}
+ 
+static BOOL SortFontMetrics()
+{
+    UNICODEGLYPH    *aglCopy = NULL;
+    FONTFAMILY	    *family = PSDRV_AFMFontList;
+    
+    while (family != NULL)
+    {
+    	AFMLISTENTRY	*afmle = family->afmlist;
+	
+	while (afmle != NULL)
+	{
+	    AFM *afm = afmle->afm;  	/* should always be valid */
+	    INT i;
+	    
+	    if (afm->Encoding == &PSDRV_AdobeGlyphList)
+	    {
+	    	if (aglCopy == NULL)	/* do this once, if necessary */
+		{
+		    aglCopy = HeapAlloc(PSDRV_Heap, 0,
+		    	    PSDRV_AdobeGlyphList.size * sizeof(UNICODEGLYPH));
+		    if (aglCopy == NULL)
+		    	return FALSE;
+			
+		    memcpy(aglCopy, PSDRV_AdobeGlyphList.glyphs,
+		    	    PSDRV_AdobeGlyphList.size * sizeof(UNICODEGLYPH));
+			    
+		    qsort(aglCopy, PSDRV_AdobeGlyphList.size,
+		    	    sizeof(UNICODEGLYPH),
+			    (__compar_fn_t)UnicodeGlyphByNameIndex);
+		}
+		
+		for (i = 0; i < afm->NumofMetrics; ++i)
+		{
+		    UNICODEGLYPH    ug, *pug;
+		    
+		    ug.name = afm->Metrics[i].N;
+		    ug.UV = -1;
+		    
+		    pug = bsearch(&ug, aglCopy, PSDRV_AdobeGlyphList.size,
+		    	    sizeof(UNICODEGLYPH),
+			    (__compar_fn_t)UnicodeGlyphByNameIndex);
+		    if (pug == NULL)
+		    {
+		    	WARN("Glyph '%s' in font '%s' does not have a UV\n",
+			    	ug.name->sz, afm->FullName);
+			afm->Metrics[i].UV = -1;
+		    }
+		    else
+		    {
+		    	afm->Metrics[i].UV = pug->UV;
+		    }
+		}
+	    }
+	    else    	    	/* FontSpecific encoding or TrueType font */
+	    {
+	    	for (i = 0; i < afm->NumofMetrics; ++i)
+		    afm->Metrics[i].UV = afm->Encoding->glyphs[i].UV;
+		
+		/* typecast avoids compiler warning */
+    	    	qsort((void *)(afm->Encoding->glyphs), afm->Encoding->size,
+		    	sizeof(UNICODEGLYPH), (__compar_fn_t)UnicodeGlyphByUV);
+			
+		for (i = 0; i < afm->Encoding->size; ++i)
+		    if (afm->Encoding->glyphs[i].UV >= 0)
+		    	break;
+			
+		afm->Encoding->size -= i;   	/* Ignore unencoded glyphs */
+		afm->Encoding->glyphs += i;  	/* from now on */
+	    }
+	    
+	    qsort(afm->Metrics, afm->NumofMetrics, sizeof(AFMMETRICS),
+	    	    (__compar_fn_t)AFMMetricsByUV);
+		    
+	    for (i = 0; i < afm->NumofMetrics; ++i)
+	    	if (afm->Metrics[i].UV >= 0)
+		    break;
+		    
+	    afm->NumofMetrics -= i; 	/* Ignore unencoded glyphs here too */
+	    afm->Metrics += i;
+	    
+	    afmle = afmle->next;
+	}
+	
+	family = family->next;
+    }
+    
+    if (aglCopy != NULL)
+    	HeapFree(PSDRV_Heap, 0, aglCopy);
+	
+    return TRUE;
+}
 
 /***********************************************************
  *
@@ -658,8 +838,9 @@ BOOL PSDRV_GetFontMetrics(void)
 	if (PSDRV_ReadAFMDir (value) == FALSE)
 	    return FALSE;
 
-    PSDRV_DumpGlyphList();
+    PSDRV_IndexGlyphList();
+    if (SortFontMetrics() == FALSE)
+    	return FALSE;
     PSDRV_DumpFontList();
     return TRUE;
 }
-
