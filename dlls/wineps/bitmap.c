@@ -19,6 +19,7 @@
  */
 
 #include <assert.h>
+#include <stdlib.h>
 
 #include "psdrv.h"
 #include "winbase.h"
@@ -337,5 +338,5 @@ INT PSDRV_StretchDIBits( PSDRV_PDEVICE *physDev, INT xDst, INT yDst, INT widthDs
     PSDRV_WriteSpool(physDev, ">\n", 2);  /* End-of-Data for /HexASCIIDecodeFilter */
     PSDRV_WriteGRestore(physDev);
     PSDRV_ResetClip(physDev);
-    return TRUE;
+    return abs(heightSrc);
 }
