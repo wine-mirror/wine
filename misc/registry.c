@@ -147,6 +147,70 @@ LPWSTR strcvtA2W(LPCSTR src, int nchars)
    dest[nchars] = 0;
    return dest;
 }
+/*
+ * we need to convert A to W with '\0' in strings (MULTI_SZ) 
+ */
+
+static LPWSTR  lmemcpynAtoW( LPWSTR dst, LPCSTR src, INT32 n )
+{	LPWSTR p = dst;
+
+	TRACE(reg,"\"%s\" %i\n",src, n);
+
+	while (n-- > 0) *p++ = (WCHAR)(unsigned char)*src++;
+
+	return dst;
+}
+static LPSTR lmemcpynWtoA( LPSTR dst, LPCWSTR src, INT32 n )
+{	LPSTR p = dst;
+
+	TRACE(string,"L\"%s\" %i\n",debugstr_w(src), n);
+
+	while (n-- > 0) *p++ = (CHAR)*src++;
+
+	return dst;
+}
+
+static void debug_print_value (LPBYTE lpbData, DWORD type, DWORD len)
+{	if (lpbData) 
+	{ switch(type)
+	  { case REG_SZ:
+                TRACE(reg," Data(sz)=%s\n",debugstr_w((LPCWSTR)lpbData));
+                break;
+
+	    case REG_DWORD:
+                TRACE(reg," Data(dword)=0x%08lx\n",(DWORD)*lpbData);
+                break;
+		
+            case REG_MULTI_SZ:
+	    	{ int i;
+		  LPCWSTR ptr = (LPCWSTR)lpbData;
+		  for (i=0;ptr[0];i++)
+		  { TRACE(reg, " MULTI_SZ(%i=%s)\n", i, debugstr_w(ptr));
+		    ptr += lstrlen32W(ptr)+1;
+		  }
+		}
+		break;
+
+            case REG_BINARY:
+                { char szTemp[100];			/* 3*32 + 3 + 1 */
+		  int i;
+		  for ( i = 0; i < len ; i++)		  
+		  { sprintf (&(szTemp[i*3]),"%02x ", lpbData[i]);
+		    if (i>=31)
+		    { sprintf (&(szTemp[i*3+3]),"...");
+		      break;
+		    }
+		  }
+		  TRACE(reg," Data(raw)=(%s)\n", szTemp);                  
+		}
+                break;
+		
+            default:
+                FIXME(reg, " Unknown data type %ld\n", type);
+	  } /* switch */
+	} /* if */
+}
+
 
 
 /******************************************************************************
@@ -2122,6 +2186,7 @@ DWORD WINAPI RegCreateKey16( HKEY hkey, LPCSTR lpszSubKey, LPHKEY retkey )
  * RETURNS 
  *    ERROR_SUCCESS:   Success
  *    ERROR_MORE_DATA: The specified buffer is not big enough to hold the data
+ * 		       !!! buffer is untouched. The MS-documentation is wrong !!!
  */
 DWORD WINAPI RegQueryValueEx32W( HKEY hkey, LPWSTR lpValueName,
                                  LPDWORD lpdwReserved, LPDWORD lpdwType,
@@ -2129,100 +2194,84 @@ DWORD WINAPI RegQueryValueEx32W( HKEY hkey, LPWSTR lpValueName,
 {
 	LPKEYSTRUCT	lpkey;
 	int		i;
+	DWORD		ret;
 
-    TRACE(reg,"(0x%x,%s,%p,%p,%p,%ld)\n", hkey, debugstr_w(lpValueName),
-          lpdwReserved, lpdwType, lpbData, lpcbData?*lpcbData:0);
+	TRACE(reg,"(0x%x,%s,%p,%p,%p,%p=%ld)\n", hkey, debugstr_w(lpValueName),
+          lpdwReserved, lpdwType, lpbData, lpcbData, lpcbData?*lpcbData:0);
 
-    lpkey = lookup_hkey(hkey);
-    if (!lpkey)
-        return ERROR_INVALID_HANDLE;
+	lpkey = lookup_hkey(hkey);
 
-    /* Reserved must be NULL (at least for now) */
-    if (lpdwReserved)
-        return ERROR_INVALID_PARAMETER;
+	if (!lpkey)
+	  return ERROR_INVALID_HANDLE;
 
-    /* An empty name string is equivalent to NULL */
-    if (lpValueName && !*lpValueName)
-        lpValueName = NULL;
+	if ((lpbData && ! lpcbData) || lpdwReserved)
+	  return ERROR_INVALID_PARAMETER;
 
-	if (lpValueName==NULL) {
-                /* Use key's unnamed or default value, if any */
-		for (i=0;i<lpkey->nrofvalues;i++)
-			if (lpkey->values[i].name==NULL)
-				break;
-	} else {
-                /* Search for the key name */
-		for (i=0;i<lpkey->nrofvalues;i++)
-			if (	lpkey->values[i].name &&
-				!lstrcmpi32W(lpValueName,lpkey->values[i].name)
-			)
-				break;
+	/* An empty name string is equivalent to NULL */
+	if (lpValueName && !*lpValueName)
+	  lpValueName = NULL;
+
+	if (lpValueName==NULL) 
+	{ /* Use key's unnamed or default value, if any */
+	  for (i=0;i<lpkey->nrofvalues;i++)
+	    if (lpkey->values[i].name==NULL)
+	      break;
+	} 
+	else 
+	{ /* Search for the key name */
+	  for (i=0;i<lpkey->nrofvalues;i++)
+	    if ( lpkey->values[i].name && !lstrcmpi32W(lpValueName,lpkey->values[i].name))
+	      break;
 	}
 
-	if (i==lpkey->nrofvalues) {
-                TRACE(reg,"Key not found\n");
-		if (lpValueName==NULL) {
-                        /* Empty keyname not found */
-			if (lpbData) {
-				*(WCHAR*)lpbData = 0;
-				*lpcbData	= 2;
-			}
-			if (lpdwType)
-				*lpdwType	= REG_SZ;
-                        TRACE(reg, "Returning an empty string\n");
-			return ERROR_SUCCESS;
-		}
-		return ERROR_FILE_NOT_FOUND;
+	if (i==lpkey->nrofvalues) 
+	{ TRACE(reg," Key not found\n");
+	  if (lpValueName==NULL) 
+	  { /* Empty keyname not found */
+	    if (lpbData) 
+	    { *(WCHAR*)lpbData = 0;
+	      *lpcbData	= 2;
+	    }
+	    if (lpdwType)
+	      *lpdwType	= REG_SZ;
+	    TRACE(reg, " Returning an empty string\n");
+	    return ERROR_SUCCESS;
+	  }
+	  return ERROR_FILE_NOT_FOUND;
 	}
 
-    if (lpdwType)
-        *lpdwType = lpkey->values[i].type;
+	ret = ERROR_SUCCESS;
 
-    if (lpbData==NULL) {
-        /* Data is not required */
-        if (lpcbData==NULL) {
-            /* And data size is not required */
-            /* So all that is returned is the type (set above) */
-            return ERROR_SUCCESS;
-        }
-        /* Set the size required and return success */
-        *lpcbData = lpkey->values[i].len;
-        return ERROR_SUCCESS;
-    }
+	if (lpdwType) 					/* type required ?*/
+	  *lpdwType = lpkey->values[i].type;
 
-    if (*lpcbData<lpkey->values[i].len) {
-        /* The size was specified, but the data is too big for it */
-        /* Instead of setting it to NULL, fill in with as much as possible */
-        /* But the docs do not specify how to handle the lpbData here */
-        /* *(WCHAR*)lpbData= 0; */
-        memcpy(lpbData,lpkey->values[i].data,*lpcbData);
-        *lpcbData = lpkey->values[i].len;
-        return ERROR_MORE_DATA;
-    }
+	if (lpcbData) 					/* size required ?*/
+	{ if (lpbData)					/* data required ?*/
+	  { if (*lpcbData >= lpkey->values[i].len)	/* buffer large enought ?*/
+	      memcpy(lpbData,lpkey->values[i].data,lpkey->values[i].len);
+	    else
+	      ret = ERROR_MORE_DATA;
+	  }
+	  *lpcbData = lpkey->values[i].len;
 
-    memcpy(lpbData,lpkey->values[i].data,lpkey->values[i].len);
+	 /* fixme: hack to fake return value for REG_MULTI_SZ */
+	  if(lpkey->values[i].type==REG_MULTI_SZ)
+	  { FIXME(reg,"fake empty return value for REG_MULTI_SZ\n");
+	    *lpcbData = 4;
+	    if (lpbData)
+	    { lpbData[0] = 0x00;
+	      lpbData[1] = 0x00;
+	      lpbData[2] = 0x00;
+	      lpbData[3] = 0x00;
+	    }
+	  }
+	}
 
-    /* Extra debugging output */
-    if (lpdwType) {
-        switch(*lpdwType){
-            case REG_SZ:
-                TRACE(reg," Data(sz)=%s\n",debugstr_w((LPCWSTR)lpbData));
-                break;
-            case REG_DWORD:
-                TRACE(reg," Data(dword)=%lx\n", (DWORD)*lpbData);
-                break;
-            case REG_BINARY:
-                TRACE(reg," Data(binary)\n");
-                /* Is there a way of printing this in readable form? */
-                break;
-            default:
-                TRACE(reg, "Unknown data type %ld\n", *lpdwType);
-        } /* switch */
-    } /* if */
+	debug_print_value ( lpbData, lpkey->values[i].type, lpkey->values[i].len);
 
-    /* Set the actual size */
-    *lpcbData = lpkey->values[i].len;
-    return ERROR_SUCCESS;
+	TRACE(reg," (ret=%lx, type=%lx, len=%ld)\n", ret, lpdwType?*lpdwType:0,lpcbData?*lpcbData:0);
+
+	return ret;
 }
 
 
@@ -2259,82 +2308,68 @@ DWORD WINAPI RegQueryValue32W( HKEY hkey, LPWSTR lpszSubKey, LPWSTR lpszData,
 
 /******************************************************************************
  * RegQueryValueEx32A [ADVAPI32.157]
+ *
+ * NOTES:
+ * the documantation is wrong: if the buffer is to small it remains untouched 
+ *
+ * FIXME: check returnvalue (len) for an empty key
  */
 DWORD WINAPI RegQueryValueEx32A( HKEY hkey, LPSTR lpszValueName,
                                  LPDWORD lpdwReserved, LPDWORD lpdwType,
                                  LPBYTE lpbData, LPDWORD lpcbData )
 {
 	LPWSTR	lpszValueNameW;
-	LPBYTE	buf;
-	DWORD	ret,myxlen;
-	DWORD	*mylen;
-	DWORD	type;
+	LPBYTE	mybuf = NULL;
+	DWORD	ret, mytype, mylen = 0;
 
-    TRACE(reg,"(%x,%s,%p,%p,%p,%ld)\n", hkey,debugstr_a(lpszValueName),
-          lpdwReserved,lpdwType,lpbData,lpcbData?*lpcbData:0);
+	TRACE(reg,"(%x,%s,%p,%p,%p,%p=%ld)\n", hkey,debugstr_a(lpszValueName),
+          lpdwReserved,lpdwType,lpbData,lpcbData,lpcbData?*lpcbData:0);
 
-    lpszValueNameW = lpszValueName?strdupA2W(lpszValueName):NULL;
-
-    /* Why would this be set? It is just an output */
-    if (lpdwType)
-        type = *lpdwType;
-
-	if (lpbData) {
-		myxlen  = 0;
-		mylen	= &myxlen;
-		buf	= xmalloc(4);
-                /* Only get the size for now */
-		ret = RegQueryValueEx32W( hkey, lpszValueNameW, lpdwReserved,
-                                          &type, buf, mylen );
-		free(buf);
-		if (ret==ERROR_MORE_DATA) {
-			buf	= (LPBYTE)xmalloc(*mylen);
-		} else {
-			buf	= (LPBYTE)xmalloc(2*(*lpcbData));
-			myxlen  = 2*(*lpcbData);
-		}
-	} else {
-		/* Data is not required */
-		buf=NULL;
-		if (lpcbData) {
-			myxlen	= *lpcbData*2;
-			mylen	= &myxlen;
-		} else
-			mylen	= NULL;
+	if (!lpcbData && lpbData)			/* buffer without size is illegal */
+	{  return ERROR_INVALID_PARAMETER;
 	}
 
-        /* Now get the data */
-	ret = RegQueryValueEx32W( hkey, lpszValueNameW, lpdwReserved, &type,
-                                  buf, mylen );
-	if (lpdwType) 
-		*lpdwType=type;
+	lpszValueNameW = lpszValueName ? strdupA2W(lpszValueName) : NULL;	
+	
+	/* get just the type first */
+	ret = RegQueryValueEx32W( hkey, lpszValueNameW, lpdwReserved, &mytype, NULL, NULL );
+	
+	if ( ret != ERROR_SUCCESS )			/* failed ?? */
+	{ if(lpszValueNameW) free(lpszValueNameW);
+	  return ret;
+	}
+	
+	if (lpcbData)					/* at least length requested? */
+	{ if (UNICONVMASK & (1<<(mytype)))		/* string requested? */
+	  { if (lpbData)				/* value requested? */
+	    { mylen = 2*( *lpcbData );
+	      mybuf = (LPBYTE)xmalloc( mylen );
+	    }
 
-	if (ret==ERROR_SUCCESS) {
-		if (buf) {
-			if (UNICONVMASK & (1<<(type))) {
-				/* convert UNICODE to ASCII */
-				lstrcpyWtoA(lpbData,(LPWSTR)buf);
-				*lpcbData	= myxlen/2;
-			} else {
-				if (myxlen>*lpcbData)
-					ret	= ERROR_MORE_DATA;
-				else
-					memcpy(lpbData,buf,myxlen);
+	    ret = RegQueryValueEx32W( hkey, lpszValueNameW, lpdwReserved, lpdwType, mybuf, &mylen );
 
-				*lpcbData	= myxlen;
-			}
-		} else {
-			if ((UNICONVMASK & (1<<(type))) && lpcbData)
-				*lpcbData	= myxlen/2;
-		}
-	} else {
-		if ((UNICONVMASK & (1<<(type))) && lpcbData)
-			*lpcbData	= myxlen/2;
+	    if (ret == ERROR_SUCCESS )
+	    { if ( lpbData )
+	      { lmemcpynWtoA(lpbData, (LPWSTR)mybuf, mylen/2);
+	      }
+	    }
+
+	    *lpcbData = mylen/2;			/* size is in byte! */
+	  }
+	  else						/* no strings, call it straight */
+	  { ret = RegQueryValueEx32W( hkey, lpszValueNameW, lpdwReserved, lpdwType, lpbData, lpcbData );
+	  }
+	}
+	
+	if (lpdwType)					/* type when requested */
+	{ *lpdwType = mytype;
 	}
 
-    if(buf) free(buf);
-    if(lpszValueNameW) free(lpszValueNameW);
-    return ret;
+	TRACE(reg," (ret=%lx,type=%lx, len=%ld)\n", ret,mytype,lpcbData?*lpcbData:0);
+	
+	if(mybuf) free(mybuf);
+	if(lpszValueNameW) free(lpszValueNameW);
+	return ret;
 }
 
 
@@ -2432,29 +2467,18 @@ DWORD WINAPI RegSetValueEx32W( HKEY hkey, LPWSTR lpszValueName,
                                DWORD dwReserved, DWORD dwType, LPBYTE lpbData,
                                DWORD cbData)
 {
-    LPKEYSTRUCT lpkey;
-    int i;
+	LPKEYSTRUCT lpkey;
+	int i;
 
-    TRACE(reg,"(%x,%s,%ld,%ld,%p,%ld)\n", hkey, debugstr_w(lpszValueName),
+	TRACE(reg,"(%x,%s,%ld,%ld,%p,%ld)\n", hkey, debugstr_w(lpszValueName),
           dwReserved, dwType, lpbData, cbData);
 
-    switch (dwType) {
-        case REG_SZ:
-            TRACE(reg," Data(sz)=%s\n", debugstr_w((LPCWSTR)lpbData));
-            break;
-        case REG_BINARY:
-            TRACE(reg," Data(binary)\n");
-            break;
-        case REG_DWORD:
-            TRACE(reg," Data(dword)=%lx\n", (DWORD)lpbData);
-            break;
-        default:
-            TRACE(reg,"Unknown type: %ld\n", dwType);
-    }
+	debug_print_value ( lpbData, dwType, cbData );
 
-    lpkey = lookup_hkey( hkey );
-    if (!lpkey)
-        return ERROR_INVALID_HANDLE;
+	lpkey = lookup_hkey( hkey );
+
+	if (!lpkey)
+          return ERROR_INVALID_HANDLE;
 
 	lpkey->flags |= REG_OPTION_TAINTED;
 
@@ -2507,23 +2531,33 @@ DWORD WINAPI RegSetValueEx32A( HKEY hkey, LPSTR lpszValueName,
 	LPWSTR	lpszValueNameW;
 	DWORD	ret;
 
-    TRACE(reg,"(%x,%s,%ld,%ld,%p,%ld)\n",hkey,debugstr_a(lpszValueName),
+	if (!lpbData)
+		return (ERROR_INVALID_PARAMETER);
+		
+	TRACE(reg,"(%x,%s,%ld,%ld,%p,%ld)\n",hkey,debugstr_a(lpszValueName),
           dwReserved,dwType,lpbData,cbData);
 
-	if ((1<<dwType) & UNICONVMASK) {
-		buf=(LPBYTE)strdupA2W(lpbData);
-		cbData=2*strlen(lpbData)+2;
-	} else
-		buf=lpbData;
-	if (lpszValueName)
-		lpszValueNameW = strdupA2W(lpszValueName);
+	if ((1<<dwType) & UNICONVMASK) 
+	{ buf = (LPBYTE)xmalloc( cbData *2 );
+	  lmemcpynAtoW ((LPVOID)buf, lpbData, cbData );
+	  cbData=2*cbData;
+	} 
 	else
-		lpszValueNameW = NULL;
+	  buf=lpbData;
+
+	if (lpszValueName)
+	  lpszValueNameW = strdupA2W(lpszValueName);
+	else
+	  lpszValueNameW = NULL;
+
 	ret=RegSetValueEx32W(hkey,lpszValueNameW,dwReserved,dwType,buf,cbData);
+
 	if (lpszValueNameW)
-		free(lpszValueNameW);
+	  free(lpszValueNameW);
+
 	if (buf!=lpbData)
-		free(buf);
+	  free(buf);
+
 	return ret;
 }
 
