@@ -4,6 +4,8 @@
  * Copyright (C) 1996, Eric Youngdale.
  */
 
+#include "config.h"
+
 #include <sys/types.h>
 #include <fcntl.h>
 #include <sys/stat.h>
@@ -26,7 +28,9 @@
 #endif
 
 #ifdef __ELF__
-#include <elf.h>
+#ifdef HAVE_ELF_H
+# include <elf.h>
+#endif
 #include <link.h>
 #include <sys/mman.h>
 #elif defined(__EMX__)

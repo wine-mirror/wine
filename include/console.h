@@ -12,18 +12,18 @@
 
 #include "config.h"
 
-/* Which libs can be used for wine's curses implementation... */
-#ifdef HAVE_LIBNCURSES 
-#define WINE_NCURSES
+/* Can we compile with curses/ncurses? */
+#if (	(defined(HAVE_LIBNCURSES) || defined(HAVE_LIBCURSES)) &&	\
+	(defined(HAVE_CURSES_H) || defined(HAVE_NCURSES_H))		\
+)
+# define WINE_NCURSES
 #else
-   #ifdef HAVE_LIBCURSES
-   #define WINE_NCURSES
-   #endif   
+# undef WINE_NCURSES
 #endif
 
 #define CONSOLE_DEFAULT_DRIVER "tty"
 /* If you have problems, try setting the next line to xterm */
-#define CONSOLE_XTERM_PROG "nxterm" /* We should check for this first... */
+#define CONSOLE_XTERM_PROG "xterm" /* We should check for this first... */
 
 typedef struct CONSOLE_DRIVER
 {

@@ -21,7 +21,13 @@
 
 #include "debug.h"
 #undef ERR /* Use ncurses's err() */
-#include <curses.h>
+#ifdef HAVE_CURSES_H
+# include <curses.h>
+#else
+# ifdef HAVE_NCURSES_H
+#  include <ncurses.h>
+# endif
+#endif
 
 SCREEN *ncurses_screen;
 

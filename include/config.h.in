@@ -126,11 +126,20 @@
 /* Define if you have the waitpid function.  */
 #undef HAVE_WAITPID
 
+/* Define if you have the <curses.h> header file.  */
+#undef HAVE_CURSES_H
+
 /* Define if you have the <dlfcn.h> header file.  */
 #undef HAVE_DLFCN_H
 
+/* Define if you have the <elf.h> header file.  */
+#undef HAVE_ELF_H
+
 /* Define if you have the <float.h> header file.  */
 #undef HAVE_FLOAT_H
+
+/* Define if you have the <libio.h> header file.  */
+#undef HAVE_LIBIO_H
 
 /* Define if you have the <linux/cdrom.h> header file.  */
 #undef HAVE_LINUX_CDROM_H
@@ -140,6 +149,9 @@
 
 /* Define if you have the <machine/soundcard.h> header file.  */
 #undef HAVE_MACHINE_SOUNDCARD_H
+
+/* Define if you have the <ncurses.h> header file.  */
+#undef HAVE_NCURSES_H
 
 /* Define if you have the <net/if.h> header file.  */
 #undef HAVE_NET_IF_H

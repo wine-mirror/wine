@@ -12,7 +12,9 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <termios.h>
-#include <libio.h>
+#ifdef HAVE_LIBIO_H
+# include <libio.h>
+#endif
 
 #ifndef HAVE_USLEEP
 #ifdef __EMX__
