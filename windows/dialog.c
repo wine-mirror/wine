@@ -62,6 +62,14 @@ typedef struct
     BOOL     dialogEx;
 } DLG_TEMPLATE;
 
+  /* Radio button group */
+typedef struct 
+{
+    UINT firstID;
+    UINT lastID;
+    UINT checkID;
+} RADIOGROUP;
+
   /* Dialog base units */
 static WORD xBaseUnit = 0, yBaseUnit = 0;
 
@@ -1593,37 +1601,48 @@ BOOL16 WINAPI CheckRadioButton16( HWND16 hwndDlg, UINT16 firstID,
 
 
 /***********************************************************************
+ *           CheckRB
+ * 
+ * Callback function used to check/uncheck radio buttons that fall 
+ * within a specific range of IDs.
+ */
+static BOOL CALLBACK CheckRB(HWND hwndChild, LPARAM lParam)
+{
+    LONG lChildID = GetWindowLongA(hwndChild, GWL_ID);
+    RADIOGROUP *lpRadioGroup = (RADIOGROUP *) lParam;
+
+    if ((lChildID >= lpRadioGroup->firstID) && 
+        (lChildID <= lpRadioGroup->lastID))
+    {
+        if (lChildID == lpRadioGroup->checkID)
+        {
+            SendMessageA(hwndChild, BM_SETCHECK, BST_CHECKED, 0);
+        }
+        else
+        {
+            SendMessageA(hwndChild, BM_SETCHECK, BST_UNCHECKED, 0);
+        }
+    }
+
+    return TRUE;
+}
+
+
+/***********************************************************************
  *           CheckRadioButton32   (USER32.48)
  */
 BOOL WINAPI CheckRadioButton( HWND hwndDlg, UINT firstID,
-                                  UINT lastID, UINT checkID )
+                              UINT lastID, UINT checkID )
 {
-    WND *pWnd = WIN_FindWndPtr( hwndDlg );
+    RADIOGROUP radioGroup;
 
-    if (!pWnd) return FALSE;
-
-    for (WIN_UpdateWndPtr(&pWnd,pWnd->child); pWnd;WIN_UpdateWndPtr(&pWnd,pWnd->next))
-        if ((pWnd->wIDmenu == firstID) || (pWnd->wIDmenu == lastID))
-        {
-            break;
-        }
-
-    if (!pWnd) return FALSE;
-
-    if (pWnd->wIDmenu == lastID)
-        lastID = firstID;  /* Buttons are in reverse order */
-    while (pWnd)
-    {
-	SendMessageA( pWnd->hwndSelf, BM_SETCHECK,
-                        (pWnd->wIDmenu == checkID), 0 );
-        if (pWnd->wIDmenu == lastID)
-        {
-                WIN_ReleaseWndPtr(pWnd);
-                break;
-        }
-	WIN_UpdateWndPtr(&pWnd,pWnd->next);
-    }
-    return TRUE;
+    /* perform bounds checking for a radio button group */
+    radioGroup.firstID = min(min(firstID, lastID), checkID);
+    radioGroup.lastID = max(max(firstID, lastID), checkID);
+    radioGroup.checkID = checkID;
+    
+    return EnumChildWindows(hwndDlg, (WNDENUMPROC)CheckRB, 
+                            (LPARAM)&radioGroup);
 }
 
 
