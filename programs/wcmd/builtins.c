@@ -172,6 +172,7 @@ char *p;
   if ((strchr(param1,'*') == NULL) && (strchr(param1,'?') == NULL)
   	&& (!recurse) && (fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)) {
     strcat (param1, "\\*");
+    FindClose(hff);
     WCMD_delete (1);
     return;
   }
@@ -192,6 +193,7 @@ char *p;
   }
   else {
     if (!DeleteFile (param1)) WCMD_print_error ();
+    FindClose (hff);
   }
 }
 
