@@ -794,15 +794,19 @@ LRESULT WINAPI DefWindowProcA( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam
         break;
 
     case WM_GETTEXT:
+        if (wParam)
         {
+            LPSTR dest = (LPSTR)lParam;
             WND *wndPtr = WIN_GetPtr( hwnd );
-            if (wParam && wndPtr && wndPtr->text)
+
+            if (!wndPtr) break;
+            if (wndPtr->text)
             {
-                LPSTR dest = (LPSTR)lParam;
                 if (!WideCharToMultiByte( CP_ACP, 0, wndPtr->text, -1,
                                           dest, wParam, NULL, NULL )) dest[wParam-1] = 0;
                 result = strlen( dest );
             }
+            else dest[0] = '\0';
             WIN_ReleasePtr( wndPtr );
         }
         break;
@@ -928,14 +932,18 @@ LRESULT WINAPI DefWindowProcW(
         break;
 
     case WM_GETTEXT:
+        if (wParam)
         {
+            LPWSTR dest = (LPWSTR)lParam;
             WND *wndPtr = WIN_GetPtr( hwnd );
-            if (wParam && wndPtr && wndPtr->text)
+
+            if (!wndPtr) break;
+            if (wndPtr->text)
             {
-                LPWSTR dest = (LPWSTR)lParam;
                 lstrcpynW( dest, wndPtr->text, wParam );
                 result = strlenW( dest );
             }
+            else dest[0] = '\0';
             WIN_ReleasePtr( wndPtr );
         }
         break;
