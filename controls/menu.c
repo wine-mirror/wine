@@ -2655,13 +2655,29 @@ static INT MENU_TrackMenu( HMENU hmenu, UINT wFlags, INT x, INT y,
 	menu = MENU_GetMenu( mt.hCurrentMenu );
 	if (!menu) /* sometimes happens if I do a window manager close */
 	    break;
-	msg.hwnd = (wFlags & TPM_ENTERIDLEEX && menu->wFlags & MF_POPUP) ? menu->hWnd : 0;
 
 	/* we have to keep the message in the queue until it's
 	 * clear that menu loop is not over yet. */
 
-	if (!MSG_InternalGetMessage( &msg, msg.hwnd, mt.hOwnerWnd, 0, 0,
-				     MSGF_MENU, PM_NOREMOVE, !enterIdleSent, &enterIdleSent )) break;
+        for (;;)
+        {
+            if (PeekMessageA( &msg, 0, 0, 0, PM_NOREMOVE ))
+            {
+                if (!CallMsgFilterA( &msg, MSGF_MENU )) break;
+                /* remove the message from the queue */
+                PeekMessageA( &msg, 0, msg.message, msg.message, PM_REMOVE );
+            }
+            else
+            {
+                if (!enterIdleSent)
+                {
+                    HWND win = (wFlags & TPM_ENTERIDLEEX && menu->wFlags & MF_POPUP) ? menu->hWnd : 0;
+                    enterIdleSent = TRUE;
+                    SendMessageW( mt.hOwnerWnd, WM_ENTERIDLE, MSGF_MENU, (LPARAM)win );
+                }
+                WaitMessage();
+            }
+        }
 
 	/* check if EndMenu() tried to cancel us, by posting this message */
         if(msg.message == WM_CANCELMODE) 

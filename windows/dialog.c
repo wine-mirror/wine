@@ -25,7 +25,6 @@
 #include "heap.h"
 #include "win.h"
 #include "user.h"
-#include "message.h"
 #include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(dialog);
@@ -1053,13 +1052,25 @@ static INT DIALOG_DoDialogBox( HWND hwnd, HWND owner )
     if (!(dlgInfo->flags & DF_END)) /* was EndDialog called in WM_INITDIALOG ? */
     {
         ShowWindow( hwnd, SW_SHOW );
-        while (MSG_InternalGetMessage(&msg, hwnd, ownerMsg, 0, 0, MSGF_DIALOGBOX,
-                                      PM_REMOVE, !(wndPtr->dwStyle & DS_NOIDLEMSG), NULL ))
+        for (;;)
         {
-            if (!(dlgInfo->flags & DF_END) && (!IsDialogMessageA( hwnd, &msg)))
+            if (!(wndPtr->dwStyle & DS_NOIDLEMSG))
+            {
+                if (!PeekMessageW( &msg, 0, 0, 0, PM_REMOVE ))
+                {
+                    /* No message present -> send ENTERIDLE and wait */
+                    SendMessageW( ownerMsg, WM_ENTERIDLE, MSGF_DIALOGBOX, (LPARAM)hwnd );
+                    if (!GetMessageW( &msg, 0, 0, 0 )) break;
+                }
+            }
+            else if (!GetMessageW( &msg, 0, 0, 0 )) break;
+
+            if (CallMsgFilterW( &msg, MSGF_DIALOGBOX )) continue;
+
+            if (!(dlgInfo->flags & DF_END) && !IsDialogMessageW( hwnd, &msg))
             {
                 TranslateMessage( &msg );
-                DispatchMessageA( &msg );
+                DispatchMessageW( &msg );
             }
             if (dlgInfo->flags & DF_END) break;
         }
@@ -1460,7 +1471,7 @@ static BOOL DIALOG_IsDialogMessage( HWND hwnd, HWND hwndDlg,
 
         case VK_RETURN:
             {
-                DWORD dw = SendMessage16( hwndDlg, DM_GETDEFID, 0, 0 );
+                DWORD dw = SendMessageW( hwndDlg, DM_GETDEFID, 0, 0 );
                 if (HIWORD(dw) == DC_HASDEFID)
                 {
                     SendMessageA( hwndDlg, WM_COMMAND, 

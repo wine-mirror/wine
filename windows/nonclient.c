@@ -10,7 +10,6 @@
 #include "wine/winuser16.h"
 #include "version.h"
 #include "win.h"
-#include "message.h"
 #include "user.h"
 #include "heap.h"
 #include "dce.h"
@@ -1847,8 +1846,9 @@ static void NC_TrackMinMaxBox95( HWND hwnd, WORD wParam )
     while(1)
     {
 	BOOL oldstate = pressed;
-        MSG_InternalGetMessage( &msg, 0, 0, WM_MOUSEFIRST, WM_MOUSELAST,
-                                0, PM_REMOVE, FALSE, NULL );
+
+        if (!GetMessageW( &msg, 0, WM_MOUSEFIRST, WM_MOUSELAST )) break;
+        if (CallMsgFilterW( &msg, MSGF_MAX )) continue;
 
 	if(msg.message == WM_LBUTTONUP)
 	    break;
@@ -1903,8 +1903,9 @@ static void NC_TrackMinMaxBox( HWND hwnd, WORD wParam )
     while(1)
     {
 	BOOL oldstate = pressed;
-        MSG_InternalGetMessage( &msg, 0, 0, WM_MOUSEFIRST, WM_MOUSELAST,
-                                0, PM_REMOVE, FALSE, NULL );
+
+        if (!GetMessageW( &msg, 0, WM_MOUSEFIRST, WM_MOUSELAST )) break;
+        if (CallMsgFilterW( &msg, MSGF_MAX )) continue;
 
 	if(msg.message == WM_LBUTTONUP)
 	    break;
@@ -1965,8 +1966,9 @@ NC_TrackCloseButton95 (HWND hwnd, WORD wParam)
     while(1)
     {
 	BOOL oldstate = pressed;
-        MSG_InternalGetMessage( &msg, 0, 0, WM_MOUSEFIRST, WM_MOUSELAST,
-                                0, PM_REMOVE, FALSE, NULL );
+
+        if (!GetMessageW( &msg, 0, WM_MOUSEFIRST, WM_MOUSELAST )) break;
+        if (CallMsgFilterW( &msg, MSGF_MAX )) continue;
 
 	if(msg.message == WM_LBUTTONUP)
 	    break;
@@ -1997,7 +1999,7 @@ NC_TrackCloseButton95 (HWND hwnd, WORD wParam)
  */
 static void NC_TrackScrollBar( HWND hwnd, WPARAM wParam, POINT pt )
 {
-    MSG16 *msg;
+    MSG msg;
     INT scrollbar;
     WND *wndPtr = WIN_FindWndPtr( hwnd );
 
@@ -2012,7 +2014,6 @@ static void NC_TrackScrollBar( HWND hwnd, WPARAM wParam, POINT pt )
 	scrollbar = SB_VERT;
     }
 
-    if (!(msg = SEGPTR_NEW(MSG16))) goto END;
     pt.x -= wndPtr->rectWindow.left;
     pt.y -= wndPtr->rectWindow.top;
     SetCapture( hwnd );
@@ -2020,21 +2021,20 @@ static void NC_TrackScrollBar( HWND hwnd, WPARAM wParam, POINT pt )
 
     do
     {
-        GetMessage16( SEGPTR_GET(msg), 0, 0, 0 );
-	switch(msg->message)
+        if (!GetMessageW( &msg, 0, 0, 0 )) break;
+        if (CallMsgFilterW( &msg, MSGF_SCROLLBAR )) continue;
+	switch(msg.message)
 	{
 	case WM_LBUTTONUP:
 	case WM_MOUSEMOVE:
         case WM_SYSTIMER:
-            pt.x = LOWORD(msg->lParam) + wndPtr->rectClient.left - 
-	      wndPtr->rectWindow.left;
-            pt.y = HIWORD(msg->lParam) + wndPtr->rectClient.top - 
-	      wndPtr->rectWindow.top;
-            SCROLL_HandleScrollEvent( hwnd, scrollbar, msg->message, pt );
+            pt.x = LOWORD(msg.lParam) + wndPtr->rectClient.left - wndPtr->rectWindow.left;
+            pt.y = HIWORD(msg.lParam) + wndPtr->rectClient.top - wndPtr->rectWindow.top;
+            SCROLL_HandleScrollEvent( hwnd, scrollbar, msg.message, pt );
 	    break;
         default:
-            TranslateMessage16( msg );
-            DispatchMessage16( msg );
+            TranslateMessage( &msg );
+            DispatchMessageW( &msg );
             break;
 	}
         if (!IsWindow( hwnd ))
@@ -2042,8 +2042,7 @@ static void NC_TrackScrollBar( HWND hwnd, WPARAM wParam, POINT pt )
             ReleaseCapture();
             break;
         }
-    } while (msg->message != WM_LBUTTONUP);
-    SEGPTR_FREE(msg);
+    } while (msg.message != WM_LBUTTONUP);
 END:
     WIN_ReleaseWndPtr(wndPtr);
 }

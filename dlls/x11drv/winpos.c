@@ -1596,8 +1596,9 @@ static LONG start_size_move( WND* wndPtr, WPARAM wParam, POINT *capturePoint )
     {
         while(!hittest)
         {
-            MSG_InternalGetMessage( &msg, 0, 0, WM_KEYFIRST, WM_MOUSELAST,
-                                    MSGF_SIZE, PM_REMOVE, FALSE, NULL );
+            GetMessageW( &msg, 0, WM_KEYFIRST, WM_MOUSELAST );
+            if (CallMsgFilterW( &msg, MSGF_SIZE )) continue;
+
             switch(msg.message)
             {
             case WM_MOUSEMOVE:
@@ -1776,8 +1777,8 @@ void X11DRV_SysCommandSizeMove( HWND hwnd, WPARAM wParam )
     {
         int dx = 0, dy = 0;
 
-        MSG_InternalGetMessage( &msg, 0, 0, WM_KEYFIRST, WM_MOUSELAST,
-                                MSGF_SIZE, PM_REMOVE, FALSE, NULL );
+        if (!GetMessageW( &msg, 0, WM_KEYFIRST, WM_MOUSELAST )) break;
+        if (CallMsgFilterW( &msg, MSGF_SIZE )) continue;
 
         /* Exit on button-up, Return, or Esc */
         if ((msg.message == WM_LBUTTONUP) ||
