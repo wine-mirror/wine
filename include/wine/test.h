@@ -30,8 +30,7 @@ extern int winetest_debug;
 /* current platform */
 extern const char *winetest_platform;
 
-extern void winetest_set_ok_location( const char* file, int line );
-extern void winetest_set_trace_location( const char* file, int line );
+extern void winetest_set_location( const char* file, int line );
 extern void winetest_start_todo( const char* platform );
 extern int winetest_loop_todo(void);
 extern void winetest_end_todo( const char* platform );
@@ -51,8 +50,8 @@ extern void winetest_trace( const char *msg, ... );
 
 #endif /* __GNUC__ */
 
-#define ok_(file, line)     (winetest_set_ok_location(file, line), 0) ? 0 : winetest_ok
-#define trace_(file, line)  (winetest_set_trace_location(file, line), 0) ? (void)0 : winetest_trace
+#define ok_(file, line)     (winetest_set_location(file, line), 0) ? 0 : winetest_ok
+#define trace_(file, line)  (winetest_set_location(file, line), 0) ? (void)0 : winetest_trace
 
 #define ok     ok_(__FILE__, __LINE__)
 #define trace  trace_(__FILE__, __LINE__)
@@ -125,6 +124,19 @@ static void exit_process( int code )
 }
 
 
+void winetest_set_location( const char* file, int line )
+{
+    tls_data* data=get_tls_data();
+    data->current_file=strrchr(file,'/');
+    if (data->current_file==NULL)
+        data->current_file=strrchr(file,'\\');
+    if (data->current_file==NULL)
+        data->current_file=file;
+    else
+        data->current_file++;
+    data->current_line=line;
+}
+
 /*
  * Checks condition.
  * Parameters:
@@ -187,13 +199,6 @@ int winetest_ok( int condition, const char *msg, ... )
     return 1;
 }
 
-void winetest_set_ok_location( const char* file, int line )
-{
-    tls_data* data=get_tls_data();
-    data->current_file=file;
-    data->current_line=line;
-}
-
 void winetest_trace( const char *msg, ... )
 {
     va_list valist;
@@ -206,13 +211,6 @@ void winetest_trace( const char *msg, ... )
         vfprintf(stderr, msg, valist);
         va_end(valist);
     }
-}
-
-void winetest_set_trace_location( const char* file, int line )
-{
-    tls_data* data=get_tls_data();
-    data->current_file=file;
-    data->current_line=line;
 }
 
 void winetest_start_todo( const char* platform )
