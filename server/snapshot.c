@@ -28,7 +28,6 @@
 #include <stdlib.h>
 
 #include "windef.h"
-#include "tlhelp32.h"
 
 #include "handle.h"
 #include "process.h"
@@ -79,7 +78,7 @@ static struct snapshot *create_snapshot( process_id_t pid, int flags )
     struct snapshot *snapshot;
 
     /* need a process for modules and heaps */
-    if (flags & (TH32CS_SNAPMODULE|TH32CS_SNAPHEAPLIST))
+    if (flags & (SNAP_MODULE|SNAP_HEAPLIST))
     {
         if (!pid) process = (struct process *)grab_object( current->process );
         else if (!(process = get_process_from_id( pid ))) return NULL;
@@ -95,17 +94,17 @@ static struct snapshot *create_snapshot( process_id_t pid, int flags )
 
     snapshot->process_pos = 0;
     snapshot->process_count = 0;
-    if (flags & TH32CS_SNAPPROCESS)
+    if (flags & SNAP_PROCESS)
         snapshot->processes = process_snap( &snapshot->process_count );
 
     snapshot->thread_pos = 0;
     snapshot->thread_count = 0;
-    if (flags & TH32CS_SNAPTHREAD)
+    if (flags & SNAP_THREAD)
         snapshot->threads = thread_snap( &snapshot->thread_count );
 
     snapshot->module_pos = 0;
     snapshot->module_count = 0;
-    if (flags & TH32CS_SNAPMODULE)
+    if (flags & SNAP_MODULE)
         snapshot->modules = module_snap( process, &snapshot->module_count );
 
     return snapshot;

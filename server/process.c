@@ -1058,6 +1058,35 @@ DECL_HANDLER(unload_dll)
     process_unload_dll( current->process, req->base );
 }
 
+/* retrieve information about a module in a process */
+DECL_HANDLER(get_dll_info)
+{
+    struct process *process;
+
+    if ((process = get_process_from_handle( req->handle, PROCESS_QUERY_INFORMATION )))
+    {
+        struct process_dll *dll;
+
+        for (dll = &process->exe; dll; dll = dll->next)
+        {
+            if (dll->base == req->base_address)
+            {
+                reply->size = dll->size;
+                reply->entry_point = 0; /* FIXME */
+                if (dll->filename)
+                {
+                    size_t len = min( dll->namelen, get_reply_max_size() );
+                    set_reply_data( dll->filename, len );
+                }
+                break;
+            }
+        }
+        if (!dll)
+            set_error(STATUS_DLL_NOT_FOUND);
+        release_object( process );
+    }
+}
+
 /* wait for a process to start waiting on input */
 /* FIXME: only returns event for now, wait is done in the client */
 DECL_HANDLER(wait_input_idle)

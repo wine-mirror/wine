@@ -359,6 +359,17 @@ typedef struct
 #define SET_THREAD_INFO_AFFINITY 0x02
 
 
+/* Retrieve information about a module */
+@REQ(get_dll_info)
+    obj_handle_t handle;       /* process handle */
+    void*        base_address; /* base address of module */
+@REPLY
+    size_t       size;          /* module size */
+    void*        entry_point;
+    VARARG(filename,string);    /* file name of module */
+@END
+
+
 /* Suspend a thread */
 @REQ(suspend_thread)
     obj_handle_t handle;       /* thread handle */
@@ -1100,10 +1111,14 @@ enum char_info_mode
 @END
 
 
+#define SNAP_HEAPLIST   0x00000001
+#define SNAP_PROCESS    0x00000002
+#define SNAP_THREAD     0x00000004
+#define SNAP_MODULE     0x00000008
 /* Create a snapshot */
 @REQ(create_snapshot)
     int          inherit;       /* inherit flag */
-    int          flags;         /* snapshot flags (TH32CS_*) */
+    int          flags;         /* snapshot flags (SNAP_*) */
     process_id_t pid;           /* process id */
 @REPLY
     obj_handle_t handle;        /* handle to the snapshot */

@@ -117,6 +117,7 @@ DECL_HANDLER(get_process_info);
 DECL_HANDLER(set_process_info);
 DECL_HANDLER(get_thread_info);
 DECL_HANDLER(set_thread_info);
+DECL_HANDLER(get_dll_info);
 DECL_HANDLER(suspend_thread);
 DECL_HANDLER(resume_thread);
 DECL_HANDLER(load_dll);
@@ -295,6 +296,7 @@ static const req_handler req_handlers[REQ_NB_REQUESTS] =
     (req_handler)req_set_process_info,
     (req_handler)req_get_thread_info,
     (req_handler)req_set_thread_info,
+    (req_handler)req_get_dll_info,
     (req_handler)req_suspend_thread,
     (req_handler)req_resume_thread,
     (req_handler)req_load_dll,

@@ -528,6 +528,20 @@ static void dump_set_thread_info_request( const struct set_thread_info_request *
     fprintf( stderr, " affinity=%d", req->affinity );
 }
 
+static void dump_get_dll_info_request( const struct get_dll_info_request *req )
+{
+    fprintf( stderr, " handle=%p,", req->handle );
+    fprintf( stderr, " base_address=%p", req->base_address );
+}
+
+static void dump_get_dll_info_reply( const struct get_dll_info_reply *req )
+{
+    fprintf( stderr, " size=%d,", req->size );
+    fprintf( stderr, " entry_point=%p,", req->entry_point );
+    fprintf( stderr, " filename=" );
+    dump_varargs_string( cur_size );
+}
+
 static void dump_suspend_thread_request( const struct suspend_thread_request *req )
 {
     fprintf( stderr, " handle=%p", req->handle );
@@ -2384,6 +2398,7 @@ static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_set_process_info_request,
     (dump_func)dump_get_thread_info_request,
     (dump_func)dump_set_thread_info_request,
+    (dump_func)dump_get_dll_info_request,
     (dump_func)dump_suspend_thread_request,
     (dump_func)dump_resume_thread_request,
     (dump_func)dump_load_dll_request,
@@ -2559,6 +2574,7 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)0,
     (dump_func)dump_get_thread_info_reply,
     (dump_func)0,
+    (dump_func)dump_get_dll_info_reply,
     (dump_func)dump_suspend_thread_reply,
     (dump_func)dump_resume_thread_reply,
     (dump_func)0,
@@ -2734,6 +2750,7 @@ static const char * const req_names[REQ_NB_REQUESTS] = {
     "set_process_info",
     "get_thread_info",
     "set_thread_info",
+    "get_dll_info",
     "suspend_thread",
     "resume_thread",
     "load_dll",

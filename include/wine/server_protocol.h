@@ -417,6 +417,22 @@ struct set_thread_info_reply
 
 
 
+struct get_dll_info_request
+{
+    struct request_header __header;
+    obj_handle_t handle;
+    void*        base_address;
+};
+struct get_dll_info_reply
+{
+    struct reply_header __header;
+    size_t       size;
+    void*        entry_point;
+    /* VARARG(filename,string); */
+};
+
+
+
 struct suspend_thread_request
 {
     struct request_header __header;
@@ -1493,6 +1509,10 @@ struct create_device_reply
 };
 
 
+#define SNAP_HEAPLIST   0x00000001
+#define SNAP_PROCESS    0x00000002
+#define SNAP_THREAD     0x00000004
+#define SNAP_MODULE     0x00000008
 
 struct create_snapshot_request
 {
@@ -2993,6 +3013,7 @@ enum request
     REQ_set_process_info,
     REQ_get_thread_info,
     REQ_set_thread_info,
+    REQ_get_dll_info,
     REQ_suspend_thread,
     REQ_resume_thread,
     REQ_load_dll,
@@ -3172,6 +3193,7 @@ union generic_request
     struct set_process_info_request set_process_info_request;
     struct get_thread_info_request get_thread_info_request;
     struct set_thread_info_request set_thread_info_request;
+    struct get_dll_info_request get_dll_info_request;
     struct suspend_thread_request suspend_thread_request;
     struct resume_thread_request resume_thread_request;
     struct load_dll_request load_dll_request;
@@ -3349,6 +3371,7 @@ union generic_reply
     struct set_process_info_reply set_process_info_reply;
     struct get_thread_info_reply get_thread_info_reply;
     struct set_thread_info_reply set_thread_info_reply;
+    struct get_dll_info_reply get_dll_info_reply;
     struct suspend_thread_reply suspend_thread_reply;
     struct resume_thread_reply resume_thread_reply;
     struct load_dll_reply load_dll_reply;
@@ -3509,6 +3532,6 @@ union generic_reply
     struct get_next_hook_reply get_next_hook_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 94
+#define SERVER_PROTOCOL_VERSION 95
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */
