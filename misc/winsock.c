@@ -98,6 +98,20 @@ static int           _px_sock_ops[] =
          SO_LINGER, SO_OOBINLINE, SO_SNDBUF, SO_RCVBUF, SO_ERROR, SO_TYPE,
 	 SO_LINGER };
 
+
+static INT _ws_tcp_ops[] = {
+#ifdef TCP_NODELAY
+	WS_TCP_NODELAY,
+#endif
+	0
+};
+static int _px_tcp_ops[] = {
+#ifdef TCP_NODELAY
+	TCP_NODELAY,
+#endif
+	0
+};
+
 static int   _check_ws(LPWSINFO pwsi, ws_socket* pws);
 static char* _check_buffer(LPWSINFO pwsi, int size);
 
@@ -116,10 +130,15 @@ static void convert_sockopt(INT *level, INT *optname)
         for(i=0; _ws_sock_ops[i]; i++)
             if( _ws_sock_ops[i] == *optname ) break;
         if( _ws_sock_ops[i] ) *optname = _px_sock_ops[i];
-        else WARN(winsock, "Unknown optname %d\n", *optname);
+        else FIXME(winsock, "Unknown SOL_SOCKET optname %d\n", *optname);
         break;
      case WS_IPPROTO_TCP:
-        *optname = IPPROTO_TCP;
+        *level = IPPROTO_TCP;
+        for(i=0; _ws_tcp_ops[i]; i++)
+		if ( _ws_tcp_ops[i] == *optname ) break;
+        if( _ws_tcp_ops[i] ) *optname = _px_tcp_ops[i];
+        else FIXME(winsock, "Unknown IPPROTO_TCP optname %d\n", *optname);
+	break;
   }
 }
 

@@ -220,6 +220,9 @@ typedef struct WSAData {
 #define WS_IOR(x,y,t)      (WS_IOC_OUT|(((UINT)sizeof(t)&WS_IOCPARM_MASK)<<16)|((x)<<8)|(y))
 #define WS_IOW(x,y,t)      (WS_IOC_IN|(((UINT)sizeof(t)&WS_IOCPARM_MASK)<<16)|((x)<<8)|(y))
 
+/* IPPROTO_TCP options */
+#define WS_TCP_NODELAY	1		/* do not apply nagle algorithm */
+
 /*
  * Socket I/O flags (supported by spec 1.1)
  */
