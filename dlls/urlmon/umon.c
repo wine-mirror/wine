@@ -918,18 +918,68 @@ HRESULT WINAPI CoInternetQueryInfo(LPCWSTR pwzUrl, QUERYOPTION QueryOption,
   return S_OK;
 }
 
+static BOOL URLMON_IsBinary(LPVOID pBuffer, DWORD cbSize)
+{
+    int binarycount = 0;
+    int i;
+    unsigned char *buff = pBuffer;
+    for(i=0; i<cbSize; i++) {
+        if(buff[i] < 32)
+            binarycount++;
+    }
+    return binarycount > (cbSize-binarycount);
+}
+
 /***********************************************************************
  *           FindMimeFromData (URLMON.@)
  *
  * Determines the Multipurpose Internet Mail Extensions (MIME) type from the data provided.
  *
+ * NOTE
+ *  See http://msdn.microsoft.com/workshop/networking/moniker/overview/appendix_a.asp
  */
 HRESULT WINAPI FindMimeFromData(LPBC pBC, LPCWSTR pwzUrl, LPVOID pBuffer,
    DWORD cbSize, LPCWSTR pwzMimeProposed, DWORD dwMimeFlags,
    LPWSTR* ppwzMimeOut, DWORD dwReserved)
 {
-  FIXME("stub\n");
-  return E_OUTOFMEMORY;
+    const WCHAR szBinaryMime[] = {'a','p','p','l','i','c','a','t','i','o','n','/','o','c','t','e','t','-','s','t','r','e','a','m','\0'};
+    const WCHAR szTextMime[] = {'t','e','x','t','/','p','l','a','i','n','\0'};
+    const WCHAR szContentType[] = {'C','o','n','t','e','n','t',' ','T','y','p','e','\0'};
+    WCHAR szTmpMime[256];
+    LPCWSTR mimeType = NULL;
+    HKEY hKey = NULL;
+
+    TRACE("(%p,%s,%p,%ld,%s,0x%lx,%p,0x%lx)\n", pBC, debugstr_w(pwzUrl), pBuffer, cbSize,
+          debugstr_w(pwzMimeProposed), dwMimeFlags, ppwzMimeOut, dwReserved);
+
+    if((!pwzUrl && (!pBuffer || cbSize <= 0)) || !ppwzMimeOut)
+        return E_INVALIDARG;
+
+    if(pwzMimeProposed)
+        mimeType = pwzMimeProposed;
+    else {
+        /* Try and find the mime type in the registry */
+        if(pwzUrl) {
+            LPWSTR ext = strrchrW(pwzUrl, '.');
+            if(ext) {
+                DWORD dwSize;
+                if(!RegOpenKeyExW(HKEY_CLASSES_ROOT, ext, 0, 0, &hKey)) {
+                    if(!RegQueryValueExW(hKey, szContentType, NULL, NULL, (LPBYTE)szTmpMime, &dwSize)) {
+                        mimeType = szTmpMime;
+                    }
+                    RegCloseKey(hKey);
+                }
+            }
+        }
+    }
+    if(!mimeType && pBuffer && cbSize > 0)
+        mimeType = URLMON_IsBinary(pBuffer, cbSize)?szBinaryMime:szTextMime;
+
+    TRACE("Using %s\n", debugstr_w(mimeType));
+    *ppwzMimeOut = CoTaskMemAlloc((lstrlenW(mimeType)+1)*sizeof(WCHAR));
+    if(!*ppwzMimeOut) return E_OUTOFMEMORY;
+    lstrcpyW(*ppwzMimeOut, mimeType);
+    return S_OK;
 }
 
 /***********************************************************************
