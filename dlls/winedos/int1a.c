@@ -40,7 +40,7 @@ void WINAPI DOSVM_Int1aHandler( CONTEXT86 *context )
     {
     case 0x00: /* GET SYSTEM TIME */
         {
-            BIOSDATA *data = BIOS_DATA;
+            BIOSDATA *data = DOSVM_BiosData();
             SET_CX( context, HIWORD(data->Ticks) );
             SET_DX( context, LOWORD(data->Ticks) );
             SET_AL( context, 0 ); /* FIXME: midnight flag is unsupported */

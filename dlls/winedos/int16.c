@@ -87,7 +87,7 @@ void WINAPI DOSVM_Int16Handler( CONTEXT86 *context )
    case 0x02: /* Get Shift Flags */
 
       /* read value from BIOS data segment's keyboard status flags field */
-      data = BIOS_DATA;
+      data = DOSVM_BiosData();
       SET_AL( context, data->KbdFlags1 );
 
       TRACE("Get Shift Flags: returning 0x%02x\n", AL_reg(context));
@@ -159,7 +159,7 @@ void WINAPI DOSVM_Int16Handler( CONTEXT86 *context )
  */
 int WINAPI DOSVM_Int16ReadChar(BYTE *ascii, BYTE *scan, CONTEXT86 *waitctx)
 {
-    BIOSDATA *data = BIOS_DATA;
+    BIOSDATA *data = DOSVM_BiosData();
     WORD CurOfs = data->NextKbdCharPtr;
 
     /* check if there's data in buffer */
@@ -194,7 +194,7 @@ int WINAPI DOSVM_Int16ReadChar(BYTE *ascii, BYTE *scan, CONTEXT86 *waitctx)
 
 int WINAPI DOSVM_Int16AddChar(BYTE ascii,BYTE scan)
 {
-  BIOSDATA *data = BIOS_DATA;
+  BIOSDATA *data = DOSVM_BiosData();
   WORD CurOfs = data->FirstKbdCharPtr;
   WORD NextOfs = CurOfs + 2;
 

@@ -707,6 +707,26 @@ void WINAPI DOSVM_AcknowledgeIRQ( CONTEXT86 *context )
 
 
 /**********************************************************************
+ *         DOSVM_BiosData
+ *
+ * Get pointer to BIOS data area. This is not at fixed location
+ * because those Win16 programs that do not use any real mode code have
+ * protected NULL pointer catching block at low linear memory and
+ * BIOS data has been moved to another location.
+ */
+BIOSDATA *DOSVM_BiosData( void )
+{
+    LDT_ENTRY entry;
+    FARPROC16 proc;
+
+    proc = GetProcAddress16( GetModuleHandle16( "KERNEL" ), 
+                             (LPCSTR)(ULONG_PTR)193 );
+    wine_ldt_get_entry( LOWORD(proc), &entry );
+    return (BIOSDATA *)wine_ldt_get_base( &entry );
+}
+
+
+/**********************************************************************
  *	    DllMain  (DOSVM.Init)
  */
 BOOL WINAPI DllMain( HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved )

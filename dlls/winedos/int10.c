@@ -789,7 +789,7 @@ static void INT10_InitializeVideoMode( BIOSDATA *data )
  */
 static void INT10_HandleVESA( CONTEXT86 *context )
 {
-    BIOSDATA *data = BIOS_DATA;
+    BIOSDATA *data = DOSVM_BiosData();
 
     switch(AL_reg(context)) {
 
@@ -954,7 +954,7 @@ static void INT10_HandleVESA( CONTEXT86 *context )
  */
 void WINAPI DOSVM_Int10Handler( CONTEXT86 *context )
 {
-    BIOSDATA *data = BIOS_DATA;
+    BIOSDATA *data = DOSVM_BiosData();
 
     INT10_InitializeVideoMode( data );
 
@@ -1403,7 +1403,7 @@ void WINAPI DOSVM_Int10Handler( CONTEXT86 *context )
  */
 void WINAPI DOSVM_PutChar( BYTE ascii )
 {
-  BIOSDATA *data = BIOS_DATA;
+  BIOSDATA *data = DOSVM_BiosData();
   unsigned  xpos, ypos;
 
   TRACE("char: 0x%02x(%c)\n", ascii, ascii);

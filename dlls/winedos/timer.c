@@ -131,7 +131,7 @@ void WINAPI DOSVM_SetTimer( UINT ticks )
  */
 void WINAPI DOSVM_Int08Handler( CONTEXT86 *context )
 {
-    BIOSDATA *bios_data      = BIOS_DATA;
+    BIOSDATA *bios_data      = DOSVM_BiosData();
     CONTEXT86 nested_context = *context;
     FARPROC16 int1c_proc     = DOSVM_GetRMHandler( 0x1c );
     

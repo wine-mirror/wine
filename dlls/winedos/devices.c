@@ -219,7 +219,7 @@ static void WINAPI con_interrupt(CONTEXT86*ctx)
 {
   int *scan;
   REQUEST_HEADER *hdr = get_hdr(SYSTEM_STRATEGY_CON,(void **)&scan);
-  BIOSDATA *bios = BIOS_DATA;
+  BIOSDATA *bios = DOSVM_BiosData();
   WORD CurOfs = bios->NextKbdCharPtr;
   DOS_LISTOFLISTS *lol = DOSMEM_LOL();
   DOS_DATASEG *dataseg = (DOS_DATASEG *)lol;

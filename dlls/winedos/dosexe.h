@@ -100,8 +100,6 @@ extern struct DPMI_segments *DOSVM_dpmi_segments;
 #define VIF_MASK 0x00080000
 #define VIP_MASK 0x00100000
 
-#define BIOS_DATA ((void *)0x400)
-
 #define ADD_LOWORD(dw,val)  ((dw) = ((dw) & 0xffff0000) | LOWORD((DWORD)(dw)+(val)))
 
 /* module.c */
@@ -123,6 +121,7 @@ extern void WINAPI DOSVM_QueueEvent( INT irq, INT priority, DOSRELAY relay, LPVO
 extern void WINAPI DOSVM_PIC_ioport_out( WORD port, BYTE val );
 extern void WINAPI DOSVM_SetTimer( UINT ticks );
 extern UINT WINAPI DOSVM_GetTimer( void );
+extern BIOSDATA   *DOSVM_BiosData( void );
 
 /* devices.c */
 extern void DOSDEV_InstallDOSDevices(void);

@@ -150,7 +150,7 @@ void DOSVM_Int09UpdateKbdStatusFlags(BYTE scan, BOOL extended, BIOSDATA *data, B
  */
 void WINAPI DOSVM_Int09Handler( CONTEXT86 *context )
 {
-  BIOSDATA *data = BIOS_DATA;
+  BIOSDATA *data = DOSVM_BiosData();
   BYTE ascii, scan = DOSVM_Int09ReadScan(&ascii);
   BYTE realscan = scan & 0x7f; /* remove 0x80 make/break flag */
   BOOL modifier = FALSE;
