@@ -1489,6 +1489,7 @@ BOOL        WINAPI GetVolumePathNamesForVolumeNameA(LPCSTR,LPSTR,DWORD,PDWORD);
 BOOL        WINAPI GetVolumePathNamesForVolumeNameW(LPCWSTR,LPWSTR,DWORD,PDWORD);
 #define     GetVolumePathNamesForVolumeName WINELIB_NAME_AW(GetVolumePathNamesForVolumeName)
 VOID        WINAPI GlobalMemoryStatus(LPMEMORYSTATUS);
+BOOL        WINAPI GlobalMemoryStatusEx(LPMEMORYSTATUSEX);
 LPVOID      WINAPI HeapAlloc(HANDLE,DWORD,SIZE_T);
 SIZE_T      WINAPI HeapCompact(HANDLE,DWORD);
 HANDLE      WINAPI HeapCreate(DWORD,SIZE_T,SIZE_T);

@@ -1027,17 +1027,15 @@ void WINAPI FreeMappedBuffer( CONTEXT86 *context )
 }
 
 /***********************************************************************
- *           GlobalMemoryStatus   (KERNEL32.@)
- * Provides information about the status of the memory, so apps can tell
- * roughly how much they are able to allocate
+ *           GlobalMemoryStatusEx   (KERNEL32.@)
+ * A version of GlobalMemoryStatus that can deal with memory over 4GB
  *
  * RETURNS
- *	None
+ *	TRUE
  */
-VOID WINAPI GlobalMemoryStatus(
-            LPMEMORYSTATUS lpmem
-) {
-    static MEMORYSTATUS	cached_memstatus;
+BOOL WINAPI GlobalMemoryStatusEx( LPMEMORYSTATUSEX lpmemex )
+{
+    static MEMORYSTATUSEX	cached_memstatus;
     static int cache_lastchecked = 0;
     SYSTEM_INFO si;
 #ifdef linux
@@ -1049,16 +1047,17 @@ VOID WINAPI GlobalMemoryStatus(
     int mib[2] = { CTL_HW };
 #endif
     if (time(NULL)==cache_lastchecked) {
-	memcpy(lpmem,&cached_memstatus,sizeof(MEMORYSTATUS));
-	return;
+	memcpy(lpmemex,&cached_memstatus,sizeof(*lpmemex));
+	return TRUE;
     }
     cache_lastchecked = time(NULL);
 
-    lpmem->dwMemoryLoad    = 0;
-    lpmem->dwTotalPhys     = 16*1024*1024;
-    lpmem->dwAvailPhys     = 16*1024*1024;
-    lpmem->dwTotalPageFile = 16*1024*1024;
-    lpmem->dwAvailPageFile = 16*1024*1024;
+    lpmemex->dwLength         = sizeof(*lpmemex);
+    lpmemex->dwMemoryLoad     = 0;
+    lpmemex->ullTotalPhys     = 16*1024*1024;
+    lpmemex->ullAvailPhys     = 16*1024*1024;
+    lpmemex->ullTotalPageFile = 16*1024*1024;
+    lpmemex->ullAvailPageFile = 16*1024*1024;
 
 #ifdef linux
     f = fopen( "/proc/meminfo", "r" );
@@ -1067,44 +1066,43 @@ VOID WINAPI GlobalMemoryStatus(
         char buffer[256];
         int total, used, free, shared, buffers, cached;
 
-        lpmem->dwLength = sizeof(MEMORYSTATUS);
-        lpmem->dwTotalPhys = lpmem->dwAvailPhys = 0;
-        lpmem->dwTotalPageFile = lpmem->dwAvailPageFile = 0;
+        lpmemex->ullTotalPhys = lpmemex->ullAvailPhys = 0;
+        lpmemex->ullTotalPageFile = lpmemex->ullAvailPageFile = 0;
         while (fgets( buffer, sizeof(buffer), f ))
         {
 	    /* old style /proc/meminfo ... */
             if (sscanf( buffer, "Mem: %d %d %d %d %d %d", &total, &used, &free, &shared, &buffers, &cached ))
             {
-                lpmem->dwTotalPhys += total;
-                lpmem->dwAvailPhys += free + buffers + cached;
+                lpmemex->ullTotalPhys += total;
+                lpmemex->ullAvailPhys += free + buffers + cached;
             }
             if (sscanf( buffer, "Swap: %d %d %d", &total, &used, &free ))
             {
-                lpmem->dwTotalPageFile += total;
-                lpmem->dwAvailPageFile += free;
+                lpmemex->ullTotalPageFile += total;
+                lpmemex->ullAvailPageFile += free;
             }
 
             /* new style /proc/meminfo ... */
             if (sscanf(buffer, "MemTotal: %d", &total))
-                lpmem->dwTotalPhys = total*1024;
+                lpmemex->ullTotalPhys = total*1024;
             if (sscanf(buffer, "MemFree: %d", &free))
-                lpmem->dwAvailPhys = free*1024;
+                lpmemex->ullAvailPhys = free*1024;
             if (sscanf(buffer, "SwapTotal: %d", &total))
-                lpmem->dwTotalPageFile = total*1024;
+                lpmemex->ullTotalPageFile = total*1024;
             if (sscanf(buffer, "SwapFree: %d", &free))
-                lpmem->dwAvailPageFile = free*1024;
+                lpmemex->ullAvailPageFile = free*1024;
             if (sscanf(buffer, "Buffers: %d", &buffers))
-                lpmem->dwAvailPhys += buffers*1024;
+                lpmemex->ullAvailPhys += buffers*1024;
             if (sscanf(buffer, "Cached: %d", &cached))
-                lpmem->dwAvailPhys += cached*1024;
+                lpmemex->ullAvailPhys += cached*1024;
         }
         fclose( f );
 
-        if (lpmem->dwTotalPhys)
+        if (lpmemex->ullTotalPhys)
         {
-            DWORD TotalPhysical = lpmem->dwTotalPhys+lpmem->dwTotalPageFile;
-            DWORD AvailPhysical = lpmem->dwAvailPhys+lpmem->dwAvailPageFile;
-            lpmem->dwMemoryLoad = (TotalPhysical-AvailPhysical)
+            DWORDLONG TotalPhysical = lpmemex->ullTotalPhys+lpmemex->ullTotalPageFile;
+            DWORDLONG AvailPhysical = lpmemex->ullAvailPhys+lpmemex->ullAvailPageFile;
+            lpmemex->dwMemoryLoad = (TotalPhysical-AvailPhysical)
                                       / (TotalPhysical / 100);
         }
     }
@@ -1115,7 +1113,7 @@ VOID WINAPI GlobalMemoryStatus(
     sysctl(mib, 2, tmp, &size_sys, NULL, 0);
     if (tmp && *tmp)
     {
-        lpmem->dwTotalPhys = *tmp;
+        lpmemex->ullTotalPhys = *tmp;
 	free(tmp);
 	mib[1] = HW_USERMEM;
 	sysctl(mib, 2, NULL, &size_sys, NULL, 0);
@@ -1123,83 +1121,112 @@ VOID WINAPI GlobalMemoryStatus(
 	sysctl(mib, 2, tmp, &size_sys, NULL, 0);
 	if (tmp && *tmp)
 	{
-	    lpmem->dwAvailPhys = *tmp;
-            lpmem->dwTotalPageFile = *tmp;
-	    lpmem->dwAvailPageFile = *tmp;
-	    lpmem->dwMemoryLoad = lpmem->dwTotalPhys - lpmem->dwAvailPhys;
+	    lpmemex->ullAvailPhys = *tmp;
+            lpmemex->ullTotalPageFile = *tmp;
+	    lpmemex->ullAvailPageFile = *tmp;
+	    lpmemex->ullMemoryLoad = lpmemex->ullTotalPhys - lpmemex->ullAvailPhys;
 	} else
 	{
-	    lpmem->dwAvailPhys = lpmem->dwTotalPhys;
-	    lpmem->dwTotalPageFile = lpmem->dwTotalPhys;
-	    lpmem->dwAvailPageFile = lpmem->dwTotalPhys;
-	    lpmem->dwMemoryLoad = 0;
+	    lpmemex->ullAvailPhys = lpmemex->ullTotalPhys;
+	    lpmemex->ullTotalPageFile = lpmemex->ullTotalPhys;
+	    lpmemex->ullAvailPageFile = lpmemex->ullTotalPhys;
+	    lpmemex->ullMemoryLoad = 0;
 	}
 	free(tmp);
 
     }
 #endif
-    /* Some applications (e.g. QuickTime 6) crash if we tell them there
-     * is more than 2GB of physical memory.
-     */
-    if (lpmem->dwTotalPhys >= 2U*1024*1024*1024)
-    {
-        lpmem->dwTotalPhys=2U*1024*1024*1024 - 1;
-        lpmem->dwAvailPhys=2U*1024*1024*1024 - 1;
-    }
-
-    /* work around for broken photoshop 4 installer */
-    if (lpmem->dwAvailPhys + lpmem->dwAvailPageFile >= 2U*1024*1024*1024)
-        lpmem->dwAvailPageFile = 2U*1024*1024*1024 - lpmem->dwAvailPhys - 1;
 
     /* FIXME: should do something for other systems */
     GetSystemInfo(&si);
-    lpmem->dwTotalVirtual  = (char*)si.lpMaximumApplicationAddress-(char*)si.lpMinimumApplicationAddress;
+    lpmemex->ullTotalVirtual  = (char*)si.lpMaximumApplicationAddress-(char*)si.lpMinimumApplicationAddress;
     /* FIXME: we should track down all the already allocated VM pages and substract them, for now arbitrarily remove 64KB so that it matches NT */
-    lpmem->dwAvailVirtual  = lpmem->dwTotalVirtual-64*1024;
-    memcpy(&cached_memstatus,lpmem,sizeof(MEMORYSTATUS));
+    lpmemex->ullAvailVirtual  = lpmemex->ullTotalVirtual-64*1024;
+    memcpy(&cached_memstatus,lpmemex,sizeof(*lpmemex));
 
     /* it appears some memory display programs want to divide by these values */
-    if(lpmem->dwTotalPageFile==0)
-        lpmem->dwTotalPageFile++;
+    if(lpmemex->ullTotalPageFile==0)
+        lpmemex->ullTotalPageFile++;
 
-    if(lpmem->dwAvailPageFile==0)
-        lpmem->dwAvailPageFile++;
+    if(lpmemex->ullAvailPageFile==0)
+        lpmemex->ullAvailPageFile++;
 
-    TRACE("<-- LPMEMORYSTATUS: dwLength %ld, dwMemoryLoad %ld, dwTotalPhys %ld, dwAvailPhys %ld,"
-          " dwTotalPageFile %ld, dwAvailPageFile %ld, dwTotalVirtual %ld, dwAvailVirtual %ld\n",
-          lpmem->dwLength, lpmem->dwMemoryLoad, lpmem->dwTotalPhys, lpmem->dwAvailPhys,
-          lpmem->dwTotalPageFile, lpmem->dwAvailPageFile, lpmem->dwTotalVirtual,
-          lpmem->dwAvailVirtual);
+    /* MSDN says about AvailExtendedVirtual: Size of unreserved and uncommitted
+       memory in the extended portion of the virtual address space of the calling
+       process, in bytes.
+       However, I don't know what this means, so set it to zero :(
+    */
+    lpmemex->ullAvailExtendedVirtual = 0;
+
+    TRACE("<-- LPMEMORYSTATUSEX: dwLength %ld, dwMemoryLoad %ld, ullTotalPhys %s, ullAvailPhys %s,"
+          " ullTotalPageFile %s, ullAvailPageFile %s, ullTotalVirtual %s, ullAvailVirtual %s\n",
+          lpmemex->dwLength, lpmemex->dwMemoryLoad, wine_dbgstr_longlong(lpmemex->ullTotalPhys),
+          wine_dbgstr_longlong(lpmemex->ullAvailPhys), wine_dbgstr_longlong(lpmemex->ullTotalPageFile),
+          wine_dbgstr_longlong(lpmemex->ullAvailPageFile), wine_dbgstr_longlong(lpmemex->ullTotalVirtual),
+          wine_dbgstr_longlong(lpmemex->ullAvailVirtual) );
+
+    return TRUE;
 }
 
 /***********************************************************************
- *           GlobalMemoryStatusEx   (KERNEL32.@)
- * A version of GlobalMemoryStatus that can deal with memory over 4GB
+ *           GlobalMemoryStatus   (KERNEL32.@)
+ * Provides information about the status of the memory, so apps can tell
+ * roughly how much they are able to allocate
  *
  * RETURNS
  *	None
  */
-BOOL WINAPI GlobalMemoryStatusEx( LPMEMORYSTATUSEX lpBuffer )
+VOID WINAPI GlobalMemoryStatus( LPMEMORYSTATUS lpBuffer )
 {
-  MEMORYSTATUS memstatus;
+    MEMORYSTATUSEX memstatus;
+    OSVERSIONINFOA osver;
 
-  /* Because GlobalMemoryStatusEx is identical to GlobalMemoryStatus save
-     for one extra field in the struct, and the lack of a bug, we simply
-     call GlobalMemoryStatus and copy the values across. */
-  FIXME("we should emulate the 4GB bug here, as per MSDN\n");
-  GlobalMemoryStatus(&memstatus);
-  lpBuffer->dwMemoryLoad = memstatus.dwMemoryLoad;
-  lpBuffer->ullTotalPhys = memstatus.dwTotalPhys;
-  lpBuffer->ullAvailPhys = memstatus.dwAvailPhys;
-  lpBuffer->ullTotalPageFile = memstatus.dwTotalPageFile;
-  lpBuffer->ullAvailPageFile = memstatus.dwAvailPageFile;
-  lpBuffer->ullTotalVirtual = memstatus.dwTotalVirtual;
-  lpBuffer->ullAvailVirtual = memstatus.dwAvailVirtual;
-  /* MSDN says about AvailExtendedVirtual: Size of unreserved and uncommitted
-     memory in the extended portion of the virtual address space of the calling
-     process, in bytes.
-     However, I don't know what this means, so set it to zero :(
-  */
-  lpBuffer->ullAvailExtendedVirtual = 0;
-  return 1;
+    /* Because GlobalMemoryStatus is identical to GlobalMemoryStatusEX save
+       for one extra field in the struct, and the lack of a bug, we simply
+       call GlobalMemoryStatusEx and copy the values across. */
+    GlobalMemoryStatusEx(&memstatus);
+
+    lpBuffer->dwLength = sizeof(*lpBuffer);
+    lpBuffer->dwMemoryLoad = memstatus.dwMemoryLoad;
+
+    /* Windows 2000 and later report -1 when values are greater than 4 Gb.
+     * NT reports values modulo 4 Gb.
+     * Values between 2 Gb and 4 Gb are rounded down to 2 Gb.
+     */
+    GetVersionExA(&osver);
+
+    if ( osver.dwMajorVersion >= 5 )
+    {
+        lpBuffer->dwTotalPhys = (memstatus.ullTotalPhys > MAXDWORD) ? MAXDWORD :
+                                (memstatus.ullTotalPhys > MAXLONG) ? MAXLONG : memstatus.ullTotalPhys;
+        lpBuffer->dwAvailPhys = (memstatus.ullAvailPhys > MAXDWORD) ? MAXDWORD :
+                                (memstatus.ullAvailPhys > MAXLONG) ? MAXLONG : memstatus.ullAvailPhys; 
+        lpBuffer->dwTotalPageFile = (memstatus.ullTotalPageFile > MAXDWORD) ? MAXDWORD :
+                                    (memstatus.ullTotalPageFile > MAXLONG) ? MAXLONG : memstatus.ullTotalPageFile;
+        lpBuffer->dwAvailPageFile = (memstatus.ullAvailPageFile > MAXDWORD) ? MAXDWORD :
+                                    (memstatus.ullAvailPageFile > MAXLONG) ? MAXLONG : memstatus.ullAvailPageFile;
+        lpBuffer->dwTotalVirtual = (memstatus.ullTotalVirtual > MAXDWORD) ? MAXDWORD :
+                                   (memstatus.ullTotalVirtual > MAXLONG)  ? MAXLONG : memstatus.ullTotalVirtual;
+        lpBuffer->dwAvailVirtual = (memstatus.ullAvailVirtual > MAXDWORD) ? MAXDWORD :
+                                   (memstatus.ullAvailVirtual > MAXLONG) ? MAXLONG : memstatus.ullAvailVirtual;
+    }
+    else	/* duplicate NT bug */
+    {
+        lpBuffer->dwTotalPhys = (memstatus.ullTotalPhys > MAXDWORD) ? memstatus.ullTotalPhys :
+                                (memstatus.ullTotalPhys > MAXLONG) ? MAXLONG : memstatus.ullTotalPhys;
+        lpBuffer->dwAvailPhys = (memstatus.ullAvailPhys > MAXDWORD) ? memstatus.ullAvailPhys :
+                                (memstatus.ullAvailPhys > MAXLONG) ? MAXLONG : memstatus.ullAvailPhys;
+        lpBuffer->dwTotalPageFile = (memstatus.ullTotalPageFile > MAXDWORD) ? memstatus.ullTotalPageFile : 
+                                    (memstatus.ullTotalPageFile > MAXLONG) ? MAXLONG : memstatus.ullTotalPageFile;
+        lpBuffer->dwAvailPageFile = (memstatus.ullAvailPageFile > MAXDWORD) ? memstatus.ullAvailPageFile : 
+                                    (memstatus.ullAvailPageFile > MAXLONG) ? MAXLONG : memstatus.ullAvailPageFile;
+        lpBuffer->dwTotalVirtual = (memstatus.ullTotalVirtual > MAXDWORD) ? memstatus.ullTotalVirtual : 
+                                   (memstatus.ullTotalVirtual > MAXLONG)  ? MAXLONG : memstatus.ullTotalVirtual;
+        lpBuffer->dwAvailVirtual = (memstatus.ullAvailVirtual > MAXDWORD) ? memstatus.ullAvailVirtual :
+                                   (memstatus.ullAvailVirtual > MAXLONG) ? MAXLONG : memstatus.ullAvailVirtual;
+    }
+
+    /* work around for broken photoshop 4 installer */
+    if ( lpBuffer->dwAvailPhys +  lpBuffer->dwAvailPageFile >= 2U*1024*1024*1024)
+         lpBuffer->dwAvailPageFile = 2U*1024*1024*1024 -  lpBuffer->dwAvailPhys - 1;
 }
