@@ -138,6 +138,7 @@ static BOOL PROPSHEET_SetCurSel(HWND hwndDlg,
                                 int index,
                                 int skipdir,
                                 HPROPSHEETPAGE hpage);
+static void PROPSHEET_SetCurSelId(HWND hwndDlg, int id);
 static LRESULT PROPSHEET_QuerySiblings(HWND hwndDlg,
                                        WPARAM wParam, LPARAM lParam);
 static BOOL PROPSHEET_AddPage(HWND hwndDlg,
@@ -1808,6 +1809,25 @@ static BOOL PROPSHEET_SetCurSel(HWND hwndDlg,
 }
 
 /******************************************************************************
+ *            PROPSHEET_SetCurSelId
+ *
+ * Selects the page, specified by resource id.
+ */
+static void PROPSHEET_SetCurSelId(HWND hwndDlg, int id)
+{
+      int idx;
+      PropSheetInfo* psInfo =
+          (PropSheetInfo*) GetPropW(hwndDlg, PropSheetInfoStr);
+
+      idx = PROPSHEET_FindPageByResId(psInfo, id);
+      if (idx < psInfo->nPages )
+      {
+          if (PROPSHEET_CanSetCurSel(hwndDlg) != FALSE)
+              PROPSHEET_SetCurSel(hwndDlg, idx, 1, 0);
+      }
+}
+
+/******************************************************************************
  *            PROPSHEET_SetTitleA
  */
 static void PROPSHEET_SetTitleA(HWND hwndDlg, DWORD dwStyle, LPCSTR lpszText)
@@ -2786,8 +2806,8 @@ PROPSHEET_DialogProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
       return TRUE;
 
     case PSM_SETCURSELID:
-        FIXME("Unimplemented msg PSM_SETCURSELID\n");
-        return FALSE;
+        PROPSHEET_SetCurSelId(hwnd, (int)lParam);
+        return TRUE;
 
     case PSM_SETFINISHTEXTW:
         PROPSHEET_SetFinishTextW(hwnd, (LPCWSTR) lParam);
