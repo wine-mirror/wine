@@ -1603,6 +1603,79 @@ static BOOL MSG_PostToQueue( HQUEUE16 hQueue, int type, HWND hwnd,
 }
 
 /***********************************************************************
+ *           MSG_IsPointerMessage
+ *
+ * Check whether this message (may) contain pointers. 
+ * Those messages may not be PostMessage()d or GetMessage()d, but are dropped.
+ *
+ * FIXME: list of pointer messages might be incomplete.
+ *
+ * (We could do a generic !IsBadWritePtr() check, but this would cause too
+ *  much slow down I think. MM20010206)
+ */
+static BOOL MSG_IsPointerMessage(UINT message, WPARAM wParam, LPARAM lParam) {
+    switch (message) {
+    case WM_CREATE:
+    case WM_NCCREATE:
+    case WM_COMPAREITEM:
+    case WM_DELETEITEM:
+    case WM_MEASUREITEM:
+    case WM_DRAWITEM:
+    case WM_GETMINMAXINFO:
+    case WM_GETTEXT:
+    case WM_SETTEXT:
+    case WM_MDICREATE:
+    case WM_MDIGETACTIVE:
+    case WM_NCCALCSIZE:
+    case WM_WINDOWPOSCHANGING:
+    case WM_WINDOWPOSCHANGED:
+    case WM_NOTIFY:
+    case WM_GETDLGCODE:
+    case WM_WININICHANGE:
+    case WM_HELP:
+    case WM_COPYDATA:
+    case WM_STYLECHANGING:
+    case WM_STYLECHANGED:
+    case WM_DROPOBJECT:
+    case WM_DRAGMOVE:
+    case WM_DRAGSELECT:
+    case WM_QUERYDROPOBJECT:
+
+    case CB_DIR:
+    case CB_ADDSTRING:
+    case CB_INSERTSTRING:
+    case CB_FINDSTRING:
+    case CB_FINDSTRINGEXACT:
+    case CB_SELECTSTRING:
+    case CB_GETLBTEXT:
+    case CB_GETDROPPEDCONTROLRECT:
+
+    case LB_DIR:
+    case LB_ADDFILE:
+    case LB_ADDSTRING:
+    case LB_INSERTSTRING:
+    case LB_GETTEXT:
+    case LB_GETITEMRECT:
+    case LB_FINDSTRING:
+    case LB_FINDSTRINGEXACT:
+    case LB_SELECTSTRING:
+    case LB_GETSELITEMS:
+    case LB_SETTABSTOPS:
+
+    case EM_REPLACESEL:
+    case EM_GETSEL:
+    case EM_GETRECT:
+    case EM_SETRECT:
+    case EM_SETRECTNP:
+    case EM_GETLINE:
+    case EM_SETTABSTOPS:
+	    return TRUE;
+    default:
+	    return FALSE;
+    }
+}
+
+/***********************************************************************
  *           MSG_PostMessage
  */
 static BOOL MSG_PostMessage( int type, HWND hwnd, UINT message, 
@@ -1610,6 +1683,20 @@ static BOOL MSG_PostMessage( int type, HWND hwnd, UINT message,
 {
     HQUEUE16 hQueue;
     WND *wndPtr;
+
+    /* See thread on wine-devel around 6.2.2001. Basically posted messages
+     * that are known to contain pointers are dropped by the Windows 32bit
+     * PostMessage() with return FALSE; and invalid parameter last error.
+     * (tested against NT4 by Gerard Patel)
+     * 16 bit does not care, so we don't either.
+     */
+    if ( (type!=QMSG_WIN16) && MSG_IsPointerMessage(message,wParam,lParam)) {
+	FIXME("Ignoring posted pointer message 0x%04x to hwnd 0x%04x.\n",
+		message,hwnd
+	);
+	SetLastError(ERROR_INVALID_PARAMETER);
+	return FALSE;
+    }
 
     if (hwnd == HWND_BROADCAST)
     {
