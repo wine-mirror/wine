@@ -7081,6 +7081,7 @@ dlls/msnet32/Makefile
 dlls/msrle32/Makefile
 dlls/msvcrt/Makefile
 dlls/msvideo/Makefile
+dlls/netapi32/Makefile
 dlls/ntdll/Makefile
 dlls/odbc32/Makefile
 dlls/ole32/Makefile
@@ -7340,6 +7341,7 @@ dlls/msnet32/Makefile
 dlls/msrle32/Makefile
 dlls/msvcrt/Makefile
 dlls/msvideo/Makefile
+dlls/netapi32/Makefile
 dlls/ntdll/Makefile
 dlls/odbc32/Makefile
 dlls/ole32/Makefile

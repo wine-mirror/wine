@@ -44,6 +44,7 @@ SUBDIRS = \
 	msrle32 \
 	msvcrt \
 	msvideo \
+	netapi32 \
 	ntdll \
 	odbc32 \
 	ole32 \
@@ -148,6 +149,7 @@ all: \
 	libmsvcrt.$(LIBEXT) \
 	libmsvfw32.$(LIBEXT) \
 	libmsvideo.$(LIBEXT) \
+	libnetapi32.$(LIBEXT) \
 	libntdll.$(LIBEXT) \
 	libodbc32.$(LIBEXT) \
 	libole2.$(LIBEXT) \
@@ -335,6 +337,9 @@ libmsvcrt.$(LIBEXT): msvcrt/libmsvcrt.$(LIBEXT)
 
 libmsvfw32.$(LIBEXT) libmsvideo.$(LIBEXT): msvideo/libmsvfw32.$(LIBEXT)
 	$(RM) $@ && $(LN_S) msvideo/libmsvfw32.$(LIBEXT) $@
+
+libnetapi32.$(LIBEXT): netapi32/libnetapi32.$(LIBEXT)
+	$(RM) $@ && $(LN_S) netapi32/libnetapi32.$(LIBEXT) $@
 
 libntdll.$(LIBEXT): ntdll/libntdll.$(LIBEXT)
 	$(RM) $@ && $(LN_S) ntdll/libntdll.$(LIBEXT) $@
@@ -568,6 +573,10 @@ msvideo/libmsvfw32.$(LIBEXT): dummy libwinmm.$(LIBEXT) libcomctl32.$(LIBEXT) \
   libversion.$(LIBEXT) libuser32.$(LIBEXT) libgdi32.$(LIBEXT) libkernel32.$(LIBEXT) \
   libntdll.$(LIBEXT)
 	@cd msvideo && $(MAKE) libmsvfw32.$(LIBEXT)
+
+netapi32/libnetapi32.$(LIBEXT): dummy libuser32.$(LIBEXT) libadvapi32.$(LIBEXT) \
+  libkernel32.$(LIBEXT) libntdll.$(LIBEXT)
+	@cd netapi32 && $(MAKE) libnetapi32.$(LIBEXT)
 
 ntdll/libntdll.$(LIBEXT): dummy
 	@cd ntdll && $(MAKE) libntdll.$(LIBEXT)
