@@ -49,10 +49,10 @@ INSTALLLIBSUBDIRS = \
 	server
 
 # Sub-directories to install for install-dev
-INSTALLDEVSUBDIRS = include tools
+INSTALLDEVSUBDIRS = include
 
 # Sub-directories to install for both install-lib and install-dev
-INSTALLBOTHSUBDIRS = dlls libs
+INSTALLBOTHSUBDIRS = dlls libs tools
 
 INSTALLSUBDIRS = $(INSTALLDEVSUBDIRS) $(INSTALLLIBSUBDIRS)
 
@@ -119,7 +119,7 @@ include/__install__: include libs tools
 libs/__install-lib__ libs/__install-dev__: libs
 fonts/__install__ loader/__install__ server/__install__: libs tools
 programs/__install__: libs tools include dlls/__install-lib__
-tools/__install__: tools
+tools/__install-lib__ tools/__install-dev__: tools
 
 $(SUBDIRS:%=%/__depend__): tools include
 

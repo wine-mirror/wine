@@ -59,14 +59,17 @@ wineprefixcreate: wineprefixcreate.in
 	sed -e 's,@dlldir\@,$(dlldir),g' -e 's,@datadir\@,$(datadir),g' $(SRCDIR)/wineprefixcreate.in >$@ || ($(RM) $@ && false)
 	chmod +x wineprefixcreate
 
-install:: wineprefixcreate
-	$(MKINSTALLDIRS) $(bindir) $(mandir)/man$(prog_manext) $(datadir)/wine $(datadir)/applications
-	$(INSTALL_SCRIPT) $(SRCDIR)/winemaker $(bindir)/winemaker
+install install-lib:: wineprefixcreate
+	$(MKINSTALLDIRS) $(bindir) $(datadir)/wine $(datadir)/applications
 	$(INSTALL_SCRIPT) wineprefixcreate $(bindir)/wineprefixcreate
-	$(INSTALL_DATA) $(SRCDIR)/winemaker.man $(mandir)/man$(prog_manext)/winemaker.$(prog_manext)
 	$(INSTALL_DATA) $(SRCDIR)/wine.inf $(datadir)/wine/wine.inf
 	$(INSTALL_DATA) $(SRCDIR)/wine.desktop $(datadir)/applications/wine.desktop
 	-$(UPDATE_DESKTOP_DATABASE)
+
+install install-dev:: $(INSTALLSUBDIRS:%=%/__install__)
+	$(MKINSTALLDIRS) $(bindir) $(mandir)/man$(prog_manext)
+	$(INSTALL_SCRIPT) $(SRCDIR)/winemaker $(bindir)/winemaker
+	$(INSTALL_DATA) $(SRCDIR)/winemaker.man $(mandir)/man$(prog_manext)/winemaker.$(prog_manext)
 
 uninstall::
 	$(RM) $(bindir)/winemaker $(bindir)/wineprefixcreate $(mandir)/man$(prog_manext)/winemaker.$(prog_manext) \
