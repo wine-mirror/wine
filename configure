@@ -3799,15 +3799,15 @@ else
 fi
 
 
+		if test $ac_cv_lib_GL_glXCreateContext = "yes"
+		then
 
-		OPENGLFILES='$(OPENGLFILES)'
-		cat >> confdefs.h <<\EOF
+			OPENGLFILES='$(OPENGLFILES)'
+			cat >> confdefs.h <<\EOF
 #define HAVE_OPENGL 1
 EOF
 
 
-		if test $ac_cv_lib_GL_glXCreateContext = "yes"
-		then
 			echo $ac_n "checking for glXGetProcAddressARB in -lGL""... $ac_c" 1>&6
 echo "configure:3813: checking for glXGetProcAddressARB in -lGL" >&5
 ac_lib_var=`echo GL'_'glXGetProcAddressARB | sed 'y%./+-%__p_%'`

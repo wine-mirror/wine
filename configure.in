@@ -280,12 +280,12 @@ then
 			     ,,
 			     $X_LIBS -lXext -lX11 -lm $X_EXTRA_LIBS)
 
-
-		OPENGLFILES='$(OPENGLFILES)'
-		AC_DEFINE(HAVE_OPENGL)
-
 		if test $ac_cv_lib_GL_glXCreateContext = "yes"
 		then
+
+			OPENGLFILES='$(OPENGLFILES)'
+			AC_DEFINE(HAVE_OPENGL)
+
 			AC_CHECK_LIB(GL,glXGetProcAddressARB,AC_DEFINE(HAVE_GLX_GETPROCADDRESS),,$X_LIBS -lXext -lX11 -lm $X_EXTRA_LIBS)
 
 			if test $ac_cv_lib_GL_glXGetProcAddressARB = "yes"
