@@ -43,6 +43,7 @@
 
 extern void LOCALE_Init(void);
 extern BOOL RELAY_Init(void);
+extern void COMPUTERNAME_Init(void);
 
 extern  int __wine_set_signal_handler(unsigned, int (*)(unsigned));
 
@@ -67,6 +68,9 @@ static BOOL process_attach(void)
 
     /* Initialize DOS memory */
     if (!DOSMEM_Init(0)) return FALSE;
+
+    /* Setup computer name */
+    COMPUTERNAME_Init();
 
     if ((hModule = LoadLibrary16( "krnl386.exe" )) >= 32)
     {

@@ -663,6 +663,8 @@
 @ stdcall SetCommTimeouts(long ptr) SetCommTimeouts
 @ stdcall SetComputerNameA(str) SetComputerNameA
 @ stdcall SetComputerNameW(wstr) SetComputerNameW
+@ stdcall SetComputerNameExA(long str) SetComputerNameExA
+@ stdcall SetComputerNameExW(long wstr) SetComputerNameExW
 @ stdcall SetConsoleActiveScreenBuffer(long) SetConsoleActiveScreenBuffer
 @ stdcall SetConsoleCP(long) SetConsoleCP
 @ stdcall SetConsoleCtrlHandler(ptr long) SetConsoleCtrlHandler

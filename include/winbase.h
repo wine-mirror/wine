@@ -1453,9 +1453,12 @@ BOOL        WINAPI SetCommBreak(HANDLE);
 BOOL        WINAPI SetCommMask(HANDLE,DWORD);
 BOOL        WINAPI SetCommState(HANDLE,LPDCB);
 BOOL        WINAPI SetCommTimeouts(HANDLE,LPCOMMTIMEOUTS);
-BOOL      WINAPI SetComputerNameA(LPCSTR);
-BOOL      WINAPI SetComputerNameW(LPCWSTR);
+BOOL        WINAPI SetComputerNameA(LPCSTR);
+BOOL        WINAPI SetComputerNameW(LPCWSTR);
 #define     SetComputerName WINELIB_NAME_AW(SetComputerName)
+BOOL        WINAPI SetComputerNameExA(COMPUTER_NAME_FORMAT,LPCSTR);
+BOOL        WINAPI SetComputerNameExW(COMPUTER_NAME_FORMAT,LPCWSTR);
+#define     SetComputerNameEx WINELIB_NAME_AW(SetComputerNameEx)
 BOOL        WINAPI SetDefaultCommConfigA(LPCSTR,LPCOMMCONFIG,DWORD);
 BOOL        WINAPI SetDefaultCommConfigW(LPCWSTR,LPCOMMCONFIG,DWORD);
 #define     SetDefaultCommConfig WINELIB_NAME_AW(SetDefaultCommConfig)

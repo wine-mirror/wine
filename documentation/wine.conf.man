@@ -303,6 +303,13 @@ booleans: Y/y/T/t/1 are true, N/n/F/f/0 are false.
 .br
 Defaults are read all, write to home files.
 .PP
+.B [Network]
+.br
+.I format: """UseDnsComputerName""=""<boolean>"""
+.br
+If Y, always override the registry setting for ComputerName
+with the Unix hostname.
+.PP
 .B [AppDefaults\\\\\\\\<appname>\\\\\\\\...]
 .PP
 This section allows specifying application-specific values for

@@ -12,6 +12,7 @@ DLLMAIN   = MAIN_KernelInit
 C_SRCS = \
 	$(TOPOBJDIR)/ole/ole2nls.c \
 	comm.c \
+	computername.c \
 	console.c \
 	debugger.c \
 	editline.c \

@@ -893,7 +893,7 @@ OPTIONAL:
           <title>The [WinMM] Section</title>
           <para>
             [WinMM] is used to define which multimedia drivers have to be loaded. Since
-	    those drivers may depend on the multimedia interfaces available on your sustem
+	    those drivers may depend on the multimedia interfaces available on your system
 	    (OSS, Alsa... to name a few), it's needed to be able to configure which driver
 	    has to be loaded.
           </para>
@@ -930,6 +930,43 @@ OPTIONAL:
 	    </itemizedlist>
           </para>
 	</sect3>
+
+        <sect3 id="network-section">
+          <title>The [Network] Section</title>
+          <para>
+            [Network] contains settings related to
+            networking. Currently there is only one value that can be set.
+          </para>
+          <variablelist>
+            <varlistentry>
+              <term>UseDnsComputerName</term>
+              <listitem>
+                <para>
+                  A boolean setting (default: <literal>Y</literal>) 
+                  that affects the way Wine sets the computer name. The computer
+                  name in the Windows world is the so-called <emphasis>NetBIOS name</emphasis>.
+                  It is contained in the <varname>ComputerName</varname> in the registry entry
+                  <varname>HKEY_LOCAL_MACHINE\System\CurrentControlSet\Control\ComputerName\ComputerName</varname>.
+                </para>
+                <para>
+                  If this option is set to "Y" or missing, Wine will set the
+                  NetBIOS name to the Unix host name of your computer, if 
+                  necessary truncated to 31 characters. The Unix hostname is the output
+                  of the shell command <command>hostname</command>, up to and not
+                  including the first dot ('.'). Among other things, this means that
+                  Windows programs running under Wine cannot change the NetBIOS computer name.
+                </para>
+                <para>
+                  If this option is set to "N", Wine will use the registry value above
+                  to set the NetBIOS name. Only if the registry entry doesn't exist (usually
+                  only during the first wine startup) it will use the Unix hostname as
+                  usual. Windows applications can change the NetBIOS name. The change
+                  will be effective after a "Reboot", i.e. after restarting Wine.
+                </para>
+              </listitem>
+            </varlistentry>
+          </variablelist>
+        </sect3>
 
         <sect3 id="appdefaults-section">
           <title>The [AppDefaults] Section</title>

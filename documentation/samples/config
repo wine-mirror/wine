@@ -268,6 +268,13 @@ WINE REGISTRY Version 2
 ;; Min number of fragments to prebuffer
 ;"SndQueueMin" = "12"
 
+[Network]
+;; Use the DNS (Unix) host name always as NetBIOS "ComputerName" (boolean, default "Y").
+;; Set to N if you need a persistent NetBIOS ComputerName that possibly differs 
+;; from the Unix host name. You'll need to set ComputerName in 
+;; HKEY_LOCAL_MACHINE\System\CurrentControlSet\Control\ComputerName\ComputerName, too.
+;"UseDnsComputerName" = "N"
+
 ;; sample AppDefaults entries
 ;[AppDefaults\\iexplore.exe\\DllOverrides]
 ;"shlwapi" = "native"

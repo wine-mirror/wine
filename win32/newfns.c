@@ -287,36 +287,6 @@ DWORD WINAPI GetCompressedFileSizeW(
 
 
 /******************************************************************************
- * SetComputerNameA [KERNEL32.@]
- */
-BOOL WINAPI SetComputerNameA( LPCSTR lpComputerName )
-{
-    BOOL ret;
-    DWORD len = MultiByteToWideChar( CP_ACP, 0, lpComputerName, -1, NULL, 0 );
-    LPWSTR nameW = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) );
-
-    MultiByteToWideChar( CP_ACP, 0, lpComputerName, -1, nameW, len );
-    ret = SetComputerNameW( nameW );
-    HeapFree( GetProcessHeap(), 0, nameW );
-    return ret;
-}
-
-
-/******************************************************************************
- * SetComputerNameW [KERNEL32.@]
- *
- * PARAMS
- *    lpComputerName [I] Address of new computer name
- *
- * RETURNS STD
- */
-BOOL WINAPI SetComputerNameW( LPCWSTR lpComputerName )
-{
-    FIXME("(%s): stub\n", debugstr_w(lpComputerName));
-    return TRUE;
-}
-
-/******************************************************************************
  *		CreateIoCompletionPort (KERNEL32.@)
  */
 HANDLE WINAPI CreateIoCompletionPort(HANDLE hFileHandle,

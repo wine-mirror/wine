@@ -1119,22 +1119,12 @@ static void _init_registry_saving( HKEY hkey_local_machine, HKEY hkey_current_us
  */
 static void _allocate_default_keys(void)
 {
-    HKEY hkey;
-    OBJECT_ATTRIBUTES attr;
-    UNICODE_STRING nameW, valueW;
-    WCHAR computer_name[200];
-    DWORD size = sizeof(computer_name)/sizeof(WCHAR);
-
     static const WCHAR StatDataW[] = {'D','y','n','D','a','t','a','\\',
                                       'P','e','r','f','S','t','a','t','s','\\',
                                       'S','t','a','t','D','a','t','a',0};
-    static const WCHAR ComputerW[] = {'M','a','c','h','i','n','e','\\',
-                                      'S','y','s','t','e','m','\\',
-                                      'C','u','r','r','e','n','t','C','o','n','t','r','o','l','S','e','t','\\',
-                                      'C','o','n','t','r','o','l','\\',
-                                      'C','o','m','p','u','t','e','r','N','a','m','e','\\',
-                                      'C','o','m','p','u','t','e','r','N','a','m','e',0};
-    static const WCHAR ComputerNameW[] = {'C','o','m','p','u','t','e','r','N','a','m','e',0};
+    HKEY hkey;
+    OBJECT_ATTRIBUTES attr;
+    UNICODE_STRING nameW;
 
     TRACE("(void)\n");
 
@@ -1147,31 +1137,6 @@ static void _allocate_default_keys(void)
 
     RtlInitUnicodeString( &nameW, StatDataW );
     if (!NtCreateKey( &hkey, KEY_ALL_ACCESS, &attr, 0, NULL, 0, NULL )) NtClose( hkey );
-
-    /* \\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion
-     *						CurrentVersion
-     *						CurrentBuildNumber
-     *						CurrentType
-     *					string	RegisteredOwner
-     *					string	RegisteredOrganization
-     *
-     */
-    /* System\\CurrentControlSet\\Services\\SNMP\\Parameters\\RFC1156Agent
-     * 					string	SysContact
-     * 					string	SysLocation
-     * 						SysServices
-     */
-    if (GetComputerNameW( computer_name, &size ))
-    {
-        RtlInitUnicodeString( &nameW, ComputerW );
-        if (!NtCreateKey( &hkey, KEY_ALL_ACCESS, &attr, 0, NULL, 0, NULL ))
-        {
-            RtlInitUnicodeString( &valueW, ComputerNameW );
-            NtSetValueKey( hkey, &valueW, 0, REG_SZ, computer_name,
-                           (strlenW(computer_name) + 1) * sizeof(WCHAR) );
-            NtClose(hkey);
-        }
-    }
 }
 
 #define REG_DONTLOAD -1

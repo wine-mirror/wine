@@ -80,7 +80,6 @@ C_SRCS = \
 	$(TOPOBJDIR)/scheduler/timer.c \
 	$(TOPOBJDIR)/win32/device.c \
 	$(TOPOBJDIR)/win32/except.c \
-	$(TOPOBJDIR)/win32/init.c \
 	$(TOPOBJDIR)/win32/kernel32.c \
 	$(TOPOBJDIR)/win32/newfns.c \
 	$(TOPOBJDIR)/win32/time.c \
