@@ -155,7 +155,7 @@ void DDRAW_dump_DDBLT(DWORD flagmask)
     DDRAW_dump_flags(flagmask, flags, sizeof(flags)/sizeof(flags[0]));
 }
 
-void DDRAW_dump_DDSCAPS(const DDSCAPS2 *in)
+void DDRAW_dump_DDSCAPS2(const DDSCAPS2 *in)
 {
     static const flag_info flags[] = {
         FE(DDSCAPS_RESERVED1),
@@ -213,6 +213,17 @@ void DDRAW_dump_DDSCAPS(const DDSCAPS2 *in)
  
     DDRAW_dump_flags_(in->dwCaps, flags, sizeof(flags)/sizeof(flags[0]), 0);
     DDRAW_dump_flags_(in->dwCaps2, flags2, sizeof(flags2)/sizeof(flags2[0]), 0);
+}
+
+void DDRAW_dump_DDSCAPS(const DDSCAPS *in) {
+    DDSCAPS2 in_bis;
+
+    in_bis.dwCaps = in->dwCaps;
+    in_bis.dwCaps2 = 0;
+    in_bis.dwCaps3 = 0;
+    in_bis.dwCaps4 = 0;
+
+    DDRAW_dump_DDSCAPS2(&in_bis);
 }
 
 void DDRAW_dump_pixelformat_flag(DWORD flagmask)
@@ -329,26 +340,40 @@ void DDRAW_dump_surface_desc(const DDSURFACEDESC2 *lpddsd)
 {
 #define STRUCT DDSURFACEDESC2
     static const member_info members[] =
-	{
-	    ME(DDSD_CAPS, DDRAW_dump_DDSCAPS, ddsCaps),
-	    ME(DDSD_HEIGHT, DDRAW_dump_DWORD, dwHeight),
-	    ME(DDSD_WIDTH, DDRAW_dump_DWORD, dwWidth),
-	    ME(DDSD_PITCH, DDRAW_dump_DWORD, u1.lPitch),
-	    ME(DDSD_LINEARSIZE, DDRAW_dump_DWORD, u1.dwLinearSize),
-	    ME(DDSD_BACKBUFFERCOUNT, DDRAW_dump_DWORD, dwBackBufferCount),
-	    ME(DDSD_MIPMAPCOUNT, DDRAW_dump_DWORD, u2.dwMipMapCount),
-	    ME(DDSD_REFRESHRATE, DDRAW_dump_DWORD, u2.dwRefreshRate),
-	    ME(DDSD_ALPHABITDEPTH, DDRAW_dump_DWORD, dwAlphaBitDepth),
-	    ME(DDSD_LPSURFACE, DDRAW_dump_PTR, lpSurface),
-	    ME(DDSD_CKDESTOVERLAY, DDRAW_dump_DDCOLORKEY, u3.ddckCKDestOverlay),
-	    ME(DDSD_CKDESTBLT, DDRAW_dump_DDCOLORKEY, ddckCKDestBlt),
-	    ME(DDSD_CKSRCOVERLAY, DDRAW_dump_DDCOLORKEY, ddckCKSrcOverlay),
-	    ME(DDSD_CKSRCBLT, DDRAW_dump_DDCOLORKEY, ddckCKSrcBlt),
-	    ME(DDSD_PIXELFORMAT, DDRAW_dump_pixelformat, u4.ddpfPixelFormat)
-	};
+        {
+            ME(DDSD_HEIGHT, DDRAW_dump_DWORD, dwHeight),
+            ME(DDSD_WIDTH, DDRAW_dump_DWORD, dwWidth),
+            ME(DDSD_PITCH, DDRAW_dump_DWORD, u1.lPitch),
+            ME(DDSD_LINEARSIZE, DDRAW_dump_DWORD, u1.dwLinearSize),
+            ME(DDSD_BACKBUFFERCOUNT, DDRAW_dump_DWORD, dwBackBufferCount),
+            ME(DDSD_MIPMAPCOUNT, DDRAW_dump_DWORD, u2.dwMipMapCount),
+            ME(DDSD_REFRESHRATE, DDRAW_dump_DWORD, u2.dwRefreshRate),
+            ME(DDSD_ALPHABITDEPTH, DDRAW_dump_DWORD, dwAlphaBitDepth),
+            ME(DDSD_LPSURFACE, DDRAW_dump_PTR, lpSurface),
+            ME(DDSD_CKDESTOVERLAY, DDRAW_dump_DDCOLORKEY, u3.ddckCKDestOverlay),
+            ME(DDSD_CKDESTBLT, DDRAW_dump_DDCOLORKEY, ddckCKDestBlt),
+            ME(DDSD_CKSRCOVERLAY, DDRAW_dump_DDCOLORKEY, ddckCKSrcOverlay),
+            ME(DDSD_CKSRCBLT, DDRAW_dump_DDCOLORKEY, ddckCKSrcBlt),
+            ME(DDSD_PIXELFORMAT, DDRAW_dump_pixelformat, u4.ddpfPixelFormat)
+        };
+    static const member_info members_caps[] =
+        {
+            ME(DDSD_CAPS, DDRAW_dump_DDSCAPS, ddsCaps)
+        };
+    static const member_info members_caps2[] =
+        {
+            ME(DDSD_CAPS, DDRAW_dump_DDSCAPS2, ddsCaps)
+        };
+#undef STRUCT
 
+    if (lpddsd->dwSize >= sizeof(DDSURFACEDESC2)) {
+        DDRAW_dump_members(lpddsd->dwFlags, lpddsd, members_caps2, 1);
+    } else {
+        DDRAW_dump_members(lpddsd->dwFlags, lpddsd, members_caps, 1);
+    }
+                                                  
     DDRAW_dump_members(lpddsd->dwFlags, lpddsd, members,
-		       sizeof(members)/sizeof(members[0]));
+                       sizeof(members)/sizeof(members[0]));
 }
 
 void DDRAW_dump_cooperativelevel(DWORD cooplevel)
@@ -533,5 +558,5 @@ void DDRAW_dump_DDCAPS(const DDCAPS *lpcaps) {
     DPRINTF(" - dwMinOverlayStretch : %ld\n", lpcaps->dwMinOverlayStretch);
     DPRINTF(" - dwMaxOverlayStretch : %ld\n", lpcaps->dwMaxOverlayStretch);
     DPRINTF("...\n");
-    DPRINTF(" - ddsCaps : "); DDRAW_dump_DDSCAPS(&lpcaps->ddsCaps); DPRINTF("\n");
+    DPRINTF(" - ddsCaps : "); DDRAW_dump_DDSCAPS2(&lpcaps->ddsCaps); DPRINTF("\n");
 }

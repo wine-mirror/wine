@@ -40,6 +40,7 @@
 	do {						\
 	    	DWORD __size = (to)->dwSize;		\
 	    	DWORD __copysize = __size;		\
+                memset(to,0,__size);                    \
 	        if ((from)->dwSize < __size) 		\
 		    __copysize = (from)->dwSize;	\
 		memcpy(to,from,__copysize);		\
@@ -350,7 +351,8 @@ void DDRAW_Convert_DDDEVICEIDENTIFIER_2_To_1(const DDDEVICEIDENTIFIER2* pIn,
 extern void DDRAW_dump_DDBLTFX(DWORD flagmask);
 extern void DDRAW_dump_DDBLTFAST(DWORD flagmask);
 extern void DDRAW_dump_DDBLT(DWORD flagmask);
-extern void DDRAW_dump_DDSCAPS(const DDSCAPS2 *in);
+extern void DDRAW_dump_DDSCAPS(const DDSCAPS *in);
+extern void DDRAW_dump_DDSCAPS2(const DDSCAPS2 *in);
 extern void DDRAW_dump_pixelformat_flag(DWORD flagmask);
 extern void DDRAW_dump_paletteformat(DWORD dwFlags);
 extern void DDRAW_dump_pixelformat(const DDPIXELFORMAT *in);
