@@ -19,6 +19,8 @@ typedef struct IMarshal IMarshal,*LPMARSHAL;
 DEFINE_OLEGUID(IID_IStdMarshalInfo,	0x00000018L, 0, 0);
 typedef struct IStdMarshalInfo IStdMarshalInfo,*LPSTDMARSHALINFO;
 
+DEFINE_OLEGUID(CLSID_DfMarshal,		0x0000030BL, 0, 0);
+
 
 /*****************************************************************************
  * IMarshal interface

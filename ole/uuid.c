@@ -28,6 +28,7 @@ DEFINE_GUID(GUID_NULL,0,0,0,0,0,0,0,0,0,0,0);
 #include "shlguid.h"
 #include "shlobj.h"
 #include "wine/obj_queryassociations.h"
+#include "wine/obj_channel.h"
 
 /* FIXME: cguids declares GUIDs but does not define their values */
 

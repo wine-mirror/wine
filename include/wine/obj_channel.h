@@ -28,6 +28,9 @@ DEFINE_GUID   (IID_IRpcStubBuffer,	0xd5f56afcL, 0x593b, 0x101a, 0xb5, 0x69, 0x08
 typedef struct IRpcStubBuffer IRpcStubBuffer,*LPRPCSTUBBUFFER;
 
 
+DEFINE_GUID   (CLSID_PSFactoryBuffer,   0x00000320L, 0x0000, 0x0000, 0xC0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x46);
+
+
 /*****************************************************************************
  * IChannelHook interface
  */

@@ -47,6 +47,9 @@ typedef struct ITypeLib2 ITypeLib2,*LPTYPELIB2;
 DEFINE_OLEGUID(IID_ITypeInfo2,      0x00020412,0,0);
 typedef struct ITypeInfo2 ITypeInfo2,*LPTYPEINFO2;
 
+/* The OLE Automation ProxyStub Interface Class (aka Typelib Marshaler) */
+DEFINE_OLEGUID(CLSID_PSOAInterface, 0x00020424,0,0);
+
 /*****************************************************************************
  * Automation data types
  */
