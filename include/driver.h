@@ -130,7 +130,7 @@ LPWINE_DRIVER	DRIVER_RegisterDriver32(LPCSTR, HMODULE,   DRIVERPROC,   LPARAM, B
 int		DRIVER_GetType(HDRVR);
 
 #if 0
-#errro "it's never used"
+#error "It's never used"
 /* internal */
 typedef struct
 {
