@@ -18,14 +18,21 @@ struct debug_info
     char  output[500];   /* current output line */
 };
 
+static struct debug_info tmp;
+
 static inline struct debug_info *get_info(void)
 {
     struct debug_info *info = NtCurrentTeb()->debug_info;
     if (!info)
     {
-        NtCurrentTeb()->debug_info = info = HeapAlloc( GetProcessHeap(), 0, sizeof(*info) );
+        /* setup the temp structure in case HeapAlloc wants to print something */
+        NtCurrentTeb()->debug_info = &tmp;
+        tmp.str_pos = tmp.strings;
+        tmp.out_pos = tmp.output;
+        info = HeapAlloc( GetProcessHeap(), 0, sizeof(*info) );
         info->str_pos = info->strings;
         info->out_pos = info->output;
+        NtCurrentTeb()->debug_info = info;
     }
     return info;
 }
