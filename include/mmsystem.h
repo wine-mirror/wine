@@ -141,6 +141,9 @@ typedef struct {
 
 #define MM_MIM_MOREDATA     0x3CC
 
+#define MM_MIXM_LINE_CHANGE 0x3D0
+#define MM_MIXM_CONTROL_CHANGE 0x3D1
+
 #define MMSYSERR_BASE          0
 #define WAVERR_BASE            32
 #define MIDIERR_BASE           64
