@@ -708,8 +708,6 @@ static int ParseTopLevel(void)
             strcpy(DLLInitFunc, GetToken());
             if (!DLLInitFunc[0])
                 fprintf(stderr, "%s:%d: Expected function name after init\n", SpecName, Line);
-            else  
-                fprintf(stderr, "InitFunc is %s\n", DLLInitFunc);
         }
 	else if (IsNumberString(token))
 	{
