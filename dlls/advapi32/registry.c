@@ -674,7 +674,7 @@ DWORD WINAPI RegQueryInfoKeyA( HKEY hkey, LPSTR class, LPDWORD class_len, LPDWOR
  */
 DWORD WINAPI RegCloseKey( HKEY hkey )
 {
-    if (!hkey || hkey >= 0x80000000) return ERROR_SUCCESS;
+    if (!hkey || hkey >= (HKEY)0x80000000) return ERROR_SUCCESS;
     return RtlNtStatusToDosError( NtClose( hkey ) );
 }
 
@@ -1435,7 +1435,7 @@ LONG WINAPI RegSaveKeyA( HKEY hkey, LPCSTR file, LPSECURITY_ATTRIBUTES sa )
     int count = 0;
     LPSTR name;
     DWORD ret, err;
-    HFILE handle;
+    HANDLE handle;
 
     TRACE( "(%x,%s,%p)\n", hkey, debugstr_a(file), sa );
 

@@ -287,7 +287,7 @@ DWORD WINAPI RegQueryInfoKeyA( HKEY hkey, LPSTR class, LPDWORD class_len, LPDWOR
  */
 DWORD WINAPI RegCloseKey( HKEY hkey )
 {
-    if (!hkey || hkey >= 0x80000000) return ERROR_SUCCESS;
+    if (!hkey || hkey >= (HKEY)0x80000000) return ERROR_SUCCESS;
     return RtlNtStatusToDosError( NtClose( hkey ) );
 }
 

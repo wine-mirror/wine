@@ -153,7 +153,7 @@ BOOL CRYPT_VerifyImage(LPCSTR lpszImage, BYTE* pData)
 	return TRUE;
 }
 
-BOOL CRYPT_ReturnhWnd(DWORD *phWnd)
+BOOL CRYPT_ReturnhWnd(HWND *phWnd)
 {
 	if (!phWnd)
 		return FALSE;

@@ -160,7 +160,7 @@ NTSTATUS WINAPI RtlEnterCriticalSection( RTL_CRITICAL_SECTION *crit )
 {
     if (interlocked_inc( &crit->LockCount ))
     {
-        if (crit->OwningThread == GetCurrentThreadId())
+        if (crit->OwningThread == (HANDLE)GetCurrentThreadId())
         {
             crit->RecursionCount++;
             return STATUS_SUCCESS;
@@ -169,7 +169,7 @@ NTSTATUS WINAPI RtlEnterCriticalSection( RTL_CRITICAL_SECTION *crit )
         /* Now wait for it */
         RtlpWaitForCriticalSection( crit );
     }
-    crit->OwningThread   = GetCurrentThreadId();
+    crit->OwningThread   = (HANDLE)GetCurrentThreadId();
     crit->RecursionCount = 1;
     return STATUS_SUCCESS;
 }
@@ -183,11 +183,11 @@ BOOL WINAPI RtlTryEnterCriticalSection( RTL_CRITICAL_SECTION *crit )
     BOOL ret = FALSE;
     if (interlocked_cmpxchg( &crit->LockCount, 0L, -1 ) == -1)
     {
-        crit->OwningThread   = GetCurrentThreadId();
+        crit->OwningThread   = (HANDLE)GetCurrentThreadId();
         crit->RecursionCount = 1;
         ret = TRUE;
     }
-    else if (crit->OwningThread == GetCurrentThreadId())
+    else if (crit->OwningThread == (HANDLE)GetCurrentThreadId())
     {
         interlocked_inc( &crit->LockCount );
         crit->RecursionCount++;

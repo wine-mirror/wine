@@ -211,11 +211,11 @@ HANDLE WINAPI K32WOWHandle32( WORD handle, WOW_HANDLE_TYPE type )
     case WOW_TYPE_HACCEL:
     case WOW_TYPE_HTASK:
     case WOW_TYPE_FULLHWND:
-        return (HANDLE)handle;
+        return (HANDLE)(ULONG_PTR)handle;
 
     default:
         ERR( "handle 0x%04x of unknown type %d\n", handle, type );
-        return (HANDLE)handle;
+        return (HANDLE)(ULONG_PTR)handle;
     }
 }
 
@@ -501,5 +501,3 @@ DWORD WINAPI WOW16Call(WORD x,WORD y,WORD z)
         DPRINTF(") calling address was 0x%08lx\n",calladdr);
         return 0;
 }
-
-

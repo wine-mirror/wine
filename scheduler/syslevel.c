@@ -148,7 +148,7 @@ VOID WINAPI _KERNEL32_86(SYSLEVEL *lock)
  */
 DWORD WINAPI _ConfirmSysLevel(SYSLEVEL *lock)
 {
-    if ( lock && lock->crst.OwningThread == GetCurrentThreadId() )
+    if ( lock && lock->crst.OwningThread == (HANDLE)GetCurrentThreadId() )
         return lock->crst.RecursionCount;
     else
         return 0L;
@@ -160,7 +160,8 @@ DWORD WINAPI _ConfirmSysLevel(SYSLEVEL *lock)
  */
 VOID WINAPI _CheckNotSysLevel(SYSLEVEL *lock)
 {
-    if (lock && lock->crst.OwningThread == GetCurrentThreadId() && lock->crst.RecursionCount)
+    if (lock && lock->crst.OwningThread == (HANDLE)GetCurrentThreadId() &&
+        lock->crst.RecursionCount)
     {
         ERR( "Holding lock %p level %d\n", lock, lock->level );
         DbgBreakPoint();

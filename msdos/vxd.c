@@ -1174,7 +1174,7 @@ void WINAPI VXD_Win32s( CONTEXT86 *context )
          */
     {
         DWORD *stack    = (DWORD *)W32S_APP2WINE(context->Edx);
-        HANDLE handle = stack[0];
+        HANDLE handle   = (HANDLE)stack[0];
         DWORD *id       = (DWORD *)W32S_APP2WINE(stack[1]);
 
         TRACE("NtCloseSection(%lx, %lx)\n", (DWORD)handle, (DWORD)id);
@@ -1197,7 +1197,7 @@ void WINAPI VXD_Win32s( CONTEXT86 *context )
          */
     {
         DWORD *stack    = (DWORD *)W32S_APP2WINE(context->Edx);
-        HANDLE handle = stack[0];
+        HANDLE handle   = (HANDLE)stack[0];
         HANDLE new_handle;
 
         TRACE("NtDupSection(%lx)\n", (DWORD)handle);
@@ -1229,7 +1229,7 @@ void WINAPI VXD_Win32s( CONTEXT86 *context )
          */
     {
         DWORD *  stack          = (DWORD *)W32S_APP2WINE(context->Edx);
-        HANDLE SectionHandle  = stack[0];
+        HANDLE   SectionHandle  = (HANDLE)stack[0];
         DWORD    ProcessHandle  = stack[1]; /* ignored */
         DWORD *  BaseAddress    = (DWORD *)W32S_APP2WINE(stack[2]);
         DWORD    ZeroBits       = stack[3];
@@ -1651,4 +1651,3 @@ void WINAPI VXD_Win32s( CONTEXT86 *context )
     }
 
 }
-

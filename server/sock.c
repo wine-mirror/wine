@@ -72,7 +72,7 @@ struct sock
     struct event       *event;       /* event object */
     user_handle_t       window;      /* window to send the message to */
     unsigned int        message;     /* message to send */
-    unsigned int        wparam;      /* message wparam (socket handle) */
+    obj_handle_t        wparam;      /* message wparam (socket handle) */
     int                 errors[FD_MAX_EVENTS]; /* event errors */
     struct sock*        deferred;    /* socket that waits for a deferred accept */
     struct async_queue  read_q;      /* Queue for asynchronous reads */
@@ -260,7 +260,7 @@ static void sock_wake_up( struct sock *sock, int pollev )
             if (sock->pmask & (1 << event))
             {
                 unsigned int lparam = (1 << event) | (sock->errors[event] << 16);
-                post_message( sock->window, sock->message, sock->wparam, lparam );
+                post_message( sock->window, sock->message, (unsigned int)sock->wparam, lparam );
             }
         }
         sock->pmask = 0;

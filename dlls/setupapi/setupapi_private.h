@@ -44,17 +44,6 @@ typedef struct tagLDD_LIST {
    ldd.ldid = LDID; \
   } while(0)
 
-typedef struct {
-    HINF16 hInf;
-    HFILE hInfFile;
-    LPSTR lpInfFileName;
-} INF_FILE;
-
-extern INF_FILE *InfList;
-extern WORD InfNumEntries;
-
-extern LPCSTR IP_GetFileName(HINF16 hInf);
-
 /* string substitutions */
 
 struct inf_file;

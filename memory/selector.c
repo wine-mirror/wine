@@ -908,7 +908,7 @@ void WINAPI AllocMappedBuffer( CONTEXT86 *context )
         context->Eax = context->Edi = 0;
     else
     {
-        buffer[0] = handle;
+        buffer[0] = (DWORD)handle;
         buffer[1] = ptr;
 
         context->Eax = (DWORD) ptr;
@@ -932,7 +932,7 @@ void WINAPI FreeMappedBuffer( CONTEXT86 *context )
 
         UnMapLS(buffer[1]);
 
-        GlobalUnlock(buffer[0]);
-        GlobalFree(buffer[0]);
+        GlobalUnlock((HGLOBAL)buffer[0]);
+        GlobalFree((HGLOBAL)buffer[0]);
     }
 }

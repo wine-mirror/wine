@@ -100,9 +100,9 @@ static const PALETTEENTRY sys_pal_template[NB_RESERVED_COLORS] =
  *
  * Create the system palette.
  */
-HPALETTE16 PALETTE_Init(void)
+HPALETTE PALETTE_Init(void)
 {
-    HPALETTE16          hpalette;
+    HPALETTE          hpalette;
     LOGPALETTE *        palPtr;
     PALETTEOBJ*         palObj;
 
@@ -115,7 +115,7 @@ HPALETTE16 PALETTE_Init(void)
     palPtr->palVersion = 0x300;
     palPtr->palNumEntries = NB_RESERVED_COLORS;
     memcpy( palPtr->palPalEntry, sys_pal_template, sizeof(sys_pal_template) );
-    hpalette = CreatePalette16( palPtr );
+    hpalette = CreatePalette( palPtr );
     HeapFree( GetProcessHeap(), 0, palPtr );
 
     palObj = (PALETTEOBJ*) GDI_GetObjPtr( hpalette, PALETTE_MAGIC );

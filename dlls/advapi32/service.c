@@ -596,7 +596,7 @@ StartServiceW( SC_HANDLE hService, DWORD dwNumServiceArgs,
     TRACE("Starting service %s\n", debugstr_a(path) );
 
     data = CreateSemaphoreA(NULL,1,1,"ADVAPI32_ServiceStartData");
-    if(data == ERROR_INVALID_HANDLE)
+    if (!data)
     {
         data = OpenSemaphoreA(SEMAPHORE_ALL_ACCESS, FALSE, "ADVAPI32_ServiceStartData");
         if(data == 0)
@@ -700,4 +700,3 @@ QueryServiceStatus( SC_HANDLE hService, LPSERVICE_STATUS lpservicestatus )
 
     return TRUE;
 }
-

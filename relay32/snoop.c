@@ -184,8 +184,8 @@ SNOOP_GetProcAddress(HMODULE hmod,LPCSTR name,DWORD ordinal,FARPROC origfun) {
 	for (j=0;j<PE_HEADER(hmod)->FileHeader.NumberOfSections;j++)
 		/* 0x42 is special ELF loader tag */
 		if ((pe_seg[j].VirtualAddress==0x42) ||
-		    (((DWORD)origfun-hmod>=pe_seg[j].VirtualAddress)&&
-		     ((DWORD)origfun-hmod <pe_seg[j].VirtualAddress+
+		    (((char *)origfun - (char *)hmod>=pe_seg[j].VirtualAddress)&&
+		     ((char *)origfun - (char *)hmod <pe_seg[j].VirtualAddress+
 		    		   pe_seg[j].SizeOfRawData
 		   ))
 		)

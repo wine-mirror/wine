@@ -140,7 +140,7 @@ HANDLE WINAPI
 OpenBackupEventLogA( LPCSTR lpUNCServerName, LPCSTR lpFileName )
 {
 	FIXME("stub\n");
-	return TRUE;
+	return (HANDLE)1;
 }
 
 /******************************************************************************
@@ -154,7 +154,7 @@ HANDLE WINAPI
 OpenBackupEventLogW( LPCWSTR lpUNCServerName, LPCWSTR lpFileName )
 {
 	FIXME("stub\n");
-	return TRUE;
+	return (HANDLE)1;
 }
 
 /******************************************************************************
@@ -163,7 +163,7 @@ OpenBackupEventLogW( LPCWSTR lpUNCServerName, LPCWSTR lpFileName )
 HANDLE WINAPI OpenEventLogA(LPCSTR uncname,LPCSTR source)
 {
 	FIXME("(%s,%s),stub!\n",uncname,source);
-	return 0xcafe4242;
+	return (HANDLE)0xcafe4242;
 }
 
 /******************************************************************************
@@ -177,7 +177,7 @@ HANDLE WINAPI
 OpenEventLogW( LPCWSTR uncname, LPCWSTR source )
 {
 	FIXME("stub\n");
-	return TRUE;
+	return (HANDLE)1;
 }
 
 /******************************************************************************
@@ -241,7 +241,7 @@ RegisterEventSourceW( LPCWSTR lpUNCServerName, LPCWSTR lpSourceName )
 {
     FIXME("(%s,%s): stub\n", debugstr_w(lpUNCServerName),
           debugstr_w(lpSourceName));
-    return 1;
+    return (HANDLE)1;
 }
 
 /******************************************************************************

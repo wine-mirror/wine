@@ -23,6 +23,16 @@
 
 #include "wincrypt.h"
 
+typedef struct _VTableProvStruc {
+    DWORD    Version;
+    BOOL    (*pFuncVerifyImage)(LPCSTR lpszImage, BYTE *pSigData);
+    BOOL    (*pFuncReturnhWnd)(HWND *phWnd);
+    DWORD    dwProvType;
+    BYTE     *pbContextInfo;
+    DWORD    cbContextInfo;
+    LPSTR    pszProvName;
+} VTableProvStruc, *PVTableProvStruc;
+
 typedef struct tagPROVFUNCS
 {
 	BOOL (*pCPAcquireContext)(HCRYPTPROV *phProv, LPSTR pszContainer, DWORD dwFlags, PVTableProvStruc pVTable);

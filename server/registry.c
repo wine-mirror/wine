@@ -87,8 +87,8 @@ struct key_value
 
 
 /* the special root keys */
-#define HKEY_SPECIAL_ROOT_FIRST   HKEY_CLASSES_ROOT
-#define HKEY_SPECIAL_ROOT_LAST    HKEY_DYN_DATA
+#define HKEY_SPECIAL_ROOT_FIRST   ((unsigned int)HKEY_CLASSES_ROOT)
+#define HKEY_SPECIAL_ROOT_LAST    ((unsigned int)HKEY_DYN_DATA)
 #define NB_SPECIAL_ROOT_KEYS      (HKEY_SPECIAL_ROOT_LAST - HKEY_SPECIAL_ROOT_FIRST + 1)
 #define IS_SPECIAL_ROOT_HKEY(h)   (((unsigned int)(h) >= HKEY_SPECIAL_ROOT_FIRST) && \
                                    ((unsigned int)(h) <= HKEY_SPECIAL_ROOT_LAST))

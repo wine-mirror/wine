@@ -189,35 +189,3 @@ RETERR16 WINAPI GenInstall16( HINF16 hinf16, LPCSTR section, WORD genflags )
     SetupTermDefaultQueueCallback( context );
     return ret;
 }
-
-
-WORD InfNumEntries = 0;
-INF_FILE *InfList = NULL;
-HINF16 IP_curr_handle = 0;
-
-
-BOOL IP_FindInf(HINF16 hInf, WORD *ret)
-{
-    WORD n;
-
-    for (n=0; n < InfNumEntries; n++)
-	if (InfList[n].hInf == hInf)
-	{
-	    *ret = n;
-	    return TRUE;
-	}
-    return FALSE;
-}
-
-
-LPCSTR IP_GetFileName(HINF16 hInf)
-{
-    WORD n;
-    if (IP_FindInf(hInf, &n))
-    {
-	return InfList[n].lpInfFileName;
-    }
-    return NULL;
-}
-
-

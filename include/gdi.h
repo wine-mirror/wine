@@ -96,15 +96,15 @@ typedef struct tagDC
     INT          vportExtY;
 
     int           flags;
-    HRGN16        hClipRgn;     /* Clip region (may be 0) */
-    HRGN16        hVisRgn;      /* Visible region (must never be 0) */
-    HRGN16        hGCClipRgn;   /* GC clip region (ClipRgn AND VisRgn) */
-    HPEN16        hPen;
-    HBRUSH16      hBrush;
-    HFONT16       hFont;
-    HBITMAP16     hBitmap;
-    HANDLE16      hDevice;
-    HPALETTE16    hPalette;
+    HRGN          hClipRgn;     /* Clip region (may be 0) */
+    HRGN          hVisRgn;      /* Visible region (must never be 0) */
+    HRGN          hGCClipRgn;   /* GC clip region (ClipRgn AND VisRgn) */
+    HPEN          hPen;
+    HBRUSH        hBrush;
+    HFONT         hFont;
+    HBITMAP       hBitmap;
+    HANDLE        hDevice;
+    HPALETTE      hPalette;
 
     GdiFont       gdiFont;
     GdiPath       path;

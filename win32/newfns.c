@@ -195,7 +195,7 @@ HANDLE WINAPI CreateMailslotA( LPCSTR lpName, DWORD nMaxMessageSize,
 {
     FIXME("(%s,%ld,%ld,%p): stub\n", debugstr_a(lpName),
           nMaxMessageSize, lReadTimeout, sa);
-    return 1;
+    return (HANDLE)1;
 }
 
 
@@ -217,7 +217,7 @@ HANDLE WINAPI CreateMailslotW( LPCWSTR lpName, DWORD nMaxMessageSize,
 {
     FIXME("(%s,%ld,%ld,%p): stub\n", debugstr_w(lpName),
           nMaxMessageSize, lReadTimeout, sa);
-    return 1;
+    return (HANDLE)1;
 }
 
 

@@ -37,6 +37,6 @@ typedef struct tagPALETTEOBJ
     LOGPALETTE                   logpalette; /* _MUST_ be the last field */
 } PALETTEOBJ;
 
-extern HPALETTE16 PALETTE_Init(void);
+extern HPALETTE PALETTE_Init(void);
 
 #endif /* __WINE_PALETTE_H */

@@ -101,7 +101,7 @@ start:
     }
     else if( rwl->iNumberActive < 0 ) /* exclusive lock in progress */
     {
-	 if( rwl->hOwningThreadId == GetCurrentThreadId() )
+	 if( rwl->hOwningThreadId == (HANDLE)GetCurrentThreadId() )
 	 {
 	     retVal = 1;
 	     rwl->iNumberActive--;
@@ -123,7 +123,7 @@ wait:
 	     goto wait;
 
     if( retVal == 1 )
-	rwl->hOwningThreadId = GetCurrentThreadId();
+	rwl->hOwningThreadId = (HANDLE)GetCurrentThreadId();
 done:
     RtlLeaveCriticalSection( &rwl->rtlCS );
     return retVal;
@@ -142,7 +142,7 @@ start:
     RtlEnterCriticalSection( &rwl->rtlCS );
     if( rwl->iNumberActive < 0 )
     {
-	if( rwl->hOwningThreadId == GetCurrentThreadId() )
+	if( rwl->hOwningThreadId == (HANDLE)GetCurrentThreadId() )
 	{
 	    rwl->iNumberActive--;
 	    retVal = 1;

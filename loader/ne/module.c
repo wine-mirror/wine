@@ -1713,7 +1713,7 @@ HMODULE16 WINAPI MapHModuleLS(HMODULE hmod) {
 	if (!hmod)
 		return TASK_GetCurrent()->hInstance;
 	if (!HIWORD(hmod))
-		return hmod; /* we already have a 16 bit module handle */
+		return LOWORD(hmod); /* we already have a 16 bit module handle */
 	pModule = (NE_MODULE*)GlobalLock16(hFirstModule);
 	while (pModule)  {
 		if (pModule->module32 == hmod)
@@ -1747,7 +1747,7 @@ HMODULE WINAPI MapHModuleSL(HMODULE16 hmod) {
  */
 void WINAPI MapHInstLS( CONTEXT86 *context )
 {
-    context->Eax = MapHModuleLS(context->Eax);
+    context->Eax = MapHModuleLS( (HMODULE)context->Eax );
 }
 
 /***************************************************************************
@@ -1756,7 +1756,7 @@ void WINAPI MapHInstLS( CONTEXT86 *context )
  */
 void WINAPI MapHInstSL( CONTEXT86 *context )
 {
-    context->Eax = MapHModuleSL(context->Eax);
+    context->Eax = (DWORD)MapHModuleSL( context->Eax );
 }
 
 /***************************************************************************
@@ -1764,7 +1764,7 @@ void WINAPI MapHInstSL( CONTEXT86 *context )
  */
 void WINAPI MapHInstLS_PN( CONTEXT86 *context )
 {
-    if (context->Eax) context->Eax = MapHModuleLS(context->Eax);
+    if (context->Eax) context->Eax = MapHModuleLS( (HMODULE)context->Eax );
 }
 
 /***************************************************************************
@@ -1772,5 +1772,5 @@ void WINAPI MapHInstLS_PN( CONTEXT86 *context )
  */
 void WINAPI MapHInstSL_PN( CONTEXT86 *context )
 {
-    if (context->Eax) context->Eax = MapHModuleSL(context->Eax);
+    if (context->Eax) context->Eax = (DWORD)MapHModuleSL( context->Eax );
 }

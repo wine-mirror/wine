@@ -145,7 +145,7 @@ static LPVOID _loadthunk(LPCSTR module, LPCSTR func, LPCSTR module32,
                          struct ThunkDataCommon *TD32, DWORD checksum)
 {
     struct ThunkDataCommon *TD16;
-    HMODULE hmod;
+    HMODULE16 hmod;
     int ordinal;
 
     if ((hmod = LoadLibrary16(module)) <= 32)
@@ -1918,7 +1918,7 @@ void WINAPI CBClientThunkSLEx( CONTEXT86 *context )
  * A 16:16 segmented pointer to the function is returned.
  * Written without any docu.
  */
-SEGPTR WINAPI Get16DLLAddress(HMODULE handle, LPSTR func_name)
+SEGPTR WINAPI Get16DLLAddress(HMODULE16 handle, LPSTR func_name)
 {
     static WORD code_sel32;
     FARPROC16 proc_16;

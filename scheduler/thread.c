@@ -760,7 +760,7 @@ BOOL WINAPI SetThreadLocale(
 #undef GetCurrentThread
 HANDLE WINAPI GetCurrentThread(void)
 {
-    return 0xfffffffe;
+    return (HANDLE)0xfffffffe;
 }
 
 

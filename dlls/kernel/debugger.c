@@ -88,7 +88,6 @@ BOOL WINAPI WaitForDebugEvent(
                 event->u.CreateProcessInfo.lpStartAddress        = data.info.create_process.start;
                 event->u.CreateProcessInfo.lpImageName           = data.info.create_process.name;
                 event->u.CreateProcessInfo.fUnicode              = data.info.create_process.unicode;
-                if (data.info.create_process.file == -1) event->u.CreateProcessInfo.hFile = 0;
                 break;
             case EXIT_THREAD_DEBUG_EVENT:
                 event->u.ExitThread.dwExitCode = data.info.exit.exit_code;
@@ -103,7 +102,6 @@ BOOL WINAPI WaitForDebugEvent(
                 event->u.LoadDll.nDebugInfoSize        = data.info.load_dll.dbg_size;
                 event->u.LoadDll.lpImageName           = data.info.load_dll.name;
                 event->u.LoadDll.fUnicode              = data.info.load_dll.unicode;
-                if (data.info.load_dll.handle == -1) event->u.LoadDll.hFile = 0;
                 break;
             case UNLOAD_DLL_DEBUG_EVENT:
                 event->u.UnloadDll.lpBaseOfDll = data.info.unload_dll.base;
@@ -389,4 +387,3 @@ BOOL WINAPI DebugSetProcessKillOnExit(BOOL kill)
     SERVER_END_REQ;
     return ret;
 }
-
