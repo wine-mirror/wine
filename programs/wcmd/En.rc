@@ -135,8 +135,8 @@ $l    < sign              $n    Current drive       $p    Current path\n\
 $q    Equal sign          $t    Current time        $v    wcmd version\n\
 \n\
 Note that entering the PROMPT command without a prompt-string resets the\n\
-prompt to the default, which is the current drive letter followed by its\n\
-current directory and a greater-than (>) sign.\n\
+prompt to the default, which is the current directory (which includes the\n\
+current drive letter) followed by a greater-than (>) sign.\n\
 (like a command PROMPT $p$g).\n\
 \n\
 The prompt can also be changed by altering the PROMPT environment variable,\n\
