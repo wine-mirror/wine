@@ -749,6 +749,17 @@ static HRESULT WINAPI MESA_IDirect3DDevice2Impl_DrawIndexedPrimitive(
   return D3D_OK;
 }
 
+static HRESULT WINAPI MESA_IDirect3DDeviceImpl_CreateExecuteBuffer(
+    LPDIRECT3DDEVICE iface, LPD3DEXECUTEBUFFERDESC lpDesc,
+    LPDIRECT3DEXECUTEBUFFER *lplpDirect3DExecuteBuffer, IUnknown *pUnkOuter
+) {
+    ICOM_THIS(IDirect3DDeviceImpl,iface);
+    TRACE("(%p)->(%p,%p,%p)\n", This, lpDesc, lplpDirect3DExecuteBuffer, pUnkOuter);
+    *lplpDirect3DExecuteBuffer = d3dexecutebuffer_create(This, lpDesc);
+    return DD_OK;
+}
+
+
 /*******************************************************************************
  *				OpenGL-specific IDirect3DDevice2
  */
@@ -1017,7 +1028,7 @@ ICOM_VTABLE(IDirect3DDevice) OpenGL_vtable_dx3 =
   IDirect3DDeviceImpl_Initialize,
   IDirect3DDeviceImpl_GetCaps,
   IDirect3DDeviceImpl_SwapTextureHandles,
-  IDirect3DDeviceImpl_CreateExecuteBuffer,
+  MESA_IDirect3DDeviceImpl_CreateExecuteBuffer,
   IDirect3DDeviceImpl_GetStats,
   IDirect3DDeviceImpl_Execute,
   IDirect3DDeviceImpl_AddViewport,

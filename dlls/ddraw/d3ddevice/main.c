@@ -466,8 +466,7 @@ HRESULT WINAPI IDirect3DDeviceImpl_CreateExecuteBuffer(
     LPDIRECT3DEXECUTEBUFFER *lplpDirect3DExecuteBuffer, IUnknown *pUnkOuter
 ) {
     ICOM_THIS(IDirect3DDeviceImpl,iface);
-    TRACE("(%p)->(%p,%p,%p)\n", This, lpDesc, lplpDirect3DExecuteBuffer, pUnkOuter);
-    *lplpDirect3DExecuteBuffer = d3dexecutebuffer_create(This, lpDesc);
+    FIXME("(%p)->(%p,%p,%p): stub\n", This, lpDesc, lplpDirect3DExecuteBuffer, pUnkOuter);
     return DD_OK;
 }
 
