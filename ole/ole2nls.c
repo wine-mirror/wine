@@ -17,6 +17,8 @@
 #include "winerror.h"
 #include "debug.h"
 
+int MAIN_GetLanguageID(char*lang, char*country, char*charset, char*dialect);
+
 /* Locale name to id map. used by EnumSystemLocales, GetLocalInfoA 
  * MUST contain all #defines from winnls.h
  * last entry has NULL name, 0 id.
@@ -340,92 +342,7 @@ const struct map_lcid2str {
  */
 LCID WINAPI GetUserDefaultLCID()
 {
-/* Default sorting, neutral sublanguage */
-/* language names following ISO 639 (rfc 1766) */
-    switch(Options.language)
-    {
- /* case LANG_Ar: return 0x01; */      /* Arabic */
- /* case LANG_Bu: return 0x02; */      /* Bulgarian */
-    case LANG_Ca: return 0x03;         /* Catalan */
- /* case LANG_Zh: return 0x04; */      /* Chinese */
-    case LANG_Cs: return 0x05;         /* Czech */
-    case LANG_Da: return 0x06;         /* Danish */
-    case LANG_De: return 0x07;         /* German */
- /* case LANG_El: return 0x08; */      /* Greek */
-    case LANG_En: return 0x09;         /* English */
-    case LANG_Es: return 0x0a;         /* Spanish */
-    case LANG_Fi: return 0x0b;         /* Finnish */
-    case LANG_Fr: return 0x0c;         /* French */
- /* case LANG_Iw: return 0x0d; */      /* Hebrew */
-    case LANG_Hu: return 0x0e;         /* Hungarian */
- /* case LANG_Ic: return 0x0f; */      /* Icelandic */
-    case LANG_It: return 0x10;         /* Italian */
- /* case LANG_Ja: return 0x11; */      /* Japanese */
-    case LANG_Ko: return 0x12;         /* Korean */
- /* case LANG_Nl: return 0x13; */      /* Dutch */
-    case LANG_No: return 0x14;         /* Norwegian */
-    case LANG_Pl: return 0x15;         /* Polish */
-    case LANG_Pt: return 0x16;         /* Portuguese */
- /* case LANG_Rm: return 0x17; */      /* Rhaeto-romance */   
- /* case LANG_Ro: return 0x18; */      /* Romanian */
- /* case LANG_Ru: return 0x19; */      /* Russian */
- /* case LANG_Hr: return 0x1a; */      /* Croatian */
- /* case LANG_Sk: return 0x1b; */      /* Slovak */
- /* case LANG_Sq: return 0x1c; */      /* Albanian */
-    case LANG_Sv: return 0x1d;         /* Swedish */
- /* case LANG_Th: return 0x1e; */      /* Thai */
- /* case LANG_Tr: return 0x1f; */      /* Turkish */
- /* case LANG_Ur: return 0x20; */      /* Urdu */
- /* case LANG_In: return 0x21; */      /* Indonesian */
- /* case LANG_Uk: return 0x22; */      /* Ukrainian */
- /* case LANG_Be: return 0x23; */      /* Belarusian */
- /* case LANG_Sl: return 0x24; */      /* Slovenian */
- /* case LANG_Et: return 0x25; */      /* Estonian */
- /* case LANG_Lv: return 0x26; */      /* Latvian */
- /* case LANG_Lt: return 0x27; */      /* Lithuanian */
- /* case LANG_Mi: return 0x28; */      /* Maori */
- /* case LANG_Fa: return 0x29; */      /* Farsi */
- /* case LANG_Vi: return 0x2a; */      /* Vietnamese */
- /* case LANG_Hy: return 0x2b; */      /* Armenian */
- /* case LANG_Az: return 0x2c; */      /* Azeri */
- /* case LANG_Eu: return 0x2d; */      /* Basque */
- /* case LANG_??: return 0x2e; */      /* Sorbian */
- /* case LANG_Mk: return 0x2f; */      /* Macedonian */
- /* case LANG_??: return 0x30; */      /* Sutu */
- /* case LANG_Ts: return 0x31; */      /* Tsonga */
- /* case LANG_??: return 0x32; */      /* Tswana */
- /* case LANG_??: return 0x33; */      /* Venda */
- /* case LANG_Xh: return 0x34; */      /* Xhosa */
- /* case LANG_Zu: return 0x35; */      /* Zulu */
- /* case LANG_Af: return 0x36; */      /* Afrikaans */
- /* case LANG_Ka: return 0x37; */      /* Georgian */
- /* case LANG_Fo: return 0x38; */      /* Faeroese */
- /* case LANG_Hi: return 0x39; */      /* Hindi */
- /* case LANG_Mt: return 0x3a; */      /* Maltese */
- /* case LANG_??: return 0x3b; */      /* Saami */
- /* case LANG_Ga: return 0x3c; */      /* Gaelic */
- /* case LANG_Ms: return 0x3e; */      /* Malay */
- /* case LANG_Kk: return 0x3f; */      /* Kazakh */
- /* case LANG_Sw: return 0x41; */      /* Swahili */
- /* case LANG_Uz: return 0x43; */      /* Uzbek */
- /* case LANG_Tt: return 0x44; */      /* Tatar */
- /* case LANG_Bn: return 0x45; */      /* Bengali */
- /* case LANG_Pa: return 0x46; */      /* Punjabi */
- /* case LANG_Gu: return 0x47; */      /* Gujarati */
- /* case LANG_Or: return 0x48; */      /* Oriya */
- /* case LANG_Ta: return 0x49; */      /* Tamil */
- /* case LANG_Te: return 0x4a; */      /* Telugu */
- /* case LANG_Kn: return 0x4b; */      /* Kannada */
- /* case LANG_Ml: return 0x4c; */      /* Malayalam */
- /* case LANG_As: return 0x4d; */      /* Assamese */
- /* case LANG_Mr: return 0x4e; */      /* Marathi */
- /* case LANG_Sa: return 0x4f; */      /* Sanskrit */
- /* case LANG_??: return 0x57; */      /* Konkani */
-    case LANG_Eo: return 0x8f;         /* Esperanto (not official number) */
-
-    default:
-	return 0x00;                   /* Neutral language */
-    }
+	return MAKELCID( GetUserDefaultLangID() , SORT_DEFAULT );
 }
 
 /***********************************************************************
@@ -441,7 +358,39 @@ LCID WINAPI GetSystemDefaultLCID()
  */
 LANGID WINAPI GetUserDefaultLangID()
 {
-	return 0x400|(WORD)GetUserDefaultLCID();
+	char *buf=NULL;
+	char *lang,*country,*charset,*dialect,*next;
+	int ret=0;
+
+	if (Options.language) return Languages[Options.language].langid;
+
+	buf=getenv("LANGUAGE");
+	if (!buf) buf=getenv("LANG");
+	if (!buf) buf=getenv("LC_ALL");
+	if (!buf) buf=getenv("LC_MESSAGES");
+	if (!buf) return MAKELANGID( LANG_NEUTRAL, SUBLANG_DEFAULT );
+
+	if (!strcmp(buf,"POSIX") || !strcmp(buf,"C")) {
+		free(buf);
+		return MAKELANGID( LANG_NEUTRAL, SUBLANG_DEFAULT );
+	}
+
+	lang=buf;
+
+	do {
+		next=strchr(lang,':'); if (next) *next++='\0';
+		dialect=strchr(lang,'@'); if (dialect) *dialect++='\0';
+		charset=strchr(lang,'.'); if (charset) *charset++='\0';
+		country=strchr(lang,'_'); if (country) *country++='\0';
+
+		ret=MAIN_GetLanguageID(lang, country, charset, dialect);
+
+		lang=next;
+
+	} while (lang && !ret);
+
+	free(buf);
+	return (LANGID)ret;
 }
 
 /***********************************************************************
@@ -449,7 +398,7 @@ LANGID WINAPI GetUserDefaultLangID()
  */
 LANGID WINAPI GetSystemDefaultLangID()
 {
-	return 0x400|GetUserDefaultLangID();
+	return GetUserDefaultLangID();
 }
 
 /***********************************************************************
@@ -465,6 +414,7 @@ INT32 WINAPI GetLocaleInfo32A(LCID lcid,LCTYPE LCType,LPSTR buf,INT32 len)
 {
 	char	*retString;
 	int	found,i;
+	int	lang;
 
 	TRACE(ole,"(0x%lx,0x%lx,%p,%x)\n",
 			lcid,LCType,buf,len);
@@ -490,23 +440,28 @@ INT32 WINAPI GetLocaleInfo32A(LCID lcid,LCTYPE LCType,LPSTR buf,INT32 len)
 		return 0;
 	}
 
-#define LOCVAL(type,value) case type:retString=value;break;
+#define LOCVAL(type,value) case type:retString=value;found=1;break;
 
-/* Now, the language specific definitions. They don't have to be
-   complete */
-    found=1;
-    switch(Options.language)
-    {
+    /* Now, the language specific definitions. They don't have to be
+       complete */
+    found=0; i=0;
+
+    do {
+	if (i=0) lang=Languages[Options.language].langid;
+	if (i=1) lang=MAKELANGID( PRIMARYLANGID(lang), SUBLANG_DEFAULT);
+	i++;
+
+	switch(lang) {
     case LANG_De:
     	switch (LCType) {
 #include "nls/deu.nls"
-	default: found=0;break;
+	default: found=0; break;
 	}
     break;  /* LANG(De) */
 
     case LANG_Da:
     	switch (LCType) {
-#include "nls/dnk.nls"
+#include "nls/dan.nls"
 	default: found=0;break;
 	}
     break; /* LANG(Da) */
@@ -583,10 +538,11 @@ INT32 WINAPI GetLocaleInfo32A(LCID lcid,LCTYPE LCType,LPSTR buf,INT32 len)
 
 /*Insert other languages here*/
 
-    default:
-    	found=0;
-	break;
-    }  /* switch */
+	default:
+	    found=0;
+	    break;
+	}  /* switch */
+    } while (!found && i<2);
 
 	if(!found) {
 		ERR(ole,"'%s' not supported for your language.\n",

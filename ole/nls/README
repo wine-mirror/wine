@@ -1,0 +1,46 @@
+There is some confusion about the format of numeral fields;
+it seems to me it is field dependant, as fields
+
+LOCALE_ILANGUAGE and LOCALE_IDEFAULTLANGUAGE use hexadecimal,
+while LOCALE_ICOUNTRY, LOCALE_IDEFAULTCOUNTRY, LOCALE_IDEFAULTCODEPAGE
+and LOCALE_IDEFAULTANSICODEPAGE use decimal.
+
+I'll appreciate info on the others numeric fields; and a confirmation
+about the numeric fields I told above.
+
+I have also doubts for the alphanumeric fields; what character encoding
+should be used for non ascii strings ? DOS code page ? Windows code page ?
+Unix standard encoding (what I did until now) ? Unicode ?
+
+--
+
+Here is how I completed some fields:
+
+* month/weekdays names: from the locales definitions of glibc and Java.
+* native monetary symbol: from the locales definitions of glibc.
+* monetary international symbols: from documents of my bank :)
+* DOS code page: from MS-DOS manuals, and some notes from IBM PC-DOS Y2K update
+* Windows code page: from Wine definitions of cp125[1234567]
+* Country abbreviation: From iso 3 letters country codes
+* Country Number: it seems to be the country code used for telephone nubers
+	(maybe Windows use it for PPP dialers etc ?)
+* Language abbreviation: it is the iso 2 letter language code + a third
+	letter to identify the country.
+* Language number: from the include files (*.h) of the FreeType librairies
+	(freetype is a library to manipulate True Type fonts, and those TTF
+	have several strings telling copyright, face name, etc; the strings
+	can be in several languages and for Microsoft platforms the Windows
+	language code numbers are used to identify language).
+	Look at ole/ole2nls.c for a comprehensive list of language code
+	numbers and iso 2 letters names.
+* Calendar type: I have not info on it, but I guess it is to identify
+	if the calendar is a gregorian one, or another (eg arabic traditional,
+	etc). As I have, for months names etc, only info on gragorian
+	calendars I set it to "1" for all files, as it seems to indicate
+	a gregorian calendar.
+
+--
+
+Pablo Saratxaga
+<srtxg@chanae.alphanet.ch>
+

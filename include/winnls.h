@@ -145,16 +145,28 @@
 
 /* Language IDs */
 
+/* FIXME: are the symbolic names correct for LIDs:  0x17, 0x20, 0x28,
+ *	  0x2a, 0x2b, 0x2c, 0x2f, 0x30, 0x31, 0x32, 0x33, 0x34, 0x35,
+ *	  0x37, 0x39, 0x3a, 0x3b, 0x3c, 0x3e, 0x3f, 0x41, 0x43, 0x44,
+ *	  0x45, 0x46, 0x47, 0x48, 0x49, 0x4a, 0x4b, 0x4c, 0x4d, 0x4e,
+ *	  0x4f, 0x57
+ */
 #define LANG_NEUTRAL                     0x00
+#define LANG_AFRIKAANS			 0x36
+#define LANG_ALBANIAN			 0x1c
 #define LANG_ARABIC                      0x01
-#define LANG_AFRIKAANS                   0x36
-#define LANG_ALBANIAN                    0x1c
+#define LANG_ARMENIAN			 0x2b
+#define LANG_ASSAMESE			 0x4d
+#define LANG_AZERI			 0x2c
 #define LANG_BASQUE                      0x2d
+#define LANG_BENGALI			 0x45
 #define LANG_BULGARIAN                   0x02
 #define LANG_BYELORUSSIAN                0x23
 #define LANG_CATALAN                     0x03
 #define LANG_CHINESE                     0x04
-#define LANG_CROATIAN                    0x1a
+#define LANG_SERBO_CROATIAN              0x1a
+#define LANG_CROATIAN	  LANG_SERBO_CROATIAN
+#define LANG_SERBIAN	  LANG_SERBO_CROATIAN
 #define LANG_CZECH                       0x05
 #define LANG_DANISH                      0x06
 #define LANG_DUTCH                       0x13
@@ -164,37 +176,70 @@
 #define LANG_FARSI                       0x29
 #define LANG_FINNISH                     0x0b
 #define LANG_FRENCH                      0x0c
+#define LANG_GAELIC			 0x3c
+#define LANG_GEORGIAN			 0x37
 #define LANG_GERMAN                      0x07
 #define LANG_GREEK                       0x08
+#define LANG_GUJARATI			 0x47
 #define LANG_HEBREW                      0x0D
+#define LANG_HINDI			 0x39
 #define LANG_HUNGARIAN                   0x0e
 #define LANG_ICELANDIC                   0x0f
 #define LANG_INDONESIAN                  0x21
 #define LANG_ITALIAN                     0x10
 #define LANG_JAPANESE                    0x11
+#define LANG_KANNADA			 0x4b
+#define LANG_KAZAKH			 0x3f
+#define LANG_KONKANI			 0x57
 #define LANG_KOREAN                      0x12
 #define LANG_LATVIAN                     0x26
 #define LANG_LITHUANIAN                  0x27
+#define LANG_MACEDONIAN			 0x2f
+#define LANG_MALAY			 0x3e
+#define LANG_MALAYALAM			 0x4c
+#define LANG_MALTESE			 0x3a
+#define LANG_MAORI			 0x28
+#define LANG_MARATHI			 0x4e
 #define LANG_NORWEGIAN                   0x14
+#define LANG_ORIYA			 0x48
 #define LANG_POLISH                      0x15
 #define LANG_PORTUGUESE                  0x16
+#define LANG_PUNJABI			 0x46
+#define LANG_RHAETO_ROMANCE		 0x17
 #define LANG_ROMANIAN                    0x18
 #define LANG_RUSSIAN                     0x19
+#define LANG_SAAMI			 0x3b
+#define LANG_SANSKRIT			 0x4f
 #define LANG_SLOVAK                      0x1b
 #define LANG_SLOVENIAN                   0x24
 #define LANG_SORBIAN                     0x2e
 #define LANG_SPANISH                     0x0a
+#define LANG_SUTU			 0x30
+#define LANG_SWAHILI			 0x41
 #define LANG_SWEDISH                     0x1d
+#define LANG_TAMIL			 0x49
+#define LANG_TATAR			 0x44
+#define LANG_TELUGU			 0x4a
 #define LANG_THAI                        0x1e
+#define LANG_TSONGA			 0x31
+#define LANG_TSWANA			 0x32
 #define LANG_TURKISH                     0x1f
 #define LANG_UKRAINIAN                   0x22
+#define LANG_URDU			 0x20
+#define LANG_UZBEK			 0x43
+#define LANG_VENDA			 0x33
+#define LANG_VIETNAMESE			 0x2a
+#define LANG_XHOSA			 0x34
+#define LANG_ZULU			 0x35
+/* non standard; keep the number high enough (but < 0xff) */
+#define LANG_ESPERANTO			 0x8f
 
 /* Sublanguage definitions */
 #define SUBLANG_NEUTRAL                  0x00    /* language neutral */
 #define SUBLANG_DEFAULT                  0x01    /* user default */
 #define SUBLANG_SYS_DEFAULT              0x02    /* system default */
 
-#define SUBLANG_ARABIC_SAUDI_ARABIA      0x01
+#define SUBLANG_ARABIC                   0x01
 #define SUBLANG_ARABIC_IRAQ              0x02
 #define SUBLANG_ARABIC_EGYPT             0x03
 #define SUBLANG_ARABIC_LIBYA             0x04
@@ -215,8 +260,9 @@
 #define SUBLANG_CHINESE_HONGKONG         0x03
 #define SUBLANG_CHINESE_SINGAPORE        0x04
 #define SUBLANG_CHINESE_MACAU            0x05
-#define SUBLANG_DUTCH_NETHERLANDS        0x01
+#define SUBLANG_DUTCH                    0x01
 #define SUBLANG_DUTCH_BELGIAN            0x02
+#define SUBLANG_DUTCH_SURINAM		 0x03
 #define SUBLANG_ENGLISH_US               0x01
 #define SUBLANG_ENGLISH_UK               0x02
 #define SUBLANG_ENGLISH_AUS              0x03
@@ -230,28 +276,28 @@
 #define SUBLANG_ENGLISH_TRINIDAD         0x0b
 #define SUBLANG_ENGLISH_ZIMBABWE         0x0c
 #define SUBLANG_ENGLISH_PHILIPPINES      0x0d
-#define SUBLANG_FRENCH_FRANCE            0x01
+#define SUBLANG_FRENCH                   0x01
 #define SUBLANG_FRENCH_BELGIAN           0x02
 #define SUBLANG_FRENCH_CANADIAN          0x03
 #define SUBLANG_FRENCH_SWISS             0x04
 #define SUBLANG_FRENCH_LUXEMBOURG        0x05
 #define SUBLANG_FRENCH_MONACO            0x06
-#define SUBLANG_GERMAN_GERMANY           0x01
+#define SUBLANG_GERMAN                   0x01
 #define SUBLANG_GERMAN_SWISS             0x02
 #define SUBLANG_GERMAN_AUSTRIAN          0x03
 #define SUBLANG_GERMAN_LUXEMBOURG        0x04
 #define SUBLANG_GERMAN_LIECHTENSTEIN     0x05
-#define SUBLANG_ITALIAN_ITALIA           0x01
+#define SUBLANG_ITALIAN                  0x01
 #define SUBLANG_ITALIAN_SWISS            0x02
-#define SUBLANG_KOREAN_WANSUNG           0x01
+#define SUBLANG_KOREAN                   0x01
 #define SUBLANG_KOREAN_JOHAB             0x02
 #define SUBLANG_NORWEGIAN_BOKMAL         0x01
 #define SUBLANG_NORWEGIAN_NYNORSK        0x02
-#define SUBLANG_PORTUGUESE_PORTUGAL      0x02
+#define SUBLANG_PORTUGUESE               0x02
 #define SUBLANG_PORTUGUESE_BRAZILIAN     0x01
-#define SUBLANG_SPANISH_SPAIN_TRAD       0x01
+#define SUBLANG_SPANISH                  0x01
 #define SUBLANG_SPANISH_MEXICAN          0x02
-#define SUBLANG_SPANISH_SPAIN_MODERN     0x03
+#define SUBLANG_SPANISH_MODERN           0x03
 #define SUBLANG_SPANISH_GUATEMALA        0x04
 #define SUBLANG_SPANISH_COSTARICA        0x05
 #define SUBLANG_SPANISH_PANAMA           0x06
@@ -268,7 +314,26 @@
 #define SUBLANG_SPANISH_HONDURAS         0x11
 #define SUBLANG_SPANISH_NICARAGUA        0x12
 #define SUBLANG_SPANISH_PUERTO_RICO      0x13
-
+/* FIXME: I don't know the symbolic names for those */
+#define SUBLANG_ROMANIAN		 0x01
+#define SUBLANG_ROMANIAN_MOLDAVIA	 0x02
+#define SUBLANG_RUSSIAN			 0x01
+#define SUBLANG_RUSSIAN_MOLDAVIA	 0x02
+#define SUBLANG_CROATIAN		 0x01
+#define SUBLANG_SERBIAN			 0x02
+#define SUBLANG_SERBIAN_LATIN		 0x03
+#define SUBLANG_SWEDISH			 0x01
+#define SUBLANG_SWEDISH_FINLAND		 0x02
+#define SUBLANG_LITHUANIAN		 0x01
+#define SUBLANG_LITHUANIAN_CLASSIC	 0x02
+#define SUBLANG_AZERI			 0x01
+#define SUBLANG_AZERI_CYRILLIC		 0x02
+#define SUBLANG_GAELIC			 0x01
+#define SUBLANG_GAELIC_SCOTTISH		 0x02
+#define SUBLANG_MALAY			 0x01
+#define SUBLANG_MALAY_BRUNEI_DARUSSALAM  0x02
+#define SUBLANG_UZBEK			 0x01
+#define SUBLANG_UZBEK_CYRILLIC		 0x02
 
 /* Sort definitions */
 #define SORT_DEFAULT                     0x0
