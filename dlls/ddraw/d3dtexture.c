@@ -82,14 +82,515 @@ get_sub_mimaplevel(IDirectDrawSurfaceImpl *tex_ptr)
 /*******************************************************************************
  *			   IDirectSurface callback methods
  */
+
 HRESULT
-gltex_upload_texture(IDirectDrawSurfaceImpl *This) {
-    IDirect3DTextureGLImpl *glThis = (IDirect3DTextureGLImpl *) This->tex_private;
+gltex_flush_texture_memory_to_GL(IDirectDrawSurfaceImpl *surf_ptr) {
 #if 0
     static BOOL color_table_queried = FALSE;
 #endif
     static void (*ptr_ColorTableEXT) (GLenum target, GLenum internalformat,
 				      GLsizei width, GLenum format, GLenum type, const GLvoid *table) = NULL;
+    GLenum internal_format = GL_RGBA, format = GL_RGBA, pixel_format = GL_UNSIGNED_BYTE; /* This is only to prevent warnings.. */
+    VOID *surface = NULL;
+    DDSURFACEDESC *src_d = (DDSURFACEDESC *)&(surf_ptr->surface_desc);
+    IDirect3DTextureGLImpl *gl_surf_ptr = (IDirect3DTextureGLImpl *) surf_ptr->tex_private;
+    BOOL upload_done = FALSE;
+    BOOL error = FALSE;
+	
+    if (gl_surf_ptr->dirty_flag != SURFACE_MEMORY_DIRTY) {
+        TRACE("   - level %d already uploaded.\n", surf_ptr->mipmap_level);
+    } else {
+        TRACE("   - uploading texture level %d (initial done = %d).\n",
+	      surf_ptr->mipmap_level, gl_surf_ptr->initial_upload_done);
+	
+	/* Texture snooping for the curious :-) */
+	snoop_texture(surf_ptr);
+	
+	if (src_d->ddpfPixelFormat.dwFlags & DDPF_PALETTEINDEXED8) {
+	    /* ****************
+	       Paletted Texture
+	       **************** */
+	    IDirectDrawPaletteImpl* pal = surf_ptr->palette;
+	    BYTE table[256][4];
+	    int i;
+	    
+#if 0
+	    if (color_table_queried == FALSE) {
+	        ptr_ColorTableEXT =
+		  ((Mesa_DeviceCapabilities *) ((x11_dd_private *) surf_ptr->surface->s.ddraw->d->private)->device_capabilities)->ptr_ColorTableEXT;
+	    }
+#endif
+	    
+	    if (pal == NULL) {
+	        /* Upload a black texture. The real one will be uploaded on palette change */
+	        WARN("Palettized texture Loading with a NULL palette !\n");
+		memset(table, 0, 256 * 4);
+	    } else {
+	        /* Get the surface's palette */
+	        for (i = 0; i < 256; i++) {
+		    table[i][0] = pal->palents[i].peRed;
+		    table[i][1] = pal->palents[i].peGreen;
+		    table[i][2] = pal->palents[i].peBlue;
+		    if ((src_d->dwFlags & DDSD_CKSRCBLT) &&
+			(i >= src_d->ddckCKSrcBlt.dwColorSpaceLowValue) &&
+			(i <= src_d->ddckCKSrcBlt.dwColorSpaceHighValue))
+		        /* We should maybe here put a more 'neutral' color than the standard bright purple
+			   one often used by application to prevent the nice purple borders when bi-linear
+			   filtering is on */
+		        table[i][3] = 0x00;
+		    else
+		        table[i][3] = 0xFF;
+		}
+	    }
+
+	    if (ptr_ColorTableEXT != NULL) {
+	        /* use Paletted Texture Extension */
+	        ptr_ColorTableEXT(GL_TEXTURE_2D,    /* target */
+				  GL_RGBA,          /* internal format */
+				  256,              /* table size */
+				  GL_RGBA,          /* table format */
+				  GL_UNSIGNED_BYTE, /* table type */
+				  table);           /* the color table */
+		
+		glTexImage2D(GL_TEXTURE_2D,       /* target */
+			     surf_ptr->mipmap_level, /* level */
+			     GL_COLOR_INDEX8_EXT, /* internal format */
+			     src_d->dwWidth, src_d->dwHeight, /* width, height */
+			     0,                   /* border */
+			     GL_COLOR_INDEX,      /* texture format */
+			     GL_UNSIGNED_BYTE,    /* texture type */
+			     src_d->lpSurface); /* the texture */
+		
+		upload_done = TRUE;
+	    } else {
+	        DWORD i;
+		BYTE *src = (BYTE *) src_d->lpSurface, *dst;
+		
+		if (gl_surf_ptr->surface_ptr != NULL)
+		    surface = gl_surf_ptr->surface_ptr;
+		else
+		    surface = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, src_d->dwWidth * src_d->dwHeight * sizeof(DWORD));
+		dst = (BYTE *) surface;
+		
+		for (i = 0; i < src_d->dwHeight * src_d->dwWidth; i++) {
+		    BYTE color = *src++;
+		    *dst++ = table[color][0];
+		    *dst++ = table[color][1];
+		    *dst++ = table[color][2];
+		    *dst++ = table[color][3];
+		}
+		
+		format = GL_RGBA;
+		internal_format = GL_RGBA;
+		pixel_format = GL_UNSIGNED_BYTE;
+	    }
+	} else if (src_d->ddpfPixelFormat.dwFlags & DDPF_RGB) {
+	    /* ************
+	       RGB Textures
+	       ************ */
+	    if (src_d->ddpfPixelFormat.u1.dwRGBBitCount == 8) {
+	        if ((src_d->ddpfPixelFormat.u2.dwRBitMask == 0xE0) &&
+		    (src_d->ddpfPixelFormat.u3.dwGBitMask == 0x1C) &&
+		    (src_d->ddpfPixelFormat.u4.dwBBitMask == 0x03)) {
+		    /* **********************
+		       GL_UNSIGNED_BYTE_3_3_2
+		       ********************** */
+		    if (src_d->dwFlags & DDSD_CKSRCBLT) {
+		        /* This texture format will never be used.. So do not care about color keying
+			   up until the point in time it will be needed :-) */
+		        error = TRUE;
+		    } else {
+		        format = GL_RGB;
+			internal_format = GL_RGB;
+			pixel_format = GL_UNSIGNED_BYTE_3_3_2;
+		    }
+		} else {
+		    error = TRUE;
+		}
+	    } else if (src_d->ddpfPixelFormat.u1.dwRGBBitCount == 16) {
+	        if ((src_d->ddpfPixelFormat.u2.dwRBitMask ==        0xF800) &&
+		    (src_d->ddpfPixelFormat.u3.dwGBitMask ==        0x07E0) &&
+		    (src_d->ddpfPixelFormat.u4.dwBBitMask ==        0x001F) &&
+		    (src_d->ddpfPixelFormat.u5.dwRGBAlphaBitMask == 0x0000)) {
+		    if (src_d->dwFlags & DDSD_CKSRCBLT) {
+		        /* Converting the 565 format in 5551 packed to emulate color-keying.
+			   
+			   Note : in all these conversion, it would be best to average the averaging
+			          pixels to get the color of the pixel that will be color-keyed to
+				  prevent 'color bleeding'. This will be done later on if ever it is
+				  too visible.
+				      
+			   Note2: when using color-keying + alpha, are the alpha bits part of the
+			          color-space or not ?
+			*/
+		        DWORD i;
+			WORD *src = (WORD *) src_d->lpSurface, *dst;
+			
+			if (gl_surf_ptr->surface_ptr != NULL)
+			    surface = gl_surf_ptr->surface_ptr;
+			else
+			    surface = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
+						src_d->dwWidth * src_d->dwHeight * sizeof(WORD));
+			dst = (WORD *) surface;
+			for (i = 0; i < src_d->dwHeight * src_d->dwWidth; i++) {
+			    WORD color = *src++;
+			    *dst = ((color & 0xFFC0) | ((color & 0x1F) << 1));
+			    if ((color < src_d->ddckCKSrcBlt.dwColorSpaceLowValue) ||
+				(color > src_d->ddckCKSrcBlt.dwColorSpaceHighValue))
+			        *dst |= 0x0001;
+			    dst++;
+			}
+			
+			format = GL_RGBA;
+			internal_format = GL_RGBA;
+			pixel_format = GL_UNSIGNED_SHORT_5_5_5_1;
+		    } else {
+		        format = GL_RGB;
+			internal_format = GL_RGB;
+			pixel_format = GL_UNSIGNED_SHORT_5_6_5;
+		    }
+		} else if ((src_d->ddpfPixelFormat.u2.dwRBitMask ==        0xF800) &&
+			   (src_d->ddpfPixelFormat.u3.dwGBitMask ==        0x07C0) &&
+			   (src_d->ddpfPixelFormat.u4.dwBBitMask ==        0x003E) &&
+			   (src_d->ddpfPixelFormat.u5.dwRGBAlphaBitMask == 0x0001)) {
+		    format = GL_RGBA;
+		    internal_format = GL_RGBA;
+		    pixel_format = GL_UNSIGNED_SHORT_5_5_5_1;
+		    if (src_d->dwFlags & DDSD_CKSRCBLT) {
+			/* Change the alpha value of the color-keyed pixels to emulate color-keying. */
+			DWORD i;
+			WORD *src = (WORD *) src_d->lpSurface, *dst;
+			
+			if (gl_surf_ptr->surface_ptr != NULL)
+			    surface = gl_surf_ptr->surface_ptr;
+			else
+			    surface = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
+						src_d->dwWidth * src_d->dwHeight * sizeof(WORD));
+			dst = (WORD *) surface;
+			for (i = 0; i < src_d->dwHeight * src_d->dwWidth; i++) {
+			    WORD color = *src++;
+			    *dst = color & 0xFFFE;
+			    if ((color < src_d->ddckCKSrcBlt.dwColorSpaceLowValue) ||
+				(color > src_d->ddckCKSrcBlt.dwColorSpaceHighValue))
+				*dst |= color & 0x0001;
+			    dst++;
+			}
+		    }
+		} else if ((src_d->ddpfPixelFormat.u2.dwRBitMask ==        0xF000) &&
+			   (src_d->ddpfPixelFormat.u3.dwGBitMask ==        0x0F00) &&
+			   (src_d->ddpfPixelFormat.u4.dwBBitMask ==        0x00F0) &&
+			   (src_d->ddpfPixelFormat.u5.dwRGBAlphaBitMask == 0x000F)) {
+		    format = GL_RGBA;
+		    internal_format = GL_RGBA;
+		    pixel_format = GL_UNSIGNED_SHORT_4_4_4_4;
+		    if (src_d->dwFlags & DDSD_CKSRCBLT) {
+			/* Change the alpha value of the color-keyed pixels to emulate color-keying. */
+			DWORD i;
+			WORD *src = (WORD *) src_d->lpSurface, *dst;
+			
+			if (gl_surf_ptr->surface_ptr != NULL)
+			    surface = gl_surf_ptr->surface_ptr;
+			else
+			    surface = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
+						src_d->dwWidth * src_d->dwHeight * sizeof(WORD));
+			dst = (WORD *) surface;
+			for (i = 0; i < src_d->dwHeight * src_d->dwWidth; i++) {
+			    WORD color = *src++;
+			    *dst = color & 0xFFF0;
+			    if ((color < src_d->ddckCKSrcBlt.dwColorSpaceLowValue) ||
+				(color > src_d->ddckCKSrcBlt.dwColorSpaceHighValue))
+				*dst |= color & 0x000F;
+			    dst++;
+			}
+		    }
+		} else if ((src_d->ddpfPixelFormat.u2.dwRBitMask ==        0x0F00) &&
+			   (src_d->ddpfPixelFormat.u3.dwGBitMask ==        0x00F0) &&
+			   (src_d->ddpfPixelFormat.u4.dwBBitMask ==        0x000F) &&
+			   (src_d->ddpfPixelFormat.u5.dwRGBAlphaBitMask == 0xF000)) {
+		    /* Move the four Alpha bits... */
+		    if (src_d->dwFlags & DDSD_CKSRCBLT) {
+			DWORD i;
+			WORD *src = (WORD *) src_d->lpSurface, *dst;
+			
+			if (gl_surf_ptr->surface_ptr != NULL)
+			    surface = gl_surf_ptr->surface_ptr;
+			else
+			    surface = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
+						src_d->dwWidth * src_d->dwHeight * sizeof(WORD));
+			dst = surface;
+			
+			for (i = 0; i < src_d->dwHeight * src_d->dwWidth; i++) {
+			    WORD color = *src++;
+			    *dst = (color & 0x0FFF) << 4;
+			    if ((color < src_d->ddckCKSrcBlt.dwColorSpaceLowValue) ||
+				(color > src_d->ddckCKSrcBlt.dwColorSpaceHighValue))
+				*dst |= (color & 0xF000) >> 12;
+			    dst++;
+			}
+			format = GL_RGBA;
+			internal_format = GL_RGBA;
+			pixel_format = GL_UNSIGNED_SHORT_4_4_4_4;
+		    } else {
+			format = GL_BGRA;
+			internal_format = GL_RGBA;
+			pixel_format = GL_UNSIGNED_SHORT_4_4_4_4_REV;
+		    }
+		} else if ((src_d->ddpfPixelFormat.u2.dwRBitMask ==        0x7C00) &&
+			   (src_d->ddpfPixelFormat.u3.dwGBitMask ==        0x03E0) &&
+			   (src_d->ddpfPixelFormat.u4.dwBBitMask ==        0x001F) &&
+			   (src_d->ddpfPixelFormat.u5.dwRGBAlphaBitMask == 0x8000)) {
+		    if (src_d->dwFlags & DDSD_CKSRCBLT) {
+			DWORD i;
+			WORD *src = (WORD *) src_d->lpSurface, *dst;
+			
+			if (gl_surf_ptr->surface_ptr != NULL)
+			    surface = gl_surf_ptr->surface_ptr;
+			else
+			    surface = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
+						src_d->dwWidth * src_d->dwHeight * sizeof(WORD));
+			dst = (WORD *) surface;
+			
+			for (i = 0; i < src_d->dwHeight * src_d->dwWidth; i++) {
+			    WORD color = *src++;
+			    *dst = (color & 0x7FFF) << 1;
+			    if ((color < src_d->ddckCKSrcBlt.dwColorSpaceLowValue) ||
+				(color > src_d->ddckCKSrcBlt.dwColorSpaceHighValue))
+				*dst |= (color & 0x8000) >> 15;
+			    dst++;
+			}
+			format = GL_RGBA;
+			internal_format = GL_RGBA;
+			pixel_format = GL_UNSIGNED_SHORT_5_5_5_1;
+		    } else {
+			format = GL_BGRA;
+			internal_format = GL_RGBA;
+			pixel_format = GL_UNSIGNED_SHORT_1_5_5_5_REV;
+		    }
+		} else if ((src_d->ddpfPixelFormat.u2.dwRBitMask ==        0x7C00) &&
+			   (src_d->ddpfPixelFormat.u3.dwGBitMask ==        0x03E0) &&
+			   (src_d->ddpfPixelFormat.u4.dwBBitMask ==        0x001F) &&
+			   (src_d->ddpfPixelFormat.u5.dwRGBAlphaBitMask == 0x0000)) {
+		    /* Converting the 0555 format in 5551 packed */
+		    DWORD i;
+		    WORD *src = (WORD *) src_d->lpSurface, *dst;
+		    
+		    if (gl_surf_ptr->surface_ptr != NULL)
+			surface = gl_surf_ptr->surface_ptr;
+		    else
+			surface = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
+					    src_d->dwWidth * src_d->dwHeight * sizeof(WORD));
+		    dst = (WORD *) surface;
+		    
+		    if (src_d->dwFlags & DDSD_CKSRCBLT) {
+			for (i = 0; i < src_d->dwHeight * src_d->dwWidth; i++) {
+			    WORD color = *src++;
+			    *dst = (color & 0x7FFF) << 1;
+			    if ((color < src_d->ddckCKSrcBlt.dwColorSpaceLowValue) ||
+				(color > src_d->ddckCKSrcBlt.dwColorSpaceHighValue))
+				*dst |= 0x0001;
+			    dst++;
+			}
+		    } else {
+			for (i = 0; i < src_d->dwHeight * src_d->dwWidth; i++) {
+			    WORD color = *src++;
+			    *dst++ = ((color & 0x7FFF) << 1) | 0x0001;
+			}
+		    }
+		    
+		    format = GL_RGBA;
+		    internal_format = GL_RGBA;
+		    pixel_format = GL_UNSIGNED_SHORT_5_5_5_1;
+		} else {
+		    error = TRUE;
+		}
+	    } else if (src_d->ddpfPixelFormat.u1.dwRGBBitCount == 24) {
+		if ((src_d->ddpfPixelFormat.u2.dwRBitMask ==        0x00FF0000) &&
+		    (src_d->ddpfPixelFormat.u3.dwGBitMask ==        0x0000FF00) &&
+		    (src_d->ddpfPixelFormat.u4.dwBBitMask ==        0x000000FF) &&
+		    (src_d->ddpfPixelFormat.u5.dwRGBAlphaBitMask == 0x00000000)) {
+		    if (src_d->dwFlags & DDSD_CKSRCBLT) {
+			/* This is a pain :-) */
+			DWORD i;
+			BYTE *src = (BYTE *) src_d->lpSurface;
+			DWORD *dst;
+			
+			if (gl_surf_ptr->surface_ptr != NULL)
+			    surface = gl_surf_ptr->surface_ptr;
+			else
+			    surface = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
+						src_d->dwWidth * src_d->dwHeight * sizeof(DWORD));
+			dst = (DWORD *) surface;
+			for (i = 0; i < src_d->dwHeight * src_d->dwWidth; i++) {
+			    DWORD color = *((DWORD *) src) & 0x00FFFFFF;
+			    src += 3;
+			    *dst = *src++ << 8;
+			    if ((color < src_d->ddckCKSrcBlt.dwColorSpaceLowValue) ||
+				(color > src_d->ddckCKSrcBlt.dwColorSpaceHighValue))
+				*dst |= 0xFF;
+			    dst++;
+			}
+			format = GL_RGBA;
+			internal_format = GL_RGBA;
+			pixel_format = GL_UNSIGNED_INT_8_8_8_8;
+		    } else {
+			format = GL_BGR;
+			internal_format = GL_RGB;
+			pixel_format = GL_UNSIGNED_BYTE;
+		    }
+		} else {
+		    error = TRUE;
+		}
+	    } else if (src_d->ddpfPixelFormat.u1.dwRGBBitCount == 32) {
+		if ((src_d->ddpfPixelFormat.u2.dwRBitMask ==        0xFF000000) &&
+		    (src_d->ddpfPixelFormat.u3.dwGBitMask ==        0x00FF0000) &&
+		    (src_d->ddpfPixelFormat.u4.dwBBitMask ==        0x0000FF00) &&
+		    (src_d->ddpfPixelFormat.u5.dwRGBAlphaBitMask == 0x000000FF)) {
+		    if (src_d->dwFlags & DDSD_CKSRCBLT) {
+			/* Just use the alpha component to handle color-keying... */
+			DWORD i;
+			DWORD *src = (DWORD *) src_d->lpSurface, *dst;
+			
+			if (gl_surf_ptr->surface_ptr != NULL)
+			    surface = gl_surf_ptr->surface_ptr;
+			else
+			    surface = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
+						src_d->dwWidth * src_d->dwHeight * sizeof(DWORD));
+			
+			dst = (DWORD *) surface;
+			for (i = 0; i < src_d->dwHeight * src_d->dwWidth; i++) {
+			    DWORD color = *src++;
+			    *dst = color & 0xFFFFFF00;
+			    if ((color < src_d->ddckCKSrcBlt.dwColorSpaceLowValue) ||
+				(color > src_d->ddckCKSrcBlt.dwColorSpaceHighValue))
+				*dst |= color & 0x000000FF;
+			    dst++;
+			}
+		    }
+		    format = GL_RGBA;
+		    internal_format = GL_RGBA;
+		    pixel_format = GL_UNSIGNED_INT_8_8_8_8;
+		} else if ((src_d->ddpfPixelFormat.u2.dwRBitMask ==        0x00FF0000) &&
+			   (src_d->ddpfPixelFormat.u3.dwGBitMask ==        0x0000FF00) &&
+			   (src_d->ddpfPixelFormat.u4.dwBBitMask ==        0x000000FF) &&
+			   (src_d->ddpfPixelFormat.u5.dwRGBAlphaBitMask == 0xFF000000)) {
+		    if (src_d->dwFlags & DDSD_CKSRCBLT) {
+			DWORD i;
+			DWORD *src = (DWORD *) src_d->lpSurface, *dst;
+			
+			if (gl_surf_ptr->surface_ptr != NULL)
+			    surface = gl_surf_ptr->surface_ptr;
+			else
+			    surface = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, src_d->dwWidth * src_d->dwHeight * sizeof(DWORD));
+			
+			dst = (DWORD *) surface;
+			for (i = 0; i < src_d->dwHeight * src_d->dwWidth; i++) {
+			    DWORD color = *src++;
+			    *dst = (color & 0x00FFFFFF) << 8;
+			    if ((color < src_d->ddckCKSrcBlt.dwColorSpaceLowValue) ||
+				(color > src_d->ddckCKSrcBlt.dwColorSpaceHighValue))
+				*dst |= (color & 0xFF000000) >> 24;
+			    dst++;
+			}
+			format = GL_RGBA;
+			internal_format = GL_RGBA;
+			pixel_format = GL_UNSIGNED_INT_8_8_8_8;
+		    } else {
+			format = GL_BGRA;
+			internal_format = GL_RGBA;
+			pixel_format = GL_UNSIGNED_INT_8_8_8_8_REV;
+		    }
+		} else if ((src_d->ddpfPixelFormat.u2.dwRBitMask ==        0x00FF0000) &&
+			   (src_d->ddpfPixelFormat.u3.dwGBitMask ==        0x0000FF00) &&
+			   (src_d->ddpfPixelFormat.u4.dwBBitMask ==        0x000000FF) &&
+			   (src_d->ddpfPixelFormat.u5.dwRGBAlphaBitMask == 0x00000000)) {
+		    /* Just add an alpha component and handle color-keying... */
+		    DWORD i;
+		    DWORD *src = (DWORD *) src_d->lpSurface, *dst;
+		    
+		    if (gl_surf_ptr->surface_ptr != NULL)
+			surface = gl_surf_ptr->surface_ptr;
+		    else
+			surface = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, src_d->dwWidth * src_d->dwHeight * sizeof(DWORD));
+		    dst = (DWORD *) surface;
+		    
+		    if (src_d->dwFlags & DDSD_CKSRCBLT) {
+			for (i = 0; i < src_d->dwHeight * src_d->dwWidth; i++) {
+			    DWORD color = *src++;
+			    *dst = color << 8;
+			    if ((color < src_d->ddckCKSrcBlt.dwColorSpaceLowValue) ||
+				(color > src_d->ddckCKSrcBlt.dwColorSpaceHighValue))
+				*dst |= 0xFF;
+			    dst++;
+			}
+		    } else {
+			for (i = 0; i < src_d->dwHeight * src_d->dwWidth; i++) {
+			    *dst++ = (*src++ << 8) | 0xFF;
+			}
+		    }
+		    format = GL_RGBA;
+		    internal_format = GL_RGBA;
+		    pixel_format = GL_UNSIGNED_INT_8_8_8_8;
+		} else {
+		    error = TRUE;
+		}
+	    } else {
+		error = TRUE;
+	    }
+	} else {
+	    error = TRUE;
+	} 
+	
+	if ((upload_done == FALSE) && (error == FALSE)) {
+	    if (gl_surf_ptr->initial_upload_done == FALSE) {
+		glTexImage2D(GL_TEXTURE_2D,
+			     surf_ptr->mipmap_level,
+			     internal_format,
+			     src_d->dwWidth, src_d->dwHeight,
+			     0,
+			     format,
+			     pixel_format,
+			     surface == NULL ? src_d->lpSurface : surface);
+		gl_surf_ptr->initial_upload_done = TRUE;
+	    } else {
+		glTexSubImage2D(GL_TEXTURE_2D,
+				surf_ptr->mipmap_level,
+				0, 0,
+				src_d->dwWidth, src_d->dwHeight,
+				format,
+				pixel_format,
+				surface == NULL ? src_d->lpSurface : surface);
+	    }
+	    gl_surf_ptr->dirty_flag = SURFACE_MEMORY;
+	    
+	    /* And store the surface pointer for future reuse.. */
+	    if (surface)
+		gl_surf_ptr->surface_ptr = surface;
+	} else if (error == TRUE) {
+	    if (ERR_ON(ddraw)) {
+		ERR("  unsupported pixel format for textures : \n");
+		DDRAW_dump_pixelformat(&src_d->ddpfPixelFormat);
+	    }
+	}
+    }
+    
+    return DD_OK;
+}
+
+HRESULT
+gltex_flush_texture_GL_to_memory(IDirectDrawSurfaceImpl *surf_ptr) {
+    IDirect3DTextureGLImpl *gl_surf_ptr = (IDirect3DTextureGLImpl *) surf_ptr->tex_private;
+
+    FIXME("This is not supported yet... Expect some graphical glitches !!!\n");
+
+    /* GL and memory are in sync again ... */
+    gl_surf_ptr->dirty_flag = SURFACE_MEMORY;
+    
+    return DD_OK;
+}
+
+HRESULT
+gltex_upload_texture(IDirectDrawSurfaceImpl *This) {
+    IDirect3DTextureGLImpl *glThis = (IDirect3DTextureGLImpl *) This->tex_private;
     IDirectDrawSurfaceImpl *surf_ptr;
     GLuint tex_name = glThis->tex_name;
     
@@ -102,489 +603,8 @@ gltex_upload_texture(IDirectDrawSurfaceImpl *This) {
     
     surf_ptr = This;
     while (surf_ptr != NULL) {
-        GLenum internal_format = GL_RGBA, format = GL_RGBA, pixel_format = GL_UNSIGNED_BYTE; /* This is only to prevent warnings.. */
-	VOID *surface = NULL;
-	DDSURFACEDESC *src_d = (DDSURFACEDESC *)&(surf_ptr->surface_desc);
-	IDirect3DTextureGLImpl *gl_surf_ptr = (IDirect3DTextureGLImpl *) surf_ptr->tex_private;
-	BOOL upload_done = FALSE;
-	BOOL error = FALSE;
+	gltex_flush_texture_memory_to_GL(surf_ptr);
 	
-	if (gl_surf_ptr->dirty_flag == FALSE) {
-	    TRACE("   - level %d already uploaded.\n", surf_ptr->mipmap_level);
-	} else {
-	    TRACE("   - uploading texture level %d (initial done = %d).\n",
-		  surf_ptr->mipmap_level, gl_surf_ptr->initial_upload_done);
-
-	    /* Texture snooping for the curious :-) */
-	    snoop_texture(surf_ptr);
-    
-	    if (src_d->ddpfPixelFormat.dwFlags & DDPF_PALETTEINDEXED8) {
-	        /* ****************
-		   Paletted Texture
-		   **************** */
-	        IDirectDrawPaletteImpl* pal = surf_ptr->palette;
-		BYTE table[256][4];
-		int i;
-		
-#if 0
-		if (color_table_queried == FALSE) {
-		    ptr_ColorTableEXT =
-		      ((Mesa_DeviceCapabilities *) ((x11_dd_private *) surf_ptr->surface->s.ddraw->d->private)->device_capabilities)->ptr_ColorTableEXT;
-		}
-#endif
-		
-		if (pal == NULL) {
-		    /* Upload a black texture. The real one will be uploaded on palette change */
-		    WARN("Palettized texture Loading with a NULL palette !\n");
-		    memset(table, 0, 256 * 4);
-		} else {
-		    /* Get the surface's palette */
-		    for (i = 0; i < 256; i++) {
-		        table[i][0] = pal->palents[i].peRed;
-			table[i][1] = pal->palents[i].peGreen;
-			table[i][2] = pal->palents[i].peBlue;
-			if ((src_d->dwFlags & DDSD_CKSRCBLT) &&
-			    (i >= src_d->ddckCKSrcBlt.dwColorSpaceLowValue) &&
-			    (i <= src_d->ddckCKSrcBlt.dwColorSpaceHighValue))
-			    /* We should maybe here put a more 'neutral' color than the standard bright purple
-			       one often used by application to prevent the nice purple borders when bi-linear
-			       filtering is on */
-			    table[i][3] = 0x00;
-			else
-			    table[i][3] = 0xFF;
-		    }
-		}
-
-		if (ptr_ColorTableEXT != NULL) {
-		    /* use Paletted Texture Extension */
-		    ptr_ColorTableEXT(GL_TEXTURE_2D,    /* target */
-				      GL_RGBA,          /* internal format */
-				      256,              /* table size */
-				      GL_RGBA,          /* table format */
-				      GL_UNSIGNED_BYTE, /* table type */
-				      table);           /* the color table */
-		    
-		    glTexImage2D(GL_TEXTURE_2D,       /* target */
-				 surf_ptr->mipmap_level, /* level */
-				 GL_COLOR_INDEX8_EXT, /* internal format */
-				 src_d->dwWidth, src_d->dwHeight, /* width, height */
-				 0,                   /* border */
-				 GL_COLOR_INDEX,      /* texture format */
-				 GL_UNSIGNED_BYTE,    /* texture type */
-				 src_d->lpSurface); /* the texture */
-		    
-		    upload_done = TRUE;
-		} else {
-		    DWORD i;
-		    BYTE *src = (BYTE *) src_d->lpSurface, *dst;
-
-		    if (glThis->surface_ptr != NULL)
-		        surface = glThis->surface_ptr;
-		    else
-		        surface = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, src_d->dwWidth * src_d->dwHeight * sizeof(DWORD));
-		    dst = (BYTE *) surface;
-		    
-		    for (i = 0; i < src_d->dwHeight * src_d->dwWidth; i++) {
-		        BYTE color = *src++;
-			*dst++ = table[color][0];
-			*dst++ = table[color][1];
-			*dst++ = table[color][2];
-			*dst++ = table[color][3];
-		    }
-		    
-		    format = GL_RGBA;
-		    internal_format = GL_RGBA;
-		    pixel_format = GL_UNSIGNED_BYTE;
-		}
-	    } else if (src_d->ddpfPixelFormat.dwFlags & DDPF_RGB) {
-	        /* ************
-		   RGB Textures
-		   ************ */
-	        if (src_d->ddpfPixelFormat.u1.dwRGBBitCount == 8) {
-		    if ((src_d->ddpfPixelFormat.u2.dwRBitMask == 0xE0) &&
-			(src_d->ddpfPixelFormat.u3.dwGBitMask == 0x1C) &&
-			(src_d->ddpfPixelFormat.u4.dwBBitMask == 0x03)) {
-		        /* **********************
-			   GL_UNSIGNED_BYTE_3_3_2
-			   ********************** */
-		        if (src_d->dwFlags & DDSD_CKSRCBLT) {
-			    /* This texture format will never be used.. So do not care about color keying
-			       up until the point in time it will be needed :-) */
-			    error = TRUE;
-			} else {
-			    format = GL_RGB;
-			    internal_format = GL_RGB;
-			    pixel_format = GL_UNSIGNED_BYTE_3_3_2;
-			}
-		    } else {
-		        error = TRUE;
-		    }
-		} else if (src_d->ddpfPixelFormat.u1.dwRGBBitCount == 16) {
-		    if ((src_d->ddpfPixelFormat.u2.dwRBitMask ==        0xF800) &&
-			(src_d->ddpfPixelFormat.u3.dwGBitMask ==        0x07E0) &&
-			(src_d->ddpfPixelFormat.u4.dwBBitMask ==        0x001F) &&
-			(src_d->ddpfPixelFormat.u5.dwRGBAlphaBitMask == 0x0000)) {
-		        if (src_d->dwFlags & DDSD_CKSRCBLT) {
-			    /* Converting the 565 format in 5551 packed to emulate color-keying.
-			       
-			       Note : in all these conversion, it would be best to average the averaging
-			              pixels to get the color of the pixel that will be color-keyed to
-				      prevent 'color bleeding'. This will be done later on if ever it is
-				      too visible.
-				      
-			       Note2: when using color-keying + alpha, are the alpha bits part of the
-			              color-space or not ?
-			    */
-			    DWORD i;
-			    WORD *src = (WORD *) src_d->lpSurface, *dst;
-			    
-			    if (glThis->surface_ptr != NULL)
-			        surface = glThis->surface_ptr;
-			    else
-			        surface = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
-						    src_d->dwWidth * src_d->dwHeight * sizeof(WORD));
-			    dst = (WORD *) surface;
-			    for (i = 0; i < src_d->dwHeight * src_d->dwWidth; i++) {
-			        WORD color = *src++;
-				*dst = ((color & 0xFFC0) | ((color & 0x1F) << 1));
-				if ((color < src_d->ddckCKSrcBlt.dwColorSpaceLowValue) ||
-				    (color > src_d->ddckCKSrcBlt.dwColorSpaceHighValue))
-				    *dst |= 0x0001;
-				dst++;
-			    }
-			    
-			    format = GL_RGBA;
-			    internal_format = GL_RGBA;
-			    pixel_format = GL_UNSIGNED_SHORT_5_5_5_1;
-			} else {
-			    format = GL_RGB;
-			    internal_format = GL_RGB;
-			    pixel_format = GL_UNSIGNED_SHORT_5_6_5;
-			}
-		    } else if ((src_d->ddpfPixelFormat.u2.dwRBitMask ==        0xF800) &&
-			       (src_d->ddpfPixelFormat.u3.dwGBitMask ==        0x07C0) &&
-			       (src_d->ddpfPixelFormat.u4.dwBBitMask ==        0x003E) &&
-			       (src_d->ddpfPixelFormat.u5.dwRGBAlphaBitMask == 0x0001)) {
-		        format = GL_RGBA;
-			internal_format = GL_RGBA;
-			pixel_format = GL_UNSIGNED_SHORT_5_5_5_1;
-			if (src_d->dwFlags & DDSD_CKSRCBLT) {
-			    /* Change the alpha value of the color-keyed pixels to emulate color-keying. */
-			    DWORD i;
-			    WORD *src = (WORD *) src_d->lpSurface, *dst;
-			    
-			    if (glThis->surface_ptr != NULL)
-			        surface = glThis->surface_ptr;
-			    else
-			        surface = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
-						    src_d->dwWidth * src_d->dwHeight * sizeof(WORD));
-			    dst = (WORD *) surface;
-			    for (i = 0; i < src_d->dwHeight * src_d->dwWidth; i++) {
-			        WORD color = *src++;
-				*dst = color & 0xFFFE;
-				if ((color < src_d->ddckCKSrcBlt.dwColorSpaceLowValue) ||
-				    (color > src_d->ddckCKSrcBlt.dwColorSpaceHighValue))
-				    *dst |= color & 0x0001;
-				dst++;
-			    }
-			}
-		    } else if ((src_d->ddpfPixelFormat.u2.dwRBitMask ==        0xF000) &&
-			       (src_d->ddpfPixelFormat.u3.dwGBitMask ==        0x0F00) &&
-			       (src_d->ddpfPixelFormat.u4.dwBBitMask ==        0x00F0) &&
-			       (src_d->ddpfPixelFormat.u5.dwRGBAlphaBitMask == 0x000F)) {
-		        format = GL_RGBA;
-			internal_format = GL_RGBA;
-			pixel_format = GL_UNSIGNED_SHORT_4_4_4_4;
-			if (src_d->dwFlags & DDSD_CKSRCBLT) {
-			    /* Change the alpha value of the color-keyed pixels to emulate color-keying. */
-			    DWORD i;
-			    WORD *src = (WORD *) src_d->lpSurface, *dst;
-		    
-			    if (glThis->surface_ptr != NULL)
-			        surface = glThis->surface_ptr;
-			    else
-			        surface = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
-						    src_d->dwWidth * src_d->dwHeight * sizeof(WORD));
-			    dst = (WORD *) surface;
-			    for (i = 0; i < src_d->dwHeight * src_d->dwWidth; i++) {
-			        WORD color = *src++;
-				*dst = color & 0xFFF0;
-				if ((color < src_d->ddckCKSrcBlt.dwColorSpaceLowValue) ||
-				    (color > src_d->ddckCKSrcBlt.dwColorSpaceHighValue))
-				    *dst |= color & 0x000F;
-				dst++;
-			    }
-			}
-		    } else if ((src_d->ddpfPixelFormat.u2.dwRBitMask ==        0x0F00) &&
-			       (src_d->ddpfPixelFormat.u3.dwGBitMask ==        0x00F0) &&
-			       (src_d->ddpfPixelFormat.u4.dwBBitMask ==        0x000F) &&
-			       (src_d->ddpfPixelFormat.u5.dwRGBAlphaBitMask == 0xF000)) {
-		        /* Move the four Alpha bits... */
-			if (src_d->dwFlags & DDSD_CKSRCBLT) {
-			    DWORD i;
-			    WORD *src = (WORD *) src_d->lpSurface, *dst;
-			
-			    if (glThis->surface_ptr != NULL)
-			        surface = glThis->surface_ptr;
-			    else
-			        surface = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
-						    src_d->dwWidth * src_d->dwHeight * sizeof(WORD));
-			    dst = surface;
-			    
-			    for (i = 0; i < src_d->dwHeight * src_d->dwWidth; i++) {
-			        WORD color = *src++;
-				*dst = (color & 0x0FFF) << 4;
-				if ((color < src_d->ddckCKSrcBlt.dwColorSpaceLowValue) ||
-				    (color > src_d->ddckCKSrcBlt.dwColorSpaceHighValue))
-				    *dst |= (color & 0xF000) >> 12;
-				dst++;
-			    }
-			    format = GL_RGBA;
-			    internal_format = GL_RGBA;
-			    pixel_format = GL_UNSIGNED_SHORT_4_4_4_4;
-			} else {
-			    format = GL_BGRA;
-			    internal_format = GL_RGBA;
-			    pixel_format = GL_UNSIGNED_SHORT_4_4_4_4_REV;
-			}
-		    } else if ((src_d->ddpfPixelFormat.u2.dwRBitMask ==        0x7C00) &&
-			       (src_d->ddpfPixelFormat.u3.dwGBitMask ==        0x03E0) &&
-			       (src_d->ddpfPixelFormat.u4.dwBBitMask ==        0x001F) &&
-			       (src_d->ddpfPixelFormat.u5.dwRGBAlphaBitMask == 0x8000)) {
-			if (src_d->dwFlags & DDSD_CKSRCBLT) {
-			    DWORD i;
-			    WORD *src = (WORD *) src_d->lpSurface, *dst;
-			
-			    if (glThis->surface_ptr != NULL)
-			        surface = glThis->surface_ptr;
-			    else
-			        surface = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
-						    src_d->dwWidth * src_d->dwHeight * sizeof(WORD));
-			    dst = (WORD *) surface;
-			
-			    for (i = 0; i < src_d->dwHeight * src_d->dwWidth; i++) {
-			        WORD color = *src++;
-				*dst = (color & 0x7FFF) << 1;
-				if ((color < src_d->ddckCKSrcBlt.dwColorSpaceLowValue) ||
-				    (color > src_d->ddckCKSrcBlt.dwColorSpaceHighValue))
-				    *dst |= (color & 0x8000) >> 15;
-				dst++;
-			    }
-			    format = GL_RGBA;
-			    internal_format = GL_RGBA;
-			    pixel_format = GL_UNSIGNED_SHORT_5_5_5_1;
-			} else {
-			    format = GL_BGRA;
-			    internal_format = GL_RGBA;
-			    pixel_format = GL_UNSIGNED_SHORT_1_5_5_5_REV;
-			}
-		    } else if ((src_d->ddpfPixelFormat.u2.dwRBitMask ==        0x7C00) &&
-			       (src_d->ddpfPixelFormat.u3.dwGBitMask ==        0x03E0) &&
-			       (src_d->ddpfPixelFormat.u4.dwBBitMask ==        0x001F) &&
-			       (src_d->ddpfPixelFormat.u5.dwRGBAlphaBitMask == 0x0000)) {
-		        /* Converting the 0555 format in 5551 packed */
-		        DWORD i;
-			WORD *src = (WORD *) src_d->lpSurface, *dst;
-			
-			if (glThis->surface_ptr != NULL)
-			    surface = glThis->surface_ptr;
-			else
-			    surface = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
-						src_d->dwWidth * src_d->dwHeight * sizeof(WORD));
-			dst = (WORD *) surface;
-			
-			if (src_d->dwFlags & DDSD_CKSRCBLT) {
-			    for (i = 0; i < src_d->dwHeight * src_d->dwWidth; i++) {
-			        WORD color = *src++;
-				*dst = (color & 0x7FFF) << 1;
-				if ((color < src_d->ddckCKSrcBlt.dwColorSpaceLowValue) ||
-				    (color > src_d->ddckCKSrcBlt.dwColorSpaceHighValue))
-				    *dst |= 0x0001;
-				dst++;
-			    }
-			} else {
-			    for (i = 0; i < src_d->dwHeight * src_d->dwWidth; i++) {
-			        WORD color = *src++;
-				*dst++ = ((color & 0x7FFF) << 1) | 0x0001;
-			    }
-			}
-			
-			format = GL_RGBA;
-			internal_format = GL_RGBA;
-			pixel_format = GL_UNSIGNED_SHORT_5_5_5_1;
-		    } else {
-		        error = TRUE;
-		    }
-		} else if (src_d->ddpfPixelFormat.u1.dwRGBBitCount == 24) {
-		    if ((src_d->ddpfPixelFormat.u2.dwRBitMask ==        0x00FF0000) &&
-			(src_d->ddpfPixelFormat.u3.dwGBitMask ==        0x0000FF00) &&
-			(src_d->ddpfPixelFormat.u4.dwBBitMask ==        0x000000FF) &&
-			(src_d->ddpfPixelFormat.u5.dwRGBAlphaBitMask == 0x00000000)) {
-		        if (src_d->dwFlags & DDSD_CKSRCBLT) {
-			    /* This is a pain :-) */
-			    DWORD i;
-			    BYTE *src = (BYTE *) src_d->lpSurface;
-			    DWORD *dst;
-			    
-			    if (glThis->surface_ptr != NULL)
-			        surface = glThis->surface_ptr;
-			    else
-			        surface = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
-						    src_d->dwWidth * src_d->dwHeight * sizeof(DWORD));
-			    dst = (DWORD *) surface;
-			    for (i = 0; i < src_d->dwHeight * src_d->dwWidth; i++) {
-			        DWORD color = *((DWORD *) src) & 0x00FFFFFF;
-				src += 3;
-				*dst = *src++ << 8;
-				if ((color < src_d->ddckCKSrcBlt.dwColorSpaceLowValue) ||
-				    (color > src_d->ddckCKSrcBlt.dwColorSpaceHighValue))
-				    *dst |= 0xFF;
-				dst++;
-			    }
-			    format = GL_RGBA;
-			    internal_format = GL_RGBA;
-			    pixel_format = GL_UNSIGNED_INT_8_8_8_8;
-			} else {
-			    format = GL_BGR;
-			    internal_format = GL_RGB;
-			    pixel_format = GL_UNSIGNED_BYTE;
-			}
-		    } else {
-		        error = TRUE;
-		    }
-		} else if (src_d->ddpfPixelFormat.u1.dwRGBBitCount == 32) {
-		    if ((src_d->ddpfPixelFormat.u2.dwRBitMask ==        0xFF000000) &&
-			(src_d->ddpfPixelFormat.u3.dwGBitMask ==        0x00FF0000) &&
-			(src_d->ddpfPixelFormat.u4.dwBBitMask ==        0x0000FF00) &&
-			(src_d->ddpfPixelFormat.u5.dwRGBAlphaBitMask == 0x000000FF)) {
-		        if (src_d->dwFlags & DDSD_CKSRCBLT) {
-			    /* Just use the alpha component to handle color-keying... */
-			    DWORD i;
-			    DWORD *src = (DWORD *) src_d->lpSurface, *dst;
-			    
-			    if (glThis->surface_ptr != NULL)
-			        surface = glThis->surface_ptr;
-			    else
-			        surface = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
-						    src_d->dwWidth * src_d->dwHeight * sizeof(DWORD));
-			    
-			    dst = (DWORD *) surface;
-			    for (i = 0; i < src_d->dwHeight * src_d->dwWidth; i++) {
-			        DWORD color = *src++;
-				*dst = color & 0xFFFFFF00;
-				if ((color < src_d->ddckCKSrcBlt.dwColorSpaceLowValue) ||
-				    (color > src_d->ddckCKSrcBlt.dwColorSpaceHighValue))
-				    *dst |= color & 0x000000FF;
-				dst++;
-			    }
-			}
-			format = GL_RGBA;
-			internal_format = GL_RGBA;
-			pixel_format = GL_UNSIGNED_INT_8_8_8_8;
-		    } else if ((src_d->ddpfPixelFormat.u2.dwRBitMask ==        0x00FF0000) &&
-			       (src_d->ddpfPixelFormat.u3.dwGBitMask ==        0x0000FF00) &&
-			       (src_d->ddpfPixelFormat.u4.dwBBitMask ==        0x000000FF) &&
-			       (src_d->ddpfPixelFormat.u5.dwRGBAlphaBitMask == 0xFF000000)) {
-			if (src_d->dwFlags & DDSD_CKSRCBLT) {
-			    DWORD i;
-			    DWORD *src = (DWORD *) src_d->lpSurface, *dst;
-			    
-			    if (glThis->surface_ptr != NULL)
-			        surface = glThis->surface_ptr;
-			    else
-			        surface = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, src_d->dwWidth * src_d->dwHeight * sizeof(DWORD));
-			
-			    dst = (DWORD *) surface;
-			    for (i = 0; i < src_d->dwHeight * src_d->dwWidth; i++) {
-			        DWORD color = *src++;
-				*dst = (color & 0x00FFFFFF) << 8;
-				if ((color < src_d->ddckCKSrcBlt.dwColorSpaceLowValue) ||
-				    (color > src_d->ddckCKSrcBlt.dwColorSpaceHighValue))
-				    *dst |= (color & 0xFF000000) >> 24;
-				dst++;
-			    }
-			    format = GL_RGBA;
-			    internal_format = GL_RGBA;
-			    pixel_format = GL_UNSIGNED_INT_8_8_8_8;
-			} else {
-			    format = GL_BGRA;
-			    internal_format = GL_RGBA;
-			    pixel_format = GL_UNSIGNED_INT_8_8_8_8_REV;
-			}
-		    } else if ((src_d->ddpfPixelFormat.u2.dwRBitMask ==        0x00FF0000) &&
-			       (src_d->ddpfPixelFormat.u3.dwGBitMask ==        0x0000FF00) &&
-			       (src_d->ddpfPixelFormat.u4.dwBBitMask ==        0x000000FF) &&
-			       (src_d->ddpfPixelFormat.u5.dwRGBAlphaBitMask == 0x00000000)) {
-		        /* Just add an alpha component and handle color-keying... */
-		        DWORD i;
-			DWORD *src = (DWORD *) src_d->lpSurface, *dst;
-			
-			if (glThis->surface_ptr != NULL)
-			    surface = glThis->surface_ptr;
-			else
-			    surface = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, src_d->dwWidth * src_d->dwHeight * sizeof(DWORD));
-			dst = (DWORD *) surface;
-			
-			if (src_d->dwFlags & DDSD_CKSRCBLT) {
-			    for (i = 0; i < src_d->dwHeight * src_d->dwWidth; i++) {
-			        DWORD color = *src++;
-				*dst = color << 8;
-				if ((color < src_d->ddckCKSrcBlt.dwColorSpaceLowValue) ||
-				    (color > src_d->ddckCKSrcBlt.dwColorSpaceHighValue))
-				    *dst |= 0xFF;
-				dst++;
-			    }
-			} else {
-			    for (i = 0; i < src_d->dwHeight * src_d->dwWidth; i++) {
-			        *dst++ = (*src++ << 8) | 0xFF;
-			    }
-			}
-			format = GL_RGBA;
-			internal_format = GL_RGBA;
-			pixel_format = GL_UNSIGNED_INT_8_8_8_8;
-		    } else {
-		        error = TRUE;
-		    }
-		} else {
-		    error = TRUE;
-		}
-	    } else {
-	        error = TRUE;
-	    } 
-	    
-	    if ((upload_done == FALSE) && (error == FALSE)) {
-	        if (gl_surf_ptr->initial_upload_done == FALSE) {
-		    glTexImage2D(GL_TEXTURE_2D,
-				 surf_ptr->mipmap_level,
-				 internal_format,
-				 src_d->dwWidth, src_d->dwHeight,
-				 0,
-				 format,
-				 pixel_format,
-				 surface == NULL ? src_d->lpSurface : surface);
-		    gl_surf_ptr->initial_upload_done = TRUE;
-		} else {
-		    glTexSubImage2D(GL_TEXTURE_2D,
-				    surf_ptr->mipmap_level,
-				    0, 0,
-				    src_d->dwWidth, src_d->dwHeight,
-				    format,
-				    pixel_format,
-				    surface == NULL ? src_d->lpSurface : surface);
-		}
-		gl_surf_ptr->dirty_flag = FALSE;
-		
-		/* And store the surface pointer for future reuse.. */
-		if (surface)
-		    glThis->surface_ptr = surface;
-	    } else if (error == TRUE) {
-	        if (ERR_ON(ddraw)) {
-		    ERR("  unsupported pixel format for textures : \n");
-		    DDRAW_dump_pixelformat(&src_d->ddpfPixelFormat);
-		}
-	    }
-	}
-
 	if (surf_ptr->surface_desc.ddsCaps.dwCaps & DDSCAPS_MIPMAP) {
 	    surf_ptr = get_sub_mimaplevel(surf_ptr);
 	} else {
@@ -610,10 +630,122 @@ gltex_setcolorkey_cb(IDirectDrawSurfaceImpl *This, DWORD dwFlags, LPDDCOLORKEY c
 {
     IDirect3DTextureGLImpl *glThis = (IDirect3DTextureGLImpl *) This->tex_private;
 
-    glThis->dirty_flag = TRUE;
+    if (glThis->dirty_flag == SURFACE_GL) {
+	GLuint cur_tex;
+	
+	ENTER_GL();
+	glGetIntegerv(GL_TEXTURE_BINDING_2D, &cur_tex);
+	glBindTexture(GL_TEXTURE_2D, glThis->tex_name);
+	gltex_flush_texture_GL_to_memory(This);
+	glBindTexture(GL_TEXTURE_2D, cur_tex);
+	LEAVE_GL();
+    }
+
+    glThis->dirty_flag = SURFACE_MEMORY_DIRTY;
     /* TODO: check color-keying on mipmapped surfaces... */
     
     return DD_OK;
+}
+
+HRESULT
+gltex_blt(IDirectDrawSurfaceImpl *This, LPRECT rdst,
+	  LPDIRECTDRAWSURFACE7 src, LPRECT rsrc,
+	  DWORD dwFlags, LPDDBLTFX lpbltfx)
+{
+    if (src != NULL) {
+	IDirectDrawSurfaceImpl *src_ptr = ICOM_OBJECT(IDirectDrawSurfaceImpl, IDirectDrawSurface7, src);
+	if (src_ptr->surface_desc.ddsCaps.dwCaps & DDSCAPS_3DDEVICE) {
+	    FIXME("Blt from framebuffer to texture - unsupported now, please report !\n");
+	}
+    }
+    return DDERR_INVALIDPARAMS;
+}
+
+HRESULT
+gltex_bltfast(IDirectDrawSurfaceImpl *surf_ptr, DWORD dstx,
+	      DWORD dsty, LPDIRECTDRAWSURFACE7 src,
+	      LPRECT rsrc, DWORD trans)
+{
+    if (src != NULL) {
+	IDirectDrawSurfaceImpl *src_ptr = ICOM_OBJECT(IDirectDrawSurfaceImpl, IDirectDrawSurface7, src);
+	
+	if ((src_ptr->surface_desc.ddsCaps.dwCaps & DDSCAPS_3DDEVICE) &&
+	    ((trans & (DDBLTFAST_SRCCOLORKEY | DDBLTFAST_DESTCOLORKEY)) == 0)) {
+	    /* This is a blt without color keying... We can use the direct copy. */
+	    RECT rsrc2;
+	    DWORD width, height;
+	    GLuint cur_tex;
+	    IDirect3DTextureGLImpl *gl_surf_ptr = surf_ptr->tex_private;
+	    int y;
+	    
+	    if (rsrc == NULL) {
+		WARN("rsrc is NULL\n");
+		rsrc = &rsrc2;
+		
+		rsrc->left = 0;
+		rsrc->top = 0;
+		rsrc->right = src_ptr->surface_desc.dwWidth;
+		rsrc->bottom = src_ptr->surface_desc.dwHeight;
+	    }
+	    
+	    width = rsrc->right - rsrc->left;
+	    height = rsrc->bottom - rsrc->top;
+	    
+	    if (((dstx + width)  > surf_ptr->surface_desc.dwWidth) ||
+		((dsty + height) > surf_ptr->surface_desc.dwHeight)) {
+		FIXME("Does not handle clipping yet in FB => Texture blits !\n");
+		return DDERR_INVALIDPARAMS;
+	    }
+
+	    TRACE(" direct frame buffer => texture BltFast override.\n");
+	    
+	    ENTER_GL();
+	    
+	    glGetIntegerv(GL_TEXTURE_BINDING_2D, &cur_tex);
+	    glBindTexture(GL_TEXTURE_2D, gl_surf_ptr->tex_name);
+	    
+	    if ((gl_surf_ptr->dirty_flag == SURFACE_MEMORY_DIRTY) &&
+		!((dstx == 0) && (dsty == 0) &&
+		  (width == surf_ptr->surface_desc.dwWidth) && (height == surf_ptr->surface_desc.dwHeight))) {
+		/* If not 'full size' and the surface is dirty, first flush it to GL before doing the copy. */
+		gltex_flush_texture_memory_to_GL(surf_ptr);
+	    }
+
+	    /* This is a hack and would need some clean-up :-) */
+	    if (gl_surf_ptr->initial_upload_done == FALSE) {
+		gl_surf_ptr->dirty_flag = SURFACE_MEMORY_DIRTY;
+		gltex_flush_texture_memory_to_GL(surf_ptr);
+	    }
+	    
+	    if ((src_ptr->surface_desc.ddsCaps.dwCaps & (DDSCAPS_FRONTBUFFER|DDSCAPS_PRIMARYSURFACE)) != 0)
+		glReadBuffer(GL_FRONT);
+	    else if ((src_ptr->surface_desc.ddsCaps.dwCaps & (DDSCAPS_BACKBUFFER)) == (DDSCAPS_BACKBUFFER))
+		glReadBuffer(GL_BACK);
+	    else {
+		ERR("Wrong surface type for locking !\n");
+		LEAVE_GL();
+		return DDERR_INVALIDPARAMS;
+	    }
+	    
+	    for (y = src_ptr->surface_desc.dwHeight - rsrc->top;
+		 y >= (src_ptr->surface_desc.dwHeight - (rsrc->top + height));
+		 y--) {
+		glCopyTexSubImage2D(GL_TEXTURE_2D, surf_ptr->mipmap_level,
+				    dstx, dsty,
+				    rsrc->left, y,
+				    width, 1);
+		dsty++;
+	    }
+	    
+	    glBindTexture(GL_TEXTURE_2D, cur_tex);
+	    LEAVE_GL();
+	    
+	    gl_surf_ptr->dirty_flag = SURFACE_GL;
+	    
+	    return DD_OK;
+	}
+    }
+    return DDERR_INVALIDPARAMS;
 }
 
 HRESULT WINAPI
@@ -667,14 +799,26 @@ Main_IDirect3DTextureImpl_2_1T_Load(LPDIRECT3DTEXTURE2 iface,
 static void gltex_set_palette(IDirectDrawSurfaceImpl* This, IDirectDrawPaletteImpl* pal)
 {
     IDirect3DTextureGLImpl *glThis = (IDirect3DTextureGLImpl *) This->tex_private;
+
+    if (glThis->dirty_flag == SURFACE_GL) {
+	GLuint cur_tex;
+	
+	ENTER_GL();
+	glGetIntegerv(GL_TEXTURE_BINDING_2D, &cur_tex);
+	glBindTexture(GL_TEXTURE_2D, glThis->tex_name);
+	gltex_flush_texture_GL_to_memory(This);
+	glBindTexture(GL_TEXTURE_2D, cur_tex);
+	LEAVE_GL();
+    }
     
     /* First call the previous set_palette function */
     glThis->set_palette(This, pal);
     
     /* And set the dirty flag */
-    glThis->dirty_flag = TRUE;
-
-    /* TODO: check palette on mipmapped surfaces... */
+    glThis->dirty_flag = SURFACE_MEMORY_DIRTY;
+    
+    /* TODO: check palette on mipmapped surfaces...
+       TODO: do we need to re-upload in case of usage of the paletted texture extension ? */
 }
 
 static void
@@ -728,7 +872,7 @@ gltex_unlock_update(IDirectDrawSurfaceImpl* This, LPCRECT pRect)
     
     /* Set the dirty flag according to the lock type */
     if ((This->lastlocktype & DDLOCK_READONLY) == 0)
-        glThis->dirty_flag = TRUE;
+        glThis->dirty_flag = SURFACE_MEMORY_DIRTY;
 }
 
 HRESULT WINAPI
@@ -817,7 +961,7 @@ GL_IDirect3DTextureImpl_2_1T_Load(LPDIRECT3DTEXTURE2 iface,
 	        if (gl_dst_ptr->tex_name == 0) ERR("Unbound GL texture !!!\n");
 
 		/* Set this texture as dirty */
-		gl_dst_ptr->dirty_flag = TRUE;
+		gl_dst_ptr->dirty_flag = SURFACE_MEMORY_DIRTY;
 	    }
 	}
 
@@ -997,6 +1141,11 @@ HRESULT d3dtexture_create(IDirect3DImpl *d3d, IDirectDrawSurfaceImpl *surf, BOOL
 	surf->aux_setcolorkey_cb = gltex_setcolorkey_cb;
 	surf->set_palette = gltex_set_palette;
 
+	/* We are the only one to use the aux_blt and aux_bltfast overides, so no need
+	   to save those... */
+	surf->aux_blt = gltex_blt;
+	surf->aux_bltfast = gltex_bltfast;
+	
 	ENTER_GL();
 	if (surf->mipmap_level == 0) {
 	    glGenTextures(1, &(private->tex_name));
@@ -1010,7 +1159,7 @@ HRESULT d3dtexture_create(IDirect3DImpl *d3d, IDirectDrawSurfaceImpl *surf, BOOL
 	LEAVE_GL();
 
 	/* And set the dirty flag accordingly */
-	private->dirty_flag = (at_creation == FALSE);
+	private->dirty_flag = (at_creation == FALSE ? SURFACE_MEMORY_DIRTY : SURFACE_MEMORY);
 	private->initial_upload_done = FALSE;
     }
 

@@ -63,6 +63,7 @@
 #define glColor3f pglColor3f
 #define glColor3ub pglColor3ub
 #define glColor4ub pglColor4ub
+#define glCopyTexSubImage2D pglCopyTexSubImage2D
 #define glColorMaterial pglColorMaterial
 #define glCullFace pglCullFace
 #define glDeleteTextures pglDeleteTextures

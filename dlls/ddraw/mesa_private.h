@@ -39,6 +39,12 @@ extern void (*wine_tsx11_unlock_ptr)(void);
 
 extern const GUID IID_D3DDEVICE_OpenGL;
 
+typedef enum {
+    SURFACE_GL,
+    SURFACE_MEMORY,
+    SURFACE_MEMORY_DIRTY
+} SURFACE_STATE;
+
 typedef struct IDirect3DGLImpl
 {
     struct IDirect3DImpl parent;
@@ -60,7 +66,7 @@ typedef struct IDirect3DTextureGLImpl
 
     /* Texture upload management */
     BOOLEAN initial_upload_done;
-    BOOLEAN dirty_flag;
+    SURFACE_STATE dirty_flag;
 
     /* Surface optimization */
     void *surface_ptr;
@@ -78,12 +84,6 @@ typedef enum {
     GL_TRANSFORM_NORMAL,
     GL_TRANSFORM_VERTEXBUFFER
 } GL_TRANSFORM_STATE;
-
-typedef enum {
-    SURFACE_GL,
-    SURFACE_MEMORY,
-    SURFACE_MEMORY_DIRTY
-} SURFACE_STATE;
 
 typedef struct IDirect3DDeviceGLImpl
 {
