@@ -2948,6 +2948,18 @@ static void EDIT_WM_Char(WND *wnd, EDITSTATE *es, CHAR c, DWORD key_data)
 			}
 		}
 		break;
+	case 0x03: /* Ctrl-C */
+		EDIT_WM_Copy(wnd, es);
+		break;
+	case 0x16: /* Ctrl-V */
+		if (!(es->style & ES_READONLY))
+			EDIT_WM_Paste(wnd, es);
+		break;
+	case 0x18: /* Ctrl-X */
+		if (!(es->style & ES_READONLY))
+			EDIT_WM_Cut(wnd, es);
+		break;
+	
 	default:
 		if (!(es->style & ES_READONLY) && ((BYTE)c >= ' ') && (c != 127)) {
 			char str[2];
