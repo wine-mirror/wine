@@ -971,6 +971,7 @@ AC_CHECK_FUNCS(\
 	settimeofday \
 	sigaltstack \
 	snprintf \
+	spawnvp \
 	statfs \
 	strcasecmp \
 	strerror \

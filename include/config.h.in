@@ -458,6 +458,9 @@
 /* Define to 1 if you have the <soundcard.h> header file. */
 #undef HAVE_SOUNDCARD_H
 
+/* Define to 1 if you have the `spawnvp' function. */
+#undef HAVE_SPAWNVP
+
 /* Define to 1 if the system has the type `ssize_t'. */
 #undef HAVE_SSIZE_T
 

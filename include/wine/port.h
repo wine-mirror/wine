@@ -276,7 +276,9 @@ extern int mkstemps(char *template, int suffix_len);
 # define _P_NOWAITO 3
 # define _P_DETACH  4
 #endif
+#ifndef HAVE_SPAWNVP
 extern int spawnvp(int mode, const char *cmdname, char *const argv[]);
+#endif
 
 /* Interlocked functions */
 

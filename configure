@@ -13616,6 +13616,7 @@ fi
 
 
 
+
 for ac_func in \
 	_lwp_create \
 	_lwp_self \
@@ -13656,6 +13657,7 @@ for ac_func in \
 	settimeofday \
 	sigaltstack \
 	snprintf \
+	spawnvp \
 	statfs \
 	strcasecmp \
 	strerror \

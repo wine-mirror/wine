@@ -31,6 +31,7 @@
 # include <unistd.h>
 #endif
 
+#ifndef HAVE_SPAWNVP
 int spawnvp(int mode, const char *cmdname, char *const argv[])
 {
 #ifndef HAVE__SPAWNVP
@@ -72,3 +73,4 @@ int spawnvp(int mode, const char *cmdname, char *const argv[])
     return _spawnvp(mode, cmdname, argv);
 #endif  /* HAVE__SPAWNVP */
 }
+#endif  /* HAVE_SPAWNVP */
