@@ -1,6 +1,7 @@
 This document should help new developers get started. Like all of Wine, it
 is a work in progress.
 
+
 SOURCE TREE STRUCTURE
 =====================
 
@@ -23,19 +24,40 @@ KERNEL:
 GDI:
 
 	graphics/		- graphics drivers
-	graphics/x11drv/	- X11 display driver
-	graphics/metafiledrv/	- metafile driver
+		x11drv/		- X11 display driver
+		win16drv/	-> see below 
+		ttydrv/		- tty display driver
+		psdrv/		- PostScript graphics driver
+		metafiledrv/	- metafile drivr
+		enhmetafiledrv/	- enhanced metafile driver
 	objects/		- logical objects
 
 USER:
 
 	controls/		- built-in widgets
-	resources/		- built-in dialog resources
+	resources/		- built-in menu and message box resources
 	windows/		- window management
 
 Other DLLs:
 
-	dlls/*/			- Other system DLLs implemented by Wine
+	dlls/			- Other system DLLs implemented by Wine
+		advapi32/	- crypto, systeminfo, security, eventlogging
+		avifil32/	- COM object to play AVI files
+		comctl32/	- common controls
+		commdlg/	- common dialog boxes (both 16 & 32 bit)
+		imagehlp/	- PE (Portable Executable) Image Helper lib
+		msacm/		- audio compression manager (multimedia)
+		msacm32/	- audio compression manager (multimedia)
+		ntdll/		- NT implementation of kernel calls
+		psapi/		- process status API
+		rasapi32/	- remote access server API
+		shell32/	- COM object implementing shell views
+		tapi32/		- telephone API
+		ver/		- File Installation Library (16 bit)
+		version/	- File Installation Library (32 bit)
+		winaspi/	- 
+		winspool/	- Printing & Print Spooler 
+		wnaspi32/	- 
 
 Miscellaneous:
 
@@ -43,12 +65,16 @@ Miscellaneous:
 	multimedia/		- multimedia driver
 	ipc/			- SysV IPC based interprocess communication
 	win32/			- misc Win32 functions
+        ole/			- OLE code 
+		nls/		- National Language Support 
+				  configuration files
 
 Tools:
 ------
 
 	rc/			- old resource compiler
-	tools/			- relay code builder, new rc, etc.
+	tools/			- relay code builder, new rc, bugreport
+				  generator, wineconfigurator, etc.
 	documentation/		- some documentation
 
 
@@ -59,6 +85,8 @@ Binary loader specific directories:
 	if1632/			- relay code
 	miscemu/		- hardware instruction emulation
 	graphics/win16drv/	- Win16 printer driver
+        server/			- the main, controlling thread of wine
+        tsx11/			- thread-safe X11 wrappers (auto generated)
 
 Winelib specific directories:
 -----------------------------
@@ -66,6 +94,7 @@ Winelib specific directories:
 	library/		- Required code for programs using Winelib
 	libtest/		- Small samples and tests
 	programs/		- Extended samples / system utilities
+
 
 IMPLEMENTING NEW API CALLS
 ==========================
@@ -79,7 +108,8 @@ unimplemented call will look like (from gdi32.spec)
 To implement this call, you need to do the following four things.
 
 1. Find the appropriate parameters for the call, and add a prototype to
-[include/windows.h]. In this case, it might look like
+the correct header file. In this case, that means [include/wingdi.h],
+and it might look like
   BOOL WINAPI PolyBezierTo(HDC, LPCVOID, DWORD);
 If the function has both an ASCII and a Unicode version, you need to
 define both and add a #define WINELIB_NAME_AW declaration. See below
@@ -101,26 +131,38 @@ Add a function called 'PolyBezierTo' somewhere. Good things to put
 into a stub:
   o a correct prototype, including the WINAPI
   o header comments, including full documentation for the function and
-    arguments
+    arguments (see documentation/README.documentation)
   o A FIXME message and an appropriate return value are good things to
     put in a stub.
 
   /************************************************************
-   *  PolyBezierTo   (GDI32.269)  Draw many Bezier curves
+   *                    PolyBezierTo   (GDI32.269)  
+   *  
+   * Draw many Bezier curves
+   *
+   * RETURNS
+   *   nonzero on success or zero on faillure
    *
    * BUGS
    *   Unimplemented
    */
-   BOOL WINAPI PolyBezierTo(HDC hdc, LPCVOID p, DWORD count) {
-	/* tell the user they've got a substandard implementation */
+   BOOL WINAPI PolyBezierTo(HDC hdc,     /* handle to device context */
+                            LPCVOID p,   /* ptr to array of Point structs */
+                            DWORD count  /* nr of points in array */
+   ) 
+   {
+      /* tell the user they've got a substandard implementation */
       FIXME(gdi, ":(%x,%p,%d): stub\n", hdc, p, count);
-	/* some programs may be able to compensate, 
-           if they know what happened */
+
+      /* some programs may be able to compensate, 
+       * if they know what happened 
+       */
       SetLastError(ERROR_CALL_NOT_IMPLEMENTED);  
       return FALSE;    /* error value */
    }
 
-4. Implement and test the function.
+4. Implement and test the rest of the function.
+
 
 MEMORY AND SEGMENTS
 ===================
@@ -177,14 +219,24 @@ struct { BYTE x; WORD y; };
 
 will take 3 bytes under Windows, but 4 with gcc, because gcc will add a
 dummy byte between x and y. To have the correct layout for structures
-used by Windows code, you need to use the WINE_PACKED attribute; so you
-would declare the above structure like this:
+used by Windows code, you need to embed the struct within two special
+#include's which will take care of the packing for you:
+
+#include "pshpack1.h"
+struct {BYTE x; WORD y; };
+#include "poppack1.h"
+
+For alignment on a 2-byte boundary, there is a "pshpack2.h", etc.
+
+The use of the WINE_PACKED attribute is obsolete. Please remove these 
+in favour of the above solution. 
+Using WINE_PACKED, you would declare the above structure like this:
 
 struct { BYTE x; WORD y WINE_PACKED; };
 
-You have to do this every time a structure member is not aligned
+You had to do this every time a structure member is not aligned
 correctly under Windows (i.e. a WORD not on an even address, or a
-DWORD on a address that is not a multiple of 4).
+DWORD on a address that was not a multiple of 4).
 
 
 NAMING CONVENTIONS FOR API FUNCTIONS AND TYPES
@@ -232,6 +284,35 @@ The Winelib user can then say:
 
 and this will use the correct declaration depending on the definition
 of the UNICODE symbol.
+
+
+NAMING CONVENTIONS FOR NON-API FUNCTIONS AND TYPES
+==================================================
+
+Functions and data which are internal to your code (or at least shouldn't be
+visible to any WineLib or Windows program) should be preceded by
+an identifier to the module:
+
+Examples:
+
+ENUMPRINTERS_GetDWORDFromRegistryA()    (in dlls/winspool/info.c)
+IAVIFile_fnRelease()                    (in dlls/avifil32/avifile.c)
+X11DRV_CreateDC()                       (in graphics/x11drv/init.c)
+TIMER_Init()                            (implemented in windows/timer.c,
+                                         used in loader/main.c )
+
+if you need prototypes for these, there are a few possibilities:
+- within same source file only:
+  put the prototypes at the top of your file and mark them as prototypes.
+- within the same module:
+  create a header file within the subdirectory where that module resides,
+  e.g.  graphics/ddraw_private.h
+- from a totally different module, or for use in winelib:
+  put your header file entry in /include/wine/
+  but be careful not to clutter this directory!
+under no circumstances, you should add non-api calls to the standard
+windoze include files. Unfortunately, this is often the case, e.g.
+the above example of TIMER_Init is defined in include/message.h
 
 
 API ENTRY POINTS
