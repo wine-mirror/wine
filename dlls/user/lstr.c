@@ -625,11 +625,11 @@ DWORD WINAPI FormatMessage16(
         from = HeapAlloc( GetProcessHeap(), 0, strlen(source)+1 );
         strcpy( from, source );
     }
-    if (dwFlags & FORMAT_MESSAGE_FROM_SYSTEM) {
+    else if (dwFlags & FORMAT_MESSAGE_FROM_SYSTEM) {
         from = HeapAlloc( GetProcessHeap(),0,200 );
 	sprintf(from,"Systemmessage, messageid = 0x%08x\n",dwMessageId);
     }
-    if (dwFlags & FORMAT_MESSAGE_FROM_HMODULE) {
+    else if (dwFlags & FORMAT_MESSAGE_FROM_HMODULE) {
         INT16	bufsize;
 	HINSTANCE16 hinst16 = ((HINSTANCE16)lpSource & 0xffff);
 

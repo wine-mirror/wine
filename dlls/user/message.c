@@ -1435,13 +1435,18 @@ static BOOL unpack_dde_message( HWND hwnd, UINT message, WPARAM *wparam, LPARAM 
 	TRACE( "recv ddepack %u %x\n", size, uiHi );
         if (size)
         {
-            hMem = GlobalAlloc( GMEM_MOVEABLE|GMEM_DDESHARE, size );
-            if (hMem && (ptr = GlobalLock( hMem )))
+            if (!(hMem = GlobalAlloc( GMEM_MOVEABLE|GMEM_DDESHARE, size )))
+                return FALSE;
+            if ((ptr = GlobalLock( hMem )))
             {
                 memcpy( ptr, *buffer, size );
                 GlobalUnlock( hMem );
             }
-            else return FALSE;
+            else
+            {
+                GlobalFree( hMem );
+                return FALSE;
+            }
         }
         uiLo = (UINT)hMem;
 
@@ -1451,8 +1456,8 @@ static BOOL unpack_dde_message( HWND hwnd, UINT message, WPARAM *wparam, LPARAM 
 	if (size)
 	{
 	    if (!buffer || !*buffer) return FALSE;
-	    hMem = GlobalAlloc( GMEM_MOVEABLE|GMEM_DDESHARE, size );
-	    if (hMem && (ptr = GlobalLock( hMem )))
+            if (!(hMem = GlobalAlloc( GMEM_MOVEABLE|GMEM_DDESHARE, size ))) return FALSE;
+            if ((ptr = GlobalLock( hMem )))
 	    {
 		memcpy( ptr, *buffer, size );
 		GlobalUnlock( hMem );
@@ -1462,7 +1467,12 @@ static BOOL unpack_dde_message( HWND hwnd, UINT message, WPARAM *wparam, LPARAM 
                     GlobalFree( hMem );
                     return FALSE;
                 }
-	    }
+            }
+            else
+            {
+                GlobalFree( hMem );
+                return FALSE;
+            }
 	} else return FALSE;
         *lparam = (LPARAM)hMem;
         break;
