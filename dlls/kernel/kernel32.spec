@@ -776,9 +776,9 @@ debug_channels (comm debugstr dll int resource stress thunk toolhelp win32)
 @ stdcall WriteConsoleInputA(long ptr long ptr) WriteConsoleInputA
 @ stdcall WriteConsoleInputW(long ptr long ptr) WriteConsoleInputW
 @ stdcall WriteConsoleOutputA(long ptr long long ptr) WriteConsoleOutputA
-@ stub WriteConsoleOutputAttribute
-@ stub WriteConsoleOutputCharacterA
-@ stub WriteConsoleOutputCharacterW
+@ stdcall WriteConsoleOutputAttribute(long ptr long long ptr) WriteConsoleOutputAttribute
+@ stdcall WriteConsoleOutputCharacterA(long ptr long long ptr) WriteConsoleOutputCharacterA
+@ stdcall WriteConsoleOutputCharacterW(long ptr long long ptr) WriteConsoleOutputCharacterW
 @ stdcall WriteConsoleOutputW(long ptr long long ptr) WriteConsoleOutputW
 @ stdcall WriteConsoleW(long ptr long ptr ptr) WriteConsoleW
 @ stdcall WriteFile(long ptr long ptr ptr) WriteFile

@@ -1701,3 +1701,83 @@ BOOL WINAPI SetConsoleInputExeNameA( LPCSTR name )
     SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
     return TRUE;
 }
+
+/******************************************************************************
+ * WriteConsoleOutputAttribute [KERNEL32.@]  Sets attributes for some cells in
+ * 					     the console screen buffer
+ *
+ * PARAMS
+ *    hConsoleOutput    [I] Handle to screen buffer
+ *    lpAttribute       [I] Pointer to buffer with write attributes
+ *    nLength           [I] Number of cells to write to
+ *    dwCoord           [I] Coords of first cell
+ *    lpNumAttrsWritten [O] Pointer to number of cells written
+ *
+ * RETURNS
+ *    Success: TRUE
+ *    Failure: FALSE
+ * 
+ * BUGS
+ *   Unimplemented
+ */
+BOOL WINAPI WriteConsoleOutputAttribute( HANDLE hConsoleOutput, 
+              CONST WORD *lpAttribute, DWORD nLength, COORD dwCoord, 
+              LPDWORD lpNumAttrsWritten)
+{
+    FIXME("(%d,%p,%ld,%dx%d,%p): stub\n", hConsoleOutput,
+          lpAttribute,nLength,dwCoord.X,dwCoord.Y,lpNumAttrsWritten);
+    *lpNumAttrsWritten = nLength;
+    return TRUE;
+}
+
+/******************************************************************************
+ * WriteConsoleOutputCharacterA [KERNEL32.@]  Copies character to consecutive
+ * 					      cells in the console screen buffer
+ *
+ * PARAMS
+ *    hConsoleOutput    [I] Handle to screen buffer
+ *    lpCharacter       [I] Pointer to buffer with chars to write
+ *    nLength           [I] Number of cells to write to
+ *    dwCoord           [I] Coords of first cell
+ *    lpNumCharsWritten [O] Pointer to number of cells written
+ * 
+ * BUGS
+ *   Unimplemented
+ */
+BOOL WINAPI WriteConsoleOutputCharacterA( HANDLE hConsoleOutput, 
+              LPCSTR lpCharacter, DWORD nLength, COORD dwCoord, 
+              LPDWORD lpNumCharsWritten)
+{
+    FIXME("(%d,%p,%ld,%dx%d,%p): stub\n", hConsoleOutput,
+          lpCharacter,nLength,dwCoord.X,dwCoord.Y,lpNumCharsWritten);
+    *lpNumCharsWritten = nLength;
+    return TRUE;
+}
+
+/******************************************************************************
+ * WriteConsoleOutputCharacterW [KERNEL32.@]  Copies character to consecutive
+ * 					      cells in the console screen buffer
+ *
+ * PARAMS
+ *    hConsoleOutput    [I] Handle to screen buffer
+ *    lpCharacter       [I] Pointer to buffer with chars to write
+ *    nLength           [I] Number of cells to write to
+ *    dwCoord           [I] Coords of first cell
+ *    lpNumCharsWritten [O] Pointer to number of cells written
+ *
+ * RETURNS
+ *    Success: TRUE
+ *    Failure: FALSE
+ * 
+ * BUGS
+ *   Unimplemented
+ */
+BOOL WINAPI WriteConsoleOutputCharacterW( HANDLE hConsoleOutput, 
+              LPCWSTR lpCharacter, DWORD nLength, COORD dwCoord, 
+              LPDWORD lpNumCharsWritten)
+{
+    FIXME("(%d,%p,%ld,%dx%d,%p): stub\n", hConsoleOutput,
+          lpCharacter,nLength,dwCoord.X,dwCoord.Y,lpNumCharsWritten);
+    *lpNumCharsWritten = nLength;
+    return TRUE;
+}

@@ -30,6 +30,7 @@
 #include <string.h>
 
 #include "windef.h"
+#include "winbase.h"
 #include "wincon.h"
 #include "debugger.h"
 
