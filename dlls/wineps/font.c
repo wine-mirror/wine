@@ -76,7 +76,7 @@ HFONT16 PSDRV_FONT_SelectObject( DC * dc, HFONT16 hfont,
 
     /* Look for a matching font family */
     for(family = physDev->pi->Fonts; family; family = family->next) {
-        if(!strcmp(FaceName, family->FamilyName))
+        if(!strcasecmp(FaceName, family->FamilyName))
 	    break;
     }
     if(!family) {
