@@ -1191,6 +1191,7 @@ HRESULT WINAPI IDirectSoundBufferImpl_Create(
 		DSOUND_RecalcVolPan(&(dsb->volpan));
 
 	InitializeCriticalSection(&(dsb->lock));
+        dsb->lock.DebugInfo->Spare[1] = (DWORD)"DSOUNDBUFFER_lock";
 
 	/* register buffer */
 	RtlAcquireResourceExclusive(&(ds->lock), TRUE);

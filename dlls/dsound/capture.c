@@ -147,6 +147,7 @@ DirectSoundCaptureCreate8(
         This->state = STATE_STOPPED;
 
         InitializeCriticalSection( &(This->lock) );
+        This->lock.DebugInfo->Spare[1] = (DWORD)"DSCAPTURE_lock";
 
         This->lpVtbl = &dscvt;
         dsound_capture = This;
@@ -1746,6 +1747,7 @@ DirectSoundFullDuplexCreate(
         This->lpVtbl = &dsfdvt;
 
         InitializeCriticalSection( &(This->lock) );
+        This->lock.DebugInfo->Spare[1] = (DWORD)"DSDUPLEX_lock";
 
         hres = IDirectSoundFullDuplexImpl_Initialize( (LPDIRECTSOUNDFULLDUPLEX)This,
                                                       pcGuidCaptureDevice, pcGuidRenderDevice,

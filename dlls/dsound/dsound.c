@@ -555,6 +555,7 @@ static HRESULT WINAPI IDirectSoundImpl_DuplicateSoundBuffer(
     dsb->dsb = NULL;
     memcpy(&(dsb->wfx), &(pdsb->wfx), sizeof(dsb->wfx));
     InitializeCriticalSection(&(dsb->lock));
+    dsb->lock.DebugInfo->Spare[1] = (DWORD)"DSOUNDBUFFER_lock";
     /* register buffer */
     RtlAcquireResourceExclusive(&(This->lock), TRUE);
     {
