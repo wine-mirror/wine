@@ -32,6 +32,12 @@ extern int WIN32_LastError;
 #define HRESULT_FACILITY(hr)  (((hr) >> 16) & 0x1FFF)
 #define SCODE_FACILITY(sc)  (((sc) >> 16) & 0x1FFF)
 
+/* SCODE <-> HRESULT functions */
+/* This macros is obsolete and should not be used in new apps. */
+#define GetScode(hr)         ((SCODE)(hr))
+/* This macros is obsolete and should not be used in new apps. */
+#define ResultFromScode(sc)  ((HRESULT)(sc))
+
 /* ERROR_UNKNOWN is a placeholder for error conditions which haven't
  * been tested yet so we're not exactly sure what will be returned.
  * All instances of ERROR_UNKNOWN should be tested under Win95/NT
