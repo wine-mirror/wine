@@ -159,6 +159,175 @@ LCID WINAPI GetSystemDefaultLCID(void)
 	return GetUserDefaultLCID();
 }
 
+#define NLS_MAX_LANGUAGES 20
+typedef struct {
+    char lang[128];
+    char country[128];
+    LANGID found_lang_id[NLS_MAX_LANGUAGES];
+    char found_language[NLS_MAX_LANGUAGES][3];
+    char found_country[NLS_MAX_LANGUAGES][3];
+    int n_found;
+} LANG_FIND_DATA;
+
+static BOOL CALLBACK NLS_FindLanguageID_ProcA(HMODULE hModule, LPCSTR type,
+                                              LPCSTR name, WORD LangID, LONG lParam)
+{
+    LANG_FIND_DATA *l_data = (LANG_FIND_DATA *)lParam;
+    LCID lcid = MAKELCID(LangID, SORT_DEFAULT);
+    char buf_language[128];
+    char buf_country[128];
+    char buf_en_language[128];
+
+    TRACE("%04X\n", (UINT)LangID);
+    if(PRIMARYLANGID(LangID) == LANG_NEUTRAL)
+        return TRUE; /* continue search */
+
+    buf_language[0] = 0;
+    buf_country[0] = 0;
+
+    GetLocaleInfoA(lcid, LOCALE_SISO639LANGNAME|LOCALE_NOUSEROVERRIDE,
+                   buf_language, sizeof(buf_language));
+    TRACE("LOCALE_SISO639LANGNAME: %s\n", buf_language);
+
+    GetLocaleInfoA(lcid, LOCALE_SISO3166CTRYNAME|LOCALE_NOUSEROVERRIDE,
+                   buf_country, sizeof(buf_country));
+    TRACE("LOCALE_SISO3166CTRYNAME: %s\n", buf_country);
+
+    if(l_data->lang && strlen(l_data->lang) > 0 && !strcasecmp(l_data->lang, buf_language))
+    {
+	if(l_data->country && strlen(l_data->country) > 0)
+	{
+	    if(!strcasecmp(l_data->country, buf_country))
+	    {
+		l_data->found_lang_id[0] = LangID;
+		l_data->n_found = 1;
+		TRACE("Found lang_id %04X for %s_%s\n", LangID, l_data->lang, l_data->country);
+		return FALSE; /* stop enumeration */
+	    }
+	}
+	else /* l_data->country not specified */
+	{
+	    if(l_data->n_found < NLS_MAX_LANGUAGES)
+	    {
+		l_data->found_lang_id[l_data->n_found] = LangID;
+		strncpy(l_data->found_country[l_data->n_found], buf_country, 3);
+		strncpy(l_data->found_language[l_data->n_found], buf_language, 3);
+		l_data->n_found++;
+		TRACE("Found lang_id %04X for %s\n", LangID, l_data->lang);
+		return TRUE; /* continue search */
+	    }
+	}
+    }
+
+    /* Just in case, check LOCALE_SENGLANGUAGE too,
+     * in hope that possible alias name might have that value.
+     */
+    buf_en_language[0] = 0;
+    GetLocaleInfoA(lcid, LOCALE_SENGLANGUAGE|LOCALE_NOUSEROVERRIDE,
+                   buf_en_language, sizeof(buf_en_language));
+    TRACE("LOCALE_SENGLANGUAGE: %s\n", buf_en_language);
+
+    if(l_data->lang && strlen(l_data->lang) > 0 && !strcasecmp(l_data->lang, buf_en_language))
+    {
+	l_data->found_lang_id[l_data->n_found] = LangID;
+	strncpy(l_data->found_country[l_data->n_found], buf_country, 3);
+	strncpy(l_data->found_language[l_data->n_found], buf_language, 3);
+	l_data->n_found++;
+	TRACE("Found lang_id %04X for %s\n", LangID, l_data->lang);
+    }
+
+    return TRUE; /* continue search */
+}
+
+/***********************************************************************
+ *           NLS_GetLanguageID
+ *
+ * INPUT:
+ *	Lang: a string whose two first chars are the iso name of a language.
+ *	Country: a string whose two first chars are the iso name of country
+ *	Charset: a string defining the chossen charset encoding
+ *	Dialect: a string defining a variation of the locale
+ *
+ *	all those values are from the standardized format of locale
+ *	name in unix which is: Lang[_Country][.Charset][@Dialect]
+ *
+ * RETURNS:
+ *	the numeric code of the language used by Windows
+ *
+ * FIXME: Charset and Dialect are not handled
+ */
+static LANGID NLS_GetLanguageID(LPCSTR Lang, LPCSTR Country, LPCSTR Charset, LPCSTR Dialect)
+{
+    LANG_FIND_DATA l_data;
+    char lang_string[256];
+
+    if(!Lang)
+    {
+	l_data.found_lang_id[0] = MAKELANGID(LANG_ENGLISH, SUBLANG_DEFAULT);
+	goto END;
+    }
+
+    memset(&l_data, 0, sizeof(LANG_FIND_DATA));
+    strncpy(l_data.lang, Lang, sizeof(l_data.lang));
+
+    if(Country && strlen(Country) > 0)
+	strncpy(l_data.country, Country, sizeof(l_data.country));
+
+    EnumResourceLanguagesA(GetModuleHandleA("KERNEL32"), RT_STRINGA,
+	(LPCSTR)LOCALE_ILANGUAGE, NLS_FindLanguageID_ProcA, (LONG)&l_data);
+
+    strcpy(lang_string, l_data.lang);
+    if(l_data.country && strlen(l_data.country) > 0)
+    {
+	strcat(lang_string, "_");
+	strcat(lang_string, l_data.country);
+    }
+
+    if(!l_data.n_found)
+    {
+	if(l_data.country && strlen(l_data.country) > 0)
+	{
+	    MESSAGE("Warning: Language '%s' was not found, retrying without country name...\n", lang_string);
+	    l_data.country[0] = 0;
+	    EnumResourceLanguagesA(GetModuleHandleA("KERNEL32"), RT_STRINGA,
+		(LPCSTR)LOCALE_ILANGUAGE, NLS_FindLanguageID_ProcA, (LONG)&l_data);
+	}
+    }
+
+    /* Re-evaluate lang_string */
+    strcpy(lang_string, l_data.lang);
+    if(l_data.country && strlen(l_data.country) > 0)
+    {
+	strcat(lang_string, "_");
+	strcat(lang_string, l_data.country);
+    }
+
+    if(!l_data.n_found)
+    {
+	MESSAGE("Warning: Language '%s' was not recognized, defaulting to English\n", lang_string);
+	l_data.found_lang_id[0] = MAKELANGID(LANG_ENGLISH, SUBLANG_DEFAULT);
+    }
+    else
+    {
+	if(l_data.n_found == 1)
+	    TRACE("For language '%s' lang_id %04X was found\n", lang_string, l_data.found_lang_id[0]);
+	else /* l_data->n_found > 1 */
+	{
+	    int i;
+	    MESSAGE("For language '%s' several language ids were found:\n", lang_string);
+	    for(i = 0; i < l_data.n_found; i++)
+		MESSAGE("%s_%s - %04X; ", l_data.found_language[i], l_data.found_country[i], l_data.found_lang_id[i]);
+
+	    MESSAGE("\nInstead of using first in the list, suggest to define\n"
+		    "your LANG environment variable like this: LANG=%s_%s\n",
+		    l_data.found_language[0], l_data.found_country[0]);
+	}
+    }
+END:
+    TRACE("Returning %04X\n", l_data.found_lang_id[0]);
+    return l_data.found_lang_id[0];
+}
+
 /***********************************************************************
  *         GetUserDefaultLangID       [KERNEL32.426]
  */
@@ -192,7 +361,7 @@ LANGID WINAPI GetUserDefaultLangID(void)
 			charset=strchr(lang,'.'); if (charset) *charset++='\0';
 			country=strchr(lang,'_'); if (country) *country++='\0';
 			
-			userLCID = MAIN_GetLanguageID(lang, country, charset, dialect);
+			userLCID = NLS_GetLanguageID(lang, country, charset, dialect);
 			
 			lang=next;
 		} while (lang && !userLCID);

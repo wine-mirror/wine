@@ -9,7 +9,6 @@
 
 extern BOOL MAIN_MainInit(void);
 extern void MAIN_WineInit(void);
-extern int MAIN_GetLanguageID(char*lang, char*country, char*charset, char*dialect);
 extern void MAIN_ParseDebugOptions(const char *options);
 
 extern BOOL RELAY_Init(void);
