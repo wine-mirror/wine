@@ -13,6 +13,8 @@ C_SRCS = \
 	umon.c \
 	urlmon_main.c
 
+SUBDIRS = tests
+
 @MAKE_DLL_RULES@
 
 ### Dependencies:

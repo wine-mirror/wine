@@ -1468,6 +1468,7 @@ dlls/ttydrv/Makefile
 dlls/twain/Makefile
 dlls/url/Makefile
 dlls/urlmon/Makefile
+dlls/urlmon/tests/Makefile
 dlls/user/Makefile
 dlls/user/tests/Makefile
 dlls/version/Makefile

@@ -6,6 +6,7 @@ TESTDLL   = shell32.dll
 IMPORTS   = shell32
 
 CTESTS = \
+	generated.c \
 	shlfileop.c
 
 @MAKE_TEST_RULES@
