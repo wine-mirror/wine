@@ -67,9 +67,9 @@
 #undef DIABLO_HACK
 
 /* Restore signal handlers overwritten by XF86DGA 
- * this is a define, for it will only work in emulator mode
  */
-#undef RESTORE_SIGNALS
+#define RESTORE_SIGNALS
+BOOL32 (*SIGNAL_Reinit)(void); /* didn't find any obvious place to put this */
 
 /* Where do these GUIDs come from?  mkuuid.
  * They exist solely to distinguish between the targets Wine support,
@@ -390,6 +390,8 @@ static HRESULT WINAPI IDirectDrawSurface3_Lock(
 
 	/* First, copy the Surface description */
 	*lpddsd = this->s.surface_desc;
+	TRACE(ddraw,"locked surface: height=%ld, width=%ld, pitch=%ld\n",
+	      lpddsd->dwHeight,lpddsd->dwWidth,lpddsd->lPitch);
 
 	/* If asked only for a part, change the surface pointer */
 	if (lprect) {
@@ -2103,6 +2105,7 @@ static HRESULT WINAPI DGA_IDirectDraw2_CreateSurface(
 	  (*lpdsf)->s.surface_desc.dwFlags |= DDSD_WIDTH|DDSD_HEIGHT|DDSD_PITCH|DDSD_LPSURFACE;
 	  (*lpdsf)->s.surface_desc.dwWidth = this->d.width;
 	  (*lpdsf)->s.surface_desc.dwHeight = this->d.height;
+	  TRACE(ddraw,"primary surface: dwWidth=%ld, dwHeight=%ld, lPitch=%ld\n",this->d.width,this->d.height,lpddsd->lPitch);
 	  /* We put our surface always in video memory */
 	  (*lpdsf)->s.surface_desc.ddsCaps.dwCaps |= DDSCAPS_VISIBLE|DDSCAPS_VIDEOMEMORY;
 	  _getpixelformat(this,&((*lpdsf)->s.surface_desc.ddpfPixelFormat));
@@ -2443,6 +2446,9 @@ static HRESULT WINAPI DGA_IDirectDraw_SetDisplayMode(
 
 	TRACE(ddraw, "(%p)->(%ld,%ld,%ld)\n", this, width, height, depth);
 
+	/* We hope getting the asked for depth */
+	this->d.screen_depth = depth;
+
 	depths = TSXListDepths(display,DefaultScreen(display),&depcount);
 	for (i=0;i<depcount;i++)
 		if (depths[i]==depth)
@@ -2496,6 +2502,7 @@ static HRESULT WINAPI DGA_IDirectDraw_SetDisplayMode(
                 } else
                     TSXFree(all_modes[i]->private);
             }
+	    for (i++;i<mode_count;i++) TSXFree(all_modes[i]->private);
             TSXFree(all_modes);
 
             if (!vidmode)
@@ -2503,8 +2510,11 @@ static HRESULT WINAPI DGA_IDirectDraw_SetDisplayMode(
 
             if (vidmode)
 	      {
+	        TRACE(ddraw,"SwitchToMode(%dx%d)\n",vidmode->hdisplay,vidmode->vdisplay);
                 TSXF86VidModeSwitchToMode(display, DefaultScreen(display), vidmode);
+#if 0 /* This messes up my screen (XF86_Mach64, 3.3.2.3a) for some reason, and should now be unnecessary */
 		TSXF86VidModeSetViewPort(display, DefaultScreen(display), 0, 0);
+#endif
 	      }
         }
 #endif
@@ -2516,10 +2526,12 @@ static HRESULT WINAPI DGA_IDirectDraw_SetDisplayMode(
 	TSXF86DGADirectVideo(display,DefaultScreen(display),XF86DGADirectGraphics);
 #ifdef DIABLO_HACK
 	TSXF86DGASetViewPort(display,DefaultScreen(display),0,this->e.dga.fb_height);
+#else
+	TSXF86DGASetViewPort(display,DefaultScreen(display),0,0);
 #endif
 
 #ifdef RESTORE_SIGNALS
-	SIGNAL_InitEmulator();
+	if (SIGNAL_Reinit) SIGNAL_Reinit();
 #endif
 	return DD_OK;
 #else /* defined(HAVE_LIBXXF86DGA) */
@@ -2688,7 +2700,7 @@ static HRESULT WINAPI common_IDirectDraw2_CreatePalette(
 	    } break;
 
 	    default:
-	      ERR(ddraw, "Memory corruption !\n");
+	      ERR(ddraw, "Memory corruption ! (depth=%ld, screen_depth=%ld)\n",this->d.depth,this->d.screen_depth);
 	      break;
 	    }
 	  }
@@ -2765,7 +2777,7 @@ static HRESULT WINAPI DGA_IDirectDraw2_RestoreDisplayMode(LPDIRECTDRAW2 this) {
 	Sleep(1000);
 	TSXF86DGADirectVideo(display,DefaultScreen(display),0);
 #ifdef RESTORE_SIGNALS
-	SIGNAL_InitEmulator();
+	if (SIGNAL_Reinit) SIGNAL_Reinit();
 #endif
 	return DD_OK;
 #else /* defined(HAVE_LIBXXF86DGA) */
@@ -2813,7 +2825,7 @@ static ULONG WINAPI DGA_IDirectDraw2_Release(LPDIRECTDRAW2 this) {
 #endif
 		
 #ifdef RESTORE_SIGNALS
-		SIGNAL_InitEmulator();
+		if (SIGNAL_Reinit) SIGNAL_Reinit();
 #endif
 		HeapFree(GetProcessHeap(),0,this);
 		return 0;
@@ -3391,9 +3403,10 @@ HRESULT WINAPI DGA_DirectDrawCreate( LPDIRECTDRAW *lplpDD, LPUNKNOWN pUnkOuter) 
 #endif
 
 	/* just assume the default depth is the DGA depth too */
+	(*lplpDD)->d.screen_depth = DefaultDepthOfScreen(screen);
 	(*lplpDD)->d.depth = DefaultDepthOfScreen(screen);
 #ifdef RESTORE_SIGNALS
-	SIGNAL_InitEmulator();
+	if (SIGNAL_Reinit) SIGNAL_Reinit();
 #endif
 
 	return DD_OK;

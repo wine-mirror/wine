@@ -102,6 +102,7 @@ extern void SIGNAL_MaskAsyncEvents( BOOL32 flag );
 
 /* if1632/signal.c */
 extern BOOL32 SIGNAL_InitEmulator(void);
+extern BOOL32 (*SIGNAL_Reinit)(void);
 
 /* misc/aspi.c */
 extern void ASPI_DOS_HandleInt(CONTEXT *context);

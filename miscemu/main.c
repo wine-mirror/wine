@@ -34,6 +34,7 @@ BOOL32 MAIN_EmulatorInit(void)
 
     /* Initialize signal handling */
     if (!SIGNAL_InitEmulator()) return FALSE;
+    SIGNAL_Reinit=SIGNAL_InitEmulator;
 
     /* Create the Win16 printer driver */
     if (!WIN16DRV_Init()) return FALSE;
