@@ -957,6 +957,7 @@ AC_CHECK_HEADERS(\
 	sys/statfs.h \
 	sys/strtio.h \
 	sys/syscall.h \
+	sys/sysctl.h \
 	sys/time.h \
 	sys/user.h \
 	sys/v86.h \
