@@ -400,6 +400,10 @@ DWORD WINAPI WsControl(DWORD protocoll,
                break;
             }
 
+            case 0x101:
+                FIXME ("Command ID Unknown but used by winipcfg.exe\n");
+                break;
+
 
             default: 
             {
