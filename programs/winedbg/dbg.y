@@ -454,7 +454,7 @@ char *arg_command = NULL;
 int      input_fetch_entire_line(const char* pfx, char** line, size_t* alloc, BOOL check_nl)
 {
     char 	buf_line[256];
-    DWORD	nread;
+    DWORD	nread, nwritten;
     size_t      len;
     
     if (arg_command) {
@@ -466,7 +466,7 @@ int      input_fetch_entire_line(const char* pfx, char** line, size_t* alloc, BO
     /* as of today, console handles can be file handles... so better use file APIs rather than
      * console's
      */
-    WriteFile(dbg_parser_output, pfx, strlen(pfx), NULL, NULL);
+    WriteFile(dbg_parser_output, pfx, strlen(pfx), &nwritten, NULL);
 
     len = 0;
     do

@@ -41,6 +41,7 @@ BOOL DOSVM_RawWrite(BYTE drive, DWORD begin, DWORD nr_sect, BYTE *dataptr, BOOL 
 {
     WCHAR root[] = {'\\','\\','.','\\','A',':',0};
     HANDLE h;
+    DWORD w;
 
     TRACE( "abs diskwrite, drive %d, sector %ld, "
            "count %ld, buffer %p\n",
@@ -53,7 +54,7 @@ BOOL DOSVM_RawWrite(BYTE drive, DWORD begin, DWORD nr_sect, BYTE *dataptr, BOOL 
     {
         SetFilePointer(h, begin * 512, NULL, SEEK_SET );
         /* FIXME: check errors */
-        WriteFile( h, dataptr, nr_sect * 512, NULL, NULL );
+        WriteFile( h, dataptr, nr_sect * 512, &w, NULL );
         CloseHandle( h );
     }
     else if (!fake_success)

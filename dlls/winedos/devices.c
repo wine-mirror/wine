@@ -273,6 +273,7 @@ static void WINAPI con_interrupt(CONTEXT86*ctx)
   BYTE *curbuffer = (lol->offs_unread_CON) ?
     (((BYTE*)dataseg) + lol->offs_unread_CON) : (BYTE*)NULL;
   DOS_DEVICE_HEADER *con = dataseg->dev;
+  DWORD w;
 
   switch (hdr->command) {
   case CMD_INPUT:
@@ -364,7 +365,7 @@ static void WINAPI con_interrupt(CONTEXT86*ctx)
 	    /* a character */
 	    if ((len+1)<CON_BUFFER) {
 	      linebuffer[len] = LOBYTE(data);
-	      WriteFile(GetStdHandle(STD_OUTPUT_HANDLE), &linebuffer[len++], 1, NULL, NULL);
+	      WriteFile(GetStdHandle(STD_OUTPUT_HANDLE), &linebuffer[len++], 1, &w, NULL);
 	    }
 	    /* else beep, but I don't like noise */
 	  }
@@ -372,7 +373,7 @@ static void WINAPI con_interrupt(CONTEXT86*ctx)
 	  case '\b':
 	    if (len>0) {
 	      len--;
-	      WriteFile(GetStdHandle(STD_OUTPUT_HANDLE), "\b \b", 3, NULL, NULL);
+	      WriteFile(GetStdHandle(STD_OUTPUT_HANDLE), "\b \b", 3, &w, NULL);
 	    }
 	    break;
 	  }

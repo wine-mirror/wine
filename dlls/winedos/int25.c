@@ -52,9 +52,10 @@ BOOL DOSVM_RawRead(BYTE drive, DWORD begin, DWORD nr_sect, BYTE *dataptr, BOOL f
                     FILE_FLAG_BACKUP_SEMANTICS, NULL);
     if (h != INVALID_HANDLE_VALUE)
     {
+        DWORD r;
         SetFilePointer(h, begin * 512, NULL, SEEK_SET );
         /* FIXME: check errors */
-        ReadFile(h, dataptr, nr_sect * 512, NULL, NULL );
+        ReadFile(h, dataptr, nr_sect * 512, &r, NULL );
         CloseHandle(h);
     }
     else

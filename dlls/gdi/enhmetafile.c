@@ -2357,9 +2357,10 @@ HENHMETAFILE WINAPI CopyEnhMetaFileA(
 	hmfDst = EMF_Create_HENHMETAFILE( emrDst, FALSE );
     } else {
         HANDLE hFile;
+        DWORD w;
         hFile = CreateFileA( file, GENERIC_WRITE | GENERIC_READ, 0,
 			     NULL, CREATE_ALWAYS, 0, 0);
-	WriteFile( hFile, emrSrc, emrSrc->nBytes, 0, 0);
+	WriteFile( hFile, emrSrc, emrSrc->nBytes, &w, NULL);
 	CloseHandle( hFile );
 	/* Reopen file for reading only, so that apps can share
 	   read access to the file while hmf is still valid */
@@ -2396,9 +2397,10 @@ HENHMETAFILE WINAPI CopyEnhMetaFileW(
 	hmfDst = EMF_Create_HENHMETAFILE( emrDst, FALSE );
     } else {
         HANDLE hFile;
+        DWORD w;
         hFile = CreateFileW( file, GENERIC_WRITE | GENERIC_READ, 0,
 			     NULL, CREATE_ALWAYS, 0, 0);
-	WriteFile( hFile, emrSrc, emrSrc->nBytes, 0, 0);
+	WriteFile( hFile, emrSrc, emrSrc->nBytes, &w, NULL);
 	CloseHandle( hFile );
 	/* Reopen file for reading only, so that apps can share
 	   read access to the file while hmf is still valid */

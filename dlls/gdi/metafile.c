@@ -411,12 +411,13 @@ HMETAFILE16 WINAPI CopyMetaFile16( HMETAFILE16 hSrcMetaFile, LPCSTR lpFilename)
     MF_ReleaseMetaHeader16( hSrcMetaFile );
 
     if(lpFilename) {         /* disk based metafile */
+        DWORD w;
         if((hFile = CreateFileA(lpFilename, GENERIC_WRITE, 0, NULL,
 				CREATE_ALWAYS, 0, 0)) == INVALID_HANDLE_VALUE) {
 	    HeapFree( GetProcessHeap(), 0, mh2 );
 	    return 0;
 	}
-	WriteFile(hFile, mh2, mh2->mtSize * 2, NULL, NULL);
+	WriteFile(hFile, mh2, mh2->mtSize * 2, &w, NULL);
 	CloseHandle(hFile);
 	mh2 = MF_CreateMetaHeaderDisk(mh2, lpFilename, FALSE);
     }
@@ -460,12 +461,13 @@ HMETAFILE WINAPI CopyMetaFileW(
     }
 
     if(lpFilename) {         /* disk based metafile */
+        DWORD w;
         if((hFile = CreateFileW(lpFilename, GENERIC_WRITE, 0, NULL,
 				CREATE_ALWAYS, 0, 0)) == INVALID_HANDLE_VALUE) {
 	    HeapFree( GetProcessHeap(), 0, mh2 );
 	    return 0;
 	}
-	WriteFile(hFile, mh2, mh2->mtSize * 2, NULL, NULL);
+	WriteFile(hFile, mh2, mh2->mtSize * 2, &w, NULL);
 	CloseHandle(hFile);
         mh2 = MF_CreateMetaHeaderDisk(mh2, lpFilename, TRUE);
     }

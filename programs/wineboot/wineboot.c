@@ -62,6 +62,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(wineboot);
 static BOOL GetLine( HANDLE hFile, char *buf, size_t buflen )
 {
     unsigned int i=0;
+    DWORD r;
     buf[0]='\0';
 
     do
@@ -75,7 +76,7 @@ static BOOL GetLine( HANDLE hFile, char *buf, size_t buflen )
     } while( isspace( *buf ) );
 
     while( buf[i]!='\n' && i<=buflen &&
-            ReadFile( hFile, buf+i+1, 1, NULL, NULL ) )
+            ReadFile( hFile, buf+i+1, 1, &r, NULL ) )
     {
         ++i;
     }

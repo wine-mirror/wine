@@ -1508,7 +1508,7 @@ HRESULT WINAPI GetClassFile(LPCOLESTR filePathName,CLSID *pclsid)
             pat=ReadPatternFromRegistry(i,j);
             hFile=CreateFileW(filePathName,,,,,,hFile);
             SetFilePosition(hFile,pat.offset);
-            ReadFile(hFile,buf,pat.size,NULL,NULL);
+            ReadFile(hFile,buf,pat.size,&r,NULL);
             if (memcmp(buf&pat.mask,pat.pattern.pat.size)==0){
 
                 *pclsid=ReadCLSIDFromRegistry(i);

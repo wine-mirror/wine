@@ -1735,9 +1735,10 @@ BOOL WINAPI TransmitCommChar(
     HANDLE hComm,      /* [in] The communication device in need of a command character. */
     CHAR   chTransmit) /* [in] The character to transmit. */
 {
+    DWORD w;
     WARN("(%p,'%c') not perfect!\n",hComm,chTransmit);
 
-    return WriteFile( hComm, &chTransmit, 1, NULL, NULL );
+    return WriteFile( hComm, &chTransmit, 1, &w, NULL );
 }
 
 

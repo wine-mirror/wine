@@ -4208,7 +4208,7 @@ void WINAPI DOSVM_Int21Handler( CONTEXT86 *context )
             LPSTR data = CTX_SEG_OFF_TO_LIN( context, 
                                              context->SegDs, context->Edx );
             LPSTR p = data;
-
+            DWORD w;
             /*
              * Do NOT use strchr() to calculate the string length,
              * as '\0' is valid string content, too!
@@ -4218,7 +4218,7 @@ void WINAPI DOSVM_Int21Handler( CONTEXT86 *context )
 
             if (DOSVM_IsWin16())
                 WriteFile( DosFileHandleToWin32Handle(1), 
-                           data, p - data, 0, 0 );
+                           data, p - data, &w, NULL );
             else
                 for(; data != p; data++)
                     DOSVM_PutChar( *data );

@@ -454,16 +454,17 @@ void apply_drive_changes()
                        NULL);
             if (hFile != INVALID_HANDLE_VALUE)
             {
+                DWORD w;
                 WINE_TRACE("  writing serial number of '%s'\n", drives[i].serial);
                 WriteFile(hFile,
                           drives[i].serial,
                           strlen(drives[i].serial),
-                          NULL,
+                          &w,
                           NULL);
                 WriteFile(hFile,
                           "\n",
                           strlen("\n"),
-                          NULL,
+                          &w,
                           NULL);
                 CloseHandle(hFile);
             }

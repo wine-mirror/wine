@@ -835,6 +835,8 @@ void VGA_WriteChars(unsigned X,unsigned Y,unsigned ch,int attr,int count)
 
 void VGA_PutChar(BYTE ascii)
 {
+    DWORD w;
+
     EnterCriticalSection(&vga_lock);
 
     switch(ascii) {
@@ -885,7 +887,7 @@ void VGA_PutChar(BYTE ascii)
      * If we don't have a console, write directly to standard output.
      */
     if(!vga_text_console)
-        WriteFile(VGA_AlphaConsole(), &ascii, 1, NULL, NULL);
+        WriteFile(VGA_AlphaConsole(), &ascii, 1, &w, NULL);
 
     LeaveCriticalSection(&vga_lock);
 }

@@ -92,7 +92,8 @@ static HANDLE                   dbg_houtput;
 
 void	dbg_outputA(const char* buffer, int len)
 {
-    WriteFile(dbg_houtput, buffer, len, NULL, NULL);
+    DWORD w;
+    WriteFile(dbg_houtput, buffer, len, &w, NULL);
 }
 
 void	dbg_outputW(const WCHAR* buffer, int len)
