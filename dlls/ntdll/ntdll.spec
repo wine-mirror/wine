@@ -246,7 +246,7 @@
 @ stdcall NtSetTimerResolution(long long ptr)
 @ stdcall NtSetValueKey(long long long long long long)
 @ stdcall NtSetVolumeInformationFile(long ptr ptr long long)
-@ stub NtShutdownSystem
+@ stdcall NtShutdownSystem(long)
 @ stub NtStartProfile
 @ stub NtStopProfile
 @ stdcall NtSuspendThread(long ptr)
@@ -824,7 +824,7 @@
 @ stdcall ZwSetTimerResolution(long long ptr) NtSetTimerResolution
 @ stdcall ZwSetValueKey(long long long long long long) NtSetValueKey
 @ stdcall ZwSetVolumeInformationFile(long ptr ptr long long) NtSetVolumeInformationFile
-@ stub ZwShutdownSystem
+@ stdcall ZwShutdownSystem(long) NtShutdownSystem
 @ stub ZwStartProfile
 @ stub ZwStopProfile
 @ stdcall ZwSuspendThread(long ptr) NtSuspendThread

@@ -792,6 +792,16 @@ NTSTATUS WINAPI NtPowerInformation(DWORD x1,DWORD x2,DWORD x3,DWORD x4,DWORD x5)
 }
 
 /******************************************************************************
+ *  NtShutdownSystem				[NTDLL.@]
+ *
+ */
+NTSTATUS WINAPI NtShutdownSystem(DWORD x1)
+{
+	FIXME("(0x%08lx),stub\n",x1);
+	return 0;
+}
+
+/******************************************************************************
  *  NtAllocateLocallyUniqueId (NTDLL.@)
  *
  * FIXME: the server should do that
