@@ -18,7 +18,6 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#include "gdi.h"
 #include "psdrv.h"
 #include "wine/debug.h"
 #include "winbase.h"
@@ -32,13 +31,18 @@ WINE_DEFAULT_DEBUG_CHANNEL(psdrv);
  */
 BOOL PSDRV_PatBlt(PSDRV_PDEVICE *physDev, INT x, INT y, INT width, INT height, DWORD dwRop)
 {
-    DC *dc = physDev->dc;
+    POINT pt[2];
+
+    pt[0].x = x;
+    pt[0].y = y;
+    pt[1].x = x + width;
+    pt[1].y = y + height;
+    LPtoDP( physDev->hdc, pt, 2 );
 
     switch(dwRop) {
     case PATCOPY:
         PSDRV_WriteGSave(physDev);
-	PSDRV_WriteRectangle(physDev, XLPTODP(dc, x), YLPTODP(dc, y),
-			     XLSTODS(dc, width), YLSTODS(dc, height));
+        PSDRV_WriteRectangle(physDev, pt[0].x, pt[0].y, pt[1].x - pt[0].x, pt[1].y - pt[0].y );
 	PSDRV_Brush(physDev, FALSE);
 	PSDRV_WriteGRestore(physDev);
 	return TRUE;
@@ -49,8 +53,7 @@ BOOL PSDRV_PatBlt(PSDRV_PDEVICE *physDev, INT x, INT y, INT width, INT height, D
 	PSCOLOR pscol;
 
         PSDRV_WriteGSave(physDev);
-	PSDRV_WriteRectangle(physDev, XLPTODP(dc, x), YLPTODP(dc, y),
-			     XLSTODS(dc, width), YLSTODS(dc, height));
+        PSDRV_WriteRectangle(physDev, pt[0].x, pt[0].y, pt[1].x - pt[0].x, pt[1].y - pt[0].y );
 	PSDRV_CreateColor( physDev, &pscol, (dwRop == BLACKNESS) ?
 			   RGB(0,0,0) : RGB(0xff,0xff,0xff) );
 	PSDRV_WriteSetColor(physDev, &pscol);

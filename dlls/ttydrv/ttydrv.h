@@ -107,7 +107,6 @@ extern BOOL TTYDRV_DC_PolyPolygon(TTYDRV_PDEVICE *physDev, const POINT* pt, cons
 extern BOOL TTYDRV_DC_PolyPolyline(TTYDRV_PDEVICE *physDev, const POINT* pt, const DWORD* counts, DWORD polylines);
 extern BOOL TTYDRV_DC_Rectangle(TTYDRV_PDEVICE *physDev, INT left, INT top, INT right, INT bottom);
 extern BOOL TTYDRV_DC_RoundRect(TTYDRV_PDEVICE *physDev, INT left, INT top, INT right, INT bottom, INT ell_width, INT ell_height);
-extern void TTYDRV_DC_SetDeviceClipping(TTYDRV_PDEVICE *physDev);
 extern COLORREF TTYDRV_DC_SetPixel(TTYDRV_PDEVICE *physDev, INT x, INT y, COLORREF color);
 extern BOOL TTYDRV_DC_StretchBlt(TTYDRV_PDEVICE *physDevDst, INT xDst, INT yDst, INT widthDst, INT heightDst, TTYDRV_PDEVICE *physDevSrc, INT xSrc, INT ySrc, INT widthSrc, INT heightSrc, DWORD rop);
 INT TTYDRV_DC_SetDIBitsToDevice(TTYDRV_PDEVICE *physDev, INT xDest, INT yDest, DWORD cx, DWORD cy, INT xSrc, INT ySrc, UINT startscan, UINT lines, LPCVOID bits, const BITMAPINFO *info, UINT coloruse);

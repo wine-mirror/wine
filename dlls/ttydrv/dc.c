@@ -202,12 +202,3 @@ INT TTYDRV_GetDeviceCaps( TTYDRV_PDEVICE *physDev, INT cap )
         return 0;
     }
 }
-
-
-/***********************************************************************
- *		TTYDRV_DC_SetDeviceClipping
- */
-void TTYDRV_DC_SetDeviceClipping(TTYDRV_PDEVICE *physDev)
-{
-    TRACE("(%x)\n", physDev->hdc);
-}

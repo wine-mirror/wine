@@ -40,15 +40,18 @@ WINE_DEFAULT_DEBUG_CHANNEL(psdrv);
  */
 BOOL PSDRV_LineTo(PSDRV_PDEVICE *physDev, INT x, INT y)
 {
-    DC *dc = physDev->dc;
+    POINT pt[2];
 
     TRACE("%d %d\n", x, y);
 
+    GetCurrentPositionEx( physDev->hdc, pt );
+    pt[1].x = x;
+    pt[1].y = y;
+    LPtoDP( physDev->hdc, pt, 2 );
+
     PSDRV_SetPen(physDev);
-    PSDRV_WriteMoveTo(physDev, INTERNAL_XWPTODP(dc, dc->CursPosX, dc->CursPosY),
-                      INTERNAL_YWPTODP(dc, dc->CursPosX, dc->CursPosY));
-    PSDRV_WriteLineTo(physDev, INTERNAL_XWPTODP(dc, x, y),
-                      INTERNAL_YWPTODP(dc, x, y));
+    PSDRV_WriteMoveTo(physDev, pt[0].x, pt[0].y );
+    PSDRV_WriteLineTo(physDev, pt[1].x, pt[1].y );
     PSDRV_DrawLine(physDev);
 
     return TRUE;
@@ -60,15 +63,18 @@ BOOL PSDRV_LineTo(PSDRV_PDEVICE *physDev, INT x, INT y)
  */
 BOOL PSDRV_Rectangle( PSDRV_PDEVICE *physDev, INT left, INT top, INT right, INT bottom )
 {
-    INT width;
-    INT height;
-    DC *dc = physDev->dc;
+    RECT rect;
 
     TRACE("%d %d - %d %d\n", left, top, right, bottom);
-    width = INTERNAL_XWSTODS(dc, right - left);
-    height = INTERNAL_YWSTODS(dc, bottom - top);
-    PSDRV_WriteRectangle(physDev, INTERNAL_XWPTODP(dc, left, top),
-                         INTERNAL_YWPTODP(dc, left, top), width, height);
+
+    rect.left = left;
+    rect.top = top;
+    rect.right = right;
+    rect.bottom = bottom;
+    LPtoDP( physDev->hdc, (POINT *)&rect, 2 );
+
+    PSDRV_WriteRectangle(physDev, rect.left, rect.top, rect.right - rect.left,
+                         rect.bottom - rect.top );
     PSDRV_Brush(physDev,0);
     PSDRV_SetPen(physDev);
     PSDRV_DrawLine(physDev);
@@ -82,20 +88,29 @@ BOOL PSDRV_Rectangle( PSDRV_PDEVICE *physDev, INT left, INT top, INT right, INT 
 BOOL PSDRV_RoundRect( PSDRV_PDEVICE *physDev, INT left, INT top, INT right,
                       INT bottom, INT ell_width, INT ell_height )
 {
-    DC *dc = physDev->dc;
+    RECT rect[2];
 
-    left = XLPTODP( dc, left );
-    right = XLPTODP( dc, right );
-    top = YLPTODP( dc, top );
-    bottom = YLPTODP( dc, bottom );
-    ell_width = XLSTODS( dc, ell_width );
-    ell_height = YLSTODS( dc, ell_height );
+    rect[0].left   = left;
+    rect[0].top    = top;
+    rect[0].right  = right;
+    rect[0].bottom = bottom;
+    rect[1].left   = 0;
+    rect[1].top    = 0;
+    rect[1].right  = ell_width;
+    rect[1].bottom = ell_height;
+    LPtoDP( physDev->hdc, (POINT *)rect, 4 );
 
-    if( left > right ) { INT tmp = left; left = right; right = tmp; }
-    if( top > bottom ) { INT tmp = top; top = bottom; bottom = tmp; }
+    left   = rect[0].left;
+    top    = rect[0].top;
+    right  = rect[0].right;
+    bottom = rect[0].bottom;
+    if (left > right) { INT tmp = left; left = right; right = tmp; }
+    if (top > bottom) { INT tmp = top; top = bottom; bottom = tmp; }
 
-    if(ell_width > right - left) ell_width = right - left;
-    if(ell_height > bottom - top) ell_height = bottom - top;
+    ell_width  = rect[1].right - rect[1].left;
+    ell_height = rect[1].bottom - rect[1].top;
+    if (ell_width > right - left) ell_width = right - left;
+    if (ell_height > bottom - top) ell_height = bottom - top;
 
     PSDRV_WriteMoveTo( physDev, left, top + ell_height/2 );
     PSDRV_WriteArc( physDev, left + ell_width/2, top + ell_height/2, ell_width,
@@ -126,15 +141,20 @@ static BOOL PSDRV_DrawArc( PSDRV_PDEVICE *physDev, INT left, INT top,
                            INT right, INT bottom, INT xstart, INT ystart,
                            INT xend, INT yend, int lines )
 {
-    DC *dc = physDev->dc;
     INT x, y, h, w;
     double start_angle, end_angle, ratio;
+    RECT rect;
 
-    x = XLPTODP(dc, (left + right)/2);
-    y = YLPTODP(dc, (top + bottom)/2);
+    rect.left = left;
+    rect.top = top;
+    rect.right = right;
+    rect.bottom = bottom;
+    LPtoDP( physDev->hdc, (POINT *)&rect, 2 );
 
-    w = XLSTODS(dc, (right - left));
-    h = YLSTODS(dc, (bottom - top));
+    x = (rect.left + rect.right) / 2;
+    y = (rect.top + rect.bottom) / 2;
+    w = rect.right - rect.left;
+    h = rect.bottom - rect.top;
 
     if(w < 0) w = -w;
     if(h < 0) h = -h;
@@ -200,15 +220,20 @@ BOOL PSDRV_Pie( PSDRV_PDEVICE *physDev, INT left, INT top, INT right, INT bottom
 BOOL PSDRV_Ellipse( PSDRV_PDEVICE *physDev, INT left, INT top, INT right, INT bottom)
 {
     INT x, y, w, h;
-    DC *dc = physDev->dc;
+    RECT rect;
 
     TRACE("%d %d - %d %d\n", left, top, right, bottom);
 
-    x = XLPTODP(dc, (left + right)/2);
-    y = YLPTODP(dc, (top + bottom)/2);
+    rect.left   = left;
+    rect.top    = top;
+    rect.right  = right;
+    rect.bottom = bottom;
+    LPtoDP( physDev->hdc, (POINT *)&rect, 2 );
 
-    w = XLSTODS(dc, (right - left));
-    h = YLSTODS(dc, (bottom - top));
+    x = (rect.left + rect.right) / 2;
+    y = (rect.top + rect.bottom) / 2;
+    w = rect.right - rect.left;
+    h = rect.bottom - rect.top;
 
     PSDRV_WriteNewPath(physDev);
     PSDRV_WriteArc(physDev, x, y, w, h, 0.0, 360.0);
@@ -224,27 +249,30 @@ BOOL PSDRV_Ellipse( PSDRV_PDEVICE *physDev, INT left, INT top, INT right, INT bo
  *           PSDRV_PolyPolyline
  */
 BOOL PSDRV_PolyPolyline( PSDRV_PDEVICE *physDev, const POINT* pts, const DWORD* counts,
-			   DWORD polylines )
+                         DWORD polylines )
 {
-    DWORD polyline, line;
-    const POINT* pt;
-    DC *dc = physDev->dc;
+    DWORD polyline, line, total;
+    POINT *dev_pts, *pt;
 
     TRACE("\n");
 
-    pt = pts;
+    for (polyline = total = 0; polyline < polylines; polyline++) total += counts[polyline];
+    if (!(dev_pts = HeapAlloc( GetProcessHeap(), 0, total * sizeof(*dev_pts) ))) return FALSE;
+    memcpy( dev_pts, pts, total * sizeof(*dev_pts) );
+    LPtoDP( physDev->hdc, dev_pts, total );
+
+    pt = dev_pts;
     for(polyline = 0; polyline < polylines; polyline++) {
-	PSDRV_WriteMoveTo(physDev, INTERNAL_XWPTODP(dc, pt->x, pt->y), INTERNAL_YWPTODP(dc, pt->x, pt->y));
+        PSDRV_WriteMoveTo(physDev, pt->x, pt->y);
 	pt++;
-	for(line = 1; line < counts[polyline]; line++) {
-	    PSDRV_WriteLineTo(physDev, INTERNAL_XWPTODP(dc, pt->x, pt->y), INTERNAL_YWPTODP(dc, pt->x, pt->y));
-	    pt++;
-	}
+        for(line = 1; line < counts[polyline]; line++, pt++)
+            PSDRV_WriteLineTo(physDev, pt->x, pt->y);
     }
+    HeapFree( GetProcessHeap(), 0, dev_pts );
     PSDRV_SetPen(physDev);
     PSDRV_DrawLine(physDev);
     return TRUE;
-}   
+}
 
 
 /***********************************************************************
@@ -260,24 +288,27 @@ BOOL PSDRV_Polyline( PSDRV_PDEVICE *physDev, const POINT* pt, INT count )
  *           PSDRV_PolyPolygon
  */
 BOOL PSDRV_PolyPolygon( PSDRV_PDEVICE *physDev, const POINT* pts, const INT* counts,
-			  UINT polygons )
+                        UINT polygons )
 {
-    DWORD polygon, line;
-    const POINT* pt;
-    DC *dc = physDev->dc;
+    DWORD polygon, line, total;
+    POINT *dev_pts, *pt;
 
     TRACE("\n");
 
-    pt = pts;
+    for (polygon = total = 0; polygon < polygons; polygon++) total += counts[polygon];
+    if (!(dev_pts = HeapAlloc( GetProcessHeap(), 0, total * sizeof(*dev_pts) ))) return FALSE;
+    memcpy( dev_pts, pts, total * sizeof(*dev_pts) );
+    LPtoDP( physDev->hdc, dev_pts, total );
+
+    pt = dev_pts;
     for(polygon = 0; polygon < polygons; polygon++) {
-	PSDRV_WriteMoveTo(physDev, INTERNAL_XWPTODP(dc, pt->x, pt->y), INTERNAL_YWPTODP(dc, pt->x, pt->y));
+        PSDRV_WriteMoveTo(physDev, pt->x, pt->y);
 	pt++;
-	for(line = 1; line < counts[polygon]; line++) {
-	    PSDRV_WriteLineTo(physDev, INTERNAL_XWPTODP(dc, pt->x, pt->y), INTERNAL_YWPTODP(dc, pt->x, pt->y));
-	    pt++;
-	}
+        for(line = 1; line < counts[polygon]; line++, pt++)
+            PSDRV_WriteLineTo(physDev, pt->x, pt->y);
 	PSDRV_WriteClosePath(physDev);
     }
+    HeapFree( GetProcessHeap(), 0, dev_pts );
 
     if(GetPolyFillMode( physDev->hdc ) == ALTERNATE)
         PSDRV_Brush(physDev, 1);
@@ -304,12 +335,13 @@ BOOL PSDRV_Polygon( PSDRV_PDEVICE *physDev, const POINT* pt, INT count )
 COLORREF PSDRV_SetPixel( PSDRV_PDEVICE *physDev, INT x, INT y, COLORREF color )
 {
     PSCOLOR pscolor;
-    DC *dc = physDev->dc;
+    POINT pt;
 
-    x = INTERNAL_XWPTODP(dc, x, y);
-    y = INTERNAL_YWPTODP(dc, x, y);
+    pt.x = x;
+    pt.y = y;
+    LPtoDP( physDev->hdc, &pt, 1 );
 
-    PSDRV_WriteRectangle( physDev, x, y, 0, 0 );
+    PSDRV_WriteRectangle( physDev, pt.x, pt.y, 0, 0 );
     PSDRV_CreateColor( physDev, &pscolor, color );
     PSDRV_WriteSetColor( physDev, &pscolor );
     PSDRV_WriteFill( physDev );

@@ -45,7 +45,7 @@ debug_channels (psdrv)
 @ cdecl SelectFont(ptr long) PSDRV_SelectFont
 @ cdecl SelectPen(ptr long) PSDRV_SelectPen
 @ cdecl SetBkColor(ptr long) PSDRV_SetBkColor
-@ cdecl SetDeviceClipping(ptr) PSDRV_SetDeviceClipping
+@ cdecl SetDeviceClipping(ptr long) PSDRV_SetDeviceClipping
 @ cdecl SetPixel(ptr long long long) PSDRV_SetPixel
 @ cdecl SetTextColor(ptr long) PSDRV_SetTextColor
 @ cdecl StartDoc(ptr ptr) PSDRV_StartDoc

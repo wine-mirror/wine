@@ -50,7 +50,8 @@ void CLIPPING_UpdateGCRegion( DC * dc )
         CombineRgn( dc->hGCClipRgn, dc->hVisRgn, 0, RGN_COPY );
     else
         CombineRgn(dc->hGCClipRgn, dc->hClipRgn, dc->hVisRgn, RGN_AND);
-    if (dc->funcs->pSetDeviceClipping) dc->funcs->pSetDeviceClipping( dc->physDev );
+    if (dc->funcs->pSetDeviceClipping)
+        dc->funcs->pSetDeviceClipping( dc->physDev, dc->hGCClipRgn );
 }
 
 

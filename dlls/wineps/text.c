@@ -18,6 +18,7 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 #include <string.h>
+#include "gdi.h"
 #include "psdrv.h"
 #include "wine/debug.h"
 #include "winspool.h"
@@ -38,7 +39,6 @@ BOOL PSDRV_ExtTextOut( PSDRV_PDEVICE *physDev, INT x, INT y, UINT flags,
     BOOL bClipped = FALSE;
     BOOL bOpaque = FALSE;
     RECT rect;
-    DC *dc = physDev->dc;
 
     TRACE("(x=%d, y=%d, flags=0x%08x, str=%s, count=%d, lpDx=%p)\n", x, y,
 	  flags, debugstr_wn(str, count), count, lpDx);
@@ -49,11 +49,8 @@ BOOL PSDRV_ExtTextOut( PSDRV_PDEVICE *physDev, INT x, INT y, UINT flags,
     /* set clipping and/or draw background */
     if ((flags & (ETO_CLIPPED | ETO_OPAQUE)) && (lprect != NULL))
     {
-	rect.left = INTERNAL_XWPTODP(dc, lprect->left, lprect->top);
-	rect.right = INTERNAL_XWPTODP(dc, lprect->right, lprect->bottom);
-	rect.top = INTERNAL_YWPTODP(dc, lprect->left, lprect->top);
-	rect.bottom = INTERNAL_YWPTODP(dc, lprect->right, lprect->bottom);
-
+        rect = *lprect;
+        LPtoDP( physDev->hdc, (POINT *)&rect, 2 );
 	PSDRV_WriteGSave(physDev);
 	PSDRV_WriteRectangle(physDev, rect.left, rect.top, rect.right - rect.left, 
 			     rect.bottom - rect.top);

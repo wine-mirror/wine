@@ -18,7 +18,6 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#include "gdi.h"
 #include "psdrv.h"
 #include "wine/debug.h"
 #include "winbase.h"
@@ -28,21 +27,15 @@ WINE_DEFAULT_DEBUG_CHANNEL(psdrv);
 /***********************************************************************
  *           PSDRV_SetDeviceClipping
  */
-VOID PSDRV_SetDeviceClipping( PSDRV_PDEVICE *physDev )
+VOID PSDRV_SetDeviceClipping( PSDRV_PDEVICE *physDev, HRGN hrgn )
 {
     CHAR szArrayName[] = "clippath";
     DWORD size;
     RGNDATA *rgndata;
-    DC *dc = physDev->dc;
 
     TRACE("hdc=%04x\n", physDev->hdc);
 
-    if (dc->hGCClipRgn == 0) {
-        ERR("Rgn is 0. Please report this.\n");
-	return;
-    }
-
-    size = GetRegionData(dc->hGCClipRgn, 0, NULL);
+    size = GetRegionData(hrgn, 0, NULL);
     if(!size) {
         ERR("Invalid region\n");
 	return;
@@ -54,7 +47,7 @@ VOID PSDRV_SetDeviceClipping( PSDRV_PDEVICE *physDev )
 	return;
     }
 
-    GetRegionData(dc->hGCClipRgn, size, rgndata);
+    GetRegionData(hrgn, size, rgndata);
 
     PSDRV_WriteInitClip(physDev);
 

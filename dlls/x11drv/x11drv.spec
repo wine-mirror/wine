@@ -57,7 +57,7 @@ debug_channels (bitblt bitmap clipboard cursor dinput event font gdi graphics
 @ cdecl SetDIBColorTable(ptr long long ptr) X11DRV_SetDIBColorTable
 @ cdecl SetDIBits(ptr long long long ptr ptr long) X11DRV_SetDIBits
 @ cdecl SetDIBitsToDevice(ptr long long long long long long long long ptr ptr long) X11DRV_SetDIBitsToDevice
-@ cdecl SetDeviceClipping(ptr) X11DRV_SetDeviceClipping
+@ cdecl SetDeviceClipping(ptr long) X11DRV_SetDeviceClipping
 @ cdecl SetDeviceGammaRamp(ptr ptr) X11DRV_SetDeviceGammaRamp
 @ cdecl SetPixel(ptr long long long) X11DRV_SetPixel
 @ cdecl SetPixelFormat(ptr long ptr) X11DRV_SetPixelFormat

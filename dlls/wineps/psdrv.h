@@ -23,7 +23,6 @@
 
 #include "windef.h"
 #include "wingdi.h"
-#include "gdi.h"
 #include "wine/wingdi16.h"
 #include "winspool.h"
 
@@ -268,7 +267,7 @@ typedef struct {
 
 typedef struct {
     HDC                 hdc;
-    DC                 *dc;
+    struct tagDC       *dc;
     PSFONT		font;		/* Current PS font */
     PSPEN		pen;
     PSBRUSH		brush;
@@ -401,8 +400,6 @@ extern BOOL PSDRV_Ellipse( PSDRV_PDEVICE *physDev, INT left, INT top, INT right,
 			     INT bottom );
 extern INT PSDRV_EndDoc( PSDRV_PDEVICE *physDev );
 extern INT PSDRV_EndPage( PSDRV_PDEVICE *physDev );
-extern BOOL PSDRV_EnumDeviceFonts( PSDRV_PDEVICE *physDev, LPLOGFONTW plf,
-				   DEVICEFONTENUMPROC proc, LPARAM lp );
 extern BOOL PSDRV_ExtTextOut( PSDRV_PDEVICE *physDev, INT x, INT y, UINT flags,
 				const RECT *lprect, LPCWSTR str, UINT count,
 				const INT *lpDx );
@@ -428,7 +425,6 @@ extern BOOL PSDRV_Rectangle( PSDRV_PDEVICE *physDev, INT left, INT top, INT righ
 extern BOOL PSDRV_RoundRect(PSDRV_PDEVICE *physDev, INT left, INT top, INT right,
 			      INT bottom, INT ell_width, INT ell_height);
 extern COLORREF PSDRV_SetBkColor( PSDRV_PDEVICE *physDev, COLORREF color );
-extern VOID PSDRV_SetDeviceClipping( PSDRV_PDEVICE *physDev );
 extern COLORREF PSDRV_SetPixel( PSDRV_PDEVICE *physDev, INT x, INT y, COLORREF color );
 extern COLORREF PSDRV_SetTextColor( PSDRV_PDEVICE *physDev, COLORREF color );
 extern INT PSDRV_StartDoc( PSDRV_PDEVICE *physDev, const DOCINFOA *doc );

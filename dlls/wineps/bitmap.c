@@ -171,7 +171,7 @@ INT PSDRV_StretchDIBits( PSDRV_PDEVICE *physDev, INT xDst, INT yDst, INT widthDs
     WORD bpp, compression;
     const char *ptr;
     INT line;
-    DC *dc = physDev->dc;
+    POINT pt[2];
 
     TRACE("%08x (%d,%d %dx%d) -> (%d,%d %dx%d)\n", physDev->hdc,
 	  xSrc, ySrc, widthSrc, heightSrc, xDst, yDst, widthDst, heightDst);
@@ -189,10 +189,15 @@ INT PSDRV_StretchDIBits( PSDRV_PDEVICE *physDev, INT xDst, INT yDst, INT widthDs
 	return FALSE;
     }
 
-    xDst = XLPTODP(dc, xDst);
-    yDst = YLPTODP(dc, yDst);
-    widthDst = XLSTODS(dc, widthDst);
-    heightDst = YLSTODS(dc, heightDst);
+    pt[0].x = xDst;
+    pt[0].y = yDst;
+    pt[1].x = xDst + widthDst;
+    pt[1].y = yDst + heightDst;
+    LPtoDP( physDev->hdc, pt, 2 );
+    xDst = pt[0].x;
+    yDst = pt[0].y;
+    widthDst = pt[1].x - pt[0].x;
+    heightDst = pt[1].y - pt[0].y;
 
     switch(bpp) {
 

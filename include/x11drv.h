@@ -118,7 +118,6 @@ extern BOOL X11DRV_GetTextExtentPoint( X11DRV_PDEVICE *physDev, LPCWSTR str,
 extern BOOL X11DRV_GetTextMetrics(X11DRV_PDEVICE *physDev, TEXTMETRICW *metrics);
 extern BOOL X11DRV_PatBlt( X11DRV_PDEVICE *physDev, INT left, INT top,
                              INT width, INT height, DWORD rop );
-extern VOID   X11DRV_SetDeviceClipping(X11DRV_PDEVICE *physDev);
 extern BOOL X11DRV_StretchBlt( X11DRV_PDEVICE *physDevDst, INT xDst, INT yDst,
                                  INT widthDst, INT heightDst,
                                  X11DRV_PDEVICE *physDevSrc, INT xSrc, INT ySrc,
@@ -303,6 +302,7 @@ extern int X11DRV_PALETTE_mapEGAPixel[16];
 
 extern int X11DRV_PALETTE_Init(void);
 extern void X11DRV_PALETTE_Cleanup(void);
+extern BOOL X11DRV_IsSolidColor(COLORREF color);
 
 extern COLORREF X11DRV_PALETTE_ToLogical(int pixel);
 extern int X11DRV_PALETTE_ToPhysical(X11DRV_PDEVICE *physDev, COLORREF color);

@@ -20,6 +20,7 @@
 #include <string.h>
 #include <stdlib.h> 	    /* for bsearch() */
 #include "winspool.h"
+#include "gdi.h"
 #include "psdrv.h"
 #include "wine/debug.h"
 #include "winerror.h"

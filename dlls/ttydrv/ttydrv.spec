@@ -40,7 +40,6 @@ debug_channels (ttydrv)
 @ cdecl SelectBitmap(ptr long) TTYDRV_SelectBitmap
 @ cdecl SelectFont(ptr long) TTYDRV_SelectFont
 @ cdecl SetDIBitsToDevice(ptr long long long long long long long long ptr ptr long) TTYDRV_DC_SetDIBitsToDevice
-@ cdecl SetDeviceClipping(ptr) TTYDRV_DC_SetDeviceClipping
 @ cdecl SetPixel(ptr long long long) TTYDRV_DC_SetPixel
 @ cdecl StretchBlt(ptr long long long long ptr long long long long long) TTYDRV_DC_StretchBlt
 

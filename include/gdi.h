@@ -221,7 +221,7 @@ typedef struct tagDC_FUNCS
     INT      (*pSetDIBits)(PHYSDEV,HBITMAP,UINT,UINT,LPCVOID,const BITMAPINFO*,UINT);
     INT      (*pSetDIBitsToDevice)(PHYSDEV,INT,INT,DWORD,DWORD,INT,INT,UINT,UINT,LPCVOID,
                                    const BITMAPINFO*,UINT);
-    VOID     (*pSetDeviceClipping)(PHYSDEV);
+    VOID     (*pSetDeviceClipping)(PHYSDEV,HRGN);
     BOOL     (*pSetDeviceGammaRamp)(PHYSDEV,LPVOID);
     INT      (*pSetMapMode)(PHYSDEV,INT);
     DWORD    (*pSetMapperFlags)(PHYSDEV,DWORD);

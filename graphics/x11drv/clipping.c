@@ -38,12 +38,11 @@ WINE_DEFAULT_DEBUG_CHANNEL(x11drv);
  *
  *           Could write using GetRegionData but this would be slower.
  */
-void X11DRV_SetDeviceClipping( X11DRV_PDEVICE *physDev )
+void X11DRV_SetDeviceClipping( X11DRV_PDEVICE *physDev, HRGN hrgn )
 {
     XRectangle *pXrect;
-    DC *dc = physDev->dc;
 
-    RGNOBJ *obj = (RGNOBJ *) GDI_GetObjPtr(dc->hGCClipRgn, REGION_MAGIC);
+    RGNOBJ *obj = (RGNOBJ *) GDI_GetObjPtr(hrgn, REGION_MAGIC);
     if (!obj)
     {
         ERR("Rgn is 0. Please report this.\n");
@@ -61,7 +60,7 @@ void X11DRV_SetDeviceClipping( X11DRV_PDEVICE *physDev )
 	if(!pXrect)
 	{
 	    WARN("Can't alloc buffer\n");
-	    GDI_ReleaseObj( dc->hGCClipRgn );
+	    GDI_ReleaseObj( hrgn );
 	    return;
 	}
 
@@ -82,7 +81,7 @@ void X11DRV_SetDeviceClipping( X11DRV_PDEVICE *physDev )
     if(pXrect)
         HeapFree( GetProcessHeap(), 0, pXrect );
 
-    GDI_ReleaseObj( dc->hGCClipRgn );
+    GDI_ReleaseObj( hrgn );
 }
 
 
