@@ -442,7 +442,7 @@ static inline char* debugrange(const RANGE* lprng)
     if (lprng) 
     {
 	char* buf = debug_getbuf();
-	snprintf(buf, DEBUG_BUFFER_SIZE, "(%d, %d)", lprng->lower, lprng->upper);
+	snprintf(buf, DEBUG_BUFFER_SIZE, "[%d, %d)", lprng->lower, lprng->upper);
     	return buf;
     } else return "(null)";
 }
@@ -701,6 +701,20 @@ static BOOL ranges_add(RANGES ranges, RANGE range);
 static BOOL ranges_del(RANGES ranges, RANGE range);
 static void ranges_dump(RANGES ranges);
 
+static inline BOOL ranges_additem(RANGES ranges, INT nItem)
+{
+    RANGE range = { nItem, nItem + 1 };
+
+    return ranges_add(ranges, range);
+}
+
+static inline BOOL ranges_delitem(RANGES ranges, INT nItem)
+{
+    RANGE range = { nItem, nItem + 1 };
+
+    return ranges_del(ranges, range);
+}
+
 /***
  * ITERATOR DOCUMENTATION
  *
@@ -778,7 +792,7 @@ static inline BOOL iterator_next(ITERATOR* i)
     i->nItem++;
 testitem:
     if (i->nItem == i->nSpecial) i->nItem++;
-    if (i->nItem <= i->range.upper) return TRUE;
+    if (i->nItem < i->range.upper) return TRUE;
 
 pickarange:
     if (i->ranges)
@@ -787,7 +801,7 @@ pickarange:
 	    i->range = *(RANGE*)DPA_GetPtr(i->ranges->hdpa, i->index++);
 	else goto end;
     }
-    else if (i->nItem > i->range.upper) goto end;
+    else if (i->nItem >= i->range.upper) goto end;
 
     i->nItem = i->range.lower;
     if (i->nItem >= 0) goto testitem;
@@ -818,8 +832,8 @@ static inline BOOL iterator_prev(ITERATOR* i)
 	return FALSE;
     }
 
-    i->nItem--;
 testitem:
+    i->nItem--;
     if (i->nItem == i->nSpecial) i->nItem--;
     if (i->nItem >= i->range.lower) return TRUE;
 
@@ -833,7 +847,7 @@ pickarange:
     else if (!start && i->nItem < i->range.lower) goto end;
 
     i->nItem = i->range.upper;
-    if (i->nItem >= 0) goto testitem;
+    if (i->nItem > 0) goto testitem;
 end:
     return (i->nItem = i->nSpecial) != -1;
 }
@@ -901,11 +915,12 @@ static BOOL iterator_frameditems(ITERATOR* i, LISTVIEW_INFO* infoPtr, const RECT
 	    rcItem.right = rcItem.left + infoPtr->nItemWidth;
 	    rcItem.bottom = rcItem.top + infoPtr->nItemHeight;
 	    if (IntersectRect(&rcTemp, &rcItem, &frame))
-	    {
-		RANGE item_range = { nItem, nItem };
-		ranges_add(i->ranges, item_range);
-		TRACE("    icon=%d\n", nItem);
-	    }				    
+		ranges_additem(i->ranges, nItem);
+	}
+	if (TRACE_ON(listview))
+	{
+	    TRACE("    icon items:\n");
+	    ranges_dump(i->ranges);
 	}
 	return TRUE;
     }
@@ -920,7 +935,7 @@ static BOOL iterator_frameditems(ITERATOR* i, LISTVIEW_INFO* infoPtr, const RECT
 	upper = min((frame.bottom - 1) / infoPtr->nItemHeight, infoPtr->nItemCount - 1);
 	if (upper < lower) return TRUE;
 	i->range.lower = lower;
-	i->range.upper = upper;
+	i->range.upper = upper + 1;
 	TRACE("    report=%s\n", debugrange(&i->range));
     }
     else
@@ -944,7 +959,7 @@ static BOOL iterator_frameditems(ITERATOR* i, LISTVIEW_INFO* infoPtr, const RECT
 	{
 	    item_range.lower = nCol * nPerCol + nFirstRow;
 	    if(item_range.lower >= infoPtr->nItemCount) break;
-	    item_range.upper = min(nCol * nPerCol + nLastRow, infoPtr->nItemCount - 1);
+	    item_range.upper = min(nCol * nPerCol + nLastRow + 1, infoPtr->nItemCount);
 	    TRACE("   list=%s\n", debugrange(&item_range));
 	    ranges_add(i->ranges, item_range);
 	}
@@ -993,10 +1008,7 @@ static BOOL iterator_visibleitems(ITERATOR* i, LISTVIEW_INFO *infoPtr, HDC  hdc)
 	rcItem.right = rcItem.left + infoPtr->nItemWidth;
 	rcItem.bottom = rcItem.top + infoPtr->nItemHeight;
 	if (!RectVisible(hdc, &rcItem))
-	{
-	    RANGE item_range = { i->nItem, i->nItem };
-	    ranges_del(i->ranges, item_range);
-	}
+	    ranges_delitem(i->ranges, i->nItem);
     }
     /* the iterator should restart on the next iterator_next */
     
@@ -2154,15 +2166,15 @@ static void LISTVIEW_PrintSelectionRanges(LISTVIEW_INFO *infoPtr)
  * [I] flags : flags
  *
  * RETURNS:
- * >0 : if Item 1 > Item 2
- * <0 : if Item 2 > Item 1
- * 0 : if Item 1 == Item 2
+ * > 0 : if range 1 > range 2
+ * < 0 : if range 2 > range 1
+ * = 0 : if range intersects range 2
  */
 static INT CALLBACK ranges_cmp(LPVOID range1, LPVOID range2, LPARAM flags)
 {
-    if (((RANGE*)range1)->upper < ((RANGE*)range2)->lower) 
+    if (((RANGE*)range1)->upper <= ((RANGE*)range2)->lower) 
 	return -1;
-    if (((RANGE*)range2)->upper < ((RANGE*)range1)->lower) 
+    if (((RANGE*)range2)->upper <= ((RANGE*)range1)->lower) 
 	return 1;
     return 0;
 }
@@ -2195,7 +2207,7 @@ static void ranges_dump(RANGES ranges)
 
 static inline BOOL ranges_contain(RANGES ranges, INT nItem)
 {
-    RANGE srchrng = { nItem, nItem };
+    RANGE srchrng = { nItem, nItem + 1 };
 
     TRACE("(nItem=%d)\n", nItem);
     if (TRACE_ON(listview)) ranges_dump(ranges);
@@ -2209,7 +2221,7 @@ static INT ranges_itemcount(RANGES ranges)
     for (i = 0; i < ranges->hdpa->nItemCount; i++)
     {
 	RANGE *sel = DPA_GetPtr(ranges->hdpa, i);
-	count += sel->upper - sel->lower + 1;
+	count += sel->upper - sel->lower;
     }
 
     return count;
@@ -2217,11 +2229,8 @@ static INT ranges_itemcount(RANGES ranges)
 
 static BOOL ranges_shift(RANGES ranges, INT nItem, INT delta, INT nUpper)
 {
-    RANGE srchrng, *chkrng;
+    RANGE srchrng = { nItem, nItem + 1 }, *chkrng;
     INT index;
-
-    srchrng.upper = nItem;
-    srchrng.lower = nItem;
 
     index = DPA_Search(ranges->hdpa, &srchrng, 0, ranges_cmp, 0, DPAS_SORTED | DPAS_INSERTAFTER);
     if (index == -1) return TRUE;
@@ -2231,8 +2240,8 @@ static BOOL ranges_shift(RANGES ranges, INT nItem, INT delta, INT nUpper)
 	chkrng = DPA_GetPtr(ranges->hdpa, index);
     	if (chkrng->lower >= nItem)
 	    chkrng->lower = max(min(chkrng->lower + delta, nUpper - 1), 0);
-        if (chkrng->upper >= nItem)
-	    chkrng->upper = max(min(chkrng->upper + delta, nUpper - 1), 0);
+        if (chkrng->upper > nItem)
+	    chkrng->upper = max(min(chkrng->upper + delta, nUpper), 0);
     }
     return TRUE;
 }
@@ -2350,13 +2359,13 @@ static BOOL ranges_del(RANGES ranges, RANGE range)
 	else if ( (chkrgn->upper <= remrgn.upper) &&
 		  (chkrgn->lower < remrgn.lower) )
 	{
-	    chkrgn->upper = remrgn.lower - 1;
+	    chkrgn->upper = remrgn.lower;
 	}
 	/* case 4: overlap lower */
 	else if ( (chkrgn->upper > remrgn.upper) &&
 		  (chkrgn->lower >= remrgn.lower) )
 	{
-	    chkrgn->lower = remrgn.upper + 1;
+	    chkrgn->lower = remrgn.upper;
 	}
 	/* case 5: fully internal */
 	else
@@ -2365,8 +2374,8 @@ static BOOL ranges_del(RANGES ranges, RANGE range)
 	    if (!newrgn) return FALSE;
 	    tmprgn = *chkrgn;
 	    newrgn->lower = chkrgn->lower;
-	    newrgn->upper = remrgn.lower - 1;
-	    chkrgn->lower = remrgn.upper + 1;
+	    newrgn->upper = remrgn.lower;
+	    chkrgn->lower = remrgn.upper;
 	    DPA_InsertPtr(ranges->hdpa, index, newrgn);
 	    chkrgn = &tmprgn;
 	}
@@ -2822,15 +2831,13 @@ static BOOL set_owner_item(LISTVIEW_INFO *infoPtr, LPLVITEMW lpLVItem, BOOL isW,
     /* and the selection is the only other state a virtual list may hold */
     if (lpLVItem->stateMask & LVIS_SELECTED)
     {
-	RANGE range = { lpLVItem->iItem, lpLVItem->iItem };
-
         if (lpLVItem->state & LVIS_SELECTED)
         {
 	    if (lStyle & LVS_SINGLESEL) LISTVIEW_RemoveAllSelections(infoPtr, lpLVItem->iItem);
-	    ranges_add(infoPtr->selectionRanges, range);
+	    ranges_additem(infoPtr->selectionRanges, lpLVItem->iItem);
         }
         else
-	    ranges_del(infoPtr->selectionRanges, range);
+	    ranges_delitem(infoPtr->selectionRanges, lpLVItem->iItem);
     }
 
     /* notify the parent now that things have changed */
@@ -2923,17 +2930,15 @@ static BOOL set_main_item(LISTVIEW_INFO *infoPtr, LPLVITEMW lpLVItem, BOOL isW, 
 
     if (uChanged & LVIF_STATE)
     {
-	RANGE range = { lpLVItem->iItem, lpLVItem->iItem };
-	
 	lpItem->state &= ~lpLVItem->stateMask;
 	lpItem->state |= (lpLVItem->state & lpLVItem->stateMask);
 	if (lpLVItem->state & lpLVItem->stateMask & ~infoPtr->uCallbackMask & LVIS_SELECTED)
 	{
 	    if (lStyle & LVS_SINGLESEL) LISTVIEW_RemoveAllSelections(infoPtr, lpLVItem->iItem);
-	    ranges_add(infoPtr->selectionRanges, range);
+	    ranges_additem(infoPtr->selectionRanges, lpLVItem->iItem);
 	}
 	else if (lpLVItem->stateMask & LVIS_SELECTED)
-	    ranges_del(infoPtr->selectionRanges, range);
+	    ranges_delitem(infoPtr->selectionRanges, lpLVItem->iItem);
 	
 	/* if we are asked to change focus, and we manage it, do it */
 	if (lpLVItem->state & lpLVItem->stateMask & ~infoPtr->uCallbackMask & LVIS_FOCUSED)
@@ -3341,8 +3346,9 @@ static void LISTVIEW_RefreshOwnerDraw(LISTVIEW_INFO *infoPtr, HDC hdc)
 	RANGE range = iterator_range(&i);
         NMLVCACHEHINT nmlv;
 
+	ZeroMemory(&nmlv, sizeof(NMLVCACHEHINT));
         nmlv.iFrom = range.lower;
-        nmlv.iTo   = range.upper;
+        nmlv.iTo   = range.upper - 1;
         notify_hdr(infoPtr, LVN_ODCACHEHINT, &nmlv.hdr);
     }
 
