@@ -43,14 +43,11 @@ static const int use_stabs = 0;
 static void function_header( FILE *outfile, const char *name )
 {
     fprintf( outfile, "\n\t.align %d\n", get_alignment(4) );
-    if (use_stabs) fprintf( outfile, "\t.stabs \"%s:F1\",36,0,0," PREFIX "%s\n", name, name);
-#ifdef NEED_TYPE_IN_DEF
-    fprintf( outfile, "\t.def " PREFIX "%s; .scl 2; .type 32; .endef\n", name );
-#else
-    fprintf( outfile, "\t.type " PREFIX "%s,@function\n", name );
-#endif
-    fprintf( outfile, "\t.globl " PREFIX "%s\n", name );
-    fprintf( outfile, PREFIX "%s:\n", name );
+    if (use_stabs)
+        fprintf( outfile, "\t.stabs \"%s:F1\",36,0,0," __ASM_NAME("%s") "\n", name, name);
+    fprintf( outfile, "\t" __ASM_FUNC("%s") "\n", name );
+    fprintf( outfile, "\t.globl " __ASM_NAME("%s") "\n", name );
+    fprintf( outfile, __ASM_NAME("%s") ":\n", name );
 }
 
 
@@ -154,11 +151,11 @@ static void BuildCallFrom16Core( FILE *outfile, int reg_func, int thunk, int sho
 
     if (UsePIC)
     {
-        fprintf( outfile, "\t.byte 0x2e\n\tmovl " PREFIX "CallTo16_DataSelector@GOT(%%ecx), %%edx\n" );
+        fprintf( outfile, "\t.byte 0x2e\n\tmovl " __ASM_NAME("CallTo16_DataSelector@GOT") "(%%ecx), %%edx\n" );
         fprintf( outfile, "\t.byte 0x2e\n\tmovl (%%edx), %%edx\n" );
     }
     else
-        fprintf( outfile, "\t.byte 0x2e\n\tmovl " PREFIX "CallTo16_DataSelector,%%edx\n" );
+        fprintf( outfile, "\t.byte 0x2e\n\tmovl " __ASM_NAME("CallTo16_DataSelector") ",%%edx\n" );
 
     /* Load 32-bit segment registers */
 #ifdef __svr4__
@@ -172,17 +169,17 @@ static void BuildCallFrom16Core( FILE *outfile, int reg_func, int thunk, int sho
 
     if ( UsePIC )
     {
-        fprintf( outfile, "\tmovl " PREFIX "SYSLEVEL_Win16CurrentTeb@GOT(%%ecx), %%edx\n" );
+        fprintf( outfile, "\tmovl " __ASM_NAME("SYSLEVEL_Win16CurrentTeb@GOT") "(%%ecx), %%edx\n" );
         fprintf( outfile, "\tmovw (%%edx), %%fs\n" );
     }
     else
-        fprintf( outfile, "\tmovw " PREFIX "SYSLEVEL_Win16CurrentTeb, %%fs\n" );
+        fprintf( outfile, "\tmovw " __ASM_NAME("SYSLEVEL_Win16CurrentTeb") ", %%fs\n" );
 
     /* Get address of wine_ldt_copy array into %ecx */
     if ( UsePIC )
-        fprintf( outfile, "\tmovl " PREFIX "wine_ldt_copy@GOT(%%ecx), %%ecx\n" );
+        fprintf( outfile, "\tmovl " __ASM_NAME("wine_ldt_copy@GOT") "(%%ecx), %%ecx\n" );
     else
-        fprintf( outfile, "\tmovl $" PREFIX "wine_ldt_copy, %%ecx\n" );
+        fprintf( outfile, "\tmovl $" __ASM_NAME("wine_ldt_copy") ", %%ecx\n" );
 
     /* Translate STACK16FRAME base to flat offset in %edx */
     fprintf( outfile, "\tmovw %%ss, %%dx\n" );
@@ -325,9 +322,9 @@ static void BuildCallFrom16Core( FILE *outfile, int reg_func, int thunk, int sho
             fprintf( outfile, "\tpushl $0\n" );
 
         if ( UsePIC )
-            fprintf( outfile, "\tcall " PREFIX "RELAY_DebugCallFrom16@PLT\n ");
+            fprintf( outfile, "\tcall " __ASM_NAME("RELAY_DebugCallFrom16@PLT") "\n ");
         else
-            fprintf( outfile, "\tcall " PREFIX "RELAY_DebugCallFrom16\n ");
+            fprintf( outfile, "\tcall " __ASM_NAME("RELAY_DebugCallFrom16") "\n ");
 
         fprintf( outfile, "\tpopl %%edx\n" );
         fprintf( outfile, "\tpopl %%edx\n" );
@@ -364,9 +361,9 @@ static void BuildCallFrom16Core( FILE *outfile, int reg_func, int thunk, int sho
             fprintf( outfile, "\tpushl $0\n" );
 
         if ( UsePIC )
-            fprintf( outfile, "\tcall " PREFIX "RELAY_DebugCallFrom16Ret@PLT\n ");
+            fprintf( outfile, "\tcall " __ASM_NAME("RELAY_DebugCallFrom16Ret@PLT") "\n ");
         else
-            fprintf( outfile, "\tcall " PREFIX "RELAY_DebugCallFrom16Ret\n ");
+            fprintf( outfile, "\tcall " __ASM_NAME("RELAY_DebugCallFrom16Ret") "\n ");
 
         fprintf( outfile, "\tpopl %%eax\n" );
         fprintf( outfile, "\tpopl %%eax\n" );
@@ -506,9 +503,9 @@ static void BuildCallTo16Core( FILE *outfile, int short_ret, int reg_func )
 
     /* Enter Win16 Mutex */
     if ( UsePIC )
-        fprintf( outfile, "\tcall " PREFIX "_EnterWin16Lock@PLT\n" );
+        fprintf( outfile, "\tcall " __ASM_NAME("_EnterWin16Lock@PLT") "\n" );
     else
-        fprintf( outfile, "\tcall " PREFIX "_EnterWin16Lock\n" );
+        fprintf( outfile, "\tcall " __ASM_NAME("_EnterWin16Lock") "\n" );
 
     /* Print debugging info */
     if (debugging)
@@ -519,9 +516,9 @@ static void BuildCallTo16Core( FILE *outfile, int short_ret, int reg_func )
         fprintf( outfile, "\tpushl  8(%%ebp)\n" );
 
         if ( UsePIC )
-            fprintf( outfile, "\tcall " PREFIX "RELAY_DebugCallTo16@PLT\n" );
+            fprintf( outfile, "\tcall " __ASM_NAME("RELAY_DebugCallTo16@PLT") "\n" );
         else
-            fprintf( outfile, "\tcall " PREFIX "RELAY_DebugCallTo16\n" );
+            fprintf( outfile, "\tcall " __ASM_NAME("RELAY_DebugCallTo16") "\n" );
 
         fprintf( outfile, "\taddl $12, %%esp\n" );
     }
@@ -529,11 +526,11 @@ static void BuildCallTo16Core( FILE *outfile, int short_ret, int reg_func )
     /* Get return address */
     if ( UsePIC )
     {
-        fprintf( outfile, "\tmovl " PREFIX "CallTo16_RetAddr@GOT(%%ebx), %%ecx\n" );
-        fprintf( outfile, "\tmovl " PREFIX "(%%ecx), %%ecx\n" );
+        fprintf( outfile, "\tmovl " __ASM_NAME("CallTo16_RetAddr@GOT") "(%%ebx), %%ecx\n" );
+        fprintf( outfile, "\tmovl (%%ecx), %%ecx\n" );
     }
     else
-        fprintf( outfile, "\tmovl " PREFIX "CallTo16_RetAddr, %%ecx\n" );
+        fprintf( outfile, "\tmovl " __ASM_NAME("CallTo16_RetAddr") ", %%ecx\n" );
 
     /* Call the actual CallTo16 routine (simulate a lcall) */
     fprintf( outfile, "\tpushl %%cs\n" );
@@ -593,18 +590,18 @@ static void BuildCallTo16Core( FILE *outfile, int short_ret, int reg_func )
         fprintf( outfile, "\tpushl $%d\n", reg_func );
 
         if ( UsePIC )
-            fprintf( outfile, "\tcall " PREFIX "RELAY_DebugCallTo16Ret@PLT\n" );
+            fprintf( outfile, "\tcall " __ASM_NAME("RELAY_DebugCallTo16Ret@PLT") "\n" );
         else
-            fprintf( outfile, "\tcall " PREFIX "RELAY_DebugCallTo16Ret\n" );
+            fprintf( outfile, "\tcall " __ASM_NAME("RELAY_DebugCallTo16Ret") "\n" );
 
         fprintf( outfile, "\taddl $4, %%esp\n" );
     }
 
     /* Leave Win16 Mutex */
     if ( UsePIC )
-        fprintf( outfile, "\tcall " PREFIX "_LeaveWin16Lock@PLT\n" );
+        fprintf( outfile, "\tcall " __ASM_NAME("_LeaveWin16Lock@PLT") "\n" );
     else
-        fprintf( outfile, "\tcall " PREFIX "_LeaveWin16Lock\n" );
+        fprintf( outfile, "\tcall " __ASM_NAME("_LeaveWin16Lock") "\n" );
 
     /* Get return value */
     fprintf( outfile, "\tpopl %%eax\n" );
@@ -723,7 +720,7 @@ static void BuildRet16Func( FILE *outfile )
 
     /* Restore 32-bit segment registers */
 
-    fprintf( outfile, "\t.byte 0x2e\n\tmovl " PREFIX "CallTo16_DataSelector-" PREFIX "Call16_Ret_Start,%%edi\n" );
+    fprintf( outfile, "\t.byte 0x2e\n\tmovl " __ASM_NAME("CallTo16_DataSelector") "-" __ASM_NAME("Call16_Ret_Start") ",%%edi\n" );
 #ifdef __svr4__
     fprintf( outfile, "\tdata16\n");
 #endif
@@ -733,7 +730,7 @@ static void BuildRet16Func( FILE *outfile )
 #endif
     fprintf( outfile, "\tmovw %%di,%%es\n" );
 
-    fprintf( outfile, "\tmovw " PREFIX "SYSLEVEL_Win16CurrentTeb,%%fs\n" );
+    fprintf( outfile, "\tmovw " __ASM_NAME("SYSLEVEL_Win16CurrentTeb") ",%%fs\n" );
 
     /* Restore the 32-bit stack */
 
@@ -751,10 +748,10 @@ static void BuildRet16Func( FILE *outfile )
     /* Declare the return address and data selector variables */
 
     fprintf( outfile, "\n\t.align %d\n", get_alignment(4) );
-    fprintf( outfile, "\t.globl " PREFIX "CallTo16_DataSelector\n" );
-    fprintf( outfile, PREFIX "CallTo16_DataSelector:\t.long 0\n" );
-    fprintf( outfile, "\t.globl " PREFIX "CallTo16_RetAddr\n" );
-    fprintf( outfile, PREFIX "CallTo16_RetAddr:\t.long 0\n" );
+    fprintf( outfile, "\t.globl " __ASM_NAME("CallTo16_DataSelector") "\n" );
+    fprintf( outfile, __ASM_NAME("CallTo16_DataSelector") ":\t.long 0\n" );
+    fprintf( outfile, "\t.globl " __ASM_NAME("CallTo16_RetAddr") "\n" );
+    fprintf( outfile, __ASM_NAME("CallTo16_RetAddr") ":\t.long 0\n" );
 }
 
 
@@ -857,9 +854,10 @@ static void BuildCallTo32CBClient( FILE *outfile, BOOL isEx )
 
     fprintf( outfile, "\n\t.align %d\n", get_alignment(4) );
     if (use_stabs)
-        fprintf( outfile, ".stabs \"CALL32_%s:F1\",36,0,0," PREFIX "CALL32_%s\n", name, name );
-    fprintf( outfile, "\t.globl " PREFIX "CALL32_%s\n", name );
-    fprintf( outfile, PREFIX "CALL32_%s:\n", name );
+        fprintf( outfile, ".stabs \"CALL32_%s:F1\",36,0,0," __ASM_NAME("CALL32_%s") "\n",
+                 name, name );
+    fprintf( outfile, "\t.globl " __ASM_NAME("CALL32_%s") "\n", name );
+    fprintf( outfile, __ASM_NAME("CALL32_%s") ":\n", name );
 
     /* Entry code */
 
@@ -878,7 +876,7 @@ static void BuildCallTo32CBClient( FILE *outfile, BOOL isEx )
     fprintf( outfile, "\tshldl $16,%%ebx,%%eax\n" );
     fprintf( outfile, "\tandl $0xfff8,%%eax\n" );
     fprintf( outfile, "\tshrl $1,%%eax\n" );
-    fprintf( outfile, "\tmovl " PREFIX "wine_ldt_copy(%%eax),%%esi\n" );
+    fprintf( outfile, "\tmovl " __ASM_NAME("wine_ldt_copy") "(%%eax),%%esi\n" );
     fprintf( outfile, "\tmovw %%bx,%%ax\n" );
     fprintf( outfile, "\taddl %%eax,%%esi\n" );
 
@@ -911,7 +909,7 @@ static void BuildCallTo32CBClient( FILE *outfile, BOOL isEx )
         fprintf( outfile, "\taddl $%d, %%ebx\n", sizeof(STACK16FRAME)-size+4 + 4 );
         fprintf( outfile, "\tmovl %%ebx, 0(%%edi)\n" );    /* 16-bit ss:sp */
 
-        fprintf( outfile, "\tmovl " PREFIX "CALL32_%s_RetAddr, %%eax\n", name );
+        fprintf( outfile, "\tmovl " __ASM_NAME("CALL32_%s_RetAddr") ", %%eax\n", name );
         fprintf( outfile, "\tmovl %%eax, 4(%%edi)\n" );   /* overwrite return address */
     }
     else
@@ -932,7 +930,7 @@ static void BuildCallTo32CBClient( FILE *outfile, BOOL isEx )
         fprintf( outfile, "\tandl $0x0000ffff, %%eax\n" );
         fprintf( outfile, "\tmovl %%eax, 16(%%edi)\n" );
 
-        fprintf( outfile, "\tmovl " PREFIX "CALL32_%s_RetAddr, %%eax\n", name );
+        fprintf( outfile, "\tmovl " __ASM_NAME("CALL32_%s_RetAddr") ", %%eax\n", name );
         fprintf( outfile, "\tmovl %%eax, 20(%%edi)\n" );
     }
 
@@ -989,8 +987,8 @@ static void BuildCallTo32CBClientRet( FILE *outfile, BOOL isEx )
 
     /* '16-bit' return stub */
 
-    fprintf( outfile, "\n\t.globl " PREFIX "CALL32_%s_Ret\n", name );
-    fprintf( outfile, PREFIX "CALL32_%s_Ret:\n", name );
+    fprintf( outfile, "\n\t.globl " __ASM_NAME("CALL32_%s_Ret") "\n", name );
+    fprintf( outfile, __ASM_NAME("CALL32_%s_Ret") ":\n", name );
 
     if ( !isEx )
     {
@@ -1008,8 +1006,8 @@ static void BuildCallTo32CBClientRet( FILE *outfile, BOOL isEx )
 
     /* Declare the return address variable */
 
-    fprintf( outfile, "\n\t.globl " PREFIX "CALL32_%s_RetAddr\n", name );
-    fprintf( outfile, PREFIX "CALL32_%s_RetAddr:\t.long 0\n", name );
+    fprintf( outfile, "\n\t.globl " __ASM_NAME("CALL32_%s_RetAddr") "\n", name );
+    fprintf( outfile, __ASM_NAME("CALL32_%s_RetAddr") ":\t.long 0\n", name );
 }
 
 
@@ -1172,8 +1170,8 @@ void BuildRelays16( FILE *outfile )
         fprintf( outfile, "Code_Start:\n\n" );
     }
 
-    fprintf( outfile, PREFIX"Call16_Start:\n" );
-    fprintf( outfile, "\t.globl "PREFIX"Call16_Start\n" );
+    fprintf( outfile, __ASM_NAME("Call16_Start") ":\n" );
+    fprintf( outfile, "\t.globl " __ASM_NAME("Call16_Start") "\n" );
     fprintf( outfile, "\t.byte 0\n\n" );
 
     /* Standard CallFrom16 routine (WORD return) */
@@ -1206,8 +1204,8 @@ void BuildRelays16( FILE *outfile )
     /* CBClientThunkSLEx routine */
     BuildCallTo32CBClient( outfile, TRUE  );
 
-    fprintf( outfile, PREFIX"Call16_End:\n" );
-    fprintf( outfile, "\t.globl "PREFIX"Call16_End\n" );
+    fprintf( outfile, __ASM_NAME("Call16_End") ":\n" );
+    fprintf( outfile, "\t.globl " __ASM_NAME("Call16_End") "\n" );
 
     if (use_stabs)
     {
@@ -1226,8 +1224,8 @@ void BuildRelays16( FILE *outfile )
 
     /* The whole Call16_Ret segment must lie within the .data section */
     fprintf( outfile, "\n\t.data\n" );
-    fprintf( outfile, "\t.globl " PREFIX "Call16_Ret_Start\n" );
-    fprintf( outfile, PREFIX "Call16_Ret_Start:\n" );
+    fprintf( outfile, "\t.globl " __ASM_NAME("Call16_Ret_Start") "\n" );
+    fprintf( outfile, __ASM_NAME("Call16_Ret_Start") ":\n" );
 
     /* Standard CallTo16 return stub */
     BuildRet16Func( outfile );
@@ -1239,8 +1237,8 @@ void BuildRelays16( FILE *outfile )
     BuildCallTo32CBClientRet( outfile, TRUE  );
 
     /* End of Call16_Ret segment */
-    fprintf( outfile, "\n\t.globl " PREFIX "Call16_Ret_End\n" );
-    fprintf( outfile, PREFIX "Call16_Ret_End:\n" );
+    fprintf( outfile, "\n\t.globl " __ASM_NAME("Call16_Ret_End") "\n" );
+    fprintf( outfile, __ASM_NAME("Call16_Ret_End") ":\n" );
 }
 
 /*******************************************************************
@@ -1293,4 +1291,3 @@ void BuildRelays32( FILE *outfile )
 }
 
 #endif  /* __i386__ */
-

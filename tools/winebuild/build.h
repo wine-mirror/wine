@@ -31,12 +31,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#ifdef NEED_UNDERSCORE_PREFIX
-# define PREFIX "_"
-#else
-# define PREFIX
-#endif
-
 #ifdef HAVE_ASM_STRING
 # define STRING ".string"
 #else

@@ -134,14 +134,14 @@ static int output_exports( FILE *outfile, int nr_exports )
 
     fprintf( outfile, "asm(\".data\\n\"\n" );
     fprintf( outfile, "    \"\\t.align %d\\n\"\n", get_alignment(4) );
-    fprintf( outfile, "    \"" PREFIX "__wine_spec_exports:\\n\"\n" );
+    fprintf( outfile, "    \"" __ASM_NAME("__wine_spec_exports") ":\\n\"\n" );
 
     /* export directory header */
 
     fprintf( outfile, "    \"\\t.long 0\\n\"\n" );                 /* Characteristics */
     fprintf( outfile, "    \"\\t.long 0\\n\"\n" );                 /* TimeDateStamp */
     fprintf( outfile, "    \"\\t.long 0\\n\"\n" );                 /* MajorVersion/MinorVersion */
-    fprintf( outfile, "    \"\\t.long " PREFIX "dllname\\n\"\n" ); /* Name */
+    fprintf( outfile, "    \"\\t.long " __ASM_NAME("dllname") "\\n\"\n" ); /* Name */
     fprintf( outfile, "    \"\\t.long %d\\n\"\n", Base );          /* Base */
     fprintf( outfile, "    \"\\t.long %d\\n\"\n", nr_exports );    /* NumberOfFunctions */
     fprintf( outfile, "    \"\\t.long %d\\n\"\n", nb_names );      /* NumberOfNames */
@@ -168,19 +168,19 @@ static int output_exports( FILE *outfile, int nr_exports )
         else switch(odp->type)
         {
         case TYPE_EXTERN:
-            fprintf( outfile, "    \"\\t.long " PREFIX "%s\\n\"\n", odp->link_name );
+            fprintf( outfile, "    \"\\t.long " __ASM_NAME("%s") "\\n\"\n", odp->link_name );
             break;
         case TYPE_STDCALL:
         case TYPE_VARARGS:
         case TYPE_CDECL:
-            fprintf( outfile, "    \"\\t.long " PREFIX "%s\\n\"\n",
+            fprintf( outfile, "    \"\\t.long " __ASM_NAME("%s") "\\n\"\n",
                      (odp->flags & FLAG_REGISTER) ? make_internal_name(odp,"regs") : odp->link_name );
             break;
         case TYPE_STUB:
-            fprintf( outfile, "    \"\\t.long " PREFIX "%s\\n\"\n", make_internal_name( odp, "stub" ) );
+            fprintf( outfile, "    \"\\t.long " __ASM_NAME("%s") "\\n\"\n", make_internal_name( odp, "stub" ) );
             break;
         case TYPE_VARIABLE:
-            fprintf( outfile, "    \"\\t.long " PREFIX "%s\\n\"\n", make_internal_name( odp, "var" ) );
+            fprintf( outfile, "    \"\\t.long " __ASM_NAME("%s") "\\n\"\n", make_internal_name( odp, "var" ) );
             break;
         case TYPE_FORWARD:
             fprintf( outfile, "    \"\\t.long __wine_spec_forwards+%d\\n\"\n", fwd_size );
@@ -279,15 +279,15 @@ static int output_exports( FILE *outfile, int nr_exports )
             switch(odp->type)
             {
             case TYPE_STDCALL:
-                fprintf( outfile, "    \"\\tjmp " PREFIX "%s\\n\"\n", name );
+                fprintf( outfile, "    \"\\tjmp " __ASM_NAME("%s") "\\n\"\n", name );
                 fprintf( outfile, "    \"\\tret $0x%04x\\n\"\n", args );
-                fprintf( outfile, "    \"\\t.long " PREFIX "%s,0x%08x\\n\"\n", name, mask );
+                fprintf( outfile, "    \"\\t.long " __ASM_NAME("%s") ",0x%08x\\n\"\n", name, mask );
                 break;
             case TYPE_CDECL:
-                fprintf( outfile, "    \"\\tjmp " PREFIX "%s\\n\"\n", name );
+                fprintf( outfile, "    \"\\tjmp " __ASM_NAME("%s") "\\n\"\n", name );
                 fprintf( outfile, "    \"\\tret\\n\"\n" );
                 fprintf( outfile, "    \"\\t.short 0x%04x\\n\"\n", args );
-                fprintf( outfile, "    \"\\t.long " PREFIX "%s,0x%08x\\n\"\n", name, mask );
+                fprintf( outfile, "    \"\\t.long " __ASM_NAME("%s") ",0x%08x\\n\"\n", name, mask );
                 break;
             default:
                 assert(0);
@@ -309,9 +309,9 @@ static int output_exports( FILE *outfile, int nr_exports )
         for (p = Names[i]->name; *p; p++)
             if (!isalnum(*p) && *p != '_' && *p != '.') break;
         if (*p) continue;
-        fprintf( outfile, "    \"\\t.globl " PREFIX "__wine_dllexport_%s_%s\\n\"\n",
+        fprintf( outfile, "    \"\\t.globl " __ASM_NAME("__wine_dllexport_%s_%s") "\\n\"\n",
                  make_c_identifier(DLLFileName), Names[i]->name );
-        fprintf( outfile, "    \"" PREFIX "__wine_dllexport_%s_%s:\\n\"\n",
+        fprintf( outfile, "    \"" __ASM_NAME("__wine_dllexport_%s_%s") ":\\n\"\n",
                  make_c_identifier(DLLFileName), Names[i]->name );
     }
     fprintf( outfile, "    \"\\t.long 0xffffffff\\n\"\n" );
@@ -415,9 +415,9 @@ static void output_register_funcs( FILE *outfile )
         fprintf( outfile,
                  "asm(\".align %d\\n\\t\"\n"
                  "    \"" __ASM_FUNC("%s") "\\n\\t\"\n"
-                 "    \"" PREFIX "%s:\\n\\t\"\n"
-                 "    \"call " PREFIX "__wine_call_from_32_regs\\n\\t\"\n"
-                 "    \".long " PREFIX "%s\\n\\t\"\n"
+                 "    \"" __ASM_NAME("%s") ":\\n\\t\"\n"
+                 "    \"call " __ASM_NAME("__wine_call_from_32_regs") "\\n\\t\"\n"
+                 "    \".long " __ASM_NAME("%s") "\\n\\t\"\n"
                  "    \".byte %d,%d\");\n",
                  get_alignment(4),
                  name, name, odp->link_name,
@@ -442,27 +442,27 @@ void output_dll_init( FILE *outfile, const char *constructor, const char *destru
     if (constructor)
     {
         fprintf( outfile, "asm(\"\\t.section\\t\\\".init\\\" ,\\\"ax\\\"\\n\"\n" );
-        fprintf( outfile, "    \"\\tcall " PREFIX "%s\\n\"\n", constructor );
+        fprintf( outfile, "    \"\\tcall " __ASM_NAME("%s") "\\n\"\n", constructor );
         fprintf( outfile, "    \"\\t.section\\t\\\".text\\\"\\n\");\n" );
     }
     if (destructor)
     {
         fprintf( outfile, "asm(\"\\t.section\\t\\\".fini\\\" ,\\\"ax\\\"\\n\"\n" );
-        fprintf( outfile, "    \"\\tcall " PREFIX "%s\\n\"\n", destructor );
+        fprintf( outfile, "    \"\\tcall " __ASM_NAME("%s") "\\n\"\n", destructor );
         fprintf( outfile, "    \"\\t.section\\t\\\".text\\\"\\n\");\n" );
     }
 #elif defined(__sparc__)
     if (constructor)
     {
         fprintf( outfile, "asm(\"\\t.section\\t\\\".init\\\" ,\\\"ax\\\"\\n\"\n" );
-        fprintf( outfile, "    \"\\tcall " PREFIX "%s\\n\"\n", constructor );
+        fprintf( outfile, "    \"\\tcall " __ASM_NAME("%s") "\\n\"\n", constructor );
         fprintf( outfile, "    \"\\tnop\\n\"\n" );
         fprintf( outfile, "    \"\\t.section\\t\\\".text\\\"\\n\");\n" );
     }
     if (destructor)
     {
         fprintf( outfile, "asm(\"\\t.section\\t\\\".fini\\\" ,\\\"ax\\\"\\n\"\n" );
-        fprintf( outfile, "    \"\\tcall " PREFIX "%s\\n\"\n", destructor );
+        fprintf( outfile, "    \"\\tcall " __ASM_NAME("%s") "\\n\"\n", destructor );
         fprintf( outfile, "    \"\\tnop\\n\"\n" );
         fprintf( outfile, "    \"\\t.section\\t\\\".text\\\"\\n\");\n" );
     }
@@ -470,13 +470,13 @@ void output_dll_init( FILE *outfile, const char *constructor, const char *destru
     if (constructor)
     {
         fprintf( outfile, "asm(\"\\t.section\\t\\\".init\\\" ,\\\"ax\\\"\\n\"\n" );
-        fprintf( outfile, "    \"\\tbl " PREFIX "%s\\n\"\n", constructor );
+        fprintf( outfile, "    \"\\tbl " __ASM_NAME("%s") "\\n\"\n", constructor );
         fprintf( outfile, "    \"\\t.section\\t\\\".text\\\"\\n\");\n" );
     }
     if (destructor)
     {
         fprintf( outfile, "asm(\"\\t.section\\t\\\".fini\\\" ,\\\"ax\\\"\\n\"\n" );
-        fprintf( outfile, "    \"\\tbl " PREFIX "%s\\n\"\n", destructor );
+        fprintf( outfile, "    \"\\tbl " __ASM_NAME("%s") "\\n\"\n", destructor );
         fprintf( outfile, "    \"\\t.section\\t\\\".text\\\"\\n\");\n" );
     }
 #else
@@ -529,7 +529,7 @@ void BuildSpec32File( FILE *outfile )
     fprintf( outfile, "#endif\n" );
     fprintf( outfile, "asm(\".section \\\".text\\\"\\n\\t\"\n" );
     fprintf( outfile, "    \".align %d\\n\"\n", get_alignment(page_size) );
-    fprintf( outfile, "    \"" PREFIX "pe_header:\\t.skip %ld\\n\\t\");\n", page_size );
+    fprintf( outfile, "    \"" __ASM_NAME("pe_header") ":\\t.skip %ld\\n\\t\");\n", page_size );
     fprintf( outfile, "#ifndef __GNUC__\n" );
     fprintf( outfile, "}\n" );
     fprintf( outfile, "#endif\n" );
@@ -900,23 +900,23 @@ void BuildDebugFile( FILE *outfile )
 
 #if defined(__i386__)
     fprintf( outfile, "asm(\"\\t.section\\t\\\".init\\\" ,\\\"ax\\\"\\n\"\n" );
-    fprintf( outfile, "    \"\\tcall " PREFIX "__wine_dbg_%s_init\\n\"\n", prefix );
+    fprintf( outfile, "    \"\\tcall " __ASM_NAME("__wine_dbg_%s_init") "\\n\"\n", prefix );
     fprintf( outfile, "    \"\\t.section\\t\\\".fini\\\" ,\\\"ax\\\"\\n\"\n" );
-    fprintf( outfile, "    \"\\tcall " PREFIX "__wine_dbg_%s_fini\\n\"\n", prefix );
+    fprintf( outfile, "    \"\\tcall " __ASM_NAME("__wine_dbg_%s_fini") "\\n\"\n", prefix );
     fprintf( outfile, "    \"\\t.section\\t\\\".text\\\"\\n\");\n" );
 #elif defined(__sparc__)
     fprintf( outfile, "asm(\"\\t.section\\t\\\".init\\\" ,\\\"ax\\\"\\n\"\n" );
-    fprintf( outfile, "    \"\\tcall " PREFIX "__wine_dbg_%s_init\\n\"\n", prefix );
+    fprintf( outfile, "    \"\\tcall " __ASM_NAME("__wine_dbg_%s_init") "\\n\"\n", prefix );
     fprintf( outfile, "    \"\\tnop\\n\"\n" );
     fprintf( outfile, "    \"\\t.section\\t\\\".fini\\\" ,\\\"ax\\\"\\n\"\n" );
-    fprintf( outfile, "    \"\\tcall " PREFIX "__wine_dbg_%s_fini\\n\"\n", prefix );
+    fprintf( outfile, "    \"\\tcall " __ASM_NAME("__wine_dbg_%s_fini") "\\n\"\n", prefix );
     fprintf( outfile, "    \"\\tnop\\n\"\n" );
     fprintf( outfile, "    \"\\t.section\t\\\".text\\\"\\n\");\n" );
 #elif defined(__PPC__)
     fprintf( outfile, "asm(\"\\t.section\\t\\\".init\\\" ,\\\"ax\\\"\\n\"\n" );
-    fprintf( outfile, "    \"\\tbl " PREFIX "__wine_dbg_%s_init\\n\"\n", prefix );
+    fprintf( outfile, "    \"\\tbl " __ASM_NAME("__wine_dbg_%s_init") "\\n\"\n", prefix );
     fprintf( outfile, "    \"\\t.section\\t\\\".fini\\\" ,\\\"ax\\\"\\n\"\n" );
-    fprintf( outfile, "    \"\\tbl " PREFIX "__wine_dbg_%s_fini\\n\"\n", prefix );
+    fprintf( outfile, "    \"\\tbl " __ASM_NAME("__wine_dbg_%s_fini") "\\n\"\n", prefix );
     fprintf( outfile, "    \"\\t.section\\t\\\".text\\\"\\n\");\n" );
 #else
 #error You need to define the DLL constructor for your architecture

@@ -48,6 +48,7 @@
  */
 
 #include "config.h"
+#include "wine/port.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -127,11 +128,7 @@ char version_string[] = "Wine Resource Compiler Version " WRC_FULLVERSION "\n"
  * Default prefix for resource names used in the C array.
  * Option '-p name' sets it to 'name'
  */
-#ifdef NEED_UNDERSCORE_PREFIX
-char *prefix = "__Resource";
-#else
-char *prefix = "_Resource";
-#endif
+char *prefix = __ASM_NAME("_Resource");
 
 /*
  * Set if compiling in 32bit mode (default).
@@ -385,13 +382,7 @@ int main(int argc,char *argv[])
 			output_name = strdup(optarg);
 			break;
 		case 'p':
-#ifdef NEED_UNDERSCORE_PREFIX
-			prefix = (char *)xmalloc(strlen(optarg)+2);
-			prefix[0] = '_';
-			strcpy(prefix+1, optarg);
-#else
 			prefix = xstrdup(optarg);
-#endif
 			break;
 		case 'r':
 			create_res = 1;

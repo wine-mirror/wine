@@ -19,6 +19,7 @@
  */
 
 #include "config.h"
+#include "wine/port.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -31,12 +32,6 @@
 #include "genres.h"
 #include "newstruc.h"
 #include "utils.h"
-
-#ifdef NEED_UNDERSCORE_PREFIX
-char Underscore[] = "_";
-#else
-char Underscore[] = "";
-#endif
 
 static char s_file_head_str[] =
         "/* This file is generated with wrc version " WRC_FULLVERSION ". Do not edit! */\n"
@@ -56,12 +51,8 @@ static char s_file_tail_str[] =
 static char s_file_autoreg_str[] =
 	"\t.text\n"
 	".LAuto_Register:\n"
-	"\tpushl\t$%s%s\n"
-#ifdef NEED_UNDERSCORE_PREFIX
-	"\tcall\t_LIBRES_RegisterResources\n"
-#else
-	"\tcall\tLIBRES_RegisterResources\n"
-#endif
+	"\tpushl\t$" __ASM_NAME("%s%s") "\n"
+	"\tcall\t" __ASM_NAME("LIBRES_RegisterResources") "\n"
 	"\taddl\t$4,%%esp\n"
 	"\tret\n\n"
 #ifdef __NetBSD__
@@ -536,8 +527,8 @@ static void write_pe_segment(FILE *fp)
 	int i;
 
 	fprintf(fp, "\t.align\t4\n");
-	fprintf(fp, "%s%s:\n", prefix, _PEResTab);
-	fprintf(fp, "\t.globl\t%s%s\n", prefix, _PEResTab);
+	fprintf(fp, __ASM_NAME("%s%s") ":\n", prefix, _PEResTab);
+	fprintf(fp, "\t.globl\t" __ASM_NAME("%s%s") "\n", prefix, _PEResTab);
 	/* Flags */
 	fprintf(fp, "\t.long\t0\n");
 	/* Time/Date stamp */
@@ -561,7 +552,7 @@ static void write_pe_segment(FILE *fp)
 		else
 		{
 			char *name = prep_nid_for_label(&(rcp->type));
-			fprintf(fp, "\t.long\t(%s_%s_typename - %s%s) | 0x80000000\n",
+			fprintf(fp, "\t.long\t(" __ASM_NAME("%s_%s_typename") " - " __ASM_NAME("%s%s") ") | 0x80000000\n",
 				prefix,
 				name,
 				prefix,
@@ -569,7 +560,7 @@ static void write_pe_segment(FILE *fp)
 		}
 		/* Offset */
 		label = prep_nid_for_label(&(rcp->type));
-		fprintf(fp, "\t.long\t(.L%s - %s%s) | 0x80000000\n",
+		fprintf(fp, "\t.long\t(.L%s - " __ASM_NAME("%s%s") ") | 0x80000000\n",
 			label,
 			prefix,
 			_PEResTab);
@@ -601,7 +592,7 @@ static void write_pe_segment(FILE *fp)
 				fprintf(fp, "\t.long\t%d\n", rsc->name->name.i_name);
 			else
 			{
-				fprintf(fp, "\t.long\t(%s%s_name - %s%s) | 0x80000000\n",
+				fprintf(fp, "\t.long\t(" __ASM_NAME("%s%s_name") " - " __ASM_NAME("%s%s") ") | 0x80000000\n",
 					prefix,
 					rsc->c_name,
 					prefix,
@@ -613,7 +604,7 @@ static void write_pe_segment(FILE *fp)
 			 */
 			/* Offset */
 			namelabel = prep_nid_for_label(rsc->name);
-			fprintf(fp, "\t.long\t(.L%s_%s - %s%s) | 0x80000000\n",
+			fprintf(fp, "\t.long\t(.L%s_%s - " __ASM_NAME("%s%s") ") | 0x80000000\n",
 				typelabel,
 				namelabel,
 				prefix,
@@ -654,7 +645,7 @@ static void write_pe_segment(FILE *fp)
 				/* LanguageId */
 				fprintf(fp, "\t.long\t0x%08x\n", rsc->lan ? MAKELANGID(rsc->lan->id, rsc->lan->sub) : 0);
 				/* Offset */
-				fprintf(fp, "\t.long\t.L%s_%s_%d - %s%s\n",
+				fprintf(fp, "\t.long\t.L%s_%s_%d - " __ASM_NAME("%s%s") "\n",
 					typelabel,
 					namelabel,
 					rsc->lan ? MAKELANGID(rsc->lan->id, rsc->lan->sub) : 0,
@@ -667,8 +658,8 @@ static void write_pe_segment(FILE *fp)
 	}
 
 	/* Write the resource table itself */
-	fprintf(fp, "%s_ResourceDirectory:\n", prefix);
-	fprintf(fp, "\t.globl\t%s_ResourceDirectory\n", prefix);
+	fprintf(fp, __ASM_NAME("%s_ResourceDirectory") ":\n", prefix);
+	fprintf(fp, "\t.globl\t" __ASM_NAME("%s_ResourceDirectory") "\n", prefix);
 	direntries = 0;
 
 	for(i = 0; i < rccount; i++)
@@ -700,7 +691,7 @@ static void write_pe_segment(FILE *fp)
 					rsc->lan ? MAKELANGID(rsc->lan->id, rsc->lan->sub) : 0);
 
 				/* Data RVA */
-				fprintf(fp, "\t.long\t%s%s_data - %s%s\n",
+				fprintf(fp, "\t.long\t" __ASM_NAME("%s%s_data") " - " __ASM_NAME("%s%s") "\n",
 					prefix,
 					rsc->c_name,
 					prefix,
@@ -736,8 +727,8 @@ static void write_ne_segment(FILE *fp)
 	int i, j;
 
 	fprintf(fp, "\t.align\t4\n");
-	fprintf(fp, "%s%s:\n", prefix, _NEResTab);
-	fprintf(fp, "\t.globl\t%s%s\n", prefix, _NEResTab);
+	fprintf(fp, __ASM_NAME("%s%s") ":\n", prefix, _NEResTab);
+	fprintf(fp, "\t.globl\t" __ASM_NAME("%s%s") "\n", prefix, _NEResTab);
 
 	/* AlignmentShift */
 	fprintf(fp, "\t.short\t%d\n", alignment_pwr);
@@ -751,7 +742,7 @@ static void write_ne_segment(FILE *fp)
 		if(rcp->type.type == name_ord)
 			fprintf(fp, "\t.short\t0x%04x\n", rcp->type.name.i_name | 0x8000);
 		else
-			fprintf(fp, "\t.short\t%s_%s_typename - %s%s\n",
+			fprintf(fp, "\t.short\t" __ASM_NAME("%s_%s_typename") " - " __ASM_NAME("%s%s") "\n",
 				prefix,
 				rcp->type.name.s_name->str.cstr,
 				prefix,
@@ -772,7 +763,7 @@ static void write_ne_segment(FILE *fp)
  * All other things are as the MS doc describes (alignment etc.)
  */
 			/* Offset */
-			fprintf(fp, "\t.short\t(%s%s_data - %s%s) >> %d\n",
+			fprintf(fp, "\t.short\t(" __ASM_NAME("%s%s_data") " - " __ASM_NAME("%s%s") ") >> %d\n",
 				prefix,
 				rcp->rscarray[j]->c_name,
 				prefix,
@@ -787,7 +778,7 @@ static void write_ne_segment(FILE *fp)
 			if(rcp->rscarray[j]->name->type == name_ord)
 				fprintf(fp, "\t.short\t0x%04x\n", rcp->rscarray[j]->name->name.i_name | 0x8000);
 			else
-				fprintf(fp, "\t.short\t%s%s_name - %s%s\n",
+				fprintf(fp, "\t.short\t" __ASM_NAME("%s%s_name") " - " __ASM_NAME("%s%s") "\n",
 				prefix,
 				rcp->rscarray[j]->c_name,
 				prefix,
@@ -827,7 +818,7 @@ static void write_rsc_names(FILE *fp)
 			if(rcp->type.type == name_str)
 			{
 				char *name = prep_nid_for_label(&(rcp->type));
-				fprintf(fp, "%s_%s_typename:\n",
+				fprintf(fp, __ASM_NAME("%s_%s_typename") ":\n",
 					prefix,
 					name);
 				write_name_str(fp, &(rcp->type));
@@ -839,7 +830,7 @@ static void write_rsc_names(FILE *fp)
 
 				if(rsc->name->type == name_str)
 				{
-					fprintf(fp, "%s%s_name:\n",
+					fprintf(fp, __ASM_NAME("%s%s_name") ":\n",
 						prefix,
 						rsc->c_name);
 					write_name_str(fp, rsc->name);
@@ -856,7 +847,7 @@ static void write_rsc_names(FILE *fp)
 
 			if(rcp->type.type == name_str)
 			{
-				fprintf(fp, "%s_%s_typename:\n",
+				fprintf(fp, __ASM_NAME("%s_%s_typename") ":\n",
 					prefix,
 					rcp->type.name.s_name->str.cstr);
 				write_name_str(fp, &(rcp->type));
@@ -865,7 +856,7 @@ static void write_rsc_names(FILE *fp)
 			{
 				if(rcp->rscarray[j]->name->type == name_str)
 				{
-					fprintf(fp, "%s%s_name:\n",
+					fprintf(fp, __ASM_NAME("%s%s_name") ":\n",
 						prefix,
 						rcp->rscarray[j]->c_name);
 					write_name_str(fp, rcp->rscarray[j]->name);
@@ -943,9 +934,9 @@ void write_s_file(char *outname, resource_t *top)
 				continue;
 
 			fprintf(fo, "\t.align\t%d\n", win32 ? 4 : alignment);
-			fprintf(fo, "%s%s_data:\n", prefix, rsc->c_name);
+			fprintf(fo, __ASM_NAME("%s%s_data") ":\n", prefix, rsc->c_name);
 			if(global)
-				fprintf(fo, "\t.globl\t%s%s_data\n", prefix, rsc->c_name);
+				fprintf(fo, "\t.globl\t" __ASM_NAME("%s%s_data") "\n", prefix, rsc->c_name);
 
 			write_s_res(fo, rsc->binres);
 
@@ -956,26 +947,26 @@ void write_s_file(char *outname, resource_t *top)
 		{
 			/* Add a resource descriptor for built-in and elf-dlls */
 			fprintf(fo, "\t.align\t4\n");
-			fprintf(fo, "%s_ResourceDescriptor:\n", prefix);
-			fprintf(fo, "\t.globl\t%s_ResourceDescriptor\n", prefix);
-			fprintf(fo, "%s_ResourceTable:\n", prefix);
+			fprintf(fo, __ASM_NAME("%s_ResourceDescriptor") ":\n", prefix);
+			fprintf(fo, "\t.globl\t" __ASM_NAME("%s_ResourceDescriptor") "\n", prefix);
+			fprintf(fo, __ASM_NAME("%s_ResourceTable") ":\n", prefix);
 			if(global)
-				fprintf(fo, "\t.globl\t%s_ResourceTable\n", prefix);
-			fprintf(fo, "\t.long\t%s%s\n", prefix, win32 ? _PEResTab : _NEResTab);
-			fprintf(fo, "%s_NumberOfResources:\n", prefix);
+				fprintf(fo, "\t.globl\t" __ASM_NAME("%s_ResourceTable") "\n", prefix);
+			fprintf(fo, "\t.long\t" __ASM_NAME("%s%s") "\n", prefix, win32 ? _PEResTab : _NEResTab);
+			fprintf(fo, __ASM_NAME("%s_NumberOfResources") ":\n", prefix);
 			if(global)
-				fprintf(fo, "\t.globl\t%s_NumberOfResources\n", prefix);
+				fprintf(fo, "\t.globl\t" __ASM_NAME("%s_NumberOfResources") "\n", prefix);
 			fprintf(fo, "\t.long\t%d\n", direntries);
-			fprintf(fo, "%s_ResourceSectionSize:\n", prefix);
+			fprintf(fo, __ASM_NAME("%s_ResourceSectionSize") ":\n", prefix);
 			if(global)
-				fprintf(fo, "\t.globl\t%s_ResourceSectionSize\n", prefix);
-			fprintf(fo, "\t.long\t.LResTabEnd - %s%s\n", prefix, win32 ? _PEResTab : _NEResTab);
+				fprintf(fo, "\t.globl\t" __ASM_NAME("%s_ResourceSectionSize") "\n", prefix);
+			fprintf(fo, "\t.long\t.LResTabEnd - " __ASM_NAME("%s%s") "\n", prefix, win32 ? _PEResTab : _NEResTab);
 			if(win32)
 			{
-				fprintf(fo, "%s_ResourcesEntries:\n", prefix);
+				fprintf(fo, __ASM_NAME("%s_ResourcesEntries") ":\n", prefix);
 				if(global)
-					fprintf(fo, "\t.globl\t%s_ResourcesEntries\n", prefix);
-				fprintf(fo, "\t.long\t%s_ResourceDirectory\n", prefix);
+					fprintf(fo, "\t.globl\t" __ASM_NAME("%s_ResourcesEntries") "\n", prefix);
+				fprintf(fo, "\t.long\t" __ASM_NAME("%s_ResourceDirectory") "\n", prefix);
 			}
 		}
 	}
@@ -1024,19 +1015,21 @@ void write_s_file(char *outname, resource_t *top)
 			 * first byte/word denotes the size and the rest the string
 			 * itself.
 			 */
-			fprintf(fo, "%s%s:\n", prefix, rsc->c_name);
+			fprintf(fo, __ASM_NAME("%s%s") ":\n", prefix, rsc->c_name);
 			if(global)
-				fprintf(fo, "\t.globl\t%s%s\n", prefix, rsc->c_name);
-			fprintf(fo, "\t.long\t%d, %s%s%s, %d, %s%s%s%s, %s%s_data, %d\n",
-				rsc->name->type == name_ord ? rsc->name->name.i_name : 0,
-				rsc->name->type == name_ord ? "0" : prefix,
-				rsc->name->type == name_ord ? "" : rsc->c_name,
-				rsc->name->type == name_ord ? "" : "_name",
-				type,
-				type ? "0" : prefix,
-				type ? "" : "_",
-				type ? "" : type_name,
-				type ? "" : "_typename",
+				fprintf(fo, "\t.globl\t" __ASM_NAME("%s%s") "\n", prefix, rsc->c_name);
+                        if (rsc->name->type == name_ord)
+                            fprintf(fo, "\t.long\t%d, 0, ", rsc->name->name.i_name );
+                        else
+                            fprintf(fo, "\t.long\t0, " __ASM_NAME("%s%s_name") ", ",
+                                    prefix, rsc->c_name );
+                        if (type)
+                            fprintf(fo, "%d, 0, ", type);
+                        else
+                            fprintf(fo, "0, " __ASM_NAME("%s_%s_typename") ", ",
+                                    prefix, type_name );
+
+                        fprintf(fo, __ASM_NAME("%s%s_data") ", %d\n",
 				prefix,
 				rsc->c_name,
 				rsc->binres->size - rsc->binres->dataidx);
@@ -1047,11 +1040,11 @@ void write_s_file(char *outname, resource_t *top)
 		/* Write the indirection table */
 		fprintf(fo, "/* Resource indirection table */\n\n");
 		fprintf(fo, "\t.align\t4\n");
-		fprintf(fo, "%s%s:\n", prefix, _ResTable);
-		fprintf(fo, "\t.globl\t%s%s\n", prefix, _ResTable);
+		fprintf(fo, __ASM_NAME("%s%s") ":\n", prefix, _ResTable);
+		fprintf(fo, "\t.globl\t" __ASM_NAME("%s%s") "\n", prefix, _ResTable);
 		for(rsc = top; rsc; rsc = rsc->next)
 		{
-			fprintf(fo, "\t.long\t%s%s\n", prefix, rsc->c_name);
+			fprintf(fo, "\t.long\t" __ASM_NAME("%s%s") "\n", prefix, rsc->c_name);
 		}
 		fprintf(fo, "\t.long\t0\n");
 		fprintf(fo, "\n");
@@ -1080,13 +1073,6 @@ void write_h_file(char *outname, resource_t *top)
 {
 	FILE *fo;
 	resource_t *rsc;
-	char *h_prefix;
-
-#ifdef NEED_UNDERSCORE_PREFIX
-	h_prefix = prefix + 1;
-#else
-	h_prefix = prefix;
-#endif
 
 	fo = fopen(outname, "wt");
 	if(!fo)
@@ -1102,7 +1088,7 @@ void write_h_file(char *outname, resource_t *top)
 	{
 		fprintf(fo, "extern %schar %s%s[];\n\n",
 			constant ? "const " : "",
-			h_prefix,
+			prefix,
 			win32 ? _PEResTab : _NEResTab);
 	}
 
@@ -1114,7 +1100,7 @@ void write_h_file(char *outname, resource_t *top)
 
 		fprintf(fo, "extern %schar %s%s_data[];\n",
 			constant ? "const " : "",
-			h_prefix,
+			prefix,
 			rsc->c_name);
 	}
 
@@ -1129,7 +1115,7 @@ void write_h_file(char *outname, resource_t *top)
 			fprintf(fo, "extern %swrc_resource%d_t %s%s;\n",
 				constant ? "const " : "",
 				win32 ? 32 : 16,
-				h_prefix,
+				prefix,
 				rsc->c_name);
 		}
 
@@ -1140,11 +1126,10 @@ void write_h_file(char *outname, resource_t *top)
 		fprintf(fo, "extern %swrc_resource%d_t %s%s[];\n\n",
 			constant ? "const " : "",
 			win32 ? 32 : 16,
-			h_prefix,
+			prefix,
 			_ResTable);
 	}
 
 	fprintf(fo, h_file_tail_str);
 	fclose(fo);
 }
-

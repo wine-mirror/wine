@@ -50,12 +50,6 @@ extern const char **debug_snoop_includelist;
 extern void WINAPI SNOOP_Entry();
 extern void WINAPI SNOOP_Return();
 
-#ifdef NEED_UNDERSCORE_PREFIX
-# define PREFIX "_"
-#else
-# define PREFIX
-#endif
-
 #include "pshpack1.h"
 
 typedef	struct tagSNOOP_FUN {

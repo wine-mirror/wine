@@ -148,7 +148,7 @@ __ASM_GLOBAL_FUNC(vm86_enter,
                   "pushl %fs\n\t"
                   "int $0x80\n"
                   ".globl " __ASM_NAME("vm86_return") "\n\t"
-                  ".type " __ASM_NAME("vm86_return") ",@function\n"
+                  __ASM_FUNC("vm86_return") "\n"
                   __ASM_NAME("vm86_return") ":\n\t"
                   "popl %fs\n\t"
                   "popl %ecx\n\t"
@@ -162,7 +162,7 @@ __ASM_GLOBAL_FUNC(vm86_enter,
                   "movl 4(%esp),%ecx\n\t"  /* vm86_ptr */
                   "movl $0,(%ecx)\n\t"
                   ".globl " __ASM_NAME("vm86_return_end") "\n\t"
-                  ".type " __ASM_NAME("vm86_return_end") ",@function\n"
+                  __ASM_FUNC("vm86_return_end") "\n"
                   __ASM_NAME("vm86_return_end") ":\n\t"
                   "ret" );
 

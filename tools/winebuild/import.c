@@ -470,13 +470,9 @@ static int output_immediate_imports( FILE *outfile )
         {
             fprintf( outfile, "    \"\\t" __ASM_FUNC("%s") "\\n\"\n",
                      dll_imports[i]->imports[j] );
-            fprintf( outfile, "    \"\\t.globl " PREFIX "%s\\n\"\n",
+            fprintf( outfile, "    \"\\t.globl " __ASM_NAME("%s") "\\n\"\n",
                      dll_imports[i]->imports[j] );
-
-
-
-
-            fprintf( outfile, "    \"" PREFIX "%s:\\n\\t", dll_imports[i]->imports[j] );
+            fprintf( outfile, "    \"" __ASM_NAME("%s") ":\\n\\t", dll_imports[i]->imports[j] );
 
 #if defined(__i386__)
             if (strstr( dll_imports[i]->imports[j], "__wine_call_from_16" ))
@@ -651,7 +647,7 @@ static int output_delayed_imports( FILE *outfile )
 
     fprintf( outfile, "asm(\".align %d\\n\"\n", get_alignment(8) );
     fprintf( outfile, "    \"\\t" __ASM_FUNC("__wine_delay_load_asm") "\\n\"\n" );
-    fprintf( outfile, "    \"" PREFIX "__wine_delay_load_asm:\\n\"\n" );
+    fprintf( outfile, "    \"" __ASM_NAME("__wine_delay_load_asm") ":\\n\"\n" );
 #if defined(__i386__)
     fprintf( outfile, "    \"\\tpushl %%ecx\\n\\tpushl %%edx\\n\\tpushl %%eax\\n\"\n" );
     fprintf( outfile, "    \"\\tcall __wine_delay_load\\n\"\n" );
@@ -675,7 +671,7 @@ static int output_delayed_imports( FILE *outfile )
             char buffer[128];
             sprintf( buffer, "__wine_delay_imp_%d_%s", i, dll_imports[i]->imports[j]);
             fprintf( outfile, "    \"\\t" __ASM_FUNC("%s") "\\n\"\n", buffer );
-            fprintf( outfile, "    \"" PREFIX "%s:\\n\"\n", buffer );
+            fprintf( outfile, "    \"" __ASM_NAME("%s") ":\\n\"\n", buffer );
 #if defined(__i386__)
             fprintf( outfile, "    \"\\tmovl $%d, %%eax\\n\"\n", (idx << 16) | j );
             fprintf( outfile, "    \"\\tjmp __wine_delay_load_asm\\n\"\n" );
@@ -700,9 +696,9 @@ static int output_delayed_imports( FILE *outfile )
         {
             fprintf( outfile, "    \"\\t" __ASM_FUNC("%s") "\\n\"\n",
                      dll_imports[i]->imports[j] );
-            fprintf( outfile, "    \"\\t.globl " PREFIX "%s\\n\"\n",
+            fprintf( outfile, "    \"\\t.globl " __ASM_NAME("%s") "\\n\"\n",
                      dll_imports[i]->imports[j] );
-            fprintf( outfile, "    \"" PREFIX "%s:\\n\\t", dll_imports[i]->imports[j] );
+            fprintf( outfile, "    \"" __ASM_NAME("%s") ":\\n\\t", dll_imports[i]->imports[j] );
 #if defined(__i386__)
             if (strstr( dll_imports[i]->imports[j], "__wine_call_from_16" ))
                 fprintf( outfile, ".byte 0x2e\\n\\tjmp *(delay_imports+%d)\\n\\tnop\\n", pos );

@@ -53,13 +53,7 @@ void PTHREAD_init_done(void)
 #include <pthread.h>
 #include <signal.h>
 
-#ifdef NEED_UNDERSCORE_PREFIX
-# define PREFIX "_"
-#else
-# define PREFIX
-#endif
-
-#define PSTR(str) PREFIX #str
+#define PSTR(str) __ASM_NAME(#str)
 
 /* adapt as necessary (a construct like this is used in glibc sources) */
 #define strong_alias(orig, alias) \
@@ -70,11 +64,7 @@ void PTHREAD_init_done(void)
  * so for those, we need to use the pogo stick */
 #if defined(__i386__) && !defined(__PIC__)
 /* FIXME: PIC */
-#define jump_alias(orig, alias) \
- asm(".globl " PSTR(alias) "\n" \
-     "\t.type " PSTR(alias) ",@function\n" \
-     PSTR(alias) ":\n" \
-     "\tjmp " PSTR(orig))
+#define jump_alias(orig, alias) __ASM_GLOBAL_FUNC( alias, "jmp " PSTR(orig))
 #endif
 
 /* get necessary libc symbols */
