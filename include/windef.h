@@ -25,7 +25,9 @@
 # undef UNICODE
 #endif  /* __WINE__ */
 
+#ifndef WINVER
 #define WINVER 0x0500
+#endif
 
 #include "winnt.h"
 
