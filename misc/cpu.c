@@ -73,9 +73,12 @@ VOID WINAPI GetSystemInfo(
 
 	/* Hmm, reasonable processor feature defaults? */
 
-        /* Create this registry key for all systems */
-	if (RegCreateKeyA(HKEY_LOCAL_MACHINE,"HARDWARE\\DESCRIPTION\\System\\CentralProcessor",&hkey)!=ERROR_SUCCESS) {
-            WARN("Unable to register CPU information\n");
+        /* Create these registry keys for all systems
+	 * FPU entry is often empty on Windows, so we don't care either */
+	if ( (RegCreateKeyA(HKEY_LOCAL_MACHINE,"HARDWARE\\DESCRIPTION\\System\\FloatingPointProcessor",&hkey)!=ERROR_SUCCESS)
+	  || (RegCreateKeyA(HKEY_LOCAL_MACHINE,"HARDWARE\\DESCRIPTION\\System\\CentralProcessor",&hkey)!=ERROR_SUCCESS) )
+	{
+            WARN("Unable to write FPU/CPU info to registry\n");
         }
 
 #ifdef linux
@@ -167,7 +170,7 @@ VOID WINAPI GetSystemInfo(
 			continue;
 		}
 		if (!strncasecmp(line,"processor",strlen("processor"))) {
-			/* processor number counts up...*/
+			/* processor number counts up... */
 			unsigned int x;
 
 			if (sscanf(value,"%d",&x))
