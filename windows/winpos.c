@@ -899,17 +899,27 @@ BOOL16 WINAPI SetForegroundWindow16( HWND16 hwnd )
  */
 HWND WINAPI GetForegroundWindow(void)
 {
-    return GetActiveWindow();
-}
+    HWND hwndActive = 0;
 
+    /* Get the foreground window (active window of hActiveQueue) */
+    if ( hActiveQueue )
+    {
+        MESSAGEQUEUE *pActiveQueue = QUEUE_Lock( hActiveQueue );
+        if ( pActiveQueue )
+            hwndActive = PERQDATA_GetActiveWnd( pActiveQueue->pQData );
+
+        QUEUE_Unlock( pActiveQueue );
+    }
+
+    return hwndActive;
+}
 
 /*******************************************************************
  *         SetForegroundWindow    (USER32.482)
  */
 BOOL WINAPI SetForegroundWindow( HWND hwnd )
 {
-    SetActiveWindow( hwnd );
-    return TRUE;
+    return WINPOS_ChangeActiveWindow( hwnd, FALSE );
 }
 
 
@@ -1643,6 +1653,8 @@ BOOL WINPOS_SetActiveWindow( HWND hWnd, BOOL fMouse, BOOL fChangeFocus)
     HWND     hwndActive = 0;
     BOOL     bRet = 0;
 
+    TRACE( win, "(%04x, %d, %d)\n", hWnd, fMouse, fChangeFocus );
+
     /* Get current active window from the active queue */
     if ( hActiveQueue )
     {
@@ -1784,7 +1796,7 @@ BOOL WINPOS_SetActiveWindow( HWND hWnd, BOOL fMouse, BOOL fChangeFocus)
         }
         WIN_ReleaseDesktop();
         
-	if (!IsWindow(hWnd)) goto CLEANUP;
+	if (hWnd && !IsWindow(hWnd)) goto CLEANUP;
     }
 
     if (hWnd)
@@ -1808,13 +1820,27 @@ BOOL WINPOS_SetActiveWindow( HWND hWnd, BOOL fMouse, BOOL fChangeFocus)
     }
 
     /* change focus if possible */
-    if( fChangeFocus && GetFocus() )
-	if( WIN_GetTopParent(GetFocus()) != hwndActive )
-	    FOCUS_SwitchFocus( pNewActiveQueue, GetFocus(),
-			       (wndPtr && (wndPtr->dwStyle & WS_MINIMIZE))?
-			       0:
-			       hwndActive
-	    );
+    if ( fChangeFocus )
+    {
+        if ( pNewActiveQueue )
+        {
+            HWND hOldFocus = PERQDATA_GetFocusWnd( pNewActiveQueue->pQData );
+
+            if ( WIN_GetTopParent( hOldFocus ) != hwndActive )
+                FOCUS_SwitchFocus( pNewActiveQueue, hOldFocus, 
+                                   (wndPtr && (wndPtr->dwStyle & WS_MINIMIZE))?
+                                   0 : hwndActive );
+        }
+
+        if ( pOldActiveQueue && 
+             ( !pNewActiveQueue || 
+                pNewActiveQueue->pQData != pOldActiveQueue->pQData ) )
+        {
+            HWND hOldFocus = PERQDATA_GetFocusWnd( pOldActiveQueue->pQData );
+            if ( hOldFocus )
+                FOCUS_SwitchFocus( pOldActiveQueue, hOldFocus, 0 );
+        }
+    }
 
     if( !hwndPrevActive && wndPtr )
         (*wndPtr->pDriver->pForceWindowRaise)(wndPtr);

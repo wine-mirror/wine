@@ -660,18 +660,12 @@ static void EVENT_ButtonRelease( HWND hWnd, XButtonEvent *event )
  */
 static void EVENT_FocusIn( HWND hWnd, XFocusChangeEvent *event )
 {
-  if (Options.managed) EVENT_QueryZOrder( hWnd );
-  
-  if (event->detail != NotifyPointer)
-    { 
-      if (hWnd != GetActiveWindow())
+    if (event->detail != NotifyPointer)
+        if (hWnd != GetForegroundWindow())
         {
-	  WINPOS_ChangeActiveWindow( hWnd, FALSE );
-	  X11DRV_KEYBOARD_UpdateState();
+            SetForegroundWindow( hWnd );
+	    X11DRV_KEYBOARD_UpdateState();
         }
-      if ((hWnd != GetFocus()) && !IsChild( hWnd, GetFocus()))
-            SetFocus( hWnd );
-    }
 }
 
 
@@ -683,15 +677,11 @@ static void EVENT_FocusIn( HWND hWnd, XFocusChangeEvent *event )
 static void EVENT_FocusOut( HWND hWnd, XFocusChangeEvent *event )
 {
     if (event->detail != NotifyPointer)
-    {
-        if (hWnd == GetActiveWindow())
+        if (hWnd == GetForegroundWindow())
 	{
 	    SendMessageA( hWnd, WM_CANCELMODE, 0, 0 );
-	    WINPOS_ChangeActiveWindow( 0, FALSE );
+	    SetForegroundWindow( 0 );
 	}
-        if ((hWnd == GetFocus()) || IsChild( hWnd, GetFocus()))
-	    SetFocus( 0 );
-    }
 }
 
 /**********************************************************************
@@ -699,13 +689,13 @@ static void EVENT_FocusOut( HWND hWnd, XFocusChangeEvent *event )
  */
 BOOL X11DRV_EVENT_CheckFocus(void)
 {
-  WND*   pWnd;
+  HWND   hWnd;
   Window xW;
   int	   state;
   
   TSXGetInputFocus(display, &xW, &state);
     if( xW == None ||
-        TSXFindContext(display, xW, winContext, (char **)&pWnd) ) 
+        TSXFindContext(display, xW, winContext, (char **)&hWnd) ) 
       return FALSE;
     return TRUE;
 }
