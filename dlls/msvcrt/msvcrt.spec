@@ -476,8 +476,8 @@ debug_channels (msvcrt)
 @ stub _telli64 #(long)
 @ cdecl _tempnam(str str) _tempnam
 @ stub _timezone #()
-@ cdecl _tolower(long) _tolower
-@ cdecl _toupper(long) _toupper
+@ cdecl _tolower(long) MSVCRT__tolower
+@ cdecl _toupper(long) MSVCRT__toupper
 @ stub _tzname
 @ cdecl _tzset() tzset
 @ stub _ui64toa #(long str long)
