@@ -3245,7 +3245,7 @@ HRESULT WINAPI VarBstrFromCy(CY cyIn, LCID lcid, ULONG dwFlags, BSTR *pbstrOut) 
  *		VarBstrFromDate		[OLEAUT32.114]
  *
  * The date is implemented using an 8 byte floating-point number.
- * Days are represented by whole numbers increments starting with 0.00 has
+ * Days are represented by whole numbers increments starting with 0.00 as
  * being December 30 1899, midnight.
  * The hours are expressed as the fractional part of the number.
  * December 30 1899 at midnight = 0.00

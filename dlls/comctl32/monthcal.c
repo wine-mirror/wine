@@ -107,7 +107,7 @@ static const int DayOfWeekTable[] = {0, 3, 2, 5, 0, 3, 5, 1, 4, 6, 2, 4};
 int MONTHCAL_MonthLength(int month, int year)
 {
 const int mdays[] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31, 0};
-  /*Wrap around, this eases handleing*/
+  /*Wrap around, this eases handling*/
   if(month == 0)
     month = 12;
   if(month == 13)

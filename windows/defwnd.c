@@ -860,7 +860,7 @@ LRESULT WINAPI DefWindowProcA( HWND hwnd, UINT msg, WPARAM wParam,
  *     Return value is dependent upon the message.
 */
 LRESULT WINAPI DefWindowProcW( 
-    HWND hwnd,      /* [in] window procedure recieving message */
+    HWND hwnd,      /* [in] window procedure receiving message */
     UINT msg,       /* [in] message identifier */
     WPARAM wParam,  /* [in] first message parameter */
     LPARAM lParam )   /* [in] second message parameter */

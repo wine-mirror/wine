@@ -731,7 +731,7 @@ static HRESULT WINAPI IDirectPlaySPImpl_HandleMessage
   {
     ERR( "Unable to perform action for msg type 0x%08lx\n", lpMsg->dwType );
   }
-  /* If a receieve event was registered for this player, invoke it */
+  /* If a receive event was registered for this player, invoke it */
   if( hReceiveEvent )
   {
     SetEvent( hReceiveEvent );

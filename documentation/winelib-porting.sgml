@@ -99,7 +99,7 @@ printf("Processor architecture=%d\n",si ANONS .wProcessorArchitecture);
         <listitem>
           <para>
             Use the compiler default, but don't call any Win32 unicode
-            functions without converting the strings first!
+            function without converting the strings first!
           </para>
         </listitem>
       </orderedlist>

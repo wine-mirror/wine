@@ -15,9 +15,9 @@
  *    1. PRIMARY(XA_PRIMARY)
  *    2. CLIPBOARD
  *
- *    In our implementation, the CLIPBOARD selection takes precedence over PRIMARY.
+ *    In our implementation, the CLIPBOARD selection takes precedence over PRIMARY,
  *    i.e. if a CLIPBOARD selection is available, it is used instead of PRIMARY.
- *    When Wine taks ownership of the clipboard, it takes ownership of BOTH selections.
+ *    When Wine takes ownership of the clipboard, it takes ownership of BOTH selections.
  *    While giving up selection ownership, if the CLIPBOARD selection is lost,
  *    it will lose both PRIMARY and CLIPBOARD and empty the clipboard.
  *    However if only PRIMARY is lost, it will continue to hold the CLIPBOARD selection
@@ -26,7 +26,7 @@
  *      Every format exposed via a windows clipboard format is also exposed through
  *    a corresponding X selection target. A selection target atom is synthesized
  *    whenever a new Windows clipboard format is registered via RegisterClipboardFormat,
- *    or when a built in format is used for the first time.
+ *    or when a built-in format is used for the first time.
  *    Windows native format are exposed by prefixing the format name with "<WCF>"
  *    This allows us to uniquely identify windows native formats exposed by other
  *    running WINE apps.
@@ -34,7 +34,7 @@
  *      In order to allow external applications to query WINE for supported formats,
  *    we respond to the "TARGETS" selection target. (See EVENT_SelectionRequest
  *    for implementation) We use the same mechanism to query external clients for
- *    availability of a particular format, by cacheing the list of available targets
+ *    availability of a particular format, by caching the list of available targets
  *    by using the clipboard cache's "delayed render" mechanism. If a selection client
  *    does not support the "TARGETS" selection target, we actually attempt to retrieve
  *    the format requested as a fallback mechanism.
@@ -912,7 +912,7 @@ BOOL X11DRV_IsClipboardFormatAvailable(UINT wFormat)
                          || (ClipboardSelectionOwner != ownerClipboard) )
     {
         /*
-         * First try cacheing the CLIPBOARD selection.
+         * First try caching the CLIPBOARD selection.
          * If unavailable try PRIMARY.
          */
         if ( X11DRV_CLIPBOARD_CacheDataFormats(xaClipboard) == 0 )
