@@ -109,28 +109,28 @@ init	Shell32LibMain
  101 stub DragQueryFileAorW   # exported by name
  102 stdcall SHCoCreateInstance(ptr ptr long ptr ptr) SHCoCreateInstance
  103 stdcall SignalFileOpen(long) SignalFileOpen
- 104 stub FileMenu_DeleteAllItems
- 105 stub FileMenu_DrawItem
- 106 stub FileMenu_FindSubMenuByPidl
- 107 stub FileMenu_GetLastSelectedItemPidls
- 108 stub FileMenu_HandleMenuChar
+ 104 stdcall FileMenu_DeleteAllItems(long)FileMenu_DeleteAllItems
+ 105 stdcall FileMenu_DrawItem(long ptr)FileMenu_DrawItem
+ 106 stdcall FileMenu_FindSubMenuByPidl(long ptr)FileMenu_FindSubMenuByPidl
+ 107 stdcall FileMenu_GetLastSelectedItemPidls(long ptr ptr)FileMenu_GetLastSelectedItemPidls
+ 108 stdcall FileMenu_HandleMenuChar(long long)FileMenu_HandleMenuChar
  109 stdcall FileMenu_InitMenuPopup (long) FileMenu_InitMenuPopup
- 110 stub FileMenu_InsertUsingPidl
- 111 stub FileMenu_Invalidate
- 112 stub FileMenu_MeasureItem
- 113 stub FileMenu_ReplaceUsingPidl
+ 110 stdcall FileMenu_InsertUsingPidl (long long ptr long long ptr) FileMenu_InsertUsingPidl
+ 111 stdcall FileMenu_Invalidate (long) FileMenu_Invalidate
+ 112 stdcall FileMenu_MeasureItem(long ptr)FileMenu_MeasureItem
+ 113 stdcall FileMenu_ReplaceUsingPidl (long long ptr long ptr) FileMenu_ReplaceUsingPidl
  114 stdcall FileMenu_Create (long long long long long) FileMenu_Create
- 115 stub FileMenu_AppendItem
+ 115 stdcall FileMenu_AppendItem (long ptr long long long long) FileMenu_AppendItemAW
  116 stdcall FileMenu_TrackPopupMenuEx (long long long long long long) FileMenu_TrackPopupMenuEx
- 117 stub FileMenu_DeleteItemByCmd
+ 117 stdcall FileMenu_DeleteItemByCmd(long long)FileMenu_DeleteItemByCmd
  118 stdcall FileMenu_Destroy (long) FileMenu_Destroy
  119 stdcall IsLFNDrive(str) IsLFNDriveA
- 120 stub FileMenu_AbortInitMenu
+ 120 stdcall FileMenu_AbortInitMenu () FileMenu_AbortInitMenu
  121 stdcall SHFlushClipboard () SHFlushClipboard
  122 stdcall RunDLL_CallEntry16 (long long long long long) RunDLL_CallEntry16 #name wrong?
  123 stdcall SHFreeUnusedLibraries () SHFreeUnusedLibraries
- 124 stub FileMenu_AppendFilesForPidl
- 125 stub FileMenu_AddFilesForPidl
+ 124 stdcall FileMenu_AppendFilesForPidl(long ptr long)FileMenu_AppendFilesForPidl
+ 125 stdcall FileMenu_AddFilesForPidl(long long long ptr long long ptr)FileMenu_AddFilesForPidl
  126 stdcall SHOutOfMemoryMessageBox (long long long) SHOutOfMemoryMessageBox
  127 stdcall SHWinHelp (long long long long) SHWinHelp
  128 stdcall DllGetClassObject(long long ptr) SHELL32_DllGetClassObject
@@ -145,13 +145,13 @@ init	Shell32LibMain
  137 stdcall DAD_ShowDragImage (long) DAD_ShowDragImage
  138 stub DuplicateIcon   # exported by name
  139 stub Desktop_UpdateBriefcaseOnEvent
- 140 stub FileMenu_DeleteItemByIndex
- 141 stub FileMenu_DeleteItemByFirstID
- 142 stub FileMenu_DeleteSeparator
- 143 stub FileMenu_EnableItemByCmd
- 144 stub FileMenu_GetItemExtent
+ 140 stdcall FileMenu_DeleteItemByIndex(long long) FileMenu_DeleteItemByIndex
+ 141 stdcall FileMenu_DeleteItemByFirstID(long long)FileMenu_DeleteItemByFirstID
+ 142 stdcall FileMenu_DeleteSeparator(long)FileMenu_DeleteSeparator
+ 143 stdcall FileMenu_EnableItemByCmd(long long long)FileMenu_EnableItemByCmd
+ 144 stdcall FileMenu_GetItemExtent (long long) FileMenu_GetItemExtent
  145 stdcall PathFindOnPath (ptr ptr) PathFindOnPathAW
- 146 stub RLBuildListOfPaths
+ 146 stdcall RLBuildListOfPaths()RLBuildListOfPaths
  147 stdcall SHCLSIDFromString(long long) SHCLSIDFromString
  148 stdcall ExtractAssociatedIconA(long ptr long) ExtractAssociatedIconA   # exported by name
  149 stdcall SHFind_InitMenuPopup(long long long long) SHFind_InitMenuPopup
@@ -168,7 +168,7 @@ init	Shell32LibMain
  160 stub SHNetConnectionDialog
  161 stdcall SHRunControlPanel (long long) SHRunControlPanel
  162 stdcall SHSimpleIDListFromPath (ptr) SHSimpleIDListFromPathAW
- 163 stub StrToOleStr
+ 163 stdcall StrToOleStr (wstr str) StrToOleStr
  164 stub Win32DeleteFile
  165 stdcall SHCreateDirectory(long long) SHCreateDirectory
  166 stub CallCPLEntry16
@@ -375,5 +375,16 @@ init	Shell32LibMain
 1217 stub FOOBAR1217   # no joke! This is the real name!!
 
 # later additions ... FIXME: incorrect ordinals
-1218 stdcall SHGetSpecialFolderPathA(long ptr long long) SHGetSpecialFolderPathA
-1219 stub DoEnvironmentSubstW
+# win 98 uses 2...330, 505..511, 520..526, 640..654, 660, 680, 700..707, 711
+
+# win98:201
+1220 stdcall DllGetVersion (ptr) SHELL32_DllGetVersion
+
+# win98:292
+1221 stdcall SHGetSpecialFolderPathA(long ptr long long) SHGetSpecialFolderPathA
+
+# win98:293
+1222 stub DoEnvironmentSubstA
+
+# win98:204
+1223 stub DoEnvironmentSubstW

@@ -50,6 +50,7 @@ void pdump (LPCITEMIDLIST pidl)
 	else
 	  TRACE(pidl,"empty pidl (Desktop)\n");	
 }
+
 /*************************************************************************
  * ILGetDisplayName			[SHELL32.15]
  */

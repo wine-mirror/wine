@@ -116,13 +116,13 @@ static void FillTreeView(IShellFolder * lpsf, LPITEMIDLIST  pidl, HTREEITEM hPar
 
 	hr=IShellFolder_EnumObjects(lpsf,hwnd, SHCONTF_FOLDERS | SHCONTF_NONFOLDERS,&lpe);
 
-        if (SUCCEEDED(hr))
-        { while (NOERROR == lpe->lpvtbl->fnNext(lpe,1,&pidlTemp,&ulFetched))
-          { ULONG ulAttrs = SFGAO_HASSUBFOLDER | SFGAO_FOLDER;
-            IShellFolder_GetAttributesOf(lpsf, 1, &pidlTemp, &ulAttrs);
-            if (ulAttrs & (SFGAO_HASSUBFOLDER | SFGAO_FOLDER))
-            { if (ulAttrs & SFGAO_FOLDER)
-              { tvi.mask  = TVIF_TEXT | TVIF_IMAGE | TVIF_SELECTEDIMAGE | TVIF_PARAM;
+	if (SUCCEEDED(hr))
+	{ while (NOERROR == IEnumIDList_Next(lpe,1,&pidlTemp,&ulFetched))
+	  { ULONG ulAttrs = SFGAO_HASSUBFOLDER | SFGAO_FOLDER;
+	    IShellFolder_GetAttributesOf(lpsf, 1, &pidlTemp, &ulAttrs);
+	    if (ulAttrs & (SFGAO_HASSUBFOLDER | SFGAO_FOLDER))
+	    { if (ulAttrs & SFGAO_FOLDER)
+	      { tvi.mask  = TVIF_TEXT | TVIF_IMAGE | TVIF_SELECTEDIMAGE | TVIF_PARAM;
 
 	        if (ulAttrs & SFGAO_HASSUBFOLDER)
 	        {  tvi.cChildren=1;

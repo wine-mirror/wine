@@ -397,6 +397,43 @@ typedef struct
 
 DWORD WINAPI SHGetMalloc(LPMALLOC *lpmal) ;
 
+/****************************************************************************
+ *	Shell File Menu API
+ */
+/* FileMenu_Create nSelHeight */
+#define	FM_FULL_SELHEIGHT	-1;
+#define	FM_DEFAULT_SELHEIGHT	0
+
+/* FileMenu_Create uFlags */
+#define	FMF_SMALL_ICONS		0x00
+#define	FMF_LARGE_ICONS		0x08
+#define	FMF_NO_COLUMN_BREAK	0x10
+
+/* FileMenu_InsertUsingPidl uFlags */
+#define	FMF_NO_EMPTY_ITEM	0x01
+#define	FMF_NO_PROGRAM_GROUPS	0x04
+
+typedef void (CALLBACK * LPFNFMCALLBACK)(LPCITEMIDLIST pidlFolder, LPCITEMIDLIST pidlFile);
+
+/* FileMenu_AppendItem lpszText */
+#define	FM_SEPARATOR		(LPCSTR)1
+#define	FM_BLANK_ICON		-1
+#define	FM_DEFAULT_HEIGHT	0
+
+/* fixme: move to ShellApi.h */
+#define ABM_NEW			0x00000000
+#define ABM_REMOVE		0x00000001
+#define ABM_QUERYPOS		0x00000002
+#define ABM_SETPOS		0x00000003
+#define ABM_GETSTATE		0x00000004
+#define ABM_GETTASKBARPOS	0x00000005
+#define ABM_ACTIVATE		0x00000006
+#define ABM_GETAUTOHIDEBAR	0x00000007
+#define ABM_SETAUTOHIDEBAR	0x00000008
+#define ABM_WINDOWPOSCHANGED	0x00000009
+
+#define ABS_AUTOHIDE		0x00000001
+#define ABS_ALWAYSONTOP		0x00000002
 #undef PURE
 #undef FAR
 #undef THIS

@@ -562,7 +562,7 @@ static HRESULT WINAPI IShellLink_fnGetHotkey(IShellLink * iface, WORD *pwHotkey)
 {
 	ICOM_THIS(IShellLinkImpl, iface);
 	
-	FIXME(shell,"(%p)->(%p)\n",This, pwHotkey);
+	FIXME(shell,"(%p)->(%p) returning 0\n",This, pwHotkey);
 	*pwHotkey=0x0;
 	return NOERROR;
 }

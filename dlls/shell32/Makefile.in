@@ -19,6 +19,7 @@ C_SRCS = \
 	shell32_main.c \
 	shellguid.c \
 	shelllink.c \
+	shlmenu.c \
 	shellole.c \
 	shellord.c \
 	shellpath.c \
