@@ -5,6 +5,7 @@
  */
 #include "msvcrt.h"
 
+#include "msvcrt/malloc.h"
 #include "msvcrt/process.h"
 
 DEFAULT_DEBUG_CHANNEL(msvcrt);
@@ -21,9 +22,16 @@ typedef struct {
  */
 static DWORD CALLBACK _beginthread_trampoline(LPVOID arg)
 {
-  _beginthread_trampoline_t *trampoline = arg;
-  trampoline->start_address(trampoline->arglist);
-  return 0;
+    _beginthread_trampoline_t local_trampoline;
+
+    /* Maybe it's just being paranoid, but freeing arg right 
+     * away seems safer. 
+     */
+    memcpy(&local_trampoline,arg,sizeof(local_trampoline));
+    MSVCRT_free(arg);
+
+    local_trampoline.start_address(local_trampoline.arglist);
+    return 0;
 }
 
 /*********************************************************************
@@ -34,15 +42,20 @@ unsigned long _beginthread(
   unsigned int stack_size, /* [in] Stack size for new thread or 0 */
   void *arglist)           /* [in] Argument list to be passed to new thread or NULL */
 {
-  _beginthread_trampoline_t trampoline;
+  _beginthread_trampoline_t* trampoline;
 
   TRACE("(%p, %d, %p)\n", start_address, stack_size, arglist);
 
-  trampoline.start_address = start_address;
-  trampoline.arglist = arglist;
+  /* Allocate the trampoline here so that it is still valid when the thread 
+   * starts... typically after this function has returned.
+   * _beginthread_trampoline is responsible for freeing the trampoline
+   */
+  trampoline=MSVCRT_malloc(sizeof(*trampoline));
+  trampoline->start_address = start_address;
+  trampoline->arglist = arglist;
 
   /* FIXME */
-  return CreateThread(NULL, stack_size, _beginthread_trampoline, &trampoline, 0, NULL);
+  return CreateThread(NULL, stack_size, _beginthread_trampoline, trampoline, 0, NULL);
 }
 
 /*********************************************************************
