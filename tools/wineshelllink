@@ -40,15 +40,15 @@ fi
 while [ $# -gt 0 ]
 do
   case "$1" in
-    (--desktop) mode="desktop"; shift 1 ;;
-    (--menu)    mode="menu"; shift 1 ;;
-    (--path)    path="$2"; shift 2 ;;
-    (--link)    link="$2"; shift 2 ;;
-    (--args)    args="$2"; shift 2 ;;
-    (--icon)    icon="$2"; shift 2 ;;
-    (--descr)   descr="$2"; shift 2 ;;
-    (--workdir) workdir="$2"; shift 2 ;;
-    (*) usage ;;
+    --desktop) mode="desktop"; shift 1 ;;
+    --menu)    mode="menu"; shift 1 ;;
+    --path)    path="$2"; shift 2 ;;
+    --link)    link="$2"; shift 2 ;;
+    --args)    args="$2"; shift 2 ;;
+    --icon)    icon="$2"; shift 2 ;;
+    --descr)   descr="$2"; shift 2 ;;
+    --workdir) workdir="$2"; shift 2 ;;
+    *) usage ;;
   esac
 done
 
