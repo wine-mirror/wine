@@ -63,7 +63,7 @@ static int is_xkb, xkb_opcode, xkb_event, xkb_error;
 static char KEYBOARD_MapDeadKeysym(KeySym keysym);
 
 /* Keyboard translation tables */
-#define MAIN_LEN 48
+#define MAIN_LEN 49
 static const WORD main_key_scan_qwerty[MAIN_LEN] =
 {
 /* this is my (102-key) keyboard layout, sorry if it doesn't quite match yours */
@@ -76,6 +76,19 @@ static const WORD main_key_scan_qwerty[MAIN_LEN] =
  /* z    x    c    v    b    n    m    ,    .    / */
    0x2C,0x2D,0x2E,0x2F,0x30,0x31,0x32,0x33,0x34,0x35,
    0x56 /* the 102nd key (actually to the right of l-shift) */
+};
+
+static const WORD main_key_scan_abnt_qwerty[MAIN_LEN] =
+{
+ /* `    1    2    3    4    5    6    7    8    9    0    -    = */
+   0x29,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09,0x0A,0x0B,0x0C,0x0D,
+ /* q    w    e    r    t    y    u    i    o    p    [    ] */
+   0x10,0x11,0x12,0x13,0x14,0x15,0x16,0x17,0x18,0x19,0x1A,0x1B,
+ /* a    s    d    f    g    h    j    k    l    ;    '    \ */
+   0x1E,0x1F,0x20,0x21,0x22,0x23,0x24,0x25,0x26,0x27,0x28,0x2B,
+ /* \      z    x    c    v    b    n    m    ,    .    / */
+   0x5e,0x2C,0x2D,0x2E,0x2F,0x30,0x31,0x32,0x33,0x34,0x35,
+   0x56, /* the 102nd key (actually to the right of l-shift) */
 };
 
 static const WORD main_key_scan_dvorak[MAIN_LEN] =
@@ -99,6 +112,16 @@ static const WORD main_key_vkey_qwerty[MAIN_LEN] =
    VK_A,VK_S,VK_D,VK_F,VK_G,VK_H,VK_J,VK_K,VK_L,VK_OEM_1,VK_OEM_7,VK_OEM_5,
    VK_Z,VK_X,VK_C,VK_V,VK_B,VK_N,VK_M,VK_OEM_COMMA,VK_OEM_PERIOD,VK_OEM_2,
    VK_OEM_102 /* the 102nd key (actually to the right of l-shift) */
+};
+
+static const WORD main_key_vkey_abnt_qwerty[MAIN_LEN] =
+{
+/* NOTE: this layout must concur with the scan codes layout above */
+   VK_OEM_3,VK_1,VK_2,VK_3,VK_4,VK_5,VK_6,VK_7,VK_8,VK_9,VK_0,VK_OEM_MINUS,VK_OEM_PLUS,
+   VK_Q,VK_W,VK_E,VK_R,VK_T,VK_Y,VK_U,VK_I,VK_O,VK_P,VK_OEM_4,VK_OEM_6,
+   VK_A,VK_S,VK_D,VK_F,VK_G,VK_H,VK_J,VK_K,VK_L,VK_OEM_1,VK_OEM_8,VK_OEM_5,
+   VK_OEM_7,VK_Z,VK_X,VK_C,VK_V,VK_B,VK_N,VK_M,VK_OEM_COMMA,VK_OEM_PERIOD,VK_OEM_2,
+   VK_OEM_102, /* the 102nd key (actually to the right of l-shift) */
 };
 
 static const WORD main_key_vkey_azerty[MAIN_LEN] =
@@ -500,7 +523,18 @@ static const char main_key_PT_br[MAIN_LEN][4] =
  "'\"","1!","2@","3#","4$","5%","6®","7&","8*","9(","0)","-_","=+",
  "qQ","wW","eE","rR","tT","yY","uU","iI","oO","pP","¥`","[{",
  "aA","sS","dD","fF","gG","hH","jJ","kK","lL","Á«","~^","]}",
- "zZ","xX","cC","vV","bB","nN","mM",",<",".>",";:","/?"
+ "zZ","xX","cC","vV","bB","nN","mM",",<",".>",";:","/?",
+ "\\|"
+};
+
+/*** Brazilian ABNT-2 keyboard layout with <ALT GR> (contributed by Mauro Carvalho Chehab) */
+static const char main_key_PT_br_alt_gr[MAIN_LEN][4] =
+{
+ "'\"","1!9","2@2","3#3","4$#","5%\"","6(,","7&","8*","9(","0)","-_","=+'",
+ "qQ","wW","eE","rR","tT","yY","uU","iI","oO","pP","4`","[{*",
+ "aA","sS","dD","fF","gG","hH","jJ","kK","lL","gG","~^","]}:",
+ "zZ","xX","cC","vV","bB","nN","mM",",<",".>",";:","/?0",
+ "\\|"
 };
 
 /*** US international keyboard layout (contributed by Gustavo Noronha (kov@debian.org)) */
@@ -660,7 +694,8 @@ static const struct {
  {"Belgian keyboard layout", 28605, &main_key_BE, &main_key_scan_qwerty, &main_key_vkey_azerty},
  {"Swiss French keyboard layout", 28605, &main_key_SF, &main_key_scan_qwerty, &main_key_vkey_qwerty},
  {"Portuguese keyboard layout", 28605, &main_key_PT, &main_key_scan_qwerty, &main_key_vkey_qwerty},
- {"Brazilian ABNT-2 keyboard layout", 28591, &main_key_PT_br, &main_key_scan_qwerty, &main_key_vkey_qwerty},
+ {"Brazilian ABNT-2 keyboard layout", 28591, &main_key_PT_br, &main_key_scan_abnt_qwerty, &main_key_vkey_abnt_qwerty},
+ {"Brazilian ABNT-2 keyboard layout ALT GR", 28591, &main_key_PT_br_alt_gr,&main_key_scan_abnt_qwerty, &main_key_vkey_abnt_qwerty},
  {"United States International keyboard layout", 28591, &main_key_US_intl, &main_key_scan_qwerty, &main_key_vkey_qwerty},
  {"Finnish keyboard layout", 28605, &main_key_FI, &main_key_scan_qwerty, &main_key_vkey_qwerty},
  {"Bulgarian bds keyboard layout", 1251, &main_key_BG_bds, &main_key_scan_qwerty, &main_key_vkey_qwerty},
