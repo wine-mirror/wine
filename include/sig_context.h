@@ -35,6 +35,7 @@ typedef struct
     unsigned long oldmask;
     unsigned long cr2;
 } SIGCONTEXT;
+#define __HAVE_SIGCONTEXT
 
 #define HANDLER_DEF(name) void name (int signal, SIGCONTEXT context)
 #define HANDLER_CONTEXT (&context)
@@ -58,6 +59,7 @@ typedef struct
 
 #include <machine/frame.h>
 typedef struct trapframe SIGCONTEXT;
+#define __HAVE_SIGCONTEXT
 
 #define HANDLER_DEF(name) void name(int signal, int code, SIGCONTEXT *context)
 #define HANDLER_CONTEXT context
@@ -73,6 +75,7 @@ typedef struct trapframe SIGCONTEXT;
 
 #include <signal.h>
 typedef struct sigcontext SIGCONTEXT;
+#define __HAVE_SIGCONTEXT
 
 #define HANDLER_DEF(name) void name(int signal, int code, SIGCONTEXT *context)
 #define HANDLER_CONTEXT context
@@ -87,6 +90,7 @@ typedef struct sigcontext SIGCONTEXT;
 #endif
 #include <sys/ucontext.h>
 typedef struct ucontext SIGCONTEXT;
+#define __HAVE_SIGCONTEXT
 
 #define HANDLER_DEF(name) void name(int signal, void *siginfo, SIGCONTEXT *context)
 #define HANDLER_CONTEXT context
@@ -126,6 +130,7 @@ typedef struct _CONTEXT		/* Note 1 */
   ULONG ctx_RegEsp;
   ULONG ctx_SegSs;
 } SIGCONTEXT;
+#define __HAVE_SIGCONTEXT
 /*typedef CONTEXTRECORD *PCONTEXTRECORD;*/
 
 #endif  /* __EMX__ */
@@ -264,5 +269,10 @@ typedef struct _CONTEXT		/* Note 1 */
 #define HANDLER_INIT() /* nothing */
 
 #endif /* __i386__ */
+
+#ifndef __HAVE_SIGCONTEXT
+/* empty entry for non x86 architectures mostly. */
+typedef DWORD SIGCONTEXT;
+#endif
 
 #endif /* __WINE_SIG_CONTEXT_H */

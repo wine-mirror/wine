@@ -1,12 +1,13 @@
 /*
  * Wine signal handling
  *
+ * Copyright 1995 Alexandre Julliard
  */
 
 #include "config.h"
 
-#include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <signal.h>
 #include <string.h>
 #include <errno.h>
@@ -29,10 +30,46 @@
 # endif
 #endif
 
-#include "miscemu.h"
-#include "selectors.h"
-#include "sig_context.h"
 #include "winsock.h"
+#include "global.h"
+#include "options.h"
+#include "debugger.h"
+#include "miscemu.h"
+#include "dosexe.h"
+#include "thread.h"
+#include "debug.h"
+
+void (*fnWINE_Debugger)(int,SIGCONTEXT*) = NULL;
+void (*ctx_debug_call)(int sig,CONTEXT*ctx)=NULL;
+BOOL32 (*fnINSTR_EmulateInstruction)(SIGCONTEXT*ctx)=NULL;
+
+#ifdef __i386__
+
+/* i386 specific faults */
+static const char * const SIGNAL_traps[] =
+{
+    "Division by zero exception",      /* 0 */
+    "Debug exception",                 /* 1 */
+    "NMI interrupt",                   /* 2 */
+    "Breakpoint exception",            /* 3 */
+    "Overflow exception",              /* 4 */
+    "Bound range exception",           /* 5 */
+    "Invalid opcode exception",        /* 6 */
+    "Device not available exception",  /* 7 */
+    "Double fault exception",          /* 8 */
+    "Coprocessor segment overrun",     /* 9 */
+    "Invalid TSS exception",           /* 10 */
+    "Segment not present exception",   /* 11 */
+    "Stack fault",                     /* 12 */
+    "General protection fault",        /* 13 */
+    "Page fault",                      /* 14 */
+    "Unknown exception",               /* 15 */
+    "Floating point exception",        /* 16 */
+    "Alignment check exception",       /* 17 */
+    "Machine check exception"          /* 18 */
+};
+#define NB_TRAPS  (sizeof(SIGNAL_traps) / sizeof(SIGNAL_traps[0]))
+#endif
 
 /* Linux sigaction function */
 
@@ -152,6 +189,106 @@ extern void ASYNC_sigio(int a);
 
 
 /**********************************************************************
+ *              SIGNAL_MaskAsyncEvents
+ */
+void SIGNAL_MaskAsyncEvents( BOOL32 flag )
+{
+  sigprocmask( (flag) ? SIG_BLOCK : SIG_UNBLOCK , &async_signal_set, NULL);
+}
+
+extern void SIGNAL_SetHandler( int sig, void (*func)(), int flags );
+
+/**********************************************************************
+ *              SIGNAL_break
+ * 
+ * Handle Ctrl-C and such
+ */
+static HANDLER_DEF(SIGNAL_break)
+{
+    HANDLER_INIT();
+    if (Options.debug && fnWINE_Debugger)
+        fnWINE_Debugger( signal, HANDLER_CONTEXT );  /* Enter our debugger */
+    else exit(0);
+}
+
+
+/**********************************************************************
+ *		SIGNAL_trap
+ *
+ * SIGTRAP handler.
+ */
+static HANDLER_DEF(SIGNAL_trap)
+{
+    HANDLER_INIT();
+    if (fnWINE_Debugger)
+	fnWINE_Debugger( signal, HANDLER_CONTEXT );  /* Enter our debugger */
+}
+
+
+/**********************************************************************
+ *		SIGNAL_fault
+ *
+ * Segfault handler.
+ */
+static HANDLER_DEF(SIGNAL_fault)
+{
+    const char *fault = "Segmentation fault";
+    HANDLER_INIT();
+
+#ifdef __i386__
+
+#if defined(TRAP_sig) && defined(CR2_sig)
+    if (TRAP_sig(HANDLER_CONTEXT) == 0x0e
+        && VIRTUAL_HandleFault( (LPVOID)CR2_sig(HANDLER_CONTEXT) ))
+	return;
+#endif
+
+    if (fnINSTR_EmulateInstruction && 
+	fnINSTR_EmulateInstruction( HANDLER_CONTEXT )
+    )
+	return;
+
+#ifdef TRAP_sig
+    if (TRAP_sig( HANDLER_CONTEXT ) < NB_TRAPS)
+        fault = SIGNAL_traps[TRAP_sig( HANDLER_CONTEXT )];
+#endif
+    if (IS_SELECTOR_SYSTEM(CS_sig(HANDLER_CONTEXT)))
+    {
+        MSG("%s in 32-bit code (0x%08lx).\n", fault, EIP_sig(HANDLER_CONTEXT));
+    }
+    else
+    {
+        MSG("%s in 16-bit code (%04x:%04lx).\n", fault,
+            (WORD)CS_sig(HANDLER_CONTEXT), EIP_sig(HANDLER_CONTEXT) );
+    }
+#ifdef CR2_sig
+    MSG("Fault address is 0x%08lx\n",CR2_sig(HANDLER_CONTEXT));
+#endif
+#endif
+
+    if (fnWINE_Debugger)
+	fnWINE_Debugger( signal, HANDLER_CONTEXT );
+}
+
+
+/**********************************************************************
+ *		SIGNAL_InitHandlers
+ */
+void SIGNAL_InitHandlers(void)
+{
+    SIGNAL_SetHandler( SIGINT,  (void (*)())SIGNAL_break, 1);
+    SIGNAL_SetHandler( SIGSEGV, (void (*)())SIGNAL_fault, 1);
+    SIGNAL_SetHandler( SIGILL,  (void (*)())SIGNAL_fault, 1);
+    SIGNAL_SetHandler( SIGFPE,  (void (*)())SIGNAL_fault, 1);
+    SIGNAL_SetHandler( SIGTRAP, (void (*)())SIGNAL_trap,  1); /* debugger */
+    SIGNAL_SetHandler( SIGHUP,  (void (*)())SIGNAL_trap,  1); /* forced break*/
+#ifdef SIGBUS
+    SIGNAL_SetHandler( SIGBUS,  (void (*)())SIGNAL_fault, 1);
+#endif
+    return;
+}
+
+/**********************************************************************
  *		SIGNAL_Init
  */
 BOOL32 SIGNAL_Init(void)
@@ -180,20 +317,10 @@ BOOL32 SIGNAL_Init(void)
 /*    SIGNAL_SetHandler( SIGIO,   (void (*)())WINSOCK_sigio, 0);  */
     SIGNAL_SetHandler( SIGIO,   (void (*)())ASYNC_sigio, 0); 
 #endif
-
     sigaddset(&async_signal_set, SIGALRM);
 
     /* ignore SIGPIPE so that WINSOCK can get a EPIPE error instead  */
     signal (SIGPIPE, SIG_IGN);
+    SIGNAL_InitHandlers();
     return TRUE;
 }
-
-
-/**********************************************************************
- *              SIGNAL_MaskAsyncEvents
- */
-void SIGNAL_MaskAsyncEvents( BOOL32 flag )
-{
-  sigprocmask( (flag) ? SIG_BLOCK : SIG_UNBLOCK , &async_signal_set, NULL);
-}
-

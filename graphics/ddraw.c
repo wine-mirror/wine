@@ -73,7 +73,6 @@
 /* Restore signal handlers overwritten by XF86DGA 
  */
 #define RESTORE_SIGNALS
-BOOL32 (*SIGNAL_Reinit)(void); /* didn't find any obvious place to put this */
 
 /* Where do these GUIDs come from?  mkuuid.
  * They exist solely to distinguish between the targets Wine support,
@@ -2750,7 +2749,7 @@ static HRESULT WINAPI DGA_IDirectDraw_SetDisplayMode(
 #endif
 
 #ifdef RESTORE_SIGNALS
-	if (SIGNAL_Reinit) SIGNAL_Reinit();
+	SIGNAL_InitHandlers();
 #endif
 	return DD_OK;
 #else /* defined(HAVE_LIBXXF86DGA) */
@@ -3000,7 +2999,7 @@ static HRESULT WINAPI DGA_IDirectDraw2_RestoreDisplayMode(LPDIRECTDRAW2 this) {
 	Sleep(1000);
 	TSXF86DGADirectVideo(display,DefaultScreen(display),0);
 #ifdef RESTORE_SIGNALS
-	if (SIGNAL_Reinit) SIGNAL_Reinit();
+	SIGNAL_InitHandlers();
 #endif
 	return DD_OK;
 #else /* defined(HAVE_LIBXXF86DGA) */
@@ -3033,7 +3032,8 @@ static ULONG WINAPI DGA_IDirectDraw2_Release(LPDIRECTDRAW2 this) {
 #ifdef HAVE_LIBXXF86DGA
 	if (!--(this->ref)) {
 		TSXF86DGADirectVideo(display,DefaultScreen(display),0);
-
+		if (this->d.window && (this->d.mainWindow != this->d.window))
+			DestroyWindow32(this->d.window);
 #ifdef HAVE_LIBXXF86VM
 		if (orig_mode) {
 			TSXF86VidModeSwitchToMode(
@@ -3048,7 +3048,7 @@ static ULONG WINAPI DGA_IDirectDraw2_Release(LPDIRECTDRAW2 this) {
 #endif
 		
 #ifdef RESTORE_SIGNALS
-		if (SIGNAL_Reinit) SIGNAL_Reinit();
+		SIGNAL_InitHandlers();
 #endif
 		HeapFree(GetProcessHeap(),0,this);
 		return 0;
@@ -3061,6 +3061,8 @@ static ULONG WINAPI Xlib_IDirectDraw2_Release(LPDIRECTDRAW2 this) {
         TRACE( ddraw, "(%p)->() decrementing from %lu.\n", this, this->ref );
 
 	if (!--(this->ref)) {
+		if (this->d.window && (this->d.mainWindow != this->d.window))
+			DestroyWindow32(this->d.window);
 		HeapFree(GetProcessHeap(),0,this);
 		return 0;
 	}
@@ -3773,7 +3775,7 @@ HRESULT WINAPI DGA_DirectDrawCreate( LPDIRECTDRAW *lplpDD, LPUNKNOWN pUnkOuter) 
 	(*lplpDD)->d.screen_depth = DefaultDepthOfScreen(X11DRV_GetXScreen());
 	(*lplpDD)->d.depth = DefaultDepthOfScreen(X11DRV_GetXScreen());
 #ifdef RESTORE_SIGNALS
-	if (SIGNAL_Reinit) SIGNAL_Reinit();
+	SIGNAL_InitHandlers();
 #endif
 
 	return DD_OK;

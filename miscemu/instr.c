@@ -323,13 +323,6 @@ BOOL32 INSTR_EmulateInstruction( SIGCONTEXT *context )
     SEGPTR gpHandler;
     BYTE *instr;
 
-    /* Check for page-fault */
-
-#if defined(TRAP_sig) && defined(CR2_sig)
-    if (TRAP_sig(context) == 0x0e
-        && VIRTUAL_HandleFault( (LPVOID)CR2_sig(context) )) return TRUE;
-#endif
-
     long_op = long_addr = IS_SEL_32(context,CS_sig(context));
     instr = (BYTE *)MK_PTR(context,CS_sig(context),EIP_sig(context));
     if (!instr) return FALSE;

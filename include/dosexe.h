@@ -43,11 +43,6 @@ extern LPDOSTASK MZ_AllocDPMITask( HMODULE16 hModule );
 
 #define V86_FLAG 0x00020000
 
-extern void (*ctx_debug_call)( int, CONTEXT* );
-#ifdef __i386__
-extern BOOL32 (*instr_emu_call)( SIGCONTEXT* );
-#endif
-
 extern void MZ_Tick( WORD handle );
 
 extern HINSTANCE16 MZ_CreateProcess( LPCSTR name, LPCSTR cmdline, LPCSTR env, BOOL32 inherit,

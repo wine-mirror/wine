@@ -32,10 +32,6 @@ BOOL32 MAIN_EmulatorInit(void)
     /* Initialize relay code */
     if (!RELAY_Init()) return FALSE;
 
-    /* Initialize signal handling */
-    if (!SIGNAL_InitEmulator()) return FALSE;
-    SIGNAL_Reinit=SIGNAL_InitEmulator;
-
     /* Create the Win16 printer driver */
     if (!WIN16DRV_Init()) return FALSE;
 
@@ -150,8 +146,11 @@ int main( int argc, char *argv[] )
         }
     }
 
-    /* Set up debugger callback routines */
-    ctx_debug_call = ctx_debug;
+    /* Set up debugger/instruction emulation callback routines */
+    ctx_debug_call		= ctx_debug;
+    fnWINE_Debugger		= wine_debug;
+    fnINSTR_EmulateInstruction	= INSTR_EmulateInstruction;
+
     if (Options.debug) 
         TASK_AddTaskEntryBreakpoint = DEBUG_AddTaskEntryBreakpoint;
 
@@ -177,4 +176,3 @@ int main( int argc, char *argv[] )
     MSG( "main: Should never happen: returned from TASK_StartTask()\n" );
     return 0;
 }
-

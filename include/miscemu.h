@@ -105,10 +105,7 @@ extern void WINAPI XMS_Handler(CONTEXT*);
 extern BOOL32 SIGNAL_Init(void);
 extern void SIGNAL_SetHandler( int sig, void (*func)(), int flags );
 extern void SIGNAL_MaskAsyncEvents( BOOL32 flag );
-
-/* if1632/signal.c */
-extern BOOL32 SIGNAL_InitEmulator(void);
-extern BOOL32 (*SIGNAL_Reinit)(void);
+extern void SIGNAL_InitHandlers(void);
 
 /* misc/aspi.c */
 extern void ASPI_DOS_HandleInt(CONTEXT *context);

@@ -321,4 +321,13 @@ extern void DEBUG_Disassemble( const DBG_ADDR *, const DBG_ADDR*, int offset );
 extern void ctx_debug( int signal, CONTEXT *regs );
 extern void wine_debug( int signal, SIGCONTEXT *regs );
 
+  /* miscemu/instr.c */
+extern BOOL32 INSTR_EmulateInstruction( SIGCONTEXT* );
+
+  /* loader/signal.c */
+extern void (*fnWINE_Debugger)(int,SIGCONTEXT*);
+extern void (*ctx_debug_call)( int, CONTEXT* );
+extern BOOL32 (*fnINSTR_EmulateInstruction)( SIGCONTEXT* );
+
+
 #endif  /* __WINE_DEBUGGER_H */

@@ -23,15 +23,12 @@
 #include "msdos.h"
 #include "miscemu.h"
 #include "debugger.h"
-#include "debug.h"
 #include "module.h"
 #include "task.h"
 #include "ldt.h"
 #include "dosexe.h"
 #include "dosmod.h"
-
-void (*ctx_debug_call)(int sig,CONTEXT*ctx)=NULL;
-BOOL32 (*instr_emu_call)(SIGCONTEXT*ctx)=NULL;
+#include "debug.h"
 
 #ifdef MZ_SUPPORTED
 
@@ -121,7 +118,7 @@ static int DOSVM_Process( LPDOSTASK lpDosTask, int fn, int sig,
 #define CP(x,y) y##_sig(&sigcontext) = VM86->regs.x
   CV;
 #undef CP
-  if (instr_emu_call) ret=instr_emu_call(&sigcontext);
+  if (fnINSTR_EmulateInstruction) ret=fnINSTR_EmulateInstruction(&sigcontext);
 #define CP(x,y) VM86->regs.x = y##_sig(&sigcontext)
   CV;
 #undef CP
