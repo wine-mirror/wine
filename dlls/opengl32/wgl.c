@@ -26,13 +26,21 @@
 #include "winbase.h"
 #include "winuser.h"
 #include "winerror.h"
-#include "x11drv.h"
 
 #include "wgl.h"
 #include "opengl_ext.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(opengl);
+
+/* x11drv GDI escapes */
+#define X11DRV_ESCAPE 6789
+enum x11drv_escape_codes
+{
+    X11DRV_GET_DISPLAY,   /* get X11 display for a DC */
+    X11DRV_GET_DRAWABLE,  /* get current drawable for a DC */
+    X11DRV_GET_FONT,      /* get current X font for a DC */
+};
 
 void (*wine_tsx11_lock_ptr)(void) = NULL;
 void (*wine_tsx11_unlock_ptr)(void) = NULL;

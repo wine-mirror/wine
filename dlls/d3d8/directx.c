@@ -18,6 +18,8 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+#include "config.h"
+
 #define NONAMELESSUNION
 #define NONAMELESSSTRUCT
 #include "windef.h"
@@ -26,12 +28,18 @@
 #include "wingdi.h"
 #include "wine/debug.h"
 
-#include "config.h"
-#include "x11drv.h"
-
 #include "d3d8_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3d);
+
+/* x11drv GDI escapes */
+#define X11DRV_ESCAPE 6789
+enum x11drv_escape_codes
+{
+    X11DRV_GET_DISPLAY,   /* get X11 display for a DC */
+    X11DRV_GET_DRAWABLE,  /* get current drawable for a DC */
+    X11DRV_GET_FONT,      /* get current X font for a DC */
+};
 
 #define NUM_MODES 10
 static const int modes[NUM_MODES][3] = {

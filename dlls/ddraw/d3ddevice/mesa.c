@@ -22,6 +22,7 @@
 #include "config.h"
 
 #include <string.h>
+#include <math.h>
 
 #define NONAMELESSUNION
 #define NONAMELESSSTRUCT
@@ -35,9 +36,16 @@
 #include "mesa_private.h"
 #include "main.h"
 
-#include "x11drv.h"
-
 WINE_DEFAULT_DEBUG_CHANNEL(ddraw);
+
+/* x11drv GDI escapes */
+#define X11DRV_ESCAPE 6789
+enum x11drv_escape_codes
+{
+    X11DRV_GET_DISPLAY,   /* get X11 display for a DC */
+    X11DRV_GET_DRAWABLE,  /* get current drawable for a DC */
+    X11DRV_GET_FONT,      /* get current X font for a DC */
+};
 
 /* They are non-static as they are used by Direct3D in the creation function */
 const GUID IID_D3DDEVICE_OpenGL = {
