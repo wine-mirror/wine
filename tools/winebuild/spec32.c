@@ -611,13 +611,13 @@ void BuildSpec32File( FILE *outfile, DLLSPEC *spec )
                  "static int __stdcall __wine_driver_entry( void *obj, void *path )\n"
                  "{\n"
                  "    int ret;\n"
-                 "    if (reason == %d && __wine_spec_init_state == 1)\n"
+                 "    if (__wine_spec_init_state == 1)\n"
                  "        _init( __wine_main_argc, __wine_main_argv, __wine_main_environ );\n"
                  "    ret = %s ? %s( obj, path ) : 0;\n"
-                 "    if (reason == %d && __wine_spec_init_state == 1) _fini();\n"
+                 "    if (__wine_spec_init_state == 1) _fini();\n"
                  "    return ret;\n"
                  "}\n",
-                 DLL_PROCESS_ATTACH, init_func, init_func, DLL_PROCESS_DETACH );
+                 init_func, init_func );
         init_func = "__wine_driver_entry";
         subsystem = IMAGE_SUBSYSTEM_NATIVE;
         break;
