@@ -314,7 +314,9 @@ BOOL PROPSHEET_CreateDialog(PropSheetInfo* psInfo)
 {
   LRESULT ret;
   LPCVOID template;
+  LPVOID temp = 0;
   HRSRC hRes;
+  DWORD resSize;
 
   if(!(hRes = FindResourceA(COMCTL32_hModule,
                             MAKEINTRESOURCEA(IDD_PROPSHEET),
@@ -324,21 +326,35 @@ BOOL PROPSHEET_CreateDialog(PropSheetInfo* psInfo)
   if(!(template = (LPVOID)LoadResource(COMCTL32_hModule, hRes)))
     return FALSE;
 
+  /*
+   * Make a copy of the dialog template.
+   */
+  resSize = SizeofResource(COMCTL32_hModule, hRes);
+
+  temp = COMCTL32_Alloc(resSize);
+
+  if (!temp)
+    return FALSE;
+
+  memcpy(temp, template, resSize);
+
   if (psInfo->useCallback)
-    (*(psInfo->ppshheader->pfnCallback))(0, PSCB_PRECREATE, (LPARAM)template);
+    (*(psInfo->ppshheader->pfnCallback))(0, PSCB_PRECREATE, (LPARAM)temp);
 
   if (psInfo->ppshheader->dwFlags & PSH_MODELESS)
     ret = CreateDialogIndirectParamA(psInfo->ppshheader->hInstance,
-                                     (LPDLGTEMPLATEA) template,
+                                     (LPDLGTEMPLATEA) temp,
                                      psInfo->ppshheader->hwndParent,
                                      (DLGPROC) PROPSHEET_DialogProc,
                                      (LPARAM)psInfo);
   else
     ret = DialogBoxIndirectParamA(psInfo->ppshheader->hInstance,
-                                  (LPDLGTEMPLATEA) template,
+                                  (LPDLGTEMPLATEA) temp,
                                   psInfo->ppshheader->hwndParent,
                                   (DLGPROC) PROPSHEET_DialogProc,
                                   (LPARAM)psInfo);
+
+  COMCTL32_Free(temp);
 
   return ret;
 }
