@@ -518,14 +518,14 @@ static BOOL DeferToRunOnce(LPWSTR link)
 {
     HKEY hkey;
     LONG r, len;
-    const WCHAR szRunOnce[] = {
+    static const WCHAR szRunOnce[] = {
         'S','o','f','t','w','a','r','e','\\',
         'M','i','c','r','o','s','o','f','t','\\',
         'W','i','n','d','o','w','s','\\',
         'C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\',
         'R','u','n','O','n','c','e',0
     };
-    const WCHAR szFormat[] = { '%','s',' ','"','%','s','"',0 };
+    static const WCHAR szFormat[] = { '%','s',' ','"','%','s','"',0 };
     LPWSTR buffer;
     WCHAR szExecutable[MAX_PATH];
 

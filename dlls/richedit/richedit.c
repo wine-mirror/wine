@@ -95,7 +95,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
    INT RICHEDIT_GetSelText(HWND hwnd,LPSTR lpstrBuffer);
 
 
-const WCHAR RichEditInfoStr[] = { '_','R','T','F','_','I','n','f','o', 0 };
+static const WCHAR RichEditInfoStr[] = { '_','R','T','F','_','I','n','f','o', 0 };
 
 typedef struct _RTFControl_info
 {

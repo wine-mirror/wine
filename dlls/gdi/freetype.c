@@ -755,8 +755,8 @@ void update_reg_entries(void)
     Family *family;
     Face *face;
     WCHAR *file;
-    const WCHAR TrueType[] = {' ','(','T','r','u','e','T','y','p','e',')','\0'};
-    const WCHAR spaceW[] = {' ', '\0'};
+    static const WCHAR TrueType[] = {' ','(','T','r','u','e','T','y','p','e',')','\0'};
+    static const WCHAR spaceW[] = {' ', '\0'};
     char *path;
 
     if(RegCreateKeyExW(HKEY_LOCAL_MACHINE, is_win9x() ? win9x_font_reg_key : winnt_font_reg_key,

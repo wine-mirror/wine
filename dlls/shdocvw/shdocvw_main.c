@@ -69,11 +69,11 @@ static BOOL SHDOCVW_GetMozctlPath( LPWSTR szPath, DWORD sz )
     DWORD r, type;
     BOOL ret = FALSE;
     HKEY hkey;
-    const WCHAR szPre[] = {
+    static const WCHAR szPre[] = {
         'S','o','f','t','w','a','r','e','\\',
         'C','l','a','s','s','e','s','\\',
         'C','L','S','I','D','\\',0 };
-    const WCHAR szPost[] = {
+    static const WCHAR szPost[] = {
         '\\','I','n','p','r','o','c','S','e','r','v','e','r','3','2',0 };
     WCHAR szRegPath[(sizeof(szPre)+sizeof(szPost))/sizeof(WCHAR)+40];
 

@@ -1060,7 +1060,7 @@ BOOL WINAPI SetLocaleInfoA(LCID lcid, LCTYPE lctype, LPCSTR data)
 BOOL WINAPI SetLocaleInfoW( LCID lcid, LCTYPE lctype, LPCWSTR data )
 {
     const WCHAR *value;
-    const WCHAR intlW[] = {'i','n','t','l',0 };
+    static const WCHAR intlW[] = {'i','n','t','l',0 };
     UNICODE_STRING valueW;
     NTSTATUS status;
     HKEY hkey;

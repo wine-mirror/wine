@@ -343,11 +343,11 @@ BOOL WINAPI InternetGetCookieW(LPCWSTR lpszUrl, LPCWSTR lpszCookieName,
      * It'd be nice to know what exactly is going on, M$ tracking users? Does this need
      * to be unique? Should I generate a random number here? etc.
      */
-    const WCHAR TrackingString[] = {
+    static const WCHAR TrackingString[] = {
         'M','t','r','x','T','r','a','c','k','i','n','g','I','D','=',
         '0','1','2','3','4','5','6','7','8','9','0','1','2','3','4','5',
         '6','7','8','9','0','1','2','3','4','5','6','7','8','9','0','1', 0 };
-    const WCHAR szps[] = { '%','s',0 };
+    static const WCHAR szps[] = { '%','s',0 };
 
     TRACE("(%s, %s, %p, %p)\n", debugstr_w(lpszUrl),debugstr_w(lpszCookieName),
 	  lpCookieData, lpdwSize);
@@ -377,8 +377,8 @@ BOOL WINAPI InternetGetCookieW(LPCWSTR lpszUrl, LPCWSTR lpszCookieName,
 	}
 	while (thisCookie)
 	{
-            const WCHAR szsc[] = { ';',' ',0 };
-            const WCHAR szpseq[] = { '%','s','=','%','s',0 };
+            static const WCHAR szsc[] = { ';',' ',0 };
+            static const WCHAR szpseq[] = { '%','s','=','%','s',0 };
             cnt += snprintfW(lpCookieData + cnt, *lpdwSize - cnt, szsc);
 	    cnt += snprintfW(lpCookieData + cnt, *lpdwSize - cnt, szpseq,
                             thisCookie->lpCookieName,

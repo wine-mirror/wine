@@ -544,9 +544,9 @@ UINT save_table( MSIDATABASE *db, MSITABLE *t )
 HRESULT init_string_table( IStorage *stg )
 {
     HRESULT r;
-    const WCHAR szStringData[] = { 
+    static const WCHAR szStringData[] = {
         '_','S','t','r','i','n','g','D','a','t','a',0 };
-    const WCHAR szStringPool[] = { 
+    static const WCHAR szStringPool[] = {
         '_','S','t','r','i','n','g','P','o','o','l',0 };
     USHORT zero[2] = { 0, 0 };
     ULONG count = 0;
@@ -593,9 +593,9 @@ UINT load_string_table( MSIDATABASE *db )
     USHORT *pool;
     UINT r, ret = ERROR_FUNCTION_FAILED, datasize = 0, poolsize = 0;
     DWORD i, count, offset, len, n;
-    const WCHAR szStringData[] = { 
+    static const WCHAR szStringData[] = {
         '_','S','t','r','i','n','g','D','a','t','a',0 };
-    const WCHAR szStringPool[] = { 
+    static const WCHAR szStringPool[] = {
         '_','S','t','r','i','n','g','P','o','o','l',0 };
 
     if( db->strings )
@@ -643,9 +643,9 @@ UINT save_string_table( MSIDATABASE *db )
 {
     UINT i, count, datasize, poolsize, sz, used, r;
     UINT ret = ERROR_FUNCTION_FAILED;
-    const WCHAR szStringData[] = { 
+    static const WCHAR szStringData[] = {
         '_','S','t','r','i','n','g','D','a','t','a',0 };
-    const WCHAR szStringPool[] = { 
+    static const WCHAR szStringPool[] = {
         '_','S','t','r','i','n','g','P','o','o','l',0 };
     CHAR *data = NULL;
     USHORT *pool = NULL;
@@ -731,13 +731,13 @@ static LPWSTR strdupW( LPCWSTR str )
 }
 
 /* information for default tables */
-const WCHAR szTables[]  = { '_','T','a','b','l','e','s',0 };
-const WCHAR szTable[]  = { 'T','a','b','l','e',0 };
-const WCHAR szName[]    = { 'N','a','m','e',0 };
-const WCHAR szColumns[] = { '_','C','o','l','u','m','n','s',0 };
-const WCHAR szColumn[]  = { 'C','o','l','u','m','n',0 };
-const WCHAR szNumber[]  = { 'N','u','m','b','e','r',0 };
-const WCHAR szType[]    = { 'T','y','p','e',0 };
+static const WCHAR szTables[]  = { '_','T','a','b','l','e','s',0 };
+static const WCHAR szTable[]  = { 'T','a','b','l','e',0 };
+static const WCHAR szName[]    = { 'N','a','m','e',0 };
+static const WCHAR szColumns[] = { '_','C','o','l','u','m','n','s',0 };
+static const WCHAR szColumn[]  = { 'C','o','l','u','m','n',0 };
+static const WCHAR szNumber[]  = { 'N','u','m','b','e','r',0 };
+static const WCHAR szType[]    = { 'T','y','p','e',0 };
 
 struct standard_table {
     LPCWSTR tablename;
@@ -809,7 +809,7 @@ static UINT get_tablecolumns( MSIDATABASE *db,
 {
     UINT r, i, n=0, table_id, count, maxcount = *sz;
     MSITABLE *table = NULL;
-    const WCHAR szColumns[] = { '_','C','o','l','u','m','n','s',0 };
+    static const WCHAR szColumns[] = { '_','C','o','l','u','m','n','s',0 };
 
     /* first check if there is a default table with that name */
     r = get_defaulttablecolumns( szTableName, colinfo, sz );
@@ -877,8 +877,8 @@ static UINT get_tablecolumns( MSIDATABASE *db,
 /* try to find the table name in the _Tables table */
 BOOL TABLE_Exists( MSIDATABASE *db, LPWSTR name )
 {
-    const WCHAR szTables[] = { '_','T','a','b','l','e','s',0 };
-    const WCHAR szColumns[] = { '_','C','o','l','u','m','n','s',0 };
+    static const WCHAR szTables[] = { '_','T','a','b','l','e','s',0 };
+    static const WCHAR szColumns[] = { '_','C','o','l','u','m','n','s',0 };
     UINT r, table_id = 0, i, count;
     MSITABLE *table = NULL;
 

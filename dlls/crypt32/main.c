@@ -91,16 +91,16 @@ static void CRYPT_guid2wstr( LPGUID guid, LPWSTR wstr )
 static LONG CRYPT_SIPWriteFunction( LPGUID guid, LPCWSTR szKey, 
               LPCWSTR szDll, LPCWSTR szFunction )
 {
-    const WCHAR szOID[] = {
+    static const WCHAR szOID[] = {
         'S','o','f','t','w','a','r','e','\\',
         'M','i','c','r','o','s','o','f','t','\\',
         'C','r','y','p','t','o','g','r','a','p','h','y','\\',
         'O','I','D','\\',
         'E','n','c','o','d','i','n','g','T','y','p','e',' ','0','\\',
         'C','r','y','p','t','S','I','P','D','l','l', 0 };
-    const WCHAR szBackSlash[] = { '\\', 0 };
-    const WCHAR szDllName[] = { 'D','l','l',0 };
-    const WCHAR szFuncName[] = { 'F','u','n','c','N','a','m','e',0 };
+    static const WCHAR szBackSlash[] = { '\\', 0 };
+    static const WCHAR szDllName[] = { 'D','l','l',0 };
+    static const WCHAR szFuncName[] = { 'F','u','n','c','N','a','m','e',0 };
     WCHAR szFullKey[ 0x100 ];
     LONG r;
     HKEY hKey;
@@ -134,19 +134,19 @@ static LONG CRYPT_SIPWriteFunction( LPGUID guid, LPCWSTR szKey,
 
 BOOL WINAPI CryptSIPAddProvider(SIP_ADD_NEWPROVIDER *psNewProv)
 {
-    const WCHAR szCreate[] = { 
+    static const WCHAR szCreate[] = {
        'C','r','e','a','t','e',
        'I','n','d','i','r','e','c','t','D','a','t','a',0};
-    const WCHAR szGetSigned[] = { 
+    static const WCHAR szGetSigned[] = {
        'G','e','t','S','i','g','n','e','d','D','a','t','a','M','s','g',0};
-    const WCHAR szIsMyFile[] = { 
+    static const WCHAR szIsMyFile[] = {
        'I','s','M','y','F','i','l','e','T','y','p','e', 0 };
-    const WCHAR szPutSigned[] = { 
+    static const WCHAR szPutSigned[] = {
        'P','u','t','S','i','g','n','e','d','D','a','t','a','M','s','g',0};
-    const WCHAR szRemoveSigned[] = {
+    static const WCHAR szRemoveSigned[] = {
        'R','e','m','o','v','e',
        'S','i','g','n','e','d','D','a','t','a','M','s','g',0};
-    const WCHAR szVerify[] = {
+    static const WCHAR szVerify[] = {
        'V','e','r','i','f','y',
        'I','n','d','i','r','e','c','t','D','a','t','a',0};
 
@@ -214,9 +214,9 @@ BOOL WINAPI CryptRegisterOIDFunction(DWORD dwEncodingType, LPCSTR pszFuncName,
                   LPCSTR pszOID, LPCWSTR pwszDll, LPCSTR pszOverrideFuncName)
 {
     LONG r;
-    const char szOID[] = "Software\\Microsoft\\Cryptography\\OID";
-    const char szType1[] = "EncodingType 1";
-    const WCHAR szDllName[] = { 'D','l','l',0 };
+    static const char szOID[] = "Software\\Microsoft\\Cryptography\\OID";
+    static const char szType1[] = "EncodingType 1";
+    static const WCHAR szDllName[] = { 'D','l','l',0 };
     HKEY hKey;
     LPSTR szKey;
     UINT len;

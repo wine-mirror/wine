@@ -35,7 +35,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(msi);
 
-const WCHAR szSumInfo[] = { 5 ,'S','u','m','m','a','r','y',
+static const WCHAR szSumInfo[] = { 5 ,'S','u','m','m','a','r','y',
                        'I','n','f','o','r','m','a','t','i','o','n',0 };
 
 static void MSI_CloseSummaryInfo( VOID *arg )

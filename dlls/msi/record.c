@@ -314,7 +314,7 @@ UINT WINAPI MsiRecordGetStringW(MSIHANDLE handle, unsigned int iField,
     MSIRECORD *rec;
     UINT len=0, ret;
     WCHAR buffer[16];
-    const WCHAR szFormat[] = { '%','d',0 };
+    static const WCHAR szFormat[] = { '%','d',0 };
 
     TRACE("%ld %d %p %p\n", handle, iField, szValue, pcchValue);
 

@@ -55,11 +55,11 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(wininet);
 
-const WCHAR g_szHttp[] = {' ','H','T','T','P','/','1','.','0',0 };
-const WCHAR g_szHost[] = {'\r','\n','H','o','s','t',':',' ',0 };
-const WCHAR g_szReferer[] = {'R','e','f','e','r','e','r',0};
-const WCHAR g_szAccept[] = {'A','c','c','e','p','t',0};
-const WCHAR g_szUserAgent[] = {'U','s','e','r','-','A','g','e','n','t',0};
+static const WCHAR g_szHttp[] = {' ','H','T','T','P','/','1','.','0',0 };
+static const WCHAR g_szHost[] = {'\r','\n','H','o','s','t',':',' ',0 };
+static const WCHAR g_szReferer[] = {'R','e','f','e','r','e','r',0};
+static const WCHAR g_szAccept[] = {'A','c','c','e','p','t',0};
+static const WCHAR g_szUserAgent[] = {'U','s','e','r','-','A','g','e','n','t',0};
 
 
 #define HTTPHEADER g_szHttp
@@ -470,8 +470,8 @@ static LPWSTR HTTP_EncodeBasicAuth( LPCWSTR username, LPCWSTR password)
 {
     UINT len;
     LPWSTR in, out;
-    const WCHAR szBasic[] = {'B','a','s','i','c',' ',0};
-    const WCHAR szColon[] = {':',0};
+    static const WCHAR szBasic[] = {'B','a','s','i','c',' ',0};
+    static const WCHAR szColon[] = {':',0};
 
     len = lstrlenW( username ) + 1 + lstrlenW ( password ) + 1;
     in = HeapAlloc( GetProcessHeap(), 0, len*sizeof(WCHAR) );
@@ -504,7 +504,7 @@ BOOL HTTP_InsertProxyAuthorization( LPWININETHTTPREQW lpwhr,
 {
     HTTPHEADERW hdr;
     INT index;
-    const WCHAR szProxyAuthorization[] = {
+    static const WCHAR szProxyAuthorization[] = {
         'P','r','o','x','y','-','A','u','t','h','o','r','i','z','a','t','i','o','n',0 };
 
     hdr.lpszValue = HTTP_EncodeBasicAuth( username, password );
@@ -606,7 +606,7 @@ HINTERNET WINAPI HTTP_HttpOpenRequestW(HINTERNET hHttpSession,
     LPWSTR lpszUrl = NULL;
     DWORD nCookieSize;
     HINTERNET handle;
-    const WCHAR szUrlForm[] = {'h','t','t','p',':','/','/','%','s',0};
+    static const WCHAR szUrlForm[] = {'h','t','t','p',':','/','/','%','s',0};
     DWORD len;
 
     TRACE("--> \n");
@@ -669,7 +669,7 @@ HINTERNET WINAPI HTTP_HttpOpenRequestW(HINTERNET hHttpSession,
 
     if (NULL == lpszVerb)
     {
-        const WCHAR szGet[] = {'G','E','T',0};
+        static const WCHAR szGet[] = {'G','E','T',0};
         lpwhr->lpszVerb = WININET_strdupW(szGet);
     }
     else if (strlenW(lpszVerb))
@@ -697,7 +697,7 @@ HINTERNET WINAPI HTTP_HttpOpenRequestW(HINTERNET hHttpSession,
     if (hIC->lpszAgent)
     {
         WCHAR *agent_header;
-        const WCHAR user_agent[] = {'U','s','e','r','-','A','g','e','n','t',':',' ','%','s','\r','\n',0 };
+        static const WCHAR user_agent[] = {'U','s','e','r','-','A','g','e','n','t',':',' ','%','s','\r','\n',0 };
 
         len = strlenW(hIC->lpszAgent) + strlenW(user_agent);
         agent_header = HeapAlloc( GetProcessHeap(), 0, len*sizeof(WCHAR) );
@@ -715,8 +715,8 @@ HINTERNET WINAPI HTTP_HttpOpenRequestW(HINTERNET hHttpSession,
     if (InternetGetCookieW(lpszUrl, NULL, NULL, &nCookieSize))
     {
         int cnt = 0;
-        const WCHAR szCookie[] = {'C','o','o','k','i','e',':',' ',0};
-        const WCHAR szcrlf[] = {'\r','\n',0};
+        static const WCHAR szCookie[] = {'C','o','o','k','i','e',':',' ',0};
+        static const WCHAR szcrlf[] = {'\r','\n',0};
 
         lpszCookies = HeapAlloc(GetProcessHeap(), 0, (nCookieSize + 1 + 8)*sizeof(WCHAR));
 
@@ -788,9 +788,9 @@ BOOL WINAPI HttpQueryInfoW(HINTERNET hHttpRequest, DWORD dwInfoLevel,
     LPHTTPHEADERW lphttpHdr = NULL;
     BOOL bSuccess = FALSE;
     LPWININETHTTPREQW lpwhr;
-    const WCHAR szFmt[] = { '%','s',':',' ','%','s','%','s',0 };
-    const WCHAR szcrlf[] = { '\r','\n',0 };
-    const WCHAR sznul[] = { 0 };
+    static const WCHAR szFmt[] = { '%','s',':',' ','%','s','%','s',0 };
+    static const WCHAR szcrlf[] = { '\r','\n',0 };
+    static const WCHAR sznul[] = { 0 };
 
     if (TRACE_ON(wininet)) {
 #define FE(x) { x, #x }
@@ -1418,12 +1418,12 @@ BOOL WINAPI HTTP_HttpSendRequestW(HINTERNET hHttpRequest, LPCWSTR lpszHeaders,
 
     do
     {
-        const WCHAR szSlash[] = { '/',0 };
-        const WCHAR szSpace[] = { ' ',0 };
-        const WCHAR szHttp[] = { 'h','t','t','p',':','/','/', 0 };
-	const WCHAR szcrlf[] = {'\r','\n', 0};
-	const WCHAR sztwocrlf[] = {'\r','\n','\r','\n', 0};
-        const WCHAR szSetCookie[] = {'S','e','t','-','C','o','o','k','i','e',0 };
+        static const WCHAR szSlash[] = { '/',0 };
+        static const WCHAR szSpace[] = { ' ',0 };
+        static const WCHAR szHttp[] = { 'h','t','t','p',':','/','/', 0 };
+        static const WCHAR szcrlf[] = {'\r','\n', 0};
+        static const WCHAR sztwocrlf[] = {'\r','\n','\r','\n', 0};
+        static const WCHAR szSetCookie[] = {'S','e','t','-','C','o','o','k','i','e',0 };
 
         TRACE("Going to url %s %s\n", debugstr_w(lpwhr->lpszHostName), debugstr_w(lpwhr->lpszPath));
         loop_next = FALSE;
@@ -1539,7 +1539,7 @@ BOOL WINAPI HTTP_HttpSendRequestW(HINTERNET hHttpRequest, LPCWSTR lpszHeaders,
         {
             if (lpwhr->StdHeaders[i].wFlags & HDR_ISREQUEST)
             {
-                const WCHAR szFmt[] = { '\r','\n','%','s',':',' ','%','s', 0};
+                static const WCHAR szFmt[] = { '\r','\n','%','s',':',' ','%','s', 0};
                 cnt += sprintfW(requestString + cnt, szFmt,
                                lpwhr->StdHeaders[i].lpszField, lpwhr->StdHeaders[i].lpszValue);
                 TRACE("Adding header %s (%s)\n",
@@ -1553,7 +1553,7 @@ BOOL WINAPI HTTP_HttpSendRequestW(HINTERNET hHttpRequest, LPCWSTR lpszHeaders,
         {
             if (lpwhr->pCustHeaders[i].wFlags & HDR_ISREQUEST)
             {
-                const WCHAR szFmt[] = { '\r','\n','%','s',':',' ','%','s', 0};
+                static const WCHAR szFmt[] = { '\r','\n','%','s',':',' ','%','s', 0};
                 cnt += sprintfW(requestString + cnt, szFmt,
                                lpwhr->pCustHeaders[i].lpszField, lpwhr->pCustHeaders[i].lpszValue);
                 TRACE("Adding custom header %s (%s)\n",
@@ -1564,7 +1564,7 @@ BOOL WINAPI HTTP_HttpSendRequestW(HINTERNET hHttpRequest, LPCWSTR lpszHeaders,
 
         if (lpwhr->lpszHostName)
         {
-            const WCHAR szFmt[] = { '%','s','%','s',0 };
+            static const WCHAR szFmt[] = { '%','s','%','s',0 };
             cnt += sprintfW(requestString + cnt, szFmt, HTTPHOSTHEADER, lpwhr->lpszHostName);
         }
 
@@ -1657,7 +1657,7 @@ BOOL WINAPI HTTP_HttpSendRequestW(HINTERNET hHttpRequest, LPCWSTR lpszHeaders,
         {
             LPHTTPHEADERW setCookieHeader;
             int nPosStart = 0, nPosEnd = 0, len;
-            const WCHAR szFmt[] = { 'h','t','t','p',':','/','/','%','s','/',0};
+            static const WCHAR szFmt[] = { 'h','t','t','p',':','/','/','%','s','/',0};
 
             setCookieHeader = &lpwhr->pCustHeaders[CustHeaderIndex];
 
@@ -1677,7 +1677,7 @@ BOOL WINAPI HTTP_HttpSendRequestW(HINTERNET hHttpRequest, LPCWSTR lpszHeaders,
                     /* fixme: not case sensitive, strcasestr is gnu only */
                     int nDomainPosEnd = 0;
                     int nDomainPosStart = 0, nDomainLength = 0;
-                    const WCHAR szDomain[] = {'d','o','m','a','i','n','=',0};
+                    static const WCHAR szDomain[] = {'d','o','m','a','i','n','=',0};
                     LPWSTR lpszDomain = strstrW(&setCookieHeader->lpszValue[nPosEnd], szDomain);
                     if (lpszDomain)
                     { /* they have specified their own domain, lets use it */
@@ -1951,8 +1951,8 @@ BOOL HTTP_GetResponseHeaders(LPWININETHTTPREQW lpwhr)
     BOOL bSuccess = FALSE;
     INT  rc = 0;
     WCHAR value[MAX_FIELD_VALUE_LEN], field[MAX_FIELD_LEN];
-    const WCHAR szStatus[] = {'S','t','a','t','u','s',0};
-    const WCHAR szHttp[] = { 'H','T','T','P',0 };
+    static const WCHAR szStatus[] = {'S','t','a','t','u','s',0};
+    static const WCHAR szHttp[] = { 'H','T','T','P',0 };
     char bufferA[MAX_REPLY_LEN];
 
     TRACE("-->\n");
@@ -2086,32 +2086,32 @@ BOOL HTTP_InterpretHttpHeader(LPWSTR buffer, LPWSTR field, INT fieldlen, LPWSTR 
 INT HTTP_GetStdHeaderIndex(LPCWSTR lpszField)
 {
     INT index = -1;
-    const WCHAR szContentLength[] = {
+    static const WCHAR szContentLength[] = {
        'C','o','n','t','e','n','t','-','L','e','n','g','t','h',0};
-    const WCHAR szStatus[] = {'S','t','a','t','u','s',0};
-    const WCHAR szContentType[] = {
+    static const WCHAR szStatus[] = {'S','t','a','t','u','s',0};
+    static const WCHAR szContentType[] = {
        'C','o','n','t','e','n','t','-','T','y','p','e',0};
-    const WCHAR szLastModified[] = {
+    static const WCHAR szLastModified[] = {
        'L','a','s','t','-','M','o','d','i','f','i','e','d',0};
-    const WCHAR szLocation[] = {'L','o','c','a','t','i','o','n',0};
-    const WCHAR szAccept[] = {'A','c','c','e','p','t',0};
-    const WCHAR szReferer[] = { 'R','e','f','e','r','e','r',0};
-    const WCHAR szContentTrans[] = { 'C','o','n','t','e','n','t','-',
+    static const WCHAR szLocation[] = {'L','o','c','a','t','i','o','n',0};
+    static const WCHAR szAccept[] = {'A','c','c','e','p','t',0};
+    static const WCHAR szReferer[] = { 'R','e','f','e','r','e','r',0};
+    static const WCHAR szContentTrans[] = { 'C','o','n','t','e','n','t','-',
        'T','r','a','n','s','f','e','r','-','E','n','c','o','d','i','n','g',0};
-    const WCHAR szDate[] = { 'D','a','t','e',0};
-    const WCHAR szServer[] = { 'S','e','r','v','e','r',0};
-    const WCHAR szConnection[] = { 'C','o','n','n','e','c','t','i','o','n',0};
-    const WCHAR szETag[] = { 'E','T','a','g',0};
-    const WCHAR szAcceptRanges[] = {
+    static const WCHAR szDate[] = { 'D','a','t','e',0};
+    static const WCHAR szServer[] = { 'S','e','r','v','e','r',0};
+    static const WCHAR szConnection[] = { 'C','o','n','n','e','c','t','i','o','n',0};
+    static const WCHAR szETag[] = { 'E','T','a','g',0};
+    static const WCHAR szAcceptRanges[] = {
        'A','c','c','e','p','t','-','R','a','n','g','e','s',0 };
-    const WCHAR szExpires[] = { 'E','x','p','i','r','e','s',0 };
-    const WCHAR szMimeVersion[] = {
+    static const WCHAR szExpires[] = { 'E','x','p','i','r','e','s',0 };
+    static const WCHAR szMimeVersion[] = {
        'M','i','m','e','-','V','e','r','s','i','o','n', 0};
-    const WCHAR szPragma[] = { 'P','r','a','g','m','a', 0};
-    const WCHAR szCacheControl[] = {
+    static const WCHAR szPragma[] = { 'P','r','a','g','m','a', 0};
+    static const WCHAR szCacheControl[] = {
        'C','a','c','h','e','-','C','o','n','t','r','o','l',0};
-    const WCHAR szUserAgent[] = { 'U','s','e','r','-','A','g','e','n','t',0};
-    const WCHAR szProxyAuth[] = {
+    static const WCHAR szUserAgent[] = { 'U','s','e','r','-','A','g','e','n','t',0};
+    static const WCHAR szProxyAuth[] = {
        'P','r','o','x','y','-',
        'A','u','t','h','e','n','t','i','c','a','t','e', 0};
 

@@ -587,7 +587,7 @@ static HRESULT WINAPI DEVENUM_IMediaCatMoniker_GetDisplayName(
 {
     ICOM_THIS(MediaCatMoniker, iface);
     WCHAR wszBuffer[MAX_PATH];
-    const WCHAR wszFriendlyName[] = {'F','r','i','e','n','d','l','y','N','a','m','e',0};
+    static const WCHAR wszFriendlyName[] = {'F','r','i','e','n','d','l','y','N','a','m','e',0};
     LONG received = sizeof(wszFriendlyName);
 
     TRACE("(%p, %p, %p)\n", pbc, pmkToLeft, ppszDisplayName);

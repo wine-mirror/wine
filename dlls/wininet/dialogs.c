@@ -93,7 +93,7 @@ static BOOL WININET_GetAuthRealm( HINTERNET hRequest, LPWSTR szBuf, DWORD sz )
 {
     LPWSTR p, q;
     DWORD index;
-    const WCHAR szRealm[] = { 'r','e','a','l','m','=',0 };
+    static const WCHAR szRealm[] = { 'r','e','a','l','m','=',0 };
 
     /* extract the Realm from the proxy response and show it */
     index = 0;
@@ -136,7 +136,8 @@ static BOOL WININET_GetSetPassword( HWND hdlg, LPCWSTR szServer,
     DWORD r, dwMagic = 19;
     UINT r_len, u_len;
     WORD sz;
-    const WCHAR szColon[] = { ':',0 }, szbs[] = { '/', 0 };
+    static const WCHAR szColon[] = { ':',0 };
+    static const WCHAR szbs[] = { '/', 0 };
 
     hUserItem = GetDlgItem( hdlg, IDC_USERNAME );
     hPassItem = GetDlgItem( hdlg, IDC_PASSWORD );

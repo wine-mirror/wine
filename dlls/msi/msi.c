@@ -45,16 +45,16 @@ WINE_DEFAULT_DEBUG_CHANNEL(msi);
  */
 #define LPCTSTR LPCWSTR
 
-const WCHAR szInstaller[] = {
+static const WCHAR szInstaller[] = {
 'S','o','f','t','w','a','r','e','\\',
 'M','i','c','r','o','s','o','f','t','\\',
 'W','i','n','d','o','w','s','\\',
 'C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\',
 'I','n','s','t','a','l','l','e','r',0 };
 
-const WCHAR szFeatures[] = {
+static const WCHAR szFeatures[] = {
 'F','e','a','t','u','r','e','s',0 };
-const WCHAR szComponents[] = {
+static const WCHAR szComponents[] = {
 'C','o','m','p','o','n','e','n','t','s',0 };
 
 /*
@@ -286,13 +286,13 @@ UINT WINAPI MsiOpenProductA(LPCSTR szProduct, MSIHANDLE *phProduct)
 
 UINT WINAPI MsiOpenProductW(LPCWSTR szProduct, MSIHANDLE *phProduct)
 {
-    const WCHAR szKey[] = {
+    static const WCHAR szKey[] = {
         'S','o','f','t','w','a','r','e','\\',
         'M','i','c','r','o','s','o','f','t','\\',
         'W','i','n','d','o','w','s','\\',
         'C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\',
         'U','n','i','n','s','t','a','l','l',0 };
-    const WCHAR szLocalPackage[] = {
+    static const WCHAR szLocalPackage[] = {
         'L','o','c','a','l','P','a','c','k','a','g','e', 0
     };
     LPWSTR path = NULL;
@@ -879,8 +879,8 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved) {
     /* FIXME: Cleanup */
   }
   /*
-  const WCHAR szMSIServerSvc[] = { 'M','S','I','S','e','r','v','e','r',0 };
-  const WCHAR szNull[] = { 0 };
+  static const WCHAR szMSIServerSvc[] = { 'M','S','I','S','e','r','v','e','r',0 };
+  static const WCHAR szNull[] = { 0 };
   if (!strcmpW(lpServiceName, szMSIServerSvc)) {
     hKey = CreateServiceW(hSCManager, 
 			  szMSIServerSvc, 

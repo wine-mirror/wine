@@ -209,7 +209,7 @@ static HRESULT GetClassMediaFile(IAsyncReader * pReader, LPCOLESTR pszFileName, 
             HKEY hkeyMajor;
             WCHAR wszMajorKeyName[CHARS_IN_GUID];
             DWORD dwKeyNameLength = sizeof(wszMajorKeyName) / sizeof(wszMajorKeyName[0]);
-            const WCHAR wszExtensions[] = {'E','x','t','e','n','s','i','o','n','s',0};
+            static const WCHAR wszExtensions[] = {'E','x','t','e','n','s','i','o','n','s',0};
     
             if (RegEnumKeyExW(hkeyMediaType, indexMajor, wszMajorKeyName, &dwKeyNameLength, NULL, NULL, NULL, NULL) != ERROR_SUCCESS)
                 break;
@@ -251,7 +251,7 @@ static HRESULT GetClassMediaFile(IAsyncReader * pReader, LPCOLESTR pszFileName, 
                         LPWSTR wszPatternString = HeapAlloc(GetProcessHeap(), 0, maxValueLen);
                         DWORD dwValueNameLen = sizeof(wszValueName) / sizeof(wszValueName[0]); /* remember this is in chars */
                         DWORD dwDataLen = maxValueLen; /* remember this is in bytes */
-                        const WCHAR wszSourceFilter[] = {'S','o','u','r','c','e',' ','F','i','l','t','e','r',0};
+                        static const WCHAR wszSourceFilter[] = {'S','o','u','r','c','e',' ','F','i','l','t','e','r',0};
                         LONG temp;
 
                         if ((temp = RegEnumValueW(hkeyMinor, indexValue, wszValueName, &dwValueNameLen, NULL, &dwType, (LPBYTE)wszPatternString, &dwDataLen)) != ERROR_SUCCESS)

@@ -342,7 +342,7 @@ static BOOL INTERNET_ConfigureProxyFromReg( LPWININETAPPINFOW lpwai )
     DWORD r, keytype, len, enabled;
     LPSTR lpszInternetSettings =
         "Software\\Microsoft\\Windows\\CurrentVersion\\Internet Settings";
-    const WCHAR szProxyServer[] = { 'P','r','o','x','y','S','e','r','v','e','r', 0 };
+    static const WCHAR szProxyServer[] = { 'P','r','o','x','y','S','e','r','v','e','r', 0 };
 
     r = RegOpenKeyA(HKEY_CURRENT_USER, lpszInternetSettings, &key);
     if ( r != ERROR_SUCCESS )
@@ -361,7 +361,7 @@ static BOOL INTERNET_ConfigureProxyFromReg( LPWININETAPPINFOW lpwai )
         if( (r == ERROR_SUCCESS) && len && (keytype == REG_SZ) )
         {
             LPWSTR szProxy, p;
-            const WCHAR szHttp[] = {'h','t','t','p','=',0};
+            static const WCHAR szHttp[] = {'h','t','t','p','=',0};
 
             szProxy=HeapAlloc( GetProcessHeap(), 0, len );
             RegQueryValueExW( key, szProxyServer, NULL, &keytype,
@@ -1070,14 +1070,14 @@ BOOL WINAPI InternetCrackUrlA(LPCSTR lpszUrl, DWORD dwUrlLength, DWORD dwFlags,
 INTERNET_SCHEME GetInternetSchemeW(LPCWSTR lpszScheme, INT nMaxCmp)
 {
     INTERNET_SCHEME iScheme=INTERNET_SCHEME_UNKNOWN;
-    const WCHAR lpszFtp[]={'f','t','p',0};
-    const WCHAR lpszGopher[]={'g','o','p','h','e','r',0};
-    const WCHAR lpszHttp[]={'h','t','t','p',0};
-    const WCHAR lpszHttps[]={'h','t','t','p','s',0};
-    const WCHAR lpszFile[]={'f','i','l','e',0};
-    const WCHAR lpszNews[]={'n','e','w','s',0};
-    const WCHAR lpszMailto[]={'m','a','i','l','t','o',0};
-    const WCHAR lpszRes[]={'r','e','s',0};
+    static const WCHAR lpszFtp[]={'f','t','p',0};
+    static const WCHAR lpszGopher[]={'g','o','p','h','e','r',0};
+    static const WCHAR lpszHttp[]={'h','t','t','p',0};
+    static const WCHAR lpszHttps[]={'h','t','t','p','s',0};
+    static const WCHAR lpszFile[]={'f','i','l','e',0};
+    static const WCHAR lpszNews[]={'n','e','w','s',0};
+    static const WCHAR lpszMailto[]={'m','a','i','l','t','o',0};
+    static const WCHAR lpszRes[]={'r','e','s',0};
     WCHAR* tempBuffer=NULL;
     TRACE("\n");
     if(lpszScheme==NULL)
@@ -1197,7 +1197,7 @@ BOOL WINAPI InternetCrackUrlW(LPCWSTR lpszUrl, DWORD dwUrlLength, DWORD dwFlags,
     if (bIsAbsolute) /* Parse <protocol>:[//<net_loc>] */
     {
         LPWSTR lpszNetLoc;
-        const WCHAR wszAbout[]={'a','b','o','u','t',':',0};
+        static const WCHAR wszAbout[]={'a','b','o','u','t',':',0};
 
         /* Get scheme first. */
         lpUC->nScheme = GetInternetSchemeW(lpszUrl, lpszcp - lpszUrl);
@@ -1680,7 +1680,7 @@ static BOOL INET_QueryOptionHelper(BOOL bIsUnicode, HINTERNET hInternet, DWORD d
             {
                 LPWININETHTTPREQW lpreq = (LPWININETHTTPREQW) lpwhh;
                 WCHAR url[1023];
-                const WCHAR szFmt[] = {'h','t','t','p',':','/','/','%','s','%','s',0};
+                static const WCHAR szFmt[] = {'h','t','t','p',':','/','/','%','s','%','s',0};
 
                 sprintfW(url,szFmt,lpreq->lpszHostName,lpreq->lpszPath);
                 TRACE("INTERNET_OPTION_URL: %s\n",debugstr_w(url));
@@ -2076,7 +2076,7 @@ HINTERNET WINAPI INTERNET_InternetOpenUrlW(HINTERNET hInternet, LPCWSTR lpszUrl,
 	
     case INTERNET_SCHEME_HTTP:
     case INTERNET_SCHEME_HTTPS: {
-	const WCHAR szStars[] = { '*','/','*', 0 };
+	static const WCHAR szStars[] = { '*','/','*', 0 };
 	LPCWSTR accept[2] = { szStars, NULL };
 	if(urlComponents.nPort == 0) {
 	    if(urlComponents.nScheme == INTERNET_SCHEME_HTTP)

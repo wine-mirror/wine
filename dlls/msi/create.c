@@ -61,8 +61,8 @@ static UINT CREATE_execute( struct tagMSIVIEW *view, MSIHANDLE record )
     MSICREATEVIEW *cv = (MSICREATEVIEW*)view;
     create_col_info *col;
     UINT r, nField, row, table_val, column_val;
-    const WCHAR szTables[] =  { '_','T','a','b','l','e','s',0 };
-    const WCHAR szColumns[] = { '_','C','o','l','u','m','n','s',0 };
+    static const WCHAR szTables[] =  { '_','T','a','b','l','e','s',0 };
+    static const WCHAR szColumns[] = { '_','C','o','l','u','m','n','s',0 };
     MSIVIEW *tv = NULL;
 
     TRACE("%p Table %s (%s)\n", cv, debugstr_w(cv->name), 

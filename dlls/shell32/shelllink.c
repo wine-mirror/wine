@@ -249,7 +249,7 @@ static HRESULT WINAPI IPersistFile_fnLoad(IPersistFile* iface, LPCOLESTR pszFile
 
 static BOOL StartLinkProcessor( LPCOLESTR szLink )
 {
-    const WCHAR szFormat[] = {'w','i','n','e','m','e','n','u','b','u','i','l','d','e','r','.','e','x','e',
+    static const WCHAR szFormat[] = {'w','i','n','e','m','e','n','u','b','u','i','l','d','e','r','.','e','x','e',
                               ' ','-','r',' ','"','%','s','"',0 };
     LONG len;
     LPWSTR buffer;

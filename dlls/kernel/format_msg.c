@@ -61,8 +61,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(resource);
  * Yes, ANSI strings in win32 resources. Go figure.
  */
 
-const WCHAR PCNTFMTWSTR[] = { '%','%','%','s',0 };
-const WCHAR FMTWSTR[] = { '%','s',0 };
+static const WCHAR PCNTFMTWSTR[] = { '%','%','%','s',0 };
+static const WCHAR FMTWSTR[] = { '%','s',0 };
 
 /**********************************************************************
  *	load_messageW		(internal)

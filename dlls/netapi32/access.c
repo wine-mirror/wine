@@ -33,9 +33,9 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(netapi32);
 
-const WCHAR sAdminUserName[] = {'A','d','m','i','n','i','s','t','r','a','t',
+static const WCHAR sAdminUserName[] = {'A','d','m','i','n','i','s','t','r','a','t',
                                 'o','r',0};
-const WCHAR sGuestUserName[] = {'G','u','e','s','t',0};
+static const WCHAR sGuestUserName[] = {'G','u','e','s','t',0};
 
 /************************************************************
  *                NETAPI_ValidateServername
@@ -277,7 +277,7 @@ NetUserEnum(LPCWSTR servername, DWORD level, DWORD filter, LPBYTE* bufptr,
  */
 void ACCESS_QueryAdminDisplayInformation(PNET_DISPLAY_USER *buf, PDWORD pdwSize)
 {
-    const WCHAR sAdminUserName[] = {
+    static const WCHAR sAdminUserName[] = {
         'A','d','m','i','n','i','s','t','r','a','t','o','r',0};
 
     /* sizes of the field buffers in WCHARS */
@@ -316,7 +316,7 @@ void ACCESS_QueryAdminDisplayInformation(PNET_DISPLAY_USER *buf, PDWORD pdwSize)
  */
 void ACCESS_QueryGuestDisplayInformation(PNET_DISPLAY_USER *buf, PDWORD pdwSize)
 {
-    const WCHAR sGuestUserName[] = {
+    static const WCHAR sGuestUserName[] = {
         'G','u','e','s','t',0 };
 
     /* sizes of the field buffers in WCHARS */

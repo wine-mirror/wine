@@ -191,13 +191,13 @@ HRESULT UXTHEME_SetActiveTheme(PTHEME_FILE tf)
  */
 void UXTHEME_InitSystem(HINSTANCE hInst)
 {
-    const WCHAR szWindowTheme[] = {
+    static const WCHAR szWindowTheme[] = {
         'u','x','_','t','h','e','m','e','\0'
     };
-    const WCHAR szSubAppName[] = {
+    static const WCHAR szSubAppName[] = {
         'u','x','_','s','u','b','a','p','p','\0'
     };
-    const WCHAR szSubIdList[] = {
+    static const WCHAR szSubIdList[] = {
         'u','x','_','s','u','b','i','d','l','s','t','\0'
     };
 

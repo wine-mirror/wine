@@ -180,7 +180,7 @@ static int COMM_WhackModem(int fd, unsigned int andy, unsigned int orrie)
  */
 static LPCWSTR COMM_ParseStart(LPCWSTR ptr)
 {
-	const WCHAR comW[] = {'C','O','M',0};
+	static const WCHAR comW[] = {'C','O','M',0};
 
 	/* The device control string may optionally start with "COMx" followed
 	   by an optional ':' and spaces. */
@@ -272,7 +272,7 @@ static LPCWSTR COMM_ParseByteSize(LPCWSTR ptr, LPBYTE lpbytesize)
 static LPCWSTR COMM_ParseStopBits(LPCWSTR ptr, LPBYTE lpstopbits)
 {
 	DWORD temp;
-	const WCHAR stopbits15W[] = {'1','.','5',0};
+	static const WCHAR stopbits15W[] = {'1','.','5',0};
 
 	if(!strncmpW(stopbits15W, ptr, 3))
 	{
@@ -297,8 +297,8 @@ static LPCWSTR COMM_ParseStopBits(LPCWSTR ptr, LPBYTE lpstopbits)
 
 static LPCWSTR COMM_ParseOnOff(LPCWSTR ptr, LPDWORD lponoff)
 {
-	const WCHAR onW[] = {'o','n',0};
-	const WCHAR offW[] = {'o','f','f',0};
+	static const WCHAR onW[] = {'o','n',0};
+	static const WCHAR offW[] = {'o','f','f',0};
 
 	if(!strncmpiW(onW, ptr, 2))
 	{
@@ -425,17 +425,17 @@ static BOOL COMM_BuildNewCommDCB(LPCWSTR device, LPDCB lpdcb, LPCOMMTIMEOUTS lpt
 {
 	DWORD temp;
 	BOOL baud = FALSE, stop = FALSE;
-	const WCHAR baudW[] = {'b','a','u','d','=',0};
-	const WCHAR parityW[] = {'p','a','r','i','t','y','=',0};
-	const WCHAR dataW[] = {'d','a','t','a','=',0};
-	const WCHAR stopW[] = {'s','t','o','p','=',0};
-	const WCHAR toW[] = {'t','o','=',0};
-	const WCHAR xonW[] = {'x','o','n','=',0};
-	const WCHAR odsrW[] = {'o','d','s','r','=',0};
-	const WCHAR octsW[] = {'o','c','t','s','=',0};
-	const WCHAR dtrW[] = {'d','t','r','=',0};
-	const WCHAR rtsW[] = {'r','t','s','=',0};
-	const WCHAR idsrW[] = {'i','d','s','r','=',0};
+	static const WCHAR baudW[] = {'b','a','u','d','=',0};
+	static const WCHAR parityW[] = {'p','a','r','i','t','y','=',0};
+	static const WCHAR dataW[] = {'d','a','t','a','=',0};
+	static const WCHAR stopW[] = {'s','t','o','p','=',0};
+	static const WCHAR toW[] = {'t','o','=',0};
+	static const WCHAR xonW[] = {'x','o','n','=',0};
+	static const WCHAR odsrW[] = {'o','d','s','r','=',0};
+	static const WCHAR octsW[] = {'o','c','t','s','=',0};
+	static const WCHAR dtrW[] = {'d','t','r','=',0};
+	static const WCHAR rtsW[] = {'r','t','s','=',0};
+	static const WCHAR idsrW[] = {'i','d','s','r','=',0};
 
 	while(*device)
 	{
@@ -2311,8 +2311,8 @@ BOOL WINAPI GetDefaultCommConfigW(
 {
      LPDCB lpdcb = &(lpCC->dcb);
      WCHAR temp[40];
-     const WCHAR comW[] = {'C','O','M',0};
-     const WCHAR formatW[] = {'C','O','M','%','c',':','3','8','4','0','0',',','n',',','8',',','1',0};
+     static const WCHAR comW[] = {'C','O','M',0};
+     static const WCHAR formatW[] = {'C','O','M','%','c',':','3','8','4','0','0',',','n',',','8',',','1',0};
 
      if (strncmpiW(lpszName,comW,3)) {
         ERR("not implemented for <%s>\n", debugstr_w(lpszName));

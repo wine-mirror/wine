@@ -4927,7 +4927,7 @@ static HRESULT WINAPI ITypeInfo_fnGetDllEntry( ITypeInfo2 *iface, MEMBERID memid
 
 	    /* FIXME: This is wrong, but how do you find that out? */
 	    if (pBstrDllName) {
-		const WCHAR oleaut32W[] = {'O','L','E','A','U','T','3','2','.','D','L','L',0};
+		static const WCHAR oleaut32W[] = {'O','L','E','A','U','T','3','2','.','D','L','L',0};
 		*pBstrDllName = SysAllocString(oleaut32W);
 	    }
 

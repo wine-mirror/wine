@@ -424,13 +424,13 @@ CreateServiceW( SC_HANDLE hSCManager, LPCWSTR lpServiceName,
     HKEY hKey;
     LONG r;
     DWORD dp;
-    const WCHAR szDisplayName[] = { 'D','i','s','p','l','a','y','N','a','m','e', 0 };
-    const WCHAR szType[] = {'T','y','p','e',0};
-    const WCHAR szStart[] = {'S','t','a','r','t',0};
-    const WCHAR szError[] = {'E','r','r','o','r','C','o','n','t','r','o','l', 0};
-    const WCHAR szImagePath[] = {'I','m','a','g','e','P','a','t','h',0};
-    const WCHAR szGroup[] = {'G','r','o','u','p',0};
-    const WCHAR szDependencies[] = { 'D','e','p','e','n','d','e','n','c','i','e','s',0};
+    static const WCHAR szDisplayName[] = { 'D','i','s','p','l','a','y','N','a','m','e', 0 };
+    static const WCHAR szType[] = {'T','y','p','e',0};
+    static const WCHAR szStart[] = {'S','t','a','r','t',0};
+    static const WCHAR szError[] = {'E','r','r','o','r','C','o','n','t','r','o','l', 0};
+    static const WCHAR szImagePath[] = {'I','m','a','g','e','P','a','t','h',0};
+    static const WCHAR szGroup[] = {'G','r','o','u','p',0};
+    static const WCHAR szDependencies[] = { 'D','e','p','e','n','d','e','n','c','i','e','s',0};
 
     FIXME("%p %s %s\n", hSCManager, 
           debugstr_w(lpServiceName), debugstr_w(lpDisplayName));
@@ -894,15 +894,15 @@ QueryServiceConfigW( SC_HANDLE hService,
                      LPQUERY_SERVICE_CONFIGW lpServiceConfig,
                      DWORD cbBufSize, LPDWORD pcbBytesNeeded)
 {
-    const WCHAR szDisplayName[] = {
+    static const WCHAR szDisplayName[] = {
         'D','i','s','p','l','a','y','N','a','m','e', 0 };
-    const WCHAR szType[] = {'T','y','p','e',0};
-    const WCHAR szStart[] = {'S','t','a','r','t',0};
-    const WCHAR szError[] = {
+    static const WCHAR szType[] = {'T','y','p','e',0};
+    static const WCHAR szStart[] = {'S','t','a','r','t',0};
+    static const WCHAR szError[] = {
         'E','r','r','o','r','C','o','n','t','r','o','l', 0};
-    const WCHAR szImagePath[] = {'I','m','a','g','e','P','a','t','h',0};
-    const WCHAR szGroup[] = {'G','r','o','u','p',0};
-    const WCHAR szDependencies[] = { 
+    static const WCHAR szImagePath[] = {'I','m','a','g','e','P','a','t','h',0};
+    static const WCHAR szGroup[] = {'G','r','o','u','p',0};
+    static const WCHAR szDependencies[] = {
         'D','e','p','e','n','d','e','n','c','i','e','s',0};
     LONG r;
     DWORD type, val, sz, total, n;

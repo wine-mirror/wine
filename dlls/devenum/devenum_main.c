@@ -305,8 +305,8 @@ static HRESULT register_clsids(int count, const register_info * pRegInfo, LPCWST
     HKEY hkeyInproc32;
     HKEY hkeyInstance = NULL;
     int i;
-    const WCHAR wcszInproc32[] = {'I','n','p','r','o','c','S','e','r','v','e','r','3','2',0};
-    const WCHAR wcszThreadingModel[] = {'T','h','r','e','a','d','i','n','g','M','o','d','e','l',0};
+    static const WCHAR wcszInproc32[] = {'I','n','p','r','o','c','S','e','r','v','e','r','3','2',0};
+    static const WCHAR wcszThreadingModel[] = {'T','h','r','e','a','d','i','n','g','M','o','d','e','l',0};
 
     res = RegOpenKeyW(HKEY_CLASSES_ROOT, clsid_keyname, &hkeyClsid)
           == ERROR_SUCCESS ? S_OK : E_FAIL;

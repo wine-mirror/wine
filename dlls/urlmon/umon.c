@@ -1061,9 +1061,9 @@ HRESULT WINAPI FindMimeFromData(LPBC pBC, LPCWSTR pwzUrl, LPVOID pBuffer,
    DWORD cbSize, LPCWSTR pwzMimeProposed, DWORD dwMimeFlags,
    LPWSTR* ppwzMimeOut, DWORD dwReserved)
 {
-    const WCHAR szBinaryMime[] = {'a','p','p','l','i','c','a','t','i','o','n','/','o','c','t','e','t','-','s','t','r','e','a','m','\0'};
-    const WCHAR szTextMime[] = {'t','e','x','t','/','p','l','a','i','n','\0'};
-    const WCHAR szContentType[] = {'C','o','n','t','e','n','t',' ','T','y','p','e','\0'};
+    static const WCHAR szBinaryMime[] = {'a','p','p','l','i','c','a','t','i','o','n','/','o','c','t','e','t','-','s','t','r','e','a','m','\0'};
+    static const WCHAR szTextMime[] = {'t','e','x','t','/','p','l','a','i','n','\0'};
+    static const WCHAR szContentType[] = {'C','o','n','t','e','n','t',' ','T','y','p','e','\0'};
     WCHAR szTmpMime[256];
     LPCWSTR mimeType = NULL;
     HKEY hKey = NULL;

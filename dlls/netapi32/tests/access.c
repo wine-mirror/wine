@@ -31,15 +31,15 @@
 WCHAR user_name[UNLEN + 1];
 WCHAR computer_name[MAX_COMPUTERNAME_LENGTH + 1];
 
-const WCHAR sAdminUserName[] = {'A','d','m','i','n','i','s','t','r','a','t',
+static const WCHAR sAdminUserName[] = {'A','d','m','i','n','i','s','t','r','a','t',
                                 'o','r',0};
-const WCHAR sGuestUserName[] = {'G','u','e','s','t',0};
-const WCHAR sNonexistentUser[] = {'N','o','n','e','x','i','s','t','e','n','t',' ',
+static const WCHAR sGuestUserName[] = {'G','u','e','s','t',0};
+static const WCHAR sNonexistentUser[] = {'N','o','n','e','x','i','s','t','e','n','t',' ',
                                 'U','s','e','r',0};
-const WCHAR sBadNetPath[] = {'\\','\\','B','a',' ',' ','p','a','t','h',0};
-const WCHAR sInvalidName[] = {'\\',0};
-const WCHAR sInvalidName2[] = {'\\','\\',0};
-const WCHAR sEmptyStr[] = { 0 };
+static const WCHAR sBadNetPath[] = {'\\','\\','B','a',' ',' ','p','a','t','h',0};
+static const WCHAR sInvalidName[] = {'\\',0};
+static const WCHAR sInvalidName2[] = {'\\','\\',0};
+static const WCHAR sEmptyStr[] = { 0 };
 
 static NET_API_STATUS (WINAPI *pNetApiBufferFree)(LPVOID)=NULL;
 static NET_API_STATUS (WINAPI *pNetApiBufferSize)(LPVOID,LPDWORD)=NULL;

@@ -439,7 +439,7 @@ static INT_PTR CALLBACK BrsFolderDlgProc(HWND hWnd, UINT msg, WPARAM wParam,
 	return FALSE;
 }
 
-static WCHAR swBrowseTempName[] = {'S','H','B','R','S','F','O','R','F','O','L','D','E','R','_','M','S','G','B','O','X',0};
+static const WCHAR swBrowseTempName[] = {'S','H','B','R','S','F','O','R','F','O','L','D','E','R','_','M','S','G','B','O','X',0};
 
 /*************************************************************************
  * SHBrowseForFolderA [SHELL32.@]
