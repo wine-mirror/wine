@@ -50,7 +50,7 @@ all: $(PROGRAMS)
 @MAKE_RULES@
 
 wineserver: $(OBJS)
-	$(CC) -o $(PROGRAMS) $(OBJS) $(LIBUNICODE) $(LIBPORT) $(LIBS) $(LDFLAGS)
+	$(CC) -o $(PROGRAMS) $(OBJS) $(LIBWINE) $(LIBUNICODE) $(LIBPORT) $(LIBS) $(LDFLAGS)
 
 install:: $(PROGRAMS)
 	$(MKINSTALLDIRS) $(bindir)
