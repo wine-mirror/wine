@@ -614,7 +614,6 @@ HDC16 WINAPI CreateCompatibleDC16( HDC16 hdc )
 HDC WINAPI CreateCompatibleDC( HDC hdc )
 {
     DC *dc, *origDC;
-    HBITMAP hbitmap;
     const DC_FUNCTIONS *funcs;
 
     if ((origDC = (DC *)GDI_GetObjPtr( hdc, DC_MAGIC ))) funcs = origDC->funcs;
@@ -640,7 +639,6 @@ HDC WINAPI CreateCompatibleDC( HDC hdc )
         !dc->funcs->pCreateDC( dc, NULL, NULL, NULL, NULL ))
     {
         WARN("creation aborted by device\n");
-        DeleteObject( hbitmap );
         GDI_HEAP_FREE( dc->hSelf );
         return 0;
     }
@@ -1285,6 +1283,44 @@ HCOLORSPACE WINAPI GetColorSpace(HDC hdc)
 {
 /*FIXME    Need to to whatever GetColorSpace actually does */
     return 0;
+}
+
+/***********************************************************************
+ *           CreateColorSpaceA    (GDI32.???)
+ */
+HCOLORSPACE WINAPI CreateColorSpaceA( LPLOGCOLORSPACEA lpLogColorSpace )
+{
+  FIXME( "stub\n" );
+  return 0; 
+}
+
+/***********************************************************************
+ *           CreateColorSpaceW    (GDI32.???)
+ */
+HCOLORSPACE WINAPI CreateColorSpaceW( LPLOGCOLORSPACEW lpLogColorSpace )
+{
+  FIXME( "stub\n" );
+  return 0;
+}
+
+/***********************************************************************
+ *           DeleteColorSpace     (GDI32.???)
+ */
+BOOL WINAPI DeleteColorSpace( HCOLORSPACE hColorSpace )
+{
+  FIXME( "stub\n" );
+  
+  return True;
+}
+
+/***********************************************************************
+ *           SetColorSpace     (GDI32.???)
+ */
+HCOLORSPACE WINAPI SetColorSpace( HDC hDC, HCOLORSPACE hColorSpace )
+{
+  FIXME( "stub\n" );
+
+  return hColorSpace;
 }
 
 /***********************************************************************
