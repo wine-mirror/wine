@@ -314,7 +314,7 @@ ULONG WINAPI RtlIsDosDeviceName_U( PCWSTR dos_name )
  * FIXME:
  *      + fill the cd structure
  */
-BOOLEAN  WINAPI RtlDosPathNameToNtPathName_U(PWSTR dos_path,
+BOOLEAN  WINAPI RtlDosPathNameToNtPathName_U(PCWSTR dos_path,
                                              PUNICODE_STRING ntpath,
                                              PWSTR* file_part,
                                              CURDIR* cd)
