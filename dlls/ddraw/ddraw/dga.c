@@ -45,10 +45,6 @@ struct ICOM_VTABLE(IDirectDraw)		dga_ddvt;
 struct ICOM_VTABLE(IDirectDraw2)	dga_dd2vt;
 struct ICOM_VTABLE(IDirectDraw4)	dga_dd4vt;
 
-#ifdef HAVE_LIBXXF86VM
-static XF86VidModeModeInfo *orig_mode = NULL;
-#endif
-
 #define DDPRIVATE(x) dga_dd_private *ddpriv = ((dga_dd_private*)(x)->d->private)
 #define DPPRIVATE(x) dga_dp_private *dppriv = ((dga_dp_private*)(x)->private)
 
