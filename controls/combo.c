@@ -154,37 +154,6 @@ static LRESULT COMBO_NCDestroy( LPHEADCOMBO lphc )
 }
 
 /***********************************************************************
- *           CBForceDummyResize
- *
- * The dummy resize is used for listboxes that have a popup to trigger
- * a re-arranging of the contents of the combobox and the recalculation
- * of the size of the "real" control window.
- */
-static void CBForceDummyResize(
-  LPHEADCOMBO lphc)
-{
-  RECT windowRect;
-	      
-  GetWindowRect(CB_HWND(lphc), &windowRect);
-
-  /*
-   * We have to be careful, resizing a combobox also has the meaning that the
-   * dropped rect will be resized. In this case, we want to trigger a resize
-   * to recalculate layout but we don't want to change the dropped rectangle
-   * So, we add the size of the dropped rectangle to the size of the control. 
-   * this will cancel-out in the processing of the WM_WINDOWPOSCHANGING 
-   * message.
-   */  
-  SetWindowPos( CB_HWND(lphc),
-		(HWND)NULL,
-		0, 0, 
-		windowRect.right  - windowRect.left,
-		windowRect.bottom - windowRect.top + 
-		  lphc->droppedRect.bottom - lphc->droppedRect.top,
-		SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE );
-}
-
-/***********************************************************************
  *           CBGetTextAreaHeight
  *
  * This method will calculate the height of the text area of the 
@@ -291,6 +260,38 @@ static INT CBGetTextAreaHeight(
   return iTextItemHeight;
 }
 
+/***********************************************************************
+ *           CBForceDummyResize
+ *
+ * The dummy resize is used for listboxes that have a popup to trigger
+ * a re-arranging of the contents of the combobox and the recalculation
+ * of the size of the "real" control window.
+ */
+static void CBForceDummyResize(
+  LPHEADCOMBO lphc)
+{
+  RECT windowRect;
+  int newComboHeight;
+
+  newComboHeight = CBGetTextAreaHeight(CB_HWND(lphc),lphc) + 2*COMBO_YBORDERSIZE();
+	
+  GetWindowRect(CB_HWND(lphc), &windowRect);
+
+  /*
+   * We have to be careful, resizing a combobox also has the meaning that the
+   * dropped rect will be resized. In this case, we want to trigger a resize
+   * to recalculate layout but we don't want to change the dropped rectangle
+   * So, we pass the height of text area of control as the height.
+   * this will cancel-out in the processing of the WM_WINDOWPOSCHANGING
+   * message.
+   */
+  SetWindowPos( CB_HWND(lphc),
+		(HWND)NULL,
+		0, 0,
+		windowRect.right  - windowRect.left,
+		newComboHeight,
+		SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE );
+}
 
 /***********************************************************************
  *           CBCalcPlacement
