@@ -3058,19 +3058,17 @@ postpaint:
  * [I] infoPtr : valid pointer to the listview structure
  * [I] hdc : device context handle
  * [I] nItem : item index
- * [I] rcItem : item rectangle
  * [I] cdmode : custom draw mode
  *
  * RETURN:
  *   Success: TRUE
  *   Failure: FALSE
  */
-static BOOL LISTVIEW_DrawItem(LISTVIEW_INFO *infoPtr, HDC hdc, INT nItem, RECT rcItem, DWORD cdmode)
+static BOOL LISTVIEW_DrawItem(LISTVIEW_INFO *infoPtr, HDC hdc, INT nItem, DWORD cdmode)
 {
     WCHAR szDispText[DISP_TEXT_SIZE] = { '\0' };
     DWORD cditemmode = CDRF_DODEFAULT;
-    INT nLabelWidth, imagePadding = 0;
-    RECT* lprcFocus, rcSelect;
+    RECT* lprcFocus, rcSelect, rcBox, rcIcon, rcLabel;
     NMLVCUSTOMDRAW nmlvcd;
     LVITEMW lvItem;
 
@@ -3088,42 +3086,32 @@ static BOOL LISTVIEW_DrawItem(LISTVIEW_INFO *infoPtr, HDC hdc, INT nItem, RECT r
 
     /* now check if we need to update the focus rectangle */
     lprcFocus = infoPtr->bFocus && (lvItem.state & LVIS_FOCUSED) ? &infoPtr->rcFocus : 0;
-    if (lprcFocus) SetRectEmpty(lprcFocus);
+    
+    if (!LISTVIEW_GetItemMeasures(infoPtr, nItem, &rcBox, NULL, &rcIcon, &rcLabel)) return FALSE;
 
-    customdraw_fill(&nmlvcd, infoPtr, hdc, &rcItem, &lvItem);
+    customdraw_fill(&nmlvcd, infoPtr, hdc, &rcBox, &lvItem);
     if (cdmode & CDRF_NOTIFYITEMDRAW)
         cditemmode = notify_customdraw (infoPtr, CDDS_ITEMPREPAINT, &nmlvcd);
     if (cditemmode & CDRF_SKIPDEFAULT) goto postpaint;
-
-    /* do indent */  
-    rcItem.left += infoPtr->iconSize.cx * lvItem.iIndent;
 
     /* state icons */
     if (infoPtr->himlState)
     {
         UINT uStateImage = (lvItem.state & LVIS_STATEIMAGEMASK) >> 12;
+	RECT rcState = rcBox;
+	
+	rcState.left += infoPtr->iconSize.cx * lvItem.iIndent;
         if (uStateImage)
-	{
 	     ImageList_Draw(infoPtr->himlState, uStateImage - 1, hdc, 
-			    rcItem.left, rcItem.top, ILD_NORMAL);
-	}
-        rcItem.left += infoPtr->iconStateSize.cx;
-	imagePadding = IMAGE_PADDING;
+			    rcState.left, rcState.top, ILD_NORMAL);
     }
 
     /* small icons */
-    if (infoPtr->himlSmall)
+    if (infoPtr->himlSmall && lvItem.iImage >= 0)
     {
-	if (lvItem.iImage >= 0)
-	{
-	    UINT mode = (lvItem.state & LVIS_SELECTED) && (infoPtr->bFocus) ?
-		        ILD_SELECTED : ILD_NORMAL;
-	    ImageList_SetBkColor(infoPtr->himlSmall, CLR_NONE);
-	    ImageList_Draw(infoPtr->himlSmall, lvItem.iImage, hdc, 
-			   rcItem.left, rcItem.top, mode);
-	}
-        rcItem.left += infoPtr->iconSize.cx;
-	imagePadding = IMAGE_PADDING;
+	ImageList_SetBkColor(infoPtr->himlSmall, CLR_NONE);
+	ImageList_Draw(infoPtr->himlSmall, lvItem.iImage, hdc, rcIcon.left, rcIcon.top,
+			(lvItem.state & LVIS_SELECTED) && (infoPtr->bFocus) ? ILD_SELECTED : ILD_NORMAL);
     }
 
     /* Don't bother painting item being edited */
@@ -3131,23 +3119,14 @@ static BOOL LISTVIEW_DrawItem(LISTVIEW_INFO *infoPtr, HDC hdc, INT nItem, RECT r
 
     select_text_attr(infoPtr, hdc, &nmlvcd);
 
-    nLabelWidth = LISTVIEW_GetStringWidthT(infoPtr, lvItem.pszText, TRUE);
-    rcItem.left += imagePadding;
-    rcSelect = rcItem;    
-    rcItem.right = min(rcItem.left + nLabelWidth + TRAILING_PADDING, rcItem.right);
-    if (!(infoPtr->dwLvExStyle & LVS_EX_FULLROWSELECT)) 
-    {
-	rcSelect.right = rcItem.right;
-	if (!lvItem.pszText) rcSelect.left = rcSelect.right;
-    }
+    rcSelect = rcLabel;
+    if ((infoPtr->dwStyle & LVS_TYPEMASK) == LVS_REPORT && (infoPtr->dwLvExStyle & LVS_EX_FULLROWSELECT))
+	rcSelect.right = rcBox.right;
     
     ExtTextOutW(hdc, rcSelect.left, rcSelect.top, ETO_OPAQUE, &rcSelect, 0, 0, 0);
-    if (lvItem.pszText)
-    {
-    	TRACE("drawing text=%s, in rect=%s\n", debugstr_w(lvItem.pszText), debugrect(&rcItem));
-	if(lprcFocus) *lprcFocus = rcItem;
-        DrawTextW(hdc, lvItem.pszText, -1, &rcItem, LV_SL_DT_FLAGS | DT_CENTER);
-    }
+    if(lprcFocus) *lprcFocus = rcSelect;
+    
+    DrawTextW(hdc, lvItem.pszText, -1, &rcLabel, LV_SL_DT_FLAGS | DT_CENTER);
 
 postpaint:
     if (cditemmode & CDRF_NOTIFYPOSTPAINT)
@@ -3345,11 +3324,9 @@ static void LISTVIEW_RefreshReport(LISTVIEW_INFO *infoPtr, HDC hdc, DWORD cdmode
 {
     INT rgntype, nDrawPosY, j;
     INT nColumnCount, nFirstCol, nLastCol;
-    RECT rcItem, rcClip, rcFullSelect;
-    BOOL bFullSelected, isFocused;
+    RECT rcItem, rcClip;
     COLUMNCACHE *lpCols;
     LVCOLUMNW lvColumn;
-    LVITEMW item;
     POINT ptOrig;
     ITERATOR i;
 
@@ -3396,33 +3373,12 @@ static void LISTVIEW_RefreshReport(LISTVIEW_INFO *infoPtr, HDC hdc, DWORD cdmode
     iterator_clippeditems(&i, infoPtr, hdc);
     
     /* a last few bits before we start drawing */
-    bFullSelected = infoPtr->dwLvExStyle & LVS_EX_FULLROWSELECT;
     TRACE("Colums=(%di - %d)\n", nFirstCol, nLastCol);
 
     /* iterate through the invalidated rows */
     while(iterator_next(&i))
     {
 	nDrawPosY = i.nItem * infoPtr->nItemHeight;
-
-    	isFocused = FALSE;	    
-	/* compute the full select rectangle, if needed */
-	if (bFullSelected)
-	{
-	    item.mask = LVIF_IMAGE | LVIF_STATE | LVIF_INDENT;
-	    item.stateMask = LVIS_SELECTED | LVIS_FOCUSED;
-	    item.iItem = i.nItem;
-	    item.iSubItem = 0;
-  	    if (!LISTVIEW_GetItemW(infoPtr, &item)) continue;
-	    
-	    isFocused = item.state & LVIS_FOCUSED;
-	    rcFullSelect.left = lpCols[0].rc.left + REPORT_MARGINX +
-	    			infoPtr->iconSize.cx * item.iIndent +
-				(infoPtr->himlSmall ? infoPtr->iconSize.cx : 0);
-	    rcFullSelect.right = max(rcFullSelect.left, lpCols[nColumnCount - 1].rc.right - REPORT_MARGINX);
-	    rcFullSelect.top = nDrawPosY;
-	    rcFullSelect.bottom = rcFullSelect.top + infoPtr->nItemHeight;
-	    OffsetRect(&rcFullSelect, ptOrig.x, ptOrig.y);
-	}
 
 	/* iterate through the invalidated columns */
 	for (j = nFirstCol; j <= nLastCol; j++)
@@ -3439,13 +3395,10 @@ static void LISTVIEW_RefreshReport(LISTVIEW_INFO *infoPtr, HDC hdc, DWORD cdmode
 	    if (rgntype == COMPLEXREGION && !RectVisible(hdc, &rcItem)) continue;
 
 	    if (j == 0)
-		LISTVIEW_DrawItem(infoPtr, hdc, i.nItem, rcItem, cdmode);
+		LISTVIEW_DrawItem(infoPtr, hdc, i.nItem, cdmode);
 	    else
 		LISTVIEW_DrawSubItem(infoPtr, hdc, i.nItem, j, rcItem, lpCols[j].align, cdmode);
 	}
-
-	/* Adjust focus if we have it, and we are in full select */
-	if (bFullSelected && isFocused) infoPtr->rcFocus = rcFullSelect;
     }
     iterator_destroy(&i);
 
@@ -3468,7 +3421,6 @@ static void LISTVIEW_RefreshReport(LISTVIEW_INFO *infoPtr, HDC hdc, DWORD cdmode
 static void LISTVIEW_RefreshList(LISTVIEW_INFO *infoPtr, HDC hdc, DWORD cdmode)
 {
     POINT Origin, Position;
-    RECT rcItem;
     ITERATOR i;
 
     /* Get scroll info once before loop */
@@ -3480,13 +3432,8 @@ static void LISTVIEW_RefreshList(LISTVIEW_INFO *infoPtr, HDC hdc, DWORD cdmode)
     while(iterator_next(&i))
     {
 	if (!LISTVIEW_GetItemListOrigin(infoPtr, i.nItem, &Position)) continue;
-	rcItem.left = Position.x;
-	rcItem.top = Position.y;
-	rcItem.bottom = rcItem.top + infoPtr->nItemHeight;
-	rcItem.right = rcItem.left + infoPtr->nItemWidth;
-	OffsetRect(&rcItem, Origin.x, Origin.y);
 
-        LISTVIEW_DrawItem(infoPtr, hdc, i.nItem, rcItem, cdmode);
+        LISTVIEW_DrawItem(infoPtr, hdc, i.nItem, cdmode);
     }
     iterator_destroy(&i);
 }
@@ -3506,7 +3453,7 @@ static void LISTVIEW_RefreshList(LISTVIEW_INFO *infoPtr, HDC hdc, DWORD cdmode)
 static void LISTVIEW_RefreshIcon(LISTVIEW_INFO *infoPtr, HDC hdc, DWORD cdmode)
 {
     POINT Origin, Position;
-    RECT rcItem;
+    RECT rcBox;
     ITERATOR i;
 
     /* Get scroll info once before loop */
@@ -3526,8 +3473,8 @@ static void LISTVIEW_RefreshIcon(LISTVIEW_INFO *infoPtr, HDC hdc, DWORD cdmode)
     iterator_destroy(&i);
 
     /* draw the focused item last, in case it's oversized */
-    if (LISTVIEW_GetItemMeasures(infoPtr, infoPtr->nFocusedItem, &rcItem, 0, 0, 0) &&
-        RectVisible(hdc, &rcItem))
+    if (LISTVIEW_GetItemMeasures(infoPtr, infoPtr->nFocusedItem, &rcBox, 0, 0, 0) &&
+        RectVisible(hdc, &rcBox))
 	LISTVIEW_DrawLargeItem(infoPtr, hdc, infoPtr->nFocusedItem, cdmode);
 }
 
