@@ -1567,6 +1567,7 @@ dlls/msacm/imaadp32/Makefile
 dlls/msacm/msadp32/Makefile
 dlls/msacm/msg711/Makefile
 dlls/msacm/winemp3/Makefile
+dlls/msacm/tests/Makefile
 dlls/msdmo/Makefile
 dlls/mshtml/Makefile
 dlls/msi/Makefile

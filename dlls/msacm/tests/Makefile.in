@@ -1,0 +1,13 @@
+TOPSRCDIR = @top_srcdir@
+TOPOBJDIR = ../../..
+SRCDIR    = @srcdir@
+VPATH     = @srcdir@
+TESTDLL   = msacm32.dll
+IMPORTS   = msacm32
+
+CTESTS = \
+	msacm.c
+
+@MAKE_TEST_RULES@
+
+### Dependencies:
