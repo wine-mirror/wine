@@ -164,6 +164,9 @@ extern HRESULT d3ddevice_find(IDirect3DImpl *d3d, LPD3DFINDDEVICESEARCH lpD3DDFS
 /* Used to upload the texture */
 extern HRESULT gltex_upload_texture(IDirectDrawSurfaceImpl *This) ;
 
+/* Used to set-up our orthographic projection */
+extern void d3ddevice_set_ortho(IDirect3DDeviceImpl *This) ;
+
 /* Common functions defined in d3dcommon.c */
 void set_render_state(IDirect3DDeviceGLImpl* This,
 		      D3DRENDERSTATETYPE dwRenderStateType, DWORD dwRenderState);
