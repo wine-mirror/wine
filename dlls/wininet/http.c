@@ -862,7 +862,10 @@ BOOL WINAPI HTTP_HttpQueryInfoW( LPWININETHTTPREQW lpwhr, DWORD dwInfoLevel,
                 return FALSE;
             }
             memcpy(lpBuffer, lpwhr->lpszRawHeaders, (len+1)*sizeof(WCHAR));
-            *lpdwBufferLength = (len + 1) * sizeof(WCHAR);
+            *lpdwBufferLength = len * sizeof(WCHAR);
+
+            TRACE("returning data: %s\n", debugstr_wn((WCHAR*)lpBuffer, len));
+
             return TRUE;
         }
         else if (index == HTTP_QUERY_RAW_HEADERS)
@@ -894,7 +897,7 @@ BOOL WINAPI HTTP_HttpQueryInfoW( LPWININETHTTPREQW lpwhr, DWORD dwInfoLevel,
 
             TRACE("returning data: %s\n", debugstr_wn((WCHAR*)lpBuffer, size));
 
-            *lpdwBufferLength = (size + 1) * sizeof(WCHAR);
+            *lpdwBufferLength = size * sizeof(WCHAR);
             HTTP_FreeTokens(ppszRawHeaderLines);
 
             return TRUE;
@@ -1160,16 +1163,18 @@ BOOL WINAPI HttpQueryInfoA(HINTERNET hHttpRequest, DWORD dwInfoLevel,
                            &len, lpdwIndex );
     if( result )
     {
-        len = WideCharToMultiByte( CP_ACP,0, bufferW, len / sizeof(WCHAR),
+        len = WideCharToMultiByte( CP_ACP,0, bufferW, len / sizeof(WCHAR) + 1,
                                      lpBuffer, *lpdwBufferLength, NULL, NULL );
-        *lpdwBufferLength = len * sizeof(WCHAR);
+        *lpdwBufferLength = len - 1;
+
+        TRACE("lpBuffer: %s\n", debugstr_a(lpBuffer));
     }
     else
         /* since the strings being returned from HttpQueryInfoW should be
          * only ASCII characters, it is reasonable to assume that all of
          * the Unicode characters can be reduced to a single byte */
         *lpdwBufferLength = len / sizeof(WCHAR);
-    
+
     HeapFree(GetProcessHeap(), 0, bufferW );
 
     return result;
