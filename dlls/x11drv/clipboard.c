@@ -369,7 +369,7 @@ LPWINE_CLIPFORMAT X11DRV_CLIPBOARD_LookupFormat(WORD wID)
 
 	lpFormat = lpFormat->NextFormat;
     }
-    if (!lpFormat->drvData) intern_atoms();
+    if (lpFormat && !lpFormat->drvData) intern_atoms();
     return lpFormat;
 }
 
@@ -1656,7 +1656,7 @@ static BOOL X11DRV_CLIPBOARD_ReadClipboardData(UINT wFormat)
 
         lpFormat = X11DRV_CLIPBOARD_LookupFormat(wFormat);
 
-        if (lpFormat->drvData)
+        if (lpFormat && lpFormat->drvData)
         {
     	    DWORD i;
 	    UINT alias;
