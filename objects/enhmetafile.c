@@ -399,6 +399,28 @@ BOOL32 WINAPI PlayEnhMetaFileRecord(
 	break;
       }
 #endif
+    case EMR_STRETCHDIBITS:
+      {
+	LONG xDest = mr->dParm[4];
+	LONG yDest = mr->dParm[5];
+	LONG xSrc = mr->dParm[6];
+	LONG ySrc = mr->dParm[7];
+	LONG cxSrc = mr->dParm[8];
+	LONG cySrc = mr->dParm[9];
+	DWORD offBmiSrc = mr->dParm[10];
+	DWORD offBitsSrc = mr->dParm[12];
+	DWORD iUsageSrc = mr->dParm[14];
+	DWORD dwRop = mr->dParm[15];
+	LONG cxDest = mr->dParm[16];
+	LONG cyDest = mr->dParm[17];
+
+	StretchDIBits32(hdc,xDest,yDest,cxDest,cyDest,
+			    xSrc,ySrc,cxSrc,cySrc,
+			    ((char *)mr)+offBitsSrc,
+			    (const BITMAPINFO *)(((char *)mr)+offBmiSrc),
+			    iUsageSrc,dwRop);
+	break;
+    }
     case EMR_EXTTEXTOUTW:
       {
 	/* 0-3: ??? */
