@@ -61,6 +61,8 @@ typedef struct
 #include "poppack.h"
 
 #define HOOK_MAGIC  ((int)'H' | (int)'K' << 8)  /* 'HK' */
+#define HHOOK_32(h) ((HHOOK)(h ? MAKELONG(h, HOOK_MAGIC) : 0))
+#define HHOOK_16(h) ((HANDLE16)((HIWORD(h) == HOOK_MAGIC) ? LOWORD(h) : 0))
 
   /* This should probably reside in USER heap */
 static HANDLE16 HOOK_systemHooks[WH_NB_HOOKS] = { 0, };
@@ -590,16 +592,16 @@ inline static LRESULT call_hook( HOOKDATA *data, INT fromtype, INT code,
  *
  * Get the next hook of a given hook.
  */
-static HANDLE16 HOOK_GetNextHook( HANDLE16 hook )
+static HHOOK HOOK_GetNextHook( HHOOK hook )
 {
-    HOOKDATA *data = (HOOKDATA *)USER_HEAP_LIN_ADDR( hook );
+    HOOKDATA *data = (HOOKDATA *)USER_HEAP_LIN_ADDR(HHOOK_16(hook));
 
     if (!data || !hook) return 0;
-    if (data->next) return data->next;
+    if (data->next) return HHOOK_32(data->next);
     if (!data->ownerQueue) return 0;  /* Already system hook */
 
     /* Now start enumerating the system hooks */
-    return HOOK_systemHooks[data->id - WH_MINHOOK];
+    return HHOOK_32(HOOK_systemHooks[data->id - WH_MINHOOK]);
 }
 
 
@@ -608,15 +610,15 @@ static HANDLE16 HOOK_GetNextHook( HANDLE16 hook )
  *
  * Get the first hook for a given type.
  */
-static HANDLE16 HOOK_GetHook( INT16 id )
+static HHOOK HOOK_GetHook( INT16 id )
 {
     MESSAGEQUEUE *queue;
-    HANDLE16 hook = 0;
+    HANDLE16 handle = 0;
 
     if ((queue = QUEUE_Current()) != NULL)
-        hook = queue->hooks[id - WH_MINHOOK];
-    if (!hook) hook = HOOK_systemHooks[id - WH_MINHOOK];
-    return hook;
+        handle = queue->hooks[id - WH_MINHOOK];
+    if (!handle) handle = HOOK_systemHooks[id - WH_MINHOOK];
+    return HHOOK_32(handle);
 }
 
 
@@ -677,7 +679,7 @@ static HHOOK HOOK_SetHook( INT16 id, LPVOID proc, INT type,
     TRACE("Setting hook %d: ret=%04x [next=%04x]\n",
 			   id, handle, data->next );
 
-    return (HHOOK)( handle? MAKELONG( handle, HOOK_MAGIC ) : 0 );
+    return HHOOK_32(handle);
 }
 
 
@@ -686,14 +688,14 @@ static HHOOK HOOK_SetHook( INT16 id, LPVOID proc, INT type,
  *
  * Remove a hook from the list.
  */
-static BOOL HOOK_RemoveHook( HANDLE16 hook )
+static BOOL HOOK_RemoveHook( HHOOK hook )
 {
     HOOKDATA *data;
-    HANDLE16 *prevHook;
+    HANDLE16 *prevHandle;
 
     TRACE("Removing hook %04x\n", hook );
 
-    if (!(data = (HOOKDATA *)USER_HEAP_LIN_ADDR(hook))) return FALSE;
+    if (!(data = (HOOKDATA *)USER_HEAP_LIN_ADDR(HHOOK_16(hook)))) return FALSE;
     if (data->flags & HOOK_INUSE)
     {
         /* Mark it for deletion later on */
@@ -710,18 +712,18 @@ static BOOL HOOK_RemoveHook( HANDLE16 hook )
     {
         MESSAGEQUEUE *queue = (MESSAGEQUEUE *)QUEUE_Lock( data->ownerQueue );
         if (!queue) return FALSE;
-        prevHook = &queue->hooks[data->id - WH_MINHOOK];
+        prevHandle = &queue->hooks[data->id - WH_MINHOOK];
         QUEUE_Unlock( queue );
     }
-    else prevHook = &HOOK_systemHooks[data->id - WH_MINHOOK];
+    else prevHandle = &HOOK_systemHooks[data->id - WH_MINHOOK];
 
-    while (*prevHook && *prevHook != hook)
-        prevHook = &((HOOKDATA *)USER_HEAP_LIN_ADDR(*prevHook))->next;
+    while (*prevHandle && *prevHandle != HHOOK_16(hook))
+        prevHandle = &((HOOKDATA *)USER_HEAP_LIN_ADDR(*prevHandle))->next;
 
-    if (!*prevHook) return FALSE;
-    *prevHook = data->next;
+    if (!*prevHandle) return FALSE;
+    *prevHandle = data->next;
 
-    USER_HEAP_FREE( hook );
+    USER_HEAP_FREE(HHOOK_16(hook));
     return TRUE;
 }
 
@@ -729,15 +731,15 @@ static BOOL HOOK_RemoveHook( HANDLE16 hook )
 /***********************************************************************
  *           HOOK_FindValidHook
  */
-static HANDLE16 HOOK_FindValidHook( HANDLE16 hook )
+static HHOOK HOOK_FindValidHook( HHOOK hook )
 {
     HOOKDATA *data;
 
     for (;;)
     {
-	if (!(data = (HOOKDATA *)USER_HEAP_LIN_ADDR(hook))) return 0;
+	if (!(data = (HOOKDATA *)USER_HEAP_LIN_ADDR(HHOOK_16(hook)))) return 0;
 	if (data->proc) return hook;
-	hook = data->next;
+	hook = HHOOK_32(data->next);
     }
 }
 
@@ -746,17 +748,17 @@ static HANDLE16 HOOK_FindValidHook( HANDLE16 hook )
  *
  * Call a hook procedure.
  */
-static LRESULT HOOK_CallHook( HANDLE16 hook, INT fromtype, INT code,
+static LRESULT HOOK_CallHook( HHOOK hook, INT fromtype, INT code,
                               WPARAM wParam, LPARAM lParam )
 {
     MESSAGEQUEUE *queue;
-    HANDLE16 prevHook;
-    HOOKDATA *data = (HOOKDATA *)USER_HEAP_LIN_ADDR(hook);
+    HANDLE16 prevHandle;
+    HOOKDATA *data = (HOOKDATA *)USER_HEAP_LIN_ADDR(HHOOK_16(hook));
     LRESULT ret;
 
     if (!(queue = QUEUE_Current())) return 0;
-    prevHook = queue->hCurHook;
-    queue->hCurHook = hook;
+    prevHandle = queue->hCurHook;
+    queue->hCurHook = HHOOK_16(hook);
 
     TRACE("Calling hook %04x: %d %08x %08lx\n", hook, code, wParam, lParam );
 
@@ -766,7 +768,7 @@ static LRESULT HOOK_CallHook( HANDLE16 hook, INT fromtype, INT code,
 
     TRACE("Ret hook %04x = %08lx\n", hook, ret );
 
-    queue->hCurHook = prevHook;
+    queue->hCurHook = prevHandle;
     if (!data->proc) HOOK_RemoveHook( hook );
     return ret;
 }
@@ -794,7 +796,7 @@ BOOL HOOK_IsHooked( INT16 id )
 LRESULT HOOK_CallHooks16( INT16 id, INT16 code, WPARAM16 wParam,
                           LPARAM lParam )
 {
-    HANDLE16 hook;
+    HHOOK hook;
 
     if (!(hook = HOOK_GetHook( id ))) return 0;
     if (!(hook = HOOK_FindValidHook(hook))) return 0;
@@ -809,7 +811,7 @@ LRESULT HOOK_CallHooks16( INT16 id, INT16 code, WPARAM16 wParam,
 LRESULT HOOK_CallHooksA( INT id, INT code, WPARAM wParam,
                            LPARAM lParam )
 {
-    HANDLE16 hook;
+    HHOOK hook;
 
     if (!(hook = HOOK_GetHook( id ))) return 0;
     if (!(hook = HOOK_FindValidHook(hook))) return 0;
@@ -824,7 +826,7 @@ LRESULT HOOK_CallHooksA( INT id, INT code, WPARAM wParam,
 LRESULT HOOK_CallHooksW( INT id, INT code, WPARAM wParam,
                            LPARAM lParam )
 {
-    HANDLE16 hook;
+    HHOOK hook;
 
     if (!(hook = HOOK_GetHook( id ))) return 0;
     if (!(hook = HOOK_FindValidHook(hook))) return 0;
@@ -841,24 +843,24 @@ void HOOK_FreeModuleHooks( HMODULE16 hModule )
  /* remove all system hooks registered by this module */
 
   HOOKDATA*     hptr;
-  HHOOK         hook, next;
+  HANDLE16      handle, next;
   int           id;
 
   for( id = WH_MINHOOK; id <= WH_MAXHOOK; id++ )
     {
-       hook = HOOK_systemHooks[id - WH_MINHOOK];
-       while( hook )
-          if( (hptr = (HOOKDATA *)USER_HEAP_LIN_ADDR(hook)) )
+       handle = HOOK_systemHooks[id - WH_MINHOOK];
+       while( handle )
+          if( (hptr = (HOOKDATA *)USER_HEAP_LIN_ADDR(handle)) )
 	    {
 	      next = hptr->next;
 	      if( hptr->ownerModule == hModule )
                 {
                   hptr->flags &= HOOK_MAPTYPE;
-                  HOOK_RemoveHook(hook);
+                  HOOK_RemoveHook(HHOOK_32(handle));
                 }
-	      hook = next;
+	      handle = next;
 	    }
-	  else hook = 0;
+	  else handle = 0;
     }
 }
 
@@ -880,7 +882,7 @@ void HOOK_FreeQueueHooks(void)
 	{
 	  next = HOOK_GetNextHook(hook);
 
-	  hptr = (HOOKDATA *)USER_HEAP_LIN_ADDR(hook);
+	  hptr = (HOOKDATA *)USER_HEAP_LIN_ADDR(HHOOK_16(hook));
 	  if( hptr && hptr->ownerQueue )
 	    {
 	      hptr->flags &= HOOK_MAPTYPE;
@@ -969,13 +971,13 @@ BOOL16 WINAPI UnhookWindowsHook16( INT16 id, HOOKPROC16 proc )
  */
 BOOL WINAPI UnhookWindowsHook( INT id, HOOKPROC proc )
 {
-    HANDLE16 hook = HOOK_GetHook( id );
+    HHOOK hook = HOOK_GetHook( id );
 
     TRACE("%d %08lx\n", id, (DWORD)proc );
 
     while (hook)
     {
-        HOOKDATA *data = (HOOKDATA *)USER_HEAP_LIN_ADDR(hook);
+        HOOKDATA *data = (HOOKDATA *)USER_HEAP_LIN_ADDR(HHOOK_16(hook));
         if (data->proc == proc) break;
         hook = HOOK_GetNextHook( hook );
     }
@@ -989,7 +991,7 @@ BOOL WINAPI UnhookWindowsHook( INT id, HOOKPROC proc )
  */
 BOOL16 WINAPI UnhookWindowsHookEx16( HHOOK hhook )
 {
-    return UnhookWindowsHookEx( hhook );
+    return HOOK_RemoveHook(hhook);
 }
 
 /***********************************************************************
@@ -997,8 +999,7 @@ BOOL16 WINAPI UnhookWindowsHookEx16( HHOOK hhook )
  */
 BOOL WINAPI UnhookWindowsHookEx( HHOOK hhook )
 {
-    if (HIWORD(hhook) != HOOK_MAGIC) return FALSE;  /* Not a new format hook */
-    return HOOK_RemoveHook( LOWORD(hhook) );
+    return HOOK_RemoveHook(hhook);
 }
 
 
@@ -1012,10 +1013,9 @@ BOOL WINAPI UnhookWindowsHookEx( HHOOK hhook )
 LRESULT WINAPI CallNextHookEx16( HHOOK hhook, INT16 code, WPARAM16 wParam,
                                  LPARAM lParam )
 {
-    HANDLE16 next;
+    HHOOK next;
 
-    if (HIWORD(hhook) != HOOK_MAGIC) return 0;  /* Not a new format hook */
-    if (!(next = HOOK_GetNextHook( LOWORD(hhook) ))) return 0;
+    if (!(next = HOOK_GetNextHook(hhook))) return 0;
 
     return HOOK_CallHook( next, HOOK_WIN16, code, wParam, lParam );
 }
@@ -1029,14 +1029,13 @@ LRESULT WINAPI CallNextHookEx16( HHOOK hhook, INT16 code, WPARAM16 wParam,
 LRESULT WINAPI CallNextHookEx( HHOOK hhook, INT code, WPARAM wParam,
                                  LPARAM lParam )
 {
-    HANDLE16 next;
+    HHOOK next;
     INT fromtype;	/* figure out Ansi/Unicode */
     HOOKDATA *oldhook;
 
-    if (HIWORD(hhook) != HOOK_MAGIC) return 0;  /* Not a new format hook */
-    if (!(next = HOOK_GetNextHook( LOWORD(hhook) ))) return 0;
+    if (!(next = HOOK_GetNextHook(hhook))) return 0;
 
-    oldhook = (HOOKDATA *)USER_HEAP_LIN_ADDR( LOWORD(hhook) );
+    oldhook = (HOOKDATA *)USER_HEAP_LIN_ADDR(HHOOK_16(hhook));
     fromtype = oldhook->flags & HOOK_MAPTYPE;
 
     if (fromtype == HOOK_WIN16)
@@ -1057,7 +1056,7 @@ LRESULT WINAPI DefHookProc16( INT16 code, WPARAM16 wParam, LPARAM lParam,
     MESSAGEQUEUE *queue;
 
     if (!(queue = QUEUE_Current())) return 0;
-    return CallNextHookEx16( queue->hCurHook, code, wParam, lParam );
+    return CallNextHookEx16(HHOOK_32(queue->hCurHook), code, wParam, lParam);
 }
 
 

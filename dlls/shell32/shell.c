@@ -494,7 +494,7 @@ LRESULT WINAPI ShellHookProc16(INT16 code, WPARAM16 wParam, LPARAM lParam)
         }
 	PostMessageA( SHELL_hWnd, uMsg, wParam, 0 );
     }
-    return CallNextHookEx16( WH_SHELL, code, wParam, lParam );
+    return CallNextHookEx16( SHELL_hHook, code, wParam, lParam );
 }
 
 /*************************************************************************
