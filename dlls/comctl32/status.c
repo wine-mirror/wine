@@ -834,13 +834,15 @@ STATUSBAR_WMCreate (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
     if (IsWindowUnicode (hwnd)) {
 	self->bUnicode = TRUE;
-	if ((len = lstrlenW ((LPCWSTR)lpCreate->lpszName))) {
+	if (lpCreate->lpszName &&
+	    (len = lstrlenW ((LPCWSTR)lpCreate->lpszName))) {
 	    self->parts[0].text = COMCTL32_Alloc ((len + 1)*sizeof(WCHAR));
 	    lstrcpyW (self->parts[0].text, (LPCWSTR)lpCreate->lpszName);
 	}
     }
     else {
-	if ((len = lstrlenA ((LPCSTR)lpCreate->lpszName))) {
+	if (lpCreate->lpszName &&
+	    (len = lstrlenA ((LPCSTR)lpCreate->lpszName))) {
 	    self->parts[0].text = COMCTL32_Alloc ((len + 1)*sizeof(WCHAR));
 	    lstrcpyAtoW (self->parts[0].text, (LPCSTR)lpCreate->lpszName);
 	}
