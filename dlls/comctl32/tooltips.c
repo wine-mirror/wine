@@ -1137,6 +1137,29 @@ TOOLTIPS_EnumToolsW (HWND hwnd, WPARAM wParam, LPARAM lParam)
     return TRUE;
 }
 
+static LRESULT
+TOOLTIPS_GetBubbleSize (HWND hwnd, WPARAM wParam, LPARAM lParam)
+{
+    TOOLTIPS_INFO *infoPtr = TOOLTIPS_GetInfoPtr (hwnd);
+    LPTTTOOLINFOW lpToolInfo = (LPTTTOOLINFOW)lParam;
+    INT nTool;
+    SIZE size;
+
+    if (lpToolInfo == NULL)
+	return FALSE;
+    if (lpToolInfo->cbSize < TTTOOLINFO_V1_SIZEW)
+	return FALSE;
+
+    nTool = TOOLTIPS_GetToolFromInfoW (infoPtr, lpToolInfo);
+    if (nTool == -1) return 0;
+
+    TRACE("tool %d\n", nTool);
+
+    TOOLTIPS_CalcTipSize (hwnd, infoPtr, &size);
+    TRACE("size %ld x %ld\n", size.cx, size.cy);
+
+    return MAKELRESULT(size.cx, size.cy);
+}
 
 static LRESULT
 TOOLTIPS_GetCurrentToolA (HWND hwnd, WPARAM wParam, LPARAM lParam)
@@ -2364,6 +2387,9 @@ TOOLTIPS_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 	case TTM_ENUMTOOLSW:
 	    return TOOLTIPS_EnumToolsW (hwnd, wParam, lParam);
+
+	case TTM_GETBUBBLESIZE:
+	    return TOOLTIPS_GetBubbleSize (hwnd, wParam, lParam);
 
 	case TTM_GETCURRENTTOOLA:
 	    return TOOLTIPS_GetCurrentToolA (hwnd, wParam, lParam);
