@@ -28,7 +28,6 @@
 #include "winbase.h"
 #include "winerror.h"
 
-
 LPCSTR filename = "testfile.xxx";
 LPCSTR sillytext =
 "en larvig liten text dx \033 gx hej 84 hej 4484 ! \001\033 bla bl\na.. bla bla."
@@ -263,10 +262,13 @@ static void test__lcreat( void )
     ok( DeleteFileA( filename ) != 0, "DeleteFile failed (%ld)", GetLastError(  ) );
 
     filehandle=_lcreat (slashname, 0); /* illegal name */
-    if (HFILE_ERROR==filehandle)
-      ok (0, "couldn't create file \"%s\" (err=%ld)", slashname,
-          GetLastError ());
-    else {
+    if (HFILE_ERROR != filehandle || GetLastError() != ERROR_INVALID_NAME)
+    {
+
+      todo_wine {
+        ok (0, "creating file \"%s\" should fail with error 123, (err=%ld)", slashname, GetLastError ());
+      }
+
       _lclose(filehandle);
       find=FindFirstFileA (slashname, &search_results);
       if (INVALID_HANDLE_VALUE==find)
@@ -646,6 +648,109 @@ static void test_DeleteFileW( void )
     ret = DeleteFileW(emptyW);
     ok(!ret && GetLastError() == ERROR_PATH_NOT_FOUND,
        "DeleteFileW(\"\") returned ret=%d error=%ld",ret,GetLastError());
+}
+
+#define IsDotDir(x)     ((x[0] == '.') && ((x[1] == 0) || ((x[1] == '.') && (x[2] == 0))))
+
+void test_MoveFileA(void)
+{
+    char tempdir[MAX_PATH];
+    char source[MAX_PATH], dest[MAX_PATH];
+    static const char prefix[] = "pfx";
+    DWORD ret;
+
+    ret = GetTempPathA(MAX_PATH, tempdir);
+    ok(ret != 0, "GetTempPathA error %ld", GetLastError());
+    ok(ret < MAX_PATH, "temp path should fit into MAX_PATH");
+
+    ret = GetTempFileNameA(tempdir, prefix, 0, source);
+    ok(ret != 0, "GetTempFileNameA error %ld", GetLastError());
+
+    ret = GetTempFileNameA(tempdir, prefix, 0, dest);
+    ok(ret != 0, "GetTempFileNameA error %ld", GetLastError());
+
+    ret = MoveFileA(source, dest);
+    ok(!ret && GetLastError() == ERROR_FILE_EXISTS,
+       "MoveFileA: unexpected error %ld\n", GetLastError());
+
+    ret = DeleteFileA(dest);
+    ok(ret, "DeleteFileA: error %ld\n", GetLastError());
+
+    ret = MoveFileA(source, dest);
+    ok(ret, "MoveFileA: failed, error %ld\n", GetLastError());
+
+    lstrcatA(tempdir, "Remove Me");
+    ret = CreateDirectoryA(tempdir, NULL);
+    ok(ret == TRUE, "CreateDirectoryA failed");
+
+    lstrcpyA(source, dest);
+    lstrcpyA(dest, tempdir);
+    lstrcatA(dest, "\\wild?.*");
+    ret = MoveFileA(source, dest);
+    todo_wine {
+	  ok(!ret, "MoveFileA: shouldn't move to wildcard file");
+      ok(GetLastError() == ERROR_INVALID_NAME,
+              "MoveFileA: with wildcards, unexpected error %ld\n", GetLastError());
+      if (ret || (GetLastError() != ERROR_INVALID_NAME))
+	  {
+        WIN32_FIND_DATAA fd;
+        char temppath[MAX_PATH];
+        HANDLE hFind;
+      
+        lstrcpyA(temppath, tempdir);
+        lstrcatA(temppath, "\\*.*");
+        hFind = FindFirstFileA(temppath, &fd);
+        if (INVALID_HANDLE_VALUE != hFind)
+		{
+          LPSTR lpName;
+          do
+		  {
+            lpName = fd.cAlternateFileName;
+            if (!lpName[0])
+              lpName = fd.cFileName;
+            ok(!IsDotDir(lpName), "MoveFileA: wildcards file created!");
+		  }
+          while (FindNextFileA(hFind, &fd));
+          FindClose(hFind);
+		}
+	  }
+    }
+
+    ret = DeleteFileA(source);
+    ok(ret, "DeleteFileA: error %ld\n", GetLastError());
+    ret = DeleteFileA(dest);
+    ok(!ret, "DeleteFileA: error %ld\n", GetLastError());
+    ret = RemoveDirectoryA(tempdir);
+    ok(ret, "DeleteDirectoryA: error %ld\n", GetLastError());
+}
+
+void test_MoveFileW(void)
+{
+    WCHAR temp_path[MAX_PATH];
+    WCHAR source[MAX_PATH], dest[MAX_PATH];
+    static const WCHAR prefix[] = {'p','f','x',0};
+    DWORD ret;
+
+    ret = GetTempPathW(MAX_PATH, temp_path);
+    if (ret==0 && GetLastError()==ERROR_CALL_NOT_IMPLEMENTED)
+        return;
+    ok(ret != 0, "GetTempPathW error %ld", GetLastError());
+    ok(ret < MAX_PATH, "temp path should fit into MAX_PATH");
+
+    ret = GetTempFileNameW(temp_path, prefix, 0, source);
+    ok(ret != 0, "GetTempFileNameW error %ld", GetLastError());
+
+    ret = GetTempFileNameW(temp_path, prefix, 0, dest);
+    ok(ret != 0, "GetTempFileNameW error %ld", GetLastError());
+
+    ret = MoveFileW(source, dest);
+    ok(!ret && GetLastError() == ERROR_FILE_EXISTS,
+       "CopyFileW: unexpected error %ld\n", GetLastError());
+
+    ret = DeleteFileW(source);
+    ok(ret, "DeleteFileW: error %ld\n", GetLastError());
+    ret = DeleteFileW(dest);
+    ok(ret, "DeleteFileW: error %ld\n", GetLastError());
 }
 
 #define PATTERN_OFFSET 0x10

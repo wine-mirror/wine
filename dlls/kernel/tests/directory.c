@@ -192,6 +192,22 @@ static void test_CreateDirectoryA(void)
 
     ret = RemoveDirectoryA(tmpdir);
     ok(ret == TRUE, "RemoveDirectoryA should always succeed");
+
+    todo_wine {
+      lstrcatA(tmpdir, "?");
+      ret = CreateDirectoryA(tmpdir, NULL);
+      ok(ret == FALSE && GetLastError() == ERROR_INVALID_NAME,
+         "CreateDirectoryA with ? wildcard name should fail, ret=%s error=%ld",
+         ret ? " True" : "False", GetLastError());
+      ret = RemoveDirectoryA(tmpdir);
+
+      tmpdir[lstrlenA(tmpdir) - 1] = '*';
+      ret = CreateDirectoryA(tmpdir, NULL);
+      ok(ret == FALSE && GetLastError() == ERROR_INVALID_NAME,
+         "CreateDirectoryA with * wildcard name should fail, ret=%s error=%ld",
+         ret ? " True" : "False", GetLastError());
+      ret = RemoveDirectoryA(tmpdir);
+    }
 }
 
 static void test_CreateDirectoryW(void)
@@ -202,6 +218,7 @@ static void test_CreateDirectoryW(void)
     static const WCHAR tmp_dir_name[] = {'P','l','e','a','s','e',' ','R','e','m','o','v','e',' ','M','e',0};
     static const WCHAR dotW[] = {'.',0};
     static const WCHAR dotdotW[] = {'.','.',0};
+    static const WCHAR questionW[] = {'?',0};
 
     ret = CreateDirectoryW(NULL, NULL);
     if (!ret && GetLastError()==ERROR_CALL_NOT_IMPLEMENTED)
@@ -238,6 +255,81 @@ static void test_CreateDirectoryW(void)
 
     ret = RemoveDirectoryW(tmpdir);
     ok(ret == TRUE, "RemoveDirectoryW should always succeed");
+
+    todo_wine {
+      lstrcatW(tmpdir, questionW);
+      ret = CreateDirectoryW(tmpdir, NULL);
+      ok(ret == FALSE && GetLastError() == ERROR_INVALID_NAME,
+         "CreateDirectoryW with ? wildcard name should fail with error 183, ret=%s error=%ld",
+         ret ? " True" : "False", GetLastError());
+      ret = RemoveDirectoryW(tmpdir);
+
+      tmpdir[lstrlenW(tmpdir) - 1] = '*';
+      ret = CreateDirectoryW(tmpdir, NULL);
+      ok(ret == FALSE && GetLastError() == ERROR_INVALID_NAME,
+         "CreateDirectoryW with * wildcard name should fail with error 183, ret=%s error=%ld",
+         ret ? " True" : "False", GetLastError());
+      ret = RemoveDirectoryW(tmpdir);
+    }
+}
+
+static void test_RemoveDirectoryA(void)
+{
+    char tmpdir[MAX_PATH];
+    BOOL ret;
+
+    GetTempPathA(MAX_PATH, tmpdir);
+    lstrcatA(tmpdir, "Please Remove Me");
+    ret = CreateDirectoryA(tmpdir, NULL);
+    ok(ret == TRUE, "CreateDirectoryA should always succeed");
+
+    ret = RemoveDirectoryA(tmpdir);
+    ok(ret == TRUE, "RemoveDirectoryA should always succeed");
+
+    todo_wine {
+      lstrcatA(tmpdir, "?");
+      ret = RemoveDirectoryA(tmpdir);
+      ok(ret == FALSE && GetLastError() == ERROR_INVALID_NAME,
+         "RemoveDirectoryA with ? wildcard name should fail with error 183, ret=%s error=%ld",
+         ret ? " True" : "False", GetLastError());
+
+      tmpdir[lstrlenA(tmpdir) - 1] = '*';
+      ret = RemoveDirectoryA(tmpdir);
+      ok(ret == FALSE && GetLastError() == ERROR_INVALID_NAME,
+         "RemoveDirectoryA with * wildcard name should fail with error 183, ret=%s error=%ld",
+         ret ? " True" : "False", GetLastError());
+    }
+}
+
+static void test_RemoveDirectoryW(void)
+{
+    WCHAR tmpdir[MAX_PATH];
+    BOOL ret;
+    static const WCHAR tmp_dir_name[] = {'P','l','e','a','s','e',' ','R','e','m','o','v','e',' ','M','e',0};
+    static const WCHAR questionW[] = {'?',0};
+
+    GetTempPathW(MAX_PATH, tmpdir);
+    lstrcatW(tmpdir, tmp_dir_name);
+    ret = CreateDirectoryW(tmpdir, NULL);
+    ok(ret == TRUE, "CreateDirectoryW should always succeed");
+
+    ret = RemoveDirectoryW(tmpdir);
+    ok(ret == TRUE, "RemoveDirectoryW should always succeed");
+
+    todo_wine {
+      lstrcatW(tmpdir, questionW);
+      ret = RemoveDirectoryW(tmpdir);
+      ok(ret == FALSE && GetLastError() == ERROR_INVALID_NAME,
+         "RemoveDirectoryW with wildcard should fail with error 183, ret=%s error=%ld",
+         ret ? " True" : "False", GetLastError());
+
+      tmpdir[lstrlenW(tmpdir) - 1] = '*';
+      ret = RemoveDirectoryW(tmpdir);
+      ok(ret == FALSE && GetLastError() == ERROR_INVALID_NAME,
+         "RemoveDirectoryW with * wildcard name should fail with error 183, ret=%s error=%ld",
+         ret ? " True" : "False", GetLastError());
+    }
+
 }
 
 START_TEST(directory)
@@ -250,4 +342,7 @@ START_TEST(directory)
 
     test_CreateDirectoryA();
     test_CreateDirectoryW();
+
+    test_RemoveDirectoryA();
+    test_RemoveDirectoryW();
 }
