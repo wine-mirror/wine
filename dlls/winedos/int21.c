@@ -158,7 +158,7 @@ void WINAPI DOSVM_Int21Handler( CONTEXT86 *context )
 
     case 0x0b: /* GET STDIN STATUS */
         {
-            BIOSDATA *data = DOSMEM_BiosData();
+            BIOSDATA *data = BIOS_DATA;
             if(data->FirstKbdCharPtr == data->NextKbdCharPtr)
                 AL_reg(context) = 0;
             else

@@ -40,7 +40,7 @@ DOSASPI_PostProc( SRB_ExecSCSICmd *lpPRB )
 
 	memcpy(&ptrSRB,lpPRB->SenseArea + lpPRB->SRB_SenseLen,sizeof(DWORD));
 	TRACE("Copying data back to DOS client at 0x%8lx\n",ptrSRB);
-	lpSRB16 = DOSMEM_MapRealToLinear(ptrSRB);
+	lpSRB16 = PTR_REAL_TO_LIN(SELECTOROF(ptrSRB),OFFSETOF(ptrSRB));
 	lpSRB16->cmd.SRB_TargStat = lpPRB->SRB_TargStat;
 	lpSRB16->cmd.SRB_HaStat = lpPRB->SRB_HaStat;
 	memcpy(lpSRB16->cmd.CDBByte + lpSRB16->cmd.SRB_CDBLen,lpPRB->SenseArea,lpSRB16->cmd.SRB_SenseLen);
@@ -106,7 +106,7 @@ DWORD ASPI_SendASPIDOSCommand(DWORD ptrSRB)
 	DWORD retval;
 	union tagSRB16 * lpSRB16;
 
-	lpSRB16 = DOSMEM_MapRealToLinear(ptrSRB);
+	lpSRB16 = PTR_REAL_TO_LIN(SELECTOROF(ptrSRB),OFFSETOF(ptrSRB));
 
 	retval = SS_ERR;
 	switch( lpSRB16->common.SRB_Cmd )
@@ -143,7 +143,8 @@ DWORD ASPI_SendASPIDOSCommand(DWORD ptrSRB)
 		lpPRB->SRB_Flags = SRB_POSTING | (lpSRB16->cmd.SRB_Flags&(SRB_DIR_IN|SRB_DIR_OUT|SRB_ENABLE_RESIDUAL_COUNT));
 
 		/* Pointer to data buffer */
-		lpPRB->SRB_BufPointer = DOSMEM_MapRealToLinear(lpSRB16->cmd.SRB_BufPointer);
+		lpPRB->SRB_BufPointer = PTR_REAL_TO_LIN(SELECTOROF(lpSRB16->cmd.SRB_BufPointer),
+                                                        OFFSETOF(lpSRB16->cmd.SRB_BufPointer));
 		/* Copy CDB in */
 		memcpy(&lpPRB->CDBByte[0],&lpSRB16->cmd.CDBByte[0],lpSRB16->cmd.SRB_CDBLen);
 

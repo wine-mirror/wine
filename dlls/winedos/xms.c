@@ -30,7 +30,6 @@
 #include "wine/winbase16.h"
 #include "module.h"
 #include "miscemu.h"
-#include "toolhelp.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(int31);
@@ -49,7 +48,7 @@ typedef struct {
 static BYTE * XMS_Offset( MOVEOFS *ofs )
 {
     if (ofs->Handle) return (BYTE*)GlobalLock16(ofs->Handle)+ofs->Offset;
-        else return (BYTE*)DOSMEM_MapRealToLinear(ofs->Offset);
+    else return (BYTE*)PTR_REAL_TO_LIN(SELECTOROF(ofs->Offset),OFFSETOF(ofs->Offset));
 }
 
 /**********************************************************************
@@ -68,13 +67,11 @@ void WINAPI XMS_Handler( CONTEXT86 *context )
         break;
     case 0x08:   /* Query Free Extended Memory */
     {
-	MEMMANINFO mmi;
+        MEMORYSTATUS status;
 
         TRACE("query free extended memory\n");
-	mmi.dwSize = sizeof(mmi);
-	MemManInfo16(&mmi);
-        AX_reg(context) = mmi.dwLargestFreeBlock >> 10;
-        DX_reg(context) = (mmi.dwFreePages * mmi.wPageSize) >> 10;
+        GlobalMemoryStatus( &status );
+        AX_reg(context) = DX_reg(context) = status.dwAvailVirtual >> 10;
         TRACE("returning largest %dK, total %dK\n", AX_reg(context), DX_reg(context));
     }
     break;

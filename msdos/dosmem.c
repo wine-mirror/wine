@@ -94,26 +94,6 @@ WORD DOSMEM_dpmi_sel;
 DWORD DOS_LOLSeg;
 
 /***********************************************************************
- *           DOSMEM_SystemBase
- *
- * Gets the virtual DOS memory base (interrupt table).
- */
-char *DOSMEM_SystemBase(void)
-{
-    return DOSMEM_sysmem;
-}
-
-/***********************************************************************
- *           DOSMEM_MemoryBase
- *
- * Gets the DOS memory base.
- */
-char *DOSMEM_MemoryBase(void)
-{
-    return DOSMEM_dosmem;
-}
-
-/***********************************************************************
  *           DOSMEM_MemoryTop
  *
  * Gets the DOS memory top.
@@ -232,14 +212,9 @@ static void DOSMEM_InitDPMI(void)
     DOSMEM_dpmi_sel = SELECTOR_AllocBlock( ptr, sizeof(enter_pm), WINE_LDT_FLAGS_CODE );
 }
 
-BIOSDATA * DOSMEM_BiosData()
+static BIOSDATA * DOSMEM_BiosData(void)
 {
     return (BIOSDATA *)(DOSMEM_sysmem + 0x400);
-}
-
-BYTE * DOSMEM_BiosSys()
-{
-    return DOSMEM_dosmem+0xf0000;
 }
 
 /* Add a structure in the BiosSys area (with size and index) and
@@ -266,7 +241,7 @@ WORD DOSMEM_GetBiosSysStructOffset(int index)
  */
 static void DOSMEM_FillBiosSegments(void)
 {
-    BYTE *pBiosSys = DOSMEM_BiosSys();
+    BYTE *pBiosSys = DOSMEM_dosmem + 0xf0000;
     BYTE *pBiosROMTable = pBiosSys+0xe6f5;
     BIOSDATA *pBiosData = DOSMEM_BiosData();
 
@@ -895,4 +870,3 @@ WORD DOSMEM_AllocSelector(WORD realsel)
 	TRACE_(selector)("(0x%04x) returns 0x%04x.\n", realsel,sel);
 	return sel;
 }
-

@@ -150,8 +150,7 @@ typedef struct
 
 struct _DOS_LISTOFLISTS * DOSMEM_LOL()
 {
-    return (struct _DOS_LISTOFLISTS *)DOSMEM_MapRealToLinear
-      (MAKESEGPTR(HIWORD(DOS_LOLSeg),0));
+    return PTR_REAL_TO_LIN(HIWORD(DOS_LOLSeg),0);
 }
 
 
@@ -218,7 +217,7 @@ static void WINAPI con_interrupt(CONTEXT86*ctx)
 {
   int *scan;
   REQUEST_HEADER *hdr = get_hdr(SYSTEM_STRATEGY_CON,(void **)&scan);
-  BIOSDATA *bios = DOSMEM_BiosData();
+  BIOSDATA *bios = BIOS_DATA;
   WORD CurOfs = bios->NextKbdCharPtr;
   DOS_LISTOFLISTS *lol = DOSMEM_LOL();
   DOS_DATASEG *dataseg = (DOS_DATASEG *)lol;
@@ -505,7 +504,7 @@ DWORD DOSDEV_Console(void)
 DWORD DOSDEV_FindCharDevice(char*name)
 {
   SEGPTR cur_ptr = MAKESEGPTR(HIWORD(DOS_LOLSeg), FIELD_OFFSET(DOS_LISTOFLISTS,NUL_dev));
-  DOS_DEVICE_HEADER *cur = DOSMEM_MapRealToLinear(cur_ptr);
+  DOS_DEVICE_HEADER *cur = PTR_REAL_TO_LIN(SELECTOROF(cur_ptr),OFFSETOF(cur_ptr));
   char dname[8];
   int cnt;
 
@@ -521,7 +520,7 @@ DWORD DOSDEV_FindCharDevice(char*name)
 	  memcmp(cur->name,dname,8))) {
     cur_ptr = cur->next_dev;
     if (cur_ptr == NONEXT) cur=NULL;
-    else cur = DOSMEM_MapRealToLinear(cur_ptr);
+    else cur = PTR_REAL_TO_LIN(SELECTOROF(cur_ptr),OFFSETOF(cur_ptr));
   }
   return cur_ptr;
 }
@@ -533,7 +532,7 @@ static void DOSDEV_DoReq(void*req, DWORD dev)
   CONTEXT86 ctx;
   char *phdr;
 
-  dhdr = DOSMEM_MapRealToLinear(dev);
+  dhdr = PTR_REAL_TO_LIN(SELECTOROF(dev),OFFSETOF(dev));
   phdr = ((char*)DOSMEM_LOL()) + DOS_DATASEG_OFF(req);
 
   /* copy request to request scratch area */

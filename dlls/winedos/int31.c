@@ -496,7 +496,7 @@ static int DPMI_FreeRMCB( DWORD address )
 	PrevRMCB->next = CurrRMCB->next;
 	    else
 	FirstRMCB = CurrRMCB->next;
-	DOSMEM_FreeBlock(DOSMEM_MapRealToLinear(CurrRMCB->address));
+	DOSMEM_FreeBlock(PTR_REAL_TO_LIN(SELECTOROF(CurrRMCB->address),OFFSETOF(CurrRMCB->address)));
 	HeapFree(GetProcessHeap(), 0, CurrRMCB);
 	return 0;
     }

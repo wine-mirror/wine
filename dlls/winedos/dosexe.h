@@ -45,6 +45,9 @@ extern WORD DOSVM_retval;  /* return value of previous DOS task */
 
 #define V86_FLAG 0x00020000
 
+#define BIOS_DATA ((void *)0x400)
+#define BIOS_SYS  ((void *)0xf0000)
+
 extern void WINAPI MZ_LoadImage( LPCSTR filename, HANDLE hFile );
 extern BOOL WINAPI MZ_Exec( CONTEXT86 *context, LPCSTR filename, BYTE func, LPVOID paramblk );
 extern void WINAPI MZ_Exit( CONTEXT86 *context, BOOL cs_psp, WORD retval );

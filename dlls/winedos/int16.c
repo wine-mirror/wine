@@ -150,7 +150,7 @@ void WINAPI DOSVM_Int16Handler( CONTEXT86 *context )
 
 int WINAPI DOSVM_Int16ReadChar(BYTE*ascii,BYTE*scan,BOOL peek)
 {
-  BIOSDATA *data = DOSMEM_BiosData();
+  BIOSDATA *data = BIOS_DATA;
   WORD CurOfs = data->NextKbdCharPtr;
 
   /* check if there's data in buffer */
@@ -177,7 +177,7 @@ int WINAPI DOSVM_Int16ReadChar(BYTE*ascii,BYTE*scan,BOOL peek)
 
 int WINAPI DOSVM_Int16AddChar(BYTE ascii,BYTE scan)
 {
-  BIOSDATA *data = DOSMEM_BiosData();
+  BIOSDATA *data = BIOS_DATA;
   WORD CurOfs = data->FirstKbdCharPtr;
   WORD NextOfs = CurOfs + 2;
 

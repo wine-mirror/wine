@@ -279,7 +279,7 @@ HANDLE VGA_AlphaConsole(void)
 
 char*VGA_AlphaBuffer(void)
 {
-    return DOSMEM_MapDosToLinear(0xb8000);
+    return (char *)0xb8000;
 }
 
 /*** GRAPHICS MODE ***/
@@ -529,14 +529,14 @@ void VGA_SetWindowStart(int start)
     if(vga_fb_window == -1)
         FIXME("Remove VGA memory emulation.\n");
     else
-        memmove(vga_fb_data + vga_fb_window, DOSMEM_MapDosToLinear(0xa0000), 64 * 1024);
+        memmove(vga_fb_data + vga_fb_window, (char *)0xa0000, 64 * 1024);
 
     vga_fb_window = start;
 
     if(vga_fb_window == -1)
         FIXME("Install VGA memory emulation.\n");
     else
-        memmove(DOSMEM_MapDosToLinear(0xa0000), vga_fb_data + vga_fb_window, 64 * 1024);
+        memmove( (char *)0xa0000, vga_fb_data + vga_fb_window, 64 * 1024);
 }
 
 /*
@@ -826,7 +826,7 @@ static void VGA_Poll_Graphics(void)
    * Synchronize framebuffer contents.
    */
   if(vga_fb_window != -1)
-    memmove(vga_fb_data + vga_fb_window, DOSMEM_MapDosToLinear(0xa0000), 64 * 1024);
+    memmove(vga_fb_data + vga_fb_window, (char *)0xa0000, 64 * 1024);
 
   /*
    * Double VGA framebuffer (320x200 -> 640x400), if needed.

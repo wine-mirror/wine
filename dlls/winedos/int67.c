@@ -101,7 +101,7 @@ static void EMS_init(void)
                          HEAP_ZERO_MEMORY,
                          sizeof(*EMS_record));
 
-  EMS_record->frame_address = DOSMEM_MapDosToLinear(base);
+  EMS_record->frame_address = (void *)base;
   EMS_record->frame_selector = base >> 4;
 }
 

@@ -84,14 +84,14 @@ static void BIOS_SetCursorPos(BIOSDATA*data,unsigned page,unsigned X,unsigned Y)
 
 static void DOSVM_Int10Handler_VESA( CONTEXT86 *context )
 {
-    BIOSDATA *data = DOSMEM_BiosData();
+    BIOSDATA *data = BIOS_DATA;
 
     switch(AL_reg(context)) {
 
     case 0x00: /* GET SuperVGA INFORMATION */
         TRACE("VESA GET SuperVGA INFORMATION\n");
         memcpy(CTX_SEG_OFF_TO_LIN(context,context->SegEs,context->Edi),
-               DOSMEM_BiosSys()+DOSMEM_GetBiosSysStructOffset(OFF_VESAINFO),
+               (char *)BIOS_SYS + DOSMEM_GetBiosSysStructOffset(OFF_VESAINFO),
                sizeof(VESAINFO));
         AL_reg(context) = 0x4f;
         AH_reg(context) = 0x00; /* 0x00 = successful 0x01 = failed */
@@ -336,7 +336,7 @@ static void DOSVM_Int10Handler_VESA( CONTEXT86 *context )
 
 void WINAPI DOSVM_Int10Handler( CONTEXT86 *context )
 {
-    BIOSDATA *data = DOSMEM_BiosData();
+    BIOSDATA *data = BIOS_DATA;
 
     switch(AH_reg(context)) {
 
@@ -788,7 +788,7 @@ void WINAPI DOSVM_Int10Handler( CONTEXT86 *context )
           AL_reg(context) = 0x1b;
           /* Copy state information structure to ES:DI */
           memcpy(CTX_SEG_OFF_TO_LIN(context,context->SegEs,context->Edi),
-              DOSMEM_BiosSys()+DOSMEM_GetBiosSysStructOffset(OFF_VIDEOSTATE),sizeof(VIDEOSTATE));
+                 (char *)BIOS_SYS + DOSMEM_GetBiosSysStructOffset(OFF_VIDEOSTATE),sizeof(VIDEOSTATE));
         }
         break;
 
@@ -839,7 +839,7 @@ static void scroll_window(int direction, char lines, char row1,
 
 void WINAPI DOSVM_PutChar(BYTE ascii)
 {
-  BIOSDATA *data = DOSMEM_BiosData();
+  BIOSDATA *data = BIOS_DATA;
   unsigned  xpos, ypos;
 
   TRACE("char: 0x%02x(%c)\n", ascii, ascii);

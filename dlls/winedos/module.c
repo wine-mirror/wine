@@ -365,7 +365,7 @@ BOOL WINAPI MZ_Exec( CONTEXT86 *context, LPCSTR filename, BYTE func, LPVOID para
        * let's work on the new values now */
       LPBYTE psp_start = (LPBYTE)((DWORD)DOSVM_psp << 4);
       ExecBlock *blk = (ExecBlock *)paramblk;
-      LPBYTE cmdline = DOSMEM_MapRealToLinear(blk->cmdline);
+      LPBYTE cmdline = PTR_REAL_TO_LIN(SELECTOROF(blk->cmdline),OFFSETOF(blk->cmdline));
 
       /* First character contains the length of the command line. */
       MZ_FillPSP(psp_start, cmdline + 1, cmdline[0]);
@@ -473,15 +473,17 @@ static BOOL MZ_InitTask(void)
 
 static void MZ_Launch(void)
 {
-  TDB *pTask = TASK_GetCurrent();
+  TDB *pTask = TASK_GetPtr( GetCurrentTask() );
   BYTE *psp_start = PTR_REAL_TO_LIN( DOSVM_psp, 0 );
   LPSTR cmdline = GetCommandLineA();
   DWORD rv;
+  SYSLEVEL *lock;
 
   MZ_FillPSP(psp_start, cmdline, cmdline ? strlen(cmdline) : 0);
   pTask->flags |= TDBF_WINOLDAP;
 
-  _LeaveWin16Lock();
+  GetpWin16Lock( &lock );
+  _LeaveSysLevel( lock );
 
   ResumeThread(dosvm_thread);
   rv = DOSVM_Loop(dosvm_thread);
@@ -515,8 +517,8 @@ void WINAPI MZ_Exit( CONTEXT86 *context, BOOL cs_psp, WORD retval )
       /* FIXME: deallocate file handles etc */
       /* free process's associated memory
        * FIXME: walk memory and deallocate all blocks owned by process */
-      DOSMEM_FreeBlock(DOSMEM_MapRealToLinear(MAKELONG(0,psp->environment)));
-      DOSMEM_FreeBlock(DOSMEM_MapRealToLinear(MAKELONG(0,DOSVM_psp)));
+      DOSMEM_FreeBlock( PTR_REAL_TO_LIN(psp->environment,0) );
+      DOSMEM_FreeBlock( PTR_REAL_TO_LIN(DOSVM_psp,0) );
       /* switch to parent's PSP */
       DOSVM_psp = parpsp;
       psp_start = (LPBYTE)((DWORD)parpsp << 4);
