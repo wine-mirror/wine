@@ -541,3 +541,4 @@ if [ $wine_return -ge 128 ]; then
 	kill -$[wine_return - 128] $$
 	# if we get here the kill didn't work
 	exit 1
+fi
