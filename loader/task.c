@@ -213,57 +213,6 @@ static BOOL TASK_FreeThunk( HTASK16 hTask, SEGPTR thunk )
 
 
 /***********************************************************************
- *           TASK_CallToStart
- *
- * 32-bit entry point for a new task. This function is responsible for
- * setting up the registers and jumping to the 16-bit entry point.
- */
-void TASK_CallToStart(void)
-{
-    TDB *pTask = (TDB *)GlobalLock16( GetCurrentTask() );
-    NE_MODULE *pModule = NE_GetPtr( pTask->hModule );
-    SEGTABLEENTRY *pSegTable = NE_SEG_TABLE( pModule );
-    CONTEXT86 context;
-
-    SYSLEVEL_EnterWin16Lock();
-
-    /* Add task to 16-bit scheduler pool if necessary */
-    if ( hCurrentTask != GetCurrentTask() )
-        TASK_Reschedule();
-
-    /* Registers at initialization must be:
-     * ax   zero
-     * bx   stack size in bytes
-     * cx   heap size in bytes
-     * si   previous app instance
-     * di   current app instance
-     * bp   zero
-     * es   selector to the PSP
-     * ds   dgroup of the application
-     * ss   stack selector
-     * sp   top of the stack
-     */
-
-    memset( &context, 0, sizeof(context) );
-    CS_reg(&context)  = GlobalHandleToSel16(pSegTable[pModule->cs - 1].hSeg);
-    DS_reg(&context)  = GlobalHandleToSel16(pTask->hInstance);
-    ES_reg(&context)  = pTask->hPDB;
-    EIP_reg(&context) = pModule->ip;
-    EBX_reg(&context) = pModule->stack_size;
-    ECX_reg(&context) = pModule->heap_size;
-    EDI_reg(&context) = pTask->hInstance;
-    ESI_reg(&context) = pTask->hPrevInstance;
-
-    TRACE("Starting main program: cs:ip=%04lx:%04lx ds=%04lx ss:sp=%04x:%04x\n",
-          CS_reg(&context), EIP_reg(&context), DS_reg(&context),
-          SELECTOROF(pTask->teb->cur_stack),
-          OFFSETOF(pTask->teb->cur_stack) );
-
-    Callbacks->CallRegisterShortProc( &context, 0 );
-}
-
-
-/***********************************************************************
  *           TASK_Create
  *
  * NOTE: This routine might be called by a Win32 thread. Thus, we need
@@ -287,17 +236,17 @@ BOOL TASK_Create( NE_MODULE *pModule, UINT16 cmdShow, TEB *teb, LPCSTR cmdline, 
 
     /* Fill the task structure */
 
-    pTask->nEvents       = 0;
-    pTask->hSelf         = hTask;
-    pTask->flags         = 0;
+    pTask->hSelf = hTask;
 
-    if (teb->tibflags & TEBF_WIN32) pTask->flags |= TDBF_WIN32;
+    if (teb->tibflags & TEBF_WIN32)
+    {
+        pTask->flags        |= TDBF_WIN32;
+        pTask->hInstance     = pModule->self;
+        pTask->hPrevInstance = 0;
+        /* NOTE: for 16-bit tasks, the instance handles are updated later on
+           in NE_InitProcess */
+    }
     if (pModule->lpDosTask) pTask->flags |= TDBF_WINOLDAP;
-
-    pTask->hInstance     = pModule->self;
-    pTask->hPrevInstance = 0;
-    /* NOTE: for 16-bit tasks, the instance handles are updated later on
-             in NE_InitProcess */
 
     pTask->version       = pModule->expected_version;
     pTask->hModule       = pModule->self;

@@ -39,7 +39,7 @@ static NE_MODULE *pCachedModule = 0;  /* Module cached by NE_OpenFile */
 
 static HINSTANCE16 NE_LoadModule( LPCSTR name, BOOL lib_only );
 static BOOL16 NE_FreeModule( HMODULE16 hModule, BOOL call_wep );
-static HINSTANCE16 NE_InitProcess( NE_MODULE *pModule, HTASK hTask );
+static void NE_InitProcess(void) WINE_NORETURN;
 
 static HINSTANCE16 MODULE_LoadModule16( LPCSTR libname, BOOL implicit, BOOL lib_only );
 
@@ -997,9 +997,11 @@ HINSTANCE16 WINAPI LoadModule16( LPCSTR name, LPVOID paramBlock )
     TEB *teb = NULL;
     BOOL lib_only = !paramBlock || (paramBlock == (LPVOID)-1);
     LOADPARAMS16 *params;
-    HINSTANCE16 instance;
+    HINSTANCE16 instance = 0;
     HMODULE16 hModule;
     NE_MODULE *pModule;
+    HTASK hTask;
+    TDB *pTask;
     LPSTR cmdline;
     WORD cmdShow;
     int socket;
@@ -1050,7 +1052,7 @@ HINSTANCE16 WINAPI LoadModule16( LPCSTR name, LPVOID paramBlock )
     CloseHandle( req->handle );
 
     if (!(teb = THREAD_Create( socket, 0, FALSE ))) goto error;
-    teb->startup = TASK_CallToStart;
+    teb->startup = NE_InitProcess;
 
     /* Create a task for this process */
 
@@ -1059,13 +1061,22 @@ HINSTANCE16 WINAPI LoadModule16( LPCSTR name, LPVOID paramBlock )
     cmdline = PTR_SEG_TO_LIN( params->cmdLine );
     if (!TASK_Create( pModule, cmdShow, teb, cmdline + 1, *cmdline )) goto error;
 
-    if ((instance = NE_InitProcess( pModule, teb->htask16 )) < 32) goto error;
+    hTask = teb->htask16;
 
     if (SYSDEPS_SpawnThread( teb ) == -1) goto error;
 
     /* Post event to start the task */
-    PostEvent16( teb->htask16 );
-    OldYield16();
+    PostEvent16( hTask );
+
+    /* Wait until we get the instance handle */
+    do
+    {
+        DirectedYield16( hTask );
+        if (!IsTask16( hTask )) break;
+        if (!(pTask = (TDB *)GlobalLock16( hTask ))) break;
+        instance = pTask->hInstance;
+        GlobalUnlock16( hTask );
+    } while (!instance);
 
     return instance;
 
@@ -1079,11 +1090,11 @@ HINSTANCE16 WINAPI LoadModule16( LPCSTR name, LPVOID paramBlock )
 /**********************************************************************
  *          NE_InitProcess
  */
-static HINSTANCE16 NE_InitProcess( NE_MODULE *pModule, HTASK hTask )
+static void NE_InitProcess(void)
 {
+    TDB *pTask = (TDB *)GlobalLock16( GetCurrentTask() );
+    NE_MODULE *pModule = NE_GetPtr( pTask->hModule );
     HINSTANCE16 hInstance, hPrevInstance;
-    TDB *pTask;
-
     SEGTABLEENTRY *pSegTable = NE_SEG_TABLE( pModule );
     WORD sp;
 
@@ -1116,9 +1127,10 @@ static HINSTANCE16 NE_InitProcess( NE_MODULE *pModule, HTASK hTask )
 
     if ( hInstance >= 32 )
     {
+        CONTEXT86 context;
+
         /* Enter instance handles into task struct */
 
-        pTask = (TDB *)GlobalLock16( hTask );
         pTask->hInstance = hInstance;
         pTask->hPrevInstance = hPrevInstance;
 
@@ -1129,10 +1141,41 @@ static HINSTANCE16 NE_InitProcess( NE_MODULE *pModule, HTASK hTask )
         sp &= ~1;
         sp -= sizeof(STACK16FRAME);
         pTask->teb->cur_stack = PTR_SEG_OFF_TO_SEGPTR( GlobalHandleToSel16(hInstance), sp );
+
+        /* Registers at initialization must be:
+         * ax   zero
+         * bx   stack size in bytes
+         * cx   heap size in bytes
+         * si   previous app instance
+         * di   current app instance
+         * bp   zero
+         * es   selector to the PSP
+         * ds   dgroup of the application
+         * ss   stack selector
+         * sp   top of the stack
+         */
+        memset( &context, 0, sizeof(context) );
+        CS_reg(&context)  = GlobalHandleToSel16(pSegTable[pModule->cs - 1].hSeg);
+        DS_reg(&context)  = GlobalHandleToSel16(pTask->hInstance);
+        ES_reg(&context)  = pTask->hPDB;
+        EIP_reg(&context) = pModule->ip;
+        EBX_reg(&context) = pModule->stack_size;
+        ECX_reg(&context) = pModule->heap_size;
+        EDI_reg(&context) = pTask->hInstance;
+        ESI_reg(&context) = pTask->hPrevInstance;
+
+        /* Now call 16-bit entry point */
+
+        TRACE("Starting main program: cs:ip=%04lx:%04lx ds=%04lx ss:sp=%04x:%04x\n",
+              CS_reg(&context), EIP_reg(&context), DS_reg(&context),
+              SELECTOROF(pTask->teb->cur_stack),
+              OFFSETOF(pTask->teb->cur_stack) );
+
+        ExitThread( Callbacks->CallRegisterShortProc( &context, 0 ) );
     }
 
     SYSLEVEL_LeaveWin16Lock();
-    return hInstance;
+    ExitThread( hInstance );
 }
 
 /***********************************************************************

@@ -25,7 +25,6 @@
 #include "wingdi.h"
 #include "wine/winuser16.h"
 #include "winerror.h"
-#include "process.h"
 #include "drive.h"
 #include "file.h"
 #include "heap.h"
@@ -509,17 +508,16 @@ done:
  *
  * Helper function for DIR_SearchPath.
  */
-static BOOL DIR_TryModulePath( LPCSTR name, DOS_FULL_NAME *full_name )
+static BOOL DIR_TryModulePath( LPCSTR name, DOS_FULL_NAME *full_name, BOOL win32 )
 {
-    PDB	*pdb = PROCESS_Current();
-
     /* FIXME: for now, GetModuleFileNameA can't return more */
     /* than OFS_MAXPATHNAME. This may change with Win32. */
 
     char buffer[OFS_MAXPATHNAME];
     LPSTR p;
 
-    if (pdb->flags & PDB32_WIN16_PROC) {
+    if (!win32)
+    {
 	if (!GetCurrentTask()) return FALSE;
 	if (!GetModuleFileName16( GetCurrentTask(), buffer, sizeof(buffer) ))
 		buffer[0]='\0';
@@ -595,7 +593,7 @@ DWORD DIR_SearchPath( LPCSTR path, LPCSTR name, LPCSTR ext,
 
     /* Try the path of the current executable (for Win32 search order) */
 
-    if (win32 && DIR_TryModulePath( name, full_name )) goto done;
+    if (win32 && DIR_TryModulePath( name, full_name, win32 )) goto done;
 
     /* Try the current directory */
 
@@ -613,7 +611,7 @@ DWORD DIR_SearchPath( LPCSTR path, LPCSTR name, LPCSTR ext,
 
     /* Try the path of the current executable (for Win16 search order) */
 
-    if (!win32 && DIR_TryModulePath( name, full_name )) goto done;
+    if (!win32 && DIR_TryModulePath( name, full_name, win32 )) goto done;
 
     /* Try all directories in path */
 

@@ -149,7 +149,6 @@ extern BOOL TASK_Create( struct _NE_MODULE *pModule, UINT16 cmdShow,
 extern void TASK_KillTask( HTASK16 hTask );
 extern HTASK16 TASK_GetNextTask( HTASK16 hTask );
 extern void TASK_Reschedule(void);
-extern void TASK_CallToStart(void);
 extern void TASK_InstallTHHook( THHOOK *pNewThook );
 extern void TASK_CallTaskSignalProc( UINT16 uCode, HANDLE16 hTaskOrModule );
 
