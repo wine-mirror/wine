@@ -88,6 +88,7 @@ static char usage[] =
 	"   --target              Synonym for -F\n"
 	"   --undefine            Synonym for -U\n"
 	"   --use-temp-file       Ignored for compatibility with windres\n"
+	"   --verbose             Synonym for -v\n"
 	"   --verify-translations Check the status of the various translations\n"
 	"   --version             Print version and exit\n"
 	"Input is taken from stdin if no sourcefile specified.\n"
@@ -197,6 +198,7 @@ static struct option long_options[] = {
 	{ "target", 1, 0, 'F' },
 	{ "undefine", 1, 0, 'U' },
 	{ "use-temp-file", 0, 0, 2 },
+	{ "verbose", 0, 0, 'v' },
 	{ "verify-translations", 0, 0, 9 },
 	{ "version", 0, 0, 5 },
 	{ 0, 0, 0, 0 }
