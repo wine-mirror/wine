@@ -321,7 +321,7 @@ void SHELL_SaveRegistry( void )
     struct set_registry_levels_request *req = get_req_buffer();
     char   buf[4];
     HKEY   hkey;
-    int    all;
+    int    all, version;
 
     TRACE("(void)\n");
 
@@ -349,10 +349,11 @@ void SHELL_SaveRegistry( void )
 
     if (lstrcmpiA(buf,"yes")) all = 1;
 
+    version = PROFILE_GetWineIniBool( "registry", "UseNewFormat", 1 ) ? 2 : 1;
     /* set saving level (0 for saving everything, 1 for saving only modified keys) */
     req->current = 1;
     req->saving  = !all;
-    req->version = PROFILE_GetWineIniBool( "registry", "UseNewFormat", 0 ) ? 2 : 1;
+    req->version = version;
     server_call( REQ_SET_REGISTRY_LEVELS );
 
     SHELL_SaveRegistryBranch(HKEY_CURRENT_USER);
