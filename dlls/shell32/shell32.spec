@@ -78,7 +78,7 @@ import kernel32.dll
   65 stub InvalidateDriveType
   66 stub IsNetDrive
   67 stdcall Shell_MergeMenus (long long long long long long) Shell_MergeMenus
-  68 stdcall SHGetSettings(ptr long long) SHGetSettings
+  68 stdcall SHGetSettings(ptr long) SHGetSettings
   69 stub SHGetNetResource
   70 stdcall SHCreateDefClassObject(long long long long long)SHCreateDefClassObject
   71 stdcall Shell_GetImageList(ptr ptr) Shell_GetImageList

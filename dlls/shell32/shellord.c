@@ -109,13 +109,13 @@ BOOL WINAPI GetFileNameFromBrowse(
  *  the registry path are for win98 (tested)
  *  and possibly are the same in nt40
  */
-void WINAPI SHGetSettings(LPSHELLFLAGSTATE lpsfs, DWORD dwMask, DWORD dwx)
+VOID WINAPI SHGetSettings(LPSHELLFLAGSTATE lpsfs, DWORD dwMask)
 {
 	HKEY	hKey;
 	DWORD	dwData;
 	DWORD	dwDataSize = sizeof (DWORD);
 
-	TRACE("(%p 0x%08lx 0x%08lx)\n",lpsfs,dwMask, dwx);
+	TRACE("(%p 0x%08lx)\n",lpsfs,dwMask);
 	
 	if (RegCreateKeyExA(HKEY_CURRENT_USER, "Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Advanced",
 				 0, 0, 0, KEY_ALL_ACCESS, 0, &hKey, 0))
