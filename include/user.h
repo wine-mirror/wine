@@ -116,9 +116,6 @@ typedef struct tagUSER_DRIVER {
 
 extern USER_DRIVER USER_Driver;
 
-WORD WINAPI UserSignalProc( UINT uCode, DWORD dwThreadOrProcessID,
-                            DWORD dwFlags, HMODULE16 hModule );
-
 /* user lock */
 extern void USER_Lock(void);
 extern void USER_Unlock(void);

@@ -490,9 +490,6 @@ void TASK_ExitTask(void)
     /* Perform USER cleanup */
 
     TASK_CallTaskSignalProc( USIG16_TERMINATION, pTask->hSelf );
-    PROCESS_CallUserSignalProc( USIG_PROCESS_EXIT, 0 );
-    PROCESS_CallUserSignalProc( USIG_THREAD_EXIT, 0 );
-    PROCESS_CallUserSignalProc( USIG_PROCESS_DESTROY, 0 );
 
     /* Remove the task from the list to be sure we never switch back to it */
     TASK_UnlinkTask( pTask->hSelf );

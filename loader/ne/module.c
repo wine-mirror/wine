@@ -293,7 +293,7 @@ WORD NE_GetOrdinal( HMODULE16 hModule, const char *name )
     NE_MODULE *pModule;
 
     if (!(pModule = NE_GetPtr( hModule ))) return 0;
-    assert( !(pModule->flags & NE_FFLAGS_WIN32) );
+    if (pModule->flags & NE_FFLAGS_WIN32) return 0;
 
     TRACE("(%04x,'%s')\n", hModule, name );
 
@@ -1287,8 +1287,7 @@ static BOOL16 NE_FreeModule( HMODULE16 hModule, BOOL call_wep )
             MODULE_CallWEP( hModule );
 
             /* Free the objects owned by the DLL module */
-            TASK_CallTaskSignalProc( USIG16_DLL_UNLOAD, hModule );
-            PROCESS_CallUserSignalProc( USIG_DLL_UNLOAD_WIN16, hModule );
+            NE_CallUserSignalProc( hModule, USIG16_DLL_UNLOAD );
         }
         else
             call_wep = FALSE;  /* We are freeing a task -> no more WEPs */

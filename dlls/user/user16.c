@@ -22,8 +22,11 @@
 #include "wine/winuser16.h"
 #include "winbase.h"
 #include "wownt32.h"
+#include "task.h"
 #include "user.h"
 #include "win.h"
+#include "winproc.h"
+#include "cursoricon.h"
 
 /* handle to handle 16 conversions */
 #define HANDLE_16(h32)		(LOWORD(h32))
@@ -452,6 +455,21 @@ HPALETTE16 WINAPI SelectPalette16( HDC16 hdc, HPALETTE16 hpal, BOOL16 bForceBack
 UINT16 WINAPI RealizePalette16( HDC16 hdc )
 {
     return UserRealizePalette( HDC_32(hdc) );
+}
+
+
+/***********************************************************************
+ *		SignalProc (USER.314)
+ */
+void WINAPI SignalProc16( HANDLE16 hModule, UINT16 code,
+                          UINT16 uExitFn, HINSTANCE16 hInstance, HQUEUE16 hQueue )
+{
+    if (code == USIG16_DLL_UNLOAD)
+    {
+        /* HOOK_FreeModuleHooks( hModule ); */
+        CLASS_FreeModuleClasses( hModule );
+        CURSORICON_FreeModuleIcons( hModule );
+    }
 }
 
 

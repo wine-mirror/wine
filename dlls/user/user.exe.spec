@@ -307,7 +307,7 @@
 #311 CaretBlinkProc # W1.1
 #312 SendMessage2
 #313 PostMessage2
-314 pascal16 SignalProc(word word word word word) USER_SignalProc
+314 pascal16 SignalProc(word word word word word) SignalProc16
 #315 XCStoDS
 #316 CompUpdateRect
 #317 CompUpdateRgn

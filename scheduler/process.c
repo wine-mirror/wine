@@ -137,116 +137,6 @@ extern void RELAY_InitDebugLists(void);
 extern BOOL MAIN_MainInit(void);
 extern void VERSION_Init( const char *appname );
 
-typedef WORD (WINAPI *pUserSignalProc)( UINT, DWORD, DWORD, HMODULE16 );
-
-/***********************************************************************
- *           PROCESS_CallUserSignalProc
- *
- * FIXME:  Some of the signals aren't sent correctly!
- *
- * The exact meaning of the USER signals is undocumented, but this
- * should cover the basic idea:
- *
- * USIG_DLL_UNLOAD_WIN16
- *     This is sent when a 16-bit module is unloaded.
- *
- * USIG_DLL_UNLOAD_WIN32
- *     This is sent when a 32-bit module is unloaded.
- *
- * USIG_DLL_UNLOAD_ORPHANS
- *     This is sent after the last Win3.1 module is unloaded,
- *     to allow removal of orphaned menus.
- *
- * USIG_FAULT_DIALOG_PUSH
- * USIG_FAULT_DIALOG_POP
- *     These are called to allow USER to prepare for displaying a
- *     fault dialog, even though the fault might have happened while
- *     inside a USER critical section.
- *
- * USIG_THREAD_INIT
- *     This is called from the context of a new thread, as soon as it
- *     has started to run.
- *
- * USIG_THREAD_EXIT
- *     This is called, still in its context, just before a thread is
- *     about to terminate.
- *
- * USIG_PROCESS_CREATE
- *     This is called, in the parent process context, after a new process
- *     has been created.
- *
- * USIG_PROCESS_INIT
- *     This is called in the new process context, just after the main thread
- *     has started execution (after the main thread's USIG_THREAD_INIT has
- *     been sent).
- *
- * USIG_PROCESS_LOADED
- *     This is called after the executable file has been loaded into the
- *     new process context.
- *
- * USIG_PROCESS_RUNNING
- *     This is called immediately before the main entry point is called.
- *
- * USIG_PROCESS_EXIT
- *     This is called in the context of a process that is about to
- *     terminate (but before the last thread's USIG_THREAD_EXIT has
- *     been sent).
- *
- * USIG_PROCESS_DESTROY
- *     This is called after a process has terminated.
- *
- *
- * The meaning of the dwFlags bits is as follows:
- *
- * USIG_FLAGS_WIN32
- *     Current process is 32-bit.
- *
- * USIG_FLAGS_GUI
- *     Current process is a (Win32) GUI process.
- *
- * USIG_FLAGS_FEEDBACK
- *     Current process needs 'feedback' (determined from the STARTUPINFO
- *     flags STARTF_FORCEONFEEDBACK / STARTF_FORCEOFFFEEDBACK).
- *
- * USIG_FLAGS_FAULT
- *     The signal is being sent due to a fault.
- */
-void PROCESS_CallUserSignalProc( UINT uCode, HMODULE16 hModule )
-{
-    DWORD dwFlags = 0;
-    HMODULE user;
-    pUserSignalProc proc;
-
-    if (!(user = GetModuleHandleA( "user32.dll" ))) return;
-    if (!(proc = (pUserSignalProc)GetProcAddress( user, "UserSignalProc" ))) return;
-
-    /* Determine dwFlags */
-
-    if ( !(current_process.flags & PDB32_WIN16_PROC) ) dwFlags |= USIG_FLAGS_WIN32;
-    if ( !(current_process.flags & PDB32_CONSOLE_PROC) ) dwFlags |= USIG_FLAGS_GUI;
-
-    if ( dwFlags & USIG_FLAGS_GUI )
-    {
-        /* Feedback defaults to ON */
-        if ( !(current_startupinfo.dwFlags & STARTF_FORCEOFFFEEDBACK) )
-            dwFlags |= USIG_FLAGS_FEEDBACK;
-    }
-    else
-    {
-        /* Feedback defaults to OFF */
-        if (current_startupinfo.dwFlags & STARTF_FORCEONFEEDBACK)
-            dwFlags |= USIG_FLAGS_FEEDBACK;
-    }
-
-    /* Call USER signal proc */
-
-    if ( uCode == USIG_THREAD_INIT || uCode == USIG_THREAD_EXIT )
-        proc( uCode, GetCurrentThreadId(), dwFlags, hModule );
-    else
-        proc( uCode, GetCurrentProcessId(), dwFlags, hModule );
-}
-
-
 /***********************************************************************
  *           get_basename
  */
@@ -554,21 +444,6 @@ static void start_process(void)
     if (main_exe_file) CloseHandle( main_exe_file ); /* we no longer need it */
 
     MODULE_DllProcessAttach( NULL, (LPVOID)1 );
-
-    /* Note: The USIG_PROCESS_CREATE signal is supposed to be sent in the
-     *       context of the parent process.  Actually, the USER signal proc
-     *       doesn't really care about that, but it *does* require that the
-     *       startup parameters are correctly set up, so that GetProcessDword
-     *       works.  Furthermore, before calling the USER signal proc the
-     *       16-bit stack must be set up, which it is only after TASK_Create
-     *       in the case of a 16-bit process. Thus, we send the signal here.
-     */
-    PROCESS_CallUserSignalProc( USIG_PROCESS_CREATE, 0 );
-    PROCESS_CallUserSignalProc( USIG_THREAD_INIT, 0 );
-    PROCESS_CallUserSignalProc( USIG_PROCESS_INIT, 0 );
-    PROCESS_CallUserSignalProc( USIG_PROCESS_LOADED, 0 );
-    /* Call UserSignalProc ( USIG_PROCESS_RUNNING ... ) only for non-GUI win32 apps */
-    if (console_app) PROCESS_CallUserSignalProc( USIG_PROCESS_RUNNING, 0 );
 
     if (TRACE_ON(relay))
         DPRINTF( "%04lx:Starting process %s (entryproc=%p)\n",

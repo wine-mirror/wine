@@ -647,7 +647,7 @@ static BOOL NE_InitDLL( NE_MODULE *pModule )
         (pModule->flags & NE_FFLAGS_WIN32)) return TRUE; /*not a library*/
 
     /* Call USER signal handler for Win3.1 compatibility. */
-    TASK_CallTaskSignalProc( USIG16_DLL_LOAD, pModule->self );
+    NE_CallUserSignalProc( pModule->self, USIG16_DLL_LOAD );
 
     if (!pModule->cs) return TRUE;  /* no initialization code */
 
@@ -706,6 +706,31 @@ void NE_InitializeDLLs( HMODULE16 hModule )
         GlobalFree16( to_init );
     }
     NE_InitDLL( pModule );
+}
+
+
+/**********************************************************************
+ *	    NE_CallUserSignalProc
+ *
+ * According to "Undocumented Windows", the task signal proc is
+ * bypassed for module load/unload notifications, and the USER signal
+ * proc is called directly instead. This is what this function does.
+ */
+typedef DWORD (WINAPI *pSignalProc)( HANDLE16 module, UINT16 code, UINT16 exit,
+                                     HINSTANCE16 inst, HQUEUE16 queue );
+
+void NE_CallUserSignalProc( HMODULE16 hModule, UINT16 code )
+{
+    FARPROC16 proc;
+    HMODULE16 user = GetModuleHandle16("user.exe");
+
+    if (!user) return;
+    if ((proc = GetProcAddress16( user, "SignalProc" )))
+    {
+        /* USER is always a builtin dll */
+        pSignalProc sigproc = (pSignalProc)((ENTRYPOINT16 *)MapSL( (SEGPTR)proc ))->target;
+        sigproc( hModule, code, 0, 0, 0 );
+    }
 }
 
 
