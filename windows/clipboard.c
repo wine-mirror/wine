@@ -238,22 +238,6 @@ UINT WINAPI RegisterClipboardFormatA(LPCSTR FormatName)
 
 
 /**************************************************************************
- *		RegisterClipboardFormat (USER.145)
- */
-UINT16 WINAPI RegisterClipboardFormat16(LPCSTR FormatName)
-{
-    UINT wFormatID = 0;
-
-    TRACE("%s\n", debugstr_a(FormatName));
-
-    if (USER_Driver.pRegisterClipboardFormat)
-        wFormatID = USER_Driver.pRegisterClipboardFormat(FormatName);
-
-    return wFormatID;
-}
-
-
-/**************************************************************************
  *		RegisterClipboardFormatW (USER32.@)
  */
 UINT WINAPI RegisterClipboardFormatW(LPCWSTR formatName)
@@ -262,17 +246,6 @@ UINT WINAPI RegisterClipboardFormatW(LPCWSTR formatName)
     UINT ret = RegisterClipboardFormatA( aFormat );
     HeapFree( GetProcessHeap(), 0, aFormat );
     return ret;
-}
-
-
-/**************************************************************************
- *		GetClipboardFormatName (USER.146)
- */
-INT16 WINAPI GetClipboardFormatName16(UINT16 wFormat, LPSTR retStr, INT16 maxlen)
-{
-    TRACE("%04x,%p,%d\n", wFormat, retStr, maxlen);
-
-    return GetClipboardFormatNameA(wFormat, retStr, maxlen);
 }
 
 
@@ -330,15 +303,6 @@ BOOL WINAPI OpenClipboard( HWND hWnd )
 
 
 /**************************************************************************
- *		CloseClipboard (USER.138)
- */
-BOOL16 WINAPI CloseClipboard16(void)
-{
-    return CloseClipboard();
-}
-
-
-/**************************************************************************
  *		CloseClipboard (USER32.@)
  */
 BOOL WINAPI CloseClipboard(void)
@@ -366,15 +330,6 @@ BOOL WINAPI CloseClipboard(void)
     }
 
     return bRet;
-}
-
-
-/**************************************************************************
- *		EmptyClipboard (USER.139)
- */
-BOOL16 WINAPI EmptyClipboard16(void)
-{
-    return EmptyClipboard();
 }
 
 
@@ -600,15 +555,6 @@ HANDLE WINAPI SetClipboardData(UINT wFormat, HANDLE hData)
 
 
 /**************************************************************************
- *		CountClipboardFormats (USER.143)
- */
-INT16 WINAPI CountClipboardFormats16(void)
-{
-    return CountClipboardFormats();
-}
-
-
-/**************************************************************************
  *		CountClipboardFormats (USER32.@)
  */
 INT WINAPI CountClipboardFormats(void)
@@ -620,15 +566,6 @@ INT WINAPI CountClipboardFormats(void)
 
     TRACE("returning %d\n", count);
     return count;
-}
-
-
-/**************************************************************************
- *		EnumClipboardFormats (USER.144)
- */
-UINT16 WINAPI EnumClipboardFormats16(UINT16 wFormat)
-{
-    return EnumClipboardFormats(wFormat);
 }
 
 
@@ -654,15 +591,6 @@ UINT WINAPI EnumClipboardFormats(UINT wFormat)
         wFmt = USER_Driver.pEnumClipboardFormats(wFormat);
 
     return wFmt;
-}
-
-
-/**************************************************************************
- *		IsClipboardFormatAvailable (USER.193)
- */
-BOOL16 WINAPI IsClipboardFormatAvailable16(UINT16 wFormat)
-{
-    return IsClipboardFormatAvailable(wFormat);
 }
 
 

@@ -183,15 +183,6 @@ void SYSCOLOR_Init(void)
 
 
 /*************************************************************************
- *		GetSysColor (USER.180)
- */
-COLORREF WINAPI GetSysColor16( INT16 nIndex )
-{
-    return GetSysColor (nIndex);
-}
-
-
-/*************************************************************************
  *		GetSysColor (USER32.@)
  */
 COLORREF WINAPI GetSysColor( INT nIndex )
@@ -200,31 +191,6 @@ COLORREF WINAPI GetSysColor( INT nIndex )
 	return SysColors[nIndex];
     else
 	return 0;
-}
-
-
-/*************************************************************************
- *		SetSysColors (USER.181)
- */
-VOID WINAPI SetSysColors16( INT16 nChanges, const INT16 *lpSysColor,
-			    const COLORREF *lpColorValues )
-{
-    int i;
-
-    for (i = 0; i < nChanges; i++)
-    {
-	SYSCOLOR_SetColor( lpSysColor[i], lpColorValues[i] );
-    }
-
-    /* Send WM_SYSCOLORCHANGE message to all windows */
-
-    SendMessageTimeoutW( HWND_BROADCAST, WM_SYSCOLORCHANGE, 0, 0,
-                         SMTO_ABORTIFHUNG, 2000, NULL );
-
-    /* Repaint affected portions of all visible windows */
-
-    RedrawWindow( GetDesktopWindow(), NULL, 0,
-                RDW_INVALIDATE | RDW_ERASE | RDW_UPDATENOW | RDW_ALLCHILDREN );
 }
 
 

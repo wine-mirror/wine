@@ -27,7 +27,6 @@
 #include "winbase.h"
 #include "winreg.h"
 #include "wingdi.h"
-#include "wine/winuser16.h"
 #include "winuser.h"
 #include "winerror.h"
 #include "user.h"
@@ -253,15 +252,6 @@ INT SYSMETRICS_Set( INT index, INT value )
         sysMetrics[index] = value;
         return prev;
     }
-}
-
-
-/***********************************************************************
- *		GetSystemMetrics (USER.179)
- */
-INT16 WINAPI GetSystemMetrics16( INT16 index )
-{
-    return (INT16)GetSystemMetrics(index);
 }
 
 

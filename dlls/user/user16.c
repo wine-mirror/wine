@@ -28,6 +28,9 @@
 #include "win.h"
 #include "winproc.h"
 #include "cursoricon.h"
+#include "wine/debug.h"
+
+WINE_DEFAULT_DEBUG_CHANNEL(user);
 
 /* handle to handle 16 conversions */
 #define HANDLE_16(h32)		(LOWORD(h32))
@@ -98,6 +101,25 @@ static BOOL CALLBACK draw_state_callback( HDC hdc, LPARAM lparam, WPARAM wparam,
 }
 
 
+/**********************************************************************
+ *		InitApp (USER.5)
+ */
+INT16 WINAPI InitApp16( HINSTANCE16 hInstance )
+{
+    /* Create task message queue */
+    return (InitThreadInput16( 0, 0 ) != 0);
+}
+
+
+/***********************************************************************
+ *		ExitWindows (USER.7)
+ */
+BOOL16 WINAPI ExitWindows16( DWORD dwReturnCode, UINT16 wReserved )
+{
+    return ExitWindowsEx( EWX_LOGOFF, 0xffffffff );
+}
+
+
 /***********************************************************************
  *		ClipCursor (USER.16)
  */
@@ -115,12 +137,36 @@ BOOL16 WINAPI ClipCursor16( const RECT16 *rect )
 
 
 /***********************************************************************
+ *		GetCursorPos (USER.17)
+ */
+BOOL16 WINAPI GetCursorPos16( POINT16 *pt )
+{
+    POINT pos;
+    if (!pt) return 0;
+    GetCursorPos(&pos);
+    pt->x = pos.x;
+    pt->y = pos.y;
+    return 1;
+}
+
+
+/***********************************************************************
  *		SetCursor (USER.69)
  */
 HCURSOR16 WINAPI SetCursor16(HCURSOR16 hCursor)
 {
   return HCURSOR_16(SetCursor(HCURSOR_32(hCursor)));
 }
+
+
+/***********************************************************************
+ *		SetCursorPos (USER.70)
+ */
+void WINAPI SetCursorPos16( INT16 x, INT16 y )
+{
+    SetCursorPos( x, y );
+}
+
 
 /***********************************************************************
  *		ShowCursor (USER.71)
@@ -231,6 +277,60 @@ DWORD WINAPI IconSize16(void)
 BOOL16 WINAPI AdjustWindowRect16( LPRECT16 rect, DWORD style, BOOL16 menu )
 {
     return AdjustWindowRectEx16( rect, style, menu, 0 );
+}
+
+
+/**************************************************************************
+ *		CloseClipboard (USER.138)
+ */
+BOOL16 WINAPI CloseClipboard16(void)
+{
+    return CloseClipboard();
+}
+
+
+/**************************************************************************
+ *		EmptyClipboard (USER.139)
+ */
+BOOL16 WINAPI EmptyClipboard16(void)
+{
+    return EmptyClipboard();
+}
+
+
+/**************************************************************************
+ *		CountClipboardFormats (USER.143)
+ */
+INT16 WINAPI CountClipboardFormats16(void)
+{
+    return CountClipboardFormats();
+}
+
+
+/**************************************************************************
+ *		EnumClipboardFormats (USER.144)
+ */
+UINT16 WINAPI EnumClipboardFormats16( UINT16 id )
+{
+    return EnumClipboardFormats( id );
+}
+
+
+/**************************************************************************
+ *		RegisterClipboardFormat (USER.145)
+ */
+UINT16 WINAPI RegisterClipboardFormat16( LPCSTR name )
+{
+    return RegisterClipboardFormatA( name );
+}
+
+
+/**************************************************************************
+ *		GetClipboardFormatName (USER.146)
+ */
+INT16 WINAPI GetClipboardFormatName16( UINT16 id, LPSTR buffer, INT16 maxlen )
+{
+    return GetClipboardFormatNameA( id, buffer, maxlen );
 }
 
 
@@ -356,6 +456,40 @@ HBITMAP16 WINAPI LoadBitmap16(HINSTANCE16 hInstance, LPCSTR name)
 
 
 /***********************************************************************
+ *		GetSystemMetrics (USER.179)
+ */
+INT16 WINAPI GetSystemMetrics16( INT16 index )
+{
+    return GetSystemMetrics( index );
+}
+
+
+/*************************************************************************
+ *		GetSysColor (USER.180)
+ */
+COLORREF WINAPI GetSysColor16( INT16 index )
+{
+    return GetSysColor( index );
+}
+
+
+/*************************************************************************
+ *		SetSysColors (USER.181)
+ */
+VOID WINAPI SetSysColors16( INT16 count, const INT16 *list16, const COLORREF *values )
+{
+    INT i, *list;
+
+    if ((list = HeapAlloc( GetProcessHeap(), 0, count * sizeof(*list) )))
+    {
+        for (i = 0; i < count; i++) list[i] = list16[i];
+        SetSysColors( count, list, values );
+        HeapFree( GetProcessHeap(), 0, list );
+    }
+}
+
+
+/***********************************************************************
  *           GrayString   (USER.185)
  */
 BOOL16 WINAPI GrayString16( HDC16 hdc, HBRUSH16 hbr, GRAYSTRINGPROC16 gsprc,
@@ -392,6 +526,15 @@ BOOL16 WINAPI GrayString16( HDC16 hdc, HBRUSH16 hbr, GRAYSTRINGPROC16 gsprc,
         HeapFree( GetProcessHeap(), 0, info );
     }
     return ret;
+}
+
+
+/**************************************************************************
+ *		IsClipboardFormatAvailable (USER.193)
+ */
+BOOL16 WINAPI IsClipboardFormatAvailable16( UINT16 wFormat )
+{
+    return IsClipboardFormatAvailable( wFormat );
 }
 
 
@@ -464,12 +607,42 @@ BOOL16 WINAPI ScrollDC16( HDC16 hdc, INT16 dx, INT16 dy, const RECT16 *rect,
     return ret;
 }
 
+
+/***********************************************************************
+ *		GetSystemDebugState (USER.231)
+ */
+WORD WINAPI GetSystemDebugState16(void)
+{
+    return 0;  /* FIXME */
+}
+
+
+/***********************************************************************
+ *		ExitWindowsExec (USER.246)
+ */
+BOOL16 WINAPI ExitWindowsExec16( LPCSTR lpszExe, LPCSTR lpszParams )
+{
+    TRACE("Should run the following in DOS-mode: \"%s %s\"\n",
+          lpszExe, lpszParams);
+    return ExitWindowsEx( EWX_LOGOFF, 0xffffffff );
+}
+
+
 /***********************************************************************
  *		GetCursor (USER.247)
  */
 HCURSOR16 WINAPI GetCursor16(void)
 {
   return HCURSOR_16(GetCursor());
+}
+
+
+/**********************************************************************
+ *		GetAsyncKeyState (USER.249)
+ */
+INT16 WINAPI GetAsyncKeyState16( INT16 key )
+{
+    return GetAsyncKeyState( key );
 }
 
 
@@ -591,6 +764,44 @@ void WINAPI SignalProc16( HANDLE16 hModule, UINT16 code,
 }
 
 
+/***********************************************************************
+ *		SetEventHook (USER.321)
+ *
+ *	Used by Turbo Debugger for Windows
+ */
+FARPROC16 WINAPI SetEventHook16(FARPROC16 lpfnEventHook)
+{
+    FIXME("(lpfnEventHook=%p): stub\n", lpfnEventHook);
+    return 0;
+}
+
+
+/**********************************************************************
+ *		EnableHardwareInput (USER.331)
+ */
+BOOL16 WINAPI EnableHardwareInput16(BOOL16 bEnable)
+{
+    FIXME("(%d) - stub\n", bEnable);
+    return TRUE;
+}
+
+
+/***********************************************************************
+ *		IsUserIdle (USER.333)
+ */
+BOOL16 WINAPI IsUserIdle16(void)
+{
+    if ( GetAsyncKeyState( VK_LBUTTON ) & 0x8000 )
+        return FALSE;
+    if ( GetAsyncKeyState( VK_RBUTTON ) & 0x8000 )
+        return FALSE;
+    if ( GetAsyncKeyState( VK_MBUTTON ) & 0x8000 )
+        return FALSE;
+    /* Should check for screen saver activation here ... */
+    return TRUE;
+}
+
+
 /**********************************************************************
  *		IsMenu    (USER.358)
  */
@@ -666,6 +877,16 @@ BOOL16 WINAPI GetIconInfo16(HICON16 hIcon, LPICONINFO16 iconinfo)
   iconinfo->hbmColor = HBITMAP_16(ii32.hbmColor);
   return ret;
 }
+
+
+/***********************************************************************
+ *		FinalUserInit (USER.400)
+ */
+void WINAPI FinalUserInit16( void )
+{
+    /* FIXME: Should chain to FinalGdiInit */
+}
+
 
 /***********************************************************************
  *		CreateCursor (USER.406)
@@ -1026,6 +1247,23 @@ void WINAPI DrawFocusRect16( HDC16 hdc, const RECT16* rc )
     DrawFocusRect( HDC_32(hdc), &rect32 );
 }
 
+
+/***********************************************************************
+ *		ChangeDisplaySettings (USER.620)
+ */
+LONG WINAPI ChangeDisplaySettings16( LPDEVMODEA devmode, DWORD flags )
+{
+    return ChangeDisplaySettingsA( devmode, flags );
+}
+
+
+/***********************************************************************
+ *		EnumDisplaySettings (USER.621)
+ */
+BOOL16 WINAPI EnumDisplaySettings16( LPCSTR name, DWORD n, LPDEVMODEA devmode )
+{
+    return EnumDisplaySettingsA( name, n, devmode );
+}
 
 /**********************************************************************
  *          DrawFrameControl  (USER.656)

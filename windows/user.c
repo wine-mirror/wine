@@ -115,18 +115,6 @@ WORD WINAPI GetFreeSystemResources16( WORD resType )
 }
 
 
-/**********************************************************************
- *		InitApp (USER.5)
- */
-INT16 WINAPI InitApp16( HINSTANCE16 hInstance )
-{
-    /* Create task message queue */
-    if ( !InitThreadInput16( 0, 0 ) ) return 0;
-
-    return 1;
-}
-
-
 /***********************************************************************
  *           USER_Lock
  */
@@ -184,14 +172,6 @@ void WIN_RestoreWndsLock( int ipreviousLocks )
 {
     while ( ipreviousLocks-- > 0 )
         _EnterSysLevel( &USER_SysLevel );
-}
-
-/***********************************************************************
- *		FinalUserInit (USER.400)
- */
-void WINAPI FinalUserInit16( void )
-{
-    /* FIXME: Should chain to FinalGdiInit now. */
 }
 
 /***********************************************************************
@@ -273,26 +253,6 @@ WORD WINAPI UserSignalProc( UINT uCode, DWORD dwThreadOrProcessID,
     /* FIXME: Should chain to GdiSignalProc now. */
     return 0;
 }
-
-/***********************************************************************
- *		ExitWindows (USER.7)
- */
-BOOL16 WINAPI ExitWindows16( DWORD dwReturnCode, UINT16 wReserved )
-{
-    return ExitWindowsEx( EWX_LOGOFF, 0xffffffff );
-}
-
-
-/***********************************************************************
- *		ExitWindowsExec (USER.246)
- */
-BOOL16 WINAPI ExitWindowsExec16( LPCSTR lpszExe, LPCSTR lpszParams )
-{
-    TRACE("Should run the following in DOS-mode: \"%s %s\"\n",
-	  lpszExe, lpszParams);
-    return ExitWindowsEx( EWX_LOGOFF, 0xffffffff );
-}
-
 
 /***********************************************************************
  *           USER_GetProcessHandleList(Internal)
@@ -496,14 +456,6 @@ LONG WINAPI ChangeDisplaySettingsW( LPDEVMODEW devmode, DWORD flags )
 }
 
 /***********************************************************************
- *		ChangeDisplaySettings (USER.620)
- */
-LONG WINAPI ChangeDisplaySettings16( LPDEVMODEA devmode, DWORD flags )
-{
-	return ChangeDisplaySettingsA(devmode, flags);
-}
-
-/***********************************************************************
  *		ChangeDisplaySettingsExA (USER32.@)
  */
 LONG WINAPI ChangeDisplaySettingsExA(
@@ -568,17 +520,6 @@ BOOL WINAPI EnumDisplaySettingsW(
 BOOL WINAPI EnumDisplaySettingsA(LPCSTR name,DWORD n,LPDEVMODEA devmode)
 {
     return EnumDisplaySettingsExA(name, n, devmode, 0);
-}
-
-/***********************************************************************
- *		EnumDisplaySettings (USER.621)
- */
-BOOL16 WINAPI EnumDisplaySettings16(
-	LPCSTR name,		/* [in] huh? */
-	DWORD n,		/* [in] nth entry in display settings list*/
-	LPDEVMODEA devmode	/* [out] devmode for that setting */
-) {
-	return (BOOL16)EnumDisplaySettingsA(name, n, devmode);
 }
 
 /***********************************************************************
@@ -658,17 +599,6 @@ BOOL WINAPI EnumDisplayDevicesW(
 }
 
 /***********************************************************************
- *		SetEventHook (USER.321)
- *
- *	Used by Turbo Debugger for Windows
- */
-FARPROC16 WINAPI SetEventHook16(FARPROC16 lpfnEventHook)
-{
-	FIXME("(lpfnEventHook=%08x): stub\n", (UINT)lpfnEventHook);
-	return NULL;
-}
-
-/***********************************************************************
  *		UserSeeUserDo (USER.216)
  */
 DWORD WINAPI UserSeeUserDo16(WORD wReqType, WORD wParam1, WORD wParam2, WORD wParam3)
@@ -690,14 +620,6 @@ DWORD WINAPI UserSeeUserDo16(WORD wReqType, WORD wParam1, WORD wParam2, WORD wPa
         WARN("wReqType %04x (unknown)\n", wReqType);
         return (DWORD)-1;
     }
-}
-
-/***********************************************************************
- *		GetSystemDebugState (USER.231)
- */
-WORD WINAPI GetSystemDebugState16(void)
-{
-    return 0;  /* FIXME */
 }
 
 /***********************************************************************

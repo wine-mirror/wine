@@ -39,8 +39,6 @@
 #include "wingdi.h"
 #include "winuser.h"
 #include "winnls.h"
-#include "wine/winbase16.h"
-#include "wine/winuser16.h"
 #include "wine/server.h"
 #include "win.h"
 #include "message.h"
@@ -53,7 +51,6 @@ WINE_DECLARE_DEBUG_CHANNEL(keyboard);
 WINE_DECLARE_DEBUG_CHANNEL(win);
 WINE_DEFAULT_DEBUG_CHANNEL(event);
 
-static BOOL InputEnabled = TRUE;
 static BOOL SwappedButtons;
 
 BYTE InputKeyStateTable[256];
@@ -341,8 +338,6 @@ UINT WINAPI SendInput( UINT count, LPINPUT inputs, int size )
 {
     UINT i;
 
-    if (!InputEnabled) return 0;
-
     for (i = 0; i < count; i++, inputs++)
     {
         switch(inputs->type)
@@ -387,21 +382,6 @@ void WINAPI keybd_event( BYTE bVk, BYTE bScan,
 
 
 /***********************************************************************
- *		keybd_event (USER.289)
- */
-void WINAPI keybd_event16( CONTEXT86 *context )
-{
-    DWORD dwFlags = 0;
-
-    if (HIBYTE(context->Eax) & 0x80) dwFlags |= KEYEVENTF_KEYUP;
-    if (HIBYTE(context->Ebx) & 0x01) dwFlags |= KEYEVENTF_EXTENDEDKEY;
-
-    keybd_event( LOBYTE(context->Eax), LOBYTE(context->Ebx),
-                 dwFlags, MAKELONG(LOWORD(context->Esi), LOWORD(context->Edi)) );
-}
-
-
-/***********************************************************************
  *		mouse_event (USER32.@)
  */
 void WINAPI mouse_event( DWORD dwFlags, DWORD dx, DWORD dy,
@@ -421,48 +401,6 @@ void WINAPI mouse_event( DWORD dwFlags, DWORD dx, DWORD dy,
 
 
 /***********************************************************************
- *		mouse_event (USER.299)
- */
-void WINAPI mouse_event16( CONTEXT86 *context )
-{
-    mouse_event( LOWORD(context->Eax), LOWORD(context->Ebx), LOWORD(context->Ecx),
-                 LOWORD(context->Edx), MAKELONG(context->Esi, context->Edi) );
-}
-
-/***********************************************************************
- *		GetMouseEventProc (USER.337)
- */
-FARPROC16 WINAPI GetMouseEventProc16(void)
-{
-    HMODULE16 hmodule = GetModuleHandle16("USER");
-    return GetProcAddress16( hmodule, "mouse_event" );
-}
-
-
-/**********************************************************************
- *		EnableHardwareInput (USER.331)
- */
-BOOL16 WINAPI EnableHardwareInput16(BOOL16 bEnable)
-{
-  BOOL16 bOldState = InputEnabled;
-  FIXME_(event)("(%d) - stub\n", bEnable);
-  InputEnabled = bEnable;
-  return bOldState;
-}
-
-
-/***********************************************************************
- *		SwapMouseButton (USER.186)
- */
-BOOL16 WINAPI SwapMouseButton16( BOOL16 fSwap )
-{
-    BOOL16 ret = SwappedButtons;
-    SwappedButtons = fSwap;
-    return ret;
-}
-
-
-/***********************************************************************
  *		SwapMouseButton (USER32.@)
  */
 BOOL WINAPI SwapMouseButton( BOOL fSwap )
@@ -470,20 +408,6 @@ BOOL WINAPI SwapMouseButton( BOOL fSwap )
     BOOL ret = SwappedButtons;
     SwappedButtons = fSwap;
     return ret;
-}
-
-
-/***********************************************************************
- *		GetCursorPos (USER.17)
- */
-BOOL16 WINAPI GetCursorPos16( POINT16 *pt )
-{
-    POINT pos;
-    if (!pt) return 0;
-    GetCursorPos(&pos);
-    pt->x = pos.x;
-    pt->y = pos.y;
-    return 1;
 }
 
 
@@ -512,15 +436,6 @@ BOOL WINAPI GetCursorInfo( PCURSORINFO pci )
     else pci->flags = 0;
     GetCursorPos(&pci->ptScreenPos);
     return 1;
-}
-
-
-/***********************************************************************
- *		SetCursorPos (USER.70)
- */
-void WINAPI SetCursorPos16( INT16 x, INT16 y )
-{
-    SetCursorPos( x, y );
 }
 
 
@@ -609,32 +524,6 @@ SHORT WINAPI GetAsyncKeyState(INT nKey)
     return retval;
 }
 
-/**********************************************************************
- *		GetAsyncKeyState (USER.249)
- */
-INT16 WINAPI GetAsyncKeyState16(INT16 nKey)
-{
-    return GetAsyncKeyState(nKey);
-}
-
-/***********************************************************************
- *		IsUserIdle (USER.333)
- */
-BOOL16 WINAPI IsUserIdle16(void)
-{
-    if ( GetAsyncKeyState( VK_LBUTTON ) & 0x8000 )
-        return FALSE;
-
-    if ( GetAsyncKeyState( VK_RBUTTON ) & 0x8000 )
-        return FALSE;
-
-    if ( GetAsyncKeyState( VK_MBUTTON ) & 0x8000 )
-        return FALSE;
-
-    /* Should check for screen saver activation here ... */
-
-    return TRUE;
-}
 
 /**********************************************************************
  *		VkKeyScanA (USER32.@)
@@ -765,14 +654,6 @@ UINT WINAPI MapVirtualKeyExW(UINT code, UINT maptype, HKL hkl)
 UINT WINAPI GetKBCodePage(void)
 {
     return GetOEMCP();
-}
-
-/****************************************************************************
- *		GetKeyboardLayoutName (USER.477)
- */
-INT16 WINAPI GetKeyboardLayoutName16(LPSTR pwszKLID)
-{
-	return GetKeyboardLayoutNameA(pwszKLID);
 }
 
 /***********************************************************************

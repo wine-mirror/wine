@@ -184,3 +184,26 @@ void WINAPI MessageBeep16( UINT16 i )
 {
     MessageBeep( i );
 }
+
+/***********************************************************************
+ *		keybd_event (USER.289)
+ */
+void WINAPI keybd_event16( CONTEXT86 *context )
+{
+    DWORD dwFlags = 0;
+
+    if (HIBYTE(context->Eax) & 0x80) dwFlags |= KEYEVENTF_KEYUP;
+    if (HIBYTE(context->Ebx) & 0x01) dwFlags |= KEYEVENTF_EXTENDEDKEY;
+
+    keybd_event( LOBYTE(context->Eax), LOBYTE(context->Ebx),
+                 dwFlags, MAKELONG(LOWORD(context->Esi), LOWORD(context->Edi)) );
+}
+
+
+/****************************************************************************
+ *		GetKeyboardLayoutName (USER.477)
+ */
+INT16 WINAPI GetKeyboardLayoutName16( LPSTR name )
+{
+    return GetKeyboardLayoutNameA( name );
+}
