@@ -27,19 +27,7 @@
 #include "winnls.h"
 
 /* strdup macros */
-/* DO NOT USE THEM!!  they will go away soon */
-
-inline static LPWSTR HEAP_strdupAtoW( HANDLE heap, DWORD flags, LPCSTR str )
-{
-    LPWSTR ret;
-    INT len;
-
-    if (!str) return NULL;
-    len = MultiByteToWideChar( CP_ACP, 0, str, -1, NULL, 0 );
-    ret = HeapAlloc( heap, flags, len * sizeof(WCHAR) );
-    if (ret) MultiByteToWideChar( CP_ACP, 0, str, -1, ret, len );
-    return ret;
-}
+/* DO NOT USE IT!!  it will go away soon */
 
 inline static LPSTR HEAP_strdupWtoA( HANDLE heap, DWORD flags, LPCWSTR str )
 {
