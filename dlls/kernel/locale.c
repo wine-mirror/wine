@@ -739,7 +739,7 @@ static const WCHAR *get_locale_value_name( DWORD lctype )
  * Retrieve user-modified locale info from the registry.
  * Return length, 0 on error, -1 if not found.
  */
-static INT get_registry_locale_info( LPCWSTR value, LPWSTR buffer, INT len )
+static INT get_registry_locale_info( UINT flags, LPCWSTR value, LPWSTR buffer, INT len )
 {
     DWORD size;
     INT ret;
@@ -752,9 +752,9 @@ static INT get_registry_locale_info( LPCWSTR value, LPWSTR buffer, INT len )
     if (!(hkey = create_registry_key())) return -1;
 
     RtlInitUnicodeString( &nameW, value );
-    size = info_size + len * sizeof(WCHAR);
+    size = info_size + (flags & LOCALE_RETURN_NUMBER ? 16 : len) * sizeof(WCHAR);
 
-    if (!(info = HeapAlloc( GetProcessHeap(), 0, size )))
+    if (!(info = HeapAlloc( GetProcessHeap(), 0, size + sizeof(WCHAR))))
     {
         NtClose( hkey );
         SetLastError( ERROR_NOT_ENOUGH_MEMORY );
@@ -767,20 +767,42 @@ static INT get_registry_locale_info( LPCWSTR value, LPWSTR buffer, INT len )
     if (!status)
     {
         ret = (size - info_size) / sizeof(WCHAR);
-        /* append terminating null if needed */
+        /* append terminating nul if needed */
         if (!ret || ((WCHAR *)info->Data)[ret-1])
         {
-            if (ret < len || !buffer) ret++;
+            if (ret < len || !buffer)
+            {
+                ((WCHAR *)info->Data)[ret] = '\0';
+                ret++;
+            }
             else
             {
                 SetLastError( ERROR_INSUFFICIENT_BUFFER );
                 ret = 0;
             }
         }
-        if (ret && buffer)
+
+        if (ret)
         {
-            memcpy( buffer, info->Data, (ret-1) * sizeof(WCHAR) );
-            buffer[ret-1] = 0;
+            if (flags & LOCALE_RETURN_NUMBER)
+            {
+                UINT number;
+                WCHAR *end;
+                number = strtolW( (WCHAR *)info->Data, &end, 10 );
+                if (*end)
+                {
+                    SetLastError( ERROR_INVALID_FLAGS );
+                    ret = 0;
+                }
+                else
+                {
+                    if (buffer)
+                        memcpy( buffer, &number, sizeof(number) );
+                    ret = sizeof(UINT)/sizeof(WCHAR);
+                }
+            }
+            else if (buffer)
+                memcpy( buffer, info->Data, ret * sizeof(WCHAR) );
         }
     }
     else
@@ -883,6 +905,8 @@ INT WINAPI GetLocaleInfoW( LCID lcid, LCTYPE lctype, LPWSTR buffer, INT len )
     const WCHAR *p;
     unsigned int i;
 
+    TRACE("(0x%08lx,0x%08lx,%p,%d)\n", lcid, lctype, buffer, len);
+    
     if (len < 0 || (len && !buffer))
     {
         SetLastError( ERROR_INVALID_PARAMETER );
@@ -901,7 +925,12 @@ INT WINAPI GetLocaleInfoW( LCID lcid, LCTYPE lctype, LPWSTR buffer, INT len )
     {
         const WCHAR *value = get_locale_value_name(lctype);
 
-        if (value && ((ret = get_registry_locale_info( value, buffer, len )) != -1)) return ret;
+        if (value)
+        {
+            ret = get_registry_locale_info( lcflags & LOCALE_RETURN_NUMBER, value, buffer, len );
+            if (ret != -1)
+                return ret;
+        }
     }
 
     /* now load it from kernel resources */
