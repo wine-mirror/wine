@@ -814,7 +814,7 @@ static void dump_string_data( const WCHAR *ptr, unsigned int size, unsigned int 
 
     for (i = 0; i < 16 && size; i++)
     {
-        int len = *ptr++;
+        unsigned len = *ptr++;
 
         if (len >= size)
         {
@@ -838,7 +838,7 @@ static void dump_msgtable_data( const void *ptr, unsigned int size, unsigned int
 {
     const MESSAGE_RESOURCE_DATA *data = ptr;
     const MESSAGE_RESOURCE_BLOCK *block = data->Blocks;
-    int i, j;
+    unsigned i, j;
 
     for (i = 0; i < data->NumberOfBlocks; i++, block++)
     {
