@@ -237,8 +237,8 @@ HRESULT WINAPI IDirectMusicSegTriggerTrack_IPersistStream_IsDirty (LPPERSISTSTRE
   return S_FALSE;
 }
 
-static HRESULT IDirectMusicSegTriggerTrack_IPersistStream_ParseSegment (LPPERSISTSTREAM iface, DMUS_PRIVATE_CHUNK* pChunk, IStream* pStm, IDirectMusicSegTriggerTrack* This) {
-
+static HRESULT IDirectMusicSegTriggerTrack_IPersistStream_ParseSegment (LPPERSISTSTREAM iface, DMUS_PRIVATE_CHUNK* pChunk, IStream* pStm) {
+  ICOM_THIS_MULTI(IDirectMusicSegTriggerTrack, PersistStreamVtbl, iface);
   DMUS_PRIVATE_CHUNK Chunk;
   DWORD ListSize[3], ListCount[3];
   LARGE_INTEGER liMove; /* used when skipping chunks */
@@ -308,8 +308,8 @@ static HRESULT IDirectMusicSegTriggerTrack_IPersistStream_ParseSegment (LPPERSIS
   return S_OK;
 }
 
-static HRESULT IDirectMusicSegTriggerTrack_IPersistStream_ParseSegmentsList (LPPERSISTSTREAM iface, DMUS_PRIVATE_CHUNK* pChunk, IStream* pStm, IDirectMusicSegTriggerTrack* This) {
-
+static HRESULT IDirectMusicSegTriggerTrack_IPersistStream_ParseSegmentsList (LPPERSISTSTREAM iface, DMUS_PRIVATE_CHUNK* pChunk, IStream* pStm) {
+  /*ICOM_THIS_MULTI(IDirectMusicSegTriggerTrack, PersistStreamVtbl, iface);*/
   HRESULT hr = E_FAIL;
   DMUS_PRIVATE_CHUNK Chunk;
   DWORD ListSize[3], ListCount[3];
@@ -336,7 +336,7 @@ static HRESULT IDirectMusicSegTriggerTrack_IPersistStream_ParseSegmentsList (LPP
       switch (Chunk.fccID) { 
       case DMUS_FOURCC_SEGMENT_LIST: {
 	TRACE_(dmfile)(": SEGMENT list\n"); 
-	hr = IDirectMusicSegTriggerTrack_IPersistStream_ParseSegment (iface, &Chunk, pStm, This);
+	hr = IDirectMusicSegTriggerTrack_IPersistStream_ParseSegment (iface, &Chunk, pStm);
 	if (FAILED(hr)) return hr;	
 	break;
       }
@@ -362,8 +362,8 @@ static HRESULT IDirectMusicSegTriggerTrack_IPersistStream_ParseSegmentsList (LPP
   return S_OK;
 }
 
-static HRESULT IDirectMusicSegTriggerTrack_IPersistStream_ParseSegTrackList (LPPERSISTSTREAM iface, DMUS_PRIVATE_CHUNK* pChunk, IStream* pStm, IDirectMusicSegTriggerTrack* This) {
-
+static HRESULT IDirectMusicSegTriggerTrack_IPersistStream_ParseSegTrackList (LPPERSISTSTREAM iface, DMUS_PRIVATE_CHUNK* pChunk, IStream* pStm) {
+  /*ICOM_THIS_MULTI(IDirectMusicSegTriggerTrack, PersistStreamVtbl, iface);*/
   HRESULT hr = E_FAIL;
   DMUS_PRIVATE_CHUNK Chunk;
   DWORD ListSize[3], ListCount[3];
@@ -396,7 +396,7 @@ static HRESULT IDirectMusicSegTriggerTrack_IPersistStream_ParseSegTrackList (LPP
       switch (Chunk.fccID) { 
       case DMUS_FOURCC_SEGMENTS_LIST: {
 	TRACE_(dmfile)(": SEGMENTS list\n"); 
-	hr = IDirectMusicSegTriggerTrack_IPersistStream_ParseSegmentsList (iface, &Chunk, pStm, This);
+	hr = IDirectMusicSegTriggerTrack_IPersistStream_ParseSegmentsList (iface, &Chunk, pStm);
 	if (FAILED(hr)) return hr;
 	break;
       }
@@ -441,7 +441,7 @@ HRESULT WINAPI IDirectMusicSegTriggerTrack_IPersistStream_Load (LPPERSISTSTREAM 
     switch (Chunk.fccID) {
     case DMUS_FOURCC_SEGTRACK_LIST: {
       TRACE_(dmfile)(": segment trigger track list\n");
-      hr = IDirectMusicSegTriggerTrack_IPersistStream_ParseSegTrackList (iface, &Chunk, pStm, This);
+      hr = IDirectMusicSegTriggerTrack_IPersistStream_ParseSegTrackList (iface, &Chunk, pStm);
       if (FAILED(hr)) return hr;
       break;    
     }

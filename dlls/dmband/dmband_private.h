@@ -150,7 +150,7 @@ struct IDirectMusicBandTrack {
 
   /* IDirectMusicBandTrack fields */
   LPDMUS_OBJECTDESC pDesc;
-  DMUS_IO_BAND_TRACK_HEADER* pHeader;
+  DMUS_IO_BAND_TRACK_HEADER header;
 	
   /* data */
   struct list Bands;

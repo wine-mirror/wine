@@ -241,8 +241,9 @@ HRESULT WINAPI IDirectMusicChordTrack_IPersistStream_IsDirty (LPPERSISTSTREAM if
   return S_FALSE;
 }
 
-static HRESULT IDirectMusicChordTrack_IPersistStream_ParseChordTrackList (LPPERSISTSTREAM iface, DMUS_PRIVATE_CHUNK* pChunk, IStream* pStm, IDirectMusicChordTrack* This) {
+static HRESULT IDirectMusicChordTrack_IPersistStream_ParseChordTrackList (LPPERSISTSTREAM iface, DMUS_PRIVATE_CHUNK* pChunk, IStream* pStm) {
 
+  ICOM_THIS_MULTI(IDirectMusicChordTrack, PersistStreamVtbl, iface);
   DMUS_PRIVATE_CHUNK Chunk;
   DWORD ListSize[3], ListCount[3];
   LARGE_INTEGER liMove; /* used when skipping chunks */
@@ -293,7 +294,7 @@ static HRESULT IDirectMusicChordTrack_IPersistStream_ParseChordTrackList (LPPERS
 
       for (it = 0; it < num; ++it) {
 	IStream_Read (pStm, &subchords, sizeof(DMUS_IO_SUBCHORD), NULL);
-	TRACE_(dmfile)("DMUS_IO_SUBCHORD #%ld\n", it);
+	TRACE_(dmfile)("DMUS_IO_SUBCHORD #%ld\n", it+1);
 	TRACE_(dmfile)(" - dwChordPattern: %lu\n", subchords.dwChordPattern);
 	TRACE_(dmfile)(" - dwScalePattern: %lu\n", subchords.dwScalePattern);
 	TRACE_(dmfile)(" - dwInversionPoints: %lu\n", subchords.dwInversionPoints);
@@ -323,7 +324,7 @@ HRESULT WINAPI IDirectMusicChordTrack_IPersistStream_Load (LPPERSISTSTREAM iface
   LARGE_INTEGER liMove;
   HRESULT hr;
  
-  FIXME(": Loading not fully implemented yet\n");
+  FIXME("(%p, %p): Loading not fully implemented yet\n", This, pStm);
 
   IStream_Read (pStm, &Chunk, sizeof(FOURCC)+sizeof(DWORD), NULL);
   TRACE_(dmfile)(": %s chunk (size = %ld)", debugstr_fourcc (Chunk.fccID), Chunk.dwSize);
@@ -334,7 +335,7 @@ HRESULT WINAPI IDirectMusicChordTrack_IPersistStream_Load (LPPERSISTSTREAM iface
     switch (Chunk.fccID) { 
     case DMUS_FOURCC_CHORDTRACK_LIST: {
       TRACE_(dmfile)(": Chord track list\n");
-      hr = IDirectMusicChordTrack_IPersistStream_ParseChordTrackList (iface, &Chunk, pStm, This);
+      hr = IDirectMusicChordTrack_IPersistStream_ParseChordTrackList (iface, &Chunk, pStm);
       if (FAILED(hr)) return hr;
       break;    
     }
@@ -354,8 +355,7 @@ HRESULT WINAPI IDirectMusicChordTrack_IPersistStream_Load (LPPERSISTSTREAM iface
     IStream_Seek (pStm, liMove, STREAM_SEEK_CUR, NULL); /* skip the rest of the chunk */
     return E_FAIL;
   }
-  }  
-
+  }
 
   return S_OK;
 }
@@ -386,21 +386,21 @@ ICOM_VTABLE(IPersistStream) DirectMusicChordTrack_PersistStream_Vtbl = {
 
 /* for ClassFactory */
 HRESULT WINAPI DMUSIC_CreateDirectMusicChordTrack (LPCGUID lpcGUID, LPVOID *ppobj, LPUNKNOWN pUnkOuter) {
-	IDirectMusicChordTrack* track;
-	
-	track = HeapAlloc (GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirectMusicChordTrack));
-	if (NULL == track) {
-		*ppobj = (LPVOID) NULL;
-		return E_OUTOFMEMORY;
-	}
-	track->UnknownVtbl = &DirectMusicChordTrack_Unknown_Vtbl;
-	track->TrackVtbl = &DirectMusicChordTrack_Track_Vtbl;
-	track->PersistStreamVtbl = &DirectMusicChordTrack_PersistStream_Vtbl;
-	track->pDesc = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(DMUS_OBJECTDESC));
-	DM_STRUCT_INIT(track->pDesc);
-	track->pDesc->dwValidData |= DMUS_OBJ_CLASS;
-	memcpy (&track->pDesc->guidClass, &CLSID_DirectMusicChordTrack, sizeof (CLSID));
-	track->ref = 0; /* will be inited by QueryInterface */
-	
-	return IDirectMusicChordTrack_IUnknown_QueryInterface ((LPUNKNOWN)&track->UnknownVtbl, lpcGUID, ppobj);
+  IDirectMusicChordTrack* track;
+  
+  track = HeapAlloc (GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirectMusicChordTrack));
+  if (NULL == track) {
+    *ppobj = (LPVOID) NULL;
+    return E_OUTOFMEMORY;
+  }
+  track->UnknownVtbl = &DirectMusicChordTrack_Unknown_Vtbl;
+  track->TrackVtbl = &DirectMusicChordTrack_Track_Vtbl;
+  track->PersistStreamVtbl = &DirectMusicChordTrack_PersistStream_Vtbl;
+  track->pDesc = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(DMUS_OBJECTDESC));
+  DM_STRUCT_INIT(track->pDesc);
+  track->pDesc->dwValidData |= DMUS_OBJ_CLASS;
+  memcpy (&track->pDesc->guidClass, &CLSID_DirectMusicChordTrack, sizeof (CLSID));
+  track->ref = 0; /* will be inited by QueryInterface */
+  
+  return IDirectMusicChordTrack_IUnknown_QueryInterface ((LPUNKNOWN)&track->UnknownVtbl, lpcGUID, ppobj);
 }

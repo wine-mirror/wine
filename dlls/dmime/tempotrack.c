@@ -254,16 +254,16 @@ HRESULT WINAPI IDirectMusicTempoTrack_IPersistStream_Load (LPPERSISTSTREAM iface
   TRACE_(dmfile)(": %s chunk (size = %ld)", debugstr_fourcc (Chunk.fccID), Chunk.dwSize);
   switch (Chunk.fccID) {	
   case DMUS_FOURCC_TEMPO_TRACK: {
-    TRACE_(dmfile)(": tempo track\n");
+    TRACE_(dmfile)(": Tempo track\n");
 #if 1
     IStream_Read (pStm, &StreamSize, sizeof(DWORD), NULL);
     StreamSize -= sizeof(DWORD);
     StreamCount = 0;
-    TRACE_(dmfile)(": items (size = %lu, chunkSize = %lu)\n", StreamSize, Chunk.dwSize - sizeof(DWORD));
+    TRACE_(dmfile)(" - sizeof(DMUS_IO_TEMPO_ITEM): %lu (chunkSize = %lu)\n", StreamSize, Chunk.dwSize - sizeof(DWORD));
     do {
       IStream_Read (pStm, &item, sizeof(item), NULL);
       ++nItem;
-      TRACE_(dmfile)("DMUS_IO_TEMPO_ITEM: item %ld\n", nItem);
+      TRACE_(dmfile)("DMUS_IO_TEMPO_ITEM #%ld\n", nItem);
       TRACE_(dmfile)(" - lTime = %lu\n", item.lTime);
       TRACE_(dmfile)(" - dblTempo = %g\n", item.dblTempo);
       StreamCount += sizeof(item);

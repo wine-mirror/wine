@@ -630,6 +630,7 @@ HRESULT WINAPI IDirectMusicSegment8Impl_IPersistStream_IsDirty (LPPERSISTSTREAM 
 static HRESULT IDirectMusicSegment8Impl_IPersistStream_LoadTrack (LPPERSISTSTREAM iface, IStream* pClonedStream, IDirectMusicTrack** ppTrack, 
 								  DMUS_IO_TRACK_HEADER* pTrack_hdr) {
 
+  ICOM_THIS_MULTI(IDirectMusicSegment8Impl, PersistStreamVtbl, iface);
   HRESULT hr = E_FAIL;
   IPersistStream* pPersistStream = NULL;
   
@@ -654,11 +655,18 @@ static HRESULT IDirectMusicSegment8Impl_IPersistStream_LoadTrack (LPPERSISTSTREA
   /* release all loading-related stuff */
   IPersistStream_Release (pPersistStream);
 
+  hr = IDirectMusicSegment8Impl_IDirectMusicSegment8_InsertTrack ((LPDIRECTMUSICSEGMENT8)This->SegmentVtbl, *ppTrack, pTrack_hdr->dwGroup); /* at dsPosition */
+  if (FAILED(hr)) {
+    ERR(": could not insert track\n");
+    return hr;
+  }
+
   return S_OK;
 }
 
-static HRESULT IDirectMusicSegment8Impl_IPersistStream_ParseTrackForm (LPPERSISTSTREAM iface, DMUS_PRIVATE_CHUNK* pChunk, IStream* pStm, IDirectMusicSegment8Impl* This) {
+static HRESULT IDirectMusicSegment8Impl_IPersistStream_ParseTrackForm (LPPERSISTSTREAM iface, DMUS_PRIVATE_CHUNK* pChunk, IStream* pStm) {
 
+  /*ICOM_THIS_MULTI(IDirectMusicSegment8Impl, PersistStreamVtbl, iface);*/
   HRESULT hr = E_FAIL;
   DMUS_PRIVATE_CHUNK Chunk;
   DWORD StreamSize, StreamCount, ListSize[3], ListCount[3];
@@ -725,42 +733,13 @@ static HRESULT IDirectMusicSegment8Impl_IPersistStream_ParseTrackForm (LPPERSIST
 	  ERR(": could not load track\n");
 	  return hr;
 	}
-	
-	hr = IDirectMusicSegment8Impl_IDirectMusicSegment8_InsertTrack ((LPDIRECTMUSICSEGMENT8)This->SegmentVtbl, pTrack, track_hdr.dwGroup); /* at dsPosition */
-	if (FAILED(hr)) {
-	  ERR(": could not insert track\n");
-	  return hr;
-	}
-	IDirectMusicTrack_Release(pTrack); pTrack = NULL; /* now we can release at as it inserted */
 	IStream_Release (pClonedStream);
-
-#if 0
-#else
-	/*
-	do {
-	  IStream_Read (pStm, &Chunk, sizeof(FOURCC)+sizeof(DWORD), NULL);
-	  ListCount[0] += sizeof(FOURCC) + sizeof(DWORD) + Chunk.dwSize;
-	  TRACE_(dmfile)(": %s chunk (size = %ld)", debugstr_fourcc (Chunk.fccID), Chunk.dwSize);
-	  switch (Chunk.fccID) {
-	  default: {
-	    TRACE_(dmfile)(": unknown chunk (irrevelant & skipping)\n");
-	    liMove.QuadPart = Chunk.dwSize;
-	    IStream_Seek (pStm, liMove, STREAM_SEEK_CUR, NULL);
-	    break;						
-	  }
-	  }
-	 
-	  TRACE_(dmfile)(": ListCount[0] = %ld < ListSize[0] = %ld\n", ListCount[0], ListSize[0]);
-	} while (ListCount[0] < ListSize[0]);
-	*/
-
-#endif
+	
+	IDirectMusicTrack_Release(pTrack); pTrack = NULL; /* now we can release at as it inserted */
 
 	liMove.QuadPart = ListSize[0];
 	IStream_Seek (pStm, liMove, STREAM_SEEK_CUR, NULL);
 	
-	/*
-	*/
       } else {
 	TRACE_(dmfile)(": unknown (skipping)\n");
 	liMove.QuadPart = Chunk.dwSize;
@@ -783,7 +762,7 @@ static HRESULT IDirectMusicSegment8Impl_IPersistStream_ParseTrackForm (LPPERSIST
 	IStream_Clone (pStm, &pClonedStream);
 	
 	liMove.QuadPart = 0;
-	liMove.QuadPart -= (sizeof(FOURCC) + sizeof(DWORD));
+	liMove.QuadPart -= sizeof(FOURCC) + (sizeof(FOURCC)+sizeof(DWORD));
 	IStream_Seek (pClonedStream, liMove, STREAM_SEEK_CUR, NULL);
 	
 	hr = IDirectMusicSegment8Impl_IPersistStream_LoadTrack (iface, pClonedStream, &pTrack, &track_hdr);
@@ -791,14 +770,8 @@ static HRESULT IDirectMusicSegment8Impl_IPersistStream_ParseTrackForm (LPPERSIST
 	  ERR(": could not load track\n");
 	  return hr;
 	}
-
 	IStream_Release (pClonedStream);
 	
-	hr = IDirectMusicSegment8Impl_IDirectMusicSegment8_InsertTrack ((LPDIRECTMUSICSEGMENT8)This->SegmentVtbl, pTrack, track_hdr.dwGroup); /* at dsPosition */
-	if (FAILED(hr)) {
-	  ERR(": could not insert track\n");
-	  return hr;
-	}
 	IDirectMusicTrack_Release(pTrack); pTrack = NULL; /* now we can release at as it inserted */
 
 	/** now safe move the cursor */
@@ -830,14 +803,8 @@ static HRESULT IDirectMusicSegment8Impl_IPersistStream_ParseTrackForm (LPPERSIST
 	  ERR(": could not load track\n");
 	  return hr;
 	}
-
 	IStream_Release (pClonedStream);
 	
-	hr = IDirectMusicSegment8Impl_IDirectMusicSegment8_InsertTrack ((LPDIRECTMUSICSEGMENT8)This->SegmentVtbl, pTrack, track_hdr.dwGroup); /* at dsPosition */
-	if (FAILED(hr)) {
-	  ERR(": could not insert track\n");
-	  return hr;
-	}
 	IDirectMusicTrack_Release(pTrack); pTrack = NULL; /* now we can release at as it inserted */
 
 	liMove.QuadPart = Chunk.dwSize;
@@ -886,7 +853,7 @@ static HRESULT IDirectMusicSegment8Impl_IPersistStream_ParseTrackList (LPPERSIST
       switch (Chunk.fccID) {
       case  DMUS_FOURCC_TRACK_FORM: {
 	TRACE_(dmfile)(": TRACK form\n");
-	hr = IDirectMusicSegment8Impl_IPersistStream_ParseTrackForm (iface, &Chunk, pStm, This);
+	hr = IDirectMusicSegment8Impl_IPersistStream_ParseTrackForm (iface, &Chunk, pStm);
 	if (FAILED(hr)) return hr;	
 	break;
       }
@@ -939,7 +906,7 @@ static HRESULT IDirectMusicSegment8Impl_IPersistStream_ParseSegmentForm (LPPERSI
       switch (Chunk.fccID) {
       case DMUS_FOURCC_SEGMENT_CHUNK: {
 	DWORD checkSz = sizeof(FOURCC);
-	FIXME_(dmfile)(": segment chunk\n");
+	TRACE_(dmfile)(": segment chunk\n");
 #if 1
 	/** DX 7 */
 	IStream_Read (pStm, &This->header.dwRepeats,    sizeof(This->header.dwRepeats), NULL);
