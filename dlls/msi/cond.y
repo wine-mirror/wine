@@ -731,7 +731,7 @@ MSICONDITION MSI_EvaluateConditionW( MSIPACKAGE *package, LPCWSTR szCondition )
     
     TRACE("Evaluating %s\n",debugstr_w(szCondition));    
 
-    if( !COND_parse( &cond ) )
+    if( szCondition && !COND_parse( &cond ) )
         r = cond.result;
     else
         r = MSICONDITION_ERROR;
