@@ -1,4 +1,97 @@
 ----------------------------------------------------------------------
+Sat Apr 20 23:23:16 1996  Robert Pouliot <krynos@qbc.clic.net>
+
+	* [resources/sysres_Fr.rc] [resources/TODO]
+	Made changes for Choose_Color dialog.
+
+Sat Apr 20 15:43:49 1996  Alexandre Julliard  <julliard@lrc.epfl.ch>
+
+	* [controls/button.c]
+	Fixed test that got miscompiled by some old gcc versions.
+
+	* [memory/local.c]
+	Fixed the layout of handle tables so that moveable handle entries
+	can be freed on LocalFree().
+	Implemented LocalFlags(), LocalCountFree(), LocalHandleDelta() and
+	GetHeapSpaces().
+
+	* [misc/main.c] [ANNOUNCE]
+	Update the list of contributors. Please let me know if I forgot
+	someone.
+
+Fri Apr 19 20:07:20 1996  Frans van Dorsselaer  <dorssel@rulhm1.leidenuniv.nl>
+
+	* [controls/edit.c] [controls/EDIT.TODO]
+	Fixed EM_SETHANDLE / WM_CREATE / EDIT_MakeFir() buffer allocation.
+	Fixed ES_NOHIDESEL / WM_MOUSEMOVE / WM_LBUTTONDOWN implementation.
+	Added WM_ENABLE implementation (gray text).
+	Fixed buffer > 32767 bug.
+	Fixed argument types / typecasting.
+	Faster selection (re)drawing.
+
+Thu Apr 18 13:38:26 1996  Marcus Meissner <msmeissn@cip.informatik.uni-erlangen.de>
+
+	* [misc/registry.c] [include/winreg.h]
+	Changed savefile format again to human readable/editable
+	(UNICODE chars >0xff are specified by \uXXXX, data by XX).
+	Has now global / local registry databases (including merging them).
+	HKEY_CLASSES_ROOT == HKEY_LOCAL_MACHINE\\SOFTWARE\\Classes.
+	HKEY_CURRENT_USER == HKEY_USERS\\<loginname>.
+
+	* [misc/comm.c]
+	Allow " " as COMx: ... spec delimiter too.
+	(AOL-CD setup.exe tries to initialize modem2 as "9600,x,x x" (can't 
+	remember the x).
+
+Thu Apr 18 09:00:00 1996  Alex Korobka <alex@phm30.pharm.sunysb.edu>
+
+	* [windows/mdi.c]
+	Miscellaneous changes.
+
+	* [windows/winpos.c] 
+	Use BitBlt whenever possible in SetWindowPos.
+
+	* [windows/painting.c]
+	Fix incompatibilities with hrgnUpdate being 1.
+
+Wed Apr 17 19:19:22 1996  Albrecht Kleine  <kleine@ak.sax.de>
+
+	* [misc/commdlg.c]
+	Many bugfixes in ChooseColor dialog.
+	Added a user defined dialog title in FileOpen-/FileSave- dialog.
+
+	* [misc/commdlg.c][include/commdlg.h]
+	  [if1632/commdlg.spec][if1632/winprocs.spec]
+	Introduced dialog-, callback- and enum- stub functions
+	for ChooseFont dialog
+
+Wed Apr 17 19:08:38 1996  Niels de Carpentier  <niels@cindy.et.tudelft.nl>
+
+	* [objects/metafile.c] [include/metafile.h] [if1632/gdi.spec]
+	Implemented EnumMetaFile and CopyMetaFile. Removed METAFILE struct.
+	Implemented META_STRETCHDIB in PlayMetaFileRecord, several bug 
+	fixes.
+
+	* [windows/winpos.c]
+	Don't try to hide the window if it's already hidden.
+
+	* [windows/message.c]
+	Let MSG_PeekHardwareMsg fill the message queue with events if
+	it's empty.
+
+Wed Apr 17 17:54:04 1996  Tristan Tarrant <tst@sthinc.demon.co.uk>
+
+	* [resources/sysres_It.rc]
+	Updated to support the new CHOOSE_COLOR_DIALOG.
+
+Tue Apr 16 11:50:00 1996  Anand Kumria <akumria@ozemail.com.au>
+
+	* [if1632/Makefile] [if1632/relay.c] [if1631/w32sys.spec]
+	  [include/w32sys.h] [include/dlls.h]
+	  [misc/Makefile] [misc/w32sys.c]
+	W32SYS.DLL partially implemented.
+
+----------------------------------------------------------------------
 Sun Apr 14 12:51:27 1996  Alexandre Julliard  <julliard@lrc.epfl.ch>
 
 	* [controls/menu.c] [include/dialog.h] [windows/dialog.c]

@@ -98,9 +98,6 @@ D) Known bugs.
 -	The clipboard is broken.  Whenever things go wrong with
 	cut/copy/paste, it is probably the clipboard that messes up things,
 	not edit.c.
--	With Notepad, if you select New File a couple of times and enter
-	text, the buffer is sometimes corrupted.
--	Switching on/off WordWrap with Notepad sometimes corrupts the buffer.
 
 
 I am still very actively changing things.  Especially I am working

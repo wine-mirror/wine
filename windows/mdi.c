@@ -12,8 +12,6 @@
  *        SetWindowPos(childHwnd,...) implicitly calls it if SWP_NOACTIVATE
  *        is not used.
  *
- * To fix:
- *	  Sticky client crollbars 
  */
 
 #include <stdlib.h>
@@ -32,14 +30,16 @@
 #include "stddebug.h"
 #include "debug.h"
 
+
+DWORD SCROLL_SetNCSbState(WND*,int,int,int,int,int,int);
+
+/* ----------------- declarations ----------------- */
 void MDI_UpdateFrameText(WND *, HWND, BOOL, LPCSTR);
 BOOL MDI_AugmentFrameMenu(MDICLIENTINFO*, WND *, HWND);
 BOOL MDI_RestoreFrameMenu(WND *, HWND);
 
 void ScrollChildren(HWND , UINT , WPARAM , LPARAM );
 void CalcChildScroll(HWND, WORD);
-
-/* ----------------- declarations ----------------- */
 
 static LONG MDI_ChildActivate(WND* ,HWND );
 
@@ -53,6 +53,16 @@ static HWND MDI_GetChildByID(WND* wndPtr,int id)
     for (wndPtr = wndPtr->child; wndPtr; wndPtr = wndPtr->next)
         if (wndPtr->wIDmenu == id) return wndPtr->hwndSelf;
     return 0;
+}
+
+static void MDI_PostUpdate(HWND hwnd, MDICLIENTINFO* ci, WORD recalc)
+{
+ if( !ci->sbNeedUpdate )
+   {
+      ci->sbNeedUpdate = TRUE;
+      PostMessage( hwnd, WM_MDICALCCHILDSCROLL, 0, 0);
+   }
+ ci->sbRecalc = recalc;
 }
 
 /**********************************************************************
@@ -427,9 +437,8 @@ HWND MDIDestroyChild(WND *w_parent, MDICLIENTINFO *ci, HWND parent,
 
         if (flagDestroy)
 	   {
+	     MDI_PostUpdate(GetParent(child), ci, SB_BOTH+1);
             DestroyWindow(child);
-	    PostMessage(parent,WM_MDICALCCHILDSCROLL,0,0L);
-	    ci->sbRecalc |= (SB_BOTH+1);
 	   }
     }
 
@@ -808,9 +817,8 @@ BOOL MDI_AugmentFrameMenu(MDICLIENTINFO* ci, WND *frame, HWND hChild)
 
  child->dwStyle &= ~WS_SYSMENU;
 
- /* redraw frame */
- SetWindowPos(frame->hwndSelf, 0,0,0,0,0, SWP_FRAMECHANGED | SWP_NOSIZE | 
-                                 SWP_NOMOVE | SWP_NOACTIVATE | SWP_NOZORDER );
+ /* redraw menu */
+ DrawMenuBar(frame->hwndSelf);
 
  return 1;
 }
@@ -837,9 +845,8 @@ BOOL MDI_RestoreFrameMenu( WND *frameWnd, HWND hChild)
  RemoveMenu(frameWnd->wIDmenu,0,MF_BYPOSITION);
  DeleteMenu(frameWnd->wIDmenu,nItems-1,MF_BYPOSITION);
 
-  /* redraw frame */
- SetWindowPos(hChild, 0,0,0,0,0, SWP_FRAMECHANGED | SWP_NOSIZE | SWP_NOMOVE |
-                                 SWP_NOACTIVATE | SWP_NOZORDER );
+ DrawMenuBar(frameWnd->hwndSelf);
+
  return 1;
 }
 
@@ -962,7 +969,7 @@ LRESULT MDIClientWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 	ci->flagChildMaximized  = 0;
 	ci->nActiveChildren	= 0;
 	ci->hFrameTitle		= frameWnd->hText;
-	ci->sbStop		= 0;
+	ci->sbNeedUpdate	= 0;
 	ci->self		= hwnd;
 	ci->obmClose		= CreateMDIMenuBitmap();
 	ci->obmRestore		= LoadBitmap(0, MAKEINTRESOURCE(OBM_RESTORE));
@@ -1014,11 +1021,11 @@ LRESULT MDIClientWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 		((LONG) (ci->flagChildMaximized>0) << 16));
 
       case WM_MDIICONARRANGE:
-	       ci->sbStop = TRUE;
-	       MDIIconArrange(hwnd);
-	       ci->sbStop = FALSE;
-	       SendMessage(hwnd,WM_MDICALCCHILDSCROLL,0,0L);
-	       return 0;
+	ci->sbNeedUpdate = TRUE;
+	MDIIconArrange(hwnd);
+	ci->sbRecalc = SB_BOTH+1;
+	SendMessage(hwnd,WM_MDICALCCHILDSCROLL,0,0L);
+	return 0;
 	
       case WM_MDIMAXIMIZE:
 	ShowWindow((HWND)wParam, SW_MAXIMIZE);
@@ -1040,17 +1047,17 @@ LRESULT MDIClientWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 #endif
 	
       case WM_MDITILE:
-	ci->sbStop = TRUE;
+	ci->sbNeedUpdate = TRUE;
 	ShowScrollBar(hwnd,SB_BOTH,FALSE);
 	MDITile(hwnd, ci,wParam);
-        ci->sbStop = FALSE;
+        ci->sbNeedUpdate = FALSE;
         return 0;
 
       case WM_VSCROLL:
       case WM_HSCROLL:
-	ci->sbStop = TRUE;
+	ci->sbNeedUpdate = TRUE;
         ScrollChildren(hwnd,message,wParam,lParam);
-	ci->sbStop = FALSE;
+	ci->sbNeedUpdate = FALSE;
         return 0;
 
       case WM_SETFOCUS:
@@ -1099,18 +1106,16 @@ LRESULT MDIClientWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 			rect.right - rect.left, rect.bottom - rect.top, 1);
 	  }
 	else
-	  {
-	     PostMessage(hwnd,WM_MDICALCCHILDSCROLL,0,0L);
-	     ci->sbRecalc |= (SB_BOTH+1);
-	  }
+	  MDI_PostUpdate(hwnd, ci, SB_BOTH+1);
+
 	break;
 
       case WM_MDICALCCHILDSCROLL:
-	if( !ci->sbStop )
+	if( ci->sbNeedUpdate )
 	  if( ci->sbRecalc )
 	    {
 	      CalcChildScroll(hwnd, ci->sbRecalc-1);
-	      ci->sbRecalc = 0;
+	      ci->sbRecalc = ci->sbNeedUpdate = 0;
 	    }
 	return 0;
     }
@@ -1256,11 +1261,10 @@ LRESULT DefMDIChildProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 	return 0;
 
       case WM_SETVISIBLE:
-         if( !ci->sbStop && !ci->flagChildMaximized)
-          {
-            PostMessage(ci->self,WM_MDICALCCHILDSCROLL,0,0L);
-            ci->sbRecalc |= (SB_BOTH+1);
-          }
+         if( ci->flagChildMaximized)
+             ci->sbNeedUpdate = 0;
+	 else
+            MDI_PostUpdate(clientWnd->hwndSelf, ci, SB_BOTH+1);
 	break;
 
       case WM_SIZE:
@@ -1305,12 +1309,8 @@ LRESULT DefMDIChildProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 	    if( switchTo )
 	        SendMessage( switchTo, WM_CHILDACTIVATE, 0, 0L);
 	  }
-	    
-        if( !ci->sbStop )
-          {
-            PostMessage(ci->self,WM_MDICALCCHILDSCROLL,0,0L);
-            ci->sbRecalc |= (SB_BOTH+1);
-          }
+	  
+	MDI_PostUpdate(clientWnd->hwndSelf, ci, SB_BOTH+1);
 	break;
 
       case WM_MENUCHAR:
@@ -1379,27 +1379,47 @@ BOOL TranslateMDISysAccel(HWND hwndClient, LPMSG msg)
 void CalcChildScroll( HWND hwnd, WORD scroll )
 {
     RECT childRect, clientRect;
-    WND *pWnd;
+    INT  vmin, vmax, hmin, hmax, vpos, hpos;
+    BOOL noscroll = FALSE;
+    WND *pWnd, *Wnd;
 
-    if (!(pWnd = WIN_FindWndPtr( hwnd ))) return;
+    if (!(Wnd = pWnd = WIN_FindWndPtr( hwnd ))) return;
     GetClientRect( hwnd, &clientRect );
     SetRectEmpty( &childRect );
-    for (pWnd = pWnd->child; pWnd; pWnd = pWnd->next)
-        UnionRect( &childRect, &pWnd->rectWindow, &childRect );
+
+    for ( pWnd = pWnd->child; pWnd; pWnd = pWnd->next )
+	{
+          UnionRect( &childRect, &pWnd->rectWindow, &childRect );
+	  if( pWnd->dwStyle & WS_MAXIMIZE )
+	      noscroll = TRUE;
+	} 
     UnionRect( &childRect, &clientRect, &childRect );
 
-    if ((scroll == SB_HORZ) || (scroll == SB_BOTH))
-    {
-        SetScrollRange( hwnd, SB_HORZ, childRect.left,
-                        childRect.right - clientRect.right, FALSE );
-        SetScrollPos( hwnd, SB_HORZ, clientRect.left - childRect.left, TRUE );
-    }
-    if ((scroll == SB_VERT) || (scroll == SB_BOTH))
-    {
-        SetScrollRange( hwnd, SB_VERT, childRect.top,
-                        childRect.bottom - clientRect.bottom, FALSE );
-        SetScrollPos( hwnd, SB_HORZ, clientRect.top - childRect.top, TRUE );
-    }
+    /* jump through the hoops to prevent excessive flashing 
+     */
+
+    hmin = childRect.left; hmax = childRect.right - clientRect.right;
+    hpos = clientRect.left - childRect.left;
+    vmin = childRect.top; vmax = childRect.bottom - clientRect.bottom;
+    vpos = clientRect.top - childRect.top;
+
+    if( noscroll )
+	ShowScrollBar(hwnd, SB_BOTH, FALSE);
+    else
+    switch( scroll )
+      {
+	case SB_HORZ:
+			vpos = hpos; vmin = hmin; vmax = hmax;
+	case SB_VERT:
+			SetScrollPos(hwnd, scroll, vpos, FALSE);
+			SetScrollRange(hwnd, scroll, vmin, vmax, TRUE);
+			break;
+	case SB_BOTH:
+			SCROLL_SetNCSbState( Wnd, vmin, vmax, vpos,
+						  hmin, hmax, hpos);
+			SetWindowPos(hwnd, 0, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE
+                                 | SWP_NOACTIVATE | SWP_NOZORDER | SWP_FRAMECHANGED );
+      }    
 }
 
 /***********************************************************************

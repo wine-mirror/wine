@@ -298,6 +298,7 @@ BOOL  GetOpenFileName(LPOPENFILENAME lpofn);
 BOOL  GetSaveFileName(LPOPENFILENAME lpofn);
 BOOL  PrintDlg(LPPRINTDLG lpPrint);
 BOOL  ReplaceText(LPFINDREPLACE lpFind);
+BOOL  ChooseFont(LPCHOOSEFONT lpChFont);
 
 LRESULT FileOpenDlgProc(HWND hWnd, UINT wMsg, WPARAM wParam, LPARAM lParam);
 LRESULT FileSaveDlgProc(HWND hWnd, UINT wMsg, WPARAM wParam, LPARAM lParam);
@@ -306,6 +307,7 @@ LRESULT FindTextDlgProc(HWND hWnd, UINT wMsg, WPARAM wParam, LPARAM lParam);
 LRESULT ReplaceTextDlgProc(HWND hWnd, UINT wMsg, WPARAM wParam, LPARAM lParam);
 LRESULT PrintDlgProc(HWND hWnd, UINT wMsg, WPARAM wParam, LPARAM lParam);
 LRESULT PrintSetupDlgProc(HWND hWnd, UINT wMsg, WPARAM wParam, LPARAM lParam);
+LRESULT FormatCharDlgProc(HWND hWnd, UINT wMsg, WPARAM wParam, LPARAM lParam);
 
 #endif 		/* #ifdef COMMDLG_H */
 

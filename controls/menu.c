@@ -2227,8 +2227,9 @@ BOOL SetMenu(HWND hWnd, HMENU hMenu)
 	    lpmenu->wFlags &= ~MF_POPUP;  /* Can't be a popup */
 	    lpmenu->Height = 0;  /* Make sure we recalculate the size */
 	}
-	SetWindowPos( hWnd, 0, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE |
-		      SWP_NOACTIVATE | SWP_NOZORDER | SWP_FRAMECHANGED );
+        if (IsWindowVisible(hWnd))
+            SetWindowPos( hWnd, 0, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE |
+                          SWP_NOACTIVATE | SWP_NOZORDER | SWP_FRAMECHANGED );
 	return TRUE;
 }
 

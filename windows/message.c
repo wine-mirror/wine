@@ -201,6 +201,9 @@ static BOOL MSG_PeekHardwareMsg( MSG *msg, HWND hwnd, WORD first, WORD last,
     MESSAGEQUEUE *sysMsgQueue = QUEUE_GetSysQueue();
     int i, pos = sysMsgQueue->nextMessage;
 
+    /* If the queue is empty, attempt to fill it */
+    if (!sysMsgQueue->msgCount && XPending(display)) MSG_WaitXEvent( 0 );
+
     for (i = 0; i < sysMsgQueue->msgCount; i++, pos++)
     {
         if (pos >= sysMsgQueue->queueSize) pos = 0;
@@ -362,11 +365,11 @@ BOOL MSG_WaitXEvent( LONG maxWait )
     {
 
 #ifdef CONFIG_IPC
-	if (DDE_GetRemoteMessage())
+        if (DDE_GetRemoteMessage())
         {
-	    while(DDE_GetRemoteMessage()) ;
-	    return TRUE;
-	}
+            while(DDE_GetRemoteMessage()) ;
+            return TRUE;
+        }
 #endif  /* CONFIG_IPC */
 
         XNextEvent( display, &event );

@@ -37,7 +37,7 @@ typedef struct
     HMENU  hWindowMenu;
     WORD   idFirstChild;       /* order is 3.1-like up to this point */
     HANDLE hFrameTitle;
-    WORD   sbStop;
+    WORD   sbNeedUpdate;
     WORD   sbRecalc;
     HBITMAP obmClose;
     HBITMAP obmRestore;

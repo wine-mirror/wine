@@ -2,6 +2,7 @@
  * Metafile functions
  *
  * Copyright  David W. Metcalfe, 1994
+ *            Niels de Carpentier, 1996
  *
  */
 
@@ -12,7 +13,7 @@
 #include "file.h"
 #include "metafile.h"
 #include "stddebug.h"
-/* #define DEBUG_METAFILE */
+#include "callback.h"
 #include "debug.h"
 
 #define HTINCR  10      /* handle table allocation size increment */
@@ -23,52 +24,60 @@ static int HTLen;       /* allocated length of handle table */
 /******************************************************************
  *         GetMetafile         GDI.124 By Kenny MacDonald 30 Nov 94
  */
+
 HMETAFILE GetMetaFile(LPSTR lpFilename)
 {
   HMETAFILE hmf;
-  METAFILE *mf;
   METAHEADER *mh;
-
+  HFILE hFile;
+  DWORD size;
+  
   dprintf_metafile(stddeb,"GetMetaFile: %s\n", lpFilename);
 
   if (!lpFilename)
     return 0;
 
-  hmf = GlobalAlloc(GMEM_MOVEABLE, sizeof(METAFILE));
-  mf = (METAFILE *)GlobalLock(hmf);
-  if (!mf) {
-    GlobalFree(hmf);
-    return 0;
-  }
-
-  mf->hMetaHdr = GlobalAlloc(GMEM_MOVEABLE, MFHEADERSIZE);
-  mh = (METAHEADER *)GlobalLock(mf->hMetaHdr);
+  hmf = GlobalAlloc(GMEM_MOVEABLE, MFHEADERSIZE);
+  mh = (METAHEADER *)GlobalLock(hmf);
+  
   if (!mh) {
-    GlobalFree(mf->hMetaHdr);
     GlobalFree(hmf);
     return 0;
   }
-  strcpy(mf->Filename, lpFilename);
-  mf->wMagic = METAFILE_MAGIC;
-  if ((mf->hFile = _lopen(lpFilename, OF_READ)) == HFILE_ERROR) {
-    GlobalFree(mf->hMetaHdr);
+  
+  if ((hFile = _lopen(lpFilename, OF_READ)) == HFILE_ERROR) {
     GlobalFree(hmf);
     return 0;
   }
-  if (FILE_Read(mf->hFile, (char *)mh, MFHEADERSIZE) == HFILE_ERROR) {
-    GlobalFree(mf->hMetaHdr);
+  
+  if (FILE_Read(hFile, (char *)mh, MFHEADERSIZE) == HFILE_ERROR) {
     GlobalFree(hmf);
     return 0;
   }
-  _lclose(mf->hFile);
+  
+  size = mh->mtSize * 2;         /* alloc memory for whole metafile */
+  GlobalUnlock(hmf);
+  hmf = GlobalReAlloc(hmf,size,GMEM_MOVEABLE);
+  mh = (METAHEADER *)GlobalLock(hmf);
+  
+  if (!mh) {
+    GlobalFree(hmf);
+    return 0;
+  }
+  
+  if (FILE_Read(hFile, (char*)mh + mh->mtHeaderSize * 2, 
+	        size - mh->mtHeaderSize * 2) == HFILE_ERROR) {
+    GlobalFree(hmf);
+    return 0;
+  }
+  
+  _lclose(hFile);
 
   if (mh->mtType != 1) {
-    GlobalFree(mf->hMetaHdr);
     GlobalFree(hmf);
     return 0;
   }
-
-  GlobalUnlock(mf->hMetaHdr);
+  
   GlobalUnlock(hmf);
   return hmf;
 
@@ -77,34 +86,30 @@ HMETAFILE GetMetaFile(LPSTR lpFilename)
 /******************************************************************
  *         CreateMetafile         GDI.125
  */
+
 HANDLE CreateMetaFile(LPCTSTR lpFilename)
 {
     DC *dc;
     HANDLE handle;
-    METAFILE *mf;
     METAHEADER *mh;
-    HANDLETABLE *ht;
-
+    int hFile;
+    
     dprintf_metafile(stddeb,"CreateMetaFile: %s\n", lpFilename);
 
     handle = GDI_AllocObject(sizeof(DC), METAFILE_DC_MAGIC);
-    if (!handle) return 0;
+    
+    if (!handle) 
+      return 0;
+    
     dc = (DC *)GDI_HEAP_LIN_ADDR(handle);
 
-    if (!(dc->w.hMetaFile = GlobalAlloc(GMEM_MOVEABLE, sizeof(METAFILE)))) {
+    if (!(dc->w.hMetaFile = GlobalAlloc(GMEM_MOVEABLE, sizeof(METAHEADER)))) {
         GDI_FreeObject(handle);
 	return 0;
     }
-    mf = (METAFILE *)GlobalLock(dc->w.hMetaFile);
-    if (!(mf->hMetaHdr = GlobalAlloc(GMEM_MOVEABLE, sizeof(METAHEADER))))
-    {
-        GDI_FreeObject(handle);
-	GlobalFree(dc->w.hMetaFile);
-	return 0;
-    }
-    mh = (METAHEADER *)GlobalLock(mf->hMetaHdr);
+    
+    mh = (METAHEADER *)GlobalLock(dc->w.hMetaFile);
 
-    mf->wMagic = METAFILE_MAGIC;
     mh->mtHeaderSize = MFHEADERSIZE / 2;
     mh->mtVersion = MFVERSION;
     mh->mtSize = MFHEADERSIZE / 2;
@@ -114,15 +119,15 @@ HANDLE CreateMetaFile(LPCTSTR lpFilename)
 
     if (lpFilename)          /* disk based metafile */
     {
-	mh->mtType = 1;
-	strcpy(mf->Filename, lpFilename);
-	mf->hFile = _lcreat(lpFilename, 0);
-	if (_lwrite(mf->hFile, (char *)mh, MFHEADERSIZE) == -1)
+	mh->mtType = 1;     /* disk */
+	hFile = _lcreat(lpFilename, 0);
+	if (_lwrite(hFile, (char *)mh, MFHEADERSIZE) == -1)
 	{
-	    GlobalFree(mf->hMetaHdr);
 	    GlobalFree(dc->w.hMetaFile);
 	    return 0;
 	}
+	mh->mtNoParameters = hFile; /* store file descriptor here */
+	                            /* windows probably uses this too*/
     }
     else                     /* memory based metafile */
 	mh->mtType = 0;
@@ -131,10 +136,48 @@ HANDLE CreateMetaFile(LPCTSTR lpFilename)
     HTLen = HTINCR;
     hHT = GlobalAlloc(GMEM_MOVEABLE | GMEM_ZEROINIT, 
 		      sizeof(HANDLETABLE) * HTLen);
-    ht = (HANDLETABLE *)GlobalLock(hHT);
-
-    GlobalUnlock(mf->hMetaHdr);
+    
     GlobalUnlock(dc->w.hMetaFile);
+    return handle;
+}
+
+
+/******************************************************************
+ *         CopyMetafile         GDI.151 Niels de Carpentier, April 1996
+ */
+
+HMETAFILE CopyMetaFile(HMETAFILE hSrcMetaFile, LPCSTR lpFilename)
+{
+    HMETAFILE handle = 0;
+    METAHEADER *mh;
+    METAHEADER *mh2;
+    int hFile;
+    
+    dprintf_metafile(stddeb,"CopyMetaFile: %s\n", lpFilename);
+    
+    mh = (METAHEADER *)GlobalLock(hSrcMetaFile);
+    
+    if (!mh)
+      return 0;
+    
+    if (lpFilename)          /* disk based metafile */
+        {
+	hFile = _lcreat(lpFilename, 0);
+	if (_lwrite(hFile, (char *)mh, mh->mtSize * 2) == -1)
+	    {
+	    _lclose(hFile);
+	    return 0;
+	    }
+	_lclose(hFile);
+        }
+    else                     /* memory based metafile */
+        {
+	handle = GlobalAlloc(GMEM_MOVEABLE,mh->mtSize * 2);
+	mh2 = (METAHEADER *)GlobalLock(handle);
+	memcpy(mh2,mh, mh->mtSize * 2);
+	GlobalUnlock(handle);
+        }
+    
     return handle;
 }
 
@@ -142,52 +185,53 @@ HANDLE CreateMetaFile(LPCTSTR lpFilename)
 /******************************************************************
  *         CloseMetafile         GDI.126
  */
+
 HMETAFILE CloseMetaFile(HDC hdc)
 {
     DC *dc;
-    METAFILE *mf;
     METAHEADER *mh;
     HMETAFILE hmf;
-/*    METARECORD *mr = (METARECORD *)&buffer;*/
-
+    HFILE hFile;
+    
     dprintf_metafile(stddeb,"CloseMetaFile\n");
 
     dc = (DC *)GDI_GetObjPtr(hdc, METAFILE_DC_MAGIC);
-    if (!dc) return 0;
-    mf = (METAFILE *)GlobalLock(dc->w.hMetaFile);
-    mh = (METAHEADER *)GlobalLock(mf->hMetaHdr);
+    
+    if (!dc) 
+      return 0;
+    
+    mh = (METAHEADER *)GlobalLock(dc->w.hMetaFile);
 
     /* Construct the end of metafile record - this is documented
      * in SDK Knowledgebase Q99334.
      */
+
     if (!MF_MetaParam0(dc, META_EOF))
     {
-	GlobalFree(mf->hMetaHdr);
 	GlobalFree(dc->w.hMetaFile);
 	return 0;
     }	
 
     if (mh->mtType == 1)        /* disk based metafile */
     {
-	if (_llseek(mf->hFile, 0L, 0) == -1)
-	{
-	    GlobalFree(mf->hMetaHdr);
-	    GlobalFree(dc->w.hMetaFile);
-	    return 0;
-	}
-	if (_lwrite(mf->hFile, (char *)mh, MFHEADERSIZE) == -1)
-	{
-	    GlobalFree(mf->hMetaHdr);
-	    GlobalFree(dc->w.hMetaFile);
-	    return 0;
-	}
-	_lclose(mf->hFile);
+        hFile = mh->mtNoParameters;
+	mh->mtNoParameters = 0;
+        if (_llseek(hFile, 0L, 0) == -1)
+        {
+            GlobalFree(dc->w.hMetaFile);
+            return 0;
+        }
+        if (_lwrite(hFile, (char *)mh, MFHEADERSIZE) == -1)
+        {
+            GlobalFree(dc->w.hMetaFile);
+            return 0;
+        }
+        _lclose(hFile);
     }
 
     /* delete the handle table */
     GlobalFree(hHT);
 
-    GlobalUnlock(mf->hMetaHdr);
     hmf = dc->w.hMetaFile;
     GlobalUnlock(hmf);
     GDI_FreeObject(hdc);
@@ -198,14 +242,14 @@ HMETAFILE CloseMetaFile(HDC hdc)
 /******************************************************************
  *         DeleteMetafile         GDI.127
  */
+
 BOOL DeleteMetaFile(HMETAFILE hmf)
 {
-    METAFILE *mf = (METAFILE *)GlobalLock(hmf);
+    METAHEADER *mh = (METAHEADER *)GlobalLock(hmf);
 
-    if (!mf || mf->wMagic != METAFILE_MAGIC)
+    if (!mh)
 	return FALSE;
 
-    GlobalFree(mf->hMetaHdr);
     GlobalFree(hmf);
     return TRUE;
 }
@@ -214,60 +258,73 @@ BOOL DeleteMetaFile(HMETAFILE hmf)
 /******************************************************************
  *         PlayMetafile         GDI.123
  */
+
 BOOL PlayMetaFile(HDC hdc, HMETAFILE hmf)
 {
-    METAFILE *mf = (METAFILE *)GlobalLock(hmf);
-    METAHEADER *mh;
+    METAHEADER *mh = (METAHEADER *)GlobalLock(hmf);
     METARECORD *mr;
     HANDLETABLE *ht;
-    char *buffer = (char *)NULL;
-
-    if (mf->wMagic != METAFILE_MAGIC)
-	return FALSE;
-
-    mh = (METAHEADER *)GlobalLock(mf->hMetaHdr);
-    if (mh->mtType == 1)       /* disk based metafile */
-    {
-	mf->hFile = _lopen(mf->Filename, OF_READ);
-	mf->hBuffer = GlobalAlloc(GMEM_MOVEABLE, mh->mtMaxRecord * 2);
-	buffer = (char *)GlobalLock(mf->hBuffer);
-	_llseek(mf->hFile, mh->mtHeaderSize * 2, 0);
-	mf->MetaOffset = mh->mtHeaderSize * 2;
-    }
-    else if (mh->mtType == 0)   /* memory based metafile */
-	mf->MetaOffset = mh->mtHeaderSize * 2;
-    else                       /* not a valid metafile type */
-	return FALSE;
-
+    int offset = 0;
+    
+    dprintf_metafile(stddeb,"PlayMetaFile(%04x %04x)\n",hdc,hmf);
+    
     /* create the handle table */
     hHT = GlobalAlloc(GMEM_MOVEABLE|GMEM_ZEROINIT,
 		      sizeof(HANDLETABLE) * mh->mtNoObjects);
     ht = (HANDLETABLE *)GlobalLock(hHT);
 
     /* loop through metafile playing records */
-    while (mf->MetaOffset < mh->mtSize * 2)
+    offset = mh->mtHeaderSize * 2;
+    while (offset < mh->mtSize * 2)
     {
-	if (mh->mtType == 1)   /* disk based metafile */
-	{
-	    FILE_Read(mf->hFile, buffer, sizeof(METARECORD));
-	    mr = (METARECORD *)buffer;
-	    FILE_Read(mf->hFile, (char *)(mr->rdParam + 1), (mr->rdSize * 2) -
-		                                       sizeof(METARECORD));
-	    mf->MetaOffset += mr->rdSize * 2;
-	}
-	else                   /* memory based metafile */
-	{
-	    mr = (METARECORD *)((char *)mh + mf->MetaOffset);
-	    mf->MetaOffset += mr->rdSize * 2;
-	}
+	mr = (METARECORD *)((char *)mh + offset);
+	dprintf_metafile(stddeb,"offset = %04x size = %08lx function = %04x\n",
+			 offset,mr->rdSize,mr->rdFunction);
+	offset += mr->rdSize * 2;
 	PlayMetaFileRecord(hdc, ht, mr, mh->mtNoObjects);
     }
 
-    /* close disk based metafile and free buffer */
-    if (mh->mtType == 1)
+    /* free handle table */
+    GlobalFree(hHT);
+
+    return TRUE;
+}
+
+
+/******************************************************************
+ *         EnumMetafile         GDI.175    
+ *                                    Niels de carpentier, april 1996
+ */
+
+BOOL EnumMetaFile(HDC hdc, HMETAFILE hmf, MFENUMPROC lpEnumFunc,LPARAM lpData)
+{
+    METAHEADER *mh = (METAHEADER *)GlobalLock(hmf);
+    METARECORD *mr;
+    HANDLETABLE *ht;
+    int offset = 0;
+  
+    dprintf_metafile(stddeb,"EnumMetaFile(%04x, %04x, %08lx, %08lx)\n",
+		     hdc, hmf, (DWORD)lpEnumFunc, lpData);
+   
+    /* create the handle table */
+    
+    hHT = GlobalAlloc(GMEM_MOVEABLE | GMEM_ZEROINIT,
+		     sizeof(HANDLETABLE) * mh->mtNoObjects);
+    ht = (HANDLETABLE *)GlobalLock(hHT);
+   
+    offset = mh->mtHeaderSize * 2;
+    
+    /* loop through metafile records */
+    
+    while (offset < (mh->mtSize * 2))
     {
-	GlobalFree(mf->hBuffer);
-	_lclose(mf->hFile);
+	mr = (METARECORD *)((char *)mh + offset);
+        if (!CallEnumMetafileProc(lpEnumFunc, hdc, MAKE_SEGPTR(ht),
+	                          MAKE_SEGPTR(mr), mh->mtNoObjects,
+				  (LONG)lpData))
+	    break;
+
+	offset += (mr->rdSize * 2);
     }
 
     /* free handle table */
@@ -280,6 +337,7 @@ BOOL PlayMetaFile(HDC hdc, HMETAFILE hmf)
 /******************************************************************
  *         PlayMetaFileRecord      GDI.176
  */
+
 void PlayMetaFileRecord(HDC hdc, HANDLETABLE *ht, METARECORD *mr,
 			                           WORD nHandles)
 {
@@ -288,6 +346,9 @@ void PlayMetaFileRecord(HDC hdc, HANDLETABLE *ht, METARECORD *mr,
     char *ptr;
     BITMAPINFOHEADER *infohdr;
 
+    dprintf_metafile(stddeb,"PlayMetaFileRecord(%04x %08lx %08lx %04x)\n",
+		     hdc,(LONG)ht, (LONG)mr, nHandles);
+    
     switch (mr->rdFunction)
     {
     case META_EOF:
@@ -552,7 +613,52 @@ void PlayMetaFileRecord(HDC hdc, HANDLETABLE *ht, METARECORD *mr,
         }
         break;
         /* End new metafile operations. */
-
+    
+    case META_STRETCHDIB:
+      {
+      LPSTR bits;
+      LPBITMAPINFO info;
+      int offset;
+      info = (LPBITMAPINFO) &(mr->rdParam[11]);
+      if (info->bmiHeader.biSize == sizeof(BITMAPINFOHEADER))
+	{
+        if (info->bmiHeader.biClrUsed)
+	  {
+	  if (info->bmiHeader.biClrUsed < (1 << info->bmiHeader.biBitCount))
+	    offset = info->bmiHeader.biClrUsed * 4;
+          else
+	    offset = (1 << info->bmiHeader.biBitCount) * 4;
+          }
+        else
+	  offset = (1 << info->bmiHeader.biBitCount) * 4;
+	}
+      else if (info->bmiHeader.biSize == sizeof(BITMAPCOREHEADER))
+	{
+	if (info->bmiHeader.biClrUsed)
+	  {
+	  if (info->bmiHeader.biClrUsed < (1 << info->bmiHeader.biBitCount))
+	    offset = info->bmiHeader.biClrUsed * 3;
+          else
+	    offset = (1 << info->bmiHeader.biBitCount) * 3;
+          }
+        else
+	  offset = (1 << info->bmiHeader.biBitCount) * 3;
+	}
+      else
+	{
+	fprintf(stderr,"Unknown size for BITMAPHEADER in PlayMetaRecord!\n");
+	break;
+	}
+	
+      offset += info->bmiHeader.biSize; 
+      bits = (LPSTR) info + offset;
+      StretchDIBits(hdc,mr->rdParam[10],mr->rdParam[9],mr->rdParam[8],
+		    mr->rdParam[7],mr->rdParam[6],mr->rdParam[5],
+		    mr->rdParam[4],mr->rdParam[3],bits,info,
+		    mr->rdParam[2],(DWORD)mr->rdParam[0]);
+      }
+      break;
+		    
     default:
 	fprintf(stddeb,"PlayMetaFileRecord: Unknown record type %x\n",
 	                                      mr->rdFunction);
@@ -564,33 +670,12 @@ void PlayMetaFileRecord(HDC hdc, HANDLETABLE *ht, METARECORD *mr,
  *
  * Trade in a meta file object handle for a handle to the meta file memory
  */
+
 HANDLE GetMetaFileBits(HMETAFILE hmf)
 {
+    dprintf_metafile(stddeb,"GetMetaFileBits: hMem out: %04x\n", hmf);
 
-    /* save away the meta file bits handle */
-    METAFILE *mf = (METAFILE *)GlobalLock(hmf);
-    HANDLE hMem = mf->hMetaHdr;
-    METAHEADER *mh = (METAHEADER *)GlobalLock(hMem);
-
-    dprintf_metafile(stddeb,"GetMetaFileBits: hmf in: %04x\n", hmf);
-
-    /* can't get bits of disk based metafile */
-    /* FIXME: should the disk file be loaded in this case? */
-    if(mh->mtType == 1) {
-        fprintf(stderr,
-            "GetMetaFileBits: application requested bits of disk meta file.\n");
-        GlobalUnlock(hMem);
-        GlobalUnlock(hmf);
-        return FALSE;
-    }
-    
-    /* unlock the memory and invalidate the metafile handle */
-    GlobalUnlock(hMem);
-    GlobalFree(hmf);
-
-    dprintf_metafile(stddeb,"GetMetaFileBits: hMem out: %04x\n", hMem);
-
-    return hMem;
+    return hmf;
 }
 
 /******************************************************************
@@ -598,76 +683,50 @@ HANDLE GetMetaFileBits(HMETAFILE hmf)
  *
  * Trade in a meta file memory handle for a handle to a meta file object
  */
+
 HMETAFILE SetMetaFileBits(HANDLE hMem)
 {
-    HMETAFILE hmf;
-    METAFILE *mf;
-    METAHEADER *mh = (METAHEADER *)GlobalLock(hMem);
+    dprintf_metafile(stddeb,"SetMetaFileBits: hmf out: %04x\n", hMem);
 
-    dprintf_metafile(stddeb,"SetMetaFileBits: hMem in: %04x\n", hMem);
-
-    if (!mh) return FALSE;
-
-    /* now it is a memory meta file */
-    mh->mtType = 0;
-
-    hmf = GlobalAlloc(GMEM_MOVEABLE, sizeof(METAFILE));
-    mf = (METAFILE *)GlobalLock(hmf);
-    if (!mf) {
-      GlobalUnlock(hMem);
-      GlobalFree(hmf);
-      return FALSE;
-    }
-
-    /* use the supplied memory handle */
-    mf->hMetaHdr = hMem;
-    mf->wMagic = METAFILE_MAGIC;
-    mf->MetaOffset = mh->mtHeaderSize * 2;
-    mf->hFile = (int) (mf->hBuffer = (HANDLE) NULL);
-
-    GlobalUnlock(hMem);
-    GlobalUnlock(hmf);
-
-    dprintf_metafile(stddeb,"SetMetaFileBits: hmf out: %04x\n", hmf);
-
-    return hmf;
+    return hMem;
 }
 
 /******************************************************************
  *         MF_WriteRecord
  */
-BOOL MF_WriteRecord(HMETAFILE hmf, METARECORD *mr, WORD rlen)
+
+HMETAFILE MF_WriteRecord(HMETAFILE hmf, METARECORD *mr, WORD rlen)
 {
     DWORD len;
-    METAFILE *mf = (METAFILE *)GlobalLock(hmf);
-    METAHEADER *mh = (METAHEADER *)GlobalLock(mf->hMetaHdr);
-
+    METAHEADER *mh = (METAHEADER *)GlobalLock(hmf);
+    
     if (mh->mtType == 0)          /* memory based metafile */
     {
 	len = mh->mtSize * 2 + rlen;
-	GlobalUnlock(mf->hMetaHdr);
-	mf->hMetaHdr = GlobalReAlloc(mf->hMetaHdr, len, GMEM_MOVEABLE);
-	mh = (METAHEADER *)GlobalLock(mf->hMetaHdr);
+	GlobalUnlock(hmf);
+	hmf = GlobalReAlloc(hmf, len, GMEM_MOVEABLE); /* hmf can change */
+	mh = (METAHEADER *)GlobalLock(hmf);
 	memcpy((WORD *)mh + mh->mtSize, mr, rlen);
     }
     else if (mh->mtType == 1)     /* disk based metafile */
     {
-	if (_lwrite(mf->hFile, (char *)mr, rlen) == -1)
+      dprintf_metafile(stddeb,"Writing record to disk\n");
+	if (_lwrite(mh->mtNoParameters, (char *)mr, rlen) == -1)
 	{
-	    GlobalUnlock(mf->hMetaHdr);
-	    return FALSE;
+	    GlobalUnlock(hmf);
+	    return 0;
 	}
     }
     else
     {
-	GlobalUnlock(mf->hMetaHdr);
-	return FALSE;
+	GlobalUnlock(hmf);
+	return 0;
     }
 
     mh->mtSize += rlen / 2;
     mh->mtMaxRecord = MAX(mh->mtMaxRecord, rlen / 2);
-    GlobalUnlock(mf->hMetaHdr);
-    return TRUE;
+    GlobalUnlock(hmf);
+    return hmf;
 }
 
 
@@ -676,6 +735,7 @@ BOOL MF_WriteRecord(HMETAFILE hmf, METARECORD *mr, WORD rlen)
  *
  *    Add a handle to an external handle table and return the index
  */
+
 int MF_AddHandle(HANDLETABLE *ht, WORD htlen, HANDLE hobj)
 {
     int i;
@@ -697,6 +757,7 @@ int MF_AddHandle(HANDLETABLE *ht, WORD htlen, HANDLE hobj)
  *
  *    Add a handle to the internal handle table and return the index
  */
+
 int MF_AddHandleInternal(HANDLE hobj)
 {
     int i;
@@ -725,14 +786,19 @@ int MF_AddHandleInternal(HANDLE hobj)
 /******************************************************************
  *         MF_MetaParam0
  */
+
 BOOL MF_MetaParam0(DC *dc, short func)
 {
     char buffer[8];
     METARECORD *mr = (METARECORD *)&buffer;
-
+    HMETAFILE handle;
+    
     mr->rdSize = 3;
     mr->rdFunction = func;
-    return MF_WriteRecord(dc->w.hMetaFile, mr, mr->rdSize * 2);
+    handle = MF_WriteRecord(dc->w.hMetaFile, mr, mr->rdSize * 2);
+    dc->w.hMetaFile = handle;
+    
+    return handle; 
 }
 
 
@@ -743,11 +809,15 @@ BOOL MF_MetaParam1(DC *dc, short func, short param1)
 {
     char buffer[8];
     METARECORD *mr = (METARECORD *)&buffer;
-
+    HMETAFILE handle;
+    
     mr->rdSize = 4;
     mr->rdFunction = func;
     *(mr->rdParam) = param1;
-    return MF_WriteRecord(dc->w.hMetaFile, mr, mr->rdSize * 2);
+    handle = MF_WriteRecord(dc->w.hMetaFile, mr, mr->rdSize * 2);
+    dc->w.hMetaFile = handle;
+
+    return handle;
 }
 
 
@@ -758,43 +828,54 @@ BOOL MF_MetaParam2(DC *dc, short func, short param1, short param2)
 {
     char buffer[10];
     METARECORD *mr = (METARECORD *)&buffer;
-
+    HMETAFILE handle;
+    
     mr->rdSize = 5;
     mr->rdFunction = func;
     *(mr->rdParam) = param2;
     *(mr->rdParam + 1) = param1;
-    return MF_WriteRecord(dc->w.hMetaFile, mr, mr->rdSize * 2);
+    handle = MF_WriteRecord(dc->w.hMetaFile, mr, mr->rdSize * 2);
+    dc->w.hMetaFile = handle;
+    
+    return handle;
 }
 
 
 /******************************************************************
  *         MF_MetaParam4
  */
+
 BOOL MF_MetaParam4(DC *dc, short func, short param1, short param2, 
 		   short param3, short param4)
 {
     char buffer[14];
     METARECORD *mr = (METARECORD *)&buffer;
-
+    HMETAFILE handle;
+    
     mr->rdSize = 7;
     mr->rdFunction = func;
     *(mr->rdParam) = param4;
     *(mr->rdParam + 1) = param3;
     *(mr->rdParam + 2) = param2;
     *(mr->rdParam + 3) = param1;
-    return MF_WriteRecord(dc->w.hMetaFile, mr, mr->rdSize * 2);
+    handle = MF_WriteRecord(dc->w.hMetaFile, mr, mr->rdSize * 2);
+    dc->w.hMetaFile = handle;
+    
+    return handle;
 }
 
 
 /******************************************************************
  *         MF_MetaParam6
  */
+
 BOOL MF_MetaParam6(DC *dc, short func, short param1, short param2, 
 		   short param3, short param4, short param5, short param6)
 {
     char buffer[18];
     METARECORD *mr = (METARECORD *)&buffer;
-
+    HMETAFILE handle;
+    
     mr->rdSize = 9;
     mr->rdFunction = func;
     *(mr->rdParam) = param6;
@@ -803,7 +884,10 @@ BOOL MF_MetaParam6(DC *dc, short func, short param1, short param2,
     *(mr->rdParam + 3) = param3;
     *(mr->rdParam + 4) = param2;
     *(mr->rdParam + 5) = param1;
-    return MF_WriteRecord(dc->w.hMetaFile, mr, mr->rdSize * 2);
+    handle = MF_WriteRecord(dc->w.hMetaFile, mr, mr->rdSize * 2);
+    dc->w.hMetaFile = handle;
+    
+    return handle; 
 }
 
 
@@ -816,7 +900,8 @@ BOOL MF_MetaParam8(DC *dc, short func, short param1, short param2,
 {
     char buffer[22];
     METARECORD *mr = (METARECORD *)&buffer;
-
+    HMETAFILE handle;
+    
     mr->rdSize = 11;
     mr->rdFunction = func;
     *(mr->rdParam) = param8;
@@ -827,48 +912,55 @@ BOOL MF_MetaParam8(DC *dc, short func, short param1, short param2,
     *(mr->rdParam + 5) = param3;
     *(mr->rdParam + 6) = param2;
     *(mr->rdParam + 7) = param1;
-    return MF_WriteRecord(dc->w.hMetaFile, mr, mr->rdSize * 2);
+    handle = MF_WriteRecord(dc->w.hMetaFile, mr, mr->rdSize * 2);
+    dc->w.hMetaFile = handle;
+    
+    return handle;
 }
 
 
 /******************************************************************
  *         MF_CreateBrushIndirect
  */
+
 BOOL MF_CreateBrushIndirect(DC *dc, HBRUSH hBrush, LOGBRUSH *logbrush)
 {
     int index;
-    BOOL rc;
+    HMETAFILE handle;
     char buffer[sizeof(METARECORD) - 2 + sizeof(LOGBRUSH)];
     METARECORD *mr = (METARECORD *)&buffer;
-    METAFILE *mf;
     METAHEADER *mh;
 
     mr->rdSize = (sizeof(METARECORD) + sizeof(LOGBRUSH) - 2) / 2;
     mr->rdFunction = META_CREATEBRUSHINDIRECT;
     memcpy(&(mr->rdParam), logbrush, sizeof(LOGBRUSH));
-    if (!MF_WriteRecord(dc->w.hMetaFile, mr, mr->rdSize * 2))
+    if (!(dc->w.hMetaFile = MF_WriteRecord(dc->w.hMetaFile, 
+					  mr, mr->rdSize * 2)))
 	return FALSE;
 
     mr->rdSize = sizeof(METARECORD) / 2;
     mr->rdFunction = META_SELECTOBJECT;
+
     if ((index = MF_AddHandleInternal(hBrush)) == -1)
 	return FALSE;
 
-    mf = (METAFILE *)GlobalLock(dc->w.hMetaFile);
-    mh = (METAHEADER *)GlobalLock(mf->hMetaHdr);
+    mh = (METAHEADER *)GlobalLock(dc->w.hMetaFile);
     *(mr->rdParam) = index;
     if (index >= mh->mtNoObjects)
 	mh->mtNoObjects++;
-    rc = MF_WriteRecord(dc->w.hMetaFile, mr, mr->rdSize * 2);
-    GlobalUnlock(mf->hMetaHdr);
+    
     GlobalUnlock(dc->w.hMetaFile);
-    return rc;
+    handle = MF_WriteRecord(dc->w.hMetaFile, mr, mr->rdSize * 2);
+    dc->w.hMetaFile = handle;
+
+    return handle;
 }
 
 
 /******************************************************************
  *         MF_CreatePatternBrush
  */
+
 BOOL MF_CreatePatternBrush(DC *dc, HBRUSH hBrush, LOGBRUSH *logbrush)
 {
     DWORD len, bmSize, biSize;
@@ -878,9 +970,8 @@ BOOL MF_CreatePatternBrush(DC *dc, HBRUSH hBrush, LOGBRUSH *logbrush)
     BITMAPINFO *info;
     BITMAPINFOHEADER *infohdr;
     int index;
-    BOOL rc;
+    HMETAFILE handle;
     char buffer[sizeof(METARECORD)];
-    METAFILE *mf;
     METAHEADER *mh;
 
     switch (logbrush->lbStyle)
@@ -930,98 +1021,103 @@ BOOL MF_CreatePatternBrush(DC *dc, HBRUSH hBrush, LOGBRUSH *logbrush)
     default:
         return FALSE;
     }
-    if (!MF_WriteRecord(dc->w.hMetaFile, mr, len))
+    if (!(dc->w.hMetaFile = MF_WriteRecord(dc->w.hMetaFile, mr, len)))
     {
 	GlobalFree(hmr);
 	return FALSE;
     }
 
     GlobalFree(hmr);
+    
     mr = (METARECORD *)&buffer;
     mr->rdSize = sizeof(METARECORD) / 2;
     mr->rdFunction = META_SELECTOBJECT;
     if ((index = MF_AddHandleInternal(hBrush)) == -1)
 	return FALSE;
 
-    mf = (METAFILE *)GlobalLock(dc->w.hMetaFile);
-    mh = (METAHEADER *)GlobalLock(mf->hMetaHdr);
+    mh = (METAHEADER *)GlobalLock(dc->w.hMetaFile);
     *(mr->rdParam) = index;
     if (index >= mh->mtNoObjects)
 	mh->mtNoObjects++;
-    rc = MF_WriteRecord(dc->w.hMetaFile, mr, mr->rdSize * 2);
-    GlobalUnlock(mf->hMetaHdr);
     GlobalUnlock(dc->w.hMetaFile);
-    return rc;
+    handle = MF_WriteRecord(dc->w.hMetaFile, mr, mr->rdSize * 2);
+    dc->w.hMetaFile = handle;
+
+    return handle;
 }
 
 
 /******************************************************************
  *         MF_CreatePenIndirect
  */
+
 BOOL MF_CreatePenIndirect(DC *dc, HPEN hPen, LOGPEN *logpen)
 {
     int index;
-    BOOL rc;
+    HMETAFILE handle;
     char buffer[sizeof(METARECORD) - 2 + sizeof(LOGPEN)];
     METARECORD *mr = (METARECORD *)&buffer;
-    METAFILE *mf;
     METAHEADER *mh;
 
     mr->rdSize = (sizeof(METARECORD) + sizeof(LOGPEN) - 2) / 2;
     mr->rdFunction = META_CREATEPENINDIRECT;
     memcpy(&(mr->rdParam), logpen, sizeof(LOGPEN));
-    if (!MF_WriteRecord(dc->w.hMetaFile, mr, mr->rdSize * 2))
+    if (!(dc->w.hMetaFile = MF_WriteRecord(dc->w.hMetaFile, mr, 
+					   mr->rdSize * 2)))
 	return FALSE;
 
     mr->rdSize = sizeof(METARECORD) / 2;
     mr->rdFunction = META_SELECTOBJECT;
+
     if ((index = MF_AddHandleInternal(hPen)) == -1)
 	return FALSE;
 
-    mf = (METAFILE *)GlobalLock(dc->w.hMetaFile);
-    mh = (METAHEADER *)GlobalLock(mf->hMetaHdr);
+    mh = (METAHEADER *)GlobalLock(dc->w.hMetaFile);
     *(mr->rdParam) = index;
     if (index >= mh->mtNoObjects)
 	mh->mtNoObjects++;
-    rc = MF_WriteRecord(dc->w.hMetaFile, mr, mr->rdSize * 2);
-    GlobalUnlock(mf->hMetaHdr);
     GlobalUnlock(dc->w.hMetaFile);
-    return rc;
+    handle = MF_WriteRecord(dc->w.hMetaFile, mr, mr->rdSize * 2);
+    dc->w.hMetaFile = handle;
+    
+    return handle;
 }
 
 
 /******************************************************************
  *         MF_CreateFontIndirect
  */
+
 BOOL MF_CreateFontIndirect(DC *dc, HFONT hFont, LOGFONT *logfont)
 {
     int index;
-    BOOL rc;
+    HMETAFILE handle;
     char buffer[sizeof(METARECORD) - 2 + sizeof(LOGFONT)];
     METARECORD *mr = (METARECORD *)&buffer;
-    METAFILE *mf;
     METAHEADER *mh;
 
     mr->rdSize = (sizeof(METARECORD) + sizeof(LOGFONT) - 2) / 2;
     mr->rdFunction = META_CREATEFONTINDIRECT;
     memcpy(&(mr->rdParam), logfont, sizeof(LOGFONT));
-    if (!MF_WriteRecord(dc->w.hMetaFile, mr, mr->rdSize * 2))
+    if (!(dc->w.hMetaFile = MF_WriteRecord(dc->w.hMetaFile, mr, 
+					  mr->rdSize * 2)))
 	return FALSE;
 
     mr->rdSize = sizeof(METARECORD) / 2;
     mr->rdFunction = META_SELECTOBJECT;
+
     if ((index = MF_AddHandleInternal(hFont)) == -1)
 	return FALSE;
 
-    mf = (METAFILE *)GlobalLock(dc->w.hMetaFile);
-    mh = (METAHEADER *)GlobalLock(mf->hMetaHdr);
+    mh = (METAHEADER *)GlobalLock(dc->w.hMetaFile);
     *(mr->rdParam) = index;
     if (index >= mh->mtNoObjects)
 	mh->mtNoObjects++;
-    rc = MF_WriteRecord(dc->w.hMetaFile, mr, mr->rdSize * 2);
-    GlobalUnlock(mf->hMetaHdr);
     GlobalUnlock(dc->w.hMetaFile);
-    return rc;
+    handle  = MF_WriteRecord(dc->w.hMetaFile, mr, mr->rdSize * 2);
+    dc->w.hMetaFile = handle;
+    
+    return handle;
 }
 
 
@@ -1030,7 +1126,7 @@ BOOL MF_CreateFontIndirect(DC *dc, HFONT hFont, LOGFONT *logfont)
  */
 BOOL MF_TextOut(DC *dc, short x, short y, LPSTR str, short count)
 {
-    BOOL rc;
+    HMETAFILE handle;
     DWORD len;
     HANDLE hmr;
     METARECORD *mr;
@@ -1047,9 +1143,10 @@ BOOL MF_TextOut(DC *dc, short x, short y, LPSTR str, short count)
     memcpy(mr->rdParam + 1, str, count);
     *(mr->rdParam + ((count + 1) >> 1) + 1) = y;
     *(mr->rdParam + ((count + 1) >> 1) + 2) = x;
-    rc = MF_WriteRecord(dc->w.hMetaFile, mr, mr->rdSize * 2);
+    handle = MF_WriteRecord(dc->w.hMetaFile, mr, mr->rdSize * 2);
+    dc->w.hMetaFile = handle;
     GlobalFree(hmr);
-    return rc;
+    return handle;
 }
 
 
@@ -1058,7 +1155,7 @@ BOOL MF_TextOut(DC *dc, short x, short y, LPSTR str, short count)
  */
 BOOL MF_MetaPoly(DC *dc, short func, LPPOINT pt, short count)
 {
-    BOOL rc;
+    HMETAFILE handle;
     DWORD len;
     HANDLE hmr;
     METARECORD *mr;
@@ -1073,9 +1170,10 @@ BOOL MF_MetaPoly(DC *dc, short func, LPPOINT pt, short count)
     mr->rdFunction = func;
     *(mr->rdParam) = count;
     memcpy(mr->rdParam + 1, pt, count * 4);
-    rc = MF_WriteRecord(dc->w.hMetaFile, mr, mr->rdSize * 2);
+    handle  = MF_WriteRecord(dc->w.hMetaFile, mr, mr->rdSize * 2);
+    dc->w.hMetaFile = handle;
     GlobalFree(hmr);
-    return rc;
+    return handle;
 }
 
 

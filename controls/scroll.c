@@ -94,14 +94,12 @@ static void SCROLL_LoadBitmaps(void)
     hRgArrowI = LoadBitmap((HINSTANCE)NULL, MAKEINTRESOURCE(OBM_RGARROWI));
 }
 
-
 /***********************************************************************
- *           SCROLL_GetScrollInfo
+ *           SCROLL_GetPtrScrollInfo
  */
-static SCROLLINFO *SCROLL_GetScrollInfo( HWND hwnd, int nBar )
+static SCROLLINFO *SCROLL_GetPtrScrollInfo( WND* wndPtr, int nBar )
 {
     HANDLE handle;
-    WND *wndPtr = WIN_FindWndPtr( hwnd );
 
     if (!wndPtr) return NULL;
     switch(nBar)
@@ -126,6 +124,15 @@ static SCROLLINFO *SCROLL_GetScrollInfo( HWND hwnd, int nBar )
         if (!hUpArrow) SCROLL_LoadBitmaps();
     }
     return (SCROLLINFO *) USER_HEAP_LIN_ADDR( handle );
+}
+
+/***********************************************************************
+ *           SCROLL_GetScrollInfo
+ */
+static SCROLLINFO *SCROLL_GetScrollInfo( HWND hwnd, int nBar )
+{
+   WND *wndPtr = WIN_FindWndPtr( hwnd );
+   return SCROLL_GetPtrScrollInfo( wndPtr, nBar );
 }
 
 
@@ -188,7 +195,7 @@ static BOOL SCROLL_GetScrollBarRect( HWND hwnd, int nBar, RECT *lprect,
     
     if ((pixels -= 3*SYSMETRICS_CXVSCROLL+1) > 0)
     {
-        SCROLLINFO *info = SCROLL_GetScrollInfo( hwnd, nBar );
+        SCROLLINFO *info = SCROLL_GetPtrScrollInfo( wndPtr, nBar );
         if ((info->flags & ESB_DISABLE_BOTH) == ESB_DISABLE_BOTH)
             *thumbPos = 0;
         else if (info->MinVal == info->MaxVal)
@@ -449,7 +456,7 @@ void SCROLL_DrawScrollBar( HWND hwnd, HDC hdc, int nBar )
     RECT rect;
     BOOL vertical;
     WND *wndPtr = WIN_FindWndPtr( hwnd );
-    SCROLLINFO *infoPtr = SCROLL_GetScrollInfo( hwnd, nBar );
+    SCROLLINFO *infoPtr = SCROLL_GetPtrScrollInfo( wndPtr, nBar );
 
     if (!wndPtr || !infoPtr ||
         ((nBar == SB_VERT) && !(wndPtr->dwStyle & WS_VSCROLL)) ||
@@ -480,7 +487,7 @@ static void SCROLL_RefreshScrollBar( HWND hwnd, int nBar )
     BOOL vertical;
     HDC hdc;
     WND *wndPtr = WIN_FindWndPtr( hwnd );
-    SCROLLINFO *infoPtr = SCROLL_GetScrollInfo( hwnd, nBar );
+    SCROLLINFO *infoPtr = SCROLL_GetPtrScrollInfo( wndPtr, nBar );
 
     if (!wndPtr || !infoPtr ||
         ((nBar == SB_VERT) && !(wndPtr->dwStyle & WS_VSCROLL)) ||
@@ -913,6 +920,38 @@ void SetScrollRange(HWND hwnd, int nBar, int MinVal, int MaxVal, BOOL bRedraw)
     if (bRedraw) SCROLL_RefreshScrollBar( hwnd, nBar );
 }
 
+/*************************************************************************
+ *	     SCROLL_SetNCSbState
+ *
+ * This is for CalcChildScroll in windows/mdi.c
+ */
+DWORD SCROLL_SetNCSbState(WND* wndPtr, int vMin, int vMax, int vPos,
+				       int hMin, int hMax, int hPos)
+{
+  SCROLLINFO  *infoPtr = SCROLL_GetPtrScrollInfo(wndPtr, SB_VERT);
+ 
+  wndPtr->dwStyle |= (WS_VSCROLL | WS_HSCROLL);
+
+  if( vMin >= vMax ) 
+    { vMin = vMax;
+      wndPtr->dwStyle &= ~WS_VSCROLL; }
+  if( vPos > vMax ) vPos = vMax; else if( vPos < vMin ) vPos = vMin;
+  infoPtr->MinVal = vMin;
+  infoPtr->MaxVal = vMax;
+  infoPtr->CurVal = vPos;
+
+  infoPtr = SCROLL_GetPtrScrollInfo(wndPtr, SB_HORZ);
+
+  if( hMin >= hMax )
+    { hMin = hMax;
+      wndPtr->dwStyle &= ~WS_HSCROLL; }
+  if( hPos > hMax ) hPos = hMax; else if( hPos < hMin ) hPos = hMin;
+  infoPtr->MinVal = hMin;
+  infoPtr->MaxVal = hMax;
+  infoPtr->CurVal = hPos;
+
+  return wndPtr->dwStyle & (WS_VSCROLL | WS_HSCROLL);
+}
 
 /*************************************************************************
  *           GetScrollRange   (USER.65)

@@ -164,7 +164,7 @@ BOOL BuildCommDCB(LPCSTR device, LPDCB lpdcb)
 			return -1;
 		
 		strcpy(temp,device+5);
-		ptr = strtok(temp, ","); 
+		ptr = strtok(temp, ", "); 
 
 		if (COM[port].baudrate > 0)
 			lpdcb->BaudRate = COM[port].baudrate;
@@ -172,7 +172,7 @@ BOOL BuildCommDCB(LPCSTR device, LPDCB lpdcb)
 			lpdcb->BaudRate = atoi(ptr);
         	dprintf_comm(stddeb,"BuildCommDCB: baudrate (%d)\n", lpdcb->BaudRate);
 
-		ptr = strtok(NULL, ",");
+		ptr = strtok(NULL, ", ");
 		if (islower(*ptr))
 			*ptr = toupper(*ptr);
 
@@ -199,11 +199,11 @@ BOOL BuildCommDCB(LPCSTR device, LPDCB lpdcb)
 				return -1;
 		}
 
-		ptr = strtok(NULL, ","); 
+		ptr = strtok(NULL, ", "); 
          	dprintf_comm(stddeb, "BuildCommDCB: charsize (%c)\n", *ptr);
 		lpdcb->ByteSize = *ptr - '0';
 
-		ptr = strtok(NULL, ",");
+		ptr = strtok(NULL, ", ");
         	dprintf_comm(stddeb, "BuildCommDCB: stopbits (%c)\n", *ptr);
 		switch (*ptr) {
 			case '1':

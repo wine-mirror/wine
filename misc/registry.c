@@ -10,22 +10,32 @@
 #include <unistd.h>
 #include <ctype.h>
 #include <errno.h>
+#include <sys/types.h>
+#include <sys/fcntl.h>
+#include <sys/stat.h>
+#include <pwd.h>
+#include <time.h>
 #include "windows.h"
 #include "win.h"
 #include "winerror.h"
 #include "string32.h"	
-#include "kernel32.h"	/* LPSECURITY_ATTRIBUTES */
 #include "stddebug.h"
 #include "debug.h"
 #include "xmalloc.h"
 #include "winreg.h"
 
-#define SAVE_CLASSES_ROOT	"/tmp/reg.classes_root"
-#define SAVE_CURRENT_USER	"/tmp/reg.current_user"
-#define SAVE_LOCAL_MACHINE	"/tmp/reg.local_machine"
-#define SAVE_USERS		"/tmp/reg.users"
+/* FIXME: following defines should be configured global ... */
 
-static KEYSTRUCT	*key_classes_root=NULL;	/* windows global values */
+/* NOTE: do not append a /. linux' mkdir() WILL FAIL if you do that */
+#define WINE_PREFIX			"/.wine"
+#define SAVE_CURRENT_USER_DEFAULT	"/usr/local/etc/wine.userreg"
+	/* relative in ~user/.wine/ */
+#define SAVE_CURRENT_USER		"user.reg"
+#define SAVE_LOCAL_MACHINE_DEFAULT	"/usr/local/etc/wine.systemreg"
+	/* relative in ~user/.wine/ */
+#define SAVE_LOCAL_MACHINE		"system.reg"
+
+static KEYSTRUCT	*key_classes_root=NULL;	/* windows 3.1 global values */
 static KEYSTRUCT	*key_current_user=NULL;	/* user specific values */
 static KEYSTRUCT	*key_local_machine=NULL;/* machine specific values */
 static KEYSTRUCT	*key_users=NULL;	/* all users? */
@@ -181,21 +191,46 @@ split_keypath(LPCWSTR wp,LPWSTR **wpv,int *wpc) {
 }
 #define FREE_KEY_PATH	free(wps[0]);free(wps);
 
-/**
+/*
  * Shell initialisation, allocates keys. 
- * FIXME:should set default values too
  */
 void
 SHELL_Init() {
+	struct	passwd	*pwd;
+
+	HKEY	cl_r_hkey,c_u_hkey;
 #define ADD_ROOT_KEY(xx) \
 	xx = (LPKEYSTRUCT)xmalloc(sizeof(KEYSTRUCT));\
 	memset(xx,'\0',sizeof(KEYSTRUCT));\
 	xx->keyname= strdupA2W("<should_not_appear_anywhere>");
 
-	ADD_ROOT_KEY(key_classes_root);
-	ADD_ROOT_KEY(key_current_user);
 	ADD_ROOT_KEY(key_local_machine);
+	if (RegCreateKey(HKEY_LOCAL_MACHINE,"\\SOFTWARE\\Classes",&cl_r_hkey)!=ERROR_SUCCESS) {
+		fprintf(stderr,"couldn't create HKEY_LOCAL_MACHINE\\SOFTWARE\\Classes. This is impossible.\n");
+		exit(1);
+	}
+	key_classes_root = lookup_hkey(cl_r_hkey);
+
 	ADD_ROOT_KEY(key_users);
+
+#if 0
+	/* FIXME: load all users and their resp. pwd->pw_dir/.wine/user.reg 
+	 *	  (later, when a win32 registry editing tool becomes avail.)
+	 */
+	while (pwd=getpwent()) {
+		if (pwd->pw_name == NULL)
+			continue;
+		RegCreateKey(HKEY_USERS,pwd->pw_name,&c_u_hkey);
+		RegCloseKey(c_u_hkey);
+	}
+#endif
+	pwd=getpwuid(getuid());
+	if (pwd && pwd->pw_name) {
+		RegCreateKey(HKEY_USERS,pwd->pw_name,&c_u_hkey);
+		key_current_user = lookup_hkey(c_u_hkey);
+	} else {
+		ADD_ROOT_KEY(key_current_user);
+	}
 	ADD_ROOT_KEY(key_performance_data);
 	ADD_ROOT_KEY(key_current_config);
 	ADD_ROOT_KEY(key_dyn_data);
@@ -211,96 +246,83 @@ SHELL_Init() {
  * old registry database files.
  * 
  * Global:
- * 	DWORD	version
- * 	DWORD	nrofkeys
- *	KEY	keys[nrofkeys]
- *
- * KEY:
- * 	USTRING	name
- *	USTRING class
- * 	DWORD	nrofvalues
- *	VALUE	vals[nrofvalues]
- * 	DWORD	nrofsubkeys
- *	KEY	keys[nrofsubkeys]
- *
- * Value:
- * 	USTRING	name
- * 	DWORD	type
- * 	DWORD	len
- * 	BYTE	data[len]
- *
- * USTRING:
- * 	DWORD	len (len==0 means data=NULL)
- * 	BYTE	data[len]
+ * 	"WINE REGISTRY Version %d"
+ * 	subkeys....
+ * Subkeys:
+ * 	keyname
+ *		valuename=lastmodified,type,data
+ *		...
+ *		subkeys
+ *	...
+ * keyname,valuename,stringdata:
+ *	the usual ascii characters from 0x00-0xff (well, not 0x00)
+ *	and \uXXXX as UNICODE value XXXX with XXXX>0xff
+ *	( "=\\\t" escaped in \uXXXX form.)
+ * type,lastmodified: 
+ *	int
  * 
- *
- * All _write_XXX and _read_XXX functions return !0 on sucess.
+ * FIXME: doesn't save 'class' (what does it mean anyway?), nor flags.
  */
 
+static void
+_write_USTRING(FILE *F,LPWSTR wstr,int escapeeq) {
+	LPWSTR	s;
+	int	doescape;
 
-static int 
-_write_DWORD(FILE *F,DWORD dw) {
-	return fwrite(&dw,sizeof(dw),1,F);
-}
-
-static int
-_write_USTRING(FILE *F,LPWSTR str) {
-	int	len;
-
-	if (str==NULL) {
-		if (!_write_DWORD(F,0))
-			return 0;
-	} else {
-		len=strlenW(str)*2+2;
-
-		if (!_write_DWORD(F,len))
-			return 0;
-		if (!fwrite(str,len,1,F))
-			return 0;
+	if (wstr==NULL) {
+		/* FIXME: NULL equals empty string... I hope
+		 * the empty string isn't a valid valuename
+		 */
+		return;
 	}
-	return 1;
+	s=wstr;
+	while (*s) {
+		doescape=0;
+		if (*s>0xff)
+			doescape = 1;
+		if (*s=='\n')
+			doescape = 1;
+		if (escapeeq && *s=='=')
+			doescape = 1;
+		if (*s=='\\')
+			fputc(*s,F); /* if \\ than put it twice. */
+		if (doescape)
+			fprintf(F,"\\u%04x",*((unsigned short*)s));
+		else
+			fputc(*s,F);
+		s++;
+	}
 }
 
-
 static int
-_do_save_subkey(FILE *F,LPKEYSTRUCT lpkey) {
+_do_save_subkey(FILE *F,LPKEYSTRUCT lpkey,int level) {
 	LPKEYSTRUCT	lpxkey;
-	int		nrofkeys;
-	int		i;
-
-	nrofkeys= 0;
-	lpxkey	= lpkey;
-	while (lpxkey) {
-		if (!(lpxkey->flags & REG_OPTION_VOLATILE))
-			nrofkeys++;
-		lpxkey	= lpxkey->next;
-	}
-	if (!_write_DWORD(F,nrofkeys))
-		return 0;
+	int		i,tabs,j;
 
 	lpxkey	= lpkey;
 	while (lpxkey) {
 		if (!(lpxkey->flags & REG_OPTION_VOLATILE)) {
-			if (!_write_USTRING(F,lpxkey->keyname))
-				return 0;
-			if (!_write_USTRING(F,lpxkey->class))
-				return 0;
-			if (!_write_DWORD(F,lpxkey->nrofvalues))
-				return 0;
+			for (tabs=level;tabs--;)
+				fputc('\t',F);
+			_write_USTRING(F,lpxkey->keyname,1);
+			fputs("\n",F);
 			for (i=0;i<lpxkey->nrofvalues;i++) {
 				LPKEYVALUE	val=lpxkey->values+i;
 
-				if (!_write_USTRING(F,val->name))
-					return 0;
-				if (!_write_DWORD(F,val->type))
-					return 0;
-				if (!_write_DWORD(F,val->len))
-					return 0;
-				if (!fwrite(val->data,val->len,1,F))
-					return 0;
+				for (tabs=level+1;tabs--;)
+					fputc('\t',F);
+				_write_USTRING(F,val->name,0);
+				fputc('=',F);
+				fprintf(F,"%ld,%ld,",val->type,val->lastmodified);
+				if ((1<<val->type) & UNICONVMASK)
+					_write_USTRING(F,(LPWSTR)val->data,0);
+				else
+					for (j=0;j<val->len;j++)
+						fprintf(F,"%02x",*((unsigned char*)val->data+j));
+				fputs("\n",F);
 			}
 			/* descend recursively */
-			if (!_do_save_subkey(F,lpxkey->nextsub))
+			if (!_do_save_subkey(F,lpxkey->nextsub,level+1))
 				return 0;
 		}
 		lpxkey=lpxkey->next;
@@ -310,16 +332,15 @@ _do_save_subkey(FILE *F,LPKEYSTRUCT lpkey) {
 
 static int
 _do_savesubreg(FILE *F,LPKEYSTRUCT lpkey) {
-	if (!_write_DWORD(F,REGISTRY_SAVE_VERSION))
-		return 0;
-	return _do_save_subkey(F,lpkey->nextsub);
+	fprintf(F,"WINE REGISTRY Version %d\n",REGISTRY_SAVE_VERSION);
+	return _do_save_subkey(F,lpkey->nextsub,0);
 }
 
 static void
 _SaveSubReg(LPKEYSTRUCT lpkey,char *fn) {
 	FILE	*F;
 
-	F=fopen(fn,"wb");
+	F=fopen(fn,"w");
 	if (F==NULL) {
 		fprintf(stddeb,__FILE__":_SaveSubReg:Couldn't open %s for writing: %s\n",
 			fn,strerror(errno)
@@ -337,105 +358,307 @@ _SaveSubReg(LPKEYSTRUCT lpkey,char *fn) {
 
 void
 SHELL_SaveRegistry() {
-	_SaveSubReg(key_classes_root,SAVE_CLASSES_ROOT);
-	_SaveSubReg(key_current_user,SAVE_CURRENT_USER);
-	_SaveSubReg(key_local_machine,SAVE_LOCAL_MACHINE);
-	_SaveSubReg(key_users,SAVE_USERS);
+	char	*fn;
+	struct	passwd	*pwd;
+
+	pwd=getpwuid(getuid());
+	if (pwd!=NULL && pwd->pw_dir!=NULL) {
+		fn=(char*)xmalloc(strlen(pwd->pw_dir)+strlen(WINE_PREFIX)+strlen(SAVE_CURRENT_USER)+2);
+		strcpy(fn,pwd->pw_dir);
+		strcat(fn,WINE_PREFIX);
+		/* create the directory. don't care about errorcodes. */
+		mkdir(fn,0755); /* drwxr-xr-x */
+		strcat(fn,"/");
+		strcat(fn,SAVE_CURRENT_USER);
+		_SaveSubReg(key_current_user,fn);
+		free(fn);
+		fn=(char*)xmalloc(strlen(pwd->pw_dir)+strlen(WINE_PREFIX)+strlen(SAVE_LOCAL_MACHINE)+1);
+		strcpy(fn,pwd->pw_dir);
+		strcat(fn,WINE_PREFIX"/"SAVE_LOCAL_MACHINE);
+		_SaveSubReg(key_local_machine,fn);
+		free(fn);
+	} else {
+		fprintf(stderr,"SHELL_SaveRegistry:failed to get homedirectory of UID %d.\n",getuid());
+	}
 }
 
 /************************ LOAD Registry Function ****************************/
 
-/* FIXME: 
- * Currently overwrites any old registry data (leaks it away)
- * should better be a merge, or ?
+/* reads a line including dynamically enlarging the readbuffer and throwing
+ * away comments
  */
+static int 
+_read_line(FILE *F,char **buf,int *len) {
+	char	*s,*curread;
+	int	mylen,curoff;
 
-static int
-_read_DWORD(FILE *F,DWORD *dw) {
-	return fread(dw,sizeof(DWORD),1,F);
-}
-
-static int
-_read_USTRING(FILE *F,LPWSTR *str) {
-	DWORD	len;
-
-	if (!_read_DWORD(F,&len))
-		return 0;
-	if (len==0) {
-		*str=NULL;
-		return 1;
-	}
-	*str=xmalloc(len);
-	return fread(*str,len,1,F);
-}
-
-static int
-_do_load_subkey(FILE *F,LPKEYSTRUCT lpkey) {
-	DWORD		howmuch;
-	LPKEYSTRUCT	*lplpkey,lpxkey;
-	int		i;
-
-	if (!_read_DWORD(F,&howmuch))
-		return 0;
-
-	/* no subkeys? */
-	if (howmuch==0)
-		return 1;
-
-	lplpkey	= &(lpkey->nextsub);
-	while (howmuch--) {
-		*lplpkey= (LPKEYSTRUCT)xmalloc(sizeof(KEYSTRUCT));
-		memset(*lplpkey,'\0',sizeof(KEYSTRUCT));
-		lpxkey	= *lplpkey;
-		if (!_read_USTRING(F,&(lpxkey->keyname)))
-			return 0;
-		if (!_read_USTRING(F,&(lpxkey->class)))
-			return 0;
-		if (!_read_DWORD(F,&(lpxkey->nrofvalues)))
-			return 0;
-		if (lpxkey->nrofvalues) {
-			lpxkey->values = (LPKEYVALUE)xmalloc(
-				lpxkey->nrofvalues*sizeof(KEYVALUE)
-			);
-			for (i=0;i<lpxkey->nrofvalues;i++) {
-				LPKEYVALUE	val=lpxkey->values+i;
-
-				memset(val,'\0',sizeof(KEYVALUE));
-				if (!_read_USTRING(F,&(val->name)))
-					return 0;
-				if (!_read_DWORD(F,&(val->type)))
-					return 0;
-				if (!_read_DWORD(F,&(val->len)))
-					return 0;
-				val->data	= (LPBYTE)xmalloc(val->len);
-				if (!fread(val->data,val->len,1,F))
-					return 0;
+	curread	= *buf;
+	mylen	= *len;
+	**buf	= '\0';
+	while (1) {
+		while (1) {
+			s=fgets(curread,mylen,F);
+			if (s==NULL)
+				return 0; /* EOF */
+			if (NULL==(s=strchr(curread,'\n'))) {
+				/* buffer wasn't large enough */
+				curoff	= strlen(*buf);
+				*buf	= xrealloc(*buf,*len*2);
+				curread	= *buf + curoff;
+				mylen	= *len;	/* we filled up the buffer and 
+						 * got new '*len' bytes to fill
+						 */
+				*len	= *len * 2;
+			} else {
+				*s='\0';
+				break;
 			}
 		}
-		if (!_do_load_subkey(F,*lplpkey))
-			return 0;
-		lplpkey	= &(lpxkey->next);
+		/* throw away comments */
+		if (**buf=='#' || **buf==';') {
+			curread	= *buf;
+			mylen	= *len;
+			continue;
+		}
+		if (s) 	/* got end of line */
+			break;
+	}
+	return 1;
+}
+
+/* converts a char* into a UNICODE string (up to a special char)
+ * and returns the position exactly after that string
+ */
+static char*
+_read_USTRING(char *buf,LPWSTR *str) {
+	char	*s;
+	LPWSTR	ws;
+
+	/* read up to "=" or "\0" or "\n" */
+	s	= buf;
+	if (*s == '=') {
+		/* empty string is the win3.1 default value(NULL)*/
+		*str	= NULL;
+		return s;
+	}
+	*str	= (LPWSTR)xmalloc(2*strlen(buf)+2);
+	ws	= *str;
+	while (*s && (*s!='\n') && (*s!='=')) {
+		if (*s!='\\')
+			*ws++=*((unsigned char*)s++);
+		else {
+			s++;
+			if (*s=='\\') {
+				*ws+='\\';
+				s++;
+				continue;
+			}
+			if (*s!='u') {
+				fprintf(stderr,"_read_USTRING:Non unicode escape sequence \\%c found in |%s|\n",*s,buf);
+				*ws++='\\';
+				*ws++=*s++;
+			} else {
+				char	xbuf[5];
+				int	wc;
+
+				s++;
+				memcpy(xbuf,s,4);xbuf[4]='\0';
+				if (!sscanf(xbuf,"%x",&wc))
+					fprintf(stderr,"_read_USTRING:strange escape sequence %s found in |%s|\n",xbuf,buf);
+				s+=4;
+				*ws++	=(unsigned short)wc;
+			}
+		}
+	}
+	*ws	= 0;
+	ws	= *str;
+	*str	= strdupW(*str);
+	free(ws);
+	return s;
+}
+
+static int
+_do_load_subkey(FILE *F,LPKEYSTRUCT lpkey,int level,char **buf,int *buflen) {
+	LPKEYSTRUCT	lpxkey,*lplpkey;
+	int		i;
+	char		*s;
+	LPWSTR		name;
+
+	/* good. we already got a line here ... so parse it */
+	lpxkey	= NULL;
+	while (1) {
+		i=0;s=*buf;
+		while (*s=='\t') {
+			s++;
+			i++;
+		}
+		if (i>level) {
+			if (lpxkey==NULL) {
+				fprintf(stderr,"_do_load_subkey:Got a subhierarchy without resp. key?\n");
+				return 0;
+			}
+			_do_load_subkey(F,lpxkey,level+1,buf,buflen);
+			continue;
+		}
+		/* let the caller handle this line */
+		if (i<level || **buf=='\0')
+			return 1;
+		/* good. this is one line for us.
+		 * it can be: a value or a keyname. Parse the name first
+		 */
+		s=_read_USTRING(s,&name);
+
+		/* switch() default: hack to avoid gotos */
+		switch (0) {
+		default:
+			if (*s=='\0') {
+				/* this is a new key 
+				 * look for the name in the already existing keys
+				 * on this level.
+				 */
+				 lplpkey= &(lpkey->nextsub);
+				 lpxkey	= *lplpkey;
+				 while (lpxkey) {
+					if (!strcmpW(lpxkey->keyname,name))
+						break;
+					lplpkey	= &(lpxkey->next);
+					lpxkey	= *lplpkey;
+				 }
+				 if (lpxkey==NULL) {
+					/* we have no key with that name yet. allocate
+					 * it.
+					 */
+					*lplpkey = (LPKEYSTRUCT)xmalloc(sizeof(KEYSTRUCT));
+					lpxkey	= *lplpkey;
+					memset(lpxkey,'\0',sizeof(KEYSTRUCT));
+					lpxkey->keyname	= name;
+				 } else {
+					/* already got it. we just remember it in 
+					 * 'lpxkey'
+					 */
+					free(name);
+				 }
+			} else {
+				LPKEYVALUE	val=NULL;
+				LPBYTE		data;
+				int		len,lastmodified,type;
+
+				if (*s!='=') {
+					fprintf(stderr,"_do_load_subkey:unexpected character: %c\n",*s);
+					break;
+				}
+				/* good. this looks like a value to me */
+				s++;
+				for (i=0;i<lpkey->nrofvalues;i++) {
+					val=lpkey->values+i;
+					if (name==NULL) {
+						if (val->name==NULL)
+							break;
+					} else {
+						if (	val->name!=NULL && 
+							!strcmpW(val->name,name)
+						)
+							break;
+					}
+				}
+				if (i==lpkey->nrofvalues) {
+					lpkey->values = xrealloc(
+						lpkey->values,
+						(++lpkey->nrofvalues)*sizeof(KEYVALUE)
+					);
+					val=lpkey->values+i;
+					memset(val,'\0',sizeof(KEYVALUE));
+					val->name = name;
+				} else {
+					/* value already exists, free name */
+					free(name);
+				}
+				if (2!=sscanf(s,"%d,%d,",&type,&lastmodified)) {
+					fprintf(stderr,"_do_load_subkey: haven't understood possible value in |%s|, skipping.\n",*buf);
+					break;
+				}
+				/* skip the 2 , */
+				s=strchr(s,',');s++;
+				s=strchr(s,',');s++;
+				if ((1<<type) & UNICONVMASK) {
+					s=_read_USTRING(s,(LPWSTR*)&data);
+					if (data)
+						len = strlenW((LPWSTR)data)*2+2;
+					else	
+						len = 0;
+				} else {
+					len=strlen(s)/2;
+					data = (LPBYTE)xmalloc(len+1);
+					for (i=0;i<len;i++) {
+						data[i]=0;
+						if (*s>='0' && *s<='9')
+							data[i]=(*s-'0')<<4;
+						if (*s>='a' && *s<='f')
+							data[i]=(*s-'a')<<4;
+						if (*s>='A' && *s<='F')
+							data[i]=(*s-'A')<<4;
+						s++;
+						if (*s>='0' && *s<='9')
+							data[i]|=*s-'0';
+						if (*s>='a' && *s<='f')
+							data[i]|=*s-'a';
+						if (*s>='A' && *s<='F')
+							data[i]|=*s-'A';
+						s++;
+					}
+				}
+				if (val->lastmodified<lastmodified) {
+					val->lastmodified=lastmodified;
+					val->type = type;
+					val->len  = len;
+					if (val->data) 
+						free(val->data);
+					val->data = data;
+				} else {
+					free(data);
+				}
+			}
+		}
+		/* read the next line */
+		if (!_read_line(F,buf,buflen))
+			return 1;
 	}
 	return 1;
 }
 
 static int
 _do_loadsubreg(FILE *F,LPKEYSTRUCT lpkey) {
-	DWORD	ver;
+	int	ver;
+	char	*buf;
+	int	buflen;
 
-	if (!_read_DWORD(F,&ver))
-		return 0;
-	if (ver!=REGISTRY_SAVE_VERSION) {
-		dprintf_reg(stddeb,__FILE__":_do_loadsubreg:Old format (%lx) registry found, ignoring it.\n",ver);
+	buf=xmalloc(10);buflen=10;
+	if (!_read_line(F,&buf,&buflen)) {
+		free(buf);
 		return 0;
 	}
-	if (!_do_load_subkey(F,lpkey)) {
+	if (!sscanf(buf,"WINE REGISTRY Version %d",&ver)) {
+		free(buf);
+		return 0;
+	}
+	if (ver!=REGISTRY_SAVE_VERSION) {
+		dprintf_reg(stddeb,__FILE__":_do_loadsubreg:Old format (%d) registry found, ignoring it. (buf was %s).\n",ver,buf);
+		free(buf);
+		return 0;
+	}
+	if (!_read_line(F,&buf,&buflen)) {
+		free(buf);
+		return 0;
+	}
+	if (!_do_load_subkey(F,lpkey,0,&buf,&buflen)) {
+		free(buf);
 		/* FIXME: memory leak on failure to read registry ... 
 		 * But this won't happen very often.
 		 */
 		lpkey->nextsub=NULL;
 		return 0;
 	}
+	free(buf);
 	return 1;
 }
 
@@ -459,18 +682,40 @@ _LoadSubReg(LPKEYSTRUCT lpkey,char *fn) {
 
 void
 SHELL_LoadRegistry() {
+	char	*fn;
+	struct	passwd	*pwd;
+
 	if (key_classes_root==NULL)
 		SHELL_Init();
-	_LoadSubReg(key_classes_root,SAVE_CLASSES_ROOT);
-	_LoadSubReg(key_current_user,SAVE_CURRENT_USER);
-	_LoadSubReg(key_local_machine,SAVE_LOCAL_MACHINE);
-	_LoadSubReg(key_users,SAVE_USERS);
+	/* load the machine-wide defaults first */
+	_LoadSubReg(key_current_user,SAVE_CURRENT_USER_DEFAULT);
+	_LoadSubReg(key_local_machine,SAVE_LOCAL_MACHINE_DEFAULT);
+
+	/* load the user saved registry. overwriting only newer entries */
+	pwd=getpwuid(getuid());
+	if (pwd!=NULL && pwd->pw_dir!=NULL) {
+		fn=(char*)xmalloc(strlen(pwd->pw_dir)+strlen(WINE_PREFIX)+strlen(SAVE_CURRENT_USER)+1);
+		strcpy(fn,pwd->pw_dir);
+		strcat(fn,WINE_PREFIX"/"SAVE_CURRENT_USER);
+		_LoadSubReg(key_current_user,fn);
+		free(fn);
+		fn=(char*)xmalloc(strlen(pwd->pw_dir)+strlen(WINE_PREFIX)+strlen(SAVE_LOCAL_MACHINE)+1);
+		strcpy(fn,pwd->pw_dir);
+		strcat(fn,WINE_PREFIX"/"SAVE_LOCAL_MACHINE);
+		_LoadSubReg(key_local_machine,fn);
+		free(fn);
+	} else {
+		fprintf(stderr,"SHELL_LoadRegistry:failed to get homedirectory of UID %d.\n",getuid());
+	}
+	/* FIXME: load all users and their resp. pwd->pw_dir/.wine/user.reg 
+	 *	  (later, when a win32 registry editing tool becomes avail.)
+	 */
 }
 
 /********************* API FUNCTIONS ***************************************/
 
 /*
- * Open Keys. 
+ * Open Keys.
  *
  * All functions are stubs to RegOpenKeyExW where all the
  * magic happens. 
@@ -508,6 +753,7 @@ RegOpenKeyExW(
 	}
 	split_keypath(lpszSubKey,&wps,&wpc);
 	i 	= 0;
+	while ((i<wpc) && (wps[i][0]=='\0')) i++;
 	lpxkey	= lpNextKey;
 	while (i<wpc) {
 		lpxkey=lpNextKey->nextsub;
@@ -647,6 +893,7 @@ RegCreateKeyExW(
 	}
 	split_keypath(lpszSubKey,&wps,&wpc);
 	i 	= 0;
+	while ((i<wpc) && (wps[i][0]=='\0')) i++;
 	lpxkey	= lpNextKey;
 	while (i<wpc) {
 		lpxkey=lpNextKey->nextsub;
@@ -1131,6 +1378,7 @@ RegSetValueExW(
 	if (lpkey->values[i].data !=NULL)
 		free(lpkey->values[i].data);
 	lpkey->values[i].data	= (LPBYTE)xmalloc(cbData);
+	lpkey->values[i].lastmodified = time(NULL);
 	memcpy(lpkey->values[i].data,lpbData,cbData);
 	return SHELL_ERROR_SUCCESS;
 }

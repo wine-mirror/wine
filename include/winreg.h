@@ -89,6 +89,7 @@ typedef struct tagKEYVALUE {
 	LPWSTR	name;	/* name of value (UNICODE) or NULL for win31 */
 	DWORD	type;	/* type of value */
 	DWORD	len;	/* length of data */
+	DWORD	lastmodified; /* time of seconds since 1.1.1970 */
 	LPBYTE	data;	/* content, may be strings, binaries, etc. */
 } KEYVALUE,*LPKEYVALUE;
 

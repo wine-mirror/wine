@@ -253,12 +253,17 @@ LRESULT ButtonWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		break;
 
 	case BM_SETSTATE:
-                if (!wParam != !(infoPtr->state & BUTTON_HIGHLIGHTED))
+                if (wParam)
                 {
-                    if (wParam) infoPtr->state |= BUTTON_HIGHLIGHTED;
-                    else infoPtr->state &= ~BUTTON_HIGHLIGHTED;
-                    PAINT_BUTTON( wndPtr, style, ODA_SELECT );
+                    if (infoPtr->state & BUTTON_HIGHLIGHTED) break;
+                    infoPtr->state |= BUTTON_HIGHLIGHTED;
                 }
+                else
+                {
+                    if (!(infoPtr->state & BUTTON_HIGHLIGHTED)) break;
+                    infoPtr->state &= ~BUTTON_HIGHLIGHTED;
+                }
+                PAINT_BUTTON( wndPtr, style, ODA_SELECT );
                 break;
 
 	default:

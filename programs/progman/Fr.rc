@@ -1,0 +1,122 @@
+/*
+ * Program Manager
+ *
+ * Copyright 1996 Ulrich Schmid
+ * French Fr.rc by Pablo Saratxaga <srtxg@linux.chanae.stben.be>
+ */
+
+#define LANGUAGE_ID                  Fr
+#define LANGUAGE_NUMBER              4
+#define LANGUAGE_MENU_ITEM           "&Français"
+
+/* Menu */
+
+#define MENU_FILE                    "&Fichier"
+#define MENU_FILE_NEW                "&Nouveau..."
+#define MENU_FILE_OPEN               "O&uvrir\tEntrée"
+#define MENU_FILE_MOVE               "&Déplacer...\tF7"
+#define MENU_FILE_COPY               "&Copier...\tF8"
+#define MENU_FILE_DELETE             "&Supprimer\tSuppr"
+#define MENU_FILE_ATTRIBUTES         "&Propriétés...\tAlt+Entrée"
+#define MENU_FILE_EXECUTE            "E&xécuter..."
+#define MENU_FILE_EXIT               "&Quitter Windows..."
+
+#define MENU_OPTIONS                 "&Options"
+#define MENU_OPTIONS_AUTO_ARRANGE    "Réorg&anisation automatique"
+#define MENU_OPTIONS_MIN_ON_RUN      "&Réduire à l'utilisation"
+#define MENU_OPTIONS_SAVE_SETTINGS   "&Enregistrer la configuration en quittant"
+
+#define MENU_WINDOWS                 "F&enêtre"
+#define MENU_WINDOWS_OVERLAP         "&Cascade\tMaj+F5"
+#define MENU_WINDOWS_SIDE_BY_SIDE    "&Mosaïque\tMaj+F4"
+#define MENU_WINDOWS_ARRANGE         "&Réorganiser les icônes"
+
+#define MENU_LANGUAGE                "&Langue"
+
+#define MENU_HELP                    "&?"
+#define MENU_HELP_CONTENTS           "&Index"
+#define MENU_HELP_SEARCH             "&Rechercher l'Aide sur..."
+#define MENU_HELP_HELP_ON_HELP       "&Utiliser l'Aide"
+#define MENU_HELP_TUTORIAL           "Didacticiel &Windows"
+
+#define MENU_INFO                    "&Info..."
+#define MENU_INFO_LICENSE            "&License"
+#define MENU_INFO_NO_WARRANTY        "&NO WARRANTY"
+#define MENU_INFO_ABOUT_WINE         "&A propos de WINE"
+
+/* Dialogs */
+
+#define DIALOG_OK                    "OK"
+#define DIALOG_CANCEL                "Annuler"
+#define DIALOG_BROWSE                "Pa&rcourir..."
+#define DIALOG_HELP                  "&Aide"
+
+#define DIALOG_NEW_CAPTION           "Nouveau"
+#define DIALOG_NEW_NEW               "Nouveau"
+#define DIALOG_NEW_GROUP             "&Groupe de programmes"
+#define DIALOG_NEW_PROGRAM           "&Programme"
+
+#define DIALOG_MOVE_CAPTION          "Déplacer un programme"
+#define DIALOG_MOVE_PROGRAM          "Déplacer le programme:"
+#define DIALOG_MOVE_FROM_GROUP       "A partir du groupe:"
+#define DIALOG_MOVE_TO_GROUP         "&Vers le groupe:"
+
+#define DIALOG_COPY_CAPTION          "Copier un programme"
+#define DIALOG_COPY_PROGRAM          "Copier le programme:"
+#define DIALOG_COPY_FROM_GROUP       DIALOG_MOVE_FROM_GROUP
+#define DIALOG_COPY_TO_GROUP         DIALOG_MOVE_TO_GROUP
+
+#define DIALOG_GROUP_CAPTION         "Propriétés de groupe"
+#define DIALOG_GROUP_DESCRIPTION     "&Nom:"
+#define DIALOG_GROUP_FILE            "&Fichier de groupe:"
+
+#define DIALOG_PROGRAM_CAPTION       "Propriétés de programme"
+#define DIALOG_PROGRAM_DESCRIPTION   DIALOG_GROUP_DESCRIPTION
+#define DIALOG_PROGRAM_COMMAND_LINE  "&Ligne de commande:"
+#define DIALOG_PROGRAM_DIRECTORY     "Répertoire de tra&vail:"
+#define DIALOG_PROGRAM_HOT_KEY       "&Touche de raccourci:"
+#define DIALOG_PROGRAM_SYMBOL        "Réduire à l'&utilisation"
+#define DIALOG_PROGRAM_OTHER_SYMBOL  "&Changer d'icône..."
+
+#define DIALOG_SYMBOL_CAPTION        "Changer d'icône"
+#define DIALOG_SYMBOL_FILE           "&Nom:"
+#define DIALOG_SYMBOL_CURRENT        "Icône a&ctuelle:"
+
+#define DIALOG_EXECUTE_CAPTION       "Exécuter"
+#define DIALOG_EXECUTE_COMMAND_LINE  DIALOG_PROGRAM_COMMAND_LINE
+#define DIALOG_EXECUTE_SYMBOL        DIALOG_PROGRAM_SYMBOL
+
+
+/* Strings */
+
+#define STRING_PROGRAM_MANAGER            "Gestionaire de programmes"
+#define STRING_ERROR                      "ERREUR"
+#define STRING_WARNING                    "WARNING"
+#define STRING_INFO                       "Information"
+#define STRING_DELETE                     "Supprimer"
+#define STRING_DELETE_GROUP_s             "Voulez-vous supprimer le groupe '%s'?"
+#define STRING_DELETE_PROGRAM_s           "Voulez-vous supprimer le programme '%s'?"
+#define STRING_NOT_IMPLEMENTED            "Non implementé"
+#define STRING_FILE_READ_ERROR_s          "Impossible d'ouvrir '%s'."
+#define STRING_FILE_WRITE_ERROR_s         "Impossible d'enregistrer '%s'."
+
+#define STRING_GRPFILE_READ_ERROR_s       "\
+Impossible d'ouvrir le groupe '%s'.\n\
+Voulez-vous que le Gestionnaire de programmes essaie\n\
+de l'ouvrir dans les prochaines sessions?"
+
+#define STRING_OUT_OF_MEMORY              "Mémoire insuffisante."
+#define STRING_WINHELP_ERROR              "Impossible d'afficher l'Aide."
+#define STRING_UNKNOWN_FEATURE_s          "Caracteristique inconnue dans %s"
+#define STRING_FILE_NOT_OVERWRITTEN_s     "Le fichier `%s' existe. Non écrasé."
+#define STRING_SAVE_GROUP_AS_s            "Groupe sauvé sous `%s' pour éviter l'écrasement du fichier original."
+
+#define STRING_NO_HOT_KEY                 "Aucun"
+
+#define STRING_ALL_FILES                  "Tout fichier (*.*)"
+#define STRING_PROGRAMS                   "Programmes"
+#define STRING_LIBRARIES_DLL              "Bibliothèques (*.dll)"
+#define STRING_SYMBOL_FILES               "Icônes"
+#define STRING_SYMBOLS_ICO                "Icônes (*.ico)"
+
+#include "Xx.rc"

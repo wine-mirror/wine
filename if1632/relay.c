@@ -52,6 +52,7 @@ BUILTIN_DLL dll_builtin_table[] =
     DLL_ENTRY( WINPROCS,   DLL_FLAG_ALWAYS_USED),
     DLL_ENTRY( DDEML,      DLL_FLAG_NOT_USED),
     DLL_ENTRY( LZEXPAND,   0),
+    DLL_ENTRY( W32SYS,     0),
     /* Win32 DLLs */
     DLL_ENTRY( ADVAPI32,   0),
     DLL_ENTRY( COMCTL32,   0),

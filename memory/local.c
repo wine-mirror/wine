@@ -47,6 +47,12 @@ typedef struct
 #define LOCAL_ARENA_FIXED      1
 #define LOCAL_ARENA_MOVEABLE   3
 
+/* Layout of a handle entry table
+ *
+ * WORD                     count of entries
+ * LOCALHANDLEENTRY[count]  entries
+ * WORD                     near ptr to next table
+ */
 typedef struct
 {
     WORD addr;                /* Address of the MOVEABLE block */
@@ -56,26 +62,26 @@ typedef struct
 
 typedef struct
 {
-    WORD check;               /* Heap checking flag */
-    WORD freeze;              /* Heap frozen flag */
-    WORD items;               /* Count of items on the heap */
-    WORD first;               /* First item of the heap */
-    WORD pad1;                /* Always 0 */
-    WORD last;                /* Last item of the heap */
-    WORD pad2;                /* Always 0 */
-    BYTE ncompact;            /* Compactions counter */
-    BYTE dislevel;            /* Discard level */
-    DWORD distotal;           /* Total bytes discarded */
-    WORD htable;              /* Pointer to handle table */
-    WORD hfree;               /* Pointer to free handle table */
-    WORD hdelta;              /* Delta to expand the handle table */
-    WORD expand;              /* Pointer to expand function (unused) */
-    WORD pstat;               /* Pointer to status structure (unused) */
-    DWORD notify WINE_PACKED; /* Pointer to LocalNotify() function */
-    WORD lock;                /* Lock count for the heap */
-    WORD extra;               /* Extra bytes to allocate when expanding */
-    WORD minsize;             /* Minimum size of the heap */
-    WORD magic;               /* Magic number */
+    WORD check;                 /* 00 Heap checking flag */
+    WORD freeze;                /* 02 Heap frozen flag */
+    WORD items;                 /* 04 Count of items on the heap */
+    WORD first;                 /* 06 First item of the heap */
+    WORD pad1;                  /* 08 Always 0 */
+    WORD last;                  /* 0a Last item of the heap */
+    WORD pad2;                  /* 0c Always 0 */
+    BYTE ncompact;              /* 0e Compactions counter */
+    BYTE dislevel;              /* 0f Discard level */
+    DWORD distotal;             /* 10 Total bytes discarded */
+    WORD htable;                /* 14 Pointer to handle table */
+    WORD hfree;                 /* 16 Pointer to free handle table */
+    WORD hdelta;                /* 18 Delta to expand the handle table */
+    WORD expand;                /* 1a Pointer to expand function (unused) */
+    WORD pstat;                 /* 1c Pointer to status structure (unused) */
+    FARPROC notify WINE_PACKED; /* 1e Pointer to LocalNotify() function */
+    WORD lock;                  /* 22 Lock count for the heap */
+    WORD extra;                 /* 24 Extra bytes to allocate when expanding */
+    WORD minsize;               /* 26 Minimum size of the heap */
+    WORD magic;                 /* 28 Magic number */
 } LOCALHEAPINFO;
 
 #ifndef WINELIB
@@ -455,8 +461,9 @@ static WORD LOCAL_Compact( WORD ds, WORD minfree, WORD flags )
     WORD arena;
     WORD freespace = 0;
     
-    if (!(pInfo = LOCAL_GetHeap( ds ))) {
-	dprintf_local( stddeb, "Local_FindFreeBlock: Local heap not found\n" );
+    if (!(pInfo = LOCAL_GetHeap( ds )))
+    {
+        fprintf( stderr, "Local_FindFreeBlock: Local heap not found\n" );
 	LOCAL_PrintHeap(ds);
 	return 0;
     }
@@ -468,6 +475,11 @@ static WORD LOCAL_Compact( WORD ds, WORD minfree, WORD flags )
         pArena = ARENA_PTR( ptr, arena );
         if (pArena->size >= freespace) freespace = pArena->size;
     }
+
+    if(freespace < ARENA_HEADER_SIZE)
+	freespace = 0;
+    else
+	freespace -= ARENA_HEADER_SIZE;
     
     if (flags & LMEM_NOCOMPACT) return freespace;
     
@@ -485,8 +497,9 @@ static HLOCAL LOCAL_FindFreeBlock( WORD ds, WORD size )
     LOCALARENA *pArena;
     WORD arena;
 
-    if (!(pInfo = LOCAL_GetHeap( ds ))) {
-	dprintf_local( stddeb, "Local_FindFreeBlock: Local heap not found\n" );
+    if (!(pInfo = LOCAL_GetHeap( ds )))
+    {
+        fprintf( stderr, "Local_FindFreeBlock: Local heap not found\n" );
 	LOCAL_PrintHeap(ds);
 	return 0;
     }
@@ -516,8 +529,9 @@ static HLOCAL LOCAL_GetBlock( WORD ds, WORD size, WORD flags )
     LOCALARENA *pArena;
     WORD arena;
 
-    if (!(pInfo = LOCAL_GetHeap( ds ))) {
-	dprintf_local( stddeb, "Local_GetBlock: Local heap not found\n");
+    if (!(pInfo = LOCAL_GetHeap( ds )))
+    {
+        fprintf( stderr, "Local_GetBlock: Local heap not found\n");
 	LOCAL_PrintHeap(ds);
 	return 0;
     }
@@ -540,7 +554,8 @@ static HLOCAL LOCAL_GetBlock( WORD ds, WORD size, WORD flags )
 	arena = LOCAL_FindFreeBlock( ds, size );
     }
     if (arena == 0) {
-	fprintf( stderr, "Local_GetBlock: not enough space!\n" );
+	fprintf( stderr, "Local_GetBlock: not enough space in heap %04x for %d bytes\n",
+                 ds, size );
 	return 0;
     }
 
@@ -564,6 +579,7 @@ static HLOCAL LOCAL_GetBlock( WORD ds, WORD size, WORD flags )
     return arena + ARENA_HEADER_SIZE;
 }
 
+
 /***********************************************************************
  *           LOCAL_NewHTable
  */
@@ -571,55 +587,81 @@ static BOOL LOCAL_NewHTable( WORD ds )
 {
     char *ptr = PTR_SEG_OFF_TO_LIN( ds, 0 );
     LOCALHEAPINFO *pInfo;
+    LOCALHANDLEENTRY *pEntry;
     HLOCAL handle;
+    int i;
 
     dprintf_local( stddeb, "Local_NewHTable\n" );
-    if (!(pInfo = LOCAL_GetHeap( ds ))) {
-      dprintf_local( stddeb, "Local heap not found\n");
-      LOCAL_PrintHeap(ds);
-      return FALSE;
+    if (!(pInfo = LOCAL_GetHeap( ds )))
+    {
+        fprintf( stderr, "Local heap not found\n");
+        LOCAL_PrintHeap(ds);
+        return FALSE;
     }
 
-    handle = LOCAL_GetBlock( ds, pInfo->hdelta*4 + 2, LMEM_FIXED );
+    handle = LOCAL_GetBlock( ds, pInfo->hdelta * sizeof(LOCALHANDLEENTRY)
+                                  + 2 * sizeof(WORD), LMEM_FIXED );
     ptr = PTR_SEG_OFF_TO_LIN( ds, 0 );
     pInfo = LOCAL_GetHeap( ds );
     if (handle == 0) return FALSE;
-    *(WORD *)(ptr + handle) = 0; /* no handles in this block yet */
+
+    /* Fill the entry table */
+
+    *(WORD *)(ptr + handle) = pInfo->hdelta;
+    pEntry = (LOCALHANDLEENTRY *)(ptr + handle + sizeof(WORD));
+    for (i = pInfo->hdelta; i > 0; i--) (pEntry++)->lock = 0xff;
+    *(WORD *)pEntry = pInfo->htable;
     pInfo->htable = handle;
     return TRUE;
 }
 
+
 /***********************************************************************
- *           LOCAL_GetNewHandle
+ *           LOCAL_GetNewHandleEntry
  */
-static HLOCAL LOCAL_GetNewHandle( WORD ds )
+static HLOCAL LOCAL_GetNewHandleEntry( WORD ds )
 {
     char *ptr = PTR_SEG_OFF_TO_LIN( ds, 0 );
     LOCALHEAPINFO *pInfo;
-    WORD count;
-    
-    if (!(pInfo = LOCAL_GetHeap( ds ))) {
-	dprintf_local( stddeb, "LOCAL_GetNewHandle: Local heap not found\n");
+    LOCALHANDLEENTRY *pEntry = NULL;
+    WORD table;
+
+    if (!(pInfo = LOCAL_GetHeap( ds )))
+    {
+        fprintf( stderr, "LOCAL_GetNewHandleEntry: Local heap not found\n");
 	LOCAL_PrintHeap(ds);
 	return 0;
     }
-    /* Check if we need a new handle table */
-    if (pInfo->htable == 0)  {
-        if (!LOCAL_NewHTable( ds )) return 0;
-	ptr = PTR_SEG_OFF_TO_LIN( ds, 0 );
-	pInfo = LOCAL_GetHeap( ds );
-    }
-    if (*(WORD *)(ptr + pInfo->htable) == pInfo->hdelta) {
-        if (!LOCAL_NewHTable( ds )) return 0;
-	ptr = PTR_SEG_OFF_TO_LIN( ds, 0 );
-	pInfo = LOCAL_GetHeap( ds );
+
+    /* Find a free slot in existing tables */
+
+    table = pInfo->htable;
+    while (table)
+    {
+        WORD count = *(WORD *)(ptr + table);
+        pEntry = (LOCALHANDLEENTRY *)(ptr + table + sizeof(WORD));
+        for (; count > 0; count--, pEntry++)
+            if (pEntry->lock == 0xff) break;
+        if (count) break;
+        table = *(WORD *)pEntry;
     }
 
-    /* increase count */
-    count = (*(WORD *)(ptr + pInfo->htable))++;
-    dprintf_local( stddeb, "Local_GetNewHandle: %04x\n", pInfo->htable + 2 + 4*count );
-    return pInfo->htable + 2 + 4*count;
+    if (!table)  /* We need to create a new table */
+    {
+        if (!LOCAL_NewHTable( ds )) return 0;
+	ptr = PTR_SEG_OFF_TO_LIN( ds, 0 );
+	pInfo = LOCAL_GetHeap( ds );
+        pEntry = (LOCALHANDLEENTRY *)(ptr + pInfo->htable + sizeof(WORD));
+    }
+
+    /* Now allocate this entry */
+
+    pEntry->lock = 0;
+    dprintf_local( stddeb, "LOCAL_GetNewHandleEntry(%04x): %04x\n",
+                   ds, ((char *)pEntry - ptr) );
+    return (HLOCAL)((char *)pEntry - ptr);
 }
+
 
 /***********************************************************************
  *           LOCAL_FreeArena
@@ -634,9 +676,11 @@ static HLOCAL LOCAL_FreeArena( WORD ds, WORD arena )
     if (!(pInfo = LOCAL_GetHeap( ds ))) return arena;
 
     pArena = ARENA_PTR( ptr, arena );
-    if ((pArena->prev & 3) == LOCAL_ARENA_FREE) {
+    if ((pArena->prev & 3) == LOCAL_ARENA_FREE)
+    {
 	/* shouldn't happen */
-	fprintf( stderr, "LocalFreeArena: Trying to free a block twice!\n" );
+        fprintf( stderr, "LocalFreeArena: Trying to free block %04x twice!\n",
+                 arena );
 	LOCAL_PrintHeap( ds );
 	return arena;
     }
@@ -670,6 +714,59 @@ static HLOCAL LOCAL_FreeArena( WORD ds, WORD arena )
 
 
 /***********************************************************************
+ *           LOCAL_FreeHandleEntry
+ *
+ * Free a handle table entry.
+ */
+static void LOCAL_FreeHandleEntry( WORD ds, HLOCAL handle )
+{
+    char *ptr = PTR_SEG_OFF_TO_LIN( ds, 0 );
+    LOCALHANDLEENTRY *pEntry = (LOCALHANDLEENTRY *)(ptr + handle);
+    LOCALHEAPINFO *pInfo;
+    WORD *pTable;
+    WORD table, count, i;
+
+    if (!(pInfo = LOCAL_GetHeap( ds ))) return;
+
+    /* Find the table where this handle comes from */
+
+    pTable = &pInfo->htable;
+    while (*pTable)
+    {
+        WORD size = (*(WORD *)(ptr + *pTable)) * sizeof(LOCALHANDLEENTRY);
+        if ((handle >= *pTable + sizeof(WORD)) &&
+            (handle < *pTable + sizeof(WORD) + size)) break;  /* Found it */
+        pTable = (WORD *)(ptr + *pTable + sizeof(WORD) + size);
+    }
+    if (!*pTable)
+    {
+        fprintf(stderr, "LOCAL_FreeHandleEntry: invalid entry %04x\n", handle);
+        LOCAL_PrintHeap( ds );
+        return;
+    }
+
+    /* Make the entry free */
+
+    pEntry->addr = 0;  /* just in case */
+    pEntry->lock = 0xff;
+
+    /* Now check if all entries in this table are free */
+
+    pEntry = (LOCALHANDLEENTRY *)(ptr + *pTable + sizeof(WORD));
+    count = *(WORD *)(ptr + *pTable);
+    for (i = count; i > 0; i--, pEntry++) if (pEntry->lock != 0xff) return;
+    
+    /* Remove the table from the linked list and free it */
+
+    table = *pTable;
+    dprintf_local( stddeb, "LOCAL_FreeHandleEntry(%04x): freeing table %04x\n",
+                   ds, table);
+    *pTable = *((WORD *)(ptr + count * sizeof(*pEntry)) + 1);
+    LOCAL_FreeArena( ds, ARENA_HEADER( table ) );
+}
+
+
+/***********************************************************************
  *           LOCAL_Free
  *
  * Implementation of LocalFree().
@@ -677,20 +774,23 @@ static HLOCAL LOCAL_FreeArena( WORD ds, WORD arena )
 HLOCAL LOCAL_Free( HANDLE ds, HLOCAL handle )
 {
     char *ptr = PTR_SEG_OFF_TO_LIN( ds, 0 );
-    WORD arena;
 
     dprintf_local( stddeb, "LocalFree: %04x ds=%04x\n", handle, ds );
     
     if (!handle) { fprintf( stderr, "LOCAL_Free: handle is 0.\n" ); return 0; }
-    if (HANDLE_FIXED( handle )) {
-	arena = ARENA_HEADER( handle );
-    } else {
-	arena = ARENA_HEADER( *(WORD *)(ptr + handle) );
-	dprintf_local( stddeb, "LocalFree: real block at %04x\n", arena);
+    if (HANDLE_FIXED( handle ))
+    {
+        if (!LOCAL_FreeArena( ds, ARENA_HEADER( handle ) )) return 0;  /* OK */
+        else return handle;  /* couldn't free it */
     }
-    arena = LOCAL_FreeArena( ds, arena );
-    if (arena != 0) return handle; /* couldn't free it */
-    return 0;
+    else
+    {
+	WORD arena = ARENA_HEADER( *(WORD *)(ptr + handle) );
+        dprintf_local( stddeb, "LocalFree: real block at %04x\n", arena );
+        if (LOCAL_FreeArena( ds, arena )) return handle; /* couldn't free it */
+        LOCAL_FreeHandleEntry( ds, handle );
+        return 0;  /* OK */
+    }
 }
 
 
@@ -706,26 +806,26 @@ HLOCAL LOCAL_Alloc( HANDLE ds, WORD flags, WORD size )
     
     dprintf_local( stddeb, "LocalAlloc: %04x %d ds=%04x\n", flags, size, ds );
 
-    if (flags & LMEM_MOVEABLE) {
+    if (flags & LMEM_MOVEABLE)
+    {
 	LOCALHANDLEENTRY *plhe;
 	HLOCAL hmem;
 	
-	hmem = LOCAL_GetBlock( ds, size + 2, flags );
-	if (hmem == 0) return 0;
-	handle = LOCAL_GetNewHandle( ds );
-	if (handle == 0) {
+	if (!(hmem = LOCAL_GetBlock( ds, size, flags ))) return 0;
+	if (!(handle = LOCAL_GetNewHandleEntry( ds )))
+        {
 	    fprintf( stderr, "LocalAlloc: couldn't get handle\n");
 	    LOCAL_FreeArena( ds, ARENA_HEADER(hmem) );
 	    return 0;
 	}
 	ptr = PTR_SEG_OFF_TO_LIN( ds, 0 );
-	*(WORD *)(ptr + hmem) = handle;
 	plhe = (LOCALHANDLEENTRY *)(ptr + handle);
-	plhe->addr = hmem + 2;
+	plhe->addr = hmem;
+        plhe->flags = (BYTE)(flags >> 8);
 	plhe->lock = 0;
-    } else {
-	handle = LOCAL_GetBlock( ds, size, flags );
     }
+    else handle = LOCAL_GetBlock( ds, size, flags );
+
     return handle;
 }
 
@@ -749,14 +849,9 @@ HLOCAL LOCAL_ReAlloc( HANDLE ds, HLOCAL handle, WORD size, WORD flags )
                    handle, size, flags, ds );
     if (!(pInfo = LOCAL_GetHeap( ds ))) return 0;
     
-    if (HANDLE_FIXED( handle )) {
-	blockhandle = handle;
-    } else {
-	size += 2;
-	blockhandle = *(WORD *)(ptr + handle);
-	dprintf_local( stddeb, "  blockhandle %04x (%04x)\n", blockhandle,
-		      *(WORD *)(ptr + blockhandle - 2));
-    }
+    if (HANDLE_FIXED( handle )) blockhandle = handle;
+    else blockhandle = *(WORD *)(ptr + handle);
+
     arena = ARENA_HEADER( blockhandle );
     dprintf_local( stddeb, "LocalReAlloc: arena is %04x\n", arena );
     pArena = ARENA_PTR( ptr, arena );
@@ -811,8 +906,8 @@ HLOCAL LOCAL_ReAlloc( HANDLE ds, HLOCAL handle, WORD size, WORD flags )
     ptr = PTR_SEG_OFF_TO_LIN( ds, 0 );
     memcpy( ptr + newhandle, ptr + (arena + ARENA_HEADER_SIZE), size );
     LOCAL_FreeArena( ds, arena );
-    if (HANDLE_MOVEABLE( handle )) {
-	newhandle += 2;
+    if (HANDLE_MOVEABLE( handle ))
+    {
 	dprintf_local( stddeb, "LocalReAlloc: fixing handle\n");
 	*(WORD *)(ptr + handle) = newhandle;
 	newhandle = handle;
@@ -831,7 +926,7 @@ static HLOCAL LOCAL_InternalLock( LPSTR heap, HLOCAL handle )
     if (HANDLE_MOVEABLE(handle))
     {
         LOCALHANDLEENTRY *pEntry = (LOCALHANDLEENTRY *)(heap + handle);
-        if (pEntry->lock < 255) pEntry->lock++;
+        if (pEntry->lock < 0xfe) pEntry->lock++;
         handle = pEntry->addr;
     }
     dprintf_local( stddeb, "returning %04x\n", handle );
@@ -860,7 +955,7 @@ BOOL LOCAL_Unlock( WORD ds, HLOCAL handle )
     if (HANDLE_MOVEABLE(handle))
     {
         LOCALHANDLEENTRY *pEntry = (LOCALHANDLEENTRY *)(ptr + handle);
-        if (!pEntry->lock || (pEntry->lock == 255)) return FALSE;
+        if (!pEntry->lock || (pEntry->lock == 0xff)) return FALSE;
         /* For moveable block, return the new lock count */
         /* (see _Windows_Internals_ p. 197) */
         return --pEntry->lock;
@@ -878,17 +973,37 @@ WORD LOCAL_Size( WORD ds, HLOCAL handle )
 {
     char *ptr = PTR_SEG_OFF_TO_LIN( CURRENT_DS, 0 );
     LOCALARENA *pArena;
-    WORD arena;
 
     dprintf_local( stddeb, "LocalSize: %04x ds=%04x\n", handle, ds );
-    
-    if (HANDLE_FIXED( handle )) {
-	arena = ARENA_HEADER( handle );
-    } else {
-	arena = ARENA_HEADER( handle = *(WORD *)(ptr + handle) );
-    }
-    pArena = ARENA_PTR( ptr, arena );
+
+    if (HANDLE_MOVEABLE( handle )) handle = *(WORD *)(ptr + handle);
+    pArena = ARENA_PTR( ptr, ARENA_HEADER(handle) );
     return pArena->next - handle;
+}
+
+
+/***********************************************************************
+ *           LOCAL_Flags
+ *
+ * Implementation of LocalFlags().
+ */
+WORD LOCAL_Flags( WORD ds, HLOCAL handle )
+{
+    char *ptr = PTR_SEG_OFF_TO_LIN( ds, 0 );
+
+    if (HANDLE_MOVEABLE(handle))
+    {
+        LOCALHANDLEENTRY *pEntry = (LOCALHANDLEENTRY *)(ptr + handle);
+        dprintf_local( stddeb, "LOCAL_Flags(%04x,%04x): returning %04x\n",
+                       ds, handle, pEntry->lock | (pEntry->flags << 8) );
+        return pEntry->lock | (pEntry->flags << 8);
+    }
+    else
+    {
+        dprintf_local( stddeb, "LOCAL_Flags(%04x,%04x): returning 0\n",
+                       ds, handle );
+        return 0;
+    }
 }
 
 
@@ -902,6 +1017,67 @@ WORD LOCAL_HeapSize( WORD ds )
     LOCALHEAPINFO *pInfo = LOCAL_GetHeap( ds );
     if (!pInfo) return 0;
     return pInfo->last - pInfo->first;
+}
+
+
+/***********************************************************************
+ *           LOCAL_CountFree
+ *
+ * Implementation of LocalCountFree().
+ */
+WORD LOCAL_CountFree( WORD ds )
+{
+    WORD arena, total;
+    LOCALARENA *pArena;
+    char *ptr = PTR_SEG_OFF_TO_LIN( ds, 0 );
+    LOCALHEAPINFO *pInfo = LOCAL_GetHeap( ds );
+
+    total = 0;
+    arena = pInfo->first;
+    pArena = ARENA_PTR( ptr, arena );
+    for (;;)
+    {
+        arena = pArena->free_next;
+        pArena = ARENA_PTR( ptr, arena );
+	if (arena == pArena->free_next) break;
+        total += pArena->size;
+    }
+    dprintf_local( stddeb, "LOCAL_CountFree(%04x): returning %d\n", ds, total);
+    return total;
+}
+
+
+/***********************************************************************
+ *           LOCAL_Handle
+ *
+ * Implementation of LocalHandle().
+ */
+HLOCAL LOCAL_Handle( WORD ds, WORD addr )
+{ 
+    char *ptr = PTR_SEG_OFF_TO_LIN( ds, 0 );
+    LOCALHEAPINFO *pInfo;
+    WORD table;
+
+    if (!(pInfo = LOCAL_GetHeap( ds )))
+    {
+        fprintf( stderr, "LOCAL_Handle(%04x): Local heap not found\n", ds );
+	LOCAL_PrintHeap( ds );
+	return 0;
+    }
+
+    /* Find the address in the entry tables */
+
+    table = pInfo->htable;
+    while (table)
+    {
+        WORD count = *(WORD *)(ptr + table);
+        LOCALHANDLEENTRY *pEntry = (LOCALHANDLEENTRY*)(ptr+table+sizeof(WORD));
+        for (; count > 0; count--, pEntry++)
+            if (pEntry->addr == addr) return (HLOCAL)((char *)pEntry - ptr);
+        table = *(WORD *)pEntry;
+    }
+
+    return (HLOCAL)addr;  /* Fixed block handle is addr */
 }
 
 
@@ -964,14 +1140,8 @@ WORD LocalSize( HLOCAL handle )
  *           LocalHandle   (KERNEL.11)
  */
 HLOCAL LocalHandle( WORD addr )
-{
-    char *ptr = PTR_SEG_OFF_TO_LIN( CURRENT_DS, 0 );
-
-    dprintf_local( stddeb, "LocalHandle: %04x\n", addr );
-    if (HANDLE_MOVEABLE( addr )) {
-	addr = *(WORD *)(ptr + addr - 2);
-    }
-    return addr;
+{ 
+    return LOCAL_Handle( CURRENT_DS, addr );
 }
 
 
@@ -980,8 +1150,7 @@ HLOCAL LocalHandle( WORD addr )
  */
 WORD LocalFlags( HLOCAL handle )
 {
-    dprintf_local( stddeb, "LocalFlags: %04x\n", handle );
-    return 0;
+    return LOCAL_Flags( CURRENT_DS, handle );
 }
 
 
@@ -1000,8 +1169,20 @@ WORD LocalCompact( WORD minfree )
  */
 FARPROC LocalNotify( FARPROC func )
 {
-    dprintf_local( stddeb, "LocalNotify: %08lx\n", func );
-    return 0;
+    LOCALHEAPINFO *pInfo;
+    FARPROC oldNotify;
+    WORD ds = CURRENT_DS;
+
+    if (!(pInfo = LOCAL_GetHeap( ds )))
+    {
+        fprintf( stderr, "LOCAL_Notify(%04x): Local heap not found\n", ds );
+	LOCAL_PrintHeap( ds );
+	return 0;
+    }
+    dprintf_local( stddeb, "LocalNotify(%04x): %08lx\n", ds, func );
+    oldNotify = pInfo->notify;
+    pInfo->notify = func;
+    return oldNotify;
 }
 
 
@@ -1020,16 +1201,22 @@ WORD LocalShrink( HLOCAL handle, WORD newsize )
  */
 DWORD GetHeapSpaces( HMODULE module )
 {
-    return MAKELONG( 0x7fff, 0xffff );
+    NE_MODULE *pModule;
+    WORD ds;
+
+    module = GetExePtr( module );
+    if (!(pModule = MODULE_GetPtr( module ))) return 0;
+    ds = (NE_SEG_TABLE( pModule ) + pModule->dgroup - 1)->selector;
+    return MAKELONG( LOCAL_CountFree( ds ), LOCAL_HeapSize( ds ) );
 }
 
 
 /***********************************************************************
  *           LocalCountFree   (KERNEL.161)
  */
-void LocalCountFree()
+WORD LocalCountFree(void)
 {
-    dprintf_local( stddeb, "LocalCountFree:\n" );
+    return LOCAL_CountFree( CURRENT_DS );
 }
 
 
@@ -1048,8 +1235,17 @@ WORD LocalHeapSize()
  */
 WORD LocalHandleDelta( WORD delta )
 {
-    dprintf_local( stddeb, "LocalHandleDelta: %04x\n", delta );
-    return 0;
+    LOCALHEAPINFO *pInfo;
+
+    if (!(pInfo = LOCAL_GetHeap( CURRENT_DS )))
+    {
+        fprintf( stderr, "LocalHandleDelta: Local heap not found\n");
+	LOCAL_PrintHeap( CURRENT_DS );
+	return 0;
+    }
+    if (delta) pInfo->hdelta = delta;
+    dprintf_local(stddeb, "LocalHandleDelta: returning %04x\n", pInfo->hdelta);
+    return pInfo->hdelta;
 }
 
 

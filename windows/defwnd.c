@@ -141,18 +141,14 @@ LRESULT DefWindowProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
 
     case WM_WINDOWPOSCHANGED:
 	{
-	    /*  Note: Windoze uses unknown SWP flags 0x1000 and 0x0800 to
-	     *        decide whether to send WM_MOVE or/and WM_SIZE respectively 
-	     */
-
 	    WINDOWPOS * winPos = (WINDOWPOS *)PTR_SEG_TO_LIN(lParam);
 	    WPARAM	wp     = SIZE_RESTORED;
 
-	    if (!(winPos->flags & SWP_NOMOVE))
+	    if (!(winPos->flags & SWP_NOCLIENTMOVE))
 		SendMessage( hwnd, WM_MOVE, 0,
 		             MAKELONG( wndPtr->rectClient.left,
 				       wndPtr->rectClient.top ));
-	    if (!(winPos->flags & SWP_NOSIZE))
+	    if (!(winPos->flags & SWP_NOCLIENTSIZE))
 		 {
 	       	   if( wndPtr->dwStyle & WS_MAXIMIZE ) wp = SIZE_MAXIMIZED;
 		   else if(wndPtr->dwStyle & WS_MINIMIZE ) wp = SIZE_MINIMIZED;

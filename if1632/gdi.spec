@@ -136,7 +136,7 @@ id	3
 148 pascal SetBrushOrg(word s_word s_word) SetBrushOrg
 149 pascal GetBrushOrg(word) GetBrushOrg
 150 pascal16 UnrealizeObject(word) UnrealizeObject
-151 stub CopyMetaFile
+151 pascal16 CopyMetaFile(word ptr) CopyMetaFile
 153 pascal16 CreateIC(ptr ptr ptr ptr) CreateIC
 154 pascal GetNearestColor(word long) GetNearestColor
 155 stub QueryAbort
@@ -150,7 +150,7 @@ id	3
 170 stub SetDCStatus
 172 pascal16 SetRectRgn(word s_word s_word s_word s_word) SetRectRgn
 173 pascal16 GetClipRgn(word) GetClipRgn
-175 stub EnumMetaFile
+175 pascal16 EnumMetaFile(word word segptr long) EnumMetaFile
 176 pascal16 PlayMetaFileRecord(word ptr ptr word) PlayMetaFileRecord
 179 pascal16 GetDCState(word) GetDCState
 180 pascal16 SetDCState(word word) SetDCState

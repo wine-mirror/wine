@@ -320,6 +320,8 @@ static LONG FILEDLG_WMInitDialog(HWND hWnd, WPARAM wParam, LPARAM lParam)
   LPSTR pstr;
   SetWindowLong(hWnd, DWL_USER, lParam);
   lpofn = (LPOPENFILENAME)lParam;
+  if (lpofn->lpstrTitle)
+      SendMessage( hWnd, WM_SETTEXT, 0, (LPARAM)lpofn->lpstrTitle );
   /* read custom filter information */
   if (lpofn->lpstrCustomFilter)
     {
@@ -1120,10 +1122,12 @@ struct CCPRIVATE
  LPCHOOSECOLOR lpcc;  /* points to public known data structure */
  int nextuserdef;     /* next free place in user defined color array */
  HDC hdcMem;          /* color graph used for BitBlt() */
+ HBITMAP hbmMem;      /* color graph bitmap */    
  RECT fullsize;       /* original dialog window size */
  UINT msetrgb;        /* # of SETRGBSTRING message (today not used)  */
  RECT old3angle;      /* last position of l-marker */
  RECT oldcross;       /* last position of color/satuation marker */
+ BOOL updating;       /* to prevent recursive WM_COMMAND/EN_UPDATE procesing */
  int h;
  int s;
  int l;               /* for temporary storing of hue,sat,lum */
@@ -1501,7 +1505,6 @@ static void CC_PaintTriangle(HWND hDlg,int y)
 static void CC_PaintCross(HWND hDlg,int x,int y)
 {
  HDC hDC;
- long temp;
  int w=GetDialogBaseUnits();
  HWND hwnd=GetDlgItem(hDlg,0x2c6);
  struct CCPRIVATE * lpp=(struct CCPRIVATE *)GetWindowLong(hDlg, DWL_USER); 
@@ -1512,56 +1515,34 @@ static void CC_PaintCross(HWND hDlg,int x,int y)
  if (IsWindowVisible(GetDlgItem(hDlg,0x2c6)))   /* if full size */
  {
    GetClientRect(hwnd,&rect);
-
    hDC=GetDC(hwnd);
+   SelectClipRgn(hDC,CreateRectRgnIndirect(&rect));   
    hPen=CreatePen(PS_SOLID,2,0);
    hPen=SelectObject(hDC,hPen);
-
-   temp=(long)rect.right*(long)x;
-   point.x=temp/(long)MAXHORI;
-   temp=(long)rect.bottom*(long)y;
-   point.y=rect.bottom-temp/(long)MAXVERT;
-
+   point.x=((long)rect.right*(long)x)/(long)MAXHORI;
+   point.y=rect.bottom-((long)rect.bottom*(long)y)/(long)MAXVERT;
    if (lpp->oldcross.left!=lpp->oldcross.right)
      BitBlt(hDC,lpp->oldcross.left,lpp->oldcross.top,
 	     lpp->oldcross.right-lpp->oldcross.left,
 	     lpp->oldcross.bottom-lpp->oldcross.top,
 	     lpp->hdcMem,lpp->oldcross.left,lpp->oldcross.top,SRCCOPY);
-
    lpp->oldcross.left  =point.x-w-1;
    lpp->oldcross.right =point.x+w+1;
    lpp->oldcross.top   =point.y-w-1;
-   lpp->oldcross.bottom=point.y+w+1;
+   lpp->oldcross.bottom=point.y+w+1; 
 
-   if (point.y+w/2<rect.bottom-3) /* perhaps better via SelectClipRgn() */
-   {
-    MoveTo(hDC,point.x,MIN(point.y+w/2,rect.bottom));
-    LineTo(hDC,point.x,MIN(point.y+w,rect.bottom-2));
-   }
-   if (point.y-w/2>3)
-   {
-    MoveTo(hDC,point.x,point.y-w/2);
-    LineTo(hDC,point.x,MAX(2,point.y-w  ));
-   }
-   if (point.x+w/2<rect.right-3)
-   {
-    MoveTo(hDC,point.x+w/2,point.y);
-    LineTo(hDC,MIN(rect.right,point.x+w),  point.y);
-   }
-   if ((point.x-w/2)>3)
-   {
-    MoveTo(hDC,point.x-w/2,point.y);
-    LineTo(hDC,MAX(2,point.x-w),  point.y);
-   }
-
+   MoveTo(hDC,point.x-w,point.y); 
+   LineTo(hDC,point.x+w,point.y);
+   MoveTo(hDC,point.x,point.y-w); 
+   LineTo(hDC,point.x,point.y+w);
    DeleteObject(SelectObject(hDC,hPen));
    ReleaseDC(hwnd,hDC);
  }
 }
 
 
-#define XSTEPS 36
-#define YSTEPS 48
+#define XSTEPS 48
+#define YSTEPS 24
 
 
 /***********************************************************************
@@ -1575,14 +1556,13 @@ static void CC_PrepareColorGraph(HWND hDlg)
  HBRUSH hbrush;
  HDC hdc ;
  RECT rect,client;
- HBITMAP hbmMem;
  HCURSOR hcursor=SetCursor(LoadCursor(0,IDC_WAIT));
 
  GetClientRect(hwnd,&client);
  hdc=GetDC(hwnd);
  lpp->hdcMem = CreateCompatibleDC(hdc);
- hbmMem = CreateCompatibleBitmap(hdc,client.right,client.bottom);
- SelectObject(lpp->hdcMem,hbmMem);
+ lpp->hbmMem = CreateCompatibleBitmap(hdc,client.right,client.bottom);
+ SelectObject(lpp->hdcMem,lpp->hbmMem);
 
  xdif=client.right /XSTEPS;
  ydif=client.bottom/YSTEPS+1;
@@ -1607,7 +1587,6 @@ static void CC_PrepareColorGraph(HWND hDlg)
  }
  ReleaseDC(hwnd,hdc);
  SetCursor(hcursor);
- /* FIXME perhaps we should do it only ONCE for all, like hCDRom,.... ? */
 }
 
 /***********************************************************************
@@ -1675,17 +1654,20 @@ static void CC_PaintLumBar(HWND hDlg,int hue,int sat)
 static void CC_EditSetRGB(HWND hDlg,COLORREF cr)
 {
  char buffer[10];
+ struct CCPRIVATE * lpp=(struct CCPRIVATE *)GetWindowLong(hDlg, DWL_USER); 
  int r=GetRValue(cr);
  int g=GetGValue(cr);
  int b=GetBValue(cr);
  if (IsWindowVisible(GetDlgItem(hDlg,0x2c6)))   /* if full size */
  {
+   lpp->updating=TRUE;
    sprintf(buffer,"%d",r);
    SetWindowText(GetDlgItem(hDlg,0x2c2),buffer);
    sprintf(buffer,"%d",g);
    SetWindowText(GetDlgItem(hDlg,0x2c3),buffer);
    sprintf(buffer,"%d",b);
    SetWindowText(GetDlgItem(hDlg,0x2c4),buffer);
+   lpp->updating=FALSE;
  }
 }
 
@@ -1695,14 +1677,18 @@ static void CC_EditSetRGB(HWND hDlg,COLORREF cr)
 static void CC_EditSetHSL(HWND hDlg,int h,int s,int l)
 {
  char buffer[10];
+ struct CCPRIVATE * lpp=(struct CCPRIVATE *)GetWindowLong(hDlg, DWL_USER); 
+ lpp->updating=TRUE;
  if (IsWindowVisible(GetDlgItem(hDlg,0x2c6)))   /* if full size */
  {
+   lpp->updating=TRUE;
    sprintf(buffer,"%d",h);
    SetWindowText(GetDlgItem(hDlg,0x2bf),buffer);
    sprintf(buffer,"%d",s);
    SetWindowText(GetDlgItem(hDlg,0x2c0),buffer);
    sprintf(buffer,"%d",l);
    SetWindowText(GetDlgItem(hDlg,0x2c1),buffer);
+   lpp->updating=FALSE;
  }
  CC_PaintLumBar(hDlg,h,s);
 }
@@ -1911,12 +1897,13 @@ static LRESULT CC_WMCommand(HWND hDlg, WPARAM wParam, LPARAM lParam)
     HDC hdc;
     COLORREF *cr;
     struct CCPRIVATE * lpp=(struct CCPRIVATE *)GetWindowLong(hDlg, DWL_USER); 
+    dprintf_commdlg(stddeb,"CC_WMCommand wParam=%x lParam=%lx\n",wParam,lParam);
     switch (wParam)
     {
           case 0x2c2:  /* edit notify RGB */
 	  case 0x2c3:
 	  case 0x2c4:
-	       if (HIWORD(lParam)==EN_UPDATE)
+	       if (HIWORD(lParam)==EN_UPDATE && !lpp->updating)
 			 {
 			   i=CC_CheckDigitsInEdit(LOWORD(lParam),255);
 			   r=GetRValue(lpp->lpcc->rgbResult);
@@ -1946,7 +1933,7 @@ static LRESULT CC_WMCommand(HWND hDlg, WPARAM wParam, LPARAM lParam)
 	  case 0x2bf:  /* edit notify HSL */
 	  case 0x2c0:
 	  case 0x2c1:
-	       if (HIWORD(lParam)==EN_UPDATE)
+	       if (HIWORD(lParam)==EN_UPDATE && !lpp->updating)
 			 {
 			   i=CC_CheckDigitsInEdit(LOWORD(lParam),wParam==0x2bf?239:240);
 			   xx=0;
@@ -2131,7 +2118,8 @@ LRESULT ColorDlgProc(HWND hDlg, UINT message,
 	  case WM_INITDIALOG:
 	                return CC_WMInitDialog(hDlg,wParam,lParam);
 	  case WM_NCDESTROY:
-	                /* FIXME: what about lpp->hdcMem ? */
+	                DeleteDC(lpp->hdcMem); 
+	                DeleteObject(lpp->hbmMem); 
 	                free(lpp);
 	                SetWindowLong(hDlg, DWL_USER, 0L); /* we don't need it anymore */
 	                break;
@@ -2158,3 +2146,84 @@ LRESULT ColorDlgProc(HWND hDlg, UINT message,
      return FALSE ;
 }
 
+
+
+/***********************************************************************
+ *                        ChooseFont   (COMMDLG.15)     
+     --April 1996--
+     please note: ChooseFont etc. are still under construction
+ */
+BOOL ChooseFont(LPCHOOSEFONT lpChFont)
+{
+    HANDLE hInst, hDlgTmpl;
+    BOOL bRet;
+    dprintf_commdlg(stddeb,"ChoseFont\n");
+    hDlgTmpl = SYSRES_LoadResource( SYSRES_DIALOG_CHOOSE_FONT );
+    hInst = WIN_GetWindowInstance( lpChFont->hwndOwner );
+    bRet = DialogBoxIndirectParam( hInst, hDlgTmpl, lpChFont->hwndOwner,
+                                   MODULE_GetWndProcEntry16("FormatCharDlgProc"), 
+                                   (DWORD)lpChFont );
+    SYSRES_FreeResource( hDlgTmpl );
+    return bRet;
+}
+
+/***********************************************************************
+ *           FontStyleEnumProc   (COMMDLG.18)
+ */
+int FontStyleEnumProc(LOGFONT *lf ,TEXTMETRIC *tm, int fonttype, LPARAM lParam)
+{
+ dprintf_commdlg(stddeb,"FontStyleEnumProc: font=%s (height=%d)\n",lf->lfFaceName,lf->lfHeight);
+ return 1;
+}
+
+/***********************************************************************
+ *           FontFamilyEnumProc   (COMMDLG.19)
+ */
+int FontFamilyEnumProc(LOGFONT *lf ,TEXTMETRIC *tm, int fonttype, LPARAM lParam)
+{
+ dprintf_commdlg(stddeb,"FontFamilyEnumProc: font=%s\n",lf->lfFaceName);
+ return 1;
+}
+
+/***********************************************************************
+ *           ColorDlgProc   (COMMDLG.16)
+ */
+LRESULT FormatCharDlgProc(HWND hDlg, UINT wMsg, WPARAM wParam, LPARAM lParam)
+{
+  HDC hdc;
+  FARPROC  enumCallback;
+  
+  switch (wMsg) 
+    {
+    case WM_INITDIALOG:
+      dprintf_commdlg(stddeb,"FormatCharDlgProc // WM_INITDIALOG lParam=%08lX\n", lParam);
+      ShowWindow(hDlg, SW_SHOWNORMAL);
+      hdc = GetDC(hDlg);
+      if (hdc)
+      {
+       HCURSOR hcursor=SetCursor(LoadCursor(0,IDC_WAIT));
+       /*  
+         currently only called for testing of 2 necessary EnumProcs 
+       */
+       enumCallback = MODULE_GetWndProcEntry16("FontFamilyEnumProc");
+       EnumFontFamilies (hdc, NULL,enumCallback ,NULL); 
+       enumCallback = MODULE_GetWndProcEntry16("FontStyleEnumProc");
+       EnumFontFamilies(hdc, /* for example : */ "COURIER",enumCallback,NULL);
+       ReleaseDC(hDlg,hdc);
+       SetCursor(hcursor);
+      }
+      return (TRUE);
+    case WM_COMMAND:
+      switch (wParam)
+	{
+	case IDOK:
+	  EndDialog(hDlg, TRUE);
+	  return(TRUE);
+	case IDCANCEL:
+	  EndDialog(hDlg, FALSE);
+	  return(TRUE);
+	}
+      return(FALSE);
+    }
+  return FALSE;
+}

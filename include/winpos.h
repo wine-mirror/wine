@@ -11,6 +11,10 @@
 
 #define DWP_MAGIC  0x5057  /* 'WP' */
 
+/* undocumented SWP flags - from SDK 3.1 */
+#define SWP_NOCLIENTSIZE	0x0800
+#define SWP_NOCLIENTMOVE	0x1000
+
 typedef struct
 {
     WORD        actualCount;

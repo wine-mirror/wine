@@ -120,8 +120,8 @@ VOID STRING_SelectLanguageByNumber(UINT num)
   if (Globals.hMainMenu) DestroyMenu(Globals.hMainMenu);
   Globals.hMainMenu = hMainMenu;
 
-#ifndef WINELIB
-  /* Update system menus (FIXME) */
+#ifdef WINELIB
+  /* Update system menus */
   for (i = 0; langNames[i] && lstrcmp(lang, langNames[i]);) i++;
   if (langNames[i]) Options.language = i;
 

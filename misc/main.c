@@ -32,21 +32,28 @@
 #include "xmalloc.h"
 
 const char people[] = "Wine is available thanks to the work of "
-"Bob Amstadt, Dag Asheim, Martin Ayotte, Ross Biro, Erik Bos, "
-"Fons Botman, John Brezak, Andrew Bulhak, John Burton, Paul Falstad, "
+"Bob Amstadt, Dag Asheim, Martin Ayotte, Ross Biro, Uwe Bonnes, Erik Bos, "
+"Fons Botman, John Brezak, Andrew Bulhak, John Burton, "
+"Niels de Carpentier, Roman Dolejsi, Frans van Dorsselaer, Paul Falstad, "
 "Olaf Flebbe, Peter Galbavy, Ramon Garcia, Hans de Graaff, "
-"Charles M. Hannum, Cameron Heide, Jochen Hoenicke, Jeffrey Hsu, "
-"Miguel de Icaza, Alexandre Julliard, Jon Konrath, Scott A. Laird, "
+"Charles M. Hannum, John Harvey, Cameron Heide, Jochen Hoenicke, "
+"Onno Hovers, Jeffrey Hsu, Miguel de Icaza, Jukka Iivonen, "
+"Alexandre Julliard, Jochen Karrer, Andreas Kirschbaum, Albrecht Kleine, "
+"Jon Konrath, Alex Korobka, Greg Kreider, Anand Kumria, Scott A. Laird, "
 "Martin von Loewis, Kenneth MacDonald, Peter MacDonald, William Magro, "
-"Marcus Meissner, Graham Menhennitt, David Metcalfe, Michael Patra, "
-"John Richardson, Johannes Ruscheinski, Thomas Sandford, "
-"Constantine Sapuntzakis, Daniel Schepler, Bernd Schmidt, "
-"Yngvi Sigurjonsson, Rick Sladkey, William Smith, Erik Svendsen, "
-"Goran Thyni, Jimmy Tirtawangsa, Jon Tombs, Linus Torvalds, "
-"Gregory Trubetskoy, Michael Veksler, Morten Welinder, Jan Willamowius, "
-"Carl Williams, Karl Guenter Wuensch, Eric Youngdale, and James Youngman.";
+"Juergen Marquardt, Marcus Meissner, Graham Menhennitt, David Metcalfe, "
+"Steffen Moeller, Philippe De Muyter, Itai Nahshon, Michael Patra, "
+"Jim Peterson, Robert Pouliot, Keith Reynolds, John Richardson, "
+"Johannes Ruscheinski, Thomas Sandford, Constantine Sapuntzakis, "
+"Daniel Schepler, Ulrich Schmid, Bernd Schmidt, Yngvi Sigurjonsson, "
+"Rick Sladkey, William Smith, Erik Svendsen, Tristan Tarrant, "
+"Andrew Taylor, Duncan C Thomson, Goran Thyni, Jimmy Tirtawangsa, "
+"Jon Tombs, Linus Torvalds, Gregory Trubetskoy, Michael Veksler, "
+"Sven Verdoolaege, Eric Warnke, Manfred Weichel, Morten Welinder, "
+"Jan Willamowius, Carl Williams, Karl Guenter Wuensch, Eric Youngdale, "
+"and James Youngman. ";
 
-static const char *langNames[] =
+const char *langNames[] =
 {
     "En",  /* LANG_En */
     "Es",  /* LANG_Es */

@@ -12,6 +12,10 @@
 #include <resource.h>
 #include <options.h>
 #include <shell.h>
+void LIBWINE_Register_accel();
+void LIBWINE_Register_De();
+void LIBWINE_Register_En();
+void LIBWINE_Register_Fr();
 #endif
 
 GLOBALS Globals;
@@ -39,6 +43,7 @@ int PASCAL WinMain (HANDLE hInstance, HANDLE prev, LPSTR cmdline, int show)
   LIBWINE_Register_accel();
   LIBWINE_Register_De();
   LIBWINE_Register_En();
+  LIBWINE_Register_Fr();
 #endif
 
 #ifndef WINELIB
@@ -62,8 +67,8 @@ int PASCAL WinMain (HANDLE hInstance, HANDLE prev, LPSTR cmdline, int show)
   }
 #endif
 
-  /* Select Language (FIXME) */
-#ifndef WINELIB
+  /* Select Language */
+#ifdef WINELIB
   Globals.lpszLanguage = langNames[Options.language];
 #else
   Globals.lpszLanguage = "En";

@@ -24,30 +24,33 @@ WORD USER_HeapSel = 0;
  */
 WORD GetFreeSystemResources( WORD resType )
 {
-    DWORD user, gdi;
+    int userPercent, gdiPercent;
 
     switch(resType)
     {
     case GFSR_USERRESOURCES:
-        user = GetHeapSpaces( USER_HeapSel );
-        gdi  = 0xffffffff;
+        userPercent = (int)LOCAL_CountFree( USER_HeapSel ) * 100 /
+                               LOCAL_HeapSize( USER_HeapSel );
+        gdiPercent  = 100;
         break;
 
     case GFSR_GDIRESOURCES:
-        gdi  = GetHeapSpaces( GDI_HeapSel );
-        user = 0xffffffff;
+        gdiPercent  = (int)LOCAL_CountFree( GDI_HeapSel ) * 100 /
+                               LOCAL_HeapSize( GDI_HeapSel );
+        userPercent = 100;
         break;
 
     case GFSR_SYSTEMRESOURCES:
-        user = GetHeapSpaces( USER_HeapSel );
-        gdi  = GetHeapSpaces( GDI_HeapSel );
+        userPercent = (int)LOCAL_CountFree( USER_HeapSel ) * 100 /
+                               LOCAL_HeapSize( USER_HeapSel );
+        gdiPercent  = (int)LOCAL_CountFree( GDI_HeapSel ) * 100 /
+                               LOCAL_HeapSize( GDI_HeapSel );
         break;
 
     default:
         return 0;
     }
-    if (user > gdi) return LOWORD(gdi) * 100 / HIWORD(gdi);
-    else return LOWORD(user) * 100 / HIWORD(user);
+    return (WORD)MIN( userPercent, gdiPercent );
 }
 
 

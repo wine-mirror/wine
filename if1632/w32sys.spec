@@ -1,0 +1,16 @@
+name	w32sys
+type	win16
+id	27
+
+#1 WEP
+2 stub ISPEFORMAT
+3 stub EXECPE
+4 stub GETPEEXEINFO
+5 stub GETW32SYSVERSION
+6 stub LOADPERESOURCE
+7 stub GETPERESOURCETABLE
+8 stub EXECPEEX
+9 stub ITSME
+10 stub W32SERROR
+11 stub EXP1
+12 pascal16 GetWin32sInfo(ptr) GetWin32sInfo

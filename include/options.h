@@ -22,6 +22,8 @@ typedef enum
     LANG_It   /* Italian */
 } WINE_LANGUAGE;
 
+extern const char *langNames[];
+
 /* Supported modes */
 typedef enum
 {

@@ -13,19 +13,7 @@
 #define MFVERSION 0x300
 #define META_EOF 0x0000
 
-typedef struct tagMETAFILE
-{
-    WORD   wMagic;	    /* `PO' */
-    char   Filename[80];    /* metafile name, if disk based */
-    int    hFile;           /* MSDOS file handle for metafile */
-    HANDLE hMetaHdr;	    /* handle of metafile header */
-    int    MetaOffset;      /* offset of current record in metafile */
-    HANDLE hBuffer;	    /* handle of buffer for disk based metafiles */
-} METAFILE;
-typedef METAFILE *LPMETAFILE;
-
-
-BOOL MF_WriteRecord(HMETAFILE hmf, METARECORD *mr, WORD rlen);
+HMETAFILE MF_WriteRecord(HMETAFILE hmf, METARECORD *mr, WORD rlen);
 int MF_AddHandle(HANDLETABLE *ht, WORD htlen, HANDLE hobj);
 int MF_AddHandleInternal(HANDLE hobj);
 BOOL MF_MetaParam0(DC *dc, short func);

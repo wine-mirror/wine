@@ -34,6 +34,7 @@ DLLS	= \
 	toolhelp.spec \
 	user.spec \
 	user32.spec \
+	w32sys.spec \
 	win87em.spec \
 	winprocs.spec \
 	winprocs32.spec \

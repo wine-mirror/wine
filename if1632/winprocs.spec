@@ -31,7 +31,10 @@ id	24
 27 pascal EntryAddrProc(word word) MODULE_GetEntryPoint
 28 pascal MyAlloc(word word word) MODULE_AllocateSegment
 29 pascal16 ActivateAppProc(word long) ACTIVATEAPP_callback
-
+30 pascal FormatCharDlgProc(word word word long) FormatCharDlgProc
+31 pascal16 FontStyleEnumProc(ptr ptr word long)   FontStyleEnumProc
+32 pascal16 FontFamilyEnumProc(ptr ptr word long)  FontFamilyEnumProc
+ 
 # Interrupt vectors 0-255 are ordinals 100-355
 # The 'word' parameter are the flags pushed on the stack by the interrupt
 100 register INT_Int00Handler(word) INT_DummyHandler
