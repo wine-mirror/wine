@@ -1534,6 +1534,11 @@ BOOL WINAPI HTTP_HttpSendRequestW(LPWININETHTTPREQW lpwhr, LPCWSTR lpszHeaders,
                 nLen--;
                 lpwhr->lpszPath[nLen]='\0';
             }
+            /* Replace '\' with '/' */
+            while (nLen>0) {
+                nLen--;
+                if (lpwhr->lpszPath[nLen] == '\\') lpwhr->lpszPath[nLen]='/';
+            }
         }
 
         if(CSTR_EQUAL != CompareStringW( LOCALE_SYSTEM_DEFAULT, NORM_IGNORECASE,
