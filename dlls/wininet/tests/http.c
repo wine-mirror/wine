@@ -195,6 +195,8 @@ abort:
     if (hor != 0x0) {
         rc = InternetCloseHandle(hor);
         ok ((rc != 0), "InternetCloseHandle of handle opened by HttpOpenRequestA failed\n");
+        rc = InternetCloseHandle(hor);
+        ok ((rc == 0), "Double close of handle opened by HttpOpenRequestA succeeded\n");
     }
     if (hic != 0x0) {
         rc = InternetCloseHandle(hic);

@@ -192,7 +192,8 @@ LPWININETHANDLEHEADER WININET_GetObject( HINTERNET hinternet )
 
     EnterCriticalSection( &WININET_cs );
 
-    if( (handle > 0) && ( handle <= WININET_dwMaxHandles ) )
+    if( (handle > 0) && ( handle <= WININET_dwMaxHandles ) && 
+        WININET_Handles[handle-1] )
         info = WININET_AddRef( WININET_Handles[handle-1] );
 
     LeaveCriticalSection( &WININET_cs );
