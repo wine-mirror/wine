@@ -110,14 +110,46 @@ static const struct charset_entry
 
 #define NLS_MAX_LANGUAGES 20
 typedef struct {
-    char lang[128];
-    char country[128];
+    WCHAR lang[128];
+    WCHAR country[4];
     LANGID found_lang_id[NLS_MAX_LANGUAGES];
-    char found_language[NLS_MAX_LANGUAGES][3];
-    char found_country[NLS_MAX_LANGUAGES][3];
+    WCHAR found_language[NLS_MAX_LANGUAGES][3];
+    WCHAR found_country[NLS_MAX_LANGUAGES][3];
     int n_found;
 } LANG_FIND_DATA;
 
+
+/* copy Unicode string to Ascii without using codepages */
+static inline void strcpyWtoA( char *dst, const WCHAR *src )
+{
+    while ((*dst++ = *src++));
+}
+
+/* Copy Ascii string to Unicode without using codepages */
+static inline void strcpynAtoW( WCHAR *dst, const char *src, size_t n )
+{
+    while (n > 1 && *src)
+    {
+        *dst++ = (unsigned char)*src++;
+        n--;
+    }
+    if (n) *dst = 0;
+}
+
+/* return a printable string for a language id */
+static const char *debugstr_lang( LANGID lang )
+{
+    WCHAR langW[4], countryW[4];
+    char buffer[8];
+    LCID lcid = MAKELCID( lang, SORT_DEFAULT );
+
+    GetLocaleInfoW(lcid, LOCALE_SISO639LANGNAME|LOCALE_NOUSEROVERRIDE, langW, sizeof(langW));
+    GetLocaleInfoW(lcid, LOCALE_SISO3166CTRYNAME|LOCALE_NOUSEROVERRIDE, countryW, sizeof(countryW));
+    strcpyWtoA( buffer, langW );
+    strcat( buffer, "_" );
+    strcpyWtoA( buffer + strlen(buffer), countryW );
+    return wine_dbg_sprintf( "%s", buffer );
+}
 
 /***********************************************************************
  *		get_lcid_codepage
@@ -133,19 +165,6 @@ inline static UINT get_lcid_codepage( LCID lcid )
 }
 
 
-/* setup default codepage info before we can get at the locale stuff */
-static void init_codepages(void)
-{
-    ansi_cptable = wine_cp_get_table( 1252 );
-    oem_cptable  = wine_cp_get_table( 437 );
-    mac_cptable  = wine_cp_get_table( 10000 );
-    unix_cptable  = wine_cp_get_table( 28591 );
-    assert( ansi_cptable );
-    assert( oem_cptable );
-    assert( mac_cptable );
-    assert( unix_cptable );
-}
-
 /***********************************************************************
  *		get_codepage_table
  *
@@ -155,7 +174,6 @@ static const union cptable *get_codepage_table( unsigned int codepage )
 {
     const union cptable *ret = NULL;
 
-    if (!ansi_cptable) init_codepages();
     assert( ansi_cptable );  /* init must have been done already */
 
     switch(codepage)
@@ -288,74 +306,59 @@ void LOCALE_InitRegistry(void)
 /***********************************************************************
  *           find_language_id_proc
  */
-static BOOL CALLBACK find_language_id_proc( HMODULE hModule, LPCSTR type,
-                                            LPCSTR name, WORD LangID, LPARAM lParam )
+static BOOL CALLBACK find_language_id_proc( HMODULE hModule, LPCWSTR type,
+                                            LPCWSTR name, WORD LangID, LPARAM lParam )
 {
     LANG_FIND_DATA *l_data = (LANG_FIND_DATA *)lParam;
     LCID lcid = MAKELCID(LangID, SORT_DEFAULT);
-    char buf_language[128];
-    char buf_country[128];
-    char buf_en_language[128];
+    WCHAR buf_language[128];
+    WCHAR buf_country[128];
+    WCHAR buf_en_language[128];
 
-    TRACE("%04X\n", (UINT)LangID);
     if(PRIMARYLANGID(LangID) == LANG_NEUTRAL)
         return TRUE; /* continue search */
 
     buf_language[0] = 0;
     buf_country[0] = 0;
 
-    GetLocaleInfoA(lcid, LOCALE_SISO639LANGNAME|LOCALE_NOUSEROVERRIDE|LOCALE_USE_CP_ACP,
+    GetLocaleInfoW(lcid, LOCALE_SISO639LANGNAME|LOCALE_NOUSEROVERRIDE,
                    buf_language, sizeof(buf_language));
-    TRACE("LOCALE_SISO639LANGNAME: %s\n", buf_language);
-
-    GetLocaleInfoA(lcid, LOCALE_SISO3166CTRYNAME|LOCALE_NOUSEROVERRIDE|LOCALE_USE_CP_ACP,
+    GetLocaleInfoW(lcid, LOCALE_SISO3166CTRYNAME|LOCALE_NOUSEROVERRIDE,
                    buf_country, sizeof(buf_country));
-    TRACE("LOCALE_SISO3166CTRYNAME: %s\n", buf_country);
 
-    if(l_data->lang[0] && !strcasecmp(l_data->lang, buf_language))
+    if(l_data->lang[0] && !strcmpiW(l_data->lang, buf_language))
     {
         if(l_data->country[0])
         {
-            if(!strcasecmp(l_data->country, buf_country))
+            if(!strcmpiW(l_data->country, buf_country))
             {
                 l_data->found_lang_id[0] = LangID;
                 l_data->n_found = 1;
-                TRACE("Found lang_id %04X for %s_%s\n", LangID, l_data->lang, l_data->country);
+                TRACE("Found id %04X for lang %s country %s\n",
+                      LangID, debugstr_w(l_data->lang), debugstr_w(l_data->country));
                 return FALSE; /* stop enumeration */
             }
         }
-        else /* l_data->country not specified */
-        {
-            if(l_data->n_found < NLS_MAX_LANGUAGES)
-            {
-                l_data->found_lang_id[l_data->n_found] = LangID;
-                strncpy(l_data->found_country[l_data->n_found], buf_country, 3);
-                strncpy(l_data->found_language[l_data->n_found], buf_language, 3);
-                l_data->n_found++;
-                TRACE("Found lang_id %04X for %s\n", LangID, l_data->lang);
-                return TRUE; /* continue search */
-            }
-        }
+        else goto found; /* l_data->country not specified */
     }
 
     /* Just in case, check LOCALE_SENGLANGUAGE too,
      * in hope that possible alias name might have that value.
      */
     buf_en_language[0] = 0;
-    GetLocaleInfoA(lcid, LOCALE_SENGLANGUAGE|LOCALE_NOUSEROVERRIDE|LOCALE_USE_CP_ACP,
+    GetLocaleInfoW(lcid, LOCALE_SENGLANGUAGE|LOCALE_NOUSEROVERRIDE,
                    buf_en_language, sizeof(buf_en_language));
-    TRACE("LOCALE_SENGLANGUAGE: %s\n", buf_en_language);
 
-    if(l_data->lang[0] && !strcasecmp(l_data->lang, buf_en_language))
-    {
-        l_data->found_lang_id[l_data->n_found] = LangID;
-        strncpy(l_data->found_country[l_data->n_found], buf_country, 3);
-        strncpy(l_data->found_language[l_data->n_found], buf_language, 3);
-        l_data->n_found++;
-        TRACE("Found lang_id %04X for %s\n", LangID, l_data->lang);
-    }
+    if(l_data->lang[0] && !strcmpiW(l_data->lang, buf_en_language)) goto found;
+    return TRUE;  /* not found, continue search */
 
-    return TRUE; /* continue search */
+found:
+    l_data->found_lang_id[l_data->n_found] = LangID;
+    strncpyW(l_data->found_country[l_data->n_found], buf_country, 3);
+    strncpyW(l_data->found_language[l_data->n_found], buf_language, 3);
+    l_data->n_found++;
+    TRACE("Found id %04X for lang %s\n", LangID, debugstr_w(l_data->lang));
+    return (l_data->n_found < NLS_MAX_LANGUAGES); /* continue search, unless we have enough */
 }
 
 
@@ -379,7 +382,6 @@ static BOOL CALLBACK find_language_id_proc( HMODULE hModule, LPCSTR type,
 static LANGID get_language_id(LPCSTR Lang, LPCSTR Country, LPCSTR Charset, LPCSTR Dialect)
 {
     LANG_FIND_DATA l_data;
-    char lang_string[256];
     HMODULE hKernel32;
 
     if(!Lang)
@@ -388,66 +390,68 @@ static LANGID get_language_id(LPCSTR Lang, LPCSTR Country, LPCSTR Charset, LPCST
         goto END;
     }
 
-    memset(&l_data, 0, sizeof(LANG_FIND_DATA));
-    strncpy(l_data.lang, Lang, sizeof(l_data.lang));
+    l_data.n_found = 0;
+    strcpynAtoW(l_data.lang, Lang, sizeof(l_data.lang));
 
-    if(Country && Country[0])
-        strncpy(l_data.country, Country, sizeof(l_data.country));
+    if (Country) strcpynAtoW(l_data.country, Country, sizeof(l_data.country));
+    else l_data.country[0] = 0;
 
     hKernel32 = GetModuleHandleW(kernel32W);
 
-    EnumResourceLanguagesA(hKernel32, (LPSTR)RT_STRING,
-                           (LPCSTR)LOCALE_ILANGUAGE, find_language_id_proc, (LPARAM)&l_data);
+    EnumResourceLanguagesW(hKernel32, (LPCWSTR)RT_STRING, (LPCWSTR)LOCALE_ILANGUAGE,
+                           find_language_id_proc, (LPARAM)&l_data);
 
-    strcpy(lang_string, l_data.lang);
-    if(l_data.country[0])
-    {
-        strcat(lang_string, "_");
-        strcat(lang_string, l_data.country);
-    }
+    if (l_data.n_found == 1) goto END;
 
     if(!l_data.n_found)
     {
         if(l_data.country[0])
         {
-            MESSAGE("Warning: Language '%s' was not found, retrying without country name...\n", lang_string);
+            /* retry without country name */
             l_data.country[0] = 0;
-            EnumResourceLanguagesA(hKernel32, (LPSTR)RT_STRING,
-                                   (LPCSTR)LOCALE_ILANGUAGE, find_language_id_proc, (LONG)&l_data);
+            EnumResourceLanguagesW(hKernel32, (LPCWSTR)RT_STRING, (LPCWSTR)LOCALE_ILANGUAGE,
+                                   find_language_id_proc, (LONG)&l_data);
+            if (!l_data.n_found)
+            {
+                MESSAGE("Warning: Language '%s_%s' was not recognized, defaulting to English.\n",
+                        Lang, Country);
+                l_data.found_lang_id[0] = MAKELANGID(LANG_ENGLISH, SUBLANG_DEFAULT);
+            }
+            else MESSAGE("Warning: Language '%s_%s' was not recognized, defaulting to '%s'.\n",
+                         Lang, Country, debugstr_lang(l_data.found_lang_id[0]) );
         }
-    }
-
-    /* Re-evaluate lang_string */
-    strcpy(lang_string, l_data.lang);
-    if(l_data.country[0])
-    {
-        strcat(lang_string, "_");
-        strcat(lang_string, l_data.country);
-    }
-
-    if(!l_data.n_found)
-    {
-        MESSAGE("Warning: Language '%s' was not recognized, defaulting to English\n", lang_string);
-        l_data.found_lang_id[0] = MAKELANGID(LANG_ENGLISH, SUBLANG_DEFAULT);
+        else
+        {
+            MESSAGE("Warning: Language '%s' was not recognized, defaulting to English.\n", Lang);
+            l_data.found_lang_id[0] = MAKELANGID(LANG_ENGLISH, SUBLANG_DEFAULT);
+        }
     }
     else
     {
-        if(l_data.n_found == 1)
-            TRACE("For language '%s' lang_id %04X was found\n", lang_string, l_data.found_lang_id[0]);
-        else /* l_data->n_found > 1 */
-        {
-            int i;
-            MESSAGE("For language '%s' several language ids were found:\n", lang_string);
-            for(i = 0; i < l_data.n_found; i++)
-                MESSAGE("%s_%s - %04X; ", l_data.found_language[i], l_data.found_country[i], l_data.found_lang_id[i]);
+        int i;
 
-            MESSAGE("\nInstead of using first in the list, suggest to define\n"
-                    "your LANG environment variable like this: LANG=%s_%s\n",
-                    l_data.found_language[0], l_data.found_country[0]);
+        if (Country && Country[0])
+            MESSAGE("For language '%s_%s' several language ids were found:\n", Lang, Country);
+        else
+            MESSAGE("For language '%s' several language ids were found:\n", Lang);
+
+        /* print a list of languages with their description */
+        for (i = 0; i < l_data.n_found; i++)
+        {
+            WCHAR buffW[128];
+            char buffA[128];
+            GetLocaleInfoW( MAKELCID( l_data.found_lang_id[i], SORT_DEFAULT ),
+                           LOCALE_SLANGUAGE|LOCALE_NOUSEROVERRIDE, buffW, sizeof(buffW));
+            strcpyWtoA( buffA, buffW );
+            MESSAGE( "   %s (%04X) - %s\n", debugstr_lang(l_data.found_lang_id[i]),
+                     l_data.found_lang_id[i], buffA );
         }
+        MESSAGE("Defaulting to '%s'. You should specify the exact language you want\n"
+                "by defining your LANG environment variable like this: LANG=%s\n",
+                debugstr_lang(l_data.found_lang_id[0]), debugstr_lang(l_data.found_lang_id[0]) );
     }
 END:
-    TRACE("Returning %04X\n", l_data.found_lang_id[0]);
+    TRACE("Returning %04X (%s)\n", l_data.found_lang_id[0], debugstr_lang(l_data.found_lang_id[0]));
     return l_data.found_lang_id[0];
 }
 
