@@ -233,6 +233,10 @@ typedef struct {
     PRINTERINFO		*pi;
 } PSDRV_PDEVICE;
 
+typedef struct {
+    PRINTERINFO *pi;
+    PSDRV_DEVMODEA *dlgdm;
+} PSDRV_DLGINFO;
 
 extern INT16 WINAPI PSDRV_ExtDeviceMode16(HWND16 hwnd, HANDLE16 hDriver,
 		    LPDEVMODEA lpdmOutput, LPSTR lpszDevice, LPSTR lpszPort,

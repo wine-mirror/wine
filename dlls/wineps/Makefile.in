@@ -5,7 +5,8 @@ VPATH     = @srcdir@
 MODULE    = wineps
 SOVERSION = 1.0
 ALTNAMES  = wineps16
-IMPORTS   = gdi32 kernel32
+WRCEXTRA = -s -pwineps
+IMPORTS   = user32 gdi32 kernel32
 
 C_SRCS = \
 	afm.c \
@@ -24,6 +25,9 @@ C_SRCS = \
 	ppd.c \
 	ps.c \
 	text.c
+
+RC_SRCS= \
+	rsrc.rc
 
 @MAKE_DLL_RULES@
 

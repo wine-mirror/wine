@@ -14,6 +14,8 @@
 #include "debugtools.h"
 #include "winuser.h"
 #include "winspool.h"
+#include "prsht.h"
+#include "psdlg.h"
 
 DEFAULT_DEBUG_CHANNEL(psdrv)
 
@@ -144,79 +146,7 @@ void PSDRV_MergeDevmodes(PSDRV_DEVMODEA *dm1, PSDRV_DEVMODEA *dm2,
 }
 
 
-#if 0
-/*******************************************************************
- *
- *		PSDRV_NewPrinterDlgProc32
- *
- *
- */
-LRESULT WINAPI PSDRV_NewPrinterDlgProc(HWND hWnd, UINT wMsg,
-					    WPARAM wParam, LPARAM lParam)
-{
-  switch (wMsg) {
-  case WM_INITDIALOG:
-    TRACE("WM_INITDIALOG lParam=%08lX\n", lParam);
-    ShowWindow(hWnd, SW_SHOWNORMAL);
-    return TRUE;
- 
-  case WM_COMMAND:
-    switch (LOWORD(wParam)) {
-    case IDOK:
-      EndDialog(hWnd, TRUE);
-      return TRUE;
-  
-    case IDCANCEL:
-      EndDialog(hWnd, FALSE);
-      return TRUE;
-    
-    default:
-      return FALSE;
-    }
-  
-  default:
-    return FALSE;
-  }
-}
-
-LRESULT WINAPI PSDRV_AdvancedSetupDlgProc(HWND hWnd, UINT wMsg,
-					    WPARAM wParam, LPARAM lParam)
-{
-  switch (wMsg) {
-  case WM_INITDIALOG:
-    TRACE("WM_INITDIALOG lParam=%08lX\n", lParam);
-    SendDlgItemMessageA(hWnd, 99, CB_ADDSTRING, 0, 
-			  (LPARAM)"Default Tray");
-    ShowWindow(hWnd, SW_SHOWNORMAL);
-    return TRUE;
-
-  case WM_COMMAND:
-    switch (LOWORD(wParam)) {
-    case IDOK:
-      EndDialog(hWnd, TRUE);
-      return TRUE;
-
-    case IDCANCEL:
-      EndDialog(hWnd, FALSE);
-      return TRUE;
-
-    case 200:
-      DialogBoxIndirectParamA( GetWindowLongA( hWnd, GWL_HINSTANCE ),
-			  SYSRES_GetResPtr( SYSRES_DIALOG_PSDRV_NEWPRINTER ),
-			  hWnd, PSDRV_NewPrinterDlgProc, (LPARAM) NULL );
-      return TRUE;
-
-    default:
-      return FALSE;
-    }
-
-  default:    
-    return FALSE;
-  }
-}
-#endif /* 0 */
-
-/***********************************************************************
+/**************************************************************
  *
  *	PSDRV_AdvancedSetupDialog16	[WINEPS.93]
  *
@@ -228,18 +158,93 @@ WORD WINAPI PSDRV_AdvancedSetupDialog16(HWND16 hwnd, HANDLE16 hDriver,
   TRACE("hwnd = %04x, hDriver = %04x devin=%p devout=%p\n", hwnd,
 	hDriver, devin, devout);
   return IDCANCEL;
-
-
-#if 0
-  return DialogBoxIndirectParamA( GetWindowLongA( hwnd, GWL_HINSTANCE ),
-	SYSRES_GetResPtr( SYSRES_DIALOG_PSDRV_ADVANCEDSETUP ),
-	hwnd, PSDRV_AdvancedSetupDlgProc, (LPARAM) NULL );
-#endif
-
-
 }
 
-/***********************************************************************
+/****************************************************************
+ *       PSDRV_PaperDlgProc
+ *
+ * Dialog proc for 'Paper' propsheet
+ */
+BOOL WINAPI PSDRV_PaperDlgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM
+			       lParam)
+{
+  PSDRV_DLGINFO *di;
+  int i, Cursel = 0; 
+  PAGESIZE *ps;
+
+
+  switch(msg) {
+  case WM_INITDIALOG:
+    di = (PSDRV_DLGINFO*)((PROPSHEETPAGEA*)lParam)->lParam;
+    SetWindowLongA(hwnd, DWL_USER, (LONG)di);
+
+    for(ps = di->pi->ppd->PageSizes, i = 0; ps; ps = ps->next, i++) {
+      SendDlgItemMessageA(hwnd, IDD_PAPERS, LB_INSERTSTRING, i, 
+			  (LPARAM)ps->FullName);
+      if(di->pi->Devmode->dmPublic.u1.s1.dmPaperSize == ps->WinPage)
+	Cursel = i;
+    }
+    SendDlgItemMessageA(hwnd, IDD_PAPERS, LB_SETCURSEL, Cursel, 0);
+
+    CheckRadioButton(hwnd, IDD_ORIENT_PORTRAIT, IDD_ORIENT_LANDSCAPE,
+		     di->pi->Devmode->dmPublic.u1.s1.dmOrientation ==
+		     DMORIENT_PORTRAIT ? IDD_ORIENT_PORTRAIT :
+		     IDD_ORIENT_LANDSCAPE);
+    break;
+
+  case WM_COMMAND:
+    di = (PSDRV_DLGINFO *)GetWindowLongA(hwnd, DWL_USER);
+    switch(LOWORD(wParam)) {
+    case IDD_PAPERS:
+      if(HIWORD(wParam) == LBN_SELCHANGE) {
+	Cursel = SendDlgItemMessageA(hwnd, LOWORD(wParam), LB_GETCURSEL, 0, 0);
+	for(i = 0, ps = di->pi->ppd->PageSizes; i < Cursel; i++, ps = ps->next)
+	  ;
+	TRACE("Setting pagesize to item %d Winpage = %d\n", Cursel,
+	      ps->WinPage);
+	di->dlgdm->dmPublic.u1.s1.dmPaperSize = ps->WinPage;
+      }
+      break;
+    case IDD_ORIENT_PORTRAIT:
+    case IDD_ORIENT_LANDSCAPE:
+      TRACE("Setting orientation to %s\n", wParam == IDD_ORIENT_PORTRAIT ?
+	    "portrait" : "landscape");
+      di->dlgdm->dmPublic.u1.s1.dmOrientation = wParam == IDD_ORIENT_PORTRAIT ?
+	DMORIENT_PORTRAIT : DMORIENT_LANDSCAPE;
+      break;
+    }
+    break;
+
+  case WM_NOTIFY:
+   {
+    NMHDR *nmhdr = (NMHDR *)lParam;
+    di = (PSDRV_DLGINFO *)GetWindowLongA(hwnd, DWL_USER);
+    switch(nmhdr->code) {
+    case PSN_APPLY:
+      memcpy(di->pi->Devmode, di->dlgdm, sizeof(PSDRV_DEVMODEA));
+      SetWindowLongA(hwnd, DWL_MSGRESULT, PSNRET_NOERROR);
+      return TRUE;
+      break;
+
+    default:
+      return FALSE;
+      break;
+    }
+    break;
+   }
+   
+  default:
+    return FALSE;
+  }
+  return TRUE;
+}
+
+
+static void (WINAPI* pInitCommonControls) (void);
+static HPROPSHEETPAGE (WINAPI* pCreatePropertySheetPage) (LPCPROPSHEETPAGEA);
+static int (WINAPI* pPropertySheet) (LPCPROPSHEETHEADERA);
+
+/***************************************************************
  *
  *	PSDRV_ExtDeviceMode16	[WINEPS.90]
  *
@@ -251,6 +256,7 @@ INT16 WINAPI PSDRV_ExtDeviceMode16(HWND16 hwnd, HANDLE16 hDriver,
 				   LPSTR lpszProfile, WORD fwMode)
 {
   PRINTERINFO *pi = PSDRV_FindPrinterInfo(lpszDevice);
+  if(!pi) return -1;
 
   TRACE("(hwnd=%04x, hDriver=%04x, devOut=%p, Device='%s', Port='%s', devIn=%p, Profile='%s', Mode=%04x)\n",
 hwnd, hDriver, lpdmOutput, lpszDevice, lpszPort, lpdmInput, lpszProfile,
@@ -259,16 +265,51 @@ fwMode);
   if(!fwMode)
     return sizeof(DEVMODEA); /* Just copy dmPublic bit of PSDRV_DEVMODE */
 
-  if(fwMode & DM_PROMPT)
-    FIXME("Mode DM_PROMPT not implemented\n");
-
-  if(fwMode & DM_UPDATE)
-    FIXME("Mode DM_UPDATE.  Just do the same as DM_COPY\n");
-
   if((fwMode & DM_MODIFY) && lpdmInput) {
     TRACE("DM_MODIFY set. devIn->dmFields = %08lx\n", lpdmInput->dmFields);
     PSDRV_MergeDevmodes(pi->Devmode, (PSDRV_DEVMODEA *)lpdmInput, pi);
   }
+
+  if(fwMode & DM_PROMPT) {
+    HINSTANCE hinstComctl32, hinstWineps32 = LoadLibraryA("WINEPS");
+    HPROPSHEETPAGE hpsp[1];
+    PROPSHEETPAGEA psp;
+    PROPSHEETHEADERA psh;
+    PSDRV_DLGINFO *di;
+    PSDRV_DEVMODEA *dlgdm;
+
+    hinstComctl32 = LoadLibraryA("comctl32.dll");
+    pInitCommonControls = (void*)GetProcAddress(hinstComctl32,
+						"InitCommonControls");
+    pCreatePropertySheetPage = (void*)GetProcAddress(hinstComctl32,
+						    "CreatePropertySheetPage");
+    pPropertySheet = (void*)GetProcAddress(hinstComctl32, "PropertySheet"); 
+    memset(&psp,0,sizeof(psp));
+    dlgdm = HeapAlloc( PSDRV_Heap, 0, sizeof(*dlgdm) );
+    memcpy(dlgdm, pi->Devmode, sizeof(*dlgdm));
+    di = HeapAlloc( PSDRV_Heap, 0, sizeof(*di) );
+    di->pi = pi;
+    di->dlgdm = dlgdm;
+    psp.dwSize = sizeof(psp);
+    psp.hInstance = hinstWineps32;
+    psp.u.pszTemplate = "PAPER";
+    psp.u2.pszIcon = NULL;
+    psp.pfnDlgProc = PSDRV_PaperDlgProc;
+    psp.lParam = (LPARAM)di;
+    hpsp[0] = pCreatePropertySheetPage(&psp);
+
+    memset(&psh, 0, sizeof(psh));
+    psh.dwSize = sizeof(psh);
+    psh.pszCaption = "Setup";
+    psh.nPages = 1;
+    psh.hwndParent = hwnd;
+    psh.u3.phpage = hpsp;
+    
+    pPropertySheet(&psh);
+    
+  }
+  if(fwMode & DM_UPDATE)
+    FIXME("Mode DM_UPDATE.  Just do the same as DM_COPY\n");
 
   if((fwMode & DM_COPY) || (fwMode & DM_UPDATE)) {
     memcpy(lpdmOutput, pi->Devmode, sizeof(DEVMODEA));
@@ -510,3 +551,25 @@ LPSTR lpszDevice, LPSTR lpszPort)
 			   NULL, DM_PROMPT );
     return;
 }
+
+#if 0
+typedef struct {
+  DWORD nPages;
+  DWORD Unknown;
+  HPROPSHEETPAGE hPages[10];
+} EDMPS;
+
+INT PSDRV_ExtDeviceModePropSheet(HWND hwnd, LPSTR lpszDevice, LPSTR lpszPort,
+				 LPVOID pPropSheet)
+{
+    EDMPS *ps = pPropSheet;
+    PROPSHEETPAGE psp;
+
+    psp->dwSize = sizeof(psp);
+    psp->hInstance = 0x1234;
+    
+    ps->nPages = 1;
+    
+}
+
+#endif

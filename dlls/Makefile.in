@@ -409,7 +409,7 @@ user/libuser32.so: libgdi32.so libkernel32.so
 version/libversion.so: liblz32.so libkernel32.so
 win32s/libw32skrnl.so: libkernel32.so
 winaspi/libwnaspi32.so: libkernel32.so
-wineps/libwineps.so: libgdi32.so libkernel32.so
+wineps/libwineps.so: libuser32.so libgdi32.so libkernel32.so
 wininet/libwininet.so: libuser32.so libkernel32.so
 winmm/joystick/libjoystick.drv.so: libwinmm.so libuser32.so
 winmm/libwinmm.so: libuser32.so libkernel32.so
