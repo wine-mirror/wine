@@ -123,6 +123,15 @@ static inline unsigned char hex_to0(int x)
     return "0123456789abcdef"[x];
 }
 
+static int hex_to_int(const char* src, size_t len){
+    unsigned int returnval = 0;
+    while (len--){
+        returnval=hex_from0(src[0]);
+        if(len) returnval<<=4;
+    }
+    return returnval;
+}
+
 static void hex_from(void* dst, const char* src, size_t len)
 {
     unsigned char *p = dst;
@@ -572,7 +581,28 @@ static void    resume_debuggee(struct gdb_context* gdbctx, unsigned long cont)
                         dbg_curr_thread->tid, cont);
     }
     else if (gdbctx->trace & GDBPXY_TRC_WIN32_ERROR)
-        fprintf(stderr, "Cannot find last thread (%lu)\n", dbg_curr_thread->tid);
+        fprintf(stderr, "Cannot find last thread\n");
+}
+
+
+static void    resume_debuggee_thread(struct gdb_context* gdbctx, unsigned long cont, unsigned int threadid)
+{
+
+    if (dbg_curr_thread)
+    {
+        if(dbg_curr_thread->tid  == threadid){
+            /* Windows debug and GDB don't seem to work well here, windows only likes ContinueDebugEvent being used on the reporter of the event */
+            if (!SetThreadContext(dbg_curr_thread->handle, &gdbctx->context))
+                if (gdbctx->trace & GDBPXY_TRC_WIN32_ERROR)
+                    fprintf(stderr, "Cannot set context on thread %lu\n", dbg_curr_thread->tid);
+            if (!ContinueDebugEvent(gdbctx->process->pid, dbg_curr_thread->tid, cont))
+                if (gdbctx->trace & GDBPXY_TRC_WIN32_ERROR)
+                    fprintf(stderr, "Cannot continue on %lu (%lu)\n",
+                            dbg_curr_thread->tid, cont);
+        }
+    }
+    else if (gdbctx->trace & GDBPXY_TRC_WIN32_ERROR)
+        fprintf(stderr, "Cannot find last thread\n");
 }
 
 static void    wait_for_debuggee(struct gdb_context* gdbctx)
@@ -863,6 +893,185 @@ static enum packet_return packet_continue(struct gdb_context* gdbctx)
                     gdbctx->exec_thread->tid, dbg_curr_thread->tid);
     resume_debuggee(gdbctx, DBG_CONTINUE);
     wait_for_debuggee(gdbctx);
+    return packet_reply_status(gdbctx);
+}
+
+static enum packet_return packet_verbose(struct gdb_context* gdbctx)
+{
+    int i;
+    int defaultAction = -1; /* magic non action */
+    unsigned char sig;
+    int actions =0;
+    int actionIndex[20]; /* allow for upto 20 actions */
+    int threadIndex[20];
+    int threadCount = 0;
+    unsigned int threadIDs[100]; /* TODO: Should make this dynamic */
+    unsigned int threadID = 0;
+    struct dbg_thread*  thd;
+
+    /* basic check */
+    assert(gdbctx->in_packet_len >= 4);
+
+    /* OK we have vCont followed by..
+    * ? for query
+    * c for packet_continue
+    * Csig for packet_continue_signal
+    * s for step
+    * Ssig  for step signal
+    * and then an optional thread ID at the end..
+    * *******************************************/
+
+    fprintf(stderr, "trying to process a verbose packet\n");
+    /* now check that we've got Cont */
+    assert(strncmp(gdbctx->in_packet, "Cont", 4) == 0);
+
+    /* Query */
+    if(gdbctx->in_packet[4] == '?'){
+        /*
+          Reply:
+          `vCont[;action]...'
+          The vCont packet is supported. Each action is a supported command in the vCont packet.
+          `'
+          The vCont packet is not supported.  (this didn't seem to be obayed!)
+        */
+        packet_reply_open(gdbctx);
+        packet_reply_add(gdbctx, "vCont", 5);
+        /* add all the supported actions to the reply (all of them for now)*/
+        packet_reply_add(gdbctx, ";c", 2);
+        packet_reply_add(gdbctx, ";C", 2);
+        packet_reply_add(gdbctx, ";s", 2);
+        packet_reply_add(gdbctx, ";S", 2);
+        packet_reply_close(gdbctx);
+        return packet_done;
+    }
+
+    /* This may not be the 'fastest' code in the world. but it should be nice and easy to debug.
+    (as it's run when people are debugging break points I'm sure they won't notice the extra 100 cycles anyway)
+    now if only gdb talked XML.... */
+#if 0 /* handy for debugging */
+    fprintf(stderr, "no, but can we find a default packet %.*s %d\n", gdbctx->in_packet_len, gdbctx->in_packet,  gdbctx->in_packet_len);
+#endif
+
+    /* go through the packet and identify where all the actions start att */
+    for(i = 4; i < gdbctx->in_packet_len - 1; i++){
+        if(gdbctx->in_packet[i] == ';'){
+            threadIndex[actions] = 0;
+            actionIndex[actions++] = i;
+        }else if(gdbctx->in_packet[i] == ':'){
+            threadIndex[actions - 1] = i;
+        }
+    }
+
+    /* now look up the default action */
+    for(i = 0 ; i < actions; i++){
+        if(threadIndex[i] == 0){
+            if(defaultAction != -1){
+                    fprintf(stderr,"Too many default actions specified\n");
+                    return packet_error;
+            }
+            defaultAction = i;
+        }
+    }
+
+    /* Now, I have this default action thing that needs to be applied to all non counted threads */
+
+    /* go through all the threads and stick there id's in the to be done list. */
+    for (thd = gdbctx->process->threads; thd; thd = thd->next)
+    {
+        threadIDs[threadCount++] = thd->tid;
+        /* check to see if we have more threads than I counted on, and tell the user what to do
+         * (their running winedbg, so I'm sure they can fix the problem from the error message!) */
+        if(threadCount == 100){
+            fprintf(stderr, "Wow, that's a lot of threads, change threadIDs in wine/programms/winedgb/gdbproxy.c to be higher\n");
+            break;
+        }
+    }
+
+    /* Ok, now we have... actionIndex full of actions and we know what threads there are, so all
+     * that remains is to apply the actions to the threads and the default action to any threads
+     * left */
+    if (dbg_curr_thread != gdbctx->exec_thread && gdbctx->exec_thread)
+    if (gdbctx->trace & GDBPXY_TRC_COMMAND_FIXME)
+        fprintf(stderr, "NIY: cont on %lu, while last thread is %lu\n",
+                gdbctx->exec_thread->tid, dbg_curr_thread->tid);
+
+    /* deal with the threaded stuff first */
+    for( i = 0; i < actions ; i++){
+
+        if(threadIndex[i] != 0){
+
+            int j, idLength = 0;
+            if(i < actions - 1){
+                idLength = (actionIndex[i+1] - threadIndex[i]) - 1;
+            } else{
+                idLength = (gdbctx->in_packet_len - threadIndex[i]) - 1;
+            }
+
+            threadID = hex_to_int( gdbctx->in_packet + threadIndex[i] + 1 , idLength);
+            /* process the action */
+            switch(gdbctx->in_packet[actionIndex[i] + 1]){
+            case 's': /* step */
+                be_cpu->single_step(&gdbctx->context, TRUE);
+                /* fall through*/
+            case 'c': /* continue */
+                resume_debuggee_thread(gdbctx, DBG_CONTINUE, threadID);
+                break;
+            case 'S': /* step Sig, */
+                be_cpu->single_step(&gdbctx->context, TRUE);
+                /* fall through */
+            case 'C': /* continue sig */
+                hex_from(&sig, gdbctx->in_packet + actionIndex[i] + 2, 1);
+                /* cannot change signals on the fly */
+                if (gdbctx->trace & GDBPXY_TRC_COMMAND)
+                    fprintf(stderr, "sigs: %u %u\n", sig, gdbctx->last_sig);
+                if (sig != gdbctx->last_sig)
+                    return packet_error;
+                resume_debuggee_thread(gdbctx, DBG_EXCEPTION_NOT_HANDLED, threadID);
+                break;
+            }
+            for(j = 0 ; j< threadCount; j++){
+                if(threadIDs[j] == threadID){
+                    threadIDs[j] = 0;
+                    break;
+                }
+            }
+        }
+    } /* for i=0 ; i< actions */
+
+     /* now we have manage the default action */
+    if(defaultAction >=0){
+        for(i = 0 ; i< threadCount; i++){
+            /* check to see if we've already done something to the thread*/
+            if(threadIDs[i] != 0){
+                /* if not apply the default action*/
+                threadID = threadIDs[i];
+                /* process the action (yes this is almost identical to the one above!) */
+                switch(gdbctx->in_packet[actionIndex[defaultAction] + 1]){
+                case 's': /* step */
+                    be_cpu->single_step(&gdbctx->context, TRUE);
+                    /* fall through */
+                case 'c': /* continue */
+                    resume_debuggee_thread(gdbctx, DBG_CONTINUE, threadID);
+                    break;
+                case 'S':
+                     be_cpu->single_step(&gdbctx->context, TRUE);
+                     /* fall through */
+                case 'C': /* continue sig */
+                    hex_from(&sig, gdbctx->in_packet + actionIndex[defaultAction] + 2, 1);
+                    /* cannot change signals on the fly */
+                    if (gdbctx->trace & GDBPXY_TRC_COMMAND)
+                        fprintf(stderr, "sigs: %u %u\n", sig, gdbctx->last_sig);
+                    if (sig != gdbctx->last_sig)
+                        return packet_error;
+                    resume_debuggee_thread(gdbctx, DBG_EXCEPTION_NOT_HANDLED, threadID);
+                    break;
+                }
+            }
+        }
+    } /* if(defaultAction >=0) */
+
+    wait_for_debuggee(gdbctx);
+    be_cpu->single_step(&gdbctx->context, FALSE);
     return packet_reply_status(gdbctx);
 }
 
@@ -1604,7 +1813,7 @@ struct packet_entry
 
 static struct packet_entry packet_entries[] =
 {
-/*        {'!', packet_extended}, */
+        /*{'!', packet_extended}, */
         {'?', packet_last_signal},
         {'c', packet_continue},
         {'C', packet_continue_signal},
@@ -1618,9 +1827,12 @@ static struct packet_entry packet_entries[] =
         /* {'p', packet_read_register}, doesn't seem needed */
         {'P', packet_write_register},
         {'q', packet_query},
-        {'s', packet_step},
+        /* {'Q', packet_set}, */
+        /* {'R', packet,restart}, only in extended mode ! */
+        {'s', packet_step},        
         /*{'S', packet_step_signal}, hard(er) to implement */
         {'T', packet_thread_alive},
+        {'v', packet_verbose},
         {'z', packet_remove_breakpoint},
         {'Z', packet_set_breakpoint},
 };
