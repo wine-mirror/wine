@@ -243,9 +243,9 @@ void WINAPI DOSVM_EmulateInterruptPM( CONTEXT86 *context, BYTE intnum )
                  context->Eax, context->Ebx, context->Ecx, context->Edx );
         DPRINTF( "  esi=%08lx edi=%08lx ebp=%08lx esp=%08lx \n",
                  context->Esi, context->Edi, context->Ebp, context->Esp );
-        DPRINTF( "  ds=%04lx es=%04lx fs=%04lx gs=%04lx flags=%08lx\n",
-                 context->SegDs, context->SegEs,
-                 context->SegFs, context->SegGs, context->EFlags );
+        DPRINTF( "  ds=%04lx es=%04lx fs=%04lx gs=%04lx ss=%04lx flags=%08lx\n",
+                 context->SegDs, context->SegEs, context->SegFs, context->SegGs,
+                 context->SegSs, context->EFlags );
     }
 
     if (context->SegCs == DOSVM_dpmi_segments->dpmi_sel)
@@ -263,6 +263,11 @@ void WINAPI DOSVM_EmulateInterruptPM( CONTEXT86 *context, BYTE intnum )
     }
     else if (context->SegCs == DOSVM_dpmi_segments->int48_sel)
     {
+        /* Restore original flags stored into the stack by the caller. */
+        DWORD *stack = CTX_SEG_OFF_TO_LIN(context, 
+                                          context->SegSs, context->Esp);
+        context->EFlags = stack[2];
+
         if (intnum != context->Eip / DOSVM_STUB_PM48)
             WARN( "interrupt stub has been modified "
                   "(interrupt is %02x, interrupt stub is %02lx)\n",
@@ -279,6 +284,11 @@ void WINAPI DOSVM_EmulateInterruptPM( CONTEXT86 *context, BYTE intnum )
     }
     else if (context->SegCs == DOSVM_dpmi_segments->int16_sel)
     {
+        /* Restore original flags stored into the stack by the caller. */
+        WORD *stack = CTX_SEG_OFF_TO_LIN(context, 
+                                         context->SegSs, context->Esp);
+        context->EFlags = (DWORD)MAKELONG( stack[2], HIWORD(context->EFlags) );
+
         if (intnum != context->Eip / DOSVM_STUB_PM16)
             WARN( "interrupt stub has been modified "
                   "(interrupt is %02x, interrupt stub is %02lx)\n",
@@ -438,6 +448,11 @@ BOOL WINAPI DOSVM_EmulateInterruptRM( CONTEXT86 *context, BYTE intnum )
     /* check if the call is from our fake BIOS interrupt stubs */
     if (context->SegCs==0xf000)
     {
+        /* Restore original flags stored into the stack by the caller. */
+        WORD *stack = CTX_SEG_OFF_TO_LIN(context, 
+                                         context->SegSs, context->Esp);
+        context->EFlags = (DWORD)MAKELONG( stack[2], HIWORD(context->EFlags) );
+
         if (intnum != context->Eip / DOSVM_STUB_RM)
             WARN( "interrupt stub has been modified "
                   "(interrupt is %02x, interrupt stub is %02lx)\n",
@@ -446,6 +461,9 @@ BOOL WINAPI DOSVM_EmulateInterruptRM( CONTEXT86 *context, BYTE intnum )
         TRACE( "builtin interrupt %02x has been branched to\n", intnum );
         
         DOSVM_CallBuiltinHandler( context, intnum );
+
+        /* Real mode stubs use IRET so we must put flags back into stack. */
+        stack[2] = LOWORD(context->EFlags);
     }
     else
     {
