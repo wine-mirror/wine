@@ -216,7 +216,7 @@ static UINT WPRINTF_GetLen( WPRINTF_FORMAT *format, WPRINTF_DATA *arg,
     case WPR_STRING:
         if (!arg->lpcstr_view) arg->lpcstr_view = null_stringA;
         for (len = 0; !format->precision || (len < format->precision); len++)
-            if (!arg->lpcstr_view + len) break;
+            if (!*(arg->lpcstr_view + len)) break;
         if (len > maxlen) len = maxlen;
         return (format->precision = len);
     case WPR_WSTRING:
