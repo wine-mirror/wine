@@ -905,7 +905,7 @@ static  void    test_SuspendFlag(void)
 {
     char                buffer[MAX_PATH];
     PROCESS_INFORMATION	info;
-    STARTUPINFOA	startup;
+    STARTUPINFOA       startup, us;
     DWORD               exit_status;
 
     /* let's start simplistic */
@@ -928,8 +928,10 @@ static  void    test_SuspendFlag(void)
     /* child process has changed result file, so let profile functions know about it */
     WritePrivateProfileStringA(NULL, NULL, NULL, resfile);
 
+    GetStartupInfoA(&us);
+
     okChildInt("StartupInfoA", "cb", startup.cb);
-    okChildString("StartupInfoA", "lpDesktop", startup.lpDesktop);
+    okChildString("StartupInfoA", "lpDesktop", us.lpDesktop);
     okChildString("StartupInfoA", "lpTitle", startup.lpTitle);
     okChildInt("StartupInfoA", "dwX", startup.dwX);
     okChildInt("StartupInfoA", "dwY", startup.dwY);
@@ -948,7 +950,7 @@ static  void    test_DebuggingFlag(void)
 {
     char                buffer[MAX_PATH];
     PROCESS_INFORMATION	info;
-    STARTUPINFOA	startup;
+    STARTUPINFOA       startup, us;
     DEBUG_EVENT         de;
     unsigned            dbg = 0;
 
@@ -976,8 +978,10 @@ static  void    test_DebuggingFlag(void)
     /* child process has changed result file, so let profile functions know about it */
     WritePrivateProfileStringA(NULL, NULL, NULL, resfile);
 
+    GetStartupInfoA(&us);
+
     okChildInt("StartupInfoA", "cb", startup.cb);
-    okChildString("StartupInfoA", "lpDesktop", startup.lpDesktop);
+    okChildString("StartupInfoA", "lpDesktop", us.lpDesktop);
     okChildString("StartupInfoA", "lpTitle", startup.lpTitle);
     okChildInt("StartupInfoA", "dwX", startup.dwX);
     okChildInt("StartupInfoA", "dwY", startup.dwY);
@@ -996,7 +1000,7 @@ static void test_Console(void)
 {
     char                buffer[MAX_PATH];
     PROCESS_INFORMATION	info;
-    STARTUPINFOA	startup;
+    STARTUPINFOA       startup, us;
     SECURITY_ATTRIBUTES sa;
     CONSOLE_SCREEN_BUFFER_INFO	sbi, sbiC;
     DWORD               modeIn, modeOut, modeInC, modeOutC;
@@ -1059,8 +1063,10 @@ static void test_Console(void)
     SetConsoleCP(cpIn);
     SetConsoleOutputCP(cpOut);
 
+    GetStartupInfoA(&us);
+
     okChildInt("StartupInfoA", "cb", startup.cb);
-    okChildString("StartupInfoA", "lpDesktop", startup.lpDesktop);
+    okChildString("StartupInfoA", "lpDesktop", us.lpDesktop);
     okChildString("StartupInfoA", "lpTitle", startup.lpTitle);
     okChildInt("StartupInfoA", "dwX", startup.dwX);
     okChildInt("StartupInfoA", "dwY", startup.dwY);
