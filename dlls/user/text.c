@@ -983,6 +983,7 @@ INT WINAPI DrawTextExA( HDC hdc, LPSTR str, INT count,
    DWORD wmax;
    DWORD amax;
 
+   if (!str) return 0;
    if (count == -1) count = strlen(str);
    if (!count) return 0;
    wcount = MultiByteToWideChar( CP_ACP, 0, str, count, NULL, 0 );
