@@ -1051,6 +1051,7 @@ static int get_hardware_message( struct thread *thread, struct message *first,
              win != filter_win && !is_child_window( filter_win, win )))
         {
             clear_bits &= ~get_hardware_msg_bit( msg );
+            release_object( win_thread );
             msg = msg->next;
             continue;
         }
