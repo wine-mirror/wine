@@ -302,8 +302,10 @@ ME_DisplayItem *ME_InsertRun(ME_TextEditor *editor, int nCharOfs, ME_DisplayItem
   assert(pItem->type == diRun || pItem->type == diUndoInsertRun);
   
   pUI = ME_AddUndoItem(editor, diUndoDeleteRun, NULL);
-  pUI->nStart = nCharOfs;
-  pUI->nLen = pItem->member.run.strText->nLen;
+  if (pUI) {
+    pUI->nStart = nCharOfs;
+    pUI->nLen = pItem->member.run.strText->nLen;
+  }
   ME_CursorFromCharOfs(editor, nCharOfs, &tmp);
   if (tmp.nOffset) {
     tmp.pRun = ME_SplitRunSimple(editor, tmp.pRun, tmp.nOffset);

@@ -40,6 +40,7 @@
 #include <string.h>
 #include <stdarg.h>
 #include <stdlib.h>
+#include <assert.h>
 
 #include "rtf.h"
 
@@ -3590,6 +3591,16 @@ BeginFile (RTF_Info *info )
 	return (1);
 }
 
+/*
+ * Write out a character. Seems to work for the default ANSI codepage,
+ * contrary to TextClass_orig. 
+ */
+
+static void
+TextClass (RTF_Info *info)
+{
+	PutLitChar (info, info->rtfMajor);
+}
 
 /*
  * Write out a character.  rtfMajor contains the input character, rtfMinor
@@ -3597,10 +3608,13 @@ BeginFile (RTF_Info *info )
  *
  * If the input character isn't in the charset map, try to print some
  * representation of it.
+ * 
+ * I'm not removing it, because it may be helpful if someone else decides
+ * to rewrite the character handler in a i18n-friendly way 
  */
-
+#if 0
 static void
-TextClass (RTF_Info *info)
+TextClass_orig (RTF_Info *info)
 {
 	char	buf[rtfBufSiz];
 
@@ -3612,13 +3626,15 @@ TextClass (RTF_Info *info)
 		PutStdChar (info, info->rtfMinor);
 	else
 	{
-		if (info->rtfMajor < 128)	/* in ASCII range */
-			sprintf (buf, "[[%c]]", info->rtfMajor);
-		else
+		if (info->rtfMajor < 256)	/* in ASCII range */
+			PutLitChar(info, info->rtfMajor);
+		else {
 			sprintf (buf, "[[\\'%02x]]", info->rtfMajor);
-		PutLitStr (info, buf);
+			PutLitStr (info, buf);
+		}
 	}
 }
+#endif
 
 
 static void
@@ -3763,10 +3779,16 @@ void PutLitChar (RTF_Info *info, int c)
 	info->OutputBuffer[info->dwOutputCount++] = c;
 }
 
+void RTFOutputANSIString( RTF_Info *info, char *str, int len )
+{
+	assert(str[len] == '\0');
+	if (len) SendMessageA( info->hwndEdit, EM_REPLACESEL, FALSE, (LPARAM) str);
+}
+
 void RTFFlushOutputBuffer( RTF_Info *info )
 {
 	info->OutputBuffer[info->dwOutputCount] = 0;
-	SendMessageA( info->hwndEdit, EM_REPLACESEL, FALSE, (LPARAM) info->OutputBuffer );
+	RTFOutputANSIString(info, info->OutputBuffer, info->dwOutputCount);
 	info->dwOutputCount = 0;
 }
 
@@ -3778,7 +3800,7 @@ static void PutLitStr (RTF_Info *info, char *str )
 		RTFFlushOutputBuffer( info );
 	if( ( len + 1 ) >= sizeof info->OutputBuffer )
 	{
-		SendMessageA( info->hwndEdit, EM_REPLACESEL, FALSE, (LPARAM) str );
+                RTFOutputANSIString(info, str, len);
 		return;
 	}
 	strcpy( &info->OutputBuffer[info->dwOutputCount], str );

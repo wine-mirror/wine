@@ -274,25 +274,151 @@ static LRESULT ME_StreamInText(ME_TextEditor *editor, DWORD dwFormat, EDITSTREAM
   return 0;
 }
 
+void ME_RTFCharAttrHook(RTF_Info *info)
+{
+  CHARFORMAT2A fmt;
+  fmt.cbSize = sizeof(fmt);
+  fmt.dwMask = 0;
+  
+  switch(info->rtfMinor)
+  {
+    case rtfBold:
+      fmt.dwMask = CFM_BOLD;
+      fmt.dwEffects = info->rtfParam ? fmt.dwMask : 0;
+      break;
+    case rtfItalic:
+      fmt.dwMask = CFM_ITALIC;
+      fmt.dwEffects = info->rtfParam ? fmt.dwMask : 0;
+      break;
+    case rtfUnderline:
+      fmt.dwMask = CFM_UNDERLINE;
+      fmt.dwEffects = info->rtfParam ? fmt.dwMask : 0;
+      break;
+    case rtfStrikeThru:
+      fmt.dwMask = CFM_STRIKEOUT;
+      fmt.dwEffects = info->rtfParam ? fmt.dwMask : 0;
+      break;
+    case rtfBackColor:
+      fmt.dwMask = CFM_BACKCOLOR;
+      fmt.dwEffects = 0;
+      if (info->rtfParam == 0)
+        fmt.dwEffects = CFE_AUTOBACKCOLOR;
+      else if (info->rtfParam != rtfNoParam)
+      {
+        RTFColor *c = RTFGetColor(info, info->rtfParam);
+        fmt.crTextColor = (c->rtfCBlue<<16)|(c->rtfCGreen<<8)|(c->rtfCRed);
+      }
+      break;
+    case rtfForeColor:
+      fmt.dwMask = CFM_COLOR;
+      fmt.dwEffects = 0;
+      if (info->rtfParam == 0)
+        fmt.dwEffects = CFE_AUTOCOLOR;
+      else if (info->rtfParam != rtfNoParam)
+      {
+        RTFColor *c = RTFGetColor(info, info->rtfParam);
+        fmt.crTextColor = (c->rtfCBlue<<16)|(c->rtfCGreen<<8)|(c->rtfCRed);
+      }
+      break;
+    case rtfFontNum:
+      if (info->rtfParam != rtfNoParam)
+      {
+        RTFFont *f = RTFGetFont(info, info->rtfParam);
+        if (f)
+        {
+          strncpy(fmt.szFaceName, f->rtfFName, sizeof(fmt.szFaceName)-1);
+          fmt.szFaceName[sizeof(fmt.szFaceName)-1] = '\0';
+          fmt.dwMask = CFM_FACE;
+        }
+      }
+      break;
+    case rtfFontSize:
+      fmt.dwMask = CFM_SIZE;
+      if (info->rtfParam != rtfNoParam)
+        fmt.yHeight = info->rtfParam*10;
+      break;
+  }
+  if (fmt.dwMask) {
+    RTFFlushOutputBuffer(info);
+    SendMessageW(info->hwndEdit, EM_SETCHARFORMAT, SCF_SELECTION, (LPARAM)&fmt);
+  }
+}
+
+void ME_RTFParAttrHook(RTF_Info *info)
+{
+  PARAFORMAT2 fmt;
+  fmt.cbSize = sizeof(fmt);
+  fmt.dwMask = 0;
+  
+  switch(info->rtfMinor)
+  {
+  case rtfParDef: /* I'm not 100% sure what does it do, but I guess it restores default paragraph attributes */
+    fmt.dwMask = PFM_ALIGNMENT;
+    fmt.wAlignment = PFA_LEFT;
+    break;
+  case rtfQuadLeft:
+  case rtfQuadJust:
+    fmt.dwMask = PFM_ALIGNMENT;
+    fmt.wAlignment = PFA_LEFT;
+    break;
+  case rtfQuadRight:
+    fmt.dwMask = PFM_ALIGNMENT;
+    fmt.wAlignment = PFA_RIGHT;
+    break;
+  case rtfQuadCenter:
+    fmt.dwMask = PFM_ALIGNMENT;
+    fmt.wAlignment = PFA_CENTER;
+    break;
+  }  
+  if (fmt.dwMask) {
+    RTFFlushOutputBuffer(info);
+    SendMessageW(info->hwndEdit, EM_SETPARAFORMAT, 0, (LPARAM)&fmt);
+  }
+}
+
+void ME_RTFReadHook(RTF_Info *info) {
+  switch(info->rtfClass)
+  {
+    case rtfControl:
+      switch(info->rtfMajor)
+      {
+        case rtfCharAttr:
+          ME_RTFCharAttrHook(info);
+          break;
+        case rtfParAttr:
+          ME_RTFParAttrHook(info);
+          break;
+      }
+      break;
+  }
+}
+
 static LRESULT ME_StreamIn(ME_TextEditor *editor, DWORD format, EDITSTREAM *stream)
 {
   RTF_Info parser;
   ME_Style *style;
+  int from, to, to2, nUndoMode;
+  ME_UndoItem *pUI;
 
   TRACE("%p %p\n", stream, editor->hWnd);
   
+  ME_GetSelection(editor, &from, &to);
   if (format & SFF_SELECTION) {
     style = ME_GetSelectionInsertStyle(editor);
-    SendMessageW(editor->hWnd, WM_CLEAR, 0, 0);
+
+    ME_InternalDeleteText(editor, from, to-from);
   }
   else {
     style = editor->pBuffer->pDefaultStyle;
     ME_AddRefStyle(style);
     SendMessageA(editor->hWnd, EM_SETSEL, 0, 0);    
-    SetWindowTextA(editor->hWnd, "");
+    ME_InternalDeleteText(editor, 0, ME_GetTextLength(editor));
+    from = to = 0;
     ME_ClearTempStyle(editor);
   }
-
+  
+  nUndoMode = editor->nUndoMode;
+  editor->nUndoMode = umIgnore;
   if (format & SF_RTF) {
     /* setup the RTF parser */
     memset(&parser, 0, sizeof parser);
@@ -301,6 +427,7 @@ static LRESULT ME_StreamIn(ME_TextEditor *editor, DWORD format, EDITSTREAM *stre
     parser.hwndEdit = editor->hWnd;
     WriterInit(&parser);
     RTFInit(&parser);
+    RTFSetReadHook(&parser, ME_RTFReadHook);
     BeginFile(&parser);
   
     /* do the parsing */
@@ -311,6 +438,7 @@ static LRESULT ME_StreamIn(ME_TextEditor *editor, DWORD format, EDITSTREAM *stre
     ME_StreamInText(editor, format, stream, style);
   else
     ERR("EM_STREAMIN without SF_TEXT or SF_RTF\n");
+  ME_GetSelection(editor, &to, &to2);
   /* put the cursor at the top */
   if (!(format & SFF_SELECTION))
     SendMessageA(editor->hWnd, EM_SETSEL, 0, 0);
@@ -318,6 +446,16 @@ static LRESULT ME_StreamIn(ME_TextEditor *editor, DWORD format, EDITSTREAM *stre
   {
     /* FIXME where to put cursor now ? */
   }
+  
+  editor->nUndoMode = nUndoMode;
+  pUI = ME_AddUndoItem(editor, diUndoDeleteRun, NULL);
+  FIXME("from %d to %d\n", from, to);
+  if (pUI && from < to)
+  {
+    pUI->nStart = from;
+    pUI->nLen = to-from;
+  }
+  ME_CommitUndo(editor);
   ME_ReleaseStyle(style);
 
   return 0;
