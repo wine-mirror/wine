@@ -358,7 +358,6 @@ static int symbol_finish(void)
             started = 1;
         }
         printf("\t%s\n",search_symbol->symbolname);
-        return 1;
     }
     return started;
 }
