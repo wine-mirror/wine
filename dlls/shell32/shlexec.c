@@ -145,6 +145,43 @@ static UINT SHELL_ExecuteA(char *lpCmd, LPSHELLEXECUTEINFOA sei, BOOL shWait)
     return retval;
 }
 
+/***********************************************************************
+ *           SHELL_TryAppPath
+ *
+ * Helper function for SHELL_FindExecutable
+ * @param lpResult - pointer to a buffer of size MAX_PATH
+ * On entry: szName is a filename (probably without path separators).
+ * On exit: if szName found in "App Path", place full path in lpResult, and return true
+ */
+static BOOL SHELL_TryAppPath( LPCSTR szName, LPSTR lpResult)
+{
+    HKEY hkApp = 0;
+    char szAppKey[256];
+    LONG len;
+    LONG res; 
+    BOOL found = FALSE;
+
+    sprintf(szAppKey, "Software\\Microsoft\\Windows\\CurrentVersion\\App Paths\\%s", szName);
+    res = RegOpenKeyExA(HKEY_LOCAL_MACHINE, szAppKey, 0, KEY_READ, &hkApp);
+    if (res) {
+        /*TRACE("RegOpenKeyExA(HKEY_LOCAL_MACHINE, %s,) returns %ld\n", szAppKey, res);*/
+        goto end;
+    }
+
+    len = MAX_PATH;
+    res = RegQueryValueA(hkApp, NULL, lpResult, &len);
+    if (res) {
+        /*TRACE("RegQueryValueA(hkApp, NULL,) returns %ld\n", res);*/
+        goto end;
+    }
+    /*TRACE("%s -> %s\n", szName, lpResult);*/
+    found = TRUE;
+
+end:
+    if (hkApp) RegCloseKey(hkApp);
+    return found;
+}
+
 /*************************************************************************
  *	SHELL_FindExecutable [Internal]
  *
@@ -176,6 +213,7 @@ static UINT SHELL_FindExecutable(LPCSTR lpPath, LPCSTR lpFile, LPCSTR lpOperatio
     TRACE("%s\n", (lpFile != NULL) ? lpFile : "-");
 
     lpResult[0] = '\0'; /* Start off with an empty return string */
+    if (key) *key = '\0';
 
     /* trap NULL parameters on entry */
     if ((lpFile == NULL) || (lpResult == NULL) || (lpOperation == NULL))
@@ -185,10 +223,17 @@ static UINT SHELL_FindExecutable(LPCSTR lpPath, LPCSTR lpFile, LPCSTR lpOperatio
         return 2; /* File not found. Close enough, I guess. */
     }
 
+    if (SHELL_TryAppPath( lpFile, lpResult ))
+    {
+        TRACE("found %s via App Paths\n", lpResult);
+        return 33;
+    }
+
     if (SearchPathA(lpPath, lpFile, ".exe", sizeof(xlpFile), xlpFile, NULL))
     {
         TRACE("SearchPathA returned non-zero\n");
         lpFile = xlpFile;
+        /* Hey, isn't this value ignored?  Why make this call?  Shouldn't we return here?  --dank*/
     }
 
     /* First thing we need is the file's extension */
@@ -215,8 +260,6 @@ static UINT SHELL_FindExecutable(LPCSTR lpPath, LPCSTR lpFile, LPCSTR lpOperatio
     /* All I know of the order is that registry is checked before */
     /* extensions; however, it'd make sense to check the programs */
     /* section first, so that's what happens here. */
-
-    if (key) *key = '\0';
 
     /* See if it's a program - if GetProfileString fails, we skip this
      * section. Actually, if GetProfileString fails, we've probably
@@ -614,15 +657,19 @@ BOOL WINAPI ShellExecuteExA32 (LPSHELLEXECUTEINFOA sei, SHELL_ExecuteA1632 execf
     retval = SHELL_FindExecutable(sei->lpDirectory, lpFile, lpOperation, cmd, lpstrProtocol);
     if (retval > 32)  /* Found */
     {
-        if (szCommandline[0]) {
-            strcat(cmd, " ");
-            strcat(cmd, szCommandline);
-        }
-        TRACE("%s/%s => %s/%s\n", szApplicationName, lpOperation, cmd, lpstrProtocol);
+        CHAR szQuotedCmd[MAX_PATH+2];
+        /* Must quote to handle case where cmd contains spaces, 
+         * else security hole if malicious user creates executable file "C:\\Program"
+         */
+        if (szCommandline[0])
+            sprintf(szQuotedCmd, "\"%s\" %s", cmd, szCommandline);
+        else
+            sprintf(szQuotedCmd, "\"%s\"", cmd);
+        TRACE("%s/%s => %s/%s\n", szApplicationName, lpOperation, szQuotedCmd, lpstrProtocol);
         if (*lpstrProtocol)
             retval = execute_from_key(lpstrProtocol, szApplicationName, sei, execfunc);
         else
-            retval = execfunc(cmd, sei, FALSE);
+            retval = execfunc(szQuotedCmd, sei, FALSE);
     }
     else if (PathIsURLA((LPSTR)lpFile))    /* File not found, check for URL */
     {
