@@ -327,7 +327,7 @@ typedef struct tagRECT
 } RECT, *PRECT, *LPRECT;
 typedef const RECT *LPCRECT;
 
-typedef struct tagRECTL
+typedef struct _RECTL
 {
     LONG left;
     LONG top;

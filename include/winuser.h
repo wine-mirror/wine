@@ -2109,7 +2109,7 @@ typedef PVOID *LPMENUTEMPLATE;
 #define SBM_GETSCROLLINFO      0x00ea
 
 /* Scrollbar info */
-typedef struct
+typedef struct tagSCROLLINFO
 {
     UINT    cbSize;
     UINT    fMask;
