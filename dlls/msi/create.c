@@ -127,6 +127,11 @@ static UINT CREATE_execute( struct tagMSIVIEW *view, MSIHANDLE record )
         if( column_val < 0 )
             break;
 
+        /* add the string again here so we increase the reference count */
+        table_val = msi_addstringW( cv->db->strings, 0, cv->name, -1, 1 );
+        if( table_val < 0 )
+            break;
+
         r = tv->ops->set_int( tv, row, 1, table_val );
         if( r )
             break;

@@ -270,7 +270,7 @@ data_type:
         }
   | TK_CHAR TK_LP data_count TK_RP
         {
-            $$ = MSITYPE_STRING | $3;
+            $$ = MSITYPE_STRING | 0x500 | $3;
         }
   | TK_LONGCHAR
         {
