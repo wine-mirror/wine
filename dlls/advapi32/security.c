@@ -202,6 +202,15 @@ CopySid( DWORD nDestinationSidLength, PSID pDestinationSid, PSID pSourceSid )
 BOOL WINAPI
 IsValidSid( PSID pSid )
 {
+    if (IsBadReadPtr(pSid, 4))
+    {
+        WARN_(security)("(%p): invalid pointer!", pSid);
+        return FALSE;
+    }
+
+    if (pSid->SubAuthorityCount > SID_MAX_SUB_AUTHORITIES)
+        return FALSE;
+
     if (!pSid || pSid->Revision != SID_REVISION)
         return FALSE;
 
