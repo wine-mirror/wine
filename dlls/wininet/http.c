@@ -2174,6 +2174,10 @@ INT HTTP_GetStdHeaderIndex(LPCWSTR lpszField)
     INT index = -1;
     static const WCHAR szContentLength[] = {
        'C','o','n','t','e','n','t','-','L','e','n','g','t','h',0};
+    static const WCHAR szQueryRange[] = {
+       'R','a','n','g','e',0};
+    static const WCHAR szContentRange[] = {
+       'C','o','n','t','e','n','t','-','R','a','n','g','e',0};
     static const WCHAR szContentType[] = {
        'C','o','n','t','e','n','t','-','T','y','p','e',0};
     static const WCHAR szLastModified[] = {
@@ -2207,6 +2211,10 @@ INT HTTP_GetStdHeaderIndex(LPCWSTR lpszField)
 
     if (!strcmpiW(lpszField, szContentLength))
         index = HTTP_QUERY_CONTENT_LENGTH;
+    else if (!strcmpiW(lpszField,szQueryRange))
+        index = HTTP_QUERY_RANGE;
+    else if (!strcmpiW(lpszField,szContentRange))
+        index = HTTP_QUERY_CONTENT_RANGE;
     else if (!strcmpiW(lpszField,szContentType))
         index = HTTP_QUERY_CONTENT_TYPE;
     else if (!strcmpiW(lpszField,szLastModified))
