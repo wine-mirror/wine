@@ -145,14 +145,15 @@ INT WINAPI StretchDIBits(HDC hdc, INT xDst, INT yDst, INT widthDst,
     else { /* use StretchBlt32 */
         HBITMAP hBitmap, hOldBitmap;
 	HDC hdcMem;
-    
+
 	hBitmap = CreateDIBitmap( hdc, &info->bmiHeader, CBM_INIT,
 				    bits, info, wUsage );
 	hdcMem = CreateCompatibleDC( hdc );
 	hOldBitmap = SelectObject( hdcMem, hBitmap );
-        /* Origin for DIBitmap is bottom left ! */
+        /* Origin for DIBitmap may be bottom left (positive biHeight) or top
+           left (negative biHeight) */
         StretchBlt( hdc, xDst, yDst, widthDst, heightDst,
-                      hdcMem, xSrc, info->bmiHeader.biHeight - heightSrc - ySrc, 
+                      hdcMem, xSrc, abs(info->bmiHeader.biHeight) - heightSrc - ySrc, 
                       widthSrc, heightSrc, dwRop );
 	SelectObject( hdcMem, hOldBitmap );
 	DeleteDC( hdcMem );
