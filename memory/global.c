@@ -475,7 +475,7 @@ LPVOID WINAPI GlobalLock16(
 ) {
     if (!handle) return 0;
     if (!VALID_HANDLE(handle))
-	return (LPVOID)0;
+	return 0;
     GET_ARENA_PTR(handle)->lockCount++;
     return (LPVOID)GET_ARENA_PTR(handle)->base;
 }
@@ -1117,7 +1117,7 @@ LPVOID WINAPI GlobalLock(
    else
    {
       WARN("invalid handle\n");
-      palloc=(LPVOID) NULL;
+      palloc=NULL;
       SetLastError(ERROR_INVALID_HANDLE);
    }
    /* HeapUnlock(GetProcessHeap()); */;

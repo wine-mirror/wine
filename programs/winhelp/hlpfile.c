@@ -1202,7 +1202,7 @@ static BOOL HLPFILE_ReadFont(HLPFILE* hlpfile)
             WINE_FIXME("Too high face ref (%u/%u)\n", idx, face_num);
             strcpy(hlpfile->fonts[i].LogFont.lfFaceName, "Helv");
         }
-        hlpfile->fonts[i].hFont = (HANDLE)0;
+        hlpfile->fonts[i].hFont = 0;
         hlpfile->fonts[i].color = RGB(ref[dscr_offset + i * 11 + 5],
                                       ref[dscr_offset + i * 11 + 6],
                                       ref[dscr_offset + i * 11 + 7]);

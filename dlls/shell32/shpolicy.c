@@ -574,7 +574,7 @@ BOOL WINAPI SHInitRestricted(LPSTR inpRegKey, LPSTR parm2)
         key string, then pass.  Otherwise return 0.
      */
 
-     if (inpRegKey != (LPSTR)NULL)
+     if (inpRegKey != NULL)
      {
          if (lstrcmpiA(inpRegKey, "Software\\Microsoft\\Windows\\CurrentVersion\\Policies"))
 	 {

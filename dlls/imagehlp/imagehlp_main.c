@@ -28,7 +28,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(imagehlp);
 
 /**********************************************************************/
 
-HANDLE IMAGEHLP_hHeap = (HANDLE) NULL;
+HANDLE IMAGEHLP_hHeap = NULL;
 
 static API_VERSION IMAGEHLP_ApiVersion = { 4, 0, 0, 5 };
 
@@ -44,7 +44,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
       break;
     case DLL_PROCESS_DETACH:
       HeapDestroy(IMAGEHLP_hHeap);
-      IMAGEHLP_hHeap = (HANDLE) NULL;
+      IMAGEHLP_hHeap = NULL;
       break;
     case DLL_THREAD_ATTACH:
       break;

@@ -210,7 +210,7 @@ BOOL RPCSS_Shutdown(void)
   if (!CloseHandle(master_mutex))
     WINE_WARN("Failed to release master mutex\n");
 
-  master_mutex = (HANDLE)NULL;
+  master_mutex = NULL;
 
   return TRUE;
 }

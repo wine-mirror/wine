@@ -579,7 +579,7 @@ static void StartServer (LPTHREAD_START_ROUTINE routine,
 {
     par->general = general;
     thread[0] = CreateThread ( NULL, 0, routine, par, 0, &thread_id[0] );
-    ok ( thread[0] != (HANDLE) NULL, "Failed to create server thread" );
+    ok ( thread[0] != NULL, "Failed to create server thread" );
 }
 
 static void StartClients (LPTHREAD_START_ROUTINE routine,
@@ -591,7 +591,7 @@ static void StartClients (LPTHREAD_START_ROUTINE routine,
     {
         client_id = i - 1;
         thread[i] = CreateThread ( NULL, 0, routine, par, 0, &thread_id[i] );
-        ok ( thread[i] != (HANDLE) NULL, "Failed to create client thread" );
+        ok ( thread[i] != NULL, "Failed to create client thread" );
         /* Make sure the client is up and running */
         WaitForSingleObject ( client_ready[client_id], INFINITE );
     };

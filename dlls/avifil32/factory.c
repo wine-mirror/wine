@@ -33,7 +33,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(avifile);
 #include "initguid.h"
 #include "avifile_private.h"
 
-HMODULE AVIFILE_hModule   = (HMODULE)NULL;
+HMODULE AVIFILE_hModule   = NULL;
 
 BOOL    AVIFILE_bLocked   = FALSE;
 UINT    AVIFILE_uUseCount = 0;
@@ -204,7 +204,7 @@ BOOL WINAPI DllMain(HINSTANCE hInstDll, DWORD fdwReason, LPVOID lpvReserved)
 
   switch (fdwReason) {
   case DLL_PROCESS_ATTACH:
-    if (AVIFILE_hModule == (HMODULE)NULL)
+    if (AVIFILE_hModule == NULL)
       AVIFILE_hModule = (HMODULE)hInstDll;
     break;
   case DLL_PROCESS_DETACH:

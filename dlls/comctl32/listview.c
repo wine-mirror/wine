@@ -7045,7 +7045,7 @@ static LRESULT LISTVIEW_Create(HWND hwnd, const CREATESTRUCTW *lpcs)
   LISTVIEW_SaveTextMetrics(infoPtr);
 
   /* create header */
-  infoPtr->hwndHeader =	CreateWindowW(WC_HEADERW, (LPCWSTR)NULL,
+  infoPtr->hwndHeader =	CreateWindowW(WC_HEADERW, NULL,
     WS_CHILD | HDS_HORZ | (DWORD)((LVS_NOSORTHEADER & lpcs->style)?0:HDS_BUTTONS),
     0, 0, 0, 0, hwnd, NULL,
     lpcs->hInstance, NULL);

@@ -444,7 +444,7 @@ HRESULT WINAPI SHCreateStreamOnFileEx(LPCWSTR lpszPath, DWORD dwMode,
 
   /* Open HANDLE to file */
   hFile = CreateFileW(lpszPath, dwAccess, dwShare, NULL, dwCreate,
-                      dwAttributes, (HANDLE)0);
+                      dwAttributes, 0);
 
   if(hFile == INVALID_HANDLE_VALUE)
   {

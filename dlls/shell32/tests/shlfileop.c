@@ -36,7 +36,7 @@ void createTestFile(CHAR *name)
     DWORD written;
     CHAR msg[MAX_PATH];
 
-    file = CreateFileA(name, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, (HANDLE)NULL);
+    file = CreateFileA(name, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, NULL);
     sprintf(msg, "Failure to open file %s", name);
     ok(file != INVALID_HANDLE_VALUE, msg);
     WriteFile(file, name, strlen(name), &written, NULL);
@@ -109,7 +109,7 @@ void test_delete(void)
     sprintf(buf, "%s\\%s", CURR_DIR, "test?.txt");
     buf[strlen(buf) + 1] = '\0';
 
-    shfo.hwnd = (HANDLE)NULL;
+    shfo.hwnd = NULL;
     shfo.wFunc = FO_DELETE;
     shfo.pFrom = buf;
     shfo.pTo = "\0";
@@ -153,7 +153,7 @@ void test_rename()
     CHAR from[MAX_PATH];
     CHAR to[MAX_PATH];
 
-    shfo.hwnd = (HANDLE)NULL;
+    shfo.hwnd = NULL;
     shfo.wFunc = FO_RENAME;
     shfo.pFrom = from;
     shfo.pTo = to;
@@ -212,7 +212,7 @@ void test_copy(void)
     CHAR to[MAX_PATH];
     FILEOP_FLAGS tmp_flags;
 
-    shfo.hwnd = (HANDLE)NULL;
+    shfo.hwnd = NULL;
     shfo.wFunc = FO_COPY;
     shfo.pFrom = from;
     shfo.pTo = to;
@@ -296,7 +296,7 @@ void test_move(void)
     CHAR from[MAX_PATH];
     CHAR to[MAX_PATH];
 
-    shfo.hwnd = (HANDLE)NULL;
+    shfo.hwnd = NULL;
     shfo.wFunc = FO_MOVE;
     shfo.pFrom = from;
     shfo.pTo = to;

@@ -3125,7 +3125,7 @@ DWORD WINAPI EnumPrinterDataExW(HANDLE hPrinter, LPCWSTR pKeyName,
     ++cbMaxValueNameLen;			/* allow for trailing '\0' */
 
     hHeap = GetProcessHeap ();
-    if (hHeap == (HANDLE) NULL)
+    if (hHeap == NULL)
     {
 	ERR ("GetProcessHeap failed\n");
 	r = RegCloseKey (hkSubKey);
@@ -3314,7 +3314,7 @@ DWORD WINAPI EnumPrinterDataExA(HANDLE hPrinter, LPCSTR pKeyName,
     }
 
     hHeap = GetProcessHeap ();
-    if (hHeap == (HANDLE) NULL)
+    if (hHeap == NULL)
     {
 	ERR ("GetProcessHeap failed\n");
 	return ERROR_OUTOFMEMORY;

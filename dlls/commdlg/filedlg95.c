@@ -1028,7 +1028,7 @@ static LRESULT FILEDLG95_InitControls(HWND hwnd)
   GetWindowRect(GetDlgItem(hwnd,IDC_TOOLBARSTATIC),&rectTB);
   MapWindowPoints( 0, hwnd,(LPPOINT)&rectTB,2);
 
-  fodInfos->DlgInfos.hwndTB = CreateWindowExA(0, TOOLBARCLASSNAMEA, (LPSTR) NULL,
+  fodInfos->DlgInfos.hwndTB = CreateWindowExA(0, TOOLBARCLASSNAMEA, NULL,
         WS_CHILD | WS_GROUP | TBSTYLE_TOOLTIPS | CCS_NODIVIDER | CCS_NORESIZE,
         0, 0, 150, 26, hwnd, (HMENU) IDC_TOOLBAR, COMMDLG_hInstance32, NULL);
 

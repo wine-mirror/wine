@@ -352,7 +352,7 @@ HANDLE RPCSS_NPConnect(void)
       case WAIT_TIMEOUT:
       default: 
         WINE_ERR("This should never happen: couldn't enter mutex.\n");
-        return (HANDLE) NULL;
+        return NULL;
     }
 
     /* try to open the client side of the named pipe. */
@@ -516,7 +516,7 @@ BOOL RPCSS_BecomePipeServer(void)
       NULL,                      /* no security attribute */ 
       0,                         /* default stack size */
       (LPTHREAD_START_ROUTINE) NPMainWorkThread,
-      (LPVOID) NULL,             /* thread parameter */
+      NULL,             /* thread parameter */
       0,                         /* not suspended */
       &threadid                  /* returns thread ID  (not used) */
     );

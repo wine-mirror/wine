@@ -189,7 +189,7 @@ INT_PTR CALLBACK RunDlgProc (HWND hwnd, UINT message, WPARAM wParam, LPARAM lPar
 
                 case 12288 :
                     {
-                    HMODULE hComdlg = (HMODULE)NULL ;
+                    HMODULE hComdlg = NULL ;
                     LPFNOFN ofnProc = NULL ;
                     static char szFName[1024] = "", szFileTitle[256] = "", szInitDir[768] = "" ;
                     static OPENFILENAMEA ofn =
@@ -198,7 +198,7 @@ INT_PTR CALLBACK RunDlgProc (HWND hwnd, UINT message, WPARAM wParam, LPARAM lPar
                         NULL,
                         NULL,
                         "Executable Files\0*.exe\0All Files\0*.*\0\0\0\0",
-                        (LPSTR)NULL,
+                        NULL,
                         0,
                         0,
                         szFName,
@@ -210,15 +210,15 @@ INT_PTR CALLBACK RunDlgProc (HWND hwnd, UINT message, WPARAM wParam, LPARAM lPar
                         OFN_ENABLESIZING | OFN_FILEMUSTEXIST | OFN_HIDEREADONLY | OFN_PATHMUSTEXIST,
                         0,
                         0,
-                        (LPCSTR)NULL,
+                        NULL,
                         0,
                         (LPOFNHOOKPROC)NULL,
-                        (LPCSTR)NULL
+                        NULL
                         } ;
 
                     ofn.hwndOwner = hwnd ;
 
-                    if ((HMODULE)NULL == (hComdlg = LoadLibraryExA ("comdlg32", (HANDLE)NULL, 0)))
+                    if (NULL == (hComdlg = LoadLibraryExA ("comdlg32", NULL, 0)))
                         {
                         MessageBoxA (hwnd, "Unable to display dialog box (LoadLibraryEx) !", "Nix", MB_OK | MB_ICONEXCLAMATION) ;
                         return TRUE ;

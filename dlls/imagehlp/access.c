@@ -208,9 +208,9 @@ BOOL WINAPI MapAndLoad(
   BOOL bDotDll, BOOL bReadOnly)
 {
   CHAR szFileName[MAX_PATH];
-  HANDLE hFile = (HANDLE) NULL;
-  HANDLE hFileMapping = (HANDLE) NULL;
-  HMODULE hModule = (HMODULE) NULL;
+  HANDLE hFile = NULL;
+  HANDLE hFileMapping = NULL;
+  HMODULE hModule = NULL;
   PIMAGE_NT_HEADERS pNtHeader = NULL;
 
   /* PathCombine(&szFileName, pszDllPath, pszImageName); */
@@ -219,7 +219,7 @@ BOOL WINAPI MapAndLoad(
   /* FIXME: Check if the file already loaded (use IMAGEHLP_pFirstLoadedImage) */
   if(!(hFile = CreateFileA(
     szFileName, GENERIC_READ, 1, /* FIXME: FILE_SHARE_READ not defined */
-    NULL, OPEN_EXISTING, 0, (HANDLE) NULL)))
+    NULL, OPEN_EXISTING, 0, NULL)))
     {
       SetLastError(ERROR_FILE_NOT_FOUND);
       goto Error;
@@ -234,7 +234,7 @@ BOOL WINAPI MapAndLoad(
       goto Error;
     }
   CloseHandle(hFile);
-  hFile = (HANDLE) NULL;
+  hFile = NULL;
 
   if(!(hModule = (HMODULE) MapViewOfFile(
     hFileMapping, FILE_MAP_READ, 0, 0, 0)))
@@ -246,7 +246,7 @@ BOOL WINAPI MapAndLoad(
     }
 
   CloseHandle(hFileMapping);
-  hFileMapping=(HANDLE) NULL;
+  hFileMapping=NULL;
 
   pLoadedImage = (PLOADED_IMAGE) HeapAlloc(
     IMAGEHLP_hHeap, 0, sizeof(LOADED_IMAGE)

@@ -47,7 +47,7 @@ HANDLE RPCRT4_RpcssNPConnect(void)
       case WAIT_TIMEOUT:
       default: 
         ERR("This should never happen: couldn't enter mutex.\n");
-        return (HANDLE) NULL;
+        return NULL;
     }
 
     /* try to open the client side of the named pipe. */

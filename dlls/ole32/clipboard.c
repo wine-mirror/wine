@@ -398,7 +398,7 @@ HRESULT WINAPI OleSetClipboard(IDataObject* pDataObj)
               GetClipboardFormatNameA(rgelt.cfFormat, szFmtName, sizeof(szFmtName)-1)
                 ? szFmtName : "");
 
-        SetClipboardData( rgelt.cfFormat, (HANDLE)NULL);
+        SetClipboardData( rgelt.cfFormat, NULL);
       }
     }
     IEnumFORMATETC_Release(penumFormatetc);

@@ -174,7 +174,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 
     case DLL_PROCESS_DETACH:
         CloseHandle(master_mutex);
-        master_mutex = (HANDLE) NULL;
+        master_mutex = NULL;
         break;
     }
 

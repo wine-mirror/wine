@@ -39,7 +39,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(msacm);
 
 /**********************************************************************/
 
-HANDLE MSACM_hHeap = (HANDLE) NULL;
+HANDLE MSACM_hHeap = NULL;
 PWINE_ACMDRIVERID MSACM_pFirstACMDriverID = NULL;
 PWINE_ACMDRIVERID MSACM_pLastACMDriverID = NULL;
 

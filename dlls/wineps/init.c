@@ -123,7 +123,7 @@ BOOL WINAPI DllMain( HINSTANCE hinst, DWORD reason, LPVOID reserved )
 	case DLL_PROCESS_ATTACH:
 
 	    PSDRV_Heap = HeapCreate(0, 0x10000, 0);
-	    if (PSDRV_Heap == (HANDLE)NULL)
+	    if (PSDRV_Heap == NULL)
 		return FALSE;
 
 	    if (PSDRV_GetFontMetrics() == FALSE) {
@@ -132,7 +132,7 @@ BOOL WINAPI DllMain( HINSTANCE hinst, DWORD reason, LPVOID reserved )
 	    }
 
 	    PSDRV_DefaultFont = CreateFontIndirectA(&DefaultLogFont);
-	    if (PSDRV_DefaultFont == (HANDLE)NULL) {
+	    if (PSDRV_DefaultFont == NULL) {
 		HeapDestroy(PSDRV_Heap);
 		return FALSE;
 	    }

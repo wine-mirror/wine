@@ -42,8 +42,8 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(richedit);
 
-HANDLE RICHED32_hHeap = (HANDLE)NULL;
-/* LPSTR  RICHED32_aSubclass = (LPSTR)NULL; */
+HANDLE RICHED32_hHeap = NULL;
+/* LPSTR  RICHED32_aSubclass = NULL; */
 
 #define DPRINTF_EDIT_MSG32(str) \
         TRACE(\
@@ -81,7 +81,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
         /* unregister all common control classes */
         RICHED32_Unregister ();
         HeapDestroy (RICHED32_hHeap);
-        RICHED32_hHeap = (HANDLE)NULL;
+        RICHED32_hHeap = NULL;
         break;
     }
     return TRUE;

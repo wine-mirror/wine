@@ -110,14 +110,14 @@ extern void UPDOWN_Register(void);
 extern void UPDOWN_Unregister(void);
 
 
-HANDLE COMCTL32_hHeap = (HANDLE)NULL;
-LPSTR    COMCTL32_aSubclass = (LPSTR)NULL;
+HANDLE COMCTL32_hHeap = NULL;
+LPSTR    COMCTL32_aSubclass = NULL;
 HMODULE COMCTL32_hModule = 0;
 LANGID  COMCTL32_uiLang = MAKELANGID(LANG_NEUTRAL, SUBLANG_NEUTRAL);
-HBRUSH  COMCTL32_hPattern55AABrush = (HANDLE)NULL;
+HBRUSH  COMCTL32_hPattern55AABrush = NULL;
 COMCTL32_SysColor  comctl32_color;
 
-static HBITMAP COMCTL32_hPattern55AABitmap = (HANDLE)NULL;
+static HBITMAP COMCTL32_hPattern55AABitmap = NULL;
 
 static const WORD wPattern55AA[] =
 {
@@ -203,19 +203,19 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 
             /* delete local pattern brush */
             DeleteObject (COMCTL32_hPattern55AABrush);
-            COMCTL32_hPattern55AABrush = (HANDLE)NULL;
+            COMCTL32_hPattern55AABrush = NULL;
             DeleteObject (COMCTL32_hPattern55AABitmap);
-            COMCTL32_hPattern55AABitmap = (HANDLE)NULL;
+            COMCTL32_hPattern55AABitmap = NULL;
 
             /* delete global subclassing atom */
             GlobalDeleteAtom (LOWORD(COMCTL32_aSubclass));
             TRACE("Subclassing atom deleted: %p\n", COMCTL32_aSubclass);
-            COMCTL32_aSubclass = (LPSTR)NULL;
+            COMCTL32_aSubclass = NULL;
 
             /* destroy private heap */
             HeapDestroy (COMCTL32_hHeap);
             TRACE("Heap destroyed: %p\n", COMCTL32_hHeap);
-            COMCTL32_hHeap = (HANDLE)NULL;
+            COMCTL32_hHeap = NULL;
             break;
     }
 

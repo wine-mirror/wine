@@ -563,7 +563,7 @@ BOOL WINAPI ShellExecuteExA32 (LPSHELLEXECUTEINFOA sei, SHELL_ExecuteA1632 execf
             debugstr_a(sei->lpDirectory), sei->nShow,
             (sei->fMask & SEE_MASK_CLASSNAME) ? debugstr_a(sei->lpClass) : "not used");
 
-    sei->hProcess = (HANDLE)NULL;
+    sei->hProcess = NULL;
     ZeroMemory(szApplicationName,MAX_PATH);
     if (sei->lpFile)
         strcpy(szApplicationName, sei->lpFile);

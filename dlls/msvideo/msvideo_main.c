@@ -687,7 +687,7 @@ HANDLE VFWAPI ICImageCompress(
 	FIXME("(%p,%08x,%p,%p,%p,%ld,%p)\n",
 		hic, uiFlags, lpbiIn, lpBits, lpbiOut, lQuality, plSize);
 
-	return (HANDLE)NULL;
+	return NULL;
 }
 
 /***********************************************************************

@@ -51,11 +51,11 @@ void msvcrt_init_console(void)
 
   /* FIXME: Should be initialised with:
    * CreateFileA("CONIN$", GENERIC_READ, FILE_SHARE_READ,
-   * NULL, OPEN_EXISTING, 0, (HANDLE)NULL);
+   * NULL, OPEN_EXISTING, 0, NULL);
    */
 
   MSVCRT_console_out= CreateFileA("CONOUT$", GENERIC_WRITE, FILE_SHARE_WRITE,
-				    NULL, OPEN_EXISTING, 0, (HANDLE)NULL);
+				    NULL, OPEN_EXISTING, 0, NULL);
 
   if ((MSVCRT_console_in == INVALID_HANDLE_VALUE) ||
       (MSVCRT_console_out== INVALID_HANDLE_VALUE))

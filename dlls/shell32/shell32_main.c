@@ -96,7 +96,7 @@ LPWSTR* WINAPI CommandLineToArgvW(LPCWSTR lpCmdline, int* numargs)
             size*=2;
             hargv=GlobalReAlloc(hargv, size, 0);
             argv=GlobalLock(hargv);
-        } while (GetModuleFileNameW((HMODULE)0, (LPWSTR)(argv+1), size-sizeof(LPWSTR)) == 0);
+        } while (GetModuleFileNameW(0, (LPWSTR)(argv+1), size-sizeof(LPWSTR)) == 0);
         argv[0]=(LPWSTR)(argv+1);
         if (numargs)
             *numargs=2;

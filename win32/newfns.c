@@ -297,7 +297,7 @@ HANDLE hExistingCompletionPort, DWORD dwCompletionKey,
 DWORD dwNumberOfConcurrentThreads)
 {
     FIXME("(%p, %p, %08lx, %08lx): stub.\n", hFileHandle, hExistingCompletionPort, dwCompletionKey, dwNumberOfConcurrentThreads);
-    return (HANDLE)NULL;
+    return NULL;
 }
 
 /******************************************************************************

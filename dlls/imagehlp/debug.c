@@ -37,7 +37,7 @@ HANDLE WINAPI FindDebugInfoFile(
     debugstr_a(DebugFilePath)
   );
   SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-  return (HANDLE) NULL;
+  return NULL;
 }
 
 /***********************************************************************
@@ -51,7 +51,7 @@ HANDLE WINAPI FindExecutableImage(
     debugstr_a(ImageFilePath)
   );
   SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-  return (HANDLE) NULL;
+  return NULL;
 }
 
 /***********************************************************************

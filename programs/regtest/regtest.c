@@ -363,7 +363,7 @@ void TestNotifyChangeKeyValue()
     long lSts;
     HANDLE hEvent;
 
-    hEvent = (HANDLE)0;
+    hEvent = 0;
 
     lSts = RegNotifyChangeKeyValue((HKEY)2, TRUE, REG_NOTIFY_CHANGE_NAME, 0, 0);
     if (lSts != ERROR_INVALID_HANDLE) xERROR(1,lSts);
@@ -695,4 +695,3 @@ int PASCAL WinMain (HINSTANCE inst, HINSTANCE prev, LPSTR cmdline, int show)
 
     return 0;
 }
-

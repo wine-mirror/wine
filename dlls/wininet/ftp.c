@@ -192,7 +192,7 @@ BOOL WINAPI FtpPutFileA(HINTERNET hConnect, LPCSTR lpszLocalFile,
 BOOL WINAPI FTP_FtpPutFileA(HINTERNET hConnect, LPCSTR lpszLocalFile,
     LPCSTR lpszNewRemoteFile, DWORD dwFlags, DWORD dwContext)
 {
-    HANDLE hFile = (HANDLE)NULL;
+    HANDLE hFile = NULL;
     BOOL bSuccess = FALSE;
     LPWININETAPPINFOA hIC = NULL;
     LPWININETFTPSESSIONA lpwfs = (LPWININETFTPSESSIONA) hConnect;

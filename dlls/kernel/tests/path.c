@@ -388,22 +388,22 @@ static void test_InitPathA(CHAR *newdir, CHAR *curDrive, CHAR *otherDrive)
   ok(CreateDirectoryA(tmpstr,NULL),"CreateDirectoryA failed");
   sprintf(tmpstr,"%s\\%s\\%s",newdir,SHORTDIR,SHORTFILE);
   hndl=CreateFileA(tmpstr,GENERIC_WRITE,0,NULL,
-                   CREATE_NEW,FILE_ATTRIBUTE_NORMAL,(HANDLE)NULL);
+                   CREATE_NEW,FILE_ATTRIBUTE_NORMAL,NULL);
   ok(hndl!=INVALID_HANDLE_VALUE,"CreateFileA failed");
   ok(CloseHandle(hndl),"CloseHandle failed");
   sprintf(tmpstr,"%s\\%s\\%s",newdir,SHORTDIR,LONGFILE);
   hndl=CreateFileA(tmpstr,GENERIC_WRITE,0,NULL,
-                   CREATE_NEW,FILE_ATTRIBUTE_NORMAL,(HANDLE)NULL);
+                   CREATE_NEW,FILE_ATTRIBUTE_NORMAL,NULL);
   ok(hndl!=INVALID_HANDLE_VALUE,"CreateFileA failed");
   ok(CloseHandle(hndl),"CloseHandle failed");
   sprintf(tmpstr,"%s\\%s\\%s",newdir,LONGDIR,SHORTFILE);
   hndl=CreateFileA(tmpstr,GENERIC_WRITE,0,NULL,
-                   CREATE_NEW,FILE_ATTRIBUTE_NORMAL,(HANDLE)NULL);
+                   CREATE_NEW,FILE_ATTRIBUTE_NORMAL,NULL);
   ok(hndl!=INVALID_HANDLE_VALUE,"CreateFileA failed");
   ok(CloseHandle(hndl),"CloseHandle failed");
   sprintf(tmpstr,"%s\\%s\\%s",newdir,LONGDIR,LONGFILE);
   hndl=CreateFileA(tmpstr,GENERIC_WRITE,0,NULL,
-                   CREATE_NEW,FILE_ATTRIBUTE_NORMAL,(HANDLE)NULL);
+                   CREATE_NEW,FILE_ATTRIBUTE_NORMAL,NULL);
   ok(hndl!=INVALID_HANDLE_VALUE,"CreateFileA failed");
   ok(CloseHandle(hndl),"CloseHandle failed");
 }
