@@ -136,6 +136,8 @@ VOID WINAPI RtlInitString(PSTRING target,LPCSTR source)
  */
 VOID WINAPI RtlInitUnicodeString(PUNICODE_STRING target,LPCWSTR source)
 {
+	TRACE(ntdll,"%p %p(%s)\n", target, source, debugstr_w(source));
+	
 	target->Length = target->MaximumLength = 0;
 	target->Buffer = (LPWSTR)source;
 	if (!source)

@@ -291,6 +291,7 @@ NTSTATUS WINAPI NtQueryInformationProcess(
 	IN ULONG ProcessInformationLength,
 	OUT PULONG ReturnLength);
 
+#define NtCurrentProcess() ( (HANDLE) -1 )
 
 /*
  *	timer

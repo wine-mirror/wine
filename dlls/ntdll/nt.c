@@ -68,6 +68,25 @@ NTSTATUS WINAPI NtQueryTimerResolution(DWORD x1,DWORD x2,DWORD x3)
  */
 
 /******************************************************************************
+ *  NtTerminateProcess			[NTDLL.] 
+ *
+ *  Native applications must kill themselves when done
+ * FIXME: return value 0-success
+ */
+NTSTATUS WINAPI NtTerminateProcess(
+	HANDLE ProcessHandle,
+	LONG ExitStatus)
+{
+	TRACE(ntdll, "0x%08x 0x%08lx\n", ProcessHandle, ExitStatus );
+
+	/* win32 (0x7fffffff) to nt (-1) */
+	if ( NtCurrentProcess() == ProcessHandle )
+	  ProcessHandle = GetCurrentProcess();
+
+	return (! TerminateProcess( ProcessHandle, ExitStatus ));
+}
+
+/******************************************************************************
 *  NtQueryInformationProcess		[NTDLL.] 
 *
 */
@@ -495,8 +514,20 @@ NTSTATUS WINAPI NtCreatePagingFile(
 	IN ULONG MaxiumSize,
 	OUT PULONG ActualSize)
 {
-	FIXME(ntdll,"(%p,0x%08lx,0x%08lx,%p),stub!\n",
-	debugstr_w(PageFileName->Buffer),MiniumSize,MaxiumSize,ActualSize);
+	FIXME(ntdll,"(%p(%s),0x%08lx,0x%08lx,%p),stub!\n",
+	PageFileName->Buffer, debugstr_w(PageFileName->Buffer),MiniumSize,MaxiumSize,ActualSize);
 	return 0;
 }
 
+/******************************************************************************
+ *  NtDisplayString				[NTDLL.95] 
+ * 
+ * writes a string to the nt-textmode screen eg. during startup
+ */
+NTSTATUS WINAPI NtDisplayString (
+	PUNICODE_STRING string)
+{
+	TRACE(ntdll,"%p(%s)\n",string->Buffer, debugstr_w(string->Buffer));
+	WriteConsoleW(GetStdHandle(STD_OUTPUT_HANDLE), string->Buffer, string->Length, 0, 0);
+	return 0;
+}

@@ -100,7 +100,7 @@ type	win32
 092 stub NtDeleteKey
 093 stub NtDeleteValueKey
 094 stdcall NtDeviceIoControlFile(long long long long long long long long long long) NtDeviceIoControlFile
-095 stub NtDisplayString
+095 stdcall NtDisplayString(ptr)NtDisplayString
 096 stdcall NtDuplicateObject(long long long long long long long) NtDuplicateObject
 097 stdcall NtDuplicateToken(long long long long long long) NtDuplicateToken
 098 stub NtEnumerateBus
@@ -235,7 +235,7 @@ type	win32
 227 stub NtStopProfile
 228 stub NtSuspendThread
 229 stub NtSystemDebugControl
-230 stub NtTerminateProcess
+230 stdcall NtTerminateProcess(long long)NtTerminateProcess
 231 stdcall NtTerminateThread(long long) NtTerminateThread
 232 stub NtTestAlert
 233 stub NtUnloadDriver
