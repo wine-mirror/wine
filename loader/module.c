@@ -47,10 +47,8 @@ WINE_DECLARE_DEBUG_CHANNEL(loaddll);
 
 inline static HMODULE get_exe_module(void)
 {
-    HMODULE mod;
-    /* FIXME: should look into PEB */
-    LdrGetDllHandle( 0, 0, NULL, &mod );
-    return mod;
+    HANDLE *pdb = (HANDLE *)NtCurrentTeb()->process;
+    return pdb[0x08 / sizeof(HANDLE)];  /* get dword at offset 0x08 in pdb */
 }
 
 /***********************************************************************
@@ -676,23 +674,18 @@ HMODULE WINAPI GetModuleHandleA(LPCSTR module)
 {
     NTSTATUS            nts;
     HMODULE             ret;
+    UNICODE_STRING      wstr;
 
-    if (module)
-    {
-        UNICODE_STRING      wstr;
+    if (!module) return get_exe_module();
 
-        RtlCreateUnicodeStringFromAsciiz(&wstr, module);
-        nts = LdrGetDllHandle(0, 0, &wstr, &ret);
-        RtlFreeUnicodeString( &wstr );
-    }
-    else
-        nts = LdrGetDllHandle(0, 0, NULL, &ret);
+    RtlCreateUnicodeStringFromAsciiz(&wstr, module);
+    nts = LdrGetDllHandle(0, 0, &wstr, &ret);
+    RtlFreeUnicodeString( &wstr );
     if (nts != STATUS_SUCCESS)
     {
         ret = 0;
         SetLastError( RtlNtStatusToDosError( nts ) );
     }
-
     return ret;
 }
 
@@ -703,17 +696,12 @@ HMODULE WINAPI GetModuleHandleW(LPCWSTR module)
 {
     NTSTATUS            nts;
     HMODULE             ret;
+    UNICODE_STRING      wstr;
 
-    if (module)
-    {
-        UNICODE_STRING      wstr;
+    if (!module) return get_exe_module();
 
-        RtlInitUnicodeString( &wstr, module );
-        nts = LdrGetDllHandle( 0, 0, &wstr, &ret);
-    }
-    else
-        nts = LdrGetDllHandle( 0, 0, NULL, &ret);
-
+    RtlInitUnicodeString( &wstr, module );
+    nts = LdrGetDllHandle( 0, 0, &wstr, &ret);
     if (nts != STATUS_SUCCESS)
     {
         SetLastError( RtlNtStatusToDosError( nts ) );
