@@ -720,9 +720,13 @@ LRESULT WINAPI EditWndProc( HWND hwnd, UINT msg,
 
 	case WM_GETDLGCODE:
 		DPRINTF_EDIT_MSG32("WM_GETDLGCODE");
-		result = (es->style & ES_MULTILINE) ?
-				DLGC_WANTALLKEYS | DLGC_HASSETSEL | DLGC_WANTCHARS | DLGC_WANTARROWS :
-				DLGC_HASSETSEL | DLGC_WANTCHARS | DLGC_WANTARROWS;
+		result = DLGC_HASSETSEL | DLGC_WANTCHARS | DLGC_WANTARROWS;
+		if (wnd->dwStyle & ES_WANTRETURN)
+		{
+		   LPMSG msg = (LPMSG)lParam;
+		   if (msg && (msg->message == WM_KEYDOWN) && (msg->wParam == VK_RETURN))
+		      result |= DLGC_WANTMESSAGE;
+		}
 		break;
 
 	case WM_CHAR:
