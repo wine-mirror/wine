@@ -59,6 +59,7 @@ typedef struct _THEME_CLASS {
 typedef struct _THEME_FILE {
     DWORD dwRefCount;
     HMODULE hTheme;
+    WCHAR szThemeFile[MAX_PATH];
     LPWSTR pszAvailColors;
     LPWSTR pszAvailSizes;
 

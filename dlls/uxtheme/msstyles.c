@@ -174,6 +174,9 @@ HRESULT MSSTYLES_OpenThemeFile(LPCWSTR lpThemeFile, LPCWSTR pszColorName, LPCWST
 
     *tf = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(THEME_FILE));
     (*tf)->hTheme = hTheme;
+    
+    GetFullPathNameW(lpThemeFile, MAX_PATH, (*tf)->szThemeFile, NULL);
+    
     (*tf)->pszAvailColors = pszColors;
     (*tf)->pszAvailSizes = pszSizes;
     (*tf)->pszSelectedColor = pszSelectedColor;

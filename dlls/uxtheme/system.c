@@ -152,7 +152,7 @@ HRESULT UXTHEME_SetActiveTheme(PTHEME_FILE tf)
         return hr;
     if(tf) {
         bThemeActive = TRUE;
-        GetModuleFileNameW(tf->hTheme, szCurrentTheme, sizeof(szCurrentTheme)/sizeof(szCurrentTheme[0]));
+        lstrcpynW(szCurrentTheme, tf->szThemeFile, sizeof(szCurrentTheme)/sizeof(szCurrentTheme[0]));
         lstrcpynW(szCurrentColor, tf->pszSelectedColor, sizeof(szCurrentColor)/sizeof(szCurrentColor[0]));
         lstrcpynW(szCurrentSize, tf->pszSelectedSize, sizeof(szCurrentSize)/sizeof(szCurrentSize[0]));
     }
