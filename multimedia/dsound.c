@@ -2082,14 +2082,19 @@ static int DSOUND_OpenAudio(void)
 	if (primarybuf == NULL)
 		return DSERR_OUTOFMEMORY;
 
-	while (audiofd != -1)
+	while (audiofd >= 0)
+
 		sleep(5);
+	/* we will most likely not get one, avoid excessive opens ... */
+	if (audiofd == -ENODEV)
+		return -1;
 	audiofd = open("/dev/audio",O_WRONLY);
 	if (audiofd==-1) {
 		/* Don't worry if sound is busy at the moment */
-		if (errno != EBUSY)
+		if ((errno != EBUSY) && (errno != ENODEV))
 			perror("open /dev/audio");
-		return audiofd; /* -1 */
+		audiofd = -errno;
+		return -1; /* -1 */
 	}
 
 	/* We should probably do something here if SETFRAGMENT fails... */
@@ -2113,7 +2118,7 @@ static void DSOUND_CloseAudio(void)
 	/* It's possible we've been called with audio closed */
 	/* from SetFormat()... this is just to force a call */
 	/* to OpenAudio() to reset the hardware properly */
-	if (audiofd != -1)
+	if (audiofd >= 0)
 		close(audiofd);
 	primarybuf->playpos = 0;
 	primarybuf->writepos = DSOUND_FRAGLEN;
@@ -2270,9 +2275,9 @@ HRESULT WINAPI DirectSoundCreate(REFGUID lpGUID,LPDIRECTSOUND *ppDS,IUnknown *pU
 
 	audiofd = open("/dev/audio",O_WRONLY);
 	if (audiofd == -1) {
+		audiofd = -errno;
 		if (errno == ENODEV) {
-			MESSAGE("No sound hardware found.\n");
-			return DSERR_NODRIVER;
+			MESSAGE("No sound hardware found, but continuing anyway.\n");
 		} else if (errno == EBUSY) {
 			MESSAGE("Sound device busy, will keep trying.\n");
 		} else {
