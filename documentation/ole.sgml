@@ -1,29 +1,9 @@
   <chapter id="ole">
     <title>COM/OLE in Wine</title>
 
-    <sect1 id="ole-architecture">
-      <title>COM/OLE Architecture in Wine</title>
-
-      <para>
-        The section goes into detail about how COM/OLE2 are
-        implemented in Wine.
-      </para>
-    </sect1>
-
-    <sect1 id="ole-binary">
-      <title>Using Binary OLE components in Wine</title>
-      <para>
-        This section describes how to import pre-compiled COM/OLE
-        components...
-      </para>
-    </sect1>
-
     <sect1 id="com-writing">
       <title>Writing OLE Components for Wine</title>
 
-      <para>
-        Based on the comments in <filename>wine/include/wine/obj_base.h</filename>.
-      </para>
       <para>
         This section describes how to create your own natively
         compiled COM/OLE components.
