@@ -68,6 +68,7 @@ HWND           gUIhwnd;
 INSTALLUI_HANDLERA gUIHandler;
 DWORD gUIFilter;
 LPVOID gUIContext;
+WCHAR gszLogFile[MAX_PATH];
 
 /*
  *  .MSI  file format
@@ -669,9 +670,19 @@ end:
 
 UINT WINAPI MsiEnableLogW(DWORD dwLogMode, LPCWSTR szLogFile, BOOL fAppend)
 {
-    FIXME("%08lx %s %d\n", dwLogMode, debugstr_w(szLogFile), fAppend);
+    HANDLE the_file = INVALID_HANDLE_VALUE;
+    TRACE("%08lx %s %d\n", dwLogMode, debugstr_w(szLogFile), fAppend);
+    strcpyW(gszLogFile,szLogFile);
+    if (!fAppend)
+        DeleteFileW(szLogFile);
+    the_file = CreateFileW(szLogFile, GENERIC_WRITE, 0, NULL, OPEN_ALWAYS,
+                           FILE_ATTRIBUTE_NORMAL, NULL);
+    if (the_file != INVALID_HANDLE_VALUE)
+        CloseHandle(the_file);
+    else
+        ERR("Unable to enable log %s\n",debugstr_w(szLogFile));
+
     return ERROR_SUCCESS;
-    /* return ERROR_CALL_NOT_IMPLEMENTED; */
 }
 
 INSTALLSTATE WINAPI MsiQueryProductStateA(LPCSTR szProduct)
@@ -1101,6 +1112,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved) {
     gUIHandler = NULL;
     gUIFilter = 0;
     gUIContext = NULL;
+    gszLogFile[0]=0;
     /* FIXME: Initialisation */
   } else if (fdwReason == DLL_PROCESS_DETACH) {
     /* FIXME: Cleanup */

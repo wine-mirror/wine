@@ -232,6 +232,22 @@ inline static char *strdupWtoA( const WCHAR *str )
     return ret;
 }
 
+inline static WCHAR *load_dynamic_stringW(MSIHANDLE row, INT index)
+{
+    DWORD sz;
+    LPWSTR ret;
+   
+    sz = 0; 
+    MsiRecordGetStringW(row,index,NULL,&sz);
+    if (sz <= 0)
+        return NULL;
+
+    sz ++;
+    ret = HeapAlloc(GetProcessHeap(),0,sz * sizeof (WCHAR));
+    MsiRecordGetStringW(row,index,ret,&sz);
+    return ret;
+}
+
 inline static int get_loaded_component(MSIPACKAGE* package, LPCWSTR Component )
 {
     INT rc = -1;
@@ -352,40 +368,43 @@ static void ui_actiondata(MSIHANDLE hPackage, LPCWSTR action, MSIHANDLE record)
     UINT rc;
     MSIHANDLE view;
     MSIHANDLE row = 0;
-    WCHAR *ActionFormat=NULL;
-    DWORD sz;
+    static WCHAR *ActionFormat=NULL;
+    static WCHAR LastAction[0x100] = {0};
     WCHAR Query[1024];
     MSIHANDLE db;
     LPWSTR ptr;
 
-    sprintfW(Query,Query_t,action);
-    db = MsiGetActiveDatabase(hPackage);
-    rc = MsiDatabaseOpenViewW(db, Query, &view);
-    MsiCloseHandle(db);
-    MsiViewExecute(view, 0);
-    rc = MsiViewFetch(view,&row);
-    if (rc != ERROR_SUCCESS)
+    if (strcmpW(LastAction,action)!=0)
     {
-        MsiViewClose(view);
-        MsiCloseHandle(view);
-        return;
-    }
+        sprintfW(Query,Query_t,action);
+        db = MsiGetActiveDatabase(hPackage);
+        rc = MsiDatabaseOpenViewW(db, Query, &view);
+        MsiCloseHandle(db);
+        MsiViewExecute(view, 0);
+        rc = MsiViewFetch(view,&row);
+        if (rc != ERROR_SUCCESS)
+        {
+            MsiViewClose(view);
+            MsiCloseHandle(view);
+            return;
+        }
 
-    if (MsiRecordIsNull(row,3))
-    {
+        if (MsiRecordIsNull(row,3))
+        {
+            MsiCloseHandle(row);
+            MsiViewClose(view);
+            MsiCloseHandle(view);
+            return;
+        }
+
+        if (ActionFormat)
+            HeapFree(GetProcessHeap(),0,ActionFormat);
+
+        ActionFormat = load_dynamic_stringW(row,3);
         MsiCloseHandle(row);
         MsiViewClose(view);
         MsiCloseHandle(view);
-        return;
     }
-    sz = 0;
-    MsiRecordGetStringW(row,3,NULL,&sz);
-    sz++;
-    ActionFormat = HeapAlloc(GetProcessHeap(),0,sz*sizeof(WCHAR));
-    MsiRecordGetStringW(row,3,ActionFormat,&sz);
-    MsiCloseHandle(row);
-    MsiViewClose(view);
-    MsiCloseHandle(view);
 
     message[0]=0;
     ptr = ActionFormat;
@@ -404,13 +423,12 @@ static void ui_actiondata(MSIHANDLE hPackage, LPCWSTR action, MSIHANDLE record)
             strcatW(message,tmp);
             ptr2++;
             field = atoiW(ptr2);
-            sz = 0;
-            MsiRecordGetStringW(record,field,NULL,&sz);
-            sz++;
-            data = HeapAlloc(GetProcessHeap(),0,sz*sizeof(WCHAR));
-            MsiRecordGetStringW(record,field,data,&sz);
-            strcatW(message,data);
-            HeapFree(GetProcessHeap(),0,data);
+            data = load_dynamic_stringW(record,field);
+            if (data)
+            {
+                strcatW(message,data);
+                HeapFree(GetProcessHeap(),0,data);
+            }
             ptr=strchrW(ptr2,']');
             ptr++;
         }
@@ -426,7 +444,6 @@ static void ui_actiondata(MSIHANDLE hPackage, LPCWSTR action, MSIHANDLE record)
  
     MsiProcessMessage(hPackage, INSTALLMESSAGE_ACTIONDATA, row);
     MsiCloseHandle(row);
-    HeapFree(GetProcessHeap(),0,ActionFormat);
 }
 
 
@@ -446,7 +463,6 @@ static void ui_actionstart(MSIHANDLE hPackage, LPCWSTR action)
     MSIHANDLE view;
     MSIHANDLE row = 0;
     WCHAR *ActionText=NULL;
-    DWORD sz;
     WCHAR Query[1024];
     MSIHANDLE db;
 
@@ -465,11 +481,7 @@ static void ui_actionstart(MSIHANDLE hPackage, LPCWSTR action)
         return;
     }
 
-    sz = 0;
-    MsiRecordGetStringW(row,2,NULL,&sz);
-    sz++;
-    ActionText = HeapAlloc(GetProcessHeap(),0,sz*sizeof(WCHAR));
-    MsiRecordGetStringW(row,2,ActionText,&sz);
+    ActionText = load_dynamic_stringW(row,2);
     MsiCloseHandle(row);
     MsiViewClose(view);
     MsiCloseHandle(view);
@@ -635,7 +647,7 @@ static UINT ACTION_ProcessExecSequence(MSIHANDLE hPackage, BOOL UIran)
         MsiCloseHandle(row);
         MsiViewClose(view);
         MsiCloseHandle(view);
-        sprintf(Query,ExecSeqQuery,0);
+        sprintf(Query,ExecSeqQuery,seq);
     }
     else
         sprintf(Query,ExecSeqQuery,0);
@@ -671,22 +683,22 @@ static UINT ACTION_ProcessExecSequence(MSIHANDLE hPackage, BOOL UIran)
             /* check conditions */
             if (!MsiRecordIsNull(row,2))
             {
-                sz=0x100;
-                rc = MsiRecordGetStringW(row,2,buffer,&sz);
-                if (rc != ERROR_SUCCESS)
-                {
-                    MsiCloseHandle(row);
-                    break;
-                }
+                LPWSTR cond = NULL;
+                cond = load_dynamic_stringW(row,2);
 
-                /* this is a hack to skip errors in the condition code */
-                if (MsiEvaluateConditionW(hPackage, buffer) ==
-                    MSICONDITION_FALSE)
+                if (cond)
                 {
-                    MsiCloseHandle(row);
-                    continue; 
+                    /* this is a hack to skip errors in the condition code */
+                    if (MsiEvaluateConditionW(hPackage, cond) ==
+                            MSICONDITION_FALSE)
+                    {
+                        HeapFree(GetProcessHeap(),0,cond);
+                        MsiCloseHandle(row);
+                        continue; 
+                    }
+                    else
+                        HeapFree(GetProcessHeap(),0,cond);
                 }
-
             }
 
             sz=0x100;
@@ -760,21 +772,22 @@ static UINT ACTION_ProcessUISequence(MSIHANDLE hPackage)
             /* check conditions */
             if (!MsiRecordIsNull(row,2))
             {
-                sz=0x100;
-                rc = MsiRecordGetStringW(row,2,buffer,&sz);
-                if (rc != ERROR_SUCCESS)
-                {
-                    MsiCloseHandle(row);
-                    break;
-                }
+                LPWSTR cond = NULL;
+                cond = load_dynamic_stringW(row,2);
 
-                if (MsiEvaluateConditionW(hPackage, buffer) ==
-                    MSICONDITION_FALSE)
+                if (cond)
                 {
-                    MsiCloseHandle(row);
-                    continue; 
+                    /* this is a hack to skip errors in the condition code */
+                    if (MsiEvaluateConditionW(hPackage, cond) ==
+                            MSICONDITION_FALSE)
+                    {
+                        HeapFree(GetProcessHeap(),0,cond);
+                        MsiCloseHandle(row);
+                        continue; 
+                    }
+                    else
+                        HeapFree(GetProcessHeap(),0,cond);
                 }
-
             }
 
             sz=0x100;
@@ -892,9 +905,8 @@ static UINT ACTION_CustomAction(MSIHANDLE hPackage,const WCHAR *action)
 ,'o','n','`',' ','=',' ','`',0};
     static const WCHAR end[]={'`',0};
     UINT type;
-    DWORD sz;
-    WCHAR source[0x100];
-    WCHAR target[0x200];
+    LPWSTR source;
+    LPWSTR target;
     WCHAR *deformated=NULL;
     MSIHANDLE db;
 
@@ -926,10 +938,8 @@ static UINT ACTION_CustomAction(MSIHANDLE hPackage,const WCHAR *action)
 
     type = MsiRecordGetInteger(row,2);
 
-    sz=0x100;
-    MsiRecordGetStringW(row,3,source,&sz);
-    sz=0x200;
-    MsiRecordGetStringW(row,4,target,&sz);
+    source = load_dynamic_stringW(row,3);
+    target = load_dynamic_stringW(row,4);
 
     TRACE("Handling custom action %s (%x %s %s)\n",debugstr_w(action),type,
           debugstr_w(source), debugstr_w(target));
@@ -955,6 +965,8 @@ static UINT ACTION_CustomAction(MSIHANDLE hPackage,const WCHAR *action)
              debugstr_w(target));
     }
 
+    HeapFree(GetProcessHeap(),0,source);
+    HeapFree(GetProcessHeap(),0,target);
     MsiCloseHandle(row);
     MsiViewClose(view);
     MsiCloseHandle(view);
@@ -1053,6 +1065,46 @@ static UINT store_binary_to_temp(MSIHANDLE hPackage, const LPWSTR source,
 
 
 typedef UINT CustomEntry(MSIHANDLE);
+typedef struct 
+{
+        MSIHANDLE hPackage;
+        WCHAR target[MAX_PATH];
+        WCHAR source[MAX_PATH];
+} thread_struct;
+
+static DWORD WINAPI DllThread(LPVOID info)
+{
+    HANDLE DLL;
+    LPSTR proc;
+    thread_struct *stuff;
+    CustomEntry *fn;
+     
+    stuff = (thread_struct*)info;
+
+    TRACE("Asyncronous start (%s, %s) \n", debugstr_w(stuff->source),
+          debugstr_w(stuff->target));
+
+    DLL = LoadLibraryW(stuff->source);
+    if (DLL)
+    {
+        proc = strdupWtoA( stuff->target );
+        fn = (CustomEntry*)GetProcAddress(DLL,proc);
+        if (fn)
+        {
+            TRACE("Calling function\n");
+            fn(stuff->hPackage);
+        }
+        else
+            ERR("Cannot load functon\n");
+
+        HeapFree(GetProcessHeap(),0,proc);
+        FreeLibrary(DLL);
+    }
+    else
+        ERR("Unable to load library\n");
+
+    return 0;
+}
 
 static UINT HANDLE_CustomType1(MSIHANDLE hPackage, const LPWSTR source, 
                                 const LPWSTR target, const INT type)
@@ -1061,23 +1113,29 @@ static UINT HANDLE_CustomType1(MSIHANDLE hPackage, const LPWSTR source,
     CustomEntry *fn;
     HANDLE DLL;
     LPSTR proc;
+    static thread_struct info;
 
     store_binary_to_temp(hPackage, source, tmp_file);
 
     TRACE("Calling function %s from %s\n",debugstr_w(target),
           debugstr_w(tmp_file));
 
-    if (type & 0xc0)
-    {
-        FIXME("Asynchronous execution.. UNHANDLED\n");
-        return ERROR_SUCCESS;
-    }
-
     if (!strchrW(tmp_file,'.'))
     {
         static const WCHAR dot[]={'.',0};
         strcatW(tmp_file,dot);
     } 
+
+    if (type & 0xc0)
+    {
+        DWORD ThreadId;
+        info.hPackage = hPackage;
+        strcpyW(info.target,target);
+        strcpyW(info.source,tmp_file);
+        TRACE("Start Asyncronous execution\n");
+        CreateThread(NULL,0,DllThread,(LPVOID)&info,0,&ThreadId);
+        return ERROR_SUCCESS;
+    }
  
     DLL = LoadLibraryW(tmp_file);
     if (DLL)
@@ -1995,7 +2053,6 @@ static UINT ACTION_CostFinalize(MSIHANDLE hPackage)
     while (1)
     {
         WCHAR Feature[0x100];
-        WCHAR Condition[0x100];
         MSIHANDLE row = 0;
         DWORD sz;
         int feature_index;
@@ -2010,14 +2067,15 @@ static UINT ACTION_CostFinalize(MSIHANDLE hPackage)
 
         sz = 0x100;
         MsiRecordGetStringW(row,1,Feature,&sz);
-        sz = 0x100;
-        MsiRecordGetStringW(row,3,Condition,&sz);
 
         feature_index = get_loaded_feature(package,Feature);
         if (feature_index < 0)
             ERR("FAILED to find loaded feature %s\n",debugstr_w(Feature));
         else
         {
+            LPWSTR Condition;
+            Condition = load_dynamic_stringW(row,3);
+
             if (MsiEvaluateConditionW(hPackage,Condition) == MSICONDITION_TRUE)
             {
                 int level = MsiRecordGetInteger(row,2);
@@ -2025,6 +2083,7 @@ static UINT ACTION_CostFinalize(MSIHANDLE hPackage)
                        level);
                 package->features[feature_index].Level = level;
             }
+            HeapFree(GetProcessHeap(),0,Condition);
         }
 
         MsiCloseHandle(row);
@@ -2253,7 +2312,7 @@ static UINT ready_media_for_file(MSIHANDLE hPackage, UINT sequence,
         }
         else
         {
-            sz = 0x100;
+            sz = MAX_PATH;
             if (MsiGetPropertyW(hPackage, cszSourceDir, source, &sz))
             {
                 ERR("No Source dir defined \n");
@@ -2745,11 +2804,7 @@ static UINT ACTION_WriteRegistryValues(MSIHANDLE hPackage)
             continue;
         }
 
-        sz = 0;
-        MsiRecordGetStringW(row,5,NULL,&sz);
-        sz++;
-        value = HeapAlloc(GetProcessHeap(),0,sz * sizeof(WCHAR));
-        MsiRecordGetStringW(row,5,value,&sz);
+        value = load_dynamic_stringW(row,5);
         value_data = parse_value(hPackage, value, &type, &size); 
 
         if (value_data)
@@ -2793,8 +2848,9 @@ static DWORD deformat_string(MSIHANDLE hPackage, WCHAR* ptr,WCHAR** data)
     DWORD size=0;
     DWORD chunk=0;
     WCHAR key[0x100];
-    WCHAR value[0x100];
+    LPWSTR value;
     DWORD sz;
+    UINT rc;
 
     /* scan for special characters */
     if (!strchrW(ptr,'[') || (strchrW(ptr,'[') && !strchrW(ptr,']')))
@@ -2830,10 +2886,16 @@ static DWORD deformat_string(MSIHANDLE hPackage, WCHAR* ptr,WCHAR** data)
     mark = strchrW(mark,']');
     mark++;
     TRACE("Current %s .. %s\n",debugstr_w(*data),debugstr_w(mark));
-    sz = 0x100;
-    if (MsiGetPropertyW(hPackage, key, value,&sz) == ERROR_SUCCESS)
+    sz = 0;
+    rc = MsiGetPropertyW(hPackage, key, NULL, &sz);
+    if ((rc == ERROR_SUCCESS) || (rc == ERROR_MORE_DATA))
     {
         LPWSTR newdata;
+
+        sz++;
+        value = HeapAlloc(GetProcessHeap(),0,sz * sizeof(WCHAR));
+        MsiGetPropertyW(hPackage, key, value, &sz);
+
         chunk = (strlenW(value)+1) * sizeof(WCHAR);
         size+=chunk;   
         newdata = HeapReAlloc(GetProcessHeap(),0,*data,size);
@@ -2999,7 +3061,6 @@ static UINT ACTION_LaunchConditions(MSIHANDLE hPackage)
     {
         LPWSTR cond = NULL; 
         LPWSTR message = NULL;
-        DWORD sz;
 
         rc = MsiViewFetch(view,&row);
         if (rc != ERROR_SUCCESS)
@@ -3008,19 +3069,11 @@ static UINT ACTION_LaunchConditions(MSIHANDLE hPackage)
             break;
         }
 
-        sz = 0;
-        MsiRecordGetStringW(row,1,NULL,&sz);
-        sz++;
-        cond = HeapAlloc(GetProcessHeap(),0,sz*sizeof(WCHAR));
-        MsiRecordGetStringW(row,1,cond,&sz);
+        cond = load_dynamic_stringW(row,1);
 
         if (MsiEvaluateConditionW(hPackage,cond) != MSICONDITION_TRUE)
         {
-            sz = 0;
-            MsiRecordGetStringW(row,2,NULL,&sz);
-            sz++;
-            message = HeapAlloc(GetProcessHeap(),0,sz*sizeof(WCHAR));
-            MsiRecordGetStringW(row,2,message,&sz);
+            message = load_dynamic_stringW(row,2);
             MessageBoxW(NULL,message,title,MB_OK);
             HeapFree(GetProcessHeap(),0,message);
             rc = ERROR_FUNCTION_FAILED;
@@ -3282,7 +3335,6 @@ static UINT register_appid(MSIHANDLE hPackage, LPCWSTR clsid, LPCWSTR app )
     MSIPACKAGE* package;
     HKEY hkey2,hkey3;
     LPWSTR buffer=0;
-    DWORD sz;
 
     package = msihandle2msiinfo(hPackage, MSIHANDLETYPE_PACKAGE);
     if (!package)
@@ -3316,11 +3368,7 @@ static UINT register_appid(MSIHANDLE hPackage, LPCWSTR clsid, LPCWSTR app )
         UINT size; 
         static const WCHAR szRemoteServerName[] =
 {'R','e','m','o','t','e','S','e','r','v','e','r','N','a','m','e',0};
-        sz =  0;
-        MsiRecordGetStringW(row,2,NULL,&sz);
-        sz++;
-        buffer = HeapAlloc(GetProcessHeap(),0,sz * sizeof (WCHAR));
-        MsiRecordGetStringW(row,2,buffer,&sz);
+        buffer = load_dynamic_stringW(row,2);
         size = deformat_string(hPackage,buffer,&deformated);
         RegSetValueExW(hkey3,szRemoteServerName,0,REG_SZ,(LPVOID)deformated,
                        size);
@@ -3333,12 +3381,8 @@ static UINT register_appid(MSIHANDLE hPackage, LPCWSTR clsid, LPCWSTR app )
         static const WCHAR szLocalService[] =
 {'L','o','c','a','l','S','e','r','v','i','c','e',0};
         UINT size;
-        sz =  0;
-        MsiRecordGetStringW(row,3,NULL,&sz);
-        sz++;
-        size = sz * sizeof(WCHAR);
-        buffer = HeapAlloc(GetProcessHeap(),0,size);
-        MsiRecordGetStringW(row,3,buffer,&sz);
+        buffer = load_dynamic_stringW(row,3);
+        size = (strlenW(buffer)+1) * sizeof(WCHAR);
         RegSetValueExW(hkey3,szLocalService,0,REG_SZ,(LPVOID)buffer,size);
         HeapFree(GetProcessHeap(),0,buffer);
     }
@@ -3348,12 +3392,8 @@ static UINT register_appid(MSIHANDLE hPackage, LPCWSTR clsid, LPCWSTR app )
         static const WCHAR szService[] =
 {'S','e','r','v','i','c','e','P','a','r','a','m','e','t','e','r','s',0};
         UINT size;
-        sz =  0;
-        MsiRecordGetStringW(row,4,NULL,&sz);
-        sz++;
-        size = sz * sizeof(WCHAR);
-        buffer = HeapAlloc(GetProcessHeap(),0,size);
-        MsiRecordGetStringW(row,4,buffer,&sz);
+        buffer = load_dynamic_stringW(row,4);
+        size = (strlenW(buffer)+1) * sizeof(WCHAR);
         RegSetValueExW(hkey3,szService,0,REG_SZ,(LPVOID)buffer,size);
         HeapFree(GetProcessHeap(),0,buffer);
     }
@@ -3363,12 +3403,8 @@ static UINT register_appid(MSIHANDLE hPackage, LPCWSTR clsid, LPCWSTR app )
         static const WCHAR szDLL[] =
 {'D','l','l','S','u','r','r','o','g','a','t','e',0};
         UINT size;
-        sz =  0;
-        MsiRecordGetStringW(row,5,NULL,&sz);
-        sz++;
-        size = sz * sizeof(WCHAR);
-        buffer = HeapAlloc(GetProcessHeap(),0,size);
-        MsiRecordGetStringW(row,5,buffer,&sz);
+        buffer = load_dynamic_stringW(row,5);
+        size = (strlenW(buffer)+1) * sizeof(WCHAR);
         RegSetValueExW(hkey3,szDLL,0,REG_SZ,(LPVOID)buffer,size);
         HeapFree(GetProcessHeap(),0,buffer);
     }
@@ -3551,17 +3587,17 @@ static UINT register_progid_base(MSIHANDLE row, LPWSTR clsid)
 {
     static const WCHAR szCLSID[] = { 'C','L','S','I','D',0 };
     HKEY hkey,hkey2;
-    WCHAR buffer[0x1000];
+    WCHAR buffer[0x100];
     DWORD sz;
 
 
-    sz = 0x1000;
+    sz = 0x100;
     MsiRecordGetStringW(row,1,buffer,&sz);
     RegCreateKeyW(HKEY_CLASSES_ROOT,buffer,&hkey);
 
     if (!MsiRecordIsNull(row,4))
     {
-        sz = 0x1000;
+        sz = 0x100;
         MsiRecordGetStringW(row,4,buffer,&sz);
         RegSetValueExW(hkey,NULL,0,REG_SZ,(LPVOID)buffer, (strlenW(buffer)+1) *
                        sizeof(WCHAR));
@@ -3569,7 +3605,7 @@ static UINT register_progid_base(MSIHANDLE row, LPWSTR clsid)
 
     if (!MsiRecordIsNull(row,3))
     {   
-        sz = 0x1000;
+        sz = 0x100;
     
         MsiRecordGetStringW(row,3,buffer,&sz);
         RegCreateKeyW(hkey,szCLSID,&hkey2);
@@ -3654,11 +3690,11 @@ static UINT register_progid(MSIHANDLE hPackage, MSIHANDLE row, LPWSTR clsid)
         HKEY hkey,hkey2;
         static const WCHAR szCLSID[] = { 'C','L','S','I','D',0 };
 
-        sz = 0x1000;
+        sz = 0x100;
         MsiRecordGetStringW(row,2,buffer,&sz);
         rc = register_parent_progid(hPackage,buffer,clsid);
 
-        sz = 0x1000;
+        sz = 0x100;
         MsiRecordGetStringW(row,1,buffer,&sz);
         RegCreateKeyW(HKEY_CLASSES_ROOT,buffer,&hkey);
         /* clasid is same as parent */
@@ -3669,7 +3705,7 @@ static UINT register_progid(MSIHANDLE hPackage, MSIHANDLE row, LPWSTR clsid)
         RegCloseKey(hkey2);
         if (!MsiRecordIsNull(row,4))
         {
-            sz = 0x1000;
+            sz = 0x100;
             MsiRecordGetStringW(row,4,buffer,&sz);
             RegSetValueExW(hkey,NULL,0,REG_SZ,(LPVOID)buffer,
                            (strlenW(buffer)+1) * sizeof(WCHAR));
@@ -3807,7 +3843,7 @@ static UINT ACTION_CreateShortcuts(MSIHANDLE hPackage)
     while (1)
     {
         WCHAR target_file[MAX_PATH];
-        WCHAR buffer[0x1000];
+        WCHAR buffer[0x100];
         DWORD sz;
         DWORD index;
         static const WCHAR szlnk[]={'.','l','n','k',0};
@@ -3819,7 +3855,7 @@ static UINT ACTION_CreateShortcuts(MSIHANDLE hPackage)
             break;
         }
         
-        sz = 0x1000;
+        sz = 0x100;
         MsiRecordGetStringW(row,4,buffer,&sz);
 
         index = get_loaded_component(package,buffer);
@@ -3858,18 +3894,18 @@ static UINT ACTION_CreateShortcuts(MSIHANDLE hPackage)
             continue;
         }
 
-        sz = 0x1000;
+        sz = 0x100;
         MsiRecordGetStringW(row,2,buffer,&sz);
         resolve_folder(hPackage, buffer,target_file,FALSE,FALSE,NULL);
 
-        sz = 0x1000;
+        sz = 0x100;
         MsiRecordGetStringW(row,3,buffer,&sz);
         reduce_to_longfilename(buffer);
         strcatW(target_file,buffer);
         if (!strchrW(target_file,'.'))
             strcatW(target_file,szlnk);
 
-        sz = 0x1000;
+        sz = 0x100;
         MsiRecordGetStringW(row,5,buffer,&sz);
         if (strchrW(buffer,'['))
         {
@@ -3890,7 +3926,7 @@ static UINT ACTION_CreateShortcuts(MSIHANDLE hPackage)
         if (!MsiRecordIsNull(row,6))
         {
             LPWSTR deformated;
-            sz = 0x1000;
+            sz = 0x100;
             MsiRecordGetStringW(row,6,buffer,&sz);
             deformat_string(hPackage,buffer,&deformated);
             IShellLinkW_SetArguments(sl,deformated);
@@ -3900,11 +3936,7 @@ static UINT ACTION_CreateShortcuts(MSIHANDLE hPackage)
         if (!MsiRecordIsNull(row,7))
         {
             LPWSTR deformated;
-            sz = 0;
-            MsiRecordGetStringW(row,7,NULL,&sz);
-            sz++;
-            deformated = HeapAlloc(GetProcessHeap(),0,sz * sizeof(WCHAR));
-            MsiRecordGetStringW(row,7,deformated,&sz);
+            deformated = load_dynamic_stringW(row,7);
             IShellLinkW_SetDescription(sl,deformated);
             HeapFree(GetProcessHeap(),0,deformated);
         }
@@ -3917,7 +3949,7 @@ static UINT ACTION_CreateShortcuts(MSIHANDLE hPackage)
             WCHAR Path[MAX_PATH];
             INT index; 
 
-            sz = 0x1000;
+            sz = 0x100;
             MsiRecordGetStringW(row,9,buffer,&sz);
 
             build_icon_path(hPackage,buffer,Path);
@@ -3933,7 +3965,7 @@ static UINT ACTION_CreateShortcuts(MSIHANDLE hPackage)
         {
             WCHAR Path[MAX_PATH];
 
-            sz = 0x1000;
+            sz = 0x100;
             MsiRecordGetStringW(row,12,buffer,&sz);
             resolve_folder(hPackage, buffer, Path, FALSE, FALSE, NULL);
             IShellLinkW_SetWorkingDirectory(sl,Path);

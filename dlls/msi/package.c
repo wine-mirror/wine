@@ -379,7 +379,10 @@ INT WINAPI MsiProcessMessage( MSIHANDLE hInstall, INSTALLMESSAGE eMessageType,
     DWORD total_size = 0;
     INT msg_field=1;
     INT i;
+    INT rc;
+
     TRACE("%x \n",eMessageType);
+    rc = 0;
 
     if ((eMessageType & 0xff000000) == INSTALLMESSAGE_ERROR)
         log_type |= INSTALLLOGMODE_ERROR;
@@ -431,8 +434,24 @@ INT WINAPI MsiProcessMessage( MSIHANDLE hInstall, INSTALLMESSAGE eMessageType,
                              debugstr_a(message));
 
     if (gUIHandler && (gUIFilter & log_type))
-        gUIHandler(gUIContext,eMessageType,message);
+        rc = gUIHandler(gUIContext,eMessageType,message);
 
+    if ((!rc) && (gszLogFile[0]) && !((eMessageType & 0xff000000) ==
+                                      INSTALLMESSAGE_PROGRESS))
+    {
+        DWORD write;
+        HANDLE log_file = CreateFileW(gszLogFile,GENERIC_WRITE, 0, NULL,
+                                  OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+
+        if (log_file != INVALID_HANDLE_VALUE)
+        {
+            SetFilePointer(log_file,0, NULL, FILE_END);
+            WriteFile(log_file,message,strlen(message),&write,NULL);
+            WriteFile(log_file,"\n",1,&write,NULL);
+            CloseHandle(log_file);
+        }
+    }
+    
     HeapFree(GetProcessHeap(),0,message);
     return ERROR_SUCCESS;
 }

@@ -252,5 +252,6 @@ extern HWND gUIhwnd;
 extern INSTALLUI_HANDLERA gUIHandler;
 extern DWORD gUIFilter;
 extern LPVOID gUIContext;
+extern WCHAR gszLogFile[MAX_PATH];
 
 #endif /* __WINE_MSI_PRIVATE__ */
