@@ -1741,7 +1741,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetLight(LPDIRECT3DDEVICE8 iface, DWORD In
     object = This->StateBlock->lights;
     while (object != NULL && object->OriginalIndex != Index) object = object->next;
 
-    /* If we didnt find it in the list of lights, time to add it */
+    /* If we didn't find it in the list of lights, time to add it */
     if (object == NULL) {
         PLIGHTINFOEL *insertAt,*prevPos;
 

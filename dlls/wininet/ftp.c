@@ -2,7 +2,7 @@
  * WININET - Ftp implementation
  *
  * Copyright 1999 Corel Corporation
- * Copyright 2004 Mike McCormack for Codeweavers
+ * Copyright 2004 Mike McCormack for CodeWeavers
  *
  * Ulrich Czekalla
  * Noureddine Jemmali

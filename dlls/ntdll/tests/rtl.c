@@ -492,7 +492,7 @@ static void test_RtlUniform(void)
  * Now comes the funny part:
  * It took me one weekend, to find the complicated algorithm and one day more,
  * to find the simplified algorithm. Several weeks later I found out: The value
- * MAXLONG (=0x7fffffff) is never returned, neighter with the native function
+ * MAXLONG (=0x7fffffff) is never returned, neither with the native function
  * nor with the simplified algorithm. In reality the native function and our
  * function return a random number distributed over [0..MAXLONG-1]. Note
  * that this is different to what native documentation states [0..MAXLONG].

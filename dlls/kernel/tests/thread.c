@@ -367,7 +367,7 @@ VOID test_CreateThread_stack()
 #endif
 }
 
-/* Check whether setting/retreiving thread priorities works */
+/* Check whether setting/retrieving thread priorities works */
 VOID test_thread_priority()
 {
    HANDLE curthread,access_thread;

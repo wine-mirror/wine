@@ -1558,7 +1558,7 @@ export PATH=$PATH:/path/to/wine/binary
       
       <qandaentry>
       <question id="Can-I-use-Wine-with-other-Linux-Distros">
-        <para>Can I use Wine with SuSE, Peanut or other Linux Distro's?</para>
+        <para>Can I use Wine with SUSE, Peanut or other Linux Distro's?</para>
       </question>
       <answer>
         <para>

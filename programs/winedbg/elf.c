@@ -549,7 +549,7 @@ enum DbgInfoLoad	DEBUG_ReadWineLoaderDbgInfo(HANDLE hProcess, struct elf_info* e
 
     /* All binaries are loaded with WINELOADER (if run from tree) or by the
      * main executable (either wine-kthread or wine-pthread)
-     * Note: the heuristic use to know wether we need to load wine-pthread or 
+     * Note: the heuristic used to know whether we need to load wine-pthread or
      * wine-kthread is not 100% safe
      */
     elf_info->flags |= ELF_INFO_DEBUG_HEADER;

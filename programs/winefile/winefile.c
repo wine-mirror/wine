@@ -2816,7 +2816,7 @@ static LRESULT pane_notify(Pane* pane, NMHDR* pnmh)
 			RECT clnt;
 			GetClientRect(pane->hwnd, &clnt);
 
-			/* move immediate to simulate HDS_FULLDRAG (for now [04/2000] not realy needed with WINELIB) */
+			/* move immediate to simulate HDS_FULLDRAG (for now [04/2000] not really needed with WINELIB) */
 			Header_SetItem(pane->hwndHeader, idx, phdn->pitem);
 
 			pane->widths[idx] += dx;

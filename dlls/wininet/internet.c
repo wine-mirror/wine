@@ -5,7 +5,7 @@
  * Copyright 2002 CodeWeavers Inc.
  * Copyright 2002 Jaco Greeff
  * Copyright 2002 TransGaming Technologies Inc.
- * Copyright 2004 Mike McCormack for Codeweavers
+ * Copyright 2004 Mike McCormack for CodeWeavers
  *
  * Ulrich Czekalla
  * Aric Stewart

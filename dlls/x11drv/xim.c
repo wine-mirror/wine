@@ -43,7 +43,7 @@ static HIMC root_context;
 static XIMStyle ximStyle = 0;
 static XIMStyle ximStyleRoot = 0;
 
-/* moved here from imm32 for dll seperation */
+/* moved here from imm32 for dll separation */
 static DWORD dwCompStringLength = 0;
 static LPBYTE CompositionString = NULL;
 static DWORD dwCompStringSize = 0;

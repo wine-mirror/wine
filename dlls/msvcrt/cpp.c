@@ -1162,7 +1162,7 @@ void* MSVCRT___RTDynamicCast(type_info *cppobj, int unknown,
 
   /* To cast an object at runtime:
    * 1.Find out the true type of the object from the typeinfo at vtable[-1]
-   * 2.Search for the destination type in the class heirachy
+   * 2.Search for the destination type in the class hierarchy
    * 3.If destination type is found, return base object address + dest offset
    *   Otherwise, fail the cast
    */

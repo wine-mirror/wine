@@ -330,7 +330,7 @@ static const MSSTYLES_ENUM_MAP mapEnum[] = {
  * If StateID == 0 then its a part being defined
  */
 
-/* These are globals to all classes, but its treated as a seperate class */
+/* These are globals to all classes, but its treated as a separate class */
 static const MSSTYLES_CLASS_MAP classGlobals[] = {
     {GP_BORDER,0,{'B','O','R','D','E','R','\0'}},
     {GP_BORDER,BSS_FLAT,{'F','L','A','T','\0'}},

@@ -128,7 +128,7 @@ static HRESULT WINAPI WBPCI2_GetClassInfo(LPPROVIDECLASSINFO2 iface, LPTYPEINFO 
 
 /* Get the IID for generic default event callbacks.  This IID will
  * in theory be used to later query for an IConnectionPoint to connect
- * an event sink (callback implmentation in the OLE control site)
+ * an event sink (callback implementation in the OLE control site)
  * to this control.
 */
 static HRESULT WINAPI WBPCI2_GetGUID(LPPROVIDECLASSINFO2 iface,

@@ -274,7 +274,7 @@ static int ctl2_find_name(
 static int ctl2_encode_name(
 	ICreateTypeLib2Impl *This, /* [I] The typelib to operate against (used for LCID only). */
 	WCHAR *name,               /* [I] The name string to encode. */
-	char **result)             /* [O] A pointer to a pointer to recieve the encoded name. */
+	char **result)             /* [O] A pointer to a pointer to receive the encoded name. */
 {
     int length;
     static char converted_name[0x104];
@@ -318,7 +318,7 @@ static int ctl2_encode_name(
 static int ctl2_encode_string(
 	ICreateTypeLib2Impl *This, /* [I] The typelib to operate against (not used?). */
 	WCHAR *string,             /* [I] The string to encode. */
-	char **result)             /* [O] A pointer to a pointer to recieve the encoded string. */
+	char **result)             /* [O] A pointer to a pointer to receive the encoded string. */
 {
     int length;
     static char converted_string[0x104];

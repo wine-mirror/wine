@@ -175,7 +175,7 @@
           Often a package will only work on the distribution which it
 	  has been compiled for.  We'll cover
           <link linkend="getting-dist-debian">Debian Linux</link>,
-          <link linkend="getting-dist-linux">Red Hat, Mandrake, SuSE and Slackware Linux</link>,
+          <link linkend="getting-dist-linux">Red Hat, Mandrake, SUSE and Slackware Linux</link>,
           <link linkend="getting-freebsd">FreeBSD</link>, and
           <link linkend="getting-other">other</link> distributions.
         </para>
@@ -261,10 +261,10 @@
       </sect2>
 
       <sect2 id="getting-dist-linux">
-        <title>Linux Red Hat, Mandrake, SuSE, and Slackware</title>
+        <title>Linux Red Hat, Mandrake, SUSE, and Slackware</title>
 
         <para>
-          Red Hat, Mandrake, SuSE and Slackware users can download
+          Red Hat, Mandrake, SUSE and Slackware users can download
 	  a wine binary from the
           <ulink url="http://sourceforge.net/project/showfiles.php?group_id=6241">
           sourceforge.net Wine download page</ulink>

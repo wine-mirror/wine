@@ -2,7 +2,7 @@
  * Microsoft Video-1 Decoder
  * Copyright (C) 2003 the ffmpeg project
  *
- * Portions Copyright (C) 2004 Mike McCormack for Codeweavers
+ * Portions Copyright (C) 2004 Mike McCormack for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
