@@ -1653,9 +1653,10 @@ sub generate_wrapper_file($$)
   my $path=$_[0];
   my $target=$_[1];
   my $app_name=@$target[$T_NAME];
+  $app_name=~ s/\.exe$//;
 
   return generate_from_template("$path${app_name}_wrapper.c","wrapper.c",[
-      ["APP_NAME",@$target[$T_NAME]],
+      ["APP_NAME",$app_name],
       ["APP_TYPE",(@$target[$T_TYPE]==$TT_GUIEXE?"GUIEXE":"CUIEXE")],
       ["APP_INIT",(@$target[$T_TYPE]==$TT_GUIEXE?"\"WinMain\"":"\"main\"")],
       ["APP_MFC",(@$target[$T_FLAGS] & $TF_MFC?"\"mfc\"":"NULL")]]);
@@ -1793,7 +1794,7 @@ sub generate_project_files($)
       generate_list("${canon}_C_SRCS",1,@$target[$T_SOURCES_C]);
       generate_list("${canon}_CXX_SRCS",1,@$target[$T_SOURCES_CXX]);
       generate_list("${canon}_RC_SRCS",1,@$target[$T_SOURCES_RC]);
-      generate_list("${canon}_SPEC_SRCS",1,[ "@$target[$T_NAME].spec" ]);
+      generate_list("${canon}_SPEC_SRCS",1,[ (@$target[$T_TYPE] == $TT_DLL?"@$target[$T_NAME].spec":"") ]);
       generate_list("${canon}_DLL_PATH",1,@$target[$T_DLL_PATH]);
       generate_list("${canon}_DLLS",1,@$target[$T_DLLS]);
       generate_list("${canon}_LIBRARY_PATH",1,@$target[$T_LIBRARY_PATH]);
@@ -1901,11 +1902,11 @@ sub generate_project_files($)
 
       $canon =~ s/_so$//;
       if (@$target[$T_TYPE] == $TT_GUIEXE) {
-	  $mode = '-m gui';
+	  $mode = "-m gui -exe @$target[$T_NAME]";
       } elsif (@$target[$T_TYPE] == $TT_CUIEXE) {
-	  $mode = '-m cui';
+	  $mode = "-m cui -exe @$target[$T_NAME]";
       } else {
-	  $mode = '';
+	  $mode = "";
       }
 
       if (@$target[$T_FLAGS] & $TF_WRAPPER) {
@@ -1919,10 +1920,6 @@ sub generate_project_files($)
       print FILEO "@$target[$T_NAME].spec.c: \$(${canon}_SPEC_SRCS) \$(${canon}_RC_SRCS:.rc=.res) \$(${canon}_OBJS)\n";
       print FILEO "\t\$(LD_PATH) \$(WINEBUILD) -fPIC -o \$\@ \$(${canon}_SPEC_SRCS:%=-spec %) \$(${canon}_RC_SRCS:%.rc=-res %.res) \$(${canon}_DLL_PATH) \$(WINE_DLL_PATH) \$(GLOBAL_DLL_PATH) $all_dlls $mode \$(${canon}_OBJS)\n";
       print FILEO "\n";
-      my $t_name=@$target[$T_NAME];
-      if (@$target[$T_TYPE]!=$TT_DLL) {
-        $t_name.=".exe.so";
-      }
       print FILEO "@$target[$T_NAME].so: @$target[$T_NAME].spec.o \$(${canon}_OBJS) \$(${canon}_DEPENDS) \n";
       if (@{@$target[$T_SOURCES_CXX]} > 0 or @{@$project_settings[$T_SOURCES_CXX]} > 0) {
         print FILEO "\t\$(LDXXSHARED)";
@@ -1939,7 +1936,9 @@ sub generate_project_files($)
   close(FILEO);
 
   foreach my $target (@{@$project[$P_TARGETS]}) {
-    generate_spec_file(@$project[$P_PATH],$target,$project_settings);
+    if (@$target[$T_TYPE] eq $TT_DLL) {
+      generate_spec_file(@$project[$P_PATH],$target,$project_settings);
+    }
     if (@$target[$T_FLAGS] & $TF_WRAPPER) {
       generate_wrapper_file(@$project[$P_PATH],$target);
     }
@@ -3215,8 +3214,8 @@ exec wine "$appname" "$@"
 #define      APP_TYPE      ##WINEMAKER_APP_TYPE##
 
 /**
- * This is the application library's base name, i.e. 'hello' if the
- * library is called 'libhello.so'.
+ * This is the name of the library containing the application,
+ * e.g. 'hello.dll' if the application is called 'hello.exe'.
  */
 static char* appName     = "##WINEMAKER_APP_NAME##";
 
@@ -3266,14 +3265,14 @@ int WINAPI main(int argc, char** argv, char** envp)
     int retcode;
 
     /* Load the application's library */
-    libName=(char*)malloc(strlen(appName)+5+3+1);
+    libName=(char*)malloc(2+strlen(appName)+3+1);
     /* FIXME: we should get the wrapper's path and use that as the base for
      * the library
      */
-    sprintf(libName,"./lib%s.so",appName);
+    sprintf(libName,"./%s.so",appName);
     appLibrary=dlopen(libName,RTLD_NOW);
     if (appLibrary==NULL) {
-        sprintf(libName,"lib%s.so",appName);
+        sprintf(libName,"%s.so",appName);
         appLibrary=dlopen(libName,RTLD_NOW);
     }
     if (appLibrary==NULL) {
