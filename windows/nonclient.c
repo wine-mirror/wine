@@ -865,7 +865,7 @@ static void  NC_DrawCaption( HDC  hdc, RECT *rect, HWND hwnd, DWORD  style,
                              DWORD  exStyle, BOOL active )
 {
     RECT  r = *rect;
-    char    buffer[256];
+    WCHAR buffer[256];
     HPEN  hPrevPen;
     HMENU hSysMenu;
 
@@ -912,21 +912,22 @@ static void  NC_DrawCaption( HDC  hdc, RECT *rect, HWND hwnd, DWORD  style,
 	}
     }
 
-    if (GetWindowTextA( hwnd, buffer, sizeof(buffer) )) {
-	NONCLIENTMETRICSA nclm;
+    if (InternalGetWindowText( hwnd, buffer, sizeof(buffer)/sizeof(WCHAR) ))
+    {
+	NONCLIENTMETRICSW nclm;
 	HFONT hFont, hOldFont;
-	nclm.cbSize = sizeof(NONCLIENTMETRICSA);
-	SystemParametersInfoA (SPI_GETNONCLIENTMETRICS, 0, &nclm, 0);
+	nclm.cbSize = sizeof(nclm);
+	SystemParametersInfoW (SPI_GETNONCLIENTMETRICS, 0, &nclm, 0);
 	if (exStyle & WS_EX_TOOLWINDOW)
-	    hFont = CreateFontIndirectA (&nclm.lfSmCaptionFont);
+	    hFont = CreateFontIndirectW (&nclm.lfSmCaptionFont);
 	else
-	    hFont = CreateFontIndirectA (&nclm.lfCaptionFont);
+	    hFont = CreateFontIndirectW (&nclm.lfCaptionFont);
 	hOldFont = SelectObject (hdc, hFont);
 	if (active) SetTextColor( hdc, GetSysColor( COLOR_CAPTIONTEXT ) );
 	else SetTextColor( hdc, GetSysColor( COLOR_INACTIVECAPTIONTEXT ) );
 	SetBkMode( hdc, TRANSPARENT );
 	r.left += 2;
-	DrawTextA( hdc, buffer, -1, &r,
+	DrawTextW( hdc, buffer, -1, &r,
 		     DT_SINGLELINE | DT_VCENTER | DT_NOPREFIX | DT_LEFT );
 	DeleteObject (SelectObject (hdc, hOldFont));
     }
