@@ -3,6 +3,14 @@
  * Copyright  Martin von Loewis, 1994
  * Copyright 1998 Bertho A. Stultiens (BS)
  *
+ * 29-Dec-1998 AdH	- Grammar and function extensions.
+ *			     grammar: TOOLBAR resources, Named ICONs in 
+ *				DIALOGS
+ *			     functions: semantic actions for the grammar 
+ *				changes, resource files can now be anywhere
+ *				on the include path instead of just in the
+ *				current directory
+ *
  * 20-Jun-1998 BS	- Fixed a bug in load_file() where the name was not
  *			  printed out correctly.
  *
@@ -82,6 +90,7 @@
 #include <stdarg.h>
 #include <assert.h>
 #include <ctype.h>
+#include <string.h>
 
 #include <config.h>
 #include "wrc.h"
@@ -114,8 +123,8 @@ static version_t *tagstt_version;
 /* Prototypes of here defined functions */
 void split_cursors(raw_data_t *rd, cursor_group_t *curg, int *ncur);
 void split_icons(raw_data_t *rd, icon_group_t *icog, int *nico);
-int alloc_cursor_id(void);
-int alloc_icon_id(void);
+int alloc_cursor_id(language_t *);
+int alloc_icon_id(language_t *);
 void ins_stt_entry(stt_entry_t *ste);
 int check_stt_entry(stringtable_t *tabs, stt_entry_t *ste);
 event_t *get_event_head(event_t *p);
@@ -156,6 +165,8 @@ dialog_t *dialog_exstyle(int st, dialog_t *dlg);
 dialog_t *dialog_style(int st, dialog_t *dlg);
 resource_t *build_stt_resources(stringtable_t *stthead);
 stringtable_t *find_stringtable(lvc_t *lvc);
+toolbar_item_t *ins_tlbr_button(toolbar_item_t *prev, toolbar_item_t *idrec);
+toolbar_item_t *get_tlbr_buttons_head(toolbar_item_t *p, int *nitems);
 
 %}
 %union{
@@ -195,6 +206,8 @@ stringtable_t *find_stringtable(lvc_t *lvc);
 	ver_value_t	*val;
 	ver_block_t	*blk;
 	ver_words_t	*verw;
+	toolbar_t	*tlbar;
+	toolbar_item_t	*tlbarItems;
 }
 
 %token tIF tIFDEF tIFNDEF tELSE tELIF tENDIF tDEFINED tNL
@@ -217,6 +230,7 @@ stringtable_t *find_stringtable(lvc_t *lvc);
 %token MENUBARBREAK MENUBREAK MENUITEM POPUP SEPARATOR
 %token HELP
 %token tSTRING IDENT RAWDATA
+%token TOOLBAR BUTTON
 %token tBEGIN tEND
 %left LOGOR
 %left LOGAND
@@ -267,6 +281,8 @@ stringtable_t *find_stringtable(lvc_t *lvc);
 %type <num>	expr xpr dummy
 %type <iptr>	e_expr
 %type <iptr>	pp_expr pp_constant
+%type <tlbar>	toolbar
+%type <tlbarItems>	toolbar_items
 
 %%
 
@@ -432,14 +448,14 @@ nameid_s: nameid	{ $$ = $1; }
 /* get the value for a single resource*/
 resource_definition
 	: accelerators	{ $$ = new_resource(res_acc, $1, $1->memopt, $1->lvc.language); }
-	| bitmap	{ $$ = new_resource(res_bmp, $1, $1->memopt, currentlanguage); }
+	| bitmap	{ $$ = new_resource(res_bmp, $1, $1->memopt, dup_language(currentlanguage)); }
 	| cursor {
 		resource_t *rsc;
 		cursor_t *cur;
-		$$ = rsc = new_resource(res_curg, $1, $1->memopt, currentlanguage);
+		$$ = rsc = new_resource(res_curg, $1, $1->memopt, dup_language(currentlanguage));
 		for(cur = $1->cursorlist; cur; cur = cur->next)
 		{
-			rsc->prev = new_resource(res_cur, cur, $1->memopt, currentlanguage);
+			rsc->prev = new_resource(res_cur, cur, $1->memopt, dup_language(currentlanguage));
 			rsc->prev->next = rsc;
 			rsc = rsc->prev;
 			rsc->name = new_name_id();
@@ -454,14 +470,14 @@ resource_definition
 		else
 			$$ = NULL;
 		}
-	| font		{ $$=new_resource(res_fnt, $1, $1->memopt, currentlanguage); }
+	| font		{ $$=new_resource(res_fnt, $1, $1->memopt, dup_language(currentlanguage)); }
 	| icon {
 		resource_t *rsc;
 		icon_t *ico;
-		$$ = rsc = new_resource(res_icog, $1, $1->memopt, currentlanguage);
+		$$ = rsc = new_resource(res_icog, $1, $1->memopt, dup_language(currentlanguage));
 		for(ico = $1->iconlist; ico; ico = ico->next)
 		{
-			rsc->prev = new_resource(res_ico, ico, $1->memopt, currentlanguage);
+			rsc->prev = new_resource(res_ico, ico, $1->memopt, dup_language(currentlanguage));
 			rsc->prev->next = rsc;
 			rsc = rsc->prev;
 			rsc->name = new_name_id();
@@ -476,10 +492,11 @@ resource_definition
 		else
 			$$ = NULL;
 		}
-	| messagetable	{ $$ = new_resource(res_msg, $1, WRC_MO_MOVEABLE | WRC_MO_DISCARDABLE, currentlanguage); }
+	| messagetable	{ $$ = new_resource(res_msg, $1, WRC_MO_MOVEABLE | WRC_MO_DISCARDABLE, dup_language(currentlanguage)); }
 	| rcdata	{ $$ = new_resource(res_rdt, $1, $1->memopt, $1->lvc.language); }
-	| userres	{ $$ = new_resource(res_usr, $1, $1->memopt, currentlanguage); }
-	| versioninfo	{ $$ = new_resource(res_ver, $1, WRC_MO_MOVEABLE | WRC_MO_DISCARDABLE, currentlanguage); }
+	| toolbar	{ $$ = new_resource(res_toolbar, $1, $1->memopt, $1->lvc.language); }
+	| userres	{ $$ = new_resource(res_usr, $1, $1->memopt, dup_language(currentlanguage)); }
+	| versioninfo	{ $$ = new_resource(res_ver, $1, WRC_MO_MOVEABLE | WRC_MO_DISCARDABLE, dup_language(currentlanguage)); }
 	;
 
 /* ------------------------------ Bitmap ------------------------------ */
@@ -673,8 +690,15 @@ ctrls	: /* Empty */				{ $$ = NULL; }
 	| ctrls CTEXT		lab_ctrl	{ $$=ins_ctrl(CT_STATIC, SS_CENTER, $3, $1); }
 	| ctrls RTEXT		lab_ctrl	{ $$=ins_ctrl(CT_STATIC, SS_RIGHT, $3, $1); }
 	/* special treatment for icons, as the extent is optional */
-	| ctrls ICON tSTRING ',' expr ',' expr ',' expr iconinfo {
-		$10->title = $3;
+	| ctrls ICON nameid_s ',' expr ',' expr ',' expr iconinfo {
+		if($3->type == name_str)
+		{
+			$10->title = $3->name.s_name;
+		}
+		else
+		{
+			$10->title = NULL;
+		}
 		$10->id = $5;
 		$10->x = $7;
 		$10->y = $9;
@@ -1380,6 +1404,46 @@ ver_words
 	| ver_words ',' expr	{ $$ = add_ver_words($1, $3); }
 	;
 
+/* ------------------------------ Toolbar ------------------------------ */
+toolbar: TOOLBAR loadmemopts expr ',' expr opt_lvc tBEGIN toolbar_items tEND {
+		int nitems;
+		toolbar_item_t *items = get_tlbr_buttons_head($8, &nitems);
+		$$ = new_toolbar($3, $5, items, nitems);
+		if($2)
+		{
+			$$->memopt = *($2);
+			free($2); 
+		}
+		else
+		{
+			$$->memopt = WRC_MO_MOVEABLE | WRC_MO_PURE;
+		}
+		if($6)
+		{
+			$$->lvc = *($6);
+			free($6);
+		}
+		if(!$$->lvc.language)
+		{
+			$$->lvc.language = dup_language(currentlanguage);
+		}
+		}
+	;
+
+toolbar_items
+	:  /* Empty */			{ $$ = NULL; }
+	| toolbar_items BUTTON expr	{         
+		toolbar_item_t *idrec = new_toolbar_item();
+		idrec->id = $3;
+		$$ = ins_tlbr_button($1, idrec); 
+		}
+	| toolbar_items SEPARATOR	{         
+		toolbar_item_t *idrec = new_toolbar_item();
+		idrec->id = 0;
+		$$ = ins_tlbr_button($1, idrec); 
+	}
+	;
+
 /* ------------------------------ Memory options ------------------------------ */
 loadmemopts
 	: /* Empty */		{ $$ = NULL; }
@@ -1714,17 +1778,17 @@ name_id_t *convert_ctlclass(name_id_t *cls)
 	else
 		cc = cls->name.s_name->str.cstr;
 
-	if(!stricmp("BUTTON", cc))
+	if(!strcasecmp("BUTTON", cc))
 		iclass = CT_BUTTON;
-	else if(!stricmp("COMBOBOX", cc))
+	else if(!strcasecmp("COMBOBOX", cc))
 		iclass = CT_COMBOBOX;
-	else if(!stricmp("LISTBOX", cc))
+	else if(!strcasecmp("LISTBOX", cc))
 		iclass = CT_LISTBOX;
-	else if(!stricmp("EDIT", cc))
+	else if(!strcasecmp("EDIT", cc))
 		iclass = CT_EDIT;
-	else if(!stricmp("STATIC", cc))
+	else if(!strcasecmp("STATIC", cc))
 		iclass = CT_STATIC;
-	else if(!stricmp("SCROLLBAR", cc))
+	else if(!strcasecmp("SCROLLBAR", cc))
 		iclass = CT_SCROLLBAR;
 	else
 		return cls;	/* No default, return user controlclass */
@@ -1896,7 +1960,7 @@ raw_data_t *load_file(string_t *name)
 	if(name->type != str_char)
 		yyerror("Filename must be ASCII string");
 		
-	fp = fopen(name->str.cstr, "rb");
+	fp = open_include(name->str.cstr, 1);
 	if(!fp)
 		yyerror("Cannot open file %s", name->str.cstr);
 	rd = new_raw_data();
@@ -2028,7 +2092,7 @@ stringtable_t *find_stringtable(lvc_t *lvc)
 	assert(lvc != NULL);
 
 	if(!lvc->language)
-		lvc->language = currentlanguage;
+		lvc->language = dup_language(currentlanguage);
 
 	for(stt = sttres; stt; stt = stt->next)
 	{
@@ -2162,16 +2226,54 @@ resource_t *build_stt_resources(stringtable_t *stthead)
 }
 
 /* Cursor and icon splitter functions */
-int alloc_icon_id(void)
+typedef struct {
+	language_t	lan;
+	int		id;
+} id_alloc_t;
+
+static int get_new_id(id_alloc_t **list, int *n, language_t *lan)
 {
-	static int icon_id = 1;
-	return icon_id++;
+	int i;
+	assert(lan != NULL);
+	assert(list != NULL);
+	assert(n != NULL);
+
+	if(!*list)
+	{
+		*list = (id_alloc_t *)xmalloc(sizeof(id_alloc_t));
+		*n = 1;
+		(*list)[0].lan = *lan;
+		(*list)[0].id = 1;
+		return 1;
+	}
+
+	for(i = 0; i < *n; i++)
+	{
+		if((*list)[i].lan.id == lan->id && (*list)[i].lan.sub == lan->sub)
+			return ++((*list)[i].id);
+	}
+
+	*list = (id_alloc_t *)xrealloc(*list, sizeof(id_alloc_t) * (*n+1));
+	(*list)[*n].lan = *lan;
+	(*list)[*n].id = 1;
+	*n += 1;
+	return 1;
 }
 
-int alloc_cursor_id(void)
+int alloc_icon_id(language_t *lan)
 {
-	static int cursor_id = 1;
-	return cursor_id++;
+	static id_alloc_t *idlist = NULL;
+	static int nid = 0;
+
+	return get_new_id(&idlist, &nid, lan);
+}
+
+int alloc_cursor_id(language_t *lan)
+{
+	static id_alloc_t *idlist = NULL;
+	static int nid = 0;
+
+	return get_new_id(&idlist, &nid, lan);
 }
 
 #define BPTR(base)	((char *)(rd->data + (base)))
@@ -2193,7 +2295,7 @@ void split_icons(raw_data_t *rd, icon_group_t *icog, int *nico)
 	for(i = 0; i < cnt; i++)
 	{
 		ico = new_icon();
-		ico->id = alloc_icon_id();
+		ico->id = alloc_icon_id(icog->lvc.language);
 		ico->lvc.language = dup_language(icog->lvc.language);
 		if(ide[i].offset > rd->size
 		|| ide[i].offset + ide[i].ressize > rd->size)
@@ -2246,7 +2348,7 @@ void split_cursors(raw_data_t *rd, cursor_group_t *curg, int *ncur)
 	for(i = 0; i < cnt; i++)
 	{
 		cur = new_cursor();
-		cur->id = alloc_cursor_id();
+		cur->id = alloc_cursor_id(curg->lvc.language);
 		cur->lvc.language = dup_language(curg->lvc.language);
 		if(cde[i].offset > rd->size
 		|| cde[i].offset + cde[i].ressize > rd->size)
@@ -2282,4 +2384,32 @@ void split_cursors(raw_data_t *rd, cursor_group_t *curg, int *ncur)
 #undef	WPTR
 #undef	DPTR
 
+
+toolbar_item_t *ins_tlbr_button(toolbar_item_t *prev, toolbar_item_t *idrec)
+{
+	idrec->prev = prev;
+	if(prev)
+		prev->next = idrec;
+
+	return idrec;
+}
+
+toolbar_item_t *get_tlbr_buttons_head(toolbar_item_t *p, int *nitems)
+{
+	if(!p)
+	{
+		*nitems = 0;
+		return NULL;
+	} 
+
+	*nitems = 1;
+
+	while(p->prev)
+	{
+		(*nitems)++;
+		p = p->prev;
+	}
+
+	return p;
+}
 

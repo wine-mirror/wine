@@ -22,7 +22,7 @@
 *
 * a pidl of NULL means the desktop
 *
-* The structure of the pidl seens to be a union. The first byte of the
+* The structure of the pidl seems to be a union. The first byte of the
 * PIDLDATA desribes the type of pidl.
 *
 * first byte - 	my Computer	0x1F
@@ -35,67 +35,92 @@
 * file: see the PIDLDATA structure	 
 */
 
-#define PT_DESKTOP	0x00 /*fixme*/
+#define PT_DESKTOP	0x00 /* internal */
 #define PT_MYCOMP	0x1F
 #define PT_SPECIAL	0x2E
 #define PT_DRIVE	0x23
 #define PT_FOLDER	0x31
-#define PT_VALUE	0x33 /*fixme*/
+#define PT_VALUE	0x32
 
 #pragma pack(1)
 typedef BYTE PIDLTYPE;
 
 typedef struct tagPIDLDATA
-{	PIDLTYPE type;
+{	PIDLTYPE type;			/*00*/
 	union
 	{ struct
-	  { CHAR szDriveName[4];
+	  { CHAR szDriveName[4];	/*01*/
 	    /* end of MS compatible*/
-	    DWORD dwSFGAO;
+	    DWORD dwSFGAO;		/*05*/
+	    /* the drive seems to be 19 bytes every time */
 	  } drive;
 	  struct 
-	  { BYTE dummy;
-	    DWORD dwFileSize;
-	    WORD uFileDate;
-	    WORD uFileTime;
-	    WORD uFileAttribs;
-	    /* end of MS compatible*/
-	    DWORD dwSFGAO;
+	  { BYTE dummy;			/*01 is 0x00 for files or dirs */
+	    DWORD dwFileSize;		/*02*/
+	    WORD uFileDate;		/*06*/
+	    WORD uFileTime;		/*08*/
+	    WORD uFileAttribs;		/*10*/
+	    /* end of MS compatible. Here are comming just one or two
+	    strings. The first is the long name. The second the dos name
+	    when needed. */
+	    DWORD dwSFGAO;		/*12*/
 	    CHAR  szAlternateName[14];	/* the 8.3 Name*/
-	    CHAR szText[1];		/* last entry, variable size */
+	    CHAR  szText[1];		/* last entry, variable size */
 	  } file, folder, generic; 
 	}u;
 } PIDLDATA, *LPPIDLDATA;
 #pragma pack(4)
 
-LPITEMIDLIST WINAPI _ILCreateDesktop(void);
-LPITEMIDLIST WINAPI _ILCreateMyComputer(void);
-LPITEMIDLIST WINAPI _ILCreateDrive(LPCSTR);
-LPITEMIDLIST WINAPI _ILCreateFolder(LPCSTR);
-LPITEMIDLIST WINAPI _ILCreateValue(LPCSTR);
-LPITEMIDLIST WINAPI _ILCreate(PIDLTYPE,LPVOID,UINT16);
-
-BOOL32 WINAPI _ILGetDrive(LPCITEMIDLIST,LPSTR,UINT16);
+/*
+ * getting string values from pidls
+ *
+ * return value is strlen()
+ */
+DWORD WINAPI _ILGetDrive(LPCITEMIDLIST,LPSTR,UINT16);
 DWORD WINAPI _ILGetItemText(LPCITEMIDLIST,LPSTR,UINT16);
 DWORD WINAPI _ILGetFolderText(LPCITEMIDLIST,LPSTR,DWORD);
 DWORD WINAPI _ILGetValueText(LPCITEMIDLIST,LPSTR,DWORD);
-DWORD WINAPI _ILGetDataText(LPCITEMIDLIST,LPCITEMIDLIST,LPSTR,DWORD);
 DWORD WINAPI _ILGetPidlPath(LPCITEMIDLIST,LPSTR,DWORD);
-DWORD WINAPI _ILGetData(PIDLTYPE,LPCITEMIDLIST,LPVOID,UINT32);
 
+/*
+ * getting special values from simple pidls
+ */
+BOOL32 WINAPI _ILGetFileDate (LPCITEMIDLIST pidl, LPSTR pOut, UINT32 uOutSize);
+BOOL32 WINAPI _ILGetFileSize (LPCITEMIDLIST pidl, LPSTR pOut, UINT32 uOutSize);
+BOOL32 WINAPI _ILGetExtension (LPCITEMIDLIST pidl, LPSTR pOut, UINT32 uOutSize);
+
+
+/*
+ * testing simple pidls
+ */
 BOOL32 WINAPI _ILIsDesktop(LPCITEMIDLIST);
 BOOL32 WINAPI _ILIsMyComputer(LPCITEMIDLIST);
 BOOL32 WINAPI _ILIsDrive(LPCITEMIDLIST);
 BOOL32 WINAPI _ILIsFolder(LPCITEMIDLIST);
 BOOL32 WINAPI _ILIsValue(LPCITEMIDLIST);
 
-BOOL32 WINAPI _ILHasFolders(LPSTR,LPCITEMIDLIST);
+/*
+ * simple pidls from strings
+ */
+LPITEMIDLIST WINAPI _ILCreateDesktop(void);
+LPITEMIDLIST WINAPI _ILCreateMyComputer(void);
+LPITEMIDLIST WINAPI _ILCreateDrive(LPCSTR);
+LPITEMIDLIST WINAPI _ILCreateFolder(LPCSTR);
+LPITEMIDLIST WINAPI _ILCreateValue(LPCSTR);
 
+/*
+ * raw pidl handling (binary) 
+ *
+ * data is binary / sizes are bytes
+ */
+DWORD WINAPI _ILGetData(PIDLTYPE,LPCITEMIDLIST,LPVOID,UINT32);
+LPITEMIDLIST WINAPI _ILCreate(PIDLTYPE,LPVOID,UINT16);
+
+/*
+ * helper functions (getting struct-pointer)
+ */
 LPPIDLDATA WINAPI _ILGetDataPointer(LPCITEMIDLIST);
 LPSTR WINAPI _ILGetTextPointer(PIDLTYPE type, LPPIDLDATA pidldata);
-BOOL32 WINAPI _ILGetFileDate (LPCITEMIDLIST pidl, LPSTR pOut, UINT32 uOutSize);
-BOOL32 WINAPI _ILGetFileSize (LPCITEMIDLIST pidl, LPSTR pOut, UINT32 uOutSize);
-BOOL32 WINAPI _ILGetExtension (LPCITEMIDLIST pidl, LPSTR pOut, UINT32 uOutSize);
 
 void pdump (LPCITEMIDLIST pidl);
 #endif

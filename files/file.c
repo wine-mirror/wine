@@ -911,9 +911,9 @@ static HFILE32 FILE_DoOpenFile( LPCSTR name, OFSTRUCT *ofs, UINT32 mode,
 
     if (mode & OF_CREATE)
     {
-        if ((hFileRet = CreateFile32A( name, access, sharing, NULL,
-                                       CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL,
-                                       -1 ))== INVALID_HANDLE_VALUE32)
+        if ((hFileRet = CreateFile32A( name, GENERIC_READ | GENERIC_WRITE,
+                                       sharing, NULL, CREATE_ALWAYS,
+                                       FILE_ATTRIBUTE_NORMAL, -1 ))== INVALID_HANDLE_VALUE32)
             goto error;
         goto success;
     }
@@ -1452,6 +1452,11 @@ BOOL32 WINAPI DeleteFile32A( LPCSTR path )
 
     TRACE(file, "'%s'\n", path );
 
+    if (!*path)
+    {
+        ERR(file, "Empty path passed\n");
+        return FALSE;
+    }
     if (DOSFS_GetDevice( path ))
     {
         WARN(file, "cannot remove DOS device '%s'!\n", path);
@@ -1581,7 +1586,7 @@ DWORD WINAPI GetFileType( HFILE32 hFile )
     struct get_file_info_reply reply;
 
     if ((req.handle = HANDLE_GetServerHandle( PROCESS_Current(), hFile,
-                                              K32OBJ_FILE, 0 )) == -1)
+                                              K32OBJ_UNKNOWN, 0 )) == -1)
         return FILE_TYPE_UNKNOWN;
     CLIENT_SendRequest( REQ_GET_FILE_INFO, -1, 1, &req, sizeof(req) );
     if (CLIENT_WaitSimpleReply( &reply, sizeof(reply), NULL ))

@@ -41,9 +41,9 @@
 #include <math.h>	/* Insomnia - pow() function */
 #include "windows.h"
 #include "winerror.h"
-#include "interfaces.h"
 #include "multimedia.h"
 #include "dsound.h"
+#include "objbase.h"
 #include "thread.h"
 #include "debug.h"
 #include "xmalloc.h"
@@ -2115,7 +2115,8 @@ HRESULT WINAPI DirectSoundCreate(LPGUID lpGUID,LPDIRECTSOUND *ppDS,IUnknown *pUn
  * DirectSound ClassFactory
  */
 static HRESULT WINAPI 
-DSCF_QueryInterface(LPCLASSFACTORY this,REFIID riid,LPVOID *ppobj) {
+DSCF_QueryInterface(LPUNKNOWN iface,REFIID riid,LPVOID *ppobj) {
+	ICOM_THIS(IClassFactory,iface);
 	char buf[80];
 
 	if (HIWORD(riid))
@@ -2127,18 +2128,21 @@ DSCF_QueryInterface(LPCLASSFACTORY this,REFIID riid,LPVOID *ppobj) {
 }
 
 static ULONG WINAPI
-DSCF_AddRef(LPCLASSFACTORY this) {
+DSCF_AddRef(LPUNKNOWN iface) {
+	ICOM_THIS(IClassFactory,iface);
 	return ++(this->ref);
 }
 
-static ULONG WINAPI DSCF_Release(LPCLASSFACTORY this) {
+static ULONG WINAPI DSCF_Release(LPUNKNOWN iface) {
+	ICOM_THIS(IClassFactory,iface);
 	/* static class, won't be  freed */
 	return --(this->ref);
 }
 
 static HRESULT WINAPI DSCF_CreateInstance(
-	LPCLASSFACTORY this,LPUNKNOWN pOuter,REFIID riid,LPVOID *ppobj
+	LPCLASSFACTORY iface,LPUNKNOWN pOuter,REFIID riid,LPVOID *ppobj
 ) {
+	ICOM_THIS(IClassFactory,iface);
 	char buf[80];
 
 	WINE_StringFromCLSID(riid,buf);
@@ -2150,19 +2154,22 @@ static HRESULT WINAPI DSCF_CreateInstance(
 	return E_NOINTERFACE;
 }
 
-static HRESULT WINAPI DSCF_LockServer(LPCLASSFACTORY this,BOOL32 dolock) {
+static HRESULT WINAPI DSCF_LockServer(LPCLASSFACTORY iface,BOOL32 dolock) {
+	ICOM_THIS(IClassFactory,iface);
 	FIXME(dsound,"(%p)->(%d),stub!\n",this,dolock);
 	return S_OK;
 }
 
-static IClassFactory_VTable DSCF_VTable = {
+static ICOM_VTABLE(IClassFactory) DSCF_VTable = {
+  {
 	DSCF_QueryInterface,
 	DSCF_AddRef,
-	DSCF_Release,
+    DSCF_Release
+  },
 	DSCF_CreateInstance,
 	DSCF_LockServer
 };
-static IClassFactory DSOUND_CF = {&DSCF_VTable, 1 };
+static _IClassFactory DSOUND_CF = {&DSCF_VTable, 1 };
 
 /*******************************************************************************
  * DllGetClassObject [DSOUND.4]
@@ -2197,7 +2204,7 @@ DWORD WINAPI DSOUND_DllGetClassObject(REFCLSID rclsid,REFIID riid,LPVOID *ppv)
     TRACE(dsound, "(%p,%p,%p)\n", xbuf, buf, ppv);
     if (!memcmp(riid,&IID_IClassFactory,sizeof(IID_IClassFactory))) {
     	*ppv = (LPVOID)&DSOUND_CF;
-	DSOUND_CF.lpvtbl->fnAddRef(&DSOUND_CF);
+	IClassFactory_AddRef(&DSOUND_CF);
     return S_OK;
     }
     FIXME(dsound, "(%p,%p,%p): no interface found.\n", xbuf, buf, ppv);

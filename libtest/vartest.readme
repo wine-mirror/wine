@@ -1,0 +1,21 @@
+The purpose of this program is validate the implementation 
+of the APIs related to VARIANTs. The validation is done
+by comparing the results given by the Windows implementation
+versus the Wine implementation.
+
+This program tests the creation/coercion/destruction of VARIANTs.
+
+This program was built in both Windows and Wine and the purpose
+of this program is to compare the output produced in both 
+environments. To facilitate that, the log of the output created 
+by the windows version of this program was added to CVS.
+
+If you modify this program, it might be wise to rebuild it in
+Windows, regenerate that output file and resubmit it to CVS.
+
+The output of the programs differ slightly from the one generated
+in Windows but most of the differences are caused by differences 
+in the way that printf interprets some escape sequences and the way
+floating point numbers are printed. See the notes in vartest.c for
+more information.
+

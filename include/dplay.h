@@ -2,6 +2,8 @@
 #ifndef __WINE_DPLAY_H
 #define __WINE_DPLAY_H
 
+#include "unknwn.h"
+
 #pragma pack(1)
 
 /* Return Values for Direct Play */

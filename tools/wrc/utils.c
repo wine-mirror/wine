@@ -137,7 +137,7 @@ char *dup_basename(const char *name, const char *ext)
 	/* +4 for later extension and +1 for '\0' */
 	base = (char *)xmalloc(namelen +4 +1);
 	strcpy(base, name);
-	if(!stricmp(name + namelen-extlen, ext))
+	if(!strcasecmp(name + namelen-extlen, ext))
 	{
 		base[namelen - extlen] = '\0';
 	}
@@ -184,7 +184,7 @@ int string_compare(const string_t *s1, const string_t *s2)
 {
 	if(s1->type == str_char && s2->type == str_char)
 	{
-		return stricmp(s1->str.cstr, s2->str.cstr);
+		return strcasecmp(s1->str.cstr, s2->str.cstr);
 	}
 	else
 	{
@@ -213,7 +213,7 @@ int wstricmp(const short *s1, const short *s2)
 {
 	char *cs1 = dupwstr2cstr(s1);
 	char *cs2 = dupwstr2cstr(s2);
-	int retval = stricmp(cs1, cs2);
+	int retval = strcasecmp(cs1, cs2);
 	free(cs1);
 	free(cs2);
 	warning("Comparing unicode strings without case -> converting to ascii");
@@ -247,16 +247,4 @@ char *dupwstr2cstr(const short *str)
 	*cptr = 0;
 	return cs;
 }
-
-#ifndef HAVE_STRICMP
-int stricmp(const char *s1, const char *s2)
-{
-	while(*s1 && *s2 && !(toupper(*s1) - toupper(*s2)))
-	{
-		s1++;
-		s2++;
-	}
-	return *s2 - *s1;
-}
-#endif
 

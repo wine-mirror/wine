@@ -16,12 +16,16 @@
 #include "windows.h"
 #include "commctrl.h"
 #include "tab.h"
-#include "heap.h"
 #include "win.h"
 #include "debug.h"
 
 
 #define TAB_GetInfoPtr(wndPtr) ((TAB_INFO *)wndPtr->wExtra[0])
+
+
+
+
+
 
 static BOOL32
 TAB_SendSimpleNotify (WND *wndPtr, UINT32 code)
@@ -42,6 +46,22 @@ TAB_GetCurSel (WND *wndPtr)
     TAB_INFO *infoPtr = TAB_GetInfoPtr(wndPtr);
  
     return infoPtr->iSelected;
+}
+
+
+static LRESULT
+TAB_SetCurSel (WND *wndPtr,WPARAM32 wParam)
+{
+    TAB_INFO *infoPtr = TAB_GetInfoPtr(wndPtr);
+	INT32 iItem=(INT32) wParam;
+	INT32 prevItem;
+ 
+	prevItem=-1;
+	if ((iItem >= 0) && (iItem < infoPtr->uNumItem)) {
+		prevItem=infoPtr->iSelected;
+    	infoPtr->iSelected=iItem;
+	}
+	return prevItem;
 }
 
 static LRESULT
@@ -76,6 +96,20 @@ TAB_LButtonUp (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
     }
 
     return 0;
+}
+
+
+static LRESULT
+TAB_AdjustRect (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
+{
+
+	if (wParam==TRUE) {
+		FIXME (tab,"Should set display rectangle\n");
+	} else {
+		FIXME (tab,"Should set window rectangle\n");
+	}
+	
+	return 0;
 }
 
 static void 
@@ -129,9 +163,9 @@ TAB_DrawItem (WND *wndPtr, HDC32 hdc, INT32 iItem)
     RECT32 r;
     INT32 oldBkMode;
    
-    HPEN32	hwPen = CreatePen32 (PS_SOLID, 1, RGB (255, 255, 255 ));
-    HPEN32	hbPen = CreatePen32 (PS_SOLID, 1, GetSysColor32 (COLOR_BTNSHADOW));
-    HPEN32	hsdPen = CreatePen32(PS_SOLID, 1, GetSysColor32 (COLOR_BTNTEXT));
+    HPEN32	hwPen  = GetSysColorPen32 (COLOR_3DHILIGHT);
+    HPEN32	hbPen  = GetSysColorPen32 (COLOR_BTNSHADOW);
+    HPEN32	hsdPen = GetSysColorPen32 (COLOR_BTNTEXT);
     HPEN32	htmpPen = (HPEN32)NULL;
 
     CopyRect32(&r, &pti->rect);
@@ -152,9 +186,6 @@ TAB_DrawItem (WND *wndPtr, HDC32 hdc, INT32 iItem)
     MoveToEx32 (hdc, r.right, r.top+1, NULL);
     LineTo32(hdc, r.right,r.bottom);
     hsdPen = SelectObject32(hdc,htmpPen); 
-    DeleteObject32(hwPen);
-    DeleteObject32(hbPen);
-    DeleteObject32(hsdPen);
 
     oldBkMode = SetBkMode32(hdc, TRANSPARENT);
     r.left += 3;
@@ -170,9 +201,10 @@ static void
 TAB_DrawBorder (WND *wndPtr, HDC32 hdc)
 {
     HPEN32 htmPen;
-    HPEN32 hwPen = GetStockObject32(WHITE_PEN);
-    HPEN32 hbPen = GetStockObject32(BLACK_PEN);
-    HPEN32 hShade = CreatePen32 ( PS_SOLID, 1, GetSysColor32 (COLOR_BTNSHADOW));
+    HPEN32 hwPen  = GetSysColorPen32 (COLOR_3DHILIGHT);
+    HPEN32 hbPen  = GetSysColorPen32 (COLOR_3DDKSHADOW);
+    HPEN32 hShade = GetSysColorPen32 (COLOR_BTNSHADOW);
+
     RECT32 rect;
 
     htmPen = SelectObject32 (hdc, hwPen);
@@ -191,7 +223,6 @@ TAB_DrawBorder (WND *wndPtr, HDC32 hdc)
     LineTo32 (hdc, rect.right-1, rect.bottom-1);
     LineTo32 (hdc, rect.left, rect.bottom-1);
     hShade = SelectObject32(hdc, hShade);
-    DeleteObject32 (hShade);
 }
 
     
@@ -199,17 +230,16 @@ static void
 TAB_Refresh (WND *wndPtr, HDC32 hdc)
 {
     TAB_INFO *infoPtr = TAB_GetInfoPtr(wndPtr);
-    HFONT32 hFont, hOldFont;
-    RECT32 rect;
-    HBRUSH32 hbrBk;
+    HFONT32 hOldFont;
     INT32 i;
 
     TAB_DrawBorder (wndPtr, hdc);
 
+	hOldFont = SelectObject32 (hdc, infoPtr->hFont);
     for (i = 0; i < infoPtr->uNumItem; i++) {
 	TAB_DrawItem (wndPtr, hdc, i);
     }
-
+	SelectObject32 (hdc, hOldFont);
 }
 
 static LRESULT
@@ -230,11 +260,11 @@ static LRESULT
 TAB_InsertItem (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 {
     TAB_INFO *infoPtr = TAB_GetInfoPtr(wndPtr);
-    TCITEM *pti;
+    TCITEM32A *pti;
     HDC32  hdc;
     INT32 iItem, len;
 
-    pti = (TCITEM*)lParam;
+    pti = (TCITEM32A *)lParam;
     iItem = (INT32)wParam;
 
     if (iItem < 0) return -1;
@@ -242,16 +272,14 @@ TAB_InsertItem (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 	iItem = infoPtr->uNumItem;
 
     if (infoPtr->uNumItem == 0) {
-	infoPtr->items = HeapAlloc (GetProcessHeap (), HEAP_ZERO_MEMORY,
-				    sizeof (TAB_ITEM));
+	infoPtr->items = COMCTL32_Alloc (sizeof (TAB_ITEM));
 	infoPtr->uNumItem++;
     }
     else {
 	TAB_ITEM *oldItems = infoPtr->items;
 
 	infoPtr->uNumItem++;
-	infoPtr->items = HeapAlloc (GetProcessHeap (), HEAP_ZERO_MEMORY,
-				    sizeof (TAB_ITEM) * infoPtr->uNumItem);
+	infoPtr->items = COMCTL32_Alloc (sizeof (TAB_ITEM) * infoPtr->uNumItem);
 	
 	/* pre insert copy */
 	if (iItem > 0) {
@@ -266,19 +294,16 @@ TAB_InsertItem (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 
 	}
 	
-	HeapFree (GetProcessHeap (), 0, oldItems);
+	COMCTL32_Free (oldItems);
     }
 
     infoPtr->items[iItem].mask = pti->mask;
     if (pti->mask & TCIF_TEXT) {
 	len = lstrlen32A (pti->pszText);
-	infoPtr->items[iItem].pszText = 
-	    HeapAlloc (GetProcessHeap (), HEAP_ZERO_MEMORY, len+1);
+	infoPtr->items[iItem].pszText = COMCTL32_Alloc (len+1);
 	lstrcpy32A (infoPtr->items[iItem].pszText, pti->pszText);
 	infoPtr->items[iItem].cchTextMax = pti->cchTextMax;
     }
-
-    
 
     if (pti->mask & TCIF_IMAGE)
 	infoPtr->items[iItem].iImage = pti->iImage;
@@ -298,12 +323,168 @@ TAB_InsertItem (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 }
 
 static LRESULT 
+TAB_SetItem32A (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
+{
+  TAB_INFO *infoPtr = TAB_GetInfoPtr(wndPtr);
+  TCITEM32A *tabItem; 
+  TAB_ITEM *wineItem; 
+  INT32    iItem,len;
+
+  iItem=(INT32) wParam;
+  tabItem=(LPTCITEM32A ) lParam;
+  TRACE (tab,"%d %p\n",iItem, tabItem);
+  if ((iItem<0) || (iItem>infoPtr->uNumItem)) return FALSE;
+
+  wineItem=& infoPtr->items[iItem];
+
+  if (tabItem->mask & TCIF_IMAGE) 
+		wineItem->iImage=tabItem->iImage;
+
+  if (tabItem->mask & TCIF_PARAM) 
+		wineItem->lParam=tabItem->lParam;
+
+  if (tabItem->mask & TCIF_RTLREADING) 
+		FIXME (tab,"TCIF_RTLREADING\n");
+
+  if (tabItem->mask & TCIF_STATE) 
+		wineItem->dwState=tabItem->dwState;
+
+  if (tabItem->mask & TCIF_TEXT) {
+	 len=lstrlen32A (tabItem->pszText);
+	 if (len>wineItem->cchTextMax) 
+		 wineItem->pszText= COMCTL32_ReAlloc (wineItem->pszText, len+1);
+	 lstrcpyn32A (wineItem->pszText, tabItem->pszText, len);
+  }
+
+	return TRUE;
+}
+
+static LRESULT 
+TAB_GetItemCount (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
+{
+   TAB_INFO *infoPtr = TAB_GetInfoPtr(wndPtr);
+
+   return infoPtr->uNumItem;
+}
+
+
+static LRESULT 
+TAB_GetItem32A (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
+{
+   TAB_INFO *infoPtr = TAB_GetInfoPtr(wndPtr);
+   TCITEM32A *tabItem;
+   TAB_ITEM *wineItem;
+   INT32    iItem;
+
+  iItem=(INT32) wParam;
+  tabItem=(LPTCITEM32A) lParam;
+  TRACE (tab,"\n");
+  if ((iItem<0) || (iItem>infoPtr->uNumItem)) return FALSE;
+
+  wineItem=& infoPtr->items[iItem];
+
+  if (tabItem->mask & TCIF_IMAGE) 
+		tabItem->iImage=wineItem->iImage;
+
+  if (tabItem->mask & TCIF_PARAM) 
+		tabItem->lParam=wineItem->lParam;
+
+  if (tabItem->mask & TCIF_RTLREADING) 
+		FIXME (tab, "TCIF_RTLREADING\n");
+
+  if (tabItem->mask & TCIF_STATE) 
+		tabItem->dwState=wineItem->dwState;
+
+  if (tabItem->mask & TCIF_TEXT) 
+	 lstrcpyn32A (tabItem->pszText, wineItem->pszText, tabItem->cchTextMax);
+
+	return TRUE;
+}
+
+static LRESULT 
+TAB_DeleteItem (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
+{
+   TAB_INFO *infoPtr = TAB_GetInfoPtr(wndPtr);
+
+	FIXME (tab,"stub \n");
+	return TRUE;
+}
+static LRESULT 
+TAB_DeleteAllItems (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
+{
+   TAB_INFO *infoPtr = TAB_GetInfoPtr(wndPtr);
+
+	COMCTL32_Free (infoPtr->items);
+	infoPtr->uNumItem=0;
+	
+	return TRUE;
+}
+
+
+static LRESULT
+TAB_GetFont (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
+{
+  TAB_INFO *infoPtr = TAB_GetInfoPtr(wndPtr);
+
+  TRACE (tab,"\n");
+  return (LRESULT)infoPtr->hFont;
+}
+
+static LRESULT
+TAB_SetFont (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
+
+{
+ TAB_INFO *infoPtr = TAB_GetInfoPtr(wndPtr);
+ TEXTMETRIC32A tm;
+ HFONT32 hFont, hOldFont;
+ HDC32 hdc;
+
+ TRACE (tab,"%x %lx\n",wParam, lParam);
+
+ infoPtr->hFont = (HFONT32)wParam;
+
+ hFont = infoPtr->hFont ? infoPtr->hFont : GetStockObject32 (SYSTEM_FONT);
+
+ hdc = GetDC32 (0);
+ hOldFont = SelectObject32 (hdc, hFont);
+ GetTextMetrics32A (hdc, &tm);
+ infoPtr->nHeight= tm.tmHeight + tm.tmExternalLeading;
+ SelectObject32 (hdc, hOldFont);
+
+ if (lParam) TAB_Refresh (wndPtr,hdc);
+ ReleaseDC32 (0, hdc);
+
+ return 0;
+}
+
+
+static LRESULT
+TAB_GetImageList (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
+{
+  TAB_INFO *infoPtr = TAB_GetInfoPtr(wndPtr);
+
+  TRACE (tab,"\n");
+  return (LRESULT)infoPtr->himl;
+}
+
+static LRESULT
+TAB_SetImageList (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
+{
+    TAB_INFO *infoPtr = TAB_GetInfoPtr(wndPtr);
+    HIMAGELIST himlPrev;
+
+    TRACE (tab,"\n");
+    himlPrev = infoPtr->himl;
+  	infoPtr->himl= (HIMAGELIST)lParam;
+    return (LRESULT)himlPrev;
+}
+
+static LRESULT 
 TAB_Create (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 {
     TAB_INFO *infoPtr;
 
-    infoPtr = (TAB_INFO *)HeapAlloc (GetProcessHeap (), HEAP_ZERO_MEMORY,
-				     sizeof(TAB_INFO));
+    infoPtr = (TAB_INFO *)COMCTL32_Alloc (sizeof(TAB_INFO));
     wndPtr->wExtra[0] = (DWORD)infoPtr;
    
     infoPtr->uNumItem = 0;
@@ -325,12 +506,12 @@ TAB_Destroy (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
     if (infoPtr->items) {
 	for (iItem = 0; iItem < infoPtr->uNumItem; iItem++) {
 	    if (infoPtr->items[iItem].pszText)
-		HeapFree (GetProcessHeap (), 0, infoPtr->items[iItem].pszText);
+		COMCTL32_Free (infoPtr->items[iItem].pszText);
 	}
-	HeapFree (GetProcessHeap (), 0, infoPtr->items);
+	COMCTL32_Free (infoPtr->items);
     }
 
-    HeapFree (GetProcessHeap (), 0, infoPtr);
+    COMCTL32_Free (infoPtr);
  
     return 0;
 }
@@ -343,11 +524,104 @@ TAB_WindowProc (HWND32 hwnd, UINT32 uMsg, WPARAM32 wParam, LPARAM lParam)
     switch (uMsg)
     {
 
+	case TCM_GETIMAGELIST:
+	   return TAB_GetImageList (wndPtr, wParam, lParam);
+
+	case TCM_SETIMAGELIST:
+	   return TAB_SetImageList (wndPtr, wParam, lParam);
+	
+	case TCM_GETITEMCOUNT:
+	    return TAB_GetItemCount (wndPtr, wParam, lParam);
+
+	case TCM_GETITEM32A:
+	   return TAB_GetItem32A (wndPtr, wParam, lParam);
+
+	case TCM_GETITEM32W:
+	   FIXME (tab, "Unimplemented msg TCM_GETITEM32W\n");
+	   return 0;
+
+	case TCM_SETITEM32A:
+	   return TAB_SetItem32A (wndPtr, wParam, lParam);
+
+	case TCM_SETITEM32W:
+	   FIXME (tab, "Unimplemented msg TCM_GETITEM32W\n");
+	   return 0;
+
+	case TCM_DELETEITEM:
+	   return TAB_DeleteItem (wndPtr, wParam, lParam);
+
+	case TCM_DELETEALLITEMS:
+	   return TAB_DeleteAllItems (wndPtr, wParam, lParam);
+
+	case TCM_GETITEMRECT:
+	   FIXME (tab, "Unimplemented msg TCM_GETITEMRECT\n");
+	   return 0;
+
 	case TCM_GETCURSEL:
 	   return TAB_GetCurSel (wndPtr);
 
-	case TCM_INSERTITEM:
+	case TCM_SETCURSEL:
+	   return TAB_SetCurSel (wndPtr, wParam);
+
+	case TCM_INSERTITEM32A:
 	   return TAB_InsertItem (wndPtr, wParam, lParam);
+
+	case TCM_INSERTITEM32W:
+	   FIXME (tab, "Unimplemented msg TCM_INSERTITEM32W\n");
+	   return 0;
+
+	case TCM_SETITEMEXTRA:
+	   FIXME (tab, "Unimplemented msg TCM_SETITEMEXTRA\n");
+	   return 0;
+
+	case TCM_ADJUSTRECT:
+	   return TAB_AdjustRect (wndPtr, wParam, lParam);
+
+	case TCM_SETITEMSIZE:
+	   FIXME (tab, "Unimplemented msg TCM_SETITEMSIZE\n");
+	   return 0;
+
+	case TCM_REMOVEIMAGE:
+	   FIXME (tab, "Unimplemented msg TCM_REMOVEIMAGE\n");
+	   return 0;
+
+	case TCM_SETPADDING:
+	   FIXME (tab, "Unimplemented msg TCM_SETPADDING\n");
+	   return 0;
+
+	case TCM_GETROWCOUNT:
+	   FIXME (tab, "Unimplemented msg TCM_GETROWCOUNT\n");
+	   return 0;
+
+	case TCM_GETTOOLTIPS:
+	   FIXME (tab, "Unimplemented msg TCM_GETTOOLTIPS\n");
+	   return 0;
+
+	case TCM_SETTOOLTIPS:
+	   FIXME (tab, "Unimplemented msg TCM_SETTOOLTIPS\n");
+	   return 0;
+
+	case TCM_GETCURFOCUS:
+	   FIXME (tab, "Unimplemented msg TCM_GETCURFOCUS\n");
+	   return 0;
+
+	case TCM_SETCURFOCUS:
+	   FIXME (tab, "Unimplemented msg TCM_SETCURFOCUS\n");
+	   return 0;
+
+	case TCM_SETMINTTABWIDTH:
+	   FIXME (tab, "Unimplemented msg TCM_SETMINTTABWIDTH\n");
+	   return 0;
+
+	case TCM_DESELECTALL:
+	   FIXME (tab, "Unimplemented msg TCM_DESELECTALL\n");
+	   return 0;
+
+	case WM_GETFONT:
+	    return TAB_GetFont (wndPtr, wParam, lParam);
+
+	case WM_SETFONT:
+	    return TAB_SetFont (wndPtr, wParam, lParam);
 
 	case WM_CREATE:
 	    return TAB_Create (wndPtr, wParam, lParam);
@@ -355,8 +629,12 @@ TAB_WindowProc (HWND32 hwnd, UINT32 uMsg, WPARAM32 wParam, LPARAM lParam)
 	case WM_DESTROY:
 	    return TAB_Destroy (wndPtr, wParam, lParam);
 
+    case WM_GETDLGCODE:
+            return DLGC_WANTARROWS | DLGC_WANTCHARS;
+
 	case WM_LBUTTONUP:
 	    return TAB_LButtonUp (wndPtr, wParam, lParam);
+
 	case WM_PAINT:
 	    return TAB_Paint (wndPtr, wParam);
 	

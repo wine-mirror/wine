@@ -169,6 +169,5 @@ values in the 60 - 120 range. 96 is a good starting point.
 
 The most likely cause is a broken fonts.dir file in one of your font
 directories. You need to rerun 'mkfontdir' to rebuild this file. Read
-its manpage for more information.
-
-
+its manpage for more information. If you can't run mkfontdir on this machine
+as you are not root, use "xset -fp xxx" to remove the broken font path.

@@ -756,7 +756,7 @@ DWORD WINAPI GetTextExtent( HDC16 hdc, LPCSTR str, INT16 count )
  *
  * FIXME: Should this have a bug for compatibility?
  * Original Windows versions of GetTextExtentPoint{A,W} have documented
- * bugs.
+ * bugs (-> MSDN KB q147647.txt).
  */
 BOOL16 WINAPI GetTextExtentPoint16( HDC16 hdc, LPCSTR str, INT16 count,
                                     LPSIZE16 size )

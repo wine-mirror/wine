@@ -1,6 +1,8 @@
 #ifndef _WINE_DINPUT_H
 #define _WINE_DINPUT_H
 
+#include "unknwn.h"
+
 #define STDMETHOD(xfn) HRESULT (CALLBACK *fn##xfn)
 #define STDMETHOD_(ret,xfn) ret (CALLBACK *fn##xfn)
 #define PURE

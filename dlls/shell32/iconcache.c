@@ -741,7 +741,7 @@ HICON32 WINAPI ExtractIconEx32A ( LPSTR lpszFile, INT32 nIconIndex, HICON32 * ph
 	if (phiconSmall)
 	{ ret = ICO_ExtractIconEx(lpszFile, phiconSmall, nIconIndex, nIcons, 16, 16  );
 	  if ( nIcons==1 )
-	  { ret = phiconLarge[0];
+	  { ret = phiconSmall[0];
 	  }
 	}
 

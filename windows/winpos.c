@@ -1273,6 +1273,9 @@ BOOL16 WINAPI GetWindowPlacement16( HWND16 hwnd, WINDOWPLACEMENT16 *wndpl )
 
 /***********************************************************************
  *           GetWindowPlacement32   (USER32.307)
+ *
+ * Win95:
+ * Fails if wndpl->length of Win95 (!) apps is invalid.
  */
 BOOL32 WINAPI GetWindowPlacement32( HWND32 hwnd, WINDOWPLACEMENT32 *pwpl32 )
 {
@@ -1355,6 +1358,9 @@ BOOL16 WINAPI SetWindowPlacement16(HWND16 hwnd, const WINDOWPLACEMENT16 *wndpl)
 
 /***********************************************************************
  *           SetWindowPlacement32   (USER32.519)
+ *
+ * Win95:
+ * Fails if wndpl->length of Win95 (!) apps is invalid.
  */
 BOOL32 WINAPI SetWindowPlacement32( HWND32 hwnd, const WINDOWPLACEMENT32 *pwpl32 )
 {

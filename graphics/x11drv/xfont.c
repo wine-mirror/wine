@@ -1806,6 +1806,7 @@ BOOL32 X11DRV_FONT_Init( DeviceCaps* pDevCaps )
   HeapFree(SystemHeap, 0, buffer);
 
   InitializeCriticalSection( &crtsc_fonts_X11 );
+  MakeCriticalSectionGlobal( &crtsc_fonts_X11 );
 
   /* fontList initialization is over, allocate X font cache */
 
@@ -1935,7 +1936,7 @@ static UINT32 XFONT_Match( fontMatch* pfm )
        d = (h = pfi->df.dfPoints) + plf->lfHeight;
    else d = h = 0;	
 
-   if( d && plf->lfHeight )
+   if( d && h && plf->lfHeight )
    {
        UINT16	height = ( plf->lfHeight > 0 ) ? plf->lfHeight
 			 : ((-plf->lfHeight * pfi->df.dfPixHeight) / h);
@@ -1959,7 +1960,8 @@ static UINT32 XFONT_Match( fontMatch* pfm )
            pfm->height = pfi->df.dfPixHeight;
            penalty += (d > 0)? d * 0x8 : -d * 0x10;
        }
-   } else pfm->height = pfi->df.dfPixHeight;
+   }
+   else pfm->height = pfi->df.dfPixHeight;
 
    if((pfm->flags & FO_MATCH_PAF) &&
       (plf->lfPitchAndFamily & FF_FAMILY) != (pfi->df.dfPitchAndFamily & FF_FAMILY) )

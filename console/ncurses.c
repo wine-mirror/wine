@@ -39,7 +39,9 @@ void NCURSES_Start()
    driver.getCursorPosition = NCURSES_GetCursorPosition;
    driver.getCharacterAtCursor = NCURSES_GetCharacterAtCursor;
    driver.clearScreen = NCURSES_ClearScreen;
+#ifdef HAVE_RESIZETERM
    driver.notifyResizeScreen = NCURSES_NotifyResizeScreen;
+#endif
 
    driver.checkForKeystroke = NCURSES_CheckForKeystroke;
    driver.getKeystroke = NCURSES_GetKeystroke;
@@ -62,9 +64,14 @@ void NCURSES_Init()
 
 void NCURSES_Write(char output, int fg, int bg, int attribute)
 {
+   char row, col;
+
    /* We can discard all extended information. */
    if (waddch(stdscr, output) == ERR)
-      FIXME(console, "NCURSES: waddch() failed.\n");
+   {
+      NCURSES_GetCursorPosition(&row, &col);
+      FIXME(console, "NCURSES: waddch() failed at %d, %d.\n", row, col);
+   }
 }
 
 void NCURSES_Close()
@@ -137,6 +144,8 @@ void NCURSES_ClearScreen()
    werase(stdscr);
 }
 
+#ifdef HAVE_RESIZETERM
+
 void NCURSES_NotifyResizeScreen(int x, int y)
 {
    /* Note: This function gets called *after* another driver in the chain
@@ -145,5 +154,7 @@ void NCURSES_NotifyResizeScreen(int x, int y)
  
    resizeterm(y, x);
 }
+
+#endif
 
 #endif /* WINE_NCURSES */

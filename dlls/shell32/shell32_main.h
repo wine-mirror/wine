@@ -16,7 +16,7 @@ extern HIMAGELIST ShellBigIconList;
 /*******************************************
 * pointer to functions dynamically loaded
 */
-extern void	(CALLBACK* pDLLInitComctl)(void);
+extern void	(CALLBACK* pDLLInitComctl)(LPVOID);
 extern INT32	(CALLBACK* pImageList_AddIcon) (HIMAGELIST himl, HICON32 hIcon);
 extern INT32	(CALLBACK* pImageList_ReplaceIcon) (HIMAGELIST, INT32, HICON32);
 extern HIMAGELIST (CALLBACK* pImageList_Create) (INT32,INT32,UINT32,INT32,INT32);

@@ -299,7 +299,7 @@ int compare_name_id(name_id_t *n1, name_id_t *n2)
 		if(n1->name.s_name->type == str_char
 		&& n2->name.s_name->type == str_char)
 		{
-			return stricmp(n1->name.s_name->str.cstr, n2->name.s_name->str.cstr);
+			return strcasecmp(n1->name.s_name->str.cstr, n2->name.s_name->str.cstr);
 		}
 		else if(n1->name.s_name->type == str_unicode
 		&& n2->name.s_name->type == str_unicode)
@@ -571,6 +571,7 @@ void count_resources(resource_t *top)
 void write_pe_segment(FILE *fp, resource_t *top)
 {
 	int i;
+	int direntries;
 
 	fprintf(fp, "\t.align\t4\n");
 	fprintf(fp, "%s%s:\n", prefix, _PEResTab);
@@ -704,6 +705,9 @@ void write_pe_segment(FILE *fp, resource_t *top)
 	}
 
 	/* Write the resource table itself */
+	fprintf(fp, "%s_ResourceDirectory:\n", prefix);
+	fprintf(fp, "\t.globl\t%s_ResourceDirectory\n", prefix);
+	direntries = 0;
 
 	for(i = 0; i < rccount; i++)
 	{
@@ -746,6 +750,8 @@ void write_pe_segment(FILE *fp, resource_t *top)
 				fprintf(fp, "\t.long\t%ld\n", codepage);
 				/* Reserved */
 				fprintf(fp, "\t.long\t0\n");
+
+				direntries++;
 			}
 			free(namelabel);
 		}
@@ -753,9 +759,9 @@ void write_pe_segment(FILE *fp, resource_t *top)
 	}
 
 	fprintf(fp, "\t.align\t4\n");
-	fprintf(fp, "%s_ResourceDirectorySize:\n", Underscore);
-	fprintf(fp, "\t.globl\t%s_ResourceDirectorySize\n", Underscore);
-	fprintf(fp, "\t.long\t. - %s%s\n", prefix, _PEResTab);
+	fprintf(fp, "%s_NumberOfResources:\n", prefix);
+	fprintf(fp, "\t.globl\t%s_NumberOfResources\n", prefix);
+	fprintf(fp, "\t.long\t%d\n", direntries);
 }
 
 /*
@@ -988,7 +994,8 @@ void write_s_file(char *outname, resource_t *top)
 		if(create_dir)
 		{
 			/* Add the size of the entire resource section for elf-dlls */
-			fprintf(fo, "%s_ResourceSectionSize:\n", Underscore);
+			fprintf(fo, "%s_ResourceSectionSize:\n", prefix);
+			fprintf(fo, "\t.globl\t%s_ResourceSectionSize\n", prefix);
 			fprintf(fo, "\t.long\t. - %s%s\n", prefix, _PEResTab);
 		}
 	}

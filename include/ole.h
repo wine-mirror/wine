@@ -7,36 +7,17 @@
 
 #include "wingdi.h"
 
-typedef CHAR		OLECHAR16;
-typedef OLECHAR16	*BSTR16;
-typedef BSTR16		*LPBSTR16;
-typedef LPSTR		LPOLESTR16;
-typedef LPCSTR		LPCOLESTR16;
-typedef WCHAR		OLECHAR32;
-typedef OLECHAR32	*BSTR32;
-typedef BSTR32		*LPBSTR32;
-typedef LPWSTR		LPOLESTR32;
-typedef LPCWSTR		LPCOLESTR32;
-DECL_WINELIB_TYPE(OLECHAR)
-DECL_WINELIB_TYPE(LPOLESTR)
-DECL_WINELIB_TYPE(LPCOLESTR)
-DECL_WINELIB_TYPE(BSTR)
-DECL_WINELIB_TYPE(LPBSTR)
+/* FIXME: we need to include wtypes.h mainly, it seems, because we need BSTR. 
+ * Normally none of the APIs in ole.h depend on it. It is most likey that they should 
+ * be moved to ole2.h (which includes objbase.h and thus wtypes.h) or some other 
+ * OLE include
+ */
+#include "wtypes.h"
+
 
 #define OLESTR16(x) x
 #define OLESTR32(x) L##x	/* probably wrong */
 #define OLESTR WINELIB_NAME(OLESTR)
-
-typedef enum tagCLSCTX
-{
-    CLSCTX_INPROC_SERVER   = 0x1,
-    CLSCTX_INPROC_HANDLER  = 0x2,
-    CLSCTX_LOCAL_SERVER    = 0x4,
-    CLSCTX_REMOTE_SERVER   = 0x10
-} CLSCTX;
-
-#define CLSCTX_SERVER (CLSCTX_INPROC_SERVER|CLSCTX_LOCAL_SERVER|CLSCTX_REMOTE_SERVER)
-#define CLSCTX_ALL    (CLSCTX_INPROC_HANDLER|CLSCTX_SERVER)
 
 typedef unsigned short VARTYPE;
 typedef LONG DISPID;

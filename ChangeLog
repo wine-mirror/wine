@@ -1,3 +1,244 @@
+Sun Jan 10 14:40:34 1999  Alexandre Julliard  <julliard@winehq.com>
+
+	* include/miscemu.h, include/msdos.h, loader/main.c, msdos/Makefile.in, msdos/dosconf.c, msdos/int21.c:
+	Andreas Mohr <a.mohr@mailto.de>
+	Added config.sys parser.
+
+	* controls/listbox.c: Pascal Cuoq <Pascal.Cuoq@inria.fr>
+	Small change in LB_SETCURSEL32 handling (the caret should be moved as
+	well).
+
+	* configure, configure.in, files/async.c, include/config.h.in, misc/winsock_dns.c, msdos/int21.c, ole/compobj.c:
+	Marcus Meissner <marcus@jet.franken.de>
+	Use autoconf check for presence of sys/file.h.
+
+	* dlls/ntdll/rtl.c, relay32/ntdll.spec:
+	Marcus Meissner <marcus@jet.franken.de>
+	Implemented DbgPrint, added ultoa.
+
+	* win32/console.c: Peter Hunnisett <hunnise@nortelnetworks.com>
+	PeekConsoleInput & ReadConsoleInput need to return 0 records read in
+	the case of an invalid handle.
+
+	* console/ncurses.c, loader/main.c:
+	Joseph Pranevich <jpranevich@lycos.com>
+	More verbose debugging output.
+	Remove compilation warning.
+
+	* msdos/int10.c: Joseph Pranevich <jpranevich@lycos.com>
+	Fix up some interrupt calls to return at the data that they are supposed
+	to. Also increase comment verbosity to help debug things later.
+
+	* include/options.h, misc/main.c, misc/version.c:
+	Andreas Mohr <a.mohr@mailto.de>
+	Added switch -dosver.
+	Cleanup for OaBuildVersion().
+
+	* libtest/.cvsignore: Added vartest and volinfo
+
+	* dlls/shell32/contmenu.c, dlls/shell32/pidl.c, dlls/shell32/pidl.h, dlls/shell32/shelllink.c, dlls/shell32/shellord.c, dlls/shell32/shlfolder.c, dlls/shell32/shlview.c, include/shell.h:
+	Juergen Schmied <juergen.schmied@metronet.de>
+	Many bugfixes, code cleanup.
+	Removed a few glitches from the COM patch.
+
+	* windows/dialog.c: Lawson Whitney <lawson_whitney@juno.com>
+	Only destroy window once.
+
+	* graphics/ddraw.c, include/ddraw.h:
+	Marcus Meissner <marcus@jet.franken.de>
+	- moved drawable to common since it is used by both DGA and Xlib.
+	  (fixes one bad memory corruption bug in DGA (StarCraft and Diablo)
+	- added BltFast sanity checks.
+
+	* windows/queue.c, loader/task.c:
+	Ulrich Weigand <weigand@informatik.uni-erlangen.de>
+	InitApp() call removed from 32-bit application startup;
+	create task message queue in InitThreadInput() instead.
+
+	* loader/ne/convert.c:
+	Ulrich Weigand <weigand@informatik.uni-erlangen.de>
+	Added accelerator table PE->NE resource conversion.
+
+	* debugger/editline.c:
+	Ulrich Weigand <weigand@informatik.uni-erlangen.de>
+	Restart read() in case of EINTR in TTYget().
+
+	* dlls/shell32/shellole.c: Marcus Meissner <marcus@jet.franken.de>
+	Ptr ref wrong.
+
+	* tools/wrc/CHANGES, tools/wrc/dumpres.c, tools/wrc/genres.c, tools/wrc/newstruc.c, tools/wrc/newstruc.h, tools/wrc/parser.l, tools/wrc/parser.y, tools/wrc/readres.c, tools/wrc/utils.c, tools/wrc/utils.h, tools/wrc/wrc.h, tools/wrc/wrctypes.h, tools/wrc/writeres.c:
+	Bertho Stultiens <bertho@panter.soci.aau.dk>
+	Wrc version 1.0.8. Toolbar resources are now supported. A couple of
+	other fixes are also included. See file tools/wrc/CHANGES for details.
+
+	* ole/compobj.c: Marcus Meissner <marcus@jet.franken.de>
+	Missing WINAPI.
+
+	* include/x11drv.h, loader/dos/module.c, objects/dc.c, relay32/builtin32.c, relay32/relay386.c, scheduler/k32obj.c, files/async.c, if1632/relay.c, include/main.h, include/multimedia.h, include/windows.h:
+	James Juran <jrj120@psu.edu>
+	Add missing #includes and prototypes to eliminate some implicit
+	function declaration warnings and 'extern's in .c files.
+
+	* configure, configure.in, console/ncurses.c, include/acconfig.h, include/config.h.in:
+	Ove Kaaven <ovek@arcticnet.no>
+	Check for resizeterm in ncurses.
+
+	* libtest/Makefile.in, libtest/vartest-Win32.log, libtest/vartest.c, libtest/vartest.readme:
+	Francis Beaudet <francis@macadamian.com>
+	New test program for VARIANT functions.
+
+	* debugger/msc.c: Eric Pouech <Eric.Pouech@wanadoo.fr>
+	Some debug information (PDB) was not mapped when loading a module,
+	which caused a core in the debugger when it tried to access it.
+
+	* Makefile.in: Ove Kaaven <ovek@arcticnet.no>
+	Links libwine.so.1.0 to libwine.so in Wine's main directory.
+	Makes Wine compile with --enable-dll again.
+
+Sat Jan  9 09:12:40 1999  Alexandre Julliard  <julliard@winehq.com>
+
+	* relay32/ole32.spec, windows/dinput.c, include/storage.h, include/unknwn.h, include/windows.h, include/wine/obj_base.h, include/wine/obj_channel.h, include/wine/obj_clientserver.h, include/wine/obj_dataobject.h, include/wine/obj_marshal.h, include/wine/obj_misc.h, include/wine/obj_moniker.h, include/wine/obj_propertystorage.h, include/wine/obj_storage.h, include/winerror.h, include/wtypes.h, misc/shell.c, multimedia/dplay.c, multimedia/dsound.c, objects/font.c, ole/compobj.c, ole/ifs.c, ole/moniker.c, ole/ole2.c, ole/ole2disp.c, ole/oledlg.c, ole/oleobj.c, ole/storage.c, ole/typelib.c, dlls/shell32/dataobject.c, dlls/shell32/enumidlist.c, dlls/shell32/folders.c, dlls/shell32/pidl.c, dlls/shell32/shell32_main.c, dlls/shell32/shelllink.c, dlls/shell32/shellole.c, dlls/shell32/shellord.c, dlls/shell32/shlfolder.c, dlls/shell32/shlview.c, graphics/ddraw.c, graphics/vga.c, if1632/compobj.spec, include/compobj.h, include/ddraw.h, include/dinput.h, include/dplay.h, include/dsound.h, include/interfaces.h, include/objbase.h, include/objidl.h, include/ole.h, include/ole2.h, include/oleobj.h, include/servprov.h, include/shell.h, include/shlguid.h, include/shlobj.h, dlls/comctl32/imagelist.c, dlls/shell32/contmenu.c:
+	Francois Gouget <fgouget@multimania.com>
+	Added a lot of COM interfaces definitions.
+	Restructured COM header files for better compatibility and clarity.
+
+Fri Jan  8 16:37:03 1999  Alexandre Julliard  <julliard@winehq.com>
+
+	* files/file.c: Set GENERIC_READ|GENERIC_WRITE access for OF_CREATE.
+	Make GetFileType work for all handle types.
+
+	* win32/device.c: Avoid crash on NULL dev->info.
+
+	* include/flatsb.h, relay32/comctl32.spec, dlls/comctl32/Makefile.in, dlls/comctl32/commctrl.c, dlls/comctl32/flatsb.c, include/commctrl.h:
+	Alex Priem <alexp@sci.kun.nl>
+	Added stubs and defines for the flat scrollbar common control.
+
+	* include/commctrl.h, dlls/comctl32/datetime.c:
+	Alex Priem <alexp@sci.kun.nl>
+	Added some defines needed for custom draw'ing and datetime common
+	controls.
+
+	* dlls/shell32/iconcache.c: Eddie Carpenter <ecarpenter@itex.co.za>
+	Fixed a small bug in function ExtractIconEx32A.
+
+	* windows/winproc.c: Juergen Schmied <juergen.schmied@metronet.de>
+	HTASK16 -> threadID mapping of WM_ACTIVATEAPP.
+
+	* files/file.c: Bertho Stultiens <bertho@panter.soci.aau.dk>
+	Make DeleteFile fail for empty path.
+
+	* msdos/ioports.c: Gerald Pfeifer <pfeifer@dbai.tuwien.ac.at>
+	Fix dummy_ctr stuff to work even without DIRECT_IO_ACCESS.
+
+	* loader/ne/segment.c: Marcus Meissner <marcus@jet.franken.de>
+	Fixed wrong buffer which caused fixups to fail.
+
+	* graphics/d3dcommon.c, graphics/d3ddevices.c, graphics/d3dtexture.c, include/d3d.h:
+	Lionel Ulmer <ulmer@directprovider.net>
+	- added all the Direct3D error codes
+	- added 8bit palettized texture support
+
+	* msdos/cdrom.c: Marcus Meissner <marcus@jet.franken.de>
+	ifdefs for defines not in linux 2.0.
+
+	* relay32/winspool.spec, misc/printdrv.c:
+	Uwe Bonnes <bon@elektron.ikp.physik.tu-darmstadt.de>
+	Added two stubs for AddPrinterDriver.
+
+	* include/dosexe.h, loader/dos/dosmod.c, loader/dos/dosmod.h, loader/dos/dosvm.c:
+	Ove Kaaven <ovek@arcticnet.no>
+	Queue SIGALRM to reduce the "signal 14 lost" complaints.
+	Added support for reprogramming the DOS timer, and reading back the
+	current value.
+
+	* misc/registry.c: Marcus Meissner <marcus@jet.franken.de>
+	Wine hangs when registry (corrupted) has lone \ at end of file.
+
+	* dlls/shell32/shell32_main.h, dlls/shell32/shell32_main.c:
+	Kostya Ivanov <kostya@warmcat.excom.spb.su>
+	Small patch that enables Clarion for Windows not to trap while
+	loading.
+
+	* ole/variant.c: Marcus Meissner <marcus@jet.franken.de>
+	Replace troublesome assignments by memset for whole struct.
+
+	* graphics/ddraw.c: Lionel Ulmer <ulmer@directprovider.net>
+	Added handling of the 'palent' field of the CreatePalette procedure.
+
+	* documentation/wine.man:
+	Uwe Bonnes <bon@elektron.ikp.physik.tu-darmstadt.de>
+	Added description about including/excluding functions from relay
+	trace.
+
+	* win32/console.c: Marcus Meissner <marcus@jet.franken.de>
+	Read at least 1 input record in ReadConsoleInputA.
+
+	* memory/virtual.c:
+	Fixed CreateMapping when a mapping with the same name already exists.
+
+Wed Jan  6 10:37:29 1999  Alexandre Julliard  <julliard@winehq.com>
+
+	* server/file.c: Fixed file destruction when file has no name.
+
+Tue Jan  5 18:38:59 1999  Alexandre Julliard  <julliard@winehq.com>
+
+	* misc/main.c: Eric Pouech <Eric.Pouech@wanadoo.fr>
+	Warns user if multiple -dll switches are used on command line.
+
+	* dlls/comctl32/trackbar.c: Alex Priem <alexp@sci.kun.nl>
+	Fixed a leftover HeapFree in the trackbar common control.
+
+	* include/commctrl.h, include/debug.h, include/debugdefs.h, include/tab.h, dlls/comctl32/tab.c:
+	Alex Priem <alexp@sci.kun.nl>
+	Fixed some problems with the tab common control (with thanks to Anders
+	Carlsson <anders.carlsson@linux.nu>).
+
+	* dlls/comctl32/commctrl.c, dlls/comctl32/propsheet.c, include/commctrl.h, include/propsheet.h, relay32/comctl32.spec:
+	Alex Priem <alexp@sci.kun.nl>
+	Added a missing PropertySheet32AW and CreatePropertySheetPage stub,
+	and some missing defines.
+
+	* misc/main.c, scheduler/syslevel.c, graphics/vga.c:
+	Ulrich Weigand <weigand@informatik.uni-erlangen.de>
+	Use MakeCriticalSectionGlobal on all critical sections used across
+	process boundaries.
+
+	* include/winbase.h, include/windows.h:
+	Ulrich Weigand <weigand@informatik.uni-erlangen.de>
+	Added prototypes for MakeCriticalSectionGlobal, ConvertToGlobalHandle.
+
+	* documentation/wine.man:
+	Uwe Bonnes <bon@elektron.ikp.physik.tu-darmstadt.de>
+	Added environment variables in the man page.
+
+	* loader/dos/module.c: Gerald Pfeifer <pfeifer@dbai.tuwien.ac.at>
+	Fixed args of MZ_CreateProcess.
+
+	* programs/clock/language.c, programs/notepad/language.c, programs/progman/main.c:
+	Andreas Mohr <a.mohr@mailto.de>
+	Fixed string bug in programs/.
+
+	* msdos/ioports.c: Andreas Mohr <a.mohr@mailto.de>
+	Added stupid "action" emulation for hardware timers in ioports.c.
+
+	* dlls/winaspi/winaspi16.c: Andreas Mohr <a.mohr@mailto.de>
+	Again a small DOSASPI patch.
+
+	* documentation/bugreports, documentation/fonts, windows/sysmetrics.c, windows/win.c, windows/winpos.c:
+	Andreas Mohr <a.mohr@mailto.de>
+	Documentation updates.
+
+	* graphics/ddraw.c: Lionel Ulmer <ulmer@directprovider.net>
+	- check if palette is not null when setting a palette
+	- check if window handle is valid before getting its 'drawable'
+
+	* graphics/x11drv/xfont.c: Eric Pouech <Eric.Pouech@wanadoo.fr>
+	Prevent core dump with some TTF (when X11 runs with a true type
+	server).
+
+	* server/console.c: Marcus Meissner <marcus@jet.franken.de>
+	Use stdout for default console output.
+
 ----------------------------------------------------------------
 Sun Jan  3 17:00:20 1999  Alexandre Julliard  <julliard@winehq.com>
 

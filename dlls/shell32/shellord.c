@@ -25,7 +25,6 @@
 #include "dlgs.h"
 #include "win.h"
 #include "cursoricon.h"
-#include "interfaces.h"
 #include "shlobj.h"
 #include "debug.h"
 #include "winreg.h"
@@ -311,7 +310,9 @@ DWORD WINAPI SHCreateDirectory(LPSECURITY_ATTRIBUTES sec,LPCSTR path) {
  */
 DWORD WINAPI SHFree(LPVOID x) {
   TRACE(shell,"%p\n",x);
-  /*return LocalFree32((HANDLE32)x);*/ /* crashes */
+  if (!HIWORD(x))
+  { *(LPDWORD)0xdeaf0000 = 0;
+  }
   return HeapFree(GetProcessHeap(),0,x);
 }
 

@@ -92,6 +92,7 @@ extern int PROFILE_GetWineIniBool( char const *section, char const *key_name,
 extern char* PROFILE_GetStringItem( char* );
 
 /* Version functions */
-extern void VERSION_ParseVersion( char *arg );
+extern void VERSION_ParseWinVersion( const char *arg );
+extern void VERSION_ParseDosVersion( const char *arg );
 
 #endif  /* __WINE_OPTIONS_H */

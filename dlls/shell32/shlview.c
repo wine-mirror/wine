@@ -10,9 +10,9 @@
 #include "ole.h"
 #include "ole2.h"
 #include "debug.h"
-#include "compobj.h"
-#include "interfaces.h"
+#include "servprov.h"
 #include "shlobj.h"
+#include "objbase.h"
 #include "shell.h"
 #include "winerror.h"
 #include "winnls.h"
@@ -666,7 +666,7 @@ BOOL32 ShellView_AddRemoveDockingWindow(LPSHELLVIEW this, BOOL32 bAdd)
 	hr = IShellBrowser_QueryInterface(this->pShellBrowser, (REFIID)&IID_IServiceProvider, (LPVOID*)&pSP);
 	if(SUCCEEDED(hr))
 	{ /*get the IDockingWindowFrame pointer*/
-	  hr = pSP->lpvtbl->fnQueryService(pSP, (REFGUID)&SID_SShellBrowser, (REFIID)&IID_IDockingWindowFrame, (LPVOID*)&pFrame);
+	  hr = IServiceProvider_QueryService(pSP, (REFGUID)&SID_SShellBrowser, (REFIID)&IID_IDockingWindowFrame, (LPVOID*)&pFrame);
 	  if(SUCCEEDED(hr))
 	  { if(bAdd)
 	    { hr = S_OK;
@@ -706,7 +706,7 @@ BOOL32 ShellView_AddRemoveDockingWindow(LPSHELLVIEW this, BOOL32 bAdd)
 	    }
 	    pFrame->lpvtbl->fnRelease(pFrame);
 	  }
-	  pSP->lpvtbl->fnRelease(pSP);
+	  IServiceProvider_Release(pSP);
 	}
 	return bReturn;
 }
@@ -725,12 +725,12 @@ BOOL32 ShellView_CanDoIDockingWindow(LPSHELLVIEW this)
 	/*get the browser's IServiceProvider*/
 	hr = IShellBrowser_QueryInterface(this->pShellBrowser, (REFIID)&IID_IServiceProvider, (LPVOID*)&pSP);
 	if(hr==S_OK)
-	{ hr = pSP->lpvtbl->fnQueryService(pSP, (REFGUID)&SID_SShellBrowser, (REFIID)&IID_IDockingWindowFrame, (LPVOID*)&pFrame);
+	{ hr = IServiceProvider_QueryService(pSP, (REFGUID)&SID_SShellBrowser, (REFIID)&IID_IDockingWindowFrame, (LPVOID*)&pFrame);
    	  if(SUCCEEDED(hr))
 	  { bReturn = TRUE;
 	    pFrame->lpvtbl->fnRelease(pFrame);
 	  }
-	  pSP->lpvtbl->fnRelease(pSP);
+	  IServiceProvider_Release(pSP);
 	}
 	return bReturn;
 }
@@ -843,6 +843,11 @@ UINT32 ShellView_GetSelections(LPSHELLVIEW this)
 {	LVITEM32A	lvItem;
 	UINT32	i;
 
+
+	if (this->aSelectedItems)
+	{ SHFree(this->aSelectedItems);
+	}
+
 	this->uSelected = ListView_GetSelectedCount(this->hWndList);
 	this->aSelectedItems = (LPITEMIDLIST*)SHAlloc(this->uSelected * sizeof(LPITEMIDLIST));
 
@@ -949,9 +954,6 @@ void ShellView_DoContextMenu(LPSHELLVIEW this, WORD x, WORD y, BOOL32 fDefault)
 	    if (pContextMenu)
 	      pContextMenu->lpvtbl->fnRelease(pContextMenu);
 	  }
-	  SHFree(this->aSelectedItems);
-	  this->aSelectedItems=NULL;
-	  this->uSelected=0;
 	}
 	else	/* background context menu */
 	{ hMenu = LoadMenuIndirect32A(&_Resource_Men_MENU_002_0_data);
@@ -1321,17 +1323,20 @@ static ULONG WINAPI IShellView_AddRef(LPSHELLVIEW this)
 *  IShellView_Release
 */
 static ULONG WINAPI IShellView_Release(LPSHELLVIEW this)
-{ TRACE(shell,"(%p)->()\n",this);
-  if (!--(this->ref)) 
-  { TRACE(shell," destroying IShellView(%p)\n",this);
+{ 	TRACE(shell,"(%p)->()\n",this);
+	if (!--(this->ref)) 
+	{ TRACE(shell," destroying IShellView(%p)\n",this);
 
-    if(this->pSFParent)
-       this->pSFParent->lpvtbl->fnRelease(this->pSFParent);
+	  if(this->pSFParent)
+	    this->pSFParent->lpvtbl->fnRelease(this->pSFParent);
 
-    HeapFree(GetProcessHeap(),0,this);
-    return 0;
-  }
-  return this->ref;
+	  if (this->aSelectedItems)
+	    SHFree(this->aSelectedItems);
+
+	  HeapFree(GetProcessHeap(),0,this);
+	  return 0;
+	}
+	return this->ref;
 }
 /**************************************************************************
 *  ShellView_GetWindow
@@ -1516,14 +1521,12 @@ static HRESULT WINAPI IShellView_GetItemObject(LPSHELLVIEW this, UINT32 uItem, R
 
 	*ppvOut = NULL;
 	if(IsEqualIID(riid, &IID_IContextMenu))
-	{ pObj =(LPUNKNOWN)IContextMenu_Constructor(this->pSFParent,this->aSelectedItems,this->uSelected);	
+	{ ShellView_GetSelections(this);
+	  pObj =(LPUNKNOWN)IContextMenu_Constructor(this->pSFParent,this->aSelectedItems,this->uSelected);	
 	}
 	else if (IsEqualIID(riid, &IID_IDataObject))
 	{ ShellView_GetSelections(this);
 	  pObj =(LPUNKNOWN)IDataObject_Constructor(this->hWndParent, this->pSFParent,this->aSelectedItems,this->uSelected);
-	  SHFree(this->aSelectedItems);
-	  this->aSelectedItems=NULL;
-	  this->uSelected=0;
 	}
 
 	TRACE(shell,"-- (%p)->(interface=%p)\n",this, ppvOut);

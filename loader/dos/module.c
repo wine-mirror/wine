@@ -45,8 +45,6 @@
 #define SEG16(ptr,seg) ((LPVOID)((BYTE*)ptr+((DWORD)(seg)<<4)))
 #define SEGPTR16(ptr,segptr) ((LPVOID)((BYTE*)ptr+((DWORD)SELECTOROF(segptr)<<4)+OFFSETOF(segptr)))
 
-extern WORD WINAPI SYSTEM_KillSystemTimer( WORD timer );
-
 static void MZ_InitPSP( LPVOID lpPSP, LPCSTR cmdline, WORD env )
 {
  PDB*psp=lpPSP;
@@ -494,7 +492,7 @@ void MZ_KillModule( LPDOSTASK lpDosTask )
 
 #else /* !MZ_SUPPORTED */
 
-HINSTANCE16 MZ_CreateProcess( LPCSTR name, LPCSTR cmdline, LPCSTR env, 
+HINSTANCE16 MZ_CreateProcess( LPCSTR name, LPCSTR cmdline, LPCSTR env, BOOL32 inherit,
                               LPSTARTUPINFO32A startup, LPPROCESS_INFORMATION info )
 {
  WARN(module,"DOS executables not supported on this architecture\n");

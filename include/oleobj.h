@@ -3,8 +3,10 @@
 
 #include "ole.h"
 #include "ole2.h"
-#include "compobj.h"
-/* #include "interfaces.h" */
+#include "wine/obj_base.h"
+#include "wine/obj_storage.h"
+#include "wine/obj_moniker.h"
+#include "wine/obj_dataobject.h"
 
 #define STDMETHOD(xfn) HRESULT (CALLBACK *fn##xfn)
 #define STDMETHOD_(type,xfn) type (CALLBACK *fn##xfn)
@@ -14,8 +16,6 @@
 
 /* forward declaration of the objects*/
 typedef struct tagOLEADVISEHOLDER	*LPOLEADVISEHOLDER,	IOleAdviseHolder;
-typedef struct tagADVISESINK		*LPADVISESINK,		IAdviseSink;
-typedef struct tagENUMSTATDATA		*LPENUMSTATDATA,	IEnumSTATDATA;
 
 
 /****************************************************************************

@@ -23,7 +23,7 @@ init	COMCTL32_LibMain
  15 stub DrawInsert
  16 stdcall CreateUpDownControl(long long long long long long long long long long long long) CreateUpDownControl
  17 stdcall InitCommonControls() InitCommonControls
- 18 stub CreatePropertySheetPage
+ 18 stdcall CreatePropertySheetPage(ptr) CreatePropertySheetPage32AW
  19 stdcall CreatePropertySheetPageA(ptr) CreatePropertySheetPage32A
  20 stdcall CreatePropertySheetPageW(ptr) CreatePropertySheetPage32W
  21 stdcall CreateStatusWindow(long str long long) CreateStatusWindow32AW
@@ -34,16 +34,16 @@ init	COMCTL32_LibMain
  26 stub DllInstall
  27 stdcall DrawStatusText(long ptr ptr long) DrawStatusText32AW
  28 stdcall DrawStatusTextW(long ptr wstr long) DrawStatusText32W
- 29 stub FlatSB_EnableScrollBar
- 30 stub FlatSB_GetScrollInfo
- 31 stub FlatSB_GetScrollPos
- 32 stub FlatSB_GetScrollProp
- 33 stub FlatSB_GetScrollRange
- 34 stub FlatSB_SetScrollInfo
- 35 stub FlatSB_SetScrollPos
- 36 stub FlatSB_SetScrollProp
- 37 stub FlatSB_SetScrollRange
- 38 stub FlatSB_ShowScrollBar
+ 29 stdcall FlatSB_EnableScrollBar (long long long) FlatSB_EnableScrollBar
+ 30 stdcall FlatSB_GetScrollInfo (long long ptr) FlatSB_GetScrollInfo
+ 31 stdcall FlatSB_GetScrollPos (long long) FlatSB_GetScrollPos
+ 32 stdcall FlatSB_GetScrollProp (long long ptr) FlatSB_GetScrollProp
+ 33 stdcall FlatSB_GetScrollRange (long long ptr ptr) FlatSB_GetScrollRange
+ 34 stdcall FlatSB_SetScrollInfo (long long ptr long) FlatSB_SetScrollInfo
+ 35 stdcall FlatSB_SetScrollPos (long long long long) FlatSB_SetScrollPos
+ 36 stdcall FlatSB_SetScrollProp (long long long long) FlatSB_SetScrollProp
+ 37 stdcall FlatSB_SetScrollRange (long long long long long) FlatSB_SetScrollRange
+ 38 stdcall FlatSB_ShowScrollBar (long long long) FlatSB_ShowScrollBar
  39 stdcall ImageList_Add(ptr long long) ImageList_Add
  40 stdcall ImageList_AddIcon(ptr long) ImageList_AddIcon
  41 stdcall ImageList_AddMasked(ptr long long) ImageList_AddMasked
@@ -87,11 +87,11 @@ init	COMCTL32_LibMain
  79 stdcall ImageList_SetOverlayImage(ptr long long) ImageList_SetOverlayImage
  80 stdcall ImageList_Write(ptr ptr) ImageList_Write
  81 stdcall InitCommonControlsEx(ptr) InitCommonControlsEx
- 82 stub InitializeFlatSB
- 83 stub PropertySheet
+ 82 stdcall InitializeFlatSB(long) InitializeFlatSB
+ 83 stdcall PropertySheet(ptr) PropertySheet32AW
  84 stdcall PropertySheetA(ptr) PropertySheet32A
  85 stdcall PropertySheetW(ptr) PropertySheet32W
- 86 stub UninitializeFlatSB
+ 86 stdcall UninitializeFlatSB(long) UninitializeFlatSB
  87 stub _TrackMouseEvent
 
 151 stdcall CreateMRUListA(ptr) CreateMRUList32A

@@ -69,7 +69,7 @@ int create_console( int fd, struct object *obj[2] )
         file_set_error();
         return 0;
     }
-    if ((write_fd = (fd != -1) ? dup(fd) : dup(0)) == -1)
+    if ((write_fd = (fd != -1) ? dup(fd) : dup(1)) == -1)
     {
         file_set_error();
         close( read_fd );

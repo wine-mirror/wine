@@ -567,7 +567,7 @@ static int CONSOLE_openpty(CONSOLE *console, char *name,
 static BOOL32 CONSOLE_make_complex(HANDLE32 handle,CONSOLE *console)
 {
 	struct termios term;
-	char buf[30];
+	char buf[30],*title;
 	char c = '\0';
 	int status = 0;
 	int i,xpid;
@@ -611,6 +611,12 @@ static BOOL32 CONSOLE_make_complex(HANDLE32 handle,CONSOLE *console)
 	/* enable mouseclicks */
 	sprintf(buf,"%c[?1001s%c[?1000h",27,27);
 	WriteFile(handle,buf,strlen(buf),&xlen,NULL);
+	if (console->title) {
+	    title = HeapAlloc(GetProcessHeap(),0,strlen("\033]2;\a")+1+strlen(console->title));
+	    sprintf(title,"\033]2;%s\a",console->title);
+	    WriteFile(handle,title,strlen(title),&xlen,NULL);
+	    HeapFree(GetProcessHeap(),0,title);
+	}
 	return TRUE;
 
 }
@@ -966,9 +972,7 @@ BOOL32 WINAPI ReadConsole32A( HANDLE32 hConsoleInput,
     );
     CONSOLE_get_input(hConsoleInput);
 
-    /* FIXME:	should this drain everything from the input queue and just 
-     * 		put the keypresses in the buffer? Needs further thought.
-     */
+    /* FIXME: should we read at least 1 char? The SDK does not say */
     for (i=0;(i<console->nrofirs)&&(charsread<nNumberOfCharsToRead);i++) {
     	if (console->irs[i].EventType != KEY_EVENT)
 		continue;
@@ -977,6 +981,7 @@ BOOL32 WINAPI ReadConsole32A( HANDLE32 hConsoleInput,
 	*xbuf++ = console->irs[i].Event.KeyEvent.uChar.AsciiChar; 
 	charsread++;
     }
+    /* SDK says: Drains all other input events from queue. */
     CONSOLE_drain_input(console,i);
     if (lpNumberOfCharsRead)
     	*lpNumberOfCharsRead = charsread;
@@ -1034,9 +1039,27 @@ BOOL32 WINAPI ReadConsoleInput32A(HANDLE32 hConsoleInput,
     if (!console) {
     	FIXME(console, "(%d,%p,%ld,%p), No console handle!\n",hConsoleInput,
 		lpBuffer, nLength, lpNumberOfEventsRead);
+
+        /* Indicate that nothing was read */
+        *lpNumberOfEventsRead = 0;
+
 	return FALSE;
     }
     CONSOLE_get_input(hConsoleInput);
+    /* SDK: return at least 1 input record */
+    while (!console->nrofirs) {
+    	DWORD res;
+
+    	res=WaitForSingleObject(hConsoleInput,0);
+	switch (res) {
+	case STATUS_TIMEOUT:	continue;
+	case 0:			break; /*ok*/
+	case WAIT_FAILED:	return 0;/*FIXME: SetLastError?*/
+	default:		break;	/*hmm*/
+	}
+	CONSOLE_get_input(hConsoleInput);
+    }
+    
     if (nLength>console->nrofirs)
     	nLength = console->nrofirs;
     memcpy(lpBuffer,console->irs,sizeof(INPUT_RECORD)*nLength);
@@ -1081,11 +1104,13 @@ BOOL32 WINAPI SetConsoleTitle32A(LPCSTR title)
     }
 
     sprintf(titlestring,titleformat,title);
-    /* FIXME: hmm, should use WriteFile probably... */
-    /*CONSOLE_Write(&console->header,titlestring,strlen(titlestring),&written,NULL);*/
-    WriteFile(GetStdHandle(STD_OUTPUT_HANDLE),titlestring,strlen(titlestring),&written,NULL);
-    if (written == strlen(titlestring))
-	ret =TRUE;
+    /* only set title for complex console (own xterm) */
+    if (console->pid != -1) {
+	WriteFile(GetStdHandle(STD_OUTPUT_HANDLE),titlestring,strlen(titlestring),&written,NULL);
+	if (written == strlen(titlestring))
+	    ret =TRUE;
+    } else
+    	ret = TRUE;
     HeapFree( GetProcessHeap(), 0, titlestring );
     K32OBJ_DecCount(&console->header);
     return ret;
@@ -1215,6 +1240,10 @@ BOOL32 WINAPI PeekConsoleInput32A(HANDLE32 hConsoleInput,
 
     if (!console) {
         FIXME(console,"(%d,%p,%ld,%p), No console handle passed!\n",hConsoleInput, pirBuffer, cInRecords, lpcRead);
+
+        /* Indicate that nothing was read */
+        *lpcRead = 0; 
+
     	return FALSE;
     }
     TRACE(console,"(%d,%p,%ld,%p)\n",hConsoleInput, pirBuffer, cInRecords, lpcRead);

@@ -1702,9 +1702,15 @@ LONG WINAPI SetWindowLong32A( HWND32 hwnd, INT32 offset, LONG newval )
  * Do not use GWL_HWNDPARENT to reset the window's parent, use
  * SetParent() instead.
  *
+ * Win95:
+ * When offset is GWL_STYLE and the calling app's ver is 4.0,
+ * it sends WM_STYLECHANGING before changing the settings
+ * and WM_STYLECHANGED afterwards.
+ * App ver 4.0 can't use SetWindowLong to change WS_EX_TOPMOST.
+ *
  * BUGS
  *
- * GWL_STYLE does not dispatch WM_STYLE_... messages.
+ * GWL_STYLE does not dispatch WM_STYLE... messages.
  *
  * CONFORMANCE
  *

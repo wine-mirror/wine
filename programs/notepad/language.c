@@ -147,7 +147,7 @@ VOID LANGUAGE_Init(VOID)
 
     PROFILE_GetWineIniString("programs", "language", "language", 
                              buffer, sizeof(buffer));
-  Globals.lpszLanguage = p = LocalLock(LocalAlloc(LMEM_FIXED, lstrlen(buffer)));
+  Globals.lpszLanguage = p = LocalLock(LocalAlloc(LMEM_FIXED, lstrlen(buffer)+1));
   strcpy(p, buffer);
   /* hmemcpy(p, buffer, 1 + lstrlen(buffer)); */
   #endif

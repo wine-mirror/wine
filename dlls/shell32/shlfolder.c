@@ -1,5 +1,5 @@
 /*
- *	Shell Folder stuff (...and all the OLE-Objects of SHELL32.DLL)
+ *	Shell Folder stuff
  *
  *	Copyright 1997	Marcus Meissner
  *	Copyright 1998	Juergen Schmied
@@ -12,9 +12,8 @@
 #include "ole.h"
 #include "ole2.h"
 #include "debug.h"
-#include "compobj.h"
-#include "interfaces.h"
 #include "shlobj.h"
+#include "objbase.h"
 #include "shell.h"
 #include "winerror.h"
 #include "winnls.h"
@@ -115,11 +114,11 @@ LPSHELLFOLDER IShellFolder_Constructor(LPSHELLFOLDER pParent,LPITEMIDLIST pidl)
 	if(sf->mpidl)        /* do we have a pidl? */
 	{ dwSize = 0;
 	  if(sf->mpSFParent->sMyPath)		/* get the size of the parents path */
-	  { dwSize += strlen(sf->mpSFParent->sMyPath) + 1;
+	  { dwSize += strlen(sf->mpSFParent->sMyPath) ;
 	    TRACE(shell,"-- (%p)->(parent's path=%s)\n",sf, debugstr_a(sf->mpSFParent->sMyPath));
 	  }   
 	  dwSize += _ILGetFolderText(sf->mpidl,NULL,0); /* add the size of the foldername*/
-	  sf->sMyPath = SHAlloc(dwSize);
+	  sf->sMyPath = SHAlloc(dwSize+1);
 	  if(sf->sMyPath)
 	  { *(sf->sMyPath)=0x00;
 	    if(sf->mpSFParent->sMyPath)		/* if the parent has a path, get it*/
@@ -141,24 +140,24 @@ LPSHELLFOLDER IShellFolder_Constructor(LPSHELLFOLDER pParent,LPITEMIDLIST pidl)
 */
 static HRESULT WINAPI IShellFolder_QueryInterface(
   LPSHELLFOLDER this, REFIID riid, LPVOID *ppvObj)
-{  char	xriid[50];
-   WINE_StringFromCLSID((LPCLSID)riid,xriid);
-   TRACE(shell,"(%p)->(\n\tIID:\t%s,%p)\n",this,xriid,ppvObj);
+{	char	xriid[50];
+	WINE_StringFromCLSID((LPCLSID)riid,xriid);
+	TRACE(shell,"(%p)->(\n\tIID:\t%s,%p)\n",this,xriid,ppvObj);
 
-  *ppvObj = NULL;
+	*ppvObj = NULL;
 
-  if(IsEqualIID(riid, &IID_IUnknown))          /*IUnknown*/
-  { *ppvObj = this; 
-  }
-  else if(IsEqualIID(riid, &IID_IShellFolder))  /*IShellFolder*/
-  {    *ppvObj = (IShellFolder*)this;
-  }   
+	if(IsEqualIID(riid, &IID_IUnknown))          /*IUnknown*/
+	{ *ppvObj = this; 
+	}
+	else if(IsEqualIID(riid, &IID_IShellFolder))  /*IShellFolder*/
+	{    *ppvObj = (IShellFolder*)this;
+	}   
 
-  if(*ppvObj)
-  { (*(LPSHELLFOLDER*)ppvObj)->lpvtbl->fnAddRef(this);  	
-    TRACE(shell,"-- Interface: (%p)->(%p)\n",ppvObj,*ppvObj);
-		return S_OK;
-  }
+	if(*ppvObj)
+ 	{ (*(LPSHELLFOLDER*)ppvObj)->lpvtbl->fnAddRef(this);  	
+	  TRACE(shell,"-- Interface: (%p)->(%p)\n",ppvObj,*ppvObj);
+	  return S_OK;
+	}
 	TRACE(shell,"-- Interface: E_NOINTERFACE\n");
 	return E_NOINTERFACE;
 }   
@@ -223,36 +222,40 @@ static HRESULT WINAPI IShellFolder_ParseDisplayName(
 	DWORD *pdwAttributes)
 {	HRESULT        hr=E_OUTOFMEMORY;
 	LPITEMIDLIST   pidlFull=NULL, pidlTemp = NULL, pidlOld = NULL;
-	LPSTR          pszTemp, pszNext=NULL;
-	CHAR           szElement[MAX_PATH];
+	LPSTR          pszNext=NULL;
+	CHAR           szTemp[MAX_PATH],szElement[MAX_PATH];
 	BOOL32         bIsFile;
-	DWORD          dwChars;
        
 	TRACE(shell,"(%p)->(HWND=0x%08x,%p,%p=%s,%p,pidl=%p,%p)\n",
 		this,hwndOwner,pbcReserved,lpszDisplayName,
 		debugstr_w(lpszDisplayName),pchEaten,ppidl,pdwAttributes);
 
-	dwChars=lstrlen32W(lpszDisplayName) + 1;
-	pszTemp=(LPSTR)HeapAlloc(GetProcessHeap(),0,dwChars);
-
-	if(pszTemp)
 	{ hr = E_FAIL;
-	  WideCharToLocal32(pszTemp, lpszDisplayName, dwChars);
-	  if(*pszTemp)
-	  { if (strcmp(pszTemp,"Desktop")==0)
-	    { pidlFull = (LPITEMIDLIST)HeapAlloc(GetProcessHeap(),0,2);
-	      pidlFull->mkid.cb = 0;
+	  WideCharToLocal32(szTemp, lpszDisplayName, lstrlen32W(lpszDisplayName) + 1);
+	  if(szTemp[0])
+	  { if (strcmp(szTemp,"Desktop")==0)
+	    { pidlFull = _ILCreateDesktop();
 	    }
-	    else if (strcmp(pszTemp,"My Computer")==0)
+	    else if (strcmp(szTemp,"My Computer")==0)
 	    { pidlFull = _ILCreateMyComputer();
 	    }
 	    else
-	    { pidlFull = _ILCreateMyComputer();
-
+	    { if (!PathIsRoot32A(szTemp))
+	      { if (this->sMyPath && strlen (this->sMyPath))
+	        { if (strcmp(this->sMyPath,"My Computer"))
+	          { strcpy (szElement,this->sMyPath);
+	            PathAddBackslash32A (szElement);
+		    strcat (szElement, szTemp);
+		    strcpy (szTemp, szElement);
+	          }
+	        }
+	      }
+	      
 	      /* check if the lpszDisplayName is Folder or File*/
-	      bIsFile = ! (GetFileAttributes32A(pszTemp) & FILE_ATTRIBUTE_DIRECTORY);
-	      pszNext = GetNextElement(pszTemp, szElement, MAX_PATH);
+	      bIsFile = ! (GetFileAttributes32A(szTemp) & FILE_ATTRIBUTE_DIRECTORY);
+	      pszNext = GetNextElement(szTemp, szElement, MAX_PATH);
 
+	      pidlFull = _ILCreateMyComputer();
 	      pidlTemp = _ILCreateDrive(szElement);			
 	      pidlOld = pidlFull;
 	      pidlFull = ILCombine(pidlFull,pidlTemp);
@@ -275,7 +278,6 @@ static HRESULT WINAPI IShellFolder_ParseDisplayName(
 	    }
 	  }
 	}
-	HeapFree(GetProcessHeap(),0,pszTemp);
 	*ppidl = pidlFull;
 	return hr;
 }
@@ -358,19 +360,15 @@ static HRESULT WINAPI IShellFolder_BindToObject( LPSHELLFOLDER this, LPCITEMIDLI
 *  REFIID        riid,       //[in ] Initial storage interface 
 *  LPVOID*       ppvObject   //[out] Interface* returned
 */
-static HRESULT WINAPI IShellFolder_BindToStorage(
-  	LPSHELLFOLDER this,
-    LPCITEMIDLIST pidl, /*simple/complex pidl*/
-    LPBC pbcReserved, 
-    REFIID riid, 
-    LPVOID *ppvOut)
+static HRESULT WINAPI IShellFolder_BindToStorage(LPSHELLFOLDER this,
+	    LPCITEMIDLIST pidl,LPBC pbcReserved, REFIID riid, LPVOID *ppvOut)
 {	char xriid[50];
 	WINE_StringFromCLSID(riid,xriid);
 
 	FIXME(shell,"(%p)->(pidl=%p,%p,\n\tIID:%s,%p) stub\n",this,pidl,pbcReserved,xriid,ppvOut);
 
-  *ppvOut = NULL;
-  return E_NOTIMPL;
+	*ppvOut = NULL;
+	return E_NOTIMPL;
 }
 
 /**************************************************************************
@@ -463,8 +461,10 @@ static HRESULT WINAPI IShellFolder_CreateViewObject( LPSHELLFOLDER this,
 	*ppvOut = NULL;
 
 	pShellView = IShellView_Constructor(this, this->mpidl);
+
 	if(!pShellView)
 	  return E_OUTOFMEMORY;
+	  
 	hr = pShellView->lpvtbl->fnQueryInterface(pShellView, riid, ppvOut);
 	pShellView->lpvtbl->fnRelease(pShellView);
 	TRACE(shell,"-- (%p)->(interface=%p)\n",this, ppvOut);
@@ -617,54 +617,56 @@ static HRESULT WINAPI IShellFolder_GetDisplayNameOf( LPSHELLFOLDER this, LPCITEM
 
 	szSpecial[0]=0x00; 
 	szDrive[0]=0x00;
+	szText[0]=0x00;
 
 	/* test if simple(relative) or complex(absolute) pidl */
 	pidlTemp = ILGetNext(pidl);
 	if (pidlTemp && pidlTemp->mkid.cb==0x00)
 	{ bSimplePidl = TRUE;
 	  TRACE(shell,"-- simple pidl\n");
+
 	}
+
 	if (_ILIsDesktop( pidl))
 	{ strcpy (szText,"Desktop");
-	}
+	}	
 	else
-	{ if (_ILIsMyComputer( pidl))
-	  { _ILGetItemText( pidl, szSpecial, MAX_PATH);
+	{ if (_ILIsMyComputer(pidl))
+	  { _ILGetItemText(pidl, szSpecial, MAX_PATH);
+	    pidl = ILGetNext(pidl);
 	  }
-	  if (_ILIsDrive( pidl))
-	  { pidlTemp = ILFindLastID(pidl);
-	    if (pidlTemp)
-	    { _ILGetItemText( pidlTemp, szTemp, MAX_PATH);
-	    }
-	    if ( dwFlags==SHGDN_NORMAL || dwFlags==SHGDN_INFOLDER)
+
+	  if (_ILIsDrive(pidl))
+	  { _ILGetDrive( pidl, szTemp, MAX_PATH);
+
+	    if ( dwFlags==SHGDN_NORMAL || dwFlags==SHGDN_INFOLDER)	/* like "A1-dos (C:)" */
 	    { GetVolumeInformation32A(szTemp,szDrive,MAX_PATH,&dwVolumeSerialNumber,&dwMaximumComponetLength,&dwFileSystemFlags,NULL,0);
-	      if (szTemp[2]=='\\')
-	      { szTemp[2]=0x00;
-	      }
+	      szTemp[2]=0x00;						/* overwrite '\' */
 	      strcat (szDrive," (");
 	      strcat (szDrive,szTemp);
 	      strcat (szDrive,")"); 
 	    }
-	    else
+	    else							/* like "C:\" */
 	    {  PathAddBackslash32A (szTemp);
 	       strcpy(szDrive,szTemp);
 	    }
 	  }
+
 		
 	  switch(dwFlags)
-	  { case SHGDN_NORMAL:
+	  { case SHGDN_NORMAL:				/* 0x0000 */
 	      _ILGetPidlPath( pidl, szText, MAX_PATH);
 	      break;
 
-	    case SHGDN_INFOLDER | SHGDN_FORPARSING: /*fall thru*/
-	    case SHGDN_INFOLDER:
+	    case SHGDN_INFOLDER | SHGDN_FORPARSING:	/* 0x8001 */
+	    case SHGDN_INFOLDER:			/* 0x0001 */
 	      pidlTemp = ILFindLastID(pidl);
 	      if (pidlTemp)
 	      { _ILGetItemText( pidlTemp, szText, MAX_PATH);
 	      }
 	      break;				
 
-	    case SHGDN_FORPARSING:
+	    case SHGDN_FORPARSING:			/* 0x8000 */
 	      if (bSimplePidl)
 	      { /* if the IShellFolder has parents, get the path from the
 	        parent and add the ItemName*/
@@ -681,9 +683,8 @@ static HRESULT WINAPI IShellFolder_GetDisplayNameOf( LPSHELLFOLDER this, LPCITEM
 	        } 
 	        strcat(szText,szTemp);
 	      }
-	      else					
-	      { /* if the pidl is absolute, get everything from the pidl*/
-	        _ILGetPidlPath( pidl, szText, MAX_PATH);
+	      else	/* if the pidl is absolute, get everything from the pidl*/					
+	      {	_ILGetPidlPath( pidl, szText, MAX_PATH);
 	      }
 	      break;
 	    default:

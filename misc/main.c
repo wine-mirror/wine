@@ -122,7 +122,8 @@ static XrmOptionDescRec optionsTable[] =
     { "-winver",        ".winver",          XrmoptionSepArg, (caddr_t)NULL },
     { "-config",        ".config",          XrmoptionSepArg, (caddr_t)NULL },
     { "-nodga",         ".nodga",           XrmoptionNoArg,  (caddr_t)"off"},
-    { "-console",       ".console",         XrmoptionSepArg, (caddr_t)NULL }
+    { "-console",       ".console",         XrmoptionSepArg, (caddr_t)NULL },
+    { "-dosver",        ".dosver",          XrmoptionSepArg, (caddr_t)NULL }
 };
 
 #define NB_OPTIONS  (sizeof(optionsTable) / sizeof(optionsTable[0]))
@@ -154,7 +155,8 @@ static XrmOptionDescRec optionsTable[] =
   "    -privatemap     Use a private color map\n" \
   "    -synchronous    Turn on synchronous display mode\n" \
   "    -version        Display the Wine version\n" \
-  "    -winver         Version to imitate (one of win31,win95,nt351,nt40)\n"
+  "    -winver         Windows version to imitate (one of win31,win95,nt351,nt40)\n" \
+  "    -dosver         DOS version to imitate (x.xx, e.g. 6.22). Only valid with -winver win31\n"
 
 
 
@@ -866,7 +868,20 @@ static void MAIN_ParseOptions( int *argc, char *argv[] )
       {
           /* Hack: store option value in Options to be retrieved */
           /* later on inside the emulator code. */
-          if (!__winelib) Options.dllFlags = xstrdup((char *)value.addr);
+          if (!__winelib)
+                        {
+                                if (Options.dllFlags)
+                                {
+                                        /* don't overwrite previous value. Should we
+                                         * automatically add the ',' between multiple DLLs ?
+                                         */
+                                        MSG("Only one -dll flag is allowed. Use ',' between multiple DLLs\n");
+                                }
+                                else
+                                {
+                                        Options.dllFlags = xstrdup((char *)value.addr);
+                                }
+                        }
           else
           {
               MSG("-dll not supported in Winelib\n" );
@@ -875,7 +890,9 @@ static void MAIN_ParseOptions( int *argc, char *argv[] )
       }
 
       if (MAIN_GetResource( db, ".winver", &value))
-          VERSION_ParseVersion( (char*)value.addr );
+          VERSION_ParseWinVersion( (char*)value.addr );
+      if (MAIN_GetResource( db, ".dosver", &value))
+          VERSION_ParseDosVersion( (char*)value.addr );
       if (MAIN_GetResource( db, ".config", &value))
          Options.configFileName = xstrdup((char *)value.addr);
       if (MAIN_GetResource( db, ".nodga", &value))
@@ -1041,6 +1058,7 @@ BOOL32 MAIN_WineInit( int *argc, char *argv[] )
 
     /* We need this before calling any Xlib function */
     InitializeCriticalSection( &X11DRV_CritSection );
+    MakeCriticalSectionGlobal( &X11DRV_CritSection );
 
     TSXrmInitialize();
 

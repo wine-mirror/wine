@@ -196,4 +196,25 @@ void WINAPI DOS3Call( CONTEXT *context );
 void do_mscdex( CONTEXT *context );
 void do_mscdex_dd (CONTEXT * context, int dorealmode);
 
+#define DOSCONF_MEM_HIGH        0x0001
+#define DOSCONF_MEM_UMB         0x0002
+#define DOSCONF_NUMLOCK         0x0004
+#define DOSCONF_KEYB_CONV       0x0008
+
+typedef struct {
+        char lastdrive;
+        int brk_flag;
+        int files;
+        int stacks_nr;
+        int stacks_sz;
+        int buf;
+        int buf2;
+        int fcbs;
+        int flags;
+        char *shell;
+        char *country;
+} DOSCONF;
+
+extern DOSCONF DOSCONF_config;
+
 #endif /* __WINE_MSDOS_H */

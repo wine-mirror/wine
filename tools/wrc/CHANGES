@@ -1,4 +1,44 @@
 ---------------------------------------------------------------------------
+Version 1.0.8 (10-Jan-1999)
+
+Albert den Haan <albertd@corel.ca>:
+- Added TOOLBAR support.
+- Buffer overflow fix in strncpyWtoA.
+- Open embedded files in resource definitions through the include path from
+  the commandline.
+- Support named icons in dialogs with unquoted names
+
+Bertho Stultiens <bertho@akhphd.au.dk>
+- Fixed a major bug in the language propagation in the parser. The parser
+  did not copy the current language while binding it to a resource structure
+  causing wrong sorting if multiple global languages were in use and was a
+  potential segfault because the pointer might not be valid.
+- Added language/version/characteristics support for toolbar.
+- Moved some defines from wrc.h to wrctypes.h to support in toolbars.
+- Removed function stricmp from source and replaced with native function
+  strcasecmp.
+- Allocate cursor and icon ordinals according to the language of the item to
+  decrease the amount of ordinals in use. This reduces the resource
+  directory size by reducing the tree size.
+- Versions 1.0.5 through 1.0.7 were never commited to cvs but were available
+  for download from an alternate site for elf-dll test generation.
+
+---------------------------------------------------------------------------
+Version 1.0.7 (19-Dec-1998)
+- Changed a couple of labels that are used by dllglue. Also reversed a patch
+  that made wrc's generated code dependent on dllglue's code.
+
+---------------------------------------------------------------------------
+Version 1.0.6 (12-Dec-1998)
+- Fixed the _PEResTab table where incorrect RVA's were put in the table.
+  The dllglue should now be merged into wrc for correct labels and the least
+  number of loadtime fixups.
+
+---------------------------------------------------------------------------
+Version 1.0.5 (12-Dec-1998)
+- Fixed an omited .globl statement for dllglue linking.
+
+---------------------------------------------------------------------------
 Version 1.0.4 (10-Dec-1998)
 - Added a global label for elf-dll linking and a long with the resource
   size and a long with the directory size.

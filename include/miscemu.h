@@ -11,7 +11,10 @@
 #include "winnt.h"
 #include "ldt.h"
 
-  /* msdos/dosmem.c */
+/* msdos/dosconf.c */
+extern int DOSCONF_ReadConfig(void);
+
+/* msdos/dosmem.c */
 extern HANDLE16 DOSMEM_BiosSeg;
 extern DWORD DOSMEM_CollateTable;
 

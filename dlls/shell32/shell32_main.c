@@ -21,7 +21,6 @@
 #include "dlgs.h"
 #include "win.h"
 #include "cursoricon.h"
-#include "interfaces.h"
 #include "sysmetrics.h"
 #include "shlobj.h"
 #include "debug.h"
@@ -382,30 +381,29 @@ DWORD WINAPI SHGetDesktopFolder(LPSHELLFOLDER *shellfolder)
   LPCLASSFACTORY lpclf;
 	TRACE(shell,"%p->(%p)\n",shellfolder,*shellfolder);
 
-  if (pdesktopfolder)
-	{	hres = NOERROR;
-	}
-	else
-  { lpclf = IClassFactory_Constructor();
+  if (pdesktopfolder) {
+    hres = NOERROR;
+  } else {
+    lpclf = IClassFactory_Constructor();
     /* fixme: the buildin IClassFactory_Constructor is at the moment only 
  		for rclsid=CLSID_ShellDesktop, so we get the right Interface (jsch)*/
-    if(lpclf)
-    { hres = lpclf->lpvtbl->fnCreateInstance(lpclf,NULL,(REFIID)&IID_IShellFolder, (void*)&pdesktopfolder);
-	 	  lpclf->lpvtbl->fnRelease(lpclf);
+    if(lpclf) {
+      hres = IClassFactory_CreateInstance(lpclf,NULL,(REFIID)&IID_IShellFolder, (void*)&pdesktopfolder);
+      IClassFactory_Release(lpclf);
 	  }  
   }
 	
-  if (pdesktopfolder)
-	{ *shellfolder = pdesktopfolder;
+  if (pdesktopfolder) {
+    *shellfolder = pdesktopfolder;
     pdesktopfolder->lpvtbl->fnAddRef(pdesktopfolder);
+  } else {
+    *shellfolder=NULL;
 	}
-  else
-	{ *shellfolder=NULL;
-	}	
 
   TRACE(shell,"-- %p->(%p)\n",shellfolder, *shellfolder);
 	return hres;
 }
+
 /*************************************************************************
  *			 SHGetPathFromIDList		[SHELL32.221][NT 4.0: SHELL32.219]
  */
@@ -962,7 +960,7 @@ DWORD WINAPI SHGetPathFromIDList32W (LPCITEMIDLIST pidl,LPWSTR pszPath)
 }
 
 
-void	(CALLBACK* pDLLInitComctl)(void);
+void	(CALLBACK* pDLLInitComctl)(LPVOID);
 INT32	(CALLBACK* pImageList_AddIcon) (HIMAGELIST himl, HICON32 hIcon);
 INT32	(CALLBACK* pImageList_ReplaceIcon) (HIMAGELIST, INT32, HICON32);
 HIMAGELIST (CALLBACK * pImageList_Create) (INT32,INT32,UINT32,INT32,INT32);
@@ -1000,7 +998,7 @@ BOOL32 WINAPI Shell32LibMain(HINSTANCE32 hinstDLL, DWORD fdwReason, LPVOID lpvRe
     if (hComctl32)
     { pDLLInitComctl=GetProcAddress32(hComctl32,"InitCommonControlsEx");
       if (pDLLInitComctl)
-      { pDLLInitComctl();
+      { pDLLInitComctl(NULL);
       }
       pImageList_Create=GetProcAddress32(hComctl32,"ImageList_Create");
       pImageList_AddIcon=GetProcAddress32(hComctl32,"ImageList_AddIcon");

@@ -28,6 +28,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <errno.h>
 #include <sys/ioctl.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -279,6 +280,7 @@ static unsigned int
 TTYget()
 {
     CHAR	c;
+    int retv;
 
     TTYflush();
     if (Pushed) {
@@ -287,7 +289,14 @@ TTYget()
     }
     if (*Input)
 	return *Input++;
-    return read(0, &c, (size_t)1) == 1 ? c : EOF;
+
+    while ( ( retv = read( 0, &c, (size_t)1 ) ) == -1 )
+    {
+        if ( errno != EINTR )
+            perror( "read" );
+    }
+
+    return retv == 1 ? c : EOF;
 }
 
 #define TTYback()	(backspace ? TTYputs((CHAR *)backspace) : TTYput('\b'))

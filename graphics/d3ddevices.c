@@ -884,11 +884,12 @@ static HRESULT WINAPI IDirect3DDevice2_DrawPrimitive(LPDIRECT3DDEVICE2 this,
       glColor3f(((col >> 16) & 0xFF) / 255.0,
 		((col >>  8) & 0xFF) / 255.0,
 		((col >>  0) & 0xFF) / 255.0);
-      
+      glTexCoord2f(vx->u.tu, vx->v.tv);
       glVertex3f(vx->x.sx, vx->y.sy, vx->z.sz);
-      TRACE(ddraw, " TLV: %f %f %f (%02lx %02lx %02lx)\n",
+      TRACE(ddraw, " TLV: %f %f %f (%02lx %02lx %02lx) (%f %f)\n",
 	    vx->x.sx, vx->y.sy, vx->z.sz,
-	    ((col >> 16) & 0xFF), ((col >>  8) & 0xFF), ((col >>  0) & 0xFF));
+	    ((col >> 16) & 0xFF), ((col >>  8) & 0xFF), ((col >>  0) & 0xFF),
+	    vx->u.tu, vx->v.tv);
     } break;
       
     default:

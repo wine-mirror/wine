@@ -9,7 +9,10 @@
 #include "ole2.h"
 #include "process.h"
 #include "debug.h"
-#include "compobj.h"
+#include "wine/obj_base.h"
+#include "wine/obj_clientserver.h"
+#include "wine/obj_storage.h"
+#include "wine/obj_moniker.h"
 
 /******************************************************************************
  *		OleBuildVersion	[OLE2.1]

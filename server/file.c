@@ -304,18 +304,19 @@ static int file_get_info( struct object *obj, struct get_file_info_reply *reply 
 
 static void file_destroy( struct object *obj )
 {
-    struct file **pptr;
     struct file *file = (struct file *)obj;
     assert( obj->ops == &file_ops );
 
-    /* remove it from the hashing list */
-    pptr = &file_hash[get_name_hash( file->name )];
-    while (*pptr && *pptr != file) pptr = &(*pptr)->next;
-    assert( *pptr );
-    *pptr = (*pptr)->next;
-
+    if (file->name)
+    {
+        /* remove it from the hashing list */
+        struct file **pptr = &file_hash[get_name_hash( file->name )];
+        while (*pptr && *pptr != file) pptr = &(*pptr)->next;
+        assert( *pptr );
+        *pptr = (*pptr)->next;
+        free( file->name );
+    }
     close( file->fd );
-    free( file->name );
     free( file );
 }
 

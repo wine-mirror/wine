@@ -1425,6 +1425,72 @@ res_t *versioninfo2res(name_id_t *name, versioninfo_t *ver)
 
 /*
  *****************************************************************************
+ * Function	: toolbaritem2res
+ * Syntax	: void toolbaritem2res(res_t *res, toolbar_item_t *tbitem)
+ * Input	:
+ * Output	: nop
+ * Description	:
+ * Remarks	: Self recursive
+ *****************************************************************************
+*/
+void toolbaritem2res(res_t *res, toolbar_item_t *tbitem)
+{
+	toolbar_item_t *itm = tbitem;
+	assert(win32 != 0);
+	while(itm)
+	{
+		put_word(res, itm->id);
+		itm = itm->next;
+	}
+
+}
+
+/*
+ *****************************************************************************
+ * Function	: toolbar2res
+ * Syntax	: res_t *toolbar2res(name_id_t *name, toolbar_t *toolbar)
+ * Input	:
+ *	name	- Name/ordinal of the resource
+ *	toolbar	- The toolbar descriptor
+ * Output	: New .res format structure
+ * Description	:
+ * Remarks	:
+ *****************************************************************************
+*/
+res_t *toolbar2res(name_id_t *name, toolbar_t *toolbar)
+{
+	int restag;
+	res_t *res;
+	assert(name != NULL);
+	assert(toolbar != NULL);
+
+	res = new_res();
+	if(win32)
+	{
+		restag = put_res_header(res, WRC_RT_TOOLBAR, NULL, name, toolbar->memopt, &(toolbar->lvc));
+
+		put_word(res, 1);		/* Menuheader: Version */
+		put_word(res, toolbar->button_width); /* (in pixels?) */
+		put_word(res, toolbar->button_height); /* (in pixels?) */
+		put_word(res, toolbar->nitems); 
+		put_pad(res);
+		toolbaritem2res(res, toolbar->items);
+		/* Set ResourceSize */
+		SetResSize(res, restag);
+		put_pad(res);
+	}
+	else /* win16 */
+	{
+		/* Do not generate anything in 16-bit mode */
+		free(res->data);
+		free(res);
+		return NULL;
+	}
+	return res;
+}
+
+/*
+ *****************************************************************************
  * Function	: prep_nid_for_label
  * Syntax	: char *prep_nid_for_label(name_id_t *nid)
  * Input	:
@@ -1546,6 +1612,7 @@ char *get_c_typename(enum res_e type)
 	case res_usr:	return "Usr";
 	case res_msg:	return "MsgTab";
 	case res_ver:	return "VerInf";
+	case res_toolbar:	return "TlBr";
 	default:	return "Oops";
 	}
 }
@@ -1630,6 +1697,10 @@ void resources2res(resource_t *top)
 		case res_ver:
 			if(!top->binres)
 				top->binres = versioninfo2res(top->name, top->res.ver);
+			break;
+		case res_toolbar:
+			if(!top->binres)
+				top->binres = toolbar2res(top->name, top->res.tbt);
 			break;
 		default:
 			internal_error(__FILE__, __LINE__, "Unknown resource type encountered %d in binary res generation", top->type);

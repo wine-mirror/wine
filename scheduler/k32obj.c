@@ -9,6 +9,7 @@
 #include "k32obj.h"
 #include "heap.h"
 #include "process.h"
+#include "server.h"
 
 
 /* The declarations are here to avoid including a lot of unnecessary files */

@@ -43,6 +43,7 @@
 #include "debug.h"
 #include "psdrv.h"
 #include "server.h"
+#include "console.h"
 
 int __winelib = 1;  /* Winelib run-time flag */
 
@@ -87,6 +88,9 @@ BOOL32 MAIN_MainInit(void)
     
     /* Set up text-mode stuff */
     CONSOLE_ResizeScreen(80, 25);
+
+    /* Read DOS config.sys */
+    if (!DOSCONF_ReadConfig()) return FALSE;
 
     return TRUE;
 }

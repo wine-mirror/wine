@@ -56,6 +56,41 @@ static __inline__ int vm86plus( int func, struct vm86plus_struct *ptr )
     return -1;
 }
 
+int XREAD(int fd,void*buf,int size) {
+ int res;
+
+ while (1) {
+  res = read(fd, buf, size);
+  if (res==size)
+   return res;
+  if (res==-1) {
+   if (errno==EINTR)
+    continue;
+   perror("dosmod read");
+   return -1;
+  }
+  fprintf(stderr,"dosmod read only %d of %d bytes.\n",res,size);
+  return res;
+ }
+}
+int XWRITE(int fd,void*buf,int size) {
+ int res;
+
+ while (1) {
+  res = write(fd, buf, size);
+  if (res==size)
+   return res;
+  if (res==-1) {
+   if (errno==EINTR)
+    continue;
+   perror("dosmod write");
+   return -1;
+  }
+  fprintf(stderr,"dosmod write only %d of %d bytes.\n",res,size);
+  return res;
+ }
+}
+
 void set_timer(struct timeval*tim)
 {
  struct itimerval cur;
@@ -65,7 +100,15 @@ void set_timer(struct timeval*tim)
  setitimer(ITIMER_REAL,&cur,NULL);
 }
 
-volatile int sig_pend,sig_fatal=0;
+void get_timer(struct timeval*tim)
+{
+ struct itimerval cur;
+
+ getitimer(ITIMER_REAL,&cur);
+ *tim=cur.it_value;
+}
+
+volatile int sig_pend,sig_fatal=0,sig_alrm=0;
 void*img;
 struct vm86plus_struct VM86;
 
@@ -82,6 +125,12 @@ void bad_handler(int sig)
  fprintf(stderr,"(Last known VM86 CS:IP was %04x:%04lx)\n",VM86.regs.cs,VM86.regs.eip);
  sig_pend=sig; sig_fatal++;
  signal(sig,bad_handler);
+}
+
+void alarm_handler(int sig)
+{
+ sig_alrm++;
+ signal(sig,alarm_handler);
 }
 
 int main(int argc,char**argv)
@@ -121,7 +170,7 @@ int main(int argc,char**argv)
  signal(SIGINT,sig_handler);
  signal(SIGUSR1,sig_handler);
  signal(SIGUSR2,sig_handler);
- signal(SIGALRM,sig_handler);
+ signal(SIGALRM,alarm_handler);
 
  signal(SIGQUIT,bad_handler);
  signal(SIGILL,bad_handler);
@@ -135,28 +184,33 @@ int main(int argc,char**argv)
 #endif
 /* report back to the main program that we're ready */
  ret=1; /* dosmod protocol revision 1 */
- write(1,&ret,sizeof(ret));
+ XWRITE(1,&ret,sizeof(ret));
 /* context exchange loop */
  do {
-  if (read(0,&func,sizeof(func))!=sizeof(func)) return 1;
+  if (XREAD(0,&func,sizeof(func))!=sizeof(func)) return 1;
   if (func<0) break;
   switch (func) {
    case DOSMOD_SET_TIMER:
-    if (read(0,&tim,sizeof(tim))!=sizeof(tim)) return 1;
+    if (XREAD(0,&tim,sizeof(tim))!=sizeof(tim)) return 1;
     set_timer(&tim);
     /* no response */
     break;
+   case DOSMOD_GET_TIMER:
+    get_timer(&tim);
+    if (XWRITE(1,&tim,sizeof(tim))!=sizeof(tim)) return 1;
+    break;
    case DOSMOD_ENTER:
    default:
-    if (read(0,&VM86,sizeof(VM86))!=sizeof(VM86)) return 1;
-    if (sig_pend) ret=DOSMOD_SIGNAL; else
+    if (XREAD(0,&VM86,sizeof(VM86))!=sizeof(VM86)) return 1;
+    if (sig_pend||sig_alrm) ret=DOSMOD_SIGNAL; else
      ret=vm86plus(func,&VM86);
-    if (write(1,&ret,sizeof(ret))!=sizeof(ret)) return 1;
-    if (write(1,&VM86,sizeof(VM86))!=sizeof(VM86)) return 1;
+    if (XWRITE(1,&ret,sizeof(ret))!=sizeof(ret)) return 1;
+    if (XWRITE(1,&VM86,sizeof(VM86))!=sizeof(VM86)) return 1;
     switch (ret&0xff) {
      case DOSMOD_SIGNAL:
       ret=sig_pend; sig_pend=0;
-      if (write(1,&ret,sizeof(ret))!=sizeof(ret)) return 1;
+      if (!ret) { ret=SIGALRM; sig_alrm--; }
+      if (XWRITE(1,&ret,sizeof(ret))!=sizeof(ret)) return 1;
       if (sig_fatal) return 1;
       break;
     }

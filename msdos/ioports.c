@@ -2,6 +2,7 @@
  * Emulation of processor ioports.
  *
  * Copyright 1995 Morten Welinder
+ * Copyright 1998 Andreas Mohr, Ove Kaaven
  */
 
 /* Known problems:
@@ -17,8 +18,17 @@
 #include <unistd.h>
 #include "windows.h"
 #include "vga.h"
+#include "dosexe.h"
 #include "options.h"
 #include "debug.h"
+
+static WORD tmr_8253_countmax[3] = {0xffff, 0x12, 1}; /* [2] needs to be 1 ! */
+/* if byte_toggle is TRUE, then hi byte has already been written */
+static BOOL16 tmr_8253_byte_toggle[3] = {FALSE, FALSE, FALSE};
+static BYTE tmr_8253_ctrlbyte_ch[4] = {0x06, 0x44, 0x86, 0};
+static int dummy_ctr = 0;
+
+static BYTE parport_8255[4] = {0x4f, 0x20, 0xff, 0xff};
 
 static BYTE cmosaddress;
 
@@ -52,7 +62,7 @@ static char port_permissions[0x10000];
 
 #endif  /* DIRECT_IO_ACCESS */
 
-static void IO_FixCMOSCheckSum()
+static void IO_FixCMOSCheckSum(void)
 {
 	WORD sum = 0;
 	int i;
@@ -62,6 +72,26 @@ static void IO_FixCMOSCheckSum()
 	cmosimage[0x2e] = sum >> 8; /* yes, this IS hi byte !! */
 	cmosimage[0x2f] = sum & 0xff;
 	TRACE(int, "calculated hi %02x, lo %02x\n", cmosimage[0x2e], cmosimage[0x2f]);
+}
+
+static void set_timer_maxval(unsigned timer, unsigned maxval)
+{
+    switch (timer) {
+        case 0: /* System timer counter divisor */
+            DOSVM_SetTimer(maxval);
+            break;
+        case 1: /* RAM refresh */
+            FIXME(int, "RAM refresh counter handling not implemented !");
+            break;
+        case 2: /* cassette & speaker */
+            /* speaker on ? */
+            if (((BYTE)parport_8255[1] & 3) == 3)
+            {
+                TRACE(int, "Beep (freq: %d) !\n", 1193180 / maxval );
+                Beep(1193180 / maxval, 20);
+            }
+            break;
+    }
 }
 
 /**********************************************************************
@@ -206,62 +236,99 @@ void IO_port_init()
 
 /**********************************************************************
  *	    IO_inport
+ *
+ * Note: The size argument has to be handled correctly _externally_ 
+ * (as we always return a DWORD)
  */
-DWORD IO_inport( int port, int count )
+DWORD IO_inport( int port, int size )
 {
     DWORD res = 0;
-    BYTE b;    
 
 #ifdef DIRECT_IO_ACCESS    
-    if (do_direct_port_access)
+    if ((do_direct_port_access)
+        /* Make sure we have access to the port */
+        && (port_permissions[port] & IO_READ))
     {
-        /* Make sure we have access to the whole range */
-        int i;
-        for (i = 0; i < count; i++)
-            if (!(port_permissions[port+i] & IO_READ)) break;
-        if (i == count)
+        iopl(3);
+        switch(size)
         {
-            iopl(3);
-            switch(count)
-            {
-                case 1: res = inb( port ); break;
-                case 2: res = inw( port ); break;
-                case 4: res = inl( port ); break;
-                default:
-                    ERR(int, "invalid count %d\n", count);
-            }
-            iopl(0);
-            return res;
+        case 1: res = inb( port ); break;
+        case 2: res = inw( port ); break;
+        case 4: res = inl( port ); break;
+        default:
+            ERR(int, "invalid data size %d\n", size);
         }
+        iopl(0);
+        return res;
     }
 #endif
 
-    TRACE(int, "%d bytes from port 0x%02x\n", count, port );
+    TRACE(int, "%d-byte value from port 0x%02x\n", size, port );
 
-    while (count-- > 0)
+    switch (port)
     {
-        switch (port)
+    case 0x40:
+    case 0x41:
+    case 0x42:
+    {
+        BYTE chan = port & 3;
+        WORD tempval = 0;
+
+        if (chan == 0) /* System timer counter divisor */
+            tempval = (WORD)DOSVM_GetTimer();
+        else
+        {   /* FIXME: intelligent hardware timer emulation needed */
+            dummy_ctr -= 10;
+            tempval = dummy_ctr;
+        }
+        switch (tmr_8253_ctrlbyte_ch[chan] & 0x30)
         {
-        case 0x70:
-            b = cmosaddress;
+        case 0x00:
+            break; /* correct ? */
+        case 0x10: /* read lo byte */
+            res = (BYTE)tempval;
             break;
-        case 0x71:
-            b = cmosimage[cmosaddress & 0x3f];
-            break;
-        case 0x200:
-        case 0x201:
-            b = 0xff; /* no joystick */
-            break;
-        case 0x3da:
-            b = VGA_ioport_in( port );
-            break;
-        default:
-            WARN( int, "Direct I/O read attempted from port %x\n", port);
-            b = 0xff;
+        case 0x30: /* read lo byte, then hi byte */
+            tmr_8253_byte_toggle[chan] ^= TRUE; /* toggle */
+            if (tmr_8253_byte_toggle[chan] == TRUE)
+            {
+                res = (BYTE)tempval;
+                break;
+            }
+            /* else [fall through if read hi byte !] */
+        case 0x20: /* read hi byte */
+            res = (BYTE)tempval>>8;
             break;
         }
-        port++;
-        res = (res << 8) | b;
+        break;
+    }
+    case 0x60:
+        res = (DWORD)parport_8255[0];
+        break;
+    case 0x61:
+        res = (DWORD)parport_8255[1];
+        break;
+    case 0x62:
+        res = (DWORD)parport_8255[2];
+        break;
+    case 0x70:
+        res = (DWORD)cmosaddress;
+        break;
+    case 0x71:
+        res = (DWORD)cmosimage[cmosaddress & 0x3f];
+        break;
+    case 0x200:
+    case 0x201:
+        res = 0xffffffff; /* no joystick */
+        break;
+    case 0x3ba:
+    case 0x3da:
+        res = (DWORD)VGA_ioport_in( port );
+        break;
+    default:
+        WARN( int, "Direct I/O read attempted from port %x\n", port);
+        res = 0xffffffff;
+        break;
     }
     TRACE(int, "  returning ( 0x%lx )\n", res );
     return res;
@@ -271,57 +338,107 @@ DWORD IO_inport( int port, int count )
 /**********************************************************************
  *	    IO_outport
  */
-void IO_outport( int port, int count, DWORD value )
+void IO_outport( int port, int size, DWORD value )
 {
-    BYTE b;
-
-    TRACE(int, "IO: 0x%lx (%d bytes) to port 0x%02x\n",
-                 value, count, port );
+    TRACE(int, "IO: 0x%lx (%d-byte value) to port 0x%02x\n",
+                 value, size, port );
 
 #ifdef DIRECT_IO_ACCESS
-    if (do_direct_port_access)
+    if ((do_direct_port_access)
+        /* Make sure we have access to the port */
+        && (port_permissions[port] & IO_WRITE))
     {
-        /* Make sure we have access to the whole range */
-        int i;
-        for (i = 0; i < count; i++)
-            if (!(port_permissions[port+i] & IO_WRITE)) break;
-        if (i == count)
+        iopl(3);
+        switch(size)
         {
-            iopl(3);
-            switch(count)
-            {
-                case 1: outb( LOBYTE(value), port ); break;
-                case 2: outw( LOWORD(value), port ); break;
-                case 4: outl( value, port ); break;
-                default:
-                    WARN(int, "Invalid count %d\n", count);
-            }
-            iopl(0);
-            return;
+        case 1: outb( LOBYTE(value), port ); break;
+        case 2: outw( LOWORD(value), port ); break;
+        case 4: outl( value, port ); break;
+        default:
+            WARN(int, "Invalid data size %d\n", size);
         }
+        iopl(0);
+        return;
     }
 #endif
 
-    while (count-- > 0)
+    switch (port)
     {
-        b = value & 0xff;
-        value >>= 8;
-        switch (port)
+    case 0x40:
+    case 0x41:
+    case 0x42:
+    {
+        BYTE chan = port & 3;
+        WORD oldval = 0;
+
+        if ( ((tmr_8253_ctrlbyte_ch[chan] & 0x30) != 0x30) ||
+/* we need to get the oldval before any lo/hi byte change has been made */
+             (tmr_8253_byte_toggle[chan] == FALSE) )
+            oldval = tmr_8253_countmax[chan];
+        switch (tmr_8253_ctrlbyte_ch[chan] & 0x30)
         {
-        case 0x70:
-            cmosaddress = b & 0x7f;
+        case 0x00:
+            break; /* correct ? */
+        case 0x10: /* write lo byte */
+            tmr_8253_countmax[chan] =
+                (tmr_8253_countmax[chan] & 0xff00) | (BYTE)value;
             break;
-        case 0x71:
-            cmosimage[cmosaddress & 0x3f] = b;
-            break;
-        case 0x3c8:
-        case 0x3c9:
-            VGA_ioport_out( port, b );
-            break;
-        default:
-            WARN(int, "Direct I/O write attempted to port %x\n", port );
+        case 0x30: /* write lo byte, then hi byte */
+            tmr_8253_byte_toggle[chan] ^= TRUE; /* toggle */
+            if (tmr_8253_byte_toggle[chan] == TRUE)
+            {
+                tmr_8253_countmax[chan] =
+                    (tmr_8253_countmax[chan] & 0xff00) | (BYTE)value;
+                break;
+            }
+            /* else [fall through if write hi byte !] */
+        case 0x20: /* write hi byte */
+            tmr_8253_countmax[chan] =
+                (tmr_8253_countmax[chan] & 0xff)|((BYTE)value << 8);
             break;
         }
-	port++;
+        if (
+            /* programming finished ? */
+            ( ((tmr_8253_ctrlbyte_ch[chan] & 0x30) != 0x30) ||
+              (tmr_8253_byte_toggle[chan] == FALSE) )
+            /* update to new value ? */
+            && (tmr_8253_countmax[chan] != oldval)
+            )
+            set_timer_maxval(chan, tmr_8253_countmax[chan]);
+    }
+    break;          
+    case 0x43:
+        /* ctrl byte for specific timer channel */
+        tmr_8253_ctrlbyte_ch[((BYTE)value & 0xc0) >> 6] = (BYTE)value;
+        if (((BYTE)value&0xc0)==0xc0) {
+            FIXME(int,"8254 timer readback not implemented yet\n");
+        } else
+            if (((BYTE)value&3)==0) {
+                FIXME(int,"timer counter latch not implemented yet\n");
+            }
+        if ((value & 0x30) == 0x30) /* write lo byte, then hi byte */
+            tmr_8253_byte_toggle[((BYTE)value & 0xc0) >> 6] = FALSE; /* init */
+        break;
+    case 0x61:
+        parport_8255[1] = (BYTE)value;
+        if ((((BYTE)parport_8255[1] & 3) == 3) && (tmr_8253_countmax[2] != 1))
+        {
+            TRACE(int, "Beep (freq: %d) !\n", 1193180 / tmr_8253_countmax[2]);
+            Beep(1193180 / tmr_8253_countmax[2], 20);
+        }
+        break;
+    case 0x70:
+        cmosaddress = (BYTE)value & 0x7f;
+        break;
+    case 0x71:
+        cmosimage[cmosaddress & 0x3f] = (BYTE)value;
+        break;
+    case 0x3c8:
+    case 0x3c9:
+        VGA_ioport_out( port, (BYTE)value );
+        break;
+    default:
+        WARN(int, "Direct I/O write attempted to port %x\n", port );
+        break;
     }
 }

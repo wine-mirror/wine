@@ -21,6 +21,42 @@
 #include "ver.h"
 #endif
 
+/* Memory/load flags */
+#define WRC_MO_MOVEABLE		0x0010
+#define WRC_MO_PURE		0x0020
+#define WRC_MO_PRELOAD		0x0040
+#define WRC_MO_DISCARDABLE	0x1000
+
+/* Resource type IDs */
+#define WRC_RT_CURSOR		(1)
+#define WRC_RT_BITMAP		(2)
+#define WRC_RT_ICON		(3)
+#define WRC_RT_MENU		(4)
+#define WRC_RT_DIALOG		(5)
+#define WRC_RT_STRING		(6)
+#define WRC_RT_FONTDIR		(7)
+#define WRC_RT_FONT		(8)
+#define WRC_RT_ACCELERATOR	(9)
+#define WRC_RT_RCDATA		(10)
+#define WRC_RT_MESSAGETABLE	(11)
+#define WRC_RT_GROUP_CURSOR	(12)
+#define WRC_RT_GROUP_ICON	(14)
+#define WRC_RT_VERSION		(16)
+#define WRC_RT_DLGINCLUDE	(17)
+#define WRC_RT_PLUGPLAY		(19)
+#define WRC_RT_VXD		(20)
+#define WRC_RT_ANICURSOR	(21)
+#define WRC_RT_ANIICON		(22)
+#define WRC_RT_TOOLBAR		(241)  
+
+/* Default class type IDs */
+#define CT_BUTTON	0x80
+#define CT_EDIT		0x81
+#define CT_STATIC 	0x82
+#define CT_LISTBOX	0x83
+#define CT_SCROLLBAR	0x84
+#define CT_COMBOBOX	0x85
+
 
 /* Binary resource structure */
 #define RES_BLOCKSIZE	512
@@ -111,6 +147,8 @@ enum res_e {
 	res_vxd,	/* Not implemented, no layout available */
 	res_anicur,	/* Not implemented, no layout available */
 	res_aniico,	/* Not implemented, no layout available */
+
+	res_toolbar = WRC_RT_TOOLBAR,	/* 241 */
 
 	res_menex = 256 + 4,
 	res_dlgex,
@@ -419,6 +457,22 @@ typedef struct accelerator {
 	event_t		*events;
 } accelerator_t;
 
+/* Toolbar structures */
+typedef struct toolbar_item {
+	struct toolbar_item	*next;
+	struct toolbar_item	*prev;        
+	int			id;
+} toolbar_item_t;
+
+typedef struct toolbar {
+	DWORD		memopt;
+	lvc_t		lvc;
+	int		button_width;
+	int		button_height;
+	int		nitems;
+	toolbar_item_t	*items;
+} toolbar_t;
+
 /* A top-level resource node */
 typedef struct resource {
 	struct resource	*next;
@@ -441,6 +495,7 @@ typedef struct resource {
 		messagetable_t	*msg;
 		rcdata_t	*rdt;
 		stringtable_t	*stt;
+		toolbar_t	*tbt;
 		user_t		*usr;
 		versioninfo_t	*ver;
 		void		*overlay; /* To catch all types at once... */

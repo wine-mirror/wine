@@ -15,6 +15,8 @@
 #include "debug.h"
 #include "spy.h"
 #include "commctrl.h"
+#include "task.h"
+#include "thread.h"
 
 /* Window procedure 16-to-32-bit thunk,
  * see BuildSpec16Files() in tools/build.c */
@@ -1080,6 +1082,17 @@ INT32 WINPROC_MapMsg16To32A( UINT16 msg16, WPARAM16 wParam16, UINT32 *pmsg32,
     case WM_NOTIFY:
     	*plparam = (LPARAM)PTR_SEG_TO_LIN(*plparam);
     	return 1;
+    case WM_ACTIVATEAPP:
+    	if (*plparam)
+	{ /* We need this when SetActiveWindow sends a Sendmessage16() to
+	     a 32bit window. Might be superflous with 32bit interprocess
+	     message queues.
+	  */
+	  HTASK16 htask = (HTASK16) *plparam;
+	  DWORD idThread = THDB_TO_THREAD_ID(((TDB*)GlobalLock16(htask))->thdb);
+	  *plparam = (LPARAM) idThread;
+	}
+	return 1;
     case WM_ASKCBFORMATNAME:
     case WM_DEVMODECHANGE:
     case WM_PAINTCLIPBOARD:
@@ -1763,6 +1776,7 @@ INT32 WINPROC_MapMsg32ATo16( HWND32 hwnd, UINT32 msg32, WPARAM32 wParam32,
         }
         return 0;
 
+    case WM_ACTIVATEAPP:
     case WM_ASKCBFORMATNAME:
     case WM_DEVMODECHANGE:
     case WM_PAINTCLIPBOARD:

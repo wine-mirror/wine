@@ -31,6 +31,7 @@ void SYSLEVEL_Init(void)
     segpWin16Mutex = SEGPTR_GET(w16Mutex);
 
     InitializeCriticalSection(&Win16Mutex);
+    MakeCriticalSectionGlobal(&Win16Mutex);
 }
 
 /************************************************************************

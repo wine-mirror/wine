@@ -117,9 +117,11 @@ fi
 dnl **** Check which curses lib to use ***
 AC_CHECK_LIB(ncurses,waddch)
 if test "$ac_cv_lib_ncurses_waddch" = "yes"
-then :
+then
+    AC_CHECK_LIB(ncurses,resizeterm,AC_DEFINE(HAVE_RESIZETERM))
 else
     AC_CHECK_LIB(curses,waddch)
+    AC_CHECK_LIB(curses,resizeterm,AC_DEFINE(HAVE_RESIZETERM))
 fi
 
 dnl **** Check for IPX (currently Linux only) ****
@@ -342,7 +344,7 @@ fi
 dnl **** Check for functions and header files ****
 
 AC_CHECK_FUNCS(clone getpagesize memmove sendmsg sigaltstack strerror stricmp tcgetattr timegm usleep wait4 waitpid vfscanf)
-AC_CHECK_HEADERS(wctype.h sys/syscall.h syscall.h sys/param.h sys/vfs.h sys/mount.h sys/statfs.h float.h linux/cdrom.h linux/ucdrom.h sys/cdio.h sys/filio.h sys/modem.h strings.h sys/strtio.h dlfcn.h unistd.h sys/sockio.h net/if.h netinet/in.h)
+AC_CHECK_HEADERS(wctype.h sys/syscall.h syscall.h sys/param.h sys/vfs.h sys/mount.h sys/statfs.h float.h linux/cdrom.h linux/ucdrom.h sys/cdio.h sys/filio.h sys/modem.h strings.h sys/strtio.h dlfcn.h unistd.h sys/sockio.h net/if.h netinet/in.h sys/file.h)
 AC_HEADER_STAT()
 AC_C_CONST()
 AC_TYPE_SIZE_T()
@@ -616,6 +618,14 @@ win32/Makefile
 windows/Makefile
 windows/ttydrv/Makefile
 windows/x11drv/Makefile ])
+
+if test "$ac_cv_lib_ncurses_resizeterm" = "no" -a "$ac_cv_lib_ncurses_waddch" = "yes"
+then
+  echo
+  echo "*** Warning: resizeterm not found in ncurses. Wine will be built without"
+  echo "*** terminal resize support. Consider upgrading ncurses."
+  echo
+fi
 
 if test "$wine_cv_libc_reentrant" = "no" 
 then

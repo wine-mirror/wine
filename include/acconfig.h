@@ -63,6 +63,9 @@
 /* Define if we can use curses (if no ncurses) for full-screen access */
 #undef HAVE_LIBCURSES
 
+/* Define if ncurses have the new resizeterm function */
+#undef HAVE_RESIZETERM
+
 /* Define if we can a compatible xterm program */
 #undef XTERM_PROGRAM
 

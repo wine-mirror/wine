@@ -12,10 +12,9 @@
 #include "windows.h"
 #include "winreg.h"
 #include "winerror.h"
-#include "ole.h"
-#include "ole2.h"
 #include "oleauto.h"
-#include "compobj.h"
+#include "wine/obj_base.h"
+#include "objbase.h"
 #include "debug.h"
 #include "winversion.h"
 

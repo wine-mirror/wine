@@ -4,13 +4,10 @@
 #ifndef __WINE_SHELL_H
 #define __WINE_SHELL_H
 
-#include "wintypes.h"
+#include "windows.h"
 #include "winreg.h"
 #include "imagelist.h"
 
-#ifndef MAX_PATH
-#define MAX_PATH 260
-#endif
 
 /****************************************************************************
 * shell 16
@@ -247,6 +244,11 @@ HRESULT WINAPI SHGetSpecialFolderLocation(HWND32, INT32, LPITEMIDLIST *);
 /****************************************************************************
 *  string and path functions
 */
+BOOL32 WINAPI PathIsRoot32A(LPCSTR x);
+BOOL32 WINAPI PathIsRoot32W(LPCWSTR x);
+#define  PathIsRoot WINELIB_NAME_AW(PathIsRoot)
+BOOL32 WINAPI PathIsRoot32AW(LPCVOID x);
+
 LPSTR  WINAPI PathAddBackslash32A(LPSTR path);	
 LPWSTR WINAPI PathAddBackslash32W(LPWSTR path);	
 #define  PathAddBackslash WINELIB_NAME_AW(PathAddBackslash)

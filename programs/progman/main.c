@@ -64,13 +64,13 @@ int PASCAL WinMain (HANDLE hInstance, HANDLE prev, LPSTR cmdline, int show)
     /* Redirect `progman.ini' */
     PROFILE_GetWineIniString("progman", "progman.ini", "progman.ini", 
 			     buffer, sizeof(buffer));
-    Globals.lpszIniFile = p = LocalLock(LocalAlloc(LMEM_FIXED, lstrlen(buffer)));
+    Globals.lpszIniFile = p = LocalLock(LocalAlloc(LMEM_FIXED, lstrlen(buffer)+1));
     hmemcpy(p, buffer, 1 + lstrlen(buffer));
 
     /* Redirect `progman.ico' */
     PROFILE_GetWineIniString("progman", "progman.ico", "progman.ico", 
 			     buffer, sizeof(buffer));
-    Globals.lpszIcoFile = p = LocalLock(LocalAlloc(LMEM_FIXED, lstrlen(buffer)));
+    Globals.lpszIcoFile = p = LocalLock(LocalAlloc(LMEM_FIXED, lstrlen(buffer)+1));
     hmemcpy(p, buffer, 1 + lstrlen(buffer));
   }
 #endif

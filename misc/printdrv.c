@@ -742,6 +742,25 @@ BOOL32 WINAPI GetPrinterDriver32W(HANDLE32 hPrinter, LPWSTR pEnvironment,
           Level,pDriverInfo,cbBuf, pcbNeeded);
     return FALSE;
 }
+/*****************************************************************************
+ *          AddPrinterDriver32A  [WINSPOOL.120]
+ */
+BOOL32 WINAPI AddPrinterDriver32A(LPSTR printerName,DWORD level, 
+				   LPBYTE pDriverInfo)
+{
+    FIXME(print, "(%s,%ld,%p): stub\n",printerName,level,pDriverInfo);
+    return FALSE;
+}
+/*****************************************************************************
+ *          AddPrinterDriver32W  [WINSPOOL.121]
+ */
+BOOL32 WINAPI AddPrinterDriver32W(LPWSTR printerName,DWORD level, 
+				   LPBYTE pDriverInfo)
+{
+    FIXME(print, "(%s,%ld,%p): stub\n",debugstr_w(printerName),
+	  level,pDriverInfo);
+    return FALSE;
+}
 
 
 

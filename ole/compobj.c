@@ -5,50 +5,57 @@
  *	Copyright 1998	Justin Bradford
  */
 
-#define INITGUID
-
 #include "config.h"
 #ifdef HAVE_UNISTD_H
-#include <unistd.h>
+# include <unistd.h>
 #endif
 #include <fcntl.h>
 #include <sys/types.h>
 #include <sys/time.h>
 #include <sys/stat.h>
-#include <sys/file.h>
+#ifdef HAVE_SYS_FILE_H
+# include <sys/file.h>
+#endif
 #include <sys/ioctl.h>
 #include <sys/socket.h>
 #ifdef HAVE_SYS_SOCKIO_H
-#include <sys/sockio.h>
+# include <sys/sockio.h>
 #endif
 #ifdef HAVE_NET_IF_H
-#include <net/if.h>
+# include <net/if.h>
 #endif
 #ifdef HAVE_NETINET_IN_H
-#include <netinet/in.h>
+# include <netinet/in.h>
 #endif
 #include <ctype.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-#include "ole.h"
-#include "ole2.h"
+#include "windows.h"
 #include "winerror.h"
+#include "ole2.h"
 #include "debug.h"
 #include "file.h"
-#include "compobj.h"
 #include "heap.h"
 #include "ldt.h"
-#include "interfaces.h"
-#include "shlobj.h"
-#include "oleobj.h"
-#include "ddraw.h"
-#include "dsound.h"
-#include "dinput.h"
-#include "d3d.h"
-#include "dplay.h"
-#include "windows.h"
+#include "winreg.h"
 
+#define INITGUID
+
+/* FIXME: we include all the header files containing GUIDs 
+ * so that the corresponding variables get defined. But they 
+ * don't even all belong to the same DLL !!!
+ */
+#include "objbase.h"
+#include "servprov.h"
+#include "shlobj.h"
+#include "ddraw.h"
+#include "d3d.h"
+#include "dinput.h"
+#include "dsound.h"
+#include "dplay.h"
+
+#include "objbase.h"
 
 LPMALLOC16 currentMalloc16=NULL;
 LPMALLOC32 currentMalloc32=NULL;
@@ -87,24 +94,57 @@ DWORD WINAPI CoBuildVersion(void)
  * Set the win16 IMalloc used for memory management
  */
 HRESULT WINAPI CoInitialize16(
-	LPMALLOC16 lpReserved	/* [in] pointer to win16 malloc interface */
+	LPVOID lpReserved	/* [in] pointer to win16 malloc interface */
 ) {
-    currentMalloc16 = lpReserved;
+    currentMalloc16 = (LPMALLOC16)lpReserved;
     return S_OK;
 }
 
 /******************************************************************************
  *		CoInitialize32	[OLE32.26]
+ *
  * Set the win32 IMalloc used for memorymanagement
+ *
+ * RETURNS
+ * S_OK if successful, S_FALSE otherwise, RPC_E_CHANGED_MODE if a previous 
+ * call to CoInitializeEx specified another threading model.
+ *
+ * BUGS
+ * Only the single threaded model is supported. As a result RPC_E_CHANGED_MODE 
+ * is never returned.
  */
 HRESULT WINAPI CoInitialize32(
-	LPMALLOC32 lpReserved	/* [in] pointer to win32 malloc interface */
+	LPVOID lpReserved	/* [in] pointer to win32 malloc interface */
 ) {
     /* FIXME: there really should be something here that incrememts a refcount
      * but I'm supposing that it is a real COM object, so I won't bother
      * creating one here.  (Decrement done in CoUnitialize()) */
-    currentMalloc32 = lpReserved;
+    currentMalloc32 = (LPMALLOC32)lpReserved;
     return S_OK;
+}
+
+/******************************************************************************
+ *		CoInitializeEx32	[OLE32.163]
+ *
+ * Set the win32 IMalloc used for memory management
+ *
+ * RETURNS
+ * S_OK if successful, S_FALSE otherwise, RPC_E_CHANGED_MODE if a previous 
+ * call to CoInitializeEx specified another threading model.
+ *
+ * BUGS
+ * Only the single threaded model is supported. As a result RPC_E_CHANGED_MODE 
+ * is never returned.
+ */
+HRESULT WINAPI CoInitializeEx32(
+	LPVOID lpReserved,	/* [in] pointer to win32 malloc interface */
+	DWORD dwCoInit		/* [in] A value from COINIT specifies the threading model */
+) {
+  if (dwCoInit!=COINIT_APARTMENTTHREADED) {
+    FIXME(ole, ":(%p,%x): unsupported flag %x\n", lpReserved, (int)dwCoInit, (int)dwCoInit);
+    /* Hope for the best and continue anyway */
+  }
+  return CoInitialize32(lpReserved);
 }
 
 /***********************************************************************
@@ -153,7 +193,7 @@ HRESULT WINAPI CoGetMalloc32(
 /***********************************************************************
  *           CoCreateStandardMalloc16 [COMPOBJ.71]
  */
-OLESTATUS WINAPI CoCreateStandardMalloc16(DWORD dwMemContext,
+HRESULT WINAPI CoCreateStandardMalloc16(DWORD dwMemContext,
 					  LPMALLOC16 *lpMalloc)
 {
     /* FIXME: docu says we shouldn't return the same allocator as in
@@ -165,23 +205,41 @@ OLESTATUS WINAPI CoCreateStandardMalloc16(DWORD dwMemContext,
 /******************************************************************************
  *		CoDisconnectObject	[COMPOBJ.15]
  */
-OLESTATUS WINAPI CoDisconnectObject( LPUNKNOWN lpUnk, DWORD reserved )
+HRESULT WINAPI CoDisconnectObject( LPUNKNOWN lpUnk, DWORD reserved )
 {
     TRACE(ole,"%p %lx\n",lpUnk,reserved);
     return S_OK;
 }
 
 /***********************************************************************
- *           IsEqualGUID [COMPOBJ.18]
- * Compares two Unique Identifiers
+ *           IsEqualGUID16 [COMPOBJ.18]
+ *
+ * Compares two Unique Identifiers.
+ *
  * RETURNS
  *	TRUE if equal
  */
-BOOL16 WINAPI IsEqualGUID(
+BOOL16 WINAPI IsEqualGUID16(
 	GUID* g1,	/* [in] unique id 1 */
-	GUID* g2	/* [in] unique id 2 */
+	GUID* g2	/**/
 ) {
     return !memcmp( g1, g2, sizeof(GUID) );
+}
+
+/***********************************************************************
+ *           IsEqualGUID32 [OLE32.76]
+ *
+ * Compares two Unique Identifiers.
+ *
+ * RETURNS
+ *	TRUE if equal
+ */
+BOOL32 WINAPI IsEqualGUID32(
+     REFGUID rguid1, /* [in] unique id 1 */
+     REFGUID rguid2  /* [in] unique id 2 */
+     )
+{
+    return !memcmp(rguid1,rguid2,sizeof(GUID));
 }
 
 /******************************************************************************
@@ -194,7 +252,7 @@ BOOL16 WINAPI IsEqualGUID(
  * RETURNS
  *	the converted GUID
  */
-OLESTATUS WINAPI CLSIDFromString16(
+HRESULT WINAPI CLSIDFromString16(
 	LPCOLESTR16 idstr,	/* [in] string representation of guid */
 	CLSID *id		/* [out] GUID converted from string */
 ) {
@@ -262,11 +320,19 @@ OLESTATUS WINAPI CLSIDFromString16(
 
 /******************************************************************************
  *		CoCreateGuid[OLE32.6]
+ *
+ * Creates a 128bit GUID.
  * Implemented according the DCE specification for UUID generation.
  * Code is based upon uuid library in e2fsprogs by Theodore Ts'o.
  * Copyright (C) 1996, 1997 Theodore Ts'o.
+ *
+ * RETURNS
+ *
+ *  S_OK if successful.
  */
-int CoCreateGuid(GUID *pguid) {
+HRESULT WINAPI CoCreateGuid(
+	GUID *pguid /* [out] points to the GUID to initialize */
+) {
    static char has_init = 0;
    unsigned char a[6];
    static int                      adjustment = 0;
@@ -458,7 +524,7 @@ sizeof((i).ifr_name)+(i).ifr_addr.sa_len)
  * RETURNS
  *	the converted GUID
  */
-OLESTATUS WINAPI CLSIDFromString32(
+HRESULT WINAPI CLSIDFromString32(
 	LPCOLESTR32 idstr,	/* [in] string representation of GUID */
 	CLSID *id		/* [out] GUID represented by above string */
 ) {
@@ -474,12 +540,11 @@ OLESTATUS WINAPI CLSIDFromString32(
  * Converts a GUID into the respective string representation.
  *
  * NOTES
- *    Why is this WINAPI?
  *
  * RETURNS
  *	the string representation and OLESTATUS
  */
-OLESTATUS WINAPI WINE_StringFromCLSID(
+HRESULT WINE_StringFromCLSID(
 	const CLSID *id,	/* [in] GUID to be converted */
 	LPSTR idstr		/* [out] pointer to buffer to contain converted guid */
 ) {
@@ -519,7 +584,7 @@ OLESTATUS WINAPI WINE_StringFromCLSID(
  * RETURNS
  *	the string representation and OLESTATUS
  */
-OLESTATUS WINAPI StringFromCLSID16(
+HRESULT WINAPI StringFromCLSID16(
 	const CLSID *id,	/* [in] the GUID to be converted */
 	LPOLESTR16 *idstr	/* [out] a pointer to a to-be-allocated segmented pointer pointing to the resulting string */
 
@@ -538,7 +603,7 @@ OLESTATUS WINAPI StringFromCLSID16(
      * everything we need.
      */
     if (!WOWCallback16Ex(
-    	(FARPROC16)((LPMALLOC16_VTABLE)PTR_SEG_TO_LIN(
+    	(FARPROC16)((ICOM_VTABLE(IMalloc16)*)PTR_SEG_TO_LIN(
 		((LPMALLOC16)PTR_SEG_TO_LIN(mllc))->lpvtbl)
 	)->fnAlloc,
 	WCB16_CDECL,
@@ -559,7 +624,7 @@ OLESTATUS WINAPI StringFromCLSID16(
  * RETURNS
  *	the string representation and OLESTATUS
  */
-OLESTATUS WINAPI StringFromCLSID32(
+HRESULT WINAPI StringFromCLSID32(
 	const CLSID *id,	/* [in] the GUID to be converted */
 	LPOLESTR32 *idstr	/* [out] a pointer to a to-be-allocated pointer pointing to the resulting string */
 ) {
@@ -607,7 +672,7 @@ StringFromGUID2(REFGUID id, LPOLESTR32 str, INT32 cmax)
  * RETURNS
  *	riid associated with the progid
  */
-OLESTATUS WINAPI CLSIDFromProgID16(
+HRESULT WINAPI CLSIDFromProgID16(
 	LPCOLESTR16 progid,	/* [in] program id as found in registry */
 	LPCLSID riid		/* [out] associated CLSID */
 ) {
@@ -638,7 +703,7 @@ OLESTATUS WINAPI CLSIDFromProgID16(
  * RETURNS
  *	riid associated with the progid
  */
-OLESTATUS WINAPI CLSIDFromProgID32(
+HRESULT WINAPI CLSIDFromProgID32(
 	LPCOLESTR32 progid,	/* [in] program id as found in registry */
 	LPCLSID riid		/* [out] associated CLSID */
 ) {
@@ -649,6 +714,7 @@ OLESTATUS WINAPI CLSIDFromProgID32(
 	return ret;
 }
 
+/* FIXME: this function is not declared in the WINELIB headers. But where should it go ? */
 /***********************************************************************
  *           LookupETask (COMPOBJ.94)
  */
@@ -660,6 +726,7 @@ OLESTATUS WINAPI LookupETask(HTASK16 *hTask,LPVOID p) {
 	return 0;
 }
 
+/* FIXME: this function is not declared in the WINELIB headers. But where should it go ? */
 /***********************************************************************
  *           SetETask (COMPOBJ.95)
  */
@@ -669,6 +736,7 @@ OLESTATUS WINAPI SetETask(HTASK16 hTask, LPVOID p) {
 	return 0;
 }
 
+/* FIXME: this function is not declared in the WINELIB headers. But where should it go ? */
 /***********************************************************************
  *           CallObjectInWOW (COMPOBJ.201)
  */
@@ -682,11 +750,11 @@ OLESTATUS WINAPI CallObjectInWOW(LPVOID p1,LPVOID p2) {
  *
  * Don't know where it registers it ...
  */
-OLESTATUS WINAPI CoRegisterClassObject16(
+HRESULT WINAPI CoRegisterClassObject16(
 	REFCLSID rclsid,
 	LPUNKNOWN pUnk,
-	DWORD dwClsContext,
-	DWORD flags,
+	DWORD dwClsContext, /* [in] CLSCTX flags indicating the context in which to run the executable */
+	DWORD flags,        /* [in] REGCLS flags indicating how connections are made */
 	LPDWORD lpdwRegister
 ) {
 	char	buf[80];
@@ -704,11 +772,11 @@ OLESTATUS WINAPI CoRegisterClassObject16(
  *
  * Don't know where it registers it ...
  */
-OLESTATUS WINAPI CoRegisterClassObject32(
+HRESULT WINAPI CoRegisterClassObject32(
 	REFCLSID rclsid,
 	LPUNKNOWN pUnk,
-	DWORD dwClsContext,
-	DWORD flags,
+	DWORD dwClsContext, /* [in] CLSCTX flags indicating the context in which to run the executable */
+	DWORD flags,        /* [in] REGCLS flags indicating how connections are made */
 	LPDWORD lpdwRegister
 ) {
     char buf[80];
@@ -799,7 +867,7 @@ HRESULT WINAPI CoGetClassObject(REFCLSID rclsid, DWORD dwClsContext,
 /******************************************************************************
  *		CoRegisterMessageFilter16	[COMPOBJ.27]
  */
-OLESTATUS WINAPI CoRegisterMessageFilter16(
+HRESULT WINAPI CoRegisterMessageFilter16(
 	LPMESSAGEFILTER lpMessageFilter,
 	LPMESSAGEFILTER *lplpMessageFilter
 ) {
@@ -837,8 +905,8 @@ HRESULT WINAPI CoCreateInstance(
 
         hres = CoGetClassObject(rclsid, dwClsContext, NULL, (const REFIID) &IID_IClassFactory, (LPVOID)&lpclf);
         if (!SUCCEEDED(hres)) return hres;
-	hres = lpclf->lpvtbl->fnCreateInstance(lpclf, pUnkOuter, iid, ppv);
-	lpclf->lpvtbl->fnRelease(lpclf);
+	hres = IClassFactory_CreateInstance(lpclf, pUnkOuter, iid, ppv);
+	IClassFactory_Release(lpclf);
 	return hres;
 #endif
 }
@@ -968,7 +1036,7 @@ VOID WINAPI CoTaskMemFree(
 /***********************************************************************
  *           CoLoadLibrary (OLE32.30)
  */
-HINSTANCE32 WINAPI CoLoadLibrary(LPSTR lpszLibName, BOOL32 bAutoFree)
+HINSTANCE32 WINAPI CoLoadLibrary(LPOLESTR16 lpszLibName, BOOL32 bAutoFree)
 {
     HINSTANCE32 hLibrary;
     OpenDll *ptr;

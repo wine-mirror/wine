@@ -148,7 +148,7 @@ BOOL32 NE_LoadSegment( NE_MODULE *pModule, WORD segnum )
       */
       char* buff = xmalloc(size);
       char* curr = buff;
-      ReadFile(hf, mem, size, &res, NULL);
+      ReadFile(hf, buff, size, &res, NULL);
       while(curr < buff + size) {
 	unsigned int rept = *((short*) curr)++;
 	unsigned int len = *((short*) curr)++;
@@ -800,6 +800,17 @@ DWORD WINAPI NE_AllocateSegment( WORD wFlags, WORD wSize, WORD wElem )
 {
     WORD size = wSize << wElem;
     HANDLE16 hMem = GlobalAlloc16( NE_Ne2MemFlags(wFlags), size);
+
+    /* not data == code */
+    if (	(wFlags & NE_SEGFLAGS_EXECUTEONLY) ||
+    		!(wFlags & NE_SEGFLAGS_DATA)
+    ) {
+        WORD hSel = GlobalHandleToSel(hMem);
+        WORD access = SelectorAccessRights(hSel,0,0);
+
+	access |= 2<<2; /* SEGMENT_CODE */
+	SelectorAccessRights(hSel,1,access);
+    }
     return MAKELONG( hMem, GlobalHandleToSel(hMem) );
 }
 

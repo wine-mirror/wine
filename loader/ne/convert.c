@@ -376,6 +376,28 @@ WORD WINAPI GetMenu32Size( LPVOID menu32 )
 }
 
 /**********************************************************************
+ *	    ConvertAccelerator32To16
+ */
+VOID ConvertAccelerator32To16( LPVOID acc32, DWORD size, LPVOID acc16 )
+{
+    int type;
+
+    do
+    {
+        /* Copy type */
+        type = *((BYTE *)acc16)++ = *((BYTE *)acc32)++;
+        /* Skip padding */
+        ((BYTE *)acc32)++;
+        /* Copy event and IDval */
+        *((WORD *)acc16)++ = *((WORD *)acc32)++;
+        *((WORD *)acc16)++ = *((WORD *)acc32)++;
+        /* Skip padding */
+        ((WORD *)acc32)++;
+
+    } while ( !( type & 0x80 ) );
+}
+
+/**********************************************************************
  *	    NE_LoadPEResource
  */
 HGLOBAL16 NE_LoadPEResource( NE_MODULE *pModule, WORD type, LPVOID bits, DWORD size )
@@ -395,6 +417,10 @@ HGLOBAL16 NE_LoadPEResource( NE_MODULE *pModule, WORD type, LPVOID bits, DWORD s
 
     case RT_DIALOG16:
         ConvertDialog32To16( bits, size, GlobalLock16( handle ) );
+        break;
+
+    case RT_ACCELERATOR16:
+        ConvertAccelerator32To16( bits, size, GlobalLock16( handle ) );
         break;
 
     case RT_STRING16:

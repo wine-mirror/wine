@@ -333,17 +333,7 @@ static BOOL32 DateToTm( DATE dateIn, LCID lcid, struct tm* pTm )
 		double decimalPart = 0.0;
 		double wholePart = 0.0;
 
-		pTm->tm_sec = 0;
-		pTm->tm_min = 0;
-		pTm->tm_hour = 0;
-		pTm->tm_mday = 0;
-		pTm->tm_mon = 0;
-		pTm->tm_year = 0;
-		pTm->tm_wday = 0;
-		pTm->tm_yday = 0;
-		pTm->tm_isdst = 0;
-		pTm->tm_gmtoff = 0;
-		pTm->tm_zone = 0;
+		memset(pTm,0,sizeof(*pTm));
 	
 		/* Because of the nature of DATE format witch
 		 * associates 2.0 to January 1, 1900. We will

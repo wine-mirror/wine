@@ -10,6 +10,7 @@
 #include "peexe.h"
 #include "heap.h"
 #include "debug.h"
+#include "main.h"
 
 typedef struct
 {

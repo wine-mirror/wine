@@ -1,4 +1,4 @@
-How to Report a Bug
+How To Report A Bug
 -------------------
 
 Some simple advice on making your bug report more useful (and thus more
@@ -6,21 +6,23 @@ likely to get answered and fixed):
 
 1) Post as much information as possible.  
 
-	This means we need more information than,
-	"MS Word crashes whenever I run it.  Do you know why?"  Include at 
-	least the following information:
+	This means we need more information than a simple
+	"MS Word crashes whenever I run it.  Do you know why?"
+	Include at least the following information:
 
 	- Version of Wine you're using (run 'wine -v')
 	- Operating system you're using, what distribution (if any), and what
-		version.
+		version
 	- Compiler and version (run 'gcc -v')
+	- Windows version, if installed
 	- Program you're trying to run, its version number, and a URL for 
-		where the program can be obtained (if available).
+		where the program can be obtained (if available)
 	- Command line you used to start wine
-	- Any other information you think may be relevant or helpful.
+	- Any other information you think may be relevant or helpful, such as
+		X server version in case of X problems, libc version etc.
 
-2) Re-run the program with the -debugmsg +relay option 
-   (i.e., 'wine -debugmsg +relay sol.exe').
+2) Re-run the program with the -debugmsg +relay,+snoop option 
+   (i.e., 'wine -debugmsg +relay,+snoop sol.exe').
 
 	If Wine crashes while running your program, it is important that we
 	have this information to have a chance at figuring out what is causing
@@ -32,7 +34,7 @@ likely to get answered and fixed):
 
 	tcsh and other csh-like shells:
 
-	    wine -debugmsg +relay [other_options] program_name |& tee filename.out
+	    wine -debugmsg +relay,+snoop [other_options] program_name |& tee filename.out
 	    tail -100 filename.out > report_file
 
 	bash and other sh-like shells:

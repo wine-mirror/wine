@@ -108,6 +108,7 @@ enum res_e res_type_from_id(name_id_t *nid)
 	case WRC_RT_GROUP_CURSOR:	return res_curg;
 	case WRC_RT_GROUP_ICON:		return res_icog;
 	case WRC_RT_VERSION:		return res_ver;
+	case WRC_RT_TOOLBAR:		return res_toolbar;
 
 	default:
 	case WRC_RT_DLGINCLUDE:

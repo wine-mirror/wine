@@ -348,7 +348,7 @@ BOOL32 WINAPI DeviceIoControl(HANDLE32 hDevice, DWORD dwIoControlCode,
 		{
 			/* FIXME: Set appropriate error */
 			FIXME( win32, "Unimplemented control %ld for VxD device %s\n", 
-				          dwIoControlCode, dev->info->name );
+                               dwIoControlCode, dev->info ? dev->info->name : "???" );
 		}
 	}
 	else

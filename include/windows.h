@@ -12,8 +12,14 @@ extern "C" {
 #include "wintypes.h"
 #include "winbase.h"  
 
-/* FIXME: Maybe we should try to get something from the Unix headers instead, this should be in windef.h by the way */
+/* FIXME: Maybe MAX_PATH and _MAX_PATH should be computed from the Unix headers instead
+ * and by the way, _MAX_PATH should be defined in stdlib.h and MAX_PATH in windef.h 
+ * and mapiwin.h
+ */
+#define _MAX_PATH 260
+#ifndef MAX_PATH
 #define MAX_PATH 260
+#endif
 
 #ifndef DONT_INCLUDE_WINGDI
 #include "winbase.h"
@@ -3836,6 +3842,8 @@ VOID        WINAPI OldYield(void);
 VOID        WINAPI PostEvent(HTASK16);
 WORD        WINAPI PrestoChangoSelector(WORD,WORD);
 BOOL32      WINAPI RegisterShellHook(HWND16,UINT16);
+/* NOTE: This is SYSTEM.3, not USER.182, which is also named KillSystemTimer */
+WORD        WINAPI SYSTEM_KillSystemTimer( WORD );
 WORD        WINAPI SelectorAccessRights(WORD,WORD,WORD);
 VOID        WINAPI SetPriority(HTASK16,INT16);
 FARPROC16   WINAPI SetResourceHandler(HINSTANCE16,SEGPTR,FARPROC16);
@@ -3857,6 +3865,7 @@ BOOL32      WINAPI AreFileApisANSI(void);
 BOOL32      WINAPI Beep(DWORD,DWORD);
 BOOL32      WINAPI CloseHandle(HANDLE32);
 BOOL32      WINAPI CloseServiceHandle(HANDLE32);
+HANDLE32    WINAPI ConvertToGlobalHandle(HANDLE32 hSrc);
 BOOL32      WINAPI CopyFile32A(LPCSTR,LPCSTR,BOOL32);
 BOOL32      WINAPI CopyFile32W(LPCWSTR,LPCWSTR,BOOL32);
 #define     CopyFile WINELIB_NAME_AW(CopyFile)
@@ -4135,6 +4144,7 @@ LONG        WINAPI RegSetKeySecurity(HKEY,SECURITY_INFORMATION,LPSECURITY_DESCRI
 LONG        WINAPI RegUnLoadKey32A(HKEY,LPCSTR);
 LONG        WINAPI RegUnLoadKey32W(HKEY,LPCWSTR);
 #define     RegUnLoadKey WINELIB_NAME_AW(RegUnLoadKey)
+BOOL32      WINAPI ReleaseMutex(HANDLE32);
 BOOL32      WINAPI ReleaseSemaphore(HANDLE32,LONG,LPLONG);
 BOOL32      WINAPI ResetEvent(HANDLE32);
 DWORD       WINAPI ResumeThread(HANDLE32);

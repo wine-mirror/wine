@@ -14,6 +14,7 @@
 #include "task.h"
 #include "debugstr.h"
 #include "debug.h"
+#include "main.h"
 
 
 /***********************************************************************
@@ -22,7 +23,6 @@
 BOOL32 RELAY_Init(void)
 {
     WORD codesel;
-    extern BOOL32 THUNK_Init(void);
 
       /* Allocate the code selector for CallTo16 routines */
 
@@ -74,8 +74,6 @@ void RELAY_DebugCallFrom16( int func_type, char *args,
     char *args16;
     const char *funstr;
     int i;
-    /* from relay32/relay386.c */
-    extern int RELAY_ShowDebugmsgRelay(const char *);
 
     if (!TRACE_ON(relay)) return;
 
@@ -196,8 +194,6 @@ void RELAY_DebugCallFrom16Ret( int func_type, int ret_val, CONTEXT *context)
     STACK16FRAME *frame;
     WORD ordinal;
     const char *funstr;
-    /* from relay32/relay386.c */
-    extern int RELAY_ShowDebugmsgRelay(const char *);
 
     if (!TRACE_ON(relay)) return;
     frame = CURRENT_STACK16;

@@ -5,13 +5,11 @@
  * <presently under construction - contact hunnise@nortelnetworks.com>
  *
  */
-#include "interfaces.h"
 #include "heap.h"
 #include "winerror.h"
 #include "debug.h"
 #include "winnt.h"
 #include "winreg.h"
-#include "compobj.h"
 #include "dplay.h"
 
 #include "thread.h"

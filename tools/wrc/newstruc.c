@@ -37,6 +37,7 @@ __NEW_STRUCT_FUNC(raw_data)
 __NEW_STRUCT_FUNC(lvc)
 __NEW_STRUCT_FUNC(res_count)
 __NEW_STRUCT_FUNC(string)
+__NEW_STRUCT_FUNC(toolbar_item)
 
 /* New instances for all types of structures */
 /* Very inefficient (in size), but very functional :-]
@@ -250,4 +251,12 @@ stringtable_t *new_stringtable(lvc_t *lvc)
 	return stt;
 }
 
-
+toolbar_t *new_toolbar(int button_width, int button_height, toolbar_item_t *items, int nitems)
+{
+	toolbar_t *tb = (toolbar_t *)xmalloc(sizeof(toolbar_t));
+	tb->button_width = button_width;
+	tb->button_height = button_height;
+	tb->nitems = nitems;
+	tb->items = items;
+	return tb;
+}

@@ -19,7 +19,6 @@
 #include "dlgs.h"
 #include "win.h"
 #include "cursoricon.h"
-#include "interfaces.h"
 #include "sysmetrics.h"
 #include "shlobj.h"
 #include "debug.h"

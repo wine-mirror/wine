@@ -48,7 +48,6 @@ DEFINE_GUID(IID_ISupportErrorInfo,  0xDF0B3D60,0x547D,0x101B,0x8E,0x65,
 #include "objbase.h"
 
 #define THIS LPCLASSFACTORY this
-typedef struct IClassFactory *LPCLASSFACTORY,IClassFactory;
 typedef struct {
 	STDMETHOD(QueryInterface) (THIS_ REFIID riid,LPVOID FAR* ppvObj) PURE;
 	STDMETHOD_(ULONG,AddRef) (THIS) PURE;
@@ -57,14 +56,9 @@ typedef struct {
 	STDMETHOD(LockServer) (THIS_ BOOL32) PURE;
 } *LPCLASSFACTORY_VTABLE,IClassFactory_VTable;
 
-struct IClassFactory {
-	LPCLASSFACTORY_VTABLE	lpvtbl;
-	DWORD			ref;
-};
 #undef THIS
 
 #define THIS LPMALLOC32 this
-typedef struct IMalloc32 *LPMALLOC32,IMalloc32;
 typedef struct {
 	STDMETHOD(QueryInterface) (THIS_ REFIID riid,LPVOID FAR* ppvObj) PURE;
 	STDMETHOD_(ULONG,AddRef) (THIS) PURE;
@@ -78,14 +72,9 @@ typedef struct {
 	STDMETHOD_(LPVOID,HeapMinimize) ( THIS );
 } *LPMALLOC32_VTABLE,IMalloc32_VTable;
 
-struct IMalloc32 {
-	LPMALLOC32_VTABLE	lpvtbl;
-	DWORD			ref;
-};
 #undef THIS
 
 #define THIS LPMALLOC16 this
-typedef struct IMalloc16 *LPMALLOC16,IMalloc16;
 typedef struct {
 	STDMETHOD(QueryInterface) (THIS_ REFIID riid,LPVOID FAR* ppvObj) PURE;
 	STDMETHOD_(ULONG,AddRef) (THIS) PURE;
@@ -99,14 +88,6 @@ typedef struct {
 	STDMETHOD_(LPVOID,HeapMinimize) ( THIS );
 } *LPMALLOC16_VTABLE,IMalloc16_VTable;
 
-struct IMalloc16 {
-	LPMALLOC16_VTABLE	lpvtbl;
-	DWORD			ref;
-	/* Gmm, I think one is not enough, we should probably manage a list of
-	 * heaps
-	 */
-	HGLOBAL16		heap;
-};
 #undef THIS
 
 /* private prototypes for the constructors */

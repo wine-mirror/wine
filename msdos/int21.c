@@ -6,7 +6,9 @@
 #include <fcntl.h>
 #include <errno.h>
 #include <stdlib.h>
-#include <sys/file.h>
+#ifdef HAVE_SYS_FILE_H
+# include <sys/file.h>
+#endif
 #include <string.h>
 #include <sys/stat.h>
 #include <sys/time.h>
@@ -1100,19 +1102,9 @@ void WINAPI DOS3Call( CONTEXT *context )
 
     switch(AH_reg(context)) 
     {
-    case 0x00: /* TERMINATE PROGRAM */
-        TRACE(int21,"TERMINATE PROGRAM\n");
-        ExitProcess( 0 );
-        break;
-
-    case 0x01: /* READ CHARACTER FROM STANDARD INPUT, WITH ECHO */
-		_lread16(1, (BYTE *)&context->Eax, 1);
-		break;
-
     case 0x03: /* READ CHARACTER FROM STDAUX  */
     case 0x04: /* WRITE CHARACTER TO STDAUX */
     case 0x05: /* WRITE CHARACTER TO PRINTER */
-    case 0x0b: /* GET STDIN STATUS */
     case 0x0f: /* OPEN FILE USING FCB */
     case 0x10: /* CLOSE FILE USING FCB */
     case 0x14: /* SEQUENTIAL READ FROM FCB FILE */		
@@ -1128,6 +1120,15 @@ void WINAPI DOS3Call( CONTEXT *context )
     case 0x54: /* GET VERIFY FLAG */
         INT_BARF( context, 0x21 );
         break;
+
+    case 0x00: /* TERMINATE PROGRAM */
+        TRACE(int21,"TERMINATE PROGRAM\n");
+        ExitProcess( 0 );
+        break;
+
+    case 0x01: /* READ CHARACTER FROM STANDARD INPUT, WITH ECHO */
+                _lread16(1, (BYTE *)&context->Eax, 1);
+                break;
 
     case 0x02: /* WRITE CHARACTER TO STANDARD OUTPUT */
         TRACE(int21, "Write Character to Standard Output\n");
@@ -1176,6 +1177,13 @@ void WINAPI DOS3Call( CONTEXT *context )
 	break;
       }
 
+    case 0x0b: /* GET STDIN STATUS */
+	{
+	    CHAR dummy;
+
+	    AL_reg(context) = CONSOLE_CheckForKeystroke(&dummy, &dummy);
+	}
+        break;
     case 0x2e: /* SET VERIFY FLAG */
         TRACE(int21,"SET VERIFY FLAG ignored\n");
     	/* we cannot change the behaviour anyway, so just ignore it */
@@ -1319,17 +1327,28 @@ void WINAPI DOS3Call( CONTEXT *context )
         switch (AL_reg(context))
         {
 	      case 0x00: /* GET CURRENT EXTENDED BREAK STATE */
-		TRACE(int21,"GET CURRENT EXTENDED BREAK STATE stub\n");
-                DL_reg(context) = 0;
+		TRACE(int21,"GET CURRENT EXTENDED BREAK STATE\n");
+                DL_reg(context) = DOSCONF_config.brk_flag;
 		break;
 
 	      case 0x01: /* SET EXTENDED BREAK STATE */
-		TRACE(int21,"SET CURRENT EXTENDED BREAK STATE stub\n");
+		TRACE(int21,"SET CURRENT EXTENDED BREAK STATE\n");
+		DOSCONF_config.brk_flag = (DL_reg(context) > 0);
 		break;		
 		
 	      case 0x02: /* GET AND SET EXTENDED CONTROL-BREAK CHECKING STATE*/
-		TRACE(int21,"GET AND SET EXTENDED CONTROL-BREAK CHECKING STATE stub\n");
-		DL_reg(context) = 0;
+		TRACE(int21,"GET AND SET EXTENDED CONTROL-BREAK CHECKING STATE\n");
+		/* ugly coding in order to stay reentrant */
+		if (DL_reg(context))
+		{
+		    DL_reg(context) = DOSCONF_config.brk_flag;
+		    DOSCONF_config.brk_flag = 1;
+		}
+		else
+		{
+		    DL_reg(context) = DOSCONF_config.brk_flag;
+		    DOSCONF_config.brk_flag = 0;
+		}
 		break;
 
 	      case 0x05: /* GET BOOT DRIVE */

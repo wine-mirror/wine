@@ -32,8 +32,8 @@
  
 #include "windows.h"
 #include "winversion.h"
-#include "compobj.h"
-#include "storage.h"
+#include "wine/obj_base.h"
+#include "wine/obj_storage.h"
 #include "imagelist.h"
 #include "commctrl.h"
 #include "debug.h"

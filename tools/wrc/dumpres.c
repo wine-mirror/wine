@@ -42,6 +42,7 @@ char *get_typename(resource_t* r)
 	case res_usr:   return "UserResource";
 	case res_msg:	return "MESSAGETABLE";
 	case res_ver:	return "VERSIONINFO";
+	case res_toolbar: return "TOOLBAR";
 	default: 	return "Unknown";
 	}
 }
@@ -64,7 +65,8 @@ char *get_typename(resource_t* r)
 char *strncpyWtoA(char *cs, short *ws, int maxlen)
 {
 	char *cptr = cs;
-	while(*ws && maxlen-1)
+	short *wsMax = ws + maxlen;
+	while(ws < wsMax)
 	{
 		if(*ws < -128 || *ws > 127)
 			printf("***Warning: Unicode string contains non-printable chars***");
@@ -821,6 +823,49 @@ void dump_versioninfo(versioninfo_t *ver)
 
 /*
  *****************************************************************************
+ * Function	: dump_toolbar_item
+ * Syntax	: void dump_toolbar_item(toolbar_item_t *item)
+ * Input	:
+ * Output	:
+ * Description	:
+ * Remarks	:
+ *****************************************************************************
+*/
+void dump_toolbar_items(toolbar_item_t *items)
+{
+	while(items)
+	{
+	        if(items->id)
+			printf("   BUTTON %d", items->id );
+		else
+	      		printf("   SEPARATOR");
+
+		printf("\n");
+	      
+		items = items->next;
+	}
+}
+
+/*
+ *****************************************************************************
+ * Function	: dump_toolbar
+ * Syntax	: void dump_toolbar(dialogex_t *toolbar)
+ * Input	:
+ *	toolbar	- Toolbar resource descriptor
+ * Output	:
+ * Description	:
+ * Remarks	:
+ *****************************************************************************
+*/
+void dump_toolbar(toolbar_t *toolbar)
+{
+	dump_memopt(toolbar->memopt);
+	dump_lvc(&(toolbar->lvc));
+	dump_toolbar_items(toolbar->items);
+}
+
+/*
+ *****************************************************************************
  * Function	:
  * Syntax	:
  * Input	:
@@ -898,6 +943,9 @@ void dump_resources(resource_t *top)
 			break;
 		case res_ver:
 			dump_versioninfo(top->res.ver);
+			break;
+		case res_toolbar:
+			dump_toolbar(top->res.tbt);
 			break;
 		default:
 			printf("Report this: Unknown resource type parsed %08x\n", top->type);

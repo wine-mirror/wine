@@ -1,12 +1,14 @@
 /*
- * Windows version functions
+ * Windows and DOS version functions
  *
  * Copyright 1997 Alexandre Julliard
  * Copyright 1997 Marcus Meissner
  * Copyright 1998 Patrik Stridvall
+ * Copyright 1998 Andreas Mohr
  */
 
 #include <string.h>
+#include <stdlib.h>
 #include "windows.h"
 #include "winbase.h"
 #include "process.h"
@@ -24,7 +26,7 @@ typedef struct
 
 
 /* FIXME: compare values below with original and fix */
-static const VERSION_DATA VersionData[NB_WINDOWS_VERSIONS] =
+static VERSION_DATA VersionData[NB_WINDOWS_VERSIONS] =
 {
     /* WIN31 */
     {
@@ -64,7 +66,7 @@ static const VERSION_DATA VersionData[NB_WINDOWS_VERSIONS] =
     }
 };
 
-static const char *VersionNames[NB_WINDOWS_VERSIONS] =
+static const char *WinVersionNames[NB_WINDOWS_VERSIONS] =
 {
     "win31",
     "win95",
@@ -74,20 +76,20 @@ static const char *VersionNames[NB_WINDOWS_VERSIONS] =
 
 /* the current version has not been autodetected but forced via cmdline */
 static BOOL32 versionForced = FALSE;
-static WINDOWS_VERSION defaultVersion = WIN31;
+static WINDOWS_VERSION defaultWinVersion = WIN31;
 
 
 /**********************************************************************
- *         VERSION_ParseVersion
+ *         VERSION_ParseWinVersion
  */
-void VERSION_ParseVersion( char *arg )
+void VERSION_ParseWinVersion( const char *arg )
 {
     int i;
     for (i = 0; i < NB_WINDOWS_VERSIONS; i++)
     {
-        if (!strcmp( VersionNames[i], arg ))
+        if (!strcmp( WinVersionNames[i], arg ))
         {
-            defaultVersion = (WINDOWS_VERSION)i;
+            defaultWinVersion = (WINDOWS_VERSION)i;
             versionForced = TRUE;
             return;
         }
@@ -95,8 +97,25 @@ void VERSION_ParseVersion( char *arg )
     MSG("Invalid winver value '%s' specified.\n", arg );
     MSG("Valid versions are:" );
     for (i = 0; i < NB_WINDOWS_VERSIONS; i++)
-        MSG(" '%s'%c", VersionNames[i],
+        MSG(" '%s'%c", WinVersionNames[i],
 	    (i == NB_WINDOWS_VERSIONS - 1) ? '\n' : ',' );
+}
+
+
+/**********************************************************************
+ *         VERSION_ParseDosVersion
+ */
+void VERSION_ParseDosVersion( const char *arg )
+{
+    int hi, lo;
+    if (sscanf( arg, "%d.%d", &hi, &lo ) == 2)
+    {
+        VersionData[WIN31].getVersion16 =
+            MAKELONG(LOWORD(VersionData[WIN31].getVersion16),
+                     (hi<<8) + lo);
+    }
+    else
+        fprintf( stderr, "-dosver: Wrong version format. Use \"-dosver x.xx\"\n");
 }
 
 
@@ -108,7 +127,7 @@ WINDOWS_VERSION VERSION_GetVersion(void)
     PIMAGE_NT_HEADERS peheader;	
 
     if (versionForced) /* user has overridden any sensible checks */
-        return defaultVersion;
+        return defaultWinVersion;
     if (!PROCESS_Current()->exe_modref)
     {
         /* HACK: if we have loaded a PE image into this address space,
@@ -135,7 +154,7 @@ WINDOWS_VERSION VERSION_GetVersion(void)
     ERR(ver,"unknown subsystem version: %04x.%04x, please report.\n",
 	peheader->OptionalHeader.MajorSubsystemVersion,
 	peheader->OptionalHeader.MinorSubsystemVersion );
-    return defaultVersion;
+    return defaultWinVersion;
 }
 
 
@@ -348,14 +367,16 @@ UINT32 WINAPI OaBuildVersion()
 {
     WINDOWS_VERSION ver = VERSION_GetVersion();
 
+    FIXME(ver, "Please report to a.mohr@mailto.de if you get version error messages !\n");
     switch(VersionData[ver].getVersion32)
     {
         case 0x80000a03: /* Win 3.1 */
 		return 0x140fd1; /* from Win32s 1.1e */
         case 0xc0000004: /* Win 95 */
-		return 0x0a0bd3;
+		return 0x1e10a9; /* some older version: 0x0a0bd3 */
         case 0x04213303: /* NT 3.51 */
-		return 0x0; /* FIXME */
+		FIXME(ver, "NT 3.51 version value unknown !\n");
+		return 0x1e10a9; /* value borrowed from Win95 */
         case 0x05650004: /* NT 4.0 */
 		return 0x141016;
 	default:

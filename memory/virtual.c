@@ -1094,9 +1094,16 @@ HANDLE32 WINAPI CreateFileMapping32A(
     {
         if (obj->type == K32OBJ_MEM_MAPPED_FILE)
         {
-            SetLastError( ERROR_ALREADY_EXISTS );
+            req.handle = -1;
+            CLIENT_SendRequest( REQ_CREATE_MAPPING, -1, 2,
+                                &req, sizeof(req),
+                                name, name ? strlen(name) + 1 : 0 );
+            CLIENT_WaitSimpleReply( &reply, sizeof(reply), NULL );
+            if (reply.handle == -1) return 0;
+            if (GetLastError() != ERROR_ALREADY_EXISTS)
+                return 0;  /* not supposed to happen */
             handle = HANDLE_Alloc( PROCESS_Current(), obj,
-                                   FILE_MAP_ALL_ACCESS /*FIXME*/, inherit, -1 );
+                                   FILE_MAP_ALL_ACCESS /*FIXME*/, inherit, reply.handle );
         }
         else
         {

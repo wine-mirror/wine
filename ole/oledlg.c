@@ -9,7 +9,7 @@
 #include "winerror.h"
 #include "ole.h"
 #include "oledlg.h"
-#include "compobj.h"
+#include "wine/obj_base.h"
 #include "debug.h"
 
 /***********************************************************************

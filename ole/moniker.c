@@ -9,16 +9,9 @@
 #include <string.h>
 #include <assert.h>
 #include "winerror.h"
-#include "ole.h"
-#include "ole2.h"
-#include "ldt.h"
-#include "heap.h"
-#include "compobj.h"
-#include "interfaces.h"
-#include "storage.h"
-#include "shlobj.h"
-#include "local.h"
-#include "module.h"
+#include "wine/obj_base.h"
+#include "wine/obj_storage.h"
+#include "wine/obj_moniker.h"
 #include "debug.h"
 
 /******************************************************************************

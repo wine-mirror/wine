@@ -40,6 +40,7 @@ __NEW_STRUCT_PROTO(raw_data);
 __NEW_STRUCT_PROTO(lvc);
 __NEW_STRUCT_PROTO(res_count);
 __NEW_STRUCT_PROTO(string);
+__NEW_STRUCT_PROTO(toolbar_item);
 
 resource_t *new_resource(enum res_e t, void *res, int memopt, language_t *lan);
 version_t *new_version(DWORD v);
@@ -61,6 +62,7 @@ messagetable_t *new_messagetable(raw_data_t *rd);
 void copy_raw_data(raw_data_t *dst, raw_data_t *src, int offs, int len);
 int *new_int(int i);
 stringtable_t *new_stringtable(lvc_t *lvc);
+toolbar_t *new_toolbar(int button_width, int button_Height, toolbar_item_t *items, int nitems);
 
 #endif
 

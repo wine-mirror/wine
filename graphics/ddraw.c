@@ -33,7 +33,6 @@
 #endif
 
 #include "winerror.h"
-#include "interfaces.h"
 #include "gdi.h"
 #include "heap.h"
 #include "ldt.h"
@@ -43,7 +42,6 @@
 #include "ddraw.h"
 #include "d3d.h"
 #include "debug.h"
-#include "compobj.h"
 #include "spy.h"
 #include "message.h"
 #include "x11drv.h"
@@ -426,7 +424,7 @@ static HRESULT WINAPI Xlib_IDirectDrawSurface3_Unlock(
 #ifdef HAVE_LIBXXSHM
     if (this->s.ddraw->e.xlib.xshm_active)
       TSXShmPutImage(display,
-		     this->s.ddraw->e.xlib.drawable,
+		     this->s.ddraw->d.drawable,
 		     DefaultGCOfScreen(screen),
 		     this->t.xlib.image,
 		     0, 0, 0, 0,
@@ -436,7 +434,7 @@ static HRESULT WINAPI Xlib_IDirectDrawSurface3_Unlock(
     else
 #endif
 	TSXPutImage(		display,
-				this->s.ddraw->e.xlib.drawable,
+				this->s.ddraw->d.drawable,
 				DefaultGCOfScreen(screen),
 				this->t.xlib.image,
 				0, 0, 0, 0,
@@ -444,7 +442,7 @@ static HRESULT WINAPI Xlib_IDirectDrawSurface3_Unlock(
 		  this->t.xlib.image->height);
   
 	if (this->s.palette && this->s.palette->cm)
-		TSXSetWindowColormap(display,this->s.ddraw->e.xlib.drawable,this->s.palette->cm);
+		TSXSetWindowColormap(display,this->s.ddraw->d.drawable,this->s.palette->cm);
 	}
 
 	return DD_OK;
@@ -503,7 +501,7 @@ static HRESULT WINAPI Xlib_IDirectDrawSurface3_Flip(
 #ifdef HAVE_LIBXXSHM
 	if (this->s.ddraw->e.xlib.xshm_active) {
 	  TSXShmPutImage(display,
-			 this->s.ddraw->e.xlib.drawable,
+			 this->s.ddraw->d.drawable,
 			 DefaultGCOfScreen(screen),
 			 flipto->t.xlib.image,
 			 0, 0, 0, 0,
@@ -513,7 +511,7 @@ static HRESULT WINAPI Xlib_IDirectDrawSurface3_Flip(
 	} else
 #endif
 	TSXPutImage(display,
-				this->s.ddraw->e.xlib.drawable,
+				this->s.ddraw->d.drawable,
 				DefaultGCOfScreen(screen),
 				flipto->t.xlib.image,
 				0, 0, 0, 0,
@@ -521,7 +519,7 @@ static HRESULT WINAPI Xlib_IDirectDrawSurface3_Flip(
 				flipto->t.xlib.image->height);
 	
 	if (flipto->s.palette && flipto->s.palette->cm) {
-	  TSXSetWindowColormap(display,this->s.ddraw->e.xlib.drawable,flipto->s.palette->cm);
+	  TSXSetWindowColormap(display,this->s.ddraw->d.drawable,flipto->s.palette->cm);
 	}
 	if (flipto!=this) {
 		XImage *tmp;
@@ -547,12 +545,17 @@ static HRESULT WINAPI Xlib_IDirectDrawSurface3_SetPalette(
 	int i;
 	TRACE(ddraw,"(%p)->(%p)\n",this,pal);
 
+	if (pal == NULL) {
+          if( this->s.palette != NULL )
+            this->s.palette->lpvtbl->fnRelease( this->s.palette );
+	  this->s.palette = pal;
+
+	  return DD_OK;
+	}
+	
 	if( !(pal->cm) && (this->s.ddraw->d.depth<=8)) 
 	{
-		pal->cm = TSXCreateColormap(display,this->s.ddraw->e.xlib.drawable,DefaultVisualOfScreen(screen),AllocAll);
-
-		/* FIXME: this is not correct, when using -managed (XSetWindowColormap??) */
-		TSXInstallColormap(display,pal->cm);
+		pal->cm = TSXCreateColormap(display,this->s.ddraw->d.drawable,DefaultVisualOfScreen(screen),AllocAll);
 
 		for (i=0;i<256;i++) {
 			XColor xc;
@@ -587,7 +590,7 @@ static HRESULT WINAPI Xlib_IDirectDrawSurface3_SetPalette(
                 pal->lpvtbl->fnAddRef( pal );
            }
           /* Perform the refresh */
-          TSXSetWindowColormap(display,this->s.ddraw->e.xlib.drawable,this->s.palette->cm);
+          TSXSetWindowColormap(display,this->s.ddraw->d.drawable,this->s.palette->cm);
         }
 	return DD_OK;
 }
@@ -697,6 +700,7 @@ static HRESULT WINAPI IDirectDrawSurface3_Blt(
 	    if (dwFlags) {
 	      TRACE(ddraw,"\t(src=NULL):Unsupported flags: ");_dump_DDBLT(dwFlags);fprintf(stderr,"\n");
 	    }
+	    this->lpvtbl->fnUnlock(this,ddesc.y.lpSurface);
 	    return DD_OK;
 	}
 
@@ -768,24 +772,33 @@ static HRESULT WINAPI IDirectDrawSurface3_Blt(
 static HRESULT WINAPI IDirectDrawSurface3_BltFast(
 	LPDIRECTDRAWSURFACE3 this,DWORD dstx,DWORD dsty,LPDIRECTDRAWSURFACE3 src,LPRECT32 rsrc,DWORD trans
 ) {
-	int		i,bpp;
+	int		i,bpp,w,h;
 	DDSURFACEDESC	ddesc,sdesc;
 
-	if (TRACE_ON(ddraw)) {
-	    TRACE(ddraw,"(%p)->(%ld,%ld,%p,%p,%08lx)\n",
+	if (1  || TRACE_ON(ddraw)) {
+	    FIXME(ddraw,"(%p)->(%ld,%ld,%p,%p,%08lx)\n",
 		    this,dstx,dsty,src,rsrc,trans
 	    );
-	    TRACE(ddraw,"	trans:");_dump_DDBLTFAST(trans);fprintf(stderr,"\n");
-	    TRACE(ddraw,"	srcrect: %dx%d-%dx%d\n",rsrc->left,rsrc->top,rsrc->right,rsrc->bottom);
+	    FIXME(ddraw,"	trans:");_dump_DDBLTFAST(trans);fprintf(stderr,"\n");
+	    FIXME(ddraw,"	srcrect: %dx%d-%dx%d\n",rsrc->left,rsrc->top,rsrc->right,rsrc->bottom);
 	}
 	/* We need to lock the surfaces, or we won't get refreshes when done. */
 	src ->lpvtbl->fnLock(src, NULL,&sdesc,DDLOCK_READONLY, 0);
 	this->lpvtbl->fnLock(this,NULL,&ddesc,DDLOCK_WRITEONLY,0);
 	bpp = this->s.surface_desc.ddpfPixelFormat.x.dwRGBBitCount / 8;
-	for (i=0;i<rsrc->bottom-rsrc->top;i++) {
+	h=rsrc->bottom-rsrc->top;
+	if (h>ddesc.dwHeight-dsty) h=ddesc.dwHeight-dsty;
+	if (h>sdesc.dwHeight-rsrc->top) h=sdesc.dwHeight-rsrc->top;
+	if (h<0) h=0;
+	w=rsrc->right-rsrc->left;
+	if (w>ddesc.dwWidth-dstx) w=ddesc.dwWidth-dstx;
+	if (w>sdesc.dwWidth-rsrc->left) w=sdesc.dwWidth-rsrc->left;
+	if (w<0) w=0;
+
+	for (i=0;i<h;i++) {
 		memcpy(	ddesc.y.lpSurface+(dsty     +i)*ddesc.lPitch+dstx*bpp,
 			sdesc.y.lpSurface+(rsrc->top+i)*sdesc.lPitch+rsrc->left*bpp,
-			(rsrc->right-rsrc->left)*bpp
+			w*bpp
 		);
 	}
 	this->lpvtbl->fnUnlock(this,ddesc.y.lpSurface);
@@ -2247,7 +2260,8 @@ static HRESULT WINAPI IDirectDraw2_SetCooperativeLevel(
 
 	/* This will be overwritten in the case of Full Screen mode.
 	   Windowed games could work with that :-) */
-	this->e.xlib.drawable  = ((X11DRV_WND_DATA *) WIN_FindWndPtr(hwnd)->pDriverData)->window;
+	if (hwnd)
+	this->d.drawable  = ((X11DRV_WND_DATA *) WIN_FindWndPtr(hwnd)->pDriverData)->window;
 
 	return DD_OK;
 }
@@ -2414,10 +2428,10 @@ static HRESULT WINAPI Xlib_IDirectDraw_SetDisplayMode(
 	_common_IDirectDraw_SetDisplayMode(this);
 
 	this->e.xlib.paintable = 1;
-        this->e.xlib.drawable  = ((X11DRV_WND_DATA *) WIN_FindWndPtr(this->d.window)->pDriverData)->window;  
+        this->d.drawable  = ((X11DRV_WND_DATA *) WIN_FindWndPtr(this->d.window)->pDriverData)->window;  
         /* We don't have a context for this window. Host off the desktop */
-        if( !this->e.xlib.drawable )
-           this->e.xlib.drawable = ((X11DRV_WND_DATA *) WIN_GetDesktop()->pDriverData)->window;
+        if( !this->d.drawable )
+           this->d.drawable = ((X11DRV_WND_DATA *) WIN_GetDesktop()->pDriverData)->window;
 	return DD_OK;
 }
 
@@ -2495,7 +2509,7 @@ static HRESULT WINAPI IDirectDraw2_CreateClipper(
 }
 
 static HRESULT WINAPI common_IDirectDraw2_CreatePalette(
-	LPDIRECTDRAW2 this,DWORD x,LPPALETTEENTRY palent,LPDIRECTDRAWPALETTE *lpddpal,LPUNKNOWN lpunk
+	LPDIRECTDRAW2 this,DWORD dwFlags,LPPALETTEENTRY palent,LPDIRECTDRAWPALETTE *lpddpal,LPUNKNOWN lpunk
 ) {
 	*lpddpal = (LPDIRECTDRAWPALETTE)HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(IDirectDrawPalette));
 	if (*lpddpal == NULL) return E_OUTOFMEMORY;
@@ -2511,8 +2525,20 @@ static HRESULT WINAPI common_IDirectDraw2_CreatePalette(
 
         if (palent)
         {
-                /* Initialize the palette based on the passed palent struct */
-                FIXME(ddraw,"needs to handle palent (%p)\n",palent);
+ 	  int size = 0;
+	  
+	  if (dwFlags & DDPCAPS_1BIT)
+	    size = 2;
+	  else if (dwFlags & DDPCAPS_2BIT)
+	    size = 4;
+	  else if (dwFlags & DDPCAPS_4BIT)
+	    size = 16;
+	  else if (dwFlags & DDPCAPS_8BIT)
+	    size = 256;
+	  else
+	    ERR(ddraw, "unhandled palette format\n");
+	  
+	  memcpy((*lpddpal)->palents, palent, size * sizeof(PALETTEENTRY));
         }
 	return DD_OK;
 }
@@ -2529,11 +2555,13 @@ static HRESULT WINAPI DGA_IDirectDraw2_CreatePalette(
 }
 
 static HRESULT WINAPI Xlib_IDirectDraw2_CreatePalette(
-	LPDIRECTDRAW2 this,DWORD x,LPPALETTEENTRY palent,LPDIRECTDRAWPALETTE *lpddpal,LPUNKNOWN lpunk
+	LPDIRECTDRAW2 this,DWORD dwFlags,LPPALETTEENTRY palent,LPDIRECTDRAWPALETTE *lpddpal,LPUNKNOWN lpunk
 ) {
-	TRACE(ddraw,"(%p)->(%08lx,%p,%p,%p)\n",this,x,palent,lpddpal,lpunk);
+	TRACE(ddraw,"(%p)->(%08lx,%p,%p,%p)\n",this,dwFlags,palent,lpddpal,lpunk);
 	*lpddpal = (LPDIRECTDRAWPALETTE)HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(IDirectDrawPalette));
 
+	TRACE(ddraw, "Palette created : %p\n", *lpddpal);
+	
 	if (*lpddpal == NULL) 
 		return E_OUTOFMEMORY;
 
@@ -2544,8 +2572,22 @@ static HRESULT WINAPI Xlib_IDirectDraw2_CreatePalette(
 	(*lpddpal)->ddraw = (LPDIRECTDRAW)this;
         this->lpvtbl->fnAddRef(this);
 
-	if (palent)
-		FIXME(ddraw,"needs to handle palent (%p)\n",palent);
+	if (palent) {
+	  int size = 0;
+
+	  if (dwFlags & DDPCAPS_1BIT)
+	    size = 2;
+	  else if (dwFlags & DDPCAPS_2BIT)
+	    size = 4;
+	  else if (dwFlags & DDPCAPS_4BIT)
+	    size = 16;
+	  else if (dwFlags & DDPCAPS_8BIT)
+	    size = 256;
+	  else
+	    ERR(ddraw, "unhandled palette format\n");
+	  
+	  memcpy((*lpddpal)->palents, palent, size * sizeof(PALETTEENTRY));
+	}
 
 	return DD_OK;
 }
@@ -3215,7 +3257,7 @@ HRESULT WINAPI Xlib_DirectDrawCreate( LPDIRECTDRAW *lplpDD, LPUNKNOWN pUnkOuter)
 	*lplpDD = (LPDIRECTDRAW)HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(IDirectDraw));
 	(*lplpDD)->lpvtbl = &xlib_ddvt;
 	(*lplpDD)->ref = 1;
-	(*lplpDD)->e.xlib.drawable = 0; /* in SetDisplayMode */
+	(*lplpDD)->d.drawable = 0; /* in SetDisplayMode */
 
 	(*lplpDD)->d.depth = DefaultDepthOfScreen(screen);
 	(*lplpDD)->d.height = screenHeight;

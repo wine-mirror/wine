@@ -860,7 +860,12 @@ static HANDLE16 HOOK_SetHook( INT16 id, LPVOID proc, INT32 type,
     {
 	if ((id == WH_JOURNALRECORD) || (id == WH_JOURNALPLAYBACK) ||
 	    (id == WH_SYSMSGFILTER)) return 0;  /* System-only hooks */
-        if (!(hQueue = GetTaskQueue( hTask ))) return 0;
+        if (!(hQueue = GetTaskQueue( hTask )))
+        {
+            /* FIXME: shouldn't this be done somewhere else? */
+            if (hTask != GetCurrentTask()) return 0;
+            if (!(hQueue = GetFastQueue())) return 0;
+        }
     }
 
     /* Create the hook structure */

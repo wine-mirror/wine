@@ -1186,23 +1186,26 @@ static LRESULT LISTBOX_SelectItemRange( WND *wnd, LB_DESCR *descr, INT32 first,
 
 /***********************************************************************
  *           LISTBOX_SetCaretIndex
+ *
+ * NOTES
+ *   index must be between 0 and descr->nb_items-1, or LB_ERR is returned.
+ *
  */
 static LRESULT LISTBOX_SetCaretIndex( WND *wnd, LB_DESCR *descr, INT32 index,
                                       BOOL32 fully_visible )
 {
-    INT32 oldfocus = descr->focus_item;
+    INT32 oldfocus = descr->focus_item;          
 
-    if ((index < -1) || (index >= descr->nb_items)) return LB_ERR;
+    if ((index < 0) || (index >= descr->nb_items)) return LB_ERR;
     if (index == oldfocus) return LB_OKAY;
     descr->focus_item = index;
     if ((oldfocus != -1) && descr->caret_on && (GetFocus32() == wnd->hwndSelf))
         LISTBOX_RepaintItem( wnd, descr, oldfocus, ODA_FOCUS );
-    if (index != -1)
-    {
-        LISTBOX_MakeItemVisible( wnd, descr, index, fully_visible );
-        if (descr->caret_on && (GetFocus32() == wnd->hwndSelf))
-            LISTBOX_RepaintItem( wnd, descr, index, ODA_FOCUS );
-    }
+
+    LISTBOX_MakeItemVisible( wnd, descr, index, fully_visible );
+    if (descr->caret_on && (GetFocus32() == wnd->hwndSelf))
+        LISTBOX_RepaintItem( wnd, descr, index, ODA_FOCUS );
+
     return LB_OKAY;
 }
 
@@ -2284,7 +2287,7 @@ LRESULT WINAPI ListBoxWndProc( HWND32 hwnd, UINT32 msg,
         wParam = (INT32)(INT16)wParam;
         /* fall through */
     case LB_SETCURSEL32:
-        if (wParam != -1) LISTBOX_MakeItemVisible( wnd, descr, wParam, TRUE );
+        LISTBOX_SetCaretIndex( wnd, descr, wParam, TRUE );  
         return LISTBOX_SetSelection( wnd, descr, wParam, TRUE, FALSE );
 
     case LB_GETSELCOUNT16:

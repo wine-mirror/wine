@@ -828,6 +828,13 @@ BOOL32 WINAPI SetMessageQueue32( INT32 size )
 HQUEUE16 WINAPI InitThreadInput( WORD unknown, WORD flags )
 {
     HQUEUE16 hQueue = GetTaskQueue( 0 );
+    if ( !hQueue )
+    {
+        /* Create task message queue */
+        int queueSize = GetProfileInt32A( "windows", "DefaultQueueSize", 8 );
+        SetMessageQueue32( queueSize );
+        return GetTaskQueue( 0 );
+    }
 
     FIXME( msg, "(%04X,%04X): should create thread-local message queue!\n",
                 unknown, flags );

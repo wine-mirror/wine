@@ -26,7 +26,7 @@ type	win32
  23 stub CoGetStandardMarshal
  24 stub CoGetState
  25 stub CoGetTreatAsClass
- 26 stdcall CoInitialize(long) CoInitialize32
+ 26 stdcall CoInitialize(ptr) CoInitialize32
  27 stdcall CoInitializeWOW(long long) CoInitializeWOW
  28 stub CoIsHandlerConnected
  29 stub CoIsOle1Class
@@ -76,7 +76,7 @@ type	win32
  73 stdcall GetRunningObjectTable(long ptr) GetRunningObjectTable32
  74 stub IIDFromString
  75 stub IsAccelerator
- 76 stub IsEqualGUID
+ 76 stdcall IsEqualGUID(ptr ptr) IsEqualGUID32
  77 stub IsValidIid
  78 stdcall IsValidInterface(ptr) IsValidInterface32
  79 stub IsValidPtrIn
@@ -144,7 +144,7 @@ type	win32
 141 stdcall RevokeDragDrop(long) RevokeDragDrop32
 142 stub SetConvertStg
 143 stub SetDocumentBitStg
-144 stdcall StgCreateDocfile(wstr long long ptr) StgCreateDocFile32
+144 stdcall StgCreateDocfile(wstr long long ptr) StgCreateDocfile32
 145 stub StgCreateDocfileOnILockBytes
 146 stdcall StgIsStorageFile(wstr) StgIsStorageFile32
 147 stub StgIsStorageILockBytes
@@ -163,7 +163,7 @@ type	win32
 160 stub WriteFmtUserTypeStg
 161 stub WriteOleStg
 162 stub WriteStringStream
-163 stub CoInitializeEx
+163 stdcall CoInitializeEx(ptr long) CoInitializeEx32
 164 stub CoInitializeSecurity
 165 stub CoCreateInstanceEx
 166 stub PropVariantClear

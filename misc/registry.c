@@ -831,6 +831,12 @@ static char* _wine_read_USTRING( char *buf, LPWSTR *str )
 			*ws++=*((unsigned char*)s++);
 		else {
 			s++;
+			if (!*s) {
+				/* Dangling \ ... may only happen if a registry
+				 * write was short. FIXME: What do to?
+				 */
+				 break;
+			}
 			if (*s=='\\') {
 				*ws++='\\';
 				s++;

@@ -12,47 +12,12 @@
 #include "wrctypes.h"
 #endif
 
-#define WRC_VERSION	"1.0.4"
-#define WRC_RELEASEDATE	"(10-Dec-1998)"
+#define WRC_VERSION	"1.0.8"
+#define WRC_RELEASEDATE	"(10-Jan-1999)"
 #define WRC_FULLVERSION WRC_VERSION " " WRC_RELEASEDATE
 
 /* Only used in heavy debugging sessions */
 #define HEAPCHECK()
-
-/* Memory/load flags */
-#define WRC_MO_MOVEABLE		0x0010
-#define WRC_MO_PURE		0x0020
-#define WRC_MO_PRELOAD		0x0040
-#define WRC_MO_DISCARDABLE	0x1000
-
-/* Resource type IDs */
-#define WRC_RT_CURSOR		(1)
-#define WRC_RT_BITMAP		(2)
-#define WRC_RT_ICON		(3)
-#define WRC_RT_MENU		(4)
-#define WRC_RT_DIALOG		(5)
-#define WRC_RT_STRING		(6)
-#define WRC_RT_FONTDIR		(7)
-#define WRC_RT_FONT		(8)
-#define WRC_RT_ACCELERATOR	(9)
-#define WRC_RT_RCDATA		(10)
-#define WRC_RT_MESSAGETABLE	(11)
-#define WRC_RT_GROUP_CURSOR	(12)
-#define WRC_RT_GROUP_ICON	(14)
-#define WRC_RT_VERSION		(16)
-#define WRC_RT_DLGINCLUDE	(17)
-#define WRC_RT_PLUGPLAY		(19)
-#define WRC_RT_VXD		(20)
-#define WRC_RT_ANICURSOR	(21)
-#define WRC_RT_ANIICON		(22)
-
-/* Default class type IDs */
-#define CT_BUTTON	0x80
-#define CT_EDIT		0x81
-#define CT_STATIC 	0x82
-#define CT_LISTBOX	0x83
-#define CT_SCROLLBAR	0x84
-#define CT_COMBOBOX	0x85
 
 /* From wrc.c */
 extern int debuglevel;

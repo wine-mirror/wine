@@ -1,15 +1,13 @@
-#ifndef _WINE_SHLOBJ_H
-#define _WINE_SHLOBJ_H
+#ifndef __WINE_SHLOBJ_H
+#define __WINE_SHLOBJ_H
 
+#include "wine/obj_base.h"
 #include "shell.h"
 #include "ole.h"
 #include "ole2.h"
-#include "compobj.h"
 #include "oleobj.h"
-#include "storage.h"
 #include "commctrl.h"
 #include "wintypes.h"
-#include "interfaces.h"
 
 #define STDMETHOD(xfn) HRESULT (CALLBACK *fn##xfn)
 #define STDMETHOD_(type,xfn) type (CALLBACK *fn##xfn)
@@ -23,22 +21,19 @@
 DWORD WINAPI SHELL32_DllGetClassObject(LPCLSID,REFIID,LPVOID*);
 
 
-typedef LPVOID	LPBC; /* *IBindCtx really */
 
 /* foreward declaration of the objects*/
-typedef struct tagPERSISTFILE	*LPPERSISTFILE,	IPersistFile;
 typedef struct tagCONTEXTMENU	*LPCONTEXTMENU,	IContextMenu;
 typedef struct tagSHELLEXTINIT	*LPSHELLEXTINIT,IShellExtInit;
 typedef struct tagENUMIDLIST	*LPENUMIDLIST,	IEnumIDList;
 typedef struct tagSHELLFOLDER	*LPSHELLFOLDER,	IShellFolder;
 typedef struct tagSHELLVIEW	*LPSHELLVIEW,	IShellView;
 typedef struct tagSHELLBROWSER	*LPSHELLBROWSER,IShellBrowser;
-typedef struct tagDATAOBJECT	*LPDATAOBJECT,	IDataObject;
 typedef struct tagSHELLICON	*LPSHELLICON,	IShellIcon;
 typedef struct tagDOCKINGWINDOWFRAME	*LPDOCKINGWINDOWFRAME,	IDockingWindowFrame;
-typedef struct tagSERVICEPROVIDER	*LPSERVICEPROVIDER,	IServiceProvider;
 typedef struct tagCOMMDLGBROWSER	*LPCOMMDLGBROWSER,	ICommDlgBrowser;
-typedef struct tagENUMFORMATETC	*LPENUMFORMATETC,	IEnumFORMATETC;
+ 
+
  
 /****************************************************************************
 *  SHELL ID
@@ -47,24 +42,13 @@ typedef struct tagENUMFORMATETC	*LPENUMFORMATETC,	IEnumFORMATETC;
 DEFINE_GUID (IID_MyComputer,		0x20D04FE0L, 0x3AEA, 0x1069, 0xA2, 0xD8, 0x08, 0x00, 0x2B, 0x30, 0x30, 0x9D);
 
 /* strange Objects */
-DEFINE_SHLGUID(IID_IEnumUnknown,	0x00000100L, 0, 0);
-DEFINE_SHLGUID(IID_IEnumString,		0x00000101L, 0, 0);
-DEFINE_SHLGUID(IID_IEnumMoniker,	0x00000102L, 0, 0);
-DEFINE_SHLGUID(IID_IEnumFORMATETC,	0x00000103L, 0, 0);
 DEFINE_SHLGUID(IID_IEnumOLEVERB,	0x00000104L, 0, 0);
-DEFINE_SHLGUID(IID_IEnumSTATDATA,	0x00000105L, 0, 0);
 
-DEFINE_SHLGUID(IID_IPersistStream,	0x00000109L, 0, 0);
-DEFINE_SHLGUID(IID_IPersistStorage,	0x0000010AL, 0, 0);
-DEFINE_SHLGUID(IID_IPersistFile,	0x0000010BL, 0, 0);
-DEFINE_SHLGUID(IID_IPersist,		0x0000010CL, 0, 0);
 DEFINE_SHLGUID(IID_IViewObject,		0x0000010DL, 0, 0);
-DEFINE_SHLGUID(IID_IDataObject,		0x0000010EL, 0, 0);
 
 DEFINE_SHLGUID(IID_IDropSource,		0x00000121L, 0, 0);
 DEFINE_SHLGUID(IID_IDropTarget,		0x00000122L, 0, 0);
 
-DEFINE_GUID (IID_IServiceProvider,	0x6D5140C1L, 0x7436, 0x11CE, 0x80, 0x34, 0x00, 0xAA, 0x00, 0x60, 0x09, 0xFA);
 DEFINE_GUID (IID_IDockingWindow,	0x012dd920L, 0x7B26, 0x11D0, 0x8C, 0xA9, 0x00, 0xA0, 0xC9, 0x2D, 0xBF, 0xE8);
 DEFINE_GUID (IID_IDockingWindowSite,	0x2A342FC2L, 0x7B26, 0x11D0, 0x8C, 0xA9, 0x00, 0xA0, 0xC9, 0x2D, 0xBF, 0xE8);
 DEFINE_GUID (IID_IDockingWindowFrame,	0x47D2657AL, 0x7B27, 0x11D0, 0x8C, 0xA9, 0x00, 0xA0, 0xC9, 0x2D, 0xBF, 0xE8);
@@ -127,31 +111,8 @@ typedef struct _STRRET
     WCHAR	cStrW[MAX_PATH];
   }u;
 } STRRET,*LPSTRRET;
-/*****************************************************************************
- * IPersistFile interface
- */
-#define THIS LPPERSISTFILE this
-typedef struct IPersistFile_VTable
-{   /* *** IUnknown methods *** */
-    STDMETHOD(QueryInterface) (THIS_ REFIID riid, LPVOID * ppvObj) PURE;
-    STDMETHOD_(ULONG,AddRef) (THIS)  PURE;
-    STDMETHOD_(ULONG,Release) (THIS) PURE;
 
-    STDMETHOD(GetClassID )(THIS_ CLSID *pClassID) PURE;
-    STDMETHOD(IsDirty )(THIS) PURE;
-    STDMETHOD(Load )(THIS_ LPCOLESTR32 pszFileName, DWORD dwMode) PURE;
-    STDMETHOD(Save )(THIS_ LPCOLESTR32 pszFileName, BOOL32 fRemember) PURE;
-    STDMETHOD(SaveCompleted )(THIS_ LPCOLESTR32 pszFileName) PURE;
-    STDMETHOD(GetCurFile )(THIS_ LPOLESTR32 *ppszFileName) PURE;
 
-} IPersistFile_VTable,*LPPERSISTFILE_VTABLE;
-
-struct tagPERSISTFILE
-{ LPPERSISTFILE_VTABLE	lpvtbl;
-  DWORD			ref;
-};
-
-#undef THIS
 /*****************************************************************************
  * IContextMenu interface
  */
@@ -282,52 +243,6 @@ typedef enum tagDVASPECT
         DVASPECT_DOCPRINT	= 8
 } DVASPECT;
 
-typedef enum tagTYMED
-{	TYMED_HGLOBAL   = 1,
-	TYMED_FILE      = 2,
-	TYMED_ISTREAM   = 4,
-	TYMED_ISTORAGE  = 8,
-	TYMED_GDI       = 16,
-	TYMED_MFPICT    = 32,
-	TYMED_ENHMF     = 64,
-	TYMED_NULL      = 0
-} TYMED;
-  
-typedef struct
-{	DWORD tdSize;
-	WORD tdDriverNameOffset;
-	WORD tdDeviceNameOffset;
-	WORD tdPortNameOffset;
-	WORD tdExtDevmodeOffset;
-	BYTE tdData[ 1 ];
-} DVTARGETDEVICE32;
-
-typedef WORD CLIPFORMAT32, *LPCLIPFORMAT32;
-
-/* dataobject as answer to a request */
-typedef struct 
-{	DWORD tymed;
-	union 
-	{ HBITMAP32 hBitmap;
-	  /*HMETAFILEPICT32 hMetaFilePict;*/
-	  /*HENHMETAFILE32 hEnhMetaFile;*/
-	  HGLOBAL32 hGlobal;
-	  LPOLESTR32 lpszFileName;
-	  IStream32 *pstm;
-	  IStorage32 *pstg;
-        } u;
-	IUnknown *pUnkForRelease;
-} STGMEDIUM32;   
-
-/* wished data format */
-typedef struct 
-{	CLIPFORMAT32 cfFormat;
-	DVTARGETDEVICE32 *ptd;
-	DWORD dwAspect;
-	LONG lindex;
-	DWORD tymed;
-} FORMATETC32, *LPFORMATETC32;
-
 /* shell specific clipboard formats */
 
 /* DATAOBJECT_InitShellIDList*/
@@ -398,65 +313,6 @@ struct tagLPIDLLIST
 
 extern LPIDLLIST IDLList_Constructor (UINT32 uStep);
 extern void IDLList_Destructor(LPIDLLIST this);
-#undef THIS
-/*****************************************************************************
- * IEnumFORMATETC interface
- */
-#define THIS LPENUMFORMATETC this
-
-typedef struct IEnumFORMATETC_VTable 
-{    /* IUnknown methods */
-	STDMETHOD(QueryInterface) (THIS_ REFIID riid, LPVOID * ppvObj) PURE;
-	STDMETHOD_(ULONG,AddRef) (THIS) PURE;
-	STDMETHOD_(ULONG,Release) (THIS) PURE;
-
-	/* IEnumFORMATETC methods */
-	STDMETHOD (Next)(THIS_ ULONG celt, FORMATETC32 *rgelt, ULONG *pceltFethed) PURE;
-	STDMETHOD (Skip)(THIS_ ULONG celt) PURE;
-	STDMETHOD (Reset)(THIS) PURE;
-	STDMETHOD (Clone)(THIS_ IEnumFORMATETC ** ppenum) PURE;
-} IEnumFORMATETC_VTable,*LPENUMFORMATETC_VTABLE;
-
-struct tagENUMFORMATETC
-{	LPENUMFORMATETC_VTABLE	lpvtbl;
-	DWORD			 ref;
-        UINT32	posFmt;
-        UINT32	countFmt;
-        LPFORMATETC32 pFmt;
-};
-
-#undef THIS
-
-/*****************************************************************************
- * IDataObject interface
- */
-#define THIS LPDATAOBJECT this
-
-typedef struct IDataObject_VTable 
-{	/*** IUnknown methods ***/
-	STDMETHOD(QueryInterface) (THIS_ REFIID riid, LPVOID * ppvObj) PURE;
-	STDMETHOD_(ULONG,AddRef) (THIS) PURE;
-	STDMETHOD_(ULONG,Release) (THIS) PURE;
-
-	STDMETHOD (GetData )(THIS_ LPFORMATETC32 pformatetcIn, STGMEDIUM32 *pmedium) PURE;
-	STDMETHOD (GetDataHere)(THIS_ LPFORMATETC32 pformatetc, STGMEDIUM32 *pmedium) PURE;
-        STDMETHOD (QueryGetData)(THIS_ LPFORMATETC32 pformatetc) PURE;
-        STDMETHOD (GetCanonicalFormatEtc)(THIS_ LPFORMATETC32 pformatectIn, LPFORMATETC32 pformatetcOut) PURE;
-        STDMETHOD (SetData)(THIS_ LPFORMATETC32 pformatetc, STGMEDIUM32 *pmedium, BOOL32 fRelease) PURE;
-        STDMETHOD (EnumFormatEtc)(THIS_ DWORD dwDirection, IEnumFORMATETC **ppenumFormatEtc) PURE;
-        STDMETHOD (DAdvise )(THIS_ LPFORMATETC32 *pformatetc, DWORD advf, IAdviseSink *pAdvSink, DWORD *pdwConnection) PURE;
-        STDMETHOD (DUnadvise)(THIS_ DWORD dwConnection) PURE;
-        STDMETHOD (EnumDAdvise)(THIS_ IEnumSTATDATA **ppenumAdvise) PURE;
-} IDataObject_VTable,*LPDATAOBJECT_VTABLE;
-
-struct tagDATAOBJECT
-{	LPDATAOBJECT_VTABLE	lpvtbl;
-	DWORD	ref;
-	LPSHELLFOLDER	psf;
-	LPIDLLIST  lpill;	/* the data of the dataobject */
-	LPITEMIDLIST  pidl;	
-};
-
 #undef THIS
 
 
@@ -1108,24 +964,6 @@ struct tagDOCKINGWINDOWFRAME
 
 #undef THIS
 /****************************************************************************
- * IServiceProvider interface
- */
-#define THIS LPSERVICEPROVIDER this
-
-typedef struct IServiceProvider_VTable
-{	/*** IUnknown methods ***/
-	STDMETHOD(QueryInterface) (THIS_ REFIID riid, LPVOID * ppvObj) PURE;
-	STDMETHOD_(ULONG,AddRef) (THIS)  PURE;
-	STDMETHOD_(ULONG,Release) (THIS) PURE;
-
-	STDMETHOD(QueryService)(THIS_ REFGUID guidService, REFIID riid, void **ppvObject);
-} IServiceProvider_VTable, *LPSERVICEPROVIDER_VTABLE;
-
-struct tagSERVICEPROVIDER
-{	LPSERVICEPROVIDER_VTABLE lpvtbl;
-	DWORD ref;
-};           
-/****************************************************************************
  * Shell Execute API
  */
 #define SE_ERR_FNF              2       /* file not found */
@@ -1389,4 +1227,5 @@ typedef struct
 #undef THIS_
 #undef STDMETHOD
 #undef STDMETHOD_
-#endif /*_WINE_SHLOBJ_H*/
+
+#endif /* __WINE_SHLOBJ_H */

@@ -6,18 +6,15 @@
 #define __WINE_OLE2_H
 
 /* to be implemented */
-typedef LPVOID LPMESSAGEFILTER;
+/* FIXME: this should be defined somewhere in oleidl.h instead, should it be repeated here ? */
 typedef LPVOID LPDROPTARGET;
-typedef struct tagMONIKER *LPMONIKER, IMoniker;
 
-#define S_OK	0
-#define S_FALSE	1
 
 /* OLE version */
 #define rmm             23
 #define rup            639
 
-/* FIXME should be in oleidl.h*/
+/* FIXME: should be in oleidl.h */
 typedef struct  tagOleMenuGroupWidths
 { LONG width[ 6 ];
 } OLEMENUGROUPWIDTHS32;

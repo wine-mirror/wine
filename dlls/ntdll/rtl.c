@@ -842,3 +842,14 @@ NTSTATUS WINAPI RtlCompareUnicodeString(LPUNICODE_STRING x1,LPUNICODE_STRING x2,
 	FIXME(ntdll,"(0x%08lx,0x%08lx,0x%08lx),stub!\n",debugstr_w(x1->Buffer),debugstr_w(x2->Buffer),x3);
 	return 0;
 }
+
+/******************************************************************************
+ *	DbgPrint	[NTDLL] 
+ */
+void __cdecl DbgPrint(LPCSTR fmt,LPVOID args) {
+	char buf[512];
+
+	wvsprintf32A(buf,fmt,&args);
+	MSG("DbgPrint says: %s",buf);
+	/* hmm, raise exception? */
+}

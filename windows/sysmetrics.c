@@ -18,6 +18,18 @@ short sysMetrics[SM_CMETRICS+1];
  *           SYSMETRICS_Init
  *
  * Initialisation of the system metrics array.
+ *
+ * Differences in return values between 3.1 and 95 apps under Win95 (FIXME ?):
+ * SM_CXVSCROLL        x+1      x
+ * SM_CYHSCROLL        x+1      x
+ * SM_CXDLGFRAME       x-1      x
+ * SM_CYDLGFRAME       x-1      x
+ * SM_CYCAPTION        x+1      x
+ * SM_CYMENU           x-1      x
+ * SM_CYFULLSCREEN     x-1      x
+ * 
+ * (collides with TWEAK_WineLook sometimes,
+ * so changing anything might be difficult) 
  */
 void SYSMETRICS_Init(void)
 {

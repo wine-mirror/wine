@@ -94,7 +94,7 @@ Use the named configuration file rather than the default
 .I -debug
 Enter the debugger before starting application
 .TP
-.I -debugmsg [xxx]#name[,[xxx1]#name1]
+.I -debugmsg [xxx]#name[,[xxx1]#name1][,<+|->relay=yyy1[:yyy2]]
 Turn debugging messages on or off.  
 .RS +7
 .PP
@@ -107,7 +107,10 @@ or
 If xxx is not specified, all debugging messages for the specified
 channel are turned on.  Each channel will print messages about a particular
 component of Wine.  # is required and can be either + or -.  Note that 
-there is not a space after the comma between names.
+there is not a space after the comma between names. yyy are either the
+name of a whole DLL or a single API entry by Name you either
+want to include or exclude from the relay listing. These names must be in
+the case as names used in the relaylisting. You can do the same for snoop.
 .PP
 For instance:
 .PP
@@ -117,6 +120,13 @@ will turn on DLL warning messages and all heap messages.
 .I -debugmsg fixme-all,warn+cursor,+relay
 will turn off all FIXME messages, turn on cursor warning messages, and turn
 on all relay messages (API calls).
+.br 
+.I -debugmsg -relay=LeaveCriticalSection:EnterCriticalSection
+will turn on all relay messages except for LeaveCriticalSection and
+EnterCriticalSection.
+.br 
+.I -debugmsg +relay=ADVAPI32
+will only turn on relay messages into the ADVAPI32 code.
 .PP
 The full list of names is: all, accel, advapi, animate, aspi, atom, 
 bitblt, bitmap, caret, cd, cdaudio, class, clipboard, clipping, combo, 
@@ -234,6 +244,12 @@ file of this format in your home directory or have the environment variable
 .B WINE_INI
 pointing to a configuration file, or use the -config option on the command 
 line.
+.SH ENVIRONMENT VARIABLES
+.B wine
+makes the environment variables of the shell from which 
+.B wine
+is started accesible to the windows/dos processes started. So use the
+appropriate syntax for your shell to enter environment variables you need. 
 .SH CONFIGURATION FILE FORMAT
 All entries are grouped in sections; a section begins with the line
 .br

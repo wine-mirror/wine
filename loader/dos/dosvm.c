@@ -295,6 +295,56 @@ int DOSVM_Enter( PCONTEXT context )
  return 0;
 }
 
+void DOSVM_SetTimer( unsigned ticks )
+{
+ TDB *pTask = (TDB *)GlobalLock16( GetCurrentTask() );
+ NE_MODULE *pModule = NE_GetPtr( pTask->hModule );
+ int stat=DOSMOD_SET_TIMER;
+ struct timeval tim;
+
+ GlobalUnlock16( GetCurrentTask() );
+ if (pModule&&pModule->lpDosTask) {
+  /* the PC clocks ticks at 1193180 Hz */
+  tim.tv_sec=0;
+  tim.tv_usec=((unsigned long long)ticks*1000000)/1193180;
+  /* sanity check */
+  if (!tim.tv_usec) tim.tv_usec=1;
+
+  if (write(pModule->lpDosTask->write_pipe,&stat,sizeof(stat))!=sizeof(stat)) {
+   ERR(module,"dosmod sync lost, errno=%d\n",errno);
+   return;
+  }
+  if (write(pModule->lpDosTask->write_pipe,&tim,sizeof(tim))!=sizeof(tim)) {
+   ERR(module,"dosmod sync lost, errno=%d\n",errno);
+   return;
+  }
+  /* there's no return */
+ }
+}
+
+unsigned DOSVM_GetTimer( void )
+{
+ TDB *pTask = (TDB *)GlobalLock16( GetCurrentTask() );
+ NE_MODULE *pModule = NE_GetPtr( pTask->hModule );
+ int stat=DOSMOD_GET_TIMER;
+ struct timeval tim;
+
+ GlobalUnlock16( GetCurrentTask() );
+ if (pModule&&pModule->lpDosTask) {
+  if (write(pModule->lpDosTask->write_pipe,&stat,sizeof(stat))!=sizeof(stat)) {
+   ERR(module,"dosmod sync lost, errno=%d\n",errno);
+   return 0;
+  }
+  /* read response */
+  if (read(pModule->lpDosTask->read_pipe,&tim,sizeof(tim))!=sizeof(tim)) {
+   ERR(module,"dosmod sync lost, errno=%d\n",errno);
+   return 0;
+  }
+  return ((unsigned long long)tim.tv_usec*1193180)/1000000;
+ }
+ return 0;
+}
+
 void MZ_Tick( WORD handle )
 {
  /* find the DOS task that has the right system_timer handle... */
@@ -319,5 +369,7 @@ int DOSVM_Enter( PCONTEXT context )
 }
 
 void MZ_Tick( WORD handle ) {}
+void DOSVM_SetTimer( unsigned ticks ) {}
+unsigned DOSVM_GetTimer( void ) { return 0; }
 
 #endif

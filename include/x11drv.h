@@ -272,6 +272,8 @@ extern WORD X11DRV_KEYBOARD_VkKeyScan(CHAR cChar);
 extern UINT16 X11DRV_KEYBOARD_MapVirtualKey(UINT16 wCode, UINT16 wMapType);
 extern INT16 X11DRV_KEYBOARD_GetKeyNameText(LONG lParam, LPSTR lpBuffer, INT16 nSize);
 extern INT16 X11DRV_KEYBOARD_ToAscii(UINT16 virtKey, UINT16 scanCode, LPBYTE lpKeyState, LPVOID lpChar, UINT16 flags);
+extern void KEYBOARD_HandleEvent( WND *pWnd, XKeyEvent *event );
+extern void KEYBOARD_UpdateState ( void );
 
 /* X11 mouse driver */
 

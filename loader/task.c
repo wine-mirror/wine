@@ -251,7 +251,6 @@ static void TASK_CallToStart(void)
         if (pModule->heap_size)
             LocalInit( pTask->hInstance, 0, pModule->heap_size );
 
-        InitApp( pTask->hModule );
         MODULE_InitializeDLLs( PROCESS_Current(), 0, DLL_PROCESS_ATTACH, (LPVOID)-1 );
         TRACE(relay, "(entryproc=%p)\n", entry );
 

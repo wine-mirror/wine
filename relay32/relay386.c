@@ -14,6 +14,7 @@
 #include "selectors.h"
 #include "debugstr.h"
 #include "debug.h"
+#include "main.h"
 
 char **debug_relay_excludelist = NULL, **debug_relay_includelist = NULL;
 

@@ -10,8 +10,6 @@
 #include "winbase.h"
 #include "miscemu.h"
 #include "vga.h"
-#include "compobj.h"
-#include "interfaces.h"
 #include "ddraw.h"
 #include "debug.h"
 
@@ -49,6 +47,7 @@ int VGA_SetMode(unsigned Xres,unsigned Yres,unsigned Depth)
         }
         vga_refresh=0;
         InitializeCriticalSection(&vga_crit);
+        MakeCriticalSectionGlobal(&vga_crit);
         /* poll every 20ms (50fps should provide adequate responsiveness) */
         poll_timer = CreateSystemTimer( 20, VGA_Poll );
     }

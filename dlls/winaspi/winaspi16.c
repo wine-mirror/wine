@@ -490,8 +490,14 @@ void ASPI_DOS_HandleInt(CONTEXT *context)
 {
 #ifdef linux
 	FARPROC16 *p = (FARPROC16 *)CTX_SEG_OFF_TO_LIN(context, DS_reg(context), EDX_reg(context));
+	if ((CX_reg(context) == 4) || (CX_reg(context) == 5))
+	{
 	*p = DPMI_AllocInternalRMCB(ASPI_DOS_func);
 	TRACE(aspi, "allocated real mode proc %p\n", *p);
+	    AX_reg(context) = CX_reg(context);
+	}
+	else
+	SET_CFLAG(context);
 #else
        SET_CFLAG(context);
 #endif

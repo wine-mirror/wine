@@ -302,6 +302,7 @@ void      WINAPI DeleteCriticalSection(CRITICAL_SECTION *lpCrit);
 void      WINAPI EnterCriticalSection(CRITICAL_SECTION *lpCrit);
 void      WINAPI InitializeCriticalSection(CRITICAL_SECTION *lpCrit);
 void      WINAPI LeaveCriticalSection(CRITICAL_SECTION *lpCrit);
+void      WINAPI MakeCriticalSectionGlobal(CRITICAL_SECTION *lpCrit);
 HANDLE32  WINAPI OpenProcess(DWORD access, BOOL32 inherit, DWORD id);
 BOOL32    WINAPI GetProcessWorkingSetSize(HANDLE32,LPDWORD,LPDWORD);
 BOOL32    WINAPI SetProcessWorkingSetSize(HANDLE32,DWORD,DWORD);

@@ -8,10 +8,13 @@
 #include "ole.h"
 #include "ole2.h"
 #include "winerror.h"
-#include "interfaces.h"
+#include "windows.h"
+#include "wine/obj_base.h"
+#include "wine/obj_storage.h"
+#include "wine/obj_moniker.h"
+#include "wine/obj_dataobject.h"
 #include "oleobj.h"
 #include "debug.h"
-#include "windows.h"
 
 
 #define IsEqualGUID(rguid1, rguid2) (!memcmp(rguid1, rguid2, sizeof(GUID)))

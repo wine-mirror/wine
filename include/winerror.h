@@ -145,8 +145,9 @@ extern int WIN32_LastError;
 
 /* HRESULT values for OLE, SHELL and other Interface stuff */
 /* the codes 4000-40ff are reserved for OLE */
-#define	NOERROR				0
-#define	S_OK				0
+#define NOERROR                                0L
+#define S_OK                                   ((HRESULT)0L)
+#define S_FALSE                                ((HRESULT)1L)
 
 #define DISP_E_BADVARTYPE   0x80020008L
 #define DISP_E_OVERFLOW     0x8002000AL

@@ -25,7 +25,7 @@ type	win32
 017 stub CsrSetPriorityClass
 018 stub CsrpProcessCallbackRequest
 019 stub DbgBreakPoint
-020 stub DbgPrint
+020 cdecl DbgPrint(str long) DbgPrint
 021 stub DbgPrompt
 022 stub DbgSsHandleKmApiMsg
 023 stub DbgSsInitialize
@@ -882,7 +882,7 @@ type	win32
 874 stub _strlwr
 875 cdecl _strnicmp(str str long) CRTDLL__strnicmp
 876 cdecl _strupr(str) CRTDLL__strupr
-877 stub _ultoa
+877 cdecl _ultoa(long ptr long) CRTDLL__ultoa
 878 stub _vsnprintf
 879 cdecl _wcsicmp(wstr wstr) CRTDLL__wcsicmp
 880 cdecl _wcslwr(wstr) CRTDLL__wcslwr

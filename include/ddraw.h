@@ -1,6 +1,8 @@
 #ifndef __WINE_DDRAW_H
 #define __WINE_DDRAW_H
 
+#include "wine/obj_base.h"
+
 #include "config.h"
 
 #ifndef X_DISPLAY_MISSING
@@ -13,7 +15,6 @@
 #ifndef	DIRECTDRAW_VERSION
 #define	DIRECTDRAW_VERSION	0x0500
 #endif /* DIRECTDRAW_VERSION */
-
 
 DEFINE_GUID( CLSID_DirectDraw,		0xD7B70EE0,0x4340,0x11CF,0xB0,0x63,0x00,0x20,0xAF,0xC2,0xCD,0x35 );
 DEFINE_GUID( CLSID_DirectDrawClipper,	0x593817A0,0x7DB3,0x11CF,0xA2,0xDE,0x00,0xAA,0x00,0xb9,0x33,0x56 );
@@ -900,6 +901,7 @@ struct _common_directdrawdata {
        We need it also in DGA mode to make some games (for example Monkey Island III work) */
     ATOM		winclass;
     HWND32		window;
+    Window		drawable;
     PAINTSTRUCT32	ps;
 };
 
@@ -910,7 +912,6 @@ struct _dga_directdrawdata {
 };
 
 struct _xlib_directdrawdata {
-    Window		drawable;
     int			paintable;
 
 #ifdef HAVE_LIBXXSHM

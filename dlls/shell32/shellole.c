@@ -12,9 +12,8 @@
 #include "ole.h"
 #include "ole2.h"
 #include "debug.h"
-#include "compobj.h"
-#include "interfaces.h"
 #include "shlobj.h"
+#include "objbase.h"
 #include "shell.h"
 #include "winerror.h"
 #include "winnls.h"
@@ -84,8 +83,8 @@ static DWORD SH_get_instance(REFCLSID clsid,LPSTR dllname,LPVOID unknownouter,RE
 	{ FIXME(shell,"no classfactory, but hres is 0x%ld!\n",hres);
 	  return E_FAIL;
 	}
-	classfac->lpvtbl->fnCreateInstance(classfac,unknownouter,refiid,inst);
-	classfac->lpvtbl->fnRelease(classfac);
+	IClassFactory_CreateInstance(classfac,unknownouter,refiid,inst);
+	IClassFactory_Release(classfac);
 	return 0;
 }
 
@@ -185,9 +184,9 @@ DWORD WINAPI SHELL32_DllGetClassObject(REFCLSID rclsid,REFIID iid,LPVOID *ppv)
 	  { lpclf = IClassFactory_Constructor();
 	  }
 
-	  if(lpclf)
-	  { hres = lpclf->lpvtbl->fnQueryInterface(lpclf,iid, ppv);
-		lpclf->lpvtbl->fnRelease(lpclf);
+	  if(lpclf) {
+	    hres = IClassFactory_QueryInterface(lpclf,iid, ppv);
+	    IClassFactory_Release(lpclf);
 	  }
 	}
 	else
@@ -216,41 +215,31 @@ DWORD WINAPI SHGetMalloc(LPMALLOC32 *lpmal)
 /**************************************************************************
 *  IClassFactory Implementation
 */
-static HRESULT WINAPI IClassFactory_QueryInterface(LPCLASSFACTORY,REFIID,LPVOID*);
-static ULONG WINAPI IClassFactory_AddRef(LPCLASSFACTORY);
-static ULONG WINAPI IClassFactory_Release(LPCLASSFACTORY);
-static HRESULT WINAPI IClassFactory_CreateInstance(LPCLASSFACTORY, LPUNKNOWN, REFIID, LPVOID *);
-static HRESULT WINAPI IClassFactory_LockServer(LPCLASSFACTORY, BOOL32);
-/**************************************************************************
- *  IClassFactory_VTable
- */
-static IClassFactory_VTable clfvt = 
-{	IClassFactory_QueryInterface,
-	IClassFactory_AddRef,
-	IClassFactory_Release,
-	IClassFactory_CreateInstance,
-	IClassFactory_LockServer
-};
+
+static ICOM_VTABLE(IClassFactory) clfvt;
 
 /**************************************************************************
  *  IClassFactory_Constructor
  */
 
 LPCLASSFACTORY IClassFactory_Constructor(void)
-{	LPCLASSFACTORY	lpclf;
+{
+	_IClassFactory* lpclf;
 
-	lpclf= (LPCLASSFACTORY)HeapAlloc(GetProcessHeap(),0,sizeof(IClassFactory));
+	lpclf= (_IClassFactory*)HeapAlloc(GetProcessHeap(),0,sizeof(_IClassFactory));
 	lpclf->ref = 1;
 	lpclf->lpvtbl = &clfvt;
   TRACE(shell,"(%p)->()\n",lpclf);
-	return lpclf;
+	return (LPCLASSFACTORY)lpclf;
 }
 /**************************************************************************
  *  IClassFactory_QueryInterface
  */
-static HRESULT WINAPI IClassFactory_QueryInterface(
-  LPCLASSFACTORY this, REFIID riid, LPVOID *ppvObj)
-{	char	xriid[50];
+static HRESULT WINAPI IClassFactory_fnQueryInterface(
+  LPUNKNOWN iface, REFIID riid, LPVOID *ppvObj)
+{
+	ICOM_THIS(IClassFactory,iface);
+	char	xriid[50];
 	WINE_StringFromCLSID((LPCLSID)riid,xriid);
 	TRACE(shell,"(%p)->(\n\tIID:\t%s)\n",this,xriid);
 
@@ -264,7 +253,7 @@ static HRESULT WINAPI IClassFactory_QueryInterface(
 	}   
 
 	if(*ppvObj)
-	{ (*(LPCLASSFACTORY*)ppvObj)->lpvtbl->fnAddRef(this);  	
+	{ IUnknown_AddRef((LPUNKNOWN)*ppvObj);  	
 	  TRACE(shell,"-- Interface: (%p)->(%p)\n",ppvObj,*ppvObj);
 	  return S_OK;
 	}
@@ -274,15 +263,19 @@ static HRESULT WINAPI IClassFactory_QueryInterface(
 /******************************************************************************
  * IClassFactory_AddRef
  */
-static ULONG WINAPI IClassFactory_AddRef(LPCLASSFACTORY this)
-{ TRACE(shell,"(%p)->(count=%lu)\n",this,this->ref);
+static ULONG WINAPI IClassFactory_fnAddRef(LPUNKNOWN iface)
+{
+	ICOM_THIS(IClassFactory,iface);
+	TRACE(shell,"(%p)->(count=%lu)\n",this,this->ref);
 	return ++(this->ref);
 }
 /******************************************************************************
  * IClassFactory_Release
  */
-static ULONG WINAPI IClassFactory_Release(LPCLASSFACTORY this)
-{	TRACE(shell,"(%p)->(count=%lu)\n",this,this->ref);
+static ULONG WINAPI IClassFactory_fnRelease(LPUNKNOWN iface)
+{
+	ICOM_THIS(IClassFactory,iface);
+	TRACE(shell,"(%p)->(count=%lu)\n",this,this->ref);
 	if (!--(this->ref)) 
 	{ TRACE(shell,"-- destroying IClassFactory(%p)\n",this);
 		HeapFree(GetProcessHeap(),0,this);
@@ -293,9 +286,11 @@ static ULONG WINAPI IClassFactory_Release(LPCLASSFACTORY this)
 /******************************************************************************
  * IClassFactory_CreateInstance
  */
-static HRESULT WINAPI IClassFactory_CreateInstance(
-  LPCLASSFACTORY this, LPUNKNOWN pUnknown, REFIID riid, LPVOID *ppObject)
-{	IUnknown *pObj = NULL;
+static HRESULT WINAPI IClassFactory_fnCreateInstance(
+  LPCLASSFACTORY iface, LPUNKNOWN pUnknown, REFIID riid, LPVOID *ppObject)
+{
+	ICOM_THIS(IClassFactory,iface);
+	IUnknown *pObj = NULL;
 	HRESULT hres;
 	char	xriid[50];
 
@@ -341,7 +336,20 @@ static HRESULT WINAPI IClassFactory_CreateInstance(
 /******************************************************************************
  * IClassFactory_LockServer
  */
-static HRESULT WINAPI IClassFactory_LockServer(LPCLASSFACTORY this, BOOL32 fLock)
-{	TRACE(shell,"%p->(0x%x), not implemented\n",this, fLock);
+static HRESULT WINAPI IClassFactory_fnLockServer(LPCLASSFACTORY iface, BOOL32 fLock)
+{
+	ICOM_THIS(IClassFactory,iface);
+	TRACE(shell,"%p->(0x%x), not implemented\n",this, fLock);
 	return E_NOTIMPL;
 }
+
+static ICOM_VTABLE(IClassFactory) clfvt = 
+{
+  {
+    IClassFactory_fnQueryInterface,
+    IClassFactory_fnAddRef,
+    IClassFactory_fnRelease
+  },
+  IClassFactory_fnCreateInstance,
+  IClassFactory_fnLockServer
+};

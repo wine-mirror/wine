@@ -69,6 +69,9 @@
 /* Define if the struct statfs is defined by <sys/mount.h> */
 #undef STATFS_DEFINED_BY_SYS_MOUNT
 
+/* Define if ncurses have the new resizeterm function */
+#undef HAVE_RESIZETERM
+
 /* Define if IPX should use netipx/ipx.h from libc */
 #undef HAVE_IPX_GNU
 
@@ -152,6 +155,9 @@
 
 /* Define if you have the <sys/cdio.h> header file.  */
 #undef HAVE_SYS_CDIO_H
+
+/* Define if you have the <sys/file.h> header file.  */
+#undef HAVE_SYS_FILE_H
 
 /* Define if you have the <sys/filio.h> header file.  */
 #undef HAVE_SYS_FILIO_H

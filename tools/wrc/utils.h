@@ -33,8 +33,4 @@ int wstricmp(const short *s1, const short *s2);
 char *dupwstr2cstr(const short *str);
 short *dupcstr2wstr(const char *str);
 
-#ifndef HAVE_STRICMP
-int stricmp(const char *s1, const char *s2);
-#endif
-
 #endif

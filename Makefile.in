@@ -170,6 +170,7 @@ libwine.a: $(LIBOBJS) $(X11OBJS)
 
 libwine.so.1.0: $(LIBOBJS) $(X11OBJS)
 	$(LDSHARED) -o$@ $(LIBOBJS) $(X11OBJS) $(LDOPTIONS)
+	ln -sf $@ libwine.so
 
 install_emu: install_lib
 	[ -d $(bindir) ] || $(MKDIR) $(bindir)
@@ -230,7 +231,7 @@ htmlpages:
 clean::
 	for i in $(ALLSUBDIRS); do (cd $$i; $(MAKE) clean) || exit 1; done
 	for i in include; do (cd $$i; $(RM) *.o \#*\# .#* *~ *% *.bak *.orig *.rej *.flc); done
-	$(RM) wine wine.sym libwine.a libwine.so.1.0 TAGS .#*
+	$(RM) wine wine.sym libwine.a libwine.so.1.0 libwine.so TAGS .#*
 
 distclean: clean
 	$(RM) config.* Make.rules include/config.h

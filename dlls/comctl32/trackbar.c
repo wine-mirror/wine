@@ -2,7 +2,7 @@
  * Trackbar control
  *
  * Copyright 1998 Eric Kohl <ekohl@abo.rhein-zeitung.de>
- * Copyright 1998 Alex Priem <alexp@sci.kun.nl>
+ * Copyright 1998,1999 Alex Priem <alexp@sci.kun.nl>
  *
  *
  * TODO:
@@ -11,7 +11,7 @@
  *   - handle dragging slider better
  *   - better tic handling.
  *   - more notifications.
- *   - tooltips
+ *   
  */
 
 /* known bugs:
@@ -27,7 +27,6 @@
 #include "windows.h"
 #include "commctrl.h"
 #include "trackbar.h"
-#include "heap.h"
 #include "win.h"
 #include "debug.h"
 
@@ -68,7 +67,7 @@ void TRACKBAR_RecalculateTics (TRACKBAR_INFO *infoPtr)
     	nrTics=(infoPtr->nRangeMax - infoPtr->nRangeMin)/infoPtr->uTicFreq;
 	else {
 		nrTics=0;
-		HeapFree (SystemHeap,0,infoPtr->tics);
+		COMCTL32_Free (infoPtr->tics);
 		infoPtr->tics=NULL;
 		infoPtr->uNumTics=0;
 		return;

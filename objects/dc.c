@@ -15,6 +15,7 @@
 #include "font.h"
 #include "winerror.h"
 #include "x11drv.h"
+#include "ts_xlib.h"
 
 /***********************************************************************
  *           DC_Init_DC_INFO

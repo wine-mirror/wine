@@ -60,12 +60,7 @@ DATETIME_Destroy (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 {
     DATETIME_INFO *infoPtr = DATETIME_GetInfoPtr(wndPtr);
 
-
-
-
-
-
-    /* free ipaddress info data */
+    /* free datetime info data */
     COMCTL32_Free (infoPtr);
 
     return 0;
@@ -82,6 +77,49 @@ DATETIME_WindowProc (HWND32 hwnd, UINT32 uMsg, WPARAM32 wParam, LPARAM lParam)
     switch (uMsg)
     {
 
+    case DTM_GETSYSTEMTIME:
+        FIXME (datetime, "Unimplemented msg DTM_GETSYSTEMTIME\n");
+        return GDT_VALID;
+
+    case DTM_SETSYSTEMTIME:
+        FIXME (datetime, "Unimplemented msg DTM_SETSYSTEMTIME\n");
+        return 1;
+
+    case DTM_GETRANGE:
+        FIXME (datetime, "Unimplemented msg DTM_GETRANGE\n");
+        return 0;
+
+    case DTM_SETRANGE:
+        FIXME (datetime, "Unimplemented msg DTM_SETRANGE\n");
+        return 1;
+
+    case DTM_SETFORMAT32A:
+        FIXME (datetime, "Unimplemented msg DTM_SETFORMAT32A\n");
+        return 1;
+
+    case DTM_SETFORMAT32W:
+        FIXME (datetime, "Unimplemented msg DTM_SETFORMAT32W\n");
+        return 1;
+
+    case DTM_SETMCCOLOR:
+        FIXME (datetime, "Unimplemented msg DTM_SETMCCOLOR\n");
+        return 0;
+
+    case DTM_GETMCCOLOR:
+        FIXME (datetime, "Unimplemented msg DTM_GETMCCOLOR\n");
+        return 0;
+
+    case DTM_GETMONTHCAL:
+        FIXME (datetime, "Unimplemented msg DTM_GETMONTHCAL\n");
+        return 0;
+
+    case DTM_SETMCFONT:
+        FIXME (datetime, "Unimplemented msg DTM_SETMCFONT\n");
+        return 0;
+
+    case DTM_GETMCFONT:
+        FIXME (datetime, "Unimplemented msg DTM_GETMCFONT\n");
+        return 0;
 
 	case WM_CREATE:
 	    return DATETIME_Create (wndPtr, wParam, lParam);

@@ -8,6 +8,7 @@
 #include "debug.h"
 #include "pidl.h"
 #include "shlobj.h"
+#include "objbase.h"
 #include "shell32_main.h"
 #include "shresdef.h"
 #include "if_macros.h"
@@ -52,8 +53,7 @@ static HRESULT WINAPI IContextMenu_QueryInterface(LPCONTEXTMENU this,REFIID riid
   { *ppvObj = (LPCONTEXTMENU)this;
   }   
   else if(IsEqualIID(riid, &IID_IShellExtInit))  /*IShellExtInit*/
-  { *ppvObj = (LPSHELLEXTINIT)this;
-    WARN(shell,"-- LPSHELLEXTINIT pointer requested\n");  
+  { FIXME (shell,"-- LPSHELLEXTINIT pointer requested\n");
   }   
 
   if(*ppvObj)
@@ -270,7 +270,7 @@ static HRESULT WINAPI IContextMenu_InvokeCommand(LPCONTEXTMENU this, LPCMINVOKEC
 *  IContextMenu_GetCommandString()
 */
 static HRESULT WINAPI IContextMenu_GetCommandString( LPCONTEXTMENU this, UINT32 idCommand,
-						UINT32 uFlags,LPUINT32 lpReserved,LPSTR lpszName,UINT32 uMaxNameLen)
+		UINT32 uFlags,LPUINT32 lpReserved,LPSTR lpszName,UINT32 uMaxNameLen)
 {	HRESULT  hr = E_INVALIDARG;
 
 	TRACE(shell,"(%p)->(idcom=%x flags=%x %p name=%p len=%x)\n",this, idCommand, uFlags, lpReserved, lpszName, uMaxNameLen);
@@ -321,8 +321,9 @@ static HRESULT WINAPI IContextMenu_HandleMenuMsg(LPCONTEXTMENU this, UINT32 uMsg
 *  IContextMenu_AllocPidlTable()
 */
 BOOL32 IContextMenu_AllocPidlTable(LPCONTEXTMENU this, DWORD dwEntries)
-{	/*add one for NULL terminator */
-	TRACE(shell,"(%p)->(entrys=%lu)\n",this, dwEntries);
+{	TRACE(shell,"(%p)->(entrys=%lu)\n",this, dwEntries);
+
+	/*add one for NULL terminator */
 	dwEntries++;
 
 	this->aPidls = (LPITEMIDLIST*)SHAlloc(dwEntries * sizeof(LPITEMIDLIST));

@@ -18,6 +18,7 @@
 
 #include <assert.h>
 #include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/time.h>
@@ -29,7 +30,7 @@
 #ifdef HAVE_SYS_FILIO_H
 # include <sys/filio.h>
 #endif
-#ifdef __svr4__
+#ifdef HAVE_SYS_FILE_H
 # include <sys/file.h>
 #endif
 

@@ -12,6 +12,7 @@
 #include "animate.h"
 #include "comboex.h"
 #include "datetime.h"
+#include "flatsb.h"
 #include "header.h"
 #include "hotkey.h"
 #include "ipaddress.h"
@@ -20,6 +21,7 @@
 #include "nativefont.h"
 #include "pager.h"
 #include "progress.h"
+#include "propsheet.h"
 #include "rebar.h"
 #include "status.h"
 #include "tab.h"
@@ -70,9 +72,11 @@ COMCTL32_LibMain (HINSTANCE32 hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 
 		/* register all Win95 common control classes */
 		ANIMATE_Register ();
+		FLATSB_Register ();
 		HEADER_Register ();
 		HOTKEY_Register ();
 		LISTVIEW_Register ();
+		PROPSHEET_Register ();
 		PROGRESS_Register ();
 		STATUS_Register ();
 		TAB_Register ();
@@ -92,6 +96,7 @@ COMCTL32_LibMain (HINSTANCE32 hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 		ANIMATE_Unregister ();
 		COMBOEX_Unregister ();
 		DATETIME_Unregister ();
+		FLATSB_Unregister ();
 		HEADER_Unregister ();
 		HOTKEY_Unregister ();
 		IPADDRESS_Unregister ();
@@ -99,6 +104,7 @@ COMCTL32_LibMain (HINSTANCE32 hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 		MONTHCAL_Unregister ();
 		NATIVEFONT_Unregister ();
 		PAGER_Unregister ();
+		PROPSHEET_UnRegister ();
 		PROGRESS_Unregister ();
 		REBAR_Unregister ();
 		STATUS_Unregister ();

@@ -24,7 +24,6 @@
 #include "msdos.h"
 #include "miscemu.h"
 #include "module.h"
-/* #define DEBUG_INT */
 #include "debug.h"
 
 
@@ -159,14 +158,18 @@ else
 	 io_stru[3]=io_stru[4]=0;
 	 io_stru[2]=1; /* supports audio channels (?? FIXME ??) */
 	 io_stru[1]=16; /* data read and plays audio racks */
+#if defined(CDROM_DRIVE_STATUS) && defined(CDS_TRAY_OPEN)
 	 io_stru[1]|=(ioctl(fdcd,CDROM_DRIVE_STATUS,0)==CDS_TRAY_OPEN);
+#endif
          TRACE(int," ----> DEVICE STATUS <0x%08lx>\n\n",(DWORD)io_stru[1]); 
 	 break;
 
 	case 9: /* media changed ? */
+#ifdef CDROM_MEDIA_CHANGED
 	 if (ioctl(fdcd,CDROM_MEDIA_CHANGED,0))
           io_stru[1]=0xff;
          else
+#endif
 	  io_stru[0]=0; /* FIXME? 1? */
 	 break;
 

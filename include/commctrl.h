@@ -93,6 +93,7 @@ BOOL32 WINAPI InitCommonControlsEx (LPINITCOMMONCONTROLSEX);
 
 #define I_IMAGECALLBACK          (-1)
 #define I_INDENTCALLBACK         (-1)
+#define I_CHILDRENCALLBACK       (-1)
 
 
 /* owner drawn types */
@@ -115,6 +116,66 @@ typedef struct tagNMTOOLTIPSCREATED
 #endif
 
 #define SNDMSG WINELIB_NAME_AW(SendMessage)
+
+
+
+/* Custom Draw messages */
+
+#define CDRF_DODEFAULT          0x0
+#define CDRF_NEWFONT            0x00000002
+#define CDRF_SKIPDEFAULT        0x00000004
+#define CDRF_NOTIFYPOSTPAINT    0x00000010
+#define CDRF_NOTIFYITEMDRAW     0x00000020
+#define CDRF_NOTIFYSUBITEMDRAW  0x00000020
+#define CDRF_NOTIFYPOSTERASE    0x00000040
+/* #define CDRF_NOTIFYITEMERASE    0x00000080          obsolete ? */
+
+
+/* drawstage flags */
+
+#define CDDS_PREPAINT           1
+#define CDDS_POSTPAINT          2
+#define CDDS_PREERASE           3
+#define CDDS_POSTERASE          4
+
+#define CDDS_ITEM				0x00010000
+#define CDDS_ITEMPREPAINT		(CDDS_ITEM | CDDS_PREPAINT)
+#define CDDS_ITEMPOSTPAINT		(CDDS_ITEM | CDDS_POSTPAINT)
+#define CDDS_ITEMPREERASE		(CDDS_ITEM | CDDS_PREERASE)
+#define CDDS_ITEMPOSTERASE		(CDDS_ITEM | CDDS_POSTERASE)
+#define CDDS_SUBITEM            0x00020000
+
+/* itemState flags */
+
+#define CDIS_SELECTED	 	0x0001
+#define CDIS_GRAYED			0x0002
+#define CDIS_DISABLED		0x0004
+#define CDIS_CHECKED		0x0008
+#define CDIS_FOCUS			0x0010
+#define CDIS_DEFAULT		0x0020
+#define CDIS_HOT			0x0040
+#define CDIS_MARKED         0x0080
+#define CDIS_INDETERMINATE  0x0100
+
+
+typedef struct tagNMCUSTOMDRAWINFO
+{
+	NMHDR	hdr;
+	DWORD	dwDrawStage;
+	HDC32	hdc;
+	RECT32	rc;
+	DWORD	dwItemSpec; 
+	UINT32	uItemState;
+	LPARAM	lItemlParam;
+} NMCUSTOMDRAW, *LPNMCUSTOMDRAW;
+
+typedef struct tagNMTTCUSTOMDRAW
+{
+	NMCUSTOMDRAW nmcd;
+	UINT32		 uDrawFlags;
+} NMTTCUSTOMDRAW, *LPNMTTCUSTOMDRAW;
+
+
 
 
 /* StatusWindow */
@@ -393,6 +454,28 @@ BOOL32     WINAPI ImageList_Write(HIMAGELIST, LPSTREAM32);
 #define ImageList_LoadBitmap(hi,lpbmp,cx,cGrow,crMask) \
   ImageList_LoadImage(hi,lpbmp,cx,cGrow,crMask,IMAGE_BITMAP,0)
 #define ImageList_RemoveAll(himl) ImageList_Remove(himl,-1)
+
+
+/* Flat Scrollbar control */
+
+#define FLATSB_CLASS16        "flatsb_class"
+#define FLATSB_CLASS32A       "flatsb_class32"
+#define FLATSB_CLASS32W       L"flatsb_class32"
+#define FLATSB_CLASS          WINELIB_NAME_AW(FLATSB_CLASS)
+
+BOOL32  WINAPI FlatSB_EnableScrollBar(HWND32, INT32, UINT32);
+BOOL32  WINAPI FlatSB_ShowScrollBar(HWND32, INT32, BOOL32);
+BOOL32  WINAPI FlatSB_GetScrollRange(HWND32, INT32, LPINT32, LPINT32);
+BOOL32  WINAPI FlatSB_GetScrollInfo(HWND32, INT32, LPSCROLLINFO);
+INT32   WINAPI FlatSB_GetScrollPos(HWND32, INT32);
+BOOL32  WINAPI FlatSB_GetScrollProp(HWND32, INT32, LPINT32);
+INT32   WINAPI FlatSB_SetScrollPos(HWND32, INT32, INT32, BOOL32);
+INT32   WINAPI FlatSB_SetScrollInfo(HWND32, INT32, LPSCROLLINFO, BOOL32);
+INT32   WINAPI FlatSB_SetScrollRange(HWND32, INT32, INT32, INT32, BOOL32);
+BOOL32  WINAPI FlatSB_SetScrollProp(HWND32, UINT32, INT32, BOOL32);
+BOOL32  WINAPI InitializeFlatSB(HWND32);
+HRESULT WINAPI UninitializeFlatSB(HWND32);
+
 
 
 /* Header control */
@@ -2307,9 +2390,15 @@ typedef INT32 (CALLBACK *PFNLVCOMPARE)(LPARAM, LPARAM, LPARAM);
 #define TCM_GETIMAGELIST        (TCM_FIRST + 2)
 #define TCM_SETIMAGELIST        (TCM_FIRST + 3)
 #define TCM_GETITEMCOUNT	(TCM_FIRST + 4)
-#define TCM_GETITEM             (TCM_FIRST + 5)
-#define TCM_SETITEM             (TCM_FIRST + 6)
-#define	TCM_INSERTITEM		(TCM_FIRST + 7)
+#define TCM_GETITEM				WINELIB_NAME_AW(TCM_GETITEM)
+#define TCM_GETITEM32A			(TCM_FIRST + 5)
+#define TCM_GETITEM32W			(TCM_FIRST + 60)
+#define TCM_SETITEM32A			(TCM_FIRST + 6)
+#define TCM_SETITEM32W			(TCM_FIRST + 61)
+#define TCM_SETITEM				WINELIB_NAME_AW(TCM_SETITEM)
+#define TCM_INSERTITEM32A		(TCM_FIRST + 7)
+#define TCM_INSERTITEM32W		(TCM_FIRST + 62)
+#define TCM_INSERTITEM			WINELIB_NAME_AW(TCM_INSERTITEM)
 #define TCM_DELETEITEM          (TCM_FIRST + 8)
 #define TCM_DELETEALLITEMS      (TCM_FIRST + 9)
 #define TCM_GETITEMRECT         (TCM_FIRST + 10)
@@ -2328,27 +2417,51 @@ typedef INT32 (CALLBACK *PFNLVCOMPARE)(LPARAM, LPARAM, LPARAM);
 #define TCM_SETCURFOCUS         (TCM_FIRST + 48)
 #define TCM_SETMINTTABWIDTH     (TCM_FIRST + 49)
 #define TCM_DESELECTALL         (TCM_FIRST + 50)
+#define TCM_HIGHLIGHTITEM		(TCM_FIRST + 51)
+#define TCM_SETEXTENDEDSTYLE	(TCM_FIRST + 52)
+#define TCM_GETEXTENDEDSTYLE	(TCM_FIRST + 53)
+#define TCM_SETUNICODEFORMAT	CCM_SETUNICODEFORMAT
+#define TCM_GETUNICODEFORMAT	CCM_GETUNICODEFORMAT
+
 
 #define TCIF_TEXT		0x0001
 #define TCIF_IMAGE		0x0002
 #define TCIF_RTLREADING		0x0004
 #define TCIF_PARAM		0x0008
+#define TCIF_STATE		0x0010
 
-typedef struct tagTCITEM {
+
+typedef struct tagTCITEM32A {
     UINT32 mask;
-    UINT32 lpReserved1;
-    UINT32 lpReserved2;
+    UINT32 dwState;
+    UINT32 dwStateMask;
     LPSTR  pszText;
     int    cchTextMax;
     int    iImage;
     LPARAM lParam;
-} TCITEM, *LPTCITEM;
+} TCITEM32A, *LPTCITEM32A;
+
+typedef struct tagTCITEM32W
+{
+    UINT32 mask;
+    DWORD  dwState;
+    DWORD  dwStateMask;
+    LPWSTR pszText;
+    INT32  cchTextMax;
+    INT32  iImage;
+    LPARAM lParam;
+} TCITEM32W, *LPTCITEM32W;
+
+#define TCITEM   WINELIB_NAME_AW(TCITEM)
+#define LPTCITEM WINELIB_NAME_AW(LPTCITEM)
+
 
 #define TCN_FIRST               (0U-550U)
 #define TCN_LAST                (0U-580U)
 #define TCN_KEYDOWN             (TCN_FIRST - 0)
 #define TCN_SELCHANGE		(TCN_FIRST - 1)
 #define TCN_SELCHANGING         (TCN_FIRST - 2)
+#define TCN_GETOBJECT      (TCN_FIRST - 3)
 
 
 /* ComboBoxEx control */
@@ -2522,6 +2635,36 @@ typedef struct tagNMIPADDRESS
 #define DATETIMEPICK_CLASS32W	L"SysDateTimePick32"
 #define DATETIMEPICK_CLASS	WINELIB_NAME_AW(DATETIMEPICK_CLASS)
 
+#define DTM_FIRST        0x1000
+
+#define DTM_GETSYSTEMTIME	(DTM_FIRST+1)
+#define DTM_SETSYSTEMTIME	(DTM_FIRST+2)
+#define DTM_GETRANGE		(DTM_FIRST+3)
+#define DTM_SETRANGE		(DTM_FIRST+4)
+#define DTM_SETFORMAT32A	(DTM_FIRST+5)
+#define DTM_SETFORMAT32W	(DTM_FIRST + 50)
+#define DTM_SETFORMAT		WINELIB_NAME_AW(DTM_SETFORMAT)
+#define DTM_SETMCCOLOR		(DTM_FIRST+6)
+#define DTM_GETMCCOLOR		(DTM_FIRST+7)
+
+#define DTM_GETMONTHCAL		(DTM_FIRST+8)
+
+#define DTM_SETMCFONT		(DTM_FIRST+9)
+#define DTM_GETMCFONT		(DTM_FIRST+10)
+
+
+
+
+#define GDT_ERROR    -1
+#define GDT_VALID    0
+#define GDT_NONE     1
+
+#define GDTR_MIN     0x0001
+#define GDTR_MAX     0x0002
+
+
+
+
 
 /**************************************************************************
  *  UNDOCUMENTED functions
@@ -2624,6 +2767,13 @@ LRESULT WINAPI COMCTL32_SendNotifyEx (HWND32, HWND32, UINT32, LPNMHDR, DWORD);
 /*
  * Property sheet support (callback procs)
  */
+
+
+#define WC_PROPSHEET32A      "SysPager"
+#define WC_PROPSHEET32W      L"SysPager"
+#define WC_PROPSHEET         WINELIB_NAME_AW(WC_PROPSHEET)
+
+
 struct _PROPSHEETPAGE32A;  /** need to forward declare those structs **/
 struct _PROPSHEETPAGE32W;
 struct _PSP;

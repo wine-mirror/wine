@@ -261,6 +261,7 @@ static struct keyword keywords[] = {
 	{ "BEGIN", tBEGIN, 0, 0, 1},
 	{ "BITMAP", tBITMAP, 0, 0, 0},
 	{ "BLOCK", BLOCK, 0, 0, 1},
+	{ "BUTTON", BUTTON, 1, 0, 0},
 	{ "CAPTION", CAPTION, 0, 0, 0},
 	{ "CHARACTERISTICS", CHARACTERISTICS, 1, 0, 0},
 	{ "CHECKBOX", CHECKBOX, 0, 0, 0},
@@ -321,6 +322,7 @@ static struct keyword keywords[] = {
 	{ "STRING", tSTRING, 0, 0, 0},
 	{ "STRINGTABLE", STRINGTABLE, 0, 0, 1},
 	{ "STYLE", STYLE, 0, 0, 0},
+	{ "TOOLBAR", TOOLBAR, 1, 0, 0},
 	{ "typedef", tTYPEDEF, 0, 1, 1},
 	{ "VALUE", VALUE, 0, 0, 0},
 	{ "VERSION", VERSION, 1, 0, 0},
@@ -333,7 +335,7 @@ static struct keyword keywords[] = {
 int kw_cmp_func(const void *s1, const void *s2)
 {
 	int ret;
-	ret = stricmp(KWP(s1)->keyword, KWP(s2)->keyword);
+	ret = strcasecmp(KWP(s1)->keyword, KWP(s2)->keyword);
 	if(!ret && (KWP(s1)->needcase || KWP(s2)->needcase))
 		return strcmp(KWP(s1)->keyword, KWP(s2)->keyword);
 	else
@@ -804,10 +806,12 @@ L\"			{
 #ifndef yywrap
 int yywrap(void)
 {
-//	if(bufferstackidx > 0)
-//	{
-//		return 0;
-//	}
+#if 0
+	if(bufferstackidx > 0)
+	{
+		return 0;
+ 	}
+#endif
 	return 1;
 }
 #endif

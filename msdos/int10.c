@@ -212,7 +212,7 @@ void WINAPI INT_Int10Handler( CONTEXT *context )
         break;
 
     case 0x0f: /* GET CURRENT VIDEO MODE */
-        TRACE(int10, "Get Current Video Mode (0x0%x)\n", AL_reg(context));
+        TRACE(int10, "Get Current Video Mode\n");
         /* Note: This should not be a constant value. */
         AL_reg(context) = 0x07; /* 80x25 text mode */
         AH_reg(context) = 80; /* 80 columns */
@@ -334,8 +334,10 @@ void WINAPI INT_Int10Handler( CONTEXT *context )
         switch BL_reg(context) {
         case 0x10: /* GET EGA INFO */
             TRACE(int10, "EGA Info Requested\n");
-            BX_reg(context) = 0x0003;
-            CX_reg(context) = 0x0009;
+            BH_reg(context) = 0x00;   /* Color screen */
+            BL_reg(context) = 0x03;   /* 256K EGA card */
+            CH_reg(context) = 0x00;   /* Switch settings?? */
+            CL_reg(context) = 0x09;   /* EGA+ card */
             break;
         case 0x20: /* ALTERNATE PRTSC */
             FIXME(int10, "Install Alternate Print Screen - Not Supported\n");
@@ -374,9 +376,9 @@ void WINAPI INT_Int10Handler( CONTEXT *context )
         switch AL_reg(context) {
         case 0x00: /* GET DISPLAY COMBINATION CODE */
             TRACE(int10, "Get Display Combination Code\n");
-            /* Why are we saying this? */
-            /* Do we need to check if we are in a windows or text app? */
-            BX_reg(context) = 0x0008; /* VGA w/ color analog display */
+            AL_reg(context) = 0x1a;
+            BH_reg(context) = 0x08; /* VGA w/ color analog display */
+            BL_reg(context) = 0x00; /* No secondary hardware */
             break;
         case 0x01: /* SET DISPLAY COMBINATION CODE */
             FIXME(int10, "Set Display Combination Code - Not Supported\n");

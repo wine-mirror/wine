@@ -3,7 +3,6 @@
 
 #include "windows.h"
 #include "winbase.h"
-#include "compobj.h"
 #include "mmsystem.h"
 #include "d3d.h"			/*FIXME: Need to break out d3dtypes.h */
 

@@ -20,8 +20,8 @@ type	win32
 117 stdcall AddPrinterA(str long ptr) AddPrinter32A
 118 stub AddPrinterConnectionA
 119 stub AddPrinterConnectionW
-120 stub AddPrinterDriverA
-121 stub AddPrinterDriverW
+120 stdcall AddPrinterDriverA(str long ptr) AddPrinterDriver32A
+121 stdcall AddPrinterDriverW(wstr long ptr) AddPrinterDriver32W
 122 stdcall AddPrinterW(wstr long ptr) AddPrinter32W
 123 stub AdvancedDocumentPropertiesA
 124 stub AdvancedDocumentPropertiesW

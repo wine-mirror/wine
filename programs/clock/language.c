@@ -187,7 +187,7 @@ VOID LANGUAGE_Init(VOID)
   if (Globals.lpszLanguage == "En") {
         PROFILE_GetWineIniString("programs", "language", "En", szBuffer, 
                                   sizeof(szBuffer));       
-        Globals.lpszLanguage = LocalLock(LocalAlloc(LMEM_FIXED, lstrlen(szBuffer)));
+        Globals.lpszLanguage = LocalLock(LocalAlloc(LMEM_FIXED, lstrlen(szBuffer)+1));
 
 /*        hmemcpy(Globals.lpszLanguage, szBuffer, 1+lstrlen(szBuffer));  */
         lstrcpyn(Globals.lpszLanguage, szBuffer, strlen(szBuffer)+1); 

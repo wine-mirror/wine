@@ -98,9 +98,9 @@ static HRESULT WINAPI IDirect3DTexture_GetHandle(LPDIRECT3DTEXTURE this,
 {
   FIXME(ddraw, "(%p)->(%p,%p): stub\n", this, lpD3DDevice, lpHandle);
 
-  *lpHandle = (DWORD) this->surface;
+  *lpHandle = (DWORD) this;
   
-  return DD_OK;
+  return D3D_OK;
 }
 
 static HRESULT WINAPI IDirect3DTexture_Initialize(LPDIRECT3DTEXTURE this,
@@ -116,7 +116,7 @@ static HRESULT WINAPI IDirect3DTexture_Unload(LPDIRECT3DTEXTURE this)
 {
   FIXME(ddraw, "(%p)->(): stub\n", this);
 
-  return DD_OK;
+  return D3D_OK;
 }
 
 /*** IDirect3DTexture2 methods ***/
@@ -124,11 +124,19 @@ static HRESULT WINAPI IDirect3DTexture2_GetHandle(LPDIRECT3DTEXTURE2 this,
 						  LPDIRECT3DDEVICE2 lpD3DDevice2,
 						  LPD3DTEXTUREHANDLE lpHandle)
 {
-  FIXME(ddraw, "(%p)->(%p,%p): stub\n", this, lpD3DDevice2, lpHandle);
+  TRACE(ddraw, "(%p)->(%p,%p)\n", this, lpD3DDevice2, lpHandle);
 
-  *lpHandle = (DWORD) this->surface; /* lpD3DDevice2->store_texture(this); */
+  /* For 32 bits OSes, handles = pointers */
+  *lpHandle = (DWORD) this;
   
-  return DD_OK;
+  /* Now, bind a new texture */
+  lpD3DDevice2->set_context(lpD3DDevice2);
+  this->D3Ddevice = (void *) lpD3DDevice2;
+  glGenTextures(1, &(this->tex_name));
+
+  TRACE(ddraw, "OpenGL texture handle is : %d\n", this->tex_name);
+  
+  return D3D_OK;
 }
 
 /* Common methods */
@@ -138,17 +146,74 @@ static HRESULT WINAPI IDirect3DTexture2_PaletteChanged(LPDIRECT3DTEXTURE2 this,
 {
   FIXME(ddraw, "(%p)->(%8ld,%8ld): stub\n", this, dwStart, dwCount);
 
-  return DD_OK;
+  return D3D_OK;
 }
 
 static HRESULT WINAPI IDirect3DTexture2_Load(LPDIRECT3DTEXTURE2 this,
 					     LPDIRECT3DTEXTURE2 lpD3DTexture2)
 {
-  FIXME(ddraw, "(%p)->(%p): stub\n", this, lpD3DTexture2);
+  DDSURFACEDESC	*src_d, *dst_d;
+  TRACE(ddraw, "(%p)->(%p)\n", this, lpD3DTexture2);
 
   /* Hack ? */
-  FIXME(ddraw, "Sthis %p / Sload %p\n", this->surface, lpD3DTexture2->surface);
+  TRACE(ddraw, "Copied to surface %p, surface %p\n", this->surface, lpD3DTexture2->surface);
   this->surface->s.surface_desc.ddsCaps.dwCaps &= ~DDSCAPS_ALLOCONLOAD;
+
+  /* Copy one surface on the other */
+  dst_d = &(this->surface->s.surface_desc);
+  src_d = &(lpD3DTexture2->surface->s.surface_desc);
+
+  if ((src_d->dwWidth != dst_d->dwWidth) || (src_d->dwHeight != dst_d->dwHeight)) {
+    /* Should also check for same pixel format, lPitch, ... */
+    ERR(ddraw, "Error in surface sizes\n");
+    return D3DERR_TEXTURE_LOAD_FAILED;
+  } else {
+    LPDIRECT3DDEVICE2 d3dd = (LPDIRECT3DDEVICE2) this->D3Ddevice;
+    /* I should put a macro for the calculus of bpp */
+    int bpp = (src_d->ddpfPixelFormat.dwFlags & DDPF_PALETTEINDEXED8 ?
+	       1 /* 8 bit of palette index */:
+	       src_d->ddpfPixelFormat.x.dwRGBBitCount / 8 /* RGB bits for each colors */ );
+
+    /* Not sure if this is usefull ! */
+    memcpy(dst_d->y.lpSurface, src_d->y.lpSurface, src_d->dwWidth * src_d->dwHeight * bpp);
+
+    /* Now, load the texture */
+    d3dd->set_context(d3dd);
+    glBindTexture(GL_TEXTURE_2D, this->tex_name);
+
+    if (src_d->ddpfPixelFormat.dwFlags & DDPF_PALETTEINDEXED8) {
+      LPDIRECTDRAWPALETTE pal = this->surface->s.palette;
+      BYTE table[256][4];
+      int i;
+      
+      /* Get the surface's palette */
+      for (i = 0; i < 256; i++) {
+	table[i][0] = pal->palents[i].peRed;
+	table[i][1] = pal->palents[i].peGreen;
+	table[i][2] = pal->palents[i].peBlue;
+	table[i][3] = 0xFF;
+      }
+      
+      /* Use Paletted Texture Extension */
+      glColorTableEXT(GL_TEXTURE_2D,    /* target */
+		      GL_RGBA,          /* internal format */
+		      256,              /* table size */
+		      GL_RGBA,          /* table format */
+		      GL_UNSIGNED_BYTE, /* table type */
+		      table);           /* the color table */
+
+      glTexImage2D(GL_TEXTURE_2D,       /* target */
+		   0,                   /* level */
+		   GL_COLOR_INDEX8_EXT, /* internal format */
+		   src_d->dwWidth, src_d->dwHeight, /* width, height */
+		   0,                   /* border */
+		   GL_COLOR_INDEX,      /* texture format */
+		   GL_UNSIGNED_BYTE,    /* texture type */
+		   src_d->y.lpSurface); /* the texture */
+    } else {
+      ERR(ddraw, "Unhandled texture format\n");
+    }
+  }
   
   return DD_OK;
 }
