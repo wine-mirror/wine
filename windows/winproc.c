@@ -897,6 +897,7 @@ INT32 WINPROC_MapMsg16To32A( UINT16 msg16, WPARAM16 wParam16, UINT32 *pmsg32,
         }
         return 1;
     case WM_GETDLGCODE:
+        if (*plparam)
         {
             LPMSG16 msg16 = (LPMSG16)PTR_SEG_TO_LIN(*plparam);
             LPMSG32 msg32 = (LPMSG32)HeapAlloc( SystemHeap, 0, sizeof(MSG32) );
@@ -914,8 +915,9 @@ INT32 WINPROC_MapMsg16To32A( UINT16 msg16, WPARAM16 wParam16, UINT32 *pmsg32,
                 return -1;
             }
             *plparam = (LPARAM)msg32;
+            return 1;
         }
-        return 1;
+        else return 0;
     case WM_NOTIFY:
     	*plparam = (LPARAM)PTR_SEG_TO_LIN(*plparam);
     	return 1;
@@ -1022,6 +1024,7 @@ LRESULT WINPROC_UnmapMsg16To32A( UINT32 msg, WPARAM32 wParam, LPARAM lParam,
         }
         break;
     case WM_GETDLGCODE:
+        if (lParam)
         {
             LPMSG32 msg32 = (LPMSG32)lParam;
 
@@ -1092,6 +1095,7 @@ INT32 WINPROC_MapMsg16To32W( UINT16 msg16, WPARAM16 wParam16, UINT32 *pmsg32,
         }
         return 1;
     case WM_GETDLGCODE:
+        if (*plparam)
         {
             LPMSG16 msg16 = (LPMSG16)PTR_SEG_TO_LIN(*plparam);
             LPMSG32 msg32 = (LPMSG32)HeapAlloc( SystemHeap, 0, sizeof(MSG32) );
@@ -1109,8 +1113,9 @@ INT32 WINPROC_MapMsg16To32W( UINT16 msg16, WPARAM16 wParam16, UINT32 *pmsg32,
                 return -1;
             }
             *plparam = (LPARAM)msg32;
+            return 1;
         }
-        return 1;
+        else return 0;
     default:  /* No Unicode translation needed */
         return WINPROC_MapMsg16To32A( msg16, wParam16, pmsg32,
                                       pwparam32, plparam );
@@ -1160,6 +1165,7 @@ LRESULT WINPROC_UnmapMsg16To32W( UINT32 msg, WPARAM32 wParam, LPARAM lParam,
         }
         break;
     case WM_GETDLGCODE:
+        if (lParam)
         {
             LPMSG32 msg32 = (LPMSG32)lParam;
 
