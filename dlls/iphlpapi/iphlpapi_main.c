@@ -46,6 +46,10 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(iphlpapi);
 
+#ifndef INADDR_NONE
+#define INADDR_NONE ~0UL
+#endif
+
 BOOL WINAPI DllMain (HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 {
   switch (fdwReason) {

@@ -84,6 +84,10 @@ WINE_DEFAULT_DEBUG_CHANNEL(netbios);
 #define PORT_NBDG 138
 #define PORT_NBSS 139
 
+#ifndef INADDR_NONE
+#define INADDR_NONE ~0UL
+#endif
+
 #define NBR_ADDWORD(p,word) (*(WORD *)(p)) = htons(word)
 #define NBR_GETWORD(p) ntohs(*(WORD *)(p))
 

@@ -57,6 +57,9 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(file);
 
+#ifndef INADDR_NONE
+#define INADDR_NONE ~0UL
+#endif
 
 static BOOL DeviceIo_VTDAPI(DWORD dwIoControlCode,
 			      LPVOID lpvInBuffer, DWORD cbInBuffer,
