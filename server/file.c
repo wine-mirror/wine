@@ -373,7 +373,7 @@ void file_set_error(void)
 #ifdef EOVERFLOW
     case EOVERFLOW: set_error( STATUS_INVALID_PARAMETER ); break;
 #endif
-    default:        perror("file_set_error"); set_win32_error( ERROR_UNKNOWN ); break;
+    default:        perror("file_set_error"); set_error( STATUS_UNSUCCESSFUL ); break;
     }
 }
 

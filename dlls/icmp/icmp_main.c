@@ -325,11 +325,11 @@ DWORD WINAPI IcmpSendEcho(
                 SetLastError(IP_DEST_NET_UNREACHABLE);
                 break;
             case EHOSTUNREACH:
-                SetLastError(IP_DEST_NET_UNREACHABLE);
+                SetLastError(IP_DEST_HOST_UNREACHABLE);
                 break;
             default:
                 TRACE("unknown error: errno=%d\n",errno);
-                SetLastError(ERROR_UNKNOWN);
+                SetLastError(IP_GENERAL_FAILURE);
             }
         }
         return 0;

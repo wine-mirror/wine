@@ -755,7 +755,7 @@ static int sock_get_error( int err )
 #ifdef EREMOTE
         case EREMOTE:           return WSAEREMOTE; break;
 #endif
-    default: errno=err; perror("sock_set_error"); return ERROR_UNKNOWN; break;
+    default: errno=err; perror("sock_set_error"); return WSAEFAULT; break;
     }
 }
 

@@ -3117,7 +3117,6 @@ static const char *get_status_name( unsigned int status )
         NAME_WIN32(ERROR_INVALID_INDEX),
         NAME_WIN32(ERROR_NEGATIVE_SEEK),
         NAME_WIN32(ERROR_SEEK),
-        NAME_WIN32(ERROR_UNKNOWN),
         { NULL, 0 }  /* terminator */
     };
 #undef NAME

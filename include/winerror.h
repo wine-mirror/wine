@@ -62,13 +62,6 @@
 /* This macros is obsolete and should not be used in new apps. */
 #define ResultFromScode(sc)  ((HRESULT)(sc))
 
-/* ERROR_UNKNOWN is a placeholder for error conditions which haven't
- * been tested yet so we're not exactly sure what will be returned.
- * All instances of ERROR_UNKNOWN should be tested under Win95/NT
- * and replaced.
- */
-#define ERROR_UNKNOWN                                      99999
-
 #define NO_ERROR                                           0
 #define ERROR_SUCCESS                                      0
 #define ERROR_INVALID_FUNCTION                             1
