@@ -224,13 +224,12 @@ static LRESULT WINAPI ButtonWndProc_common(HWND hWnd, UINT uMsg,
     case WM_GETDLGCODE:
         switch(btn_type)
         {
-        case BS_AUTOCHECKBOX:    return DLGC_BUTTON | DLGC_WANTCHARS;
-        case BS_AUTORADIOBUTTON: return DLGC_RADIOBUTTON;
-        case BS_CHECKBOX:        return DLGC_BUTTON | DLGC_WANTCHARS;
-        case BS_DEFPUSHBUTTON:   return DLGC_DEFPUSHBUTTON;
+        case BS_USERBUTTON:
+        case BS_PUSHBUTTON:      return DLGC_BUTTON | DLGC_UNDEFPUSHBUTTON;
+        case BS_DEFPUSHBUTTON:   return DLGC_BUTTON | DLGC_DEFPUSHBUTTON;
+        case BS_RADIOBUTTON:
+        case BS_AUTORADIOBUTTON: return DLGC_BUTTON | DLGC_RADIOBUTTON;
         case BS_GROUPBOX:        return DLGC_STATIC;
-        case BS_PUSHBUTTON:      return DLGC_UNDEFPUSHBUTTON;
-        case BS_RADIOBUTTON:     return DLGC_RADIOBUTTON;
         default:                 return DLGC_BUTTON;
         }
 

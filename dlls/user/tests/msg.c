@@ -2643,23 +2643,36 @@ static void test_button_messages(void)
     static const struct
     {
 	DWORD style;
+	DWORD dlg_code;
 	const struct message *setfocus;
 	const struct message *killfocus;
     } button[] = {
-	{ BS_PUSHBUTTON, WmSetFocusButtonSeq, WmKillFocusButtonSeq },
-	{ BS_DEFPUSHBUTTON, WmSetFocusButtonSeq, WmKillFocusButtonSeq },
-	{ BS_CHECKBOX, WmSetFocusStaticSeq, WmKillFocusStaticSeq },
-	{ BS_AUTOCHECKBOX, WmSetFocusStaticSeq, WmKillFocusStaticSeq },
-	{ BS_RADIOBUTTON, WmSetFocusStaticSeq, WmKillFocusStaticSeq },
-	{ BS_3STATE, WmSetFocusStaticSeq, WmKillFocusStaticSeq },
-	{ BS_AUTO3STATE, WmSetFocusStaticSeq, WmKillFocusStaticSeq },
-	{ BS_GROUPBOX, WmSetFocusStaticSeq, WmKillFocusStaticSeq },
-	{ BS_USERBUTTON, WmSetFocusButtonSeq, WmKillFocusButtonSeq },
-	{ BS_AUTORADIOBUTTON, WmSetFocusStaticSeq, WmKillFocusStaticSeq },
-	{ BS_OWNERDRAW, WmSetFocusButtonSeq, WmKillFocusButtonSeq }
+	{ BS_PUSHBUTTON, DLGC_BUTTON | DLGC_UNDEFPUSHBUTTON,
+	  WmSetFocusButtonSeq, WmKillFocusButtonSeq },
+	{ BS_DEFPUSHBUTTON, DLGC_BUTTON | DLGC_DEFPUSHBUTTON,
+	  WmSetFocusButtonSeq, WmKillFocusButtonSeq },
+	{ BS_CHECKBOX, DLGC_BUTTON,
+	  WmSetFocusStaticSeq, WmKillFocusStaticSeq },
+	{ BS_AUTOCHECKBOX, DLGC_BUTTON,
+	  WmSetFocusStaticSeq, WmKillFocusStaticSeq },
+	{ BS_RADIOBUTTON, DLGC_BUTTON | DLGC_RADIOBUTTON,
+	  WmSetFocusStaticSeq, WmKillFocusStaticSeq },
+	{ BS_3STATE, DLGC_BUTTON,
+	  WmSetFocusStaticSeq, WmKillFocusStaticSeq },
+	{ BS_AUTO3STATE, DLGC_BUTTON,
+	  WmSetFocusStaticSeq, WmKillFocusStaticSeq },
+	{ BS_GROUPBOX, DLGC_STATIC,
+	  WmSetFocusStaticSeq, WmKillFocusStaticSeq },
+	{ BS_USERBUTTON, DLGC_BUTTON | DLGC_UNDEFPUSHBUTTON,
+	  WmSetFocusButtonSeq, WmKillFocusButtonSeq },
+	{ BS_AUTORADIOBUTTON, DLGC_BUTTON | DLGC_RADIOBUTTON,
+	  WmSetFocusStaticSeq, WmKillFocusStaticSeq },
+	{ BS_OWNERDRAW, DLGC_BUTTON,
+	  WmSetFocusButtonSeq, WmKillFocusButtonSeq }
     };
     unsigned int i;
     HWND hwnd;
+    DWORD dlg_code;
 
     subclass_button();
 
@@ -2668,6 +2681,9 @@ static void test_button_messages(void)
 	hwnd = CreateWindowExA(0, "my_button_class", "test", button[i].style | WS_POPUP,
 			       0, 0, 50, 14, 0, 0, 0, NULL);
 	ok(hwnd != 0, "Failed to create button window\n");
+
+	dlg_code = SendMessageA(hwnd, WM_GETDLGCODE, 0, 0);
+	ok(dlg_code == button[i].dlg_code, "%d: wrong dlg_code %08lx\n", i, dlg_code);
 
 	ShowWindow(hwnd, SW_SHOW);
 	UpdateWindow(hwnd);
@@ -2684,7 +2700,7 @@ static void test_button_messages(void)
 	DestroyWindow(hwnd);
     }
 
-    hwnd = CreateWindowExA(0, "my_button_class", "test", button[i].style | WS_POPUP | WS_VISIBLE,
+    hwnd = CreateWindowExA(0, "my_button_class", "test", BS_PUSHBUTTON | WS_POPUP | WS_VISIBLE,
 			   0, 0, 50, 14, 0, 0, 0, NULL);
     ok(hwnd != 0, "Failed to create button window\n");
 
