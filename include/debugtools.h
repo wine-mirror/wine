@@ -45,7 +45,7 @@ extern short debug_msg_enabled[][DEBUG_CLASS_COUNT];
 #ifndef NO_TRACE_MSGS
 #define TRACE(ch, fmt, args...) DPRINTF_(trace, ch, fmt, ## args)
 #else
-#define TRACE(ch, fmt, args...)
+#define TRACE(ch, fmt, args...) do { } while (0)
 #endif /* NO_TRACE_MSGS */
 
 #ifndef NO_DEBUG_MSGS
@@ -53,9 +53,9 @@ extern short debug_msg_enabled[][DEBUG_CLASS_COUNT];
 #define FIXME(ch, fmt, args...) DPRINTF_(fixme, ch, fmt, ## args)
 #define DUMP(format, args...)   DPRINTF(format, ## args)
 #else
-#define WARN(ch, fmt, args...)
-#define FIXME(ch, fmt, args...)
-#define DUMP(format, args...)
+#define WARN(ch, fmt, args...) do { } while (0)
+#define FIXME(ch, fmt, args...) do { } while (0)
+#define DUMP(format, args...) do { } while (0)
 #endif /* NO_DEBUG_MSGS */
 
 /* define error macro regardless of what is configured */
