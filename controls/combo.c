@@ -33,6 +33,8 @@
 #include "user.h"
 #include "win.h"
 #include "controls.h"
+#include "winreg.h"
+#include "winternl.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(combo);
@@ -2111,15 +2113,43 @@ static LRESULT ComboWndProc_common( HWND hwnd, UINT message,
 		if( CB_HASSTRINGS(lphc) ) lParam = (LPARAM)MapSL(lParam);
 		/* fall through */
 	case CB_ADDSTRING:
-		return unicode ? SendMessageW(lphc->hWndLBox, LB_ADDSTRING, 0, lParam) :
-				 SendMessageA(lphc->hWndLBox, LB_ADDSTRING, 0, lParam);
+		if( unicode )
+                {
+                    if( lphc->dwStyle & CBS_LOWERCASE )
+                        strlwrW((LPWSTR)lParam);
+                    else if( lphc->dwStyle & CBS_UPPERCASE )
+                        struprW((LPWSTR)lParam);
+                    return SendMessageW(lphc->hWndLBox, LB_ADDSTRING, 0, lParam);
+                }
+                else
+                {
+                    if( lphc->dwStyle & CBS_LOWERCASE )
+                        _strlwr((LPSTR)lParam);
+                    else if( lphc->dwStyle & CBS_UPPERCASE )
+                        _strupr((LPSTR)lParam);
+                    return SendMessageA(lphc->hWndLBox, LB_ADDSTRING, 0, lParam);
+                }
 	case CB_INSERTSTRING16:
 		wParam = (INT)(INT16)wParam;
 		if( CB_HASSTRINGS(lphc) ) lParam = (LPARAM)MapSL(lParam);
 		/* fall through */
 	case CB_INSERTSTRING:
-		return unicode ? SendMessageW(lphc->hWndLBox, LB_INSERTSTRING, wParam, lParam) :
-				 SendMessageA(lphc->hWndLBox, LB_INSERTSTRING, wParam, lParam);
+		if( unicode )
+                {
+                    if( lphc->dwStyle & CBS_LOWERCASE )
+                        strlwrW((LPWSTR)lParam);
+                    else if( lphc->dwStyle & CBS_UPPERCASE )
+                        struprW((LPWSTR)lParam);
+                    return SendMessageW(lphc->hWndLBox, LB_INSERTSTRING, wParam, lParam);
+                }
+                else
+                {
+                    if( lphc->dwStyle & CBS_LOWERCASE )
+                        _strlwr((LPSTR)lParam);
+                    else if( lphc->dwStyle & CBS_UPPERCASE )
+                        _strupr((LPSTR)lParam);
+                    return SendMessageA(lphc->hWndLBox, LB_INSERTSTRING, wParam, lParam);
+                }
 	case CB_DELETESTRING16:
 	case CB_DELETESTRING:
 		return unicode ? SendMessageW(lphc->hWndLBox, LB_DELETESTRING, wParam, 0) :
