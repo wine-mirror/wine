@@ -522,7 +522,12 @@ void BuildSpec32File( FILE *outfile, DLLSPEC *spec )
     fprintf( outfile, "}\n" );
     fprintf( outfile, "#endif\n" );
 
+#ifdef __APPLE__
+    fprintf( outfile, "static char _end[4];\n" );
+#else
     fprintf( outfile, "extern char _end[];\n" );
+#endif
+    
     fprintf( outfile, "extern int __wine_spec_data_start[], __wine_spec_exports[];\n\n" );
 
 #ifdef __i386__
@@ -569,8 +574,24 @@ void BuildSpec32File( FILE *outfile, DLLSPEC *spec )
     fprintf( outfile, "extern char **__wine_main_argv;\n" );
     fprintf( outfile, "extern char **__wine_main_environ;\n" );
     fprintf( outfile, "extern unsigned short **__wine_main_wargv;\n" );
+#ifdef __APPLE__
+    fprintf( outfile, "extern _dyld_func_lookup(char *, void *);");
+    fprintf( outfile, "void _init(int argc, char** argv, char** chr)\n" );
+    fprintf( outfile, "{\n");
+    fprintf( outfile, "    void (*init)(void);\n");
+    fprintf( outfile, "    _dyld_func_lookup(\"__dyld_make_delayed_module_initializer_calls\", (unsigned long *)&init);\n");
+    fprintf( outfile, "    init();\n");
+    fprintf( outfile, "}\n");
+    fprintf( outfile, "void _fini()\n" );
+    fprintf( outfile, "{\n");
+    fprintf( outfile, "    void (*fini)(void);\n");
+    fprintf( outfile, "    _dyld_func_lookup(\"__dyld_mod_term_funcs\", (unsigned long *)&fini);\n");
+    fprintf( outfile, "    fini();\n");
+    fprintf( outfile, "}\n");
+#else
     fprintf( outfile, "extern void _init(int, char**, char**);\n" );
     fprintf( outfile, "extern void _fini();\n" );
+#endif
 
     characteristics = subsystem = 0;
     switch(spec->mode)
