@@ -267,6 +267,32 @@ GL_IDirect3DImpl_3_FindDevice(LPDIRECT3D3 iface,
     return d3ddevice_find(This, lpD3DDFS, lpD3DFDR, 3);
 }
 
+HRESULT WINAPI
+GL_IDirect3DImpl_7_3T_EnumZBufferFormats(LPDIRECT3D7 iface,
+					 REFCLSID riidDevice,
+					 LPD3DENUMPIXELFORMATSCALLBACK lpEnumCallback,
+					 LPVOID lpContext)
+{
+    ICOM_THIS_FROM(IDirect3DImpl, IDirect3D7, iface);
+    DDPIXELFORMAT pformat;
+    
+    TRACE("(%p/%p)->(%s,%p,%p)\n", This, iface, debugstr_guid(riidDevice), lpEnumCallback, lpContext);
+
+    memset(&pformat, 0, sizeof(pformat));
+    pformat.dwSize = sizeof(DDPIXELFORMAT);
+    pformat.dwFourCC = 0;   
+    TRACE("Enumerating dummy ZBuffer format (16 bits)\n");
+    pformat.dwFlags = DDPF_ZBUFFER;
+    pformat.u1.dwZBufferBitDepth = 16;
+    pformat.u3.dwZBitMask =    0x0000FFFF;
+    pformat.u5.dwRGBZBitMask = 0x0000FFFF;
+
+    /* Whatever the return value, stop here.. */
+    lpEnumCallback(&pformat, lpContext);
+    
+    return D3D_OK;
+}
+
 static void light_released(IDirect3DImpl *This, GLenum light_num)
 {
     IDirect3DGLImpl *glThis = (IDirect3DGLImpl *) This;
@@ -288,7 +314,7 @@ ICOM_VTABLE(IDirect3D7) VTABLE_IDirect3D7 =
     XCAST(EnumDevices) Main_IDirect3DImpl_7_EnumDevices,
     XCAST(CreateDevice) Main_IDirect3DImpl_7_CreateDevice,
     XCAST(CreateVertexBuffer) Main_IDirect3DImpl_7_3T_CreateVertexBuffer,
-    XCAST(EnumZBufferFormats) Main_IDirect3DImpl_7_3T_EnumZBufferFormats,
+    XCAST(EnumZBufferFormats) GL_IDirect3DImpl_7_3T_EnumZBufferFormats,
     XCAST(EvictManagedTextures) Main_IDirect3DImpl_7_3T_EvictManagedTextures,
 };
 
