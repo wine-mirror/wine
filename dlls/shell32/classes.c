@@ -27,6 +27,10 @@ BOOL HCR_MapTypeToValue ( LPCSTR szExtension, LPSTR szFileType, DWORD len, BOOL 
 
 	TRACE("%s %p\n",szExtension, szFileType );
 
+    /* added because we do not want to have double dots */
+    if (szExtension[0]=='.')
+        bPrependDot=0;
+
 	if (bPrependDot)
 	  strcpy(szTemp, ".");
 

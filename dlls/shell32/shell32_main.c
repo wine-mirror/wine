@@ -201,6 +201,7 @@ DWORD WINAPI SHGetFileInfoA(LPCSTR path,DWORD dwFileAttributes,
 	IExtractIconA * pei = NULL;
 	LPITEMIDLIST	pidlLast = NULL, pidl = NULL;
 	HRESULT hr = S_OK;
+    BOOL IconNotYetLoaded=TRUE;
 
 	TRACE("(%s fattr=0x%lx sfi=%p(attr=0x%08lx) size=0x%x flags=0x%x)\n", 
 	  (flags & SHGFI_PIDL)? "pidl" : path, dwFileAttributes, psfi, psfi->dwAttributes, sizeofpsfi, flags);
@@ -323,7 +324,19 @@ DWORD WINAPI SHGetFileInfoA(LPCSTR path,DWORD dwFileAttributes,
 	/* get the type name */
 	if (SUCCEEDED(hr) && (flags & SHGFI_TYPENAME))
 	{
-	  _ILGetFileType(pidlLast, psfi->szTypeName, 80);
+        if (!flags & SHGFI_USEFILEATTRIBUTES)
+	        _ILGetFileType(pidlLast, psfi->szTypeName, 80);
+        else
+        {
+	        char sTemp[64];
+            strcpy(sTemp,PathFindExtensionA(path));
+	        if (!( HCR_MapTypeToValue(sTemp, sTemp, 64, TRUE)
+	        && HCR_MapTypeToValue(sTemp, psfi->szTypeName, 80, FALSE )))
+	        {
+	            lstrcpynA (psfi->szTypeName, sTemp, 80 - 6);
+	            strcat (psfi->szTypeName, "-file");
+	        }
+        }
 	}
 
 	/* ### icons ###*/
@@ -359,6 +372,7 @@ DWORD WINAPI SHGetFileInfoA(LPCSTR path,DWORD dwFileAttributes,
 	/* get icon index (or load icon)*/
 	if (SUCCEEDED(hr) && (flags & (SHGFI_ICON | SHGFI_SYSICONINDEX)))
 	{
+
 	  if (flags & SHGFI_USEFILEATTRIBUTES)
 	  {
 	    char sTemp [MAX_PATH];
@@ -374,10 +388,16 @@ DWORD WINAPI SHGetFileInfoA(LPCSTR path,DWORD dwFileAttributes,
               {
                 strcpy(sTemp, path);
               }
-	      /* FIXME: if sTemp contains a valid filename, get the icon 
-	         from there, index is in dwNr
-	      */
-              psfi->iIcon = 2;
+              IconNotYetLoaded=FALSE;
+              psfi->iIcon = 0;
+              if (SHGFI_LARGEICON)
+                PrivateExtractIconsA(sTemp,dwNr,GetSystemMetrics(SM_CXICON),
+                                     GetSystemMetrics(SM_CYICON),
+                                     &psfi->hIcon,0,1,0);
+              else
+                PrivateExtractIconsA(sTemp,dwNr,GetSystemMetrics(SM_CXSMICON),
+                                     GetSystemMetrics(SM_CYSMICON),
+                                     &psfi->hIcon,0,1,0);
             }
             else                                  /* default icon */
             {
@@ -399,7 +419,7 @@ DWORD WINAPI SHGetFileInfoA(LPCSTR path,DWORD dwFileAttributes,
 	}
 
 	/* icon handle */
-	if (SUCCEEDED(hr) && (flags & SHGFI_ICON))
+	if (SUCCEEDED(hr) && (flags & SHGFI_ICON) && IconNotYetLoaded)
 	  psfi->hIcon = ImageList_GetIcon((flags & SHGFI_LARGEICON) ? ShellBigIconList:ShellSmallIconList, psfi->iIcon, ILD_NORMAL);
 
 	if (flags & (SHGFI_UNKNOWN1 | SHGFI_UNKNOWN2 | SHGFI_UNKNOWN3))
