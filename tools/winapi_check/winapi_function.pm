@@ -22,9 +22,10 @@ use base qw(function);
 use strict;
 
 use config qw($current_dir $wine_dir);
-use modules qw($modules);
 use util qw(&normalize_set);
-use winapi qw($win16api $win32api @winapis);
+
+my $import = 0;
+use vars qw($modules $win16api $win32api @winapis);
 
 ########################################################################
 # constructor
@@ -36,6 +37,15 @@ sub new {
     my $self  = {};
     bless ($self, $class);
 
+    if (!$import) {
+	require modules;
+	import modules qw($modules);
+	
+	require winapi;
+	import winapi qw($win16api $win32api @winapis);
+
+	$import = 1;
+    }
     return $self;
 }
 

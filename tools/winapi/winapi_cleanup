@@ -28,35 +28,12 @@ use config qw($current_dir $wine_dir);
 use output qw($output);
 use winapi_cleanup_options qw($options);
 
+use util qw(edit_file);
+
 if($options->progress) {
     $output->enable_progress;
 } else {
     $output->disable_progress;
-}
-
-########################################################################
-# edit_file
-
-sub edit_file {
-    my $filename = shift;
-    my $function = shift;
-
-    open(IN, "< $filename") || die "Can't open file '$filename'";
-    open(OUT, "> $filename.tmp") || die "Can't open file '$filename.tmp'";
-
-    my $result = &$function(\*IN, \*OUT, @_);
-
-    close(IN);
-    close(OUT);
-
-    if($result) {
-        unlink($filename);
-        rename("$filename.tmp", $filename);
-    } else {
-        unlink("$filename.tmp");
-    }
-
-    return $result;
 }
 
 ########################################################################

@@ -776,6 +776,7 @@ sub parse_c_file {
     my $previous_line = 0;
     my $previous_column = -1;
 
+    my $preprocessor_condition;
     my $if = 0;
     my $if0 = 0;
     my $extern_c = 0;
@@ -902,19 +903,40 @@ sub parse_c_file {
 		    $preprocessor .= $1;
 		}
 
-		if($if0 && $preprocessor =~ /^\#\s*endif/) {
+
+		if (0) {
+		    # Nothing
+		} elsif($preprocessor =~ /^\#\s*if/) {
+		    if($preprocessor =~ /^\#\s*if\s*0/) {
+			$if0++;
+		    } elsif($if0 > 0) {
+			$if++;
+		    } else {
+			if($preprocessor =~ /^\#\s*ifdef\s+WORDS_BIGENDIAN$/) {
+			    $preprocessor_condition = "defined(WORD_BIGENDIAN)";
+			    # $output->write("'$preprocessor_condition':'$declaration'\n")
+			} else {
+			    $preprocessor_condition = "";
+			}
+		    }
+		} elsif($preprocessor =~ /^\#\s*else/) {
+		    if ($preprocessor_condition ne "") {
+			$preprocessor_condition =~ "!$preprocessor_condition";
+			$preprocessor_condition =~ s/^!!/!/;
+			# $output->write("'$preprocessor_condition':'$declaration'\n")
+		    }
+		} elsif($preprocessor =~ /^\#\s*endif/) {
 		    if($if0 > 0) {
 			if($if > 0) {
 			    $if--;
 			} else {
 			    $if0--;
 			}
-		    }
-	        } elsif($preprocessor =~ /^\#\s*if/) {
-		    if($preprocessor =~ /^\#\s*if\s*0/) {
-			$if0++;
-		    } elsif($if0 > 0) {
-			$if++;
+		    } else {
+			if ($preprocessor_condition ne "") {
+			    # $output->write("'$preprocessor_condition':'$declaration'\n");
+			    $preprocessor_condition = "";
+			}
 		    }
 		}
 
@@ -1606,6 +1628,7 @@ sub parse_c_typedef {
 
     my $create_type = \${$self->{CREATE_TYPE}};
     my $found_type = \${$self->{FOUND_TYPE}};
+    my $preprocessor_condition = \${$self->{PREPROCESSOR_CONDITION}};
 
     my $refcurrent = shift;
     my $refline = shift;
@@ -1639,14 +1662,16 @@ sub parse_c_typedef {
 	    {
 		my $field_linkage;
 		my $field_type;
-		my $field_name;		
+		my $field_name;
 
 		if ($self->parse_c_variable(\$match, \$line, \$column, \$field_linkage, \$field_type, \$field_name)) {
 		    $field_type =~ s/\s+/ /g;
-
+		    
 		    push @field_types, $field_type;
 		    push @field_names, $field_name;
 		    # $output->write("$kind:$_name:$field_type:$field_name\n");
+		} elsif ($match) {
+		    $self->_parse_c_error($_, $line, $column, "typedef $kind: '$match'");
 		}
 
 		if ($self->_parse_c(';', \$_, \$line, \$column)) {
@@ -1799,12 +1824,43 @@ sub parse_c_variable {
 
     if($finished) {
 	# Nothing
-    } elsif(s/^((?:enum\s+|struct\s+|union\s+)?\w+\s*(?:\*\s*)*)(\w+)$//s) {
-	$type = $self->_format_c_type($1);
+    } elsif(s/^(enum|struct|union)(?:\s+(\w+))?\s*\{//s) {
+	my $kind = $1;
+	my $_name = $2;
+	$self->_update_c_position($&, \$line, \$column);
+
+	if(defined($_name)) {
+	    $type = "$kind $_name { }";
+	} else {
+	    $type = "$kind { }";
+	}
+
+	$finished = 1;
+    } elsif(s/^((?:enum\s+|struct\s+|union\s+)?\w+(?:\s*\*)*)\s*(\w+)\s*(\[.*?\]$|:\s*(\d+)$|\{)?//s) {
+	$type = $1;
+	$name = $2;
+
+	if (defined($3)) {
+	    my $bits = $4;
+	    local $_ = $3;
+	    if (/^\[/) {
+		$type .= $_;
+	    } elsif (/^:/) {
+		$type .= ":$bits";
+	    } elsif (/^\{/) {
+		# Nothing
+	    }
+	}
+
+	$type = $self->_format_c_type($type);
+
+	$finished = 1;
+    } elsif(s/^((?:enum\s+|struct\s+|union\s+)?\w+(?:\s*\*)*\s*\(\s*(?:\*\s*)*)(\w+)\s*(\)\(.*?\))$//s) {
+	$type = $self->_format_c_type("$1$3");
 	$name = $2;
 
 	$finished = 1;
-    } elsif(s/^((?:enum\s+|struct\s+|union\s+)?\w+\s*(?:\*\s*)*\(\s*(?:\*\s*)*)(\w+)\s*(\)\(.*?\))$//s) {
+
 	$type = $self->_format_c_type("$1$3");
 	$name = $2;
 
@@ -1827,20 +1883,15 @@ sub parse_c_variable {
     } elsif($self->_parse_c('(?:struct\s+)?ICOM_VTABLE\s*\(\w+\)', \$_, \$line, \$column, \$match)) {
 	$type = $match;
 	$finished = 1;
-    } elsif(s/^(?:enum\s+|struct\s+|union\s+)(\w+)?\s*\{.*?\}\s*//s) {
+    } elsif(s/^(enum|struct|union)(?:\s+(\w+))?\s*\{.*?\}\s*//s) {
+	my $kind = $1;
+	my $_name = $2;
 	$self->_update_c_position($&, \$line, \$column);
 
-	if(defined($1)) {
-	    $type = "struct $1 { }";
+	if(defined($_name)) {
+	    $type = "struct $_name { }";
 	} else {
 	    $type = "struct { }";
-	}
-	if(defined($2)) {
-	    my $stars = $2;
-	    $stars =~ s/\s//g;
-	    if($stars) {
-		$type .= " $type";
-	    }
 	}
     } elsif(s/^((?:enum\s+|struct\s+|union\s+)?\w+)\s*(?:\*\s*)*//s) {
 	$type = $&;
@@ -1889,7 +1940,7 @@ sub parse_c_variable {
 
     # $output->write("$type: $name: '$_'\n");
 
-    if(1) {
+    if(1 || $finished) {
 	# Nothing
     } elsif($self->_parse_c('(?:struct\s+)?ICOM_VTABLE\s*\(.*?\)', \$_, \$line, \$column, \$match)) {
 	$type = "<type>";
@@ -1906,27 +1957,26 @@ sub parse_c_variable {
 
 	$type =~ s/\s//g;
 	$type =~ s/^struct/struct /;
-    } elsif(/^(?:enum|struct|union)(?:\s+(\w+))?\s*\{.*?\}\s*((?:\*\s*)*)(\w+)\s*(?:=|$)/s) {
+    } elsif(/^(enum|struct|union)(?:\s+(\w+))?\s*\{.*?\}\s*((?:\*\s*)*)(\w+)\s*(?:=|$)/s) {
 	$self->_update_c_position($&, \$line, \$column);
 
-	if(defined($1)) {
-	    $type = "struct $1 { }";
+	my $kind = $1;
+	my $_name= $2;
+	my $stars = $3;
+	$name = $4;
+
+	if(defined($_name)) {
+	    $type = "struct $_name { }";
 	} else {
 	    $type = "struct { }";
 	}
-	my $stars = $2;
+
 	$stars =~ s/\s//g;
 	if($stars) {
 	    $type .= " $type";
 	}
-
-	$name = $3;
     } else {
 	return 0;
-    }
-
-    if(!$name) {
-        $name = "<name>";
     }
 
     $$refcurrent = $_;

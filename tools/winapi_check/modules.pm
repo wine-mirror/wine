@@ -39,7 +39,13 @@ use config qw(
 use options qw($options);
 use output qw($output);
 
-$modules = 'modules'->new;
+sub import {
+    $Exporter::ExportLevel++;
+    &Exporter::import(@_);
+    $Exporter::ExportLevel--;
+
+    $modules = 'modules'->new;
+}
 
 sub get_spec_file_type {
     my $file = shift;
@@ -85,18 +91,23 @@ sub new {
     my $self  = {};
     bless ($self, $class);
 
-    my $spec_files16 = \@{$self->{SPEC_FILES16}};
-    my $spec_files32 = \@{$self->{SPEC_FILES32}};
+    my $spec_file_found = $self->read_module_file();
+    $self->read_spec_files($spec_file_found);
+
+    return $self;
+}
+
+sub read_module_file {
+    my $self = shift;
+
     my $dir2spec_file = \%{$self->{DIR2SPEC_FILE}};
     my $spec_file2dir = \%{$self->{SPEC_FILE2DIR}};
-    my $spec_file2module = \%{$self->{SPEC_FILE2MODULE}};
-    my $module2spec_file = \%{$self->{MODULE2SPEC_FILE}};
 
     my $module_file = "$winapi_check_dir/modules.dat";
 
     $output->progress("modules.dat");
 
-    my %spec_file_found;
+    my $spec_file_found = {};
     my $allowed_dir;
     my $spec_file;
 
@@ -114,7 +125,7 @@ sub new {
 		$output->write("modules.dat: $spec_file: file ($spec_file) doesn't exist or is no file\n");
 	    }
 
-	    $spec_file_found{$spec_file}++;
+	    $$spec_file_found{$spec_file}++;
 	    $$spec_file2dir{$spec_file} = {};
 	    next;
 	} else {
@@ -128,6 +139,20 @@ sub new {
 	}
     }
     close(IN);
+
+    return $spec_file_found;
+}
+
+sub read_spec_files {
+    my $self = shift;
+    
+    my $spec_file_found = shift;
+
+    my $dir2spec_file = \%{$self->{DIR2SPEC_FILE}};
+    my $spec_files16 = \@{$self->{SPEC_FILES16}};
+    my $spec_files32 = \@{$self->{SPEC_FILES32}};
+    my $spec_file2module = \%{$self->{SPEC_FILE2MODULE}};
+    my $module2spec_file = \%{$self->{MODULE2SPEC_FILE}};
 
     my @spec_files;
     if($wine_dir eq ".") {
@@ -162,14 +187,10 @@ sub new {
     }
 
     foreach my $spec_file (@spec_files) {
-	if(!$spec_file_found{$spec_file} && $spec_file !~ m%tests/[^/]+$%) {
+	if(!$$spec_file_found{$spec_file} && $spec_file !~ m%tests/[^/]+$%) {
 	    $output->write("modules.dat: $spec_file: exists but is not specified\n");
 	}
     }
-
-    $modules = $self;
-
-    return $self;
 }
 
 sub all_modules {

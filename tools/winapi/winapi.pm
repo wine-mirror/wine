@@ -30,29 +30,40 @@ require Exporter;
 use vars qw($win16api $win32api @winapis);
 
 use config qw($current_dir $wine_dir $winapi_dir);
-use modules qw($modules);
 use options qw($options);
 use output qw($output);
 
-my @spec_files16 = $modules->allowed_spec_files16;
-$win16api = 'winapi'->new("win16", \@spec_files16);
+use vars qw($modules);
 
-my @spec_files32 = $modules->allowed_spec_files32;
-$win32api = 'winapi'->new("win32", \@spec_files32);
+sub import {
+    $Exporter::ExportLevel++;
+    &Exporter::import(@_);
+    $Exporter::ExportLevel--;
 
-@winapis = ($win16api, $win32api);
+    require modules;
+    import modules qw($modules);
 
-for my $internal_name ($win32api->all_internal_functions) {
-    my $module16 = $win16api->function_internal_module($internal_name);
-    my $module32 = $win16api->function_internal_module($internal_name);
-    if(defined($module16) &&
-       !$win16api->is_function_stub_in_module($module16, $internal_name) &&
-       !$win32api->is_function_stub_in_module($module32, $internal_name))
-    {
-	$win16api->found_shared_internal_function($internal_name);
-	$win32api->found_shared_internal_function($internal_name);
+    my @spec_files16 = $modules->allowed_spec_files16;
+    $win16api = 'winapi'->new("win16", \@spec_files16);
+    
+    my @spec_files32 = $modules->allowed_spec_files32;
+    $win32api = 'winapi'->new("win32", \@spec_files32);
+    
+    @winapis = ($win16api, $win32api);
+
+    for my $internal_name ($win32api->all_internal_functions) {
+	my $module16 = $win16api->function_internal_module($internal_name);
+	my $module32 = $win16api->function_internal_module($internal_name);
+	if(defined($module16) &&
+	   !$win16api->is_function_stub_in_module($module16, $internal_name) &&
+	   !$win32api->is_function_stub_in_module($module32, $internal_name))
+	{
+	    $win16api->found_shared_internal_function($internal_name);
+	    $win32api->found_shared_internal_function($internal_name);
+	}
     }
 }
+
 
 sub new {
     my $proto = shift;

@@ -14,11 +14,13 @@ install::
 	$(INSTALL_SCRIPT) $(SRCDIR)/trampoline $(bindir)/winapi_cleanup
 	$(INSTALL_SCRIPT) $(SRCDIR)/trampoline $(bindir)/winapi_extract
 	$(INSTALL_SCRIPT) $(SRCDIR)/trampoline $(bindir)/winapi_fixup
+	$(INSTALL_SCRIPT) $(SRCDIR)/trampoline $(bindir)/winapi_test
 
 uninstall::
 	$(RM) $(bindir)/make_filter
 	$(RM) $(bindir)/winapi_check
 	$(RM) $(bindir)/winapi_extract
 	$(RM) $(bindir)/winapi_fixup
+	$(RM) $(bindir)/winapi_test
 
 ### Dependencies:

@@ -41,9 +41,14 @@ use c_parser;
 use function;
 use type;
 
-use winapi qw($win16api $win32api @winapis);
 use winapi_c_parser;
 use winapi_function;
+
+use vars qw($win16api $win32api @winapis);
+if ($options->spec_files || $options->winetest) {
+    require winapi;
+    import winapi qw($win16api $win32api @winapis);
+}
 
 my %module2entries;
 my %module2spec_file;
@@ -257,7 +262,9 @@ foreach my $file (@h_files, @c_files) {
 	my $name = $function->name;
 	$functions{$name} = $function;
 
-	&$update_output();
+	if ($function->statements) {
+	    &$update_output();
+	}
 
 	my $old_function;
 	if($options->stub_statistics) {
@@ -295,10 +302,21 @@ foreach my $file (@h_files, @c_files) {
 	    statements_stub($old_function);
 	}
 
-	$function = undef;
-	&$update_output();
+	if ($function->statements) {
+	    $function = undef;
+	    &$update_output();
+	} else {
+	    $function = undef;
+	}
     };
     $parser->set_found_function_callback($found_function);
+
+    my $found_line = sub {
+	$line = shift;
+
+	&$update_output;
+    };
+    $parser->set_found_line_callback($found_line);
 
     my $found_type = sub {
 	my $type = shift;

@@ -59,7 +59,14 @@ sub name {
 
     if(defined($_)) { $$name = $_; }
 
-    return $$name;
+    if($$name) {
+	return $$name;
+    } else {
+	my $kind = \${$self->{KIND}};
+	my $_name = \${$self->{_NAME}};
+
+	return "$$kind $$_name";
+    }
 }
 
 sub fields {
@@ -77,6 +84,16 @@ sub fields {
     return @fields;
 }
 
+sub field_names {
+    my $self = shift;
+    my $field_names = \${$self->{FIELD_NAMES}};
+
+    local $_ = shift;
+
+    if(defined($_)) { $$field_names = $_; }
+
+    return $$field_names;
+}
 
 sub field_types {
     my $self = shift;
@@ -87,17 +104,6 @@ sub field_types {
     if(defined($_)) { $$field_types = $_; }
 
     return $$field_types;
-}
-
-sub field_names {
-    my $self = shift;
-    my $field_names = \${$self->{FIELD_NAMES}};
-
-    local $_ = shift;
-
-    if(defined($_)) { $$field_names = $_; }
-
-    return $$field_names;
 }
 
 1;

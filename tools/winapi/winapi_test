@@ -1,0 +1,304 @@
+#!/usr/bin/perl -w
+
+# Copyright 2002 Patrik Stridvall
+#
+# This library is free software; you can redistribute it and/or
+# modify it under the terms of the GNU Lesser General Public
+# License as published by the Free Software Foundation; either
+# version 2.1 of the License, or (at your option) any later version.
+#
+# This library is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# Lesser General Public License for more details.
+#
+# You should have received a copy of the GNU Lesser General Public
+# License along with this library; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+#
+
+use strict;
+
+BEGIN {
+    $0 =~ m%^(.*?/?tools)/winapi/winapi_test$%;
+    require "$1/winapi/setup.pm";
+}
+
+use config qw(
+    &file_type &files_skip &files_filter
+    $current_dir $wine_dir $winapi_dir $winapi_check_dir
+);
+use output qw($output);
+use winapi_test_options qw($options);
+
+if($options->progress) {
+    $output->enable_progress;
+} else {
+    $output->disable_progress;
+}
+
+use c_parser;
+use tests qw($tests);
+use type;
+use util qw(replace_file);
+
+my @tests = ();
+if ($options->pack) {
+    push @tests, "pack";
+}
+
+my @files = ();
+{
+    my %files;    
+
+    my %test_dirs;
+    foreach my $test (@tests) {
+	my @test_dirs = $tests->get_test_dirs($test);
+	foreach my $test_dir (@test_dirs) {
+	    my @includes = $tests->get_section($test_dir, $test, "include");
+	    foreach my $include (@includes) {
+		$files{"include/$include"}++;
+	    }
+	}
+    }
+    @files = sort(keys(%files));
+}
+
+my %file2types;
+
+my $progress_output;
+my $progress_current = 0;
+my $progress_max = scalar(@files);
+
+foreach my $file (@files) {
+    $progress_current++;
+
+    {
+	open(IN, "< $wine_dir/$file");
+	local $/ = undef;
+	$_ = <IN>;
+	close(IN);
+    }
+
+    my $max_line = 0;
+    {
+      local $_ = $_;
+      while(s/^.*?\n//) { $max_line++; }
+      if($_) { $max_line++; }
+    }
+
+    my $parser = new c_parser($file);
+
+    my $line;
+    my $type;
+
+    my $update_output = sub {
+	my $progress = "";
+	my $prefix = "";
+
+	$progress .= "$file (file $progress_current of $progress_max)";
+	$prefix .= "$file: ";
+
+	if(defined($line)) {
+	    $progress .= ": line $line of $max_line";
+	}
+
+	$output->progress($progress);
+	$output->prefix($prefix);
+    };
+
+    &$update_output();
+
+    my $found_line = sub {
+	$line = shift;
+
+	&$update_output;
+    };
+    $parser->set_found_line_callback($found_line);
+
+    my $found_type = sub {
+	$type = shift;
+
+	my $name = $type->name;
+	$file2types{$file}{$name} = $type;
+
+	&$update_output();
+
+	return 1;
+    };
+    $parser->set_found_type_callback($found_type);
+
+    {
+	my $line = 1;
+	my $column = 0;
+	if(!$parser->parse_c_file(\$_, \$line, \$column)) {
+	    $output->write("can't parse file\n");
+	}
+    }
+
+    $output->prefix("");
+}
+
+sub output_header {
+    local *OUT = shift; 
+
+    my $test_dir = shift;
+    my $test = shift;
+
+    print OUT "/* File generated automatically from $wine_dir/tools/winapi/test.dat; do not edit! */\n";
+    print OUT "/* This file can be copied, modified and distributed without restriction. */\n";
+    print OUT "\n";
+
+    print OUT "/*\n";
+    my @description = $tests->get_section($test_dir, $test, "description");
+    foreach my $description (@description) {
+	print OUT " * $description\n";
+    }
+    print OUT " */\n";
+
+    print OUT "\n";
+    print OUT "#include <stdio.h>\n";
+    print OUT "\n";
+    print OUT "#include \"wine/test.h\"\n";
+    my @includes = $tests->get_section($test_dir, $test, "include");
+    foreach my $include (@includes) {
+	print OUT "#include \"$include\"\n";
+    }
+    print OUT "\n";
+
+    print OUT "START_TEST(generated_$test)\n";
+    print OUT "{\n";
+}
+
+sub output_footer {
+    local *OUT = shift; 
+
+    my $test_dir = shift;
+    my $test = shift;
+
+    print OUT "}\n";
+}
+
+sub field_size {
+    my $name = shift;
+    my $field_type = shift;
+    my $field_name = shift;
+
+    local $_ = $field_type;
+
+    my $count;
+    my $bits;
+    if (s/^(.*?)\s*(?:\[\s*(.*?)\s*\]|:(\d+))?$/$1/) {
+	$count = $2;
+	$bits = $3;
+    }
+
+    my $size;
+    if(/^(?:(?:signed\s+|unsigned\s+)?char|CHAR|BYTE|UCHAR)$/) {
+	$size = 1;
+    } elsif (/^(?:(?:signed\s+|unsigned\s+)?short|UWORD|WCHAR|WORD)$/) {
+	$size = 2;
+    } elsif (/^(?:FILETIME|LARGE_INTEGER|LONGLONG|ULONGLONG)$/) {
+	$size = 8;
+    } elsif (/^(?:SYSTEMTIME)$/) {
+	$size = 16;
+    } elsif (/^(?:CRITICAL_SECTION)$/) {
+	$size = 24;
+    } elsif (/^(?:DCB)$/) {
+	$size = 28;
+    } elsif (/^(?:EXCEPTION_RECORD)$/) {
+	$size = 80;
+    } elsif (/^(?:struct|union)$/) {
+	$output->write("$name:$field_name: can't parse type '$field_type'\n");
+	$size = 4;
+    } else {
+	$size = 4;
+    }
+
+    if (defined($count)) {
+	if ($count =~ /^\d+$/) {
+	    return $size * int($count);
+	} elsif ($count =~ /^ANYSIZE_ARRAY$/) {
+	    return $size;
+	} else {
+	    $output->write("$name:$field_name: can't parse type '$field_type'\n");
+	    return $size; # Not correct.
+	}
+    } elsif (defined($bits)) {
+	return -$bits;
+    } else {
+	return $size;
+    }
+}
+
+########################################################################
+# output_file
+
+sub output_file {
+    local *OUT = shift;
+
+    my $test_dir = shift;
+    my $test = shift;
+
+    output_header(\*OUT, $test_dir, $test);
+    
+    my @includes = $tests->get_section($test_dir, $test, "include");
+    my @type_names = $tests->get_section($test_dir, $test, "struct");
+    
+    foreach my $include (@includes) {
+	my $types = $file2types{"include/$include"};
+	
+	foreach my $type_name (@type_names) {
+	    my $pack = 4; # FIXME: Not always correct
+	    
+	    my $type = $$types{$type_name};
+	    
+	    my $offset = 0;
+	    my $offset_bits = 0;
+	    
+	    print OUT "    /* $type_name */\n";
+	    foreach my $field ($type->fields) {
+		(my $field_type, my $field_name) = @$field;
+		
+		my $field_size = field_size($type_name, $field_type, $field_name);
+		if ($field_size >= 0) {
+		    if ($offset_bits) {
+			$offset += $pack * int(($offset_bits + 8 * $pack - 1 ) / (8 * $pack));
+			$offset_bits = 0;
+		    }
+		    
+		    my $field_offset = $offset;
+		    if ($field_name ne "") {
+			print OUT "    ok(FIELD_OFFSET($type_name, $field_name) == $field_offset,\n";
+			print OUT "       \"FIELD_OFFSET($type_name, $field_name) == %ld (expected $field_offset)\",\n";
+			print OUT "       FIELD_OFFSET($type_name, $field_name)); /* $field_type */\n";
+		    }
+		    
+		    $offset += $field_size;
+		} else {
+		    $offset_bits += -$field_size;
+		}
+	    }
+	    
+	    my $type_size = $offset;
+	    if ($type_size % $pack != 0) {
+		$type_size = (int($type_size / $pack) + 1) * $pack;
+	    }
+	    
+	    print OUT "    ok(sizeof($type_name) == $type_size, ";
+	    print OUT "\"sizeof($type_name) == %d (expected $type_size)\", ";
+	    print OUT "sizeof($type_name));\n";
+	    print OUT "\n";
+	}
+    }
+
+    output_footer(\*OUT, $test_dir, $test);
+}
+
+foreach my $test (@tests) {
+    my @test_dirs = $tests->get_test_dirs($test);
+    foreach my $test_dir (@test_dirs) {
+	my $file = "$wine_dir/$test_dir/generated_$test.c";
+	replace_file($file, \&output_file, $test_dir, $test);
+    }
+}
