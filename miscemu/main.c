@@ -158,13 +158,14 @@ int main( int argc, char *argv[] )
     if ( !(pModule = NE_GetPtr( GetModuleHandle16( "KERNEL" ) )) ) return 1;
     if ( !TASK_Create( THREAD_Current(), pModule, 0, 0, FALSE ) ) return 1;
 
-    /* Initialize CALL32 routines */
-    /* This needs to be done just before switching stacks */
-    IF1632_CallLargeStack = (int (*)(int (*func)(), void *arg))CALL32_Init();
-
     /* Switch to initial task */
-    CURRENT_STACK16->frame32->retaddr = (DWORD)MAIN_EmulatorRun;
-    TASK_StartTask( PROCESS_Current()->task );
-    MSG( "main: Should never happen: returned from TASK_StartTask()\n" );
+    PostEvent16( PROCESS_Current()->task );
+    TASK_Reschedule();
+
+    /* Switch stacks and jump to MAIN_EmulatorRun */
+    CALL32_Init( &IF1632_CallLargeStack, MAIN_EmulatorRun,
+                 THREAD_Current()->teb.stack_top );
+
+    MSG( "main: Should never happen: returned from CALL32_Init()\n" );
     return 0;
 }

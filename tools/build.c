@@ -2488,11 +2488,20 @@ static void BuildCallTo32CBClient( FILE *outfile, BOOL isEx )
  *
  * The pointer to the function can be retrieved by calling CALL32_Init,
  * which also takes care of saving the current 32-bit stack pointer.
+ * Furthermore, CALL32_Init switches to a new stack and jumps to the
+ * specified target address.
  *
  * NOTE: The CALL32_LargeStack routine may be recursively entered by the 
  *       same thread, but not concurrently entered by several threads.
  *
- * Stack layout:
+ * Stack layout of CALL32_Init:
+ *
+ * (esp+12)  new stack address
+ * (esp+8)   target address
+ * (esp+4)   pointer to variable to receive CALL32_LargeStack address
+ * (esp)     ret addr
+ *
+ * Stack layout of CALL32_LargeStack:
  *   ...     ...
  * (ebp+12)  arg
  * (ebp+8)   func
@@ -2510,9 +2519,13 @@ static void BuildCallTo32LargeStack( FILE *outfile )
     fprintf( outfile, "\t.globl " PREFIX "CALL32_Init\n" );
     fprintf( outfile, "\t.type " PREFIX "CALL32_Init,@function\n" );
     fprintf( outfile, PREFIX "CALL32_Init:\n" );
-    fprintf( outfile, "\tleal -256(%%esp),%%eax\n" );
-    fprintf( outfile, "\tmovl %%eax,CALL32_Original32_esp\n" );
-    fprintf( outfile, "\tmovl $CALL32_LargeStack,%%eax\n" );
+    fprintf( outfile, "\tmovl %%esp,CALL32_Original32_esp\n" );
+    fprintf( outfile, "\tpopl %%eax\n" );
+    fprintf( outfile, "\tpopl %%eax\n" );
+    fprintf( outfile, "\tmovl $CALL32_LargeStack,(%%eax)\n" );
+    fprintf( outfile, "\tpopl %%eax\n" );
+    fprintf( outfile, "\tpopl %%esp\n" );
+    fprintf( outfile, "\tpushl %%eax\n" );
     fprintf( outfile, "\tret\n" );
 
     /* Function header */
