@@ -226,6 +226,16 @@ struct MSVCRT__complex {
   double y;      /* Imaginary part */
 };
 
+typedef struct MSVCRT__div_t {
+    int quot;  /* quotient */
+    int rem;   /* remainder */
+} MSVCRT_div_t;
+
+typedef struct MSVCRT__ldiv_t {
+    long quot;  /* quotient */
+    long rem;   /* remainder */
+} MSVCRT_ldiv_t;
+
 struct MSVCRT__heapinfo {
   int*           _pentry;
   MSVCRT_size_t  _size;
