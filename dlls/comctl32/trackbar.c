@@ -407,6 +407,8 @@ TRACKBAR_DrawOneTic (TRACKBAR_INFO *infoPtr, HDC hdc, LONG ticPos, int flags)
     }
 
     range = infoPtr->lRangeMax - infoPtr->lRangeMin;
+    if (range == 0)
+      range = 1; /* to avoid division by zero */
 
     if (flags & TIC_SELECTIONMARK) {
   	indent = (flags & TIC_SELECTIONMARKMIN) ? -1 : 1;
