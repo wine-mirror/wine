@@ -377,8 +377,10 @@ DWORD deformat_string(MSIPACKAGE *package, LPCWSTR ptr, WCHAR** data )
             size++;
             *data = HeapAlloc(GetProcessHeap(),0,size*sizeof(WCHAR));
             MSI_FormatRecordW(package,rec,*data,&size);
+            msiobj_release( &rec->hdr );
             return sizeof(WCHAR)*size;
         }
+        msiobj_release( &rec->hdr );
     }
 
     *data = NULL;
@@ -1053,7 +1055,7 @@ static UINT ACTION_ProcessUISequence(MSIPACKAGE *package)
                 break;
             }
 
-            rc = ACTION_PerformAction(package,buffer);
+            rc = ACTION_PerformUIAction(package,buffer);
 
             if (rc == ERROR_FUNCTION_NOT_CALLED)
                 rc = ERROR_SUCCESS;
@@ -1079,6 +1081,58 @@ end:
 /********************************************************
  * ACTION helper functions and functions that perform the actions
  *******************************************************/
+BOOL ACTION_HandleStandardAction(MSIPACKAGE *package, LPCWSTR action, UINT* rc)
+{
+    BOOL ret = FALSE; 
+
+    int i;
+    i = 0;
+    while (StandardActions[i].action != NULL)
+    {
+        if (strcmpW(StandardActions[i].action, action)==0)
+        {
+            ui_actioninfo(package, action, TRUE, 0);
+            ui_actionstart(package, action);
+            *rc = StandardActions[i].handler(package);
+            ui_actioninfo(package, action, FALSE, *rc);
+            ret = TRUE;
+            break;
+        }
+        i++;
+    }
+    return ret;
+}
+
+BOOL ACTION_HandleDialogBox(MSIPACKAGE *package, LPCWSTR dialog, UINT* rc)
+{
+    BOOL ret = FALSE;
+
+    /*
+     * for the UI when we get that working
+     *
+    if (ACTION_DialogBox(package,dialog) == ERROR_SUCCESS)
+    {
+        *rc = package->CurrentInstallState;
+        ret = TRUE;
+    }
+    */
+    return ret;
+}
+
+BOOL ACTION_HandleCustomAction(MSIPACKAGE* package, LPCWSTR action, UINT* rc)
+{
+    BOOL ret=FALSE;
+    UINT arc;
+
+    arc = ACTION_CustomAction(package,action,FALSE);
+
+    if (arc != ERROR_CALL_NOT_IMPLEMENTED)
+    {
+        *rc = arc;
+        ret = TRUE;
+    }
+    return ret;
+}
 
 /* 
  * A lot of actions are really important even if they don't do anything
@@ -1091,36 +1145,44 @@ end:
 UINT ACTION_PerformAction(MSIPACKAGE *package, const WCHAR *action)
 {
     UINT rc = ERROR_SUCCESS; 
-    BOOL handled = FALSE;
-    int i;
+    BOOL handled;
 
     TRACE("Performing action (%s)\n",debugstr_w(action));
 
-    i = 0;
-    while (StandardActions[i].action != NULL)
-    {
-        if (strcmpW(StandardActions[i].action, action)==0)
-        {
-            ui_actioninfo(package, action, TRUE, 0);
-            ui_actionstart(package, action);
-            rc = StandardActions[i].handler(package);
-            ui_actioninfo(package, action, FALSE, rc);
-            handled =TRUE;
-            break;
-        }
-        i++;
-    }
+    handled = ACTION_HandleStandardAction(package, action, &rc);
 
-    /* Try for Custom Actions */
+    if (!handled)
+        handled = ACTION_HandleCustomAction(package, action, &rc);
+
     if (!handled)
     {
-        rc = ACTION_CustomAction(package,action,FALSE);
+        FIXME("UNHANDLED MSI ACTION %s\n",debugstr_w(action));
+        rc = ERROR_FUNCTION_NOT_CALLED;
+    }
 
-        if (rc != ERROR_SUCCESS)
-        {
-            FIXME("UNHANDLED MSI ACTION %s\n",debugstr_w(action));
-            rc = ERROR_FUNCTION_NOT_CALLED;
-        }
+    package->CurrentInstallState = rc;
+    return rc;
+}
+
+UINT ACTION_PerformUIAction(MSIPACKAGE *package, const WCHAR *action)
+{
+    UINT rc = ERROR_SUCCESS;
+    BOOL handled = FALSE;
+
+    TRACE("Performing action (%s)\n",debugstr_w(action));
+
+    handled = ACTION_HandleStandardAction(package, action, &rc);
+
+    if (!handled)
+        handled = ACTION_HandleCustomAction(package, action, &rc);
+
+    if (!handled)
+        handled = ACTION_HandleDialogBox(package, action, &rc);
+
+    if (!handled)
+    {
+        FIXME("UNHANDLED MSI ACTION %s\n",debugstr_w(action));
+        rc = ERROR_FUNCTION_NOT_CALLED;
     }
 
     package->CurrentInstallState = rc;

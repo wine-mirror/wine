@@ -98,6 +98,7 @@ typedef struct tagMSIFILE
 
 
 UINT ACTION_PerformAction(MSIPACKAGE *package, const WCHAR *action);
+UINT ACTION_PerformUIAction(MSIPACKAGE *package, const WCHAR *action);
 void ACTION_FinishCustomActions( MSIPACKAGE* package);
 UINT ACTION_CustomAction(MSIPACKAGE *package,const WCHAR *action, BOOL execute);
 void ACTION_UpdateComponentStates(MSIPACKAGE *package, LPCWSTR szFeature);

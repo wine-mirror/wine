@@ -103,7 +103,7 @@ UINT ACTION_CustomAction(MSIPACKAGE *package,LPCWSTR action, BOOL execute)
     {
         MSI_ViewClose(view);
         msiobj_release(&view->hdr);
-        return rc;
+        return ERROR_CALL_NOT_IMPLEMENTED;
     }
 
     type = MSI_RecordGetInteger(row,2);
