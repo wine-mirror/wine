@@ -6,11 +6,21 @@
  */
 
 #define WINVER 0x0501
+#define _WIN32_WINNT 0x0501
+
 #define WINE_NOWINSOCK
 
 #include "windows.h"
 
 #include "wine/test.h"
+
+/***********************************************************************
+ * Compability macros
+ */
+
+#define DWORD_PTR UINT_PTR
+#define LONG_PTR INT_PTR
+#define ULONG_PTR UINT_PTR
 
 /***********************************************************************
  * Windows API extension
@@ -66,7 +76,6 @@ void test_pack(void)
     /* ACCEL (pack 4) */
     TEST_TYPE(ACCEL, 6, 2);
     TEST_FIELD(ACCEL, BYTE, fVirt, 0, 1, 1);
-    TEST_FIELD(ACCEL, BYTE, pad0, 1, 1, 1);
     TEST_FIELD(ACCEL, WORD, key, 2, 2, 2);
     TEST_FIELD(ACCEL, WORD, cmd, 4, 2, 2);
 
@@ -443,12 +452,26 @@ void test_pack(void)
 
     /* MONITORINFOEXA (pack 4) */
     TEST_TYPE(MONITORINFOEXA, 72, 4);
-    TEST_FIELD(MONITORINFOEXA, MONITORINFO, dummy, 0, 40, 4);
+#ifdef NONAMELESSSTRUCT
+    TEST_FIELD(MONITORINFOEXA, MONITORINFO, DUMMYSTRUCTNAME, 0, 40, 4);
+#else
+    TEST_FIELD(MONITORINFOEXA, DWORD, cbSize, 0, 4, 4);
+    TEST_FIELD(MONITORINFOEXA, RECT, rcMonitor, 4, 16, 4);
+    TEST_FIELD(MONITORINFOEXA, RECT, rcWork, 20, 16, 4);
+    TEST_FIELD(MONITORINFOEXA, DWORD, dwFlags, 36, 4, 4);
+#endif
     TEST_FIELD(MONITORINFOEXA, CHAR[CCHDEVICENAME], szDevice, 40, 32, 1);
 
     /* MONITORINFOEXW (pack 4) */
     TEST_TYPE(MONITORINFOEXW, 104, 4);
-    TEST_FIELD(MONITORINFOEXW, MONITORINFO, dummy, 0, 40, 4);
+#ifdef NONAMELESSSTRUCT
+    TEST_FIELD(MONITORINFOEXW, MONITORINFO, DUMMYSTRUCTNAME, 0, 40, 4);
+#else
+    TEST_FIELD(MONITORINFOEXW, DWORD, cbSize, 0, 4, 4);
+    TEST_FIELD(MONITORINFOEXW, RECT, rcMonitor, 4, 16, 4);
+    TEST_FIELD(MONITORINFOEXW, RECT, rcWork, 20, 16, 4);
+    TEST_FIELD(MONITORINFOEXW, DWORD, dwFlags, 36, 4, 4);
+#endif
     TEST_FIELD(MONITORINFOEXW, WCHAR[CCHDEVICENAME], szDevice, 40, 64, 2);
 
     /* MOUSEHOOKSTRUCT (pack 4) */
@@ -675,14 +698,12 @@ void test_pack(void)
     TEST_FIELD(TRACKMOUSEEVENT, HWND, hwndTrack, 8, 4, 4);
     TEST_FIELD(TRACKMOUSEEVENT, DWORD, dwHoverTime, 12, 4, 4);
 
-    /* WINDOWINFO (pack 4) */
-    TEST_TYPE(WINDOWINFO, 60, 4);
+    /* WINDOWINFO */
     TEST_FIELD(WINDOWINFO, DWORD, cbSize, 0, 4, 4);
     TEST_FIELD(WINDOWINFO, RECT, rcWindow, 4, 16, 4);
     TEST_FIELD(WINDOWINFO, RECT, rcClient, 20, 16, 4);
     TEST_FIELD(WINDOWINFO, DWORD, dwStyle, 36, 4, 4);
     TEST_FIELD(WINDOWINFO, DWORD, dwExStyle, 40, 4, 4);
-    TEST_FIELD(WINDOWINFO, DWORD, dwWindowStatus, 44, 4, 4);
     TEST_FIELD(WINDOWINFO, UINT, cxWindowBorders, 48, 4, 4);
     TEST_FIELD(WINDOWINFO, UINT, cyWindowBorders, 52, 4, 4);
     TEST_FIELD(WINDOWINFO, ATOM, atomWindowType, 56, 2, 2);

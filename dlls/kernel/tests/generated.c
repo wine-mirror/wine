@@ -6,11 +6,21 @@
  */
 
 #define WINVER 0x0501
+#define _WIN32_WINNT 0x0501
+
 #define WINE_NOWINSOCK
 
 #include "windows.h"
 
 #include "wine/test.h"
+
+/***********************************************************************
+ * Compability macros
+ */
+
+#define DWORD_PTR UINT_PTR
+#define LONG_PTR INT_PTR
+#define ULONG_PTR UINT_PTR
 
 /***********************************************************************
  * Windows API extension
@@ -222,8 +232,7 @@ void test_pack(void)
     TEST_FIELD(OSVERSIONINFOA, DWORD, dwPlatformId, 16, 4, 4);
     TEST_FIELD(OSVERSIONINFOA, CHAR[128], szCSDVersion, 20, 128, 1);
 
-    /* OSVERSIONINFOEXA (pack 4) */
-    TEST_TYPE(OSVERSIONINFOEXA, 156, 4);
+    /* OSVERSIONINFOEXA */
     TEST_FIELD(OSVERSIONINFOEXA, DWORD, dwOSVersionInfoSize, 0, 4, 4);
     TEST_FIELD(OSVERSIONINFOEXA, DWORD, dwMajorVersion, 4, 4, 4);
     TEST_FIELD(OSVERSIONINFOEXA, DWORD, dwMinorVersion, 8, 4, 4);
@@ -232,12 +241,8 @@ void test_pack(void)
     TEST_FIELD(OSVERSIONINFOEXA, CHAR[128], szCSDVersion, 20, 128, 1);
     TEST_FIELD(OSVERSIONINFOEXA, WORD, wServicePackMajor, 148, 2, 2);
     TEST_FIELD(OSVERSIONINFOEXA, WORD, wServicePackMinor, 150, 2, 2);
-    TEST_FIELD(OSVERSIONINFOEXA, WORD, wSuiteMask, 152, 2, 2);
-    TEST_FIELD(OSVERSIONINFOEXA, BYTE, wProductType, 154, 1, 1);
-    TEST_FIELD(OSVERSIONINFOEXA, BYTE, wReserved, 155, 1, 1);
 
-    /* OSVERSIONINFOEXW (pack 4) */
-    TEST_TYPE(OSVERSIONINFOEXW, 284, 4);
+    /* OSVERSIONINFOEXW */
     TEST_FIELD(OSVERSIONINFOEXW, DWORD, dwOSVersionInfoSize, 0, 4, 4);
     TEST_FIELD(OSVERSIONINFOEXW, DWORD, dwMajorVersion, 4, 4, 4);
     TEST_FIELD(OSVERSIONINFOEXW, DWORD, dwMinorVersion, 8, 4, 4);
@@ -246,9 +251,6 @@ void test_pack(void)
     TEST_FIELD(OSVERSIONINFOEXW, WCHAR[128], szCSDVersion, 20, 256, 2);
     TEST_FIELD(OSVERSIONINFOEXW, WORD, wServicePackMajor, 276, 2, 2);
     TEST_FIELD(OSVERSIONINFOEXW, WORD, wServicePackMinor, 278, 2, 2);
-    TEST_FIELD(OSVERSIONINFOEXW, WORD, wSuiteMask, 280, 2, 2);
-    TEST_FIELD(OSVERSIONINFOEXW, BYTE, wProductType, 282, 1, 1);
-    TEST_FIELD(OSVERSIONINFOEXW, BYTE, wReserved, 283, 1, 1);
 
     /* OSVERSIONINFOW (pack 4) */
     TEST_TYPE(OSVERSIONINFOW, 276, 4);

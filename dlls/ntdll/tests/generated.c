@@ -6,11 +6,21 @@
  */
 
 #define WINVER 0x0501
+#define _WIN32_WINNT 0x0501
+
 #define WINE_NOWINSOCK
 
 #include "windows.h"
 
 #include "wine/test.h"
+
+/***********************************************************************
+ * Compability macros
+ */
+
+#define DWORD_PTR UINT_PTR
+#define LONG_PTR INT_PTR
+#define ULONG_PTR UINT_PTR
 
 /***********************************************************************
  * Windows API extension
@@ -344,12 +354,10 @@ void test_pack(void)
     TEST_FIELD(IMAGE_OS2_HEADER, WORD, ne_swaparea, 60, 2, 2);
     TEST_FIELD(IMAGE_OS2_HEADER, WORD, ne_expver, 62, 2, 2);
 
-    /* IMAGE_RESOURCE_DATA_ENTRY (pack 4) */
-    TEST_TYPE(IMAGE_RESOURCE_DATA_ENTRY, 16, 4);
+    /* IMAGE_RESOURCE_DATA_ENTRY */
     TEST_FIELD(IMAGE_RESOURCE_DATA_ENTRY, DWORD, OffsetToData, 0, 4, 4);
     TEST_FIELD(IMAGE_RESOURCE_DATA_ENTRY, DWORD, Size, 4, 4, 4);
     TEST_FIELD(IMAGE_RESOURCE_DATA_ENTRY, DWORD, CodePage, 8, 4, 4);
-    TEST_FIELD(IMAGE_RESOURCE_DATA_ENTRY, DWORD, ResourceHandle, 12, 4, 4);
 
     /* IMAGE_RESOURCE_DIRECTORY (pack 4) */
     TEST_TYPE(IMAGE_RESOURCE_DIRECTORY, 16, 4);
