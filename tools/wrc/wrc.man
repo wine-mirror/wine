@@ -20,16 +20,16 @@ specified with \fI-o\fR, then \fBwrc\fR will write the output to
 no inputfile was given.
 .SH OPTIONS
 .TP
-.I \fB\-B\fR \fIx\fR
-Win32 only; set output byte\-ordering, where \fIx\fR is one of n[ative],
+.I \fB\-\-debug\fR=\fInn\fR
+Set debug level to \fInn\fR. The value is a bitmask consisting of
+1=verbose, 2=dump internals, 4=resource parser trace, 8=preprocessor
+messages, 16=preprocessor scanner and 32=preprocessor parser trace.
+.TP
+.I \fB\-\-endianess\fR=\fIe\fR
+Win32 only; set output byte\-ordering, where \fIe\fR is one of n[ative],
 l[ittle] or b[ig].  Only resources in source-form can be reorderd. Native
 ordering depends on the system on which \fBwrc\fR was built. You can see
 the native ordering by typing \fIwrc \-h\fR.
-.TP
-.I \fB\-d\fR \fIn\fR
-Set debug level to \fIn\fR. The value is a bitmask consisting of
-1=verbose, 2=dump internals, 4=resource parser trace, 8=preprocessor
-messages, 16=preprocessor scanner and 32=preprocessor parser trace.
 .TP
 .I \fB\-D\fR, \fB\-\-define\fR=\fIid[=val]\fR
 Define preprocessor identifier \fIid\fR to (optionally) value \fIval\fR.
@@ -43,7 +43,7 @@ outputfile was selected. The output is compatible with what gcc would
 generate.
 .TP
 .I \fB\-F\fR, \fB\-\-target\fR
-Ignored for compatibility with windres.
+Ignored for compatibility with \fIwindres\fR.
 .TP
 .I \fB\-h\fR, \fB\-\-help\fR
 Prints a summary message and exits.
@@ -72,23 +72,12 @@ input to 'rc16' disables the recognition of win32 keywords.
 Set default language to \fIlan\fR. Default is the neutral language 0
 (i.e. "LANGUAGE 0, 0").
 .TP
-.I \fB\-m\fR
-Do not remap numerical resource type-IDs onto standard resources. This will
-cause all numerical resource type\-IDs to be treated as user\-type resources
-and will not be checked nor byte\-reversed. Without this option, resources
-with, for example, type\-ID 2 are parsed as bitmaps and other type\-IDs will
-map onto their respective standard type.
-Use this option with caution because it can create problems when compiling for,
-for example, big\-endian platforms. The \fI\-m\fR option is usefull for
-source\-files that contain overlapping type\-IDs, or when the format of the
-resource is not 100% compliant.
-.TP
 .I \fB\-\-nostdinc\fR
 Do not search the standard include path, look for include files only
 in the directories explicitly specified with the \fI\-I\fR option.
 .TP
 .I \fB\-\-no\-use\-temp\-file\fR
-Ignored for compatibility with windres.
+Ignored for compatibility with \fIwindres\fR.
 .TP
 .I \fB\-o\fR, \fB\-\-output\fR=\fIfile\fR
 Write output to \fIfile\fR. Default is \fBinputfile.res\fR
@@ -99,23 +88,34 @@ from standard input.
 Sets the output format. The supported formats are 'res' and 'res16'.
 If this option is not specified, format defaults to 'res'.
 .TP
+.I \fB\-\-pedantic\fR
+Enable pedantic warnings. Notably redefinition of #define statements can
+be discovered with this option.
+.TP
+.I \fB\-r\fR
+Ignored for compatibility with \fIrc\fR.
+.TP
 .I \fB\-\-preprocessor\fR=\fIprogram\fR
 This option may be used to specify the preprocessor to use, including any 
 leading arguments. If not specified, \fBwrc\fR uses its builtin processor.
 To disable preprocessing, use \fB--preprocessor=cat\fR.
 .TP
+.I \fB\-U\fR, \fB\-\-undefine\fR=\fIid\fR
+Undefine preprocessor identifier \fIid\fR.  Please note that only macros 
+defined up to this point are undefined by this command. However, these 
+include the special macros defined automatically by \fIwrc\fR.
+See also
+.B PREPROCESSOR
+below.
+.TP
 .I \fB\-\-use\-temp\-file\fR
-Ignored for compatibility with windres.
+Ignored for compatibility with \fIwindres\fR.
 .TP
 .I \fB\-v\fR
 Turns on verbose mode (equivalent to -d 1).
 .TP
 .I \fB\-\-version\fR
 Print version end exit.
-.TP
-.I \fB\-W\fR
-Enable pedantic warnings. Notably redefinition of #define statements can
-be discovered with this option.
 .SH PREPROCESSOR
 The preprocessor is ANSI\-C compatible with some of the extensions of 
 the gcc preprocessor. 

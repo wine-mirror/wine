@@ -56,37 +56,39 @@
 
 static char usage[] =
 	"Usage: wrc [options...] [infile[.rc|.res]] [outfile]\n"
-	"   -B x        Set output byte-order x={n[ative], l[ittle], b[ig]}\n"
-	"               (win32 only; default is " ENDIAN "-endian)\n"
-	"   -d n        Set debug level to 'n'\n"
 	"   -D id[=val] Define preprocessor identifier id=val\n"
 	"   -E          Preprocess only\n"
 	"   -F target	Ignored for compatibility with windres\n"
-	"   -h		Prints this summary.\n"
-	"   -i file	The name of the input file.\n"
+	"   -h		Prints this summary\n"
+	"   -i file	The name of the input file\n"
 	"   -I path     Set include search dir to path (multiple -I allowed)\n"
 	"   -J format	The input format (either `rc' or `rc16')\n"
 	"   -l lan      Set default language to lan (default is neutral {0, 0})\n"
-	"   -m          Do not remap numerical resource IDs\n"
 	"   -o file     Output to file (default is infile.res)\n"
-	"   -O format	The output format (either `res' or `res16`).\n"
-	"   -v          Enable verbose mode.\n"
-	"   -W          Enable pedantic warnings\n"
+	"   -O format	The output format (either `res' or `res16`)\n"
+	"   -r		Ignored for compatibility with rc\n"
+	"   -U id       Undefine preprocessor identifier id\n"
+	"   -v          Enable verbose mode\n"
 	"The following long options are supported:\n"
-	"   --input		Synonym for -i.\n"
-	"   --input-format	Synonym for -J.\n"
-	"   --output		Synonym for -o.\n"
-	"   --output-format	Synonym for -O.\n"
-	"   --target		Synonym for -F.\n"
-	"   --preprocessor	Specifies the preprocessor to use, including arguments.\n"
-	"   --include-dir	Synonym for -I.\n"
-	"   --define		Synonym for -D.\n"
-	"   --language		Synonym for -l.\n"
-	"   --nostdinc		Disables searching the standard include path.\n"
-	"   --use-temp-file	Ignored for compatibility with windres.\n"
-	"   --no-use-temp-file	Ignored for compatibility with windres.\n"
-	"   --help		Synonym for -h.\n"
-	"   --version		Print version and exit.\n"
+	"   --debug=nn          Set debug level to 'nn'\n"
+	"   --define		Synonym for -D\n"
+	"   --endianess=e       Set output byte-order e={n[ative], l[ittle], b[ig]}\n"
+	"                       (win32 only; default is " ENDIAN "-endian)\n"
+	"   --help		Synonym for -h\n"
+	"   --include-dir	Synonym for -I\n"
+	"   --input		Synonym for -i\n"
+	"   --input-format	Synonym for -J\n"
+	"   --language		Synonym for -l\n"
+	"   --no-use-temp-file	Ignored for compatibility with windres\n"
+	"   --nostdinc		Disables searching the standard include path\n"
+	"   --output		Synonym for -o\n"
+	"   --output-format	Synonym for -O\n"
+	"   --pedantic          Enable pedantic warnings\n"
+	"   --preprocessor	Specifies the preprocessor to use, including arguments\n"
+	"   --target		Synonym for -F\n"
+	"   --undefine		Synonym for -U\n"
+	"   --use-temp-file	Ignored for compatibility with windres\n"
+	"   --version		Print version and exit\n"
 	"Input is taken from stdin if no sourcefile specified.\n"
 	"Debug level 'n' is a bitmask with following meaning:\n"
 	"    * 0x01 Tell which resource is parsed (verbose mode)\n"
@@ -155,11 +157,6 @@ int preprocess_only = 0;
  */
 int no_preprocess = 0;
 
-/*
- * Cleared when _not_ to remap resource types (-m option)
- */
-int remap = 1;
-
 char *output_name;		/* The name given by the -o option */
 char *input_name;		/* The name given on the command-line */
 char *temp_name;		/* Temporary file for preprocess pipe */
@@ -177,21 +174,25 @@ static void rm_tempfile(void);
 static void segvhandler(int sig);
 
 static const char* short_options = 
-	"B:d:D:EF:hi:I:J:l:mo:O:vW";
+	"D:EF:hi:I:J:l:o:O:rU:v";
 static struct option long_options[] = {
+	{ "debug", 1, 0, 6 },
+	{ "define", 1, 0, 'D' },
+	{ "endianess", 1, 0, 7 },
+	{ "help", 0, 0, 'h' },
+	{ "include-dir", 1, 0, 'I' },
 	{ "input", 1, 0, 'i' },
 	{ "input-format", 1, 0, 'J' },
+	{ "language", 1, 0, 'l' },
+	{ "no-use-temp-file", 0, 0, 3 },
+	{ "nostdinc", 0, 0, 1 },
 	{ "output", 1, 0, 'o' },
 	{ "output-format", 1, 0, 'O' },
-	{ "target", 1, 0, 'F' },
+	{ "pendantic", 0, 0, 8 },
 	{ "preprocessor", 1, 0, 4 },
-	{ "include-dir", 1, 0, 'I' },
-	{ "define", 1, 0, 'D' },
-	{ "language", 1, 0, 'l' },
-	{ "nostdinc", 0, 0, 1 },
+	{ "target", 1, 0, 'F' },
+	{ "undefine", 1, 0, 'U' },
 	{ "use-temp-file", 0, 0, 2 },
-	{ "no-use-temp-file", 0, 0, 3 },
-	{ "help", 0, 0, 'h' },
 	{ "version", 0, 0, 5 },
 	{ 0, 0, 0, 0 }
 };
@@ -211,6 +212,16 @@ int main(int argc,char *argv[])
 	signal(SIGSEGV, segvhandler);
 
 	now = time(NULL);
+
+	/* Set the default defined stuff */
+	wpp_add_cmdline_define("__WRC__=" WRC_EXP_STRINGIZE(WRC_MAJOR_VERSION));
+	wpp_add_cmdline_define("__WRC_MINOR__=" WRC_EXP_STRINGIZE(WRC_MINOR_VERSION));
+	wpp_add_cmdline_define("__WRC_MICRO__=" WRC_EXP_STRINGIZE(WRC_MICRO_VERSION));
+	wpp_add_cmdline_define("__WRC_PATCH__=" WRC_EXP_STRINGIZE(WRC_MICRO_VERSION));
+
+	wpp_add_cmdline_define("RC_INVOKED=1");
+	wpp_add_cmdline_define("__WIN32__=1");
+	wpp_add_cmdline_define("__FLAT__=1");
 
 	/* First rebuild the commandline to put in destination */
 	/* Could be done through env[], but not all OS-es support it */
@@ -247,7 +258,10 @@ int main(int argc,char *argv[])
 			printf(version_string);
 			exit(0);
 			break;
-		case 'B':
+		case 6:
+			debuglevel = strtol(optarg, NULL, 0);
+			break;
+		case 7:
 			switch(optarg[0])
 			{
 			case 'n':
@@ -267,8 +281,9 @@ int main(int argc,char *argv[])
 				lose++;
 			}
 			break;
-		case 'd':
-			debuglevel = strtol(optarg, NULL, 0);
+		case 8:
+			pedantic = 1;
+			wpp_set_pedantic(1);
 			break;
 		case 'D':
 			wpp_add_cmdline_define(optarg);
@@ -302,23 +317,27 @@ int main(int argc,char *argv[])
 				currentlanguage = new_language(PRIMARYLANGID(lan), SUBLANGID(lan));
 			}
 			break;
-		case 'm':
-			remap = 0;
-			break;
 		case 'o':
 			if (!output_name) output_name = strdup(optarg);
 			else error("Too many output files.\n");
 			break;
 		case 'O':
-			if (strcmp(optarg, "res16") == 0) win32 = 0;
+			if (strcmp(optarg, "res16") == 0)
+			{
+				win32 = 0;
+				wpp_del_define("__WIN32__");
+				wpp_del_define("__FLAT__");
+			}
 			else if (strcmp(optarg, "res")) warning("Output format %s not supported.", optarg);
+			break;
+		case 'r':
+			/* ignored for compatibility with rc */
+			break;
+		case 'U':
+			wpp_del_define(optarg);
 			break;
 		case 'v':
 			debuglevel = DEBUGLEVEL_CHAT;
-			break;
-		case 'W':
-			pedantic = 1;
-			wpp_set_pedantic(1);
 			break;
 		default:
 			lose++;
@@ -366,20 +385,6 @@ int main(int argc,char *argv[])
         wpp_set_debug( (debuglevel & DEBUGLEVEL_PPLEX) != 0,
                        (debuglevel & DEBUGLEVEL_PPTRACE) != 0,
                        (debuglevel & DEBUGLEVEL_PPMSG) != 0 );
-
-	/* Set the default defined stuff */
-	wpp_add_cmdline_define("__WRC__=" WRC_EXP_STRINGIZE(WRC_MAJOR_VERSION));
-	wpp_add_cmdline_define("__WRC_MINOR__=" WRC_EXP_STRINGIZE(WRC_MINOR_VERSION));
-	wpp_add_cmdline_define("__WRC_MICRO__=" WRC_EXP_STRINGIZE(WRC_MICRO_VERSION));
-	wpp_add_cmdline_define("__WRC_PATCH__=" WRC_EXP_STRINGIZE(WRC_MICRO_VERSION));
-
-	wpp_add_cmdline_define("RC_INVOKED=1");
-
-	if(win32)
-	{
-		wpp_add_cmdline_define("__WIN32__=1");
-		wpp_add_cmdline_define("__FLAT__=1");
-	}
 
 	/* Check if the user set a language, else set default */
 	if(!currentlanguage)

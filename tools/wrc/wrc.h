@@ -56,7 +56,6 @@ extern int pedantic;
 extern int byteorder;
 extern int preprocess_only;
 extern int no_preprocess;
-extern int remap;
 
 extern char *output_name;
 extern char *input_name;

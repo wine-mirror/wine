@@ -2994,9 +2994,5 @@ static int rsrcid_to_token(int lookahead)
 		return lookahead;
 	}
 
-	if(remap)
-		return token;
-	else
-		yywarning("Usertype uses reserved type ID %d, which is used by %s", yylval.num, type);
-	return lookahead;
+	return token;
 }
