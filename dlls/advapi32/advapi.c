@@ -121,6 +121,12 @@ BOOL WINAPI GetCurrentHwProfileA(LPHW_PROFILE_INFOA pInfo)
 	return 1;
 }
 
+BOOL WINAPI GetCurrentHwProfileW(LPHW_PROFILE_INFOW pInfo)
+{
+       FIXME("(%p)\n", pInfo);
+       return FALSE;
+}
+
 /******************************************************************************
  * AbortSystemShutdownA [ADVAPI32.@]
  *

@@ -108,6 +108,7 @@
 @ stdcall GetAce(ptr long ptr)
 @ stdcall GetAclInformation(ptr ptr long long)
 @ stdcall GetCurrentHwProfileA(ptr)
+@ stdcall GetCurrentHwProfileW(ptr)
 @ stub GetEffectiveRightsFromAclA
 @ stdcall GetExplicitEntriesFromAclA(ptr ptr ptr)
 @ stdcall GetExplicitEntriesFromAclW(ptr ptr ptr)
