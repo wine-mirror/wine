@@ -278,7 +278,6 @@ BOOL WINAPI SetSysColors( INT nChanges, const INT *lpSysColor,
 
 /*************************************************************************
  *		SetSysColorsTemp (USER32.@)
- *		SetSysColorsTemp (USER.661)
  */
 BOOL	WINAPI	SetSysColorsTemp( int n, const int* p, const COLORREF* ptr)
 {

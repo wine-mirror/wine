@@ -5557,7 +5557,6 @@ HRESULT WINAPI StgCreateDocfileOnILockBytes(
 
 /******************************************************************************
  *    StgOpenStorageOnILockBytes    [OLE32.149]
- *    StgOpenStorageOnILockBytes    [STORAGE.4]
  */
 HRESULT WINAPI StgOpenStorageOnILockBytes(
       ILockBytes *plkbyt,
@@ -5623,7 +5622,6 @@ HRESULT WINAPI StgOpenStorageOnILockBytes(
 /******************************************************************************
  *              StgSetTimes [ole32.150]
  *              StgSetTimes [OLE32.150]
- *              StgSetTimes [STORAGE.7]
  *
  *
  */
@@ -5636,7 +5634,6 @@ HRESULT WINAPI StgSetTimes(WCHAR * str, FILETIME * a, FILETIME * b, FILETIME *c 
 
 /******************************************************************************
  *              StgIsStorageILockBytes        [OLE32.147]
- *              StgIsStorageILockBytes        [STORAGE.6]
  *
  * Determines if the ILockBytes contains a storage object.
  */

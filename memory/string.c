@@ -131,6 +131,7 @@ INT WINAPI lstrcmpW( LPCWSTR str1, LPCWSTR str2 )
 
 
 /***********************************************************************
+ *           lstrcmpi    (KERNEL32.@)
  *           lstrcmpiA   (KERNEL32.@)
  */
 INT WINAPI lstrcmpiA( LPCSTR str1, LPCSTR str2 )
@@ -215,7 +216,9 @@ SEGPTR WINAPI lstrcpyn16( SEGPTR dst, LPCSTR src, INT16 n )
 
 
 /***********************************************************************
+ *           lstrcpyn    (KERNEL32.@)
  *           lstrcpynA   (KERNEL32.@)
+ *
  * Note: this function differs from the UNIX strncpy, it _always_ writes
  * a terminating \0
  */

@@ -110,12 +110,3 @@ DWORD WINAPI EngineMakeFontDir(HDC16 hdc, LPFONTDIR16 fontdir, LPCSTR string)
     return -1; /* error */
     
 }
-
-/***********************************************************************
- *		EngineExtTextOut (GDI.314)
- */
-WORD WINAPI EngineExtTextOut()
-{
-   FIXME("stub!\n");
-    return 0;
-}

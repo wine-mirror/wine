@@ -2521,7 +2521,6 @@ DWORD WINAPI InSendMessageEx( LPVOID reserved )
 
 /***********************************************************************
  *		BroadcastSystemMessage (USER32.@)
- *		BroadcastSystemMessage (USER.604)
  */
 LONG WINAPI BroadcastSystemMessage(
 	DWORD dwFlags,LPDWORD recipients,UINT uMessage,WPARAM wParam,

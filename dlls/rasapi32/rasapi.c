@@ -54,7 +54,7 @@ DWORD WINAPI RasHangUpA( HRASCONN hrasconn)
 }
 
 /**************************************************************************
- *                 RasDeleteEntryA		[RASAPI32.*]
+ *                 RasDeleteEntryA		[RASAPI32.7]
  */
 DWORD WINAPI RasDeleteEntryA(LPCSTR a, LPCSTR b)
 {
@@ -63,7 +63,7 @@ DWORD WINAPI RasDeleteEntryA(LPCSTR a, LPCSTR b)
 }
 
 /**************************************************************************
- *                 RasDeleteEntryW		[RASAPI32.*]
+ *                 RasDeleteEntryW		[RASAPI32.8]
  */
 DWORD WINAPI RasDeleteEntryW(LPCWSTR a, LPCWSTR b)
 {
@@ -72,7 +72,7 @@ DWORD WINAPI RasDeleteEntryW(LPCWSTR a, LPCWSTR b)
 }
 
 /**************************************************************************
- *                 RasEnumAutodialAddressesA	[RASAPI32.*]
+ *                 RasEnumAutodialAddressesA	[RASAPI32.14]
  */
 DWORD WINAPI RasEnumAutodialAddressesA(LPCSTR *a, LPDWORD b, LPDWORD c)
 {
@@ -81,7 +81,7 @@ DWORD WINAPI RasEnumAutodialAddressesA(LPCSTR *a, LPDWORD b, LPDWORD c)
 }
 
 /**************************************************************************
- *                 RasEnumAutodialAddressesW	[RASAPI32.*]
+ *                 RasEnumAutodialAddressesW	[RASAPI32.15]
  */
 DWORD WINAPI RasEnumAutodialAddressesW(LPCWSTR *a, LPDWORD b, LPDWORD c)
 {
@@ -95,7 +95,7 @@ typedef LPVOID LPRASAUTODIALENTRYA;
 typedef LPVOID LPRASAUTODIALENTRYW;
 
 /**************************************************************************
- *                 RasEnumDevicesA		[RASAPI32.*]
+ *                 RasEnumDevicesA		[RASAPI32.19]
  */
 DWORD WINAPI RasEnumDevicesA(LPRASDEVINFOA a, LPDWORD b, LPDWORD c)
 {
@@ -104,7 +104,7 @@ DWORD WINAPI RasEnumDevicesA(LPRASDEVINFOA a, LPDWORD b, LPDWORD c)
 }
 
 /**************************************************************************
- *                 RasEnumDevicesW		[RASAPI32.*]
+ *                 RasEnumDevicesW		[RASAPI32.20]
  */
 DWORD WINAPI RasEnumDevicesW(LPRASDEVINFOW a, LPDWORD b, LPDWORD c)
 {
@@ -113,7 +113,7 @@ DWORD WINAPI RasEnumDevicesW(LPRASDEVINFOW a, LPDWORD b, LPDWORD c)
 }
 
 /**************************************************************************
- *                 RasGetAutodialAddressA	[RASAPI32.*]
+ *                 RasGetAutodialAddressA	[RASAPI32.24]
  */
 DWORD WINAPI RasGetAutodialAddressA(LPCSTR a, LPDWORD b, LPRASAUTODIALENTRYA c,
 					LPDWORD d, LPDWORD e)
@@ -123,7 +123,7 @@ DWORD WINAPI RasGetAutodialAddressA(LPCSTR a, LPDWORD b, LPRASAUTODIALENTRYA c,
 }
 
 /**************************************************************************
- *                 RasGetAutodialAddressW	[RASAPI32.*]
+ *                 RasGetAutodialAddressW	[RASAPI32.25]
  */
 DWORD WINAPI RasGetAutodialAddressW(LPCWSTR a, LPDWORD b, LPRASAUTODIALENTRYW c,
 					LPDWORD d, LPDWORD e)
@@ -133,7 +133,7 @@ DWORD WINAPI RasGetAutodialAddressW(LPCWSTR a, LPDWORD b, LPRASAUTODIALENTRYW c,
 }
 
 /**************************************************************************
- *                 RasGetAutodialEnableA	[RASAPI32.*]
+ *                 RasGetAutodialEnableA	[RASAPI32.26]
  */
 DWORD WINAPI RasGetAutodialEnableA(DWORD a, LPBOOL b)
 {
@@ -142,7 +142,7 @@ DWORD WINAPI RasGetAutodialEnableA(DWORD a, LPBOOL b)
 }
 
 /**************************************************************************
- *                 RasGetAutodialEnableW	[RASAPI32.*]
+ *                 RasGetAutodialEnableW	[RASAPI32.27]
  */
 DWORD WINAPI RasGetAutodialEnableW(DWORD a, LPBOOL b)
 {
@@ -151,7 +151,7 @@ DWORD WINAPI RasGetAutodialEnableW(DWORD a, LPBOOL b)
 }
 
 /**************************************************************************
- *                 RasGetAutodialParamA		[RASAPI32.*]
+ *                 RasGetAutodialParamA		[RASAPI32.28]
  */
 DWORD WINAPI RasGetAutodialParamA(DWORD a, LPVOID b, LPDWORD c)
 {
@@ -160,7 +160,7 @@ DWORD WINAPI RasGetAutodialParamA(DWORD a, LPVOID b, LPDWORD c)
 }
 
 /**************************************************************************
- *                 RasGetAutodialParamW		[RASAPI32.*]
+ *                 RasGetAutodialParamW		[RASAPI32.29]
  */
 DWORD WINAPI RasGetAutodialParamW(DWORD a, LPVOID b, LPDWORD c)
 {
@@ -169,7 +169,7 @@ DWORD WINAPI RasGetAutodialParamW(DWORD a, LPVOID b, LPDWORD c)
 }
 
 /**************************************************************************
- *                 RasGetAutodialAddressA	[RASAPI32.*]
+ *                 RasSetAutodialAddressA	[RASAPI32.57]
  */
 DWORD WINAPI RasSetAutodialAddressA(LPCSTR a, DWORD b, LPRASAUTODIALENTRYA c,
 					DWORD d, DWORD e)
@@ -179,7 +179,7 @@ DWORD WINAPI RasSetAutodialAddressA(LPCSTR a, DWORD b, LPRASAUTODIALENTRYA c,
 }
 
 /**************************************************************************
- *                 RasGetAutodialAddressW	[RASAPI32.*]
+ *                 RasSetAutodialAddressW	[RASAPI32.58]
  */
 DWORD WINAPI RasSetAutodialAddressW(LPCWSTR a, DWORD b, LPRASAUTODIALENTRYW c,
 					DWORD d, DWORD e)
@@ -189,7 +189,7 @@ DWORD WINAPI RasSetAutodialAddressW(LPCWSTR a, DWORD b, LPRASAUTODIALENTRYW c,
 }
 
 /**************************************************************************
- *                 RasSetAutodialEnableA	[RASAPI32.*]
+ *                 RasSetAutodialEnableA	[RASAPI32.59]
  */
 DWORD WINAPI RasSetAutodialEnableA(DWORD a, BOOL b)
 {
@@ -198,7 +198,7 @@ DWORD WINAPI RasSetAutodialEnableA(DWORD a, BOOL b)
 }
 
 /**************************************************************************
- *                 RasGetAutodialEnableW	[RASAPI32.*]
+ *                 RasSetAutodialEnableW	[RASAPI32.60]
  */
 DWORD WINAPI RasSetAutodialEnableW(DWORD a, BOOL b)
 {
@@ -207,7 +207,7 @@ DWORD WINAPI RasSetAutodialEnableW(DWORD a, BOOL b)
 }
 
 /**************************************************************************
- *                 RasSetAutodialParamA	[RASAPI32.*]
+ *                 RasSetAutodialParamA	[RASAPI32.61]
  */
 DWORD WINAPI RasSetAutodialParamA(DWORD a, LPVOID b, DWORD c)
 {
@@ -216,7 +216,7 @@ DWORD WINAPI RasSetAutodialParamA(DWORD a, LPVOID b, DWORD c)
 }
 
 /**************************************************************************
- *                 RasSetAutodialParamW	[RASAPI32.*]
+ *                 RasSetAutodialParamW	[RASAPI32.62]
  */
 DWORD WINAPI RasSetAutodialParamW(DWORD a, LPVOID b, DWORD c)
 {

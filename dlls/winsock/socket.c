@@ -3225,7 +3225,7 @@ UINT16 wsaHerrno(int loc_errno)
 
 
 /***********************************************************************
- *              WSARecvFrom             (WSOCK32.69)
+ *              WSARecvFrom             (WS2_32.69)
  */
 INT WINAPI WSARecvFrom( SOCKET s, LPWSABUF lpBuffers, DWORD dwBufferCount,
                         LPDWORD lpNumberOfBytesRecvd, LPDWORD lpFlags, struct sockaddr *lpFrom,

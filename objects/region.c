@@ -899,7 +899,6 @@ DWORD WINAPI GetRegionData16(HRGN16 hrgn, DWORD count, LPRGNDATA rgndata)
 
 /***********************************************************************
  *           ExtCreateRegion   (GDI32.@)
- *           ExtCreateRegion   (GDI.608)
  * 
  */
 HRGN WINAPI ExtCreateRegion( const XFORM* lpXform, DWORD dwCount, const RGNDATA* rgndata)
@@ -2927,7 +2926,6 @@ HRGN WINAPI CreatePolygonRgn( const POINT *points, INT count,
 
 /***********************************************************************
  * GetRandomRgn [GDI32.@]
- * GetRandomRgn [GDI.611]
  *
  * NOTES
  *     This function is documented in MSDN online

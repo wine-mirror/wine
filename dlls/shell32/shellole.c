@@ -593,7 +593,7 @@ end:
 }
 
 /*************************************************************************
- *  DragQueryFileW		[shell32.133]
+ *  DragQueryFileW		[SHELL32.133]
  */
 UINT WINAPI DragQueryFileW(
 	HDROP hDrop,

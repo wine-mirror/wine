@@ -2118,7 +2118,6 @@ BOOL WINAPI LocalFileTimeToFileTime( const FILETIME *localft,
 
 /***********************************************************************
  *           FileTimeToLocalFileTime   (KERNEL32.@)
- *           FileTimeToLocalFileTime   (KERNEL.432)
  */
 BOOL WINAPI FileTimeToLocalFileTime( const FILETIME *utcft,
                                        LPFILETIME localft )

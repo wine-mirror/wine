@@ -1440,7 +1440,6 @@ void WINAPI Resurrection16(HDC16 hDC,
 
 /***********************************************************************
  *           GetLayout    (GDI32.@)
- *           GetLayout    (GDI.1001)
  *
  * Gets left->right or right->left text layout flags of a dc.
  * win98 just returns 0 and sets ERROR_CALL_NOT_IMPLEMENTED so we do the same
