@@ -80,6 +80,9 @@ BOOL32 GRAPH_DrawBitmap( HDC32 hdc, HBITMAP32 hbitmap,
         return FALSE;
     }
 
+    /* HACK for now */
+    if(!bmp->DDBitmap)
+        X11DRV_CreateBitmap( hbitmap );
     pbitmap = bmp->DDBitmap->physBitmap;
 
     xdest += dc->w.DCOrgX; ydest += dc->w.DCOrgY;
@@ -249,6 +252,10 @@ BOOL32 GRAPH_SelectClipMask( HDC32 hdc, HBITMAP32 hMonoBitmap, INT32 x, INT32 y)
 	   GDI_HEAP_UNLOCK( hdc );
 	   return FALSE;
        }
+
+       /* HACK for now */
+       if(!bmp->DDBitmap)
+	   X11DRV_CreateBitmap( hMonoBitmap );
        pbitmap = bmp->DDBitmap->physBitmap;
        TSXSetClipOrigin( display, dc->u.x.gc, dc->w.DCOrgX + x, dc->w.DCOrgY + y);
     }

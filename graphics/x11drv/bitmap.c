@@ -28,11 +28,6 @@
 GC BITMAP_monoGC = 0, BITMAP_colorGC = 0;
 
 
-#define BITMAP_WIDTH_BYTES(width,bpp) \
-    (((bpp) == 24) ? (width) * 4 : ( ((bpp) == 15) ? (width) * 2 : \
-				    ((width) * (bpp) + 15) / 16 * 2 ))
-
-
 /***********************************************************************
  *           X11DRV_BITMAP_Init
  */
@@ -371,6 +366,8 @@ static LONG X11DRV_SetBitmapBits(BITMAPOBJ *bmp, void *bits, LONG count)
     XImage *image;
     LPBYTE sbuf, tmpbuffer;
     int	w, h, pad, widthbytes;
+
+    TRACE(x11drv, "(bmp=%p, bits=%p, count=%lx)\n", bmp, bits, count);
     
     pad = BITMAP_GetBitsPadding(bmp->bitmap.bmWidth, bmp->bitmap.bmBitsPixel);
 
@@ -381,8 +378,11 @@ static LONG X11DRV_SetBitmapBits(BITMAPOBJ *bmp, void *bits, LONG count)
 
     widthbytes	= (((bmp->bitmap.bmWidth * bmp->bitmap.bmBitsPixel) + 31) /
 		   32) * 4;
-    height      = bmp->bitmap.bmHeight;
+    height      = count / bmp->bitmap.bmWidthBytes;
     tmpbuffer	= (LPBYTE)xmalloc(widthbytes*height);
+
+    TRACE(x11drv, "h=%ld, w=%d, wb=%d\n", height, bmp->bitmap.bmWidth, 
+	  widthbytes);
 
     EnterCriticalSection( &X11DRV_CritSection );
     image = XCreateImage( display, DefaultVisualOfScreen(screen),
