@@ -180,7 +180,7 @@ static void fill_opengl_caps(D3DDEVICEDESC *d1)
     d1->dlcLightingCaps.dwNumLights = 16; /* glGetIntegerv(GL_MAX_LIGHTS, &maxlight); d1->dlcLightingCaps.dwNumLights = maxlight; */
     fill_opengl_primcaps(&(d1->dpcLineCaps));
     fill_opengl_primcaps(&(d1->dpcTriCaps));
-    d1->dwDeviceRenderBitDepth  = DDBD_16;
+    d1->dwDeviceRenderBitDepth  = DDBD_16|DDBD_24;
     d1->dwDeviceZBufferBitDepth = DDBD_16;
     d1->dwMaxBufferSize = 0;
     d1->dwMaxVertexCount = 65536;
