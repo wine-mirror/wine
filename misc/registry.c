@@ -322,7 +322,7 @@ struct _w31_valent {
 };
 
 /* recursive helper function to display a directory tree  [Internal] */
-static void _w31_dumptree(unsigned short idx, unsigned char *txt,
+static void _w31_dumptree(unsigned short idx, char *txt,
                           struct _w31_tabent *tab, struct _w31_header *head,
                           HKEY hkey, ULONG lastmodified, int level)
 {
@@ -398,7 +398,7 @@ static void _w31_loadreg( const WCHAR *path )
     UNICODE_STRING              nameW;
     struct _w31_header          head;
     struct _w31_tabent*         tab = NULL;
-    unsigned char*              txt = NULL;
+    char*                       txt = NULL;
     unsigned int		len;
     ULONG			lastmodified;
     NTSTATUS                    status;

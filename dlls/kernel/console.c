@@ -1827,7 +1827,7 @@ static int	next_line(HANDLE hCon, CONSOLE_SCREEN_BUFFER_INFO* csbi)
  *
  */
 static int     	write_block(HANDLE hCon, CONSOLE_SCREEN_BUFFER_INFO* csbi,
-			    DWORD mode, LPWSTR ptr, int len)
+			    DWORD mode, LPCWSTR ptr, int len)
 {
     int	blk;	/* number of chars to write on current line */
     int done;   /* number of chars already written */
@@ -1875,7 +1875,7 @@ BOOL WINAPI WriteConsoleW(HANDLE hConsoleOutput, LPCVOID lpBuffer, DWORD nNumber
 {
     DWORD			mode;
     DWORD			nw = 0;
-    WCHAR*			psz = (WCHAR*)lpBuffer;
+    const WCHAR*		psz = lpBuffer;
     CONSOLE_SCREEN_BUFFER_INFO	csbi;
     int				k, first = 0;
 

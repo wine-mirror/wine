@@ -1048,7 +1048,7 @@ static int PROFILE_GetPrivateProfileString( LPCWSTR section, LPCWSTR entry,
 					    BOOL allow_section_name_copy )
 {
     int		ret;
-    LPWSTR	pDefVal = NULL;
+    LPCWSTR	pDefVal = NULL;
 
     if (!filename)
 	filename = wininiW;
@@ -1070,13 +1070,16 @@ static int PROFILE_GetPrivateProfileString( LPCWSTR section, LPCWSTR entry,
 	if (*p == ' ') /* ouch, contained trailing ' ' */
 	{
 	    int len = (int)(p - def_val);
-	    pDefVal = HeapAlloc(GetProcessHeap(), 0, (len + 1) * sizeof(WCHAR));
-	    strncpyW(pDefVal, def_val, len);
-	    pDefVal[len] = '\0';
+            LPWSTR p;
+
+	    p = HeapAlloc(GetProcessHeap(), 0, (len + 1) * sizeof(WCHAR));
+	    strncpyW(p, def_val, len);
+	    p[len] = '\0';
+            pDefVal = p;
 	}
     }
     if (!pDefVal)
-	pDefVal = (LPWSTR)def_val;
+	pDefVal = (LPCWSTR)def_val;
 
     RtlEnterCriticalSection( &PROFILE_CritSect );
 
@@ -1094,7 +1097,7 @@ static int PROFILE_GetPrivateProfileString( LPCWSTR section, LPCWSTR entry,
     RtlLeaveCriticalSection( &PROFILE_CritSect );
 
     if (pDefVal != def_val) /* allocated */
-	HeapFree(GetProcessHeap(), 0, pDefVal);
+	HeapFree(GetProcessHeap(), 0, (void*)pDefVal);
 
     TRACE("returning %s, %d\n", debugstr_w(buffer), ret);
 

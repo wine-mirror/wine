@@ -516,7 +516,7 @@ HGLOBAL WINAPI GlobalHandle(
         maybe_intern = HANDLE_TO_INTERN( handle );
         if (maybe_intern->Magic == MAGIC_GLOBAL_USED) {
             test = maybe_intern->Pointer;
-            if (HeapValidate( GetProcessHeap(), 0, (char *)test - HGLOBAL_STORAGE ) && /* obj(-handle) valid arena? */
+            if (HeapValidate( GetProcessHeap(), 0, (const char *)test - HGLOBAL_STORAGE ) && /* obj(-handle) valid arena? */
                 HeapValidate( GetProcessHeap(), 0, maybe_intern ))  /* intern valid arena? */
                 break;  /* valid moveable block */
         }

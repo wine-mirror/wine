@@ -479,12 +479,12 @@ static struct mapls_entry *first_entry;
 SEGPTR WINAPI MapLS( LPCVOID ptr )
 {
     struct mapls_entry *entry, *free = NULL;
-    void *base;
+    const void *base;
     SEGPTR ret = 0;
 
     if (!HIWORD(ptr)) return (SEGPTR)ptr;
 
-    base = (char *)ptr - ((unsigned int)ptr & 0x7fff);
+    base = (const char *)ptr - ((unsigned int)ptr & 0x7fff);
     HeapLock( GetProcessHeap() );
     for (entry = first_entry; entry; entry = entry->next)
     {
@@ -507,11 +507,11 @@ SEGPTR WINAPI MapLS( LPCVOID ptr )
             first_entry = free;
         }
         SetSelectorBase( free->sel, (DWORD)base );
-        free->addr = base;
+        free->addr = (void*)base;
         entry = free;
     }
     entry->count++;
-    ret = MAKESEGPTR( entry->sel, (char *)ptr - (char *)entry->addr );
+    ret = MAKESEGPTR( entry->sel, (const char *)ptr - (char *)entry->addr );
  done:
     HeapUnlock( GetProcessHeap() );
     return ret;

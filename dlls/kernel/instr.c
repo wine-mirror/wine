@@ -275,7 +275,7 @@ static BYTE *INSTR_GetOperandAddr( CONTEXT86 *context, BYTE *instr,
     wine_ldt_get_entry( seg, &entry );
     if (wine_ldt_is_empty( &entry )) return NULL;
     if (wine_ldt_get_limit(&entry) < (base + (index << ss))) return NULL;
-    return (char *)wine_ldt_get_base(&entry) + base + (index << ss);
+    return (BYTE *)wine_ldt_get_base(&entry) + base + (index << ss);
 #undef GET_VAL
 }
 

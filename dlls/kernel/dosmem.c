@@ -215,7 +215,7 @@ static DWORD DOSMEM_GetTicksSinceMidnight(void)
  */
 static void DOSMEM_FillBiosSegments(void)
 {
-    BYTE *pBiosSys = DOSMEM_dosmem + 0xf0000;
+    char *pBiosSys = DOSMEM_dosmem + 0xf0000;
     BYTE *pBiosROMTable = pBiosSys+0xe6f5;
     BIOSDATA *pBiosData = DOSMEM_BiosData();
 
@@ -261,7 +261,7 @@ static void DOSMEM_FillBiosSegments(void)
     *(pBiosROMTable+0x9)	= 0x00; /* feature byte 5 */
 
     /* BIOS date string */
-    strcpy((char *)pBiosSys+0xfff5, "13/01/99");
+    strcpy(pBiosSys+0xfff5, "13/01/99");
 
     /* BIOS ID */
     *(pBiosSys+0xfffe) = 0xfc;

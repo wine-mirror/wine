@@ -40,6 +40,7 @@
 #include "wine/unicode.h"
 #include "winnls.h"
 #include "winerror.h"
+#include "winver.h"
 #include "thread.h"
 #include "kernel_private.h"
 #include "wine/debug.h"
@@ -464,8 +465,8 @@ END:
  */
 static int charset_cmp( const void *name, const void *entry )
 {
-    const struct charset_entry *charset = (struct charset_entry *)entry;
-    return strcasecmp( (char *)name, charset->charset_name );
+    const struct charset_entry *charset = (const struct charset_entry *)entry;
+    return strcasecmp( (const char *)name, charset->charset_name );
 }
 
 /***********************************************************************

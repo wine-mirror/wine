@@ -90,7 +90,7 @@ static INT load_messageW( HMODULE instance, UINT id, WORD lang,
 
     if (i>0) {
 	if (mre->Flags & MESSAGE_RESOURCE_UNICODE)
-	    lstrcpynW(buffer, (LPWSTR)mre->Text, i);
+	    lstrcpynW(buffer, (LPCWSTR)mre->Text, i);
 	else
 	    MultiByteToWideChar( CP_ACP, 0, mre->Text, -1, buffer, i);
 	buffer[i]=0;
@@ -170,8 +170,8 @@ DWORD WINAPI FormatMessageA(
     from = NULL;
     if (dwFlags & FORMAT_MESSAGE_FROM_STRING)
     {
-        from = HeapAlloc( GetProcessHeap(), 0, strlen((LPSTR)lpSource)+1 );
-        strcpy( from, (LPSTR)lpSource );
+        from = HeapAlloc( GetProcessHeap(), 0, strlen((LPCSTR)lpSource)+1 );
+        strcpy( from, (LPCSTR)lpSource );
     }
     else {
         bufsize = 0;
@@ -398,9 +398,9 @@ DWORD WINAPI FormatMessageW(
         FIXME("line wrapping not supported.\n");
     from = NULL;
     if (dwFlags & FORMAT_MESSAGE_FROM_STRING) {
-        from = HeapAlloc( GetProcessHeap(), 0, (strlenW((LPWSTR)lpSource) + 1) *
+        from = HeapAlloc( GetProcessHeap(), 0, (strlenW((LPCWSTR)lpSource) + 1) *
             sizeof(WCHAR) );
-        strcpyW( from, (LPWSTR)lpSource );
+        strcpyW( from, (LPCWSTR)lpSource );
     }
     else {
         bufsize = 0;
