@@ -2290,6 +2290,20 @@ HRESULT WINAPI AVIGetFromClipboard(PAVIFILE *ppfile)
 }
 
 /***********************************************************************
+ *      AVIMakeStreamFromClipboard (AVIFIL32.@)
+ */
+HRESULT WINAPI AVIMakeStreamFromClipboard(UINT cfFormat, HANDLE hGlobal,
+                                          PAVISTREAM * ppstream)
+{
+  FIXME("(0x%08x,%p,%p), stub!\n", cfFormat, hGlobal, ppstream);
+
+  if (ppstream == NULL)
+    return AVIERR_BADHANDLE;
+
+  return AVIERR_UNSUPPORTED;
+}
+
+/***********************************************************************
  *		AVIPutFileOnClipboard	(AVIFIL32.@)
  */
 HRESULT WINAPI AVIPutFileOnClipboard(PAVIFILE pfile)
@@ -2300,4 +2314,22 @@ HRESULT WINAPI AVIPutFileOnClipboard(PAVIFILE pfile)
     return AVIERR_BADHANDLE;
 
   return AVIERR_UNSUPPORTED;
+}
+
+HRESULT WINAPI AVISaveA(LPCSTR szFile, CLSID * pclsidHandler, AVISAVECALLBACK lpfnCallback,
+                        int nStreams, PAVISTREAM pavi, LPAVICOMPRESSOPTIONS lpOptions, ...)
+{
+    FIXME("(%s,%p,%p,0x%08x,%p,%p), stub!\n", debugstr_a(szFile), pclsidHandler, lpfnCallback,
+          nStreams, pavi, lpOptions);
+
+    return AVIERR_UNSUPPORTED;
+}
+
+HRESULT WINAPI AVISaveW(LPCWSTR szFile, CLSID * pclsidHandler, AVISAVECALLBACK lpfnCallback,
+                        int nStreams, PAVISTREAM pavi, LPAVICOMPRESSOPTIONS lpOptions, ...)
+{
+    FIXME("(%s,%p,%p,0x%08x,%p,%p), stub!\n", debugstr_w(szFile), pclsidHandler, lpfnCallback,
+          nStreams, pavi, lpOptions);
+
+    return AVIERR_UNSUPPORTED;
 }

@@ -1051,6 +1051,7 @@ HRESULT WINAPI AVIStreamGetFrameClose(PGETFRAME pg);
 
 HRESULT WINAPI AVIMakeCompressedStream(PAVISTREAM*ppsCompressed,PAVISTREAM ppsSource,AVICOMPRESSOPTIONS *lpOptions,CLSID*pclsidHandler);
 HRESULT WINAPI AVIMakeFileFromStreams(PAVIFILE *ppfile, int nStreams, PAVISTREAM *ppStreams);
+HRESULT WINAPI AVIMakeStreamFromClipboard(UINT cfFormat, HANDLE hGlobal, PAVISTREAM * ppstream);
 
 HRESULT WINAPI AVIStreamOpenFromFileA(PAVISTREAM *ppavi, LPCSTR szFile,
 				      DWORD fccType, LONG lParam,
@@ -1067,6 +1068,14 @@ HRESULT WINAPI AVIBuildFilterW(LPWSTR szFilter, LONG cbFilter, BOOL fSaving);
 BOOL WINAPI AVISaveOptions(HWND hWnd,UINT uFlags,INT nStream,
 			   PAVISTREAM *ppavi,LPAVICOMPRESSOPTIONS *ppOptions);
 HRESULT WINAPI AVISaveOptionsFree(INT nStreams,LPAVICOMPRESSOPTIONS*ppOptions);
+
+HRESULT WINAPI AVISaveA(LPCSTR szFile, CLSID *pclsidHandler,
+             AVISAVECALLBACK lpfnCallback, int nStreams,
+             PAVISTREAM pavi, LPAVICOMPRESSOPTIONS lpOptions, ...);
+HRESULT WINAPI AVISaveW(LPCWSTR szFile, CLSID *pclsidHandler,
+             AVISAVECALLBACK lpfnCallback, int nStreams,
+             PAVISTREAM pavi, LPAVICOMPRESSOPTIONS lpOptions, ...);
+#define AVISave WINELIB_NAME_AW(AVISave)
 
 HRESULT WINAPI AVISaveVA(LPCSTR szFile, CLSID *pclsidHandler,
 			 AVISAVECALLBACK lpfnCallback, int nStream,

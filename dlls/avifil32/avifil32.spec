@@ -1,9 +1,9 @@
-@ stub    AVIBuildFilter
+@ stdcall AVIBuildFilter(str long long) AVIBuildFilterA
 @ stdcall AVIBuildFilterA(str long long)
 @ stdcall AVIBuildFilterW(wstr long long)
 @ stdcall AVIClearClipboard()
 @ stdcall AVIFileAddRef(ptr)
-@ stub    AVIFileCreateStream
+@ stdcall AVIFileCreateStream(ptr ptr ptr) AVIFileCreateStreamA
 @ stdcall AVIFileCreateStreamA(ptr ptr ptr)
 @ stdcall AVIFileCreateStreamW(ptr ptr ptr)
 @ stdcall AVIFileEndRecord(ptr)
@@ -13,7 +13,7 @@
 @ stdcall AVIFileInfoA(ptr ptr long)
 @ stdcall AVIFileInfoW(ptr ptr long)
 @ stdcall AVIFileInit()
-@ stub    AVIFileOpen
+@ stdcall AVIFileOpen(ptr str long ptr) AVIFileOpenA
 @ stdcall AVIFileOpenA(ptr str long ptr)
 @ stdcall AVIFileOpenW(ptr wstr long ptr)
 @ stdcall AVIFileReadData(ptr long ptr ptr)
@@ -22,16 +22,16 @@
 @ stdcall AVIGetFromClipboard(ptr)
 @ stdcall AVIMakeCompressedStream(ptr ptr ptr ptr)
 @ stdcall AVIMakeFileFromStreams(ptr long ptr)
-@ stub    AVIMakeStreamFromClipboard
+@ stdcall AVIMakeStreamFromClipboard(long long ptr)
 @ stdcall AVIPutFileOnClipboard(ptr)
-@ stub    AVISave
-@ stub    AVISaveA
+@ varargs AVISave(str ptr ptr long ptr ptr) AVISaveA
+@ varargs AVISaveA(str ptr ptr long ptr ptr)
 @ stdcall AVISaveOptions(long long long ptr ptr)
 @ stdcall AVISaveOptionsFree(long ptr)
-@ stub    AVISaveV
+@ stdcall AVISaveV(str ptr ptr long ptr ptr) AVISaveVA
 @ stdcall AVISaveVA(str ptr ptr long ptr ptr)
 @ stdcall AVISaveVW(wstr ptr ptr long ptr ptr)
-@ stub    AVISaveW
+@ varargs AVISaveW(wstr ptr ptr long ptr ptr)
 @ stdcall AVIStreamAddRef(ptr)
 @ stdcall AVIStreamBeginStreaming(ptr long long long)
 @ stdcall AVIStreamCreate(ptr long long ptr)
@@ -67,10 +67,10 @@
 @ stdcall EditStreamCopy(ptr ptr ptr ptr)
 @ stdcall EditStreamCut(ptr ptr ptr ptr)
 @ stdcall EditStreamPaste(ptr ptr ptr ptr long long)
-@ stub    EditStreamSetInfo
+@ stdcall EditStreamSetInfo(ptr ptr long) EditStreamSetInfoA
 @ stdcall EditStreamSetInfoA(ptr ptr long)
 @ stdcall EditStreamSetInfoW(ptr ptr long)
-@ stub    EditStreamSetName
+@ stdcall EditStreamSetName(ptr str) EditStreamSetNameA
 @ stdcall EditStreamSetNameA(ptr str)
 @ stdcall EditStreamSetNameW(ptr wstr)
 @ extern  IID_IAVIEditStream
