@@ -1932,7 +1932,7 @@ static HRESULT WINAPI ISVOleCmdTarget_QueryStatus(
 	OLECMD * prgCmds,
 	OLECMDTEXT* pCmdText)
 {
-    int i;
+    UINT i;
     _ICOM_THIS_From_IOleCommandTarget(IShellViewImpl, iface);
 
     FIXME("(%p)->(%p(%s) 0x%08lx %p %p\n",
