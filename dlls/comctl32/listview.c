@@ -164,6 +164,8 @@ typedef struct tagLISTVIEW_INFO
 /* Padding behind the label */
 #define TRAILING_PADDING  5
 
+/* Border for the icon caption */
+#define CAPTION_BORDER  2
 /* 
  * macros
  */
@@ -2906,7 +2908,7 @@ static VOID LISTVIEW_DrawLargeItem(HWND hwnd, HDC hdc, INT nItem, RECT rcItem,
   LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongA(hwnd, 0); 
   CHAR szDispText[DISP_TEXT_SIZE];
   INT nDrawPosX = rcItem.left;
-  INT nLabelWidth;
+  INT nLabelWidth, rcWidth;
   TEXTMETRICA tm;
   LVITEMA lvItem;
 
@@ -2961,13 +2963,40 @@ bottom=%d)\n", hwnd, hdc, nItem, rcItem.left, rcItem.top, rcItem.right,
   if (infoPtr->hwndEdit && lvItem.state & LVIS_FOCUSED)
     return;
 
+  InflateRect(&rcItem, -(2*CAPTION_BORDER), 0);
   rcItem.top += infoPtr->iconSize.cy + ICON_BOTTOM_PADDING; 
   nLabelWidth = ListView_GetStringWidthA(hwnd, lvItem.pszText);
-  nDrawPosX = infoPtr->iconSpacing.cx - nLabelWidth;
+  GetTextMetricsA(hdc, &tm);
+
+  /* append an ellipse ('...') if the caption won't fit in the rect */
+  rcWidth = max(0, rcItem.right - rcItem.left);
+  if (nLabelWidth > rcWidth)
+  {
+      INT i, len, eos, nCharsFit;
+      /* give or take a couple, how many average sized chars would fit? */
+      nCharsFit = tm.tmAveCharWidth > 0 ? (rcWidth/tm.tmAveCharWidth)+2 : 0; 
+      /* place the ellipse accordingly, without overrunning the buffer */
+      len = strlen(szDispText);
+      eos = min((nCharsFit > 1 && nCharsFit < len) ? nCharsFit+3 : len+2,
+                sizeof(szDispText)-1);
+      
+      nLabelWidth = ListView_GetStringWidthA(hwnd, szDispText);
+      while ((nLabelWidth > rcWidth) && (eos > 3))
+      {
+	 for (i = 1; i < 4; i++)
+	    szDispText[eos-i] = '.'; 
+         /* shift the ellipse one char to the left for each iteration */
+         szDispText[eos--] = '\0'; 
+         nLabelWidth = ListView_GetStringWidthA(hwnd, szDispText);
+      }
+  }
+
+  InflateRect(&rcItem, 2*CAPTION_BORDER, 0);
+  nDrawPosX = infoPtr->iconSpacing.cx - 2*CAPTION_BORDER - nLabelWidth;
   if (nDrawPosX > 1)
   {
     rcItem.left += nDrawPosX / 2;
-    rcItem.right = rcItem.left + nLabelWidth;
+    rcItem.right = rcItem.left + nLabelWidth + 2*CAPTION_BORDER;
   }
   else
   {
@@ -2976,9 +3005,8 @@ bottom=%d)\n", hwnd, hdc, nItem, rcItem.left, rcItem.top, rcItem.right,
   }
 
   /* draw label */  
-  GetTextMetricsA(hdc, &tm);
   rcItem.bottom = rcItem.top + tm.tmHeight + HEIGHT_PADDING; 
-  ExtTextOutA(hdc, rcItem.left, rcItem.top, ETO_OPAQUE | ETO_CLIPPED, 
+  ExtTextOutA(hdc, rcItem.left + CAPTION_BORDER, rcItem.top, ETO_OPAQUE | ETO_CLIPPED, 
               &rcItem, lvItem.pszText, lstrlenA(lvItem.pszText), NULL);
         
 
