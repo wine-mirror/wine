@@ -628,22 +628,42 @@ static void test_CreateFileW(void)
        "CreateFileW(\"\") returned ret=%p error=%ld\n",hFile,GetLastError());
 }
 
-
-static void test_GetTempFileNameA() {
+static void test_GetTempFileNameA()
+{
     UINT result;
     char out[MAX_PATH];
-    char *expected = "c:\\windows\\abc2.tmp";
+    char expected[MAX_PATH + 10];
+    char windowsdir[MAX_PATH + 10];
+    char windowsdrive[3];
 
-    /* this test may depend on the config file settings */
-    result = GetTempFileNameA("C:", "abc", 1, out);
-    ok( result != 0, "GetTempFileNameA: error %ld\n", GetLastError() );
-    ok( ((out[0] == 'C') && (out[1] == ':')) && (out[2] == '\\'), "GetTempFileNameA: first three characters should be C:\\, string was actually %s\n", out );
+    result = GetWindowsDirectory(windowsdir, sizeof(windowsdir));
+    ok(result < sizeof(windowsdir), "windowsdir is abnormally long!\n");
+    ok(result != 0, "GetWindowsDirectory: error %ld\n", GetLastError());
 
-    result = GetTempFileNameA("c:\\windows\\", "abc", 2, out);
-    ok( result != 0, "GetTempFileNameA: error %ld\n", GetLastError() );
-    ok( lstrcmpiA( out, expected ) == 0, "GetTempFileNameA: Unexpected output \"%s\" vs \"%s\"\n", out, expected );
+    /* If the Windows directory is the root directory, it ends in backslash, not else. */
+    if (strlen(windowsdir) != 3) /* As in  "C:\"  or  "F:\"  */
+    {
+        strcat(windowsdir, "\\");
+    }
+
+    windowsdrive[0] = windowsdir[0];
+    windowsdrive[1] = windowsdir[1];
+    windowsdrive[2] = '\0';
+
+    result = GetTempFileNameA(windowsdrive, "abc", 1, out);
+    ok(result != 0, "GetTempFileNameA: error %ld\n", GetLastError());
+    ok(((out[0] == windowsdrive[0]) && (out[1] == ':')) && (out[2] == '\\'),
+       "GetTempFileNameA: first three characters should be %c:\\, string was actually %s\n",
+       windowsdrive[0], out);
+
+    result = GetTempFileNameA(windowsdir, "abc", 2, out);
+    ok(result != 0, "GetTempFileNameA: error %ld\n", GetLastError());
+    expected[0] = '\0';
+    strcat(expected, windowsdir);
+    strcat(expected, "abc2.tmp");
+    ok(lstrcmpiA(out, expected) == 0, "GetTempFileNameA: Unexpected output \"%s\" vs \"%s\"\n",
+       out, expected);
 }
-
 
 static void test_DeleteFileA( void )
 {
