@@ -126,7 +126,7 @@ static HRESULT WINAPI IDirectSound3DBufferImpl_GetAllParameters(
 	LPDS3DBUFFER lpDs3dBuffer)
 {
 	ICOM_THIS(IDirectSound3DBufferImpl,iface);
-	TRACE("returning all parameters\n");
+	TRACE("returning: all parameters\n");
 	*lpDs3dBuffer = This->ds3db;
 	return DS_OK;
 }
@@ -403,7 +403,9 @@ static HRESULT WINAPI IDirectSound3DListenerImpl_GetAllParameter(
 	LPDIRECTSOUND3DLISTENER iface,
 	LPDS3DLISTENER lpDS3DL)
 {
-	FIXME("stub\n");
+	ICOM_THIS(IDirectSound3DListenerImpl,iface);
+	TRACE("returning: all parameters\n");
+	*lpDS3DL = This->ds3dl;
 	return DS_OK;
 }
 
@@ -411,7 +413,9 @@ static HRESULT WINAPI IDirectSound3DListenerImpl_GetDistanceFactor(
 	LPDIRECTSOUND3DLISTENER iface,
 	LPD3DVALUE lpfDistanceFactor)
 {
-	FIXME("stub\n");
+	ICOM_THIS(IDirectSound3DListenerImpl,iface);
+	TRACE("returning: Distance Factor = %f\n", This->ds3dl.flDistanceFactor);
+	*lpfDistanceFactor = This->ds3dl.flDistanceFactor;
 	return DS_OK;
 }
 
@@ -419,7 +423,9 @@ static HRESULT WINAPI IDirectSound3DListenerImpl_GetDopplerFactor(
 	LPDIRECTSOUND3DLISTENER iface,
 	LPD3DVALUE lpfDopplerFactor)
 {
-	FIXME("stub\n");
+	ICOM_THIS(IDirectSound3DListenerImpl,iface);
+	TRACE("returning: Doppler Factor = %f\n", This->ds3dl.flDopplerFactor);
+	*lpfDopplerFactor = This->ds3dl.flDopplerFactor;
 	return DS_OK;
 }
 
@@ -428,7 +434,12 @@ static HRESULT WINAPI IDirectSound3DListenerImpl_GetOrientation(
 	LPD3DVECTOR lpvOrientFront,
 	LPD3DVECTOR lpvOrientTop)
 {
-	FIXME("stub\n");
+	ICOM_THIS(IDirectSound3DListenerImpl,iface);
+	TRACE("returning: OrientFront vector = (%f,%f,%f); OrientTop vector = (%f,%f,%f)\n", This->ds3dl.vOrientFront.u1.x, \
+	This->ds3dl.vOrientFront.u2.y, This->ds3dl.vOrientFront.u3.z, This->ds3dl.vOrientTop.u1.x, This->ds3dl.vOrientTop.u2.y, \
+	This->ds3dl.vOrientTop.u3.z);
+	*lpvOrientFront = This->ds3dl.vOrientFront;
+	*lpvOrientTop = This->ds3dl.vOrientTop;
 	return DS_OK;
 }
 
@@ -436,7 +447,9 @@ static HRESULT WINAPI IDirectSound3DListenerImpl_GetPosition(
 	LPDIRECTSOUND3DLISTENER iface,
 	LPD3DVECTOR lpvPosition)
 {
-	FIXME("stub\n");
+	ICOM_THIS(IDirectSound3DListenerImpl,iface);
+	TRACE("returning: Position vector = (%f,%f,%f)\n", This->ds3dl.vPosition.u1.x, This->ds3dl.vPosition.u2.y, This->ds3dl.vPosition.u3.z);
+	*lpvPosition = This->ds3dl.vPosition;
 	return DS_OK;
 }
 
@@ -444,7 +457,9 @@ static HRESULT WINAPI IDirectSound3DListenerImpl_GetRolloffFactor(
 	LPDIRECTSOUND3DLISTENER iface,
 	LPD3DVALUE lpfRolloffFactor)
 {
-	FIXME("stub\n");
+	ICOM_THIS(IDirectSound3DListenerImpl,iface);
+	TRACE("returning: RolloffFactor = %f\n", This->ds3dl.flRolloffFactor);
+	*lpfRolloffFactor = This->ds3dl.flRolloffFactor;
 	return DS_OK;
 }
 
@@ -452,7 +467,9 @@ static HRESULT WINAPI IDirectSound3DListenerImpl_GetVelocity(
 	LPDIRECTSOUND3DLISTENER iface,
 	LPD3DVECTOR lpvVelocity)
 {
-	FIXME("stub\n");
+	ICOM_THIS(IDirectSound3DListenerImpl,iface);
+	TRACE("returning: Velocity vector = (%f,%f,%f)\n", This->ds3dl.vVelocity.u1.x, This->ds3dl.vVelocity.u2.y, This->ds3dl.vVelocity.u3.z);
+	*lpvVelocity = This->ds3dl.vVelocity;
 	return DS_OK;
 }
 
