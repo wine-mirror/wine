@@ -10,7 +10,9 @@
 @ stub DeleteIE3Cache
 @ stub DeleteUrlCacheContainerA
 @ stub DeleteUrlCacheContainerW
-@ stdcall DeleteUrlCacheEntry(str)
+@ stdcall DeleteUrlCacheEntry(str) DeleteUrlCacheEntryA
+@ stdcall DeleteUrlCacheEntryA(str)
+@ stub DeleteUrlCacheEntryW
 @ stdcall DeleteUrlCacheGroup(double long ptr)
 @ stdcall DetectAutoProxyUrl(str long long)
 @ stdcall DllInstall(long ptr) WININET_DllInstall
@@ -147,10 +149,10 @@
 @ stdcall IsHostInProxyBypassList(long str long)
 @ stub LoadUrlCacheContent
 @ stub ParseX509EncodedCertificateForListBoxEntry
-@ stub ReadUrlCacheEntryStream
+@ stdcall ReadUrlCacheEntryStream(ptr long ptr ptr long)
 @ stdcall RetrieveUrlCacheEntryFileA(str ptr ptr long)
 @ stub RetrieveUrlCacheEntryFileW
-@ stub RetrieveUrlCacheEntryStreamA
+@ stdcall RetrieveUrlCacheEntryStreamA(str ptr ptr long long)
 @ stub RetrieveUrlCacheEntryStreamW
 @ stub RunOnceUrlCache
 @ stub SetUrlCacheConfigInfoA
@@ -162,6 +164,8 @@
 @ stub ShowClientAuthCerts
 @ stub ShowSecurityInfo
 @ stub ShowX509EncodedCertificate
-@ stub UnlockUrlCacheEntryFile
-@ stub UnlockUrlCacheEntryStream
+@ stdcall UnlockUrlCacheEntryFile(str long) UnlockUrlCacheEntryFileA
+@ stdcall UnlockUrlCacheEntryFileA(str long)
+@ stub UnlockUrlCacheEntryFileW
+@ stdcall UnlockUrlCacheEntryStream(ptr long)
 @ stub UpdateUrlCacheContentPath
