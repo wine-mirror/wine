@@ -32,6 +32,10 @@ static const unsigned int win_formats[][4] = {
     {0,                  8000,  8, 2},
     {0,                  8000, 16, 1},
     {0,                  8000, 16, 2},
+    {0,                 16000,  8, 1},
+    {0,                 16000,  8, 2},
+    {0,                 16000, 16, 1},
+    {0,                 16000, 16, 2},
     {0,                 12000, 16, 2},
     {WAVE_FORMAT_1M08,  11025,  8, 1},
     {WAVE_FORMAT_1S08,  11025,  8, 2},
@@ -56,5 +60,6 @@ static const unsigned int win_formats[][4] = {
 };
 #define NB_WIN_FORMATS (sizeof(win_formats)/sizeof(*win_formats))
 
+extern const char* dev_name(int);
 extern const char* wave_open_flags(DWORD);
 extern const char* mmsys_error(MMRESULT);
