@@ -13,5 +13,6 @@ locale.ok
 path.ok
 pipe.ok
 process.ok
+profile.ok
 testlist.c
 thread.ok

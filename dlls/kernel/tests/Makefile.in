@@ -19,6 +19,7 @@ CTESTS = \
 	path.c \
 	pipe.c \
 	process.c \
+	profile.c \
 	thread.c
 
 @MAKE_TEST_RULES@
