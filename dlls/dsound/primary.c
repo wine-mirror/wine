@@ -38,22 +38,22 @@ WINE_DEFAULT_DEBUG_CHANNEL(dsound);
 
 void DSOUND_RecalcPrimary(IDirectSoundImpl *This)
 {
-	DWORD sw;
+	DWORD nBlockAlign;
 	TRACE("(%p)\n",This);
 
-	sw = This->pwfx->nChannels * (This->pwfx->wBitsPerSample / 8);
+	nBlockAlign = This->pwfx->nBlockAlign;
 	if (This->hwbuf) {
 		DWORD fraglen;
 		/* let fragment size approximate the timer delay */
-		fraglen = (This->pwfx->nSamplesPerSec * DS_TIME_DEL / 1000) * sw;
+		fraglen = (This->pwfx->nSamplesPerSec * DS_TIME_DEL / 1000) * nBlockAlign;
 		/* reduce fragment size until an integer number of them fits in the buffer */
 		/* (FIXME: this may or may not be a good idea) */
-		while (This->buflen % fraglen) fraglen -= sw;
+		while (This->buflen % fraglen) fraglen -= nBlockAlign;
 		This->fraglen = fraglen;
 		TRACE("fraglen=%ld\n", This->fraglen);
 	}
 	/* calculate the 10ms write lead */
-	This->writelead = (This->pwfx->nSamplesPerSec / 100) * sw;
+	This->writelead = (This->pwfx->nSamplesPerSec / 100) * nBlockAlign;
 }
 
 static HRESULT DSOUND_PrimaryOpen(IDirectSoundImpl *This)
@@ -72,7 +72,7 @@ static HRESULT DSOUND_PrimaryOpen(IDirectSoundImpl *This)
 		else if (This->state == STATE_STOPPING) This->state = STATE_STOPPED;
 		/* use fragments of 10ms (1/100s) each (which should get us within
 		 * the documented write cursor lead of 10-15ms) */
-		buflen = ((This->pwfx->nAvgBytesPerSec / 100) & ~3) * DS_HEL_FRAGS;
+		buflen = ((This->pwfx->nSamplesPerSec / 100) * This->pwfx->nBlockAlign) * DS_HEL_FRAGS;
 		TRACE("desired buflen=%ld, old buffer=%p\n", buflen, This->buffer);
 		/* reallocate emulated primary buffer */
 
