@@ -17,8 +17,12 @@ INSTALLED_INCLUDES = \
 # Testing LIB_TARGET prevents installing header files
 # when --disable-lib is used
 install:: dummy
-	if [ $(LIB_TARGET) ]; then [ -d $(includedir) ] || $(MKDIR) $(includedir); \
-	$(INSTALL_DATA) $(INSTALLED_INCLUDES) $(includedir); fi
+	if [ $(LIB_TARGET) ]; then \
+	    [ -d $(includedir) ] || $(MKDIR) $(includedir); \
+	    for f in $(INSTALLED_INCLUDES); do \
+		$(INSTALL_DATA) $(SRCDIR)/$$f $(includedir); \
+	    done; \
+	fi
 
 # Don't just do a rm -rf on $(includedir) -- don't want to wipe out 
 # anything extra the user may have put there.
