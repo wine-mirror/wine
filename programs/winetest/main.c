@@ -68,7 +68,23 @@ static int running_under_wine ()
 
 static int running_on_visible_desktop ()
 {
-    return IsWindowVisible( GetDesktopWindow() );
+    BOOL visible;
+    HWND desktop;
+    HDC hdc;
+    HRGN hrgn;
+    RECT rc;
+
+    desktop = GetDesktopWindow();
+    hdc = GetDC(desktop);
+    hrgn = CreateRectRgn(0, 0, 0, 0);
+    GetRandomRgn(hdc, hrgn, SYSRGN);
+
+    visible = GetRgnBox(hrgn, &rc) != NULLREGION;
+
+    DeleteObject(hrgn);
+    ReleaseDC(desktop, hdc);
+
+    return visible;
 }
 
 void print_version ()
