@@ -11,11 +11,11 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <dlfcn.h>
 #include <string.h>
 
 #include "winbase.h"
 #include "debugtools.h"
+#include "wine/port.h"
 
 #include "sql.h"
 #include "sqltypes.h"
@@ -164,7 +164,7 @@ MAIN_OdbcInit(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 
       if (gProxyHandle.dmHandle)
       {
-         dlclose(gProxyHandle.dmHandle);
+         wine_dlclose(gProxyHandle.dmHandle,NULL,0);
          gProxyHandle.dmHandle = NULL;
       }
     }
@@ -186,6 +186,7 @@ MAIN_OdbcInit(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 BOOL ODBC_LoadDriverManager()
 {
    char *s = getenv("LIB_ODBC_DRIVER_MANAGER");
+   char error[256];
 
    TRACE("\n");
 
@@ -196,13 +197,11 @@ BOOL ODBC_LoadDriverManager()
    else
           strcpy(gProxyHandle.dmLibName, "libodbc.so");
 
-    dlerror();  /* clear dlerror first */
-   gProxyHandle.dmHandle = dlopen(gProxyHandle.dmLibName, RTLD_LAZY);
+   gProxyHandle.dmHandle = wine_dlopen(gProxyHandle.dmLibName, RTLD_LAZY, error, sizeof(error));
 
    if (gProxyHandle.dmHandle == NULL)           /* fail to load unixODBC driver manager */
    {
-           const char *err = dlerror();
-           WARN("failed to open library %s: %s\n", gProxyHandle.dmLibName, err);
+           WARN("failed to open library %s: %s\n", gProxyHandle.dmLibName, error);
            gProxyHandle.dmLibName[0] = '\0';
            gProxyHandle.nErrorType = ERROR_LIBRARY_NOT_FOUND;
            return FALSE;
@@ -228,18 +227,18 @@ BOOL ODBC_LoadDriverManager()
 BOOL ODBC_LoadDMFunctions()
 {
     int i;
+    char error[256];
 
     if (gProxyHandle.dmHandle == NULL)
         return FALSE;
 
-    dlerror();  /* clear dlerror first */
     for ( i = 0; i < NUM_SQLFUNC; i ++ )
     {
         gProxyHandle.functions[i] = template_func[i];
-        gProxyHandle.functions[i].func = dlsym(gProxyHandle.dmHandle,
-                gProxyHandle.functions[i].name);
+        gProxyHandle.functions[i].func = wine_dlsym(gProxyHandle.dmHandle,
+                gProxyHandle.functions[i].name, error, sizeof(error));
 
-        if (dlerror())
+        if (error[0])
         {
             ERR("Failed to load function %s",gProxyHandle.functions[i].name);
             gProxyHandle.functions[i].func = SQLDummyFunc;
@@ -739,7 +738,7 @@ SQLRETURN WINAPI SQLFreeEnv(SQLHENV EnvironmentHandle)
         /*
         if (gProxyHandle.dmHandle)
         {
-           dlclose(gProxyHandle.dmHandle);
+           wine_dlclose(gProxyHandle.dmHandle,NULL,0);
            gProxyHandle.dmHandle = NULL;
         }
         */
@@ -769,7 +768,7 @@ SQLRETURN WINAPI SQLFreeHandle(SQLSMALLINT HandleType, SQLHANDLE Handle)
         {
             if (gProxyHandle.dmHandle)
             {
-               dlclose(gProxyHandle.dmHandle);
+               wine_dlclose(gProxyHandle.dmHandle,NULL,0);
                gProxyHandle.dmHandle = NULL;
             }
         }

@@ -130,4 +130,16 @@ int lstat(const char *file_name, struct stat *buf);
 #define S_ISLNK(mod) (0)
 #endif /* S_ISLNK */
 
+extern void *wine_dlopen( const char *filename, int flag, char *error, int errorsize );
+extern void *wine_dlsym( void *handle, const char *symbol, char *error, int errorsize );
+extern int wine_dlclose( void *handle, char *error, int errorsize );
+
+#ifdef HAVE_DL_API
+#include <dlfcn.h>
+#else
+#define RTLD_LAZY	0x001
+#define RTLD_NOW	0x002
+#define RTLD_GLOBAL	0x100
+#endif
+
 #endif /* !defined(__WINE_WINE_PORT_H) */

@@ -38,6 +38,9 @@
 #ifdef HAVE_LIBUTIL_H
 # include <libutil.h>
 #endif
+#ifdef HAVE_DL_API
+# include <dlfcn.h>
+#endif
 
 #include "wine/port.h"
 
@@ -410,4 +413,99 @@ void *wine_anon_mmap( void *start, size_t size, int prot, int flags )
     flags |= MAP_PRIVATE;
 #endif
     return mmap( start, size, prot, flags, fdzero, 0 );
+}
+
+
+/*
+ * These functions provide wrappers around dlopen() and associated
+ * functions.  They work around a bug in glibc 2.1.x where calling
+ * a dl*() function after a previous dl*() function has failed
+ * without a dlerror() call between the two will cause a crash.
+ * They all take a pointer to a buffer that
+ * will receive the error description (from dlerror()).  This
+ * parameter may be NULL if the error description is not required.
+ */
+
+/***********************************************************************
+ *		wine_dlopen
+ */
+void *wine_dlopen( const char *filename, int flag, char *error, int errorsize )
+{
+#ifdef HAVE_DL_API
+    void *ret;
+    char *s;
+    dlerror(); dlerror();
+    ret = dlopen( filename, flag );
+    s = dlerror();
+    if (error)
+    {
+	strncpy( error, s ? s : "", errorsize );
+	error[errorsize - 1] = '\0';
+    }
+    dlerror();
+    return ret;
+#else
+    if (error)
+    {
+	strncpy( error, "dlopen interface not detected by configure", errorsize );
+	error[errorsize - 1] = '\0';
+    }
+    return NULL;
+#endif
+}
+
+/***********************************************************************
+ *		wine_dlsym
+ */
+void *wine_dlsym( void *handle, const char *symbol, char *error, int errorsize )
+{
+#ifdef HAVE_DL_API
+    void *ret;
+    char *s;
+    dlerror(); dlerror();
+    ret = dlsym( handle, symbol );
+    s = dlerror();
+    if (error)
+    {
+	strncpy( error, s ? s : "", errorsize );
+	error[errorsize - 1] = '\0';
+    }
+    dlerror();
+    return ret;
+#else
+    if (error)
+    {
+	strncpy( error, "dlopen interface not detected by configure", errorsize );
+	error[errorsize - 1] = '\0';
+    }
+    return NULL;
+#endif
+}
+
+/***********************************************************************
+ *		wine_dlclose
+ */
+int wine_dlclose( void *handle, char *error, int errorsize )
+{
+#ifdef HAVE_DL_API
+    int ret;
+    char *s;
+    dlerror(); dlerror();
+    ret = dlclose( handle );
+    s = dlerror();
+    if (error)
+    {
+	strncpy( error, s ? s : "", errorsize );
+	error[errorsize - 1] = '\0';
+    }
+    dlerror();
+    return ret;
+#else
+    if (error)
+    {
+	strncpy( error, "dlopen interface not detected by configure", errorsize );
+	error[errorsize - 1] = '\0';
+    }
+    return 1;
+#endif
 }

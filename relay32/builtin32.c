@@ -10,9 +10,6 @@
 #include <string.h>
 #include <stdio.h>
 #include <ctype.h>
-#ifdef HAVE_DL_API
-#include <dlfcn.h>
-#endif
 #include <sys/types.h>
 #ifdef HAVE_SYS_MMAN_H
 #include <sys/mman.h>
@@ -40,24 +37,17 @@ static HMODULE main_module;
  */
 void *BUILTIN32_dlopen( const char *name )
 {
-#ifdef HAVE_DL_API
     void *handle;
+    char error[256];
 
-    if (!(handle = wine_dll_load( name )))
+    if (!(handle = wine_dll_load( name, error, sizeof(error) )))
     {
-        LPSTR pErr;
-        if ((pErr = dlerror()))
-        {
-            if (strstr(pErr, "undefined symbol")) /* undef symbol -> ERR() */
-                ERR("failed to load %s: %s\n", name, pErr);
-            else /* WARN() for libraries that are supposed to be native */
-                WARN("failed to load %s: %s\n", name, pErr );
-        }
+        if (strstr(error, "undefined symbol")) /* undef symbol -> ERR() */
+            ERR("failed to load %s: %s\n", name, error);
+        else /* WARN() for libraries that are supposed to be native */
+            WARN("failed to load %s: %s\n", name, error );
     }
     return handle;
-#else
-    return NULL;
-#endif
 }
 
 /***********************************************************************
@@ -65,10 +55,8 @@ void *BUILTIN32_dlopen( const char *name )
  */
 int BUILTIN32_dlclose( void *handle )
 {
-#ifdef HAVE_DL_API
     /* FIXME: should unregister descriptors first */
-    /* return dlclose( handle ); */
-#endif
+    /* wine_dll_unload( handle ); */
     return 0;
 }
 

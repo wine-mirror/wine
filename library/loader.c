@@ -15,9 +15,6 @@
 #ifdef HAVE_SYS_MMAN_H
 #include <sys/mman.h>
 #endif
-#ifdef HAVE_DL_API
-#include <dlfcn.h>
-#endif
 
 #include "winnt.h"
 #include "wine/library.h"
@@ -79,17 +76,13 @@ static void build_dll_path(void)
 
 /* open a library for a given dll, searching in the dll path
  * 'name' must be the Windows dll name (e.g. "kernel32.dll") */
-static void *dlopen_dll( const char *name )
+static void *dlopen_dll( const char *name, char *error, int errorsize )
 {
-#ifdef HAVE_DL_API
     int i, namelen = strlen(name);
     char *buffer, *p, *ext;
     void *ret = NULL;
 
     if (!init_done) build_dll_path();
-
-    /* clear dlerror to avoid glibc bug */
-    dlerror();
 
     buffer = malloc( dll_path_maxlen + namelen + 8 );
 
@@ -109,17 +102,14 @@ static void *dlopen_dll( const char *name )
         int len = strlen(dll_paths[i]);
         char *p = buffer + dll_path_maxlen - len;
         memcpy( p, dll_paths[i], len );
-        if ((ret = dlopen( p, RTLD_NOW ))) break;
-        dlerror();  /* clear dlerror to avoid glibc bug */
+        if ((ret = wine_dlopen( p, RTLD_NOW, error, errorsize ))) break;
     }
 
     /* now try the default dlopen search path */
-    if (!ret) ret = dlopen( buffer + dll_path_maxlen + 1, RTLD_NOW );
+    if (!ret)
+        ret = wine_dlopen( buffer + dll_path_maxlen + 1, RTLD_NOW, error, errorsize );
     free( buffer );
     return ret;
-#else
-    return NULL;
-#endif
 }
 
 
@@ -318,7 +308,7 @@ void wine_dll_set_callback( load_dll_callback_t load )
  *
  * Load a builtin dll.
  */
-void *wine_dll_load( const char *filename )
+void *wine_dll_load( const char *filename, char *error, int errorsize )
 {
     int i;
 
@@ -338,7 +328,7 @@ void *wine_dll_load( const char *filename )
             return (void *)1;
         }
     }
-    return dlopen_dll( filename );
+    return dlopen_dll( filename, error, errorsize );
 }
 
 
@@ -349,9 +339,8 @@ void *wine_dll_load( const char *filename )
  */
 void wine_dll_unload( void *handle )
 {
-#ifdef HAVE_DL_API
-    if (handle != (void *)1) dlclose( handle );
-#endif
+    if (handle != (void *)1)
+	wine_dlclose( handle, NULL, 0 );
 }
 
 
@@ -359,20 +348,17 @@ void wine_dll_unload( void *handle )
  *           wine_dll_load_main_exe
  *
  * Try to load the .so for the main exe, optionally searching for it in PATH.
- * Note: dlerror() is cleared before returning because of a glibc bug.
  */
 void *wine_dll_load_main_exe( const char *name, int search_path )
 {
     void *ret = NULL;
-#ifdef HAVE_DL_API
     const char *path = NULL;
     if (search_path) path = getenv( "PATH" );
 
     if (!path)
     {
         /* no path, try only the specified name */
-        dlerror();  /* clear dlerror to avoid glibc bug */
-        ret = dlopen( name, RTLD_NOW );
+        ret = wine_dlopen( name, RTLD_NOW, NULL, 0 );
     }
     else
     {
@@ -394,8 +380,7 @@ void *wine_dll_load_main_exe( const char *name, int search_path )
                 if ((len = p - path) > 0)
                 {
                     memcpy( basename - len, path, len );
-                    dlerror();  /* clear dlerror to avoid glibc bug */
-                    if ((ret = dlopen( basename - len, RTLD_NOW ))) break;
+                    if ((ret = wine_dlopen( basename - len, RTLD_NOW, NULL, 0 ))) break;
                 }
                 if (!*p) break;
                 path = p + 1;
@@ -403,7 +388,5 @@ void *wine_dll_load_main_exe( const char *name, int search_path )
             if (tmp != buffer) free( tmp );
         }
     }
-    if (!ret) dlerror();  /* clear dlerror to avoid glibc bug */
-#endif  /* HAVE_DL_API */
     return ret;
 }

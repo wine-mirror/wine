@@ -22,6 +22,7 @@
 #include "module.h"
 #include "debugtools.h"
 #include "winerror.h"
+#include "wine/port.h"
 
 DEFAULT_DEBUG_CHANNEL(win32);
 
@@ -48,8 +49,6 @@ typedef struct {
 #define STUBOFFSET  (sizeof(IMAGE_DOS_HEADER) + \
                      sizeof(IMAGE_NT_HEADERS) + \
                      sizeof(IMAGE_SECTION_HEADER))
-
-#include <dlfcn.h>
 
 static FARPROC ELF_FindExportedFunction( WINE_MODREF *wm, LPCSTR funcName, BOOL snoop );
 
@@ -109,6 +108,7 @@ WINE_MODREF *ELF_LoadLibraryExA( LPCSTR libname, DWORD flags)
         HMODULE		hmod;
 	char		*modname,*s,*t,*x;
 	LPVOID		*dlhandle;
+	char		error[256];
 
 	t = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY,
                        strlen(libname) + strlen("lib.so") + 1 );
@@ -152,10 +152,9 @@ WINE_MODREF *ELF_LoadLibraryExA( LPCSTR libname, DWORD flags)
          points to the ENTIRE DOS filename of the library
          t is returned by HeapAlloc() above and so is also used
          with HeapFree() below */
-        dlerror();  /* clear dlerror because of glibc bug */
-	dlhandle = dlopen(s,RTLD_NOW);
+	dlhandle = wine_dlopen(s,RTLD_NOW,error,sizeof(error));
 	if (!dlhandle) {
-                dlerror();  /* clear dlerror because of glibc bug */
+                WARN("failed to load %s: %s\n", s, error);
 		HeapFree( GetProcessHeap(), 0, t );
 		SetLastError( ERROR_FILE_NOT_FOUND );
 		return NULL;
@@ -176,22 +175,20 @@ static FARPROC ELF_FindExportedFunction( WINE_MODREF *wm, LPCSTR funcName, BOOL 
 	LPVOID			fun;
 	int			i,nrofargs = 0;
 	ELF_STDCALL_STUB	*stub, *first_stub;
+	char			error[256];
 
 	if (!HIWORD(funcName)) {
 		ERR("Can't import from UNIX dynamic libs by ordinal, sorry.\n");
 		return (FARPROC)0;
 	}
-        dlerror();  /* clear dlerror() first */
-	fun = dlsym(wm->dlhandle,funcName);
+	fun = wine_dlsym(wm->dlhandle,funcName,error,sizeof(error));
         if (!fun)
         {
-            dlerror();  /* clear dlerror() to avoid glibc bug */
             /* we sometimes have an excess '_' at the beginning of the name */
             if (funcName[0]=='_')
             {
 		funcName++ ;
-		fun = dlsym(wm->dlhandle,funcName);
-                if (!fun) dlerror();  /* clear dlerror() to avoid glibc bug */
+		fun = wine_dlsym(wm->dlhandle,funcName,error,sizeof(error));
             }
         }
 	if (!fun) {
@@ -205,8 +202,7 @@ static FARPROC ELF_FindExportedFunction( WINE_MODREF *wm, LPCSTR funcName, BOOL 
 			*t = '\0';
 			nrofargs = 0;
 			sscanf(t+1,"%d",&nrofargs);
-			fun = dlsym(wm->dlhandle,fn);
-                        if (!fun) dlerror();  /* clear dlerror() to avoid glibc bug */
+			fun = wine_dlsym(wm->dlhandle,fn,error,sizeof(error));
 			HeapFree( GetProcessHeap(), 0, fn );
 		}
 	}
@@ -266,7 +262,7 @@ static FARPROC ELF_FindExportedFunction( WINE_MODREF *wm, LPCSTR funcName, BOOL 
 		fun=(FARPROC)stub;
 	}
 	if (!fun) {
-		FIXME("function %s not found: %s\n",funcName,dlerror());
+		FIXME("function %s not found: %s\n",funcName,error);
 		return fun;
 	}
 	fun = SNOOP_GetProcAddress(wm->module,funcName,stub-first_stub,fun);

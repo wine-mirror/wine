@@ -1505,7 +1505,7 @@ static void MODULE_FlushModrefs(void)
 
                 TRACE(" unloading %s\n", wm->filename);
                 /* VirtualFree( (LPVOID)wm->module, 0, MEM_RELEASE ); */  /* FIXME */
-                /* if (wm->dlhandle) dlclose( wm->dlhandle ); */  /* FIXME */
+                /* if (wm->dlhandle) wine_dlclose( wm->dlhandle, NULL, 0 ); */  /* FIXME */
                 FreeLibrary16(wm->hDummyMod);
                 HeapFree( GetProcessHeap(), 0, wm->deps );
                 HeapFree( GetProcessHeap(), 0, wm->filename );
