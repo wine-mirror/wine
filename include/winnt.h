@@ -1111,6 +1111,96 @@ typedef struct _STACK_FRAME_HEADER
 
 #endif  /* __PPC__ */
 
+#ifdef __ALPHA__
+
+/*
+ * FIXME:
+ *
+ * I have no idea if any of this is right as I just ripped 
+ * it from mingw-win32api.
+ *
+ */
+
+#define CONTEXT_ALPHA 0x20000
+#define CONTEXT_CONTROL (CONTEXT_ALPHA|1L)
+#define CONTEXT_FLOATING_POINT (CONTEXT_ALPHA|2L)
+#define CONTEXT_INTEGER (CONTEXT_ALPHA|4L)
+#define CONTEXT_FULL (CONTEXT_CONTROL|CONTEXT_FLOATING_POINT|CONTEXT_INTEGER)
+typedef struct _CONTEXT {
+	ULONGLONG FltF0;
+	ULONGLONG FltF1;
+	ULONGLONG FltF2;
+	ULONGLONG FltF3;
+	ULONGLONG FltF4;
+	ULONGLONG FltF5;
+	ULONGLONG FltF6;
+	ULONGLONG FltF7;
+	ULONGLONG FltF8;
+	ULONGLONG FltF9;
+	ULONGLONG FltF10;
+	ULONGLONG FltF11;
+	ULONGLONG FltF12;
+	ULONGLONG FltF13;
+	ULONGLONG FltF14;
+	ULONGLONG FltF15;
+	ULONGLONG FltF16;
+	ULONGLONG FltF17;
+	ULONGLONG FltF18;
+	ULONGLONG FltF19;
+	ULONGLONG FltF20;
+	ULONGLONG FltF21;
+	ULONGLONG FltF22;
+	ULONGLONG FltF23;
+	ULONGLONG FltF24;
+	ULONGLONG FltF25;
+	ULONGLONG FltF26;
+	ULONGLONG FltF27;
+	ULONGLONG FltF28;
+	ULONGLONG FltF29;
+	ULONGLONG FltF30;
+	ULONGLONG FltF31;
+	ULONGLONG IntV0;
+	ULONGLONG IntT0;
+	ULONGLONG IntT1;
+	ULONGLONG IntT2;
+	ULONGLONG IntT3;
+	ULONGLONG IntT4;
+	ULONGLONG IntT5;
+	ULONGLONG IntT6;
+	ULONGLONG IntT7;
+	ULONGLONG IntS0;
+	ULONGLONG IntS1;
+	ULONGLONG IntS2;
+	ULONGLONG IntS3;
+	ULONGLONG IntS4;
+	ULONGLONG IntS5;
+	ULONGLONG IntFp;
+	ULONGLONG IntA0;
+	ULONGLONG IntA1;
+	ULONGLONG IntA2;
+	ULONGLONG IntA3;
+	ULONGLONG IntA4;
+	ULONGLONG IntA5;
+	ULONGLONG IntT8;
+	ULONGLONG IntT9;
+	ULONGLONG IntT10;
+	ULONGLONG IntT11;
+	ULONGLONG IntRa;
+	ULONGLONG IntT12;
+	ULONGLONG IntAt;
+	ULONGLONG IntGp;
+	ULONGLONG IntSp;
+	ULONGLONG IntZero;
+	ULONGLONG Fpcr;
+	ULONGLONG SoftFpcr;
+	ULONGLONG Fir;
+	DWORD Psr;
+	DWORD ContextFlags;
+	DWORD Fill[4];
+} CONTEXT;
+
+#endif  /* __ALPHA__ */
+
 #ifdef __sparc__
 
 /*
@@ -1296,6 +1386,37 @@ static DWORD __builtin_return_address(int p_iDepth)
 
 #endif /* __PPC__ */
 
+#ifdef __ALPHA__
+
+/* FIXME: 
+ * use getcontext() to retrieve full context 
+ * I dont know if this is correct for alpha as was ripped from 
+ * PPC support.
+ */
+
+#define _GET_CONTEXT \
+    CONTEXT context;   \
+    do { memset(&context, 0, sizeof(CONTEXT));            \
+         context.ContextFlags = CONTEXT_CONTROL;          \
+       } while (0)
+
+#define DEFINE_REGS_ENTRYPOINT_0( name, fn ) \
+  void WINAPI name ( void ) \
+  { _GET_CONTEXT; fn( &context ); }
+#define DEFINE_REGS_ENTRYPOINT_1( name, fn, t1 ) \
+  void WINAPI name ( t1 a1 ) \
+  { _GET_CONTEXT; fn( a1, &context ); }
+#define DEFINE_REGS_ENTRYPOINT_2( name, fn, t1, t2 ) \
+  void WINAPI name ( t1 a1, t2 a2 ) \
+  { _GET_CONTEXT; fn( a1, a2, &context ); }
+#define DEFINE_REGS_ENTRYPOINT_3( name, fn, t1, t2, t3 ) \
+  void WINAPI name ( t1 a1, t2 a2, t3 a3 ) \
+  { _GET_CONTEXT; fn( a1, a2, a3, &context ); }
+#define DEFINE_REGS_ENTRYPOINT_4( name, fn, t1, t2, t3, t4 ) \
+  void WINAPI name ( t1 a1, t2 a2, t3 a3, t4 a4 ) \
+  { _GET_CONTEXT; fn( a1, a2, a3, a4, &context ); }
+
+#endif /* __ALPHA__ */
 
 #ifndef DEFINE_REGS_ENTRYPOINT_0
 #error You need to define DEFINE_REGS_ENTRYPOINT macros for your CPU
