@@ -2052,7 +2052,7 @@ ImageList_Remove (HIMAGELIST himl, INT i)
     }
 
     if ((i < -1) || (i >= himl->cCurImage)) {
-        ERR("index out of range! %d\n", i);
+        TRACE("index out of range! %d\n", i);
         return FALSE;
     }
 
