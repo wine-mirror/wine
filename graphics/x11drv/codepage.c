@@ -333,26 +333,22 @@ void X11DRV_DrawString_dbcs( fontObject* pfo, Display* pdisp,
 }
 
 static
-int X11DRV_TextWidth_cp932( fontObject* pfo, XChar2b* pstr, int count )
+int X11DRV_TextWidth_dbcs_2fonts( fontObject* pfo, XChar2b* pstr, int count )
 {
     int i;
     int width;
-    fontObject* pfo_ansi = XFONT_GetFontObject( pfo->prefobjs[0] );
+    int curfont;
+    fontObject* pfos[X11FONT_REFOBJS_MAX+1];
+
+    pfos[0] = XFONT_GetFontObject( pfo->prefobjs[0] );
+    pfos[1] = pfo;
+    if ( pfos[0] == NULL ) pfos[0] = pfo;
 
     width = 0;
     for ( i = 0; i < count; i++ )
     {
-	if ( pstr->byte1 != (BYTE)0 )
-	{
-	    width += TSXTextWidth16( pfo->fs, pstr, 1 );
-	}
-	else
-	{
-	    if ( pfo_ansi != NULL )
-	    {
-		width += TSXTextWidth16( pfo_ansi->fs, pstr, 1 );
-	    }
-	}
+	curfont = ( pstr->byte1 != 0 ) ? 1 : 0;
+	width += TSXTextWidth16( pfos[curfont]->fs, pstr, 1 );
 	pstr ++;
     }
 
@@ -360,9 +356,9 @@ int X11DRV_TextWidth_cp932( fontObject* pfo, XChar2b* pstr, int count )
 }
 
 static
-void X11DRV_DrawText_cp932( fontObject* pfo, Display* pdisp, Drawable d,
-                            GC gc, int x, int y, XTextItem16* pitems,
-                            int count )
+void X11DRV_DrawText_dbcs_2fonts( fontObject* pfo, Display* pdisp, Drawable d,
+                                  GC gc, int x, int y, XTextItem16* pitems,
+                                  int count )
 {
     int i, nitems, prevfont = -1, curfont;
     XChar2b* pstr;
@@ -372,6 +368,7 @@ void X11DRV_DrawText_cp932( fontObject* pfo, Display* pdisp, Drawable d,
 
     pfos[0] = XFONT_GetFontObject( pfo->prefobjs[0] );
     pfos[1] = pfo;
+    if ( pfos[0] == NULL ) pfos[0] = pfo;
 
     nitems = 0;
     for ( i = 0; i < count; i++ )
@@ -410,39 +407,32 @@ void X11DRV_DrawText_cp932( fontObject* pfo, Display* pdisp, Drawable d,
 }
 
 static
-void X11DRV_TextExtents_cp932( fontObject* pfo, XChar2b* pstr, int count,
-                               int* pdir, int* pascent, int* pdescent,
-                               int* pwidth )
+void X11DRV_TextExtents_dbcs_2fonts( fontObject* pfo, XChar2b* pstr, int count,
+                                     int* pdir, int* pascent, int* pdescent,
+                                     int* pwidth )
 {
     XCharStruct info;
     int ascent, descent, width;
     int i;
-    fontObject* pfo_ansi = XFONT_GetFontObject( pfo->prefobjs[0] );
+    int curfont;
+    fontObject* pfos[X11FONT_REFOBJS_MAX+1];
+
+    pfos[0] = XFONT_GetFontObject( pfo->prefobjs[0] );
+    pfos[1] = pfo;
+    if ( pfos[0] == NULL ) pfos[0] = pfo;
 
     width = 0;
     *pascent = 0;
     *pdescent = 0;
     for ( i = 0; i < count; i++ )
     {
-	if ( pstr->byte1 != (BYTE)0 )
-	{
-	    TSXTextExtents16( pfo->fs, pstr, 1, pdir,
-			      &ascent, &descent, &info );
-	    if ( *pascent < ascent ) *pascent = ascent;
-	    if ( *pdescent < descent ) *pdescent = descent;
-	    width += info.width;
-	}
-	else
-	{
-	    if ( pfo_ansi != NULL )
-	    {
-		TSXTextExtents16( pfo_ansi->fs, pstr, 1, pdir,
-				  &ascent, &descent, &info );
-		if ( *pascent < ascent ) *pascent = ascent;
-		if ( *pdescent < descent ) *pdescent = descent;
-		width += info.width;
-	    }
-	}
+	curfont = ( pstr->byte1 != 0 ) ? 1 : 0;
+	TSXTextExtents16( pfos[curfont]->fs, pstr, 1, pdir,
+			  &ascent, &descent, &info );
+	if ( *pascent < ascent ) *pascent = ascent;
+	if ( *pdescent < descent ) *pdescent = descent;
+	width += info.width;
+
 	pstr ++;
     }
 
@@ -544,9 +534,9 @@ const X11DRV_CP X11DRV_cptable[X11DRV_CPTABLE_COUNT] =
 	X11DRV_enum_subfont_charset_cp932,
 	X11DRV_unicode_to_char2b_cp932,
 	X11DRV_DrawString_dbcs,
-	X11DRV_TextWidth_cp932,
-	X11DRV_DrawText_cp932,
-	X11DRV_TextExtents_cp932,
+	X11DRV_TextWidth_dbcs_2fonts,
+	X11DRV_DrawText_dbcs_2fonts,
+	X11DRV_TextExtents_dbcs_2fonts,
         X11DRV_GetTextMetricsA_cp932,
     },
     { /* CP936 */
@@ -561,10 +551,10 @@ const X11DRV_CP X11DRV_cptable[X11DRV_CPTABLE_COUNT] =
     { /* CP949 */
 	X11DRV_enum_subfont_charset_cp949,
 	X11DRV_unicode_to_char2b_cp949,
-	X11DRV_DrawString_normal, /* FIXME */
-	X11DRV_TextWidth_normal, /* FIXME */
-	X11DRV_DrawText_normal, /* FIXME */
-	X11DRV_TextExtents_normal, /* FIXME */
+	X11DRV_DrawString_dbcs,
+	X11DRV_TextWidth_dbcs_2fonts,
+	X11DRV_DrawText_dbcs_2fonts,
+	X11DRV_TextExtents_dbcs_2fonts,
         X11DRV_GetTextMetricsA_normal, /* FIXME */
     },
     { /* CP950 */
