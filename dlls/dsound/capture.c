@@ -418,14 +418,14 @@ IDirectSoundCaptureImpl_Release( LPDIRECTSOUNDCAPTURE iface )
 
     if ( uRef == 0 ) {
         TRACE("deleting object\n");
+        if (This->capture_buffer)
+            IDirectSoundCaptureBufferImpl_Release(
+		(LPDIRECTSOUNDCAPTUREBUFFER8) This->capture_buffer);
+
         if (This->driver) { 
             IDsCaptureDriver_Close(This->driver);
             IDsCaptureDriver_Release(This->driver);
 	}
-
-        if (This->capture_buffer)
-            IDirectSoundCaptureBufferImpl_Release(
-		(LPDIRECTSOUNDCAPTUREBUFFER8) This->capture_buffer);
 
 	if (This->pwfx)
 	    HeapFree(GetProcessHeap(), 0, This->pwfx);
@@ -1012,6 +1012,9 @@ IDirectSoundCaptureBufferImpl_Release( LPDIRECTSOUNDCAPTUREBUFFER8 iface )
 
     if ( uRef == 0 ) {
         TRACE("deleting object\n");
+	if (This->dsound->state == STATE_CAPTURING)
+	    This->dsound->state = STATE_STOPPING;
+
         if (This->pdscbd)
             HeapFree(GetProcessHeap(),0, This->pdscbd);
 
