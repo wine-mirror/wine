@@ -746,7 +746,10 @@ static int _nt_parse_nk(HKEY hkey, char * base, nt_nk * nk, int level)
 	  if (!_nt_parse_vk(subkey, base, vk)) goto error1;
 	}
 
-	RegCloseKey(subkey);
+	/* Don't close the subkey if it is the hkey that was passed
+	 * (i.e. Level was <= 0)
+	 */
+	if( subkey!=hkey ) RegCloseKey(subkey);
 	return TRUE;
 	
 error1:	RegCloseKey(subkey);
