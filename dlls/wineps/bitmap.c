@@ -58,7 +58,7 @@ static BOOL get_bitmap_info( const void *ptr, LONG *width, LONG *height, WORD *b
     {
     case sizeof(BITMAPCOREHEADER):
         {
-            const BITMAPCOREHEADER *core = (BITMAPCOREHEADER *)header;
+            const BITMAPCOREHEADER *core = (const BITMAPCOREHEADER *)header;
             *width  = core->bcWidth;
             *height = core->bcHeight;
             *bpp    = core->bcBitCount;
@@ -320,7 +320,7 @@ INT PSDRV_StretchDIBits( PSDRV_PDEVICE *physDev, INT xDst, INT yDst, INT widthDs
 
         src_ptr = bits;
         src_ptr += (ySrc * widthbytes);
-        bitmap_size = heightSrc * widthSrc * 2;
+        bitmap_size = heightSrc * widthSrc * 3;
         dst_ptr = bitmap = HeapAlloc(GetProcessHeap(), 0, bitmap_size);
         
         for(line = 0; line < heightSrc; line++, src_ptr += widthbytes) {
