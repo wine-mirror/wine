@@ -51,6 +51,17 @@ BOOL WINAPI ImmConfigureIMEW(
 }
 
 /***********************************************************************
+ *		ImmDisableIME (IMM32.@)
+ */
+BOOL WINAPI ImmDisableIME(
+  DWORD idThread)
+{
+  FIXME("(idThread %lu): stub\n", idThread);
+  SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+  return FALSE;
+}
+
+/***********************************************************************
  *		ImmEscapeA (IMM32.@)
  */
 LRESULT WINAPI ImmEscapeA(

@@ -22,7 +22,7 @@ debug_channels (imm)
 @ stdcall ImmDestroyContext(long) ImmDestroyContext
 @ stdcall ImmDestroyIMCC(long) ImmDestroyIMCC
 @ stdcall ImmDestroySoftKeyboard(long) ImmDestroySoftKeyboard
-@ stub ImmDisableIME
+@ stdcall ImmDisableIME(long) ImmDisableIME
 @ stub ImmEnumInputContext
 @ stdcall ImmEnumRegisterWordA(long ptr str long str ptr) ImmEnumRegisterWordA
 @ stdcall ImmEnumRegisterWordW(long ptr wstr long wstr ptr) ImmEnumRegisterWordW
