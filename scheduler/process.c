@@ -18,7 +18,6 @@
 #include "drive.h"
 #include "module.h"
 #include "file.h"
-#include "heap.h"
 #include "thread.h"
 #include "winerror.h"
 #include "server.h"
@@ -102,6 +101,9 @@ unsigned int server_startticks;
 extern struct _ENVDB *ENV_BuildEnvironment(void);
 extern BOOL ENV_BuildCommandLine( char **argv );
 extern STARTUPINFOA current_startupinfo;
+
+/* scheduler/pthread.c */
+extern void PTHREAD_init_done(void);
 
 extern BOOL MAIN_MainInit(void);
 
@@ -303,9 +305,11 @@ static BOOL process_init( char *argv[] )
     if (create_flags & CREATE_NEW_CONSOLE)
         set_console_handles( current_startupinfo.hStdOutput );
 
-    /* Create the system and process heaps */
-    if (!HEAP_CreateSystemHeap()) return FALSE;
+    /* Create the process heap */
     current_process.heap = HeapCreate( HEAP_GROWABLE, 0, 0 );
+
+    /* Now we can use the pthreads routines */
+    PTHREAD_init_done();
 
     /* Copy the parent environment */
     if (!(current_process.env_db = ENV_BuildEnvironment())) return FALSE;

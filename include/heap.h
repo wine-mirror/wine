@@ -15,10 +15,7 @@
 #include "wine/unicode.h"
 #include "wine/windef16.h"  /* for SEGPTR */
 
-extern HANDLE SystemHeap;
-
 extern SEGPTR HEAP_GetSegptr( HANDLE heap, DWORD flags, LPCVOID ptr );
-extern BOOL HEAP_CreateSystemHeap(void);
 
 /* SEGPTR helper macros */
 
@@ -77,19 +74,5 @@ inline static LPSTR HEAP_strdupWtoA( HANDLE heap, DWORD flags, LPCWSTR str )
     if(ret) WideCharToMultiByte( CP_ACP, 0, str, -1, ret, len, NULL, NULL );
     return ret;
 }
-
-/* system heap private data */
-/* you must lock the system heap before using this structure */
-typedef struct
-{
-    void     *gdi;        /* GDI heap */
-    void     *user;       /* USER handle table */
-    void     *cursor;     /* cursor information */
-    void     *queue;      /* message queues descriptor */
-    void     *win;        /* windows descriptor */
-    void     *root;       /* X11 root window */
-} SYSTEM_HEAP_DESCR;
-
-extern SYSTEM_HEAP_DESCR *SystemHeapDescr;
 
 #endif  /* __WINE_HEAP_H */

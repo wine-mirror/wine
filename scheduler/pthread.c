@@ -16,7 +16,6 @@
 #include <unistd.h>
 
 #include "winbase.h"
-#include "heap.h"
 #include "thread.h"
 
 /* Currently this probably works only for glibc2,
@@ -88,6 +87,13 @@ typedef const void *key_data;
 
 #define P_OUTPUT(stuff) write(2,stuff,strlen(stuff))
 
+static int init_done;
+
+void PTHREAD_init_done(void)
+{
+    init_done = 1;
+}
+
 void __pthread_initialize(void)
 {
 }
@@ -106,7 +112,7 @@ strong_alias(__pthread_once, pthread_once);
 void __pthread_kill_other_threads_np(void)
 {
   /* FIXME: this is supposed to be preparation for exec() */
-  if (SystemHeap) P_OUTPUT("fixme:pthread_kill_other_threads_np\n");
+  if (init_done) P_OUTPUT("fixme:pthread_kill_other_threads_np\n");
 }
 strong_alias(__pthread_kill_other_threads_np, pthread_kill_other_threads_np);
 
@@ -125,13 +131,13 @@ int __pthread_atfork(void (*prepare)(void),
 		     void (*parent)(void),
 		     void (*child)(void))
 {
-    if (SystemHeap) EnterCriticalSection( &atfork_section );
+    if (init_done) EnterCriticalSection( &atfork_section );
     assert( atfork_count < MAX_ATFORK );
     atfork_prepare[atfork_count] = prepare;
     atfork_parent[atfork_count] = parent;
     atfork_child[atfork_count] = child;
     atfork_count++;
-    if (SystemHeap) LeaveCriticalSection( &atfork_section );
+    if (init_done) LeaveCriticalSection( &atfork_section );
     return 0;
 }
 strong_alias(__pthread_atfork, pthread_atfork);
@@ -178,19 +184,19 @@ strong_alias(__pthread_mutex_init, pthread_mutex_init);
 
 static void mutex_real_init( pthread_mutex_t *mutex )
 {
-  CRITICAL_SECTION *critsect = HeapAlloc(SystemHeap, 0, sizeof(CRITICAL_SECTION));
+  CRITICAL_SECTION *critsect = HeapAlloc(GetProcessHeap(), 0, sizeof(CRITICAL_SECTION));
   InitializeCriticalSection(critsect);
 
   if (InterlockedCompareExchange((PVOID*)&(((wine_mutex)mutex)->critsect),critsect,NULL) != NULL) {
     /* too late, some other thread already did it */
     DeleteCriticalSection(critsect);
-    HeapFree(SystemHeap, 0, critsect);
+    HeapFree(GetProcessHeap(), 0, critsect);
   }
 }
 
 int __pthread_mutex_lock(pthread_mutex_t *mutex)
 {
-  if (!SystemHeap) return 0;
+  if (!init_done) return 0;
   if (!((wine_mutex)mutex)->critsect) 
     mutex_real_init( mutex );
 
@@ -201,7 +207,7 @@ strong_alias(__pthread_mutex_lock, pthread_mutex_lock);
 
 int __pthread_mutex_trylock(pthread_mutex_t *mutex)
 {
-  if (!SystemHeap) return 0;
+  if (!init_done) return 0;
   if (!((wine_mutex)mutex)->critsect) 
     mutex_real_init( mutex );
 
@@ -233,7 +239,7 @@ int __pthread_mutex_destroy(pthread_mutex_t *mutex)
 #endif
   }
   DeleteCriticalSection(((wine_mutex)mutex)->critsect);
-  HeapFree(SystemHeap, 0, ((wine_mutex)mutex)->critsect);
+  HeapFree(GetProcessHeap(), 0, ((wine_mutex)mutex)->critsect);
   return 0;
 }
 strong_alias(__pthread_mutex_destroy, pthread_mutex_destroy);

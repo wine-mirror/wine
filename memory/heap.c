@@ -96,7 +96,6 @@ typedef struct tagHEAP
     CRITICAL_SECTION critSection;   /* Critical section for serialization */
     DWORD            flags;         /* Heap flags */
     DWORD            magic;         /* Magic number */
-    void            *private;       /* Private pointer for the user of the heap */
 } HEAP;
 
 #define HEAP_MAGIC       ((DWORD)('H' | ('E'<<8) | ('A'<<16) | ('P'<<24)))
@@ -105,10 +104,7 @@ typedef struct tagHEAP
 #define HEAP_MIN_BLOCK_SIZE  (8+sizeof(ARENA_FREE))  /* Min. heap block size */
 #define COMMIT_MASK          0xffff  /* bitmask for commit/decommit granularity */
 
-HANDLE SystemHeap = 0;
-
-SYSTEM_HEAP_DESCR *SystemHeapDescr = 0;
-
+static HEAP *systemHeap;   /* globally shared heap */
 static HEAP *processHeap;  /* main process heap */
 static HEAP *segptrHeap;   /* main segptr heap */
 static HEAP *firstHeap;    /* head of secondary heaps list */
@@ -541,9 +537,8 @@ static BOOL HEAP_InitSubHeap( HEAP *heap, LPVOID address, DWORD flags,
         /* Initialize critical section */
 
         InitializeCriticalSection( &heap->critSection );
-	if (!SystemHeap) MakeCriticalSectionGlobal( &heap->critSection );
     }
- 
+
     /* Create the first free block */
 
     HEAP_CreateFreeBlock( subheap, (LPBYTE)subheap + subheap->headerSize, 
@@ -1030,6 +1025,42 @@ static BOOL HEAP_IsRealArena( HEAP *heapPtr,   /* [in] ptr to the heap */
 
 
 /***********************************************************************
+ *           HEAP_CreateSystemHeap
+ *
+ * Create the system heap.
+ */
+static HANDLE HEAP_CreateSystemHeap(void)
+{
+    int created;
+
+    HANDLE map = CreateFileMappingA( INVALID_HANDLE_VALUE, NULL, SEC_COMMIT | PAGE_READWRITE,
+                                     0, HEAP_DEF_SIZE, "__SystemHeap" );
+    if (!map) return 0;
+    created = (GetLastError() != ERROR_ALREADY_EXISTS);
+
+    if (!(systemHeap = MapViewOfFileEx( map, FILE_MAP_ALL_ACCESS, 0, 0, 0, SYSTEM_HEAP_BASE )))
+    {
+        /* pre-defined address not available, use any one */
+        ERR( "system heap base address %p not available\n", SYSTEM_HEAP_BASE );
+        return 0;
+    }
+
+    if (created)  /* newly created heap */
+    {
+        HEAP_InitSubHeap( systemHeap, systemHeap, HEAP_SHARED, 0, HEAP_DEF_SIZE );
+        MakeCriticalSectionGlobal( &systemHeap->critSection );
+    }
+    else
+    {
+        /* wait for the heap to be initialized */
+        while (!systemHeap->critSection.LockSemaphore) Sleep(1);
+    }
+    CloseHandle( map );
+    return (HANDLE)systemHeap;
+}
+
+
+/***********************************************************************
  *           HeapCreate   (KERNEL32.336)
  * RETURNS
  *	Handle of heap: Success
@@ -1044,7 +1075,8 @@ HANDLE WINAPI HeapCreate(
 
     if ( flags & HEAP_SHARED ) {
         WARN( "Shared Heap requested, returning system heap.\n" );
-        return SystemHeap;
+        if (!systemHeap) HEAP_CreateSystemHeap();
+        return (HANDLE)systemHeap;
     }
 
     /* Allocate the heap block */
@@ -1095,14 +1127,14 @@ BOOL WINAPI HeapDestroy( HANDLE heap /* [in] Handle of heap */ )
     HEAP *heapPtr = HEAP_GetPtr( heap );
     SUBHEAP *subheap;
 
-    if ( heap == SystemHeap ) { 
-        WARN( "attempt to destroy system heap, returning TRUE!\n" );
-        return TRUE;
-    }
-     
     TRACE("%08x\n", heap );
     if (!heapPtr) return FALSE;
 
+    if (heapPtr == systemHeap)
+    {
+        WARN( "attempt to destroy system heap, returning TRUE!\n" );
+        return TRUE;
+    }
     if (heapPtr == processHeap)  /* cannot delete the main process heap */
     {
         SetLastError( ERROR_INVALID_PARAMETER );
@@ -1604,74 +1636,6 @@ HW_end:
 
 
 /***********************************************************************
- *           HEAP_CreateSystemHeap
- *
- * Create the system heap.
- */
-BOOL HEAP_CreateSystemHeap(void)
-{
-    SYSTEM_HEAP_DESCR *descr;
-    HANDLE heap;
-    HEAP *heapPtr;
-    int created;
-
-    HANDLE map = CreateFileMappingA( INVALID_HANDLE_VALUE, NULL, SEC_COMMIT | PAGE_READWRITE,
-                                     0, HEAP_DEF_SIZE, "__SystemHeap" );
-    if (!map) return FALSE;
-    created = (GetLastError() != ERROR_ALREADY_EXISTS);
-
-    if (!(heapPtr = MapViewOfFileEx( map, FILE_MAP_ALL_ACCESS, 0, 0, 0, SYSTEM_HEAP_BASE )))
-    {
-        /* pre-defined address not available, use any one */
-        fprintf( stderr, "Warning: system heap base address %p not available\n",
-                 SYSTEM_HEAP_BASE );
-        if (!(heapPtr = MapViewOfFile( map, FILE_MAP_ALL_ACCESS, 0, 0, 0 )))
-        {
-            CloseHandle( map );
-            return FALSE;
-        }
-    }
-    heap = (HANDLE)heapPtr;
-
-    if (created)  /* newly created heap */
-    {
-        HEAP_InitSubHeap( heapPtr, heapPtr, HEAP_SHARED, 0, HEAP_DEF_SIZE );
-        HeapLock( heap );
-        descr = heapPtr->private = HeapAlloc( heap, HEAP_ZERO_MEMORY, sizeof(*descr) );
-        assert( descr );
-    }
-    else
-    {
-        /* wait for the heap to be initialized */
-        while (!heapPtr->private) Sleep(1);
-        HeapLock( heap );
-        /* remap it to the right address if necessary */
-        if (heapPtr->subheap.heap != heapPtr)
-        {
-            void *base = heapPtr->subheap.heap;
-            HeapUnlock( heap );
-            UnmapViewOfFile( heapPtr );
-            if (!(heapPtr = MapViewOfFileEx( map, FILE_MAP_ALL_ACCESS, 0, 0, 0, base )))
-            {
-                fprintf( stderr, "Couldn't map system heap at the correct address (%p)\n", base );
-                CloseHandle( map );
-                return FALSE;
-            }
-            heap = (HANDLE)heapPtr;
-            HeapLock( heap );
-        }
-        descr = heapPtr->private;
-        assert( descr );
-    }
-    SystemHeap = heap;
-    SystemHeapDescr = descr;
-    HeapUnlock( heap );
-    CloseHandle( map );
-    return TRUE;
-}
-
-
-/***********************************************************************
  *           GetProcessHeap    (KERNEL32.259)
  */
 HANDLE WINAPI GetProcessHeap(void)
@@ -1841,7 +1805,7 @@ HANDLE WINAPI Local32Init16( WORD segment, DWORD tableSize,
         LPBYTE oldBase = (LPBYTE)GetSelectorBase( segment );
         memcpy( base, oldBase, segSize );
         GLOBAL_MoveBlock( segment, base, totSize );
-        HeapFree( SystemHeap, 0, oldBase );
+        HeapFree( GetProcessHeap(), 0, oldBase );
     }
     
     return (HANDLE)header;
