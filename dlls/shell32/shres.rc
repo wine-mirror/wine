@@ -129,6 +129,8 @@ STRINGTABLE DISCARDABLE
 {
 	IDS_CREATEFOLDER_DENIED "Can not create new Folder: Permission denied."
 	IDS_CREATEFOLDER_CAPTION "Error during creating a new folder"
+	IDS_DELETEFOLDER_TEXT "Are you sure you want to delete %1 and all it's subfolders?"
+	IDS_DELETEFOLDER_CAPTION "Confirm file delete"
 }
 
 shv_accel ACCELERATORS

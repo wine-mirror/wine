@@ -209,6 +209,70 @@ static HRESULT SHELL32_GetDisplayNameOfChild(
 }
 
 /***********************************************************************
+ *  SHELL32_GetItemAttributes
+ *
+ * NOTES
+ * observerd values:
+ *  folder:	0xE0000177	FILESYSTEM | HASSUBFOLDER | FOLDER
+ *  file:	0x40000177	FILESYSTEM
+ *  drive:	0xf0000144	FILESYSTEM | HASSUBFOLDER | FOLDER | FILESYSANCESTOR
+ *  mycomputer:	0xb0000154	HASSUBFOLDER | FOLDER | FILESYSANCESTOR
+ *  (seems to be default for shell extensions if no registry entry exists)
+ *
+ * This functions does not set flags!! It only resets flags when nessesary.
+ */
+static HRESULT SHELL32_GetItemAttributes(
+	IShellFolder * psf,
+	LPITEMIDLIST pidl,
+	LPDWORD pdwAttributes)
+{
+        GUID const * clsid;
+	DWORD dwAttributes;
+	
+	TRACE("0x%08lx\n", *pdwAttributes);
+
+	if (*pdwAttributes & (0xcff3fe88))
+	  WARN("attribute 0x%08lx not implemented\n", *pdwAttributes);
+	*pdwAttributes &= ~SFGAO_LINK; /* FIXME: for native filedialogs */
+
+	if (_ILIsDrive(pidl))
+	{
+	  *pdwAttributes &= 0xf0000144;
+	}
+	else if ((clsid=_ILGetGUIDPointer(pidl)))
+	{
+	  if (HCR_GetFolderAttributes(clsid, &dwAttributes))
+	  {
+	    *pdwAttributes &= dwAttributes;
+	  }
+	  else
+	  {
+	    *pdwAttributes &= 0xb0000154;
+	  }	  
+	}
+	else if (_ILGetDataPointer(pidl))
+	{
+	  dwAttributes = _ILGetFileAttributes(pidl, NULL, 0);
+	  *pdwAttributes &= ~SFGAO_FILESYSANCESTOR;
+
+	  if(( SFGAO_FOLDER & *pdwAttributes) && !(dwAttributes & FILE_ATTRIBUTE_DIRECTORY))
+	      *pdwAttributes &= ~(SFGAO_FOLDER|SFGAO_HASSUBFOLDER);
+
+	  if(( SFGAO_HIDDEN & *pdwAttributes) && !(dwAttributes & FILE_ATTRIBUTE_HIDDEN))
+	      *pdwAttributes &= ~SFGAO_HIDDEN;
+
+	  if(( SFGAO_READONLY & *pdwAttributes) && !(dwAttributes & FILE_ATTRIBUTE_READONLY))
+	      *pdwAttributes &= ~SFGAO_READONLY;
+	}
+	else
+	{
+	  *pdwAttributes &= 0xb0000154;
+	}
+	TRACE("-- 0x%08lx\n", *pdwAttributes);
+	return S_OK;
+}
+
+/***********************************************************************
 *   IShellFolder implementation
 */
 
@@ -604,6 +668,17 @@ static HRESULT WINAPI IShellFolder_fnParseDisplayName(
 	    }
 	    else
 	    {
+	       if (pdwAttributes && *pdwAttributes)
+	       {
+	         SHELL32_GetItemAttributes(_IShellFolder_(This), pidlTemp, pdwAttributes);
+/*	         WIN32_FIND_DATAA fd;
+	         SHGetDataFromIDListA(_IShellFolder_(This), pidlTemp, SHGDFIL_FINDDATA, &fd, sizeof(fd));
+		 if (!(FILE_ATTRIBUTE_DIRECTORY & fd.dwFileAttributes))
+		   *pdwAttributes &= ~SFGAO_FOLDER;
+		 if (FILE_ATTRIBUTE_READONLY  & fd.dwFileAttributes)
+		   *pdwAttributes &= ~(SFGAO_CANDELETE|SFGAO_CANMOVE|SFGAO_CANRENAME );
+*/
+	       }
 	       hr = S_OK;
 	    }
 	  }
@@ -682,11 +757,16 @@ static HRESULT WINAPI IShellFolder_fnBindToObject( IShellFolder2 * iface, LPCITE
 	      return E_FAIL;
 	    }
 	}
-	else
+	else if(_ILIsFolder(pidl))
 	{
 	  LPITEMIDLIST pidltemp = ILCloneFirst(pidl);
 	  pShellFolder = IShellFolder_Constructor(iface, pidltemp);
 	  ILFree(pidltemp);
+	}
+	else
+	{
+	  ERR("can't bind to a file\n");
+	  return E_FAIL;
 	}
 	
 	if (_ILIsPidlSimple(pidl))
@@ -901,19 +981,8 @@ static HRESULT WINAPI IShellFolder_fnGetAttributesOf(
 	while (cidl > 0 && *apidl)
 	{
 	  pdump (*apidl);
-	  if (_ILIsFolder( *apidl))
-	  {
-	    *rgfInOut &= 0xe0000177;
-	    goto next;
-	  }
-	  else if (_ILIsValue( *apidl))
-	  {
-	    *rgfInOut &= 0x40000177;
-	    goto next;
-	  }
-	  hr = E_INVALIDARG;
-
-next:	  apidl++;
+	  SHELL32_GetItemAttributes(_IShellFolder_(This), *apidl, rgfInOut);
+	  apidl++;
 	  cidl--;
 	} 
 
@@ -1436,7 +1505,7 @@ static HRESULT WINAPI ISFHelper_fnDeleteItems(
 	    LPITEMIDLIST pidl;
 
 	    MESSAGE("delete %s\n", szPath);
-	    if (! RemoveDirectoryA(szPath)) return E_FAIL;
+	    if (! SHELL_DeleteDirectoryA(szPath, TRUE)) return E_FAIL;
 	    pidl = ILCombine(This->absPidl, apidl[i]);
 	    SHChangeNotifyA(SHCNE_RMDIR, SHCNF_IDLIST, pidl, NULL);
 	    SHFree(pidl); 
@@ -1625,6 +1694,11 @@ static HRESULT WINAPI ISF_Desktop_fnParseDisplayName(
 	else
 	{
 	  hr = S_OK;
+
+	  if (pdwAttributes && *pdwAttributes)
+	  {
+	    SHELL32_GetItemAttributes(_IShellFolder_(This), pidlTemp, pdwAttributes);
+	  }
 	}
 
 	*ppidl = pidlTemp;
@@ -1769,12 +1843,14 @@ static HRESULT WINAPI ISF_Desktop_fnCreateViewObject( IShellFolder2 * iface,
 /**************************************************************************
 *  ISF_Desktop_fnGetAttributesOf
 */
-static HRESULT WINAPI ISF_Desktop_fnGetAttributesOf(IShellFolder2 * iface,UINT cidl,LPCITEMIDLIST *apidl,DWORD *rgfInOut)
+static HRESULT WINAPI ISF_Desktop_fnGetAttributesOf(
+	IShellFolder2 * iface,
+	UINT cidl,
+	LPCITEMIDLIST *apidl,
+	DWORD *rgfInOut)
 {
 	_ICOM_THIS_From_IShellFolder2(IGenericSFImpl, iface)
 
-	GUID		const * clsid;
-	DWORD		attributes;
 	HRESULT		hr = S_OK;
 
 	TRACE("(%p)->(cidl=%d apidl=%p mask=0x%08lx)\n",This,cidl,apidl, *rgfInOut);
@@ -1785,37 +1861,8 @@ static HRESULT WINAPI ISF_Desktop_fnGetAttributesOf(IShellFolder2 * iface,UINT c
 	while (cidl > 0 && *apidl)
 	{
 	  pdump (*apidl);
-
-	  if ((clsid=_ILGetGUIDPointer(*apidl)))
-	  {
-	    if (IsEqualIID(clsid, &CLSID_MyComputer))
-	    {
-	      *rgfInOut &= 0xb0000154;
-	      goto next;
-	    }
-	    else if (HCR_GetFolderAttributes(clsid, &attributes))
-	    {
-	      *rgfInOut &= attributes;
-	      goto next;
-	    }
-	    else
-	    { /* some shell-extension */
-	      *rgfInOut &= 0xb0000154;
-	    }
-	  }
-	  else if (_ILIsFolder( *apidl))
-	  {
-	    *rgfInOut &= 0xe0000177;
-	    goto next;
-	  }
-	  else if (_ILIsValue( *apidl))
-	  {
-	    *rgfInOut &= 0x40000177;
-	    goto next;
-	  }
-	  hr = E_INVALIDARG;
-
-next:	  apidl++;
+	  SHELL32_GetItemAttributes(_IShellFolder_(This), *apidl, rgfInOut);
+	  apidl++;
 	  cidl--;
 	}
 
@@ -2086,6 +2133,10 @@ static HRESULT WINAPI ISF_MyComputer_fnParseDisplayName(
 	  }
 	  else
 	  {
+	    if (pdwAttributes && *pdwAttributes)
+	    {
+	      SHELL32_GetItemAttributes(_IShellFolder_(This), pidlTemp, pdwAttributes);
+	    }
 	    hr = S_OK;
 	  }
 	  *ppidl = pidlTemp;
@@ -2213,12 +2264,14 @@ static HRESULT WINAPI ISF_MyComputer_fnCreateViewObject( IShellFolder2 * iface,
 /**************************************************************************
 *  ISF_MyComputer_fnGetAttributesOf
 */
-static HRESULT WINAPI ISF_MyComputer_fnGetAttributesOf(IShellFolder2 * iface,UINT cidl,LPCITEMIDLIST *apidl,DWORD *rgfInOut)
+static HRESULT WINAPI ISF_MyComputer_fnGetAttributesOf(
+	IShellFolder2 * iface,
+	UINT cidl,
+	LPCITEMIDLIST *apidl,
+	DWORD *rgfInOut)
 {
 	_ICOM_THIS_From_IShellFolder2(IGenericSFImpl, iface)
 
-	GUID		const * clsid;
-	DWORD		attributes;
 	HRESULT		hr = S_OK;
 
 	TRACE("(%p)->(cidl=%d apidl=%p mask=0x%08lx)\n",This,cidl,apidl,*rgfInOut);
@@ -2226,28 +2279,11 @@ static HRESULT WINAPI ISF_MyComputer_fnGetAttributesOf(IShellFolder2 * iface,UIN
 	if ( (!cidl) || (!apidl) || (!rgfInOut))
 	  return E_INVALIDARG;
 
-	*rgfInOut = 0xffffffff;
-
 	while (cidl > 0 && *apidl)
 	{
 	  pdump (*apidl);
-
-	  if (_ILIsDrive(*apidl))
-	  {
-	    *rgfInOut &= 0xf0000144;
-	    goto next;
-	  }
-	  else if ((clsid=_ILGetGUIDPointer(*apidl)))
-	  {
-	    if (HCR_GetFolderAttributes(clsid, &attributes))
-	    {
-	      *rgfInOut &= attributes;
-	      goto next;
-	    }
-	  }
-	  hr = E_INVALIDARG;
-
-next:	  apidl++;
+	  SHELL32_GetItemAttributes(_IShellFolder_(This), *apidl, rgfInOut);
+	  apidl++;
 	  cidl--;
 	}
 

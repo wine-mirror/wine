@@ -72,12 +72,8 @@ extern UINT cfFileContents;
 * IShellView interface
 */
 
-
-
 typedef GUID SHELLVIEWID;
 #define SV_CLASS_NAME   ("SHELLDLL_DefView")
-
-UINT WINAPI SHMapPIDLToSystemImageListIndex(LPSHELLFOLDER sh, LPITEMIDLIST pidl, UINT * pIndex);
 
 /****************************************************************************
  * IShellIcon interface
@@ -340,29 +336,6 @@ typedef struct _SHELLVIEWDATA   /* idl */
 } SHELLVIEWDATA, * LPSHELLVIEWDATA;
 
 DWORD WINAPI SHGetMalloc(LPMALLOC *lpmal) ;
-
-/****************************************************************************
- *	Shell File Menu API
- */
-/* FileMenu_Create nSelHeight */
-#define	FM_FULL_SELHEIGHT	-1;
-#define	FM_DEFAULT_SELHEIGHT	0
-
-/* FileMenu_Create uFlags */
-#define	FMF_SMALL_ICONS		0x00
-#define	FMF_LARGE_ICONS		0x08
-#define	FMF_NO_COLUMN_BREAK	0x10
-
-/* FileMenu_InsertUsingPidl uFlags */
-#define	FMF_NO_EMPTY_ITEM	0x01
-#define	FMF_NO_PROGRAM_GROUPS	0x04
-
-typedef void (CALLBACK * LPFNFMCALLBACK)(LPCITEMIDLIST pidlFolder, LPCITEMIDLIST pidlFile);
-
-/* FileMenu_AppendItem lpszText */
-#define	FM_SEPARATOR		(LPCSTR)1
-#define	FM_BLANK_ICON		-1
-#define	FM_DEFAULT_HEIGHT	0
 
 /**********************************************************************
  * SHGetSettings ()

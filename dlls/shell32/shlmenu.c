@@ -444,7 +444,7 @@ HMENU WINAPI FileMenu_FindSubMenuByPidl(
 /*************************************************************************
  * FileMenu_AppendFilesForPidl			[SHELL32.124]
  */
-HMENU WINAPI FileMenu_AppendFilesForPidl(
+int WINAPI FileMenu_AppendFilesForPidl(
 	HMENU	hmenu,
 	LPCITEMIDLIST	pidl,
 	BOOL	bAddSeperator)
@@ -490,7 +490,7 @@ int WINAPI FileMenu_AddFilesForPidl (
 /*************************************************************************
  * FileMenu_TrackPopupMenuEx			[SHELL32.116]
  */
-HRESULT WINAPI FileMenu_TrackPopupMenuEx (
+BOOL WINAPI FileMenu_TrackPopupMenuEx (
 	HMENU hMenu,
 	UINT uFlags,
 	int x,

@@ -11,192 +11,813 @@
 #include "winversion.h"
 #include "winreg.h"
 #include "crtdll.h"
-#include "tchar.h"
 
 #include "shlobj.h"
 #include "shell32_main.h"
 #include "windef.h"
 #include "options.h"
+#include "wine/undocshell.h"
+#include "shlwapi.h"
 
 DEFAULT_DEBUG_CHANNEL(shell)
 
-/* Supported protocols for PathIsURL */
-LPSTR SupportedProtocol[] = {"http","https","ftp","gopher","file","mailto",""};
+/*
+	Combining and Constructing paths
+*/
 
 /*************************************************************************
- * PathIsRootA
+ * PathAppendA		[SHLWAPI.@]
+ * 
+ * NOTES
+ *  concat path lpszPath2 onto lpszPath1
+ *
+ * FIXME
+ *  the resulting path is also canonicalized
  */
-BOOL WINAPI PathIsRootA(LPCSTR x)
-{	TRACE("%s\n",x);
-	if (*(x+1)==':' && *(x+2)=='\\')		/* "X:\" */
-	  return 1;
-	if (*x=='\\')		/* "\" */
-	  return 0;
-	if (x[0]=='\\' && x[1]=='\\')		/* UNC "\\<xx>\" */
-	{ int	foundbackslash = 0;
-	  x=x+2;
-	  while (*x)
-	  { if (*x++=='\\')
-	      foundbackslash++;
-	  }
-	  if (foundbackslash<=1)	/* max 1 \ more ... */
-	    return 1;
+LPSTR WINAPI PathAppendA(
+	LPSTR lpszPath1,
+	LPCSTR lpszPath2) 
+{
+	TRACE("%s %s\n",lpszPath1, lpszPath2);
+	while (lpszPath2[0]=='\\') lpszPath2++;
+	return PathCombineA(lpszPath1,lpszPath1,lpszPath2);
+}
+
+/*************************************************************************
+ * PathAppendW		[SHLWAPI.@]
+ */
+LPSTR WINAPI PathAppendW(
+	LPWSTR lpszPath1,
+	LPCWSTR lpszPath2) 
+{
+	FIXME("%s %s\n",debugstr_w(lpszPath1), debugstr_w(lpszPath2));
+	return NULL;
+}
+
+/*************************************************************************
+ * PathAppendAW		[SHELL32.36]
+ */
+LPVOID WINAPI PathAppendAW(
+	LPVOID lpszPath1,
+	LPCVOID lpszPath2)
+{
+	if (VERSION_OsIsUnicode())
+	  return PathAppendW(lpszPath1, lpszPath2);
+	return PathAppendA(lpszPath1, lpszPath2);
+}
+
+/*************************************************************************
+ * PathCombineA		[SHLWAPI.@]
+ * 
+ * NOTES
+ *  if lpszFile='.' skip it
+ *  szDest can be equal to lpszFile. Thats why we use sTemp
+ *
+ * FIXME
+ *  the resulting path is also canonicalized
+ *  If lpszSrcPath2 starts with a backslash it is appended 
+ *  to the root of lpszSrcPath1.
+ */
+LPSTR WINAPI PathCombineA(
+	LPSTR szDest,
+	LPCSTR lpszDir,
+	LPCSTR lpszFile) 
+{
+	char sTemp[MAX_PATH];
+	TRACE("%p %p->%s %p->%s\n",szDest, lpszDir, lpszDir, lpszFile, lpszFile);
+	
+	
+	if (!lpszFile || !lpszFile[0] || (lpszFile[0]=='.' && !lpszFile[1]) ) 
+	{
+	  strcpy(szDest,lpszDir);
+	  return szDest;
 	}
-	return 0;
-}
 
-/*************************************************************************
- * PathIsRootW
- */
-BOOL WINAPI PathIsRootW(LPCWSTR x) 
-{	TRACE("%s\n",debugstr_w(x));
-	if (*(x+1)==':' && *(x+2)=='\\')		/* "X:\" */
-	  return 1;
-	if (*x == (WCHAR) '\\')		/* "\" */
-	  return 0;
-	if (x[0]==(WCHAR)'\\' && x[1]==(WCHAR)'\\')	/* UNC "\\<xx>\" */
-	{ int	foundbackslash = 0;
-	  x=x+2;
-	  while (*x) 
-	  { if (*x++==(WCHAR)'\\')
-	      foundbackslash++;
-	  }
-	  if (foundbackslash<=1)	/* max 1 \ more ... */
-	    return 1;
+	/*  if lpszFile is a complete path don't care about lpszDir */
+	if (PathIsRootA(lpszFile))
+	{
+	  strcpy(szDest,lpszFile);
 	}
-	return 0;
+	else
+	{
+	  strcpy(sTemp,lpszDir);
+	  PathAddBackslashA(sTemp);
+	  strcat(sTemp,lpszFile);
+	  strcpy(szDest,sTemp);
+	}
+	return szDest;
 }
 
 /*************************************************************************
- * PathIsRoot [SHELL32.29]
+ * PathCombineW		 [SHLWAPI.@]
  */
-BOOL WINAPI PathIsRootAW(LPCVOID x) 
-{	if (VERSION_OsIsUnicode())
-	  return PathIsRootW(x);
-	return PathIsRootA(x);
+LPWSTR WINAPI PathCombineW(
+	LPWSTR szDest,
+	LPCWSTR lpszDir,
+	LPCWSTR lpszFile) 
+{
+	WCHAR sTemp[MAX_PATH];
+	TRACE("%p %p->%s %p->%s\n",szDest, lpszDir, debugstr_w(lpszDir),
+			 lpszFile, debugstr_w(lpszFile));
+	
+	
+	if (!lpszFile || !lpszFile[0] || (lpszFile[0]==(WCHAR)'.' && !lpszFile[1]) ) 
+	{
+	  CRTDLL_wcscpy(szDest,lpszDir);
+	  return szDest;
+	}
 
+	/*  if lpszFile is a complete path don't care about lpszDir */
+	if (PathIsRootW(lpszFile))
+	{
+	  CRTDLL_wcscpy(szDest,lpszFile);
+	}
+	else
+	{
+	  CRTDLL_wcscpy(sTemp,lpszDir);
+	  PathAddBackslashW(sTemp);
+	  CRTDLL_wcscat(sTemp,lpszFile);
+	  CRTDLL_wcscpy(szDest,sTemp);
+	}
+	return szDest;
 }
 
 /*************************************************************************
- * PathBuildRootA [SHELL32.30]
+ * PathCombineAW	 [SHELL32.37]
  */
-LPSTR WINAPI PathBuildRootA(LPSTR root,BYTE drive) {
-  TRACE("%p %i\n",root, drive);
-	strcpy(root,"A:\\");
-	root[0]+=drive;
-	return root;
+LPVOID WINAPI PathCombineAW(
+	LPVOID szDest,
+	LPCVOID lpszDir,
+	LPCVOID lpszFile) 
+{
+	if (VERSION_OsIsUnicode())
+	  return PathCombineW( szDest, lpszDir, lpszFile );
+	return PathCombineA( szDest, lpszDir, lpszFile );
 }
 
 /*************************************************************************
- * PathFindExtensionA
+ * PathAddBackslashA	[SHLWAPI.@]
  *
  * NOTES
- *     returns pointer to last . in last pathcomponent or at \0.
+ *     append \ if there is none
  */
-LPCSTR WINAPI PathFindExtensionA(LPCSTR path) 
-{	LPCSTR   lastpoint = NULL;
-	TRACE("%p %s\n",path,path);
-	while (*path) 
-	{ if (*path=='\\'||*path==' ')
+LPSTR WINAPI PathAddBackslashA(LPSTR lpszPath)
+{
+	int len;
+	TRACE("%p->%s\n",lpszPath,lpszPath);
+
+	len = strlen(lpszPath);
+	if (len && lpszPath[len-1]!='\\') 
+	{
+	  lpszPath[len]  = '\\';
+	  lpszPath[len+1]= 0x00;
+	  return lpszPath+len+1;
+	}
+	return lpszPath+len;
+}
+
+/*************************************************************************
+ * PathAddBackslashW	[SHLWAPI.@]
+ */
+LPWSTR WINAPI PathAddBackslashW(LPWSTR lpszPath)
+{
+	int len;
+	TRACE("%p->%s\n",lpszPath,debugstr_w(lpszPath));
+
+	len = CRTDLL_wcslen(lpszPath);
+	if (len && lpszPath[len-1]!=(WCHAR)'\\') 
+	{
+	  lpszPath[len]  = (WCHAR)'\\';
+	  lpszPath[len+1]= 0x00;
+	  return lpszPath+len+1;
+	}
+	return lpszPath+len;
+}
+
+/*************************************************************************
+ * PathAddBackslashAW		[SHELL32.32]
+ */
+LPVOID WINAPI PathAddBackslashAW(LPVOID lpszPath)
+{
+	if(VERSION_OsIsUnicode())
+	  return PathAddBackslashW(lpszPath);
+	return PathAddBackslashA(lpszPath);
+}
+
+/*************************************************************************
+ * PathBuildRootA		[SHLWAPI.@]
+ */
+LPSTR WINAPI PathBuildRootA(LPSTR lpszPath, int drive) 
+{
+	TRACE("%p %i\n",lpszPath, drive);
+
+	strcpy(lpszPath,"A:\\");
+	lpszPath[0]+=drive;
+	return lpszPath;
+}
+
+/*************************************************************************
+ * PathBuildRootW		[SHLWAPI.@]
+ */
+LPWSTR WINAPI PathBuildRootW(LPWSTR lpszPath, int drive) 
+{
+	TRACE("%p %i\n",debugstr_w(lpszPath), drive);
+
+	lstrcpyAtoW(lpszPath,"A:\\");
+	lpszPath[0]+=drive;
+	return lpszPath;
+}
+
+/*************************************************************************
+ * PathBuildRootAW		[SHELL32.30]
+ */
+LPVOID WINAPI PathBuildRootAW(LPVOID lpszPath, int drive)
+{
+	if(VERSION_OsIsUnicode())
+	  return PathBuildRootW(lpszPath, drive);
+	return PathBuildRootA(lpszPath, drive);
+}
+
+/*
+	Extracting Component Parts
+*/
+
+/*************************************************************************
+ * PathFindFileNameA	[SHLWAPI.@]
+ */
+LPSTR WINAPI PathFindFileNameA(LPCSTR lpszPath)
+{
+	LPCSTR aslash;
+	aslash = lpszPath;
+
+	TRACE("%s\n",aslash);
+	while (lpszPath[0]) 
+	{
+	  if (((lpszPath[0]=='\\') || (lpszPath[0]==':')) && lpszPath[1] && lpszPath[1]!='\\')
+	      aslash = lpszPath+1;
+	  lpszPath++;
+	}
+	return (LPSTR)aslash;
+
+}
+
+/*************************************************************************
+ * PathFindFileNameW	[SHLWAPI.@]
+ */
+LPWSTR WINAPI PathFindFileNameW(LPCWSTR lpszPath)
+{
+	LPCWSTR wslash;
+	wslash = lpszPath;
+
+	TRACE("%s\n",debugstr_w(wslash));
+	while (lpszPath[0]) 
+	{
+	  if (((lpszPath[0]=='\\') || (lpszPath[0]==':')) && lpszPath[1] && lpszPath[1]!='\\')
+	    wslash = lpszPath+1;
+	  lpszPath++;
+	}
+	return (LPWSTR)wslash;	
+}
+
+/*************************************************************************
+ * PathFindFileNameAW	[SHELL32.34]
+ */
+LPVOID WINAPI PathFindFileNameAW(LPCVOID lpszPath)
+{
+	if(VERSION_OsIsUnicode())
+	  return PathFindFileNameW(lpszPath);
+	return PathFindFileNameA(lpszPath);
+}
+
+/*************************************************************************
+ * PathFindExtensionA	[SHLWAPI.@]
+ *
+ * NOTES
+ *     returns pointer to last . in last lpszPath component or at \0.
+ */
+
+LPSTR WINAPI PathFindExtensionA(LPCSTR lpszPath) 
+{
+	LPCSTR   lastpoint = NULL;
+
+	TRACE("%p %s\n",lpszPath,lpszPath);
+
+	while (*lpszPath) 
+	{
+	  if (*lpszPath=='\\'||*lpszPath==' ')
 	    lastpoint=NULL;
-	  if (*path=='.')
-	    lastpoint=path;
-	  path++;
+	  if (*lpszPath=='.')
+	    lastpoint=lpszPath;
+	  lpszPath++;
 	}
-	return lastpoint?lastpoint:path;
+	return (LPSTR)(lastpoint?lastpoint:lpszPath);
 }
 
 /*************************************************************************
- * PathFindExtensionW
- *
- * NOTES
- *     returns pointer to last . in last pathcomponent or at \0.
+ * PathFindExtensionW	[SHLWAPI.@]
  */
-LPCWSTR WINAPI PathFindExtensionW(LPCWSTR path) 
-{	LPCWSTR   lastpoint = NULL;
-	TRACE("(%p %s)\n",path,debugstr_w(path));
-	while (*path)
-	{ if (*path==(WCHAR)'\\'||*path==(WCHAR)' ')
+LPWSTR WINAPI PathFindExtensionW(LPCWSTR lpszPath) 
+{
+	LPCWSTR   lastpoint = NULL;
+
+	TRACE("(%p %s)\n",lpszPath,debugstr_w(lpszPath));
+
+	while (*lpszPath)
+	{
+	  if (*lpszPath==(WCHAR)'\\'||*lpszPath==(WCHAR)' ')
 	    lastpoint=NULL;
-	  if (*path==(WCHAR)'.')
-	    lastpoint=path;
-	  path++;
+	  if (*lpszPath==(WCHAR)'.')
+	    lastpoint=lpszPath;
+	  lpszPath++;
 	}
-	return lastpoint?lastpoint:path;
+	return (LPWSTR)(lastpoint?lastpoint:lpszPath);
 }
 
 /*************************************************************************
- * PathFindExtension [SHELL32.31]
+ * PathFindExtensionAW		[SHELL32.31]
+ */
+LPVOID WINAPI PathFindExtensionAW(LPCVOID lpszPath) 
+{
+	if (VERSION_OsIsUnicode())
+	  return PathFindExtensionW(lpszPath);
+	return PathFindExtensionA(lpszPath);
+
+}
+
+/*************************************************************************
+ * PathGetExtensionA		[internal]
  *
  * NOTES
- *     returns pointer to last . in last pathcomponent or at \0.
+ *  exported by ordinal
+ *  return value points to the first char after the dot
  */
-LPCVOID WINAPI PathFindExtensionAW(LPCVOID path) 
-{	if (VERSION_OsIsUnicode())
-	  return PathFindExtensionW(path);
-	return PathFindExtensionA(path);
+LPSTR WINAPI PathGetExtensionA(LPCSTR lpszPath)
+{
+	TRACE("(%s)\n",lpszPath);
 
+	lpszPath = PathFindExtensionA(lpszPath);
+	return (LPSTR)(*lpszPath?(lpszPath+1):lpszPath);
 }
 
 /*************************************************************************
- * PathAddBackslashA
- * 
- * NOTES
- *     append \ if there is none
+ * PathGetExtensionW		[internal]
  */
-LPSTR WINAPI PathAddBackslashA(LPSTR path)
-{	int len;
-	TRACE("%p->%s\n",path,path);
+LPWSTR WINAPI PathGetExtensionW(LPCWSTR lpszPath)
+{
+	TRACE("(%s)\n",debugstr_w(lpszPath));
 
-	len = strlen(path);
-	if (len && path[len-1]!='\\') 
-	{ path[len]  = '\\';
-	  path[len+1]= 0x00;
-	  return path+len+1;
+	lpszPath = PathFindExtensionW(lpszPath);
+	return (LPWSTR)(*lpszPath?(lpszPath+1):lpszPath);
+}
+
+/*************************************************************************
+ * PathGetExtensionAW		[SHELL32.158]
+ */
+LPVOID WINAPI PathGetExtensionAW(LPCVOID lpszPath) 
+{
+	if (VERSION_OsIsUnicode())
+	  return PathGetExtensionW(lpszPath);
+	return PathGetExtensionA(lpszPath);
+}
+
+/*************************************************************************
+ * PathGetArgsA		[SHLWAPI.@]
+ *
+ * NOTES
+ *     look for next arg in string. handle "quoted" strings
+ *     returns pointer to argument *AFTER* the space. Or to the \0.
+ *
+ * FIXME
+ *     quoting by '\'
+ */
+LPSTR WINAPI PathGetArgsA(LPCSTR lpszPath) 
+{
+	BOOL	qflag = FALSE;
+
+	TRACE("%s\n",lpszPath);
+
+	while (*lpszPath) 
+	{
+	  if ((*lpszPath==' ') && !qflag)
+	    return (LPSTR)lpszPath+1;
+	  if (*lpszPath=='"')
+	    qflag=!qflag;
+	  lpszPath++;
 	}
-	return path+len;
+	return (LPSTR)lpszPath;
+
 }
 
 /*************************************************************************
- * PathAddBackslashW
- * 
- * NOTES
- *     append \ if there is none
+ * PathGetArgsW		[SHLWAPI.@]
  */
-LPWSTR WINAPI PathAddBackslashW(LPWSTR path)
-{	int len;
-	TRACE("%p->%s\n",path,debugstr_w(path));
+LPWSTR WINAPI PathGetArgsW(LPCWSTR lpszPath) 
+{
+	BOOL	qflag = FALSE;
 
-	len = CRTDLL_wcslen(path);
-	if (len && path[len-1]!=(WCHAR)'\\') 
-	{ path[len]  = (WCHAR)'\\';
-	  path[len+1]= 0x00;
-	  return path+len+1;
+	TRACE("%s\n",debugstr_w(lpszPath));
+
+	while (*lpszPath) 
+	{
+	  if ((*lpszPath==' ') && !qflag)
+	    return (LPWSTR)lpszPath+1;
+	  if (*lpszPath=='"')
+	    qflag=!qflag;
+	  lpszPath++;
 	}
-	return path+len;
+	return (LPWSTR)lpszPath;
 }
 
 /*************************************************************************
- * PathAddBackslash [SHELL32.32]
+ * PathGetArgsAW	[SHELL32.52]
+ */
+LPVOID WINAPI PathGetArgsAW(LPVOID lpszPath) 
+{
+	if (VERSION_OsIsUnicode())
+	  return PathGetArgsW(lpszPath);
+	return PathGetArgsA(lpszPath);
+}
+
+/*************************************************************************
+ * PathGetDriveNumberA	[SHLWAPI.@]
+ */
+int WINAPI PathGetDriveNumberA(LPCSTR lpszPath)
+{
+	int chr = tolower(lpszPath[0]);
+	
+	TRACE ("%s\n",debugstr_a(lpszPath));
+
+	if (!lpszPath || lpszPath[1]!=':' || chr < 'a' || chr > 'z') return -1;
+	return tolower(lpszPath[0]) - 'a' ;
+}
+
+/*************************************************************************
+ * PathGetDriveNumberW	[SHLWAPI.@]
+ */
+int WINAPI PathGetDriveNumberW(LPCWSTR lpszPath)
+{
+	int chr = towlower(lpszPath[0]);
+	
+	TRACE ("%s\n",debugstr_w(lpszPath));
+
+	if (!lpszPath || lpszPath[1]!=':' || chr < 'a' || chr > 'z') return -1;
+	return tolower(lpszPath[0]) - 'a' ;
+}
+
+/*************************************************************************
+ * PathGetDriveNumber	[SHELL32.57]
+ */
+int WINAPI PathGetDriveNumberAW(LPVOID lpszPath) 
+{
+	if (VERSION_OsIsUnicode())
+	  return PathGetDriveNumberW(lpszPath);
+	return PathGetDriveNumberA(lpszPath);
+}
+
+/*************************************************************************
+ * PathRemoveFileSpecA	[SHLWAPI.@]
  * 
  * NOTES
- *     append \ if there is none
+ *     truncates passed argument to a valid path
+ *     returns if the string was modified or not.
+ *     "\foo\xx\foo"-> "\foo\xx"
+ *     "\" -> "\"
+ *     "a:\foo"	-> "a:\"
  */
-LPVOID WINAPI PathAddBackslashAW(LPVOID path)
-{	if(VERSION_OsIsUnicode())
-	  return PathAddBackslashW(path);
-	return PathAddBackslashA(path);
+BOOL WINAPI PathRemoveFileSpecA(LPSTR lpszPath)
+{
+	LPSTR cutplace;
+
+	TRACE("%s\n",lpszPath);
+
+	if (!lpszPath[0]) return 0;
+
+	cutplace = PathFindFileNameA(lpszPath);
+	if (cutplace)
+	{
+	  *cutplace='\0';
+	  if (PathIsRootA(lpszPath))
+	  {
+	    PathAddBackslashA(lpszPath);
+	  }
+	  else
+	  {
+	    PathRemoveBackslashA(lpszPath);
+	  }
+	  return TRUE;
+	}
+	return FALSE;
 }
 
 /*************************************************************************
- * PathRemoveBlanksA
+ * PathRemoveFileSpecW	[SHLWAPI.@]
+ */
+BOOL WINAPI PathRemoveFileSpecW(LPWSTR lpszPath)
+{
+	LPWSTR cutplace;
+
+	TRACE("%s\n",debugstr_w(lpszPath));
+
+	if (!lpszPath[0]) return 0;
+	cutplace = PathFindFileNameW(lpszPath);
+	if (cutplace)
+	{
+	  *cutplace='\0';
+	  if (PathIsRootW(lpszPath))
+	  {
+	    PathAddBackslashW(lpszPath);
+	  }
+	  else
+	  {
+	    PathRemoveBackslashW(lpszPath);
+	  }
+	  return TRUE;
+	}
+	return FALSE;
+}
+
+/*************************************************************************
+ * PathRemoveFileSpec [SHELL32.35]
+ */
+BOOL WINAPI PathRemoveFileSpecAW(LPVOID lpszPath) 
+{
+	if (VERSION_OsIsUnicode())
+	  return PathRemoveFileSpecW(lpszPath);
+	return PathRemoveFileSpecA(lpszPath);
+}
+
+/*************************************************************************
+ * PathStripPathA	[SHELLWAPI.@]
+ * 
+ * NOTES
+ *  removes the path from the beginning of a filename
+ */
+void WINAPI PathStripPathA(LPSTR lpszPath)
+{
+	LPSTR lpszFileName = PathFindFileNameA(lpszPath);
+
+	TRACE("%s\n", lpszPath);
+
+	if(lpszFileName)
+	  RtlMoveMemory(lpszPath, lpszFileName, strlen(lpszFileName)); 
+}
+
+/*************************************************************************
+ * PathStripPathW	[SHELLWAPI.@]
+ */
+void WINAPI PathStripPathW(LPWSTR lpszPath)
+{
+	LPWSTR lpszFileName = PathFindFileNameW(lpszPath);
+
+	TRACE("%s\n", debugstr_w(lpszPath));
+	if(lpszFileName)
+	  RtlMoveMemory(lpszPath, lpszFileName, lstrlenW(lpszFileName)*sizeof(WCHAR)); 
+}
+
+/*************************************************************************
+ * PathStripPathAW	[SHELL32.38]
+ */
+void WINAPI PathStripPathAW(LPVOID lpszPath) 
+{
+	if (VERSION_OsIsUnicode())
+	  return PathStripPathW(lpszPath);
+	return PathStripPathA(lpszPath);
+}
+
+/*************************************************************************
+ * PathStripToRootA	[SHLWAPI.@]
+ */
+BOOL WINAPI PathStripToRootA(LPSTR lpszPath)
+{
+	TRACE("%s\n", lpszPath);
+
+	/* X:\ */
+	if (lpszPath[1]==':' && lpszPath[2]=='\\')
+	{
+	  lpszPath[3]='\0';
+	  return TRUE;
+	}
+
+	/* "\" */
+	if (lpszPath[0]=='\\')
+	{
+	  lpszPath[1]='\0';
+	  return TRUE;
+	}
+
+	/* UNC "\\<computer>\<share>" */
+	if (lpszPath[0]=='\\' && lpszPath[1]=='\\')		
+	{
+	  int foundbackslash = 0;
+	  lpszPath += 2;
+	  while (*lpszPath)
+	  {
+	    if (*lpszPath=='\\') foundbackslash++;
+	    if (foundbackslash==2)
+	    {
+	      *lpszPath = '\0';
+	      return TRUE;
+	    }
+	    lpszPath++;
+	  }
+	}
+
+	return FALSE;
+}
+
+/*************************************************************************
+ * PathStripToRootW	[SHLWAPI.@]
+ */
+BOOL WINAPI PathStripToRootW(LPWSTR lpszPath)
+{
+	TRACE("%s\n", debugstr_w(lpszPath));
+
+	/* X:\ */
+	if (lpszPath[1]==':' && lpszPath[2]=='\\')
+	{
+	  lpszPath[3]='\0';
+	  return TRUE;
+	}
+
+	/* "\" */
+	if (lpszPath[0]=='\\')
+	{
+	  lpszPath[1]='\0';
+	  return TRUE;
+	}
+
+	/* UNC "\\<computer>\<share>" */
+	if (lpszPath[0]=='\\' && lpszPath[1]=='\\')		
+	{
+	  int foundbackslash = 0;
+	  lpszPath += 2;
+	  while (*lpszPath)
+	  {
+	    if (*lpszPath=='\\') foundbackslash++;
+	    if (foundbackslash==2)
+	    {
+	      *lpszPath = '\0';
+	      return TRUE;
+	    }
+	    lpszPath++;
+	  }
+	}
+
+	return FALSE;
+}
+
+/*************************************************************************
+ * PathStripToRootAW	[SHELL32.50]
+ */
+BOOL WINAPI PathStripToRootAW(LPVOID lpszPath) 
+{
+	if (VERSION_OsIsUnicode())
+	  return PathStripToRootW(lpszPath);
+	return PathStripToRootA(lpszPath);
+}
+
+/*************************************************************************
+ * PathRemoveArgsA	[SHLWAPI.@]
+ */
+void WINAPI PathRemoveArgsA(LPSTR lpszPath)
+{
+	LPSTR lpszArgs = PathGetArgsA(lpszPath);
+
+	TRACE("%s\n", lpszPath);
+
+	if (lpszArgs) *(--lpszArgs)='\0';
+}
+
+/*************************************************************************
+ * PathRemoveArgsW	[SHLWAPI.@]
+ */
+void WINAPI PathRemoveArgsW(LPWSTR lpszPath)
+{
+	LPWSTR lpszArgs = PathGetArgsW(lpszPath);
+
+	TRACE("%s\n", debugstr_w(lpszPath));
+
+	if (lpszArgs) *(--lpszArgs)='\0';
+}
+
+/*************************************************************************
+ * PathRemoveArgsAW	[SHELL32.251]
+ */
+void WINAPI PathRemoveArgsAW(LPVOID lpszPath) 
+{
+	if (VERSION_OsIsUnicode())
+	  return PathRemoveArgsW(lpszPath);
+	return PathRemoveArgsA(lpszPath);
+}
+
+/*************************************************************************
+ * PathRemoveExtensionA		[SHLWAPI.@]
+ */
+void WINAPI PathRemoveExtensionA(LPSTR lpszPath)
+{
+	LPSTR lpszExtension = PathFindExtensionA(lpszPath);
+
+	TRACE("%s\n", lpszPath);
+
+	if (lpszExtension) *lpszExtension='\0';
+}
+
+/*************************************************************************
+ * PathRemoveExtensionW		[SHLWAPI.@]
+ */
+void WINAPI PathRemoveExtensionW(LPWSTR lpszPath)
+{
+	LPWSTR lpszExtension = PathFindExtensionW(lpszPath);
+
+	TRACE("%s\n", debugstr_w(lpszPath));
+
+	if (lpszExtension) *lpszExtension='\0';
+}
+
+/*************************************************************************
+ * PathRemoveExtensionAW	[SHELL32.250]
+ */
+void WINAPI PathRemoveExtensionAW(LPVOID lpszPath) 
+{
+	if (VERSION_OsIsUnicode())
+	  return PathRemoveExtensionW(lpszPath);
+	return PathRemoveExtensionA(lpszPath);
+}
+
+/*************************************************************************
+ * PathRemoveBackslashA	[SHLWAPI.@]
+ *
+ * If the path ends in a backslash it is replaced by a NULL
+ * and the address of the NULL is returned
+ * Otherwise 
+ * the address of the last character is returned.
+ *
+ */
+LPSTR WINAPI PathRemoveBackslashA( LPSTR lpszPath )
+{
+	LPSTR p = lpszPath;
+	
+	while (*lpszPath) p = lpszPath++;
+	if ( *p == (CHAR)'\\') *p = (CHAR)'\0';
+	return p;
+}
+
+/*************************************************************************
+ * PathRemoveBackslashW	[SHLWAPI.@]
+ */
+LPWSTR WINAPI PathRemoveBackslashW( LPWSTR lpszPath )
+{
+	LPWSTR p = lpszPath;
+	
+	while (*lpszPath); p = lpszPath++;
+	if ( *p == (WCHAR)'\\') *p = (WCHAR)'\0';
+	return p;
+}
+
+/*
+	Path Manipulations
+*/
+
+/*************************************************************************
+ * PathGetShortPathA [internal]
+ */
+LPSTR WINAPI PathGetShortPathA(LPSTR lpszPath)
+{
+	FIXME("%s stub\n", lpszPath);
+	return NULL;
+}
+
+/*************************************************************************
+ * PathGetShortPathW [internal]
+ */
+LPWSTR WINAPI PathGetShortPathW(LPWSTR lpszPath)
+{
+	FIXME("%s stub\n", debugstr_w(lpszPath));
+	return NULL;
+}
+
+/*************************************************************************
+ * PathGetShortPathAW [SHELL32.92]
+ */
+LPVOID WINAPI PathGetShortPathAW(LPVOID lpszPath)
+{
+	if(VERSION_OsIsUnicode())
+	  return PathGetShortPathW(lpszPath);
+	return PathGetShortPathA(lpszPath);
+}
+
+/*************************************************************************
+ * PathRemoveBlanksA [SHLWAPI.@]
  * 
  * NOTES
  *     remove spaces from beginning and end of passed string
  */
 LPSTR WINAPI PathRemoveBlanksA(LPSTR str)
-{	LPSTR x = str;
+{
+	LPSTR x = str;
+
 	TRACE("%s\n",str);
+
 	while (*x==' ') x++;
 	if (x!=str)
 	  strcpy(str,x);
@@ -211,14 +832,14 @@ LPSTR WINAPI PathRemoveBlanksA(LPSTR str)
 }
 
 /*************************************************************************
- * PathRemoveBlanksW
- * 
- * NOTES
- *     remove spaces from beginning and end of passed string
+ * PathRemoveBlanksW [SHLWAPI.@]
  */
 LPWSTR WINAPI PathRemoveBlanksW(LPWSTR str)
-{	LPWSTR x = str;
+{
+	LPWSTR x = str;
+
 	TRACE("%s\n",debugstr_w(str));
+
 	while (*x==' ') x++;
 	if (x!=str)
 	  CRTDLL_wcscpy(str,x);
@@ -233,586 +854,57 @@ LPWSTR WINAPI PathRemoveBlanksW(LPWSTR str)
 }
 
 /*************************************************************************
- * PathRemoveBlanks [SHELL32.33]
- * 
- * NOTES
- *     remove spaces from beginning and end of passed string
+ * PathRemoveBlanksAW [SHELL32.33]
  */
 LPVOID WINAPI PathRemoveBlanksAW(LPVOID str)
-{	if(VERSION_OsIsUnicode())
+{
+	if(VERSION_OsIsUnicode())
 	  return PathRemoveBlanksW(str);
 	return PathRemoveBlanksA(str);
 }
 
 /*************************************************************************
- * PathFindFilenameA
+ * PathQuoteSpacesA [SHLWAPI.@]
  * 
  * NOTES
- *     basename(char *fn);
  */
-LPCSTR WINAPI PathFindFilenameA(LPCSTR aptr)
-{	LPCSTR aslash;
-	aslash = aptr;
-
-	TRACE("%s\n",aslash);
-	while (aptr[0]) 
-	{ if (((aptr[0]=='\\') || (aptr[0]==':')) && aptr[1] && aptr[1]!='\\')
-	      aslash = aptr+1;
-	  aptr++;
-	}
-	return aslash;
-
-}
-
-/*************************************************************************
- * PathFindFilenameW
- * 
- * NOTES
- *     basename(char *fn);
- */
-LPCWSTR WINAPI PathFindFilenameW(LPCWSTR wptr)
-{	LPCWSTR wslash;
-	wslash = wptr;
-
-	TRACE("%s\n",debugstr_w(wslash));
-	while (wptr[0]) 
-	{ if (((wptr[0]=='\\') || (wptr[0]==':')) && wptr[1] && wptr[1]!='\\')
-	    wslash = wptr+1;
-	  wptr++;
-	}
-	return wslash;	
-}
-
-/*************************************************************************
- * PathFindFilename [SHELL32.34]
- * 
- * NOTES
- *     basename(char *fn);
- */
-LPCVOID WINAPI PathFindFilenameAW(LPCVOID fn)
+LPSTR WINAPI PathQuoteSpacesA(LPCSTR lpszPath)
 {
-	if(VERSION_OsIsUnicode())
-	  return PathFindFilenameW(fn);
-	return PathFindFilenameA(fn);
-}
-
-/*************************************************************************
- * PathRemoveFileSpecA [SHELL32.35]
- * 
- * NOTES
- *     bool getpath(char *pathname); truncates passed argument to a valid path
- *     returns if the string was modified or not.
- *     "\foo\xx\foo"-> "\foo\xx"
- *     "\" -> "\"
- *     "a:\foo"	-> "a:\"
- */
-DWORD WINAPI PathRemoveFileSpecA(LPSTR fn) {
-	LPSTR	x,cutplace;
-  TRACE("%s\n",fn);
-	if (!fn[0])
-		return 0;
-	x=fn;
-	cutplace = fn;
-	while (*x) {
-		if (*x=='\\') {
-			cutplace=x++;
-			continue;
-		}
-		if (*x==':') {
-			x++;
-			if (*x=='\\')
-				cutplace=++x;
-			continue; /* already x++ed */
-		}
-		x++;
-	}
-	if (!*cutplace)
-		return 0;
-	if (cutplace==fn) {
-		if (fn[0]=='\\') {
-			if (!fn[1])
-				return 0;
-			fn[0]='\0';
-			return 1;
-		}
-	}
-	*cutplace='\0';
-	return 1;
-}
-
-/*************************************************************************
- * PathAppendA [SHELL32.36]
- * 
- * NOTES
- *     concat_paths(char*target,const char*add);
- *     concats "target\\add" and writes them to target
- */
-LPSTR WINAPI PathAppendA(LPSTR x1,LPSTR x2) {
-  TRACE("%s %s\n",x1,x2);
-  while (x2[0]=='\\') x2++;
-  return PathCombineA(x1,x1,x2);
-}
-
-/*************************************************************************
- * PathCombineA
- * 
- * NOTES
- *  if lpszFile='.' skip it
- *  szDest can be equal to lpszFile. Thats why we use sTemp
- */
-LPSTR WINAPI PathCombineA(LPSTR szDest, LPCSTR lpszDir, LPCSTR lpszFile) 
-{	char sTemp[MAX_PATH];
-	TRACE("%p %p->%s %p->%s\n",szDest, lpszDir, lpszDir, lpszFile, lpszFile);
-	
-	
-	if (!lpszFile || !lpszFile[0] || (lpszFile[0]=='.' && !lpszFile[1]) ) 
-	{ strcpy(szDest,lpszDir);
-	  return szDest;
-	}
-
-	/*  if lpszFile is a complete path don't care about lpszDir */
-	if (PathIsRootA(lpszFile))
-	{ strcpy(szDest,lpszFile);
-	}
-	else
-	{ strcpy(sTemp,lpszDir);
-	  PathAddBackslashA(sTemp);
-	  strcat(sTemp,lpszFile);
-	  strcpy(szDest,sTemp);
-	}
-	return szDest;
-}
-
-/*************************************************************************
- * PathCombineW
- * 
- * NOTES
- *  if lpszFile='.' skip it
- *  szDest can be equal to lpszFile. Thats why we use sTemp
- */
-LPWSTR WINAPI PathCombineW(LPWSTR szDest, LPCWSTR lpszDir, LPCWSTR lpszFile) 
-{	WCHAR sTemp[MAX_PATH];
-	TRACE("%p %p->%s %p->%s\n",szDest, lpszDir, debugstr_w(lpszDir),
-			 lpszFile, debugstr_w(lpszFile));
-	
-	
-	if (!lpszFile || !lpszFile[0] || (lpszFile[0]==(WCHAR)'.' && !lpszFile[1]) ) 
-	{ CRTDLL_wcscpy(szDest,lpszDir);
-	  return szDest;
-	}
-
-	/*  if lpszFile is a complete path don't care about lpszDir */
-	if (PathIsRootW(lpszFile))
-	{ CRTDLL_wcscpy(szDest,lpszFile);
-	}
-	else
-	{ CRTDLL_wcscpy(sTemp,lpszDir);
-	  PathAddBackslashW(sTemp);
-	  CRTDLL_wcscat(sTemp,lpszFile);
-	  CRTDLL_wcscpy(szDest,sTemp);
-	}
-	return szDest;
-}
-
-/*************************************************************************
- * PathCombine [SHELL32.37]
- * 
- * NOTES
- *  if lpszFile='.' skip it
- *  szDest can be equal to lpszFile. Thats why we use sTemp
- */
-LPVOID WINAPI PathCombineAW(LPVOID szDest, LPCVOID lpszDir, LPCVOID lpszFile) 
-{	if (VERSION_OsIsUnicode())
-	  return PathCombineW( szDest, lpszDir, lpszFile );
-	return PathCombineA( szDest, lpszDir, lpszFile );
-}
-
-/*************************************************************************
- * PathIsUNCA
- * 
- * NOTES
- *     PathIsUNC(char*path);
- */
-BOOL WINAPI PathIsUNCA(LPCSTR path) 
-{	TRACE("%s\n",path);
-
-	if ((path[0]=='\\') && (path[1]=='\\'))
-	  return TRUE;
-	return FALSE;
-}
-
-/*************************************************************************
- * PathIsUNCW
- * 
- * NOTES
- *     PathIsUNC(char*path);
- */
-BOOL WINAPI PathIsUNCW(LPCWSTR path) 
-{	TRACE("%s\n",debugstr_w(path));
-
-	if ((path[0]=='\\') && (path[1]=='\\'))
-	  return TRUE;
-	return FALSE;
-}
-
-/*************************************************************************
- * PathIsUNC [SHELL32.39]
- * 
- * NOTES
- *     PathIsUNC(char*path);
- */
-BOOL WINAPI PathIsUNCAW (LPCVOID path)
-{	if (VERSION_OsIsUnicode())
-	  return PathIsUNCW( path );
-	return PathIsUNCA( path );  
-}
-
-/*************************************************************************
- *  PathIsRelativeA
- * 
- */
-BOOL WINAPI PathIsRelativeA (LPCSTR path)
-{	TRACE("path=%s\n",path);
-
-	if (path && (path[0]!='\\' && path[1]==':'))
-	  return TRUE;
-	return FALSE;    
-}
-
-/*************************************************************************
- *  PathIsRelativeW
- * 
- */
-BOOL WINAPI PathIsRelativeW (LPCWSTR path)
-{	TRACE("path=%s\n",debugstr_w(path));
-
-	if (path && (path[0]!='\\' && path[1]==':'))
-	  return TRUE;
-	return FALSE;    
-}
-
-/*************************************************************************
- *  PathIsRelative [SHELL32.40]
- * 
- */
-BOOL WINAPI PathIsRelativeAW (LPCVOID path)
-{	if (VERSION_OsIsUnicode())
-	  return PathIsRelativeW( path );
-	return PathIsRelativeA( path );  
-}
-
-/*************************************************************************
- *  PathIsExeA
- * 
- */
-BOOL WINAPI PathIsExeA (LPCSTR path)
-{	FIXME("path=%s\n",path);
-	return FALSE;
-}
-
-/*************************************************************************
- *  PathIsExeW
- * 
- */
-BOOL WINAPI PathIsExeW (LPCWSTR path)
-{	FIXME("path=%s\n",debugstr_w(path));
-	return FALSE;
-}
-
-/*************************************************************************
- *  PathIsExe [SHELL32.43]
- * 
- */
-BOOL WINAPI PathIsExeAW (LPCVOID path)
-{	if (VERSION_OsIsUnicode())
-	  return PathIsExeW (path);
-	return PathIsExeA(path);
-}
-
-/*************************************************************************
- * PathFileExistsA [SHELL32.45]
- * 
- * NOTES
- *     file_exists(char *fn);
- */
-BOOL WINAPI PathFileExistsA(LPSTR fn) {
-  TRACE("%s\n",fn);
-   if (GetFileAttributesA(fn)==-1)
-    	return FALSE;
-    else
-    	return TRUE;
-}
-/*************************************************************************
- * PathMatchSingleMask
- * 
- * NOTES
- *     internal (used by PathMatchSpec)
- */
-static BOOL PathMatchSingleMaskA(LPCSTR name, LPCSTR mask)
-{
-  while (*name && *mask && *mask!=';') {
-    if (*mask=='*') {
-      do {
-	if (PathMatchSingleMaskA(name,mask+1)) return 1;  /* try substrings */
-      } while (*name++);
-      return 0;
-    }
-    if (toupper(*mask)!=toupper(*name) && *mask!='?') return 0;
-    name++;
-    mask++;
-  }
-  if (!*name) {
-    while (*mask=='*') mask++;
-    if (!*mask || *mask==';') return 1;
-  }
-  return 0;
-}
-static BOOL PathMatchSingleMaskW(LPCWSTR name, LPCWSTR mask)
-{
-  while (*name && *mask && *mask!=';') {
-    if (*mask=='*') {
-      do {
-	if (PathMatchSingleMaskW(name,mask+1)) return 1;  /* try substrings */
-      } while (*name++);
-      return 0;
-    }
-    if (towupper(*mask)!=towupper(*name) && *mask!='?') return 0;
-    name++;
-    mask++;
-  }
-  if (!*name) {
-    while (*mask=='*') mask++;
-    if (!*mask || *mask==';') return 1;
-  }
-  return 0;
-}
-
-/*************************************************************************
- * PathMatchSpecA
- * 
- * NOTES
- *     used from COMDLG32
- */
-BOOL WINAPI PathMatchSpecA(LPCSTR name, LPCSTR mask) 
-{
-  TRACE("%s %s\n",name,mask);
-
-  if (!lstrcmpA( mask, "*.*" )) return 1;   /* we don't require a period */
-
-  while (*mask) {
-    if (PathMatchSingleMaskA(name,mask)) return 1;    /* helper function */
-    while (*mask && *mask!=';') mask++;
-    if (*mask==';') {
-      mask++;
-      while (*mask==' ') mask++;      /*  masks may be separated by "; " */
-	  }
-	}
-  return 0;
-}
-
-/*************************************************************************
- * PathMatchSpecW
- * 
- * NOTES
- *     used from COMDLG32
- */
-BOOL WINAPI PathMatchSpecW(LPCWSTR name, LPCWSTR mask) 
-{
-  WCHAR stemp[4];
-  TRACE("%s %s\n",debugstr_w(name),debugstr_w(mask));
-
-	lstrcpyAtoW(stemp,"*.*");	
-  if (!lstrcmpW( mask, stemp )) return 1;   /* we don't require a period */
-
-  while (*mask) {
-    if (PathMatchSingleMaskW(name,mask)) return 1;    /* helper function */
-    while (*mask && *mask!=';') mask++;
-    if (*mask==';') {
-      mask++;
-      while (*mask==' ') mask++;       /* masks may be separated by "; " */
-	  }
-	}
-  return 0;
-}
-
-/*************************************************************************
- * PathMatchSpec [SHELL32.46]
- * 
- * NOTES
- *     used from COMDLG32
- */
-BOOL WINAPI PathMatchSpecAW(LPVOID name, LPVOID mask) 
-{	if (VERSION_OsIsUnicode())
-	  return PathMatchSpecW( name, mask );
-	return PathMatchSpecA( name, mask );
-}
-/*************************************************************************
- * PathSetDlgItemPathA
- * NOTES
- *  use PathCompactPath to make sure, the path fits into the control
- */
-BOOL WINAPI PathSetDlgItemPathA(HWND hDlg, int id, LPCSTR pszPath) 
-{	TRACE("%x %x %s\n",hDlg, id, pszPath);
-	return SetDlgItemTextA(hDlg, id, pszPath);
-}
-
-/*************************************************************************
- * PathSetDlgItemPathW
- * NOTES
- *  use PathCompactPath to make sure, the path fits into the control
- */
-BOOL WINAPI PathSetDlgItemPathW(HWND hDlg, int id, LPCWSTR pszPath) 
-{	TRACE("%x %x %s\n",hDlg, id, debugstr_w(pszPath));
-	return SetDlgItemTextW(hDlg, id, pszPath);
-}
-
-/*************************************************************************
- * PathSetDlgItemPath [SHELL32.48]
- * NOTES
- *  use PathCompactPath to make sure, the path fits into the control
- */
-BOOL WINAPI PathSetDlgItemPathAW(HWND hDlg, int id, LPCVOID pszPath) 
-{	if (VERSION_OsIsUnicode())
-	  return PathSetDlgItemPathW(hDlg, id, pszPath);
-	return PathSetDlgItemPathA(hDlg, id, pszPath);
-}
-
-/*************************************************************************
- * PathQualifyA
- */
-BOOL WINAPI PathQualifyA(LPCSTR pszPath) 
-{	FIXME("%s\n",pszPath);
+	FIXME("%s\n",lpszPath);
 	return 0;
 }
 
 /*************************************************************************
- * PathQualifyW
+ * PathQuoteSpacesW [SHLWAPI.@]
  */
-BOOL WINAPI PathQualifyW(LPCWSTR pszPath) 
-{	FIXME("%s\n",debugstr_w(pszPath));
-	return 0;
-}
-
-/*************************************************************************
- * PathQualify [SHELL32.49]
- */
-BOOL WINAPI PathQualifyAW(LPCVOID pszPath) 
-{	if (VERSION_OsIsUnicode())
-	  return PathQualifyW(pszPath);
-	return PathQualifyA(pszPath);
-}
-
-/*************************************************************************
- * PathResolve [SHELL32.51]
- */
-DWORD WINAPI PathResolve(LPCSTR s,DWORD x2,DWORD x3) {
-	FIXME("(%s,0x%08lx,0x%08lx),stub!\n",s,x2,x3);
-	return 0;
-}
-
-/*************************************************************************
- * PathGetArgsA
- *
- * NOTES
- *     look for next arg in string. handle "quoted" strings
- *     returns pointer to argument *AFTER* the space. Or to the \0.
- */
-LPCSTR WINAPI PathGetArgsA(LPCSTR cmdline) 
-{	BOOL	qflag = FALSE;
-
-	TRACE("%s\n",cmdline);
-
-	while (*cmdline) 
-	{ if ((*cmdline==' ') && !qflag)
-	    return cmdline+1;
-	  if (*cmdline=='"')
-	    qflag=!qflag;
-	  cmdline++;
-	}
-	return cmdline;
-
-}
-
-/*************************************************************************
- * PathGetArgsW
- *
- * NOTES
- *     look for next arg in string. handle "quoted" strings
- *     returns pointer to argument *AFTER* the space. Or to the \0.
- */
-LPCWSTR WINAPI PathGetArgsW(LPCWSTR cmdline) 
-{	BOOL	qflag = FALSE;
-
-	TRACE("%s\n",debugstr_w(cmdline));
-
-	while (*cmdline) 
-	{ if ((*cmdline==' ') && !qflag)
-	    return cmdline+1;
-	  if (*cmdline=='"')
-	    qflag=!qflag;
-	  cmdline++;
-	}
-	return cmdline;
-}
-
-/*************************************************************************
- * PathGetArgs [SHELL32.52]
- *
- * NOTES
- *     look for next arg in string. handle "quoted" strings
- *     returns pointer to argument *AFTER* the space. Or to the \0.
- */
-LPCVOID WINAPI PathGetArgsAW(LPVOID cmdline) 
-{	if (VERSION_OsIsUnicode())
-	  return PathGetArgsW(cmdline);
-	return PathGetArgsA(cmdline);
-}
-
-/*************************************************************************
- * PathQuoteSpacesA
- * 
- * NOTES
- *     basename(char *fn);
- */
-LPSTR WINAPI PathQuoteSpacesA(LPCSTR aptr)
-{	FIXME("%s\n",aptr);
-	return 0;
-
-}
-
-/*************************************************************************
- * PathQuoteSpacesW
- * 
- * NOTES
- *     basename(char *fn);
- */
-LPWSTR WINAPI PathQuoteSpacesW(LPCWSTR wptr)
-{	FIXME("%s\n",debugstr_w(wptr));
+LPWSTR WINAPI PathQuoteSpacesW(LPCWSTR lpszPath)
+{
+	FIXME("%s\n",debugstr_w(lpszPath));
 	return 0;	
 }
 
 /*************************************************************************
- * PathQuoteSpaces [SHELL32.55]
- * 
- * NOTES
- *     basename(char *fn);
+ * PathQuoteSpacesAW [SHELL32.55]
  */
-LPVOID WINAPI PathQuoteSpacesAW (LPCVOID fn)
-{	if(VERSION_OsIsUnicode())
-	  return PathQuoteSpacesW(fn);
-	return PathQuoteSpacesA(fn);
+LPVOID WINAPI PathQuoteSpacesAW (LPCVOID lpszPath)
+{
+	if(VERSION_OsIsUnicode())
+	  return PathQuoteSpacesW(lpszPath);
+	return PathQuoteSpacesA(lpszPath);
 }
 
-
 /*************************************************************************
- * PathUnquoteSpacesA
+ * PathUnquoteSpacesA [SHLWAPI.@]
  * 
  * NOTES
  *     unquote string (remove ")
  */
 VOID WINAPI PathUnquoteSpacesA(LPSTR str) 
-{	DWORD      len = lstrlenA(str);
+{
+	DWORD len = lstrlenA(str);
+
 	TRACE("%s\n",str);
+
 	if (*str!='"')
 	  return;
 	if (str[len-1]!='"')
@@ -823,13 +915,11 @@ VOID WINAPI PathUnquoteSpacesA(LPSTR str)
 }
 
 /*************************************************************************
- * PathUnquoteSpacesW
- * 
- * NOTES
- *     unquote string (remove ")
+ * PathUnquoteSpacesW [SHLWAPI.@]
  */
 VOID WINAPI PathUnquoteSpacesW(LPWSTR str) 
-{	DWORD len = CRTDLL_wcslen(str);
+{
+	DWORD len = CRTDLL_wcslen(str);
 
 	TRACE("%s\n",debugstr_w(str));
 
@@ -843,10 +933,7 @@ VOID WINAPI PathUnquoteSpacesW(LPWSTR str)
 }
 
 /*************************************************************************
- * PathUnquoteSpaces [SHELL32.56]
- * 
- * NOTES
- *     unquote string (remove ")
+ * PathUnquoteSpacesAW [SHELL32.56]
  */
 VOID WINAPI PathUnquoteSpacesAW(LPVOID str) 
 {
@@ -857,32 +944,631 @@ VOID WINAPI PathUnquoteSpacesAW(LPVOID str)
 }
 
 /*************************************************************************
- * PathGetDriveNumberA [SHLWAPI.@]
- *
+ * PathParseIconLocationA	[SHLWAPI.@]
  */
-HRESULT WINAPI PathGetDriveNumberA(LPSTR u)
-{	FIXME("%s stub\n",debugstr_a(u));
+int WINAPI PathParseIconLocationA(LPSTR lpszPath)
+{
+	LPSTR lpstrComma = strchr(lpszPath, ',');
+	
+	FIXME("%s stub\n", debugstr_a(lpszPath));
+
+	if (lpstrComma && lpstrComma[1])
+	{
+	  lpstrComma[0]='\0';
+/*	  return atoi(&lpstrComma[1]);	FIXME */
+	}
 	return 0;
 }
 
 /*************************************************************************
- * PathGetDriveNumberW [SHLWAPI.@]
- *
+ * PathParseIconLocationW	[SHLWAPI.@]
  */
-HRESULT WINAPI PathGetDriveNumberW(LPWSTR u)
-{	FIXME("%s stub\n",debugstr_w(u));
+int WINAPI PathParseIconLocationW(LPWSTR lpszPath)
+{
+	LPWSTR lpstrComma = CRTDLL_wcschr(lpszPath, ',');
+	
+	FIXME("%s stub\n", debugstr_w(lpszPath));
+
+	if (lpstrComma && lpstrComma[1])
+	{
+	  lpstrComma[0]='\0';
+/*	  return _wtoi(&lpstrComma[1]);	FIXME */
+	}
 	return 0;
 }
 
 /*************************************************************************
- * PathGetDriveNumber [SHELL32.57]
- *
+ * PathParseIconLocationAW	[SHELL32.249]
  */
-HRESULT WINAPI PathGetDriveNumberAW(LPVOID str)
+int WINAPI PathParseIconLocationAW (LPVOID lpszPath)
 {
 	if(VERSION_OsIsUnicode())
-	  return PathGetDriveNumberW(str);
-	return PathGetDriveNumberA(str);
+	  return PathParseIconLocationW(lpszPath);
+	return PathParseIconLocationA(lpszPath);
+}
+
+/*
+	Path Testing
+*/
+/*************************************************************************
+ * PathIsUNCA		[SHLWAPI.@]
+ * 
+ * NOTES
+ *     PathIsUNC(char*path);
+ */
+BOOL WINAPI PathIsUNCA(LPCSTR lpszPath) 
+{
+	TRACE("%s\n",lpszPath);
+
+	return (lpszPath && (lpszPath[0]=='\\') && (lpszPath[1]=='\\'));
+}
+
+/*************************************************************************
+ * PathIsUNCW		[SHLWAPI.@]
+ */
+BOOL WINAPI PathIsUNCW(LPCWSTR lpszPath) 
+{
+	TRACE("%s\n",debugstr_w(lpszPath));
+
+	return (lpszPath && (lpszPath[0]=='\\') && (lpszPath[1]=='\\'));
+}
+
+/*************************************************************************
+ * PathIsUNCAW		[SHELL32.39]
+ */
+BOOL WINAPI PathIsUNCAW (LPCVOID lpszPath)
+{
+	if (VERSION_OsIsUnicode())
+	  return PathIsUNCW( lpszPath );
+	return PathIsUNCA( lpszPath );  
+}
+
+/*************************************************************************
+ *  PathIsRelativeA	[SHLWAPI.@]
+ */
+BOOL WINAPI PathIsRelativeA (LPCSTR lpszPath)
+{
+	TRACE("lpszPath=%s\n",lpszPath);
+
+	return (lpszPath && (lpszPath[0]!='\\' && lpszPath[1]!=':'));
+}
+
+/*************************************************************************
+ *  PathIsRelativeW	[SHLWAPI.@]
+ */
+BOOL WINAPI PathIsRelativeW (LPCWSTR lpszPath)
+{
+	TRACE("lpszPath=%s\n",debugstr_w(lpszPath));
+
+	return (lpszPath && (lpszPath[0]!='\\' && lpszPath[1]!=':'));
+}
+
+/*************************************************************************
+ *  PathIsRelativeAW	[SHELL32.40]
+ */
+BOOL WINAPI PathIsRelativeAW (LPCVOID lpszPath)
+{
+	if (VERSION_OsIsUnicode())
+	  return PathIsRelativeW( lpszPath );
+	return PathIsRelativeA( lpszPath );  
+}
+
+/*************************************************************************
+ * PathIsRootA		[SHLWAPI.@]
+ *
+ * notes
+ *  TRUE if the path points to a root directory
+ */
+BOOL WINAPI PathIsRootA(LPCSTR lpszPath)
+{
+	TRACE("%s\n",lpszPath);
+
+	/* X:\ */
+	if (lpszPath[1]==':' && lpszPath[2]=='\\' && lpszPath[3]=='\0')
+	  return TRUE;
+
+	/* "\" */
+	if (lpszPath[0]=='\\' && lpszPath[1]=='\0')
+	  return TRUE;
+
+	/* UNC "\\<computer>\<share>" */
+	if (lpszPath[0]=='\\' && lpszPath[1]=='\\')		
+	{
+	  int foundbackslash = 0;
+	  lpszPath += 2;
+	  while (*lpszPath)
+	  {
+	    if (*(lpszPath++)=='\\') foundbackslash++;
+	  }
+	  if (foundbackslash==1)
+	    return TRUE;
+	}
+	return FALSE;
+}
+
+/*************************************************************************
+ * PathIsRootW		[SHLWAPI.@]
+ */
+BOOL WINAPI PathIsRootW(LPCWSTR lpszPath) 
+{
+	TRACE("%s\n",debugstr_w(lpszPath));
+
+	/* X:\ */
+	if (lpszPath[1]==':' && lpszPath[2]=='\\' && lpszPath[3]=='\0')
+	  return TRUE;
+
+	/* "\" */
+	if (lpszPath[0]=='\\' && lpszPath[1]=='\0')
+	  return TRUE;
+
+	/* UNC "\\<computer>\<share>" */
+	if (lpszPath[0]=='\\' && lpszPath[1]=='\\')		
+	{
+	  int foundbackslash = 0;
+	  lpszPath += 2;
+	  while (*lpszPath)
+	  {
+	    if (*(lpszPath++)=='\\') foundbackslash++;
+	  }
+	  if (foundbackslash==1)
+	    return TRUE;
+	}
+	return FALSE;
+
+}
+
+/*************************************************************************
+ * PathIsRootAW		[SHELL32.29]
+ */
+BOOL WINAPI PathIsRootAW(LPCVOID lpszPath) 
+{
+	if (VERSION_OsIsUnicode())
+	  return PathIsRootW(lpszPath);
+	return PathIsRootA(lpszPath);
+}
+
+/*************************************************************************
+ *  PathIsExeA		[internal]
+ */
+BOOL WINAPI PathIsExeA (LPCSTR lpszPath)
+{
+	LPCSTR lpszExtension = PathGetExtensionA(lpszPath);
+	int i = 0;
+	static char * lpszExtensions[6] = {"exe", "com", "pid", "cmd", "bat", NULL };
+	
+	TRACE("path=%s\n",lpszPath);
+
+	for(i=0; lpszExtensions[i]; i++)
+	  if (!strcasecmp(lpszExtension,lpszExtensions[i])) return TRUE;
+	  
+	return FALSE;
+}
+
+/*************************************************************************
+ *  PathIsExeW		[internal]
+ */
+BOOL WINAPI PathIsExeW (LPCWSTR lpszPath)
+{
+	LPCWSTR lpszExtension = PathGetExtensionW(lpszPath);
+	int i = 0;
+	static WCHAR lpszExtensions[6][4] =
+	  {{'e','x','e','\0'}, {'c','o','m','\0'}, {'p','i','d','\0'},
+	   {'c','m','d','\0'}, {'b','a','t','\0'}, {'\0'} };
+	
+	TRACE("path=%s\n",debugstr_w(lpszPath));
+
+	for(i=0; lpszExtensions[i]; i++)
+	  if (!CRTDLL__wcsicmp(lpszExtension,lpszExtensions[i])) return TRUE;
+	  
+	return FALSE;
+}
+
+/*************************************************************************
+ *  PathIsExeAW		[SHELL32.43]
+ */
+BOOL WINAPI PathIsExeAW (LPCVOID path)
+{
+	if (VERSION_OsIsUnicode())
+	  return PathIsExeW (path);
+	return PathIsExeA(path);
+}
+
+/*************************************************************************
+ * PathIsDirectoryA	[SHLWAPI.@]
+ */
+BOOL WINAPI PathIsDirectoryA(LPCSTR lpszPath)
+{
+	HANDLE hFile;
+	WIN32_FIND_DATAA stffile;
+	
+	TRACE("%s\n", debugstr_a(lpszPath));
+
+	hFile = FindFirstFileA(lpszPath, &stffile);
+
+	if ( hFile != INVALID_HANDLE_VALUE )
+	{
+	  FindClose (hFile);
+          return (stffile.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY);
+	}
+
+	return FALSE;	
+}
+
+/*************************************************************************
+ * PathIsDirectoryW	[SHLWAPI.@]
+ */
+BOOL WINAPI PathIsDirectoryW(LPCWSTR lpszPath)
+{
+	HANDLE hFile;
+	WIN32_FIND_DATAW stffile;
+	
+	TRACE("%s\n", debugstr_w(lpszPath));
+
+	hFile = FindFirstFileW(lpszPath, &stffile);
+
+	if ( hFile != INVALID_HANDLE_VALUE )
+	{
+	  FindClose (hFile);
+          return (stffile.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY);
+	}
+
+	return FALSE;	
+}
+
+/*************************************************************************
+ * PathIsDirectoryAW	[SHELL32.159]
+ */
+BOOL WINAPI PathIsDirectoryAW (LPCVOID lpszPath)
+{
+	if (VERSION_OsIsUnicode())
+	  return PathIsDirectoryW (lpszPath);
+	return PathIsDirectoryA (lpszPath);
+}
+
+/*************************************************************************
+ * PathFileExistsA	[SHLWAPI.@]
+ * 
+ * NOTES
+ *     file_exists(char *fn);
+ */
+BOOL WINAPI PathFileExistsA(LPCSTR lpszPath) 
+{
+	TRACE("%s\n",lpszPath);
+	return  (GetFileAttributesA(lpszPath)!=-1);
+}
+
+/*************************************************************************
+ * PathFileExistsW	[SHLWAPI.@]
+ */
+BOOL WINAPI PathFileExistsW(LPCWSTR lpszPath) 
+{
+	TRACE("%s\n",debugstr_w(lpszPath));
+	return  (GetFileAttributesW(lpszPath)!=-1);
+}
+
+/*************************************************************************
+ * PathFileExistsAW	[SHELL32.45]
+ */ 
+BOOL WINAPI PathFileExistsAW (LPCVOID lpszPath)
+{
+	if (VERSION_OsIsUnicode())
+	  return PathFileExistsW (lpszPath);
+	return PathFileExistsA (lpszPath);
+}
+
+/*************************************************************************
+ * PathMatchSingleMaskA	[internal]
+ * 
+ * NOTES
+ *     internal (used by PathMatchSpec)
+ */
+static BOOL PathMatchSingleMaskA(LPCSTR name, LPCSTR mask)
+{
+	while (*name && *mask && *mask!=';') 
+	{
+	  if (*mask=='*') 
+	  {
+	    do 
+	    {
+	      if (PathMatchSingleMaskA(name,mask+1)) return 1;  /* try substrings */
+	    } while (*name++);
+	    return 0;
+	  }
+	  if (toupper(*mask)!=toupper(*name) && *mask!='?') return 0;
+	  name++;
+	  mask++;
+	}
+	if (!*name) 
+	{
+	  while (*mask=='*') mask++;
+	  if (!*mask || *mask==';') return 1;
+	}
+	return 0;
+}
+
+/*************************************************************************
+ * PathMatchSingleMaskW	[internal]
+ */
+static BOOL PathMatchSingleMaskW(LPCWSTR name, LPCWSTR mask)
+{
+	while (*name && *mask && *mask!=';') 
+	{
+	  if (*mask=='*') 
+	  {
+	    do 
+	    {
+	      if (PathMatchSingleMaskW(name,mask+1)) return 1;  /* try substrings */
+	    } while (*name++);
+	    return 0;
+	  }
+	  if (towupper(*mask)!=towupper(*name) && *mask!='?') return 0;
+	  name++;
+	  mask++;
+	}
+	if (!*name) 
+	{
+	  while (*mask=='*') mask++;
+	  if (!*mask || *mask==';') return 1;
+	}
+	return 0;
+}
+/*************************************************************************
+ * PathMatchSpecA	[SHLWAPI.@]
+ * 
+ * NOTES
+ *     used from COMDLG32
+ */
+BOOL WINAPI PathMatchSpecA(LPCSTR name, LPCSTR mask) 
+{
+	TRACE("%s %s\n",name,mask);
+
+	if (!lstrcmpA( mask, "*.*" )) return 1;   /* we don't require a period */
+
+	while (*mask) 
+	{
+	  if (PathMatchSingleMaskA(name,mask)) return 1;    /* helper function */
+	  while (*mask && *mask!=';') mask++;
+	  if (*mask==';') 
+	  {
+	    mask++;
+	    while (*mask==' ') mask++;      /*  masks may be separated by "; " */
+	  }
+	}
+	return 0;
+}
+
+/*************************************************************************
+ * PathMatchSpecW	[SHLWAPI.@]
+ */
+BOOL WINAPI PathMatchSpecW(LPCWSTR name, LPCWSTR mask) 
+{
+	WCHAR stemp[4];
+	TRACE("%s %s\n",debugstr_w(name),debugstr_w(mask));
+
+	lstrcpyAtoW(stemp,"*.*");	
+	if (!lstrcmpW( mask, stemp )) return 1;   /* we don't require a period */
+
+	while (*mask) 
+	{
+	  if (PathMatchSingleMaskW(name,mask)) return 1;    /* helper function */
+	  while (*mask && *mask!=';') mask++;
+	  if (*mask==';') 
+	  {
+	    mask++;
+	    while (*mask==' ') mask++;       /* masks may be separated by "; " */
+	  }
+	}
+	return 0;
+}
+
+/*************************************************************************
+ * PathMatchSpecAW	[SHELL32.46]
+ */
+BOOL WINAPI PathMatchSpecAW(LPVOID name, LPVOID mask) 
+{
+	if (VERSION_OsIsUnicode())
+	  return PathMatchSpecW( name, mask );
+	return PathMatchSpecA( name, mask );
+}
+
+/*************************************************************************
+ * PathIsSameRootA	[SHLWAPI.@]
+ *
+ * FIXME
+ *  what to do with "\path" ??
+ */
+BOOL WINAPI PathIsSameRootA(LPCSTR lpszPath1, LPCSTR lpszPath2)
+{
+	TRACE("%s %s\n", lpszPath1, lpszPath2);
+	
+	if (PathIsRelativeA(lpszPath1) || PathIsRelativeA(lpszPath2)) return FALSE;
+
+	/* usual path */
+	if ( toupper(lpszPath1[0])==toupper(lpszPath2[0]) &&
+	     lpszPath1[1]==':' && lpszPath2[1]==':' &&
+	     lpszPath1[2]=='\\' && lpszPath2[2]=='\\')
+	  return TRUE;
+
+	/* UNC */
+	if (lpszPath1[0]=='\\' && lpszPath2[0]=='\\' &&
+	    lpszPath1[1]=='\\' && lpszPath2[1]=='\\')
+	{
+	  int pos=2, bsfound=0;
+	  while (lpszPath1[pos] && lpszPath2[pos] &&
+	        (lpszPath1[pos] == lpszPath2[pos]))
+	  {
+	    if (lpszPath1[pos]=='\\') bsfound++;
+	    if (bsfound == 2) return TRUE;
+	    pos++;
+	  }
+	  return (lpszPath1[pos] == lpszPath2[pos]);
+	}
+	return FALSE;
+}
+
+/*************************************************************************
+ * PathIsSameRootW	[SHLWAPI.@]
+ */
+BOOL WINAPI PathIsSameRootW(LPCWSTR lpszPath1, LPCWSTR lpszPath2)
+{
+	TRACE("%s %s\n", debugstr_w(lpszPath1), debugstr_w(lpszPath2));
+	
+	if (PathIsRelativeW(lpszPath1) || PathIsRelativeW(lpszPath2)) return FALSE;
+
+	/* usual path */
+	if ( towupper(lpszPath1[0])==towupper(lpszPath2[0]) &&
+	     lpszPath1[1]==':' && lpszPath2[1]==':' &&
+	     lpszPath1[2]=='\\' && lpszPath2[2]=='\\')
+	  return TRUE;
+
+	/* UNC */
+	if (lpszPath1[0]=='\\' && lpszPath2[0]=='\\' &&
+	    lpszPath1[1]=='\\' && lpszPath2[1]=='\\')
+	{
+	  int pos=2, bsfound=0;
+	  while (lpszPath1[pos] && lpszPath2[pos] &&
+	        (lpszPath1[pos] == lpszPath2[pos]))
+	  {
+	    if (lpszPath1[pos]=='\\') bsfound++;
+	    if (bsfound == 2) return TRUE;
+	    pos++;
+	  }
+	  return (lpszPath1[pos] == lpszPath2[pos]);
+	}
+	return FALSE;
+}
+
+/*************************************************************************
+ * PathIsSameRootAW	[SHELL32.650]
+ */
+BOOL WINAPI PathIsSameRootAW(LPCVOID lpszPath1, LPCVOID lpszPath2)
+{
+	if (VERSION_OsIsUnicode())
+	  return PathIsSameRootW(lpszPath1, lpszPath2);
+	return PathIsSameRootA(lpszPath1, lpszPath2);
+}
+
+/*************************************************************************
+ * PathIsURLA
+ */
+BOOL WINAPI PathIsURLA(LPCSTR lpstrPath)
+{
+	LPSTR lpstrRes;
+	int iSize, i=0;
+	static LPSTR SupportedProtocol[] = 
+	  {"http","https","ftp","gopher","file","mailto",NULL};
+
+	if(!lpstrPath) return FALSE;
+
+	/* get protocol        */
+	lpstrRes = strchr(lpstrPath,':');
+	if(!lpstrRes) return FALSE;
+	iSize = lpstrRes - lpstrPath;
+
+	while(SupportedProtocol[i])
+	{
+	  if (iSize == strlen(SupportedProtocol[i]))
+	    if(!strncasecmp(lpstrPath, SupportedProtocol[i], iSize));
+	      return TRUE;
+	  i++;
+	}
+
+	return FALSE;
+}  
+
+/*************************************************************************
+ * PathIsURLW
+ */
+BOOL WINAPI PathIsURLW(LPCWSTR lpstrPath)
+{
+	LPWSTR lpstrRes;
+	int iSize, i=0;
+	static WCHAR SupportedProtocol[7][7] = 
+	  {{'h','t','t','p','\0'},{'h','t','t','p','s','\0'},{'f','t','p','\0'},
+	  {'g','o','p','h','e','r','\0'},{'f','i','l','e','\0'},
+	  {'m','a','i','l','t','o','\0'},{0}};
+
+	if(!lpstrPath) return FALSE;
+
+	/* get protocol        */
+	lpstrRes = CRTDLL_wcschr(lpstrPath,':');
+	if(!lpstrRes) return FALSE;
+	iSize = lpstrRes - lpstrPath;
+
+	while(SupportedProtocol[i])
+	{
+	  if (iSize == CRTDLL_wcslen(SupportedProtocol[i]))
+	    if(!CRTDLL__wcsnicmp(lpstrPath, SupportedProtocol[i], iSize));
+	      return TRUE;
+	  i++;
+	}
+
+	return FALSE;
+}  
+
+/*************************************************************************
+ * IsLFNDriveA		[SHELL32.119]
+ * 
+ * NOTES
+ *     exported by ordinal Name
+ */
+BOOL WINAPI IsLFNDriveA(LPCSTR lpszPath) 
+{
+    DWORD	fnlen;
+
+    if (!GetVolumeInformationA(lpszPath,NULL,0,NULL,&fnlen,NULL,NULL,0))
+	return FALSE;
+    return fnlen>12;
+}
+
+/*
+	Creating Something Unique
+*/
+/*************************************************************************
+ * PathMakeUniqueNameA	[internal]
+ */
+BOOL WINAPI PathMakeUniqueNameA(
+	LPSTR lpszBuffer,
+	DWORD dwBuffSize, 
+	LPCSTR lpszShortName,
+	LPCSTR lpszLongName,
+	LPCSTR lpszPathName)
+{
+	FIXME("%p %lu %s %s %s stub\n",
+	 lpszBuffer, dwBuffSize, debugstr_a(lpszShortName),
+	 debugstr_a(lpszLongName), debugstr_a(lpszPathName));
+	return TRUE;
+}
+
+/*************************************************************************
+ * PathMakeUniqueNameW	[internal]
+ */
+BOOL WINAPI PathMakeUniqueNameW(
+	LPWSTR lpszBuffer,
+	DWORD dwBuffSize, 
+	LPCWSTR lpszShortName,
+	LPCWSTR lpszLongName,
+	LPCWSTR lpszPathName)
+{
+	FIXME("%p %lu %s %s %s stub\n",
+	 lpszBuffer, dwBuffSize, debugstr_w(lpszShortName),
+	 debugstr_w(lpszLongName), debugstr_w(lpszPathName));
+	return TRUE;
+}
+
+/*************************************************************************
+ * PathMakeUniqueNameAW	[SHELL32.47]
+ */
+BOOL WINAPI PathMakeUniqueNameAW(
+	LPVOID lpszBuffer,
+	DWORD dwBuffSize, 
+	LPCVOID lpszShortName,
+	LPCVOID lpszLongName,
+	LPCVOID lpszPathName)
+{
+	if (VERSION_OsIsUnicode())
+	  return PathMakeUniqueNameW(lpszBuffer,dwBuffSize, lpszShortName,lpszLongName,lpszPathName);
+	return PathMakeUniqueNameA(lpszBuffer,dwBuffSize, lpszShortName,lpszLongName,lpszPathName);
 }
 
 /*************************************************************************
@@ -891,75 +1577,52 @@ HRESULT WINAPI PathGetDriveNumberAW(LPVOID str)
  * NOTES
  *     exported by ordinal
  */
-BOOL WINAPI PathYetAnotherMakeUniqueNameA(LPDWORD x,LPDWORD y) {
-    FIXME("(%p,%p):stub.\n",x,y);
+BOOL WINAPI PathYetAnotherMakeUniqueNameA(
+	LPSTR lpszBuffer,
+	LPCSTR lpszPathName,
+	LPCSTR lpszShortName,
+	LPCSTR lpszLongName)
+{
+    FIXME("(%p,%p, %p ,%p):stub.\n",
+     lpszBuffer, lpszPathName, lpszShortName, lpszLongName);
     return TRUE;
 }
 
-/*************************************************************************
- * IsLFNDriveA [SHELL32.119]
- * 
- * NOTES
- *     exported by ordinal Name
+
+/*
+	cleaning and resolving paths 
  */
-BOOL WINAPI IsLFNDriveA(LPCSTR path) {
-    DWORD	fnlen;
-
-    if (!GetVolumeInformationA(path,NULL,0,NULL,&fnlen,NULL,NULL,0))
-	return FALSE;
-    return fnlen>12;
-}
 
 /*************************************************************************
- * PathFindOnPathA
+ * PathFindOnPathA	[SHELL32.145]
  */
 BOOL WINAPI PathFindOnPathA(LPSTR sFile, LPCSTR sOtherDirs)
-{	FIXME("%s %s\n",sFile, sOtherDirs);
+{
+	FIXME("%s %s\n",sFile, sOtherDirs);
 	return FALSE;
 }
 
 /*************************************************************************
- * PathFindOnPathW
+ * PathFindOnPathW	[SHELL32]
  */
 BOOL WINAPI PathFindOnPathW(LPWSTR sFile, LPCWSTR sOtherDirs)
-{	FIXME("%s %s\n",debugstr_w(sFile), debugstr_w(sOtherDirs));
+{
+	FIXME("%s %s\n",debugstr_w(sFile), debugstr_w(sOtherDirs));
 	return FALSE;
 }
 
 /*************************************************************************
- * PathFindOnPath [SHELL32.145]
+ * PathFindOnPathAW	[SHELL32]
  */
 BOOL WINAPI PathFindOnPathAW(LPVOID sFile, LPCVOID sOtherDirs)
-{	if (VERSION_OsIsUnicode())
+{
+	if (VERSION_OsIsUnicode())
 	  return PathFindOnPathW(sFile, sOtherDirs);
 	return PathFindOnPathA(sFile, sOtherDirs);
 }
 
 /*************************************************************************
- * PathGetExtension [SHELL32.158]
- *
- * NOTES
- *     exported by ordinal
- */
-LPCSTR WINAPI PathGetExtensionA(LPCSTR path,DWORD y,DWORD z)
-{	TRACE("(%s,%08lx,%08lx)\n",path,y,z);
-	path = PathFindExtensionA(path);
-	return *path?(path+1):path;
-}
-LPCWSTR WINAPI PathGetExtensionW(LPCWSTR path,DWORD y,DWORD z)
-{	TRACE("(%s, %08lx, %08lx)\n",debugstr_w(path),y,z);
-	path = PathFindExtensionW(path);
-	return *path?(path+1):path;
-}
-LPCVOID WINAPI PathGetExtensionAW(LPCVOID path,DWORD y,DWORD z) 
-{	if (VERSION_OsIsUnicode())
-	  return PathGetExtensionW(path,y,z);
-	return PathGetExtensionA(path,y,z);
-}
-
-/*************************************************************************
- * PathCleanupSpec				[SHELL32.171]
- *
+ * PathCleanupSpecA	[SHELL32.171]
  */
 DWORD WINAPI PathCleanupSpecA(LPSTR x, LPSTR y)
 {
@@ -967,12 +1630,18 @@ DWORD WINAPI PathCleanupSpecA(LPSTR x, LPSTR y)
 	return TRUE;
 }
 
+/*************************************************************************
+ * PathCleanupSpecA	[SHELL32]
+ */
 DWORD WINAPI PathCleanupSpecW(LPWSTR x, LPWSTR y)
 {
 	FIXME("(%p %s, %p %s) stub\n",x,debugstr_w(x),y,debugstr_w(y));
 	return TRUE;
 }
 
+/*************************************************************************
+ * PathCleanupSpecAW	[SHELL32]
+ */
 DWORD WINAPI PathCleanupSpecAW (LPVOID x, LPVOID y)
 {
 	if (VERSION_OsIsUnicode())
@@ -981,56 +1650,158 @@ DWORD WINAPI PathCleanupSpecAW (LPVOID x, LPVOID y)
 }
 
 /*************************************************************************
- * SheGetDirW [SHELL32.281]
- *
+ * PathQualifyA		[SHELL32]
  */
-HRESULT WINAPI SheGetDirW(LPWSTR u, LPWSTR v)
-{	FIXME("%p %p stub\n",u,v);
+BOOL WINAPI PathQualifyA(LPCSTR pszPath) 
+{
+	FIXME("%s\n",pszPath);
 	return 0;
 }
 
 /*************************************************************************
- * SheChangeDirW [SHELL32.274]
- *
+ * PathQualifyW		[SHELL32]
  */
-HRESULT WINAPI SheChangeDirW(LPWSTR u)
-{	FIXME("(%s),stub\n",debugstr_w(u));
+BOOL WINAPI PathQualifyW(LPCWSTR pszPath) 
+{
+	FIXME("%s\n",debugstr_w(pszPath));
 	return 0;
 }
 
 /*************************************************************************
-*	PathProcessCommand	[SHELL32.653]
-*/
-HRESULT WINAPI PathProcessCommandA (LPSTR lpCommand, LPSTR v, DWORD w, DWORD x)
-{
-	FIXME("%p(%s) %p 0x%04lx 0x%04lx stub\n",
-	lpCommand, lpCommand, v, w,x );
-	lstrcpyA(v, lpCommand);
-	return 0;
-}
-
-HRESULT WINAPI PathProcessCommandW (LPWSTR lpCommand, LPSTR v, DWORD w, DWORD x)
-{
-	FIXME("(%p %s, %p, 0x%04lx, 0x%04lx) stub\n",
-	lpCommand, debugstr_w(lpCommand), v, w,x );
-	return 0;
-}
-
-HRESULT WINAPI PathProcessCommandAW (LPVOID lpCommand, LPSTR v, DWORD w, DWORD x)
+ * PathQualifyAW	[SHELL32]
+ */
+BOOL WINAPI PathQualifyAW(LPCVOID pszPath) 
 {
 	if (VERSION_OsIsUnicode())
-	  return PathProcessCommandW(lpCommand, v, w, x);
-	return PathProcessCommandA(lpCommand, v, w, x);
+	  return PathQualifyW(pszPath);
+	return PathQualifyA(pszPath);
 }
 
 /*************************************************************************
- * SHGetSpecialFolderPathA
+ * PathResolveA [SHELL32.51]
+ */
+BOOL WINAPI PathResolveA(
+	LPSTR lpszPath,
+	LPCSTR *alpszPaths, 
+	DWORD dwFlags)
+{
+	FIXME("(%s,%p,0x%08lx),stub!\n",
+	  lpszPath, *alpszPaths, dwFlags);
+	return 0;
+}
+
+/*************************************************************************
+ * PathResolveW [SHELL32]
+ */
+BOOL WINAPI PathResolveW(
+	LPWSTR lpszPath,
+	LPCWSTR *alpszPaths, 
+	DWORD dwFlags)
+{
+	FIXME("(%s,%p,0x%08lx),stub!\n",
+	  debugstr_w(lpszPath), debugstr_w(*alpszPaths), dwFlags);
+	return 0;
+}
+
+/*************************************************************************
+ * PathResolveAW [SHELL32]
+ */
+BOOL WINAPI PathResolveAW(
+	LPVOID lpszPath,
+	LPCVOID *alpszPaths, 
+	DWORD dwFlags)
+{
+	if (VERSION_OsIsUnicode())
+	  return PathResolveW(lpszPath, (LPCWSTR*)alpszPaths, dwFlags);
+	return PathResolveA(lpszPath, (LPCSTR*)alpszPaths, dwFlags);
+}
+
+/*************************************************************************
+*	PathProcessCommandA	[SHELL32.653]
+*/
+HRESULT WINAPI PathProcessCommandA (
+	LPCSTR lpszPath,
+	LPSTR lpszBuff,
+	DWORD dwBuffSize,
+	DWORD dwFlags)
+{
+	FIXME("%s %p 0x%04lx 0x%04lx stub\n",
+	lpszPath, lpszBuff, dwBuffSize, dwFlags);
+	lstrcpyA(lpszBuff, lpszPath);
+	return 0;
+}
+
+/*************************************************************************
+*	PathProcessCommandW
+*/
+HRESULT WINAPI PathProcessCommandW (
+	LPCWSTR lpszPath,
+	LPWSTR lpszBuff,
+	DWORD dwBuffSize,
+	DWORD dwFlags)
+{
+	FIXME("(%s, %p, 0x%04lx, 0x%04lx) stub\n",
+	debugstr_w(lpszPath), lpszBuff, dwBuffSize, dwFlags);
+	lstrcpyW(lpszBuff, lpszPath);
+	return 0;
+}
+
+/*************************************************************************
+*	PathProcessCommandAW
+*/
+HRESULT WINAPI PathProcessCommandAW (
+	LPCVOID lpszPath,
+	LPVOID lpszBuff,
+	DWORD dwBuffSize,
+	DWORD dwFlags)
+{
+	if (VERSION_OsIsUnicode())
+	  return PathProcessCommandW(lpszPath, lpszBuff, dwBuffSize, dwFlags);
+	return PathProcessCommandA(lpszPath, lpszBuff, dwBuffSize, dwFlags);
+}
+
+/*
+	special
+*/
+
+/*************************************************************************
+ * PathSetDlgItemPathA
+ *
+ * NOTES
+ *  use PathCompactPath to make sure, the path fits into the control
+ */
+BOOL WINAPI PathSetDlgItemPathA(HWND hDlg, int id, LPCSTR pszPath) 
+{	TRACE("%x %x %s\n",hDlg, id, pszPath);
+	return SetDlgItemTextA(hDlg, id, pszPath);
+}
+
+/*************************************************************************
+ * PathSetDlgItemPathW
+ */
+BOOL WINAPI PathSetDlgItemPathW(HWND hDlg, int id, LPCWSTR pszPath) 
+{	TRACE("%x %x %s\n",hDlg, id, debugstr_w(pszPath));
+	return SetDlgItemTextW(hDlg, id, pszPath);
+}
+
+/*************************************************************************
+ * PathSetDlgItemPathAW
+ */
+BOOL WINAPI PathSetDlgItemPathAW(HWND hDlg, int id, LPCVOID pszPath) 
+{	if (VERSION_OsIsUnicode())
+	  return PathSetDlgItemPathW(hDlg, id, pszPath);
+	return PathSetDlgItemPathA(hDlg, id, pszPath);
+}
+
+
+/*************************************************************************
+ * SHGetSpecialFolderPathA [SHELL32.175]
  * 
  * converts csidl to path
  * 
  */
  
 static char * szSHFolders = "Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Shell Folders";
+static char * szSHUserFolders = "Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\User Shell Folders";
 
 BOOL WINAPI SHGetSpecialFolderPathA (
 	HWND hwndOwner,
@@ -1174,40 +1945,46 @@ BOOL WINAPI SHGetSpecialFolderPathA (
 	    return FALSE;
 	}
 
-	if (RegCreateKeyExA(hRootKey,szSHFolders,0,NULL,REG_OPTION_NON_VOLATILE,KEY_WRITE,NULL,&hKey,&dwDisp))
-	{
-	  return FALSE;
-	}
+	/* user shell folders */
+	if (RegCreateKeyExA(hRootKey,szSHUserFolders,0,NULL,0,KEY_ALL_ACCESS,NULL,&hKey,&dwDisp)) return FALSE;
 
 	if (RegQueryValueExA(hKey,szValueName,NULL,&dwType,(LPBYTE)szPath,&dwPathLen))
 	{
-	  /* value not existing */
-	  if (bRelative)
+	  RegCloseKey(hKey);
+
+	  /* shell folders */
+	  if (RegCreateKeyExA(hRootKey,szSHFolders,0,NULL,0,KEY_ALL_ACCESS,NULL,&hKey,&dwDisp)) return FALSE;
+
+	  if (RegQueryValueExA(hKey,szValueName,NULL,&dwType,(LPBYTE)szPath,&dwPathLen))
 	  {
-	    GetWindowsDirectoryA(szPath, MAX_PATH);
-	    PathAddBackslashA(szPath);
-	    strcat(szPath, szDefaultPath);
+
+	    /* value not existing */
+	    if (bRelative)
+	    {
+	      GetWindowsDirectoryA(szPath, MAX_PATH);
+	      PathAddBackslashA(szPath);
+	      strcat(szPath, szDefaultPath);
+	    }
+	    else
+	    {
+	      strcpy(szPath, "C:\\");	/* fixme ??? */
+	      strcat(szPath, szDefaultPath);
+	    }
+	    RegSetValueExA(hKey,szValueName,0,REG_SZ,(LPBYTE)szPath,strlen(szPath)+1);
 	  }
-	  else
-	  {
-	    strcpy(szPath, szDefaultPath);
-	  }
-	  if (bCreate)
-	  {
-	    CreateDirectoryA(szPath,NULL);
-	  }
-	  RegSetValueExA(hKey,szValueName,0,REG_SZ,(LPBYTE)szPath,strlen(szPath)+1);
 	}
 	RegCloseKey(hKey);
+
+	if (bCreate && CreateDirectoryA(szPath,NULL))
+	{
+	    MESSAGE("Created not existing system directory '%s'\n", szPath);
+	}
 
 	return TRUE;
 }
 
 /*************************************************************************
  * SHGetSpecialFolderPathW
- * 
- * converts csidl to path
- * 
  */
 BOOL WINAPI SHGetSpecialFolderPathW (
 	HWND hwndOwner,
@@ -1228,10 +2005,7 @@ BOOL WINAPI SHGetSpecialFolderPathW (
 }
 
 /*************************************************************************
- * SHGetSpecialFolderPath [SHELL32.175]
- * 
- * converts csidl to path
- * 
+ * SHGetSpecialFolderPathAW
  */
 BOOL WINAPI SHGetSpecialFolderPathAW (
 	HWND hwndOwner,
@@ -1246,97 +2020,171 @@ BOOL WINAPI SHGetSpecialFolderPathAW (
 }
 
 /*************************************************************************
- * PathRemoveBackslashA
+ * PathCanonicalizeA
  *
- * If the path ends in a backslash it is replaced by a NULL
- * and the address of the NULL is returned
- * Otherwise 
- * the address of the last character is returned.
- *
+ *  FIXME
+ *   returnvalue
  */
-LPSTR WINAPI PathRemoveBackslashA( LPSTR lpPath )
+ 
+BOOL WINAPI PathCanonicalizeA(LPSTR pszBuf, LPCSTR pszPath)
 {
-	LPSTR p = lpPath;
+	int OffsetMin = 0, OffsetSrc = 0, OffsetDst = 0, LenSrc = strlen(pszPath);
+	BOOL bModifyed = FALSE;
+
+	TRACE("%p %s\n", pszBuf, pszPath);
 	
-	while (*lpPath) p = lpPath++;
-	if ( *p == (CHAR)'\\') *p = (CHAR)'\0';
-	return p;
-}
+	pszBuf[OffsetDst]='\0';
 
-/*************************************************************************
- * PathRemoveBackslashW
- *
- */
-LPWSTR WINAPI PathRemoveBackslashW( LPWSTR lpPath )
-{
-	LPWSTR p = lpPath;
+	/* keep the root of the path */
+	if( LenSrc && (pszPath[OffsetSrc]=='\\'))
+	{
+	  pszBuf[OffsetDst++] = pszPath[OffsetSrc++]; OffsetMin++; LenSrc--;
+	}
+	else if ( (LenSrc >= 2) && (pszPath[OffsetSrc+1] == ':'))
+	{
+	  pszBuf[OffsetDst++] = pszPath[OffsetSrc++]; OffsetMin++; LenSrc--;
+	  pszBuf[OffsetDst++] = pszPath[OffsetSrc++]; OffsetMin++; LenSrc--;
+	  if (LenSrc && (pszPath[OffsetSrc] == '\\'))
+	  {
+	    pszBuf[OffsetDst++] = pszPath[OffsetSrc++]; OffsetMin++; LenSrc--;
+	    if (LenSrc == 1 && pszPath[OffsetSrc]=='.')
+	    {
+	      /* C:\. */
+	      OffsetSrc++; LenSrc--; bModifyed = TRUE;
+	    } 
+	    else if (LenSrc == 2 && pszPath[OffsetSrc]=='.' && pszPath[OffsetSrc+1]=='.')
+	    {
+	      /* C:\.. */
+	      OffsetSrc+=2; LenSrc-=2; bModifyed = TRUE;
+	    } 
+          }
+	}
 	
-	while (*lpPath); p = lpPath++;
-	if ( *p == (WCHAR)'\\') *p = (WCHAR)'\0';
-	return p;
+	/* ".\" at the beginning of the path */
+	if (LenSrc >= 2 && pszPath[OffsetSrc]=='.' && pszPath[OffsetSrc+1]=='\\')
+	{
+	  OffsetSrc+=2; LenSrc-=2; bModifyed = TRUE;
+	} 
+	
+	while ( LenSrc )
+	{
+	  if((LenSrc>=3) && (pszPath[OffsetSrc]=='\\') && (pszPath[OffsetSrc+1]=='.') && (pszPath[OffsetSrc+2]=='.'))
+	  {
+	    /* "\.." found, go one deeper */
+	    while((OffsetDst > OffsetMin) && (pszBuf[OffsetDst]!='\\')) OffsetDst--;
+	    OffsetSrc += 3; LenSrc -= 3; bModifyed = TRUE;
+	    if(OffsetDst == OffsetMin && pszPath[OffsetSrc]=='\\') OffsetSrc++;
+	    pszBuf[OffsetDst] = '\0';			/* important for \..\.. */
+	  }
+	  else if(LenSrc>=2 && pszPath[OffsetSrc]=='\\' && pszPath[OffsetSrc+1]=='.' )
+	  {
+	    /* "\." found, skip it */
+	    OffsetSrc += 2; LenSrc-=2; bModifyed = TRUE;
+	  }
+	  else
+	  {
+	    pszBuf[OffsetDst++] = pszPath[OffsetSrc++]; LenSrc--;
+	  }
+	}
+	pszBuf[OffsetDst] = '\0';
+	TRACE("-- %s %u\n", pszBuf, bModifyed);
+	return bModifyed;
+}
+
+
+/*************************************************************************
+ * PathCanonicalizeW
+ *
+ *  FIXME
+ *   returnvalue
+ */
+BOOL WINAPI PathCanonicalizeW(LPWSTR pszBuf, LPCWSTR pszPath)
+{
+	int OffsetMin = 0, OffsetSrc = 0, OffsetDst = 0, LenSrc = lstrlenW(pszPath);
+	BOOL bModifyed = FALSE;
+
+	TRACE("%p %s\n", pszBuf, debugstr_w(pszPath));
+	
+	pszBuf[OffsetDst]='\0';
+
+	/* keep the root of the path */
+	if( LenSrc && (pszPath[OffsetSrc]=='\\'))
+	{
+	  pszBuf[OffsetDst++] = pszPath[OffsetSrc++]; OffsetMin++; LenSrc--;
+	}
+	else if ( (LenSrc >= 2) && (pszPath[OffsetSrc+1] == ':'))
+	{
+	  pszBuf[OffsetDst++] = pszPath[OffsetSrc++]; OffsetMin++; LenSrc--;
+	  pszBuf[OffsetDst++] = pszPath[OffsetSrc++]; OffsetMin++; LenSrc--;
+	  if (LenSrc && (pszPath[OffsetSrc] == '\\'))
+	  {
+	    pszBuf[OffsetDst++] = pszPath[OffsetSrc++]; OffsetMin++; LenSrc--;
+	    if (LenSrc == 1 && pszPath[OffsetSrc]=='.')
+	    {
+	      /* C:\. */
+	      OffsetSrc++; LenSrc--; bModifyed = TRUE;
+	    } 
+	    else if (LenSrc == 2 && pszPath[OffsetSrc]=='.' && pszPath[OffsetSrc+1]=='.')
+	    {
+	      /* C:\.. */
+	      OffsetSrc+=2; LenSrc-=2; bModifyed = TRUE;
+	    } 
+          }
+	}
+	
+	/* ".\" at the beginning of the path */
+	if (LenSrc >= 2 && pszPath[OffsetSrc]=='.' && pszPath[OffsetSrc+1]=='\\')
+	{
+	  OffsetSrc+=2; LenSrc-=2; bModifyed = TRUE;
+	} 
+	
+	while ( LenSrc )
+	{
+	  if((LenSrc>=3) && (pszPath[OffsetSrc]=='\\') && (pszPath[OffsetSrc+1]=='.') && (pszPath[OffsetSrc+2]=='.'))
+	  {
+	    /* "\.." found, go one deeper */
+	    while((OffsetDst > OffsetMin) && (pszBuf[OffsetDst]!='\\')) OffsetDst--;
+	    OffsetSrc += 3; LenSrc -= 3; bModifyed = TRUE;
+	    if(OffsetDst == OffsetMin && pszPath[OffsetSrc]=='\\') OffsetSrc++;
+	    pszBuf[OffsetDst] = '\0';			/* important for \..\.. */
+	  }
+	  else if(LenSrc>=2 && pszPath[OffsetSrc]=='\\' && pszPath[OffsetSrc+1]=='.' )
+	  {
+	    /* "\." found, skip it */
+	    OffsetSrc += 2; LenSrc-=2; bModifyed = TRUE;
+	  }
+	  else
+	  {
+	    pszBuf[OffsetDst++] = pszPath[OffsetSrc++]; LenSrc--;
+	  }
+	}
+	pszBuf[OffsetDst] = '\0';
+	TRACE("-- %s %u\n", debugstr_w(pszBuf), bModifyed);
+	return bModifyed;
 }
 
 /*************************************************************************
- * PathIsURLA
- *
+ * PathFindNextComponentA
  */
-BOOL WINAPI PathIsURLA(LPCSTR lpstrPath)
+LPSTR WINAPI PathFindNextComponentA(LPCSTR pszPath)
 {
-  LPSTR lpstrRes;
-  char lpstrFileType[10] = "";
-  int iSize;
-  int i = 0;
-  /* sanity check */
-  if(!lpstrPath)
-    return FALSE;
-
-  /* get protocol        */
-  /* protocol://location */
-  if(!(lpstrRes = strchr(lpstrPath,':')))
-  {
-    return FALSE;
-  }
-  iSize = lpstrRes - lpstrPath;
-  if(iSize > sizeof(lpstrFileType))
-    return FALSE;
-
-  strncpy(lpstrFileType,lpstrPath,iSize);
-
-  while(strlen(SupportedProtocol[i]))
-  {
-    if(!_stricmp(lpstrFileType,SupportedProtocol[i++]))
-      return TRUE;
-  }
-
-  return FALSE;
-}  
-
-/*************************************************************************
- * PathIsDirectoryA
- *
- */
-BOOL WINAPI PathIsDirectoryA(LPCSTR pszPath)
-{
-	FIXME("%s\n", debugstr_a(pszPath));
-	return TRUE;
+	while( *pszPath )
+	{
+	  if(*pszPath++=='\\')
+	    return (LPSTR)((*pszPath)? pszPath : NULL);
+	}
+	return NULL;
 }
 
 /*************************************************************************
- * PathIsDirectoryW
- *
+ * PathFindNextComponentW
  */
-BOOL WINAPI PathIsDirectoryW(LPCWSTR pszPath)
+LPWSTR WINAPI PathFindNextComponentW(LPCWSTR pszPath)
 {
-	FIXME("%s\n", debugstr_w(pszPath));
-	return TRUE;
-}
-/*************************************************************************
- * PathIsDirectory
- *
- */
-BOOL WINAPI PathIsDirectoryAW (LPCVOID pszPath)
-{
-	if (VERSION_OsIsUnicode())
-	  return PathIsDirectoryW (pszPath);
-	return PathIsDirectoryA (pszPath);
+	while( *pszPath )
+	{
+	  if(*pszPath++=='\\')
+	    return (LPWSTR)((*pszPath)? pszPath : NULL);
+	}
+	return NULL;
 }

@@ -8,8 +8,25 @@
 #include "winversion.h"
 
 #include "shlobj.h"
+#include "shresdef.h"
+#include "wine/undocshell.h"
 
 DEFAULT_DEBUG_CHANNEL(shell);
+
+#define ASK_DELETE_FILE 1
+#define ASK_DELETE_FOLDER 2
+#define ASK_DELETE_MULTIPLE_FILE 3
+
+static BOOL SHELL_WarnFolderDelete (int nKindOfDialog, LPCSTR szDir)
+{
+	char szCaption[255], szText[255], szBuffer[256];
+
+	LoadStringA(shell32_hInstance, IDS_DELETEFOLDER_TEXT, szText, sizeof(szText));
+	LoadStringA(shell32_hInstance, IDS_DELETEFOLDER_CAPTION, szCaption, sizeof(szCaption));
+	FormatMessageA(FORMAT_MESSAGE_FROM_STRING, szText, 0,0, szBuffer, sizeof(szBuffer), (DWORD*)&szDir);
+
+	return (IDOK == MessageBoxA(GetActiveWindow(),szText, szCaption, MB_OKCANCEL | MB_ICONEXCLAMATION));
+}
 
 /**************************************************************************
  *	SHELL_DeleteDirectoryA()
@@ -17,7 +34,7 @@ DEFAULT_DEBUG_CHANNEL(shell);
  * like rm -r
  */
 
-BOOL SHELL_DeleteDirectoryA(LPCSTR pszDir)
+BOOL SHELL_DeleteDirectoryA(LPCSTR pszDir, BOOL bShowUI)
 {
 	BOOL		ret = FALSE;
 	HANDLE		hFind;
@@ -27,6 +44,8 @@ BOOL SHELL_DeleteDirectoryA(LPCSTR pszDir)
 	strcpy(szTemp, pszDir);
 	PathAddBackslashA(szTemp);
 	strcat(szTemp, "*.*");
+	
+	if (bShowUI && !SHELL_WarnFolderDelete(ASK_DELETE_FOLDER, pszDir)) return FALSE;
 	
 	if(INVALID_HANDLE_VALUE != (hFind = FindFirstFileA(szTemp, &wfd)))
 	{
@@ -39,7 +58,7 @@ BOOL SHELL_DeleteDirectoryA(LPCSTR pszDir)
 	      strcat(szTemp, wfd.cFileName);
 	
 	      if(FILE_ATTRIBUTE_DIRECTORY & wfd.dwFileAttributes)
-	        SHELL_DeleteDirectoryA(szTemp);
+	        SHELL_DeleteDirectoryA(szTemp, FALSE);
 	      else
 	        DeleteFileA(szTemp);
 	    }
@@ -124,3 +143,22 @@ DWORD WINAPI SHFileOperationAW(LPVOID lpFileOp)
 	  return SHFileOperationW(lpFileOp);
 	return SHFileOperationA(lpFileOp);
 }
+
+/*************************************************************************
+ * SheGetDirW [SHELL32.281]
+ *
+ */
+HRESULT WINAPI SheGetDirW(LPWSTR u, LPWSTR v)
+{	FIXME("%p %p stub\n",u,v);
+	return 0;
+}
+
+/*************************************************************************
+ * SheChangeDirW [SHELL32.274]
+ *
+ */
+HRESULT WINAPI SheChangeDirW(LPWSTR u)
+{	FIXME("(%s),stub\n",debugstr_w(u));
+	return 0;
+}
+

@@ -176,11 +176,11 @@ type win32
 @ stub    PathAddExtensionA
 @ stub    PathAddExtensionW
 @ stdcall PathAppendA (str str) PathAppendA
-@ stub    PathAppendW
+@ stdcall PathAppendW (str str) PathAppendW
 @ stdcall PathBuildRootA (ptr long) PathBuildRootA
-@ stub    PathBuildRootW
-@ stub    PathCanonicalizeA
-@ stub    PathCanonicalizeW
+@ stdcall PathBuildRootW (ptr long) PathBuildRootW
+@ stdcall PathCanonicalizeA (ptr str) PathCanonicalizeA
+@ stdcall PathCanonicalizeW (ptr wstr) PathCanonicalizeW
 @ stdcall PathCombineA (ptr ptr ptr) PathCombineA
 @ stdcall PathCombineW (ptr ptr ptr) PathCombineW
 @ stub    PathCommonPrefixA
@@ -192,21 +192,21 @@ type win32
 @ stub    PathCreateFromUrlA
 @ stub    PathCreateFromUrlW
 @ stdcall PathFileExistsA (str) PathFileExistsA
-@ stub    PathFileExistsW
-@ stdcall PathFindExtensionA (ptr) PathFindExtensionA
-@ stdcall PathFindExtensionW (ptr) PathFindExtensionW
-@ stdcall PathFindFileNameA (ptr) PathFindFilenameA
-@ stdcall PathFindFileNameW (ptr) PathFindFilenameW
-@ stub    PathFindNextComponentA
-@ stub    PathFindNextComponentW
-@ stdcall PathFindOnPathA (ptr ptr) PathFindOnPathA
-@ stdcall PathFindOnPathW (ptr ptr) PathFindOnPathW
+@ stdcall PathFileExistsW (wstr) PathFileExistsW
+@ stdcall PathFindExtensionA (str) PathFindExtensionA
+@ stdcall PathFindExtensionW (wstr) PathFindExtensionW
+@ stdcall PathFindFileNameA (str) PathFindFileNameA
+@ stdcall PathFindFileNameW (wstr) PathFindFileNameW
+@ stdcall PathFindNextComponentA (str) PathFindNextComponentA
+@ stdcall PathFindNextComponentW (wstr) PathFindNextComponentW
+@ stdcall PathFindOnPathA (str ptr) PathFindOnPathA
+@ stdcall PathFindOnPathW (wstr ptr) PathFindOnPathW
 @ stdcall PathGetArgsA (str) PathGetArgsA
-@ stdcall PathGetArgsW (str) PathGetArgsW
+@ stdcall PathGetArgsW (wstr) PathGetArgsW
 @ stub    PathGetCharTypeA
 @ stub    PathGetCharTypeW
-@ stdcall PathGetDriveNumberA(str) PathGetDriveNumberA
-@ stdcall PathGetDriveNumberW(str) PathGetDriveNumberW
+@ stdcall PathGetDriveNumberA (str) PathGetDriveNumberA
+@ stdcall PathGetDriveNumberW (wstr) PathGetDriveNumberW
 @ stub    PathIsContentTypeA
 @ stub    PathIsContentTypeW
 @ stdcall PathIsDirectoryA(str) PathIsDirectoryA
@@ -215,44 +215,44 @@ type win32
 @ stub    PathIsFileSpecW
 @ stub    PathIsPrefixA
 @ stub    PathIsPrefixW
-@ stdcall PathIsRelativeA (ptr) PathIsRelativeA
-@ stdcall PathIsRelativeW (ptr) PathIsRelativeW
+@ stdcall PathIsRelativeA (str) PathIsRelativeA
+@ stdcall PathIsRelativeW (wstr) PathIsRelativeW
 @ stdcall PathIsRootA(str) PathIsRootA
 @ stdcall PathIsRootW(wstr) PathIsRootW
-@ stub    PathIsSameRootA
-@ stub    PathIsSameRootW
+@ stdcall PathIsSameRootA(str str) PathIsSameRootA
+@ stdcall PathIsSameRootW(wstr wstr) PathIsSameRootW
 @ stub    PathIsSystemFolderA
 @ stub    PathIsSystemFolderW
-@ stdcall PathIsUNCA (ptr) PathIsUNCA
+@ stdcall PathIsUNCA (str) PathIsUNCA
 @ stub    PathIsUNCServerA
 @ stub    PathIsUNCServerShareA
 @ stub    PathIsUNCServerShareW
 @ stub    PathIsUNCServerW
 @ stdcall PathIsUNCW(wstr) PathIsUNCW
 @ stdcall PathIsURLA(str) PathIsURLA
-@ stub    PathIsURLW
+@ stdcall PathIsURLW(wstr) PathIsURLW
 @ stub    PathMakePrettyA
 @ stub    PathMakePrettyW
 @ stub    PathMakeSystemFolderA
 @ stub    PathMakeSystemFolderW
 @ stdcall PathMatchSpecA  (str str) PathMatchSpecA
 @ stdcall PathMatchSpecW  (str str) PathMatchSpecW
-@ stub    PathParseIconLocationA
-@ stub    PathParseIconLocationW
+@ stdcall PathParseIconLocationA (str) PathParseIconLocationA
+@ stdcall PathParseIconLocationW (wstr) PathParseIconLocationW
 @ stdcall PathQuoteSpacesA (ptr) PathQuoteSpacesA
 @ stdcall PathQuoteSpacesW (ptr) PathQuoteSpacesW
 @ stub    PathRelativePathToA
 @ stub    PathRelativePathToW
-@ stub    PathRemoveArgsA
-@ stub    PathRemoveArgsW
-@ stdcall PathRemoveBackslashA (ptr) PathRemoveBackslashA
-@ stdcall PathRemoveBackslashW (ptr) PathRemoveBackslashW
+@ stdcall PathRemoveArgsA(str)PathRemoveArgsA
+@ stdcall PathRemoveArgsW(wstr)PathRemoveArgsW
+@ stdcall PathRemoveBackslashA (str) PathRemoveBackslashA
+@ stdcall PathRemoveBackslashW (wstr) PathRemoveBackslashW
 @ stdcall PathRemoveBlanksA(str) PathRemoveBlanksA
 @ stdcall PathRemoveBlanksW(wstr) PathRemoveBlanksW
-@ stub    PathRemoveExtensionA
-@ stub    PathRemoveExtensionW
+@ stdcall PathRemoveExtensionA(str)PathRemoveExtensionA
+@ stdcall PathRemoveExtensionW(wstr)PathRemoveExtensionW
 @ stdcall PathRemoveFileSpecA (str) PathRemoveFileSpecA
-@ stub    PathRemoveFileSpecW
+@ stdcall PathRemoveFileSpecW (wstr) PathRemoveFileSpecW
 @ stub    PathRenameExtensionA
 @ stub    PathRenameExtensionW
 @ stub    PathSearchAndQualifyA
@@ -261,19 +261,19 @@ type win32
 @ stdcall PathSetDlgItemPathW (long long ptr) PathSetDlgItemPathW
 @ stub    PathSkipRootA
 @ stub    PathSkipRootW
-@ stub    PathStripPathA
-@ stub    PathStripPathW
-@ stub    PathStripToRootA
-@ stub    PathStripToRootW
+@ stdcall PathStripPathA(str)PathStripPathA
+@ stdcall PathStripPathW(wstr)PathStripPathW
+@ stdcall PathStripToRootA(str)PathStripToRootA
+@ stdcall PathStripToRootW(wstr)PathStripToRootW
 @ stub    PathUnmakeSystemFolderA
 @ stub    PathUnmakeSystemFolderW
 @ stdcall PathUnquoteSpacesA (str) PathUnquoteSpacesA
-@ stdcall PathUnquoteSpacesW (str) PathUnquoteSpacesW
+@ stdcall PathUnquoteSpacesW (wstr) PathUnquoteSpacesW
 @ stub    SHCreateShellPalette
 @ stub    SHDeleteEmptyKeyA
 @ stub    SHDeleteEmptyKeyW
 @ stdcall SHDeleteKeyA(long str)SHRegDeleteKeyA
-@ stdcall SHDeleteKeyW(long str)SHRegDeleteKeyW
+@ stdcall SHDeleteKeyW(long wstr)SHRegDeleteKeyW
 @ stub    SHDeleteOrphanKeyA
 @ stub    SHDeleteOrphanKeyW
 @ stub    SHDeleteValueA

@@ -278,6 +278,6 @@ LPITEMIDLIST WINAPI SHBrowseForFolderA (LPBROWSEINFOA lpbi)
 	TRACE("(%lx,%s) empty stub!\n", (DWORD)lpbi, lpbi->lpszTitle);
 
 	return (LPITEMIDLIST) DialogBoxParamA( shell32_hInstance,
-			"SHBRSFORFOLDER_MSGBOX", 0,
+			"SHBRSFORFOLDER_MSGBOX",  lpbi->hwndOwner,
 			BrsFolderDlgProc, (INT)lpbi );
 }

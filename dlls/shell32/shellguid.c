@@ -8,6 +8,7 @@
  */
 #define INITGUID
 
+#include "shlwapi.h"
 /* #include "shlguid.h" */
 
 /*

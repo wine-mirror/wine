@@ -58,14 +58,6 @@ DEFINE_SHLGUID(IID_IShellBrowser,       0x000214E2L, 0, 0);
 #define FCT_CONFIGABLE  0x0002
 #define FCT_ADDTOEND    0x0004
 
-/* undocumented, found in the web posted by Chris Becke */ 
-#define CWM_SETPATH	(WM_USER+2)
-#define CWM_WANTIDLE	(WM_USER+3)
-#define CWM_GETSETCURRENTINFO	(WM_USER+4)
-#define CWM_SELECTITEM	(WM_USER+5)
-#define CWM_STOPWAITING	(WM_USER+6)
-#define CWM_GETISHELLBROWSER (WM_USER+7)
-
 #define ICOM_INTERFACE IShellBrowser
 #define IShellBrowser_METHODS \
 	ICOM_METHOD2(HRESULT, InsertMenusSB, HMENU, hmenuShared, LPOLEMENUGROUPWIDTHS, lpMenuWidths) \
