@@ -648,7 +648,7 @@ typedef struct
 
 /****** Window classes ******/
 
-typedef struct
+typedef struct tagCREATESTRUCTA
 {
     LPVOID      lpCreateParams;
     HINSTANCE hInstance;
@@ -785,7 +785,7 @@ typedef struct
 #define DBGFILL_STACK  0xf7
 
   /* WM_WINDOWPOSCHANGING/CHANGED struct */
-typedef struct
+typedef struct tagWINDOWPOS
 {
     HWND  hwnd;
     HWND  hwndInsertAfter;

@@ -68,7 +68,7 @@ typedef struct
 
 /* Cursors / Icons */
 
-typedef struct
+typedef struct tagCURSORICONINFO
 {
     POINT16 ptHotSpot;
     WORD    nWidth;

@@ -12,6 +12,7 @@
 #include <X11/Xatom.h>
 #include "ts_xlib.h"
 
+#include "wine/winuser16.h"
 #include "clipboard.h"
 #include "debug.h"
 #include "message.h"

@@ -19,6 +19,7 @@
 #include "ts_xresource.h"
 #include "ts_xutil.h"
 
+#include "wine/winuser16.h"
 #include "debug.h"
 #include "keyboard.h"
 #include "message.h"

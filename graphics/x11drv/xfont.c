@@ -26,6 +26,7 @@
 #include <fcntl.h>
 #include <math.h>
 #include <assert.h>
+#include "winuser.h"
 #include "heap.h"
 #include "options.h"
 #include "font.h"

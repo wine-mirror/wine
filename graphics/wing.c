@@ -17,6 +17,7 @@
 #endif /* defined(HAVE_LIBXXSHM) */
 #include "x11drv.h"
 
+#include "wine/winuser16.h"
 #include "bitmap.h"
 #include "palette.h"
 #include "dc.h"

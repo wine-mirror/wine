@@ -21,6 +21,7 @@
 #ifdef MALLOC_DEBUGGING
 # include <malloc.h>
 #endif
+#include "wine/winuser16.h"
 #include "winbase.h"
 #include "winsock.h"
 #include "heap.h"

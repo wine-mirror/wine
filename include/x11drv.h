@@ -14,14 +14,17 @@
 #include <X11/Xatom.h>
 #endif /* !defined(X_DISPLAY_MISSING) */
 
+#include "winbase.h"
 #include "gdi.h"
 #include "windef.h"
-#include "wine/winuser16.h"
 
 struct tagCLASS;
 struct tagDC;
 struct tagDeviceCaps;
 struct tagWND;
+struct tagCREATESTRUCTA;
+struct tagWINDOWPOS;
+struct tagCURSORICONINFO;
 
   /* X physical pen */
 typedef struct
@@ -316,7 +319,7 @@ extern int X11DRV_MONITOR_GetDepth(struct tagMONITOR *pMonitor);
 
 extern struct _MOUSE_DRIVER X11DRV_MOUSE_Driver;
 
-extern void X11DRV_MOUSE_SetCursor(CURSORICONINFO *lpCursor);
+extern void X11DRV_MOUSE_SetCursor(struct tagCURSORICONINFO *lpCursor);
 extern void X11DRV_MOUSE_MoveCursor(WORD wAbsX, WORD wAbsY);
 
 /* X11 windows driver */
@@ -335,11 +338,11 @@ extern Window X11DRV_WND_GetXRootWindow(struct tagWND *wndPtr);
 extern void X11DRV_WND_Initialize(struct tagWND *wndPtr);
 extern void X11DRV_WND_Finalize(struct tagWND *wndPtr);
 extern BOOL X11DRV_WND_CreateDesktopWindow(struct tagWND *wndPtr, struct tagCLASS *classPtr, BOOL bUnicode);
-extern BOOL X11DRV_WND_CreateWindow(struct tagWND *wndPtr, struct tagCLASS *classPtr, CREATESTRUCTA *cs, BOOL bUnicode);
+extern BOOL X11DRV_WND_CreateWindow(struct tagWND *wndPtr, struct tagCLASS *classPtr, struct tagCREATESTRUCTA *cs, BOOL bUnicode);
 extern BOOL X11DRV_WND_DestroyWindow(struct tagWND *pWnd);
 extern struct tagWND *X11DRV_WND_SetParent(struct tagWND *wndPtr, struct tagWND *pWndParent);
 extern void X11DRV_WND_ForceWindowRaise(struct tagWND *pWnd);
-extern void X11DRV_WND_SetWindowPos(struct tagWND *wndPtr, const WINDOWPOS *winpos, BOOL bSMC_SETXPOS);
+extern void X11DRV_WND_SetWindowPos(struct tagWND *wndPtr, const struct tagWINDOWPOS *winpos, BOOL bSMC_SETXPOS);
 extern void X11DRV_WND_SetText(struct tagWND *wndPtr, LPCSTR text);
 extern void X11DRV_WND_SetFocus(struct tagWND *wndPtr);
 extern void X11DRV_WND_PreSizeMove(struct tagWND *wndPtr);
