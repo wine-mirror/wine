@@ -18,7 +18,6 @@
 #include "digitalv.h"
 #include "options.h"
 #include "wine/winbase16.h"
-#include "winuser.h"
 #include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(mci)

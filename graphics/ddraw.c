@@ -15,6 +15,7 @@
  */
 
 #include "config.h"
+#include "winerror.h"
 
 #ifndef X_DISPLAY_MISSING 
 
@@ -51,7 +52,6 @@
 #include <string.h>
 #include <stdlib.h>
 
-#include "winerror.h"
 #include "gdi.h"
 #include "heap.h"
 #include "dc.h"
@@ -5251,7 +5251,6 @@ DWORD WINAPI DDRAW_DllCanUnloadNow(void)
 #else /* !defined(X_DISPLAY_MISSING) */
 
 #include "windef.h"
-#include "winerror.h"
 #include "wtypes.h"
 
 #define DD_OK 0

@@ -14,7 +14,6 @@
 #include "global.h"
 #include "winnt.h"
 #include "winerror.h"
-#include "winreg.h"
 #include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(reg)

@@ -22,7 +22,6 @@
 #include "pe_image.h"
 #include "peexe.h"
 #include "debugger.h"
-#include "peexe.h"
 
 #define NR_TYPE_HASH 521
 

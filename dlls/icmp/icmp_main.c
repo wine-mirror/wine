@@ -59,7 +59,6 @@
 #define LITTLE_ENDIAN    1234
 #endif
 #ifndef BYTE_ORDER
-#include "config.h"
 #ifdef WORDS_BIGENDIAN
 #define BYTE_ORDER       BIG_ENDIAN
 #else

@@ -14,7 +14,6 @@
 #include "olectl.h"
 #include "oleidl.h"
 #include "oaidl.h"
-#include "olectl.h"
 #include "ocidl.h"
 #include "objbase.h"
 #include "servprov.h"
@@ -25,9 +24,7 @@
 #include "dplay.h"
 #include "dplobby.h"
 #include "vfw.h"
-#include "shlguid.h"
 #include "shlobj.h"
-#include "docobj.h"
 
 /* and now for the one assumed GUID... */
 DEFINE_GUID(GUID_NULL,   0,0,0,0,0,0,0,0,0,0,0);

@@ -49,7 +49,6 @@
 #include "win16drv.h"
 #include "callback.h"
 #include "server.h"
-#include "cursoricon.h"
 #include "loadorder.h"
 
 DEFAULT_DEBUG_CHANNEL(server)

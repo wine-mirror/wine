@@ -10,8 +10,6 @@
 
 #ifdef LCC
 #include "lcc.h"
-#else
-#include "shell.h"
 #endif
 
 #include "main.h"
@@ -19,10 +17,13 @@
 #include "dialog.h"
 #include "language.h"
 
+#if !defined(LCC) || defined(WINELIB)
+#include "shell.h"
+#endif
+
 #ifdef WINELIB
 #include "options.h"
 #include "resource.h"
-#include "shell.h"
 void LIBWINE_Register_Da();
 void LIBWINE_Register_De();
 void LIBWINE_Register_En();

@@ -12,7 +12,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <assert.h>
-#include <string.h>
 
 #include "wrc.h"
 #include "newstruc.h"

@@ -23,15 +23,12 @@
 #include "task.h"
 #include "global.h"
 #include "process.h"
-#include "toolhelp.h"
 #include "snoop.h"
 #include "builtin16.h"
 #include "stackframe.h"
 #include "debugtools.h"
-#include "file.h"
 #include "loadorder.h"
 #include "elfdll.h"
-#include "toolhelp.h"
 
 DEFAULT_DEBUG_CHANNEL(module)
 

@@ -22,7 +22,6 @@
 #include "options.h"
 #include "miscemu.h"
 #include "debugtools.h"
-#include "miscemu.h"
 
 DEFAULT_DEBUG_CHANNEL(int)
 

@@ -8,7 +8,6 @@
 #include <errno.h>
 #include <stdio.h>
 #include <sys/types.h>
-#include "debugtools.h"
 #include "winerror.h"
 #include "winbase.h"
 #include "heap.h"

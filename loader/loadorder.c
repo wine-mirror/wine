@@ -13,7 +13,6 @@
 #include "options.h"
 #include "loadorder.h"
 #include "heap.h"
-#include "options.h"
 #include "module.h"
 #include "elfdll.h"
 #include "debugtools.h"

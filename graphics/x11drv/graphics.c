@@ -33,7 +33,6 @@
 #include "gdi.h"
 #include "dc.h"
 #include "monitor.h"
-#include "bitmap.h"
 #include "callback.h"
 #include "metafile.h"
 #include "palette.h"

@@ -18,7 +18,6 @@
 #include "winnls.h"
 #include "debugstr.h"
 #include "debugtools.h"
-#include "winuser.h"
 #include "winerror.h"
 #include "stackframe.h"
 

@@ -26,7 +26,6 @@
 #include "pe_image.h"
 #include "peexe.h"
 #include "debugger.h"
-#include "peexe.h"
 #include "task.h"
 
 struct searchlist

@@ -17,7 +17,6 @@
 #include "monitor.h"
 #include "palette.h"
 #include "windef.h"
-#include "wine/winuser16.h"
 
 DEFAULT_DEBUG_CHANNEL(wing)
 

@@ -37,9 +37,6 @@
 #ifdef HAVE_LINK_H
 # include <link.h>
 #endif
-#ifdef HAVE_SYS_MMAN_H
-# include <sys/mman.h>
-#endif
 #elif defined(__EMX__)
 #ifdef HAVE_A_OUT_H
 # include <a_out.h>

@@ -31,7 +31,6 @@
 #include "toolhelp.h"
 #include "winnt.h"
 #include "winsock.h"
-#include "thread.h"
 #include "syslevel.h"
 #include "debugtools.h"
 #include "dosexe.h"

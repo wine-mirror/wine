@@ -116,7 +116,6 @@ typedef struct trapframe SIGCONTEXT;
 
 #if defined(__NetBSD__) || defined(__FreeBSD__) || defined(__OpenBSD__)
 
-#include <signal.h>
 typedef struct sigcontext SIGCONTEXT;
 
 #define HANDLER_DEF(name) void name( int __signal, int code, SIGCONTEXT *__context )
@@ -126,7 +125,6 @@ typedef struct sigcontext SIGCONTEXT;
 
 #if defined(__svr4__) || defined(_SCO_DS) || defined(__sun)
 
-#include <signal.h>
 #ifdef _SCO_DS
 #include <sys/regset.h>
 #endif

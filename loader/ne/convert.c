@@ -8,7 +8,6 @@
 #include "wine/winuser16.h"
 #include "module.h"
 #include "debugtools.h"
-#include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(resource)
 

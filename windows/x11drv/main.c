@@ -34,7 +34,6 @@
 #include "x11drv.h"
 #include "xmalloc.h"
 #include "version.h"
-#include "win.h"
 
 /**********************************************************************/
 

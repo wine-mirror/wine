@@ -12,8 +12,6 @@
 #include "module.h"
 #include "debugger.h"
 #include "win.h"
-
-#include "debugger.h"
 #include "peexe.h"
 #include "pe_image.h"
 

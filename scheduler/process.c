@@ -21,7 +21,6 @@
 #include "thread.h"
 #include "winerror.h"
 #include "pe_image.h"
-#include "task.h"
 #include "server.h"
 #include "options.h"
 #include "callback.h"
