@@ -2248,6 +2248,43 @@ HENHMETAFILE WINAPI CopyEnhMetaFileA(
     return hmfDst;
 }
 
+/*****************************************************************************
+ *  CopyEnhMetaFileW (GDI32.@)  Duplicate an enhanced metafile
+ *
+ *
+ */
+HENHMETAFILE WINAPI CopyEnhMetaFileW(
+    HENHMETAFILE hmfSrc,
+    LPCWSTR file)
+{
+    ENHMETAHEADER *emrSrc = EMF_GetEnhMetaHeader( hmfSrc ), *emrDst;
+    HENHMETAFILE hmfDst;
+
+    if(!emrSrc) return FALSE;
+    if (!file) {
+        emrDst = HeapAlloc( GetProcessHeap(), 0, emrSrc->nBytes );
+	memcpy( emrDst, emrSrc, emrSrc->nBytes );
+	hmfDst = EMF_Create_HENHMETAFILE( emrDst, FALSE );
+    } else {
+        HANDLE hFile;
+        hFile = CreateFileW( file, GENERIC_WRITE | GENERIC_READ, 0,
+			     NULL, CREATE_ALWAYS, 0, 0);
+	WriteFile( hFile, emrSrc, emrSrc->nBytes, 0, 0);
+	CloseHandle( hFile );
+	/* Reopen file for reading only, so that apps can share
+	   read access to the file while hmf is still valid */
+        hFile = CreateFileW( file, GENERIC_READ, FILE_SHARE_READ,
+			     NULL, OPEN_EXISTING, 0, 0);
+	if(hFile == INVALID_HANDLE_VALUE) {
+	    ERR("Can't reopen emf for reading\n");
+	    return 0;
+	}
+	hmfDst = EMF_GetEnhMetaFile( hFile );
+        CloseHandle( hFile );
+    }
+    return hmfDst;
+}
+
 
 /* Struct to be used to be passed in the LPVOID parameter for cbEnhPaletteCopy */
 typedef struct tagEMF_PaletteCopy

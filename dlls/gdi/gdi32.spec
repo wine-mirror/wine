@@ -31,7 +31,7 @@
 @ stdcall CombineRgn(long long long long)
 @ stdcall CombineTransform(ptr ptr ptr)
 @ stdcall CopyEnhMetaFileA(long str)
-@ stub CopyEnhMetaFileW
+@ stdcall CopyEnhMetaFileW(long wstr)
 @ stdcall CopyMetaFileA(long str)
 @ stdcall CopyMetaFileW(long wstr)
 @ stdcall CreateBitmap(long long long long ptr)
