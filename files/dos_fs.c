@@ -824,14 +824,14 @@ BOOL32 DOSFS_GetFullName( LPCSTR name, BOOL32 check_last, DOS_FULL_NAME *full )
 
     if (!found)
     {
-        if (check_last)
-        {
-            DOS_ERROR( ER_FileNotFound, EC_NotFound, SA_Abort, EL_Disk );
-            return FALSE;
-        }
         if (*name)  /* Not last */
         {
             DOS_ERROR( ER_PathNotFound, EC_NotFound, SA_Abort, EL_Disk );
+            return FALSE;
+        }
+        if (check_last)
+        {
+            DOS_ERROR( ER_FileNotFound, EC_NotFound, SA_Abort, EL_Disk );
             return FALSE;
         }
     }
