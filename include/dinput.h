@@ -535,7 +535,9 @@ struct SysMouse32A {
 	DWORD				ref;
 	GUID				guid;
 	BYTE                            absolute;
-	struct DIMOUSESTATE             prevpos;
+	/* Previous position for relative moves */
+	LONG prevX;
+	LONG prevY;
 };
 
 struct SysKeyboard32A {

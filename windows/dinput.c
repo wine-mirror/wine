@@ -1,6 +1,8 @@
 /*		DirectInput
  *
  * Copyright 1998 Marcus Meissner
+ *
+ * Additions (mouse support) Copyright 1998 Lionel Ulmer
  */
 /* Status:
  *
@@ -9,6 +11,8 @@
  * - WingCommander Prophecy Demo:
  *   Doesn't get Input Focus.
  * 
+ * - Fallout : works great in X and DGA mode
+ *
  * FIXME: The keyboard handling needs to (and will) be merged into keyboard.c
  *	  (The current implementation is currently only a proof of concept and
  *	   an utter mess.)
@@ -57,10 +61,47 @@ HRESULT WINAPI DirectInputCreate32A(HINSTANCE32 hinst, DWORD dwVersion, LPDIRECT
  *	IDirectInputA_EnumDevices
  */
 static HRESULT WINAPI IDirectInputA_EnumDevices(
-	LPDIRECTINPUT32A this,DWORD dwFlags,LPDIENUMDEVICESCALLBACK32A cb,
-	LPVOID context,DWORD x
+	LPDIRECTINPUT32A this, DWORD dwDevType, LPDIENUMDEVICESCALLBACK32A lpCallback,
+	LPVOID pvRef, DWORD dwFlags
 ) {
-	FIXME(dinput,"(this=%p,0x%08lx,%p,%p,0x%08lx): stub\n",this,dwFlags,cb,context,x);
+  DIDEVICEINSTANCE32A devInstance;
+  int ret;
+
+  TRACE(dinput, "(this=%p,0x%04lx,%p,%p,%04lx)\n", this, dwDevType, lpCallback, pvRef, dwFlags);
+
+#if 0 /* Not compiled for the moment as long as I do not find
+	 the needed constants */
+  /* Ignore this field for the moment */
+  if (dwDevType != 0) {
+    FIXME(dinput, "device filtering not supported.\n");
+  }
+    
+  devInstance.dwSize = sizeof(DIDEVICEINSTANCE32A);
+  
+  /* Return keyboard */
+  devInstance.guidInstance = GUID_SysKeyboard;
+  devInstance.guidProduct = GUID_SysKeyboard;
+  devInstance.dwDevType = 1; /* Constant unknown :-( */
+  strcpy(devInstance.tszInstanceName, "Keyboard");
+  strcpy(devInstance.tszProductName, "Wine Keyboard");
+  
+  ret = lpCallback(&devInstance, pvRef);
+  TRACE(dinput, "Keyboard registered (%d)\n", ret);
+  
+  if (!ret)
+    return 0;
+  
+  /* Return mouse */
+  devInstance.guidInstance = GUID_SysMouse;
+  devInstance.guidProduct = GUID_SysMouse;
+  devInstance.dwDevType = 2; /* Constant unknown :-( */
+  strcpy(devInstance.tszInstanceName, "Mouse");
+  strcpy(devInstance.tszProductName, "Wine Mouse");
+  
+  ret = lpCallback(&devInstance, pvRef);
+  TRACE(dinput, "Mouse registered (%d)\n", ret);
+#endif
+  
 	return 0;
 }
 
@@ -215,7 +256,8 @@ static HRESULT WINAPI IDirectInputDeviceA_GetDeviceData(
 	LPDIRECTINPUTDEVICE32A this,DWORD dodsize,LPDIDEVICEOBJECTDATA dod,
 	LPDWORD entries,DWORD flags
 ) {
-/*	TRACE(dinput,"IDirectInputDeviceA(%p)->GetDeviceData(%ld,%p,%p(0x%08lx),0x%08lx)\n",this,dodsize,dod,entries,*entries,flags);*/
+  TRACE(dinput,"IDirectInputDeviceA(%p)->GetDeviceData(%ld,%p,%p(0x%08lx),0x%08lx)\n",
+	this,dodsize,dod,entries,*entries,flags);
 	return 0;
 }
 
@@ -363,6 +405,14 @@ static HRESULT WINAPI IDirectInputDeviceA_QueryInterface(
 /******************************************************************************
  *	SysMouseA (DInput Mouse support)
  */
+
+/******************************************************************************
+  *     SetDataFormat : the application can choose the format of the data
+  *   the device driver sends back with GetDeviceState.
+  *
+  *   For the moment, only the "standard" configuration (c_dfDIMouse) is supported
+  *   in absolute and relative mode.
+  */
 static HRESULT WINAPI SysMouseA_SetDataFormat(
 	LPDIRECTINPUTDEVICE32A this,LPCDIDATAFORMAT df
 ) {
@@ -384,12 +434,19 @@ static HRESULT WINAPI SysMouseA_SetDataFormat(
       WINE_StringFromCLSID(df->rgodf[i].pguid,xbuf);
     else
       strcpy(xbuf,"<no guid>");
-    TRACE(dinput,"df.rgodf[%d].guid %s\n",i,xbuf);
+    TRACE(dinput,"df.rgodf[%d].guid %s (%p)\n",i,xbuf, df->rgodf[i].pguid);
     TRACE(dinput,"df.rgodf[%d].dwOfs %ld\n",i,df->rgodf[i].dwOfs);
     TRACE(dinput,"dwType 0x%02x,dwInstance %d\n",DIDFT_GETTYPE(df->rgodf[i].dwType),DIDFT_GETINSTANCE(df->rgodf[i].dwType));
     TRACE(dinput,"df.rgodf[%d].dwFlags 0x%08lx\n",i,df->rgodf[i].dwFlags);
   }
 
+  /* Check size of data format to prevent crashes if the applications
+     sends a smaller buffer */
+  if (df->dwDataSize != sizeof(struct DIMOUSESTATE)) {
+    FIXME(dinput, "non-standard mouse configuration not supported yet.");
+    return DIERR_INVALIDPARAM;
+  }
+  
   /* For the moment, ignore these fields and return always as if
      c_dfDIMouse was passed as format... */
   if (df->dwFlags == DIDF_ABSAXIS)
@@ -407,18 +464,19 @@ static HRESULT WINAPI SysMouseA_SetDataFormat(
     TSXQueryPointer(display, rootWindow, &rw, &cr,
 		    &rx, &ry, &cx, &cy, &mask);
     /* Fill the initial mouse state structure */
-    mthis->prevpos.lX = rx;
-    mthis->prevpos.lY = ry;
-    mthis->prevpos.lZ = 0;
-    mthis->prevpos.rgbButtons[0] = (mask & Button1Mask ? 0xFF : 0x00);
-    mthis->prevpos.rgbButtons[1] = (mask & Button2Mask ? 0xFF : 0x00);
-    mthis->prevpos.rgbButtons[2] = (mask & Button3Mask ? 0xFF : 0x00);
-    mthis->prevpos.rgbButtons[3] = (mask & Button4Mask ? 0xFF : 0x00);
+    mthis->prevX = rx;
+    mthis->prevY = ry;
   }
   
   return 0;
 }
 
+/******************************************************************************
+  *     GetDeviceState : returns the "state" of the mouse.
+  *
+  *   For the moment, only the "standard" return structure (DIMOUSESTATE) is
+  *   supported.
+  */
 static HRESULT WINAPI SysMouseA_GetDeviceState(
 	LPDIRECTINPUTDEVICE32A this,DWORD len,LPVOID ptr
 ) {
@@ -430,6 +488,12 @@ static HRESULT WINAPI SysMouseA_GetDeviceState(
   
   TRACE(dinput,"(this=%p,0x%08lx,%p): \n",this,len,ptr);
   
+  /* Check if the buffer is big enough */
+  if (len < sizeof(struct DIMOUSESTATE)) {
+    FIXME(dinput, "unsupported state structure.");
+    return DIERR_INVALIDPARAM;
+  }
+  
   /* Get the mouse position */
   TSXQueryPointer(display, rootWindow, &rw, &cr,
 		  &rx, &ry, &cx, &cy, &mask);
@@ -440,16 +504,16 @@ static HRESULT WINAPI SysMouseA_GetDeviceState(
     mstate->lX = rx;
     mstate->lY = ry;
   } else {
-    mstate->lX = rx - mthis->prevpos.lX;
-    mstate->lY = ry - mthis->prevpos.lY;
-    /* Fill the previous position structure */
-    mthis->prevpos.lX = rx;
-    mthis->prevpos.lY = ry;
+    mstate->lX = rx - mthis->prevX;
+    mstate->lY = ry - mthis->prevY;
+    /* Fill the previous positions */
+    mthis->prevX = rx;
+    mthis->prevY = ry;
   }
   mstate->lZ = 0;
   mstate->rgbButtons[0] = (mask & Button1Mask ? 0xFF : 0x00);
-  mstate->rgbButtons[1] = (mask & Button2Mask ? 0xFF : 0x00);
-  mstate->rgbButtons[2] = (mask & Button3Mask ? 0xFF : 0x00);
+  mstate->rgbButtons[1] = (mask & Button3Mask ? 0xFF : 0x00); /* Windows button two is X button 3 */
+  mstate->rgbButtons[2] = (mask & Button2Mask ? 0xFF : 0x00);
   mstate->rgbButtons[3] = (mask & Button4Mask ? 0xFF : 0x00);
   
   return 0;
