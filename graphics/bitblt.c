@@ -26,7 +26,7 @@ BOOL16 WINAPI PatBlt16( HDC16 hdc, INT16 left, INT16 top,
 BOOL WINAPI PatBlt( HDC hdc, INT left, INT top,
                         INT width, INT height, DWORD rop)
 {
-    DC * dc = DC_GetDCPtr( hdc );
+    DC * dc = DC_GetDCUpdate( hdc );
     BOOL bRet = FALSE;
 
     if (!dc) return FALSE;

@@ -1471,8 +1471,6 @@ BOOL X11DRV_PatBlt( DC *dc, INT left, INT top,
     params.heightSrc = 0;
     params.rop = rop;
 
-    if (dc->w.flags & DC_DIRTY) CLIPPING_UpdateGCRegion( dc );
-
     X11DRV_DIB_UpdateDIBSection( dc, FALSE );
     EnterCriticalSection( &X11DRV_CritSection );
     result = (BOOL)CALL_LARGE_STACK( BITBLT_DoStretchBlt, &params );
@@ -1507,9 +1505,6 @@ BOOL X11DRV_BitBlt( DC *dcDst, INT xDst, INT yDst,
     X11DRV_DIB_UpdateDIBSection( dcDst, FALSE );
     X11DRV_DIB_UpdateDIBSection( dcSrc, FALSE );
 
-    if (dcDst->w.flags & DC_DIRTY) CLIPPING_UpdateGCRegion( dcDst );
-    if (dcSrc && (dcSrc->w.flags & DC_DIRTY)) CLIPPING_UpdateGCRegion( dcSrc );
-
     EnterCriticalSection( &X11DRV_CritSection );
     result = (BOOL)CALL_LARGE_STACK( BITBLT_DoStretchBlt, &params );
     LeaveCriticalSection( &X11DRV_CritSection );
@@ -1543,9 +1538,6 @@ BOOL X11DRV_StretchBlt( DC *dcDst, INT xDst, INT yDst,
 
     X11DRV_DIB_UpdateDIBSection( dcDst, FALSE );
     X11DRV_DIB_UpdateDIBSection( dcSrc, FALSE );
-
-    if (dcDst->w.flags & DC_DIRTY) CLIPPING_UpdateGCRegion( dcDst );
-    if (dcSrc && (dcSrc->w.flags & DC_DIRTY)) CLIPPING_UpdateGCRegion( dcSrc );
 
     EnterCriticalSection( &X11DRV_CritSection );
     result = (BOOL)CALL_LARGE_STACK( BITBLT_DoStretchBlt, &params );
