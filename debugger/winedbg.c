@@ -221,6 +221,7 @@ static	DBG_THREAD*	DEBUG_AddThread(DBG_PROCESS* p, DWORD tid,
     t->wait_for_first_exception = 0;
     t->dbg_exec_mode = EXEC_CONT;
     t->dbg_exec_count = 0;
+    sprintf(t->name, "%08lx", tid);
 
     p->num_threads++;
     t->next = p->threads;
@@ -866,15 +867,18 @@ int DEBUG_main(int argc, char** argv)
 	DWORD	pid;
 
 	if ((pid = atoi(argv[1])) != 0 && (hEvent = (HANDLE)atoi(argv[2])) != 0) {
-	    BOOL	ret = DEBUG_Attach(pid, TRUE);
-
-	    SetEvent(hEvent);
-            CloseHandle(hEvent);
-	    if (!ret) {
+	    if (!DEBUG_Attach(pid, TRUE)) {
 		DEBUG_Printf(DBG_CHN_ERR, "Can't attach process %ld: %ld\n", 
 			     DEBUG_CurrPid, GetLastError());
+		/* don't care about result */
+		SetEvent(hEvent);
 		goto leave;
 	    }
+	    if (!SetEvent(hEvent)) {
+		DEBUG_Printf(DBG_CHN_ERR, "Invalid event handle: %p\n", hEvent);
+		goto leave;
+	    }
+            CloseHandle(hEvent);
 	    DEBUG_CurrPid = pid;
 	}
     }
