@@ -1,4 +1,5 @@
 # These entries must apparently exist in any win95-compatible registry.
+# (feed this to `regapi setValue' to install)
 
 # Shell Folders. The purpose of these are pretty self-evident.
 # Primarily used by installation programs and the Explorer.
