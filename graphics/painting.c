@@ -583,6 +583,7 @@ BOOL WINAPI FillRgn( HDC hdc, HRGN hrgn, HBRUSH hbrush )
     HBRUSH prevBrush;
     DC * dc = DC_GetDCPtr( hdc );
 
+    if (!dc) return FALSE;
     if(dc->funcs->pFillRgn)
         return dc->funcs->pFillRgn(dc, hrgn, hbrush);
 
