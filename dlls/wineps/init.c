@@ -391,22 +391,21 @@ static BOOL PSDRV_CreateDC( DC *dc, LPCSTR driver, LPCSTR device,
     }
     TRACE("PageSize = (%d,%d - %d,%d)\n", physDev->PageSize.left, physDev->PageSize.bottom, physDev->PageSize.right, physDev->PageSize.top);
 
-    /* these are in mm */
-    width = (physDev->PageSize.right - physDev->PageSize.left) * 25.4 /
-      devCaps->logPixelsX;
-    height = (physDev->PageSize.top - physDev->PageSize.bottom) * 25.4 /
-      devCaps->logPixelsY;
+    /* these are in device units */
+    width = physDev->PageSize.right - physDev->PageSize.left;
+    height = physDev->PageSize.top - physDev->PageSize.bottom;
 
     if(physDev->Devmode->dmPublic.u1.s1.dmOrientation == DMORIENT_PORTRAIT) {
-        devCaps->horzSize = width;
-	devCaps->vertSize = height;
+        devCaps->horzRes = width;
+	devCaps->vertRes = height;
     } else {
-        devCaps->horzSize = height;
-	devCaps->vertSize = width;
+        devCaps->horzRes = height;
+	devCaps->vertRes = width;
     }
 
-    devCaps->horzRes = devCaps->logPixelsX * devCaps->horzSize / 25.4;
-    devCaps->vertRes = devCaps->logPixelsY * devCaps->vertSize / 25.4;
+    /* these are in mm */
+    devCaps->horzSize = (devCaps->horzRes * 25.4) / devCaps->logPixelsX;
+    devCaps->vertSize = (devCaps->vertRes * 25.4) / devCaps->logPixelsY;
 
     TRACE("devcaps: horzSize = %dmm, vertSize = %dmm, "
 	  "horzRes = %d, vertRes = %d\n",
