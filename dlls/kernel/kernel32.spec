@@ -1073,7 +1073,7 @@
 @ stdcall ProcessIdToSessionId(long ptr)
 @ stdcall SetCalendarInfoA(long long long str)
 @ stdcall SetCalendarInfoW(long long long wstr)
-@ stdcall SetCriticalSectionSpinCount(ptr long)
+@ stdcall SetCriticalSectionSpinCount(ptr long) ntdll.RtlSetCriticalSectionSpinCount
 @ stub SetInformationJobObject
 @ stub SetTermsrvAppInstallMode
 @ stdcall VerifyVersionInfoA(long long long long)

@@ -317,29 +317,6 @@ BOOL WINAPI InitializeCriticalSectionAndSpinCount( CRITICAL_SECTION *crit, DWORD
 }
 
 /***********************************************************************
- *           SetCriticalSectionSpinCount   (KERNEL32.@)
- *
- * Set the spin count for a critical section.
- *
- * PARAMS
- *  crit      [O] Critical section to set the spin count for.
- *  spincount [I] Number of times to spin upon contention.
- *
- * RETURNS
- *  The previous spin count value of crit.
- *
- * NOTES
- *  This function is available on NT4SP3 or later, but not Win98.
- */
-DWORD WINAPI SetCriticalSectionSpinCount( CRITICAL_SECTION *crit, DWORD spincount )
-{
-    ULONG_PTR oldspincount = crit->SpinCount;
-    if(spincount) FIXME("critsection=%p: spincount=%ld not supported\n", crit, spincount);
-    crit->SpinCount = spincount;
-    return oldspincount;
-}
-
-/***********************************************************************
  *           MakeCriticalSectionGlobal   (KERNEL32.@)
  */
 void WINAPI MakeCriticalSectionGlobal( CRITICAL_SECTION *crit )

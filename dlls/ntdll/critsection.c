@@ -78,6 +78,27 @@ static inline HANDLE get_semaphore( RTL_CRITICAL_SECTION *crit )
  */
 NTSTATUS WINAPI RtlInitializeCriticalSection( RTL_CRITICAL_SECTION *crit )
 {
+    return RtlInitializeCriticalSectionAndSpinCount( crit, 0 );
+}
+
+/***********************************************************************
+ *           RtlInitializeCriticalSectionAndSpinCount   (NTDLL.@)
+ *
+ * Initialise a new RTL_CRITICAL_SECTION with a given spin count.
+ *
+ * PARAMS
+ *   crit      [O] Critical section to initialise
+ *   spincount [I] Spin count for crit
+ * 
+ * RETURNS
+ *  STATUS_SUCCESS.
+ *
+ * NOTES
+ * The InitializeCriticalSectionAndSpinCount() (KERNEL32) function is
+ * available on NT4SP3 or later, and Win98 or later.
+ */
+NTSTATUS WINAPI RtlInitializeCriticalSectionAndSpinCount( RTL_CRITICAL_SECTION *crit, ULONG spincount )
+{
     if (!GetProcessHeap()) crit->DebugInfo = NULL;
     else
     {
@@ -99,34 +120,32 @@ NTSTATUS WINAPI RtlInitializeCriticalSection( RTL_CRITICAL_SECTION *crit )
     crit->RecursionCount = 0;
     crit->OwningThread   = 0;
     crit->LockSemaphore  = 0;
+    crit->SpinCount      = spincount;
     return STATUS_SUCCESS;
 }
 
 /***********************************************************************
- *           RtlInitializeCriticalSectionAndSpinCount   (NTDLL.@)
+ *           RtlSetCriticalSectionSpinCount   (NTDLL.@)
  *
- * Initialise a new RTL_CRITICAL_SECTION with a given spin count.
+ * Sets the spin count of a critical section.
  *
  * PARAMS
- *   crit      [O] Critical section to initialise
+ *   crit      [O] Critical section
  *   spincount [I] Spin count for crit
- * 
+ *
  * RETURNS
- *  STATUS_SUCCESS.
+ *  The previous spin count.
  *
  * NOTES
- * The InitializeCriticalSectionAndSpinCount() (KERNEL32) function is
- * available on NT4SP3 or later, and Win98 or later.
- * I am assuming that this is the correct definition given the MSDN
- * docs for the kernel32 functions.
+ *  If the system is not SMP, spincount is ignored and set to 0.
  */
-NTSTATUS WINAPI RtlInitializeCriticalSectionAndSpinCount( RTL_CRITICAL_SECTION *crit, DWORD spincount )
+ULONG WINAPI RtlSetCriticalSectionSpinCount( RTL_CRITICAL_SECTION *crit, ULONG spincount )
 {
-    if(spincount) TRACE("critsection=%p: spincount=%ld not supported\n", crit, spincount);
+    ULONG oldspincount = crit->SpinCount;
+    if (NtCurrentTeb()->Peb->NumberOfProcessors <= 1) spincount = 0;
     crit->SpinCount = spincount;
-    return RtlInitializeCriticalSection( crit );
+    return oldspincount;
 }
-
 
 /***********************************************************************
  *           RtlDeleteCriticalSection   (NTDLL.@)

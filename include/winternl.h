@@ -156,7 +156,9 @@ typedef struct _PEB
     BYTE                         __pad_1c[36];       /*  1c */
     PRTL_BITMAP                  TlsBitmap;          /*  40 */
     ULONG                        TlsBitmapBits[2];   /*  44 */
-    BYTE                         __pad_4c[156];      /*  4c */
+    BYTE                         __pad_4c[24];       /*  4c */
+    ULONG                        NumberOfProcessors; /*  64 */
+    BYTE                         __pad_68[128];      /*  68 */
     PVOID                        Reserved3[59];      /*  e8 */
     ULONG                        SessionId;          /* 1d4 */
 } PEB, *PPEB;
@@ -1513,6 +1515,7 @@ NTSTATUS  WINAPI RtlSelfRelativeToAbsoluteSD(PSECURITY_DESCRIPTOR,PSECURITY_DESC
                                              PDWORD,PACL,PDWORD,PACL,PDWORD,PSID,PDWORD,PSID,PDWORD);
 void      WINAPI RtlSetAllBits(PRTL_BITMAP);
 void      WINAPI RtlSetBits(PRTL_BITMAP,ULONG,ULONG);
+ULONG     WINAPI RtlSetCriticalSectionSpinCount(RTL_CRITICAL_SECTION*,ULONG);
 NTSTATUS  WINAPI RtlSetCurrentDirectory_U(const UNICODE_STRING*);
 void      WINAPI RtlSetCurrentEnvironment(PWSTR, PWSTR*);
 NTSTATUS  WINAPI RtlSetDaclSecurityDescriptor(PSECURITY_DESCRIPTOR,BOOLEAN,PACL,BOOLEAN);

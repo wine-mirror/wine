@@ -108,6 +108,11 @@ static void thread_detach(void)
 static BOOL process_attach(void)
 {
     HMODULE16 hModule;
+    SYSTEM_INFO si;
+
+    /* FIXME: should probably be done in ntdll */
+    GetSystemInfo( &si );
+    NtCurrentTeb()->Peb->NumberOfProcessors = si.dwNumberOfProcessors;
 
     /* Setup registry locale information */
     LOCALE_InitRegistry();

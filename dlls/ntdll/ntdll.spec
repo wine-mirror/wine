@@ -563,6 +563,7 @@
 @ stdcall RtlSelfRelativeToAbsoluteSD(ptr ptr ptr ptr ptr ptr ptr ptr ptr ptr ptr)
 @ stdcall RtlSetAllBits(ptr)
 @ stdcall RtlSetBits(ptr long long)
+@ stdcall RtlSetCriticalSectionSpinCount(ptr long)
 @ stdcall RtlSetCurrentDirectory_U(ptr)
 @ stdcall RtlSetCurrentEnvironment(wstr ptr)
 @ stdcall RtlSetDaclSecurityDescriptor(ptr long ptr long)

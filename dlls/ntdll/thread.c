@@ -106,9 +106,10 @@ void thread_init(void)
     struct wine_pthread_thread_info thread_info;
     static struct debug_info debug_info;  /* debug info for initial thread */
 
-    peb.ProcessParameters = &params;
-    peb.TlsBitmap         = &tls_bitmap;
-    peb.LdrData           = &ldr;
+    peb.NumberOfProcessors = 1;
+    peb.ProcessParameters  = &params;
+    peb.TlsBitmap          = &tls_bitmap;
+    peb.LdrData            = &ldr;
     RtlInitializeBitMap( &tls_bitmap, (BYTE *)peb.TlsBitmapBits, sizeof(peb.TlsBitmapBits) * 8 );
     InitializeListHead( &ldr.InLoadOrderModuleList );
     InitializeListHead( &ldr.InMemoryOrderModuleList );
@@ -524,7 +525,7 @@ NTSTATUS WINAPI NtSetInformationThread( HANDLE handle, THREADINFOCLASS class,
             DWORD index;
 
             if (length != sizeof(DWORD)) return STATUS_INVALID_PARAMETER;
-            index = *(DWORD *)data;
+            index = *(const DWORD *)data;
             if (index >= 64) return STATUS_INVALID_PARAMETER;
             RtlAcquirePebLock();
             for (entry = tls_links.Flink; entry != &tls_links; entry = entry->Flink)
