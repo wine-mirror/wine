@@ -74,7 +74,6 @@ typedef struct tagWND
 #define WIN_ISDIALOG              0x0010 /* Window is a dialog */
 #define WIN_ISWIN32               0x0020 /* Understands Win32 messages */
 #define WIN_NEEDS_SHOW_OWNEDPOPUP 0x0040 /* WM_SHOWWINDOW:SC_SHOW must be sent in the next ShowOwnedPopup call */
-#define WIN_NEEDS_INTERNALSOP     0x0080 /* Window was hidden by WIN_InternalShowOwnedPopups */
 
   /* Window functions */
 extern WND *WIN_GetPtr( HWND hwnd );
@@ -97,7 +96,6 @@ extern BOOL WIN_CreateDesktopWindow(void);
 extern BOOL WIN_IsWindowDrawable( HWND hwnd, BOOL );
 extern HWND *WIN_ListParents( HWND hwnd );
 extern HWND *WIN_ListChildren( HWND hwnd );
-extern BOOL WIN_InternalShowOwnedPopups( HWND owner, BOOL fShow, BOOL unmanagedOnly );
 extern void MDI_CalcDefaultChildPos( HWND hwndClient, INT total, LPPOINT lpPos, INT delta );
 
 /* internal SendInput codes (FIXME) */
