@@ -29,10 +29,11 @@
 #include "wingdi.h"
 #include "wine/unicode.h"
 #include "wine/port.h"
+#include "wine/debug.h"
 #include "gdi.h"
 #include "font.h"
-#include "wine/debug.h"
 
+#include <stdlib.h>
 #include <sys/stat.h>
 #include <string.h>
 #include <dirent.h>
@@ -73,6 +74,26 @@ WINE_DEFAULT_DEBUG_CHANNEL(font);
 #endif
 
 static FT_Library library = 0;
+
+static void *ft_handle = NULL;
+
+#define MAKE_FUNCPTR(f) static typeof(f) * p##f = NULL;
+MAKE_FUNCPTR(FT_Cos)
+MAKE_FUNCPTR(FT_Done_Face)
+MAKE_FUNCPTR(FT_Get_Char_Index)
+MAKE_FUNCPTR(FT_Get_Sfnt_Table)
+MAKE_FUNCPTR(FT_Init_FreeType)
+MAKE_FUNCPTR(FT_Load_Glyph)
+MAKE_FUNCPTR(FT_MulFix)
+MAKE_FUNCPTR(FT_New_Face)
+MAKE_FUNCPTR(FT_Outline_Get_Bitmap)
+MAKE_FUNCPTR(FT_Outline_Transform)
+MAKE_FUNCPTR(FT_Outline_Translate)
+MAKE_FUNCPTR(FT_Select_Charmap)
+MAKE_FUNCPTR(FT_Set_Pixel_Sizes)
+MAKE_FUNCPTR(FT_Sin)
+MAKE_FUNCPTR(FT_Vector_Rotate)
+#undef MAKE_FUNCPTR
 
 typedef struct tagFace {
     WCHAR *StyleName;
@@ -171,13 +192,13 @@ static BOOL AddFontFileToList(char *file)
     int i;
 
     TRACE("Loading font file %s\n", debugstr_a(file));
-    if((err = FT_New_Face(library, file, 0, &ft_face)) != 0) {
+    if((err = pFT_New_Face(library, file, 0, &ft_face)) != 0) {
         ERR("Unable to load font file %s err = %x\n", debugstr_a(file), err);
 	return FALSE;
     }
 
     if(!FT_IS_SFNT(ft_face)) { /* for now we'll skip everything but TT/OT */
-        FT_Done_Face(ft_face);
+        pFT_Done_Face(ft_face);
 	return FALSE;
     }
 
@@ -211,7 +232,7 @@ static BOOL AddFontFileToList(char *file)
 	    ERR("Already loaded font %s %s\n", debugstr_w(family->FamilyName),
 		debugstr_w(StyleW));
 	    HeapFree(GetProcessHeap(), 0, StyleW);
-	    FT_Done_Face(ft_face);
+	    pFT_Done_Face(ft_face);
 	    return FALSE;
 	}
     }
@@ -223,13 +244,14 @@ static BOOL AddFontFileToList(char *file)
     (*insertface)->Italic = (ft_face->style_flags & FT_STYLE_FLAG_ITALIC) ? 1 : 0;
     (*insertface)->Bold = (ft_face->style_flags & FT_STYLE_FLAG_BOLD) ? 1 : 0;
 
-    pOS2 = FT_Get_Sfnt_Table(ft_face, ft_sfnt_os2);
+    pOS2 = pFT_Get_Sfnt_Table(ft_face, ft_sfnt_os2);
     if(pOS2) {
 	(*insertface)->fsCsb[0] = pOS2->ulCodePageRange1;
 	(*insertface)->fsCsb[1] = pOS2->ulCodePageRange2;
     } else {
         (*insertface)->fsCsb[0] = (*insertface)->fsCsb[1] = 0;
     }
+    TRACE("fsCsb = %08lx %08lx\n", (*insertface)->fsCsb[0], (*insertface)->fsCsb[1]);
 
     if((*insertface)->fsCsb[0] == 0) { /* let's see if we can find any interesting cmaps */
         for(i = 0; i < ft_face->num_charmaps &&
@@ -247,7 +269,7 @@ static BOOL AddFontFileToList(char *file)
 	}
     }
 
-    FT_Done_Face(ft_face);
+    pFT_Done_Face(ft_face);
 
     TRACE("Added font %s %s\n", debugstr_w(family->FamilyName),
 	  debugstr_w(StyleW));
@@ -322,8 +344,46 @@ BOOL WineEngInit(void)
 
     TRACE("\n");
 
-    if(FT_Init_FreeType(&library) != 0) {
+    ft_handle = wine_dlopen("libfreetype.so", RTLD_NOW, NULL, 0);
+    if(!ft_handle) {
+        WINE_MESSAGE(
+      "Wine cannot find the FreeType font library.  To enable Wine to\n"
+      "use TrueType fonts please install a version of FreeType greater than\n"
+      "or equal to 2.0.5.\n"
+      "http://www.freetype.org\n");
+	return FALSE;
+    }
+
+#define LOAD_FUNCPTR(f) if((p##f = wine_dlsym(ft_handle, #f, NULL, 0)) == NULL){WARN("Can't find symbol %s\n", #f); goto sym_not_found;}
+
+    LOAD_FUNCPTR(FT_Cos)
+    LOAD_FUNCPTR(FT_Done_Face)
+    LOAD_FUNCPTR(FT_Get_Char_Index)
+    LOAD_FUNCPTR(FT_Get_Sfnt_Table)
+    LOAD_FUNCPTR(FT_Init_FreeType)
+    LOAD_FUNCPTR(FT_Load_Glyph)
+    LOAD_FUNCPTR(FT_MulFix)
+    LOAD_FUNCPTR(FT_New_Face)
+    LOAD_FUNCPTR(FT_Outline_Get_Bitmap)
+    LOAD_FUNCPTR(FT_Outline_Transform)
+    LOAD_FUNCPTR(FT_Outline_Translate)
+    LOAD_FUNCPTR(FT_Select_Charmap)
+    LOAD_FUNCPTR(FT_Set_Pixel_Sizes)
+    LOAD_FUNCPTR(FT_Sin)
+    LOAD_FUNCPTR(FT_Vector_Rotate)
+
+#undef LOAD_FUNCPTR
+
+      if(!wine_dlsym(ft_handle, "FT_Get_Postscript_Name", NULL, 0) &&
+	 !wine_dlsym(ft_handle, "FT_Sqrt64", NULL, 0)) {
+	/* try to avoid 2.0.4: >= 2.0.5 has FT_Get_Postscript_Name and
+	   <= 2.0.3 has FT_Sqrt64 */
+	  goto sym_not_found;
+      }
+	
+    if(pFT_Init_FreeType(&library) != 0) {
         ERR("Can't init FreeType library\n");
+	wine_dlclose(ft_handle, NULL, 0);
 	return FALSE;
     }
 
@@ -362,6 +422,14 @@ BOOL WineEngInit(void)
 
     DumpFontList();
     return TRUE;
+sym_not_found:
+    WINE_MESSAGE(
+      "Wine cannot find certain functions that it needs inside the FreeType\n"
+      "font library.  To enable Wine to use TrueType fonts please upgrade\n"
+      "FreeType to at least version 2.0.5.\n"
+      "http://www.freetype.org\n");
+    wine_dlclose(ft_handle, NULL, 0);
+    return FALSE;
 }
 
 
@@ -370,7 +438,7 @@ static LONG calc_ppem_for_height(FT_Face ft_face, LONG height)
     TT_OS2 *pOS2;
     LONG ppem;
 
-    pOS2 = FT_Get_Sfnt_Table(ft_face, ft_sfnt_os2);
+    pOS2 = pFT_Get_Sfnt_Table(ft_face, ft_sfnt_os2);
 
     if(height == 0) height = 16;
 
@@ -405,7 +473,7 @@ static FT_Face OpenFontFile(GdiFont font, char *file, LONG height)
     FT_Face ft_face;
     LONG ppem;
 
-    err = FT_New_Face(library, file, 0, &ft_face);
+    err = pFT_New_Face(library, file, 0, &ft_face);
     if(err) {
         ERR("FT_New_Face rets %d\n", err);
 	return 0;
@@ -419,7 +487,7 @@ static FT_Face OpenFontFile(GdiFont font, char *file, LONG height)
     if(ppem == 0)
         ppem = calc_ppem_for_height(ft_face, height);
 
-    FT_Set_Pixel_Sizes(ft_face, 0, ppem);
+    pFT_Set_Pixel_Sizes(ft_face, 0, ppem);
 
     return ft_face;
 }
@@ -452,7 +520,7 @@ static GdiFont alloc_font(void)
 
 static void free_font(GdiFont font)
 {
-    FT_Done_Face(font->ft_face);
+    if (font->ft_face) pFT_Done_Face(font->ft_face);
     HeapFree(GetProcessHeap(), 0, font->gm);
     HeapFree(GetProcessHeap(), 0, font);
 }
@@ -707,7 +775,7 @@ not_found:
     ret->ft_face = OpenFontFile(ret, face->file, plf->lfHeight);
 
     if(ret->charset == SYMBOL_CHARSET)
-        FT_Select_Charmap(ret->ft_face, ft_encoding_symbol);
+        pFT_Select_Charmap(ret->ft_face, ft_encoding_symbol);
     ret->orientation = plf->lfOrientation;
     GDI_ReleaseObj(hfont);
 
@@ -937,7 +1005,7 @@ static FT_UInt get_glyph_index(GdiFont font, UINT glyph)
 {
     if(font->charset == SYMBOL_CHARSET && glyph < 0x100)
         glyph = glyph + 0xf000;
-    return FT_Get_Char_Index(font->ft_face, glyph);
+    return pFT_Get_Char_Index(font->ft_face, glyph);
 }
 
 /*************************************************************
@@ -980,7 +1048,7 @@ DWORD WineEngGetGlyphOutline(GdiFont font, UINT glyph, UINT format,
 	}
     }
 
-    err = FT_Load_Glyph(ft_face, glyph_index, FT_LOAD_DEFAULT);
+    err = pFT_Load_Glyph(ft_face, glyph_index, FT_LOAD_DEFAULT);
 
     if(err) {
         FIXME("FT_Load_Glyph on index %x returns %d\n", glyph_index, err);
@@ -1014,7 +1082,7 @@ DWORD WineEngGetGlyphOutline(GdiFont font, UINT glyph, UINT format,
 		vec.y = ft_face->glyph->metrics.horiBearingY -
 		  yc * ft_face->glyph->metrics.height;
 		TRACE("Vec %ld,%ld\n", vec.x, vec.y);
-		FT_Vector_Rotate(&vec, angle);
+		pFT_Vector_Rotate(&vec, angle);
 		if(xc == 0 && yc == 0) {
 		    left = right = vec.x;
 		    top = bottom = vec.y;
@@ -1034,7 +1102,7 @@ DWORD WineEngGetGlyphOutline(GdiFont font, UINT glyph, UINT format,
 	TRACE("transformed box: (%d,%d - %d,%d)\n", left, top, right, bottom);
 	vec.x = ft_face->glyph->metrics.horiAdvance;
 	vec.y = 0;
-	FT_Vector_Rotate(&vec, angle);
+	pFT_Vector_Rotate(&vec, angle);
 	lpgm->gmCellIncX = (vec.x+63) >> 6;
 	lpgm->gmCellIncY = -(vec.y+63) >> 6;
     }
@@ -1070,18 +1138,18 @@ DWORD WineEngGetGlyphOutline(GdiFont font, UINT glyph, UINT format,
 
 	if(font->orientation) {
 	    FT_Matrix matrix;
-	    matrix.xx = matrix.yy = FT_Cos(angle);
-	    matrix.xy = -FT_Sin(angle);
+	    matrix.xx = matrix.yy = pFT_Cos(angle);
+	    matrix.xy = -pFT_Sin(angle);
 	    matrix.yx = -matrix.xy;
 
-	    FT_Outline_Transform(&ft_face->glyph->outline, &matrix);
+	    pFT_Outline_Transform(&ft_face->glyph->outline, &matrix);
 	}
 
-	FT_Outline_Translate(&ft_face->glyph->outline, -left, -bottom );
+	pFT_Outline_Translate(&ft_face->glyph->outline, -left, -bottom );
 
 	/* Note: FreeType will only set 'black' bits for us. */
 	memset(buf, 0, needed);
-	FT_Outline_Get_Bitmap(library, &ft_face->glyph->outline, &ft_bitmap);
+	pFT_Outline_Get_Bitmap(library, &ft_face->glyph->outline, &ft_bitmap);
 	break;
 
     case GGO_GRAY2_BITMAP:
@@ -1106,15 +1174,15 @@ DWORD WineEngGetGlyphOutline(GdiFont font, UINT glyph, UINT format,
 
 	if(font->orientation) {
 	    FT_Matrix matrix;
-	    matrix.xx = matrix.yy = FT_Cos(angle);
-	    matrix.xy = -FT_Sin(angle);
+	    matrix.xx = matrix.yy = pFT_Cos(angle);
+	    matrix.xy = -pFT_Sin(angle);
 	    matrix.yx = -matrix.xy;
-	    FT_Outline_Transform(&ft_face->glyph->outline, &matrix);
+	    pFT_Outline_Transform(&ft_face->glyph->outline, &matrix);
 	}
 
-	FT_Outline_Translate(&ft_face->glyph->outline, -left, -bottom );
+	pFT_Outline_Translate(&ft_face->glyph->outline, -left, -bottom );
 
-	FT_Outline_Get_Bitmap(library, &ft_face->glyph->outline, &ft_bitmap);
+	pFT_Outline_Get_Bitmap(library, &ft_face->glyph->outline, &ft_bitmap);
 
 	if(format == GGO_GRAY2_BITMAP)
 	    mult = 5;
@@ -1218,13 +1286,13 @@ BOOL WineEngGetTextMetrics(GdiFont font, LPTEXTMETRICW ptm)
     x_scale = ft_face->size->metrics.x_scale;
     y_scale = ft_face->size->metrics.y_scale;
 
-    pOS2 = FT_Get_Sfnt_Table(ft_face, ft_sfnt_os2);
+    pOS2 = pFT_Get_Sfnt_Table(ft_face, ft_sfnt_os2);
     if(!pOS2) {
       FIXME("Can't find OS/2 table - not TT font?\n");
       return 0;
     }
 
-    pHori = FT_Get_Sfnt_Table(ft_face, ft_sfnt_hhea);
+    pHori = pFT_Get_Sfnt_Table(ft_face, ft_sfnt_hhea);
     if(!pHori) {
       FIXME("Can't find HHEA table - not TT font?\n");
       return 0;
@@ -1242,9 +1310,9 @@ BOOL WineEngGetTextMetrics(GdiFont font, LPTEXTMETRICW ptm)
 	ptm->tmDescent = -font->yMin;
 	ptm->tmInternalLeading = (ptm->tmAscent + ptm->tmDescent) - ft_face->size->metrics.y_ppem;
     } else {
-	ptm->tmAscent = (FT_MulFix(pOS2->usWinAscent, y_scale) + 32) >> 6;
-	ptm->tmDescent = (FT_MulFix(pOS2->usWinDescent, y_scale) + 32) >> 6;
-	ptm->tmInternalLeading = (FT_MulFix(pOS2->usWinAscent + pOS2->usWinDescent
+	ptm->tmAscent = (pFT_MulFix(pOS2->usWinAscent, y_scale) + 32) >> 6;
+	ptm->tmDescent = (pFT_MulFix(pOS2->usWinDescent, y_scale) + 32) >> 6;
+	ptm->tmInternalLeading = (pFT_MulFix(pOS2->usWinAscent + pOS2->usWinDescent
 					    - ft_face->units_per_EM, y_scale) + 32) >> 6;
     }
 
@@ -1253,12 +1321,12 @@ BOOL WineEngGetTextMetrics(GdiFont font, LPTEXTMETRICW ptm)
     /* MSDN says:
      el = MAX(0, LineGap - ((WinAscent + WinDescent) - (Ascender - Descender)))
     */
-    ptm->tmExternalLeading = max(0, (FT_MulFix(pHori->Line_Gap -
+    ptm->tmExternalLeading = max(0, (pFT_MulFix(pHori->Line_Gap -
        		 ((pOS2->usWinAscent + pOS2->usWinDescent) -
 		  (pHori->Ascender - pHori->Descender)), y_scale) + 32) >> 6);
 
-    ptm->tmAveCharWidth = (FT_MulFix(pOS2->xAvgCharWidth, x_scale) + 32) >> 6;
-    ptm->tmMaxCharWidth = (FT_MulFix(ft_face->bbox.xMax - ft_face->bbox.xMin, x_scale) + 32) >> 6;
+    ptm->tmAveCharWidth = (pFT_MulFix(pOS2->xAvgCharWidth, x_scale) + 32) >> 6;
+    ptm->tmMaxCharWidth = (pFT_MulFix(ft_face->bbox.xMax - ft_face->bbox.xMin, x_scale) + 32) >> 6;
     ptm->tmWeight = font->fake_bold ? FW_BOLD : pOS2->usWeightClass;
     ptm->tmOverhang = 0;
     ptm->tmDigitizedAspectX = 300;
@@ -1343,14 +1411,14 @@ UINT WineEngGetOutlineTextMetrics(GdiFont font, UINT cbSize,
     x_scale = ft_face->size->metrics.x_scale;
     y_scale = ft_face->size->metrics.y_scale;
 
-    pOS2 = FT_Get_Sfnt_Table(ft_face, ft_sfnt_os2);
+    pOS2 = pFT_Get_Sfnt_Table(ft_face, ft_sfnt_os2);
     if(!pOS2) {
         FIXME("Can't find OS/2 table - not TT font?\n");
 	ret = 0;
 	goto end;
     }
 
-    pHori = FT_Get_Sfnt_Table(ft_face, ft_sfnt_hhea);
+    pHori = pFT_Get_Sfnt_Table(ft_face, ft_sfnt_hhea);
     if(!pHori) {
         FIXME("Can't find HHEA table - not TT font?\n");
 	ret = 0;
@@ -1369,11 +1437,11 @@ UINT WineEngGetOutlineTextMetrics(GdiFont font, UINT cbSize,
     potm->otmsCharSlopeRun = pHori->caret_Slope_Run;
     potm->otmItalicAngle = 0; /* POST table */
     potm->otmEMSquare = ft_face->units_per_EM;
-    potm->otmAscent = (FT_MulFix(pOS2->sTypoAscender, y_scale) + 32) >> 6;
-    potm->otmDescent = (FT_MulFix(pOS2->sTypoDescender, y_scale) + 32) >> 6;
-    potm->otmLineGap = (FT_MulFix(pOS2->sTypoLineGap, y_scale) + 32) >> 6;
-    potm->otmsCapEmHeight = (FT_MulFix(pOS2->sCapHeight, y_scale) + 32) >> 6;
-    potm->otmsXHeight = (FT_MulFix(pOS2->sxHeight, y_scale) + 32) >> 6;
+    potm->otmAscent = (pFT_MulFix(pOS2->sTypoAscender, y_scale) + 32) >> 6;
+    potm->otmDescent = (pFT_MulFix(pOS2->sTypoDescender, y_scale) + 32) >> 6;
+    potm->otmLineGap = (pFT_MulFix(pOS2->sTypoLineGap, y_scale) + 32) >> 6;
+    potm->otmsCapEmHeight = (pFT_MulFix(pOS2->sCapHeight, y_scale) + 32) >> 6;
+    potm->otmsXHeight = (pFT_MulFix(pOS2->sxHeight, y_scale) + 32) >> 6;
     potm->otmrcFontBox.left = ft_face->bbox.xMin;
     potm->otmrcFontBox.right = ft_face->bbox.xMax;
     potm->otmrcFontBox.top = ft_face->bbox.yMin;
@@ -1382,16 +1450,16 @@ UINT WineEngGetOutlineTextMetrics(GdiFont font, UINT cbSize,
     potm->otmMacDescent = 0;
     potm->otmMacLineGap = 0;
     potm->otmusMinimumPPEM = 0; /* TT Header */
-    potm->otmptSubscriptSize.x = (FT_MulFix(pOS2->ySubscriptXSize, x_scale) + 32) >> 6;
-    potm->otmptSubscriptSize.y = (FT_MulFix(pOS2->ySubscriptYSize, y_scale) + 32) >> 6;
-    potm->otmptSubscriptOffset.x = (FT_MulFix(pOS2->ySubscriptXOffset, x_scale) + 32) >> 6;
-    potm->otmptSubscriptOffset.y = (FT_MulFix(pOS2->ySubscriptYOffset, y_scale) + 32) >> 6;
-    potm->otmptSuperscriptSize.x = (FT_MulFix(pOS2->ySuperscriptXSize, x_scale) + 32) >> 6;
-    potm->otmptSuperscriptSize.y = (FT_MulFix(pOS2->ySuperscriptYSize, y_scale) + 32) >> 6;
-    potm->otmptSuperscriptOffset.x = (FT_MulFix(pOS2->ySuperscriptXOffset, x_scale) + 32) >> 6;
-    potm->otmptSuperscriptOffset.y = (FT_MulFix(pOS2->ySuperscriptYOffset, y_scale) + 32) >> 6;
-    potm->otmsStrikeoutSize = (FT_MulFix(pOS2->yStrikeoutSize, y_scale) + 32) >> 6;
-    potm->otmsStrikeoutPosition = (FT_MulFix(pOS2->yStrikeoutPosition, y_scale) + 32) >> 6;
+    potm->otmptSubscriptSize.x = (pFT_MulFix(pOS2->ySubscriptXSize, x_scale) + 32) >> 6;
+    potm->otmptSubscriptSize.y = (pFT_MulFix(pOS2->ySubscriptYSize, y_scale) + 32) >> 6;
+    potm->otmptSubscriptOffset.x = (pFT_MulFix(pOS2->ySubscriptXOffset, x_scale) + 32) >> 6;
+    potm->otmptSubscriptOffset.y = (pFT_MulFix(pOS2->ySubscriptYOffset, y_scale) + 32) >> 6;
+    potm->otmptSuperscriptSize.x = (pFT_MulFix(pOS2->ySuperscriptXSize, x_scale) + 32) >> 6;
+    potm->otmptSuperscriptSize.y = (pFT_MulFix(pOS2->ySuperscriptYSize, y_scale) + 32) >> 6;
+    potm->otmptSuperscriptOffset.x = (pFT_MulFix(pOS2->ySuperscriptXOffset, x_scale) + 32) >> 6;
+    potm->otmptSuperscriptOffset.y = (pFT_MulFix(pOS2->ySuperscriptYOffset, y_scale) + 32) >> 6;
+    potm->otmsStrikeoutSize = (pFT_MulFix(pOS2->yStrikeoutSize, y_scale) + 32) >> 6;
+    potm->otmsStrikeoutPosition = (pFT_MulFix(pOS2->yStrikeoutPosition, y_scale) + 32) >> 6;
     potm->otmsUnderscoreSize = 0; /* POST Header */
     potm->otmsUnderscorePosition = 0; /* POST Header */
 

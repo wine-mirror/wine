@@ -6,7 +6,6 @@ VPATH     = @srcdir@
 MODULE    = gdi32.dll
 ALTNAMES  = gdi.exe dispdib.dll wing.dll
 IMPORTS   = kernel32.dll ntdll.dll
-EXTRALIBS = @FREETYPELIBS@
 EXTRAINCL = @FREETYPEINCL@
 
 C_SRCS = \

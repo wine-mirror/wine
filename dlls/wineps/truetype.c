@@ -26,6 +26,7 @@
  *
  */
 #include "config.h"
+#include "wine/port.h"
 
 #ifdef HAVE_FREETYPE
 
@@ -76,6 +77,22 @@ WINE_DEFAULT_DEBUG_CHANNEL(psdrv);
 #define GLYPH_LOAD_FLAGS    	(   FT_LOAD_NO_SCALE	    	|   \
     	    	    	    	    FT_LOAD_IGNORE_TRANSFORM	|   \
 				    FT_LOAD_LINEAR_DESIGN   	    )
+
+static void *ft_handle = NULL;
+
+#define MAKE_FUNCPTR(f) static typeof(f) * p##f = NULL;
+MAKE_FUNCPTR(FT_Done_Face)
+MAKE_FUNCPTR(FT_Done_FreeType)
+MAKE_FUNCPTR(FT_Get_Char_Index)
+MAKE_FUNCPTR(FT_Get_Glyph_Name)
+MAKE_FUNCPTR(FT_Get_Sfnt_Name)
+MAKE_FUNCPTR(FT_Get_Sfnt_Name_Count)
+MAKE_FUNCPTR(FT_Get_Sfnt_Table)
+MAKE_FUNCPTR(FT_Init_FreeType)
+MAKE_FUNCPTR(FT_Load_Glyph)
+MAKE_FUNCPTR(FT_New_Face)
+MAKE_FUNCPTR(FT_Set_Charmap)
+#undef MAKE_FUNCPTR
 				    
 /*******************************************************************************
  *  FindCharMap
@@ -129,7 +146,7 @@ static BOOL FindCharMap(FT_Face face, FT_CharMap *p_charmap, LPSTR *p_sz)
 	return TRUE;
     }
     
-    error = FT_Set_Charmap(face, charmap);
+    error = pFT_Set_Charmap(face, charmap);
     if (error != FT_Err_Ok)
     {
     	ERR("%s returned %i\n", "FT_Set_Charmap", error);
@@ -217,11 +234,11 @@ static BOOL FindMSTTString(FT_Face face, FT_CharMap charmap, FT_UShort name_id,
     FT_SfntName     name;
     FT_Error	    error;
     
-    num_strings = FT_Get_Sfnt_Name_Count(face);
+    num_strings = pFT_Get_Sfnt_Name_Count(face);
     
     for (string_index = 0; string_index < num_strings; ++string_index)
     {
-    	error = FT_Get_Sfnt_Name(face, string_index, &name);
+    	error = pFT_Get_Sfnt_Name(face, string_index, &name);
 	if (error != FT_Err_Ok)
 	{
 	    ERR("%s returned %i\n", "FT_Get_Sfnt_Name", error);
@@ -278,10 +295,10 @@ static BOOL StartAFM(FT_Face face, AFM **p_afm)
     USHORT  	    em_size;
     AFM     	    *afm;
     
-    head = FT_Get_Sfnt_Table(face, ft_sfnt_head);
-    post = FT_Get_Sfnt_Table(face, ft_sfnt_post);
-    os2 = FT_Get_Sfnt_Table(face, ft_sfnt_os2);
-    hhea = FT_Get_Sfnt_Table(face, ft_sfnt_hhea);
+    head = pFT_Get_Sfnt_Table(face, ft_sfnt_head);
+    post = pFT_Get_Sfnt_Table(face, ft_sfnt_post);
+    os2 = pFT_Get_Sfnt_Table(face, ft_sfnt_os2);
+    hhea = pFT_Get_Sfnt_Table(face, ft_sfnt_hhea);
     
     if (head == NULL || post == NULL || os2 == NULL || hhea == NULL ||
     	    os2->version == 0xffff) 	    	    	/* old Macintosh font */
@@ -337,7 +354,7 @@ static BOOL ReadCharMetrics(FT_Face face, AFM *afm, AFMMETRICS **p_metrics)
     USHORT  	em_size = afm->WinMetrics.usUnitsPerEm;
     
     for (charcode = 0, index = 0; charcode < 65536; ++charcode)
-    	if (FT_Get_Char_Index(face, charcode) != 0)
+    	if (pFT_Get_Char_Index(face, charcode) != 0)
 	    ++index;	    	    	    	    	/* count # of glyphs */
 	    
     afm->NumofMetrics = index;
@@ -348,21 +365,21 @@ static BOOL ReadCharMetrics(FT_Face face, AFM *afm, AFMMETRICS **p_metrics)
 	
     for (charcode = 0, index = 0; charcode < 65536; ++charcode)
     {
-    	FT_UInt     glyph_index = FT_Get_Char_Index(face, charcode);
+    	FT_UInt     glyph_index = pFT_Get_Char_Index(face, charcode);
 	FT_Error    error;
 	CHAR	    buffer[128];  	    	/* for glyph names */
 	
 	if (glyph_index == 0)
 	    continue;
 	    
-	error = FT_Load_Glyph(face, glyph_index, GLYPH_LOAD_FLAGS);
+	error = pFT_Load_Glyph(face, glyph_index, GLYPH_LOAD_FLAGS);
 	if (error != FT_Err_Ok)
 	{
 	    ERR("%s returned %i\n", "FT_Load_Glyph", error);
 	    goto cleanup;
 	}
 	
-	error = FT_Get_Glyph_Name(face, glyph_index, buffer, sizeof(buffer));
+	error = pFT_Get_Glyph_Name(face, glyph_index, buffer, sizeof(buffer));
 	if (error != FT_Err_Ok)
 	{
 	    ERR("%s returned %i\n", "FT_Get_Glyph_Name", error);
@@ -471,7 +488,7 @@ static BOOL ReadTrueTypeFile(FT_Library library, LPCSTR filename)
     
     TRACE("%s\n", filename);
     
-    error = FT_New_Face(library, filename, 0, &face);
+    error = pFT_New_Face(library, filename, 0, &face);
     if (error != FT_Err_Ok)
     {
     	WARN("FreeType error %i opening %s\n", error, filename);
@@ -482,7 +499,7 @@ static BOOL ReadTrueTypeFile(FT_Library library, LPCSTR filename)
     {
     	if (BuildTrueTypeAFM(face) == FALSE)
 	{
-	    FT_Done_Face(face);
+	    pFT_Done_Face(face);
 	    return FALSE;
 	}
     }
@@ -491,7 +508,7 @@ static BOOL ReadTrueTypeFile(FT_Library library, LPCSTR filename)
     	WARN("Required information missing from %s\n", filename);
     }
     
-    error = FT_Done_Face(face);
+    error = pFT_Done_Face(face);
     if (error != FT_Err_Ok)
     {
     	ERR("%s returned %i\n", "FT_Done_Face", error);
@@ -572,10 +589,36 @@ BOOL PSDRV_GetTrueTypeMetrics(void)
 	    0, KEY_READ, &hkey) != ERROR_SUCCESS)
 	return TRUE;
 
-    error = FT_Init_FreeType(&library);
+
+    ft_handle = wine_dlopen("libfreetype.so", RTLD_NOW, NULL, 0);
+    if(!ft_handle) {
+        WINE_MESSAGE(
+      "Wine cannot find the FreeType font library.  To enable Wine to\n"
+      "use TrueType fonts please install a version of FreeType greater than\n"
+      "or equal to 2.0.5.\n"
+      "http://www.freetype.org\n");
+	return TRUE;
+    }
+
+#define LOAD_FUNCPTR(f) if((p##f = wine_dlsym(ft_handle, #f, NULL, 0)) == NULL) goto sym_not_found;
+    LOAD_FUNCPTR(FT_Done_Face)
+    LOAD_FUNCPTR(FT_Done_FreeType)
+    LOAD_FUNCPTR(FT_Get_Char_Index)
+    LOAD_FUNCPTR(FT_Get_Glyph_Name)
+    LOAD_FUNCPTR(FT_Get_Sfnt_Name)
+    LOAD_FUNCPTR(FT_Get_Sfnt_Name_Count)
+    LOAD_FUNCPTR(FT_Get_Sfnt_Table)
+    LOAD_FUNCPTR(FT_Init_FreeType)
+    LOAD_FUNCPTR(FT_Load_Glyph)
+    LOAD_FUNCPTR(FT_New_Face)
+    LOAD_FUNCPTR(FT_Set_Charmap)
+#undef LOAD_FUNCPTR
+
+    error = pFT_Init_FreeType(&library);
     if (error != FT_Err_Ok)
     {
     	ERR("%s returned %i\n", "FT_Init_FreeType", error);
+	wine_dlclose(ft_handle, NULL, 0);
 	RegCloseKey(hkey);
 	return FALSE;
     }
@@ -591,7 +634,7 @@ BOOL PSDRV_GetTrueTypeMetrics(void)
 	if (ReadTrueTypeDir(library, value_buf) == FALSE)
 	{
 	    RegCloseKey(hkey);
-	    FT_Done_FreeType(library);
+	    pFT_Done_FreeType(library);
 	    return FALSE;
 	}
 	
@@ -602,7 +645,19 @@ BOOL PSDRV_GetTrueTypeMetrics(void)
     }
     
     RegCloseKey(hkey);
-    FT_Done_FreeType(library);
+    pFT_Done_FreeType(library);
+    wine_dlclose(ft_handle, NULL, 0);
+    ft_handle = NULL;
+    return TRUE;
+
+sym_not_found:
+    WINE_MESSAGE(
+      "Wine cannot find certain functions that it needs inside the FreeType\n"
+      "font library.  To enable Wine to use TrueType fonts please upgrade\n"
+      "FreeType to at least version 2.0.5.\n"
+      "http://www.freetype.org\n");
+    wine_dlclose(ft_handle, NULL, 0);
+    ft_handle = NULL;
     return TRUE;
 }
 

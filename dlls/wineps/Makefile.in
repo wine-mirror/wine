@@ -5,7 +5,7 @@ VPATH     = @srcdir@
 MODULE    = wineps.dll
 ALTNAMES  = wineps16.dll
 IMPORTS   = user32.dll gdi32.dll winspool.drv kernel32.dll ntdll.dll
-EXTRALIBS = @CUPSLIBS@ @FREETYPELIBS@
+EXTRALIBS = @CUPSLIBS@
 EXTRAINCL = @FREETYPEINCL@
 
 FONTMETRICS = \
