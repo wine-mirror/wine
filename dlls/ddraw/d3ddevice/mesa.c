@@ -1662,7 +1662,9 @@ d3ddevice_create(IDirect3DDeviceImpl **obj, IDirect3DImpl *d3d, IDirectDrawSurfa
     gl_object->render_state.dst = GL_ZERO;
     gl_object->render_state.mag = GL_NEAREST;
     gl_object->render_state.min = GL_NEAREST;
-
+    gl_object->render_state.alpha_ref = 0.0; /* No actual idea about the real default value... */
+    gl_object->render_state.alpha_func = GL_ALWAYS; /* Here either but it seems logical */
+    
     /* Allocate memory for the matrices */
     gl_object->world_mat = (D3DMATRIX *) HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, 16 * sizeof(float));
     gl_object->view_mat  = (D3DMATRIX *) HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, 16 * sizeof(float));

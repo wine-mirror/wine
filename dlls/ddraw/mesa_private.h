@@ -63,6 +63,10 @@ typedef struct render_state {
     GLenum src, dst;
     /* This is used for textures */
     GLenum mag, min;
+
+    /* This is needed for the Alpha stuff */
+    GLenum alpha_func;
+    GLclampf alpha_ref;
 } RenderState;
 
 /* Common functions defined in d3dcommon.c */

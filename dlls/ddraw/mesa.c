@@ -30,6 +30,24 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(ddraw);
 
+GLenum convert_D3D_compare_to_GL(D3DCMPFUNC dwRenderState)
+{
+    switch (dwRenderState) {
+        case D3DCMP_NEVER: return GL_NEVER;
+	case D3DCMP_LESS: return GL_LESS;
+	case D3DCMP_EQUAL: return GL_EQUAL;
+	case D3DCMP_LESSEQUAL: return GL_LEQUAL;
+	case D3DCMP_GREATER: return GL_GREATER;
+	case D3DCMP_NOTEQUAL: return GL_NOTEQUAL;
+	case D3DCMP_GREATEREQUAL: return GL_GEQUAL;
+	case D3DCMP_ALWAYS: return GL_ALWAYS;
+	default:
+            ERR("Unexpected compare type !!!\n");
+            return GL_NEVER;
+    }
+}
+
+
 void set_render_state(D3DRENDERSTATETYPE dwRenderStateType,
 		      DWORD dwRenderState, RenderState *rs)
 {
@@ -66,9 +84,9 @@ void set_render_state(D3DRENDERSTATETYPE dwRenderStateType,
 		}
 	    } break;
 
-	    case D3DRENDERSTATE_TEXTUREADDRESSU:
-	    case D3DRENDERSTATE_TEXTUREADDRESSV:
-	    case D3DRENDERSTATE_TEXTUREADDRESS: { /* 3 */
+	    case D3DRENDERSTATE_TEXTUREADDRESSU:  /* 44 */
+	    case D3DRENDERSTATE_TEXTUREADDRESSV:  /* 45 */
+	    case D3DRENDERSTATE_TEXTUREADDRESS: { /*  3 */
 	        GLenum arg = GL_REPEAT; /* Default value */
 	        switch ((D3DTEXTUREADDRESS) dwRenderState) {
 		    case D3DTADDRESS_WRAP:   arg = GL_REPEAT; break;
@@ -133,8 +151,15 @@ void set_render_state(D3DRENDERSTATETYPE dwRenderStateType,
 		else
 		    glDepthMask(GL_FALSE);
 	        break;
+	      
+	    case D3DRENDERSTATE_ALPHATESTENABLE:  /* 15 */
+	        if (dwRenderState)
+		    glEnable(GL_ALPHA_TEST);
+	        else
+		    glDisable(GL_ALPHA_TEST);
+	        break;
 
-	    case D3DRENDERSTATE_TEXTUREMAG:         /* 17 */
+	    case D3DRENDERSTATE_TEXTUREMAG:       /* 17 */
 	        switch ((D3DTEXTUREFILTER) dwRenderState) {
 		    case D3DFILTER_NEAREST:
 		        rs->mag = GL_NEAREST;
@@ -218,34 +243,17 @@ void set_render_state(D3DRENDERSTATETYPE dwRenderStateType,
 	        break;
 
 	    case D3DRENDERSTATE_ZFUNC:            /* 23 */
-	        switch ((D3DCMPFUNC) dwRenderState) {
-		    case D3DCMP_NEVER:
-		        glDepthFunc(GL_NEVER);
-			break;
-		    case D3DCMP_LESS:
-			glDepthFunc(GL_LESS);
-			break;
-		    case D3DCMP_EQUAL:
-			glDepthFunc(GL_EQUAL);
-			break;
-		    case D3DCMP_LESSEQUAL:
-			glDepthFunc(GL_LEQUAL);
-			break;
-		    case D3DCMP_GREATER:
-			glDepthFunc(GL_GREATER);
-			break;
-		    case D3DCMP_NOTEQUAL:
-			glDepthFunc(GL_NOTEQUAL);
-			break;
-		    case D3DCMP_GREATEREQUAL:
-			glDepthFunc(GL_GEQUAL);
-			break;
-		    case D3DCMP_ALWAYS:
-			glDepthFunc(GL_ALWAYS);
-			break;
-		    default:
-			ERR("Unexpected value\n");
-		}
+	        glDepthFunc(convert_D3D_compare_to_GL(dwRenderState));
+	        break;
+	      
+	    case D3DRENDERSTATE_ALPHAREF:   /* 24 */
+	        rs->alpha_ref = dwRenderState / 255.0;
+	        glAlphaFunc(rs->alpha_func, rs->alpha_ref);
+	        break;
+	      
+	    case D3DRENDERSTATE_ALPHAFUNC: /* 25 */
+	        rs->alpha_func = convert_D3D_compare_to_GL(dwRenderState);
+	        glAlphaFunc(rs->alpha_func, rs->alpha_ref);
 	        break;
 
 	    case D3DRENDERSTATE_DITHERENABLE:     /* 26 */
