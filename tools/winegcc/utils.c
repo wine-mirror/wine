@@ -277,8 +277,11 @@ void spawn(const char* prefix, const strarray* args)
 {
     int i, status;
     strarray* arr = strarray_dup(args);
-    const char** argv = arr->base;
+    const char** argv;
     char* prog = 0;
+
+    strarray_add(arr, NULL);
+    argv = arr->base;
 
     if (prefix)
     {
@@ -294,7 +297,6 @@ void spawn(const char* prefix, const strarray* args)
 	}
     }
 
-    strarray_add(arr, NULL);
     if (verbose)
     {
 	for(i = 0; argv[i]; i++) printf("%s ", argv[i]);

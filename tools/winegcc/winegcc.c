@@ -669,6 +669,7 @@ int main(int argc, char **argv)
 		case 'x': case 'o': case 'D': case 'U':
 		case 'I': case 'A': case 'l': case 'u':
 		case 'b': case 'V': case 'G': case 'L':
+		case 'B':
 		    if (argv[i][2]) option_arg = &argv[i][2];
 		    else next_is_arg = 1;
 		    break;
