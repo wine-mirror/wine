@@ -18,7 +18,7 @@
 @  stdcall wglUseFontOutlinesA(long long long long long long long ptr)
 @  stub    glGetLevelParameterfv
 @  stub    glGetLevelParameteriv
-@  stub    wglUseFontBitmapsW
+@  stdcall wglUseFontBitmapsW(long long long long)
 @  stub    wglUseFontOutlinesW
 @  stub    wglGetDefaultProcAddress
 @  stdcall wglChoosePixelFormat(long ptr) gdi32.ChoosePixelFormat
