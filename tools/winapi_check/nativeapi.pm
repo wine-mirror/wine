@@ -76,14 +76,12 @@ sub new {
 	# skip comments
 	if(/^dnl/) { next; }
 
-	if(/^AC_CHECK_HEADERS\(\s*(.*?)\)\s*$/) {
-	    my @arguments = split(/,/,$1);
-	    foreach my $name (split(/\s+/, $arguments[0])) {		
+	if(/^AC_CHECK_HEADERS\(\s*([^,\)]*)(?:,|\))?/) {
+	    foreach my $name (split(/\s+/, $1)) {
 		$$conditional_headers{$name}++;
 	    }
-	} elsif(/^AC_CHECK_FUNCS\(\s*(.*?)\)\s*$/) {
-	    my @arguments = split(/,/,$1);
-	    foreach my $name (split(/\s+/, $arguments[0])) {		
+	} elsif(/^AC_CHECK_FUNCS\(\s*([^,\)]*)(?:,|\))?/) {
+	    foreach my $name (split(/\s+/, $1)) {
 		$$conditional_functions{$name}++;
 	    }
 	} elsif(/^AC_FUNC_ALLOCA/) {

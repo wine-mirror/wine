@@ -46,7 +46,7 @@ sub parse_c_file {
 	    }
 	}
 
-	$statements = "";
+	$statements = undef;
     };
     my $function_end = sub {
 	&$function_found_callback($line_number,$debug_channels,$documentation,$linkage,$return_type,
@@ -55,6 +55,7 @@ sub parse_c_file {
 	$function = "";
     };
     my %regs_entrypoints;
+    my @comment_lines = ();
     my @comments = ();
     my $level = 0;
     my $extern_c = 0;
@@ -72,11 +73,11 @@ sub parse_c_file {
 	    if($lookahead) {
 		$lookahead = 0;
 		$_ .= "\n" . $line;
+		$lookahead_count++;
 	    } else {
 		$_ = $line;
 		$lookahead_count = 0;
 	    }
-	    $lookahead_count++;
 	    print " $level($lookahead_count): $line\n" if $options->debug >= 2;
 	    print "*** $_\n" if $options->debug >= 3;
 	} else {
@@ -91,7 +92,12 @@ sub parse_c_file {
 	}
       
 	# remove C comments
-	if(s/^(.*?)(\/\*.*?\*\/)(.*)$/$1 $3/s) { push @comments, $2; $again = 1; next }
+	if(s/^(.*?)(\/\*.*?\*\/)(.*)$/$1 $3/s) { 
+	    push @comment_lines, $.; 
+	    push @comments, $2; 
+	    $again = 1; 
+	    next;
+	}
 	if(/^(.*?)\/\*/s) {
 	    $lookahead = 1;
 	    next;
@@ -126,6 +132,7 @@ sub parse_c_file {
 	    next; 
 	}
 
+	my $documentation_line;
 	my $documentation;
 	my @argument_documentations = ();
 	{
@@ -137,7 +144,11 @@ sub parse_c_file {
 	    }
 
 	    if(defined($comments[$n]) && $n >= 0) {
+		my @lines = split(/\n/, $comments[$n]);
+
+		$documentation_line = $comment_lines[$n] - scalar(@lines) + 1;
 		$documentation = $comments[$n];
+
 		for(my $m=$n+1; $m <= $#comments; $m++) {
 		    if($comments[$m] =~ /^\/\*\*+\/$/ ||
 		       $comments[$m] =~ /^\/\*\s*(?:\!)?defined/) # FIXME: Kludge
@@ -211,6 +222,10 @@ sub parse_c_file {
 		}
 	    }
 
+	    if(!defined($statements)) {
+		$statements = "";
+	    }
+
 	    if($line !~ /^\s*$/) {
 		$statements .= "$line\n";
 	    }
@@ -223,10 +238,14 @@ sub parse_c_file {
             ((__cdecl|__stdcall|CDECL|VFWAPIV|VFWAPI|WINAPIV|WINAPI|CALLBACK)\s+)?
 	    (\w+(\(\w+\))?)\s*\(([^\)]*)\)\s*(\{|\;)/sx)
         {
-	    $line_number = $. - $lookahead_count;
+	    my @lines = split(/\n/, $&);
+	    my $function_line = $. - scalar(@lines) + 1;
+
+	    # FIXME: Should be separate for documentation and function
+	    $line_number = $documentation_line;
 
 	    $_ = $'; $again = 1;
-	    
+
 	    if($11 eq "{")  {
 		$level++;
 	    }

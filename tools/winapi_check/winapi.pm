@@ -694,6 +694,15 @@ sub function_external_calling_convention {
     return $$function_external_calling_convention{$name};
 }
 
+sub function_internal_name {
+    my $self = shift;
+    my $function_internal_name = \%{$self->{FUNCTION_INTERNAL_NAME}};
+
+    my $name = shift;
+
+    return $$function_internal_name{$name};
+}
+
 sub function_external_name {
     my $self = shift;
     my $function_external_name = \%{$self->{FUNCTION_EXTERNAL_NAME}};

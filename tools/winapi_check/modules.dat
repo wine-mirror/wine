@@ -195,7 +195,6 @@ dlls/odbc32
 % dlls/ole32/compobj.spec
 
 dlls/ole32
-files
 
 % dlls/ole32/ole2.spec
 
@@ -210,7 +209,6 @@ dlls/ole32
 % dlls/ole32/ole2nls.spec
 
 dlls/ole32
-ole
 
 % dlls/ole32/ole2prox.spec
 

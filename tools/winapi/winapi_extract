@@ -118,7 +118,7 @@ foreach my $file (@files) {
 
 	local $_;
 	foreach (split(/\n/, $documentation)) {
-	    if(/^ \*\s*(\w+)\s*[\(\[]\s*(\w+)\.\s*(\@|\d+)\s*[\)\]]/m) {
+	    if(/^\s*\*\s*(\w+|\@)\s*[\(\[]\s*(\w+)\s*\.\s*(\@|\d+)\s*[\)\]]/) {
 		my $external_name = $1;
 		my $module = lc($2);
 		my $ordinal = $3;
