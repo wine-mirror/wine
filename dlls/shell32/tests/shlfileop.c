@@ -20,6 +20,7 @@
 
 #include <stdio.h>
  
+#include "windef.h"
 #include "winbase.h"
 #include "wtypes.h"
 #include "shellapi.h"
