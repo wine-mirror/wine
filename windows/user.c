@@ -130,8 +130,6 @@ static void USER_InstallRsrcHandler( HINSTANCE16 hInstance )
  */
 INT16 WINAPI InitApp( HINSTANCE16 hInstance )
 {
-    int queueSize;
-
       /* InitTask() calls LibMain()'s of implicitly loaded DLLs 
        * prior to InitApp() so there is no clean way to do
        * SetTaskSignalHandler() in time. So, broken Windows bypasses 
@@ -145,9 +143,8 @@ INT16 WINAPI InitApp( HINSTANCE16 hInstance )
     /* FIXME: should set a USER-specific handler that displays a msg box */
     INT_SetPMHandler( 0, INT_GetPMHandler( 0xff ) );
 
-      /* Create task message queue */
-    queueSize = GetProfileInt32A( "windows", "DefaultQueueSize", 8 );
-    if (!SetMessageQueue32( queueSize )) return 0;
+    /* Create task message queue */
+    if ( !GetFastQueue() ) return 0;
 
     return 1;
 }
@@ -166,32 +163,34 @@ static void USER_ModuleUnload( HMODULE16 hModule )
  */
 static void USER_AppExit( HTASK16 hTask, HINSTANCE16 hInstance, HQUEUE16 hQueue )
 {
-    /* FIXME: empty clipboard if needed, maybe destroy menus (Windows
-     *	      only complains about them but does nothing);
-     */
+    if ( hQueue )
+    {
+        /* FIXME: empty clipboard if needed, maybe destroy menus (Windows
+         *	      only complains about them but does nothing);
+         */
 
-    WND* desktop = WIN_GetDesktop();
+        WND* desktop = WIN_GetDesktop();
 
-    /* Patch desktop window */
-    if( desktop->hmemTaskQ == hQueue )
-	desktop->hmemTaskQ = GetTaskQueue(TASK_GetNextTask(hTask));
+        /* Patch desktop window */
+        if( desktop->hmemTaskQ == hQueue )
+    	desktop->hmemTaskQ = GetTaskQueue(TASK_GetNextTask(hTask));
 
-    /* Patch resident popup menu window */
-    MENU_PatchResidentPopup( hQueue, NULL );
+        /* Patch resident popup menu window */
+        MENU_PatchResidentPopup( hQueue, NULL );
 
-    TIMER_RemoveQueueTimers( hQueue );
+        TIMER_RemoveQueueTimers( hQueue );
 
-    QUEUE_FlushMessages( hQueue );
-    HOOK_FreeQueueHooks( hQueue );
+        QUEUE_FlushMessages( hQueue );
+        HOOK_FreeQueueHooks( hQueue );
 
-    QUEUE_SetExitingQueue( hQueue );
-    WIN_ResetQueueWindows( desktop, hQueue, (HQUEUE16)0);
-    CLIPBOARD_ResetLock( hQueue, 0 );
-    QUEUE_SetExitingQueue( 0 );
+        QUEUE_SetExitingQueue( hQueue );
+        WIN_ResetQueueWindows( desktop, hQueue, (HQUEUE16)0);
+        CLIPBOARD_ResetLock( hQueue, 0 );
+        QUEUE_SetExitingQueue( 0 );
 
-    /* Free the message queue */
-
-    QUEUE_DeleteMsgQueue( hQueue );
+        /* Free the message queue */
+        QUEUE_DeleteMsgQueue( hQueue );
+    }
 
     /* ModuleUnload() in "Internals" */
 
