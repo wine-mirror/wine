@@ -15,7 +15,7 @@ SONAME     = lib$(MODULE).so
 IMPORTLIBS = $(IMPORTS:%=$(DLLDIR)/lib%.$(LIBEXT))
 ALLNAMES   = lib$(MODULE).so $(ALTNAMES:%=lib%.so)
 SPEC_SRCS  = $(ALTNAMES:%=%.spec)
-ALL_OBJS   = $(OBJS) $(MODULE).spec.o
+ALL_OBJS   = $(MODULE).spec.o $(OBJS)
 ALL_LIBS   = -L$(TOPOBJDIR) -lwine $(EXTRALIBS) $(LIBS)
 
 all: lib$(MODULE).$(LIBEXT) $(ALTNAMES:%=lib%.$(LIBEXT))

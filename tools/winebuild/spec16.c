@@ -772,16 +772,17 @@ void BuildSpec16File( FILE *outfile )
     /* Output the DLL constructor */
 
     fprintf( outfile, "#ifdef __GNUC__\n" );
-    fprintf( outfile, "static void %s_init(void) __attribute__((constructor));\n", DLLName );
+    fprintf( outfile, "static void init(void) __attribute__((unused));\n" );
     fprintf( outfile, "#else /* defined(__GNUC__) */\n" );
     fprintf( outfile, "static void __asm__dummy_dll_init(void) {\n" );
+    fprintf( outfile, "#endif /* defined(__GNUC__) */\n" );
     fprintf( outfile, "asm(\"\\t.section\t.init ,\\\"ax\\\"\\n\"\n" );
-    fprintf( outfile, "    \"\\tcall %s_init\\n\"\n", DLLName );
+    fprintf( outfile, "    \"\\tcall init\\n\"\n" );
     fprintf( outfile, "    \"\\t.previous\\n\");\n" );
+    fprintf( outfile, "#ifndef __GNUC__\n" );
     fprintf( outfile, "}\n" );
     fprintf( outfile, "#endif /* defined(__GNUC__) */\n" );
-    fprintf( outfile, "static void %s_init(void) { __wine_register_dll_16( &descriptor ); }\n",
-             DLLName );
+    fprintf( outfile, "static void init(void) { __wine_register_dll_16( &descriptor ); }\n" );
 }
 
 

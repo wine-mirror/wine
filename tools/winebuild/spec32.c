@@ -341,7 +341,7 @@ static void output_stub_funcs( FILE *outfile )
         fprintf( outfile, "    unsigned int params;\n" );
         fprintf( outfile, "    const void *info[15];\n" );
         fprintf( outfile, "  } rec;\n" );
-        fprintf( outfile, "  extern void RtlRaiseException( struct exc_record * );\n\n" );
+        fprintf( outfile, "  extern void __stdcall RtlRaiseException( struct exc_record * );\n\n" );
         fprintf( outfile, "  rec.code    = 0x%08x;\n", EXCEPTION_WINE_STUB );
         fprintf( outfile, "  rec.flags   = %d;\n", EH_NONCONTINUABLE );
         fprintf( outfile, "  rec.rec     = 0;\n" );
@@ -443,6 +443,12 @@ void BuildSpec32File( FILE *outfile )
     fprintf( outfile, "    \"pe_header:\\t.fill %ld,1,0\\n\\t\");\n", page_size );
 
     fprintf( outfile, "static const char dllname[] = \"%s\";\n\n", DLLName );
+
+#ifdef __i386__
+    fprintf( outfile, "#define __stdcall __attribute__((__stdcall__))\n\n" );
+#else
+    fprintf( outfile, "#define __stdcall\n\n" );
+#endif
 
     /* Output the stub functions */
 
@@ -549,13 +555,13 @@ void BuildSpec32File( FILE *outfile )
     case SPEC_MODE_CUIEXE:
         if (!init_func) init_func = has_imports ? "main" : "wine_main";
         fprintf( outfile,
-                 "\n#include <winbase.h>\n"
-                 "int _ARGC;\n"
+                 "\nint _ARGC;\n"
                  "char **_ARGV;\n"
                  "static void __wine_exe_main(void)\n"
                  "{\n"
                  "    extern int %s( int argc, char *argv[] );\n"
                  "    extern int __wine_get_main_args( char ***argv );\n"
+                 "    extern void __stdcall ExitProcess(int);\n"
                  "    _ARGC = __wine_get_main_args( &_ARGV );\n"
                  "    ExitProcess( %s( _ARGC, _ARGV ) );\n"
                  "}\n\n", init_func, init_func );
@@ -665,11 +671,12 @@ void BuildSpec32File( FILE *outfile )
     /* Output the DLL constructor */
 
     fprintf( outfile, "#ifdef __GNUC__\n" );
-    fprintf( outfile, "static void init(void) __attribute__((constructor));\n" );
+    fprintf( outfile, "static void init(void) __attribute__((unused));\n" );
     if (nr_debug)
-        fprintf( outfile, "static void fini(void) __attribute__((destructor));\n" );
+        fprintf( outfile, "static void fini(void) __attribute__((unused));\n" );
     fprintf( outfile, "#else /* defined(__GNUC__) */\n" );
     fprintf( outfile, "static void __asm__dummy_dll_init(void) {\n" );
+    fprintf( outfile, "#endif /* defined(__GNUC__) */\n" );
     fprintf( outfile, "asm(\"\\t.section\t.init ,\\\"ax\\\"\\n\"\n" );
     fprintf( outfile, "    \"\\tcall init\\n\"\n" );
     fprintf( outfile, "    \"\\t.previous\\n\");\n" );
@@ -679,6 +686,7 @@ void BuildSpec32File( FILE *outfile )
         fprintf( outfile, "    \"\\tcall fini\\n\"\n" );
         fprintf( outfile, "    \"\\t.previous\\n\");\n" );
     }
+    fprintf( outfile, "#ifndef __GNUC__\n" );
     fprintf( outfile, "}\n" );
     fprintf( outfile, "#endif /* defined(__GNUC__) */\n\n" );
     fprintf( outfile, "static void init(void)\n{\n" );
