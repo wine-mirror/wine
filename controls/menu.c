@@ -2635,7 +2635,12 @@ static INT MENU_TrackMenu( HMENU hmenu, UINT wFlags, INT x, INT y,
     fEndMenu = FALSE;
     if (!(menu = (POPUPMENU *) USER_HEAP_LIN_ADDR( hmenu ))) return FALSE;
 
-    if (wFlags & TPM_BUTTONDOWN) MENU_ButtonDown( &mt, hmenu, wFlags );
+    if (wFlags & TPM_BUTTONDOWN) 
+    {
+	/* Get the result in order to start the tracking or not */
+	fRemove = MENU_ButtonDown( &mt, hmenu, wFlags );
+	fEndMenu = !fRemove;   
+    }
 
     EVENT_Capture( mt.hOwnerWnd, HTMENU );
 
