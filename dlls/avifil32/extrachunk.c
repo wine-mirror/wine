@@ -89,7 +89,7 @@ HRESULT WriteExtraChunk(LPEXTRACHUNKS extra,FOURCC ckid,LPVOID lpData,
     return AVIERR_MEMORY;
 
   extra->lp  = lp;
-  ((LPBYTE)lp) += extra->cb;
+  lp = (LPDWORD) ((LPBYTE)lp + extra->cb);
   extra->cb += size + 2 * sizeof(DWORD);
 
   /* insert chunk-header in block */
@@ -125,7 +125,7 @@ HRESULT ReadChunkIntoExtra(LPEXTRACHUNKS extra,HMMIO hmmio,MMCKINFO *lpck)
     return AVIERR_MEMORY;
 
   extra->lp  = lp;
-  ((LPBYTE)lp) += extra->cb;
+  lp = (LPDWORD) ((LPBYTE)lp + extra->cb);
   extra->cb += cb;
 
   /* insert chunk-header in block */
