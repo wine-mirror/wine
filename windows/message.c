@@ -2186,8 +2186,8 @@ static BOOL MSG_DoTranslateMessage( UINT message, HWND hwnd,
 
     if ((message != WM_KEYDOWN) && (message != WM_SYSKEYDOWN))	return FALSE;
 
-    TRACE_(key)("Translating key %04X, scancode %04X\n",
-                 wParam, HIWORD(lParam) );
+    TRACE_(key)("Translating key %s (%04x), scancode %02x\n",
+                 SPY_GetVKeyName(wParam), wParam, LOBYTE(HIWORD(lParam)));
 
     /* FIXME : should handle ToAscii yielding 2 */
     switch (ToAscii(wParam, HIWORD(lParam),
