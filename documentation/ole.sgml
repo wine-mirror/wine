@@ -240,7 +240,7 @@ struct IDirect3DVtbl {
           and initialize the lpVtbl field to point to this variable.
         </para>
         <para>
-          The IDirect3D_Xxx macros then just difference the lpVtbl
+          The IDirect3D_Xxx macros then just dereference the lpVtbl
           pointer and use the function pointer corresponding to the
           macro name. This emulates the behavior of a virtual table
           and should be just as fast.
@@ -300,7 +300,7 @@ struct IDirect3DVtbl {
         <para>
           Since IDirect3D does double duty, each ICOM_METHOD macro
           defines both a function pointer and a non-virtual inline
-          method which differences it and calls it. This way this
+          method which dereferences it and calls it. This way this
           method behaves just like a virtual method but does not
           create a true C++ virtual table which would break the
           structure layout. If you look at the implementation of these
