@@ -112,6 +112,13 @@
 @="ole32.dll"
 "ThreadingModel"="Both"
 
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{0000030b-0000-0000-C000-000000000046}]
+@="DfMarshal"
+
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{0000030b-0000-0000-C000-000000000046}\InProcServer32]
+@="ole32.dll"
+"ThreadingModel"="Both"
+
 # IUnknown, the superclass for everything COM/OLE.
 [HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Interface\{00000000-0000-0000-C000-000000000046}]
 @="IUnknown"
