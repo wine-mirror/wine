@@ -506,6 +506,10 @@ static inline void collapse_path( WCHAR *path, UINT mark )
         while (*p && *p != '\\') p++;
         if (*p == '\\') p++;
     }
+
+    /* remove trailing spaces and dots (yes, Windows really does that, don't ask) */
+    while (p > path + mark && (p[-1] == ' ' || p[-1] == '.')) p--;
+    *p = 0;
 }
 
 
@@ -533,17 +537,16 @@ static const WCHAR *skip_unc_prefix( const WCHAR *ptr )
  */
 static ULONG get_full_path_helper(LPCWSTR name, LPWSTR buffer, ULONG size)
 {
-    ULONG                       reqsize = 0, mark = 0, dep = 0, deplen, name_len;
+    ULONG                       reqsize = 0, mark = 0, dep = 0, deplen;
     DOS_PATHNAME_TYPE           type;
     LPWSTR                      ins_str = NULL;
     LPCWSTR                     ptr;
     const UNICODE_STRING*       cd;
     WCHAR                       tmp[4];
 
-    /* remove trailing spaces (yes, Windows really does that, don't ask) */
-    name_len = strlenW( name );
-    while (name_len && name[name_len-1] == ' ') name_len--;
-    if (!name_len) return 0;
+    /* return error if name only consists of spaces */
+    for (ptr = name; *ptr; ptr++) if (*ptr != ' ') break;
+    if (!*ptr) return 0;
 
     RtlAcquirePebLock();
 
@@ -679,7 +682,7 @@ static ULONG get_full_path_helper(LPCWSTR name, LPWSTR buffer, ULONG size)
     }
 
     /* enough space ? */
-    deplen = (name_len - dep) * sizeof(WCHAR);
+    deplen = strlenW(name + dep) * sizeof(WCHAR);
     if (reqsize + deplen + sizeof(WCHAR) > size)
     {
         /* not enough space, return need size (including terminating '\0') */
@@ -687,8 +690,7 @@ static ULONG get_full_path_helper(LPCWSTR name, LPWSTR buffer, ULONG size)
         goto done;
     }
 
-    memmove(buffer + reqsize / sizeof(WCHAR), name + dep, deplen);
-    buffer[(reqsize + deplen) / sizeof(WCHAR)] = 0;
+    memmove(buffer + reqsize / sizeof(WCHAR), name + dep, deplen + sizeof(WCHAR));
     if (reqsize) memcpy(buffer, ins_str, reqsize);
     reqsize += deplen;
 

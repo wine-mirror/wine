@@ -240,6 +240,11 @@ static void test_RtlGetFullPathName_U()
         {
             { "c:/test",                     "c:\\test",         "test"},
             { "c:/test     ",                "c:\\test",         "test"},
+            { "c:/test.",                    "c:\\test",         "test"},
+            { "c:/test  ....   ..   ",       "c:\\test",         "test"},
+            { "c:/test/  ....   ..   ",      "c:\\test\\",       NULL},
+            { "c:/test/..",                  "c:\\",             NULL},
+            { "c:/test/.. ",                 "c:\\test\\",       NULL},
             { "c:/TEST",                     "c:\\test",         "test"},
             { "c:/test/file",                "c:\\test\\file",   "file"},
             { "c:/test/././file",            "c:\\test\\file",   "file"},
@@ -265,7 +270,7 @@ static void test_RtlGetFullPathName_U()
         len= strlen(test->rname) * sizeof(WCHAR);
         pRtlMultiByteToUnicodeN(pathbufW , sizeof(pathbufW), NULL, test->path, strlen(test->path)+1 );
         ret = pRtlGetFullPathName_U( pathbufW,MAX_PATH, rbufferW, &file_part);
-        ok( ret == len, "Wrong result %ld/%d for %s\n", ret, len, test->path );
+        ok( ret == len, "Wrong result %ld/%d for \"%s\"\n", ret, len, test->path );
         ok(pRtlUnicodeToMultiByteN(rbufferA,MAX_PATH,&reslen,rbufferW,MAX_PATH) == STATUS_SUCCESS,
            "RtlUnicodeToMultiByteN failed\n");
         ok(strcasecmp(rbufferA,test->rname) == 0, "Got \"%s\" expected \"%s\"\n",rbufferA,test->rname);
