@@ -24,7 +24,7 @@
           used for "Windows Emulator". In a way, both meanings are
           correct, only seen from different perspectives. The first
           meaning says that Wine is not a virtual machine, it does not
-          emulate a CPU, and you are not supposed to install neither
+          emulate a CPU, and you are not supposed to install 
           Windows nor any Windows device drivers on top of it; rather,
           Wine is an implementation of the Windows API, and can be
           used as a library to port Windows applications to Unix. The
@@ -82,8 +82,8 @@
           What is its function in Wine? Well, to be brief, it provides
           Inter-Process Communication (IPC), synchronization, and
           process/thread management. When the wineserver launches, it
-          creates a Unix socket for the current host in your home
-          directory's <filename>.wine</filename> subdirectory (or
+          creates a Unix socket for the current host based on (see below)
+          your home directory's <filename>.wine</filename> subdirectory (or
           wherever the <constant>WINEPREFIX</constant> environment
           variable points) - all Wine processes launched later
           connects to the wineserver using this socket. (If a
@@ -91,6 +91,22 @@
           will start up the wineserver in auto-terminate mode (i.e.
           the wineserver will then terminate itself once the last Wine
           process has terminated).)
+        </para>
+        <para>
+          In earlier versions of Wine the master socket mentioned
+          above was actually created in the configuration directory;
+          either your home directory's <filename>/wine</filename> 
+          subdirectory or wherever the <constant>WINEPREFIX</constant>
+          environment variable points>.  Since that might not be possible
+          the socket is actually created within the <filename>/tmp</filename>
+          directory with a name that reflects the configuration directory.
+          This means that there can actually be several separate copies of
+          the wineserver running; one per combination of user and
+          configuration directory.  Note that you should not have several
+          users using the same configuration directory at the same time;
+          they will have different copies of the wineserver running and
+          this could well lead to problems with the registry information
+          that they are sharing.
         </para>
         <para>
           Every thread in each Wine process has its own request
