@@ -284,7 +284,7 @@ type	win32
 @ stub RtlAreAnyAccessesGranted
 @ stub RtlAreBitsClear
 @ stub RtlAreBitsSet
-@ stub RtlAssert
+@ stdcall RtlAssert(ptr ptr long long) RtlAssert
 @ stub RtlCaptureStackBackTrace
 @ stub RtlCharToInteger
 @ stub RtlCheckRegistryKey

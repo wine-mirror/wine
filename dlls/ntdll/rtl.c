@@ -502,3 +502,12 @@ NTSTATUS WINAPI RtlClearBits(DWORD x1,DWORD x2,DWORD x3)
 	return 0;
 }
 
+/******************************************************************************
+ *  RtlAssert                           [NTDLL]
+ *
+ * Not implemented in non-debug versions.
+ */
+void WINAPI RtlAssert(LPVOID x1,LPVOID x2,DWORD x3, DWORD x4)
+{
+	FIXME("(%p,%p,0x%08lx,0x%08lx),stub\n",x1,x2,x3,x4);
+}
