@@ -387,7 +387,7 @@ static HRESULT WINAPI IShellFolder_fnParseDisplayName(
 	ICOM_THIS(IGenericSFImpl, iface);
 
 	HRESULT		hr=E_OUTOFMEMORY;
-	LPITEMIDLIST	pidlFull=NULL, pidlTemp = NULL, pidlOld = NULL;
+	LPITEMIDLIST	pidlFull=NULL, pidlTemp = NULL, pidlOld = NULL, pidlNew = NULL;
 	LPSTR		pszNext=NULL;
 	CHAR		szTemp[MAX_PATH],szElement[MAX_PATH];
 	BOOL		bIsFile;
@@ -398,6 +398,7 @@ static HRESULT WINAPI IShellFolder_fnParseDisplayName(
 
 	{ hr = E_FAIL;
 	  WideCharToLocal(szTemp, lpszDisplayName, lstrlenW(lpszDisplayName) + 1);
+          
 	  if(szTemp[0])
 	  { if (strcmp(szTemp,"Desktop")==0)
 	    { pidlFull = _ILCreateDesktop();
@@ -416,7 +417,6 @@ static HRESULT WINAPI IShellFolder_fnParseDisplayName(
 	          }
 	        }
 	      }
-	      
 	      /* check if the lpszDisplayName is Folder or File*/
 	      bIsFile = ! (GetFileAttributesA(szTemp) & FILE_ATTRIBUTE_DIRECTORY);
 	      pszNext = GetNextElement(szTemp, szElement, MAX_PATH);
@@ -441,6 +441,16 @@ static HRESULT WINAPI IShellFolder_fnParseDisplayName(
 	        }
 	        hr = S_OK;
 	      }
+
+              /* The following code is to make the absolute
+               pidl (pidlFull)  relative to the current folder */
+
+              if((pidlNew = ILFindChild(This->pMyPidl,pidlFull)))
+              {
+                  pidlOld = pidlFull;
+                  pidlFull = ILClone(pidlNew);
+                  SHFree(pidlOld);
+              }
 	    }
 	  }
 	}
