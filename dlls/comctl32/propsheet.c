@@ -1250,6 +1250,29 @@ static BOOL PROPSHEET_CreateTabControl(HWND hwndParent,
 
   return TRUE;
 }
+
+/******************************************************************************
+ *            PROPSHEET_WizardSubclassProc
+ *
+ * Subclassing window procedure for wizard extrior pages to prevent drawing
+ * background and so drawing above the watermark.
+ */
+LRESULT CALLBACK
+PROPSHEET_WizardSubclassProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam, UINT_PTR uID, DWORD_PTR dwRef)
+{
+  switch (uMsg)
+  {
+    case WM_ERASEBKGND:
+      return TRUE;
+
+    case WM_CTLCOLORSTATIC:
+      SetBkColor((HDC)wParam, GetSysColor(COLOR_WINDOW));
+      return (INT_PTR)GetSysColorBrush(COLOR_WINDOW);
+  }
+
+  return DefSubclassProc(hwnd, uMsg, wParam, lParam);
+}
+
 /*
  * Get the size of an in-memory Template
  *
@@ -1550,6 +1573,15 @@ static BOOL PROPSHEET_CreatePage(HWND hwndParent,
 		   rc.left + padding.x/2,
 		   rc.top + padding.y/2 + offsety,
 		   pageWidth, pageHeight - offsety, 0);
+  }
+
+  /* Subclass exterior wizard pages */
+  if((psInfo->ppshheader.dwFlags & (PSH_WIZARD97_NEW | PSH_WIZARD97_OLD)) &&
+     (psInfo->ppshheader.dwFlags & PSH_WATERMARK) &&
+     (ppshpage->dwFlags & PSP_HIDEHEADER))
+  {
+      SetWindowSubclass(hwndPage, PROPSHEET_WizardSubclassProc, 1,
+                        (DWORD_PTR)ppshpage);
   }
 
   return TRUE;
@@ -2409,6 +2441,15 @@ static BOOL PROPSHEET_RemovePage(HWND hwndDlg,
   else if (index < psInfo->active_page)
     psInfo->active_page--;
 
+  /* Unsubclass the page dialog window */
+  if((psInfo->ppshheader.dwFlags & (PSH_WIZARD97_NEW | PSH_WIZARD97_OLD) &&
+     (psInfo->ppshheader.dwFlags & PSH_WATERMARK) &&
+     ((PROPSHEETPAGEW*)psInfo->proppage[index].hpage)->dwFlags & PSP_HIDEHEADER))
+  {
+     RemoveWindowSubclass(psInfo->proppage[index].hwndPage,
+                          PROPSHEET_WizardSubclassProc, 1);
+  }
+
   /* Destroy page dialog window */
   DestroyWindow(psInfo->proppage[index].hwndPage);
 
@@ -2668,6 +2709,15 @@ static void PROPSHEET_CleanUp(HWND hwndDlg)
   for (i = 0; i < psInfo->nPages; i++)
   {
      PROPSHEETPAGEA* psp = (PROPSHEETPAGEA*)psInfo->proppage[i].hpage;
+
+     /* Unsubclass the page dialog window */
+     if((psInfo->ppshheader.dwFlags & (PSH_WIZARD97_NEW | PSH_WIZARD97_OLD)) &&
+        (psInfo->ppshheader.dwFlags & PSH_WATERMARK) &&
+        (psp->dwFlags & PSP_HIDEHEADER))
+     {
+        RemoveWindowSubclass(psInfo->proppage[i].hwndPage,
+                             PROPSHEET_WizardSubclassProc, 1);
+     }
 
      if(psInfo->proppage[i].hwndPage)
         DestroyWindow(psInfo->proppage[i].hwndPage);
@@ -3048,7 +3098,7 @@ static LRESULT PROPSHEET_Paint(HWND hwnd)
     HPALETTE hOldPal = 0;
     int offsety = 0;
     HBRUSH hbr;
-    RECT r;
+    RECT r, rzone;
     LPCPROPSHEETPAGEW ppshpage;
     WCHAR szBuffer[256];
     int nLength;
@@ -3066,7 +3116,6 @@ static LRESULT PROPSHEET_Paint(HWND hwnd)
 	 (psInfo->ppshheader.dwFlags & (PSH_WIZARD97_OLD | PSH_WIZARD97_NEW)) &&
 	 (psInfo->ppshheader.dwFlags & PSH_HEADER) ) 
     {
-	RECT rzone;
 	HWND hwndLineHeader = GetDlgItem(hwnd, IDC_SUNKEN_LINEHEADER);
 	HFONT hOldFont;
 	COLORREF clrOld = 0;
@@ -3111,9 +3160,8 @@ static LRESULT PROPSHEET_Paint(HWND hwnd)
  	}
  	else
  	{
- 	    hbr = CreateSolidBrush(GetSysColor(COLOR_WINDOW));
+ 	    hbr = GetSysColorBrush(COLOR_WINDOW);
  	    FillRect(hdc, &rzone, hbr);
- 	    DeleteObject(hbr);
 
  	    /* Draw the header bitmap. It's always centered like a
  	     * common 49 x 49 bitmap. */
@@ -3194,6 +3242,14 @@ static LRESULT PROPSHEET_Paint(HWND hwnd)
 
 	GetClientRect(hwndLine, &r);
 	MapWindowPoints(hwndLine, hwnd, (LPPOINT) &r, 2);
+
+	rzone.left = 0;
+	rzone.top = 0;
+	rzone.right = r.right;
+	rzone.bottom = r.top - 1;
+
+	hbr = GetSysColorBrush(COLOR_WINDOW);
+	FillRect(hdc, &rzone, hbr);
 
 	GetObjectA(psInfo->ppshheader.u4.hbmWatermark, sizeof(BITMAP), (LPVOID)&bm);
 	hbmp = SelectObject(hdcSrc, psInfo->ppshheader.u4.hbmWatermark);
