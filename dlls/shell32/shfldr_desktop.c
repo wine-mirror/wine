@@ -216,7 +216,7 @@ static HRESULT WINAPI ISF_Desktop_fnParseDisplayName (IShellFolder2 * iface,
 	szNext = GetNextElementW (lpszDisplayName, szElement, MAX_PATH);
 	TRACE ("-- element: %s\n", debugstr_w (szElement));
 	SHCLSIDFromStringW (szElement + 2, &clsid);
-	pidlTemp = _ILCreate (PT_GUID, &clsid, sizeof (clsid));
+	pidlTemp = _ILCreateGuid (PT_GUID, &clsid);
     } else if (PathGetDriveNumberW (lpszDisplayName) >= 0) {
 	/* it's a filesystem path with a drive. Let MyComputer parse it */
 	pidlTemp = _ILCreateMyComputer ();

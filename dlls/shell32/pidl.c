@@ -1526,110 +1526,149 @@ HRESULT WINAPI SHBindToParent(LPCITEMIDLIST pidl, REFIID riid, LPVOID *ppv, LPCI
  */
 LPITEMIDLIST _ILCreateDesktop()
 {	TRACE("()\n");
-	return _ILCreate(PT_DESKTOP, NULL, 0);
+	return _ILCreateWithTypeAndSize(PT_DESKTOP, 0);
 }
 
 LPITEMIDLIST _ILCreateMyComputer()
 {	TRACE("()\n");
-	return _ILCreate(PT_GUID, &CLSID_MyComputer, sizeof(GUID));
+	return _ILCreateGuid(PT_GUID, &CLSID_MyComputer);
 }
 
 LPITEMIDLIST _ILCreateIExplore()
 {	TRACE("()\n");
-	return _ILCreate(PT_GUID, &CLSID_Internet, sizeof(GUID));
+	return _ILCreateGuid(PT_GUID, &CLSID_Internet);
 }
 
 LPITEMIDLIST _ILCreateControl()
 {	TRACE("()\n");
-	return _ILCreate(PT_SPECIAL, &CLSID_ControlPanel, sizeof(GUID));
+    /* FIXME: needs to be child of MyComputer */
+	return _ILCreateGuid(PT_SHELLEXT, &CLSID_ControlPanel);
 }
 
 LPITEMIDLIST _ILCreatePrinter()
 {	TRACE("()\n");
-	return _ILCreate(PT_SPECIAL, &CLSID_Printers, sizeof(GUID));
+    /* FIXME: needs to be child of MyComputer */
+	return _ILCreateGuid(PT_SHELLEXT, &CLSID_Printers);
 }
 
 LPITEMIDLIST _ILCreateNetwork()
 {	TRACE("()\n");
-	return _ILCreate(PT_GUID, &CLSID_NetworkPlaces, sizeof(GUID));
+	return _ILCreateGuid(PT_GUID, &CLSID_NetworkPlaces);
 }
 
 LPITEMIDLIST _ILCreateBitBucket()
 {	TRACE("()\n");
-	return _ILCreate(PT_GUID, &CLSID_RecycleBin, sizeof(GUID));
+	return _ILCreateGuid(PT_GUID, &CLSID_RecycleBin);
 }
 
-LPITEMIDLIST _ILCreateDrive( LPCSTR lpszNew)
-{	char sTemp[4];
-	lstrcpynA (sTemp,lpszNew,4);
-	sTemp[2]='\\';
-	sTemp[3]=0x00;
-	TRACE("(%s)\n",sTemp);
-	return _ILCreate(PT_DRIVE,(LPVOID)&sTemp[0],4);
-}
-
-LPITEMIDLIST _ILCreateFolder( WIN32_FIND_DATAA * stffile )
+/**************************************************************************
+ *  _ILCreateGuid()
+ *  Creates a new PIDL with type type (which can be one of PT_SHELLEXT or
+ *  PT_GUID) with the given GUID data.
+ */
+LPITEMIDLIST _ILCreateGuid(PIDLTYPE type, REFIID guid)
 {
-	char	buff[MAX_PATH + 14 +1]; /* see WIN32_FIND_DATA */
-	char *	pbuff = buff;
-	ULONG	len, len1;
-	LPITEMIDLIST pidl;
+    LPITEMIDLIST pidlOut;
 
-	TRACE("(%s, %s)\n",stffile->cAlternateFileName, stffile->cFileName);
+    if (type == PT_SHELLEXT || type == PT_GUID)
+    {
+        pidlOut = _ILCreateWithTypeAndSize(type, 2 + 2 + sizeof(GUID));
+        if (pidlOut)
+        {
+            LPPIDLDATA pData = _ILGetDataPointer(pidlOut);
 
-	/* prepare buffer with both names */
-	len = strlen (stffile->cFileName) + 1;
-	memcpy (pbuff, stffile->cFileName, len);
-	pbuff += len;
-
-	len1 = strlen (stffile->cAlternateFileName)+1;
-	memcpy (pbuff, stffile->cAlternateFileName, len1);
-
-	pidl = _ILCreate(PT_FOLDER, (LPVOID)buff, len + len1);
-
-	/* set attributes */
-	if (pidl)
-	{
-	  LPPIDLDATA pData;
-	  pData = _ILGetDataPointer(pidl);
-	  FileTimeToDosDateTime(&(stffile->ftLastWriteTime),&pData->u.folder.uFileDate,&pData->u.folder.uFileTime);
-	  pData->u.folder.dwFileSize = stffile->nFileSizeLow;
-	  pData->u.folder.uFileAttribs = stffile->dwFileAttributes;
-	}
-
-	return pidl;
+            memcpy(&(pData->u.guid.guid), guid, sizeof(GUID));
+            TRACE("-- create GUID-pidl %s\n",
+             debugstr_guid(&(pData->u.guid.guid)));
+        }
+    }
+    else
+    {
+        WARN("%d: invalid type for GUID\n", type);
+        pidlOut = NULL;
+    }
+    return pidlOut;
 }
 
-LPITEMIDLIST _ILCreateValue(WIN32_FIND_DATAA * stffile)
+LPITEMIDLIST _ILCreateGuidFromStrA(LPCSTR szGUID)
 {
-	char	buff[MAX_PATH + 14 +1]; /* see WIN32_FIND_DATA */
-	char *	pbuff = buff;
-	ULONG	len, len1;
-	LPITEMIDLIST pidl;
+	IID iid;
 
-	TRACE("(%s, %s)\n",stffile->cAlternateFileName, stffile->cFileName);
-
-	/* prepare buffer with both names */
-	len = strlen (stffile->cFileName) + 1;
-	memcpy (pbuff, stffile->cFileName, len);
-	pbuff += len;
-
-	len1 = strlen (stffile->cAlternateFileName)+1;
-	memcpy (pbuff, stffile->cAlternateFileName, len1);
-
-	pidl = _ILCreate(PT_VALUE, (LPVOID)buff, len + len1);
-
-	/* set attributes */
-	if (pidl)
+	if (!SUCCEEDED(SHCLSIDFromStringA(szGUID, &iid)))
 	{
-	  LPPIDLDATA pData;
-	  pData = _ILGetDataPointer(pidl);
-	  FileTimeToDosDateTime(&(stffile->ftLastWriteTime),&pData->u.folder.uFileDate,&pData->u.folder.uFileTime);
-	  pData->u.folder.dwFileSize = stffile->nFileSizeLow;
-	  pData->u.folder.uFileAttribs=stffile->dwFileAttributes;
+	  ERR("%s is not a GUID\n", szGUID);
+	  return NULL;
 	}
+	return _ILCreateGuid(PT_GUID, &iid);
+}
 
-	return pidl;
+LPITEMIDLIST _ILCreateWithTypeAndSize(PIDLTYPE type, UINT size)
+{
+    LPITEMIDLIST pidlOut = NULL, pidlTemp = NULL;
+    LPPIDLDATA   pData;
+
+    if(!(pidlOut = SHAlloc(size + 2))) return NULL;
+    ZeroMemory(pidlOut, size + 2);
+    pidlOut->mkid.cb = size;
+
+    if ((pData = _ILGetDataPointer(pidlOut)))
+        pData->type = type;
+
+    if ((pidlTemp = ILGetNext(pidlOut)))
+        pidlTemp->mkid.cb = 0x00;
+
+    TRACE("-- (pidl=%p, size=%u)\n", pidlOut, size);
+    return pidlOut;
+}
+
+/**************************************************************************
+ *  _ILCreateFromFindDataA()
+ *  Creates a new PIDL from stffile
+ */
+LPITEMIDLIST _ILCreateFromFindDataA(WIN32_FIND_DATAA * stffile )
+{
+    char	buff[MAX_PATH + 14 +1]; /* see WIN32_FIND_DATA */
+    char *	pbuff = buff;
+    ULONG	len, len1;
+    LPITEMIDLIST pidl;
+    PIDLTYPE type;
+
+    if (!stffile)
+        return NULL;
+
+    TRACE("(%s, %s)\n",stffile->cAlternateFileName, stffile->cFileName);
+
+    /* prepare buffer with both names */
+    len = strlen (stffile->cFileName) + 1;
+    memcpy (pbuff, stffile->cFileName, len);
+    pbuff += len;
+
+    len1 = strlen (stffile->cAlternateFileName)+1;
+    memcpy (pbuff, stffile->cAlternateFileName, len1);
+
+    type = (stffile->dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) ? PT_FOLDER : 
+     PT_VALUE;
+    /* FIXME: magic #s! */
+    if ((pidl = _ILCreateWithTypeAndSize(type, 2 + 12 + len + len1)))
+    {
+        LPPIDLDATA pData;
+        LPSTR pszDest;
+
+        /* set attributes */
+        if ((pData = _ILGetDataPointer(pidl)))
+        {
+            pData->type = type;
+            FileTimeToDosDateTime(&(stffile->ftLastWriteTime),&pData->u.folder.uFileDate,&pData->u.folder.uFileTime);
+            pData->u.folder.dwFileSize = stffile->nFileSizeLow;
+            pData->u.folder.uFileAttribs = stffile->dwFileAttributes;
+        }
+        if ((pszDest = _ILGetTextPointer(pidl)))
+        {
+            memcpy(pszDest, buff, len + len1);
+            TRACE("-- create Value: %s\n",debugstr_a(pszDest));
+        }
+    }
+    return pidl;
 }
 
 LPITEMIDLIST _ILCreateFromPathA(LPCSTR szPath)
@@ -1641,25 +1680,35 @@ LPITEMIDLIST _ILCreateFromPathA(LPCSTR szPath)
 	hFile = FindFirstFileA(szPath, &stffile);
 	if (hFile != INVALID_HANDLE_VALUE) 
 	{
-	  if (stffile.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
-	    pidl = _ILCreateFolder(&stffile);
-	  else
-	    pidl = _ILCreateValue(&stffile);
+	  pidl = _ILCreateFromFindDataA(&stffile);
 	  FindClose(hFile);
 	}
 	return pidl;
 }
 
-LPITEMIDLIST _ILCreateSpecial(LPCSTR szGUID)
+LPITEMIDLIST _ILCreateDrive( LPCSTR lpszNew)
 {
-	IID iid;
+    char sTemp[4];
+    LPITEMIDLIST pidlOut;
 
-	if (!SUCCEEDED(SHCLSIDFromStringA(szGUID, &iid)))
-	{
-	  ERR("%s is not a GUID\n", szGUID);
-	  return NULL;
-	}
-	return _ILCreate(PT_GUID, &iid, sizeof(IID));
+    sTemp[0]=lpszNew[0];
+    sTemp[1]=':';
+    sTemp[2]='\\';
+    sTemp[3]=0x00;
+    TRACE("(%s)\n",sTemp);
+
+    /* FIXME: magic #s! */
+    if ((pidlOut = _ILCreateWithTypeAndSize(PT_DRIVE, 25)))
+    {
+        LPSTR pszDest;
+
+        if ((pszDest = _ILGetTextPointer(pidlOut)))
+        {
+            memcpy(pszDest, sTemp, sizeof(sTemp));
+            TRACE("-- create Drive: %s\n", debugstr_a(pszDest));
+        }
+    }
+    return pidlOut;
 }
 
 LPITEMIDLIST _ILCreateCPanel(LPCSTR name, LPCSTR displayName, LPCSTR comment, int iconIdx)
@@ -1703,88 +1752,6 @@ LPITEMIDLIST _ILCreateCPanel(LPCSTR name, LPCSTR displayName, LPCSTR comment, in
     pcheck(pidl);
 
     return pidl;
-}
-
-/**************************************************************************
- *  _ILCreate()
- *  Creates a new PIDL
- *  type = PT_DESKTOP | PT_DRIVE | PT_FOLDER | PT_VALUE
- *  pIn = data
- *  uInSize = size of data (raw)
- */
-
-LPITEMIDLIST _ILCreate(PIDLTYPE type, LPCVOID pIn, UINT uInSize)
-{
-	LPITEMIDLIST   pidlOut = NULL, pidlTemp = NULL;
-	LPPIDLDATA     pData;
-	UINT           uSize = 0;
-	LPSTR	pszDest;
-
-	TRACE("(0x%02x %p %i)\n",type,pIn,uInSize);
-
-	switch (type)
-	{
-	  case PT_DESKTOP:
-	    uSize = 0;
-	    break;
-	  case PT_SPECIAL:
-	  case PT_GUID:
-	    uSize = 2 + 2 + sizeof(GUID);
-	    break;
-	  case PT_DRIVE:
-	    uSize = 2 + 23;
-	    break;
-	  case PT_FOLDER:
-	  case PT_VALUE:
-	    uSize = 2 + 12 + uInSize;
-	    break;
-	  default:
-	    FIXME("can't create type: 0x%08x\n",type);
-	    return NULL;
-	}
-
-	if(!(pidlOut = SHAlloc(uSize + 2))) return NULL;
-	ZeroMemory(pidlOut, uSize + 2);
-	pidlOut->mkid.cb = uSize;
-
-	switch (type)
-	{
-	  case PT_DESKTOP:
-	    TRACE("- create Desktop\n");
-	    break;
-
-	  case PT_SPECIAL:
-	  case PT_GUID:
-	    pData = _ILGetDataPointer(pidlOut);
-	    pData->type = type;
-	    memcpy(&(pData->u.guid.guid), pIn, uInSize);
-	    TRACE("-- create GUID-pidl %s\n", debugstr_guid(&(pData->u.guid.guid)));
-	    break;
-
-	  case PT_DRIVE:
-	    pData = _ILGetDataPointer(pidlOut);
-	    pData->type = type;
-	    pszDest = _ILGetTextPointer(pidlOut);
-	    memcpy(pszDest, pIn, uInSize);
-	    TRACE("-- create Drive: %s\n",debugstr_a(pszDest));
-	    break;
-
-	  case PT_FOLDER:
-	  case PT_VALUE:
-	    pData = _ILGetDataPointer(pidlOut);
-	    pData->type = type;
-	    pszDest =  _ILGetTextPointer(pidlOut);
-	    memcpy(pszDest, pIn, uInSize);
-	    TRACE("-- create Value: %s\n",debugstr_a(pszDest));
-	    break;
-	}
-
-	pidlTemp = ILGetNext(pidlOut);
-	if (pidlTemp)
-	  pidlTemp->mkid.cb = 0x00;
-
-	TRACE("-- (pidl=%p, size=%u)\n", pidlOut, uSize);
-	return pidlOut;
 }
 
 /**************************************************************************
@@ -1840,7 +1807,7 @@ BOOL _ILIsSpecialFolder (LPCITEMIDLIST pidl)
 {
 	LPPIDLDATA lpPData = _ILGetDataPointer(pidl);
 	TRACE("(%p)\n",pidl);
-	return (pidl && ( (lpPData && (PT_GUID== lpPData->type || PT_SPECIAL== lpPData->type)) ||
+	return (pidl && ( (lpPData && (PT_GUID== lpPData->type || PT_SHELLEXT== lpPData->type)) ||
 			  (pidl && pidl->mkid.cb == 0x00)
 			));
 }
@@ -2007,7 +1974,7 @@ LPSTR _ILGetTextPointer(LPCITEMIDLIST pidl)
 	  switch (pdata->type)
 	  {
 	    case PT_GUID:
-	    case PT_SPECIAL:
+	    case PT_SHELLEXT:
 	      return NULL;
 
 	    case PT_DRIVE:
@@ -2078,7 +2045,7 @@ REFIID _ILGetGUIDPointer(LPCITEMIDLIST pidl)
 	  TRACE("pdata->type 0x%04x\n", pdata->type);
 	  switch (pdata->type)
 	  {
-	    case PT_SPECIAL:
+	    case PT_SHELLEXT:
 	    case PT_GUID:
 	      return (REFIID) &(pdata->u.guid.guid);
 

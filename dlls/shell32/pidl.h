@@ -90,7 +90,7 @@
 #define PT_DRIVE	0x23
 #define PT_DRIVE2	0x25
 #define PT_DRIVE3	0x29
-#define PT_SPECIAL	0x2E
+#define PT_SHELLEXT	0x2E
 #define PT_DRIVE1	0x2F
 #define PT_FOLDER1	0x30
 #define PT_FOLDER	0x31
@@ -180,11 +180,28 @@ BOOL	_ILIsPidlSimple		(LPCITEMIDLIST pidl);
 BOOL	_ILIsCPanelStruct	(LPCITEMIDLIST pidl);
 
 /*
- * simple pidls from strings
+ * simple pidls
  */
-LPITEMIDLIST	_ILCreate	(PIDLTYPE,LPCVOID,UINT);
 
+/* Basic PIDL constructor.  Allocates size + 2 bytes (to include space for the
+ * NULL PIDL terminator), and sets type to type.
+ */
+LPITEMIDLIST	_ILCreateWithTypeAndSize(PIDLTYPE type, UINT size);
+
+/* Creates a PIDL with guid format and type type, which must be either PT_GUID
+ * or PT_SHELLEXT.
+ */
+LPITEMIDLIST	_ILCreateGuid(PIDLTYPE type, REFIID guid);
+
+/* Like _ILCreateGuid, but using the string szGUID. */
+LPITEMIDLIST	_ILCreateGuidFromStrA(LPCSTR szGUID);
+
+/* Commonly used PIDLs representing file system objects. */
 LPITEMIDLIST	_ILCreateDesktop	(void);
+LPITEMIDLIST	_ILCreateFromFindDataA(WIN32_FIND_DATAA *stffile);
+LPITEMIDLIST	_ILCreateFromPathA	(LPCSTR szPath);
+
+/* Other helpers */
 LPITEMIDLIST	_ILCreateMyComputer	(void);
 LPITEMIDLIST	_ILCreateIExplore	(void);
 LPITEMIDLIST	_ILCreateControl	(void);
@@ -192,10 +209,6 @@ LPITEMIDLIST	_ILCreatePrinter	(void);
 LPITEMIDLIST	_ILCreateNetwork	(void);
 LPITEMIDLIST	_ILCreateBitBucket	(void);
 LPITEMIDLIST	_ILCreateDrive		(LPCSTR);
-LPITEMIDLIST	_ILCreateFolder		(WIN32_FIND_DATAA * stffile);
-LPITEMIDLIST	_ILCreateValue		(WIN32_FIND_DATAA * stffile);
-LPITEMIDLIST	_ILCreateSpecial	(LPCSTR szGUID);
-LPITEMIDLIST	_ILCreateFromPathA	(LPCSTR szPath);
 LPITEMIDLIST	_ILCreateCPanel		(LPCSTR name, LPCSTR displayName, LPCSTR comment, int iconIdx);
 
 /*

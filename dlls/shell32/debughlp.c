@@ -70,7 +70,7 @@ LPSTR _dbg_ILGetTextPointer(LPCITEMIDLIST pidl)
 	  switch (pdata->type)
 	  {
 	    case PT_GUID:
-	    case PT_SPECIAL:
+	    case PT_SHELLEXT:
 	      return NULL;
 
 	    case PT_DRIVE:
@@ -128,7 +128,7 @@ REFIID _dbg_ILGetGUIDPointer(LPCITEMIDLIST pidl)
 	{
 	  switch (pdata->type)
 	  {
-	    case PT_SPECIAL:
+	    case PT_SHELLEXT:
 	    case PT_GUID:
 	      return (REFIID) &(pdata->u.guid.guid);
 	  }
@@ -231,7 +231,7 @@ BOOL pcheck (LPCITEMIDLIST pidl)
             switch (type)
 	    { case PT_DESKTOP:
 	      case PT_GUID:
-	      case PT_SPECIAL:
+	      case PT_SHELLEXT:
 	      case PT_DRIVE:
 	      case PT_DRIVE1:
 	      case PT_DRIVE2:

@@ -132,7 +132,7 @@ static BOOL CreateFolderEnumList(
 	      if ( !(dwFlags & SHCONTF_INCLUDEHIDDEN) && (stffile.dwFileAttributes & FILE_ATTRIBUTE_HIDDEN) ) continue;
 	      if ( (stffile.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) && strcmp (stffile.cFileName, ".") && strcmp (stffile.cFileName, ".."))
 	      {
-		pidl = _ILCreateFolder (&stffile);
+		pidl = _ILCreateFromFindDataA (&stffile);
 		if(pidl && AddToEnumList((IEnumIDList*)This, pidl))
 		{
 		  continue;
@@ -156,7 +156,7 @@ static BOOL CreateFolderEnumList(
 	      if ( !(dwFlags & SHCONTF_INCLUDEHIDDEN) && (stffile.dwFileAttributes & FILE_ATTRIBUTE_HIDDEN) ) continue;
 	      if (! (stffile.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) )
 	      {
-		pidl = _ILCreateValue(&stffile);
+		pidl = _ILCreateFromFindDataA(&stffile);
 		if(pidl && AddToEnumList((IEnumIDList*)This, pidl))
 		{
 		  continue;
@@ -258,7 +258,7 @@ int SHELL_RegisterCPanelFolders(IEnumIDList* list, HKEY hkey_root, LPCSTR szRepP
 	break;
 
       if (*name == '{') {
-	LPITEMIDLIST pidl = _ILCreateSpecial(name);
+	LPITEMIDLIST pidl = _ILCreateGuidFromStrA(name);
 
 	if (pidl && AddToEnumList(list, pidl))
 	    ++cnt;
@@ -363,7 +363,7 @@ static BOOL CreateDesktopEnumList(
 	      if (ERROR_SUCCESS!=RegEnumKeyExA(hkey, i, iid, &size, 0, NULL, NULL, NULL))
 	        break;
 
-	      pidl = _ILCreateSpecial(iid);
+	      pidl = _ILCreateGuidFromStrA(iid);
 
 	      if(pidl)
 	        AddToEnumList((IEnumIDList*)This, pidl);
@@ -430,7 +430,7 @@ static BOOL CreateMyCompEnumList(
 	      if (ERROR_SUCCESS!=RegEnumKeyExA(hkey, i, iid, &size, 0, NULL, NULL, NULL))
 	        break;
 
-	      pidl = _ILCreateSpecial(iid);
+	      pidl = _ILCreateGuidFromStrA(iid);
 
 	      if(pidl)
 	        AddToEnumList((IEnumIDList*)This, pidl);
