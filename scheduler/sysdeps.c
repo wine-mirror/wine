@@ -256,8 +256,7 @@ __declspec(naked) void SYSDEPS_CallOnStack( void (*func)(LPVOID), LPVOID arg )
   __asm int 3;
 }
 #  endif /* defined(__GNUC__) || defined(_MSC_VER) */
-#elif __sparc__
-#  ifdef __GNUC__
+#elif defined(__sparc__) && defined(__GNUC__)
 __ASM_GLOBAL_FUNC( SYSDEPS_CallOnStack,
                    "mov %o0, %l0\n\t" /* store first argument */
                    "call " __ASM_NAME("NtCurrentTeb") ", 0\n\t"
@@ -266,13 +265,6 @@ __ASM_GLOBAL_FUNC( SYSDEPS_CallOnStack,
                    "call %l0, 0\n\t" /* call func */
                    "mov %l1, %o0\n\t" /* delay slot:  arg for func */
                    "ta 0x01\n\t"); /* breakpoint - we never get here */
-#  else /* !defined(__GNUC__) */
-void SYSDEPS_CallOnStack( void (*func)(LPVOID), LPVOID arg )
-{
-    func( arg );
-    while(1); /* avoid warning */
-}
-#  endif /* !defined(__GNUC__) */
 #else /* !sparc, !i386 */
 void SYSDEPS_CallOnStack( void (*func)(LPVOID), LPVOID arg )
 {
