@@ -1375,10 +1375,15 @@ INT16 WINAPI LookupIconIdFromDirectoryEx16( LPBYTE xdir, BOOL16 bIcon,
     UINT16 retVal = 0;
     if( dir && !dir->idReserved && (dir->idType & 3) )
     {
-        HDC hdc = GetDC(0);
-	UINT palEnts = GetSystemPaletteEntries(hdc, 0, 0, NULL);
-	int colors = (cFlag & LR_MONOCHROME) ? 2 : palEnts;
 	CURSORICONDIRENTRY* entry;
+	HDC hdc;
+	UINT palEnts;
+	int colors;
+	hdc = GetDC(0);
+	palEnts = GetSystemPaletteEntries(hdc, 0, 0, NULL);
+	if (palEnts == 0)
+	    palEnts = 256;
+	colors = (cFlag & LR_MONOCHROME) ? 2 : palEnts;
 
 	ReleaseDC(0, hdc);
 
