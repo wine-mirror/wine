@@ -1079,6 +1079,7 @@ HRESULT WINAPI CoMarshalInterface(IStream *pStream, REFIID riid, IUnknown *pUnk,
             hr = E_UNEXPECTED;
             goto cleanup;
         }
+        objref.u_objref.u_custom.clsid = marshaler_clsid;
         objref.u_objref.u_custom.cbExtension = 0;
         objref.u_objref.u_custom.size = GlobalSize(hGlobal);
         /* write constant sized OR_CUSTOM data into stream */
