@@ -74,6 +74,10 @@
 
 #else  /* USE_COMPILER_EXCEPTIONS */
 
+#ifndef __GNUC__
+#define __attribute__(x) /* nothing */
+#endif
+
 #define __TRY \
     do { __WINE_FRAME __f; \
          int __first = 1; \
@@ -90,7 +94,7 @@
              __f.u.filter = (func); \
              __wine_push_frame( &__f.frame ); \
              if (sigsetjmp( __f.jmp, 1 )) { \
-                 const __WINE_FRAME * const __eptr WINE_UNUSED = &__f; \
+                 const __WINE_FRAME * const __eptr __attribute__((unused)) = &__f; \
                  do {
 
 #define __ENDTRY \

@@ -31,14 +31,6 @@
 
 #define NTAPI __stdcall
 
-/* Macro for structure packing and more. */
-
-#ifdef __GNUC__
-#define WINE_UNUSED   __attribute__((unused))
-#else
-#define WINE_UNUSED    /* nothing */
-#endif
-
 #if (defined(_M_IX86) || defined(_M_IA64) || defined(_M_AMD64) || defined(__MINGW32__)) && !defined(MIDL_PASS)
 # if defined(_MSC_VER)
 #  define DECLSPEC_IMPORT __declspec(dllimport)

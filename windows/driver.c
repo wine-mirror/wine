@@ -57,7 +57,8 @@ static LPWINE_DRIVER	lpDrvItemList = NULL;
 /**************************************************************************
  *			LoadStartupDrivers			[internal]
  */
-static void WINE_UNUSED DRIVER_LoadStartupDrivers(void)
+#if 0
+static void DRIVER_LoadStartupDrivers(void)
 {
     char  	str[256];
 
@@ -75,6 +76,7 @@ static void WINE_UNUSED DRIVER_LoadStartupDrivers(void)
 	TRACE("end of list !\n");
     }
 }
+#endif
 
 /**************************************************************************
  *			DRIVER_GetNumberOfModuleRefs		[internal]

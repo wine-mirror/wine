@@ -197,29 +197,6 @@ INT SIC_GetIconIndex (LPCWSTR sSourceFile, INT dwSourceIndex )
 	LeaveCriticalSection(&SHELL32_SicCS);
 	return ret;
 }
-/****************************************************************************
- * SIC_GetIcon				[internal]
- *
- * NOTES
- *  retrieves the specified icon from the iconcache. if not found tries to load the icon
- */
-static HICON WINE_UNUSED SIC_GetIcon (LPCWSTR sSourceFile, INT dwSourceIndex, BOOL bSmallIcon )
-{	INT index;
-
-	TRACE("%s %i\n", debugstr_w(sSourceFile), dwSourceIndex);
-
-	index = SIC_GetIconIndex(sSourceFile, dwSourceIndex);
-
-	if (INVALID_INDEX == index)
-	{
-	  return (HICON)INVALID_INDEX;
-	}
-
-	if (bSmallIcon)
-	  return ImageList_GetIcon(ShellSmallIconList, index, ILD_NORMAL);
-	return ImageList_GetIcon(ShellBigIconList, index, ILD_NORMAL);
-
-}
 /*****************************************************************************
  * SIC_Initialize			[internal]
  *
