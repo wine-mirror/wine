@@ -55,9 +55,9 @@ type	win32
 0051 stub GetPrivateObjectSecurity
 0052 stub GetSecurityDescriptorControl
 0053 stub GetSecurityDescriptorDacl
-0054 stub GetSecurityDescriptorGroup
+0054 stdcall GetSecurityDescriptorGroup(ptr ptr ptr) GetSecurityDescriptorGroup
 0055 stdcall GetSecurityDescriptorLength(ptr) GetSecurityDescriptorLength
-0056 stub GetSecurityDescriptorOwner
+0056 stdcall GetSecurityDescriptorOwner(ptr ptr ptr) GetSecurityDescriptorOwner
 0057 stub GetSecurityDescriptorSacl
 0058 stub GetServiceDisplayNameA
 0059 stub GetServiceDisplayNameW
@@ -181,7 +181,7 @@ type	win32
 0177 stdcall RegisterServiceCtrlHandlerW (ptr ptr) RegisterServiceCtrlHandlerW
 0178 stdcall ReportEventA (long long long long ptr long long str ptr) ReportEvent32A
 0179 stdcall ReportEventW (long long long long ptr long long wstr ptr) ReportEvent32W
-0180 stub RevertToSelf
+0180 stdcall RevertToSelf() RevertToSelf
 0181 stub SetAclInformation
 0182 stdcall SetFileSecurityA(str long ptr ) SetFileSecurity32A
 0183 stdcall SetFileSecurityW(wstr long ptr) SetFileSecurity32W

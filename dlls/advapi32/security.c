@@ -45,6 +45,7 @@ BOOL32 WINAPI OpenThreadToken( HANDLE32 thread,DWORD desiredaccess,
 {
 	FIXME(advapi,"(%08x,%08lx,%d,%p): stub!\n",
 	      thread,desiredaccess,openasself,thandle);
+	*thandle = 0; /* FIXME ... well, store something in there ;) */
 	return TRUE;
 }
 
@@ -278,7 +279,25 @@ DWORD WINAPI GetSecurityDescriptorLength( SECURITY_DESCRIPTOR *pDescr)
     return 0;
 }
 
+/***********************************************************************
+ *           GetSecurityDescriptorOwner  (ADVAPI.56)
+ */
+BOOL32 WINAPI GetSecurityDescriptorOwner (SECURITY_DESCRIPTOR *pDescr,LPSID *pOwner,LPBOOL32 lpbOwnerDefaulted)
+{
+    FIXME(security, "(%p,%p,%p), stub\n", pDescr,pOwner,lpbOwnerDefaulted);
+    *lpbOwnerDefaulted = TRUE;
+    return 0;
+}
 
+/***********************************************************************
+ *           GetSecurityDescriptorGroup  (ADVAPI.54)
+ */
+BOOL32 WINAPI GetSecurityDescriptorGroup(SECURITY_DESCRIPTOR *pDescr,LPSID *pGroup,LPBOOL32 lpbOwnerDefaulted)
+{
+    FIXME(security, "(%p,%p,%p), stub\n", pDescr,pGroup,lpbOwnerDefaulted);
+    *lpbOwnerDefaulted = TRUE;
+    return 0;
+}
 
 /***********************************************************************
  *           InitializeSid  (ADVAPI.74)
@@ -434,4 +453,12 @@ BOOL32 WINAPI LsaOpenPolicy(DWORD x1,DWORD x2,DWORD x3,DWORD x4) {
 BOOL32 WINAPI NotifyBootConfigStatus(DWORD x1) {
 	FIXME(advapi,"(0x%08lx),stub!\n",x1);
 	return 1;
+}
+
+/******************************************************************************
+ * RevertToSelf			[ADVAPI32]
+ */
+BOOL32 WINAPI RevertToSelf(void) {
+	FIXME(advapi,"(), stub\n");
+	return TRUE;
 }
