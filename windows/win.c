@@ -1937,8 +1937,6 @@ static LONG_PTR WIN_GetWindowLong( HWND hwnd, INT offset, WINDOWPROCTYPE type )
     LONG_PTR retvalue = 0;
     WND *wndPtr;
 
-    TRACE( "%p %d %x\n", hwnd, offset, type );
-
     if (offset == GWLP_HWNDPARENT)
     {
         HWND parent = GetAncestor( hwnd, GA_PARENT );
