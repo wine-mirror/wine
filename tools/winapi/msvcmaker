@@ -165,8 +165,9 @@ MAKEFILE_IN: foreach my $makefile_in_file (@makefile_in_files) {
 	} elsif (/^TESTDLL\s*=\s*(\S+)\s*$/) {
 	    $testdll = $1;
 	} elsif (/^IMPORTS\s*=\s*/) {
-	    @imports = split /\s+/s, $';
-	    @imports = grep !/^ntdll$/, @imports;
+            push @imports, grep !/^ntdll$/, split /\s+/s, $';
+	} elsif (/^EXTRALIBS\s*=\s*/) {
+            push @imports, map { /^-l(dxerr8|dxerr9|dxguid|strmiids|uuid)$/ ? $1 : () } split /\s+/s, $';
 	} elsif (/^CTESTS\s*=\s*/) {
 	    my @files = split /\s+/s, $';
 
