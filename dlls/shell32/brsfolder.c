@@ -16,9 +16,8 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
  * FIXME:
- *  - view with root unequal desktop
  *  - many memory leaks
- *  - show only filesystem objects
+ *  - many flags unimplemented
  */
 
 #include <stdlib.h>
@@ -40,13 +39,29 @@ static HWND		hwndTreeView;
 static LPBROWSEINFOW	lpBrowseInfo;
 static LPITEMIDLIST	pidlRet;
 
-static void FillTreeView(LPSHELLFOLDER lpsf, LPITEMIDLIST  lpifq, HTREEITEM hParent);
+static void FillTreeView(LPSHELLFOLDER lpsf, LPITEMIDLIST  lpifq, HTREEITEM hParent, IEnumIDList* lpe);
+static HTREEITEM InsertTreeViewItem(IShellFolder * lpsf, LPITEMIDLIST pidl, LPITEMIDLIST pidlParent, IEnumIDList* pEnumIL, HTREEITEM hParent);
+
+#define SUPPORTEDFLAGS (BIF_STATUSTEXT | \
+                        BIF_BROWSEFORCOMPUTER | \
+                        BIF_RETURNFSANCESTORS | \
+                        BIF_RETURNONLYFSDIRS | \
+                        BIF_BROWSEINCLUDEFILES)
+
+static inline DWORD BrowseFlagsToSHCONTF(UINT ulFlags)
+{
+    return SHCONTF_FOLDERS | (ulFlags & BIF_BROWSEINCLUDEFILES ? SHCONTF_NONFOLDERS : 0);
+}
 
 static void InitializeTreeView(HWND hwndParent, LPCITEMIDLIST root)
 {
 	HIMAGELIST	hImageList;
 	IShellFolder *	lpsf;
 	HRESULT	hr;
+	IEnumIDList * pEnumIL = NULL;
+	LPITEMIDLIST parentofroot;
+	parentofroot = ILClone(root);
+	ILRemoveLastID(parentofroot);
 
 	hwndTreeView = GetDlgItem (hwndParent, IDD_TREEVIEW);
 	Shell_GetImageList(NULL, &hImageList);
@@ -54,11 +69,8 @@ static void InitializeTreeView(HWND hwndParent, LPCITEMIDLIST root)
 	TRACE("dlg=%p tree=%p\n", hwndParent, hwndTreeView );
 
 	if (hImageList && hwndTreeView)
-	{ TreeView_SetImageList(hwndTreeView, hImageList, 0);
-	}
+	  TreeView_SetImageList(hwndTreeView, hImageList, 0);
 
-	/* so far, this method doesn't work (still missing the upper level), keep the old way */
-#if 0
 	if (_ILIsDesktop (root)) {
 	   hr = SHGetDesktopFolder(&lpsf);
 	} else {
@@ -66,36 +78,69 @@ static void InitializeTreeView(HWND hwndParent, LPCITEMIDLIST root)
 
 	   hr = SHGetDesktopFolder(&lpsfdesktop);
 	   if (SUCCEEDED(hr)) {
-	      hr = IShellFolder_BindToObject(lpsfdesktop, root, 0,(REFIID)&IID_IShellFolder,(LPVOID *)&lpsf);
+	      hr = IShellFolder_BindToObject(lpsfdesktop, parentofroot, 0,(REFIID)&IID_IShellFolder,(LPVOID *)&lpsf);
 	      IShellFolder_Release(lpsfdesktop);
 	   }
 	}
-#else
-	hr = SHGetDesktopFolder(&lpsf);
-#endif
+	if (SUCCEEDED(hr))
+	{
+	    IShellFolder * pSFRoot;
+	    if (_ILIsPidlSimple(root))
+	    {
+	        pSFRoot = lpsf;
+	        IShellFolder_AddRef(pSFRoot);
+	    }
+	    else
+	        hr = IShellFolder_BindToObject(lpsf,ILFindLastID(root),0,&IID_IShellFolder,(LPVOID *)&pSFRoot);
+	    if (SUCCEEDED(hr))
+	    {
+	        hr = IShellFolder_EnumObjects(
+	            pSFRoot,
+	            hwndParent,
+	            BrowseFlagsToSHCONTF(lpBrowseInfo->ulFlags),
+	            &pEnumIL);
+	        IShellFolder_Release(pSFRoot);
+	    }
+	}
 
 	if (SUCCEEDED(hr) && hwndTreeView)
-	{ TreeView_DeleteAllItems(hwndTreeView);
-       	  FillTreeView(lpsf, NULL, TVI_ROOT);
+	{
+	  TreeView_DeleteAllItems(hwndTreeView);
+	  TreeView_Expand(hwndTreeView,
+	                  InsertTreeViewItem(lpsf, _ILIsPidlSimple(root) ? root : ILFindLastID(root), parentofroot, pEnumIL,  TVI_ROOT),
+	                  TVE_EXPAND);
 	}
 
 	if (SUCCEEDED(hr))
-	{ IShellFolder_Release(lpsf);
-	}
+	  IShellFolder_Release(lpsf);
+
 	TRACE("done\n");
 }
 
 static int GetIcon(LPITEMIDLIST lpi, UINT uFlags)
-{	SHFILEINFOW    sfi;
+{
+	SHFILEINFOW    sfi;
 	SHGetFileInfoW((LPCWSTR)lpi, 0 ,&sfi, sizeof(SHFILEINFOW), uFlags);
 	return sfi.iIcon;
 }
 
 static void GetNormalAndSelectedIcons(LPITEMIDLIST lpifq, LPTVITEMW lpTV_ITEM)
-{	TRACE("%p %p\n",lpifq, lpTV_ITEM);
+{
+	LPITEMIDLIST pidlDesktop = NULL;
+
+	TRACE("%p %p\n",lpifq, lpTV_ITEM);
+
+	if (!lpifq)
+	{
+	    pidlDesktop = _ILCreateDesktop();
+	    lpifq = pidlDesktop;
+	}
 
 	lpTV_ITEM->iImage = GetIcon(lpifq, SHGFI_PIDL | SHGFI_SYSICONINDEX | SHGFI_SMALLICON);
 	lpTV_ITEM->iSelectedImage = GetIcon(lpifq, SHGFI_PIDL | SHGFI_SYSICONINDEX | SHGFI_SMALLICON | SHGFI_OPENICON);
+
+	if (pidlDesktop)
+	    ILFree(pidlDesktop);
 
 	return;
 }
@@ -105,6 +150,7 @@ typedef struct tagID
    LPSHELLFOLDER lpsfParent;
    LPITEMIDLIST  lpi;
    LPITEMIDLIST  lpifq;
+   IEnumIDList*  pEnumIL;
 } TV_ITEMDATA, *LPTV_ITEMDATA;
 
 static BOOL GetName(LPSHELLFOLDER lpsf, LPITEMIDLIST lpi, DWORD dwFlags, LPWSTR lpFriendlyName)
@@ -127,75 +173,121 @@ static BOOL GetName(LPSHELLFOLDER lpsf, LPITEMIDLIST lpi, DWORD dwFlags, LPWSTR 
 	return bSuccess;
 }
 
-static void FillTreeView(IShellFolder * lpsf, LPITEMIDLIST  pidl, HTREEITEM hParent)
+static HTREEITEM InsertTreeViewItem(IShellFolder * lpsf, LPITEMIDLIST pidl, LPITEMIDLIST pidlParent, IEnumIDList* pEnumIL, HTREEITEM hParent)
 {
 	TVITEMW 	tvi;
 	TVINSERTSTRUCTW	tvins;
-	HTREEITEM	hPrev = 0;
-	LPENUMIDLIST	lpe=0;
-	LPITEMIDLIST	pidlTemp=0;
+	WCHAR		szBuff[MAX_PATH];
 	LPTV_ITEMDATA	lptvid=0;
+
+	tvi.mask  = TVIF_TEXT | TVIF_IMAGE | TVIF_SELECTEDIMAGE | TVIF_PARAM;
+
+	tvi.cChildren= pEnumIL ? 1 : 0;
+	tvi.mask |= TVIF_CHILDREN;
+
+	if (!(lptvid = (LPTV_ITEMDATA)SHAlloc(sizeof(TV_ITEMDATA))))
+	    return NULL;
+
+	if (!GetName(lpsf, pidl, SHGDN_NORMAL, szBuff))
+	    return NULL;
+
+	tvi.pszText    = szBuff;
+	tvi.cchTextMax = MAX_PATH;
+	tvi.lParam = (LPARAM)lptvid;
+
+	IShellFolder_AddRef(lpsf);
+	lptvid->lpsfParent = lpsf;
+	lptvid->lpi	= ILClone(pidl);
+	lptvid->lpifq	= pidlParent ? ILCombine(pidlParent, pidl) : ILClone(pidl);
+	lptvid->pEnumIL = pEnumIL;
+	GetNormalAndSelectedIcons(lptvid->lpifq, &tvi);
+
+	tvins.DUMMYUNIONNAME.item         = tvi;
+	tvins.hInsertAfter = NULL;
+	tvins.hParent      = hParent;
+
+	return (HTREEITEM)TreeView_InsertItemW(hwndTreeView, &tvins);
+}
+
+static void FillTreeView(IShellFolder * lpsf, LPITEMIDLIST  pidl, HTREEITEM hParent, IEnumIDList* lpe)
+{
+	HTREEITEM	hPrev = 0;
+	LPITEMIDLIST	pidlTemp=0;
 	ULONG		ulFetched;
 	HRESULT		hr;
-	WCHAR		szBuff[MAX_PATH];
 	HWND		hwnd=GetParent(hwndTreeView);
 
 	TRACE("%p %p %x\n",lpsf, pidl, (INT)hParent);
 	SetCapture(GetParent(hwndTreeView));
 	SetCursor(LoadCursorA(0, IDC_WAITA));
 
-	hr=IShellFolder_EnumObjects(lpsf, hwnd, SHCONTF_FOLDERS | SHCONTF_NONFOLDERS, &lpe);
-
-	if (SUCCEEDED(hr))
-	{ while (NOERROR == IEnumIDList_Next(lpe,1,&pidlTemp,&ulFetched))
-	  { ULONG ulAttrs = SFGAO_HASSUBFOLDER | SFGAO_FOLDER;
+	while (NOERROR == IEnumIDList_Next(lpe,1,&pidlTemp,&ulFetched))
+	{
+	    ULONG ulAttrs = SFGAO_HASSUBFOLDER | SFGAO_FOLDER;
+	    IEnumIDList* pEnumIL = NULL;
+	    IShellFolder* pSFChild = NULL;
 	    IShellFolder_GetAttributesOf(lpsf, 1, &pidlTemp, &ulAttrs);
-	    if (ulAttrs & (SFGAO_HASSUBFOLDER | SFGAO_FOLDER))
-	    { if (ulAttrs & SFGAO_FOLDER)
-	      { tvi.mask  = TVIF_TEXT | TVIF_IMAGE | TVIF_SELECTEDIMAGE | TVIF_PARAM;
-
-	        if (ulAttrs & SFGAO_HASSUBFOLDER)
-	        {  tvi.cChildren=1;
-	           tvi.mask |= TVIF_CHILDREN;
+	    if (ulAttrs & SFGAO_FOLDER)
+	    {
+	        hr = IShellFolder_BindToObject(lpsf,pidlTemp,NULL,&IID_IShellFolder,(LPVOID*)&pSFChild);
+	        if (SUCCEEDED(hr))
+	            hr = IShellFolder_EnumObjects(pSFChild, hwnd, BrowseFlagsToSHCONTF(lpBrowseInfo->ulFlags), &pEnumIL);
+	        if (SUCCEEDED(hr))
+	        {
+	            if ((IEnumIDList_Skip(pEnumIL, 1) != S_OK) || FAILED(IEnumIDList_Reset(pEnumIL)))
+	            {
+	                IEnumIDList_Release(pEnumIL);
+	                pEnumIL = NULL;
+	            }
 	        }
-
-	        if (!(lptvid = (LPTV_ITEMDATA)SHAlloc(sizeof(TV_ITEMDATA))))
-		    goto Done;
-
-	        if (!GetName(lpsf, pidlTemp, SHGDN_NORMAL, szBuff))
-		    goto Done;
-
-	        tvi.pszText    = szBuff;
-	        tvi.cchTextMax = MAX_PATH;
-	        tvi.lParam = (LPARAM)lptvid;
-
-	        IShellFolder_AddRef(lpsf);
-	        lptvid->lpsfParent = lpsf;
-	        lptvid->lpi	= ILClone(pidlTemp);
-	        lptvid->lpifq	= ILCombine(pidl, pidlTemp);
-	        GetNormalAndSelectedIcons(lptvid->lpifq, &tvi);
-
-	        tvins.DUMMYUNIONNAME.item         = tvi;
-	        tvins.hInsertAfter = hPrev;
-	        tvins.hParent      = hParent;
-
-	        hPrev = (HTREEITEM)TreeView_InsertItemW(hwndTreeView, &tvins);
-
-	      }
+	        IShellFolder_Release(pSFChild);
 	    }
+
+	    if (!(hPrev = InsertTreeViewItem(lpsf, pidlTemp, pidl, pEnumIL, hParent)))
+	        goto Done;
 	    SHFree(pidlTemp);  /* Finally, free the pidl that the shell gave us... */
-	    pidlTemp=0;
-	  }
+	    pidlTemp=NULL;
 	}
 
 Done:
 	ReleaseCapture();
 	SetCursor(LoadCursorW(0, IDC_ARROWW));
 
-	if (lpe)
-	  IEnumIDList_Release(lpe);
-	if (pidlTemp )
+	if (pidlTemp)
 	  SHFree(pidlTemp);
+}
+
+static inline BOOL PIDLIsType(LPCITEMIDLIST pidl, PIDLTYPE type)
+{
+    LPPIDLDATA data = _ILGetDataPointer(pidl);
+    if (!data)
+        return FALSE;
+    return (data->type == type);
+}
+
+static void BrsFolder_CheckValidSelection(HWND hWndTree, LPTV_ITEMDATA lptvid)
+{
+    LPCITEMIDLIST pidl = lptvid->lpi;
+    BOOL bEnabled = TRUE;
+    DWORD dwAttributes;
+    if ((lpBrowseInfo->ulFlags & BIF_BROWSEFORCOMPUTER) &&
+        !PIDLIsType(pidl, PT_COMP))
+        bEnabled = FALSE;
+    if (lpBrowseInfo->ulFlags & BIF_RETURNFSANCESTORS)
+    {
+        dwAttributes = SFGAO_FILESYSANCESTOR | SFGAO_FILESYSTEM;
+        if (FAILED(IShellFolder_GetAttributesOf(lptvid->lpsfParent, 1, &lptvid->lpi, &dwAttributes)) ||
+            !dwAttributes)
+            bEnabled = FALSE;
+    }
+    if (lpBrowseInfo->ulFlags & BIF_RETURNONLYFSDIRS)
+    {
+        dwAttributes = SFGAO_FOLDER | SFGAO_FILESYSTEM;
+        if (FAILED(IShellFolder_GetAttributesOf(lptvid->lpsfParent, 1, &lptvid->lpi, &dwAttributes)) ||
+            (dwAttributes != (SFGAO_FOLDER | SFGAO_FILESYSTEM)))
+            bEnabled = FALSE;
+    }
+    SendMessageW(hWndTree, BFFM_ENABLEOK, 0, (LPARAM)bEnabled);
 }
 
 static LRESULT MsgNotify(HWND hWnd,  UINT CtlID, LPNMHDR lpnmh)
@@ -210,26 +302,29 @@ static LRESULT MsgNotify(HWND hWnd,  UINT CtlID, LPNMHDR lpnmh)
 	switch (pnmtv->hdr.idFrom)
 	{ case IDD_TREEVIEW:
 	    switch (pnmtv->hdr.code)
-	    { case TVN_DELETEITEMA:
+	    {
+	      case TVN_DELETEITEMA:
 	      case TVN_DELETEITEMW:
-	        { FIXME("TVN_DELETEITEMA/W\n");
-	          lptvid=(LPTV_ITEMDATA)pnmtv->itemOld.lParam;
-	          IShellFolder_Release(lptvid->lpsfParent);
-	          SHFree(lptvid->lpi);
-	          SHFree(lptvid->lpifq);
-	          SHFree(lptvid);
-		}
+                TRACE("TVN_DELETEITEMA/W\n");
+	        lptvid=(LPTV_ITEMDATA)pnmtv->itemOld.lParam;
+	        IShellFolder_Release(lptvid->lpsfParent);
+	        if (lptvid->pEnumIL)
+	          IEnumIDList_Release(lptvid->pEnumIL);
+	        SHFree(lptvid->lpi);
+	        SHFree(lptvid->lpifq);
+	        SHFree(lptvid);
 	        break;
 
 	      case TVN_ITEMEXPANDINGA:
 	      case TVN_ITEMEXPANDINGW:
-		{ FIXME("TVN_ITEMEXPANDINGA/W\n");
+		{
+                  TRACE("TVN_ITEMEXPANDINGA/W\n");
 		  if ((pnmtv->itemNew.state & TVIS_EXPANDEDONCE))
 	            break;
 
 	          lptvid=(LPTV_ITEMDATA)pnmtv->itemNew.lParam;
 	          if (SUCCEEDED(IShellFolder_BindToObject(lptvid->lpsfParent, lptvid->lpi,0,(REFIID)&IID_IShellFolder,(LPVOID *)&lpsf2)))
-	          { FillTreeView( lpsf2, lptvid->lpifq, pnmtv->itemNew.hItem );
+	          { FillTreeView( lpsf2, lptvid->lpifq, pnmtv->itemNew.hItem, lptvid->pEnumIL);
 	          }
 	          TreeView_SortChildren(hwndTreeView, pnmtv->itemNew.hItem, FALSE);
 		}
@@ -240,10 +335,11 @@ static LRESULT MsgNotify(HWND hWnd,  UINT CtlID, LPNMHDR lpnmh)
 		pidlRet = lptvid->lpifq;
 		if (lpBrowseInfo->lpfn)
 		   (lpBrowseInfo->lpfn)(hWnd, BFFM_SELCHANGED, (LPARAM)pidlRet, lpBrowseInfo->lParam);
+		BrsFolder_CheckValidSelection(hWnd, lptvid);
 	        break;
 
 	      default:
-	        FIXME("unhandled (%d)\n", pnmtv->hdr.code);
+	        WARN("unhandled (%d)\n", pnmtv->hdr.code);
 		break;
 	    }
 	    break;
@@ -268,8 +364,8 @@ static INT_PTR CALLBACK BrsFolderDlgProc(HWND hWnd, UINT msg, WPARAM wParam,
 	{ case WM_INITDIALOG:
 	    pidlRet = NULL;
 	    lpBrowseInfo = (LPBROWSEINFOW) lParam;
-	    if (lpBrowseInfo->ulFlags & ~(BIF_STATUSTEXT))
-	      FIXME("flags %x not implemented\n", lpBrowseInfo->ulFlags & ~(BIF_STATUSTEXT));
+	    if (lpBrowseInfo->ulFlags & ~SUPPORTEDFLAGS)
+	      FIXME("flags %x not implemented\n", lpBrowseInfo->ulFlags & ~SUPPORTEDFLAGS);
 	    if (lpBrowseInfo->lpszTitle) {
 	       SetWindowTextW(GetDlgItem(hWnd, IDD_TITLE), lpBrowseInfo->lpszTitle);
 	    } else {
@@ -278,15 +374,10 @@ static INT_PTR CALLBACK BrsFolderDlgProc(HWND hWnd, UINT msg, WPARAM wParam,
 	    if (!(lpBrowseInfo->ulFlags & BIF_STATUSTEXT))
 	       ShowWindow(GetDlgItem(hWnd, IDD_STATUS), SW_HIDE);
 
-	    if (lpBrowseInfo->pidlRoot )
-	      FIXME("root is desktop\n");
-
 	    InitializeTreeView(hWnd, lpBrowseInfo->pidlRoot);
 
-	    if (lpBrowseInfo->lpfn) {
+	    if (lpBrowseInfo->lpfn)
 	       (lpBrowseInfo->lpfn)(hWnd, BFFM_INITIALIZED, 0, lpBrowseInfo->lParam);
-	       (lpBrowseInfo->lpfn)(hWnd, BFFM_SELCHANGED, 0/*FIXME*/, lpBrowseInfo->lParam);
-	    }
 
 	    return TRUE;
 
@@ -319,17 +410,27 @@ static INT_PTR CALLBACK BrsFolderDlgProc(HWND hWnd, UINT msg, WPARAM wParam,
 	   TRACE("Enable %ld\n", lParam);
 	   EnableWindow(GetDlgItem(hWnd, 1), (lParam)?TRUE:FALSE);
 	   break;
+	case BFFM_SETOKTEXT: /* unicode only */
+	   TRACE("Set OK text %s\n", debugstr_w((LPWSTR)wParam));
+	   SetWindowTextW(GetDlgItem(hWnd, 1), (LPWSTR)wParam);
+	   break;
 	case BFFM_SETSELECTIONA:
 	   if (wParam)
-	      TRACE("Set selection %s\n", debugstr_a((LPSTR)lParam));
+	      FIXME("Set selection %s\n", debugstr_a((LPSTR)lParam));
 	   else
-	      TRACE("Set selection %p\n", (void*)lParam);
+	      FIXME("Set selection %p\n", (void*)lParam);
 	   break;
 	case BFFM_SETSELECTIONW:
 	   if (wParam)
-	      TRACE("Set selection %s\n", debugstr_w((LPWSTR)lParam));
+	      FIXME("Set selection %s\n", debugstr_w((LPWSTR)lParam));
 	   else
-	      TRACE("Set selection %p\n", (void*)lParam);
+	      FIXME("Set selection %p\n", (void*)lParam);
+	   break;
+	case BFFM_SETEXPANDED: /* unicode only */
+	   if (wParam)
+	      FIXME("Set expanded %s\n", debugstr_w((LPWSTR)lParam));
+	   else
+	      FIXME("Set expanded %p\n", (void*)lParam);
 	   break;
 	}
 	return FALSE;
