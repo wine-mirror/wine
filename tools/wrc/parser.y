@@ -435,7 +435,7 @@ cjunk	: tTYPEDEF			{ strip_til_semicolon(); }
 	| tSTATIC			{ strip_til_semicolon(); }
 	| tINLINE			{ internal_error(__FILE__, __LINE__, "Don't yet know how to strip inline functions\n"); }
 /*	| tIDENT tIDENT			{ strip_til_semicolon(); } */
-	| tIDENT tIDENT '('		{ strip_til_parenthesis(); }
+/*	| tIDENT tIDENT '('		{ strip_til_parenthesis(); } See comments in 'resource' below */
 /*	| tIDENT '('			{ strip_til_parenthesis(); } */
 	| tIDENT '*'			{ strip_til_semicolon(); }
 	| tNL	/*
@@ -467,21 +467,49 @@ cjunk	: tTYPEDEF			{ strip_til_semicolon(); }
 
 /* Parse top level resource definitions etc. */
 resource
-	: nameid usrcvt resource_definition {
+	: expr usrcvt resource_definition {
 		$$ = $3;
 		if($$)
 		{
-			$$->name = $1;
-			if($1->type == name_ord)
-			{
-				chat("Got %s (%d)",get_typename($3),$1->name.i_name);
+			if($1 > 65535 || $1 < -32768)
+				yyerror("Resource's ID out of range (%d)", $1);
+			$$->name = new_name_id();
+			$$->name->type = name_ord;
+			$$->name->name.i_name = $1;
+			chat("Got %s (%d)", get_typename($3), $$->name->name.i_name);
 			}
-			else if($1->type == name_str)
-			{
-				chat("Got %s (%s)",get_typename($3),$1->name.s_name->str.cstr);
 			}
+	| tIDENT usrcvt resource_definition {
+		$$ = $3;
+		if($$)
+		{
+			$$->name = new_name_id();
+			$$->name->type = name_str;
+			$$->name->name.s_name = $1;
+			chat("Got %s (%s)", get_typename($3), $$->name->name.s_name->str.cstr);
 		}
 		}
+	| tIDENT usrcvt tIDENT '('	{ /* cjunk */ strip_til_parenthesis(); $$ = NULL; }
+		/* The above rule is inserted here with explicit tIDENT
+		 * references to avoid a nasty LALR(2) problem when
+		 * considering the 'cjunk' rules with respect to the usertype
+		 * resources.
+		 * A usertype resource can have two leading identifiers before
+		 * it qualifies as shift into usertype rules. However, the
+		 * cjunk scanner also has a rule of two leading identifiers.
+		 * The problem occurs because the second identifier is at the
+		 * second lookahead (hence LALR(2)) seen from the recursion
+		 * rule 'resources'.
+		 * Thus, the scanner will pick *one* of the rules in preference
+		 * of the other (in this case it was 'cjunk') and generates a
+		 * syntax error if the trailing context wasn't seen. The
+		 * correct action would have been to rollback the stack and
+		 * decent into the 'userres' rule, but this cannot be done
+		 * because yacc only parses LALR(1).
+		 * The problem is prevented from happening by making the decent
+		 * into the cjunk-scanning obsolete and explicitly force the
+		 * scanner to require no more than 1 lookahead.
+		 */
 	| stringtable {
 		/* Don't do anything, stringtables are converted to
 		 * resource_t structures when we are finished parsing and

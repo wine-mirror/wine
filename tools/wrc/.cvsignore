@@ -6,3 +6,8 @@ ppy.tab.h
 wrc
 y.tab.c
 y.tab.h
+ppy.tab.c
+ppy.tab.h
+y.output
+ppy.output
+lex.backup

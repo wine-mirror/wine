@@ -1,4 +1,11 @@
 ---------------------------------------------------------------------------
+Version 1.1.8 (24-Aug-2000)
+
+Bertho Stultiens <bertho@akhphd.au.dk>
+- Fixed a LALR(2) problem while scanning usertype resources which
+  had identifiers for both name and type.
+
+---------------------------------------------------------------------------
 Version 1.1.7 (24-Jul-2000)
 
 Bertho Stultiens <bertho@akhphd.au.dk>

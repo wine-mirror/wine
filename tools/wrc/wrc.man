@@ -1,4 +1,4 @@
-.TH WRC 1 "July 24, 2000" "Version 1.1.7" "Wine Resource Compiler"
+.TH WRC 1 "August 24, 2000" "Version 1.1.8" "Wine Resource Compiler"
 .SH NAME
 wrc \- Wine Resource Compiler
 .SH SYNOPSIS
