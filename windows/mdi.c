@@ -300,7 +300,7 @@ static LRESULT MDISetMenu( HWND hwnd, HMENU hmenuFrame,
     {
         if (hmenuFrame == ci->hFrameMenu) return (LRESULT)hmenuFrame;
 
-        if( IsZoomed(ci->hwndActiveChild) && hmenuFrame != ci->hFrameMenu )
+        if (IsZoomed(ci->hwndActiveChild))
             MDI_RestoreFrameMenu( hwndFrame, ci->hwndActiveChild );
     }
 
@@ -335,7 +335,7 @@ static LRESULT MDISetMenu( HWND hwnd, HMENU hmenuFrame,
             HMENU oldFrameMenu = ci->hFrameMenu;
 
             ci->hFrameMenu = hmenuFrame;
-            if( IsZoomed(ci->hwndActiveChild) )
+            if (IsZoomed(ci->hwndActiveChild) && (GetWindowLongW(ci->hwndActiveChild, GWL_STYLE) & WS_VISIBLE))
                 MDI_AugmentFrameMenu( hwndFrame, ci->hwndActiveChild );
 
             return (LRESULT)oldFrameMenu;

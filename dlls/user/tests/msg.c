@@ -1556,7 +1556,8 @@ static LRESULT WINAPI mdi_client_hook_proc(HWND hwnd, UINT message, WPARAM wPara
     if (message != WM_PAINT &&
         message != WM_ERASEBKGND &&
         message != WM_NCPAINT &&
-        message != WM_GETTEXT)
+        message != WM_GETTEXT &&
+        message != WM_MDIGETACTIVE)
     {
         trace("mdi client: %p, %04x, %08x, %08lx\n", hwnd, message, wParam, lParam);
 
@@ -1620,6 +1621,19 @@ static LRESULT WINAPI mdi_child_wnd_proc(HWND hwnd, UINT message, WPARAM wParam,
                  * in the high word for internal purposes
                  */
                 wParam = winpos->flags & 0xffff;
+                break;
+            }
+
+            case WM_MDIACTIVATE:
+            {
+                HWND active, client = GetParent(hwnd);
+
+                active = (HWND)SendMessageA(client, WM_MDIGETACTIVE, 0, 0);
+
+                if (hwnd == (HWND)lParam) /* if we are being activated */
+                    ok (active == (HWND)lParam, "new active %p != active %p\n", (HWND)lParam, active);
+                else
+                    ok (active == (HWND)wParam, "old active %p != active %p\n", (HWND)wParam, active);
                 break;
             }
         }

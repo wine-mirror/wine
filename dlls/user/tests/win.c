@@ -947,22 +947,27 @@ static void test_MDI_create(HWND parent, HWND mdi_client)
     mdi_cs.lParam = (LPARAM)mdi_lParam_test_message;
     mdi_child = (HWND)SendMessageA(mdi_client, WM_MDICREATE, 0, (LPARAM)&mdi_cs);
     ok(mdi_child != 0, "MDI child creation failed\n");
-    DestroyWindow(mdi_child);
+    SendMessageA(mdi_client, WM_MDIDESTROY, (WPARAM)mdi_child, 0);
+    ok(!IsWindow(mdi_child), "WM_MDIDESTROY failed\n");
 
     mdi_cs.style = 0x7fffffff; /* without WS_POPUP */
     mdi_child = (HWND)SendMessageA(mdi_client, WM_MDICREATE, 0, (LPARAM)&mdi_cs);
     ok(mdi_child != 0, "MDI child creation failed\n");
-    DestroyWindow(mdi_child);
+    SendMessageA(mdi_client, WM_MDIDESTROY, (WPARAM)mdi_child, 0);
+    ok(!IsWindow(mdi_child), "WM_MDIDESTROY failed\n");
 
     mdi_cs.style = 0xffffffff; /* with WS_POPUP */
     mdi_child = (HWND)SendMessageA(mdi_client, WM_MDICREATE, 0, (LPARAM)&mdi_cs);
     if (GetWindowLongA(mdi_client, GWL_STYLE) & MDIS_ALLCHILDSTYLES)
     {
         ok(!mdi_child, "MDI child with WS_POPUP and with MDIS_ALLCHILDSTYLES should fail\n");
-        DestroyWindow(mdi_child);
     }
     else
+    {
         ok(mdi_child != 0, "MDI child creation failed\n");
+        SendMessageA(mdi_client, WM_MDIDESTROY, (WPARAM)mdi_child, 0);
+        ok(!IsWindow(mdi_child), "WM_MDIDESTROY failed\n");
+    }
 
     /* test MDICREATESTRUCT A<->W mapping */
     /* MDICREATESTRUCTA and MDICREATESTRUCTW have the same layout */
@@ -978,7 +983,11 @@ static void test_MDI_create(HWND parent, HWND mdi_client)
         else
             ok(mdi_child != 0, "MDI child creation failed\n");
     }
-    DestroyWindow(mdi_child);
+    else
+    {
+        SendMessageA(mdi_client, WM_MDIDESTROY, (WPARAM)mdi_child, 0);
+        ok(!IsWindow(mdi_child), "WM_MDIDESTROY failed\n");
+    }
 
     mdi_child = CreateMDIWindowA("MDI_child_Class_1", "MDI child",
                                  0,
@@ -987,7 +996,8 @@ static void test_MDI_create(HWND parent, HWND mdi_client)
                                  mdi_client, GetModuleHandle(0),
                                  (LPARAM)mdi_lParam_test_message);
     ok(mdi_child != 0, "MDI child creation failed\n");
-    DestroyWindow(mdi_child);
+    SendMessageA(mdi_client, WM_MDIDESTROY, (WPARAM)mdi_child, 0);
+    ok(!IsWindow(mdi_child), "WM_MDIDESTROY failed\n");
 
     mdi_child = CreateMDIWindowA("MDI_child_Class_1", "MDI child",
                                  0x7fffffff, /* without WS_POPUP */
@@ -996,7 +1006,8 @@ static void test_MDI_create(HWND parent, HWND mdi_client)
                                  mdi_client, GetModuleHandle(0),
                                  (LPARAM)mdi_lParam_test_message);
     ok(mdi_child != 0, "MDI child creation failed\n");
-    DestroyWindow(mdi_child);
+    SendMessageA(mdi_client, WM_MDIDESTROY, (WPARAM)mdi_child, 0);
+    ok(!IsWindow(mdi_child), "WM_MDIDESTROY failed\n");
 
     mdi_child = CreateMDIWindowA("MDI_child_Class_1", "MDI child",
                                  0xffffffff, /* with WS_POPUP */
@@ -1007,10 +1018,13 @@ static void test_MDI_create(HWND parent, HWND mdi_client)
     if (GetWindowLongA(mdi_client, GWL_STYLE) & MDIS_ALLCHILDSTYLES)
     {
         ok(!mdi_child, "MDI child with WS_POPUP and with MDIS_ALLCHILDSTYLES should fail\n");
-        DestroyWindow(mdi_child);
     }
     else
+    {
         ok(mdi_child != 0, "MDI child creation failed\n");
+        SendMessageA(mdi_client, WM_MDIDESTROY, (WPARAM)mdi_child, 0);
+        ok(!IsWindow(mdi_child), "WM_MDIDESTROY failed\n");
+    }
 
     /* test MDICREATESTRUCT A<->W mapping */
     SetLastError(0xdeadbeef);
@@ -1027,7 +1041,11 @@ static void test_MDI_create(HWND parent, HWND mdi_client)
         else
             ok(mdi_child != 0, "MDI child creation failed\n");
     }
-    DestroyWindow(mdi_child);
+    else
+    {
+        SendMessageA(mdi_client, WM_MDIDESTROY, (WPARAM)mdi_child, 0);
+        ok(!IsWindow(mdi_child), "WM_MDIDESTROY failed\n");
+    }
 
     mdi_child = CreateWindowExA(WS_EX_MDICHILD, "MDI_child_Class_1", "MDI child",
                                 0,
@@ -1036,7 +1054,8 @@ static void test_MDI_create(HWND parent, HWND mdi_client)
                                 mdi_client, 0, GetModuleHandle(0),
                                 (LPVOID)mdi_lParam_test_message);
     ok(mdi_child != 0, "MDI child creation failed\n");
-    DestroyWindow(mdi_child);
+    SendMessageA(mdi_client, WM_MDIDESTROY, (WPARAM)mdi_child, 0);
+    ok(!IsWindow(mdi_child), "WM_MDIDESTROY failed\n");
 
     mdi_child = CreateWindowExA(WS_EX_MDICHILD, "MDI_child_Class_1", "MDI child",
                                 0x7fffffff, /* without WS_POPUP */
@@ -1045,7 +1064,8 @@ static void test_MDI_create(HWND parent, HWND mdi_client)
                                 mdi_client, 0, GetModuleHandle(0),
                                 (LPVOID)mdi_lParam_test_message);
     ok(mdi_child != 0, "MDI child creation failed\n");
-    DestroyWindow(mdi_child);
+    SendMessageA(mdi_client, WM_MDIDESTROY, (WPARAM)mdi_child, 0);
+    ok(!IsWindow(mdi_child), "WM_MDIDESTROY failed\n");
 
     mdi_child = CreateWindowExA(WS_EX_MDICHILD, "MDI_child_Class_1", "MDI child",
                                 0xffffffff, /* with WS_POPUP */
@@ -1056,10 +1076,13 @@ static void test_MDI_create(HWND parent, HWND mdi_client)
     if (GetWindowLongA(mdi_client, GWL_STYLE) & MDIS_ALLCHILDSTYLES)
     {
         ok(!mdi_child, "MDI child with WS_POPUP and with MDIS_ALLCHILDSTYLES should fail\n");
-        DestroyWindow(mdi_child);
     }
     else
+    {
         ok(mdi_child != 0, "MDI child creation failed\n");
+        SendMessageA(mdi_client, WM_MDIDESTROY, (WPARAM)mdi_child, 0);
+        ok(!IsWindow(mdi_child), "WM_MDIDESTROY failed\n");
+    }
 
     /* test MDICREATESTRUCT A<->W mapping */
     SetLastError(0xdeadbeef);
@@ -1076,7 +1099,11 @@ static void test_MDI_create(HWND parent, HWND mdi_client)
         else
             ok(mdi_child != 0, "MDI child creation failed\n");
     }
-    DestroyWindow(mdi_child);
+    else
+    {
+        SendMessageA(mdi_client, WM_MDIDESTROY, (WPARAM)mdi_child, 0);
+        ok(!IsWindow(mdi_child), "WM_MDIDESTROY failed\n");
+    }
 
     /* This test fails on Win9x */
     if (!isWin9x)
@@ -1281,6 +1308,18 @@ static LRESULT WINAPI mdi_child_wnd_proc_1(HWND hwnd, UINT msg, WPARAM wparam, L
                minmax->ptMaxSize.y, my_minmax.ptMaxSize.y);
 
             return 1;
+        }
+
+        case WM_MDIACTIVATE:
+        {
+            HWND active, client = GetParent(hwnd);
+            /*trace("%p WM_MDIACTIVATE %08x %08lx\n", hwnd, wparam, lparam);*/
+            active = (HWND)SendMessageA(client, WM_MDIGETACTIVE, 0, 0);
+            if (hwnd == (HWND)lparam) /* if we are being activated */
+                ok (active == (HWND)lparam, "new active %p != active %p\n", (HWND)lparam, active);
+            else
+                ok (active == (HWND)wparam, "old active %p != active %p\n", (HWND)wparam, active);
+            break;
         }
     }
     return DefMDIChildProcA(hwnd, msg, wparam, lparam);
