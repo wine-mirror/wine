@@ -118,7 +118,7 @@ HRESULT Main_DirectDraw_Construct(IDirectDrawImpl *This, BOOL ex)
     /* This is for the moment here... */
     This->free_memory = free_memory;
     This->allocate_memory = allocate_memory;
-    This->total_vidmem = 16 * 1024 * 1024;
+    This->total_vidmem = 64 * 1024 * 1024;
     This->available_vidmem = This->total_vidmem;
       
     return DD_OK;
