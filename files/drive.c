@@ -390,9 +390,9 @@ int DRIVE_FindDriveRoot( const char **path )
     len = strlen(buffer);
 
     /* strip off trailing slashes */
-    while (len > 0 && buffer[len - 1] == '/') buffer[--len] = 0;
+    while (len > 1 && buffer[len - 1] == '/') buffer[--len] = 0;
 
-    while (len > 0)
+    for (;;)
     {
         /* Find the drive */
         if (stat( buffer, &st ) == 0 && S_ISDIR( st.st_mode ))
@@ -406,6 +406,7 @@ int DRIVE_FindDriveRoot( const char **path )
                if ((DOSDrives[drive].dev == st.st_dev) &&
                    (DOSDrives[drive].ino == st.st_ino))
                {
+                   if (len == 1) len = 0;  /* preserve root slash in returned path */
                    TRACE( "%s -> drive %c:, root='%s', name='%s'\n",
                        *path, 'A' + drive, buffer, *path + len);
                    *path += len;
@@ -414,23 +415,22 @@ int DRIVE_FindDriveRoot( const char **path )
                }
             }
         }
+        if (len <= 1) return -1;  /* reached root */
 
         level = 0;
-        while (len > 0 && level < 1)
+        while (level < 1)
         {
             /* find start of the last path component */
-            while (len > 0 && buffer[len - 1] != '/')
-                --len;
+            while (len > 1 && buffer[len - 1] != '/') len--;
+            if (!buffer[len]) break;  /* empty component -> reached root */
             /* does removing it take us up a level? */
             if (strcmp( buffer + len, "." ) != 0)
                 level += strcmp( buffer + len, ".." ) ? 1 : -1;
             buffer[len] = 0;
             /* strip off trailing slashes */
-            while (len > 0 && buffer[len - 1] == '/') buffer[--len] = 0;
+            while (len > 1 && buffer[len - 1] == '/') buffer[--len] = 0;
         }
     }
-
-    return -1;
 }
 
 
