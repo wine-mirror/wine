@@ -108,6 +108,11 @@ typedef struct
 
 #include "poppack.h"
 
+typedef struct
+{
+        HRSRC *pResInfo;
+        int   nIndex;
+} ENUMRESSTRUCT;
 
 static ICOM_VTABLE(IShellLinkA)		slvt;
 static ICOM_VTABLE(IShellLinkW)		slvtw;
@@ -337,8 +342,15 @@ static BOOL SaveIconResAsXPM(const BITMAPINFO *pIcon, const char *szXPMFileName)
 
 static BOOL CALLBACK EnumResNameProc(HANDLE hModule, const char *lpszType, char *lpszName, LONG lParam)
 {
-    *(HRSRC *) lParam = FindResourceA(hModule, lpszName, RT_GROUP_ICONA);
-    return FALSE;
+    ENUMRESSTRUCT *sEnumRes = (ENUMRESSTRUCT *) lParam;
+    
+    if (!sEnumRes->nIndex--)
+    {
+      *sEnumRes->pResInfo = FindResourceA(hModule, lpszName, RT_GROUP_ICONA);
+      return FALSE;
+    }
+    else
+      return TRUE;
 }
 
 static int ExtractFromEXEDLL(const char *szFileName, int nIndex, const char *szXPMFileName)
@@ -349,7 +361,9 @@ static int ExtractFromEXEDLL(const char *szFileName, int nIndex, const char *szX
     HGLOBAL hResData;
     GRPICONDIR *pIconDir;
     BITMAPINFO *pIcon;
+    ENUMRESSTRUCT sEnumRes;
     int nMax = 0;
+    int nMaxBits = 0;
     int i;
 
     if (!(hModule = LoadLibraryExA(szFileName, 0, LOAD_LIBRARY_AS_DATAFILE)))
@@ -358,17 +372,21 @@ static int ExtractFromEXEDLL(const char *szFileName, int nIndex, const char *szX
         goto error1;
     }
 
-    if (nIndex)
+    if (nIndex < 0)
     {
-        hResInfo = FindResourceA(hModule, MAKEINTRESOURCEA(nIndex), RT_GROUP_ICONA);
+        hResInfo = FindResourceA(hModule, MAKEINTRESOURCEA(-nIndex), RT_GROUP_ICONA);
         TRACE("FindResourceA (%s) called, return 0x%x, error %ld\n", szFileName, hResInfo, GetLastError());
     }
     else
-        if (EnumResourceNamesA(hModule, RT_GROUP_ICONA, &EnumResNameProc, (LONG) &hResInfo))
+    {
+        sEnumRes.pResInfo = &hResInfo;
+        sEnumRes.nIndex = nIndex;
+        if (EnumResourceNamesA(hModule, RT_GROUP_ICONA, &EnumResNameProc, (LONG) &sEnumRes))
         {
             TRACE("EnumResourceNamesA failed, error %ld\n", GetLastError());
             goto error2;
         }
+    }
 
     if (!hResInfo)
     {
@@ -388,10 +406,18 @@ static int ExtractFromEXEDLL(const char *szFileName, int nIndex, const char *szX
     }
 
     for (i = 0; i < pIconDir->idCount; i++)
-        if ((pIconDir->idEntries[i].bHeight * pIconDir->idEntries[i].bWidth) > nMax)
+        if ((pIconDir->idEntries[i].wBitCount >= nMaxBits) && (pIconDir->idEntries[i].wBitCount <= 8))
         {
-            lpName = MAKEINTRESOURCEA(pIconDir->idEntries[i].nID);
-            nMax = pIconDir->idEntries[i].bHeight * pIconDir->idEntries[i].bWidth;
+          if (pIconDir->idEntries[i].wBitCount > nMaxBits)
+          {
+              nMaxBits = pIconDir->idEntries[i].wBitCount;
+              nMax = 0;
+          }
+          if ((pIconDir->idEntries[i].bHeight * pIconDir->idEntries[i].bWidth) > nMax)
+          {
+              lpName = MAKEINTRESOURCEA(pIconDir->idEntries[i].nID);
+              nMax = pIconDir->idEntries[i].bHeight * pIconDir->idEntries[i].bWidth;
+          }
         }
 
     FreeResource(hResData);
