@@ -143,9 +143,9 @@ BOOL16 WINAPI FastWindowFrame16( HDC16 hdc, const RECT16 *rect,
               rect->right - rect->left - width, height, rop );
     PatBlt( hdc, rect->left, rect->top + height, width,
               rect->bottom - rect->top - height, rop );
-    PatBlt( hdc, rect->left + width, rect->bottom,
+    PatBlt( hdc, rect->left + width, rect->bottom - 1,
               rect->right - rect->left - width, -height, rop );
-    PatBlt( hdc, rect->right, rect->top, -width, 
+    PatBlt( hdc, rect->right - 1, rect->top, -width,
               rect->bottom - rect->top - height, rop );
     SelectObject( hdc, hbrush );
     return TRUE;
