@@ -6,7 +6,7 @@ type	win32
   3 stdcall CLSIDFromString(wstr ptr) CLSIDFromString32
   4 stdcall CoBuildVersion() CoBuildVersion
   5 stub CoCreateFreeThreadedMarshaler
-  6 stub CoCreateGuid
+  6 stdcall CoCreateGuid(ptr) CoCreateGuid
   7 stdcall CoCreateInstance(ptr ptr long ptr ptr) CoCreateInstance
   8 stdcall CoDisconnectObject(ptr long) CoDisconnectObject
   9 stdcall CoDosDateTimeToFileTime(long long ptr) DosDateTimeToFileTime

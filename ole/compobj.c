@@ -218,6 +218,15 @@ OLESTATUS WINAPI CLSIDFromString16(
 }
 
 /******************************************************************************
+ *		CoCreateGuid[OLE32.6]
+ * Just a random 128-bit number?
+ */
+HRESULT WINAPI CoCreateGuid(GUID *pguid) {
+	FIXME(ole,"stub!\n");
+	return S_OK;
+}
+
+/******************************************************************************
  *		CLSIDFromString32	[OLE32.3]
  * Converts a unique identifier from it's string representation into 
  * the GUID struct.
