@@ -272,9 +272,10 @@ BOOL WINAPI PolyTextOutA (
 			  INT cStrings           /* [in] Number of strings in array */
 			  )
 {
-  FIXME("stub!\n");
-  SetLastError ( ERROR_CALL_NOT_IMPLEMENTED );
-  return 0;
+    for (; cStrings>0; cStrings--, pptxt++)
+        if (!ExtTextOutA( hdc, pptxt->x, pptxt->y, pptxt->uiFlags, &pptxt->rcl, pptxt->lpstr, pptxt->n, pptxt->pdx ))
+            return FALSE;
+    return TRUE;
 }
 
 
@@ -290,7 +291,8 @@ BOOL WINAPI PolyTextOutW (
 			  INT cStrings           /* [in] Number of strings in array */
 			  )
 {
-  FIXME("stub!\n");
-  SetLastError ( ERROR_CALL_NOT_IMPLEMENTED );
-  return 0;
+    for (; cStrings>0; cStrings--, pptxt++)
+        if (!ExtTextOutW( hdc, pptxt->x, pptxt->y, pptxt->uiFlags, &pptxt->rcl, pptxt->lpstr, pptxt->n, pptxt->pdx ))
+            return FALSE;
+    return TRUE;
 }
