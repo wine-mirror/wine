@@ -292,24 +292,39 @@ static void parse_idl_file( INCL_FILE *pFile, FILE *file )
 
     while (fgets( buffer, sizeof(buffer)-1, file ))
     {
+        char quote;
         char *p = buffer;
         line++;
         while (*p && isspace(*p)) p++;
-        if (strncmp( p, "import", 6 )) continue;
-        p += 6;
-        while (*p && isspace(*p)) p++;
-        if (*p != '\"') continue;
-        p++;
+
+        if (!strncmp( p, "import", 6 ))
+        {
+            p += 6;
+            while (*p && isspace(*p)) p++;
+            if (*p != '\"') continue;
+        }
+        else
+        {
+            if (*p++ != '#') continue;
+            while (*p && isspace(*p)) p++;
+            if (strncmp( p, "include", 7 )) continue;
+            p += 7;
+            while (*p && isspace(*p)) p++;
+            if (*p != '\"' && *p != '<' ) continue;
+        }
+
+        quote = *p++;
+        if (quote == '<') quote = '>';
         include = p;
-        while (*p && (*p != '\"')) p++;
+        while (*p && (*p != quote)) p++;
         if (!*p)
         {
-            fprintf( stderr, "%s:%d: Malformed import directive\n",
+            fprintf( stderr, "%s:%d: Malformed #include or import directive\n",
                      pFile->filename, line );
             exit(1);
         }
         *p = 0;
-        add_include( pFile, include, line, 0 );
+        add_include( pFile, include, line, (quote == '>') );
     }
 }
 
