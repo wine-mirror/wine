@@ -461,12 +461,13 @@ INT32 WINAPI GetDIBits32(
         return 0;
     }
 
-      /* Transfer color info */
+    /* Transfer color info (FIXME) */
     
-    if (info->bmiHeader.biBitCount<=8) {
-	int colors = info->bmiHeader.biClrUsed;
-        if (!colors && (info->bmiHeader.biBitCount <= 8))
-            colors = 1 << info->bmiHeader.biBitCount;
+    if (info && (info->bmiHeader.biBitCount <= 8) &&
+        (bmp->bitmap.bmBitsPixel <= 8))
+    {
+        int colors = 1 << info->bmiHeader.biBitCount;
+	info->bmiHeader.biClrUsed = 0;
 	palEntry = palette->logpalette.palPalEntry;
 	for (i = 0; i < colors; i++, palEntry++)
 	{
