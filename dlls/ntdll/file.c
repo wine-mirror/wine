@@ -16,15 +16,27 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+#include "config.h"
+#include "wine/port.h"
+
 #include <stdlib.h>
 #include <string.h>
+#include <stdio.h>
+#include <errno.h>
+#include <unistd.h>
+#ifdef HAVE_SYS_ERRNO_H
+#include <sys/errno.h>
+#endif
 #include "wine/debug.h"
+#include "wine/server.h"
 #include "ntdll_misc.h"
+#include "file.h" /* FIXME */
 
 #include "ntddk.h"
 #include "winioctl.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(ntdll);
+
 
 /**************************************************************************
  *                 NtOpenFile				[NTDLL.@]
@@ -46,11 +58,60 @@ NTSTATUS WINAPI NtOpenFile(
 	ULONG ShareAccess,
 	ULONG OpenOptions)
 {
-	FIXME("(%p,0x%08lx,%p,%p,0x%08lx,0x%08lx) stub\n",
-	FileHandle, DesiredAccess, ObjectAttributes,
-	IoStatusBlock, ShareAccess, OpenOptions);
+	ULONG len = 0;
+	PSTR filename;
+	CHAR szDosDevices[] = "\\DosDevices\\";
+	DOS_FULL_NAME full_name;
+	NTSTATUS r;
+
+	FIXME("(%p,0x%08lx,%p,%p,0x%08lx,0x%08lx) partial stub\n",
+		FileHandle, DesiredAccess, ObjectAttributes,
+		IoStatusBlock, ShareAccess, OpenOptions);
+
 	dump_ObjectAttributes (ObjectAttributes);
-	return 0;
+
+	if(ObjectAttributes->RootDirectory)
+	{
+		FIXME("Object root directory unknown %x\n",
+			ObjectAttributes->RootDirectory);
+		return STATUS_OBJECT_NAME_NOT_FOUND;
+	}
+
+	/* create an ascii string from the unicode filename */
+	RtlUnicodeToMultiByteSize( &len, ObjectAttributes->ObjectName->Buffer,
+				ObjectAttributes->ObjectName->Length );
+	filename = RtlAllocateHeap( GetProcessHeap(), 0, len + 1);
+	RtlUnicodeToMultiByteN(filename, len, NULL, ObjectAttributes->ObjectName->Buffer,
+				ObjectAttributes->ObjectName->Length );
+	filename[len]=0;
+
+	/* FIXME: DOSFS stuff should call here, not vice-versa */
+	if(strncmp(filename, szDosDevices, strlen(szDosDevices)))
+		return STATUS_OBJECT_NAME_NOT_FOUND;
+
+	/* FIXME: this calls SetLastError() -> bad */
+	if(!DOSFS_GetFullName(&filename[strlen(szDosDevices)], TRUE,
+				&full_name))
+		return STATUS_OBJECT_NAME_NOT_FOUND;
+
+	/* FIXME: modify server protocol so
+                  create file takes an OBJECT_ATTRIBUTES structure */
+        SERVER_START_REQ( create_file )
+        {
+            req->access     = DesiredAccess;
+            req->inherit    = 0;
+            req->sharing    = ShareAccess;
+            req->create     = OPEN_EXISTING;
+            req->attrs      = 0;
+            req->drive_type = GetDriveTypeA( full_name.short_name );
+            wine_server_add_data( req, full_name.long_name, strlen(full_name.long_name) );
+            SetLastError(0);
+            r = wine_server_call( req );
+            *FileHandle = reply->handle;
+        }
+        SERVER_END_REQ;
+
+	return r;
 }
 
 /**************************************************************************
@@ -94,6 +155,34 @@ NTSTATUS WINAPI NtCreateFile(
 	return 0;
 }
 
+/* set the last error depending on errno */
+NTSTATUS NTFILE_errno_to_status(int val)
+{
+    switch (val)
+    {
+    case EAGAIN:    return ( STATUS_SHARING_VIOLATION );
+    case ESPIPE:
+    case EBADF:     return ( STATUS_INVALID_HANDLE );
+    case ENOSPC:    return ( STATUS_DISK_FULL );
+    case EACCES:
+    case ESRCH:
+    case EPERM:     return ( STATUS_ACCESS_DENIED );
+    case EROFS:     return ( STATUS_MEDIA_WRITE_PROTECTED );
+    case EBUSY:     return ( STATUS_FILE_LOCK_CONFLICT );
+    case ENOENT:    return ( STATUS_NO_SUCH_FILE );
+    case EISDIR:    return ( STATUS_FILE_IS_A_DIRECTORY );
+    case ENFILE:
+    case EMFILE:    return ( STATUS_NO_MORE_FILES );
+    case EEXIST:    return ( STATUS_OBJECT_NAME_COLLISION );
+    case EINVAL:    return ( STATUS_INVALID_PARAMETER );
+    case ENOTEMPTY: return ( STATUS_DIRECTORY_NOT_EMPTY );
+    case EIO:       return ( STATUS_ACCESS_VIOLATION );
+    }
+    perror("file_set_error");
+    return ( STATUS_INVALID_PARAMETER );
+}
+
+
 /******************************************************************************
  *  NtReadFile					[NTDLL.@]
  *  ZwReadFile					[NTDLL.@]
@@ -108,8 +197,76 @@ NTSTATUS WINAPI NtCreateFile(
  *   ULONG 		Length
  *   PLARGE_INTEGER 	ByteOffset 	OPTIONAL
  *   PULONG 		Key 		OPTIONAL
+ *
+ * IoStatusBlock->Information contains the number of bytes read on return.
  */
 NTSTATUS WINAPI NtReadFile (
+	HANDLE FileHandle,
+	HANDLE EventHandle,
+	PIO_APC_ROUTINE ApcRoutine,
+	PVOID ApcContext,
+	PIO_STATUS_BLOCK IoStatusBlock,
+	PVOID Buffer,
+	ULONG Length,
+	PLARGE_INTEGER ByteOffset,
+	PULONG Key)
+{
+	int fd, result, flags, ret;
+	enum fd_type type;
+
+	FIXME("(0x%08x,0x%08x,%p,%p,%p,%p,0x%08lx,%p,%p),partial stub!\n",
+		FileHandle,EventHandle,ApcRoutine,ApcContext,IoStatusBlock,Buffer,Length,ByteOffset,Key);
+
+	if (IsBadWritePtr( Buffer, Length ) ||
+	    IsBadWritePtr( IoStatusBlock, sizeof *IoStatusBlock) ||
+	    IsBadWritePtr( ByteOffset, sizeof *ByteOffset) )
+		return STATUS_ACCESS_VIOLATION;
+
+	IoStatusBlock->Information = 0;
+
+	ret = wine_server_handle_to_fd( FileHandle, GENERIC_READ, &fd, &type, &flags );
+	if(ret)
+		return ret;
+
+	/* FIXME: this code only does synchronous reads so far */
+
+	/* FIXME: depending on how libc implements this, between two processes
+	      there could be a race condition between the seek and read here */
+	do
+	{
+               	result = pread( fd, Buffer, Length, ByteOffset->QuadPart);
+	}
+	while ( (result == -1) && ((errno == EAGAIN) || (errno == EINTR)) );
+
+	close( fd );
+
+	if (result == -1)
+	{
+		return IoStatusBlock->u.Status = NTFILE_errno_to_status(errno);
+	}
+
+	IoStatusBlock->Information = result;
+	IoStatusBlock->u.Status = 0;
+
+	return STATUS_SUCCESS;
+}
+
+/******************************************************************************
+ *  NtWriteFile					[NTDLL.@]
+ *  ZwWriteFile					[NTDLL.@]
+ *
+ * Parameters
+ *   HANDLE32 		FileHandle
+ *   HANDLE32 		Event 		OPTIONAL
+ *   PIO_APC_ROUTINE 	ApcRoutine 	OPTIONAL
+ *   PVOID 		ApcContext 	OPTIONAL
+ *   PIO_STATUS_BLOCK 	IoStatusBlock
+ *   PVOID 		Buffer
+ *   ULONG 		Length
+ *   PLARGE_INTEGER 	ByteOffset 	OPTIONAL
+ *   PULONG 		Key 		OPTIONAL
+ */
+NTSTATUS WINAPI NtWriteFile (
 	HANDLE FileHandle,
 	HANDLE EventHandle,
 	PIO_APC_ROUTINE ApcRoutine,
