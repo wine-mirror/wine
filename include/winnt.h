@@ -561,6 +561,8 @@ typedef struct _STACK_FRAME_HEADER
 
 typedef struct _CONTEXT
 {
+    DWORD ContextFlags;
+
     /* These are selected by CONTEXT_INTEGER */
     DWORD g0;
     DWORD g1;
@@ -663,6 +665,63 @@ typedef HANDLE *PHANDLE;
 
 #define ISV86(context)       (EFL_reg(context) & 0x00020000)
 #define V86BASE(context)     ((context)->Dr7) /* ugly */
+
+
+/* Macros to retrieve the current context */
+
+#ifdef __i386__
+#define _DEFINE_REGS_ENTRYPOINT( name, fn, args ) \
+  __asm__(".align 4\n\t"                         \
+          ".globl " #name "\n\t"                 \
+          ".type " #name ",@function\n\t"        \
+          #name ":\n\t"                          \
+          "call CALL32_Regs\n\t"                 \
+          ".long " #fn "\n\t"                    \
+          ".byte " #args ", " #args "\n\t");
+
+#define DEFINE_REGS_ENTRYPOINT_0( name, fn ) \
+  _DEFINE_REGS_ENTRYPOINT( name, fn, 0 )
+#define DEFINE_REGS_ENTRYPOINT_1( name, fn, t1 ) \
+  _DEFINE_REGS_ENTRYPOINT( name, fn, 4 )
+#define DEFINE_REGS_ENTRYPOINT_2( name, fn, t1, t2 ) \
+  _DEFINE_REGS_ENTRYPOINT( name, fn, 8 )
+#define DEFINE_REGS_ENTRYPOINT_3( name, fn, t1, t2, t3 ) \
+  _DEFINE_REGS_ENTRYPOINT( name, fn, 12 )
+#define DEFINE_REGS_ENTRYPOINT_4( name, fn, t1, t2, t3, t4 ) \
+  _DEFINE_REGS_ENTRYPOINT( name, fn, 16 )
+
+#endif  /* __i386__ */
+
+#ifdef __sparc__
+/* FIXME: use getcontext() to retrieve full context */
+#define _GET_CONTEXT \
+    CONTEXT context;   \
+    do { memset(&context, 0, sizeof(CONTEXT));            \
+         context.ContextFlags = CONTEXT_CONTROL;          \
+         context.pc = (DWORD)__builtin_return_address(0); \
+       } while (0)
+
+#define DEFINE_REGS_ENTRYPOINT_0( name, fn ) \
+  void WINAPI name ( void ) \
+  { _GET_CONTEXT; fn( &context ); }
+#define DEFINE_REGS_ENTRYPOINT_1( name, fn, t1 ) \
+  void WINAPI name ( t1 a1 ) \
+  { _GET_CONTEXT; fn( a1, &context ); }
+#define DEFINE_REGS_ENTRYPOINT_2( name, fn, t1, t2 ) \
+  void WINAPI name ( t1 a1, t2 a2 ) \
+  { _GET_CONTEXT; fn( a1, a2, &context ); }
+#define DEFINE_REGS_ENTRYPOINT_3( name, fn, t1, t2, t3 ) \
+  void WINAPI name ( t1 a1, t2 a2, t3 a3 ) \
+  { _GET_CONTEXT; fn( a1, a2, a3, &context ); }
+#define DEFINE_REGS_ENTRYPOINT_4( name, fn, t1, t2, t3, t4 ) \
+  void WINAPI name ( t1 a1, t2 a2, t3 a3, t4 a4 ) \
+  { _GET_CONTEXT; fn( a1, a2, a3, a4, &context ); }
+
+#endif /* __sparc__ */
+
+#ifndef DEFINE_REGS_ENTRYPOINT_0
+#error You need to define DEFINE_REGS_ENTRYPOINT macros for your CPU
+#endif
 
 #ifdef __i386__
 # define GET_IP(context) ((LPVOID)(context)->Eip)

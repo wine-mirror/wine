@@ -91,24 +91,19 @@ static inline void WINE_UNUSED stack16_pop( int size )
     teb->cur_stack += size;
 }
 
-#ifdef __i386__
 /* Push a DWORD on the 32-bit stack */
-static inline void WINE_UNUSED stack32_push( CONTEXT *context, DWORD val )
+static inline void WINE_UNUSED stack32_push( CONTEXT86 *context, DWORD val )
 {
     ESP_reg(context) -= sizeof(DWORD);
     *(DWORD *)ESP_reg(context) = val;
 }
 
 /* Pop a DWORD from the 32-bit stack */
-static inline DWORD WINE_UNUSED stack32_pop( CONTEXT *context )
+static inline DWORD WINE_UNUSED stack32_pop( CONTEXT86 *context )
 {
     DWORD ret = *(DWORD *)ESP_reg(context);
     ESP_reg(context) += sizeof(DWORD);
     return ret;
 }
-#endif  /* __i386__ */
-
-/* Win32 register functions */
-#define REGS_FUNC(name) __regs_##name
 
 #endif /* __WINE_STACKFRAME_H */

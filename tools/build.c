@@ -472,6 +472,13 @@ static int ParseExportFunction( ORDDEF *odp )
     if ((odp->type == TYPE_STDCALL) && !i)
         odp->type = TYPE_CDECL; /* stdcall is the same as cdecl for 0 args */
     strcpy(odp->u.func.link_name, GetToken());
+
+    /* Ignore Win32 'register' routines on non-Intel archs */
+#ifndef __i386__
+    if ( odp->type == TYPE_REGISTER && SpecType == SPEC_WIN32 )
+        odp->type = TYPE_INVALID;
+#endif
+
     return 0;
 }
 
@@ -1024,7 +1031,7 @@ static int BuildModule16( FILE *outfile, int max_code_offset,
 static int BuildSpec32File( char * specfile, FILE *outfile )
 {
     ORDDEF *odp;
-    int i, nb_names, fwd_size = 0;
+    int i, nb_names, fwd_size = 0, have_regs = FALSE;
 
     fprintf( outfile, "/* File generated automatically from %s; do not edit! */\n\n",
              specfile );
@@ -1041,33 +1048,6 @@ static int BuildSpec32File( char * specfile, FILE *outfile )
                  i, DLLName, i );
     }
 
-    /* Output code for all register functions */
-
-    fprintf( outfile, "#ifdef __i386__\n" );
-    fprintf( outfile, "#ifndef __GNUC__\n" );
-    fprintf( outfile, "static void __asm__dummy() {\n" );
-    fprintf( outfile, "#endif /* !defined(__GNUC__) */\n" );
-    for (i = Base, odp = OrdinalDefinitions + Base; i <= Limit; i++, odp++)
-    {
-        if (odp->type != TYPE_REGISTER) continue;
-        fprintf( outfile,
-                 "__asm__(\".align 4\\n\\t\"\n"
-                 "        \".globl " PREFIX "%s\\n\\t\"\n"
-                 "        \".type " PREFIX "%s,@function\\n\\t\"\n"
-                 "        \"" PREFIX "%s:\\n\\t\"\n"
-                 "        \"call " PREFIX "CALL32_Regs\\n\\t\"\n"
-                 "        \".long " PREFIX "__regs_%s\\n\\t\"\n"
-                 "        \".byte %d,%d\");\n",
-                 odp->u.func.link_name, odp->u.func.link_name,
-                 odp->u.func.link_name, odp->u.func.link_name,
-                 4 * strlen(odp->u.func.arg_types),
-                 4 * strlen(odp->u.func.arg_types) );
-    }
-    fprintf( outfile, "#ifndef __GNUC__\n" );
-    fprintf( outfile, "}\n" );
-    fprintf( outfile, "#endif /* !defined(__GNUC__) */\n" );
-    fprintf( outfile, "#endif /* defined(__i386__) */\n" );
-
     /* Output the DLL functions prototypes */
 
     for (i = Base, odp = OrdinalDefinitions + Base; i <= Limit; i++, odp++)
@@ -1077,7 +1057,6 @@ static int BuildSpec32File( char * specfile, FILE *outfile )
         case TYPE_EXTERN:
             fprintf( outfile, "extern void %s();\n", odp->u.ext.link_name );
             break;
-        case TYPE_REGISTER:
         case TYPE_STDCALL:
         case TYPE_VARARGS:
         case TYPE_CDECL:
@@ -1085,6 +1064,10 @@ static int BuildSpec32File( char * specfile, FILE *outfile )
             break;
         case TYPE_FORWARD:
             fwd_size += strlen(odp->u.fwd.link_name) + 1;
+            break;
+        case TYPE_REGISTER:
+            fprintf( outfile, "extern void __regs_%d();\n", i );
+            have_regs = TRUE;
             break;
         case TYPE_INVALID:
         case TYPE_STUB:
@@ -1100,6 +1083,32 @@ static int BuildSpec32File( char * specfile, FILE *outfile )
     if (DLLInitFunc[0]) fprintf( outfile, "extern void %s();\n", DLLInitFunc );
 
 
+    /* Output code for all register functions */
+
+    if ( have_regs )
+    { 
+        fprintf( outfile, "#ifndef __GNUC__\n" );
+        fprintf( outfile, "static void __asm__dummy() {\n" );
+        fprintf( outfile, "#endif /* !defined(__GNUC__) */\n" );
+        for (i = Base, odp = OrdinalDefinitions + Base; i <= Limit; i++, odp++)
+        {
+            if (odp->type != TYPE_REGISTER) continue;
+            fprintf( outfile,
+                     "__asm__(\".align 4\\n\\t\"\n"
+                     "        \".type " PREFIX "__regs_%d,@function\\n\\t\"\n"
+                     "        \"" PREFIX "__regs_%d:\\n\\t\"\n"
+                     "        \"call " PREFIX "CALL32_Regs\\n\\t\"\n"
+                     "        \".long " PREFIX "%s\\n\\t\"\n"
+                     "        \".byte %d,%d\");\n",
+                     i, i, odp->u.func.link_name,
+                     4 * strlen(odp->u.func.arg_types),
+                     4 * strlen(odp->u.func.arg_types) );
+        }
+        fprintf( outfile, "#ifndef __GNUC__\n" );
+        fprintf( outfile, "}\n" );
+        fprintf( outfile, "#endif /* !defined(__GNUC__) */\n" );
+    }
+
     /* Output the DLL functions table */
 
     fprintf( outfile, "\nstatic const ENTRYPOINT32 Functions[%d] =\n{\n",
@@ -1114,7 +1123,6 @@ static int BuildSpec32File( char * specfile, FILE *outfile )
         case TYPE_EXTERN:
             fprintf( outfile, "    %s", odp->u.ext.link_name );
             break;
-        case TYPE_REGISTER:
         case TYPE_STDCALL:
         case TYPE_VARARGS:
         case TYPE_CDECL:
@@ -1122,6 +1130,9 @@ static int BuildSpec32File( char * specfile, FILE *outfile )
             break;
         case TYPE_STUB:
             fprintf( outfile, "    __stub_%d", i );
+            break;
+        case TYPE_REGISTER:
+            fprintf( outfile, "    __regs_%d", i );
             break;
         case TYPE_FORWARD:
             fprintf( outfile, "    (ENTRYPOINT32)\"%s\"", odp->u.fwd.link_name );
