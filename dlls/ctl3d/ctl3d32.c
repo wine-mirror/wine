@@ -40,7 +40,7 @@ BOOL WINAPI Ctl3dColorChange(void)
     return TRUE;
 }
 
-HBRUSH WINAPI Ctl3dCtlColor(HDC hdc, LONG hwnd)
+HBRUSH WINAPI Ctl3dCtlColor(HDC hdc, HWND hwnd)
 {
     return 0;
 }
@@ -114,4 +114,34 @@ BOOL WINAPI Ctl3dUnsubclassCtl(HWND hwnd)
 
 void WINAPI Ctl3dWinIniChange(void)
 {
+}
+
+LRESULT WINAPI ComboWndProc3d(HWND hwnd,UINT msg,WPARAM wparam,LPARAM lparam)
+{
+    return 0;
+}
+
+LRESULT WINAPI BtnWndProc3d(HWND hwnd,UINT msg,WPARAM wparam,LPARAM lparam)
+{
+    return 0;
+}
+
+LRESULT WINAPI StaticWndProc3d(HWND hwnd,UINT msg,WPARAM wparam,LPARAM lparam)
+{
+    return 0;
+}
+
+LRESULT WINAPI EditWndProc3d(HWND hwnd,UINT msg,WPARAM wparam,LPARAM lparam)
+{
+    return 0;
+}
+
+LRESULT WINAPI ListWndProc3d(HWND hwnd,UINT msg,WPARAM wparam,LPARAM lparam)
+{
+    return 0;
+}
+
+LRESULT WINAPI Ctl3dDlgProc(HWND hwnd,UINT msg,WPARAM wparam,LPARAM lparam)
+{
+    return 0;
 }
