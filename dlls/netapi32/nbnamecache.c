@@ -19,7 +19,10 @@
  * rather more efficient than not having a name cache at all.
  */
 
+#include "config.h"
+#include "wine/port.h"
 #include "wine/debug.h"
+
 #include "nbnamecache.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(netbios);

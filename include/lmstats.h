@@ -88,7 +88,7 @@ typedef struct _STAT_SERVER_0 {
     DWORD sts0_bigbufneed;
 } STAT_SERVER_0, *PSTAT_SERVER_0, *LPSTAT_SERVER_0;
 
-NET_API_STATUS WINAPI NetStatisticsGet(LPWSTR *server, LPWSTR *service, DWORD level,
+NET_API_STATUS WINAPI NetStatisticsGet(LPWSTR server, LPWSTR service, DWORD level,
                                        DWORD options, LPBYTE *bufptr);
 
 #ifdef __cplusplus

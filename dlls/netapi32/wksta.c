@@ -18,10 +18,14 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+#include "config.h"
+#include "wine/port.h"
+
 #include <stdarg.h>
 #include <stdlib.h>
 #include "windef.h"
 #include "winbase.h"
+#include "winsock2.h"
 #include "nb30.h"
 #include "lmcons.h"
 #include "lmapibuf.h"
@@ -234,9 +238,9 @@ static BOOL WkstaEnumAdaptersCallback(UCHAR totalLANAs, UCHAR lanaIndex,
 }
 
 NET_API_STATUS WINAPI 
-NetWkstaTransportEnum(LPCWSTR ServerName, DWORD level, LPBYTE* pbuf,
+NetWkstaTransportEnum(LPWSTR ServerName, DWORD level, PBYTE* pbuf,
       DWORD prefmaxlen, LPDWORD read_entries,
-      LPDWORD total_entries, LPDWORD hresume)
+      PDWORD total_entries, PDWORD hresume)
 {
     NET_API_STATUS ret;
 

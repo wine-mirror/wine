@@ -70,7 +70,7 @@ NET_API_STATUS  WINAPI NetServerEnum(
 /************************************************************
  *                NetStatisticsGet  (NETAPI32.@)
  */
-NET_API_STATUS WINAPI NetStatisticsGet(LPWSTR *server, LPWSTR *service,
+NET_API_STATUS WINAPI NetStatisticsGet(LPWSTR server, LPWSTR service,
                                        DWORD level, DWORD options,
                                        LPBYTE *bufptr)
 {

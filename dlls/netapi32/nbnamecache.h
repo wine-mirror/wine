@@ -17,6 +17,9 @@
 #ifndef __WINE_NBNAMECACHE_H
 #define __WINE_NBNAMECACHE_H
 
+#include <stdarg.h>
+
+#include "windef.h"
 #include "winbase.h"
 #include "nb30.h"
 
