@@ -36,7 +36,7 @@ void *xrealloc (void *op, size_t len)
 {
     void *p = realloc (op, len);
 
-    if (!p) report (R_FATAL, "Out of memory.");
+    if (len && !p) report (R_FATAL, "Out of memory.");
     return p;
 }
 

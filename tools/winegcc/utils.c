@@ -60,8 +60,8 @@ void* xmalloc(size_t size)
 
 void *xrealloc(void* p, size_t size)
 {
-    void* p2;
-    if ((p2 = realloc (p, size)) == NULL)
+    void* p2 = realloc (p, size);
+    if (size && !p2)
 	error("Can not realloc %d bytes.", size);
 
     return p2;
