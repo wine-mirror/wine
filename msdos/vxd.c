@@ -100,6 +100,47 @@ void WINAPI VXD_PageFile( CONTEXT *context )
     }
 }
 
+/***********************************************************************
+ *           VXD_Reboot
+ */
+void VXD_Reboot ( CONTEXT *context )
+{
+    unsigned service = AX_reg(context);
+
+    TRACE(vxd,"[%04x] VMM  \n", (UINT16)service);
+
+    switch(service)
+    {
+    case 0x0000: /* version */
+        AX_reg(context) = VXD_WinVersion();
+        RESET_CFLAG(context);
+        break;
+
+    default:
+        VXD_BARF( context, "REBOOT" );
+    }
+}
+
+/***********************************************************************
+ *           VXD_VDD
+ */
+void VXD_VDD ( CONTEXT *context )
+{
+    unsigned service = AX_reg(context);
+
+    TRACE(vxd,"[%04x] VMM  \n", (UINT16)service);
+
+    switch(service)
+    {
+    case 0x0000: /* version */
+        AX_reg(context) = VXD_WinVersion();
+        RESET_CFLAG(context);
+        break;
+
+    default:
+        VXD_BARF( context, "VDD" );
+    }
+}
 
 /***********************************************************************
  *           VXD_Shell

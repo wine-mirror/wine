@@ -47,6 +47,7 @@ typedef struct
 /* 16-bit DLLs */
 
 extern const WIN16_DESCRIPTOR AVIFILE_Descriptor;
+extern const WIN16_DESCRIPTOR COMM_Descriptor;
 extern const WIN16_DESCRIPTOR COMMDLG_Descriptor;
 extern const WIN16_DESCRIPTOR COMPOBJ_Descriptor;
 extern const WIN16_DESCRIPTOR DDEML_Descriptor;
@@ -103,6 +104,7 @@ static BUILTIN16_DLL BuiltinDLLs[] =
     { &COMPOBJ_Descriptor,  DLL_FLAG_NOT_USED },
     { &DDEML_Descriptor,    DLL_FLAG_NOT_USED },
     { &KEYBOARD_Descriptor, 0 },
+    { &COMM_Descriptor,     0 },
     { &LZEXPAND_Descriptor, 0 },
     { &MMSYSTEM_Descriptor, 0 },
     { &MOUSE_Descriptor,    0 },

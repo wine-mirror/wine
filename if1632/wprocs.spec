@@ -283,6 +283,8 @@ type	win16
 #
 401 register VXD_VMM() VXD_VMM
 405 register VXD_Timer() VXD_Timer
+409 register VXD_Reboot() VXD_Reboot
+410 register VXD_VDD() VXD_VDD
 414 register VXD_Comm() VXD_Comm
 #415 register VXD_Printer() VXD_Printer
 423 register VXD_Shell() VXD_Shell

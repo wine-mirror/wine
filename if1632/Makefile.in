@@ -7,6 +7,7 @@ MODULE    = if1632
 
 DLLS = \
 	avifile.spec \
+	comm.spec \
 	commdlg.spec \
 	compobj.spec \
 	ddeml.spec \
