@@ -1039,7 +1039,7 @@ VOID WINAPI InitMUILanguage (LANGID uiLang)
 
 
 /***********************************************************************
- * SetWindowSubclass [COMCTL32.@]
+ * SetWindowSubclass [COMCTL32.410]
  *
  * Starts a window subclass
  *
@@ -1138,7 +1138,7 @@ BOOL WINAPI SetWindowSubclass (HWND hWnd, SUBCLASSPROC pfnSubclass,
 
 
 /***********************************************************************
- * GetWindowSubclass [COMCTL32.@]
+ * GetWindowSubclass [COMCTL32.411]
  *
  * Gets the Reference data from a subclass.
  *
@@ -1178,7 +1178,7 @@ BOOL WINAPI GetWindowSubclass (HWND hWnd, SUBCLASSPROC pfnSubclass,
 
 
 /***********************************************************************
- * RemoveWindowSubclass [COMCTL32.@]
+ * RemoveWindowSubclass [COMCTL32.412]
  *
  * Removes a window subclass.
  *
@@ -1242,7 +1242,7 @@ BOOL WINAPI RemoveWindowSubclass(HWND hWnd, SUBCLASSPROC pfnSubclass, UINT_PTR u
 
 
 /***********************************************************************
- * DefSubclassProc [COMCTL32.@]
+ * DefSubclassProc [COMCTL32.413]
  *
  * Calls the next window procedure (ie. the one before this subclass)
  *

@@ -101,10 +101,10 @@
 402 stdcall -noname FindMRUStringW(long wstr ptr)
 403 stdcall -noname EnumMRUListW(long long ptr long)
 404 stdcall -noname CreateMRUListLazyW(ptr long long long)
-410 stdcall @(long long long long) COMCTL32_410
-411 stdcall @(long long long) COMCTL32_411
-412 stdcall @(long long long) COMCTL32_412
-413 stdcall @(long long long long) COMCTL32_413
+410 stdcall SetWindowSubclass(long ptr long long)
+411 stdcall GetWindowSubclass(long ptr long ptr)
+412 stdcall RemoveWindowSubclass(long ptr long)
+413 stdcall DefSubclassProc(long long long long)
 414 stub @
 415 stdcall @(long long long long long) COMCTL32_415
 416 stub @
@@ -186,9 +186,3 @@
 @ stdcall PropertySheetW(ptr)
 @ stdcall UninitializeFlatSB(long)
 @ stdcall _TrackMouseEvent(ptr)
-
-# These are only available in comctrl 6
-@ stdcall DefSubclassProc(long long long long)
-@ stdcall GetWindowSubclass(long ptr long ptr)
-@ stdcall RemoveWindowSubclass(long ptr long)
-@ stdcall SetWindowSubclass(long ptr long long)
