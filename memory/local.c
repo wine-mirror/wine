@@ -12,6 +12,8 @@
  * parameter than usual.
  */
 
+#include "config.h"
+
 #include <stdlib.h>
 #include <string.h>
 #include "wine/winbase16.h"
@@ -40,7 +42,7 @@ typedef struct
 } LOCALARENA;
 
 #define ARENA_HEADER_SIZE      4
-#define ARENA_HEADER( handle) ( ((handle) & ~3) - ARENA_HEADER_SIZE)
+#define ARENA_HEADER( handle) ((handle) - ARENA_HEADER_SIZE)
 
   /* Arena types (stored in 'prev' field of the arena) */
 #define LOCAL_ARENA_FREE       0
@@ -67,8 +69,9 @@ typedef struct
 
 /*
  * We make addr = 4n + 2 and set *((WORD *)addr - 1) = &addr like Windows does
- * in case something actually relies on this.
- * Note the ARENA_HEADER(addr) still produces the desired result ie. 4n - 4
+ * in case something actually relies on this.   
+ * Note that if the architecture does not allow unaligned accesses, we make 
+ * addr = 4n + 4 to avoid returning unaligned pointers from LocalAlloc etc.
  *
  * An unused handle has lock = flags = 0xff. In windows addr is that of next
  * free handle, at the moment in wine we set it to 0.
@@ -76,6 +79,13 @@ typedef struct
  * A discarded block's handle has lock = addr = 0 and flags = 0x40
  * (LMEM_DISCARDED >> 8)
  */
+
+#ifdef ALLOW_UNALIGNED_ACCESS
+  #define MOVEABLE_PREFIX sizeof(HLOCAL16)
+#else
+  #define MOVEABLE_PREFIX sizeof(int)
+#endif
+
 
 #include "pshpack1.h"
 
@@ -721,7 +731,7 @@ WORD LOCAL_Compact( HANDLE16 ds, UINT16 minfree, UINT16 flags )
                 /* OK we can move this one if we want */
                 TRACE("handle %04x (block %04x) can be moved.\n",
 			     (WORD)((char *)pEntry - ptr), pEntry->addr);
-                movearena = ARENA_HEADER(pEntry->addr);
+                movearena = ARENA_HEADER(pEntry->addr - MOVEABLE_PREFIX);
                 pMoveArena = ARENA_PTR(ptr, movearena);
                 movesize = pMoveArena->next - movearena;
                 arena = pInfo->first;
@@ -761,7 +771,7 @@ WORD LOCAL_Compact( HANDLE16 ds, UINT16 minfree, UINT16 flags )
 		        LOCAL_CallTo16_word_www(pInfo->notify, LN_MOVE,
 			(WORD)((char *)pEntry - ptr), pEntry->addr);
                     /* Update handle table entry */
-                    pEntry->addr = finalarena + ARENA_HEADER_SIZE + sizeof(HLOCAL16) ;
+                    pEntry->addr = finalarena + ARENA_HEADER_SIZE + MOVEABLE_PREFIX;
                 }
                 else if((ARENA_PTR(ptr, pMoveArena->prev & ~3)->prev & 3)
 			       == LOCAL_ARENA_FREE)
@@ -771,7 +781,7 @@ WORD LOCAL_Compact( HANDLE16 ds, UINT16 minfree, UINT16 flags )
                     finalarena = pMoveArena->prev & ~3;
                     LOCAL_GrowArenaDownward( ds, movearena, movesize );
                     /* Update handle table entry */
-                    pEntry->addr = finalarena + ARENA_HEADER_SIZE + sizeof(HLOCAL16) ;
+                    pEntry->addr = finalarena + ARENA_HEADER_SIZE + MOVEABLE_PREFIX;
                 }
             }
         }
@@ -795,7 +805,7 @@ WORD LOCAL_Compact( HANDLE16 ds, UINT16 minfree, UINT16 flags )
 	    {
                 TRACE("Discarding handle %04x (block %04x).\n",
                               (char *)pEntry - ptr, pEntry->addr);
-                LOCAL_FreeArena(ds, ARENA_HEADER(pEntry->addr));
+                LOCAL_FreeArena(ds, ARENA_HEADER(pEntry->addr - MOVEABLE_PREFIX));
 		if (pInfo->notify)
                     LOCAL_CallTo16_word_www(pInfo->notify, LN_DISCARD,
 			(char *)pEntry - ptr, pEntry->flags);
@@ -1100,7 +1110,7 @@ HLOCAL16 LOCAL_Free( HANDLE16 ds, HLOCAL16 handle )
         {
             TRACE("real block at %04x\n",
 			   pEntry->addr );
-            if (LOCAL_FreeArena( ds, ARENA_HEADER(pEntry->addr) ))
+            if (LOCAL_FreeArena( ds, ARENA_HEADER(pEntry->addr - MOVEABLE_PREFIX) ))
                 return handle; /* couldn't free it */
         }
         LOCAL_FreeHandleEntry( ds, handle );
@@ -1130,7 +1140,7 @@ HLOCAL16 LOCAL_Alloc( HANDLE16 ds, WORD flags, WORD size )
 
 	if(size)
 	{
-	    if (!(hmem = LOCAL_GetBlock( ds, size + sizeof(HLOCAL16), flags )))
+	    if (!(hmem = LOCAL_GetBlock( ds, size + MOVEABLE_PREFIX, flags )))
 		return 0;
         }
 	else /* We just need to allocate a discarded handle */
@@ -1147,7 +1157,7 @@ HLOCAL16 LOCAL_Alloc( HANDLE16 ds, WORD flags, WORD size )
 	plhe->lock = 0;
 	if(hmem)
 	{
-	    plhe->addr = hmem + sizeof(HLOCAL16);
+	    plhe->addr = hmem + MOVEABLE_PREFIX;
 	    plhe->flags = (BYTE)((flags & 0x0f00) >> 8);
 	    *(HLOCAL16 *)(ptr + hmem) = handle;
 	}
@@ -1203,23 +1213,23 @@ HLOCAL16 LOCAL_ReAlloc( HANDLE16 ds, HLOCAL16 handle, WORD size, WORD flags )
 		WARN("Dicarded block has non-zero addr.\n");
 	    TRACE("ReAllocating discarded block\n");
 	    if(size <= 4) size = 5;
-	    if (!(hl = LOCAL_GetBlock( ds, size + sizeof(HLOCAL16), flags)))
+	    if (!(hl = LOCAL_GetBlock( ds, size + MOVEABLE_PREFIX, flags)))
 		return 0;
             ptr = MapSL( MAKESEGPTR( ds, 0 ) );  /* Reload ptr */
             pEntry = (LOCALHANDLEENTRY *) (ptr + handle);
-	    pEntry->addr = hl + sizeof(HLOCAL16);
+	    pEntry->addr = hl + MOVEABLE_PREFIX;
             pEntry->flags = 0;
             pEntry->lock = 0;
 	    *(HLOCAL16 *)(ptr + hl) = handle;
             return handle;
 	}
-	if (((blockhandle = pEntry->addr) & 3) != 2)
+	if (((blockhandle = pEntry->addr - MOVEABLE_PREFIX) & 3) != 0)
 	{
 	    ERR("(%04x,%04x): invalid handle\n",
                      ds, handle );
 	    return 0;
         }
-	if(*((HLOCAL16 *)(ptr + blockhandle) - 1) != handle) {
+	if (*(HLOCAL16 *)(ptr + blockhandle) != handle) {
 	    ERR("Back ptr to handle is invalid\n");
 	    return 0;
         }
@@ -1252,7 +1262,7 @@ HLOCAL16 LOCAL_ReAlloc( HANDLE16 ds, HLOCAL16 handle, WORD size, WORD flags )
 		{
 		    /* discards moveable blocks */
                     TRACE("Discarding block\n");
-                    LOCAL_FreeArena(ds, ARENA_HEADER(pEntry->addr));
+                    LOCAL_FreeArena(ds, ARENA_HEADER(pEntry->addr - MOVEABLE_PREFIX));
                     pEntry->addr = 0;
                     pEntry->flags = (LMEM_DISCARDED >> 8);
                     return handle;
@@ -1277,6 +1287,7 @@ HLOCAL16 LOCAL_ReAlloc( HANDLE16 ds, HLOCAL16 handle, WORD size, WORD flags )
     pArena = ARENA_PTR( ptr, arena );
 
     if(size <= 4) size = 5;
+    if(HANDLE_MOVEABLE(handle)) size += MOVEABLE_PREFIX;
     oldsize = pArena->next - arena - ARENA_HEADER_SIZE;
     nextarena = LALIGN(blockhandle + size);
 
@@ -1321,12 +1332,12 @@ HLOCAL16 LOCAL_ReAlloc( HANDLE16 ds, HLOCAL16 handle, WORD size, WORD flags )
 	    }
         }
     }
-    if(HANDLE_MOVEABLE(handle)) size += sizeof(HLOCAL16);
+
     hmem = LOCAL_GetBlock( ds, size, flags );
     ptr = MapSL( MAKESEGPTR( ds, 0 ));  /* Reload ptr                             */
     if(HANDLE_MOVEABLE(handle))         /* LOCAL_GetBlock might have triggered    */
     {                                   /* a compaction, which might in turn have */
-      blockhandle = pEntry->addr ;      /* moved the very block we are resizing   */
+      blockhandle = pEntry->addr - MOVEABLE_PREFIX; /* moved the very block we are resizing */
       arena = ARENA_HEADER( blockhandle );   /* thus, we reload arena, too        */
     }
     if (!hmem)
@@ -1359,7 +1370,7 @@ HLOCAL16 LOCAL_ReAlloc( HANDLE16 ds, HLOCAL16 handle, WORD size, WORD flags )
     {
 	TRACE("fixing handle\n");
         pEntry = (LOCALHANDLEENTRY *)(ptr + handle);
-        pEntry->addr = hmem + sizeof(HLOCAL16);
+        pEntry->addr = hmem + MOVEABLE_PREFIX;
 	/* Back ptr should still be correct */
 	if(*(HLOCAL16 *)(ptr + hmem) != handle)
 	    ERR("back ptr is invalid.\n");
@@ -1433,9 +1444,16 @@ WORD LOCAL_Size( HANDLE16 ds, HLOCAL16 handle )
 
     TRACE("%04x ds=%04x\n", handle, ds );
 
-    if (HANDLE_MOVEABLE( handle )) handle = *(WORD *)(ptr + handle);
     if (!handle) return 0;
-    pArena = ARENA_PTR( ptr, ARENA_HEADER(handle) );
+    if (HANDLE_MOVEABLE( handle )) 
+    {
+        handle = *(WORD *)(ptr + handle);
+        if (!handle) return 0;
+        pArena = ARENA_PTR( ptr, ARENA_HEADER(handle - MOVEABLE_PREFIX) );
+    }
+    else
+        pArena = ARENA_PTR( ptr, ARENA_HEADER(handle) );
+
     return pArena->next - handle;
 }
 
