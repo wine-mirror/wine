@@ -97,7 +97,7 @@ static const struct object_ops startup_info_ops =
 
 
 /* set the console and stdio handles for a newly created process */
-static int set_process_console( struct process *process, struct process *parent,
+static int set_process_console( struct process *process, struct thread *parent_thread,
                                 struct startup_info *info, struct init_process_reply *reply )
 {
     if (process->create_flags & CREATE_NEW_CONSOLE)
@@ -105,26 +105,26 @@ static int set_process_console( struct process *process, struct process *parent,
         /* let the process init do the allocation */
         return 1;
     }
-    else if (parent && !(process->create_flags & DETACHED_PROCESS))
+    else if (parent_thread && !(process->create_flags & DETACHED_PROCESS))
     {
         /* FIXME: some better error checking should be done...
          * like if hConOut and hConIn are console handles, then they should be on the same
          * physical console
          */
-        inherit_console( parent, process,
+        inherit_console( parent_thread, process,
                          (info->inherit_all || (info->start_flags & STARTF_USESTDHANDLES)) ?
                          info->hstdin : 0 );
     }
-    if (parent)
+    if (parent_thread)
     {
         if (!info->inherit_all && !(info->start_flags & STARTF_USESTDHANDLES))
         {
             /* duplicate the handle from the parent into this process */
-            reply->hstdin  = duplicate_handle( parent, info->hstdin, process,
+            reply->hstdin  = duplicate_handle( parent_thread->process, info->hstdin, process,
                                                0, TRUE, DUPLICATE_SAME_ACCESS );
-            reply->hstdout = duplicate_handle( parent, info->hstdout, process,
+            reply->hstdout = duplicate_handle( parent_thread->process, info->hstdout, process,
                                                0, TRUE, DUPLICATE_SAME_ACCESS );
-            reply->hstderr = duplicate_handle( parent, info->hstderr, process,
+            reply->hstderr = duplicate_handle( parent_thread->process, info->hstderr, process,
                                                0, TRUE, DUPLICATE_SAME_ACCESS );
         }
         else
@@ -260,7 +260,7 @@ static void init_process( int ppid, struct init_process_reply *reply )
     }
 
     /* set the process console */
-    if (!set_process_console( process, parent, info, reply )) return;
+    if (!set_process_console( process, parent_thread, info, reply )) return;
 
     if (parent)
     {
@@ -434,7 +434,7 @@ static void process_unload_dll( struct process *process, void *base )
 }
 
 /* kill all processes being attached to a console renderer */
-static void kill_console_processes( struct process *renderer, int exit_code )
+void kill_console_processes( struct thread *renderer, int exit_code )
 {
     for (;;)  /* restart from the beginning of the list every time */
     {
@@ -442,7 +442,7 @@ static void kill_console_processes( struct process *renderer, int exit_code )
 
         /* find the first process being attached to 'renderer' and still running */
         while (process &&
-               (process == renderer || !process->console ||
+               (process == renderer->process || !process->console ||
                 process->console->renderer != renderer || !process->running_threads))
         {
             process = process->next;
@@ -462,9 +462,6 @@ static void process_killed( struct process *process )
 
     /* close the console attached to this process, if any */
     free_console( process );
-
-    /* close the processes using process as renderer, if any */
-    kill_console_processes( process, 0 );
 
     while (process->exe.next)
     {

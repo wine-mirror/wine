@@ -413,9 +413,8 @@ static int debugger_attach( struct process *process, struct thread *debugger )
         if (thread->process == process) goto error;
 
     /* don't let a debugger debug its console... won't work */
-    if (debugger->process->console &&
-        debugger->process->console->renderer == process &&
-        process->console) goto error;
+    if (debugger->process->console && debugger->process->console->renderer->process == process)
+        goto error;
 
     suspend_process( process );
 

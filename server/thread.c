@@ -698,6 +698,7 @@ void kill_thread( struct thread *thread, int violent_death )
         /* if it is waiting on the socket, we don't need to send a SIGTERM */
         violent_death = 0;
     }
+    kill_console_processes( thread, 0 );
     debug_exit_thread( thread );
     abandon_mutexes( thread );
     remove_process_thread( thread->process, thread );

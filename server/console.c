@@ -180,7 +180,7 @@ static struct console_input_events *create_console_input_events(void)
     return evt;
 }
 
-static struct object *create_console_input( struct process* renderer )
+static struct object *create_console_input( struct thread* renderer )
 {
     struct console_input *console_input;
 
@@ -310,9 +310,10 @@ int free_console( struct process *process )
  *	2/ parent is a renderer which launches process, and process should attach to the console
  *	   renderered by parent
  */
-void inherit_console(struct process *parent, struct process *process, handle_t hconin)
+void inherit_console(struct thread *parent_thread, struct process *process, handle_t hconin)
 {
     int done = 0;
+    struct process* parent = parent_thread->process;
 
     /* if parent is a renderer, then attach current process to its console
      * a bit hacky....
@@ -323,7 +324,7 @@ void inherit_console(struct process *parent, struct process *process, handle_t h
 
         if ((console = (struct console_input*)get_handle_obj( parent, hconin, 0, NULL )))
 	{
-	    if (console->renderer == parent)
+	    if (console->renderer == parent_thread)
 	    {
 		process->console = (struct console_input*)grab_object( console );
 		process->console->num_proc++;
@@ -1097,7 +1098,7 @@ DECL_HANDLER(alloc_console)
         goto the_end;
     }
 
-    if ((console = (struct console_input*)create_console_input( renderer )))
+    if ((console = (struct console_input*)create_console_input( current )))
     {
         if ((in = alloc_handle( renderer, console, req->access, req->inherit )))
         {

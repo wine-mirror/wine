@@ -16,7 +16,7 @@ struct console_input
 {
     struct object                obj;           /* object header */
     int                          num_proc;      /* number of processes attached to this console */
-    struct process              *renderer;      /* console renderer thread */
+    struct thread               *renderer;      /* console renderer thread */
     int                          mode;          /* input mode */
     struct screen_buffer        *active;        /* active screen buffer */
     int                          recnum;        /* number of input records */
@@ -31,7 +31,7 @@ struct console_input
 
 /* console functions */
 
-extern void inherit_console(struct process *parent, struct process *process, handle_t hconin);
+extern void inherit_console(struct thread *parent_thread, struct process *process, handle_t hconin);
 extern int free_console( struct process *process );
 
 #endif  /* __WINE_SERVER_CONSOLE_H */
