@@ -28,7 +28,7 @@
 extern "C" {
 #endif /* defined(__cplusplus) */
 
-#include <pshpack1.h>
+#include <pshpack8.h>
 
 #ifndef NO_SHLWAPI_REG
 
@@ -926,7 +926,7 @@ typedef HRESULT (CALLBACK *DLLGETVERSIONPROC)(DLLVERSIONINFO *);
 typedef struct _DLLVERSIONINFO2 {
     DLLVERSIONINFO info1;
     DWORD          dwFlags;    /* Reserved */
-    ULONGLONG      ullVersion; /* 16 bits each for Major, Minor, Build, QFE */
+    ULONGLONG DECLSPEC_ALIGN(8) ullVersion; /* 16 bits each for Major, Minor, Build, QFE */
 } DLLVERSIONINFO2;
 
 #define DLLVER_MAJOR_MASK 0xFFFF000000000000
