@@ -975,11 +975,11 @@ MONTHCAL_SetRange(HWND hwnd, WPARAM wParam, LPARAM lParam)
   }
   if(wParam & GDTR_MIN) {
     if(MONTHCAL_ValidateTime(lprgSysTimeArray[0])) {
-      MONTHCAL_CopyTime(&lprgSysTimeArray[0], &infoPtr->maxDate);
+      MONTHCAL_CopyTime(&lprgSysTimeArray[0], &infoPtr->minDate);
       infoPtr->rangeValid|=GDTR_MIN;
     } else {
       GetSystemTime(&infoPtr->todaysDate);
-      MONTHCAL_CopyTime(&infoPtr->todaysDate, &infoPtr->maxDate);
+      MONTHCAL_CopyTime(&infoPtr->todaysDate, &infoPtr->minDate);
     }
   }
 
