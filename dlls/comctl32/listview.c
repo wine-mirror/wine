@@ -257,6 +257,7 @@ static LRESULT LISTVIEW_SetItemState(HWND hwnd, INT nItem, LPLVITEMW lpLVItem);
 static BOOL LISTVIEW_IsSelected(HWND hwnd, INT nItem);
 static VOID LISTVIEW_RemoveSelectionRange(HWND hwnd, INT lItem, INT uItem);
 static void LISTVIEW_FillBackground(HWND hwnd, HDC hdc, LPRECT rc);
+static void ListView_UpdateLargeItemLabelRect (HWND hwnd, const LISTVIEW_INFO* infoPtr, int nItem, RECT *rect);
 
 /******** Defines that LISTVIEW_ProcessLetterKeys uses ****************/
 #define KEY_DELAY       450
@@ -3275,7 +3276,7 @@ static VOID LISTVIEW_DrawLargeItem(HWND hwnd, HDC hdc, INT nItem, RECT rcItem,
   LVITEMW lvItem;
   UINT uFormat = DT_TOP | DT_CENTER | DT_WORDBREAK | DT_NOPREFIX |
                  DT_EDITCONTROL ;
-  /* Maintain this format in line with the one in LISTVIEW_UpdateLargeItemRect*/
+  /* Maintain this format in line with the one in LISTVIEW_UpdateLargeItemLabelRect*/
   RECT rcTemp;
 
   TRACE("(hwnd=%x, hdc=%x, nItem=%d, left=%d, top=%d, right=%d, bottom=%d)\n",
@@ -3420,8 +3421,20 @@ static VOID LISTVIEW_DrawLargeItem(HWND hwnd, HDC hdc, INT nItem, RECT rcItem,
    */
   if (uFormat & DT_NOCLIP)
   {
+      RECT rcBack=rcItem;
       HBRUSH hBrush = CreateSolidBrush(GetBkColor (hdc));
+      int dx, dy, old_wid, new_wid;
       DrawTextW (hdc, lvItem.pszText, -1, &rcItem, uFormat | DT_CALCRECT);
+      /* Microsoft, in their great wisdom, have decided that the rectangle
+       * returned by DrawText on DT_CALCRECT will only guarantee the dimension,
+       * not the location.  So we have to do the centring ourselves (and take
+       * responsibility for agreeing off-by-one consistency with them).
+       */
+      old_wid = rcItem.right-rcItem.left;
+      new_wid = rcBack.right - rcBack.left;
+      dx = rcBack.left - rcItem.left + (new_wid-old_wid)/2;
+      dy = rcBack.top - rcItem.top;
+      OffsetRect (&rcItem, dx, dy);
       FillRect(hdc, &rcItem, hBrush);
       DeleteObject(hBrush);
   }
@@ -5535,6 +5548,68 @@ static BOOL LISTVIEW_GetItemPosition(HWND hwnd, INT nItem, LPPOINT lpptPosition)
    return bResult;
 }
 
+/***
+ * Update the bounding rectangle around the text under a large icon.
+ * This depends on whether it has the focus or not.
+ * On entry the rectangle's top, left and right should be set.
+ * On return the bottom will also be set and the width may have been 
+ * modified.
+ *
+ * This appears to be weird, even in the Microsoft implementation.
+ */
+
+static void ListView_UpdateLargeItemLabelRect (
+        HWND hwnd,                    /* The window of the listview */
+        const LISTVIEW_INFO *infoPtr, /* The listview itself */
+        int nItem, /* The item for which we are calculating this */
+        RECT *rect) /* The rectangle to be updated */
+{
+    HDC hdc = GetDC (hwnd);
+    HFONT hOldFont = SelectObject (hdc, infoPtr->hFont);
+
+    if (infoPtr->bFocus && infoPtr->nFocusedItem == nItem)
+    {
+        /* We (aim to) display the full text.  In Windows 95 it appears to 
+         * calculate the size assuming the specified font and then it draws
+         * the text in that region with the specified font except scaled to 
+         * 10 point (or the height of the system font or ...).  Thus if the
+         * window has 24 point Helvetica the highlit rectangle will be 
+         * taller than the text and if it is 7 point Helvetica then the text
+         * will be clipped.
+         * For now we will simply say that it is the correct size to display
+         * the text in the specified font.
+         */
+        LVITEMW lvItem;
+        lvItem.mask = LVIF_TEXT;
+        lvItem.iItem = nItem;
+        lvItem.iSubItem = 0;
+        /* We will specify INTERNAL and so will receive back a const
+         * pointer to the text, rather than specifying a buffer to which
+         * to copy it.
+         */
+        LISTVIEW_GetItemW (hwnd, &lvItem, TRUE);
+        DrawTextW (hdc, lvItem.pszText, -1, rect, DT_CALCRECT |
+                        DT_NOCLIP | DT_EDITCONTROL | DT_TOP | DT_CENTER |
+                        DT_WORDBREAK | DT_NOPREFIX);
+        /* Maintain this DT_* list in line with LISTVIEW_DrawLargeItem */
+    }
+    else
+    {
+        /* As far as I can see the text region seems to be trying to be
+         * "tall enough for two lines of text".  Once again (comctl32.dll ver
+         * 5.81?) it measures this on the basis of the selected font and then
+         * draws it with the same font except in 10 point size.  This can lead
+         * to more or less than the two rows appearing.
+         * Question; are we  supposed to be including DT_EXTERNALLEADING? 
+         * Question; should the width be shrunk to the space required to 
+         * display the two lines?
+         */
+        rect->bottom = rect->top + 2 * infoPtr->ntmHeight;
+    }
+
+    SelectObject (hdc, hOldFont);
+    ReleaseDC (hwnd, hdc);
+}
 
 /***
  * DESCRIPTION:
@@ -5557,6 +5632,12 @@ static BOOL LISTVIEW_GetItemPosition(HWND hwnd, INT nItem, LPPOINT lpptPosition)
  * RETURN:
  *   SUCCESS : TRUE
  *   FAILURE : FALSE
+ *
+ * NOTES
+ *   Note that the bounding rectangle of the label in the LVS_ICON view depends
+ *   upon whether the window has the focus currently and on whether the item
+ *   is the one with the focus.  Ensure that the control's record of which 
+ *   item has the focus agrees with the items' records.
  */
 static LRESULT LISTVIEW_GetItemRect(HWND hwnd, INT nItem, LPRECT lprc)
 {
@@ -5670,9 +5751,8 @@ static LRESULT LISTVIEW_GetItemRect(HWND hwnd, INT nItem, LPRECT lprc)
               {
                 lprc->left += 1;
                 lprc->right = lprc->left + infoPtr->iconSpacing.cx - 1;
+                ListView_UpdateLargeItemLabelRect (hwnd, infoPtr, nItem, lprc);
               }
-	      
-              lprc->bottom = lprc->top + infoPtr->ntmHeight + HEIGHT_PADDING;
             }              
           }
         }
@@ -5741,6 +5821,7 @@ static LRESULT LISTVIEW_GetItemRect(HWND hwnd, INT nItem, LPRECT lprc)
           {
             if (LISTVIEW_GetOrigin(hwnd, &ptOrigin) != FALSE)
             {
+              RECT label_rect;
               INT text_left, text_right, icon_left, text_pos_x;
               /* for style LVS_ICON bounds
                *            left = min(icon.left, text.left)
@@ -5778,7 +5859,10 @@ static LRESULT LISTVIEW_GetItemRect(HWND hwnd, INT nItem, LPRECT lprc)
                              + infoPtr->iconSize.cy + 1
                               + ICON_BOTTOM_PADDING;
  
-               lprc->bottom += (infoPtr->ntmHeight + HEIGHT_PADDING);
+               CopyRect (&label_rect, lprc);
+               label_rect.top = lprc->bottom;
+               ListView_UpdateLargeItemLabelRect (hwnd, infoPtr, nItem, &label_rect);
+               UnionRect (lprc, lprc, &label_rect);
             }
           } 
         }
@@ -7243,6 +7327,7 @@ static LRESULT LISTVIEW_SetIconSpacing(HWND hwnd, DWORD spacing)
     if (uView == LVS_ICON) 
        infoPtr->iconSpacing.cy = infoPtr->iconSize.cy + infoPtr->ntmHeight
                                   + ICON_BOTTOM_PADDING + ICON_TOP_PADDING + LABEL_VERT_OFFSET;
+        /* FIXME.  I don't think so; I think it is based on twice the ntmHeight */
     else /* FIXME: unknown computation for non LVS_ICON - this is a guess */
        infoPtr->iconSpacing.cy = LISTVIEW_GetItemHeight(hwnd);
   }
