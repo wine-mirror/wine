@@ -309,6 +309,21 @@
 @ stub SystemFunction028
 @ stub SystemFunction029
 @ stub SystemFunction030
+@ stub SystemFunction031
+@ stub SystemFunction032
+@ stub SystemFunction033
+@ stub SystemFunction034
+@ stub SystemFunction035
+@ stub SystemFunction036
+@ stub SystemFunction040
+@ stub SystemFunction041
+@ stub TraceEvent
+@ stub TraceEventInstance
+@ stub TraceMessage
+@ stub TraceMessageVa
+@ stub UnregisterTraceGuids
+@ stub UpdateTraceA
+@ stub UpdateTraceW
 @ stub LsaQueryInfoTrustedDomain
 @ stub LsaQuerySecret
 @ stub LsaCreateSecret
@@ -339,12 +354,12 @@
 @ stdcall SynchronizeWindows31FilesAndWindowsNTRegistry(long long long long)
 @ stdcall QueryWindows31FilesMigration(long)
 @ stub LsaICLookupSids
-@ stub SystemFunction031
 @ stub I_ScSetServiceBitsA
 @ stub EnumServiceGroupA
 @ stub EnumServiceGroupW
 @ stdcall CheckTokenMembership(long ptr ptr)
+@ stub WdmWmiServiceMain
+@ stub WmiCloseBlock
+@ stub WmiOpenBlock
 @ stub WmiQuerySingleInstanceW
 @ stub WmiSetSingleInstanceW
-@ stub WmiOpenBlock
-@ stub WmiCloseBlock
