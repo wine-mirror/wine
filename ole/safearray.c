@@ -387,6 +387,13 @@ HRESULT WINAPI SafeArrayGetLBound(
 UINT WINAPI SafeArrayGetDim(
   SAFEARRAY * psa)
 { 
+  /*
+   * A quick test in Windows shows that the behavior here for an invalid
+   * pointer is to return 0.
+   */
+  if(! validArg(psa)) 
+    return 0;
+
   return psa->cDims;
 }
 
@@ -396,6 +403,13 @@ UINT WINAPI SafeArrayGetDim(
 UINT WINAPI SafeArrayGetElemsize(
   SAFEARRAY * psa)
 { 
+  /*
+   * A quick test in Windows shows that the behavior here for an invalid
+   * pointer is to return 0.
+   */
+  if(! validArg(psa)) 
+    return 0;
+
   return psa->cbElements;
 }
 
@@ -727,6 +741,12 @@ static BOOL validArg(
   LONG psaSize  = 0;
   LONG descSize = 0;
   LONG fullSize = 0;
+
+  /*
+   * Let's check for the null pointer just in case.
+   */
+  if (psa == NULL)
+    return FALSE;
 
   /* Check whether the size of the chunk make sens... That's the only thing
      I can think of now... */

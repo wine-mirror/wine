@@ -1644,14 +1644,12 @@ static HRESULT WINAPI ValidateVt( VARTYPE vt )
  */
 void WINAPI VariantInit(VARIANTARG* pvarg)
 {
-	TRACE(ole,"(%p),stub\n",pvarg);
+  TRACE(ole,"(%p),stub\n",pvarg);
 
-	pvarg->vt = VT_EMPTY;
-	pvarg->wReserved1 = 0;
-	pvarg->wReserved2= 0;
-	pvarg->wReserved3= 0;
+  memset(pvarg, 0, sizeof (VARIANTARG));
+  pvarg->vt = VT_EMPTY;
 
-	return;
+  return;
 }
 
 /******************************************************************************
@@ -1664,41 +1662,51 @@ void WINAPI VariantInit(VARIANTARG* pvarg)
  */
 HRESULT WINAPI VariantClear(VARIANTARG* pvarg)
 {
-	HRESULT res = S_OK;
-	TRACE(ole,"(%p),stub\n",pvarg);
+  HRESULT res = S_OK;
+  TRACE(ole,"(%p)\n",pvarg);
 
-	res = ValidateVariantType( pvarg->vt );
-	if( res == S_OK )
+  res = ValidateVariantType( pvarg->vt );
+  if( res == S_OK )
+  {
+    if( !( pvarg->vt & VT_BYREF ) )
+    {
+      /*
+       * The VT_ARRAY flag is a special case of a safe array.
+       */
+      if ( (pvarg->vt & VT_ARRAY) != 0)
+      {
+	SafeArrayDestroy(pvarg->u.parray);
+      }
+      else
+      {
+	switch( pvarg->vt & VT_TYPEMASK )
 	{
-		if( !( pvarg->vt & VT_BYREF ) )
-		{
-			switch( pvarg->vt & VT_TYPEMASK )
-			{
-			case( VT_BSTR ):
-				SysFreeString( pvarg->u.bstrVal );
-				break;
-			case( VT_DISPATCH ):
-				break;
-			case( VT_VARIANT ):
-				break;
-			case( VT_UNKNOWN ):
-				break;
-			case( VT_SAFEARRAY ):
-				break;
-			default:
-				break;
-			}
-		}
-		
-		/* Set the fields to empty.
-		 */
-		pvarg->wReserved1 = 0;
-		pvarg->wReserved2 = 0;
-		pvarg->wReserved3 = 0;
-		pvarg->vt = VT_EMPTY;
+	  case( VT_BSTR ):
+	    SysFreeString( pvarg->u.bstrVal );
+	    break;
+	  case( VT_DISPATCH ):
+	    break;
+	  case( VT_VARIANT ):
+	    break;
+	  case( VT_UNKNOWN ):
+	    break;
+	  case( VT_SAFEARRAY ):
+	    SafeArrayDestroy(pvarg->u.parray);
+	    break;
+	  default:
+	    break;
 	}
+      }
+    }
+	
+    /*
+     * Empty all the fields and mark the type as empty.
+     */
+    memset(pvarg, 0, sizeof (VARIANTARG));
+    pvarg->vt = VT_EMPTY;
+  }
 
-	return res;
+  return res;
 }
 
 /******************************************************************************
@@ -1708,59 +1716,72 @@ HRESULT WINAPI VariantClear(VARIANTARG* pvarg)
  */
 HRESULT WINAPI VariantCopy(VARIANTARG* pvargDest, VARIANTARG* pvargSrc)
 {
-	HRESULT res = S_OK;
-	TRACE(ole,"(%p, %p),stub\n", pvargDest, pvargSrc);
+  HRESULT res = S_OK;
 
-	res = ValidateVariantType( pvargSrc->vt );
-	/* If the pointer are to the same variant we don't need
-	 * to do anything.
+  TRACE(ole,"(%p, %p)\n", pvargDest, pvargSrc);
+
+  res = ValidateVariantType( pvargSrc->vt );
+
+  /* If the pointer are to the same variant we don't need
+   * to do anything.
+   */
+  if( pvargDest != pvargSrc && res == S_OK )
+  {
+    res = VariantClear( pvargDest );
+		
+    if( res == S_OK )
+    {
+      if( pvargSrc->vt & VT_BYREF )
+      {
+	/* In the case of byreference we only need
+	 * to copy the pointer.
 	 */
-	if( pvargDest != pvargSrc && res == S_OK )
+	pvargDest->u = pvargSrc->u;
+	pvargDest->vt = pvargSrc->vt;
+      }
+      else
+      {
+	/*
+	 * The VT_ARRAY flag is another way to designate a safe array.
+	 */
+	if (pvargSrc->vt & VT_ARRAY)
 	{
-		res = VariantClear( pvargDest );
-		
-		if( res == S_OK )
-		{
-			if( pvargSrc->vt & VT_BYREF )
-			{
-				/* In the case of byreference we only need
-				 * to copy the pointer.
-				 */
-				pvargDest->u = pvargSrc->u;
-				pvargDest->vt = pvargSrc->vt;
-			}
-			else
-			{
-				/* In the case of by value we need to
-				 * copy the actuall value. In the case of
-				 * VT_BSTR a copy of the string is made,
-				 * if VT_ARRAY the entire array is copied
-				 * if VT_DISPATCH or VT_IUNKNOWN AddReff is
-				 * called to increment the object's reference count.
-				 */
-				switch( pvargSrc->vt & VT_TYPEMASK )
-				{
-				case( VT_BSTR ):
-				   pvargDest->u.bstrVal = SysAllocString( pvargSrc->u.bstrVal );
-				   break;
-				case( VT_DISPATCH ):
-					break;
-				case( VT_VARIANT ):
-					break;
-				case( VT_UNKNOWN ):
-					break;
-				case( VT_SAFEARRAY ):
-					break;
-				default:
-					pvargDest->u = pvargSrc->u;
-					break;
-				}
-				pvargDest->vt = pvargSrc->vt;
-			}
-		
-		}
+	  SafeArrayCopy(pvargSrc->u.parray, &pvargDest->u.parray);
 	}
-	return res;
+	else
+	{
+	  /* In the case of by value we need to
+	   * copy the actuall value. In the case of
+	   * VT_BSTR a copy of the string is made,
+	   * if VT_DISPATCH or VT_IUNKNOWN AddReff is
+	   * called to increment the object's reference count.
+	   */
+	  switch( pvargSrc->vt & VT_TYPEMASK )
+	  {
+	    case( VT_BSTR ):
+	      pvargDest->u.bstrVal = SysAllocString( pvargSrc->u.bstrVal );
+	      break;
+	    case( VT_DISPATCH ):
+	      break;
+	    case( VT_VARIANT ):
+	      break;
+	    case( VT_UNKNOWN ):
+	      break;
+	    case( VT_SAFEARRAY ):
+	      SafeArrayCopy(pvargSrc->u.parray, &pvargDest->u.parray);
+	      break;
+	    default:
+	      pvargDest->u = pvargSrc->u;
+	      break;
+	  }
+	}
+	
+	pvargDest->vt = pvargSrc->vt;
+      }      
+    }
+  }
+
+  return res;
 }
 
 
@@ -1772,101 +1793,122 @@ HRESULT WINAPI VariantCopy(VARIANTARG* pvargDest, VARIANTARG* pvargSrc)
  */
 HRESULT WINAPI VariantCopyInd(VARIANT* pvargDest, VARIANTARG* pvargSrc)
 {
-	HRESULT res = S_OK;
-	TRACE(ole,"(%p, %p),stub\n", pvargDest, pvargSrc);
+  HRESULT res = S_OK;
 
-	res = ValidateVariantType( pvargSrc->vt );
-	if( res != S_OK )
-		return res;
-	
-	if( pvargSrc->vt & VT_BYREF )
+  TRACE(ole,"(%p, %p)\n", pvargDest, pvargSrc);
+
+  res = ValidateVariantType( pvargSrc->vt );
+
+  if( res != S_OK )
+    return res;
+  
+  if( pvargSrc->vt & VT_BYREF )
+  {
+    VARIANTARG varg;
+    VariantInit( &varg );
+
+    /* handle the in place copy.
+     */
+    if( pvargDest == pvargSrc )
+    {
+      /* we will use a copy of the source instead.
+       */
+      res = VariantCopy( &varg, pvargSrc );
+      pvargSrc = &varg;
+    }
+
+    if( res == S_OK )
+    {
+      res = VariantClear( pvargDest );
+
+      if( res == S_OK )
+      {
+	/*
+	 * The VT_ARRAY flag is another way to designate a safearray variant.
+	 */
+	if ( pvargSrc->vt & VT_ARRAY)
 	{
-		VARIANTARG varg;
-		VariantInit( &varg );
-		/* handle the in place copy.
-		 */
-		if( pvargDest == pvargSrc )
-		{
-			/* we will use a copy of the source instead.
-			 */
-			res = VariantCopy( &varg, pvargSrc );
-			pvargSrc = &varg;
-		}
-		if( res == S_OK )
-		{
-			res = VariantClear( pvargDest );
-			if( res == S_OK )
-			{
-				/* In the case of by reference we need
-				 * to copy the date pointed to by the variant.
-				 */
-				/* Get the variant type.
-				 */
-				switch( pvargSrc->vt & VT_TYPEMASK )
-				{
-				case( VT_BSTR ):
-				   pvargDest->u.bstrVal = SysAllocString( *(pvargSrc->u.pbstrVal) );
-				   break;
-				case( VT_DISPATCH ):
-					break;
-				case( VT_VARIANT ):
-					{
-						/* Prevent from cycling.  According to tests on
-						 * VariantCopyInd in Windows and the documentation
-						 * this API dereferences the inner Variants to only one depth.
-						 * If the inner Variant itself contains an
-						 * other inner variant the E_INVALIDARG error is
-						 * returned. 
-						 */
-						if( pvargSrc->wReserved1 & PROCESSING_INNER_VARIANT )
-						{
-							/* If we get here we are attempting to deference
-							 * an inner variant that that is itself contained
-							 * in an inner variant so report E_INVALIDARG error.
-							 */
-							 res = E_INVALIDARG;
-						}
-						else
-						{
-							/* Set the processing inner variant flag.
-							 * We will set this flag in the inner variant
-							 * that will be passed to the VariantCopyInd function.
-							 */
-							(pvargSrc->u.pvarVal)->wReserved1 |= PROCESSING_INNER_VARIANT;
-							/* Dereference the inner variant.
-							 */
-							res = VariantCopyInd( pvargDest, pvargSrc->u.pvarVal );
-						}
-					}
-					break;
-				case( VT_UNKNOWN ):
-					break;
-				case( VT_SAFEARRAY ):
-					break;
-				default:
-                    /* This is a by reference Variant which means that the union
-                     * part of the Variant contains a pointer to some data of
-                     * type "pvargSrc->vt & VT_TYPEMASK".
-                     * We will deference this data in a generic fashion using
-                     * the void pointer "Variant.u.byref".
-                     * We will copy this data into the union of the destination
-                     * Variant.
-					 */
-					memcpy( &pvargDest->u, pvargSrc->u.byref, SizeOfVariantData( pvargSrc ) );
-					break;
-				}
-				pvargDest->vt = pvargSrc->vt & VT_TYPEMASK;
-			}
-		}
-		/* this should not fail.
-		 */
-		VariantClear( &varg );
+	  SafeArrayCopy(*pvargSrc->u.pparray, &pvargDest->u.parray);
 	}
 	else
 	{
-		res = VariantCopy( pvargDest, pvargSrc );
+	  /* In the case of by reference we need
+	   * to copy the date pointed to by the variant.
+	   */
+
+	  /* Get the variant type.
+	   */
+	  switch( pvargSrc->vt & VT_TYPEMASK )
+	  {
+	    case( VT_BSTR ):
+	      pvargDest->u.bstrVal = SysAllocString( *(pvargSrc->u.pbstrVal) );
+	      break;
+	    case( VT_DISPATCH ):
+	      break;
+	    case( VT_VARIANT ):
+	      {
+		/* Prevent from cycling.  According to tests on
+		 * VariantCopyInd in Windows and the documentation
+		 * this API dereferences the inner Variants to only one depth.
+		 * If the inner Variant itself contains an
+		 * other inner variant the E_INVALIDARG error is
+		 * returned. 
+		 */
+		if( pvargSrc->wReserved1 & PROCESSING_INNER_VARIANT )
+		{
+		  /* If we get here we are attempting to deference
+		   * an inner variant that that is itself contained
+		   * in an inner variant so report E_INVALIDARG error.
+		   */
+		  res = E_INVALIDARG;
+		}
+		else
+		{
+		  /* Set the processing inner variant flag.
+		   * We will set this flag in the inner variant
+		   * that will be passed to the VariantCopyInd function.
+		   */
+		  (pvargSrc->u.pvarVal)->wReserved1 |= PROCESSING_INNER_VARIANT;
+		  
+		  /* Dereference the inner variant.
+		   */
+		  res = VariantCopyInd( pvargDest, pvargSrc->u.pvarVal );
+		}
+	      }
+	      break;
+	    case( VT_UNKNOWN ):
+	      break;
+	    case( VT_SAFEARRAY ):
+	      SafeArrayCopy(*pvargSrc->u.pparray, &pvargDest->u.parray);
+	      break;
+	    default:
+	      /* This is a by reference Variant which means that the union
+	       * part of the Variant contains a pointer to some data of
+	       * type "pvargSrc->vt & VT_TYPEMASK".
+	       * We will deference this data in a generic fashion using
+	       * the void pointer "Variant.u.byref".
+	       * We will copy this data into the union of the destination
+	       * Variant.
+	       */
+	      memcpy( &pvargDest->u, pvargSrc->u.byref, SizeOfVariantData( pvargSrc ) );
+	      break;
+	  }
 	}
-	return res;
+	
+	pvargDest->vt = pvargSrc->vt & VT_TYPEMASK;
+      }
+    }
+
+    /* this should not fail.
+     */
+    VariantClear( &varg );
+  }
+  else
+  {
+    res = VariantCopy( pvargDest, pvargSrc );
+  }
+
+  return res;
 }
 
 /******************************************************************************
