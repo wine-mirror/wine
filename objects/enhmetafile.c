@@ -9,6 +9,7 @@
 #include "winbase.h"
 #include "winnt.h"
 #include "debug.h"
+#include "winerror.h"
 
 /*****************************************************************************
  *          GetEnhMetaFile32A (GDI32.174)
@@ -501,5 +502,53 @@ HENHMETAFILE32 WINAPI CopyEnhMetaFile32A(
     return 0;
   }
 }
+
+/*****************************************************************************
+ *  GetEnhMetaFilePaletteEntries (GDI32.179)  
+ * 
+ *  Copy the palette and report size  
+ */
+
+UINT32 WINAPI GetEnhMetaFilePaletteEntries(HENHMETAFILE32 hemf,
+					     UINT32 cEntries,
+					     LPPALETTEENTRY lppe)
+{
+  LPENHMETAHEADER h = GlobalLock32(hemf);
+  UINT32 temp = h->nPalEntries;
+  if ( h == NULL ){
+    GlobalUnlock32(hemf);
+    return(0);
+  } else {
+    if ((lppe)&&(cEntries>0)){
+      FIXME(metafile,"Stub\n");
+      GlobalUnlock32(hemf);
+      return(GDI_ERROR);
+    } else{
+      GlobalUnlock32(hemf);
+      return(0);
+    }
+  }
+}
+
+
+
+/******************************************************************
+ *         SetWinMetaFileBits   (GDI32.343)
+ *      
+ *         Translate from old style to new style.
+ */
+
+HENHMETAFILE32 WINAPI SetWinMetaFileBits(UINT32 cbBuffer,
+					   CONST BYTE *lpbBuffer,
+					   HDC32 hdcRef,
+					   CONST METAFILEPICT32 *lpmfp
+					   ) 
+{
+   FIXME(metafile,"Stub\n");
+   return NULL;
+
+}
+
+
 
 

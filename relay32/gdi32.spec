@@ -181,7 +181,7 @@ init	MAIN_GdiInit
 176 stdcall GetEnhMetaFileDescriptionA(long long ptr) GetEnhMetaFileDescription32A
 177 stdcall GetEnhMetaFileDescriptionW(long long ptr) GetEnhMetaFileDescription32W
 178 stdcall GetEnhMetaFileHeader(long long ptr) GetEnhMetaFileHeader
-179 stub GetEnhMetaFilePaletteEntries
+179 stdcall GetEnhMetaFilePaletteEntries (long long ptr) GetEnhMetaFilePaletteEntries
 180 stub GetEnhMetaFileW
 181 stdcall GetFontData(long long long ptr long) GetFontData32
 182 stdcall GetFontLanguageInfo(long) GetFontLanguageInfo32
@@ -345,7 +345,7 @@ init	MAIN_GdiInit
 340 stdcall SetViewportExtEx(long long long ptr) SetViewportExtEx32
 341 stdcall SetViewportOrgEx(long long long ptr) SetViewportOrgEx32
 342 stub SetVirtualResolution
-343 stub SetWinMetaFileBits
+343 stdcall SetWinMetaFileBits(long ptr long ptr) SetWinMetaFileBits
 344 stdcall SetWindowExtEx(long long long ptr) SetWindowExtEx32
 345 stdcall SetWindowOrgEx(long long long ptr) SetWindowOrgEx32
 346 stdcall SetWorldTransform(long ptr) SetWorldTransform
