@@ -305,6 +305,9 @@ void wine_pthread_init_current_teb( struct wine_pthread_thread_info *info )
     wine_ldt_set_limit( &fs_entry, info->teb_size - 1 );
     wine_ldt_set_flags( &fs_entry, WINE_LDT_FLAGS_DATA|WINE_LDT_FLAGS_32BIT );
     wine_ldt_init_fs( info->teb_sel, &fs_entry );
+#elif defined(HAVE__LWP_CREATE)
+    /* On non-i386 Solaris, we use the LWP private pointer */
+    _lwp_setprivate( info->teb_base );
 #elif defined(__powerpc__)
     /* On PowerPC, the current TEB is in the gpr13 register */
 # ifdef __APPLE__
