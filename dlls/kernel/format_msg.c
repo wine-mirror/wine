@@ -170,7 +170,6 @@ DWORD WINAPI FormatMessageA(
 		from = HEAP_strdupA( GetProcessHeap(), 0, (LPSTR)lpSource);
 	}
 	else {
-		dwMessageId &= 0xFFFF;
 		if (dwFlags & FORMAT_MESSAGE_FROM_SYSTEM)
 			hmodule = GetModuleHandleA("kernel32");
 		bufsize=load_messageA(hmodule,dwMessageId,dwLanguageId,NULL,100);
@@ -381,7 +380,6 @@ DWORD WINAPI FormatMessageW(
 		from = HEAP_strdupWtoA(GetProcessHeap(),0,(LPWSTR)lpSource);
 	}
 	else {
-		dwMessageId &= 0xFFFF;
 		if (dwFlags & FORMAT_MESSAGE_FROM_SYSTEM)
 			hmodule = GetModuleHandleA("kernel32");
 		bufsize=load_messageA(hmodule,dwMessageId,dwLanguageId,NULL,100);
