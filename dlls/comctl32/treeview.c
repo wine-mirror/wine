@@ -1504,7 +1504,7 @@ TREEVIEW_InsertItemA (HWND hwnd, WPARAM wParam, LPARAM lParam)
     memcpy (&infoPtr->items[0], &oldItems[0],
                     infoPtr->uNumPtrsAlloced/2 * sizeof(TREEVIEW_ITEM));
     memcpy (&infoPtr->freeList[0], &oldfreeList[0],
-                    infoPtr->uNumPtrsAlloced>>6 * sizeof(INT));
+                    (infoPtr->uNumPtrsAlloced>>6) * sizeof(INT));
 
     COMCTL32_Free (oldItems);  
     COMCTL32_Free (oldfreeList);  
