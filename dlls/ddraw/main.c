@@ -241,6 +241,8 @@ static HRESULT DDRAW_Create(
     LPDIRECTDRAW7 pDD;
     HRESULT hr;
 
+    TRACE("(%s,%p,%p,%d)\n", debugstr_guid(lpGUID), lplpDD, pUnkOuter, ex);
+
     if (DDRAW_num_drivers == 0)
     {
 	WARN("no DirectDraw drivers registered\n");
@@ -250,8 +252,6 @@ static HRESULT DDRAW_Create(
     if (lpGUID == (LPGUID)DDCREATE_EMULATIONONLY
 	|| lpGUID == (LPGUID)DDCREATE_HARDWAREONLY)
 	lpGUID = NULL;
-
-    TRACE("(%s,%p,%p)\n",debugstr_guid(lpGUID),lplpDD,pUnkOuter);
 
     if (pUnkOuter != NULL)
 	return DDERR_INVALIDPARAMS; /* CLASS_E_NOAGGREGATION? */
@@ -277,7 +277,8 @@ static HRESULT DDRAW_Create(
 HRESULT WINAPI DirectDrawCreate(
 	LPGUID lpGUID, LPDIRECTDRAW* lplpDD, LPUNKNOWN pUnkOuter
 ) {
-  return DDRAW_Create(lpGUID,(LPVOID*)lplpDD,pUnkOuter,&IID_IDirectDraw,FALSE);
+    TRACE("(%s,%p,%p)\n", debugstr_guid(lpGUID), lplpDD, pUnkOuter);
+    return DDRAW_Create(lpGUID, (LPVOID*) lplpDD, pUnkOuter, &IID_IDirectDraw, FALSE);
 }
 
 /***********************************************************************
@@ -290,10 +291,12 @@ HRESULT WINAPI DirectDrawCreate(
 HRESULT WINAPI DirectDrawCreateEx(
 	LPGUID lpGUID, LPVOID* lplpDD, REFIID iid, LPUNKNOWN pUnkOuter
 ) {
+    TRACE("(%s,%p,%s,%p)\n", debugstr_guid(lpGUID), lplpDD, debugstr_guid(iid), pUnkOuter);
+
     if (!IsEqualGUID(iid, &IID_IDirectDraw7))
 	return DDERR_INVALIDPARAMS;
 
-  return DDRAW_Create(lpGUID, lplpDD, pUnkOuter, iid, TRUE);
+    return DDRAW_Create(lpGUID, lplpDD, pUnkOuter, iid, TRUE);
 }
 
 extern HRESULT Uninit_DirectDraw_Create(const GUID*, LPDIRECTDRAW7*,
@@ -305,8 +308,17 @@ static HRESULT DDRAW_CreateDirectDraw(IUnknown* pUnkOuter, REFIID iid,
 {
     LPDIRECTDRAW7 pDD;
     HRESULT hr;
+    BOOL ex;
 
-    hr = Uninit_DirectDraw_Create(NULL, &pDD, pUnkOuter, TRUE); /* ex? */
+    TRACE("(%p,%s,%p)\n", pUnkOuter, debugstr_guid(iid), ppObj);
+    
+    /* This is a mighty hack :-) */
+    if (IsEqualGUID(iid, &IID_IDirectDraw7))
+	ex = TRUE;
+    else
+        ex = FALSE;
+    
+    hr = Uninit_DirectDraw_Create(NULL, &pDD, pUnkOuter, ex);
     if (FAILED(hr)) return hr;
 
     hr = IDirectDraw7_QueryInterface(pDD, iid, ppObj);
@@ -349,6 +361,8 @@ DDCF_QueryInterface(LPCLASSFACTORY iface,REFIID riid,LPVOID *ppobj)
 {
     ICOM_THIS(IClassFactoryImpl,iface);
 
+    TRACE("(%p)->(%s,%p)\n", This, debugstr_guid(riid), ppobj);
+    
     if (IsEqualGUID(riid, &IID_IUnknown)
 	|| IsEqualGUID(riid, &IID_IClassFactory))
     {
@@ -363,18 +377,21 @@ DDCF_QueryInterface(LPCLASSFACTORY iface,REFIID riid,LPVOID *ppobj)
 
 static ULONG WINAPI DDCF_AddRef(LPCLASSFACTORY iface) {
     ICOM_THIS(IClassFactoryImpl,iface);
+
+    TRACE("(%p)->() incrementing from %ld.\n", This, This->ref);
+    
     return ++(This->ref);
 }
 
 static ULONG WINAPI DDCF_Release(LPCLASSFACTORY iface) {
     ICOM_THIS(IClassFactoryImpl,iface);
 
-    ULONG ref = --This->ref;
+    TRACE("(%p)->() decrementing from %ld.\n", This, This->ref);
 
-    if (ref == 0)
+    if (--This->ref == 0)
 	HeapFree(GetProcessHeap(), 0, This);
 
-    return ref;
+    return This->ref;
 }
 
 

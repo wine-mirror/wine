@@ -698,31 +698,47 @@ IDirectDraw4Impl_GetVerticalBlankStatus(LPDIRECTDRAW4 This, LPBOOL lpbIsInVB)
 }
 
 static HRESULT WINAPI
-IDirectDrawImpl_Initialize(LPDIRECTDRAW This, LPGUID pGUID)
+IDirectDrawImpl_Initialize(LPDIRECTDRAW iface, LPGUID pGUID)
 {
-    return IDirectDraw7_Initialize(COM_INTERFACE_CAST(IDirectDrawImpl,
-						      IDirectDraw,
-						      IDirectDraw7, This),
-				   pGUID);
+    ICOM_THIS_FROM(IDirectDrawImpl, IDirectDraw, iface);
+    HRESULT ret_value;
+
+    ret_value = IDirectDraw7_Initialize(ICOM_INTERFACE(This, IDirectDraw7), pGUID);
+    
+    /* Overwrite the falsely set 'DIRECTDRAW7' flag */
+    This->local.dwLocalFlags &= ~DDRAWILCL_DIRECTDRAW7;
+    
+    return ret_value;
 }
 
 static HRESULT WINAPI
-IDirectDraw2Impl_Initialize(LPDIRECTDRAW2 This, LPGUID pGUID)
+IDirectDraw2Impl_Initialize(LPDIRECTDRAW2 iface, LPGUID pGUID)
 {
-    return IDirectDraw7_Initialize(COM_INTERFACE_CAST(IDirectDrawImpl,
-						      IDirectDraw2,
-						      IDirectDraw7, This),
-				   pGUID);
+    ICOM_THIS_FROM(IDirectDrawImpl, IDirectDraw2, iface);
+    HRESULT ret_value;
+    
+    ret_value = IDirectDraw7_Initialize(ICOM_INTERFACE(This, IDirectDraw7), pGUID);
+
+    /* Overwrite the falsely set 'DIRECTDRAW7' flag */
+    This->local.dwLocalFlags &= ~DDRAWILCL_DIRECTDRAW7;
+    
+    return ret_value;
 }
 
 static HRESULT WINAPI
-IDirectDraw4Impl_Initialize(LPDIRECTDRAW4 This, LPGUID pGUID)
+IDirectDraw4Impl_Initialize(LPDIRECTDRAW4 iface, LPGUID pGUID)
 {
-    return IDirectDraw7_Initialize(COM_INTERFACE_CAST(IDirectDrawImpl,
-						      IDirectDraw4,
-						      IDirectDraw7, This),
-				   pGUID);
+    ICOM_THIS_FROM(IDirectDrawImpl, IDirectDraw4, iface);
+    HRESULT ret_value;
+    
+    ret_value = IDirectDraw7_Initialize(ICOM_INTERFACE(This, IDirectDraw7), pGUID);
+    
+    /* Overwrite the falsely set 'DIRECTDRAW7' flag */
+    This->local.dwLocalFlags &= ~DDRAWILCL_DIRECTDRAW7;
+    
+    return ret_value;
 }
+
 
 static HRESULT WINAPI
 IDirectDrawImpl_RestoreDisplayMode(LPDIRECTDRAW This)

@@ -335,7 +335,7 @@ HRESULT HAL_DirectDraw_Construct(IDirectDrawImpl *This, BOOL ex)
 {
     HRESULT hr;
 
-    TRACE("(%p)\n", This);
+    TRACE("(%p,%d)\n", This, ex);
 
     hr = User_DirectDraw_Construct(This, ex);
     if (FAILED(hr)) return hr;
