@@ -8,7 +8,10 @@
 
 static int dump_new_thread_request( struct new_thread_request *req, int len )
 {
-    fprintf( stderr, " pid=%p", req->pid );
+    fprintf( stderr, " pid=%p,", req->pid );
+    fprintf( stderr, " suspend=%d,", req->suspend );
+    fprintf( stderr, " tinherit=%d,", req->tinherit );
+    fprintf( stderr, " pinherit=%d", req->pinherit );
     return (int)sizeof(*req);
 }
 

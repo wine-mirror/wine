@@ -9,6 +9,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <signal.h>
 #include <sys/types.h>
 #include <sys/uio.h>
 #include <unistd.h>
@@ -113,8 +114,9 @@ DECL_HANDLER(new_thread)
         err = ERROR_TOO_MANY_OPEN_FILES;
         goto done;
     }
-    if (!(new_thread = create_thread( new_fd, req->pid, &reply.thandle,
-                                      &reply.phandle )))
+    if (!(new_thread = create_thread( new_fd, req->pid, req->suspend,
+                                      req->tinherit, req->pinherit,
+                                      &reply.thandle, &reply.phandle )))
     {
         close( new_fd );
         err = ERROR_OUTOFMEMORY;
@@ -153,6 +155,8 @@ DECL_HANDLER(init_thread)
     current->name[len] = '\0';
     CLEAR_ERROR();
  done:
+    if (current->suspend > 0 && current->unix_pid)
+        kill( current->unix_pid, SIGSTOP );
     send_reply( current, -1, 0 );
 }
 

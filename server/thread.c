@@ -75,8 +75,9 @@ static struct thread *first_thread;
 
 
 /* create a new thread */
-struct thread *create_thread( int fd, void *pid, int *thread_handle,
-                              int *process_handle )
+struct thread *create_thread( int fd, void *pid, int suspend,
+                              int thread_inherit, int process_inherit,
+                              int *thread_handle, int *process_handle )
 {
     struct thread *thread;
     struct process *process;
@@ -107,7 +108,7 @@ struct thread *create_thread( int fd, void *pid, int *thread_handle,
     thread->prev      = NULL;
     thread->priority  = THREAD_PRIORITY_NORMAL;
     thread->affinity  = 1;
-    thread->suspend   = 0;
+    thread->suspend   = suspend? 1 : 0;
 
     if (first_thread) first_thread->prev = thread;
     first_thread = thread;
@@ -117,13 +118,13 @@ struct thread *create_thread( int fd, void *pid, int *thread_handle,
     if (current)
     {
         if ((*thread_handle = alloc_handle( current->process, thread,
-                                            THREAD_ALL_ACCESS, 0 )) == -1)
+                                            THREAD_ALL_ACCESS, thread_inherit )) == -1)
             goto error;
     }
     if (current && !pid)
     {
         if ((*process_handle = alloc_handle( current->process, process,
-                                             PROCESS_ALL_ACCESS, 0 )) == -1)
+                                             PROCESS_ALL_ACCESS, process_inherit )) == -1)
             goto error;
     }
 

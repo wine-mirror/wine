@@ -44,6 +44,9 @@ struct cmsg_fd
 struct new_thread_request
 {
     void*        pid;          /* process id for the new thread (or 0 if none yet) */
+    int          suspend;      /* new thread should be suspended on creation */ 
+    int          tinherit;     /* inherit flag for thread handle */
+    int          pinherit;     /* inherit flag for process handle */
 };
 struct new_thread_reply
 {
@@ -656,7 +659,9 @@ extern unsigned int CLIENT_WaitReply( int *len, int *passed_fd,
 extern unsigned int CLIENT_WaitSimpleReply( void *reply, int len, int *passed_fd );
 
 struct _THDB;
-extern int CLIENT_NewThread( struct _THDB *thdb, int *thandle, int *phandle );
+extern int CLIENT_NewThread( struct _THDB *thdb, 
+                             LPSECURITY_ATTRIBUTES psa, LPSECURITY_ATTRIBUTES tsa,
+                             int *thandle, int *phandle );
 extern int CLIENT_SetDebug( int level );
 extern int CLIENT_InitThread(void);
 #endif  /* __WINE_SERVER__ */

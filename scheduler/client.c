@@ -276,7 +276,9 @@ unsigned int CLIENT_WaitSimpleReply( void *reply, int len, int *passed_fd )
  *
  * Send a new thread request.
  */
-int CLIENT_NewThread( THDB *thdb, int *thandle, int *phandle )
+int CLIENT_NewThread( THDB *thdb, 
+                      LPSECURITY_ATTRIBUTES psa, LPSECURITY_ATTRIBUTES tsa,
+                      int *thandle, int *phandle )
 {
     struct new_thread_request request;
     struct new_thread_reply reply;
@@ -289,6 +291,9 @@ int CLIENT_NewThread( THDB *thdb, int *thandle, int *phandle )
     }
 
     request.pid = thdb->process->server_pid;
+    request.suspend = (thdb->flags & CREATE_SUSPENDED)? TRUE : FALSE;
+    request.tinherit = (tsa && (tsa->nLength>=sizeof(*tsa)) && tsa->bInheritHandle);
+    request.pinherit = (psa && (psa->nLength>=sizeof(*psa)) && psa->bInheritHandle);
     CLIENT_SendRequest( REQ_NEW_THREAD, fd[1], 1, &request, sizeof(request) );
     if (CLIENT_WaitSimpleReply( &reply, sizeof(reply), NULL )) goto error;
     thdb->server_tid = reply.tid;
