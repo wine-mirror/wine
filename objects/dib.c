@@ -895,7 +895,17 @@ HBITMAP16 WINAPI CreateDIBSection16 (HDC16 hdc, BITMAPINFO *bmi, UINT16 usage,
             INT size  = (bi->biSizeImage && bi->biCompression != BI_RGB) ?
                          bi->biSizeImage : width_bytes * height;
 
-            WORD sel = SELECTOR_AllocBlock( bits32, size, WINE_LDT_FLAGS_DATA );
+            /* calculate number of sel's needed for size with 64K steps */
+            WORD count = (size + 0xffff) / 0x10000;
+            WORD sel = AllocSelectorArray16(count);
+            int i;
+
+            for (i = 0; i < count; i++)
+            {
+                SetSelectorBase(sel + (i << __AHSHIFT), (DWORD)bits32 + i * 0x10000);
+                SetSelectorLimit16(sel + (i << __AHSHIFT), size - 1); /* yep, limit is correct */
+                size -= 0x10000;
+            }
             bmp->segptr_bits = MAKESEGPTR( sel, 0 );
             if (bits16) *bits16 = bmp->segptr_bits;
         }

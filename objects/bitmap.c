@@ -443,7 +443,14 @@ BOOL BITMAP_DeleteObject( HBITMAP16 hbitmap, BITMAPOBJ * bmp )
         }
         HeapFree(GetProcessHeap(), 0, dib);
         bmp->dib = NULL;
-        if (bmp->segptr_bits) SELECTOR_FreeBlock( SELECTOROF(bmp->segptr_bits) );
+        if (bmp->segptr_bits)
+        { /* free its selector array */
+            WORD sel = SELECTOROF(bmp->segptr_bits);
+            WORD count = (GetSelectorLimit16(sel) / 0x10000) + 1;
+            int i;
+
+            for (i = 0; i < count; i++) FreeSelector16(sel + (i << __AHSHIFT));
+        }
     }
     return GDI_FreeObject( hbitmap, bmp );
 }
