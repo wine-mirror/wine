@@ -90,7 +90,7 @@ typedef enum _ADRESS_MODE {
 #define SYMF_OMAP_GENERATED   0x00000001
 #define SYMF_OMAP_MODIFIED    0x00000002
 
-typedef enum _SYM_TYPE {
+typedef enum {
   SymNone,
   SymCoff,
   SymCv,
@@ -98,7 +98,7 @@ typedef enum _SYM_TYPE {
   SymExport,
   SymDeferred,
   SymSym        /* .sym file */
-} SYM_TYPE32;
+} SYM_TYPE;
 
 #define UNDNAME_COMPLETE               0x0000
 #define UNDNAME_NO_LEADING_UNDERSCORES 0x0001
@@ -245,7 +245,7 @@ typedef struct _IMAGEHLP_MODULE {
   DWORD      TimeDateStamp;
   DWORD      CheckSum;
   DWORD      NumSyms;
-  SYM_TYPE32 SymType;
+  SYM_TYPE   SymType;
   CHAR       ModuleName[32];
   CHAR       ImageName[256];
   CHAR       LoadedImageName[256];

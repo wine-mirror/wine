@@ -1828,7 +1828,7 @@ BOOL        WINAPI WriteProcessMemory(HANDLE, LPVOID, LPVOID, DWORD, LPDWORD);
 BOOL        WINAPI WriteProfileStringA(LPCSTR,LPCSTR,LPCSTR);
 BOOL        WINAPI WriteProfileStringW(LPCWSTR,LPCWSTR,LPCWSTR);
 #define     WriteProfileString WINELIB_NAME_AW(WriteProfileString)
-#define     Yield32()
+#define     Yield()
 LPSTR       WINAPI lstrcatA(LPSTR,LPCSTR);
 LPWSTR      WINAPI lstrcatW(LPWSTR,LPCWSTR);
 #define     lstrcat WINELIB_NAME_AW(lstrcat)
