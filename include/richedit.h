@@ -354,11 +354,16 @@ DECL_WINELIB_TYPE_AW(CHARFORMAT2)
 #define ENM_IMECHANGE         0x00800000
 #define ENM_LINK              0x04000000
 
+#ifndef __RICHEDIT_CHARRANGE_DEFINED
+#define __RICHEDIT_CHARRANGE_DEFINED
+
 typedef struct _charrange
 {
     LONG    cpMin;
     LONG    cpMax;
 } CHARRANGE;
+
+#endif /* __RICHEDIT_CHARRANGE_DEFINED */
 
 typedef struct _textrange
 {

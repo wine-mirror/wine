@@ -24,6 +24,7 @@ IDL_SRCS = \
 	oleidl.idl \
 	propidl.idl \
 	pstore.idl \
+	richole.idl \
 	servprov.idl \
 	shldisp.idl \
 	shobjidl.idl \
@@ -184,7 +185,6 @@ WINDOWS_INCLUDES = \
 	reason.h \
 	regstr.h \
 	richedit.h \
-	richole.h \
 	rpc.h \
 	rpcdce.h \
 	rpcdcep.h \
