@@ -78,13 +78,13 @@ static HKEY create_test_entries(void)
         SetEnvironmentVariableA("LONGSYSTEMVAR", "bar");
         SetEnvironmentVariableA("FOO", "ImARatherLongButIndeedNeededString");
 
-	ok(!RegCreateKeyA(HKEY_CURRENT_USER, REG_TEST_KEY, &hKey), "RegCreateKeyA failed");
+	ok(!RegCreateKeyA(HKEY_CURRENT_USER, REG_TEST_KEY, &hKey), "RegCreateKeyA failed\n");
 
 	if (hKey)
 	{
-           ok(!RegSetValueExA(hKey,"Test1",0,REG_EXPAND_SZ, sTestpath1, strlen(sTestpath1)+1), "RegSetValueExA failed");
-           ok(!RegSetValueExA(hKey,"Test2",0,REG_SZ, sTestpath1, strlen(sTestpath1)+1), "RegSetValueExA failed");
-           ok(!RegSetValueExA(hKey,"Test3",0,REG_EXPAND_SZ, sTestpath2, strlen(sTestpath2)+1), "RegSetValueExA failed");
+           ok(!RegSetValueExA(hKey,"Test1",0,REG_EXPAND_SZ, sTestpath1, strlen(sTestpath1)+1), "RegSetValueExA failed\n");
+           ok(!RegSetValueExA(hKey,"Test2",0,REG_SZ, sTestpath1, strlen(sTestpath1)+1), "RegSetValueExA failed\n");
+           ok(!RegSetValueExA(hKey,"Test3",0,REG_EXPAND_SZ, sTestpath2, strlen(sTestpath2)+1), "RegSetValueExA failed\n");
 	}
 
 	sExpLen1 = ExpandEnvironmentStringsA(sTestpath1, sExpTestpath1, sizeof(sExpTestpath1));
@@ -104,16 +104,16 @@ static void test_SHGetValue(void)
 	strcpy(buf, sEmptyBuffer);
 	dwSize = MAX_PATH;
 	dwType = -1;
-	ok(! SHGetValueA(HKEY_CURRENT_USER, REG_TEST_KEY, "Test1", &dwType, buf, &dwSize), "SHGetValueA failed");
-	ok( 0 == strcmp(sExpTestpath1, buf), "(%s,%s)", buf, sExpTestpath1);
-	ok( REG_SZ == dwType, "(%lx)", dwType);
+	ok(! SHGetValueA(HKEY_CURRENT_USER, REG_TEST_KEY, "Test1", &dwType, buf, &dwSize), "SHGetValueA failed\n");
+	ok( 0 == strcmp(sExpTestpath1, buf), "(%s,%s)\n", buf, sExpTestpath1);
+	ok( REG_SZ == dwType, "(%lx)\n", dwType);
 
 	strcpy(buf, sEmptyBuffer);
 	dwSize = MAX_PATH;
 	dwType = -1;
-	ok(! SHGetValueA(HKEY_CURRENT_USER, REG_TEST_KEY, "Test2", &dwType, buf, &dwSize), "SHGetValueA failed");
-	ok( 0 == strcmp(sTestpath1, buf) , "(%s)", buf);
-	ok( REG_SZ == dwType , "(%lx)", dwType);
+	ok(! SHGetValueA(HKEY_CURRENT_USER, REG_TEST_KEY, "Test2", &dwType, buf, &dwSize), "SHGetValueA failed\n");
+	ok( 0 == strcmp(sTestpath1, buf) , "(%s)\n", buf);
+	ok( REG_SZ == dwType , "(%lx)\n", dwType);
 }
 
 static void test_SHGetRegPath(void)
@@ -124,8 +124,8 @@ static void test_SHGetRegPath(void)
 		return;
 
 	strcpy(buf, sEmptyBuffer);
-	ok(! (*pSHRegGetPathA)(HKEY_CURRENT_USER, REG_TEST_KEY, "Test1", buf, 0), "SHRegGetPathA failed");
-	ok( 0 == strcmp(sExpTestpath1, buf) , "(%s)", buf);
+	ok(! (*pSHRegGetPathA)(HKEY_CURRENT_USER, REG_TEST_KEY, "Test1", buf, 0), "SHRegGetPathA failed\n");
+	ok( 0 == strcmp(sExpTestpath1, buf) , "(%s)\n", buf);
 }
 
 static void test_SHQUeryValueEx(void)
@@ -138,7 +138,7 @@ static void test_SHQUeryValueEx(void)
 	const char * sTestedFunction = "";
 	DWORD nUsedBuffer1,nUsedBuffer2;
 
-	ok(! RegOpenKeyExA(HKEY_CURRENT_USER, REG_TEST_KEY, 0,  KEY_QUERY_VALUE, &hKey), "test4 RegOpenKey");
+	ok(! RegOpenKeyExA(HKEY_CURRENT_USER, REG_TEST_KEY, 0,  KEY_QUERY_VALUE, &hKey), "test4 RegOpenKey\n");
 
 	/****** SHQueryValueExA ******/
 
@@ -148,29 +148,29 @@ static void test_SHQUeryValueEx(void)
 	/*
 	 * Case 1.1 All arguments are NULL
 	 */
-	ok(! SHQueryValueExA( hKey, "Test1", NULL, NULL, NULL, NULL), "SHQueryValueExA failed");
+	ok(! SHQueryValueExA( hKey, "Test1", NULL, NULL, NULL, NULL), "SHQueryValueExA failed\n");
 
 	/*
 	 * Case 1.2 dwType is set
 	 */
 	dwType = -1;
-	ok(! SHQueryValueExA( hKey, "Test1", NULL, &dwType, NULL, NULL), "SHQueryValueExA failed");
-	ok( dwType == REG_SZ, "(%lu)", dwType);
+	ok(! SHQueryValueExA( hKey, "Test1", NULL, &dwType, NULL, NULL), "SHQueryValueExA failed\n");
+	ok( dwType == REG_SZ, "(%lu)\n", dwType);
 
 	/*
 	 * dwSize is set
          * dwExpanded < dwUnExpanded
 	 */
 	dwSize = 6;
-	ok(! SHQueryValueExA( hKey, "Test1", NULL, NULL, NULL, &dwSize), "SHQueryValueExA failed");
-	ok( dwSize == nUsedBuffer1, "(%lu,%lu)", dwSize, nUsedBuffer1);
+	ok(! SHQueryValueExA( hKey, "Test1", NULL, NULL, NULL, &dwSize), "SHQueryValueExA failed\n");
+	ok( dwSize == nUsedBuffer1, "(%lu,%lu)\n", dwSize, nUsedBuffer1);
 
 	/*
          * dwExpanded > dwUnExpanded
 	 */
 	dwSize = 6;
-	ok(! SHQueryValueExA( hKey, "Test3", NULL, NULL, NULL, &dwSize), "SHQueryValueExA failed");
-	ok( dwSize == nUsedBuffer2, "(%lu,%lu)", dwSize, nUsedBuffer2);
+	ok(! SHQueryValueExA( hKey, "Test3", NULL, NULL, NULL, &dwSize), "SHQueryValueExA failed\n");
+	ok( dwSize == nUsedBuffer2, "(%lu,%lu)\n", dwSize, nUsedBuffer2);
 
 
 	/*
@@ -180,10 +180,10 @@ static void test_SHQUeryValueEx(void)
 	dwSize = 6;
 	dwType = -1;
 	dwRet = SHQueryValueExA( hKey, "Test1", NULL, &dwType, buf, &dwSize);
-	ok( dwRet == ERROR_MORE_DATA, "(%lu)", dwRet);
-	ok( 0 == strcmp(sEmptyBuffer, buf), "(%s)", buf);
-	ok( dwType == REG_SZ, "(%lu)" , dwType);
-	ok( dwSize == nUsedBuffer1, "(%lu,%lu)" , dwSize, nUsedBuffer1);
+	ok( dwRet == ERROR_MORE_DATA, "(%lu)\n", dwRet);
+	ok( 0 == strcmp(sEmptyBuffer, buf), "(%s)\n", buf);
+	ok( dwType == REG_SZ, "(%lu)\n" , dwType);
+	ok( dwSize == nUsedBuffer1, "(%lu,%lu)\n" , dwSize, nUsedBuffer1);
 
 	/*
 	 * string grows during expanding
@@ -192,10 +192,10 @@ static void test_SHQUeryValueEx(void)
 	dwSize = 6;
 	dwType = -1;
 	dwRet = SHQueryValueExA( hKey, "Test3", NULL, &dwType, buf, &dwSize);
-	ok( ERROR_MORE_DATA == dwRet, "ERROR_MORE_DATA");
-	ok( 0 == strcmp(sEmptyBuffer, buf), "(%s)", buf);
-	ok( dwSize == nUsedBuffer2, "(%lu,%lu)" , dwSize, nUsedBuffer2);
-	ok( dwType == REG_SZ, "(%lu)" , dwType);
+	ok( ERROR_MORE_DATA == dwRet, "ERROR_MORE_DATA\n");
+	ok( 0 == strcmp(sEmptyBuffer, buf), "(%s)\n", buf);
+	ok( dwSize == nUsedBuffer2, "(%lu,%lu)\n" , dwSize, nUsedBuffer2);
+	ok( dwType == REG_SZ, "(%lu)\n" , dwType);
 
 	/*
 	 * if the unexpanded string fits into the buffer it can get cut when expanded
@@ -203,11 +203,11 @@ static void test_SHQUeryValueEx(void)
 	strcpy(buf, sEmptyBuffer);
 	dwSize = sExpLen2 - 4;
 	dwType = -1;
-	ok( ERROR_MORE_DATA == SHQueryValueExA( hKey, "Test3", NULL, &dwType, buf, &dwSize), "Expected ERROR_MORE_DATA");
-	ok( 0 == strncmp(sExpTestpath2, buf, sExpLen2 - 4 - 1), "(%s)", buf);
-	ok( sExpLen2 - 4 - 1 == strlen(buf), "(%s)", buf);
-	ok( dwSize == nUsedBuffer2, "(%lu,%lu)" , dwSize, nUsedBuffer2);
-	ok( dwType == REG_SZ, "(%lu)" , dwType);
+	ok( ERROR_MORE_DATA == SHQueryValueExA( hKey, "Test3", NULL, &dwType, buf, &dwSize), "Expected ERROR_MORE_DATA\n");
+	ok( 0 == strncmp(sExpTestpath2, buf, sExpLen2 - 4 - 1), "(%s)\n", buf);
+	ok( sExpLen2 - 4 - 1 == strlen(buf), "(%s)\n", buf);
+	ok( dwSize == nUsedBuffer2, "(%lu,%lu)\n" , dwSize, nUsedBuffer2);
+	ok( dwType == REG_SZ, "(%lu)\n" , dwType);
 
 	/*
 	 * The buffer is NULL but the size is set
@@ -216,9 +216,9 @@ static void test_SHQUeryValueEx(void)
 	dwSize = 6;
 	dwType = -1;
 	dwRet = SHQueryValueExA( hKey, "Test3", NULL, &dwType, NULL, &dwSize);
-	ok( ERROR_SUCCESS == dwRet, "(%lu)", dwRet);
-	ok( dwSize == nUsedBuffer2, "(%lu,%lu)" , dwSize, nUsedBuffer2);
-	ok( dwType == REG_SZ, "(%lu)" , dwType);
+	ok( ERROR_SUCCESS == dwRet, "(%lu)\n", dwRet);
+	ok( dwSize == nUsedBuffer2, "(%lu,%lu)\n" , dwSize, nUsedBuffer2);
+	ok( dwType == REG_SZ, "(%lu)\n" , dwType);
 
 
 	RegCloseKey(hKey);
@@ -239,20 +239,20 @@ static void test_SHCopyKey(void)
 	hKeyDst = NULL;
 	if (RegCreateKeyA(HKEY_CURRENT_USER, REG_TEST_KEY "\\CopyDestination", &hKeyDst) || !hKeyDst)
 	{
-		ok(0, "didn't open dest");
+		ok(0, "didn't open dest\n");
 		return;
 	}
 
 	hKeySrc = NULL;
 	if (RegOpenKeyA(HKEY_LOCAL_MACHINE, REG_CURRENT_VERSION, &hKeySrc) || !hKeySrc)
 	{
-		ok(0, "didn't open source");
+		ok(0, "didn't open source\n");
 		return;
 	}
 
 
 	if (pSHCopyKeyA)
-		ok (!(*pSHCopyKeyA)(hKeyDst, NULL, hKeySrc, 0), "failed copy");
+		ok (!(*pSHCopyKeyA)(hKeyDst, NULL, hKeySrc, 0), "failed copy\n");
 
 	RegCloseKey(hKeySrc);
 	RegCloseKey(hKeyDst);
@@ -261,12 +261,12 @@ static void test_SHCopyKey(void)
 	hKeyDst = NULL;
 	if (RegOpenKeyA(HKEY_CURRENT_USER, REG_TEST_KEY "\\CopyDestination\\AeDebug", &hKeyDst) || !hKeyDst)
 	{
-		ok(0, "didn't open copy");
+		ok(0, "didn't open copy\n");
 		return;
 	}
 
 	/* And the we copied the values too */
-	ok(!SHQueryValueExA(hKeyDst, "Debugger", NULL, NULL, NULL, NULL), "SHQueryValueExA failed");
+	ok(!SHQueryValueExA(hKeyDst, "Debugger", NULL, NULL, NULL, NULL), "SHQueryValueExA failed\n");
 
 	RegCloseKey(hKeyDst);
 }

@@ -52,11 +52,11 @@ static int init_wksta_tests(void)
     rc=GetUserNameW(user_name, &dwSize);
     if (rc==FALSE && GetLastError()==ERROR_CALL_NOT_IMPLEMENTED)
         return 0;
-    ok(rc, "User Name Retrieved");
+    ok(rc, "User Name Retrieved\n");
 
     computer_name[0] = 0;
     dwSize = sizeof(computer_name);
-    ok(GetComputerNameW(computer_name, &dwSize), "Computer Name Retrieved");
+    ok(GetComputerNameW(computer_name, &dwSize), "Computer Name Retrieved\n");
     return 1;
 }
 
@@ -67,8 +67,8 @@ static void run_get_comp_name_tests(void)
     if (!pNetpGetComputerName)
         return;
 
-    ok(pNetpGetComputerName(&ws) == NERR_Success, "Computer name is retrieved");
-    ok(!lstrcmpW(computer_name, ws), "This is really computer name");
+    ok(pNetpGetComputerName(&ws) == NERR_Success, "Computer name is retrieved\n");
+    ok(!lstrcmpW(computer_name, ws), "This is really computer name\n");
     pNetApiBufferFree(ws);
 }
 
@@ -84,35 +84,35 @@ static void run_wkstausergetinfo_tests(void)
 
     /* Level 0 */
     ok(pNetWkstaUserGetInfo(NULL, 0, (LPBYTE *)&ui0) == NERR_Success,
-       "NetWkstaUserGetInfo is successful");
-    ok(!lstrcmpW(user_name, ui0->wkui0_username), "This is really user name");
+       "NetWkstaUserGetInfo is successful\n");
+    ok(!lstrcmpW(user_name, ui0->wkui0_username), "This is really user name\n");
     pNetApiBufferSize(ui0, &dwSize);
     ok(dwSize >= (sizeof(WKSTA_USER_INFO_0) +
                  lstrlenW(ui0->wkui0_username) * sizeof(WCHAR)),
-       "Is allocated with NetApiBufferAllocate");
+       "Is allocated with NetApiBufferAllocate\n");
 
     /* Level 1 */
     ok(pNetWkstaUserGetInfo(NULL, 1, (LPBYTE *)&ui1) == NERR_Success,
-       "NetWkstaUserGetInfo is successful");
+       "NetWkstaUserGetInfo is successful\n");
     ok(lstrcmpW(ui1->wkui1_username, ui0->wkui0_username) == 0,
-       "the same name as returned for level 0");
+       "the same name as returned for level 0\n");
     pNetApiBufferSize(ui1, &dwSize);
     ok(dwSize >= (sizeof(WKSTA_USER_INFO_1) +
                   (lstrlenW(ui1->wkui1_username) +
                    lstrlenW(ui1->wkui1_logon_domain) +
                    lstrlenW(ui1->wkui1_oth_domains) +
                    lstrlenW(ui1->wkui1_logon_server)) * sizeof(WCHAR)),
-       "Is allocated with NetApiBufferAllocate");
+       "Is allocated with NetApiBufferAllocate\n");
 
     /* Level 1101 */
     ok(pNetWkstaUserGetInfo(NULL, 1101, (LPBYTE *)&ui1101) == NERR_Success,
-       "NetWkstaUserGetInfo is successful");
+       "NetWkstaUserGetInfo is successful\n");
     ok(lstrcmpW(ui1101->wkui1101_oth_domains, ui1->wkui1_oth_domains) == 0,
-       "the same oth_domains as returned for level 1");
+       "the same oth_domains as returned for level 1\n");
     pNetApiBufferSize(ui1101, &dwSize);
     ok(dwSize >= (sizeof(WKSTA_USER_INFO_1101) +
                  lstrlenW(ui1101->wkui1101_oth_domains) * sizeof(WCHAR)),
-       "Is allocated with NetApiBufferAllocate");
+       "Is allocated with NetApiBufferAllocate\n");
 
     pNetApiBufferFree(ui0);
     pNetApiBufferFree(ui1);
@@ -120,7 +120,7 @@ static void run_wkstausergetinfo_tests(void)
 
     /* errors handling */
     ok(pNetWkstaUserGetInfo(NULL, 10000, (LPBYTE *)&ui0) == ERROR_INVALID_LEVEL,
-       "Invalid level");
+       "Invalid level\n");
 }
 
 static void run_wkstatransportenum_tests(void)
@@ -136,7 +136,7 @@ static void run_wkstatransportenum_tests(void)
     apiReturn = pNetWkstaTransportEnum(NULL, 1, NULL, MAX_PREFERRED_LENGTH,
         NULL, &totalEntries, NULL);
     ok(apiReturn == ERROR_INVALID_LEVEL || apiReturn == ERROR_INVALID_PARAMETER,
-       "NetWkstaTransportEnum returned %ld", apiReturn);
+       "NetWkstaTransportEnum returned %ld\n", apiReturn);
 
     /* 2nd check: is param 5 passed? (only if level passes?) */
     apiReturn = pNetWkstaTransportEnum(NULL, 0, NULL, MAX_PREFERRED_LENGTH,
@@ -147,30 +147,30 @@ static void run_wkstatransportenum_tests(void)
         return;
 
     ok(apiReturn == STATUS_ACCESS_VIOLATION || apiReturn == ERROR_INVALID_PARAMETER,
-       "NetWkstaTransportEnum returned %ld", apiReturn);
+       "NetWkstaTransportEnum returned %ld\n", apiReturn);
 
     /* 3rd check: is param 3 passed? */
     apiReturn = pNetWkstaTransportEnum(NULL, 0, NULL, MAX_PREFERRED_LENGTH,
         NULL, NULL, NULL);
     ok(apiReturn == STATUS_ACCESS_VIOLATION || apiReturn == ERROR_INVALID_PARAMETER,
-       "NetWkstaTransportEnum returned %ld", apiReturn);
+       "NetWkstaTransportEnum returned %ld\n", apiReturn);
 
     /* 4th check: is param 6 passed? */
     apiReturn = pNetWkstaTransportEnum(NULL, 0, &bufPtr, MAX_PREFERRED_LENGTH,
         &entriesRead, NULL, NULL);
-    ok(apiReturn == RPC_X_NULL_REF_POINTER, "null pointer");
+    ok(apiReturn == RPC_X_NULL_REF_POINTER, "null pointer\n");
 
     /* final check: valid return, actually get data back */
     apiReturn = pNetWkstaTransportEnum(NULL, 0, &bufPtr, MAX_PREFERRED_LENGTH,
         &entriesRead, &totalEntries, NULL);
     ok(apiReturn == NERR_Success || apiReturn == ERROR_NETWORK_UNREACHABLE,
-       "NetWkstaTransportEnum returned %ld", apiReturn);
+       "NetWkstaTransportEnum returned %ld\n", apiReturn);
     if (apiReturn == NERR_Success) {
         /* WKSTA_TRANSPORT_INFO_0 *transports = (WKSTA_TRANSPORT_INFO_0 *)bufPtr; */
 
-        ok(bufPtr != NULL, "got data back");
-        ok(entriesRead > 0, "read at least one transport");
-        ok(totalEntries > 0, "at least one transport");
+        ok(bufPtr != NULL, "got data back\n");
+        ok(entriesRead > 0, "read at least one transport\n");
+        ok(totalEntries > 0, "at least one transport\n");
         pNetApiBufferFree(bufPtr);
     }
 }

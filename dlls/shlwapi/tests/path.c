@@ -56,12 +56,12 @@ static void hash_url(const char* szUrl)
   
   DWORD cbSize = sizeof(DWORD);
   DWORD dwHash1, dwHash2;
-  ok(UrlHashA(szTestUrl, (LPBYTE)&dwHash1, cbSize) == S_OK, "UrlHashA didn't return S_OK");
-  ok(UrlHashW(wszTestUrl, (LPBYTE)&dwHash2, cbSize) == S_OK, "UrlHashW didn't return S_OK");
+  ok(UrlHashA(szTestUrl, (LPBYTE)&dwHash1, cbSize) == S_OK, "UrlHashA didn't return S_OK\n");
+  ok(UrlHashW(wszTestUrl, (LPBYTE)&dwHash2, cbSize) == S_OK, "UrlHashW didn't return S_OK\n");
 
   FreeWideString(wszTestUrl);
 
-  ok(dwHash1 == dwHash2, "Hashes didn't compare");
+  ok(dwHash1 == dwHash2, "Hashes didn't compare\n");
 }
 
 static void test_UrlHash(void)
@@ -81,13 +81,13 @@ static void test_url_part(const char* szUrl, DWORD dwPart, DWORD dwFlags, const 
   DWORD dwSize;
 
   dwSize = INTERNET_MAX_URL_LENGTH;
-  ok( UrlGetPartA(szUrl, szPart, &dwSize, dwPart, dwFlags) == S_OK, "UrlGetPartA didn't return S_OK" );
+  ok( UrlGetPartA(szUrl, szPart, &dwSize, dwPart, dwFlags) == S_OK, "UrlGetPartA didn't return S_OK\n" );
   dwSize = INTERNET_MAX_URL_LENGTH;
-  ok( UrlGetPartW(wszUrl, wszPart, &dwSize, dwPart, dwFlags) == S_OK, "UrlGetPartW didn't return S_OK" );
+  ok( UrlGetPartW(wszUrl, wszPart, &dwSize, dwPart, dwFlags) == S_OK, "UrlGetPartW didn't return S_OK\n" );
 
   wszConvertedPart = GetWideString(szPart);
 
-  ok(strcmpW(wszPart,wszConvertedPart)==0, "Strings didn't match between ascii and unicode UrlGetPart!");
+  ok(strcmpW(wszPart,wszConvertedPart)==0, "Strings didn't match between ascii and unicode UrlGetPart!\n");
 
   FreeWideString(wszUrl);
   FreeWideString(wszConvertedPart);
@@ -95,7 +95,7 @@ static void test_url_part(const char* szUrl, DWORD dwPart, DWORD dwFlags, const 
   /* Note that v6.0 and later don't return '?' with the query */
   ok(strcmp(szPart,szExpected)==0 ||
      (*szExpected=='?' && !strcmp(szPart,szExpected+1)),
-	 "Expected %s, but got %s", szExpected, szPart);
+	 "Expected %s, but got %s\n", szExpected, szPart);
 }
 
 static void test_UrlGetPart(void)

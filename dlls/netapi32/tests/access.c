@@ -56,11 +56,11 @@ static int init_access_tests(void)
     rc=GetUserNameW(user_name, &dwSize);
     if (rc==FALSE && GetLastError()==ERROR_CALL_NOT_IMPLEMENTED)
         return 0;
-    ok(rc, "User Name Retrieved");
+    ok(rc, "User Name Retrieved\n");
 
     computer_name[0] = 0;
     dwSize = sizeof(computer_name);
-    ok(GetComputerNameW(computer_name, &dwSize), "Computer Name Retrieved");
+    ok(GetComputerNameW(computer_name, &dwSize), "Computer Name Retrieved\n");
     return 1;
 }
 
@@ -77,45 +77,45 @@ void run_usergetinfo_tests(void)
 
     /* Level 0 */
     rc=pNetUserGetInfo(NULL, sAdminUserName, 0, (LPBYTE *)&ui0);
-    ok(rc == NERR_Success, "NetUserGetInfo: rc=%ld", rc);
-    ok(!lstrcmpW(sAdminUserName, ui0->usri0_name), "This is really user name");
+    ok(rc == NERR_Success, "NetUserGetInfo: rc=%ld\n", rc);
+    ok(!lstrcmpW(sAdminUserName, ui0->usri0_name), "This is really user name\n");
     pNetApiBufferSize(ui0, &dwSize);
     ok(dwSize >= (sizeof(USER_INFO_0) +
                   (lstrlenW(ui0->usri0_name) + 1) * sizeof(WCHAR)),
-       "Is allocated with NetApiBufferAllocate");
+       "Is allocated with NetApiBufferAllocate\n");
 
     /* Level 10 */
     rc=pNetUserGetInfo(NULL, sAdminUserName, 10, (LPBYTE *)&ui10);
-    ok(rc == NERR_Success, "NetUserGetInfo: rc=%ld", rc);
-    ok(!lstrcmpW(sAdminUserName, ui10->usri10_name), "This is really user name");
+    ok(rc == NERR_Success, "NetUserGetInfo: rc=%ld\n", rc);
+    ok(!lstrcmpW(sAdminUserName, ui10->usri10_name), "This is really user name\n");
     pNetApiBufferSize(ui10, &dwSize);
     ok(dwSize >= (sizeof(USER_INFO_10) +
                   (lstrlenW(ui10->usri10_name) + 1 +
                    lstrlenW(ui10->usri10_comment) + 1 +
                    lstrlenW(ui10->usri10_usr_comment) + 1 +
                    lstrlenW(ui10->usri10_full_name) + 1) * sizeof(WCHAR)),
-       "Is allocated with NetApiBufferAllocate");
+       "Is allocated with NetApiBufferAllocate\n");
 
     pNetApiBufferFree(ui0);
     pNetApiBufferFree(ui10);
 
     /* errors handling */
     rc=pNetUserGetInfo(NULL, sAdminUserName, 10000, (LPBYTE *)&ui0);
-    ok(rc == ERROR_INVALID_LEVEL,"Invalid Level: rc=%ld",rc);
+    ok(rc == ERROR_INVALID_LEVEL,"Invalid Level: rc=%ld\n",rc);
     rc=pNetUserGetInfo(NULL, sNonexistentUser, 0, (LPBYTE *)&ui0);
-    ok(rc == NERR_UserNotFound,"Invalid User Name: rc=%ld",rc);
+    ok(rc == NERR_UserNotFound,"Invalid User Name: rc=%ld\n",rc);
     todo_wine {
         /* FIXME - Currently Wine can't verify whether the network path is good or bad */
         rc=pNetUserGetInfo(sBadNetPath, sAdminUserName, 0, (LPBYTE *)&ui0);
         ok(rc == ERROR_BAD_NETPATH || rc == ERROR_NETWORK_UNREACHABLE,
-           "Bad Network Path: rc=%ld",rc);
+           "Bad Network Path: rc=%ld\n",rc);
     }
     rc=pNetUserGetInfo(sEmptyStr, sAdminUserName, 0, (LPBYTE *)&ui0);
-    ok(rc == ERROR_BAD_NETPATH,"Bad Network Path: rc=%ld",rc);
+    ok(rc == ERROR_BAD_NETPATH,"Bad Network Path: rc=%ld\n",rc);
     rc=pNetUserGetInfo(sInvalidName, sAdminUserName, 0, (LPBYTE *)&ui0);
-    ok(rc == ERROR_INVALID_NAME,"Invalid Server Name: rc=%ld",rc);
+    ok(rc == ERROR_INVALID_NAME,"Invalid Server Name: rc=%ld\n",rc);
     rc=pNetUserGetInfo(sInvalidName2, sAdminUserName, 0, (LPBYTE *)&ui0);
-    ok(rc == ERROR_INVALID_NAME,"Invalid Server Name: rc=%ld",rc);
+    ok(rc == ERROR_INVALID_NAME,"Invalid Server Name: rc=%ld\n",rc);
 }
 
 /* checks Level 1 of NetQueryDisplayInformation */
@@ -137,22 +137,22 @@ void run_querydisplayinformation1_tests(void)
             (PVOID *)&Buffer);
 
         ok((Result == ERROR_SUCCESS) || (Result == ERROR_MORE_DATA),
-           "Information Retrieved");
+           "Information Retrieved\n");
         rec = Buffer;
         for(; EntryCount > 0; EntryCount--)
         {
             if (!lstrcmpW(rec->usri1_name, sAdminUserName))
             {
-                ok(!hasAdmin, "One admin user");
-                ok(rec->usri1_flags & UF_SCRIPT, "UF_SCRIPT flag is set");
-                ok(rec->usri1_flags & UF_NORMAL_ACCOUNT, "UF_NORMAL_ACCOUNT flag is set");
+                ok(!hasAdmin, "One admin user\n");
+                ok(rec->usri1_flags & UF_SCRIPT, "UF_SCRIPT flag is set\n");
+                ok(rec->usri1_flags & UF_NORMAL_ACCOUNT, "UF_NORMAL_ACCOUNT flag is set\n");
                 hasAdmin = TRUE;
             }
             else if (!lstrcmpW(rec->usri1_name, sGuestUserName))
             {
-                ok(!hasGuest, "One guest record");
-                ok(rec->usri1_flags & UF_SCRIPT, "UF_SCRIPT flag is set");
-                ok(rec->usri1_flags & UF_NORMAL_ACCOUNT, "UF_NORMAL_ACCOUNT flag is set");
+                ok(!hasGuest, "One guest record\n");
+                ok(rec->usri1_flags & UF_SCRIPT, "UF_SCRIPT flag is set\n");
+                ok(rec->usri1_flags & UF_NORMAL_ACCOUNT, "UF_NORMAL_ACCOUNT flag is set\n");
                 hasGuest = TRUE;
             }
 
@@ -163,8 +163,8 @@ void run_querydisplayinformation1_tests(void)
         pNetApiBufferFree(Buffer);
     } while (Result == ERROR_MORE_DATA);
 
-    ok(hasAdmin, "Has Administrator account");
-    ok(hasGuest, "Has Guest account");
+    ok(hasAdmin, "Has Administrator account\n");
+    ok(hasGuest, "Has Guest account\n");
 }
 
 START_TEST(access)

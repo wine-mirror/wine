@@ -114,13 +114,13 @@ static void test_ClassIDs(void)
   while (*guids)
   {
     dwLen = pSHLWAPI_23(*guids, szBuff, 256);
-    ok(dwLen == 39, "wrong size for id %d", i);
+    ok(dwLen == 39, "wrong size for id %d\n", i);
 
     bRet = pSHLWAPI_269(szBuff, &guid);
-    ok(bRet != FALSE, "created invalid string '%s'", szBuff);
+    ok(bRet != FALSE, "created invalid string '%s'\n", szBuff);
 
     if (bRet)
-      ok(IsEqualGUID(*guids, &guid), "GUID created wrong %d", i);
+      ok(IsEqualGUID(*guids, &guid), "GUID created wrong %d\n", i);
 
     guids++;
     i++;
@@ -128,42 +128,42 @@ static void test_ClassIDs(void)
 
   /* Test endianess */
   dwLen = pSHLWAPI_23(&IID_Endianess, szBuff, 256);
-  ok(dwLen == 39, "wrong size for IID_Endianess");
+  ok(dwLen == 39, "wrong size for IID_Endianess\n");
 
   ok(!strcmp(szBuff, "{01020304-0506-0708-090A-0B0C0D0E0F0A}"),
-     "Endianess Broken, got '%s'", szBuff);
+     "Endianess Broken, got '%s'\n", szBuff);
 
   /* test lengths */
   szBuff[0] = ':';
   dwLen = pSHLWAPI_23(&IID_Endianess, szBuff, 0);
-  ok(dwLen == 0, "accepted bad length");
-  ok(szBuff[0] == ':', "wrote to buffer with no length");
+  ok(dwLen == 0, "accepted bad length\n");
+  ok(szBuff[0] == ':', "wrote to buffer with no length\n");
 
   szBuff[0] = ':';
   dwLen = pSHLWAPI_23(&IID_Endianess, szBuff, 38);
-  ok(dwLen == 0, "accepted bad length");
-  ok(szBuff[0] == ':', "wrote to buffer with no length");
+  ok(dwLen == 0, "accepted bad length\n");
+  ok(szBuff[0] == ':', "wrote to buffer with no length\n");
 
   szBuff[0] = ':';
   dwLen = pSHLWAPI_23(&IID_Endianess, szBuff, 39);
-  ok(dwLen == 39, "rejected ok length");
-  ok(szBuff[0] == '{', "Didn't write to buffer with ok length");
+  ok(dwLen == 39, "rejected ok length\n");
+  ok(szBuff[0] == '{', "Didn't write to buffer with ok length\n");
 
   /* Test string */
   strcpy(szBuff, "{xxx-");
   bRet = pSHLWAPI_269(szBuff, &guid);
-  ok(bRet == FALSE, "accepted invalid string");
+  ok(bRet == FALSE, "accepted invalid string\n");
 
   dwLen = pSHLWAPI_23(&IID_Endianess, szBuff, 39);
-  ok(dwLen == 39, "rejected ok length");
-  ok(szBuff[0] == '{', "Didn't write to buffer with ok length");
+  ok(dwLen == 39, "rejected ok length\n");
+  ok(szBuff[0] == '{', "Didn't write to buffer with ok length\n");
 }
 
 
 START_TEST(clsid)
 {
   hShlwapi = LoadLibraryA("shlwapi.dll");
-  ok(hShlwapi != 0, "LoadLibraryA failed");
+  ok(hShlwapi != 0, "LoadLibraryA failed\n");
   if (hShlwapi)
   {
     pSHLWAPI_269 = (void*)GetProcAddress(hShlwapi, (LPSTR)269);

@@ -215,31 +215,31 @@ static HRESULT (WINAPI *pSHLWAPI_214)(_IDummyStream*,ULARGE_INTEGER*);
 static void InitFunctionPtrs()
 {
   SHLWAPI_hshlwapi = LoadLibraryA("shlwapi.dll");
-  ok(SHLWAPI_hshlwapi != 0, "LoadLibrary failed");
+  ok(SHLWAPI_hshlwapi != 0, "LoadLibrary failed\n");
   if (SHLWAPI_hshlwapi)
   {
     pSHLWAPI_17 = (void *)GetProcAddress( SHLWAPI_hshlwapi, (LPSTR)17);
-    ok(pSHLWAPI_17 != 0, "No Ordinal 17");
+    ok(pSHLWAPI_17 != 0, "No Ordinal 17\n");
     pSHLWAPI_18 = (void *)GetProcAddress( SHLWAPI_hshlwapi, (LPSTR)18);
-    ok(pSHLWAPI_18 != 0, "No Ordinal 18");
+    ok(pSHLWAPI_18 != 0, "No Ordinal 18\n");
     pSHLWAPI_19 = (void *)GetProcAddress( SHLWAPI_hshlwapi, (LPSTR)19);
-    ok(pSHLWAPI_19 != 0, "No Ordinal 19");
+    ok(pSHLWAPI_19 != 0, "No Ordinal 19\n");
     pSHLWAPI_20 = (void *)GetProcAddress( SHLWAPI_hshlwapi, (LPSTR)20);
-    ok(pSHLWAPI_20 != 0, "No Ordinal 20");
+    ok(pSHLWAPI_20 != 0, "No Ordinal 20\n");
     pSHLWAPI_21 = (void *)GetProcAddress( SHLWAPI_hshlwapi, (LPSTR)21);
-    ok(pSHLWAPI_21 != 0, "No Ordinal 21");
+    ok(pSHLWAPI_21 != 0, "No Ordinal 21\n");
     pSHLWAPI_22 = (void *)GetProcAddress( SHLWAPI_hshlwapi, (LPSTR)22);
-    ok(pSHLWAPI_22 != 0, "No Ordinal 22");
+    ok(pSHLWAPI_22 != 0, "No Ordinal 22\n");
     pSHLWAPI_166 = (void *)GetProcAddress( SHLWAPI_hshlwapi, (LPSTR)166);
-    ok(pSHLWAPI_166 != 0, "No Ordinal 166");
+    ok(pSHLWAPI_166 != 0, "No Ordinal 166\n");
     pSHLWAPI_184 = (void *)GetProcAddress( SHLWAPI_hshlwapi, (LPSTR)184);
-    ok(pSHLWAPI_184 != 0, "No Ordinal 184");
+    ok(pSHLWAPI_184 != 0, "No Ordinal 184\n");
     pSHLWAPI_212 = (void *)GetProcAddress( SHLWAPI_hshlwapi, (LPSTR)212);
-    ok(pSHLWAPI_212 != 0, "No Ordinal 212");
+    ok(pSHLWAPI_212 != 0, "No Ordinal 212\n");
     pSHLWAPI_213 = (void *)GetProcAddress( SHLWAPI_hshlwapi, (LPSTR)213);
-    ok(pSHLWAPI_213 != 0, "No Ordinal 213");
+    ok(pSHLWAPI_213 != 0, "No Ordinal 213\n");
     pSHLWAPI_214 = (void *)GetProcAddress( SHLWAPI_hshlwapi, (LPSTR)214);
-    ok(pSHLWAPI_214 != 0, "No Ordinal 214");
+    ok(pSHLWAPI_214 != 0, "No Ordinal 214\n");
   }
 }
 
@@ -289,30 +289,30 @@ static void test_CList(void)
 
     /* Add it */
     hRet = pSHLWAPI_20(&list, inserted);
-    ok(hRet > S_OK, "failed list add");
+    ok(hRet > S_OK, "failed list add\n");
 
     if (hRet > S_OK)
     {
-      ok(list && list->ulSize, "item not added");
+      ok(list && list->ulSize, "item not added\n");
 
       /* Find it */
       inserted = pSHLWAPI_22(list, item->ulId);
-      ok(inserted != NULL, "lost after adding");
+      ok(inserted != NULL, "lost after adding\n");
 
-      ok(!inserted || inserted->ulId != ~0UL, "find returned a container");
+      ok(!inserted || inserted->ulId != ~0UL, "find returned a container\n");
 
       /* Check size */
       if (inserted && inserted->ulSize & 0x3)
       {
         /* Contained */
-        ok(inserted[-1].ulId == ~0UL, "invalid size is not countained");
+        ok(inserted[-1].ulId == ~0UL, "invalid size is not countained\n");
         ok(inserted[-1].ulSize > inserted->ulSize+sizeof(SHLWAPI_CLIST),
-           "container too small");
+           "container too small\n");
       }
       else if (inserted)
       {
         ok(inserted->ulSize==item->ulSize+sizeof(SHLWAPI_CLIST),
-           "id %ld size wrong (%ld!=%ld)", inserted->ulId, inserted->ulSize,
+           "id %ld size wrong (%ld!=%ld)\n", inserted->ulId, inserted->ulSize,
            item->ulSize+sizeof(SHLWAPI_CLIST));
       }
       if (inserted)
@@ -324,9 +324,9 @@ static void test_CList(void)
           if (bufftest[sizeof(SHLWAPI_CLIST)+i] != i*2)
             bDataOK = FALSE;
 
-        ok(bDataOK == TRUE, "data corrupted on insert");
+        ok(bDataOK == TRUE, "data corrupted on insert\n");
       }
-      ok(!inserted || inserted->ulId==item->ulId, "find got wrong item");
+      ok(!inserted || inserted->ulId==item->ulId, "find got wrong item\n");
     }
     item++;
   }
@@ -335,32 +335,32 @@ static void test_CList(void)
   InitDummyStream(&streamobj);
 
   hRet = pSHLWAPI_17(&streamobj, list);
-  ok(hRet == S_OK, "write failed");
+  ok(hRet == S_OK, "write failed\n");
   if (hRet == S_OK)
   {
     /* 1 call for each element, + 1 for OK (use our null element for this) */
     ok(streamobj.writecalls == sizeof(SHLWAPI_CLIST_items)/sizeof(SHLWAPI_CLIST),
-       "wrong call count");
-    ok(streamobj.readcalls == 0,"called Read() in write");
-    ok(streamobj.seekcalls == 0,"called Seek() in write");
+       "wrong call count\n");
+    ok(streamobj.readcalls == 0,"called Read() in write\n");
+    ok(streamobj.seekcalls == 0,"called Seek() in write\n");
   }
 
   /* Failure cases for writing */
   InitDummyStream(&streamobj);
   streamobj.failwritecall = TRUE;
   hRet = pSHLWAPI_17(&streamobj, list);
-  ok(hRet == STG_E_ACCESSDENIED, "changed object failure return");
-  ok(streamobj.writecalls == 1, "called object after failure");
-  ok(streamobj.readcalls == 0,"called Read() after failure");
-  ok(streamobj.seekcalls == 0,"called Seek() after failure");
+  ok(hRet == STG_E_ACCESSDENIED, "changed object failure return\n");
+  ok(streamobj.writecalls == 1, "called object after failure\n");
+  ok(streamobj.readcalls == 0,"called Read() after failure\n");
+  ok(streamobj.seekcalls == 0,"called Seek() after failure\n");
 
   InitDummyStream(&streamobj);
   streamobj.failwritesize = TRUE;
   hRet = pSHLWAPI_17(&streamobj, list);
-  ok(hRet == STG_E_MEDIUMFULL, "changed size failure return");
-  ok(streamobj.writecalls == 1, "called object after size failure");
-  ok(streamobj.readcalls == 0,"called Read() after failure");
-  ok(streamobj.seekcalls == 0,"called Seek() after failure");
+  ok(hRet == STG_E_MEDIUMFULL, "changed size failure return\n");
+  ok(streamobj.writecalls == 1, "called object after size failure\n");
+  ok(streamobj.readcalls == 0,"called Read() after failure\n");
+  ok(streamobj.seekcalls == 0,"called Seek() after failure\n");
 
   /* Invalid inputs for adding */
   inserted = (LPSHLWAPI_CLIST)buff;
@@ -368,48 +368,48 @@ static void test_CList(void)
   inserted->ulId = 33;
   hRet = pSHLWAPI_20(&list, inserted);
   /* The call succeeds but the item is not inserted */
-  ok(hRet == S_OK, "failed bad element size");
+  ok(hRet == S_OK, "failed bad element size\n");
   inserted = pSHLWAPI_22(list, 33);
-  ok(inserted == NULL, "inserted bad element size");
+  ok(inserted == NULL, "inserted bad element size\n");
 
   inserted = (LPSHLWAPI_CLIST)buff;
   inserted->ulSize = 44;
   inserted->ulId = ~0UL;
   hRet = pSHLWAPI_20(&list, inserted);
   /* The call succeeds but the item is not inserted */
-  ok(hRet == S_OK, "failed adding a container");
+  ok(hRet == S_OK, "failed adding a container\n");
 
   item = SHLWAPI_CLIST_items;
 
   /* Look for non-existing item in populated list */
   inserted = pSHLWAPI_22(list, 99999999);
-  ok(inserted == NULL, "found a non-existing item");
+  ok(inserted == NULL, "found a non-existing item\n");
 
   while (item->ulSize)
   {
     /* Delete items */
     BOOL bRet = pSHLWAPI_21(&list, item->ulId);
-    ok(bRet == TRUE, "couldn't find item to delete");
+    ok(bRet == TRUE, "couldn't find item to delete\n");
     item++;
   }
 
   /* Look for non-existing item in empty list */
   inserted = pSHLWAPI_22(list, 99999999);
-  ok(inserted == NULL, "found an item in empty list");
+  ok(inserted == NULL, "found an item in empty list\n");
 
   /* Create a list by reading in data */
   InitDummyStream(&streamobj);
 
   hRet = pSHLWAPI_18(&streamobj, &list);
-  ok(hRet == S_OK, "failed create from Read()");
+  ok(hRet == S_OK, "failed create from Read()\n");
   if (hRet == S_OK)
   {
-    ok(streamobj.readbeyondend == FALSE, "read beyond end");
+    ok(streamobj.readbeyondend == FALSE, "read beyond end\n");
     /* 2 calls per item, but only 1 for the terminator */
     ok(streamobj.readcalls == sizeof(SHLWAPI_CLIST_items)/sizeof(SHLWAPI_CLIST)*2-1,
-       "wrong call count");
-    ok(streamobj.writecalls == 0, "called Write() from create");
-    ok(streamobj.seekcalls == 0,"called Seek() from create");
+       "wrong call count\n");
+    ok(streamobj.writecalls == 0, "called Write() from create\n");
+    ok(streamobj.seekcalls == 0,"called Seek() from create\n");
 
     item = SHLWAPI_CLIST_items;
 
@@ -417,25 +417,25 @@ static void test_CList(void)
     while (item->ulSize)
     {
       inserted = pSHLWAPI_22(list, item->ulId);
-      ok(inserted != NULL, "lost after adding");
+      ok(inserted != NULL, "lost after adding\n");
 
-      ok(!inserted || inserted->ulId != ~0UL, "find returned a container");
+      ok(!inserted || inserted->ulId != ~0UL, "find returned a container\n");
 
       /* Check size */
       if (inserted && inserted->ulSize & 0x3)
       {
         /* Contained */
-        ok(inserted[-1].ulId == ~0UL, "invalid size is not countained");
+        ok(inserted[-1].ulId == ~0UL, "invalid size is not countained\n");
         ok(inserted[-1].ulSize > inserted->ulSize+sizeof(SHLWAPI_CLIST),
-           "container too small");
+           "container too small\n");
       }
       else if (inserted)
       {
         ok(inserted->ulSize==item->ulSize+sizeof(SHLWAPI_CLIST),
-           "id %ld size wrong (%ld!=%ld)", inserted->ulId, inserted->ulSize,
+           "id %ld size wrong (%ld!=%ld)\n", inserted->ulId, inserted->ulSize,
            item->ulSize+sizeof(SHLWAPI_CLIST));
       }
-      ok(!inserted || inserted->ulId==item->ulId, "find got wrong item");
+      ok(!inserted || inserted->ulId==item->ulId, "find got wrong item\n");
       if (inserted)
       {
         BOOL bDataOK = TRUE;
@@ -445,7 +445,7 @@ static void test_CList(void)
           if (bufftest[sizeof(SHLWAPI_CLIST)+i] != i*2)
             bDataOK = FALSE;
 
-        ok(bDataOK == TRUE, "data corrupted on insert");
+        ok(bDataOK == TRUE, "data corrupted on insert\n");
       }
       item++;
     }
@@ -455,21 +455,21 @@ static void test_CList(void)
   InitDummyStream(&streamobj);
   streamobj.failreadcall = TRUE;
   hRet = pSHLWAPI_18(&streamobj, &list);
-  ok(hRet == STG_E_ACCESSDENIED, "changed object failure return");
-  ok(streamobj.readbeyondend == FALSE, "read beyond end");
-  ok(streamobj.readcalls == 1, "called object after read failure");
-  ok(streamobj.writecalls == 0,"called Write() after read failure");
-  ok(streamobj.seekcalls == 0,"called Seek() after read failure");
+  ok(hRet == STG_E_ACCESSDENIED, "changed object failure return\n");
+  ok(streamobj.readbeyondend == FALSE, "read beyond end\n");
+  ok(streamobj.readcalls == 1, "called object after read failure\n");
+  ok(streamobj.writecalls == 0,"called Write() after read failure\n");
+  ok(streamobj.seekcalls == 0,"called Seek() after read failure\n");
 
   /* Read returns large object */
   InitDummyStream(&streamobj);
   streamobj.readreturnlarge = TRUE;
   hRet = pSHLWAPI_18(&streamobj, &list);
-  ok(hRet == S_OK, "failed create from Read() with large item");
-  ok(streamobj.readbeyondend == FALSE, "read beyond end");
-  ok(streamobj.readcalls == 1,"wrong call count");
-  ok(streamobj.writecalls == 0,"called Write() after read failure");
-  ok(streamobj.seekcalls == 2,"wrong Seek() call count (%d)", streamobj.seekcalls);
+  ok(hRet == S_OK, "failed create from Read() with large item\n");
+  ok(streamobj.readbeyondend == FALSE, "read beyond end\n");
+  ok(streamobj.readcalls == 1,"wrong call count\n");
+  ok(streamobj.writecalls == 0,"called Write() after read failure\n");
+  ok(streamobj.seekcalls == 2,"wrong Seek() call count (%d)\n", streamobj.seekcalls);
 
   pSHLWAPI_19(list);
 }
@@ -485,46 +485,46 @@ static void test_SHLWAPI_166(void)
   InitDummyStream(&streamobj);
   bRet = pSHLWAPI_166(&streamobj);
 
-  ok(bRet == TRUE, "failed before seek adjusted");
-  ok(streamobj.readcalls == 0, "called Read()");
-  ok(streamobj.writecalls == 0, "called Write()");
-  ok(streamobj.seekcalls == 0, "called Seek()");
-  ok(streamobj.statcalls == 1, "wrong call count");
+  ok(bRet == TRUE, "failed before seek adjusted\n");
+  ok(streamobj.readcalls == 0, "called Read()\n");
+  ok(streamobj.writecalls == 0, "called Write()\n");
+  ok(streamobj.seekcalls == 0, "called Seek()\n");
+  ok(streamobj.statcalls == 1, "wrong call count\n");
 
   streamobj.statcalls = 0;
   streamobj.pos.QuadPart = 50001;
 
   bRet = pSHLWAPI_166(&streamobj);
 
-  ok(bRet == FALSE, "failed after seek adjusted");
-  ok(streamobj.readcalls == 0, "called Read()");
-  ok(streamobj.writecalls == 0, "called Write()");
-  ok(streamobj.seekcalls == 0, "called Seek()");
-  ok(streamobj.statcalls == 1, "wrong call count");
+  ok(bRet == FALSE, "failed after seek adjusted\n");
+  ok(streamobj.readcalls == 0, "called Read()\n");
+  ok(streamobj.writecalls == 0, "called Write()\n");
+  ok(streamobj.seekcalls == 0, "called Seek()\n");
+  ok(streamobj.statcalls == 1, "wrong call count\n");
 
   /* Failure cases */
   InitDummyStream(&streamobj);
   streamobj.pos.QuadPart = 50001;
   streamobj.failstatcall = TRUE; /* 1: Stat() Bad, Read() OK */
   bRet = pSHLWAPI_166(&streamobj);
-  ok(bRet == FALSE, "should be FALSE after read is OK");
-  ok(streamobj.readcalls == 1, "wrong call count");
-  ok(streamobj.writecalls == 0, "called Write()");
-  ok(streamobj.seekcalls == 1, "wrong call count");
-  ok(streamobj.statcalls == 1, "wrong call count");
-  ok(streamobj.pos.QuadPart == 0, "Didn't seek to start");
+  ok(bRet == FALSE, "should be FALSE after read is OK\n");
+  ok(streamobj.readcalls == 1, "wrong call count\n");
+  ok(streamobj.writecalls == 0, "called Write()\n");
+  ok(streamobj.seekcalls == 1, "wrong call count\n");
+  ok(streamobj.statcalls == 1, "wrong call count\n");
+  ok(streamobj.pos.QuadPart == 0, "Didn't seek to start\n");
 
   InitDummyStream(&streamobj);
   streamobj.pos.QuadPart = 50001;
   streamobj.failstatcall = TRUE;
   streamobj.failreadcall = TRUE; /* 2: Stat() Bad, Read() Bad Also */
   bRet = pSHLWAPI_166(&streamobj);
-  ok(bRet == TRUE, "Should be true after read fails");
-  ok(streamobj.readcalls == 1, "wrong call count");
-  ok(streamobj.writecalls == 0, "called Write()");
-  ok(streamobj.seekcalls == 0, "Called Seek()");
-  ok(streamobj.statcalls == 1, "wrong call count");
-  ok(streamobj.pos.QuadPart == 50001, "called Seek() after read failed");
+  ok(bRet == TRUE, "Should be true after read fails\n");
+  ok(streamobj.readcalls == 1, "wrong call count\n");
+  ok(streamobj.writecalls == 0, "called Write()\n");
+  ok(streamobj.seekcalls == 0, "Called Seek()\n");
+  ok(streamobj.statcalls == 1, "wrong call count\n");
+  ok(streamobj.pos.QuadPart == 50001, "called Seek() after read failed\n");
 }
 
 static void test_SHLWAPI_184(void)
@@ -539,10 +539,10 @@ static void test_SHLWAPI_184(void)
   InitDummyStream(&streamobj);
   hRet = pSHLWAPI_184(&streamobj, buff, sizeof(buff));
 
-  ok(hRet == S_OK, "failed Read()");
-  ok(streamobj.readcalls == 1, "wrong call count");
-  ok(streamobj.writecalls == 0, "called Write()");
-  ok(streamobj.seekcalls == 0, "called Seek()");
+  ok(hRet == S_OK, "failed Read()\n");
+  ok(streamobj.readcalls == 1, "wrong call count\n");
+  ok(streamobj.writecalls == 0, "called Write()\n");
+  ok(streamobj.seekcalls == 0, "called Seek()\n");
 }
 
 static void test_SHLWAPI_212(void)
@@ -557,10 +557,10 @@ static void test_SHLWAPI_212(void)
   InitDummyStream(&streamobj);
   hRet = pSHLWAPI_212(&streamobj, buff, sizeof(buff));
 
-  ok(hRet == S_OK, "failed Write()");
-  ok(streamobj.readcalls == 0, "called Read()");
-  ok(streamobj.writecalls == 1, "wrong call count");
-  ok(streamobj.seekcalls == 0, "called Seek()");
+  ok(hRet == S_OK, "failed Write()\n");
+  ok(streamobj.readcalls == 0, "called Read()\n");
+  ok(streamobj.writecalls == 1, "wrong call count\n");
+  ok(streamobj.seekcalls == 0, "called Seek()\n");
 }
 
 static void test_SHLWAPI_213(void)
@@ -579,15 +579,15 @@ static void test_SHLWAPI_213(void)
 
   streamobj.seekcalls = 0;
   pSHLWAPI_213(&streamobj); /* Should rewind */
-  ok(streamobj.statcalls == 0, "called Stat()");
-  ok(streamobj.readcalls == 0, "called Read()");
-  ok(streamobj.writecalls == 0, "called Write()");
-  ok(streamobj.seekcalls == 1, "wrong call count");
+  ok(streamobj.statcalls == 0, "called Stat()\n");
+  ok(streamobj.readcalls == 0, "called Read()\n");
+  ok(streamobj.writecalls == 0, "called Write()\n");
+  ok(streamobj.seekcalls == 1, "wrong call count\n");
 
   ul.QuadPart = 50001;
   hRet = pSHLWAPI_214(&streamobj, &ul);
-  ok(hRet == S_OK, "failed Stat()");
-  ok(ul.QuadPart == 0, "213 didn't rewind stream");
+  ok(hRet == S_OK, "failed Stat()\n");
+  ok(ul.QuadPart == 0, "213 didn't rewind stream\n");
 }
 
 static void test_SHLWAPI_214(void)
@@ -607,12 +607,12 @@ static void test_SHLWAPI_214(void)
   streamobj.seekcalls = 0;
   hRet = pSHLWAPI_214(&streamobj, &ul);
 
-  ok(hRet == S_OK, "failed Stat()");
-  ok(streamobj.statcalls == 1, "wrong call count");
-  ok(streamobj.readcalls == 0, "called Read()");
-  ok(streamobj.writecalls == 0, "called Write()");
-  ok(streamobj.seekcalls == 0, "called Seek()");
-  ok(ul.QuadPart == 5000l, "Stat gave wrong size");
+  ok(hRet == S_OK, "failed Stat()\n");
+  ok(streamobj.statcalls == 1, "wrong call count\n");
+  ok(streamobj.readcalls == 0, "called Read()\n");
+  ok(streamobj.writecalls == 0, "called Write()\n");
+  ok(streamobj.seekcalls == 0, "called Seek()\n");
+  ok(ul.QuadPart == 5000l, "Stat gave wrong size\n");
 }
 
 START_TEST(clist)

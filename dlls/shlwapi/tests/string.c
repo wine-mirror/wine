@@ -159,7 +159,7 @@ static void test_StrChrA(void)
   WORD count;
 
   /* this test crashes on win2k SP4 */
-  /*ok(!StrChrA(NULL,'\0'), "found a character in a NULL string!");*/
+  /*ok(!StrChrA(NULL,'\0'), "found a character in a NULL string!\n");*/
 
   for (count = 32; count < 128; count++)
     string[count] = (char)count;
@@ -186,7 +186,7 @@ static void test_StrChrW(void)
   WORD count;
 
   /* this test crashes on win2k SP4 */
-  /*ok(!StrChrW(NULL,'\0'), "found a character in a NULL string!");*/
+  /*ok(!StrChrW(NULL,'\0'), "found a character in a NULL string!\n");*/
 
   for (count = 32; count < 16384; count++)
     string[count] = count;
@@ -195,13 +195,13 @@ static void test_StrChrW(void)
   for (count = 32; count < 16384; count++)
   {
     LPWSTR result = StrChrW(string+32, count);
-    ok((result - string) == count, "found char %d in wrong place", count);
+    ok((result - string) == count, "found char %d in wrong place\n", count);
   }
 
   for (count = 32; count < 16384; count++)
   {
     LPWSTR result = StrChrW(string+count+1, count);
-    ok(!result, "found char not in the string");
+    ok(!result, "found char not in the string\n");
   }
 }
 
@@ -211,7 +211,7 @@ static void test_StrChrIA(void)
   WORD count;
 
   /* this test crashes on win2k SP4 */
-  /*ok(!StrChrIA(NULL,'\0'), "found a character in a NULL string!");*/
+  /*ok(!StrChrIA(NULL,'\0'), "found a character in a NULL string!\n");*/
 
   for (count = 32; count < 128; count++)
     string[count] = (char)count;
@@ -221,14 +221,14 @@ static void test_StrChrIA(void)
   {
     LPSTR result = StrChrIA(string+32, count);
 
-    ok(result - string == count, "found char '%c' in wrong place", count);
-    ok(StrChrIA(result, count)!=NULL, "didn't find lowercase '%c'", count);
+    ok(result - string == count, "found char '%c' in wrong place\n", count);
+    ok(StrChrIA(result, count)!=NULL, "didn't find lowercase '%c'\n", count);
   }
 
   for (count = 'a'; count < 'z'; count++)
   {
     LPSTR result = StrChrIA(string+count+1, count);
-    ok(!result, "found char not in the string");
+    ok(!result, "found char not in the string\n");
   }
 }
 
@@ -238,7 +238,7 @@ static void test_StrChrIW(void)
   WORD count;
 
   /* this test crashes on win2k SP4 */
-  /*ok(!StrChrIA(NULL,'\0'), "found a character in a NULL string!");*/
+  /*ok(!StrChrIA(NULL,'\0'), "found a character in a NULL string!\n");*/
 
   for (count = 32; count < 128; count++)
     string[count] = count;
@@ -248,14 +248,14 @@ static void test_StrChrIW(void)
   {
     LPWSTR result = StrChrIW(string+32, count);
 
-    ok(result - string == count, "found char '%c' in wrong place", count);
-    ok(StrChrIW(result, count)!=NULL, "didn't find lowercase '%c'", count);
+    ok(result - string == count, "found char '%c' in wrong place\n", count);
+    ok(StrChrIW(result, count)!=NULL, "didn't find lowercase '%c'\n", count);
   }
 
   for (count = 'a'; count < 'z'; count++)
   {
     LPWSTR result = StrChrIW(string+count+1, count);
-    ok(!result, "found char not in the string");
+    ok(!result, "found char not in the string\n");
   }
 }
 
@@ -265,7 +265,7 @@ static void test_StrRChrA(void)
   WORD count;
 
   /* this test crashes on win2k SP4 */
-  /*ok(!StrRChrA(NULL, NULL,'\0'), "found a character in a NULL string!");*/
+  /*ok(!StrRChrA(NULL, NULL,'\0'), "found a character in a NULL string!\n");*/
 
   for (count = 32; count < 128; count++)
     string[count] = (char)count;
@@ -274,19 +274,19 @@ static void test_StrRChrA(void)
   for (count = 32; count < 128; count++)
   {
     LPSTR result = StrRChrA(string+32, NULL, count);
-    ok(result - string == count, "found char %d in wrong place", count);
+    ok(result - string == count, "found char %d in wrong place\n", count);
   }
 
   for (count = 32; count < 128; count++)
   {
     LPSTR result = StrRChrA(string+count+1, NULL, count);
-    ok(!result, "found char not in the string");
+    ok(!result, "found char not in the string\n");
   }
 
   for (count = 32; count < 128; count++)
   {
     LPSTR result = StrRChrA(string+count+1, string + 127, count);
-    ok(!result, "found char not in the string");
+    ok(!result, "found char not in the string\n");
   }
 }
 
@@ -296,7 +296,7 @@ static void test_StrRChrW(void)
   WORD count;
 
   /* this test crashes on win2k SP4 */
-  /*ok(!StrRChrW(NULL, NULL,'\0'), "found a character in a NULL string!");*/
+  /*ok(!StrRChrW(NULL, NULL,'\0'), "found a character in a NULL string!\n");*/
 
   for (count = 32; count < 128; count++)
     string[count] = count;
@@ -335,7 +335,7 @@ static void test_StrCpyW(void)
     MultiByteToWideChar(0,0,result->byte_size_64,-1,szSrc,sizeof(szSrc)/sizeof(WCHAR));
 
     StrCpyW(szBuff, szSrc);
-    ok(!StrCmpW(szSrc, szBuff), "Copied string %s wrong", result->byte_size_64);
+    ok(!StrCmpW(szSrc, szBuff), "Copied string %s wrong\n", result->byte_size_64);
     result++;
   }
 }
@@ -349,7 +349,7 @@ static void test_StrToIntA(void)
   while (result->string)
   {
     return_val = StrToIntA(result->string);
-    ok(return_val == result->str_to_int, "converted '%s' wrong (%d)",
+    ok(return_val == result->str_to_int, "converted '%s' wrong (%d)\n",
        result->string, return_val);
     result++;
   }
@@ -365,7 +365,7 @@ static void test_StrToIntW(void)
   {
     MultiByteToWideChar(0,0,result->string,-1,szBuff,sizeof(szBuff)/sizeof(WCHAR));
     return_val = StrToIntW(szBuff);
-    ok(return_val == result->str_to_int, "converted '%s' wrong (%d)",
+    ok(return_val == result->str_to_int, "converted '%s' wrong (%d)\n",
        result->string, return_val);
     result++;
   }
@@ -381,10 +381,10 @@ static void test_StrToIntExA(void)
   {
     return_val = -1;
     bRet = StrToIntExA(result->string,0,&return_val);
-    ok(!bRet || return_val != -1, "No result returned from '%s'",
+    ok(!bRet || return_val != -1, "No result returned from '%s'\n",
        result->string);
     if (bRet)
-      ok(return_val == result->str_to_int_ex, "converted '%s' wrong (%d)",
+      ok(return_val == result->str_to_int_ex, "converted '%s' wrong (%d)\n",
          result->string, return_val);
     result++;
   }
@@ -394,10 +394,10 @@ static void test_StrToIntExA(void)
   {
     return_val = -1;
     bRet = StrToIntExA(result->string,STIF_SUPPORT_HEX,&return_val);
-    ok(!bRet || return_val != -1, "No result returned from '%s'",
+    ok(!bRet || return_val != -1, "No result returned from '%s'\n",
        result->string);
     if (bRet)
-      ok(return_val == result->str_to_int_hex, "converted '%s' wrong (%d)",
+      ok(return_val == result->str_to_int_hex, "converted '%s' wrong (%d)\n",
          result->string, return_val);
     result++;
   }
@@ -415,10 +415,10 @@ static void test_StrToIntExW(void)
     return_val = -1;
     MultiByteToWideChar(0,0,result->string,-1,szBuff,sizeof(szBuff)/sizeof(WCHAR));
     bRet = StrToIntExW(szBuff, 0, &return_val);
-    ok(!bRet || return_val != -1, "No result returned from '%s'",
+    ok(!bRet || return_val != -1, "No result returned from '%s'\n",
        result->string);
     if (bRet)
-      ok(return_val == result->str_to_int_ex, "converted '%s' wrong (%d)",
+      ok(return_val == result->str_to_int_ex, "converted '%s' wrong (%d)\n",
          result->string, return_val);
     result++;
   }
@@ -429,10 +429,10 @@ static void test_StrToIntExW(void)
     return_val = -1;
     MultiByteToWideChar(0,0,result->string,-1,szBuff,sizeof(szBuff)/sizeof(WCHAR));
     bRet = StrToIntExW(szBuff, STIF_SUPPORT_HEX, &return_val);
-    ok(!bRet || return_val != -1, "No result returned from '%s'",
+    ok(!bRet || return_val != -1, "No result returned from '%s'\n",
        result->string);
     if (bRet)
-      ok(return_val == result->str_to_int_hex, "converted '%s' wrong (%d)",
+      ok(return_val == result->str_to_int_hex, "converted '%s' wrong (%d)\n",
          result->string, return_val);
     result++;
   }
@@ -447,10 +447,10 @@ static void test_StrDupA()
   {
     lpszStr = StrDupA(result->byte_size_64);
 
-    ok(lpszStr != NULL, "Dup failed");
+    ok(lpszStr != NULL, "Dup failed\n");
     if (lpszStr)
     {
-      ok(!strcmp(result->byte_size_64, lpszStr), "Copied string wrong");
+      ok(!strcmp(result->byte_size_64, lpszStr), "Copied string wrong\n");
       LocalFree((HLOCAL)lpszStr);
     }
     result++;
@@ -460,7 +460,7 @@ static void test_StrDupA()
    * returned an empty string (as Wine does).
    */
   lpszStr = StrDupA(NULL);
-  ok(lpszStr == NULL || *lpszStr == '\0', "NULL string returned %p", lpszStr);
+  ok(lpszStr == NULL || *lpszStr == '\0', "NULL string returned %p\n", lpszStr);
 }
 
 static void test_StrFormatByteSize64A(void)
@@ -531,7 +531,7 @@ void test_StrFromTimeIntervalA(void)
   {
     StrFromTimeIntervalA(szBuff, 256, result->ms, result->digits);
 
-    ok(!strcmp(result->time_interval, szBuff), "Formatted %ld %d wrong",
+    ok(!strcmp(result->time_interval, szBuff), "Formatted %ld %d wrong\n",
        result->ms, result->digits);
     result++;
   }
