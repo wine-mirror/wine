@@ -330,12 +330,13 @@ static INT X11DRV_DIB_MaskToShift(DWORD mask)
  *   high bits, the green, and the source color in the low bits.
  */
 static void X11DRV_DIB_Convert_any_asis(int width, int height,
+                                    int bytes_per_pixel,
                                     const void* srcbits, int srclinebytes,
                                     void* dstbits, int dstlinebytes)
 {
     int y;
 
-    width=abs(dstlinebytes);
+    width*=bytes_per_pixel;
     for (y=0; y<height; y++) {
         memcpy(dstbits, srcbits, width);
         srcbits += srclinebytes;
@@ -2938,7 +2939,7 @@ static void X11DRV_DIB_SetImageBits_16( int lines, const BYTE *srcbits,
                     /* ==== rgb 555 dib -> rgb 555 bmp ==== */
                     /* ==== bgr 555 dib -> bgr 555 bmp ==== */
                     X11DRV_DIB_Convert_any_asis
-                        (dstwidth,lines,
+                        (dstwidth,lines,2,
                          srcbits,linebytes,
                          dstbits,-bmpImage->bytes_per_line);
                 } else {
@@ -2981,7 +2982,7 @@ static void X11DRV_DIB_SetImageBits_16( int lines, const BYTE *srcbits,
                     /* ==== rgb 565 dib -> rgb 565 bmp ==== */
                     /* ==== bgr 565 dib -> bgr 565 bmp ==== */
                     X11DRV_DIB_Convert_any_asis
-                        (dstwidth,lines,
+                        (dstwidth,lines,2,
                          srcbits,linebytes,
                          dstbits,-bmpImage->bytes_per_line);
                 } else {
@@ -3199,7 +3200,7 @@ static void X11DRV_DIB_GetImageBits_16( int lines, BYTE *dstbits,
                     /* ==== rgb 555 bmp -> rgb 555 dib ==== */
                     /* ==== bgr 555 bmp -> bgr 555 dib ==== */
                     X11DRV_DIB_Convert_any_asis
-                        (dstwidth,lines,
+                        (dstwidth,lines,2,
                          srcbits,-bmpImage->bytes_per_line,
                          dstbits,linebytes);
                 } else {
@@ -3241,7 +3242,7 @@ static void X11DRV_DIB_GetImageBits_16( int lines, BYTE *dstbits,
                     /* ==== rgb 565 bmp -> rgb 565 dib ==== */
                     /* ==== bgr 565 bmp -> bgr 565 dib ==== */
                     X11DRV_DIB_Convert_any_asis
-                        (dstwidth,lines,
+                        (dstwidth,lines,2,
                          srcbits,-bmpImage->bytes_per_line,
                          dstbits,linebytes);
                 } else {
@@ -3522,7 +3523,7 @@ static void X11DRV_DIB_SetImageBits_24( int lines, const BYTE *srcbits,
                 /* ==== rgb 888 dib -> rgb 888 bmp ==== */
                 /* ==== bgr 888 dib -> bgr 888 bmp ==== */
                 X11DRV_DIB_Convert_any_asis
-                    (dstwidth,lines,
+                    (dstwidth,lines,3,
                      srcbits,linebytes,
                      dstbits,-bmpImage->bytes_per_line);
             } else {
@@ -3677,7 +3678,7 @@ static void X11DRV_DIB_GetImageBits_24( int lines, BYTE *dstbits,
                 /* ==== rgb 888 bmp -> rgb 888 dib ==== */
                 /* ==== bgr 888 bmp -> bgr 888 dib ==== */
                 X11DRV_DIB_Convert_any_asis
-                    (dstwidth,lines,
+                    (dstwidth,lines,3,
                      srcbits,-bmpImage->bytes_per_line,
                      dstbits,linebytes);
             } else {
@@ -3923,7 +3924,7 @@ static void X11DRV_DIB_SetImageBits_32(int lines, const BYTE *srcbits,
                     /* ==== rgb 0888 dib -> rgb 0888 bmp ==== */
                     /* ==== bgr 0888 dib -> bgr 0888 bmp ==== */
                     X11DRV_DIB_Convert_any_asis
-                        (dstwidth,lines,
+                        (dstwidth,lines,4,
                          srcbits,linebytes,
                          dstbits,-bmpImage->bytes_per_line);
                 } else if (rSrc==bmpImage->blue_mask && bSrc==bmpImage->red_mask) {
@@ -4159,7 +4160,7 @@ static void X11DRV_DIB_GetImageBits_32( int lines, BYTE *dstbits,
                     /* ==== rgb 0888 bmp -> rgb 0888 dib ==== */
                     /* ==== bgr 0888 bmp -> bgr 0888 dib ==== */
                     X11DRV_DIB_Convert_any_asis
-                        (dstwidth,lines,
+                        (dstwidth,lines,4,
                          srcbits,-bmpImage->bytes_per_line,
                          dstbits,linebytes);
                 } else if (rDst==bmpImage->blue_mask && bDst==bmpImage->red_mask) {
@@ -4644,10 +4645,6 @@ INT X11DRV_SetDIBitsToDevice( DC *dc, INT xDest, INT yDest, DWORD cx,
                break;
 
        case 24:
-               descr.rMask = descr.gMask = descr.bMask = 0;
-               descr.colorMap = 0;
-               break;
-
        case 32:
                descr.rMask = (descr.compression == BI_BITFIELDS) ? *(DWORD *)info->bmiColors       : 0xff0000;
                descr.gMask = (descr.compression == BI_BITFIELDS) ? *((DWORD *)info->bmiColors + 1) : 0x00ff00;
@@ -4729,10 +4726,6 @@ INT X11DRV_DIB_SetDIBits(
                break;
 
        case 24:
-               descr.rMask = descr.gMask = descr.bMask = 0;
-               descr.colorMap = 0;
-               break;
-
        case 32:
                descr.rMask = (descr.compression == BI_BITFIELDS) ? *(DWORD *)info->bmiColors       : 0xff0000;
                descr.gMask = (descr.compression == BI_BITFIELDS) ? *((DWORD *)info->bmiColors + 1) : 0x00ff00;
