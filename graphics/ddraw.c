@@ -402,6 +402,15 @@ static int _getpixelformat(LPDIRECTDRAW2 ddraw,LPDDPIXELFORMAT pf) {
 		pf->xy.dwRGBAlphaBitMask= 0;
 		return 0;
 	}
+	if (ddraw->d.depth==24) {
+		pf->dwFlags       	= DDPF_RGB;
+		pf->x.dwRGBBitCount	= 24;
+		pf->y.dwRBitMask	= vi[0].red_mask;
+		pf->z.dwGBitMask	= vi[0].green_mask;
+		pf->xx.dwBBitMask	= vi[0].blue_mask;
+		pf->xy.dwRGBAlphaBitMask= 0;
+		return 0;
+	}
 	FIXME(ddraw,"_getpixelformat:unknown depth %ld?\n",ddraw->d.depth);
 	return DDERR_GENERIC;
 }

@@ -6,17 +6,20 @@ layer is represented by the functions in the Win32 DLL ddraw.dll and the
 IDirectDraw* interfaces (that can be created using the API functions). 
 
 WINE currently implements a very basic set of the DirectDraw functionality
-in graphics/ddraw.c. This implementation uses the XFree86-DGA extension 
+in graphics/ddraw.c. This implementation uses either the XFree86-DGA extension 
 to get very fast access to the graphics card framebuffer and doublebuffering
-features. It is as fast as the MS equivalent for the stuff that is implemented.
+features or Xlib, which is slower.
+The implementation using XFree86-DGA is as fast as the MS equivalent for the
+stuff that is implemented.
+
 Several applications already work, see below.
 Problems of the implementation using XFree86-DGA:
 
-	- XFree86 cannot switch resolution nor depth on the fly.
+	- XFree86 cannot switch depth on the fly.
 	  This is a problem with X and unavoidable.
 	  Current solution is to pop up a MessageBox with an error for 
 	  mismatched parameters and advice the user to restart the X server
-	  with the specified depth and/or screensize.
+	  with the specified depth.
 	- The rest of the functionality that has to be implemented will have
 	  to be done in software and will be very slow.
 	- This requires WINE to be run as root user so XF86DGA can mmap the
@@ -25,10 +28,7 @@ Problems of the implementation using XFree86-DGA:
 
 Status:
    - Diablo [640x480x8]:
-     The movies play with speed comparable to the MS DDRAW one.
-     The game doesn't work, it somehow tries to write into 2 lines _BEFORE_
-     the start of the surface. I have tried to investigate this, but it is
-     in code that is automatically generated.
+     No longer works. Unclear why. [WINE-990131, Marcus Meissner]
   
    - WingCommander 4 / Win95 Patch [640x480x8]:
      The intromovie plays, in 8 bit mode (to reconfigure wc4, run wine
@@ -36,23 +36,25 @@ Status:
      this is due to the unusual colorweight (565 rgb) of the Mystique in 16bit
      mode. [Specifying it in DDPIXELFORMAT didn't help.]
 
-     Requires to be run in 640x480xdepth mode (doesn't seem to heed
-     DDSURFACEDESC.lPitch).
-     You can even fly the first mission with Maniac (ignore the weird sounds),
-     but it crashes as soon as you arrive at Blue Point Station...
-  
+     Keyboard input does not work. This seems to be a problem with the 
+     cooperative window and USER input handling in general.
+
+     -> Unable to test Gameplay.
+
+     The display is slower as before. Reason is unknown, but I suspect the 
+     communication between winserver,dsoundmixerthread,mainthread takes
+     up too much time.
+
+     [WINE-990131, Marcus Meissner]
+
    - Monkey Island 3 [640x480x8]:
-     WINE-CVS-981116: 
+     WINE-CVS-981116:
      	Works, using DGA and Xlib. (Mousecontrol is a bit off in windowed mode.)
    
    - DiscWorld 2 [640x480x8]:
      Plays through nearly all intro movies. Sound and animation skip a lot of
      stuff (possible DirectSound asynchronization problem).
    
-   - XvT [640x480x16]:
-     Shows the splash screen, then fails with missing Joystick. I have
-     investigated but failed to find a reason for this.
-  
    - Tomb Raider 2 Demo (using 8 bit renderer) [640x480x8]:
      I have played nearly all of the DEMO level using Keyboard Controls.
      Sound is a bit weird. Keyboard/Mouse handling too due to incomplete

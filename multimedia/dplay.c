@@ -415,7 +415,7 @@ static HRESULT WINAPI IDirectPlayLobby2W_Connect
      return DPERR_INVALIDPARAMS;
   }
 
-  if( ( createRC = DirectPlayCreate( &IID_IDirectPlayLobby2, lplpDP, pUnk ) ) != DP_OK )
+  if( ( createRC = DirectPlayCreate( (LPGUID)&IID_IDirectPlayLobby2, lplpDP, pUnk ) ) != DP_OK )
   {
      ERR( dplay, "error creating Direct Play 2W interface. Return Code = %ld.\n", createRC );
      return createRC;
