@@ -112,8 +112,6 @@ const WCHAR PropSheetInfoStr[] =
 #define MAX_TABTEXT_LENGTH 255
 #define MAX_BUTTONTEXT_LENGTH 64
 
-#define PSH_WIZARD97_OLD   0x00002000
-#define PSH_WIZARD97_NEW   0x01000000
 #define INTRNL_ANY_WIZARD (PSH_WIZARD | PSH_WIZARD97_OLD | PSH_WIZARD97_NEW | PSH_WIZARD_LITE)
 
 /******************************************************************************

@@ -253,10 +253,7 @@ DECL_WINELIB_TYPE_AW(LPFNPSPCALLBACK)
 #define PSH_RTLREADING          0x0800
 #define PSH_WIZARDCONTEXTHELP   0x00001000
 
-     /*
-      * for below IE 5
-      * PSH_WIZARD97            0x00002000
-      */
+#define PSH_WIZARD97_OLD        0x00002000 /* for IE < 5 */
 #define PSH_WATERMARK           0x00008000
 #define PSH_USEHBMWATERMARK     0x00010000
 #define PSH_USEHPLWATERMARK     0x00020000
@@ -265,11 +262,15 @@ DECL_WINELIB_TYPE_AW(LPFNPSPCALLBACK)
 #define PSH_USEHBMHEADER        0x00100000
 #define PSH_USEPAGELANG         0x00200000
 #define PSH_WIZARD_LITE         0x00400000
-     /*
-      * for IE 5 and above
-      * PSH_WIZARD97            0x01000000
-      */
+#define PSH_WIZARD97_NEW        0x01000000 /* for IE >= 5 */
 #define PSH_NOCONTEXTHELP       0x02000000
+#ifndef __WINE__
+# if _WIN32_IE < 0x0500
+#  define PSH_WIZARD97          PSH_WIZARD97_OLD
+# else
+#  define PSH_WIZARD97          PSH_WIZARD97_NEW
+# endif
+#endif
 
 #define PSCB_INITIALIZED  1
 #define PSCB_PRECREATE    2
