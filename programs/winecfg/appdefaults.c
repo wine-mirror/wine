@@ -40,23 +40,21 @@ static void update_comboboxes(HWND dialog)
   char *winver, *dosver;
   
   /* retrieve the registry values */
-  winver = getConfigValue(keypath("Version"), "Windows", NULL);
-  dosver = getConfigValue(keypath("Version"), "DOS", NULL);
+  winver = get(keypath("Version"), "Windows", "");
+  dosver = get(keypath("Version"), "DOS", "");
 
-  /* NULL winver/dosver means use automatic mode (ie the builtin dll linkage heuristics)  */
+  /* empty winver/dosver means use automatic mode (ie the builtin dll linkage heuristics)  */
   
-  WINE_TRACE("winver is %s\n", winver ? winver : "null (automatic mode)");
-  WINE_TRACE("dosver is %s\n", dosver ? dosver : "null (automatic mode)");
+  WINE_TRACE("winver is %s\n", *winver != '\0' ? winver : "null (automatic mode)");
+  WINE_TRACE("dosver is %s\n", *dosver != '\0' ? dosver : "null (automatic mode)");
 
   /* normalize the version strings */
-  if (winver && strlen(winver))
+  if (*winver != '\0')
   {
     if ((pVer = getWinVersions ()))
     {
-      WINE_TRACE("Windows version\n");
       for (i = 0; *pVer->szVersion || *pVer->szDescription; i++, pVer++)
       {
-	WINE_TRACE("pVer->szVersion == %s\n", pVer->szVersion);
 	if (!strcasecmp (pVer->szVersion, winver))
 	{
 	  SendDlgItemMessage (dialog, IDC_WINVER, CB_SETCURSEL, (WPARAM) (i + 1), 0);
@@ -71,14 +69,12 @@ static void update_comboboxes(HWND dialog)
     SendDlgItemMessage (dialog, IDC_WINVER, CB_SETCURSEL, 0, 0);
   }
 
-  if (dosver && strlen(dosver))
+  if (*dosver != '\0')
   {
     if ((pVer = getDOSVersions ()))
     {
-      WINE_TRACE("DOS version\n");
       for (i = 0; *pVer->szVersion || *pVer->szDescription; i++, pVer++)
       {
-	WINE_TRACE("pVer->szVersion == %s\n", pVer->szVersion);
 	if (!strcasecmp (pVer->szVersion, dosver))
 	{
 	  SendDlgItemMessage (dialog, IDC_DOSVER, CB_SETCURSEL,
@@ -93,9 +89,9 @@ static void update_comboboxes(HWND dialog)
     WINE_TRACE("setting dosver combobox to automatic/default\n");
     SendDlgItemMessage (dialog, IDC_DOSVER, CB_SETCURSEL, 0, 0);
   }
-
-  if (winver) free(winver);
-  if (dosver) free(dosver);
+  
+  HeapFree(GetProcessHeap(), 0, winver);
+  HeapFree(GetProcessHeap(), 0, dosver);
 }
 
 void
@@ -153,6 +149,7 @@ static void add_listview_item(HWND listview, char *text, void *association)
   ListView_InsertItem(listview, &item);
 }
 
+/* Called when the application is initialized (cannot reinit!)  */
 static void init_appsheet(HWND dialog)
 {
   HWND listview;
@@ -160,22 +157,21 @@ static void init_appsheet(HWND dialog)
   int i;
   DWORD size;
   char appname[1024];
-  FILETIME ft;
 
   WINE_TRACE("()\n");
-  
+
   listview = GetDlgItem(dialog, IDC_APP_LISTVIEW);
 
   /* we use the lparam field of the item so we can alter the presentation later and not change code
    * for instance, to use the tile view or to display the EXEs embedded 'display name' */
   add_listview_item(listview, "Default Settings", NULL);
-  
-  /* do the application specific stuff, then add the default item last */
-  if (RegOpenKey(configKey, "AppDefaults", &key) == ERROR_SUCCESS)
+
+  /* because this list is only populated once, it's safe to bypass the settings list here  */
+  if (RegOpenKey(config_key, "AppDefaults", &key) == ERROR_SUCCESS)
   {
       i = 0;
       size = sizeof(appname);
-      while (RegEnumKeyEx(key, i, appname, &size, NULL, NULL, NULL, &ft) == ERROR_SUCCESS)
+      while (RegEnumKeyEx(key, i, appname, &size, NULL, NULL, NULL, NULL) == ERROR_SUCCESS)
       {
           add_listview_item(listview, appname, strdup(appname));
 
@@ -218,12 +214,13 @@ static int get_listview_selection(HWND listview)
   return -1;
 }
 
+
 /* called when the user selects a different application */
 static void on_selection_change(HWND dialog, HWND listview)
 {
   LVITEM item;
   char *oldapp = currentApp;
-
+    
   WINE_TRACE("()\n");
   
   item.iItem = get_listview_selection(listview);
@@ -253,6 +250,8 @@ static void on_selection_change(HWND dialog, HWND listview)
       init_comboboxes(dialog);
   
   update_comboboxes(dialog);
+
+  set_window_title(dialog);
 }
 
 static void on_add_app_click(HWND dialog)
@@ -295,14 +294,14 @@ static void on_remove_app_click(HWND dialog)
 {
     HWND listview = GetDlgItem(dialog, IDC_APP_LISTVIEW);
     int selection = get_listview_selection(listview);
-    char *section = keypath("");
+    char *section = keypath(""); /* AppDefaults\\whatever.exe\\ */
 
     WINE_TRACE("selection=%d, section=%s\n", selection, section);
     
     assert( selection != 0 ); /* user cannot click this button when "default settings" is selected  */
 
     section[strlen(section)] = '\0'; /* remove last backslash  */
-    addTransaction(section, NULL, ACTION_REMOVE, NULL);
+    set(section, NULL, NULL); /* delete the section  */
     ListView_DeleteItem(listview, selection);
 
     SetFocus(listview);
@@ -316,13 +315,16 @@ static void on_winver_change(HWND dialog)
     if (selection == 0)
     {
         WINE_TRACE("automatic/default selected so removing current setting\n");
-        addTransaction(keypath("Version"), "Windows", ACTION_REMOVE, NULL);
+        set(keypath("Version"), "Windows", NULL);
     }
     else
     {
         WINE_TRACE("setting Version\\Windows key to value '%s'\n", ver[selection - 1].szVersion);
-        addTransaction(keypath("Version"), "Windows", ACTION_SET,  ver[selection - 1].szVersion);
+        set(keypath("Version"), "Windows", ver[selection - 1].szVersion);
     }
+
+    /* enable the apply button  */
+    SendMessage(GetParent(dialog), PSM_CHANGED, (WPARAM) dialog, 0);
 }
 
 static void on_dosver_change(HWND dialog)
@@ -333,13 +335,16 @@ static void on_dosver_change(HWND dialog)
     if (selection == 0)
     {
         WINE_TRACE("automatic/default selected so removing current setting\n");
-        addTransaction(keypath("Version"), "DOS", ACTION_REMOVE, NULL);
+        set(keypath("Version"), "DOS", NULL);
     }
     else
     {
         WINE_TRACE("setting Version\\DOS key to value '%s'\n", ver[selection - 1].szVersion);
-        addTransaction(keypath("Version"), "DOS", ACTION_SET,  ver[selection - 1].szVersion);
+        set(keypath("Version"), "DOS", ver[selection - 1].szVersion);
     }
+
+    /* enable the apply button  */
+    SendMessage(GetParent(dialog), PSM_CHANGED, (WPARAM) dialog, 0);
 }
 
 INT_PTR CALLBACK
@@ -348,17 +353,25 @@ AppDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
   switch (uMsg)
   {
     case WM_INITDIALOG:
-      init_appsheet(hDlg);
-      break;
+        init_appsheet(hDlg);
+        break;
+
+    case WM_SHOWWINDOW:
+        set_window_title(hDlg);
+        break;
 
     case WM_NOTIFY:
-    
       switch (((LPNMHDR)lParam)->code)
       {
         case LVN_ITEMCHANGED:
-          on_selection_change(hDlg, GetDlgItem(hDlg, IDC_APP_LISTVIEW));
-          break;
+            on_selection_change(hDlg, GetDlgItem(hDlg, IDC_APP_LISTVIEW));
+            break;
+        case PSN_APPLY:
+            apply();
+            SetWindowLong(hDlg, DWL_MSGRESULT, PSNRET_NOERROR);
+            break;
       }
+      
       break;
     
     case WM_COMMAND:
@@ -383,6 +396,7 @@ AppDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
           }
           break;
       }
+
       break;
   }
   

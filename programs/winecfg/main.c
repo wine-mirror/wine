@@ -217,10 +217,6 @@ WinMain (HINSTANCE hInstance, HINSTANCE hPrev, LPSTR szCmdLine, int nShow)
 	WINE_ERR("initialization failed, aborting\n");
 	ExitProcess(1);
     }
-
-    /* is the user running as root? */
-    if(getuid() == 0)
-        MessageBox(NULL, "It is not advisable to run wine as root.  Doing so may compromise the security of your computer.  Please run wine as a normal user.", "", MB_OK);
     
     /*
      * The next 3 lines should be all that is needed

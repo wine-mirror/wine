@@ -212,14 +212,13 @@ int refreshDriveDlg (HWND dialog)
     ShowWindow(GetDlgItem(dialog, IDS_DRIVE_NO_C), SW_HIDE);
   
   /* disable or enable controls depending on whether we are editing global vs app specific config */
-  if (appSettings == EDITING_GLOBAL) {
+  if (currentApp) {
     WINE_TRACE("enabling controls\n");
     enable(IDC_LIST_DRIVES);
     enable(IDC_BUTTON_ADD);
     enable(IDC_BUTTON_REMOVE);
     enable(IDC_BUTTON_EDIT);
     enable(IDC_BUTTON_AUTODETECT);
-    
   } else {
     WINE_TRACE("disabling controls\n");
     disable(IDC_LIST_DRIVES);
@@ -1016,6 +1015,11 @@ DriveDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
       case WM_INITDIALOG:
           onDriveInitDialog();
           break;
+
+      case WM_SHOWWINDOW:
+          set_window_title(hDlg);
+          break;
+          
       case WM_COMMAND:
 	switch (LOWORD(wParam)) {
 	    case IDC_LIST_DRIVES:

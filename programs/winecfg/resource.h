@@ -53,26 +53,17 @@
 #define IDC_DESKTOP_BY                  1026
 #define IDC_XDGA                        1027
 #define IDC_XSHM                        1028
+
+/* dll editing  */
 #define IDC_RAD_BUILTIN                 1029
 #define IDC_RAD_NATIVE                  1030
 #define IDC_RAD_BUILTIN_NATIVE          1031
 #define IDC_RAD_NATIVE_BUILTIN          1032
 #define IDC_RAD_DISABLE                 1033
-#define IDC_TREE_DLLS                   1034
-#define IDC_DLLS_ADDAPP                 8000
+#define IDC_DLLS_LIST                   1034
 #define IDC_DLLS_ADDDLL                 8001
-#define IDC_DLLS_REMOVEAPP              8002
 #define IDC_DLLS_REMOVEDLL              8003
-#define IDC_DLLLIST                     8004
-#define IDC_RADIO_DEFAULT_BUILTIN       1033
-#define IDC_RADIO_DEFAULT_NATIVE        1034
-#define IDC_RADIO_VIRTUAL               1035
-#define IDC_EDIT_VIRTUAL                1036
-#define IDC_BUTTON_VIRTUAL              1037
-#define IDC_RADIO_REAL                  1038
-#define IDC_EDIT_REAL                   1039
-#define IDC_BUTTON_REAL                 1040
-#define IDC_BUTTON_FOLDERS              1041
+#define IDC_DLLCOMBO                    8004
 
 /* drive editing */
 #define IDC_LIST_DRIVES                 1042

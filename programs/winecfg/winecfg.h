@@ -45,30 +45,21 @@
     }
 
 #define WRITEME(owner) MessageBox(owner, "Write me!", "", MB_OK | MB_ICONEXCLAMATION);
-  
-
-/* Transaction management */
-enum transaction_action {
-    ACTION_SET,
-    ACTION_REMOVE
-};
-
-struct transaction {
-    char *section;
-    char *key;
-    char *newValue;
-    enum transaction_action action;
-    struct transaction *next, *prev;
-};
-extern struct transaction *tqhead, *tqtail;
-
-extern int instantApply; /* non-zero means apply all changes instantly */
-
-#define EDITING_GLOBAL 0
-#define EDITING_APP    1
-extern int appSettings;  /* non-zero means we are editing appdefault settings */
 
 extern char *currentApp; /* NULL means editing global settings  */
+
+/* Use get and set to alter registry settings. The changes made through set
+   won't be committed to the registry until process_all_settings is called,
+   however get will still return accurate information.
+
+   You are expected to release the result of get. The parameters to set will
+   be copied, so release them too when necessary.
+ */
+void set(char *path, char *name, char *value);
+char *get(char *path, char *name, char *def);
+BOOL exists(char *path, char *name);
+void apply(void);
+char **enumerate_values(char *path);
 
 /* returns a string of the form "AppDefaults\\appname.exe\\section", or just "section" if
  * the user is editing the global settings.
@@ -77,31 +68,11 @@ extern char *currentApp; /* NULL means editing global settings  */
  */
 char *keypath(char *section); 
 
-/* Commits a transaction to the registry */
-void processTransaction(struct transaction *trans);
-
-/* Processes every pending transaction in the queue, removing them as it works from head to tail */
-void processTransQueue();
-
-/* Adds a transaction to the head of the queue. If we're using instant apply, this calls processTransaction
- * action can be either:
- *   ACTION_SET -> this transaction will change a registry key, newValue is the replacement value
- *   ACTION_REMOVE -> this transaction will remove a registry key. In this case, newValue is ignored.
- */
-void addTransaction(const char *section, const char *key, enum transaction_action action, const char *newValue);
-
-/* frees the transaction structure, all fields, and removes it from the queue if in it */
-void destroyTransaction(struct transaction *trans);
-
 /* Initializes the transaction system */
 int initialize(void);
-extern HKEY configKey;
+extern HKEY config_key;
 
-/* don't use these directly!  */
-int setConfigValue (const char *subkey, const char *valueName, const char *value);
-char *getConfigValue (const char *subkey, const char *valueName, const char *defaultResult);
-HRESULT doesConfigValueExist (const char *subkey, const char *valueName);
-HRESULT removeConfigValue (const char *subkey, const char *valueName);
+void set_window_title(HWND dialog);
 
 /* Graphics */
 
@@ -125,14 +96,12 @@ INT_PTR CALLBACK AudioDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lPara
 char *getDialogItemText(HWND hDlg, WORD controlID);
 #define disable(id) EnableWindow(GetDlgItem(dialog, id), 0);
 #define enable(id) EnableWindow(GetDlgItem(dialog, id), 1);
-#define alloc(size) HeapAlloc(GetProcessHeap(), 0, size);
-#define release(ptr) HeapFree(GetProcessHeap(), 0, ptr);
 void PRINTERROR(void); /* WINE_TRACE() the plaintext error message from GetLastError() */
 
 /* returns a string in the win32 heap  */
 static inline char *strdupA(char *s)
 {
-    char *r = alloc(strlen(s));
+    char *r = HeapAlloc(GetProcessHeap(), 0, strlen(s));
     return strcpy(r, s);
 }
 

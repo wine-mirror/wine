@@ -55,7 +55,8 @@ void selectAudioDriver(HWND hDlg, char *drivername)
     {
       if (!strcmp (pAudioDrv->szDriver, drivername))
       {
-	addTransaction("Winmm", "Drivers", ACTION_SET, pAudioDrv->szDriver);
+	set("Winmm", "Drivers", (char *) pAudioDrv->szDriver);
+        SendMessage(GetParent(hDlg), PSM_CHANGED, (WPARAM) hDlg, 0); /* enable apply button */
 	SendDlgItemMessage(hDlg, IDC_AUDIO_DRIVER, CB_SETCURSEL,
 			   (WPARAM) i, 0);
       }
@@ -66,7 +67,7 @@ void selectAudioDriver(HWND hDlg, char *drivername)
 void
 initAudioDlg (HWND hDlg)
 {
-  char *curAudioDriver = getConfigValue("Winmm", "Drivers", "winealsa.drv");
+  char *curAudioDriver = get("Winmm", "Drivers", "winealsa.drv");
   const AUDIO_DRIVER *pAudioDrv = NULL;
   int i;
 
@@ -175,13 +176,18 @@ AudioDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	     break;
 	}
 	break;
-	
+
+      case WM_SHOWWINDOW:
+        set_window_title(hDlg);
+        break;
+        
       case WM_NOTIFY:
 	switch(((LPNMHDR)lParam)->code) {
 	    case PSN_KILLACTIVE:
 	      SetWindowLong(hDlg, DWL_MSGRESULT, FALSE);
 	      break;
 	    case PSN_APPLY:
+              apply();
 	      SetWindowLong(hDlg, DWL_MSGRESULT, PSNRET_NOERROR);
 	      break;
 	    case PSN_SETACTIVE:

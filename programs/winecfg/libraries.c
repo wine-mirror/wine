@@ -2,6 +2,7 @@
  * WineCfg libraries tabsheet
  *
  * Copyright 2004 Robert van Herk
+ * Copyright 2004 Mike Hearn
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -24,535 +25,324 @@
 #include <commdlg.h>
 #include <wine/debug.h>
 #include <stdio.h>
+#include <assert.h>
 #include "winecfg.h"
 #include "resource.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(winecfg);
 
-typedef enum _DLGMODE
+enum dllmode
 {
-	DLL,
-	APP,
-	GLOBAL,
-} DLGMODE;
-
-typedef enum _DLLMODE {
 	BUILTIN_NATIVE,
 	NATIVE_BUILTIN,
 	BUILTIN,
 	NATIVE,
 	DISABLE,
-	UNKNOWN /*Special value indicating an erronous DLL override mode*/
-} DLLMODE;
+	UNKNOWN /* Special value indicating an erronous DLL override mode */
+};
 
-static void removeSpaces(char* in, char* out)
+struct dll
 {
-  int i,j;
-  j = 0;
-  for (i = 0; i < strlen(in); i++)
-  {
-    if (in[i] != ' ')
+        char *name;
+        enum dllmode mode;
+};
+
+static enum dllmode parse_override(char *in)
+{
+    int i, j;
+    char *out;
+
+    out = HeapAlloc(GetProcessHeap(), 0, strlen(in));
+
+    /* remove the spaces */
+    j = 0;
+    for (i = 0; i < strlen(in); i++)
     {
-      out[j] = in[i];
-      j++;
+        if (in[i] != ' ')
+        {
+            out[j] = in[i];
+            j++;
+        }
     }
-  }
-  out[j] = 0;
-}
+    out[j] = 0;
 
-static DLLMODE Str2DLLMode(char* c)
-{
-  /*Parse a string into a DLLMode*/ 
-  char* d = HeapAlloc(GetProcessHeap(), 0, sizeof(c));
-  removeSpaces(c,d);
-  if (strcmp (d, "builtin,native") == 0) {
-    return BUILTIN_NATIVE;
-  } else
-  if (strcmp (d, "native,builtin") == 0) {
-    return NATIVE_BUILTIN;
-  } else
-  if (strcmp (d, "native") == 0){
-    return NATIVE;
-  } else
-  if (strcmp (d, "builtin") == 0) {
-    return BUILTIN;
-  } else
-  if (strcmp (d, "") == 0) {
-    return DISABLE;
-  } else
+    /* parse the string */
+    if (strcmp(out, "builtin,native") == 0) return BUILTIN_NATIVE;
+    else if (strcmp(out, "native,builtin") == 0) return NATIVE_BUILTIN;
+    else if (strcmp(out, "native") == 0) return NATIVE;
+    else if (strcmp(out, "builtin") == 0) return BUILTIN;
+    else if (strcmp(out, "") == 0) return DISABLE;
+
     return UNKNOWN;
 }
 
-static char* DLLMode2Str(DLLMODE mode)
+/* this is used to convert a dllmode to a human readable string. we should read from the translations here  */
+static char* mode_to_label(enum dllmode mode)
 {
-  char* res;
-  switch (mode) {
-    case NATIVE:
-      res = "native";
-      break;
-    case BUILTIN:
-      res = "builtin";
-      break;
-    case NATIVE_BUILTIN:
-      res = "native, builtin";
-      break;
-    case BUILTIN_NATIVE:
-      res = "builtin, native";
-      break;
-    case DISABLE:
-      res = "";
-      break;
-    default:
-      res = "unknown";
-  }
-  return strdup(res);
+    char* res;
+
+    switch (mode) {
+        case NATIVE:
+            res = "native";
+            break;
+        case BUILTIN:
+            res = "builtin";
+            break;
+        case NATIVE_BUILTIN:
+            res = "native, builtin";
+            break;
+        case BUILTIN_NATIVE:
+            res = "builtin, native";
+            break;
+        case DISABLE:
+            res = "disabled";
+            break;
+        default:
+            res = "unknown/invalid";
+            break;
+    }
+
+    return res;
 }
 
-typedef struct _DLLOVERRIDE
+static void set_controls_from_selection(HWND dialog)
 {
-	char* lpcKey;    /*The actual dll name*/
-	DLLMODE mode;
-} DLLOVERRIDE, *LPDLLOVERRIDE;
+    int index = SendDlgItemMessage(dialog, IDC_DLLS_LIST, LB_GETCURSEL, 0, 0);
+    struct dll *dll;
+    DWORD id;
+    int i;
+    
+    if (index == -1) /* no selection  */
+    {
+        for (i = IDC_RAD_BUILTIN; i <= IDC_RAD_DISABLE; i++)
+            disable(i);
 
-static LPDLLOVERRIDE CreateDLLOverride(char* lpcKey)
-{
-	LPDLLOVERRIDE out = HeapAlloc(GetProcessHeap(),0,sizeof(DLLOVERRIDE));
-	out->lpcKey = strdup (lpcKey);
-	return out;
+        CheckRadioButton(dialog, IDC_RAD_BUILTIN, IDC_RAD_DISABLE, -1);
+        
+        return;
+    }
+
+    /* enable the controls  */
+    for (i = IDC_RAD_BUILTIN; i <= IDC_RAD_DISABLE; i++)
+        enable(i);
+
+    dll = (struct dll *) SendDlgItemMessage(dialog, IDC_DLLS_LIST, LB_GETITEMDATA, index, 0);
+    
+    switch (dll->mode)
+    {
+        case NATIVE:
+            id = IDC_RAD_NATIVE;
+            break;
+        case BUILTIN:
+            id = IDC_RAD_BUILTIN;
+            break;
+        case NATIVE_BUILTIN:
+            id = IDC_RAD_NATIVE_BUILTIN;
+            break;
+        case BUILTIN_NATIVE:
+            id = IDC_RAD_BUILTIN_NATIVE;
+            break;
+        case DISABLE:
+            id = IDC_RAD_DISABLE;
+            break;
+
+        case UNKNOWN:
+        default:
+            id = -1;
+            break;
+    }
+
+    CheckRadioButton(dialog, IDC_RAD_BUILTIN, IDC_RAD_DISABLE, id);
 }
 
-static VOID FreeDLLOverride(LPDLLOVERRIDE ldo)
+
+static void clear_settings(HWND dialog)
 {
-	if (ldo->lpcKey)
-		free(ldo->lpcKey);
-	HeapFree(GetProcessHeap(),0,ldo);
+    int count = SendDlgItemMessage(dialog, IDC_DLLS_LIST, LB_GETCOUNT, 0, 0);
+    int i;
+
+    WINE_TRACE("count=%d\n", count);
+    
+    for (i = 0; i < count; i++)
+    {
+        struct dll *dll = (struct dll *) SendDlgItemMessage(dialog, IDC_DLLS_LIST, LB_GETITEMDATA, 0, 0);
+        
+        SendDlgItemMessage(dialog, IDC_DLLS_LIST, LB_DELETESTRING, 0, 0);
+        
+        HeapFree(GetProcessHeap(), 0, dll->name);
+        HeapFree(GetProcessHeap(), 0, dll);
+    }
 }
 
-typedef struct _APPL
+static void load_library_settings(HWND dialog)
 {
-	BOOL isGlobal;
-	char* lpcApplication;
-	char* lpcSection; /*Registry section*/
-} APPL, *LPAPPL;
+    char **overrides = enumerate_values(keypath("DllOverrides"));
+    char **p;
+    int sel, count = 0;
 
-static LPAPPL CreateAppl(BOOL isGlobal, char* application, char* section)
-{
-	LPAPPL out;
-	out = HeapAlloc(GetProcessHeap(),0,sizeof(APPL));
-	out->lpcApplication = strdup(application);
-	out->lpcSection = strdup(section);
-	out->isGlobal = isGlobal;
-	return out;
+    sel = SendDlgItemMessage(dialog, IDC_DLLS_LIST, LB_GETCURSEL, 0, 0);
+
+    WINE_TRACE("sel=%d\n", sel);
+
+    clear_settings(dialog);
+    
+    if (!overrides || *overrides == NULL)
+    {
+        set_controls_from_selection(dialog);
+        disable(IDC_DLLS_REMOVEDLL);
+        HeapFree(GetProcessHeap(), 0, overrides);
+        return;
+    }
+
+    enable(IDC_DLLS_REMOVEDLL);
+    
+    for (p = overrides; *p != NULL; p++)
+    {
+        int index;
+        char *str, *value, *label;
+        struct dll *dll;
+
+        value = get(keypath("DllOverrides"), *p, NULL);
+
+        label = mode_to_label(parse_override(value));
+        
+        str = HeapAlloc(GetProcessHeap(), 0, strlen(*p) + 2 + strlen(label) + 2);
+        strcpy(str, *p);
+        strcat(str, " (");
+        strcat(str, label);
+        strcat(str, ")");
+
+        dll = HeapAlloc(GetProcessHeap(), 0, sizeof(struct dll));
+        dll->name = *p;
+        dll->mode = parse_override(value);
+
+        index = SendDlgItemMessage(dialog, IDC_DLLS_LIST, LB_ADDSTRING, (WPARAM) -1, (LPARAM) str);
+        SendDlgItemMessage(dialog, IDC_DLLS_LIST, LB_SETITEMDATA, index, (LPARAM) dll);
+
+        HeapFree(GetProcessHeap(), 0, str);
+
+        count++;
+    }
+
+    HeapFree(GetProcessHeap(), 0, overrides);
+
+    /* restore the previous selection, if possible  */
+    if (sel >= count - 1) sel = count - 1;
+    else if (sel == -1) sel = 0;
+    
+    SendDlgItemMessage(dialog, IDC_DLLS_LIST, LB_SETCURSEL, sel, 0);
+
+    set_controls_from_selection(dialog);
 }
 
-static VOID FreeAppl(LPAPPL lpAppl)
+/* Called when the application is initialized (cannot reinit!)  */
+static void init_libsheet(HWND dialog)
 {
-	if (lpAppl->lpcApplication)
-		free(lpAppl->lpcApplication); /* The strings were strdup-ped, so we use "free" */
-	if (lpAppl->lpcSection)
-		free(lpAppl->lpcSection);
-	HeapFree(GetProcessHeap(),0,lpAppl);
+    /* clear the add dll controls  */
+    SendDlgItemMessage(dialog, IDC_DLLCOMBO, WM_SETTEXT, 1, (LPARAM) "");
+    disable(IDC_DLLS_ADDDLL);
 }
 
-typedef struct _ITEMTAG
-{
-	LPAPPL lpAppl;
-	LPDLLOVERRIDE lpDo;
-} ITEMTAG, *LPITEMTAG;
 
-static LPITEMTAG CreateItemTag()
+static void on_add_combo_change(HWND dialog)
 {
-	LPITEMTAG out;
-	out = HeapAlloc(GetProcessHeap(),0,sizeof(ITEMTAG));
-	out->lpAppl = 0;
-	out->lpDo = 0;
-	return out;
+    char buffer[1024];
+
+    SendDlgItemMessage(dialog, IDC_DLLCOMBO, WM_GETTEXT, sizeof(buffer), (LPARAM) buffer);
+
+    if (strlen(buffer))
+        enable(IDC_DLLS_ADDDLL)
+    else
+        disable(IDC_DLLS_ADDDLL);
 }
 
-static VOID FreeItemTag(LPITEMTAG lpit)
+static void set_dllmode(HWND dialog, DWORD id)
 {
-	if (lpit->lpAppl)
-		FreeAppl(lpit->lpAppl);
-	if (lpit->lpDo)
-		FreeDLLOverride(lpit->lpDo);
-	HeapFree(GetProcessHeap(),0,lpit);
+    enum dllmode mode;
+    struct dll *dll;
+    int sel;
+    char *str;
+
+#define CONVERT(s) case IDC_RAD_##s: mode = s; break;
+    
+    switch (id)
+    {
+        CONVERT( BUILTIN );
+        CONVERT( NATIVE );
+        CONVERT( BUILTIN_NATIVE );
+        CONVERT( NATIVE_BUILTIN );
+        CONVERT( DISABLE );
+
+        default: assert( FALSE ); /* should not be reached  */
+    }
+
+#undef CONVERT
+
+    sel = SendDlgItemMessage(dialog, IDC_DLLS_LIST, LB_GETCURSEL, 0, 0);
+    if (sel == -1) return;
+    
+    dll = (struct dll *) SendDlgItemMessage(dialog, IDC_DLLS_LIST, LB_GETITEMDATA, sel, 0);
+
+    switch (mode)
+    {
+        case BUILTIN: str = "builtin"; break;
+        case NATIVE: str = "native"; break;
+        case BUILTIN_NATIVE: str = "builtin, native"; break;
+        case NATIVE_BUILTIN: str = "native, builtin"; break;
+        case DISABLE: str = ""; break;
+        default: assert( FALSE ); /* unreachable  */
+    }
+    WINE_TRACE("Setting %s to %s\n", dll->name, str);
+    
+    set(keypath("DllOverrides"), dll->name, str);
+
+    load_library_settings(dialog);  /* ... and refresh  */
 }
 
-static VOID UpdateDLLList(HWND hDlg, char* dll)
+static void on_add_click(HWND dialog)
 {
-	/*Add if it isn't already in*/
-	if (SendDlgItemMessage(hDlg, IDC_DLLLIST, CB_FINDSTRING, 1, (LPARAM) dll) == CB_ERR)
-		SendDlgItemMessage(hDlg,IDC_DLLLIST,CB_ADDSTRING,0,(LPARAM) dll);
+    char buffer[1024];
+
+    ZeroMemory(buffer, sizeof(buffer));
+
+    SendDlgItemMessage(dialog, IDC_DLLCOMBO, WM_GETTEXT, sizeof(buffer), (LPARAM) buffer);
+
+    SendDlgItemMessage(dialog, IDC_DLLCOMBO, WM_SETTEXT, 0, (LPARAM) "");
+    disable(IDC_DLLS_ADDDLL);
+    
+    WINE_TRACE("Adding %s as native, builtin", buffer);
+    
+    set(keypath("DllOverrides"), buffer, "native,builtin");
+
+    load_library_settings(dialog);
+
+    SendDlgItemMessage(dialog, IDC_DLLS_LIST, LB_SELECTSTRING, (WPARAM) 0, (LPARAM) buffer);
+
+    set_controls_from_selection(dialog);
 }
 
-static VOID LoadLibrarySettings(LPAPPL appl /*DON'T FREE, treeview will own this*/, HWND hDlg, HWND hwndTV)
+static void on_remove_click(HWND dialog)
 {
-	HKEY key;
-	int i;
-	DWORD size;
-	DWORD readSize;
-	char name [255];
-	char read [255];
-	LPITEMTAG lpIt;
-	TVINSERTSTRUCT tis;	
-	HTREEITEM hParent;
-	LPDLLOVERRIDE lpdo;
-	
-	WINE_TRACE("opening %s\n", appl->lpcSection);
-	if (RegOpenKey (configKey, appl->lpcSection, &key) == ERROR_SUCCESS)
-	{
-		i = 0;
-		size = 255;
-		readSize = 255;
-		
-		lpIt = CreateItemTag();
-		lpIt->lpAppl = appl;
+    int sel = SendDlgItemMessage(dialog, IDC_DLLS_LIST, LB_GETCURSEL, 0, 0);
+    struct dll *dll;
 
-		tis.hParent = NULL;
-		tis.hInsertAfter = TVI_LAST;
-		tis.u.item.mask = TVIF_TEXT | TVIF_PARAM;
-		tis.u.item.pszText = appl->lpcApplication;
-		tis.u.item.lParam = (LPARAM)lpIt;
-		hParent = TreeView_InsertItem(hwndTV,&tis);
-		tis.hParent = hParent;
+    if (sel == LB_ERR) return;
+    
+    dll = (struct dll *) SendDlgItemMessage(dialog, IDC_DLLS_LIST, LB_GETITEMDATA, sel, 0);
+    
+    SendDlgItemMessage(dialog, IDC_DLLS_LIST, LB_DELETESTRING, sel, 0);
 
-		while (RegEnumValue(key, i, name, &size, NULL, NULL, read, &readSize) == ERROR_SUCCESS)
-		{                           
-			WINE_TRACE("Reading value %s, namely %s\n", name, read);
-			
-			lpIt = CreateItemTag();
-			lpdo = CreateDLLOverride(name);
-			lpIt->lpDo = lpdo;
-			tis.u.item.lParam = (LPARAM)lpIt;
-			tis.u.item.pszText = name;
-			
-			lpdo->mode = Str2DLLMode(read);
-			
-			TreeView_InsertItem(hwndTV,&tis);
-			UpdateDLLList(hDlg, name);
-			i ++; size = 255; readSize = 255;
-		}
-		RegCloseKey(key);
-	}
-}
+    set(keypath("DllOverrides"), dll->name, NULL);
 
-static VOID SetEnabledDLLControls(HWND dialog, DLGMODE dlgmode)
-{
-	if (dlgmode == DLL) {
-		enable(IDC_RAD_BUILTIN);
-		enable(IDC_RAD_NATIVE);
-		enable(IDC_RAD_BUILTIN_NATIVE);
-		enable(IDC_RAD_NATIVE_BUILTIN);
-		enable(IDC_RAD_DISABLE);
-		enable(IDC_DLLS_REMOVEDLL);
-	} else {
-		disable(IDC_RAD_BUILTIN);
-		disable(IDC_RAD_NATIVE);
-		disable(IDC_RAD_BUILTIN_NATIVE);
-		disable(IDC_RAD_NATIVE_BUILTIN);
-		disable(IDC_RAD_DISABLE);
-		disable(IDC_DLLS_REMOVEDLL);
-	}
+    HeapFree(GetProcessHeap(), 0, dll->name);
+    HeapFree(GetProcessHeap(), 0, dll);
 
-	if (dlgmode == APP) {
-		enable(IDC_DLLS_REMOVEAPP);
-	}
-	else {
-		disable(IDC_DLLS_REMOVEAPP);
-	}
-}
+    if (SendDlgItemMessage(dialog, IDC_DLLS_LIST, LB_GETCOUNT, 0, 0) > 0)
+        SendDlgItemMessage(dialog, IDC_DLLS_LIST, LB_SETCURSEL, max(sel - 1, 0), 0);
+    else
+        disable(IDC_DLLS_REMOVEDLL);
 
-static VOID OnInitLibrariesDlg(HWND hDlg)
-{
-	HWND hwndTV;
-	LPAPPL lpAppl;
-	HKEY applKey;
-	int i;
-	DWORD size;
-	char appl [255];
-	char lpcKey [255];
-	FILETIME ft;
-
-	hwndTV = GetDlgItem(hDlg,IDC_TREE_DLLS);
-	lpAppl = CreateAppl(TRUE,"Global DLL Overrides", "DllOverrides");
-	LoadLibrarySettings(lpAppl, hDlg, hwndTV);
-	
-	/*And now the application specific stuff:*/
-	if (RegOpenKey(configKey, "AppDefaults", &applKey) == ERROR_SUCCESS) {
-		i = 0;
-		size = 255;
-		while (RegEnumKeyEx(applKey, i, appl, &size, NULL, NULL, NULL, &ft) == ERROR_SUCCESS)
-		{
-			sprintf(lpcKey, "AppDefaults\\%s\\DllOverrides", appl);
-			lpAppl = CreateAppl(FALSE,appl, lpcKey);
-			LoadLibrarySettings(lpAppl, hDlg, hwndTV);
-			i++; size = 255;
-		}
-		RegCloseKey(applKey);
-	}
-
-	SetEnabledDLLControls(hDlg, GLOBAL);
-}
-
-static VOID OnTreeViewChangeItem(HWND hDlg, HWND hTV)
-{
-	TVITEM ti;
-	LPITEMTAG lpit;
-	int buttonId;
-
-	ti.mask = TVIF_PARAM;
-	ti.hItem = TreeView_GetSelection(hTV);
-	if (TreeView_GetItem (hTV, &ti))
-	{
-		lpit = (LPITEMTAG) ti.lParam;
-		if (lpit->lpDo)
-		{
-			WINE_TRACE("%s\n", lpit->lpDo->lpcKey);
-			buttonId = IDC_RAD_BUILTIN;
-			switch (lpit->lpDo->mode)
-			{
-				case NATIVE:
-					buttonId = IDC_RAD_NATIVE;
-					break;
-				case BUILTIN:
-					buttonId = IDC_RAD_BUILTIN;
-					break;
-				case NATIVE_BUILTIN:
-					buttonId = IDC_RAD_NATIVE_BUILTIN;
-					break;
-				case BUILTIN_NATIVE:
-					buttonId = IDC_RAD_BUILTIN_NATIVE;
-					break;
-				case DISABLE:
-					buttonId = IDC_RAD_DISABLE;
-					break;
-				case UNKNOWN:
-					buttonId = -1;
-					break;
-			}
-			CheckRadioButton(hDlg, IDC_RAD_BUILTIN, IDC_RAD_DISABLE, buttonId);
-			SetEnabledDLLControls(hDlg, DLL);
-		} else {
-			if (lpit->lpAppl)
-			{
-				if (lpit->lpAppl->isGlobal == TRUE)
-					SetEnabledDLLControls(hDlg, GLOBAL);
-				else
-					SetEnabledDLLControls(hDlg, APP);
-			}
-		}
-	}
-}
-
-static VOID SetDLLMode(HWND hDlg, DLLMODE mode)
-{
-	HWND hTV;
-	TVITEM ti;
-	LPITEMTAG lpit;
-	char* cMode;
-	TVITEM tiPar;
-	LPITEMTAG lpitPar;
-
-	hTV = GetDlgItem(hDlg, IDC_TREE_DLLS);
-	ti.mask = TVIF_PARAM;
-	ti.hItem = TreeView_GetSelection(hTV);
-	if (TreeView_GetItem (hTV, &ti))
-	{
-		lpit = (LPITEMTAG) ti.lParam;
-		if (lpit->lpDo)
-		{
-			lpit->lpDo->mode = mode;
-			cMode = DLLMode2Str (mode);
-			/*Find parent, so we can read registry section*/
-			tiPar.mask = TVIF_PARAM;
-			tiPar.hItem = TreeView_GetParent(hTV, ti.hItem);
-			if (TreeView_GetItem(hTV,&tiPar))
-			{
-				lpitPar = (LPITEMTAG) tiPar.lParam;
-				if (lpitPar->lpAppl)
-				{
-					addTransaction(lpitPar->lpAppl->lpcSection, lpit->lpDo->lpcKey, ACTION_SET, cMode);
-				}
-			}
-			free(cMode);
-		}
-	}
-}
-
-static VOID OnBuiltinClick(HWND hDlg)
-{
-	SetDLLMode(hDlg, BUILTIN);
-}
-
-static VOID OnNativeClick(HWND hDlg)
-{
-	SetDLLMode(hDlg, NATIVE);
-}
-
-static VOID OnBuiltinNativeClick(HWND hDlg)
-{
-	SetDLLMode(hDlg, BUILTIN_NATIVE);
-}
-
-static VOID OnNativeBuiltinClick(HWND hDlg)
-{
-	SetDLLMode(hDlg, NATIVE_BUILTIN);
-}
-
-static VOID OnDisableClick(HWND hDlg)
-{
-	SetDLLMode(hDlg, DISABLE);
-}
-
-static VOID OnTreeViewDeleteItem(NMTREEVIEW* nmt)
-{
-	FreeItemTag((LPITEMTAG)(nmt->itemOld.lParam));
-}
-
-static VOID OnAddDLLClick(HWND hDlg)
-{
-	HWND hTV;
-	TVITEM ti;
-	LPITEMTAG lpit;
-	LPITEMTAG lpitNew;
-	TVITEM childti;
-	char dll [255];
-	BOOL doAdd;
-	TVINSERTSTRUCT tis;
-
-	hTV = GetDlgItem(hDlg, IDC_TREE_DLLS);
-	ti.mask = TVIF_PARAM;
-	ti.hItem = TreeView_GetSelection(hTV);
-	if (TreeView_GetItem (hTV, &ti))
-	{
-		lpit = (LPITEMTAG) ti.lParam;
-		if (lpit->lpDo) { /*Is this a DLL override (that is: a subitem), then find the parent*/
-			ti.hItem = TreeView_GetParent(hTV, ti.hItem);
-			if (TreeView_GetItem(hTV,&ti)) {
-				lpit = (LPITEMTAG) ti.lParam;
-			} else return;
-		}
-	} else return;
-	/*Now we should have an parent item*/
-	if (lpit->lpAppl)
-	{
-		lpitNew = CreateItemTag();
-		SendDlgItemMessage(hDlg,IDC_DLLLIST,WM_GETTEXT,(WPARAM)255, (LPARAM) dll);
-		if (strlen(dll) > 0) {
-			/*Is the dll already in the list? If so, don't do it*/
-			doAdd = TRUE;
-			childti.mask = TVIF_PARAM;
-			if ((childti.hItem = TreeView_GetNextItem(hTV, ti.hItem, TVGN_CHILD))) {
-				/*Retrieved first child*/
-				while (TreeView_GetItem (hTV, &childti))
-				{
-					if (strcmp(((LPITEMTAG)childti.lParam)->lpDo->lpcKey,dll) == 0) {
-						doAdd = FALSE;
-						break;
-					}
-					childti.hItem = TreeView_GetNextItem(hTV, childti.hItem, TVGN_NEXT);
-				}
-			}
-			if (doAdd)
-			{
-				lpitNew->lpDo = CreateDLLOverride(dll);
-				lpitNew->lpDo->mode = NATIVE;
-				tis.hInsertAfter = TVI_LAST;
-				tis.u.item.mask = TVIF_TEXT | TVIF_PARAM;
-				tis.u.item.pszText = dll;
-				tis.u.item.lParam = (LPARAM)lpitNew;
-				tis.hParent = ti.hItem;
-				TreeView_InsertItem(hTV,&tis);
-				UpdateDLLList(hDlg, dll);
-				addTransaction(lpit->lpAppl->lpcSection, dll, ACTION_SET, "native");
-			} else MessageBox(hDlg, "A DLL with that name is already in this list...", "", MB_OK | MB_ICONINFORMATION);
-		}
-	} else return;
-}
-
-static VOID OnRemoveDLLClick(HWND hDlg)
-{
-	HWND hTV;
-	TVITEM ti;
-	LPITEMTAG lpit;
-	TVITEM tiPar;
-	LPITEMTAG lpitPar;
-
-	hTV = GetDlgItem(hDlg, IDC_TREE_DLLS);
-	ti.mask = TVIF_PARAM;
-	ti.hItem = TreeView_GetSelection(hTV);
-	if (TreeView_GetItem (hTV, &ti)) {
-		lpit = (LPITEMTAG) ti.lParam;
-		if (lpit->lpDo)
-		{
-			/*Find parent for section*/
-			tiPar.mask = TVIF_PARAM;
-			tiPar.hItem = TreeView_GetParent(hTV, ti.hItem);
-			if (TreeView_GetItem(hTV,&tiPar))
-			{
-				lpitPar = (LPITEMTAG) tiPar.lParam;
-				if (lpitPar->lpAppl)
-				{
-					addTransaction(lpitPar->lpAppl->lpcSection, lpit->lpDo->lpcKey, ACTION_REMOVE, NULL);
-					TreeView_DeleteItem(hTV,ti.hItem);
-				}
-			}
-		}
-	}
-}
-
-static VOID OnAddApplicationClick(HWND hDlg)
-{
-	char szFileTitle [255];
-	char szFile [255];
-	char lpcKey [255];
-
-	TVINSERTSTRUCT tis;
-	LPITEMTAG lpit;
-	OPENFILENAME ofn = { sizeof(OPENFILENAME),
-		0, /*hInst*/0, "Wine Programs (*.exe,*.exe.so)\0*.exe;*.exe.so\0", NULL, 0, 0, NULL,
-		0, NULL, 0, NULL, NULL,
-		OFN_SHOWHELP, 0, 0, NULL, 0, NULL };
-
-	ofn.lpstrFileTitle = szFileTitle;
-	ofn.lpstrFileTitle[0] = '\0';
-	ofn.nMaxFileTitle = sizeof(szFileTitle);
-	ofn.lpstrFile = szFile;
-	ofn.lpstrFile[0] = '\0';
-	ofn.nMaxFile = sizeof(szFile);
-
-	if (GetOpenFileName(&ofn))
-	{
-		tis.hParent = NULL;
-		tis.hInsertAfter = TVI_LAST;
-		tis.u.item.mask = TVIF_TEXT | TVIF_PARAM;
-		tis.u.item.pszText = szFileTitle;
-		lpit = CreateItemTag();
-		sprintf(lpcKey, "AppDefaults\\%s\\DllOverrides", szFileTitle);
-		lpit->lpAppl = CreateAppl(FALSE,szFileTitle,lpcKey);
-		tis.u.item.lParam = (LPARAM)lpit;
-		TreeView_InsertItem(GetDlgItem(hDlg,IDC_TREE_DLLS), &tis);
-		setConfigValue(lpcKey,NULL,NULL);
-	}
-}
-
-static VOID OnRemoveApplicationClick(HWND hDlg)
-{
-	HWND hTV;
-	TVITEM ti;
-	LPITEMTAG lpit;
-
-	hTV = GetDlgItem(hDlg, IDC_TREE_DLLS);
-	ti.mask = TVIF_PARAM;
-	ti.hItem = TreeView_GetSelection(hTV);
-	if (TreeView_GetItem (hTV, &ti)) {
-		lpit = (LPITEMTAG) ti.lParam;
-		if (lpit->lpAppl)
-		{
-			addTransaction(lpit->lpAppl->lpcSection, NULL, ACTION_REMOVE, NULL);
-			TreeView_DeleteItem(hTV,ti.hItem);
-		}
-	}
+    set_controls_from_selection(dialog);
 }
 
 INT_PTR CALLBACK
@@ -561,56 +351,53 @@ LibrariesDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	switch (uMsg)
 	{
 	case WM_INITDIALOG:
-		OnInitLibrariesDlg(hDlg);
-		break;  
+		init_libsheet(hDlg);
+		break;
+        case WM_SHOWWINDOW:
+                set_window_title(hDlg);
+                break;
 	case WM_NOTIFY:
 		switch (((LPNMHDR)lParam)->code) {
-		case TVN_SELCHANGED: {
-				switch(LOWORD(wParam)) {
-				case IDC_TREE_DLLS:
-					OnTreeViewChangeItem(hDlg, GetDlgItem(hDlg,IDC_TREE_DLLS));
-					break;
-				}
-			}
-			break;
-		case TVN_DELETEITEM:
-			OnTreeViewDeleteItem ((LPNMTREEVIEW)lParam);
-			break;
+                case PSN_SETACTIVE:
+                    load_library_settings(hDlg);
+                    break;
 		}
 		break;
 	case WM_COMMAND:
 		switch(HIWORD(wParam)) {
+
+                    /* FIXME: when the user hits enter in the DLL combo box we should invoke the add
+                     * add button, rather than the propsheet OK button. But I don't know how to do that!
+                     */
+                    
+                case CBN_EDITCHANGE:
+                        if(LOWORD(wParam) == IDC_DLLCOMBO)
+                        {
+                            on_add_combo_change(hDlg);
+                            break;
+                        }
+                    
 		case BN_CLICKED:
 			switch(LOWORD(wParam)) {
 			case IDC_RAD_BUILTIN:
-				OnBuiltinClick(hDlg);
-				break;
 			case IDC_RAD_NATIVE:
-				OnNativeClick(hDlg);
-				break;
 			case IDC_RAD_BUILTIN_NATIVE:
-				OnBuiltinNativeClick(hDlg);
-				break;
 			case IDC_RAD_NATIVE_BUILTIN:
-				OnNativeBuiltinClick(hDlg);
-				break;
 			case IDC_RAD_DISABLE:
-				OnDisableClick(hDlg);
-				break;
-			case IDC_DLLS_ADDAPP:
-				OnAddApplicationClick(hDlg);
-				break;
-			case IDC_DLLS_REMOVEAPP:
-				OnRemoveApplicationClick(hDlg);
-				break;
+                            set_dllmode(hDlg, LOWORD(wParam));
+                            break;
+                            
 			case IDC_DLLS_ADDDLL:
-				OnAddDLLClick(hDlg);
-				break;
+                            on_add_click(hDlg);
+                            break;
 			case IDC_DLLS_REMOVEDLL:
-				OnRemoveDLLClick(hDlg);
-				break;
+                            on_remove_click(hDlg);
+                            break;
 			}
 			break;
+                case LBN_SELCHANGE:
+                        set_controls_from_selection(hDlg);
+                        break;
 		}
 		break;
 	}
