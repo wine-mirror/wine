@@ -2461,6 +2461,7 @@ void  StorageImpl_SetNextBlockInChain(
   void* depotBuffer;
 
   assert(depotBlockCount < This->bigBlockDepotCount);
+  assert(blockIndex != nextBlock);
 
   if (depotBlockCount < COUNT_BBDEPOTINHEADER)
   {
@@ -2713,7 +2714,7 @@ BOOL StorageImpl_ReadProperty(
   ULARGE_INTEGER offsetInPropSet;
   BOOL         readSucessful;
   ULONG          bytesRead;
-  
+
   offsetInPropSet.HighPart = 0;
   offsetInPropSet.LowPart  = index * PROPSET_BLOCK_SIZE;
   
@@ -3740,12 +3741,28 @@ BlockChainStream* BlockChainStream_Construct(
   ULONG          propertyIndex)
 {
   BlockChainStream* newStream;
+  ULONG blockIndex;
 
   newStream = HeapAlloc(GetProcessHeap(), 0, sizeof(BlockChainStream));
 
   newStream->parentStorage           = parentStorage;
   newStream->headOfStreamPlaceHolder = headOfStreamPlaceHolder;
   newStream->ownerPropertyIndex      = propertyIndex;
+  newStream->lastBlockNoInSequence   = 0xFFFFFFFF;
+  newStream->tailIndex               = BLOCK_END_OF_CHAIN;
+  newStream->numBlocks               = 0;
+
+  blockIndex = BlockChainStream_GetHeadOfChain(newStream);
+
+  while (blockIndex != BLOCK_END_OF_CHAIN)
+  {
+    newStream->numBlocks++;
+    newStream->tailIndex = blockIndex;
+
+    blockIndex = StorageImpl_GetNextBlockInChain(
+                   parentStorage,
+                   blockIndex);
+  }
 
   return newStream;
 }
@@ -3833,10 +3850,24 @@ BOOL BlockChainStream_ReadAt(BlockChainStream* This,
   BYTE* bufferWalker;
   BYTE* bigBlockBuffer;
 
+  if (This->lastBlockNoInSequence == 0xFFFFFFFF)
+    This->lastBlockNoInSequence = blockNoInSequence;
   /*
    * Find the first block in the stream that contains part of the buffer.
    */
-  blockIndex = BlockChainStream_GetHeadOfChain(This);
+  if (blockNoInSequence > This->lastBlockNoInSequence)
+  {
+    ULONG temp = blockNoInSequence;
+
+    blockIndex = This->lastBlockNoInSequenceIndex;
+    blockNoInSequence -= This->lastBlockNoInSequence;
+    This->lastBlockNoInSequence = temp;
+  }
+  else
+  {
+    blockIndex = BlockChainStream_GetHeadOfChain(This);
+    This->lastBlockNoInSequence = blockNoInSequence;
+  }
 
   while ( (blockNoInSequence > 0) &&  (blockIndex != BLOCK_END_OF_CHAIN))
   {
@@ -3845,6 +3876,8 @@ BOOL BlockChainStream_ReadAt(BlockChainStream* This,
     
     blockNoInSequence--;
   }
+
+  This->lastBlockNoInSequenceIndex = blockIndex;
 
   /*
    * Start reading the buffer.
@@ -3906,11 +3939,26 @@ BOOL BlockChainStream_WriteAt(BlockChainStream* This,
   BYTE* bufferWalker;
   BYTE* bigBlockBuffer;
 
+  if (This->lastBlockNoInSequence == 0xFFFFFFFF)
+    This->lastBlockNoInSequence = blockNoInSequence;
+
   /*
    * Find the first block in the stream that contains part of the buffer.
    */
-  blockIndex = BlockChainStream_GetHeadOfChain(This);
-  
+  if (blockNoInSequence > This->lastBlockNoInSequence)
+  {
+    ULONG temp = blockNoInSequence;
+
+    blockIndex = This->lastBlockNoInSequenceIndex;
+    blockNoInSequence -= This->lastBlockNoInSequence;
+    This->lastBlockNoInSequence = temp;
+  }
+  else
+  {
+    blockIndex = BlockChainStream_GetHeadOfChain(This);
+    This->lastBlockNoInSequence = blockNoInSequence;
+  }
+
   while ( (blockNoInSequence > 0) &&  (blockIndex != BLOCK_END_OF_CHAIN))
   {
     blockIndex = 
@@ -3918,6 +3966,8 @@ BOOL BlockChainStream_WriteAt(BlockChainStream* This,
     
     blockNoInSequence--;
   }
+
+  This->lastBlockNoInSequenceIndex = blockIndex;
 
   /*
    * Here, I'm casting away the constness on the buffer variable
@@ -4001,6 +4051,9 @@ BOOL BlockChainStream_Shrink(BlockChainStream* This,
     blockIndex, 
     BLOCK_END_OF_CHAIN);
 
+  This->tailIndex = blockIndex;
+  This->numBlocks = numBlocks;
+
   /*
    * Mark the extra blocks as free
    */
@@ -4046,24 +4099,25 @@ BOOL BlockChainStream_Enlarge(BlockChainStream* This,
     }
     else
     {
-    StgProperty chainProp;
-    assert(This->ownerPropertyIndex != PROPERTY_NULL);
+      StgProperty chainProp;
+      assert(This->ownerPropertyIndex != PROPERTY_NULL);
 
-    StorageImpl_ReadProperty(
-      This->parentStorage, 
-      This->ownerPropertyIndex,
-      &chainProp);
+      StorageImpl_ReadProperty(
+        This->parentStorage, 
+        This->ownerPropertyIndex,
+        &chainProp);
 
       chainProp.startingBlock = blockIndex; 
 
-    StorageImpl_WriteProperty(
-      This->parentStorage, 
-      This->ownerPropertyIndex,
-      &chainProp);
-  }
-  }
+      StorageImpl_WriteProperty(
+        This->parentStorage, 
+        This->ownerPropertyIndex,
+        &chainProp);
+    }
 
-  currentBlock = blockIndex;
+    This->tailIndex = blockIndex;
+    This->numBlocks = 1;
+  }
 
   /*
    * Figure out how many blocks are needed to contain this stream
@@ -4076,14 +4130,24 @@ BOOL BlockChainStream_Enlarge(BlockChainStream* This,
   /*
    * Go to the current end of chain
    */
-  while (blockIndex != BLOCK_END_OF_CHAIN)
+  if (This->tailIndex == BLOCK_END_OF_CHAIN)
   {
-    oldNumBlocks++;
     currentBlock = blockIndex;
 
-    blockIndex = 
-      StorageImpl_GetNextBlockInChain(This->parentStorage, currentBlock);
+    while (blockIndex != BLOCK_END_OF_CHAIN)
+    {
+      This->numBlocks++;
+      currentBlock = blockIndex;
+
+      blockIndex =
+        StorageImpl_GetNextBlockInChain(This->parentStorage, currentBlock);
+    }
+
+    This->tailIndex = currentBlock;
   }
+
+  currentBlock = This->tailIndex;
+  oldNumBlocks = This->numBlocks;
 
   /*
    * Add new blocks to the chain
@@ -4105,6 +4169,9 @@ BOOL BlockChainStream_Enlarge(BlockChainStream* This,
     currentBlock = blockIndex;
     oldNumBlocks++;
   }
+
+  This->tailIndex = blockIndex;
+  This->numBlocks = newNumBlocks;
 
   return TRUE;
 }

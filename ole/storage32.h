@@ -140,8 +140,7 @@ struct BigBlockFile
   HANDLE hfile;
   HANDLE hfilemap;
   DWORD flProtect;
-  MappedPage *headmap_ro;
-  MappedPage *headmap_w;
+  MappedPage *maplisthead;
   BigBlock *headblock;
 };
 
@@ -724,8 +723,12 @@ void StorageUtl_CopyPropertyToSTATSTG(STATSTG*     destination,
 struct BlockChainStream
 {
   StorageImpl* parentStorage;
-  ULONG*         headOfStreamPlaceHolder;
-  ULONG          ownerPropertyIndex;
+  ULONG*       headOfStreamPlaceHolder;
+  ULONG        ownerPropertyIndex;
+  ULONG        lastBlockNoInSequence;
+  ULONG        lastBlockNoInSequenceIndex;
+  ULONG        tailIndex;
+  ULONG        numBlocks;
 };
 
 /*
