@@ -654,6 +654,7 @@ typedef struct
 #define OBJ_EXTPEN          11
 #define OBJ_ENHMETADC       12
 #define OBJ_ENHMETAFILE     13
+#define OBJ_COLORSPACE      14
 
 typedef struct
 {
