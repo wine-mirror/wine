@@ -3385,11 +3385,12 @@ static BOOL LISTVIEW_DrawItem(LISTVIEW_INFO *infoPtr, HDC hdc, INT nItem, INT nS
     {
 	COLUMN_INFO *lpColumnInfo = DPA_GetPtr(infoPtr->hdpaColumns, nSubItem);
 	if (lpColumnInfo)
-	{
-            if (lpColumnInfo->fmt & LVCFMT_LEFT) uFormat |= DT_LEFT;
-            else if (lpColumnInfo->fmt & LVCFMT_RIGHT) uFormat |= DT_RIGHT;
-            else if (lpColumnInfo->fmt & LVCFMT_CENTER) uFormat |= DT_CENTER;
-	}
+	    switch (lpColumnInfo->fmt & LVCFMT_JUSTIFYMASK)
+	    {
+	    case LVCFMT_RIGHT:  uFormat |= DT_RIGHT;  break;
+	    case LVCFMT_CENTER: uFormat |= DT_CENTER; break;
+	    default:            uFormat |= DT_LEFT;
+	    }
     }
     if (!(uFormat & (DT_RIGHT | DT_CENTER))) rcLabel.left += 2;
     DrawTextW(hdc, lvItem.pszText, -1, &rcLabel, uFormat);
