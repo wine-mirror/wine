@@ -30,23 +30,25 @@ a abundância de informação encontrada em http://www.winehq.org.
 Para compilar e executaro Wine, você deve ter o seguinte:
 
 		Linux versão 2.0.36 ou superior
-		FreeBSD 4.x ou FreeBSD 5-CURRENT ou posterior
+		FreeBSD 5.3 ou posterior
 		Solaris x86 2.5 ou posterior
 		NetBSD-current
 
-Como o Wine requer suport a tarefas a nível de kernel para executar, 
+Como o Wine requer suporte a tarefas a nível de kernel para executar, 
 somente os sistemas operacionais acima mencionados são suportados.
 Outros sistemas operacionais que suportarem tarefas do kernel poderão 
 ter suporte no futuro.
 
 Informações para o Linux:
-Enquanto o Linux 2.2.x deve continuar em uso e Linux 2.0.x poderá
-continuar em uso (versões antigas 2.0.x mal funcionamento relacionados a
+Enquanto o Linux 2.2.x continuar em uso e Linux 2.0.x talvez continue
+em uso (versões 2.0.x antigas tem mal funcionamento relacionados a
 tarefas), será muito melhor ter um kernel mais atualizado como 2.4.x.
 
 Informações para o FreeBSD:
-Certifique-se de ter as opções USER_LDT, SYSVSHM, SYSVSEM; e SYSVMSG, 
-ligadas ao kernel. Mais informações encontram-se em: 
+Wine deve compilar no FreeBSD 4.x e FreeBSD 5.x, mas versões anteriores
+a FreeBSD 5.3 geralmente não funcionam corretamente.
+
+Mais informações encontram-se em: 
 ftp://ftp.freebsd.org/pub/FreeBSD/ports/ports/emulators/wine/
 
 Informações para o Solaris:
@@ -82,7 +84,7 @@ problema é desconhecida.
 
 Naturalmente que necessita do "make" (comumente o GNU make).
 
-Tamném precisa do flex versão 2.5 ou posterior e do bison.
+Também precisa do flex versão 2.5 ou posterior e do bison.
 Se estiver usando RedHat ou Debian, instale os pacotes do flex e do bison.
 
 Bibliotecas de suporte opcionais:

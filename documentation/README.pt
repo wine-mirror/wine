@@ -29,31 +29,31 @@ encontrada em http://www.winehq.org.
 Para compilar e correr o Wine, deves ter o seguinte:
 
 		Linux version 2.0.36 ou superior
-		FreeBSD 4.x ou FreeBSD 5-CURRENT
+		FreeBSD 5.3 ou seguinte
 		Solaris x86 2.5 ou seguinte
 		NetBSD-current
 
+Como o Wine requer sequências kernel-level para poder correr, apenas
+os sistemas operativos acima mencionados são suportados.
+Outros sistemas operativos que suportam sequências kernel, talvez 
+venham a ser suportados no futuro.
+
 Linux info:
-Contudo o Linux versão 2.0.x irá sobretudo trabalhar, certos aspectos 
-(especificamente LDT      sharing) requesitado para propriamente 
-suportar  sequências Win32 não foram implementadas até a versão do 
-kernel 2.2. Se tiveres quebras (crashes) com uma certa sequência ou que 
-estejam relacionados, tu poderas querer fazer o upgrade pelo menos até a 
-versão 2.2.
-Também, alguns bugs foram arranjados e certas funcionalidades foram 
-tardiamente adicionadas nas séries do Linux 2.0.x, então se tiveres um 
-Linux Kernel muito antigo.será melhor fazer o upgrade até ao lançamento 
-da versão 2.0.x.
+Enquanto o Linux 2.2.x irá sobretudo trabalhar e Linux 2.0.x poderá
+irá contudo trabalhar (versões 2.0.x antigas tem mal funcionamento 
+relacionados a tarefas), será muito melhor teres um kernel atualizado
+como 2.4.x.
 
 FreeBSD info:
-Certificar-se que tem as opções USER_LDT, SYSVSHM, SYSVSEM; e SYSVMSG, 
-ligadas ao kernel. Mais informação
-encontra-se em: 
+Wine deverá construir no FreeBSD 4.x e FreeBSD 5.x, mas versões anteriores
+a FreeBSD 5.3 geralmente não trabalham corretamente.
+
+Mais informações encontra-se em: 
 ftp://ftp.freebsd.org/pub/FreeBSD/ports/ports/emulators/wine/
 
 
 Solaris info:
-Tu irás provavelmente ter que contruir o Wine com as ferramentas GNU 
+Tu irás provavelmente ter que construir o Wine com as ferramentas GNU 
 (gcc, gas, etc.). Aviso: ao instalar gas *não* assegura que será usado 
 pelo gcc. Recompilar o gcc depois de instalar o gas ou symking cc, as e 
 ld para as ferramentas gnu é dito que é necessário.
@@ -72,19 +72,11 @@ NTFS. Como os programas de Windows precisam de acesso write em quase tudo.
 No caso de NTFS files, copia por cima para uma localização em que se 
 possa escrever.
 
-O Wine requer sequências kernel-level para poder correr. Actualmente, 
-apenas as versões 2.0 ou superiores do Linux. FreeBSD 4.x ou superiores, 
-Solaris x86 versão 2.5 ou superiores, e NetBSD-actual são suportados.
-Outros sistemas operativos que suportam sequências kernel, talvez venham 
-a ser suportados no futuro.
-
-Tu precisas de ter o X11 development que inclua fucheiros instalados 
+Requisitos básicos:
+Tu precisas de ter instalados os fucheiros de include do X11 development
 (chamados xlib6g-dev em Debian e Xfree86-devel no RedHat).
-Para usar o suporte do Wine para aplicacões multi-sequnciai, as tuas 
-livrarias X têm que ser reentrantes, que é provavelmente "defaul" por agora.
-Se tu tens o libc6 (glibc2), ou compilaste as librarias X por ti prório, 
-eles foram provavelmente compiladas com a opção de reentrância activada.
 
+Requisitos para as ferramentas de construção:
 Em sistemas x86 o gcc >= 2.7.2 é requerido.
 Versões anteriores à 2.7.2.3 poderão ter problemas quando certos 
 ficheiros são compilados com optimização, frequentemente devido a 
@@ -92,10 +84,14 @@ problemas relacionados com as gestôes dos cabeçalhos dos ficheiros.
 Actualmente o pgcc não trabalha com o Wine. A causa deste problema é 
 desconhecida.
 
-Claro que tambm precisas fazer "make" (geralmente como o GNU make).
+Claro que também precisas fazer "make" (geralmente como o GNU make).
 
 Tu também necessitas do flex versao 2.5 ou superior e o bison.
 Se estiveres a usar RedHat ou Debian, instala os pacotes do flex e do bison.
+
+Bibliotecas de suporte opcionais:
+Se desejares suporte de impressão do CUPS, por favor instala os pacotes
+cups e cups-devel.
 
 Para os requesitos no caso de tu quereres contruir a documentação, ve a 
 secção "DOCUMENTAÇÃO".
