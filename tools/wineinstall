@@ -91,7 +91,7 @@ if [ $RET -eq 0 ]; then
       if [ $RET -eq 0 ]; then
         echo Done.
       else
-        echo FAILED. Probably you aren't installing as root.
+        echo "FAILED. Probably you aren't installing as root."
       fi
     else
       echo "Sorry, I won't install Wine when an rpm version is still installed."
