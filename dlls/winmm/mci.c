@@ -451,7 +451,10 @@ static	DWORD	MCI_LoadMciDriver(LPWINE_MM_IDATA iData, LPCSTR _strDevTyp,
     hDrv = OpenDriverA(strDevTyp, "mci", (LPARAM)&modp);
     
     if (!hDrv) {
-	FIXME("Couldn't load driver for type %s.\n", strDevTyp);
+	FIXME("Couldn't load driver for type %s.\n"
+	      "If you don't have a windows installation accessible from Wine,\n"
+	      "you perhaps forgot to create a [mci] section in system.ini\n",
+	      strDevTyp);
 	dwRet = MCIERR_DEVICE_NOT_INSTALLED;
 	goto errCleanUp;
     }				
@@ -2035,11 +2038,30 @@ static	DWORD MCI_Open(DWORD dwParam, LPMCI_OPEN_PARMSA lpParms)
 		goto errCleanUp;
 	    }
 	} else {
+	    LPSTR	ptr;
 	    if (lpParms->lpstrDeviceType == NULL) {
 		dwRet = MCIERR_NULL_PARAMETER_BLOCK;
 		goto errCleanUp;
 	    }
 	    strcpy(strDevTyp, lpParms->lpstrDeviceType);
+	    ptr = strchr(strDevTyp, '!');
+	    if (ptr) {
+		/* this behavior is not documented in windows. However, since, in
+		 * some occasions, MCI_OPEN handling is translated by WinMM into
+		 * a call to mciSendString("open <type>"); this code shall be correct
+		 */
+		if (dwParam & MCI_OPEN_ELEMENT) {
+		    ERR("Both MCI_OPEN_ELEMENT(%s) and %s are used\n",
+			lpParms->lpstrElementName, strDevTyp);
+		    dwRet = MCIERR_UNRECOGNIZED_KEYWORD;
+		    goto errCleanUp;
+		}
+		dwParam |= MCI_OPEN_ELEMENT;
+		*ptr++ = 0;
+		/* FIXME: not a good idea to write in user supplied buffer */
+		lpParms->lpstrElementName = ptr;
+	    }
+		
 	}
 	TRACE("devType='%s' !\n", strDevTyp);
     }
