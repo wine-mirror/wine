@@ -144,12 +144,14 @@ INT X11DRV_ScrollWindowEx( HWND hwnd, INT dx, INT dy,
     RECT rc, cliprc;
     WND*   wnd = WIN_FindWndPtr( hwnd );
 
-    if( !wnd || !WIN_IsWindowDrawable( wnd, TRUE ))
+    if (!wnd) return ERROR;
+    if (!WIN_IsWindowDrawable( wnd, TRUE ))
     {
-        retVal = ERROR;
-        goto END;
+        WIN_ReleaseWndPtr( wnd );
+        return ERROR;
     }
     hwnd = wnd->hwndSelf;  /* make it a full handle */
+    WIN_ReleaseWndPtr( wnd );
 
     GetClientRect(hwnd, &rc);
     if (rect) IntersectRect(&rc, &rc, rect);
@@ -203,16 +205,22 @@ INT X11DRV_ScrollWindowEx( HWND hwnd, INT dx, INT dy,
 
         if( flags & SW_SCROLLCHILDREN )
         {
-            RECT r;
-            WND *w;
-            for( w =WIN_LockWndPtr(wnd->child); w; WIN_UpdateWndPtr(&w, w->next))
+            HWND *list = WIN_ListChildren( hwnd );
+
+            if (list)
             {
-                r = w->rectWindow;
-                if( !rect || IntersectRect(&r, &r, &rc) )
-                    SetWindowPos(w->hwndSelf, 0, w->rectWindow.left + dx,
-                                 w->rectWindow.top  + dy, 0,0, SWP_NOZORDER |
-                                 SWP_NOSIZE | SWP_NOACTIVATE | SWP_NOREDRAW |
-                                 SWP_DEFERERASE );
+                int i;
+                RECT r, dummy;
+                for (i = 0; list[i]; i++)
+                {
+                    GetWindowRect( list[i], &r );
+                    MapWindowPoints( 0, hwnd, (POINT *)&r, 2 );
+                    if (!rect || IntersectRect(&dummy, &r, &rc))
+                        SetWindowPos( list[i], 0, r.left + dx, r.top  + dy, 0, 0,
+                                      SWP_NOZORDER | SWP_NOSIZE | SWP_NOACTIVATE |
+                                      SWP_NOREDRAW | SWP_DEFERERASE );
+                }
+                HeapFree( GetProcessHeap(), 0, list );
             }
         }
 
@@ -230,7 +238,5 @@ INT X11DRV_ScrollWindowEx( HWND hwnd, INT dx, INT dy,
         if( bOwnRgn && hrgnUpdate ) DeleteObject( hrgnUpdate );
         DeleteObject( hrgnClip );
     }
-END:
-    WIN_ReleaseWndPtr(wnd);
     return retVal;
 }

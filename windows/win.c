@@ -383,15 +383,7 @@ void WIN_UnlinkWindow( HWND hwnd )
  */
 void WIN_LinkWindow( HWND hwnd, HWND parent, HWND hwndInsertAfter )
 {
-    WND *wndPtr, **ppWnd, *parentPtr = NULL;
     BOOL ret;
-
-    if (!(wndPtr = WIN_FindWndPtr( hwnd ))) return;
-    if (parent && !(parentPtr = WIN_FindWndPtr( parent )))
-    {
-        WIN_ReleaseWndPtr(wndPtr);
-        return;
-    }
 
     SERVER_START_REQ( link_window )
     {
@@ -401,42 +393,88 @@ void WIN_LinkWindow( HWND hwnd, HWND parent, HWND hwndInsertAfter )
         ret = !SERVER_CALL_ERR();
     }
     SERVER_END_REQ;
-    if (!ret) goto done;
-
-    /* first unlink it if it is linked */
-    if (wndPtr->parent)
+    if (ret && parent)
     {
-        WND *ptr = WIN_FindWndPtr( wndPtr->parent );
-        ppWnd = &ptr->child;
-        while (*ppWnd && *ppWnd != wndPtr) ppWnd = &(*ppWnd)->next;
-        if (*ppWnd) *ppWnd = wndPtr->next;
-        WIN_ReleaseWndPtr( ptr );
+        WND *wndPtr = WIN_FindWndPtr( hwnd );
+        if (wndPtr)
+        {
+            wndPtr->parent = WIN_GetFullHandle(parent);
+            WIN_ReleaseWndPtr( wndPtr );
+        }
     }
+}
 
-    if (parentPtr)
+
+/***********************************************************************
+ *           find_child_to_repaint
+ *
+ * Find a window that needs repaint among the children of the specified window.
+ */
+static HWND find_child_to_repaint( HWND parent )
+{
+    int i;
+    HWND ret = 0;
+    HWND *list;
+
+    if (!parent) parent = GetDesktopWindow();
+    if (!(list = list_window_children( parent, 0, 0 ))) return 0;
+
+    for (i = 0; list[i] && !ret; i++)
     {
-        wndPtr->parent = parentPtr->hwndSelf;
-        if ((hwndInsertAfter == HWND_TOP) || (hwndInsertAfter == HWND_BOTTOM))
+        WND *win = WIN_GetWndPtr( list[i] );
+        if (win == BAD_WND_PTR) continue;  /* ignore it */
+        if (!win)
         {
-            ppWnd = &parentPtr->child;  /* Point to first sibling hwnd */
-            if (hwndInsertAfter == HWND_BOTTOM)  /* Find last sibling hwnd */
-                while (*ppWnd) ppWnd = &(*ppWnd)->next;
+            /* doesn't belong to this process, but check children */
+            ret = find_child_to_repaint( list[i] );
+            continue;
         }
-        else  /* Normal case */
+        if (!(win->dwStyle & WS_VISIBLE))
         {
-            WND * afterPtr = WIN_FindWndPtr( hwndInsertAfter );
-            if (!afterPtr) goto done;
-            ppWnd = &afterPtr->next;
-            WIN_ReleaseWndPtr(afterPtr);
+            USER_Unlock();
+            continue;
         }
-        wndPtr->next = *ppWnd;
-        *ppWnd = wndPtr;
-    }
-    else wndPtr->next = NULL;  /* unlinked */
+        if ((win->tid != GetCurrentThreadId()) ||
+            (!win->hrgnUpdate && !(win->flags & WIN_INTERNAL_PAINT)))
+        {
+            /* does not need repaint, check children */
+            USER_Unlock();
+            ret = find_child_to_repaint( list[i] );
+            continue;
+        }
 
- done:
-    WIN_ReleaseWndPtr( parentPtr );
-    WIN_ReleaseWndPtr( wndPtr );
+        /* now we have something */
+        ret = list[i];
+        if (!(win->dwExStyle & WS_EX_TRANSPARENT))
+        {
+            /* not transparent, we can repaint it */
+            USER_Unlock();
+            break;
+        }
+        USER_Unlock();
+
+        /* transparent window, look for non-transparent sibling to paint first */
+        for (i++; list[i]; i++)
+        {
+            if (!(win = WIN_GetWndPtr( list[i] ))) continue;
+            if (win == BAD_WND_PTR) continue;
+            if (!(win->dwStyle & WS_VISIBLE))
+            {
+                USER_Unlock();
+                continue;
+            }
+            if (!(win->dwExStyle & WS_EX_TRANSPARENT) &&
+                (win->hrgnUpdate || (win->flags & WIN_INTERNAL_PAINT)))
+            {
+                ret = list[i];
+                USER_Unlock();
+                break;
+            }
+            USER_Unlock();
+        }
+    }
+    HeapFree( GetProcessHeap(), 0, list );
+    return ret;
 }
 
 
@@ -447,55 +485,27 @@ void WIN_LinkWindow( HWND hwnd, HWND parent, HWND hwndInsertAfter )
  */
 HWND WIN_FindWinToRepaint( HWND hwnd )
 {
-    HWND hwndRet;
-    WND *pWnd;
-
     /* Note: the desktop window never gets WM_PAINT messages
      * The real reason why is because Windows DesktopWndProc
      * does ValidateRgn inside WM_ERASEBKGND handler.
      */
     if (hwnd == GetDesktopWindow()) hwnd = 0;
 
-    pWnd = hwnd ? WIN_FindWndPtr(hwnd) : WIN_LockWndPtr(pWndDesktop->child);
-
-    for ( ; pWnd ; WIN_UpdateWndPtr(&pWnd,pWnd->next))
+    if (hwnd)
     {
-        if (!(pWnd->dwStyle & WS_VISIBLE)) continue;
-        if ((pWnd->hrgnUpdate || (pWnd->flags & WIN_INTERNAL_PAINT)) &&
-            WIN_IsCurrentThread( pWnd->hwndSelf ))
-            break;
-        if (pWnd->child )
+        /* check the window itself first */
+        WND *win = WIN_FindWndPtr( hwnd );
+        if (!win) return 0;
+        if ((win->dwStyle & WS_VISIBLE) &&
+            (win->hrgnUpdate || (win->flags & WIN_INTERNAL_PAINT)))
         {
-            if ((hwndRet = WIN_FindWinToRepaint( pWnd->child->hwndSelf )) )
-            {
-                WIN_ReleaseWndPtr(pWnd);
-                return hwndRet;
-            }
+            WIN_ReleaseWndPtr( win );
+            return hwnd;
         }
+        WIN_ReleaseWndPtr( win );
     }
-
-    if(!pWnd)
-    {
-        TRACE("nothing found\n");
-        return 0;
-    }
-    hwndRet = pWnd->hwndSelf;
-
-    /* look among siblings if we got a transparent window */
-    while (pWnd)
-    {
-        if (!(pWnd->dwExStyle & WS_EX_TRANSPARENT) &&
-            (pWnd->hrgnUpdate || (pWnd->flags & WIN_INTERNAL_PAINT)) &&
-            WIN_IsCurrentThread( pWnd->hwndSelf ))
-        {
-            hwndRet = pWnd->hwndSelf;
-            WIN_ReleaseWndPtr(pWnd);
-            break;
-        }
-        WIN_UpdateWndPtr(&pWnd,pWnd->next);
-    }
-    TRACE("found %04x\n",hwndRet);
-    return hwndRet;
+    /* now check its children */
+    return find_child_to_repaint( hwnd );
 }
 
 
@@ -503,34 +513,33 @@ HWND WIN_FindWinToRepaint( HWND hwnd )
  *           WIN_DestroyWindow
  *
  * Destroy storage associated to a window. "Internals" p.358
- * returns a locked wndPtr->next
  */
-static WND* WIN_DestroyWindow( WND* wndPtr )
+static void WIN_DestroyWindow( HWND hwnd )
 {
-    HWND hwnd = wndPtr->hwndSelf;
-    WND *pWnd;
+    WND *wndPtr;
+    HWND *list;
 
-    TRACE("%04x\n", wndPtr->hwndSelf );
+    TRACE("%04x\n", hwnd );
 
     /* free child windows */
-    WIN_LockWndPtr(wndPtr->child);
-    while ((pWnd = wndPtr->child))
+    if ((list = WIN_ListChildren( hwnd )))
     {
-        wndPtr->child = WIN_DestroyWindow( pWnd );
-        WIN_ReleaseWndPtr(pWnd);
+        int i;
+        for (i = 0; list[i]; i++) WIN_DestroyWindow( list[i] );
+        HeapFree( GetProcessHeap(), 0, list );
     }
 
     /*
      * Clear the update region to make sure no WM_PAINT messages will be
      * generated for this window while processing the WM_NCDESTROY.
      */
-    RedrawWindow( wndPtr->hwndSelf, NULL, 0,
+    RedrawWindow( hwnd, NULL, 0,
                   RDW_VALIDATE | RDW_NOFRAME | RDW_NOERASE | RDW_NOINTERNALPAINT | RDW_NOCHILDREN);
 
     /*
      * Send the WM_NCDESTROY to the window being destroyed.
      */
-    SendMessageA( wndPtr->hwndSelf, WM_NCDESTROY, 0, 0);
+    SendMessageA( hwnd, WM_NCDESTROY, 0, 0);
 
     /* FIXME: do we need to fake QS_MOUSEMOVE wakebit? */
 
@@ -539,12 +548,10 @@ static WND* WIN_DestroyWindow( WND* wndPtr )
 
     /* free resources associated with the window */
 
-    TIMER_RemoveWindowTimers( wndPtr->hwndSelf );
-    PROPERTY_RemoveWindowProps( wndPtr );
+    TIMER_RemoveWindowTimers( hwnd );
+    PROPERTY_RemoveWindowProps( hwnd );
 
-    /* toss stale messages from the queue */
-
-    QUEUE_CleanupWindow( hwnd );
+    if (!(wndPtr = WIN_FindWndPtr( hwnd ))) return;
     wndPtr->hmemTaskQ = 0;
 
     if (!(wndPtr->dwStyle & WS_CHILD))
@@ -558,16 +565,13 @@ static WND* WIN_DestroyWindow( WND* wndPtr )
 	DestroyMenu( wndPtr->hSysMenu );
 	wndPtr->hSysMenu = 0;
     }
-    USER_Driver.pDestroyWindow( wndPtr->hwndSelf );
-    DCE_FreeWindowDCE( wndPtr->hwndSelf );    /* Always do this to catch orphaned DCs */
+    USER_Driver.pDestroyWindow( hwnd );
+    DCE_FreeWindowDCE( hwnd );    /* Always do this to catch orphaned DCs */
     WINPROC_FreeProc( wndPtr->winproc, WIN_PROC_WINDOW );
     CLASS_RemoveWindow( wndPtr->class );
     wndPtr->class = NULL;
     wndPtr->dwMagic = 0;  /* Mark it as invalid */
-
-    WIN_UpdateWndPtr(&pWnd,wndPtr->next);
-
-    return pWnd;
+    WIN_ReleaseWndPtr( wndPtr );
 }
 
 /***********************************************************************
@@ -622,8 +626,6 @@ BOOL WIN_CreateDesktopWindow(void)
     hwndDesktop = pWndDesktop->hwndSelf;
 
     pWndDesktop->tid               = 0;  /* nobody owns the desktop */
-    pWndDesktop->next              = NULL;
-    pWndDesktop->child             = NULL;
     pWndDesktop->parent            = 0;
     pWndDesktop->owner             = 0;
     pWndDesktop->class             = class;
@@ -838,10 +840,8 @@ static HWND WIN_CreateWindowEx( CREATESTRUCTA *cs, ATOM classAtom,
 
     /* Fill the window structure */
 
-    wndPtr->tid   = GetCurrentThreadId();
-    wndPtr->next  = NULL;
-    wndPtr->child = NULL;
-    wndPtr->owner = owner;
+    wndPtr->tid            = GetCurrentThreadId();
+    wndPtr->owner          = owner;
     wndPtr->parent         = parent;
     wndPtr->class          = classPtr;
     wndPtr->winproc        = winproc;
@@ -960,12 +960,12 @@ static HWND WIN_CreateWindowEx( CREATESTRUCTA *cs, ATOM classAtom,
     }
     else wndPtr->wIDmenu = (UINT)cs->hMenu;
 
-    if (!USER_Driver.pCreateWindow( wndPtr->hwndSelf, cs, unicode))
+    if (!USER_Driver.pCreateWindow( hwnd, cs, unicode))
     {
         WARN("aborted by WM_xxCREATE!\n");
-        WIN_ReleaseWndPtr(WIN_DestroyWindow( wndPtr ));
+        WIN_ReleaseWndPtr( wndPtr );
+        WIN_DestroyWindow( hwnd );
         CLASS_RemoveWindow( classPtr );
-        WIN_ReleaseWndPtr(wndPtr);
         return 0;
     }
 
@@ -1352,7 +1352,7 @@ BOOL WINAPI DestroyWindow( HWND hwnd )
 
       /* Destroy the window storage */
 
-    WIN_ReleaseWndPtr(WIN_DestroyWindow( wndPtr ));
+    WIN_DestroyWindow( hwnd );
     retvalue = TRUE;
 end:
     WIN_ReleaseWndPtr(wndPtr);

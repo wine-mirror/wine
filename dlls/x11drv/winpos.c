@@ -707,7 +707,8 @@ static BOOL fixup_flags( WINDOWPOS *winpos )
                 /* don't need to change the Zorder of hwnd if it's already inserted
                  * after hwndInsertAfter or when inserting hwnd after itself.
                  */
-                if ((wnd->next == wndPtr ) || (winpos->hwnd == winpos->hwndInsertAfter))
+                if ((winpos->hwnd == winpos->hwndInsertAfter) ||
+                    (winpos->hwnd == GetWindow( winpos->hwndInsertAfter, GW_HWNDNEXT )))
                     winpos->flags |= SWP_NOZORDER;
             }
             WIN_ReleaseWndPtr(wnd);
@@ -1306,20 +1307,6 @@ void X11DRV_UnmapNotify( HWND hwnd, XUnmapEvent *event )
  *
  * Synchronize internal z-order with the window manager's.
  */
-static BOOL __check_query_condition( WND** pWndA, WND** pWndB )
-{
-    /* return TRUE if we have at least two managed windows */
-
-    for( *pWndB = NULL; *pWndA; *pWndA = (*pWndA)->next )
-        if( ((*pWndA)->dwExStyle & WS_EX_MANAGED) &&
-            ((*pWndA)->dwStyle & WS_VISIBLE )) break;
-    if( *pWndA )
-        for( *pWndB = (*pWndA)->next; *pWndB; *pWndB = (*pWndB)->next )
-            if( ((*pWndB)->dwExStyle & WS_EX_MANAGED) &&
-                ((*pWndB)->dwStyle & WS_VISIBLE )) break;
-    return ((*pWndB) != NULL);
-}
-
 static Window __get_common_ancestor( Display *display, Window A, Window B,
                                      Window** children, unsigned* total )
 {
@@ -1369,29 +1356,39 @@ static unsigned __td_lookup( Window w, Window* list, unsigned max )
 static HWND query_zorder( Display *display, HWND hWndCheck)
 {
     HWND      hwndInsertAfter = HWND_TOP;
-    WND      *pWndCheck = WIN_FindWndPtr(hWndCheck);
-    WND *top = WIN_FindWndPtr( GetTopWindow(0) );
-    WND *pWnd, *pWndZ = top;
     Window      w, parent, *children = NULL;
     unsigned    total, check, pos, best;
+    HWND *list = WIN_ListChildren( GetDesktopWindow() );
+    HWND hwndA = 0, hwndB = 0;
+    WND *win;
+    int i;
 
-    if( !__check_query_condition(&pWndZ, &pWnd) )
+    /* find at least two managed windows */
+    if (!list) return 0;
+    for (i = 0; list[i]; i++)
     {
-        WIN_ReleaseWndPtr(pWndCheck);
-        WIN_ReleaseWndPtr(top);
-        return hwndInsertAfter;
+        if (!(win = WIN_FindWndPtr( list[i] ))) continue;
+        if ((win->dwExStyle & WS_EX_MANAGED) && (win->dwStyle & WS_VISIBLE))
+        {
+            if (!hwndA) hwndA = list[i];
+            else
+            {
+                hwndB = list[i];
+                WIN_ReleaseWndPtr( win );
+                break;
+            }
+        }
+        WIN_ReleaseWndPtr( win );
     }
-    WIN_LockWndPtr(pWndZ);
-    WIN_LockWndPtr(pWnd);
-    WIN_ReleaseWndPtr(top);
+    if (!hwndA || !hwndB) goto done;
 
-    parent = __get_common_ancestor( display, get_whole_window(pWndZ),
-                                    get_whole_window(pWnd), &children, &total );
+    parent = __get_common_ancestor( display, X11DRV_get_whole_window(hwndA),
+                                    X11DRV_get_whole_window(hwndB), &children, &total );
     if( parent && children )
     {
-        /* w is the ancestor if pWndCheck that is a direct descendant of 'parent' */
+        /* w is the ancestor if hWndCheck that is a direct descendant of 'parent' */
 
-        w = __get_top_decoration( display, get_whole_window(pWndCheck), parent );
+        w = __get_top_decoration( display, X11DRV_get_whole_window(hWndCheck), parent );
 
         if( w != children[total-1] ) /* check if at the top */
         {
@@ -1399,32 +1396,28 @@ static HWND query_zorder( Display *display, HWND hWndCheck)
             check = __td_lookup( w, children, total );
             best = total;
 
-            for( WIN_UpdateWndPtr(&pWnd,pWndZ); pWnd;WIN_UpdateWndPtr(&pWnd,pWnd->next))
+            /* go through all windows in Wine z-order... */
+            for (i = 0; list[i]; i++)
             {
-                /* go through all windows in Wine z-order... */
-
-                if( pWnd != pWndCheck )
+                if (list[i] == hWndCheck) continue;
+                if (!(GetWindowLongW( list[i], GWL_EXSTYLE ) & WS_EX_MANAGED)) continue;
+                if (!(w = __get_top_decoration( display, X11DRV_get_whole_window(list[i]),
+                                                parent ))) continue;
+                pos = __td_lookup( w, children, total );
+                if( pos < best && pos > check )
                 {
-                    if( !(pWnd->dwExStyle & WS_EX_MANAGED) ||
-                        !(w = __get_top_decoration( display, get_whole_window(pWnd), parent )) )
-                        continue;
-                    pos = __td_lookup( w, children, total );
-                    if( pos < best && pos > check )
-                    {
-                        /* find a nearest Wine window precedes
-                         * pWndCheck in the real z-order... */
-                        best = pos;
-                        hwndInsertAfter = pWnd->hwndSelf;
-                    }
-                    if( best - check == 1 ) break;
+                    /* find a nearest Wine window precedes hWndCheck in the real z-order */
+                    best = pos;
+                    hwndInsertAfter = list[i];
                 }
+                if( best - check == 1 ) break;
             }
         }
     }
     if( children ) TSXFree( children );
-    WIN_ReleaseWndPtr(pWnd);
-    WIN_ReleaseWndPtr(pWndZ);
-    WIN_ReleaseWndPtr(pWndCheck);
+
+ done:
+    HeapFree( GetProcessHeap(), 0, list );
     return hwndInsertAfter;
 }
 

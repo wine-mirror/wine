@@ -22,15 +22,13 @@ struct tagMESSAGEQUEUE;
 
 typedef struct tagWND
 {
-    struct tagWND *next;          /* Next sibling */
-    struct tagWND *child;         /* First child */
+    HWND           hwndSelf;      /* Handle of this window */
     HWND           parent;        /* Window parent */
     HWND           owner;         /* Window owner */
     struct tagCLASS *class;       /* Window class */
     HWINDOWPROC    winproc;       /* Window procedure */
     DWORD          dwMagic;       /* Magic number (must be WND_MAGIC) */
     DWORD          tid;           /* Owner thread id */
-    HWND         hwndSelf;      /* Handle of this window */
     HINSTANCE    hInstance;     /* Window hInstance (from CreateWindow) */
     RECT         rectClient;    /* Client area rel. to parent client area */
     RECT         rectWindow;    /* Whole window rel. to parent client area */
@@ -124,7 +122,7 @@ extern void CARET_GetRect(LPRECT lprc);  /* windows/caret.c */
 extern BOOL16 DRAG_QueryUpdate( HWND, SEGPTR, BOOL );
 extern HBRUSH DEFWND_ControlColor( HDC hDC, UINT ctlType );  /* windows/defwnd.c */
 
-extern void PROPERTY_RemoveWindowProps( WND *pWnd );  		      /* windows/property.c */
+extern void PROPERTY_RemoveWindowProps( HWND hwnd );  /* windows/property.c */
 
 /* Classes functions */
 struct tagCLASS;  /* opaque structure */

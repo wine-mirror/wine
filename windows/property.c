@@ -231,10 +231,12 @@ HANDLE WINAPI RemovePropW( HWND hwnd, LPCWSTR str )
  *
  * Remove all properties of a window.
  */
-void PROPERTY_RemoveWindowProps( WND *pWnd )
+void PROPERTY_RemoveWindowProps( HWND hwnd )
 {
     PROPERTY *prop, *next;
+    WND *pWnd = WIN_FindWndPtr( hwnd );
 
+    if (!pWnd) return;
     for (prop = pWnd->pProp; (prop); prop = next)
     {
         next = prop->next;
@@ -242,6 +244,7 @@ void PROPERTY_RemoveWindowProps( WND *pWnd )
         HeapFree( GetProcessHeap(), 0, prop );
     }
     pWnd->pProp = NULL;
+    WIN_ReleaseWndPtr( pWnd );
 }
 
 

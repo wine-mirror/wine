@@ -283,15 +283,99 @@ BOOL WINAPI ScreenToClient( HWND hwnd, LPPOINT lppnt )
 
 
 /***********************************************************************
+ *           find_child_from_point
+ *
+ * Find the child that contains pt. Helper for WindowFromPoint.
+ * pt is in parent client coordinates.
+ * lparam is the param to pass in the WM_NCHITTEST message.
+ */
+static HWND find_child_from_point( HWND parent, POINT pt, INT *hittest, LPARAM lparam )
+{
+    int i, res;
+    WND *wndPtr;
+    HWND *list = WIN_ListChildren( parent );
+
+    if (!list) return 0;
+    for (i = 0; list[i]; i++)
+    {
+        if (!(wndPtr = WIN_FindWndPtr( list[i] ))) continue;
+        /* If point is in window, and window is visible, and it  */
+        /* is enabled (or it's a top-level window), then explore */
+        /* its children. Otherwise, go to the next window.       */
+
+        if (!(wndPtr->dwStyle & WS_VISIBLE)) goto next;  /* not visible -> skip */
+        if ((wndPtr->dwStyle & (WS_POPUP | WS_CHILD | WS_DISABLED)) == (WS_CHILD | WS_DISABLED))
+            goto next;  /* disabled child -> skip */
+        if ((wndPtr->dwExStyle & (WS_EX_LAYERED | WS_EX_TRANSPARENT)) == (WS_EX_LAYERED | WS_EX_TRANSPARENT))
+            goto next;  /* transparent -> skip */
+        if (wndPtr->hrgnWnd)
+        {
+            if (!PtInRegion( wndPtr->hrgnWnd, pt.x - wndPtr->rectWindow.left,
+                             pt.y - wndPtr->rectWindow.top ))
+                goto next;  /* point outside window region -> skip */
+        }
+        else if (!PtInRect( &wndPtr->rectWindow, pt )) goto next;  /* not in window -> skip */
+
+        TRACE( "%ld,%ld is inside %04x\n", pt.x, pt.y, list[i] );
+
+        /* If window is minimized or disabled, return at once */
+        if (wndPtr->dwStyle & WS_MINIMIZE)
+        {
+            WIN_ReleaseWndPtr( wndPtr );
+            *hittest = HTCAPTION;
+            return list[i];
+        }
+        if (wndPtr->dwStyle & WS_DISABLED)
+        {
+            WIN_ReleaseWndPtr( wndPtr );
+            *hittest = HTERROR;
+            return list[i];
+        }
+
+        /* If point is in client area, explore children */
+        if (PtInRect( &wndPtr->rectClient, pt ))
+        {
+            POINT new_pt;
+            HWND ret;
+
+            new_pt.x = pt.x - wndPtr->rectClient.left;
+            new_pt.y = pt.y - wndPtr->rectClient.top;
+            WIN_ReleaseWndPtr( wndPtr );
+            if ((ret = find_child_from_point( list[i], new_pt, hittest, lparam )))
+                return ret;
+        }
+        else WIN_ReleaseWndPtr( wndPtr );
+
+        /* Now it's inside window, send WM_NCCHITTEST (if same thread) */
+        if (!WIN_IsCurrentThread( list[i] ))
+        {
+            *hittest = HTCLIENT;
+            return list[i];
+        }
+        if ((res = SendMessageA( list[i], WM_NCHITTEST, 0, lparam )) != HTTRANSPARENT)
+        {
+            *hittest = res;  /* Found the window */
+            return list[i];
+        }
+        continue;  /* continue search with next sibling */
+
+    next:
+        WIN_ReleaseWndPtr( wndPtr );
+    }
+    return 0;
+}
+
+
+/***********************************************************************
  *           WINPOS_WindowFromPoint
  *
  * Find the window and hittest for a given point.
  */
 HWND WINPOS_WindowFromPoint( HWND hwndScope, POINT pt, INT *hittest )
 {
-    WND *wndScope, *wndPtr, *wndTmp;
-    HWND hwnd_ret = 0;
+    WND *wndScope;
     POINT xy = pt;
+    int res;
 
     TRACE("scope %04x %ld,%ld\n", hwndScope, pt.x, pt.y);
 
@@ -300,115 +384,41 @@ HWND WINPOS_WindowFromPoint( HWND hwndScope, POINT pt, INT *hittest )
     hwndScope = wndScope->hwndSelf;  /* make it a full handle */
 
     *hittest = HTERROR;
-    wndPtr = WIN_LockWndPtr(wndScope->child);
-
     if( wndScope->dwStyle & WS_DISABLED )
     {
-        *hittest = HTERROR;
-        goto end;
+        WIN_ReleaseWndPtr(wndScope);
+        return 0;
     }
 
     if (wndScope->parent)
         MapWindowPoints( GetDesktopWindow(), wndScope->parent, &xy, 1 );
 
-    if (xy.x < wndScope->rectClient.left || pt.x >= wndScope->rectClient.right ||
-        xy.y < wndScope->rectClient.top || pt.y >= wndScope->rectClient.bottom ||
-        wndScope->dwStyle & WS_MINIMIZE)
-        goto hittest;
-
-    xy.x -= wndScope->rectClient.left;
-    xy.y -= wndScope->rectClient.top;
-
-    for (;;)
+    if (!(wndScope->dwStyle & WS_MINIMIZE) && PtInRect( &wndScope->rectClient, xy ))
     {
-        while (wndPtr)
-        {
-            /* If point is in window, and window is visible, and it  */
-            /* is enabled (or it's a top-level window), then explore */
-            /* its children. Otherwise, go to the next window.       */
+        HWND ret;
 
-	     if ((wndPtr->dwStyle & WS_VISIBLE) &&
-	        ((wndPtr->dwExStyle & (WS_EX_LAYERED | WS_EX_TRANSPARENT)) != (WS_EX_LAYERED | WS_EX_TRANSPARENT)) &&
-                (!(wndPtr->dwStyle & WS_DISABLED) ||
-                 ((wndPtr->dwStyle & (WS_POPUP | WS_CHILD)) != WS_CHILD)) &&
-		(wndPtr->hrgnWnd ?
-		PtInRegion(wndPtr->hrgnWnd, xy.x - wndPtr->rectWindow.left,
-			   xy.y - wndPtr->rectWindow.top) :
-                ((xy.x >= wndPtr->rectWindow.left) &&
-		 (xy.x < wndPtr->rectWindow.right) &&
-		 (xy.y >= wndPtr->rectWindow.top) &&
-		 (xy.y < wndPtr->rectWindow.bottom))))
-            {
-                TRACE("%ld,%ld is inside %04x\n", xy.x, xy.y, wndPtr->hwndSelf);
-                hwnd_ret = wndPtr->hwndSelf;  /* Got a suitable window */
-
-                /* If window is minimized or disabled, return at once */
-                if (wndPtr->dwStyle & WS_MINIMIZE)
-                {
-                    *hittest = HTCAPTION;
-                    goto end;
-                }
-                if (wndPtr->dwStyle & WS_DISABLED)
-                {
-                    *hittest = HTERROR;
-                    goto end;
-                }
-
-                /* If point is not in client area, ignore the children */
-                if ((xy.x < wndPtr->rectClient.left) ||
-                    (xy.x >= wndPtr->rectClient.right) ||
-                    (xy.y < wndPtr->rectClient.top) ||
-                    (xy.y >= wndPtr->rectClient.bottom)) break;
-
-                xy.x -= wndPtr->rectClient.left;
-                xy.y -= wndPtr->rectClient.top;
-                WIN_UpdateWndPtr(&wndPtr,wndPtr->child);
-            }
-            else
-            {
-                WIN_UpdateWndPtr(&wndPtr,wndPtr->next);
-            }
-        }
-
-hittest:
-        /* If nothing found, try the scope window */
-        if (!hwnd_ret) hwnd_ret = hwndScope;
-
-        /* Send the WM_NCHITTEST message (only if to the same task) */
-        if (WIN_IsCurrentThread( hwnd_ret ))
-        {
-            INT res = SendMessageA( hwnd_ret, WM_NCHITTEST, 0, MAKELONG( pt.x, pt.y ) );
-            if (res != HTTRANSPARENT)
-            {
-                *hittest = res;  /* Found the window */
-                goto end;
-	    }
-	}
-        else
-        {
-            *hittest = HTCLIENT;
-            goto end;
-	}
-
-        if (!(wndTmp = WIN_FindWndPtr( hwnd_ret ))) break;
-
-        /* If no children found in last search, make point relative to parent */
-        if (!wndPtr)
-        {
-            xy.x += wndTmp->rectClient.left;
-            xy.y += wndTmp->rectClient.top;
-        }
-
-        /* Restart the search from the next sibling */
-        WIN_UpdateWndPtr(&wndPtr,wndTmp->next);
-        hwnd_ret = wndTmp->parent;
-        WIN_ReleaseWndPtr( wndTmp );
+        xy.x -= wndScope->rectClient.left;
+        xy.y -= wndScope->rectClient.top;
+        WIN_ReleaseWndPtr( wndScope );
+        if ((ret = find_child_from_point( hwndScope, xy, hittest, MAKELONG( pt.x, pt.y ) )))
+            return ret;
     }
+    else WIN_ReleaseWndPtr( wndScope );
 
-end:
-    WIN_ReleaseWndPtr(wndPtr);
-    WIN_ReleaseWndPtr(wndScope);
-    return hwnd_ret;
+    /* If nothing found, try the scope window */
+    if (!WIN_IsCurrentThread( hwndScope ))
+    {
+        *hittest = HTCLIENT;
+        return hwndScope;
+    }
+    res = SendMessageA( hwndScope, WM_NCHITTEST, 0, MAKELONG( pt.x, pt.y ) );
+    if (res != HTTRANSPARENT)
+    {
+        *hittest = res;  /* Found the window */
+        return hwndScope;
+    }
+    *hittest = HTNOWHERE;
+    return 0;
 }
 
 
