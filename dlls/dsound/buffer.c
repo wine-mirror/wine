@@ -207,6 +207,7 @@ static HRESULT WINAPI IDirectSoundBufferImpl_SetVolume(
 ) {
 	IDirectSoundBufferImpl *This = (IDirectSoundBufferImpl *)iface;
 	LONG oldVol;
+	HRESULT hres = DS_OK;
 
 	TRACE("(%p,%ld)\n",This,vol);
 
@@ -235,7 +236,6 @@ static HRESULT WINAPI IDirectSoundBufferImpl_SetVolume(
 
 	if (vol != oldVol) {
 		if (This->hwbuf) {
-	    		HRESULT hres;
 			hres = IDsDriverBuffer_SetVolumePan(This->hwbuf, &(This->volpan));
 	    		if (hres != DS_OK)
 		    		WARN("IDsDriverBuffer_SetVolumePan failed\n");
@@ -246,7 +246,7 @@ static HRESULT WINAPI IDirectSoundBufferImpl_SetVolume(
 	LeaveCriticalSection(&(This->lock));
 	/* **** */
 
-	return DS_OK;
+	return hres;
 }
 
 static HRESULT WINAPI IDirectSoundBufferImpl_GetVolume(
@@ -795,6 +795,7 @@ static HRESULT WINAPI IDirectSoundBufferImpl_Unlock(
 ) {
 	IDirectSoundBufferImpl *This = (IDirectSoundBufferImpl *)iface;
 	DWORD probably_valid_to;
+	HRESULT hres = DS_OK;
 
 	TRACE("(%p,%p,%ld,%p,%ld)\n", This,p1,x1,p2,x2);
 
@@ -802,30 +803,28 @@ static HRESULT WINAPI IDirectSoundBufferImpl_Unlock(
 	EnterCriticalSection(&(This->lock));
 
 	if (!(This->dsound->drvdesc.dwFlags & DSDDESC_DONTNEEDSECONDARYLOCK) && This->hwbuf) {
-		HRESULT hres;
 		hres = IDsDriverBuffer_Unlock(This->hwbuf, p1, x1, p2, x2);
-		if (hres != DS_OK) {
-			LeaveCriticalSection(&(This->lock));
+		if (hres != DS_OK)
 			WARN("IDsDriverBuffer_Unlock failed\n");
-			return hres;
-		}
 	}
 
-	if (p2) probably_valid_to = (((LPBYTE)p2)-This->buffer->memory) + x2;
-	else probably_valid_to = (((LPBYTE)p1)-This->buffer->memory) + x1;
-	probably_valid_to %= This->buflen;
-	if ((probably_valid_to == 0) && ((x1+x2) == This->buflen) &&
-	    ((This->state == STATE_STARTING) ||
-	     (This->state == STATE_PLAYING)))
-		/* see IDirectSoundBufferImpl_Lock */
-		probably_valid_to = (DWORD)-1;
-	This->probably_valid_to = probably_valid_to;
+        if (hres == DS_OK) {
+		if (p2) probably_valid_to = (((LPBYTE)p2)-This->buffer->memory) + x2;
+		else probably_valid_to = (((LPBYTE)p1)-This->buffer->memory) + x1;
+		probably_valid_to %= This->buflen;
+		if ((probably_valid_to == 0) && ((x1+x2) == This->buflen) &&
+		    ((This->state == STATE_STARTING) ||
+		     (This->state == STATE_PLAYING)))
+			/* see IDirectSoundBufferImpl_Lock */
+			probably_valid_to = (DWORD)-1;
+		This->probably_valid_to = probably_valid_to;
+	}
 
 	LeaveCriticalSection(&(This->lock));
 	/* **** */
 
 	TRACE("probably_valid_to=%ld\n", This->probably_valid_to);
-	return DS_OK;
+	return hres;
 }
 
 static HRESULT WINAPI IDirectSoundBufferImpl_Restore(

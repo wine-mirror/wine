@@ -775,7 +775,7 @@ static HRESULT WINAPI PrimaryBufferImpl_SetPan(
 	IDirectSoundImpl* dsound = This->dsound;
 	DWORD ampfactors;
 	DSVOLUMEPAN volpan;
-        HRESULT hres;
+        HRESULT hres = DS_OK;
 
 	TRACE("(%p,%ld)\n",This,pan);
 
@@ -803,8 +803,7 @@ static HRESULT WINAPI PrimaryBufferImpl_SetPan(
                 hres = IDsDriverBuffer_SetVolumePan(dsound->hwbuf, &volpan);
                 if (hres != DS_OK)
                     WARN("IDsDriverBuffer_SetVolumePan failed\n");
-            }
-            else {
+            } else {
                 ampfactors = (volpan.dwTotalLeftAmpFactor & 0xffff) | (volpan.dwTotalRightAmpFactor << 16);
                 waveOutSetVolume(dsound->hwo, ampfactors);
             }
@@ -813,7 +812,7 @@ static HRESULT WINAPI PrimaryBufferImpl_SetPan(
 	LeaveCriticalSection(&(dsound->mixlock));
 	/* **** */
 
-	return DS_OK;
+	return hres;
 }
 
 static HRESULT WINAPI PrimaryBufferImpl_GetPan(
