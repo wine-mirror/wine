@@ -50,8 +50,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(shell);
 typedef struct tagPOLICYDAT
 {
   DWORD polflags;        /* flags value passed to SHRestricted */
-  LPSTR appstr;          /* application str such as "Explorer" */
-  LPSTR keystr;          /* name of the actual registry key / policy */
+  LPCSTR appstr;         /* application str such as "Explorer" */
+  LPCSTR keystr;         /* name of the actual registry key / policy */
   DWORD cache;           /* cached value or 0xffffffff for invalid */
 } POLICYDATA, *LPPOLICYDATA;
 
@@ -61,69 +61,69 @@ extern POLICYDATA sh32_policy_table[SHELL_MAX_POLICIES];
 
 /* application strings */
 
-static char strExplorer[] = {"Explorer"};
-static char strActiveDesk[] = {"ActiveDesktop"};
-static char strWinOldApp[] = {"WinOldApp"};
+static const char strExplorer[] = {"Explorer"};
+static const char strActiveDesk[] = {"ActiveDesktop"};
+static const char strWinOldApp[] = {"WinOldApp"};
 
 /* key strings */
 
-static char strNoFileURL[] = {"NoFileUrl"};
-static char strNoFolderOptions[] = {"NoFolderOptions"};
-static char strNoChangeStartMenu[] = {"NoChangeStartMenu"};
-static char strNoWindowsUpdate[] = {"NoWindowsUpdate"};
-static char strNoSetActiveDesktop[] = {"NoSetActiveDesktop"};
-static char strNoForgetSoftwareUpdate[] = {"NoForgetSoftwareUpdate"};
-static char strNoMSAppLogo[] = {"NoMSAppLogo5ChannelNotify"};
-static char strForceCopyACLW[] = {"ForceCopyACLWithFile"};
-static char strNoResolveTrk[] = {"NoResolveTrack"};
-static char strNoResolveSearch[] = {"NoResolveSearch"};
-static char strNoEditComponent[] = {"NoEditingComponents"};
-static char strNoMovingBand[] = {"NoMovingBands"};
-static char strNoCloseDragDrop[] = {"NoCloseDragDropBands"};
-static char strNoCloseComponent[] = {"NoClosingComponents"};
-static char strNoDelComponent[] = {"NoDeletingComponents"};
-static char strNoAddComponent[] = {"NoAddingComponents"};
-static char strNoComponent[] = {"NoComponents"};
-static char strNoChangeWallpaper[] = {"NoChangingWallpaper"};
-static char strNoHTMLWallpaper[] = {"NoHTMLWallpaper"};
-static char strNoCustomWebView[] = {"NoCustomizeWebView"};
-static char strClassicShell[] = {"ClassicShell"};
-static char strClearRecentDocs[] = {"ClearRecentDocsOnExit"};
-static char strNoFavoritesMenu[] = {"NoFavoritesMenu"};
-static char strNoActiveDesktopChanges[] = {"NoActiveDesktopChanges"};
-static char strNoActiveDesktop[] = {"NoActiveDesktop"};
-static char strNoRecentDocMenu[] = {"NoRecentDocsMenu"};
-static char strNoRecentDocHistory[] = {"NoRecentDocsHistory"};
-static char strNoInetIcon[] = {"NoInternetIcon"};
-static char strNoStngsWizard[] = {"NoSettingsWizards"};
-static char strNoLogoff[] = {"NoLogoff"};
-static char strNoNetConDis[] = {"NoNetConnectDisconnect"};
-static char strNoContextMenu[] = {"NoViewContextMenu"};
-static char strNoTryContextMenu[] = {"NoTrayContextMenu"};
-static char strNoWebMenu[] = {"NoWebMenu"};
-static char strLnkResolveIgnoreLnkInfo[] = {"LinkResolveIgnoreLinkInfo"};
-static char strNoCommonGroups[] = {"NoCommonGroups"};
-static char strEnforceShlExtSecurity[] = {"EnforceShellExtensionSecurity"};
-static char strNoRealMode[] = {"NoRealMode"};
-static char strMyDocsOnNet[] = {"MyDocsOnNet"};
-static char strNoStartMenuSubfolder[] = {"NoStartMenuSubFolders"};
-static char strNoAddPrinters[] = {"NoAddPrinter"};
-static char strNoDeletePrinters[] = {"NoDeletePrinter"};
-static char strNoPrintTab[] = {"NoPrinterTabs"};
-static char strRestrictRun[] = {"RestrictRun"};
-static char strNoStartBanner[] = {"NoStartBanner"};
-static char strNoNetworkNeighborhood[] = {"NoNetHood"};
-static char strNoDriveTypeAtRun[] = {"NoDriveTypeAutoRun"};
-static char strNoDrivesAutoRun[] = {"NoDriveAutoRun"};
-static char strNoDrives[] = {"NoDrives"};
-static char strNoFind[] = {"NoFind"};
-static char strNoDesktop[] = {"NoDesktop"};
-static char strNoSetTaskBar[] = {"NoSetTaskbar"};
-static char strNoSetFld[] = {"NoSetFolders"};
-static char strNoFileMenu[] = {"NoFileMenu"};
-static char strNoSavSetng[] = {"NoSaveSettings"};
-static char strNoClose[] = {"NoClose"};
-static char strNoRun[] = {"NoRun"};
+static const char strNoFileURL[] = {"NoFileUrl"};
+static const char strNoFolderOptions[] = {"NoFolderOptions"};
+static const char strNoChangeStartMenu[] = {"NoChangeStartMenu"};
+static const char strNoWindowsUpdate[] = {"NoWindowsUpdate"};
+static const char strNoSetActiveDesktop[] = {"NoSetActiveDesktop"};
+static const char strNoForgetSoftwareUpdate[] = {"NoForgetSoftwareUpdate"};
+static const char strNoMSAppLogo[] = {"NoMSAppLogo5ChannelNotify"};
+static const char strForceCopyACLW[] = {"ForceCopyACLWithFile"};
+static const char strNoResolveTrk[] = {"NoResolveTrack"};
+static const char strNoResolveSearch[] = {"NoResolveSearch"};
+static const char strNoEditComponent[] = {"NoEditingComponents"};
+static const char strNoMovingBand[] = {"NoMovingBands"};
+static const char strNoCloseDragDrop[] = {"NoCloseDragDropBands"};
+static const char strNoCloseComponent[] = {"NoClosingComponents"};
+static const char strNoDelComponent[] = {"NoDeletingComponents"};
+static const char strNoAddComponent[] = {"NoAddingComponents"};
+static const char strNoComponent[] = {"NoComponents"};
+static const char strNoChangeWallpaper[] = {"NoChangingWallpaper"};
+static const char strNoHTMLWallpaper[] = {"NoHTMLWallpaper"};
+static const char strNoCustomWebView[] = {"NoCustomizeWebView"};
+static const char strClassicShell[] = {"ClassicShell"};
+static const char strClearRecentDocs[] = {"ClearRecentDocsOnExit"};
+static const char strNoFavoritesMenu[] = {"NoFavoritesMenu"};
+static const char strNoActiveDesktopChanges[] = {"NoActiveDesktopChanges"};
+static const char strNoActiveDesktop[] = {"NoActiveDesktop"};
+static const char strNoRecentDocMenu[] = {"NoRecentDocsMenu"};
+static const char strNoRecentDocHistory[] = {"NoRecentDocsHistory"};
+static const char strNoInetIcon[] = {"NoInternetIcon"};
+static const char strNoStngsWizard[] = {"NoSettingsWizards"};
+static const char strNoLogoff[] = {"NoLogoff"};
+static const char strNoNetConDis[] = {"NoNetConnectDisconnect"};
+static const char strNoContextMenu[] = {"NoViewContextMenu"};
+static const char strNoTryContextMenu[] = {"NoTrayContextMenu"};
+static const char strNoWebMenu[] = {"NoWebMenu"};
+static const char strLnkResolveIgnoreLnkInfo[] = {"LinkResolveIgnoreLinkInfo"};
+static const char strNoCommonGroups[] = {"NoCommonGroups"};
+static const char strEnforceShlExtSecurity[] = {"EnforceShellExtensionSecurity"};
+static const char strNoRealMode[] = {"NoRealMode"};
+static const char strMyDocsOnNet[] = {"MyDocsOnNet"};
+static const char strNoStartMenuSubfolder[] = {"NoStartMenuSubFolders"};
+static const char strNoAddPrinters[] = {"NoAddPrinter"};
+static const char strNoDeletePrinters[] = {"NoDeletePrinter"};
+static const char strNoPrintTab[] = {"NoPrinterTabs"};
+static const char strRestrictRun[] = {"RestrictRun"};
+static const char strNoStartBanner[] = {"NoStartBanner"};
+static const char strNoNetworkNeighborhood[] = {"NoNetHood"};
+static const char strNoDriveTypeAtRun[] = {"NoDriveTypeAutoRun"};
+static const char strNoDrivesAutoRun[] = {"NoDriveAutoRun"};
+static const char strNoDrives[] = {"NoDrives"};
+static const char strNoFind[] = {"NoFind"};
+static const char strNoDesktop[] = {"NoDesktop"};
+static const char strNoSetTaskBar[] = {"NoSetTaskbar"};
+static const char strNoSetFld[] = {"NoSetFolders"};
+static const char strNoFileMenu[] = {"NoFileMenu"};
+static const char strNoSavSetng[] = {"NoSaveSettings"};
+static const char strNoClose[] = {"NoClose"};
+static const char strNoRun[] = {"NoRun"};
 
 /* policy data array */
 
@@ -476,17 +476,23 @@ POLICYDATA sh32_policy_table[] =
 /*************************************************************************
  * SHRestricted				[SHELL32.100]
  *
- * walks through policy table, queries <app> key, <type> value, returns
- * queried (DWORD) value, and caches it between called to SHInitRestricted
- * to prevent unnecessary registry access.
+ * Get the value associated with a policy Id.
+ *
+ * PARAMS
+ *     pol [I] Policy Id
+ *
+ * RETURNS
+ *     The queried value for the policy.
  *
  * NOTES
- *     exported by ordinal
+ *     Exported by ordinal.
+ *     This function caches the retrieved values to prevent unnecessary registry access,
+ *     if SHInitRestricted() was previously called.
  *
- * REFERENCES:
- *     MS System Policy Editor
- *     98Lite 2.0 (which uses many of these policy keys) http://www.98lite.net/
- *     "The Windows 95 Registry", by John Woram, 1996 MIS: Press
+ * REFERENCES
+ *     a: MS System Policy Editor.
+ *     b: 98Lite 2.0 (which uses many of these policy keys) http://www.98lite.net/
+ *     c: 'The Windows 95 Registry', by John Woram, 1996 MIS: Press
  */
 DWORD WINAPI SHRestricted (DWORD pol) {
         char regstr[256];
@@ -542,28 +548,24 @@ DWORD WINAPI SHRestricted (DWORD pol) {
 /*************************************************************************
  *      SHInitRestricted                         [SHELL32.244]
  *
- * Win98+ by-ordinal only routine called by Explorer and MSIE 4 and 5.
- * Inits the policy cache used by SHRestricted to avoid excess
- * registry access.
+ * Initialise the policy cache to speed up calls to SHRestricted().
  *
- * INPUTS
- * Two inputs: one is a string or NULL.  If non-NULL the pointer
- * should point to a string containing the following exact text:
- * "Software\Microsoft\Windows\CurrentVersion\Policies".
- * The other input is unused.
+ * PARAMS
+ *  inpRegKey [I] Registry key to scan.
+ *  parm2     [I] Reserved.
+ *
+ * RETURNS
+ *  Success: -1. The policy cache is initialsed.
+ *  Failure: 0, if inpRegKey is any value other than NULL or
+ *           "Software\Microsoft\Windows\CurrentVersion\Policies".
  *
  * NOTES
- * If the input is non-NULL and does not point to a string containing
- * that exact text the routine will do nothing.
+ *  Exported by ordinal. Introduced in Win98.
  *
- * If the text does match or the pointer is NULL, then the routine
- * will init SHRestricted()'s policy cache to all 0xffffffff and
- * returns 0xffffffff as well.
- *
- * I haven't yet run into anything calling this with inputs other than
- * (NULL, NULL), so I may have the inputs reversed.
+ * FIXME
+ *  I haven't yet run into anything calling this with inputs other than
+ *  (NULL, NULL), so I may have the parameters reversed.
  */
-
 BOOL WINAPI SHInitRestricted(LPSTR inpRegKey, LPSTR parm2)
 {
      int i;
