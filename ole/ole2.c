@@ -107,6 +107,12 @@ LRESULT CALLBACK OLEMenu_CallWndProc(INT code, WPARAM wParam, LPARAM lParam);
 LRESULT CALLBACK OLEMenu_GetMsgProc(INT code, WPARAM wParam, LPARAM lParam);
 
 /******************************************************************************
+ * These are the prototypes of the OLE Clipboard initialization methods (in clipboard.c)
+ */
+void OLEClipbrd_UnInitialize();
+void OLEClipbrd_Initialize();
+
+/******************************************************************************
  * These are the prototypes of the utility methods used for OLE Drag n Drop
  */
 static void            OLEDD_Initialize();
@@ -179,6 +185,11 @@ HRESULT WINAPI OleInitialize(LPVOID reserved)
     TRACE("() - Initializing the OLE libraries\n");
 
     /*
+     * OLE Clipboard
+     */
+    OLEClipbrd_Initialize();
+
+    /*
      * Drag and Drop
      */
     OLEDD_Initialize();
@@ -230,6 +241,11 @@ void WINAPI OleUninitialize(void)
     TRACE("() - Freeing the last reference count\n");
 
     /*
+     * OLE Clipboard
+     */
+    OLEClipbrd_UnInitialize();
+
+    /*
      * Drag and Drop
      */
     OLEDD_UnInitialize();
@@ -244,23 +260,6 @@ void WINAPI OleUninitialize(void)
    * Then, uninitialize the COM libraries.
    */
   CoUninitialize();
-}
-
-/***********************************************************************
- *           OleFlushClipboard   [OLE2.76]
- */
-HRESULT WINAPI OleFlushClipboard16(void)
-{
-    return S_OK;
-}
-
-/***********************************************************************
- *           OleSetClipboard     [OLE32.127]
- */
-HRESULT WINAPI OleSetClipboard(LPVOID pDataObj)
-{
-    FIXME("(%p), stub!\n", pDataObj);
-    return S_OK;
 }
 
 /******************************************************************************
@@ -809,21 +808,6 @@ HRESULT WINAPI OleSave(
   }
   
   return hres;
-}
-
-
-/***********************************************************************
- * OleGetClipboard32 [OLE32.105]
- */
-HRESULT WINAPI OleGetClipboard(
-  IDataObject** ppDataObj)
-{
-  FIXME("(%p),stub!\n", ppDataObj);
-
-  if (ppDataObj)
-    *ppDataObj=0;
-
-  return E_FAIL;
 }
 
 

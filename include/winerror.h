@@ -296,6 +296,16 @@ extern int WIN32_LastError;
 #define TYPE_E_ELEMENTNOTFOUND           0x8002802BL
 #define TYPE_E_CANTLOADLIBRARY  0x80029C4AL
 
+/* OLE Clipboard */
+#define CLIPBRD_E_FIRST         0x800401D0L
+#define CLIPBRD_E_LAST          0x800401DFL
+#define CLIPBRD_S_FIRST         0x000401D0L
+#define CLIPBRD_S_LAST          0x000401DFL
+#define CLIPBRD_E_CANT_OPEN     0x800401D0L
+#define CLIPBRD_E_CANT_EMPTY    0x800401D1L
+#define CLIPBRD_E_CANT_SET      0x800401D2L
+#define CLIPBRD_E_BAD_DATA      0x800401D3L
+#define CLIPBRD_E_CANT_CLOSE    0x800401D4L
 
 /* Drag and Drop */
 #define DRAGDROP_S_DROP   0x00040100L
@@ -350,6 +360,8 @@ extern int WIN32_LastError;
 
 #define DV_E_FORMATETC            0x80040064
 #define DV_E_DVASPECT             0x8004006B
+#define DV_E_LINDEX               0x80040068
+#define DV_E_TYMED                0x80040069
 
 #define CLASS_E_NOAGGREGATION     0x80040110
 #define	CLASS_E_CLASSNOTAVAILABLE 0x80040111

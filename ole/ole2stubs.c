@@ -18,7 +18,7 @@ HRESULT WINAPI OleCreateFromData(LPDATAOBJECT pSrcDataObj, REFIID riid,
                 LPVOID* ppvObj)
 {
     FIXME("(%p,%p,%li,%p,%p,%p,%p), stub!\n", pSrcDataObj,riid,renderopt,pFormatEtc,pClientSite,pStg,ppvObj);
-    return S_OK;
+    return DV_E_FORMATETC;
 }
 
 
@@ -94,15 +94,6 @@ HRESULT WINAPI SetConvertStg(LPSTORAGE pStg, BOOL fConvert)
 }
 
 /******************************************************************************
- *              OleFlushClipboard        [OLE32.103]
- */
-HRESULT WINAPI OleFlushClipboard()
-{
-  FIXME("(), stub!\n");
-  return S_OK;
-}
-
-/******************************************************************************
  *              OleCreate        [OLE32.80]
  */
 HRESULT WINAPI OleCreate(REFCLSID rclsid, REFIID riid, DWORD renderopt, LPFORMATETC pFormatEtc, LPOLECLIENTSITE pClientSite,
@@ -156,7 +147,7 @@ HGLOBAL WINAPI OleGetIconOfClass(REFCLSID rclsid, LPOLESTR lpszLabel, BOOL fUseT
 HRESULT WINAPI OleQueryCreateFromData(LPDATAOBJECT pSrcDataObject)
 {
   FIXME("(%p), stub!\n", pSrcDataObject);
-  return S_OK;
+  return S_FALSE;
 }
 
 /******************************************************************************

@@ -8,6 +8,7 @@ MODULE    = ole
 C_SRCS = \
 	antimoniker.c \
 	bindctx.c \
+	clipboard.c\
 	compobj.c \
 	compositemoniker.c \
 	datacache.c \

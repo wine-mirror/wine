@@ -239,13 +239,3 @@ OLESTATUS WINAPI OleCreateFromClip(
 	return OLE_OK;
 }
 
-/***********************************************************************
- *           OleIsCurrentClipboard32 [OLE32.110]
- */
-HRESULT WINAPI OleIsCurrentClipboard (
-  IDataObject *pDataObject)  /* ptr to the data obj previously copied or cut */
-{
-  FIXME("(DataObject %p): stub!\n", pDataObject);
-  return S_FALSE;
-}
-
