@@ -868,7 +868,7 @@ static HMODULE16 NE_LoadExeHeader( HANDLE handle, LPCSTR path )
                     bundle->first = bundle->last =
                         oldbundle->last + nr_entries;
                     bundle->next = 0;
-                    (BYTE *)entry += sizeof(ET_BUNDLE);
+		    entry = (ET_ENTRY*)(((BYTE*)entry)+sizeof(ET_BUNDLE));
                 }
             }
         }

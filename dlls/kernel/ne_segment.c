@@ -211,8 +211,10 @@ BOOL NE_LoadSegment( NE_MODULE *pModule, WORD segnum )
 
       ReadFile(hf, buff, size, &res, NULL);
       while(curr < buff + size) {
-	unsigned int rept = *((short*) curr)++;
-	unsigned int len = *((short*) curr)++;
+	unsigned int rept = ((short*)curr)[0];
+	unsigned int len =  ((short*)curr)[1];
+
+	curr += 2*sizeof(short);
 	for(; rept > 0; rept--) {
 	  char* bytes = curr;
 	  unsigned int byte;

@@ -1470,18 +1470,19 @@ void WINAPI C16ThkSL(CONTEXT86 *context)
      *   call __FLATCS:__wine_call_from_16_thunk
      */
 
-    *x++ = 0xB8; *((WORD *)x)++ = ds;
+    *x++ = 0xB8; *(WORD *)x = ds; x += sizeof(WORD);
     *x++ = 0x8E; *x++ = 0xC0;
     *x++ = 0x66; *x++ = 0x0F; *x++ = 0xB7; *x++ = 0xC9;
     *x++ = 0x67; *x++ = 0x66; *x++ = 0x26; *x++ = 0x8B;
-                 *x++ = 0x91; *((DWORD *)x)++ = context->Edx;
+                 *x++ = 0x91; *(DWORD *)x = context->Edx; x += sizeof(DWORD);
 
     *x++ = 0x55;
     *x++ = 0x66; *x++ = 0x52;
     *x++ = 0x52;
     *x++ = 0x66; *x++ = 0x52;
-    *x++ = 0x66; *x++ = 0x9A; *((DWORD *)x)++ = (DWORD)__wine_call_from_16_thunk;
-                              *((WORD *)x)++ = cs;
+    *x++ = 0x66; *x++ = 0x9A;
+    *(void **)x = __wine_call_from_16_thunk; x += sizeof(void *);
+    *(WORD *)x = cs; x += sizeof(WORD);
 
     /* Jump to the stub code just created */
     context->Eip = LOWORD(context->Eax);
@@ -1530,15 +1531,16 @@ void WINAPI C16ThkSL01(CONTEXT86 *context)
          */
 
         *x++ = 0x66; *x++ = 0x33; *x++ = 0xC0;
-        *x++ = 0x66; *x++ = 0xBA; *((DWORD *)x)++ = (DWORD)td;
-        *x++ = 0x9A; *((DWORD *)x)++ = procAddress;
+        *x++ = 0x66; *x++ = 0xBA; *(void **)x = td; x += sizeof(void *);
+        *x++ = 0x9A; *(DWORD *)x = procAddress; x += sizeof(DWORD);
 
         *x++ = 0x55;
         *x++ = 0x66; *x++ = 0x52;
         *x++ = 0x52;
         *x++ = 0x66; *x++ = 0x52;
-        *x++ = 0x66; *x++ = 0x9A; *((DWORD *)x)++ = (DWORD)__wine_call_from_16_thunk;
-                                  *((WORD *)x)++ = cs;
+        *x++ = 0x66; *x++ = 0x9A;
+        *(void **)x = __wine_call_from_16_thunk; x += sizeof(void *);
+        *(WORD *)x = cs; x += sizeof(WORD);
 
         /* Jump to the stub code just created */
         context->Eip = LOWORD(context->Eax);
