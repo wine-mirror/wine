@@ -66,15 +66,22 @@ typedef struct ISupportErrorInfo ISupportErrorInfo,*LPSUPPORTERRORINFO;
  *  SafeArray defines and structs 
  */
 
-#define FADF_AUTO       ( 0x1 )
-#define FADF_STATIC     ( 0x2 )
-#define FADF_EMBEDDED   ( 0x4 )
-#define FADF_FIXEDSIZE  ( 0x10 )
-#define FADF_BSTR       ( 0x100 )
-#define FADF_UNKNOWN    ( 0x200 )
-#define FADF_DISPATCH   ( 0x400 )
-#define FADF_VARIANT    ( 0x800 )
-#define FADF_RESERVED   ( 0xf0e8 )
+#define FADF_AUTO        ( 0x1 )
+#define FADF_STATIC      ( 0x2 )
+#define FADF_EMBEDDED    ( 0x4 )
+#define FADF_FIXEDSIZE   ( 0x10 )
+#define FADF_RECORD      ( 0x20 )
+#define FADF_HAVEIID     ( 0x40 )
+#define FADF_HAVEVARTYPE ( 0x80 )
+#define FADF_BSTR        ( 0x100 )
+#define FADF_UNKNOWN     ( 0x200 )
+#define FADF_DISPATCH    ( 0x400 )
+#define FADF_VARIANT     ( 0x800 )
+#define FADF_RESERVED    ( 0xf008 )
+
+/* Undocumented flags */                                                                                  
+#define FADF_CREATEVECTOR ( 0x2000 ) /* set when the safe array is created using SafeArrayCreateVector */ 
+
 
 typedef struct  tagSAFEARRAYBOUND 
 {
@@ -423,19 +430,6 @@ typedef enum tagVARFLAGS
 	VARFLAG_FIMMEDIATEBIND  = 0x1000
 } VARFLAGS;
 
-/*****************************************************************
- *  SafeArray defines and structs 
- */
-
-#define FADF_AUTO       ( 0x1 )
-#define FADF_STATIC     ( 0x2 )
-#define FADF_EMBEDDED   ( 0x4 )
-#define FADF_FIXEDSIZE  ( 0x10 )
-#define FADF_BSTR       ( 0x100 )
-#define FADF_UNKNOWN    ( 0x200 )
-#define FADF_DISPATCH   ( 0x400 )
-#define FADF_VARIANT    ( 0x800 )
-#define FADF_RESERVED   ( 0xf0e8 )
 
 /*
  * Data types for Variants.

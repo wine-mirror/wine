@@ -542,7 +542,7 @@ HRESULT WINAPI SafeArrayDestroyData(
   /* check if this array is a Vector, in which case do not free the data 
      block since it has been allocated by AllocDescriptor and therefore
      deserve to be freed by DestroyDescriptor */
-  if(!(psa->fFeatures & FADF_FIXEDSIZE)) { /* Set when we do CreateVector */
+  if(!(psa->fFeatures & FADF_CREATEVECTOR)) { /* Set when we do CreateVector */
 
     /* free the whole chunk */
     if((hRes = HeapFree( GetProcessHeap(), 0, psa->pvData)) == 0) /*falied*/
@@ -639,6 +639,7 @@ HRESULT WINAPI SafeArrayCopy(
 { 
   HRESULT hRes;
   DWORD   dAllocSize;
+  ULONG   ulWholeArraySize; /* size of the thing */
 
   if(! validArg(psa)) 
     return E_INVALIDARG;
@@ -650,12 +651,17 @@ HRESULT WINAPI SafeArrayCopy(
             sizeof(*psa)+(sizeof(*(psa->rgsabound))*(psa->cDims-1)));
 
     (*ppsaOut)->pvData = NULL; /* do not point to the same data area */
-  
+
+    /* make sure the new safe array doesn't have the FADF_CREATEVECTOR flag,
+       because the data has not been allocated with the descriptor. */
+    (*ppsaOut)->fFeatures &= ~FADF_CREATEVECTOR;  
+ 
     /* Get the allocated memory size for source and allocate it for target */ 
-    dAllocSize = HeapSize(GetProcessHeap(), 0, psa->pvData);
+    ulWholeArraySize = getArraySize(psa); /* Number of item in SA */
+    dAllocSize = ulWholeArraySize*psa->cbElements;
+
     (*ppsaOut)->pvData = 
       HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, dAllocSize);
-
     if( (*ppsaOut)->pvData != NULL) {   /* HeapAlloc succeed */
 
       if( (hRes=duplicateData(psa, ppsaOut)) != S_OK) { /* E_OUTOFMEMORY */
@@ -699,18 +705,18 @@ SAFEARRAY* WINAPI SafeArrayCreateVector(
                       (sizeof(*psa) + (VARTYPE_SIZE[vt] * cElements))))) {
     return NULL;
   }
-
+										
   /* setup data members... */ 
   psa->cDims      = 1; /* always and forever */
-  psa->fFeatures  = getFeatures(vt) | FADF_FIXEDSIZE;
+  psa->fFeatures  = getFeatures(vt) | FADF_CREATEVECTOR;  /* undocumented flag used by Microsoft */
   psa->cLocks     = 0;
-  psa->pvData     = psa+sizeof(*psa);
+  psa->pvData     = (BYTE*)psa + sizeof(*psa);
   psa->cbElements = VARTYPE_SIZE[vt];
 
   psa->rgsabound[0].cElements = cElements;
   psa->rgsabound[0].lLbound   = lLbound;
-  
-  return(psa); 
+
+  return(psa); 				  
 } 
 
 /************************************************************************ 
@@ -825,19 +831,32 @@ static BOOL resizeSafeArray(
       }
   }
 
-  /* Ok now, if we are enlarging the array, we *MUST* move the whole block 
-     pointed to by pvData.   If we are shorthening the array, this move is
-     optional but we do it anyway becuase the benefit is that we are 
-     releasing to the system the unused memory */
-  
-  if((pvNewBlock = HeapReAlloc(GetProcessHeap(), 0, psa->pvData, 
-     (ulWholeArraySize + lDelta) * psa->cbElements)) == NULL) 
-      return FALSE; /* TODO If we get here it means:
-                       SHRINK situation :  we've deleted the undesired
-                                           data and did not release the memory
-                       GROWING situation:  we've been unable to grow the array
-                    */
+  if (!(psa->fFeatures & FADF_CREATEVECTOR))
+  {
+    /* Ok now, if we are enlarging the array, we *MUST* move the whole block 
+       pointed to by pvData.   If we are shorthening the array, this move is
+       optional but we do it anyway becuase the benefit is that we are 
+       releasing to the system the unused memory */
 
+    if((pvNewBlock = HeapReAlloc(GetProcessHeap(), 0, psa->pvData, 
+       (ulWholeArraySize + lDelta) * psa->cbElements)) == NULL) 
+        return FALSE; /* TODO If we get here it means:
+                         SHRINK situation :  we've deleted the undesired
+                                             data and did not release the memory
+                         GROWING situation:  we've been unable to grow the array
+                      */
+  }
+  else
+  {
+    /* Allocate a new block, because the previous data has been allocated with 
+       the descriptor in SafeArrayCreateVector function. */
+
+    if((pvNewBlock = HeapAlloc(GetProcessHeap(), 0,
+       ulWholeArraySize * psa->cbElements)) == NULL) 
+        return FALSE;
+
+    psa->fFeatures &= ~FADF_CREATEVECTOR;
+  }
   /* reassign to the new block of data */
   psa->pvData = pvNewBlock;
   return TRUE;
