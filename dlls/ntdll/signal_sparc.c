@@ -427,8 +427,6 @@ int __wine_set_signal_handler(unsigned int sig, wine_signal_handler wsh)
  */
 BOOL SIGNAL_Init(void)
 {
-    sigfillset( &all_sigs );
-
     if (set_handler( SIGINT,  (void (*)())int_handler  ) == -1) goto error;
     if (set_handler( SIGFPE,  (void (*)())fpe_handler  ) == -1) goto error;
     if (set_handler( SIGSEGV, (void (*)())segv_handler ) == -1) goto error;
