@@ -96,7 +96,7 @@
 #ifndef _WINSOCKAPI_
 #define _WINSOCKAPI_
 
-#if defined(__MINGW_H) && !defined(MSVCRT_BSD_TYPES_DEFINED)
+#if (defined(_MSC_VER) || defined(__MINGW_H)) && !defined(MSVCRT_BSD_TYPES_DEFINED)
 /* MinGW doesn't define the u_xxx types */
 typedef unsigned char u_char;
 typedef unsigned short u_short;
@@ -497,7 +497,7 @@ inline static u_short __wine_ushort_swap(u_short s)
 }
 inline static u_long __wine_ulong_swap(u_long l)
 {
-    return ((u_long)__wine_ushort_swap(l) << 16) | __wine_ushort_swap(l >> 16);
+    return ((u_long)__wine_ushort_swap((u_short)l) << 16) | __wine_ushort_swap((u_short)(l >> 16));
 }
 #define htonl(l) __wine_ulong_swap(l)
 #define htons(s) __wine_ushort_swap(s)
