@@ -738,6 +738,17 @@ void WINAPI PostQuitMessage16( INT16 exitCode )
 
 /***********************************************************************
  *           PostQuitMessage32   (USER32.421)
+ *
+ * PostQuitMessage() posts a message to the system requesting an
+ * application to terminate execution. As a result of this function,
+ * the WM_QUIT message is posted to the application, and
+ * PostQuitMessage() returns immediately.  The exitCode parameter
+ * specifies an application-defined exit code, which appears in the
+ * _wParam_ parameter of the WM_QUIT message posted to the application.  
+ *
+ * CONFORMANCE
+ *
+ *  ECMA-234, Win32
  */
 void WINAPI PostQuitMessage32( INT32 exitCode )
 {
@@ -899,6 +910,24 @@ BOOL32 WINAPI GetInputState32(void)
 
 /***********************************************************************
  *           GetMessagePos   (USER.119) (USER32.272)
+ * 
+ * The GetMessagePos() function returns a long value representing a
+ * cursor position, in screen coordinates, when the last message
+ * retrieved by the GetMessage() function occurs. The x-coordinate is
+ * in the low-order word of the return value, the y-coordinate is in
+ * the high-order word. The application can use the MAKEPOINT()
+ * macro to obtain a POINT structure from the return value. 
+ *
+ * For the current cursor position, use GetCursorPos().
+ *
+ * RETURNS
+ *
+ * Cursor position of last message on success, zero on failure.
+ *
+ * CONFORMANCE
+ *
+ * ECMA-234, Win32
+ *
  */
 DWORD WINAPI GetMessagePos(void)
 {
@@ -911,6 +940,22 @@ DWORD WINAPI GetMessagePos(void)
 
 /***********************************************************************
  *           GetMessageTime   (USER.120) (USER32.273)
+ *
+ * GetMessageTime() returns the message time for the last message
+ * retrieved by the function. The time is measured in milliseconds with
+ * the same offset as GetTickCount().
+ *
+ * Since the tick count wraps, this is only useful for moderately short
+ * relative time comparisons.
+ *
+ * RETURNS
+ *
+ * Time of last message on success, zero on failure.
+ *
+ * CONFORMANCE
+ *
+ * ECMA-234, Win32
+ *  
  */
 LONG WINAPI GetMessageTime(void)
 {

@@ -1258,6 +1258,11 @@ static void  MSG_CallWndProcHook32( LPMSG32 pmsg, BOOL32 bUnicode )
 
 /**********************************************************************
  *           PostThreadMessage32A    (USER32.422)
+ *
+ * BUGS
+ *
+ *  Thread-local message queues are not supported.
+ * 
  */
 BOOL32 WINAPI PostThreadMessage32A(DWORD idThread , UINT32 message,
                                    WPARAM32 wParam, LPARAM lParam )
@@ -1321,11 +1326,32 @@ LRESULT WINAPI SendMessage32A( HWND32 hwnd, UINT32 msg, WPARAM32 wParam,
 
 
 /***********************************************************************
- *           SendMessage32W   (USER32.459)
+ *           SendMessage32W   (USER32.459)  Send Window Message
+ *
+ *  Sends a message to the window procedure of the specified window.
+ *  SendMessage() will not return until the called window procedure
+ *  either returns or calls ReplyMessage().
+ *
+ *  Use PostMessage() to send message and return immediately. A window
+ *  procedure may use InSendMessage() to detect
+ *  SendMessage()-originated messages.
+ *
+ *  Applications which communicate via HWND_BROADCAST may use
+ *  RegisterWindowMessage() to obtain a unique message to avoid conflicts
+ *  with other applications.
+ *
+ * CONFORMANCE
+ * 
+ *  ECMA-234, Win32 
  */
-LRESULT WINAPI SendMessage32W( HWND32 hwnd, UINT32 msg, WPARAM32 wParam,
-                               LPARAM lParam )
-{
+LRESULT WINAPI SendMessage32W( 
+  HWND32 hwnd,    /* Window to send message to. If HWND_BROADCAST, 
+                 the message will be sent to all top-level windows. */
+
+  UINT32 msg,      /* message */
+  WPARAM32 wParam, /* message parameter */
+  LPARAM lParam    /* additional message parameter */
+) {
     WND * wndPtr;
     WND **list, **ppWnd;
     LRESULT ret;
@@ -1415,6 +1441,8 @@ LRESULT WINAPI SendMessageTimeout32W( HWND32 hwnd, UINT32 msg, WPARAM32 wParam,
  * BUGS
  *
  * Is supposed to return BOOL under Win32.
+ *
+ * Thread-local message queues are not supported.
  *
  * CONFORMANCE
  *
@@ -1755,7 +1783,7 @@ LONG WINAPI DispatchMessage32A( const MSG32* msg )
 
 
 /***********************************************************************
- *           DispatchMessage32W   (USER32.142)
+ *           DispatchMessage32W   (USER32.142)     Process Message
  *
  * Process the message specified in the structure *_msg_.
  *
@@ -1850,7 +1878,13 @@ WORD WINAPI RegisterWindowMessage32W( LPCWSTR str )
 
 
 /***********************************************************************
- *           GetTickCount   (USER.13) (KERNEL32.299)
+ *           GetTickCount   (USER.13) (KERNEL32.299)  System Time
+ * Returns the number of milliseconds, modulo 2^32, since the start
+ * of the current session.
+ *
+ * CONFORMANCE
+ *
+ * ECMA-234, Win32
  */
 DWORD WINAPI GetTickCount(void)
 {
