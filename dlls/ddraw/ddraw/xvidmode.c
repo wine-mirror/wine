@@ -341,6 +341,7 @@ XVidMode_DirectDraw_SetDisplayMode(LPDIRECTDRAW7 iface, DWORD dwWidth,
 	XF86VidModeModeInfo* new_mode;
         WND *tmpWnd = WIN_FindWndPtr(This->window);
         Window x11Wnd = X11DRV_WND_GetXWindow(tmpWnd);
+        WIN_ReleaseWndPtr(tmpWnd);
 
 	new_mode = choose_mode(dwWidth, dwHeight, dwRefreshRate, dwFlags);
 
