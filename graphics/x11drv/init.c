@@ -290,6 +290,7 @@ INT X11DRV_ExtEscape( X11DRV_PDEVICE *physDev, INT escape, INT in_count, LPCVOID
                 if (out_count >= sizeof(Font))
                 {
                     fontObject* pfo = XFONT_GetFontObject( physDev->font );
+		    if (pfo == NULL) return FALSE;
                     *(Font *)out_data = pfo->fs->fid;
                     return TRUE;
                 }

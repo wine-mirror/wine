@@ -445,7 +445,7 @@ BOOL WINAPI wglSwapLayerBuffers(HDC hdc,
   if (fuPlanes) {
     WARN("Following layers unhandled : %08x\n", fuPlanes);
   }
-  
+
   return TRUE;
 }
 
@@ -459,7 +459,9 @@ BOOL WINAPI wglUseFontBitmapsA(HDC hdc,
 {
   Font fid = get_font( hdc );
 
-  TRACE("(%08x, %ld, %ld, %ld)\n", hdc, first, count, listBase);
+  TRACE("(%08x, %ld, %ld, %ld) using font %ld\n", hdc, first, count, listBase, fid);
+
+  if (fid == 0) return FALSE;
 
   ENTER_GL();
   /* I assume that the glyphs are at the same position for X and for Windows */
