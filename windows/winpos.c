@@ -747,7 +747,7 @@ void WINPOS_GetMinMaxInfo( HWND hwnd, POINT *maxSize, POINT *maxPos,
             style &= ~WS_BORDER; /* WS_CAPTION = WS_DLGFRAME | WS_BORDER */
 
         GetClientRect(GetAncestor(hwnd,GA_PARENT), &rc);
-        AdjustWindowRectEx(&rc, style, 0, exstyle);
+        AdjustWindowRectEx(&rc, style, ((style & WS_POPUP) && GetMenu(hwnd)), exstyle);
 
         /* avoid calculating this twice */
         style &= ~(WS_DLGFRAME | WS_BORDER | WS_THICKFRAME);

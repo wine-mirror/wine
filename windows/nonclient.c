@@ -79,7 +79,7 @@ static const BYTE lpGrayMask[] = { 0xAA, 0xA0,
      ((exStyle) & WS_EX_DLGMODALFRAME) || \
      !((style) & (WS_CHILD | WS_POPUP)))
 
-#define HAS_MENU(w)  (!((w)->dwStyle & WS_CHILD) && ((w)->wIDmenu != 0))
+#define HAS_MENU(w)  ((((w)->dwStyle & (WS_CHILD | WS_POPUP)) != WS_CHILD) && ((w)->wIDmenu != 0))
 
 
 /******************************************************************************
@@ -390,7 +390,7 @@ LONG NC_HandleNCCalcSize( HWND hwnd, RECT *winRect )
 	winRect->right  -= tmpRect.right;
 	winRect->bottom -= tmpRect.bottom;
 
-        if (!(style & WS_CHILD) && GetMenu(hwnd))
+        if (((style & (WS_CHILD | WS_POPUP)) != WS_CHILD) && GetMenu(hwnd))
         {
             TRACE("Calling GetMenuBarHeight with hwnd %p, width %ld, at (%ld, %ld).\n",
                   hwnd, winRect->right - winRect->left, -tmpRect.left, -tmpRect.top );
