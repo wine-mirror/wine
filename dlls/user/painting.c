@@ -534,12 +534,12 @@ BOOL WINAPI GetUpdateRect( HWND hwnd, LPRECT rect, BOOL erase )
 
     if (!(update_rgn = send_ncpaint( hwnd, NULL, &flags ))) return FALSE;
 
-    GetRgnBox( update_rgn, rect );
+    if (rect) GetRgnBox( update_rgn, rect );
 
     send_erase( hwnd, flags, update_rgn, &dummy, &hdc );
     if (hdc)
     {
-        DPtoLP( hdc, (LPPOINT)rect, 2 );
+        if (rect) DPtoLP( hdc, (LPPOINT)rect, 2 );
         ReleaseDC( hwnd, hdc );
     }
     else DeleteObject( update_rgn );
