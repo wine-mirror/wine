@@ -619,7 +619,8 @@ extern DWORD EVENT_x11_time_to_win32_time(Time time);
 /* X11 driver private messages, must be in the range 0x80001000..0x80001fff */
 enum x11drv_window_messages
 {
-    WM_X11DRV_ACQUIRE_SELECTION = 0x80001000
+    WM_X11DRV_ACQUIRE_SELECTION = 0x80001000,
+    WM_X11DRV_DELETE_WINDOW
 };
 
 /* x11drv private window data */

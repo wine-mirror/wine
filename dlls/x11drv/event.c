@@ -34,7 +34,9 @@
 #include <assert.h>
 #include <stdarg.h>
 #include <string.h>
-#include "wine/winuser16.h"
+
+#define NONAMELESSUNION
+#define NONAMELESSSTRUCT
 #include "windef.h"
 #include "winbase.h"
 #include "winuser.h"
@@ -48,7 +50,6 @@
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(event);
-WINE_DECLARE_DEBUG_CHANNEL(clipboard);
 
 extern BOOL ximInComposeMode;
 
@@ -393,7 +394,7 @@ static void handle_wm_protocols( HWND hwnd, XClientMessageEvent *event )
          * and we are in managed mode. This is to disallow applications from
          * being closed by the window manager while in a modal state.
          */
-        if (IsWindowEnabled(hwnd)) PostMessageW( hwnd, WM_SYSCOMMAND, SC_CLOSE, 0 );
+        if (IsWindowEnabled(hwnd)) PostMessageW( hwnd, WM_X11DRV_DELETE_WINDOW, 0, 0 );
     }
     else if (protocol == x11drv_atom(WM_TAKE_FOCUS))
     {
@@ -946,6 +947,8 @@ LRESULT X11DRV_WindowMessage( HWND hwnd, UINT msg, WPARAM wp, LPARAM lp )
     case WM_X11DRV_ACQUIRE_SELECTION:
         X11DRV_AcquireClipboard( hwnd );
         return 0;
+    case WM_X11DRV_DELETE_WINDOW:
+        return SendMessageW( hwnd, WM_SYSCOMMAND, SC_CLOSE, 0 );
     default:
         FIXME( "got window msg %x hwnd %p wp %x lp %lx\n", msg, hwnd, wp, lp );
         return 0;
