@@ -240,7 +240,7 @@ SEGPTR WINAPI lstrcpyn16( SEGPTR dst, LPCSTR src, INT16 n )
 LPSTR WINAPI lstrcpynA( LPSTR dst, LPCSTR src, INT n )
 {
     LPSTR p = dst;
-    TRACE("(%p, %s, %i)\n", dst, debugstr_an(src,n), n);
+    TRACE("(%p, %s, %i)\n", dst, debugstr_a(src), n);
     /* In real windows the whole function is protected by an exception handler
      * that returns ERROR_INVALID_PARAMETER on faulty parameters
      * We currently just check for NULL.
@@ -263,7 +263,7 @@ LPSTR WINAPI lstrcpynA( LPSTR dst, LPCSTR src, INT n )
 LPWSTR WINAPI lstrcpynW( LPWSTR dst, LPCWSTR src, INT n )
 {
     LPWSTR p = dst;
-    TRACE("(%p, %s, %i)\n", dst,  debugstr_wn(src,n), n);
+    TRACE("(%p, %s, %i)\n", dst,  debugstr_w(src), n);
     /* In real windows the whole function is protected by an exception handler
      * that returns ERROR_INVALID_PARAMETER on faulty parameters
      * We currently just check for NULL.
