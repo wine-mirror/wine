@@ -2,7 +2,7 @@
  *	Shell Folder stuff
  *
  *	Copyright 1997	Marcus Meissner
- *	Copyright 1998	Juergen Schmied
+ *	Copyright 1998, 1999	Juergen Schmied
  *	
  *	IShellFolder with IDropTarget, IPersistFolder
  *
@@ -26,159 +26,7 @@
 
 DEFAULT_DEBUG_CHANNEL(shell)
 
-/***************************************************************************
- * IDropTarget interface definition for the ShellFolder
- */
-
-typedef struct
-{	ICOM_VTABLE(IDropTarget)* lpvtbl;
-	ULONG ref;
-} ISFDropTarget;
-
-static struct ICOM_VTABLE(IDropTarget) dtvt;
-
-
-/****************************************************************************
- * ISFDropTarget implementation
- */
-
-static IDropTarget * WINAPI ISFDropTarget_Constructor(void)
-{
-	ISFDropTarget* sf;
-
-	sf = HeapAlloc(GetProcessHeap(), 0, sizeof(ISFDropTarget));
-
-	if (sf)
-	{ sf->lpvtbl = &dtvt;
-	  sf->ref    = 1;
-	}
-
-	return (IDropTarget *)sf;
-}
-
-static HRESULT WINAPI ISFDropTarget_QueryInterface(
-	IDropTarget *iface,
-	REFIID riid,
-	LPVOID *ppvObj)
-{
-	ICOM_THIS(ISFDropTarget,iface);
-
-	char	xriid[50];
-	WINE_StringFromCLSID((LPCLSID)riid,xriid);
-
-	TRACE("(%p)->(\n\tIID:\t%s,%p)\n",This,xriid,ppvObj);
-
-	if ( !This || !ppvObj)
-	  return E_INVALIDARG;
-
-	*ppvObj = NULL;
-
-	if(IsEqualIID(riid, &IID_IUnknown))          /*IUnknown*/
-	{ *ppvObj = This; 
-	}
-	else if(IsEqualIID(riid, &IID_IDropTarget))  /*IShellFolder*/
-	{    *ppvObj = (ISFDropTarget*)This;
-	}   
-
-	if(*ppvObj)
-	{ IDropTarget_AddRef((IDropTarget*)*ppvObj);
-	  TRACE("-- Interface: (%p)->(%p)\n",ppvObj,*ppvObj);
-	  return S_OK;
-	}
-
-	TRACE("-- Interface: E_NOINTERFACE\n");
-
-	return E_NOINTERFACE;
-}
-
-static ULONG WINAPI ISFDropTarget_AddRef( IDropTarget *iface)
-{
-	ICOM_THIS(ISFDropTarget,iface);
-
-	TRACE("(%p)->(count=%lu)\n",This,This->ref);
-
-	shell32_ObjCount++;
-
-	return ++(This->ref);
-}
-
-static ULONG WINAPI ISFDropTarget_Release( IDropTarget *iface)
-{
-	ICOM_THIS(ISFDropTarget,iface);
-
-	shell32_ObjCount--;
-
-	if (!--(This->ref)) 
-	{ TRACE("-- destroying ISFDropTarget (%p)\n",This);
-	  HeapFree(GetProcessHeap(),0,This);
-	  return 0;
-	}
-	return This->ref;
-}
-
-static HRESULT WINAPI ISFDropTarget_DragEnter(
-	IDropTarget 	*iface,
-	IDataObject	*pDataObject,
-	DWORD		grfKeyState,
-	POINTL		pt,
-	DWORD		*pdwEffect)
-{	
-
-	ICOM_THIS(ISFDropTarget,iface);
-
-	FIXME("Stub: This=%p, DataObject=%p\n",This,pDataObject);
-
-	return E_NOTIMPL;
-}
-
-static HRESULT WINAPI ISFDropTarget_DragOver(
-	IDropTarget	*iface,
-	DWORD		grfKeyState,
-	POINTL		pt,
-	DWORD		*pdwEffect)
-{
-	ICOM_THIS(ISFDropTarget,iface);
-
-	FIXME("Stub: This=%p\n",This);
-
-	return E_NOTIMPL;
-}
-
-static HRESULT WINAPI ISFDropTarget_DragLeave(
-	IDropTarget	*iface)
-{
-	ICOM_THIS(ISFDropTarget,iface);
-
-	FIXME("Stub: This=%p\n",This);
-
-	return E_NOTIMPL;
-}
-
-static HRESULT WINAPI ISFDropTarget_Drop(
-	IDropTarget	*iface,
-	IDataObject*	pDataObject,
-	DWORD		grfKeyState,
-	POINTL		pt,
-	DWORD		*pdwEffect)
-{
-	ICOM_THIS(ISFDropTarget,iface);
-
-	FIXME("Stub: This=%p\n",This);
-
-	return E_NOTIMPL;
-}
-
-static struct ICOM_VTABLE(IDropTarget) dtvt = 
-{
-	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
-	ISFDropTarget_QueryInterface,
-	ISFDropTarget_AddRef,
-	ISFDropTarget_Release,
-	ISFDropTarget_DragEnter,
-	ISFDropTarget_DragOver,
-	ISFDropTarget_DragLeave,
-	ISFDropTarget_Drop
-};
+#define MEM_DEBUG 1
 
 /***************************************************************************
  *  GetNextElement (internal function)
@@ -276,10 +124,11 @@ static HRESULT SHELL32_CoCreateInitSF (
 
 	*ppvOut = NULL;
 	
-	hr = SHCoCreateInstance(NULL, clsid, NULL, iid, (LPVOID*)&pShellFolder);
+	/* we have to ask first for IPersistFolder, some special folders are expecting this */
+	hr = SHCoCreateInstance(NULL, clsid, NULL, &IID_IPersistFolder, (LPVOID*)&pPersistFolder);
 	if (SUCCEEDED(hr))
 	{
-	  hr = IShellFolder_QueryInterface(pShellFolder, &IID_IPersistFolder, (LPVOID*)&pPersistFolder);
+	  hr = IPersistFolder_QueryInterface(pPersistFolder, iid, (LPVOID*)&pShellFolder);
 	  if (SUCCEEDED(hr))
 	  {
 	    absPidl = ILCombine (pidlRoot, pidlChild);
@@ -319,14 +168,7 @@ static HRESULT SHELL32_GetDisplayNameOfChild(
 	    hr = IShellFolder_GetDisplayNameOf(psfChild, pidlNext, dwFlags | SHGDN_INFOLDER, &strTemp);
 	    if (SUCCEEDED(hr))
 	    {
-	      if (strTemp.uType == STRRET_CSTRA)
-	      {
-		lstrcpynA(szOut , strTemp.u.cStr, dwOutLen);
-	      }
-	      else
-	      {
-	        FIXME("wrong return type");
-	      }
+	      hr = StrRetToStrNA(szOut, dwOutLen, &strTemp, pidlNext);
 	    }
 
 	    IShellFolder_Release(psfChild);
@@ -349,20 +191,44 @@ typedef struct
 	DWORD				ref;
 
 	ICOM_VTABLE(IPersistFolder)*	lpvtblPersistFolder;
+	ICOM_VTABLE(IDropTarget)*	lpvtblDropTarget;
+	
 	CLSID*				pclsid;
 
 	LPSTR				sMyPath;
 	LPITEMIDLIST			absPidl;	/* complete pidl */
+
+	UINT		cfShellIDList;			/* clipboardformat for IDropTarget */
+	BOOL		fAcceptFmt;			/* flag for pending Drop */
 } IGenericSFImpl;
 
 static struct ICOM_VTABLE(IShellFolder) sfvt;
-
 static struct ICOM_VTABLE(IPersistFolder) psfvt;
+static struct ICOM_VTABLE(IDropTarget) dtvt;
 
 static IShellFolder * ISF_MyComputer_Constructor(void);
 
 #define _IPersistFolder_Offset ((int)(&(((IGenericSFImpl*)0)->lpvtblPersistFolder))) 
 #define _ICOM_THIS_From_IPersistFolder(class, name) class* This = (class*)(((char*)name)-_IPersistFolder_Offset); 
+	
+static struct ICOM_VTABLE(IDropTarget) dtvt;
+#define _IDropTarget_Offset ((int)(&(((IGenericSFImpl*)0)->lpvtblDropTarget))) 
+#define _ICOM_THIS_From_IDropTarget(class, name) class* This = (class*)(((char*)name)-_IDropTarget_Offset); 
+
+/**************************************************************************
+*	registers clipboardformat once
+*/
+static void SF_RegisterClipFmt (IShellFolder * iface)
+{
+	ICOM_THIS(IGenericSFImpl, iface);
+
+	TRACE("(%p)\n", This);
+
+	if (!This->cfShellIDList)
+	{
+	  This->cfShellIDList = RegisterClipboardFormatA(CFSTR_SHELLIDLIST);
+	}
+}
 
 /**************************************************************************
 *	  IShellFolder_Constructor
@@ -382,8 +248,11 @@ static IShellFolder * IShellFolder_Constructor(
 
 	sf->lpvtbl=&sfvt;
 	sf->lpvtblPersistFolder=&psfvt;
+	sf->lpvtblDropTarget=&dtvt;
 	sf->pclsid = (CLSID*)&CLSID_SFFile;
-	
+	sf->cfShellIDList=0;
+	sf->fAcceptFmt=FALSE;
+
 	TRACE("(%p)->(parent=%p, pidl=%p)\n",sf,sfParent, pidl);
 	pdump(pidl);
 		
@@ -449,19 +318,27 @@ static HRESULT WINAPI IShellFolder_fnQueryInterface(
 	{ *ppvObj = This; 
 	}
 	else if(IsEqualIID(riid, &IID_IShellFolder))
-	{    *ppvObj = (IShellFolder*)This;
-	}   
+	{
+	  *ppvObj = (IShellFolder*)This;
+	}
 	else if(IsEqualIID(riid, &IID_IPersist))
-	{    *ppvObj = (IPersistFolder*)&(This->lpvtblPersistFolder);
-	}   
+	{
+	  *ppvObj = (IPersistFolder*)&(This->lpvtblPersistFolder);
+	}
 	else if(IsEqualIID(riid, &IID_IPersistFolder))
-	{    *ppvObj = (IPersistFolder*)&(This->lpvtblPersistFolder);
-	}   
+	{
+	  *ppvObj = (IPersistFolder*)&(This->lpvtblPersistFolder);
+	}
+	else if(IsEqualIID(riid, &IID_IDropTarget))
+	{
+	  *ppvObj = (IDropTarget*)&(This->lpvtblDropTarget);
+	  SF_RegisterClipFmt((IShellFolder*)This);
+	}
 
 	if(*ppvObj)
 	{
 	  IUnknown_AddRef((IUnknown*)(*ppvObj));
-	  TRACE("-- Interface: (%p)->(%p)\n",ppvObj,*ppvObj);
+	  TRACE("-- Interface = %p\n", *ppvObj);
 	  return S_OK;
 	}
 	TRACE("-- Interface: E_NOINTERFACE\n");
@@ -476,6 +353,9 @@ static ULONG WINAPI IShellFolder_fnAddRef(IShellFolder * iface)
 {
 	ICOM_THIS(IGenericSFImpl, iface);
 
+#ifdef MEM_DEBUG
+	TRACE("called from: 0x%08x\n", *( ((UINT*)&iface)-1 ));
+#endif
 	TRACE("(%p)->(count=%lu)\n",This,This->ref);
 
 	shell32_ObjCount++;
@@ -489,6 +369,9 @@ static ULONG WINAPI IShellFolder_fnRelease(IShellFolder * iface)
 {
 	ICOM_THIS(IGenericSFImpl, iface);
 
+#ifdef MEM_DEBUG
+	TRACE("called from: 0x%08x\n", *( ((UINT*)&iface)-1 ));
+#endif
 	TRACE("(%p)->(count=%lu)\n",This,This->ref);
 
 	shell32_ObjCount--;
@@ -643,7 +526,7 @@ static HRESULT WINAPI IShellFolder_fnBindToObject( IShellFolder * iface, LPCITEM
 
 	*ppvOut = NULL;
 
-	if ((iid=_ILGetGUIDPointer(pidl)) && !IsEqualIID(iid, &IID_MyComputer))
+	if ((iid=_ILGetGUIDPointer(pidl)))
 	{
 	  /* we have to create a alien folder */
 	  if (  SUCCEEDED(SHCoCreateInstance(NULL, iid, NULL, riid, (LPVOID*)&pShellFolder))
@@ -811,39 +694,43 @@ static HRESULT WINAPI  IShellFolder_fnCompareIDs(
 }
 
 /**************************************************************************
-*	  IShellFolder_fnCreateViewObject
-* Creates an View Object representing the ShellFolder
-*  IShellView / IShellBrowser / IContextMenu
-*
-* PARAMETERS
-*  HWND    hwndOwner,  // Handle of owner window
-*  REFIID  riid,       // Requested initial interface
-*  LPVOID* ppvObject)  // Resultant interface*
-*
-* NOTES
-*  the same as SHCreateShellFolderViewEx ???
+*	IShellFolder_fnCreateViewObject
 */
 static HRESULT WINAPI IShellFolder_fnCreateViewObject( IShellFolder * iface,
 		 HWND hwndOwner, REFIID riid, LPVOID *ppvOut)
 {
 	ICOM_THIS(IGenericSFImpl, iface);
 
-	LPSHELLVIEW pShellView;
-	char    xriid[50];
-	HRESULT       hr;
+	LPSHELLVIEW	pShellView;
+	char		xriid[50];
+	HRESULT		hr = E_INVALIDARG;
 
 	WINE_StringFromCLSID(riid,xriid);
 	TRACE("(%p)->(hwnd=0x%x,\n\tIID:\t%s,%p)\n",This,hwndOwner,xriid,ppvOut);
 	
-	*ppvOut = NULL;
+	if(ppvOut)
+	{
+	  *ppvOut = NULL;
 
-	pShellView = IShellView_Constructor((IShellFolder *) This);
-
-	if(!pShellView)
-	  return E_OUTOFMEMORY;
-	  
-	hr = pShellView->lpvtbl->fnQueryInterface(pShellView, riid, ppvOut);
-	pShellView->lpvtbl->fnRelease(pShellView);
+	  if(IsEqualIID(riid, &IID_IDropTarget))
+	  {
+	    hr = IShellFolder_QueryInterface((IShellFolder*)This, &IID_IDropTarget, ppvOut);
+	  }
+	  else if(IsEqualIID(riid, &IID_IContextMenu))
+	  {
+	    FIXME("IContextMenu not implemented\n");
+	    hr = E_NOTIMPL;
+	  }
+	  else if(IsEqualIID(riid, &IID_IShellView))
+	  {
+	    pShellView = IShellView_Constructor((IShellFolder *) This);
+	    if(pShellView)
+	    {
+	      hr = IShellView_QueryInterface(pShellView, riid, ppvOut);
+	      IShellView_Release(pShellView);
+	    }
+	  }
+	}
 	TRACE("-- (%p)->(interface=%p)\n",This, ppvOut);
 	return hr; 
 }
@@ -925,59 +812,50 @@ static HRESULT WINAPI IShellFolder_fnGetUIObjectOf(
 
 	char		xclsid[50];
 	LPITEMIDLIST	pidl;
-	LPUNKNOWN	pObj = NULL; 
-
+	IUnknown*	pObj = NULL; 
+	HRESULT		hr = E_INVALIDARG;
+	
 	WINE_StringFromCLSID(riid,xclsid);
 
 	TRACE("(%p)->(%u,%u,apidl=%p,\n\tIID:%s,%p,%p)\n",
 	  This,hwndOwner,cidl,apidl,xclsid,prgfInOut,ppvOut);
 
-	if (!ppvOut)
-	  return E_INVALIDARG;
+	if (ppvOut)
+	{
+	  *ppvOut = NULL;
 
-	*ppvOut = NULL;
+	  if(IsEqualIID(riid, &IID_IContextMenu) && (cidl >= 1))
+	  {
+	    pObj  = (LPUNKNOWN)IContextMenu_Constructor((IShellFolder *)This, This->absPidl, apidl, cidl);
+	  }
+	  else if (IsEqualIID(riid, &IID_IDataObject) &&(cidl >= 1))
+	  {
+	    pObj = (LPUNKNOWN)IDataObject_Constructor (hwndOwner, This->absPidl, apidl, cidl);
+	    hr = S_OK;
+	  }
+	  else if (IsEqualIID(riid, &IID_IExtractIconA) && (cidl == 1))
+	  {
+	    pidl = ILCombine(This->absPidl,apidl[0]);
+	    pObj = (LPUNKNOWN)IExtractIconA_Constructor( pidl );
+	    SHFree(pidl);
+	    hr = S_OK;
+	  } 
+	  else if (IsEqualIID(riid, &IID_IDropTarget) && (cidl >= 1))
+	  {
+	    hr = IShellFolder_QueryInterface((IShellFolder*)This, &IID_IDropTarget, (LPVOID*)&pObj);
+	  }
+	  else
+	  { 
+	    hr = E_NOINTERFACE;
+	  }
 
-	if(IsEqualIID(riid, &IID_IContextMenu))
-	{ 
-	  if(cidl < 1)
-	    return E_INVALIDARG;
+	  if(!pObj)
+	    hr = E_OUTOFMEMORY;
 
-	  pObj  = (LPUNKNOWN)IContextMenu_Constructor((IShellFolder *)This, This->absPidl, apidl, cidl);
+	  *ppvOut = pObj;
 	}
-	else if (IsEqualIID(riid, &IID_IDataObject))
-	{ 
-	  if (cidl < 1)
-	    return E_INVALIDARG;
-
-	  pObj = (LPUNKNOWN)IDataObject_Constructor (hwndOwner, This->absPidl, apidl, cidl);
-	}
-	else if(IsEqualIID(riid, &IID_IExtractIconA))
-	{ 
-	  if (cidl != 1)
-	    return E_INVALIDARG;
-
-	  pidl = ILCombine(This->absPidl,apidl[0]);
-	  pObj = (LPUNKNOWN)IExtractIconA_Constructor( pidl );
-	  SHFree(pidl);
-	} 
-	else if (IsEqualIID(riid, &IID_IDropTarget))
-	{ 
-	  if (cidl < 1)
-	    return E_INVALIDARG;
-
-	  pObj = (LPUNKNOWN)ISFDropTarget_Constructor();
-	}
-	else
-	{ 
-	  ERR("(%p)->E_NOINTERFACE\n",This);
-	  return E_NOINTERFACE;
-	}
-
-	if(!pObj)
-	  return E_OUTOFMEMORY;
-
-	*ppvOut = pObj;
-	return S_OK;
+	TRACE("(%p)->hr=0x%08lx\n",This, hr);
+	return hr;
 }
 
 /**************************************************************************
@@ -1264,18 +1142,27 @@ static HRESULT WINAPI ISF_Desktop_fnBindToObject( IShellFolder * iface, LPCITEMI
 
 	*ppvOut = NULL;
 
-	if (!(clsid=_ILGetGUIDPointer(pidl))) return E_INVALIDARG;
-
-	if ( IsEqualIID(clsid, &IID_MyComputer))
+	if ((clsid=_ILGetGUIDPointer(pidl)))
 	{
-	  pShellFolder = ISF_MyComputer_Constructor();
-	}
+	  if ( IsEqualIID(clsid, &IID_MyComputer))
+	  {
+	    pShellFolder = ISF_MyComputer_Constructor();
+	  }
+	  else 
+	  {
+	     /* shell extension */
+	     if (!SUCCEEDED(SHELL32_CoCreateInitSF (This->absPidl, pidl, clsid, riid, (LPVOID*)&pShellFolder)))
+	     {
+	       return E_INVALIDARG;
+	     }
+	  }
+	} 
 	else
 	{
-	   if (!SUCCEEDED(SHELL32_CoCreateInitSF (This->absPidl, pidl, clsid, riid, (LPVOID*)&pShellFolder)))
-	   {
-	     return E_INVALIDARG;
-	   }
+	  /* file system folder on the desktop */
+	  LPITEMIDLIST pidltemp = ILCloneFirst(pidl);
+	  pShellFolder = IShellFolder_Constructor((IShellFolder*)This, pidltemp);
+	  ILFree(pidltemp);
 	}
 	
 	if (_ILIsPidlSimple(pidl))	/* no sub folders */
@@ -1292,6 +1179,49 @@ static HRESULT WINAPI ISF_Desktop_fnBindToObject( IShellFolder * iface, LPCITEMI
 	TRACE("-- (%p) returning (%p)\n",This, *ppvOut);
 
 	return S_OK;
+}
+
+/**************************************************************************
+*	ISF_Desktop_fnCreateViewObject
+*/
+static HRESULT WINAPI ISF_Desktop_fnCreateViewObject( IShellFolder * iface,
+		 HWND hwndOwner, REFIID riid, LPVOID *ppvOut)
+{
+	ICOM_THIS(IGenericSFImpl, iface);
+
+	LPSHELLVIEW	pShellView;
+	char		xriid[50];
+	HRESULT		hr = E_INVALIDARG;
+
+	WINE_StringFromCLSID(riid,xriid);
+	TRACE("(%p)->(hwnd=0x%x,\n\tIID:\t%s,%p)\n",This,hwndOwner,xriid,ppvOut);
+	
+	if(ppvOut)
+	{
+	  *ppvOut = NULL;
+
+	  if(IsEqualIID(riid, &IID_IDropTarget))
+	  {
+	    FIXME("IDropTarget not implemented\n");
+	    hr = E_NOTIMPL;
+	  }
+	  else if(IsEqualIID(riid, &IID_IContextMenu))
+	  {
+	    FIXME("IContextMenu not implemented\n");
+	    hr = E_NOTIMPL;
+	  }
+	  else if(IsEqualIID(riid, &IID_IShellView))
+	  {
+	    pShellView = IShellView_Constructor((IShellFolder *) This);
+	    if(pShellView)
+	    {
+	      hr = IShellView_QueryInterface(pShellView, riid, ppvOut);
+	      IShellView_Release(pShellView);
+	    }
+	  }
+	}
+	TRACE("-- (%p)->(interface=%p)\n",This, ppvOut);
+	return hr; 
 }
 
 /**************************************************************************
@@ -1325,6 +1255,10 @@ static HRESULT WINAPI ISF_Desktop_fnGetAttributesOf(IShellFolder * iface,UINT ci
 	    {
 	      *rgfInOut &= attributes;
 	      goto next;
+	    }
+	    else
+	    { /* some shell-extension */
+	      *rgfInOut &= 0xb0000154;
 	    }
 	  }
 	  else if (_ILIsFolder( *apidl))
@@ -1401,7 +1335,7 @@ static ICOM_VTABLE(IShellFolder) sfdvt =
 	ISF_Desktop_fnBindToObject,
 	IShellFolder_fnBindToStorage,
 	IShellFolder_fnCompareIDs,
-	IShellFolder_fnCreateViewObject,
+	ISF_Desktop_fnCreateViewObject,
 	ISF_Desktop_fnGetAttributesOf,
 	IShellFolder_fnGetUIObjectOf,
 	ISF_Desktop_fnGetDisplayNameOf,
@@ -1560,6 +1494,49 @@ static HRESULT WINAPI ISF_MyComputer_fnBindToObject( IShellFolder * iface, LPCIT
 }
 
 /**************************************************************************
+*	ISF_MyComputer_fnCreateViewObject
+*/
+static HRESULT WINAPI ISF_MyComputer_fnCreateViewObject( IShellFolder * iface,
+		 HWND hwndOwner, REFIID riid, LPVOID *ppvOut)
+{
+	ICOM_THIS(IGenericSFImpl, iface);
+
+	LPSHELLVIEW	pShellView;
+	char		xriid[50];
+	HRESULT		hr = E_INVALIDARG;
+
+	WINE_StringFromCLSID(riid,xriid);
+	TRACE("(%p)->(hwnd=0x%x,\n\tIID:\t%s,%p)\n",This,hwndOwner,xriid,ppvOut);
+	
+	if(ppvOut)
+	{
+	  *ppvOut = NULL;
+
+	  if(IsEqualIID(riid, &IID_IDropTarget))
+	  {
+	    FIXME("IDropTarget not implemented\n");
+	    hr = E_NOTIMPL;
+	  }
+	  else if(IsEqualIID(riid, &IID_IContextMenu))
+	  {
+	    FIXME("IContextMenu not implemented\n");
+	    hr = E_NOTIMPL;
+	  }
+	  else if(IsEqualIID(riid, &IID_IShellView))
+	  {
+	    pShellView = IShellView_Constructor((IShellFolder *) This);
+	    if(pShellView)
+	    {
+	      hr = IShellView_QueryInterface(pShellView, riid, ppvOut);
+	      IShellView_Release(pShellView);
+	    }
+	  }
+	}
+	TRACE("-- (%p)->(interface=%p)\n",This, ppvOut);
+	return hr; 
+}
+
+/**************************************************************************
 *  ISF_MyComputer_fnGetAttributesOf
 */
 static HRESULT WINAPI ISF_MyComputer_fnGetAttributesOf(IShellFolder * iface,UINT cidl,LPCITEMIDLIST *apidl,DWORD *rgfInOut)
@@ -1691,7 +1668,7 @@ static ICOM_VTABLE(IShellFolder) sfmcvt =
 	ISF_MyComputer_fnBindToObject,
 	IShellFolder_fnBindToStorage,
 	IShellFolder_fnCompareIDs,
-	IShellFolder_fnCreateViewObject,
+	ISF_MyComputer_fnCreateViewObject,
 	ISF_MyComputer_fnGetAttributesOf,
 	IShellFolder_fnGetUIObjectOf,
 	ISF_MyComputer_fnGetDisplayNameOf,
@@ -1711,6 +1688,8 @@ static HRESULT WINAPI ISFPersistFolder_QueryInterface(
 {
 	_ICOM_THIS_From_IPersistFolder(IGenericSFImpl, iface);
 
+	TRACE("(%p)\n", This);
+
 	return IShellFolder_QueryInterface((IShellFolder*)This, iid, ppvObj);
 }
 
@@ -1722,6 +1701,8 @@ static ULONG WINAPI ISFPersistFolder_AddRef(
 	IPersistFolder *	iface)
 {
 	_ICOM_THIS_From_IPersistFolder(IShellFolder, iface);
+
+	TRACE("(%p)\n", This);
 
 	return IShellFolder_AddRef((IShellFolder*)This);
 }
@@ -1735,6 +1716,8 @@ static ULONG WINAPI ISFPersistFolder_Release(
 {
 	_ICOM_THIS_From_IPersistFolder(IGenericSFImpl, iface);
 
+	TRACE("(%p)\n", This);
+
 	return IShellFolder_Release((IShellFolder*)This);
 }
 
@@ -1746,6 +1729,8 @@ static HRESULT WINAPI ISFPersistFolder_GetClassID(
 	CLSID *			lpClassId)
 {
 	_ICOM_THIS_From_IPersistFolder(IGenericSFImpl, iface);
+
+	TRACE("(%p)\n", This);
 
 	if (!lpClassId) return E_POINTER;
 	*lpClassId = *This->pclsid;
@@ -1765,6 +1750,8 @@ static HRESULT WINAPI ISFPersistFolder_Initialize(
 {
 	_ICOM_THIS_From_IPersistFolder(IGenericSFImpl, iface);
 
+	TRACE("(%p)\n", This);
+
 	if(This->absPidl)
 	{
 	  SHFree(This->absPidl);
@@ -1782,5 +1769,139 @@ static ICOM_VTABLE(IPersistFolder) psfvt =
 	ISFPersistFolder_Release,
 	ISFPersistFolder_GetClassID,
 	ISFPersistFolder_Initialize
+};
+
+/****************************************************************************
+ * ISFDropTarget implementation
+ */
+static BOOL ISFDropTarget_QueryDrop(
+	IDropTarget *iface,
+	DWORD dwKeyState,
+	LPDWORD pdwEffect)
+{
+	DWORD dwEffect = *pdwEffect;
+
+	_ICOM_THIS_From_IDropTarget(IGenericSFImpl,iface);
+	
+	*pdwEffect = DROPEFFECT_NONE;
+
+	if (This->fAcceptFmt)
+	{ /* Does our interpretation of the keystate ... */
+	  *pdwEffect = KeyStateToDropEffect(dwKeyState);
+	  
+	  /* ... matches the desired effect ? */
+	  if (dwEffect & *pdwEffect)
+	  {
+	    return TRUE;
+	  }
+	}
+	return FALSE;
+}
+
+static HRESULT WINAPI ISFDropTarget_QueryInterface(
+	IDropTarget *iface,
+	REFIID riid,
+	LPVOID *ppvObj)
+{
+	_ICOM_THIS_From_IDropTarget(IGenericSFImpl,iface);
+
+	TRACE("(%p)\n", This);
+
+	return IShellFolder_QueryInterface((IShellFolder*)This, riid, ppvObj);
+}
+
+static ULONG WINAPI ISFDropTarget_AddRef( IDropTarget *iface)
+{
+	_ICOM_THIS_From_IDropTarget(IGenericSFImpl,iface);
+
+	TRACE("(%p)\n", This);
+
+	return IShellFolder_AddRef((IShellFolder*)This);
+}
+
+static ULONG WINAPI ISFDropTarget_Release( IDropTarget *iface)
+{
+	_ICOM_THIS_From_IDropTarget(IGenericSFImpl,iface);
+
+	TRACE("(%p)\n", This);
+
+	return IShellFolder_Release((IShellFolder*)This);
+}
+
+static HRESULT WINAPI ISFDropTarget_DragEnter(
+	IDropTarget 	*iface,
+	IDataObject	*pDataObject,
+	DWORD		dwKeyState,
+	POINTL		pt,
+	DWORD		*pdwEffect)
+{	
+	FORMATETC	fmt;
+	
+	_ICOM_THIS_From_IDropTarget(IGenericSFImpl,iface);
+
+	TRACE("(%p)->(DataObject=%p)\n",This,pDataObject);
+
+	InitFormatEtc(fmt, This->cfShellIDList, TYMED_HGLOBAL);
+
+	This->fAcceptFmt = (S_OK == IDataObject_QueryGetData(pDataObject, &fmt)) ? TRUE : FALSE;
+
+	ISFDropTarget_QueryDrop(iface, dwKeyState, pdwEffect);
+
+	return S_OK;
+}
+
+static HRESULT WINAPI ISFDropTarget_DragOver(
+	IDropTarget	*iface,
+	DWORD		dwKeyState,
+	POINTL		pt,
+	DWORD		*pdwEffect)
+{
+	_ICOM_THIS_From_IDropTarget(IGenericSFImpl,iface);
+
+	TRACE("(%p)\n",This);
+	
+	if(!pdwEffect) return E_INVALIDARG;
+
+	ISFDropTarget_QueryDrop(iface, dwKeyState, pdwEffect);
+
+	return S_OK;
+}
+
+static HRESULT WINAPI ISFDropTarget_DragLeave(
+	IDropTarget	*iface)
+{
+	_ICOM_THIS_From_IDropTarget(IGenericSFImpl,iface);
+
+	TRACE("(%p)\n",This);
+
+	This->fAcceptFmt = FALSE;
+	
+	return S_OK;
+}
+
+static HRESULT WINAPI ISFDropTarget_Drop(
+	IDropTarget	*iface,
+	IDataObject*	pDataObject,
+	DWORD		dwKeyState,
+	POINTL		pt,
+	DWORD		*pdwEffect)
+{
+	_ICOM_THIS_From_IDropTarget(IGenericSFImpl,iface);
+
+	FIXME("(%p) object dropped\n",This);
+
+	return E_NOTIMPL;
+}
+
+static struct ICOM_VTABLE(IDropTarget) dtvt = 
+{
+	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
+	ISFDropTarget_QueryInterface,
+	ISFDropTarget_AddRef,
+	ISFDropTarget_Release,
+	ISFDropTarget_DragEnter,
+	ISFDropTarget_DragOver,
+	ISFDropTarget_DragLeave,
+ 	ISFDropTarget_Drop
 };
 
