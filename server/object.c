@@ -13,6 +13,7 @@
 
 #include "winerror.h"
 #include "thread.h"
+#include "unicode.h"
 
 int debug_level = 0;
 
@@ -22,7 +23,7 @@ struct object_name
     struct object_name *prev;
     struct object      *obj;
     size_t              len;
-    char                name[1];
+    WCHAR               name[1];
 };
 
 #define NAME_HASH_SIZE 37
@@ -66,22 +67,22 @@ void *memdup( const void *data, size_t len )
 
 /*****************************************************************/
 
-static int get_name_hash( const char *name, size_t len )
+static int get_name_hash( const WCHAR *name, size_t len )
 {
-    char hash = 0;
+    WCHAR hash = 0;
     while (len--) hash ^= *name++;
     return hash % NAME_HASH_SIZE;
 }
 
 /* allocate a name for an object */
-static struct object_name *alloc_name( const char *name, size_t len )
+static struct object_name *alloc_name( const WCHAR *name, size_t len )
 {
     struct object_name *ptr;
 
-    if ((ptr = mem_alloc( sizeof(*ptr) + len )))
+    if ((ptr = mem_alloc( sizeof(*ptr) + len * sizeof(ptr->name[0]) )))
     {
         ptr->len = len;
-        memcpy( ptr->name, name, len );
+        memcpy( ptr->name, name, len * sizeof(ptr->name[0]) );
         ptr->name[len] = 0;
     }
     return ptr;
@@ -139,7 +140,7 @@ void *alloc_object( const struct object_ops *ops )
     return obj;
 }
 
-void *create_named_object( const struct object_ops *ops, const char *name, size_t len )
+void *create_named_object( const struct object_ops *ops, const WCHAR *name, size_t len )
 {
     struct object *obj;
     struct object_name *name_ptr;
@@ -167,11 +168,16 @@ void *create_named_object( const struct object_ops *ops, const char *name, size_
     return obj;
 }
 
-/* return a pointer to the object name, or to an empty string */
-const char *get_object_name( struct object *obj )
+/* dump the name of an object to stderr */
+void dump_object_name( struct object *obj )
 {
-    if (!obj->name) return "";
-    return obj->name->name;
+    if (!obj->name) fprintf( stderr, "name=\"\"" );
+    else
+    {
+        fprintf( stderr, "name=L\"" );
+        dump_strW( obj->name->name, strlenW(obj->name->name), stderr, "\"\"" );
+        fputc( '\"', stderr );
+    }
 }
 
 /* grab an object (i.e. increment its refcount) and return the object */
@@ -206,14 +212,14 @@ void release_object( void *ptr )
 }
 
 /* find an object by its name; the refcount is incremented */
-struct object *find_object( const char *name, size_t len )
+struct object *find_object( const WCHAR *name, size_t len )
 {
     struct object_name *ptr;
     if (!name || !len) return NULL;
     for (ptr = names[ get_name_hash( name, len ) ]; ptr; ptr = ptr->next)
     {
         if (ptr->len != len) continue;
-        if (!memcmp( ptr->name, name, len )) return grab_object( ptr->obj );
+        if (!memcmp( ptr->name, name, len*sizeof(WCHAR) )) return grab_object( ptr->obj );
     }
     return NULL;
 }

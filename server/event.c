@@ -42,7 +42,7 @@ static const struct object_ops event_ops =
 };
 
 
-static struct event *create_event( const char *name, size_t len,
+static struct event *create_event( const WCHAR *name, size_t len,
                                    int manual_reset, int initial_state )
 {
     struct event *event;
@@ -88,9 +88,10 @@ static void event_dump( struct object *obj, int verbose )
 {
     struct event *event = (struct event *)obj;
     assert( obj->ops == &event_ops );
-    fprintf( stderr, "Event manual=%d signaled=%d name='%s'\n",
-             event->manual_reset, event->signaled,
-             get_object_name( &event->obj ) );
+    fprintf( stderr, "Event manual=%d signaled=%d ",
+             event->manual_reset, event->signaled );
+    dump_object_name( &event->obj );
+    fputc( '\n', stderr );
 }
 
 static int event_signaled( struct object *obj, struct thread *thread )
@@ -112,7 +113,7 @@ static int event_satisfied( struct object *obj, struct thread *thread )
 /* create an event */
 DECL_HANDLER(create_event)
 {
-    size_t len = get_req_strlen( req->name );
+    size_t len = get_req_strlenW( req->name );
     struct event *event;
 
     req->handle = -1;
@@ -126,7 +127,7 @@ DECL_HANDLER(create_event)
 /* open a handle to an event */
 DECL_HANDLER(open_event)
 {
-    size_t len = get_req_strlen( req->name );
+    size_t len = get_req_strlenW( req->name );
     req->handle = open_object( req->name, len, &event_ops, req->access, req->inherit );
 }
 

@@ -399,22 +399,22 @@ int duplicate_handle( struct process *src, int src_handle, struct process *dst,
 }
 
 /* open a new handle to an existing object */
-int open_object( const char *name, size_t len, const struct object_ops *ops,
+int open_object( const WCHAR *name, size_t len, const struct object_ops *ops,
                  unsigned int access, int inherit )
 {
+    int handle = -1;
     struct object *obj = find_object( name, len );
-    if (!obj) 
+    if (obj)
     {
-        set_error( ERROR_FILE_NOT_FOUND );
-        return -1;
-    }
-    if (ops && obj->ops != ops)
-    {
+        if (ops && obj->ops != ops)
+            set_error( ERROR_INVALID_HANDLE );
+        else
+            handle = alloc_handle( current->process, obj, access, inherit );
         release_object( obj );
-        set_error( ERROR_INVALID_HANDLE );  /* FIXME: not the right type */ 
-        return -1;
     }
-    return alloc_handle( current->process, obj, access, inherit );
+    else
+        set_error( ERROR_FILE_NOT_FOUND );
+    return handle;
 }
 
 /* close a handle */

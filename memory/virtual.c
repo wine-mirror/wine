@@ -22,7 +22,6 @@
 #include "winbase.h"
 #include "winerror.h"
 #include "file.h"
-#include "heap.h"
 #include "process.h"
 #include "xmalloc.h"
 #include "global.h"
@@ -1090,7 +1089,7 @@ HANDLE WINAPI CreateFileMappingA(
     req->size_low    = size_low;
     req->protect     = vprot;
     req->inherit     = (sa && (sa->nLength>=sizeof(*sa)) && sa->bInheritHandle);
-    lstrcpynA( req->name, name ? name : "", server_remaining(req->name) );
+    server_strcpyAtoW( req->name, name );
     SetLastError(0);
     server_call( REQ_CREATE_MAPPING );
     if (req->handle == -1) return 0;
@@ -1102,15 +1101,42 @@ HANDLE WINAPI CreateFileMappingA(
  *             CreateFileMapping32W   (KERNEL32.47)
  * See CreateFileMapping32A
  */
-HANDLE WINAPI CreateFileMappingW( HFILE hFile, LPSECURITY_ATTRIBUTES attr, 
-                                      DWORD protect, DWORD size_high,  
-                                      DWORD size_low, LPCWSTR name )
+HANDLE WINAPI CreateFileMappingW( HFILE hFile, LPSECURITY_ATTRIBUTES sa, 
+                                  DWORD protect, DWORD size_high,  
+                                  DWORD size_low, LPCWSTR name )
 {
-    LPSTR nameA = HEAP_strdupWtoA( GetProcessHeap(), 0, name );
-    HANDLE ret = CreateFileMappingA( hFile, attr, protect,
-                                         size_high, size_low, nameA );
-    HeapFree( GetProcessHeap(), 0, nameA );
-    return ret;
+    struct create_mapping_request *req = get_req_buffer();
+    BYTE vprot;
+
+    /* Check parameters */
+
+    TRACE("(%x,%p,%08lx,%08lx%08lx,%s)\n",
+          hFile, sa, protect, size_high, size_low, debugstr_w(name) );
+
+    vprot = VIRTUAL_GetProt( protect );
+    if (protect & SEC_RESERVE)
+    {
+        if (hFile != INVALID_HANDLE_VALUE)
+        {
+            SetLastError( ERROR_INVALID_PARAMETER );
+            return 0;
+        }
+    }
+    else vprot |= VPROT_COMMITTED;
+    if (protect & SEC_NOCACHE) vprot |= VPROT_NOCACHE;
+
+    /* Create the server object */
+
+    req->file_handle = hFile;
+    req->size_high   = size_high;
+    req->size_low    = size_low;
+    req->protect     = vprot;
+    req->inherit     = (sa && (sa->nLength>=sizeof(*sa)) && sa->bInheritHandle);
+    server_strcpyW( req->name, name );
+    SetLastError(0);
+    server_call( REQ_CREATE_MAPPING );
+    if (req->handle == -1) return 0;
+    return req->handle;
 }
 
 
@@ -1131,7 +1157,7 @@ HANDLE WINAPI OpenFileMappingA(
 
     req->access  = access;
     req->inherit = inherit;
-    lstrcpynA( req->name, name ? name : "", server_remaining(req->name) );
+    server_strcpyAtoW( req->name, name );
     server_call( REQ_OPEN_MAPPING );
     if (req->handle == -1) return 0; /* must return 0 on failure, not -1 */
     return req->handle;
@@ -1144,10 +1170,14 @@ HANDLE WINAPI OpenFileMappingA(
  */
 HANDLE WINAPI OpenFileMappingW( DWORD access, BOOL inherit, LPCWSTR name)
 {
-    LPSTR nameA = HEAP_strdupWtoA( GetProcessHeap(), 0, name );
-    HANDLE ret = OpenFileMappingA( access, inherit, nameA );
-    HeapFree( GetProcessHeap(), 0, nameA );
-    return ret;
+    struct open_mapping_request *req = get_req_buffer();
+
+    req->access  = access;
+    req->inherit = inherit;
+    server_strcpyW( req->name, name );
+    server_call( REQ_OPEN_MAPPING );
+    if (req->handle == -1) return 0; /* must return 0 on failure, not -1 */
+    return req->handle;
 }
 
 

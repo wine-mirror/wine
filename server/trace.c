@@ -10,6 +10,7 @@
 #include <sys/uio.h>
 #include "winsock2.h"
 #include "request.h"
+#include "unicode.h"
 
 
 /* utility functions */
@@ -39,12 +40,8 @@ static void dump_bytes( const unsigned char *ptr, int len )
 static void dump_unicode_string( const WCHAR *str )
 {
     fprintf( stderr, "L\"" );
-    while (*str)
-    {
-        fprintf( stderr, "%c", isprint( (char)*str ) ? (char )*str : '?' );
-        str++;
-    }
-    fprintf( stderr, "\"" );
+    dump_strW( str, strlenW(str), stderr, "\"\"" );
+    fputc( '\"', stderr );
 }
 
 
@@ -341,7 +338,8 @@ static void dump_create_event_request( struct create_event_request *req )
     fprintf( stderr, " manual_reset=%d,", req->manual_reset );
     fprintf( stderr, " initial_state=%d,", req->initial_state );
     fprintf( stderr, " inherit=%d,", req->inherit );
-    fprintf( stderr, " name=\"%s\"", req->name );
+    fprintf( stderr, " name=" );
+    dump_unicode_string( req->name );
 }
 
 static void dump_create_event_reply( struct create_event_request *req )
@@ -359,7 +357,8 @@ static void dump_open_event_request( struct open_event_request *req )
 {
     fprintf( stderr, " access=%08x,", req->access );
     fprintf( stderr, " inherit=%d,", req->inherit );
-    fprintf( stderr, " name=\"%s\"", req->name );
+    fprintf( stderr, " name=" );
+    dump_unicode_string( req->name );
 }
 
 static void dump_open_event_reply( struct open_event_request *req )
@@ -371,7 +370,8 @@ static void dump_create_mutex_request( struct create_mutex_request *req )
 {
     fprintf( stderr, " owned=%d,", req->owned );
     fprintf( stderr, " inherit=%d,", req->inherit );
-    fprintf( stderr, " name=\"%s\"", req->name );
+    fprintf( stderr, " name=" );
+    dump_unicode_string( req->name );
 }
 
 static void dump_create_mutex_reply( struct create_mutex_request *req )
@@ -388,7 +388,8 @@ static void dump_open_mutex_request( struct open_mutex_request *req )
 {
     fprintf( stderr, " access=%08x,", req->access );
     fprintf( stderr, " inherit=%d,", req->inherit );
-    fprintf( stderr, " name=\"%s\"", req->name );
+    fprintf( stderr, " name=" );
+    dump_unicode_string( req->name );
 }
 
 static void dump_open_mutex_reply( struct open_mutex_request *req )
@@ -401,7 +402,8 @@ static void dump_create_semaphore_request( struct create_semaphore_request *req 
     fprintf( stderr, " initial=%08x,", req->initial );
     fprintf( stderr, " max=%08x,", req->max );
     fprintf( stderr, " inherit=%d,", req->inherit );
-    fprintf( stderr, " name=\"%s\"", req->name );
+    fprintf( stderr, " name=" );
+    dump_unicode_string( req->name );
 }
 
 static void dump_create_semaphore_reply( struct create_semaphore_request *req )
@@ -424,7 +426,8 @@ static void dump_open_semaphore_request( struct open_semaphore_request *req )
 {
     fprintf( stderr, " access=%08x,", req->access );
     fprintf( stderr, " inherit=%d,", req->inherit );
-    fprintf( stderr, " name=\"%s\"", req->name );
+    fprintf( stderr, " name=" );
+    dump_unicode_string( req->name );
 }
 
 static void dump_open_semaphore_reply( struct open_semaphore_request *req )
@@ -718,7 +721,8 @@ static void dump_create_mapping_request( struct create_mapping_request *req )
     fprintf( stderr, " protect=%d,", req->protect );
     fprintf( stderr, " inherit=%d,", req->inherit );
     fprintf( stderr, " file_handle=%d,", req->file_handle );
-    fprintf( stderr, " name=\"%s\"", req->name );
+    fprintf( stderr, " name=" );
+    dump_unicode_string( req->name );
 }
 
 static void dump_create_mapping_reply( struct create_mapping_request *req )
@@ -730,7 +734,8 @@ static void dump_open_mapping_request( struct open_mapping_request *req )
 {
     fprintf( stderr, " access=%08x,", req->access );
     fprintf( stderr, " inherit=%d,", req->inherit );
-    fprintf( stderr, " name=\"%s\"", req->name );
+    fprintf( stderr, " name=" );
+    dump_unicode_string( req->name );
 }
 
 static void dump_open_mapping_reply( struct open_mapping_request *req )

@@ -46,7 +46,7 @@ static const struct object_ops mutex_ops =
 };
 
 
-static struct mutex *create_mutex( const char *name, size_t len, int owned )
+static struct mutex *create_mutex( const WCHAR *name, size_t len, int owned )
 {
     struct mutex *mutex;
 
@@ -94,8 +94,9 @@ static void mutex_dump( struct object *obj, int verbose )
 {
     struct mutex *mutex = (struct mutex *)obj;
     assert( obj->ops == &mutex_ops );
-    printf( "Mutex count=%u owner=%p name='%s'\n",
-            mutex->count, mutex->owner, get_object_name( &mutex->obj) );
+    fprintf( stderr, "Mutex count=%u owner=%p ", mutex->count, mutex->owner );
+    dump_object_name( &mutex->obj );
+    fputc( '\n', stderr );
 }
 
 static int mutex_signaled( struct object *obj, struct thread *thread )
@@ -137,7 +138,7 @@ static void mutex_destroy( struct object *obj )
 /* create a mutex */
 DECL_HANDLER(create_mutex)
 {
-    size_t len = get_req_strlen( req->name );
+    size_t len = get_req_strlenW( req->name );
     struct mutex *mutex;
 
     req->handle = -1;
@@ -151,7 +152,7 @@ DECL_HANDLER(create_mutex)
 /* open a handle to a mutex */
 DECL_HANDLER(open_mutex)
 {
-    size_t len = get_req_strlen( req->name );
+    size_t len = get_req_strlenW( req->name );
     req->handle = open_object( req->name, len, &mutex_ops, req->access, req->inherit );
 }
 

@@ -84,7 +84,7 @@ static void init_page_size(void)
 
 
 static struct object *create_mapping( int size_high, int size_low, int protect,
-                                      int handle, const char *name, size_t len )
+                                      int handle, const WCHAR *name, size_t len )
 {
     struct mapping *mapping;
     int access = 0;
@@ -137,9 +137,10 @@ static void mapping_dump( struct object *obj, int verbose )
 {
     struct mapping *mapping = (struct mapping *)obj;
     assert( obj->ops == &mapping_ops );
-    fprintf( stderr, "Mapping size=%08x%08x prot=%08x file=%p name='%s'\n",
-             mapping->size_high, mapping->size_low, mapping->protect,
-             mapping->file, get_object_name( &mapping->obj ) );
+    fprintf( stderr, "Mapping size=%08x%08x prot=%08x file=%p ",
+             mapping->size_high, mapping->size_low, mapping->protect, mapping->file );
+    dump_object_name( &mapping->obj );
+    fputc( '\n', stderr );
 }
 
 static void mapping_destroy( struct object *obj )
@@ -158,7 +159,7 @@ int get_page_size(void)
 /* create a file mapping */
 DECL_HANDLER(create_mapping)
 {
-    size_t len = get_req_strlen( req->name );
+    size_t len = get_req_strlenW( req->name );
     struct object *obj;
 
     req->handle = -1;
@@ -175,7 +176,7 @@ DECL_HANDLER(create_mapping)
 /* open a handle to a mapping */
 DECL_HANDLER(open_mapping)
 {
-    size_t len = get_req_strlen( req->name );
+    size_t len = get_req_strlenW( req->name );
     req->handle = open_object( req->name, len, &mapping_ops, req->access, req->inherit );
 }
 

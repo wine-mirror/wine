@@ -129,50 +129,6 @@ static const struct object_ops key_ops =
  * - REG_EXPAND_SZ and REG_MULTI_SZ are saved as strings instead of hex
  */
 
-/* dump a string to a text file with proper escaping */
-static int dump_strW( const WCHAR *str, int len, FILE *f, char escape[2] )
-{
-    static const char escapes[32] = ".......abtnvfr.............e....";
-    char buffer[256];
-    char *pos = buffer;
-    int count = 0;
-
-    for (; len; str++, len--)
-    {
-        if (pos > buffer + sizeof(buffer) - 8)
-        {
-            fwrite( buffer, pos - buffer, 1, f );
-            count += pos - buffer;
-            pos = buffer;
-        }
-        if (*str > 127)  /* hex escape */
-        {
-            if (len > 1 && str[1] < 128 && isxdigit((char)str[1]))
-                pos += sprintf( pos, "\\x%04x", *str );
-            else
-                pos += sprintf( pos, "\\x%x", *str );
-            continue;
-        }
-        if (*str < 32)  /* octal or C escape */
-        {
-            if (!*str && len == 1) continue;  /* do not output terminating NULL */
-            if (escapes[*str] != '.')
-                pos += sprintf( pos, "\\%c", escapes[*str] );
-            else if (len > 1 && str[1] >= '0' && str[1] <= '7')
-                pos += sprintf( pos, "\\%03o", *str );
-            else
-                pos += sprintf( pos, "\\%o", *str );
-            continue;
-        }
-        if (*str == '\\' || *str == escape[0] || *str == escape[1]) *pos++ = '\\';
-        *pos++ = *str;
-    }
-    fwrite( buffer, pos - buffer, 1, f );
-    count += pos - buffer;
-    return count;
-}
-
-
 static inline char to_hex( char ch )
 {
     if (isdigit(ch)) return ch - '0';

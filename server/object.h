@@ -68,13 +68,13 @@ struct object
 extern void *mem_alloc( size_t size );  /* malloc wrapper */
 extern void *memdup( const void *data, size_t len );
 extern void *alloc_object( const struct object_ops *ops );
-extern const char *get_object_name( struct object *obj );
-extern void *create_named_object( const struct object_ops *ops, const char *name, size_t len );
+extern void dump_object_name( struct object *obj );
+extern void *create_named_object( const struct object_ops *ops, const WCHAR *name, size_t len );
 /* grab/release_object can take any pointer, but you better make sure */
 /* that the thing pointed to starts with a struct object... */
 extern struct object *grab_object( void *obj );
 extern void release_object( void *obj );
-extern struct object *find_object( const char *name, size_t len );
+extern struct object *find_object( const WCHAR *name, size_t len );
 extern int no_add_queue( struct object *obj, struct wait_queue_entry *entry );
 extern int no_satisfied( struct object *obj, struct thread *thread );
 extern int no_read_fd( struct object *obj );

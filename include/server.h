@@ -278,7 +278,7 @@ struct create_event_request
     IN  int          initial_state; /* initial state of the event */
     IN  int          inherit;       /* inherit flag */
     OUT int          handle;        /* handle to the event */
-    IN  char         name[1];       /* event name */
+    IN  WCHAR        name[1];       /* event name */
 };
 
 /* Event operation */
@@ -296,7 +296,7 @@ struct open_event_request
     IN  unsigned int access;        /* wanted access rights */
     IN  int          inherit;       /* inherit flag */
     OUT int          handle;        /* handle to the event */
-    IN  char         name[1];       /* object name */
+    IN  WCHAR        name[1];       /* object name */
 };
 
 
@@ -306,7 +306,7 @@ struct create_mutex_request
     IN  int          owned;         /* initially owned? */
     IN  int          inherit;       /* inherit flag */
     OUT int          handle;        /* handle to the mutex */
-    IN  char         name[1];       /* mutex name */
+    IN  WCHAR        name[1];       /* mutex name */
 };
 
 
@@ -323,7 +323,7 @@ struct open_mutex_request
     IN  unsigned int access;        /* wanted access rights */
     IN  int          inherit;       /* inherit flag */
     OUT int          handle;        /* handle to the mutex */
-    IN  char         name[1];       /* object name */
+    IN  WCHAR        name[1];       /* object name */
 };
 
 
@@ -334,7 +334,7 @@ struct create_semaphore_request
     IN  unsigned int max;           /* maximum count */
     IN  int          inherit;       /* inherit flag */
     OUT int          handle;        /* handle to the semaphore */
-    IN  char         name[1];       /* semaphore name */
+    IN  WCHAR        name[1];       /* semaphore name */
 };
 
 
@@ -353,7 +353,7 @@ struct open_semaphore_request
     IN  unsigned int access;        /* wanted access rights */
     IN  int          inherit;       /* inherit flag */
     OUT int          handle;        /* handle to the semaphore */
-    IN  char         name[1];       /* object name */
+    IN  WCHAR        name[1];       /* object name */
 };
 
 
@@ -642,7 +642,7 @@ struct create_mapping_request
     IN  int          inherit;       /* inherit flag */
     IN  int          file_handle;   /* file handle */
     OUT int          handle;        /* handle to the mapping */
-    IN  char         name[1];       /* object name */
+    IN  WCHAR        name[1];       /* object name */
 };
 /* protection flags */
 #define VPROT_READ       0x01
@@ -660,7 +660,7 @@ struct open_mapping_request
     IN  unsigned int access;        /* wanted access rights */
     IN  int          inherit;       /* inherit flag */
     OUT int          handle;        /* handle to the mapping */
-    IN  char         name[1];       /* object name */
+    IN  WCHAR        name[1];       /* object name */
 };
 
 
@@ -1095,6 +1095,28 @@ static inline int server_call( enum request req )
     unsigned int res = server_call_noerr( req );
     if (res) SetLastError( res );
     return res;
+}
+
+/* copy a Unicode string to the server buffer */
+static inline void server_strcpyW( WCHAR *dst, const WCHAR *src )
+{
+    if (src)
+    {
+        WCHAR *end = (WCHAR *)((char *)NtCurrentTeb()->buffer + NtCurrentTeb()->buffer_size) - 1;
+        while ((dst < end) && *src) *dst++ = *src++;
+    }
+    *dst = 0;
+}
+
+/* copy and convert an ASCII string to the server buffer */
+static inline void server_strcpyAtoW( WCHAR *dst, const char *src )
+{
+    if (src)
+    {
+        WCHAR *end = (WCHAR *)((char *)NtCurrentTeb()->buffer + NtCurrentTeb()->buffer_size) - 1;
+        while ((dst < end) && *src) *dst++ = (WCHAR)(unsigned char)*src++;
+    }
+    *dst = 0;
 }
 
 extern int CLIENT_InitServer(void);

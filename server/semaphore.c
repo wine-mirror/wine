@@ -42,7 +42,7 @@ static const struct object_ops semaphore_ops =
 };
 
 
-static struct semaphore *create_semaphore( const char *name, size_t len,
+static struct semaphore *create_semaphore( const WCHAR *name, size_t len,
                                            unsigned int initial, unsigned int max )
 {
     struct semaphore *sem;
@@ -97,8 +97,9 @@ static void semaphore_dump( struct object *obj, int verbose )
 {
     struct semaphore *sem = (struct semaphore *)obj;
     assert( obj->ops == &semaphore_ops );
-    fprintf( stderr, "Semaphore count=%d max=%d name='%s'\n",
-             sem->count, sem->max, get_object_name( &sem->obj ) );
+    fprintf( stderr, "Semaphore count=%d max=%d ", sem->count, sem->max );
+    dump_object_name( &sem->obj );
+    fputc( '\n', stderr );
 }
 
 static int semaphore_signaled( struct object *obj, struct thread *thread )
@@ -120,7 +121,7 @@ static int semaphore_satisfied( struct object *obj, struct thread *thread )
 /* create a semaphore */
 DECL_HANDLER(create_semaphore)
 {
-    size_t len = get_req_strlen( req->name );
+    size_t len = get_req_strlenW( req->name );
     struct semaphore *sem;
 
     req->handle = -1;
@@ -134,7 +135,7 @@ DECL_HANDLER(create_semaphore)
 /* open a handle to a semaphore */
 DECL_HANDLER(open_semaphore)
 {
-    size_t len = get_req_strlen( req->name );
+    size_t len = get_req_strlenW( req->name );
     req->handle = open_object( req->name, len, &semaphore_ops, req->access, req->inherit );
 }
 

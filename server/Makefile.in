@@ -27,7 +27,8 @@ C_SRCS = \
 	sock.c \
 	socket.c \
 	thread.c \
-	trace.c
+	trace.c \
+	unicode.c
 
 EXTRA_SRCS = main.c
 MAIN_OBJS = main.o

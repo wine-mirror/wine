@@ -7,7 +7,6 @@
 #include <assert.h>
 #include <string.h>
 #include "winerror.h"
-#include "heap.h"
 #include "syslevel.h"
 #include "server.h"
 
@@ -16,14 +15,14 @@
  *           CreateEvent32A    (KERNEL32.156)
  */
 HANDLE WINAPI CreateEventA( SECURITY_ATTRIBUTES *sa, BOOL manual_reset,
-                                BOOL initial_state, LPCSTR name )
+                            BOOL initial_state, LPCSTR name )
 {
     struct create_event_request *req = get_req_buffer();
 
     req->manual_reset = manual_reset;
     req->initial_state = initial_state;
     req->inherit = (sa && (sa->nLength>=sizeof(*sa)) && sa->bInheritHandle);
-    lstrcpynA( req->name, name ? name : "", server_remaining(req->name) );
+    server_strcpyAtoW( req->name, name );
     SetLastError(0);
     server_call( REQ_CREATE_EVENT );
     if (req->handle == -1) return 0;
@@ -35,12 +34,18 @@ HANDLE WINAPI CreateEventA( SECURITY_ATTRIBUTES *sa, BOOL manual_reset,
  *           CreateEvent32W    (KERNEL32.157)
  */
 HANDLE WINAPI CreateEventW( SECURITY_ATTRIBUTES *sa, BOOL manual_reset,
-                                BOOL initial_state, LPCWSTR name )
+                            BOOL initial_state, LPCWSTR name )
 {
-    LPSTR nameA = HEAP_strdupWtoA( GetProcessHeap(), 0, name );
-    HANDLE ret = CreateEventA( sa, manual_reset, initial_state, nameA );
-    if (nameA) HeapFree( GetProcessHeap(), 0, nameA );
-    return ret;
+    struct create_event_request *req = get_req_buffer();
+
+    req->manual_reset = manual_reset;
+    req->initial_state = initial_state;
+    req->inherit = (sa && (sa->nLength>=sizeof(*sa)) && sa->bInheritHandle);
+    server_strcpyW( req->name, name );
+    SetLastError(0);
+    server_call( REQ_CREATE_EVENT );
+    if (req->handle == -1) return 0;
+    return req->handle;
 }
 
 /***********************************************************************
@@ -61,7 +66,7 @@ HANDLE WINAPI OpenEventA( DWORD access, BOOL inherit, LPCSTR name )
 
     req->access  = access;
     req->inherit = inherit;
-    lstrcpynA( req->name, name ? name : "", server_remaining(req->name) );
+    server_strcpyAtoW( req->name, name );
     server_call( REQ_OPEN_EVENT );
     if (req->handle == -1) return 0; /* must return 0 on failure, not -1 */
     return req->handle;
@@ -73,10 +78,14 @@ HANDLE WINAPI OpenEventA( DWORD access, BOOL inherit, LPCSTR name )
  */
 HANDLE WINAPI OpenEventW( DWORD access, BOOL inherit, LPCWSTR name )
 {
-    LPSTR nameA = HEAP_strdupWtoA( GetProcessHeap(), 0, name );
-    HANDLE ret = OpenEventA( access, inherit, nameA );
-    if (nameA) HeapFree( GetProcessHeap(), 0, nameA );
-    return ret;
+    struct open_event_request *req = get_req_buffer();
+
+    req->access  = access;
+    req->inherit = inherit;
+    server_strcpyW( req->name, name );
+    server_call( REQ_OPEN_EVENT );
+    if (req->handle == -1) return 0; /* must return 0 on failure, not -1 */
+    return req->handle;
 }
 
 
