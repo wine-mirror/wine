@@ -98,7 +98,10 @@ INT32 WINAPI ExtSelectClipRgn( HDC32 hdc, HRGN32 hrgn, INT32 fnMode )
         }
 
         OffsetRgn32( dc->w.hClipRgn, -dc->w.DCOrgX, -dc->w.DCOrgY );
-        retval = CombineRgn32( dc->w.hClipRgn, hrgn, dc->w.hClipRgn, fnMode );
+        if(fnMode == RGN_COPY)
+            retval = CombineRgn32( dc->w.hClipRgn, hrgn, 0, fnMode );
+        else
+            retval = CombineRgn32( dc->w.hClipRgn, dc->w.hClipRgn, hrgn, fnMode);
         OffsetRgn32( dc->w.hClipRgn, dc->w.DCOrgX, dc->w.DCOrgY );
     }
 
