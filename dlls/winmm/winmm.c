@@ -1369,6 +1369,9 @@ UINT WINAPI midiOutPrepareHeader(HMIDIOUT hMidiOut,
 
     TRACE("(%p, %p, %d)\n", hMidiOut, lpMidiOutHdr, uSize);
 
+    if (lpMidiOutHdr == NULL || uSize < sizeof (MIDIHDR))
+	return MMSYSERR_INVALPARAM;
+
     if ((wmld = MMDRV_Get(hMidiOut, MMDRV_MIDIOUT, FALSE)) == NULL)
 	return MMSYSERR_INVALHANDLE;
 
@@ -1384,6 +1387,9 @@ UINT WINAPI midiOutUnprepareHeader(HMIDIOUT hMidiOut,
     LPWINE_MLD		wmld;
 
     TRACE("(%p, %p, %d)\n", hMidiOut, lpMidiOutHdr, uSize);
+
+    if (lpMidiOutHdr == NULL || uSize < sizeof (MIDIHDR))
+	return MMSYSERR_INVALPARAM;
 
     if (!(lpMidiOutHdr->dwFlags & MHDR_PREPARED)) {
 	return MMSYSERR_NOERROR;
@@ -1554,7 +1560,7 @@ UINT WINAPI midiInGetNumDevs(void)
 UINT WINAPI midiInGetDevCapsW(UINT_PTR uDeviceID, LPMIDIINCAPSW lpCaps, UINT uSize)
 {
     MIDIINCAPSA		micA;
-    UINT		ret = midiInGetDevCapsA(uDeviceID, &micA, uSize);
+    UINT		ret = midiInGetDevCapsA(uDeviceID, &micA, sizeof(micA));
 
     if (ret == MMSYSERR_NOERROR) {
 	MIDIINCAPSW micW;
@@ -1679,6 +1685,9 @@ UINT WINAPI midiInPrepareHeader(HMIDIIN hMidiIn,
 
     TRACE("(%p, %p, %d)\n", hMidiIn, lpMidiInHdr, uSize);
 
+    if (lpMidiInHdr == NULL || uSize < sizeof (MIDIHDR))
+	return MMSYSERR_INVALPARAM;
+
     if ((wmld = MMDRV_Get(hMidiIn, MMDRV_MIDIIN, FALSE)) == NULL)
 	return MMSYSERR_INVALHANDLE;
 
@@ -1694,6 +1703,9 @@ UINT WINAPI midiInUnprepareHeader(HMIDIIN hMidiIn,
     LPWINE_MLD		wmld;
 
     TRACE("(%p, %p, %d)\n", hMidiIn, lpMidiInHdr, uSize);
+
+    if (lpMidiInHdr == NULL || uSize < sizeof (MIDIHDR))
+	return MMSYSERR_INVALPARAM;
 
     if (!(lpMidiInHdr->dwFlags & MHDR_PREPARED)) {
 	return MMSYSERR_NOERROR;
@@ -2963,7 +2975,9 @@ UINT WINAPI waveInPrepareHeader(HWAVEIN hWaveIn, WAVEHDR* lpWaveInHdr,
 
     TRACE("(%p, %p, %u);\n", hWaveIn, lpWaveInHdr, uSize);
 
-    if (lpWaveInHdr == NULL) return MMSYSERR_INVALPARAM;
+    if (lpWaveInHdr == NULL || uSize < sizeof (WAVEHDR))
+	return MMSYSERR_INVALPARAM;
+
     if ((wmld = MMDRV_Get(hWaveIn, MMDRV_WAVEIN, FALSE)) == NULL)
 	return MMSYSERR_INVALHANDLE;
 
@@ -2982,7 +2996,9 @@ UINT WINAPI waveInUnprepareHeader(HWAVEIN hWaveIn, WAVEHDR* lpWaveInHdr,
 
     TRACE("(%p, %p, %u);\n", hWaveIn, lpWaveInHdr, uSize);
 
-    if (lpWaveInHdr == NULL) return MMSYSERR_INVALPARAM;
+    if (lpWaveInHdr == NULL || uSize < sizeof (WAVEHDR))
+	return MMSYSERR_INVALPARAM;
+
     if (!(lpWaveInHdr->dwFlags & WHDR_PREPARED)) {
 	return MMSYSERR_NOERROR;
     }
