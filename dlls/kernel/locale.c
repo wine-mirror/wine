@@ -526,6 +526,14 @@ static LCID init_default_lcid( UINT *unix_cp )
 
 /***********************************************************************
  *		GetUserDefaultLangID (KERNEL32.@)
+ *
+ * Get the default language Id for the current user.
+ *
+ * PARAMS
+ *  None.
+ *
+ * RETURNS
+ *  The current LANGID of the default language for the current user.
  */
 LANGID WINAPI GetUserDefaultLangID(void)
 {
@@ -535,6 +543,14 @@ LANGID WINAPI GetUserDefaultLangID(void)
 
 /***********************************************************************
  *		GetSystemDefaultLangID (KERNEL32.@)
+ *
+ * Get the default language Id for the system.
+ *
+ * PARAMS
+ *  None.
+ *
+ * RETURNS
+ *  The current LANGID of the default language for the system.
  */
 LANGID WINAPI GetSystemDefaultLangID(void)
 {
@@ -544,6 +560,14 @@ LANGID WINAPI GetSystemDefaultLangID(void)
 
 /***********************************************************************
  *		GetUserDefaultLCID (KERNEL32.@)
+ *
+ * Get the default locale Id for the current user.
+ *
+ * PARAMS
+ *  None.
+ *
+ * RETURNS
+ *  The current LCID of the default locale for the current user.
  */
 LCID WINAPI GetUserDefaultLCID(void)
 {
@@ -555,6 +579,14 @@ LCID WINAPI GetUserDefaultLCID(void)
 
 /***********************************************************************
  *		GetSystemDefaultLCID (KERNEL32.@)
+ *
+ * Get the default locale Id for the system.
+ *
+ * PARAMS
+ *  None.
+ *
+ * RETURNS
+ *  The current LCID of the default locale for the system.
  */
 LCID WINAPI GetSystemDefaultLCID(void)
 {
@@ -566,6 +598,14 @@ LCID WINAPI GetSystemDefaultLCID(void)
 
 /***********************************************************************
  *		GetUserDefaultUILanguage (KERNEL32.@)
+ *
+ * Get the default user interface language Id for the current user.
+ *
+ * PARAMS
+ *  None.
+ *
+ * RETURNS
+ *  The current LANGID of the default UI language for the current user.
  */
 LANGID WINAPI GetUserDefaultUILanguage(void)
 {
@@ -575,6 +615,15 @@ LANGID WINAPI GetUserDefaultUILanguage(void)
 
 /***********************************************************************
  *		GetSystemDefaultUILanguage (KERNEL32.@)
+ *
+ * Get the default user interface language Id for the system.
+ *
+ * PARAMS
+ *  None.
+ *
+ * RETURNS
+ *  The current LANGID of the default UI language for the system. This is
+ *  typically the same language used during the installation process.
  */
 LANGID WINAPI GetSystemDefaultUILanguage(void)
 {
@@ -1060,8 +1109,13 @@ BOOL WINAPI SetLocaleInfoW( LCID lcid, LCTYPE lctype, LPCWSTR data )
 /******************************************************************************
  *              GetACP   (KERNEL32.@)
  *
+ * Get the current Ansi code page Id for the system.
+ *
+ * PARAMS
+ *  None.
+ *
  * RETURNS
- *    Current ANSI code-page identifier, default if no current defined
+ *    The current Ansi code page identifier for the system.
  */
 UINT WINAPI GetACP(void)
 {
@@ -1072,6 +1126,14 @@ UINT WINAPI GetACP(void)
 
 /***********************************************************************
  *              GetOEMCP   (KERNEL32.@)
+ *
+ * Get the current OEM code page Id for the system.
+ *
+ * PARAMS
+ *  None.
+ *
+ * RETURNS
+ *    The current OEM code page identifier for the system.
  */
 UINT WINAPI GetOEMCP(void)
 {
@@ -1082,6 +1144,15 @@ UINT WINAPI GetOEMCP(void)
 
 /***********************************************************************
  *           IsValidCodePage   (KERNEL32.@)
+ *
+ * Determine if a given code page identifier is valid.
+ *
+ * PARAMS
+ *  codepage [I] Code page Id to verify.
+ *
+ * RETURNS
+ *  TRUE, If codepage is valid and available on the system,
+ *  FALSE otherwise.
  */
 BOOL WINAPI IsValidCodePage( UINT codepage )
 {
@@ -1225,6 +1296,16 @@ BOOL WINAPI GetCPInfoExW( UINT codepage, DWORD dwFlags, LPCPINFOEXW cpinfo )
 
 /***********************************************************************
  *              EnumSystemCodePagesA   (KERNEL32.@)
+ *
+ * Call a user defined function for every code page installed on the system.
+ *
+ * PARAMS
+ *   lpfnCodePageEnum [I] User CODEPAGE_ENUMPROC to call with each found code page
+ *   flags            [I] Reserved, set to 0.
+ *
+ * RETURNS
+ *  TRUE, If all code pages have been enumerated, or
+ *  FALSE if lpfnCodePageEnum returned FALSE to stop the enumeration.
  */
 BOOL WINAPI EnumSystemCodePagesA( CODEPAGE_ENUMPROCA lpfnCodePageEnum, DWORD flags )
 {
@@ -1244,6 +1325,8 @@ BOOL WINAPI EnumSystemCodePagesA( CODEPAGE_ENUMPROCA lpfnCodePageEnum, DWORD fla
 
 /***********************************************************************
  *              EnumSystemCodePagesW   (KERNEL32.@)
+ *
+ * See EnumSystemCodePagesA.
  */
 BOOL WINAPI EnumSystemCodePagesW( CODEPAGE_ENUMPROCW lpfnCodePageEnum, DWORD flags )
 {
@@ -1483,7 +1566,7 @@ BOOL WINAPI SetThreadLocale( LCID lcid )
  *  lcid [I] LCID identifier of the locale to convert
  *
  * RETURNS
- *  lcid unchanged, if not a default locale or is its sublanguage is
+ *  lcid unchanged, if not a default locale or its sublanguage is
  *   not SUBLANG_NEUTRAL.
  *  GetSystemDefaultLCID(), if lcid == LOCALE_SYSTEM_DEFAULT.
  *  GetUserDefaultLCID(), if lcid == LOCALE_USER_DEFAULT or LOCALE_NEUTRAL.
@@ -1632,6 +1715,8 @@ DWORD WINAPI VerLanguageNameW( UINT wLang, LPWSTR szLang, UINT nSize )
 
 /******************************************************************************
  *           GetStringTypeW    (KERNEL32.@)
+ *
+ * See GetStringTypeA.
  */
 BOOL WINAPI GetStringTypeW( DWORD type, LPCWSTR src, INT count, LPWORD chartype )
 {
@@ -1691,6 +1776,8 @@ BOOL WINAPI GetStringTypeW( DWORD type, LPCWSTR src, INT count, LPWORD chartype 
 
 /******************************************************************************
  *           GetStringTypeExW    (KERNEL32.@)
+ *
+ * See GetStringTypeExA.
  */
 BOOL WINAPI GetStringTypeExW( LCID locale, DWORD type, LPCWSTR src, INT count, LPWORD chartype )
 {
@@ -1701,6 +1788,20 @@ BOOL WINAPI GetStringTypeExW( LCID locale, DWORD type, LPCWSTR src, INT count, L
 
 /******************************************************************************
  *           GetStringTypeA    (KERNEL32.@)
+ *
+ * Get characteristics of the characters making up a string.
+ *
+ * PARAMS
+ *  locale   [I] Locale Id for the string
+ *  type     [I] CT_CTYPE1 = classification, CT_CTYPE2 = directionality, CT_CTYPE3 = typographic info
+ *  src      [I] String to analyse
+ *  count    [I] Length of src in chars, or -1 if src is NUL terminated
+ *  chartype [O] Destination for the calculated characteristics
+ *
+ * RETURNS
+ *  Success: TRUE. chartype is filled with the requested characteristics of each char
+ *           in src.
+ *  Failure: FALSE. Use GetLastError() to determine the cause.
  */
 BOOL WINAPI GetStringTypeA( LCID locale, DWORD type, LPCSTR src, INT count, LPWORD chartype )
 {
@@ -1734,6 +1835,20 @@ BOOL WINAPI GetStringTypeA( LCID locale, DWORD type, LPCSTR src, INT count, LPWO
 
 /******************************************************************************
  *           GetStringTypeExA    (KERNEL32.@)
+ *
+ * Get characteristics of the characters making up a string.
+ *
+ * PARAMS
+ *  locale   [I] Locale Id for the string
+ *  type     [I] CT_CTYPE1 = classification, CT_CTYPE2 = directionality, CT_CTYPE3 = typographic info
+ *  src      [I] String to analyse
+ *  count    [I] Length of src in chars, or -1 if src is NUL terminated
+ *  chartype [O] Destination for the calculated characteristics
+ *
+ * RETURNS
+ *  Success: TRUE. chartype is filled with the requested characteristics of each char
+ *           in src.
+ *  Failure: FALSE. Use GetLastError() to determine the cause.
  */
 BOOL WINAPI GetStringTypeExA( LCID locale, DWORD type, LPCSTR src, INT count, LPWORD chartype )
 {
@@ -1743,6 +1858,8 @@ BOOL WINAPI GetStringTypeExA( LCID locale, DWORD type, LPCSTR src, INT count, LP
 
 /*************************************************************************
  *           LCMapStringW    (KERNEL32.@)
+ *
+ * See LCMapStringA.
  */
 INT WINAPI LCMapStringW(LCID lcid, DWORD flags, LPCWSTR src, INT srclen,
                         LPWSTR dst, INT dstlen)
@@ -1859,6 +1976,20 @@ INT WINAPI LCMapStringW(LCID lcid, DWORD flags, LPCWSTR src, INT srclen,
 
 /*************************************************************************
  *           LCMapStringA    (KERNEL32.@)
+ *
+ * Map characters in a locale sensitive string.
+ *
+ * PARAMS
+ *  lcid   [I] LCID for the conversion.
+ *  flags  [I] Flags controlling the mapping (LCMAP_ constants from "winnls.h").
+ *  src    [I] String to map
+ *  srclen [I] Length of src in chars, or -1 if src is NUL terminated
+ *  dst    [O] Destination for mapped string
+ *  dstlen [I] Length of dst in characters
+ *
+ * RETURNS
+ *  Success: The length of the mapped string in dst, including the NUL terminator.
+ *  Failure: 0. Use GetLastError() to determine the cause.
  */
 INT WINAPI LCMapStringA(LCID lcid, DWORD flags, LPCSTR src, INT srclen,
                         LPSTR dst, INT dstlen)
@@ -1946,9 +2077,56 @@ map_string_exit:
 INT WINAPI FoldStringA(DWORD dwFlags, LPCSTR src, INT srclen,
                        LPSTR dst, INT dstlen)
 {
-    FIXME( "not implemented\n" );
-    SetLastError( ERROR_CALL_NOT_IMPLEMENTED );
-    return 0;
+    INT ret = 0, srclenW = 0;
+    WCHAR *srcW = NULL, *dstW = NULL;
+
+    if (!src || !srclen || dstlen < 0 || (dstlen && !dst) || src == dst)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return 0;
+    }
+
+    srclenW = MultiByteToWideChar(CP_ACP, dwFlags & MAP_COMPOSITE ? MB_COMPOSITE : 0,
+                                  src, srclen, NULL, 0);
+    srcW = HeapAlloc(GetProcessHeap(), 0, srclenW * sizeof(WCHAR));
+
+    if (!srcW)
+    {
+        SetLastError(ERROR_NOT_ENOUGH_MEMORY);
+        goto FoldStringA_exit;
+    }
+
+    MultiByteToWideChar(CP_ACP, dwFlags & MAP_COMPOSITE ? MB_COMPOSITE : 0,
+                        src, srclen, srcW, srclenW);
+
+    dwFlags = (dwFlags & ~MAP_PRECOMPOSED) | MAP_FOLDCZONE;
+
+    ret = FoldStringW(dwFlags, srcW, srclenW, NULL, 0);
+    if (ret && dstlen)
+    {
+        dstW = HeapAlloc(GetProcessHeap(), 0, ret * sizeof(WCHAR));
+
+        if (!dstW)
+        {
+            SetLastError(ERROR_NOT_ENOUGH_MEMORY);
+            goto FoldStringA_exit;
+        }
+
+        ret = FoldStringW(dwFlags, srcW, srclenW, dstW, ret);
+        if (!WideCharToMultiByte(CP_ACP, 0, dstW, ret, dst, dstlen, NULL, NULL))
+        {
+            ret = 0;
+            SetLastError(ERROR_INSUFFICIENT_BUFFER);
+        }
+    }
+
+    if (dstW)
+        HeapFree(GetProcessHeap(), 0, dstW);
+
+FoldStringA_exit:
+    if (srcW)
+        HeapFree(GetProcessHeap(), 0, srcW);
+    return ret;
 }
 
 /*************************************************************************
@@ -1988,6 +2166,8 @@ INT WINAPI FoldStringW(DWORD dwFlags, LPCWSTR src, INT srclen,
 
 /******************************************************************************
  *           CompareStringW    (KERNEL32.@)
+ *
+ * See CompareStringA.
  */
 INT WINAPI CompareStringW(LCID lcid, DWORD style,
                           LPCWSTR str1, INT len1, LPCWSTR str2, INT len2)
@@ -2017,6 +2197,21 @@ INT WINAPI CompareStringW(LCID lcid, DWORD style,
 
 /******************************************************************************
  *           CompareStringA    (KERNEL32.@)
+ *
+ * Compare two locale sensitive strings.
+ *
+ * PARAMS
+ *  lcid  [I] LCID for the comparason
+ *  style [I] Flags for the comparason (NORM_ constants from "winnls.h").
+ *  str1  [I] First string to compare
+ *  len1  [I] Length of str1, or -1 if str1 is NUL terminated
+ *  str2  [I] Second string to compare
+ *  len2  [I] Length of str2, or -1 if str2 is NUL terminated
+ *
+ * RETURNS
+ *  Success: CSTR_LESS_THAN, CSTR_EQUAL or CSTR_GREATER_THAN depending on whether
+ *           str2 is less than, equal to or greater than str1 respectively.
+ *  Failure: FALSE. Use GetLastError() to determine the cause.
  */
 INT WINAPI CompareStringA(LCID lcid, DWORD style,
                           LPCSTR str1, INT len1, LPCSTR str2, INT len2)
@@ -2077,6 +2272,17 @@ INT WINAPI CompareStringA(LCID lcid, DWORD style,
 /*************************************************************************
  *           lstrcmp     (KERNEL32.@)
  *           lstrcmpA    (KERNEL32.@)
+ *
+ * Compare two strings using the current thread locale.
+ *
+ * PARAMS
+ *  str1  [I] First string to compare
+ *  str2  [I] Second string to compare
+ *
+ * RETURNS
+ *  Success: A number less than, equal to or greater than 0 depending on whether
+ *           str2 is less than, equal to or greater than str1 respectively.
+ *  Failure: FALSE. Use GetLastError() to determine the cause.
  */
 int WINAPI lstrcmpA(LPCSTR str1, LPCSTR str2)
 {
@@ -2088,6 +2294,17 @@ int WINAPI lstrcmpA(LPCSTR str1, LPCSTR str2)
 /*************************************************************************
  *           lstrcmpi     (KERNEL32.@)
  *           lstrcmpiA    (KERNEL32.@)
+ *
+ * Compare two strings using the current thread locale, ignoring case.
+ *
+ * PARAMS
+ *  str1  [I] First string to compare
+ *  str2  [I] Second string to compare
+ *
+ * RETURNS
+ *  Success: A number less than, equal to or greater than 0 depending on whether
+ *           str2 is less than, equal to or greater than str1 respectively.
+ *  Failure: FALSE. Use GetLastError() to determine the cause.
  */
 int WINAPI lstrcmpiA(LPCSTR str1, LPCSTR str2)
 {
@@ -2098,6 +2315,8 @@ int WINAPI lstrcmpiA(LPCSTR str1, LPCSTR str2)
 
 /*************************************************************************
  *           lstrcmpW    (KERNEL32.@)
+ *
+ * See lstrcmpA.
  */
 int WINAPI lstrcmpW(LPCWSTR str1, LPCWSTR str2)
 {
@@ -2108,6 +2327,8 @@ int WINAPI lstrcmpW(LPCWSTR str1, LPCWSTR str2)
 
 /*************************************************************************
  *           lstrcmpiW    (KERNEL32.@)
+ *
+ * See lstrcmpiA.
  */
 int WINAPI lstrcmpiW(LPCWSTR str1, LPCWSTR str2)
 {
