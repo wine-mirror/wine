@@ -2183,7 +2183,7 @@ MSVCRT_FILE *MSVCRT__wfopen(const MSVCRT_wchar_t *path, const MSVCRT_wchar_t *mo
 /*********************************************************************
  *		_fsopen (MSVCRT.@)
  */
-MSVCRT_FILE*  _fsopen(const char *path, const char *mode, int share)
+MSVCRT_FILE*  MSVCRT__fsopen(const char *path, const char *mode, int share)
 {
   FIXME(":(%s,%s,%d),ignoring share mode!\n",path,mode,share);
   return MSVCRT_fopen(path,mode);

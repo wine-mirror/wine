@@ -239,7 +239,7 @@
 @ cdecl _fpreset()
 @ cdecl _fputchar(long)
 @ cdecl _fputwchar(long)
-@ cdecl _fsopen(str str long)
+@ cdecl _fsopen(str str long) MSVCRT__fsopen
 @ cdecl _fstat(long ptr) MSVCRT__fstat
 @ cdecl _fstati64(long ptr) MSVCRT__fstati64
 @ cdecl _ftime(ptr)
