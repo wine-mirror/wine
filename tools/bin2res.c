@@ -33,9 +33,11 @@
 #endif
 
 static const char* help =
-        "Usage: bin2res [-x] | [-a] [-f] [-h] <rsrc.rc>\n"
+        "Usage: bin2res [OPTIONS] <rsrc.rc>\n"
 	"  -a archive binaries into the <rsrc.rc> file\n"
 	"  -x extract binaries from the <rsrc.rc> file\n"
+	"  -i <filename> archive the named file into the <rsrc.rc> file\n"
+	"  -o <filename> extract the named file from the <rsrc.rc> file\n"
 	"  -f force processing of older resources\n"
 	"  -h print this help screen and exit\n"
 	"\n"
@@ -55,7 +57,8 @@ static const char* help =
 	"  bin2res -x myrsrc.rc\n"
 	"Binary files newer than the .rc file are not overwritten.\n"
 	"\n"
-	"To force processing of all resources, use the -f flag.\n";
+	"To force processing of all resources, use the -f flag.\n"
+	"To process a particular file, use the -i/-o options.\n";
 
 void usage(void)
 {
@@ -118,7 +121,7 @@ const char* parse_marker(const char *line, time_t* last_updated)
     return res_file_name;
 }
 
-int process_resources(const char* input_file_name, int inserting, int force_processing)
+int process_resources(const char* input_file_name, const char* specific_file_name, int inserting, int force_processing)
 {
     char buffer[2048], tmp_file_name[PATH_MAX];
     const char *res_file_name;
@@ -147,7 +150,8 @@ int process_resources(const char* input_file_name, int inserting, int force_proc
     {
 	if (inserting) fprintf(ftmp, "%s", buffer);
 	if (!(res_file_name = parse_marker(buffer, &res_last_update))) continue;
-        if (!force_processing && ((rc_last_update < res_last_update) == !inserting))
+        if ( (specific_file_name && strcmp(specific_file_name, res_file_name)) ||
+	     (!force_processing && ((rc_last_update < res_last_update) == !inserting)) )
         {
 	    printf("skipping '%s'\n", res_file_name);
             continue;
@@ -188,15 +192,24 @@ int main(int argc, char **argv)
 {
     int convert_dir = 0, optc;
     int force_overwrite = 0;
-    const char* input_file_name;
+    const char* input_file_name = 0;
+    const char* specific_file_name = 0;
 
-    while((optc = getopt(argc, argv, "axfh")) != EOF)
+    while((optc = getopt(argc, argv, "axi:o:fh")) != EOF)
     {
 	switch(optc)
 	{
 	case 'a':
 	case 'x':
 	    if (convert_dir) usage();
+	    convert_dir = optc;
+	break;
+	case 'i':
+	case 'o':
+	    if (specific_file_name) usage();
+	    specific_file_name = optarg;
+	    optc = ((optc == 'i') ? 'a' : 'x');
+	    if (convert_dir && convert_dir != optc) usage();
 	    convert_dir = optc;
 	break;
 	case 'f':
@@ -216,7 +229,8 @@ int main(int argc, char **argv)
 
     if (!convert_dir) usage();
 
-    if (!process_resources(input_file_name, convert_dir == 'a', force_overwrite))
+    if (!process_resources(input_file_name, specific_file_name, 
+			   convert_dir == 'a', force_overwrite))
     {
 	perror("Processing failed");
 	exit(1);
