@@ -189,7 +189,7 @@ static ULONG WINAPI ISF_MyComputer_fnRelease (IShellFolder2 * iface)
 static HRESULT WINAPI
 ISF_MyComputer_fnParseDisplayName (IShellFolder2 * iface,
 				   HWND hwndOwner,
-				   LPBC pbcReserved,
+				   LPBC pbc,
 				   LPOLESTR lpszDisplayName,
 				   DWORD * pchEaten, LPITEMIDLIST * ppidl, DWORD * pdwAttributes)
 {
@@ -202,7 +202,7 @@ ISF_MyComputer_fnParseDisplayName (IShellFolder2 * iface,
     LPITEMIDLIST pidlTemp;
 
     TRACE ("(%p)->(HWND=%p,%p,%p=%s,%p,pidl=%p,%p)\n",
-	   This, hwndOwner, pbcReserved, lpszDisplayName, debugstr_w (lpszDisplayName), pchEaten, ppidl, pdwAttributes);
+	   This, hwndOwner, pbc, lpszDisplayName, debugstr_w (lpszDisplayName), pchEaten, ppidl, pdwAttributes);
 
     *ppidl = 0;
     if (pchEaten)
@@ -215,7 +215,7 @@ ISF_MyComputer_fnParseDisplayName (IShellFolder2 * iface,
 	pidlTemp = _ILCreateDrive (szTempA);
 
 	if (szNext && *szNext) {
-	    hr = SHELL32_ParseNextElement (hwndOwner, iface, &pidlTemp, (LPOLESTR) szNext, pchEaten, pdwAttributes);
+	    hr = SHELL32_ParseNextElement (iface, hwndOwner, pbc, &pidlTemp, (LPOLESTR) szNext, pchEaten, pdwAttributes);
 	} else {
 	    if (pdwAttributes && *pdwAttributes) {
 		SHELL32_GetItemAttributes (_IShellFolder_ (This), pidlTemp, pdwAttributes);

@@ -105,8 +105,7 @@ LPCWSTR GetNextElementW (LPCWSTR pszNext, LPWSTR pszOut, DWORD dwOut)
     return pszTail;
 }
 
-HRESULT SHELL32_ParseNextElement (HWND hwndOwner,
-				  IShellFolder2 * psf,
+HRESULT SHELL32_ParseNextElement (IShellFolder2 * psf, HWND hwndOwner, LPBC pbc,
 				  LPITEMIDLIST * pidlInOut, LPOLESTR szNext, DWORD * pEaten, DWORD * pdwAttributes)
 {
     HRESULT hr = E_OUTOFMEMORY;
@@ -114,13 +113,13 @@ HRESULT SHELL32_ParseNextElement (HWND hwndOwner,
       pidlTemp = NULL;
     IShellFolder *psfChild;
 
-    TRACE ("(%p, %p, %s)\n", psf, pidlInOut ? *pidlInOut : NULL, debugstr_w (szNext));
+    TRACE ("(%p, %p, %p, %s)\n", psf, pbc, pidlInOut ? *pidlInOut : NULL, debugstr_w (szNext));
 
     /* get the shellfolder for the child pidl and let it analyse further */
-    hr = IShellFolder_BindToObject (psf, *pidlInOut, NULL, &IID_IShellFolder, (LPVOID *) & psfChild);
+    hr = IShellFolder_BindToObject (psf, *pidlInOut, pbc, &IID_IShellFolder, (LPVOID *) & psfChild);
 
     if (SUCCEEDED (hr)) {
-	hr = IShellFolder_ParseDisplayName (psfChild, hwndOwner, NULL, szNext, pEaten, &pidlOut, pdwAttributes);
+	hr = IShellFolder_ParseDisplayName (psfChild, hwndOwner, pbc, szNext, pEaten, &pidlOut, pdwAttributes);
 	IShellFolder_Release (psfChild);
 
 	pidlTemp = ILCombine (*pidlInOut, pidlOut);
@@ -390,7 +389,7 @@ HRESULT SHELL32_GetItemAttributes (IShellFolder * psf, LPCITEMIDLIST pidl, LPDWO
 }
 
 /***********************************************************************
- *  SHELL32_GetItemAttributes
+ *  SHELL32_CompareIDs
  */
 HRESULT SHELL32_CompareIDs (IShellFolder * iface, LPARAM lParam, LPCITEMIDLIST pidl1, LPCITEMIDLIST pidl2)
 {

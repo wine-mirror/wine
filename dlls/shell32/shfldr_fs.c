@@ -319,7 +319,7 @@ static ULONG WINAPI IShellFolder_fnRelease (IShellFolder2 * iface)
 static HRESULT WINAPI
 IShellFolder_fnParseDisplayName (IShellFolder2 * iface,
 				 HWND hwndOwner,
-				 LPBC pbcReserved,
+				 LPBC pbc,
 				 LPOLESTR lpszDisplayName,
 				 DWORD * pchEaten, LPITEMIDLIST * ppidl, DWORD * pdwAttributes)
 {
@@ -333,7 +333,7 @@ IShellFolder_fnParseDisplayName (IShellFolder2 * iface,
     DWORD len;
 
     TRACE ("(%p)->(HWND=%p,%p,%p=%s,%p,pidl=%p,%p)\n",
-	   This, hwndOwner, pbcReserved, lpszDisplayName, debugstr_w (lpszDisplayName), pchEaten, ppidl, pdwAttributes);
+	   This, hwndOwner, pbc, lpszDisplayName, debugstr_w (lpszDisplayName), pchEaten, ppidl, pdwAttributes);
 
     if (!lpszDisplayName || !ppidl)
 	return E_INVALIDARG;
@@ -356,7 +356,7 @@ IShellFolder_fnParseDisplayName (IShellFolder2 * iface,
 	if (pidlTemp) {
 	    if (szNext && *szNext) {
 		/* try to analyse the next element */
-		hr = SHELL32_ParseNextElement (hwndOwner, iface, &pidlTemp, (LPOLESTR) szNext, pchEaten, pdwAttributes);
+		hr = SHELL32_ParseNextElement (iface, hwndOwner, pbc, &pidlTemp, (LPOLESTR) szNext, pchEaten, pdwAttributes);
 	    } else {
 		/* it's the last element */
 		if (pdwAttributes && *pdwAttributes) {

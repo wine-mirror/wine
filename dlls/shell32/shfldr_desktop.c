@@ -189,7 +189,7 @@ static ULONG WINAPI ISF_Desktop_fnRelease (IShellFolder2 * iface)
 */
 static HRESULT WINAPI ISF_Desktop_fnParseDisplayName (IShellFolder2 * iface,
 						      HWND hwndOwner,
-						      LPBC pbcReserved,
+						      LPBC pbc,
 						      LPOLESTR lpszDisplayName,
 						      DWORD * pchEaten, LPITEMIDLIST * ppidl, DWORD * pdwAttributes)
 {
@@ -198,13 +198,19 @@ static HRESULT WINAPI ISF_Desktop_fnParseDisplayName (IShellFolder2 * iface,
     WCHAR szElement[MAX_PATH];
     LPCWSTR szNext = NULL;
     LPITEMIDLIST pidlTemp = NULL;
-    HRESULT hr = E_OUTOFMEMORY;
+    HRESULT hr = E_INVALIDARG;
+    char szPath[MAX_PATH];
+    DWORD len;
     CLSID clsid;
 
     TRACE ("(%p)->(HWND=%p,%p,%p=%s,%p,pidl=%p,%p)\n",
-	   This, hwndOwner, pbcReserved, lpszDisplayName, debugstr_w (lpszDisplayName), pchEaten, ppidl, pdwAttributes);
+	   This, hwndOwner, pbc, lpszDisplayName, debugstr_w (lpszDisplayName), pchEaten, ppidl, pdwAttributes);
+
+    if (!lpszDisplayName || !ppidl)
+	return E_INVALIDARG;
 
     *ppidl = 0;
+
     if (pchEaten)
 	*pchEaten = 0;		/* strange but like the original */
 
@@ -217,21 +223,24 @@ static HRESULT WINAPI ISF_Desktop_fnParseDisplayName (IShellFolder2 * iface,
 	/* it's a filesystem path with a drive. Let MyComputer parse it */
 	pidlTemp = _ILCreateMyComputer ();
 	szNext = lpszDisplayName;
+    } else if (PathIsUNCW(lpszDisplayName)) {
+	pidlTemp = _ILCreateNetwork();
+	szNext = lpszDisplayName;
     } else {
 	/* it's a filesystem path on the desktop. Let a FSFolder parse it */
-	WCHAR szCompletePath[MAX_PATH];
 
-	/* build a complete path to create a simpel pidl */
-	MultiByteToWideChar (CP_ACP, 0, This->sPathTarget, -1, szCompletePath, MAX_PATH);
-	PathAddBackslashW (szCompletePath);
-	lstrcatW (szCompletePath, lpszDisplayName);
-	pidlTemp = SHSimpleIDListFromPathW (lpszDisplayName);
+	/* build a complete path to create a simple pidl */
+	lstrcpyA(szPath, This->sPathTarget);
+	PathAddBackslashA(szPath);
+	len = lstrlenA(szPath);
+	WideCharToMultiByte(CP_ACP, 0, lpszDisplayName, -1, szPath + len, MAX_PATH - len, NULL, NULL);
+	pidlTemp = _ILCreateFromPathA(szPath);
 	szNext = lpszDisplayName;
     }
 
     if (pidlTemp) {
 	if (szNext && *szNext) {
-	    hr = SHELL32_ParseNextElement (hwndOwner, iface, &pidlTemp, (LPOLESTR) szNext, pchEaten, pdwAttributes);
+	    hr = SHELL32_ParseNextElement (iface, hwndOwner, pbc, &pidlTemp, (LPOLESTR) szNext, pchEaten, pdwAttributes);
 	} else {
 	    hr = S_OK;
 	    if (pdwAttributes && *pdwAttributes) {
