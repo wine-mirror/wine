@@ -415,7 +415,9 @@ BOOL WINAPI EnumDisplaySettingsA(
 	int depths[4] = {8,16,24,32};
 
 	TRACE_(system)("(%s,%ld,%p)\n",name,n,devmode);
-	if (n==0) {
+	devmode->dmDisplayFlags = 0;
+	devmode->dmDisplayFrequency = 85;
+	if (n==0 || n == (DWORD)-1 || n == (DWORD)-2) {
 		devmode->dmBitsPerPel = GetSystemMetrics(SM_WINE_BPP);
 		devmode->dmPelsHeight = GetSystemMetrics(SM_CYSCREEN);
 		devmode->dmPelsWidth  = GetSystemMetrics(SM_CXSCREEN);
@@ -439,9 +441,11 @@ BOOL WINAPI EnumDisplaySettingsW(LPCWSTR name,DWORD n,LPDEVMODEW devmode) {
 	BOOL ret = EnumDisplaySettingsA(nameA,n,&devmodeA); 
 
 	if (ret) {
-		devmode->dmBitsPerPel	= devmodeA.dmBitsPerPel;
-		devmode->dmPelsHeight	= devmodeA.dmPelsHeight;
-		devmode->dmPelsWidth	= devmodeA.dmPelsWidth;
+		devmode->dmBitsPerPel		 = devmodeA.dmBitsPerPel;
+		devmode->dmPelsHeight		 = devmodeA.dmPelsHeight;
+		devmode->dmPelsWidth	   	 = devmodeA.dmPelsWidth;
+		devmode->dmDisplayFlags	    = devmodeA.dmDisplayFlags;
+		devmode->dmDisplayFrequency = devmodeA.dmDisplayFrequency;
 		/* FIXME: convert rest too, if they are ever returned */
 	}
 	HeapFree(GetProcessHeap(),0,nameA);
@@ -458,6 +462,30 @@ BOOL16 WINAPI EnumDisplaySettings16(
 ) {
 	TRACE_(system)("(%s, %ld, %p)\n", name, n, devmode);
 	return (BOOL16)EnumDisplaySettingsA(name, n, devmode);
+}
+
+/***********************************************************************
+ *		EnumDisplaySettingsExA (USER32.@)
+ */
+BOOL WINAPI EnumDisplaySettingsExA(LPCSTR lpszDeviceName, DWORD iModeNum,
+				   LPDEVMODEA lpDevMode, DWORD dwFlags) 
+{
+        TRACE_(system)("(%s,%lu,%p,%08lx): stub\n",
+		       debugstr_a(lpszDeviceName), iModeNum, lpDevMode, dwFlags);
+
+	return EnumDisplaySettingsA(lpszDeviceName, iModeNum, lpDevMode);
+}
+
+/***********************************************************************
+ *		EnumDisplaySettingsExW (USER32.@)
+ */
+BOOL WINAPI EnumDisplaySettingsExW(LPCWSTR lpszDeviceName, DWORD iModeNum,
+				   LPDEVMODEW lpDevMode, DWORD dwFlags) 
+{
+	TRACE_(system)("(%s,%lu,%p,%08lx): stub\n",
+			debugstr_w(lpszDeviceName), iModeNum, lpDevMode, dwFlags);
+
+	return EnumDisplaySettingsW(lpszDeviceName, iModeNum, lpDevMode);
 }
 
 /***********************************************************************

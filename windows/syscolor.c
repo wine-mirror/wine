@@ -276,6 +276,14 @@ BOOL WINAPI SetSysColors( INT nChanges, const INT *lpSysColor,
     return TRUE;
 }
 
+/*************************************************************************
+ *		SetSysColors (USER32.@)
+ */
+BOOL	WINAPI	SetSysColorsTemp( int n, const int* p, const COLORREF* ptr)
+{
+	FIXME("(%d,%p,%p): stub!\n", n, p, ptr);
+	return 0;
+}
 
 /***********************************************************************
  *		GetSysColorBrush (USER.281)
@@ -312,3 +320,5 @@ HPEN WINAPI GetSysColorPen( INT index )
     return SysColorPens[index];
 
 }
+
+

@@ -4196,6 +4196,14 @@ BOOL WINAPI DrawMenuBar( HWND hWnd )
     return FALSE;
 }
 
+/***********************************************************************
+ *           DrawMenuBarTemp   (USER32.@)
+ */
+DWORD WINAPI DrawMenuBarTemp(DWORD p1, DWORD p2)
+{
+    FIXME("(%08lx %08lx): stub\n", p1, p2);
+    return 0;
+}
 
 /***********************************************************************
  *           EndMenu   (USER.187) (USER32.@)

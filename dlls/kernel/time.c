@@ -12,6 +12,7 @@
 #include "file.h"
 #include "ntddk.h"
 #include "winerror.h"
+#include "winnls.h"
 #include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(win32);
@@ -312,3 +313,50 @@ BOOL WINAPI GetProcessTimes(
     TIME_ClockTimeToFileTime(tms.tms_stime,lpKernelTime);
     return TRUE;
 }
+
+/*********************************************************************
+ *	GetCalendarInfoA				(KERNEL32)
+ *
+ */
+int WINAPI GetCalendarInfoA(LCID Locale, CALID Calendar, CALTYPE CalType,
+			    LPSTR lpCalData, int cchData, LPDWORD lpValue)
+{
+    FIXME("(%08lx,%08lx,%08lx,%p,%d,%p): stub\n", 
+	  Locale, Calendar, CalType, lpCalData, cchData, lpValue);
+    return 0;
+}
+
+/*********************************************************************
+ *	GetCalendarInfoW				(KERNEL32)
+ *
+ */
+int WINAPI GetCalendarInfoW(LCID Locale, CALID Calendar, CALTYPE CalType,
+			    LPWSTR lpCalData, int cchData, LPDWORD lpValue)
+{	
+    FIXME("(%08lx,%08lx,%08lx,%p,%d,%p): stub\n", 
+	  Locale, Calendar, CalType, lpCalData, cchData, lpValue);
+    return 0;
+}
+
+/*********************************************************************
+ *	SetCalendarInfoA				(KERNEL32)
+ *
+ */
+int WINAPI	SetCalendarInfoA(LCID Locale, CALID Calendar, CALTYPE CalType, LPCSTR lpCalData)
+{
+    FIXME("(%08lx,%08lx,%08lx,%s): stub\n", 
+	  Locale, Calendar, CalType, debugstr_a(lpCalData));
+    return 0;
+}
+
+/*********************************************************************
+ *	SetCalendarInfoW				(KERNEL32)
+ *
+ */
+int WINAPI	SetCalendarInfoW(LCID Locale, CALID Calendar, CALTYPE CalType, LPCWSTR lpCalData)
+{
+    FIXME("(%08lx,%08lx,%08lx,%s): stub\n", 
+	  Locale, Calendar, CalType, debugstr_w(lpCalData));
+    return 0;
+}
+

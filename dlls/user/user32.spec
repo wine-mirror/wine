@@ -518,7 +518,7 @@ debug_channels (accel caret class clipboard combo cursor dc ddeml dialog driver
 @ stdcall SetScrollRange(long long long long long) SetScrollRange
 @ stdcall SetShellWindow(long) SetShellWindow
 @ stdcall SetSysColors(long ptr ptr) SetSysColors
-@ stub SetSysColorsTemp
+@ stdcall SetSysColorsTemp(long ptr ptr) SetSysColorsTemp
 @ stdcall SetSystemCursor(long long) SetSystemCursor
 @ stdcall SetSystemMenu(long long) SetSystemMenu
 @ stdcall SetSystemTimer(long long long ptr) SetSystemTimer
@@ -652,6 +652,9 @@ debug_channels (accel caret class clipboard combo cursor dc ddeml dialog driver
 @ stdcall GetClipboardSequenceNumber () GetClipboardSequenceNumber
 @ stdcall AllowSetForegroundWindow (long) AllowSetForegroundWindow
 @ stdcall LockSetForegroundWindow (long) LockSetForegroundWindow
+@ stdcall DrawMenuBarTemp(long long) DrawMenuBarTemp
+@ stdcall EnumDisplaySettingsExA(str long ptr long) EnumDisplaySettingsExA
+@ stdcall EnumDisplaySettingsExW(wstr long ptr long) EnumDisplaySettingsExW
 
 ################################################################
 # Wine extensions: Win16 functions that are needed by other dlls

@@ -958,6 +958,10 @@ debug_channels (comm debugstr dll int resource stress thunk toolhelp win32)
 @ stdcall InitializeCriticalSectionAndSpinCount(ptr long) InitializeCriticalSectionAndSpinCount
 @ stdcall SetCriticalSectionSpinCount(ptr long) SetCriticalSectionSpinCount
 @ stdcall ProcessIdToSessionId(long ptr) ProcessIdToSessionId
+@ stdcall GetCalendarInfoA(long long long ptr long ptr) GetCalendarInfoA
+@ stdcall GetCalendarInfoW(long long long ptr long ptr) GetCalendarInfoW
+@ stdcall SetCalendarInfoA(long long long str) SetCalendarInfoA
+@ stdcall SetCalendarInfoW(long long long wstr) SetCalendarInfoW
 
 ################################################################
 # Wine extensions: Win16 functions that are needed by other dlls
