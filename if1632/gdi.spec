@@ -127,7 +127,7 @@ length	490
 117 pascal SetDCOrg(word s_word s_word) SetDCOrg(1 2 3)
 #121 pascal Death
 #122 pascal ReSurRection
-#123 pascal PlayMetaFile
+123 pascal PlayMetaFile(word word) PlayMetaFile(1 2)
 #124 pascal GetMetaFile
 125 pascal CreateMetaFile(ptr) CreateMetaFile(1)
 126 pascal CloseMetaFile(word) CloseMetaFile(1)
@@ -148,7 +148,8 @@ length	490
 153 pascal CreateIC(ptr ptr ptr ptr) CreateIC(1 2 3 4)
 154 pascal GetNearestColor(word long) GetNearestColor(1 2)
 #155 pascal QueryAbort
-#156 pascal CreateDiscardableBitmap
+156 pascal CreateDiscardableBitmap(word word word) 
+	   CreateDiscardableBitmap(1 2 3)
 #159 pascal GetMetaFileBits
 #160 pascal SetMetaFileBits
 161 pascal PtInRegion(word s_word s_word) PtInRegion(1 2 3)
@@ -159,6 +160,7 @@ length	490
 172 pascal SetRectRgn(word s_word s_word s_word s_word) SetRectRgn(1 2 3 4 5)
 173 pascal GetClipRgn(word) GetClipRgn(1)
 #175 pascal EnumMetaFile
+176 pascal PlayMetaFileRecord(word ptr ptr word) PlayMetaFileRecord(1 2 3 4)
 179 pascal GetDCState(word) GetDCState(1)
 180 pascal SetDCState(word word) SetDCState(1 2)
 181 pascal RectInRegionOld(word ptr) RectInRegion(1 2)

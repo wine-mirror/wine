@@ -155,7 +155,7 @@ LONG CallWindowProc( FARPROC func, HWND hwnd, WORD message,
 	    user_tab = FindDLLTable("USER");
 
 	/* DefWindowProc */
-	if (user_tab[104].address == address)
+	if (user_tab[107].address == address)
 	    return DefWindowProc(hwnd, message, wParam, lParam);
 	
 	/* DefDlgProc */

@@ -10,6 +10,7 @@ static char Copyright[] = "Copyright  Alexandre Julliard, 1993";
 #include <stdio.h>
 #include <string.h>
 
+#include "options.h"
 #include "class.h"
 #include "win.h"
 #include "user.h"
@@ -370,12 +371,23 @@ HWND CreateWindowEx( DWORD exStyle, LPSTR className, LPSTR windowName,
 	  /* Only select focus events on top-level override-redirect windows */
 	if (win_attr.override_redirect) win_attr.event_mask |= FocusChangeMask;
     }
+    if (Options.nobackingstore)
+       win_attr.backing_store = NotUseful;
+    else
+       win_attr.backing_store = Always;
+
+    if (Options.nosaveunders)
+       win_attr.save_under = FALSE;
+    else
+       win_attr.save_under = TRUE;        
+    
     wndPtr->window = XCreateWindow( display, parentPtr->window,
 		   x + parentPtr->rectClient.left - parentPtr->rectWindow.left,
 		   y + parentPtr->rectClient.top - parentPtr->rectWindow.top,
 		   width, height, 0,
 		   CopyFromParent, InputOutput, CopyFromParent,
-		   CWEventMask | CWOverrideRedirect | CWColormap, &win_attr );
+		   CWEventMask | CWOverrideRedirect | CWColormap |
+		   CWSaveUnder | CWBackingStore, &win_attr );
     XStoreName( display, wndPtr->window, windowName );
 
       /* Send the WM_CREATE message */

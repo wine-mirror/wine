@@ -19,7 +19,7 @@
 #include "wine.h"
 #include "windows.h"
 
-#define DEBUG_COMM
+/* #define DEBUG_COMM /* */
 
 #define MAX_PORTS	16
 
@@ -155,7 +155,7 @@ fprintf(stderr,"BuildCommDCB: (%s), ptr %d\n", device, (long) lpdcb);
 #endif
 	commerror = 0;
 
-	if (!strncmp(device,"COM",3)) {
+	if (!strncasecmp(device,"COM",3)) {
 		port = device[3] - '0';
 	
 
@@ -170,8 +170,7 @@ fprintf(stderr,"BuildCommDCB: (%s), ptr %d\n", device, (long) lpdcb);
 		}
 		
 		if (!COM[port].fd) {
-			commerror = IE_NOPEN;
-			return -1;
+		    OpenComm(device, 0, 0);
 		}
 		lpdcb->Id = COM[port].fd;
 		
@@ -246,7 +245,7 @@ fprintf(stderr,"OpenComm: %s, %d, %d\n", device, cbInQueue, cbOutQueue);
 	
 	commerror = 0;
 
-	if (!strncmp(device,"COM",3)) {
+	if (!strncasecmp(device,"COM",3)) {
 		port = device[3] - '0';
 
 		if (port-- == 0) {
@@ -259,8 +258,7 @@ fprintf(stderr,"OpenComm: %s, %d, %d\n", device, cbInQueue, cbOutQueue);
 			return -1;
 		}
 		if (COM[port].fd) {
-			commerror = IE_OPEN;
-			return -1;
+			return COM[port].fd;
 		}
 
 		fd = open(COM[port].devicename, O_RDWR | O_NONBLOCK, 0);
@@ -273,7 +271,7 @@ fprintf(stderr,"OpenComm: %s, %d, %d\n", device, cbInQueue, cbOutQueue);
 		}
 	} 
 	else 
-	if (!strncmp(device,"LPT",3)) {
+	if (!strncasecmp(device,"LPT",3)) {
 		port = device[3] - '0';
 	
 		if (!ValidLPTPort(port)) {

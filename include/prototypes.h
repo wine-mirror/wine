@@ -82,7 +82,7 @@ extern void load_ne_header (int, struct ne_header_s *);
 
 extern char *GetFilenameFromInstance(unsigned short instance);
 extern struct w_files *GetFileInfo(unsigned short instance);
-extern HINSTANCE LoadImage(char *modulename, int filetype);
+extern HINSTANCE LoadImage(char *modulename, int filetype, int change_dir);
 extern int _WinMain(int argc, char **argv);
 extern void InitializeLoadedDLLs();
 extern int FixupSegment(struct w_files * wpnt, int segment_num);

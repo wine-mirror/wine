@@ -1,4 +1,141 @@
 ----------------------------------------------------------------------
+Sat May 28 12:03:23 1994  Bob Amstadt  (bob@pooh)
+
+	* miscemu/int21.c (OpenExistingFile): 
+	OpenExistingFile needed to return handle in AX register instead
+	of the BX register.
+
+	* miscemu/int21.c (ioctlGetDeviceInfo): 
+	Added a little code to give a fake result for normal files.
+
+Wed May 25 21:55:38 1994  Bob Amstadt  (bob@pooh)
+
+	* [memory/global.c]
+	return value from GlobalSize was completely wrong.
+
+	* [miscemu/int21.h]
+	fixed bug in FindFirst.  Directory pointer (dp) was not placed in
+	dta correctly.
+
+	* [tools/build.c]
+	fixed creation of pop.h to guarantee that flags are restored correctly.
+
+	* [misc/comm.c]
+	changed all occurance of strncmp() to strncasecmp().
+	BuildCommDCB() should not require that OpenComm() be called first.
+
+	* [loader/selector.c]
+	Heap initialized to size of full segment less stack size and 
+	automatic data size.
+
+Sat May 28 09:14:33 1994  Rick Sladkey  (jrs@world.std.com)
+
+	* [controls/listbox.c]
+	Correct typos in ListBoxResetContent where lpls variable is
+	used where lsls2 variable is meant.  Don't call USER_HEAP_FREE
+	twice on the same handle if hData and hMem are the same.
+
+	* [debugger/opcodes/i386-dis.c]
+	Add new name array names_rmw for table driven decoding of the
+	16-bit mod/rm field.  Omit large case statement in OP_E and
+	replace with array reference to match existing coding style.
+	Add new static variable machine with value 286 or 386 to
+	correctly decode mod/rm field in either 16 or 32 bit modes.
+	Set it in print_insn_i{2,3}86.  In OP_E use it to decide how
+	to decode mod/rm.  While the code was correct for 16 bit code,
+	it was improperly decoding mod/rm fields on word prefixed
+	32 bit instructions.
+
+	* [debugger/debug.l]
+	Recognize new token ABORT.   Recognize single letters 'p'
+	and 'q' as tokens.
+
+	* [debugger/dbg.y]
+	Add new token ABORT.  Allow print command to be invoked by
+	'p' and quit command by 'q', ala GDB.  Change lots of '};'
+	to just '}'.  Add static dummy_regs to wine_debug so that
+	wine_debug(0, NULL) doesn't core dump with qmagic.
+
+	* [debugger/info.c]
+	Correct syntax of break command in helptext and omit former
+	comment about probable bugginess of the disassembly since it
+	is now correct.  Change fprintf of first backtrace stack
+	frame to match that of the second and subsequent frames.
+
+	* [loader/selector.c]
+	Change construction of command line in CreatePSP from creating
+	a string that looks like "arg1 arg2 \r" to "arg1 arg2".  A DOS
+	PSP command line looks like " arg1 arg2\r" with the length not
+	including the trailing "\r" but that is not how Windows does it.
+
+	* [loader/library.c]
+	Change uses of %s to print strings in GetModuleHandle to %x so
+	that string IDs don't cause a core dump with qmagic.  Handle
+	converting a string id to a literal module handle.  For
+	example, GetModuleHandle((LPSTR) 0x57) now returns 0x57 if
+	it is a real module handle.
+
+	* [misc/message.c]
+	In MessageBox, translate a NULL title argument to the string "Error".
+
+	* [misc/profile.c]
+	In GetSetProfile translate a NULL Default argument to "".  Any
+	caller whose Default argument is NULL is buggy, but CHARMAP does it
+	anyway.
+
+	* [objects/font.c]
+	Add NULL pointer checks in EnumFontFamilies to prevent core dumps.
+
+Sat May 28 20:01:51 1994 Jon Tombs (jon@gtex02.us.es) 
+
+	* New options/resourses nosaveunders and nobackingstore.  By 
+	default backingstore and saveunders are now enabled, these use 
+	more memory but avoids those slow (sometimes multiple) redraws 
+	caused be exposure events.
+
+May 30, 94 martin2@trgcorp.solucorp.qc.ca (Martin Ayotte)
+
+	* [misc/driver.c] New file
+	Skeleton for 'Installable Wine Drivers' functions. :-)
+	* [misc/audio.c] New file
+	Skeleton for basic 'Audio Driver' functions.
+	* [misc/network.c] New file
+	Stubs for few networking functions.
+
+	* [misc/mmsystem.c]
+	More coding ... a dust in a galaxy ...
+	* [misc/shell.c]
+	Some coding for 'RegXXX' functions ... a dust in the wind ...
+
+	* [misc/profile.c]
+	Bug fix in GetSetProfile(), bad enumeration if KeyName == NULL.
+
+	* [objects/gdi.c]
+	New function CreateDiscardableBitmap(), it just calling 
+	CreateCompatibleBitmap() for now. It's get 'clock.exe' running ! :-)
+
+	* [controls/listbox.c]
+	* [controls/combo.c]
+	New font member assigned to SYSTEM_FONT as default.
+	Added processing for WM_SETFONT message;
+
+
+Tue May 31 20:34:25 EDT 1994  John Richardson <jrichard@cs.uml.edu>
+
+        * [windows/event.c]
+        Added AsyncMouseButtonsStates array for GetAsyncKeyState.
+
+        * [windows/keyboard.c]
+        Implemented beginning of GetAsyncKeyState.
+
+Wed May 25 23:35:03 1994  David Metcalfe <david@prism.demon.co.uk>
+
+        * [objects/metafile.c] [include/metafile.h]
+          [windows/mapping.c] [objects/clipping.c] [objects/bitblt.c]
+          [windows/dc.c]
+        Further metafile support.
+
+----------------------------------------------------------------------
 Mon May 23 15:07:36 1994  Bob Amstadt  (bob@pooh)
 
 	* [loader/selector.c]
@@ -30,7 +167,7 @@ Mon May 23 00:48:25 1994  Rick Sladkey  (jrs@world.std.com)
         * [windows/dialog.c]
         Fix inadvertent printing of string IDs as strings.
 
-May 16, 94 martin2@trgcorp.solucorp.qc.ca (Martin Ayotte)
+May 23, 94 martin2@trgcorp.solucorp.qc.ca (Martin Ayotte)
 
 	* [controls/menu.c]
 	New functions GetMenuItemCount(), GetMenuItemID().

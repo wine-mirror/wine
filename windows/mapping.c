@@ -163,7 +163,23 @@ WORD SetMapMode( HDC hdc, WORD mode )
 DWORD SetViewportExt( HDC hdc, short x, short y )
 {
     SIZE size;
-    if (!SetViewportExtEx( hdc, x, y, &size )) return 0;
+    DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
+    if (!dc) 
+    {
+	dc = (DC *)GDI_GetObjPtr(hdc, METAFILE_DC_MAGIC);
+	if (!dc) return FALSE;
+	MF_MetaParam2(dc, META_SETVIEWPORTEXT, x, y);
+	return 0;
+    }
+
+    size.cx = dc->w.VportExtX;
+    size.cy = dc->w.VportExtY;
+    if ((dc->w.MapMode != MM_ISOTROPIC) && (dc->w.MapMode != MM_ANISOTROPIC))
+	return size.cx | (size.cy << 16);
+    if (!x || !y) return 0;
+    dc->w.VportExtX = x;
+    dc->w.VportExtY = y;
+    if (dc->w.MapMode == MM_ISOTROPIC) MAPPING_FixIsotropic( dc );
     return size.cx | (size.cy << 16);
 }
 
@@ -196,7 +212,19 @@ BOOL SetViewportExtEx( HDC hdc, short x, short y, LPSIZE size )
 DWORD SetViewportOrg( HDC hdc, short x, short y )
 {
     POINT pt;
-    if (!SetViewportOrgEx( hdc, x, y, &pt )) return 0;
+    DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
+    if (!dc) 
+    {
+	dc = (DC *)GDI_GetObjPtr(hdc, METAFILE_DC_MAGIC);
+	if (!dc) return FALSE;
+	MF_MetaParam2(dc, META_SETVIEWPORTORG, x, y);
+	return 0;
+    }
+
+    pt.x = dc->w.VportOrgX;
+    pt.y = dc->w.VportOrgY;
+    dc->w.VportOrgX = x;
+    dc->w.VportOrgY = y;
     return pt.x | (pt.y << 16);
 }
 
@@ -225,7 +253,23 @@ BOOL SetViewportOrgEx( HDC hdc, short x, short y, LPPOINT pt )
 DWORD SetWindowExt( HDC hdc, short x, short y )
 {
     SIZE size;
-    if (!SetWindowExtEx( hdc, x, y, &size )) return 0;
+    DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
+    if (!dc) 
+    {
+	dc = (DC *)GDI_GetObjPtr(hdc, METAFILE_DC_MAGIC);
+	if (!dc) return FALSE;
+	MF_MetaParam2(dc, META_SETWINDOWEXT, x, y);
+	return 0;
+    }
+
+    size.cx = dc->w.WndExtX;
+    size.cy = dc->w.WndExtY;
+    if ((dc->w.MapMode != MM_ISOTROPIC) && (dc->w.MapMode != MM_ANISOTROPIC))
+	return size.cx | (size.cy << 16);
+    if (!x || !y) return 0;
+    dc->w.WndExtX = x;
+    dc->w.WndExtY = y;
+    if (dc->w.MapMode == MM_ISOTROPIC) MAPPING_FixIsotropic( dc );
     return size.cx | (size.cy << 16);
 }
 
@@ -258,7 +302,19 @@ BOOL SetWindowExtEx( HDC hdc, short x, short y, LPSIZE size )
 DWORD SetWindowOrg( HDC hdc, short x, short y )
 {
     POINT pt;
-    if (!SetWindowOrgEx( hdc, x, y, &pt )) return 0;
+    DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
+    if (!dc) 
+    {
+	dc = (DC *)GDI_GetObjPtr(hdc, METAFILE_DC_MAGIC);
+	if (!dc) return FALSE;
+	MF_MetaParam2(dc, META_SETWINDOWORG, x, y);
+	return 0;
+    }
+
+    pt.x = dc->w.WndOrgX;
+    pt.y = dc->w.WndOrgY;
+    dc->w.WndOrgX = x;
+    dc->w.WndOrgY = y;
     return pt.x | (pt.y << 16);
 }
 
@@ -287,7 +343,19 @@ BOOL SetWindowOrgEx( HDC hdc, short x, short y, LPPOINT pt )
 DWORD OffsetViewportOrg( HDC hdc, short x, short y )
 {
     POINT pt;
-    if (!OffsetViewportOrgEx( hdc, x, y, &pt )) return 0;
+    DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
+    if (!dc) 
+    {
+	dc = (DC *)GDI_GetObjPtr(hdc, METAFILE_DC_MAGIC);
+	if (!dc) return FALSE;
+	MF_MetaParam2(dc, META_OFFSETVIEWPORTORG, x, y);
+	return 0;
+    }
+
+    pt.x = dc->w.VportOrgX;
+    pt.y = dc->w.VportOrgY;
+    dc->w.VportOrgX += x;
+    dc->w.VportOrgY += y;
     return pt.x | (pt.y << 16);
 }
 
@@ -316,7 +384,19 @@ BOOL OffsetViewportOrgEx( HDC hdc, short x, short y, LPPOINT pt )
 DWORD OffsetWindowOrg( HDC hdc, short x, short y )
 {
     POINT pt;
-    if (!OffsetWindowOrgEx( hdc, x, y, &pt )) return 0;
+    DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
+    if (!dc) 
+    {
+	dc = (DC *)GDI_GetObjPtr(hdc, METAFILE_DC_MAGIC);
+	if (!dc) return FALSE;
+	MF_MetaParam2(dc, META_OFFSETWINDOWORG, x, y);
+	return 0;
+    }
+
+    pt.x = dc->w.WndOrgX;
+    pt.y = dc->w.WndOrgY;
+    dc->w.WndOrgX += x;
+    dc->w.WndOrgY += y;
     return pt.x | (pt.y << 16);
 }
 
@@ -346,8 +426,25 @@ DWORD ScaleViewportExt( HDC hdc, short xNum, short xDenom,
 		      short yNum, short yDenom )
 {
     SIZE size;
-    if (!ScaleViewportExtEx( hdc, xNum, xDenom, yNum, yDenom, &size ))
+    DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
+    if (!dc) 
+    {
+	dc = (DC *)GDI_GetObjPtr(hdc, METAFILE_DC_MAGIC);
+	if (!dc) return FALSE;
+	MF_MetaParam4(dc, META_SCALEVIEWPORTEXT, xNum, xDenom, yNum, yDenom);
 	return 0;
+    }
+
+    size.cx = dc->w.VportExtX;
+    size.cy = dc->w.VportExtY;
+    if ((dc->w.MapMode != MM_ISOTROPIC) && (dc->w.MapMode != MM_ANISOTROPIC))
+	return size.cx | (size.cy << 16);
+    if (!xNum || !xDenom || !xNum || !yDenom) return 0;
+    dc->w.VportExtX = (dc->w.VportExtX * xNum) / xDenom;
+    dc->w.VportExtY = (dc->w.VportExtY * yNum) / yDenom;
+    if (dc->w.VportExtX == 0) dc->w.VportExtX = 1;
+    if (dc->w.VportExtY == 0) dc->w.VportExtY = 1;
+    if (dc->w.MapMode == MM_ISOTROPIC) MAPPING_FixIsotropic( dc );
     return size.cx | (size.cy << 16);
 }
 
@@ -384,8 +481,25 @@ DWORD ScaleWindowExt( HDC hdc, short xNum, short xDenom,
 		      short yNum, short yDenom )
 {
     SIZE size;
-    if (!ScaleWindowExtEx( hdc, xNum, xDenom, yNum, yDenom, &size ))
+    DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
+    if (!dc) 
+    {
+	dc = (DC *)GDI_GetObjPtr(hdc, METAFILE_DC_MAGIC);
+	if (!dc) return FALSE;
+	MF_MetaParam4(dc, META_SCALEWINDOWEXT, xNum, xDenom, yNum, yDenom);
 	return 0;
+    }
+
+    size.cx = dc->w.WndExtX;
+    size.cy = dc->w.WndExtY;
+    if ((dc->w.MapMode != MM_ISOTROPIC) && (dc->w.MapMode != MM_ANISOTROPIC))
+	return size.cx | (size.cy << 16);
+    if (!xNum || !xDenom || !xNum || !yDenom) return FALSE;
+    dc->w.WndExtX = (dc->w.WndExtX * xNum) / xDenom;
+    dc->w.WndExtY = (dc->w.WndExtY * yNum) / yDenom;
+    if (dc->w.WndExtX == 0) dc->w.WndExtX = 1;
+    if (dc->w.WndExtY == 0) dc->w.WndExtY = 1;
+    if (dc->w.MapMode == MM_ISOTROPIC) MAPPING_FixIsotropic( dc );
     return size.cx | (size.cy << 16);
 }
 

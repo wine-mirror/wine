@@ -15,6 +15,8 @@
 #include "msdos.h"
 #include "options.h"
 
+/* #define DEBUG_FIND /* */
+
 static char Copyright[] = "copyright Erik Bos, 1993";
 
 WORD ExtendedError, CodePage = 437;
@@ -366,20 +368,34 @@ static void SetFileAttributes(struct sigcontext_struct *context)
 
 static void ioctlGetDeviceInfo(struct sigcontext_struct *context)
 {
-	WORD handle = EBX & 0xffff;
-
-	switch (handle) {
-		case 0:
-		case 1:
-		case 2:
-			EDX = (EDX & 0xffff0000) | 0x80d3;
-			break;
-
-		default:
-			Barf(context);
-			EDX = (EDX & 0xffff0000) | 0x50;
+    WORD handle = EBX & 0xffff;
+    
+    switch (handle) 
+    {
+      case 0:
+      case 1:
+      case 2:
+	EDX = (EDX & 0xffff0000) | 0x80d3;
+	break;
+	
+      default:
+	{
+	    struct stat sbuf;
+	    
+	    if (fstat(handle, &sbuf) < 0)
+	    {
+		Barf(context);
+		EDX = (EDX & 0xffff0000) | 0x50;
+		SetCflag;
+		return;
+	    }
+	    
+	    /* This isn't the right answer, but should be close enough. */
+	    EDX = (EDX & 0xffff0000) | 0x0943;
 	}
-	ResetCflag;
+    }
+    
+    ResetCflag;
 }
 
 static void ioctlGenericBlkDevReq(struct sigcontext_struct *context)
@@ -542,8 +558,7 @@ static void OpenExistingFile(struct sigcontext_struct *context)
 		return;
 	}		
 	Error (0,0,0);
-	EBX = (EBX & 0xffff0000L) | handle;
-	EAX = (EAX & 0xffffff00L) | NoError;
+	EAX = (EAX & 0xffff0000L) | handle;
 	ResetCflag;
 }
 
@@ -705,13 +720,20 @@ static void FindNext(struct sigcontext_struct *context)
 {
 	struct dosdirent *dp;
 	
-	dp = (struct dosdirent *)(dta + 0x0d);
+#ifdef DEBUG_FIND
+	fprintf(stderr, "FindNext: ");
+#endif
+	
+	dp = *(struct dosdirent **)(dta + 0x0d);
 
 	do {
 		if ((dp = DOS_readdir(dp)) == NULL) {
 			Error(NoMoreFiles, EC_MediaError , EL_Disk);
 			EAX = (EAX & 0xffffff00L) | NoMoreFiles;
 			SetCflag;
+#ifdef DEBUG_FIND
+			fprintf(stderr, "\n");
+#endif
 			return;
 		}
 	} while (*(dta + 0x0c) != dp->attribute);
@@ -723,6 +745,12 @@ static void FindNext(struct sigcontext_struct *context)
 
 	EAX = (EAX & 0xffffff00L);
 	ResetCflag;
+
+#ifdef DEBUG_FIND
+	fprintf(stderr, 
+		"DTA: drive %c, template %11.11s, size %d, name %-13.13s\n",
+		dta[0] + 'A', &dta[1], *(LONG *)(&dta[0x1a]), &dta[0x1e]);
+#endif
 	return;
 }
 
@@ -764,13 +792,8 @@ static void FindFirst(struct sigcontext_struct *context)
 		SetCflag;
 		return;
 	}
-/*	strncpy(dta + 1, AsciizToFCB(dp->filemask), 11); */
 
-/*	*((BYTE *) ((void*)dta + 0x0d)) = (BYTE *) dp; */
-
-	*((struct dosdirent *)(dta + 0x0d))
-	 =
-	  *dp;
+	memcpy(dta + 0x0d, &dp, sizeof(dp));
 	FindNext(context);
 }
 

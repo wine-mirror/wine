@@ -28,7 +28,7 @@
 #include "prototypes.h"
 #include "autoconf.h"
 
-/* #define DEBUG */
+/* #define DEBUG /* */
 
 #define WINE_INI_USER "~/.winerc"
 #define MAX_OPEN_DIRS 16
@@ -363,7 +363,7 @@ char *GetUnixFileName(char *dosfilename)
 { 
 	/*   a:\windows\system.ini  =>  /dos/windows/system.ini */
 	
-	char temp[256];
+	static char temp[256];
 	int drive;
 
 	if (dosfilename[1] == ':') 
@@ -393,7 +393,7 @@ char *GetUnixFileName(char *dosfilename)
 char *GetDosFileName(char *unixfilename)
 { 
 	int i;
-	char temp[256];
+	static char temp[256];
 	/*   /dos/windows/system.ini => c:\windows\system.ini */
 	
 	for (i = 0 ; i != MAX_DOS_DRIVES; i++) {

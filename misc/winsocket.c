@@ -878,7 +878,9 @@ INT WSAStartup(WORD wVersionRequested, LPWSADATA lpWSAData)
 	return WSASYSNOTREADY;
 
     heap = (struct WinSockHeap *) GlobalLock(HeapHandle);
+#ifndef WINELIB
     HEAP_Init(&MyHeap, heap, sizeof(struct WinSockHeap));
+#endif
     bcopy(&Winsock_data, lpWSAData, sizeof(Winsock_data));
 
     /* ipc stuff */

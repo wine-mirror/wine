@@ -34,6 +34,8 @@ extern void CallTo32();
 char * GetModuleName(struct w_files * wpnt, int index, char *buffer);
 extern unsigned char ran_out;
 extern char WindowsPath[256];
+char *WIN_ProgramName;
+
 unsigned short WIN_StackSize;
 unsigned short WIN_HeapSize;
 
@@ -124,24 +126,46 @@ void load_ne_header (int fd, struct ne_header_s *ne_header)
  *					LoadImage
  * Load one NE format executable into memory
  */
-HINSTANCE LoadImage(char *modulename, int filetype)
+HINSTANCE LoadImage(char *modulename, int filetype, int change_dir)
 {
     unsigned int read_size;
     int i;
     struct w_files * wpnt, *wpnt1;
     unsigned int status;
     char buffer[256];
+    char *fullname;
 
     /*
      * search file
      */
-    if (FindFile(buffer, sizeof(buffer), modulename, (filetype == EXE ? 
-    	EXE_Extensions : DLL_Extensions), WindowsPath) ==NULL)
+    fullname = FindFile(buffer, sizeof(buffer), modulename, 
+			(filetype == EXE ? EXE_Extensions : DLL_Extensions), 
+			WindowsPath);
+    if (fullname == NULL)
     {
-    	fprintf(stderr, "LoadImage: I can't find %s.dll | %s.exe !\n",modulename, modulename);
+    	fprintf(stderr, "LoadImage: I can't find %s.dll | %s.exe !\n",
+		modulename, modulename);
 	return (HINSTANCE) NULL;
     }
-    fprintf(stderr,"LoadImage: loading %s (%s)\n", modulename, buffer);
+
+    fullname = GetDosFileName(fullname);
+    WIN_ProgramName = strdup(fullname);
+    
+    fprintf(stderr,"LoadImage: loading %s (%s)\n           [%s]\n", 
+	    modulename, buffer, WIN_ProgramName);
+
+    if (change_dir && fullname)
+    {
+	char dirname[256];
+	char *p;
+
+	strcpy(dirname, fullname);
+	p = strrchr(dirname, '\\');
+	*p = '\0';
+
+	DOS_SetDefaultDrive(dirname[0] - 'A');
+	DOS_ChangeDir(dirname[0] - 'A', dirname + 2);
+    }
 
     /* First allocate a spot to store the info we collect, and add it to
      * our linked list.
@@ -257,7 +281,7 @@ HINSTANCE LoadImage(char *modulename, int filetype)
       if(FindDLLTable(buff)) continue;  /* This module already loaded */
 #endif
 
-      LoadImage(buff, DLL);
+      LoadImage(buff, DLL, 0);
 /*
       fprintf(stderr,"Unable to load:%s\n",  buff);
 */
@@ -297,7 +321,7 @@ _WinMain(int argc, char **argv)
 		strcat(WinePath, p);
 	}
 	
-	if ((hInstMain = LoadImage(Argv[0], EXE)) == (HINSTANCE) NULL ) {
+	if ((hInstMain = LoadImage(Argv[0], EXE, 1)) == (HINSTANCE) NULL ) {
 		fprintf(stderr, "wine: can't find %s!.\n", Argv[0]);
 		exit(1);
 	}

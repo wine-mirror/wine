@@ -251,7 +251,7 @@ UINT WINAPI waveOutSetVolume(UINT uDeviceID, DWORD dwVolume);
 UINT WINAPI waveOutGetErrorText(UINT uError, LPSTR lpText, UINT uSize);
 UINT WINAPI waveGetErrorText(UINT uError, LPSTR lpText, UINT uSize);
 UINT WINAPI waveOutOpen(HWAVEOUT FAR* lphWaveOut, UINT uDeviceID,
-    const WAVEFORMAT FAR* lpFormat, DWORD dwCallback, DWORD dwInstance, DWORD dwFlags);
+    const LPWAVEFORMAT lpFormat, DWORD dwCallback, DWORD dwInstance, DWORD dwFlags);
 UINT WINAPI waveOutClose(HWAVEOUT hWaveOut);
 UINT WINAPI waveOutPrepareHeader(HWAVEOUT hWaveOut,
      WAVEHDR FAR* lpWaveOutHdr, UINT uSize);
@@ -278,7 +278,7 @@ UINT WINAPI waveInGetDevCaps(UINT uDeviceID, WAVEINCAPS FAR* lpCaps,
     UINT uSize);
 UINT WINAPI waveInGetErrorText(UINT uError, LPSTR lpText, UINT uSize);
 UINT WINAPI waveInOpen(HWAVEIN FAR* lphWaveIn, UINT uDeviceID,
-    const WAVEFORMAT FAR* lpFormat, DWORD dwCallback, DWORD dwInstance, DWORD dwFlags);
+    const LPWAVEFORMAT lpFormat, DWORD dwCallback, DWORD dwInstance, DWORD dwFlags);
 UINT WINAPI waveInClose(HWAVEIN hWaveIn);
 UINT WINAPI waveInPrepareHeader(HWAVEIN hWaveIn,
     WAVEHDR FAR* lpWaveInHdr, UINT uSize);
@@ -1385,6 +1385,32 @@ typedef struct {
 typedef MCI_OVLY_LOAD_PARMS FAR * LPMCI_OVLY_LOAD_PARMS;
 
 
+/**************************************************************
+ * 		Linux MMSYSTEM Internals & Sample Audio Drivers
+ */
+
+typedef struct {
+	DWORD   	dwCallback;
+	DWORD   	dwInstance;
+	HMIDIOUT	hMidi;
+	DWORD   	dwFlags;
+	}	PORTALLOC;
+typedef PORTALLOC FAR *LPPORTALLOC;
+
+BOOL DriverCallback(DWORD dwCallBack, UINT uFlags, HANDLE hDev, 
+		WORD wMsg, DWORD dwUser, DWORD dwParam1, DWORD dwParam2);
+DWORD auxMessage(WORD wDevID, WORD wMsg, DWORD dwUser, 
+					DWORD dwParam1, DWORD dwParam2);
+DWORD midMessage(WORD wDevID, WORD wMsg, DWORD dwUser, 
+					DWORD dwParam1, DWORD dwParam2);
+DWORD modMessage(WORD wDevID, WORD wMsg, DWORD dwUser, 
+					DWORD dwParam1, DWORD dwParam2);
+DWORD widMessage(WORD wDevID, WORD wMsg, DWORD dwUser, 
+					DWORD dwParam1, DWORD dwParam2);
+DWORD wodMessage(WORD wDevID, WORD wMsg, DWORD dwUser, 
+					DWORD dwParam1, DWORD dwParam2);
+
 #endif /* MMSYSTEM_H */
+
 
 

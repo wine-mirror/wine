@@ -43,6 +43,7 @@ void mode_command(int);
 %token NO_SYMBOL
 %token SYMBOLFILE
 %token DEFINE
+%token ABORT
 
 %%
 
@@ -52,17 +53,20 @@ void mode_command(int);
  line:		'\n'
 	| infocmd '\n'
 	| error '\n'       { yyerrok; }
-	| QUIT  '\n'       { exit(0); };
-	| HELP  '\n'       { dbg_help(); };
-	| CONT '\n'        { return; };
-	| SYMBOLFILE IDENTIFIER '\n' { read_symboltable($2); };
-	| DEFINE IDENTIFIER expr '\n'  { add_hash($2, $3); };
-	| MODE NUM	   { mode_command($2); };
-	| ENABLE NUM	   { enable_break($2); };
-	| DISABLE NUM	   { disable_break($2); };
-	| BREAK '*' expr   { add_break($3); };
+	| QUIT  '\n'       { exit(0); }
+	| 'q' '\n'         { exit(0); }
+	| HELP  '\n'       { dbg_help(); }
+	| CONT '\n'        { return; }
+	| 'c' '\n'         { return; }
+	| ABORT '\n'       { kill(getpid(), SIGABRT); }
+	| SYMBOLFILE IDENTIFIER '\n' { read_symboltable($2); }
+	| DEFINE IDENTIFIER expr '\n'  { add_hash($2, $3); }
+	| MODE NUM	   { mode_command($2); }
+	| ENABLE NUM	   { enable_break($2); }
+	| DISABLE NUM	   { disable_break($2); }
+	| BREAK '*' expr   { add_break($3); }
 	| x_command
-	| BACKTRACE '\n'   { dbg_bt(); };
+	| BACKTRACE '\n'   { dbg_bt(); }
 	| print_command
 	| deposit_command
 
@@ -73,12 +77,18 @@ deposit_command:
 
 
 x_command:
-	  'x' expr  '\n' { examine_memory($2, 1, 'x'); };
-	| 'x' '/' fmt expr  '\n' { examine_memory($4, 1, $3); };
-	| 'x' '/' NUM fmt expr  '\n' { examine_memory($5, $3, $4); };
+	  'x' expr  '\n' { examine_memory($2, 1, 'x'); }
+	| 'x' '/' fmt expr  '\n' { examine_memory($4, 1, $3); }
+	| 'x' '/' NUM fmt expr  '\n' { examine_memory($5, $3, $4); }
 
+print:
+	  'p'
+	| print
+	
  print_command:
-	PRINT expr  '\n' { examine_memory(((unsigned int) &$2 ), 1, 'x'); };
+	  print expr '\n' { examine_memory(((unsigned int) &$2 ), 1, 'x'); }
+	| print '/' fmt expr '\n' { examine_memory((unsigned int) &$4, 1, $3); }
+	| print '/' NUM fmt expr '\n' { examine_memory((unsigned int) &$5, $3, $4); }
 
  fmt:  'x'     { $$ = 'x'; }
 	| 'd'  { $$ = 'd'; }
@@ -92,20 +102,20 @@ x_command:
 			           if($$ == 0xffffffff) {
 					   fprintf(stderr,"Symbol %s not found\n", $1);
 					   YYERROR;
-				   };
-			        }; 
+				   }
+			        } 
 
  expr:  NUM			{ $$ = $1;	}
 	| REG			{ if(regval) $$ = regval[$1]; else application_not_running();}
 	| symbol   		{ $$ = *((unsigned int *) $1); }
 	| expr '+' NUM		{ $$ = $1 + $3; }
-	| expr '-' NUM		{ $$ = $1 - $3; };
-	| '(' expr ')'		{ $$ = $2; };
-	| '*' expr		{ $$ = *((unsigned int *) $2); };
+	| expr '-' NUM		{ $$ = $1 - $3; }
+	| '(' expr ')'		{ $$ = $2; }
+	| '*' expr		{ $$ = *((unsigned int *) $2); }
 	
  infocmd: INFO REGS { info_reg(); }
-	| INFO STACK  { info_stack(); };
-	| INFO BREAK  { info_break(); };
+	| INFO STACK  { info_stack(); }
+	| INFO BREAK  { info_break(); }
 
 
 %%
@@ -141,8 +151,10 @@ wine_debug(int signal, int * regs)
 #ifdef YYDEBUG
 	yydebug = 0;
 #endif
+	static int dummy_regs[32];
+
 	yyin = stdin;
-	regval = regs;
+	regval = regs ? regs : dummy_regs;
 
 #ifdef linux        
 	if((SC_CS & 7) != 7) {
@@ -151,7 +163,7 @@ wine_debug(int signal, int * regs)
 	} else {
 		dbg_mask = 0xffff;
 		dbg_mode = 16;
-	};
+	}
 #endif
 #ifdef __NetBSD__
 	if(SC_CS == 0x1f) {
@@ -160,7 +172,7 @@ wine_debug(int signal, int * regs)
 	} else {
 		dbg_mask = 0xffff;
 		dbg_mode = 16;
-	};
+	}
 #endif
 	fprintf(stderr,"In %d bit mode.\n", dbg_mode);
 
@@ -170,7 +182,7 @@ wine_debug(int signal, int * regs)
 	if(!loaded_symbols){
 		loaded_symbols++;
 		load_entrypoints();
-	};
+	}
 #endif
 
 	/* Remove the breakpoints from memory... */
@@ -187,7 +199,7 @@ wine_debug(int signal, int * regs)
 	  }
 
 	/* Show where we crashed */
-	if(regval)
+	if(regs)
 	  examine_memory(SC_EIP(dbg_mask), 1, 'i');
 
 	issue_prompt();

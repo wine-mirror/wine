@@ -703,6 +703,9 @@ static char *names8[] = {
 static char *names_seg[] = {
   "%es","%cs","%ss","%ds","%fs","%gs","%?","%?",
 };
+static char *names_rmw[] = {
+  "%bx,%si","%bx,%di","%bp,%si","%bp,%di","%si","%di","%bp","%bx", 
+};
 
 struct dis386 grps[][8] = {
   /* GRP1b */
@@ -950,8 +953,9 @@ ckprefix ()
     }
 }
 
+static int machine;
 static int dflag;
-static int aflag;		
+static int aflag;
 
 static char op1out[100], op2out[100], op3out[100];
 static int op_address[3], op_ad, op_index[3];
@@ -1140,6 +1144,7 @@ print_insn_i286 (pc, info)
      bfd_vma pc;
      disassemble_info *info;
 {
+  machine = 286;
   dflag = 0;
   aflag = 0;
   return print_insn_i286_or_i386 (pc, info);
@@ -1150,6 +1155,7 @@ print_insn_i386 (pc, info)
      bfd_vma pc;
      disassemble_info *info;
 {
+  machine = 386;
   dflag = 1;
   aflag = 1;
   return print_insn_i286_or_i386 (pc, info, 36);
@@ -1555,7 +1561,7 @@ OP_E (bytemode)
   
   append_prefix ();
 
-  if (bytemode == w_mode || (bytemode == v_mode && !dflag))
+  if (machine == 286)
     {
       if (mod == 0 && rm == 6)
 	{
@@ -1579,33 +1585,8 @@ OP_E (bytemode)
 	  oappend (scratchbuf);
 	}
 
-      switch (rm)
-	{
-	case 0:
-	  oappend ("(%bx,%si)");
-	  break;
-	case 1:
-	  oappend ("(%bx,%di)");
-	  break;
-	case 2:
-	  oappend ("(%bp,%si)");
-	  break;
-	case 3:
-	  oappend ("(%bp,%di)");
-	  break;
-	case 4:
-	  oappend ("(%si)");
-	  break;
-	case 5:
-	  oappend ("(%di)");
-	  break;
-	case 6:
-	  oappend ("(%bp)");
-	  break;
-	case 7:
-	  oappend ("(%bx)");
-	  break;
-	}	  
+      sprintf (scratchbuf, "(%s)", names_rmw[rm]);
+      oappend (scratchbuf);
       return 0;
     }
 

@@ -222,7 +222,7 @@ char * helptext[] = {
 "of the commands that gdb would accept.  The commands currently",
 "are:\n",
 "  info [reg,stack,break]",
-"  break <addr>",
+"  break *<addr>",
 "  enable bpnum",
 "  disable bpnum",
 "  help",
@@ -245,10 +245,6 @@ char * helptext[] = {
 " Also, a nm format symbol table can be read from a file using the",
 " symbolfile command.  Symbols can also be defined individually with",
 " the define command.",
-"",
-"The disassembly code seems to work most of the time, but it does get",
-"a little confused at times.  The 16 bit mode probably has not been used",
-"much so there are probably bugs.",
 "",
 NULL};
 
@@ -286,7 +282,7 @@ void dbg_bt(){
   }
 
   fprintf(stderr,"Backtrace:\n");
-  fprintf(stderr,"%d: %4.4x:%4.4x\n", frameno++, SC_CS, SC_EIP(dbg_mask));
+  fprintf(stderr,"%d %4.4x:%4.4x\n", frameno++, SC_CS, SC_EIP(dbg_mask));
   cs = SC_CS;
 
   frame = (struct frame *) ((SC_EBP(dbg_mask) & ~1) | (SC_SS << 16));

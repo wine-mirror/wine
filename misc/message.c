@@ -54,6 +54,9 @@ int MessageBox(HWND hWnd, LPSTR str, LPSTR title, WORD type)
 	DWORD		dwStyle;
 	HINSTANCE	hInst;
 	int			nRet;
+
+	if (title == NULL)
+		title = "Error";
 	wndPtr = WIN_FindWndPtr(hWnd);
 	if (wndPtr == NULL) {
 		hInst = hSysRes;

@@ -13,6 +13,11 @@ static char Copyright[] = "Copyright  David W. Metcalfe, 1994";
 
 #define DEBUG_METAFILE
 
+#define HTINCR  10      /* handle table allocation size increment */
+
+static HANDLE hHT;      /* handle of the handle table */
+static int HTLen;       /* allocated length of handle table */
+
 /******************************************************************
  *         CreateMetafile         GDI.125
  */
@@ -22,6 +27,7 @@ HANDLE CreateMetaFile(LPSTR lpFilename)
     HANDLE handle;
     METAFILE *mf;
     METAHEADER *mh;
+    HANDLETABLE *ht;
 
 #ifdef DEBUG_METAFILE
     printf("CreateMetaFile: %s\n", lpFilename);
@@ -64,6 +70,12 @@ HANDLE CreateMetaFile(LPSTR lpFilename)
     else                     /* memory based metafile */
 	mh->mtType = 0;
 
+    /* create the handle table */
+    HTLen = HTINCR;
+    hHT = GlobalAlloc(GMEM_MOVEABLE | GMEM_ZEROINIT, 
+		      sizeof(HANDLETABLE) * HTLen);
+    ht = (HANDLETABLE *)GlobalLock(hHT);
+
     GlobalUnlock(mf->hMetaHdr);
     GlobalUnlock(dc->w.hMetaFile);
     return handle;
@@ -94,9 +106,12 @@ HMETAFILE CloseMetaFile(HDC hdc)
     /* Construct the end of metafile record - this is undocumented
      * but is created by MS Windows 3.1.
      */
-    mr->rdSize = 3;
-    mr->rdFunction = META_EOF;
-    MF_WriteRecord(dc->w.hMetaFile, mr, mr->rdSize * 2);
+    if (!MF_MetaParam0(dc, META_EOF))
+    {
+	GlobalFree(mf->hMetaHdr);
+	GlobalFree(dc->w.hMetaFile);
+	return 0;
+    }	
 
     if (mh->mtType == 1)        /* disk based metafile */
     {
@@ -115,8 +130,12 @@ HMETAFILE CloseMetaFile(HDC hdc)
 	_lclose(mf->hFile);
     }
 
+    /* delete the handle table */
+    GlobalFree(hHT);
+
     GlobalUnlock(mf->hMetaHdr);
     hmf = dc->w.hMetaFile;
+    GlobalUnlock(hmf);
     GDI_FreeObject(hdc);
     return hmf;
 }
@@ -135,6 +154,292 @@ BOOL DeleteMetaFile(HMETAFILE hmf)
     GlobalFree(mf->hMetaHdr);
     GlobalFree(hmf);
     return TRUE;
+}
+
+
+/******************************************************************
+ *         PlayMetafile         GDI.123
+ */
+BOOL PlayMetaFile(HDC hdc, HMETAFILE hmf)
+{
+    METAFILE *mf = (METAFILE *)GlobalLock(hmf);
+    METAHEADER *mh;
+    METARECORD *mr;
+    HANDLETABLE *ht;
+    char *buffer;
+
+    if (mf->wMagic != METAFILE_MAGIC)
+	return FALSE;
+
+    mh = (METAHEADER *)GlobalLock(mf->hMetaHdr);
+    if (mh->mtType == 1)       /* disk based metafile */
+    {
+	mf->hFile = _lopen(mf->Filename, OF_READ);
+	mf->hBuffer = GlobalAlloc(GMEM_MOVEABLE, mh->mtMaxRecord * 2);
+	buffer = (char *)GlobalLock(mf->hBuffer);
+	_llseek(mf->hFile, mh->mtHeaderSize * 2, 0);
+	mf->MetaOffset = mh->mtHeaderSize * 2;
+    }
+    else if (mh->mtType == 0)   /* memory based metafile */
+	mf->MetaOffset = mh->mtHeaderSize * 2;
+    else                       /* not a valid metafile type */
+	return FALSE;
+
+    /* create the handle table */
+    hHT = GlobalAlloc(GMEM_MOVEABLE, sizeof(HANDLETABLE) * mh->mtNoObjects);
+    ht = (HANDLETABLE *)GlobalLock(hHT);
+
+    /* loop through metafile playing records */
+    while (mf->MetaOffset < mh->mtSize * 2)
+    {
+	if (mh->mtType == 1)   /* disk based metafile */
+	{
+	    _lread(mf->hFile, buffer, sizeof(METARECORD));
+	    mr = (METARECORD *)&buffer;
+	    _lread(mf->hFile, (char *)(mr->rdParam + 1), (mr->rdSize * 2) -
+		                                       sizeof(METARECORD));
+	    mf->MetaOffset += mr->rdSize * 2;
+	}
+	else                   /* memory based metafile */
+	{
+	    mr = (METARECORD *)((char *)mh + mf->MetaOffset);
+	    mf->MetaOffset += mr->rdSize * 2;
+	}
+	PlayMetaFileRecord(hdc, ht, mr, mh->mtNoObjects);
+    }
+
+    /* close disk based metafile and free buffer */
+    if (mh->mtType == 1)
+    {
+	GlobalFree(mf->hBuffer);
+	_lclose(mf->hFile);
+    }
+
+    /* free handle table */
+    GlobalFree(hHT);
+
+    return TRUE;
+}
+
+
+/******************************************************************
+ *         PlayMetaFileRecord      GDI.176
+ */
+void PlayMetaFileRecord(HDC hdc, HANDLETABLE *ht, METARECORD *mr,
+			                           WORD nHandles)
+{
+    short s1;
+    HANDLE hndl;
+    char *ptr;
+    BITMAPINFOHEADER *infohdr;
+
+    switch (mr->rdFunction)
+    {
+    case META_SETBKCOLOR:
+	SetBkColor(hdc, *(mr->rdParam));
+	break;
+
+    case META_SETBKMODE:
+	SetBkMode(hdc, *(mr->rdParam));
+	break;
+
+    case META_SETMAPMODE:
+	SetMapMode(hdc, *(mr->rdParam));
+	break;
+
+    case META_SETROP2:
+	SetROP2(hdc, *(mr->rdParam));
+	break;
+
+    case META_SETRELABS:
+	SetRelAbs(hdc, *(mr->rdParam));
+	break;
+
+    case META_SETPOLYFILLMODE:
+	SetPolyFillMode(hdc, *(mr->rdParam));
+	break;
+
+    case META_SETSTRETCHBLTMODE:
+	SetStretchBltMode(hdc, *(mr->rdParam));
+	break;
+
+    case META_SETTEXTCOLOR:
+	SetTextColor(hdc, MAKELONG(*(mr->rdParam), *(mr->rdParam + 1)));
+	break;
+
+    case META_SETWINDOWORG:
+	SetWindowOrg(hdc, *(mr->rdParam + 1), *(mr->rdParam));
+	break;
+
+    case META_SETWINDOWEXT:
+	SetWindowExt(hdc, *(mr->rdParam + 1), *(mr->rdParam));
+	break;
+
+    case META_SETVIEWPORTORG:
+	SetViewportOrg(hdc, *(mr->rdParam + 1), *(mr->rdParam));
+	break;
+
+    case META_SETVIEWPORTEXT:
+	SetViewportExt(hdc, *(mr->rdParam + 1), *(mr->rdParam));
+	break;
+
+    case META_OFFSETWINDOWORG:
+	OffsetWindowOrg(hdc, *(mr->rdParam + 1), *(mr->rdParam));
+	break;
+
+    case META_SCALEWINDOWEXT:
+	ScaleWindowExt(hdc, *(mr->rdParam + 3), *(mr->rdParam + 2),
+		       *(mr->rdParam + 1), *(mr->rdParam));
+	break;
+
+    case META_OFFSETVIEWPORTORG:
+	OffsetViewportOrg(hdc, *(mr->rdParam + 1), *(mr->rdParam));
+	break;
+
+    case META_SCALEVIEWPORTEXT:
+	ScaleViewportExt(hdc, *(mr->rdParam + 3), *(mr->rdParam + 2),
+			 *(mr->rdParam + 1), *(mr->rdParam));
+	break;
+
+    case META_LINETO:
+	LineTo(hdc, *(mr->rdParam + 1), *(mr->rdParam));
+	break;
+
+    case META_MOVETO:
+	MoveTo(hdc, *(mr->rdParam + 1), *(mr->rdParam));
+	break;
+
+    case META_EXCLUDECLIPRECT:
+	ExcludeClipRect(hdc, *(mr->rdParam + 3), *(mr->rdParam + 2),
+			*(mr->rdParam + 1), *(mr->rdParam));
+	break;
+
+    case META_INTERSECTCLIPRECT:
+	IntersectClipRect(hdc, *(mr->rdParam + 3), *(mr->rdParam + 2),
+			*(mr->rdParam + 1), *(mr->rdParam));
+	break;
+
+    case META_ARC:
+	Arc(hdc, *(mr->rdParam + 7), *(mr->rdParam + 6), *(mr->rdParam + 5),
+	    *(mr->rdParam + 4), *(mr->rdParam + 3), *(mr->rdParam + 2),
+	    *(mr->rdParam + 1), *(mr->rdParam));
+	break;
+
+    case META_ELLIPSE:
+	Ellipse(hdc, *(mr->rdParam + 3), *(mr->rdParam + 2),
+		*(mr->rdParam + 1), *(mr->rdParam));
+	break;
+
+    case META_FLOODFILL:
+	FloodFill(hdc, *(mr->rdParam + 3), *(mr->rdParam + 2),
+		  MAKELONG(*(mr->rdParam + 1), *(mr->rdParam)));
+	break;
+
+    case META_PIE:
+	Pie(hdc, *(mr->rdParam + 7), *(mr->rdParam + 6), *(mr->rdParam + 5),
+	    *(mr->rdParam + 4), *(mr->rdParam + 3), *(mr->rdParam + 2),
+	    *(mr->rdParam + 1), *(mr->rdParam));
+	break;
+
+    case META_RECTANGLE:
+	Ellipse(hdc, *(mr->rdParam + 3), *(mr->rdParam + 2),
+		*(mr->rdParam + 1), *(mr->rdParam));
+	break;
+
+    case META_ROUNDRECT:
+	RoundRect(hdc, *(mr->rdParam + 5), *(mr->rdParam + 4),
+		  *(mr->rdParam + 3), *(mr->rdParam + 2),
+		  *(mr->rdParam + 1), *(mr->rdParam));
+	break;
+
+    case META_PATBLT:
+	PatBlt(hdc, *(mr->rdParam + 5), *(mr->rdParam + 4),
+	       *(mr->rdParam + 3), *(mr->rdParam + 2),
+	       MAKELONG(*(mr->rdParam), *(mr->rdParam + 1)));
+	break;
+
+    case META_SAVEDC:
+	SaveDC(hdc);
+	break;
+
+    case META_SETPIXEL:
+	SetPixel(hdc, *(mr->rdParam + 3), *(mr->rdParam + 2),
+		 MAKELONG(*(mr->rdParam + 1), *(mr->rdParam)));
+	break;
+
+    case META_OFFSETCLIPRGN:
+	OffsetClipRgn(hdc, *(mr->rdParam + 1), *(mr->rdParam));
+	break;
+
+    case META_TEXTOUT:
+	s1 = *(mr->rdParam);
+	TextOut(hdc, *(mr->rdParam + ((s1 + 1) >> 1) + 2),
+		*(mr->rdParam + ((s1 + 1) >> 1) + 1), 
+		(char *)(mr->rdParam + 1), s1);
+	break;
+
+    case META_POLYGON:
+	Polygon(hdc, (LPPOINT)(mr->rdParam + 1), *(mr->rdParam));
+	break;
+
+    case META_POLYLINE:
+	Polyline(hdc, (LPPOINT)(mr->rdParam + 1), *(mr->rdParam));
+	break;
+
+    case META_RESTOREDC:
+	RestoreDC(hdc, *(mr->rdParam));
+	break;
+
+    case META_SELECTOBJECT:
+	SelectObject(hdc, *(ht->objectHandle + *(mr->rdParam)));
+	break;
+
+    case META_CHORD:
+	Chord(hdc, *(mr->rdParam + 7), *(mr->rdParam + 6), *(mr->rdParam + 5),
+	      *(mr->rdParam + 4), *(mr->rdParam + 3), *(mr->rdParam + 2),
+	      *(mr->rdParam + 1), *(mr->rdParam));
+	break;
+
+    case META_CREATEPATTERNBRUSH:
+	switch (*(mr->rdParam))
+	{
+	case BS_PATTERN:
+	    infohdr = (BITMAPINFOHEADER *)(mr->rdParam + 2);
+	    MF_AddHandle(ht, nHandles,
+			 CreatePatternBrush(CreateBitmap(infohdr->biWidth, 
+				      infohdr->biHeight, 
+				      infohdr->biPlanes, 
+				      infohdr->biBitCount,
+				      (LPSTR)(mr->rdParam + 
+				      (sizeof(BITMAPINFOHEADER) / 2) + 4))));
+	    break;
+
+	case BS_DIBPATTERN:
+	    s1 = mr->rdSize * 2 - sizeof(METARECORD) - 2;
+	    hndl = GlobalAlloc(GMEM_MOVEABLE, s1);
+	    ptr = GlobalLock(hndl);
+	    memcpy(ptr, mr->rdParam + 2, s1);
+	    GlobalUnlock(hndl);
+	    MF_AddHandle(ht, nHandles,
+			 CreateDIBPatternBrush(hndl, *(mr->rdParam + 1)));
+	    GlobalFree(hndl);
+	}
+	break;
+	
+    case META_CREATEPENINDIRECT:
+	MF_AddHandle(ht, nHandles, 
+		     CreatePenIndirect((LOGPEN *)(&(mr->rdParam))));
+	break;
+
+    case META_CREATEBRUSHINDIRECT:
+	MF_AddHandle(ht, nHandles, 
+		     CreateBrushIndirect((LOGBRUSH *)(&(mr->rdParam))));
+	break;
+
+    default:
+	printf("PlayMetaFileRecord: Unknown record type %x\n",
+	                                      mr->rdFunction);
+    }
 }
 
 
@@ -173,6 +478,71 @@ BOOL MF_WriteRecord(HMETAFILE hmf, METARECORD *mr, WORD rlen)
     mh->mtMaxRecord = max(mh->mtMaxRecord, rlen / 2);
     GlobalUnlock(mf->hMetaHdr);
     return TRUE;
+}
+
+
+/******************************************************************
+ *         MF_AddHandle
+ *
+ *    Add a handle to an external handle table and return the index
+ */
+int MF_AddHandle(HANDLETABLE *ht, WORD htlen, HANDLE hobj)
+{
+    int i;
+
+    for (i = 0; i < htlen; i++)
+    {
+	if (*(ht->objectHandle + i) == 0)
+	{
+	    *(ht->objectHandle + i) = hobj;
+	    return i;
+	}
+    }
+    return -1;
+}
+
+
+/******************************************************************
+ *         MF_AddHandleInternal
+ *
+ *    Add a handle to the internal handle table and return the index
+ */
+int MF_AddHandleInternal(HANDLE hobj)
+{
+    int i;
+    HANDLETABLE *ht = (HANDLETABLE *)GlobalLock(hHT);
+
+    for (i = 0; i < HTLen; i++)
+    {
+	if (*(ht->objectHandle + i) == 0)
+	{
+	    *(ht->objectHandle + i) = hobj;
+	    GlobalUnlock(hHT);
+	    return i;
+	}
+    }
+    GlobalUnlock(hHT);
+    if (!(hHT = GlobalReAlloc(hHT, HTINCR, GMEM_MOVEABLE | GMEM_ZEROINIT)))
+	return -1;
+    HTLen += HTINCR;
+    ht = (HANDLETABLE *)GlobalLock(hHT);
+    *(ht->objectHandle + i) = hobj;
+    GlobalUnlock(hHT);
+    return i;
+}
+
+
+/******************************************************************
+ *         MF_MetaParam0
+ */
+BOOL MF_MetaParam0(DC *dc, short func)
+{
+    char buffer[8];
+    METARECORD *mr = (METARECORD *)&buffer;
+
+    mr->rdSize = 3;
+    mr->rdFunction = func;
+    return MF_WriteRecord(dc->w.hMetaFile, mr, mr->rdSize * 2);
 }
 
 
@@ -274,16 +644,15 @@ BOOL MF_MetaParam8(DC *dc, short func, short param1, short param2,
 /******************************************************************
  *         MF_CreateBrushIndirect
  */
-BOOL MF_CreateBrushIndirect(DC *dc, LOGBRUSH *logbrush)
+BOOL MF_CreateBrushIndirect(DC *dc, HBRUSH hBrush, LOGBRUSH *logbrush)
 {
+    int index;
+    BOOL rc;
     char buffer[sizeof(METARECORD) - 2 + sizeof(LOGBRUSH)];
     METARECORD *mr = (METARECORD *)&buffer;
-    METAFILE *mf = (METAFILE *)GlobalLock(dc->w.hMetaFile);
-    METAHEADER *mh = (METAHEADER *)GlobalLock(mf->hMetaHdr);
+    METAFILE *mf;
+    METAHEADER *mh;
 
-#ifdef DEBUG_METAFILE
-    printf("MF_CreateBrushIndirect\n");
-#endif
     mr->rdSize = (sizeof(METARECORD) + sizeof(LOGBRUSH) - 2) / 2;
     mr->rdFunction = META_CREATEBRUSHINDIRECT;
     memcpy(&(mr->rdParam), logbrush, sizeof(LOGBRUSH));
@@ -292,24 +661,37 @@ BOOL MF_CreateBrushIndirect(DC *dc, LOGBRUSH *logbrush)
 
     mr->rdSize = sizeof(METARECORD) / 2;
     mr->rdFunction = META_SELECTOBJECT;
-    *(mr->rdParam) = mh->mtNoObjects++;
-    return MF_WriteRecord(dc->w.hMetaFile, mr, mr->rdSize * 2);
+    if ((index = MF_AddHandleInternal(hBrush)) == -1)
+	return FALSE;
+
+    mf = (METAFILE *)GlobalLock(dc->w.hMetaFile);
+    mh = (METAHEADER *)GlobalLock(mf->hMetaHdr);
+    *(mr->rdParam) = index;
+    if (index >= mh->mtNoObjects)
+	mh->mtNoObjects++;
+    rc = MF_WriteRecord(dc->w.hMetaFile, mr, mr->rdSize * 2);
+    GlobalUnlock(mf->hMetaHdr);
+    GlobalUnlock(dc->w.hMetaFile);
+    return rc;
 }
 
 
 /******************************************************************
  *         MF_CreatePatternBrush
  */
-BOOL MF_CreatePatternBrush(DC *dc, LOGBRUSH *logbrush)
+BOOL MF_CreatePatternBrush(DC *dc, HBRUSH hBrush, LOGBRUSH *logbrush)
 {
     DWORD len, bmSize, biSize;
     HANDLE hmr;
     METARECORD *mr;
     BITMAPOBJ *bmp;
     BITMAPINFO *info;
+    BITMAPINFOHEADER *infohdr;
+    int index;
+    BOOL rc;
     char buffer[sizeof(METARECORD)];
-    METAFILE *mf = (METAFILE *)GlobalLock(dc->w.hMetaFile);
-    METAHEADER *mh = (METAHEADER *)GlobalLock(mf->hMetaHdr);
+    METAFILE *mf;
+    METAHEADER *mh;
 
     switch (logbrush->lbStyle)
     {
@@ -317,7 +699,7 @@ BOOL MF_CreatePatternBrush(DC *dc, LOGBRUSH *logbrush)
 	bmp = (BITMAPOBJ *)GDI_GetObjPtr(logbrush->lbHatch, BITMAP_MAGIC);
 	if (!bmp) return FALSE;
 	len = sizeof(METARECORD) + sizeof(BITMAPINFOHEADER) + 
-	      (bmp->bitmap.bmHeight * bmp->bitmap.bmWidthBytes) + 2;
+	      (bmp->bitmap.bmHeight * bmp->bitmap.bmWidthBytes) + 6;
 	if (!(hmr = GlobalAlloc(GMEM_MOVEABLE, len)))
 	    return FALSE;
 	mr = (METARECORD *)GlobalLock(hmr);
@@ -325,7 +707,14 @@ BOOL MF_CreatePatternBrush(DC *dc, LOGBRUSH *logbrush)
 	mr->rdFunction = META_DIBCREATEPATTERNBRUSH;
 	mr->rdSize = len / 2;
 	*(mr->rdParam) = logbrush->lbStyle;
-	memcpy(mr->rdParam + (sizeof(BITMAPINFOHEADER) / 2) + 2, 
+	*(mr->rdParam + 1) = DIB_RGB_COLORS;
+	infohdr = (BITMAPINFOHEADER *)(mr->rdParam + 2);
+	infohdr->biSize = sizeof(BITMAPINFOHEADER);
+	infohdr->biWidth = bmp->bitmap.bmWidth;
+	infohdr->biHeight = bmp->bitmap.bmHeight;
+	infohdr->biPlanes = bmp->bitmap.bmPlanes;
+	infohdr->biBitCount = bmp->bitmap.bmBitsPixel;
+	memcpy(mr->rdParam + (sizeof(BITMAPINFOHEADER) / 2) + 4,
 	       bmp->bitmap.bmBits, 
 	       bmp->bitmap.bmHeight * bmp->bitmap.bmWidthBytes);
 	break;
@@ -359,24 +748,33 @@ BOOL MF_CreatePatternBrush(DC *dc, LOGBRUSH *logbrush)
     mr = (METARECORD *)&buffer;
     mr->rdSize = sizeof(METARECORD) / 2;
     mr->rdFunction = META_SELECTOBJECT;
-    (WORD)(*(mr->rdParam)) = mh->mtNoObjects++;
-    return MF_WriteRecord(dc->w.hMetaFile, mr, mr->rdSize * 2);
+    if ((index = MF_AddHandleInternal(hBrush)) == -1)
+	return FALSE;
+
+    mf = (METAFILE *)GlobalLock(dc->w.hMetaFile);
+    mh = (METAHEADER *)GlobalLock(mf->hMetaHdr);
+    *(mr->rdParam) = index;
+    if (index >= mh->mtNoObjects)
+	mh->mtNoObjects++;
+    rc = MF_WriteRecord(dc->w.hMetaFile, mr, mr->rdSize * 2);
+    GlobalUnlock(mf->hMetaHdr);
+    GlobalUnlock(dc->w.hMetaFile);
+    return rc;
 }
 
 
 /******************************************************************
  *         MF_CreatePenIndirect
  */
-BOOL MF_CreatePenIndirect(DC *dc, LOGPEN *logpen)
+BOOL MF_CreatePenIndirect(DC *dc, HPEN hPen, LOGPEN *logpen)
 {
+    int index;
+    BOOL rc;
     char buffer[sizeof(METARECORD) - 2 + sizeof(LOGPEN)];
     METARECORD *mr = (METARECORD *)&buffer;
-    METAFILE *mf = (METAFILE *)GlobalLock(dc->w.hMetaFile);
-    METAHEADER *mh = (METAHEADER *)GlobalLock(mf->hMetaHdr);
+    METAFILE *mf;
+    METAHEADER *mh;
 
-#ifdef DEBUG_METAFILE
-    printf("MF_CreatePenIndirect\n");
-#endif
     mr->rdSize = (sizeof(METARECORD) + sizeof(LOGPEN) - 2) / 2;
     mr->rdFunction = META_CREATEPENINDIRECT;
     memcpy(&(mr->rdParam), logpen, sizeof(LOGPEN));
@@ -385,8 +783,18 @@ BOOL MF_CreatePenIndirect(DC *dc, LOGPEN *logpen)
 
     mr->rdSize = sizeof(METARECORD) / 2;
     mr->rdFunction = META_SELECTOBJECT;
-    (WORD)(*(mr->rdParam)) = mh->mtNoObjects++;
-    return MF_WriteRecord(dc->w.hMetaFile, mr, mr->rdSize * 2);
+    if ((index = MF_AddHandleInternal(hPen)) == -1)
+	return FALSE;
+
+    mf = (METAFILE *)GlobalLock(dc->w.hMetaFile);
+    mh = (METAHEADER *)GlobalLock(mf->hMetaHdr);
+    *(mr->rdParam) = index;
+    if (index >= mh->mtNoObjects)
+	mh->mtNoObjects++;
+    rc = MF_WriteRecord(dc->w.hMetaFile, mr, mr->rdSize * 2);
+    GlobalUnlock(mf->hMetaHdr);
+    GlobalUnlock(dc->w.hMetaFile);
+    return rc;
 }
 
 
@@ -400,7 +808,7 @@ BOOL MF_TextOut(DC *dc, short x, short y, LPSTR str, short count)
     HANDLE hmr;
     METARECORD *mr;
 
-    len = sizeof(METARECORD) + count + 4;
+    len = sizeof(METARECORD) + (((count + 1) >> 1) * 2) + 4;
     if (!(hmr = GlobalAlloc(GMEM_MOVEABLE, len)))
 	return FALSE;
     mr = (METARECORD *)GlobalLock(hmr);
@@ -410,8 +818,8 @@ BOOL MF_TextOut(DC *dc, short x, short y, LPSTR str, short count)
     mr->rdFunction = META_TEXTOUT;
     *(mr->rdParam) = count;
     memcpy(mr->rdParam + 1, str, count);
-    *(mr->rdParam + (count / 2) + 1) = y;
-    *(mr->rdParam + (count / 2) + 2) = x;
+    *(mr->rdParam + ((count + 1) >> 1) + 1) = y;
+    *(mr->rdParam + ((count + 1) >> 1) + 2) = x;
     rc = MF_WriteRecord(dc->w.hMetaFile, mr, mr->rdSize * 2);
     GlobalFree(hmr);
     return rc;

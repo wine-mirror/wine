@@ -663,8 +663,10 @@ int EnumFontFamilies(HDC hDC, LPSTR lpszFamily, FARPROC lpEnumFunc, LPSTR lpData
 	while (TRUE) {
 		if (lpLogFontList[i] == NULL) break;
 		if (lpszFamily == NULL) {
+			if (lpLogFontList[i] == NULL) break;
 			for (j = 0; j < MAX_FONTS; j++)	{
 				if (lpFaceList[j] == NULL) break;
+				if (lpLogFontList[i] == NULL) break;
 				if (strcmp(lpFaceList[j], lpLogFontList[i]->lfFaceName) == 0) {
 					i++; j = 0;
 					}

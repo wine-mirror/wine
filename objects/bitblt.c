@@ -12,6 +12,7 @@ static char Copyright[] = "Copyright  Alexandre Julliard, 1993";
 #include <X11/Intrinsic.h>
 
 #include "gdi.h"
+#include "metafile.h"
 
 extern const int DC_XROPfunction[];
 
@@ -28,7 +29,15 @@ BOOL PatBlt( HDC hdc, short left, short top,
     int x1, x2, y1, y2;
     
     DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
-    if (!dc) return FALSE;
+    if (!dc) 
+    {
+	dc = (DC *)GDI_GetObjPtr(hdc, METAFILE_DC_MAGIC);
+	if (!dc) return FALSE;
+	MF_MetaParam6(dc, META_PATBLT, left, top, width, height,
+		      HIWORD(rop), LOWORD(rop));
+	return TRUE;
+    }
+
 #ifdef DEBUG_GDI
     printf( "PatBlt: %d %d,%d %dx%d %06x\n",
 	    hdc, left, top, width, height, rop );

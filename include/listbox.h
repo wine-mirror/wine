@@ -26,6 +26,7 @@ typedef struct tagHEADLIST {
     void	*lpFirst; 
     DWORD	dwStyle;
     HWND	hWndLogicParent;
+	HFONT	hFont;
 } HEADLIST;
 typedef HEADLIST FAR* LPHEADLIST;
 

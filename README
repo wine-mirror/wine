@@ -197,6 +197,17 @@ bob@amscons.com
 
 7. WHAT'S NEW
 
+WHAT'S NEW with Wine-940602: (see ChangeLog for details)
+	- CLOCK.EXE runs.
+	- ABORT command added to debugger.
+	- Windows environment is now imported from the UNIX environment.
+	- Use of save unders and backing store are now the default.  Resource
+	  and command line options have been added to disable these things.
+	- Assorted new driver functions
+	- GetAsyncKeyState()
+	- More metafile support
+	- and many many bug fixes!
+
 WHAT'S NEW with Wine-940524: (see ChangeLog for details)
 	- New menu functions
 	- EnumObjects()

@@ -78,6 +78,7 @@ LONG ListBoxWndProc( HWND hwnd, WORD message, WORD wParam, LONG lParam )
 			lphl->hWndLogicParent = (HWND)HIWORD(createStruct->lpCreateParams);
 		else
 			lphl->hWndLogicParent = GetParent(hwnd);
+		lphl->hFont = GetStockObject(SYSTEM_FONT);
 		lphl->ColumnsWidth = wndPtr->rectClient.right - wndPtr->rectClient.left;
 		if (wndPtr->dwStyle & WS_VSCROLL) {
 			SetScrollRange(hwnd, SB_VERT, 1, lphl->ItemsCount, TRUE);
@@ -330,6 +331,14 @@ LONG ListBoxWndProc( HWND hwnd, WORD message, WORD wParam, LONG lParam )
 		InvalidateRect(hwnd, NULL, TRUE);
 		UpdateWindow(hwnd);
 		break;
+	case WM_SETFONT:
+		lphl = ListBoxGetWindowAndStorage(hwnd, &wndPtr);
+		if (lphl == NULL) return 0;
+		if (wParam == 0)
+			lphl->hFont = GetStockObject(SYSTEM_FONT);
+		else
+			lphl->hFont = wParam;
+		if (wParam == 0) break;
 	case WM_PAINT:
 		wndPtr = WIN_FindWndPtr(hwnd);
 		if ((wndPtr->dwStyle & LBS_OWNERDRAWFIXED) == LBS_OWNERDRAWFIXED) {
@@ -514,6 +523,7 @@ void StdDrawListBox(HWND hwnd)
 	    }
 	lphl = ListBoxGetWindowAndStorage(hwnd, &wndPtr);
 	if (lphl == NULL) goto EndOfPaint;
+	SelectObject(hdc, lphl->hFont);
 	hBrush = SendMessage(lphl->hWndLogicParent, WM_CTLCOLOR, (WORD)hdc,
 		    MAKELONG(hwnd, CTLCOLOR_LISTBOX));
 	if (hBrush == (HBRUSH)NULL)  hBrush = GetStockObject(WHITE_BRUSH);
@@ -986,8 +996,9 @@ int ListBoxResetContent(HWND hwnd)
 #ifdef DEBUG_LISTBOX
 	    printf("ResetContent #%u\n", i);
 #endif
-	    if (lpls2->hData != 0) USER_HEAP_FREE(lpls->hData);
-	    if (lpls2->hMem != 0) USER_HEAP_FREE(lpls->hMem);
+	    if (lpls2->hData != 0 && lpls2->hData != lpls2->hMem)
+		USER_HEAP_FREE(lpls2->hData);
+	    if (lpls2->hMem != 0) USER_HEAP_FREE(lpls2->hMem);
 	    }  
 	if (lpls == NULL)  break;
     }
@@ -1093,6 +1104,7 @@ int ListBoxGetSel(HWND hwnd, WORD wIndex)
 int ListBoxDirectory(HWND hwnd, UINT attrib, LPSTR filespec)
 {
 	struct dosdirent *dp;
+	struct dosdirent *newdp;
 	struct stat	st;
 	int	x, wRet;
 	char 	temp[256];
@@ -1100,9 +1112,8 @@ int ListBoxDirectory(HWND hwnd, UINT attrib, LPSTR filespec)
 	fprintf(stderr,"ListBoxDirectory: %s, %4x\n",filespec,attrib);
 #endif
 	if ((dp = (struct dosdirent *)DOS_opendir(filespec)) ==NULL) return 0;
-	while (1) {
-		dp = (struct dosdirent *)DOS_readdir(dp);
-		if (!dp->inuse)	break;
+	while (dp = (struct dosdirent *)DOS_readdir(dp)) {
+		if (!dp->inuse) break;
 #ifdef DEBUG_LISTBOX
 		printf("ListBoxDirectory %08X '%s' !\n", dp->filename, dp->filename);
 #endif

@@ -4,7 +4,7 @@
  * Copyright 1993 Alexandre Julliard
  */
 
-#define DEBUG_DIALOG /* */
+/* #define DEBUG_DIALOG /* */
 
 static char Copyright[] = "Copyright  Alexandre Julliard, 1993";
 

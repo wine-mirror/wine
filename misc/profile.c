@@ -220,6 +220,10 @@ static short GetSetProfile (int set, LPSTR AppName, LPSTR KeyName,
     TSecHeader *section;
     TKeys      *key;
     
+    /* Supposedly Default should NEVER be NULL.  But sometimes it is.  */
+    if (Default == NULL)
+	Default = "";
+
     if (!(section = is_loaded (FileName))){
 	New = (TProfile *) xmalloc (sizeof (TProfile));
 	New->link = Base;
@@ -237,16 +241,31 @@ static short GetSetProfile (int set, LPSTR AppName, LPSTR KeyName,
 	/* If no key value given, then list all the keys */
 	if ((!KeyName) && (!set)){
 	    char *p = ReturnedString;
-	    int left = Size - 1;
+	    int left = Size - 2;
 	    int slen;
-	    
+#ifdef DEBUG_PROFILE
+		printf("GetSetProfile // KeyName == NULL, Enumeration !\n");
+#endif
 	    for (key = section->Keys; key; key = key->link){
-		strncpy (p, key->KeyName, left);
-		slen = strlen (key->KeyName) + 1;
-		left -= slen+1;
+		if (left < 1) {
+			printf("GetSetProfile // No more storage for enum !\n");
+			return (Size - 2);
+			}
+		slen = min(strlen(key->KeyName) + 1, left);
+#ifdef DEBUG_PROFILE
+		printf("GetSetProfile // strncpy(%08X, %08X, %d);\n", 
+				ReturnedString, key->Value, slen);
+#endif
+		strncpy (p, key->KeyName, slen);
+#ifdef DEBUG_PROFILE
+		printf("GetSetProfile // enum '%s' !\n", p);
+#endif
+		left -= slen;
 		p += slen;
 	    }
-	    return left;
+		*p = '\0';
+		printf("GetSetProfile // normal end of enum !\n");
+	    return (Size - 2 - left);
 	}
 	for (key = section->Keys; key; key = key->link){
 	    if (strcasecmp (key->KeyName, KeyName))
@@ -291,7 +310,11 @@ short GetPrivateProfileString (LPSTR AppName, LPSTR KeyName,
 			       short Size, LPSTR FileName)
 {
     int v;
-    
+
+#ifdef DEBUG_PROFILE
+	printf("GetPrivateProfileString ('%s', '%s', '%s', %08X, %d, %s\n", 
+			AppName, KeyName, Default, ReturnedString, Size, FileName);
+#endif
     v = GetSetProfile (0,AppName,KeyName,Default,ReturnedString,Size,FileName);
     if (AppName)
 	return strlen (ReturnedString);

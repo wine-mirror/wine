@@ -34,6 +34,7 @@ static XContext winContext = 0;
 
   /* State variables */
 BOOL MouseButtonsStates[NB_BUTTONS] = { FALSE, FALSE, FALSE };
+BOOL AsyncMouseButtonsStates[NB_BUTTONS] = { FALSE, FALSE, FALSE };
 static WORD ALTKeyState;
 static HWND captureWnd = 0;
 Window winHasCursor = 0;
@@ -381,6 +382,7 @@ static void EVENT_ButtonPress( XButtonEvent *event )
 
     if (buttonNum >= NB_BUTTONS) return;
     MouseButtonsStates[buttonNum] = TRUE;
+    AsyncMouseButtonsStates[buttonNum] = TRUE;
     winHasCursor = event->window;
     hardware_event( messages[buttonNum],
 		    EVENT_XStateToKeyState( event->state ), 0L,

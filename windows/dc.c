@@ -293,7 +293,14 @@ int SaveDC( HDC hdc )
     HDC hdcs;
     DC * dc, * dcs;
 
-    if (!(dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC ))) return 0;
+    dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
+    if (!dc) 
+    {
+	dc = (DC *)GDI_GetObjPtr(hdc, METAFILE_DC_MAGIC);
+	if (!dc) return 0;
+	MF_MetaParam0(dc, META_SAVEDC);
+	return 1;  /* ?? */
+    }
     if (!(hdcs = GetDCState( hdc ))) return 0;
     dcs = (DC *) GDI_HEAP_ADDR( hdcs );
     dcs->header.hNext = dc->header.hNext;
@@ -315,7 +322,15 @@ BOOL RestoreDC( HDC hdc, short level )
 #ifdef DEBUG_DC
     printf( "RestoreDC: %d %d\n", hdc, level );
 #endif    
-    if (!(dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC ))) return FALSE;
+    dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
+    if (!dc) 
+    {
+	dc = (DC *)GDI_GetObjPtr(hdc, METAFILE_DC_MAGIC);
+	if (!dc) return FALSE;
+	if (level != -1) return FALSE;
+	MF_MetaParam1(dc, META_RESTOREDC, level);
+	return TRUE;
+    }
     if (level == -1) level = dc->saveLevel;
     if ((level < 1) || (level > (short)dc->saveLevel)) return FALSE;
     

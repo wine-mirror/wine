@@ -9,7 +9,7 @@ static char Copyright[] = "Copyright  Robert J. Amstadt, 1993";
 #include "heap.h"
 #include "regfunc.h"
 
-/* #define DEBUG_HEAP */
+/* #define DEBUG_HEAP /* */
 
 LHEAP *LocalHeaps = NULL;
 

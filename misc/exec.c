@@ -45,7 +45,7 @@ extern int CallToInit16(unsigned long csip, unsigned long sssp,
 			unsigned short ds);
 HANDLE CreateNewTask(HINSTANCE hInst);
 
-
+#ifndef WINELIB
 void InitializeLoadedNewDLLs(HINSTANCE hInst)
 {
     struct w_files * w;
@@ -127,7 +127,12 @@ void StartNewTask(HINSTANCE hInst)
 
 }
 
-
+#else
+void StartNewTask (HINSTANCE hInst)
+{
+    printf ("Not yet implemented\n");
+}
+#endif
 
 /**********************************************************************
  *				LoadModule	[KERNEL.45]
@@ -172,7 +177,7 @@ WORD WinExec(LPSTR lpCmdLine, WORD nCmdShow)
 			printf("Can't 'fork' process !\n");
 			break;
 		case 0:
-			if ((hInst = LoadImage(ArgV[0], EXE)) == (HINSTANCE) NULL ) {
+			if ((hInst = LoadImage(ArgV[0], EXE, 1)) == (HINSTANCE) NULL ) {
 				fprintf(stderr, "wine: can't find %s!.\n", ArgV[0]);
 				printf("Child process died !\n");
 				exit(1);

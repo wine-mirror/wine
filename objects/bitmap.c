@@ -251,6 +251,16 @@ HBITMAP BITMAP_SelectObject( HDC hdc, DC * dc, HBITMAP hbitmap,
     return prevHandle;
 }
 
+/***********************************************************************
+ *           CreateDiscardableBitmap    (GDI.156)
+ */
+HBITMAP CreateDiscardableBitmap(HDC hdc, short width, short height)
+{
+    printf("CreateDiscardableBitmap(%04X, %d, %d); "
+	   "// call CreateCompatibleBitmap() for now!\n",
+	   hdc, width, height);
+    return CreateCompatibleBitmap(hdc, width, height);
+}
 
 /***********************************************************************
  *           GetBitmapDimensionEx    (GDI.468)

@@ -17,8 +17,6 @@
  *
  ************************************************************************/
 
-/* #define DEBUG_FILE */
-
 #include <stdio.h>
 #include <fcntl.h>
 #include <limits.h>
@@ -27,7 +25,7 @@
 #include <windows.h>
 #include "prototypes.h"
 
-/* #define DEBUG_FILE */
+/* #define DEBUG_FILE /* */
 
 char WindowsDirectory[256], SystemDirectory[256], TempDirectory[256];
 
@@ -87,9 +85,11 @@ INT _lwrite (INT hFile, LPSTR lpBuffer, INT wBytes)
 {
 	int result;
 
+#if 0
 #ifdef DEBUG_FILE
   fprintf(stderr, "_lwrite: handle %d, buffer = %ld, length = %d\n",
 	  		hFile, (int) lpBuffer, wBytes);
+#endif
 #endif
 	result = write (hFile, lpBuffer, wBytes);
 
@@ -121,38 +121,61 @@ INT _lclose (INT hFile)
  **************************************************************************/
 INT OpenFile (LPSTR lpFileName, LPOFSTRUCT ofs, WORD wStyle)
 {
-	int 	base,flags;
-	int		handle;
-#ifdef DEBUG_FILE
-	fprintf(stderr,"Openfile(%s,<struct>,%d) ",lpFileName,wStyle);
-#endif
-	base=wStyle&0xF;
-	flags=wStyle&0xFFF0;
-  
-	flags&=0xFF0F;  /* strip SHARE bits for now */
-	flags&=0xD7FF;  /* strip PROMPT & CANCEL bits for now */
-	flags&=0x7FFF;  /* strip REOPEN bit for now */
-	flags&=0xFBFF;  /* strib VERIFY bit for now */
-  
-	if(flags&OF_CREATE) { base |=O_CREAT; flags &=0xEFFF; }
+    int 	base, flags;
+    int		handle;
 
 #ifdef DEBUG_FILE
-	fprintf(stderr,"now %d,%d\n",base,flags);
+    fprintf(stderr,"Openfile(%s,<struct>,%d) ",lpFileName,wStyle);
 #endif
 
-	if (flags & OF_EXIST) {
-		printf("OpenFile // OF_EXIST '%s' !\n", lpFileName);
-		handle = _lopen (lpFileName, wStyle);
-		close(handle);
-		return handle;
-		}
-	if (flags & OF_DELETE) {
-		printf("OpenFile // OF_DELETE '%s' !\n", lpFileName);
-		return unlink(lpFileName);
-		}
-	else {
-		return _lopen (lpFileName, wStyle);
-		}
+    base   = wStyle & 0xF;
+    flags  = wStyle & 0xFFF0;
+  
+    flags &= 0xFF0F;  /* strip SHARE bits for now */
+    flags &= 0xD7FF;  /* strip PROMPT & CANCEL bits for now */
+    flags &= 0x7FFF;  /* strip REOPEN bit for now */
+    flags &= 0xFBFF;  /* strib VERIFY bit for now */
+  
+    if (flags & OF_CREATE) 
+    { 
+	base  |= O_CREAT; 
+	flags &= 0xEFFF; 
+    }
+
+#ifdef DEBUG_FILE
+    fprintf(stderr,"now %d,%d\n",base,flags);
+#endif
+
+    if (flags & OF_EXIST) 
+    {
+	printf("OpenFile // OF_EXIST '%s' !\n", lpFileName);
+	handle = _lopen (lpFileName, wStyle);
+	close(handle);
+	return handle;
+    }
+    if (flags & OF_DELETE) 
+    {
+	printf("OpenFile // OF_DELETE '%s' !\n", lpFileName);
+	return unlink(lpFileName);
+    }
+    else 
+    {
+	int  handle;
+	char *UnixFileName;
+
+	if ((UnixFileName = GetUnixFileName(lpFileName)) == NULL)
+	    return HFILE_ERROR;
+	handle = open(UnixFileName, base, 0666);
+
+#ifdef DEBUG_FILE
+	fprintf(stderr, "OpenFile: returning %04.4x\n", handle);
+#endif
+
+	if (handle == -1)
+	    return HFILE_ERROR;
+	else
+	    return handle;
+    }
 }
 
 /**************************************************************************

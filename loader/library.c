@@ -46,11 +46,18 @@ HANDLE GetModuleHandle(LPSTR lpModuleName)
 {
 	register struct w_files *w = wine_files;
 	int 	i;
- 	printf("GetModuleHandle('%s');\n", lpModuleName);
+ 	printf("GetModuleHandle('%x');\n", lpModuleName);
  	printf("GetModuleHandle // searching in loaded modules\n");
 	while (w) {
-/*		printf("GetModuleHandle // '%s' \n", w->name);  */
-		if (strcasecmp(w->name, lpModuleName) == 0) {
+/*		printf("GetModuleHandle // '%x' \n", w->name);  */
+		if (((int) lpModuleName & 0xffff0000) == 0) {
+			if (w->hinstance == (int) lpModuleName) {
+				printf("GetModuleHandle('%x') return %04X \n",
+				       lpModuleName, w->hinstance);
+				return w->hinstance;
+				}
+			}
+		else if (strcasecmp(w->name, lpModuleName) == 0) {
 			printf("GetModuleHandle('%s') return %04X \n", 
 							lpModuleName, w->hinstance);
 			return w->hinstance;
@@ -60,13 +67,20 @@ HANDLE GetModuleHandle(LPSTR lpModuleName)
  	printf("GetModuleHandle // searching in builtin libraries\n");
     for (i = 0; i < N_BUILTINS; i++) {
 		if (dll_builtin_table[i].dll_name == NULL) break;
-		if (strcasecmp(dll_builtin_table[i].dll_name, lpModuleName) == 0) {
-			printf("GetModuleHandle('%s') return %04X \n", 
+		if (((int) lpModuleName & 0xffff0000) == 0) {
+			if (0xFF00 + i == (int) lpModuleName) {
+				printf("GetModuleHandle('%s') return %04X \n",
+				       lpModuleName, w->hinstance);
+				return 0xFF + i;
+				}
+			}
+		else if (strcasecmp(dll_builtin_table[i].dll_name, lpModuleName) == 0) {
+			printf("GetModuleHandle('%x') return %04X \n", 
 							lpModuleName, 0xFF00 + i);
 			return (0xFF00 + i);
 			}
 		}
-	printf("GetModuleHandle('%s') not found !\n", lpModuleName);
+	printf("GetModuleHandle('%x') not found !\n", lpModuleName);
 	return 0;
 }
 
@@ -192,7 +206,7 @@ HANDLE LoadLibrary(LPSTR libname)
     lpNewMod->FileName = (LPSTR) malloc(strlen(libname));
     if (lpNewMod->FileName != NULL)	
 	strcpy(lpNewMod->FileName, libname);
-    lpNewMod->hInst = LoadImage(libname, DLL);
+    lpNewMod->hInst = LoadImage(libname, DLL, 0);
     lpNewMod->Count = 1;
     printf("LoadLibrary returned Library hInst=%04X\n", lpNewMod->hInst);
     GlobalUnlock(hModule);	
@@ -315,7 +329,7 @@ FARPROC GetProcAddress(HANDLE hModule, char *proc_name)
 		break;
 	    }
 	    cpnt += len + 2;
-	};
+	}
 	if (ordinal == 0) 
 	{
 	    printf("GetProcAddress // function '%s' not found !\n", proc_name);

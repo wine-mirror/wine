@@ -12,5 +12,7 @@
 	popl	%ecx
 	popl	%eax
 	add	$16,%esp
-	popfl
+	popl	%gs:return_value
 	add	$20,%esp
+	pushl	%gs:return_value
+	popfl

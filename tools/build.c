@@ -50,7 +50,7 @@ static char Copyright[] = "Copyright  Robert J. Amstadt, 1993";
 #define POP_0		"\tadd\t$4,%%esp\n"
 #define POP_SS		"\tpopw\t%%ss\n\tadd\t$2,%%esp\n"
 #define POP_ESP		"\tpopl\t%%esp\n"
-#define POP_EFL		"\tpopfl\n"
+#define POP_EFL		"\tpopl\t%%gs:return_value\n"
 #define POP_CS		"\tpopw\t%%cs\n\tadd\t$2,%%esp\n"
 #define POP_EIP		"\tpopl\t$0\n"
 #define POP_DS		"\tpopw\t%%ds\n\tadd\t$2,%%esp\n"
@@ -728,6 +728,8 @@ main(int argc, char **argv)
     
 	if (add_count > 0)
 	    fprintf(fp, "\tadd\t$%d,%%esp\n", add_count);
+
+	fprintf(fp, "\tpushl\t%%gs:return_value\n\tpopfl\n");
 		
 	fclose(fp);
 	exit(0);

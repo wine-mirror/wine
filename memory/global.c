@@ -1,6 +1,7 @@
 static char RCSId[] = "$Id: global.c,v 1.2 1993/07/04 04:04:21 root Exp root $";
 static char Copyright[] = "Copyright  Robert J. Amstadt, 1993";
 
+/* #define DEBUG_HEAP /* */
 #define GLOBAL_SOURCE
 
 #include <stdio.h>
@@ -406,21 +407,23 @@ GlobalFlags(unsigned int block)
 unsigned int
 GlobalSize(unsigned int block)
 {
-    GDESC *g;
-
-    if (block == 0)
+    GDESC *g = GlobalGetGDesc(block);
+    
+    if (g == NULL)
 	return 0;
 
-    /*
-     * Find GDESC for this block.
-     */
-    for (g = GlobalList; g != NULL; g = g->next)
+    if (g->sequence == 0)
     {
-	if (g->handle == block)
-	    return g->length;
+	MDESC *m = (MDESC *) g->addr - 1;
+	
+	return m->length;
     }
-
-    return 0;
+    else if (g->sequence >= 1)
+    {
+	return g->length * 0x10000;
+    }
+    
+    return g->length;
 }
 
 /**********************************************************************

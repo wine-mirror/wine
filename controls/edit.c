@@ -673,7 +673,7 @@ void EDIT_WriteTextLine(HWND hwnd, RECT *rect, int y)
     int col, off = 0;
     int sbl, sel, sbc, sec;
     RECT rc;
-    div_t num;
+
     BOOL trunc = FALSE;
     WND *wndPtr = WIN_FindWndPtr(hwnd);
     EDITSTATE *es = (EDITSTATE *)EDIT_HEAP_ADDR((HANDLE)(*(wndPtr->wExtra)));

@@ -18,6 +18,16 @@ CallLineDDAProc (FARPROC back, int x, int y, long lParam)
     (*back)(x, y, lParam);
 }
 
+DWORD CallHookProc (HOOKPROC func, short code, WPARAM wParam, LPARAM lParam)
+{
+    (*func)(code, wParam, lParam);
+}
+
+BOOL CallGrayStringProc (FARPROC func, HDC hdc, LPARAM lParam, INT cch)
+{
+    return (*func) (hdc, lParam, cch);
+}
+
 /*
  * Header loading routines for WineLib.
  */

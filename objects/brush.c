@@ -237,13 +237,13 @@ HBRUSH BRUSH_SelectObject( HDC hdc, DC * dc, HBRUSH hbrush, BRUSHOBJ * brush )
 	case BS_SOLID:
 	case BS_HATCHED:
 	case BS_HOLLOW:
-	    if (!MF_CreateBrushIndirect(dc, &(brush->logbrush)))
+	    if (!MF_CreateBrushIndirect(dc, hbrush, &(brush->logbrush)))
 		return 0;
 	    break;
 
 	case BS_PATTERN:
 	case BS_DIBPATTERN:
-	    if (!MF_CreatePatternBrush(dc, &(brush->logbrush)))
+	    if (!MF_CreatePatternBrush(dc, hbrush, &(brush->logbrush)))
 		return 0;
 	    break;
 	}

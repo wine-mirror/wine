@@ -60,9 +60,12 @@ SEGDESC Segments[MAX_SELECTORS];
 
 extern void KERNEL_Ordinal_102();
 extern void UNIXLIB_Ordinal_0();
+extern char *WIN_ProgramName;
+extern char WindowsPath[256];
 
 extern char **Argv;
 extern int Argc;
+extern char **environ;
 
 /**********************************************************************
  *					FindUnusedSelectors
@@ -709,7 +712,9 @@ LPSTR GetDOSEnvironment(void)
 static SEGDESC *
 CreateEnvironment(void)
 {
+    char **e;
     char *p;
+    unsigned short *w;
     SEGDESC * s;
 
     s = CreateNewSegments(0, 0, PAGE_SIZE, 1);
@@ -717,15 +722,36 @@ CreateEnvironment(void)
 	return NULL;
 
     /*
-     * Fill environment with meaningless babble.
+     * Fill environment with Windows path, the Unix environment,
+     * and program name.
      */
     p = (char *) s->base_addr;
-    strcpy(p, "PATH=C:\\WINDOWS");
+    strcpy(p, "PATH=");
+    strcat(p, WindowsPath);
     p += strlen(p) + 1;
+
+    for (e = environ; *e; e++)
+    {
+	if (strncasecmp(*e, "path", 4))
+	{
+	    strcpy(p, *e);
+	    p += strlen(p) + 1;
+	}
+    }
+
     *p++ = '\0';
-    *p++ = 11;
-    *p++ = 0;
-    strcpy(p, "C:\\TEST.EXE");
+    w = (unsigned short *) p;
+    *w = strlen(WIN_ProgramName);
+    strcpy(p + 2, WIN_ProgramName);
+
+    /*
+     * Display environment
+     */
+    fprintf(stderr, "Environment at %08.8x\n", s->base_addr);
+    for (p = s->base_addr; *p; p += strlen(p) + 1)
+	fprintf(stderr, "    %s\n", p);
+    p += 3;
+    fprintf(stderr, "    Program: %s\n", p);
 
     return  s;
 }
@@ -769,12 +795,13 @@ CreatePSP(void)
 	    strlen(Argv[i]) > 124)
 	    break;
 	
+	if (i != 1)
+	    *p1++ = ' ';
+
 	for (p2 = Argv[i]; *p2 != '\0'; )
 	    *p1++ = *p2++;
 	
-	*p1++ = ' ';
     }
-    *p1++ = '\r';
     *p1 = '\0';
     psp->pspCommandTailCount = strlen(psp->pspCommandTail);
 
@@ -903,7 +930,8 @@ CreateSelectors(struct  w_files * wpnt)
 	Segments[s->selector >> 3].owner = auto_data_sel;
 	if (s->selector == auto_data_sel)
 	    HEAP_LocalInit(auto_data_sel, s->base_addr + saved_old_length, 
-			   ne_header->local_heap_length);
+			   0x10000 - 2 - saved_old_length 
+			   - ne_header->stack_length);
     }
 
     if(!EnvironmentSelector) {

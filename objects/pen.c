@@ -64,7 +64,7 @@ HPEN PEN_SelectObject( DC * dc, HPEN hpen, PENOBJ * pen )
     HPEN prevHandle = dc->w.hPen;
 
     if (dc->header.wMagic == METAFILE_DC_MAGIC)
-	return MF_CreatePenIndirect(dc, &(pen->logpen));
+	return MF_CreatePenIndirect(dc, hpen, &(pen->logpen));
 
     dc->w.hPen = hpen;
 

@@ -8,6 +8,7 @@ static char Copyright[] = "Copyright  Alexandre Julliard, 1993";
 
 #include <stdio.h>
 #include "gdi.h"
+#include "metafile.h"
 
 
 /***********************************************************************
@@ -131,7 +132,14 @@ int SelectVisRgn( HDC hdc, HRGN hrgn )
 int OffsetClipRgn( HDC hdc, short x, short y )
 {
     DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
-    if (!dc) return ERROR;    
+    if (!dc) 
+    {
+	dc = (DC *)GDI_GetObjPtr(hdc, METAFILE_DC_MAGIC);
+	if (!dc) return ERROR;
+	MF_MetaParam2(dc, META_OFFSETCLIPRGN, x, y);
+	return NULLREGION;   /* ?? */
+    }
+
 #ifdef DEBUG_CLIPPING
     printf( "OffsetClipRgn: %d %d,%d\n", hdc, x, y );
 #endif
@@ -219,7 +227,14 @@ int ExcludeClipRect( HDC hdc, short left, short top,
 		     short right, short bottom )
 {
     DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
-    if (!dc) return ERROR;    
+    if (!dc) 
+    {
+	dc = (DC *)GDI_GetObjPtr(hdc, METAFILE_DC_MAGIC);
+	if (!dc) return ERROR;
+	MF_MetaParam4(dc, META_EXCLUDECLIPRECT, left, top, right, bottom);
+	return NULLREGION;   /* ?? */
+    }
+
 #ifdef DEBUG_CLIPPING
     printf( "ExcludeClipRect: %d %dx%d,%dx%d\n",
 	    hdc, left, top, right, bottom );
@@ -236,7 +251,14 @@ int IntersectClipRect( HDC hdc, short left, short top,
 		       short right, short bottom )
 {
     DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
-    if (!dc) return ERROR;    
+    if (!dc) 
+    {
+	dc = (DC *)GDI_GetObjPtr(hdc, METAFILE_DC_MAGIC);
+	if (!dc) return ERROR;
+	MF_MetaParam4(dc, META_INTERSECTCLIPRECT, left, top, right, bottom);
+	return NULLREGION;   /* ?? */
+    }
+
 #ifdef DEBUG_CLIPPING
     printf( "IntersectClipRect: %d %dx%d,%dx%d\n",
 	    hdc, left, top, right, bottom );

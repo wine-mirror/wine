@@ -258,7 +258,7 @@ length	540
 #246 EXITWINDOWSEXEC
 247 pascal GetCursor() GetCursor()
 248 pascal GetOpenClipboardWindow() GetOpenClipboardWindow()
-#249 GETASYNCKEYSTATE
+249 pascal GetAsyncKeyState(word) GetAsyncKeyState(1)
 #250 GETMENUSTATE
 #251 SENDDRIVERMESSAGE
 #252 OPENDRIVER
@@ -413,13 +413,13 @@ length	540
 #509 WNETUNWATCHQUEUE
 #510 WNETLOCKQUEUEDATA
 #511 WNETUNLOCKQUEUEDATA
-#512 WNETGETCONNECTION
+512 pascal WNetGetConnection(ptr ptr ptr) WNetGetConnection(1 2 3)
 #513 WNETGETCAPS
 #514 WNETDEVICEMODE
 #515 WNETBROWSEDIALOG
-#516 WNETGETUSER
-#517 WNETADDCONNECTION
-#518 WNETCANCELCONNECTION
+516 pascal WNetGetUser(ptr ptr ptr) WNetGetUser(1 2 3)
+517 pascal WNetAddConnection(ptr ptr ptr) WNetAddConnection(1 2 3)
+518 pascal WNetCancelConnection(ptr word) WNetCancelConnection(1 2)
 #519 WNETGETERROR
 #520 WNETGETERRORTEXT
 #521 WNETENABLE

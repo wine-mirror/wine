@@ -98,6 +98,7 @@ cont|con|co		{ return CONT; }
 symbolfile|symbolfil|symbolfi|symbolf|symbol|symbo|symb { return SYMBOLFILE; }
 
 define|defin|defi|def|de        { return DEFINE; }
+abort|abor|abo         	        { return ABORT; }
 print|prin|pri|pr		{ return PRINT; }
 
 mode				{ return MODE; }
@@ -106,13 +107,15 @@ regs|reg|re	{ return REGS; }
 
 stack|stac|sta|st     	{ return STACK; }
 
-x		{ return 'x'; }
+p  		{ return 'p'; }
+x  		{ return 'x'; }
 d		{ return 'd'; }
 i		{ return 'i'; }
 w		{ return 'w'; }
 b		{ return 'b'; }
 s		{ return 's'; }
 c		{ return 'c'; }
+q		{ return 'q'; }
 
 {IDENTIFIER}	{yylval = (int) make_symbol(yytext); 
 	          return IDENTIFIER;

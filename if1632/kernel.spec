@@ -18,7 +18,7 @@ length	415
 12  pascal LocalFlags(word) WIN16_LocalFlags(1)
 13  pascal LocalCompact(word) WIN16_LocalCompact(1)
 14  return LocalNotify 4 0
-15  pascal GlobalAlloc(word long) GlobalAlloc(1 2)
+15  pascal GlobalAlloc(word long) WIN16_GlobalAlloc(1 2)
 16  pascal GlobalReAlloc(word long word) GlobalReAlloc(1 2 3)
 17  pascal GlobalFree(word) GlobalFree(1)
 18  pascal GlobalLock(word) GlobalLock(1)
@@ -203,7 +203,7 @@ length	415
 #204 SWAPRECORDING
 #205 CVWBREAK
 #206 ALLOCSELECTORARRAY
-#207 ISDBCSLEADBYTE
+207 return IsDBCSLeadByte 2 0
 #310 LOCALHANDLEDELTA
 #311 GETSETKERNELDOSPROC
 #314 DEBUGDEFINESEGMENT
