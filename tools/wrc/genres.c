@@ -457,7 +457,7 @@ res_t *dialog2res(name_id_t *name, dialog_t *dlg)
 			else
 				internal_error(__FILE__, __LINE__, "Control has no control-class");
 			if(ctrl->title)
-				put_name_id(res, ctrl->title, TRUE);
+				put_name_id(res, ctrl->title, FALSE);
 			else
 				put_word(res, 0);
 			if(ctrl->extra)
@@ -634,7 +634,7 @@ res_t *dialogex2res(name_id_t *name, dialogex_t *dlgex)
 			else
 				internal_error(__FILE__, __LINE__, "Control has no control-class");
 			if(ctrl->title)
-				put_name_id(res, ctrl->title, TRUE);
+				put_name_id(res, ctrl->title, FALSE);
 			else
 				put_word(res, 0);
 			if(ctrl->extra)

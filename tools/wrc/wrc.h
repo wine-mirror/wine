@@ -12,8 +12,8 @@
 #include "wrctypes.h"
 #endif
 
-#define WRC_VERSION	"1.0.12"
-#define WRC_RELEASEDATE	"(18-Jul-1999)"
+#define WRC_VERSION	"1.0.14"
+#define WRC_RELEASEDATE	"(08-Aug-1999)"
 #define WRC_FULLVERSION WRC_VERSION " " WRC_RELEASEDATE
 
 /* Only used in heavy debugging sessions */

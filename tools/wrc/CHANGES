@@ -1,4 +1,24 @@
 ---------------------------------------------------------------------------
+Version 1.0.14 (08-Aug-1999)
+
+Bertho Stultiens <bertho@akhphd.au.dk>
+- Deeply ashamed that I thought that flex had a bug. Of course my own fault
+  not recognizing unmatched text in start condition yyrcd and pp_strip[ps].
+  There is a catch all rule now in the flexer with a warning to mark the
+  condition and promptly revealed errors in the wine-headers.
+
+---------------------------------------------------------------------------
+Version 1.0.13 (08-Aug-1999)
+
+Bertho Stultiens <bertho@akhphd.au.dk>
+- Fixed uppercase conversion of titles in dialog controls which was
+  introduced with the icon changes.
+- Fixed strings longer than 1024 bytes/shorts by autosizing the array. A
+  warning is issued whenever more than 64k is allocated.
+- Made a workarround for a flex bug where an ECHO put '\\' and '\n'
+  characters on the screen.
+
+---------------------------------------------------------------------------
 Version 1.0.12 (18-Jul-1999)
 
 Bertho Stultiens <bertho@akhphd.au.dk>

@@ -126,10 +126,12 @@ string_t *make_filename(char *s, int len);
 
 int line_number = 1;		/* The current line */
 int char_number = 1;		/* The current char pos within the line */
-static char cbuffer[1024];	/* Buffers for string collection */
+static char *cbuffer;		/* Buffers for string collection */
 static int cbufidx;
-static short wbuffer[1024];
+static int cbufalloc = 0;
+static short *wbuffer;
 static int wbufidx;
+static int wbufalloc = 0;
 static int want_nl = 0;		/* Set when newline needs to go to parser */
 static int want_ident = 0;	/* Set is #ifdef, #ifndef or defined is seen */
 static int stripslevel = 0;	/* Count {} during pp_strips mode */
@@ -551,7 +553,8 @@ void add_to_substtext(char *text, int len)
 <pp_strips>\{		stripslevel++;
 <pp_strips>\}		stripslevel--;
 <pp_strips>;		if(!stripslevel) pop_start();
-<pp_strips>[^\{\};\n#]*	; /* Ignore rest */
+<pp_strips>\/[^*\n]		; /* To catch comments */
+<pp_strips>[^\{\};\n#/]*	; /* Ignore rest */
 
 <pp_stripp>\(		stripplevel++;
 <pp_stripp>\)		{
@@ -562,7 +565,8 @@ void add_to_substtext(char *text, int len)
 					push_to(pp_stripp_final);
 				}
 			}
-<pp_stripp>[^\(\);\n#]*	; /* Ignore rest */
+<pp_stripp>\/[^*\n]		; /* To catch comments */
+<pp_stripp>[^\(\);\n#/]*	; /* Ignore rest */
 
 <pp_stripp_final>{ws}*	; /* Ignore */
 <pp_stripp_final>;	pop_start(); /* Kill the semicolon */
@@ -753,7 +757,7 @@ L\"			{
 <yystr>\"\"		addcchar('\"');		/* "bla""bla"   -> "bla\"bla" */
 <yystr>\\\"\"		addcchar('\"');		/* "bla\""bla"  -> "bla\"bla" */
 <yystr>\"{ws}+\"	;			/* "bla" "bla"  -> "blabla" */
-
+<yystr>.		yywarning("Matched %c");
 
 
 \'			{
@@ -774,9 +778,10 @@ L\"			{
 				addcchar((char)result);
 			}
 <yyrcd>{ws}+		;	/* Ignore space */
+<yyrcd>\n		line_number++; char_number = 1;
 <yyrcd>.		yyerror("Malformed data-line");
 
-<INITIAL,pp_ignore,pp_def_s>"/*"	push_to(comment);	/* Eat comment */
+<INITIAL,pp_ignore,pp_def_s,pp_strips,pp_stripp>"/*"	push_to(comment);	/* Eat comment */
 <comment>[^*\n]*	;
 <comment>"*"+[^*/\n]*	;
 <comment>\n		line_number++; char_number = 1;
@@ -810,6 +815,18 @@ L\"			{
                                 }
 				yy_delete_buffer(b);
 			}
+
+<*>.|\n			{
+				/* Catch all rule to find any unmatched text */
+				if(*yytext == '\n')
+				{
+					line_number++;
+					char_number = 1;
+				}
+				yywarning("Unmatched text '%c' (0x%02x) YY_START=%d",
+					isprint(*yytext) ? *yytext : '.', *yytext, YY_START);
+			}
+
 %%
 
 #ifndef yywrap
@@ -830,15 +847,34 @@ int yywrap(void)
  */
 void addcchar(char c)
 {
-	if(cbufidx >= sizeof(cbuffer))
-		internal_error(__FILE__, __LINE__, "Character buffer overflow");
+	if(cbufidx >= cbufalloc)
+	{
+		cbufalloc += 1024;
+		cbuffer = xrealloc(cbuffer, cbufalloc * sizeof(cbuffer[0]));
+		if(cbufalloc > 65536)
+			yywarning("Reallocating string buffer larger than 64kB");
+	}
 	cbuffer[cbufidx++] = c;
 }
 
 void addwchar(short s)
 {
-	if(wbufidx >= sizeof(wbuffer))
-		internal_error(__FILE__, __LINE__, "Wide character buffer overflow");
+	if(wbufidx >= wbufalloc)
+	{
+		wbufalloc += 1024;
+		wbuffer = xrealloc(wbuffer, wbufalloc * sizeof(wbuffer[0]));
+		if(wbufalloc > 65536)
+			yywarning("Reallocating wide string buffer larger than 64kB");
+	}
+
+	/*
+	 * BS 08-Aug-1999 FIXME: The '& 0xff' is probably a bug, but I have
+	 * not experienced it yet and I seem to remember that this was for
+	 * a reason. But, as so many things you tend to forget why.
+	 * I guess that there were problems due to the sign extension of
+	 * shorts WRT chars (e.g. 0x80 becomes 0xff80 instead of 0x0080).
+	 * This should then be fixed in the lexer calling the function.
+	 */
 	wbuffer[wbufidx++] = (short)(s & 0xff);
 }
 

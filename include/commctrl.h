@@ -3260,26 +3260,26 @@ typedef struct tagNMDATETIMEFORMATQUERYW
 #define GDTR_MAX     0x0002
 
 
-#define DateTime_GetSystemtime(hdp, pst)   \\
+#define DateTime_GetSystemtime(hdp, pst)   \
   (DWORD)SendMessageA (hdp, DTM_GETSYSTEMTIME , 0, (LPARAM)(pst)) 
-#define DateTime_SetSystemtime(hdp, gd, pst)   \\
+#define DateTime_SetSystemtime(hdp, gd, pst)   \
   (BOOL)SendMessageA (hdp, DTM_SETSYSTEMTIME, (LPARAM)(gd), (LPARAM)(pst))
-#define DateTime_GetRange(hdp, rgst)  \\
+#define DateTime_GetRange(hdp, rgst)  \
   (DWORD)SendMessageA (hdp, DTM_GETRANGE, 0, (LPARAM)(rgst)) 
-#define DateTime_SetRange(hdp, gd, rgst) \\
+#define DateTime_SetRange(hdp, gd, rgst) \
    (BOOL)SendMessageA (hdp, DTM_SETRANGE, (WPARAM)(gd), (LPARAM)(rgst))
 #define DateTime_SetFormat WINELIB_NAME_AW(DateTime_SetFormat)
-#define DateTime_SetFormatA(hdp, sz)  \\
+#define DateTime_SetFormatA(hdp, sz)  \
   (BOOL)SendMessageA (hdp, DTM_SETFORMAT, 0, (LPARAM)(sz))
-#define DateTime_SetFormatW(hdp, sz)  \\
+#define DateTime_SetFormatW(hdp, sz)  \
   (BOOL)SendMessageW (hdp, DTM_SETFORMAT, 0, (LPARAM)(sz))
-#define DateTime_GetMonthCalColor(hdp, iColor) \\
+#define DateTime_GetMonthCalColor(hdp, iColor) \
   SendMessageA (hdp, DTM_GETMCCOLOR, iColor, 0)
-#define DateTime_GetMonthCal(hdp)  \\
+#define DateTime_GetMonthCal(hdp)  \
   (HWND) SendMessageA (hdp, DTM_GETMONTHCAL, 0, 0)
-#define DateTime_SetMonthCalFont(hdp, hfont, fRedraw) \\
+#define DateTime_SetMonthCalFont(hdp, hfont, fRedraw) \
   SendMessageA (hdp, DTM_SETMCFONT, (WPARAM)hfont, (LPARAM)fRedraw)
-#define DateTime_GetMonthCalFont(hdp) \\
+#define DateTime_GetMonthCalFont(hdp) \
   SendMessageA (hdp, DTM_GETMCFONT, 0, 0)
 
 
