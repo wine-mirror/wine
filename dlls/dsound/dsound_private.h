@@ -491,3 +491,4 @@ extern IDirectSoundImpl* dsound;
 
 extern HRESULT mmErr(UINT err);
 extern void setup_dsound_options(void);
+extern const char * get_device_id(LPCGUID pGuid);

@@ -86,6 +86,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(dsound);
 #define DS_SND_QUEUE_MIN 12 /* min number of fragments to prebuffer */
 
 IDirectSoundImpl*	dsound = NULL;
+static GUID             device_guids[MAXWAVEDRIVERS];
 
 HRESULT mmErr(UINT err)
 {
@@ -222,7 +223,7 @@ void setup_dsound_options(void)
     if (ds_snd_queue_min != DS_SND_QUEUE_MIN)
        WARN("ds_snd_queue_min = %d (default=%d)\n",ds_snd_queue_min ,DS_SND_QUEUE_MIN);
     if (ds_hw_accel != DS_HW_ACCEL_FULL)
-	WARN("ds_hw_accel = %s (default=Full)\n", 
+	WARN("ds_hw_accel = %s (default=Full)\n",
 	    ds_hw_accel==DS_HW_ACCEL_FULL ? "Full" :
 	    ds_hw_accel==DS_HW_ACCEL_STANDARD ? "Standard" :
 	    ds_hw_accel==DS_HW_ACCEL_BASIC ? "Basic" :
@@ -234,7 +235,18 @@ void setup_dsound_options(void)
 	WARN("ds_default_capture = %d (default=0)\n",ds_default_playback);
 }
 
-
+const char * get_device_id(LPCGUID pGuid)
+{
+    if (IsEqualGUID(&DSDEVID_DefaultPlayback, pGuid))
+        return "DSDEVID_DefaultPlayback";
+    else if (IsEqualGUID(&DSDEVID_DefaultVoicePlayback, pGuid))
+        return "DSDEVID_DefaultVoicePlayback";
+    else if (IsEqualGUID(&DSDEVID_DefaultCapture, pGuid))
+        return "DSDEVID_DefaultCapture";
+    else if (IsEqualGUID(&DSDEVID_DefaultVoiceCapture, pGuid))
+        return "DSDEVID_DefaultVoiceCapture";
+    return debugstr_guid(pGuid);
+}
 
 /***************************************************************************
  * GetDeviceID	[DSOUND.9]
@@ -251,14 +263,14 @@ void setup_dsound_options(void)
  *
  * NOTES
  *    pGuidSrc is a valid device GUID or DSDEVID_DefaultPlayback,
- *    DSDEVID_DefaultCapture, DSDEVID_DefaultVoicePlayback, or 
+ *    DSDEVID_DefaultCapture, DSDEVID_DefaultVoicePlayback, or
  *    DSDEVID_DefaultVoiceCapture.
  *    Returns pGuidSrc if pGuidSrc is a valid device or the device
  *    GUID for the specified constants.
  */
 HRESULT WINAPI GetDeviceID(LPCGUID pGuidSrc, LPGUID pGuidDest)
 {
-    TRACE("(%p,%p)\n",pGuidSrc,pGuidDest);
+    TRACE("(%s,%p)\n", get_device_id(pGuidSrc),pGuidDest);
 
     if ( pGuidSrc == NULL) {
 	WARN("invalid parameter: pGuidSrc == NULL\n");
@@ -276,6 +288,7 @@ HRESULT WINAPI GetDeviceID(LPCGUID pGuidSrc, LPGUID pGuidDest)
 	int err = mmErr(waveOutMessage((HWAVEOUT)ds_default_playback,DRV_QUERYDSOUNDGUID,(DWORD)&guid,0));
 	if (err == DS_OK) {
 	    memcpy(pGuidDest, &guid, sizeof(GUID));
+            TRACE("returns %s\n", get_device_id(pGuidDest));
 	    return DS_OK;
 	}
     }
@@ -286,11 +299,13 @@ HRESULT WINAPI GetDeviceID(LPCGUID pGuidSrc, LPGUID pGuidDest)
 	int err = mmErr(waveInMessage((HWAVEIN)ds_default_capture,DRV_QUERYDSOUNDGUID,(DWORD)&guid,0));
 	if (err == DS_OK) {
 	    memcpy(pGuidDest, &guid, sizeof(GUID));
+            TRACE("returns %s\n", get_device_id(pGuidDest));
 	    return DS_OK;
 	}
     }
 
     memcpy(pGuidDest, pGuidSrc, sizeof(GUID));
+    TRACE("returns %s\n", get_device_id(pGuidDest));
 
     return DS_OK;
 }
@@ -350,11 +365,11 @@ HRESULT WINAPI DirectSoundEnumerateA(
     for (wod = 0; wod < devs; ++wod) {
 	err = mmErr(waveOutMessage((HWAVEOUT)wod,DRV_QUERYDSOUNDDESC,(DWORD)&desc,0));
 	if (err == DS_OK) {
-	    err = mmErr(waveOutMessage((HWAVEOUT)wod,DRV_QUERYDSOUNDGUID,(DWORD)&guid,0));
+	    err = mmErr(waveOutMessage((HWAVEOUT)wod,DRV_QUERYDSOUNDGUID,(DWORD)&device_guids[wod],0));
 	    if (err == DS_OK) {
 		TRACE("calling lpDSEnumCallback(%s,\"%s\",\"%s\",%p)\n",
-		    debugstr_guid(&guid),desc.szDesc,desc.szDrvName,lpContext);
-		if (lpDSEnumCallback(&guid, desc.szDesc, desc.szDrvName, lpContext) == FALSE)
+		    debugstr_guid(&device_guids[wod]),desc.szDesc,desc.szDrvName,lpContext);
+		if (lpDSEnumCallback(&device_guids[wod], desc.szDesc, desc.szDrvName, lpContext) == FALSE)
 		    return DS_OK;
 	    }
 	}
@@ -422,15 +437,15 @@ HRESULT WINAPI DirectSoundEnumerateW(
     for (wod = 0; wod < devs; ++wod) {
 	err = mmErr(waveOutMessage((HWAVEOUT)wod,DRV_QUERYDSOUNDDESC,(DWORD)&desc,0));
 	if (err == DS_OK) {
-	    err = mmErr(waveOutMessage((HWAVEOUT)wod,DRV_QUERYDSOUNDGUID,(DWORD)&guid,0));
+	    err = mmErr(waveOutMessage((HWAVEOUT)wod,DRV_QUERYDSOUNDGUID,(DWORD)&device_guids[wod],0));
 	    if (err == DS_OK) {
 		TRACE("calling lpDSEnumCallback(%s,\"%s\",\"%s\",%p)\n",
-		    debugstr_guid(&guid),desc.szDesc,desc.szDrvName,lpContext);
+		    debugstr_guid(&device_guids[wod]),desc.szDesc,desc.szDrvName,lpContext);
 		MultiByteToWideChar( CP_ACP, 0, desc.szDesc, -1,
 		    wDesc, sizeof(wDesc)/sizeof(WCHAR) );
 		    MultiByteToWideChar( CP_ACP, 0, desc.szDrvName, -1,
 		    wName, sizeof(wName)/sizeof(WCHAR) );
-		if (lpDSEnumCallback(&guid, wDesc, wName, lpContext) == FALSE)
+		if (lpDSEnumCallback(&device_guids[wod], wDesc, wName, lpContext) == FALSE)
 		    return DS_OK;
 	    }
 	}
@@ -523,7 +538,7 @@ DSPCF_AddRef(LPCLASSFACTORY iface) {
 	return ++(This->ref);
 }
 
-static ULONG WINAPI 
+static ULONG WINAPI
 DSPCF_Release(LPCLASSFACTORY iface) {
 	ICOM_THIS(IClassFactoryImpl,iface);
 	/* static class, won't be  freed */
@@ -531,7 +546,7 @@ DSPCF_Release(LPCLASSFACTORY iface) {
 	return --(This->ref);
 }
 
-static HRESULT WINAPI 
+static HRESULT WINAPI
 DSPCF_CreateInstance(
 	LPCLASSFACTORY iface,LPUNKNOWN pOuter,REFIID riid,LPVOID *ppobj
 ) {
@@ -553,7 +568,7 @@ DSPCF_CreateInstance(
 	return E_NOINTERFACE;
 }
 
-static HRESULT WINAPI 
+static HRESULT WINAPI
 DSPCF_LockServer(LPCLASSFACTORY iface,BOOL dolock) {
 	ICOM_THIS(IClassFactoryImpl,iface);
 	FIXME("(%p)->(%d),stub!\n",This,dolock);
@@ -610,7 +625,7 @@ DWORD WINAPI DSOUND_DllGetClassObject(REFCLSID rclsid,REFIID riid,LPVOID *ppv)
 	    debugstr_guid(rclsid), debugstr_guid(riid), ppv);
 	return S_FALSE;
     }
-    
+
     if ( IsEqualCLSID( &CLSID_DirectSoundCapture, rclsid ) ||
 	 IsEqualCLSID( &CLSID_DirectSoundCapture8, rclsid ) ) {
 	if ( IsEqualCLSID( &IID_IClassFactory, riid ) ) {
@@ -622,7 +637,7 @@ DWORD WINAPI DSOUND_DllGetClassObject(REFCLSID rclsid,REFIID riid,LPVOID *ppv)
 	    debugstr_guid(rclsid), debugstr_guid(riid), ppv);
 	return S_FALSE;
     }
-    
+
     if ( IsEqualCLSID( &CLSID_DirectSoundFullDuplex, rclsid ) ) {
 	if ( IsEqualCLSID( &IID_IClassFactory, riid ) ) {
 	    *ppv = (LPVOID)&DSOUND_FULLDUPLEX_CF;
@@ -633,7 +648,7 @@ DWORD WINAPI DSOUND_DllGetClassObject(REFCLSID rclsid,REFIID riid,LPVOID *ppv)
 	    debugstr_guid(rclsid), debugstr_guid(riid), ppv);
 	return S_FALSE;
     }
-    
+
     if ( IsEqualCLSID( &CLSID_DirectSoundPrivate, rclsid ) ) {
 	if ( IsEqualCLSID( &IID_IClassFactory, riid ) ) {
 	    *ppv = (LPVOID)&DSOUND_PRIVATE_CF;
@@ -651,7 +666,7 @@ DWORD WINAPI DSOUND_DllGetClassObject(REFCLSID rclsid,REFIID riid,LPVOID *ppv)
 
 
 /*******************************************************************************
- * DllCanUnloadNow [DSOUND.4]  
+ * DllCanUnloadNow [DSOUND.4]
  * Determines whether the DLL is in use.
  *
  * RETURNS

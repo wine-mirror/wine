@@ -80,6 +80,7 @@ static ICOM_VTABLE(IDirectSoundCaptureBuffer8) dscbvt;
 static ICOM_VTABLE(IDirectSoundFullDuplex) dsfdvt;
 
 static IDirectSoundCaptureImpl*       dsound_capture = NULL;
+static GUID                           capture_guids[MAXWAVEDRIVERS];
 
 static const char * captureStateString[] = {
     "STATE_STOPPED",
@@ -216,11 +217,11 @@ DirectSoundCaptureEnumerateA(
     for (wid = 0; wid < devs; ++wid) {
 	err = mmErr(waveInMessage((HWAVEIN)wid,DRV_QUERYDSOUNDDESC,(DWORD)&desc,0));
 	if (err == DS_OK) {
-	    err = mmErr(waveInMessage((HWAVEIN)wid,DRV_QUERYDSOUNDGUID,(DWORD)&guid,0));
+	    err = mmErr(waveInMessage((HWAVEIN)wid,DRV_QUERYDSOUNDGUID,(DWORD)&capture_guids[wid],0));
 	    if (err == DS_OK) {
 		TRACE("calling lpDSEnumCallback(%s,\"%s\",\"%s\",%p)\n",
-		    debugstr_guid(&guid),desc.szDesc,desc.szDrvName,lpContext);
-		if (lpDSEnumCallback(&guid, desc.szDesc, desc.szDrvName, lpContext) == FALSE)
+		    debugstr_guid(&capture_guids[wid]),desc.szDesc,desc.szDrvName,lpContext);
+		if (lpDSEnumCallback(&capture_guids[wid], desc.szDesc, desc.szDrvName, lpContext) == FALSE)
 		    return DS_OK;
 	    }
 	} 
@@ -289,15 +290,15 @@ DirectSoundCaptureEnumerateW(
     for (wid = 0; wid < devs; ++wid) {
 	err = mmErr(waveInMessage((HWAVEIN)wid,DRV_QUERYDSOUNDDESC,(DWORD)&desc,0));
 	if (err == DS_OK) {
-	    err = mmErr(waveInMessage((HWAVEIN)wid,DRV_QUERYDSOUNDGUID,(DWORD)&guid,0));
+	    err = mmErr(waveInMessage((HWAVEIN)wid,DRV_QUERYDSOUNDGUID,(DWORD)&capture_guids[wid],0));
 	    if (err == DS_OK) {
 		TRACE("calling lpDSEnumCallback(%s,\"%s\",\"%s\",%p)\n",
-		    debugstr_guid(&DSDEVID_DefaultCapture),desc.szDesc,desc.szDrvName,lpContext);
+		    debugstr_guid(&capture_guids[wid]),desc.szDesc,desc.szDrvName,lpContext);
 		MultiByteToWideChar( CP_ACP, 0, desc.szDesc, -1, 
 		    wDesc, sizeof(wDesc)/sizeof(WCHAR) );
 		MultiByteToWideChar( CP_ACP, 0, desc.szDrvName, -1, 
 		    wName, sizeof(wName)/sizeof(WCHAR) );
-		if (lpDSEnumCallback((LPGUID)&DSDEVID_DefaultCapture, wDesc, wName, lpContext) == FALSE)
+		if (lpDSEnumCallback((LPGUID)&capture_guids[wid], wDesc, wName, lpContext) == FALSE)
 		    return DS_OK;
 	    }
 	} 
