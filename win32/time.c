@@ -103,11 +103,19 @@ BOOL WINAPI SetSystemTime(const SYSTEMTIME *systime)
 DWORD WINAPI GetTimeZoneInformation(LPTIME_ZONE_INFORMATION tzinfo)
 {
     time_t gmt, lt;
+    struct tm *ptm;
+    int daylight;
 
     memset(tzinfo, 0, sizeof(TIME_ZONE_INFORMATION));
 
     gmt = time(NULL);
-    lt = mktime(gmtime(&gmt));
+    ptm=localtime(&gmt);
+    daylight=ptm->tm_isdst;
+
+    ptm = gmtime(&gmt);
+    ptm->tm_isdst=daylight;
+    lt = mktime(ptm);
+    
     tzinfo->Bias = (lt - gmt) / 60;
     tzinfo->StandardBias = 0;
     tzinfo->DaylightBias = -60;
