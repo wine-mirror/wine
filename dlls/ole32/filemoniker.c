@@ -983,7 +983,7 @@ HRESULT WINAPI FileMonikerImpl_GetTimeOfLastChange(IMoniker* iface,
 
     res= IRunningObjectTable_GetTimeOfLastChange(rot,iface,pFileTime);
 
-    if (FAILED(res)){ /* the moniker is not registred */
+    if (FAILED(res)){ /* the moniker is not registered */
 
         if (!GetFileAttributesExW(This->filePathName,GetFileExInfoStandard,&info))
             return MK_E_NOOBJECT;

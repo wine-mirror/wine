@@ -495,7 +495,7 @@ static void test_RtlUniform(void)
  * MAXLONG (=0x7fffffff) is never returned, neither with the native function
  * nor with the simplified algorithm. In reality the native function and our
  * function return a random number distributed over [0..MAXLONG-1]. Note
- * that this is different to what native documentation states [0..MAXLONG].
+ * that this is different from what native documentation states [0..MAXLONG].
  * Expressed with D.H. Lehmer's 1948 algorithm it looks like:
  *
  * seed = (seed * const_1 + const_2) % MAXLONG;

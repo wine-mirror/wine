@@ -69,7 +69,7 @@ not exist in wcmd.\n"
 batch file.\n\
 \n\
 The label which is the target of a GOTO may be up to 255 characters\n\
-long but may not include spaces (this is different to other operating\n\
+long but may not include spaces (this is different from other operating\n\
 systems). If two or more identical labels exist in a batch file the\n\
 first one will always be executed. Attempting to GOTO a non-existent\n\
 label terminates the batch file execution.\n\

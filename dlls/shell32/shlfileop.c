@@ -1077,7 +1077,7 @@ int WINAPI SHFileOperationW(LPSHFILEOPSTRUCTW lpFileOp)
                 goto shfileop_normal;
 	    }
 
-	    /* W98 Bug with FO_MOVE different to FO_COPY, better the same as FO_COPY */
+	    /* W98 Bug with FO_MOVE different from FO_COPY, better the same as FO_COPY */
 	    b_ToValid = ((b_SameTailName &&  b_SameRoot && (FO_COPY == FuncSwitch)) ||
                          (b_SameTailName && !b_SameRoot) || (b_ToInvalidTail));
 

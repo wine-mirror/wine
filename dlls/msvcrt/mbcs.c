@@ -607,7 +607,7 @@ unsigned int _mbbtombc(unsigned int c)
      ((c >= 0x20 && c <=0x7e) ||(c >= 0xa1 && c <= 0xdf)))
   {
     /* FIXME: I can't get this function to return anything
-     * different to what I pass it...
+     * different from what I pass it...
      */
   }
   return c;  /* ASCII CP or no MB char */

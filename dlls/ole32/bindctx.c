@@ -269,7 +269,7 @@ HRESULT WINAPI BindCtxImpl_RevokeObjectBound(IBindCtx* iface, IUnknown* punk)
 
     TRACE("(%p,%p)\n",This,punk);
 
-    /* check if the object was registred or not */
+    /* check if the object was registered or not */
     if (BindCtxImpl_GetObjectIndex(This,punk,NULL,&index)==S_FALSE)
         return MK_E_NOTBOUND;
 
