@@ -1065,7 +1065,7 @@ HRESULT WINAPI FileMonikerImpl_CommonPrefixWith(IMoniker* iface,IMoniker* pmkOth
 int WINAPI FileMonikerImpl_DecomposePath(LPOLESTR str, LPOLESTR** stringTable)
 {
     WCHAR bSlash[] = {'\\',0};
-    WCHAR word[100];
+    WCHAR word[MAX_PATH];
     int i=0,j,tabIndex=0;
     LPOLESTR *strgtable ;
 
