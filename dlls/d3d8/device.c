@@ -106,7 +106,6 @@ void DrawPrimitiveI(LPDIRECT3DDEVICE8 iface,
 
     int NumVertexes = NumPrimitives;
     VERTEXSHADER8* vertex_shader = NULL;
-    VSHADERINPUTDATA8 vertex_shader_input;
     BOOL useVertexShaderFunction = FALSE;
 
     ICOM_THIS(IDirect3DDevice8Impl,iface);
@@ -127,7 +126,7 @@ void DrawPrimitiveI(LPDIRECT3DDEVICE8 iface,
       }
       fvf = (D3DFORMAT) vertex_shader->fvf;
       TRACE("vertex shader declared FVF: %lx\n", vertex_shader->fvf);
-      memset(&vertex_shader_input, 0, sizeof(VSHADERINPUTDATA8));
+      memset(&vertex_shader->input, 0, sizeof(VSHADERINPUTDATA8));
     }
 
     {
@@ -302,22 +301,11 @@ void DrawPrimitiveI(LPDIRECT3DDEVICE8 iface,
                 curPos = curPos + sizeof(float);
                 VTRACE(("x,y,z=%f,%f,%f\n", x,y,z));
 
-                if (TRUE == useVertexShaderFunction) {
-                    vertex_shader_input.V[D3DVSDE_POSITION].x = x;
-                    vertex_shader_input.V[D3DVSDE_POSITION].y = y;
-                    vertex_shader_input.V[D3DVSDE_POSITION].z = z;
-                    vertex_shader_input.V[D3DVSDE_POSITION].w = 1.0f;
-                }
-
                 /* RHW follows, only if transformed */
                 if (isRHW) {
                     rhw = *(float *)curPos;
                     curPos = curPos + sizeof(float);
                     VTRACE(("rhw=%f\n", rhw));
-
-                    if (TRUE == useVertexShaderFunction) {
-                        vertex_shader_input.V[D3DVSDE_POSITION].w = rhw;
-                    }
                 }
 
                 /* Blending data */
@@ -335,20 +323,6 @@ void DrawPrimitiveI(LPDIRECT3DDEVICE8 iface,
                         skippedBlendLastUByte4 =  *(DWORD*)curPos; 
                         curPos = curPos + sizeof(DWORD);
                     }
-
-                    if (TRUE == useVertexShaderFunction) {
-                        vertex_shader_input.V[D3DVSDE_BLENDWEIGHT].x = skippedBlend.x;
-                        vertex_shader_input.V[D3DVSDE_BLENDWEIGHT].y = skippedBlend.y;
-                        vertex_shader_input.V[D3DVSDE_BLENDWEIGHT].z = skippedBlend.z;
-                        vertex_shader_input.V[D3DVSDE_BLENDWEIGHT].w = skippedBlend.w;
-
-                        if (isLastUByte4) {
-                            vertex_shader_input.V[D3DVSDE_BLENDINDICES].x = (float) skippedBlendLastUByte4;
-                            vertex_shader_input.V[D3DVSDE_BLENDINDICES].y = (float) skippedBlendLastUByte4;
-                            vertex_shader_input.V[D3DVSDE_BLENDINDICES].z = (float) skippedBlendLastUByte4;
-                            vertex_shader_input.V[D3DVSDE_BLENDINDICES].w = (float) skippedBlendLastUByte4;
-                        }
-                    }
                 }
 
                 /* Vertex Normal Data (untransformed only) */
@@ -360,52 +334,24 @@ void DrawPrimitiveI(LPDIRECT3DDEVICE8 iface,
                     nz = *(float *)curPos;
                     curPos = curPos + sizeof(float);
                     VTRACE(("nx,ny,nz=%f,%f,%f\n", nx,ny,nz));
-
-                    if (TRUE == useVertexShaderFunction) {
-                        vertex_shader_input.V[D3DVSDE_NORMAL].x = nx;
-                        vertex_shader_input.V[D3DVSDE_NORMAL].y = ny;
-                        vertex_shader_input.V[D3DVSDE_NORMAL].z = nz;
-                        vertex_shader_input.V[D3DVSDE_NORMAL].w = 1.0f;
-                    }
                 }
 
                 if (isPtSize) {
                     ptSize = *(float *)curPos;
                     VTRACE(("ptSize=%f\n", ptSize));
                     curPos = curPos + sizeof(float);
-
-                    if (TRUE == useVertexShaderFunction) {
-                        vertex_shader_input.V[D3DVSDE_PSIZE].x = ptSize;
-                        vertex_shader_input.V[D3DVSDE_PSIZE].y = 0.0f;
-                        vertex_shader_input.V[D3DVSDE_PSIZE].z = 0.0f;
-                        vertex_shader_input.V[D3DVSDE_PSIZE].w = 1.0f;
-                    }
                 }
 
                 if (isDiffuse) {
                     diffuseColor = *(DWORD *)curPos;
                     VTRACE(("diffuseColor=%lx\n", diffuseColor));
                     curPos = curPos + sizeof(DWORD);
-
-                    if (TRUE == useVertexShaderFunction) {
-                        vertex_shader_input.V[D3DVSDE_DIFFUSE].x = (float) (((diffuseColor >> 16) & 0xFF) / 255.0f);
-                        vertex_shader_input.V[D3DVSDE_DIFFUSE].y = (float) (((diffuseColor >>  8) & 0xFF) / 255.0f);
-                        vertex_shader_input.V[D3DVSDE_DIFFUSE].z = (float) (((diffuseColor >>  0) & 0xFF) / 255.0f);
-                        vertex_shader_input.V[D3DVSDE_DIFFUSE].w = (float) (((diffuseColor >> 24) & 0xFF) / 255.0f);
-                    }
                 }
 
                 if (isSpecular) {
                     specularColor = *(DWORD *)curPos;
                     VTRACE(("specularColor=%lx\n", specularColor));
                     curPos = curPos + sizeof(DWORD);
-
-                    if (TRUE == useVertexShaderFunction) {
-                        vertex_shader_input.V[D3DVSDE_SPECULAR].x = (float) (((specularColor >> 16) & 0xFF) / 255.0f);
-                        vertex_shader_input.V[D3DVSDE_SPECULAR].y = (float) (((specularColor >>  8) & 0xFF) / 255.0f);
-                        vertex_shader_input.V[D3DVSDE_SPECULAR].z = (float) (((specularColor >>  0) & 0xFF) / 255.0f);
-                        vertex_shader_input.V[D3DVSDE_SPECULAR].w = (float) (((specularColor >> 24) & 0xFF) / 255.0f);
-                    }
                 }
 
                 /* ToDo: Texture coords */
@@ -432,10 +378,7 @@ void DrawPrimitiveI(LPDIRECT3DDEVICE8 iface,
                             VTRACE(("tex:%d, s,t=%f,%f\n", textureNo, s,t));
 
                             if (TRUE == useVertexShaderFunction) {
-                                vertex_shader_input.V[D3DVSDE_TEXCOORD0 + textureNo].x = s;
-                                vertex_shader_input.V[D3DVSDE_TEXCOORD0 + textureNo].y = t;
-                                vertex_shader_input.V[D3DVSDE_TEXCOORD0 + textureNo].z = 0.0f;
-                                vertex_shader_input.V[D3DVSDE_TEXCOORD0 + textureNo].w = 1.0f;
+			      /* Nothing to do */
                             } else { 
                                 if (This->isMultiTexture) {
                                     glMultiTexCoord2fARB(GL_TEXTURE0_ARB + textureNo, s, t);
@@ -455,10 +398,7 @@ void DrawPrimitiveI(LPDIRECT3DDEVICE8 iface,
                             VTRACE(("tex:%d, s,t,r=%f,%f,%f\n", textureNo, s,t,r));
 
                             if (TRUE == useVertexShaderFunction) {
-                                vertex_shader_input.V[D3DVSDE_TEXCOORD0 + textureNo].x = s;
-                                vertex_shader_input.V[D3DVSDE_TEXCOORD0 + textureNo].y = t;
-                                vertex_shader_input.V[D3DVSDE_TEXCOORD0 + textureNo].z = r;
-                                vertex_shader_input.V[D3DVSDE_TEXCOORD0 + textureNo].w = 1.0f;
+			      /* Nothing to do */
                             } else {
                                 if (This->isMultiTexture) {
                                     glMultiTexCoord3fARB(GL_TEXTURE0_ARB + textureNo, s, t, r);
@@ -481,38 +421,53 @@ void DrawPrimitiveI(LPDIRECT3DDEVICE8 iface,
 
                 /** if vertex shader program specified ... using it */
                 if (TRUE == useVertexShaderFunction) {
-                    VSHADEROUTPUTDATA8 vs_o;
-                    memset(&vs_o, 0, sizeof(VSHADEROUTPUTDATA8));
-                    vshader_program_execute_SW(vertex_shader, &vertex_shader_input, &vs_o);
-                    /*
-                    TRACE_VECTOR(vs_o.oPos);
-                    TRACE_VECTOR(vs_o.oD[0]);
-                    TRACE_VECTOR(vs_o.oT[0]);
-                    TRACE_VECTOR(vs_o.oT[1]);
-                    */
-                    x = vs_o.oPos.x;
-                    y = vs_o.oPos.y;
-                    z = vs_o.oPos.z;
 
-                    if (1.0f != vs_o.oPos.w || isRHW) {
-                        rhw = vs_o.oPos.w;
-                    }
-                    /*TRACE_VECTOR(vs_o.oPos);*/
-                    if (isDiffuse) {
-                        /*diffuseColor = D3DCOLOR_COLORVALUE(vs_o.oD[0].x, vs_o.oD[0].y, vs_o.oD[0].z, vs_o.oD[0].w);*/
-                        /*TRACE_VECTOR(vs_o.oD[0]);*/
-                        /*glColor4f(vs_o.oD[0].x, vs_o.oD[0].y, vs_o.oD[0].z, vs_o.oD[0].w); */
-                        glMaterialfv(GL_FRONT, GL_DIFFUSE, (float*) &vs_o.oD[0]);
-                        checkGLcall("glMaterialfv");
-                    }
-                    if (isSpecular) {
-                        /*specularColor = D3DCOLOR_COLORVALUE(vs_o.oD[1].x, vs_o.oD[1].y, vs_o.oD[1].z, vs_o.oD[1].w);*/
-                        /*TRACE_VECTOR(vs_o.oD[1]);*/
-                        glMaterialfv(GL_FRONT, GL_SPECULAR, (float*) &vs_o.oD[1]);
-                        checkGLcall("glMaterialfv");
-                    }
-                    /** reupdate textures coords binding using vs_o.oT[0->3] */
-                    for (textureNo = 0; textureNo < 4/*min(numTextures, 4)*/; ++textureNo) {
+                    /**
+                     * this code must become the really 
+                     * vs input params init
+                     * 
+                     * because its possible to use input registers for anything
+                     * and some samples use registers for other things than they are
+                     * declared
+                     */
+
+		    /** 
+		     * no really valid declaration, user defined input register use 
+		     * so fill input registers as described in vertex shader declaration
+		     */
+		    vshader_fill_input(vertex_shader, This, vertexBufData, StartVertexIndex,
+				       (!isIndexed) ? (vx_index * skip) : 
+				                      (idxBytes == 2) ? ((pIdxBufS[StartIdx + vx_index]) * skip) : 
+                                                                        ((pIdxBufL[StartIdx + vx_index]) * skip));
+
+		    memset(&vertex_shader->output, 0, sizeof(VSHADEROUTPUTDATA8));
+                    vshader_program_execute_SW(vertex_shader, &vertex_shader->input, &vertex_shader->output);
+                    /*
+                    TRACE_VECTOR(vertex_shader->output.oPos);
+                    TRACE_VECTOR(vertex_shader->output.oD[0]);
+		    TRACE_VECTOR(vertex_shader->output.oD[1]);
+                    TRACE_VECTOR(vertex_shader->output.oT[0]);
+                    TRACE_VECTOR(vertex_shader->output.oT[1]);
+                    */
+		    x = vertex_shader->output.oPos.x;
+                    y = vertex_shader->output.oPos.y;
+                    z = vertex_shader->output.oPos.z;
+
+                    if (1.0f != vertex_shader->output.oPos.w || isRHW) {
+		      rhw = vertex_shader->output.oPos.w;
+		    }
+		    /*diffuseColor = D3DCOLOR_COLORVALUE(vertex_shader->output.oD[0]);*/
+		    glColor4fv((float*) &vertex_shader->output.oD[0]);
+
+		    /* Requires secondary color extensions to compile... */
+		    if (checkGLSupport(EXT_SECONDARY_COLOR)) {
+		      /*specularColor = D3DCOLOR_COLORVALUE(vertex_shader->output.oD[1]);*/
+		      GLExtCall(glSecondaryColor3fvEXT)((float*) &vertex_shader->output.oD[1]);     
+		      /*checkGLcall("glSecondaryColor3fvEXT");*/
+		    }
+
+                    /** reupdate textures coords binding using vertex_shader->output.oT[0->3] */
+                    for (textureNo = 0; textureNo < 4; ++textureNo) {
                         float s, t, r, q;
 
                         if (!(This->isMultiTexture) && textureNo > 0) {
@@ -523,31 +478,31 @@ void DrawPrimitiveI(LPDIRECT3DDEVICE8 iface,
                         if (This->StateBlock.textures[textureNo] != NULL) {
                             switch (IDirect3DBaseTexture8Impl_GetType((LPDIRECT3DBASETEXTURE8) This->StateBlock.textures[textureNo])) {
                             case D3DRTYPE_TEXTURE:
-                                /*TRACE_VECTOR(vs_o.oT[textureNo]);*/
-                                s = vs_o.oT[textureNo].x;
-                                t = vs_o.oT[textureNo].y;
-                                VTRACE(("tex:%d, s,t=%f,%f\n", textureNo, s,t));
+                                /*TRACE_VECTOR(vertex_shader->output.oT[textureNo]);*/
+                                s = vertex_shader->output.oT[textureNo].x;
+                                t = vertex_shader->output.oT[textureNo].y;
+                                VTRACE(("tex:%d, s,t=%f,%f\n", textureNo, s, t));
                                 if (This->isMultiTexture) {
                                     glMultiTexCoord2fARB(GL_TEXTURE0_ARB + textureNo, s, t);
-                                    checkGLcall("glMultiTexCoord2fARB");
+                                    /*checkGLcall("glMultiTexCoord2fARB");*/
                                 } else {
                                     glTexCoord2f(s, t);
-                                    checkGLcall("gTexCoord2f");
+                                    /*checkGLcall("gTexCoord2f");*/
                                 }
                                 break;
 
                             case D3DRTYPE_VOLUMETEXTURE:
-                                /*TRACE_VECTOR(vs_o.oT[textureNo]);*/
-                                s = vs_o.oT[textureNo].x;
-                                t = vs_o.oT[textureNo].y;
-                                r = vs_o.oT[textureNo].z;
-                                VTRACE(("tex:%d, s,t,r=%f,%f,%f\n", textureNo, s,t,r));
+                                /*TRACE_VECTOR(vertex_shader->output.oT[textureNo]);*/
+                                s = vertex_shader->output.oT[textureNo].x;
+                                t = vertex_shader->output.oT[textureNo].y;
+                                r = vertex_shader->output.oT[textureNo].z;
+                                VTRACE(("tex:%d, s,t,r=%f,%f,%f\n", textureNo, s, t, r));
                                 if (This->isMultiTexture) {
                                     glMultiTexCoord3fARB(GL_TEXTURE0_ARB + textureNo, s, t, r); 
-                                    checkGLcall("glMultiTexCoord2fARB");
+                                    /*checkGLcall("glMultiTexCoord2fARB");*/
                                 } else {
                                     glTexCoord3f(s, t, r);
-                                    checkGLcall("gTexCoord3f");
+                                    /*checkGLcall("gTexCoord3f");*/
                                 }
                                 break;
 
@@ -562,11 +517,11 @@ void DrawPrimitiveI(LPDIRECT3DDEVICE8 iface,
                     if (1.0f == rhw || rhw < 0.01f) {
                         VTRACE(("Vertex: glVertex:x,y,z=%f,%f,%f\n", x,y,z));
                         glVertex3f(x, y, z);
-                        checkGLcall("glVertex3f");
+                        /*checkGLcall("glVertex3f");*/
                     } else {
                         VTRACE(("Vertex: glVertex:x,y,z=%f,%f,%f / rhw=%f\n", x,y,z,rhw));
                         glVertex4f(x / rhw, y / rhw, z / rhw, 1.0f / rhw);
-                        checkGLcall("glVertex4f");
+                        /*checkGLcall("glVertex4f");*/
                     }
                 } else { 
                     /** 

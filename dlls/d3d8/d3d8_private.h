@@ -98,10 +98,10 @@ typedef struct SAVEDSTATES {
 
 typedef struct STATEBLOCK {
 
-    D3DSTATEBLOCKTYPE             blockType;
+    D3DSTATEBLOCKTYPE         blockType;
 
-    SAVEDSTATES                   Changed;
-    SAVEDSTATES                   Set;
+    SAVEDSTATES               Changed;
+    SAVEDSTATES               Set;
 
     /* Light Enable */
     BOOL                      lightEnable[MAX_ACTIVE_LIGHTS];
@@ -150,6 +150,10 @@ typedef struct STATEBLOCK {
 
     /* TODO: Vertex Shader Constant */
 
+    /* Indexed Vertex Blending */
+    D3DVERTEXBLENDFLAGS       vertex_blend;
+    FLOAT                     tween_factor;
+
 } STATEBLOCK;
 
 typedef struct D3DSHADERVECTOR {
@@ -176,26 +180,6 @@ typedef struct SHADERDATA8 {
   UINT codeLength;
 } SHADERDATA8;
 
-typedef struct VERTEXSHADER8 { /* TODO: Vertex Shader */
-  DWORD* decl;
-  DWORD* function;
-  DWORD usage; /* 0 || D3DUSAGE_SOFTWAREPROCESSING */
-  UINT declLength;
-  UINT functionLength;
-  DWORD fvf;
-  DWORD version;
-  /* run time datas */
-  SHADERDATA8* data;
-} VERTEXSHADER8;
-
-typedef struct PIXELSHADER8 { /* TODO: Pixel Shader */
-  CONST DWORD* function;
-  UINT functionLength;
-  DWORD version;
-  /* run time datas */
-  SHADERDATA8* data;
-} PIXELSHADER8;
-
 /** temporary here waiting for buffer code */
 typedef struct VSHADERINPUTDATA8 {
   D3DSHADERVECTOR V[16];
@@ -209,6 +193,28 @@ typedef struct VSHADEROUTPUTDATA8 {
   D3DSHADERVECTOR oFog;
   D3DSHADERVECTOR oPts;
 } VSHADEROUTPUTDATA8;
+
+typedef struct VERTEXSHADER8 { /* TODO: Vertex Shader */
+  DWORD* decl;
+  DWORD* function;
+  DWORD usage; /* 0 || D3DUSAGE_SOFTWAREPROCESSING */
+  UINT declLength;
+  UINT functionLength;
+  DWORD fvf;
+  DWORD version;
+  /* run time datas */
+  SHADERDATA8* data;
+  VSHADERINPUTDATA8 input;
+  VSHADEROUTPUTDATA8 output;
+} VERTEXSHADER8;
+
+typedef struct PIXELSHADER8 { /* TODO: Pixel Shader */
+  CONST DWORD* function;
+  UINT functionLength;
+  DWORD version;
+  /* run time datas */
+  SHADERDATA8* data;
+} PIXELSHADER8;
 
 /*
  * External prototypes
@@ -228,6 +234,29 @@ void CreateStateBlock(LPDIRECT3DDEVICE8 iface);
        TRACE("%s call ok %s / %d\n", A, __FILE__, __LINE__); \
     } \
 }
+
+#define checkGLSupport(ExtName)  FALSE/*(TRUE == This->direct3d8->glInfo.supported[ExtName])*/
+#define GLExtCall(FuncName)      /*(This->direct3d8->glInfo.FuncName)*/
+
+
+#define D3DCOLOR_R(dw) (((float) (((dw) >> 16) & 0xFF)) / 255.0f)
+#define D3DCOLOR_G(dw) (((float) (((dw) >>  8) & 0xFF)) / 255.0f)
+#define D3DCOLOR_B(dw) (((float) (((dw) >>  0) & 0xFF)) / 255.0f)
+#define D3DCOLOR_A(dw) (((float) (((dw) >> 24) & 0xFF)) / 255.0f)
+
+#define D3DCOLORTOCOLORVALUE(dw, col) \
+  (col).r = D3DCOLOR_R(dw); \
+  (col).g = D3DCOLOR_G(dw); \
+  (col).b = D3DCOLOR_B(dw); \
+  (col).a = D3DCOLOR_A(dw); 
+
+#define D3DCOLORTOVECTOR4(dw, vec) \
+  (vec).x = D3DCOLOR_R(dw); \
+  (vec).y = D3DCOLOR_G(dw); \
+  (vec).z = D3DCOLOR_B(dw); \
+  (vec).w = D3DCOLOR_A(dw);
+
+
 
 /* ===========================================================================
     The interfactes themselves
@@ -929,5 +958,6 @@ extern HRESULT  WINAPI        IDirect3DVolumeTexture8Impl_AddDirtyBox(LPDIRECT3D
 DWORD vshader_decl_parse(VERTEXSHADER8* vshader);
 DWORD vshader_program_parse(VERTEXSHADER8* vshader);
 BOOL  vshader_program_execute_SW(VERTEXSHADER8* vshader, VSHADERINPUTDATA8* input, VSHADEROUTPUTDATA8* output);
+VOID  vshader_fill_input(VERTEXSHADER8* vshader, IDirect3DDevice8Impl* device, const void* vertexFirstStream, DWORD StartVertexIndex, DWORD idxDecal);
 
 #endif /* __WINE_D3DX8_PRIVATE_H */
