@@ -99,6 +99,7 @@ DOLOCALCONF=auto              # whether to autogenerate localconf
 DOWCHK=auto                   # whether to autoconfigure existing-windows installation
 DOWINE=auto                   # whether to autoconfigure no-windows installation
 DOREG=auto                    # whether to install default registry
+DOAPP=auto                    # whether to install applications, distributed with Wine
 SYSREG=yes                    # whether to make root's registry global (system-default)
 CONVCONF=no		      # whether we are converting an existing .winerc or not
 
@@ -117,8 +118,8 @@ WINECONF=tools/wineconf       # the path of wineconf perl script
 WINEINI=$exdir/config         # the path of default wine config file (also used by wineconf)
 WININI=/dev/null              # the path of default win.ini
 SYSTEMINI=$exdir/system.ini   # the path of default system.ini
-REGAPI=programs/regapi/regapi # the path of regapi winelib application
-DEFREG=winedefault.reg        # the path of the registry file to be fed to regapi
+REGEDIT=programs/regedit/regedit # the path of regedit winelib application
+DEFREG=winedefault.reg        # the path of the registry file to be fed to regedit
 # CROOT=/var/wine             # the path of the fake Drive C (asks user if not set)
 DEFCAT=cat                    # program to cat $DEFREG with (some packages need zcat)
 #--- end of defaults
@@ -170,7 +171,7 @@ function conf_string_answer {
 }
 
 function create_windows_directories {
-  for tdir in "$CROOT/windows" "$CROOT/windows/system" \
+  for tdir in "$CROOT/windows" "$CROOT/windows/system" "$CROOT/windows/system32" \
               "$CROOT/windows/Start Menu" "$CROOT/windows/Start Menu/Programs" \
               "$CROOT/Common Files" "$CROOT/Program Files" \
               "$CROOT/windows/Profiles" "$CROOT/windows/Profiles/Administrator"
@@ -180,9 +181,33 @@ function create_windows_directories {
   [ -f "$CROOT/windows/system.ini" ] || cp "$SYSTEMINI" "$CROOT/windows/system.ini"
 }
 
+#creates symbolic link in windows directory to installed winelib application
+#parameters:
+# - name of the installed winelib application
+# - full path to application in the winelib directory
+function link_app {
+  ln -sf $bindir/$1 $2
+  ln -sf $bindir/$1.so $2.so
+}
+
+#puts windows applications replacements to windows directories,
+#configures them
+function configure_wine_applications {
+  link_app regedit      "$CROOT/windows/regedit.exe"
+  link_app uninstaller  "$CROOT/windows/uninstall.exe"
+  link_app wcmd         "$CROOT/windows/system32/cmd.exe"
+  link_app control      "$CROOT/windows/system32/control.exe"
+  link_app winhelp      "$CROOT/windows/system32/help.exe"
+  link_app notepad      "$CROOT/windows/system32/notepad.exe"
+  link_app progman      "$CROOT/windows/system32/progman.exe"
+  link_app regsvr32     "$CROOT/windows/system32/regsvr32.exe"
+  link_app winemine     "$CROOT/windows/system32/winmine.exe"
+  link_app winver       "$CROOT/windows/system32/winver.exe"
+}
+
 # startup...
 
-echo "WINE Installer v0.72"
+echo "WINE Installer v0.73"
 echo
 
 if [ "$BINDIST" = 'no' ]
@@ -540,6 +565,7 @@ then {
     echo "Configuring Wine for a no-windows install in $CROOT..."
   
     create_windows_directories
+    configure_wine_applications
   }
   fi
 
@@ -616,14 +642,14 @@ if [ "$DOREG" = 'yes' ]
 then {
   if [ "$BINDIST" = 'no' ]
   then {
-    echo "Compiling regapi..."
-    (cd programs/regapi; make)
+    echo "Compiling regedit..."
+    (cd programs/regedit; make)
     echo
   }
   fi
   echo "Preparing to install default Wine registry entries..."
 
-  # edit config files so we don't have to run regapi under X
+  # edit config files so we don't have to run regedit under X
   if [ "$CONVCONF" = 'yes' ]
   then
     mv $WINEINI $WINEINI.new
@@ -638,26 +664,26 @@ then {
 
   echo "Installing default Wine registry entries..."
   echo
-  if ! $REGAPI setValue < $TMPREG > /dev/null
+  if ! $REGEDIT $TMPREG > /dev/null
   then {
     rm -f $TMPREG
     echo "Registry install failed."
-    conf_reset_question regapi_error
-    conf_question high regapi_error
+    conf_reset_question regedit_error
+    conf_question high regedit_error
     exit 1
   }
   else {
-    # if we are converting from a .winerc file, running regapi once
+    # if we are converting from a .winerc file, running regedit once
     # will ONLY convert .winerc -> ~/.wine/config, it will not import the
-    # registry data.  so if we are converting we need to run regapi twice
+    # registry data.  so if we are converting we need to run regedit twice
     if [ "$CONVCONF" = 'yes' ]
     then
-      if ! $REGAPI setValue < $TMPREG > /dev/null
+      if ! $REGEDIT $TMPREG > /dev/null
       then
         rm -f $TMPREG
         echo "Registry install failed."
-        conf_reset_question regapi_error
-        conf_question high regapi_error
+        conf_reset_question regedit_error
+        conf_question high regedit_error
         exit 1
       else
         echo
