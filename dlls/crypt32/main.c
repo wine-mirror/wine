@@ -53,6 +53,14 @@ BOOL WINAPI I_CryptFreeLruCache(DWORD x)
     return FALSE;
 }
 
+BOOL WINAPI CryptProtectData(DATA_BLOB* pDataIn, LPCWSTR szDataDescr, DATA_BLOB* pOptionalEntropy,
+                             PVOID pvReserved, CRYPTPROTECT_PROMPTSTRUCT* pPromptStruct,
+                             DWORD dwFlags, DATA_BLOB* pDataOut)
+{
+    FIXME("stub!\n");
+    return FALSE;
+}
+
 /*
  * (0x1001350, %eax, 0, 0, 9);
  *

@@ -49,6 +49,13 @@ typedef struct _CRYPTOAPI_BLOB {
   CRYPT_DER_BLOB,      *PCRYPT_DER_BLOB,
   CRYPT_ATTR_BLOB,     *PCRYPT_ATTR_BLOB;
 
+typedef struct _CRYPTPROTECT_PROMPTSTRUCT{
+  DWORD   cbSize;
+  DWORD   dwPromptFlags;
+  HWND    hwndApp;
+  LPCWSTR szPrompt;
+} CRYPTPROTECT_PROMPTSTRUCT, *PCRYPTPROTECT_PROMPTSTRUCT;
+
 typedef struct _CRYPT_ALGORITHM_IDENTIFIER {
   LPSTR            pszObjId;
   CRYPT_OBJID_BLOB Parameters;
