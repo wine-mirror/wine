@@ -59,7 +59,12 @@
  *   -- we should keep an ordered array of coordinates in iconic mode
  *      this would allow to frame items (iterator_frameditems),
  *      and find nearest item (LVFI_NEARESTXY) a lot more efficiently
- *   
+ *
+ * Flags
+ *   -- LVIF_COLUMNS
+ *   -- LVIF_GROUPID
+ *   -- LVIF_NORECOMPUTE
+ *
  * States
  *   -- LVIS_ACTIVATING (not currently supported by comctl32.dll version 6.0)
  *   -- LVIS_CUT
@@ -4759,12 +4764,12 @@ static BOOL LISTVIEW_GetItemT(LISTVIEW_INFO *infoPtr, LPLVITEMW lpLVItem, BOOL i
     {
 	dispInfo.item.state = 0;
 
-	/* if we need to callback, do it now */
-	if ((lpLVItem->mask & ~LVIF_STATE) || infoPtr->uCallbackMask)
+	/* apprently, we should not callback for lParam in LVS_OWNERDATA */
+	if ((lpLVItem->mask & ~(LVIF_STATE | LVIF_PARAM)) || infoPtr->uCallbackMask)
 	{
 	    /* NOTE: copy only fields which we _know_ are initialized, some apps
 	     *       depend on the uninitialized fields being 0 */
-	    dispInfo.item.mask = lpLVItem->mask;
+	    dispInfo.item.mask = lpLVItem->mask & ~LVIF_PARAM;
 	    dispInfo.item.iItem = lpLVItem->iItem;
 	    dispInfo.item.iSubItem = lpLVItem->iSubItem;
 	    if (lpLVItem->mask & LVIF_TEXT)
@@ -4779,7 +4784,10 @@ static BOOL LISTVIEW_GetItemT(LISTVIEW_INFO *infoPtr, LPLVITEMW lpLVItem, BOOL i
 	    *lpLVItem = dispInfo.item;
 	    TRACE("   getdispinfo(1):lpLVItem=%s\n", debuglvitem_t(lpLVItem, isW));
 	}
-
+	
+	/* make sure lParam is zeroed out */
+	if (lpLVItem->mask & LVIF_PARAM) lpLVItem->lParam = 0;
+	
 	/* we store only a little state, so if we're not asked, we're done */
 	if (!(lpLVItem->mask & LVIF_STATE) || lpLVItem->iSubItem) return TRUE;
 
