@@ -123,17 +123,28 @@ static	BOOL	MMDRV_GetDescription32(const char* fname, char* buf, int buflen)
     DWORD	dw;
     BOOL	ret = FALSE;
     UINT	u;
+    FARPROC pGetFileVersionInfoSizeA;
+    FARPROC pGetFileVersionInfoA;
+    FARPROC pVerQueryValueA;
+    HMODULE hmodule = 0;
 
 #define E(_x)	do {TRACE _x;goto theEnd;} while(0)
 
     if (OpenFile(fname, &ofs, OF_EXIST)==HFILE_ERROR)		E(("Can't find file %s\n", fname));
 
-    /* should load version.dll */
-    if (!(dw = GetFileVersionInfoSizeA(ofs.szPathName, &h)))	E(("Can't get FVIS\n"));
+    if (!(hmodule = LoadLibraryA( "version.dll" ))) goto theEnd;
+    if (!(pGetFileVersionInfoSizeA = GetProcAddress( hmodule, "GetFileVersionInfoSizeA" )))
+        goto theEnd;
+    if (!(pGetFileVersionInfoA = GetProcAddress( hmodule, "GetFileVersionInfoA" )))
+        goto theEnd;
+    if (!(pVerQueryValueA = GetProcAddress( hmodule, "pVerQueryValueA" )))
+        goto theEnd;
+
+    if (!(dw = pGetFileVersionInfoSizeA(ofs.szPathName, &h)))	E(("Can't get FVIS\n"));
     if (!(ptr = HeapAlloc(GetProcessHeap(), 0, dw)))		E(("OOM\n"));
-    if (!GetFileVersionInfoA(ofs.szPathName, h, dw, ptr))	E(("Can't get FVI\n"));
+    if (!pGetFileVersionInfoA(ofs.szPathName, h, dw, ptr))	E(("Can't get FVI\n"));
     
-#define	A(_x) if (VerQueryValueA(ptr, "\\StringFileInfo\\040904B0\\" #_x, &val, &u)) \
+#define	A(_x) if (pVerQueryValueA(ptr, "\\StringFileInfo\\040904B0\\" #_x, &val, &u)) \
                   TRACE(#_x " => %s\n", (LPSTR)val); else TRACE(#_x " @\n")
     
     A(CompanyName);
@@ -150,13 +161,14 @@ static	BOOL	MMDRV_GetDescription32(const char* fname, char* buf, int buflen)
     A(SpecialBuild); 
 #undef A
 
-    if (!VerQueryValueA(ptr, "\\StringFileInfo\\040904B0\\ProductName", &val, &u)) E(("Can't get product name\n"));
+    if (!pVerQueryValueA(ptr, "\\StringFileInfo\\040904B0\\ProductName", &val, &u)) E(("Can't get product name\n"));
     lstrcpynA(buf, val, buflen);
 
 #undef E    
     ret = TRUE;
 theEnd:
     HeapFree(GetProcessHeap(), 0, ptr);
+    if (hmodule) FreeLibrary( hmodule );
     return ret;
 }
 
