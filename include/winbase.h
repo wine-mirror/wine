@@ -458,7 +458,7 @@ typedef struct {
 
 /* The 'overlapped' data structure used by async I/O functions.
  */
-typedef struct {
+typedef struct _OVERLAPPED {
         DWORD Internal;
         DWORD InternalHigh;
         DWORD Offset;

@@ -300,12 +300,20 @@ HANDLE FILE_DupUnixHandle( int fd, DWORD access, BOOL inherit )
  * Retrieve the Unix handle corresponding to a file handle.
  * Returns -1 on failure.
  */
-static int FILE_GetUnixHandleType( HANDLE handle, DWORD access, enum fd_type *type, int *flags )
+static int FILE_GetUnixHandleType( HANDLE handle, DWORD access, enum fd_type *type, int *flags_ptr )
 {
-    int ret, fd = -1;
+    int ret, flags, fd = -1;
 
-    ret = wine_server_handle_to_fd( handle, access, &fd, type, flags );
+    ret = wine_server_handle_to_fd( handle, access, &fd, type, &flags );
+    if (flags_ptr) *flags_ptr = flags;
     if (ret) SetLastError( RtlNtStatusToDosError(ret) );
+    else if (((access & GENERIC_READ)  && (flags & FD_FLAG_RECV_SHUTDOWN)) ||
+             ((access & GENERIC_WRITE) && (flags & FD_FLAG_SEND_SHUTDOWN)))
+    {
+        close (fd);
+        SetLastError ( ERROR_PIPE_NOT_CONNECTED );
+        return -1;
+    }
     return fd;
 }
 
@@ -1411,7 +1419,7 @@ BOOL WINAPI GetOverlappedResult(
         *lpTransferred = lpOverlapped->InternalHigh;
 
     SetLastError ( lpOverlapped->Internal == STATUS_PENDING ?
-                   ERROR_IO_INCOMPLETE : lpOverlapped->Internal );
+                   ERROR_IO_INCOMPLETE : RtlNtStatusToDosError ( lpOverlapped->Internal ) );
 
     return (r==WAIT_OBJECT_0);
 }
@@ -1511,8 +1519,12 @@ static BOOL FILE_ReadFileEx(HANDLE hFile, LPVOID buffer, DWORD bytesToRead,
     if ( fd < 0 )
     {
         WARN ( "Couldn't get FD\n" );
-        SetLastError ( ERROR_INVALID_PARAMETER );
         return FALSE;
+    }
+    if ( ! (flags & FD_FLAG_OVERLAPPED) ) {
+        WARN ( "fd is not overlapped\n" );
+        SetLastError ( ERROR_INVALID_PARAMETER );
+        goto error;
     }
 
     ovp = (async_fileio*) HeapAlloc(GetProcessHeap(), 0, sizeof (async_fileio));
@@ -1730,6 +1742,11 @@ static BOOL FILE_WriteFileEx(HANDLE hFile, LPCVOID buffer, DWORD bytesToWrite,
     {
         TRACE( "Couldn't get FD\n" );
         return FALSE;
+    }
+    if ( ! (flags & FD_FLAG_OVERLAPPED) ) {
+        WARN ( "fd is not overlapped\n" );
+        SetLastError ( ERROR_INVALID_PARAMETER );
+        goto error;
     }
 
     ovp = (async_fileio*) HeapAlloc(GetProcessHeap(), 0, sizeof (async_fileio));

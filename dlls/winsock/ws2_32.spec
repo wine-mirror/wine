@@ -52,7 +52,7 @@ debug_channels (winsock)
 37  stdcall  WSAEnumProtocolsA(ptr ptr ptr) WSAEnumProtocolsA
 38  stdcall  WSAEnumProtocolsW(ptr ptr ptr) WSAEnumProtocolsW
 39  stdcall  WSAEventSelect(long long long) WSAEventSelect
-40  stub     WSAGetOverlappedResult
+40  stdcall  WSAGetOverlappedResult(long ptr ptr long ptr) WSAGetOverlappedResult
 41  stub     WSAGetQOSByName
 42  stub     WSAGetServiceClassInfoA
 43  stub     WSAGetServiceClassInfoW
