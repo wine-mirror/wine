@@ -1252,10 +1252,12 @@ INT32 WINAPI ToAscii32( UINT32 virtKey,UINT32 scanCode,LPBYTE lpKeyState,
     if (lpKeyState[VK_CAPITAL] & 0x01)
 	e.state |= LockMask;
     if (lpKeyState[VK_CONTROL] & 0x80)
+    {
 	if (lpKeyState[VK_MENU] & 0x80)
 	    e.state |= AltGrMask;
 	else
 	    e.state |= ControlMask;
+    }
     if (lpKeyState[VK_NUMLOCK] & 0x01)
 	e.state |= NumLockMask;
     TRACE(key, "(%04X, %04X) : faked state = %X\n",
