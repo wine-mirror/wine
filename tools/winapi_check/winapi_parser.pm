@@ -164,8 +164,9 @@ sub parse_c_file {
 
     print STDERR "Processing file '$file' ... " if $options->verbose;
     open(IN, "< $file") || die "<internal>: $file: $!\n";
-    $/ = "\n";
+    local $_ = "";
     while($again || defined(my $line = <IN>)) {
+	$_ = "" if !defined($_);
 	if(!$again) {
 	    chomp $line;
 
@@ -177,8 +178,8 @@ sub parse_c_file {
 		$_ = $line;
 		$lookahead_count = 0;
 	    }
-	    print " $level($lookahead_count): $line\n" if $options->debug >= 2;
-	    print "*** $_\n" if $options->debug >= 3;
+	    $output->write(" $level($lookahead_count): $line\n") if $options->debug >= 2;
+	    $output->write("*** $_\n") if $options->debug >= 3;
 	} else {
 	    $lookahead_count = 0;
 	    $again = 0;

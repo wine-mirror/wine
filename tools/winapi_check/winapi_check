@@ -1,6 +1,6 @@
 #!/usr/bin/perl -w
 
-# Copyright 1999-2001 Patrik Stridvall
+# Copyright 1999-2002 Patrik Stridvall
 #
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -546,7 +546,9 @@ foreach my $file (@c_files) {
 			    $include = "$header";
 			}
 		    } elsif($header eq "controls.h") { # FIXME: Kludge
-			$include = "dlls/user/controls.h";
+			$include = "dlls/user/$header";
+		    } elsif($header eq "ts_xlib.h") { # FIXME: Kludge
+			$include = "dlls/x11drv/$header";
 		    } elsif($check_local) {
 			$output->write("$file: #include \"$header\": file not found\n");
 		    }
@@ -620,6 +622,11 @@ foreach my $file (@c_files) {
 			}
 		    } elsif($header eq "controls.h") { # FIXME: Kludge
 			$include2info{"dlls/user/$header"}{used}++;
+			foreach my $name (keys(%{$include2info{"dlls/user/$header"}{includes}})) {
+			    $include2info{$name}{used}++;
+			}
+		    } elsif($header eq "ts_xlib.h") { # FIXME: Kludge
+			$include2info{"dlls/x11drv/$header"}{used}++;
 			foreach my $name (keys(%{$include2info{"dlls/user/$header"}{includes}})) {
 			    $include2info{$name}{used}++;
 			}
