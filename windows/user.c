@@ -447,7 +447,7 @@ BOOL WINAPI ExitWindowsEx( UINT flags, DWORD reserved )
     if (flags & EWX_REBOOT)
         USER_StartRebootProcess();
 
-    if (result) ExitKernel16();
+    if (result) ExitProcess(0);
     return TRUE;
 }
 
