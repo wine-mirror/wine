@@ -165,6 +165,7 @@ struct options
     strarray* lib_dirs;
     strarray *linker_args;
     strarray *compiler_args;
+    strarray* winebuild_args;
     strarray* files;
 };
 
@@ -336,8 +337,8 @@ static void build(struct options* opts)
     char *spec_c_name, *spec_o_name, *base_file, *base_name;
     const char* output_name;
     const char *winebuild = getenv("WINEBUILD");
-    int j;
     int generate_app_loader = 1;
+    int j;
 
     if (!winebuild) winebuild = "winebuild";
 
@@ -360,6 +361,9 @@ static void build(struct options* opts)
     else if (strendswith(base_file, ".exe")) base_file[strlen(base_file) - 4] = 0;
     if ((base_name = strrchr(base_file, '/'))) base_name++;
     else base_name = base_file;
+
+    if (opts->files->size == 1 && strendswith(opts->files->base[0], ".exe.so"))
+	goto only_app_loader;
 
     /* prepare the linking path */
     lib_dirs = strarray_dup(opts->lib_dirs);
@@ -447,6 +451,9 @@ static void build(struct options* opts)
     for ( j = 0; j < lib_paths->size; j++ )
 	strarray_add(spec_args, lib_paths->base[j]);
 
+    for ( j = 0 ; j < opts->winebuild_args->size ; j++ )
+        strarray_add(spec_args, opts->winebuild_args->base[j]);
+
     for ( j = 0; j < dll_libs->size; j++ )
 	strarray_add(spec_args, dll_libs->base[j]);
 
@@ -504,6 +511,7 @@ static void build(struct options* opts)
     spawn(link_args);
 
     /* create the loader script */
+only_app_loader:
     if (generate_app_loader)
     {
         create_file(base_file, app_loader_template, base_name);
@@ -614,6 +622,7 @@ int main(int argc, char **argv)
     opts.files = strarray_alloc();
     opts.linker_args = strarray_alloc();
     opts.compiler_args = strarray_alloc();
+    opts.winebuild_args = strarray_alloc();
 
     /* determine the processor type */
     if (strendswith(argv[0], "winecpp")) opts.processor = proc_pp;
@@ -749,6 +758,12 @@ int main(int argc, char **argv)
                         if (strstr(argv[i], "-static"))
                             linking = -1;
                     }
+		    else if (strncmp("-Wb,", argv[i], 4) == 0)
+		    {
+			strarray* Wb = strarray_fromstring(argv[i] + 4, ",");
+			strarray_addall(opts.winebuild_args, Wb);
+			strarray_free(Wb);
+		    }
                     break;
                 case '-':
                     if (strcmp("-static", argv[i]+1) == 0)

@@ -118,6 +118,13 @@ void strarray_add(strarray* arr, const char* str)
     arr->base[arr->size++] = str;
 }
 
+void strarray_del(strarray* arr, int i)
+{
+    if (i < 0 || i >= arr->size) error("Invalid index i=%d", i);
+    memmove(&arr->base[i], &arr->base[i + 1], (arr->size - i - 1) * sizeof(arr->base[0]));
+    arr->size--;
+}
+
 void strarray_addall(strarray* arr, const strarray* from)
 {
     int i;
