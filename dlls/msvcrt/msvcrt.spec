@@ -521,7 +521,7 @@
 @ cdecl _wfopen(wstr wstr)
 @ stub _wfreopen #(wstr wstr ptr)
 @ cdecl _wfsopen(wstr wstr long)
-@ stub _wfullpath #(ptr wstr long)
+@ cdecl _wfullpath(ptr wstr long)
 @ cdecl _wgetcwd(wstr long)
 @ cdecl _wgetdcwd(long wstr long)
 @ cdecl _wgetenv(wstr)
