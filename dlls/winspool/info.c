@@ -2505,11 +2505,12 @@ BOOL WINAPI GetPrinterDriverDirectoryA(LPSTR pName, LPSTR pEnvironment,
     ret = GetPrinterDriverDirectoryW( nameW.Buffer, environmentW.Buffer, Level,
 				      (LPBYTE)driverDirectoryW, len, &pcbNeededW );
     if (ret) {
-        ret = WideCharToMultiByte( CP_ACP, 0, driverDirectoryW, -1, 
+        DWORD needed;
+        needed = 1 + WideCharToMultiByte( CP_ACP, 0, driverDirectoryW, -1, 
                                    pDriverDirectory, cbBuf, NULL, NULL);
         if(pcbNeeded)
-            *pcbNeeded = WideCharToMultiByte( CP_ACP, 0, driverDirectoryW, -1,
-                                              NULL, 0, NULL, NULL);
+            *pcbNeeded = needed;
+        ret = (needed <= cbBuf) ? TRUE : FALSE;
     } else 
         if(pcbNeeded) *pcbNeeded = pcbNeededW * sizeof(CHAR)/sizeof(WCHAR);
 
