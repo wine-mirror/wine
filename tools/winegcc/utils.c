@@ -220,6 +220,7 @@ file_type get_file_type(const char* filename)
     if (strendswith(filename, ".a")) return file_arh;
     if (strendswith(filename, ".res")) return file_res;
     if (strendswith(filename, ".so")) return file_so;
+    if (strendswith(filename, ".dylib")) return file_so;
     if (strendswith(filename, ".def")) return file_dll;
     if (strendswith(filename, ".rc")) return file_rc;
 
@@ -246,6 +247,10 @@ static file_type guess_lib_type(const char* dir, const char* library, char** fil
 {
     /* Unix shared object */
     if ((*file = try_lib_path(dir, "lib", library, ".so", file_so)))
+	return file_so;
+	
+    /* Mach-O (Darwin/Mac OS X) Dynamic Library behaves mostly like .so */
+    if ((*file = try_lib_path(dir, "lib", library, ".dylib", file_so)))
 	return file_so;
 
     /* Windows DLL */
