@@ -2692,7 +2692,7 @@ HRESULT WINAPI VarI2FromStr(OLECHAR* strIn, LCID lcid, ULONG dwFlags, short* psO
 	double dValue = 0.0;
 	LPSTR pNewString = NULL;
 
-	TRACE("( %p, 0x%08lx, 0x%08lx, %p ), stub\n", strIn, lcid, dwFlags, psOut );
+	TRACE("( %s, 0x%08lx, 0x%08lx, %p ), stub\n", debugstr_w(strIn), lcid, dwFlags, psOut );
 
 	/* Check if we have a valid argument
 	 */
@@ -5345,7 +5345,7 @@ HRESULT WINAPI VarAdd(LPVARIANT left, LPVARIANT right, LPVARIANT result)
     if ((V_VT(left)&VT_TYPEMASK) == VT_BSTR &&
         (V_VT(right)&VT_TYPEMASK) == VT_BSTR) {
         V_VT(result) = VT_BSTR;
-        VarBstrCat(V_BSTR(left), V_BSTR(right), &V_BSTR(result));
+        rc = VarBstrCat(V_BSTR(left), V_BSTR(right), &V_BSTR(result));
     } else {
 
         /* Integers */
