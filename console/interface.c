@@ -150,6 +150,14 @@ void CONSOLE_Refresh()
       driver.refresh();
 }
 
+int CONSOLE_AllocColor(int color)
+{
+   if (driver.allocColor)
+      return driver.allocColor(color);
+   else 
+      return 0;
+}
+
 /* This function is only at the CONSOLE level. */
 /* Admittably, calling the variable norefresh might be a bit dumb...*/
 void CONSOLE_SetRefresh(int setting)
@@ -199,6 +207,12 @@ void CONSOLE_NotifyResizeScreen(int x, int y)
 {
    if (driver.notifyResizeScreen)
       driver.notifyResizeScreen(x, y);
+}
+
+void CONSOLE_SetBackgroundColor(int fg, int bg)
+{
+   if (driver.setBackgroundColor)
+      driver.setBackgroundColor(fg, bg);
 }
 
 void CONSOLE_WriteRawString(char *str)

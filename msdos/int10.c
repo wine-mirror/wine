@@ -9,13 +9,14 @@
 #include "debug.h"
 #include "console.h"
 
-static int conv_text_mode_attribute_attribute(char attribute);
-static int conv_text_mode_attribute_fg_color(char attribute);
-static int conv_text_mode_attribute_bg_color(char attribute);
+static void conv_text_mode_attributes(char attribute, int *fg, int *bg,
+       int *wattribute);
 static void write_char_attribute_at_cursor(char output, char page_num, 
        char attribute, short times);
 static void scroll_window(int direction, char lines, char row1, 
    char col1, char row2, char col2, char attribute);
+
+static int color_pallet[16];
 
 #define SCROLL_UP 1
 #define SCROLL_DOWN 2
@@ -48,22 +49,52 @@ static void scroll_window(int direction, char lines, char row1,
 
 void WINAPI INT_Int10Handler( CONTEXT *context )
 {
+    static int registered_colors = FALSE;
+    static int video_mode = 7;
+    static int video_columns = 80;
+
+    if (!registered_colors)
+    {
+        /* Colors:
+             0000b   black          1000b   dark gray
+             0001b   blue           1001b   light blue
+             0010b   green          1010b   light green
+             0011b   cyan           1011b   light cyan
+             0100b   red            1100b   light red
+             0101b   magenta        1101b   light magenta
+             0110b   brown          1110b   yellow
+             0111b   light gray     1111b   white
+        */
+
+        color_pallet[0]  = CONSOLE_AllocColor(WINE_BLACK);
+        color_pallet[1]  = CONSOLE_AllocColor(WINE_BLUE);
+        color_pallet[2]  = CONSOLE_AllocColor(WINE_GREEN);
+        color_pallet[3]  = CONSOLE_AllocColor(WINE_CYAN);
+        color_pallet[4]  = CONSOLE_AllocColor(WINE_RED);
+        color_pallet[5]  = CONSOLE_AllocColor(WINE_MAGENTA);
+        color_pallet[6]  = CONSOLE_AllocColor(WINE_BROWN);
+        color_pallet[7]  = CONSOLE_AllocColor(WINE_LIGHT_GRAY);
+        color_pallet[8]  = CONSOLE_AllocColor(WINE_DARK_GRAY);
+        color_pallet[9]  = CONSOLE_AllocColor(WINE_LIGHT_BLUE);
+        color_pallet[10] = CONSOLE_AllocColor(WINE_LIGHT_GREEN);
+        color_pallet[11] = CONSOLE_AllocColor(WINE_LIGHT_CYAN);
+        color_pallet[12] = CONSOLE_AllocColor(WINE_LIGHT_RED);
+        color_pallet[13] = CONSOLE_AllocColor(WINE_LIGHT_MAGENTA);
+        color_pallet[14] = CONSOLE_AllocColor(WINE_YELLOW);
+        color_pallet[15] = CONSOLE_AllocColor(WINE_WHITE);
+    }
+
     switch(AH_reg(context)) {
 
     case 0x00: /* SET VIDEO MODE */
-        /* Text Modes: (can xterm or similar change text rows/cols?) */
-        /*    Answer: Yes. We can add that later. */
-        /*      Er, maybe. I thought resizeterm() did it, I was wrong. */
+        /* Text Modes: */
         /* (mode) (text rows/cols)
             0x00 - 40x25 
             0x01 - 40x25
             0x02 - 80x25
-            0x03 - 80x25 or 80x43 or 80x50 
+            0x03 - 80x25 or 80x43 or 80x50 (assume 80x25) 
             0x07 - 80x25
         */
-
-        /* We may or may not want to do a refresh between the resize and
-           the clear... */
 
         switch (AL_reg(context)) {
             case 0x00: /* 40x25 */
@@ -73,6 +104,8 @@ void WINAPI INT_Int10Handler( CONTEXT *context )
                    AL_reg(context));
                 CONSOLE_ResizeScreen(40, 25);
                 CONSOLE_ClearScreen();
+                video_mode = AL_reg(context);
+                video_columns = 40;
                 break;                
             case 0x02:
             case 0x03:
@@ -82,10 +115,13 @@ void WINAPI INT_Int10Handler( CONTEXT *context )
                    AL_reg(context));
                 CONSOLE_ResizeScreen(80, 25);
                 CONSOLE_ClearScreen();
+                video_mode = AL_reg(context);
+                video_columns = 80;
                 break;
             case 0x13:
                 TRACE(int10, "Setting VGA 320x200 256-color mode\n");
                 VGA_SetMode(320,200,8);
+                video_mode = AL_reg(context);
                 break;
             default:
                 FIXME(int10, "Set Video Mode (0x%x) - Not Supported\n", 
@@ -184,7 +220,8 @@ void WINAPI INT_Int10Handler( CONTEXT *context )
     case 0x0b: 
         switch BH_reg(context) {
         case 0x00: /* SET BACKGROUND/BORDER COLOR */
-            FIXME(int10, "Set Background/Border Color - Not Supported\n");
+            /* In text modes, this sets only the border */
+            TRACE(int10, "Set Background/Border Color - Ignored\n");
             break;
         case 0x01: /* SET PALETTE */
             FIXME(int10, "Set Palette - Not Supported\n");
@@ -214,8 +251,8 @@ void WINAPI INT_Int10Handler( CONTEXT *context )
     case 0x0f: /* GET CURRENT VIDEO MODE */
         TRACE(int10, "Get Current Video Mode\n");
         /* Note: This should not be a constant value. */
-        AL_reg(context) = 0x07; /* 80x25 text mode */
-        AH_reg(context) = 80; /* 80 columns */
+        AL_reg(context) = video_mode;
+        AH_reg(context) = video_columns;
         BH_reg(context) = 0; /* Display page 0 */
         break;
 
@@ -421,9 +458,10 @@ static void write_char_attribute_at_cursor(char output, char page_num,
        return;
     }  
 
-    wattribute = conv_text_mode_attribute_attribute(attribute);
-    fg_color = conv_text_mode_attribute_fg_color(attribute);
-    bg_color = conv_text_mode_attribute_bg_color(attribute);
+    conv_text_mode_attributes(attribute, &fg_color, &bg_color,
+        &wattribute);
+
+    TRACE(int10, "Fore: %d Back: %d\n", fg_color, bg_color);
 
     CONSOLE_GetCursorPosition(&x, &y);
 
@@ -436,65 +474,29 @@ static void write_char_attribute_at_cursor(char output, char page_num,
     CONSOLE_MoveCursor(x, y);
 }
 
-static int conv_text_mode_attribute_fg_color(char attribute)
+static void conv_text_mode_attributes(char attribute, int *fg, int *bg,
+   int *wattribute)
 {
-    /* This is a local function to convert the color values 
-       in text-mode attributes to Wine's scheme */
-    
+    /* This is a local function to convert the text-mode attributes
+       to Wine's color and attribute scheme */
+
     /* Foreground Color is stored in bits 3 through 0 */
-
-    /* Colors:
-          0000b   black          1000b   dark gray
-          0001b   blue           1001b   light blue
-          0010b   green          1010b   light green
-          0011b   cyan           1011b   light cyan
-          0100b   red            1100b   light red
-          0101b   magenta        1101b   light magenta
-          0110b   brown          1110b   yellow
-          0111b   light gray     1111b   white
-    */
-
-    /* FIXME - We need color values for those and some generic constants */
-
-    return 0; /* Bogus, temporary data. */
-}
-
-static int conv_text_mode_attribute_bg_color(char attribute)
-{
-    /* This is a local function to convert the color values 
-       in text-mode attributes to Wine's scheme */
-    
     /* Background Color is stored in bits 6 through 4 */
-    
-    /* Colors same as above, but only the left column */
-
-    /* FIXME - We need color values for those and some generic constants */
-
-    return 0; /* Bogus, temporary data. */
-}
-
-static int conv_text_mode_attribute_attribute(char attribute)
-{
-    /* This is a local function to convert the attribute values 
-       in text-mode attributes to Wine's scheme */
-    
     /* If this has bit 7 set, then we need to blink */
 
-    if (255 && attribute)
-    {
-        /* return TEXT_ATTRIBUTE_BLINK; */
-    }
-    
-    return 0; /* Bogus data */
+    *fg = color_pallet[attribute & 15];
+    *bg = color_pallet[(attribute & 112) / 16];
+    *wattribute = attribute & 128;
+
 }
 
 static void scroll_window(int direction, char lines, char row1, 
    char col1, char row2, char col2, char attribute)
 {
-   int wattribute, bg_color;
+   int wattribute, bg_color, fg_color;
 
-   wattribute = conv_text_mode_attribute_attribute(attribute);
-   bg_color = conv_text_mode_attribute_bg_color(attribute);
+   conv_text_mode_attributes(attribute, &fg_color, &bg_color,
+      &wattribute);
 
    if (!lines) /* Actually, clear the window */
    {

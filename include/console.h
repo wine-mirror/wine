@@ -35,8 +35,12 @@ typedef struct CONSOLE_DRIVER
    void (*getCharacterAtCursor)(char *, int *, int *, int *);
    void (*clearScreen)();
 
+   /* Color-control functions */
+   int  (*allocColor)(int color);
+   void (*setBackgroundColor)(int fg, int bg);
+
    /* Keyboard Functions */
-   int (*checkForKeystroke)(char *, char *);
+   int  (*checkForKeystroke)(char *, char *);
    void (*getKeystroke)(char *, char *);
 
    /* Windowing Functions */
@@ -83,6 +87,8 @@ char CONSOLE_GetCharacter();
 void CONSOLE_ResizeScreen();
 void CONSOLE_NotifyResizeScreen(); 
 void CONSOLE_WriteRawString(char *);
+int  CONSOLE_AllocColor(int);
+void CONSOLE_SetBackgroundColor(int fg, int bg);
 
 /* Generic Defines */
 void GENERIC_Start();
@@ -111,6 +117,8 @@ void NCURSES_GetCharacterAtCursor(char *, int *, int *, int *);
 void NCURSES_Refresh();
 void NCURSES_ClearScreen();
 void NCURSES_NotifyResizeScreen(int x, int y);
+int  NCURSES_AllocColor(int);
+void NCURSES_SetBackgroundColor(int fg, int bg);
 
 #endif /* WINE_NCURSES */
 
@@ -119,5 +127,24 @@ void XTERM_Start();
 void XTERM_Close();
 void XTERM_Init();
 void XTERM_ResizeScreen(int x, int y);
+
+/* Color defines */
+/* These will eventually be hex triples for dynamic allocation */
+#define WINE_BLACK		1
+#define WINE_BLUE		2
+#define WINE_GREEN		3
+#define WINE_CYAN		4
+#define WINE_MAGENTA		5
+#define WINE_BROWN		6
+#define WINE_RED		7
+#define WINE_LIGHT_GRAY		8
+#define WINE_DARK_GRAY		9
+#define WINE_LIGHT_BLUE		10
+#define WINE_LIGHT_GREEN	11
+#define WINE_LIGHT_RED		12
+#define WINE_LIGHT_MAGENTA	13
+#define WINE_LIGHT_CYAN		14
+#define WINE_YELLOW		15
+#define WINE_WHITE		16
 
 #endif /* CONSOLE_H */

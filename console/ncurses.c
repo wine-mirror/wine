@@ -31,6 +31,8 @@
 
 SCREEN *ncurses_screen;
 
+static int get_color_pair(int fg_color, int bg_color);
+
 void NCURSES_Start()
 {
    /* This should be the root driver so we can ignore anything
@@ -45,6 +47,8 @@ void NCURSES_Start()
    driver.getCursorPosition = NCURSES_GetCursorPosition;
    driver.getCharacterAtCursor = NCURSES_GetCharacterAtCursor;
    driver.clearScreen = NCURSES_ClearScreen;
+   driver.allocColor = NCURSES_AllocColor;
+   driver.setBackgroundColor = NCURSES_SetBackgroundColor;
 #ifdef HAVE_RESIZETERM
    driver.notifyResizeScreen = NCURSES_NotifyResizeScreen;
 #endif
@@ -60,10 +64,11 @@ void NCURSES_Init()
    ncurses_screen = newterm("xterm", driver.console_out,
       driver.console_in);
    set_term(ncurses_screen);
-   cbreak();
+   start_color();
+   raw();
    noecho();
    nonl();
-   intrflush(stdscr, FALSE);
+/*   intrflush(stdscr, FALSE); */ 
    keypad(stdscr, TRUE);
    nodelay(stdscr, TRUE);
 }
@@ -71,9 +76,17 @@ void NCURSES_Init()
 void NCURSES_Write(char output, int fg, int bg, int attribute)
 {
    char row, col;
+   int pair;
+   
+   if (!fg)
+      fg = COLOR_WHITE; /* Default */
 
-   /* We can discard all extended information. */
-   if (waddch(stdscr, output) == ERR)
+   if (!bg)
+      bg = COLOR_BLACK; /* Default */
+
+   pair = get_color_pair(fg, bg);
+
+   if (waddch(stdscr, output | COLOR_PAIR(pair)) == ERR)
    {
       NCURSES_GetCursorPosition(&row, &col);
       FIXME(console, "NCURSES: waddch() failed at %d, %d.\n", row, col);
@@ -150,6 +163,36 @@ void NCURSES_ClearScreen()
    werase(stdscr);
 }
 
+int NCURSES_AllocColor(int color)
+{
+   /* Currently support only internal colors */
+   switch (color)
+   {
+      case WINE_BLACK:		return COLOR_BLACK;
+      case WINE_WHITE:		return COLOR_WHITE;
+      case WINE_RED:		return COLOR_RED;
+      case WINE_GREEN:		return COLOR_GREEN;
+      case WINE_YELLOW:		return COLOR_YELLOW;
+      case WINE_BLUE:     	return COLOR_BLUE;
+      case WINE_MAGENTA:	return COLOR_MAGENTA;
+      case WINE_CYAN:		return COLOR_CYAN;
+   }
+
+   FIXME(console, "Unable to allocate color %d\n", color);
+
+   /* Don't allocate a color... yet */
+   return 0;
+}
+
+void NCURSES_SetBackgroundColor(int fg, int bg)
+{
+   int pair;
+
+   pair = get_color_pair(fg, bg);
+
+   bkgdset(COLOR_PAIR(pair));
+}
+
 #ifdef HAVE_RESIZETERM
 
 void NCURSES_NotifyResizeScreen(int x, int y)
@@ -161,6 +204,37 @@ void NCURSES_NotifyResizeScreen(int x, int y)
    resizeterm(y, x);
 }
 
-#endif
+#endif /* HAVE_RESIZETERM */
+
+static int get_color_pair(int fg_color, int bg_color)
+{
+   /* ncurses internally uses "color pairs" in addition to the "pallet" */
+   /* This isn't the best way to do this. Or even close */
+
+   static int current = 0;
+   static int fg[255];     /* 16 x 16 is enough */
+   static int bg[255];
+   int x;
+
+   /* The first pair is hardwired into ncurses */
+   fg[0] = COLOR_WHITE;
+   bg[0] = COLOR_BLACK;
+
+   for (x = 0; x <= current; x++)
+   {
+      if ((fg_color == fg[x]) && (bg_color == bg[x]))
+      {
+         TRACE(console, "Color pair: already allocated\n");
+         return x;  
+      }    
+   }
+
+   /* Need to allocate new color */
+   current++;
+   fg[current] = fg_color;
+   bg[current] = bg_color;
+   TRACE(console, "Color pair: allocated.\n");
+   return init_pair(current, fg_color, bg_color);
+}
 
 #endif /* WINE_NCURSES */
