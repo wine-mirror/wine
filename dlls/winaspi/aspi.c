@@ -43,18 +43,24 @@ DEFAULT_DEBUG_CHANNEL(aspi);
 static void
 SCSI_GetProcinfo();
 
+static void
+SCSI_MapHCtoController();
+
 /* Exported functions */
 void
 SCSI_Init()
 {
 	/* For now we just call SCSI_GetProcinfo */
 	SCSI_GetProcinfo();
+	SCSI_MapHCtoController();
 }
 
 int
 ASPI_GetNumControllers()
 {
 	HKEY hkeyScsi;
+	HKEY hkeyControllerMap;
+	DWORD error;
 	DWORD type = REG_DWORD;
 	DWORD num_ha = 0;
 	DWORD cbData = sizeof(num_ha);
@@ -65,13 +71,20 @@ ASPI_GetNumControllers()
 		return 0;
 	}
 
-	if( RegQueryValueExA(hkeyScsi, NULL, NULL, &type, (LPBYTE)&num_ha, &cbData ) != ERROR_SUCCESS )
+	if( (error=RegOpenKeyExA(hkeyScsi, KEYNAME_SCSI_CONTROLLERMAP, 0, KEY_ALL_ACCESS, &hkeyControllerMap )) != ERROR_SUCCESS )
+	{
+		ERR("Could not open HKEY_DYN_DATA\\%s\\%s\n", KEYNAME_SCSI, KEYNAME_SCSI_CONTROLLERMAP);
+		RegCloseKey(hkeyScsi);
+		SetLastError(error);
+		return 0;
+	}
+	if( RegQueryValueExA(hkeyControllerMap, NULL, NULL, &type, (LPBYTE)&num_ha, &cbData ) != ERROR_SUCCESS )
 	{
 		ERR("Could not query value HEKY_DYN_DATA\\%s\n",KEYNAME_SCSI);
 		num_ha=0;
 	}
+	RegCloseKey(hkeyControllerMap);
 	RegCloseKey(hkeyScsi);
-	FIXME("Please fix to return number of controllers\n");
 	TRACE("Returning %ld host adapters\n", num_ha );
 	return num_ha;
 }
@@ -113,10 +126,51 @@ SCSI_GetDeviceName( int h, int c, int t, int d, LPSTR devstr, LPDWORD lpcbData )
 DWORD
 ASPI_GetHCforController( int controller )
 {
-	DWORD retval;
+	DWORD hc = 0xFFFFFFFF;
+	char cstr[20];
+	DWORD error;
+	HKEY hkeyScsi;
+	HKEY hkeyControllerMap;
+	DWORD type = REG_DWORD;
+	DWORD cbData = sizeof(DWORD);
+	DWORD disposition;
+#if 0
 	FIXME("Please fix to map each channel of each host adapter to the proper ASPI controller number!\n");
-	retval = (controller << 16);
-	return retval;
+	hc = (controller << 16);
+	return hc;
+#endif
+	if( (error=RegCreateKeyExA(HKEY_DYN_DATA, KEYNAME_SCSI, 0, NULL, REG_OPTION_VOLATILE, KEY_ALL_ACCESS, NULL, &hkeyScsi, &disposition )) != ERROR_SUCCESS )
+	{
+		ERR("Could not open HEKY_DYN_DATA\\%s\n",KEYNAME_SCSI);
+		SetLastError(error);
+		return hc;
+	}
+	if( disposition != REG_OPENED_EXISTING_KEY )
+	{
+		WARN("Created HKEY_DYN_DATA\\%s\n",KEYNAME_SCSI);
+	}
+	if( (error=RegCreateKeyExA(hkeyScsi, KEYNAME_SCSI_CONTROLLERMAP, 0, NULL, REG_OPTION_VOLATILE, KEY_ALL_ACCESS, NULL, &hkeyControllerMap, &disposition )) != ERROR_SUCCESS )
+	{
+		ERR("Could not open HKEY_DYN_DATA\\%s\\%s\n", KEYNAME_SCSI, KEYNAME_SCSI_CONTROLLERMAP);
+		RegCloseKey(hkeyScsi);
+		SetLastError(error);
+		return hc;
+	}
+	if( disposition != REG_OPENED_EXISTING_KEY )
+	{
+		WARN("Created HKEY_DYN_DATA\\%s\\%s\n",KEYNAME_SCSI, KEYNAME_SCSI_CONTROLLERMAP);
+	}
+
+	sprintf(cstr, "c%02d", controller);
+	if( (error=RegQueryValueExA( hkeyControllerMap, cstr, 0, &type, (LPBYTE)&hc, &cbData)) != ERROR_SUCCESS )
+	{
+		ERR("Could not open HKEY_DYN_DATA\\%s\\%s\\%s, error=%lx\n", KEYNAME_SCSI, KEYNAME_SCSI_CONTROLLERMAP, cstr, error );
+		SetLastError( error );
+	}
+	RegCloseKey(hkeyControllerMap);
+	RegCloseKey(hkeyScsi);
+	return hc;
+
 };
 
 int
@@ -268,6 +322,94 @@ SCSI_printprocentry( const struct LinuxProcScsiDevice * dev )
 	TRACE( "  Type:   %s ANSI SCSI revision: %02d\n",
 		dev->type,
 		dev->ansirev );
+}
+
+static BOOL
+SCSI_PutRegControllerMap( HKEY hkeyControllerMap, int num_controller, int ha, int chan)
+{
+	DWORD error;
+	char cstr[20];
+	DWORD hc;
+	hc = (ha << 16) + chan;
+	sprintf(cstr, "c%02d", num_controller);
+	if( (error=RegSetValueExA( hkeyControllerMap, cstr, 0, REG_DWORD, (LPBYTE)&hc, sizeof(DWORD))) != ERROR_SUCCESS )
+	{
+		ERR("Could not create HKEY_DYN_DATA\\%s\\%s\\%s\n", KEYNAME_SCSI, KEYNAME_SCSI_CONTROLLERMAP, cstr );
+	}
+	return error;
+}
+
+static void
+SCSI_MapHCtoController()
+{
+	HKEY hkeyScsi;
+	HKEY hkeyControllerMap;
+	DWORD disposition;
+
+	char idstr[20];
+	DWORD cbIdStr = 20;
+	int i = 0;
+	DWORD type = 0;
+	DWORD error;
+
+	DWORD num_controller = 0;
+	int last_ha = -1;
+	int last_chan = -1;
+
+	int ha = 0;
+	int chan = 0;
+
+	if( RegCreateKeyExA(HKEY_DYN_DATA, KEYNAME_SCSI, 0, NULL, REG_OPTION_VOLATILE, KEY_ALL_ACCESS, NULL, &hkeyScsi, &disposition ) != ERROR_SUCCESS )
+	{
+		ERR("Could not open HEKY_DYN_DATA\\%s\n",KEYNAME_SCSI);
+		return;
+	}
+	if( disposition != REG_OPENED_EXISTING_KEY )
+	{
+		WARN("Created HKEY_DYN_DATA\\%s\n",KEYNAME_SCSI);
+	}
+	if( RegCreateKeyExA(hkeyScsi, KEYNAME_SCSI_CONTROLLERMAP, 0, NULL, REG_OPTION_VOLATILE, KEY_ALL_ACCESS, NULL, &hkeyControllerMap, &disposition ) != ERROR_SUCCESS )
+	{
+		ERR("Could not create HKEY_DYN_DATA\\%s\\%s\n", KEYNAME_SCSI, KEYNAME_SCSI_CONTROLLERMAP);
+		RegCloseKey(hkeyScsi);
+		return;
+	}
+	
+	for( i=0; (error=RegEnumValueA( hkeyScsi, i, idstr, &cbIdStr, NULL, &type, NULL, NULL )) == ERROR_SUCCESS; i++ )
+	{
+		sscanf(idstr, "h%02dc%02dt%*02dd%*02d", &ha, &chan);
+		if( last_ha < ha )
+		{	/* Next HA */
+			last_ha = ha;
+			last_chan = chan;
+			SCSI_PutRegControllerMap( hkeyControllerMap, num_controller, ha, chan);
+			num_controller++;
+		}
+		else if( last_ha > ha )
+		{
+			FIXME("Expected registry to be sorted\n");
+		}
+		/* last_ha == ha */
+		else if( last_chan < chan )
+		{
+			last_chan = chan;
+			SCSI_PutRegControllerMap( hkeyControllerMap, num_controller, ha, chan);
+			num_controller++;
+		}
+		else if( last_chan > chan )
+		{
+			FIXME("Expected registry to be sorted\n");
+		}
+		/* else last_ha == ha && last_chan == chan so do nothing */
+	}
+	/* Set (default) value to number of controllers */
+	if( RegSetValueExA(hkeyControllerMap, NULL, 0, REG_DWORD, (LPBYTE)&num_controller, sizeof(DWORD) ) != ERROR_SUCCESS )
+	{
+		ERR("Could not set value HEKY_DYN_DATA\\%s\\%s\n",KEYNAME_SCSI, KEYNAME_SCSI_CONTROLLERMAP);
+	}
+	RegCloseKey(hkeyControllerMap);
+	RegCloseKey(hkeyScsi);
+	return;
 }
 #endif
 

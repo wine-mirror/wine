@@ -33,6 +33,7 @@ struct sg_header
 
 /* RegKey used for SCSI info under HKEY_DYN_DATA */
 #define KEYNAME_SCSI "WineScsi"
+#define KEYNAME_SCSI_CONTROLLERMAP "ControllerMap"
 
 /* Function prototypes from dlls/wnaspi32/aspi.c */
 void
