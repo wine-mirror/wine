@@ -212,7 +212,7 @@ HBITMAP32 WINAPI CreateCompatibleBitmap32( HDC32 hdc, INT32 width, INT32 height)
 
     TRACE(bitmap, "(%04x,%d,%d) = \n", hdc, width, height );
     if (!(dc = DC_GetDCPtr( hdc ))) return 0;
-    if ((width >0x1000) || (height > 0x1000)) {
+    if ((width >= 0x10000) || (height >= 0x10000)) {
 	FIXME(bitmap,"got bad width %d or height %d, please look for reason\n",
 	      width, height );
     } else {
