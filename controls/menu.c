@@ -4818,9 +4818,14 @@ DWORD WINAPI GetMenuContextHelpId( HMENU hMenu )
  */
 UINT WINAPI MenuItemFromPoint(HWND hWnd, HMENU hMenu, POINT ptScreen)
 {
-    FIXME("(0x%04x,0x%04x,(%ld,%ld)):stub\n", 
-	  hWnd, hMenu, ptScreen.x, ptScreen.y);
-    return 0;
+    POPUPMENU *menu = MENU_GetMenu(hMenu);
+    UINT pos;
+    MENUITEM *item;
+
+    /*FIXME: Do we have to handle hWnd here? */
+    item = MENU_FindItemByCoords(menu, ptScreen, &pos);
+
+    return pos;
 }
 
 
