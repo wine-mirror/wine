@@ -61,7 +61,6 @@ typedef LPCSTR LPCOLESTR16;
  *
  * TODO: Most of these things will have to be made thread-safe.
  */
-HINSTANCE       COMPOBJ_hInstance32 = 0;
 
 static HRESULT COM_GetRegisteredClassObject(REFCLSID rclsid, DWORD dwClsContext, LPUNKNOWN*  ppUnk);
 static void COM_RevokeAllClasses(void);

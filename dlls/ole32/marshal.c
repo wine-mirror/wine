@@ -33,16 +33,13 @@
 #include "winuser.h"
 #include "objbase.h"
 #include "ole2.h"
-#include "ole2ver.h"
 #include "rpc.h"
 #include "winerror.h"
 #include "winreg.h"
-#include "wownt32.h"
 #include "wtypes.h"
 #include "wine/unicode.h"
-#include "wine/winbase16.h"
+
 #include "compobj_private.h"
-#include "ifs.h"
 
 #include "wine/debug.h"
 
