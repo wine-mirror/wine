@@ -477,6 +477,30 @@ static BOOL get_registry_value( HKEY hkey, const WCHAR *module, enum loadorder_t
 
 
 /***************************************************************************
+ *	MODULE_GetSystemDirectory
+ *
+ * Retrieve the system directory. The string must be freed by the caller.
+ */
+BOOL MODULE_GetSystemDirectory( UNICODE_STRING *sysdir )
+{
+    static const WCHAR winsysdirW[] = {'w','i','n','s','y','s','d','i','r',0};
+    UNICODE_STRING name;
+
+    RtlInitUnicodeString( &name, winsysdirW );
+    sysdir->MaximumLength = 0;
+    if (RtlQueryEnvironmentVariable_U( NULL, &name, sysdir ) != STATUS_BUFFER_TOO_SMALL)
+        return FALSE;
+    sysdir->MaximumLength = sysdir->Length + sizeof(WCHAR);
+    if (!(sysdir->Buffer = RtlAllocateHeap( GetProcessHeap(), 0, sysdir->MaximumLength )))
+        return FALSE;
+    if (RtlQueryEnvironmentVariable_U( NULL, &name, sysdir ) == STATUS_SUCCESS)
+        return TRUE;
+    RtlFreeUnicodeString( sysdir );
+    return FALSE;
+}
+
+
+/***************************************************************************
  *	MODULE_GetLoadOrderW	(internal)
  *
  * Locate the loadorder of a module.
@@ -510,17 +534,17 @@ void MODULE_GetLoadOrderW( enum loadorder_type loadorder[], const WCHAR *app_nam
      */
     if (win32)
     {
-        WCHAR sysdir[MAX_PATH+1];
-        UNICODE_STRING path_str, sysdir_str;
-        if (!GetSystemDirectoryW( sysdir, MAX_PATH )) return;
+        UNICODE_STRING path_str, sysdir;
 
+        if (!MODULE_GetSystemDirectory( &sysdir )) return;
         RtlInitUnicodeString( &path_str, path );
-        RtlInitUnicodeString( &sysdir_str, sysdir );
-        if (RtlPrefixUnicodeString( &sysdir_str, &path_str, TRUE ))
+        if (RtlPrefixUnicodeString( &sysdir, &path_str, TRUE ))
         {
-            path += sysdir_str.Length / sizeof(WCHAR);
-            while (*path == '\\' || *path == '/') path++;
+            const WCHAR *p = path + sysdir.Length / sizeof(WCHAR);
+            while (*p == '\\' || *p == '/') p++;
+            if (!strchrW( p, '\\' ) && !strchrW( p, '/' )) path = p;
         }
+        RtlFreeUnicodeString( &sysdir );
     }
 
     if (!(len = strlenW(path))) return;
