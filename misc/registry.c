@@ -1146,79 +1146,21 @@ static int _get_reg_type(void)
     return ret;
 }
 
-#define WINE_REG_VER_ERROR  -1
-#define WINE_REG_VER_1       0
-#define WINE_REG_VER_2       1
-#define WINE_REG_VER_OLD     2
-#define WINE_REG_VER_UNKNOWN 3
-
-/* return the version of wine registry file [Internal] */
-static int _get_wine_registry_file_format_version(LPCSTR fn)
-{
-    FILE *f;
-    char tmp[50];
-    int ver;
-
-    if ((f=fopen(fn,"rt")) == NULL) {
-        WARN("Couldn't open %s for reading: %s\n",fn,strerror(errno));
-        return WINE_REG_VER_ERROR;
-    }
-
-    if (fgets(tmp,50,f) == NULL) {
-        WARN("Error reading %s: %s\n",fn,strerror(errno));
-        fclose(f);
-        return WINE_REG_VER_ERROR;
-    }
-    fclose(f);
-
-    if (sscanf(tmp,"WINE REGISTRY Version %d",&ver) != 1) return WINE_REG_VER_UNKNOWN;
-    switch (ver) {
-        case 1:
-            return WINE_REG_VER_1;
-            break;
-        case 2:
-            return WINE_REG_VER_2;
-            break;
-        default:
-            return WINE_REG_VER_UNKNOWN;
-    }
-}
-
 /* load the registry file in wine format [Internal] */
 static void load_wine_registry(HKEY hkey,LPCSTR fn)
 {
-    int file_format;
-
-    file_format = _get_wine_registry_file_format_version(fn);
-    switch (file_format) {
-
-        case WINE_REG_VER_1:
-            WARN("Unable to load registry file %s: old format which is no longer supported.\n",fn);
-            break;
-
-        case WINE_REG_VER_2: {
-            HANDLE file;
-            if ((file = FILE_CreateFile( fn, GENERIC_READ, 0, NULL, OPEN_EXISTING,
-                                              FILE_ATTRIBUTE_NORMAL, 0, TRUE, DRIVE_UNKNOWN )))
-            {
-                SERVER_START_REQ( load_registry )
-                {
-                    req->hkey    = hkey;
-                    req->file    = file;
-                    wine_server_call( req );
-                }
-                SERVER_END_REQ;
-                CloseHandle( file );
-            }
-            break;
+    HANDLE file;
+    if ((file = FILE_CreateFile( fn, GENERIC_READ, 0, NULL, OPEN_EXISTING,
+                                 FILE_ATTRIBUTE_NORMAL, 0, TRUE, DRIVE_UNKNOWN )))
+    {
+        SERVER_START_REQ( load_registry )
+        {
+            req->hkey    = hkey;
+            req->file    = file;
+            wine_server_call( req );
         }
-
-        case WINE_REG_VER_UNKNOWN:
-            WARN("Unable to load registry file %s: unknown format.\n",fn);
-            break;
-
-        case WINE_REG_VER_ERROR:
-            break;
+        SERVER_END_REQ;
+        CloseHandle( file );
     }
 }
 
