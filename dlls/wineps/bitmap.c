@@ -205,9 +205,7 @@ INT PSDRV_StretchDIBits( DC *dc, INT xDst, INT yDst, INT widthDst,
 	return FALSE;
 
     }
-    PSDRV_WriteSpool(dc, "%\n", 2);  /* some versions of ghostscript seem to
-					eat one too many chars after the image
-					operator */
+    PSDRV_WriteSpool(dc, ">\n", 2);  /* End-of-Data for /HexASCIIDecodeFilter */
     PSDRV_WriteGRestore(dc);
     return TRUE;
 }
