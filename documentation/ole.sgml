@@ -1,12 +1,12 @@
   <chapter id="ole">
-    <title>COM/OLE in Wine</title>
+    <title>COM in Wine</title>
 
     <sect1 id="com-writing">
-      <title>Writing OLE Components for Wine</title>
+      <title>Writing COM Components for Wine</title>
 
       <para>
         This section describes how to create your own natively
-        compiled COM/OLE components.
+        compiled COM components.
       </para>
 
       <sect2>
@@ -365,6 +365,508 @@ static ICOM_VTABLE(IDirect3D) d3dvt = {
         <para>
           Finally we initialize the virtual table.
         </para>
+      </sect2>
+    </sect1>
+                                         
+    <sect1 id="dcom-1">
+      <title>A brief introduction to DCOM in Wine</title>
+
+      <para>
+        This section explains the basic principles behind DCOM remoting as used by InstallShield and others.
+      </para>
+
+      <sect2>
+        <title>BASICS</title>
+
+        <para>
+          The basic idea behind DCOM is to take a COM object and make it location
+          transparent. That means you can use it from other threads, processes and
+          machines without having to worry about the fact that you can't just
+          dereference the interface vtable pointer to call methods on it.
+        </para>
+
+        <para>
+          You might be wondering about putting threads next to processes and
+          machines in that last paragraph. You can access thread safe objects from
+          multiple threads without DCOM normally, right? Why would you need RPC
+          magic to do that?
+        </para>
+
+        <para>
+          The answer is of course that COM doesn't assume that objects actually
+          are thread-safe. Most real-world objects aren't, in fact, for various
+          reasons. What these reasons are isn't too important here, though, it's
+          just important to realize that the problem of thread-unsafe objects is
+          what COM tries hard to solve with its apartment model. There are also
+          ways to tell COM that your object is truly thread-safe (namely the
+          free-threaded marshaller). In general, no object is truly thread-safe if
+          it could potentially use another not so thread-safe object, though, so
+          the free-threaded marshaller is less used than you'd think.
+        </para>
+        
+        <para>
+          For now, suffice it to say that COM lets you "marshal" interfaces into
+          other "apartments". An apartment (you may see it referred to as a
+          context in modern versions of COM) can be thought of as a location, and
+          contains objects. 
+        </para>
+
+        <para>
+          Every thread in a program that uses COM exists in an apartment. If a
+          thread wishes to use an object from another apartment, marshalling and
+          the whole DCOM infrastructure gets involved to make that happen behind
+          the scenes.
+        </para>
+
+        <para>
+          So. Each COM object resides in an apartment, and each apartment
+          resides in a process, and each process resides in a machine, and each
+          machine resides in a network. Allowing those objects to be used
+          from <emphasis>any</emphasis> of these different places is what DCOM
+          is all about.
+        </para>
+
+        <para>
+          The process of marshalling refers to taking a function call in an
+          apartment and actually performing it in another apartment. Let's say you
+          have two machines, A and B, and on machine B there is an object sitting
+          in a DLL on the hard disk. You want to create an instance of that object
+          (activate it) and use it as if you had compiled it into your own
+          program. This is hard, because the remote object is expecting to be
+          called by code in its own address space - it may do things like accept
+          pointers to linked lists and even return other objects.
+        </para>
+
+        <para>
+          Very basic marshalling is easy enough to understand. You take a method
+          on a remote interface, copy each of its parameters into a buffer, and
+          send it to the remote computer. On the other end, the remote server
+          reads each parameter from the buffer, calls the method, writes the
+          result into another buffer and sends it back.
+        </para>
+
+        <para>
+          The tricky part is exactly how to encode those parameters in the buffer,
+          and how to convert standard stdcall/cdecl method calls to network
+          packets and back again. This is the job of the RPCRT4.DLL file - or the
+          Remote Procedure Call Runtime. 
+        </para>
+
+        <para>
+          The backbone of DCOM is this RPC runtime, which is an implementation
+          of <ulink
+          url="http://www.opengroup.org/onlinepubs/009629399/toc.htm">DCE
+          RPC</ulink>. DCE RPC is not naturally object oriented, so this
+          protocol is extended with some new constructs and by assigning new
+          meanings to some of the packet fields, to produce ORPC or Object
+          RPC. You might see it called MS-RPC as well.
+        </para>
+
+        <para>
+          RPC packets contain a buffer containing marshalled data in NDR format.
+          NDR is short for "Network Data Representation" and is similar the XDR
+          format used in SunRPC (the closest native equivalent on Linux to DCE
+          RPC). NDR/XDR are all based on the idea of graph serialization and were
+          worked out during the 80s, meaning they are very powerful and can do
+          things like marshal doubly linked lists and other rather tricky
+          structures.
+        </para>
+
+        <para>
+          In Wine, our DCOM implementation is <emphasis>not</emphasis> based on the
+          RPC runtime, as while few programs use DCOM even fewer use
+          RPC directly so it was developed some time after
+          OLE32/OLEAUT32 were. Eventually this will have to be fixed,
+          otherwise our DCOM will never be compatible with
+          Microsofts. Bear this in mind as you read through the code
+          however.
+        </para>
+      </sect2>
+      
+      <sect2>
+        <title>PROXIES AND STUBS</title>
+
+        <para>
+          Manually marshalling and unmarshalling each method call using the NDR
+          APIs (NdrConformantArrayMarshall etc) is very tedious work, so the
+          Platform SDK ships with a tool called "midl" which is an IDL compiler.
+          IDL or the "Interface Definition Language" is a tool designed
+          specifically for describing interfaces in a reasonably language neutral
+          fashion, though in reality it bears a close resemblence to C++.
+        </para>
+
+        <para>
+          By describing the functions you want to expose via RPC in IDL therefore,
+          it becomes possible to pass this file to MIDL which spits out a huge
+          amount of C source code. That code defines functions which have the same
+          prototype as the functions described in your IDL but which internally
+          take each argument, marshal it using Ndr, send the packet, and unmarshal
+          the return.
+        </para>
+        
+        <para>
+          Because this code proxies the code from the client to the server, the
+          functions are called proxies. Easy, right?
+        </para>
+
+        <para>
+          Of course, in the RPC server process at the other end, you need some way
+          to unmarshal the RPCs, so you have functions also generated by MIDL
+          which are the inverse of the proxies: they accept an NDR buffer, extract
+          the parameters, call the real function then marshal the result back.
+          They are called stubs, and stand in for the real calling code in the
+          client process.
+        </para>
+        
+        <para>
+          The sort of marshalling/unmarshalling code that MIDL spits out can be
+          seen in dlls/oleaut32/oaidl_p.c - it's not exactly what it would look
+          like as that file contains DCOM proxies/stubs which are different, but
+          you get the idea. Proxy functions take the arguments and feel them to
+          the NDR marshallers (or picklers), invoke an NdrProxySendReceive and
+          then convert the out parameters and return code. There's a ton of goop
+          in there for dealing with buffer allocation, exceptions and so on - it's
+          really ugly code. But, this is the basic concept behind DCE RPC.
+        </para>
+      </sect2>
+      
+      <sect2>
+        <title>INTERFACE MARSHALLING</title>
+
+        <para>
+          Standard NDR only knows about C style function calls - they
+          can accept and even return structures, but it has no concept
+          of COM interfaces.  Confusingly DCE RPC <emphasis>does</emphasis> have a
+          concept of RPC interfaces which are just convenient ways to
+          bundle function calls together into namespaces, but let's
+          ignore that for now as it just muddies the water. The
+          primary extension made by Microsoft to NDR then was the
+          ability to take a COM interface pointer and marshal that
+          into the NDR stream.
+        </para>
+
+        <para>
+          The basic theory of proxies and stubs and IDL is still here, but it's
+          been modified slightly. Whereas before you could define a bunch of
+          functions in IDL, now a new "object" keyword has appeared. This tells
+          MIDL that you're describing a COM interface, and as a result the
+          proxies/stubs it generates are also COM objects.
+        </para>
+
+        <para>
+          That's a very important distinction. When you make a call to a remote
+          COM object you do it via a proxy object that COM has constructed on the
+          fly. Likewise, a stub object on the remote end unpacks the RPC packet
+          and makes the call. 
+        </para>
+
+        <para>
+          Because this is object-oriented RPC, there are a few complications: for
+          instance, a call that goes via the same proxies/stubs may end up at a
+          different object instance, so the RPC runtime keeps track of "this" and
+          "that" in the RPC packets.
+        </para>
+
+        <para>
+          This leads naturally onto the question of how we got those proxy/stub
+          objects in the first place, and where they came from. You can use the
+          CoCreateInstanceEx API to activate COM objects on a remote machine, this
+          works like CoCreateInstance API. Behind the scenes, a lot of stuff is
+          involved to do this (like IRemoteActivation, IOXIDResolver and so on)
+          but let's gloss over that for now.
+        </para>
+
+        <para>
+          When DCOM creates an object on a remote machine, the DCOM runtime on
+          that machine activates the object in the usual way (by looking it up in
+          the registry etc) and then marshals the requested interface back to the
+          client. Marshalling an interface takes a pointer, and produces a buffer
+          containing all the information DCOM needs to construct a proxy object in
+          the client, a stub object in the server and link the two together.
+        </para>
+
+        <para>
+          The structure of a marshalled interface pointer is somewhat complex.
+          Let's ignore that too. The important thing is how COM proxies/stubs are
+          loaded.
+        </para>
+      </sect2>
+
+      <sect2>
+        <title>COM PROXY/STUB SYSTEM</title>
+
+        <para>
+          COM proxies are objects that implement both the interfaces needing to be
+          proxied and also IRpcProxyBuffer. Likewise, COM stubs implement
+          IRpcStubBuffer and understand how to invoke the methods of the requested
+          interface.
+        </para>
+
+        <para>
+          You may be wondering what the word "buffer" is doing in those interface
+          names. I'm not sure either, except that a running theme in DCOM is that
+          interfaces which have nothing to do with buffers have the word Buffer
+          appended to them, seemingly at random. Ignore it and <emphasis>don't let it
+            confuse you</emphasis>
+          :) This stuff is convoluted enough ...
+        </para>
+
+        <para>
+          The IRpc[Proxy/Stub]Buffer interfaces are used to control the proxy/stub
+          objects and are one of the many semi-public interfaces used in DCOM.
+        </para>
+
+        <para>
+          DCOM is theoretically an internet RFC <ulink
+                                                   url="http://www.grimes.demon.co.uk/DCOM/DCOMSpec.htm">[2]</ulink> and is
+          specced out, but in reality the only implementation of it apart from
+          ours is Microsofts, and as a result there are lots of interfaces
+          which <emphasis>can</emphasis> be used if you want to customize or
+          control DCOM but in practice are badly documented or not documented at
+          all, or exist mostly as interfaces between MIDL generated code and COM
+          itself. Don't pay too much attention to the MSDN definitions of these
+          interfaces and APIs.
+        </para>
+
+        <para>
+          COM proxies and stubs are like any other normal COM object - they are
+          registered in the registry, they can be loaded with CoCreateInstance and
+          so on. They have to be in process (in DLLs) however. They aren't
+          activated directly by COM however, instead the process goes something
+          like this:
+          
+          <itemizedlist>
+            <listitem> <para> COM receives a marshalled interface packet, and retrieves the IID of
+                the marshalled interface from it </para> </listitem>
+
+
+            <listitem> <para> COM looks in
+              HKEY_CLASSES_ROOT/Interface/{whatever-iid}/ProxyStubClsId32
+              to retrieve the CLSID of another COM object, which
+              implements IPSFactoryBuffer. </para> </listitem>
+            
+            <listitem> <para> IPSFactoryBuffer has only two methods, CreateProxy and CreateStub. COM
+                calls whichever is appropriate: CreateStub for the server, CreateProxy
+                for the client. MIDL will normally provide an implementation of this
+                object for you in the code it generates. </para></listitem>
+          </itemizedlist>
+          
+        </para>
+
+        <para>
+          Once CreateProxy has been called, the resultant object is QueryInterfaced to
+          IRpcProxyBuffer, which only has 1 method, IRpcProxyBuffer::Connect.
+          This method only takes one parameter, the IRpcChannelBuffer object which
+          encapsulates the "RPC Channel" between the client and server.
+        </para>
+
+        <para>
+          On the server side, a similar process is performed - the PSFactoryBuffer
+          is created, CreateStub is called, result is QId to IRpcStubBuffer, and
+          IRpcStubBuffer::Connect is used to link it to the RPC channel.
+        </para>
+
+      </sect2>
+
+      <sect2>
+        <title>RPC CHANNELS</title>
+
+        <para>
+          Remember the RPC runtime? Well, that's not just responsible for
+          marshalling stuff, it also controls the connection and protocols between
+          the client and server. We can ignore the details of this for now,
+          suffice it to say that an RPC Channel is a COM object that implements
+          IRpcChannelBuffer, and it's basically an abstraction of different RPC
+          methods. For instance, in the case of inter-thread marshalling (not
+          covered here) the RPC connection code isn't used, only the NDR
+          marshallers are, so IRpcChannelBuffer in that case isn't actually
+          implemented by RPCRT4 but rather just by the COM/OLE DLLS.
+        </para>
+
+        <para>
+          On this topic, Ove Kaaven says: It depends on the Windows version, I
+          think. Windows 95 and Windows NT 4 certainly had very different models
+          when I looked. I'm pretty sure the Windows 98 version of RPCRT4 was
+          able to dispatch messages directly to individual apartments. I'd be
+          surprised if some similar functionality was not added to Windows
+          2000. After all, if an object on machine A wanted to use an object on
+          machine B in an apartment C, wouldn't it be most efficient if the RPC
+          system knew about apartments and could dispatch the message directly
+          to it? And if RPC does know how to efficiently dispatch to apartments,
+          why should COM duplicate this functionality? There were, however, no
+          unified way to tell RPC about them across Windows versions, so in that
+          old patch of mine, I let the COM/OLE dlls do the apartment dispatch,
+          but even then, the RPC runtime was always involved. After all, it
+          could be quite tricky to tell whether the call is merely interthread,
+          without involving the RPC runtime...
+        </para>
+
+        <para>
+          RPC channels are constructed on the fly by DCOM as part of the
+          marshalling process. So, when you make a call on a COM proxy, it goes
+          like this:
+        </para>
+
+        <para>
+          Your code -&gt; COM proxy object -&gt; RPC Channel -&gt; COM stub object -&gt; Their code
+        </para>
+
+      </sect2>
+
+      <sect2>
+        <title>HOW THIS ACTUALLY WORKS IN WINE</title>
+
+        <para>
+          Right now, Wine does not use the NDR marshallers or RPC to implement its
+          DCOM. When you marshal an interface in Wine, in the server process a
+          _StubMgrThread thread is started. I haven't gone into the stub manager
+          here. The important thing is that eventually a _StubReaderThread is
+          started which accepts marshalled DCOM RPCs, and then passes them to
+          IRpcStubBuffer::Invoke on the correct stub object which in turn
+          demarshals the packet and performs the call. The threads started by our
+          implementation of DCOM are never terminated, they just hang around until
+          the process dies.
+        </para>
+
+        <para>
+          Remember that I said our DCOM doesn't use RPC? Well, you might be
+          thinking "but we use IRpcStubBuffer like we're supposed to ... isn't
+          that provided by MIDL which generates code that uses the NDR APIs?". If
+          so pat yourself on the back, you're still with me. Go get a cup of
+          coffee.
+        </para>
+
+      </sect2>
+
+      <sect2>
+        <title>TYPELIB MARSHALLER</title>
+
+        <para>
+          In fact, the reason for the PSFactoryBuffer layer of indirection is
+          because you not all interfaces are marshalled using MIDL generated code.
+          Why not? Well, to understand <emphasis>that</emphasis>
+          you have to see that one of the
+          driving forces behind OLE and by extension DCOM was the development
+          Visual Basic. Microsoft wanted VB developers to be first class citizens
+          in the COM world, but things like writing IDL and compiling them with a
+          C compiler into DLLs wasn't easy enough.
+        </para>
+
+        <para>
+          So, type libraries were invented. Actually they were invented as part of
+          a parallel line of COM development known as "OLE Automation", but let's
+          not get into that here. Type libraries are basically binary IDL files,
+          except that despite there being two type library formats neither of them
+          can fully express everything expressable in IDL. Anyway, with a type
+          library (which can be embedded as a resource into a DLL) you have
+          another option beyond compiling MIDL output - you can set the
+          ProxyStubClsId32 registry entry for your interfaces to the CLSID of the
+          "type library marshaller" or "universal marshaller". Both terms are
+          used, but in the Wine source it's called the typelib marshaller.
+        </para>
+
+        <para>
+          The type library marshaller constructs proxy and stub objects on the
+          fly. It does so by having generic marshalling glue which reads the
+          information from the type libraries, and takes the parameters directly
+          off the stack. The CreateProxy method actually builds a vtable out of
+          blocks of assembly stitched together which pass control to _xCall, which
+          then does the marshalling. You can see all this magic in
+          dlls/oleaut32/tmarshal.c
+        </para>
+
+        <para>
+          In the case of InstallShield, it actually comes with typelibs for all
+          the interfaces it needs to marshal (fixme: is this right?), but they
+          actually use a mix of MIDL and typelib marshalling. In order to cover up
+          for the fact that we don't really use RPC they're all force to go via
+          the typelib marshaller - that's what the 1 || hack is for and what the
+          "Registering non-automation type library!" warning is about (I think).
+        </para>
+      </sect2>
+
+      <sect2>
+        <title>WRAPUP</title>
+
+        <para>
+          OK, so there are some (very) basic notes on DCOM. There's a ton of stuff
+          I have not covered:
+        </para>
+        
+        <itemizedlist>
+          <listitem><para> Format strings/MOPs</para></listitem>
+          
+          <listitem><para> Apartments, threading models, inter-thread marshalling</para></listitem>
+          
+          <listitem><para> OXIDs/OIDs, etc, IOXIDResolver</para></listitem>
+          
+          <listitem><para> IRemoteActivation</para></listitem>
+          
+          <listitem><para> Complex/simple pings, distributed garbage collection</para></listitem>
+
+          <listitem><para> Marshalling IDispatch</para></listitem>
+          
+          <listitem><para> Structure of marshalled interface pointers (STDOBJREFs etc)</para></listitem>
+          
+          <listitem><para> Runtime class object registration (CoRegisterClassObject), ROT</para></listitem>
+          
+          <listitem><para> IRemUnknown</para></listitem>
+          
+          <listitem><para> Exactly how InstallShield uses DCOM</para></listitem>
+        </itemizedlist>
+
+        <para>
+          Then there's a bunch of stuff I still don't understand, like ICallFrame,
+          interface pointer swizzling, exactly where and how all this stuff is
+          actually implemented and so on.
+        </para>
+
+        <para>
+          But for now that's enough.
+        </para>
+      </sect2>
+
+      <sect2>
+        <title>FURTHER READING</title>
+
+        <para>
+          Most of these documents assume you have knowledge only contained in
+          other documents. You may have to reread them a few times for it all to
+          make sense. Don't feel you need to read these to understand DCOM, you
+          don't, you only need to look at them if you're planning to help
+          implement it.
+        </para>
+
+        <itemizedlist>
+            <listitem><para>
+              <ulink url="http://msdn.microsoft.com/library/default.asp?url=/library/en-us/com/htm/cmi_n2p_459u.asp">
+                http://msdn.microsoft.com/library/default.asp?url=/library/en-us/com/htm/cmi_n2p_459u.asp</ulink>
+
+            </para></listitem>
+
+
+            <listitem><para>
+              <ulink url="http://msdn.microsoft.com/library/default.asp?url=/library/en-us/com/htm/cmi_q2z_5ygi.asp">
+                http://msdn.microsoft.com/library/default.asp?url=/library/en-us/com/htm/cmi_q2z_5ygi.asp</ulink>
+            </para></listitem>
+
+
+            <listitem><para>
+                <ulink url="http://www.microsoft.com/msj/0398/dcom.aspx">
+                  http://www.microsoft.com/msj/0398/dcom.aspx</ulink>
+            </para></listitem>
+
+            <listitem><para>
+                <ulink url="http://www.microsoft.com/ntserver/techresources/appserv/COM/DCOM/4_ConnectionMgmt.asp">
+                  http://www.microsoft.com/ntserver/techresources/appserv/COM/DCOM/4_ConnectionMgmt.asp</ulink>
+            </para></listitem>
+
+
+            <listitem><para><ulink url="http://www.idevresource.com/com/library/articles/comonlinux.asp">
+                  http://www.idevresource.com/com/library/articles/comonlinux.asp</ulink>
+
+                (unfortunately part 2 of this article does not seem to exist anymore, if it was ever written)</para></listitem>
+        </itemizedlist>
       </sect2>
     </sect1>
   </chapter>
