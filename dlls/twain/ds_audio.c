@@ -17,7 +17,7 @@
  */
 
 #include "twain.h"
-#include "twain_i.h"
+
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(twain);
@@ -48,4 +48,3 @@ TW_UINT16 TWAIN_AudioNativeXferGet (pTW_IDENTITY pOrigin, pTW_IDENTITY pDest,
 
     return TWRC_FAILURE;
 }
-
