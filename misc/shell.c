@@ -451,7 +451,7 @@ HINSTANCE16 WINAPI FindExecutable16( LPCSTR lpFile, LPCSTR lpDirectory,
 /*************************************************************************
  *             AboutDlgProc16   (SHELL.33)
  */
-LRESULT WINAPI AboutDlgProc16( HWND16 hWnd, UINT16 msg, WPARAM16 wParam,
+BOOL16 WINAPI AboutDlgProc16( HWND16 hWnd, UINT16 msg, WPARAM16 wParam,
                                LPARAM lParam )
 { return AboutDlgProc32( hWnd, msg, wParam, lParam );
 }

@@ -6,21 +6,15 @@
  *
  */
 
-#include <ctype.h>
 #include <stdlib.h>
 #include <string.h>
-#include "ole.h"
-#include "ole2.h"
 #include "debug.h"
-#include "shlobj.h"
 #include "objbase.h"
-#include "shell.h"
 #include "winerror.h"
-#include "winnls.h"
-#include "winproc.h"
 #include "winversion.h"
-#include "commctrl.h"
 
+#include "shlguid.h"
+#include "shlobj.h"
 #include "shell32_main.h"
 
 /*************************************************************************
@@ -229,7 +223,9 @@ LPCLASSFACTORY IClassFactory_Constructor(void)
 	lpclf= (_IClassFactory*)HeapAlloc(GetProcessHeap(),0,sizeof(_IClassFactory));
 	lpclf->ref = 1;
 	lpclf->lpvtbl = &clfvt;
-  TRACE(shell,"(%p)->()\n",lpclf);
+
+	TRACE(shell,"(%p)->()\n",lpclf);
+	shell32_ObjCount++;
 	return (LPCLASSFACTORY)lpclf;
 }
 /**************************************************************************
@@ -267,6 +263,8 @@ static ULONG WINAPI IClassFactory_fnAddRef(LPUNKNOWN iface)
 {
 	ICOM_THIS(IClassFactory,iface);
 	TRACE(shell,"(%p)->(count=%lu)\n",this,this->ref);
+
+	shell32_ObjCount++;
 	return ++(this->ref);
 }
 /******************************************************************************
@@ -276,6 +274,8 @@ static ULONG WINAPI IClassFactory_fnRelease(LPUNKNOWN iface)
 {
 	ICOM_THIS(IClassFactory,iface);
 	TRACE(shell,"(%p)->(count=%lu)\n",this,this->ref);
+
+	shell32_ObjCount--;
 	if (!--(this->ref)) 
 	{ TRACE(shell,"-- destroying IClassFactory(%p)\n",this);
 		HeapFree(GetProcessHeap(),0,this);

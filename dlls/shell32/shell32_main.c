@@ -4,33 +4,27 @@
  *  1998 Marcus Meissner
  *  1998 Juergen Schmied (jsch)  *  <juergen.schmied@metronet.de>
  */
-#include <assert.h>
 #include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
-#include <ctype.h>
+
 #include "windows.h"
 #include "wine/winuser16.h"
 #include "winerror.h"
-#include "file.h"
-#include "shell.h"
 #include "heap.h"
-#include "module.h"
-#include "neexe.h"
 #include "resource.h"
 #include "dlgs.h"
 #include "win.h"
-#include "cursoricon.h"
 #include "sysmetrics.h"
-#include "shlobj.h"
 #include "debug.h"
 #include "winreg.h"
-#include "imagelist.h"
-#include "sysmetrics.h"
-#include "commctrl.h"
 #include "authors.h"
+
+#include "shell.h"
 #include "pidl.h"
+#include "shlobj.h"
 #include "shell32_main.h"
+
+#include "shlguid.h"
 
 /*************************************************************************
  *				CommandLineToArgvW	[SHELL32.7]
@@ -692,8 +686,8 @@ ShellExecute32W(
 /*************************************************************************
  *             AboutDlgProc32  (not an exported API function)
  */
-LRESULT WINAPI AboutDlgProc32( HWND32 hWnd, UINT32 msg, WPARAM32 wParam,
-                               LPARAM lParam )
+BOOL32 WINAPI AboutDlgProc32( HWND32 hWnd, UINT32 msg, WPARAM32 wParam,
+                              LPARAM lParam )
 {   HWND32 hWndCtl;
     char Template[512], AppTitle[512];
 
@@ -959,72 +953,114 @@ DWORD WINAPI SHGetPathFromIDList32W (LPCITEMIDLIST pidl,LPWSTR pszPath)
 	return NOERROR;
 }
 
+/*************************************************************************
+ * global variables of the shell32.dll
+ *
+ */
+void	(WINAPI* pDLLInitComctl)(LPVOID);
+INT32	(WINAPI* pImageList_AddIcon) (HIMAGELIST himl, HICON32 hIcon);
+INT32	(WINAPI* pImageList_ReplaceIcon) (HIMAGELIST, INT32, HICON32);
+HIMAGELIST (WINAPI * pImageList_Create) (INT32,INT32,UINT32,INT32,INT32);
+HICON32	(WINAPI * pImageList_GetIcon) (HIMAGELIST, INT32, UINT32);
+INT32	(WINAPI* pImageList_GetImageCount)(HIMAGELIST);
 
-void	(CALLBACK* pDLLInitComctl)(LPVOID);
-INT32	(CALLBACK* pImageList_AddIcon) (HIMAGELIST himl, HICON32 hIcon);
-INT32	(CALLBACK* pImageList_ReplaceIcon) (HIMAGELIST, INT32, HICON32);
-HIMAGELIST (CALLBACK * pImageList_Create) (INT32,INT32,UINT32,INT32,INT32);
-HICON32	(CALLBACK * pImageList_GetIcon) (HIMAGELIST, INT32, UINT32);
-INT32	(CALLBACK* pImageList_GetImageCount)(HIMAGELIST);
+LPVOID	(WINAPI* pCOMCTL32_Alloc) (INT32);  
+BOOL32	(WINAPI* pCOMCTL32_Free) (LPVOID);  
 
-LPVOID	(CALLBACK* pCOMCTL32_Alloc) (INT32);  
-BOOL32	(CALLBACK* pCOMCTL32_Free) (LPVOID);  
+HDPA	(WINAPI* pDPA_Create) (INT32);  
+INT32	(WINAPI* pDPA_InsertPtr) (const HDPA, INT32, LPVOID); 
+BOOL32	(WINAPI* pDPA_Sort) (const HDPA, PFNDPACOMPARE, LPARAM); 
+LPVOID	(WINAPI* pDPA_GetPtr) (const HDPA, INT32);   
+BOOL32	(WINAPI* pDPA_Destroy) (const HDPA); 
+INT32	(WINAPI *pDPA_Search) (const HDPA, LPVOID, INT32, PFNDPACOMPARE, LPARAM, UINT32);
 
-HDPA	(CALLBACK* pDPA_Create) (INT32);  
-INT32	(CALLBACK* pDPA_InsertPtr) (const HDPA, INT32, LPVOID); 
-BOOL32	(CALLBACK* pDPA_Sort) (const HDPA, PFNDPACOMPARE, LPARAM); 
-LPVOID	(CALLBACK* pDPA_GetPtr) (const HDPA, INT32);   
-BOOL32	(CALLBACK* pDPA_Destroy) (const HDPA); 
-INT32	(CALLBACK *pDPA_Search) (const HDPA, LPVOID, INT32, PFNDPACOMPARE, LPARAM, UINT32);
-static BOOL32 bShell32IsInitialized=0;
+/* user32 */
+HICON32* (WINAPI *pLookupIconIdFromDirectoryEx32)(LPBYTE dir, BOOL32 bIcon, INT32 width, INT32 height, UINT32 cFlag);
+HICON32* (WINAPI *pCreateIconFromResourceEx32)(LPBYTE bits,UINT32 cbSize, BOOL32 bIcon, DWORD dwVersion, INT32 width, INT32 height,UINT32 cFlag);
+
+static BOOL32		bShell32IsInitialized = 0;
+static HINSTANCE32	hComctl32;
+static INT32		shell32_RefCount = 0;
+
+INT32		shell32_ObjCount = 0;
+HINSTANCE32	shell32_hInstance; 
 /*************************************************************************
  * SHELL32 LibMain
  *
- * FIXME
- *  at the moment the icons are extracted from shell32.dll
- *  free the imagelists
  */
-HINSTANCE32 shell32_hInstance; 
 
-BOOL32 WINAPI Shell32LibMain(HINSTANCE32 hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
-{ HINSTANCE32 hComctl32;
+BOOL32 WINAPI Shell32LibMain(HINSTANCE32 hinstDLL, DWORD fdwReason, LPVOID fImpLoad)
+{	HMODULE32 hUser32;
 
-  TRACE(shell,"0x%x 0x%lx %p\n", hinstDLL, fdwReason, lpvReserved);
+	TRACE(shell,"0x%x 0x%lx %p\n", hinstDLL, fdwReason, fImpLoad);
 
-  shell32_hInstance = hinstDLL;
+	shell32_hInstance = hinstDLL;
   
-  if (fdwReason==DLL_PROCESS_ATTACH && !bShell32IsInitialized)
-  { hComctl32 = LoadLibrary32A("COMCTL32.DLL");	
-    if (hComctl32)
-    { pDLLInitComctl=GetProcAddress32(hComctl32,"InitCommonControlsEx");
-      if (pDLLInitComctl)
-      { pDLLInitComctl(NULL);
-      }
-      pImageList_Create=GetProcAddress32(hComctl32,"ImageList_Create");
-      pImageList_AddIcon=GetProcAddress32(hComctl32,"ImageList_AddIcon");
-      pImageList_ReplaceIcon=GetProcAddress32(hComctl32,"ImageList_ReplaceIcon");
-      pImageList_GetIcon=GetProcAddress32(hComctl32,"ImageList_GetIcon");
-      pImageList_GetImageCount=GetProcAddress32(hComctl32,"ImageList_GetImageCount");
+	switch (fdwReason)
+	{ case DLL_PROCESS_ATTACH:
+	    if (!bShell32IsInitialized)
+	    { hComctl32 = LoadLibrary32A("COMCTL32.DLL");	
+	      hUser32 = GetModuleHandle32A("USER32");
+	      if (hComctl32 && hUser32)
+	      { pDLLInitComctl=GetProcAddress32(hComctl32,"InitCommonControlsEx");
+	        if (pDLLInitComctl)
+	        { pDLLInitComctl(NULL);
+	        }
+	        pImageList_Create=GetProcAddress32(hComctl32,"ImageList_Create");
+	        pImageList_AddIcon=GetProcAddress32(hComctl32,"ImageList_AddIcon");
+	        pImageList_ReplaceIcon=GetProcAddress32(hComctl32,"ImageList_ReplaceIcon");
+	        pImageList_GetIcon=GetProcAddress32(hComctl32,"ImageList_GetIcon");
+	        pImageList_GetImageCount=GetProcAddress32(hComctl32,"ImageList_GetImageCount");
 
-      /* imports by ordinal, pray that it works*/
-      pCOMCTL32_Alloc=GetProcAddress32(hComctl32, (LPCSTR)71L);
-      pCOMCTL32_Free=GetProcAddress32(hComctl32, (LPCSTR)73L);
-      pDPA_Create=GetProcAddress32(hComctl32, (LPCSTR)328L);
-      pDPA_Destroy=GetProcAddress32(hComctl32, (LPCSTR)329L);
-      pDPA_GetPtr=GetProcAddress32(hComctl32, (LPCSTR)332L);
-      pDPA_InsertPtr=GetProcAddress32(hComctl32, (LPCSTR)334L);
-      pDPA_Sort=GetProcAddress32(hComctl32, (LPCSTR)338L);
-      pDPA_Search=GetProcAddress32(hComctl32, (LPCSTR)339L);
+	        /* imports by ordinal, pray that it works*/
+	        pCOMCTL32_Alloc=GetProcAddress32(hComctl32, (LPCSTR)71L);
+	        pCOMCTL32_Free=GetProcAddress32(hComctl32, (LPCSTR)73L);
+	        pDPA_Create=GetProcAddress32(hComctl32, (LPCSTR)328L);
+	        pDPA_Destroy=GetProcAddress32(hComctl32, (LPCSTR)329L);
+	        pDPA_GetPtr=GetProcAddress32(hComctl32, (LPCSTR)332L);
+	        pDPA_InsertPtr=GetProcAddress32(hComctl32, (LPCSTR)334L);
+	        pDPA_Sort=GetProcAddress32(hComctl32, (LPCSTR)338L);
+	        pDPA_Search=GetProcAddress32(hComctl32, (LPCSTR)339L);
+	        /* user32 */
+	        pLookupIconIdFromDirectoryEx32=GetProcAddress32(hUser32,"LookupIconIdFromDirectoryEx");
+	        pCreateIconFromResourceEx32=GetProcAddress32(hUser32,"CreateIconFromResourceEx");
+	      }
+	      else
+	      { ERR(shell,"P A N I C SHELL32 loading failed\n");
+	        return FALSE;
+	      }
+	      SIC_Initialize();
+	      bShell32IsInitialized = TRUE;
+	    }
+	    shell32_RefCount++;
+	    break;
 
-      FreeLibrary32(hComctl32);
-    }
-    else
-    { /* panic, imediately exit wine*/
-      ERR(shell,"P A N I C error getting functionpointers\n");
-      exit (1);
-    }
-    SIC_Initialize();
-    bShell32IsInitialized = TRUE;
-  }
-  return TRUE;
+	  case DLL_THREAD_ATTACH:
+	    shell32_RefCount++;
+	    break;
+
+	  case DLL_THREAD_DETACH:
+	    shell32_RefCount--;
+	    break;
+
+	  case DLL_PROCESS_DETACH:
+	    shell32_RefCount--;
+	    if ( !shell32_RefCount )
+	    { FreeLibrary32(hComctl32);
+	      bShell32IsInitialized = FALSE;
+
+	      if (pdesktopfolder) 
+	      { pdesktopfolder->lpvtbl->fnRelease(pdesktopfolder);
+	      }
+
+	      /* this one is here ot check if AddRef/Release is balanced */
+	      if (shell32_ObjCount)
+	      { FIXME(shell,"%u objects left\n", shell32_ObjCount);
+	      }
+	    }
+	    TRACE(shell, "refcount=%u objcount=%u \n", shell32_RefCount, shell32_ObjCount);
+	    break;	      
+	}
+
+	return TRUE;
 }

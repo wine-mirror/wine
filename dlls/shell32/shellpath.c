@@ -4,17 +4,14 @@
  * Many of this functions are in SHLWAPI.DLL also
  *
  */
-#include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
 #include "windows.h"
-#include "winerror.h"
-#include "file.h"
-#include "shell.h"
-#include "shlobj.h"
 #include "debug.h"
 #include "winnls.h"
 #include "winversion.h"
+
+#include "shlobj.h"
 #include "shell32_main.h"
 
 /*************************************************************************

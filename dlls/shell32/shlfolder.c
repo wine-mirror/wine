@@ -6,20 +6,18 @@
  *
  */
 
-#include <ctype.h>
 #include <stdlib.h>
 #include <string.h>
-#include "ole.h"
-#include "ole2.h"
+
 #include "debug.h"
-#include "shlobj.h"
-#include "objbase.h"
-#include "shell.h"
 #include "winerror.h"
-#include "winnls.h"
-#include "winproc.h"
-#include "commctrl.h"
+
+#include "wine/obj_base.h"
+#include "shlguid.h"
+
 #include "pidl.h"
+#include "objbase.h"
+#include "shlobj.h"
 #include "shell32_main.h"
 
 static HRESULT WINAPI IShellFolder_QueryInterface(LPSHELLFOLDER,REFIID,LPVOID*);
@@ -104,36 +102,36 @@ LPSHELLFOLDER IShellFolder_Constructor(LPSHELLFOLDER pParent,LPITEMIDLIST pidl)
 	sf->lpvtbl=&sfvt;
 	sf->sMyPath=NULL;	/* path of the folder */
 	sf->pMyPidl=NULL;	/* my qualified pidl */
-	sf->mpSFParent=pParent;	/* parrent shellfolder */
 
 	TRACE(shell,"(%p)->(parent=%p, pidl=%p)\n",sf,pParent, pidl);
 	pdump(pidl);
 		
 	/* keep a copy of the pidl in the instance*/
-	sf->mpidl = ILClone(pidl);
+	sf->mpidl = ILClone(pidl);		/* my short pidl */
 	
-	if(sf->mpidl)        				/* do we have a pidl? */
+	if(sf->mpidl)        			/* do we have a pidl? */
 	{ dwSize = 0;
-	  if(sf->mpSFParent->sMyPath)			/* get the size of the parents path */
-	  { dwSize += strlen(sf->mpSFParent->sMyPath) ;
-	    TRACE(shell,"-- (%p)->(parent's path=%s)\n",sf, debugstr_a(sf->mpSFParent->sMyPath));
+	  if(pParent->sMyPath)			/* get the size of the parents path */
+	  { dwSize += strlen(pParent->sMyPath) ;
+	    TRACE(shell,"-- (%p)->(parent's path=%s)\n",sf, debugstr_a(pParent->sMyPath));
 	  }   
 	  dwSize += _ILGetFolderText(sf->mpidl,NULL,0); /* add the size of the foldername*/
 	  sf->sMyPath = SHAlloc(dwSize+2);		/* '\0' and backslash */
 	  if(sf->sMyPath)
 	  { int len;
 	    *(sf->sMyPath)=0x00;
-	    if(sf->mpSFParent->sMyPath)			/* if the parent has a path, get it*/
-	    {  strcpy(sf->sMyPath, sf->mpSFParent->sMyPath);
+	    if(pParent->sMyPath)			/* if the parent has a path, get it*/
+	    {  strcpy(sf->sMyPath, pParent->sMyPath);
 	       PathAddBackslash32A (sf->sMyPath);
 	    }
-	    sf->pMyPidl = ILCombine(sf->mpSFParent->pMyPidl, pidl);
+	    sf->pMyPidl = ILCombine(pParent->pMyPidl, pidl);
 	    len = strlen(sf->sMyPath);
 	    _ILGetFolderText(sf->mpidl, sf->sMyPath+len, dwSize-len);
 	    TRACE(shell,"-- (%p)->(my pidl=%p, my path=%s)\n",sf, sf->pMyPidl,debugstr_a(sf->sMyPath));
 	    pdump (sf->pMyPidl);
 	  }
 	}
+	shell32_ObjCount++;
 	return sf;
 }
 /**************************************************************************
@@ -171,7 +169,8 @@ static HRESULT WINAPI IShellFolder_QueryInterface(
 */
 
 static ULONG WINAPI IShellFolder_AddRef(LPSHELLFOLDER this)
-{	TRACE(shell,"(%p)->(count=%lu)\n",this,(this->ref)+1);
+{	TRACE(shell,"(%p)->(count=%lu)\n",this,this->ref);
+	shell32_ObjCount++;
 	return ++(this->ref);
 }
 
@@ -180,6 +179,8 @@ static ULONG WINAPI IShellFolder_AddRef(LPSHELLFOLDER this)
  */
 static ULONG WINAPI IShellFolder_Release(LPSHELLFOLDER this) 
 {	TRACE(shell,"(%p)->(count=%lu)\n",this,this->ref);
+
+	shell32_ObjCount--;
 	if (!--(this->ref)) 
 	{ TRACE(shell,"-- destroying IShellFolder(%p)\n",this);
 

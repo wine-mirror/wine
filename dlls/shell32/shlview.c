@@ -2,27 +2,25 @@
  *	ShellView
  *
  *	Copyright 1998	<juergen.schmied@metronet.de>
+ *
+ *  FIXME: when the ShellView_WndProc gets a WM_NCDESTROY should we do a
+ *  Release() ??? 
+ *
  */
 
-#include <ctype.h>
 #include <stdlib.h>
 #include <string.h>
-#include "ole.h"
-#include "ole2.h"
 #include "debug.h"
-#include "servprov.h"
-#include "shlobj.h"
-#include "objbase.h"
-#include "shell.h"
 #include "winerror.h"
-#include "winnls.h"
-#include "winproc.h"
-#include "commctrl.h"
 
-#include "shell32_main.h"
 #include "pidl.h"
-#include "shresdef.h"
+#include "shlguid.h"
+#include "shlobj.h"
+#include "servprov.h"
+#include "objbase.h"
 #include "if_macros.h"
+#include "shell32_main.h"
+#include "shresdef.h"
 
 /***********************************************************************
 *   IShellView implementation
@@ -128,6 +126,7 @@ LPSHELLVIEW IShellView_Constructor( LPSHELLFOLDER pFolder, LPCITEMIDLIST pidl)
 	  sv->pSFParent->lpvtbl->fnAddRef(sv->pSFParent);
 
 	TRACE(shell,"(%p)->(%p pidl=%p)\n",sv, pFolder, pidl);
+	shell32_ObjCount++;
 	return sv;
 }
 /**************************************************************************
@@ -390,13 +389,13 @@ static HRESULT ShellView_FillList(LPSHELLVIEW this)
 	  { ZeroMemory(&lvItem, sizeof(lvItem));	/* create the listviewitem*/
 	    lvItem.mask = LVIF_TEXT | LVIF_IMAGE | LVIF_PARAM;		/*set the mask*/
 	    lvItem.iItem = ListView_GetItemCount(this->hWndList);	/*add the item to the end of the list*/
-	    lvItem.lParam = (LPARAM)ILClone(pidl);			/*set the item's data*/
+	    lvItem.lParam = (LPARAM) pidl;				/*set the item's data*/
 	    lvItem.pszText = LPSTR_TEXTCALLBACK32A;			/*get text on a callback basis*/
 	    lvItem.iImage = I_IMAGECALLBACK;				/*get the image on a callback basis*/
 	    ListView_InsertItem32A(this->hWndList, &lvItem);
 	  }
 	  else
-	    SHFree(pidl);	/* the listview has a COPY*/
+	    SHFree(pidl);	/* the listview has the COPY*/
         }
 
 	/*turn the listview's redrawing back on and force it to draw*/
@@ -1316,14 +1315,18 @@ static HRESULT WINAPI IShellView_QueryInterface(LPSHELLVIEW this,REFIID riid, LP
 *  IShellView::AddRef
 */
 static ULONG WINAPI IShellView_AddRef(LPSHELLVIEW this)
-{ TRACE(shell,"(%p)->(count=%lu)\n",this,(this->ref)+1);
-  return ++(this->ref);
+{	TRACE(shell,"(%p)->(count=%lu)\n",this,(this->ref)+1);
+
+	shell32_ObjCount++;
+	return ++(this->ref);
 }
 /**************************************************************************
 *  IShellView_Release
 */
 static ULONG WINAPI IShellView_Release(LPSHELLVIEW this)
 { 	TRACE(shell,"(%p)->()\n",this);
+
+	shell32_ObjCount--;
 	if (!--(this->ref)) 
 	{ TRACE(shell," destroying IShellView(%p)\n",this);
 
@@ -1332,6 +1335,9 @@ static ULONG WINAPI IShellView_Release(LPSHELLVIEW this)
 
 	  if (this->aSelectedItems)
 	    SHFree(this->aSelectedItems);
+
+	  if (this->pCommDlgBrowser)
+	    this->pCommDlgBrowser->lpvtbl->fnRelease(this->pCommDlgBrowser);
 
 	  HeapFree(GetProcessHeap(),0,this);
 	  return 0;
@@ -1342,7 +1348,7 @@ static ULONG WINAPI IShellView_Release(LPSHELLVIEW this)
 *  ShellView_GetWindow
 */
 static HRESULT WINAPI IShellView_GetWindow(LPSHELLVIEW this,HWND32 * phWnd)
-{	TRACE(shell,"(%p) stub\n",this);
+{	TRACE(shell,"(%p)\n",this);
 	*phWnd = this->hWnd;
 
 	return S_OK;
@@ -1439,11 +1445,10 @@ static HRESULT WINAPI IShellView_CreateViewWindow(LPSHELLVIEW this, IShellView *
 	IShellBrowser_AddRef(this->pShellBrowser);
 	IShellBrowser_GetWindow(this->pShellBrowser, &(this->hWndParent));
 
-	/* try to get the ICommDlgBrowserInterface */
+	/* try to get the ICommDlgBrowserInterface, adds a reference !!! */
 	this->pCommDlgBrowser=NULL;
-	if ( SUCCEEDED (IShellBrowser_QueryInterface( this->pShellBrowser,
-								        (REFIID)&IID_ICommDlgBrowser,
-									(LPVOID*) &this->pCommDlgBrowser)))
+	if ( SUCCEEDED (IShellBrowser_QueryInterface( this->pShellBrowser, 
+			(REFIID)&IID_ICommDlgBrowser, (LPVOID*) &this->pCommDlgBrowser)))
 	{ TRACE(shell,"-- CommDlgBrowser\n");
 	}
 	   

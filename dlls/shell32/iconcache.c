@@ -1,7 +1,8 @@
 /*
  *	shell icon cache (SIC)
  *
- *
+ * FIXME
+ *  since dll geting never unloaded the iconcache will never be freed
  */
 #include <string.h>
 #include "windows.h"
@@ -374,7 +375,7 @@ HGLOBAL32 WINAPI ICO_ExtractIconEx(LPCSTR lpszExeFileName, HICON32* RetPtr, UINT
 	    { WARN(shell,"no matching real address for icongroup!\n");
 	      goto end_4;	/* failure */
 	    }
-	    RetPtr[i] = LookupIconIdFromDirectoryEx32(igdata, TRUE, cxDesired, cyDesired, LR_DEFAULTCOLOR);
+	    RetPtr[i] = pLookupIconIdFromDirectoryEx32(igdata, TRUE, cxDesired, cyDesired, LR_DEFAULTCOLOR);
 	  }
 
 	  if (!(iconresdir=GetResDirEntryW(rootresdir,RT_ICON32W,(DWORD)rootresdir,FALSE))) 
@@ -402,7 +403,7 @@ HGLOBAL32 WINAPI ICO_ExtractIconEx(LPCSTR lpszExeFileName, HICON32* RetPtr, UINT
 	      RetPtr[i]=0;
 	      continue;
 	    }
-	    RetPtr[i] = CreateIconFromResourceEx32(idata,idataent->Size,TRUE,0x00030000, cxDesired, cyDesired, LR_DEFAULTCOLOR);
+	    RetPtr[i] = pCreateIconFromResourceEx32(idata,idataent->Size,TRUE,0x00030000, cxDesired, cyDesired, LR_DEFAULTCOLOR);
 	  }
 	  hRet = RetPtr[0];	/* return first icon */
 	  goto end_3;		/* sucess */

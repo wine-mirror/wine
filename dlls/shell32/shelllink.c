@@ -5,23 +5,17 @@
  *
  */
 
-#include <ctype.h>
-#include <stdlib.h>
 #include <string.h>
-#include "ole.h"
-#include "ole2.h"
 #include "debug.h"
+#include "winerror.h"
+
 #include "objbase.h"
 #include "wine/obj_base.h"
 #include "wine/obj_storage.h"
-#include "shell.h"
-#include "winerror.h"
-#include "winnls.h"
-#include "winproc.h"
-#include "commctrl.h"
-#include "pidl.h"
 
+#include "pidl.h"
 #include "shell32_main.h"
+#include "shlguid.h"
 
 /* IPersistFile Implementation */
 typedef struct _IPersistFile {
@@ -45,6 +39,7 @@ LPPERSISTFILE IPersistFile_Constructor(void)
 	sl->lpvtbl = &pfvt;
 
 	TRACE(shell,"(%p)->()\n",sl);
+	shell32_ObjCount++;
 	return (LPPERSISTFILE)sl;
 }
 
@@ -83,6 +78,8 @@ static ULONG WINAPI IPersistFile_fnAddRef(LPUNKNOWN iface)
 {
 	ICOM_THIS(IPersistFile,iface);
 	TRACE(shell,"(%p)->(count=%lu)\n",this,this->ref);
+
+	shell32_ObjCount++;
 	return ++(this->ref);
 }
 /******************************************************************************
@@ -92,6 +89,9 @@ static ULONG WINAPI IPersistFile_fnRelease(LPUNKNOWN iface)
 {
 	ICOM_THIS(IPersistFile,iface);
 	TRACE(shell,"(%p)->(count=%lu)\n",this,this->ref);
+
+	shell32_ObjCount--;
+
 	if (!--(this->ref)) 
 	{ TRACE(shell,"-- destroying IPersistFile(%p)\n",this);
 	  HeapFree(GetProcessHeap(),0,this);
@@ -173,6 +173,7 @@ LPCLASSFACTORY IShellLink_CF_Constructor(void)
 	lpclf->ref = 1;
 	lpclf->lpvtbl = &slcfvt;
 	TRACE(shell,"(%p)->()\n",lpclf);
+	shell32_ObjCount++;
 	return (LPCLASSFACTORY)lpclf;
 }
 /**************************************************************************
@@ -210,6 +211,8 @@ static ULONG WINAPI IShellLink_CF_AddRef(LPUNKNOWN iface)
 {
 	ICOM_THIS(IClassFactory,iface);
 	TRACE(shell,"(%p)->(count=%lu)\n",this,this->ref);
+
+	shell32_ObjCount++;
 	return ++(this->ref);
 }
 /******************************************************************************
@@ -219,6 +222,8 @@ static ULONG WINAPI IShellLink_CF_Release(LPUNKNOWN iface)
 {
 	ICOM_THIS(IClassFactory,iface);
 	TRACE(shell,"(%p)->(count=%lu)\n",this,this->ref);
+
+	shell32_ObjCount--;
 	if (!--(this->ref)) 
 	{ TRACE(shell,"-- destroying IClassFactory(%p)\n",this);
 		HeapFree(GetProcessHeap(),0,this);
@@ -349,6 +354,7 @@ LPSHELLLINK IShellLink_Constructor(void)
 	sl->lppf = IPersistFile_Constructor();
 
 	TRACE(shell,"(%p)->()\n",sl);
+	shell32_ObjCount++;
 	return sl;
 }
 
@@ -386,6 +392,8 @@ static HRESULT WINAPI IShellLink_QueryInterface(
  */
 static ULONG WINAPI IShellLink_AddRef(LPSHELLLINK this)
 {	TRACE(shell,"(%p)->(count=%lu)\n",this,this->ref);
+
+	shell32_ObjCount++;
 	return ++(this->ref);
 }
 /******************************************************************************
@@ -393,6 +401,8 @@ static ULONG WINAPI IShellLink_AddRef(LPSHELLLINK this)
  */
 static ULONG WINAPI IShellLink_Release(LPSHELLLINK this)
 {	TRACE(shell,"(%p)->(count=%lu)\n",this,this->ref);
+
+	shell32_ObjCount--;
 	if (!--(this->ref)) 
 	{ TRACE(shell,"-- destroying IShellLink(%p)\n",this);
 	  IPersistFile_Release(this->lppf);	/* IPersistFile*/
@@ -502,6 +512,7 @@ LPCLASSFACTORY IShellLinkW_CF_Constructor(void)
 	lpclf->ref = 1;
 	lpclf->lpvtbl = &slwcfvt;
 	TRACE(shell,"(%p)->()\n",lpclf);
+	shell32_ObjCount++;
 	return (LPCLASSFACTORY)lpclf;
 }
 /**************************************************************************
@@ -539,6 +550,8 @@ static ULONG WINAPI IShellLinkW_CF_AddRef(LPUNKNOWN iface)
 {
 	ICOM_THIS(IClassFactory,iface);
 	TRACE(shell,"(%p)->(count=%lu)\n",this,this->ref);
+
+	shell32_ObjCount++;
 	return ++(this->ref);
 }
 /******************************************************************************
@@ -548,6 +561,8 @@ static ULONG WINAPI IShellLinkW_CF_Release(LPUNKNOWN iface)
 {
 	ICOM_THIS(IClassFactory,iface);
 	TRACE(shell,"(%p)->(count=%lu)\n",this,this->ref);
+
+	shell32_ObjCount--;
 	if (!--(this->ref)) 
 	{ TRACE(shell,"-- destroying IClassFactory(%p)\n",this);
 		HeapFree(GetProcessHeap(),0,this);
@@ -679,6 +694,7 @@ LPSHELLLINKW IShellLinkW_Constructor(void)
 	sl->lppf = IPersistFile_Constructor();
 
 	TRACE(shell,"(%p)->()\n",sl);
+	shell32_ObjCount++;
 	return sl;
 }
 
@@ -715,21 +731,25 @@ static HRESULT WINAPI IShellLinkW_QueryInterface(
  * IShellLinkW_AddRef
  */
 static ULONG WINAPI IShellLinkW_AddRef(LPSHELLLINKW this)
-{ TRACE(shell,"(%p)->(count=%lu)\n",this,this->ref);
-    return ++(this->ref);
+{	TRACE(shell,"(%p)->(count=%lu)\n",this,this->ref);
+
+	shell32_ObjCount++;
+	return ++(this->ref);
 }
 /******************************************************************************
  * IClassFactory_Release
  */
 static ULONG WINAPI IShellLinkW_Release(LPSHELLLINKW this)
-{ TRACE(shell,"(%p)->(count=%lu)\n",this,this->ref);
-  if (!--(this->ref)) 
-  { TRACE(shell,"-- destroying IShellLinkW(%p)\n",this);
-    IPersistFile_Release(this->lppf);	/* IPersistFile*/
-    HeapFree(GetProcessHeap(),0,this);
-    return 0;
-  }
-  return this->ref;
+{	TRACE(shell,"(%p)->(count=%lu)\n",this,this->ref);
+
+	shell32_ObjCount--;
+	if (!--(this->ref)) 
+	{ TRACE(shell,"-- destroying IShellLinkW(%p)\n",this);
+	  IPersistFile_Release(this->lppf);	/* IPersistFile*/
+	  HeapFree(GetProcessHeap(),0,this);
+	  return 0;
+	}
+	return this->ref;
 }
 
 static HRESULT WINAPI IShellLinkW_GetPath(LPSHELLLINKW this, LPWSTR pszFile,INT32 cchMaxPath, WIN32_FIND_DATA32A *pfd, DWORD fFlags)

@@ -7,11 +7,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include "debug.h"
-#include "shlobj.h"
-#include "shell.h"
 #include "winerror.h"
-#include "commctrl.h"
 
+#include "shlobj.h"
 #include "shell32_main.h"
 
 BOOL32 HCR_MapTypeToValue ( LPCSTR szExtension, LPSTR szFileType, DWORD len)

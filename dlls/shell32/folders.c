@@ -4,22 +4,16 @@
  *
  */
 
-#include <ctype.h>
 #include <stdlib.h>
 #include <string.h>
-#include "ole.h"
-#include "ole2.h"
 #include "debug.h"
-#include "shlobj.h"
 #include "objbase.h"
-#include "shell.h"
 #include "winerror.h"
-#include "winnls.h"
-#include "winproc.h"
-#include "commctrl.h"
-#include "pidl.h"
 
+#include "pidl.h"
 #include "shell32_main.h"
+#include "shlguid.h"
+#include "shlobj.h"
 
 
 /******************************************************************************
@@ -58,8 +52,9 @@ LPEXTRACTICON IExtractIcon_Constructor(LPCITEMIDLIST pidl)
 
   pdump(pidl);
 
-  TRACE(shell,"(%p)\n",ei);
-  return ei;
+	TRACE(shell,"(%p)\n",ei);
+	shell32_ObjCount++;
+	return ei;
 }
 /**************************************************************************
  *  IExtractIcon_QueryInterface
@@ -91,14 +86,20 @@ static HRESULT WINAPI IExtractIcon_QueryInterface( LPEXTRACTICON this, REFIID ri
 *  IExtractIcon_AddRef
 */
 static ULONG WINAPI IExtractIcon_AddRef(LPEXTRACTICON this)
-{ TRACE(shell,"(%p)->(count=%lu)\n",this,(this->ref)+1);
-  return ++(this->ref);
+{	TRACE(shell,"(%p)->(count=%lu)\n",this,(this->ref)+1);
+
+	shell32_ObjCount++;
+
+	return ++(this->ref);
 }
 /**************************************************************************
 *  IExtractIcon_Release
 */
 static ULONG WINAPI IExtractIcon_Release(LPEXTRACTICON this)
-{ TRACE(shell,"(%p)->()\n",this);
+{	TRACE(shell,"(%p)->()\n",this);
+
+	shell32_ObjCount--;
+
   if (!--(this->ref)) 
   { TRACE(shell," destroying IExtractIcon(%p)\n",this);
     SHFree(this->pidl);

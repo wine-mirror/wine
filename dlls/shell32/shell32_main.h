@@ -9,29 +9,32 @@
 *  global SHELL32.DLL variables
 */
 extern HINSTANCE32 shell32_hInstance;
-extern UINT32      shell32_DllRefCount;
+extern INT32	  shell32_ObjCount;
 extern HIMAGELIST ShellSmallIconList;
 extern HIMAGELIST ShellBigIconList;
 
 /*******************************************
 * pointer to functions dynamically loaded
 */
-extern void	(CALLBACK* pDLLInitComctl)(LPVOID);
-extern INT32	(CALLBACK* pImageList_AddIcon) (HIMAGELIST himl, HICON32 hIcon);
-extern INT32	(CALLBACK* pImageList_ReplaceIcon) (HIMAGELIST, INT32, HICON32);
-extern HIMAGELIST (CALLBACK* pImageList_Create) (INT32,INT32,UINT32,INT32,INT32);
-extern HICON32	(CALLBACK* pImageList_GetIcon) (HIMAGELIST, INT32, UINT32);
-extern INT32	(CALLBACK* pImageList_GetImageCount)(HIMAGELIST);
+extern void	(WINAPI* pDLLInitComctl)(LPVOID);
+extern INT32	(WINAPI* pImageList_AddIcon) (HIMAGELIST himl, HICON32 hIcon);
+extern INT32	(WINAPI* pImageList_ReplaceIcon) (HIMAGELIST, INT32, HICON32);
+extern HIMAGELIST (WINAPI* pImageList_Create) (INT32,INT32,UINT32,INT32,INT32);
+extern HICON32	(WINAPI* pImageList_GetIcon) (HIMAGELIST, INT32, UINT32);
+extern INT32	(WINAPI* pImageList_GetImageCount)(HIMAGELIST);
 
-extern LPVOID	(CALLBACK* pCOMCTL32_Alloc) (INT32);  
-extern BOOL32	(CALLBACK* pCOMCTL32_Free) (LPVOID);  
+extern LPVOID	(WINAPI* pCOMCTL32_Alloc) (INT32);  
+extern BOOL32	(WINAPI* pCOMCTL32_Free) (LPVOID);  
 
-extern HDPA	(CALLBACK* pDPA_Create) (INT32);  
-extern INT32	(CALLBACK* pDPA_InsertPtr) (const HDPA, INT32, LPVOID); 
-extern BOOL32	(CALLBACK* pDPA_Sort) (const HDPA, PFNDPACOMPARE, LPARAM); 
-extern LPVOID	(CALLBACK* pDPA_GetPtr) (const HDPA, INT32);   
-extern BOOL32	(CALLBACK* pDPA_Destroy) (const HDPA); 
-extern INT32	(CALLBACK* pDPA_Search) (const HDPA, LPVOID, INT32, PFNDPACOMPARE, LPARAM, UINT32);
+extern HDPA	(WINAPI* pDPA_Create) (INT32);  
+extern INT32	(WINAPI* pDPA_InsertPtr) (const HDPA, INT32, LPVOID); 
+extern BOOL32	(WINAPI* pDPA_Sort) (const HDPA, PFNDPACOMPARE, LPARAM); 
+extern LPVOID	(WINAPI* pDPA_GetPtr) (const HDPA, INT32);   
+extern BOOL32	(WINAPI* pDPA_Destroy) (const HDPA); 
+extern INT32	(WINAPI* pDPA_Search) (const HDPA, LPVOID, INT32, PFNDPACOMPARE, LPARAM, UINT32);
+
+extern HICON32* (WINAPI *pLookupIconIdFromDirectoryEx32)(LPBYTE dir, BOOL32 bIcon, INT32 width, INT32 height, UINT32 cFlag);
+extern HICON32* (WINAPI *pCreateIconFromResourceEx32)(LPBYTE bits,UINT32 cbSize, BOOL32 bIcon, DWORD dwVersion, INT32 width, INT32 height,UINT32 cFlag);
 
 LPITEMIDLIST WINAPI ILClone (LPCITEMIDLIST pidl);
 LPITEMIDLIST WINAPI ILGetNext(LPITEMIDLIST pidl);

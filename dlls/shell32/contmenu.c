@@ -6,12 +6,14 @@
 #include "windows.h"
 #include "winerror.h"
 #include "debug.h"
+
 #include "pidl.h"
-#include "shlobj.h"
 #include "objbase.h"
+#include "if_macros.h"
+#include "shlguid.h"
+#include "shlobj.h"
 #include "shell32_main.h"
 #include "shresdef.h"
-#include "if_macros.h"
 
 static HRESULT WINAPI IContextMenu_QueryInterface(LPCONTEXTMENU ,REFIID , LPVOID *);
 static ULONG WINAPI IContextMenu_AddRef(LPCONTEXTMENU);
@@ -69,19 +71,23 @@ static HRESULT WINAPI IContextMenu_QueryInterface(LPCONTEXTMENU this,REFIID riid
 *  IContextMenu_AddRef
 */
 static ULONG WINAPI IContextMenu_AddRef(LPCONTEXTMENU this)
-{ TRACE(shell,"(%p)->(count=%lu)\n",this,(this->ref)+1);
-  return ++(this->ref);
+{	TRACE(shell,"(%p)->(count=%lu)\n",this,(this->ref)+1);
+	shell32_ObjCount++;
+	return ++(this->ref);
 }
 /**************************************************************************
 *  IContextMenu_Release
 */
 static ULONG WINAPI IContextMenu_Release(LPCONTEXTMENU this)
 {	TRACE(shell,"(%p)->()\n",this);
+
+	shell32_ObjCount--;
+
 	if (!--(this->ref)) 
 	{ TRACE(shell," destroying IContextMenu(%p)\n",this);
 
 	  if(this->pSFParent)
-	  this->pSFParent->lpvtbl->fnRelease(this->pSFParent);
+	    this->pSFParent->lpvtbl->fnRelease(this->pSFParent);
 
 	  /*make sure the pidl is freed*/
 	  if(this->aPidls)
@@ -122,6 +128,7 @@ LPCONTEXTMENU IContextMenu_Constructor(LPSHELLFOLDER pSFParent, LPCITEMIDLIST *a
 	{ cm->bAllValues &= (_ILIsValue(aPidls[u]) ? 1 : 0);
 	}
 	TRACE(shell,"(%p)->()\n",cm);
+	shell32_ObjCount++;
 	return cm;
 }
 /**************************************************************************
@@ -201,7 +208,7 @@ static HRESULT WINAPI IContextMenu_InvokeCommand(LPCONTEXTMENU this, LPCMINVOKEC
 	if(HIWORD(lpcmi->lpVerb))
 	{ /* get the active IShellView */
 	  lpSB = (LPSHELLBROWSER)SendMessage32A(lpcmi->hwnd, CWM_GETISHELLBROWSER,0,0);
-	  IShellBrowser_QueryActiveShellView(lpSB, &lpSV);
+	  IShellBrowser_QueryActiveShellView(lpSB, &lpSV);	/* does AddRef() on lpSV */
 	  lpSV->lpvtbl->fnGetWindow(lpSV, &hWndSV);
 	  
 	  /* these verbs are used by the filedialogs*/
@@ -219,6 +226,7 @@ static HRESULT WINAPI IContextMenu_InvokeCommand(LPCONTEXTMENU this, LPCMINVOKEC
 	  else
 	  { FIXME(shell,"please report: unknown verb %s\n",lpcmi->lpVerb);
 	  }
+	  lpSV->lpvtbl->fnRelease(lpSV);
 	  return NOERROR;
 	}
 

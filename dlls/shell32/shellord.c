@@ -1,35 +1,19 @@
 /*
- * 				Shell Ordinal Functions
- *
- * These are completely undocumented. The meaning of the functions changes
- * between different OS versions (NT uses Unicode strings, 95 uses ASCII
- * strings, etc. etc.)
+ * The parameters of many functions changes between different OS versions
+ * (NT uses Unicode strings, 95 uses ASCII strings)
  * 
- * They are just here so that explorer.exe and iexplore.exe can be tested.
- *
  * Copyright 1997 Marcus Meissner
  *           1998 Jürgen Schmied
  */
-#include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
-#include <ctype.h>
 #include "windows.h"
 #include "winerror.h"
-#include "file.h"
-#include "shell.h"
-#include "heap.h"
-#include "module.h"
-#include "neexe.h"
-#include "resource.h"
-#include "dlgs.h"
-#include "win.h"
-#include "cursoricon.h"
-#include "shlobj.h"
 #include "debug.h"
-#include "winreg.h"
 #include "winnls.h"
 #include "winversion.h"
+#include "heap.h"
+
+#include "shlobj.h"
 #include "shell32_main.h"
 
 /*************************************************************************
@@ -604,7 +588,7 @@ BOOL32 WINAPI ShellExecuteEx32A (LPSHELLEXECUTEINFO32A sei)
 	STARTUPINFO32A  startupinfo;
 	PROCESS_INFORMATION processinformation;
 			
-  	FIXME(shell,"mask=0x%08lx hwnd=0x%04x verb=%s file=%s parm=%s dir=%s show=0x%08x class=%sstub\n",
+  	WARN(shell,"mask=0x%08lx hwnd=0x%04x verb=%s file=%s parm=%s dir=%s show=0x%08x class=%s incomplete\n",
 		sei->fMask, sei->hwnd, sei->lpVerb, sei->lpFile,
 		sei->lpParameters, sei->lpDirectory, sei->nShow, sei->lpClass);
 
@@ -630,7 +614,7 @@ BOOL32 WINAPI ShellExecuteEx32A (LPSHELLEXECUTEINFO32A sei)
 	/* process the IDList */
 	if ( (sei->fMask & SEE_MASK_INVOKEIDLIST) == SEE_MASK_INVOKEIDLIST) /*0x0c*/
 	{ SHGetPathFromIDList32A (sei->lpIDList,szApplicationName);
-	  FIXME(shell,"-- idlist=%p (%s)\n", sei->lpIDList, szApplicationName);
+	  TRACE(shell,"-- idlist=%p (%s)\n", sei->lpIDList, szApplicationName);
 	}
 	else
 	{ if (sei->fMask & SEE_MASK_IDLIST )
@@ -657,43 +641,58 @@ BOOL32 WINAPI ShellExecuteEx32A (LPSHELLEXECUTEINFO32A sei)
 	  memmove(pos,pos+3,len);
 	}
 
-	FIXME(shell,"-- %s\n",szCommandline);
+	TRACE(shell,"execute: %s %s\n",szApplicationName, szCommandline);
 
 	ZeroMemory(&startupinfo,sizeof(STARTUPINFO32A));
 	startupinfo.cb = sizeof(STARTUPINFO32A);
 
-	CreateProcess32A(szApplicationName[0] ? szApplicationName:NULL,
+	return CreateProcess32A(szApplicationName[0] ? szApplicationName:NULL,
 			 szCommandline[0] ? szCommandline : NULL,
 			 NULL, NULL, FALSE, 0, 
 			 NULL, NULL, &startupinfo, &processinformation);
 	  
 	
-	return 0;
 }
 /*************************************************************************
- * ShellExecuteEx [SHELL32.293]
+ * ShellExecuteEx32W [SHELL32.293]
  *
  */
 BOOL32 WINAPI ShellExecuteEx32W (LPSHELLEXECUTEINFO32W sei)
-{ 	WCHAR szTemp[MAX_PATH];
+{	SHELLEXECUTEINFO32A seiA;
+	DWORD ret;
 
-  	FIXME(shell,"(%p): stub\n",sei);
+	TRACE (shell,"%p\n", sei);
 
-	if (sei->fMask & SEE_MASK_IDLIST)
-	{ SHGetPathFromIDList32W (sei->lpIDList,szTemp);
-	  TRACE (shell,"-- idlist=%p (%s)\n", sei->lpIDList, debugstr_w(szTemp));
-	}
-
-	if (sei->fMask & SEE_MASK_CLASSNAME)
-	{ TRACE (shell,"-- classname= %s\n", debugstr_w(sei->lpClass));
-	}
-    
-	if (sei->lpVerb)
-	{ TRACE (shell,"-- action=%s\n", debugstr_w(sei->lpVerb));
-	}
+	memcpy(&seiA, sei, sizeof(SHELLEXECUTEINFO32A));
 	
-	return 0;
+        if (sei->lpVerb)
+	  seiA.lpVerb = HEAP_strdupWtoA( GetProcessHeap(), 0, sei->lpVerb);
+
+        if (sei->lpFile)
+	  seiA.lpFile = HEAP_strdupWtoA( GetProcessHeap(), 0, sei->lpFile);
+
+        if (sei->lpParameters)
+	  seiA.lpParameters = HEAP_strdupWtoA( GetProcessHeap(), 0, sei->lpParameters);
+
+	if (sei->lpDirectory)
+	  seiA.lpDirectory = HEAP_strdupWtoA( GetProcessHeap(), 0, sei->lpDirectory);
+
+        if ((sei->fMask & SEE_MASK_CLASSNAME) && sei->lpClass)
+	  seiA.lpClass = HEAP_strdupWtoA( GetProcessHeap(), 0, sei->lpClass);
+	else
+	  seiA.lpClass = NULL;
+	  	  
+	ret = ShellExecuteEx32A(&seiA);
+
+        if (seiA.lpVerb)	HeapFree( GetProcessHeap(), 0, (LPSTR) seiA.lpVerb );
+	if (seiA.lpFile)	HeapFree( GetProcessHeap(), 0, (LPSTR) seiA.lpFile );
+	if (seiA.lpParameters)	HeapFree( GetProcessHeap(), 0, (LPSTR) seiA.lpParameters );
+	if (seiA.lpDirectory)	HeapFree( GetProcessHeap(), 0, (LPSTR) seiA.lpDirectory );
+	if (seiA.lpClass)	HeapFree( GetProcessHeap(), 0, (LPSTR) seiA.lpClass );
+
+ 	return ret;
 }
+
 static LPUNKNOWN SHELL32_IExplorerInterface=0;
 /*************************************************************************
  * SHSetInstanceExplorer [SHELL32.176]

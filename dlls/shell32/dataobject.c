@@ -73,6 +73,7 @@ LPENUMFORMATETC IEnumFORMATETC_Constructor(UINT32 cfmt, const FORMATETC32 afmt[]
 	}
 
 	TRACE(shell,"(%p)->()\n",ef);
+	shell32_ObjCount++;
 	return (LPENUMFORMATETC)ef;
 }
 static HRESULT WINAPI IEnumFORMATETC_fnQueryInterface(LPUNKNOWN iface, REFIID riid, LPVOID* ppvObj)
@@ -104,12 +105,16 @@ static ULONG WINAPI IEnumFORMATETC_fnAddRef(LPUNKNOWN iface)
 {
 	ICOM_THIS(IEnumFORMATETC,iface);
 	TRACE(shell,"(%p)->(count=%lu)\n",this,(this->ref)+1);
+	shell32_ObjCount++;
 	return ++(this->ref);
 }
 static ULONG WINAPI IEnumFORMATETC_fnRelease(LPUNKNOWN iface)
 {
 	ICOM_THIS(IEnumFORMATETC,iface);
 	TRACE(shell,"(%p)->()\n",this);
+
+	shell32_ObjCount--;
+
 	if (!--(this->ref)) 
 	{ TRACE(shell," destroying IEnumFORMATETC(%p)\n",this);
 	  if (this->pFmt)
@@ -241,6 +246,7 @@ LPDATAOBJECT IDataObject_Constructor(HWND32 hwndOwner, LPSHELLFOLDER psf, LPITEM
 	dto->lpill->lpvtbl->fnAddItems(dto->lpill, apidl, cidl); 
 	
 	TRACE(shell,"(%p)->(sf=%p apidl=%p cidl=%u)\n",dto, psf, apidl, cidl);
+	shell32_ObjCount++;
 	return (LPDATAOBJECT)dto;
 }
 /***************************************************************************
@@ -276,7 +282,10 @@ static HRESULT WINAPI IDataObject_fnQueryInterface (LPUNKNOWN iface, REFIID riid
 static ULONG WINAPI IDataObject_fnAddRef(LPUNKNOWN iface)
 {
 	ICOM_THIS(IDataObject,iface);
+
 	TRACE(shell,"(%p)->(count=%lu)\n",this,(this->ref)+1);
+
+	shell32_ObjCount++;
 	return ++(this->ref);
 }
 /**************************************************************************
@@ -286,6 +295,9 @@ static ULONG WINAPI IDataObject_fnRelease(LPUNKNOWN iface)
 {
 	ICOM_THIS(IDataObject,iface);
 	TRACE(shell,"(%p)->()\n",this);
+
+	shell32_ObjCount--;
+
 	if (!--(this->ref)) 
 	{ TRACE(shell," destroying IDataObject(%p)\n",this);
 	  IDLList_Destructor(this->lpill);

@@ -4,20 +4,15 @@
  *	Copyright 1998	Juergen Schmied <juergen.schmied@metronet.de>
  */
 
-#include <ctype.h>
 #include <stdlib.h>
 #include <string.h>
-#include "ole.h"
-#include "ole2.h"
 #include "debug.h"
-#include "shlobj.h"
 #include "objbase.h"
-#include "shell.h"
 #include "winerror.h"
-#include "winnls.h"
-#include "winproc.h"
-#include "commctrl.h"
+
 #include "pidl.h"
+#include "shlguid.h"
+#include "shlobj.h"
 #include "shell32_main.h"
 
 /* IEnumIDList Implementation */
@@ -75,6 +70,7 @@ LPENUMIDLIST IEnumIDList_Constructor( LPCSTR lpszPath, DWORD dwFlags)
 	}
 
 	TRACE(shell,"-- (%p)->()\n",lpeidl);
+	shell32_ObjCount++;
 	return lpeidl;
 }
 
@@ -109,14 +105,19 @@ static HRESULT WINAPI IEnumIDList_QueryInterface(
  * IEnumIDList_AddRef
  */
 static ULONG WINAPI IEnumIDList_AddRef(LPENUMIDLIST this)
-{ TRACE(shell,"(%p)->()\n",this);
+{	TRACE(shell,"(%p)->(%u)\n",this,this->ref);
+
+	shell32_ObjCount++;
 	return ++(this->ref);
 }
 /******************************************************************************
  * IEnumIDList_Release
  */
 static ULONG WINAPI IEnumIDList_Release(LPENUMIDLIST this)
-{	TRACE(shell,"(%p)->()\n",this);
+{	TRACE(shell,"(%p)->(%u)\n",this,this->ref);
+
+	shell32_ObjCount--;
+
 	if (!--(this->ref)) 
 	{ TRACE(shell," destroying IEnumIDList(%p)\n",this);
 	  IEnumIDList_DeleteList(this);
