@@ -7,6 +7,10 @@
 #  require Xpm
 # Feb 25 2000 - Ove Kåven
 #  auto-add /usr/local/lib to /etc/ld.so.conf
+# Mar 2 2000 - Ove Kåven
+#  source rather than grep config.cache
+#  use sourced config.cache to start ldconfig
+#  reconfigure if config.cache doesn't exist
 
 # defaults
 
@@ -28,9 +32,11 @@ fi
 
 # run the configure script, if necessary
 
-if [ -f Makefile ] && [ Makefile -nt configure ]
+if [ -f config.cache ] && [ -f Makefile ] && [ Makefile -nt configure ]
 then {
   echo "I see that WINE has already been configured, so I'll skip that."
+  # load configure results
+  . ./config.cache
 }
 else {
   # we'll run with defaults (we need libwine.a later)
@@ -44,14 +50,17 @@ else {
     exit 1
   }
   fi
+  # load configure results
+  . ./config.cache
   # make sure X was found
-  if ! grep -qs "have_x=yes" config.cache
+  eval "$ac_cv_have_x"
+  if [ "$have_x" != "yes" ]
   then {
     echo "Install the X development headers and try again."
     rm -f config.cache
     exit 1
   }
-  elif ! grep -qs "xpm_h=yes" config.cache
+  elif [ "$ac_cv_header_X11_xpm_h" != "yes" ]
   then {
     echo "Install the Xpm development headers and try again."
     rm -f config.cache
@@ -103,7 +112,7 @@ else {
     echo "/usr/local/lib didn't exist in your /etc/ld.so.conf, adding it now..."
     echo /usr/local/lib >>/etc/ld.so.conf
     echo "Re-running ldconfig..."
-    ldconfig
+    eval "$ac_cv_path_LDCONFIG"
   }
   fi
 }
