@@ -3363,6 +3363,7 @@ INT       WINAPI SetScrollPos(HWND,INT,INT,BOOL);
 BOOL      WINAPI SetScrollRange(HWND,INT,INT,INT,BOOL);
 BOOL      WINAPI SetSysColors(INT,const INT*,const COLORREF*);
 #define     SetSysModalWindow(hwnd) ((HWND)0)
+BOOL      WINAPI SetSystemCursor(HCURSOR,DWORD);
 BOOL      WINAPI SetSystemMenu(HWND,HMENU);
 UINT      WINAPI SetSystemTimer(HWND,UINT,UINT,TIMERPROC);
 UINT      WINAPI SetTimer(HWND,UINT,UINT,TIMERPROC);

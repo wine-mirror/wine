@@ -508,7 +508,7 @@ init	MAIN_UserInit
 504 stdcall SetShellWindow(long) SetShellWindow
 505 stdcall SetSysColors(long ptr ptr) SetSysColors
 506 stub SetSysColorsTemp
-507 stub SetSystemCursor
+507 stdcall SetSystemCursor(long long) SetSystemCursor
 508 stdcall SetSystemMenu(long long) SetSystemMenu
 509 stdcall SetSystemTimer(long long long ptr) SetSystemTimer
 510 stdcall SetThreadDesktop(long) SetThreadDesktop
