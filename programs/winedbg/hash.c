@@ -104,38 +104,26 @@ static unsigned int name_hash( const char * name )
 int
 DEBUG_cmp_sym(const void * p1, const void * p2)
 {
-  struct name_hash ** name1 = (struct name_hash **) p1;
-  struct name_hash ** name2 = (struct name_hash **) p2;
+  struct name_hash * name1 = *(struct name_hash **) p1;
+  struct name_hash * name2 = *(struct name_hash **) p2;
 
-  if( ((*name1)->flags & SYM_INVALID) != 0 )
-    {
+  if( (name1->flags & SYM_INVALID) != 0 )
       return -1;
-    }
 
-  if( ((*name2)->flags & SYM_INVALID) != 0 )
-    {
+  if( (name2->flags & SYM_INVALID) != 0 )
       return 1;
-    }
 
-  if( (*name1)->value.addr.seg > (*name2)->value.addr.seg )
-    {
+  if( name1->value.addr.seg > name2->value.addr.seg )
       return 1;
-    }
 
-  if( (*name1)->value.addr.seg < (*name2)->value.addr.seg )
-    {
+  if( name1->value.addr.seg < name2->value.addr.seg )
       return -1;
-    }
 
-  if( (*name1)->value.addr.off > (*name2)->value.addr.off )
-    {
+  if( name1->value.addr.off > name2->value.addr.off )
       return 1;
-    }
 
-  if( (*name1)->value.addr.off < (*name2)->value.addr.off )
-    {
+  if( name1->value.addr.off < name2->value.addr.off )
       return -1;
-    }
 
   return 0;
 }
