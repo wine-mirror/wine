@@ -2668,7 +2668,24 @@ BOOL WINAPI ShowOwnedPopups( HWND owner, BOOL fShow )
     for (; count < totalChild; count++)
     {
         if (pWnd[count]->owner && (pWnd[count]->owner->hwndSelf == owner) && (pWnd[count]->dwStyle & WS_POPUP))
-            SendMessageA(pWnd[count]->hwndSelf, WM_SHOWWINDOW, fShow ? SW_SHOW : SW_HIDE,IsIconic(owner) ? SW_PARENTOPENING : SW_PARENTCLOSING);
+        {
+            if (fShow)
+            {
+                if (pWnd[count]->flags & WIN_NEEDS_SHOW_OWNEDPOPUP)
+                {
+                    SendMessageA(pWnd[count]->hwndSelf, WM_SHOWWINDOW, SW_SHOW, IsIconic(owner) ? SW_PARENTOPENING : SW_PARENTCLOSING);
+                    pWnd[count]->flags &= ~WIN_NEEDS_SHOW_OWNEDPOPUP;
+                }
+            }
+            else
+            {
+                if (IsWindowVisible(pWnd[count]->hwndSelf))
+                {
+                    SendMessageA(pWnd[count]->hwndSelf, WM_SHOWWINDOW, SW_HIDE, IsIconic(owner) ? SW_PARENTOPENING : SW_PARENTCLOSING);
+                    pWnd[count]->flags |= WIN_NEEDS_SHOW_OWNEDPOPUP;
+                }
+            }
+        }
     }
 
     WIN_ReleaseDesktop();    

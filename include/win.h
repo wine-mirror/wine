@@ -154,6 +154,7 @@ typedef struct
 #define WIN_MANAGED            0x0100 /* Window managed by the window system */
 #define WIN_ISDIALOG           0x0200 /* Window is a dialog */
 #define WIN_ISWIN32            0x0400 /* Understands Win32 messages */
+#define WIN_NEEDS_SHOW_OWNEDPOPUP 0x0800 /* WM_SHOWWINDOW:SC_SHOW must be sent in the next ShowOwnedPopup call */
 
   /* BuildWinArray() flags */
 #define BWA_SKIPDISABLED	0x0001
