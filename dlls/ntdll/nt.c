@@ -546,6 +546,22 @@ NTSTATUS WINAPI NtQuerySystemInformation(
             else ret = STATUS_INFO_LENGTH_MISMATCH;
         }
         break;
+    case SystemCpuInformation:
+        {
+            SYSTEM_CPU_INFORMATION* sci;
+            sci = (SYSTEM_CPU_INFORMATION *) SystemInformation;
+            if (Length >= sizeof(*sci))
+            {
+                /* FIXME: move some code from kernel/cpu.c to process this */
+                sci->Architecture = PROCESSOR_ARCHITECTURE_INTEL;
+                sci->Level = 6; /* 686, aka Pentium II+ */
+                sci->Revision = 0;
+                sci->Reserved = 0;
+                sci->FeatureSet = 0x1fff;
+            }
+            else ret = STATUS_INFO_LENGTH_MISMATCH;
+        }
+        break;
     case SystemPerformanceInformation:
         {
             SYSTEM_PERFORMANCE_INFORMATION* spi = (SYSTEM_PERFORMANCE_INFORMATION*)SystemInformation;
