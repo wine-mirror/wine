@@ -526,7 +526,7 @@ ICOM_DEFINE(IDispatch,IUnknown)
 #define IDispatch_Release(p)            ICOM_CALL (Release,p)
 /*** IDispatch methods ***/
 #define IDispatch_GetTypeInfoCount(p,a)      ICOM_CALL1 (GetTypeInfoCount,p,a)
-#define IDispatch_GetTypeInfo(p,a,b,c)       ICOM_CALL3 (GetTypeInfo,p,b,c)
+#define IDispatch_GetTypeInfo(p,a,b,c)       ICOM_CALL3 (GetTypeInfo,p,a,b,c)
 #define IDispatch_GetIDsOfNames(p,a,b,c,d,e) ICOM_CALL5 (GetIDsOfNames,p,a,b,c,d,e)
 #define IDispatch_Invoke(p,a,b,c,d,e,f,g,h)  ICOM_CALL8 (Invoke,p,a,b,c,d,e,f,g,h)
 
