@@ -625,7 +625,7 @@ DEBUG_EvalExpr(struct expr * exp)
 	  rtn.off = (unsigned int) DEBUG_TypeDerefPointer(&exp1, &rtn.type);
 	  break;
 	case EXP_OP_FORCE_DEREF:
-	  rtn.seg = 0;
+	  rtn.seg = exp1.seg;
 	  rtn.off = *(unsigned int *) exp1.off;
 	  break;
 	case EXP_OP_ADDR:
