@@ -1,0 +1,194 @@
+#!/usr/bin/perl -w
+
+# Copyright 2001 Patrik Stridvall
+
+use strict;
+
+BEGIN {
+    $0 =~ m%^(.*?/?tools)/winapi/winapi_fixup$%;
+    require "$1/winapi/setup.pm";
+}
+
+use config qw(
+    &file_type &file_skip &files_skip &get_spec_files
+    $current_dir $wine_dir $winapi_dir $winapi_check_dir
+);
+use output;
+use options;
+use modules;
+use util;
+use winapi;
+use winapi_parser;
+
+my $output = output->new;
+
+my %options_long = (
+    "debug" => { default => 0, description => "debug mode" },
+    "help" => { default => 0, description => "help mode" },
+    "verbose" => { default => 0, description => "verbose mode" },
+
+    "progress" => { default => 1, description => "show progress" },
+
+    "win16" => { default => 1, description => "Win16 fixup" },
+    "win32" => { default => 1, description => "Win32 fixup" },
+
+    "local" =>  { default => 1, description => "local fixup" },
+    "global" => { default => 1, description => "global fixup" },
+
+    "modify" => { default => 0, description => "global fixup" },
+);
+
+my %options_short = (
+    "d" => "debug",
+    "?" => "help",
+    "v" => "verbose"
+);
+
+my $options_usage = "usage: winapi_fixup [--help] [<files>]\n";
+
+my $options = options->new(\%options_long, \%options_short, $options_usage);
+
+my $modules = modules->new($options, $output, $wine_dir, $current_dir, \&file_type, "$winapi_check_dir/modules.dat");
+
+my $win16api = winapi->new($options, $output, "win16", "$winapi_check_dir/win16");
+my $win32api = winapi->new($options, $output, "win32", "$winapi_check_dir/win32");
+my @winapis = ($win16api, $win32api);
+
+if($wine_dir eq ".") {
+    winapi->read_all_spec_files($modules, $wine_dir, $current_dir, \&file_type, $win16api, $win32api);
+} else {
+    my @spec_files = $modules->allowed_spec_files($wine_dir, $current_dir);
+    winapi->read_spec_files($modules, $wine_dir, $current_dir, \@spec_files, $win16api, $win32api);
+}
+
+my %substitute;
+my %insert_line;
+
+my @c_files = files_skip(options->c_files);
+
+my $progress_output;
+my $progress_current = 0;
+my $progress_max = scalar(@c_files);
+
+foreach my $file (@c_files) {
+    $progress_current++;
+    if(options->progress) {
+	output->progress("$file: file $progress_current of $progress_max");
+    }
+    
+    my $found_function = sub {
+	my $line = shift;
+	my $refdebug_channels = shift;
+	my @debug_channels = @$refdebug_channels;
+	my $documentation = shift;
+	my $linkage = shift;
+	my $return_type = shift;
+	my $calling_convention = shift;
+	my $internal_name = shift;
+	my $refargument_types = shift;
+	my @argument_types = @$refargument_types;
+	my $refargument_names = shift;
+	my @argument_names = @$refargument_names;
+	my $refargument_documentations = shift;
+	my @argument_documentations = @$refargument_documentations;
+	my $statements = shift;
+
+	if($linkage eq "static" || $linkage eq "extern") {
+	    return;
+	}
+
+	if($documentation) {
+	    local $_;
+	    foreach (split(/\n/, $documentation)) {
+		if(/^(\s*\*\s*\w+\s*)([\(\[]\s*\w+\.\s*(?:\@|\d+)\s*[\)\]])\s*([\(\[]\s*\w+\.\s*(?:\@|\d+)\s*[\)\]])/m) {
+		    $substitute{$_}{search} = $_;
+		    $substitute{$_}{replace} = "$1$2\n$1$3";
+		} elsif(/^\s*\*\s*(\w+)\s*[\(\[]\s*(\w+)\.\s*(\@|\d+)\s*[\)\]]/m) {
+		    my $name = $1;
+		    my $module = $2;
+		    my $ordinal = $3;
+
+		    my $module2;
+		    my $ordinal2;
+		    foreach my $winapi (@winapis) {
+			$module2 = ($winapi->function_module($internal_name) || $module2);
+			$ordinal2 = ($winapi->function_ordinal($internal_name) || $ordinal2);
+			if(defined($module2) || defined($ordinal2)) { last; }
+		    }
+		    
+		    if(!defined($module2) || !defined($ordinal2)) {
+			output->write("$file: $internal_name: unknown error\n");
+		    } elsif(lc($module) eq $module2 && $ordinal ne $ordinal2) {
+			$substitute{$_}{search} = "$module.$ordinal";
+			$substitute{$_}{replace} = "\U$module2\E.$ordinal2";
+		    }
+		}
+	    }
+	} elsif(0) {
+	    my $name;
+	    my $module;
+	    my $ordinal;
+	    foreach my $winapi (@winapis) {
+		$name = ($winapi->function_external_name($internal_name) || $name);
+		$module = ($winapi->function_module($internal_name) || $module);
+		$ordinal = ($winapi->function_ordinal($internal_name) || $ordinal);
+		if(defined($name) || defined($module) || defined($ordinal)) { last; }
+	    }
+
+	    if(defined($name) && defined($module) && defined($ordinal)) {
+		$insert_line{$line} = 
+		    "/" . "*" x 71 . "\n" .
+		    " *\t\t$name (\U$module\E.$ordinal)\n" .
+		    " */\n";
+	    }
+	}
+    };
+
+    my $found_preprocessor = sub {
+	my $directive = shift;
+	my $argument = shift;
+    };
+
+    winapi_parser::parse_c_file $options, $output, $file, $found_function, $found_preprocessor;
+
+    my $editor = sub {
+	local *IN = shift;
+	local *OUT = shift;
+
+	my $modified = 0;
+	while(<IN>) {
+	    chomp;
+
+	    my $line = $insert_line{$.};
+	    if(defined($line)) {
+		if(options->modify) {
+		    $_ = "$line$_";
+		    $modified = 1;
+		} else {
+		    output->write("$file: $.: insert : '$line'\n");
+		}
+	    }
+
+	    my $search = $substitute{$_}{search};
+	    my $replace = $substitute{$_}{replace};
+	    
+	    if(defined($search) && defined($replace)) {
+		if(options->modify) {
+		    if(s/\Q$search\E/$replace/) {
+			$modified = 1;
+		    }
+		} else {
+		    output->write("$file: $.: search : '$search'\n");
+		    output->write("$file: $.: replace: '$replace'\n");
+		}
+	    }
+	    print OUT "$_\n";
+	}
+
+	return $modified;
+    };
+
+    edit_file($file, $editor);
+}
+
+output->hide_progress;

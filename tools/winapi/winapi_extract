@@ -1,0 +1,245 @@
+#!/usr/bin/perl -w
+
+# Copyright 2001 Patrik Stridvall
+
+use strict;
+
+BEGIN {
+    $0 =~ m%^(.*?/?tools)/winapi/winapi_extract$%;
+    require "$1/winapi/setup.pm";
+}
+
+use config qw(
+    &file_type &file_skip &files_skip &get_spec_files
+    $current_dir $wine_dir $winapi_dir $winapi_check_dir
+);
+use output;
+use options;
+use winapi;
+use winapi_parser;
+
+my $output = output->new;
+
+my %options_long = (
+    "debug" => { default => 0, description => "debug mode" },
+    "help" => { default => 0, description => "help mode" },
+    "verbose" => { default => 0, description => "verbose mode" },
+
+    "progress" => { default => 1, description => "show progress" },
+
+    "win16" => { default => 1, description => "Win16 extraction" },
+    "win32" => { default => 1, description => "Win32 extraction" },
+
+    "local" =>  { default => 1, description => "local extraction" },
+    "global" => { default => 1, description => "global extraction" },
+
+    "spec-files" => { default => 1, parent => "global", description => "spec files extraction" },
+);
+
+my %options_short = (
+    "d" => "debug",
+    "?" => "help",
+    "v" => "verbose"
+);
+
+my $options_usage = "usage: winapi_extract [--help] [<files>]\n";
+
+my $options = options->new(\%options_long, \%options_short, $options_usage);
+
+my %module2spec_file;
+my %module2type;
+{
+    local $_;
+
+    foreach my $spec_file (get_spec_files) {
+	my $module;
+	my $type;
+
+	open(IN, "< $wine_dir/$spec_file");
+	while(<IN>) {
+	    s/^\s*?(.*?)\s*$/$1/; # remove whitespace at begining and end of line
+	    s/^(.*?)\s*#.*$/$1/;  # remove comments
+	    /^$/ && next;         # skip empty lines
+
+	    if(/^name\s+(.*?)$/) {
+		$module = $1;
+		$module2spec_file{$module} = $spec_file;
+	    } elsif(/^type\s+(.*?)$/) {
+		$type = $1;
+		$module2type{$module} = $type;
+	    }
+	}
+	close(IN);
+    }
+}
+
+my $win16api = winapi->new($options, $output, "win16", "$winapi_check_dir/win16");
+my $win32api = winapi->new($options, $output, "win32", "$winapi_check_dir/win32");
+my @winapis = ($win16api, $win32api);
+
+my %specifications;
+
+my @files = files_skip($options->c_files);
+
+my $progress_output;
+my $progress_current = 0;
+my $progress_max = scalar(@files);
+
+foreach my $file (@files) {
+    my $functions = 0;
+
+    $progress_current++;
+    if($options->progress) {
+	output->progress("$file: file $progress_current of $progress_max");
+    }
+
+    my $found_function = sub {
+	my $line = shift;
+	my $refdebug_channels = shift;
+	my @debug_channels = @$refdebug_channels;
+	my $documentation = shift;
+	my $linkage = shift;
+	my $return_type = shift;
+	my $calling_convention = shift;
+	my $internal_name = shift;
+	my $refargument_types = shift;
+	my @argument_types = @$refargument_types;
+	my $refargument_names = shift;
+	my @argument_names = @$refargument_names;
+	my $refargument_documentations = shift;
+	my @argument_documentations = @$refargument_documentations;
+	my $statements = shift;
+
+	$functions++;
+
+	if($linkage eq "static") {
+	    return;
+	}
+
+	local $_;
+	foreach (split(/\n/, $documentation)) {
+	    if(/^ \*\s*(\w+)\s*[\(\[]\s*(\w+)\.\s*(\@|\d+)\s*[\)\]]/m) {
+		my $name = $1;
+		my $module = lc($2);
+		my $ordinal = $3;
+
+		if($ordinal eq "@") {
+		    $specifications{$module}{unfixed}{$name}{debug_channels} = [@debug_channels];
+		    $specifications{$module}{unfixed}{$name}{name} = $name;
+		    $specifications{$module}{unfixed}{$name}{ordinal} = $ordinal;
+		    $specifications{$module}{unfixed}{$name}{arguments} = [@argument_types];
+		} else {
+		    $specifications{$module}{fixed}{$ordinal}{debug_channels} = [@debug_channels];
+		    $specifications{$module}{fixed}{$ordinal}{ordinal} = $ordinal;
+		    $specifications{$module}{fixed}{$ordinal}{name} = $name;
+		    $specifications{$module}{fixed}{$ordinal}{arguments} = [@argument_types];
+		}
+
+		if($options->debug) {
+		    output->write("$file: $name ($module.$ordinal)\n");
+		}
+	    }
+	}
+    };
+
+
+    my $found_preprocessor = sub {
+	my $directive = shift;
+	my $argument = shift;
+    };
+
+    winapi_parser::parse_c_file $options, $output, $file, $found_function, $found_preprocessor;
+
+    if($functions == 0) {
+	output->write("$file: doesn't contain any functions\n");
+    }
+}
+
+sub output_function {
+    local *OUT = shift;
+    my $type = shift;
+    my $function = shift;
+
+    my $name = $function->{name};
+    my $ordinal = $function->{ordinal};
+    my @arguments = @{$function->{arguments}};
+    
+    my @arguments2;
+    foreach my $argument (@arguments) {
+	my $argument2;
+	if($type eq "win16") {
+	    $argument2 = $win16api->translate_argument($argument);
+	} else {
+	    $argument2 = $win32api->translate_argument($argument);
+	}
+	if(!defined($argument2)) {
+	    $argument2 = "undef";
+	}
+	push @arguments2, $argument2;
+    }
+
+    if($type eq "win16") {
+	print OUT "$ordinal pascal $name(@arguments2) $name\n";
+    } else {
+	print OUT "$ordinal stdcall $name(@arguments2) $name\n";
+    }
+}
+
+if($options->spec_files) {
+    foreach my $module (keys(%specifications)) {
+	my $spec_file = $module2spec_file{$module};
+	my $type = $module2type{$module};
+	
+	if(!defined($spec_file) || !defined($type)) {
+	    output->write("$module: doesn't exist\n");
+	    next;
+	}
+	
+	$spec_file .= "2";
+	
+	output->progress("$spec_file");
+	open(OUT, "> $wine_dir/$spec_file");
+	
+	print OUT "name $module\n";
+	print OUT "type $type\n";
+	print OUT "\n";
+	
+	my %debug_channels;
+	foreach my $ordinal (sort {$a <=> $b} keys(%{$specifications{$module}{fixed}})) {
+	    my $function = $specifications{$module}{fixed}{$ordinal};
+	    foreach my $debug_channel (@{$function->{debug_channels}}) {
+		$debug_channels{$debug_channel}++;
+	    }
+	}
+	foreach my $name (sort(keys(%{$specifications{$module}{unfixed}}))) {
+	    my $function = $specifications{$module}{unfixed}{$name}; 
+	    foreach my $debug_channel (@{$function->{debug_channels}}) {
+		$debug_channels{$debug_channel}++;
+	    }
+	}
+
+	my @debug_channels = sort(keys(%debug_channels));
+	if($#debug_channels >= 0) { 
+	    print OUT "debug_channels (" .  join(" ", @debug_channels) . ")\n";
+	    print OUT "\n";
+	}
+	
+	my $empty = 1;
+	foreach my $ordinal (sort {$a <=> $b} keys(%{$specifications{$module}{fixed}})) {       
+	    my $function = $specifications{$module}{fixed}{$ordinal};
+	    output_function(\*OUT, $type, $function);
+	    $empty = 0;
+	}
+
+	foreach my $name (sort(keys(%{$specifications{$module}{unfixed}}))) {
+	    if(!$empty) {
+		print OUT "\n";
+		$empty = 1;
+	    }
+	    my $function = $specifications{$module}{unfixed}{$name}; 
+	    output_function(\*OUT, $type, $function);
+	}
+	close(OUT);
+    }
+}
+output->hide_progress;
