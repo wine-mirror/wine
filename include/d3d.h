@@ -814,8 +814,8 @@ ICOM_DEFINE(IDirect3DDevice3,IUnknown)
     ICOM_METHOD (HRESULT,BeginScene) \
     ICOM_METHOD (HRESULT,EndScene) \
     ICOM_METHOD1(HRESULT,GetDirect3D,          LPDIRECT3D7*,lplpDirect3D3) \
-    ICOM_METHOD2(HRESULT,SetRenderTarget,      LPDIRECTDRAWSURFACE,lpNewRenderTarget,DWORD,dwFlags) \
-    ICOM_METHOD1(HRESULT,GetRenderTarget,      LPDIRECTDRAWSURFACE*,lplpRenderTarget) \
+    ICOM_METHOD2(HRESULT,SetRenderTarget,      LPDIRECTDRAWSURFACE7,lpNewRenderTarget,DWORD,dwFlags) \
+    ICOM_METHOD1(HRESULT,GetRenderTarget,      LPDIRECTDRAWSURFACE7*,lplpRenderTarget) \
     ICOM_METHOD6(HRESULT,Clear,                DWORD,,LPD3DRECT,,DWORD,,D3DCOLOR,,D3DVALUE,,DWORD,) \
     ICOM_METHOD2(HRESULT,SetTransform,         D3DTRANSFORMSTATETYPE,dtstTransformStateType, LPD3DMATRIX,lpD3DMatrix) \
     ICOM_METHOD2(HRESULT,GetTransform,         D3DTRANSFORMSTATETYPE,dtstTransformStateType, LPD3DMATRIX,lpD3DMatrix) \
@@ -841,7 +841,7 @@ ICOM_DEFINE(IDirect3DDevice3,IUnknown)
     ICOM_METHOD7(HRESULT,DrawIndexedPrimitiveVB, D3DPRIMITIVETYPE,d3dptPrimitiveType,LPDIRECT3DVERTEXBUFFER7,lpD3DVertexBuf,DWORD,,DWORD,,LPWORD,lpwIndices,DWORD,dwIndexCount,DWORD,dwFlags) \
     ICOM_METHOD5(HRESULT,ComputeSphereVisibility,     LPD3DVECTOR,lpCenters,LPD3DVALUE,lpRadii,DWORD,dwNumSpheres,DWORD,dwFlags,LPDWORD,lpdwReturnValues) \
     ICOM_METHOD2(HRESULT,GetTexture,           DWORD,dwStage,LPDIRECTDRAWSURFACE7*,) \
-    ICOM_METHOD2(HRESULT,SetTexture,           DWORD,dwStage,LPDIRECTDRAWSURFACE,) \
+    ICOM_METHOD2(HRESULT,SetTexture,           DWORD,dwStage,LPDIRECTDRAWSURFACE7,) \
     ICOM_METHOD3(HRESULT,GetTextureStageState, DWORD,dwStage,D3DTEXTURESTAGESTATETYPE,d3dTexStageStateType,LPDWORD,lpdwState) \
     ICOM_METHOD3(HRESULT,SetTextureStageState, DWORD,dwStage,D3DTEXTURESTAGESTATETYPE,d3dTexStageStateType,DWORD,dwState) \
     ICOM_METHOD1(HRESULT,ValidateDevice,       LPDWORD,lpdwPasses) \
