@@ -48,7 +48,7 @@ struct pipe_user
     struct named_pipe  *pipe;
     struct pipe_user   *next;
     struct pipe_user   *prev;
-    void               *thread;
+    struct thread      *thread;
     void               *func;
     void               *overlapped;
 };
@@ -134,6 +134,7 @@ static void notify_waiter( struct pipe_user *user, unsigned int status)
         thread_queue_apc(user->thread,NULL,user->func,
             APC_ASYNC,1,2,user->overlapped,status);
     }
+    if (user->thread) release_object(user->thread);
     user->thread = NULL;
     user->func = NULL;
     user->overlapped=NULL;
@@ -172,6 +173,7 @@ static void pipe_user_destroy( struct object *obj)
     if (user->next) user->next->prev = user->prev;
     if (user->prev) user->prev->next = user->next;
     else user->pipe->users = user->next;
+    if (user->thread) release_object(user->thread);
     release_object(user->pipe);
 }
 
@@ -361,7 +363,7 @@ DECL_HANDLER(connect_named_pipe)
     else
     {
         user->state = ps_wait_open;
-        user->thread = current;
+        user->thread = (struct thread *)grab_object(current);
         user->func = req->func;
         user->overlapped = req->overlapped;
 
@@ -405,7 +407,7 @@ DECL_HANDLER(wait_named_pipe)
                 if( (user = create_pipe_user (pipe, -1)) )
                 {
                     user->state = ps_wait_connect;
-                    user->thread = current;
+                    user->thread = (struct thread *)grab_object(current);
                     user->func = req->func;
                     user->overlapped = req->overlapped;
                     /* don't release it */
