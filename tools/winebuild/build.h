@@ -238,6 +238,7 @@ extern int debugging;
 extern int stack_size;
 extern int nb_debug_channels;
 extern int nb_lib_paths;
+extern int display_warnings;
 
 extern char DLLName[80];
 extern char DLLFileName[80];

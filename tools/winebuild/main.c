@@ -45,6 +45,7 @@ int nb_entry_points = 0;
 int nb_names = 0;
 int nb_debug_channels = 0;
 int nb_lib_paths = 0;
+int display_warnings = 0;
 
 /* we only support relay debugging on i386 */
 #if defined(__i386__) && !defined(NO_TRACE_MSGS)
@@ -110,6 +111,7 @@ struct option_descr
 static void do_pic(void);
 static void do_output( const char *arg );
 static void do_usage(void);
+static void do_warnings(void);
 static void do_spec( const char *arg );
 static void do_def( const char *arg );
 static void do_glue( const char *arg );
@@ -122,6 +124,7 @@ static const struct option_descr option_table[] =
 {
     { "-fPIC",    0, do_pic,     "-fPIC            Generate PIC code" },
     { "-h",       0, do_usage,   "-h               Display this help message" },
+    { "-w",       0, do_warnings,"-w               Turn on warnings" },
     { "-L",       1, do_lib,     "-L directory     Look for imports libraries in 'directory'" },
     { "-o",       1, do_output,  "-o name          Set the output file name (default: stdout)" },
     { "-sym",     1, do_sym,     "-sym file.o      Read the list of undefined symbols from 'file.o'" },
@@ -162,6 +165,11 @@ static void do_usage(void)
     for (opt = option_table; opt->name; opt++) fprintf( stderr, "   %s\n", opt->usage );
     fprintf( stderr, "\nExactly one of -spec, -glue or -relay must be specified.\n\n" );
     exit(1);
+}
+
+static void do_warnings(void)
+{
+    display_warnings = 1;
 }
 
 static void do_spec( const char *arg )

@@ -106,6 +106,8 @@ void fatal_perror( const char *msg, ... )
 void warning( const char *msg, ... )
 {
     va_list valist;
+
+    if (!display_warnings) return;
     va_start( valist, msg );
     if (input_file_name)
     {
