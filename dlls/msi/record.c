@@ -261,6 +261,10 @@ UINT WINAPI MsiRecordGetStringA(MSIHANDLE handle, unsigned int iField,
         WideCharToMultiByte( CP_ACP, 0, rec->fields[iField].u.szwVal, -1,
                              szValue, *pcchValue, NULL, NULL);
         break;
+    case MSIFIELD_NULL:
+        len = 1;
+        if( *pcchValue > 0 )
+            szValue[0] = 0;
     default:
         ret = ERROR_INVALID_PARAMETER;
         break;
@@ -319,6 +323,10 @@ UINT WINAPI MsiRecordGetStringW(MSIHANDLE handle, unsigned int iField,
         len = lstrlenW( rec->fields[iField].u.szwVal );
         lstrcpynW(szValue, rec->fields[iField].u.szwVal, *pcchValue);
         break;
+    case MSIFIELD_NULL:
+        len = 1;
+        if( *pcchValue > 0 )
+            szValue[0] = 0;
     default:
         break;
     }
