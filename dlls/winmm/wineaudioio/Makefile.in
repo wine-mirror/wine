@@ -4,7 +4,7 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = wineaudioio.drv
 IMPORTS   = winmm user32 kernel32 ntdll
-EXTRALIBS = @AUDIOIOLIBS@
+EXTRALIBS = $(LIBUUID) @AUDIOIOLIBS@
 
 LDDLLFLAGS = @LDDLLFLAGS@
 SYMBOLFILE = $(MODULE).tmp.o
