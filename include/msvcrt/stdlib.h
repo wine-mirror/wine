@@ -7,7 +7,9 @@
  */
 #ifndef __WINE_STDLIB_H
 #define __WINE_STDLIB_H
+#ifndef __WINE_USE_MSVCRT
 #define __WINE_USE_MSVCRT
+#endif
 
 #ifndef MSVCRT
 # ifdef USE_MSVCRT_PREFIX
@@ -169,8 +171,8 @@ int         MSVCRT(atoi)(const char*);
 long        MSVCRT(atol)(const char*);
 void*       MSVCRT(calloc)(MSVCRT(size_t),MSVCRT(size_t));
 #ifdef __i386__
-long long    MSVCRT(div)(int,int);
-unsigned long long MSVCRT(ldiv)(long,long);
+__int64    MSVCRT(div)(int,int);
+unsigned __int64 MSVCRT(ldiv)(long,long);
 #else
 MSVCRT(div_t) MSVCRT(div)(int,int);
 MSVCRT(ldiv_t) MSVCRT(ldiv)(long,long);
@@ -238,7 +240,7 @@ static inline char* itoa(int value, char* str, int radix) { return _itoa(value, 
 static inline char* ltoa(long value, char* str, int radix) { return _ltoa(value, str, radix); }
 static inline _onexit_t onexit(_onexit_t func) { return _onexit(func); }
 static inline int putenv(const char* str) { return _putenv(str); }
-static inline void swab(char* src, char* dst, int len) { return _swab(src, dst, len); }
+static inline void swab(char* src, char* dst, int len) { _swab(src, dst, len); }
 static inline char* ultoa(unsigned long value, char* str, int radix) { return _ultoa(value, str, radix); }
 #endif /* USE_MSVCRT_PREFIX */
 

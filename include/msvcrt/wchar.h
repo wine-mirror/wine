@@ -7,7 +7,9 @@
  */
 #ifndef __WINE_WCHAR_H
 #define __WINE_WCHAR_H
+#ifndef __WINE_USE_MSVCRT
 #define __WINE_USE_MSVCRT
+#endif
 
 #include <stdarg.h>
 

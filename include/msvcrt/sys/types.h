@@ -19,7 +19,9 @@
  */
 #ifndef __WINE_SYS_TYPES_H
 #define __WINE_SYS_TYPES_H
+#ifndef __WINE_USE_MSVCRT
 #define __WINE_USE_MSVCRT
+#endif
 
 #ifndef MSVCRT
 # ifdef USE_MSVCRT_PREFIX

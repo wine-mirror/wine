@@ -7,8 +7,9 @@
  */
 #ifndef __WINE_CONIO_H
 #define __WINE_CONIO_H
+#ifndef __WINE_USE_MSVCRT
 #define __WINE_USE_MSVCRT
-
+#endif
 
 #ifdef __cplusplus
 extern "C" {

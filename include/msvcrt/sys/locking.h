@@ -19,7 +19,9 @@
  */
 #ifndef __WINE_SYS_LOCKING_H__
 #define __WINE_SYS_LOCKING_H__
+#ifndef __WINE_USE_MSVCRT
 #define __WINE_USE_MSVCRT
+#endif
 
 #define _LK_UNLCK 0
 #define _LK_LOCK 1

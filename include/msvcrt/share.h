@@ -23,7 +23,9 @@
 
 #ifndef __WINE_SHARE_H
 #define __WINE_SHARE_H
+#ifndef __WINE_USE_MSVCRT
 #define __WINE_USE_MSVCRT
+#endif
 
 #define	SH_COMPAT	0x00	/* Compatibility */
 #define	SH_DENYRW	0x10	/* Deny read/write */
@@ -38,4 +40,3 @@
 #define _SH_DENYNO SH_DENYNO
 
 #endif	/* __WINE_SHARE_H_ */
-

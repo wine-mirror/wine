@@ -18,7 +18,9 @@
 
 #ifndef __WINE_ERRNO_H
 #define __WINE_ERRNO_H
+#ifndef __WINE_USE_MSVCRT
 #define __WINE_USE_MSVCRT
+#endif
 
 #ifndef MSVCRT
 # ifdef USE_MSVCRT_PREFIX

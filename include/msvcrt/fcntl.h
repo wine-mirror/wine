@@ -7,8 +7,9 @@
  */
 #ifndef __WINE_FCNTL_H
 #define __WINE_FCNTL_H
+#ifndef __WINE_USE_MSVCRT
 #define __WINE_USE_MSVCRT
-
+#endif
 
 #define _O_RDONLY      0
 #define _O_WRONLY      1

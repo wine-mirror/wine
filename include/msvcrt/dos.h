@@ -7,8 +7,9 @@
  */
 #ifndef __WINE_DOS_H
 #define __WINE_DOS_H
+#ifndef __WINE_USE_MSVCRT
 #define __WINE_USE_MSVCRT
-
+#endif
 
 /* The following are also defined in io.h */
 #define _A_NORMAL 0x00000000
