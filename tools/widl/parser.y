@@ -131,6 +131,7 @@ static type_t std_uhyper = { "MIDL_uhyper" };
 %token tCONST tCONTEXTHANDLE tCONTEXTHANDLENOSERIALIZE
 %token tCONTEXTHANDLESERIALIZE tCONTROL tCPPQUOTE
 %token tDEFAULT
+%token tDEFAULTVALUE
 %token tDISPINTERFACE
 %token tDLLNAME tDOUBLE tDUAL
 %token tENDPOINT
@@ -153,6 +154,7 @@ static type_t std_uhyper = { "MIDL_uhyper" };
 %token tMETHODS
 %token tMODULE
 %token tOBJECT tODL tOLEAUTOMATION
+%token tOPTIONAL
 %token tOUT
 %token tPOINTERDEFAULT
 %token tPROPERTIES
@@ -174,6 +176,7 @@ static type_t std_uhyper = { "MIDL_uhyper" };
 %token tUNSIGNED
 %token tUUID
 %token tV1ENUM
+%token tVARARG
 %token tVERSION
 %token tVOID
 %token tWCHAR tWIREMARSHAL
@@ -341,6 +344,8 @@ attribute:
 	| tCONTEXTHANDLENOSERIALIZE		{ $$ = make_attrv(ATTR_CONTEXTHANDLE, 0); /* RPC_CONTEXT_HANDLE_DONT_SERIALIZE */ }
 	| tCONTEXTHANDLESERIALIZE		{ $$ = make_attrv(ATTR_CONTEXTHANDLE, 0); /* RPC_CONTEXT_HANDLE_SERIALIZE */ }
 	| tDEFAULT				{ $$ = make_attr(ATTR_DEFAULT); }
+	| tDEFAULTVALUE '(' expr_const ')'	{ $$ = make_attrp(ATTR_DEFAULTVALUE, $3); }
+	| tDEFAULTVALUE '(' aSTRING ')'		{ $$ = make_attrp(ATTR_DEFAULTVALUE, $3); }
 	| tDLLNAME '(' aSTRING ')'		{ $$ = make_attrp(ATTR_DLLNAME, $3); }
 	| tDUAL					{ $$ = make_attr(ATTR_DUAL); }
 	| tENDPOINT '(' aSTRING ')'		{ $$ = make_attrp(ATTR_ENDPOINT, $3); }
@@ -358,6 +363,7 @@ attribute:
 	| tOBJECT				{ $$ = make_attr(ATTR_OBJECT); }
 	| tODL					{ $$ = make_attr(ATTR_ODL); }
 	| tOLEAUTOMATION			{ $$ = make_attr(ATTR_OLEAUTOMATION); }
+	| tOPTIONAL                             { $$ = make_attr(ATTR_OPTIONAL); }
 	| tOUT					{ $$ = make_attr(ATTR_OUT); }
 	| tPOINTERDEFAULT '(' pointer_type ')'	{ $$ = make_attrv(ATTR_POINTERDEFAULT, $3); }
 	| tPROPGET				{ $$ = make_attr(ATTR_PROPGET); }
@@ -373,6 +379,7 @@ attribute:
 	| tTRANSMITAS '(' type ')'		{ $$ = make_attrp(ATTR_TRANSMITAS, type_ref($3)); }
 	| tUUID '(' aUUID ')'			{ $$ = make_attrp(ATTR_UUID, $3); }
 	| tV1ENUM				{ $$ = make_attr(ATTR_V1ENUM); }
+	| tVARARG				{ $$ = make_attr(ATTR_VARARG); }
 	| tVERSION '(' version ')'		{ $$ = make_attrv(ATTR_VERSION, $3); }
 	| tWIREMARSHAL '(' type ')'		{ $$ = make_attrp(ATTR_WIREMARSHAL, type_ref($3)); }
 	| pointer_type				{ $$ = make_attrv(ATTR_POINTERTYPE, $1); }

@@ -206,6 +206,7 @@ static struct keyword {
 	{"cpp_quote",			tCPPQUOTE},
 /* ... */
 	{"default",			tDEFAULT},
+	{"defaultvalue",		tDEFAULTVALUE},
 /* ... */
 	{"dispinterface",		tDISPINTERFACE},
 /* ... */
@@ -257,6 +258,7 @@ static struct keyword {
 	{"odl",				tODL},
 	{"oleautomation",		tOLEAUTOMATION},
 /* ... */
+	{"optional",			tOPTIONAL},
 	{"out",				tOUT},
 /* ... */
 	{"pointer_default",		tPOINTERDEFAULT},
@@ -295,6 +297,7 @@ static struct keyword {
 	{"uuid",			tUUID},
 	{"v1_enum",			tV1ENUM},
 /* ... */
+	{"vararg",			tVARARG},
 	{"version",			tVERSION},
 	{"void",			tVOID},
 	{"wchar_t",			tWCHAR},
