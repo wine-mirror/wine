@@ -280,7 +280,10 @@ int main(int argc,char *argv[])
 {
 	extern char* optarg;
 	extern int   optind;
-	int optc, opti = 0;
+	int optc;
+#ifdef HAVE_GETOPT_LONG
+	int opti = 0;
+#endif
 	int stdinc = 1;
 	int lose = 0;
 	int ret;
