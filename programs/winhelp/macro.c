@@ -155,7 +155,7 @@ static int MACRO_DoLookUp(struct MacroDesc* start, const char* name, struct lexr
         {
             lr->proto = md->arguments;
             if (md->isBool)
-            {       
+            {
                 lr->bool_function = (BOOL (*)())md->fn;
                 return BOOL_FUNCTION;
             }
@@ -172,7 +172,7 @@ static int MACRO_DoLookUp(struct MacroDesc* start, const char* name, struct lexr
 int MACRO_Lookup(const char* name, struct lexret* lr)
 {
     int ret;
-    
+
     if ((ret = MACRO_DoLookUp(MACRO_Builtins, name, lr, -1)) != EMPTY)
         return ret;
     if (MACRO_Loaded && (ret = MACRO_DoLookUp(MACRO_Loaded, name, lr, MACRO_NumLoaded)) != EMPTY)
@@ -281,7 +281,7 @@ void MACRO_ChangeButtonBinding(LPCSTR id, LPCSTR macro)
     b = MACRO_LookupButton(win, id);
     if (!*b) {WINE_FIXME("Couldn't find button '%s'\n", id); return;}
 
-    size = sizeof(WINHELP_BUTTON) + lstrlen(id) + 
+    size = sizeof(WINHELP_BUTTON) + lstrlen(id) +
         lstrlen((*b)->lpszName) + lstrlen(macro) + 3;
 
     button = HeapAlloc(GetProcessHeap(), 0, size);
@@ -558,7 +558,7 @@ void MACRO_FileOpen(void)
     {
         HLPFILE*        hlpfile = WINHELP_LookupHelpFile(szPath);
 
-        WINHELP_CreateHelpWindowByHash(hlpfile, 0, 
+        WINHELP_CreateHelpWindowByHash(hlpfile, 0,
                                        WINHELP_GetWindowInfo(hlpfile, "main"), SW_SHOWNORMAL);
     }
 }
@@ -679,14 +679,15 @@ void MACRO_JumpContents(LPCSTR lpszPath, LPCSTR lpszWindow)
 
     WINE_TRACE("(\"%s\", \"%s\")\n", lpszPath, lpszWindow);
     hlpfile = WINHELP_LookupHelpFile(lpszPath);
-    WINHELP_CreateHelpWindowByHash(hlpfile, 0, 
+    WINHELP_CreateHelpWindowByHash(hlpfile, 0,
                                    WINHELP_GetWindowInfo(hlpfile, lpszWindow),
                                    SW_NORMAL);
 }
 
 void MACRO_JumpContext(LPCSTR lpszPath, LPCSTR lpszWindow, LONG context)
 {
-    WINE_FIXME("(\"%s\", \"%s\", %lu)\n", lpszPath, lpszWindow, context);
+    WINE_FIXME("(\"%s\", \"%s\", %ld)semi-stub\n", lpszPath, lpszWindow, context);
+    return MACRO_JumpContents(lpszPath, lpszWindow);
 }
 
 void MACRO_JumpHash(LPCSTR lpszPath, LPCSTR lpszWindow, LONG lHash)
@@ -695,7 +696,7 @@ void MACRO_JumpHash(LPCSTR lpszPath, LPCSTR lpszWindow, LONG lHash)
 
     WINE_TRACE("(\"%s\", \"%s\", %lu)\n", lpszPath, lpszWindow, lHash);
     hlpfile = WINHELP_LookupHelpFile(lpszPath);
-    WINHELP_CreateHelpWindowByHash(hlpfile, lHash, 
+    WINHELP_CreateHelpWindowByHash(hlpfile, lHash,
                                    WINHELP_GetWindowInfo(hlpfile, lpszWindow),
                                    SW_NORMAL);
 }
