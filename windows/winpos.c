@@ -173,32 +173,7 @@ void WINAPI SwitchToThisWindow( HWND hwnd, BOOL restore )
  */
 BOOL WINAPI GetWindowRect( HWND hwnd, LPRECT rect )
 {
-    BOOL ret;
-    WND *wndPtr = WIN_GetPtr( hwnd );
-
-    if (!wndPtr) return FALSE;
-
-    if (wndPtr != WND_OTHER_PROCESS)
-    {
-        *rect = wndPtr->rectWindow;
-        WIN_ReleasePtr( wndPtr );
-        ret = TRUE;
-    }
-    else
-    {
-        SERVER_START_REQ( get_window_rectangles )
-        {
-            req->handle = hwnd;
-            if ((ret = !wine_server_call_err( req )))
-            {
-                rect->left   = reply->window.left;
-                rect->top    = reply->window.top;
-                rect->right  = reply->window.right;
-                rect->bottom = reply->window.bottom;
-            }
-        }
-        SERVER_END_REQ;
-    }
+    BOOL ret = WIN_GetRectangles( hwnd, rect, NULL );
     if (ret)
     {
         MapWindowPoints( GetAncestor( hwnd, GA_PARENT ), 0, (POINT *)rect, 2 );
@@ -292,31 +267,14 @@ int WINAPI SetWindowRgn( HWND hwnd, HRGN hrgn, BOOL bRedraw )
 BOOL WINAPI GetClientRect( HWND hwnd, LPRECT rect )
 {
     BOOL ret;
-    WND *wndPtr = WIN_GetPtr( hwnd );
 
-    rect->left = rect->top = rect->right = rect->bottom = 0;
-    if (!wndPtr) return FALSE;
-
-    if (wndPtr != WND_OTHER_PROCESS)
+    rect->right = rect->bottom = 0;
+    if ((ret = WIN_GetRectangles( hwnd, NULL, rect )))
     {
-        rect->right  = wndPtr->rectClient.right - wndPtr->rectClient.left;
-        rect->bottom = wndPtr->rectClient.bottom - wndPtr->rectClient.top;
-        WIN_ReleasePtr( wndPtr );
-        ret = TRUE;
+        rect->right -= rect->left;
+        rect->bottom -= rect->top;
     }
-    else
-    {
-        SERVER_START_REQ( get_window_rectangles )
-        {
-            req->handle = hwnd;
-            if ((ret = !wine_server_call_err( req )))
-            {
-                rect->right  = reply->client.right - reply->client.left;
-                rect->bottom = reply->client.bottom - reply->client.top;
-            }
-        }
-        SERVER_END_REQ;
-    }
+    rect->left = rect->top = 0;
     return ret;
 }
 
@@ -351,57 +309,64 @@ BOOL WINAPI ScreenToClient( HWND hwnd, LPPOINT lppnt )
 static HWND find_child_from_point( HWND parent, POINT pt, INT *hittest, LPARAM lparam )
 {
     int i, res;
+    LONG style, exstyle;
+    RECT rectWindow, rectClient;
     WND *wndPtr;
     HWND *list = WIN_ListChildren( parent );
 
     if (!list) return 0;
     for (i = 0; list[i]; i++)
     {
-        if (!(wndPtr = WIN_FindWndPtr( list[i] ))) continue;
         /* If point is in window, and window is visible, and it  */
         /* is enabled (or it's a top-level window), then explore */
         /* its children. Otherwise, go to the next window.       */
 
-        if (!(wndPtr->dwStyle & WS_VISIBLE)) goto next;  /* not visible -> skip */
-        if ((wndPtr->dwStyle & (WS_POPUP | WS_CHILD | WS_DISABLED)) == (WS_CHILD | WS_DISABLED))
-            goto next;  /* disabled child -> skip */
-        if ((wndPtr->dwExStyle & (WS_EX_LAYERED | WS_EX_TRANSPARENT)) == (WS_EX_LAYERED | WS_EX_TRANSPARENT))
-            goto next;  /* transparent -> skip */
-        if (wndPtr->hrgnWnd)
+        style = GetWindowLongW( list[i], GWL_STYLE );
+        if (!(style & WS_VISIBLE)) continue;  /* not visible -> skip */
+        if ((style & (WS_POPUP | WS_CHILD | WS_DISABLED)) == (WS_CHILD | WS_DISABLED))
+            continue;  /* disabled child -> skip */
+        exstyle = GetWindowLongW( list[i], GWL_EXSTYLE );
+        if ((exstyle & (WS_EX_LAYERED | WS_EX_TRANSPARENT)) == (WS_EX_LAYERED | WS_EX_TRANSPARENT))
+            continue;  /* transparent -> skip */
+
+        if (!WIN_GetRectangles( list[i], &rectWindow, &rectClient )) continue;
+        if (!PtInRect( &rectWindow, pt )) continue;  /* not in window -> skip */
+
+        /* FIXME: check window region for other processes too */
+        if ((wndPtr = WIN_GetPtr( list[i] )) && wndPtr != WND_OTHER_PROCESS)
         {
-            if (!PtInRegion( wndPtr->hrgnWnd, pt.x - wndPtr->rectWindow.left,
-                             pt.y - wndPtr->rectWindow.top ))
-                goto next;  /* point outside window region -> skip */
+            if (wndPtr->hrgnWnd && !PtInRegion( wndPtr->hrgnWnd,
+                                                pt.x - rectWindow.left, pt.y - rectWindow.top ))
+            {
+                WIN_ReleasePtr( wndPtr );
+                continue;  /* point outside window region -> skip */
+            }
+            WIN_ReleasePtr( wndPtr );
         }
-        else if (!PtInRect( &wndPtr->rectWindow, pt )) goto next;  /* not in window -> skip */
 
         /* If window is minimized or disabled, return at once */
-        if (wndPtr->dwStyle & WS_MINIMIZE)
+        if (style & WS_MINIMIZE)
         {
-            WIN_ReleaseWndPtr( wndPtr );
             *hittest = HTCAPTION;
             return list[i];
         }
-        if (wndPtr->dwStyle & WS_DISABLED)
+        if (style & WS_DISABLED)
         {
-            WIN_ReleaseWndPtr( wndPtr );
             *hittest = HTERROR;
             return list[i];
         }
 
         /* If point is in client area, explore children */
-        if (PtInRect( &wndPtr->rectClient, pt ))
+        if (PtInRect( &rectClient, pt ))
         {
             POINT new_pt;
             HWND ret;
 
-            new_pt.x = pt.x - wndPtr->rectClient.left;
-            new_pt.y = pt.y - wndPtr->rectClient.top;
-            WIN_ReleaseWndPtr( wndPtr );
+            new_pt.x = pt.x - rectClient.left;
+            new_pt.y = pt.y - rectClient.top;
             if ((ret = find_child_from_point( list[i], new_pt, hittest, lparam )))
                 return ret;
         }
-        else WIN_ReleaseWndPtr( wndPtr );
 
         /* Now it's inside window, send WM_NCCHITTEST (if same thread) */
         if (!WIN_IsCurrentThread( list[i] ))
@@ -414,10 +379,7 @@ static HWND find_child_from_point( HWND parent, POINT pt, INT *hittest, LPARAM l
             *hittest = res;  /* Found the window */
             return list[i];
         }
-        continue;  /* continue search with next sibling */
-
-    next:
-        WIN_ReleaseWndPtr( wndPtr );
+        /* continue search with next sibling */
     }
     return 0;
 }
@@ -430,40 +392,36 @@ static HWND find_child_from_point( HWND parent, POINT pt, INT *hittest, LPARAM l
  */
 HWND WINPOS_WindowFromPoint( HWND hwndScope, POINT pt, INT *hittest )
 {
-    WND *wndScope;
     POINT xy = pt;
     int res;
+    LONG style;
 
     TRACE("scope %04x %ld,%ld\n", hwndScope, pt.x, pt.y);
 
     if (!hwndScope) hwndScope = GetDesktopWindow();
-    if (!(wndScope = WIN_FindWndPtr( hwndScope ))) return 0;
-    hwndScope = wndScope->hwndSelf;  /* make it a full handle */
+    style = GetWindowLongW( hwndScope, GWL_STYLE );
 
     *hittest = HTERROR;
-    if( wndScope->dwStyle & WS_DISABLED )
+    if (style & WS_DISABLED) return 0;
+
+    MapWindowPoints( GetDesktopWindow(), GetAncestor( hwndScope, GA_PARENT ), &xy, 1 );
+
+    if (!(style & WS_MINIMIZE))
     {
-        WIN_ReleaseWndPtr(wndScope);
-        return 0;
-    }
-
-    if (wndScope->parent)
-        MapWindowPoints( GetDesktopWindow(), wndScope->parent, &xy, 1 );
-
-    if (!(wndScope->dwStyle & WS_MINIMIZE) && PtInRect( &wndScope->rectClient, xy ))
-    {
-        HWND ret;
-
-        xy.x -= wndScope->rectClient.left;
-        xy.y -= wndScope->rectClient.top;
-        WIN_ReleaseWndPtr( wndScope );
-        if ((ret = find_child_from_point( hwndScope, xy, hittest, MAKELONG( pt.x, pt.y ) )))
+        RECT rectClient;
+        if (WIN_GetRectangles( hwndScope, NULL, &rectClient ) && PtInRect( &rectClient, xy ))
         {
-            TRACE( "found child %x\n", ret );
-            return ret;
+            HWND ret;
+
+            xy.x -= rectClient.left;
+            xy.y -= rectClient.top;
+            if ((ret = find_child_from_point( hwndScope, xy, hittest, MAKELONG( pt.x, pt.y ) )))
+            {
+                TRACE( "found child %x\n", ret );
+                return ret;
+            }
         }
     }
-    else WIN_ReleaseWndPtr( wndScope );
 
     /* If nothing found, try the scope window */
     if (!WIN_IsCurrentThread( hwndScope ))
@@ -512,28 +470,29 @@ HWND WINAPI ChildWindowFromPointEx( HWND hwndParent, POINT pt, UINT uFlags)
     HWND *list;
     int i;
     RECT rect;
-    HWND retvalue = 0;
+    HWND retvalue;
 
     GetClientRect( hwndParent, &rect );
     if (!PtInRect( &rect, pt )) return 0;
     if (!(list = WIN_ListChildren( hwndParent ))) return 0;
 
-    for (i = 0; list[i] && !retvalue; i++)
+    for (i = 0; list[i]; i++)
     {
-        WND *wnd = WIN_FindWndPtr( list[i] );
-        if (!wnd) continue;
-        if (PtInRect( &wnd->rectWindow, pt ))
+        if (!WIN_GetRectangles( list[i], &rect, NULL )) continue;
+        if (!PtInRect( &rect, pt )) continue;
+        if (uFlags & (CWP_SKIPINVISIBLE|CWP_SKIPDISABLED))
         {
-            if ( (uFlags & CWP_SKIPINVISIBLE) &&
-                 !(wnd->dwStyle & WS_VISIBLE) );
-            else if ( (uFlags & CWP_SKIPDISABLED) &&
-                      (wnd->dwStyle & WS_DISABLED) );
-            else if ( (uFlags & CWP_SKIPTRANSPARENT) &&
-                      (wnd->dwExStyle & WS_EX_TRANSPARENT) );
-            else retvalue = list[i];
+            LONG style = GetWindowLongW( list[i], GWL_STYLE );
+            if ((uFlags & CWP_SKIPINVISIBLE) && !(style & WS_VISIBLE)) continue;
+            if ((uFlags & CWP_SKIPDISABLED) && (style & WS_DISABLED)) continue;
         }
-        WIN_ReleaseWndPtr( wnd );
+        if (uFlags & CWP_SKIPTRANSPARENT)
+        {
+            if (GetWindowLongW( list[i], GWL_EXSTYLE ) & WS_EX_TRANSPARENT) continue;
+        }
+        break;
     }
+    retvalue = list[i];
     HeapFree( GetProcessHeap(), 0, list );
     if (!retvalue) retvalue = hwndParent;
     return retvalue;

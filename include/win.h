@@ -92,6 +92,7 @@ extern void WIN_SetOwner( HWND hwnd, HWND owner );
 extern LONG WIN_SetStyle( HWND hwnd, LONG style );
 extern LONG WIN_SetExStyle( HWND hwnd, LONG style );
 extern void WIN_SetRectangles( HWND hwnd, const RECT *rectWindow, const RECT *rectClient );
+extern BOOL WIN_GetRectangles( HWND hwnd, RECT *rectWindow, RECT *rectClient );
 extern LRESULT WIN_DestroyWindow( HWND hwnd );
 extern void WIN_DestroyThreadWindows( HWND hwnd );
 extern BOOL WIN_CreateDesktopWindow(void);

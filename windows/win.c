@@ -569,6 +569,52 @@ void WIN_SetRectangles( HWND hwnd, const RECT *rectWindow, const RECT *rectClien
 
 
 /***********************************************************************
+ *           WIN_GetRectangles
+ *
+ * Get the window and client rectangles.
+ */
+BOOL WIN_GetRectangles( HWND hwnd, RECT *rectWindow, RECT *rectClient )
+{
+    WND *win = WIN_GetPtr( hwnd );
+    BOOL ret = TRUE;
+
+    if (!win) return FALSE;
+    if (win == WND_OTHER_PROCESS)
+    {
+        SERVER_START_REQ( get_window_rectangles )
+        {
+            req->handle = hwnd;
+            if ((ret = !wine_server_call( req )))
+            {
+                if (rectWindow)
+                {
+                    rectWindow->left   = reply->window.left;
+                    rectWindow->top    = reply->window.top;
+                    rectWindow->right  = reply->window.right;
+                    rectWindow->bottom = reply->window.bottom;
+                }
+                if (rectClient)
+                {
+                    rectClient->left   = reply->client.left;
+                    rectClient->top    = reply->client.top;
+                    rectClient->right  = reply->client.right;
+                    rectClient->bottom = reply->client.bottom;
+                }
+            }
+        }
+        SERVER_END_REQ;
+    }
+    else
+    {
+        if (rectWindow) *rectWindow = win->rectWindow;
+        if (rectClient) *rectClient = win->rectClient;
+        WIN_ReleasePtr( win );
+    }
+    return ret;
+}
+
+
+/***********************************************************************
  *           WIN_DestroyWindow
  *
  * Destroy storage associated to a window. "Internals" p.358
