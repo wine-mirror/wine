@@ -32,7 +32,9 @@
 # include <netinet/in.h>
 #endif
 #ifdef HAVE_OPENSSL_SSL_H
+#define DSA __ssl_DSA  /* avoid conflict with commctrl.h */
 # include <openssl/ssl.h>
+#undef DSA
 #endif
 
 /* used for netconnection.c stuff */
