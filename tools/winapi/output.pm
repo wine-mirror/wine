@@ -38,7 +38,7 @@ use strict;
 my $stdout_isatty = -t STDOUT;
 my $stderr_isatty = -t STDERR;
 
-sub new {
+sub new($) {
     my $proto = shift;
     my $class = ref($proto) || $proto;
     my $self  = {};
@@ -69,24 +69,24 @@ sub DESTROY {
     $self->hide_progress;
 }
 
-sub enable_progress {
+sub enable_progress($) {
     my $self = shift;
     my $progress_enabled = \${$self->{PROGRESS_ENABLED}};
 
     $$progress_enabled = 1;
 }
 
-sub disable_progress {
+sub disable_progress($) {
     my $self = shift;
     my $progress_enabled = \${$self->{PROGRESS_ENABLED}};
 
     $$progress_enabled = 0;
 }
 
-sub show_progress {
+sub show_progress($) {
     my $self = shift;
     my $progress_enabled = \${$self->{PROGRESS_ENABLED}};
-    my $progress = \${$self->{PROGRESS}};
+    my $progress = ${$self->{PROGRESS}};
     my $last_progress = \${$self->{LAST_PROGRESS}};
     my $progress_count = \${$self->{PROGRESS_COUNT}};
 
@@ -94,13 +94,18 @@ sub show_progress {
 
     if($$progress_enabled) {
 	if($$progress_count > 0 && $$progress && $stderr_isatty) {
-	    print STDERR $$progress;
-	    $$last_progress = $$progress;
+            # If progress has more than $columns characters the xterm will
+            # scroll to the next line and our ^H characters will fail to
+            # erase it.
+            my $columns=$ENV{COLUMNS} || 80;
+            $progress = substr $progress,0,($columns-1);
+	    print STDERR $progress;
+	    $$last_progress = $progress;
 	}
     }
 }
 
-sub hide_progress  {
+sub hide_progress($)  {
     my $self = shift;
     my $progress_enabled = \${$self->{PROGRESS_ENABLED}};
     my $progress = \${$self->{PROGRESS}};
@@ -111,46 +116,42 @@ sub hide_progress  {
 
     if($$progress_enabled) {
 	if($$last_progress && $stderr_isatty) {
-	    my $message;
-	    for (1..length($$last_progress)) {
-		$message .= " ";
-	    }
+	    my $message=" " x length($$last_progress);
 	    print STDERR $message;
 	    undef $$last_progress;
 	}
     }
 }
 
-sub update_progress {
+sub update_progress($) {
     my $self = shift;
     my $progress_enabled = \${$self->{PROGRESS_ENABLED}};
-    my $progress = \${$self->{PROGRESS}};
+    my $progress = ${$self->{PROGRESS}};
     my $last_progress = \${$self->{LAST_PROGRESS}};
 
     if($$progress_enabled) {
+        # If progress has more than $columns characters the xterm will
+        # scroll to the next line and our ^H characters will fail to
+        # erase it.
+        my $columns=$ENV{COLUMNS} || 80;
+        $progress = substr $progress,0,($columns-1);
+
 	my $prefix = "";
 	my $suffix = "";
 	if($$last_progress) {
-	    for (1..length($$last_progress)) {
-		$prefix .= "";
-	    }
+            $prefix = "" x length($$last_progress);
 
-	    my $diff = length($$last_progress)-length($$progress);
+	    my $diff = length($$last_progress)-length($progress);
 	    if($diff > 0) {
-		for (1..$diff) {
-		    $suffix .= " ";
-		}
-		for (1..$diff) {
-		    $suffix .= "";
-		}
+                $suffix = (" " x $diff) . ("" x $diff);
 	    }
 	}
-	print STDERR $prefix . $$progress . $suffix;
-	$$last_progress = $$progress;
+	print STDERR $prefix, $progress, $suffix;
+	$$last_progress = $progress;
     }
 }
 
-sub progress {
+sub progress($$) {
     my $self = shift;
     my $progress = \${$self->{PROGRESS}};
     my $last_time = \${$self->{LAST_TIME}};
@@ -168,7 +169,7 @@ sub progress {
     }
 }
 
-sub lazy_progress {
+sub lazy_progress($$) {
     my $self = shift;
     my $progress = \${$self->{PROGRESS}};
     my $last_time = \${$self->{LAST_TIME}};
@@ -182,7 +183,7 @@ sub lazy_progress {
     }
 }
 
-sub prefix {
+sub prefix($$) {
     my $self = shift;
     my $prefix = \${$self->{PREFIX}};
     my $prefix_callback = \${$self->{PREFIX_CALLBACK}};
@@ -198,7 +199,7 @@ sub prefix {
     }
 }
 
-sub prefix_callback {
+sub prefix_callback($) {
     my $self = shift;
 
     my $prefix = \${$self->{PREFIX}};
@@ -208,7 +209,7 @@ sub prefix_callback {
     $$prefix_callback = shift;
 }
 
-sub write {
+sub write($$) {
     my $self = shift;
 
     my $message = shift;
