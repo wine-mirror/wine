@@ -249,6 +249,7 @@ static DWORD FILE_GetNtStatus(void)
     case EINVAL:
     case ENOTEMPTY:    nt = STATUS_DIRECTORY_NOT_EMPTY;     break;
     case EPIPE:        nt = STATUS_PIPE_BROKEN;             break;
+    case EIO:          nt = STATUS_DISK_CORRUPT_ERROR;      break;
     case ENOEXEC:      /* ?? */
     case ESPIPE:       /* ?? */
     case EEXIST:       /* ?? */
