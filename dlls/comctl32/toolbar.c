@@ -4123,13 +4123,13 @@ TOOLBAR_MouseMove (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	if (nHit >= 0)
 	{
 	    btnPtr = &infoPtr->buttons[nHit];
-	    btnPtr->bHot = TRUE;
 
 	    infoPtr->nHotItem = nHit;
 
             /* only enabled buttons show hot effect */            
             if(infoPtr->buttons[nHit].fsState & TBSTATE_ENABLED)
             {
+                btnPtr->bHot = TRUE;
                 InvalidateRect(hwnd, &btnPtr->rect,
                     TOOLBAR_HasText(infoPtr, btnPtr));
             }
