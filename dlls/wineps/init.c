@@ -652,7 +652,7 @@ PRINTERINFO *PSDRV_FindPrinterInfo(LPCSTR name)
         DWORD papersize;
 
 	if(GetLocaleInfoW(LOCALE_USER_DEFAULT, LOCALE_IPAPERSIZE | LOCALE_RETURN_NUMBER,
-			  (LPWSTR)&papersize, sizeof(papersize))) {
+			  (LPWSTR)&papersize, sizeof(papersize)/sizeof(WCHAR))) {
 	    PSDRV_DEVMODEA dm;
 	    memset(&dm, 0, sizeof(dm));
 	    dm.dmPublic.dmFields = DM_PAPERSIZE;

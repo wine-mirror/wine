@@ -143,8 +143,8 @@ static const char *debugstr_lang( LANGID lang )
     char buffer[8];
     LCID lcid = MAKELCID( lang, SORT_DEFAULT );
 
-    GetLocaleInfoW(lcid, LOCALE_SISO639LANGNAME|LOCALE_NOUSEROVERRIDE, langW, sizeof(langW));
-    GetLocaleInfoW(lcid, LOCALE_SISO3166CTRYNAME|LOCALE_NOUSEROVERRIDE, countryW, sizeof(countryW));
+    GetLocaleInfoW(lcid, LOCALE_SISO639LANGNAME|LOCALE_NOUSEROVERRIDE, langW, sizeof(langW)/sizeof(WCHAR));
+    GetLocaleInfoW(lcid, LOCALE_SISO3166CTRYNAME|LOCALE_NOUSEROVERRIDE, countryW, sizeof(countryW)/sizeof(WCHAR));
     strcpyWtoA( buffer, langW );
     strcat( buffer, "_" );
     strcpyWtoA( buffer + strlen(buffer), countryW );
@@ -322,9 +322,9 @@ static BOOL CALLBACK find_language_id_proc( HMODULE hModule, LPCWSTR type,
     buf_country[0] = 0;
 
     GetLocaleInfoW(lcid, LOCALE_SISO639LANGNAME|LOCALE_NOUSEROVERRIDE,
-                   buf_language, sizeof(buf_language));
+                   buf_language, sizeof(buf_language)/sizeof(WCHAR));
     GetLocaleInfoW(lcid, LOCALE_SISO3166CTRYNAME|LOCALE_NOUSEROVERRIDE,
-                   buf_country, sizeof(buf_country));
+                   buf_country, sizeof(buf_country)/sizeof(WCHAR));
 
     if(l_data->lang[0] && !strcmpiW(l_data->lang, buf_language))
     {
@@ -347,7 +347,7 @@ static BOOL CALLBACK find_language_id_proc( HMODULE hModule, LPCWSTR type,
      */
     buf_en_language[0] = 0;
     GetLocaleInfoW(lcid, LOCALE_SENGLANGUAGE|LOCALE_NOUSEROVERRIDE,
-                   buf_en_language, sizeof(buf_en_language));
+                   buf_en_language, sizeof(buf_en_language)/sizeof(WCHAR));
 
     if(l_data->lang[0] && !strcmpiW(l_data->lang, buf_en_language)) goto found;
     return TRUE;  /* not found, continue search */
@@ -438,7 +438,7 @@ static LANGID get_language_id(LPCSTR Lang, LPCSTR Country, LPCSTR Charset, LPCST
             WCHAR buffW[128];
             char buffA[128];
             GetLocaleInfoW( MAKELCID( l_data.found_lang_id[i], SORT_DEFAULT ),
-                           LOCALE_SLANGUAGE|LOCALE_NOUSEROVERRIDE, buffW, sizeof(buffW));
+                           LOCALE_SLANGUAGE|LOCALE_NOUSEROVERRIDE, buffW, sizeof(buffW)/sizeof(WCHAR));
             strcpyWtoA( buffA, buffW );
             MESSAGE( "   %s (%04X) - %s\n", debugstr_lang(l_data.found_lang_id[i]),
                      l_data.found_lang_id[i], buffA );

@@ -1428,7 +1428,7 @@ HRESULT WINAPI VarUdateFromDate(DATE dateIn, ULONG dwFlags, UDATE *lpUdate)
 
 #define GET_NUMBER_TEXT(fld,name) \
   buff[0] = 0; \
-  if (!GetLocaleInfoW(lcid, lctype|fld, buff, sizeof(WCHAR) * 2)) \
+  if (!GetLocaleInfoW(lcid, lctype|fld, buff, 2)) \
     WARN("buffer too small for " #fld "\n"); \
   else \
     if (buff[0]) lpChars->name = buff[0]; \
@@ -1451,7 +1451,7 @@ void VARIANT_GetLocalisedNumberChars(VARIANT_NUMBER_CHARS *lpChars, LCID lcid, D
 
   /* Local currency symbols are often 2 characters */
   lpChars->cCurrencyLocal2 = '\0';
-  switch(GetLocaleInfoW(lcid, lctype|LOCALE_SCURRENCY, buff, sizeof(WCHAR) * 4))
+  switch(GetLocaleInfoW(lcid, lctype|LOCALE_SCURRENCY, buff, sizeof(buff)/sizeof(WCHAR)))
   {
     case 3: lpChars->cCurrencyLocal2 = buff[1]; /* Fall through */
     case 2: lpChars->cCurrencyLocal  = buff[0];
