@@ -175,12 +175,18 @@ DWORD	WINAPI SHGetFileInfoW(LPCWSTR,DWORD,SHFILEINFOW*,UINT,UINT);
 #define FOF_NOCONFIRMMKDIR         0x0200
 #define FOF_NOERRORUI              0x0400
 #define FOF_NOCOPYSECURITYATTRIBS  0x0800
+#define FOF_NORECURSION            0x1000  /* don't do recursion into directories */
+#define FOF_NO_CONNECTED_ELEMENTS  0x2000  /* don't do connected files */
+#define FOF_WANTNUKEWARNING        0x4000  /* during delete operation, warn if delete instead
+                                              of recycling (even if FOF_NOCONFIRMATION) */
+#define FOF_NORECURSEREPARSE       0x8000  /* don't do recursion into reparse points */
 
 typedef WORD FILEOP_FLAGS;
 
 #define PO_DELETE       0x0013
 #define PO_RENAME       0x0014
 #define PO_PORTCHANGE   0x0020
+#define PO_REN_PORT     (PO_RENAME | PO_PORTCHANGE)
 
 typedef WORD PRINTEROP_FLAGS;
 
@@ -212,6 +218,25 @@ typedef struct _SHFILEOPSTRUCTW
 int	WINAPI SHFileOperationA (LPSHFILEOPSTRUCTA lpFileOp);
 int	WINAPI SHFileOperationW (LPSHFILEOPSTRUCTW lpFileOp);
 #define  SHFileOperation WINELIB_NAME_AW(SHFileOperation)
+
+typedef struct _SHNAMEMAPPINGA
+{
+  LPSTR    pszOldPath;
+  LPSTR    pszNewPath;
+  int      cchOldPath;
+  int      cchNewPath;
+} SHNAMEMAPPINGA, *LPSHNAMEMAPPINGA;
+
+typedef struct _SHNAMEMAPPINGW
+{
+  LPWSTR   pszOldPath;
+  LPWSTR   pszNewPath;
+  int      cchOldPath;
+  int      cchNewPath;
+} SHNAMEMAPPINGW, *LPSHNAMEMAPPINGW;
+
+DECL_WINELIB_TYPE_AW(SHNAMEMAPPING)
+DECL_WINELIB_TYPE_AW(LPSHNAMEMAPPING)
 
 /******************************************
  * ShellExecute
