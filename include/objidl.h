@@ -6325,7 +6325,7 @@ DEFINE_GUID(IID_IMessageFilter, 0x00000016, 0x0000, 0x0000, 0xc0,0x00, 0x00,0x00
 #if defined(__cplusplus) && !defined(CINTERFACE)
 struct IMessageFilter : public IUnknown
 {
-    virtual DWORD STDMETHODCALLTYPE HandleInComingCall(
+    virtual DWORD STDMETHODCALLTYPE HandleIncomingCall(
         DWORD dwCallType,
         HTASK htaskCaller,
         DWORD dwTickCount,
@@ -6363,7 +6363,7 @@ struct IMessageFilterVtbl {
         IMessageFilter* This);
 
     /*** IMessageFilter methods ***/
-    DWORD (STDMETHODCALLTYPE *HandleInComingCall)(
+    DWORD (STDMETHODCALLTYPE *HandleIncomingCall)(
         IMessageFilter* This,
         DWORD dwCallType,
         HTASK htaskCaller,
@@ -6389,7 +6389,7 @@ struct IMessageFilterVtbl {
 #define IMessageFilter_AddRef(p) (p)->lpVtbl->AddRef(p)
 #define IMessageFilter_Release(p) (p)->lpVtbl->Release(p)
 /*** IMessageFilter methods ***/
-#define IMessageFilter_HandleInComingCall(p,a,b,c,d) (p)->lpVtbl->HandleInComingCall(p,a,b,c,d)
+#define IMessageFilter_HandleIncomingCall(p,a,b,c,d) (p)->lpVtbl->HandleIncomingCall(p,a,b,c,d)
 #define IMessageFilter_RetryRejectedCall(p,a,b,c) (p)->lpVtbl->RetryRejectedCall(p,a,b,c)
 #define IMessageFilter_MessagePending(p,a,b,c) (p)->lpVtbl->MessagePending(p,a,b,c)
 
@@ -6402,17 +6402,17 @@ struct IMessageFilterVtbl {
     STDMETHOD_(ULONG,AddRef)(THIS) PURE; \
     STDMETHOD_(ULONG,Release)(THIS) PURE; \
     /*** IMessageFilter methods ***/ \
-    STDMETHOD_(DWORD,HandleInComingCall)(THIS_ DWORD dwCallType, HTASK htaskCaller, DWORD dwTickCount, LPINTERFACEINFO lpInterfaceInfo) PURE; \
+    STDMETHOD_(DWORD,HandleIncomingCall)(THIS_ DWORD dwCallType, HTASK htaskCaller, DWORD dwTickCount, LPINTERFACEINFO lpInterfaceInfo) PURE; \
     STDMETHOD_(DWORD,RetryRejectedCall)(THIS_ HTASK htaskCallee, DWORD dwTickCount, DWORD dwRejectType) PURE; \
     STDMETHOD_(DWORD,MessagePending)(THIS_ HTASK htaskCallee, DWORD dwTickCount, DWORD dwPendingType) PURE;
 
-DWORD CALLBACK IMessageFilter_HandleInComingCall_Proxy(
+DWORD CALLBACK IMessageFilter_HandleIncomingCall_Proxy(
     IMessageFilter* This,
     DWORD dwCallType,
     HTASK htaskCaller,
     DWORD dwTickCount,
     LPINTERFACEINFO lpInterfaceInfo);
-void __RPC_STUB IMessageFilter_HandleInComingCall_Stub(
+void __RPC_STUB IMessageFilter_HandleIncomingCall_Stub(
     struct IRpcStubBuffer* This,
     struct IRpcChannelBuffer* pRpcChannelBuffer,
     PRPC_MESSAGE pRpcMessage,
