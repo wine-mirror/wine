@@ -1214,8 +1214,7 @@ void WINAPI DOS3Call( CONTEXT *context )
         break;
 
     case 0x31: /* TERMINATE AND STAY RESIDENT */
-        TRACE(int21,"TERMINATE AND STAY RESIDENT stub\n");
-        INT_BARF( context, 0x21 );
+        FIXME(int21,"TERMINATE AND STAY RESIDENT stub\n");
         break;
 
     case 0x32: /* GET DOS DRIVE PARAMETER BLOCK FOR SPECIFIC DRIVE */
