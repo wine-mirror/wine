@@ -111,10 +111,10 @@ DWORD WINAPI UnhandledExceptionFilter(PEXCEPTION_POINTERS epointers)
        RegCloseKey(hDbgConf);
     } else {
        /* format[0] = 0; */
-       strcpy(format, "winedbg %ld %ld");
+       strcpy(format, "debugger/winedbg %ld %ld");
     }
 
-    if (!bAuto) {
+    if (!bAuto && Callout.MessageBoxA) {
        sprintf( buffer, "Unhandled exception 0x%08lx at address 0x%08lx.\n"
 	                "Do you wish to debug it ?",
 		epointers->ExceptionRecord->ExceptionCode,
