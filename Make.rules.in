@@ -149,8 +149,7 @@ DLLS = \
 
 # Implicit rules
 
-.SUFFIXES:
-.SUFFIXES: .rc .res .spec .spec.c .spec.o .glue.c $(SUFFIXES)
+.SUFFIXES: .rc .res .spec .spec.c .spec.o .glue.c
 
 .c.o:
 	$(CC) -c $(ALLCFLAGS) -o $*.o $<
