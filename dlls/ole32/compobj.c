@@ -543,6 +543,8 @@ HRESULT WINAPI CoInitializeEx(
     COM_ApartmentRelease(apt);
     return RPC_E_CHANGED_MODE;
   }
+  else
+    hr = S_FALSE;
 
   COM_CurrentInfo()->inits++;
 
