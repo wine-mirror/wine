@@ -29,9 +29,9 @@
 #include "winerror.h"
 #include "winnls.h"
 #include "wine/unicode.h"
-#include "file.h"  /* for FILETIME routines */
 #include "wine/server.h"
 #include "wine/debug.h"
+#include "ntdll_misc.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(timer);
 
@@ -130,34 +130,21 @@ BOOL WINAPI SetWaitableTimer( HANDLE handle, const LARGE_INTEGER *when, LONG per
                               PTIMERAPCROUTINE callback, LPVOID arg, BOOL resume )
 {
     BOOL ret;
-    LARGE_INTEGER exp = *when;
+    struct timeval tv;
 
-    if (exp.s.HighPart < 0)  /* relative time */
+    if (!when->s.LowPart && !when->s.HighPart)
     {
-        LARGE_INTEGER now;
-        NtQuerySystemTime( &now );
-        exp.QuadPart = RtlLargeIntegerSubtract( now.QuadPart, exp.QuadPart );
+        /* special case to start timeout on now+period without too many calculations */
+        tv.tv_sec  = 0;
+        tv.tv_usec = 0;
     }
+    else NTDLL_get_server_timeout( &tv, when );
 
     SERVER_START_REQ( set_timer )
     {
-        if (!exp.s.LowPart && !exp.s.HighPart)
-        {
-            /* special case to start timeout on now+period without too many calculations */
-            req->sec  = 0;
-            req->usec = 0;
-        }
-        else
-        {
-            DWORD remainder;
-            FILETIME ft;
-
-            ft.dwLowDateTime	= exp.s.LowPart;
-            ft.dwHighDateTime	= exp.s.HighPart;
-            req->sec  = DOSFS_FileTimeToUnixTime( &ft, &remainder );
-            req->usec = remainder / 10;  /* convert from 100-ns to us units */
-        }
         req->handle   = handle;
+        req->sec      = tv.tv_sec;
+        req->usec     = tv.tv_usec;
         req->period   = period;
         req->callback = callback;
         req->arg      = arg;

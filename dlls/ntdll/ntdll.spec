@@ -249,7 +249,7 @@
 @ stdcall NtUnmapViewOfSection(long ptr)
 @ stub NtVdmControl
 @ stub NtW32Call
-@ stub NtWaitForMultipleObjects
+@ stdcall NtWaitForMultipleObjects(long ptr long long ptr)
 @ stub NtWaitForProcessMutant
 @ stdcall NtWaitForSingleObject(long long long)
 @ stub NtWaitHighEventPair
@@ -773,7 +773,7 @@
 @ stdcall ZwUnmapViewOfSection(long ptr) NtUnmapViewOfSection
 @ stub ZwVdmControl
 @ stub ZwW32Call
-@ stub ZwWaitForMultipleObjects
+@ stdcall ZwWaitForMultipleObjects(long ptr long long ptr) NtWaitForMultipleObjects
 @ stub ZwWaitForProcessMutant
 @ stdcall ZwWaitForSingleObject(long long long) NtWaitForSingleObject
 @ stub ZwWaitHighEventPair

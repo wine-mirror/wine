@@ -269,9 +269,11 @@ static const struct tagTZ_INFO TZ_INFO[] =
 #define MONSPERYEAR        12
 
 /* 1601 to 1970 is 369 years plus 89 leap days */
-#define SECS_1601_TO_1970  ((369 * 365 + 89) * (ULONGLONG)86400)
+#define SECS_1601_TO_1970  ((369 * 365 + 89) * (ULONGLONG)SECSPERDAY)
+#define TICKS_1601_TO_1970 (SECS_1601_TO_1970 * TICKSPERSEC)
 /* 1601 to 1980 is 379 years plus 91 leap days */
-#define SECS_1601_to_1980  ((379 * 365 + 91) * (ULONGLONG)86400)
+#define SECS_1601_TO_1980  ((379 * 365 + 91) * (ULONGLONG)SECSPERDAY)
+#define TICKS_1601_TO_1980 (SECS_1601_TO_1980 * TICKSPERSEC)
 
 
 static const int YearLengths[2] = {DAYSPERNORMALYEAR, DAYSPERLEAPYEAR};
@@ -291,6 +293,39 @@ static inline void NormalizeTimeFields(CSHORT *FieldToNormalize, CSHORT *CarryFi
 	*FieldToNormalize = (CSHORT) (*FieldToNormalize - Modulus);
 	*CarryField = (CSHORT) (*CarryField + 1);
 }
+
+/***********************************************************************
+ *              NTDLL_get_server_timeout
+ *
+ * Convert a NTDLL timeout into a timeval struct to send to the server.
+ */
+void NTDLL_get_server_timeout( struct timeval *when, const LARGE_INTEGER *timeout )
+{
+    UINT remainder;
+
+    if (!timeout)  /* infinite timeout */
+    {
+        when->tv_sec = when->tv_usec = 0;
+    }
+    else if (timeout->QuadPart <= 0)  /* relative timeout */
+    {
+        ULONG sec = RtlEnlargedUnsignedDivide( -timeout->QuadPart, TICKSPERSEC, &remainder );
+        gettimeofday( when, 0 );
+        if ((when->tv_usec += remainder / 10) >= 1000000)
+        {
+            when->tv_usec -= 1000000;
+            when->tv_sec++;
+        }
+        when->tv_sec += sec;
+    }
+    else  /* absolute time */
+    {
+        when->tv_sec = RtlEnlargedUnsignedDivide( timeout->QuadPart - TICKS_1601_TO_1970,
+                                                  TICKSPERSEC, &remainder );
+        when->tv_usec = remainder / 10;
+    }
+}
+
 
 /******************************************************************************
  *       RtlTimeToTimeFields [NTDLL.@]
@@ -501,7 +536,7 @@ BOOLEAN WINAPI RtlTimeToSecondsSince1980( const LARGE_INTEGER *time, LPDWORD res
 {
     ULONGLONG tmp = ((ULONGLONG)time->s.HighPart << 32) | time->s.LowPart;
     tmp = RtlLargeIntegerDivide( tmp, 10000000, NULL );
-    tmp -= SECS_1601_to_1980;
+    tmp -= SECS_1601_TO_1980;
     if (tmp > 0xffffffff) return FALSE;
     *res = (DWORD)tmp;
     return TRUE;
@@ -521,7 +556,7 @@ BOOLEAN WINAPI RtlTimeToSecondsSince1980( const LARGE_INTEGER *time, LPDWORD res
  */
 void WINAPI RtlSecondsSince1970ToTime( DWORD time, LARGE_INTEGER *res )
 {
-    ULONGLONG secs = RtlExtendedIntegerMultiply( time + SECS_1601_TO_1970, 10000000 );
+    ULONGLONG secs = time * (ULONGLONG)TICKSPERSEC + TICKS_1601_TO_1970;
     res->s.LowPart  = (DWORD)secs;
     res->s.HighPart = (DWORD)(secs >> 32);
 }
@@ -540,7 +575,7 @@ void WINAPI RtlSecondsSince1970ToTime( DWORD time, LARGE_INTEGER *res )
  */
 void WINAPI RtlSecondsSince1980ToTime( DWORD time, LARGE_INTEGER *res )
 {
-    ULONGLONG secs = RtlExtendedIntegerMultiply( time + SECS_1601_to_1980, 10000000 );
+    ULONGLONG secs = time * (ULONGLONG)TICKSPERSEC + TICKS_1601_TO_1980;
     res->s.LowPart  = (DWORD)secs;
     res->s.HighPart = (DWORD)(secs >> 32);
 }
@@ -588,7 +623,8 @@ NTSTATUS WINAPI NtQuerySystemTime( PLARGE_INTEGER time )
     struct timeval now;
 
     gettimeofday( &now, 0 );
-    time->QuadPart = RtlExtendedIntegerMultiply( now.tv_sec+SECS_1601_TO_1970, 10000000 ) + now.tv_usec * 10;
+    time->QuadPart = now.tv_sec * (ULONGLONG)TICKSPERSEC + TICKS_1601_TO_1970;
+    time->QuadPart += now.tv_usec * 10;
     return STATUS_SUCCESS;
 }
 

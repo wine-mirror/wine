@@ -268,19 +268,6 @@ NTSTATUS WINAPI NtClose( HANDLE Handle )
     return ret;
 }
 
-/******************************************************************************
- *  NtWaitForSingleObject		[NTDLL.@]
- *  ZwWaitForSingleObject		[NTDLL.@]
- */
-NTSTATUS WINAPI NtWaitForSingleObject(
-	IN HANDLE Object,
-	IN BOOLEAN Alertable,
-	IN PLARGE_INTEGER Time)
-{
-	FIXME("(%p,0x%08x,%p),stub!\n",Object,Alertable,Time);
-	return 0;
-}
-
 /*
  *	Directory functions
  */

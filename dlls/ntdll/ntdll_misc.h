@@ -28,6 +28,8 @@
 extern LPCSTR debugstr_us( const UNICODE_STRING *str );
 extern void dump_ObjectAttributes (const OBJECT_ATTRIBUTES *ObjectAttributes);
 
+extern void NTDLL_get_server_timeout( struct timeval *when, const LARGE_INTEGER *timeout );
+
 /* module handling */
 extern FARPROC MODULE_GetProcAddress( HMODULE hModule, LPCSTR function, int hint, BOOL snoop );
 extern WINE_MODREF *MODULE_AllocModRef( HMODULE hModule, LPCSTR filename );

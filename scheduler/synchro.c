@@ -20,163 +20,9 @@
 
 #include "config.h"
 
-#include <assert.h>
-#include <errno.h>
-#include <signal.h>
-#ifdef HAVE_SYS_TIME_H
-# include <sys/time.h>
-#endif
-#ifdef HAVE_SYS_POLL_H
-# include <sys/poll.h>
-#endif
-#ifdef HAVE_UNISTD_H
-# include <unistd.h>
-#endif
-#include <string.h>
+#include "winbase.h"
+#include "winternl.h"
 
-#include "file.h"  /* for DOSFS_UnixTimeToFileTime */
-#include "thread.h"
-#include "winerror.h"
-#include "wine/server.h"
-#include "async.h"
-
-
-/***********************************************************************
- *              get_timeout
- */
-inline static void get_timeout( struct timeval *when, int timeout )
-{
-    gettimeofday( when, 0 );
-    if (timeout)
-    {
-        long sec = timeout / 1000;
-        if ((when->tv_usec += (timeout - 1000*sec) * 1000) >= 1000000)
-        {
-            when->tv_usec -= 1000000;
-            when->tv_sec++;
-        }
-        when->tv_sec += sec;
-    }
-}
-
-/***********************************************************************
- *           check_async_list
- *
- * Process a status event from the server.
- */
-static void WINAPI check_async_list(async_private *asp, DWORD status)
-{
-    async_private *ovp;
-    DWORD ovp_status;
-
-    for( ovp = NtCurrentTeb()->pending_list; ovp && ovp != asp; ovp = ovp->next );
-
-    if(!ovp)
-            return;
-
-    if( status != STATUS_ALERTED )
-    {
-        ovp_status = status;
-        ovp->ops->set_status (ovp, status);
-    }
-    else ovp_status = ovp->ops->get_status (ovp);
-
-    if( ovp_status == STATUS_PENDING ) ovp->func( ovp );
-
-    /* This will destroy all but PENDING requests */
-    register_old_async( ovp );
-}
-
-
-/***********************************************************************
- *              wait_reply
- *
- * Wait for a reply on the waiting pipe of the current thread.
- */
-static int wait_reply( void *cookie )
-{
-    int signaled;
-    struct wake_up_reply reply;
-    for (;;)
-    {
-        int ret;
-        ret = read( NtCurrentTeb()->wait_fd[0], &reply, sizeof(reply) );
-        if (ret == sizeof(reply))
-        {
-            if (!reply.cookie) break;  /* thread got killed */
-            if (reply.cookie == cookie) return reply.signaled;
-            /* we stole another reply, wait for the real one */
-            signaled = wait_reply( cookie );
-            /* and now put the wrong one back in the pipe */
-            for (;;)
-            {
-                ret = write( NtCurrentTeb()->wait_fd[1], &reply, sizeof(reply) );
-                if (ret == sizeof(reply)) break;
-                if (ret >= 0) server_protocol_error( "partial wakeup write %d\n", ret );
-                if (errno == EINTR) continue;
-                server_protocol_perror("wakeup write");
-            }
-            return signaled;
-        }
-        if (ret >= 0) server_protocol_error( "partial wakeup read %d\n", ret );
-        if (errno == EINTR) continue;
-        server_protocol_perror("wakeup read");
-    }
-    /* the server closed the connection; time to die... */
-    SYSDEPS_AbortThread(0);
-}
-
-
-/***********************************************************************
- *              call_apcs
- *
- * Call outstanding APCs.
- */
-static void call_apcs( BOOL alertable )
-{
-    FARPROC proc = NULL;
-    FILETIME ft;
-    void *args[4];
-
-    for (;;)
-    {
-        int type = APC_NONE;
-        SERVER_START_REQ( get_apc )
-        {
-            req->alertable = alertable;
-            wine_server_set_reply( req, args, sizeof(args) );
-            if (!wine_server_call( req ))
-            {
-                type = reply->type;
-                proc = reply->func;
-            }
-        }
-        SERVER_END_REQ;
-
-        switch(type)
-        {
-        case APC_NONE:
-            return;  /* no more APCs */
-        case APC_ASYNC:
-            proc( args[0], args[1]);
-            break;
-        case APC_USER:
-            proc( args[0] );
-            break;
-        case APC_TIMER:
-            /* convert sec/usec to NT time */
-            DOSFS_UnixTimeToFileTime( (time_t)args[0], &ft, (DWORD)args[1] * 10 );
-            proc( args[2], ft.dwLowDateTime, ft.dwHighDateTime );
-            break;
-        case APC_ASYNC_IO:
-            check_async_list ( args[0], (DWORD) args[1]);
-            break;
-        default:
-            server_protocol_error( "get_apc_request: bad type %d\n", type );
-            break;
-        }
-    }
-}
 
 /***********************************************************************
  *              Sleep  (KERNEL32.@)
@@ -233,46 +79,27 @@ DWORD WINAPI WaitForMultipleObjectsEx( DWORD count, const HANDLE *handles,
                                        BOOL wait_all, DWORD timeout,
                                        BOOL alertable )
 {
-    int ret, cookie;
-    struct timeval tv;
+    NTSTATUS status;
 
-    if (count > MAXIMUM_WAIT_OBJECTS)
+    if (timeout == INFINITE)
     {
-        SetLastError( ERROR_INVALID_PARAMETER );
-        return WAIT_FAILED;
+        status = NtWaitForMultipleObjects( count, handles, wait_all, alertable, NULL );
+    }
+    else
+    {
+        LARGE_INTEGER time;
+
+        time.QuadPart = timeout * (ULONGLONG)10000;
+        time.QuadPart = -time.QuadPart;
+        status = NtWaitForMultipleObjects( count, handles, wait_all, alertable, &time );
     }
 
-    if (timeout == INFINITE) tv.tv_sec = tv.tv_usec = 0;
-    else get_timeout( &tv, timeout );
-
-    for (;;)
+    if (HIWORD(status))  /* is it an error code? */
     {
-        SERVER_START_REQ( select )
-        {
-            req->flags   = SELECT_INTERRUPTIBLE;
-            req->cookie  = &cookie;
-            req->sec     = tv.tv_sec;
-            req->usec    = tv.tv_usec;
-            wine_server_add_data( req, handles, count * sizeof(HANDLE) );
-
-            if (wait_all) req->flags |= SELECT_ALL;
-            if (alertable) req->flags |= SELECT_ALERTABLE;
-            if (timeout != INFINITE) req->flags |= SELECT_TIMEOUT;
-
-            ret = wine_server_call( req );
-        }
-        SERVER_END_REQ;
-        if (ret == STATUS_PENDING) ret = wait_reply( &cookie );
-        if (ret != STATUS_USER_APC) break;
-        call_apcs( alertable );
-        if (alertable) break;
+        SetLastError( RtlNtStatusToDosError(status) );
+        status = WAIT_FAILED;
     }
-    if (HIWORD(ret))  /* is it an error code? */
-    {
-        SetLastError( RtlNtStatusToDosError(ret) );
-        ret = WAIT_FAILED;
-    }
-    return ret;
+    return status;
 }
 
 
