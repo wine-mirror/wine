@@ -89,6 +89,11 @@ struct	WIN_servent {
 	SEGPTR	s_proto WINE_PACKED;		/* protocol to use */
 };
 
+typedef struct WinSock_fd_set {
+	u_short fd_count;               /* how many are SET? */
+	SOCKET  fd_array[FD_SETSIZE];   /* an array of SOCKETs */
+} WinSock_fd_set;
+                
 struct WinSockHeap {
 	char	ntoa_buffer[32];
 
@@ -686,17 +691,124 @@ INT WINSOCK_recvfrom(SOCKET s, char *buf, INT len, INT flags,
 	return length;
 }
 
-INT WINSOCK_select(INT nfds, fd_set *readfds, fd_set *writefds,
-	fd_set *exceptfds, struct timeval *timeout)
+INT WINSOCK_select(INT nfds, WinSock_fd_set *ws_readfds,
+	WinSock_fd_set *ws_writefds, WinSock_fd_set *ws_exceptfds,
+	struct timeval *timeout)
 {
-	dprintf_winsock(stddeb, "WSA_select: fd # %d, ptr %8lx, ptr %8lx, ptr %8lX\n", nfds, (unsigned long) readfds, (unsigned long) writefds, (unsigned long) exceptfds);
+	int ret;
+	int i;
+	int count;
+	int highfd;
+	fd_set readfds,writefds,exceptfds;
+	FD_ZERO(&readfds);
+	FD_ZERO(&writefds);
+	FD_ZERO(&exceptfds);
+	
+	dprintf_winsock(stddeb, "WSA_select called: nfds %d (ignored), ptr %8lx, ptr %8lx, ptr %8lx\n", nfds, (unsigned long) ws_readfds, (unsigned long) ws_writefds, (unsigned long) ws_exceptfds);
 
 	if (!wsa_initted) { 
 		WSASetLastError(WSANOTINITIALISED);
+		dprintf_winsock(stddeb, "WSA_select: returning error WSANOTINITIALISED\n");
 		return SOCKET_ERROR;
 	}
-/* FIXME */
-	return(select(nfds, readfds, writefds, exceptfds, timeout));
+	
+/* In some sort of attempt to be BSD-compatible, MS-Winsock accepts and
+   discards the nfds parameter.  However, the format of windoze's fd_sets
+   is totally different from the BSD standard.  So much for compatibility.
+   Hence, we must convert the winsock array-of-ints fd_set to the UNIX
+   bitmapped format. */
+
+	if(ws_readfds!=NULL) {
+		dprintf_winsock(stddeb, "readfds: (%d) ",ws_readfds->fd_count);
+		for(i=0;i<(ws_readfds->fd_count);i++) {
+			dprintf_winsock(stddeb, " %d",( (SOCKET *)&(((char *)ws_readfds)[2]) )[i]);
+			/*FD_SET(((SOCKET *)&(((char *)ws_readfds)[2]))[i], &readfds);*/
+			FD_SET(ws_readfds->fd_array[i], &readfds);
+		}
+		dprintf_winsock(stddeb, "\n");
+	} else {
+		dprintf_winsock(stddeb, "readfds: (null)\n");
+	}
+	if(ws_writefds!=NULL) {
+		dprintf_winsock(stddeb, "writefds: (%d) ",ws_writefds->fd_count);
+		for(i=0;i<(ws_writefds->fd_count);i++) {
+			dprintf_winsock(stddeb, " %d",( (SOCKET *)&(((char *)ws_writefds)[2]) )[i]);
+			/*FD_SET(((SOCKET *)&(((char *)ws_writefds)[2]))[i], &writefds);*/
+			FD_SET(ws_writefds->fd_array[i], &writefds);
+		}
+		dprintf_winsock(stddeb, "\n");
+	} else {
+		dprintf_winsock(stddeb, "writefds: (null)\n");
+	}
+	if(ws_exceptfds!=NULL) {
+		dprintf_winsock(stddeb, "exceptfds: (%d) ",ws_exceptfds->fd_count);
+		for(i=0;i<(ws_exceptfds->fd_count);i++) {
+			dprintf_winsock(stddeb, " %d",( (SOCKET *)&(((char *)ws_exceptfds)[2]) )[i]);
+			/*FD_SET(((SOCKET *)&(((char *)ws_exceptfds)[2]))[i], &exceptfds);*/
+			FD_SET(ws_exceptfds->fd_array[i], &exceptfds);
+		}
+		dprintf_winsock(stddeb, "\n");
+	} else {
+		dprintf_winsock(stddeb, "exceptfds: (null)\n");
+	}
+	
+	/* Make the select() call */
+	dprintf_winsock(stddeb, "WSA_select: calling select()\n");
+	highfd=256; /* We should count them, but this works */
+	ret=select(highfd, &readfds, &writefds, &exceptfds, timeout);
+	dprintf_winsock(stddeb, "WSA_select: select() returned %d\n",ret);
+	if(ret<0) {
+		errno_to_wsaerrno();
+		dprintf_winsock(stddeb, "WSA_select returning: Error %d\n",SOCKET_ERROR);
+		return SOCKET_ERROR;
+	}
+	
+	/* update the winsock fd sets */
+	if(ws_readfds!=NULL) {
+		dprintf_winsock(stddeb, "readfds: ");
+		count=0;
+		for(i=0;i<highfd;i++) {
+			if(FD_ISSET(i,&readfds)) {
+				dprintf_winsock(stddeb, " %d",i);
+				ws_readfds->fd_array[count++]=i;
+			}
+		}
+		dprintf_winsock(stddeb, "  (%d)\n",count);
+		ws_readfds->fd_count=count;
+	} else {
+		dprintf_winsock(stddeb, "readfds: (null)\n");
+	}
+	if(ws_writefds!=NULL) {
+		dprintf_winsock(stddeb, "writefds: ");
+		count=0;
+		for(i=0;i<highfd;i++) {
+			if(FD_ISSET(i,&writefds)) {
+				dprintf_winsock(stddeb, " %d",i);
+				ws_writefds->fd_array[count++]=i;
+			}
+		}
+		dprintf_winsock(stddeb, "  (%d)\n",count);
+		ws_writefds->fd_count=count;
+	} else {
+		dprintf_winsock(stddeb, "writefds: (null)\n");
+	}
+	if(ws_exceptfds!=NULL) {
+		dprintf_winsock(stddeb, "exceptfds: ");
+		count=0;
+		for(i=0;i<highfd;i++) {
+			if(FD_ISSET(i,&exceptfds)) {
+				dprintf_winsock(stddeb, " %d",i);
+				ws_exceptfds->fd_array[count++]=i;
+			}
+		}
+		dprintf_winsock(stddeb, "  (%d)\n",count);
+		ws_exceptfds->fd_count=count;
+	} else {
+		dprintf_winsock(stddeb, "exceptfds: (null)\n");
+	}
+	
+	dprintf_winsock(stddeb, "WSA_select returning: %d\n",ret);
+	return(ret);	
 }
 
 INT WINSOCK_send(SOCKET s, char *buf, INT len, INT flags)
@@ -1363,10 +1475,23 @@ INT WSAAsyncSelect(SOCKET s, HWND hWnd, u_int wMsg, long lEvent)
     }
 }
 
-INT WSAFDIsSet(INT fd, fd_set *set)
+INT WSAFDIsSet(SOCKET fd, WinSock_fd_set *set)
 {
-	return( FD_ISSET(fd, set) );
-}
+  int i = set->fd_count;
+  
+  dprintf_winsock(stddeb, "__WSAFDIsSet(%d,%8lx)\n",fd,(unsigned long)set);
+    
+  while (i--)
+    {
+      if (set->fd_array[i] == fd)
+        {
+          dprintf_winsock(stddeb, "__WSAFDIsSet returning 1\n");
+          return 1;
+        }
+    }
+  dprintf_winsock(stddeb, "__WSAFDIsSet returning 0\n");
+  return 0;
+}                                                            
 
 INT WSACancelAsyncRequest(HANDLE hAsyncTaskHandle)
 {

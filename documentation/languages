@@ -18,8 +18,9 @@ you must...
 2.  Edit ./wine.man (search for -language) to show the new language
     abbreviation.
 
-3.  Edit misc/main.c variable "langNames" to contain the new language
-    abbreviation.  Also edit macro "USAGE" to show the new abbreviation.
+3.  Edit misc/main.c variable "Languages" to contain the new language
+    abbreviation and language ID.  Also edit macro "USAGE" to show the
+    new abbreviation.
 
 4.  Edit include/options.h enum "WINE_LANGUAGE" to have a member called
     LANG_XX where XX is the new abbreviation.

@@ -4,6 +4,7 @@
  * Copyright 1996 John Harvey
  */
 
+#include <stdio.h>
 #include "windows.h"
 #include "win16drv.h"
 #include "gdi.h"

@@ -120,7 +120,7 @@ HANDLE CreateMetaFile(LPCSTR lpFilename)
     {
 	mh->mtType = 1;     /* disk */
 	hFile = _lcreat(lpFilename, 0);
-	if (_lwrite(hFile, (char *)mh, MFHEADERSIZE) == -1)
+	if (_lwrite32(hFile, (char *)mh, MFHEADERSIZE) == -1)
 	{
 	    GlobalFree16(dc->w.hMetaFile);
 	    return 0;
@@ -165,7 +165,7 @@ HMETAFILE16 CopyMetaFile(HMETAFILE16 hSrcMetaFile, LPCSTR lpFilename)
 	hFile = _lcreat(lpFilename, 0);
 	j=mh->mtType;
 	mh->mtType=1;        /* disk file version stores 1 here */
-	i=_lwrite(hFile, (char *)mh, mh->mtSize * 2) ;
+	i=_lwrite32(hFile, (char *)mh, mh->mtSize * 2) ;
 	mh->mtType=j;        /* restore old value  [0 or 1] */	
         _lclose(hFile);
 	if (i == -1)
@@ -241,7 +241,7 @@ HMETAFILE16 CloseMetaFile(HDC hdc)
             GlobalFree16(dc->w.hMetaFile);
             return 0;
         }
-        if (_lwrite(hFile, (char *)mh, MFHEADERSIZE) == -1)
+        if (_lwrite32(hFile, (char *)mh, MFHEADERSIZE) == -1)
         {
             GlobalFree16(dc->w.hMetaFile);
             return 0;
@@ -806,7 +806,7 @@ HMETAFILE16 MF_WriteRecord(HMETAFILE16 hmf, METARECORD *mr, WORD rlen)
     else if (mh->mtType == 1)     /* disk based metafile */
     {
       dprintf_metafile(stddeb,"Writing record to disk\n");
-	if (_lwrite(mh->mtNoParameters, (char *)mr, rlen) == -1)
+	if (_lwrite32(mh->mtNoParameters, (char *)mr, rlen) == -1)
 	{
 	    GlobalUnlock16(hmf);
 	    return 0;

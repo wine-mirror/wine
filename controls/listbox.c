@@ -1047,7 +1047,7 @@ static LONG LBLButtonDown(HWND hwnd, WORD wParam, LONG lParam)
   int        y,n;
   RECT16     rectsel;
 
-  SetFocus(hwnd);
+  SetFocus32(hwnd);
   SetCapture(hwnd);
 
   lphl->PrevFocused = lphl->ItemFocused;
@@ -1480,7 +1480,7 @@ static LONG LBPaint(HWND hwnd, WORD wParam, LONG lParam)
         dprintf_listbox(stddeb,"LBPaint: drawing item: %d %d %d %d %d\n",
                         rect.left,top,rect.right,top+height,lpls->itemState);
 
-        if (lphl->OwnerDrawn && (lphl->ItemFocused == i) && GetFocus() == hwnd)
+        if (lphl->OwnerDrawn && (lphl->ItemFocused == i) && GetFocus32() == hwnd)
            {
              ListBoxDrawItem (hwnd, lphl, hdc, lpls, &lpls->itemRect, ODA_FOCUS, 
                                                       lpls->itemState & ~ODS_FOCUS);

@@ -94,11 +94,15 @@ void dump_exports(struct PE_Export_Directory * pe_exports, unsigned int load_add
   name = (u_char **)  (((char *) load_addr) + (int) pe_exports->AddressOfNames);
 
   dprintf_win32(stddeb,"%-32s Ordinal Virt Addr\n", "Function Name");
-  for(i=0; i< pe_exports->Number_Of_Functions; i++)
-    {
-      ename =  (char *) (((char *) load_addr) + (int) *name++);
-      dprintf_win32(stddeb,"%-32s %4d    %8.8lx\n", ename, *ordinal++, *function++);
-    }
+  for(i=0; i< pe_exports->Number_Of_Functions; i++) {
+      if (i<pe_exports->Number_Of_Names) {
+	  ename =  (char *) (((char *) load_addr) + (int) *name++);
+	  dprintf_win32(stddeb,"%-32s %4d    %8.8lx\n", ename, *ordinal++, *function++);
+      } else {
+      	  /* ordinals/names no longer valid, but we still got functions */
+	  dprintf_win32(stddeb,"%-32s %4s    %8.8lx\n","","",*function++);
+      }
+  }
 }
 
 FARPROC32 PE_FindExportedFunction(struct pe_data *pe, LPCSTR funcName)
@@ -110,153 +114,151 @@ FARPROC32 PE_FindExportedFunction(struct pe_data *pe, LPCSTR funcName)
 	u_char ** name, *ename;
 	int i;
 
-	if (!exports) return NULL;
-	ordinal = (u_short *) (((char *) load_addr) + (int) exports->Address_Of_Name_Ordinals);
-	function = (u_long *)  (((char *) load_addr) + (int) exports->AddressOfFunctions);
-	name = (u_char **)  (((char *) load_addr) + (int) exports->AddressOfNames);
-	for(i=0; i<exports->Number_Of_Functions; i++)
-	{
-		if(HIWORD(funcName))
+	if (!exports)
+		return NULL;
+	ordinal=(u_short*)(((char*)load_addr)+(int)exports->Address_Of_Name_Ordinals);
+	function=(u_long*)(((char*)load_addr)+(int)exports->AddressOfFunctions);
+	name=(u_char **)(((char*)load_addr)+(int)exports->AddressOfNames);
+	if (HIWORD(funcName)) {
+		for(i=0; i<exports->Number_Of_Names; i++)
 		{
 			ename =  (char *) (((char *) load_addr) + (int) *name);
 			if(strcmp(ename,funcName)==0)
 				return (FARPROC32)(load_addr + *function);
-		}else{
+			function++;
+			name++;
+		}
+	} else {
+		/* if we got no name directory, we use the ordinal as offset */
+		if (!exports->Number_Of_Names) {
+			i = function[(int)funcName-exports->Base];
+			return (FARPROC32)(load_addr+i);
+		}
+		for(i=0; i<exports->Number_Of_Names; i++) {
 			if((int)funcName == (int)*ordinal + exports->Base)
 				return (FARPROC32)(load_addr + *function);
+			function++;
+			ordinal++;
 		}
-		function++;
-		ordinal++;
-		name++;
 	}
 	return NULL;
 }
 
-void fixup_imports(struct pe_data *pe, HMODULE16 hModule)
-{ 
-  struct PE_Import_Directory * pe_imp;
-  int fixup_failed=0;
-  unsigned int load_addr = pe->load_addr;
-  int i;
-  NE_MODULE *ne_mod;
-  HMODULE16 *mod_ptr;
+void 
+fixup_imports (struct pe_data *pe, HMODULE16 hModule)
+{
+    struct PE_Import_Directory *pe_imp;
+    int	fixup_failed = 0;
+    unsigned int load_addr = pe->load_addr;
+    int i;
+    NE_MODULE *ne_mod;
+    HMODULE16 *mod_ptr;
 
- /* OK, now dump the import list */
-  dprintf_win32(stddeb, "\nDumping imports list\n");
+    /* OK, now dump the import list */
+    dprintf_win32 (stddeb, "\nDumping imports list\n");
 
-  /* first, count the number of imported non-internal modules */
-  pe_imp = pe->pe_import;
-  for(i=0;pe_imp->ModuleName;pe_imp++)
-  	i++;
+    /* first, count the number of imported non-internal modules */
+    pe_imp = pe->pe_import;
+    for (i = 0; pe_imp->ModuleName; pe_imp++)
+	i++;
 
-  /* Now, allocate memory for dlls_to_init */
-  ne_mod = GlobalLock16(hModule);
-  ne_mod->dlls_to_init = GLOBAL_Alloc(GMEM_ZEROINIT,(i+1) * sizeof(HMODULE16),
-                                      hModule, FALSE, FALSE, FALSE );
-  mod_ptr = GlobalLock16(ne_mod->dlls_to_init);
-  /* load the modules and put their handles into the list */
-  for(i=0,pe_imp = pe->pe_import;pe_imp->ModuleName;pe_imp++)
-  {
-  	char *name = (char*)load_addr+pe_imp->ModuleName;
-	mod_ptr[i] = LoadModule(name,(LPVOID)-1);
-	if(mod_ptr[i]<=(HMODULE16)32)
-        {
-            char *p, buffer[256];
+    /* Now, allocate memory for dlls_to_init */
+    ne_mod = GlobalLock16 (hModule);
+    ne_mod->dlls_to_init = GLOBAL_Alloc(GMEM_ZEROINIT, (i+1)*sizeof(HMODULE16),
+                                        hModule, FALSE, FALSE, FALSE);
+    mod_ptr = GlobalLock16 (ne_mod->dlls_to_init);
+    /* load the modules and put their handles into the list */
+    for (i = 0, pe_imp = pe->pe_import; pe_imp->ModuleName; pe_imp++) {
+	char *name = (char *) load_addr + pe_imp->ModuleName;
+	mod_ptr[i] = LoadModule (name, (LPVOID) - 1);
+	if (mod_ptr[i] <= (HMODULE16) 32) {
+	    char *p, buffer[256];
 
-            /* Try with prepending the path of the current module */
-            GetModuleFileName( hModule, buffer, sizeof(buffer) );
-            if (!(p = strrchr( buffer, '\\' ))) p = buffer;
-            strcpy( p + 1, name );
-            mod_ptr[i] = LoadModule( buffer, (LPVOID)-1 );
-        }
-	if(mod_ptr[i]<=(HMODULE16)32)
-	{
-		fprintf(stderr,"Module %s not found\n",name);
-		exit(0);
+	    /* Try with prepending the path of the current module */
+	    GetModuleFileName (hModule, buffer, sizeof (buffer));
+	    if (!(p = strrchr (buffer, '\\')))
+		p = buffer;
+	    strcpy (p + 1, name);
+	    mod_ptr[i] = LoadModule (buffer, (LPVOID) - 1);
+	}
+	if (mod_ptr[i] <= (HMODULE16) 32) {
+	    fprintf (stderr, "Module %s not found\n", name);
+	    exit (0);
 	}
 	i++;
-  }
-  pe_imp = pe->pe_import;
-  while (pe_imp->ModuleName)
-    {
-      char * Module;
-      struct pe_import_name * pe_name;
-      unsigned int * import_list, *thunk_list;
-
-      Module = ((char *) load_addr) + pe_imp->ModuleName;
-      dprintf_win32(stddeb, "%s\n", Module);
-
-   if(pe_imp->Import_List != 0) { /* original microsoft style */
-      dprintf_win32(stddeb, "Microsoft style imports used\n");
-      import_list = (unsigned int *) 
-	(((unsigned int) load_addr) + pe_imp->Import_List);
-	  thunk_list = (unsigned int *)
-	  (((unsigned int) load_addr) + pe_imp->Thunk_List);
-
-
-    while(*import_list)
-	{
-	  pe_name = (struct pe_import_name *) ((int) load_addr + ((unsigned)*import_list & ~0x80000000));
-	  if((unsigned)*import_list & 0x80000000)
-	  {
-		int ordinal=*import_list & (0x80000000-1);
-		dprintf_win32(stddeb,"--- Ordinal %s,%d\n", Module, ordinal);
-		*thunk_list = GetProcAddress32(MODULE_FindModule(Module),
-                                               (LPCSTR)ordinal);
-	  	if(!*thunk_list)
-	  	{
-	  		fprintf(stderr,"No implementation for %s.%d, setting to NULL\n",
-                                Module, ordinal);
-			/* fixup_failed=1; */
-	  	}
-	  }else{ /* import by name */
-	  dprintf_win32(stddeb, "--- %s %s.%d\n", pe_name->Name, Module, pe_name->Hint);
-#ifndef WINELIB /* FIXME: JBP: Should this happen in libwine.a? */
-	  	*thunk_list = GetProcAddress32(MODULE_FindModule(Module),
-                                               pe_name->Name);
-	  if(!*thunk_list)
-	  {
-	  	fprintf(stderr,"No implementation for %s.%d(%s), setting to NULL\n",
-                        Module, pe_name->Hint, pe_name->Name);
-		/* fixup_failed=1; */
-	  }
-
-#else
-	  fprintf(stderr,"JBP: Call to RELAY32_GetEntryPoint being ignored.\n");
-#endif
-		}
-
-	  import_list++;
-	  thunk_list++;
-	}
-    } else { /* Borland style */
-      dprintf_win32(stddeb, "Borland style imports used\n");
-      thunk_list = (unsigned int *)
-        (((unsigned int) load_addr) + pe_imp->Thunk_List);
-      while(*thunk_list) {
-        pe_name = (struct pe_import_name *) ((int) load_addr + *thunk_list);
-        if((unsigned)pe_name & 0x80000000) {
-          fprintf(stderr,"Import by ordinal not supported\n");
-          exit(0);
-        }
-        dprintf_win32(stddeb, "--- %s %s.%d\n", pe_name->Name, Module, pe_name->Hint);
-#ifndef WINELIB /* FIXME: JBP: Should this happen in libwine.a? */
-        *thunk_list = GetProcAddress32(MODULE_FindModule(Module),
-                                       pe_name->Name);
-#else
-        fprintf(stderr,"JBP: Call to RELAY32_GetEntryPoint being ignored.\n");
-#endif
-        if(!*thunk_list) {
-          fprintf(stderr,"No implementation for %s.%d, setting to NULL\n",
-                  Module, pe_name->Hint);
-          /* fixup_failed=1; */
-        }
-        thunk_list++;
-      }
     }
-    pe_imp++;
-  }
-  if(fixup_failed)exit(1);
+    pe_imp = pe->pe_import;
+    while (pe_imp->ModuleName) {
+	char *Module;
+	struct pe_import_name *pe_name;
+	unsigned int *import_list, *thunk_list;
+
+	Module = ((char *) load_addr) + pe_imp->ModuleName;
+	dprintf_win32 (stddeb, "%s\n", Module);
+
+	if (pe_imp->Import_List != 0) {	/* original microsoft style */
+	    dprintf_win32 (stddeb, "Microsoft style imports used\n");
+	    import_list = (unsigned int *)(((unsigned int)load_addr)+pe_imp->Import_List);
+	    thunk_list = (unsigned int *)(((unsigned int)load_addr)+pe_imp->Thunk_List);
+
+	    while (*import_list) {
+		pe_name = (struct pe_import_name *) ((int) load_addr + ((unsigned) *import_list & ~0x80000000));
+		if ((unsigned) *import_list & 0x80000000) {
+		    int ordinal = *import_list & (0x80000000 - 1);
+		    dprintf_win32 (stddeb, "--- Ordinal %s,%d\n", Module, ordinal);
+		    *thunk_list = GetProcAddress32(MODULE_FindModule (Module),
+		    				   (LPCSTR) ordinal);
+		    if (!*thunk_list) {
+			fprintf(stderr,"No implementation for %s.%d, setting to NULL\n",
+				Module, ordinal);
+			/* fixup_failed=1; */
+		    }
+		} else {		/* import by name */
+		    dprintf_win32 (stddeb, "--- %s %s.%d\n", pe_name->Name, Module, pe_name->Hint);
+		    *thunk_list = GetProcAddress32(MODULE_FindModule (Module),
+						   pe_name->Name);
+		    if (!*thunk_list) {
+			fprintf(stderr, "No implementation for %s.%d(%s), setting to NULL\n",
+				Module, pe_name->Hint, pe_name->Name);
+			/* fixup_failed=1; */
+		    }
+		}
+		import_list++;
+		thunk_list++;
+	    }
+	} else {			/* Borland style */
+	    dprintf_win32 (stddeb, "Borland style imports used\n");
+	    thunk_list = (unsigned int *)(((unsigned int)load_addr)+pe_imp->Thunk_List);
+	    while (*thunk_list) {
+		pe_name=(struct pe_import_name *)((int)load_addr+*thunk_list);
+		if ((unsigned) pe_name & 0x80000000) {
+		    /* not sure about this branch, but it seems to work */
+		    int ordinal = *thunk_list & ~0x80000000;
+		    dprintf_win32(stddeb,"--- Ordinal %s.%d\n",Module,ordinal);
+		    *thunk_list = GetProcAddress32(MODULE_FindModule (Module),
+						   (LPCSTR) ordinal);
+		    if (!*thunk_list) {
+			fprintf(stderr, "No implementation for %s.%d, setting to NULL\n",
+				Module,ordinal);
+			/* fixup_failed=1; */
+		    }
+		} else {
+		    dprintf_win32(stddeb,"--- %s %s.%d\n",
+		   		  pe_name->Name, Module, pe_name->Hint);
+		    *thunk_list = GetProcAddress32(MODULE_FindModule(Module),
+						   pe_name->Name);
+		    if (!*thunk_list) {
+		    	fprintf(stderr, "No implementation for %s.%d, setting to NULL\n",
+				Module, pe_name->Hint);
+		    	/* fixup_failed=1; */
+		    }
+		}
+		thunk_list++;
+	    }
+	}
+	pe_imp++;
+    }
+    if (fixup_failed) exit(1);
 }
 
 static void calc_vma_size(struct pe_data *pe)
@@ -558,6 +560,7 @@ HINSTANCE PE_LoadModule( int fd, OFSTRUCT *ofs, LOADPARAMS* params )
 int USER_InitApp(HINSTANCE hInstance);
 void PE_InitTEB(int hTEB);
 
+void PE_InitializeDLLs(HMODULE16 hModule);
 void PE_Win32CallToStart( SIGCONTEXT *context )
 {
     int fs;
@@ -594,7 +597,9 @@ static void PE_InitDLL(HMODULE16 hModule)
     if (!(pModule->flags & NE_FFLAGS_WIN32) || !(pe = pModule->pe_module))
         return;
 
-    /* FIXME: What are the correct values for parameters 2 and 3? */
+    /* FIXME: What is the correct value for parameter 3? 
+     *	      (the MSDN library JAN96 says 'reserved for future use')
+     */
         
     /* Is this a library? */
     if (pe->pe_header->coff.Characteristics & IMAGE_FILE_DLL)
@@ -602,7 +607,7 @@ static void PE_InitDLL(HMODULE16 hModule)
         printf("InitPEDLL() called!\n");
         CallDLLEntryProc32( (FARPROC32)(pe->load_addr + 
                                   pe->pe_header->opt_coff.AddressOfEntryPoint),
-                            hModule, 0, 0 );
+                            hModule, DLL_PROCESS_ATTACH, 0 );
     }
 }
 

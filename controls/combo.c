@@ -262,7 +262,7 @@ static LRESULT CBPaint(HWND hwnd, WPARAM wParam, LPARAM lParam)
   if (lpls != NULL) {  
     FillRect16(hdc, &rect, hBrush);
     ListBoxDrawItem (hwnd, lphl, hdc, lpls, &rect, ODA_DRAWENTIRE, 0);
-    if (GetFocus() == hwnd)
+    if (GetFocus32() == hwnd)
     ListBoxDrawItem (hwnd,lphl, hdc, lpls, &rect, ODA_FOCUS, ODS_FOCUS);
   }
   else FillRect16(hdc, &rect, hBrush);
@@ -616,7 +616,7 @@ static LRESULT CBShowDropDown(HWND hwnd, WPARAM wParam, LPARAM lParam)
     SetWindowPos(lphc->hWndLBox, 0, rect.left, rect.top+lphc->LBoxTop, 0, 0,
 		 SWP_NOSIZE | SWP_NOACTIVATE |
                  (wParam ? SWP_SHOWWINDOW : SWP_HIDEWINDOW));
-    if (!wParam) SetFocus(hwnd);
+    if (!wParam) SetFocus32(hwnd);
   }
   return 0;
 }
@@ -960,7 +960,7 @@ static LRESULT CBLPaint( HWND hwnd, WPARAM wParam, LPARAM lParam )
 	ListBoxDrawItem (combohwnd, lphl, hdc, lpls, &lpls->itemRect, ODA_DRAWENTIRE, 
 			 lpls->itemState);
       }
-      if ((lphl->ItemFocused == i) && GetFocus() == hwnd)
+      if ((lphl->ItemFocused == i) && GetFocus32() == hwnd)
 	ListBoxDrawItem (combohwnd, lphl, hdc, lpls, &lpls->itemRect, ODA_FOCUS, ODS_FOCUS);
 
       top += height;
@@ -1007,7 +1007,7 @@ static LRESULT CBLLButtonDown( HWND hwnd, WPARAM wParam, LPARAM lParam )
   int        y;
   RECT16     rectsel;
 
-/*  SetFocus(hwnd); */
+/*  SetFocus32(hwnd); */
   SetCapture(hwnd);
 
   lphl->PrevFocused = lphl->ItemFocused;

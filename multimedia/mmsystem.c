@@ -1929,7 +1929,7 @@ LONG mmioWrite(HMMIO16 hmmio, HPCSTR pch, LONG cch)
 	dprintf_mmsys(stddeb, "mmioWrite(%04X, %p, %ld);\n", hmmio, pch, cch);
 	lpmminfo = (LPMMIOINFO)GlobalLock16(hmmio);
 	if (lpmminfo == NULL) return 0;
-	count = _lwrite(LOWORD(lpmminfo->dwReserved2), (LPSTR)pch, cch);
+	count = _lwrite32(LOWORD(lpmminfo->dwReserved2), (LPSTR)pch, cch);
 	GlobalUnlock16(hmmio);
 	return count;
 }
@@ -2017,7 +2017,7 @@ UINT mmioAdvance(HMMIO16 hmmio, MMIOINFO * lpmmioinfo, UINT uFlags)
 			lpmmioinfo->pchBuffer, lpmmioinfo->cchBuffer);
 		}
 	if (uFlags == MMIO_WRITE) {
-		count = _lwrite(LOWORD(lpmminfo->dwReserved2),
+		count = _lwrite32(LOWORD(lpmminfo->dwReserved2),
 			lpmmioinfo->pchBuffer, lpmmioinfo->cchBuffer);
 		}
 	lpmmioinfo->pchNext	+= count;

@@ -31,7 +31,7 @@
 #define MIN_STR_ATOM              0xc000
 #define MAX_ATOM_LEN              255
 
-#define ATOMTOHANDLE(atom)        ((HANDLE)(atom) << 2)
+#define ATOMTOHANDLE(atom)        ((HANDLE16)(atom) << 2)
 #define HANDLETOATOM(handle)      ((ATOM)(0xc000 | ((handle) >> 2)))
 
 #define HAS_ATOM_TABLE(sel)  \
@@ -53,7 +53,7 @@ static HANDLE16 ATOM_InitTable( WORD selector, WORD entries )
       /* Allocate the table */
 
     handle = LOCAL_Alloc( selector, LMEM_FIXED,
-                          sizeof(ATOMTABLE) + (entries-1) * sizeof(HANDLE) );
+                          sizeof(ATOMTABLE) + (entries-1) * sizeof(HANDLE16) );
     if (!handle) return 0;
     table = (ATOMTABLE *)PTR_SEG_OFF_TO_LIN( selector, handle );
     table->size = entries;
@@ -71,7 +71,7 @@ static HANDLE16 ATOM_InitTable( WORD selector, WORD entries )
  *
  * Global table initialisation.
  */
-BOOL ATOM_Init(void)
+BOOL32 ATOM_Init(void)
 {
     return ATOM_InitTable( USER_HeapSel, DEFAULT_ATOMTABLE_SIZE ) != 0;
 }
@@ -83,7 +83,7 @@ BOOL ATOM_Init(void)
  * Return a pointer to the atom table of a given segment, creating
  * it if necessary.
  */
-static ATOMTABLE * ATOM_GetTable( WORD selector, BOOL create )
+static ATOMTABLE * ATOM_GetTable( WORD selector, BOOL32 create )
 {
     INSTANCEDATA *ptr = (INSTANCEDATA *)PTR_SEG_OFF_TO_LIN( selector, 0 );
     if (!ptr->atomtable)
@@ -102,7 +102,7 @@ static ATOMTABLE * ATOM_GetTable( WORD selector, BOOL create )
  *
  * Make an ATOMENTRY pointer from a handle (obtained from GetAtomHandle()).
  */
-static ATOMENTRY * ATOM_MakePtr( WORD selector, HANDLE handle )
+static ATOMENTRY * ATOM_MakePtr( WORD selector, HANDLE16 handle )
 {
     return (ATOMENTRY *)PTR_SEG_OFF_TO_LIN( selector, handle );
 }
@@ -126,7 +126,7 @@ static WORD ATOM_Hash( WORD entries, LPCSTR str, WORD len )
 static ATOM ATOM_AddAtom( WORD selector, LPCSTR str )
 {
     WORD hash;
-    HANDLE entry;
+    HANDLE16 entry;
     ATOMENTRY * entryPtr;
     ATOMTABLE * table;
     int len;
@@ -169,7 +169,7 @@ static ATOM ATOM_DeleteAtom( WORD selector, ATOM atom )
 {
     ATOMENTRY * entryPtr;
     ATOMTABLE * table;
-    HANDLE entry, *prevEntry;
+    HANDLE16 entry, *prevEntry;
     WORD hash;
     
     if (atom < MIN_STR_ATOM) return 0;  /* Integer atom */
@@ -205,7 +205,7 @@ static ATOM ATOM_FindAtom( WORD selector, LPCSTR str )
 {
     ATOMTABLE * table;
     WORD hash;
-    HANDLE entry;
+    HANDLE16 entry;
     int len;
 
     if (str[0] == '#') return atoi( &str[1] );  /* Check for integer atom */
@@ -233,7 +233,7 @@ static UINT32 ATOM_GetAtomName( WORD selector, ATOM atom,
 {
     ATOMTABLE * table;
     ATOMENTRY * entryPtr;
-    HANDLE entry;
+    HANDLE16 entry;
     char * strPtr;
     UINT32 len;
     char text[8];
@@ -272,7 +272,7 @@ WORD InitAtomTable( WORD entries )
 /***********************************************************************
  *           GetAtomHandle   (KERNEL.73)
  */
-HANDLE GetAtomHandle( ATOM atom )
+HANDLE16 GetAtomHandle( ATOM atom )
 {
     if (atom < MIN_STR_ATOM) return 0;
     return ATOMTOHANDLE( atom );

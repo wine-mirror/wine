@@ -21,8 +21,8 @@ heap	65520
 19  pascal16 ReleaseCapture() ReleaseCapture
 20  pascal16 SetDoubleClickTime(word) SetDoubleClickTime
 21  pascal16 GetDoubleClickTime() GetDoubleClickTime
-22  pascal16 SetFocus(word) SetFocus
-23  pascal16 GetFocus() GetFocus
+22  pascal16 SetFocus(word) SetFocus16
+23  pascal16 GetFocus() GetFocus16
 24  pascal16 RemoveProp(word ptr) RemoveProp16
 25  pascal16 GetProp(word ptr) GetProp16
 26  pascal16 SetProp(word ptr word) SetProp16

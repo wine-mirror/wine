@@ -318,7 +318,7 @@ SEGPTR NE_LockResource( HMODULE16 hModule, HGLOBAL16 handle )
 /***********************************************************************
  *           NE_FreeResource
  */
-BOOL NE_FreeResource( HMODULE16 hModule, HGLOBAL16 handle )
+BOOL32 NE_FreeResource( HMODULE16 hModule, HGLOBAL16 handle )
 {
     NE_TYPEINFO *pTypeInfo;
     NE_NAMEINFO *pNameInfo;

@@ -69,7 +69,7 @@
 /*
  * Switch to disassemble 16-bit code.
  */
-static BOOL db_disasm_16 = FALSE;
+static BOOL32 db_disasm_16 = FALSE;
 
 /*
  * Size attributes
@@ -1139,7 +1139,7 @@ void DEBUG_Disasm( DBG_ADDR *addr )
 	int	i_size;
 	int	i_mode;
 	int	regmodrm = 0;
-	BOOL    first;
+	BOOL32  first;
 	int	displ;
 	int	prefix;
 	int	imm;

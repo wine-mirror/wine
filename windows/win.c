@@ -549,6 +549,47 @@ static HWND WIN_CreateWindowEx( CREATESTRUCT32A *cs, ATOM classAtom,
 
     WIN_LinkWindow( hwnd, (cs->style & WS_CHILD) ? HWND_BOTTOM : HWND_TOP );
 
+    /* Call the WH_CBT hook */
+
+    if (HOOK_GetHook( WH_CBT, GetTaskQueue(0) ))
+    {
+        CBT_CREATEWND16* cbtc;
+
+        if ((cbtc = SEGPTR_NEW(CBT_CREATEWND16)))
+        {
+            /* Dummy message params to use WINPROC_MapMsg functions */
+            UINT16 msg;
+            WPARAM16 wparam;
+            LPARAM lparam;
+
+            HWND hwndZnew = (cs->style & WS_CHILD) ? HWND_BOTTOM : HWND_TOP;
+
+            /* Map the CREATESTRUCT to 16-bit format */
+            lparam = (LPARAM)cs;
+            if (unicode)
+                WINPROC_MapMsg32WTo16( WM_CREATE, 0, &msg, &wparam, &lparam );
+            else
+                WINPROC_MapMsg32ATo16( WM_CREATE, 0, &msg, &wparam, &lparam );
+            cbtc->lpcs = (CREATESTRUCT16 *)lparam;
+            cbtc->hwndInsertAfter = hwndZnew;
+            wmcreate = !HOOK_CallHooks( WH_CBT, HCBT_CREATEWND, hwnd,
+                                        (LPARAM)SEGPTR_GET(cbtc) );
+            WINPROC_UnmapMsg32ATo16( WM_CREATE, 0, lparam );
+            if (hwndZnew != cbtc->hwndInsertAfter)
+            {
+                WIN_UnlinkWindow( hwnd );
+                WIN_LinkWindow( hwnd, cbtc->hwndInsertAfter );
+            }
+            SEGPTR_FREE(cbtc);
+            if (!wmcreate)
+            {
+                dprintf_win(stddeb,"CreateWindowEx: CBT-hook returned 0\n" );
+                WIN_DestroyWindow( hwnd );
+                return 0;
+            }
+        }
+    }
+
     /* Send the WM_GETMINMAXINFO message and fix the size if needed */
 
     if ((cs->style & WS_THICKFRAME) || !(cs->style & (WS_POPUP | WS_CHILD)))
@@ -1143,8 +1184,8 @@ BOOL EnableWindow( HWND hwnd, BOOL enable )
     {
 	  /* Disable window */
 	wndPtr->dwStyle |= WS_DISABLED;
-	if ((hwnd == GetFocus()) || IsChild( hwnd, GetFocus() ))
-	    SetFocus( 0 );  /* A disabled window can't have the focus */
+	if ((hwnd == GetFocus32()) || IsChild( hwnd, GetFocus32() ))
+	    SetFocus32( 0 );  /* A disabled window can't have the focus */
 	if ((hwnd == GetCapture()) || IsChild( hwnd, GetCapture() ))
 	    ReleaseCapture();  /* A disabled window can't capture the mouse */
 	SendMessage16( hwnd, WM_ENABLE, FALSE, 0 );

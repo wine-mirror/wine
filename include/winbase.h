@@ -133,37 +133,6 @@ typedef struct {
 
 DECL_WINELIB_TYPE_AW(OSVERSIONINFO);
 
-typedef struct
-{
-    DWORD     dwFileAttributes;
-    FILETIME  ftCreationTime;
-    FILETIME  ftLastAccessTime;
-    FILETIME  ftLastWriteTime;
-    DWORD     nFileSizeHigh;
-    DWORD     nFileSizeLow;
-    DWORD     dwReserved0;
-    DWORD     dwReserved1;
-    CHAR      cFileName[260];
-    CHAR      cAlternateFileName[14];
-} WIN32_FIND_DATA32A, *LPWIN32_FIND_DATA32A;
-
-typedef struct
-{
-    DWORD     dwFileAttributes;
-    FILETIME  ftCreationTime;
-    FILETIME  ftLastAccessTime;
-    FILETIME  ftLastWriteTime;
-    DWORD     nFileSizeHigh;
-    DWORD     nFileSizeLow;
-    DWORD     dwReserved0;
-    DWORD     dwReserved1;
-    WCHAR     cFileName[260];
-    WCHAR     cAlternateName[14];
-} WIN32_FIND_DATA32W, *LPWIN32_FIND_DATA32W;
-
-DECL_WINELIB_TYPE_AW(WIN32_FIND_DATA);
-DECL_WINELIB_TYPE_AW(LPWIN32_FIND_DATA);
-
 #define VER_PLATFORM_WIN32s             0
 #define VER_PLATFORM_WIN32_WINDOWS      1
 #define VER_PLATFORM_WIN32_NT           2

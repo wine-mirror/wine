@@ -111,7 +111,7 @@ static LOCALHEAPINFO *LOCAL_GetHeap( HANDLE16 ds )
     INSTANCEDATA *ptr = (INSTANCEDATA *)PTR_SEG_OFF_TO_LIN( ds, 0 );
     dprintf_local( stddeb, "Heap at %p, %04x\n", ptr, ptr->heap );
     if (!ptr || !ptr->heap) return NULL;
-    if (IsBadReadPtr((SEGPTR)MAKELONG( ptr->heap, ds ), sizeof(LOCALHEAPINFO)))
+    if (IsBadReadPtr16( (SEGPTR)MAKELONG(ptr->heap,ds), sizeof(LOCALHEAPINFO)))
         return NULL;
     pInfo = (LOCALHEAPINFO*)((char*)ptr + ptr->heap);
     if (pInfo->magic != LOCAL_HEAP_MAGIC) return NULL;

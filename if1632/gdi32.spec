@@ -39,7 +39,7 @@ base	1
 0034 stdcall CreateDIBPatternBrush(long long) CreateDIBPatternBrush
 0035 stub CreateDIBPatternBrushPt
 0036 stub CreateDIBSection
-0037 stub CreateDIBitmap
+0037 stdcall CreateDIBitmap(long ptr long ptr ptr long) CreateDIBitmap
 0038 stdcall CreateDiscardableBitmap(long long long) CreateDiscardableBitmap
 0039 stdcall CreateEllipticRgn(long long long long) CreateEllipticRgn
 0040 stdcall CreateEllipticRgnIndirect(ptr) CreateEllipticRgnIndirect32
@@ -149,7 +149,7 @@ base	1
 0142 stub GetAspectRatioFilterEx
 0143 stdcall GetBitmapBits(long long ptr) GetBitmapBits
 0144 stdcall GetBitmapDimensionEx(long ptr) GetBitmapDimensionEx32
-0145 stub GetBkColor
+0145 stdcall GetBkColor(long) GetBkColor
 0146 stub GetBkMode
 0147 stub GetBoundsRect
 0148 stub GetBrushOrgEx
@@ -231,10 +231,10 @@ base	1
 0224 stub GetTextAlign
 0225 stub GetTextCharacterExtra
 0226 stub GetTextCharset
-0227 stub GetTextColor
+0227 stdcall GetTextColor(long) GetTextColor
 0228 stub GetTextExtentExPointA
 0229 stub GetTextExtentExPointW
-0230 stub GetTextExtentPoint32A
+0230 stdcall GetTextExtentPoint32A(long ptr long ptr) GetTextExtentPoint32A
 0231 stub GetTextExtentPoint32W
 0232 stdcall GetTextExtentPointA(long ptr long ptr) GetTextExtentPoint32A
 0233 stdcall GetTextExtentPointW(long ptr long ptr) GetTextExtentPoint32W
@@ -250,7 +250,7 @@ base	1
 0243 stub GetWindowOrgEx
 0244 stub GetWorldTransform
 0245 stub IntersectClipRect
-0246 stub InvertRgn
+0246 stdcall InvertRgn(long long) InvertRgn
 0247 stdcall LPtoDP(long ptr long) LPtoDP32
 0248 stdcall LineDDA(long long long long ptr long) THUNK_LineDDA32
 0249 stdcall LineTo(long long long) LineTo
@@ -294,9 +294,9 @@ base	1
 0287 stub ResetDCA
 0288 stub ResetDCW
 0289 stub ResizePalette
-0290 stub RestoreDC
+0290 stdcall RestoreDC(long long) RestoreDC
 0291 stub RoundRect
-0292 stub SaveDC
+0292 stdcall SaveDC(long) SaveDC
 0293 stdcall ScaleViewportExtEx(long long long long long ptr) ScaleViewportExtEx32
 0294 stdcall ScaleWindowExtEx(long long long long long ptr) ScaleWindowExtEx32
 0295 stub SelectBrushLocal
@@ -339,7 +339,7 @@ base	1
 0331 stdcall SetROP2(long long) SetROP2
 0332 stdcall SetRectRgn(long long long long long) SetRectRgn
 0333 stub SetRelAbs
-0334 stub SetStretchBltMode
+0334 stdcall SetStretchBltMode(long long) SetStretchBltMode
 0335 stub SetSystemPaletteUse
 0336 stub SetTextAlign
 0337 stub SetTextCharacterExtra
@@ -363,7 +363,7 @@ base	1
 0355 stdcall TextOutA(long long long ptr long) TextOut32A
 0356 stdcall TextOutW(long long long ptr long) TextOut32W
 0357 stub UnloadNetworkFonts
-0358 stub UnrealizeObject
+0358 stdcall UnrealizeObject(long) UnrealizeObject
 0359 stub UpdateColors
 0360 stub WidenPath
 0361 stub pstackConnect

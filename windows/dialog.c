@@ -599,7 +599,7 @@ static HWND DIALOG_CreateIndirect( HINSTANCE hInst, LPCSTR dlgTemplate,
     if (dlgInfo->hUserFont)
 	SendMessage32A( hwnd, WM_SETFONT, (WPARAM)dlgInfo->hUserFont, 0 );
     if (SendMessage32A(hwnd, WM_INITDIALOG, (WPARAM)dlgInfo->hwndFocus, param))
-	SetFocus( dlgInfo->hwndFocus );
+	SetFocus32( dlgInfo->hwndFocus );
     if (template.style & WS_VISIBLE) ShowWindow( hwnd, SW_SHOW );
     return hwnd;
 }
@@ -906,7 +906,7 @@ BOOL IsDialogMessage( HWND hwndDlg, LPMSG16 msg )
         case VK_DOWN:
             if (!(dlgCode & DLGC_WANTARROWS))
             {
-                SetFocus(GetNextDlgGroupItem(hwndDlg,GetFocus(),FALSE));
+                SetFocus32( GetNextDlgGroupItem(hwndDlg,GetFocus32(),FALSE) );
                 return TRUE;
             }
             break;
@@ -915,7 +915,7 @@ BOOL IsDialogMessage( HWND hwndDlg, LPMSG16 msg )
         case VK_UP:
             if (!(dlgCode & DLGC_WANTARROWS))
             {
-                SetFocus(GetNextDlgGroupItem(hwndDlg,GetFocus(),TRUE));
+                SetFocus32( GetNextDlgGroupItem(hwndDlg,GetFocus32(),TRUE) );
                 return TRUE;
             }
             break;

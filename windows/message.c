@@ -215,7 +215,7 @@ static BOOL MSG_TranslateKeyboardMsg( MSG16 *msg, BOOL remove )
 
       /* Should check Ctrl-Esc and PrintScreen here */
 
-    msg->hwnd = GetFocus();
+    msg->hwnd = GetFocus16();
     if (!msg->hwnd)
     {
 	  /* Send the message to the active window instead,  */
@@ -695,8 +695,8 @@ static BOOL MSG_PeekMessage( LPMSG16 msg, HWND hwnd, WORD first, WORD last,
  * 'hwnd' must be the handle of the dialog or menu window.
  * 'code' is the message filter value (MSGF_??? codes).
  */
-BOOL MSG_InternalGetMessage( MSG16 *msg, HWND hwnd, HWND hwndOwner, short code,
-			     WORD flags, BOOL sendIdle ) 
+BOOL32 MSG_InternalGetMessage( MSG16 *msg, HWND32 hwnd, HWND32 hwndOwner,
+                               WPARAM32 code, WORD flags, BOOL32 sendIdle ) 
 {
     for (;;)
     {

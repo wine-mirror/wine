@@ -19,8 +19,8 @@
 BOOL32 DEBUG_IsBadReadPtr( const DBG_ADDR *address, int size )
 {
     if (address->seg)  /* segmented addr */
-        return IsBadReadPtr( (SEGPTR)MAKELONG( (WORD)address->off,
-                                               (WORD)address->seg ), size );
+        return IsBadReadPtr16( (SEGPTR)MAKELONG( (WORD)address->off,
+                                                 (WORD)address->seg ), size );
         /* FIXME: should check if resulting linear addr is readable */
     else  /* linear address */
         return FALSE;  /* FIXME: should do some checks here */
@@ -37,8 +37,8 @@ BOOL32 DEBUG_IsBadWritePtr( const DBG_ADDR *address, int size )
     if (address->seg)  /* segmented addr */
         /* Note: we use IsBadReadPtr here because we are */
         /* always allowed to write to read-only segments */
-        return IsBadReadPtr( (SEGPTR)MAKELONG( (WORD)address->off,
-                                               (WORD)address->seg ), size );
+        return IsBadReadPtr16( (SEGPTR)MAKELONG( (WORD)address->off,
+                                                 (WORD)address->seg ), size );
         /* FIXME: should check if resulting linear addr is writable */
     else  /* linear address */
         return FALSE;  /* FIXME: should do some checks here */

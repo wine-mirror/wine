@@ -29,21 +29,9 @@ typedef struct {
     unsigned long       main_thread_id;
 } PROCESS_OBJECT;
 
-/* The FILE object includes things like disk files, pipes, and
- * character devices (com ports, consoles, ...).
- */
-typedef struct {
-    KERNEL_OBJECT       common;
-    int                 fd;                 /* UNIX fd */
-    int                 type;               /* FILE_TYPE_* */
-    unsigned long       misc_flags;         /* special flags */
-    unsigned long       access_flags;       /* UNIX access flags */
-    unsigned long       create_flags;       /* UNIX creation flags */
-} FILE_OBJECT;
-
 typedef struct {
     KERNEL_OBJECT	common;
-    FILE_OBJECT	       *file_obj;
+    HFILE		hfile;
     int			prot;
     unsigned long	size;
 } FILEMAP_OBJECT;
@@ -115,6 +103,6 @@ int ValidateKernelObject(KERNEL_OBJECT *ptr);
 
 /* Prototypes for the Close*Handle functions
  */
-int CloseFileHandle(FILE_OBJECT *hFile);
+int CloseFileHandle(HFILE hFile);
 
 #endif /* __WINE_HANDLE32_H */

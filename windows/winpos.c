@@ -54,7 +54,7 @@ static HWND hwndPrevActive  = 0;  /* Previously active window */
  * Find a suitable place for an iconic window.
  * The new position is stored into wndPtr->ptIconPos.
  */
-void WINPOS_FindIconPos( HWND hwnd )
+void WINPOS_FindIconPos( HWND32 hwnd )
 {
     RECT16 rectParent;
     short x, y, xspacing, yspacing;
@@ -711,12 +711,6 @@ BOOL ShowWindow( HWND hwnd, int cmd )
 		   MAKELONG(wndPtr->rectClient.left, wndPtr->rectClient.top) );
     }
 
-    if (hwnd == GetFocus())
-    { 
-	SetFocus( (wndPtr->dwStyle & WS_CHILD)? wndPtr->parent->hwndSelf: 0 );
-	if (hwnd == CARET_GetHwnd()) DestroyCaret();
-    }
-
     return wasVisible;
 }
 
@@ -867,7 +861,7 @@ BOOL32 SetWindowPlacement32( HWND32 hwnd, const WINDOWPLACEMENT32 *wndpl )
  *
  * back-end to SetActiveWindow
  */
-BOOL WINPOS_SetActiveWindow( HWND hWnd, BOOL fMouse, BOOL fChangeFocus )
+BOOL32 WINPOS_SetActiveWindow( HWND32 hWnd, BOOL32 fMouse, BOOL32 fChangeFocus)
 {
     WND                   *wndPtr          = WIN_FindWndPtr(hWnd);
     WND                   *wndTemp         = WIN_FindWndPtr(hwndActive);
@@ -1010,9 +1004,9 @@ BOOL WINPOS_SetActiveWindow( HWND hWnd, BOOL fMouse, BOOL fChangeFocus )
     }
 
     /* change focus if possible */
-    if( fChangeFocus && GetFocus() )
-	if( WIN_GetTopParent(GetFocus()) != hwndActive )
-	    FOCUS_SwitchFocus( GetFocus(),
+    if( fChangeFocus && GetFocus32() )
+	if( WIN_GetTopParent(GetFocus32()) != hwndActive )
+	    FOCUS_SwitchFocus( GetFocus32(),
 			       (wndPtr->dwStyle & WS_MINIMIZE)? 0: hwndActive);
 
     /* if active wnd is minimized redraw icon title 
@@ -1031,7 +1025,7 @@ BOOL WINPOS_SetActiveWindow( HWND hWnd, BOOL fMouse, BOOL fChangeFocus )
  *	   WINPOS_ChangeActiveWindow
  *
  */
-BOOL WINPOS_ChangeActiveWindow( HWND hWnd, BOOL mouseMsg )
+BOOL32 WINPOS_ChangeActiveWindow( HWND32 hWnd, BOOL32 mouseMsg )
 {
     WND *wndPtr = WIN_FindWndPtr(hWnd);
 
@@ -1072,7 +1066,7 @@ BOOL WINPOS_ChangeActiveWindow( HWND hWnd, BOOL mouseMsg )
  * oldWindowRect, oldClientRect and winpos must be non-NULL only
  * when calcValidRect is TRUE.
  */
-LONG WINPOS_SendNCCalcSize( HWND hwnd, BOOL calcValidRect,
+LONG WINPOS_SendNCCalcSize( HWND32 hwnd, BOOL32 calcValidRect,
                             RECT16 *newWindowRect, RECT16 *oldWindowRect,
                             RECT16 *oldClientRect, SEGPTR winpos,
                             RECT16 *newClientRect )
@@ -1831,8 +1825,13 @@ BOOL SetWindowPos( HWND hwnd, HWND hwndInsertAfter, INT x, INT y,
 	    uFlags |= SMC_NOPARENTERASE;
         }
 
-        if ((winpos->hwnd == GetFocus()) || IsChild(winpos->hwnd, GetFocus()))
-            SetFocus( GetParent32(winpos->hwnd) ); /* Revert focus to parent */
+        if ((winpos->hwnd == GetFocus32()) ||
+            IsChild( winpos->hwnd, GetFocus32()))
+        {
+            /* Revert focus to parent */
+            SetFocus32( GetParent32(winpos->hwnd) );
+        }
+	if (hwnd == CARET_GetHwnd()) DestroyCaret();
 
 	if (winpos->hwnd == hwndActive)
 	{

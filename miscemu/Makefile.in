@@ -1,4 +1,4 @@
-DEFS   = -D__WINE__
+DEFS   = -D__WINE__ -DNO_TRANSITION_TYPES
 TOPSRC = @top_srcdir@
 MODULE = miscemu
 

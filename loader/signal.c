@@ -152,7 +152,7 @@ static void SIGNAL_SetHandler( int sig, void (*func)() )
     sigset_t sig_mask;
     sigemptyset(&sig_mask);
     sig_act.sa_handler = func;
-    sig_act.sa_flags = SA_ONSTACK | SA_SIGINFO;
+    sig_act.sa_flags = SA_SIGINFO | SA_ONSTACK | SA_RESTART;
     sig_act.sa_mask = sig_mask;
     ret = sigaction( sig, &sig_act, NULL );
 #endif  /* __svr4__ || _SCO_DS */

@@ -44,7 +44,7 @@ extern void LIBRES_RegisterResources(const struct resource* const * Res);
 #endif
 
 extern int NE_AccessResource( HMODULE16 hModule, HRSRC16 hRsrc );
-extern BOOL NE_FreeResource( HMODULE16 hModule, HGLOBAL16 handle );
+extern BOOL32 NE_FreeResource( HMODULE16 hModule, HGLOBAL16 handle );
 extern HRSRC16 NE_FindResource(HMODULE16 hModule, SEGPTR typeId, SEGPTR resId);
 extern DWORD NE_SizeofResource( HMODULE16 hModule, HRSRC16 hRsrc );
 extern SEGPTR NE_LockResource( HMODULE16 hModule, HGLOBAL16 handle );

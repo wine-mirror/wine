@@ -9,11 +9,11 @@
 
 #include "windows.h"
 
-extern BOOL ATOM_Init(void);
+extern BOOL32 ATOM_Init(void);
 
 typedef struct
 {
-    HANDLE      next;
+    HANDLE16    next;
     WORD        refCount;
     BYTE        length;
     BYTE        str[1];
@@ -22,7 +22,7 @@ typedef struct
 typedef struct
 {
     WORD        size;
-    HANDLE      entries[1];
+    HANDLE16    entries[1];
 } ATOMTABLE;
 
 #endif  /* ATOM_H */

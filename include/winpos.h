@@ -21,14 +21,15 @@ typedef struct
     WORD        suggestedCount;
     WORD        valid;
     WORD        wMagic;
-    HWND        hwndParent;
+    HWND32      hwndParent;
     WINDOWPOS16 winPos[1];
 } DWP;
 
-extern void WINPOS_FindIconPos( HWND hwnd );
-extern BOOL WINPOS_SetActiveWindow( HWND hWnd, BOOL fMouse, BOOL fChangeFocus);
-extern BOOL WINPOS_ChangeActiveWindow( HWND hwnd, BOOL mouseMsg );
-extern LONG WINPOS_SendNCCalcSize( HWND hwnd, BOOL calcValidRect,
+extern void WINPOS_FindIconPos( HWND32 hwnd );
+extern BOOL32 WINPOS_SetActiveWindow( HWND32 hWnd, BOOL32 fMouse,
+                                      BOOL32 fChangeFocus );
+extern BOOL32 WINPOS_ChangeActiveWindow( HWND32 hwnd, BOOL32 mouseMsg );
+extern LONG WINPOS_SendNCCalcSize( HWND32 hwnd, BOOL32 calcValidRect,
                                   RECT16 *newWindowRect, RECT16 *oldWindowRect,
 				  RECT16 *oldClientRect, SEGPTR winpos,
 				  RECT16 *newClientRect );

@@ -2,6 +2,8 @@
  * DEC 93 Erik Bos <erik@xs4all.nl>
  *
  * Copyright 1996 Marcus Meissner
+ * FIXME: use HFILEs instead of unixfds
+ *	  the win32 functions here get HFILEs already.
  */
 
 #include <stdio.h>
@@ -379,7 +381,7 @@ BOOL32 BuildCommDCB32W(LPCWSTR devid,LPDCB32 lpdcb) {
  */
 INT16 OpenComm(LPCSTR device,UINT16 cbInQueue,UINT16 cbOutQueue)
 {
-	int port, fd;
+	int port,fd;
 
     	dprintf_comm(stddeb,
 		"OpenComm: %s, %d, %d\n", device, cbInQueue, cbOutQueue);
@@ -474,10 +476,8 @@ INT16 SetCommBreak16(INT16 fd)
 /*****************************************************************************
  *	SetCommBreak		(KERNEL32.449)
  */
-BOOL32 SetCommBreak32(HANDLE32 hfile)
+BOOL32 SetCommBreak32(INT32 fd)
 {
-	FILE_OBJECT	*fob = (FILE_OBJECT*)hfile;
-	int		fd = fob->fd;
 
 	struct DosDeviceStruct *ptr;
 
@@ -513,10 +513,8 @@ INT16 ClearCommBreak16(INT16 fd)
 /*****************************************************************************
  *	ClearCommBreak		(KERNEL32.20)
  */
-BOOL32 ClearCommBreak32(HANDLE32 hfile)
+BOOL32 ClearCommBreak32(INT32 fd)
 {
-	FILE_OBJECT	*fob = (FILE_OBJECT*)hfile;
-	int		fd = fob->fd;
 	struct DosDeviceStruct *ptr;
 
     	dprintf_comm(stddeb,"ClearCommBreak: fd: %d\n", fd);
@@ -609,10 +607,8 @@ LONG EscapeCommFunction16(UINT16 fd,UINT16 nFunction)
 /*****************************************************************************
  *	EscapeCommFunction	(KERNEL32.214)
  */
-BOOL32 EscapeCommFunction32(HANDLE32 hfile,UINT32 nFunction)
+BOOL32 EscapeCommFunction32(INT32 fd,UINT32 nFunction)
 {
-	FILE_OBJECT	*fob = (FILE_OBJECT*)hfile;
-	int		fd = fob->fd;
 	struct termios	port;
 	struct DosDeviceStruct *ptr;
 
@@ -725,11 +721,9 @@ INT16 GetCommError(INT16 fd,LPCOMSTAT lpStat)
 /*****************************************************************************
  *	ClearCommError	(KERNEL32.21)
  */
-BOOL32 ClearCommError(HANDLE32 hfile,LPDWORD errors,LPCOMSTAT lpStat)
+BOOL32 ClearCommError(INT32 fd,LPDWORD errors,LPCOMSTAT lpStat)
 {
 	int temperror;
-	FILE_OBJECT	*fob=(FILE_OBJECT*)hfile;
-	int		fd = fob->fd;
 
     	dprintf_comm(stddeb,
 		"ClearCommError: fd %d (current error %d)\n", fd, commerror);
@@ -762,11 +756,8 @@ UINT16 GetCommEventMask(INT16 fd,UINT16 fnEvtClear)
 /*****************************************************************************
  *	GetCommMask	(KERNEL32.156)
  */
-BOOL32 GetCommMask(HANDLE32 hfile,LPDWORD evtmask)
+BOOL32 GetCommMask(INT32 fd,LPDWORD evtmask)
 {
-	FILE_OBJECT	*fob=(FILE_OBJECT*)hfile;
-	int		fd = fob->fd;
-
     	dprintf_comm(stddeb,
 		"GetCommMask: fd %d, mask %p\n", fd, evtmask);
 	*evtmask = eventmask;
@@ -776,11 +767,8 @@ BOOL32 GetCommMask(HANDLE32 hfile,LPDWORD evtmask)
 /*****************************************************************************
  *	SetCommMask	(KERNEL32.451)
  */
-BOOL32 SetCommMask(HANDLE32 hfile,DWORD evtmask)
+BOOL32 SetCommMask(INT32 fd,DWORD evtmask)
 {
-	FILE_OBJECT	*fob=(FILE_OBJECT*)hfile;
-	int		fd = fob->fd;
-
     	dprintf_comm(stddeb,
 		"SetCommMask: fd %d, mask %lx\n", fd, evtmask);
 	eventmask = evtmask;
@@ -992,10 +980,8 @@ INT16 SetCommState16(LPDCB16 lpdcb)
 /*****************************************************************************
  *	SetCommState32	(KERNEL32.452)
  */
-BOOL32 SetCommState32(HANDLE32 hfile,LPDCB32 lpdcb)
+BOOL32 SetCommState32(INT32 fd,LPDCB32 lpdcb)
 {
-	FILE_OBJECT	*fob = (FILE_OBJECT*)hfile;
-	int		fd = fob->fd;
 	struct termios port;
 	struct DosDeviceStruct *ptr;
 
@@ -1316,10 +1302,8 @@ INT16 GetCommState16(INT16 fd, LPDCB16 lpdcb)
 /*****************************************************************************
  *	GetCommState	(KERNEL32.159)
  */
-BOOL32 GetCommState32(HANDLE32 hfile, LPDCB32 lpdcb)
+BOOL32 GetCommState32(INT32 fd, LPDCB32 lpdcb)
 {
-	FILE_OBJECT	*fob = (FILE_OBJECT*)hfile;
-	int		fd = fob->fd;
 	struct termios	port;
 
 
@@ -1461,10 +1445,8 @@ INT16 TransmitCommChar16(INT16 fd,CHAR chTransmit)
 /*****************************************************************************
  *	TransmitCommChar	(KERNEL32.535)
  */
-BOOL32 TransmitCommChar32(HANDLE32 hfile,CHAR chTransmit)
+BOOL32 TransmitCommChar32(INT32 fd,CHAR chTransmit)
 {
-	FILE_OBJECT	*fob = (FILE_OBJECT*)hfile;
-	int		fd = fob->fd;
 	struct DosDeviceStruct *ptr;
 
     	dprintf_comm(stddeb,"TransmitCommChar32(%d,'%c')\n",fd,chTransmit);
@@ -1593,9 +1575,9 @@ INT16 WriteComm(INT16 fd, LPSTR lpvBuf, INT16 cbWrite)
 /*****************************************************************************
  *	GetCommTimeouts		(KERNEL32.160)
  */
-BOOL32 GetCommTimeouts(HANDLE32 hfile,LPCOMMTIMEOUTS lptimeouts) {
+BOOL32 GetCommTimeouts(INT32 fd,LPCOMMTIMEOUTS lptimeouts) {
 	dprintf_comm(stddeb,"GetCommTimeouts(%lx,%p), empty stub.\n",
-		(DWORD)hfile,lptimeouts
+		fd,lptimeouts
 	);
 	return TRUE;
 }
@@ -1603,9 +1585,9 @@ BOOL32 GetCommTimeouts(HANDLE32 hfile,LPCOMMTIMEOUTS lptimeouts) {
 /*****************************************************************************
  *	SetCommTimeouts		(KERNEL32.453)
  */
-BOOL32 SetCommTimeouts(HANDLE32 hfile,LPCOMMTIMEOUTS lptimeouts) {
+BOOL32 SetCommTimeouts(INT32 fd,LPCOMMTIMEOUTS lptimeouts) {
 	dprintf_comm(stddeb,"SetCommTimeouts(%lx,%p), empty stub.\n",
-		(DWORD)hfile,lptimeouts
+		fd,lptimeouts
 	);
 	return TRUE;
 }

@@ -21,8 +21,8 @@ typedef struct
     DBG_ADDR    addr;
     BYTE        addrlen;
     BYTE        opcode;
-    BOOL        enabled;
-    BOOL        in_use;
+    BOOL16      enabled;
+    BOOL16      in_use;
 } BREAKPOINT;
 
 static BREAKPOINT breakpoints[MAX_BREAKPOINTS];
@@ -65,7 +65,7 @@ static void DEBUG_SetOpcode( const DBG_ADDR *addr, BYTE op )
  * Determine if the instruction at CS:EIP is an instruction that
  * we need to step over (like a call or a repetitive string move).
  */
-static BOOL DEBUG_IsStepOverInstr( SIGCONTEXT *context )
+static BOOL32 DEBUG_IsStepOverInstr( SIGCONTEXT *context )
 {
     BYTE *instr = (BYTE *)PTR_SEG_OFF_TO_LIN(CS_reg(context),EIP_reg(context));
 

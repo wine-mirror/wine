@@ -1,12 +1,13 @@
 #include <sys/types.h>
 #include <dirent.h>
 #include <string.h>
+#include <ctype.h>
+#include <malloc.h>
 #include "xmalloc.h"
 #include "windows.h"
-#include "winbase.h"
 #include "dos_fs.h"
 #include "heap.h"
-#include <ctype.h>
+#include "string32.h"
 
 #define PATH_LEN 260
 
@@ -55,7 +56,6 @@ static BOOL32 MatchWildCard(LPCSTR file, LPCSTR mask)
 /*************************************************************************
  *              FindNextFile32A             (KERNEL32.126)
  */
-
 BOOL32 FindNextFile32A(HANDLE32 handle, LPWIN32_FIND_DATA32A data)
 {
     FindFileContext32 *context;
@@ -86,6 +86,26 @@ BOOL32 FindNextFile32A(HANDLE32 handle, LPWIN32_FIND_DATA32A data)
     }
     
     return (FALSE);
+}
+
+/*************************************************************************
+ *              FindNextFile32W             (KERNEL32.127)
+ */
+BOOL32 FindNextFile32W(HANDLE32 handle, LPWIN32_FIND_DATA32W data)
+{
+    WIN32_FIND_DATA32A	adata;
+
+    adata.dwFileAttributes	= data->dwFileAttributes;
+    adata.ftCreationTime	= data->ftCreationTime;
+    adata.ftLastAccessTime	= data->ftLastAccessTime;
+    adata.ftLastWriteTime	= data->ftLastWriteTime;
+    adata.nFileSizeHigh		= data->nFileSizeHigh;
+    adata.nFileSizeLow		= data->nFileSizeLow;
+    adata.dwReserved0		= data->dwReserved0;
+    adata.dwReserved1		= data->dwReserved1;
+    STRING32_UniToAnsi(adata.cFileName,data->cFileName);
+    STRING32_UniToAnsi(adata.cAlternateFileName,data->cAlternateFileName);
+    return FindNextFile32A(handle,&adata);
 }
 
 /*************************************************************************
@@ -140,9 +160,33 @@ HANDLE32 FindFirstFile32A(LPCSTR lpfilename,
 }
 
 /*************************************************************************
- *              FindClose             (KERNEL32.119)
+ *              FindFirstFile32W             (KERNEL32.124)
  */
-BOOL32 FindClose(HANDLE32 handle)
+HANDLE32 FindFirstFile32W(LPCWSTR filename,LPWIN32_FIND_DATA32W data)
+{
+    WIN32_FIND_DATA32A	adata;
+    LPSTR		afn = STRING32_DupUniToAnsi(filename);
+    HANDLE32		res;
+
+    adata.dwFileAttributes	= data->dwFileAttributes;
+    adata.ftCreationTime	= data->ftCreationTime;
+    adata.ftLastAccessTime	= data->ftLastAccessTime;
+    adata.ftLastWriteTime	= data->ftLastWriteTime;
+    adata.nFileSizeHigh		= data->nFileSizeHigh;
+    adata.nFileSizeLow		= data->nFileSizeLow;
+    adata.dwReserved0		= data->dwReserved0;
+    adata.dwReserved1		= data->dwReserved1;
+    STRING32_UniToAnsi(adata.cFileName,data->cFileName);
+    STRING32_UniToAnsi(adata.cAlternateFileName,data->cAlternateFileName);
+    res=FindFirstFile32A(afn,&adata);
+    free(afn);
+    return res;
+}
+
+/*************************************************************************
+ *              FindClose32             (KERNEL32.119)
+ */
+BOOL32 FindClose32(HANDLE32 handle)
 {
     FindFileContext32 *context;
 

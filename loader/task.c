@@ -1181,7 +1181,7 @@ DWORD WIN16_GetCurrentTask(void)
 /***********************************************************************
  *           GetCurrentPDB   (KERNEL.37)
  */
-HANDLE GetCurrentPDB(void)
+HANDLE16 GetCurrentPDB(void)
 {
     TDB *pTask;
 

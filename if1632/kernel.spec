@@ -78,11 +78,11 @@ type	win16
 #79 RESERVED3
 #80 RESERVED4
 81  pascal16 _lclose(word) _lclose
-82  pascal16 _lread(word segptr word) _lread
+82  pascal16 _lread(word segptr word) WIN16_lread
 83  pascal16 _lcreat(ptr word) _lcreat
 84  pascal   _llseek(word long word) _llseek
 85  pascal16 _lopen(ptr word) _lopen
-86  pascal16 _lwrite(word ptr word) _lwrite
+86  pascal16 _lwrite(word ptr word) _lwrite16
 87  pascal16 RESERVED5(ptr ptr) lstrcmp16
 88  pascal   lstrcpy(segptr segptr) lstrcpy16
 89  pascal   lstrcat(segptr segptr) lstrcat16
@@ -196,7 +196,7 @@ type	win16
 196 pascal16 SelectorAccessRights(word word word) SelectorAccessRights
 197 pascal16 GlobalFix(word) GlobalFix
 198 pascal16 GlobalUnfix(word) GlobalUnfix
-199 pascal16 SetHandleCount(word) SetHandleCount
+199 pascal16 SetHandleCount(word) SetHandleCount16
 200 stub ValidateFreeSpaces
 201 stub ReplaceInst
 202 stub RegisterPtrace
@@ -241,10 +241,10 @@ type	win16
 328 stub _DebugOutput
 #329 K329
 #332 stub THHOOK
-334 pascal16 IsBadReadPtr(segptr word) IsBadReadPtr
-335 pascal16 IsBadWritePtr(segptr word) IsBadWritePtr
-336 pascal16 IsBadCodePtr(segptr) IsBadCodePtr
-337 pascal16 IsBadStringPtr(segptr word) IsBadStringPtr
+334 pascal16 IsBadReadPtr(segptr word) IsBadReadPtr16
+335 pascal16 IsBadWritePtr(segptr word) IsBadWritePtr16
+336 pascal16 IsBadCodePtr(segptr) IsBadCodePtr16
+337 pascal16 IsBadStringPtr(segptr word) IsBadStringPtr16
 338 stub HasGPHandler
 339 stub DiagQuery
 340 stub DiagOutput
@@ -253,10 +253,10 @@ type	win16
 343 stub RegisterWinOldApHook
 344 stub GetWinOldApHooks
 345 pascal16 IsSharedSelector(word) IsSharedSelector
-346 pascal16 IsBadHugeReadPtr(segptr long) IsBadHugeReadPtr
-347 pascal16 IsBadHugeWritePtr(segptr long) IsBadHugeWritePtr
+346 pascal16 IsBadHugeReadPtr(segptr long) IsBadHugeReadPtr16
+347 pascal16 IsBadHugeWritePtr(segptr long) IsBadHugeWritePtr16
 348 pascal16 hmemcpy(ptr ptr long) hmemcpy
-349 pascal   _hread(word segptr long) _hread
+349 pascal   _hread(word segptr long) WIN16_hread
 350 pascal   _hwrite(word ptr long) _hwrite
 #351 BUNNY_351
 352 pascal   lstrcatn(segptr segptr word) lstrcatn16
@@ -292,3 +292,4 @@ type	win16
 517 stub CallProc32W
 518 stub CallProcEx32W
 627 stub IsBadFlatReadWritePtr
+631 stub FUNC004	# shell hook

@@ -41,7 +41,7 @@ typedef struct tagWND
     CLASS         *class;         /* Window class */
     HWINDOWPROC    winproc;       /* Window procedure */
     DWORD          dwMagic;       /* Magic number (must be WND_MAGIC) */
-    HWND16         hwndSelf;      /* Handle of this window */
+    HWND32         hwndSelf;      /* Handle of this window */
     HINSTANCE16    hInstance;     /* Window hInstance (from CreateWindow) */
     RECT16         rectClient;    /* Client area rel. to parent client area */
     RECT16         rectWindow;    /* Whole window rel. to parent client area */

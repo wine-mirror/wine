@@ -83,8 +83,7 @@ static HANDLE16 HOOK_SetHook( INT16 id, HOOKPROC16 proc, HINSTANCE16 hInst,
         if (!(hQueue = GetTaskQueue( hTask ))) return 0;
     }
 
-    if (id == WH_JOURNALPLAYBACK || id == WH_CBT ||
-        id == WH_DEBUG || id == WH_SHELL)
+    if (id == WH_CBT || id == WH_DEBUG || id == WH_SHELL)
     {
 	fprintf( stdnimp, "Unimplemented hook set: (%d,%08lx,%04x,%04x)!\n",
                  id, (DWORD)proc, hInst, hTask );

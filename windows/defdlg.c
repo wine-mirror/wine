@@ -19,7 +19,7 @@
  */
 static void DEFDLG_SetFocus( HWND hwndDlg, HWND hwndCtrl )
 {
-    HWND hwndPrev = GetFocus();
+    HWND32 hwndPrev = GetFocus32();
 
     if (IsChild( hwndDlg, hwndPrev ))
     {
@@ -28,7 +28,7 @@ static void DEFDLG_SetFocus( HWND hwndDlg, HWND hwndCtrl )
     }
     if (SendMessage16( hwndCtrl, WM_GETDLGCODE, 0, 0 ) & DLGC_HASSETSEL)
         SendMessage16( hwndCtrl, EM_SETSEL, FALSE, MAKELONG( 0, -1 ) );
-    SetFocus( hwndCtrl );
+    SetFocus32( hwndCtrl );
 }
 
 
@@ -37,7 +37,7 @@ static void DEFDLG_SetFocus( HWND hwndDlg, HWND hwndCtrl )
  */
 static BOOL DEFDLG_SaveFocus( HWND hwnd, DIALOGINFO *infoPtr )
 {
-    HWND hwndFocus = GetFocus();
+    HWND32 hwndFocus = GetFocus32();
 
     if (!hwndFocus || !IsChild( hwnd, hwndFocus )) return FALSE;
     infoPtr->hwndFocus = hwndFocus;
@@ -189,7 +189,7 @@ static LRESULT DEFDLG_Proc( HWND32 hwnd, UINT32 msg, WPARAM32 wParam,
                 HWND hwndDest = (HWND)wParam;
                 if (!lParam)
                 {
-                    HWND hwndPrev = GetFocus();
+                    HWND32 hwndPrev = GetFocus32();
                     if (!hwndPrev)  /* Set focus to the first item */
                         hwndDest = DIALOG_GetFirstTabItem( hwnd );
                     else

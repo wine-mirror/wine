@@ -264,7 +264,7 @@ UINT32 ThunkConnect32( struct thunkstruct *ths, LPSTR thunkfun16,
 {
 	HINSTANCE16	hmm;
 
-	fprintf(stdnimp,"ThunkConnect32(<struct>,%s,%s,%s,%lx,%lx)\n",
+	fprintf(stdnimp,"ThunkConnect32(<struct>,%s,%s,%s,%x,%lx)\n",
 		thunkfun16,module32,module16,hmod32,dllinitarg1
 	);
 	fprintf(stdnimp,"	magic = %c%c%c%c\n",

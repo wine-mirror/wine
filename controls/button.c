@@ -123,14 +123,14 @@ LRESULT ButtonWndProc(HWND32 hWnd, UINT32 uMsg, WPARAM32 wParam, LPARAM lParam)
 
     case WM_LBUTTONDOWN:
         SendMessage32A( hWnd, BM_SETSTATE32, TRUE, 0 );
-        SetFocus( hWnd );
+        SetFocus32( hWnd );
         SetCapture( hWnd );
         break;
 
     case WM_LBUTTONUP:
         ReleaseCapture();
         if (!(infoPtr->state & BUTTON_HIGHLIGHTED)) break;
-        SendMessage16( hWnd, BM_SETSTATE16, FALSE, 0 );
+        SendMessage32A( hWnd, BM_SETSTATE32, FALSE, 0 );
         GetClientRect16( hWnd, &rect );
         if (PtInRect16( &rect, MAKEPOINT16(lParam) ))
         {

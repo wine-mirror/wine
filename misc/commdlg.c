@@ -2006,7 +2006,7 @@ static LRESULT CC_WMCommand(HWND hDlg, WPARAM wParam, LPARAM lParam)
           case 0x2cf:
                CC_SwitchToFullSize(hDlg,lpp->lpcc->rgbResult,&lpp->fullsize);
 	       InvalidateRect32( hDlg, NULL, TRUE );
-	       SetFocus(GetDlgItem(hDlg,0x2bf));
+	       SetFocus32(GetDlgItem(hDlg,0x2bf));
 	       break;
 
           case 0x2c8:    /* add colors ... column by column */

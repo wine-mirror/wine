@@ -47,10 +47,10 @@ base	1
 0042 stdcall CreateDirectoryW(ptr ptr) CreateDirectory32W
 0043 	stdcall CreateEventA(ptr long long ptr) CreateEventA
 0044 stub CreateEventW
-0045   stdcall CreateFileA(ptr long long ptr long long long) CreateFileA
-0046 	stdcall CreateFileMappingA(long ptr long long long ptr) CreateFileMapping
-0047 stub CreateFileMappingW
-0048 stub CreateFileW
+0045 stdcall CreateFileA(ptr long long ptr long long long) CreateFile32A
+0046 stdcall CreateFileMappingA(long ptr long long long ptr) CreateFileMapping32A
+0047 stdcall CreateFileMappingW(long ptr long long long ptr) CreateFileMapping32W
+0048 stdcall CreateFileW(ptr long long ptr long long long) CreateFile32W
 0049 stub CreateIoCompletionPort
 0050 stub CreateMailslotA
 0051 stub CreateMailslotW
@@ -121,15 +121,15 @@ base	1
 0116 stub FillConsoleOutputCharacterW
 0117 stub FindAtomA
 0118 stub FindAtomW
-0119 stdcall FindClose(long) FindClose
+0119 stdcall FindClose(long) FindClose32
 0120 stub FindCloseChangeNotification
 0121 stub FindFirstChangeNotificationA
 0122 stub FindFirstChangeNotificationW
 0123 stdcall FindFirstFileA(ptr ptr) FindFirstFile32A
-0124 stub FindFirstFileW
+0124 stdcall FindFirstFileW(ptr ptr) FindFirstFile32W
 0125 stub FindNextChangeNotification
 0126 stdcall FindNextFileA(long ptr) FindNextFile32A
-0127 stub FindNextFileW
+0127 stdcall FindNextFileW(long ptr) FindNextFile32W
 0128 stdcall FindResourceA(long ptr ptr) FindResource32A
 0129 stdcall FindResourceExA(long ptr ptr long) FindResourceEx32A
 0130 stdcall FindResourceExW(long ptr ptr long) FindResourceEx32W
@@ -219,9 +219,9 @@ base	1
 0214 stub GetEnvironmentVariableW
 0215 stub GetExitCodeProcess
 0216 stub GetExitCodeThread
-0217 stdcall GetFileAttributesA(ptr)		GetFileAttributesA
-0218 stub GetFileAttributesW
-0219   stdcall GetFileInformationByHandle(long ptr) GetFileInformationByHandle
+0217 stdcall GetFileAttributesA(ptr) GetFileAttributes32A
+0218 stdcall GetFileAttributesW(ptr) GetFileAttributes32W
+0219 stdcall GetFileInformationByHandle(long ptr) GetFileInformationByHandle
 0220 stub GetFileSize
 0221 stub GetFileTime
 0222    stdcall GetFileType(long) GetFileType
@@ -388,11 +388,11 @@ base	1
 0383 stub LockFileEx
 0384 stdcall LockResource(long) LockResource32
 0385 stub MapViewOfFile
-0386 	stdcall MapViewOfFileEx(long long long long long long) MapViewOfFileEx
-0387 stub MoveFileA
+0386 stdcall MapViewOfFileEx(long long long long long long) MapViewOfFileEx
+0387 stdcall MoveFileA(ptr ptr) MoveFile32A
 0388 stub MoveFileExA
 0389 stub MoveFileExW
-0390 stub MoveFileW
+0390 stdcall MoveFileW(ptr ptr) MoveFile32W
 0391 stdcall MulDiv(long long long) MulDiv32
 0392 stdcall MultiByteToWideChar(long long ptr long ptr long) MultiByteToWideChar
 0393 stub OpenConsoleW
@@ -485,7 +485,7 @@ base	1
 0480 stub SetCurrentDirectoryW
 0481 stub SetDefaultCommConfigA
 0482 stub SetDefaultCommConfigW
-0483 stub SetEndOfFile
+0483 stdcall SetEndOfFile(long) SetEndOfFile
 0484 stdcall SetEnvironmentVariableA(ptr ptr) SetEnvironmentVariable32A
 0485 stdcall SetEnvironmentVariableW(ptr ptr) SetEnvironmentVariable32W
 0486 stdcall SetErrorMode(long) SetErrorMode
@@ -493,10 +493,10 @@ base	1
 0488 stub SetFileApisToANSI
 0489 stub SetFileApisToOEM
 0490 stdcall SetFileAttributesA(ptr long) SetFileAttributes32A
-0491 stub SetFileAttributesW
+0491 stdcall SetFileAttributesW(ptr long) SetFileAttributes32W
 0492    stdcall SetFilePointer(long long ptr long) SetFilePointer
 0493 stub SetFileTime
-0494    stdcall SetHandleCount(long) W32_SetHandleCount
+0494 stdcall SetHandleCount(long) SetHandleCount32
 0495 stub SetHandleInformation
 0496 stub SetLastConsoleEventActive
 0497    stdcall SetLastError(long) SetLastError
@@ -580,7 +580,7 @@ base	1
 0575 stub WriteConsoleOutputCharacterW
 0576 stub WriteConsoleOutputW
 0577 stub WriteConsoleW
-0578    stdcall WriteFile(long ptr long ptr ptr) WriteFile
+0578 stdcall WriteFile(long ptr long ptr ptr) WriteFile
 0579 stub WriteFileEx
 0580 stub WritePrivateProfileSectionA
 0581 stub WritePrivateProfileSectionW
@@ -592,14 +592,14 @@ base	1
 0587 stdcall WriteProfileStringA(ptr ptr ptr)	WriteProfileString
 0588 stub WriteProfileStringW
 0589 stub WriteTapemark
-0590 stub _hread
-0591 stub _hwrite
+0590 stdcall _hread(long ptr long) _hread
+0591 stdcall _hwrite(long ptr long) _hwrite
 0592 stdcall _lclose(long) _lclose
 0593 stdcall _lcreat(ptr long) _lcreat
-0594 stub _llseek
+0594 stdcall _llseek(long long long) _llseek
 0595 stdcall _lopen(ptr long) _lopen
-0596 stub _lread
-0597 stub _lwrite
+0596 stdcall _lread(long ptr long) _lread32
+0597 stdcall _lwrite(long ptr long) _lwrite32
 0598 stdcall lstrcat(ptr ptr) lstrcat32A
 0599 stdcall lstrcatA(ptr ptr) lstrcat32A
 0600 stdcall lstrcatW(ptr ptr) lstrcat32W

@@ -13,8 +13,9 @@
 extern DWORD MSG_WineStartTicks;  /* Ticks at Wine startup */
 
 /* message.c */
-extern BOOL MSG_InternalGetMessage( MSG16 *msg, HWND hwnd, HWND hwndOwner,
-				    short code, WORD flags, BOOL sendIdle );
+extern BOOL32 MSG_InternalGetMessage( MSG16 *msg, HWND32 hwnd,
+                                      HWND32 hwndOwner, WPARAM32 code,
+                                      WORD flags, BOOL32 sendIdle );
 
 /* timer.c */
 extern void TIMER_RemoveWindowTimers( HWND32 hwnd );
@@ -26,7 +27,7 @@ extern BOOL32 TIMER_GetTimerMsg( MSG16 *msg, HWND32 hwnd,
                                  HQUEUE16 hQueue, BOOL32 remove );
 
 /* event.c */
-extern BOOL EVENT_WaitXEvent( BOOL sleep );
+extern BOOL32 EVENT_WaitXEvent( BOOL32 sleep );
 extern void EVENT_Synchronize(void);
 extern void EVENT_ProcessEvent( XEvent *event );
 extern void EVENT_RegisterWindow( WND *pWnd );

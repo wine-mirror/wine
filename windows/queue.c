@@ -411,7 +411,7 @@ static void QUEUE_WakeSomeone( UINT message )
     {
         if (wakeBit == QS_KEY)
         {
-            if (!(hwnd = GetFocus())) hwnd = GetActiveWindow();
+            if (!(hwnd = GetFocus32())) hwnd = GetActiveWindow();
         }
         else hwnd = GetCapture();
     }

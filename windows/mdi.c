@@ -573,7 +573,7 @@ LONG MDI_ChildActivate(WND *clientPtr, HWND hWndChild)
     if( !hWndChild )
 	{
 	    if( isActiveFrameWnd )
-		SetFocus( clientInfo->self );
+		SetFocus32( clientInfo->self );
 	    return 0;
 	}
 	
@@ -588,11 +588,11 @@ LONG MDI_ChildActivate(WND *clientPtr, HWND hWndChild)
     if( isActiveFrameWnd )
 	  {
 	    SendMessage16( hWndChild, WM_NCACTIVATE, TRUE, 0L);
-	    if( GetFocus() == clientInfo->self )
+	    if( GetFocus32() == clientInfo->self )
 		SendMessage16( clientInfo->self, WM_SETFOCUS, 
 			    (WPARAM)clientInfo->self, 0L );
 	    else
-		SetFocus( clientInfo->self );
+		SetFocus32( clientInfo->self );
     }
 
 #ifdef WINELIB32
@@ -1096,7 +1096,7 @@ LRESULT MDIClientWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 	  {
 	   w = WIN_FindWndPtr( ci->hwndActiveChild );
 	   if( !(w->dwStyle & WS_MINIMIZE) )
-	       SetFocus( ci->hwndActiveChild );
+	       SetFocus32( ci->hwndActiveChild );
 	  } 
 	return 0;
 	
@@ -1214,7 +1214,7 @@ LRESULT DefFrameProc16( HWND16 hwnd, HWND16 hwndMDIClient, UINT16 message,
 	    return 0;
 	
 	  case WM_SETFOCUS:
-	    SetFocus(hwndMDIClient);
+	    SetFocus32(hwndMDIClient);
 	    break;
 
 	  case WM_SIZE:

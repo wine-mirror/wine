@@ -1270,7 +1270,7 @@ static void EDIT_PaintLine(WND *wndPtr, HDC hdc, UINT line, BOOL rev)
 	s = MIN(li + ll, MAX(li, s));
 	e = MIN(li + ll, MAX(li, e));
 	if (rev && (s != e) &&
-			((GetFocus() == wndPtr->hwndSelf) ||
+			((GetFocus32() == wndPtr->hwndSelf) ||
 				(wndPtr->dwStyle & ES_NOHIDESEL))) {
 		x += EDIT_PaintText(wndPtr, hdc, x, y, line, 0, s - li, FALSE);
 		x += EDIT_PaintText(wndPtr, hdc, x, y, line, s - li, e - s, TRUE);
@@ -1852,7 +1852,7 @@ static LRESULT EDIT_EM_LineScroll(WND *wndPtr, WPARAM wParam, LPARAM lParam)
 	dx = xoff - nxoff;
 	dy = EDIT_WndYFromLine(wndPtr, fv) - EDIT_WndYFromLine(wndPtr, nfv);
 	if (dx || dy) {
-		if (wndPtr->hwndSelf == GetFocus())
+		if (wndPtr->hwndSelf == GetFocus32())
 			HideCaret(wndPtr->hwndSelf);
 		if (EDIT_GetRedraw(wndPtr)) 
 			ScrollWindow(wndPtr->hwndSelf, dx, dy, NULL, NULL);
@@ -1864,7 +1864,7 @@ static LRESULT EDIT_EM_LineScroll(WND *wndPtr, WPARAM wParam, LPARAM lParam)
 		if (IsHScrollBar(wndPtr))
 			SetScrollPos(wndPtr->hwndSelf, SB_HORZ,
 				EDIT_WM_HScroll(wndPtr, EM_GETTHUMB, 0L), TRUE);
-		if (wndPtr->hwndSelf == GetFocus()) {
+		if (wndPtr->hwndSelf == GetFocus32()) {
 			GetCaretPos16(&pos);
 			SetCaretPos(pos.x + dx, pos.y + dy);
 			ShowCaret(wndPtr->hwndSelf);
@@ -2023,7 +2023,7 @@ static LRESULT EDIT_EM_SetSel(WND *wndPtr, WPARAM wParam, LPARAM lParam)
 	}
 	es->SelStart = ns;
 	es->SelEnd = ne;
-	if (wndPtr->hwndSelf == GetFocus()) {
+	if (wndPtr->hwndSelf == GetFocus32()) {
 		el = (UINT)EDIT_EM_LineFromChar(wndPtr, ne, 0L);
 		eli = (UINT)EDIT_EM_LineIndex(wndPtr, el, 0L);
 		SetCaretPos(EDIT_WndXFromCol(wndPtr, el, ne - eli),
@@ -2603,7 +2603,7 @@ static LRESULT EDIT_WM_LButtonDown(WND *wndPtr, WPARAM wParam, LPARAM lParam)
 	UINT vlc = EDIT_GetVisibleLineCount(wndPtr);
 	UINT li;
 
-	SetFocus(wndPtr->hwndSelf);
+	SetFocus32(wndPtr->hwndSelf);
 	SetCapture(wndPtr->hwndSelf);
 	l = MIN(fv + vlc - 1, MAX(fv, l));
 	x = MIN(EDIT_GetWndWidth(wndPtr), MAX(0, x));
@@ -2684,7 +2684,7 @@ static LRESULT EDIT_WM_Paint(WND *wndPtr, WPARAM wParam, LPARAM lParam)
 	RECT16 rcLine;
 	RECT16 rcRgn;
 	BOOL rev = IsWindowEnabled(wndPtr->hwndSelf) &&
-				((GetFocus() == wndPtr->hwndSelf) ||
+				((GetFocus32() == wndPtr->hwndSelf) ||
 					(wndPtr->dwStyle & ES_NOHIDESEL));
 
 	hdc = BeginPaint16(wndPtr->hwndSelf, &ps);
@@ -2791,7 +2791,7 @@ static LRESULT EDIT_WM_SetFont(WND *wndPtr, WPARAM wParam, LPARAM lParam)
 	EDIT_BuildLineDefs(wndPtr);
 	if ((BOOL)lParam && EDIT_GetRedraw(wndPtr))
 		InvalidateRect32( wndPtr->hwndSelf, NULL, TRUE );
-	if (wndPtr->hwndSelf == GetFocus()) {
+	if (wndPtr->hwndSelf == GetFocus32()) {
 		DestroyCaret();
 		CreateCaret(wndPtr->hwndSelf, 0, 2, EDIT_GetLineHeight(wndPtr));
 		EDIT_EM_SetSel(wndPtr, 1, sel);

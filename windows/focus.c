@@ -7,6 +7,7 @@
  *
  */
 
+#define NO_TRANSITION_TYPES  /* This file is Win32-clean */
 #include "win.h"
 #include "winpos.h"
 #include "hook.h"
@@ -14,7 +15,7 @@
 #include "message.h"
 #include "options.h"
 
-static HWND hwndFocus = 0;
+static HWND32 hwndFocus = 0;
 
 /*****************************************************************
  *               FOCUS_SetXFocus
@@ -22,7 +23,7 @@ static HWND hwndFocus = 0;
  * Set the X focus.
  * Explicit colormap management seems to work only with OLVWM.
  */
-void FOCUS_SetXFocus( HWND hwnd )
+void FOCUS_SetXFocus( HWND32 hwnd )
 {
     XWindowAttributes win_attr;
     Window win;
@@ -55,25 +56,34 @@ void FOCUS_SetXFocus( HWND hwnd )
 /*****************************************************************
  *	         FOCUS_SwitchFocus 
  */
-void FOCUS_SwitchFocus(HWND hFocusFrom, HWND hFocusTo)
+void FOCUS_SwitchFocus( HWND32 hFocusFrom, HWND32 hFocusTo )
 {
     hwndFocus = hFocusTo;
 
-    if (hFocusFrom) SendMessage16( hFocusFrom, WM_KILLFOCUS, (WPARAM)hFocusTo, 0L);
+    if (hFocusFrom) SendMessage32A( hFocusFrom, WM_KILLFOCUS, hFocusTo, 0 );
     if( !hFocusTo || hFocusTo != hwndFocus )
 	return;
 
-    SendMessage16( hFocusTo, WM_SETFOCUS, (WPARAM)hFocusFrom, 0L);
+    SendMessage32A( hFocusTo, WM_SETFOCUS, hFocusFrom, 0 );
     FOCUS_SetXFocus( hFocusTo );
 }
 
 
 /*****************************************************************
- *               SetFocus            (USER.22)
+ *               SetFocus16   (USER.22)
  */
-HWND SetFocus(HWND hwnd)
+HWND16 SetFocus16( HWND16 hwnd )
 {
-    HWND hWndPrevFocus, hwndTop = hwnd;
+    return (HWND16)SetFocus32( hwnd );
+}
+
+
+/*****************************************************************
+ *               SetFocus32   (USER32.480)
+ */
+HWND32 SetFocus32( HWND32 hwnd )
+{
+    HWND32 hWndPrevFocus, hwndTop = hwnd;
     WND *wndPtr = WIN_FindWndPtr( hwnd );
 
     if (wndPtr)
@@ -91,7 +101,8 @@ HWND SetFocus(HWND hwnd)
 	if( hwnd == hwndFocus ) return hwnd;
 
 	/* call hooks */
-	if( HOOK_CallHooks( WH_CBT, HCBT_SETFOCUS, (WPARAM)hwnd, (LPARAM)hwndFocus) )
+	if( HOOK_CallHooks( WH_CBT, HCBT_SETFOCUS, (WPARAM16)hwnd,
+                            (LPARAM)hwndFocus) )
 	    return 0;
 
         /* activate hwndTop if needed. */
@@ -115,11 +126,18 @@ HWND SetFocus(HWND hwnd)
 
 
 /*****************************************************************
- *               GetFocus            (USER.23)
+ *               GetFocus16   (USER.23)
  */
-HWND GetFocus(void)
+HWND16 GetFocus16(void)
 {
-    return hwndFocus;
+    return (HWND16)hwndFocus;
 }
 
 
+/*****************************************************************
+ *               GetFocus32   (USER32.239)
+ */
+HWND32 GetFocus32(void)
+{
+    return hwndFocus;
+}

@@ -5,6 +5,7 @@
  *           1995, Alex Korobka  
  */
 
+#define NO_TRANSITION_TYPES  /* This file is Win32-clean */
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -454,7 +455,7 @@ static const char * const MessageTypeNames[SPY_MAX_MSGNUM + 1] =
 };
 
 
-static BOOL SPY_Exclude[SPY_MAX_MSGNUM+1];
+static BOOL16 SPY_Exclude[SPY_MAX_MSGNUM+1];
 static int SPY_IndentLevel  = 0;
 
 #define SPY_EXCLUDE(msg) \
@@ -463,7 +464,7 @@ static int SPY_IndentLevel  = 0;
 /***********************************************************************
  *           SPY_GetMsgName
  */
-const char *SPY_GetMsgName( UINT msg )
+const char *SPY_GetMsgName( UINT32 msg )
 {
     static char buffer[20];
 
@@ -504,7 +505,7 @@ void SPY_EnterMessage( INT32 iFlag, HWND32 hWnd, UINT32 msg,
     case SPY_SENDMESSAGE32:
         {
             char taskName[30];
-            HTASK hTask = GetWindowTask16(hWnd);
+            HTASK16 hTask = GetWindowTask16(hWnd);
             if (hTask == GetCurrentTask()) strcpy( taskName, "self" );
             else if (!hTask) strcpy( taskName, "Wine" );
             else sprintf( taskName, "task %04x %s",

@@ -132,7 +132,7 @@ base	1
 0125 stdcall DefWindowProcA(long long long long) DefWindowProc32A
 0126 stdcall DefWindowProcW(long long long long) DefWindowProc32W
 0127 stub DeferWindowPos
-0128 stub DeleteMenu
+0128 stdcall DeleteMenu(long) DeleteMenu
 0129 stub DestroyAcceleratorTable
 0130 stdcall DestroyCaret() DestroyCaret
 0131 stub DestroyCursor
@@ -243,7 +243,7 @@ base	1
 0236 stdcall GetDlgItemTextA(long long ptr long) GetDlgItemText32A
 0237 stdcall GetDlgItemTextW(long long ptr long) GetDlgItemText32W
 0238 stub GetDoubleClickTime
-0239 stdcall GetFocus() GetFocus
+0239 stdcall GetFocus() GetFocus32
 0240 stub GetForegroundWindow
 0241 stub GetIconInfo
 0242 stub GetInputDesktop
@@ -288,9 +288,9 @@ base	1
 0281 stdcall GetPropW(long ptr) GetProp32W
 0282 stub GetQueueStatus
 0283 stdcall GetScrollInfo(long long ptr) GetScrollInfo32
-0284 stub GetScrollPos
+0284 stdcall GetScrollPos(long long) GetScrollPos
 0285 stub GetScrollRange
-0286 stub GetShellWindow
+0286 return GetShellWindow 0 0
 0287 stdcall GetSubMenu(long long) GetSubMenu
 0288 stdcall GetSysColor(long) GetSysColor
 0289 stdcall GetSysColorBrush(long) GetSysColorBrush
@@ -484,7 +484,7 @@ base	1
 0477 stdcall SetDlgItemTextA(long long ptr) SetDlgItemText32A
 0478 stdcall SetDlgItemTextW(long long ptr) SetDlgItemText32W
 0479 stub SetDoubleClickTime
-0480 stdcall SetFocus(long) SetFocus
+0480 stdcall SetFocus(long) SetFocus32
 0481 stub SetForegroundWindow
 0482 stdcall SetInternalWindowPos(long long ptr ptr) SetInternalWindowPos32
 0483 stub SetKeyboardState
@@ -576,7 +576,7 @@ base	1
 0569 stub UserRegisterWowHandlers
 0570 stdcall ValidateRect(long ptr) ValidateRect32
 0571 stdcall ValidateRgn(long long) ValidateRgn
-0572 stub VkKeyScanA
+0572 stdcall VkKeyScanA(long) VkKeyScan
 0573 stub VkKeyScanExA
 0574 stub VkKeyScanExW
 0575 stub VkKeyScanW

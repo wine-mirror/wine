@@ -254,7 +254,7 @@ INT16 wvsnprintf16( LPSTR buffer, UINT16 maxlen, LPCSTR spec, LPCVOID args )
             break;
         case WPR_WSTRING:  /* No Unicode in Win16 */
         case WPR_STRING:
-            if (IsBadReadPtr( *(SEGPTR *)args, 1 )) cur_arg = (DWORD)"";
+            if (IsBadReadPtr16( *(SEGPTR *)args, 1 )) cur_arg = (DWORD)"";
             else cur_arg = (DWORD)PTR_SEG_TO_LIN( *(SEGPTR *)args );
             args = (SEGPTR *)args + 1;
             break;

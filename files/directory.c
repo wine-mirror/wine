@@ -147,7 +147,13 @@ int DIR_Init(void)
                        &DIR_SystemDosDir, &DIR_SystemUnixDir ))) return 0;
     if (!(DIR_GetPath( "temp", "c:\\windows",
                        &DIR_TempDosDir, &DIR_TempUnixDir ))) return 0;
-
+    if (-1==access(DIR_TempUnixDir,W_OK)) {
+    	if (errno==EACCES)
+		fprintf(stderr,"Warning: The Temporary Directory (as specified in wine.conf) is NOT writeable. Please check your configuration.\n");
+	else
+		fprintf(stderr,"Warning: Access to Temporary Directory failed (%s).\n",strerror(errno));
+    }
+   
     if (drive == -1)
     {
         drive = DIR_WindowsDosDir[0] - 'A';

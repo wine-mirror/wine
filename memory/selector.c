@@ -365,9 +365,9 @@ WORD SelectorAccessRights( WORD sel, WORD op, WORD val )
 
 
 /***********************************************************************
- *           IsBadCodePtr   (KERNEL.336)
+ *           IsBadCodePtr16   (KERNEL.336)
  */
-BOOL IsBadCodePtr( SEGPTR lpfn )
+BOOL16 IsBadCodePtr16( SEGPTR lpfn )
 {
     WORD sel;
     ldt_entry entry;
@@ -383,9 +383,9 @@ BOOL IsBadCodePtr( SEGPTR lpfn )
 
 
 /***********************************************************************
- *           IsBadStringPtr   (KERNEL.337)
+ *           IsBadStringPtr16   (KERNEL.337)
  */
-BOOL IsBadStringPtr( SEGPTR ptr, WORD size )
+BOOL16 IsBadStringPtr16( SEGPTR ptr, UINT16 size )
 {
     WORD sel;
     ldt_entry entry;
@@ -402,9 +402,9 @@ BOOL IsBadStringPtr( SEGPTR ptr, WORD size )
 
 
 /***********************************************************************
- *           IsBadHugeReadPtr   (KERNEL.346)
+ *           IsBadHugeReadPtr16   (KERNEL.346)
  */
-BOOL IsBadHugeReadPtr( SEGPTR ptr, DWORD size )
+BOOL16 IsBadHugeReadPtr16( SEGPTR ptr, DWORD size )
 {
     WORD sel;
     ldt_entry entry;
@@ -420,9 +420,9 @@ BOOL IsBadHugeReadPtr( SEGPTR ptr, DWORD size )
 
 
 /***********************************************************************
- *           IsBadHugeWritePtr   (KERNEL.347)
+ *           IsBadHugeWritePtr16   (KERNEL.347)
  */
-BOOL IsBadHugeWritePtr( SEGPTR ptr, DWORD size )
+BOOL16 IsBadHugeWritePtr16( SEGPTR ptr, DWORD size )
 {
     WORD sel;
     ldt_entry entry;
@@ -437,20 +437,20 @@ BOOL IsBadHugeWritePtr( SEGPTR ptr, DWORD size )
 }
 
 /***********************************************************************
- *           IsBadReadPtr   (KERNEL.334)
+ *           IsBadReadPtr16   (KERNEL.334)
  */
-BOOL IsBadReadPtr( SEGPTR ptr, WORD size )
+BOOL16 IsBadReadPtr16( SEGPTR ptr, UINT16 size )
 {
-    return IsBadHugeReadPtr( ptr, size );
+    return IsBadHugeReadPtr16( ptr, size );
 }
 
 
 /***********************************************************************
- *           IsBadWritePtr   (KERNEL.335)
+ *           IsBadWritePtr16   (KERNEL.335)
  */
-BOOL IsBadWritePtr( SEGPTR ptr, WORD size )
+BOOL16 IsBadWritePtr16( SEGPTR ptr, UINT16 size )
 {
-    return IsBadHugeWritePtr( ptr, size );
+    return IsBadHugeWritePtr16( ptr, size );
 }
 
 

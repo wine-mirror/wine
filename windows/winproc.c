@@ -144,7 +144,7 @@ static WINDOWPROC *WINPROC_GetPtr( WNDPROC16 handle )
 
     /* Check for a segmented pointer */
 
-    if (!IsBadReadPtr( (SEGPTR)handle, sizeof(WINDOWPROC)-sizeof(proc->thunk)))
+    if (!IsBadReadPtr16((SEGPTR)handle,sizeof(WINDOWPROC)-sizeof(proc->thunk)))
     {
         ptr = (BYTE *)PTR_SEG_TO_LIN(handle);
         if (!HEAP_IsInsideHeap( WinProcHeap, 0, ptr )) return NULL;

@@ -1,4 +1,51 @@
 ----------------------------------------------------------------------
+Wed Sep 11 18:08:30 1996  Albrecht Kleine  <kleine@ak.sax.de>
+
+	* [windows/event.c]
+	Minor improvements in setting event time in MSG struct.
+
+	* [windows/hook.c]
+	Removed an useless 'unimplemented hook' message.
+
+	* [windows/win.c]
+	Added a WH_CBT hook call during window creation: good for CTL3D.DLL
+
+Wed Sep 11 11:19:56 1996  Marcus Meissner <msmeissn@cip.informatik.uni-erlangen.de>
+	* [loader/pe_image.c]
+	Fixed imports with no name/ordinal list (MFC30.DLL).
+	Added borland style - ordinal import (wsock32.dll).
+
+	* [files/file.c] [win32/file.c] [if1632/kernel.spec]
+	  [if1632/kernel32.spec] [include/windows.h]
+	Win32 and Win16 code use the same filehandles/HFILEs.
+	Added SetEndOfFile, MoveFile*, diverse *W functions.
+
+	* [loader/pe_image.c]
+	Fixed argument 2 to DllEntry.
+
+	* [misc/comm.c]
+	Adapt to filehandling changes, win32 code still broken.
+
+	* [misc/registry.c]
+	Use Wine filehandling.
+	StartupRegistry to add startup-detected registry entries.
+
+	* [miscemu/dpmi.c] [miscemu/int21.c]
+	Some missing interrupt-functions added.
+
+	* [if1632/gdi32.spec][if1632/user32.spec]
+	Some thunks to 16 bit equivalent functions added.
+
+Sat Sep  7 11:36:57 EDT 1996  Matthew Ghio <ghio@netcom.com>
+
+	* [misc/winsocket.c]
+	Rewrote WINSOCK_select() and WSAFDIsSet() to properly convert
+	Windows fd_set structs.
+
+	* [if1632/winsock.spec]
+	Corrected arguments to select().
+
+----------------------------------------------------------------------
 Sun Sep  1 19:22:46 1996  Alexandre Julliard  <julliard@lrc.epfl.ch>
 
 	* [misc/commdlg.c] [if1632/commdlg.spec]

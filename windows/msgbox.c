@@ -142,7 +142,7 @@ LRESULT SystemMessageBoxProc(HWND hwnd,UINT message,WPARAM wParam,LPARAM lParam)
       hItem = GetDlgItem(hwnd, (i + 5) % 7 + 1);
       if (GetWindowLong32A(hItem, GWL_STYLE) & WS_VISIBLE) {
 	if (buttons++ == ((lpmb->type & MB_DEFMASK) >> 8)) {
-	  SetFocus(hItem);
+	  SetFocus32(hItem);
 	  SendMessage32A( hItem, BM_SETSTYLE32, BS_DEFPUSHBUTTON, TRUE );
 	}
 	SetWindowPos(hItem, 0, bpos, tiheight, 0, 0,

@@ -195,8 +195,8 @@ static BYTE *INSTR_GetOperandAddr( SIGCONTEXT *context, BYTE *instr,
  *
  * Emulate the LDS (and LES,LFS,etc.) instruction.
  */
-static BOOL INSTR_EmulateLDS( SIGCONTEXT *context, BYTE *instr, int long_op,
-                              int long_addr, int segprefix, int *len )
+static BOOL32 INSTR_EmulateLDS( SIGCONTEXT *context, BYTE *instr, int long_op,
+                                int long_addr, int segprefix, int *len )
 {
     WORD seg;
     BYTE *regmodrm = instr + 1 + (*instr == 0x0f);

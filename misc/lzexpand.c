@@ -461,7 +461,7 @@ LZCopy(HFILE src,HFILE dest) {
 			return ret;
 		}
 		len    += ret;
-		wret	= _lwrite(dest,buf,ret);
+		wret	= _lwrite32(dest,buf,ret);
 		if (wret!=ret)
 			return LZERROR_WRITE;
 	}

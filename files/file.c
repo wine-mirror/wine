@@ -18,6 +18,7 @@
 #include <utime.h>
 
 #include "windows.h"
+#include "winerror.h"
 #include "directory.h"
 #include "dos_fs.h"
 #include "drive.h"
@@ -42,6 +43,7 @@ typedef struct tagDOS_FILE
     char               *unix_name;
     WORD                filedate;
     WORD                filetime;
+    DWORD               type;         /* Type for win32 apps */
 } DOS_FILE;
 
 /* Global files array */
@@ -72,6 +74,7 @@ static DOS_FILE *FILE_Alloc(void)
     file->count = 1;
     file->unix_handle = -1;
     file->unix_name = NULL;
+    file->type = FILE_TYPE_DISK;
     return file;
 }
 
@@ -217,7 +220,7 @@ int FILE_GetUnixHandle( HFILE hFile )
  *
  * Close all open files of a given PDB. Used on task termination.
  */
-void FILE_CloseAllFiles( HANDLE hPDB )
+void FILE_CloseAllFiles( HANDLE16 hPDB )
 {
     BYTE *files;
     WORD count;
@@ -314,7 +317,7 @@ static DOS_FILE *FILE_OpenUnixFile( const char *name, int mode )
     struct stat st;
 
     if (!(file = FILE_Alloc())) return NULL;
-    if ((file->unix_handle = open( name, mode )) == -1)
+    if ((file->unix_handle = open( name, mode, 0666 )) == -1)
     {
         if (Options.allowReadOnly && (mode == O_RDWR))
         {
@@ -346,9 +349,11 @@ static DOS_FILE *FILE_OpenUnixFile( const char *name, int mode )
 /***********************************************************************
  *           FILE_Open
  */
-static DOS_FILE *FILE_Open( LPCSTR path, int mode )
+HFILE FILE_Open( LPCSTR path, INT32 mode )
 {
     const char *unixName;
+    DOS_FILE *file;
+    HFILE handle;
 
     dprintf_file(stddeb, "FILE_Open: '%s' %04x\n", path, mode );
     if ((unixName = DOSFS_IsDevice( path )) != NULL)
@@ -358,11 +363,16 @@ static DOS_FILE *FILE_Open( LPCSTR path, int mode )
         {
             dprintf_file(stddeb, "FILE_Open: Non-existing device\n");
             DOS_ERROR( ER_FileNotFound, EC_NotFound, SA_Abort, EL_Disk );
-            return NULL;
+            return HFILE_ERROR;
         }
     }
-    else if (!(unixName = DOSFS_GetUnixFileName( path, TRUE ))) return NULL;
-    return FILE_OpenUnixFile( unixName, mode );
+    else if (!(unixName = DOSFS_GetUnixFileName( path, TRUE )))
+        return HFILE_ERROR;
+
+    if (!(file = FILE_OpenUnixFile( unixName, mode ))) return HFILE_ERROR;
+    if ((handle = FILE_AllocTaskHandle( file )) == HFILE_ERROR)
+        FILE_Close( file );
+    return handle;
 }
 
 
@@ -434,7 +444,7 @@ int FILE_Stat( LPCSTR unixName, BYTE *pattr, DWORD *psize,
  *
  * Get the date and time of a file.
  */
-int FILE_GetDateTime( HFILE hFile, WORD *pdate, WORD *ptime, BOOL refresh )
+int FILE_GetDateTime( HFILE hFile, WORD *pdate, WORD *ptime, BOOL32 refresh )
 {
     DOS_FILE *file;
 
@@ -596,6 +606,8 @@ UINT32 GetTempFileName32A( LPCSTR path, LPCSTR prefix, UINT32 unique,
     {
         lstrcpyn32A( buffer, DOSFS_GetDosTrueName( buffer, FALSE ), 144 );
         dprintf_file( stddeb, "GetTempFileName: returning %s\n", buffer );
+	if (-1==access(DOSFS_GetUnixFileName(buffer,TRUE),W_OK))
+	    fprintf(stderr,"Warning: GetTempFileName returns '%s', which doesn't seem to be writeable. Please check your configuration file if this generates a failure.\n",buffer);
         return unique;
     }
 
@@ -617,6 +629,8 @@ UINT32 GetTempFileName32A( LPCSTR path, LPCSTR prefix, UINT32 unique,
 
     lstrcpyn32A( buffer, DOSFS_GetDosTrueName( buffer, FALSE ), 144 );
     dprintf_file( stddeb, "GetTempFileName: returning %s\n", buffer );
+    if (-1==access(DOSFS_GetUnixFileName(buffer,TRUE),W_OK))
+	fprintf(stderr,"Warning: GetTempFileName returns '%s', which doesn't seem to be writeable. Please check your configuration file if this generates a failure.\n",buffer);
     return num;
 }
 
@@ -965,11 +979,46 @@ HFILE _lclose( HFILE hFile )
 
 
 /***********************************************************************
- *           _lread   (KERNEL.82)
+ *           WIN16_hread
  */
-INT _lread( HFILE hFile, SEGPTR buffer, WORD count )
+LONG WIN16_hread( HFILE hFile, SEGPTR buffer, LONG count )
 {
-    return (INT)_hread( hFile, buffer, (LONG)count );
+    LONG maxlen;
+
+    dprintf_file( stddeb, "_hread16: %d %08lx %ld\n",
+                  hFile, (DWORD)buffer, count );
+
+    /* Some programs pass a count larger than the allocated buffer */
+    maxlen = GetSelectorLimit( SELECTOROF(buffer) ) - OFFSETOF(buffer) + 1;
+    if (count > maxlen) count = maxlen;
+    return FILE_Read( hFile, PTR_SEG_TO_LIN(buffer), count );
+}
+
+
+/***********************************************************************
+ *           WIN16_lread
+ */
+UINT16 WIN16_lread( HFILE hFile, SEGPTR buffer, UINT16 count )
+{
+    return (UINT16)WIN16_hread( hFile, buffer, (LONG)count );
+}
+
+
+/***********************************************************************
+ *           _lread32   (KERNEL32.596)
+ */
+UINT32 _lread32( HFILE hFile, LPVOID buffer, UINT32 count )
+{
+    return (UINT32)FILE_Read( hFile, buffer, (LONG)count );
+}
+
+
+/***********************************************************************
+ *           _lread16   (KERNEL.82)
+ */
+UINT16 _lread16( HFILE hFile, LPVOID buffer, UINT16 count )
+{
+    return (UINT16)FILE_Read( hFile, buffer, (LONG)count );
 }
 
 
@@ -1010,9 +1059,9 @@ HFILE _lcreat_uniq( LPCSTR path, INT32 attr )
 
 
 /***********************************************************************
- *           _llseek   (KERNEL.84)
+ *           _llseek   (KERNEL.84) (KERNEL32.594)
  */
-LONG _llseek( HFILE hFile, LONG lOffset, INT nOrigin )
+LONG _llseek( HFILE hFile, LONG lOffset, INT32 nOrigin )
 {
     DOS_FILE *file;
     int origin, result;
@@ -1039,9 +1088,7 @@ LONG _llseek( HFILE hFile, LONG lOffset, INT nOrigin )
  */
 HFILE _lopen( LPCSTR path, INT32 mode )
 {
-    DOS_FILE *file;
-    int unixMode;
-    HFILE handle;
+    INT32 unixMode;
 
     dprintf_file(stddeb, "_lopen('%s',%04x)\n", path, mode );
 
@@ -1058,38 +1105,33 @@ HFILE _lopen( LPCSTR path, INT32 mode )
         unixMode = O_RDONLY;
         break;
     }
-    if (!(file = FILE_Open( path, unixMode ))) return HFILE_ERROR;
-    if ((handle = FILE_AllocTaskHandle( file )) == HFILE_ERROR)
-        FILE_Close( file );
-    return handle;
+    return FILE_Open( path, unixMode );
 }
 
 
 /***********************************************************************
- *           _lwrite   (KERNEL.86)
+ *           _lwrite16   (KERNEL.86)
  */
-INT _lwrite( HFILE hFile, LPCSTR buffer, WORD count )
+UINT16 _lwrite16( HFILE hFile, LPCSTR buffer, UINT16 count )
 {
-    return (INT)_hwrite( hFile, buffer, (LONG)count );
+    return (UINT16)_hwrite( hFile, buffer, (LONG)count );
+}
+
+/***********************************************************************
+ *           _lwrite32   (KERNEL.86)
+ */
+UINT32 _lwrite32( HFILE hFile, LPCSTR buffer, UINT32 count )
+{
+    return (UINT32)_hwrite( hFile, buffer, (LONG)count );
 }
 
 
 /***********************************************************************
  *           _hread   (KERNEL.349)
  */
-LONG _hread( HFILE hFile, SEGPTR buffer, LONG count )
+LONG _hread( HFILE hFile, LPVOID buffer, LONG count)
 {
-#ifndef WINELIB
-    LONG maxlen;
-
-    dprintf_file( stddeb, "_hread: %d %08lx %ld\n",
-                  hFile, (DWORD)buffer, count );
-
-    /* Some programs pass a count larger than the allocated buffer */
-    maxlen = GetSelectorLimit( SELECTOROF(buffer) ) - OFFSETOF(buffer) + 1;
-    if (count > maxlen) count = maxlen;
-#endif
-    return FILE_Read( hFile, PTR_SEG_TO_LIN(buffer), count );
+    return FILE_Read( hFile, buffer, count );
 }
 
 
@@ -1117,9 +1159,9 @@ LONG _hwrite( HFILE hFile, LPCSTR buffer, LONG count )
 
 
 /***********************************************************************
- *           SetHandleCount   (KERNEL.199)
+ *           SetHandleCount16   (KERNEL.199)
  */
-WORD SetHandleCount( WORD count )
+UINT16 SetHandleCount16( UINT16 count )
 {
     HANDLE hPDB = GetCurrentPDB();
     PDB *pdb = (PDB *)GlobalLock16( hPDB );
@@ -1344,4 +1386,32 @@ BOOL32 RemoveDirectory32W( LPCWSTR path )
     BOOL32 ret = RemoveDirectory32A( xpath );
     free(xpath);
     return ret;
+}
+
+
+/***********************************************************************
+ *           FILE_SetFileType
+ */
+BOOL32 FILE_SetFileType( HFILE hFile, DWORD type )
+{
+    DOS_FILE *file = FILE_GetFile(hFile);
+    if (!file) return FALSE;
+    file->type = type;
+    return TRUE;
+}
+
+
+/***********************************************************************
+ *           GetFileType   (KERNEL32.222)
+ */
+DWORD GetFileType( HFILE hFile )
+{
+    DOS_FILE *file = FILE_GetFile(hFile);
+    
+    if (!file)
+    {
+    	SetLastError( ERROR_INVALID_HANDLE );
+    	return FILE_TYPE_UNKNOWN; /* FIXME: correct? */
+    }
+    return file->type;
 }

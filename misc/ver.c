@@ -62,8 +62,8 @@ find_ne_resource(
 	nehdoffset = LZTELL(lzfd);
 	LZSeek(lzfd,nehd->resource_tab_offset,SEEK_CUR);
 	LZREAD(&shiftcount);
-	dprintf_resource(stderr,"shiftcount is %d\n",shiftcount);
-	dprintf_resource(stderr,"reading resource typeinfo dir.\n");
+	dprintf_ver(stddeb,"shiftcount is %d\n",shiftcount);
+	dprintf_ver(stddeb,"reading resource typeinfo dir.\n");
 
 	if (!HIWORD(typeid)) typeid = (SEGPTR)(LOWORD(typeid) | 0x8000);
 	if (!HIWORD(resid))  resid  = (SEGPTR)(LOWORD(resid) | 0x8000);
@@ -73,7 +73,7 @@ find_ne_resource(
 		LZREAD(&ti);
 		if (!ti.type_id)
 			return 0;
-		dprintf_resource(stderr,"    ti.typeid =%04x,count=%d\n",ti.type_id,ti.count);
+		dprintf_ver(stddeb,"    ti.typeid =%04x,count=%d\n",ti.type_id,ti.count);
 		skipflag=0;
 		if (!HIWORD(typeid)) {
 			if ((ti.type_id&0x8000)&&(typeid!=ti.type_id))
@@ -96,7 +96,7 @@ find_ne_resource(
 				str=xmalloc(len);
 				if (len!=LZRead32(lzfd,str,len))
 					return 0;
-				dprintf_resource(stderr,"read %s to compare it with %s\n",
+				dprintf_ver(stddeb,"read %s to compare it with %s\n",
 					str,(char*)PTR_SEG_TO_LIN(typeid)
 				);
 				if (lstrcmpi32A(str,(char*)PTR_SEG_TO_LIN(typeid)))
@@ -114,7 +114,7 @@ find_ne_resource(
 			int	len;
 
 			LZREAD(&ni);
-			dprintf_resource(stderr,"	ni.id=%4x,offset=%d,length=%d\n",
+			dprintf_ver(stddeb,"	ni.id=%4x,offset=%d,length=%d\n",
 				ni.id,ni.offset,ni.length
 			);
 			skipflag=1;
@@ -137,7 +137,7 @@ find_ne_resource(
 					str=xmalloc(len);
 					if (len!=LZRead32(lzfd,str,len))
 						return 0;
-					dprintf_resource(stderr,"read %s to compare it with %s\n",
+					dprintf_ver(stddeb,"read %s to compare it with %s\n",
 						str,(char*)PTR_SEG_TO_LIN(typeid)
 					);
 					if (!lstrcmpi32A(str,(char*)PTR_SEG_TO_LIN(typeid)))
@@ -156,7 +156,7 @@ find_ne_resource(
 				free(rdata);
 				return 0;
 			}
-			dprintf_resource(stderr,"resource found.\n");
+			dprintf_ver(stddeb,"resource found.\n");
 			*resdata= (BYTE*)rdata;
 			*reslen	= len;
 			return 1;
@@ -173,7 +173,7 @@ GetFileResourceSize(LPCSTR filename,SEGPTR restype,SEGPTR resid,LPDWORD off) {
 	int	reslen;
 	struct	ne_header_s	nehd;
 
-	fprintf(stderr,"GetFileResourceSize(%s,%lx,%lx,%p)\n",
+	dprintf_ver(stddeb,"GetFileResourceSize(%s,%lx,%lx,%p)\n",
 		filename,(LONG)restype,(LONG)resid,off
 	);
 	lzfd=LZOpenFile16(filename,&ofs,OF_READ);
@@ -202,7 +202,7 @@ GetFileResource(LPCSTR filename,SEGPTR restype,SEGPTR resid,
 	BYTE	*resdata;
 	int	reslen=datalen;
 	struct	ne_header_s	nehd;
-	fprintf(stderr,"GetFileResource(%s,%lx,%lx,%ld,%ld,%p)\n",
+	dprintf_ver(stddeb,"GetFileResource(%s,%lx,%lx,%ld,%ld,%p)\n",
 		filename,(LONG)restype,(LONG)resid,off,datalen,data
 	);
 
@@ -235,7 +235,7 @@ GetFileVersionInfoSize16(LPCSTR filename,LPDWORD handle) {
 	BYTE	buf[72];
 	VS_FIXEDFILEINFO *vffi;
 
-	dprintf_resource(stderr,"GetFileVersionInfoSize16(%s,%p)\n",filename,handle);
+	dprintf_ver(stddeb,"GetFileVersionInfoSize16(%s,%p)\n",filename,handle);
 	len=GetFileResourceSize(filename,VS_FILE_INFO,VS_VERSION_INFO,handle);
 	if (!len)
 		return 0;
@@ -250,100 +250,100 @@ GetFileVersionInfoSize16(LPCSTR filename,LPDWORD handle) {
 		return 0;
 	if (*(WORD*)buf < len)
 		len = *(WORD*)buf;
-	fprintf(stderr,"->strucver=%ld.%ld,filever=%ld.%ld,productver=%ld.%ld,flagmask=%lx,flags=%lx,OS=",
+	dprintf_ver(stddeb,"->strucver=%ld.%ld,filever=%ld.%ld,productver=%ld.%ld,flagmask=%lx,flags=%lx,OS=",
 		(vffi->dwStrucVersion>>16),vffi->dwStrucVersion&0xFFFF,
 		vffi->dwFileVersionMS,vffi->dwFileVersionLS,
 		vffi->dwProductVersionMS,vffi->dwProductVersionLS,
 		vffi->dwFileFlagsMask,vffi->dwFileFlags
 	);
 	switch (vffi->dwFileOS&0xFFFF0000) {
-	case VOS_DOS:fprintf(stderr,"DOS,");break;
-	case VOS_OS216:fprintf(stderr,"OS/2-16,");break;
-	case VOS_OS232:fprintf(stderr,"OS/2-32,");break;
-	case VOS_NT:fprintf(stderr,"NT,");break;
+	case VOS_DOS:dprintf_ver(stddeb,"DOS,");break;
+	case VOS_OS216:dprintf_ver(stddeb,"OS/2-16,");break;
+	case VOS_OS232:dprintf_ver(stddeb,"OS/2-32,");break;
+	case VOS_NT:dprintf_ver(stddeb,"NT,");break;
 	case VOS_UNKNOWN:
 	default:
-		fprintf(stderr,"UNKNOWN(%ld),",vffi->dwFileOS&0xFFFF0000);break;
+		dprintf_ver(stddeb,"UNKNOWN(%ld),",vffi->dwFileOS&0xFFFF0000);break;
 	}
 	switch (vffi->dwFileOS & 0xFFFF) {
-	case VOS__BASE:fprintf(stderr,"BASE");break;
-	case VOS__WINDOWS16:fprintf(stderr,"WIN16");break;
-	case VOS__WINDOWS32:fprintf(stderr,"WIN32");break;
-	case VOS__PM16:fprintf(stderr,"PM16");break;
-	case VOS__PM32:fprintf(stderr,"PM32");break;
-	default:fprintf(stderr,"UNKNOWN(%ld)",vffi->dwFileOS&0xFFFF);break;
+	case VOS__BASE:dprintf_ver(stddeb,"BASE");break;
+	case VOS__WINDOWS16:dprintf_ver(stddeb,"WIN16");break;
+	case VOS__WINDOWS32:dprintf_ver(stddeb,"WIN32");break;
+	case VOS__PM16:dprintf_ver(stddeb,"PM16");break;
+	case VOS__PM32:dprintf_ver(stddeb,"PM32");break;
+	default:dprintf_ver(stddeb,"UNKNOWN(%ld)",vffi->dwFileOS&0xFFFF);break;
 	}
 	switch (vffi->dwFileType) {
 	default:
 	case VFT_UNKNOWN:
-		fprintf(stderr,"filetype=Unknown(%ld)",vffi->dwFileType);
+		dprintf_ver(stddeb,"filetype=Unknown(%ld)",vffi->dwFileType);
 		break;
-	case VFT_APP:fprintf(stderr,"filetype=APP");break;
-	case VFT_DLL:fprintf(stderr,"filetype=DLL");break;
+	case VFT_APP:dprintf_ver(stddeb,"filetype=APP");break;
+	case VFT_DLL:dprintf_ver(stddeb,"filetype=DLL");break;
 	case VFT_DRV:
-		fprintf(stderr,"filetype=DRV,");
+		dprintf_ver(stddeb,"filetype=DRV,");
 		switch(vffi->dwFileSubtype) {
 		default:
 		case VFT2_UNKNOWN:
-			fprintf(stderr,"UNKNOWN(%ld)",vffi->dwFileSubtype);
+			dprintf_ver(stddeb,"UNKNOWN(%ld)",vffi->dwFileSubtype);
 			break;
 		case VFT2_DRV_PRINTER:
-			fprintf(stderr,"PRINTER");
+			dprintf_ver(stddeb,"PRINTER");
 			break;
 		case VFT2_DRV_KEYBOARD:
-			fprintf(stderr,"KEYBOARD");
+			dprintf_ver(stddeb,"KEYBOARD");
 			break;
 		case VFT2_DRV_LANGUAGE:
-			fprintf(stderr,"LANGUAGE");
+			dprintf_ver(stddeb,"LANGUAGE");
 			break;
 		case VFT2_DRV_DISPLAY:
-			fprintf(stderr,"DISPLAY");
+			dprintf_ver(stddeb,"DISPLAY");
 			break;
 		case VFT2_DRV_MOUSE:
-			fprintf(stderr,"MOUSE");
+			dprintf_ver(stddeb,"MOUSE");
 			break;
 		case VFT2_DRV_NETWORK:
-			fprintf(stderr,"NETWORK");
+			dprintf_ver(stddeb,"NETWORK");
 			break;
 		case VFT2_DRV_SYSTEM:
-			fprintf(stderr,"SYSTEM");
+			dprintf_ver(stddeb,"SYSTEM");
 			break;
 		case VFT2_DRV_INSTALLABLE:
-			fprintf(stderr,"INSTALLABLE");
+			dprintf_ver(stddeb,"INSTALLABLE");
 			break;
 		case VFT2_DRV_SOUND:
-			fprintf(stderr,"SOUND");
+			dprintf_ver(stddeb,"SOUND");
 			break;
 		case VFT2_DRV_COMM:
-			fprintf(stderr,"COMM");
+			dprintf_ver(stddeb,"COMM");
 			break;
 		case VFT2_DRV_INPUTMETHOD:
-			fprintf(stderr,"INPUTMETHOD");
+			dprintf_ver(stddeb,"INPUTMETHOD");
 			break;
 		}
 		break;
 	case VFT_FONT:
-		fprintf(stderr,"filetype=FONT.");
+		dprintf_ver(stddeb,"filetype=FONT.");
 		switch (vffi->dwFileSubtype) {
 		default:
-			fprintf(stderr,"UNKNOWN(%ld)",vffi->dwFileSubtype);
+			dprintf_ver(stddeb,"UNKNOWN(%ld)",vffi->dwFileSubtype);
 			break;
-		case VFT2_FONT_RASTER:fprintf(stderr,"RASTER");break;
-		case VFT2_FONT_VECTOR:fprintf(stderr,"VECTOR");break;
-		case VFT2_FONT_TRUETYPE:fprintf(stderr,"TRUETYPE");break;
+		case VFT2_FONT_RASTER:dprintf_ver(stddeb,"RASTER");break;
+		case VFT2_FONT_VECTOR:dprintf_ver(stddeb,"VECTOR");break;
+		case VFT2_FONT_TRUETYPE:dprintf_ver(stddeb,"TRUETYPE");break;
 		}
 		break;
-	case VFT_VXD:fprintf(stderr,"filetype=VXD");break;
-	case VFT_STATIC_LIB:fprintf(stderr,"filetype=STATIC_LIB");break;
+	case VFT_VXD:dprintf_ver(stddeb,"filetype=VXD");break;
+	case VFT_STATIC_LIB:dprintf_ver(stddeb,"filetype=STATIC_LIB");break;
 	}
-	fprintf(stderr,"filedata=%lx.%lx\n",vffi->dwFileDateMS,vffi->dwFileDateLS);
+	dprintf_ver(stddeb,"filedata=%lx.%lx\n",vffi->dwFileDateMS,vffi->dwFileDateLS);
 	return len;
 }
 
 /* GetFileVersionInfoSize32A			[VERSION.1] */
 DWORD
 GetFileVersionInfoSize32A(LPCSTR filename,LPDWORD handle) {
-	dprintf_resource(stderr,"GetFileVersionInfoSize32A(%s,%p)\n",filename,handle);
+	dprintf_ver(stddeb,"GetFileVersionInfoSize32A(%s,%p)\n",filename,handle);
 	return GetFileVersionInfoSize16(filename,handle);
 }
 
@@ -362,7 +362,7 @@ GetFileVersionInfoSize32W(LPCWSTR filename,LPDWORD handle) {
 /* GetFileVersionInfo				[VER.7] */
 DWORD 
 GetFileVersionInfo16(LPCSTR filename,DWORD handle,DWORD datasize,LPVOID data) {
-	dprintf_resource(stderr,"GetFileVersionInfo16(%s,%ld,%ld,%p)\n->",
+	dprintf_ver(stddeb,"GetFileVersionInfo16(%s,%ld,%ld,%p)\n->",
 		filename,handle,datasize,data
 	);
 	return GetFileResource(
@@ -394,7 +394,7 @@ VerFindFile16(
 	UINT16 flags,LPCSTR filename,LPCSTR windir,LPCSTR appdir,
 	LPSTR curdir,UINT16 *curdirlen,LPSTR destdir,UINT16 *destdirlen
 ) {
-	fprintf(stderr,"VerFindFile(%x,%s,%s,%s,%p,%d,%p,%d)\n",
+	dprintf_ver(stddeb,"VerFindFile(%x,%s,%s,%s,%p,%d,%p,%d)\n",
 		flags,filename,windir,appdir,curdir,*curdirlen,destdir,*destdirlen
 	);
 	strcpy(curdir,"Z:\\ROOT\\.WINE\\");/*FIXME*/
@@ -441,7 +441,7 @@ VerInstallFile16(
 	UINT16 flags,LPCSTR srcfilename,LPCSTR destfilename,LPCSTR srcdir,
 	LPCSTR destdir,LPSTR tmpfile,UINT16 *tmpfilelen
 ) {
-	fprintf(stderr,"VerInstallFile(%x,%s,%s,%s,%s,%p,%d)\n",
+	dprintf_ver(stddeb,"VerInstallFile(%x,%s,%s,%s,%s,%p,%d)\n",
 		flags,srcfilename,destfilename,srcdir,destdir,tmpfile,*tmpfilelen
 	);
 
@@ -541,7 +541,7 @@ VerLanguageName16(UINT16 langid,LPSTR langname,UINT16 langnamelen) {
 	int	i;
 	char	*buf;
 
-	fprintf(stderr,"VerLanguageName(%d,%p,%d)\n",langid,langname,langnamelen);
+	dprintf_ver(stddeb,"VerLanguageName(%d,%p,%d)\n",langid,langname,langnamelen);
 	/* First, check \System\CurrentControlSet\control\Nls\Locale\<langid>
 	 * from the registry. 
 	 */
@@ -632,13 +632,13 @@ _find_data(BYTE *block,LPCSTR str) {
 
 	while (1) {
 		db=(struct db*)block;
-		fprintf(stderr,"db=%p,db->nextoff=%d,db->datalen=%d,db->name=%s,db->data=%s\n",
+		dprintf_ver(stddeb,"db=%p,db->nextoff=%d,db->datalen=%d,db->name=%s,db->data=%s\n",
 			db,db->nextoff,db->datalen,db->name,(char*)((char*)db+4+((strlen(db->name)+4)&~3))
 		);
 		if (!db->nextoff)
 			return NULL;
 
-		fprintf(stderr,"comparing with %s\n",db->name);
+		dprintf_ver(stddeb,"comparing with %s\n",db->name);
 		if (!strncmp(db->name,str,substrlen)) {
 			if (nextslash)
 				return _find_data(
@@ -661,7 +661,7 @@ VerQueryValue16(SEGPTR segblock,LPCSTR subblock,SEGPTR *buffer,UINT16 *buflen)
 	struct	db	*db;
 	char	*s;
 
-	fprintf(stderr,"VerQueryValue16(%p,%s,%p,%d)\n",
+	dprintf_ver(stddeb,"VerQueryValue16(%p,%s,%p,%d)\n",
 		block,subblock,buffer,*buflen
 	);
 	s=(char*)xmalloc(strlen("VS_VERSION_INFO")+strlen(subblock)+1);
@@ -677,7 +677,7 @@ VerQueryValue16(SEGPTR segblock,LPCSTR subblock,SEGPTR *buffer,UINT16 *buflen)
 	b	= b+4+((strlen(db->name)+4)&~3);
 	/* now look up what the resp. SEGPTR would be ... */
 	*buffer	= (b-block)+segblock;
-	fprintf(stderr,"	-> %s=%s\n",subblock,b);
+	dprintf_ver(stddeb,"	-> %s=%s\n",subblock,b);
 	return 1;
 }
 
@@ -688,7 +688,7 @@ VerQueryValue32A(LPVOID vblock,LPCSTR subblock,LPVOID *vbuffer,UINT32 *buflen)
 	struct	db	*db;
 	char	*s;
 
-	fprintf(stderr,"VerQueryValue32A(%p,%s,%p,%d)\n",
+	dprintf_ver(stddeb,"VerQueryValue32A(%p,%s,%p,%d)\n",
 		block,subblock,buffer,*buflen
 	);
 	s=(char*)xmalloc(strlen("VS_VERSION_INFO")+strlen(subblock)+1);
@@ -703,7 +703,7 @@ VerQueryValue32A(LPVOID vblock,LPCSTR subblock,LPVOID *vbuffer,UINT32 *buflen)
 	/* let b point to data area */
 	b	= b+4+((strlen(db->name)+4)&~3);
 	*buffer	= b;
-	fprintf(stderr,"	-> %s=%s\n",subblock,b);
+	dprintf_ver(stddeb,"	-> %s=%s\n",subblock,b);
 	return 1;
 }
 
@@ -733,7 +733,7 @@ VerQueryValue32W(LPVOID vblock,LPCWSTR subblock,LPVOID *vbuffer,UINT32 *buflen)
 	/* let b point to data area */
 	b	= b+4+((strlen(db->name)+4)&~3);
 	*buffer	= b;
-	fprintf(stderr,"	-> %s=%s\n",sb,b);
+	dprintf_ver(stddeb,"	-> %s=%s\n",sb,b);
 	free(sb);
 	return 1;
 }

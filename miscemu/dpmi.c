@@ -12,9 +12,12 @@
 #include "ldt.h"
 #include "module.h"
 #include "miscemu.h"
+#include "drive.h"
+#include "msdos.h"
 #include "stddebug.h"
-/* #define DEBUG_INT */
 #include "debug.h"
+
+#define DOS_GET_DRIVE(reg) ((reg) ? (reg) - 1 : DRIVE_GetCurrentDrive())
 
 
 /* Structure for real-mode callbacks */
@@ -196,26 +199,24 @@ void INT_Int31Handler( SIGCONTEXT *context )
         *  ES:DI points to real-mode call structure  
         *  Currently we just print it out and return error.
         */
+	RESET_CFLAG(context);
         {
             REALMODECALL *p = (REALMODECALL *)PTR_SEG_OFF_TO_LIN( ES_reg(context), DI_reg(context) );
-            fprintf(stdnimp,
-                    "RealModeInt %02x: EAX=%08lx EBX=%08lx ECX=%08lx EDX=%08lx\n"
-                    "                ESI=%08lx EDI=%08lx ES=%04x DS=%04x\n",
-                    BL_reg(context), p->eax, p->ebx, p->ecx, p->edx,
-                    p->esi, p->edi, p->es, p->ds );
 
-            /* Compton's 1995 encyclopedia does its MSCDEX calls through
-             * this interrupt.  Why?  Who knows...
-             */
-            if ((BL_reg(context) == 0x2f) && ((p->eax & 0xFF00) == 0x1500))
-            {
-                do_mscdex( context );
+	    switch (BL_reg(context)) {
+	    case 0x2f:	/* int2f */
+	    	switch ((p->eax & 0xFF00)>>8) {
+		case 0x15:
+			/* MSCDEX hook */
+			AX_reg(context) = p->eax & 0xFFFF;
+                	do_mscdex( context );
+			break;
+		default:
+			SET_CFLAG(context);
+			break;
+		}
 		break;
-            }
-	    /* NETAPI.DLL of Win95 does AX=6506 to fetch a realmode ptr
-	     * to the COLLATE table.
-	     */
-	    if (BL_reg(context) == 0x21) {
+	    case 0x21:	/* int21 */
 	    	switch ((p->eax & 0xFF00)>>8) {
 		case 0x65:
 		    switch (p->eax & 0xFF) {
@@ -235,16 +236,76 @@ void INT_Int31Handler( SIGCONTEXT *context )
 		    default:
             		SET_CFLAG(context);
 		    }
+		    break;
+		case 0x44:
+		    switch (p->eax & 0xFF) {
+		    case 0x0D:{/* generic block device request */
+		    	BYTE	*dataptr = DOSMEM_RealMode2Linear((p->ds)*0x1000+(p->edx & 0xFFFF));
+			int	drive = DOS_GET_DRIVE(p->ebx&0xFF); 
+
+		    	if ((p->ecx & 0xFF00) != 0x0800) {
+				SET_CFLAG(context);
+				break;
+			}
+			switch (p->ecx & 0xFF) {
+			case 0x66:{ 
+
+			    char    label[12],fsname[9],path[4];
+			    DWORD   serial;
+
+			    strcpy(path,"x:\\");path[0]=drive+'A';
+			    GetVolumeInformation32A(path,label,12,&serial,NULL,NULL,fsname,9);
+			    *(WORD*)dataptr         = 0;
+			    memcpy(dataptr+2,&serial,4);
+			    memcpy(dataptr+6,label  ,11);
+			    memcpy(dataptr+17,fsname,8);
+			    break;
+                        }
+			case 0x60:	/* get device parameters */
+					/* used by defrag.exe of win95 */
+                            memset(dataptr, 0, 0x26);
+                            dataptr[0] = 0x04;
+                            dataptr[6] = 0; /* media type */
+                            if (drive > 1) {
+                                dataptr[1] = 0x05; /* fixed disk */
+                                setword(&dataptr[2], 0x01); /* non removable */
+                                setword(&dataptr[4], 0x300); /* # of cylinders */
+                            } else {
+                                dataptr[1] = 0x07; /* block dev, floppy */
+                                setword(&dataptr[2], 0x02); /* removable */
+                                setword(&dataptr[4], 80); /* # of cylinders */
+                            }
+                            CreateBPB(drive, &dataptr[7]);
+			    break;
+			default:
+			    SET_CFLAG(context);
+			    break;
+			}
+		    }
+		    	break;
+		    default:
+            		SET_CFLAG(context);
+			break;
+		    }
 		default:
             	    SET_CFLAG(context);
 		    break;
 		}
 		break;
+	    default:
+		SET_CFLAG(context);
+		break;
 	    }
-            SET_CFLAG(context);
+	    if (EFL_reg(context)&1) {
+	        fprintf(stdnimp,
+                    "RealModeInt %02x: EAX=%08lx EBX=%08lx ECX=%08lx EDX=%08lx\n"
+                    "                ESI=%08lx EDI=%08lx ES=%04x DS=%04x\n",
+                    BL_reg(context), p->eax, p->ebx, p->ecx, p->edx,
+                    p->esi, p->edi, p->es, p->ds
+		);
+	    }
         }
         break;
-
     case 0x0301:  /* Call real mode procedure with far return */
         {
             REALMODECALL *p = (REALMODECALL *)PTR_SEG_OFF_TO_LIN( ES_reg(context), DI_reg(context) );
@@ -274,9 +335,12 @@ void INT_Int31Handler( SIGCONTEXT *context )
             REALMODECALL *p = (REALMODECALL *)PTR_SEG_OFF_TO_LIN( ES_reg(context), DI_reg(context) );
             fprintf(stdnimp,
                     "AllocRMCB: EAX=%08lx EBX=%08lx ECX=%08lx EDX=%08lx\n"
-                    "           ESI=%08lx EDI=%08lx ES=%04x DS=%04x CS:IP=%04x:%04x\n",
+                    "           ESI=%08lx EDI=%08lx ES=%04x DS=%04x CS:IP=%04x:%04x\n"
+		    "	Function to call: %04x:%04x\n",
                     p->eax, p->ebx, p->ecx, p->edx,
-                    p->esi, p->edi, p->es, p->ds, p->cs, p->ip );
+                    p->esi, p->edi, p->es, p->ds, p->cs, p->ip,
+		    DS_reg(context),SI_reg(context)
+	    );
             SET_CFLAG(context);
         }
         break;

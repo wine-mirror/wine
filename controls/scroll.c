@@ -490,7 +490,7 @@ static void SCROLL_RefreshScrollBar( HWND hwnd, int nBar )
 
     vertical = SCROLL_GetScrollBarRect( hwnd, nBar, &rect,
                                         &arrowSize, &thumbPos );
-    hdc = (nBar == SB_CTL) ? GetDC(hwnd) : GetWindowDC(hwnd);
+    hdc = GetDCEx( hwnd, 0, DCX_CACHE | ((nBar == SB_CTL) ? 0 : DCX_WINDOW) );
     if (!hdc) return;
     SCROLL_DrawInterior( hwnd, hdc, nBar, &rect, arrowSize, thumbPos,
                          infoPtr->flags, vertical, FALSE, FALSE );
@@ -556,7 +556,7 @@ void SCROLL_HandleScrollEvent( HWND hwnd, int nBar, WORD msg, POINT16 pt )
     if (!infoPtr) return;
     if ((trackHitTest == SCROLL_NOWHERE) && (msg != WM_LBUTTONDOWN)) return;
 
-    hdc = (nBar == SB_CTL) ? GetDC(hwnd) : GetWindowDC(hwnd);
+    hdc = GetDCEx( hwnd, 0, DCX_CACHE | ((nBar == SB_CTL) ? 0 : DCX_WINDOW) );
     vertical = SCROLL_GetScrollBarRect( hwnd, nBar, &rect,
                                         &arrowSize, &thumbPos );
     hwndOwner = (nBar == SB_CTL) ? GetParent32(hwnd) : hwnd;
@@ -571,7 +571,7 @@ void SCROLL_HandleScrollEvent( HWND hwnd, int nBar, WORD msg, POINT16 pt )
           trackThumbPos = thumbPos;
           prevPt = pt;
           SetCapture( hwnd );
-          if (nBar == SB_CTL) SetFocus( hwnd );
+          if (nBar == SB_CTL) SetFocus32( hwnd );
           break;
 
       case WM_MOUSEMOVE:
@@ -1007,7 +1007,7 @@ BOOL EnableScrollBar( HWND hwnd, UINT nBar, UINT flags )
     infoPtr->flags = flags;
 
       /* Redraw the whole scroll bar */
-    hdc = (nBar == SB_CTL) ? GetDC(hwnd) : GetWindowDC(hwnd);
+    hdc = GetDCEx( hwnd, 0, DCX_CACHE | ((nBar == SB_CTL) ? 0 : DCX_WINDOW) );
     SCROLL_DrawScrollBar( hwnd, hdc, nBar );
     ReleaseDC( hwnd, hdc );
     return TRUE;

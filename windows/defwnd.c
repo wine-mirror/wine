@@ -171,7 +171,7 @@ static LRESULT DEFWND_DefWinProc( WND *wndPtr, UINT32 msg, WPARAM32 wParam,
 	return MA_ACTIVATE;
 
     case WM_ACTIVATE:
-	if (LOWORD(wParam) != WA_INACTIVE) SetFocus( wndPtr->hwndSelf );
+	if (LOWORD(wParam) != WA_INACTIVE) SetFocus32( wndPtr->hwndSelf );
 	break;
 
     case WM_ERASEBKGND:

@@ -98,7 +98,7 @@ void ChopOffWhiteSpace(char *string)
 			string[length] = '\0';
 }
 
-static void CreateBPB(int drive, BYTE *data)
+void CreateBPB(int drive, BYTE *data)
 {
 	if (drive > 1) {
 		setword(data, 512);
@@ -232,6 +232,9 @@ static void ioctlGenericBlkDevReq( SIGCONTEXT *context )
             return;
 	}
 	switch (CL_reg(context)) {
+		case 0x4a: /* lock logical volume */
+			dprintf_int(stddeb,"int21: lock logical volume (%d) level %d mode %d\n",drive,BH_reg(context),DX_reg(context));
+			return;
 		case 0x60: /* get device parameters */
 			   /* used by w4wgrp's winfile */
 			memset(dataptr, 0, 0x26);
@@ -251,6 +254,23 @@ static void ioctlGenericBlkDevReq( SIGCONTEXT *context )
 			}
 			CreateBPB(drive, &dataptr[7]);			
 			RESET_CFLAG(context);
+			return;
+		case 0x66:/*  get disk serial number */
+			{	char	label[12],fsname[9],path[4];
+				DWORD	serial;
+
+				strcpy(path,"x:\\");path[0]=drive+'A';
+				GetVolumeInformation32A(
+					path,label,12,&serial,NULL,NULL,fsname,9
+				);
+				*(WORD*)dataptr		= 0;
+				memcpy(dataptr+2,&serial,4);
+				memcpy(dataptr+6,label	,11);
+				memcpy(dataptr+17,fsname,8);
+				return;
+			}
+		case 0x6a:
+			dprintf_int(stddeb,"int21: logical volume %d unlocked.\n",drive);
 			return;
 		default:
                         INT_BARF( context, 0x21 );
@@ -285,7 +305,7 @@ static void INT21_GetSystemTime( SIGCONTEXT *context )
 					/* Note hundredths of seconds */
 }
 
-static void CreateFile( SIGCONTEXT *context )
+static void INT21_CreateFile( SIGCONTEXT *context )
 {
     AX_reg(context) = _lcreat( PTR_SEG_OFF_TO_LIN( DS_reg(context),
                                           DX_reg(context) ), CX_reg(context) );
@@ -439,7 +459,7 @@ void ExtendedOpenCreateFile(SIGCONTEXT *context )
 	AL_reg(context) = BL_reg(context);
 	/* CX is still the same */
 	DX_reg(context) = SI_reg(context);
-	CreateFile(context);
+	INT21_CreateFile(context);
 	if (EFL_reg(context) & 0x0001) { /*no file open, flags set */
 	  dprintf_int(stddeb, "int21: extended open/create: truncfailed");
 	  return;
@@ -466,7 +486,7 @@ void ExtendedOpenCreateFile(SIGCONTEXT *context )
       AL_reg(context) = BL_reg(context);
       /* CX should still be the same */
       DX_reg(context) = SI_reg(context);
-      CreateFile(context);
+      INT21_CreateFile(context);
       if (EFL_reg(context) & 0x0001) { /*no file open, flags set */
 	dprintf_int(stddeb, "int21: extended open/create: create failed\n");
 	return;
@@ -1172,10 +1192,10 @@ void DOS3Call( SIGCONTEXT *context )
 
     case 0x3f: /* "READ" - READ FROM FILE OR DEVICE */
         {
-            LONG result = _hread( BX_reg(context),
-                                  PTR_SEG_OFF_TO_SEGPTR( DS_reg(context),
-                                                         DX_reg(context) ),
-                                  CX_reg(context) );
+            LONG result = WIN16_hread( BX_reg(context),
+                                       PTR_SEG_OFF_TO_SEGPTR( DS_reg(context),
+                                                              DX_reg(context) ),
+                                       CX_reg(context) );
             if (result == -1)
             {
                 AX_reg(context) = DOS_ExtendedError;
@@ -1250,7 +1270,18 @@ void DOS3Call( SIGCONTEXT *context )
 
         case 0x01:
             break;
+	case 0x05:{	/* IOCTL - WRITE TO BLOCK DEVICE CONTROL CHANNEL */
+	    BYTE *dataptr = PTR_SEG_OFF_TO_LIN(DS_reg(context),DX_reg(context));
+	    int	i;
+	    int	drive = DOS_GET_DRIVE(BL_reg(context));
 
+	    fprintf(stdnimp,"int21: program tried to write to block device control channel of drive %d:\n",drive);
+	    for (i=0;i<CX_reg(context);i++)
+	    	fprintf(stdnimp,"%02x ",dataptr[i]);
+	    fprintf(stdnimp,"\n");
+	    AX_reg(context)=CX_reg(context);
+	    break;
+	}
         case 0x08:   /* Check if drive is removable. */
             switch(GetDriveType16( DOS_GET_DRIVE( BL_reg(context) )))
             {
@@ -1521,11 +1552,34 @@ void DOS3Call( SIGCONTEXT *context )
     case 0x61: /* UNUSED */
     case 0x63: /* UNUSED */
     case 0x64: /* OS/2 DOS BOX */
-    case 0x65: /* GET EXTENDED COUNTRY INFORMATION */
         INT_BARF( context, 0x21 );
         SET_CFLAG(context);
-        break;
-	
+    	break;
+    case 0x65:{/* GET EXTENDED COUNTRY INFORMATION */
+    	extern WORD WINE_LanguageId;
+	BYTE    *dataptr=PTR_SEG_OFF_TO_LIN(ES_reg(context),DI_reg(context));;
+    	switch (AL_reg(context)) {
+	case 0x01:
+	    dataptr[0] = 0x1;
+	    *(WORD*)(dataptr+1) = 41;
+	    *(WORD*)(dataptr+3) = WINE_LanguageId;
+	    *(WORD*)(dataptr+5) = CodePage;
+	    break;
+	case 0x06: {
+	    extern  DWORD   DOSMEM_CollateTable;
+
+	    dataptr[0] = 0x06;
+	    *(DWORD*)(dataptr+1) = MAKELONG(DOSMEM_CollateTable & 0xFFFF,DOSMEM_AllocSelector(DOSMEM_CollateTable>>16));
+	    CX_reg(context)         = 258;/*FIXME: size of table?*/
+	    break;
+	}
+	default:
+            INT_BARF( context, 0x21 );
+            SET_CFLAG(context);
+    	    break;
+	}
+    	break;
+    }
     case 0x66: /* GLOBAL CODE PAGE TABLE */
         switch (AL_reg(context))
         {
@@ -1541,7 +1595,7 @@ void DOS3Call( SIGCONTEXT *context )
         break;
 
     case 0x67: /* SET HANDLE COUNT */
-        SetHandleCount( BX_reg(context) );
+        SetHandleCount16( BX_reg(context) );
         if (DOS_ExtendedError)
         {
             AX_reg(context) = DOS_ExtendedError;
@@ -1603,6 +1657,8 @@ void DOS3Call( SIGCONTEXT *context )
                 SET_CFLAG(context);
             }
             break;
+	case 0xa0:
+	    break;
         case 0x3b:  /* Change directory */
         case 0x41:  /* Delete file */
         case 0x43:  /* Get/Set file attributes */

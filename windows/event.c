@@ -26,6 +26,7 @@
 #include "class.h"
 #include "clipboard.h"
 #include "debugger.h"
+#include "hook.h"
 #include "message.h"
 #include "module.h"
 #include "options.h"
@@ -35,7 +36,6 @@
 #include "stddebug.h"
 #include "debug.h"
 #include "dde_proc.h"
-
 
 #define NB_BUTTONS      3     /* Windows can handle 3 buttons */
 
@@ -287,7 +287,7 @@ void EVENT_RegisterWindow( WND *pWnd )
  * Return TRUE if an event is pending, FALSE on timeout or error
  * (for instance lost connection with the server).
  */
-BOOL EVENT_WaitXEvent( BOOL sleep )
+BOOL32 EVENT_WaitXEvent( BOOL32 sleep )
 {
     fd_set read_set;
     struct timeval timeout;
@@ -542,7 +542,7 @@ static void EVENT_key( XKeyEvent *event )
 	hardware_event( KeyStateTable[VK_MENU] & 0x80 ? WM_SYSKEYDOWN : WM_KEYDOWN, 
 		        vkey, keylp.lp2,
 		        event->x_root - desktopX, event->y_root - desktopY,
-		        event->time, 0 );
+		        event->time - MSG_WineStartTicks, 0 );
 	KeyDown = TRUE;
 
 	/* Currently we use reserved field in the scan-code byte to
@@ -572,7 +572,7 @@ static void EVENT_key( XKeyEvent *event )
 	hardware_event( sysKey & 0x80 ? WM_SYSKEYUP : WM_KEYUP, 
 		        vkey, keylp.lp2,
 		        event->x_root - desktopX, event->y_root - desktopY,
-		        event->time, 0 );
+		        event->time - MSG_WineStartTicks, 0 );
 	KeyDown = FALSE;
     }
 }
@@ -585,7 +585,7 @@ static void EVENT_MotionNotify( XMotionEvent *event )
 {
     hardware_event( WM_MOUSEMOVE, EVENT_XStateToKeyState( event->state ), 0L,
 		    event->x_root - desktopX, event->y_root - desktopY,
-		    event->time, 0 );
+		    event->time - MSG_WineStartTicks, 0 );
 }
 
 
@@ -624,7 +624,7 @@ static void EVENT_ButtonPress( XButtonEvent *event )
     hardware_event( messages[buttonNum],
 		    EVENT_XStateToKeyState( event->state ), 0L,
 		    event->x_root - desktopX, event->y_root - desktopY,
-		    event->time, 0 );
+		    event->time - MSG_WineStartTicks, 0 );
 }
 
 
@@ -642,7 +642,7 @@ static void EVENT_ButtonRelease( XButtonEvent *event )
     hardware_event( messages[buttonNum],
 		    EVENT_XStateToKeyState( event->state ), 0L,
 		    event->x_root - desktopX, event->y_root - desktopY,
-		    event->time, 0 );
+		    event->time - MSG_WineStartTicks, 0 );
 }
 
 
@@ -653,7 +653,8 @@ static void EVENT_FocusIn (HWND hwnd, XFocusChangeEvent *event )
 {
     if (event->detail == NotifyPointer) return;
     if (hwnd != GetActiveWindow()) WINPOS_ChangeActiveWindow( hwnd, FALSE );
-    if ((hwnd != GetFocus()) && !IsChild( hwnd, GetFocus())) SetFocus( hwnd );
+    if ((hwnd != GetFocus32()) && !IsChild( hwnd, GetFocus32()))
+        SetFocus32( hwnd );
 }
 
 
@@ -666,7 +667,8 @@ static void EVENT_FocusOut( HWND hwnd, XFocusChangeEvent *event )
 {
     if (event->detail == NotifyPointer) return;
     if (hwnd == GetActiveWindow()) WINPOS_ChangeActiveWindow( 0, FALSE );
-    if ((hwnd == GetFocus()) || IsChild( hwnd, GetFocus())) SetFocus( 0 );
+    if ((hwnd == GetFocus32()) || IsChild( hwnd, GetFocus32()))
+        SetFocus32( 0 );
 }
 
 
@@ -850,7 +852,7 @@ static void EVENT_ClientMessage( WND *pWnd, XClientMessageEvent *event )
   void EVENT_EnterNotify( WND *pWnd, XCrossingEvent *event )
   {
    if( !Options.managed && rootWindow == DefaultRootWindow(display) &&
-     (COLOR_GetSystemPaletteFlags() & COLOR_PRIVATE) && GetFocus() )
+     (COLOR_GetSystemPaletteFlags() & COLOR_PRIVATE) && GetFocus32() )
       XInstallColormap( display, COLOR_GetColormap() );
   }
  */ 
@@ -860,10 +862,10 @@ static void EVENT_ClientMessage( WND *pWnd, XClientMessageEvent *event )
  */
 void EVENT_MapNotify( HWND hWnd, XMapEvent *event )
 {
-    HWND hwndFocus = GetFocus();
+    HWND32 hwndFocus = GetFocus32();
 
     if (hwndFocus && IsChild( hWnd, hwndFocus ))
-      FOCUS_SetXFocus(hwndFocus);
+      FOCUS_SetXFocus( hwndFocus );
 
     return;
 }

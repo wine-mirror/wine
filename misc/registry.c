@@ -224,6 +224,7 @@ split_keypath(LPCWSTR wp,LPWSTR **wpv,int *wpc) {
 /*
  * Shell initialisation, allocates keys. 
  */
+void SHELL_StartupRegistry();
 void
 SHELL_Init() {
 	struct	passwd	*pwd;
@@ -265,8 +266,69 @@ SHELL_Init() {
 	ADD_ROOT_KEY(key_current_config);
 	ADD_ROOT_KEY(key_dyn_data);
 #undef ADD_ROOT_KEY
+	SHELL_StartupRegistry();
 }
 
+
+void
+SHELL_StartupRegistry() {
+	HKEY	hkey,xhkey=0;
+	FILE	*F;
+	char	buf[200],cpubuf[200];
+
+	RegCreateKey16(HKEY_DYN_DATA,"\\PerfStats\\StatData",&xhkey);
+	RegCloseKey(xhkey);
+	RegCreateKey16(HKEY_LOCAL_MACHINE,"\\HARDWARE\\DESCRIPTION\\System\\CentralProcessor",&hkey);
+#ifdef linux
+	F=fopen("/proc/cpuinfo","r");
+	if (F) {
+		int	procnr=-1,x;
+		while (NULL!=fgets(buf,200,F)) {
+			if (sscanf(buf,"processor\t: %d",&x)) {
+				sprintf(buf,"%d",x);
+				if (xhkey)
+					RegCloseKey(xhkey);
+				procnr=x;
+				RegCreateKey16(hkey,buf,&xhkey);
+			}
+			if (sscanf(buf,"cpu\t\t: %s",cpubuf)) {
+				sprintf(buf,"CPU %s",cpubuf);
+				if (xhkey)
+					RegSetValueEx32A(xhkey,"Identifier",0,REG_SZ,buf,strlen(buf));
+			}
+		}
+		fclose(F);
+	}
+	if (xhkey)
+		RegCloseKey(xhkey);
+	RegCloseKey(hkey);
+#else
+	/* FIXME */
+	RegCreateKey16(hkey,"0",&xhkey);
+	RegSetValueEx32A(xhkey,"Identifier",0,REG_SZ,"CPU 386",strlen("CPU 386"));
+#endif
+	RegOpenKey16(HKEY_LOCAL_MACHINE,"\\HARDWARE\\DESCRIPTION\\System",&hkey);
+	RegSetValueEx32A(hkey,"Identifier",0,REG_SZ,"SystemType WINE",strlen("SystemType WINE"));
+	RegCloseKey(hkey);
+	/* \\SOFTWARE\\Microsoft\\Window NT\\CurrentVersion
+	 *						CurrentVersion
+	 *						CurrentBuildNumber
+	 *						CurrentType
+	 *					string	RegisteredOwner
+	 *					string	RegisteredOrganization
+	 *
+	 */
+	/* System\\CurrentControlSet\\Services\\SNMP\\Parameters\\RFC1156Agent
+	 * 					string	SysContact
+	 * 					string	SysLocation
+	 * 						SysServices
+	 */						
+	if (-1!=gethostname(buf,200)) {
+		RegCreateKey16(HKEY_LOCAL_MACHINE,"System\\CurrentControlSet\\Control\\ComputerName\\ComputerName",&xhkey);
+		RegSetValueEx16(xhkey,"ComputerName",0,REG_SZ,buf,strlen(buf)+1);
+		RegCloseKey(xhkey);
+	}
+}
 /************************ SAVE Registry Function ****************************/
 
 #define REGISTRY_SAVE_VERSION	0x00000001
@@ -992,6 +1054,8 @@ _w95dkelookup(unsigned long dkeaddr,int n,struct _w95nr2da *nr2da,struct _w95key
 	return NULL;
 }
 
+extern time_t FileTimeToUnixTime(FILETIME*);
+
 static void
 _w95_loadreg(char* fn,LPKEYSTRUCT lpkey) {
 	/* Disk Key Entry structure (RGKN part) */
@@ -1028,34 +1092,33 @@ _w95_loadreg(char* fn,LPKEYSTRUCT lpkey) {
 	struct	_w95nr2da 	*nr2da;
 
 	HFILE		hfd;
-	int		fd,lastmodified;
+	int		lastmodified;
 	char		magic[5];
 	unsigned long	nr,pos,i,where,version,rgdbsection,end,off_next_rgdb;
 	struct	_w95key	*keys;
 	int		nrofdkes;
 	unsigned char	*data,*curdata,*nextrgdb;
 	OFSTRUCT	ofs;
-	struct	stat	stbuf;
+	BY_HANDLE_FILE_INFORMATION hfdinfo;
 
 	dprintf_reg(stddeb,"Loading Win95 registry database '%s'\n",fn);
 	hfd=OpenFile(fn,&ofs,OF_READ);
 	if (hfd==HFILE_ERROR)
 		return;
-	fd = FILE_GetUnixHandle(hfd);
 	magic[4]=0;
-	if (4!=read(fd,magic,4))
+	if (4!=FILE_Read(hfd,magic,4))
 		return;
 	if (strcmp(magic,"CREG")) {
 		fprintf(stddeb,"%s is not a w95 registry.\n",fn);
 		return;
 	}
-	if (4!=read(fd,&version,4))
+	if (4!=FILE_Read(hfd,&version,4))
 		return;
-	if (4!=read(fd,&rgdbsection,4))
+	if (4!=FILE_Read(hfd,&rgdbsection,4))
 		return;
-	if (-1==lseek(fd,0x20,SEEK_SET))
+	if (-1==_llseek(hfd,0x20,SEEK_SET))
 		return;
-	if (4!=read(fd,magic,4))
+	if (4!=FILE_Read(hfd,magic,4))
 		return;
 	if (strcmp(magic,"RGKN")) {
 		dprintf_reg(stddeb,"second IFF header not RGKN, but %s\n",magic);
@@ -1063,14 +1126,14 @@ _w95_loadreg(char* fn,LPKEYSTRUCT lpkey) {
 	}
 
 	/* STEP 1: Keylink structures */
-	if (-1==lseek(fd,0x40,SEEK_SET))
+	if (-1==_llseek(hfd,0x40,SEEK_SET))
 		return;
 	where	= 0x40;
 	end	= rgdbsection;
 
 	nrofdkes = (end-where)/sizeof(struct dke)+100;
 	data = (char*)xmalloc(end-where);
-	if ((end-where)!=read(fd,data,end-where))
+	if ((end-where)!=FILE_Read(hfd,data,end-where))
 		return;
 	curdata = data;
 
@@ -1144,15 +1207,15 @@ _w95_loadreg(char* fn,LPKEYSTRUCT lpkey) {
 	qsort(nr2da,nrofdkes,sizeof(nr2da[0]),_w95dkecomp);
 
 	/* STEP 2: keydata & values */
-	if (-1==fstat(fd,&stbuf))
+	if (!GetFileInformationByHandle(hfd,&hfdinfo))
 		return;
-	end		= stbuf.st_size;
-	lastmodified	= stbuf.st_mtime;
+	end		= hfdinfo.nFileSizeLow;
+	lastmodified	= FileTimeToUnixTime(&(hfdinfo.ftLastWriteTime));
 
-	if (-1==lseek(fd,rgdbsection,SEEK_SET))
+	if (-1==_llseek(hfd,rgdbsection,SEEK_SET))
 		return;
 	data = (char*)xmalloc(end-rgdbsection);
-	if ((end-rgdbsection)!=read(fd,data,end-rgdbsection))
+	if ((end-rgdbsection)!=FILE_Read(hfd,data,end-rgdbsection))
 		return;
 	_lclose(hfd);
 	curdata = data;
