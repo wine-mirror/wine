@@ -22,7 +22,6 @@
  *  TODO:
  *  - Reference counting
  *  - Thread-safing
- *  - Signature checking
  */
 
 #include <time.h>
@@ -255,7 +254,6 @@ BOOL WINAPI CryptAcquireContextA (HCRYPTPROV *phProv, LPCSTR pszContainer,
 	PCRYPTPROV pProv = NULL;
 	HKEY key;
 	PSTR imagepath = NULL, keyname = NULL, provname = NULL, temp = NULL;
-	BYTE* signature;
 	DWORD keytype, type, len;
 	ULONG r;
 
@@ -378,74 +376,19 @@ BOOL WINAPI CryptAcquireContextA (HCRYPTPROV *phProv, LPCSTR pszContainer,
 		SetLastError(NTE_PROV_TYPE_ENTRY_BAD);
 		goto error;
 	}
-
-	r = RegQueryValueExA(key, "Signature", NULL, &keytype, NULL, &len);
-	if ( r == ERROR_SUCCESS && keytype == REG_BINARY )
-	{
-		if (!(signature = CRYPT_Alloc(len)))
-		{
-			RegCloseKey(key);
-			SetLastError(ERROR_NOT_ENOUGH_MEMORY);
-			goto error;
-		}
-		r = RegQueryValueExA(key, "Signature", NULL, NULL, signature, &len);
-		if ( r != ERROR_SUCCESS )
-		{
-			TRACE("error %ld reading 'Signature'\n", r );
-			CRYPT_Free(signature);
-			RegCloseKey(key);
-			SetLastError(NTE_PROV_TYPE_ENTRY_BAD);
-			goto error;
-		}
-	}
-	else
-	{
-		r = RegQueryValueExA(key, "SigInFile", NULL, &keytype, NULL, &len);
-		if (r != ERROR_SUCCESS)
-		{
-			TRACE("error %ld reading size of 'SigInFile'\n", r );
-			RegCloseKey(key);
-			SetLastError(NTE_PROV_TYPE_ENTRY_BAD);
-			goto error;
-		}
-		else
-		{
-			/* FIXME: The presence of the SigInFile value indicates the
-			 * provider's signature is in its resources, so need to read it.
-			 * But since CRYPT_VerifyImage is stubbed, provide any old thing
-			 * for now.
-			 */
-			if (!(signature = CRYPT_Alloc(1)))
-			{
-				RegCloseKey(key);
-				SetLastError(ERROR_NOT_ENOUGH_MEMORY);
-				goto error;
-			}
-		}
-	}
 	RegCloseKey(key);
 	len = ExpandEnvironmentStringsA(temp, NULL, 0);
 	if ( !(imagepath = CRYPT_Alloc(len)) )
 	{
-		CRYPT_Free(signature);
 		SetLastError(ERROR_NOT_ENOUGH_MEMORY);
 		goto error;
 	}
 	if (!ExpandEnvironmentStringsA(temp, imagepath, len))
 	{
-		CRYPT_Free(signature);
 		/* ExpandEnvironmentStrings will call SetLastError */
 		goto error;
 	}
-
-	if (!CRYPT_VerifyImage(imagepath, signature))
-	{
-		CRYPT_Free(signature);
-		SetLastError(NTE_SIGNATURE_FILE_BAD);
-		goto error;
-	}
 	pProv = CRYPT_LoadProvider(imagepath);
-	CRYPT_Free(signature);
 	if (!pProv) {
 		/* CRYPT_LoadProvider calls SetLastError */
 		goto error;
