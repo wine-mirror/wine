@@ -621,8 +621,8 @@
 @ stdcall EnumDisplayMonitors(long ptr ptr long) EnumDisplayMonitors
 @ stdcall PrivateExtractIconExA (long long long long long) PrivateExtractIconExA
 @ stdcall PrivateExtractIconExW (long long long long long) PrivateExtractIconExW
-@ stdcall PrivateExtractIconsA (long long long long long long long long) PrivateExtractIconsA
-@ stdcall PrivateExtractIconsW (long long long long long long long long) PrivateExtractIconsW
+@ stdcall PrivateExtractIconsA (str long long long ptr ptr long long) PrivateExtractIconsA
+@ stdcall PrivateExtractIconsW (wstr long long long ptr ptr long long) PrivateExtractIconsW
 @ stdcall RegisterShellHookWindow (long) RegisterShellHookWindow
 @ stdcall DeregisterShellHookWindow (long) DeregisterShellHookWindow
 @ stdcall SetShellWindowEx (long long) SetShellWindowEx

@@ -4314,8 +4314,10 @@ BOOL      WINAPI PostMessageA(HWND,UINT,WPARAM,LPARAM);
 BOOL      WINAPI PostMessageW(HWND,UINT,WPARAM,LPARAM);
 #define     PostMessage WINELIB_NAME_AW(PostMessage)
 void        WINAPI PostQuitMessage(INT);
-BOOL      WINAPI PtInRect(const RECT*,POINT);
-BOOL      WINAPI RedrawWindow(HWND,const RECT*,HRGN,UINT);
+UINT        WINAPI PrivateExtractIconsA(LPCSTR,int,int,int,HICON*,UINT*,UINT,UINT);
+UINT        WINAPI PrivateExtractIconsW(LPCWSTR,int,int,int,HICON*,UINT*,UINT,UINT);
+BOOL        WINAPI PtInRect(const RECT*,POINT);
+BOOL        WINAPI RedrawWindow(HWND,const RECT*,HRGN,UINT);
 ATOM        WINAPI RegisterClassA(const WNDCLASSA *);
 ATOM        WINAPI RegisterClassW(const WNDCLASSW *);
 #define     RegisterClass WINELIB_NAME_AW(RegisterClass)
@@ -4464,9 +4466,6 @@ INT       WINAPI wvsprintfW(LPWSTR,LPCWSTR,va_list);
 
 /* NOTE: This is SYSTEM.3, not USER.182, which is also named KillSystemTimer */
 WORD        WINAPI SYSTEM_KillSystemTimer( WORD );
-
-HRESULT     WINAPI PrivateExtractIconsA(LPCSTR,INT,DWORD,DWORD,HICON*,DWORD,UINT,DWORD);
-HRESULT     WINAPI PrivateExtractIconsW(LPCWSTR,INT,DWORD,DWORD,HICON*,DWORD,UINT,DWORD);
 
 #ifdef __cplusplus
 }

@@ -240,17 +240,19 @@ static BYTE * ICO_GetIconDirectory( LPBYTE peimage, LPicoICONDIR* lplpiID, ULONG
  *  nIcons = 0: returns number of Icons in file
  *
  * returns
- *  failure:0; success: icon handle or nr of icons (nIconIndex-1)
+ *  failure:0; success: number of icons in file (nIcons = 0) or nr of icons retrieved
  */
-static HRESULT ICO_ExtractIconExW(
+static UINT ICO_ExtractIconExW(
 	LPCWSTR lpszExeFileName,
 	HICON * RetPtr,
 	INT nIconIndex,
 	UINT nIcons,
 	UINT cxDesired,
-	UINT cyDesired )
+	UINT cyDesired,
+	UINT *pIconId,
+	UINT flags)
 {
-	HRESULT		hRet = E_FAIL;
+	UINT		ret = 0;
 	LPBYTE		pData;
 	DWORD		sig;
 	HANDLE		hFile;
@@ -260,28 +262,28 @@ static HRESULT ICO_ExtractIconExW(
 	ULONG		uSize;
 	DWORD		fsizeh,fsizel;
 
-	TRACE("(file %s,start %d,extract %d\n", debugstr_w(lpszExeFileName), nIconIndex, nIcons);
+	TRACE("%s, %d, %d %p 0x%08x\n", debugstr_w(lpszExeFileName), nIconIndex, nIcons, pIconId, flags);
 
 	hFile = CreateFileW( lpszExeFileName, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, 0 );
-	if (hFile == INVALID_HANDLE_VALUE) return hRet;
+	if (hFile == INVALID_HANDLE_VALUE) return ret;
 	fsizel = GetFileSize(hFile,&fsizeh);
 
 	/* Map the file */
-	fmapping = CreateFileMappingA( hFile, NULL, PAGE_READONLY | SEC_COMMIT, 0, 0, NULL );
-        CloseHandle( hFile );
+	fmapping = CreateFileMappingW( hFile, NULL, PAGE_READONLY | SEC_COMMIT, 0, 0, NULL );
+	CloseHandle( hFile );
 	if (!fmapping)
 	{
 	  WARN("CreateFileMapping error %ld\n", GetLastError() );
-	  return hRet;
+	  return ret;
 	}
 
 	if ( !(peimage = MapViewOfFile(fmapping,FILE_MAP_READ,0,0,0)))
 	{
 	  WARN("MapViewOfFile error %ld\n", GetLastError() );
           CloseHandle( fmapping );
-	  return hRet;
+	  return ret;
 	}
-        CloseHandle( fmapping );
+	CloseHandle( fmapping );
 
 	sig = USER32_GetResourceTable(peimage,fsizel,&pData);
 
@@ -327,7 +329,7 @@ static HRESULT ICO_ExtractIconExW(
 	  {
 	    if( nIcons == 0 )
 	    {
-	      hRet = iconDirCount;
+	      ret = iconDirCount;
 	    }
 	    else if( nIconIndex < iconDirCount )
 	    {
@@ -340,7 +342,7 @@ static HRESULT ICO_ExtractIconExW(
 	        /* .ICO files have only one icon directory */
 	        if( lpiID == NULL )	/* *.ico */
 	          pCIDir = USER32_LoadResource( peimage, pIconDir + i, *(WORD*)pData, &uSize );
-	        RetPtr[i-nIconIndex] = (HICON)LookupIconIdFromDirectoryEx( pCIDir, TRUE, cxDesired, cyDesired, 0);
+	        RetPtr[i-nIconIndex] = (HICON)LookupIconIdFromDirectoryEx( pCIDir, TRUE, cxDesired, cyDesired, flags );
 	      }
 
 	      for( icon = nIconIndex; icon < nIconIndex + nIcons; icon++ )
@@ -349,16 +351,16 @@ static HRESULT ICO_ExtractIconExW(
 	        if( lpiID )
 	          pCIDir = ICO_LoadIcon( peimage, lpiID->idEntries + (int)RetPtr[icon-nIconIndex], &uSize);
 	        else
-		  for( i = 0; i < iconCount; i++ )
-		    if( pIconStorage[i].id == ((int)RetPtr[icon-nIconIndex] | 0x8000) )
-		      pCIDir = USER32_LoadResource( peimage, pIconStorage + i,*(WORD*)pData, &uSize );
+	          for ( i = 0; i < iconCount; i++ )
+	            if ( pIconStorage[i].id == ((int)RetPtr[icon-nIconIndex] | 0x8000) )
+	              pCIDir = USER32_LoadResource( peimage, pIconStorage + i,*(WORD*)pData, &uSize );
 
 	        if( pCIDir )
-		  RetPtr[icon-nIconIndex] = (HICON) CreateIconFromResourceEx(pCIDir,uSize,TRUE,0x00030000, cxDesired, cyDesired, LR_DEFAULTCOLOR);
+	          RetPtr[icon - nIconIndex] = (HICON)CreateIconFromResourceEx(pCIDir, uSize, TRUE, 0x00030000, cxDesired, cyDesired, flags);
 	        else
-		  RetPtr[icon-nIconIndex] = 0;
+	          RetPtr[icon - nIconIndex] = 0;
 	      }
-	      hRet = S_OK;
+	      ret = icon - nIconIndex;	/* return number of retrieved icons */
 	    }
 	  }
 	}
@@ -419,7 +421,7 @@ static HRESULT ICO_ExtractIconExW(
 	  /* only number of icons requested */
 	  if( nIcons == 0 )
 	  {
-	    hRet = iconDirCount;
+	    ret = iconDirCount;
 	    goto end;		/* success */
 	  }
 
@@ -482,11 +484,12 @@ static HRESULT ICO_ExtractIconExW(
 	      if (igdataent->OffsetToData < pe_sections[j].VirtualAddress)
 	        continue;
 	      if (igdataent->OffsetToData+igdataent->Size > pe_sections[j].VirtualAddress+pe_sections[j].SizeOfRawData)
-		continue;
+	        continue;
 
 	      if (igdataent->OffsetToData-pe_sections[j].VirtualAddress+pe_sections[j].PointerToRawData+igdataent->Size > fsizel) {
-		  FIXME("overflow in PE lookup (%s has len %ld, have offset %ld), short file?\n",debugstr_w(lpszExeFileName),fsizel,igdataent->OffsetToData-pe_sections[j].VirtualAddress+pe_sections[j].PointerToRawData+igdataent->Size);
-		  goto end; /* failure */
+	        FIXME("overflow in PE lookup (%s has len %ld, have offset %ld), short file?\n", debugstr_w(lpszExeFileName), fsizel,
+	        	   igdataent->OffsetToData - pe_sections[j].VirtualAddress + pe_sections[j].PointerToRawData + igdataent->Size);
+	        goto end; /* failure */
 	      }
 	      igdata = peimage+(igdataent->OffsetToData-pe_sections[j].VirtualAddress+pe_sections[j].PointerToRawData);
 	    }
@@ -496,9 +499,12 @@ static HRESULT ICO_ExtractIconExW(
 	      FIXME("no matching real address for icongroup!\n");
 	      goto end;	/* failure */
 	    }
-	    RetPtr[i] = (HICON)LookupIconIdFromDirectoryEx(igdata, TRUE, cxDesired, cyDesired, LR_DEFAULTCOLOR);
+	    RetPtr[i] = (HICON)LookupIconIdFromDirectoryEx(igdata, TRUE, cxDesired, cyDesired, flags);
 	  }
 
+	  if (pIconId)
+	  	*pIconId = LOWORD(*RetPtr);
+	  	 
 	  if (!(iconresdir=find_entry_by_id(rootresdir,LOWORD(RT_ICONW),rootresdir)))
 	  {
 	    WARN("No Iconresourcedirectory!\n");
@@ -507,9 +513,9 @@ static HRESULT ICO_ExtractIconExW(
 
 	  for (i=0; i<nIcons; i++)
 	  {
-              const IMAGE_RESOURCE_DIRECTORY *xresdir;
-              xresdir = find_entry_by_id(iconresdir,LOWORD(RetPtr[i]),rootresdir);
-              xresdir = find_entry_default(xresdir,rootresdir);
+        const IMAGE_RESOURCE_DIRECTORY *xresdir;
+        xresdir = find_entry_by_id(iconresdir,LOWORD(RetPtr[i]),rootresdir);
+        xresdir = find_entry_default(xresdir,rootresdir);
 	    idataent = (PIMAGE_RESOURCE_DATA_ENTRY)xresdir;
 	    idata = NULL;
 
@@ -528,13 +534,14 @@ static HRESULT ICO_ExtractIconExW(
 	      RetPtr[i]=0;
 	      continue;
 	    }
-	    RetPtr[i] = (HICON) CreateIconFromResourceEx(idata,idataent->Size,TRUE,0x00030000, cxDesired, cyDesired, LR_DEFAULTCOLOR);
+	    RetPtr[i] = (HICON) CreateIconFromResourceEx(idata,idataent->Size,TRUE,0x00030000, cxDesired, cyDesired, flags);
 	  }
-	  hRet = S_OK;	/* return first icon */
+	  ret = i;	/* return number of retrieved icons */
 	}			/* if(sig == IMAGE_NT_SIGNATURE) */
 
-end:	UnmapViewOfFile(peimage);	/* success */
-	return hRet;
+end:
+	UnmapViewOfFile(peimage);	/* success */
+	return ret;
 }
 
 /***********************************************************************
@@ -545,60 +552,75 @@ end:	UnmapViewOfFile(peimage);	/* success */
  *  the higher word of sizeXY contains the size of the small icon, the lower
  *  word the size of the big icon. phicon points to HICON[2].
  *
- * RETURNS
- *  nIcons > 0: HRESULT
- *  nIcons = 0: the number of icons
+ * FIXME:
+ * 1) should also support 16 bit EXE + DLLs, cursor and animated cursor as well
+ *    as bitmap files.
+ * 2) should return according to MSDN
+ *  phicons == NULL	: the number of icons in file or 0 on error
+ *  phicons != NULL	: the number of icons extracted or 0xFFFFFFFF on error
+ * 	  does return in Win2000
+ *  when file valid the number of icons or 0 on any error
+ *  when file invalid and phicon == NULL returns 0
+ *  when file invalid and phicon != NULL returns 0xFFFFFFFF
+ *
+ * *pIconID is always set to 0 when file invalid
+ * *pIconID is always set to 0xFFFFFFFF for valid icon and cursor files
+ * *pIconID is set to actual identifier for valid dll/exes or -1 on error
  */
 
-HRESULT WINAPI PrivateExtractIconsW (
+UINT WINAPI PrivateExtractIconsW (
 	LPCWSTR lpwstrFile,
 	int nIndex,
-	DWORD sizeX,
-	DWORD sizeY,
-	HICON * phicon,	/* [???] NOTE: HICON* */
-	DWORD w,	/* [in] NOTE: 0 */
-	UINT nIcons,
-	DWORD y )	/* [in] NOTE: 0x80 maybe LR_* constant */
+	int sizeX,
+	int sizeY,
+	HICON * phicon,	/* [out] pointer to array of HICON handles */
+	UINT* pIconId,	/* [out] pointer to returned icon identifier which fits best */
+	UINT nIcons,    /* [in] number of icons to retrieve */
+	UINT flags )	/* [in] LR_* flags used by LoadImage */
 {
-	DWORD ret;
-	TRACE("%s 0x%08x 0x%08lx 0x%08lx %p 0x%08lx 0x%08x 0x%08lx\n",
-	debugstr_w(lpwstrFile),nIndex, sizeX ,sizeY ,phicon,w,nIcons,y );
+    UINT ret;
+    TRACE("%s %d %dx%d %p %p %d 0x%08x\n",
+          debugstr_w(lpwstrFile), nIndex, sizeX, sizeY, phicon, pIconId, nIcons, flags);
 
-	if ((nIcons == 2) && HIWORD(sizeX) && HIWORD(sizeY))
-	{
-	  ret = ICO_ExtractIconExW(lpwstrFile, phicon, nIndex, 1, sizeX & 0xffff, sizeY & 0xffff );
-	  if (!SUCCEEDED(ret)) return ret;
-	  ret = ICO_ExtractIconExW(lpwstrFile, phicon+1, nIndex, 1, (sizeX>>16) & 0xffff, (sizeY>>16) & 0xffff );
-	} else
-	  ret = ICO_ExtractIconExW(lpwstrFile, phicon, nIndex, nIcons, sizeX & 0xffff, sizeY & 0xffff );
-	return ret;
+	if (pIconId) /* Invalidate icon identifier on entry */
+		*pIconId = 0xFFFFFFFF;
+		
+    if (!phicon)
+      return ICO_ExtractIconExW(lpwstrFile, NULL, nIndex, 0, sizeX & 0xffff, sizeY & 0xffff, pIconId, flags);
+		
+    if ((nIcons == 2) && HIWORD(sizeX) && HIWORD(sizeY))
+    {
+      ret = ICO_ExtractIconExW(lpwstrFile, phicon, nIndex, 1, sizeX & 0xffff, sizeY & 0xffff, pIconId, flags);
+      if (!SUCCEEDED(ret)) return ret;
+      ret = ICO_ExtractIconExW(lpwstrFile, phicon+1, nIndex, 1, (sizeX>>16) & 0xffff, (sizeY>>16) & 0xffff, pIconId, flags);
+    } else
+      ret = ICO_ExtractIconExW(lpwstrFile, phicon, nIndex, nIcons, sizeX & 0xffff, sizeY & 0xffff, pIconId, flags);
+    return ret;
 }
 
 /***********************************************************************
  *           PrivateExtractIconsA			[USER32.@]
  */
 
-HRESULT WINAPI PrivateExtractIconsA (
+UINT WINAPI PrivateExtractIconsA (
 	LPCSTR lpstrFile,
-	INT nIndex,
-	DWORD sizeX,
-	DWORD sizeY,
+	int nIndex,
+	int sizeX,
+	int sizeY,
 	HICON * phicon,
-	DWORD w,	/* [in] NOTE: 0 */
-	UINT  nIcons,
-	DWORD y )	/* [in] NOTE: 0x80 */
+	UINT* piconid,  /* [out] pointer to returned icon identifier which fits best */
+	UINT nIcons,    /* [in] number of icons to retrieve */
+	UINT flags )    /* [in] LR_* flags used by LoadImage */
 {
-	DWORD ret;
-        INT len = MultiByteToWideChar( CP_ACP, 0, lpstrFile, -1, NULL, 0 );
-        LPWSTR lpwstrFile = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) );
+    UINT ret;
+    INT len = MultiByteToWideChar(CP_ACP, 0, lpstrFile, -1, NULL, 0);
+    LPWSTR lpwstrFile = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
 
-        MultiByteToWideChar( CP_ACP, 0, lpstrFile, -1, lpwstrFile, len );
-	ret = PrivateExtractIconsW(
-		lpwstrFile, nIndex, sizeX, sizeY, phicon, w, nIcons, y
-	);
+    MultiByteToWideChar(CP_ACP, 0, lpstrFile, -1, lpwstrFile, len);
+    ret = PrivateExtractIconsW(lpwstrFile, nIndex, sizeX, sizeY, phicon, piconid, nIcons, flags);
 
-	HeapFree(GetProcessHeap(), 0, lpwstrFile);
-	return ret;
+    HeapFree(GetProcessHeap(), 0, lpwstrFile);
+    return ret;
 }
 
 /***********************************************************************
