@@ -7325,22 +7325,16 @@ static LRESULT LISTVIEW_MouseWheel(LISTVIEW_INFO *infoPtr, INT wheelDelta)
         *  listview should be scrolled by a multiple of 37 dependently on its dimension or its visible item number
         *  should be fixed in the future.
         */
-        if (GetScrollInfo(infoPtr->hwndSelf, SB_VERT, &scrollInfo))
-            LISTVIEW_VScroll(infoPtr, SB_THUMBPOSITION,
-			     scrollInfo.nPos + (gcWheelDelta < 0) ?
-			     LISTVIEW_SCROLL_ICON_LINE_SIZE :
-			     -LISTVIEW_SCROLL_ICON_LINE_SIZE, 0);
+        LISTVIEW_VScroll(infoPtr, SB_INTERNAL, (gcWheelDelta < 0) ?
+                LISTVIEW_SCROLL_ICON_LINE_SIZE : -LISTVIEW_SCROLL_ICON_LINE_SIZE, 0);
         break;
 
     case LVS_REPORT:
         if (abs(gcWheelDelta) >= WHEEL_DELTA && pulScrollLines)
         {
-            if (GetScrollInfo(infoPtr->hwndSelf, SB_VERT, &scrollInfo))
-            {
-                int cLineScroll = min(LISTVIEW_GetCountPerColumn(infoPtr), pulScrollLines);
-                cLineScroll *= (gcWheelDelta / WHEEL_DELTA);
-                LISTVIEW_VScroll(infoPtr, SB_THUMBPOSITION, scrollInfo.nPos + cLineScroll, 0);
-            }
+            int cLineScroll = min(LISTVIEW_GetCountPerColumn(infoPtr), pulScrollLines);
+            cLineScroll *= (gcWheelDelta / WHEEL_DELTA);
+            LISTVIEW_VScroll(infoPtr, SB_INTERNAL, cLineScroll, 0);
         }
         break;
 
