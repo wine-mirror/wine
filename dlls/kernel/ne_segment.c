@@ -694,9 +694,11 @@ static BOOL NE_InitDLL( NE_MODULE *pModule )
     context.Ebp = OFFSETOF(NtCurrentTeb()->cur_stack) + (WORD)&((STACK16FRAME*)0)->bp;
 
     pModule->cs = 0;  /* Don't initialize it twice */
-    TRACE_(dll)("Calling LibMain, cs:ip=%04lx:%04lx ds=%04lx di=%04x cx=%04x\n",
-                 context.SegCs, context.Eip, context.SegDs,
-                 LOWORD(context.Edi), LOWORD(context.Ecx) );
+    TRACE_(dll)("Calling LibMain for %.*s, cs:ip=%04lx:%04lx ds=%04lx di=%04x cx=%04x\n",
+                *((BYTE*)pModule + pModule->name_table),
+                (char *)pModule + pModule->name_table + 1,
+                context.SegCs, context.Eip, context.SegDs,
+                LOWORD(context.Edi), LOWORD(context.Ecx) );
     WOWCallback16Ex( 0, WCB16_REGS, 0, NULL, (DWORD *)&context );
     return TRUE;
 }
