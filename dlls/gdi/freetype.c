@@ -1249,9 +1249,18 @@ not_found:
         free_font( ret );
         return 0;
     }
+	
+    if (ret->charset == SYMBOL_CHARSET && 
+        !pFT_Select_Charmap(ret->ft_face, FT_ENCODING_MS_SYMBOL)) {
+        /* No ops */
+    }
+    else if (!pFT_Select_Charmap(ret->ft_face, FT_ENCODING_UNICODE)) {
+        /* No ops */
+    }
+    else {
+        pFT_Select_Charmap(ret->ft_face, FT_ENCODING_APPLE_ROMAN);
+    }
 
-    if(ret->charset == SYMBOL_CHARSET)
-        pFT_Select_Charmap(ret->ft_face, ft_encoding_symbol);
     ret->orientation = lf.lfOrientation;
     ret->name = strdupW(family->FamilyName);
 
