@@ -74,6 +74,7 @@
 #include <stdlib.h>
 #include "charlist.h"
 #include "windows.h"
+#include "debugtools.h"
 
 extern HANDLE RICHED32_hHeap;
 
@@ -2807,7 +2808,7 @@ static void
 DefaultMsgProc (s)
 char	*s;
 {
-	fprintf (stderr, "%s", s);
+    MESSAGE( "%s", s);
 }
 
 
@@ -2899,7 +2900,7 @@ static void
 DefaultPanicProc (s)
 char	*s;
 {
-	fprintf (stderr, "%s", s);
+    MESSAGE( "%s", s);
 	/*exit (1);*/
 }
 

@@ -23,6 +23,9 @@ RC_SRCS = \
 MC_SRCS = \
 	messages/winerr_enu.mc
 
+EXTRASUBDIRS = \
+	messages
+
 @MAKE_DLL_RULES@
 
 depend $(RC_SRCS:.rc=.s): $(MC_SRCS:.mc=.rc)

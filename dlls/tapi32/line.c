@@ -315,10 +315,10 @@ DWORD WINAPI lineGetCountry(DWORD dwCountryID, DWORD dwAPIVersion, LPLINECOUNTRY
         if(dwCountryID && (TAPI_LCList[i].dwCountryID != dwCountryID))
             continue;
 
-        len  = lstrlenA (TAPI_LCList[i].lpCountryName)+1;
-        len += lstrlenA (TAPI_LCList[i].lpSameAreaRule)+1;
-        len += lstrlenA (TAPI_LCList[i].lpLongDistanceRule)+1;
-        len += lstrlenA (TAPI_LCList[i].lpInternationalRule)+1;
+        len  = strlen (TAPI_LCList[i].lpCountryName)+1;
+        len += strlen (TAPI_LCList[i].lpSameAreaRule)+1;
+        len += strlen (TAPI_LCList[i].lpLongDistanceRule)+1;
+        len += strlen (TAPI_LCList[i].lpInternationalRule)+1;
 
         if(dwAvailSize<(dwOffset+len))
         {
@@ -342,35 +342,35 @@ DWORD WINAPI lineGetCountry(DWORD dwCountryID, DWORD dwAPIVersion, LPLINECOUNTRY
             lpLCE[i].dwNextCountryID = TAPI_LCList[i+1].dwCountryID;
 
         /* add country name */
-        len = lstrlenA(TAPI_LCList[i].lpCountryName)+1;
+        len = strlen(TAPI_LCList[i].lpCountryName)+1;
         lpLCE[i].dwCountryNameSize = len;
         lpLCE[i].dwCountryNameOffset = dwOffset;
         lpstr = ((LPSTR)lpLineCountryList)+dwOffset;
-        lstrcpyA(lpstr, TAPI_LCList[i].lpCountryName);
+        strcpy(lpstr, TAPI_LCList[i].lpCountryName);
         dwOffset+=len;
 
         /* add Same Area Rule */
-        len = lstrlenA (TAPI_LCList[i].lpSameAreaRule)+1;
+        len = strlen (TAPI_LCList[i].lpSameAreaRule)+1;
         lpLCE[i].dwSameAreaRuleSize = len;
         lpLCE[i].dwSameAreaRuleOffset = dwOffset;
         lpstr = ((LPSTR)lpLineCountryList)+dwOffset;
-        lstrcpyA(lpstr, TAPI_LCList[i].lpSameAreaRule);
+        strcpy(lpstr, TAPI_LCList[i].lpSameAreaRule);
         dwOffset+=len;
 
         /* add Long Distance Rule */
-        len = lstrlenA (TAPI_LCList[i].lpLongDistanceRule)+1;
+        len = strlen (TAPI_LCList[i].lpLongDistanceRule)+1;
         lpLCE[i].dwLongDistanceRuleSize = len;
         lpLCE[i].dwLongDistanceRuleOffset = dwOffset;
         lpstr = ((LPSTR)lpLineCountryList)+dwOffset;
-        lstrcpyA(lpstr, TAPI_LCList[i].lpLongDistanceRule);
+        strcpy(lpstr, TAPI_LCList[i].lpLongDistanceRule);
         dwOffset+=len;
 
         /* add Long Distance Rule */
-        len = lstrlenA (TAPI_LCList[i].lpInternationalRule)+1;
+        len = strlen (TAPI_LCList[i].lpInternationalRule)+1;
         lpLCE[i].dwInternationalRuleSize = len;
         lpLCE[i].dwInternationalRuleOffset = dwOffset;
         lpstr = ((LPSTR)lpLineCountryList)+dwOffset;
-        lstrcpyA(lpstr, TAPI_LCList[i].lpInternationalRule);
+        strcpy(lpstr, TAPI_LCList[i].lpInternationalRule);
         dwOffset+=len;
     }
 

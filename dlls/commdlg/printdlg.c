@@ -1055,7 +1055,7 @@ LRESULT WINAPI PrintDlgProc16(HWND16 hWnd, UINT16 wMsg, WPARAM16 wParam,
     {
     case WM_INITDIALOG:
       TRACE("WM_INITDIALOG lParam=%08lX\n", lParam);
-      ShowWindow16(hWnd, SW_SHOWNORMAL);
+      ShowWindow(hWnd, SW_SHOWNORMAL);
       return (TRUE);
     case WM_COMMAND:
       switch (wParam)
@@ -1083,7 +1083,7 @@ LRESULT WINAPI PrintSetupDlgProc16(HWND16 hWnd, UINT16 wMsg, WPARAM16 wParam,
     {
     case WM_INITDIALOG:
       TRACE("WM_INITDIALOG lParam=%08lX\n", lParam);
-      ShowWindow16(hWnd, SW_SHOWNORMAL);
+      ShowWindow(hWnd, SW_SHOWNORMAL);
       return (TRUE);
     case WM_COMMAND:
       switch (wParam) {

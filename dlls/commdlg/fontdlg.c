@@ -323,7 +323,7 @@ INT16 WINAPI FontFamilyEnumProc16( SEGPTR logfont, SEGPTR metrics,
                                    UINT16 nFontType, LPARAM lParam )
 {
   HWND16 hwnd=LOWORD(lParam);
-  HWND16 hDlg=GetParent16(hwnd);
+  HWND hDlg=GetParent(hwnd);
   LPCHOOSEFONT16 lpcf=(LPCHOOSEFONT16)GetWindowLongA(hDlg, DWL_USER); 
   LOGFONT16 *lplf = (LOGFONT16 *)PTR_SEG_TO_LIN( logfont );
   LOGFONTA lf32a;
@@ -347,8 +347,8 @@ static int SetFontStylesToCombo2(HWND hwnd, HDC hdc, LPLOGFONTA lplf)
    static struct FONTSTYLE fontstyles[FSTYLES]={ 
           { 0,FW_NORMAL,"Regular"},{0,FW_BOLD,"Bold"},
           { 1,FW_NORMAL,"Italic"}, {1,FW_BOLD,"Bold Italic"}};
-   HFONT16 hf;
-   TEXTMETRIC16 tm;
+   HFONT hf;
+   TEXTMETRICA tm;
    int i,j;
 
    for (i=0;i<FSTYLES;i++)
@@ -357,7 +357,7 @@ static int SetFontStylesToCombo2(HWND hwnd, HDC hdc, LPLOGFONTA lplf)
      lplf->lfWeight=fontstyles[i].weight;
      hf=CreateFontIndirectA(lplf);
      hf=SelectObject(hdc,hf);
-     GetTextMetrics16(hdc,&tm);
+     GetTextMetricsA(hdc,&tm);
      hf=SelectObject(hdc,hf);
      DeleteObject(hf);
 
@@ -454,7 +454,7 @@ INT16 WINAPI FontStyleEnumProc16( SEGPTR logfont, SEGPTR metrics,
 {
   HWND16 hcmb2=LOWORD(lParam);
   HWND16 hcmb3=HIWORD(lParam);
-  HWND16 hDlg=GetParent16(hcmb3);
+  HWND hDlg=GetParent(hcmb3);
   LPCHOOSEFONT16 lpcf=(LPCHOOSEFONT16)GetWindowLongA(hDlg, DWL_USER); 
   LOGFONT16 *lplf = (LOGFONT16 *)PTR_SEG_TO_LIN(logfont);
   LOGFONTA lf32a;

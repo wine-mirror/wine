@@ -1,6 +1,8 @@
 name    psapi
 type    win32
 
+import	kernel32.dll
+
 @ stdcall EmptyWorkingSet(long) EmptyWorkingSet
 @ stdcall EnumDeviceDrivers(ptr long ptr) EnumDeviceDrivers
 @ stdcall EnumProcessModules(long ptr long ptr) EnumProcessModules

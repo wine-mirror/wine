@@ -15,6 +15,7 @@
  */
 
 #include <string.h>
+#include <stdio.h>
 
 #include "winbase.h"
 #include "winreg.h"
@@ -27,7 +28,7 @@
 #include "queue.h"
 #include "message.h"
 
-DEFAULT_DEBUG_CHANNEL(comm)
+DEFAULT_DEBUG_CHANNEL(comm);
 
 HMODULE SERIALUI_hModule = 0;
 DWORD SERIALUI_dwProcessesAttached = 0;
@@ -347,7 +348,7 @@ BOOL WINAPI SERIALUI_ConfigDialogProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
         if(!info)
             return FALSE;
         SetWindowLongA(hWnd, DWL_USER, lParam);
-        wsnprintfA(szTitle, sizeof szTitle, "Settings for %s", info->lpszDevice);
+        snprintf(szTitle, sizeof szTitle, "Settings for %s", info->lpszDevice);
         SetWindowTextA(hWnd, szTitle);
         SERIALUI_DCBToDialogInfo(hWnd, info);
         return TRUE;
@@ -455,7 +456,7 @@ BOOL WINAPI SERIALUI_SetDefaultCommConfig(
     if(r != ERROR_SUCCESS)
         return FALSE;
 
-    wsnprintfA(szKeyName, sizeof szKeyName, "%s\\%s", lpszCommKey ,lpszDevice);
+    snprintf(szKeyName, sizeof szKeyName, "%s\\%s", lpszCommKey ,lpszDevice);
     r = RegCreateKeyA(hKeyReg, szKeyName, &hKeyPort);
     if(r == ERROR_SUCCESS)
     {
@@ -507,7 +508,7 @@ BOOL WINAPI SERIALUI_GetDefaultCommConfig(
     if(r != ERROR_SUCCESS)
         return FALSE;
 
-    wsnprintfA(szKeyName, sizeof szKeyName, "%s\\%s", lpszCommKey ,lpszDevice);
+    snprintf(szKeyName, sizeof szKeyName, "%s\\%s", lpszCommKey ,lpszDevice);
     r = RegOpenKeyA(hKeyReg, szKeyName, &hKeyPort);
     if(r == ERROR_SUCCESS)
     {

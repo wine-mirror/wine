@@ -42,63 +42,6 @@ HRESULT WINAPI StrRetToStrNAW (LPVOID dest, DWORD len, LPSTRRET src, LPITEMIDLIS
 	return StrRetToStrNA (dest, len, src, pidl);
 }
 
-/************************* string functions ****************************/
-
-/*************************************************************************
- * StrChrA					[SHLWAPI]
- */
-LPSTR WINAPI StrChrA (LPCSTR str, INT c)
-{
-	TRACE("%s %i\n", str,c);
-	return strchr(str, c);
-}
-
-/*************************************************************************
- * StrChrW					[NT 4.0:SHELL32.651]
- *
- */
-LPWSTR WINAPI StrChrW (LPWSTR str, WCHAR x )
-{
-	TRACE("%s 0x%04x\n",debugstr_w(str),x);
-	return strchrW(str, x);
-}
-
-/*************************************************************************
- * StrCmpNA					[NT 4.0:SHELL32.*]
- */
-INT WINAPI StrCmpNA ( LPCSTR str1, LPCSTR str2, INT len)
-{
-	TRACE("%s %s %i stub\n", str1,str2,len);
-	return strncmp(str1, str2, len);
-}
-
-/*************************************************************************
- * StrCmpNW					[NT 4.0:SHELL32.*]
- */
-INT WINAPI StrCmpNW ( LPCWSTR wstr1, LPCWSTR wstr2, INT len)
-{
-	TRACE("%s %s %i stub\n", debugstr_w(wstr1),debugstr_w(wstr2),len);
-	return strncmpW(wstr1, wstr2, len);
-}
-
-/*************************************************************************
- * StrCmpNIA					[NT 4.0:SHELL32.*]
- */
-int WINAPI StrCmpNIA ( LPCSTR str1, LPCSTR str2, int len)
-{
-	TRACE("%s %s %i stub\n", str1,str2,len);
-	return strncasecmp(str1, str2, len);
-}
-
-/*************************************************************************
- * StrCmpNIW					[NT 4.0:SHELL32.*]
- */
-int WINAPI StrCmpNIW ( LPCWSTR wstr1, LPCWSTR wstr2, int len)
-{
-	TRACE("%s %s %i stub\n", debugstr_w(wstr1),debugstr_w(wstr2),len);
-	return strncmpiW(wstr1, wstr2, len);
-}
-
 /************************* OLESTR functions ****************************/
 
 /************************************************************************

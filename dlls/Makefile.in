@@ -394,12 +394,14 @@ oleaut32/liboleaut32.so: libole32.so libgdi32.so libkernel32.so
 olecli/libolecli32.so: libole32.so libolesvr32.so libgdi32.so
 olepro32/libolepro32.so: liboleaut32.so
 opengl32/libopengl32.so: libx11drv.so
+psapi/libpsapi.so: libkernel32.so
 richedit/libriched32.so: libuser32.so libkernel32.so
 serialui/libserialui.so: libuser32.so libadvapi32.so libkernel32.so
 setupapi/libsetupapi.so: libkernel32.so
 shell32/libshell32.so: libole32.so libshlwapi.so libcomctl32.so libadvapi32.so libuser32.so libgdi32.so libkernel32.so
 shfolder/libshfolder.so: libshell32.so
 shlwapi/libshlwapi.so: libadvapi32.so libuser32.so libkernel32.so
+tapi32/libtapi32.so: libkernel32.so
 ttydrv/libttydrv.so: libuser32.so libgdi32.so libkernel32.so
 urlmon/liburlmon.so: libole32.so
 user/libuser32.so: libgdi32.so libkernel32.so

@@ -31,7 +31,6 @@
 #include "winerror.h"
 #include "winreg.h"         /* for HKEY_LOCAL_MACHINE */
 #include "winnls.h"         /* for PRIMARYLANGID */
-#include "wine/winbase16.h" /* for RegQueryValue16(HKEY,LPSTR,LPSTR,LPDWORD) */
 #include "heap.h"
 #include "wine/obj_base.h"
 #include "debugtools.h"
@@ -74,7 +73,7 @@ QueryPathOfRegTypeLib16(
 		return E_FAIL;
 	}
 	plen = sizeof(pathname);
-	if (RegQueryValue16(HKEY_LOCAL_MACHINE,typelibkey,pathname,&plen)) {
+	if (RegQueryValueA(HKEY_LOCAL_MACHINE,typelibkey,pathname,&plen)) {
 		/* try again without lang specific id */
 		if (SUBLANGID(lcid))
 			return QueryPathOfRegTypeLib16(guid,wMaj,wMin,PRIMARYLANGID(lcid),path);
@@ -116,7 +115,7 @@ QueryPathOfRegTypeLib(
 		return E_FAIL;
 	}
 	plen = sizeof(pathname);
-	if (RegQueryValue16(HKEY_LOCAL_MACHINE,typelibkey,pathname,&plen)) {
+	if (RegQueryValueA(HKEY_LOCAL_MACHINE,typelibkey,pathname,&plen)) {
 		/* try again without lang specific id */
 		if (SUBLANGID(lcid))
 			return QueryPathOfRegTypeLib(guid,wMaj,wMin,PRIMARYLANGID(lcid),path);

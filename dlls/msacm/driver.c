@@ -7,6 +7,8 @@
  *		  1999	Eric Pouech
  */
 
+#include <stdio.h>
+
 #include "winbase.h"
 #include "winerror.h"
 #include "windef.h"
@@ -20,7 +22,7 @@
 #include "wineacm.h"
 #include "winreg.h"
 
-DEFAULT_DEBUG_CHANNEL(msacm)
+DEFAULT_DEBUG_CHANNEL(msacm);
 	
 /***********************************************************************
  *           acmDriverAddA (MSACM32.2)
@@ -311,7 +313,7 @@ MMRESULT WINAPI acmDriverPriority(HACMDRIVERID hadid, DWORD dwPriority, DWORD fd
 	return MMSYSERR_ERROR;
     
     for (dwPriorityCounter = 1; ; dwPriorityCounter++)	{
-	wsnprintfA(szSubKey, 17, "Priorty%ld", dwPriorityCounter);
+	snprintf(szSubKey, 17, "Priorty%ld", dwPriorityCounter);
 	lError = RegQueryValueA(hPriorityKey, szSubKey, szBuffer, &lBufferLength);
 	if (lError != ERROR_SUCCESS)
 	    break;

@@ -1737,7 +1737,7 @@ UINT16	WINAPI MCI_DefYieldProc(UINT16 wDevID, DWORD data)
     
     TRACE("(0x%04x, 0x%08lx)\n", wDevID, data);
 
-    if ((HIWORD(data) != 0 && GetActiveWindow16() != HIWORD(data)) ||
+    if ((HIWORD(data) != 0 && GetActiveWindow() != HIWORD(data)) ||
 	(GetAsyncKeyState(LOWORD(data)) & 1) == 0) {
 	UserYield16();
 	ret = 0;

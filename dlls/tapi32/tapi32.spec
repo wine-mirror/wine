@@ -1,6 +1,8 @@
 name	tapi32
 type	win32
 
+import	kernel32.dll
+
 @ stdcall lineAccept(long str long) lineAccept
 @ stdcall lineAddProvider(str long ptr) lineAddProvider
 @ stdcall lineAddToConference(long long) lineAddToConference

@@ -323,7 +323,7 @@ INT WINAPI GetExpandedNameW( LPCWSTR in, LPWSTR out )
 INT16 WINAPI LZRead16( HFILE16 fd, LPVOID buf, UINT16 toread )
 {
     if (IS_LZ_HANDLE(fd)) return LZRead( fd, buf, toread );
-    return _lread16( fd, buf, toread );
+    return _lread( FILE_GetHandle(fd), buf, toread );
 }
 
 
@@ -424,7 +424,7 @@ INT WINAPI LZRead( HFILE fd, LPVOID vbuf, UINT toread )
 LONG WINAPI LZSeek16( HFILE16 fd, LONG off, INT16 type )
 {
     if (IS_LZ_HANDLE(fd)) return LZSeek( fd, off, type );
-    return _llseek16( fd, off, type );
+    return _llseek( FILE_GetHandle(fd), off, type );
 }
 
 

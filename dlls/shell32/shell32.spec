@@ -249,14 +249,14 @@ import kernel32.dll
  298 stdcall Shell_NotifyIconW(long ptr) Shell_NotifyIconW
  299 stub Shl1632_ThunkData32
  300 stub Shl3216_ThunkData32
- 301 stdcall StrChrA (str long) StrChrA   
+ 301 forward StrChrA shlwapi.StrChrA   
  302 stub StrChrIA
  303 stub StrChrIW
- 304 stdcall StrChrW (wstr long) StrChrW
- 305 stdcall StrCmpNA(str str long) StrCmpNA 
- 306 stdcall StrCmpNIA (str str long) StrCmpNIA
- 307 stdcall StrCmpNIW (wstr wstr long) StrCmpNIW
- 308 stdcall StrCmpNW (wstr wstr long) StrCmpNW
+ 304 forward StrChrW shlwapi.StrChrW
+ 305 forward StrCmpNA shlwapi.StrCmpNA 
+ 306 forward StrCmpNIA shlwapi.StrCmpNIA
+ 307 forward StrCmpNIW shlwapi.StrCmpNIW
+ 308 forward StrCmpNW shlwapi.StrCmpNW
  309 stdcall StrCpyNA (ptr str long) lstrcpynA
  310 stdcall StrCpyNW (ptr wstr long)lstrcpynW
  311 stub StrNCmpA

@@ -2108,7 +2108,7 @@ HGLOBAL16 WINAPI OleMetaFilePictFromIconAndLabel16(
 
     hdc = CreateMetaFile16(NULL);
     DrawIcon(hdc, 0, 0, hIcon); /* FIXME */
-    TextOut16(hdc, 0, 0, lpszLabel, 1); /* FIXME */
+    TextOutA(hdc, 0, 0, lpszLabel, 1); /* FIXME */
     hmf = GlobalAlloc16(0, sizeof(METAFILEPICT16));
     mf = (METAFILEPICT16 *)GlobalLock16(hmf);
     mf->mm = MM_ANISOTROPIC;
