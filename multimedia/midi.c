@@ -453,8 +453,7 @@ static void midReceiveChar(WORD wDevID, unsigned char value, DWORD dwTime)
 	WORD 		sbfb = FALSE;
 
 	if (lpMidiHdr) {
-	    LPBYTE	lpData = ((DWORD)lpMidiHdr == lpMidiHdr->reserved) ?
-		(LPBYTE)lpMidiHdr->lpData : (LPBYTE)PTR_SEG_TO_LIN(lpMidiHdr->lpData);
+	    LPBYTE	lpData = lpMidiHdr->lpData;
 	
 	    lpData[lpMidiHdr->dwBytesRecorded++] = value;
 	    if (lpMidiHdr->dwBytesRecorded == lpMidiHdr->dwBufferLength) {
@@ -470,7 +469,7 @@ static void midReceiveChar(WORD wDevID, unsigned char value, DWORD dwTime)
 	    lpMidiHdr->dwFlags &= ~MHDR_INQUEUE;
 	    lpMidiHdr->dwFlags |= MHDR_DONE;
 	    MidiInDev[wDevID].lpQueueHdr = (LPMIDIHDR)lpMidiHdr->lpNext;
-	    if (MIDI_NotifyClient(wDevID, MIM_LONGDATA, (DWORD)lpMidiHdr->reserved, dwTime) != MMSYSERR_NOERROR) {
+	    if (MIDI_NotifyClient(wDevID, MIM_LONGDATA, (DWORD)lpMidiHdr, dwTime) != MMSYSERR_NOERROR) {
 		WARN("Couldn't notify client\n");
 	    }
 	}
@@ -1418,8 +1417,7 @@ static DWORD modLongData(WORD wDevID, LPMIDIHDR lpMidiHdr, DWORD dwSize)
 	return MIDIERR_NODEVICE;
     }
     
-    lpData = ((DWORD)lpMidiHdr == lpMidiHdr->reserved) ?
-	(LPBYTE)lpMidiHdr->lpData : (LPBYTE)PTR_SEG_TO_LIN(lpMidiHdr->lpData);
+    lpData = lpMidiHdr->lpData;
 
     if (lpData == NULL) 
 	return MIDIERR_UNPREPARED;
@@ -1474,7 +1472,7 @@ static DWORD modLongData(WORD wDevID, LPMIDIHDR lpMidiHdr, DWORD dwSize)
     
     lpMidiHdr->dwFlags &= ~MHDR_INQUEUE;
     lpMidiHdr->dwFlags |= MHDR_DONE;
-    if (MIDI_NotifyClient(wDevID, MOM_DONE, lpMidiHdr->reserved, 0L) != MMSYSERR_NOERROR) {
+    if (MIDI_NotifyClient(wDevID, MOM_DONE, (DWORD)lpMidiHdr, 0L) != MMSYSERR_NOERROR) {
 	WARN("can't notify client !\n");
 	return MMSYSERR_INVALPARAM;
     }
