@@ -1015,6 +1015,7 @@ BOOL16 WINAPI DCHook16( HDC16 hDC, WORD code, DWORD data, LPARAM lParam )
                DCE_OffsetVisRgn( hDC, hVisRgn );
 	       SelectVisRgn16(hDC, hVisRgn);
 	       DeleteObject( hVisRgn );
+              WIN_ReleaseWndPtr( wndPtr );  /* Release WIN_FindWndPtr lock */
 	   }
            else /* non-fatal but shouldn't happen */
 	     WARN(dc, "DC is not in use!\n");

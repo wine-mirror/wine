@@ -1730,7 +1730,7 @@ LRESULT WINAPI ComboWndProc( HWND hwnd, UINT message,
                 goto END;
         case WM_WINDOWPOSCHANGING:
 	        retvalue = COMBO_WindowPosChanging(hwnd, lphc, (LPWINDOWPOS)lParam);
-		return retvalue;
+		goto END;
 	case WM_SIZE:
 	        if( lphc->hWndLBox && 
 		  !(lphc->wState & CBF_NORESIZE) ) COMBO_Size( lphc );
