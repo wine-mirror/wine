@@ -261,10 +261,12 @@ static void DOSFS_ToDosDTAFormat( LPCSTR name, LPSTR buffer )
     char *p;
 
     memcpy( buffer, name, 8 );
-    for (p = buffer + 8; (p > buffer) && (p[-1] == ' '); p--);
+    p = buffer + 8;
+    while ((p > buffer) && (p[-1] == ' ')) p--;
     *p++ = '.';
     memcpy( p, name + 8, 3 );
-    for (p += 3; p[-1] == ' '; p--);
+    p += 3;
+    while (p[-1] == ' ') p--;
     if (p[-1] == '.') p--;
     *p = '\0';
 }

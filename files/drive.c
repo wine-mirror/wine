@@ -1422,7 +1422,7 @@ BOOL WINAPI GetVolumeInformationA( LPCSTR root, LPSTR label,
     if (label)
     {
        lstrcpynA( label, DRIVE_GetLabel(drive), label_len );
-       for (cp = label; *cp; cp++);
+       cp = label + strlen(label);
        while (cp != label && *(cp-1) == ' ') cp--;
        *cp = '\0';
     }

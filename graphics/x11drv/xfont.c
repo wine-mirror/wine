@@ -957,11 +957,9 @@ static BOOL LFD_ComposeLFD( const fontObject* fo,
 
    if (uRelax <= 4)
    {
-       fontEncodingTemplate* boba;
-       
-       i = fo->fi->fi_encoding >> 8;
-       for( boba = fETTable; i; i--, boba = boba->next );
-       
+       fontEncodingTemplate* boba = fETTable;
+
+       for(i = fo->fi->fi_encoding >> 8; i; i--) boba = boba->next;
        aLFD.charset_registry = boba->prefix ? boba->prefix : any;
        
        i = fo->fi->fi_encoding & 255;

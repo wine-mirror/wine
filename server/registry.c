@@ -1305,7 +1305,8 @@ static void load_keys( struct key *key, FILE *f )
 
     while (read_next_line( &info ) == 1)
     {
-        for (p = info.buffer; *p && isspace(*p); p++);
+        p = info.buffer;
+        while (*p && isspace(*p)) p++;
         switch(*p)
         {
         case '[':   /* new key */

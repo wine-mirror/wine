@@ -591,7 +591,10 @@ static	BOOL		MMIO_Destroy(LPWINE_MMIO wm)
     LPWINE_MMIO*	m;
 
     EnterCriticalSection(&iData->cs);
-    for (m = &(iData->lpMMIO); *m && *m != wm; m = &(*m)->lpNext);
+    /* search for the matching one... */
+    m = &(iData->lpMMIO);
+    while (*m && *m != wm) m = &(*m)->lpNext;
+    /* ...and destroy */
     if (*m) {
 	*m = (*m)->lpNext;
 	HeapFree(GetProcessHeap(), 0, wm);

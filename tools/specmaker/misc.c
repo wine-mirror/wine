@@ -120,12 +120,12 @@ const char *str_match (const char *str, const char *match, int *found)
 {
   assert(str && match && found);
 
-  for (; *str == ' '; str++);
+  while (*str == ' ') str++;
   if (!strncmp (str, match, strlen (match)))
   {
     *found = 1;
     str += strlen (match);
-    for (; *str == ' '; str++);
+    while (*str == ' ') str++;
   }
   else
     *found = 0;

@@ -443,7 +443,8 @@ void generate_startup_debug_events( struct process *process, void *entry )
         generate_debug_event( thread, CREATE_THREAD_DEBUG_EVENT, NULL );
 
     /* generate dll events (in loading order, i.e. reverse list order) */
-    for (dll = &process->exe; dll->next; dll = dll->next);
+    dll = &process->exe;
+    while (dll->next) dll = dll->next;
     while (dll != &process->exe)
     {
         generate_debug_event( process->thread_list, LOAD_DLL_DEBUG_EVENT, dll );

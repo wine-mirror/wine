@@ -649,7 +649,8 @@ static VOID HLPFILE_SystemCommands(HLPFILE* hlpfile)
 	  lstrcpy(p, (LPSTR) ptr + 4);
 	  macro->lpszMacro = p;
 	  macro->next = 0;
-	  for (m = &hlpfile->first_macro; *m; m = &(*m)->next);
+          m = &hlpfile->first_macro;
+          while (*m) m = &(*m)->next;
 	  *m = macro;
 	  break;
 
