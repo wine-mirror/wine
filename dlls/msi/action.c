@@ -1527,15 +1527,21 @@ static UINT HANDLE_CustomType2(MSIPACKAGE *package, const LPWSTR source,
 
     deformat_string(package,target,&deformated);
 
-    len = strlenW(tmp_file) + strlenW(deformated) + 2;
+    len = strlenW(tmp_file)+2;
+
+    if (deformated)
+        len += strlenW(deformated);
    
     cmd = (WCHAR*)HeapAlloc(GetProcessHeap(),0,sizeof(WCHAR)*len);
 
     strcpyW(cmd,tmp_file);
-    strcatW(cmd,spc);
-    strcatW(cmd,deformated);
+    if (deformated)
+    {
+        strcatW(cmd,spc);
+        strcatW(cmd,deformated);
 
-    HeapFree(GetProcessHeap(),0,deformated);
+        HeapFree(GetProcessHeap(),0,deformated);
+    }
 
     TRACE("executing exe %s \n",debugstr_w(cmd));
 
@@ -1577,16 +1583,20 @@ static UINT HANDLE_CustomType18(MSIPACKAGE *package, const LPWSTR source,
     len = strlenW(package->files[index].TargetPath);
 
     deformat_string(package,target,&deformated);
-    len += strlenW(deformated);
+    if (deformated)
+        len += strlenW(deformated);
     len += 2;
 
     cmd = (WCHAR*)HeapAlloc(GetProcessHeap(),0,len * sizeof(WCHAR));
 
     strcpyW(cmd, package->files[index].TargetPath);
-    strcatW(cmd, spc);
-    strcatW(cmd, deformated);
+    if (deformated)
+    {
+        strcatW(cmd, spc);
+        strcatW(cmd, deformated);
 
-    HeapFree(GetProcessHeap(),0,deformated);
+        HeapFree(GetProcessHeap(),0,deformated);
+    }
 
     TRACE("executing exe %s \n",debugstr_w(cmd));
 
@@ -1630,14 +1640,20 @@ static UINT HANDLE_CustomType50(MSIPACKAGE *package, const LPWSTR source,
         return prc;
 
     deformat_string(package,target,&deformated);
-    len = strlenW(prop) + strlenW(deformated) + 2;
+    len = strlenW(prop) + 2;
+    if (deformated)
+         len += strlenW(deformated);
+
     cmd = (WCHAR*)HeapAlloc(GetProcessHeap(),0,sizeof(WCHAR)*len);
 
     strcpyW(cmd,prop);
-    strcatW(cmd,spc);
-    strcatW(cmd,deformated);
+    if (deformated)
+    {
+        strcatW(cmd,spc);
+        strcatW(cmd,deformated);
 
-    HeapFree(GetProcessHeap(),0,deformated);
+        HeapFree(GetProcessHeap(),0,deformated);
+    }
 
     TRACE("executing exe %s \n",debugstr_w(cmd));
 
@@ -1679,6 +1695,9 @@ static UINT HANDLE_CustomType34(MSIPACKAGE *package, const LPWSTR source,
     HeapFree(GetProcessHeap(),0,filename);
 
     deformat_string(package,target,&deformated);
+
+    if (!deformated)
+        return ERROR_FUNCTION_FAILED;
 
     TRACE("executing exe %s \n",debugstr_w(deformated));
 
@@ -3666,6 +3685,7 @@ next:
 static DWORD deformat_string(MSIPACKAGE *package, WCHAR* ptr,WCHAR** data)
 {
     WCHAR* mark=NULL;
+    WCHAR* mark2;
     DWORD size=0;
     DWORD chunk=0;
     WCHAR key[0x100];
@@ -3679,6 +3699,7 @@ static DWORD deformat_string(MSIPACKAGE *package, WCHAR* ptr,WCHAR** data)
         *data = NULL;
         return 0;
     }
+    TRACE("Starting with %s\n",debugstr_w(ptr));
     /* scan for special characters */
     if (!strchrW(ptr,'[') || (strchrW(ptr,'[') && !strchrW(ptr,']')))
     {
@@ -3708,8 +3729,9 @@ static DWORD deformat_string(MSIPACKAGE *package, WCHAR* ptr,WCHAR** data)
         (*data)[0]=0;
     }
     mark++;
-    strcpyW(key,mark);
-    *strchrW(key,']')=0;
+    mark2 = strchrW(mark,']');
+    strncpyW(key,mark,mark2-mark);
+    key[mark2-mark] = 0;
     mark = strchrW(mark,']');
     mark++;
     TRACE("Current %s .. %s\n",debugstr_w(*data),debugstr_w(mark));
