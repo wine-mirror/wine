@@ -134,6 +134,8 @@ __ASM_GLOBAL_FUNC(vm86_enter,
                   "popl %ebp\n\t"
                   "ret" );
 
+#define HAVE_VM86
+
 #endif  /* linux */
 
 #ifdef BSDI
@@ -392,7 +394,7 @@ static inline void *get_cr2_value( const SIGCONTEXT *sigcontext )
 }
 
 
-#ifdef linux
+#ifdef HAVE_VM86
 /***********************************************************************
  *           save_vm86_context
  *
@@ -443,7 +445,7 @@ static void restore_vm86_context( const CONTEXT *context, struct vm86plus_struct
     vm86->regs.ss     = context->SegSs;
     vm86->regs.eflags = context->EFlags;
 }
-#endif /* linux */
+#endif /* HAVE_VM86 */
 
 
 /***********************************************************************
@@ -467,7 +469,7 @@ static void save_context( CONTEXT *context, const SIGCONTEXT *sigcontext )
     {
         fs = SYSLEVEL_Win16CurrentTeb;
     }
-#ifdef linux
+#ifdef HAVE_VM86
     else if ((void *)EIP_sig(sigcontext) == vm86_return)  /* vm86 mode */
     {
         /* retrieve pointer to vm86plus struct that was stored in vm86_enter */
@@ -479,7 +481,7 @@ static void save_context( CONTEXT *context, const SIGCONTEXT *sigcontext )
         save_vm86_context( context, vm86 );
         return;
     }
-#endif  /* linux */
+#endif  /* HAVE_VM86 */
 
     __set_fs(fs);
 
@@ -512,7 +514,7 @@ static void save_context( CONTEXT *context, const SIGCONTEXT *sigcontext )
  */
 static void restore_context( const CONTEXT *context, SIGCONTEXT *sigcontext )
 {
-#ifdef linux
+#ifdef HAVE_VM86
     /* check if exception occurred in vm86 mode */
     if ((void *)EIP_sig(sigcontext) == vm86_return &&
         IS_SELECTOR_SYSTEM(CS_sig(sigcontext)))
@@ -522,7 +524,7 @@ static void restore_context( const CONTEXT *context, SIGCONTEXT *sigcontext )
         restore_vm86_context( context, vm86 );
         return;
     }
-#endif /* linux */
+#endif /* HAVE_VM86 */
 
     EAX_sig(sigcontext) = context->Eax;
     EBX_sig(sigcontext) = context->Ebx;
@@ -773,6 +775,7 @@ static void do_fpe( CONTEXT *context, int trap_code )
 }
 
 
+#ifdef HAVE_VM86
 /**********************************************************************
  *		set_vm86_pend
  *
@@ -804,7 +807,6 @@ static void set_vm86_pend( CONTEXT *context )
             EXC_RtlRaiseException( &rec, context );
         }
     }
-#ifdef linux
     else if (teb->vm86_ptr)
     {
         /* not in VM86, but possibly setting up for it */
@@ -825,8 +827,43 @@ static void set_vm86_pend( CONTEXT *context )
             }
         }
     }
-#endif /* linux */
 }
+
+
+/**********************************************************************
+ *		usr2_handler
+ *
+ * Handler for SIGUSR2.
+ * We use it to signal that the running __wine_enter_vm86() should
+ * immediately set VIP_MASK, causing pending events to be handled
+ * as early as possible.
+ */
+static HANDLER_DEF(usr2_handler)
+{
+    CONTEXT context;
+
+    save_context( &context, HANDLER_CONTEXT );
+    set_vm86_pend( &context );
+    restore_context( &context, HANDLER_CONTEXT );
+}
+
+
+/**********************************************************************
+ *		alrm_handler
+ *
+ * Handler for SIGALRM.
+ * Increases the alarm counter and sets the vm86 pending flag.
+ */
+static HANDLER_DEF(alrm_handler)
+{
+    CONTEXT context;
+
+    save_context( &context, HANDLER_CONTEXT );
+    NtCurrentTeb()->alarms++;
+    set_vm86_pend( &context );
+    restore_context( &context, HANDLER_CONTEXT );
+}
+#endif /* HAVE_VM86 */
 
 
 /**********************************************************************
@@ -891,41 +928,6 @@ static HANDLER_DEF(int_handler)
     rec.ExceptionAddress = (LPVOID)context.Eip;
     rec.NumberParameters = 0;
     EXC_RtlRaiseException( &rec, &context );
-    restore_context( &context, HANDLER_CONTEXT );
-}
-
-
-/**********************************************************************
- *		alrm_handler
- *
- * Handler for SIGALRM.
- * Increases the alarm counter and sets the vm86 pending flag.
- */
-static HANDLER_DEF(alrm_handler)
-{
-    CONTEXT context;
-
-    save_context( &context, HANDLER_CONTEXT );
-    NtCurrentTeb()->alarms++;
-    set_vm86_pend( &context );
-    restore_context( &context, HANDLER_CONTEXT );
-}
-
-
-/**********************************************************************
- *		usr2_handler
- *
- * Handler for SIGUSR2.
- * We use it to signal that the running __wine_enter_vm86() should
- * immediately set VIP_MASK, causing pending events to be handled
- * as early as possible.
- */
-static HANDLER_DEF(usr2_handler)
-{
-    CONTEXT context;
-
-    save_context( &context, HANDLER_CONTEXT );
-    set_vm86_pend( &context );
     restore_context( &context, HANDLER_CONTEXT );
 }
 
@@ -1010,8 +1012,12 @@ BOOL SIGNAL_Init(void)
 #ifdef SIGTRAP
     if (set_handler( SIGTRAP, have_sigaltstack, (void (*)())trap_handler ) == -1) goto error;
 #endif
+
+#ifdef HAVE_VM86
     if (set_handler( SIGALRM, have_sigaltstack, (void (*)())alrm_handler ) == -1) goto error;
     if (set_handler( SIGUSR2, have_sigaltstack, (void (*)())usr2_handler ) == -1) goto error;
+#endif
+
     return TRUE;
 
  error:
@@ -1020,7 +1026,7 @@ BOOL SIGNAL_Init(void)
 }
 
 
-#ifdef linux
+#ifdef HAVE_VM86
 /**********************************************************************
  *		__wine_enter_vm86
  *
@@ -1102,12 +1108,12 @@ cancel_vm86:
     }
 }
 
-#else /* linux */
+#else /* HAVE_VM86 */
 void __wine_enter_vm86( CONTEXT *context )
 {
     MESSAGE("vm86 mode not supported on this platform\n");
 }
-#endif /* linux */
+#endif /* HAVE_VM86 */
 
 /**********************************************************************
  *		DbgBreakPoint   (NTDLL.@)
