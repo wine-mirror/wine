@@ -1,0 +1,22 @@
+DEFS      = @DLLFLAGS@ -D__WINE__
+TOPSRCDIR = @top_srcdir@
+TOPOBJDIR = ../..
+SRCDIR    = @srcdir@
+VPATH     = @srcdir@
+MODULE    = msacm32
+
+C_SRCS = \
+	builtin.c \
+	driver.c \
+	filter.c \
+	format.c \
+	internal.c \
+	msacm32_main.c \
+	stream.c
+
+all: $(MODULE).o
+
+@MAKE_RULES@
+
+### Dependencies:
+
