@@ -461,6 +461,7 @@ else
                          freetype/ftsnames.h \
                          freetype/ttnameid.h \
                          freetype/ftoutln.h \
+                         freetype/ftwinfnt.h \
                          freetype/internal/sfnt.h,,,
                          [#if HAVE_FT2BUILD_H
                           #include <ft2build.h>

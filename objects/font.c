@@ -627,8 +627,9 @@ static INT CALLBACK FONT_EnumInstance( const LOGFONTW *plf, const TEXTMETRICW *p
     DC *dc;
 
     /* lfCharSet is at the same offset in both LOGFONTA and LOGFONTW */
-    if( pfe->lpLogFontParam->lfCharSet == DEFAULT_CHARSET ||
-        pfe->lpLogFontParam->lfCharSet == plf->lfCharSet )
+    if((pfe->lpLogFontParam->lfCharSet == DEFAULT_CHARSET ||
+        pfe->lpLogFontParam->lfCharSet == plf->lfCharSet) &&
+       (!(fType & RASTER_FONTTYPE) || GetDeviceCaps(pfe->hdc, TEXTCAPS) & TC_RA_ABLE) )
     {
 	/* convert font metrics */
         ENUMLOGFONTEXA logfont;
