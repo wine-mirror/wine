@@ -143,6 +143,8 @@ static inline void WCEL_Update(WCEL_Context* ctx, int beg, int len)
 {
     WriteConsoleOutputCharacterW(ctx->hConOut, &ctx->line[beg], len,
                                  WCEL_GetCoord(ctx, beg), NULL);
+    FillConsoleOutputAttribute(ctx->hConOut, ctx->csbi.wAttributes, len,
+                               WCEL_GetCoord(ctx, beg), NULL);
 }
 
 /* ====================================================================
