@@ -309,6 +309,9 @@ static inline int pf_output_format_W( pf_output *out, LPCWSTR str,
     if( len < 0 )
         len = strlenW( str );
 
+    if (flags->Precision && flags->Precision < len)
+      len = flags->Precision;
+
     r = pf_fill( out, len, flags, 1 );
 
     if( r>=0 )
@@ -327,6 +330,9 @@ static inline int pf_output_format_A( pf_output *out, LPCSTR str,
 
     if( len < 0 )
         len = strlen( str );
+
+    if (flags->Precision && flags->Precision < len)
+      len = flags->Precision;
 
     r = pf_fill( out, len, flags, 1 );
 
@@ -461,7 +467,10 @@ static int pf_vsnprintf( pf_output *out, const WCHAR *format, va_list valist )
         {
             p++;
             if( *p == '*' )
+            {
                 flags.Precision = va_arg( valist, int );
+                p++;
+            }
             else while( isdigit(*p) )
             {
                 flags.Precision *= 10;

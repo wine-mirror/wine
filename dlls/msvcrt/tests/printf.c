@@ -76,6 +76,16 @@ static void test_sprintf( void )
     ok(!strcmp(buffer,"0foo"),"String not zero-prefixed \"%s\"\n",buffer);
     ok( r==4, "return count wrong\n");
 
+    format = "%.1s";
+    r = sprintf(buffer,format,"foo");
+    ok(!strcmp(buffer,"f"),"Precision ignored \"%s\"\n",buffer);
+    ok( r==1, "return count wrong\n");
+
+    format = "%.*s";
+    r = sprintf(buffer,format,1,"foo");
+    ok(!strcmp(buffer,"f"),"Precision ignored \"%s\"\n",buffer);
+    ok( r==1, "return count wrong\n");
+
     format = "%#-012p";
     r = sprintf(buffer,format,(void *)57);
     ok(!strcmp(buffer,"0X00000039  "),"Pointer formatted incorrectly\n");
