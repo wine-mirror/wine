@@ -8,6 +8,7 @@ EXTRALIBS = $(LIBUNICODE) -lstrmiids -luuid
 EXTRADEFS = -DCOM_NO_WINDOWS_H
 
 C_SRCS = \
+	htmldoc.c \
 	main.c
 
 @MAKE_DLL_RULES@
