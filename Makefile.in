@@ -200,10 +200,10 @@ install_lib: dummy
 	[ -d $(libdir) ] || $(MKDIR) $(libdir)
 	if [ $(LIB_TARGET) ]; then $(INSTALL_DATA) $(LIB_TARGET) $(libdir); fi
 	if [ -f wine.sym ]; then $(INSTALL_DATA) wine.sym $(libdir)/wine.sym; fi
+	if [ $(LIB_TARGET) = libwine.so.1.0 ]; then ldconfig; fi
 
 uninstall_lib: dummy
-	cd $(libdir); $(RM) $(LIB_TARGET)
-	if [ -f $(libdir)/wine.sym ]; then $(RM) $(libdir)/wine.sym; fi
+	cd $(libdir); $(RM) $(LIB_TARGET) libwine.a libwine.so wine.sym
 
 $(BUILDSUBDIRS): dummy
 	@cd $@; $(SUBMAKE)
