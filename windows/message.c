@@ -1113,8 +1113,12 @@ BOOL16 WINAPI PostMessage16( HWND16 hwnd, UINT16 message, WPARAM16 wParam,
 BOOL32 WINAPI PostMessage32A( HWND32 hwnd, UINT32 message, WPARAM32 wParam,
                               LPARAM lParam )
 {
-    /* FIXME */
-    return PostMessage16( hwnd, message, wParam, lParam );
+  /* FIXME */
+  if (message&0xffff0000)
+    FIXME(msg,"message is truncated from %d to %d\n", message, message&0xffff);
+  if (wParam&0xffff0000)
+    FIXME(msg,"wParam is truncated from %d to %d\n", wParam, wParam&0xffff);
+  return PostMessage16( hwnd, message, wParam, lParam );
 }
 
 
@@ -1124,8 +1128,12 @@ BOOL32 WINAPI PostMessage32A( HWND32 hwnd, UINT32 message, WPARAM32 wParam,
 BOOL32 WINAPI PostMessage32W( HWND32 hwnd, UINT32 message, WPARAM32 wParam,
                               LPARAM lParam )
 {
-    /* FIXME */
-    return PostMessage16( hwnd, message, wParam, lParam );
+  /* FIXME */
+  if (message&0xffff0000)
+    FIXME(msg,"message is truncated from %d to %d\n", message, message&0xffff);
+  if (wParam&0xffff0000)
+    FIXME(msg,"wParam is truncated from %d to %d\n", wParam, wParam&0xffff);
+  return PostMessage16( hwnd, message, wParam, lParam );
 }
 
 
