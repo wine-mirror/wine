@@ -253,7 +253,7 @@ winspool</><entry>wnet</><entry>x11</>
 	  <screen>
 <prompt>$</prompt> <userinput>wine --dll setupx=n foo.exe</userinput>
           </screen>
-	  See the <link linkend="dlls">DLL chapter</link> for more details.
+	  See the <link linkend="dll-config">DLL chapter</link> for more details.
         </para>
       </sect2>
 

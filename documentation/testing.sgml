@@ -1,0 +1,351 @@
+  <chapter id="testing">
+    <title>Writing Conformance tests</title>
+
+    <para>
+      Note: This part of the documentation is still very much a work in
+      progress and is in no way complete.
+    </para>
+
+    <sect1 id="testing-intro">
+      <title>Introduction</title>
+      <para>
+        With more The Windows API follows no standard, it is itself a defacto
+        standard, and deviations from that standard, even small ones, often
+        cause applications to crash or misbehave in some way. Furthermore
+        a conformance test suite is the most accurate (if not necessarily
+        the most complete) form of API documentation and can be used to
+        supplement the Windows API documentation.
+      </para>
+      <para>
+        Writing a conformance test suite for more than 10000 APIs is no small
+        undertaking. Fortunately it can prove very useful to the development
+        of Wine way before it is complete.
+        <itemizedlist>
+          <listitem>
+            <para>
+              The conformance test suite must run on Windows. This is
+              necessary to provide a reasonable way to verify its accuracy.
+              Furthermore the tests must pass successfully on all Windows
+              platforms (tests not relevant to a given platform should be
+              skipped).
+            </para>
+            <para>
+              A consequence of this is that the test suite will provide a
+              great way to detect variations in the API between different
+              Windows versions. For instance, this can provide insights
+              into the differences between the, often undocumented, Win9x and
+              NT Windows families.
+            </para>
+            <para>
+              However, one must remember that the goal of Wine is to run
+              Windows applications on Linux, not to be a clone of any specific
+              Windows version. So such variations must only be tested for when
+              relevant to that goal.
+            </para>
+          </listitem>
+          <listitem>
+            <para>
+              Writing conformance tests is also an easy way to discover
+              bugs in Wine. Of course, before fixing the bugs discovered in
+              this way, one must first make sure that the new tests do pass
+              successfully on at least one Windows 9x and one Windows NT
+              version.
+            </para>
+            <para>
+              Bugs discovered this way should also be easier to fix. Unlike
+              some mysterious application crashes, when a conformance test
+              fails, the expected behavior and APIs tested for are known thus
+              greatly simplifying the diagnosis.
+            </para>
+          </listitem>
+          <listitem>
+            <para>
+              To detect regressions. Simply running the test suite regularly
+              in Wine turns it into a great tool to detect regressions.
+              When a test fails, one immediately knows what was the expected
+              behavior and which APIs are involved. Thus regressions caught
+              this way should be detected earlier, because it is easy to run
+              all tests on a regular basis, and easier to fix because of the
+              reduced diagnosis work.
+            </para>
+          </listitem>
+          <listitem>
+            <para>
+              Tests written in advance of the Wine development (possibly even
+              by non Wine developpers) can also simplify the work of the
+              futur implementer by making it easier for him to check the
+              correctness of his code.
+            </para>
+          </listitem>
+          <listitem>
+            <para>
+              FIXME: Ports to new architectures involve New ports involve modifying core parts of Wine:
+              synchronization, exception handling, thread management, etc.
+              After such modifications extensive testing is necessary to
+              make sure the changes did not To check the correctness of new ports.
+            </para>
+          </listitem>
+        </itemizedlist>
+      </para>
+    </sect1>
+
+    <sect1 id="testing-what">
+      <title>What to test for?</title>
+      <para>
+        The first thing to test for is the documented behavior of APIs
+        and such as CreateFile. For instance one can create a file using a
+        long pathname, check that the behavior is correct when the file
+        already exists, try to open the file using the corresponding short
+        pathname, convert the filename to Unicode and try to open it using
+        CreateFileW, and all other things which are documented and that
+        applications rely on.
+      </para>
+      <para>
+        While the testing framework is not specifically geared towards this
+        type of tests, it is also possible to test the behavior of Windows
+        messages. To do so, create a window, preferably a hidden one so that
+        it does not steal the focus when running the tests, and send messages
+        to that window or to controls in that window. Then, in the message
+        procedure, check that you receive the expected messages and with the
+        correct parameters.
+      </para>
+      <para>
+        For instance you could create an edit control and use WM_SETTEXT to
+        set its contents, possibly check length restrictions, and verify the
+        results using WM_GETTEXT. Similarly one could create a listbox and
+        check the effect of LB_DELETESTRING on the list's number of items,
+        selected items list, highlighted item, etc.
+      </para>
+      <para>
+        However, undocumented behavior should not be tested for unless there
+        is an application that relies on this behavior, and in that case the
+        test should mention that application, or unless one can strongly
+        expect applications to rely on this behavior, typically APIs that
+        return the required buffer size when the buffer pointer is NULL.
+      </para>
+    </sect1>
+
+    <sect1 id="testing-perl-vs-c">
+      <title>Why have both Perl and C tests?</title>
+      <para>
+      </para>
+    </sect1>
+
+    <sect1 id="testing-running">
+      <title>Running the tests on Windows</title>
+      <para>
+        The simplest way to run the tests in Wine is to type 'make test' in
+        the Wine sources top level directory. This will run all the Wine
+        conformance tests.
+      </para>
+      <para>
+        The tests for a specific Wine library are located in a 'tests'
+        directory in that library's directory. Each test is contained in a
+        file, either a '.pl' file (e.g. <filename>dlls/kernel/tests/atom.pl</>)
+        for a test written in perl, or a '.c' file (e.g.
+        <filename>dlls/kernel/tests/thread.c</>) for a test written in C. Each
+        file itself contains many checks concerning one or more related APIs.
+      </para>
+      <para>
+        So to run all the tests related to a given Wine library, go to the
+        corresponding 'tests' directory and type 'make test'. This will
+        compile the C tests, run the tests, and create an
+        '<replaceable>xxx</>.ok' file for each test that passes successfully.
+        And if you only want to run the tests contained in the
+        <filename>thread.c</> file of the kernel library, you would do:
+<screen>
+<prompt>$ </>cd dlls/kernel/tests
+<prompt>$ </>make thread.ok
+</screen>
+      </para>
+      <para>
+        Note that if the test has already been run and is up to date (i.e. if
+        neither the kernel library nor the <filename>thread.c</> file has
+        changed since the <filename>thread.ok</> file was created), then make
+        will say so. To force the test to be re-run, delete the
+        <filename>thread.ok</> file, and run the make command again.
+      </para>
+      <para>
+        You can also run tests manually using a command similar to the
+        following:
+<screen>
+<prompt>$ </>runtest -q -M kernel32.dll -p kernel32_test.exe.so thread.c
+<prompt>$ </>runtest -p kernel32_test.exe.so thread.c
+thread.c: 86 tests executed, 5 marked as todo, 0 failures.
+</screen>
+        The '-P wine' options defines the platform that is currently being
+        tested; the '-q' option causes the testing framework not to report
+        statistics about the number of successfull and failed tests. Run
+        <command>runtest -h</> for more details.
+      </para>
+    </sect1>
+
+    <sect1 id="testing-c-test">
+      <title>Inside a C test</title>
+
+      <para>
+        When writing new checks you can either modify an existing test file or
+        add a new one. If your tests are related to the tests performed by an
+        existing file, then add them to that file. Otherwise create a new .c
+        file in the tests directory and add that file to the
+        <varname>CTESTS</> variable in <filename>Makefile.in</>.
+      </para>
+      <para>
+        A new test file will look something like the following:
+<screen>
+#include &lt;wine/test.h&gt;
+#include &lt;winbase.h&gt;
+
+/* Maybe auxiliary functions and definitions here */
+
+START_TEST(paths)
+{
+   /* Write your checks there or put them in functions you will call from
+    * there
+    */
+}
+</screen>
+      </para>
+      <para>
+        The test's entry point is the START_TEST section. This is where
+        execution will start. You can put all your tests in that section but
+        it may be better to split related checks in functions you will call
+        from the START_TEST section. The parameter to START_TEST must match
+        the name of the C file. So in the above example the C file would be
+        called <filename>paths.c</>.
+      </para>
+      <para>
+        Tests should start by including the <filename>wine/test.h</> header.
+        This header will provide you access to all the testing framework
+        functions. You can then include the windows header you need, but make
+        sure to not include any Unix or Wine specific header: tests must
+        compile on Windows.
+      </para>
+<!-- FIXME: Can we include windows.h now? We should be able to but currently __WINE__ is defined thus making it impossible. -->
+<!-- FIXME: Add recommendations about what to print in case of a failure: be informative -->
+      <para>
+        You can use <function>trace</> to print informational messages. Note
+        that these messages will only be printed if 'runtest -v' is being used.
+<screen>
+  trace("testing GlobalAddAtomA");
+  trace("foo=%d",foo);
+</screen>
+        <!-- FIXME: Make sure trace supports %d... -->
+      </para>
+      <para>
+        Then just call functions and use <function>ok</> to make sure that
+        they behaved as expected:
+<screen>
+  ATOM atom = GlobalAddAtomA( "foobar" );
+  ok( GlobalFindAtomA( "foobar" ) == atom, "could not find atom foobar" );
+  ok( GlobalFindAtomA( "FOOBAR" ) == atom, "could not find atom FOOBAR" );
+</screen>
+        The first parameter of <function>ok</> is an expression which must
+        evaluate to true if the test was successful. The next parameter is a
+        printf-compatible format string which is displayed in case the test
+        failed, and the following optional parameters depend on the format
+        string.
+      </para>
+      <para>
+        It is important to display an informative message when a test fails:
+        a good error message will help the Wine developper identify exactly
+        what went wrong without having to add too many other printfs. For
+        instance it may be useful to print the error code if relevant, or the
+        expected value and effective value. In that respect, for some tests
+        you may want to define a macro such as the following:
+<screen>
+#define eq(received, expected, label, type) \
+        ok((received) == (expected), "%s: got " type " instead of " type, (label),(received),(expected))
+
+...
+
+eq( b, curr_val, "SPI_{GET,SET}BEEP", "%d" );
+</screen>
+       </para>
+       <para>
+         Note
+       </para>
+    </sect1>
+
+    <sect1 id="testing-platforms">
+      <title>Handling platform issues</title>
+      <para>
+        Some checks may be written before they pass successfully in Wine.
+        Without some mechanism, such checks would potentially generate
+        hundred of known failures for months each time the tests are being run.
+        This would make it hard to detect new failures caused by a regression.
+        or to detect that a patch fixed a long standing issue.
+      </para>
+      <para>
+        Thus the Wine testing framework has the concept of platforms and
+        groups of checks can be declared as expected to fail on some of them.
+        In the most common case, one would declare a group of tests as
+        expected to fail in Wine. To do so, use the following construct:
+<screen>
+todo_wine {
+    SetLastError( 0xdeadbeef );
+    ok( GlobalAddAtomA(0) == 0 && GetLastError() == 0xdeadbeef, "failed to add atom 0" );
+}
+</screen>
+        On Windows the above check would be performed normally, but on Wine it
+        would be expected to fail, and not cause the failure of the whole
+        test. However. If that check were to succeed in Wine, it would
+        cause the test to fail, thus making it easy to detect when something
+        has changed that fixes a bug. Also note that todo checks are accounted
+        separately from regular checks so that the testing statistics remain
+        meaningful. Finally, note that todo sections can be nested so that if
+        a test only fails on the cygwin and reactos platforms, one would
+        write:
+<screen>
+todo("cygwin") {
+    todo("reactos") {
+        ...
+    }
+}
+</screen>
+        <!-- FIXME: Would we really have platforms such as reactos, cygwin, freebsd & co? -->
+        But specific platforms should not be nested inside a todo_wine section
+        since that would be redundant.
+      </para>
+      <para>
+        When writing tests you will also encounter differences between Windows
+        9x and Windows NT platforms. Such differences should be treated
+        differently from the platform issues mentioned above. In particular
+        you should remember that the goal of Wine is not to be a clone of any
+        specific Windows version but to run Windows applications on Unix.
+      </para>
+      <para>
+        So, if an API returns a different error code on Windows 9x and
+        Windows NT, your check should just verify that Wine returns one or
+        the other:
+<screen>
+ok ( GetLastError() == WIN9X_ERROR || GetLastError() == NT_ERROR, ...);
+</screen>
+      </para>
+      <para>
+        If an API is only present on some Windows platforms, then use
+        LoadLibrary and GetProcAddress to check if it is implemented and
+        invoke it. Remember, tests must run on all Windows platforms.
+        Similarly, conformance tests should nor try to correlate the Windows
+        version returned by GetVersion with whether given APIs are
+        implemented or not. Again, the goal of Wine is to run Windows
+        applications (which do not do such checks), and not be a clone of a
+        specific Windows version.
+      </para>
+      <para>
+        FIXME: What about checks that cause the process to crash due to a bug?
+      </para>
+    </sect1>
+
+
+<!-- FIXME: Strategies for testing threads, testing network stuff,
+ file handling, eq macro... -->
+
+  </chapter>
+
+<!-- Keep this comment at the end of the file
+Local variables:
+mode: sgml
+sgml-parent-document:("wine-doc.sgml" "set" "book" "part" "chapter" "")
+End:
+-->

@@ -41,7 +41,7 @@
         include them as either separate attachments or by appending
         the <command>diff -u /dev/null /my/new/file</command> output of them
 	to any <command>cvs diff -u</command> output you may have.
-	Alernatively, use <command>diff -Nu olddir/ newdir/</command>
+	Alternatively, use <command>diff -Nu olddir/ newdir/</command>
 	in case of multiple new files to add.
       </para>
       <para>
