@@ -1142,7 +1142,8 @@ static HWND WIN_CreateWindowEx( CREATESTRUCTA *cs, ATOM classAtom,
 
     /* Set the window menu */
 
-    if ((wndPtr->dwStyle & (WS_CAPTION | WS_CHILD)) == WS_CAPTION )
+    if ((wndPtr->dwStyle & WS_CAPTION || wndPtr->dwExStyle & WS_EX_APPWINDOW)
+        && !( wndPtr->dwStyle & WS_CHILD) )
     {
         if (cs->hMenu) SetMenu(hwnd, cs->hMenu);
         else
