@@ -96,9 +96,11 @@ BYTE lpGrayMask[] = { 0xAA, 0xA0,
  */
 BOOL WIN_WindowNeedsWMBorder( DWORD style, DWORD exStyle )
 {
-    if (!(style & WS_CHILD) && Options.managed  &&
-        (((style & WS_CAPTION) == WS_CAPTION) ||
-         (style & WS_THICKFRAME)))
+    if (!(style & WS_CHILD) && 
+	Options.managed  &&
+	!(exStyle & WS_EX_TOOLWINDOW) &&
+        ( ((style & WS_CAPTION) == WS_CAPTION) ||
+	  (style & WS_THICKFRAME)))
         return TRUE;
     return FALSE;
 }
