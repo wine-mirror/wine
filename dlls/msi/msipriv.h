@@ -245,6 +245,8 @@ extern void enum_stream_names( IStorage *stg );
 
 BOOL unsquash_guid(LPCWSTR in, LPWSTR out);
 BOOL squash_guid(LPCWSTR in, LPWSTR out);
+BOOL encode_base85_guid(GUID *,LPWSTR);
+BOOL decode_base85_guid(LPCWSTR,GUID*);
 
 /* UI globals */
 extern INSTALLUILEVEL gUILevel;

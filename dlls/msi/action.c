@@ -3134,7 +3134,7 @@ static void resolve_keypath(MSIHANDLE hPackage, MSIPACKAGE* package, INT
  * actually done in the PublishComponents and PublishFeatures
  * step, and not here.  It appears like the keypath and all that is
  * resolved in this step, however actually written in the Publish steps.
- * But we will leave it here for now 
+ * But we will leave it here for now because it is unclear
  */
 static UINT ACTION_ProcessComponents(MSIHANDLE hPackage)
 {
@@ -3183,9 +3183,36 @@ static UINT ACTION_ProcessComponents(MSIHANDLE hPackage)
     if (rc != ERROR_SUCCESS)
         goto end;
 
-    /* I have no idea what goes in here */
+    /* here the guids are base 85 encoded */
     for (i = 0; i < package->loaded_features; i++)
-        RegSetValueExW(hkey3,package->features[i].Feature,0,REG_SZ,NULL,0);
+    {
+        LPWSTR data = NULL;
+        GUID clsid;
+        int j;
+        INT size;
+
+        size = package->features[i].ComponentCount*21*sizeof(WCHAR);
+        data = HeapAlloc(GetProcessHeap(), 0, size);
+
+        data[0] = 0;
+        for (j = 0; j < package->features[i].ComponentCount; j++)
+        {
+            WCHAR buf[21];
+            TRACE("From %s\n",debugstr_w(package->components
+                            [package->features[i].Components[j]].ComponentId));
+            CLSIDFromString(package->components
+                            [package->features[i].Components[j]].ComponentId,
+                            &clsid);
+            encode_base85_guid(&clsid,buf);
+            TRACE("to %s\n",debugstr_w(buf));
+            strcatW(data,buf);
+        }
+
+        size = strlenW(data)*sizeof(WCHAR);
+        RegSetValueExW(hkey3,package->features[i].Feature,0,REG_SZ,
+                       (LPSTR)data,size);
+        HeapFree(GetProcessHeap(),0,data);
+    }
 
     RegCloseKey(hkey3);
     RegCloseKey(hkey2);
