@@ -75,6 +75,29 @@ struct DPB
     WORD free_clusters;     /* Number of free clusters (0xFFFF=unknown) */
 };
 
+struct EDPB			/* FAT32 extended Drive Parameter Block */
+{				/* from Ralf Brown's Interrupt List */
+	struct DPB dpb;		/* first 24 bytes = original DPB */
+
+	BYTE edpb_flags;	/* undocumented/unknown flags */
+	DWORD next_edpb;	/* pointer to next EDPB */
+	WORD free_cluster;	/* cluster to start search for free space on write, typically
+	                           the last cluster allocated */
+	WORD clusters_free;	/* number of free clusters on drive or FFFF = unknown */
+	WORD clusters_free_hi;	/* hiword of clusters_free */
+	WORD mirroring_flags;	/* mirroring flags: bit 7 set = do not mirror active FAT */
+				/* bits 0-3 = 0-based number of the active FAT */
+	WORD info_sector;	/* sector number of file system info sector, or FFFF for none */
+	WORD spare_boot_sector;	/* sector number of backup boot sector, or FFFF for none */
+	DWORD first_cluster;	/* sector number of the first cluster */
+	DWORD max_cluster;	/* sector number of the last cluster */
+	DWORD fat_clusters;	/* number of clusters occupied by FAT */
+	DWORD root_cluster;	/* cluster number of start of root directory */
+	DWORD free_cluster2;	/* same as free_cluster: cluster at which to start
+	                           search for free space when writing */
+
+};
+
 WORD CodePage = 437;
 DWORD dpbsegptr;
 
@@ -180,17 +203,15 @@ static int INT21_GetDriveAllocInfo( CONTEXT86 *context )
     return 1;
 }
 
-static void GetDrivePB( CONTEXT86 *context, int drive )
+static int FillInDrivePB( int drive )
 {
         if(!DRIVE_IsValid(drive))
         {
             SetLastError( ERROR_INVALID_DRIVE );
-            AX_reg(context) = 0x00ff;
+			return 0;
         }
         else if (heap || INT21_CreateHeap())
         {
-                FIXME("GetDrivePB not fully implemented.\n");
-
                 /* FIXME: I have no idea what a lot of this information should
                  * say or whether it even really matters since we're not allowing
                  * direct block access.  However, some programs seem to depend on
@@ -215,11 +236,24 @@ static void GetDrivePB( CONTEXT86 *context, int drive )
                 heap->dpb.next = 0;
                 heap->dpb.free_search = 0;
                 heap->dpb.free_clusters = 0xFFFF;    /* unknown */
+				return 1;
+		}	
 
+		return 0;
+}
+
+static void GetDrivePB( CONTEXT86 *context, int drive )
+{
+	if (FillInDrivePB( drive ))
+	{
                 AL_reg(context) = 0x00;
                 DS_reg(context) = SELECTOROF(dpbsegptr);
                 BX_reg(context) = OFFSETOF(dpbsegptr);
         }
+	else
+	{
+        AX_reg(context) = 0x00ff;
+	}
 }
 
 
@@ -2266,13 +2300,92 @@ void WINAPI DOS3Call( CONTEXT86 *context )
 
     case 0x70: /* MS-DOS 7 (Windows95) - ??? (country-specific?)*/
     case 0x72: /* MS-DOS 7 (Windows95) - ??? */
-    case 0x73: /* MS-DOS 7 (Windows95) - DRIVE LOCKING ??? */
         TRACE("windows95 function AX %04x\n",
                     AX_reg(context));
         WARN("        returning unimplemented\n");
         SET_CFLAG(context);
         AL_reg(context) = 0;
         break;
+
+    case 0x73: /* MULTIPLEXED: Win95 OSR2/Win98 FAT32 calls */
+        TRACE("windows95 function AX %04x\n",
+                    AX_reg(context));
+
+        switch (AL_reg(context))
+		{
+		case 0x02:	/* Get Extended Drive Parameter Block for specific drive */
+		    		/* ES:DI points to word with length of data (should be 0x3d) */
+			{
+				WORD *buffer;
+				struct EDPB *edpb;
+			    DWORD cluster_sectors, sector_bytes, free_clusters, total_clusters;
+			    char root[] = "A:\\";
+
+				buffer = (WORD *)CTX_SEG_OFF_TO_LIN(context, ES_reg(context), EDI_reg(context));
+
+				TRACE("Get Extended DPB: linear buffer address is %p\n", buffer);
+
+				/* validate passed-in buffer lengths */
+				if ((*buffer != 0x3d) || (ECX_reg(context) != 0x3f))
+				{
+					WARN("Get Extended DPB: buffer lengths incorrect\n");
+					WARN("CX = %lx, buffer[0] = %x\n", ECX_reg(context), *buffer);
+					SET_CFLAG(context);
+					AL_reg(context) = 0x18;		/* bad buffer length */
+				}
+
+				/* buffer checks out */
+				buffer++;		/* skip over length word now */
+				if (FillInDrivePB( DX_reg(context) ) )
+				{
+				 	edpb = (struct EDPB *)buffer;
+
+					/* copy down the old-style DPB portion first */
+					memcpy(&edpb->dpb, &heap->dpb, sizeof(struct DPB));
+
+					/* now fill in the extended entries */
+					edpb->edpb_flags = 0;
+					edpb->next_edpb = 0;
+					edpb->free_cluster = edpb->free_cluster2 = 0;
+					
+					/* determine free disk space */
+				    *root += DOS_GET_DRIVE( DX_reg(context) );
+				    GetDiskFreeSpaceA( root, &cluster_sectors, &sector_bytes,
+                              &free_clusters, &total_clusters );
+
+					edpb->clusters_free = (free_clusters&0xffff);
+
+					edpb->clusters_free_hi = free_clusters >> 16;
+					edpb->mirroring_flags = 0;
+					edpb->info_sector = 0xffff;
+					edpb->spare_boot_sector = 0xffff;
+					edpb->first_cluster = 0;
+					edpb->max_cluster = total_clusters;
+					edpb->fat_clusters = 32;	/* made-up value */
+					edpb->root_cluster = 0;
+				
+					RESET_CFLAG(context);	/* clear carry */
+					AX_reg(context) = 0;	
+				}
+				else
+				{
+			        AX_reg(context) = 0x00ff;
+					SET_CFLAG(context);
+				}
+			}
+			break;
+
+		case 0x03:	/* Get Extended free space on drive */
+		case 0x04:  /* Set DPB for formatting */
+		case 0x05:  /* extended absolute disk read/write */
+			FIXME("Unimplemented FAT32 int32 function %04x\n", AX_reg(context));
+			SET_CFLAG(context);
+			AL_reg(context) = 0;
+			break;
+		}
+		
+		break;
+
 
     case 0xdc: /* CONNECTION SERVICES - GET CONNECTION NUMBER */
     case 0xea: /* NOVELL NETWARE - RETURN SHELL VERSION */
