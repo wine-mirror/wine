@@ -1815,7 +1815,7 @@ static HRESULT FILEDLG95_FILETYPE_Init(HWND hwnd)
     if(lpstrFilter)
     {
       DWORD len;
-      _strlwr(lpstrFilter);	/* lowercase */
+      CharLowerA(lpstrFilter); /* lowercase */
       len = MultiByteToWideChar( CP_ACP, 0, lpstrFilter, -1, NULL, 0 );
       fodInfos->ShellInfos.lpstrCurrentFilter = MemAlloc( len * sizeof(WCHAR) );
       MultiByteToWideChar( CP_ACP, 0, lpstrFilter, -1,
@@ -1856,7 +1856,7 @@ static BOOL FILEDLG95_FILETYPE_OnCommand(HWND hwnd, WORD wNotifyCode)
       if((int)lpstrFilter != CB_ERR)
       {
           DWORD len;
-          _strlwr(lpstrFilter); /* lowercase */
+          CharLowerA(lpstrFilter); /* lowercase */
           len = MultiByteToWideChar( CP_ACP, 0, lpstrFilter, -1, NULL, 0 );
           fodInfos->ShellInfos.lpstrCurrentFilter = MemAlloc( len * sizeof(WCHAR) );
           MultiByteToWideChar( CP_ACP, 0, lpstrFilter, -1,

@@ -1016,45 +1016,24 @@ BOOL WINAPI GetVersionExW(OSVERSIONINFOW*);
 
 /*int WinMain(HINSTANCE, HINSTANCE prev, char *cmd, int show);*/
 
-/* FIXME: need to use defines because we don't have proper imports everywhere yet */
-#ifndef have_proper_imports
-LONG        WINAPI RtlEnterCriticalSection( CRITICAL_SECTION *crit );
-LONG        WINAPI RtlLeaveCriticalSection( CRITICAL_SECTION *crit );
-LONG        WINAPI RtlDeleteCriticalSection( CRITICAL_SECTION *crit );
-BOOL        WINAPI RtlTryEnterCriticalSection( CRITICAL_SECTION *crit );
-PVOID       WINAPI RtlAllocateHeap(HANDLE,ULONG,ULONG);
-BOOLEAN     WINAPI RtlFreeHeap(HANDLE,ULONG,PVOID);
-PVOID       WINAPI RtlReAllocateHeap(HANDLE,ULONG,PVOID,ULONG);
-ULONG       WINAPI RtlSizeHeap(HANDLE,ULONG,PVOID);
-#define     HeapAlloc(heap,flags,size) RtlAllocateHeap(heap,flags,size)
-#define     HeapFree(heap,flags,ptr) RtlFreeHeap(heap,flags,ptr)
-#define     HeapReAlloc(heap,flags,ptr,size) RtlReAllocateHeap(heap,flags,ptr,size)
-#define     HeapSize(heap,flags,ptr) RtlSizeHeap(heap,flags,ptr)
-#define     EnterCriticalSection(crit) RtlEnterCriticalSection(crit)
-#define     LeaveCriticalSection(crit) RtlLeaveCriticalSection(crit)
-#define     DeleteCriticalSection(crit) RtlDeleteCriticalSection(crit)
-#define     TryEnterCriticalSection(crit) RtlTryEnterCriticalSection(crit)
-#else
 LPVOID      WINAPI HeapAlloc(HANDLE,DWORD,DWORD);
 BOOL        WINAPI HeapFree(HANDLE,DWORD,LPVOID);
 LPVOID      WINAPI HeapReAlloc(HANDLE,DWORD,LPVOID,DWORD);
 DWORD       WINAPI HeapSize(HANDLE,DWORD,LPVOID);
+void        WINAPI InitializeCriticalSection(CRITICAL_SECTION *lpCrit);
+BOOL        WINAPI InitializeCriticalSectionAndSpinCount(CRITICAL_SECTION *,DWORD);
 void        WINAPI DeleteCriticalSection(CRITICAL_SECTION *lpCrit);
 void        WINAPI EnterCriticalSection(CRITICAL_SECTION *lpCrit);
 BOOL        WINAPI TryEnterCriticalSection(CRITICAL_SECTION *lpCrit);
 void        WINAPI LeaveCriticalSection(CRITICAL_SECTION *lpCrit);
-#endif
-
-void      WINAPI InitializeCriticalSection(CRITICAL_SECTION *lpCrit);
-BOOL      WINAPI InitializeCriticalSectionAndSpinCount(CRITICAL_SECTION *,DWORD);
-void      WINAPI MakeCriticalSectionGlobal(CRITICAL_SECTION *lpCrit);
-BOOL      WINAPI GetProcessWorkingSetSize(HANDLE,LPDWORD,LPDWORD);
-DWORD     WINAPI QueueUserAPC(PAPCFUNC,HANDLE,ULONG_PTR);
-void      WINAPI RaiseException(DWORD,DWORD,DWORD,const LPDWORD);
-BOOL    WINAPI SetProcessWorkingSetSize(HANDLE,DWORD,DWORD);
-BOOL    WINAPI TerminateProcess(HANDLE,DWORD);
-BOOL    WINAPI TerminateThread(HANDLE,DWORD);
-BOOL    WINAPI GetExitCodeThread(HANDLE,LPDWORD); 
+void        WINAPI MakeCriticalSectionGlobal(CRITICAL_SECTION *lpCrit);
+BOOL        WINAPI GetProcessWorkingSetSize(HANDLE,LPDWORD,LPDWORD);
+DWORD       WINAPI QueueUserAPC(PAPCFUNC,HANDLE,ULONG_PTR);
+void        WINAPI RaiseException(DWORD,DWORD,DWORD,const LPDWORD);
+BOOL        WINAPI SetProcessWorkingSetSize(HANDLE,DWORD,DWORD);
+BOOL        WINAPI TerminateProcess(HANDLE,DWORD);
+BOOL        WINAPI TerminateThread(HANDLE,DWORD);
+BOOL        WINAPI GetExitCodeThread(HANDLE,LPDWORD);
 
 /* GetBinaryType return values.
  */

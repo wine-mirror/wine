@@ -16,7 +16,6 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#include <limits.h>
 #include "windef.h"
 #include "wine/windef16.h"
 #include "wine/debug.h"
@@ -107,12 +106,7 @@ void WINAPI FreeAllUserMem(void)
 INT16 WINAPI GetFreeFileHandles(void)
 {
 	TRACE("GetFreeFileHandles\n");
-
-#ifndef OPEN_MAX
-	return _POSIX_OPEN_MAX;
-#else
-	return OPEN_MAX;
-#endif
+        return 256;  /* can't have more than 256 16-bit handles */
 }
 
 /***********************************************************************

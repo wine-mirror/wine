@@ -21,7 +21,6 @@
 #include <ctype.h>
 #include <string.h>
 #include <sys/types.h>
-#include <pwd.h>
 #include <unistd.h>
 
 #include "winbase.h"
@@ -468,29 +467,8 @@ DWORD WINAPI WNetGetUniversalNameW ( LPCWSTR lpLocalPath, DWORD dwInfoLevel,
  */
 DWORD WINAPI WNetGetUserA( LPCSTR lpName, LPSTR lpUserID, LPDWORD lpBufferSize )
 {
-    struct passwd *pwd = getpwuid(getuid());
-
-    FIXME( "(%s, %p, %p): mostly stub\n", 
-           debugstr_a(lpName), lpUserID, lpBufferSize );
-
-    if (pwd)
-    {
-        if ( strlen(pwd->pw_name) + 1 > *lpBufferSize )
-        {
-            *lpBufferSize = strlen(pwd->pw_name) + 1;
-
-            SetLastError(ERROR_MORE_DATA);
-            return ERROR_MORE_DATA;
-        }
-
-	strcpy( lpUserID, pwd->pw_name );
-        *lpBufferSize = strlen(pwd->pw_name) + 1;
-        return WN_SUCCESS;
-    }
-
-    /* FIXME: wrong return value */
-    SetLastError(ERROR_NO_NETWORK);
-    return ERROR_NO_NETWORK;
+    if (GetUserNameA( lpUserID, lpBufferSize )) return WN_SUCCESS;
+    return GetLastError();
 }
 
 /*****************************************************************

@@ -779,3 +779,45 @@ BOOL16 WINAPI Local32Next16( LOCAL32ENTRY *pLocal32Entry )
     return FALSE;
 }
 
+
+/* FIXME: these functions are needed for dlls that aren't properly separated yet */
+
+LPVOID WINAPI HeapAlloc( HANDLE heap, DWORD flags, DWORD size )
+{
+    return RtlAllocateHeap( heap, flags, size );
+}
+
+BOOL WINAPI HeapFree( HANDLE heap, DWORD flags, LPVOID ptr )
+{
+    return RtlFreeHeap( heap, flags, ptr );
+}
+
+LPVOID WINAPI HeapReAlloc( HANDLE heap, DWORD flags, LPVOID ptr, DWORD size )
+{
+    return RtlReAllocateHeap( heap, flags, ptr, size );
+}
+
+DWORD WINAPI HeapSize( HANDLE heap, DWORD flags, LPVOID ptr )
+{
+    return RtlSizeHeap( heap, flags, ptr );
+}
+
+void WINAPI EnterCriticalSection( CRITICAL_SECTION *crit )
+{
+    RtlEnterCriticalSection( crit );
+}
+
+BOOL WINAPI TryEnterCriticalSection( CRITICAL_SECTION *crit )
+{
+    return RtlTryEnterCriticalSection( crit );
+}
+
+void WINAPI DeleteCriticalSection( CRITICAL_SECTION *crit )
+{
+    RtlDeleteCriticalSection( crit );
+}
+
+void WINAPI LeaveCriticalSection( CRITICAL_SECTION *crit )
+{
+    RtlLeaveCriticalSection( crit );
+}

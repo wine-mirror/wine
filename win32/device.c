@@ -44,7 +44,9 @@
 #include "wine/debug.h"
 
 /* int 13 stuff */
-#include <sys/ioctl.h>
+#ifdef HAVE_SYS_IOCTL_H
+# include <sys/ioctl.h>
+#endif
 #include <fcntl.h>
 #ifdef linux
 # include <linux/fd.h>

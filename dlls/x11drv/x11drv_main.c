@@ -138,7 +138,7 @@ static int error_handler( Display *display, XErrorEvent *error_evt )
  */
 static void lock_tsx11(void)
 {
-    RtlEnterCriticalSection( &X11DRV_CritSection );
+    EnterCriticalSection( &X11DRV_CritSection );
 }
 
 /***********************************************************************
@@ -146,7 +146,7 @@ static void lock_tsx11(void)
  */
 static void unlock_tsx11(void)
 {
-    RtlLeaveCriticalSection( &X11DRV_CritSection );
+    LeaveCriticalSection( &X11DRV_CritSection );
 }
 
 /***********************************************************************
@@ -431,7 +431,7 @@ static void process_detach(void)
     /* restore TSX11 locking */
     wine_tsx11_lock = old_tsx11_lock;
     wine_tsx11_unlock = old_tsx11_unlock;
-    RtlDeleteCriticalSection( &X11DRV_CritSection );
+    DeleteCriticalSection( &X11DRV_CritSection );
 }
 
 

@@ -37,7 +37,7 @@
 /* Win32 process environment database */
 typedef struct _ENVDB
 {
-    LPSTR            environ;          /* 00 Process environment strings */
+    LPSTR            env;              /* 00 Process environment strings */
     DWORD            unknown1;         /* 04 Unknown */
     LPSTR            cmd_line;         /* 08 Command line */
     LPSTR            cur_dir;          /* 0c Current directory */
@@ -165,7 +165,7 @@ static BOOL build_environment(void)
     /* Now allocate the environment */
 
     if (!(p = HeapAlloc( GetProcessHeap(), 0, size ))) return FALSE;
-    current_envdb.environ = p;
+    current_envdb.env = p;
     env_sel = SELECTOR_AllocBlock( p, 0x10000, WINE_LDT_FLAGS_DATA );
 
     /* And fill it with the Unix environment */
@@ -487,7 +487,7 @@ LPWSTR WINAPI GetCommandLineW(void)
  */
 LPSTR WINAPI GetEnvironmentStringsA(void)
 {
-    return current_envdb.environ;
+    return current_envdb.env;
 }
 
 
@@ -500,10 +500,10 @@ LPWSTR WINAPI GetEnvironmentStringsW(void)
     LPWSTR ret;
 
     RtlAcquirePebLock();
-    size = HeapSize( GetProcessHeap(), 0, current_envdb.environ );
+    size = HeapSize( GetProcessHeap(), 0, current_envdb.env );
     if ((ret = HeapAlloc( GetProcessHeap(), 0, size * sizeof(WCHAR) )) != NULL)
     {
-        LPSTR pA = current_envdb.environ;
+        LPSTR pA = current_envdb.env;
         LPWSTR pW = ret;
         while (size--) *pW++ = (WCHAR)(BYTE)*pA++;
     }
@@ -517,7 +517,7 @@ LPWSTR WINAPI GetEnvironmentStringsW(void)
  */
 BOOL WINAPI FreeEnvironmentStringsA( LPSTR ptr )
 {
-    if (ptr != current_envdb.environ)
+    if (ptr != current_envdb.env)
     {
         SetLastError( ERROR_INVALID_PARAMETER );
         return FALSE;
@@ -549,7 +549,7 @@ DWORD WINAPI GetEnvironmentVariableA( LPCSTR name, LPSTR value, DWORD size )
         return 0;
     }
     RtlAcquirePebLock();
-    if ((p = ENV_FindVariable( current_envdb.environ, name, strlen(name) )))
+    if ((p = ENV_FindVariable( current_envdb.env, name, strlen(name) )))
     {
         ret = strlen(p);
         if (size <= ret)
@@ -597,7 +597,7 @@ BOOL WINAPI SetEnvironmentVariableA( LPCSTR name, LPCSTR value )
     BOOL ret = FALSE;
 
     RtlAcquirePebLock();
-    env = p = current_envdb.environ;
+    env = p = current_envdb.env;
 
     /* Find a place to insert the string */
 
@@ -634,7 +634,7 @@ BOOL WINAPI SetEnvironmentVariableA( LPCSTR name, LPCSTR value )
         strcat( p, "=" );
         strcat( p, value );
     }
-    current_envdb.environ = new_env;
+    current_envdb.env = new_env;
     ret = TRUE;
 
 done:
@@ -684,8 +684,7 @@ DWORD WINAPI ExpandEnvironmentStringsA( LPCSTR src, LPSTR dst, DWORD count )
             if ((p = strchr( src + 1, '%' )))
             {
                 len = p - src - 1;  /* Length of the variable name */
-                if ((var = ENV_FindVariable( current_envdb.environ,
-                                             src + 1, len )))
+                if ((var = ENV_FindVariable( current_envdb.env, src + 1, len )))
                 {
                     src += len + 2;  /* Skip the variable name */
                     len = strlen(var);
