@@ -28,6 +28,17 @@
 #include "winbase.h"
 #include "winerror.h"
 
+#ifdef NONAMELESSUNION
+# define U(x)  (x).u
+#else
+# define U(x)  (x)
+#endif
+#ifdef NONAMELESSSTRUCT
+# define S(x)  (x).s
+#else
+# define S(x)  (x)
+#endif
+
 static int dll_capable(const char *dll, const char *function)
 {
     HMODULE module = GetModuleHandleA(dll);
@@ -912,8 +923,8 @@ static void test_offset_in_overlapped_structure(void)
     ok(done == sizeof(buf), "expected number of bytes written %lu\n", done);
 
     memset(&ov, 0, sizeof(ov));
-    ov.Offset = PATTERN_OFFSET;
-    ov.OffsetHigh = 0;
+    S(U(ov)).Offset = PATTERN_OFFSET;
+    S(U(ov)).OffsetHigh = 0;
     rc=WriteFile(hFile, pattern, sizeof(pattern), &done, &ov);
     /* Win 9x does not support the overlapped I/O on files */
     if (rc || GetLastError()!=ERROR_INVALID_PARAMETER) {
@@ -923,8 +934,8 @@ static void test_offset_in_overlapped_structure(void)
         ok(SetFilePointer(hFile, 0, NULL, FILE_CURRENT) == (PATTERN_OFFSET + sizeof(pattern)),
            "expected file offset %d\n", PATTERN_OFFSET + sizeof(pattern));
 
-        ov.Offset = sizeof(buf) * 2;
-        ov.OffsetHigh = 0;
+        S(U(ov)).Offset = sizeof(buf) * 2;
+        S(U(ov)).OffsetHigh = 0;
         ret = WriteFile(hFile, pattern, sizeof(pattern), &done, &ov);
         ok( ret, "WriteFile error %ld\n", GetLastError());
         ok(done == sizeof(pattern), "expected number of bytes written %lu\n", done);
@@ -942,8 +953,8 @@ static void test_offset_in_overlapped_structure(void)
 
     memset(buf, 0, sizeof(buf));
     memset(&ov, 0, sizeof(ov));
-    ov.Offset = PATTERN_OFFSET;
-    ov.OffsetHigh = 0;
+    S(U(ov)).Offset = PATTERN_OFFSET;
+    S(U(ov)).OffsetHigh = 0;
     rc=ReadFile(hFile, buf, sizeof(pattern), &done, &ov);
     /* Win 9x does not support the overlapped I/O on files */
     if (rc || GetLastError()!=ERROR_INVALID_PARAMETER) {
@@ -1001,8 +1012,8 @@ static void test_LockFile(void)
     ok( !UnlockFile( handle, 10, 0, 20, 0 ), "UnlockFile 10,20 again succeeded\n" );
     ok( UnlockFile( handle, 5, 0, 5, 0 ), "UnlockFile 5,5 failed\n" );
 
-    overlapped.Offset = 100;
-    overlapped.OffsetHigh = 0;
+    S(U(overlapped)).Offset = 100;
+    S(U(overlapped)).OffsetHigh = 0;
     overlapped.hEvent = 0;
 
     lockfileex_capable = dll_capable("kernel32", "LockFileEx");
@@ -1018,7 +1029,7 @@ static void test_LockFile(void)
     }
 
     /* overlapping shared locks are OK */
-    overlapped.Offset = 150;
+    S(U(overlapped)).Offset = 150;
     limited_UnLockFile || ok( LockFileEx( handle, 0, 0, 100, 0, &overlapped ), "LockFileEx 150,100 failed\n" );
 
     /* but exclusive is not */
@@ -1031,7 +1042,7 @@ static void test_LockFile(void)
         {
             if (!UnlockFileEx( handle, 0, 100, 0, &overlapped ))
             { /* UnLockFile is capable. */
-                overlapped.Offset = 100;
+                S(U(overlapped)).Offset = 100;
                 ok( !UnlockFileEx( handle, 0, 100, 0, &overlapped ),
                     "UnlockFileEx 150,100 again succeeded\n" );
 	    }
@@ -1299,8 +1310,8 @@ static void test_async_file_errors(void)
     HANDLE hFile;
     LPVOID lpBuffer = HeapAlloc(GetProcessHeap(), 0, 4096);
     OVERLAPPED ovl;
-    ovl.Offset = 0;
-    ovl.OffsetHigh = 0;
+    S(U(ovl)).Offset = 0;
+    S(U(ovl)).OffsetHigh = 0;
     ovl.hEvent = hSem;
     completion_count = 0;
     szFile[0] = '\0';
@@ -1317,7 +1328,7 @@ static void test_async_file_errors(void)
         /*printf("Offset = %ld, result = %s\n", ovl.Offset, res ? "TRUE" : "FALSE");*/
         if (!res)
             break;
-        ovl.Offset += 4096;
+        S(U(ovl)).Offset += 4096;
         /* i/o completion routine only called if ReadFileEx returned success.
          * we only care about violations of this rule so undo what should have
          * been done */

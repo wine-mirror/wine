@@ -2993,7 +2993,7 @@ BOOL WINAPI WSAGetOverlappedResult( SOCKET s, LPWSAOVERLAPPED lpOverlapped,
         *lpcbTransfer = lpOverlapped->InternalHigh;
 
     if ( lpdwFlags )
-        *lpdwFlags = lpOverlapped->Offset;
+        *lpdwFlags = lpOverlapped->u.s.Offset;
 
     switch ( lpOverlapped->Internal )
     {

@@ -323,8 +323,8 @@ BOOL WINAPI ReadFileEx(HANDLE hFile, LPVOID buffer, DWORD bytesToRead,
         return FALSE;
     }
 
-    offset.u.LowPart = overlapped->Offset;
-    offset.u.HighPart = overlapped->OffsetHigh;
+    offset.u.LowPart = overlapped->u.s.Offset;
+    offset.u.HighPart = overlapped->u.s.OffsetHigh;
     io_status = (PIO_STATUS_BLOCK)overlapped;
     io_status->u.Status = STATUS_PENDING;
 
@@ -364,8 +364,8 @@ BOOL WINAPI ReadFile( HANDLE hFile, LPVOID buffer, DWORD bytesToRead,
 
     if (overlapped != NULL)
     {
-        offset.u.LowPart = overlapped->Offset;
-        offset.u.HighPart = overlapped->OffsetHigh;
+        offset.u.LowPart = overlapped->u.s.Offset;
+        offset.u.HighPart = overlapped->u.s.OffsetHigh;
         poffset = &offset;
         hEvent = overlapped->hEvent;
         io_status = (PIO_STATUS_BLOCK)overlapped;
@@ -405,8 +405,8 @@ BOOL WINAPI WriteFileEx(HANDLE hFile, LPCVOID buffer, DWORD bytesToWrite,
         SetLastError(ERROR_INVALID_PARAMETER);
         return FALSE;
     }
-    offset.u.LowPart = overlapped->Offset;
-    offset.u.HighPart = overlapped->OffsetHigh;
+    offset.u.LowPart = overlapped->u.s.Offset;
+    offset.u.HighPart = overlapped->u.s.OffsetHigh;
 
     io_status = (PIO_STATUS_BLOCK)overlapped;
     io_status->u.Status = STATUS_PENDING;
@@ -439,8 +439,8 @@ BOOL WINAPI WriteFile( HANDLE hFile, LPCVOID buffer, DWORD bytesToWrite,
 
     if (overlapped)
     {
-        offset.u.LowPart = overlapped->Offset;
-        offset.u.HighPart = overlapped->OffsetHigh;
+        offset.u.LowPart = overlapped->u.s.Offset;
+        offset.u.HighPart = overlapped->u.s.OffsetHigh;
         poffset = &offset;
         hEvent = overlapped->hEvent;
         piosb = (PIO_STATUS_BLOCK)overlapped;
@@ -999,13 +999,13 @@ BOOL WINAPI LockFileEx( HANDLE hFile, DWORD flags, DWORD reserved,
     }
 
     TRACE( "%p %lx%08lx %lx%08lx flags %lx\n",
-           hFile, overlapped->OffsetHigh, overlapped->Offset, 
+           hFile, overlapped->u.s.OffsetHigh, overlapped->u.s.Offset, 
            count_high, count_low, flags );
 
     count.u.LowPart = count_low;
     count.u.HighPart = count_high;
-    offset.u.LowPart = overlapped->Offset;
-    offset.u.HighPart = overlapped->OffsetHigh;
+    offset.u.LowPart = overlapped->u.s.Offset;
+    offset.u.HighPart = overlapped->u.s.OffsetHigh;
 
     status = NtLockFile( hFile, overlapped->hEvent, NULL, NULL, 
                          NULL, &offset, &count, NULL, 
@@ -1050,7 +1050,7 @@ BOOL WINAPI UnlockFileEx( HANDLE hFile, DWORD reserved, DWORD count_low, DWORD c
     }
     if (overlapped->hEvent) FIXME("Unimplemented overlapped operation\n");
 
-    return UnlockFile( hFile, overlapped->Offset, overlapped->OffsetHigh, count_low, count_high );
+    return UnlockFile( hFile, overlapped->u.s.Offset, overlapped->u.s.OffsetHigh, count_low, count_high );
 }
 
 

@@ -1975,8 +1975,8 @@ static BOOL COMM_WaitCommEvent(
     commio->fd = fd;  /* FIXME */
 
     lpOverlapped->InternalHigh = 0;
-    lpOverlapped->Offset = 0;
-    lpOverlapped->OffsetHigh = 0;
+    lpOverlapped->u.s.Offset = 0;
+    lpOverlapped->u.s.OffsetHigh = 0;
 
     SERVER_START_REQ( register_async )
     {

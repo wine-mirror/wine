@@ -835,10 +835,10 @@ static void test_pack_OVERLAPPED(void)
 {
     /* OVERLAPPED (pack 4) */
     TEST_TYPE(OVERLAPPED, 20, 4);
-    TEST_FIELD(OVERLAPPED, DWORD, Internal, 0, 4, 4);
-    TEST_FIELD(OVERLAPPED, DWORD, InternalHigh, 4, 4, 4);
-    TEST_FIELD(OVERLAPPED, DWORD, Offset, 8, 4, 4);
-    TEST_FIELD(OVERLAPPED, DWORD, OffsetHigh, 12, 4, 4);
+    TEST_FIELD(OVERLAPPED, ULONG_PTR, Internal, 0, 4, 4);
+    TEST_FIELD(OVERLAPPED, ULONG_PTR, InternalHigh, 4, 4, 4);
+    /*TEST_FIELD(OVERLAPPED, DWORD, Offset, 8, 4, 4);*/
+    /*TEST_FIELD(OVERLAPPED, DWORD, OffsetHigh, 12, 4, 4);*/
     TEST_FIELD(OVERLAPPED, HANDLE, hEvent, 16, 4, 4);
 }
 

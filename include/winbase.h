@@ -485,10 +485,25 @@ typedef struct _SYSTEMTIME{
 /* The 'overlapped' data structure used by async I/O functions.
  */
 typedef struct _OVERLAPPED {
-        DWORD Internal;
-        DWORD InternalHigh;
-        DWORD Offset;
-        DWORD OffsetHigh;
+#ifdef WORDS_BIGENDIAN
+        ULONG_PTR InternalHigh;
+        ULONG_PTR Internal;
+#else
+        ULONG_PTR Internal;
+        ULONG_PTR InternalHigh;
+#endif
+        union {
+            struct {
+#ifdef WORDS_BIGENDIAN
+                DWORD OffsetHigh;
+                DWORD Offset;
+#else
+                DWORD Offset;
+                DWORD OffsetHigh;
+#endif
+            } DUMMYSTRUCTNAME;
+            PVOID Pointer;
+        } DUMMYUNIONNAME;
         HANDLE hEvent;
 } OVERLAPPED, *LPOVERLAPPED;
 

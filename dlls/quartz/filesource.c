@@ -18,6 +18,9 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+#define NONAMELESSUNION
+#define NONAMELESSSTRUCT
+
 #include "quartz_private.h"
 
 #include "wine/debug.h"
@@ -966,8 +969,8 @@ static HRESULT WINAPI FileAsyncReader_Request(IAsyncReader * iface, IMediaSample
     {
         DWORD dwLength = (DWORD) BYTES_FROM_MEDIATIME(Stop - Start);
 
-        pDataRq->ovl.Offset = (DWORD) BYTES_FROM_MEDIATIME(Start);
-        pDataRq->ovl.OffsetHigh = (DWORD)(BYTES_FROM_MEDIATIME(Start) >> (sizeof(DWORD) * 8));
+        pDataRq->ovl.u.s.Offset = (DWORD) BYTES_FROM_MEDIATIME(Start);
+        pDataRq->ovl.u.s.OffsetHigh = (DWORD)(BYTES_FROM_MEDIATIME(Start) >> (sizeof(DWORD) * 8));
         pDataRq->ovl.hEvent = This->hEvent;
         pDataRq->dwUserData = dwUser;
         pDataRq->pNext = NULL;
@@ -1120,8 +1123,8 @@ static HRESULT WINAPI FileAsyncReader_SyncRead(IAsyncReader * iface, LONGLONG ll
 
     ovl.hEvent = CreateEventW(NULL, 0, 0, NULL);
     /* NOTE: llPosition is the actual byte position to start reading from */
-    ovl.Offset = (DWORD) llPosition;
-    ovl.OffsetHigh = (DWORD) (llPosition >> (sizeof(DWORD) * 8));
+    ovl.u.s.Offset = (DWORD) llPosition;
+    ovl.u.s.OffsetHigh = (DWORD) (llPosition >> (sizeof(DWORD) * 8));
 
     if (!ReadFile(This->hFile, pBuffer, lLength, NULL, &ovl))
         hr = HRESULT_FROM_WIN32(GetLastError());
