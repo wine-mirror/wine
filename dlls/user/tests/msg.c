@@ -95,6 +95,7 @@ static const struct message WmSWP_ShowOverlappedSeq[] = {
     { WM_ACTIVATE, sent|wparam, 1 },
     { HCBT_SETFOCUS, hook },
     { WM_IME_SETCONTEXT, sent|wparam|defwinproc|optional, 1 },
+    { WM_IME_NOTIFY, sent|defwinproc|optional },
     { WM_SETFOCUS, sent|wparam|defwinproc, 0 },
     { WM_NCPAINT, sent|wparam|optional, 1 },
     { WM_GETTEXT, sent|defwinproc|optional },
@@ -130,6 +131,7 @@ static const struct message WmShowOverlappedSeq[] = {
     { WM_ACTIVATE, sent|wparam, 1 },
     { HCBT_SETFOCUS, hook },
     { WM_IME_SETCONTEXT, sent|wparam|defwinproc|optional, 1 },
+    { WM_IME_NOTIFY, sent|defwinproc|optional },
     { WM_SETFOCUS, sent|wparam|defwinproc, 0 },
     { WM_NCPAINT, sent|wparam|optional, 1 },
     { WM_GETTEXT, sent|defwinproc|optional },
@@ -159,6 +161,7 @@ static const struct message WmHideOverlappedSeq[] = {
     { WM_ACTIVATEAPP, sent|wparam, 0 },
     { WM_KILLFOCUS, sent|wparam, 0 },
     { WM_IME_SETCONTEXT, sent|wparam|optional, 0 },
+    { WM_IME_NOTIFY, sent|optional|defwinproc },
     { 0 }
 };
 /* ShowWindow(SW_HIDE) for an invisible overlapped window */
@@ -175,6 +178,7 @@ static const struct message WmDestroyOverlappedSeq[] = {
     { WM_ACTIVATEAPP, sent|wparam, 0 },
     { WM_KILLFOCUS, sent|wparam, 0 },
     { WM_IME_SETCONTEXT, sent|wparam|optional, 0 },
+    { WM_IME_NOTIFY, sent|optional|defwinproc },
     { WM_DESTROY, sent },
     { WM_NCDESTROY, sent },
     { 0 }
@@ -224,6 +228,7 @@ static const struct message WmShowVisiblePopupSeq_3[] = {
     { WM_KILLFOCUS, sent|parent },
     { WM_IME_SETCONTEXT, sent|parent|wparam|optional, 0 },
     { WM_IME_SETCONTEXT, sent|wparam|defwinproc|optional, 1 },
+    { WM_IME_NOTIFY, sent|defwinproc|optional },
     { WM_SETFOCUS, sent|defwinproc },
     { 0 }
 };
@@ -293,6 +298,28 @@ static const struct message WmShowChildSeq_2[] = {
  * for a not visible child window
  */
 static const struct message WmShowChildSeq_3[] = {
+    { WM_WINDOWPOSCHANGING, sent|wparam, 0 },
+    { WM_WINDOWPOSCHANGED, sent|wparam, 0 },
+    { 0 }
+};
+/* ShowWindow(SW_SHOW) for child with invisible parent */
+static const struct message WmShowChildInvisibleParentSeq[] = {
+    { WM_SHOWWINDOW, sent|wparam, 1 },
+    { 0 }
+};
+/* ShowWindow(SW_HIDE) for child with invisible parent */
+static const struct message WmHideChildInvisibleParentSeq[] = {
+    { WM_SHOWWINDOW, sent|wparam, 0 },
+    { 0 }
+};
+/* SetWindowPos(SWP_SHOWWINDOW) for child with invisible parent */
+static const struct message WmShowChildInvisibleParentSeq_2[] = {
+    { WM_WINDOWPOSCHANGING, sent|wparam, 0 },
+    { WM_WINDOWPOSCHANGED, sent|wparam, 0 },
+    { 0 }
+};
+/* SetWindowPos(SWP_HIDEWINDOW) for child with invisible parent */
+static const struct message WmHideChildInvisibleParentSeq_2[] = {
     { WM_WINDOWPOSCHANGING, sent|wparam, 0 },
     { WM_WINDOWPOSCHANGED, sent|wparam, 0 },
     { 0 }
@@ -426,6 +453,7 @@ static const struct message WmCreateCustomDialogSeq[] = {
     { WM_KILLFOCUS, sent|parent },
     { WM_IME_SETCONTEXT, sent|parent|wparam|optional, 0 },
     { WM_IME_SETCONTEXT, sent|wparam|optional, 1 },
+    { WM_IME_NOTIFY, sent|optional|defwinproc },
     { WM_SETFOCUS, sent },
     { WM_GETDLGCODE, sent|defwinproc|wparam, 0 },
     { WM_WINDOWPOSCHANGING, sent|wparam, 0 },
@@ -477,6 +505,7 @@ static const struct message WmEndCustomDialogSeq[] = {
     { WM_KILLFOCUS, sent },
     { WM_IME_SETCONTEXT, sent|wparam|optional, 0 },
     { WM_IME_SETCONTEXT, sent|parent|wparam|defwinproc|optional, 1 },
+    { WM_IME_NOTIFY, sent|optional },
     { WM_SETFOCUS, sent|parent|defwinproc },
     { 0 }
 };
@@ -523,7 +552,7 @@ static const struct message WmModalDialogSeq[] = {
     { WM_CTLCOLORDLG, sent|optional },
     { WM_PAINT, sent|optional },
     { WM_CTLCOLORBTN, sent },
-    { WM_ENTERIDLE, sent|parent },
+    { WM_ENTERIDLE, sent|parent|optional },
     { WM_TIMER, sent },
     { WM_ENABLE, sent|parent|wparam, 1 },
     { WM_WINDOWPOSCHANGING, sent },
@@ -691,10 +720,27 @@ static const struct message WmSetScrollRangeHV_NC_Seq[] =
     { WM_NCCALCSIZE, sent|wparam, 1 },
     { WM_NCPAINT, sent|optional },
     { WM_GETTEXT, sent|defwinproc|optional },
+    { WM_GETICON, sent|optional|defwinproc },
+    { WM_GETICON, sent|optional|defwinproc },
+    { WM_GETICON, sent|optional|defwinproc },
+    { WM_GETTEXT, sent|defwinproc|optional },
     { WM_ERASEBKGND, sent|optional },
     { WM_CTLCOLORDLG, sent|defwinproc|optional }, /* sent to a parent of the dialog */
     { WM_WINDOWPOSCHANGED, sent|wparam, 0 },
     { WM_SIZE, sent|defwinproc },
+    { WM_GETTEXT, sent|optional },
+    { WM_GETICON, sent|optional },
+    { WM_GETICON, sent|optional },
+    { WM_GETICON, sent|optional },
+    { WM_GETTEXT, sent|optional },
+    { WM_GETICON, sent|optional },
+    { WM_GETICON, sent|optional },
+    { WM_GETICON, sent|optional },
+    { WM_GETTEXT, sent|optional },
+    { WM_GETICON, sent|optional },
+    { WM_GETICON, sent|optional },
+    { WM_GETICON, sent|optional },
+    { WM_GETTEXT, sent|optional },
     { 0 }
 };
 
@@ -1591,6 +1637,35 @@ static void test_messages(void)
     flush_sequence();
     DialogBoxA( 0, "TEST_DIALOG", hparent, TestModalDlgProcA );
     ok_sequence(WmModalDialogSeq, "ModalDialog", TRUE);
+
+    /* test showing child with hidden parent */
+    ShowWindow( hparent, SW_HIDE );
+    flush_sequence();
+
+    hchild = CreateWindowExA(0, "TestWindowClass", "Test child", WS_CHILD,
+                             0, 0, 10, 10, hparent, 0, 0, NULL);
+    ok (hchild != 0, "Failed to create child window\n");
+    ok_sequence(WmCreateChildSeq, "CreateWindow:child", FALSE);
+
+    ShowWindow( hchild, SW_SHOW );
+    ok_sequence(WmShowChildInvisibleParentSeq, "ShowWindow:show child with invisible parent", TRUE);
+    ok(GetWindowLongA(hchild, GWL_STYLE) & WS_VISIBLE, "WS_VISIBLE should be set\n");
+    ok(!IsWindowVisible(hchild), "IsWindowVisible() should return FALSE\n");
+
+    ShowWindow( hchild, SW_HIDE );
+    ok_sequence(WmHideChildInvisibleParentSeq, "ShowWindow:hide child with invisible parent", TRUE);
+    ok(!(GetWindowLongA(hchild, GWL_STYLE) & WS_VISIBLE), "WS_VISIBLE should be not set\n");
+    ok(!IsWindowVisible(hchild), "IsWindowVisible() should return FALSE\n");
+
+    SetWindowPos(hchild, 0,0,0,0,0, SWP_SHOWWINDOW|SWP_NOSIZE|SWP_NOMOVE|SWP_NOACTIVATE|SWP_NOZORDER);
+    ok_sequence(WmShowChildInvisibleParentSeq_2, "SetWindowPos:show child with invisible parent", FALSE);
+    ok(GetWindowLongA(hchild, GWL_STYLE) & WS_VISIBLE, "WS_VISIBLE should be set\n");
+    ok(!IsWindowVisible(hchild), "IsWindowVisible() should return FALSE\n");
+
+    SetWindowPos(hchild, 0,0,0,0,0, SWP_HIDEWINDOW|SWP_NOSIZE|SWP_NOMOVE|SWP_NOACTIVATE|SWP_NOZORDER);
+    ok_sequence(WmHideChildInvisibleParentSeq_2, "SetWindowPos:hide child with invisible parent", FALSE);
+    ok(!(GetWindowLongA(hchild, GWL_STYLE) & WS_VISIBLE), "WS_VISIBLE should not be set\n");
+    ok(!IsWindowVisible(hchild), "IsWindowVisible() should return FALSE\n");
 
     DestroyWindow(hparent);
     flush_sequence();
