@@ -2,3 +2,4 @@ Makefile
 bin2res
 fnt2bdf
 makedep
+mingwrap

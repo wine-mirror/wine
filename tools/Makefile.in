@@ -3,11 +3,19 @@ TOPSRCDIR = @top_srcdir@
 TOPOBJDIR = ..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
-
-PROGRAMS = makedep fnt2bdf bin2res
 MODULE   = none
 
-C_SRCS = makedep.c fnt2bdf.c bin2res.c
+PROGRAMS = \
+	bin2res \
+	fnt2bdf \
+	makedep \
+	mingwrap
+
+C_SRCS = \
+	bin2res.c \
+	fnt2bdf.c \
+	makedep.c \
+	mingwrap.c
 
 SUBDIRS = \
 	widl \
@@ -38,12 +46,16 @@ fnt2bdf: fnt2bdf.o
 bin2res: bin2res.o
 	$(CC) $(CFLAGS) -o bin2res bin2res.o
 
+mingwrap: mingwrap.o
+	$(CC) $(CFLAGS) -DINCLUDEDIR="$(includedir)" -o mingwrap mingwrap.o
+
 install::
 	$(MKINSTALLDIRS) $(bindir) $(mandir)/man$(prog_manext)
 	$(INSTALL_SCRIPT) $(SRCDIR)/winemaker $(bindir)/winemaker
+	$(INSTALL_SCRIPT) $(SRCDIR)/mingwrap $(bindir)/mingwrap
 	$(INSTALL_DATA) $(SRCDIR)/winemaker.man $(mandir)/man$(prog_manext)/winemaker.$(prog_manext)
 
 uninstall::
-	$(RM) $(bindir)/winemaker $(mandir)/man$(prog_manext)/winemaker.$(prog_manext)
+	$(RM) $(bindir)/winemaker $(bindir)/mingwrap $(mandir)/man$(prog_manext)/winemaker.$(prog_manext)
 
 ### Dependencies:
