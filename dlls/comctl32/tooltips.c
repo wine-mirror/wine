@@ -900,7 +900,7 @@ TOOLTIPS_DelToolA (HWND hwnd, WPARAM wParam, LPARAM lParam)
 		SetWindowLongA ((HWND)toolPtr->uId, GWL_WNDPROC,
 				  (LONG)lpttsi->wpOrigProc);
 		RemovePropA ((HWND)toolPtr->uId, COMCTL32_aSubclass);
-		COMCTL32_Free (&lpttsi);
+		COMCTL32_Free (lpttsi);
 	    }
 	    else
 		ERR("Invalid data handle!\n");
@@ -913,7 +913,7 @@ TOOLTIPS_DelToolA (HWND hwnd, WPARAM wParam, LPARAM lParam)
 		    SetWindowLongA ((HWND)toolPtr->hwnd, GWL_WNDPROC,
 				      (LONG)lpttsi->wpOrigProc);
 		    RemovePropA ((HWND)toolPtr->hwnd, COMCTL32_aSubclass);
-		    COMCTL32_Free (&lpttsi);
+		    COMCTL32_Free (lpttsi);
 		}
 		else
 		    lpttsi->uRefCount--;
@@ -997,7 +997,7 @@ TOOLTIPS_DelToolW (HWND hwnd, WPARAM wParam, LPARAM lParam)
 		SetWindowLongA ((HWND)toolPtr->uId, GWL_WNDPROC,
 				  (LONG)lpttsi->wpOrigProc);
 		RemovePropA ((HWND)toolPtr->uId, COMCTL32_aSubclass);
-		COMCTL32_Free (&lpttsi);
+		COMCTL32_Free (lpttsi);
 	    }
 	    else
 		ERR("Invalid data handle!\n");
@@ -1010,7 +1010,7 @@ TOOLTIPS_DelToolW (HWND hwnd, WPARAM wParam, LPARAM lParam)
 		    SetWindowLongA ((HWND)toolPtr->hwnd, GWL_WNDPROC,
 				      (LONG)lpttsi->wpOrigProc);
 		    RemovePropA ((HWND)toolPtr->hwnd, COMCTL32_aSubclass);
-		    COMCTL32_Free (&lpttsi);
+		    COMCTL32_Free (lpttsi);
 		}
 		else
 		    lpttsi->uRefCount--;
@@ -2047,7 +2047,7 @@ TOOLTIPS_Destroy (HWND hwnd, WPARAM wParam, LPARAM lParam)
                     SetWindowLongA ((HWND)toolPtr->uId, GWL_WNDPROC,
                               (LONG)lpttsi->wpOrigProc);
                     RemovePropA ((HWND)toolPtr->uId, COMCTL32_aSubclass);
-                    COMCTL32_Free (&lpttsi);
+                    COMCTL32_Free (lpttsi);
                 }
             }
             else {
@@ -2056,7 +2056,7 @@ TOOLTIPS_Destroy (HWND hwnd, WPARAM wParam, LPARAM lParam)
                     SetWindowLongA ((HWND)toolPtr->hwnd, GWL_WNDPROC,
                                (LONG)lpttsi->wpOrigProc);
                     RemovePropA ((HWND)toolPtr->hwnd, COMCTL32_aSubclass);
-                    COMCTL32_Free (&lpttsi);
+                    COMCTL32_Free (lpttsi);
                 }
             }
         }
