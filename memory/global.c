@@ -1049,6 +1049,7 @@ HGLOBAL WINAPI GlobalAlloc(
       if (!pintern) return NULL;
       if(size)
       {
+	 size = (size + 0x1f) & ~0x1f;
 	 if (!(palloc=HeapAlloc(heap, hpflags, size+sizeof(HGLOBAL)))) {
 	    HeapFree(heap, 0, pintern);
 	    return NULL;
@@ -1097,6 +1098,7 @@ LPVOID WINAPI GlobalLock(
    {
       WARN("invalid handle\n");
       palloc=(LPVOID) NULL;
+      SetLastError(ERROR_INVALID_HANDLE);
    }
    /* HeapUnlock(GetProcessHeap()); */;
    return palloc;
