@@ -393,3 +393,25 @@ BOOL WINAPI WINNLSGetEnableStatus(HWND hUnknown1)
     FIXME("hUnknown1 %p: stub!\n", hUnknown1);
     return TRUE; /* success (?) */
 }
+
+/**********************************************************************
+ * SendIMEMessageExA [USER32.@]
+ *
+ */
+LRESULT WINAPI SendIMEMessageExA(HWND p1, LPARAM p2)
+{
+  FIXME("(%p,%lx): stub\n", p1, p2);
+  SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+  return 0;
+}
+
+/**********************************************************************
+ * SendIMEMessageExW [USER32.@]
+ *
+ */
+LRESULT WINAPI SendIMEMessageExW(HWND p1, LPARAM p2)
+{
+  FIXME("(%p,%lx): stub\n", p1, p2);
+  SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+  return 0;
+}

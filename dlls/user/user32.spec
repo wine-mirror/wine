@@ -485,8 +485,8 @@
 @ stdcall ScrollWindowEx(long long long ptr ptr long ptr long)
 @ stdcall SendDlgItemMessageA(long long long long long)
 @ stdcall SendDlgItemMessageW(long long long long long)
-# @ stub SendIMEMessageExA
-# @ stub SendIMEMessageExW
+@ stdcall SendIMEMessageExA(long long)
+@ stdcall SendIMEMessageExW(long long)
 @ stdcall SendMessageA(long long long long)
 @ stdcall SendMessageCallbackA(long long long long ptr long)
 @ stdcall SendMessageCallbackW(long long long long ptr long)
