@@ -3192,7 +3192,7 @@ static void EDIT_EM_ReplaceSel(EDITSTATE *es, BOOL can_undo, LPCWSTR lpsz_replac
 	EDIT_UpdateScrollInfo(es);
 
 
-	if(es->flags & EF_UPDATE)
+        if(send_update || (es->flags & EF_UPDATE))
 	{
 	    es->flags &= ~EF_UPDATE;
 	    EDIT_NOTIFY_PARENT(es, EN_CHANGE, "EN_CHANGE");
@@ -3603,11 +3603,23 @@ static void EDIT_EM_SetSel(EDITSTATE *es, UINT start, UINT end, BOOL after_wrap)
 		es->flags |= EF_AFTER_WRAP;
 	else
 		es->flags &= ~EF_AFTER_WRAP;
-/* This is a little bit more efficient than before, not sure if it can be improved. FIXME? */
-        ORDER_UINT(start, end);
+	/* Compute the necessary invalidation region. */
+	/* Note that we don't need to invalidate regions which have
+	 * "never" been selected, or those which are "still" selected.
+	 * In fact, every time we hit a selection boundary, we can
+	 * *toggle* whether we need to invalidate.  Thus we can optimize by
+	 * *sorting* the interval endpoints.  Let's assume that we sort them
+	 * in this order:
+	 *        start <= end <= old_start <= old_end
+	 * Knuth 5.3.1 (p 183) asssures us that this can be done optimally
+	 * in 5 comparisons; ie it's impossible to do better than the
+	 * following: */
         ORDER_UINT(end, old_end);
         ORDER_UINT(start, old_start);
         ORDER_UINT(old_start, old_end);
+        ORDER_UINT(start, end);
+	/* Note that at this point 'end' and 'old_start' are not in order, but
+	 * start is definitely the min. and old_end is definitely the max. */
 	if (end != old_start)
         {
 /*
@@ -3616,6 +3628,7 @@ static void EDIT_EM_SetSel(EDITSTATE *es, UINT start, UINT end, BOOL after_wrap)
  *          EDIT_InvalidateText(es, start, end);
  *          EDIT_InvalidateText(es, old_start, old_end);
  * in place of the following if statement.
+ * (That would complete the optimal five-comparison four-element sort.)
  */
             if (old_start > end )
             {
@@ -4781,6 +4794,11 @@ static void EDIT_WM_SetText(EDITSTATE *es, LPCWSTR text, BOOL unicode)
 	text = textW;
     }
 
+    if (es->flags & EF_UPDATE)
+	/* fixed this bug once; complain if we see it about to happen again. */
+	ERR("SetSel may generate UPDATE message whose handler may reset "
+	    "selection.\n");
+
     EDIT_EM_SetSel(es, 0, (UINT)-1, FALSE);
     if (text) 
     {
@@ -5047,7 +5065,10 @@ static LRESULT EDIT_WM_VScroll(EDITSTATE *es, INT action, INT pos)
  */
 static void EDIT_UpdateTextRegion(EDITSTATE *es, HRGN hrgn, BOOL bErase)
 {
-    if (es->flags & EF_UPDATE) EDIT_NOTIFY_PARENT(es, EN_UPDATE, "EN_UPDATE");
+    if (es->flags & EF_UPDATE) {
+        es->flags &= ~EF_UPDATE;
+        EDIT_NOTIFY_PARENT(es, EN_UPDATE, "EN_UPDATE");
+    }
     InvalidateRgn(es->hwndSelf, hrgn, bErase);
 }
 
@@ -5059,6 +5080,9 @@ static void EDIT_UpdateTextRegion(EDITSTATE *es, HRGN hrgn, BOOL bErase)
  */
 static void EDIT_UpdateText(EDITSTATE *es, LPRECT rc, BOOL bErase)
 {
-    if (es->flags & EF_UPDATE) EDIT_NOTIFY_PARENT(es, EN_UPDATE, "EN_UPDATE");
+    if (es->flags & EF_UPDATE) {
+        es->flags &= ~EF_UPDATE;
+        EDIT_NOTIFY_PARENT(es, EN_UPDATE, "EN_UPDATE");
+    }
     InvalidateRect(es->hwndSelf, rc, bErase);
 }

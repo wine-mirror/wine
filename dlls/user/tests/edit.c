@@ -1,6 +1,7 @@
 /* Unit test suite for edit control.
  *
  * Copyright 2004 Vitaliy Margolen
+ * Copyright 2005 C. Scott Ananian
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -19,6 +20,7 @@
 
 #include <assert.h>
 #include <windows.h>
+#include <windowsx.h>
 #include <commctrl.h>
 
 #include "wine/test.h"
@@ -27,6 +29,12 @@
 #define ES_COMBO 0x200
 #endif
 
+#define ID_EDITTEST2 99
+#define MAXLEN 200
+
+static char szEditTest2Name[] = "Edit Test 2 window class";
+static HINSTANCE hinst;
+static HWND hwndET2;
 
 HWND create_editcontrol (DWORD style, DWORD exstyle)
 {
@@ -79,7 +87,7 @@ static void set_client_height(HWND Wnd, unsigned Height)
                  SWP_NOMOVE | SWP_NOZORDER);
 }
 
-static void test_edit_control(void)
+static void test_edit_control_1(void)
 {
     HWND hwEdit;
     MSG msMessage;
@@ -268,7 +276,95 @@ static void test_edit_control(void)
     DestroyWindow(hwEdit);
 }
 
+/* WM_SETTEXT is implemented by selecting all text, and then replacing the
+ * selection.  This test checks that the first 'select all' doesn't generate
+ * an UPDATE message which can escape and (via a handler) change the
+ * selection, which would cause WM_SETTEXT to break.  This old bug
+ * was fixed 18-Mar-2005; we check here to ensure it doesn't regress.
+ */
+static void test_edit_control_2(void)
+{
+    HWND hwndMain;
+    char szLocalString[MAXLEN];
+
+    /* Create main and edit windows. */
+    hwndMain = CreateWindow(szEditTest2Name, "ET2", WS_OVERLAPPEDWINDOW,
+                            0, 0, 200, 200, NULL, NULL, hinst, NULL);
+    assert(hwndMain);
+    if (winetest_interactive)
+        ShowWindow (hwndMain, SW_SHOW);
+
+    hwndET2 = CreateWindow("EDIT", NULL,
+                           WS_CHILD|WS_BORDER|ES_LEFT|ES_AUTOHSCROLL,
+                           0, 0, 150, 50, /* important this not be 0 size. */
+                           hwndMain, (HMENU) ID_EDITTEST2, hinst, NULL);
+    assert(hwndET2);
+    if (winetest_interactive)
+        ShowWindow (hwndET2, SW_SHOW);
+
+    trace("EDIT: SETTEXT atomicity\n");
+    /* Send messages to "type" in the word 'foo'. */
+    SendMessage(hwndET2, WM_CHAR, 'f', 1);
+    SendMessage(hwndET2, WM_CHAR, 'o', 1);
+    SendMessage(hwndET2, WM_CHAR, 'o', 1);
+    /* 'foo' should have been changed to 'bar' by the UPDATE handler. */
+    GetWindowText(hwndET2, szLocalString, MAXLEN);
+    ok(lstrcmp(szLocalString, "bar")==0,
+       "Wrong contents of edit: %s\n", szLocalString);
+
+    /* OK, done! */
+    DestroyWindow (hwndET2);
+    DestroyWindow (hwndMain);
+}
+
+static void ET2_check_change() {
+   char szLocalString[MAXLEN];
+   /* This EN_UPDATE handler changes any 'foo' to 'bar'. */
+   GetWindowText(hwndET2, szLocalString, MAXLEN);
+   if (lstrcmp(szLocalString, "foo")==0) {
+       lstrcpy(szLocalString, "bar");
+       SendMessage(hwndET2, WM_SETTEXT, 0, (LPARAM) szLocalString);
+   }
+   /* always leave the cursor at the end. */
+   SendMessage(hwndET2, EM_SETSEL, MAXLEN - 1, MAXLEN - 1);
+}
+static void ET2_OnCommand(HWND hwnd, int id, HWND hwndCtl, UINT codeNotify)
+{
+    if (id==ID_EDITTEST2 && codeNotify == EN_UPDATE)
+        ET2_check_change();
+}
+static LRESULT CALLBACK ET2_WndProc(HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
+{
+    switch (iMsg) {
+        HANDLE_MSG(hwnd, WM_COMMAND, ET2_OnCommand);
+    }
+    return DefWindowProc(hwnd, iMsg, wParam, lParam);
+}
+
+static BOOL RegisterWindowClasses (void)
+{
+    WNDCLASSA cls;
+    cls.style = 0;
+    cls.lpfnWndProc = ET2_WndProc;
+    cls.cbClsExtra = 0;
+    cls.cbWndExtra = 0;
+    cls.hInstance = hinst;
+    cls.hIcon = NULL;
+    cls.hCursor = LoadCursorA (NULL, IDC_ARROW);
+    cls.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);
+    cls.lpszMenuName = NULL;
+    cls.lpszClassName = szEditTest2Name;
+    if (!RegisterClassA (&cls)) return FALSE;
+
+    return TRUE;
+}
+
 START_TEST(edit)
 {
-    test_edit_control();
+    hinst = GetModuleHandleA (NULL);
+    if (!RegisterWindowClasses())
+        assert(0);
+
+    test_edit_control_1();
+    test_edit_control_2();
 }
