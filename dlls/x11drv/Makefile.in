@@ -27,7 +27,7 @@ SUBDIRS = \
 
 all: $(PROGRAMS)
 
-$(EXTRA_OBJS) $(PROGRAMS): $(TOOLSUBDIRS) dummy
+$(EXTRA_OBJS) $(PROGRAMS): dummy
 	@cd `dirname $@` && $(MAKE) `basename $@`
 
 install:: $(PROGRAMS)

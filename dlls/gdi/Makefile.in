@@ -32,7 +32,7 @@ SUBDIRS = \
 
 @MAKE_DLL_RULES@
 
-$(EXTRA_OBJS): $(TOOLSUBDIRS) dummy
+$(EXTRA_OBJS): dummy
 	@cd `dirname $@` && $(MAKE) `basename $@`
 
 ### Dependencies:
