@@ -7077,6 +7077,7 @@ static LRESULT LISTVIEW_SetImageList(HWND hwnd, INT nType, HIMAGELIST himl)
 {
   LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongA(hwnd, 0);
   HIMAGELIST himlOld = 0;
+  INT oldHeight;
 
   switch (nType) 
   {
@@ -7097,7 +7098,10 @@ static LRESULT LISTVIEW_SetImageList(HWND hwnd, INT nType, HIMAGELIST himl)
     break;
   }
 
+  oldHeight = infoPtr->nItemHeight;
   infoPtr->nItemHeight = LISTVIEW_GetItemHeight(hwnd);
+  if (infoPtr->nItemHeight != oldHeight)
+    LISTVIEW_UpdateScroll(hwnd);
 
   return (LRESULT)himlOld;
 }
@@ -7143,11 +7147,11 @@ static LRESULT LISTVIEW_SetItemA(HWND hwnd, LPLVITEMA lpLVItem)
 
 /***
  * DESCRIPTION:
- * Preallocates memory.
+ * Preallocates memory (does *not* set the actual count of items !)
  * 
  * PARAMETER(S):
  * [I] HWND : window handle
- * [I] INT   : item count (projected number of items)
+ * [I] INT   : item count (projected number of items to allocate)
  * [I] DWORD : update flags
  *
  * RETURN:
@@ -7189,22 +7193,7 @@ static BOOL LISTVIEW_SetItemCount(HWND hwnd, INT nItems, DWORD dwFlags)
   }
   else
   {
-   if (nItems == 0)
-    return LISTVIEW_DeleteAllItems (hwnd);
-
-   if (nItems > GETITEMCOUNT(infoPtr))
-    {
-      /* append items */
-      FIXME("append items\n");
-
-    }
-    else if (nItems < GETITEMCOUNT(infoPtr))
-    {
-      /* remove items */
-      while(nItems < GETITEMCOUNT(infoPtr)) {
-        LISTVIEW_DeleteItem(hwnd, GETITEMCOUNT(infoPtr) - 1);
-      }
-    }
+      FIXME("setitemcount not done for non-ownerdata\n");
   }
 
   return TRUE;
@@ -8886,7 +8875,7 @@ static VOID LISTVIEW_UpdateSize(HWND hwnd)
      
   if (uView == LVS_LIST)
   {
-    if ((lStyle & WS_HSCROLL) == 0)
+    if (lStyle & WS_HSCROLL)
     {
       INT nHScrollHeight = GetSystemMetrics(SM_CYHSCROLL);
       if (infoPtr->rcList.bottom > nHScrollHeight)
