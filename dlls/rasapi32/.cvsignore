@@ -1,2 +1,4 @@
 Makefile
 rasapi32.spec.c
+rasapi16.spec.c
+rasapi16.spec.glue.s

@@ -5,7 +5,8 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = rasapi32
 
-SPEC_SRCS = rasapi32.spec
+SPEC_SRCS = rasapi32.spec rasapi16.spec
+GLUE      = rasapi16.spec.c
 
 C_SRCS = rasapi.c 
 

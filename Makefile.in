@@ -34,18 +34,29 @@ LIBSUBDIRS = \
 	dlls/avifil32 \
 	dlls/comctl32 \
 	dlls/commdlg \
+	dlls/crtdll \
+	dlls/dciman32 \
 	dlls/imagehlp \
+	dlls/imm32 \
+	dlls/lzexpand \
 	dlls/msacm \
 	dlls/msacm32 \
+	dlls/msnet32 \
+	dlls/msvideo \
 	dlls/ntdll \
 	dlls/psapi \
 	dlls/rasapi32 \
 	dlls/shell32 \
+	dlls/sound \
+	dlls/stress \
 	dlls/tapi32 \
 	dlls/ver \
 	dlls/version \
+	dlls/win32s \
 	dlls/win87em \
 	dlls/winaspi \
+	dlls/windebug \
+	dlls/wing \
 	dlls/winspool \
 	dlls/wnaspi32 \
 	files \
@@ -114,18 +125,29 @@ LIBOBJS = \
 	dlls/avifil32/avifil32.o \
 	dlls/comctl32/comctl32.o \
 	dlls/commdlg/commdlg.o \
+	dlls/crtdll/crtdll.o \
+	dlls/dciman32/dciman32.o \
 	dlls/imagehlp/imagehlp.o \
+	dlls/imm32/imm32.o \
+	dlls/lzexpand/lzexpand.o \
 	dlls/msacm/msacm.o \
 	dlls/msacm32/msacm32.o \
+	dlls/msnet32/msnet32.o \
+	dlls/msvideo/msvideo.o \
 	dlls/ntdll/ntdll.o \
 	dlls/psapi/psapi.o \
 	dlls/rasapi32/rasapi32.o \
 	dlls/shell32/shell32.o \
+	dlls/sound/sound.o \
+	dlls/stress/stress.o \
 	dlls/tapi32/tapi32.o \
 	dlls/ver/ver.o \
 	dlls/version/version.o \
+	dlls/win32s/win32s.o \
 	dlls/win87em/win87em.o \
 	dlls/winaspi/winaspi.o \
+	dlls/windebug/windebug.o \
+	dlls/wing/wing.o \
 	dlls/winspool/winspool.o \
 	dlls/wnaspi32/wnaspi32.o \
 	files/files.o \

@@ -1,0 +1,4 @@
+Makefile
+msvfw32.spec.c
+msvideo.spec.c
+msvideo.spec.glue.s

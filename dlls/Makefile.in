@@ -3,17 +3,29 @@ SUBDIRS = \
 	avifil32 \
 	comctl32 \
 	commdlg \
+	crtdll \
+	dciman32 \
 	imagehlp \
+	imm32 \
+	lzexpand \
 	msacm \
 	msacm32 \
+	msnet32 \
+	msvideo \
 	ntdll \
 	psapi \
 	shell32 \
+	sound \
+	stress \
 	tapi32 \
 	ver \
 	version \
+	win32s \
 	win87em \
 	winaspi \
+	windebug \
+	wing \
+	winspool \
 	wnaspi32
 
 all: $(SUBDIRS)

@@ -3,13 +3,13 @@ TOPSRCDIR = @top_srcdir@
 TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
-MODULE    = avifil32
+MODULE    = windebug
 
-SPEC_SRCS = avifil32.spec avifile.spec
-GLUE      = avifile.spec.c
+SPEC_SRCS = windebug.spec
+GLUE      = windebug.spec.c
 
 C_SRCS = \
-	avifile.c
+	windebug_main.c
 
 all: $(MODULE).o
 

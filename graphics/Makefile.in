@@ -24,8 +24,7 @@ C_SRCS = \
 	mapping.c \
 	painting.c \
 	path.c \
-	vga.c \
-	wing.c
+	vga.c
 
 all: $(MODULE).o
 

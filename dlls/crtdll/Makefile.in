@@ -3,17 +3,15 @@ TOPSRCDIR = @top_srcdir@
 TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
-MODULE    = avifil32
+MODULE    = crtdll
 
-SPEC_SRCS = avifil32.spec avifile.spec
-GLUE      = avifile.spec.c
+SPEC_SRCS = crtdll.spec
 
 C_SRCS = \
-	avifile.c
+	crtdll_main.c
 
 all: $(MODULE).o
 
 @MAKE_RULES@
 
 ### Dependencies:
-

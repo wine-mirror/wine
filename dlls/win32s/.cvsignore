@@ -1,0 +1,6 @@
+Makefile
+w32skrnl.spec.c
+w32sys.spec.c
+w32sys.spec.glue.s
+win32s16.spec.c
+win32s16.spec.glue.s

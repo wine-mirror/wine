@@ -9,32 +9,22 @@ MODULE    = misc
 C_SRCS = \
 	cdrom.c \
 	comm.c \
-	crtdll.c \
 	cpu.c \
 	ddeml.c \
 	debugstr.c \
 	error.c \
-	imm.c \
 	lstr.c \
-	lzexpand.c \
 	main.c \
 	network.c \
 	port.c \
 	printdrv.c \
 	registry.c \
-	shell.c \
-	sound.c \
 	spy.c \
-	stress.c \
 	system.c \
 	toolhelp.c \
 	tweak.c \
 	version.c \
 	w32scomb.c \
-	w32skrnl.c \
-	w32sys.c \
-	win32s16.c \
-	windebug.c \
 	winsock.c \
 	winsock_async.c \
 	wsprintf.c \

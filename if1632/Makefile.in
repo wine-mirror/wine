@@ -6,7 +6,6 @@ VPATH     = @srcdir@
 MODULE    = if1632
 
 SPEC_SRCS = \
-	avifile.spec \
 	comm.spec \
 	compobj.spec \
 	ddeml.spec \
@@ -15,10 +14,8 @@ SPEC_SRCS = \
 	gdi.spec \
 	kernel.spec \
 	keyboard.spec \
-	lzexpand.spec \
 	mmsystem.spec \
 	mouse.spec \
-	msvideo.spec \
 	ole2.spec \
 	ole2conv.spec \
 	ole2disp.spec \
@@ -27,20 +24,12 @@ SPEC_SRCS = \
 	ole2thk.spec \
 	olecli.spec \
 	olesvr.spec \
-	rasapi16.spec \
-	shell.spec \
-	sound.spec \
 	storage.spec \
-	stress.spec \
 	system.spec \
 	toolhelp.spec \
 	typelib.spec \
 	user.spec \
-	w32sys.spec \
-	win32s16.spec \
-	windebug.spec \
 	wineps.spec \
-	wing.spec \
 	winsock.spec \
 	wprocs.spec
 

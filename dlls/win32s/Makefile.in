@@ -3,13 +3,15 @@ TOPSRCDIR = @top_srcdir@
 TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
-MODULE    = avifil32
+MODULE    = win32s
 
-SPEC_SRCS = avifil32.spec avifile.spec
-GLUE      = avifile.spec.c
+SPEC_SRCS = w32sys.spec win32s16.spec w32skrnl.spec
+GLUE      = w32sys.spec.c win32s16.spec.c
 
 C_SRCS = \
-	avifile.c
+	w32skrnl.c \
+	w32sys.c \
+	win32s16.c
 
 all: $(MODULE).o
 

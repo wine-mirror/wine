@@ -6,7 +6,8 @@ VPATH     = @srcdir@
 MODULE    = shell32
 WRCEXTRA  = -s -p$(MODULE)
 
-SPEC_SRCS = shell32.spec
+SPEC_SRCS = shell32.spec shell.spec
+GLUE      = shell.spec.c
 
 C_SRCS = \
 	brsfolder.c \
@@ -20,6 +21,7 @@ C_SRCS = \
 	pidl.c \
 	regstream.c \
 	shell32_main.c \
+	shell.c \
 	shellguid.c \
 	shelllink.c \
 	shlmenu.c \

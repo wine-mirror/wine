@@ -3,13 +3,13 @@ TOPSRCDIR = @top_srcdir@
 TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
-MODULE    = avifil32
+MODULE    = stress
 
-SPEC_SRCS = avifil32.spec avifile.spec
-GLUE      = avifile.spec.c
+SPEC_SRCS = stress.spec
+GLUE      = stress.spec.c
 
 C_SRCS = \
-	avifile.c
+	stress_main.c
 
 all: $(MODULE).o
 

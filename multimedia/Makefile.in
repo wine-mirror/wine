@@ -23,7 +23,6 @@ C_SRCS = \
 	mmaux.c \
 	mmio.c \
 	mmsystem.c \
-	msvideo.c \
 	time.c
 
 RC_SRCS= \

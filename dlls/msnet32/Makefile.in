@@ -3,17 +3,12 @@ TOPSRCDIR = @top_srcdir@
 TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
-MODULE    = avifil32
+MODULE    = msnet32
 
-SPEC_SRCS = avifil32.spec avifile.spec
-GLUE      = avifile.spec.c
-
-C_SRCS = \
-	avifile.c
+SPEC_SRCS = msnet32.spec
 
 all: $(MODULE).o
 
 @MAKE_RULES@
 
 ### Dependencies:
-

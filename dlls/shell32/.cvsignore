@@ -1,3 +1,5 @@
 Makefile
 shell32.spec.c
+shell.spec.c
+shell.spec.glue.s
 shres.s
