@@ -333,13 +333,6 @@ extern "C" {
 #define TIME_NOSECONDS          0x02  /* show no seconds */
 #define TIME_NOMINUTESORSECONDS 0x01  /* show no minutes either */
 
-/* FIXME: These 3 defines are internal and should be removed */
-#ifdef __WINESRC__
-#define DATE_DATEVARSONLY      0x0100  /* only date stuff: yMdg */
-#define TIME_TIMEVARSONLY      0x0200  /* only time stuff: hHmst */
-#define LOCALE_TIMEDATEBOTH    0x0300  /* full set */
-#endif
-
 /* Unicode char type flags */
 #define	CT_CTYPE1		0x0001	/* usual ctype */
 #define	CT_CTYPE2		0x0002	/* bidirectional layout info */
