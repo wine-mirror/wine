@@ -1352,7 +1352,7 @@ HRESULT WINAPI CoGetClassObject(
 
 	if ( compobj_RegReadPath(keyname, NULL, dllpath, sizeof(dllpath)) != ERROR_SUCCESS) {
 	    /* failure: CLSID is not found in registry */
-	    WARN("class %s not registred\n", xclsid);
+           WARN("class %s not registered inproc\n", xclsid);
             hres = REGDB_E_CLASSNOTREG;
 	} else {
 	  if ((hLibrary = LoadLibraryExA(dllpath, 0, LOAD_WITH_ALTERED_SEARCH_PATH)) == 0) {
