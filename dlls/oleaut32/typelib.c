@@ -4101,39 +4101,53 @@ DispCallFunc(
     DWORD *args;
     HRESULT hres;
 
-    FIXME("(%p, %ld, %d, %d, %d, %p, %p, %p)\n",
-	pvInstance, oVft, cc, vtReturn, cActuals, prgvt, prgpvarg, pvargResult
+    TRACE("(%p, %ld, %d, %d, %d, %p, %p, %p (vt=%d))\n",
+	pvInstance, oVft, cc, vtReturn, cActuals, prgvt, prgpvarg, pvargResult, V_VT(pvargResult)
     );
-    argsize = 0;
+    /* DispCallFunc is only used to invoke methods belonging to an IDispatch-derived COM interface.
+    So we need to add a first parameter to the list of arguments, to supply the interface pointer */
+    argsize = 1;
     for (i=0;i<cActuals;i++) {
-        FIXME("arg %d: type %d\n",i,prgvt[i]);
+        TRACE("arg %d: type %d, size %d\n",i,prgvt[i],_argsize(prgvt[i]));
 	dump_Variant(prgpvarg[i]);
         argsize += _argsize(prgvt[i]);
     }
     args = (DWORD*)HeapAlloc(GetProcessHeap(),0,sizeof(DWORD)*argsize);
-    argspos = 0;
+    args[0]=0;      /* this is the fake IDispatch interface pointer */
+    argspos = 1;
     for (i=0;i<cActuals;i++) {
 	int arglen;
         VARIANT *arg = prgpvarg[i];
-
+        TRACE("Storing arg %d (%d as %d)\n",i,V_VT(arg),prgvt[i]);
 	arglen = _argsize(prgvt[i]);
 	if (V_VT(arg) == prgvt[i]) {
 	    memcpy(&args[argspos],&V_UNION(arg,lVal), arglen*sizeof(DWORD));
+	} else if (prgvt[i] == VT_VARIANT) {
+	    memcpy(&args[argspos],arg, arglen*sizeof(DWORD));
+    } else if (prgvt[i]==VT_UNKNOWN && V_VT(arg)==VT_DISPATCH) {
+        /* in this context, if the type lib specifies IUnknown*, giving an IDispatch* is correct;
+        so, don't invoke VariantChangeType */
+        memcpy(&args[argspos],&V_UNION(arg,lVal), arglen*sizeof(DWORD));
+	} else if (VariantChangeType(arg,arg,0,prgvt[i])==S_OK) {
+        FIXME("argument was coerced in-place; source data has been modified!!!\n");
+	    memcpy(&args[argspos],&V_UNION(arg,lVal), arglen*sizeof(DWORD));
 	} else {
-	    if (prgvt[i] == VT_VARIANT) {
-		memcpy(&args[argspos],arg, arglen*sizeof(DWORD));
-	    } else {
-		ERR("Set arg %d to disparg type %d vs %d\n",i,
-			V_VT(arg),prgvt[i]
-		);
-	    }
+	    ERR("Set arg %d to disparg type %d vs %d\n",i,V_VT(arg),prgvt[i]);
 	}
 	argspos += arglen;
     }
 
-    FIXME("Do not know how to handle pvargResult %p. Expect crash ...\n",pvargResult);
-
-    hres = _invoke((*(DWORD***)pvInstance)[oVft/4],cc,argsize/4,args);
+    if(pvargResult!=NULL && V_VT(pvargResult)==VT_EMPTY)
+    {
+        _invoke((*(DWORD***)pvInstance)[oVft/4],cc,argsize,args);
+        hres=S_OK;
+    }
+    else
+    {
+        FIXME("Do not know how to handle pvargResult %p. Expect crash ...\n",pvargResult);
+        hres = _invoke((*(DWORD***)pvInstance)[oVft/4],cc,argsize,args);
+        FIXME("Method returned %lx\n",hres);
+    }
     HeapFree(GetProcessHeap(),0,args);
     return hres;
 }
