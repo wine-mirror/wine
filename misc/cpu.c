@@ -190,7 +190,9 @@ VOID WINAPI GetSystemInfo(
 			if (sscanf(value,"%d",&x))
 				cachedsi.wProcessorRevision = x;
 		}
-		if (!strncasecmp(line,"flags",strlen("flags"))) {
+		if (	!strncasecmp(line,"flags",strlen("flags"))	||
+			!strncasecmp(line,"features",strlen("features"))
+		) {
 			if (strstr(value,"cx8"))
 				PF[PF_COMPARE_EXCHANGE_DOUBLE] = TRUE;
 			if (strstr(value,"mmx"))
