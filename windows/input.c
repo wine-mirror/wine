@@ -133,6 +133,7 @@ void WINAPI keybd_event( BYTE bVk, BYTE bScan,
         if (!(InputKeyStateTable[bVk] & 0x80))
             InputKeyStateTable[bVk] ^= 0x01;
         InputKeyStateTable[bVk] |= 0x80;
+        AsyncKeyStateTable[bVk] |= 0x80;
 
         message = (InputKeyStateTable[VK_MENU] & 0x80)
               && !(InputKeyStateTable[VK_CONTROL] & 0x80)
@@ -614,7 +615,7 @@ WORD WINAPI GetAsyncKeyState(INT nKey)
         AsyncMouseButtonsStates[2] = 0;
         break;
      default:
-         retval = AsyncKeyStateTable[nKey] |
+         retval = ((AsyncKeyStateTable[nKey] & 0x80) ? 0x0001 : 0) |
                   ((InputKeyStateTable[nKey] & 0x80) ? 0x8000 : 0);
         AsyncKeyStateTable[nKey] = 0;
         break;
