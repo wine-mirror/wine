@@ -624,7 +624,7 @@ static ICOM_VTABLE(IDirect3D) d3dvt = {
           DCOM is theoretically an internet RFC <ulink
                                                    url="http://www.grimes.demon.co.uk/DCOM/DCOMSpec.htm">[2]</ulink> and is
           specced out, but in reality the only implementation of it apart from
-          ours is Microsofts, and as a result there are lots of interfaces
+          ours is Microsoft's, and as a result there are lots of interfaces
           which <emphasis>can</emphasis> be used if you want to customize or
           control DCOM but in practice are badly documented or not documented at
           all, or exist mostly as interfaces between MIDL generated code and COM

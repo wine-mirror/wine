@@ -1207,8 +1207,8 @@ BOOL DPLAYX_SetLobbyMsgThreadId( DWORD dwAppId, DWORD dwThreadId )
 
 /* NOTE: This is potentially not thread safe. You are not guaranteed to end up
          with the correct string printed in the case where the HRESULT is not
-         known. You'll just get the last hr passed in printed. This can change
-         over time if this method is used alot :) */
+         known. You will just get the last hr passed in. This can change
+         over time if this method is used a lot :) */
 LPCSTR DPLAYX_HresultToString(HRESULT hr)
 {
   static char szTempStr[12];

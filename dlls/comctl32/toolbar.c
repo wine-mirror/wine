@@ -64,7 +64,7 @@
  *     enablebtn.exe, getbmp.exe, getbtn.exe, getflags.exe, hidebtn.exe,
  *     indetbtn.exe, insbtn.exe, pressbtn.exe, setbtnsz.exe, setcmdid.exe,
  *     setparnt.exe, setrows.exe, toolwnd.exe.
- *   - Microsofts controlspy examples.
+ *   - Microsoft's controlspy examples.
  *   - Charles Petzold's 'Programming Windows': gadgets.exe
  */
 

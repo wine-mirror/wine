@@ -59,7 +59,7 @@ static const WCHAR* scanW(LPCWSTR buf, WCHAR token, DWORD len)
 }
 
 /*
- * This helper function should probably go alot of places
+ * This helper function should probably go a lot of places
  *
  * Thinking about this, maybe this should become yet another Bison file
  *
@@ -178,14 +178,14 @@ static DWORD deformat_string_internal(MSIPACKAGE *package, LPCWSTR ptr,
             }
             else
             {
-                ERR("Unknown enviroment variable\n");
+                ERR("Unknown environment variable\n");
                 chunk = 0;
                 value = NULL;
                 rc = ERROR_FUNCTION_FAILED;
             }
             break;
         default:
-            /* check for numaric values */
+            /* check for numeric values */
             index = 0;
             while (isdigitW(key[index])) index++;
             if (key[index] == 0)
@@ -297,7 +297,7 @@ szResult, DWORD *sz)
         return ERROR_INVALID_HANDLE;
 
     original_len = *sz;
-    /* +1 just to make sure we have a buffer incase the len is 0 */
+    /* +1 just to make sure we have a buffer in case the len is 0 */
     szwResult = HeapAlloc(GetProcessHeap(),0,(original_len+1) * sizeof(WCHAR));
 
     rc = MSI_FormatRecordW(package, record, szwResult, sz);

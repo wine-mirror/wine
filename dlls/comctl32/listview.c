@@ -4143,7 +4143,7 @@ static BOOL LISTVIEW_DeleteAllItems(LISTVIEW_INFO *infoPtr)
 
     for (i = infoPtr->nItemCount - 1; i >= 0; i--)
     {
-        /* send LVN_DELETEITEM notification, if not supressed */
+        /* send LVN_DELETEITEM notification, if not suppressed */
 	if (!bSuppress) notify_deleteitem(infoPtr, i);
 	if (!(infoPtr->dwStyle & LVS_OWNERDATA))
 	{

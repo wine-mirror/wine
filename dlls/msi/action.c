@@ -1028,9 +1028,9 @@ end:
  *******************************************************/
 
 /* 
- * Alot of actions are really important even if they don't do anything
- * explicit.. Lots of properties are set at the beginning of the installation
- * CostFinalize does a bunch of work to translated the directories and such
+ * A lot of actions are really important even if they don't do anything
+ * explicit... Lots of properties are set at the beginning of the installation
+ * CostFinalize does a bunch of work to translate the directories and such
  * 
  * But until I get write access to the database that is hard, so I am going to
  * hack it to see if I can get something to run.
@@ -1430,13 +1430,13 @@ static void load_feature(MSIPACKAGE* package, MSIRECORD * row)
  * I am not doing any of the costing functionality yet. 
  * Mostly looking at doing the Component and Feature loading
  *
- * The native MSI does ALOT of modification to tables here. Mostly adding alot
- * of temporary columns to the Feature and Component tables. 
+ * The native MSI does A LOT of modification to tables here. Mostly adding
+ * a lot of temporary columns to the Feature and Component tables. 
  *
- *    note: native msi also tracks the short filename. but I am only going to
+ *    note: Native msi also tracks the short filename. But I am only going to
  *          track the long ones.  Also looking at this directory table
  *          it appears that the directory table does not get the parents
- *          resolved base on property only based on their entrys in the 
+ *          resolved base on property only based on their entries in the 
  *          directory table.
  */
 static UINT ACTION_CostInitialize(MSIPACKAGE *package)
@@ -1949,7 +1949,7 @@ static UINT SetFeatureStates(MSIPACKAGE *package)
 }
 
 /* 
- * Alot is done in this function aside from just the costing.
+ * A lot is done in this function aside from just the costing.
  * The costing needs to be implemented at some point but for now I am going
  * to focus on the directory building
  *
@@ -2817,7 +2817,7 @@ static UINT ACTION_DuplicateFiles(MSIPACKAGE *package)
 }
 
 
-/* OK this value is "interpretted" and then formatted based on the 
+/* OK this value is "interpreted" and then formatted based on the 
    first few characters */
 static LPSTR parse_value(MSIPACKAGE *package, WCHAR *value, DWORD *type, 
                          DWORD *size)
@@ -4270,7 +4270,7 @@ static UINT ACTION_PublishProduct(MSIPACKAGE *package)
     msiobj_release(&view->hdr);
 
 next:
-    /* ok there is alot more done here but i need to figure out what */
+    /* ok there is a lot more done here but i need to figure out what */
     productcode = load_dynamic_property(package,szProductCode,&rc);
     if (!productcode)
         return rc;
@@ -5197,8 +5197,8 @@ UINT WINAPI MsiSetTargetPathW(MSIHANDLE hInstall, LPCWSTR szFolder,
  *        MSIRUNMODE_REBOOTATEND       We need to reboot after installation completed
  *        MSIRUNMODE_REBOOTNOW         We need to reboot to continue the installation
  *        MSIRUNMODE_CABINET           Files from cabinet are installed
- *        MSIRUNMODE_SOURCESHORTNAMES  Long names in source files is supressed
- *        MSIRUNMODE_TARGETSHORTNAMES  Long names in destination files is supressed
+ *        MSIRUNMODE_SOURCESHORTNAMES  Long names in source files is suppressed
+ *        MSIRUNMODE_TARGETSHORTNAMES  Long names in destination files is suppressed
  *        MSIRUNMODE_RESERVED11        Reserved
  *        MSIRUNMODE_WINDOWS9X         Running under Windows95/98
  *        MSIRUNMODE_ZAWENABLED        Demand installation is supported

@@ -1493,7 +1493,7 @@ mp_exch (mp_int * a, mp_int * b)
 
 /* this is a shell function that calls either the normal or Montgomery
  * exptmod functions.  Originally the call to the montgomery code was
- * embedded in the normal function but that wasted alot of stack space
+ * embedded in the normal function but that wasted a lot of stack space
  * for nothing (since 99% of the time the Montgomery code would be called)
  */
 int mp_exptmod (mp_int * G, mp_int * X, mp_int * P, mp_int * Y)
@@ -2629,7 +2629,7 @@ mp_mod_d (mp_int * a, mp_digit b, mp_digit * c)
  * shifts with subtractions when the result is greater than b.
  *
  * The method is slightly modified to shift B unconditionally upto just under
- * the leading bit of b.  This saves alot of multiple precision shifting.
+ * the leading bit of b.  This saves a lot of multiple precision shifting.
  */
 int mp_montgomery_calc_normalization (mp_int * a, mp_int * b)
 {

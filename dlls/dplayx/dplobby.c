@@ -70,9 +70,9 @@ BOOL DPL_CreateAndSetLobbyHandles( DWORD dwDestProcessId, HANDLE hDestProcess,
 /*****************************************************************************
  * IDirectPlayLobby {1,2,3} implementation structure
  *
- * The philosophy behind this extra pointer derefernce is that I wanted to
+ * The philosophy behind this extra pointer dereference is that I wanted to
  * have the same structure for all types of objects without having to do
- * alot of casting. I also only wanted to implement an interface in the
+ * a lot of casting. I also only wanted to implement an interface in the
  * object it was "released" with IUnknown interface being implemented in the 1 version.
  * Of course, with these new interfaces comes the data required to keep the state required
  * by these interfaces. So, basically, the pointers contain the data associated with

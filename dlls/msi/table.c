@@ -408,7 +408,7 @@ UINT read_table_from_storage( MSIDATABASE *db, LPCWSTR name, MSITABLE **ptable)
 
     TRACE("%s\n",debugstr_w(name));
 
-    /* non-existing tables should be interpretted as empty tables */
+    /* non-existing tables should be interpreted as empty tables */
     t = HeapAlloc( GetProcessHeap(), 0, 
                    sizeof (MSITABLE) + lstrlenW(name)*sizeof (WCHAR) );
     if( !t )

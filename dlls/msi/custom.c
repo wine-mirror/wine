@@ -364,8 +364,8 @@ static UINT process_handle(MSIPACKAGE* package, UINT type,
 
     if (!(type & 0x80))
     {
-        /* syncronous */
-        TRACE("Syncronous Execution of action %s\n",debugstr_w(Name));
+        /* synchronous */
+        TRACE("Synchronous Execution of action %s\n",debugstr_w(Name));
         if (ProcessHandle)
             WaitForSingleObject(ProcessHandle,INFINITE);
         else
@@ -385,8 +385,8 @@ static UINT process_handle(MSIPACKAGE* package, UINT type,
     }
     else 
     {
-        TRACE("Asyncronous Execution of action %s\n",debugstr_w(Name));
-        /* asyncronous */
+        TRACE("Asynchronous Execution of action %s\n",debugstr_w(Name));
+        /* asynchronous */
         if (type & 0x40)
         {
             if (ProcessHandle)

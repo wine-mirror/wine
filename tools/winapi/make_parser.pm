@@ -292,7 +292,7 @@ sub gcc_output($$) {
     if(s/^(\d+):\s+//) {
 	$line = $1;
 	if(s/^warning:\s+//) {
-	    my $supress = 0;
+	    my $suppress = 0;
 
 	    if(0) {
 		# Nothing
@@ -306,77 +306,77 @@ sub gcc_output($$) {
 		   HRASCONN|HRGN|HRSRC|HWAVEIN|HWAVEOUT|HWINSTA|HWND|
 		   SC_HANDLE|WSAEVENT|handle_t|pointer)$/x)
 		{
-		    $supress = 1;
+		    $suppress = 1;
 		} else {
-		    $supress = 0;
+		    $suppress = 0;
 		}
 	    } elsif(/^\(near initialization for \`(.*?)\'\)$/) {
-		$supress = 0;
+		$suppress = 0;
 	    } elsif(/^\`(.*?)\' defined but not used$/) {
-		$supress = 0;
+		$suppress = 0;
 	    } elsif(/^\`(.*?)\' is not at beginning of declaration$/) {
-		$supress = 0;
+		$suppress = 0;
 	    } elsif(/^\`%x\' yields only last 2 digits of year in some locales$/) {
-		$supress = 1;
+		$suppress = 1;
 	    } elsif(/^assignment makes integer from pointer without a cast$/) {
-		$supress = 0;
+		$suppress = 0;
 	    } elsif(/^assignment makes pointer from integer without a cast$/) {
-		$supress = 0;
+		$suppress = 0;
 	    } elsif(/^assignment from incompatible pointer type$/) {
-		$supress = 0;
+		$suppress = 0;
 	    } elsif(/^cast from pointer to integer of different size$/) {
-		$supress = 0;
+		$suppress = 0;
 	    } elsif(/^comparison between pointer and integer$/) {
-		$supress = 0;
+		$suppress = 0;
 	    } elsif(/^comparison between signed and unsigned$/) {
-		$supress = 0;
+		$suppress = 0;
 	    } elsif(/^comparison of unsigned expression < 0 is always false$/) {
-		$supress = 0;
+		$suppress = 0;
 	    } elsif(/^comparison of unsigned expression >= 0 is always true$/) {
-		$supress = 0;
+		$suppress = 0;
 	    } elsif(/^conflicting types for built-in function \`(.*?)\'$/) {
-		$supress = 0;
+		$suppress = 0;
 	    } elsif(/^empty body in an if-statement$/) {
-		$supress = 0;
+		$suppress = 0;
 	    } elsif(/^empty body in an else-statement$/) {
-		$supress = 0;
+		$suppress = 0;
 	    } elsif(/^implicit declaration of function \`(.*?)\'$/) {
-		$supress = 0;
+		$suppress = 0;
 	    } elsif(/^initialization from incompatible pointer type$/) {
-		$supress = 0;
+		$suppress = 0;
 	    } elsif(/^initialization makes pointer from integer without a cast$/) {
-		$supress = 0;
+		$suppress = 0;
 	    } elsif(/^missing initializer$/) {
-		$supress = 0;
+		$suppress = 0;
 	    } elsif(/^ordered comparison of pointer with integer zero$/) {
-		$supress = 0;
+		$suppress = 0;
 	    } elsif(/^passing arg (\d+) of (?:pointer to function|\`(\S+)\') from incompatible pointer type$/) {
 		my $arg = $1;
 		my $name = $2;
 		if(defined($name) && $name =~ /^GDI_AllocObject$/) {
-		    $supress = 1;
+		    $suppress = 1;
 		} else {
-		    $supress = 0;
+		    $suppress = 0;
 		}
 	    } elsif(/^passing arg (\d+) of (?:pointer to function|\`(\S+)\') makes integer from pointer without a cast$/) {
-		$supress = 0;
+		$suppress = 0;
 	    } elsif(/^passing arg (\d+) of (?:pointer to function|\`(\S+)\') makes pointer from integer without a cast$/) {
-		$supress = 0;
+		$suppress = 0;
 	    } elsif(/^return makes integer from pointer without a cast$/) {
-		$supress = 0;
+		$suppress = 0;
 	    } elsif(/^return makes pointer from integer without a cast$/) {
-		$supress = 0;
+		$suppress = 0;
 	    } elsif(/^type of \`(.*?)\' defaults to \`(.*?)\'$/) {
-		$supress = 0;
+		$suppress = 0;
 	    } elsif(/^unused variable \`(.*?)\'$/) {
-		$supress = 0;
+		$suppress = 0;
 	    } elsif(!$options->pedantic) {
-		$supress = 0;
+		$suppress = 0;
 	    } else {
 		error("gcc_output");
 	    }
 
-	    if(!$supress) {
+	    if(!$suppress) {
 		if($function) {
 		    $message = "function $function: warning: $_";
 		} else {

@@ -49,7 +49,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(wininet);
 /* FIXME
  *     Cookies are currently memory only.
  *     Cookies are NOT THREAD SAFE
- *     Cookies could use ALOT OF MEMORY. We need some kind of memory management here!
+ *     Cookies could use A LOT OF MEMORY. We need some kind of memory management here!
  *     Cookies should care about the expiry time
  */
 

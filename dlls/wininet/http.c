@@ -2057,7 +2057,7 @@ BOOL HTTP_GetResponseHeaders(LPWININETHTTPREQW lpwhr)
         {
             LPWSTR * pFieldAndValue;
 
-            TRACE("got line %s, now interpretting\n", debugstr_a(bufferA));
+            TRACE("got line %s, now interpreting\n", debugstr_a(bufferA));
             MultiByteToWideChar( CP_ACP, 0, bufferA, buflen, buffer, MAX_REPLY_LEN );
 
             while (cchRawHeaders + buflen + strlenW(szCrLf) > cchMaxRawHeaders)

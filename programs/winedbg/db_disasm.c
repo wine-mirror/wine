@@ -1330,7 +1330,7 @@ void be_i386_disasm_one_insn(ADDRESS *addr, int display)
 	struct i_addr	address;
 
 	/*
-	 * Set this so we get can supress the printout if we need to.
+	 * Set this so we get can suppress the printout if we need to.
 	 */
 	db_display = display;
         switch (addr->Mode)
@@ -1760,7 +1760,7 @@ void be_i386_disasm_one_insn(ADDRESS *addr, int display)
 		case Dl:
 		    if (size == WORD) {
 			get_value_inc(displ, addr, 2, TRUE);
-			/* Offsetset only affects low 16 bits */
+			/* Offset only affects low 16 bits */
 		        displ = (addr->Offset & 0xffff0000)
 			      | ((addr->Offset + displ) & 0xffff);
 		    }
