@@ -872,37 +872,148 @@ HINSTANCE WINAPI LoadModule( LPCSTR name, LPVOID paramBlock )
     return hInstance;
 }
 
+/*************************************************************************
+ *		get_executable_name
+ * 
+ * Try longer and longer strings from "line" to find an existing
+ * file name. Each attempt is delimited by a blank outside of quotes.
+ * Also will attempt to append ".exe" if requested and not already
+ * present. Returns the address of the remaining portion of the
+ * input line.
+ *
+ */
 
 static void get_executable_name( LPCSTR line, LPSTR name, int namelen,
                                  LPCSTR *after, BOOL extension )
 {
-    int len = 0;
-    LPCSTR p = NULL, pcmd = NULL;
+    LPCSTR pcmd = NULL;
+    LPCSTR from;
+    LPSTR to, to_end, to_old;
 
-    while ( *line == ' ' ) line++;
-    if ( *line == '"' )
-    {
-        line++;      /* skip '"' */
-        if ((pcmd = strchr(line, '"'))) /* closing '"' available, too ? */
-            len = ++pcmd - line;
-    }
-    else
-    {
-	if((p = strchr(line, ' '))) 
+    to = name;
+    to_end = to + namelen - 1;
+    to_old = to;
+    
+    while ( *line == ' ' ) line++;  /* point to beginning of string */
+    from = line;
+    pcmd = from;
+    do {
+        /* Copy all input till end, blank, or quote */
+        while((*from != 0) && (*from != ' ') && (*from != '"') && (to < to_end)) 
+           *to++ = *from++;
+        if (to >= to_end) { *to = 0; pcmd = from; break; }
+
+        if (*from == '"')
+	  {
+	    /* Handle quoted string. If there is a closing quote, copy all */
+	    /* that is inside.                                             */
+            from++;
+            if (!strchr(from, '"'))
+	      {
+	        /* fail - no closing quote */
+		to = to_old; /* restore to previous attempt */
+                *to = 0;     /* end string  */
+                break;       /* exit with  previous attempt */
+	      }
+            while((*from != '"') && (to < to_end)) *to++ = *from++;
+	    if (to >= to_end) { *to = 0; pcmd = from; break; }
+            from++;
+            continue;  /* past quoted string, so restart from top */
+	  }
+
+        *to = 0;   /* terminate output string */
+        to_old = to;   /* save for possible use in unmatched quote case */
+        pcmd = from;
+
+	/* Input termination is a blank. Try this file name */
+
+	/* Append ".exe" if necessary and space permits */
+        if ( (to-name) < namelen-4)
 	{
-		len = p - line;
-		pcmd = p+1;
+            if(extension && (strrchr(name, '.') <= strrchr(name, '\\')) )
+        	strcat(name, ".exe");
 	}
-	else
-		len = strlen(line);
+
+        TRACE(module, "checking if file exists '%s'\n", name);
+
+        if (GetFileAttributesA(name)!=-1)
+	  break;      /* if file exists then all done */
 	
-	len++;
+	/* loop around keeping the blank as part of file name */
+        if (!*from)
+	  break;    /* exit if out of input string */
+
+        *to++ = *from++;      /* move in blank and restart */
+    } while (1);
+
+    if (after) *after = pcmd;
+    TRACE(module, "selected as file name '%s'\n    and cmdline as %s\n",
+            name, debugstr_a(pcmd));
     }
-    if(len > (namelen - 4)) len = namelen - 4;
-    lstrcpynA(name, line, len);
+
+/*************************************************************************
+ *		make_executable_name
+ * 
+ * Scan input string (the lpApplicationName) and remove any quotes
+ * if they are balanced. Also will attempt to append ".exe" if requested 
+ * and not already present.
+ *
+ */
+
+static void make_executable_name( LPCSTR line, LPSTR name, int namelen,
+                                  BOOL extension )
+{
+    LPCSTR from;
+    LPSTR to, to_end, to_old;
+
+    to = name;
+    to_end = to + namelen - 1;
+    to_old = to;
+    
+    while ( *line == ' ' ) line++;  /* point to beginning of string */
+    from = line;
+    do {
+        /* Copy all input till end, blank, or quote */
+        while((*from != 0) && (*from != '"') && (to < to_end)) 
+           *to++ = *from++;
+        if (to >= to_end) { *to = 0; break; }
+
+        if (*from == '"')
+	  {
+	    /* Handle quoted string. If there is a closing quote, copy all */
+	    /* that is inside.                                             */
+            from++;
+            if (!strchr(from, '"'))
+	      {
+	        /* fail - no closing quote */
+		to = to_old; /* restore to previous attempt */
+                *to = 0;     /* end string  */
+                break;       /* exit with  previous attempt */
+	      }
+            while((*from != '"') && (to < to_end)) *to++ = *from++;
+	    if (to >= to_end) { *to = 0; break; }
+            from++;
+            continue;  /* past quoted string, so restart from top */
+	  }
+
+        *to = 0;   /* terminate output string */
+        to_old = to;   /* save for possible use in unmatched quote case */
+
+	/* loop around keeping the blank as part of file name */
+        if (!*from)
+	  break;    /* exit if out of input string */
+
+        *to++ = *from++;      /* move in blank and restart */
+    } while (1);
+
+    /* Append ".exe" if necessary and space permits */
+    if ( (to-name) < namelen-4)
+      {
     if(extension && (strrchr(name, '.') <= strrchr(name, '\\')) )
         	strcat(name, ".exe");
-    if (after) *after = pcmd;
+      }
+
+    TRACE(module, "selected as file name '%s'\n", name );
 }
 
 /**********************************************************************
@@ -921,7 +1032,7 @@ BOOL WINAPI CreateProcessA( LPCSTR lpApplicationName, LPSTR lpCommandLine,
     OFSTRUCT ofs;
     DWORD type;
     char name[256];
-    LPCSTR cmdline;
+    LPCSTR cmdline = NULL;
 
     /* Get name and command line */
 
@@ -934,14 +1045,12 @@ BOOL WINAPI CreateProcessA( LPCSTR lpApplicationName, LPSTR lpCommandLine,
     name[0] = '\0';
 
     if (lpApplicationName) {
-       get_executable_name( lpApplicationName, name, sizeof(name), NULL, TRUE );
+       make_executable_name( lpApplicationName, name, sizeof(name), TRUE );
+       cmdline = (lpCommandLine) ? lpCommandLine : lpApplicationName ;
     }
     else {
-       get_executable_name( lpCommandLine, name, sizeof ( name ), NULL, TRUE );
+       get_executable_name( lpCommandLine, name, sizeof ( name ), &cmdline, TRUE );
     }
-    if (!lpCommandLine) 
-      cmdline = lpApplicationName;
-    else cmdline = lpCommandLine;
 
     /* Warn if unsupported features are used */
 
