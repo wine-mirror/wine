@@ -541,6 +541,9 @@ HRESULT WINAPI DoDragDrop (
   /*
    * Setup the drag n drop tracking window.
    */
+  if (!IsValidInterface((LPUNKNOWN)pDropSource))
+      return E_INVALIDARG;
+
   trackerInfo.dataObject        = pDataObject;
   trackerInfo.dropSource        = pDropSource;
   trackerInfo.dwOKEffect        = dwOKEffect;

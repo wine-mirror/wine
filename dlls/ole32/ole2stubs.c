@@ -25,6 +25,7 @@
 #include "winbase.h"
 #include "winuser.h"
 #include "ole2.h"
+#include "objidl.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(ole);
@@ -225,13 +226,42 @@ HRESULT     WINAPI OleRegEnumFormatEtc (
 /***********************************************************************
  *           PropVariantClear			    [OLE32.166]
  */
-HRESULT WINAPI PropVariantClear(void *pvar) /* [in/out] FIXME: PROPVARIANT * */
+HRESULT WINAPI PropVariantClear(PROPVARIANT * pvar) /* [in/out] FIXME: PROPVARIANT * */
 {
-	FIXME("(%p): stub:\n", pvar);
+	TRACE("(%p)\n", pvar);
 
-	*(LPWORD)pvar = 0;
-	/* sets at least the vt field to VT_EMPTY */
-	return E_NOTIMPL;
+	if (!pvar)
+	    return S_OK;
+
+	switch(pvar->vt)
+	{
+	    case VT_BSTR:
+	        CoTaskMemFree(pvar->u.bstrVal);
+		break;
+	    case VT_STREAM:
+	    case VT_STREAMED_OBJECT:
+	    case VT_STORAGE:
+	    case VT_STORED_OBJECT:
+	        IUnknown_Release((LPUNKNOWN)pvar->u.pStream);
+		break;
+	    case VT_CLSID:
+	    case VT_CF:
+	    case VT_LPSTR:
+	    case VT_LPWSTR:
+	    case VT_BLOB:
+	    case VT_BLOB_OBJECT:
+	        FIXME("Don't know what to do for variant type %d\n", pvar->vt);
+	    default:
+	        if (pvar->vt && VT_VECTOR)
+		{
+		    FIXME("Need to recursively destroy elements in vector\n");
+/*		    SafeArrayDestroy(pvar->u.caub); */
+		}
+	}
+
+	ZeroMemory(pvar, sizeof(PROPVARIANT));
+
+	return S_OK;
 }
 
 /***********************************************************************
