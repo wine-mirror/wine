@@ -373,7 +373,7 @@ section.
 .br
 The only sections that support application-specific information at the
 moment are
-.I DllOverrides
+.I DllOverrides, dsound, Version
 and
 .I x11drv.
 .br
