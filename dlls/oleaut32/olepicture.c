@@ -810,7 +810,9 @@ static boolean _jpeg_fill_input_buffer(j_decompress_ptr cinfo) {
 }
 
 static void _jpeg_skip_input_data(j_decompress_ptr cinfo,long num_bytes) {
-    ERR("(%ld), should not get here.\n",num_bytes);
+    TRACE("Skipping %ld bytes...\n", num_bytes);
+    cinfo->src->next_input_byte += num_bytes;
+    cinfo->src->bytes_in_buffer -= num_bytes;
 }
 
 static boolean _jpeg_resync_to_restart(j_decompress_ptr cinfo, int desired) {
