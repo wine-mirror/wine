@@ -1,0 +1,58 @@
+#! /usr/bin/perl
+#
+# Generate AUTHORS and include/authors.h
+#
+open(AUTHORS,"<AUTHORS") or die "Can't open AUTHORS";
+open(NEWAUTHORS,">AUTHORS.new");
+while(<AUTHORS>)
+  {
+    print NEWAUTHORS;
+    last if /^Wine is/;
+  }
+while(<AUTHORS>)
+  {
+    chop;
+    s/^and //;
+    s/[,.]$//;
+    push @authors, $_;
+  }
+
+# Sort them
+sub cmpnames
+  {
+    @anames = split(" ",$a);
+    @bnames = split(" ",$b);
+    $ret = $anames[-1] cmp $bnames[-1];
+    $ret = $anames[0] cmp $bnames[0] unless $ret;
+    return $ret;
+  }
+@authors = sort cmpnames @authors;
+
+# Print authors
+for ($i = 0; $i < $#authors; $i++)
+  {
+    print NEWAUTHORS "$authors[$i],\n";
+  }
+print NEWAUTHORS "and $authors[$#authors].\n";
+print "Created AUTHORS.new\n";
+
+# Build authors.h file
+open(NEWAUTHORS_H,">include/authors.h");
+
+print NEWAUTHORS_H <<EOF;
+#ifndef __WINE_AUTHORS_H
+#define __WINE_AUTHORS_H
+
+static const char * const SHELL_People[] =
+{
+EOF
+
+# Print authors
+for ($i = 0; $i <= $#authors; $i++)
+  {
+    print NEWAUTHORS_H "    \"$authors[$i]\",\n";
+  }
+print NEWAUTHORS_H "    NULL\n};\n";
+print NEWAUTHORS_H "\n#endif  /* __WINE_AUTHORS_H */\n";
+
+print "Created include/authors.h\n";
