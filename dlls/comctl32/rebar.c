@@ -281,7 +281,7 @@ REBAR_Refresh (HWND hwnd, HDC hdc)
 }
 
 static void
-REBAR_AdjustBands (REBAR_INFO *infoPtr, UINT rowstart, UINT rowend, 
+REBAR_AdjustBands (REBAR_INFO *infoPtr, UINT rowstart, UINT rowend,
 		   INT maxx, INT usedx, INT mcy, DWORD dwStyle)
      /* Function: This routine distributes the extra space in a row */
      /*  evenly over the adjustable bands in the row. It also makes */
@@ -292,10 +292,10 @@ REBAR_AdjustBands (REBAR_INFO *infoPtr, UINT rowstart, UINT rowend,
     INT incr, lastx=0;
 
     TRACE("start=%u, end=%u, max x=%d, used x=%d, max y=%d\n",
-	  rowstart, rowend, maxx, usedx, mcy);
+	  rowstart, rowend-1, maxx, usedx, mcy);
 
     j = 0;
-    for (i = rowstart; i<=rowend; i++) {
+    for (i = rowstart; i<rowend; i++) {
       lpBand = &infoPtr->bands[i];
       if ((lpBand->fMask & RBBIM_CHILD) && lpBand->hwndChild &&
 	  !(lpBand->fStyle & RBBS_FIXEDSIZE)) 
@@ -307,9 +307,9 @@ REBAR_AdjustBands (REBAR_INFO *infoPtr, UINT rowstart, UINT rowend,
       incr = 0;
 
     TRACE("adjusting %u of %u bands in row, incr=%d\n", 
-	  j, rowend-rowstart+1, incr);
+	  j, rowend-rowstart, incr);
 
-    for (i = rowstart; i<=rowend; i++) {
+    for (i = rowstart; i<rowend; i++) {
       lpBand = &infoPtr->bands[i];
       if (dwStyle & CCS_VERT) {
         lpBand->rcBand.bottom = lastx + 
@@ -356,7 +356,7 @@ REBAR_CalcHorzBand (HWND hwnd, REBAR_INFO *infoPtr, UINT rstart, UINT rend, BOOL
     /* MS seems to use GetDlgCtrlID() for above GetWindowLong call */
     parenthwnd = GetParent (hwnd);
 
-    for(i=rstart; i<=rend; i++){
+    for(i=rstart; i<rend; i++){
       lpBand = &infoPtr->bands[i];
       oldChild = lpBand->rcChild;
 
@@ -486,7 +486,7 @@ REBAR_CalcVertBand (HWND hwnd, REBAR_INFO *infoPtr, UINT rstart, UINT rend, BOOL
     /* MS seems to use GetDlgCtrlID() for above GetWindowLong call */
     parenthwnd = GetParent (hwnd);
 
-    for(i=rstart; i<=rend; i++){
+    for(i=rstart; i<rend; i++){
       lpBand = &infoPtr->bands[i];
       oldChild = lpBand->rcChild;
 
@@ -689,10 +689,10 @@ REBAR_Layout (HWND hwnd, LPRECT lpRect, BOOL notify, BOOL resetclient)
 	  if (dwStyle & CCS_VERT) {
 	    /* first adjust all bands in previous current row to */
 	    /* redistribute extra x pixels                       */
-	    REBAR_AdjustBands (infoPtr, rowstartband, i-1,
+	    REBAR_AdjustBands (infoPtr, rowstartband, i,
 			       clientcy, y, mcy, dwStyle);
 	    /* calculate band subrectangles and break to new row */
-	    REBAR_CalcVertBand (hwnd, infoPtr, rowstartband, i-1,
+	    REBAR_CalcVertBand (hwnd, infoPtr, rowstartband, i,
 				notify, dwStyle);
 	    y = 0;
 	    x += (mcy + 2);
@@ -700,10 +700,10 @@ REBAR_Layout (HWND hwnd, LPRECT lpRect, BOOL notify, BOOL resetclient)
 	  else {
 	    /* first adjust all bands in previous current row to */
 	    /* redistribute extra x pixels                       */
-	    REBAR_AdjustBands (infoPtr, rowstartband, i-1,
+	    REBAR_AdjustBands (infoPtr, rowstartband, i,
 			       clientcx, x, mcy, dwStyle);
 	    /* calculate band subrectangles and break to new row */
-	    REBAR_CalcHorzBand (hwnd, infoPtr, rowstartband, i-1,
+	    REBAR_CalcHorzBand (hwnd, infoPtr, rowstartband, i,
 				notify, dwStyle);
 	    x = 0;
 	    y += (mcy + 2);
@@ -771,16 +771,16 @@ REBAR_Layout (HWND hwnd, LPRECT lpRect, BOOL notify, BOOL resetclient)
       infoPtr->uNumRows = row;
 
       if (dwStyle & CCS_VERT) {
-	REBAR_AdjustBands (infoPtr, rowstartband, infoPtr->uNumBands-1,
+	REBAR_AdjustBands (infoPtr, rowstartband, infoPtr->uNumBands,
 			   clientcy, y, mcy, dwStyle);
-	REBAR_CalcVertBand (hwnd, infoPtr, rowstartband, infoPtr->uNumBands-1,
+	REBAR_CalcVertBand (hwnd, infoPtr, rowstartband, infoPtr->uNumBands,
 			    notify, dwStyle);
 	x += mcy;
       }
       else {
-	REBAR_AdjustBands (infoPtr, rowstartband, infoPtr->uNumBands-1,
+	REBAR_AdjustBands (infoPtr, rowstartband, infoPtr->uNumBands,
 			   clientcx, x, mcy, dwStyle);
-	REBAR_CalcHorzBand (hwnd, infoPtr, rowstartband, infoPtr->uNumBands-1, 
+	REBAR_CalcHorzBand (hwnd, infoPtr, rowstartband, infoPtr->uNumBands, 
 			    notify, dwStyle);
 	y += mcy;
       }
