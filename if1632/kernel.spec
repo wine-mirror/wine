@@ -397,7 +397,7 @@ file	krnl386.exe
 490 pascal16 KERNEL_490(word) KERNEL_490
 491 pascal RegisterServiceProcess(long long) RegisterServiceProcess
 492 stub WOAAbort
-493 stub UTInit
+493 pascal16 UTInit(long long long long) UTInit16
 494 stub KERNEL_494
 
 # 495 is present only in Win98

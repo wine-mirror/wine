@@ -238,6 +238,16 @@ static BOOL WINAPI CALLBACK_CallWOWCallback16Ex(
 }
 
 /**********************************************************************
+ *	     CALLBACK_CallUTProc
+ */
+static DWORD WINAPI CALLBACK_CallUTProc( DWORD w1, DWORD w2 )
+{
+    ERR( relay, "Cannot call a UT thunk proc in Winelib\n" );
+    assert( FALSE );
+    return 0;
+}
+
+/**********************************************************************
  *	     CALLBACK_CallTaskRescheduleProc
  */
 static BOOL WINAPI CALLBACK_CallTaskRescheduleProc( void )
@@ -275,6 +285,7 @@ static const CALLBACKS_TABLE CALLBACK_WinelibTable =
     CALLBACK_CallResourceHandlerProc, /* CallResourceHandlerProc */
     CALLBACK_CallWOWCallbackProc,     /* CallWOWCallbackProc */
     CALLBACK_CallWOWCallback16Ex,     /* CallWOWCallback16Ex */
+    CALLBACK_CallUTProc,              /* CallUTProc */
     CALLBACK_CallASPIPostProc,        /* CallASPIPostProc */
     /* The graphics driver callbacks are never used in Winelib */
     NULL,                             /* CallDrvControlProc */

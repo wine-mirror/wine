@@ -42,6 +42,7 @@ typedef struct
     DWORD (CALLBACK *CallWOWCallbackProc)( FARPROC16, DWORD );
     BOOL (CALLBACK *CallWOWCallback16Ex)( FARPROC16, DWORD, DWORD, LPVOID, 
                                             LPDWORD );
+    DWORD (CALLBACK *CallUTProc)( FARPROC16, DWORD, DWORD );
     LRESULT (CALLBACK *CallASPIPostProc)( FARPROC16, SEGPTR );
     /* Following are the graphics driver callbacks */
     WORD (CALLBACK *CallDrvControlProc)( FARPROC16, SEGPTR, WORD,

@@ -8,6 +8,7 @@ type	win16
 18 pascal ReplaceTextDlgProc(word word word long) ReplaceTextDlgProc16
 19 pascal PrintSetupDlgProc(word word word long) PrintSetupDlgProc16
 20 pascal PrintDlgProc(word word word long) PrintDlgProc16
+23 pascal UTGlue16(ptr long ptr long) UTGlue16
 24 pascal16 TASK_Reschedule() TASK_Reschedule
 27 pascal EntryAddrProc(word word) NE_GetEntryPoint
 28 pascal MyAlloc(word word word) NE_AllocateSegment

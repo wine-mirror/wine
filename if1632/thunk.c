@@ -166,6 +166,7 @@ static const CALLBACKS_TABLE CALLBACK_EmulatorTable =
     (void *)CallTo16_word_www,             /* CallResourceHandlerProc */
     (void *)CallTo16_long_l,               /* CallWOWCallbackProc */
     THUNK_WOWCallback16Ex,                 /* CallWOWCallback16Ex */
+    (void *)CallTo16_long_ll,              /* CallUTProc */
     (void *)CallTo16_long_l,               /* CallASPIPostProc */
     (void *)CallTo16_word_lwll,            /* CallDrvControlProc */
     (void *)CallTo16_word_lwlll,           /* CallDrvEnableProc */

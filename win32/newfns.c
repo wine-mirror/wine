@@ -16,30 +16,6 @@ at a later date. */
 #include "debug.h"
 #include "debugstr.h"
 
-/****************************************************************************
- *		UTRegister (KERNEL32.697)
- */
-BOOL WINAPI UTRegister(HMODULE hModule,
-                      LPSTR lpsz16BITDLL,
-                      LPSTR lpszInitName,
-                      LPSTR lpszProcName,
-                      /*UT32PROC*/ LPVOID *ppfn32Thunk,
-                      /*FARPROC*/ LPVOID pfnUT32CallBack,
-                      LPVOID lpBuff)
-{
-    FIXME(updown, "(%#x,...): stub\n",hModule);
-    return TRUE;
-}
-
-/****************************************************************************
- *		UTUnRegister (KERNEL32.698)
- */
-BOOL WINAPI UTUnRegister(HMODULE hModule)
-{
-    FIXME(updown, "(%#x...): stub\n", hModule);
-    return TRUE;
-}
-
 
 /****************************************************************************
  *		QueryPerformanceCounter (KERNEL32.564)
