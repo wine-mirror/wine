@@ -48,10 +48,18 @@ static void module_fill_module(const char* in, char* out, unsigned size)
     if (len > 4 && 
         (!strcasecmp(&out[len - 4], ".dll") || !strcasecmp(&out[len - 4], ".exe")))
         out[len - 4] = '\0';
-    else 
+    else
+    {
         if (len > 7 && 
             (!strcasecmp(&out[len - 7], ".dll.so") || !strcasecmp(&out[len - 7], ".exe.so")))
             strcpy(&out[len - 7], "<elf>");
+        else if (len > 7 &&
+                 out[len - 7] == '.' && !strcasecmp(&out[len - 3], ".so"))
+        {
+            if (len + 3 < size) strcpy(&out[len - 3], "<elf>");
+            else WARN("Buffer too short: %s\n", out);
+        }
+    }
     while ((*out = tolower(*out))) out++;
 }
 
@@ -227,6 +235,29 @@ struct module* module_find_by_addr(const struct process* pcs, unsigned long addr
     return module;
 }
 
+static BOOL module_is_elf_container_loaded(struct process* pcs, const char* ImageName, 
+                                           const char* ModuleName)
+{
+    char                buffer[MAX_PATH];
+    size_t              len;
+    struct module*      module;
+
+    if (!ModuleName)
+    {
+        module_fill_module(ImageName, buffer, sizeof(buffer));
+        ModuleName = buffer;
+    }
+    len = strlen(ModuleName);
+    for (module = pcs->lmodules; module; module = module->next)
+    {
+        if (!strncasecmp(module->module.ModuleName, ModuleName, len) &&
+            module->type == DMT_ELF &&
+            !strcmp(module->module.ModuleName + len, "<elf>"))
+            return TRUE;
+    }
+    return FALSE;
+}
+
 /***********************************************************************
  *			SymLoadModule (DBGHELP.@)
  */
@@ -243,19 +274,28 @@ DWORD WINAPI SymLoadModule(HANDLE hProcess, HANDLE hFile, char* ImageName,
     pcs = process_find_by_handle(hProcess);
     if (!pcs) return FALSE;
 
-    /* this is a Wine extension to the API */
-    if (!ImageName && !hFile)
+    /* force transparent ELF loading / unloading */
+    elf_synchronize_module_list(pcs);
+
+    /* this is a Wine extension to the API just to redo the synchronisation */
+    if (!ImageName && !hFile) return 0;
+
+    if (module_is_elf_container_loaded(pcs, ImageName, ModuleName))
     {
-        elf_synchronize_module_list(pcs);
+        /* force the loading of DLL as builtin */
+        if ((module = pe_load_module_from_pcs(pcs, ImageName, ModuleName, BaseOfDll, SizeOfDll)))
+            goto done;
+        WARN("Couldn't locate %s\n", ImageName);
         return 0;
     }
-
+    TRACE("Assuming %s as native DLL\n", ImageName);
     if (!(module = pe_load_module(pcs, ImageName, hFile, BaseOfDll, SizeOfDll)))
     {
         unsigned        len = strlen(ImageName);
 
         if (!strcmp(ImageName + len - 3, ".so") &&
             (module = elf_load_module(pcs, ImageName))) goto done;
+        FIXME("should no longer happen\n");
         if ((module = pe_load_module_from_pcs(pcs, ImageName, ModuleName, BaseOfDll, SizeOfDll)))
             goto done;
         WARN("Couldn't locate %s\n", ImageName);
@@ -274,8 +314,6 @@ done:
     }
     strncpy(module->module.ImageName, ImageName, sizeof(module->module.ImageName));
     module->module.ImageName[sizeof(module->module.ImageName) - 1] = '\0';
-    /* force transparent ELF loading / unloading */
-    if (module->type != DMT_ELF) elf_synchronize_module_list(pcs);
 
     return module->module.BaseOfImage;
 }

@@ -253,8 +253,11 @@ static void elf_finish_stabs_info(struct module* module, struct hash_table* symt
         switch (sym->symt.tag)
         {
         case SymTagFunction:
-            if (((struct symt_function*)sym)->address != module->elf_info->elf_addr)
+            if (((struct symt_function*)sym)->address != module->elf_info->elf_addr &&
+                ((struct symt_function*)sym)->size)
+            {
                 break;
+            }
             symp = elf_lookup_symtab(module, symtab, sym->hash_elt.name, 
                                      ((struct symt_function*)sym)->container);
             if (symp)
@@ -274,8 +277,12 @@ static void elf_finish_stabs_info(struct module* module, struct hash_table* symt
                 symp = elf_lookup_symtab(module, symtab, sym->hash_elt.name, 
                                          ((struct symt_data*)sym)->container);
                 if (symp)
+                {
                     ((struct symt_data*)sym)->u.address = module->elf_info->elf_addr +
                                                           symp->st_value;
+                    ((struct symt_data*)sym)->kind = (ELF32_ST_BIND(symp->st_info) == STB_LOCAL) ?
+                        DataIsFileStatic : DataIsGlobal;
+                }
                 break;
             default:;
             }
@@ -285,6 +292,8 @@ static void elf_finish_stabs_info(struct module* module, struct hash_table* symt
             break;
         }
     }
+    /* since we may have changed some addresses & sizes, mark the module to be resorted */
+    module->sortlist_valid = FALSE;
 }
 
 /******************************************************************
@@ -301,6 +310,7 @@ static int elf_new_wine_thunks(struct module* module, struct hash_table* ht_symt
     struct hash_table_iter      hti;
     struct symtab_elt*          ste;
     DWORD                       addr;
+    int                         idx;
 
     hash_table_iter_init(ht_symtab, &hti, NULL);
     while ((ste = hash_table_iter_up(&hti)))
@@ -330,25 +340,56 @@ static int elf_new_wine_thunks(struct module* module, struct hash_table* ht_symt
             symt_new_thunk(module, compiland, ste->ht_elt.name, thunks[j].ordinal,
                            addr, ste->symp->st_size);
         }
-        else if (symt_find_nearest(module, addr) == -1)
+        else
         {
-            /* creating public symbols for all the ELF symbols which haven't been
-             * used yet (ie we have no debug information on them)
-             * That's the case, for example, of the .spec.c files
-             */
-            if (ELF32_ST_TYPE(ste->symp->st_info) == STT_FUNC)
+            DWORD       ref_addr;
+
+            idx = symt_find_nearest(module, addr);
+            if (idx != -1)
+                symt_get_info(&module->addr_sorttab[idx]->symt, 
+                              TI_GET_ADDRESS, &ref_addr);
+            if (idx == -1 || addr != ref_addr)
             {
-                symt_new_function(module, compiland, ste->ht_elt.name,
-                                  addr, ste->symp->st_size, NULL);
+                /* creating public symbols for all the ELF symbols which haven't been
+                 * used yet (ie we have no debug information on them)
+                 * That's the case, for example, of the .spec.c files
+                 */
+                if (ELF32_ST_TYPE(ste->symp->st_info) == STT_FUNC)
+                {
+                    symt_new_function(module, compiland, ste->ht_elt.name,
+                                      addr, ste->symp->st_size, NULL);
+                }
+                else
+                {
+                    symt_new_global_variable(module, compiland, ste->ht_elt.name,
+                                             ELF32_ST_BIND(ste->symp->st_info) == STB_LOCAL,
+                                             addr, ste->symp->st_size, NULL);
+                }
+                /* FIXME: this is a hack !!!
+                 * we are adding new symbols, but as we're parsing a symbol table
+                 * (hopefully without duplicate symbols) we delay rebuilding the sorted
+                 * module table until we're done with the symbol table
+                 * Otherwise, as we intertwine symbols's add and lookup, performance
+                 * is rather bad
+                 */
+                module->sortlist_valid = TRUE;
             }
-            else
+            else if (strcmp(ste->ht_elt.name, module->addr_sorttab[idx]->hash_elt.name))
             {
-                symt_new_global_variable(module, compiland, ste->ht_elt.name,
-                                         FALSE /* FIXME */,
-                                         addr, ste->symp->st_size, NULL);
+                DWORD   xaddr = 0, xsize = 0;
+
+                symt_get_info(&module->addr_sorttab[idx]->symt, TI_GET_ADDRESS, &xaddr);
+                symt_get_info(&module->addr_sorttab[idx]->symt, TI_GET_LENGTH,  &xsize);
+
+                FIXME("Duplicate in %s: %s<%08lx-%08x> %s<%08lx-%08lx>\n", 
+                      module->module.ModuleName,
+                      ste->ht_elt.name, addr, ste->symp->st_size,
+                      module->addr_sorttab[idx]->hash_elt.name, xaddr, xsize);
             }
         }
     }
+    /* see comment above */
+    module->sortlist_valid = FALSE;
     return TRUE;
 }
 
@@ -522,7 +563,8 @@ SYM_TYPE elf_load_debug_info(struct module* module)
         FIXME("Unsupported Dwarf2 information\n");
         sym_type = SymNone;
     }
-    if (strstr(module->module.ModuleName, "<elf>"))
+    if (strstr(module->module.ModuleName, "<elf>") ||
+        !strcmp(module->module.ModuleName, "<wine-loader>"))
     {
         /* add the thunks for native libraries */
         if (!(dbghelp_options & SYMOPT_PUBLICS_ONLY))
@@ -788,8 +830,7 @@ BOOL	elf_synchronize_module_list(struct process* pcs)
     struct module*      module;
 
     if (!pcs->dbg_hdr_addr) return FALSE;
-    if (!read_mem(pcs->handle, pcs->dbg_hdr_addr, &dbg_hdr, sizeof(dbg_hdr)) ||
-        dbg_hdr.r_state != RT_CONSISTENT)
+    if (!read_mem(pcs->handle, pcs->dbg_hdr_addr, &dbg_hdr, sizeof(dbg_hdr)))
         return FALSE;
 
     for (module = pcs->lmodules; module; module = module->next)
@@ -889,8 +930,7 @@ struct module*  elf_load_module(struct process* pcs, const char* name)
     xname = strrchr(name, '/');
     if (!xname++) xname = name;
 
-    if (!read_mem(pcs->handle, pcs->dbg_hdr_addr, &dbg_hdr, sizeof(dbg_hdr)) ||
-        dbg_hdr.r_state != RT_CONSISTENT)
+    if (!read_mem(pcs->handle, pcs->dbg_hdr_addr, &dbg_hdr, sizeof(dbg_hdr)))
         return NULL;
 
     for (lm_addr = (void*)dbg_hdr.r_map; lm_addr; lm_addr = (void*)lm.l_next)

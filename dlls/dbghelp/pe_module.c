@@ -89,6 +89,7 @@ static SYM_TYPE pe_load_dbg_file(const struct process* pcs, struct module* modul
 
     WINE_TRACE("Processing DBG file %s\n", dbg_name);
 
+    tmp[0] = '\0';
     if ((hFile = FindDebugInfoFile((char*)dbg_name, pcs->search_path, tmp)) != NULL &&
         ((hMap = CreateFileMappingA(hFile, NULL, PAGE_READONLY, 0, 0, NULL)) != 0) &&
         ((dbg_mapping = MapViewOfFile(hMap, FILE_MAP_READ, 0, 0, 0)) != NULL))
@@ -114,10 +115,8 @@ static SYM_TYPE pe_load_dbg_file(const struct process* pcs, struct module* modul
                                            hdr->DebugDirectorySize / sizeof(*dbg));
     }
     else
-    {
-        WINE_ERR("-Unable to peruse .DBG file %s (%s)\n", 
-                 dbg_name, debugstr_a(tmp));
-    }
+        WINE_ERR("-Unable to peruse .DBG file %s (%s)\n", dbg_name, debugstr_a(tmp));
+
     if (dbg_mapping) UnmapViewOfFile((void*)dbg_mapping);
     if (hMap) CloseHandle(hMap);
     if (hFile != NULL) CloseHandle(hFile);
@@ -324,7 +323,8 @@ struct module* pe_load_module(struct process* pcs, char* name,
     else if (name) strcpy(loaded_name, name);
     else if (dbghelp_options & SYMOPT_DEFERRED_LOADS)
         FIXME("Trouble ahead (no module name passed in deferred mode)\n");
-    if ((hMap = CreateFileMappingA(hFile, NULL, PAGE_READONLY, 0, 0, NULL)) != 0)
+    if (!(module = module_find_by_name(pcs, loaded_name, DMT_PE)) &&
+        (hMap = CreateFileMappingA(hFile, NULL, PAGE_READONLY, 0, 0, NULL)) != NULL)
     {
         if ((mapping = MapViewOfFile(hMap, FILE_MAP_READ, 0, 0, 0)) != NULL)
         {

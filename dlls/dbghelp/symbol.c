@@ -94,14 +94,15 @@ static inline void re_append(char** mask, unsigned* len, char ch)
  *      +       1 or more of preceding char
  *      escapes \ on #, ?, [, ], *, +. don't work on -
  */
-static void compile_regex(const char* str, regex_t* re)
+static void compile_regex(const char* str, int numchar, regex_t* re)
 {
     char*       mask = HeapAlloc(GetProcessHeap(), 0, 1);
     unsigned    len = 1;
     BOOL        in_escape = FALSE;
 
     re_append(&mask, &len, '^');
-    while (*str)
+
+    while (*str && numchar--)
     {
         /* FIXME: this shouldn't be valid on '-' */
         if (in_escape)
@@ -130,7 +131,7 @@ static void compile_regex(const char* str, regex_t* re)
     }
     re_append(&mask, &len, '$');
     mask[len - 1] = '\0';
-    regcomp(re, mask, REG_NOSUB);
+    if (regcomp(re, mask, REG_NOSUB)) FIXME("Couldn't compile %s\n", mask);
     HeapFree(GetProcessHeap(), 0, mask);
 }
 
@@ -421,7 +422,6 @@ struct symt_thunk* symt_new_thunk(struct module* module,
 {
     struct symt_thunk*  sym;
 
-
     TRACE_(dbghelp_symt)("Adding global thunk %s:%s @%lx-%lx\n", 
                          module->module.ModuleName, name, addr, addr + size - 1);
 
@@ -535,7 +535,7 @@ static void symt_fill_sym_info(const struct module* module,
                          sym, sym_info->Name, sym_info->Size, sym_info->Address);
 }
 
-static BOOL symt_enum_module(struct module* module, const char* mask,
+static BOOL symt_enum_module(struct module* module, regex_t* regex,
                              PSYM_ENUMERATESYMBOLS_CALLBACK cb, PVOID user)
 {
     char                        buffer[sizeof(SYMBOL_INFO) + 256];
@@ -543,11 +543,7 @@ static BOOL symt_enum_module(struct module* module, const char* mask,
     void*                       ptr;
     struct symt_ht*             sym = NULL;
     struct hash_table_iter      hti;
-    regex_t                     preg;
 
-    assert(mask);
-    assert(mask[0] != '!');
-    compile_regex(mask, &preg);
     hash_table_iter_init(&module->ht_symbols, &hti, NULL);
     while ((ptr = hash_table_iter_up(&hti)))
     {
@@ -559,7 +555,7 @@ static BOOL symt_enum_module(struct module* module, const char* mask,
             sym->symt.tag == SymTagPublicSymbol) continue;
 
         if (sym->hash_elt.name &&
-            regexec(&preg, sym->hash_elt.name, 0, NULL, 0) == 0)
+            regexec(regex, sym->hash_elt.name, 0, NULL, 0) == 0)
         {
             sym_info->SizeOfStruct = sizeof(SYMBOL_INFO);
             sym_info->MaxNameLen = sizeof(buffer) - sizeof(SYMBOL_INFO);
@@ -567,7 +563,6 @@ static BOOL symt_enum_module(struct module* module, const char* mask,
             if (!cb(sym_info, sym_info->Size, user)) break;
         }
     }   
-    regfree(&preg);
     return sym ? FALSE : TRUE;
 }
 
@@ -615,7 +610,7 @@ static BOOL resort_symbols(struct module* module)
 int symt_find_nearest(struct module* module, DWORD addr)
 {
     int         mid, high, low;
-    DWORD       ref;
+    DWORD       ref_addr, ref_size;
 
     if (!module->sortlist_valid && !resort_symbols(module)) return -1;
 
@@ -625,13 +620,14 @@ int symt_find_nearest(struct module* module, DWORD addr)
     low = 0;
     high = module->module.NumSyms;
 
-    symt_get_info(&module->addr_sorttab[0]->symt, TI_GET_ADDRESS, &ref);
-    if (addr < ref) return -1;
+    symt_get_info(&module->addr_sorttab[0]->symt, TI_GET_ADDRESS, &ref_addr);
+    if (addr < ref_addr) return -1;
     if (high)
     {
-        symt_get_info(&module->addr_sorttab[high - 1]->symt, TI_GET_ADDRESS, &ref);
-        /* FIXME: use the size of symbol here if known */
-        if (addr > ref + 0x1000) return -1;
+        symt_get_info(&module->addr_sorttab[high - 1]->symt, TI_GET_ADDRESS, &ref_addr);
+        if (!symt_get_info(&module->addr_sorttab[high - 1]->symt,  TI_GET_LENGTH, &ref_size) || !ref_size)
+            ref_size = 0x1000; /* arbitrary value */
+        if (addr >= ref_addr + ref_size) return -1;
     }
     
     while (high > low + 1)
@@ -651,16 +647,22 @@ int symt_find_nearest(struct module* module, DWORD addr)
      */
     if (module->addr_sorttab[low]->symt.tag == SymTagPublicSymbol)
     {   
-        symt_get_info(&module->addr_sorttab[low]->symt, TI_GET_ADDRESS, &ref);
+        symt_get_info(&module->addr_sorttab[low]->symt, TI_GET_ADDRESS, &ref_addr);
         if (low > 0 &&
             module->addr_sorttab[low - 1]->symt.tag != SymTagPublicSymbol &&
-            !cmp_sorttab_addr(module, low - 1, ref))
+            !cmp_sorttab_addr(module, low - 1, ref_addr))
             low--;
         else if (low < module->module.NumSyms - 1 && 
                  module->addr_sorttab[low + 1]->symt.tag != SymTagPublicSymbol &&
-                 !cmp_sorttab_addr(module, low + 1, ref))
+                 !cmp_sorttab_addr(module, low + 1, ref_addr))
             low++;
     }
+    /* finally check that we fit into the found symbol */
+    symt_get_info(&module->addr_sorttab[low]->symt, TI_GET_ADDRESS, &ref_addr);
+    if (addr < ref_addr) return -1;
+    if (!symt_get_info(&module->addr_sorttab[high - 1]->symt, TI_GET_LENGTH, &ref_size) || !ref_size)
+        ref_size = 0x1000; /* arbitrary value */
+    if (addr >= ref_addr + ref_size) return -1;
 
     return low;
 }
@@ -733,7 +735,7 @@ static BOOL symt_enum_locals(struct process* pcs, const char* mask,
         BOOL            ret;
         regex_t         preg;
 
-        compile_regex(mask ? mask : "*", &preg);
+        compile_regex(mask ? mask : "*", -1, &preg);
         ret = symt_enum_locals_helper(pcs, module, &preg, EnumSymbolsCallback, 
                                       UserContext, sym_info, 
                                       &((struct symt_function*)sym)->vchildren);
@@ -748,6 +750,13 @@ static BOOL symt_enum_locals(struct process* pcs, const char* mask,
 /******************************************************************
  *		SymEnumSymbols (DBGHELP.@)
  *
+ * cases BaseOfDll = 0
+ *      !foo fails always (despite what MSDN states)
+ *      RE1!RE2 looks up all modules matching RE1, and in all these modules, lookup RE2
+ *      no ! in Mask, lookup in local Context
+ * cases BaseOfDll != 0
+ *      !foo fails always (despite what MSDN states)
+ *      RE1!RE2 gets RE2 from BaseOfDll (whatever RE1 is)
  */
 BOOL WINAPI SymEnumSymbols(HANDLE hProcess, ULONG BaseOfDll, PCSTR Mask,
                            PSYM_ENUMERATESYMBOLS_CALLBACK EnumSymbolsCallback,
@@ -755,6 +764,9 @@ BOOL WINAPI SymEnumSymbols(HANDLE hProcess, ULONG BaseOfDll, PCSTR Mask,
 {
     struct process*     pcs = process_find_by_handle(hProcess);
     struct module*      module;
+    struct module*      dbg_module;
+    const char*         bang;
+    regex_t             mod_regex, sym_regex;
 
     TRACE("(%p %08lx %s %p %p)\n", 
           hProcess, BaseOfDll, debugstr_a(Mask), EnumSymbolsCallback, UserContext);
@@ -763,41 +775,42 @@ BOOL WINAPI SymEnumSymbols(HANDLE hProcess, ULONG BaseOfDll, PCSTR Mask,
 
     if (BaseOfDll == 0)
     {
-        if (Mask && Mask[0] == '!')
+        /* do local variables ? */
+        if (!Mask || !(bang = strchr(Mask, '!')))
+            return symt_enum_locals(pcs, Mask, EnumSymbolsCallback, UserContext);
+
+        if (bang == Mask) return FALSE;
+
+        compile_regex(Mask, bang - Mask, &mod_regex);
+        compile_regex(bang + 1, -1, &sym_regex);
+        
+        for (module = pcs->lmodules; module; module = module->next)
         {
-            if (!Mask[1])
+            if (module->type == DMT_PE && (dbg_module = module_get_debug(pcs, module)))
             {
-                /* FIXME: is this really what's intended ??? */
-                for (module = pcs->lmodules; module; module = module->next)
-                {
-                    if (module->module.SymType != SymNone &&
-                        !symt_enum_module(module, "*", EnumSymbolsCallback, UserContext))
-                        break;
-                }
-                return TRUE;
+                if (regexec(&mod_regex, module->module.ModuleName, 0, NULL, 0) == 0)
+                    symt_enum_module(dbg_module, &sym_regex, EnumSymbolsCallback, UserContext);
             }
-            module = module_find_by_name(pcs, &Mask[1], DMT_UNKNOWN);
-            Mask++;
         }
-        else return symt_enum_locals(pcs, Mask, EnumSymbolsCallback, UserContext);
+        regfree(&mod_regex);
+        regfree(&sym_regex);
+        return TRUE;
     }
-    else
+    module = module_find_by_addr(pcs, BaseOfDll, DMT_UNKNOWN);
+    if (!(module = module_get_debug(pcs, module)))
+        return FALSE;
+
+    /* we always ignore module name from Mask when BaseOfDll is defined */
+    if (Mask && (bang = strchr(Mask, '!')))
     {
-        module = module_find_by_addr(pcs, BaseOfDll, DMT_UNKNOWN);
-        if (Mask && Mask[0] == '!')
-        {
-            if (!Mask[1] ||
-                strcmp(&Mask[1], module->module.ModuleName))
-            {
-                FIXME("Strange call mode\n");
-                return FALSE;
-            }
-            Mask = "*";
-        }
-        else if (!Mask) Mask = "*";
+        if (bang == Mask) return FALSE;
+        Mask = bang + 1;
     }
-    if ((module = module_get_debug(pcs, module)))
-        symt_enum_module(module, Mask, EnumSymbolsCallback, UserContext);
+
+    compile_regex(Mask ? Mask : "*", -1, &sym_regex);
+    symt_enum_module(module, &sym_regex, EnumSymbolsCallback, UserContext);
+    regfree(&sym_regex);
+
     return TRUE;
 }
 
@@ -889,32 +902,45 @@ BOOL WINAPI SymFromName(HANDLE hProcess, LPSTR Name, PSYMBOL_INFO Symbol)
     struct hash_table_iter      hti;
     void*                       ptr;
     struct symt_ht*             sym = NULL;
+    const char*                 name;
 
     TRACE("(%p, %s, %p)\n", hProcess, Name, Symbol);
     if (!pcs) return FALSE;
     if (Symbol->SizeOfStruct < sizeof(*Symbol)) return FALSE;
-    for (module = pcs->lmodules; module; module = module->next)
+    name = strchr(Name, '!');
+    if (name)
     {
-        if (module->module.SymType != SymNone)
-        {
-            if (module->module.SymType == SymDeferred)
-            {
-                struct module*  xmodule = module_get_debug(pcs, module);
-                if (!xmodule) continue;
-                module = xmodule;
-            }
-            hash_table_iter_init(&module->ht_symbols, &hti, Name);
-            while ((ptr = hash_table_iter_up(&hti)))
-            {
-                sym = GET_ENTRY(ptr, struct symt_ht, hash_elt);
+        char    tmp[128];
+        assert(name - Name < sizeof(tmp));
+        memcpy(tmp, Name, name - Name);
+        tmp[name - Name] = '\0';
+        module = module_find_by_name(pcs, tmp, DMT_UNKNOWN);
+        if (!module) return FALSE;
+        Name = (char*)(name + 1);
+    }
+    else module = pcs->lmodules;
 
-                if (!strcmp(sym->hash_elt.name, Name))
-                {
-                    symt_fill_sym_info(module, &sym->symt, Symbol);
-                    return TRUE;
-                }
+    /* FIXME: Name could be made out of a regular expression */
+    while (module)
+    {
+        if (module->module.SymType == SymNone) continue;
+        if (module->module.SymType == SymDeferred)
+        {
+            struct module*      xmodule = module_get_debug(pcs, module);
+            if (!xmodule || xmodule != module) continue;
+        }
+        hash_table_iter_init(&module->ht_symbols, &hti, Name);
+        while ((ptr = hash_table_iter_up(&hti)))
+        {
+            sym = GET_ENTRY(ptr, struct symt_ht, hash_elt);
+
+            if (!strcmp(sym->hash_elt.name, Name))
+            {
+                symt_fill_sym_info(module, &sym->symt, Symbol);
+                return TRUE;
             }
         }
+        module = (name) ? NULL : module->next;
     }
     return FALSE;
 }

@@ -2240,11 +2240,10 @@ static int codeview_snarf(const struct msc_debug_info* msc_dbg, const BYTE* root
             memcpy(symname, sym->thunk.name, sym->thunk.namelen);
             symname[sym->thunk.namelen] = '\0';
             flt = codeview_get_linetab(linetab, sym->thunk.segment, sym->thunk.offset);
-            symt_new_function(msc_dbg->module, flt ? flt->compiland : NULL,
-                              symname, 
-                              codeview_get_address(msc_dbg, sym->thunk.segment, sym->thunk.offset),
-                              sym->thunk.thunk_len,
-                              codeview_get_type(sym->thunk.thtype, FALSE));
+            symt_new_thunk(msc_dbg->module, flt ? flt->compiland : NULL,
+                           symname, sym->thunk.thtype,
+                           codeview_get_address(msc_dbg, sym->thunk.segment, sym->thunk.offset),
+                           sym->thunk.thunk_len);
 	    break;
 
         /*

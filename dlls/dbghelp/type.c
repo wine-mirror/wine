@@ -361,8 +361,7 @@ BOOL WINAPI SymEnumTypes(HANDLE hProcess, unsigned long BaseOfDll,
     TRACE("(%p %08lx %p %p)\n",
           hProcess, BaseOfDll, EnumSymbolsCallback, UserContext);
 
-    pcs = process_find_by_handle(hProcess);
-    if (!pcs) return FALSE;
+    if (!(pcs = process_find_by_handle(hProcess))) return FALSE;
     module = module_find_by_addr(pcs, BaseOfDll, DMT_UNKNOWN);
     if (!(module = module_get_debug(pcs, module))) return FALSE;
 
@@ -730,13 +729,16 @@ BOOL WINAPI SymGetTypeInfo(HANDLE hProcess, unsigned long ModBase,
                            PVOID pInfo)
 {
     struct process*     pcs = process_find_by_handle(hProcess);
+    struct module*      module;
 
     if (!pcs) return FALSE;
-#if 0
-    struct module*      module;
+
     module = module_find_by_addr(pcs, ModBase, DMT_UNKNOWN);
-    if (!(module = module_get_debug(pcs, module))) return FALSE;
-#endif
+    if (!(module = module_get_debug(pcs, module)))
+    {
+        FIXME("Someone didn't properly set ModBase (0x%08lx)\n", ModBase);
+        return FALSE;
+    }
 
     return symt_get_info((struct symt*)TypeId, GetType, pInfo);
 }
