@@ -32,8 +32,8 @@
 #include "multimedia.h"
 #include "syslevel.h"
 #include "callback.h"
-#include "module.h"
 #include "selectors.h"
+#include "module.h"
 #include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(mmsys)
@@ -43,24 +43,21 @@ static UINT16 waveGetErrorText(UINT16 uError, LPSTR lpText, UINT16 uSize);
 LONG   WINAPI DrvDefDriverProc(DWORD dwDevID, HDRVR16 hDrv, WORD wMsg, 
 			       DWORD dwParam1, DWORD dwParam2);
 
-static	HINSTANCE	WINMM_hInstance = 0; 
-static	HINSTANCE	MMSYSTEM_hInstance = 0; 
+static LPWINE_MM_IDATA	lpFirstIData = 0;
 
 /**************************************************************************
- * 			MULTIMEDIA_Init				[internal]
+ * 			MULTIMEDIA_GetIData			[internal]
  */
-static	BOOL	MULTIMEDIA_Init()
+LPWINE_MM_IDATA	MULTIMEDIA_GetIData(void)
 {
-    static BOOL     bInitDone = FALSE;
+    DWORD		pid = GetCurrentProcessId();
+    LPWINE_MM_IDATA	iData;
 
-    if (!bInitDone) {
-	if (MULTIMEDIA_MidiInit() && MULTIMEDIA_MciInit() && MULTIMEDIA_MMTimeInit()) {
-	    bInitDone = TRUE;
-	} else {
-	    return FALSE;
-	}
+    for (iData = lpFirstIData; iData; iData = iData->lpNextIData) {
+	if (iData->dwThisProcess == pid)
+	    break;
     }
-    return TRUE;
+    return iData;
 }
 
 /**************************************************************************
@@ -71,17 +68,45 @@ static	BOOL	MULTIMEDIA_Init()
  */
 BOOL WINAPI WINMM_LibMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID fImpLoad)
 {
+    static BOOL     		bInitDone = FALSE;
+    LPWINE_MM_IDATA		iData;
+
     TRACE("0x%x 0x%lx %p\n", hinstDLL, fdwReason, fImpLoad);
 
     switch (fdwReason) {
     case DLL_PROCESS_ATTACH:
-	if (!MULTIMEDIA_Init())
+	if (!bInitDone) { /* to be done only once */
+	    if (!MULTIMEDIA_MidiInit() || !MULTIMEDIA_MciInit()) {
+		return FALSE;
+	    }
+	    bInitDone = TRUE;	
+	}
+	iData = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(WINE_MM_IDATA));
+	if (!iData)
 	    return FALSE;
-	WINMM_hInstance = hinstDLL;
+	iData->hWinMM32Instance = hinstDLL;
+	iData->dwThisProcess = GetCurrentProcessId();
+	iData->lpNextIData = lpFirstIData;
+	lpFirstIData = iData;
+	break;
+    case DLL_PROCESS_DETACH:
+	iData = MULTIMEDIA_GetIData();
+	if (!iData) 	{ERR("Idata is NULL, please report\n"); return FALSE;}
+	{
+	    LPWINE_MM_IDATA*	ppid;
+	    
+	    for (ppid = &lpFirstIData; *ppid; ppid = &(*ppid)->lpNextIData) {
+		if (*ppid == iData) {
+		    *ppid = iData->lpNextIData;
+		    break;
+		}
+	    }
+	}
+	/* FIXME: should also free content and resources allocated inside iData */
+	HeapFree(GetProcessHeap(), 0, iData);
 	break;
     case DLL_THREAD_ATTACH:
     case DLL_THREAD_DETACH:
-    case DLL_PROCESS_DETACH:
 	break;
     }
     return TRUE;
@@ -96,17 +121,35 @@ BOOL WINAPI WINMM_LibMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID fImpLoad)
 BOOL WINAPI MMSYSTEM_LibMain(DWORD fdwReason, HINSTANCE hinstDLL, WORD ds, 
 			     WORD wHeapSize, DWORD dwReserved1, WORD wReserved2)
 {
+    HANDLE			hndl;
+    LPWINE_MM_IDATA		iData;
+
     TRACE("0x%x 0x%lx\n", hinstDLL, fdwReason);
 
     switch (fdwReason) {
     case DLL_PROCESS_ATTACH:
-	if (!MULTIMEDIA_Init())
+	/* need to load WinMM in order to:
+	 * - correctly initiates shared variables (MULTIMEDIA_Init())
+	 * - correctly creates the per process WINE_MM_IDATA chunk
+	 */
+	hndl = LoadLibraryA("WINMM.DLL");
+	
+	if (!hndl) {
+	    ERR("Could not load sibling WinMM.dll\n");
 	    return FALSE;
-	MMSYSTEM_hInstance = hinstDLL;
+	}
+	iData = MULTIMEDIA_GetIData();
+	if (!iData) 	{ERR("Idata is NULL, please report\n"); return FALSE;}
+	iData->hWinMM16Instance = hinstDLL;
+	iData->h16Module32 = hndl;
+	break;
+    case DLL_PROCESS_DETACH:
+	iData = MULTIMEDIA_GetIData();
+	if (!iData) 	{ERR("Idata is NULL, please report\n"); return FALSE;}
+	FreeLibrary(iData->h16Module32);
 	break;
     case DLL_THREAD_ATTACH:
     case DLL_THREAD_DETACH:
-    case DLL_PROCESS_DETACH:
 	break;
     }
     return TRUE;
@@ -226,12 +269,15 @@ static BOOL16 WINAPI proc_PlaySound(LPCSTR lpszSoundName, UINT uFlags)
 	}
     }
     
-    if (mmioDescend(hmmio, &ckMainRIFF, NULL, 0) == 0) 
+    if (mmioDescend(hmmio, &ckMainRIFF, NULL, 0) == 0) {
+	DWORD	dwPos = mmioSeek(hmmio, 0, SEEK_CUR);
         do {
 	    TRACE("ParentChunk ckid=%.4s fccType=%.4s cksize=%08lX \n",
 		  (LPSTR)&ckMainRIFF.ckid, (LPSTR)&ckMainRIFF.fccType, 
 		  ckMainRIFF.cksize);
-	    
+
+	    mmioSeek(hmmio, dwPos, SEEK_SET);
+
 	    if ((ckMainRIFF.ckid == FOURCC_RIFF) &&
 	    	(ckMainRIFF.fccType == mmioFOURCC('W', 'A', 'V', 'E'))) {
 		MMCKINFO        mmckInfo;
@@ -254,6 +300,9 @@ static BOOL16 WINAPI proc_PlaySound(LPCSTR lpszSoundName, UINT uFlags)
 			TRACE("wBitsPerSample=%u !\n", pcmWaveFormat.wBitsPerSample);
 			
 			mmckInfo.ckid = mmioFOURCC('d', 'a', 't', 'a');
+			/* move to end of 'fmt ' chunk */
+			mmioSeek(hmmio, mmckInfo.dwDataOffset + ((mmckInfo.cksize + 1) & ~1), SEEK_SET);
+
 			if (mmioDescend(hmmio, &mmckInfo, &ckMainRIFF, MMIO_FINDCHUNK) == 0) {
 			    WAVEOPENDESC	waveDesc;
 			    DWORD		dwRet;
@@ -317,7 +366,8 @@ static BOOL16 WINAPI proc_PlaySound(LPCSTR lpszSoundName, UINT uFlags)
 		}
 	    }
 	} while (PlaySound_Loop);
-    
+    }
+
     if (hmmio != 0) mmioClose(hmmio, 0);
     return bRet;
 }
@@ -359,7 +409,7 @@ static DWORD WINAPI PlaySound_Thread(LPVOID arg)
 	    FreeResource(hGLOB);
 	    continue;
 	}
-	PlaySound_Result=proc_PlaySound(PlaySound_pszSound, (UINT16)PlaySound_fdwSound);
+	PlaySound_Result = proc_PlaySound(PlaySound_pszSound, (UINT16)PlaySound_fdwSound);
     }
 }
 
@@ -1972,7 +2022,7 @@ UINT16	WINAPI MCI_DefYieldProc(UINT16 wDevID, DWORD data)
 
 	msg.hwnd = HIWORD(data);
 	while (!PeekMessageA(&msg, HIWORD(data), WM_KEYFIRST, WM_KEYLAST, PM_REMOVE));
-	ret = 0xFFFF;
+	ret = -1;
     }
     return ret;
 }
@@ -3856,9 +3906,15 @@ UINT16 WINAPI waveOutGetNumDevs16()
 UINT16 WINAPI waveOutGetDevCaps16(UINT16 uDeviceID, LPWAVEOUTCAPS16 lpCaps,
 				  UINT16 uSize)
 {
-    if (uDeviceID > waveOutGetNumDevs16() - 1) return MMSYSERR_BADDEVICEID;
-    if (uDeviceID == (UINT16)WAVE_MAPPER) return MMSYSERR_BADDEVICEID; /* FIXME: do we have a wave mapper ? */
     TRACE("waveOutGetDevCaps\n");
+
+    /* FIXME: do we have a wave mapper ? */
+    if (uDeviceID == (UINT16)WAVE_MAPPER) 
+	uDeviceID = 0;
+	/* return MMSYSERR_BADDEVICEID; */
+
+    if (uDeviceID >= waveOutGetNumDevs16()) return MMSYSERR_BADDEVICEID;
+
     return wodMessage(uDeviceID, WODM_GETDEVCAPS, 0L, (DWORD)lpCaps, uSize);
 }
 
