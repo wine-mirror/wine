@@ -785,8 +785,6 @@ ImageList_DragLeave (HWND hwndLock)
  *     The position of the drag image is relative to the window, not
  *     the client area.
  *
- * BUGS
- *     The drag image should be drawn semitransparent.
  */
 
 static inline void
@@ -807,6 +805,8 @@ ImageList_InternalDragDraw (HDC hdc, INT x, INT y)
     imldp.fState  = ILS_ALPHA;
     imldp.Frame   = 128;
 
+    /* FIXME: instead of using the alpha blending, we should
+     * create a 50% mask, and draw it semitransparantly that way */
     ImageList_DrawIndirect (&imldp);
 }
 

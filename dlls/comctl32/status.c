@@ -20,8 +20,15 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
  * FIXME:
- * 1) Implement all CCS_* styles.
- * 2) Should we hide grip if the parent window is maximized?
+ * 	-- CCS_BOTTOM (default)
+ * 	-- CCS_LEFT
+ * 	-- CCS_NODEVIDER
+ * 	-- CCS_NOMOVEX
+ * 	-- CCS_NOMOVEY
+ * 	-- CCS_NOPARENTALIGN
+ * 	-- CCS_RIGHT
+ * 	-- CCS_TOP
+ * 	-- CCS_VERT (defaults to RIGHT)
  */
 
 #include <string.h>

@@ -45,10 +45,10 @@ typedef struct tagWND
     HWINDOWPROC    winproc;       /* Window procedure */
     DWORD          dwMagic;       /* Magic number (must be WND_MAGIC) */
     DWORD          tid;           /* Owner thread id */
-    HINSTANCE    hInstance;     /* Window hInstance (from CreateWindow) */
-    RECT         rectClient;    /* Client area rel. to parent client area */
-    RECT         rectWindow;    /* Whole window rel. to parent client area */
-    LPWSTR        text;           /* Window text */
+    HINSTANCE      hInstance;     /* Window hInstance (from CreateWindow) */
+    RECT           rectClient;    /* Client area rel. to parent client area */
+    RECT           rectWindow;    /* Whole window rel. to parent client area */
+    LPWSTR         text;          /* Window text */
     void          *pVScroll;      /* Vertical scroll-bar info */
     void          *pHScroll;      /* Horizontal scroll-bar info */
     struct tagDCE *dce;           /* Window DCE (if CS_OWNDC or CS_CLASSDC) */
@@ -141,7 +141,6 @@ inline static void WIN_ReleasePtr( WND *ptr )
 extern HWND CARET_GetHwnd(void);
 extern void CARET_GetRect(LPRECT lprc);  /* windows/caret.c */
 
-extern BOOL16 DRAG_QueryUpdate( HWND, SEGPTR, BOOL );
 extern HBRUSH DEFWND_ControlColor( HDC hDC, UINT ctlType );  /* windows/defwnd.c */
 
 /* Classes functions */
