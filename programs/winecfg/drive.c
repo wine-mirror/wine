@@ -108,8 +108,11 @@ BOOL add_drive(char letter, char *targetpath, char *label, char *serial, uint ty
 void delete_drive(struct drive *d)
 {
     HeapFree(GetProcessHeap(), 0, d->unixpath);
+    d->unixpath = NULL;
     HeapFree(GetProcessHeap(), 0, d->label);
+    d->label = NULL;
     HeapFree(GetProcessHeap(), 0, d->serial);
+    d->serial = NULL;
 
     d->in_use = FALSE;
 }
