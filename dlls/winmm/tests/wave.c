@@ -209,7 +209,7 @@ static const char * wave_out_caps(DWORD dwSupport)
 #undef FLAG
 }
 
-static void wave_out_test_deviceOut(int device, int format, DWORD flags, LPWAVEOUTCAPS pcaps)
+static void wave_out_test_deviceOut(int device, double duration, int format, DWORD flags, LPWAVEOUTCAPS pcaps)
 {
     WAVEFORMATEX wfx;
     HWAVEOUT wout;
@@ -253,7 +253,7 @@ static void wave_out_test_deviceOut(int device, int format, DWORD flags, LPWAVEO
        wfx.nChannels, win_formats[format][1], win_formats[format][2],
        win_formats[format][3]);
 
-    frag.lpData=wave_generate_la(&wfx,1.0,&frag.dwBufferLength);
+    frag.lpData=wave_generate_la(&wfx,duration,&frag.dwBufferLength);
     frag.dwFlags=0;
     frag.dwLoops=0;
 
@@ -265,7 +265,7 @@ static void wave_out_test_deviceOut(int device, int format, DWORD flags, LPWAVEO
        "waveOutPrepareHeader: device=%d rc=%d\n",device,rc);
 
     if (winetest_interactive && rc==MMSYSERR_NOERROR) {
-        trace("Playing 440Hz LA at %ldx%2dx%d %04lx\n",
+        trace("Playing %g second 440Hz tone at %ldx%2dx%d %04lx\n",duration,
               wfx.nSamplesPerSec, wfx.wBitsPerSample,wfx.nChannels,flags);
         rc=waveOutSetVolume(wout,0x20002000);
         ok(rc==MMSYSERR_NOERROR,"waveOutSetVolume: device=%d rc=%d\n",device,rc);
@@ -358,10 +358,18 @@ static void wave_out_tests()
               caps.wChannels,caps.dwFormats,caps.dwSupport,wave_out_caps(caps.dwSupport));
         free(name);
 
+        if (winetest_interactive)
+        {
+            trace("Playing a 5 seconds reference tone.\n");
+            trace("All subsequent tones should be identical to this one.\n");
+            trace("Listen for stutter, changes in pitch, volume, etc.\n");
+            wave_out_test_deviceOut(d,5.0,0,0,&caps);
+        }
+
         for (f=0;f<NB_WIN_FORMATS;f++) {
             if (caps.dwFormats & win_formats[f][0]) {
-                wave_out_test_deviceOut(d,f,0,&caps);
-                wave_out_test_deviceOut(d,f,WAVE_FORMAT_DIRECT,&caps);
+                wave_out_test_deviceOut(d,1.0,f,0,&caps);
+                wave_out_test_deviceOut(d,1.0,f,WAVE_FORMAT_DIRECT,&caps);
             }
         }
 
