@@ -322,10 +322,18 @@ static const char main_key_JA_pc98x1[MAIN_LEN][4] =
  "\\_",
 };
 
+/*** Brazilian ABNT-2 keyboard layout (contributed by Raul Gomes Fernandes) */
+static const char main_key_PT_br[MAIN_LEN][4] =
+{
+ "'\"","1!","2@","3#","4$","5%","6\"","7&","8*","9(","0)","-_","=+",
+ "qQ","wW","eE","rR","tT","yY","uU","iI","oO","pP","'`","[{",
+ "aA","sS","dD","fF","gG","hH","jJ","kK","lL","Á«","~^","]}",
+ "zZ","xX","cC","vV","bB","nN","mM",",<",".>","/?"
+};
 
 
 /*** Layout table. Add your keyboard mappings to this list */
-static struct {
+static const struct {
  WORD lang, ansi_codepage, oem_codepage;
  const char (*key)[MAIN_LEN][4];
 } main_key_tab[]={
@@ -356,6 +364,7 @@ static struct {
  {MAKELANGID(LANG_CROATIAN,SUBLANG_CROATIAN),      1250, 852, &main_key_HR_jelly},
  {MAKELANGID(LANG_JAPANESE,SUBLANG_DEFAULT),        932, 932, &main_key_JA_jp106},
  {MAKELANGID(LANG_JAPANESE,SUBLANG_DEFAULT),        932, 932, &main_key_JA_pc98x1},
+ {MAKELANGID(LANG_PORTUGUESE,SUBLANG_PORTUGUESE_BRAZILIAN), 1252, 860, &main_key_PT_br},
 
  {0} /* sentinel */
 };
