@@ -132,7 +132,7 @@ FakeZBuffer_DirectDrawSurface_Blt(LPDIRECTDRAWSURFACE7 iface, LPRECT rdst,
     }
 
     /* We only support the BLT with DEPTH_FILL for now */
-    if (This->ddraw_owner->d3d != NULL) {
+    if ((dwFlags & DDBLT_DEPTHFILL) && This->ddraw_owner->d3d != NULL) {
         if (This->ddraw_owner->d3d->current_device != NULL) {
 	    This->ddraw_owner->d3d->current_device->clear(This->ddraw_owner->d3d->current_device,
 							  0, NULL, /* Clear the whole screen */

@@ -145,7 +145,10 @@ Main_IDirect3DLightImpl_1_GetLight(LPDIRECT3DLIGHT iface,
  */
 
 static void update(IDirect3DLightImpl* This) {
-    IDirect3DDeviceImpl* device = This->active_viewport->active_device;
+    IDirect3DDeviceImpl* device;
+    if (!This->active_viewport||!This->active_viewport->active_device)
+        return;
+    device =  This->active_viewport->active_device;
     IDirect3DDevice7_SetLight(ICOM_INTERFACE(device,IDirect3DDevice7),This->dwLightIndex,&(This->light7));
 }
 

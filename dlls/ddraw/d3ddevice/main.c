@@ -233,6 +233,21 @@ Main_IDirect3DDeviceImpl_7_3T_2T_1T_QueryInterface(LPDIRECT3DDEVICE7 iface,
 	TRACE("  Creating IDirect3DDevice7 interface %p\n", *obp);
 	return S_OK;
     }
+    if ( IsEqualGUID( &IID_IDirectDrawSurface, riid ) ||
+         IsEqualGUID( &IID_IDirectDrawSurface2, riid ) ||
+         IsEqualGUID( &IID_IDirectDrawSurface3, riid ) ) {
+        IDirectDrawSurface7_AddRef(ICOM_INTERFACE(This->surface, IDirectDrawSurface7));
+        *obp = ICOM_INTERFACE(This->surface, IDirectDrawSurface3);
+	TRACE("  Return IDirectDrawSurface3 interface %p\n", *obp);
+	return S_OK;
+    }
+    if ( IsEqualGUID( &IID_IDirectDrawSurface3, riid ) ||
+         IsEqualGUID( &IID_IDirectDrawSurface7, riid ) ) {
+        IDirectDrawSurface7_AddRef(ICOM_INTERFACE(This->surface, IDirectDrawSurface7));
+        *obp = ICOM_INTERFACE(This->surface, IDirectDrawSurface7);
+	TRACE("  Return IDirectDrawSurface7 interface %p\n", *obp);
+	return S_OK;
+    }
     FIXME("(%p): interface for IID %s NOT found!\n", This, debugstr_guid(riid));
     return OLE_E_ENUM_NOMORE;
 }
@@ -484,7 +499,6 @@ Main_IDirect3DDeviceImpl_7_3T_2T_MultiplyTransform(LPDIRECT3DDEVICE7 iface,
 {
     ICOM_THIS_FROM(IDirect3DDeviceImpl, IDirect3DDevice7, iface);
     LPD3DMATRIX mat;
-    D3DMATRIX temp;
     DWORD matrix_changed = 0x00000000;
 
     TRACE("(%p/%p)->(%08x,%p)\n", This, iface, dtstTransformStateType, lpD3DMatrix);
@@ -539,31 +553,8 @@ Main_IDirect3DDeviceImpl_7_3T_2T_MultiplyTransform(LPDIRECT3DDEVICE7 iface,
 	    return DDERR_INVALIDPARAMS;
     }
 
-    /* Now do the multiplication 'by hand'.
-       I know that all this could be optimised, but this will be done later :-) */
-    temp._11 = (mat->_11 * lpD3DMatrix->_11) + (mat->_21 * lpD3DMatrix->_12) + (mat->_31 * lpD3DMatrix->_13) + (mat->_41 * lpD3DMatrix->_14);
-    temp._21 = (mat->_11 * lpD3DMatrix->_21) + (mat->_21 * lpD3DMatrix->_22) + (mat->_31 * lpD3DMatrix->_23) + (mat->_41 * lpD3DMatrix->_24);
-    temp._31 = (mat->_11 * lpD3DMatrix->_31) + (mat->_21 * lpD3DMatrix->_32) + (mat->_31 * lpD3DMatrix->_33) + (mat->_41 * lpD3DMatrix->_34);
-    temp._41 = (mat->_11 * lpD3DMatrix->_41) + (mat->_21 * lpD3DMatrix->_42) + (mat->_31 * lpD3DMatrix->_43) + (mat->_41 * lpD3DMatrix->_44);
-
-    temp._12 = (mat->_12 * lpD3DMatrix->_11) + (mat->_22 * lpD3DMatrix->_12) + (mat->_32 * lpD3DMatrix->_13) + (mat->_42 * lpD3DMatrix->_14);
-    temp._22 = (mat->_12 * lpD3DMatrix->_21) + (mat->_22 * lpD3DMatrix->_22) + (mat->_32 * lpD3DMatrix->_23) + (mat->_42 * lpD3DMatrix->_24);
-    temp._32 = (mat->_12 * lpD3DMatrix->_31) + (mat->_22 * lpD3DMatrix->_32) + (mat->_32 * lpD3DMatrix->_33) + (mat->_42 * lpD3DMatrix->_34);
-    temp._42 = (mat->_12 * lpD3DMatrix->_41) + (mat->_22 * lpD3DMatrix->_42) + (mat->_32 * lpD3DMatrix->_43) + (mat->_42 * lpD3DMatrix->_44);
-
-    temp._13 = (mat->_13 * lpD3DMatrix->_11) + (mat->_23 * lpD3DMatrix->_12) + (mat->_33 * lpD3DMatrix->_13) + (mat->_43 * lpD3DMatrix->_14);
-    temp._23 = (mat->_13 * lpD3DMatrix->_21) + (mat->_23 * lpD3DMatrix->_22) + (mat->_33 * lpD3DMatrix->_23) + (mat->_43 * lpD3DMatrix->_24);
-    temp._33 = (mat->_13 * lpD3DMatrix->_31) + (mat->_23 * lpD3DMatrix->_32) + (mat->_33 * lpD3DMatrix->_33) + (mat->_43 * lpD3DMatrix->_34);
-    temp._43 = (mat->_13 * lpD3DMatrix->_41) + (mat->_23 * lpD3DMatrix->_42) + (mat->_33 * lpD3DMatrix->_43) + (mat->_43 * lpD3DMatrix->_44);
-
-    temp._14 = (mat->_14 * lpD3DMatrix->_11) + (mat->_24 * lpD3DMatrix->_12) + (mat->_34 * lpD3DMatrix->_13) + (mat->_44 * lpD3DMatrix->_14);
-    temp._24 = (mat->_14 * lpD3DMatrix->_21) + (mat->_24 * lpD3DMatrix->_22) + (mat->_34 * lpD3DMatrix->_23) + (mat->_44 * lpD3DMatrix->_24);
-    temp._34 = (mat->_14 * lpD3DMatrix->_31) + (mat->_24 * lpD3DMatrix->_32) + (mat->_34 * lpD3DMatrix->_33) + (mat->_44 * lpD3DMatrix->_34);
-    temp._44 = (mat->_14 * lpD3DMatrix->_41) + (mat->_24 * lpD3DMatrix->_42) + (mat->_34 * lpD3DMatrix->_43) + (mat->_44 * lpD3DMatrix->_44);
-
+    multiply_matrix(mat,mat,lpD3DMatrix);
     
-    /* And copy the new matrix in the good storage.. */
-    memcpy(mat, &temp, 16 * sizeof(D3DVALUE));
     if (TRACE_ON(ddraw)) {
         dump_D3DMATRIX(mat);
     }

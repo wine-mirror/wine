@@ -175,7 +175,8 @@ struct IDirect3DExecuteBufferImpl
 
     /* This buffer will store the transformed vertices */
     void* vertex_data;
-    D3DVERTEXTYPE vertex_type;
+    WORD* indices;
+    int nb_indices;
 
     /* This flags is set to TRUE if we allocated ourselves the
        data buffer */
@@ -290,6 +291,7 @@ extern DWORD get_flexible_vertex_size(DWORD d3dvtVertexType);
 extern void convert_FVF_to_strided_data(DWORD d3dvtVertexType, LPVOID lpvVertices, D3DDRAWPRIMITIVESTRIDEDDATA *strided, DWORD dwStartVertex);
 extern void dump_D3DVOP(DWORD dwVertexOp);
 extern void dump_D3DPV(DWORD dwFlags);
+extern void multiply_matrix(LPD3DMATRIX,LPD3DMATRIX,LPD3DMATRIX);
 
 extern const float id_mat[16];
 

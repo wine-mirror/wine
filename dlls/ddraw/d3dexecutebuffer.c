@@ -36,34 +36,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(ddraw);
 
-/* Structure to store the 'semi transformed' vertices */
-typedef struct {
-    D3DVALUE x;
-    D3DVALUE y;
-    D3DVALUE z;
-    D3DVALUE w;
-
-    D3DVALUE nx;
-    D3DVALUE ny;
-    D3DVALUE nz;
-
-    D3DVALUE u;
-    D3DVALUE v;
-} OGL_Vertex;
-
-typedef struct {
-    D3DVALUE x;
-    D3DVALUE y;
-    D3DVALUE z;
-    D3DVALUE w;
-
-    D3DCOLOR c;
-    D3DCOLOR sc;
-
-    D3DVALUE u;
-    D3DVALUE v;
-} OGL_LVertex;
-
 static void _dump_d3dstatus(LPD3DSTATUS lpStatus) {
 
 }
@@ -79,109 +51,6 @@ static void _dump_executedata(LPD3DEXECUTEDATA lpData) {
 static void _dump_D3DEXECUTEBUFFERDESC(LPD3DEXECUTEBUFFERDESC lpDesc) {
 
 }
-
-#define DO_VERTEX(index) 			                                \
-{										\
-    glTexCoord2f(vx[index].u,							\
-   	         vx[index].v);							\
-    glNormal3f(vx[index].nx,							\
-	       vx[index].ny,							\
-	       vx[index].nz);							\
-    glVertex4f(vx[index].x,						     	\
-	       vx[index].y,							\
-	       vx[index].z,							\
-	       vx[index].w);							\
-										\
-    TRACE("   V: %f %f %f %f (%f %f %f) (%f %f)\n",			        \
-	  vx[index].x, vx[index].y, vx[index].z, vx[index].w,			\
-	  vx[index].nx, vx[index].ny, vx[index].nz,				\
-	  vx[index].u, vx[index].v);						\
-}
-
-#define DO_LVERTEX(index)							\
-{										\
-    DWORD col = l_vx[index].c;							\
-  										\
-    glColor3f(((col >> 16) & 0xFF) / 255.0,					\
-	      ((col >>  8) & 0xFF) / 255.0,					\
-	      ((col >>  0) & 0xFF) / 255.0);					\
-    glTexCoord2f(l_vx[index].u,							\
-	         l_vx[index].v);						\
-    glVertex4f(l_vx[index].x,							\
-	       l_vx[index].y,							\
-	       l_vx[index].z,							\
-	       l_vx[index].w);							\
-  										\
-    TRACE("  LV: %f %f %f %f (%02lx %02lx %02lx) (%f %f)\n",		        \
-	  l_vx[index].x, l_vx[index].y, l_vx[index].z, l_vx[index].w,		\
-	  ((col >> 16) & 0xFF), ((col >>  8) & 0xFF), ((col >>  0) & 0xFF),	\
-	  l_vx[index].u, l_vx[index].v);					\
-}
-
-#define DO_TLVERTEX(index)							\
-{										\
-    D3DTLVERTEX *vx = &(tl_vx[index]);						\
-    DWORD col = vx->u5.color;							\
-										\
-    glColor3f(((col >> 16) & 0xFF) / 255.0,					\
-              ((col >>  8) & 0xFF) / 255.0,					\
-              ((col >>  0) & 0xFF) / 255.0);					\
-    glTexCoord2f(vx->u7.tu, vx->u8.tv);						\
-    if (vx->u4.rhw < 1e-8)							\
-        glVertex3f(vx->u1.sx,							\
-                   vx->u2.sy,							\
-                   vx->u3.sz);							\
-    else									\
-        glVertex4f(vx->u1.sx / vx->u4.rhw,					\
-                   vx->u2.sy / vx->u4.rhw,					\
-                   vx->u3.sz / vx->u4.rhw,					\
-                   1.0 / vx->u4.rhw);						\
-    TRACE(" TLV: %f %f %f (%02lx %02lx %02lx) (%f %f) (%f)\n",		        \
-          vx->u1.sx, vx->u2.sy, vx->u3.sz,					\
-          ((col >> 16) & 0xFF), ((col >>  8) & 0xFF), ((col >>  0) & 0xFF),	\
-          vx->u7.tu, vx->u8.tv, vx->u4.rhw);					\
-}
-
-#define TRIANGLE_LOOP(macro)				\
-{							\
-    glBegin(GL_TRIANGLES); 				\
-    for (i = 0; i < count; i++) {			\
-        LPD3DTRIANGLE ci = (LPD3DTRIANGLE) instr;	\
-      							\
-        TRACE("  v1: %d  v2: %d  v3: %d\n",	        \
-	      ci->u1.v1, ci->u2.v2, ci->u3.v3);		\
-        TRACE("  Flags : ");			        \
-        if (TRACE_ON(ddraw)) {				\
-	    /* Wireframe */				\
-	    if (ci->wFlags & D3DTRIFLAG_EDGEENABLE1)	\
-	        TRACE("EDGEENABLE1 ");		\
-	    if (ci->wFlags & D3DTRIFLAG_EDGEENABLE2)	\
-	        TRACE("EDGEENABLE2 ");		\
-	    if (ci->wFlags & D3DTRIFLAG_EDGEENABLE1)	\
-	        TRACE("EDGEENABLE3 ");		\
-							\
-	    /* Strips / Fans */				\
-	    if (ci->wFlags == D3DTRIFLAG_EVEN)		\
-	        TRACE("EVEN ");			\
-	    if (ci->wFlags == D3DTRIFLAG_ODD)		\
-	        TRACE("ODD ");			\
-	    if (ci->wFlags == D3DTRIFLAG_START)		\
-	        TRACE("START ");			\
-	    if ((ci->wFlags > 0) && (ci->wFlags < 30))	\
-	        TRACE("STARTFLAT(%d) ", ci->wFlags);	\
-	    TRACE("\n");				\
-        }						\
-							\
-        /* Draw the triangle */				\
-        macro(ci->u1.v1);				\
-        macro(ci->u2.v2);				\
-        macro(ci->u3.v3);				\
-							\
-        instr += size;					\
-    }							\
-    glEnd();						\
-}
-
 
 static void execute(IDirect3DExecuteBufferImpl *This,
 		    IDirect3DDeviceImpl *lpDevice,
@@ -205,8 +74,6 @@ static void execute(IDirect3DExecuteBufferImpl *This,
     if (TRACE_ON(ddraw))
       _dump_executedata(&(This->data));
 
-    ENTER_GL();
-    
     if (((IDirect3DDeviceGLImpl *) lpDevice)->state == SURFACE_MEMORY_DIRTY) {
         lpDevice->flush_to_framebuffer(lpDevice, NULL, ((IDirect3DDeviceGLImpl *) lpDevice)->lock_surf);
     }
@@ -234,75 +101,44 @@ static void execute(IDirect3DExecuteBufferImpl *This,
 
 	    case D3DOP_TRIANGLE: {
 	        int i;
-		OGL_Vertex  *vx    = (OGL_Vertex  *) This->vertex_data;
-		OGL_LVertex *l_vx  = (OGL_LVertex *) This->vertex_data;
 		D3DTLVERTEX *tl_vx = (D3DTLVERTEX *) This->vertex_data;
 		TRACE("TRIANGLE         (%d)\n", count);
 		
-		switch (This->vertex_type) {
-		    case D3DVT_VERTEX:
-		        /* This time, there is lighting */
-		        glEnable(GL_LIGHTING);
-			
-			if (TRACE_ON(ddraw)) {
-			    TRACE("  Projection Matrix : (%p)\n", lpDevice->proj_mat);
-			    dump_D3DMATRIX(lpDevice->proj_mat);
-			    TRACE("  View       Matrix : (%p)\n", lpDevice->view_mat);
-			    dump_D3DMATRIX(lpDevice->view_mat);
-			}
-
-			/* Using the identity matrix as the world matrix as the world transformation was
-			   already done. */
-			lpDevice->set_matrices(lpDevice, VIEWMAT_CHANGED|WORLDMAT_CHANGED|PROJMAT_CHANGED,
-					       (D3DMATRIX *) id_mat, lpDevice->view_mat, lpDevice->proj_mat);
-			break;
-
-		    case D3DVT_LVERTEX:
-			/* No lighting */
-			glDisable(GL_LIGHTING);
-
-			if (TRACE_ON(ddraw)) {
-			    TRACE("  Projection Matrix : (%p)\n", lpDevice->proj_mat);
-			    dump_D3DMATRIX(lpDevice->proj_mat);
-			    TRACE("  View       Matrix : (%p)\n", lpDevice->view_mat);
-			    dump_D3DMATRIX(lpDevice->view_mat);
-			}
-
-			/* Using the identity matrix as the world matrix as the world transformation was
-			   already done. */
-			lpDevice->set_matrices(lpDevice, VIEWMAT_CHANGED|WORLDMAT_CHANGED|PROJMAT_CHANGED,
-					       (D3DMATRIX *) id_mat, lpDevice->view_mat, lpDevice->proj_mat);
-			break;
-
-		    case D3DVT_TLVERTEX: {
-			/* First, disable lighting and fogging */
-			glDisable(GL_LIGHTING);
-			glDisable(GL_FOG);
-			
-			d3ddevice_set_ortho(lpDevice);
-		    } break;
-
-		    default:
-			ERR("Unhandled vertex type !\n");
-			break;
+		if (count*3>This->nb_indices) {
+		    This->nb_indices = count * 3;
+		    if (This->indices)
+		        HeapFree(GetProcessHeap(),0,This->indices);
+		    This->indices = HeapAlloc(GetProcessHeap(),0,sizeof(WORD)*This->nb_indices);
 		}
-
-		switch (This->vertex_type) {
-		    case D3DVT_VERTEX:
-		        TRIANGLE_LOOP(DO_VERTEX);
-			break;
-
-		    case D3DVT_LVERTEX:
-			TRIANGLE_LOOP(DO_LVERTEX);
-			break;
-
-		    case D3DVT_TLVERTEX:
-			TRIANGLE_LOOP(DO_TLVERTEX);
-			break;
-
-		    default:
-			ERR("Unhandled vertex type !\n");
+			
+		for (i = 0; i < count; i++) {
+                    LPD3DTRIANGLE ci = (LPD3DTRIANGLE) instr;
+		    TRACE("  v1: %d  v2: %d  v3: %d\n",ci->u1.v1, ci->u2.v2, ci->u3.v3);
+		    TRACE("  Flags : ");
+		    if (TRACE_ON(ddraw)) {
+			/* Wireframe */
+			if (ci->wFlags & D3DTRIFLAG_EDGEENABLE1)
+	        	    TRACE("EDGEENABLE1 ");
+	    		if (ci->wFlags & D3DTRIFLAG_EDGEENABLE2)
+	        	    TRACE("EDGEENABLE2 ");
+	    		if (ci->wFlags & D3DTRIFLAG_EDGEENABLE1)
+	        	    TRACE("EDGEENABLE3 ");
+	    		/* Strips / Fans */
+	    		if (ci->wFlags == D3DTRIFLAG_EVEN)
+	        	    TRACE("EVEN ");
+	    		if (ci->wFlags == D3DTRIFLAG_ODD)
+	        	    TRACE("ODD ");
+	    		if (ci->wFlags == D3DTRIFLAG_START)
+	        	    TRACE("START ");
+	    		if ((ci->wFlags > 0) && (ci->wFlags < 30))
+	       		    TRACE("STARTFLAT(%d) ", ci->wFlags);
+	    		TRACE("\n");
+        	    }
+		    This->indices[i*3]=ci->u1.v1;This->indices[i*3+1]=ci->u2.v2;This->indices[i*3+2]=ci->u3.v3;
+                    instr += size;
 		}
+                IDirect3DDevice7_DrawIndexedPrimitive(ICOM_INTERFACE(lpDevice,IDirect3DDevice7),
+				                      D3DPT_TRIANGLELIST,D3DFVF_TLVERTEX,tl_vx,0,This->indices,count*3,0);
 	    } break;
 
 	    case D3DOP_MATRIXLOAD:
@@ -323,18 +159,8 @@ static void execute(IDirect3DExecuteBufferImpl *This,
 		    TRACE("  Dest : %08lx  Src1 : %08lx  Src2 : %08lx\n",
 			  ci->hDestMatrix, ci->hSrcMatrix1, ci->hSrcMatrix2);
 		    
-		    /* Do the multiplication..
-		       As I am VERY lazy, I let OpenGL do the multiplication for me */
-		    glMatrixMode(GL_PROJECTION);
-		    /* Save the current matrix */
-		    glPushMatrix();
-		    /* Load Matrix one and do the multiplication */
-		    glLoadMatrixf((float *) c);
-		    glMultMatrixf((float *) b);
-		    glGetFloatv(GL_PROJECTION_MATRIX, (float *) a);
-		    /* Restore the current matrix */
-		    glPopMatrix();
-		    
+                    multiply_matrix(a,b,c);
+
 		    instr += size;
 		}
 	    } break;
@@ -345,29 +171,10 @@ static void execute(IDirect3DExecuteBufferImpl *This,
 		
 		for (i = 0; i < count; i++) {
 		    LPD3DSTATE ci = (LPD3DSTATE) instr;
+
+		    IDirect3DDevice7_SetTransform(ICOM_INTERFACE(lpDevice, IDirect3DDevice7),
+						  ci->u1.drstRenderStateType, (LPD3DMATRIX)ci->u2.dwArg[0]);
 		    
-		    /* Handle the state transform */
-		    switch (ci->u1.dtstTransformStateType) {
-		        case D3DTRANSFORMSTATE_WORLD: {
-			    TRACE("  WORLD (%p)\n", (D3DMATRIX*) ci->u2.dwArg[0]);
-			    lpDevice->world_mat = (D3DMATRIX*) ci->u2.dwArg[0];
-			} break;
-
-			case D3DTRANSFORMSTATE_VIEW: {
-			    TRACE("  VIEW (%p)\n", (D3DMATRIX*) ci->u2.dwArg[0]);
-			    lpDevice->view_mat = (D3DMATRIX*) ci->u2.dwArg[0];
-			} break;
-
-			case D3DTRANSFORMSTATE_PROJECTION: {
-			    TRACE("  PROJECTION (%p)\n", (D3DMATRIX*) ci->u2.dwArg[0]);
-			    lpDevice->proj_mat = (D3DMATRIX*) ci->u2.dwArg[0];
-			} break;
-			  
-			default:
-			    ERR("  Unhandled state transformation !! (%d)\n", (int) ci->u1.dtstTransformStateType);
-			    break;
-		    }
-
 		    instr += size;
 		}
 	    } break;
@@ -378,64 +185,63 @@ static void execute(IDirect3DExecuteBufferImpl *This,
 		
 		for (i = 0; i < count; i++) {
 		    LPD3DSTATE ci = (LPD3DSTATE) instr;
-		    
-		    /* Handle the state transform */
-		    switch (ci->u1.dlstLightStateType) {
-		        case D3DLIGHTSTATE_MATERIAL: {
-			    IDirect3DMaterialImpl* mat = (IDirect3DMaterialImpl*) ci->u2.dwArg[0];
-			    TRACE("  MATERIAL\n");
-			    
-			    if (mat != NULL) {
-			        mat->activate(mat);
-			    } else {
-			        TRACE("    bad Material Handle\n");
-			    }
-			} break ;
 
-			case D3DLIGHTSTATE_AMBIENT: {
-			    float light[4];
-			    DWORD dwLightState = ci->u2.dwArg[0];
-			    TRACE("  AMBIENT\n");
-			    
-			    light[0] = ((dwLightState >> 16) & 0xFF) / 255.0;
-			    light[1] = ((dwLightState >>  8) & 0xFF) / 255.0;
-			    light[2] = ((dwLightState >>  0) & 0xFF) / 255.0;
-			    light[3] = 1.0;
-			    glLightModelfv(GL_LIGHT_MODEL_AMBIENT, (float *) light);
-			    
-			    TRACE("    R:%02lx G:%02lx B:%02lx A:%02lx\n",
-				  ((dwLightState >> 16) & 0xFF),
-				  ((dwLightState >>  8) & 0xFF),
-				  ((dwLightState >>  0) & 0xFF),
-				  ((dwLightState >> 24) & 0xFF));
-			} break ;
-			  
-			case D3DLIGHTSTATE_COLORMODEL: {
-			    WARN("  COLORMODEL\n");
-			} break ;
+		    TRACE("(%08x,%08lx)\n",ci->u1.dlstLightStateType, ci->u2.dwArg[0]);
 
-			case D3DLIGHTSTATE_FOGMODE: {
-			    WARN("  FOGMODE\n");
-			} break ;
+		    if (!ci->u1.dlstLightStateType && (ci->u1.dlstLightStateType > D3DLIGHTSTATE_COLORVERTEX))
+			ERR("Unexpected Light State Type\n");
+		    else if (ci->u1.dlstLightStateType == D3DLIGHTSTATE_MATERIAL /* 1 */) {
+			IDirect3DMaterialImpl *mat = (IDirect3DMaterialImpl *) ci->u2.dwArg[0];
 
-			case D3DLIGHTSTATE_FOGSTART: {
-			    WARN("  FOGSTART\n");
-			} break ;
-
-			case D3DLIGHTSTATE_FOGEND: {
-			    WARN("  FOGEND\n");
-			} break ;
-
-			case D3DLIGHTSTATE_FOGDENSITY: {
-			    WARN("  FOGDENSITY\n");
-			} break ;
-
-			default:
-			    ERR("  Unhandled light state !! (%d)\n", (int) ci->u1.dlstLightStateType);
-			    break;
+			if (mat != NULL) {
+			    mat->activate(mat);
+			} else {
+			    ERR(" D3DLIGHTSTATE_MATERIAL called with NULL material !!!\n");
+			}
 		    }
-		    instr += size;
-	        }
+		   else if (ci->u1.dlstLightStateType == D3DLIGHTSTATE_COLORMODEL /* 3 */) {
+			switch (ci->u2.dwArg[0]) {
+			    case D3DCOLOR_MONO:
+			       ERR("DDCOLOR_MONO should not happen!\n");
+			       break;
+			    case D3DCOLOR_RGB:
+			       /* We are already in this mode */
+			       break;
+			    default:
+		               ERR("Unknown color model!\n");
+			}
+		    } else {
+		    	D3DRENDERSTATETYPE rs = 0;
+		    	switch (ci->u1.dlstLightStateType) {
+
+		    	    case D3DLIGHTSTATE_AMBIENT:       /* 2 */
+				rs = D3DRENDERSTATE_AMBIENT;
+				break;		
+			    case D3DLIGHTSTATE_FOGMODE:       /* 4 */
+				rs = D3DRENDERSTATE_FOGVERTEXMODE;
+				break;
+			    case D3DLIGHTSTATE_FOGSTART:      /* 5 */
+				rs = D3DRENDERSTATE_FOGSTART;
+				break;
+			    case D3DLIGHTSTATE_FOGEND:        /* 6 */
+				rs = D3DRENDERSTATE_FOGEND;
+				break;
+			    case D3DLIGHTSTATE_FOGDENSITY:    /* 7 */
+				rs = D3DRENDERSTATE_FOGDENSITY;
+				break;
+			    case D3DLIGHTSTATE_COLORVERTEX:   /* 8 */
+				rs = D3DRENDERSTATE_COLORVERTEX;
+				break;
+			    default:
+				break;
+			}
+			
+		        IDirect3DDevice7_SetRenderState(ICOM_INTERFACE(lpDevice, IDirect3DDevice7),
+	                                		rs,ci->u2.dwArg[0]);
+		   }
+
+		}
+		instr += size;
 	    } break;
 
 	    case D3DOP_STATERENDER: {
@@ -445,10 +251,8 @@ static void execute(IDirect3DExecuteBufferImpl *This,
 		for (i = 0; i < count; i++) {
 		    LPD3DSTATE ci = (LPD3DSTATE) instr;
 		    
-		    LEAVE_GL();
 		    IDirect3DDevice7_SetRenderState(ICOM_INTERFACE(lpDevice, IDirect3DDevice7),
 						    ci->u1.drstRenderStateType, ci->u2.dwArg[0]);
-		    ENTER_GL();
 
 		    instr += size;
 		}
@@ -510,63 +314,96 @@ static void execute(IDirect3DExecuteBufferImpl *This,
 		    if (ci->dwFlags == D3DPROCESSVERTICES_TRANSFORMLIGHT) {
 		        int nb;
 			D3DVERTEX  *src = ((LPD3DVERTEX)  ((char *)This->desc.lpData + vs)) + ci->wStart;
-			OGL_Vertex *dst = ((OGL_Vertex *) (This->vertex_data)) + ci->wDest;
-			D3DMATRIX *mat = lpDevice->world_mat;
+			D3DTLVERTEX *dst = ((LPD3DTLVERTEX) (This->vertex_data)) + ci->wDest;
+			D3DMATRIX *mat2 = lpDevice->world_mat;
+			D3DMATRIX mat;
+			D3DVALUE nx,ny,nz;
+			D3DVIEWPORT* Viewport = &lpViewport->viewports.vp1;
 			
-			TRACE("  World Matrix : (%p)\n", mat);
-			dump_D3DMATRIX(mat);
+			if (TRACE_ON(ddraw)) {
+			    TRACE("  Projection Matrix : (%p)\n", lpDevice->proj_mat);
+			    dump_D3DMATRIX(lpDevice->proj_mat);
+			    TRACE("  View       Matrix : (%p)\n", lpDevice->view_mat);
+			    dump_D3DMATRIX(lpDevice->view_mat);
+			    TRACE("  World Matrix : (%p)\n", &mat);
+			    dump_D3DMATRIX(&mat);
+			}
 
-			This->vertex_type = D3DVT_VERTEX;
-			
+			multiply_matrix(&mat,lpDevice->view_mat,lpDevice->world_mat);
+			multiply_matrix(&mat,lpDevice->proj_mat,&mat);
+
 			for (nb = 0; nb < ci->dwCount; nb++) {
-			    /* For the moment, no normal transformation... */
-			    dst->nx = (src->u4.nx * mat->_11) + (src->u5.ny * mat->_21) + (src->u6.nz * mat->_31);
-			    dst->ny = (src->u4.nx * mat->_12) + (src->u5.ny * mat->_22) + (src->u6.nz * mat->_32);
-			    dst->nz = (src->u4.nx * mat->_13) + (src->u5.ny * mat->_23) + (src->u6.nz * mat->_33);
+			    /* Normals transformation */
+			    nx = (src->u4.nx * mat2->_11) + (src->u5.ny * mat2->_21) + (src->u6.nz * mat2->_31);
+			    ny = (src->u4.nx * mat2->_12) + (src->u5.ny * mat2->_22) + (src->u6.nz * mat2->_32);
+			    nz = (src->u4.nx * mat2->_13) + (src->u5.ny * mat2->_23) + (src->u6.nz * mat2->_33);
 			    
-			    dst->u  = src->u7.tu;
-			    dst->v  = src->u8.tv;
+			    /* No lighting yet */
+			    dst->u5.color = 0xFFFFFFFF; /* Opaque white */
+			    dst->u6.specular = 0xFF000000; /* No specular and no fog factor */
+			    
+			    dst->u7.tu  = src->u7.tu;
+			    dst->u8.tv  = src->u8.tv;
 			    
 			    /* Now, the matrix multiplication */
-			    dst->x = (src->u1.x * mat->_11) + (src->u2.y * mat->_21) + (src->u3.z * mat->_31) + (1.0 * mat->_41);
-			    dst->y = (src->u1.x * mat->_12) + (src->u2.y * mat->_22) + (src->u3.z * mat->_32) + (1.0 * mat->_42);
-			    dst->z = (src->u1.x * mat->_13) + (src->u2.y * mat->_23) + (src->u3.z * mat->_33) + (1.0 * mat->_43);
-			    dst->w = (src->u1.x * mat->_14) + (src->u2.y * mat->_24) + (src->u3.z * mat->_34) + (1.0 * mat->_44);
-			    
+			    dst->u1.sx = (src->u1.x * mat._11) + (src->u2.y * mat._21) + (src->u3.z * mat._31) + (1.0 * mat._41);
+			    dst->u2.sy = (src->u1.x * mat._12) + (src->u2.y * mat._22) + (src->u3.z * mat._32) + (1.0 * mat._42);
+			    dst->u3.sz = (src->u1.x * mat._13) + (src->u2.y * mat._23) + (src->u3.z * mat._33) + (1.0 * mat._43);
+			    dst->u4.rhw = (src->u1.x * mat._14) + (src->u2.y * mat._24) + (src->u3.z * mat._34) + (1.0 * mat._44);
+
+			    dst->u1.sx = dst->u1.sx / dst->u4.rhw * Viewport->dwWidth / 2
+				       + Viewport->dwX + Viewport->dwWidth / 2;
+			    dst->u2.sy = dst->u2.sy / dst->u4.rhw * Viewport->dwHeight / 2
+				       + Viewport->dwY + Viewport->dwHeight / 2;
+			    dst->u3.sz /= dst->u4.rhw;
+			    dst->u4.rhw = 1 / dst->u4.rhw;
+
 			    src++;
 			    dst++;
+			    
 			}
 		    } else if (ci->dwFlags == D3DPROCESSVERTICES_TRANSFORM) {
 		        int nb;
 			D3DLVERTEX *src  = ((LPD3DLVERTEX) ((char *)This->desc.lpData + vs)) + ci->wStart;
-			OGL_LVertex *dst = ((OGL_LVertex *) (This->vertex_data)) + ci->wDest;
-			D3DMATRIX *mat = lpDevice->world_mat;
+			D3DTLVERTEX *dst = ((LPD3DTLVERTEX) (This->vertex_data)) + ci->wDest;
+			D3DMATRIX mat;
+			D3DVIEWPORT* Viewport = &lpViewport->viewports.vp1;
 			
-			TRACE("  World Matrix : (%p)\n", mat);
-			dump_D3DMATRIX(mat);
-			
-			This->vertex_type = D3DVT_LVERTEX;
-			
+			if (TRACE_ON(ddraw)) {
+			    TRACE("  Projection Matrix : (%p)\n", lpDevice->proj_mat);
+			    dump_D3DMATRIX(lpDevice->proj_mat);
+			    TRACE("  View       Matrix : (%p)\n", lpDevice->view_mat);
+			    dump_D3DMATRIX(lpDevice->view_mat);
+			    TRACE("  World Matrix : (%p)\n", &mat);
+			    dump_D3DMATRIX(&mat);
+			}
+
+			multiply_matrix(&mat,lpDevice->view_mat,lpDevice->world_mat);
+			multiply_matrix(&mat,lpDevice->proj_mat,&mat);
+
 			for (nb = 0; nb < ci->dwCount; nb++) {
-			    dst->c  = src->u4.color;
-			    dst->sc = src->u5.specular;
-			    dst->u  = src->u6.tu;
-			    dst->v  = src->u7.tv;
+			    dst->u5.color = src->u4.color;
+			    dst->u6.specular = src->u5.specular;
+			    dst->u7.tu = src->u6.tu;
+			    dst->u8.tv = src->u7.tv;
 			    
 			    /* Now, the matrix multiplication */
-			    dst->x = (src->u1.x * mat->_11) + (src->u2.y * mat->_21) + (src->u3.z * mat->_31) + (1.0 * mat->_41);
-			    dst->y = (src->u1.x * mat->_12) + (src->u2.y * mat->_22) + (src->u3.z * mat->_32) + (1.0 * mat->_42);
-			    dst->z = (src->u1.x * mat->_13) + (src->u2.y * mat->_23) + (src->u3.z * mat->_33) + (1.0 * mat->_43);
-			    dst->w = (src->u1.x * mat->_14) + (src->u2.y * mat->_24) + (src->u3.z * mat->_34) + (1.0 * mat->_44);
-			    
+			    dst->u1.sx = (src->u1.x * mat._11) + (src->u2.y * mat._21) + (src->u3.z * mat._31) + (1.0 * mat._41);
+			    dst->u2.sy = (src->u1.x * mat._12) + (src->u2.y * mat._22) + (src->u3.z * mat._32) + (1.0 * mat._42);
+			    dst->u3.sz = (src->u1.x * mat._13) + (src->u2.y * mat._23) + (src->u3.z * mat._33) + (1.0 * mat._43);
+			    dst->u4.rhw = (src->u1.x * mat._14) + (src->u2.y * mat._24) + (src->u3.z * mat._34) + (1.0 * mat._44);
+
+			    dst->u1.sx /= dst->u4.rhw * Viewport->dvScaleX * Viewport->dwWidth / 2 + Viewport->dwX;
+			    dst->u2.sy /= dst->u4.rhw * Viewport->dvScaleY * Viewport->dwHeight / 2 + Viewport->dwY;
+			    dst->u3.sz /= dst->u4.rhw;
+			    dst->u4.rhw = 1 / dst->u4.rhw;
+
 			    src++;
 			    dst++;
 			}
 		    } else if (ci->dwFlags == D3DPROCESSVERTICES_COPY) {
 		        D3DTLVERTEX *src = ((LPD3DTLVERTEX) ((char *)This->desc.lpData + vs)) + ci->wStart;
 			D3DTLVERTEX *dst = ((LPD3DTLVERTEX) (This->vertex_data)) + ci->wDest;
-			
-			This->vertex_type = D3DVT_TLVERTEX;
 			
 			memcpy(dst, src, ci->dwCount * sizeof(D3DTLVERTEX));
 		    } else {
@@ -644,7 +481,7 @@ static void execute(IDirect3DExecuteBufferImpl *This,
     }
 
 end_of_buffer:
-    LEAVE_GL();
+    ;
 }
 
 HRESULT WINAPI
@@ -691,6 +528,8 @@ Main_IDirect3DExecuteBufferImpl_1_Release(LPDIRECT3DEXECUTEBUFFER iface)
 	    HeapFree(GetProcessHeap(),0,This->desc.lpData);
 	if (This->vertex_data != NULL)
 	    HeapFree(GetProcessHeap(),0,This->vertex_data);
+	if (This->indices != NULL)
+	    HeapFree(GetProcessHeap(),0,This->indices);
 	HeapFree(GetProcessHeap(),0,This);
 	return 0;
     }
@@ -751,7 +590,7 @@ Main_IDirect3DExecuteBufferImpl_1_SetExecuteData(LPDIRECT3DEXECUTEBUFFER iface,
     /* Prepares the transformed vertex buffer */
     if (This->vertex_data != NULL)
         HeapFree(GetProcessHeap(), 0, This->vertex_data);
-    This->vertex_data = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, nbvert * sizeof(OGL_Vertex));
+    This->vertex_data = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, nbvert * sizeof(D3DTLVERTEX));
 
     if (TRACE_ON(ddraw)) {
         _dump_executedata(lpData);
@@ -864,6 +703,9 @@ HRESULT d3dexecutebuffer_create(IDirect3DExecuteBufferImpl **obj, IDirect3DImpl 
     object->desc.dwFlags |= D3DDEB_LPDATA;
 
     object->execute = execute;
+
+    object->indices = NULL;
+    object->nb_indices = 0;
 
     *obj = object;
     
