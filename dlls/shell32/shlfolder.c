@@ -568,10 +568,8 @@ static HRESULT WINAPI  IShellFolder_fnCompareIDs(
 	  return 1;
 
 	/* get the last item in each list */
-	while((ILGetNext(pidlTemp1))->mkid.cb)
-	  pidlTemp1 = ILGetNext(pidlTemp1);
-	while((ILGetNext(pidlTemp2))->mkid.cb)
-	  pidlTemp2 = ILGetNext(pidlTemp2);
+	pidlTemp1 = ILFindLastID(pidlTemp1);
+	pidlTemp2 = ILFindLastID(pidlTemp2);
 
 	/* at This point, both pidlTemp1 and pidlTemp2 point to the last item in the list */
 	if(_ILIsValue(pidlTemp1) != _ILIsValue(pidlTemp2))
@@ -582,14 +580,14 @@ static HRESULT WINAPI  IShellFolder_fnCompareIDs(
 
 	_ILGetDrive( pidl1,szString1,sizeof(szString1));
 	_ILGetDrive( pidl2,szString2,sizeof(szString2));
-	nReturn = strcasecmp(szString2, szString1);
+	nReturn = strcasecmp(szString1, szString2);
 
 	if(nReturn)
 	  return nReturn;
 
 	_ILGetFolderText( pidl1,szString1,sizeof(szString1));
 	_ILGetFolderText( pidl2,szString2,sizeof(szString2));
-	nReturn = strcasecmp(szString2, szString1);
+	nReturn = strcasecmp(szString1, szString2);
 
 	if(nReturn)
 	  return nReturn;
