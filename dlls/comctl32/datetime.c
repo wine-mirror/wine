@@ -653,10 +653,11 @@ DATETIME_ResetFieldDown (DATETIME_INFO *infoPtr, int number)
 		break;
 	case ONEDIGITYEAR: 
 	case TWODIGITYEAR: 
-        /* FYI: On 9/14/1752 the calender changed and England and the American */
-        /* colonies changed to the Gregorian calender.  This change involved */
-        /* having September 14th following September 2nd.  So no date algorithms */
-        /* work before that date. */
+        /* FYI: On 1752/9/14 the calendar changed and England and the 
+         * American colonies changed to the Gregorian calendar. This change 
+         * involved having September 14th follow September 2nd. So no date 
+         * algorithm works before that date.
+         */
 	case FULLYEAR:   
 		date->wSecond = 0;
 		date->wMinute = 0;
@@ -846,7 +847,7 @@ DATETIME_LButtonDown (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
   if (infoPtr->select == DTHT_MCPOPUP) {
     /* FIXME: button actually is only depressed during dropdown of the */
-    /* calender control and when the mouse is over the button window */
+    /* calendar control and when the mouse is over the button window */
     infoPtr->bCalDepressed = TRUE;
 
     /* recalculate the position of the monthcal popup */
@@ -1091,7 +1092,7 @@ DATETIME_Size (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
   DrawEdge((HDC)NULL, &(infoPtr->rcDraw), EDGE_SUNKEN, BF_RECT | BF_ADJUST);
 
-  /* set the size of the button that drops the calender down */
+  /* set the size of the button that drops the calendar down */
   /* FIXME: account for style that allows button on left side */
   infoPtr->calbutton.top   = infoPtr->rcDraw.top;
   infoPtr->calbutton.bottom= infoPtr->rcDraw.bottom;
