@@ -333,6 +333,8 @@ static LONGLONG call_cdecl_function( LONGLONG_CPROC func, int nb_args, const int
     default:
         ERR( "Unsupported nb of args %d\n", nb_args );
         assert(FALSE);
+        ret = 0;
+        break;
     }
     return ret;
 }
@@ -382,6 +384,8 @@ static LONGLONG call_stdcall_function( LONGLONG_FARPROC func, int nb_args, const
     default:
         ERR( "Unsupported nb of args %d\n", nb_args );
         assert(FALSE);
+        ret = 0;
+        break;
     }
     return ret;
 }
