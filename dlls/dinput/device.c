@@ -288,6 +288,7 @@ DataFormat *create_DataFormat(const DIDATAFORMAT *wine_format, LPCDIDATAFORMAT a
     int same = 1;
     int *done;
     int index = 0;
+    DWORD next = 0;
     
     ret = (DataFormat *) HeapAlloc(GetProcessHeap(), 0, sizeof(DataFormat));
     
@@ -341,14 +342,21 @@ DataFormat *create_DataFormat(const DIDATAFORMAT *wine_format, LPCDIDATAFORMAT a
 		else
 		    dt[index].size = sizeof(DWORD);
 		dt[index].offset_in  = wine_format ->rgodf[i].dwOfs;
-		dt[index].offset_out = asked_format->rgodf[j].dwOfs;
+                if (asked_format->rgodf[j].dwOfs < next) {
+                    WARN("bad format: dwOfs=%ld, changing to %ld\n", asked_format->rgodf[j].dwOfs, next);
+		    dt[index].offset_out = next;
+		    offset[i] = next;
+                } else {
+		    dt[index].offset_out = asked_format->rgodf[j].dwOfs;
+                    offset[i] = asked_format->rgodf[j].dwOfs;
+                }
 		dt[index].value = 0;
-		index++;
+                next = next + dt[index].size;
 		
-		if (wine_format->rgodf[i].dwOfs != asked_format->rgodf[j].dwOfs)
+		if (wine_format->rgodf[i].dwOfs != dt[index].offset_out)
 		    same = 0;
 		
-		offset[i] = asked_format->rgodf[j].dwOfs;
+		index++;
 		break;
 	    }
 	}
