@@ -81,8 +81,6 @@ typedef struct tagFontInfo
  /* LFD parameters can be quite different from the actual metrics */
 
     UINT16			lfd_height;
-    UINT16			lfd_width;
-    UINT16			lfd_decipoints;
     UINT16			lfd_resolution;
     IFONTINFO16			df;
 } fontInfo;
@@ -94,6 +92,25 @@ typedef struct tagFontInfo
 #define FR_REMOVED          0x4000              /* delayed remove */
 #define FR_NAMESET          0x8000
 
+#define LFD_FIELDS 14
+typedef struct
+{
+    char* foundry;
+    char* family;
+    char* weight;
+    char* slant;
+    char* set_width;
+    char* add_style;
+    char* pixel_size;
+    char* point_size;
+    char* resolution_x;
+    char* resolution_y;
+    char* spacing;
+    char* average_width;
+    char* charset_registry;
+    char* charset_encoding;
+} LFD;
+
 typedef struct tagFontResource
 {
   struct tagFontResource*	next;
@@ -102,7 +119,7 @@ typedef struct tagFontResource
   UINT16			fi_count;
   UINT16			fo_count;
   fontInfo*			fi;
-  char*                         resource;
+  LFD*                          resource;
   HANDLE			hOwner;		/*  For FR_SOFTFONT/FR_SOFTRESOURCE fonts */
   CHAR				lfFaceName[LF_FACESIZE];
 } fontResource;
