@@ -18,6 +18,13 @@
 
 #include "build.h"
 
+#ifdef __i386__
+extern unsigned short __get_cs(void);
+__ASM_GLOBAL_FUNC( __get_cs, "movw %cs,%ax\n\tret" );
+#else
+static inline unsigned short __get_cs(void) { return 0; }
+#endif /* __i386__ */
+
 
 /*******************************************************************
  *         StoreVariableCode
@@ -497,12 +504,12 @@ void BuildSpec16File( FILE *outfile )
     int i, nFuncs, nTypes;
     int code_offset, data_offset, module_size, res_size;
     unsigned char *data;
+    unsigned short code_selector = __get_cs();
 
     /* File header */
 
     fprintf( outfile, "/* File generated automatically from %s; do not edit! */\n\n",
              input_file_name );
-    fprintf( outfile, "#define __FLATCS__ 0x%04x\n", code_selector );
     fprintf( outfile, "#include \"builtin16.h\"\n\n" );
 
     fprintf( outfile, "extern void RELAY_Unimplemented16(void);\n\n" );
@@ -709,8 +716,8 @@ void BuildSpec16File( FILE *outfile )
     fprintf( outfile, "    \"%s\",\n", DLLName );
     fprintf( outfile, "    Module,\n" );
     fprintf( outfile, "    sizeof(Module),\n" );
-    fprintf( outfile, "    (BYTE *)&Code_Segment,\n" );
-    fprintf( outfile, "    (BYTE *)Data_Segment,\n" );
+    fprintf( outfile, "    &Code_Segment,\n" );
+    fprintf( outfile, "    Data_Segment,\n" );
     fprintf( outfile, "    \"%s\",\n", owner_name );
     fprintf( outfile, "    %s\n", res_size ? "resource_data" : "0" );
     fprintf( outfile, "};\n" );

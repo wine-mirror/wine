@@ -36,6 +36,7 @@ BOOL RELAY_Init(void)
     extern void CALL32_CBClient_Ret();
     extern void CALL32_CBClientEx_Ret();
     extern SEGPTR CallTo16_RetAddr;
+    extern DWORD CallTo16_DataSelector;
     extern SEGPTR CALL32_CBClient_RetAddr;
     extern SEGPTR CALL32_CBClientEx_RetAddr;
 
@@ -46,6 +47,7 @@ BOOL RELAY_Init(void)
 
       /* Patch the return addresses for CallTo16 routines */
 
+    CallTo16_DataSelector = __get_ds();
     CallTo16_RetAddr = 
         PTR_SEG_OFF_TO_SEGPTR( codesel, (char*)CallTo16_Ret - (char*)Call16_Ret_Start );
     CALL32_CBClient_RetAddr = 

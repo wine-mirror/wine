@@ -17,6 +17,7 @@
 #include "module.h"
 #include "miscemu.h"
 #include "stackframe.h"
+#include "selectors.h"
 #include "task.h"
 #include "debugtools.h"
 #include "toolhelp.h"
@@ -29,6 +30,21 @@ DEFAULT_DEBUG_CHANNEL(module);
 
 static const BUILTIN16_DESCRIPTOR *builtin_dlls[MAX_DLLS];
 static int nb_dlls;
+
+
+/* patch all the flat cs references of the code segment if necessary */
+inline static void patch_code_segment( void *code_segment )
+{
+#ifdef __i386__
+    CALLFROM16 *call = code_segment;
+    if (call->flatcs == __get_cs()) return;  /* nothing to patch */
+    while (call->pushl == 0x68)
+    {
+        call->flatcs = __get_cs();
+        call++;
+    }
+#endif
+}
 
 
 /***********************************************************************
@@ -62,6 +78,7 @@ static HMODULE16 BUILTIN_DoLoadModule16( const BUILTIN16_DESCRIPTOR *descr )
     pSegTable->hSeg = GLOBAL_CreateBlock( GMEM_FIXED, descr->code_start,
                                           pSegTable->minsize, hModule, TRUE, TRUE, FALSE );
     if (!pSegTable->hSeg) return 0;
+    patch_code_segment( descr->code_start );
     pSegTable++;
 
     /* Allocate the data segment */

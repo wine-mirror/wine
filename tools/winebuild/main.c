@@ -17,17 +17,6 @@
 #include "winnt.h"
 #include "build.h"
 
-#ifdef __i386__
-extern WORD __get_cs(void);
-extern WORD __get_ds(void);
-__ASM_GLOBAL_FUNC( __get_cs, "movw %cs,%ax\n\tret" );
-__ASM_GLOBAL_FUNC( __get_ds, "movw %ds,%ax\n\tret" );
-#else
-static inline WORD __get_cs(void) { return 0; }
-static inline WORD __get_ds(void) { return 0; }
-#endif
-
-
 ORDDEF EntryPoints[MAX_ORDINALS];
 ORDDEF *Ordinals[MAX_ORDINALS];
 ORDDEF *Names[MAX_ORDINALS];
@@ -48,9 +37,6 @@ char owner_name[80];
 
 const char *input_file_name;
 const char *output_file_name;
-
-unsigned short code_selector;
-unsigned short data_selector;
 
 static FILE *input_file;
 static FILE *output_file;
@@ -188,13 +174,6 @@ int main(int argc, char **argv)
 {
     output_file = stdout;
     parse_options( argv );
-
-    /* Retrieve the selector values; this assumes that we are building
-     * the asm files on the platform that will also run them. Probably
-     * a safe assumption to make.
-     */
-    code_selector = __get_cs();
-    data_selector = __get_ds();
 
     switch(exec_mode)
     {

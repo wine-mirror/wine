@@ -55,8 +55,8 @@ typedef struct
     const char *name;              /* DLL name */
     void       *module_start;      /* 32-bit address of the module data */
     int         module_size;       /* Size of the module data */
-    const BYTE *code_start;        /* 32-bit address of DLL code */
-    const BYTE *data_start;        /* 32-bit address of DLL data */
+    void       *code_start;        /* 32-bit address of DLL code */
+    void       *data_start;        /* 32-bit address of DLL data */
     const char *owner;             /* 32-bit dll that contains this dll */
     const void *rsrc;              /* resources data */
 } BUILTIN16_DESCRIPTOR;

@@ -167,9 +167,6 @@ extern int DLLHeapSize;
 extern int UsePIC;
 extern int debugging;
 
-extern unsigned short code_selector;
-extern unsigned short data_selector;
-
 extern char DLLName[80];
 extern char DLLFileName[80];
 extern char DLLInitFunc[80];

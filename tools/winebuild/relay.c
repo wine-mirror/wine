@@ -120,8 +120,15 @@ static void BuildCallFrom16Core( FILE *outfile, int reg_func, int thunk, int sho
         fprintf( outfile, "\taddl $_GLOBAL_OFFSET_TABLE_+[.-.LCallFrom16%s.getgot1], %%ecx\n", name );
     }
 
+    if (UsePIC)
+    {
+        fprintf( outfile, "\t.byte 0x2e\n\tmovl " PREFIX "CallTo16_DataSelector@GOT(%%ecx), %%edx\n" );
+        fprintf( outfile, "\t.byte 0x2e\n\tmovl (%%edx), %%edx\n" );
+    }
+    else
+        fprintf( outfile, "\t.byte 0x2e\n\tmovl " PREFIX "CallTo16_DataSelector,%%edx\n" );
+
     /* Load 32-bit segment registers */
-    fprintf( outfile, "\tmovw $0x%04x, %%dx\n", data_selector );
 #ifdef __svr4__
     fprintf( outfile, "\tdata16\n");
 #endif
@@ -690,7 +697,7 @@ static void BuildRet16Func( FILE *outfile )
 
     /* Restore 32-bit segment registers */
 
-    fprintf( outfile, "\tmovw $0x%04x,%%di\n", data_selector );
+    fprintf( outfile, "\t.byte 0x2e\n\tmovl " PREFIX "CallTo16_DataSelector-" PREFIX "Call16_Ret_Start,%%edi\n" );
 #ifdef __svr4__
     fprintf( outfile, "\tdata16\n");
 #endif
@@ -715,9 +722,12 @@ static void BuildRet16Func( FILE *outfile )
 
     fprintf( outfile, "\tlret\n" );
 
-    /* Declare the return address variable */
+    /* Declare the return address and data selector variables */
 
-    fprintf( outfile, "\n\t.globl " PREFIX "CallTo16_RetAddr\n" );
+    fprintf( outfile, "\n\t.align 4\n" );
+    fprintf( outfile, "\t.globl " PREFIX "CallTo16_DataSelector\n" );
+    fprintf( outfile, PREFIX "CallTo16_DataSelector:\t.long 0\n" );
+    fprintf( outfile, "\t.globl " PREFIX "CallTo16_RetAddr\n" );
     fprintf( outfile, PREFIX "CallTo16_RetAddr:\t.long 0\n" );
 }
 
