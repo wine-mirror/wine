@@ -7,6 +7,7 @@ MODULE	  = none
 INSTALLED_INCLUDES = \
 	amaudio.h \
 	amvideo.h \
+	audevcod.h \
 	basetsd.h \
 	cderr.h \
 	cguid.h \
@@ -30,7 +31,9 @@ INSTALLED_INCLUDES = \
 	docobj.h \
 	dplay.h \
 	dplobby.h \
+	dshow.h \
 	dsound.h \
+	evcode.h \
 	guiddef.h \
 	imagehlp.h \
 	imm.h \
@@ -112,6 +115,7 @@ INSTALLED_INCLUDES = \
 	tlhelp32.h \
 	unknwn.h \
 	urlmon.h \
+	uuids.h \
 	ver.h \
 	vfw.h \
 	winbase.h \
