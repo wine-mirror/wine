@@ -2437,18 +2437,19 @@ BOOL32 WINAPI SetWindowPos32( HWND32 hwnd, HWND32 hwndInsertAfter,
     }
     else if (flags & SWP_HIDEWINDOW)
     {
-	wndPtr->dwStyle &= ~WS_VISIBLE;
         if (wndPtr->window)
         {
-            TSXUnmapWindow( display, wndPtr->window );
-	    if( uFlags & SMC_SETXPOS )
-	    {
-              WINPOS_SetXWindowPos( &winpos );
-              winpos.hwndInsertAfter = tempInsertAfter;
-	    }
+           if (wndPtr->dwStyle & WS_VISIBLE) TSXUnmapWindow( display, wndPtr->window );
+           wndPtr->dwStyle &= ~WS_VISIBLE;
+           if( uFlags & SMC_SETXPOS )
+           {
+               WINPOS_SetXWindowPos( &winpos );
+               winpos.hwndInsertAfter = tempInsertAfter;
+           }
         }
         else
         {
+            wndPtr->dwStyle &= ~WS_VISIBLE;
             if (!(flags & SWP_NOREDRAW))
                 PAINT_RedrawWindow( wndPtr->parent->hwndSelf, &oldWindowRect,
                                     0, RDW_INVALIDATE | RDW_ALLCHILDREN |
