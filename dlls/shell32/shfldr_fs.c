@@ -296,6 +296,50 @@ static ULONG WINAPI IShellFolder_fnRelease (IShellFolder2 * iface)
 }
 
 /**************************************************************************
+ *  SHELL32_CreatePidlFromBindCtx  [internal]
+ *
+ *  If the caller bound File System Bind Data, assume it is the 
+ *   find data for the path.
+ *  This allows binding of pathes that don't exist.
+ */
+LPITEMIDLIST SHELL32_CreatePidlFromBindCtx(IBindCtx *pbc, LPCWSTR path)
+{
+    static const WCHAR szfsbc[] = {
+        'F','i','l','e',' ','S','y','s','t','e','m',' ',
+        'B','i','n','d',' ','D','a','t','a',0 };
+    IFileSystemBindData *fsbd = NULL;
+    LPITEMIDLIST pidl = NULL;
+    IUnknown *param = NULL;
+    WIN32_FIND_DATAW wfd;
+    HRESULT r;
+
+    TRACE("%p %s\n", pbc, debugstr_w(path));
+
+    if (!pbc)
+        return NULL;
+
+    /* see if the caller bound File System Bind Data */
+    r = IBindCtx_GetObjectParam( pbc, (LPOLESTR) szfsbc, &param );
+    if (FAILED(r))
+        return NULL;
+
+    r = IUnknown_QueryInterface( param, &IID_IFileSystemBindData,
+                                 (LPVOID*) &fsbd );
+    if (SUCCEEDED(r))
+    {
+        r = IFileSystemBindData_GetFindData( fsbd, &wfd );
+        if (SUCCEEDED(r))
+        {
+            lstrcpynW( &wfd.cFileName[0], path, MAX_PATH );
+            pidl = _ILCreateFromFindDataW( &wfd );
+        }
+        IFileSystemBindData_Release( fsbd );
+    }
+    
+    return pidl;
+}
+
+/**************************************************************************
 * IShellFolder_ParseDisplayName {SHELL32}
 *
 * Parse a display name.
@@ -332,7 +376,7 @@ IShellFolder_fnParseDisplayName (IShellFolder2 * iface,
     HRESULT hr = E_INVALIDARG;
     LPCWSTR szNext = NULL;
     WCHAR szElement[MAX_PATH];
-    CHAR szPath[MAX_PATH];
+    WCHAR szPath[MAX_PATH];
     LPITEMIDLIST pidlTemp = NULL;
     DWORD len;
 
@@ -345,18 +389,21 @@ IShellFolder_fnParseDisplayName (IShellFolder2 * iface,
     if (pchEaten)
 	*pchEaten = 0;		/* strange but like the original */
 
-    if (*lpszDisplayName) {
+    pidlTemp = SHELL32_CreatePidlFromBindCtx(pbc, lpszDisplayName);
+    if (!pidlTemp && *lpszDisplayName)
+    {
 	/* get the next element */
 	szNext = GetNextElementW (lpszDisplayName, szElement, MAX_PATH);
 
 	/* build the full pathname to the element */
-	lstrcpyA(szPath, This->sPathTarget);
-	PathAddBackslashA(szPath);
-	len = lstrlenA(szPath);
-	WideCharToMultiByte(CP_ACP, 0, szElement, -1, szPath + len, MAX_PATH - len, NULL, NULL);
+        /* lstrcpyW(szPath, This->sPathTarget); */
+        MultiByteToWideChar(CP_ACP, 0, This->sPathTarget, -1, szPath, MAX_PATH);
+        PathAddBackslashW(szPath);
+        len = lstrlenW(szPath);
+        lstrcpynW(szPath + len, szElement, MAX_PATH - len);
 
 	/* get the pidl */
-	hr = _ILCreateFromPathA(szPath, &pidlTemp);
+	hr = _ILCreateFromPathW(szPath, &pidlTemp);
 
 	if (SUCCEEDED(hr)) {
 	    if (szNext && *szNext) {
