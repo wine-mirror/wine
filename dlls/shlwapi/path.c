@@ -55,7 +55,7 @@ extern HMODULE SHLWAPI_hshell32;
 typedef BOOL (WINAPI *fnpIsNetDrive)(int);
 static  fnpIsNetDrive pIsNetDrive;
 
-HRESULT WINAPI SHLWAPI_441(LPCWSTR,LPWSTR,DWORD);
+HRESULT WINAPI SHGetWebFolderFilePathW(LPCWSTR,LPWSTR,DWORD);
 
 /*************************************************************************
  * PathAppendA    [SHLWAPI.@]
@@ -1052,9 +1052,9 @@ int WINAPI PathParseIconLocationW(LPWSTR lpszPath)
 /*************************************************************************
  * @	[SHLWAPI.4]
  *
- * Unicode version of SHLWAPI_3.
+ * Unicode version of PathFileExistsDefExtA.
  */
-BOOL WINAPI SHLWAPI_4(LPWSTR lpszPath,DWORD dwWhich)
+BOOL WINAPI PathFileExistsDefExtW(LPWSTR lpszPath,DWORD dwWhich)
 {
   static const WCHAR pszExts[7][5] = { { '.', 'p', 'i', 'f', 0},
                                        { '.', 'c', 'o', 'm', 0},
@@ -1116,7 +1116,7 @@ BOOL WINAPI SHLWAPI_4(LPWSTR lpszPath,DWORD dwWhich)
  *  users (here through PathFindOnPathA()) and keeping advanced functionality for
  *  their own developers exclusive use. Monopoly, anyone?
  */
-BOOL WINAPI SHLWAPI_3(LPSTR lpszPath,DWORD dwWhich)
+BOOL WINAPI PathFileExistsDefExtA(LPSTR lpszPath,DWORD dwWhich)
 {
   BOOL bRet = FALSE;
 
@@ -1126,7 +1126,7 @@ BOOL WINAPI SHLWAPI_3(LPSTR lpszPath,DWORD dwWhich)
   {
     WCHAR szPath[MAX_PATH];
     MultiByteToWideChar(0,0,lpszPath,-1,szPath,MAX_PATH);
-    bRet = SHLWAPI_4(szPath, dwWhich);
+    bRet = PathFileExistsDefExtW(szPath, dwWhich);
     if (bRet)
       WideCharToMultiByte(0,0,szPath,-1,lpszPath,MAX_PATH,0,0);
   }
@@ -1153,7 +1153,7 @@ static BOOL WINAPI SHLWAPI_PathFindInOtherDirs(LPWSTR lpszFile, DWORD dwWhich)
   GetSystemDirectoryW(buff, MAX_PATH);
   if (!PathAppendW(buff, lpszFile))
      return FALSE;
-  if (SHLWAPI_4(buff, dwWhich))
+  if (PathFileExistsDefExtW(buff, dwWhich))
   {
     strcpyW(lpszFile, buff);
     return TRUE;
@@ -1161,7 +1161,7 @@ static BOOL WINAPI SHLWAPI_PathFindInOtherDirs(LPWSTR lpszFile, DWORD dwWhich)
   GetWindowsDirectoryW(buff, MAX_PATH);
   if (!PathAppendW(buff, szSystem ) || !PathAppendW(buff, lpszFile))
     return FALSE;
-  if (SHLWAPI_4(buff, dwWhich))
+  if (PathFileExistsDefExtW(buff, dwWhich))
   {
     strcpyW(lpszFile, buff);
     return TRUE;
@@ -1169,7 +1169,7 @@ static BOOL WINAPI SHLWAPI_PathFindInOtherDirs(LPWSTR lpszFile, DWORD dwWhich)
   GetWindowsDirectoryW(buff, MAX_PATH);
   if (!PathAppendW(buff, lpszFile))
     return FALSE;
-  if (SHLWAPI_4(buff, dwWhich))
+  if (PathFileExistsDefExtW(buff, dwWhich))
   {
     strcpyW(lpszFile, buff);
     return TRUE;
@@ -1200,7 +1200,7 @@ static BOOL WINAPI SHLWAPI_PathFindInOtherDirs(LPWSTR lpszFile, DWORD dwWhich)
 
     if (!PathAppendW(buff, lpszFile))
       return FALSE;
-    if (SHLWAPI_4(buff, dwWhich))
+    if (PathFileExistsDefExtW(buff, dwWhich))
     {
       strcpyW(lpszFile, buff);
       free(lpszPATH);
@@ -1225,7 +1225,7 @@ static BOOL WINAPI SHLWAPI_PathFindInOtherDirs(LPWSTR lpszFile, DWORD dwWhich)
  *  Success: TRUE. The path to the executable is stored in lpszFile.
  *  Failure: FALSE. The path to the executable is unchanged.
  */
-BOOL WINAPI SHLWAPI_5(LPSTR lpszFile,LPCSTR *lppszOtherDirs,DWORD dwWhich)
+BOOL WINAPI PathFindOnPathExA(LPSTR lpszFile,LPCSTR *lppszOtherDirs,DWORD dwWhich)
 {
   WCHAR szFile[MAX_PATH];
   WCHAR buff[MAX_PATH];
@@ -1247,7 +1247,7 @@ BOOL WINAPI SHLWAPI_5(LPSTR lpszFile,LPCSTR *lppszOtherDirs,DWORD dwWhich)
     {
       MultiByteToWideChar(0,0,*lpszOtherPath,-1,szOther,MAX_PATH);
       PathCombineW(buff, szOther, szFile);
-      if (SHLWAPI_4(buff, dwWhich))
+      if (PathFileExistsDefExtW(buff, dwWhich))
       {
         WideCharToMultiByte(0,0,buff,-1,lpszFile,MAX_PATH,0,0);
         return TRUE;
@@ -1267,9 +1267,9 @@ BOOL WINAPI SHLWAPI_5(LPSTR lpszFile,LPCSTR *lppszOtherDirs,DWORD dwWhich)
 /*************************************************************************
  * @	[SHLWAPI.6]
  *
- * Unicode version of SHLWAPI_5.
+ * Unicode version of PathFindOnPathExA.
  */
-BOOL WINAPI SHLWAPI_6(LPWSTR lpszFile,LPCWSTR *lppszOtherDirs,DWORD dwWhich)
+BOOL WINAPI PathFindOnPathExW(LPWSTR lpszFile,LPCWSTR *lppszOtherDirs,DWORD dwWhich)
 {
   WCHAR buff[MAX_PATH];
 
@@ -1285,7 +1285,7 @@ BOOL WINAPI SHLWAPI_6(LPWSTR lpszFile,LPCWSTR *lppszOtherDirs,DWORD dwWhich)
     while (lpszOtherPath && *lpszOtherPath && (*lpszOtherPath)[0])
     {
       PathCombineW(buff, *lpszOtherPath, lpszFile);
-      if (SHLWAPI_4(buff, dwWhich))
+      if (PathFileExistsDefExtW(buff, dwWhich))
       {
         strcpyW(lpszFile, buff);
         return TRUE;
@@ -1313,7 +1313,7 @@ BOOL WINAPI SHLWAPI_6(LPWSTR lpszFile,LPCWSTR *lppszOtherDirs,DWORD dwWhich)
 BOOL WINAPI PathFindOnPathA(LPSTR lpszFile, LPCSTR *lppszOtherDirs)
 {
   TRACE("(%s,%p)\n", debugstr_a(lpszFile), lppszOtherDirs);
-  return SHLWAPI_5(lpszFile, lppszOtherDirs, 0);
+  return PathFindOnPathExA(lpszFile, lppszOtherDirs, 0);
  }
 
 /*************************************************************************
@@ -1324,7 +1324,7 @@ BOOL WINAPI PathFindOnPathA(LPSTR lpszFile, LPCSTR *lppszOtherDirs)
 BOOL WINAPI PathFindOnPathW(LPWSTR lpszFile, LPCWSTR *lppszOtherDirs)
 {
   TRACE("(%s,%p)\n", debugstr_w(lpszFile), lppszOtherDirs);
-  return SHLWAPI_6(lpszFile,lppszOtherDirs, 0);
+  return PathFindOnPathExW(lpszFile,lppszOtherDirs, 0);
 }
 
 /*************************************************************************
@@ -3816,7 +3816,7 @@ VOID WINAPI PathUndecorateW(LPWSTR lpszPath)
 }
 
 /*************************************************************************
- * SHLWAPI_440     [SHLWAPI.440]
+ * @     [SHLWAPI.440]
  *
  * Find localised or default web content in "%WINDOWS%\web\".
  *
@@ -3829,7 +3829,7 @@ VOID WINAPI PathUndecorateW(LPWSTR lpszPath)
  *  Success: S_OK. lpszPath contains the full path to the content.
  *  Failure: E_FAIL. The content does not exist or lpszPath is too short.
  */
-HRESULT WINAPI SHLWAPI_440(LPCSTR lpszFile, LPSTR lpszPath, DWORD dwPathLen)
+HRESULT WINAPI SHGetWebFolderFilePathA(LPCSTR lpszFile, LPSTR lpszPath, DWORD dwPathLen)
 {
   WCHAR szFile[MAX_PATH], szPath[MAX_PATH];
   HRESULT hRet;
@@ -3838,17 +3838,17 @@ HRESULT WINAPI SHLWAPI_440(LPCSTR lpszFile, LPSTR lpszPath, DWORD dwPathLen)
 
   MultiByteToWideChar(0, 0, lpszFile, -1, szFile, MAX_PATH);
   szPath[0] = '\0';
-  hRet = SHLWAPI_441(szFile, szPath, dwPathLen);
+  hRet = SHGetWebFolderFilePathW(szFile, szPath, dwPathLen);
   WideCharToMultiByte(0, 0, szPath, -1, lpszPath, dwPathLen, 0, 0);
   return hRet;
 }
 
 /*************************************************************************
- * SHLWAPI_441     [SHLWAPI.441]
+ * @     [SHLWAPI.441]
  *
- * Unicode version of SHLWAPI_440.
+ * Unicode version of SHGetWebFolderFilePathA.
  */
-HRESULT WINAPI SHLWAPI_441(LPCWSTR lpszFile, LPWSTR lpszPath, DWORD dwPathLen)
+HRESULT WINAPI SHGetWebFolderFilePathW(LPCWSTR lpszFile, LPWSTR lpszPath, DWORD dwPathLen)
 {
   static const WCHAR szWeb[] = {'\\','W','e','b','\\','\0'};
   static const WCHAR szWebMui[] = {'m','u','i','\\','%','0','4','x','\\','\0'};

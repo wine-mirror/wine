@@ -40,7 +40,7 @@ typedef const SHLWAPI_CLIST* LPCSHLWAPI_CLIST;
 /* ulId for contained SHLWAPI_CLIST items */
 #define CLIST_ID_CONTAINER (~0UL)
 
-HRESULT WINAPI SHLWAPI_20(LPSHLWAPI_CLIST*,LPCSHLWAPI_CLIST);
+HRESULT WINAPI SHAddDataBlock(LPSHLWAPI_CLIST*,LPCSHLWAPI_CLIST);
 
 /*************************************************************************
  * NextItem
@@ -73,17 +73,17 @@ inline static LPSHLWAPI_CLIST NextItem(LPCSHLWAPI_CLIST lpList)
  *
  *  The exposed API consists of:
  *
- *   SHLWAPI_17() Write a compact list to a stream,
+ *   SHWriteDataBlockList - Write a compact list to a stream,
  *
- *   SHLWAPI_18() Read and create a list from a stream,
+ *   SHReadDataBlockList - Read and create a list from a stream,
  *
- *   SHLWAPI_19() Free a list,
+ *   SHFreeDataBlockList - Free a list,
  *
- *   SHLWAPI_20() Insert a new item into a list,
+ *   SHAddDataBlock - Insert a new item into a list,
  *
- *   SHLWAPI_21() Remove an item from a list,
+ *   SHRemoveDataBlock - Remove an item from a list,
  *
- *   SHLWAPI_22() Find an item in a list.
+ *   SHFindDataBlock - Find an item in a list.
  *
  *  The compact list is stored packed into a memory array. Each element has a
  *  size and an associated ID. Elements must be less than 64k if the list is
@@ -95,7 +95,7 @@ inline static LPSHLWAPI_CLIST NextItem(LPCSHLWAPI_CLIST lpList)
  *
  *  These functions are slow for large objects and long lists.
  */
-HRESULT WINAPI SHLWAPI_17(IStream* lpStream, LPSHLWAPI_CLIST lpList)
+HRESULT WINAPI SHWriteDataBlockList(IStream* lpStream, LPSHLWAPI_CLIST lpList)
 {
   ULONG ulSize;
   HRESULT hRet = E_FAIL;
@@ -149,9 +149,9 @@ HRESULT WINAPI SHLWAPI_17(IStream* lpStream, LPSHLWAPI_CLIST lpList)
  *
  * NOTES
  *  When read from a file, list objects are limited in size to 64k.
- *  See SHLWAPI_17.
+ *  See SHWriteDataBlockList.
  */
-HRESULT WINAPI SHLWAPI_18(IStream* lpStream, LPSHLWAPI_CLIST* lppList)
+HRESULT WINAPI SHReadDataBlockList(IStream* lpStream, LPSHLWAPI_CLIST* lppList)
 {
   SHLWAPI_CLIST bBuff[128]; /* Temporary storage for new list item */
   ULONG ulBuffSize = sizeof(bBuff);
@@ -223,7 +223,7 @@ HRESULT WINAPI SHLWAPI_18(IStream* lpStream, LPSHLWAPI_CLIST* lppList)
       if(FAILED(hRet) || ulRead != ulSize)
         break;
 
-      SHLWAPI_20(lppList, pItem); /* Insert Item */
+      SHAddDataBlock(lppList, pItem); /* Insert Item */
     }
   } while(1);
 
@@ -246,9 +246,9 @@ HRESULT WINAPI SHLWAPI_18(IStream* lpStream, LPSHLWAPI_CLIST* lppList)
  *  Nothing.
  *
  * NOTES
- *  See SHLWAPI_17.
+ *  See SHWriteDataBlockList.
  */
-VOID WINAPI SHLWAPI_19(LPSHLWAPI_CLIST lpList)
+VOID WINAPI SHFreeDataBlockList(LPSHLWAPI_CLIST lpList)
 {
   TRACE("(%p)\n", lpList);
 
@@ -273,9 +273,9 @@ VOID WINAPI SHLWAPI_19(LPSHLWAPI_CLIST lpList)
  *  If the size of the element to be inserted is less than the size of a
  *  SHLWAPI_CLIST node, or the Id for the item is CLIST_ID_CONTAINER,
  *  the call returns S_OK but does not actually add the element.
- *  See SHLWAPI_17.
+ *  See SHWriteDataBlockList.
  */
-HRESULT WINAPI SHLWAPI_20(LPSHLWAPI_CLIST* lppList, LPCSHLWAPI_CLIST lpNewItem)
+HRESULT WINAPI SHAddDataBlock(LPSHLWAPI_CLIST* lppList, LPCSHLWAPI_CLIST lpNewItem)
 {
   LPSHLWAPI_CLIST lpInsertAt = NULL;
   ULONG ulSize;
@@ -365,9 +365,9 @@ HRESULT WINAPI SHLWAPI_20(LPSHLWAPI_CLIST* lppList, LPCSHLWAPI_CLIST lpNewItem)
  *  Failure: FALSE, If any parameters are invalid, or the item was not found.
  *
  * NOTES
- *  See SHLWAPI_17.
+ *  See SHWriteDataBlockList.
  */
-BOOL WINAPI SHLWAPI_21(LPSHLWAPI_CLIST* lppList, ULONG ulId)
+BOOL WINAPI SHRemoveDataBlock(LPSHLWAPI_CLIST* lppList, ULONG ulId)
 {
   LPSHLWAPI_CLIST lpList = 0;
   LPSHLWAPI_CLIST lpItem = NULL;
@@ -435,9 +435,9 @@ BOOL WINAPI SHLWAPI_21(LPSHLWAPI_CLIST* lppList, ULONG ulId)
  *  Failure: NULL
  *
  * NOTES
- *  See SHLWAPI_17.
+ *  See SHWriteDataBlockList.
  */
-LPSHLWAPI_CLIST WINAPI SHLWAPI_22(LPSHLWAPI_CLIST lpList, ULONG ulId)
+LPSHLWAPI_CLIST WINAPI SHFindDataBlock(LPSHLWAPI_CLIST lpList, ULONG ulId)
 {
   TRACE("(%p,%ld)\n", lpList, ulId);
 

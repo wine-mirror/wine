@@ -60,6 +60,8 @@ typedef struct
 {
   ICOM_VFIELD(IQueryAssociations);
   LONG ref;
+  HKEY hkeySource;
+  HKEY hkeyProgID;
 } IQueryAssociationsImpl;
 
 static struct ICOM_VTABLE(IQueryAssociations) IQueryAssociations_vtbl;
@@ -76,6 +78,8 @@ static IQueryAssociations* IQueryAssociations_Constructor(void)
   iface =(IQueryAssociationsImpl*)HeapAlloc(GetProcessHeap(),0,sizeof(IQueryAssociationsImpl));
   iface->lpVtbl = &IQueryAssociations_vtbl;
   iface->ref = 1;
+  iface->hkeySource = NULL;
+  iface->hkeyProgID = NULL;
 
   TRACE("Returning IQueryAssociations* %p\n", iface);
   return (IQueryAssociations*)iface;
@@ -113,7 +117,7 @@ static BOOL SHLWAPI_ParamAToW(LPCSTR lpszParam, LPWSTR lpszBuff, DWORD dwLen,
 }
 
 /*************************************************************************
- * AssocCreate  [SHLWAPI.253]
+ * AssocCreate  [SHLWAPI.@]
  *
  * Create a new IQueryAssociations object.
  *
@@ -156,7 +160,7 @@ HRESULT WINAPI AssocCreate(CLSID clsid, REFIID refiid, void **lpInterface)
 }
 
 /*************************************************************************
- * AssocQueryKeyW  [SHLWAPI.255]
+ * AssocQueryKeyW  [SHLWAPI.@]
  *
  * See AssocQueryKeyA.
  */
@@ -185,7 +189,7 @@ HRESULT WINAPI AssocQueryKeyW(ASSOCF cfFlags, ASSOCKEY assockey, LPCWSTR pszAsso
 }
 
 /*************************************************************************
- * AssocQueryKeyA  [SHLWAPI.254]
+ * AssocQueryKeyA  [SHLWAPI.@]
  *
  * Get a file association key from the registry.
  *
@@ -226,7 +230,7 @@ HRESULT WINAPI AssocQueryKeyA(ASSOCF cfFlags, ASSOCKEY assockey, LPCSTR pszAssoc
 }
 
 /*************************************************************************
- * AssocQueryStringW  [SHLWAPI.384]
+ * AssocQueryStringW  [SHLWAPI.@]
  *
  * See AssocQueryStringA.
  */
@@ -259,7 +263,7 @@ HRESULT WINAPI AssocQueryStringW(ASSOCF cfFlags, ASSOCSTR str, LPCWSTR pszAssoc,
 }
 
 /*************************************************************************
- * AssocQueryStringA  [SHLWAPI.381]
+ * AssocQueryStringA  [SHLWAPI.@]
  *
  * Get a file association string from the registry.
  *
@@ -321,7 +325,7 @@ HRESULT WINAPI AssocQueryStringA(ASSOCF cfFlags, ASSOCSTR str, LPCSTR pszAssoc,
 }
 
 /*************************************************************************
- * AssocQueryStringByKeyW  [SHLWAPI.383]
+ * AssocQueryStringByKeyW  [SHLWAPI.@]
  *
  * See AssocQueryStringByKeyA.
  */
@@ -352,7 +356,7 @@ HRESULT WINAPI AssocQueryStringByKeyW(ASSOCF cfFlags, ASSOCSTR str, HKEY hkAssoc
 }
 
 /*************************************************************************
- * AssocQueryStringByKeyA  [SHLWAPI.382]
+ * AssocQueryStringByKeyA  [SHLWAPI.@]
  *
  * Get a file association string from the registry, given a starting key.
  *
@@ -486,11 +490,11 @@ static ULONG WINAPI IQueryAssociations_fnRelease(IQueryAssociations *iface)
  * Initialise an IQueryAssociations object.
  *
  * PARAMS
- *  iface    [I] IQueryAssociations interface to initialise
- *  cfFlags  [I] ASSOCF_ flags from "shlwapi.h"
- *  pszAssoc [I] String for the root key name, or NULL if hkProgid is given
- *  hkProgid [I] Handle for the root key, or NULL if pszAssoc is given
- *  hWnd     [I] Reserved, must be NULL.
+ *  iface      [I] IQueryAssociations interface to initialise
+ *  cfFlags    [I] ASSOCF_ flags from "shlwapi.h"
+ *  pszAssoc   [I] String for the root key name, or NULL if hkProgid is given
+ *  hkeyProgid [I] Handle for the root key, or NULL if pszAssoc is given
+ *  hWnd       [I] Reserved, must be NULL.
  *
  * RETURNS
  *  Success: S_OK. iface is initialised with the parameters given.
@@ -500,14 +504,53 @@ static HRESULT WINAPI IQueryAssociations_fnInit(
   IQueryAssociations *iface,
   ASSOCF cfFlags,
   LPCWSTR pszAssoc,
-  HKEY hkProgid,
+  HKEY hkeyProgid,
   HWND hWnd)
 {
-  ICOM_THIS(IQueryAssociationsImpl, iface);
+    static const WCHAR szProgID[] = {'P','r','o','g','I','D',0};
+    ICOM_THIS(IQueryAssociationsImpl,iface);
+    HRESULT hr;
 
-  FIXME("(%p,0x%8lx,%s,%p,%p)-stub!\n", This, cfFlags,
-        debugstr_w(pszAssoc), hkProgid, hWnd);
-  return E_NOTIMPL;
+    TRACE("(%p)->(%ld,%s,%p,%p)\n", iface,
+                                    cfFlags,
+                                    debugstr_w(pszAssoc),
+                                    hkeyProgid,
+                                    hWnd);
+    if (hWnd != NULL)
+        FIXME("hwnd != NULL not supported\n");
+    if (cfFlags != 0)
+    	FIXME("unsupported flags: %lx\n", cfFlags);
+    if (pszAssoc != NULL)
+    {
+        hr = RegOpenKeyExW(HKEY_CLASSES_ROOT,
+                           pszAssoc,
+                           0,
+                           KEY_READ,
+                           &This->hkeySource);
+        if (FAILED(hr))
+            return HRESULT_FROM_WIN32(ERROR_NO_ASSOCIATION);
+        /* if this is not a prog id */
+        if ((*pszAssoc == '.') || (*pszAssoc == '{'))
+        {
+            hr = RegOpenKeyExW(This->hkeySource,
+                               szProgID,
+                               0,
+                               KEY_READ,
+                               &This->hkeyProgID);
+            if (FAILED(hr))
+                FIXME("Don't know what to return\n");
+        }
+        else
+            This->hkeyProgID = This->hkeySource;
+        return S_OK;
+    }
+    else if (hkeyProgid != NULL)
+    {
+        This->hkeyProgID = hkeyProgid;
+        return S_OK;
+    }
+    else
+        return E_FAIL;
 }
 
 /**************************************************************************

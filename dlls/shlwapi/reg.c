@@ -53,8 +53,8 @@ typedef struct {
     WCHAR    key_string[MAX_PATH];     /* additional path from 'start' */
 } Internal_HUSKEY, *LPInternal_HUSKEY;
 
-DWORD   WINAPI SHLWAPI_24(REFGUID,LPWSTR,INT);
-HRESULT WINAPI SHLWAPI_344(REFGUID,LPCWSTR,BOOL,BOOL,PHKEY);
+DWORD   WINAPI SHStringFromGUIDW(REFGUID,LPWSTR,INT);
+HRESULT WINAPI SHRegGetCLSIDKeyW(REFGUID,LPCWSTR,BOOL,BOOL,PHKEY);
 
 
 #define REG_HKCU  TRUE
@@ -1675,7 +1675,7 @@ LONG WINAPI SHEnumValueW(HKEY hKey, DWORD dwIndex, LPWSTR lpszValue,
  *   Failure: An error code from RegOpenKeyExA() or SHQueryValueExA(),
  *            or ERROR_INVALID_FUNCTION in the machine is in safe mode.
  */
-DWORD WINAPI SHLWAPI_205(HKEY hkey, LPCSTR pSubKey, LPCSTR pValue,
+DWORD WINAPI SHGetValueGoodBootA(HKEY hkey, LPCSTR pSubKey, LPCSTR pValue,
                          LPDWORD pwType, LPVOID pvData, LPDWORD pbData)
 {
   if (GetSystemMetrics(SM_CLEANBOOT))
@@ -1686,9 +1686,9 @@ DWORD WINAPI SHLWAPI_205(HKEY hkey, LPCSTR pSubKey, LPCSTR pValue,
 /*************************************************************************
  * @   [SHLWAPI.206]
  *
- * Unicode version of SHLWAPI_205.
+ * Unicode version of SHGetValueGoodBootW.
  */
-DWORD WINAPI SHLWAPI_206(HKEY hkey, LPCWSTR pSubKey, LPCWSTR pValue,
+DWORD WINAPI SHGetValueGoodBootW(HKEY hkey, LPCWSTR pSubKey, LPCWSTR pValue,
                          LPDWORD pwType, LPVOID pvData, LPDWORD pbData)
 {
   if (GetSystemMetrics(SM_CLEANBOOT))
@@ -1709,7 +1709,7 @@ DWORD WINAPI SHLWAPI_206(HKEY hkey, LPCWSTR pSubKey, LPCWSTR pValue,
  *   Success: TRUE
  *   Failure: FALSE
  */
-BOOL WINAPI SHLWAPI_320(LPCSTR lpszSubKey, LPCSTR lpszValue)
+BOOL WINAPI RegisterMIMETypeForExtensionA(LPCSTR lpszSubKey, LPCSTR lpszValue)
 {
   DWORD dwRet;
 
@@ -1727,9 +1727,9 @@ BOOL WINAPI SHLWAPI_320(LPCSTR lpszSubKey, LPCSTR lpszValue)
 /*************************************************************************
  * @   [SHLWAPI.321]
  *
- * Unicode version of SHLWAPI_320.
+ * Unicode version of RegisterMIMETypeForExtensionA.
  */
-BOOL WINAPI SHLWAPI_321(LPCWSTR lpszSubKey, LPCWSTR lpszValue)
+BOOL WINAPI RegisterMIMETypeForExtensionW(LPCWSTR lpszSubKey, LPCWSTR lpszValue)
 {
   DWORD dwRet;
 
@@ -1756,7 +1756,7 @@ BOOL WINAPI SHLWAPI_321(LPCWSTR lpszSubKey, LPCWSTR lpszValue)
  *   Success: TRUE
  *   Failure: FALSE
  */
-BOOL WINAPI SHLWAPI_322(LPCSTR lpszSubKey)
+BOOL WINAPI UnregisterMIMETypeForExtensionA(LPCSTR lpszSubKey)
 {
   HRESULT ret = SHDeleteValueA(HKEY_CLASSES_ROOT, lpszSubKey, lpszContentTypeA);
   return ret ? FALSE : TRUE;
@@ -1765,9 +1765,9 @@ BOOL WINAPI SHLWAPI_322(LPCSTR lpszSubKey)
 /*************************************************************************
  * @   [SHLWAPI.323]
  *
- * Unicode version of SHLWAPI_322.
+ * Unicode version of UnregisterMIMETypeForExtensionA.
  */
-BOOL WINAPI SHLWAPI_323(LPCWSTR lpszSubKey)
+BOOL WINAPI UnregisterMIMETypeForExtensionW(LPCWSTR lpszSubKey)
 {
   HRESULT ret = SHDeleteValueW(HKEY_CLASSES_ROOT, lpszSubKey, lpszContentTypeW);
   return ret ? FALSE : TRUE;
@@ -1790,7 +1790,7 @@ BOOL WINAPI SHLWAPI_323(LPCWSTR lpszSubKey)
  * NOTES
  *   The base path for the key is "MIME\Database\Content Type\"
  */
-BOOL WINAPI SHLWAPI_328(LPCSTR lpszType, LPSTR lpszBuffer, DWORD dwLen)
+BOOL WINAPI GetMIMETypeSubKeyA(LPCSTR lpszType, LPSTR lpszBuffer, DWORD dwLen)
 {
   TRACE("(%s,%p,%ld)\n", debugstr_a(lpszType), lpszBuffer, dwLen);
 
@@ -1811,9 +1811,9 @@ BOOL WINAPI SHLWAPI_328(LPCSTR lpszType, LPSTR lpszBuffer, DWORD dwLen)
 /*************************************************************************
  * @   [SHLWAPI.329]
  *
- * Unicode version of SHLWAPI_328.
+ * Unicode version of GetMIMETypeSubKeyA.
  */
-BOOL WINAPI SHLWAPI_329(LPCWSTR lpszType, LPWSTR lpszBuffer, DWORD dwLen)
+BOOL WINAPI GetMIMETypeSubKeyW(LPCWSTR lpszType, LPWSTR lpszBuffer, DWORD dwLen)
 {
   TRACE("(%s,%p,%ld)\n", debugstr_w(lpszType), lpszBuffer, dwLen);
 
@@ -1844,14 +1844,14 @@ BOOL WINAPI SHLWAPI_329(LPCWSTR lpszType, LPWSTR lpszBuffer, DWORD dwLen)
  *   Success: TRUE. The file extension is set in the registry.
  *   Failure: FALSE.
  */
-BOOL WINAPI SHLWAPI_324(LPCSTR lpszExt, LPCSTR lpszType)
+BOOL WINAPI RegisterExtensionForMIMETypeA(LPCSTR lpszExt, LPCSTR lpszType)
 {
   DWORD dwLen;
   char szKey[MAX_PATH];
 
   TRACE("(%s,%s)\n", debugstr_a(lpszExt), debugstr_a(lpszType));
 
-  if (!SHLWAPI_328(lpszType, szKey, MAX_PATH)) /* Get full path to the key */
+  if (!GetMIMETypeSubKeyA(lpszType, szKey, MAX_PATH)) /* Get full path to the key */
     return FALSE;
 
   dwLen = strlen(lpszExt) + 1;
@@ -1864,9 +1864,9 @@ BOOL WINAPI SHLWAPI_324(LPCSTR lpszExt, LPCSTR lpszType)
 /*************************************************************************
  * @   [SHLWAPI.325]
  *
- * Unicode version of SHLWAPI_324.
+ * Unicode version of RegisterExtensionForMIMETypeA.
  */
-BOOL WINAPI SHLWAPI_325(LPCWSTR lpszExt, LPCWSTR lpszType)
+BOOL WINAPI RegisterExtensionForMIMETypeW(LPCWSTR lpszExt, LPCWSTR lpszType)
 {
   DWORD dwLen;
   WCHAR szKey[MAX_PATH];
@@ -1874,7 +1874,7 @@ BOOL WINAPI SHLWAPI_325(LPCWSTR lpszExt, LPCWSTR lpszType)
   TRACE("(%s,%s)\n", debugstr_w(lpszExt), debugstr_w(lpszType));
 
   /* Get the full path to the key */
-  if (!SHLWAPI_329(lpszType, szKey, MAX_PATH)) /* Get full path to the key */
+  if (!GetMIMETypeSubKeyW(lpszType, szKey, MAX_PATH)) /* Get full path to the key */
     return FALSE;
 
   dwLen = (lstrlenW(lpszExt) + 1) * sizeof(WCHAR);
@@ -1899,13 +1899,13 @@ BOOL WINAPI SHLWAPI_325(LPCWSTR lpszExt, LPCWSTR lpszType)
  * NOTES
  *   If deleting the extension leaves an orphan key, the key is removed also.
  */
-BOOL WINAPI SHLWAPI_326(LPCSTR lpszType)
+BOOL WINAPI UnregisterExtensionForMIMETypeA(LPCSTR lpszType)
 {
   char szKey[MAX_PATH];
 
   TRACE("(%s)\n", debugstr_a(lpszType));
 
-  if (!SHLWAPI_328(lpszType, szKey, MAX_PATH)) /* Get full path to the key */
+  if (!GetMIMETypeSubKeyA(lpszType, szKey, MAX_PATH)) /* Get full path to the key */
     return FALSE;
 
   if (!SHDeleteValueA(HKEY_CLASSES_ROOT, szKey, szExtensionA))
@@ -1919,15 +1919,15 @@ BOOL WINAPI SHLWAPI_326(LPCSTR lpszType)
 /*************************************************************************
  * @   [SHLWAPI.327]
  *
- * Unicode version of SHLWAPI_326.
+ * Unicode version of UnregisterExtensionForMIMETypeA.
  */
-BOOL WINAPI SHLWAPI_327(LPCWSTR lpszType)
+BOOL WINAPI UnregisterExtensionForMIMETypeW(LPCWSTR lpszType)
 {
   WCHAR szKey[MAX_PATH];
 
   TRACE("(%s)\n", debugstr_w(lpszType));
 
-  if (!SHLWAPI_329(lpszType, szKey, MAX_PATH)) /* Get full path to the key */
+  if (!GetMIMETypeSubKeyW(lpszType, szKey, MAX_PATH)) /* Get full path to the key */
     return FALSE;
 
   if (!SHDeleteValueW(HKEY_CLASSES_ROOT, szKey, szExtensionW))
@@ -2096,7 +2096,7 @@ DWORD WINAPI SHCopyKeyW(HKEY hKeyDst, LPCWSTR lpszSubKey, HKEY hKeySrc, DWORD dw
  */
 
 /*************************************************************************
- *      SHLWAPI_280     [SHLWAPI.280]
+ *      @     [SHLWAPI.280]
  *
  * Read an integer value from the registry, falling back to a default.
  *
@@ -2109,7 +2109,7 @@ DWORD WINAPI SHCopyKeyW(HKEY hKeyDst, LPCWSTR lpszSubKey, HKEY hKeySrc, DWORD dw
  *  The value contained in the given registry value if present, otherwise
  *  iDefault.
  */
-int WINAPI SHLWAPI_280(HKEY hKey, LPCWSTR lpszValue, int iDefault)
+int WINAPI SHRegGetIntW(HKEY hKey, LPCWSTR lpszValue, int iDefault)
 {
   TRACE("(%p,%s,%d)", hKey, debugstr_w(lpszValue), iDefault);
 
@@ -2127,7 +2127,7 @@ int WINAPI SHLWAPI_280(HKEY hKey, LPCWSTR lpszValue, int iDefault)
 }
 
 /*************************************************************************
- *      SHLWAPI_343	[SHLWAPI.343]
+ *      @	[SHLWAPI.343]
  *
  * Create or open an explorer ClassId Key.
  *
@@ -2142,22 +2142,22 @@ int WINAPI SHLWAPI_280(HKEY hKey, LPCWSTR lpszValue, int iDefault)
  *  Success: S_OK. phKey contains the resulting registry handle.
  *  Failure: An HRESULT error code indicating the problem.
  */
-HRESULT WINAPI SHLWAPI_343(REFGUID guid, LPCSTR lpszValue, BOOL bUseHKCU, BOOL bCreate, PHKEY phKey)
+HRESULT WINAPI SHRegGetCLSIDKeyA(REFGUID guid, LPCSTR lpszValue, BOOL bUseHKCU, BOOL bCreate, PHKEY phKey)
 {
   WCHAR szValue[MAX_PATH];
 
   if (lpszValue)
     MultiByteToWideChar(CP_ACP, 0, lpszValue, -1, szValue, sizeof(szValue)/sizeof(WCHAR));
 
-  return SHLWAPI_344(guid, lpszValue ? szValue : NULL, bUseHKCU, bCreate, phKey);
+  return SHRegGetCLSIDKeyW(guid, lpszValue ? szValue : NULL, bUseHKCU, bCreate, phKey);
 }
 
 /*************************************************************************
- *      SHLWAPI_344	[SHLWAPI.344]
+ *      @	[SHLWAPI.344]
  *
- * Unicode version of SHLWAPI_343.
+ * Unicode version of SHRegGetCLSIDKeyA.
  */
-HRESULT WINAPI SHLWAPI_344(REFGUID guid, LPCWSTR lpszValue, BOOL bUseHKCU,
+HRESULT WINAPI SHRegGetCLSIDKeyW(REFGUID guid, LPCWSTR lpszValue, BOOL bUseHKCU,
                            BOOL bCreate, PHKEY phKey)
 {
   static const WCHAR szClassIdKey[] = { 'S','o','f','t','w','a','r','e','\\',
@@ -2171,7 +2171,7 @@ HRESULT WINAPI SHLWAPI_344(REFGUID guid, LPCWSTR lpszValue, BOOL bUseHKCU,
 
   /* Create the key string */
   memcpy(szKey, szClassIdKey, sizeof(szClassIdKey));
-  SHLWAPI_24(guid, szKey + szClassIdKeyLen, 39); /* Append guid */
+  SHStringFromGUIDW(guid, szKey + szClassIdKeyLen, 39); /* Append guid */
 
   if(lpszValue)
   {

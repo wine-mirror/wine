@@ -485,7 +485,7 @@ IStream * WINAPI SHOpenRegStreamW(HKEY hkey, LPCWSTR pszSubkey,
  *  A copy of the memory pointed to by lpbData is made, and is freed
  *  when the stream is released.
  */
-IStream * WINAPI SHLWAPI_12(LPBYTE lpbData, DWORD dwDataLen)
+IStream * WINAPI SHCreateMemStream(LPBYTE lpbData, DWORD dwDataLen)
 {
   IStream *iStrmRet = NULL;
 

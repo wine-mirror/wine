@@ -557,7 +557,7 @@ HRESULT WINAPI SHLWAPI_184(IStream *lpStream, LPVOID lpvDest, ULONG ulSize)
  *  TRUE:  If the stream has 0 length
  *  FALSE: Otherwise.
  */
-BOOL WINAPI SHLWAPI_166(IStream *lpStream)
+BOOL WINAPI SHIsEmptyStream(IStream *lpStream)
 {
   STATSTG statstg;
   BOOL bRet = TRUE;
@@ -630,7 +630,7 @@ HRESULT WINAPI SHLWAPI_212(IStream *lpStream, LPCVOID lpvSrc, ULONG ulSize)
  *  Success: S_OK. The current position within the stream is updated
  *  Failure: An HRESULT error code.
  */
-HRESULT WINAPI SHLWAPI_213(IStream *lpStream)
+HRESULT WINAPI IStream_Reset(IStream *lpStream)
 {
   LARGE_INTEGER zero;
   TRACE("(%p)\n", lpStream);
@@ -651,7 +651,7 @@ HRESULT WINAPI SHLWAPI_213(IStream *lpStream)
  *  Success: S_OK. lpulSize contains the size of the stream.
  *  Failure: An HRESULT error code.
  */
-HRESULT WINAPI SHLWAPI_214(IStream *lpStream, ULARGE_INTEGER* lpulSize)
+HRESULT WINAPI IStream_Size(IStream *lpStream, ULARGE_INTEGER* lpulSize)
 {
   STATSTG statstg;
   HRESULT hRet;

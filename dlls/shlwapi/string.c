@@ -2076,7 +2076,7 @@ BOOL WINAPI StrIsIntlEqualW(BOOL bCase, LPCWSTR lpszStr, LPCWSTR lpszComp,
  *  Success: A pointer to the last character written.
  *  Failure: lpszDest, if any arguments are invalid.
  */
-LPSTR WINAPI SHLWAPI_399(LPSTR lpszDest, LPCSTR lpszSrc, int iLen)
+LPSTR WINAPI StrCpyNXA(LPSTR lpszDest, LPCSTR lpszSrc, int iLen)
 {
   TRACE("(%p,%s,%i)\n", lpszDest, debugstr_a(lpszSrc), iLen);
 
@@ -2093,9 +2093,9 @@ LPSTR WINAPI SHLWAPI_399(LPSTR lpszDest, LPCSTR lpszSrc, int iLen)
 /*************************************************************************
  * @    [SHLWAPI.400]
  *
- * Unicode version of SHLWAPI_399.
+ * Unicode version of StrCpyNXA.
  */
-LPWSTR WINAPI SHLWAPI_400(LPWSTR lpszDest, LPCWSTR lpszSrc, int iLen)
+LPWSTR WINAPI StrCpyNXW(LPWSTR lpszDest, LPCWSTR lpszSrc, int iLen)
 {
   TRACE("(%p,%s,%i)\n", lpszDest, debugstr_w(lpszSrc), iLen);
 
@@ -2325,7 +2325,7 @@ LPSTR WINAPI StrFormatByteSizeA(DWORD dwBytes, LPSTR lpszDest, UINT cchMax)
 }
 
 /*************************************************************************
- *      SHLWAPI_203	[SHLWAPI.203]
+ *      @	[SHLWAPI.203]
  *
  * Remove a single non-trailing ampersand ('&') from a string.
  *
@@ -2336,7 +2336,7 @@ LPSTR WINAPI StrFormatByteSizeA(DWORD dwBytes, LPSTR lpszDest, UINT cchMax)
  *  The character after the first ampersand in lpszStr, or the first character
  *  in lpszStr if there is no ampersand in the string.
  */
-char WINAPI SHLWAPI_203(LPCSTR lpszStr)
+char WINAPI SHStripMneumonicA(LPCSTR lpszStr)
 {
   LPSTR lpszIter, lpszTmp;
   char ch;

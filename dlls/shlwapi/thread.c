@@ -51,7 +51,7 @@ static HRESULT (WINAPI *pSHGetInstanceExplorer)(IUnknown**);
 
 extern DWORD SHLWAPI_ThreadRef_index;  /* Initialised in shlwapi_main.c */
 
-DWORD WINAPI SHLWAPI_23(REFGUID,LPSTR,INT);
+DWORD WINAPI SHStringFromGUIDA(REFGUID,LPSTR,INT);
 
 /**************************************************************************
  *      _CreateAllAccessSecurityAttributes       [SHLWAPI.356]
@@ -475,6 +475,6 @@ HANDLE WINAPI _SHGlobalCounterCreate (REFGUID guid)
   TRACE("(%s)\n", debugstr_guid(guid));
 
   /* Create a named semaphore using the GUID string */
-  SHLWAPI_23(guid, szName, sizeof(szName) - 1);
+  SHStringFromGUIDA(guid, szName, sizeof(szName) - 1);
   return _SHGlobalCounterCreateNamedA(szName, 0);
 }
