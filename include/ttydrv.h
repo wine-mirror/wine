@@ -7,7 +7,7 @@
 
 #include "windef.h"
 #include "wingdi.h"
-#include "wine/winuser16.h"
+#include "wine/wingdi16.h"
 
 struct tagBITMAPOBJ;
 struct tagCLASS;
@@ -15,6 +15,9 @@ struct tagDC;
 struct tagDESKTOP;
 struct tagPALETTEOBJ;
 struct tagWND;
+struct tagCURSORICONINFO;
+struct tagCREATESTRUCTA;
+struct tagWINDOWPOS;
 
 /**************************************************************************
  * TTY GDI driver
@@ -139,7 +142,7 @@ extern void TTYDRV_MONITOR_SetScreenSaveTimeout(struct tagMONITOR *pMonitor, int
 
 extern struct tagMOUSE_DRIVER TTYDRV_MOUSE_Driver;
 
-extern void TTYDRV_MOUSE_SetCursor(CURSORICONINFO *lpCursor);
+extern void TTYDRV_MOUSE_SetCursor(struct tagCURSORICONINFO *lpCursor);
 extern void TTYDRV_MOUSE_MoveCursor(WORD wAbsX, WORD wAbsY);
 extern BOOL TTYDRV_MOUSE_EnableWarpPointer(BOOL bEnable);
 
@@ -150,11 +153,11 @@ extern struct tagWND_DRIVER TTYDRV_WND_Driver;
 extern void TTYDRV_WND_Initialize(struct tagWND *wndPtr);
 extern void TTYDRV_WND_Finalize(struct tagWND *wndPtr);
 extern BOOL TTYDRV_WND_CreateDesktopWindow(struct tagWND *wndPtr, struct tagCLASS *classPtr, BOOL bUnicode);
-extern BOOL TTYDRV_WND_CreateWindow(struct tagWND *wndPtr, struct tagCLASS *classPtr, CREATESTRUCTA *cs, BOOL bUnicode);
+extern BOOL TTYDRV_WND_CreateWindow(struct tagWND *wndPtr, struct tagCLASS *classPtr, struct tagCREATESTRUCTA *cs, BOOL bUnicode);
 extern BOOL TTYDRV_WND_DestroyWindow(struct tagWND *pWnd);
 extern struct tagWND *TTYDRV_WND_SetParent(struct tagWND *wndPtr, struct tagWND *pWndParent);
 extern void TTYDRV_WND_ForceWindowRaise(struct tagWND *pWnd);
-extern void TTYDRV_WND_SetWindowPos(struct tagWND *wndPtr, const WINDOWPOS *winpos, BOOL bSMC_SETXPOS);
+extern void TTYDRV_WND_SetWindowPos(struct tagWND *wndPtr, const struct tagWINDOWPOS *winpos, BOOL bSMC_SETXPOS);
 extern void TTYDRV_WND_SetText(struct tagWND *wndPtr, LPCSTR text);
 extern void TTYDRV_WND_SetFocus(struct tagWND *wndPtr);
 extern void TTYDRV_WND_PreSizeMove(struct tagWND *wndPtr);

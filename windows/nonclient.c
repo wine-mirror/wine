@@ -5,6 +5,7 @@
  *
  */
 
+#include "wine/winuser16.h"
 #include "version.h"
 #include "win.h"
 #include "message.h"

@@ -9,7 +9,7 @@
 /***********************************************************************
  *		TTYDRV_MOUSE_SetCursor
  */
-void TTYDRV_MOUSE_SetCursor( CURSORICONINFO *lpCursor )
+void TTYDRV_MOUSE_SetCursor( struct tagCURSORICONINFO *lpCursor )
 {
 }
 

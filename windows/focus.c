@@ -7,6 +7,7 @@
  *
  */
 
+#include "wine/winuser16.h"
 #include "win.h"
 #include "winpos.h"
 #include "hook.h"

@@ -6,6 +6,7 @@
  */
 
 #include <string.h>
+#include "wine/winuser16.h"
 #include "sysmetrics.h"
 #include "heap.h"
 #include "module.h"

@@ -27,7 +27,7 @@ WORD WINAPI DISPLAY_Inquire(LPCURSORINFO lpCursorInfo)
 /***********************************************************************
  *           DISPLAY_SetCursor			(DISPLAY.102)
  */
-VOID WINAPI DISPLAY_SetCursor( CURSORICONINFO *lpCursor )
+VOID WINAPI DISPLAY_SetCursor( struct tagCURSORICONINFO *lpCursor )
 {
    MOUSE_Driver->pSetCursor(lpCursor);
 }
