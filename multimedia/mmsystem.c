@@ -2062,7 +2062,7 @@ int	MCI_UnMapMsg16To32A(WORD uDevTyp, WORD wMsg, DWORD lParam)
 	    
 	    mop16->wDeviceID = mop32a->wDeviceID;
 	}
-	HeapFree(SystemHeap, 0, (LPVOID)lParam);
+	HeapFree(SystemHeap, 0, (LPVOID)(lParam - sizeof(LPMCI_OPEN_PARMS16)));
 	return 0;
     default:
 	FIXME(mci, "Map/Unmap internal error on msg=%s\n", MCI_CommandToString(wMsg));
