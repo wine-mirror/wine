@@ -282,17 +282,6 @@ static inline void *wld_memset( void *dest, int val, size_t len )
     return dest;
 }
 
-static inline void *wld_memmove( void *dest, const void *src, size_t len )
-{
-    const char *s = src;
-    char *d = dest;
-    int i;
-
-    if (d < s) for (i = 0; i < len; i++) d[i] = s[i];
-    else for (i = len - 1; i >= 0; i--) d[i] = s[i];
-    return dest;
-}
-
 /*
  * wld_printf - just the basics
  *
@@ -377,6 +366,8 @@ static void dump_auxiliary( ElfW(auxv_t) *av )
         NAME(AT_PHENT),
         NAME(AT_PHNUM),
         NAME(AT_PLATFORM),
+        NAME(AT_SYSINFO),
+        NAME(AT_SYSINFO_EHDR),
         NAME(AT_UID),
         { 0, NULL }
     };
@@ -398,12 +389,27 @@ static void dump_auxiliary( ElfW(auxv_t) *av )
  *
  * Set the new auxiliary values
  */
-static void set_auxiliary_values( ElfW(auxv_t) *av, const ElfW(auxv_t) *new_av, void **stack )
+static void set_auxiliary_values( ElfW(auxv_t) *av, const ElfW(auxv_t) *new_av,
+                                  const ElfW(auxv_t) *delete_av, void **stack )
 {
-    int i, j, av_count = 0, new_count = 0;
+    int i, j, av_count = 0, new_count = 0, delete_count = 0;
+    char *src, *dst;
 
     /* count how many aux values we have already */
     while (av[av_count].a_type != AT_NULL) av_count++;
+
+    /* delete unwanted values */
+    for (j = 0; delete_av[j].a_type != AT_NULL; j++)
+    {
+        for (i = 0; i < av_count; i++) if (av[i].a_type == delete_av[j].a_type)
+        {
+            av[i].a_type = av[av_count-1].a_type;
+            av[i].a_un.a_val = av[av_count-1].a_un.a_val;
+            av[--av_count].a_type = AT_NULL;
+            delete_count++;
+            break;
+        }
+    }
 
     /* count how many values we have in new_av that aren't in av */
     for (j = 0; new_av[j].a_type != AT_NULL; j++)
@@ -412,13 +418,20 @@ static void set_auxiliary_values( ElfW(auxv_t) *av, const ElfW(auxv_t) *new_av, 
         if (i == av_count) new_count++;
     }
 
-    if (new_count)  /* need to make room for the extra values */
+    src = (char *)*stack;
+    dst = src - (new_count - delete_count) * sizeof(*av);
+    if (new_count > delete_count)   /* need to make room for the extra values */
     {
-        char *new_stack = (char *)*stack - new_count * sizeof(*av);
-        wld_memmove( new_stack, *stack, (char *)(av + av_count) - (char *)*stack );
-        *stack = new_stack;
-        av -= new_count;
+        int len = (char *)(av + av_count + 1) - src;
+        for (i = 0; i < len; i++) dst[i] = src[i];
     }
+    else if (new_count < delete_count)  /* get rid of unused values */
+    {
+        int len = (char *)(av + av_count + 1) - dst;
+        for (i = len - 1; i >= 0; i--) dst[i] = src[i];
+    }
+    *stack = dst;
+    av -= (new_count - delete_count);
 
     /* now set the values */
     for (j = 0; new_av[j].a_type != AT_NULL; j++)
@@ -803,6 +816,28 @@ error:
     fatal_error( "invalid WINEPRELOADRESERVE value '%s'\n", str );
 }
 
+/*
+ *  is_in_preload_range
+ *
+ * Check if address of the given aux value is in one of the reserved ranges
+ */
+static int is_in_preload_range( const ElfW(auxv_t) *av, int type )
+{
+    int i;
+
+    while (av->a_type != type && av->a_type != AT_NULL) av++;
+
+    if (av->a_type == type)
+    {
+        for (i = 0; preload_info[i].size; i++)
+        {
+            if ((char *)av->a_un.a_ptr >= (char *)preload_info[i].addr &&
+                (char *)av->a_un.a_ptr < (char *)preload_info[i].addr + preload_info[i].size)
+                return 1;
+        }
+    }
+    return 0;
+}
 
 /*
  *  wld_start
@@ -816,7 +851,7 @@ void* wld_start( void **stack )
     int i, *pargc;
     char **argv, **p;
     char *interp, *reserve = NULL;
-    ElfW(auxv_t) new_av[11], *av;
+    ElfW(auxv_t) new_av[12], delete_av[3], *av;
     struct wld_link_map main_binary_map, ld_so_map;
     struct wine_preload_info **wine_main_preload_info;
 
@@ -879,13 +914,20 @@ void* wld_start( void **stack )
     SET_NEW_AV( 8, AT_EUID, get_auxiliary( av, AT_EUID, wld_geteuid() ) );
     SET_NEW_AV( 9, AT_GID, get_auxiliary( av, AT_GID, wld_getgid() ) );
     SET_NEW_AV(10, AT_EGID, get_auxiliary( av, AT_EGID, wld_getegid() ) );
+    SET_NEW_AV(11, AT_NULL, 0 );
 #undef SET_NEW_AV
+
+    i = 0;
+    /* delete sysinfo values if addresses conflict */
+    if (is_in_preload_range( av, AT_SYSINFO )) delete_av[i++].a_type = AT_SYSINFO;
+    if (is_in_preload_range( av, AT_SYSINFO_EHDR )) delete_av[i++].a_type = AT_SYSINFO_EHDR;
+    delete_av[i].a_type = AT_NULL;
 
     /* get rid of first argument */
     pargc[1] = pargc[0] - 1;
     *stack = pargc + 1;
 
-    set_auxiliary_values( av, new_av, stack );
+    set_auxiliary_values( av, new_av, delete_av, stack );
 
 #ifdef DUMP_AUX_INFO
     wld_printf("new stack = %x\n", *stack);
