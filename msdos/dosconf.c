@@ -208,7 +208,9 @@ static int DOSCONF_Files(char **confline)
 
 static int DOSCONF_Install(char **confline)
 {
+#if 0
     int loadhigh = 0;
+#endif
 
     *confline += 7; /* strlen("INSTALL") */
     if (!(DOSCONF_JumpToEntry(confline, '='))) return 0;

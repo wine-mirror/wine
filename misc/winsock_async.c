@@ -358,7 +358,7 @@ static HANDLE16	__WSAsyncDBQuery(
 	aq->sbuf	= (SEGPTR)sbuf;
 	aq->sbuflen	= sbuflen;
 #if 1
-	hthread = CreateThread(NULL,NULL,_async_queryfun,aq,0,NULL);
+	hthread = CreateThread(NULL,0,_async_queryfun,aq,0,NULL);
 	if (hthread==INVALID_HANDLE_VALUE)
 #endif
 		_async_queryfun(aq);

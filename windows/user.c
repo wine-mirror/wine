@@ -561,7 +561,7 @@ BOOL WINAPI GetUserObjectSecurity(HANDLE hObj, SECURITY_INFORMATION * pSIRequest
  *           SetSystemCursor   (USER32.507)
  */
 BOOL WINAPI SetSystemCursor(HCURSOR hcur, DWORD id)
-{	FIXME(win32,"(%08x,%08x),stub!\n",  hcur, id);
+{	FIXME(win32,"(%08x,%08lx),stub!\n",  hcur, id);
 	return TRUE;
 }
 
