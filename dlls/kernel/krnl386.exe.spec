@@ -1,4 +1,3 @@
-name	kernel
 rsrc	version16.res
 
 # 1-207 are the basic functions, those are (with minor variations)
