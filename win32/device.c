@@ -37,6 +37,7 @@
 #include "stackframe.h"
 #include "server.h"
 #include "debugtools.h"
+#include "global.h"
 
 DEFAULT_DEBUG_CHANNEL(win32)
 
@@ -248,7 +249,7 @@ LPCSTR VMM_Service_Name[N_VMM_SERVICE] =
     "PageFree",               /* 0x000A */
     "ContextSwitch",          /* 0x000B */
     "HeapReAllocate",         /* 0x000C */
-    "PageModifyPerm",         /* 0x000D */
+    "PageModifyPermissions",  /* 0x000D */
     "PageQuery",              /* 0x000E */
     "GetCurrentContext",      /* 0x000F */
     "HeapFree",               /* 0x0010 */
@@ -277,6 +278,42 @@ LPCSTR VMM_Service_Name[N_VMM_SERVICE] =
     "RegReplaceKey",          /* 0x0027 */
     "<KERNEL32.101>"          /* 0x0028 -- What does this do??? */
 };
+
+/* PageReserve arena values */
+#define PR_PRIVATE  0x80000400	/* anywhere in private arena */
+#define PR_SHARED   0x80060000	/* anywhere in shared arena */
+#define PR_SYSTEM   0x80080000	/* anywhere in system arena */
+
+/* PageReserve flags */
+#define PR_FIXED    0x00000008	/* don't move during PageReAllocate */
+#define PR_4MEG     0x00000001	/* allocate on 4mb boundary */
+#define PR_STATIC   0x00000010	/* see PageReserve documentation */
+
+/* PageCommit default pager handle values */
+#define PD_ZEROINIT 0x00000001	/* swappable zero-initialized pages */
+#define PD_NOINIT   0x00000002	/* swappable uninitialized pages */
+#define PD_FIXEDZERO	0x00000003  /* fixed zero-initialized pages */
+#define PD_FIXED    0x00000004	/* fixed uninitialized pages */
+
+/* PageCommit flags */
+#define PC_FIXED    0x00000008	/* pages are permanently locked */
+#define PC_LOCKED   0x00000080	/* pages are made present and locked*/
+#define PC_LOCKEDIFDP	0x00000100  /* pages are locked if swap via DOS */
+#define PC_WRITEABLE	0x00020000  /* make the pages writeable */
+#define PC_USER     0x00040000	/* make the pages ring 3 accessible */
+#define PC_INCR     0x40000000	/* increment "pagerdata" each page */
+#define PC_PRESENT  0x80000000	/* make pages initially present */
+#define PC_STATIC   0x20000000	/* allow commit in PR_STATIC object */
+#define PC_DIRTY    0x08000000	/* make pages initially dirty */
+#define PC_CACHEDIS 0x00100000  /* Allocate uncached pages - new for WDM */
+#define PC_CACHEWT  0x00080000  /* Allocate write through cache pages - new for WDM */
+#define PC_PAGEFLUSH 0x00008000 /* Touch device mapped pages on alloc - new for WDM */
+
+/* PageCommitContig additional flags */
+#define PCC_ZEROINIT	0x00000001  /* zero-initialize new pages */
+#define PCC_NOLIN   0x10000000	/* don't map to any linear address */
+
+
 
 HANDLE DEVICE_Open( LPCSTR filename, DWORD access,
                       LPSECURITY_ATTRIBUTES sa )
@@ -628,6 +665,153 @@ static DWORD VxDCall_VMM( DWORD service, CONTEXT86 *context )
         LPCSTR  lpszOldFile= (LPCSTR)stack32_pop( context );
         return RegReplaceKeyA( hkey, lpszSubKey, lpszNewFile, lpszOldFile );
     }
+    case 0x0000: /* PageReserve */
+      {
+	LPVOID address;
+	LPVOID ret;
+	DWORD psize = VIRTUAL_GetPageSize();
+	ULONG page   = (ULONG) stack32_pop( context );
+	ULONG npages = (ULONG) stack32_pop( context );
+	ULONG flags  = (ULONG) stack32_pop( context );
+
+	FIXME("PageReserve: page: %08lx, npages: %08lx, flags: %08lx partial stub!\n",
+	      page, npages, flags );
+
+	if ( page == PR_SYSTEM ) {
+	  ERR("Can't reserve ring 1 memory\n");
+	  return -1;
+	}
+	/* FIXME: This has to be handled seperatly, when we have seperate
+	   address-spaces */
+	if ( page == PR_PRIVATE || page == PR_SHARED ) page = 0;
+	/* FIXME: Handle flags in some way */
+	address = (LPVOID )(page * psize); 
+	ret = VirtualAlloc ( address, ( npages * psize ), MEM_RESERVE, 0 );
+	FIXME("PageReserve: returning: %08lx\n", (DWORD )ret );
+	if ( ret == NULL )
+	  return -1;
+	else
+	  return (DWORD )ret;
+      }
+
+    case 0x0001: /* PageCommit */
+      {
+	LPVOID address;
+	LPVOID ret;
+	DWORD virt_perm;
+	DWORD psize = VIRTUAL_GetPageSize();
+	ULONG page   = (ULONG) stack32_pop( context );
+	ULONG npages = (ULONG) stack32_pop( context );
+	ULONG hpd  = (ULONG) stack32_pop( context );
+	ULONG pagerdata   = (ULONG) stack32_pop( context );
+	ULONG flags  = (ULONG) stack32_pop( context );
+
+	FIXME("PageCommit: page: %08lx, npages: %08lx, hpd: %08lx pagerdata: "
+	      "%08lx, flags: %08lx partial stub\n",
+	      page, npages, hpd, pagerdata, flags );
+	
+	if ( flags & PC_USER )
+	  if ( flags & PC_WRITEABLE )
+	    virt_perm = PAGE_EXECUTE_READWRITE;
+	  else
+	    virt_perm = PAGE_EXECUTE_READ;
+	else
+	  virt_perm = PAGE_NOACCESS;
+
+	address = (LPVOID )(page * psize); 
+	ret = VirtualAlloc ( address, ( npages * psize ), MEM_COMMIT, virt_perm );
+	FIXME("PageCommit: Returning: %08lx\n", (DWORD )ret );
+	return (DWORD )ret;
+
+      }
+    case 0x0002: /* PageDecommit */
+      {
+	LPVOID address;
+	BOOL ret;
+	DWORD psize = VIRTUAL_GetPageSize();
+	ULONG page = (ULONG) stack32_pop( context );
+	ULONG npages = (ULONG) stack32_pop( context );
+	ULONG flags = (ULONG) stack32_pop( context );
+
+	FIXME("PageDecommit: page: %08lx, npages: %08lx, flags: %08lx partial stub\n",
+	      page, npages, flags );
+	address = (LPVOID )( page * psize );
+	ret = VirtualFree ( address, ( npages * psize ), MEM_DECOMMIT ); 
+	FIXME("PageDecommit: Returning: %s\n", ret ? "TRUE" : "FALSE" );
+	return ret;
+      }
+    case 0x000d: /* PageModifyPermissions */
+      {	
+	DWORD pg_old_perm;
+	DWORD pg_new_perm;
+	DWORD virt_old_perm;
+	DWORD virt_new_perm;
+	MEMORY_BASIC_INFORMATION mbi;
+	LPVOID address;
+	DWORD psize = VIRTUAL_GetPageSize();
+	ULONG page = stack32_pop ( context );
+	ULONG npages = stack32_pop ( context );
+	ULONG permand = stack32_pop ( context );
+	ULONG permor = stack32_pop ( context );
+
+	FIXME("PageModifyPermissions %08lx %08lx %08lx %08lx partial stub\n",
+	      page, npages, permand, permor );
+	address = (LPVOID )( page * psize );
+
+	VirtualQuery ( address, &mbi, sizeof ( MEMORY_BASIC_INFORMATION ));
+	virt_old_perm = mbi.Protect;
+
+	switch ( virt_old_perm & mbi.Protect ) {
+	case PAGE_READONLY:
+	case PAGE_EXECUTE:
+	case PAGE_EXECUTE_READ:
+	  pg_old_perm = PC_USER;
+	  break;
+	case PAGE_READWRITE:
+	case PAGE_WRITECOPY:
+	case PAGE_EXECUTE_READWRITE:
+	case PAGE_EXECUTE_WRITECOPY:
+	  pg_old_perm = PC_USER | PC_WRITEABLE;
+	  break; 
+	case PAGE_NOACCESS:
+	default:
+	  pg_old_perm = 0;
+	  break;
+	}	
+	pg_new_perm = pg_old_perm;
+	pg_new_perm &= permand & ~PC_STATIC;
+	pg_new_perm |= permor  & ~PC_STATIC;
+
+	virt_new_perm = ( virt_old_perm )  & ~0xff;
+	if ( pg_new_perm & PC_USER )
+	  if ( pg_new_perm & PC_WRITEABLE )
+	    virt_new_perm |= PAGE_EXECUTE_READWRITE;
+	  else
+	    virt_new_perm |= PAGE_EXECUTE_READ;
+  
+	if ( ! VirtualProtect ( address, ( npages * psize ), virt_new_perm, &virt_old_perm ) ) {
+	  ERR("Can't change page permissions for %08lx\n", (DWORD )address );
+	  return 0xffffffff;
+	}
+	FIXME("Returning: %08lx\n", pg_old_perm );
+	return pg_old_perm;
+      }
+    case 0x000a: /* PageFree */
+      {
+	BOOL ret;
+	LPVOID hmem = (LPVOID) stack32_pop( context );
+	DWORD flags = (DWORD ) stack32_pop( context );
+	
+	FIXME("PageFree: hmem: %08lx, flags: %08lx partial stub\n",
+	      (DWORD )hmem, flags );
+
+	ret = VirtualFree ( hmem, 0, MEM_RELEASE );
+	EAX_reg( context ) = ret;
+	FIXME("Returning: %d\n", ret );
+
+	return 0;
+      }
+
 
     default:
         if (LOWORD(service) < N_VMM_SERVICE)
