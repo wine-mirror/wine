@@ -485,6 +485,9 @@ controls/Makefile
 debugger/Makefile
 dlls/Makefile
 dlls/comctl32/Makefile
+dlls/imagehlp/Makefile
+dlls/msacm/Makefile
+dlls/msacm32/Makefile
 dlls/psapi/Makefile
 dlls/shell32/Makefile
 dlls/winaspi/Makefile

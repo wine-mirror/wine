@@ -39,10 +39,12 @@ extern const BUILTIN32_DESCRIPTOR DPLAY_Descriptor;
 extern const BUILTIN32_DESCRIPTOR DPLAYX_Descriptor;
 extern const BUILTIN32_DESCRIPTOR DSOUND_Descriptor;
 extern const BUILTIN32_DESCRIPTOR GDI32_Descriptor;
+extern const BUILTIN32_DESCRIPTOR IMAGEHLP_Descriptor;
 extern const BUILTIN32_DESCRIPTOR IMM32_Descriptor;
 extern const BUILTIN32_DESCRIPTOR KERNEL32_Descriptor;
 extern const BUILTIN32_DESCRIPTOR LZ32_Descriptor;
 extern const BUILTIN32_DESCRIPTOR MPR_Descriptor;
+extern const BUILTIN32_DESCRIPTOR MSACM32_Descriptor;
 extern const BUILTIN32_DESCRIPTOR MSNET32_Descriptor;
 extern const BUILTIN32_DESCRIPTOR MSVFW32_Descriptor;
 extern const BUILTIN32_DESCRIPTOR NTDLL_Descriptor;
@@ -77,10 +79,12 @@ static BUILTIN32_DLL BuiltinDLLs[] =
     { &DPLAYX_Descriptor,   TRUE  },
     { &DSOUND_Descriptor,   TRUE  },
     { &GDI32_Descriptor,    TRUE  },
+    { &IMAGEHLP_Descriptor, FALSE },
     { &IMM32_Descriptor,    FALSE },
     { &KERNEL32_Descriptor, TRUE  },
     { &LZ32_Descriptor,     TRUE  },
     { &MPR_Descriptor,      TRUE  },
+    { &MSACM32_Descriptor,  FALSE },
     { &MSNET32_Descriptor,  FALSE },
     { &MSVFW32_Descriptor,  FALSE },
     { &NTDLL_Descriptor,    TRUE  },

@@ -17,10 +17,12 @@ DLLS = \
 	dplayx.spec \
 	dsound.spec \
 	gdi32.spec \
+	imagehlp.spec \
 	imm32.spec \
 	kernel32.spec \
 	lz32.spec \
 	mpr.spec \
+	msacm32.spec \
 	msnet32.spec \
 	msvfw32.spec \
 	ntdll.spec \

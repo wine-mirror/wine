@@ -57,6 +57,7 @@ extern const WIN16_DESCRIPTOR KEYBOARD_Descriptor;
 extern const WIN16_DESCRIPTOR LZEXPAND_Descriptor;
 extern const WIN16_DESCRIPTOR MMSYSTEM_Descriptor;
 extern const WIN16_DESCRIPTOR MOUSE_Descriptor;
+extern const WIN16_DESCRIPTOR MSACM_Descriptor;
 extern const WIN16_DESCRIPTOR MSVIDEO_Descriptor;
 extern const WIN16_DESCRIPTOR OLE2CONV_Descriptor;
 extern const WIN16_DESCRIPTOR OLE2DISP_Descriptor;
@@ -105,6 +106,7 @@ static BUILTIN16_DLL BuiltinDLLs[] =
     { &LZEXPAND_Descriptor, 0 },
     { &MMSYSTEM_Descriptor, 0 },
     { &MOUSE_Descriptor,    0 },
+    { &MSACM_Descriptor,    0 },
     { &MSVIDEO_Descriptor,  0 },
     { &OLE2CONV_Descriptor, DLL_FLAG_NOT_USED },
     { &OLE2DISP_Descriptor, DLL_FLAG_NOT_USED },

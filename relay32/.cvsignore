@@ -11,10 +11,12 @@ dplay.c
 dplayx.c
 dsound.c
 gdi32.c
+imagehlp.c
 imm32.c
 kernel32.c
 lz32.c
 mpr.c
+msacm32.c
 msnet32.c
 msvfw32.c
 ntdll.c

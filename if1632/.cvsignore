@@ -12,6 +12,7 @@ keyboard.s
 lzexpand.s
 mmsystem.s
 mouse.s
+msacm.s
 msvideo.s
 ole2.s
 ole2conv.s

@@ -28,6 +28,9 @@ LIBSUBDIRS = \
 	tools/wrc \
 	controls \
 	dlls/comctl32 \
+	dlls/imagehlp \
+	dlls/msacm \
+	dlls/msacm32 \
 	dlls/psapi \
 	dlls/shell32 \
 	dlls/winaspi \
@@ -82,6 +85,9 @@ INSTALLSUBDIRS = $(DOCSUBDIRS)
 LIBOBJS = \
 	controls/controls.o \
 	dlls/comctl32/comctl32.o \
+	dlls/imagehlp/imagehlp.o \
+	dlls/msacm/msacm.o \
+	dlls/msacm32/msacm32.o \
 	dlls/psapi/psapi.o \
 	dlls/shell32/shell32.o \
 	dlls/winaspi/winaspi.o \
