@@ -139,7 +139,7 @@ BOOL WINAPI COMDLG32_DllEntryPoint(HINSTANCE hInstance, DWORD Reason, LPVOID Res
 		
 		/* SHELL */
 		
-		COMDLG32_SHFree = (void*)GetProcAddress(SHELL32_hInstance,"SHFree");
+		COMDLG32_SHFree = (void*)GetProcAddress(SHELL32_hInstance, (LPCSTR)195L);
 		COMDLG32_SHGetSpecialFolderLocation = (void*)GetProcAddress(SHELL32_hInstance,"SHGetSpecialFolderLocation");
 		COMDLG32_SHGetPathFromIDListA = (void*)GetProcAddress(SHELL32_hInstance,"SHGetPathFromIDListA");
 		COMDLG32_SHGetDesktopFolder = (void*)GetProcAddress(SHELL32_hInstance,"SHGetDesktopFolder");
