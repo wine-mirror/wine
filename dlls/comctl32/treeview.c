@@ -1815,7 +1815,7 @@ TREEVIEW_GetFont(TREEVIEW_INFO *infoPtr)
 
 
 static INT CALLBACK
-TREEVIEW_ResetTextWidth(LPVOID pItem, DWORD unused)
+TREEVIEW_ResetTextWidth(LPVOID pItem, LPVOID unused)
 {
     (void)unused;
 

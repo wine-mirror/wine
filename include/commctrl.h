@@ -4378,112 +4378,41 @@ DECL_WINELIB_TYPE_AW(LPNMDATETIMEFORMATQUERY)
   SNDMSGA (hdp, DTM_GETMCFONT, 0, 0)
 
 
+struct _DSA;
+typedef struct _DSA *HDSA;
 
+typedef INT (CALLBACK *PFNDSAENUMCALLBACK)(LPVOID, LPVOID);
 
-
-
-/**************************************************************************
- *  UNDOCUMENTED functions
- */
-
-/* private heap memory functions */
-
-LPVOID WINAPI COMCTL32_Alloc (DWORD);
-LPVOID WINAPI COMCTL32_ReAlloc (LPVOID, DWORD);
-BOOL WINAPI COMCTL32_Free (LPVOID);
-DWORD  WINAPI COMCTL32_GetSize (LPVOID);
-
-LPWSTR WINAPI COMCTL32_StrChrW (LPCWSTR, WORD);
-
-
-INT  WINAPI Str_GetPtrA (LPCSTR, LPSTR, INT);
-BOOL WINAPI Str_SetPtrA (LPSTR *, LPCSTR);
-INT  WINAPI Str_GetPtrW (LPCWSTR, LPWSTR, INT);
-BOOL WINAPI Str_SetPtrW (LPWSTR *, LPCWSTR);
-#define Str_GetPtr WINELIB_NAME_AW(Str_GetPtr)
-#define Str_SetPtr WINELIB_NAME_AW(Str_SetPtr)
-
-
-/* Dynamic Storage Array */
-
-typedef struct _DSA
-{
-    INT  nItemCount;
-    LPVOID pData;
-    INT  nMaxCount;
-    INT  nItemSize;
-    INT  nGrow;
-} DSA, *HDSA;
-
-HDSA   WINAPI DSA_Create (INT, INT);
-BOOL WINAPI DSA_DeleteAllItems (const HDSA);
-INT  WINAPI DSA_DeleteItem (const HDSA, INT);
-BOOL WINAPI DSA_Destroy (const HDSA);
-BOOL WINAPI DSA_GetItem (const HDSA, INT, LPVOID);
-LPVOID WINAPI DSA_GetItemPtr (const HDSA, INT);
-INT  WINAPI DSA_InsertItem (const HDSA, INT, LPVOID);
-BOOL WINAPI DSA_SetItem (const HDSA, INT, LPVOID);
-
-typedef INT (CALLBACK *DSAENUMPROC)(LPVOID, DWORD);
-VOID   WINAPI DSA_EnumCallback (const HDSA, DSAENUMPROC, LPARAM);
-BOOL WINAPI DSA_DestroyCallback (const HDSA, DSAENUMPROC, LPARAM);
-
-
-/* Dynamic Pointer Array */
-
-typedef struct _DPA
-{
-    INT    nItemCount;
-    LPVOID   *ptrs;
-    HANDLE hHeap;
-    INT    nGrow;
-    INT    nMaxCount;
-} DPA, *HDPA;
-
-HDPA   WINAPI DPA_Create (INT);
-HDPA   WINAPI DPA_CreateEx (INT, HANDLE);
-BOOL WINAPI DPA_Destroy (const HDPA);
-HDPA   WINAPI DPA_Clone (const HDPA, const HDPA);
-LPVOID WINAPI DPA_GetPtr (const HDPA, INT);
-INT  WINAPI DPA_GetPtrIndex (const HDPA, LPVOID);
-BOOL WINAPI DPA_Grow (const HDPA, INT);
-BOOL WINAPI DPA_SetPtr (const HDPA, INT, LPVOID);
-INT  WINAPI DPA_InsertPtr (const HDPA, INT, LPVOID);
-LPVOID WINAPI DPA_DeletePtr (const HDPA, INT);
-BOOL WINAPI DPA_DeleteAllPtrs (const HDPA);
-
-typedef INT (CALLBACK *PFNDPACOMPARE)(LPVOID, LPVOID, LPARAM);
-BOOL WINAPI DPA_Sort (const HDPA, PFNDPACOMPARE, LPARAM);
+HDSA   WINAPI DSA_Create(INT, INT);
+BOOL   WINAPI DSA_Destroy(HDSA);
+void   WINAPI DSA_DestroyCallback(HDSA, PFNDSAENUMCALLBACK, LPVOID);
+LPVOID WINAPI DSA_GetItemPtr(HDSA, INT);
+INT    WINAPI DSA_InsertItem(HDSA, INT, LPVOID);
 
 #define DPAS_SORTED             0x0001
 #define DPAS_INSERTBEFORE       0x0002
 #define DPAS_INSERTAFTER        0x0004
 
-INT  WINAPI DPA_Search (const HDPA, LPVOID, INT, PFNDPACOMPARE, LPARAM, UINT);
 
-#define DPAM_NOSORT             0x0001
-#define DPAM_INSERT             0x0004
-#define DPAM_DELETE             0x0008
+struct _DPA;
+typedef struct _DPA *HDPA;
 
-typedef PVOID (CALLBACK *PFNDPAMERGE)(DWORD,PVOID,PVOID,LPARAM);
-BOOL WINAPI DPA_Merge (const HDPA, const HDPA, DWORD, PFNDPACOMPARE, PFNDPAMERGE, LPARAM);
+typedef INT (CALLBACK *PFNDPAENUMCALLBACK)(LPVOID, LPVOID);
+typedef INT (CALLBACK *PFNDPACOMPARE)(LPVOID, LPVOID, LPARAM);
 
-typedef INT (CALLBACK *DPAENUMPROC)(LPVOID, DWORD);
-VOID   WINAPI DPA_EnumCallback (const HDPA, DPAENUMPROC, LPARAM);
-BOOL WINAPI DPA_DestroyCallback (const HDPA, DPAENUMPROC, LPARAM);
+HDPA   WINAPI DPA_Create(INT);
+BOOL   WINAPI DPA_Destroy(HDPA);
+LPVOID WINAPI DPA_DeletePtr(HDPA, INT);
+BOOL   WINAPI DPA_DeleteAllPtrs(HDPA);
+BOOL   WINAPI DPA_SetPtr(HDPA, INT, LPVOID);
+LPVOID WINAPI DPA_GetPtr(HDPA, INT);
+INT    WINAPI DPA_InsertPtr(HDPA, INT, LPVOID);
+BOOL   WINAPI DPA_Sort(HDPA, PFNDPACOMPARE, LPARAM);
+void   WINAPI DPA_EnumCallback(HDPA, PFNDPAENUMCALLBACK, LPVOID);
+void   WINAPI DPA_DestroyCallback(HDPA, PFNDPAENUMCALLBACK, LPVOID);
+INT    WINAPI DPA_Search(HDPA, LPVOID, INT, PFNDPACOMPARE, LPARAM, UINT);
 
-
-#define DPA_GetPtrCount(hdpa)  (*(INT*)(hdpa))
-#define DPA_GetPtrPtr(hdpa)    (*((LPVOID**)((BYTE*)(hdpa)+sizeof(INT))))
-#define DPA_FastGetPtr(hdpa,i) (DPA_GetPtrPtr(hdpa)[i])
-
-
-/* notification helper functions */
-
-LRESULT WINAPI COMCTL32_SendNotify (HWND, HWND, UINT, LPNMHDR);
-
-/* type and functionality of last parameter is still unknown */
-LRESULT WINAPI COMCTL32_SendNotifyEx (HWND, HWND, UINT, LPNMHDR, DWORD);
+BOOL WINAPI Str_SetPtrW (LPWSTR *, LPCWSTR);
 
 #ifdef __cplusplus
 }

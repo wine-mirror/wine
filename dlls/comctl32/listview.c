@@ -1027,7 +1027,7 @@ testitem:
 pickarange:
     if (i->ranges)
     {
-	if (i->index < i->ranges->hdpa->nItemCount)
+	if (i->index < DPA_GetPtrCount(i->ranges->hdpa))
 	    i->range = *(RANGE*)DPA_GetPtr(i->ranges->hdpa, i->index++);
 	else goto end;
     }
@@ -1053,7 +1053,7 @@ static inline BOOL iterator_prev(ITERATOR* i)
     if (i->nItem == -1)
     {
 	start = TRUE;
-	if (i->ranges) i->index = i->ranges->hdpa->nItemCount;
+	if (i->ranges) i->index = DPA_GetPtrCount(i->ranges->hdpa);
 	goto pickarange;
     }
     if (i->nItem == i->nSpecial)
@@ -1089,7 +1089,7 @@ static RANGE iterator_range(ITERATOR* i)
     if (!i->ranges) return i->range;
 
     range.lower = (*(RANGE*)DPA_GetPtr(i->ranges->hdpa, 0)).lower;
-    range.upper = (*(RANGE*)DPA_GetPtr(i->ranges->hdpa, i->ranges->hdpa->nItemCount - 1)).upper;
+    range.upper = (*(RANGE*)DPA_GetPtr(i->ranges->hdpa, DPA_GetPtrCount(i->ranges->hdpa) - 1)).upper;
     return range;
 }
 
@@ -1293,8 +1293,8 @@ static inline COLUMN_INFO * LISTVIEW_GetColumnInfo(LISTVIEW_INFO *infoPtr, INT n
 {
     static COLUMN_INFO mainItem;
 
-    if (nSubItem == 0 && infoPtr->hdpaColumns->nItemCount == 0) return &mainItem;
-    assert (nSubItem >= 0 && nSubItem < infoPtr->hdpaColumns->nItemCount);
+    if (nSubItem == 0 && DPA_GetPtrCount(infoPtr->hdpaColumns) == 0) return &mainItem;
+    assert (nSubItem >= 0 && nSubItem < DPA_GetPtrCount(infoPtr->hdpaColumns));
     return (COLUMN_INFO *)DPA_GetPtr(infoPtr->hdpaColumns, nSubItem);
 }
 	
@@ -2299,7 +2299,7 @@ static SUBITEM_INFO* LISTVIEW_GetSubItemPtr(HDPA hdpaSubItems, INT nSubItem)
     INT i;
 
     /* we should binary search here if need be */
-    for (i = 1; i < hdpaSubItems->nItemCount; i++)
+    for (i = 1; i < DPA_GetPtrCount(hdpaSubItems); i++)
     {
 	lpSubItem = (SUBITEM_INFO *)DPA_GetPtr(hdpaSubItems, i);
 	if (lpSubItem->iSubItem == nSubItem)
@@ -2333,9 +2333,9 @@ static INT LISTVIEW_CalculateItemWidth(LISTVIEW_INFO *infoPtr)
     {
 	RECT rcHeader;
 
-	if (infoPtr->hdpaColumns->nItemCount > 0)
+	if (DPA_GetPtrCount(infoPtr->hdpaColumns) > 0)
 	{
-	    LISTVIEW_GetHeaderRect(infoPtr, infoPtr->hdpaColumns->nItemCount - 1, &rcHeader);
+	    LISTVIEW_GetHeaderRect(infoPtr, DPA_GetPtrCount(infoPtr->hdpaColumns) - 1, &rcHeader);
             nItemWidth = rcHeader.right;
 	}
     }
@@ -2475,12 +2475,12 @@ static void ranges_assert(RANGES ranges, LPCSTR desc, const char *func, int line
     
     TRACE("*** Checking %s:%d:%s ***\n", func, line, desc);
     assert (ranges);
-    assert (ranges->hdpa->nItemCount >= 0);
+    assert (DPA_GetPtrCount(ranges->hdpa) >= 0);
     ranges_dump(ranges);
     prev = (RANGE *)DPA_GetPtr(ranges->hdpa, 0);
-    if (ranges->hdpa->nItemCount > 0)
+    if (DPA_GetPtrCount(ranges->hdpa) > 0)
 	assert (prev->lower >= 0 && prev->lower < prev->upper);
-    for (i = 1; i < ranges->hdpa->nItemCount; i++)
+    for (i = 1; i < DPA_GetPtrCount(ranges->hdpa); i++)
     {
 	curr = (RANGE *)DPA_GetPtr(ranges->hdpa, i);
 	assert (prev->upper <= curr->lower);
@@ -2504,7 +2504,7 @@ static void ranges_clear(RANGES ranges)
 {
     INT i;
 	
-    for(i = 0; i < ranges->hdpa->nItemCount; i++)
+    for(i = 0; i < DPA_GetPtrCount(ranges->hdpa); i++)
 	COMCTL32_Free(DPA_GetPtr(ranges->hdpa, i));
     DPA_DeleteAllPtrs(ranges->hdpa);
 }
@@ -2523,9 +2523,9 @@ static RANGES ranges_clone(RANGES ranges)
     RANGES clone;
     INT i;
 	   
-    if (!(clone = ranges_create(ranges->hdpa->nItemCount))) goto fail;
+    if (!(clone = ranges_create(DPA_GetPtrCount(ranges->hdpa)))) goto fail;
 
-    for (i = 0; i < ranges->hdpa->nItemCount; i++)
+    for (i = 0; i < DPA_GetPtrCount(ranges->hdpa); i++)
     {
         RANGE *newrng = (RANGE *)COMCTL32_Alloc(sizeof(RANGE));
 	if (!newrng) goto fail;
@@ -2544,7 +2544,7 @@ static RANGES ranges_diff(RANGES ranges, RANGES sub)
 {
     INT i;
 
-    for (i = 0; i < sub->hdpa->nItemCount; i++)
+    for (i = 0; i < DPA_GetPtrCount(sub->hdpa); i++)
 	ranges_del(ranges, *((RANGE *)DPA_GetPtr(sub->hdpa, i)));
 
     return ranges;
@@ -2554,7 +2554,7 @@ static void ranges_dump(RANGES ranges)
 {
     INT i;
 
-    for (i = 0; i < ranges->hdpa->nItemCount; i++)
+    for (i = 0; i < DPA_GetPtrCount(ranges->hdpa); i++)
     	TRACE("   %s\n", debugrange(DPA_GetPtr(ranges->hdpa, i)));
 }
 
@@ -2571,7 +2571,7 @@ static INT ranges_itemcount(RANGES ranges)
 {
     INT i, count = 0;
     
-    for (i = 0; i < ranges->hdpa->nItemCount; i++)
+    for (i = 0; i < DPA_GetPtrCount(ranges->hdpa); i++)
     {
 	RANGE *sel = DPA_GetPtr(ranges->hdpa, i);
 	count += sel->upper - sel->lower;
@@ -2588,7 +2588,7 @@ static BOOL ranges_shift(RANGES ranges, INT nItem, INT delta, INT nUpper)
     index = DPA_Search(ranges->hdpa, &srchrng, 0, ranges_cmp, 0, DPAS_SORTED | DPAS_INSERTAFTER);
     if (index == -1) return TRUE;
 
-    for (; index < ranges->hdpa->nItemCount; index++)
+    for (; index < DPA_GetPtrCount(ranges->hdpa); index++)
     {
 	chkrng = DPA_GetPtr(ranges->hdpa, index);
     	if (chkrng->lower >= nItem)
@@ -3331,7 +3331,7 @@ static BOOL set_sub_item(LISTVIEW_INFO *infoPtr, const LVITEMW *lpLVItem, BOOL i
     if (infoPtr->dwStyle & LVS_OWNERDATA) return FALSE;
     
     /* set subitem only if column is present */
-    if (lpLVItem->iSubItem >= infoPtr->hdpaColumns->nItemCount) return FALSE;
+    if (lpLVItem->iSubItem >= DPA_GetPtrCount(infoPtr->hdpaColumns)) return FALSE;
    
     /* First do some sanity checks */
     if (lpLVItem->mask & ~(LVIF_TEXT | LVIF_IMAGE)) return FALSE;
@@ -3350,7 +3350,7 @@ static BOOL set_sub_item(LISTVIEW_INFO *infoPtr, const LVITEMW *lpLVItem, BOOL i
 	lpSubItem = (SUBITEM_INFO *)COMCTL32_Alloc(sizeof(SUBITEM_INFO));
 	if (!lpSubItem) return FALSE;
 	/* we could binary search here, if need be...*/
-  	for (i = 1; i < hdpaSubItems->nItemCount; i++)
+  	for (i = 1; i < DPA_GetPtrCount(hdpaSubItems); i++)
   	{
 	    tmpSubItem = (SUBITEM_INFO *)DPA_GetPtr(hdpaSubItems, i);
 	    if (tmpSubItem->iSubItem > lpLVItem->iSubItem) break;
@@ -3741,12 +3741,12 @@ static void LISTVIEW_RefreshReport(LISTVIEW_INFO *infoPtr, ITERATOR *i, HDC hdc,
     LISTVIEW_GetOrigin(infoPtr, &Origin);
     
     /* narrow down the columns we need to paint */
-    for(colRange.lower = 0; colRange.lower < infoPtr->hdpaColumns->nItemCount; colRange.lower++)
+    for(colRange.lower = 0; colRange.lower < DPA_GetPtrCount(infoPtr->hdpaColumns); colRange.lower++)
     {
 	LISTVIEW_GetHeaderRect(infoPtr, colRange.lower, &rcItem);
 	if (rcItem.right + Origin.x >= rcClip.left) break;
     }
-    for(colRange.upper = infoPtr->hdpaColumns->nItemCount; colRange.upper > 0; colRange.upper--)
+    for(colRange.upper = DPA_GetPtrCount(infoPtr->hdpaColumns); colRange.upper > 0; colRange.upper--)
     {
 	LISTVIEW_GetHeaderRect(infoPtr, colRange.upper - 1, &rcItem);
 	if (rcItem.left + Origin.x < rcClip.right) break;
@@ -4017,7 +4017,7 @@ static BOOL LISTVIEW_DeleteAllItems(LISTVIEW_INFO *infoPtr)
 	if (!(infoPtr->dwStyle & LVS_OWNERDATA))
 	{
 	    hdpaSubItems = (HDPA)DPA_GetPtr(infoPtr->hdpaItems, i);
-	    for (j = 0; j < hdpaSubItems->nItemCount; j++)
+	    for (j = 0; j < DPA_GetPtrCount(hdpaSubItems); j++)
 	    {
 		hdrItem = (ITEMHDR *)DPA_GetPtr(hdpaSubItems, j);
 		if (is_textW(hdrItem->pszText)) COMCTL32_Free(hdrItem->pszText);
@@ -4056,14 +4056,14 @@ static void LISTVIEW_ScrollColumns(LISTVIEW_INFO *infoPtr, INT nColumn, INT dx)
     RECT rcOld, rcCol;
     INT nCol;
    
-    if (nColumn < 0 || infoPtr->hdpaColumns->nItemCount < 1) return;
-    lpColumnInfo = LISTVIEW_GetColumnInfo(infoPtr, min(nColumn, infoPtr->hdpaColumns->nItemCount - 1));
+    if (nColumn < 0 || DPA_GetPtrCount(infoPtr->hdpaColumns) < 1) return;
+    lpColumnInfo = LISTVIEW_GetColumnInfo(infoPtr, min(nColumn, DPA_GetPtrCount(infoPtr->hdpaColumns) - 1));
     rcCol = lpColumnInfo->rcHeader;
-    if (nColumn >= infoPtr->hdpaColumns->nItemCount)
+    if (nColumn >= DPA_GetPtrCount(infoPtr->hdpaColumns))
 	rcCol.left = rcCol.right;
     
     /* ajust the other columns */
-    for (nCol = nColumn; nCol < infoPtr->hdpaColumns->nItemCount; nCol++)
+    for (nCol = nColumn; nCol < DPA_GetPtrCount(infoPtr->hdpaColumns); nCol++)
     {
 	lpColumnInfo = LISTVIEW_GetColumnInfo(infoPtr, nCol);
         lpColumnInfo->rcHeader.left += dx;
@@ -4108,8 +4108,8 @@ static BOOL LISTVIEW_DeleteColumn(LISTVIEW_INFO *infoPtr, INT nColumn)
     
     TRACE("nColumn=%d\n", nColumn);
 
-    if (nColumn < 0 || infoPtr->hdpaColumns->nItemCount == 0
-           || nColumn >= infoPtr->hdpaColumns->nItemCount) return FALSE;
+    if (nColumn < 0 || DPA_GetPtrCount(infoPtr->hdpaColumns) == 0
+           || nColumn >= DPA_GetPtrCount(infoPtr->hdpaColumns)) return FALSE;
 
     /* While the MSDN specifically says that column zero should not be deleted,
        it does in fact work on WinNT, and at least one app depends on it. On
@@ -4118,7 +4118,7 @@ static BOOL LISTVIEW_DeleteColumn(LISTVIEW_INFO *infoPtr, INT nColumn)
        we just delete the last column including the header.
      */
     if (nColumn == 0)
-        nColumn = infoPtr->hdpaColumns->nItemCount - 1;
+        nColumn = DPA_GetPtrCount(infoPtr->hdpaColumns) - 1;
 
     LISTVIEW_GetHeaderRect(infoPtr, nColumn, &rcCol);
     
@@ -4142,7 +4142,7 @@ static BOOL LISTVIEW_DeleteColumn(LISTVIEW_INFO *infoPtr, INT nColumn)
 	    hdpaSubItems = (HDPA)DPA_GetPtr(infoPtr->hdpaItems, nItem);
 	    nSubItem = 0;
 	    lpDelItem = 0;
-	    for (i = 1; i < hdpaSubItems->nItemCount; i++)
+	    for (i = 1; i < DPA_GetPtrCount(hdpaSubItems); i++)
 	    {
 		lpSubItem = (SUBITEM_INFO *)DPA_GetPtr(hdpaSubItems, i);
 		if (lpSubItem->iSubItem == nColumn)
@@ -4294,7 +4294,7 @@ static BOOL LISTVIEW_DeleteItem(LISTVIEW_INFO *infoPtr, INT nItem)
 	INT i;
 
 	hdpaSubItems = (HDPA)DPA_DeletePtr(infoPtr->hdpaItems, nItem);	
-	for (i = 0; i < hdpaSubItems->nItemCount; i++)
+	for (i = 0; i < DPA_GetPtrCount(hdpaSubItems); i++)
     	{
             hdrItem = (ITEMHDR *)DPA_GetPtr(hdpaSubItems, i);
 	    if (is_textW(hdrItem->pszText)) COMCTL32_Free(hdrItem->pszText);
@@ -4711,7 +4711,7 @@ static BOOL LISTVIEW_GetColumnT(LISTVIEW_INFO *infoPtr, INT nColumn, LPLVCOLUMNW
     COLUMN_INFO *lpColumnInfo;
     HDITEMW hdi;
 
-    if (!lpColumn || nColumn < 0 || nColumn >= infoPtr->hdpaColumns->nItemCount) return FALSE;
+    if (!lpColumn || nColumn < 0 || nColumn >= DPA_GetPtrCount(infoPtr->hdpaColumns)) return FALSE;
     lpColumnInfo = LISTVIEW_GetColumnInfo(infoPtr, nColumn);
 
     /* initialize memory */
@@ -4788,7 +4788,7 @@ static INT LISTVIEW_GetColumnWidth(LISTVIEW_INFO *infoPtr, INT nColumn)
 	nColumnWidth = infoPtr->nItemWidth;
 	break;
     case LVS_REPORT:
-	if (nColumn < 0 || nColumn >= infoPtr->hdpaColumns->nItemCount) return 0;
+	if (nColumn < 0 || nColumn >= DPA_GetPtrCount(infoPtr->hdpaColumns)) return 0;
 	LISTVIEW_GetHeaderRect(infoPtr, nColumn, &rcHeader);
 	nColumnWidth = rcHeader.right - rcHeader.left;
 	break;
@@ -5849,7 +5849,7 @@ static INT LISTVIEW_HitTest(LISTVIEW_INFO *infoPtr, LPLVHITTESTINFO lpht, BOOL s
   	INT j;
 
         rcBounds.right = rcBounds.left;
-        for (j = 0; j < infoPtr->hdpaColumns->nItemCount; j++)
+        for (j = 0; j < DPA_GetPtrCount(infoPtr->hdpaColumns); j++)
         {
 	    rcBounds.left = rcBounds.right;
 	    rcBounds.right += LISTVIEW_GetColumnWidth(infoPtr, j);
@@ -6230,7 +6230,7 @@ static INT LISTVIEW_InsertColumnT(LISTVIEW_INFO *infoPtr, INT nColumn,
     TRACE("(nColumn=%d, lpColumn=%s, isW=%d)\n", nColumn, debuglvcolumn_t(lpColumn, isW), isW);
 
     if (!lpColumn || nColumn < 0) return -1;
-    nColumn = min(nColumn, infoPtr->hdpaColumns->nItemCount);
+    nColumn = min(nColumn, DPA_GetPtrCount(infoPtr->hdpaColumns));
     
     ZeroMemory(&hdi, sizeof(HDITEMW));
     column_fill_hditem(infoPtr, &hdi, nColumn, lpColumn, isW);
@@ -6259,7 +6259,7 @@ static INT LISTVIEW_InsertColumnT(LISTVIEW_INFO *infoPtr, INT nColumn,
 	for (nItem = 0; nItem < infoPtr->nItemCount; nItem++)
 	{
 	    hdpaSubItems = (HDPA)DPA_GetPtr(infoPtr->hdpaItems, nItem);
-	    for (i = 1; i < hdpaSubItems->nItemCount; i++)
+	    for (i = 1; i < DPA_GetPtrCount(hdpaSubItems); i++)
 	    {
 		lpSubItem = (SUBITEM_INFO *)DPA_GetPtr(hdpaSubItems, i);
 		if (lpSubItem->iSubItem >= nNewColumn)
@@ -6305,7 +6305,7 @@ static BOOL LISTVIEW_SetColumnT(LISTVIEW_INFO *infoPtr, INT nColumn,
 
     TRACE("(nColumn=%d, lpColumn=%s, isW=%d)\n", nColumn, debuglvcolumn_t(lpColumn, isW), isW);
     
-    if (!lpColumn || nColumn < 0 || nColumn >= infoPtr->hdpaColumns->nItemCount) return FALSE;
+    if (!lpColumn || nColumn < 0 || nColumn >= DPA_GetPtrCount(infoPtr->hdpaColumns)) return FALSE;
 
     ZeroMemory(&hdi, sizeof(HDITEMW));
     if (lpColumn->mask & LVCF_FMT)
@@ -6398,9 +6398,9 @@ static BOOL LISTVIEW_SetColumnWidth(LISTVIEW_INFO *infoPtr, INT nColumn, INT cx)
 	return TRUE;
     }
 
-    if (nColumn < 0 || nColumn >= infoPtr->hdpaColumns->nItemCount) return FALSE;
+    if (nColumn < 0 || nColumn >= DPA_GetPtrCount(infoPtr->hdpaColumns)) return FALSE;
 
-    if (cx == LVSCW_AUTOSIZE || (cx == LVSCW_AUTOSIZE_USEHEADER && nColumn < infoPtr->hdpaColumns->nItemCount -1))
+    if (cx == LVSCW_AUTOSIZE || (cx == LVSCW_AUTOSIZE_USEHEADER && nColumn < DPA_GetPtrCount(infoPtr->hdpaColumns) -1))
     {
 	INT nLabelWidth;
 	LVITEMW lvItem;
@@ -6427,7 +6427,7 @@ static BOOL LISTVIEW_SetColumnWidth(LISTVIEW_INFO *infoPtr, INT nColumn, INT cx)
     else if(cx == LVSCW_AUTOSIZE_USEHEADER)
     {
 	/* if iCol is the last column make it fill the remainder of the controls width */
-        if(nColumn == infoPtr->hdpaColumns->nItemCount - 1) 
+        if(nColumn == DPA_GetPtrCount(infoPtr->hdpaColumns) - 1) 
 	{
 	    RECT rcHeader;
 	    POINT Origin;
@@ -7884,7 +7884,7 @@ static LRESULT LISTVIEW_HeaderNotification(LISTVIEW_INFO *infoPtr, const NMHEADE
     
     TRACE("(lpnmh=%p)\n", lpnmh);
 
-    if (!lpnmh || lpnmh->iItem < 0 || lpnmh->iItem >= infoPtr->hdpaColumns->nItemCount) return 0;
+    if (!lpnmh || lpnmh->iItem < 0 || lpnmh->iItem >= DPA_GetPtrCount(infoPtr->hdpaColumns)) return 0;
     
     switch (lpnmh->hdr.code)
     {    

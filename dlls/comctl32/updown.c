@@ -39,6 +39,7 @@
 #include "winuser.h"
 #include "winnls.h"
 #include "commctrl.h"
+#include "comctl32.h"
 #include "wine/unicode.h"
 #include "wine/debug.h"
 

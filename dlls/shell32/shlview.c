@@ -563,12 +563,21 @@ static BOOLEAN LV_RenameItem(IShellViewImpl * This, LPCITEMIDLIST pidlOld, LPCIT
 * - fills the list into the view
 */
 
+static INT CALLBACK fill_list( LPVOID ptr, LPVOID arg )
+{
+    LPITEMIDLIST pidl = ptr;
+    IShellViewImpl *This = arg;
+    /* in a commdlg This works as a filemask*/
+    if ( IncludeObject(This, pidl)==S_OK ) LV_AddItem(This, pidl);
+    SHFree(pidl);
+    return TRUE;
+}
+
 static HRESULT ShellView_FillList(IShellViewImpl * This)
 {
 	LPENUMIDLIST	pEnumIDList;
 	LPITEMIDLIST	pidl;
 	DWORD		dwFetched;
-	INT		i;
 	HRESULT		hRes;
 	HDPA		hdpa;
 
@@ -605,21 +614,12 @@ static HRESULT ShellView_FillList(IShellViewImpl * This)
 	/*turn the listview's redrawing off*/
 	SendMessageA(This->hWndList, WM_SETREDRAW, FALSE, 0);
 
-	for (i=0; i < DPA_GetPtrCount(hdpa); ++i) 	/* DPA_GetPtrCount is a macro*/
-	{
-	  pidl = (LPITEMIDLIST)DPA_GetPtr(hdpa, i);
-
-	  /* in a commdlg This works as a filemask*/
-	  if ( IncludeObject(This, pidl)==S_OK )
-	    LV_AddItem(This, pidl);
-	  SHFree(pidl);
-	}
+        DPA_DestroyCallback( hdpa, fill_list, This );
 
 	/*turn the listview's redrawing back on and force it to draw*/
 	SendMessageA(This->hWndList, WM_SETREDRAW, TRUE, 0);
 
 	IEnumIDList_Release(pEnumIDList); /* destroy the list*/
-	DPA_Destroy(hdpa);
 
 	return S_OK;
 }

@@ -39,6 +39,7 @@
 #include "commctrl.h"
 #include "vfw.h"
 #include "mmsystem.h"
+#include "comctl32.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(animate);

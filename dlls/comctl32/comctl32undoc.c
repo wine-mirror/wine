@@ -61,6 +61,24 @@ WINE_DEFAULT_DEBUG_CHANNEL(commctrl);
 extern HANDLE COMCTL32_hHeap; /* handle to the private heap */
 
 
+struct _DSA
+{
+    INT  nItemCount;
+    LPVOID pData;
+    INT  nMaxCount;
+    INT  nItemSize;
+    INT  nGrow;
+};
+
+struct _DPA
+{
+    INT    nItemCount;
+    LPVOID   *ptrs;
+    HANDLE hHeap;
+    INT    nGrow;
+    INT    nMaxCount;
+};
+
 typedef struct _STREAMDATA
 {
     DWORD dwSize;
@@ -224,10 +242,10 @@ DPA_Merge (const HDPA hdpa1, const HDPA hdpa2, DWORD dwFlags,
     TRACE("%p %p %08lx %p %p %08lx)\n",
 	   hdpa1, hdpa2, dwFlags, pfnCompare, pfnMerge, lParam);
 
-    if (IsBadWritePtr (hdpa1, sizeof(DPA)))
+    if (IsBadWritePtr (hdpa1, sizeof(*hdpa1)))
 	return FALSE;
 
-    if (IsBadWritePtr (hdpa2, sizeof(DPA)))
+    if (IsBadWritePtr (hdpa2, sizeof(*hdpa2)))
 	return FALSE;
 
     if (IsBadCodePtr ((FARPROC)pfnCompare))
@@ -1330,7 +1348,7 @@ DSA_Create (INT nSize, INT nGrow)
 
     TRACE("(size=%d grow=%d)\n", nSize, nGrow);
 
-    hdsa = (HDSA)COMCTL32_Alloc (sizeof(DSA));
+    hdsa = (HDSA)COMCTL32_Alloc (sizeof(*hdsa));
     if (hdsa)
     {
 	hdsa->nItemCount = 0;
@@ -1663,7 +1681,7 @@ DPA_Create (INT nGrow)
 
     TRACE("(%d)\n", nGrow);
 
-    hdpa = (HDPA)COMCTL32_Alloc (sizeof(DPA));
+    hdpa = (HDPA)COMCTL32_Alloc (sizeof(*hdpa));
     if (hdpa) {
 	hdpa->nGrow = max(8, nGrow);
 	hdpa->hHeap = COMCTL32_hHeap;
@@ -1766,7 +1784,7 @@ DPA_Clone (const HDPA hdpa, const HDPA hdpaNew)
     if (!hdpaNew) {
 	/* create a new DPA */
 	hdpaTemp = (HDPA)HeapAlloc (hdpa->hHeap, HEAP_ZERO_MEMORY,
-				    sizeof(DPA));
+				    sizeof(*hdpaTemp));
 	hdpaTemp->hHeap = hdpa->hHeap;
 	hdpaTemp->nGrow = hdpa->nGrow;
     }
@@ -2237,9 +2255,9 @@ DPA_CreateEx (INT nGrow, HANDLE hHeap)
     TRACE("(%d %p)\n", nGrow, hHeap);
 
     if (hHeap)
-	hdpa = (HDPA)HeapAlloc (hHeap, HEAP_ZERO_MEMORY, sizeof(DPA));
+	hdpa = (HDPA)HeapAlloc (hHeap, HEAP_ZERO_MEMORY, sizeof(*hdpa));
     else
-	hdpa = (HDPA)COMCTL32_Alloc (sizeof(DPA));
+	hdpa = (HDPA)COMCTL32_Alloc (sizeof(*hdpa));
 
     if (hdpa) {
 	hdpa->nGrow = min(8, nGrow);
@@ -2502,11 +2520,11 @@ COMCTL32_StrToIntW (LPWSTR lpString)
  */
 
 VOID WINAPI
-DPA_EnumCallback (const HDPA hdpa, DPAENUMPROC enumProc, LPARAM lParam)
+DPA_EnumCallback (HDPA hdpa, PFNDPAENUMCALLBACK enumProc, LPVOID lParam)
 {
     INT i;
 
-    TRACE("(%p %p %08lx)\n", hdpa, enumProc, lParam);
+    TRACE("(%p %p %p)\n", hdpa, enumProc, lParam);
 
     if (!hdpa)
 	return;
@@ -2533,18 +2551,16 @@ DPA_EnumCallback (const HDPA hdpa, DPAENUMPROC enumProc, LPARAM lParam)
  *     lParam   [I]
  *
  * RETURNS
- *     Success: TRUE
- *     Failure: FALSE
+ *     none
  */
 
-BOOL WINAPI
-DPA_DestroyCallback (const HDPA hdpa, DPAENUMPROC enumProc, LPARAM lParam)
+void WINAPI
+DPA_DestroyCallback (HDPA hdpa, PFNDPAENUMCALLBACK enumProc, LPVOID lParam)
 {
-    TRACE("(%p %p %08lx)\n", hdpa, enumProc, lParam);
+    TRACE("(%p %p %p)\n", hdpa, enumProc, lParam);
 
     DPA_EnumCallback (hdpa, enumProc, lParam);
-
-    return DPA_Destroy (hdpa);
+    DPA_Destroy (hdpa);
 }
 
 
@@ -2563,11 +2579,11 @@ DPA_DestroyCallback (const HDPA hdpa, DPAENUMPROC enumProc, LPARAM lParam)
  */
 
 VOID WINAPI
-DSA_EnumCallback (const HDSA hdsa, DSAENUMPROC enumProc, LPARAM lParam)
+DSA_EnumCallback (HDSA hdsa, PFNDSAENUMCALLBACK enumProc, LPVOID lParam)
 {
     INT i;
 
-    TRACE("(%p %p %08lx)\n", hdsa, enumProc, lParam);
+    TRACE("(%p %p %p)\n", hdsa, enumProc, lParam);
 
     if (!hdsa)
 	return;
@@ -2595,18 +2611,16 @@ DSA_EnumCallback (const HDSA hdsa, DSAENUMPROC enumProc, LPARAM lParam)
  *     lParam   [I]
  *
  * RETURNS
- *     Success: TRUE
- *     Failure: FALSE
+ *     none
  */
 
-BOOL WINAPI
-DSA_DestroyCallback (const HDSA hdsa, DSAENUMPROC enumProc, LPARAM lParam)
+void WINAPI
+DSA_DestroyCallback (HDSA hdsa, PFNDSAENUMCALLBACK enumProc, LPVOID lParam)
 {
-    TRACE("(%p %p %08lx)\n", hdsa, enumProc, lParam);
+    TRACE("(%p %p %p)\n", hdsa, enumProc, lParam);
 
     DSA_EnumCallback (hdsa, enumProc, lParam);
-
-    return DSA_Destroy (hdsa);
+    DSA_Destroy (hdsa);
 }
 
 /**************************************************************************

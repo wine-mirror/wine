@@ -267,24 +267,19 @@ BOOL SIC_Initialize(void)
  *
  * frees the cache
  */
+static INT CALLBACK sic_free( LPVOID ptr, LPVOID lparam )
+{
+    SHFree(ptr);
+    return TRUE;
+}
+
 void SIC_Destroy(void)
 {
-	LPSIC_ENTRY lpsice;
-	int i;
-
 	TRACE("\n");
 
 	EnterCriticalSection(&SHELL32_SicCS);
 
-	if (sic_hdpa && NULL != DPA_GetPtr (sic_hdpa, 0))
-	{
-	  for (i=0; i < DPA_GetPtrCount(sic_hdpa); ++i)
-	  {
-	    lpsice = DPA_GetPtr(sic_hdpa, i);
-	    SHFree(lpsice);
-	  }
-	  DPA_Destroy(sic_hdpa);
-	}
+	if (sic_hdpa) DPA_DestroyCallback(sic_hdpa, sic_free, NULL );
 
 	sic_hdpa = NULL;
 

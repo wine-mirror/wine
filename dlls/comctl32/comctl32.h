@@ -155,4 +155,28 @@ typedef struct
    WNDPROC origproc;
 } SUBCLASS_INFO, *LPSUBCLASS_INFO;
 
+/* private heap memory functions */
+
+LPVOID WINAPI COMCTL32_Alloc (DWORD);
+LPVOID WINAPI COMCTL32_ReAlloc (LPVOID, DWORD);
+BOOL WINAPI COMCTL32_Free (LPVOID);
+DWORD  WINAPI COMCTL32_GetSize (LPVOID);
+
+/* undocumented functions */
+
+INT  WINAPI Str_GetPtrA (LPCSTR, LPSTR, INT);
+INT  WINAPI Str_GetPtrW (LPCWSTR, LPWSTR, INT);
+
+INT  WINAPI DPA_GetPtrIndex (const HDPA, LPVOID);
+BOOL WINAPI DPA_Grow (const HDPA, INT);
+
+#define DPAM_NOSORT             0x0001
+#define DPAM_INSERT             0x0004
+#define DPAM_DELETE             0x0008
+
+typedef PVOID (CALLBACK *PFNDPAMERGE)(DWORD,PVOID,PVOID,LPARAM);
+BOOL WINAPI DPA_Merge (const HDPA, const HDPA, DWORD, PFNDPACOMPARE, PFNDPAMERGE, LPARAM);
+
+#define DPA_GetPtrCount(hdpa)  (*(INT*)(hdpa))
+
 #endif  /* __WINE_COMCTL32_H */

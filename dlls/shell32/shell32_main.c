@@ -959,15 +959,6 @@ HRESULT WINAPI SHELL32_DllGetVersion (DLLVERSIONINFO *pdvi)
  */
 void	(WINAPI *pDLLInitComctl)(LPVOID);
 
-LPVOID	(WINAPI *pCOMCTL32_Alloc) (INT);
-BOOL	(WINAPI *pCOMCTL32_Free) (LPVOID);
-
-HANDLE  (WINAPI *pCreateMRUListA) (LPVOID lpcml);
-DWORD   (WINAPI *pFreeMRUListA) (HANDLE hMRUList);
-INT     (WINAPI *pAddMRUData) (HANDLE hList, LPCVOID lpData, DWORD cbData);
-INT     (WINAPI *pFindMRUData) (HANDLE hList, LPCVOID lpData, DWORD cbData, LPINT lpRegNum);
-INT     (WINAPI *pEnumMRUListA) (HANDLE hList, INT nItemPos, LPVOID lpBuffer, DWORD nBufferSize);
-
 static HINSTANCE	hComctl32;
 
 HINSTANCE	shell32_hInstance = 0;

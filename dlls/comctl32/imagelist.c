@@ -51,6 +51,7 @@
 #include "wingdi.h"
 #include "winuser.h"
 #include "commctrl.h"
+#include "comctl32.h"
 #include "imagelist.h"
 #include "wine/debug.h"
 

@@ -2607,7 +2607,7 @@ TOOLBAR_AddStringW (HWND hwnd, WPARAM wParam, LPARAM lParam)
                     COMCTL32_Free(oldStrings);
                 }
 
-                np=COMCTL32_StrChrW (p, L'|');
+                np=strchrW (p, '|');
                 if (np!=NULL) {
                     len = np - p;
                     np++;
