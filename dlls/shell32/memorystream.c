@@ -198,12 +198,17 @@ static HRESULT WINAPI IStream_fnRead (IStream * iface, void* pv, ULONG cb, ULONG
 
 static HRESULT WINAPI IStream_fnWrite (IStream * iface, const void* pv, ULONG cb, ULONG* pcbWritten)
 {
+       DWORD dummy_count;
 	ICOM_THIS(ISHFileStream, iface);
 
 	TRACE("(%p)\n",This);
 
 	if( !pv )
 		return STG_E_INVALIDPOINTER;
+
+       /* WriteFile() doesn't allow to specify NULL as write count pointer */
+       if (!pcbWritten)
+               pcbWritten = &dummy_count;
 
 	if( ! WriteFile( This->handle, pv, cb, pcbWritten, NULL ) )
 		return E_FAIL;
