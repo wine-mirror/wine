@@ -1635,6 +1635,18 @@ BOOL WINAPI InternetSetOptionW(HINTERNET hInternet, DWORD dwOption,
         FIXME("Option INTERNET_OPTION_REQUEST_PRIORITY (%ld): STUB\n",priority);
       }
       break;
+    case INTERNET_OPTION_CONNECT_TIMEOUT:
+      {
+        unsigned long connecttimeout=*(unsigned long*)lpBuffer;
+        FIXME("Option INTERNET_OPTION_CONNECT_TIMEOUT (%ld): STUB\n",connecttimeout);
+      }
+      break;
+    case INTERNET_OPTION_DATA_RECEIVE_TIMEOUT:
+      {
+        unsigned long receivetimeout=*(unsigned long*)lpBuffer;
+        FIXME("Option INTERNET_OPTION_DATA_RECEIVE_TIMEOUT (%ld): STUB\n",receivetimeout);
+      }
+      break;
     case INTERNET_OPTION_RESET_URLCACHE_SESSION:
         FIXME("Option INTERNET_OPTION_RESET_URLCACHE_SESSION: STUB\n");
         break;
