@@ -90,9 +90,8 @@ inline static BOOL is_executable( const WCHAR *name )
  * [0]                        <- indicates end of strings
  *
  */
-static BOOL add_boot_rename_entry( LPCWSTR fn1, LPCWSTR fn2, DWORD flags )
+static BOOL add_boot_rename_entry( LPCWSTR source, LPCWSTR dest, DWORD flags )
 {
-    static const WCHAR PreString[] = {'\\','?','?','\\',0};
     static const WCHAR ValueName[] = {'P','e','n','d','i','n','g',
                                       'F','i','l','e','R','e','n','a','m','e',
                                       'O','p','e','r','a','t','i','o','n','s',0};
@@ -104,14 +103,27 @@ static BOOL add_boot_rename_entry( LPCWSTR fn1, LPCWSTR fn2, DWORD flags )
     static const int info_size = FIELD_OFFSET( KEY_VALUE_PARTIAL_INFORMATION, Data );
 
     OBJECT_ATTRIBUTES attr;
-    UNICODE_STRING nameW;
+    UNICODE_STRING nameW, source_name, dest_name;
     KEY_VALUE_PARTIAL_INFORMATION *info;
     BOOL rc = FALSE;
     HKEY Reboot = 0;
-    DWORD len0, len1, len2;
+    DWORD len1, len2;
     DWORD DataSize = 0;
     BYTE *Buffer = NULL;
     WCHAR *p;
+
+    if (!RtlDosPathNameToNtPathName_U( source, &source_name, NULL, NULL ))
+    {
+        SetLastError( ERROR_PATH_NOT_FOUND );
+        return FALSE;
+    }
+    dest_name.Buffer = NULL;
+    if (dest && !RtlDosPathNameToNtPathName_U( dest, &dest_name, NULL, NULL ))
+    {
+        RtlFreeUnicodeString( &source_name );
+        SetLastError( ERROR_PATH_NOT_FOUND );
+        return FALSE;
+    }
 
     attr.Length = sizeof(attr);
     attr.RootDirectory = 0;
@@ -125,22 +137,19 @@ static BOOL add_boot_rename_entry( LPCWSTR fn1, LPCWSTR fn2, DWORD flags )
     {
         WARN("Error creating key for reboot managment [%s]\n",
              "SYSTEM\\CurrentControlSet\\Control\\Session Manager");
+        RtlFreeUnicodeString( &source_name );
+        RtlFreeUnicodeString( &dest_name );
         return FALSE;
     }
 
-    len0 = strlenW(PreString);
-    len1 = strlenW(fn1) + len0 + 1;
-    if (fn2)
+    len1 = source_name.Length + sizeof(WCHAR);
+    if (dest)
     {
-        len2 = strlenW(fn2) + len0 + 1;
-        if (flags & MOVEFILE_REPLACE_EXISTING) len2++; /* Plus 1 because of the leading '!' */
+        len2 = dest_name.Length + sizeof(WCHAR);
+        if (flags & MOVEFILE_REPLACE_EXISTING)
+            len2 += sizeof(WCHAR); /* Plus 1 because of the leading '!' */
     }
-    else len2 = 1; /* minimum is the 0 characters for the empty second string */
-
-    /* convert characters to bytes */
-    len0 *= sizeof(WCHAR);
-    len1 *= sizeof(WCHAR);
-    len2 *= sizeof(WCHAR);
+    else len2 = sizeof(WCHAR); /* minimum is the 0 characters for the empty second string */
 
     RtlInitUnicodeString( &nameW, ValueName );
 
@@ -163,22 +172,18 @@ static BOOL add_boot_rename_entry( LPCWSTR fn1, LPCWSTR fn2, DWORD flags )
             goto Quit;
     }
 
-    p = (WCHAR *)(Buffer + DataSize);
-    strcpyW( p, PreString );
-    strcatW( p, fn1 );
+    memcpy( Buffer + DataSize, source_name.Buffer, len1 );
     DataSize += len1;
-    if (fn2)
+    p = (WCHAR *)(Buffer + DataSize);
+    if (dest)
     {
-        p = (WCHAR *)(Buffer + DataSize);
         if (flags & MOVEFILE_REPLACE_EXISTING)
             *p++ = '!';
-        strcpyW( p, PreString );
-        strcatW( p, fn2 );
+        memcpy( p, dest_name.Buffer, len2 );
         DataSize += len2;
     }
     else
     {
-        p = (WCHAR *)(Buffer + DataSize);
         *p = 0;
         DataSize += sizeof(WCHAR);
     }
@@ -191,6 +196,8 @@ static BOOL add_boot_rename_entry( LPCWSTR fn1, LPCWSTR fn2, DWORD flags )
     rc = !NtSetValueKey(Reboot, &nameW, 0, REG_MULTI_SZ, Buffer + info_size, DataSize - info_size);
 
  Quit:
+    RtlFreeUnicodeString( &source_name );
+    RtlFreeUnicodeString( &dest_name );
     if (Reboot) NtClose(Reboot);
     if (Buffer) HeapFree( GetProcessHeap(), 0, Buffer );
     return(rc);
