@@ -178,8 +178,6 @@ WINE COMPONENTS
 	- winebuild : Winebuild is a tool used for building Winelib applications 
 		(and by Wine itself) to allow a developer to compile a .spec file 
 		into a .spec.c file.
-	- wineclipserv : The Wine Clipboard Server is a standalone XLib application
-		whose purpose is to manage the X selection when Wine exits.
 	- wineconsole : Render the output of CUI programs.
 	- winedbg : A application making use of the debugging API to allow 
 		debugging of Wine or Winelib applications as well as Wine itself 
@@ -462,9 +460,6 @@ Example (split this into %build and %install section for rpm:
 	install -d $BR/usr/X11R6/lib/wine
 	mv $BR/usr/X11R6/lib/lib* $BR/usr/X11R6/lib/wine/
 
-	# the clipboard server is started on demand.
-	install -m 755 dlls/x11drv/wineclipsrv $BR/usr/X11R6/bin/
-
 	# The Wine server is needed.
 	install -m 755 server/wineserver $BR/usr/X11R6/bin/
 
@@ -477,9 +472,9 @@ separate library directory should be used.
         
 You will need to package the files:
 
-	$prefix/bin/wine, $prefix/bin/dosmod, $prefix/lib/wine/*
+	$prefix/bin/wine, $prefix/lib/wine/*
 	$prefix/man/man1/wine.1, $prefix/include/wine/*,
-	$prefix/bin/wineserver, $prefix/bin/wineclipsrv
+	$prefix/bin/wineserver
 
 	%config /etc/wine/*
 	%doc ... choose from the toplevel directory and documentation/

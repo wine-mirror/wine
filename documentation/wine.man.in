@@ -233,11 +233,6 @@ The
 .B wine 
 debugger
 .TP 
-.I @bindir@/wineclipsrv
-The 
-.B wine 
-clipboard server
-.TP 
 .I @dlldir@
 Directory containing 
 .B wine's

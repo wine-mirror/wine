@@ -1,4 +1,3 @@
-EXTRADEFS = -DBINDIR="\"$(bindir)\""
 TOPSRCDIR = @top_srcdir@
 TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
@@ -44,20 +43,8 @@ C_SRCS = \
 	xrender.c \
 	xvidmode.c
 
-PROGRAMS = wineclipsrv
-
 @MAKE_DLL_RULES@
 
 all: $(PROGRAMS)
-
-wineclipsrv: wineclipsrv.c
-	$(CC) $(ALLCFLAGS) -o wineclipsrv $(SRCDIR)/wineclipsrv.c $(EXTRALIBS) $(LDFLAGS) $(LIBS)
-
-install:: $(PROGRAMS)
-	$(MKINSTALLDIRS) $(bindir)
-	$(INSTALL_PROGRAM) wineclipsrv $(bindir)/wineclipsrv
-
-uninstall::
-	$(RM) $(bindir)/wineclipsrv
 
 ### Dependencies:
