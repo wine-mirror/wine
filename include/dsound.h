@@ -2,6 +2,7 @@
 #define __WINE_DSOUND_H
 
 #include "windows.h"
+#include "winbase.h"
 #include "compobj.h"
 #include "mmsystem.h"
 #include "d3d.h"			//FIXME: Need to break out d3dtypes.h
@@ -161,6 +162,11 @@ typedef const DSBPOSITIONNOTIFY *LPCDSBPOSITIONNOTIFY;
 #define DSSPEAKER_STEREO        4
 #define DSSPEAKER_SURROUND      5
 
+#define DSSPEAKER_GEOMETRY_MIN      0x00000005  // 5 degrees
+#define DSSPEAKER_GEOMETRY_NARROW   0x0000000A  // 10 degrees
+#define DSSPEAKER_GEOMETRY_WIDE     0x00000014  // 20 degrees
+#define DSSPEAKER_GEOMETRY_MAX      0x000000B4  // 180 degrees
+
 
 typedef LPVOID* LPLPVOID;
 
@@ -191,7 +197,7 @@ typedef struct tagLPDIRECTSOUND_VTABLE
     STDMETHOD( Compact)(THIS ) PURE;
     STDMETHOD( GetSpeakerConfig)(THIS_ LPDWORD ) PURE;
     STDMETHOD( SetSpeakerConfig)(THIS_ DWORD ) PURE;
-    STDMETHOD( Initialize)(THIS_ GUID FAR * ) PURE;
+    STDMETHOD( Initialize)(THIS_ LPGUID ) PURE;
 } *LPDIRECTSOUND_VTABLE;
 
 struct IDirectSound {
@@ -247,15 +253,18 @@ struct IDirectSoundBuffer {
 	DWORD				freq;
 	ULONG				freqAdjust;
 	LONG				volume,pan;
-	ULONG				lVolAdjust,rVolAdjust;
+	LONG				lVolAdjust,rVolAdjust;
 	LPDIRECTSOUND			dsound;
 	DSBUFFERDESC			dsbd;
 	LPDSBPOSITIONNOTIFY		notifies;
 	int				nrofnotifies;
+	CRITICAL_SECTION		lock;
 };
 #undef THIS
 
 #define WINE_NOBUFFER                   0x80000000
+
+#define DSBPN_OFFSETSTOP		-1
 
 #define THIS LPDIRECTSOUNDNOTIFY this
 typedef struct IDirectSoundNotify_VTable {
@@ -347,7 +356,7 @@ struct IDirectSound3DListener {
 	DWORD				ref;
 	LPDIRECTSOUNDBUFFER		dsb;
 	DS3DLISTENER			ds3dl;
-	
+	CRITICAL_SECTION		lock;	
 };
 #undef THIS
 
@@ -402,6 +411,7 @@ struct IDirectSound3DBuffer {
 	DS3DBUFFER			ds3db;
 	LPBYTE				buffer;
 	DWORD				buflen;
+	CRITICAL_SECTION		lock;
 };
 #undef THIS
 #undef STDMETHOD
