@@ -1254,7 +1254,14 @@ static void X11DRV_DIB_SetImageBits_RLE8( int lines, const BYTE *bits,
 		color = colors[color_index];
 
 		while(length--)
-		  XPutPixel(bmpImage, x++, line, color);
+		  {
+		    if (x>=dstwidth)
+		      {
+			x=0;
+			line--;
+		      }
+		    XPutPixel(bmpImage, x++, line, color);
+		  }
 	    }
 	  else 
 	    {    
@@ -1317,6 +1324,11 @@ static void X11DRV_DIB_SetImageBits_RLE8( int lines, const BYTE *bits,
 			  while(length--)
 			    {
 				color_index = (*pIn++);
+				if (x>=dstwidth)
+				  {
+				    x=0;
+				    line--;
+				  }
 				XPutPixel(bmpImage, x++, line, 
 					  colors[color_index]);
 			    }
