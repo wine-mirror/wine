@@ -186,7 +186,14 @@ function create_windows_directories {
 # - name of the installed winelib application
 # - full path to application in the winelib directory
 function link_app {
-  ln -sf $libdir/wine/$1.exe.so $2
+  if [ "$WINEINSTALLED" = 'no' ]
+  then {
+    ln -sf $PWD/programs/$1/$1.exe.so $2
+  }
+  else {
+    ln -sf $libdir/wine/$1.exe.so $2
+  }
+  fi
 }
 
 #puts windows applications replacements to windows directories,
@@ -210,7 +217,7 @@ function configure_wine_applications {
 
 # startup...
 
-echo "WINE Installer v0.73"
+echo "WINE Installer v0.74"
 echo
 
 if [ "$BINDIST" = 'no' ]
@@ -398,6 +405,8 @@ then {
         echo "Exiting wineinstall"
         exit 1;
       fi
+
+      WINEINSTALLED=yes
     }
     else {
       # user didn't want to install wine so tell them about running from the
@@ -415,6 +424,8 @@ then {
       echo "LD_LIBRARY_PATH to $PWD:$DLLPATH"
       echo "in your logon scripts."
       echo
+
+      WINEINSTALLED=no
     }
     fi # [ "$ROOTINSTALL" = "yes" ]
   }
@@ -525,11 +536,23 @@ then {
     else {
       echo " found."
 
-      conf_reset_question windows_found
-      conf_question low windows_found \
-       "Created $LCONF using your existing Windows installation." \
-       "You probably want to review the file, though."
-      DOWINE=no
+      conf_question low do_without_windows \
+       "Windows was found on your system, and so we can use the Windows" \
+       "Drive as our Wine drive. You may, however, wish to create a clean" \
+       "Wine install anyways."
+      conf_yesno_answer "Should I use the Windows drive for the Wine install? (yes/no) "
+      if [ "$ANSWER" = 'yes' ]
+      then {
+        conf_reset_question windows_found
+        conf_question low windows_found \
+         "Created $LCONF using your existing Windows installation." \
+         "You probably want to review the file, though."
+        DOWINE=no
+      }
+      else {
+        DOWINE=yes
+      }
+      fi
     }
     fi
   }
