@@ -38,6 +38,7 @@ extern void dump_ObjectAttributes (const OBJECT_ATTRIBUTES *ObjectAttributes);
 extern void NTDLL_get_server_timeout( abs_time_t *when, const LARGE_INTEGER *timeout );
 extern NTSTATUS NTDLL_wait_for_multiple_objects( UINT count, const HANDLE *handles, UINT flags,
                                                  const LARGE_INTEGER *timeout );
+extern void wine_server_init_process(void);
 
 /* module handling */
 extern BOOL MODULE_GetSystemDirectory( UNICODE_STRING *sysdir );

@@ -369,11 +369,11 @@ static BOOL build_initial_environment(void)
 
 
 /***********************************************************************
- *              set_library_argv
+ *              set_library_wargv
  *
- * Set the Wine library argc/argv global variables.
+ * Set the Wine library Unicode argv global variables.
  */
-static void set_library_argv( char **argv )
+static void set_library_wargv( char **argv )
 {
     int argc;
     WCHAR *p;
@@ -394,9 +394,6 @@ static void set_library_argv( char **argv )
         total -= reslen;
     }
     wargv[argc] = NULL;
-
-    __wine_main_argc  = argc;
-    __wine_main_argv  = argv;
     __wine_main_wargv = wargv;
 }
 
@@ -618,9 +615,6 @@ static BOOL process_init( char *argv[] )
     setbuf(stderr,NULL);
     setlocale(LC_CTYPE,"");
 
-    /* Setup the server connection */
-    wine_server_init_thread();
-
     /* Retrieve startup info from the server */
     SERVER_START_REQ( init_process )
     {
@@ -638,9 +632,6 @@ static BOOL process_init( char *argv[] )
     }
     SERVER_END_REQ;
     if (!ret) return FALSE;
-
-    /* Create the process heap */
-    peb->ProcessHeap = RtlCreateHeap( HEAP_GROWABLE, NULL, 0, 0, NULL, NULL );
 
     if (info_size == 0)
     {
@@ -729,7 +720,7 @@ static void start_process( void *arg )
 {
     __TRY
     {
-        LdrInitializeThunk( main_exe_file, 0, 0, 0 );
+        LdrInitializeThunk( main_exe_file, CreateFileW, 0, 0 );
     }
     __EXCEPT(UnhandledExceptionFilter)
     {
@@ -740,11 +731,11 @@ static void start_process( void *arg )
 
 
 /***********************************************************************
- *           __wine_process_init
+ *           __wine_kernel_init
  *
  * Wine initialisation: load and start the main exe file.
  */
-void __wine_process_init( int argc, char *argv[] )
+void __wine_kernel_init(void)
 {
     WCHAR *main_exe_name, *p;
     char error[1024];
@@ -753,22 +744,23 @@ void __wine_process_init( int argc, char *argv[] )
     PEB *peb = NtCurrentTeb()->Peb;
 
     /* Initialize everything */
-    if (!process_init( argv )) exit(1);
+    if (!process_init( __wine_main_argv )) exit(1);
 
-    argv++;  /* remove argv[0] (wine itself) */
+    __wine_main_argv++;  /* remove argv[0] (wine itself) */
+    __wine_main_argc--;
 
     if (!(main_exe_name = peb->ProcessParameters->ImagePathName.Buffer))
     {
         WCHAR buffer[MAX_PATH];
         WCHAR exe_nameW[MAX_PATH];
 
-        if (!argv[0]) OPTIONS_Usage();
+        if (!__wine_main_argv[0]) OPTIONS_Usage();
 
         /* FIXME: locale info not loaded yet */
-        MultiByteToWideChar( CP_UNIXCP, 0, argv[0], -1, exe_nameW, MAX_PATH );
+        MultiByteToWideChar( CP_UNIXCP, 0, __wine_main_argv[0], -1, exe_nameW, MAX_PATH );
         if (!find_exe_file( exe_nameW, buffer, MAX_PATH, &main_exe_file ))
         {
-            MESSAGE( "wine: cannot find '%s'\n", argv[0] );
+            MESSAGE( "wine: cannot find '%s'\n", __wine_main_argv[0] );
             ExitProcess(1);
         }
         if (main_exe_file == INVALID_HANDLE_VALUE)
@@ -781,7 +773,7 @@ void __wine_process_init( int argc, char *argv[] )
     }
 
     TRACE( "starting process name=%s file=%p argv[0]=%s\n",
-           debugstr_w(main_exe_name), main_exe_file, debugstr_a(argv[0]) );
+           debugstr_w(main_exe_name), main_exe_file, debugstr_a(__wine_main_argv[0]) );
 
     MODULE_InitLoadPath();
     VERSION_Init( main_exe_name );
@@ -821,8 +813,9 @@ void __wine_process_init( int argc, char *argv[] )
         TRACE( "starting Win16/DOS binary %s\n", debugstr_w(main_exe_name) );
         CloseHandle( main_exe_file );
         main_exe_file = 0;
-        argv--;
-        argv[0] = "winevdm.exe";
+        __wine_main_argv--;
+        __wine_main_argc++;
+        __wine_main_argv[0] = "winevdm.exe";
         if (open_builtin_exe_file( winevdmW, error, sizeof(error), 0, &file_exists ))
             goto found;
         MESSAGE( "wine: trying to run %s, cannot open builtin library for 'winevdm.exe': %s\n",
@@ -860,12 +853,9 @@ void __wine_process_init( int argc, char *argv[] )
 
  found:
     /* build command line */
-    set_library_argv( argv );
+    set_library_wargv( __wine_main_argv );
     if (!build_command_line( __wine_main_wargv )) goto error;
 
-    /* create 32-bit module for main exe */
-    if (!(peb->ImageBaseAddress = BUILTIN32_LoadExeModule( peb->ImageBaseAddress, CreateFileW )))
-        goto error;
     stack_size = RtlImageNtHeader(peb->ImageBaseAddress)->OptionalHeader.SizeOfStackReserve;
 
     /* allocate main thread stack */

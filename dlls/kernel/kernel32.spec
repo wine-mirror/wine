@@ -1132,6 +1132,9 @@
 # Unix files
 @ stdcall wine_get_unix_file_name(str ptr long)
 
+# Init code
+@ cdecl __wine_kernel_init()
+
 ################################################################
 # Wine dll separation hacks, these will go away, don't use them
 #

@@ -138,13 +138,6 @@ inline static void set_status( NTSTATUS status )
     NtCurrentTeb()->last_error = RtlNtStatusToDosError( status );
 }
 
-/* set the process main heap */
-static void set_process_heap( HANDLE heap )
-{
-    NtCurrentTeb()->Peb->ProcessHeap = heap;
-    processHeap = heap;
-}
-
 /* mark a block of memory as free for debugging purposes */
 static inline void mark_block_free( void *ptr, size_t size )
 {
@@ -1035,10 +1028,8 @@ HANDLE WINAPI RtlCreateHeap( ULONG flags, PVOID addr, ULONG totalSize, ULONG com
         firstHeap = heapPtr;
         RtlUnlockHeap( processHeap );
     }
-    else  /* assume the first heap we create is the process main heap */
-    {
-        set_process_heap( (HANDLE)subheap->heap );
-    }
+    else processHeap = subheap->heap;  /* assume the first heap we create is the process main heap */
+
     return (HANDLE)subheap;
 }
 

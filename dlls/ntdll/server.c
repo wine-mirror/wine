@@ -600,11 +600,11 @@ static int server_connect( const char *oldcwd, const char *serverdir )
 
 
 /***********************************************************************
- *           server_init
+ *           wine_server_init_process
  *
  * Start the server and create the initial socket pair.
  */
-static void server_init(void)
+void wine_server_init_process(void)
 {
     int size;
     char *oldcwd;
@@ -656,8 +656,6 @@ void wine_server_init_thread(void)
     int version, ret;
     int reply_pipe[2];
     struct sigaction sig_act;
-
-    if (fd_socket == -1) server_init();
 
     sig_act.sa_handler = SIG_IGN;
     sig_act.sa_flags   = 0;

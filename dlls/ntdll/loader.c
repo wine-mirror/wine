@@ -82,7 +82,8 @@ struct builtin_load_info
     WINE_MODREF *wm;
 };
 
-static struct builtin_load_info *builtin_load_info;
+static struct builtin_load_info default_load_info;
+static struct builtin_load_info *builtin_load_info = &default_load_info;
 
 static UINT tls_module_count;      /* number of modules with TLS directory */
 static UINT tls_total_size;        /* total size of TLS storage */
@@ -1029,9 +1030,11 @@ NTSTATUS WINAPI LdrGetProcedureAddress(HMODULE module, const ANSI_STRING *name,
  */
 static void load_builtin_callback( void *module, const char *filename )
 {
+    static const WCHAR emptyW[1];
     IMAGE_NT_HEADERS *nt;
     WINE_MODREF *wm;
     WCHAR *fullname, *p;
+    const WCHAR *load_path;
 
     if (!module)
     {
@@ -1078,7 +1081,10 @@ static void load_builtin_callback( void *module, const char *filename )
 
     /* fixup imports */
 
-    if (fixup_imports( wm, builtin_load_info->load_path ) != STATUS_SUCCESS)
+    load_path = builtin_load_info->load_path;
+    if (!load_path) load_path = NtCurrentTeb()->Peb->ProcessParameters->DllPath.Buffer;
+    if (!load_path) load_path = emptyW;
+    if (fixup_imports( wm, load_path ) != STATUS_SUCCESS)
     {
         /* the module has only be inserted in the load & memory order lists */
         RemoveEntryList(&wm->ldr.InLoadOrderModuleList);
@@ -1738,9 +1744,9 @@ PIMAGE_NT_HEADERS WINAPI RtlImageNtHeader(HMODULE hModule)
 /******************************************************************
  *		LdrInitializeThunk (NTDLL.@)
  *
- * FIXME: the arguments are not correct, main_file is a Wine invention.
+ * FIXME: the arguments are not correct, main_file and CreateFileW_ptr are Wine inventions.
  */
-void WINAPI LdrInitializeThunk( HANDLE main_file, ULONG unknown2, ULONG unknown3, ULONG unknown4 )
+void WINAPI LdrInitializeThunk( HANDLE main_file, void *CreateFileW_ptr, ULONG unknown3, ULONG unknown4 )
 {
     NTSTATUS status;
     WINE_MODREF *wm;
@@ -1749,6 +1755,13 @@ void WINAPI LdrInitializeThunk( HANDLE main_file, ULONG unknown2, ULONG unknown3
     PEB *peb = NtCurrentTeb()->Peb;
     UNICODE_STRING *main_exe_name = &peb->ProcessParameters->ImagePathName;
     IMAGE_NT_HEADERS *nt = RtlImageNtHeader( peb->ImageBaseAddress );
+
+    pCreateFileW = CreateFileW_ptr;
+    if (!MODULE_GetSystemDirectory( &system_dir ))
+    {
+        ERR( "Couldn't get system dir\n");
+        exit(1);
+    }
 
     /* allocate the modref for the main exe */
     if (!(wm = alloc_module( peb->ImageBaseAddress, main_exe_name->Buffer )))
@@ -1874,28 +1887,42 @@ PVOID WINAPI RtlImageRvaToVa( const IMAGE_NT_HEADERS *nt, HMODULE module,
 
 
 /***********************************************************************
- *           BUILTIN32_Init
- *
- * Initialize loading callbacks and return HMODULE of main exe.
- * 'main' is the main exe in case it was already loaded from a PE file.
- *
- * FIXME: this should be done differently once kernel is properly separated.
+ *           __wine_process_init
  */
-HMODULE BUILTIN32_LoadExeModule( HMODULE main, void *CreateFileW_ptr )
+void __wine_process_init( int argc, char *argv[] )
 {
-    static struct builtin_load_info default_info;
+    static const WCHAR kernel32W[] = {'k','e','r','n','e','l','3','2','.','d','l','l',0};
 
-    pCreateFileW = CreateFileW_ptr;
-    if (!MODULE_GetSystemDirectory( &system_dir ))
-        MESSAGE( "Couldn't get system dir in process init\n");
-    NtCurrentTeb()->Peb->ImageBaseAddress = main;
-    default_info.status = STATUS_SUCCESS;
-    default_info.load_path = NtCurrentTeb()->Peb->ProcessParameters->DllPath.Buffer;
-    builtin_load_info = &default_info;
+    WINE_MODREF *wm;
+    NTSTATUS status;
+    ANSI_STRING func_name;
+    void (DECLSPEC_NORETURN *init_func)();
+
+    /* setup the server connection */
+    wine_server_init_process();
+    wine_server_init_thread();
+
+    /* create the process heap */
+    if (!(NtCurrentTeb()->Peb->ProcessHeap = RtlCreateHeap( HEAP_GROWABLE, NULL, 0, 0, NULL, NULL )))
+    {
+        MESSAGE( "wine: failed to create the process heap\n" );
+        exit(1);
+    }
+
+    /* setup the load callback and create ntdll modref */
     wine_dll_set_callback( load_builtin_callback );
-    if (!NtCurrentTeb()->Peb->ImageBaseAddress)
-        MESSAGE( "No built-in EXE module loaded!  Did you create a .spec file?\n" );
-    if (default_info.status != STATUS_SUCCESS)
-        MESSAGE( "Error while processing initial modules\n");
-    return NtCurrentTeb()->Peb->ImageBaseAddress;
+
+    if ((status = load_builtin_dll( NULL, kernel32W, 0, &wm )) != STATUS_SUCCESS)
+    {
+        MESSAGE( "wine: could not load kernel32.dll, status %lx\n", status );
+        exit(1);
+    }
+    RtlInitAnsiString( &func_name, "__wine_kernel_init" );
+    if ((status = LdrGetProcedureAddress( wm->ldr.BaseAddress, &func_name,
+                                          0, (void **)&init_func )) != STATUS_SUCCESS)
+    {
+        MESSAGE( "wine: could not find __wine_kernel_init in kernel32.dll, status %lx\n", status );
+        exit(1);
+    }
+    init_func();
 }
