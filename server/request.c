@@ -296,7 +296,8 @@ static void master_socket_poll_event( struct object *obj, int event )
 /* remove the socket upon exit */
 static void socket_cleanup(void)
 {
-    unlink( SOCKETNAME );
+    static int do_it_once;
+    if (!do_it_once++) unlink( SOCKETNAME );
 }
 
 static void master_socket_destroy( struct object *obj )
@@ -382,7 +383,7 @@ void open_master_socket(void)
     if (bind( fd, (struct sockaddr *)&addr, slen ) == -1)
     {
         if ((errno == EEXIST) || (errno == EADDRINUSE))
-            fatal_error( "another server is already running\n" );
+            exit(0);  /* pretend we succeeded to start */
         else
             fatal_perror( "bind" );
     }
@@ -411,7 +412,9 @@ void open_master_socket(void)
 /* close the master socket and stop waiting for new clients */
 void close_master_socket(void)
 {
-    release_object( master_socket );
+    /* if a new client is waiting, we keep on running */
+    if (!check_select_events( master_socket->obj.fd, POLLIN ))
+        release_object( master_socket );
 }
 
 /* lock/unlock the master socket to stop accepting new clients */

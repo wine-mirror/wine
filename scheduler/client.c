@@ -338,6 +338,7 @@ const char *get_config_dir(void)
 static void start_server( const char *oldcwd )
 {
     static int started;  /* we only try once */
+    char *path, *p;
     if (!started)
     {
         int status;
@@ -345,24 +346,36 @@ static void start_server( const char *oldcwd )
         if (pid == -1) fatal_perror( "fork" );
         if (!pid)
         {
-            char *path, *p;
             /* first try the installation dir */
             execl( BINDIR "/wineserver", "wineserver", NULL );
-            if (oldcwd) chdir( oldcwd );
+
             /* now try the dir we were launched from */
-            if (!(path = malloc( strlen(argv0) + 20 )))
+            if (full_argv0)
+            {
+                if (!(path = malloc( strlen(full_argv0) + 20 )))
+                    fatal_error( "out of memory\n" );
+                if ((p = strrchr( strcpy( path, full_argv0 ), '/' )))
+                {
+                    strcpy( p, "/wineserver" );
+                    execl( path, "wineserver", NULL );
+                    strcpy( p, "/server/wineserver" );
+                    execl( path, "wineserver", NULL );
+                }
+            }
+
+            /* now try the path */
+            execlp( "wineserver", "wineserver", NULL );
+
+            /* and finally the current dir */
+            if (!(path = malloc( strlen(oldcwd) + 20 )))
                 fatal_error( "out of memory\n" );
-            if ((p = strrchr( strcpy( path, argv0 ), '/' )))
+            if ((p = strrchr( strcpy( path, oldcwd ), '/' )))
             {
                 strcpy( p, "/wineserver" );
                 execl( path, "wineserver", NULL );
                 strcpy( p, "/server/wineserver" );
                 execl( path, "wineserver", NULL );
             }
-            /* now try the path */
-            execlp( "wineserver", "wineserver", NULL );
-            /* and finally the current dir */
-            execl( "./server/wineserver", "wineserver", NULL );
             fatal_error( "could not exec wineserver\n" );
         }
         started = 1;
@@ -382,13 +395,13 @@ static int server_connect( const char *oldcwd, const char *serverdir )
 {
     struct sockaddr_un addr;
     struct stat st;
-    int s, slen;
+    int s, slen, retry;
 
     /* chdir to the server directory */
     if (chdir( serverdir ) == -1)
     {
         if (errno != ENOENT) fatal_perror( "chdir to %s", serverdir );
-        start_server( NULL );
+        start_server( "." );
         if (chdir( serverdir ) == -1) fatal_perror( "chdir to %s", serverdir );
     }
 
@@ -397,42 +410,44 @@ static int server_connect( const char *oldcwd, const char *serverdir )
     if (st.st_uid != getuid()) fatal_error( "'%s' is not owned by you\n", serverdir );
     if (st.st_mode & 077) fatal_error( "'%s' must not be accessible by other users\n", serverdir );
 
-    /* check for an existing socket */
-    if (lstat( SOCKETNAME, &st ) == -1)
+    for (retry = 0; retry < 3; retry++)
     {
-        if (errno != ENOENT) fatal_perror( "lstat %s/%s", serverdir, SOCKETNAME );
-        start_server( oldcwd );
-        if (lstat( SOCKETNAME, &st ) == -1) fatal_perror( "lstat %s/%s", serverdir, SOCKETNAME );
-    }
+        /* if not the first try, wait a bit to leave the server time to exit */
+        if (retry) usleep( 100000 * retry * retry );
 
-    /* make sure the socket is sane */
-    if (!S_ISSOCK(st.st_mode))
-        fatal_error( "'%s/%s' is not a socket\n", serverdir, SOCKETNAME );
-    if (st.st_uid != getuid())
-        fatal_error( "'%s/%s' is not owned by you\n", serverdir, SOCKETNAME );
+        /* check for an existing socket */
+        if (lstat( SOCKETNAME, &st ) == -1)
+        {
+            if (errno != ENOENT) fatal_perror( "lstat %s/%s", serverdir, SOCKETNAME );
+            start_server( oldcwd );
+            if (lstat( SOCKETNAME, &st ) == -1) fatal_perror( "lstat %s/%s", serverdir, SOCKETNAME );
+        }
 
-    /* try to connect to it */
-    addr.sun_family = AF_UNIX;
-    strcpy( addr.sun_path, SOCKETNAME );
-    slen = sizeof(addr) - sizeof(addr.sun_path) + strlen(addr.sun_path) + 1;
+        /* make sure the socket is sane */
+        if (!S_ISSOCK(st.st_mode))
+            fatal_error( "'%s/%s' is not a socket\n", serverdir, SOCKETNAME );
+        if (st.st_uid != getuid())
+            fatal_error( "'%s/%s' is not owned by you\n", serverdir, SOCKETNAME );
+
+        /* try to connect to it */
+        addr.sun_family = AF_UNIX;
+        strcpy( addr.sun_path, SOCKETNAME );
+        slen = sizeof(addr) - sizeof(addr.sun_path) + strlen(addr.sun_path) + 1;
 #ifdef HAVE_SOCKADDR_SUN_LEN
-    addr.sun_len = slen;
+        addr.sun_len = slen;
 #endif
-    if ((s = socket( AF_UNIX, SOCK_STREAM, 0 )) == -1) fatal_perror( "socket" );
-    if (connect( s, (struct sockaddr *)&addr, slen ) == -1)
-    {
-        close( s );
-        /* wait a bit and retry with a new socket */
-        usleep( 50000 );
         if ((s = socket( AF_UNIX, SOCK_STREAM, 0 )) == -1) fatal_perror( "socket" );
-        if (connect( s, (struct sockaddr *)&addr, slen ) == -1)
-            fatal_error( "file '%s/%s' exists,\n"
-                         "   but I cannot connect to it; maybe the server has crashed?\n"
-                         "   If this is the case, you should remove this socket file and try again.\n",
-                         serverdir, SOCKETNAME );
+        if (connect( s, (struct sockaddr *)&addr, slen ) != -1)
+        {
+            fcntl( s, F_SETFD, 1 ); /* set close on exec flag */
+            return s;
+        }
+        close( s );
     }
-    fcntl( s, F_SETFD, 1 ); /* set close on exec flag */
-    return s;
+    fatal_error( "file '%s/%s' exists,\n"
+                 "   but I cannot connect to it; maybe the server has crashed?\n"
+                 "   If this is the case, you should remove this socket file and try again.\n",
+                 serverdir, SOCKETNAME );
 }
 
 
