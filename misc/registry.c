@@ -679,6 +679,8 @@ void SHELL_SaveRegistry( void )
 	char	buf[4];
 	HKEY	hkey;
 	int	all;
+	int     usedCfgUser = 0;
+	int     usedCfgLM = 0;
 
     TRACE(reg,"(void)\n");
 
@@ -703,10 +705,30 @@ void SHELL_SaveRegistry( void )
 	}
 	if (lstrcmpiA(buf,"yes"))
 		all=1;
+
+	/* Try saving a config file specified User.reg save/load name */
+	fn = xmalloc( MAX_PATHNAME_LEN ); 
+	if (PROFILE_GetWineIniString ("Registry", "UserFileName", "", fn, MAX_PATHNAME_LEN - 1)) {
+	  _savereg(lookup_hkey(HKEY_CURRENT_USER),fn,all);
+	  usedCfgUser = 1;
+	}
+	free (fn);
+
+	/* Try saving a config file specified System.reg save/load name*/
+	fn = xmalloc ( MAX_PATHNAME_LEN);
+	if (PROFILE_GetWineIniString ("Registry", "LocalMachineFileName", "", fn, MAX_PATHNAME_LEN - 1)){
+	  _savereg(lookup_hkey(HKEY_LOCAL_MACHINE), fn, all);
+	  usedCfgLM = 1;
+	}
+	free (fn);
+
 	pwd=getpwuid(getuid());
 	if (pwd!=NULL && pwd->pw_dir!=NULL)
         {
                 char *tmp;
+
+		/* Hack to disable double save */
+		if (usedCfgUser == 0){
 
 		fn=(char*)xmalloc( strlen(pwd->pw_dir) + strlen(WINE_PREFIX) +
                                    strlen(SAVE_CURRENT_USER) + 2 );
@@ -725,6 +747,12 @@ void SHELL_SaveRegistry( void )
 		}
 		free(tmp);
 		free(fn);
+
+		}
+
+		/* Hack to disable double save */
+		if (usedCfgLM == 0){
+
 		fn=(char*)xmalloc(strlen(pwd->pw_dir)+strlen(WINE_PREFIX)+strlen(SAVE_LOCAL_MACHINE)+2);
 		strcpy(fn,pwd->pw_dir);
 		strcat(fn,WINE_PREFIX"/"SAVE_LOCAL_MACHINE);
@@ -738,6 +766,8 @@ void SHELL_SaveRegistry( void )
 		}
 		free(tmp);
 		free(fn);
+
+		}
 	} else
 		WARN(reg,"Failed to get homedirectory of UID %d.\n",getuid());
 }
@@ -1743,7 +1773,24 @@ void SHELL_LoadRegistry( void )
 
 	/* load the user saved registries */
 
+	/* Try to load config file specified files */
+
+	fn = xmalloc( MAX_PATHNAME_LEN ); 
+	if (PROFILE_GetWineIniString ("Registry", "UserFileName", "", fn, MAX_PATHNAME_LEN - 1)) {
+	  _wine_loadreg(lookup_hkey(HKEY_CURRENT_USER),fn,0);
+	}
+	free (fn);
+
+	fn = xmalloc ( MAX_PATHNAME_LEN);
+	if (PROFILE_GetWineIniString ("Registry", "LocalMachineFileName", "", fn, MAX_PATHNAME_LEN - 1)){
+	  _savereg(lookup_hkey(HKEY_LOCAL_MACHINE), fn, 0);
+	}
+	free (fn);
+
 	/* FIXME: use getenv("HOME") or getpwuid(getuid())->pw_dir ?? */
+	/* FIXME: user's home/.wine/user.reg and system.reg files are not
+	   blocked from loading not sure if we want to or not.*/
+
 
 	pwd=getpwuid(getuid());
 	if (pwd!=NULL && pwd->pw_dir!=NULL) {
