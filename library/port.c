@@ -426,11 +426,11 @@ static int solaris_try_mmap (void *addr, size_t len, int prot, int flags,
        and MAP_FIXED isn't already specified. */
 
     if ( !addr )
-        return FALSE;
+        return 0;
     if ( (uintptr_t)addr & (pagesize-1) )
-        return FALSE;
+        return 0;
     if ( flags & MAP_FIXED )
-        return FALSE;
+        return 0;
 
     /* We use vfork() to freeze all threads of the
        current process.  This allows us to check without
