@@ -61,6 +61,15 @@ void WINAPI WIN87_fpmath( CONTEXT *context )
 
     case 6: /* round top of stack to integer using method AX & 0x0C00 */
         /* returns current controlword */
+        {
+            DWORD dw=0;
+            /* I don't know much about asm() programming. This could be
+             * wrong.
+             */
+           __asm__ __volatile__("frndint");
+           __asm__ __volatile__("fist %0;wait" : "=m" (dw) : : "memory");
+            TRACE(int,"On top of stack is %ld\n",dw);
+        }
         break;
 
     case 7: /* POP top of stack as integer into DX:AX */
@@ -98,6 +107,7 @@ void WINAPI WIN87_fpmath( CONTEXT *context )
         break;
 
     default: /* error. Say that loud and clear */
+        FIXME(int,"unhandled switch %d\n",BX_reg(context));
         AX_reg(context) = DX_reg(context) = 0xFFFF;
         break;
     }
