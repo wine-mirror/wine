@@ -13222,6 +13222,8 @@ fi
 
 ac_config_commands="$ac_config_commands controls"
 
+ac_config_commands="$ac_config_commands dlls/advapi32/tests"
+
 ac_config_commands="$ac_config_commands dlls/ddraw/d3ddevice"
 
 ac_config_commands="$ac_config_commands dlls/ddraw/dclipper"
@@ -13927,6 +13929,7 @@ do
   "tsx11/Makefile" ) CONFIG_FILES="$CONFIG_FILES tsx11/Makefile" ;;
   "unicode/Makefile" ) CONFIG_FILES="$CONFIG_FILES unicode/Makefile" ;;
   "controls" ) CONFIG_COMMANDS="$CONFIG_COMMANDS controls" ;;
+  "dlls/advapi32/tests" ) CONFIG_COMMANDS="$CONFIG_COMMANDS dlls/advapi32/tests" ;;
   "dlls/ddraw/d3ddevice" ) CONFIG_COMMANDS="$CONFIG_COMMANDS dlls/ddraw/d3ddevice" ;;
   "dlls/ddraw/dclipper" ) CONFIG_COMMANDS="$CONFIG_COMMANDS dlls/ddraw/dclipper" ;;
   "dlls/ddraw/ddraw" ) CONFIG_COMMANDS="$CONFIG_COMMANDS dlls/ddraw/ddraw" ;;
@@ -14607,6 +14610,8 @@ echo "$as_me: executing $ac_dest commands" >&6;}
   case $ac_dest in
     controls ) test -d "controls" || ({ echo "$as_me:$LINENO: creating controls" >&5
 echo "$as_me: creating controls" >&6;} && mkdir "controls") ;;
+    dlls/advapi32/tests ) test -d "dlls/advapi32/tests" || ({ echo "$as_me:$LINENO: creating dlls/advapi32/tests" >&5
+echo "$as_me: creating dlls/advapi32/tests" >&6;} && mkdir "dlls/advapi32/tests") ;;
     dlls/ddraw/d3ddevice ) test -d "dlls/ddraw/d3ddevice" || ({ echo "$as_me:$LINENO: creating dlls/ddraw/d3ddevice" >&5
 echo "$as_me: creating dlls/ddraw/d3ddevice" >&6;} && mkdir "dlls/ddraw/d3ddevice") ;;
     dlls/ddraw/dclipper ) test -d "dlls/ddraw/dclipper" || ({ echo "$as_me:$LINENO: creating dlls/ddraw/dclipper" >&5

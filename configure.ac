@@ -1192,6 +1192,7 @@ dnl **** Generate output files ****
 AH_TOP([#define __WINE_CONFIG_H])
 
 WINE_CONFIG_EXTRA_DIR(controls)
+WINE_CONFIG_EXTRA_DIR(dlls/advapi32/tests)
 WINE_CONFIG_EXTRA_DIR(dlls/ddraw/d3ddevice)
 WINE_CONFIG_EXTRA_DIR(dlls/ddraw/dclipper)
 WINE_CONFIG_EXTRA_DIR(dlls/ddraw/ddraw)
