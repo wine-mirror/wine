@@ -39,7 +39,9 @@ C_SRCS = \
 	treeview.c \
 	updown.c
 
-RC_SRCS= rsrc.rc
+RC_SRCS = rsrc.rc
+
+SUBDIRS = tests
 
 @MAKE_DLL_RULES@
 

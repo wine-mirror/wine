@@ -1365,6 +1365,7 @@ dlls/avifil32/Makefile
 dlls/cabinet/Makefile
 dlls/comcat/Makefile
 dlls/comctl32/Makefile
+dlls/comctl32/tests/Makefile
 dlls/commdlg/Makefile
 dlls/crtdll/Makefile
 dlls/crypt32/Makefile
