@@ -31,7 +31,6 @@ BEGIN
     LTEXT           "Versión de Wine:",IDC_STATIC,119,17,45,8
     LTEXT           "CVS",IDC_WINEVER,169,17,56,8
     LTEXT           "Versión de Windows:",IDC_STATIC,17,155,58,8
-    LTEXT           "Apariencia de Windows:",IDC_STATIC,17,193,58,8
     LTEXT           "Versión de DOS:",IDC_STATIC,17,173,57,8
     CONTROL         IDB_WINE,IDC_STATIC,"Static",SS_BITMAP | SS_CENTERIMAGE | 
                     SS_REALSIZEIMAGE | WS_BORDER,15,17,157,111, WS_EX_TRANSPARENT
