@@ -1513,6 +1513,7 @@ dlls/glu32/Makefile
 dlls/glut32/Makefile
 dlls/iccvid/Makefile
 dlls/icmp/Makefile
+dlls/ifsmgr.vxd/Makefile
 dlls/imagehlp/Makefile
 dlls/imm32/Makefile
 dlls/iphlpapi/Makefile
@@ -1521,6 +1522,8 @@ dlls/kernel/Makefile
 dlls/kernel/tests/Makefile
 dlls/lzexpand/Makefile
 dlls/mapi32/Makefile
+dlls/mmdevldr.vxd/Makefile
+dlls/monodebg.vxd/Makefile
 dlls/mpr/Makefile
 dlls/msacm/Makefile
 dlls/msacm/imaadp32/Makefile
@@ -1586,7 +1589,12 @@ dlls/user/Makefile
 dlls/user/tests/Makefile
 dlls/uuid/Makefile
 dlls/uxtheme/Makefile
+dlls/vdhcp.vxd/Makefile
 dlls/version/Makefile
+dlls/vnb.vxd/Makefile
+dlls/vnetbios.vxd/Makefile
+dlls/vtdapi.vxd/Makefile
+dlls/vwin32.vxd/Makefile
 dlls/win32s/Makefile
 dlls/winaspi/Makefile
 dlls/wined3d/Makefile

@@ -24,19 +24,7 @@
 #include "wine/port.h"
 
 #include <stdlib.h>
-#ifdef HAVE_UNISTD_H
-# include <unistd.h>
-#endif
 #include <sys/types.h>
-#ifdef HAVE_SYS_SOCKET_H
-# include <sys/socket.h>
-#endif
-#ifdef HAVE_NETINET_IN_H
-# include <netinet/in.h>
-#endif
-#ifdef HAVE_ARPA_INET_H
-# include <arpa/inet.h>
-#endif
 #include <string.h>
 #include <stdarg.h>
 #include <time.h>
@@ -48,82 +36,13 @@
 #include "winerror.h"
 #include "winnls.h"
 #include "file.h"
-#include "winioctl.h"
-#include "winnt.h"
-#include "iphlpapi.h"
 #include "kernel_private.h"
 #include "wine/server.h"
+#include "wine/unicode.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(file);
 
-#ifndef INADDR_NONE
-#define INADDR_NONE ~0UL
-#endif
-
-static BOOL DeviceIo_VTDAPI(DWORD dwIoControlCode,
-			      LPVOID lpvInBuffer, DWORD cbInBuffer,
-			      LPVOID lpvOutBuffer, DWORD cbOutBuffer,
-			      LPDWORD lpcbBytesReturned,
-			      LPOVERLAPPED lpOverlapped);
-static BOOL DeviceIo_MONODEBG(DWORD dwIoControlCode,
-			      LPVOID lpvInBuffer, DWORD cbInBuffer,
-			      LPVOID lpvOutBuffer, DWORD cbOutBuffer,
-			      LPDWORD lpcbBytesReturned,
-			      LPOVERLAPPED lpOverlapped);
-static BOOL DeviceIo_MMDEVLDR(DWORD dwIoControlCode,
-			      LPVOID lpvInBuffer, DWORD cbInBuffer,
-			      LPVOID lpvOutBuffer, DWORD cbOutBuffer,
-			      LPDWORD lpcbBytesReturned,
-			      LPOVERLAPPED lpOverlapped);
-
-static BOOL DeviceIo_IFSMgr(DWORD dwIoControlCode,
-			      LPVOID lpvInBuffer, DWORD cbInBuffer,
-			      LPVOID lpvOutBuffer, DWORD cbOutBuffer,
-			      LPDWORD lpcbBytesReturned,
-			      LPOVERLAPPED lpOverlapped);
-
-static BOOL DeviceIo_VCD(DWORD dwIoControlCode,
-			      LPVOID lpvInBuffer, DWORD cbInBuffer,
-			      LPVOID lpvOutBuffer, DWORD cbOutBuffer,
-			      LPDWORD lpcbBytesReturned,
-			      LPOVERLAPPED lpOverlapped);
-
-static BOOL DeviceIo_VWin32(DWORD dwIoControlCode,
-			      LPVOID lpvInBuffer, DWORD cbInBuffer,
-			      LPVOID lpvOutBuffer, DWORD cbOutBuffer,
-			      LPDWORD lpcbBytesReturned,
-			      LPOVERLAPPED lpOverlapped);
-
-static BOOL DeviceIo_DHCP(DWORD dwIoControlCode,
-			      LPVOID lpvInBuffer, DWORD cbInBuffer,
-			      LPVOID lpvOutBuffer, DWORD cbOutBuffer,
-			      LPDWORD lpcbBytesReturned,
-			      LPOVERLAPPED lpOverlapped);
-
-static BOOL DeviceIo_PCCARD (DWORD dwIoControlCode,
-			      LPVOID lpvInBuffer, DWORD cbInBuffer,
-			      LPVOID lpvOutBuffer, DWORD cbOutBuffer,
-			      LPDWORD lpcbBytesReturned,
-			      LPOVERLAPPED lpOverlapped);
-
-static BOOL DeviceIo_HASP (DWORD dwIoControlCode,
-			      LPVOID lpvInBuffer, DWORD cbInBuffer,
-			      LPVOID lpvOutBuffer, DWORD cbOutBuffer,
-			      LPDWORD lpcbBytesReturned,
-			      LPOVERLAPPED lpOverlapped);
-
-static BOOL DeviceIo_NetBIOS(DWORD dwIoControlCode,
-			      LPVOID lpvInBuffer, DWORD cbInBuffer,
-			      LPVOID lpvOutBuffer, DWORD cbOutBuffer,
-			      LPDWORD lpcbBytesReturned,
-			      LPOVERLAPPED lpOverlapped);
-
-static BOOL DeviceIo_VNB(DWORD dwIoControlCode,
-			      LPVOID lpvInBuffer, DWORD cbInBuffer,
-			      LPVOID lpvOutBuffer, DWORD cbOutBuffer,
-			      LPDWORD lpcbBytesReturned,
-			      LPOVERLAPPED lpOverlapped);
 
 /*
  * VxD names are taken from the Win95 DDK
@@ -133,152 +52,171 @@ struct VxDInfo
 {
     LPCSTR  name;
     WORD    id;
+    HMODULE module;
     BOOL  (*deviceio)(DWORD, LPVOID, DWORD,
                         LPVOID, DWORD, LPDWORD, LPOVERLAPPED);
 };
 
-static const struct VxDInfo VxDList[] =
+static struct VxDInfo VxDList[] =
 {
     /* Standard VxD IDs */
-    { "VMM",      0x0001, NULL },
-    { "DEBUG",    0x0002, NULL },
-    { "VPICD",    0x0003, NULL },
-    { "VDMAD",    0x0004, NULL },
-    { "VTD",      0x0005, NULL },
-    { "V86MMGR",  0x0006, NULL },
-    { "PAGESWAP", 0x0007, NULL },
-    { "PARITY",   0x0008, NULL },
-    { "REBOOT",   0x0009, NULL },
-    { "VDD",      0x000A, NULL },
-    { "VSD",      0x000B, NULL },
-    { "VMD",      0x000C, NULL },
-    { "VKD",      0x000D, NULL },
-    { "VCD",      0x000E, DeviceIo_VCD },
-    { "VPD",      0x000F, NULL },
-    { "BLOCKDEV", 0x0010, NULL },
-    { "VMCPD",    0x0011, NULL },
-    { "EBIOS",    0x0012, NULL },
-    { "BIOSXLAT", 0x0013, NULL },
-    { "VNETBIOS", 0x0014, DeviceIo_NetBIOS },
-    { "DOSMGR",   0x0015, NULL },
-    { "WINLOAD",  0x0016, NULL },
-    { "SHELL",    0x0017, NULL },
-    { "VMPOLL",   0x0018, NULL },
-    { "VPROD",    0x0019, NULL },
-    { "DOSNET",   0x001A, NULL },
-    { "VFD",      0x001B, NULL },
-    { "VDD2",     0x001C, NULL },
-    { "WINDEBUG", 0x001D, NULL },
-    { "TSRLOAD",  0x001E, NULL },
-    { "BIOSHOOK", 0x001F, NULL },
-    { "INT13",    0x0020, NULL },
-    { "PAGEFILE", 0x0021, NULL },
-    { "SCSI",     0x0022, NULL },
-    { "MCA_POS",  0x0023, NULL },
-    { "SCSIFD",   0x0024, NULL },
-    { "VPEND",    0x0025, NULL },
-    { "VPOWERD",  0x0026, NULL },
-    { "VXDLDR",   0x0027, NULL },
-    { "NDIS",     0x0028, NULL },
-    { "BIOS_EXT", 0x0029, NULL },
-    { "VWIN32",   0x002A, DeviceIo_VWin32 },
-    { "VCOMM",    0x002B, NULL },
-    { "SPOOLER",  0x002C, NULL },
-    { "WIN32S",   0x002D, NULL },
-    { "DEBUGCMD", 0x002E, NULL },
+    { "VMM",      0x0001, NULL, NULL },
+    { "DEBUG",    0x0002, NULL, NULL },
+    { "VPICD",    0x0003, NULL, NULL },
+    { "VDMAD",    0x0004, NULL, NULL },
+    { "VTD",      0x0005, NULL, NULL },
+    { "V86MMGR",  0x0006, NULL, NULL },
+    { "PAGESWAP", 0x0007, NULL, NULL },
+    { "PARITY",   0x0008, NULL, NULL },
+    { "REBOOT",   0x0009, NULL, NULL },
+    { "VDD",      0x000A, NULL, NULL },
+    { "VSD",      0x000B, NULL, NULL },
+    { "VMD",      0x000C, NULL, NULL },
+    { "VKD",      0x000D, NULL, NULL },
+    { "VCD",      0x000E, NULL, NULL },
+    { "VPD",      0x000F, NULL, NULL },
+    { "BLOCKDEV", 0x0010, NULL, NULL },
+    { "VMCPD",    0x0011, NULL, NULL },
+    { "EBIOS",    0x0012, NULL, NULL },
+    { "BIOSXLAT", 0x0013, NULL, NULL },
+    { "VNETBIOS", 0x0014, NULL, NULL },
+    { "DOSMGR",   0x0015, NULL, NULL },
+    { "WINLOAD",  0x0016, NULL, NULL },
+    { "SHELL",    0x0017, NULL, NULL },
+    { "VMPOLL",   0x0018, NULL, NULL },
+    { "VPROD",    0x0019, NULL, NULL },
+    { "DOSNET",   0x001A, NULL, NULL },
+    { "VFD",      0x001B, NULL, NULL },
+    { "VDD2",     0x001C, NULL, NULL },
+    { "WINDEBUG", 0x001D, NULL, NULL },
+    { "TSRLOAD",  0x001E, NULL, NULL },
+    { "BIOSHOOK", 0x001F, NULL, NULL },
+    { "INT13",    0x0020, NULL, NULL },
+    { "PAGEFILE", 0x0021, NULL, NULL },
+    { "SCSI",     0x0022, NULL, NULL },
+    { "MCA_POS",  0x0023, NULL, NULL },
+    { "SCSIFD",   0x0024, NULL, NULL },
+    { "VPEND",    0x0025, NULL, NULL },
+    { "VPOWERD",  0x0026, NULL, NULL },
+    { "VXDLDR",   0x0027, NULL, NULL },
+    { "NDIS",     0x0028, NULL, NULL },
+    { "BIOS_EXT", 0x0029, NULL, NULL },
+    { "VWIN32",   0x002A, NULL, NULL },
+    { "VCOMM",    0x002B, NULL, NULL },
+    { "SPOOLER",  0x002C, NULL, NULL },
+    { "WIN32S",   0x002D, NULL, NULL },
+    { "DEBUGCMD", 0x002E, NULL, NULL },
 
-    { "VNB",      0x0031, DeviceIo_VNB },
-    { "SERVER",   0x0032, NULL },
-    { "CONFIGMG", 0x0033, NULL },
-    { "DWCFGMG",  0x0034, NULL },
-    { "SCSIPORT", 0x0035, NULL },
-    { "VFBACKUP", 0x0036, NULL },
-    { "ENABLE",   0x0037, NULL },
-    { "VCOND",    0x0038, NULL },
+    { "VNB",      0x0031, NULL, NULL },
+    { "SERVER",   0x0032, NULL, NULL },
+    { "CONFIGMG", 0x0033, NULL, NULL },
+    { "DWCFGMG",  0x0034, NULL, NULL },
+    { "SCSIPORT", 0x0035, NULL, NULL },
+    { "VFBACKUP", 0x0036, NULL, NULL },
+    { "ENABLE",   0x0037, NULL, NULL },
+    { "VCOND",    0x0038, NULL, NULL },
 
-    { "EFAX",     0x003A, NULL },
-    { "DSVXD",    0x003B, NULL },
-    { "ISAPNP",   0x003C, NULL },
-    { "BIOS",     0x003D, NULL },
-    { "WINSOCK",  0x003E, NULL },
-    { "WSOCK",    0x003E, NULL },
-    { "WSIPX",    0x003F, NULL },
-    { "IFSMgr",   0x0040, DeviceIo_IFSMgr },
-    { "VCDFSD",   0x0041, NULL },
-    { "MRCI2",    0x0042, NULL },
-    { "PCI",      0x0043, NULL },
-    { "PELOADER", 0x0044, NULL },
-    { "EISA",     0x0045, NULL },
-    { "DRAGCLI",  0x0046, NULL },
-    { "DRAGSRV",  0x0047, NULL },
-    { "PERF",     0x0048, NULL },
-    { "AWREDIR",  0x0049, NULL },
+    { "EFAX",     0x003A, NULL, NULL },
+    { "DSVXD",    0x003B, NULL, NULL },
+    { "ISAPNP",   0x003C, NULL, NULL },
+    { "BIOS",     0x003D, NULL, NULL },
+    { "WINSOCK",  0x003E, NULL, NULL },
+    { "WSOCK",    0x003E, NULL, NULL },
+    { "WSIPX",    0x003F, NULL, NULL },
+    { "IFSMgr",   0x0040, NULL, NULL },
+    { "VCDFSD",   0x0041, NULL, NULL },
+    { "MRCI2",    0x0042, NULL, NULL },
+    { "PCI",      0x0043, NULL, NULL },
+    { "PELOADER", 0x0044, NULL, NULL },
+    { "EISA",     0x0045, NULL, NULL },
+    { "DRAGCLI",  0x0046, NULL, NULL },
+    { "DRAGSRV",  0x0047, NULL, NULL },
+    { "PERF",     0x0048, NULL, NULL },
+    { "AWREDIR",  0x0049, NULL, NULL },
 
     /* Far East support */
-    { "ETEN",     0x0060, NULL },
-    { "CHBIOS",   0x0061, NULL },
-    { "VMSGD",    0x0062, NULL },
-    { "VPPID",    0x0063, NULL },
-    { "VIME",     0x0064, NULL },
-    { "VHBIOSD",  0x0065, NULL },
+    { "ETEN",     0x0060, NULL, NULL },
+    { "CHBIOS",   0x0061, NULL, NULL },
+    { "VMSGD",    0x0062, NULL, NULL },
+    { "VPPID",    0x0063, NULL, NULL },
+    { "VIME",     0x0064, NULL, NULL },
+    { "VHBIOSD",  0x0065, NULL, NULL },
 
     /* Multimedia OEM IDs */
-    { "VTDAPI",   0x0442, DeviceIo_VTDAPI },
-    { "MMDEVLDR", 0x044A, DeviceIo_MMDEVLDR },
+    { "VTDAPI",   0x0442, NULL, NULL },
+    { "MMDEVLDR", 0x044A, NULL, NULL },
 
     /* Network Device IDs */
-    { "VNetSup",  0x0480, NULL },
-    { "VRedir",   0x0481, NULL },
-    { "VBrowse",  0x0482, NULL },
-    { "VSHARE",   0x0483, NULL },
-    { "IFSMgr",   0x0484, NULL },
-    { "MEMPROBE", 0x0485, NULL },
-    { "VFAT",     0x0486, NULL },
-    { "NWLINK",   0x0487, NULL },
-    { "VNWLINK",  0x0487, NULL },
-    { "NWSUP",    0x0487, NULL },
-    { "VTDI",     0x0488, NULL },
-    { "VIP",      0x0489, NULL },
-    { "VTCP",     0x048A, NULL },
-    { "VCache",   0x048B, NULL },
-    { "VUDP",     0x048C, NULL },
-    { "VAsync",   0x048D, NULL },
-    { "NWREDIR",  0x048E, NULL },
-    { "STAT80",   0x048F, NULL },
-    { "SCSIPORT", 0x0490, NULL },
-    { "FILESEC",  0x0491, NULL },
-    { "NWSERVER", 0x0492, NULL },
-    { "SECPROV",  0x0493, NULL },
-    { "NSCL",     0x0494, NULL },
-    { "WSTCP",    0x0495, NULL },
-    { "NDIS2SUP", 0x0496, NULL },
-    { "MSODISUP", 0x0497, NULL },
-    { "Splitter", 0x0498, NULL },
-    { "PPP",      0x0499, NULL },
-    { "VDHCP",    0x049A, DeviceIo_DHCP },
-    { "VNBT",     0x049B, NULL },
-    { "LOGGER",   0x049D, NULL },
-    { "EFILTER",  0x049E, NULL },
-    { "FFILTER",  0x049F, NULL },
-    { "TFILTER",  0x04A0, NULL },
-    { "AFILTER",  0x04A1, NULL },
-    { "IRLAMP",   0x04A2, NULL },
+    { "VNetSup",  0x0480, NULL, NULL },
+    { "VRedir",   0x0481, NULL, NULL },
+    { "VBrowse",  0x0482, NULL, NULL },
+    { "VSHARE",   0x0483, NULL, NULL },
+    { "IFSMgr",   0x0484, NULL, NULL },
+    { "MEMPROBE", 0x0485, NULL, NULL },
+    { "VFAT",     0x0486, NULL, NULL },
+    { "NWLINK",   0x0487, NULL, NULL },
+    { "VNWLINK",  0x0487, NULL, NULL },
+    { "NWSUP",    0x0487, NULL, NULL },
+    { "VTDI",     0x0488, NULL, NULL },
+    { "VIP",      0x0489, NULL, NULL },
+    { "VTCP",     0x048A, NULL, NULL },
+    { "VCache",   0x048B, NULL, NULL },
+    { "VUDP",     0x048C, NULL, NULL },
+    { "VAsync",   0x048D, NULL, NULL },
+    { "NWREDIR",  0x048E, NULL, NULL },
+    { "STAT80",   0x048F, NULL, NULL },
+    { "SCSIPORT", 0x0490, NULL, NULL },
+    { "FILESEC",  0x0491, NULL, NULL },
+    { "NWSERVER", 0x0492, NULL, NULL },
+    { "SECPROV",  0x0493, NULL, NULL },
+    { "NSCL",     0x0494, NULL, NULL },
+    { "WSTCP",    0x0495, NULL, NULL },
+    { "NDIS2SUP", 0x0496, NULL, NULL },
+    { "MSODISUP", 0x0497, NULL, NULL },
+    { "Splitter", 0x0498, NULL, NULL },
+    { "PPP",      0x0499, NULL, NULL },
+    { "VDHCP",    0x049A, NULL, NULL },
+    { "VNBT",     0x049B, NULL, NULL },
+    { "LOGGER",   0x049D, NULL, NULL },
+    { "EFILTER",  0x049E, NULL, NULL },
+    { "FFILTER",  0x049F, NULL, NULL },
+    { "TFILTER",  0x04A0, NULL, NULL },
+    { "AFILTER",  0x04A1, NULL, NULL },
+    { "IRLAMP",   0x04A2, NULL, NULL },
 
-    { "PCCARD",   0x097C, DeviceIo_PCCARD },
-    { "HASP95",   0x3721, DeviceIo_HASP },
+    { "PCCARD",   0x097C, NULL, NULL },
+    { "HASP95",   0x3721, NULL, NULL },
 
     /* WINE additions, ids unknown */
-    { "MONODEBG.VXD", 0x4242, DeviceIo_MONODEBG },
+    { "MONODEBG", 0x4242, NULL, NULL },
 
-    { NULL,       0,      NULL }
+    { NULL,       0,      NULL, NULL }
 };
+
 
 HANDLE DEVICE_Open( LPCWSTR filenameW, DWORD access, LPSECURITY_ATTRIBUTES sa )
 {
-    const struct VxDInfo *info;
-    char filename[MAX_PATH];
+    static const WCHAR dotVxDW[] = {'.','v','x','d',0};
+    struct VxDInfo *info;
+    WCHAR *p, buffer[16];
+    char filename[32];
 
-    if (!WideCharToMultiByte(CP_ACP, 0, filenameW, -1, filename, MAX_PATH, NULL, NULL))
+    if (strlenW( filenameW ) >= sizeof(buffer)/sizeof(WCHAR) - 4 ||
+        strchrW( filenameW, '/' ) || strchrW( filenameW, '\\' ))
+    {
+        SetLastError( ERROR_FILE_NOT_FOUND );
+        return 0;
+    }
+    strcpyW( buffer, filenameW );
+    p = strchrW( buffer, '.' );
+    if (!p) strcatW( buffer, dotVxDW );
+    else if (strcmpiW( p, dotVxDW ))  /* existing extension has to be .vxd */
+    {
+        SetLastError( ERROR_FILE_NOT_FOUND );
+        return 0;
+    }
+
+    if (!WideCharToMultiByte(CP_ACP, 0, buffer, -1, filename, sizeof(filename), NULL, NULL))
     {
         SetLastError( ERROR_FILE_NOT_FOUND );
         return 0;
@@ -286,7 +224,15 @@ HANDLE DEVICE_Open( LPCWSTR filenameW, DWORD access, LPSECURITY_ATTRIBUTES sa )
 
     for (info = VxDList; info->name; info++)
         if (!strncasecmp( info->name, filename, strlen(info->name) ))
+        {
+            if (!info->module)
+            {
+                info->module = LoadLibraryW( buffer );
+                if (info->module)
+                    info->deviceio = (void *)GetProcAddress( info->module, "DeviceIoControl" );
+            }
             return FILE_CreateDevice( info->id | 0x10000, access, sa );
+        }
 
     FIXME( "Unknown/unsupported VxD %s. Try setting Windows version to 'nt40' or 'win31'.\n",
            filename);
@@ -401,648 +347,4 @@ BOOL WINAPI DeviceIoControl(HANDLE hDevice, DWORD dwIoControlCode,
             }
 	}
    	return FALSE;
-}
-
-/***********************************************************************
- *           DeviceIo_VTDAPI
- */
-static BOOL DeviceIo_VTDAPI(DWORD dwIoControlCode, LPVOID lpvInBuffer, DWORD cbInBuffer,
-			      LPVOID lpvOutBuffer, DWORD cbOutBuffer,
-			      LPDWORD lpcbBytesReturned,
-			      LPOVERLAPPED lpOverlapped)
-{
-    BOOL retv = TRUE;
-
-    switch (dwIoControlCode)
-    {
-    case 5:
-        if (lpvOutBuffer && (cbOutBuffer>=4))
-            *(DWORD*)lpvOutBuffer = GetTickCount();
-
-        if (lpcbBytesReturned)
-            *lpcbBytesReturned = 4;
-
-        break;
-
-    default:
-        FIXME( "Control %ld not implemented\n", dwIoControlCode);
-        retv = FALSE;
-        break;
-    }
-
-    return retv;
-}
-
-/***********************************************************************
- *           DeviceIo_IFSMgr
- * NOTES
- *   These ioctls are used by 'MSNET32.DLL'.
- *
- *   I have been unable to uncover any documentation about the ioctls so
- *   the implementation of the cases IFS_IOCTL_21 and IFS_IOCTL_2F are
- *   based on reasonable guesses on information found in the Windows 95 DDK.
- *
- */
-
-/*
- * IFSMgr DeviceIO service
- */
-
-#define IFS_IOCTL_21                100
-#define IFS_IOCTL_2F                101
-#define	IFS_IOCTL_GET_RES           102
-#define IFS_IOCTL_GET_NETPRO_NAME_A 103
-
-struct win32apireq {
-	unsigned long 	ar_proid;
-	unsigned long  	ar_eax;
-	unsigned long  	ar_ebx;
-	unsigned long  	ar_ecx;
-	unsigned long  	ar_edx;
-	unsigned long  	ar_esi;
-	unsigned long  	ar_edi;
-	unsigned long  	ar_ebp;
-	unsigned short 	ar_error;
-	unsigned short  ar_pad;
-};
-
-static void win32apieq_2_CONTEXT(struct win32apireq *pIn,CONTEXT86 *pCxt)
-{
-	memset(pCxt,0,sizeof(*pCxt));
-
-	pCxt->ContextFlags=CONTEXT86_INTEGER|CONTEXT86_CONTROL;
-	pCxt->Eax = pIn->ar_eax;
-	pCxt->Ebx = pIn->ar_ebx;
-	pCxt->Ecx = pIn->ar_ecx;
-	pCxt->Edx = pIn->ar_edx;
-	pCxt->Esi = pIn->ar_esi;
-	pCxt->Edi = pIn->ar_edi;
-
-	/* FIXME: Only partial CONTEXT86_CONTROL */
-	pCxt->Ebp = pIn->ar_ebp;
-
-	/* FIXME: pIn->ar_proid ignored */
-	/* FIXME: pIn->ar_error ignored */
-	/* FIXME: pIn->ar_pad ignored */
-}
-
-static void CONTEXT_2_win32apieq(CONTEXT86 *pCxt,struct win32apireq *pOut)
-{
-	memset(pOut,0,sizeof(struct win32apireq));
-
-	pOut->ar_eax = pCxt->Eax;
-	pOut->ar_ebx = pCxt->Ebx;
-	pOut->ar_ecx = pCxt->Ecx;
-	pOut->ar_edx = pCxt->Edx;
-	pOut->ar_esi = pCxt->Esi;
-	pOut->ar_edi = pCxt->Edi;
-
-	/* FIXME: Only partial CONTEXT86_CONTROL */
-	pOut->ar_ebp = pCxt->Ebp;
-
-	/* FIXME: pOut->ar_proid ignored */
-	/* FIXME: pOut->ar_error ignored */
-	/* FIXME: pOut->ar_pad ignored */
-}
-
-static BOOL DeviceIo_IFSMgr(DWORD dwIoControlCode, LPVOID lpvInBuffer, DWORD cbInBuffer,
-			      LPVOID lpvOutBuffer, DWORD cbOutBuffer,
-			      LPDWORD lpcbBytesReturned,
-			      LPOVERLAPPED lpOverlapped)
-{
-    BOOL retv = TRUE;
-	TRACE("(%ld,%p,%ld,%p,%ld,%p,%p): stub\n",
-			dwIoControlCode,
-			lpvInBuffer,cbInBuffer,
-			lpvOutBuffer,cbOutBuffer,
-			lpcbBytesReturned,
-			lpOverlapped);
-
-    switch (dwIoControlCode)
-    {
-	case IFS_IOCTL_21:
-	case IFS_IOCTL_2F:{
-		CONTEXT86 cxt;
-		struct win32apireq *pIn=(struct win32apireq *) lpvInBuffer;
-		struct win32apireq *pOut=(struct win32apireq *) lpvOutBuffer;
-
-		TRACE(
-			"Control '%s': "
-			"proid=0x%08lx, eax=0x%08lx, ebx=0x%08lx, ecx=0x%08lx, "
-			"edx=0x%08lx, esi=0x%08lx, edi=0x%08lx, ebp=0x%08lx, "
-			"error=0x%04x, pad=0x%04x\n",
-			(dwIoControlCode==IFS_IOCTL_21)?"IFS_IOCTL_21":"IFS_IOCTL_2F",
-			pIn->ar_proid, pIn->ar_eax, pIn->ar_ebx, pIn->ar_ecx,
-			pIn->ar_edx, pIn->ar_esi, pIn->ar_edi, pIn->ar_ebp,
-			pIn->ar_error, pIn->ar_pad
-		);
-
-		win32apieq_2_CONTEXT(pIn,&cxt);
-
-		if(dwIoControlCode==IFS_IOCTL_21)
-                    INSTR_CallBuiltinHandler( &cxt, 0x21 );
-                else
-                    INSTR_CallBuiltinHandler( &cxt, 0x2f );
-
-		CONTEXT_2_win32apieq(&cxt,pOut);
-
-        retv = TRUE;
-	} break;
-	case IFS_IOCTL_GET_RES:{
-        FIXME( "Control 'IFS_IOCTL_GET_RES' not implemented\n");
-        retv = FALSE;
-	} break;
-	case IFS_IOCTL_GET_NETPRO_NAME_A:{
-        FIXME( "Control 'IFS_IOCTL_GET_NETPRO_NAME_A' not implemented\n");
-        retv = FALSE;
-	} break;
-    default:
-        FIXME( "Control %ld not implemented\n", dwIoControlCode);
-        retv = FALSE;
-    }
-
-    return retv;
-}
-
-/***********************************************************************
- *           DeviceIo_VCD
- */
-static BOOL DeviceIo_VCD(DWORD dwIoControlCode,
-			      LPVOID lpvInBuffer, DWORD cbInBuffer,
-			      LPVOID lpvOutBuffer, DWORD cbOutBuffer,
-			      LPDWORD lpcbBytesReturned,
-			      LPOVERLAPPED lpOverlapped)
-{
-    BOOL retv = TRUE;
-
-    switch (dwIoControlCode)
-    {
-    case IOCTL_SERIAL_LSRMST_INSERT:
-    {
-        FIXME( "IOCTL_SERIAL_LSRMST_INSERT NIY !\n");
-        retv = FALSE;
-    }
-    break;
-
-    default:
-        FIXME( "Unknown Control %ld\n", dwIoControlCode);
-        retv = FALSE;
-        break;
-    }
-
-    return retv;
-}
-
-
-/***********************************************************************
- *           DeviceIo_VWin32
- */
-
-static void DIOCRegs_2_CONTEXT( DIOC_REGISTERS *pIn, CONTEXT86 *pCxt )
-{
-    memset( pCxt, 0, sizeof(*pCxt) );
-    /* Note: segment registers == 0 means that CTX_SEG_OFF_TO_LIN
-             will interpret 32-bit register contents as linear pointers */
-
-    pCxt->ContextFlags=CONTEXT86_INTEGER|CONTEXT86_CONTROL;
-    pCxt->Eax = pIn->reg_EAX;
-    pCxt->Ebx = pIn->reg_EBX;
-    pCxt->Ecx = pIn->reg_ECX;
-    pCxt->Edx = pIn->reg_EDX;
-    pCxt->Esi = pIn->reg_ESI;
-    pCxt->Edi = pIn->reg_EDI;
-
-    /* FIXME: Only partial CONTEXT86_CONTROL */
-
-    pCxt->EFlags = pIn->reg_Flags & ~0x00020000; /* clear vm86 mode */
-}
-
-static void CONTEXT_2_DIOCRegs( CONTEXT86 *pCxt, DIOC_REGISTERS *pOut )
-{
-    memset( pOut, 0, sizeof(DIOC_REGISTERS) );
-
-    pOut->reg_EAX = pCxt->Eax;
-    pOut->reg_EBX = pCxt->Ebx;
-    pOut->reg_ECX = pCxt->Ecx;
-    pOut->reg_EDX = pCxt->Edx;
-    pOut->reg_ESI = pCxt->Esi;
-    pOut->reg_EDI = pCxt->Edi;
-
-    /* FIXME: Only partial CONTEXT86_CONTROL */
-    pOut->reg_Flags = pCxt->EFlags;
-}
-
-#define DIOC_AH(regs) (((unsigned char*)&((regs)->reg_EAX))[1])
-#define DIOC_AL(regs) (((unsigned char*)&((regs)->reg_EAX))[0])
-#define DIOC_BH(regs) (((unsigned char*)&((regs)->reg_EBX))[1])
-#define DIOC_BL(regs) (((unsigned char*)&((regs)->reg_EBX))[0])
-#define DIOC_DH(regs) (((unsigned char*)&((regs)->reg_EDX))[1])
-#define DIOC_DL(regs) (((unsigned char*)&((regs)->reg_EDX))[0])
-
-#define DIOC_AX(regs) (((unsigned short*)&((regs)->reg_EAX))[0])
-#define DIOC_BX(regs) (((unsigned short*)&((regs)->reg_EBX))[0])
-#define DIOC_CX(regs) (((unsigned short*)&((regs)->reg_ECX))[0])
-#define DIOC_DX(regs) (((unsigned short*)&((regs)->reg_EDX))[0])
-
-#define DIOC_SET_CARRY(regs) (((regs)->reg_Flags)|=0x00000001)
-
-static BOOL DeviceIo_VWin32(DWORD dwIoControlCode,
-			      LPVOID lpvInBuffer, DWORD cbInBuffer,
-			      LPVOID lpvOutBuffer, DWORD cbOutBuffer,
-			      LPDWORD lpcbBytesReturned,
-			      LPOVERLAPPED lpOverlapped)
-{
-    BOOL retv = TRUE;
-
-    switch (dwIoControlCode)
-    {
-    case VWIN32_DIOC_DOS_IOCTL:
-    case 0x10: /* Int 0x21 call, call it VWIN_DIOC_INT21 ? */
-    case VWIN32_DIOC_DOS_INT13:
-    case VWIN32_DIOC_DOS_INT25:
-    case VWIN32_DIOC_DOS_INT26:
-    case 0x29: /* Int 0x31 call, call it VWIN_DIOC_INT31 ? */
-    case VWIN32_DIOC_DOS_DRIVEINFO:
-    {
-        CONTEXT86 cxt;
-        DIOC_REGISTERS *pIn  = (DIOC_REGISTERS *)lpvInBuffer;
-        DIOC_REGISTERS *pOut = (DIOC_REGISTERS *)lpvOutBuffer;
-        BYTE intnum = 0;
-
-        TRACE( "Control '%s': "
-               "eax=0x%08lx, ebx=0x%08lx, ecx=0x%08lx, "
-               "edx=0x%08lx, esi=0x%08lx, edi=0x%08lx \n",
-               (dwIoControlCode == VWIN32_DIOC_DOS_IOCTL)? "VWIN32_DIOC_DOS_IOCTL" :
-               (dwIoControlCode == VWIN32_DIOC_DOS_INT25)? "VWIN32_DIOC_DOS_INT25" :
-               (dwIoControlCode == VWIN32_DIOC_DOS_INT26)? "VWIN32_DIOC_DOS_INT26" :
-               (dwIoControlCode == VWIN32_DIOC_DOS_DRIVEINFO)? "VWIN32_DIOC_DOS_DRIVEINFO" :  "???",
-               pIn->reg_EAX, pIn->reg_EBX, pIn->reg_ECX,
-               pIn->reg_EDX, pIn->reg_ESI, pIn->reg_EDI );
-
-        DIOCRegs_2_CONTEXT( pIn, &cxt );
-
-        switch (dwIoControlCode)
-        {
-        case VWIN32_DIOC_DOS_IOCTL: /* Call int 21h */
-        case 0x10: /* Int 0x21 call, call it VWIN_DIOC_INT21 ? */
-        case VWIN32_DIOC_DOS_DRIVEINFO:        /* Call int 21h 730x */
-            intnum = 0x21;
-            break;
-        case VWIN32_DIOC_DOS_INT13:
-            intnum = 0x13;
-            break;
-        case VWIN32_DIOC_DOS_INT25: 
-            intnum = 0x25;
-            break;
-        case VWIN32_DIOC_DOS_INT26:
-            intnum = 0x26;
-            break;
-        case 0x29: /* Int 0x31 call, call it VWIN_DIOC_INT31 ? */
-            intnum = 0x31;
-            break;
-        }
-
-        INSTR_CallBuiltinHandler( &cxt, intnum );
-        CONTEXT_2_DIOCRegs( &cxt, pOut );
-    }
-    break;
-
-    case VWIN32_DIOC_SIMCTRLC:
-        FIXME( "Control VWIN32_DIOC_SIMCTRLC not implemented\n");
-        retv = FALSE;
-        break;
-
-    default:
-        FIXME( "Unknown Control %ld\n", dwIoControlCode);
-        retv = FALSE;
-        break;
-    }
-
-    return retv;
-}
-
-/* this is the main multimedia device loader */
-static BOOL DeviceIo_MMDEVLDR(DWORD dwIoControlCode,
-			      LPVOID lpvInBuffer, DWORD cbInBuffer,
-			      LPVOID lpvOutBuffer, DWORD cbOutBuffer,
-			      LPDWORD lpcbBytesReturned,
-			      LPOVERLAPPED lpOverlapped)
-{
-	FIXME("(%ld,%p,%ld,%p,%ld,%p,%p): stub\n",
-	    dwIoControlCode,
-	    lpvInBuffer,cbInBuffer,
-	    lpvOutBuffer,cbOutBuffer,
-	    lpcbBytesReturned,
-	    lpOverlapped
-	);
-	switch (dwIoControlCode) {
-	case 5:
-		/* Hmm. */
-		*(DWORD*)lpvOutBuffer=0;
-		*lpcbBytesReturned=4;
-		return TRUE;
-	}
-	return FALSE;
-}
-/* this is used by some Origin games */
-static BOOL DeviceIo_MONODEBG(DWORD dwIoControlCode,
-			      LPVOID lpvInBuffer, DWORD cbInBuffer,
-			      LPVOID lpvOutBuffer, DWORD cbOutBuffer,
-			      LPDWORD lpcbBytesReturned,
-			      LPOVERLAPPED lpOverlapped)
-{
-	switch (dwIoControlCode) {
-	case 1:	/* version */
-		*(LPDWORD)lpvOutBuffer = 0x20004; /* WC SecretOps */
-		break;
-	case 9: /* debug output */
-		ERR("MONODEBG: %s\n",debugstr_a(lpvInBuffer));
-		break;
-	default:
-		FIXME("(%ld,%p,%ld,%p,%ld,%p,%p): stub\n",
-			dwIoControlCode,
-			lpvInBuffer,cbInBuffer,
-			lpvOutBuffer,cbOutBuffer,
-			lpcbBytesReturned,
-			lpOverlapped
-		);
-		break;
-	}
-	return TRUE;
-}
-
-/* pccard */
-static BOOL DeviceIo_PCCARD (DWORD dwIoControlCode,
-			      LPVOID lpvInBuffer, DWORD cbInBuffer,
-			      LPVOID lpvOutBuffer, DWORD cbOutBuffer,
-			      LPDWORD lpcbBytesReturned,
-			      LPOVERLAPPED lpOverlapped)
-{
-	switch (dwIoControlCode) {
-	case 0x0000: /* PCCARD_Get_Version */
-	case 0x0001: /* PCCARD_Card_Services */
-	default:
-		FIXME( "(%ld,%p,%ld,%p,%ld,%p,%p): stub\n",
-			dwIoControlCode,
-			lpvInBuffer,cbInBuffer,
-			lpvOutBuffer,cbOutBuffer,
-			lpcbBytesReturned,
-			lpOverlapped
-		);
-		break;
-	}
-	return FALSE;
-}
-
-static BOOL DeviceIo_HASP(DWORD dwIoControlCode, LPVOID lpvInBuffer, DWORD cbInBuffer,
-			      LPVOID lpvOutBuffer, DWORD cbOutBuffer,
-			      LPDWORD lpcbBytesReturned,
-			      LPOVERLAPPED lpOverlapped)
-{
-    BOOL retv = TRUE;
-	FIXME("(%ld,%p,%ld,%p,%ld,%p,%p): stub\n",
-			dwIoControlCode,
-			lpvInBuffer,cbInBuffer,
-			lpvOutBuffer,cbOutBuffer,
-			lpcbBytesReturned,
-			lpOverlapped);
-
-    return retv;
-}
-
-typedef UCHAR (WINAPI *NetbiosFunc)(LPVOID);
-
-static BOOL DeviceIo_NetBIOS(DWORD dwIoControlCode,
-			      LPVOID lpvInBuffer, DWORD cbInBuffer,
-			      LPVOID lpvOutBuffer, DWORD cbOutBuffer,
-			      LPDWORD lpcbBytesReturned,
-			      LPOVERLAPPED lpOverlapped)
-{
-    static HMODULE netapi;
-    static NetbiosFunc pNetbios;
-
-    if (dwIoControlCode != 256)
-    {
-        FIXME("(%ld,%p,%ld,%p,%ld,%p,%p): stub\n",
-                dwIoControlCode,
-                lpvInBuffer,cbInBuffer,
-                lpvOutBuffer,cbOutBuffer,
-                lpcbBytesReturned,
-                lpOverlapped);
-    }
-    else
-    {
-        if (!pNetbios)
-        {
-            if (!netapi) netapi = LoadLibraryA("netapi32.dll");
-            if (netapi) pNetbios = (NetbiosFunc)GetProcAddress(netapi, "Netbios");
-        }
-        if (pNetbios)
-        {
-            pNetbios(lpvInBuffer);
-            return TRUE;
-        }
-    }
-    return FALSE;
-}
-
-static BOOL DeviceIo_DHCP(DWORD dwIoControlCode, LPVOID lpvInBuffer,
-                          DWORD cbInBuffer,
-                          LPVOID lpvOutBuffer, DWORD cbOutBuffer,
-                          LPDWORD lpcbBytesReturned,
-                          LPOVERLAPPED lpOverlapped)
-{
-    DWORD error;
-
-    switch (dwIoControlCode) {
-    case 1:
-    {
-        /* since IpReleaseAddress/IpRenewAddress are not implemented, say there
-         * are no DHCP adapters
-         */
-        error = ERROR_FILE_NOT_FOUND;
-        break;
-    }
-
-    /* FIXME: don't know what this means */
-    case 5:
-        if (lpcbBytesReturned)
-            *lpcbBytesReturned = sizeof(DWORD);
-        if (lpvOutBuffer && cbOutBuffer >= 4)
-        {
-            *(LPDWORD)lpvOutBuffer = 0;
-            error = NO_ERROR;
-        }
-        else
-            error = ERROR_BUFFER_OVERFLOW;
-        break;
-
-    default:
-        FIXME("(%ld,%p,%ld,%p,%ld,%p,%p): stub\n",
-                dwIoControlCode,
-                lpvInBuffer,cbInBuffer,
-                lpvOutBuffer,cbOutBuffer,
-                lpcbBytesReturned,
-                lpOverlapped);
-        error = ERROR_NOT_SUPPORTED;
-        break;
-    }
-    if (error)
-        SetLastError(error);
-    return error == NO_ERROR;
-}
-
-typedef DWORD (WINAPI *GetNetworkParamsFunc)(PFIXED_INFO, PDWORD);
-typedef DWORD (WINAPI *GetAdaptersInfoFunc)(PIP_ADAPTER_INFO, PDWORD);
-
-typedef struct _nbtInfo
-{
-    DWORD ip;
-    DWORD winsPrimary;
-    DWORD winsSecondary;
-    DWORD dnsPrimary;
-    DWORD dnsSecondary;
-    DWORD unk0;
-} nbtInfo;
-
-#define MAX_NBT_ENTRIES 7
-
-typedef struct _nbtTable
-{
-    DWORD   numEntries;
-    nbtInfo table[MAX_NBT_ENTRIES];
-    UCHAR   pad[6];
-    WORD    nodeType;
-    WORD    scopeLen;
-    char    scope[254];
-} nbtTable;
-
-static BOOL DeviceIo_VNB(DWORD dwIoControlCode,
-                         LPVOID lpvInBuffer, DWORD cbInBuffer,
-                         LPVOID lpvOutBuffer, DWORD cbOutBuffer,
-                         LPDWORD lpcbBytesReturned,
-                         LPOVERLAPPED lpOverlapped)
-{
-    static HMODULE iphlpapi;
-    static GetNetworkParamsFunc pGetNetworkParams;
-    static GetAdaptersInfoFunc pGetAdaptersInfo;
-    DWORD error;
-
-    switch (dwIoControlCode)
-    {
-        case 116:
-            if (lpcbBytesReturned)
-                *lpcbBytesReturned = sizeof(nbtTable);
-            if (!lpvOutBuffer || cbOutBuffer < sizeof(nbtTable))
-                error = ERROR_BUFFER_OVERFLOW;
-            else
-            {
-                nbtTable *info = (nbtTable *)lpvOutBuffer;
-
-                memset(info, 0, sizeof(nbtTable));
-                if (!iphlpapi)
-                {
-                    iphlpapi = LoadLibraryA("iphlpapi.dll");
-                    pGetNetworkParams = (GetNetworkParamsFunc)GetProcAddress(iphlpapi,"GetNetworkParams");
-                    pGetAdaptersInfo = (GetAdaptersInfoFunc)GetProcAddress(iphlpapi, "GetAdaptersInfo");
-                }
-                if (iphlpapi)
-                {
-                    DWORD size = 0;
-
-                    error = pGetNetworkParams(NULL, &size);
-                    if (ERROR_BUFFER_OVERFLOW == error)
-                    {
-                        PFIXED_INFO fixedInfo = (PFIXED_INFO)HeapAlloc(
-                         GetProcessHeap(), 0, size);
-
-                        error = pGetNetworkParams(fixedInfo, &size);
-                        if (NO_ERROR == error)
-                        {
-                            info->nodeType = (WORD)fixedInfo->NodeType;
-                            info->scopeLen = min(strlen(fixedInfo->ScopeId) + 1,
-                             sizeof(info->scope) - 2);
-                            memcpy(info->scope + 1, fixedInfo->ScopeId,
-                             info->scopeLen);
-                            info->scope[info->scopeLen + 1] = '\0';
-                            {
-                                /* convert into L2-encoded version */
-                                char *ptr, *lenPtr;
-
-                                for (ptr = info->scope + 1; *ptr &&
-                                 ptr - info->scope < sizeof(info->scope); )
-                                {
-                                    for (lenPtr = ptr - 1, *lenPtr = 0;
-                                     *ptr && *ptr != '.' &&
-                                     ptr - info->scope < sizeof(info->scope);
-                                     ptr++)
-                                        *lenPtr += 1;
-                                    ptr++;
-                                }
-                            }
-                            /* could set DNS servers here too, but since
-                             * ipconfig.exe and winipcfg.exe read these from the
-                             * registry, there's no point */
-                        }
-                        if (fixedInfo)
-                            HeapFree(GetProcessHeap(), 0, fixedInfo);
-                    }
-                    size = 0;
-                    error = pGetAdaptersInfo(NULL, &size);
-                    if (ERROR_BUFFER_OVERFLOW == error)
-                    {
-                        PIP_ADAPTER_INFO adapterInfo = (PIP_ADAPTER_INFO)
-                         HeapAlloc(GetProcessHeap(), 0, size);
-
-                        error = pGetAdaptersInfo(adapterInfo, &size);
-                        if (NO_ERROR == error)
-                        {
-                            PIP_ADAPTER_INFO ptr = adapterInfo;
-
-                            for (ptr = adapterInfo; ptr && info->numEntries <
-                             MAX_NBT_ENTRIES; ptr = ptr->Next)
-                            {
-                                unsigned long addr;
-
-                                addr = inet_addr(
-                                 ptr->IpAddressList.IpAddress.String);
-                                if (addr != 0 && addr != INADDR_NONE)
-                                    info->table[info->numEntries].ip =
-                                     ntohl(addr);
-                                addr = inet_addr(
-                                 ptr->PrimaryWinsServer.IpAddress.String);
-                                if (addr != 0 && addr != INADDR_NONE)
-                                    info->table[info->numEntries].winsPrimary
-                                     = ntohl(addr);
-                                addr = inet_addr(
-                                 ptr->SecondaryWinsServer.IpAddress.String);
-                                if (addr != 0 && addr != INADDR_NONE)
-                                    info->table[info->numEntries].winsSecondary
-                                     = ntohl(addr);
-                                info->numEntries++;
-                            }
-                        }
-                        if (adapterInfo)
-                            HeapFree(GetProcessHeap(), 0, adapterInfo);
-                    }
-                }
-                else
-                    error = GetLastError();
-            }
-            break;
-
-        case 119:
-            /* nbtstat.exe uses this, but the return seems to be a bunch of
-             * pointers, so it's not so easy to reverse engineer.  Fall through
-             * to unimplemented...
-             */
-        default:
-            FIXME( "Unimplemented control %ld for VxD device VNB\n",
-                               dwIoControlCode );
-            error = ERROR_NOT_SUPPORTED;
-            break;
-    }
-    if (error)
-        SetLastError(error);
-    return error == NO_ERROR;
 }

@@ -50,12 +50,15 @@ BASEDIRS = \
 	gdi \
 	iccvid \
 	icmp \
+	ifsmgr.vxd \
 	imagehlp \
 	imm32 \
 	iphlpapi \
 	kernel \
 	lzexpand \
 	mapi32 \
+	mmdevldr.vxd \
+	monodebg.vxd \
 	mpr \
 	msacm \
 	msacm/imaadp32 \
@@ -110,7 +113,12 @@ BASEDIRS = \
 	urlmon \
 	user \
 	uxtheme \
+	vdhcp.vxd \
 	version \
+	vnb.vxd \
+	vnetbios.vxd \
+	vtdapi.vxd \
+	vwin32.vxd \
 	win32s \
 	winaspi \
 	winedos \
@@ -248,6 +256,7 @@ SYMLINKS = \
 	gdi32.dll$(DLLEXT) \
 	iccvid.dll$(DLLEXT) \
 	icmp.dll$(DLLEXT) \
+	ifsmgr.vxd$(DLLEXT) \
 	imaadp32.acm$(DLLEXT) \
 	imagehlp.dll$(DLLEXT) \
 	imm32.dll$(DLLEXT) \
@@ -264,6 +273,8 @@ SYMLINKS = \
 	mciseq.drv$(DLLEXT) \
 	mciwave.drv$(DLLEXT) \
 	midimap.drv$(DLLEXT) \
+	mmdevldr.vxd$(DLLEXT) \
+	monodebg.vxd$(DLLEXT) \
 	mpr.dll$(DLLEXT) \
 	msacm.drv$(DLLEXT) \
 	msacm32.dll$(DLLEXT) \
@@ -317,7 +328,12 @@ SYMLINKS = \
 	urlmon.dll$(DLLEXT) \
 	user32.dll$(DLLEXT) \
 	uxtheme.dll$(DLLEXT) \
+	vdhcp.vxd$(DLLEXT) \
 	version.dll$(DLLEXT) \
+	vnb.vxd$(DLLEXT) \
+	vnetbios.vxd$(DLLEXT) \
+	vtdapi.vxd$(DLLEXT) \
+	vwin32.vxd$(DLLEXT) \
 	w32skrnl.dll$(DLLEXT) \
 	winealsa.drv$(DLLEXT) \
 	winearts.drv$(DLLEXT) \
@@ -477,6 +493,9 @@ iccvid.dll$(DLLEXT): iccvid/iccvid.dll$(DLLEXT)
 icmp.dll$(DLLEXT): icmp/icmp.dll$(DLLEXT)
 	$(RM) $@ && $(LN_S) icmp/icmp.dll$(DLLEXT) $@
 
+ifsmgr.vxd$(DLLEXT): ifsmgr.vxd/ifsmgr.vxd$(DLLEXT)
+	$(RM) $@ && $(LN_S) ifsmgr.vxd/ifsmgr.vxd$(DLLEXT) $@
+
 imaadp32.acm$(DLLEXT): msacm/imaadp32/imaadp32.acm$(DLLEXT)
 	$(RM) $@ && $(LN_S) msacm/imaadp32/imaadp32.acm$(DLLEXT) $@
 
@@ -529,6 +548,12 @@ mciwave.drv$(DLLEXT): winmm/mciwave/mciwave.drv$(DLLEXT)
 
 midimap.drv$(DLLEXT): winmm/midimap/midimap.drv$(DLLEXT)
 	$(RM) $@ && $(LN_S) winmm/midimap/midimap.drv$(DLLEXT) $@
+
+mmdevldr.vxd$(DLLEXT): mmdevldr.vxd/mmdevldr.vxd$(DLLEXT)
+	$(RM) $@ && $(LN_S) mmdevldr.vxd/mmdevldr.vxd$(DLLEXT) $@
+
+monodebg.vxd$(DLLEXT): monodebg.vxd/monodebg.vxd$(DLLEXT)
+	$(RM) $@ && $(LN_S) monodebg.vxd/monodebg.vxd$(DLLEXT) $@
 
 mpr.dll$(DLLEXT): mpr/mpr.dll$(DLLEXT)
 	$(RM) $@ && $(LN_S) mpr/mpr.dll$(DLLEXT) $@
@@ -725,11 +750,26 @@ ddeml.dll$(DLLEXT) display.drv$(DLLEXT) keyboard.drv$(DLLEXT) \
 uxtheme.dll$(DLLEXT): uxtheme/uxtheme.dll$(DLLEXT)
 	$(RM) $@ && $(LN_S) uxtheme/uxtheme.dll$(DLLEXT) $@
 
+vdhcp.vxd$(DLLEXT): vdhcp.vxd/vdhcp.vxd$(DLLEXT)
+	$(RM) $@ && $(LN_S) vdhcp.vxd/vdhcp.vxd$(DLLEXT) $@
+
 version.dll$(DLLEXT): version/version.dll$(DLLEXT)
 	$(RM) $@ && $(LN_S) version/version.dll$(DLLEXT) $@
 
 ver.dll$(DLLEXT) : version.dll$(DLLEXT)
 	$(RM) $@ && $(LN_S) version.dll$(DLLEXT) $@
+
+vnb.vxd$(DLLEXT): vnb.vxd/vnb.vxd$(DLLEXT)
+	$(RM) $@ && $(LN_S) vnb.vxd/vnb.vxd$(DLLEXT) $@
+
+vnetbios.vxd$(DLLEXT): vnetbios.vxd/vnetbios.vxd$(DLLEXT)
+	$(RM) $@ && $(LN_S) vnetbios.vxd/vnetbios.vxd$(DLLEXT) $@
+
+vtdapi.vxd$(DLLEXT): vtdapi.vxd/vtdapi.vxd$(DLLEXT)
+	$(RM) $@ && $(LN_S) vtdapi.vxd/vtdapi.vxd$(DLLEXT) $@
+
+vwin32.vxd$(DLLEXT): vwin32.vxd/vwin32.vxd$(DLLEXT)
+	$(RM) $@ && $(LN_S) vwin32.vxd/vwin32.vxd$(DLLEXT) $@
 
 w32skrnl.dll$(DLLEXT): win32s/w32skrnl.dll$(DLLEXT)
 	$(RM) $@ && $(LN_S) win32s/w32skrnl.dll$(DLLEXT) $@
@@ -1667,6 +1707,7 @@ glu32/glu32.dll$(DLLEXT): glu32
 glut32/glut32.dll$(DLLEXT): glut32
 iccvid/iccvid.dll$(DLLEXT): iccvid
 icmp/icmp.dll$(DLLEXT): icmp
+ifsmgr.vxd/ifsmgr.vxd$(DLLEXT): ifsmgr.vxd
 msacm/imaadp32/imaadp32.acm$(DLLEXT): msacm/imaadp32
 imagehlp/imagehlp.dll$(DLLEXT): imagehlp
 imm32/imm32.dll$(DLLEXT): imm32
@@ -1681,6 +1722,8 @@ winmm/mcicda/mcicda.drv$(DLLEXT): winmm/mcicda
 winmm/mciseq/mciseq.drv$(DLLEXT): winmm/mciseq
 winmm/mciwave/mciwave.drv$(DLLEXT): winmm/mciwave
 winmm/midimap/midimap.drv$(DLLEXT): winmm/midimap
+mmdevldr.vxd/mmdevldr.vxd$(DLLEXT): mmdevldr.vxd
+monodebg.vxd/monodebg.vxd$(DLLEXT): monodebg.vxd
 mpr/mpr.dll$(DLLEXT): mpr
 winmm/wavemap/msacm.drv$(DLLEXT): winmm/wavemap
 msacm/msacm32.dll$(DLLEXT): msacm
@@ -1735,7 +1778,12 @@ url/url.dll$(DLLEXT): url
 urlmon/urlmon.dll$(DLLEXT): urlmon
 user/user32.dll$(DLLEXT): user
 uxtheme/uxtheme.dll$(DLLEXT): uxtheme
+vdhcp.vxd/vdhcp.vxd$(DLLEXT): vdhcp.vxd
 version/version.dll$(DLLEXT): version
+vnb.vxd/vnb.vxd$(DLLEXT): vnb.vxd
+vnetbios.vxd/vnetbios.vxd$(DLLEXT): vnetbios.vxd
+vtdapi.vxd/vtdapi.vxd$(DLLEXT): vtdapi.vxd
+vwin32.vxd/vwin32.vxd$(DLLEXT): vwin32.vxd
 win32s/w32skrnl.dll$(DLLEXT): win32s
 winmm/winealsa/winealsa.drv$(DLLEXT): winmm/winealsa
 winmm/winearts/winearts.drv$(DLLEXT): winmm/winearts

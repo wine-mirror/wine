@@ -1,0 +1,13 @@
+TOPSRCDIR = @top_srcdir@
+TOPOBJDIR = ../..
+SRCDIR    = @srcdir@
+VPATH     = @srcdir@
+MODULE    = vdhcp.vxd
+IMPORTS   = kernel32
+
+C_SRCS = \
+	vdhcp.c
+
+@MAKE_DLL_RULES@
+
+### Dependencies:

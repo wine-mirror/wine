@@ -1,0 +1,13 @@
+TOPSRCDIR = @top_srcdir@
+TOPOBJDIR = ../..
+SRCDIR    = @srcdir@
+VPATH     = @srcdir@
+MODULE    = ifsmgr.vxd
+IMPORTS   = winedos kernel32
+
+C_SRCS = \
+	ifsmgr.c
+
+@MAKE_DLL_RULES@
+
+### Dependencies:
