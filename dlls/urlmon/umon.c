@@ -1066,6 +1066,18 @@ HRESULT WINAPI CoInternetQueryInfo(LPCWSTR pwzUrl, QUERYOPTION QueryOption,
   return S_OK;
 }
 
+/***********************************************************************
+ *           CoInternetCreateSecurityManager (URLMON.@)
+ *
+ */
+typedef void *IInternetSecurityManager;
+HRESULT CoInternetCreateSecurityManager( IServiceProvider *pSP,
+    IInternetSecurityManager **ppSM, DWORD dwReserved )
+{
+  FIXME("%p %ld\n", pSP, dwReserved );
+  return E_NOTIMPL;
+}
+
 static BOOL URLMON_IsBinary(LPVOID pBuffer, DWORD cbSize)
 {
     int binarycount = 0;
@@ -1454,4 +1466,25 @@ HRESULT WINAPI URLDownloadToFileW(LPUNKNOWN pCaller,
     CloseHandle(hfile);
 
     return S_OK;
+}
+
+/***********************************************************************
+ *           HlinkSimpleNavigateToString (URLMON.@)
+ */
+HRESULT WINAPI HlinkSimpleNavigateToString( LPCWSTR szTarget,
+    LPCWSTR szLocation, LPCWSTR szTargetFrameName, IUnknown *pUnk,
+    IBindCtx *pbc, IBindStatusCallback *pbsc, DWORD grfHLNF, DWORD dwReserved)
+{
+    FIXME("%s\n", debugstr_w( szTarget ) );
+    return E_NOTIMPL;
+}
+
+/***********************************************************************
+ *           HlinkNavigateString (URLMON.@)
+ */
+HRESULT WINAPI HlinkNavigateString( IUnknown *pUnk, LPCWSTR szTarget )
+{
+    TRACE("%p %s\n", pUnk, debugstr_w( szTarget ) );
+    return HlinkSimpleNavigateToString( 
+               szTarget, NULL, NULL, pUnk, NULL, NULL, 0, 0 );
 }

@@ -7,7 +7,7 @@
 @ stub CoInstall
 @ stdcall CoInternetCombineUrl(wstr wstr long wstr long ptr long)
 @ stdcall CoInternetCompareUrl(wstr wstr long)
-@ stub CoInternetCreateSecurityManager
+@ stdcall CoInternetCreateSecurityManager(ptr ptr long)
 @ stub CoInternetCreateZoneManager
 @ stub CoInternetGetProtocolFlags
 @ stub CoInternetGetSecurityUrl
@@ -40,9 +40,9 @@
 @ stub HlinkGoBack
 @ stub HlinkGoForward
 @ stub HlinkNavigateMoniker
-@ stub HlinkNavigateString
+@ stdcall HlinkNavigateString(ptr wstr)
 @ stub HlinkSimpleNavigateToMoniker
-@ stub HlinkSimpleNavigateToString
+@ stdcall HlinkSimpleNavigateToString(wstr wstr wstr ptr ptr ptr long long)
 @ stdcall IsAsyncMoniker(ptr)
 @ stub IsLoggingEnabledA
 @ stub IsLoggingEnabledW
