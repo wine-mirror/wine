@@ -146,23 +146,28 @@ NTSTATUS WINAPI RtlpWaitForCriticalSection( RTL_CRITICAL_SECTION *crit )
     {
         EXCEPTION_RECORD rec;
         HANDLE sem = get_semaphore( crit );
+        LARGE_INTEGER time;
+        DWORD status;
 
-        DWORD res = WaitForSingleObject( sem, 5000L );
-        if ( res == WAIT_TIMEOUT )
+        time.QuadPart = -5000 * 10000;  /* 5 seconds */
+        status = NtWaitForSingleObject( sem, FALSE, &time );
+        if ( status == WAIT_TIMEOUT )
         {
             const char *name = (char *)crit->DebugInfo;
             if (!name) name = "?";
             ERR( "section %p %s wait timed out, retrying (60 sec) tid=%04lx\n",
                  crit, debugstr_a(name), GetCurrentThreadId() );
-            res = WaitForSingleObject( sem, 60000L );
-            if ( res == WAIT_TIMEOUT && TRACE_ON(relay) )
+            time.QuadPart = -60000 * 10000;
+            status = NtWaitForSingleObject( sem, FALSE, &time );
+            if ( status == WAIT_TIMEOUT && TRACE_ON(relay) )
             {
                 ERR( "section %p %s wait timed out, retrying (5 min) tid=%04lx\n",
                      crit, debugstr_a(name), GetCurrentThreadId() );
-                res = WaitForSingleObject( sem, 300000L );
+                time.QuadPart = -300000 * (ULONGLONG)10000;
+                status = NtWaitForSingleObject( sem, FALSE, &time );
             }
         }
-        if (res == STATUS_WAIT_0) return STATUS_SUCCESS;
+        if (status == STATUS_WAIT_0) return STATUS_SUCCESS;
 
         /* Throw exception only for Wine internal locks */
         if (!crit->DebugInfo) continue;

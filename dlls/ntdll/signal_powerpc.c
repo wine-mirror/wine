@@ -409,8 +409,11 @@ static HANDLER_DEF(term_handler)
  */
 static HANDLER_DEF(usr1_handler)
 {
+    LARGE_INTEGER timeout;
+
     /* wait with 0 timeout, will only return once the thread is no longer suspended */
-    WaitForMultipleObjectsEx( 0, NULL, FALSE, 0, FALSE );
+    timeout.QuadPart = 0;
+    NtWaitForMultipleObjects( 0, NULL, FALSE, FALSE, &timeout );
 }
 
 

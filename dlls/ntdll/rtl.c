@@ -166,7 +166,7 @@ wait:
 	     rwl->uExclusiveWaiters++;
 
 	     RtlLeaveCriticalSection( &rwl->rtlCS );
-	     if( WaitForSingleObject( rwl->hExclusiveReleaseSemaphore, INFINITE ) == WAIT_FAILED )
+	     if( NtWaitForSingleObject( rwl->hExclusiveReleaseSemaphore, FALSE, NULL ) == WAIT_FAILED )
 		 goto done;
 	     goto start; /* restart the acquisition to avoid deadlocks */
 	 }
@@ -206,7 +206,7 @@ start:
 	{
 	    rwl->uSharedWaiters++;
 	    RtlLeaveCriticalSection( &rwl->rtlCS );
-	    if( (dwWait = WaitForSingleObject( rwl->hSharedReleaseSemaphore, INFINITE )) == WAIT_FAILED )
+	    if( (dwWait = NtWaitForSingleObject( rwl->hSharedReleaseSemaphore, FALSE, NULL )) == WAIT_FAILED )
 		goto done;
 	    goto start;
 	}
