@@ -519,32 +519,6 @@ BOOL WINAPI ImmIsIME(HKL hKL)
 }
 
 /***********************************************************************
- *		ImmIsUIMessageA (IMM32.@)
- */
-BOOL WINAPI ImmIsUIMessageA(
-  HWND hWndIME, UINT msg, WPARAM wParam, LPARAM lParam)
-{
-  FIXME("(0x%08x, %d, %d, %ld): stub\n",
-    hWndIME, msg, wParam, lParam
-  );
-  SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-  return FALSE;
-}
-
-/***********************************************************************
- *		ImmIsUIMessageW (IMM32.@)
- */
-BOOL WINAPI ImmIsUIMessageW(
-  HWND hWndIME, UINT msg, WPARAM wParam, LPARAM lParam)
-{
-  FIXME("(0x%08x, %d, %d, %ld): stub\n",
-    hWndIME, msg, wParam, lParam
-  );
-  SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-  return FALSE;
-}
-
-/***********************************************************************
  *		ImmNotifyIME (IMM32.@)
  */
 BOOL WINAPI ImmNotifyIME(

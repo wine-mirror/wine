@@ -48,11 +48,11 @@ BOOL WINAPI IMM32_DllMain(
 		IMM32_dwProcessAttached ++;
 
 		IMM32_InitProcessMem();
-		/*IMM32_RegisterIMEWndClass( hInstDLL );*/
+		IMM32_RegisterIMEWndClass( hInstDLL );
 		break;
 	case DLL_PROCESS_DETACH:
 		/*IMM32_UnloadAllIMEs();*/
-		/*IMM32_UnregisterIMEWndClass( hInstDLL );*/
+		IMM32_UnregisterIMEWndClass( hInstDLL );
 		IMM32_CleanupProcessMem();
 
 		IMM32_dwProcessAttached --;

@@ -121,13 +121,13 @@ struct IMM32_IME_EXPORTED_HANDLERS
 
 
 
-/* imm_main.c */
+/* main.c */
 LPVOID IMM32_HeapAlloc( DWORD dwFlags, DWORD dwSize );
 LPVOID IMM32_HeapReAlloc( DWORD dwFlags, LPVOID lpv, DWORD dwSize );
 void IMM32_HeapFree( LPVOID lpv );
 IMM32_THREADDATA* IMM32_GetThreadData( void );
 
-/* imm_memory.c */
+/* memory.c */
 IMM32_MOVEABLEMEM* IMM32_MoveableAlloc( DWORD dwHeapFlags, DWORD dwHeapSize );
 void IMM32_MoveableFree( IMM32_MOVEABLEMEM* lpMoveable );
 BOOL IMM32_MoveableReAlloc( IMM32_MOVEABLEMEM* lpMoveable,
@@ -137,12 +137,16 @@ BOOL IMM32_MoveableUnlock( IMM32_MOVEABLEMEM* lpMoveable );
 DWORD IMM32_MoveableGetLockCount( IMM32_MOVEABLEMEM* lpMoveable );
 DWORD IMM32_MoveableGetSize( IMM32_MOVEABLEMEM* lpMoveable );
 
-/* imm_string.c */
+/* string.c */
 INT IMM32_strlenAtoW( LPCSTR lpstr );
 INT IMM32_strlenWtoA( LPCWSTR lpwstr );
 LPWSTR IMM32_strncpyAtoW( LPWSTR lpwstr, LPCSTR lpstr, INT wbuflen );
 LPSTR IMM32_strncpyWtoA( LPSTR lpstr, LPCWSTR lpwstr, INT abuflen );
 LPWSTR IMM32_strdupAtoW( LPCSTR lpstr );
 LPSTR IMM32_strdupWtoA( LPCWSTR lpwstr );
+
+/* imewnd.c */
+BOOL IMM32_RegisterIMEWndClass( HINSTANCE hInstDLL );
+void IMM32_UnregisterIMEWndClass( HINSTANCE hInstDLL );
 
 
