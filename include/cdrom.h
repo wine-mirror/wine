@@ -95,6 +95,11 @@ DWORD	CDROM_GetLabel(int drive, char *label);
 /* values borrowed from Linux 2.2.x cdrom.h */
 #define CDS_NO_INFO			0
 #define CDS_AUDIO			100
+#define CDS_DATA_1                      101
+#define CDS_DATA_2                      102
+#define CDS_XA_2_1                      103
+#define CDS_XA_2_2                      104
+#define CDS_MIXED                       105
 
 #endif
 
