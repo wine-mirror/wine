@@ -26,6 +26,7 @@
 #include "wownt32.h"
 #include "wine/winuser16.h"
 #include "gdi.h"
+#include "gdi_private.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(clipping);
@@ -157,7 +158,8 @@ INT WINAPI OffsetClipRgn( HDC hdc, INT x, INT y )
     if(dc->funcs->pOffsetClipRgn)
         ret = dc->funcs->pOffsetClipRgn( dc->physDev, x, y );
     else if (dc->hClipRgn) {
-        ret = OffsetRgn( dc->hClipRgn, XLSTODS(dc,x), YLSTODS(dc,y));
+        ret = OffsetRgn( dc->hClipRgn, MulDiv( x, dc->vportExtX, dc->wndExtX ),
+                         MulDiv( y, dc->vportExtY, dc->wndExtY ) );
 	CLIPPING_UpdateGCRegion( dc );
     }
     GDI_ReleaseObj( hdc );

@@ -33,11 +33,41 @@
 #include "winnls.h"
 #include "wownt32.h"
 #include "gdi.h"
+#include "gdi_private.h"
 #include "wine/unicode.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(font);
 WINE_DECLARE_DEBUG_CHANNEL(gdi);
+
+  /* Device -> World size conversion */
+
+/* Performs a device to world transformation on the specified width (which
+ * is in integer format).
+ */
+static inline INT INTERNAL_XDSTOWS(DC *dc, INT width)
+{
+    FLOAT floatWidth;
+
+    /* Perform operation with floating point */
+    floatWidth = (FLOAT)width * dc->xformVport2World.eM11;
+    /* Round to integers */
+    return GDI_ROUND(floatWidth);
+}
+
+/* Performs a device to world transformation on the specified size (which
+ * is in integer format).
+ */
+static inline INT INTERNAL_YDSTOWS(DC *dc, INT height)
+{
+    FLOAT floatHeight;
+
+    /* Perform operation with floating point */
+    floatHeight = (FLOAT)height * dc->xformVport2World.eM22;
+    /* Round to integers */
+    return GDI_ROUND(floatHeight);
+}
+
 
 static HGDIOBJ FONT_SelectObject( HGDIOBJ handle, void *obj, HDC hdc );
 static INT FONT_GetObject16( HGDIOBJ handle, void *obj, INT count, LPVOID buffer );

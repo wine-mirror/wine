@@ -27,9 +27,10 @@
 #include "wingdi.h"
 #include "wine/winuser16.h"
 #include "winerror.h"
-#include "gdi.h"
-#include "wine/debug.h"
 #include "winnls.h"
+#include "gdi.h"
+#include "gdi_private.h"
+#include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(text);
 

@@ -29,6 +29,7 @@
 #include "wine/wingdi16.h"
 #include "bitmap.h"
 #include "wownt32.h"
+#include "gdi_private.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(gdi);

@@ -23,7 +23,6 @@
 #include "wine/winuser16.h"
 #include "bitmap.h"
 #include "wine/debug.h"
-#include "palette.h"
 #include "windef.h"
 #include "wownt32.h"
 

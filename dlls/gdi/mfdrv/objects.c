@@ -25,6 +25,7 @@
 #include "bitmap.h"
 #include "wownt32.h"
 #include "mfdrv/metafiledrv.h"
+#include "gdi_private.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(metafile);

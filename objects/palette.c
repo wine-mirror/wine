@@ -33,6 +33,7 @@
 #include "wownt32.h"
 #include "wine/winuser16.h"
 #include "gdi.h"
+#include "gdi_private.h"
 #include "palette.h"
 #include "wine/debug.h"
 #include "winerror.h"

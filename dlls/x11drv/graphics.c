@@ -38,9 +38,7 @@
 
 #include "x11drv.h"
 #include "x11font.h"
-#include "bitmap.h"
 #include "gdi.h"
-#include "palette.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(graphics);

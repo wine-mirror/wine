@@ -31,7 +31,6 @@
 #include "wownt32.h"
 #include "wine/unicode.h"
 #include "wine/server.h"
-#include "gdi.h"
 #include "user.h"
 #include "win.h"
 #include "message.h"

@@ -34,7 +34,6 @@
 #include <assert.h>
 #include "dce.h"
 #include "win.h"
-#include "gdi.h"
 #include "user.h"
 #include "wine/debug.h"
 #include "windef.h"

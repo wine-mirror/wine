@@ -23,10 +23,11 @@
 #include <string.h>
 
 #include "wine/winbase16.h"
+#include "wine/winuser16.h"
 #include "gdi.h"
 #include "bitmap.h"
+#include "gdi_private.h"
 #include "wine/debug.h"
-#include "wine/winuser16.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(bitmap);
 

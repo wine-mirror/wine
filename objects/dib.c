@@ -27,6 +27,7 @@
 #include "bitmap.h"
 #include "gdi.h"
 #include "wownt32.h"
+#include "gdi_private.h"
 #include "wine/debug.h"
 #include "palette.h"
 

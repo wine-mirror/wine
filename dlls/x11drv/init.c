@@ -25,7 +25,6 @@
 
 #include "windef.h"
 #include "winbase.h"
-#include "bitmap.h"
 #include "x11drv.h"
 #include "x11font.h"
 #include "ddrawi.h"
@@ -33,7 +32,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(x11drv);
 
-const DC_FUNCTIONS *X11DRV_DC_Funcs = NULL;  /* hack */
+const struct tagDC_FUNCS *X11DRV_DC_Funcs = NULL;  /* hack */
 
 Display *gdi_display;  /* display to use for all GDI functions */
 

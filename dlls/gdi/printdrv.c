@@ -49,6 +49,7 @@
 #include "wownt32.h"
 #include "wine/debug.h"
 #include "gdi.h"
+#include "gdi_private.h"
 #include "heap.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(print);

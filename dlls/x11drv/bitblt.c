@@ -31,7 +31,6 @@
 #include "wingdi.h"
 #include "winreg.h"
 #include "winuser.h"
-#include "bitmap.h"
 #include "gdi.h"
 #include "x11drv.h"
 #include "wine/debug.h"

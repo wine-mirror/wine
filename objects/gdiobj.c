@@ -35,11 +35,14 @@
 #include "local.h"
 #include "palette.h"
 #include "gdi.h"
+#include "gdi_private.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(gdi);
 
 #define HGDIOBJ_32(h16)   ((HGDIOBJ)(ULONG_PTR)(h16))
+
+#define GDI_HEAP_SIZE 0xffe0
 
 /***********************************************************************
  *          GDI stock objects

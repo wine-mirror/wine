@@ -54,6 +54,7 @@
 #include "wownt32.h"
 #include "winreg.h"
 #include "winternl.h"
+#include "gdi_private.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(metafile);

@@ -37,7 +37,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(x11drv);
 GC BITMAP_monoGC = 0, BITMAP_colorGC = 0;
 Pixmap BITMAP_stock_pixmap;   /* pixmap for the default stock bitmap */
 
-extern const DC_FUNCTIONS *X11DRV_DC_Funcs;  /* hack */
+extern const struct tagDC_FUNCS *X11DRV_DC_Funcs;  /* hack */
 
 /***********************************************************************
  *           X11DRV_BITMAP_Init

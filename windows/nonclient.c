@@ -35,7 +35,6 @@
 #include "winpos.h"
 #include "nonclient.h"
 #include "shellapi.h"
-#include "bitmap.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(nonclient);

@@ -32,7 +32,6 @@
 #include "winbase.h"
 #include "wownt32.h"
 #include "x11drv.h"
-#include "bitmap.h"
 #include "wine/unicode.h"
 #include "wine/debug.h"
 
