@@ -164,6 +164,17 @@ static const WCHAR SPI_SETSCREENREADER_VALNAME[]=        {'W','I','N','E','_','S
 static const WCHAR SPI_SETSCREENSAVERRUNNING_REGKEY[]=   {'C','o','n','t','r','o','l',' ','P','a','n','e','l','\\','D','e','s','k','t','o','p',0};
 static const WCHAR SPI_SETSCREENSAVERRUNNING_VALNAME[]=  {'W','I','N','E','_','S','c','r','e','e','n','S','a','v','e','r','R','u','n','n','i','n','g',0};
 
+static const WCHAR METRICS_REGKEY[]=                  {'C','o','n','t','r','o','l',' ','P','a','n','e','l','\\','D','e','s','k','t','o','p','\\',
+                                                       'W','i','n','d','o','w','M','e','t','r','i','c','s',0};
+static const WCHAR METRICS_SCROLLWIDTH_VALNAME[]=     {'S','c','r','o','l','l','W','i','d','t','h',0};
+static const WCHAR METRICS_SCROLLHEIGHT_VALNAME[]=    {'S','c','r','o','l','l','H','e','i','g','h','t',0};
+static const WCHAR METRICS_CAPTIONWIDTH_VALNAME[]=    {'C','a','p','t','i','o','n','W','i','d','t','h',0};
+static const WCHAR METRICS_CAPTIONHEIGHT_VALNAME[]=   {'C','a','p','t','i','o','n','H','e','i','g','h','t',0};
+static const WCHAR METRICS_SMCAPTIONWIDTH_VALNAME[]=  {'S','m','C','a','p','t','i','o','n','W','i','d','t','h',0};
+static const WCHAR METRICS_SMCAPTIONHEIGHT_VALNAME[]= {'S','m','C','a','p','t','i','o','n','H','e','i','g','h','t',0};
+static const WCHAR METRICS_MENUWIDTH_VALNAME[]=       {'M','e','n','u','W','i','d','t','h',0};
+static const WCHAR METRICS_MENUHEIGHT_VALNAME[]=      {'M','e','n','u','H','e','i','g','h','t',0};
+
 /* volatile registry branch under CURRENT_USER_REGKEY for temporary values storage */
 static const WCHAR WINE_CURRENT_USER_REGKEY[] = {'W','i','n','e',0};
 
@@ -185,6 +196,7 @@ static const WCHAR defPattern[]=                             {'1','7','0',' ','8
                                                               ' ','1','7','0',' ','8','5',0};
 static const WCHAR CSu[]=                                    {'%','u',0};
 static const WCHAR CSd[]=                                    {'%','d',0};
+static const WCHAR DISPLAY[]=                                {'D','I','S','P','L','A','Y',0};
 
 /* Indicators whether system parameter value is loaded */
 static char spi_loaded[SPI_WINE_IDX + 1];
@@ -531,17 +543,14 @@ inline static int SYSPARAMS_Twips2Pixels(int x)
  * Of course this function belongs somewhere more usable but here will do
  * for now.
  */
-static int SYSPARAMS_GetRegistryMetric (
-        HKEY       hkey,            /* handle to the registry section */
-        const char *key,            /* value name in the section */
-        int        default_value)   /* default to return */
+static int SYSPARAMS_GetRegistryMetric( HKEY hkey, LPCWSTR lpValName, int default_value )
 {
     int value = default_value;
     if (hkey)
     {
-        BYTE buffer[128];
+        WCHAR buffer[128];
         DWORD type, count = sizeof(buffer);
-        if(!RegQueryValueExA (hkey, key, 0, &type, buffer, &count))
+        if(!RegQueryValueExW( hkey, lpValName, NULL, &type, (LPBYTE)buffer, &count) )
         {
             if (type != REG_SZ)
             {
@@ -551,7 +560,7 @@ static int SYSPARAMS_GetRegistryMetric (
                 /* FIXME_(reg)("We need reg format converter\n"); */
             }
             else
-                value = atoi(buffer);
+                value = atoiW(buffer);
         }
     }
     return SYSPARAMS_Twips2Pixels(value);
@@ -582,27 +591,27 @@ void SYSPARAMS_Init(void)
     WCHAR buf[10];
     INT border;
 
-    display_dc = CreateICA( "DISPLAY", NULL, NULL, NULL );
+    display_dc = CreateICW( DISPLAY, NULL, NULL, NULL );
     assert( display_dc );
 
-    if (RegOpenKeyExA (HKEY_CURRENT_USER, "Control Panel\\desktop\\WindowMetrics",
+    if (RegOpenKeyExW (HKEY_CURRENT_USER, METRICS_REGKEY,
                        0, KEY_QUERY_VALUE, &hkey) != ERROR_SUCCESS) hkey = 0;
 
-    sysMetrics[SM_CXVSCROLL] = SYSPARAMS_GetRegistryMetric( hkey, "ScrollWidth", 16 );
+    sysMetrics[SM_CXVSCROLL] = SYSPARAMS_GetRegistryMetric( hkey, METRICS_SCROLLWIDTH_VALNAME, 16 );
     sysMetrics[SM_CYHSCROLL] = sysMetrics[SM_CXVSCROLL];
 
     /* The Win 2000 resource kit SAYS that this is governed by the ScrollHeight
      * but on my computer that controls the CYV/CXH values. */
-    sysMetrics[SM_CYCAPTION] = SYSPARAMS_GetRegistryMetric(hkey, "CaptionHeight", 18)
+    sysMetrics[SM_CYCAPTION] = SYSPARAMS_GetRegistryMetric(hkey, METRICS_CAPTIONHEIGHT_VALNAME, 18)
                                  + 1; /* for the separator? */
 
-    sysMetrics[SM_CYMENU] = SYSPARAMS_GetRegistryMetric (hkey, "MenuHeight", 18) + 1;
+    sysMetrics[SM_CYMENU] = SYSPARAMS_GetRegistryMetric (hkey, METRICS_MENUHEIGHT_VALNAME, 18) + 1;
 
 
     sysMetrics[SM_CXDLGFRAME] = 3;
     sysMetrics[SM_CYDLGFRAME] = sysMetrics[SM_CXDLGFRAME];
 
-    SystemParametersInfoA( SPI_GETBORDER, 0, &border, 0 );
+    SystemParametersInfoW( SPI_GETBORDER, 0, &border, 0 );
     sysMetrics[SM_CXFRAME] = sysMetrics[SM_CXDLGFRAME] + border;
     sysMetrics[SM_CYFRAME] = sysMetrics[SM_CYDLGFRAME] + border;
 
@@ -616,8 +625,8 @@ void SYSPARAMS_Init(void)
     sysMetrics[SM_CYICON] = 32;
     sysMetrics[SM_CYKANJIWINDOW] = 0;
     sysMetrics[SM_MOUSEPRESENT] = 1;
-    sysMetrics[SM_CYVSCROLL] = SYSPARAMS_GetRegistryMetric (hkey, "ScrollHeight", sysMetrics[SM_CXVSCROLL]);
-    sysMetrics[SM_CXHSCROLL] = SYSPARAMS_GetRegistryMetric (hkey, "ScrollHeight", sysMetrics[SM_CYHSCROLL]);
+    sysMetrics[SM_CYVSCROLL] = SYSPARAMS_GetRegistryMetric (hkey, METRICS_SCROLLHEIGHT_VALNAME, sysMetrics[SM_CXVSCROLL]);
+    sysMetrics[SM_CXHSCROLL] = SYSPARAMS_GetRegistryMetric (hkey, METRICS_SCROLLHEIGHT_VALNAME, sysMetrics[SM_CYHSCROLL]);
     sysMetrics[SM_DEBUG] = 0;
 
     sysMetrics[SM_SWAPBUTTON] = 0;
@@ -634,7 +643,7 @@ void SYSPARAMS_Init(void)
     sysMetrics[SM_CXMIN] = 112;
     sysMetrics[SM_CYMIN] = 27;
 
-    sysMetrics[SM_CXSIZE] = SYSPARAMS_GetRegistryMetric (hkey, "CaptionWidth", sysMetrics[SM_CYCAPTION] - 1);
+    sysMetrics[SM_CXSIZE] = SYSPARAMS_GetRegistryMetric (hkey, METRICS_CAPTIONWIDTH_VALNAME, sysMetrics[SM_CYCAPTION] - 1);
     sysMetrics[SM_CYSIZE] = sysMetrics[SM_CYCAPTION] - 1;
     sysMetrics[SM_CXMINTRACK] = sysMetrics[SM_CXMIN];
     sysMetrics[SM_CYMINTRACK] = sysMetrics[SM_CYMIN];
@@ -651,11 +660,11 @@ void SYSPARAMS_Init(void)
     spi_loaded[SPI_SETDOUBLECLKHEIGHT_IDX] = TRUE;
 
     sysMetrics[SM_CXICONSPACING] = 75;
-    SystemParametersInfoA( SPI_ICONHORIZONTALSPACING, 0, &sysMetrics[SM_CXICONSPACING], 0 );
+    SystemParametersInfoW( SPI_ICONHORIZONTALSPACING, 0, &sysMetrics[SM_CXICONSPACING], 0 );
     sysMetrics[SM_CYICONSPACING] = 75;
-    SystemParametersInfoA( SPI_ICONVERTICALSPACING, 0, &sysMetrics[SM_CYICONSPACING], 0 );
+    SystemParametersInfoW( SPI_ICONVERTICALSPACING, 0, &sysMetrics[SM_CYICONSPACING], 0 );
 
-    SystemParametersInfoA( SPI_GETMENUDROPALIGNMENT, 0, &sysMetrics[SM_MENUDROPALIGNMENT], 0 );
+    SystemParametersInfoW( SPI_GETMENUDROPALIGNMENT, 0, &sysMetrics[SM_MENUDROPALIGNMENT], 0 );
     sysMetrics[SM_PENWINDOWS] = 0;
     sysMetrics[SM_DBCSENABLED] = 0;
 
@@ -669,10 +678,10 @@ void SYSPARAMS_Init(void)
     sysMetrics[SM_CYMINSPACING] = 24;
     sysMetrics[SM_CXSMICON] = 16;
     sysMetrics[SM_CYSMICON] = 16;
-    sysMetrics[SM_CYSMCAPTION] = SYSPARAMS_GetRegistryMetric(hkey, "SmCaptionHeight", 15) + 1;
-    sysMetrics[SM_CXSMSIZE] = SYSPARAMS_GetRegistryMetric(hkey, "SmCaptionWidth", 13);
+    sysMetrics[SM_CYSMCAPTION] = SYSPARAMS_GetRegistryMetric(hkey, METRICS_SMCAPTIONHEIGHT_VALNAME, 15) + 1;
+    sysMetrics[SM_CXSMSIZE] = SYSPARAMS_GetRegistryMetric(hkey, METRICS_SMCAPTIONWIDTH_VALNAME, 13);
     sysMetrics[SM_CYSMSIZE] = sysMetrics[SM_CYSMCAPTION] - 1;
-    sysMetrics[SM_CXMENUSIZE] = SYSPARAMS_GetRegistryMetric(hkey, "MenuWidth", sysMetrics[SM_CYMENU] - 1);
+    sysMetrics[SM_CXMENUSIZE] = SYSPARAMS_GetRegistryMetric(hkey, METRICS_MENUWIDTH_VALNAME, sysMetrics[SM_CYMENU] - 1);
     sysMetrics[SM_CYMENUSIZE] = sysMetrics[SM_CYMENU] - 1;
 
     /* FIXME: What do these mean? */
@@ -705,7 +714,7 @@ void SYSPARAMS_Init(void)
     sysMetrics[SM_SAMEDISPLAYFORMAT] = 1;
     sysMetrics[SM_CMETRICS] = SM_CMETRICS;
 
-    SystemParametersInfoA( SPI_GETSHOWSOUNDS, 0, &sysMetrics[SM_SHOWSOUNDS], 0 );
+    SystemParametersInfoW( SPI_GETSHOWSOUNDS, 0, &sysMetrics[SM_SHOWSOUNDS], 0 );
 
     if (hkey) RegCloseKey (hkey);
 
