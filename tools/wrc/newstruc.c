@@ -228,6 +228,7 @@ static int convert_bitmap(char *data, int size)
 	BITMAPINFOHEADER *bih = (BITMAPINFOHEADER *)data;
 	BITMAPV4HEADER *b4h = (BITMAPV4HEADER *)data;
 	int type = 0;
+    int returnSize = 0;           /* size to be returned */
 #ifdef WORDS_BIGENDIAN
 	DWORD bisizel = BYTESWAP_DWORD(sizeof(BITMAPINFOHEADER));
 	DWORD b4sizel = BYTESWAP_DWORD(sizeof(BITMAPV4HEADER));
@@ -240,17 +241,24 @@ static int convert_bitmap(char *data, int size)
 	DWORD b4sizeb = BYTESWAP_DWORD(sizeof(BITMAPV4HEADER));
 #endif
 
+
+    /*
+     * Originally the bih and b4h pointers were simply incremented here,
+     * and memmoved at the end of the function.  This causes alignment
+     * issues on solaris, so we do the memmove here rather than at the end.
+     */
 	if(data[0] == 'B' && data[1] == 'M')
 	{
 		/* Little endian signature */
-		bih = (BITMAPINFOHEADER *)(data + sizeof(BITMAPFILEHEADER));
-		b4h = (BITMAPV4HEADER *)(data + sizeof(BITMAPFILEHEADER));
+         memmove(data, data+sizeof(BITMAPFILEHEADER), size - sizeof(BITMAPFILEHEADER));
+         returnSize = sizeof(BITMAPFILEHEADER);
 	}
 	else if(data[0] == 'M' && data[1] == 'B')
 	{
 		type |= FL_SIGBE;	/* Big endian signature */
-		bih = (BITMAPINFOHEADER *)(data + sizeof(BITMAPFILEHEADER));
-		b4h = (BITMAPV4HEADER *)(data + sizeof(BITMAPFILEHEADER));
+         memmove(data, data+sizeof(BITMAPFILEHEADER), size - sizeof(BITMAPFILEHEADER));
+         returnSize = sizeof(BITMAPFILEHEADER);
+
 	}
 
 	if(bih->biSize == bisizel)
@@ -323,7 +331,7 @@ static int convert_bitmap(char *data, int size)
 		memmove(data, data+sizeof(BITMAPFILEHEADER), size - sizeof(BITMAPFILEHEADER));
 		return sizeof(BITMAPFILEHEADER);
 	}
-	return 0;
+    return returnSize;
 }
 #undef FL_SIGBE
 #undef FL_SIZEBE
@@ -423,8 +431,10 @@ static void split_icons(raw_data_t *rd, icon_group_t *icog, int *nico)
 		ico->nclr = ide.nclr;
 		ico->planes = swap ? BYTESWAP_WORD(ide.planes) : ide.planes;
 		ico->bits = swap ? BYTESWAP_WORD(ide.bits) : ide.bits;
-		convert_bitmap((char *)rd->data + ide.offset, 0);
 		memcpy(&info, rd->data + ide.offset, sizeof(info));
+         convert_bitmap((char *) &info, 0);
+         memcpy(rd->data + ide.offset, &info, sizeof(info));
+
 		if(!ico->planes)
 		{
 			/* Argh! They did not fill out the resdir structure */
@@ -513,8 +523,9 @@ static void split_cursors(raw_data_t *rd, cursor_group_t *curg, int *ncur)
 		cur->width = cde.width;
 		cur->height = cde.height;
 		cur->nclr = cde.nclr;
-		convert_bitmap((char *)rd->data + cde.offset, 0);
 		memcpy(&info, rd->data + cde.offset, sizeof(info));
+         convert_bitmap((char *)&info, 0);
+         memcpy(rd->data + cde.offset, &info, sizeof(info));
 		/* The bitmap is in destination byteorder. We want native for our structures */
 		switch(byteorder)
 		{
