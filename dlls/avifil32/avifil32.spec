@@ -1,7 +1,9 @@
 name	avifil32
 type	win32
+init	AVIFILE_DllMain
 
 import msvfw32.dll
+import ole32.dll
 import kernel32.dll
 import ntdll.dll
 
@@ -43,7 +45,7 @@ debug_channels (avifile)
 @ stub    AVISaveW
 @ stub    AVIStreamAddRef
 @ stub    AVIStreamBeginStreaming
-@ stub    AVIStreamCreate
+@ stdcall AVIStreamCreate(ptr long long ptr) AVIStreamCreate
 @ stub    AVIStreamEndStreaming
 @ stub    AVIStreamFindSample
 @ stdcall AVIStreamGetFrame(ptr long) AVIStreamGetFrame
