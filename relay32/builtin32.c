@@ -87,6 +87,8 @@ static void load_library( void *base, const char *filename )
 {
     HMODULE module = (HMODULE)base;
     WINE_MODREF *wm;
+    char *fullname;
+    DWORD len;
 
     if (!base)
     {
@@ -104,14 +106,27 @@ static void load_library( void *base, const char *filename )
     if (GetModuleHandleA( filename ))
         MESSAGE( "Warning: loading builtin %s, but native version already present. Expect trouble.\n", filename );
 
-    /* Create 32-bit MODREF */
-    if (!(wm = PE_CreateModule( module, filename, 0, 0, TRUE )))
+    len = GetSystemDirectoryA( NULL, 0 );
+    if (!(fullname = HeapAlloc( GetProcessHeap(), 0, len + strlen(filename) + 1 )))
     {
         ERR( "can't load %s\n", filename );
         SetLastError( ERROR_OUTOFMEMORY );
         return;
     }
-    TRACE( "loaded %s %p %x\n", filename, wm, module );
+    GetSystemDirectoryA( fullname, len );
+    strcat( fullname, "\\" );
+    strcat( fullname, filename );
+
+    /* Create 32-bit MODREF */
+    if (!(wm = PE_CreateModule( module, fullname, 0, 0, TRUE )))
+    {
+        ERR( "can't load %s\n", filename );
+        HeapFree( GetProcessHeap(), 0, fullname );
+        SetLastError( ERROR_OUTOFMEMORY );
+        return;
+    }
+    TRACE( "loaded %s %p %x\n", fullname, wm, module );
+    HeapFree( GetProcessHeap(), 0, fullname );
     wm->refCount++;  /* we don't support freeing builtin dlls (FIXME)*/
 
     /* setup relay debugging entry points */
