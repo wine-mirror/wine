@@ -3,4 +3,5 @@ error.ok
 generated.ok
 ntdll_test.exe.spec.c
 rtlbitmap.ok
+rtlstr.ok
 testlist.c

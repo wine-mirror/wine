@@ -8,7 +8,8 @@ IMPORTS   = ntdll
 CTESTS = \
 	error.c \
 	generated.c \
-	rtlbitmap.c
+	rtlbitmap.c \
+	rtlstr.c
 
 @MAKE_TEST_RULES@
 
