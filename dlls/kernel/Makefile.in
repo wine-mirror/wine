@@ -7,6 +7,7 @@ SOVERSION = 1.0
 ALTNAMES  = comm kernel stress system toolhelp windebug win87em wprocs
 
 C_SRCS = \
+	comm.c \
 	debugger.c \
 	format_msg.c \
 	kernel_main.c \

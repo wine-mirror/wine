@@ -8,7 +8,6 @@ MODULE    = misc
 
 C_SRCS = \
 	cdrom.c \
-	comm.c \
 	cpu.c \
 	debugstr.c \
 	error.c \

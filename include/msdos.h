@@ -2,7 +2,6 @@
 #define __WINE_MSDOS_H
 
 #include "winnt.h"
-#include "comm.h"
 
 struct fcb {
         BYTE drive;
@@ -99,9 +98,6 @@ typedef struct _DOS_LISTOFLISTS
 } DOS_LISTOFLISTS;
 
 #define MAX_DOS_DRIVES	26
-
-extern struct DosDeviceStruct COM[MAX_PORTS];
-extern struct DosDeviceStruct LPT[MAX_PORTS];
 
 #define setword(a,b)	do { *(BYTE*)(a)	  = (b) & 0xff; \
                              *((BYTE*)((a)+1)) = ((b)>>8) & 0xff;\

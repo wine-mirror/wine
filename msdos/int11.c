@@ -52,7 +52,7 @@ void WINAPI INT_Int11Handler( CONTEXT86 *context )
     if (DRIVE_IsValid(1)) diskdrives++;
     if (diskdrives) diskdrives--;
 	
-    for (x=0; x!=MAX_PORTS; x++)
+    for (x=0; x < 9; x++)
     {
         char temp[16],name[16];
 

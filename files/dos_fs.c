@@ -29,7 +29,6 @@
 #include "winerror.h"
 #include "drive.h"
 #include "file.h"
-#include "comm.h"
 #include "heap.h"
 #include "msdos.h"
 #include "syslevel.h"
@@ -694,6 +693,33 @@ const DOS_DEVICE *DOSFS_GetDeviceByHandle( HFILE hFile )
 }
 
 
+/**************************************************************************
+ *         DOSFS_CreateCommPort
+ */
+static HANDLE DOSFS_CreateCommPort(LPCSTR name, DWORD access)
+{
+    struct create_serial_request *req = get_req_buffer();
+    DWORD r;
+    char devname[40];
+
+    TRACE("%s %lx\n", name, access);
+
+    PROFILE_GetWineIniString("serialports",name,"",devname,sizeof devname);
+    if(!devname[0])
+        return 0;
+
+    TRACE("opening %s as %s\n", devname, name);
+
+    req->handle  = 0;
+    req->access  = access;
+    req->sharing = FILE_SHARE_READ|FILE_SHARE_WRITE;
+    lstrcpynA( req->name, devname, server_remaining(req->name) );
+    SetLastError(0);
+    r = server_call( REQ_CREATE_SERIAL );
+    TRACE("create_port_request return %08lX handle = %08X\n",r,req->handle);
+    return req->handle;
+}
+
 /***********************************************************************
  *           DOSFS_OpenDevice
  *
@@ -746,7 +772,7 @@ HFILE DOSFS_OpenDevice( const char *name, DWORD access )
                     return FILE_CreateDevice( i, access, NULL );
 		}
 
-                if( (handle=COMM_CreatePort(name,access)) )
+                if( (handle=DOSFS_CreateCommPort(name,access)) )
                     return handle;
 
 		FIXME("device open %s not supported (yet)\n",DOSFS_Devices[i].name);

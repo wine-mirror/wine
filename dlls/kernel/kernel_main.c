@@ -10,13 +10,13 @@
 #include "neexe.h"
 #include "module.h"
 #include "task.h"
-#include "comm.h"
 #include "selectors.h"
 #include "miscemu.h"
 #include "global.h"
 
 extern void CODEPAGE_Init(void);
 extern BOOL THUNK_Init(void);
+extern void COMM_Init(void);
 
 
 /***********************************************************************
