@@ -342,7 +342,6 @@ struct IDirectSound3DBufferImpl
     DWORD                       ref;
     /* IDirectSound3DBufferImpl fields */
     IDirectSoundBufferImpl*     dsb;
-    CRITICAL_SECTION            lock;
 };
 
 HRESULT WINAPI IDirectSound3DBufferImpl_Create(

@@ -400,16 +400,6 @@ static DWORD WINAPI IDirectSoundBufferImpl_Release(LPDIRECTSOUNDBUFFER8 iface) {
 		}
 	}
 
-	if (This->ds3db) {
-		WARN("ds3db still has reference\n");
-		EnterCriticalSection(&(This->ds3db->lock));
-		This->ds3db->dsb = NULL;
-		LeaveCriticalSection(&(This->ds3db->lock));
-	}
-
-	if (This->iks)
-		IKsPropertySet_Release((LPKSPROPERTYSET)This->iks);
-
 	if (This->notifies != NULL)
 		HeapFree(GetProcessHeap(), 0, This->notifies);
 
