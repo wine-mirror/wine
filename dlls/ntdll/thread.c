@@ -259,6 +259,7 @@ NTSTATUS WINAPI RtlCreateUserThread( HANDLE process, const SECURITY_DESCRIPTOR *
     }
     if (stack_reserve < stack_commit) stack_reserve = stack_commit;
     stack_reserve = (stack_reserve + 0xffff) & ~0xffff;  /* round to 64K boundary */
+    if (stack_reserve < 1024 * 1024) stack_reserve = 1024 * 1024;  /* Xlib needs a large stack */
 
     info->stack_base = NULL;
     info->stack_size = stack_reserve;

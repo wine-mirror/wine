@@ -62,6 +62,7 @@ TEB *THREAD_InitStack( TEB *teb, DWORD stack_size )
     void *base;
 
     stack_size = (stack_size + (page_size - 1)) & ~(page_size - 1);
+    if (stack_size < 1024 * 1024) stack_size = 1024 * 1024;  /* Xlib needs a large stack */
 
     if (!(base = VirtualAlloc( NULL, stack_size, MEM_COMMIT, PAGE_EXECUTE_READWRITE )))
         return NULL;
