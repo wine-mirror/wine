@@ -44,8 +44,27 @@ static inline int time_before( struct timeval *t1, struct timeval *t2 )
             ((t1->tv_sec == t2->tv_sec) && (t1->tv_usec < t2->tv_usec)));
 }
 
-static void finish_async(async_private *ovp)
+static void CALLBACK call_completion_routine(ULONG_PTR data)
 {
+    async_private* ovp = (async_private*)data;
+
+    ovp->completion_func(ovp->lpOverlapped->Internal,
+                         ovp->lpOverlapped->InternalHigh,
+                         ovp->lpOverlapped);
+    ovp->completion_func=NULL;
+    HeapFree(GetProcessHeap(), 0, ovp);
+}
+
+static void finish_async(async_private *ovp, DWORD status)
+{
+    ovp->lpOverlapped->Internal=status;
+
+    /* call ReadFileEx/WriteFileEx's overlapped completion function */
+    if(ovp->completion_func)
+    {
+        QueueUserAPC(call_completion_routine,GetCurrentThread(),(ULONG_PTR)ovp);
+    }
+
     /* remove it from the active list */
     if(ovp->prev)
         ovp->prev->next = ovp->next;
@@ -60,7 +79,7 @@ static void finish_async(async_private *ovp)
 
     close(ovp->fd);
     NtSetEvent(ovp->lpOverlapped->hEvent,NULL);
-    HeapFree(GetProcessHeap(), 0, ovp);
+    if(!ovp->completion_func) HeapFree(GetProcessHeap(), 0, ovp);
 }
 
 /***********************************************************************
@@ -96,15 +115,13 @@ static void check_async_list(void)
 
             if(ovp->lpOverlapped->Internal!=STATUS_PENDING)
             {
-                ovp->lpOverlapped->Internal=STATUS_UNSUCCESSFUL;
-                finish_async(ovp);
+                finish_async(ovp,STATUS_UNSUCCESSFUL);
                 continue;
             }
 
             if(ovp->timeout && time_before(&ovp->tv,&now))
             {
-                ovp->lpOverlapped->Internal=STATUS_TIMEOUT;
-                finish_async(ovp);
+                finish_async(ovp,STATUS_TIMEOUT);
                 continue;
             }
 
@@ -135,8 +152,7 @@ static void check_async_list(void)
 
         if( r==0 )
         {
-            timeout_user->lpOverlapped->Internal = STATUS_TIMEOUT;
-            finish_async(timeout_user);
+            finish_async(timeout_user, STATUS_TIMEOUT);
             continue;
         }
 
@@ -147,7 +163,7 @@ static void check_async_list(void)
                 user[i]->func(user[i],fds[i].revents);
 
             if(user[i]->lpOverlapped->Internal!=STATUS_PENDING)
-                finish_async(user[i]);
+                finish_async(user[i],user[i]->lpOverlapped->Internal);
         }
 
         if(fds[0].revents == POLLIN)

@@ -2912,6 +2912,8 @@ static BOOL COMM_WaitCommEvent(
     ovp->func = COMM_WaitCommEventService;
     ovp->buffer = (char *)lpdwEvents;
     ovp->fd = fd;
+    ovp->count = 0;
+    ovp->completion_func = 0;                                                  
   
     ovp->next = NtCurrentTeb()->pending_list;
     ovp->prev = NULL;

@@ -43,6 +43,8 @@ typedef struct async_private
      int           event;
      char         *buffer;
      async_handler func;
+     int           count;
+     LPOVERLAPPED_COMPLETION_ROUTINE completion_func;
      struct async_private *next;
      struct async_private *prev;
 } async_private;

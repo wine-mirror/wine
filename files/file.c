@@ -1268,7 +1268,7 @@ static void FILE_AsyncReadService(async_private *ovp, int events)
 
     /* check to see if the data is ready (non-blocking) */
     result = read(ovp->fd, &ovp->buffer[lpOverlapped->InternalHigh],
-                  lpOverlapped->OffsetHigh - lpOverlapped->InternalHigh);
+                  ovp->count - lpOverlapped->InternalHigh);
 
     if ( (result<0) && ((errno == EAGAIN) || (errno == EINTR)))
     {
@@ -1286,9 +1286,9 @@ static void FILE_AsyncReadService(async_private *ovp, int events)
     }
 
     lpOverlapped->InternalHigh += result;
-    TRACE("read %d more bytes %ld/%ld so far\n",result,lpOverlapped->InternalHigh,lpOverlapped->OffsetHigh);
+    TRACE("read %d more bytes %ld/%d so far\n",result,lpOverlapped->InternalHigh,ovp->count);
 
-    if(lpOverlapped->InternalHigh < lpOverlapped->OffsetHigh)
+    if(lpOverlapped->InternalHigh < ovp->count)
         r = STATUS_PENDING;
     else
         r = STATUS_SUCCESS;
@@ -1334,8 +1334,6 @@ BOOL WINAPI ReadFileEx(HANDLE hFile, LPVOID buffer, DWORD bytesToRead,
         return FALSE;
     }
 
-    overlapped->Offset       = 0;
-    overlapped->OffsetHigh   = bytesToRead; /* FIXME: wrong */
     overlapped->Internal     = STATUS_PENDING;
     overlapped->InternalHigh = 0;
 
@@ -1375,6 +1373,8 @@ BOOL WINAPI ReadFileEx(HANDLE hFile, LPVOID buffer, DWORD bytesToRead,
         return FALSE;
     }
     ovp->lpOverlapped = overlapped;
+    ovp->count = bytesToRead;
+    ovp->completion_func = lpCompletionRoutine;
     ovp->timeout = timeout;
     gettimeofday(&ovp->tv,NULL);
     add_timeout(&ovp->tv,timeout);
@@ -1463,7 +1463,7 @@ static void FILE_AsyncWriteService(struct async_private *ovp, int events)
 
     /* write some data (non-blocking) */
     result = write(ovp->fd, &ovp->buffer[lpOverlapped->InternalHigh],
-                  lpOverlapped->OffsetHigh-lpOverlapped->InternalHigh);
+                  ovp->count-lpOverlapped->InternalHigh);
 
     if ( (result<0) && ((errno == EAGAIN) || (errno == EINTR)))
     {
@@ -1480,9 +1480,9 @@ static void FILE_AsyncWriteService(struct async_private *ovp, int events)
 
     lpOverlapped->InternalHigh += result;
 
-    TRACE("wrote %d more bytes %ld/%ld so far\n",result,lpOverlapped->InternalHigh,lpOverlapped->OffsetHigh);
+    TRACE("wrote %d more bytes %ld/%d so far\n",result,lpOverlapped->InternalHigh,ovp->count);
 
-    if(lpOverlapped->InternalHigh < lpOverlapped->OffsetHigh)
+    if(lpOverlapped->InternalHigh < ovp->count)
         r = STATUS_PENDING;
     else
         r = STATUS_SUCCESS;
@@ -1510,8 +1510,6 @@ BOOL WINAPI WriteFileEx(HANDLE hFile, LPCVOID buffer, DWORD bytesToWrite,
         return FALSE;
     }
 
-    overlapped->Offset       = 0;
-    overlapped->OffsetHigh   = bytesToWrite;
     overlapped->Internal     = STATUS_PENDING;
     overlapped->InternalHigh = 0;
 
@@ -1545,6 +1543,8 @@ BOOL WINAPI WriteFileEx(HANDLE hFile, LPCVOID buffer, DWORD bytesToWrite,
     ovp->event = POLLOUT;
     ovp->func = FILE_AsyncWriteService;
     ovp->buffer = (LPVOID) buffer;
+    ovp->count = bytesToWrite;
+    ovp->completion_func = lpCompletionRoutine;
     ovp->fd = FILE_GetUnixHandle( hFile, GENERIC_WRITE );
     if(ovp->fd <0)
     {
