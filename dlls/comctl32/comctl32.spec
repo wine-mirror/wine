@@ -169,7 +169,7 @@ debug_channels (animate comboex commctrl datetime header hotkey imagelist ipaddr
 362 stdcall StrStrW(wstr wstr) COMCTL32_StrStrW
 363 stub StrStrIW
 364 stdcall StrSpnW(wstr wstr) COMCTL32_StrSpnW
-365 stub StrToIntW
+365 stdcall StrToIntW(wstr) COMCTL32_StrToIntW
 366 stub StrChrIA
 367 stub StrChrIW
 368 stub StrRChrIA

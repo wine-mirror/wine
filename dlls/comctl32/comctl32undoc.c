@@ -48,6 +48,7 @@ typedef struct _LOADDATA
 
 typedef HRESULT CALLBACK (*DPALOADPROC)(LPLOADDATA,IStream*,LPARAM);
 
+INT __cdecl _wtoi(LPWSTR string);
 
 /**************************************************************************
  * DPA_LoadStream [COMCTL32.9]
@@ -2078,6 +2079,16 @@ INT WINAPI
 COMCTL32_StrToIntA (LPSTR lpString)
 {
     return atoi(lpString);
+}
+
+/**************************************************************************
+ * StrToIntW [COMCTL32.365] Converts a wide char string to a signed integer.
+ */
+
+INT WINAPI
+COMCTL32_StrToIntW (LPWSTR lpString)
+{
+    return _wtoi(lpString);
 }
 
 
