@@ -44,6 +44,9 @@ static BOOL initialized = FALSE;
 void initDriveDlg (HWND hDlg)
 {
     int i;
+
+    /* Clear the listbox */
+    SendMessageA(GetDlgItem(hDlg, IDC_LIST_DRIVES), LB_RESETCONTENT, 0, 0);
     for (i = 0; i < config.driveCount; i++) {
 	int itemIndex;
 	DRIVE_DESC *drive = DPA_GetPtr(config.pDrives, i);
@@ -52,7 +55,7 @@ void initDriveDlg (HWND hDlg)
 	WINE_TRACE("Iterating, item %d of %d, drive=%p\n", i, config.driveCount, drive);
 	assert(drive);
 
-	WINE_TRACE("Adding %s to the listbox\n", drive->szName);
+	WINE_TRACE("Adding %s (%s) to the listbox\n", drive->szName, drive->szLabel);
 
 	/* the first SendMessage call adds the string and returns the index, the second associates that index with it */
 	snprintf(title, MAX_NAME_LENGTH, "Drive %s (%s)", drive->szName, drive->szLabel);
@@ -150,15 +153,16 @@ void fill_drive_droplist(long mask, DRIVE_DESC *pCurrentDrive, HWND hDlg)
 }
 
 
-void enable_cdrom_box(HWND hDlg, int bEnable)
+/* if bEnable is 1 then we are editing a CDROM, so can enable all controls, otherwise we want to disable
+ * "detect from device" and "serial number", but still allow the user to manually set the path. The UI
+ * for this could be somewhat better -mike
+ */
+void enable_labelserial_box(HWND hDlg, int bEnable)
 {
-  EnableWindow( GetDlgItem( hDlg, IDC_BOX_CDROM ), bEnable );
   EnableWindow( GetDlgItem( hDlg, IDC_RADIO_AUTODETECT ), bEnable );
-  EnableWindow( GetDlgItem( hDlg, IDC_RADIO_ASSIGN ), bEnable );
   EnableWindow( GetDlgItem( hDlg, IDC_EDIT_DEVICE ), bEnable );
   EnableWindow( GetDlgItem( hDlg, IDC_BUTTON_BROWSE_DEVICE ), bEnable );
   EnableWindow( GetDlgItem( hDlg, IDC_EDIT_SERIAL ), bEnable );
-  EnableWindow( GetDlgItem( hDlg, IDC_EDIT_LABEL ), bEnable );
   EnableWindow( GetDlgItem( hDlg, IDC_STATIC_SERIAL ), bEnable );
   EnableWindow( GetDlgItem( hDlg, IDC_STATIC_LABEL ), bEnable );
 }
@@ -222,10 +226,11 @@ INT_PTR CALLBACK DriveEditDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM l
 	    selection = IDC_RADIO_AUTODETECT;
 	  }
 	
-	  enable_cdrom_box( hDlg, 1 );
+	  enable_labelserial_box( hDlg, 1 );
 	}
 	else {
-	  enable_cdrom_box( hDlg, 0 );
+	  enable_labelserial_box( hDlg, 0 );
+	  selection = IDC_RADIO_ASSIGN;
 	}
 	
 	CheckRadioButton( hDlg, IDC_RADIO_AUTODETECT, IDC_RADIO_ASSIGN, selection );
@@ -242,10 +247,10 @@ INT_PTR CALLBACK DriveEditDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM l
 	    case CBN_SELCHANGE:
 	      selection = SendDlgItemMessage( hDlg, IDC_COMBO_TYPE, CB_GETCURSEL, 0, 0);
 	      if( selection == 2 || selection == 3 ) { /* cdrom or floppy */
-		enable_cdrom_box( hDlg, 1 );
+		enable_labelserial_box( hDlg, 1 );
 	      }
 	      else {
-		enable_cdrom_box( hDlg, 0 );
+		enable_labelserial_box( hDlg, 0 );
 	      }
 	      break;
 	    }
@@ -262,7 +267,7 @@ INT_PTR CALLBACK DriveEditDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM l
 	    ZeroMemory(&buffer[0], MAX_NAME_LENGTH);
 	    GetWindowText(GetDlgItem(hDlg, IDC_EDIT_PATH), buffer, MAX_NAME_LENGTH);
 	    if (strlen(buffer) > 0) {
-	      strncpy(pDrive->szName, buffer, MAX_NAME_LENGTH);
+	      strncpy(pDrive->szPath, buffer, MAX_NAME_LENGTH);
 	      
 	      /* only fill in the other values if we have a path */
 	      selection = SendDlgItemMessage( hDlg, IDC_COMBO_TYPE, CB_GETCURSEL, 0, 0);
@@ -295,9 +300,9 @@ INT_PTR CALLBACK DriveEditDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM l
 		}
 	      }
 	      else {
-		pDrive->szLabel[0] = 0;
-		pDrive->szSerial[0] = 0;
-		pDrive->szDevice[0] = 0;
+		GetWindowText(GetDlgItem(hDlg, IDC_EDIT_LABEL), pDrive->szLabel, MAX_NAME_LENGTH);
+		GetWindowText(GetDlgItem(hDlg, IDC_EDIT_SERIAL), pDrive->szSerial, MAX_NAME_LENGTH);
+		GetWindowText(GetDlgItem(hDlg, IDC_EDIT_DEVICE), pDrive->szDevice, MAX_NAME_LENGTH);
 	      }
 	      EndDialog(hDlg, wParam);
 	    }
@@ -380,6 +385,8 @@ DriveDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	      DialogBoxParam(NULL, MAKEINTRESOURCE(IDD_DRIVE_EDIT2),
 			     NULL, (DLGPROC) DriveEditDlgProc, (LPARAM) pDrive );
 	      SetProp(hDlg, "PDRIVE", pDrive);
+	      WINE_TRACE("refreshing main dialog\n");
+	      initDriveDlg(hDlg);
 	    }
 	  }
 	  break;

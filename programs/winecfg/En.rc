@@ -185,7 +185,7 @@ BEGIN
     PUSHBUTTON      "Browse...",IDC_BUTTON_BROWSE_DEVICE,148,89,40,13
     CONTROL         "Manually Assign:",IDC_RADIO_ASSIGN,"Button",
                     BS_AUTORADIOBUTTON,21,104,69,10
-    GROUPBOX        "Label and Serial Number",IDC_BOX_CDROM,15,68,180,79
+    GROUPBOX        "Label and Serial Number",IDC_BOX_LABELSERIAL,15,68,180,79
 END
 
 STRINGTABLE DISCARDABLE 

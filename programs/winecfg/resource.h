@@ -98,6 +98,6 @@
 #define IDC_RADIO_AUTODETECT            1068
 #define IDC_RADIO_ASSIGN                1069
 #define IDC_BUTTON_BROWSE_DEVICE        1070
-#define IDC_BOX_CDROM                   1071
+#define IDC_BOX_LABELSERIAL             1071
 #define IDC_STATIC_SERIAL               1072
 #define IDC_STATIC_LABEL                1073
