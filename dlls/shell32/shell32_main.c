@@ -859,6 +859,15 @@ void WINAPI FreeIconList( DWORD dw )
 { FIXME("(%lx): stub\n",dw);
 }
 
+
+/*************************************************************************
+ * ShellDDEInit (SHELL32.@)
+ */
+void WINAPI ShellDDEInit(BOOL start)
+{
+    FIXME("stub: %d\n", start);
+}
+
 /***********************************************************************
  * DllGetVersion [SHELL32.@]
  *
