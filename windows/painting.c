@@ -643,6 +643,13 @@ BOOL32 WINAPI GetUpdateRect32( HWND32 hwnd, LPRECT32 rect, BOOL32 erase )
 	    if (GetUpdateRgn32( hwnd, hrgn, erase ) == ERROR) return FALSE;
 	    GetRgnBox32( hrgn, rect );
 	    DeleteObject32( hrgn );
+	    if (wndPtr->class->style & CS_OWNDC)
+	    {
+		if (GetMapMode32(wndPtr->dce->hDC) != MM_TEXT)
+		{
+		    DPtoLP32 (wndPtr->dce->hDC, (LPPOINT32)rect,  2);
+		}
+	    }
 	}
 	else SetRectEmpty32( rect );
     }
