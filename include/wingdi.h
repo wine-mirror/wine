@@ -2529,21 +2529,13 @@ UINT16      WINAPI GetTextCharset16(HDC16);
 UINT      WINAPI GetTextCharset(HDC);
 COLORREF    WINAPI GetTextColor16(HDC16);
 COLORREF    WINAPI GetTextColor(HDC);
-/* this one is different, because Win32 has *both* 
- * GetTextExtentPoint and GetTextExtentPoint32 !
- */
 BOOL16      WINAPI GetTextExtentPoint16(HDC16,LPCSTR,INT16,LPSIZE16);
-BOOL      WINAPI GetTextExtentPoint32A(HDC,LPCSTR,INT,LPSIZE);
-BOOL      WINAPI GetTextExtentPoint32W(HDC,LPCWSTR,INT,LPSIZE);
-BOOL      WINAPI GetTextExtentPointA(HDC,LPCSTR,INT,LPSIZE);
-BOOL      WINAPI GetTextExtentPointW(HDC,LPCWSTR,INT,LPSIZE);
-#ifdef UNICODE
-#define     GetTextExtentPoint GetTextExtentPointW
-#define     GetTextExtentPoint32 GetTextExtentPoint32W
-#else
-#define     GetTextExtentPoint GetTextExtentPointA
-#define     GetTextExtentPoint32 GetTextExtentPoint32A
-#endif
+BOOL        WINAPI GetTextExtentPointA(HDC,LPCSTR,INT,LPSIZE);
+BOOL        WINAPI GetTextExtentPointW(HDC,LPCWSTR,INT,LPSIZE);
+#define     GetTextExtentPoint WINELIB_NAME_AW(GetTextExtentPoint)
+BOOL        WINAPI GetTextExtentPoint32A(HDC,LPCSTR,INT,LPSIZE);
+BOOL        WINAPI GetTextExtentPoint32W(HDC,LPCWSTR,INT,LPSIZE);
+#define     GetTextExtentPoint32 WINELIB_NAME_AW(GetTextExtentPoint32)
 INT16       WINAPI GetTextFace16(HDC16,INT16,LPSTR);
 INT       WINAPI GetTextFaceA(HDC,INT,LPSTR);
 INT       WINAPI GetTextFaceW(HDC,INT,LPWSTR);
