@@ -43,6 +43,7 @@ BOOL WIN16DRV_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags,
     RECT16 	*lpOpaqueRect = NULL;
     WORD wOptions = 0;
     DWORD len;
+    POINT pt;
     INT16 width;
     char *str;
     DWORD dwRet;
@@ -77,8 +78,11 @@ BOOL WIN16DRV_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags,
 	y = dc->CursPosY;
     }
 
-    x = XLPTODP( dc, x );
-    y = YLPTODP( dc, y );
+    pt.x = x;
+    pt.y = y;
+    LPtoDP( physDev->hdc, &pt, 1 );
+    x = pt.x;
+    y = pt.y;
 
     dwRet = PRTDRV_ExtTextOut(physDev->segptrPDEVICE, 0, 0,
 			      NULL, str, -len,  physDev->FontInfo,
@@ -91,12 +95,22 @@ BOOL WIN16DRV_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags,
     switch( dc->textAlign & (TA_LEFT | TA_RIGHT | TA_CENTER) ) {
     case TA_LEFT:
         if (dc->textAlign & TA_UPDATECP)
-	    dc->CursPosX = XDPTOLP( dc, x + width );
+        {
+            pt.x = x + width;
+            pt.y = y;
+            DPtoLP( physDev->hdc, &pt, 1 );
+            dc->CursPosX = pt.x;
+        }
 	break;
     case TA_RIGHT:
         x -= width;
-	if (dc->textAlign & TA_UPDATECP)
-	    dc->CursPosX = XDPTOLP( dc, x );
+        if (dc->textAlign & TA_UPDATECP)
+        {
+            pt.x = x;
+            pt.y = y;
+            DPtoLP( physDev->hdc, &pt, 1 );
+            dc->CursPosX = pt.x;
+        }
 	break;
     case TA_CENTER:
         x -= width / 2;
@@ -123,12 +137,3 @@ BOOL WIN16DRV_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags,
     HeapFree( GetProcessHeap(), 0, str );
     return bRet;
 }
-
-
-
-
-
-
-
-
-

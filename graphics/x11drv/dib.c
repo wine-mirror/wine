@@ -4737,6 +4737,7 @@ INT X11DRV_SetDIBitsToDevice( X11DRV_PDEVICE *physDev, INT xDest, INT yDest, DWO
     DWORD width, oldcy = cy;
     INT result;
     int height, tmpheight;
+    POINT pt;
     DC *dc = physDev->dc;
 
     if (DIB_GetBitmapInfo( &info->bmiHeader, &width, &height,
@@ -4752,6 +4753,10 @@ INT X11DRV_SetDIBitsToDevice( X11DRV_PDEVICE *physDev, INT xDest, INT yDest, DWO
     if (ySrc + cy >= startscan + lines) cy = startscan + lines - ySrc;
     if (xSrc + cx >= width) cx = width - xSrc;
     if (!cx || !cy) return 0;
+
+    pt.x = xDest;
+    pt.y = yDest;
+    LPtoDP(physDev->hdc, &pt, 1);
 
     X11DRV_SetupGCForText( physDev );  /* To have the correct colors */
     TSXSetFunction(gdi_display, physDev->gc, X11DRV_XROPfunction[dc->ROPmode-1]);
@@ -4796,9 +4801,8 @@ INT X11DRV_SetDIBitsToDevice( X11DRV_PDEVICE *physDev, INT xDest, INT yDest, DWO
     descr.xSrc      = xSrc;
     descr.ySrc      = tmpheight >= 0 ? lines-(ySrc-startscan)-cy+(oldcy-cy)
                                      : ySrc - startscan;
-    descr.xDest     = physDev->org.x + XLPTODP( dc, xDest );
-    descr.yDest     = physDev->org.y + YLPTODP( dc, yDest ) +
-                                     (tmpheight >= 0 ? oldcy-cy : 0);
+    descr.xDest     = physDev->org.x + pt.x;
+    descr.yDest     = physDev->org.y + pt.y + (tmpheight >= 0 ? oldcy-cy : 0);
     descr.width     = cx;
     descr.height    = cy;
     descr.useShm    = FALSE;

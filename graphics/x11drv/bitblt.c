@@ -1224,6 +1224,7 @@ static BOOL BITBLT_InternalStretchBlt( X11DRV_PDEVICE *physDevDst, INT xDst, INT
     const BYTE *opcode;
     Pixmap pixmaps[3] = { 0, 0, 0 };  /* pixmaps for DST, SRC, TMP */
     GC tmpGC = 0;
+    POINT pts[2];
     DC *dcSrc = physDevSrc ? physDevSrc->dc : NULL;
     DC *dcDst = physDevDst->dc;
 
@@ -1244,12 +1245,15 @@ static BOOL BITBLT_InternalStretchBlt( X11DRV_PDEVICE *physDevDst, INT xDst, INT
 
       /* Map the coordinates to device coords */
 
-    xDst      = XLPTODP( dcDst, xDst );
-    yDst      = YLPTODP( dcDst, yDst );
-
-    /* Here we have to round to integers, not truncate */
-    widthDst  = MulDiv(widthDst, dcDst->vportExtX, dcDst->wndExtX);
-    heightDst = MulDiv(heightDst, dcDst->vportExtY, dcDst->wndExtY);
+    pts[0].x = xDst;
+    pts[0].y = yDst;
+    pts[1].x = xDst + widthDst;
+    pts[1].y = yDst + heightDst;
+    LPtoDP(physDevDst->hdc, pts, 2);
+    xDst      = pts[0].x;
+    yDst      = pts[0].y;
+    widthDst  = pts[1].x - pts[0].x;
+    heightDst = pts[1].y - pts[0].y;
 
     TRACE("    vportdst=%d,%d-%d,%d wnddst=%d,%d-%d,%d\n",
                     dcDst->vportOrgX, dcDst->vportOrgY,
@@ -1262,10 +1266,16 @@ static BOOL BITBLT_InternalStretchBlt( X11DRV_PDEVICE *physDevDst, INT xDst, INT
 
     if (useSrc)
     {
-        xSrc      = XLPTODP( dcSrc, xSrc );
-        ySrc      = YLPTODP( dcSrc, ySrc );
-        widthSrc  = widthSrc * dcSrc->vportExtX / dcSrc->wndExtX;
-        heightSrc = heightSrc * dcSrc->vportExtY / dcSrc->wndExtY;
+        pts[0].x = xSrc;
+        pts[0].y = ySrc;
+        pts[1].x = xSrc + widthSrc;
+        pts[1].y = ySrc + heightSrc;
+        LPtoDP(physDevSrc->hdc, pts, 2);
+        xSrc      = pts[0].x;
+        ySrc      = pts[0].y;
+        widthSrc  = pts[1].x - pts[0].x;
+        heightSrc = pts[1].y - pts[0].y;
+
         fStretch  = (widthSrc != widthDst) || (heightSrc != heightDst);
         TRACE("    vportsrc=%d,%d-%d,%d wndsrc=%d,%d-%d,%d\n",
                         dcSrc->vportOrgX, dcSrc->vportOrgY,
@@ -1553,13 +1563,26 @@ BOOL X11DRV_BitBlt( X11DRV_PDEVICE *physDevDst, INT xDst, INT yDst,
     if ((sSrc == DIB_Status_AppMod) && (rop == SRCCOPY) &&
         (dcSrc->bitsPerPixel == dcDst->bitsPerPixel))
     {
+      POINT pts[2];
       /* do everything ourselves; map coordinates */
-      xSrc = XLPTODP( dcSrc, xSrc );
-      ySrc = YLPTODP( dcSrc, ySrc );
-      xDst = XLPTODP( dcDst, xDst );
-      yDst = YLPTODP( dcDst, yDst );
-      width  = MulDiv(width, dcDst->vportExtX, dcDst->wndExtX);
-      height = MulDiv(height, dcDst->vportExtY, dcDst->wndExtY);
+
+      pts[0].x = xSrc;
+      pts[0].y = ySrc;
+      pts[1].x = xSrc + width;
+      pts[1].y = ySrc + height;
+
+      LPtoDP(physDevSrc->hdc, pts, 2);
+      width = pts[1].x - pts[0].x;
+      height = pts[1].y - pts[0].y;
+      xSrc = pts[0].x;
+      ySrc = pts[0].y;
+
+      pts[0].x = xDst;
+      pts[0].y = yDst;
+      LPtoDP(physDevDst->hdc, pts, 1);
+
+      xDst = pts[0].x;
+      yDst = pts[0].y;
 
       /* Perform basic clipping */
       if (!BITBLT_GetVisRectangles( dcDst, xDst, yDst, width, height,

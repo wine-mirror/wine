@@ -58,8 +58,8 @@ BOOL16 WINAPI DPtoLP16( HDC16 hdc, LPPOINT16 points, INT16 count )
 
     while (count--)
     {
-	points->x = XDPTOLP( dc, points->x );
-	points->y = YDPTOLP( dc, points->y );
+        points->x = MulDiv( points->x - dc->vportOrgX, dc->wndExtX, dc->vportExtX ) + dc->wndOrgX;
+        points->y = MulDiv( points->y - dc->vportOrgY, dc->wndExtY, dc->vportExtY ) + dc->wndOrgY;
         points++;
     }
     GDI_ReleaseObj( hdc );
@@ -75,11 +75,20 @@ BOOL WINAPI DPtoLP( HDC hdc, LPPOINT points, INT count )
     DC * dc = DC_GetDCPtr( hdc );
     if (!dc) return FALSE;
 
-    while (count--)
+    if (dc->vport2WorldValid)
     {
-        if (!INTERNAL_DPTOLP( dc, points ))
-	    break;
-        points++;
+        while (count--)
+        {
+            FLOAT x = points->x;
+            FLOAT y = points->y;
+            points->x = floor( x * dc->xformVport2World.eM11 +
+                               y * dc->xformVport2World.eM21 +
+                               dc->xformVport2World.eDx + 0.5 );
+            points->y = floor( x * dc->xformVport2World.eM12 +
+                               y * dc->xformVport2World.eM22 +
+                               dc->xformVport2World.eDy + 0.5 );
+            points++;
+        }
     }
     GDI_ReleaseObj( hdc );
     return (count < 0);
@@ -96,8 +105,8 @@ BOOL16 WINAPI LPtoDP16( HDC16 hdc, LPPOINT16 points, INT16 count )
 
     while (count--)
     {
-	points->x = XLPTODP( dc, points->x );
-	points->y = YLPTODP( dc, points->y );
+        points->x = MulDiv( points->x - dc->wndOrgX, dc->vportExtX, dc->wndExtX ) + dc->vportOrgX;
+        points->y = MulDiv( points->y - dc->wndOrgY, dc->vportExtY, dc->wndExtY ) + dc->vportOrgY;
         points++;
     }
     GDI_ReleaseObj( hdc );
@@ -115,7 +124,14 @@ BOOL WINAPI LPtoDP( HDC hdc, LPPOINT points, INT count )
 
     while (count--)
     {
-	INTERNAL_LPTODP( dc, points );
+        FLOAT x = points->x;
+        FLOAT y = points->y;
+        points->x = floor( x * dc->xformWorld2Vport.eM11 +
+                           y * dc->xformWorld2Vport.eM21 +
+                           dc->xformWorld2Vport.eDx + 0.5 );
+        points->y = floor( x * dc->xformWorld2Vport.eM12 +
+                           y * dc->xformWorld2Vport.eM22 +
+                           dc->xformWorld2Vport.eDy + 0.5 );
         points++;
     }
     GDI_ReleaseObj( hdc );

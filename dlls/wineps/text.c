@@ -148,8 +148,13 @@ static BOOL PSDRV_Text(PSDRV_PDEVICE *physDev, INT x, INT y, UINT flags, LPCWSTR
     TRACE("textAlign = %x\n", align);
     switch(align & (TA_LEFT | TA_CENTER | TA_RIGHT) ) {
     case TA_LEFT:
-        if(align & TA_UPDATECP) {
-	    dc->CursPosX = INTERNAL_XDPTOWP(dc, x + sz.cx, y);
+        if(align & TA_UPDATECP)
+        {
+            POINT pt;
+            pt.x = x + sz.cx;
+            pt.y = y;
+            DPtoLP( physDev->hdc, &pt, 1 );
+            dc->CursPosX = pt.x;
 	}
 	break;
 
@@ -159,8 +164,13 @@ static BOOL PSDRV_Text(PSDRV_PDEVICE *physDev, INT x, INT y, UINT flags, LPCWSTR
 
     case TA_RIGHT:
 	x -= sz.cx;
-	if(align & TA_UPDATECP) {
-	    dc->CursPosX = INTERNAL_XDPTOWP(dc, x, y);
+	if(align & TA_UPDATECP)
+        {
+            POINT pt;
+            pt.x = x;
+            pt.y = y;
+            DPtoLP( physDev->hdc, &pt, 1 );
+            dc->CursPosX = pt.x;
 	}
 	break;
     }

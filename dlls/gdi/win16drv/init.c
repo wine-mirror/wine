@@ -258,7 +258,6 @@ BOOL WIN16DRV_CreateDC( DC *dc, PHYSDEV *pdev, LPCSTR driver, LPCSTR device, LPC
     *pdev = (PHYSDEV)physDev;
     physDev->hdc = dc->hSelf;
     physDev->dc = dc;
-    physDev->org.x = physDev->org.y = 0;
 
     pLPD = LoadPrinterDriver(driver);
     if (pLPD == NULL)

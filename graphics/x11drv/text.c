@@ -58,6 +58,7 @@ X11DRV_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flags,
     XChar2b		*str2b = NULL;
     BOOL		dibUpdateFlag = FALSE;
     BOOL                result = TRUE;
+    POINT               pt;
     DC *dc = physDev->dc;
 
     if(dc->gdiFont)
@@ -105,24 +106,26 @@ X11DRV_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flags,
 	      return FALSE;
 	    if (!X11DRV_GetTextExtentPoint( physDev, wstr, count, &sz ))
 	      return FALSE;
-	    rect.left   = INTERNAL_XWPTODP( dc, x, y );
-	    rect.right  = INTERNAL_XWPTODP( dc, x+sz.cx, y+sz.cy );
-	    rect.top    = INTERNAL_YWPTODP( dc, x, y );
-	    rect.bottom = INTERNAL_YWPTODP( dc, x+sz.cx, y+sz.cy );
+	    rect.left   = x;
+	    rect.right  = x + sz.cx;
+	    rect.top    = y;
+	    rect.bottom = y + sz.cy;
 	}
 	else
 	{
-	    rect.left   = INTERNAL_XWPTODP( dc, lprect->left, lprect->top );
-	    rect.right  = INTERNAL_XWPTODP( dc, lprect->right, lprect->bottom );
-	    rect.top    = INTERNAL_YWPTODP( dc, lprect->left, lprect->top );
-	    rect.bottom = INTERNAL_YWPTODP( dc, lprect->right, lprect->bottom );
+	    rect = *lprect;
 	}
+	LPtoDP(physDev->hdc, (POINT*)&rect, 2);
+
 	if (rect.right < rect.left) SWAP_INT( rect.left, rect.right );
 	if (rect.bottom < rect.top) SWAP_INT( rect.top, rect.bottom );
     }
 
-    x = INTERNAL_XWPTODP( dc, x, y );
-    y = INTERNAL_YWPTODP( dc, x, y );
+    pt.x = x;
+    pt.y = y;
+    LPtoDP(physDev->hdc, &pt, 1);
+    x = pt.x;
+    y = pt.y;
 
     TRACE("\treal coord: x=%i, y=%i, rect=(%d,%d - %d,%d)\n",
 			  x, y, rect.left, rect.top, rect.right, rect.bottom);
@@ -168,16 +171,22 @@ X11DRV_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flags,
     {
       case TA_LEFT:
 	  if (dc->textAlign & TA_UPDATECP) {
-	      dc->CursPosX = INTERNAL_XDPTOWP( dc, x + xwidth, y - ywidth );
-	      dc->CursPosY = INTERNAL_YDPTOWP( dc, x + xwidth, y - ywidth );
+	      pt.x = x + xwidth;
+	      pt.y = y - ywidth;
+	      DPtoLP(physDev->hdc, &pt, 1);
+	      dc->CursPosX = pt.x;
+	      dc->CursPosY = pt.y;
 	  }
 	  break;
       case TA_RIGHT:
 	  x -= xwidth;
 	  y += ywidth;
 	  if (dc->textAlign & TA_UPDATECP) {
-	      dc->CursPosX = INTERNAL_XDPTOWP( dc, x, y );
-	      dc->CursPosY = INTERNAL_YDPTOWP( dc, x, y );
+	      pt.x = x;
+	      pt.y = y;
+	      DPtoLP(physDev->hdc, &pt, 1);
+	      dc->CursPosX = pt.x;
+	      dc->CursPosY = pt.y;
 	  }
 	  break;
       case TA_CENTER:

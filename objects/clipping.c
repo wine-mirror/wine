@@ -228,12 +228,14 @@ INT WINAPI ExcludeClipRect( HDC hdc, INT left, INT top,
         ret = dc->funcs->pExcludeClipRect( dc->physDev, left, top, right, bottom );
     else
     {
-        left   = XLPTODP( dc, left );
-        right  = XLPTODP( dc, right );
-        top    = YLPTODP( dc, top );
-        bottom = YLPTODP( dc, bottom );
+        RECT rect;
+        rect.left = left;
+        rect.top = top;
+        rect.right = right;
+        rect.bottom = bottom;
+        LPtoDP( hdc, (POINT*)&rect, 2 );
 
-        if (!(newRgn = CreateRectRgn( left, top, right, bottom ))) ret = ERROR;
+        if (!(newRgn = CreateRectRgn( rect.left, rect.top, rect.right, rect.bottom ))) ret = ERROR;
         else
         {
             if (!dc->hClipRgn)
@@ -271,27 +273,30 @@ INT WINAPI IntersectClipRect( HDC hdc, INT left, INT top,
     DC *dc = DC_GetDCUpdate( hdc );
     if (!dc) return ERROR;
 
-    TRACE("%04x %dx%d,%dx%d\n", hdc, left, top, right, bottom );
+    TRACE("%04x %d,%d - %d,%d\n", hdc, left, top, right, bottom );
 
     if(dc->funcs->pIntersectClipRect)
         ret = dc->funcs->pIntersectClipRect( dc->physDev, left, top, right, bottom );
     else
     {
-        left   = XLPTODP( dc, left );
-        right  = XLPTODP( dc, right );
-        top    = YLPTODP( dc, top );
-        bottom = YLPTODP( dc, bottom );
+        RECT rect;
+
+        rect.left   = left;
+        rect.top    = top;
+        rect.right  = right;
+        rect.bottom = bottom;
+        LPtoDP( hdc, (POINT*)&rect, 2 );
 
         if (!dc->hClipRgn)
         {
-            dc->hClipRgn = CreateRectRgn( left, top, right, bottom );
+            dc->hClipRgn = CreateRectRgn( rect.left, rect.top, rect.right, rect.bottom );
             ret = SIMPLEREGION;
         }
         else
         {
             HRGN newRgn;
 
-            if (!(newRgn = CreateRectRgn( left, top, right, bottom ))) ret = ERROR;
+            if (!(newRgn = CreateRectRgn( rect.left, rect.top, rect.right, rect.bottom))) ret = ERROR;
             else
             {
                 ret = CombineRgn( dc->hClipRgn, dc->hClipRgn, newRgn, RGN_AND );
@@ -313,17 +318,19 @@ INT16 WINAPI ExcludeVisRect16( HDC16 hdc, INT16 left, INT16 top,
 {
     HRGN tempRgn;
     INT16 ret;
+    RECT rect;
     DC * dc = DC_GetDCUpdate( hdc );
     if (!dc) return ERROR;
 
-    left   = XLPTODP( dc, left );
-    right  = XLPTODP( dc, right );
-    top    = YLPTODP( dc, top );
-    bottom = YLPTODP( dc, bottom );
+    rect.left   = left;
+    rect.top    = top;
+    rect.right  = right;
+    rect.bottom = bottom;
+    LPtoDP( hdc, (POINT*)&rect, 2 );
 
-    TRACE("%04x %dx%d,%dx%d\n", hdc, left, top, right, bottom );
+    TRACE("%04x %d,%d - %d,%d\n", hdc, rect.left, rect.top, rect.right, rect.bottom );
 
-    if (!(tempRgn = CreateRectRgn( left, top, right, bottom ))) ret = ERROR;
+    if (!(tempRgn = CreateRectRgn( rect.left, rect.top, rect.right, rect.bottom ))) ret = ERROR;
     else
     {
         ret = CombineRgn( dc->hVisRgn, dc->hVisRgn, tempRgn, RGN_DIFF );
@@ -343,17 +350,19 @@ INT16 WINAPI IntersectVisRect16( HDC16 hdc, INT16 left, INT16 top,
 {
     HRGN tempRgn;
     INT16 ret;
+    RECT rect;
     DC * dc = DC_GetDCUpdate( hdc );
     if (!dc) return ERROR;
 
-    left   = XLPTODP( dc, left );
-    right  = XLPTODP( dc, right );
-    top    = YLPTODP( dc, top );
-    bottom = YLPTODP( dc, bottom );
+    rect.left   = left;
+    rect.top    = top;
+    rect.right  = right;
+    rect.bottom = bottom;
+    LPtoDP( hdc, (POINT*)&rect, 2 );
 
-    TRACE("%04x %dx%d,%dx%d\n", hdc, left, top, right, bottom );
+    TRACE("%04x %d,%d - %d,%d\n", hdc, rect.left, rect.top, rect.right, rect.bottom );
 
-    if (!(tempRgn = CreateRectRgn( left, top, right, bottom ))) ret = ERROR;
+    if (!(tempRgn = CreateRectRgn( rect.left, rect.top, rect.right, rect.bottom ))) ret = ERROR;
     else
     {
         ret = CombineRgn( dc->hVisRgn, dc->hVisRgn, tempRgn, RGN_AND );
@@ -386,7 +395,12 @@ BOOL WINAPI PtVisible( HDC hdc, INT x, INT y )
     if (!dc) return FALSE;
     if (dc->hGCClipRgn)
     {
-        ret = PtInRegion( dc->hGCClipRgn, XLPTODP(dc,x), YLPTODP(dc,y) );
+        POINT pt;
+
+        pt.x = x;
+        pt.y = y;
+        LPtoDP( hdc, &pt, 1 );
+        ret = PtInRegion( dc->hGCClipRgn, pt.x, pt.y );
     }
     GDI_ReleaseObj( hdc );
     return ret;

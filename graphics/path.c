@@ -81,6 +81,12 @@ WINE_DEFAULT_DEBUG_CHANNEL(gdi);
 #define GROW_FACTOR_NUMER    2  /* Numerator of grow factor for the array */
 #define GROW_FACTOR_DENOM    1  /* Denominator of grow factor             */
 
+/* A floating point version of the POINT structure */
+typedef struct tagFLOAT_POINT
+{
+   FLOAT x, y;
+} FLOAT_POINT;
+
 
 static BOOL PATH_PathToRegion(GdiPath *pPath, INT nPolyFillMode,
    HRGN *pHrgn);
@@ -94,6 +100,23 @@ static void PATH_NormalizePoint(FLOAT_POINT corners[], const FLOAT_POINT
    *pPoint, double *pX, double *pY);
 static BOOL PATH_CheckCorners(DC *dc, POINT corners[], INT x1, INT y1, INT x2, INT y2);
 
+/* Performs a world-to-viewport transformation on the specified point (which
+ * is in floating point format).
+ */
+static inline void WINE_UNUSED INTERNAL_LPTODP_FLOAT(DC *dc, FLOAT_POINT *point)
+{
+    FLOAT x, y;
+
+    /* Perform the transformation */
+    x = point->x;
+    y = point->y;
+    point->x = x * dc->xformWorld2Vport.eM11 +
+               y * dc->xformWorld2Vport.eM21 +
+               dc->xformWorld2Vport.eDx;
+    point->y = x * dc->xformWorld2Vport.eM12 +
+               y * dc->xformWorld2Vport.eM22 +
+               dc->xformWorld2Vport.eDy;
+}
 
 /***********************************************************************
  *           BeginPath    (GDI.512)

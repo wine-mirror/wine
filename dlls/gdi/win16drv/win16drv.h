@@ -207,7 +207,6 @@ typedef struct
     LPLOGPEN16		PenInfo;        /* Current pen realized by printer driver */
     HDC                 hdc;
     DC                 *dc;
-    POINT               org;            /* Device origin */
     DeviceCaps          DevCaps;        /* Device caps */
 } WIN16DRV_PDEVICE;
 
