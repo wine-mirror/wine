@@ -1036,6 +1036,23 @@ static const WCHAR TOOLBARCLASSNAMEW[] = { 'T','o','o','l','b','a','r',
 #define TBN_GETINFOTIP WINELIB_NAME_AW(TBN_GETINFOTIP)
 
 
+typedef struct _NMTBCUSTOMDRAW
+{
+    NMCUSTOMDRAW nmcd;
+    HBRUSH hbrMonoDither;
+    HBRUSH hbrLines;
+    HPEN hpenLines;
+    COLORREF clrText;
+    COLORREF clrMark;
+    COLORREF clrTextHighlight;
+    COLORREF clrBtnFace;
+    COLORREF clrBtnHighlight;
+    COLORREF clrHighlightHotTrack;
+    RECT rcText;
+    int nStringBkMode;
+    int nHLStringBkMode;
+} NMTBCUSTOMDRAW, *LPNMTBCUSTOMDRAW;
+
 /* This is just for old CreateToolbar. */
 /* Don't use it in new programs. */
 typedef struct _OLDTBBUTTON {
@@ -1162,6 +1179,14 @@ typedef struct
 #define TBBUTTONINFO   WINELIB_NAME_AW(TBBUTTONINFO)
 #define LPTBBUTTONINFO WINELIB_NAME_AW(LPTBBUTTONINFO)
 
+typedef struct tagNMTBHOTITEM
+{
+    NMHDR hdr;
+    int idOld;
+    int idNew;
+    DWORD dwFlags;
+} NMTBHOTITEM, *LPNMTBHOTITEM;
+
 typedef struct tagNMTBGETINFOTIPA
 {
     NMHDR  hdr;
@@ -1182,6 +1207,31 @@ typedef struct tagNMTBGETINFOTIPW
 
 #define NMTBGETINFOTIP   WINELIB_NAME_AW(NMTBGETINFOFTIP)
 #define LPNMTBGETINFOTIP WINELIB_NAME_AW(LPNMTBGETINFOTIP)
+
+typedef struct
+{
+    NMHDR hdr;
+    DWORD dwMask;
+    int idCommand;
+    DWORD lParam;
+    int iImage;
+    LPSTR pszText;
+    int cchText;
+} NMTBDISPINFOA, *LPNMTBDISPINFOA;
+
+typedef struct
+{
+    NMHDR hdr;
+    DWORD dwMask;
+    int idCommand;
+    DWORD lParam;
+    int iImage;
+    LPWSTR pszText;
+    int cchText;
+} NMTBDISPINFOW, *LPNMTBDISPINFOW;
+
+#define NMTBDISPINFO WINELIB_NAME_AW(NMTBDISPINFO)
+#define LPNMTBDISPINFO WINELIB_NAME_AW(LPNMTBDISPINFO)
 
 typedef struct tagNMTOOLBARA
 {
@@ -2182,7 +2232,17 @@ typedef struct tagNMTVGETINFOTIPW
     LPARAM lParam;
 } NMTVGETINFOTIPW, *LPNMTVGETINFOTIPW;
 
+#define NMTVGETINFOTIP WINELIB_NAME_AW(NMTVGETINFOTIP)
+#define LPNMTVGETINFOTIP WINELIB_NAME_AW(LPNMTVGETINFOTIP)
 
+typedef struct tagTVKEYDOWN
+{
+    NMHDR hdr;
+    WORD wVKey;
+    UINT flags;
+} NMTVKEYDOWN, *LPNMTVKEYDOWN;
+
+#define TV_KEYDOWN      NMTVKEYDOWN
 
 #define TreeView_InsertItemA(hwnd, phdi) \
   (HTREEITEM)SendMessageA((hwnd), TVM_INSERTITEMA, 0, \
@@ -2368,18 +2428,6 @@ typedef struct tagNMTVGETINFOTIPW
   _TVi.state = data; \
   SendMessageA((hwndTV), TVM_SETITEM, 0, (LPARAM)(TV_ITEM *)&_TVi); \
 }
-
-typedef struct {
-  NMHDR hdr;
-  WORD  wVKey;
-  UINT  flags;
-} TV_KEYDOWN;
-
-
-
-
-
-
 
 
 /* Listview control */
@@ -2609,7 +2657,6 @@ static const WCHAR WC_LISTVIEWW[] = { 'S','y','s',
 #define LVM_GETHOVERTIME        (LVM_FIRST+72)
 #define LVM_GETNUMBEROFWORKAREAS (LVM_FIRST+73)
 #define LVM_SETTOOLTIPS         (LVM_FIRST+74)
-
 #define LVM_GETTOOLTIPS         (LVM_FIRST+78)
 
 #define LVN_FIRST               (0U-100U)
@@ -2704,6 +2751,7 @@ typedef struct tagLVBKIMAGEW
 } LVBKIMAGEW, *LPLVBKIMAGEW;
 
 #define LVBKIMAGE WINELIB_NAME_AW(LVBKIMAGE)
+#define LPLVBKIMAGE WINELIB_NAME_AW(LPLVBKIMAGE)
 
 #define LVBKIF_SOURCE_NONE      0x00000000
 #define LVBKIF_SOURCE_HBITMAP   0x00000001
@@ -2774,9 +2822,21 @@ typedef struct tagNMLISTVIEW
     LPARAM  lParam;
 } NMLISTVIEW, *LPNMLISTVIEW;
 
-#define LPNM_LISTVIEW   LPNMLISTVIEW
 #define NM_LISTVIEW     NMLISTVIEW
+#define LPNM_LISTVIEW   LPNMLISTVIEW
 
+typedef struct tagNMITEMACTIVATE
+{
+    NMHDR hdr;
+    int iItem;
+    int iSubItem;
+    UINT uNewState;
+    UINT uOldState;
+    UINT uChanged;
+    POINT ptAction;
+    LPARAM lParam;
+    UINT uKeyFlags;
+} NMITEMACTIVATE, *LPNMITEMACTIVATE;
 
 typedef struct tagLVDISPINFO
 {
@@ -2803,6 +2863,31 @@ typedef struct tagLVKEYDOWN
 } NMLVKEYDOWN, *LPNMLVKEYDOWN;
 
 #define LV_KEYDOWN     NMLVKEYDOWN
+
+typedef struct tagNMLVGETINFOTIPA
+{
+    NMHDR hdr;
+    DWORD dwFlags;
+    LPSTR pszText;
+    int cchTextMax;
+    int iItem;
+    int iSubItem;
+    LPARAM lParam;
+} NMLVGETINFOTIPA, *LPNMLVGETINFOTIPA;
+
+typedef struct tagNMLVGETINFOTIPW
+{
+    NMHDR hdr;
+    DWORD dwFlags;
+    LPWSTR pszText;
+    int cchTextMax;
+    int iItem;
+    int iSubItem;
+    LPARAM lParam;
+} NMLVGETINFOTIPW, *LPNMLVGETINFOTIPW;
+
+#define NMLVGETINFOTIP WINELIB_NAME_AW(NMLVGETINFOTIP)
+#define LPNMLVGETINFOTIP WINELIB_NAME_AW(LPNMLVGETINFOTIP)
 
 typedef struct tagLVHITTESTINFO
 {
@@ -2837,6 +2922,16 @@ typedef struct tagTCHITTESTINFO
 
 typedef INT CALLBACK (*PFNLVCOMPARE)(LPARAM, LPARAM, LPARAM);
 
+#define NMLVCUSTOMDRAW_V3_SIZE CCSIZEOF_STRUCT(NMLCUSTOMDRW, clrTextBk)
+
+typedef struct tagNMLVCUSTOMDRAW
+{
+    NMCUSTOMDRAW nmcd;
+    COLORREF clrText;
+    COLORREF clrTextBk;
+    int iSubItem;
+} NMLVCUSTOMDRAW, *LPNMLVCUSTOMDRAW;
+
 typedef struct tagNMLVCACHEHINT
 {
 	NMHDR	hdr;
@@ -2848,15 +2943,29 @@ typedef struct tagNMLVCACHEHINT
 #define PNM_CACHEHINT  LPNMLVCACHEHINT
 #define NM_CACHEHINT   NMLVCACHEHINT
 
-#define NMLVCUSTOMDRAW_V3_SIZE CCSIZEOF_STRUCT(NMLCUSTOMDRW, clrTextBk)
-
-typedef struct tagNMLVCUSTOMDRAW
+typedef struct tagNMLVFINDITEM
 {
-    NMCUSTOMDRAW nmcd;
-    COLORREF clrText;
-    COLORREF clrTextBk;
-    int iSubItem;
-} NMLVCUSTOMDRAW, *LPNMLVCUSTOMDRAW;
+    NMHDR hdr;
+    int iStart;
+    LVFINDINFO lvfi;
+} NMLVFINDITEM, *LPNMLVFINDITEM;
+
+#define NM_FINDITEM NMLVFINDITEM
+#define PNM_FINDITEM LPNMLVFINDITEM
+#define LPNM_FINDITEM LPNMLVFINDITEM
+
+typedef struct tagNMLVODSTATECHANGE
+{
+    NMHDR hdr;
+    int iFrom;
+    int iTo;
+    UINT uNewState;
+    UINT uOldState;
+} NMLVODSTATECHANGE, *LPNMLVODSTATECHANGE;
+
+#define PNM_ODSTATECHANGE LPNMLVODSTATECHANGE
+#define LPNM_ODSTATECHANGE LPNMLVODSTATECHANGE
+#define NM_ODSTATECHANGE NMLVODSTATECHANGE
 
 #define ListView_SetTextBkColor(hwnd,clrBk) \
     (BOOL)SendMessageA((hwnd),LVM_SETTEXTBKCOLOR,0,(LPARAM)(COLORREF)(clrBk))
@@ -3183,6 +3292,14 @@ typedef struct tagTCITEMW
 #define TCN_SELCHANGING         (TCN_FIRST - 2)
 #define TCN_GETOBJECT      (TCN_FIRST - 3)
 
+typedef struct tagTCKEYDOWN
+{
+    NMHDR hdr;
+    WORD wVKey;
+    UINT flags;
+} NMTCKEYDOWN;
+
+#define TC_KEYDOWN              NMTCKEYDOWN
 
 /* ComboBoxEx control */
 
@@ -3247,6 +3364,13 @@ static const WCHAR WC_COMBOBOXEXW[] = { 'C','o','m','b','o',
 #define CBEN_DRAGBEGINW         (CBEN_FIRST - 9)
 #define CBEN_DRAGBEGIN WINELIB_NAME_AW(CBEN_DRAGBEGIN)
 
+#define CBES_EX_NOEDITIMAGE          0x00000001
+#define CBES_EX_NOEDITIMAGEINDENT    0x00000002
+#define CBES_EX_PATHWORDBREAKPROC    0x00000004
+#define CBES_EX_NOSIZELIMIT          0x00000008
+#define CBES_EX_CASESENSITIVE        0x00000010
+
+
 typedef struct tagCOMBOBOXEXITEMA
 {
     UINT mask;
@@ -3259,8 +3383,7 @@ typedef struct tagCOMBOBOXEXITEMA
     int iIndent;
     LPARAM lParam;
 } COMBOBOXEXITEMA, *PCOMBOBOXEXITEMA;
-typedef COMBOBOXEXITEMA CONST *PCCOMBOEXITEMA;
-
+typedef COMBOBOXEXITEMA CONST *PCCOMBOEXITEMA; /* Yes, there's a BOX missing */
 
 typedef struct tagCOMBOBOXEXITEMW
 {
@@ -3274,9 +3397,11 @@ typedef struct tagCOMBOBOXEXITEMW
     int iIndent;
     LPARAM lParam;
 } COMBOBOXEXITEMW, *PCOMBOBOXEXITEMW;
+typedef COMBOBOXEXITEMW CONST *PCCOMBOEXITEMW; /* Yes, there's a BOX missing */
 
 #define COMBOBOXEXITEM WINELIB_NAME_AW(COMBOBOXEXITEM)
-
+#define PCOMBOBOXEXITEM WINELIB_NAME_AW(PCOMBOBOXEXITEM)
+#define PCCOMBOBOXEXITEM WINELIB_NAME_AW(PCCOMBOEXITEM) /* Yes, there's a BOX missing */
 
 #define CBENF_KILLFOCUS               1
 #define CBENF_RETURN                  2
@@ -3307,21 +3432,38 @@ typedef struct tagNMCBEENDEDITA
 #define LPNMCBEENDEDIT WINELIB_NAME_AW(LPNMCBEENDEDIT)
 #define PNMCBEENDEDIT WINELIB_NAME_AW(PNMCBEENDEDIT)
 
-
-typedef struct tagNMCOMBOBOXEXA
+typedef struct
 {
-    NMHDR        hdr;
-    COMBOBOXEXITEMA  ceItem;
+    NMHDR hdr;
+    COMBOBOXEXITEMA ceItem;
 } NMCOMBOBOXEXA, *PNMCOMBOBOXEXA;
 
-typedef struct tagNMCOMBOBOXEXW
+typedef struct
 {
-    NMHDR        hdr;
-    COMBOBOXEXITEMW  ceItem;
+    NMHDR hdr;
+    COMBOBOXEXITEMW ceItem;
 } NMCOMBOBOXEXW, *PNMCOMBOBOXEXW;
 
 #define NMCOMBOBOXEX WINELIB_NAME_AW(NMCOMBOBOXEX)
 #define PNMCOMBOBOXEX WINELIB_NAME_AW(PNMCOMBOBOXEX)
+
+typedef struct
+{
+    NMHDR hdr;
+    int iItemid;
+    char szText[CBEMAXSTRLEN];
+} NMCBEDRAGBEGINA, *PNMCBEDRAGBEGINA, *LPNMCBEDRAGBEGINA;
+
+typedef struct
+{
+    NMHDR hdr;
+    int iItemid;
+    WCHAR szText[CBEMAXSTRLEN];
+} NMCBEDRAGBEGINW, *PNMCBEDRAGBEGINW, *LPNMCBEDRAGBEGINW;
+
+#define NMCBEDRAGBEGIN WINELIB_NAME_AW(NMCBEDRAGBEGIN)
+#define PNMCBEDRAGBEGIN WINELIB_NAME_AW(PNMCBEDRAGBEGIN)
+#define LPNMCBEDRAGBEGIN WINELIB_NAME_AW(LPNMCBEDRAGBEGIN)
 
 
 /* Hotkey control */
