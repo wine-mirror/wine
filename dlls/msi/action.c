@@ -2399,11 +2399,35 @@ static UINT SetFeatureStates(MSIPACKAGE *package)
     {
         for(i = 0; i < package->loaded_features; i++)
         {
-            if (strcmpiW(override,all)==0 || 
-                strstrW(override,package->features[i].Feature))
+            if (strcmpiW(override,all)==0)
             {
                 package->features[i].ActionRequest= INSTALLSTATE_LOCAL;
                 package->features[i].Action = INSTALLSTATE_LOCAL;
+            }
+            else
+            {
+                LPWSTR ptr = override;
+                LPWSTR ptr2 = strchrW(override,',');
+
+                while (ptr)
+                {
+                    if ((ptr2 && 
+                        strncmpW(ptr,package->features[i].Feature, ptr2-ptr)==0)
+                        || (!ptr2 &&
+                        strcmpW(ptr,package->features[i].Feature)==0))
+                    {
+                        package->features[i].ActionRequest= INSTALLSTATE_LOCAL;
+                        package->features[i].Action = INSTALLSTATE_LOCAL;
+                        break;
+                    }
+                    if (ptr2)
+                    {
+                        ptr=ptr2+1;
+                        ptr2 = strchrW(ptr,',');
+                    }
+                    else
+                        break;
+                }
             }
         }
         HeapFree(GetProcessHeap(),0,override);
