@@ -386,7 +386,16 @@ DIB_DirectDrawSurface_Blt(LPDIRECTDRAWSURFACE7 iface, LPRECT rdst,
 
     dbuf = (BYTE*)ddesc.lpSurface+(xdst.top*ddesc.u1.lPitch)+(xdst.left*bpp);
 
-    dwFlags &= ~(DDBLT_WAIT|DDBLT_ASYNC);/* FIXME: can't handle right now */
+    if (dwFlags & (DDBLT_WAIT|DDBLT_ASYNC))
+    {
+	static BOOL displayed = FALSE;
+	if (!displayed)
+	{
+	    FIXME("dwFlags DDBLT_WAIT and/or DDBLT_ASYNC: can't handle right now.\n");
+	    displayed = TRUE;
+	}
+        dwFlags &= ~(DDBLT_WAIT|DDBLT_ASYNC);
+    }
 
     /* First, all the 'source-less' blits */
     if (dwFlags & DDBLT_COLORFILL) {

@@ -8,7 +8,7 @@
  *			  non-terminals (see cjunk rule).
  * 21-May-2000 BS	- Partial implementation of font resources.
  *			- Corrected language propagation for binary
- *			  resources such as bitmaps, isons, cursors,
+ *			  resources such as bitmaps, icons, cursors,
  *			  userres and rcdata. The language is now
  *			  correct in .res files.
  *			- Fixed reading the resource name as ident,
@@ -2964,14 +2964,14 @@ static int rsrcid_to_token(int lookahead)
 	case WRC_RT_ANIICON:
 	case WRC_RT_GROUP_CURSOR:
 	case WRC_RT_GROUP_ICON:
-		yywarning("Usertype uses reserved type-ID %d, which is auto-generated", yylval.num);
+		yywarning("Usertype uses reserved type ID %d, which is auto-generated", yylval.num);
 		return lookahead;
 
 	case WRC_RT_DLGINCLUDE:
 	case WRC_RT_PLUGPLAY:
 	case WRC_RT_VXD:
 	case WRC_RT_HTML:
-		yywarning("Usertype uses reserved type-ID %d, which is not supported by wrc", yylval.num);
+		yywarning("Usertype uses reserved type ID %d, which is not supported by wrc yet", yylval.num);
 	default:
 		return lookahead;
 	}
@@ -2979,7 +2979,7 @@ static int rsrcid_to_token(int lookahead)
 	if(remap)
 		return token;
 	else
-		yywarning("Usertype uses reserved type-ID %d, which is used by %s", yylval.num, type);
+		yywarning("Usertype uses reserved type ID %d, which is used by %s", yylval.num, type);
 	return lookahead;
 }
 

@@ -59,7 +59,7 @@ NetBSD info:
   Make sure you have the USER_LDT, SYSVSHM, SYSVSEM, and SYSVMSG options
   turned on in your kernel.
 
-File systems info :
+File systems info:
   Wine should run on most file systems. However, Wine will fail to start
   if umsdos is used for the /tmp directory. A few compatibility problems have
   also been reported using files accessed through Samba.
@@ -77,11 +77,12 @@ must be reentrant, which is probably the default by now.
 If you have libc6 (glibc2), or you compiled the X libraries yourself,
 they were probably compiled with the reentrant option enabled.
 
-You also need to have libXpm installed on your system. The sources for
-it are available at ftp.x.org and all its mirror sites in the directory
-/contrib/libraries. If you are using RedHat, libXpm is distributed as the
-xpm and xpm-devel packages. Debian distributes libXpm as xpm4.7, xpm4g,
-and xpm4g-dev. SuSE calls these packages xpm and xpm-devel.
+You also need to have libXpm (and its header files, e.g. xpm.h)
+installed on your system. The sources for it are available at
+ftp.x.org and all its mirror sites in the directory
+/contrib/libraries.  If you are using RedHat, libXpm is distributed as
+packages xpm and xpm-devel.  Debian distributes libXpm as xpm4.7,
+xpm4g, and xpm4g-dev.  SuSE calls these packages xpm and xpm-devel.
 
 On x86 Systems gcc >= 2.7.2 is required.
 Versions earlier than 2.7.2.3 may have problems when certain files
@@ -142,11 +143,16 @@ man page (documentation/wine.conf.man).
 The file documentation/samples/config contains an example configuration file
 which has to be adapted and copied to the location mentioned above.
 
+Don't forget to add vital registry entries by applying winedefault.reg
+with programs/regapi/. See documentation/ for details.
+
 See http://www.winehq.com/support.shtml for further configuration hints.
 
 In order to verify the correctness of the environment you need for
 Wine to run successfully, run "./tools/winecheck | less".  You'll get
 a percentage score indicating "Wine configuration correctness".
+As this program is alpha, it doesn't run a truly thorough test yet, though,
+so it should be taken as a first verification step only.
 
 6. RUNNING PROGRAMS
 
@@ -178,7 +184,8 @@ of users reporting file corruption. Do NOT run Explorer, for instance,
 if you don't have a proper backup, as it renames/cripples several
 directories sometimes. Not even other MS apps such as e.g. Messenger are safe,
 as they launch Explorer somehow. This particular corruption (!$!$!$!$.pfr)
-can be fixed with http://home.nexgo.de/andi.mohr/download/decorrupt_explorer
+can at least partially be fixed by using
+http://home.nexgo.de/andi.mohr/download/decorrupt_explorer
 
 
 7. GETTING MORE INFORMATION

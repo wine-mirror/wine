@@ -299,7 +299,7 @@ ln -sf /usr/local/etc/wine.userreg wine.userreg
           <term>UseNewFormat</term>
           <listitem>
             <para>
-              This option is obsolete. Wine now always use the new
+              This option is obsolete. Wine now always uses the new
               format; support for the old format was removed a while
               ago.
             </para>
