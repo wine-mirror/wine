@@ -36,7 +36,7 @@ const K32OBJ_OPS THREAD_Ops =
 };
 
 /* Is threading code initialized? */
-BOOL32 THREAD_InitDone = FALSE;
+BOOL THREAD_InitDone = FALSE;
 
 /* THDB of the initial thread */
 static THDB initial_thdb;
@@ -56,7 +56,7 @@ THDB *THREAD_Current(void)
 /***********************************************************************
  *           THREAD_IsWin16
  */
-BOOL32 THREAD_IsWin16( THDB *thdb )
+BOOL THREAD_IsWin16( THDB *thdb )
 {
     if (!thdb || !thdb->process)
         return TRUE;
@@ -81,7 +81,7 @@ THDB *THREAD_IdToTHDB( DWORD id )
     if (!K32OBJ_IsValid( &thdb->header, K32OBJ_THREAD ))
     {
         /* Allow task handles to be used; convert to main thread */
-        if ( IsTask( id ) )
+        if ( IsTask16( id ) )
         {
             TDB *pTask = (TDB *)GlobalLock16( id );
             if (pTask) return pTask->thdb;
@@ -99,7 +99,7 @@ THDB *THREAD_IdToTHDB( DWORD id )
  *
  * Initialization of a newly created THDB.
  */
-static BOOL32 THREAD_InitTHDB( THDB *thdb, DWORD stack_size, BOOL32 alloc_stack16,
+static BOOL THREAD_InitTHDB( THDB *thdb, DWORD stack_size, BOOL alloc_stack16,
                                int *server_thandle, int *server_phandle )
 {
     DWORD old_prot;
@@ -147,7 +147,7 @@ static BOOL32 THREAD_InitTHDB( THDB *thdb, DWORD stack_size, BOOL32 alloc_stack1
 
     /* Create the thread event */
 
-    if (!(thdb->event = CreateEvent32A( NULL, FALSE, FALSE, NULL ))) goto error;
+    if (!(thdb->event = CreateEventA( NULL, FALSE, FALSE, NULL ))) goto error;
     thdb->event = ConvertToGlobalHandle( thdb->event );
     return TRUE;
 
@@ -165,7 +165,7 @@ error:
  *
  * Create the initial thread.
  */
-THDB *THREAD_CreateInitialThread( PDB32 *pdb )
+THDB *THREAD_CreateInitialThread( PDB *pdb )
 {
     int fd[2];
     char buffer[16];
@@ -234,7 +234,7 @@ THDB *THREAD_CreateInitialThread( PDB32 *pdb )
 /***********************************************************************
  *           THREAD_Create
  */
-THDB *THREAD_Create( PDB32 *pdb, DWORD stack_size, BOOL32 alloc_stack16,
+THDB *THREAD_Create( PDB *pdb, DWORD stack_size, BOOL alloc_stack16,
                      int *server_thandle, int *server_phandle,
                      LPTHREAD_START_ROUTINE start_addr, LPVOID param )
 {
@@ -325,28 +325,28 @@ void THREAD_Start( THDB *thdb )
 /***********************************************************************
  *           CreateThread   (KERNEL32.63)
  */
-HANDLE32 WINAPI CreateThread( SECURITY_ATTRIBUTES *sa, DWORD stack,
+HANDLE WINAPI CreateThread( SECURITY_ATTRIBUTES *sa, DWORD stack,
                               LPTHREAD_START_ROUTINE start, LPVOID param,
                               DWORD flags, LPDWORD id )
 {
     int server_handle = -1;
-    HANDLE32 handle = INVALID_HANDLE_VALUE32;
-    BOOL32 inherit = (sa && (sa->nLength>=sizeof(*sa)) && sa->bInheritHandle);
+    HANDLE handle = INVALID_HANDLE_VALUE;
+    BOOL inherit = (sa && (sa->nLength>=sizeof(*sa)) && sa->bInheritHandle);
 
     THDB *thread = THREAD_Create( PROCESS_Current(), stack,
                                   TRUE, &server_handle, NULL, start, param );
-    if (!thread) return INVALID_HANDLE_VALUE32;
+    if (!thread) return INVALID_HANDLE_VALUE;
     handle = HANDLE_Alloc( PROCESS_Current(), &thread->header,
                            THREAD_ALL_ACCESS, inherit, server_handle );
-    if (handle == INVALID_HANDLE_VALUE32) goto error;
+    if (handle == INVALID_HANDLE_VALUE) goto error;
     if (SYSDEPS_SpawnThread( thread ) == -1) goto error;
     if (id) *id = THDB_TO_THREAD_ID( thread );
     return handle;
 
 error:
-    if (handle != INVALID_HANDLE_VALUE32) CloseHandle( handle );
+    if (handle != INVALID_HANDLE_VALUE) CloseHandle( handle );
     K32OBJ_DecCount( &thread->header );
-    return INVALID_HANDLE_VALUE32;
+    return INVALID_HANDLE_VALUE;
 }
 
 
@@ -390,7 +390,7 @@ void WINAPI ExitThread(
  * RETURNS
  *    Pseudohandle for the current thread
  */
-HANDLE32 WINAPI GetCurrentThread(void)
+HANDLE WINAPI GetCurrentThread(void)
 {
     return CURRENT_THREAD_PSEUDOHANDLE;
 }
@@ -518,7 +518,7 @@ DWORD WINAPI TlsAlloc(void)
  *    Success: TRUE
  *    Failure: FALSE
  */
-BOOL32 WINAPI TlsFree(
+BOOL WINAPI TlsFree(
     DWORD index) /* [in] TLS Index to free */
 {
     DWORD mask;
@@ -574,7 +574,7 @@ LPVOID WINAPI TlsGetValue(
  *    Success: TRUE
  *    Failure: FALSE
  */
-BOOL32 WINAPI TlsSetValue(
+BOOL WINAPI TlsSetValue(
     DWORD index,  /* [in] TLS index to set value for */
     LPVOID value) /* [in] Value to be stored */
 {
@@ -596,8 +596,8 @@ BOOL32 WINAPI TlsSetValue(
  *    Success: TRUE
  *    Failure: FALSE
  */
-BOOL32 WINAPI SetThreadContext(
-    HANDLE32 handle,  /* [in]  Handle to thread with context */
+BOOL WINAPI SetThreadContext(
+    HANDLE handle,  /* [in]  Handle to thread with context */
     CONTEXT *context) /* [out] Address of context structure */
 {
     FIXME( thread, "not implemented\n" );
@@ -611,8 +611,8 @@ BOOL32 WINAPI SetThreadContext(
  *    Success: TRUE
  *    Failure: FALSE
  */
-BOOL32 WINAPI GetThreadContext(
-    HANDLE32 handle,  /* [in]  Handle to thread with context */
+BOOL WINAPI GetThreadContext(
+    HANDLE handle,  /* [in]  Handle to thread with context */
     CONTEXT *context) /* [out] Address of context structure */
 {
     WORD cs, ds;
@@ -639,8 +639,8 @@ BOOL32 WINAPI GetThreadContext(
  *    Success: Thread's priority level.
  *    Failure: THREAD_PRIORITY_ERROR_RETURN
  */
-INT32 WINAPI GetThreadPriority(
-    HANDLE32 hthread) /* [in] Handle to thread */
+INT WINAPI GetThreadPriority(
+    HANDLE hthread) /* [in] Handle to thread */
 {
     struct get_thread_info_request req;
     struct get_thread_info_reply reply;
@@ -660,9 +660,9 @@ INT32 WINAPI GetThreadPriority(
  *    Success: TRUE
  *    Failure: FALSE
  */
-BOOL32 WINAPI SetThreadPriority(
-    HANDLE32 hthread, /* [in] Handle to thread */
-    INT32 priority)   /* [in] Thread priority level */
+BOOL WINAPI SetThreadPriority(
+    HANDLE hthread, /* [in] Handle to thread */
+    INT priority)   /* [in] Thread priority level */
 {
     struct set_thread_info_request req;
     req.handle = HANDLE_GetServerHandle( PROCESS_Current(), hthread,
@@ -678,7 +678,7 @@ BOOL32 WINAPI SetThreadPriority(
 /**********************************************************************
  *           SetThreadAffinityMask   (KERNEL32.669)
  */
-DWORD WINAPI SetThreadAffinityMask( HANDLE32 hThread, DWORD dwThreadAffinityMask )
+DWORD WINAPI SetThreadAffinityMask( HANDLE hThread, DWORD dwThreadAffinityMask )
 {
     struct set_thread_info_request req;
     req.handle = HANDLE_GetServerHandle( PROCESS_Current(), hThread,
@@ -699,8 +699,8 @@ DWORD WINAPI SetThreadAffinityMask( HANDLE32 hThread, DWORD dwThreadAffinityMask
  *    Success: TRUE
  *    Failure: FALSE
  */
-BOOL32 WINAPI TerminateThread(
-    HANDLE32 handle, /* [in] Handle to thread */
+BOOL WINAPI TerminateThread(
+    HANDLE handle, /* [in] Handle to thread */
     DWORD exitcode)  /* [in] Exit code for thread */
 {
     struct terminate_thread_request req;
@@ -720,8 +720,8 @@ BOOL32 WINAPI TerminateThread(
  *    Success: TRUE
  *    Failure: FALSE
  */
-BOOL32 WINAPI GetExitCodeThread(
-    HANDLE32 hthread, /* [in]  Handle to thread */
+BOOL WINAPI GetExitCodeThread(
+    HANDLE hthread, /* [in]  Handle to thread */
     LPDWORD exitcode) /* [out] Address to receive termination status */
 {
     struct get_thread_info_request req;
@@ -747,7 +747,7 @@ BOOL32 WINAPI GetExitCodeThread(
  *    Already running: 0
  */
 DWORD WINAPI ResumeThread(
-    HANDLE32 hthread) /* [in] Identifies thread to restart */
+    HANDLE hthread) /* [in] Identifies thread to restart */
 {
     struct resume_thread_request req;
     struct resume_thread_reply reply;
@@ -767,7 +767,7 @@ DWORD WINAPI ResumeThread(
  *    Failure: 0xFFFFFFFF
  */
 DWORD WINAPI SuspendThread(
-    HANDLE32 hthread) /* [in] Handle to the thread */
+    HANDLE hthread) /* [in] Handle to the thread */
 {
     struct suspend_thread_request req;
     struct suspend_thread_reply reply;
@@ -782,7 +782,7 @@ DWORD WINAPI SuspendThread(
 /***********************************************************************
  *              QueueUserAPC  (KERNEL32.566)
  */
-DWORD WINAPI QueueUserAPC( PAPCFUNC func, HANDLE32 hthread, ULONG_PTR data )
+DWORD WINAPI QueueUserAPC( PAPCFUNC func, HANDLE hthread, ULONG_PTR data )
 {
     struct queue_apc_request req;
     req.handle = HANDLE_GetServerHandle( PROCESS_Current(), hthread,
@@ -804,8 +804,8 @@ DWORD WINAPI QueueUserAPC( PAPCFUNC func, HANDLE32 hthread, ULONG_PTR data )
  *    Success: TRUE
  *    Failure: FALSE
  */
-BOOL32 WINAPI GetThreadTimes( 
-    HANDLE32 thread,         /* [in]  Specifies the thread of interest */
+BOOL WINAPI GetThreadTimes( 
+    HANDLE thread,         /* [in]  Specifies the thread of interest */
     LPFILETIME creationtime, /* [out] When the thread was created */
     LPFILETIME exittime,     /* [out] When the thread was destroyed */
     LPFILETIME kerneltime,   /* [out] Time thread spent in kernel mode */
@@ -830,10 +830,10 @@ BOOL32 WINAPI GetThreadTimes(
  * TODO:
  *    1. Reset the Key State (currenly per thread key state is not maintained)
  */
-BOOL32 WINAPI AttachThreadInput( 
+BOOL WINAPI AttachThreadInput( 
     DWORD idAttach,   /* [in] Thread to attach */
     DWORD idAttachTo, /* [in] Thread to attach to */
-    BOOL32 fAttach)   /* [in] Attach or detach */
+    BOOL fAttach)   /* [in] Attach or detach */
 {
     MESSAGEQUEUE *pSrcMsgQ = 0, *pTgtMsgQ = 0;
     BOOL16 bRet = 0;
@@ -851,8 +851,8 @@ BOOL32 WINAPI AttachThreadInput(
         goto CLEANUP;
         
     /* Retrieve message queues corresponding to the thread id's */
-    pTgtMsgQ = (MESSAGEQUEUE *)QUEUE_Lock( GetThreadQueue( idAttach ) );
-    pSrcMsgQ = (MESSAGEQUEUE *)QUEUE_Lock( GetThreadQueue( idAttachTo ) );
+    pTgtMsgQ = (MESSAGEQUEUE *)QUEUE_Lock( GetThreadQueue16( idAttach ) );
+    pSrcMsgQ = (MESSAGEQUEUE *)QUEUE_Lock( GetThreadQueue16( idAttachTo ) );
 
     /* Ensure we have message queues and that Src and Tgt threads
      * are not system threads.
@@ -904,7 +904,7 @@ CLEANUP:
 /**********************************************************************
  * VWin32_BoostThreadGroup [KERNEL.535]
  */
-VOID WINAPI VWin32_BoostThreadGroup( DWORD threadId, INT32 boost )
+VOID WINAPI VWin32_BoostThreadGroup( DWORD threadId, INT boost )
 {
     FIXME(thread, "(0x%08lx,%d): stub\n", threadId, boost);
 }
@@ -912,7 +912,7 @@ VOID WINAPI VWin32_BoostThreadGroup( DWORD threadId, INT32 boost )
 /**********************************************************************
  * VWin32_BoostThreadStatic [KERNEL.536]
  */
-VOID WINAPI VWin32_BoostThreadStatic( DWORD threadId, INT32 boost )
+VOID WINAPI VWin32_BoostThreadStatic( DWORD threadId, INT boost )
 {
     FIXME(thread, "(0x%08lx,%d): stub\n", threadId, boost);
 }
@@ -927,7 +927,7 @@ VOID WINAPI VWin32_BoostThreadStatic( DWORD threadId, INT32 boost )
  * NOTES
  *  Implemented in NT only (3.1 and above according to MS
  */
-BOOL32 WINAPI SetThreadLocale(
+BOOL WINAPI SetThreadLocale(
     LCID lcid)     /* [in] Locale identifier */
 {
     SetLastError(ERROR_CALL_NOT_IMPLEMENTED);

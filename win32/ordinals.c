@@ -20,7 +20,7 @@
 /**********************************************************************
  *           WOWGetDescriptor        (KERNEL32.88) (WOW32.1)
  */
-BOOL32 WINAPI WOWGetDescriptor(SEGPTR segptr,LPLDT_ENTRY ldtent)
+BOOL WINAPI WOWGetDescriptor(SEGPTR segptr,LPLDT_ENTRY ldtent)
 {
     return GetThreadSelectorEntry(GetCurrentThreadId(),segptr>>16,ldtent);
 }
@@ -32,7 +32,7 @@ BOOL32 WINAPI WOWGetDescriptor(SEGPTR segptr,LPLDT_ENTRY ldtent)
  */
 DWORD WINAPI GetProcessDword(DWORD processid,DWORD action)
 {
-	PDB32	*process = processid? PROCESS_IdToPDB( processid )
+	PDB	*process = processid? PROCESS_IdToPDB( processid )
                                     : PROCESS_Current();
 	TDB	*pTask;
 
@@ -69,7 +69,7 @@ DWORD WINAPI GetProcessDword(DWORD processid,DWORD action)
 	case 32:/* get showwindow flag from startupinfo */
 		return (DWORD)(process->env_db->startup_info->wShowWindow);
 	case 36:{/* return startup x and y sizes */
-		LPSTARTUPINFO32A si = process->env_db->startup_info;
+		LPSTARTUPINFOA si = process->env_db->startup_info;
 		DWORD x,y;
 
 		x=si->dwXSize;if (x==0x80000000) x=0x8000;
@@ -77,7 +77,7 @@ DWORD WINAPI GetProcessDword(DWORD processid,DWORD action)
 		return (y<<16)+x;
 	}
 	case 40:{/* return startup x and y */
-		LPSTARTUPINFO32A si = process->env_db->startup_info;
+		LPSTARTUPINFOA si = process->env_db->startup_info;
 		DWORD x,y;
 
 		x=si->dwX;if (x==0x80000000) x=0x8000;
@@ -105,7 +105,7 @@ DWORD WINAPI GetProcessDword(DWORD processid,DWORD action)
  */
 VOID WINAPI SetProcessDword(DWORD processid,DWORD action,DWORD value)
 {
-	PDB32	*process = processid? PROCESS_IdToPDB( processid )
+	PDB	*process = processid? PROCESS_IdToPDB( processid )
                                     : PROCESS_Current();
 
 	action+=56;
@@ -171,7 +171,7 @@ void WINAPI HouseCleanLogicallyDeadHandles(void)
 }
 
 
-BOOL32 WINAPI _KERNEL32_100(HANDLE32 threadid,DWORD exitcode,DWORD x) {
+BOOL WINAPI _KERNEL32_100(HANDLE threadid,DWORD exitcode,DWORD x) {
 	FIXME(thread,"(%d,%ld,0x%08lx): stub\n",threadid,exitcode,x);
 	return TRUE;
 }
@@ -223,7 +223,7 @@ HRESULT WINAPI DeregisterShellHookWindow ( DWORD u )
 /***********************************************************************
  *           RegisterTaskList32   			[USER23.436]
  */
-DWORD WINAPI RegisterTaskList32 (DWORD x)
+DWORD WINAPI RegisterTaskList (DWORD x)
 {	FIXME(win,"0x%08lx\n",x);
 	return TRUE;
 }

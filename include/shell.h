@@ -16,8 +16,8 @@ extern void SHELL_SaveRegistry(void);
 extern void SHELL_Init(void);
 
 /* global functions used from shell32 */
-extern HINSTANCE32 SHELL_FindExecutable(LPCSTR,LPCSTR ,LPSTR);
-extern HGLOBAL16 WINAPI InternalExtractIcon(HINSTANCE16,LPCSTR,UINT16,WORD);
+extern HINSTANCE SHELL_FindExecutable(LPCSTR,LPCSTR ,LPSTR);
+extern HGLOBAL16 WINAPI InternalExtractIcon16(HINSTANCE16,LPCSTR,UINT16,WORD);
 
 /****************************************************************************
 * shell 32
@@ -75,28 +75,23 @@ typedef struct { 	   /* structure for dropped files */
 
 typedef struct { 	   /* structure for dropped files */ 
 	DWORD		lSize;
-	POINT32		ptMousePos;   
-	BOOL32		fInNonClientArea;
-        BOOL32          fWideChar;
+	POINT		ptMousePos;   
+	BOOL		fInNonClientArea;
+        BOOL          fWideChar;
 	/* memory block with filenames follows */     
-} DROPFILESTRUCT32, *LPDROPFILESTRUCT32; 
+} DROPFILESTRUCT, *LPDROPFILESTRUCT; 
 
-DECL_WINELIB_TYPE(DROPFILESTRUCT)
-DECL_WINELIB_TYPE(LPDROPFILESTRUCT)
 
 void        WINAPI DragAcceptFiles16(HWND16 hWnd, BOOL16 b);
-void        WINAPI DragAcceptFiles32(HWND32 hWnd, BOOL32 b);
-#define     DragAcceptFiles WINELIB_NAME(DragAcceptFiles)
+void        WINAPI DragAcceptFiles(HWND hWnd, BOOL b);
 UINT16      WINAPI DragQueryFile16(HDROP16 hDrop, WORD wFile, LPSTR lpszFile, WORD wLength);
-UINT32      WINAPI DragQueryFile32A(HDROP32 hDrop, UINT32 lFile, LPSTR lpszFile, UINT32 lLength);
-UINT32      WINAPI DragQueryFile32W(HDROP32 hDrop, UINT32 lFile, LPWSTR lpszFile, UINT32 lLength);
+UINT      WINAPI DragQueryFileA(HDROP hDrop, UINT lFile, LPSTR lpszFile, UINT lLength);
+UINT      WINAPI DragQueryFileW(HDROP hDrop, UINT lFile, LPWSTR lpszFile, UINT lLength);
 #define     DragQueryFile WINELIB_NAME_AW(DragQueryFile)
-void        WINAPI DragFinish32(HDROP32 h);
+void        WINAPI DragFinish(HDROP h);
 void        WINAPI DragFinish16(HDROP16 h);
-#define     DragFinish WINELIB_NAME(DragFinish)
-BOOL32      WINAPI DragQueryPoint32(HDROP32 hDrop, POINT32 *p);
+BOOL      WINAPI DragQueryPoint(HDROP hDrop, POINT *p);
 BOOL16      WINAPI DragQueryPoint16(HDROP16 hDrop, POINT16 *p);
-#define     DragQueryPoint WINELIB_NAME(DragQueryPoint)
 
 
 /****************************************************************************
@@ -104,11 +99,11 @@ BOOL16      WINAPI DragQueryPoint16(HDROP16 hDrop, POINT16 *p);
 */
 typedef struct _NOTIFYICONDATA {
 	DWORD cbSize;
-	HWND32 hWnd;
-	UINT32 uID;
-	UINT32 uFlags;
-	UINT32 uCallbackMessage;
-	HICON32 hIcon;
+	HWND hWnd;
+	UINT uID;
+	UINT uFlags;
+	UINT uCallbackMessage;
+	HICON hIcon;
 	CHAR szTip[64];
 } NOTIFYICONDATA, *PNOTIFYICONDATA;
 
@@ -126,78 +121,78 @@ typedef struct
 } ITEMIDLIST,*LPITEMIDLIST,*LPCITEMIDLIST;
 #pragma pack(4)
 
-DWORD WINAPI SHGetPathFromIDList32A (LPCITEMIDLIST pidl,LPSTR pszPath);
-DWORD WINAPI SHGetPathFromIDList32W (LPCITEMIDLIST pidl,LPWSTR pszPath);
+DWORD WINAPI SHGetPathFromIDListA (LPCITEMIDLIST pidl,LPSTR pszPath);
+DWORD WINAPI SHGetPathFromIDListW (LPCITEMIDLIST pidl,LPWSTR pszPath);
 #define  SHGetPathFromIDList WINELIB_NAME_AW(SHGetPathFromIDList)
 
 /****************************************************************************
 * SHFILEINFO API 
 */
-typedef struct tagSHFILEINFO32A {
-	HICON32	hIcon;			/* icon */
+typedef struct tagSHFILEINFOA {
+	HICON	hIcon;			/* icon */
 	int	iIcon;			/* icon index */
 	DWORD	dwAttributes;		/* SFGAO_ flags */
 	CHAR	szDisplayName[MAX_PATH];/* display name (or path) */
 	CHAR	szTypeName[80];		/* type name */
-} SHFILEINFO32A;
+} SHFILEINFOA;
 
-typedef struct tagSHFILEINFO32W {
-	HICON32	hIcon;			/* icon */
+typedef struct tagSHFILEINFOW {
+	HICON	hIcon;			/* icon */
 	int	iIcon;			/* icon index */
 	DWORD	dwAttributes;		/* SFGAO_ flags */
 	WCHAR	szDisplayName[MAX_PATH];/* display name (or path) */
 	WCHAR	szTypeName[80];		/* type name */
-} SHFILEINFO32W;
+} SHFILEINFOW;
 
 DECL_WINELIB_TYPE_AW(SHFILEINFO)
 
-DWORD    WINAPI SHGetFileInfo32A(LPCSTR,DWORD,SHFILEINFO32A*,UINT32,UINT32);
-DWORD    WINAPI SHGetFileInfo32W(LPCWSTR,DWORD,SHFILEINFO32W*,UINT32,UINT32);
+DWORD    WINAPI SHGetFileInfoA(LPCSTR,DWORD,SHFILEINFOA*,UINT,UINT);
+DWORD    WINAPI SHGetFileInfoW(LPCWSTR,DWORD,SHFILEINFOW*,UINT,UINT);
 #define  SHGetFileInfo WINELIB_NAME_AW(SHGetFileInfo)
 
 /****************************************************************************
 * SHFILEOPSTRUCT API 
 */
 typedef struct _SHFILEOPSTRUCTA
-{ HWND32          hwnd;
-  UINT32          wFunc;
+{ HWND          hwnd;
+  UINT          wFunc;
   LPCSTR          pFrom;
   LPCSTR          pTo;
   FILEOP_FLAGS    fFlags;
-  BOOL32          fAnyOperationsAborted;
+  BOOL          fAnyOperationsAborted;
   LPVOID          hNameMappings;
   LPCSTR          lpszProgressTitle;
-} SHFILEOPSTRUCT32A, *LPSHFILEOPSTRUCT32A;
+} SHFILEOPSTRUCTA, *LPSHFILEOPSTRUCTA;
 
 typedef struct _SHFILEOPSTRUCTW
-{ HWND32          hwnd;
-  UINT32          wFunc;
+{ HWND          hwnd;
+  UINT          wFunc;
   LPCWSTR         pFrom;
   LPCWSTR         pTo;
   FILEOP_FLAGS    fFlags;
-  BOOL32          fAnyOperationsAborted;
+  BOOL          fAnyOperationsAborted;
   LPVOID          hNameMappings;
   LPCWSTR         lpszProgressTitle;
-} SHFILEOPSTRUCT32W, *LPSHFILEOPSTRUCT32W;
+} SHFILEOPSTRUCTW, *LPSHFILEOPSTRUCTW;
 
 #define  SHFILEOPSTRUCT WINELIB_NAME_AW(SHFILEOPSTRUCT)
 #define  LPSHFILEOPSTRUCT WINELIB_NAME_AW(LPSHFILEOPSTRUCT)
 
-DWORD WINAPI SHFileOperation32A (LPSHFILEOPSTRUCT32A lpFileOp);  
-DWORD WINAPI SHFileOperation32W (LPSHFILEOPSTRUCT32W lpFileOp);
+DWORD WINAPI SHFileOperationA (LPSHFILEOPSTRUCTA lpFileOp);  
+DWORD WINAPI SHFileOperationW (LPSHFILEOPSTRUCTW lpFileOp);
 #define  SHFileOperation WINELIB_NAME_AW(SHFileOperation)
 
-DWORD WINAPI SHFileOperation32(DWORD x);
+DWORD WINAPI SHFileOperationAW(DWORD x);
 
 /****************************************************************************
 * APPBARDATA 
 */
 typedef struct _AppBarData {
 	DWORD	cbSize;
-	HWND32	hWnd;
-	UINT32	uCallbackMessage;
-	UINT32	uEdge;
-	RECT32	rc;
+	HWND	hWnd;
+	UINT	uCallbackMessage;
+	UINT	uEdge;
+	RECT	rc;
 	LPARAM	lParam;
 } APPBARDATA, *PAPPBARDATA;
 
@@ -225,7 +220,7 @@ typedef struct
   DWORD unknown;
 } IDSTRUCT;
 
-DWORD WINAPI SHChangeNotifyRegister(HWND32 hwnd,LONG events1,LONG events2,DWORD msg,int count,IDSTRUCT *idlist);
+DWORD WINAPI SHChangeNotifyRegister(HWND hwnd,LONG events1,LONG events2,DWORD msg,int count,IDSTRUCT *idlist);
 DWORD WINAPI SHChangeNotifyDeregister(LONG x1);
 
 /****************************************************************************
@@ -234,92 +229,92 @@ DWORD WINAPI SHChangeNotifyDeregister(LONG x1);
 #define SHARD_PIDL      0x00000001L
 #define SHARD_PATH      0x00000002L
 
-DWORD WINAPI SHAddToRecentDocs(UINT32 uFlags, LPCVOID pv);
+DWORD WINAPI SHAddToRecentDocs(UINT uFlags, LPCVOID pv);
 
 /****************************************************************************
 * SHGetSpecialFolderLocation API
 */
-HRESULT WINAPI SHGetSpecialFolderLocation(HWND32, INT32, LPITEMIDLIST *);
+HRESULT WINAPI SHGetSpecialFolderLocation(HWND, INT, LPITEMIDLIST *);
 /****************************************************************************
 *  string and path functions
 */
-BOOL32 WINAPI PathIsRoot32A(LPCSTR x);
-BOOL32 WINAPI PathIsRoot32W(LPCWSTR x);
+BOOL WINAPI PathIsRootA(LPCSTR x);
+BOOL WINAPI PathIsRootW(LPCWSTR x);
 #define  PathIsRoot WINELIB_NAME_AW(PathIsRoot)
-BOOL32 WINAPI PathIsRoot32AW(LPCVOID x);
+BOOL WINAPI PathIsRootAW(LPCVOID x);
 
-LPSTR  WINAPI PathAddBackslash32A(LPSTR path);	
-LPWSTR WINAPI PathAddBackslash32W(LPWSTR path);	
+LPSTR  WINAPI PathAddBackslashA(LPSTR path);	
+LPWSTR WINAPI PathAddBackslashW(LPWSTR path);	
 #define  PathAddBackslash WINELIB_NAME_AW(PathAddBackslash)
-LPVOID  WINAPI PathAddBackslash32AW(LPVOID path);	
+LPVOID  WINAPI PathAddBackslashAW(LPVOID path);	
 
-BOOL32  WINAPI PathQualify32A(LPCSTR path);	
-BOOL32 WINAPI PathQualify32W(LPCWSTR path);	
+BOOL  WINAPI PathQualifyA(LPCSTR path);	
+BOOL WINAPI PathQualifyW(LPCWSTR path);	
 #define  PathQualify WINELIB_NAME_AW(PathQualify)
-BOOL32  WINAPI PathQualify32AW(LPCVOID path);	
+BOOL  WINAPI PathQualifyAW(LPCVOID path);	
 
-LPSTR  WINAPI PathQuoteSpaces32A(LPCSTR path);	
-LPWSTR WINAPI PathQuoteSpaces32W(LPCWSTR path);	
+LPSTR  WINAPI PathQuoteSpacesA(LPCSTR path);	
+LPWSTR WINAPI PathQuoteSpacesW(LPCWSTR path);	
 #define  PathQuoteSpaces WINELIB_NAME_AW(PathQuoteSpaces)
-LPVOID  WINAPI PathQuoteSpaces32AW(LPCVOID path);	
+LPVOID  WINAPI PathQuoteSpacesAW(LPCVOID path);	
 
-LPSTR  WINAPI PathCombine32A(LPSTR szDest, LPCSTR lpszDir, LPCSTR lpszFile);
-LPWSTR WINAPI PathCombine32W(LPWSTR szDest, LPCWSTR lpszDir, LPCWSTR lpszFile);
+LPSTR  WINAPI PathCombineA(LPSTR szDest, LPCSTR lpszDir, LPCSTR lpszFile);
+LPWSTR WINAPI PathCombineW(LPWSTR szDest, LPCWSTR lpszDir, LPCWSTR lpszFile);
 #define  PathCombine WINELIB_NAME_AW(PathCombine)
-LPVOID WINAPI PathCombine32AW(LPVOID szDest, LPCVOID lpszDir, LPCVOID lpszFile);
+LPVOID WINAPI PathCombineAW(LPVOID szDest, LPCVOID lpszDir, LPCVOID lpszFile);
 
-LPCSTR WINAPI PathFindExtension32A(LPCSTR path);
-LPCWSTR WINAPI PathFindExtension32W(LPCWSTR path);
+LPCSTR WINAPI PathFindExtensionA(LPCSTR path);
+LPCWSTR WINAPI PathFindExtensionW(LPCWSTR path);
 #define  PathFindExtension WINELIB_NAME_AW(PathFindExtension)
-LPCVOID WINAPI PathFindExtension32AW(LPCVOID path); 
+LPCVOID WINAPI PathFindExtensionAW(LPCVOID path); 
 
-LPCSTR WINAPI PathGetExtension32A(LPCSTR path, DWORD y, DWORD x);
-LPCWSTR WINAPI PathGetExtension32W(LPCWSTR path, DWORD y, DWORD x);
+LPCSTR WINAPI PathGetExtensionA(LPCSTR path, DWORD y, DWORD x);
+LPCWSTR WINAPI PathGetExtensionW(LPCWSTR path, DWORD y, DWORD x);
 #define  PathGetExtension WINELIB_NAME_AW(PathGetExtension)
-LPCVOID WINAPI PathGetExtension32AW(LPCVOID path, DWORD y, DWORD x); 
+LPCVOID WINAPI PathGetExtensionAW(LPCVOID path, DWORD y, DWORD x); 
 
-LPCSTR WINAPI PathFindFilename32A(LPCSTR path);
-LPCWSTR WINAPI PathFindFilename32W(LPCWSTR path);
+LPCSTR WINAPI PathFindFilenameA(LPCSTR path);
+LPCWSTR WINAPI PathFindFilenameW(LPCWSTR path);
 #define  PathFindFilename WINELIB_NAME_AW(PathFindFilename)
-LPCVOID WINAPI PathFindFilename32AW(LPCVOID path); 
+LPCVOID WINAPI PathFindFilenameAW(LPCVOID path); 
 
-BOOL32 WINAPI PathMatchSpec32A(LPCSTR x, LPCSTR y);
-BOOL32 WINAPI PathMatchSpec32W(LPCWSTR x, LPCWSTR y);
+BOOL WINAPI PathMatchSpecA(LPCSTR x, LPCSTR y);
+BOOL WINAPI PathMatchSpecW(LPCWSTR x, LPCWSTR y);
 #define  PathMatchSpec WINELIB_NAME_AW(PathMatchSpec)
-BOOL32 WINAPI PathMatchSpec32AW(LPVOID x, LPVOID y);
+BOOL WINAPI PathMatchSpecAW(LPVOID x, LPVOID y);
 
-LPSTR WINAPI PathRemoveBlanks32A(LPSTR str);
-LPWSTR WINAPI PathRemoveBlanks32W(LPWSTR str);
+LPSTR WINAPI PathRemoveBlanksA(LPSTR str);
+LPWSTR WINAPI PathRemoveBlanksW(LPWSTR str);
 #define  PathRemoveBlanks WINELIB_NAME_AW(PathRemoveBlanks)
-LPVOID WINAPI PathRemoveBlanks32AW(LPVOID str);
+LPVOID WINAPI PathRemoveBlanksAW(LPVOID str);
 
-BOOL32 WINAPI PathIsRelative32A(LPCSTR str);
-BOOL32 WINAPI PathIsRelative32W(LPCWSTR str);
+BOOL WINAPI PathIsRelativeA(LPCSTR str);
+BOOL WINAPI PathIsRelativeW(LPCWSTR str);
 #define  PathIsRelative WINELIB_NAME_AW(PathIsRelative)
-BOOL32 WINAPI PathIsRelative32AW(LPCVOID str);
+BOOL WINAPI PathIsRelativeAW(LPCVOID str);
 
-BOOL32 WINAPI PathIsUNC32A(LPCSTR str);
-BOOL32 WINAPI PathIsUNC32W(LPCWSTR str);
+BOOL WINAPI PathIsUNCA(LPCSTR str);
+BOOL WINAPI PathIsUNCW(LPCWSTR str);
 #define  PathIsUNC WINELIB_NAME_AW(PathIsUNC)
-BOOL32 WINAPI PathIsUNC32AW(LPCVOID str);
+BOOL WINAPI PathIsUNCAW(LPCVOID str);
 
-BOOL32 WINAPI PathFindOnPath32A(LPSTR sFile, LPCSTR sOtherDirs);
-BOOL32 WINAPI PathFindOnPath32W(LPWSTR sFile, LPCWSTR sOtherDirs);
+BOOL WINAPI PathFindOnPathA(LPSTR sFile, LPCSTR sOtherDirs);
+BOOL WINAPI PathFindOnPathW(LPWSTR sFile, LPCWSTR sOtherDirs);
 #define PathFindOnPath WINELIB_NAME_AW(PathFindOnPath)
-BOOL32 WINAPI PathFindOnPath32AW(LPVOID sFile, LPCVOID sOtherDirs);
+BOOL WINAPI PathFindOnPathAW(LPVOID sFile, LPCVOID sOtherDirs);
 
-LPSTR WINAPI StrFormatByteSize32A ( DWORD dw, LPSTR pszBuf, UINT32 cchBuf );
-LPWSTR WINAPI StrFormatByteSize32W ( DWORD dw, LPWSTR pszBuf, UINT32 cchBuf );
+LPSTR WINAPI StrFormatByteSizeA ( DWORD dw, LPSTR pszBuf, UINT cchBuf );
+LPWSTR WINAPI StrFormatByteSizeW ( DWORD dw, LPWSTR pszBuf, UINT cchBuf );
 #define  StrFormatByteSize WINELIB_NAME_AW(StrFormatByteSize)
 
 /****************************************************************************
 *  other functions
 */
 HICON16 WINAPI ExtractIconEx16 ( LPCSTR, INT16, HICON16 *, HICON16 *, UINT16 );
-HICON32 WINAPI ExtractIconEx32A( LPCSTR, INT32, HICON32 *, HICON32 *, UINT32 );
-HICON32 WINAPI ExtractIconEx32W( LPCWSTR, INT32, HICON32 *, HICON32 *, UINT32 );
+HICON WINAPI ExtractIconExA( LPCSTR, INT, HICON *, HICON *, UINT );
+HICON WINAPI ExtractIconExW( LPCWSTR, INT, HICON *, HICON *, UINT );
 #define  ExtractIconEx WINELIB_NAME_AW(ExtractIconEx)
-HICON32 WINAPI ExtractIconEx32AW(LPCVOID, INT32, HICON32 *, HICON32 *, UINT32 );
+HICON WINAPI ExtractIconExAW(LPCVOID, INT, HICON *, HICON *, UINT );
 
 LPVOID WINAPI SHAlloc(DWORD len);
 DWORD WINAPI SHFree(LPVOID x);

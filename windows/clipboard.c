@@ -34,34 +34,34 @@ extern CLIPBOARD_DRIVER TTYDRV_CLIPBOARD_Driver;
  */
 
 static HQUEUE16 hqClipLock   = 0;
-static BOOL32 bCBHasChanged  = FALSE;
+static BOOL bCBHasChanged  = FALSE;
 
-HWND32 hWndClipOwner  = 0;   /* current clipboard owner */
-HWND32 hWndClipWindow = 0;   /* window that opened clipboard */
-static HWND32 hWndViewer     = 0;   /* start of viewers chain */
+HWND hWndClipOwner  = 0;   /* current clipboard owner */
+HWND hWndClipWindow = 0;   /* window that opened clipboard */
+static HWND hWndViewer     = 0;   /* start of viewers chain */
 
 static WORD LastRegFormat = CF_REGFORMATBASE;
 
-CLIPFORMAT ClipFormats[16]  = {
-    { CF_TEXT, 1, 0, "Text", (HANDLE32)NULL, 0, NULL, &ClipFormats[1] , (HANDLE16)NULL},
-    { CF_BITMAP, 1, 0, "Bitmap", (HANDLE32)NULL, 0, &ClipFormats[0], &ClipFormats[2] , (HANDLE16)NULL},
-    { CF_METAFILEPICT, 1, 0, "MetaFile Picture", (HANDLE32)NULL, 0, &ClipFormats[1], &ClipFormats[3] , (HANDLE16)NULL},
-    { CF_SYLK, 1, 0, "Sylk", (HANDLE32)NULL, 0, &ClipFormats[2], &ClipFormats[4] , (HANDLE16)NULL},
-    { CF_DIF, 1, 0, "DIF", (HANDLE32)NULL, 0, &ClipFormats[3], &ClipFormats[5] , (HANDLE16)NULL},
-    { CF_TIFF, 1, 0, "TIFF", (HANDLE32)NULL, 0, &ClipFormats[4], &ClipFormats[6] , (HANDLE16)NULL},
-    { CF_OEMTEXT, 1, 0, "OEM Text", (HANDLE32)NULL, 0, &ClipFormats[5], &ClipFormats[7] , (HANDLE16)NULL},
-    { CF_DIB, 1, 0, "DIB", (HANDLE32)NULL, 0, &ClipFormats[6], &ClipFormats[8] , (HANDLE16)NULL},
-    { CF_PALETTE, 1, 0, "Palette", (HANDLE32)NULL, 0, &ClipFormats[7], &ClipFormats[9] , (HANDLE16)NULL},
-    { CF_PENDATA, 1, 0, "PenData", (HANDLE32)NULL, 0, &ClipFormats[8], &ClipFormats[10] , (HANDLE16)NULL},
-    { CF_RIFF, 1, 0, "RIFF", (HANDLE32)NULL, 0, &ClipFormats[9], &ClipFormats[11] , (HANDLE16)NULL},
-    { CF_WAVE, 1, 0, "Wave", (HANDLE32)NULL, 0, &ClipFormats[10], &ClipFormats[12] , (HANDLE16)NULL},
-    { CF_OWNERDISPLAY, 1, 0, "Owner Display", (HANDLE32)NULL, 0, &ClipFormats[11], &ClipFormats[13] , (HANDLE16)NULL},
-    { CF_DSPTEXT, 1, 0, "DSPText", (HANDLE32)NULL, 0, &ClipFormats[12], &ClipFormats[14] , (HANDLE16)NULL},
-    { CF_DSPMETAFILEPICT, 1, 0, "DSPMetaFile Picture", (HANDLE32)NULL, 0, &ClipFormats[13], &ClipFormats[15] , (HANDLE16)NULL},
-    { CF_DSPBITMAP, 1, 0, "DSPBitmap", (HANDLE32)NULL, 0, &ClipFormats[14], NULL , (HANDLE16)NULL}
+WINE_CLIPFORMAT ClipFormats[16]  = {
+    { CF_TEXT, 1, 0, "Text", (HANDLE)NULL, 0, NULL, &ClipFormats[1] , (HANDLE16)NULL},
+    { CF_BITMAP, 1, 0, "Bitmap", (HANDLE)NULL, 0, &ClipFormats[0], &ClipFormats[2] , (HANDLE16)NULL},
+    { CF_METAFILEPICT, 1, 0, "MetaFile Picture", (HANDLE)NULL, 0, &ClipFormats[1], &ClipFormats[3] , (HANDLE16)NULL},
+    { CF_SYLK, 1, 0, "Sylk", (HANDLE)NULL, 0, &ClipFormats[2], &ClipFormats[4] , (HANDLE16)NULL},
+    { CF_DIF, 1, 0, "DIF", (HANDLE)NULL, 0, &ClipFormats[3], &ClipFormats[5] , (HANDLE16)NULL},
+    { CF_TIFF, 1, 0, "TIFF", (HANDLE)NULL, 0, &ClipFormats[4], &ClipFormats[6] , (HANDLE16)NULL},
+    { CF_OEMTEXT, 1, 0, "OEM Text", (HANDLE)NULL, 0, &ClipFormats[5], &ClipFormats[7] , (HANDLE16)NULL},
+    { CF_DIB, 1, 0, "DIB", (HANDLE)NULL, 0, &ClipFormats[6], &ClipFormats[8] , (HANDLE16)NULL},
+    { CF_PALETTE, 1, 0, "Palette", (HANDLE)NULL, 0, &ClipFormats[7], &ClipFormats[9] , (HANDLE16)NULL},
+    { CF_PENDATA, 1, 0, "PenData", (HANDLE)NULL, 0, &ClipFormats[8], &ClipFormats[10] , (HANDLE16)NULL},
+    { CF_RIFF, 1, 0, "RIFF", (HANDLE)NULL, 0, &ClipFormats[9], &ClipFormats[11] , (HANDLE16)NULL},
+    { CF_WAVE, 1, 0, "Wave", (HANDLE)NULL, 0, &ClipFormats[10], &ClipFormats[12] , (HANDLE16)NULL},
+    { CF_OWNERDISPLAY, 1, 0, "Owner Display", (HANDLE)NULL, 0, &ClipFormats[11], &ClipFormats[13] , (HANDLE16)NULL},
+    { CF_DSPTEXT, 1, 0, "DSPText", (HANDLE)NULL, 0, &ClipFormats[12], &ClipFormats[14] , (HANDLE16)NULL},
+    { CF_DSPMETAFILEPICT, 1, 0, "DSPMetaFile Picture", (HANDLE)NULL, 0, &ClipFormats[13], &ClipFormats[15] , (HANDLE16)NULL},
+    { CF_DSPBITMAP, 1, 0, "DSPBitmap", (HANDLE)NULL, 0, &ClipFormats[14], NULL , (HANDLE16)NULL}
     };
 
-static LPCLIPFORMAT __lookup_format( LPCLIPFORMAT lpFormat, WORD wID )
+static LPWINE_CLIPFORMAT __lookup_format( LPWINE_CLIPFORMAT lpFormat, WORD wID )
 {
     while(TRUE)
     {
@@ -98,7 +98,7 @@ void CLIPBOARD_ResetLock( HQUEUE16 hqCurrent, HQUEUE16 hqNew )
 	{
  	    hWndClipOwner = 0;
 	    hWndClipWindow = 0;
-	    EmptyClipboard32();
+	    EmptyClipboard();
 	    hqClipLock = 0;
 	}
     }
@@ -108,13 +108,13 @@ void CLIPBOARD_ResetLock( HQUEUE16 hqCurrent, HQUEUE16 hqNew )
 /**************************************************************************
  *			CLIPBOARD_DeleteRecord
  */
-void CLIPBOARD_DeleteRecord(LPCLIPFORMAT lpFormat, BOOL32 bChange)
+void CLIPBOARD_DeleteRecord(LPWINE_CLIPFORMAT lpFormat, BOOL bChange)
 {
     if( (lpFormat->wFormatID >= CF_GDIOBJFIRST &&
 	 lpFormat->wFormatID <= CF_GDIOBJLAST) || lpFormat->wFormatID == CF_BITMAP )
     {
       if (lpFormat->hData32)
-	DeleteObject32(lpFormat->hData32);
+	DeleteObject(lpFormat->hData32);
       if (lpFormat->hData16)
 	DeleteObject16(lpFormat->hData16);
     }
@@ -122,8 +122,8 @@ void CLIPBOARD_DeleteRecord(LPCLIPFORMAT lpFormat, BOOL32 bChange)
     {
       if (lpFormat->hData32)
       {
-        DeleteMetaFile32( ((METAFILEPICT32 *)GlobalLock32( lpFormat->hData32 ))->hMF );
-	GlobalFree32(lpFormat->hData32);
+        DeleteMetaFile( ((METAFILEPICT *)GlobalLock( lpFormat->hData32 ))->hMF );
+	GlobalFree(lpFormat->hData32);
 	if (lpFormat->hData16)
 	  /* HMETAFILE16 and HMETAFILE32 are apparently the same thing, 
 	     and a shallow copy is enough to share a METAFILEPICT
@@ -140,7 +140,7 @@ void CLIPBOARD_DeleteRecord(LPCLIPFORMAT lpFormat, BOOL32 bChange)
     else 
     {
       if (lpFormat->hData32)
-	GlobalFree32(lpFormat->hData32);
+	GlobalFree(lpFormat->hData32);
       if (lpFormat->hData16)
 	GlobalFree16(lpFormat->hData16);
     }
@@ -155,7 +155,7 @@ void CLIPBOARD_DeleteRecord(LPCLIPFORMAT lpFormat, BOOL32 bChange)
 /**************************************************************************
  *			CLIPBOARD_IsPresent
  */
-BOOL32 CLIPBOARD_IsPresent(WORD wFormat)
+BOOL CLIPBOARD_IsPresent(WORD wFormat)
 {
     /* special case */
 
@@ -164,7 +164,7 @@ BOOL32 CLIPBOARD_IsPresent(WORD wFormat)
                ClipFormats[CF_OEMTEXT-1].wDataPresent;
     else
     {
-	LPCLIPFORMAT lpFormat = __lookup_format( ClipFormats, wFormat );
+	LPWINE_CLIPFORMAT lpFormat = __lookup_format( ClipFormats, wFormat );
 	if( lpFormat ) return (lpFormat->wDataPresent);
     }
     return FALSE;
@@ -175,7 +175,7 @@ BOOL32 CLIPBOARD_IsPresent(WORD wFormat)
  */
 BOOL16 WINAPI OpenClipboard16( HWND16 hWnd )
 {
-    return OpenClipboard32( hWnd );
+    return OpenClipboard( hWnd );
 }
 
 
@@ -184,15 +184,15 @@ BOOL16 WINAPI OpenClipboard16( HWND16 hWnd )
  *
  * Note: Netscape uses NULL hWnd to open the clipboard.
  */
-BOOL32 WINAPI OpenClipboard32( HWND32 hWnd )
+BOOL WINAPI OpenClipboard( HWND hWnd )
 {
-    BOOL32 bRet;
+    BOOL bRet;
 
     TRACE(clipboard,"(%04x)...\n", hWnd);
 
     if (!hqClipLock)
     {
-	 hqClipLock = GetFastQueue();
+	 hqClipLock = GetFastQueue16();
     	 hWndClipWindow = hWnd;
 	 bCBHasChanged = FALSE;
 	 bRet = TRUE;
@@ -209,18 +209,18 @@ BOOL32 WINAPI OpenClipboard32( HWND32 hWnd )
  */
 BOOL16 WINAPI CloseClipboard16(void)
 {
-    return CloseClipboard32();
+    return CloseClipboard();
 }
 
 
 /**************************************************************************
  *            CloseClipboard32   (USER32.54)
  */
-BOOL32 WINAPI CloseClipboard32(void)
+BOOL WINAPI CloseClipboard(void)
 {
     TRACE(clipboard,"!\n");
 
-    if (hqClipLock == GetFastQueue())
+    if (hqClipLock == GetFastQueue16())
     {
 	hWndClipWindow = 0;
 
@@ -237,20 +237,20 @@ BOOL32 WINAPI CloseClipboard32(void)
  */
 BOOL16 WINAPI EmptyClipboard16(void)
 {
-    return EmptyClipboard32();
+    return EmptyClipboard();
 }
 
 
 /**************************************************************************
  *            EmptyClipboard32   (USER32.169)
  */
-BOOL32 WINAPI EmptyClipboard32(void)
+BOOL WINAPI EmptyClipboard(void)
 {
-    LPCLIPFORMAT lpFormat = ClipFormats; 
+    LPWINE_CLIPFORMAT lpFormat = ClipFormats; 
 
     TRACE(clipboard,"(void)\n");
 
-    if (hqClipLock != GetFastQueue()) return FALSE;
+    if (hqClipLock != GetFastQueue16()) return FALSE;
 
     /* destroy private objects */
 
@@ -285,7 +285,7 @@ HWND16 WINAPI GetClipboardOwner16(void)
 /**************************************************************************
  *            GetClipboardOwner32   (USER32.225)
  */
-HWND32 WINAPI GetClipboardOwner32(void)
+HWND WINAPI GetClipboardOwner(void)
 {
     return hWndClipOwner;
 }
@@ -296,7 +296,7 @@ HWND32 WINAPI GetClipboardOwner32(void)
  */
 HANDLE16 WINAPI SetClipboardData16( UINT16 wFormat, HANDLE16 hData )
 {
-    LPCLIPFORMAT lpFormat = __lookup_format( ClipFormats, wFormat );
+    LPWINE_CLIPFORMAT lpFormat = __lookup_format( ClipFormats, wFormat );
 
     TRACE(clipboard, "(%04X, %04x) !\n", wFormat, hData);
 
@@ -307,7 +307,7 @@ HANDLE16 WINAPI SetClipboardData16( UINT16 wFormat, HANDLE16 hData )
      *  adding new data).
      */
 
-    if( (hqClipLock != GetFastQueue()) || !lpFormat ||
+    if( (hqClipLock != GetFastQueue16()) || !lpFormat ||
 	(!hData && (!hWndClipOwner || (hWndClipOwner != hWndClipWindow))) ) return 0; 
 
     CLIPBOARD_GetDriver()->pSetClipboardData(wFormat);
@@ -342,9 +342,9 @@ HANDLE16 WINAPI SetClipboardData16( UINT16 wFormat, HANDLE16 hData )
 /**************************************************************************
  *            SetClipboardData32   (USER32.470)
  */
-HANDLE32 WINAPI SetClipboardData32( UINT32 wFormat, HANDLE32 hData )
+HANDLE WINAPI SetClipboardData( UINT wFormat, HANDLE hData )
 {
-    LPCLIPFORMAT lpFormat = __lookup_format( ClipFormats, wFormat );
+    LPWINE_CLIPFORMAT lpFormat = __lookup_format( ClipFormats, wFormat );
 
     TRACE(clipboard, "(%08X, %08x) !\n", wFormat, hData);
 
@@ -355,7 +355,7 @@ HANDLE32 WINAPI SetClipboardData32( UINT32 wFormat, HANDLE32 hData )
      *  adding new data).
      */
 
-    if( (hqClipLock != GetFastQueue()) || !lpFormat ||
+    if( (hqClipLock != GetFastQueue16()) || !lpFormat ||
 	(!hData && (!hWndClipOwner || (hWndClipOwner != hWndClipWindow))) ) return 0; 
 
     CLIPBOARD_GetDriver()->pSetClipboardData(wFormat);
@@ -390,11 +390,11 @@ HANDLE32 WINAPI SetClipboardData32( UINT32 wFormat, HANDLE32 hData )
 /**************************************************************************
  *                      CLIPBOARD_RenderFormat
  */
-static BOOL32 CLIPBOARD_RenderFormat(LPCLIPFORMAT lpFormat)
+static BOOL CLIPBOARD_RenderFormat(LPWINE_CLIPFORMAT lpFormat)
 {
   if( lpFormat->wDataPresent && !lpFormat->hData16 && !lpFormat->hData32 )
   {
-    if( IsWindow32(hWndClipOwner) )
+    if( IsWindow(hWndClipOwner) )
       SendMessage16(hWndClipOwner,WM_RENDERFORMAT,
 		    (WPARAM16)lpFormat->wFormatID,0L);
     else
@@ -413,7 +413,7 @@ static BOOL32 CLIPBOARD_RenderFormat(LPCLIPFORMAT lpFormat)
  *
  * Convert text between UNIX and DOS formats.
  */
-static BOOL32 CLIPBOARD_RenderText(LPCLIPFORMAT lpTarget, LPCLIPFORMAT lpSource)
+static BOOL CLIPBOARD_RenderText(LPWINE_CLIPFORMAT lpTarget, LPWINE_CLIPFORMAT lpSource)
 {
     UINT16 size;
     LPCSTR lpstrS; 
@@ -421,8 +421,8 @@ static BOOL32 CLIPBOARD_RenderText(LPCLIPFORMAT lpTarget, LPCLIPFORMAT lpSource)
 
     if (lpSource->hData32)
     {
-      size = GlobalSize32( lpSource->hData32 );
-      lpstrS = (LPSTR)GlobalLock32(lpSource->hData32);
+      size = GlobalSize( lpSource->hData32 );
+      lpstrS = (LPSTR)GlobalLock(lpSource->hData32);
     }
     else
     {
@@ -434,19 +434,19 @@ static BOOL32 CLIPBOARD_RenderText(LPCLIPFORMAT lpTarget, LPCLIPFORMAT lpSource)
     TRACE(clipboard,"\tconverting from '%s' to '%s', %i chars\n",
 			   	      lpSource->Name, lpTarget->Name, size);
 
-    lpTarget->hData32 = GlobalAlloc32(GMEM_ZEROINIT, size); 
-    lpstrT = (LPSTR)GlobalLock32(lpTarget->hData32);
+    lpTarget->hData32 = GlobalAlloc(GMEM_ZEROINIT, size); 
+    lpstrT = (LPSTR)GlobalLock(lpTarget->hData32);
 
     if( lpstrT )
     {
 	if( lpSource->wFormatID == CF_TEXT )
-	    CharToOemBuff32A(lpstrS, lpstrT, size);
+	    CharToOemBuffA(lpstrS, lpstrT, size);
 	else
-	    OemToCharBuff32A(lpstrS, lpstrT, size);
+	    OemToCharBuffA(lpstrS, lpstrT, size);
 	TRACE(clipboard,"\tgot %s\n", lpstrT);
-	GlobalUnlock32(lpTarget->hData32);
+	GlobalUnlock(lpTarget->hData32);
 	if (lpSource->hData32)
-	  GlobalUnlock32(lpSource->hData32);
+	  GlobalUnlock(lpSource->hData32);
 	else
 	  GlobalUnlock16(lpSource->hData16);
 	return TRUE;
@@ -454,7 +454,7 @@ static BOOL32 CLIPBOARD_RenderText(LPCLIPFORMAT lpTarget, LPCLIPFORMAT lpSource)
 
     lpTarget->hData32 = 0;
     if (lpSource->hData32)
-      GlobalUnlock32(lpSource->hData32);
+      GlobalUnlock(lpSource->hData32);
     else
       GlobalUnlock16(lpSource->hData16);
     return FALSE;
@@ -465,10 +465,10 @@ static BOOL32 CLIPBOARD_RenderText(LPCLIPFORMAT lpTarget, LPCLIPFORMAT lpSource)
  */
 HANDLE16 WINAPI GetClipboardData16( UINT16 wFormat )
 {
-    LPCLIPFORMAT lpRender = ClipFormats; 
-    LPCLIPFORMAT lpUpdate = NULL;
+    LPWINE_CLIPFORMAT lpRender = ClipFormats; 
+    LPWINE_CLIPFORMAT lpUpdate = NULL;
 
-    if (hqClipLock != GetFastQueue()) return 0;
+    if (hqClipLock != GetFastQueue16()) return 0;
 
     TRACE(clipboard,"(%04X)\n", wFormat);
 
@@ -504,7 +504,7 @@ HANDLE16 WINAPI GetClipboardData16( UINT16 wFormat )
       if( lpUpdate->wFormatID == CF_METAFILEPICT )
 	size = sizeof( METAFILEPICT16 );
       else
-	size = GlobalSize32(lpUpdate->hData32);
+	size = GlobalSize(lpUpdate->hData32);
       lpUpdate->hData16 = GlobalAlloc16(GMEM_ZEROINIT, size);
       if( !lpUpdate->hData16 )
 	ERR(clipboard, "(%04X) -- not enough memory in 16b heap\n", wFormat);
@@ -516,17 +516,17 @@ HANDLE16 WINAPI GetClipboardData16( UINT16 wFormat )
 	FIXME(clipboard,"\tin the appropriate file.\n");
 #ifdef SOMEONE_IMPLEMENTED_ME
 	CopyMetaFilePict32to16( GlobalLock16(lpUpdate->hData16), 
-			        GlobalLock32(lpUpdate->hData32) );
+			        GlobalLock(lpUpdate->hData32) );
 #endif
       }
       else
       {
 	memcpy( GlobalLock16(lpUpdate->hData16), 
-		GlobalLock32(lpUpdate->hData32), 
+		GlobalLock(lpUpdate->hData32), 
 		size );
       }
 	GlobalUnlock16(lpUpdate->hData16);
-	GlobalUnlock32(lpUpdate->hData32);
+	GlobalUnlock(lpUpdate->hData32);
       }
     }
 
@@ -539,12 +539,12 @@ HANDLE16 WINAPI GetClipboardData16( UINT16 wFormat )
 /**************************************************************************
  *             GetClipboardData32   (USER32.222)
  */
-HANDLE32 WINAPI GetClipboardData32( UINT32 wFormat )
+HANDLE WINAPI GetClipboardData( UINT wFormat )
 {
-    LPCLIPFORMAT lpRender = ClipFormats; 
-    LPCLIPFORMAT lpUpdate = NULL;
+    LPWINE_CLIPFORMAT lpRender = ClipFormats; 
+    LPWINE_CLIPFORMAT lpUpdate = NULL;
 
-    if (hqClipLock != GetFastQueue()) return 0;
+    if (hqClipLock != GetFastQueue16()) return 0;
 
     TRACE(clipboard,"(%08X)\n", wFormat);
 
@@ -578,26 +578,26 @@ HANDLE32 WINAPI GetClipboardData32( UINT32 wFormat )
     {
       int size;
       if( lpUpdate->wFormatID == CF_METAFILEPICT )
-	size = sizeof( METAFILEPICT32 );
+	size = sizeof( METAFILEPICT );
       else
 	size = GlobalSize16(lpUpdate->hData16);
-      lpUpdate->hData32 = GlobalAlloc32(GMEM_ZEROINIT, size); 
+      lpUpdate->hData32 = GlobalAlloc(GMEM_ZEROINIT, size); 
       if( lpUpdate->wFormatID == CF_METAFILEPICT )
       {
 	FIXME(clipboard,"\timplement function CopyMetaFilePict16to32\n");
 	FIXME(clipboard,"\tin the appropriate file.\n");
 #ifdef SOMEONE_IMPLEMENTED_ME
 	CopyMetaFilePict16to32( GlobalLock16(lpUpdate->hData32), 
-			        GlobalLock32(lpUpdate->hData16) );
+			        GlobalLock(lpUpdate->hData16) );
 #endif
       }
       else
       {
-	memcpy( GlobalLock32(lpUpdate->hData32), 
+	memcpy( GlobalLock(lpUpdate->hData32), 
 		GlobalLock16(lpUpdate->hData16), 
 		size );
       }
-      GlobalUnlock32(lpUpdate->hData32);
+      GlobalUnlock(lpUpdate->hData32);
       GlobalUnlock16(lpUpdate->hData16);
     }
 
@@ -611,17 +611,17 @@ HANDLE32 WINAPI GetClipboardData32( UINT32 wFormat )
  */
 INT16 WINAPI CountClipboardFormats16(void)
 {
-    return CountClipboardFormats32();
+    return CountClipboardFormats();
 }
 
 
 /**************************************************************************
  *           CountClipboardFormats32   (USER32.63)
  */
-INT32 WINAPI CountClipboardFormats32(void)
+INT WINAPI CountClipboardFormats(void)
 {
-    INT32 FormatCount = 0;
-    LPCLIPFORMAT lpFormat = ClipFormats; 
+    INT FormatCount = 0;
+    LPWINE_CLIPFORMAT lpFormat = ClipFormats; 
 
     TRACE(clipboard,"(void)\n");
 
@@ -652,20 +652,20 @@ INT32 WINAPI CountClipboardFormats32(void)
  */
 UINT16 WINAPI EnumClipboardFormats16( UINT16 wFormat )
 {
-    return EnumClipboardFormats32( wFormat );
+    return EnumClipboardFormats( wFormat );
 }
 
 
 /**************************************************************************
  *            EnumClipboardFormats32   (USER32.179)
  */
-UINT32 WINAPI EnumClipboardFormats32( UINT32 wFormat )
+UINT WINAPI EnumClipboardFormats( UINT wFormat )
 {
-    LPCLIPFORMAT lpFormat = ClipFormats; 
+    LPWINE_CLIPFORMAT lpFormat = ClipFormats; 
 
     TRACE(clipboard,"(%04X)\n", wFormat);
 
-    if( hqClipLock != GetFastQueue() ) return 0;
+    if( hqClipLock != GetFastQueue16() ) return 0;
 
     if( (!wFormat || wFormat == CF_TEXT || wFormat == CF_OEMTEXT) ) 
         CLIPBOARD_GetDriver()->pRequestSelection();
@@ -703,8 +703,8 @@ UINT32 WINAPI EnumClipboardFormats32( UINT32 wFormat )
  */
 UINT16 WINAPI RegisterClipboardFormat16( LPCSTR FormatName )
 {
-    LPCLIPFORMAT lpNewFormat; 
-    LPCLIPFORMAT lpFormat = ClipFormats; 
+    LPWINE_CLIPFORMAT lpNewFormat; 
+    LPWINE_CLIPFORMAT lpFormat = ClipFormats; 
 
     if (FormatName == NULL) return 0;
 
@@ -727,7 +727,7 @@ UINT16 WINAPI RegisterClipboardFormat16( LPCSTR FormatName )
 
     /* allocate storage for new format entry */
 
-    lpNewFormat = (LPCLIPFORMAT)xmalloc(sizeof(CLIPFORMAT));
+    lpNewFormat = (LPWINE_CLIPFORMAT)xmalloc(sizeof(WINE_CLIPFORMAT));
     lpFormat->NextFormat = lpNewFormat;
     lpNewFormat->wFormatID = LastRegFormat;
     lpNewFormat->wRefCount = 1;
@@ -749,7 +749,7 @@ UINT16 WINAPI RegisterClipboardFormat16( LPCSTR FormatName )
 /**************************************************************************
  *            RegisterClipboardFormat32A   (USER32.431)
  */
-UINT32 WINAPI RegisterClipboardFormat32A( LPCSTR formatName )
+UINT WINAPI RegisterClipboardFormatA( LPCSTR formatName )
 {
     return RegisterClipboardFormat16( formatName );
 }
@@ -758,10 +758,10 @@ UINT32 WINAPI RegisterClipboardFormat32A( LPCSTR formatName )
 /**************************************************************************
  *            RegisterClipboardFormat32W   (USER32.432)
  */
-UINT32 WINAPI RegisterClipboardFormat32W( LPCWSTR formatName )
+UINT WINAPI RegisterClipboardFormatW( LPCWSTR formatName )
 {
     LPSTR aFormat = HEAP_strdupWtoA( GetProcessHeap(), 0, formatName );
-    UINT32 ret = RegisterClipboardFormat32A( aFormat );
+    UINT ret = RegisterClipboardFormatA( aFormat );
     HeapFree( GetProcessHeap(), 0, aFormat );
     return ret;
 }
@@ -771,16 +771,16 @@ UINT32 WINAPI RegisterClipboardFormat32W( LPCWSTR formatName )
  */
 INT16 WINAPI GetClipboardFormatName16( UINT16 wFormat, LPSTR retStr, INT16 maxlen )
 {
-    return GetClipboardFormatName32A( wFormat, retStr, maxlen );
+    return GetClipboardFormatNameA( wFormat, retStr, maxlen );
 }
 
 
 /**************************************************************************
  *            GetClipboardFormatName32A   (USER32.223)
  */
-INT32 WINAPI GetClipboardFormatName32A( UINT32 wFormat, LPSTR retStr, INT32 maxlen )
+INT WINAPI GetClipboardFormatNameA( UINT wFormat, LPSTR retStr, INT maxlen )
 {
-    LPCLIPFORMAT lpFormat = __lookup_format( ClipFormats, wFormat );
+    LPWINE_CLIPFORMAT lpFormat = __lookup_format( ClipFormats, wFormat );
 
     TRACE(clipboard, "(%04X, %p, %d) !\n", wFormat, retStr, maxlen);
 
@@ -789,7 +789,7 @@ INT32 WINAPI GetClipboardFormatName32A( UINT32 wFormat, LPSTR retStr, INT32 maxl
 
     TRACE(clipboard, "Name='%s' !\n", lpFormat->Name);
 
-    lstrcpyn32A( retStr, lpFormat->Name, maxlen );
+    lstrcpynA( retStr, lpFormat->Name, maxlen );
     return strlen(retStr);
 }
 
@@ -797,10 +797,10 @@ INT32 WINAPI GetClipboardFormatName32A( UINT32 wFormat, LPSTR retStr, INT32 maxl
 /**************************************************************************
  *            GetClipboardFormatName32W   (USER32.224)
  */
-INT32 WINAPI GetClipboardFormatName32W( UINT32 wFormat, LPWSTR retStr, INT32 maxlen )
+INT WINAPI GetClipboardFormatNameW( UINT wFormat, LPWSTR retStr, INT maxlen )
 {
     LPSTR p = HEAP_xalloc( GetProcessHeap(), 0, maxlen );
-    INT32 ret = GetClipboardFormatName32A( wFormat, p, maxlen );
+    INT ret = GetClipboardFormatNameA( wFormat, p, maxlen );
     lstrcpynAtoW( retStr, p, maxlen );
     HeapFree( GetProcessHeap(), 0, p );
     return ret;
@@ -812,16 +812,16 @@ INT32 WINAPI GetClipboardFormatName32W( UINT32 wFormat, LPWSTR retStr, INT32 max
  */
 HWND16 WINAPI SetClipboardViewer16( HWND16 hWnd )
 {
-    return SetClipboardViewer32( hWnd );
+    return SetClipboardViewer( hWnd );
 }
 
 
 /**************************************************************************
  *            SetClipboardViewer32   (USER32.471)
  */
-HWND32 WINAPI SetClipboardViewer32( HWND32 hWnd )
+HWND WINAPI SetClipboardViewer( HWND hWnd )
 {
-    HWND32 hwndPrev = hWndViewer;
+    HWND hwndPrev = hWndViewer;
 
     TRACE(clipboard,"(%04x): returning %04x\n", hWnd, hwndPrev);
 
@@ -842,7 +842,7 @@ HWND16 WINAPI GetClipboardViewer16(void)
 /**************************************************************************
  *           GetClipboardViewer32   (USER32.226)
  */
-HWND32 WINAPI GetClipboardViewer32(void)
+HWND WINAPI GetClipboardViewer(void)
 {
     return hWndViewer;
 }
@@ -853,15 +853,15 @@ HWND32 WINAPI GetClipboardViewer32(void)
  */
 BOOL16 WINAPI ChangeClipboardChain16(HWND16 hWnd, HWND16 hWndNext)
 {
-    return ChangeClipboardChain32(hWnd, hWndNext);
+    return ChangeClipboardChain(hWnd, hWndNext);
 }
 
 /**************************************************************************
  *           ChangeClipboardChain32   (USER32.22)
  */
-BOOL32 WINAPI ChangeClipboardChain32(HWND32 hWnd, HWND32 hWndNext)
+BOOL WINAPI ChangeClipboardChain(HWND hWnd, HWND hWndNext)
 {
-    BOOL32 bRet = 0;
+    BOOL bRet = 0;
 
     FIXME(clipboard, "(0x%04x, 0x%04x): stub?\n", hWnd, hWndNext);
 
@@ -883,14 +883,14 @@ BOOL32 WINAPI ChangeClipboardChain32(HWND32 hWnd, HWND32 hWndNext)
  */
 BOOL16 WINAPI IsClipboardFormatAvailable16( UINT16 wFormat )
 {
-    return IsClipboardFormatAvailable32( wFormat );
+    return IsClipboardFormatAvailable( wFormat );
 }
 
 
 /**************************************************************************
  *           IsClipboardFormatAvailable32   (USER32.340)
  */
-BOOL32 WINAPI IsClipboardFormatAvailable32( UINT32 wFormat )
+BOOL WINAPI IsClipboardFormatAvailable( UINT wFormat )
 {
     TRACE(clipboard,"(%04X) !\n", wFormat);
 
@@ -913,7 +913,7 @@ HWND16 WINAPI GetOpenClipboardWindow16(void)
 /**************************************************************************
  *             GetOpenClipboardWindow32   (USER32.277)
  */
-HWND32 WINAPI GetOpenClipboardWindow32(void)
+HWND WINAPI GetOpenClipboardWindow(void)
 {
     return hWndClipWindow;
 }
@@ -932,19 +932,19 @@ INT16 WINAPI GetPriorityClipboardFormat16( UINT16 *lpPriorityList, INT16 nCount)
 /**************************************************************************
  *             GetPriorityClipboardFormat32   (USER32.279)
  */
-INT32 WINAPI GetPriorityClipboardFormat32( UINT32 *lpPriorityList, INT32 nCount )
+INT WINAPI GetPriorityClipboardFormat( UINT *lpPriorityList, INT nCount )
 {
     int Counter;
 
-    if(CountClipboardFormats32() == 0) 
+    if(CountClipboardFormats() == 0) 
     { 
         return 0;
     }
 
     for(Counter = 0; Counter <= nCount; Counter++)
     {
-        if(IsClipboardFormatAvailable32(*(lpPriorityList+sizeof(INT32)*Counter)))
-            return *(lpPriorityList+sizeof(INT32)*Counter);
+        if(IsClipboardFormatAvailable(*(lpPriorityList+sizeof(INT)*Counter)))
+            return *(lpPriorityList+sizeof(INT)*Counter);
     }
 
     return -1;

@@ -22,21 +22,21 @@
 #define ANIMATE_GetInfoPtr(wndPtr) ((ANIMATE_INFO *)wndPtr->wExtra[0])
 
 
-static BOOL32
-ANIMATE_LoadRes32A (ANIMATE_INFO *infoPtr, HINSTANCE32 hInst, LPSTR lpName)
+static BOOL
+ANIMATE_LoadResA (ANIMATE_INFO *infoPtr, HINSTANCE hInst, LPSTR lpName)
 {
-    HRSRC32 hrsrc;
-    HGLOBAL32 handle;
+    HRSRC hrsrc;
+    HGLOBAL handle;
 
-    hrsrc = FindResource32A (hInst, lpName, "AVI");
+    hrsrc = FindResourceA (hInst, lpName, "AVI");
     if (!hrsrc)
 	return FALSE;
 
-    handle = LoadResource32 (hInst, hrsrc);
+    handle = LoadResource (hInst, hrsrc);
     if (!handle)
 	return FALSE;
 
-    infoPtr->lpAvi = LockResource32 (handle);
+    infoPtr->lpAvi = LockResource (handle);
     if (!infoPtr->lpAvi)
 	return FALSE;
 
@@ -44,19 +44,19 @@ ANIMATE_LoadRes32A (ANIMATE_INFO *infoPtr, HINSTANCE32 hInst, LPSTR lpName)
 }
 
 
-static BOOL32
-ANIMATE_LoadFile32A (ANIMATE_INFO *infoPtr, LPSTR lpName)
+static BOOL
+ANIMATE_LoadFileA (ANIMATE_INFO *infoPtr, LPSTR lpName)
 {
-    HANDLE32 handle;
+    HANDLE handle;
 
     infoPtr->hFile =
-	CreateFile32A (lpName, GENERIC_READ, 0, NULL, OPEN_EXISTING,
+	CreateFileA (lpName, GENERIC_READ, 0, NULL, OPEN_EXISTING,
 		       FILE_ATTRIBUTE_NORMAL, 0);
     if (!infoPtr->hFile)
 	return FALSE;
 
     handle =
-	CreateFileMapping32A (infoPtr->hFile, NULL, PAGE_READONLY | SEC_COMMIT,
+	CreateFileMappingA (infoPtr->hFile, NULL, PAGE_READONLY | SEC_COMMIT,
 			      0, 0, NULL);
     if (!handle) {
 	CloseHandle (infoPtr->hFile);
@@ -84,7 +84,7 @@ ANIMATE_Free (ANIMATE_INFO *infoPtr)
 	infoPtr->lpAvi = NULL;
     }
     else {
-	GlobalFree32 ((HGLOBAL32)infoPtr->lpAvi);
+	GlobalFree ((HGLOBAL)infoPtr->lpAvi);
 	infoPtr->lpAvi = NULL;
     }
 }
@@ -99,10 +99,10 @@ ANIMATE_GetAviInfo (infoPtr)
 
 
 static LRESULT
-ANIMATE_Open32A (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
+ANIMATE_OpenA (WND *wndPtr, WPARAM wParam, LPARAM lParam)
 {
     ANIMATE_INFO *infoPtr = ANIMATE_GetInfoPtr(wndPtr);
-    HINSTANCE32 hInstance = (HINSTANCE32)wParam;
+    HINSTANCE hInstance = (HINSTANCE)wParam;
 
     ANIMATE_Free (infoPtr);
 
@@ -114,14 +114,14 @@ ANIMATE_Open32A (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
     if (HIWORD(lParam)) {
 	FIXME (animate, "(\"%s\") empty stub!\n", (LPSTR)lParam);
 
-	if (ANIMATE_LoadRes32A (infoPtr, hInstance, (LPSTR)lParam)) {
+	if (ANIMATE_LoadResA (infoPtr, hInstance, (LPSTR)lParam)) {
 
 	    FIXME (animate, "AVI resource found!\n");
 
 	}
 	else {
 	    FIXME (animate, "No AVI resource found!\n");
-	    if (ANIMATE_LoadFile32A (infoPtr, (LPSTR)lParam)) {
+	    if (ANIMATE_LoadFileA (infoPtr, (LPSTR)lParam)) {
 		FIXME (animate, "AVI file found!\n");
 	    }
 	    else {
@@ -133,8 +133,8 @@ ANIMATE_Open32A (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
     else {
 	FIXME (animate, "(%u) empty stub!\n", (WORD)LOWORD(lParam));
 
-	if (ANIMATE_LoadRes32A (infoPtr, hInstance,
-				MAKEINTRESOURCE32A((INT32)lParam))) {
+	if (ANIMATE_LoadResA (infoPtr, hInstance,
+				MAKEINTRESOURCEA((INT)lParam))) {
 	    FIXME (animate, "AVI resource found!\n");
 	}
 	else {
@@ -153,12 +153,12 @@ ANIMATE_Open32A (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 
 
 static LRESULT
-ANIMATE_Play (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
+ANIMATE_Play (WND *wndPtr, WPARAM wParam, LPARAM lParam)
 {
     /* ANIMATE_INFO *infoPtr = ANIMATE_GetInfoPtr(wndPtr); */
-    INT32 nFrom   = (INT32)LOWORD(lParam);
-    INT32 nTo     = (INT32)HIWORD(lParam);
-    INT32 nRepeat = (INT32)wParam;
+    INT nFrom   = (INT)LOWORD(lParam);
+    INT nTo     = (INT)HIWORD(lParam);
+    INT nRepeat = (INT)wParam;
 
 #if 0
     /* nothing opened */
@@ -185,7 +185,7 @@ ANIMATE_Play (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 
 
 static LRESULT
-ANIMATE_Stop (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
+ANIMATE_Stop (WND *wndPtr, WPARAM wParam, LPARAM lParam)
 {
     /* ANIMATE_INFO *infoPtr = ANIMATE_GetInfoPtr(wndPtr); */
 
@@ -201,7 +201,7 @@ ANIMATE_Stop (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 
 
 static LRESULT
-ANIMATE_Create (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
+ANIMATE_Create (WND *wndPtr, WPARAM wParam, LPARAM lParam)
 {
     ANIMATE_INFO *infoPtr;
 
@@ -227,7 +227,7 @@ ANIMATE_Create (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 
 
 static LRESULT
-ANIMATE_Destroy (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
+ANIMATE_Destroy (WND *wndPtr, WPARAM wParam, LPARAM lParam)
 {
     ANIMATE_INFO *infoPtr = ANIMATE_GetInfoPtr(wndPtr);
 
@@ -244,7 +244,7 @@ ANIMATE_Destroy (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 
 #if 0
 static LRESULT
-ANIMATE_EraseBackground (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
+ANIMATE_EraseBackground (WND *wndPtr, WPARAM wParam, LPARAM lParam)
 {
     ANIMATE_INFO *infoPtr = ANIMATE_GetInfoPtr(wndPtr);
 /*
@@ -262,14 +262,14 @@ ANIMATE_EraseBackground (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 
 
 LRESULT WINAPI
-ANIMATE_WindowProc (HWND32 hwnd, UINT32 uMsg, WPARAM32 wParam, LPARAM lParam)
+ANIMATE_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     WND *wndPtr = WIN_FindWndPtr(hwnd);
 
     switch (uMsg)
     {
-	case ACM_OPEN32A:
-	    return ANIMATE_Open32A (wndPtr, wParam, lParam);
+	case ACM_OPENA:
+	    return ANIMATE_OpenA (wndPtr, wParam, lParam);
 
 /*	case ACM_OPEN32W: */
 /*	    return ANIMATE_Open32W (wndPtr, wParam, lParam); */
@@ -301,7 +301,7 @@ ANIMATE_WindowProc (HWND32 hwnd, UINT32 uMsg, WPARAM32 wParam, LPARAM lParam)
 	    if (uMsg >= WM_USER)
 		ERR (animate, "unknown msg %04x wp=%08x lp=%08lx\n",
 		     uMsg, wParam, lParam);
-	    return DefWindowProc32A (hwnd, uMsg, wParam, lParam);
+	    return DefWindowProcA (hwnd, uMsg, wParam, lParam);
     }
     return 0;
 }
@@ -310,27 +310,27 @@ ANIMATE_WindowProc (HWND32 hwnd, UINT32 uMsg, WPARAM32 wParam, LPARAM lParam)
 VOID
 ANIMATE_Register (VOID)
 {
-    WNDCLASS32A wndClass;
+    WNDCLASSA wndClass;
 
-    if (GlobalFindAtom32A (ANIMATE_CLASS32A)) return;
+    if (GlobalFindAtomA (ANIMATE_CLASSA)) return;
 
-    ZeroMemory (&wndClass, sizeof(WNDCLASS32A));
+    ZeroMemory (&wndClass, sizeof(WNDCLASSA));
     wndClass.style         = CS_GLOBALCLASS | CS_DBLCLKS;
-    wndClass.lpfnWndProc   = (WNDPROC32)ANIMATE_WindowProc;
+    wndClass.lpfnWndProc   = (WNDPROC)ANIMATE_WindowProc;
     wndClass.cbClsExtra    = 0;
     wndClass.cbWndExtra    = sizeof(ANIMATE_INFO *);
-    wndClass.hCursor       = LoadCursor32A (0, IDC_ARROW32A);
-    wndClass.hbrBackground = (HBRUSH32)(COLOR_BTNFACE + 1);
-    wndClass.lpszClassName = ANIMATE_CLASS32A;
+    wndClass.hCursor       = LoadCursorA (0, IDC_ARROWA);
+    wndClass.hbrBackground = (HBRUSH)(COLOR_BTNFACE + 1);
+    wndClass.lpszClassName = ANIMATE_CLASSA;
  
-    RegisterClass32A (&wndClass);
+    RegisterClassA (&wndClass);
 }
 
 
 VOID
 ANIMATE_Unregister (VOID)
 {
-    if (GlobalFindAtom32A (ANIMATE_CLASS32A))
-	UnregisterClass32A (ANIMATE_CLASS32A, (HINSTANCE32)NULL);
+    if (GlobalFindAtomA (ANIMATE_CLASSA))
+	UnregisterClassA (ANIMATE_CLASSA, (HINSTANCE)NULL);
 }
 

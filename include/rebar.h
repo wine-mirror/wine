@@ -9,33 +9,33 @@
 
 typedef struct tagREBAR_BAND
 {
-    UINT32    fStyle;
+    UINT    fStyle;
     COLORREF  clrFore;
     COLORREF  clrBack;
-    INT32     iImage;
-    HWND32    hwndChild;
-    UINT32    cxMinChild;
-    UINT32    cyMinChild;
-    UINT32    cx;
-    HBITMAP32 hbmBack;
-    UINT32    wID;
-    UINT32    cyChild;
-    UINT32    cyMaxChild;
-    UINT32    cyIntegral;
-    UINT32    cxIdeal;
+    INT     iImage;
+    HWND    hwndChild;
+    UINT    cxMinChild;
+    UINT    cyMinChild;
+    UINT    cx;
+    HBITMAP hbmBack;
+    UINT    wID;
+    UINT    cyChild;
+    UINT    cyMaxChild;
+    UINT    cyIntegral;
+    UINT    cxIdeal;
     LPARAM    lParam;
-    UINT32    cxHeader;
+    UINT    cxHeader;
 
-    UINT32    uMinHeight;
-    UINT32    fDraw;          /* drawing flags */
-    RECT32    rcBand;         /* calculated band rectangle */
-    RECT32    rcGripper;      /* calculated gripper rectangle */
-    RECT32    rcCapImage;     /* calculated caption image rectangle */
-    RECT32    rcCapText;      /* calculated caption text rectangle */
-    RECT32    rcChild;        /* calculated child rectangle */
+    UINT    uMinHeight;
+    UINT    fDraw;          /* drawing flags */
+    RECT    rcBand;         /* calculated band rectangle */
+    RECT    rcGripper;      /* calculated gripper rectangle */
+    RECT    rcCapImage;     /* calculated caption image rectangle */
+    RECT    rcCapText;      /* calculated caption text rectangle */
+    RECT    rcChild;        /* calculated child rectangle */
 
     LPWSTR    lpText;
-    HWND32    hwndPrevParent;
+    HWND    hwndPrevParent;
 } REBAR_BAND;
 
 typedef struct tagREBAR_INFO
@@ -43,19 +43,19 @@ typedef struct tagREBAR_INFO
     COLORREF   clrBk;       /* background color */
     COLORREF   clrText;     /* text color */
     HIMAGELIST himl;        /* handle to imagelist */
-    UINT32     uNumBands;   /* number of bands in the rebar */
-    HWND32     hwndToolTip; /* handle to the tool tip control */
-    HWND32     hwndNotify;  /* notification window (parent) */
-    HFONT32    hFont;       /* handle to the rebar's font */
-    SIZE32     imageSize;   /* image size (image list) */
+    UINT     uNumBands;   /* number of bands in the rebar */
+    HWND     hwndToolTip; /* handle to the tool tip control */
+    HWND     hwndNotify;  /* notification window (parent) */
+    HFONT    hFont;       /* handle to the rebar's font */
+    SIZE     imageSize;   /* image size (image list) */
 
-    SIZE32     calcSize;    /* calculated rebar size */
-    BOOL32     bAutoResize; /* auto resize deadlock flag */
-    BOOL32     bUnicode;    /* Unicode flag */
-    HCURSOR32  hcurArrow;   /* handle to the arrow cursor */
-    HCURSOR32  hcurHorz;    /* handle to the EW cursor */
-    HCURSOR32  hcurVert;    /* handle to the NS cursor */
-    HCURSOR32  hcurDrag;    /* handle to the drag cursor */
+    SIZE     calcSize;    /* calculated rebar size */
+    BOOL     bAutoResize; /* auto resize deadlock flag */
+    BOOL     bUnicode;    /* Unicode flag */
+    HCURSOR  hcurArrow;   /* handle to the arrow cursor */
+    HCURSOR  hcurHorz;    /* handle to the EW cursor */
+    HCURSOR  hcurVert;    /* handle to the NS cursor */
+    HCURSOR  hcurDrag;    /* handle to the drag cursor */
 
     REBAR_BAND *bands;      /* pointer to the array of rebar bands */
 

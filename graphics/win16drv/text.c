@@ -14,12 +14,12 @@
 /***********************************************************************
  *           WIN16DRV_ExtTextOut
  */
-BOOL32 WIN16DRV_ExtTextOut( DC *dc, INT32 x, INT32 y, UINT32 flags,
-                           const RECT32 *lprect, LPCSTR str, UINT32 count,
-                           const INT32 *lpDx )
+BOOL WIN16DRV_ExtTextOut( DC *dc, INT x, INT y, UINT flags,
+                           const RECT *lprect, LPCSTR str, UINT count,
+                           const INT *lpDx )
 {
     WIN16DRV_PDEVICE *physDev = (WIN16DRV_PDEVICE *)dc->physDev;
-    BOOL32 bRet = 1;
+    BOOL bRet = 1;
     RECT16	 clipRect;
     RECT16 	 opaqueRect;
     RECT16 	*lpOpaqueRect = NULL; 

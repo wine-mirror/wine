@@ -33,7 +33,7 @@ void dummy_usage_of_debug_msg_name()
 }
 
 /* stub */
-HWND32 GetDesktopWindow32()
+HWND GetDesktopWindow()
 {
   printf("GetDesktopWindow\n");
   return 0;
@@ -67,7 +67,7 @@ HWND GetTopWindow(HWND a)
   return 1;
 }
 /* stub */
-WORD FreeSelector(WORD a)
+WORD FreeSelector16(WORD a)
 {
   printf("FreeSelector(%04x)\n",a);
   return 0;
@@ -103,7 +103,7 @@ WND *WIN_FindWndPtr(HWND hwnd)
 }
 
 /* stub */
-WORD GetCurrentPDB(void)
+WORD GetCurrentPDB16(void)
 {
   printf("GetCurrentPDB()\n");
   

@@ -22,13 +22,13 @@ typedef struct _MUTEX
 /***********************************************************************
  *           CreateMutex32A   (KERNEL32.166)
  */
-HANDLE32 WINAPI CreateMutex32A( SECURITY_ATTRIBUTES *sa, BOOL32 owner,
+HANDLE WINAPI CreateMutexA( SECURITY_ATTRIBUTES *sa, BOOL owner,
                                 LPCSTR name )
 {
     struct create_mutex_request req;
     struct create_mutex_reply reply;
     int len = name ? strlen(name) + 1 : 0;
-    HANDLE32 handle;
+    HANDLE handle;
     MUTEX *mutex;
 
     req.owned   = owner;
@@ -43,7 +43,7 @@ HANDLE32 WINAPI CreateMutex32A( SECURITY_ATTRIBUTES *sa, BOOL32 owner,
                                     name, reply.handle, MUTEX_ALL_ACCESS,
                                     sa, &handle );
     if (mutex) K32OBJ_DecCount( &mutex->header );
-    if (handle == INVALID_HANDLE_VALUE32) handle = 0;
+    if (handle == INVALID_HANDLE_VALUE) handle = 0;
     SYSTEM_UNLOCK();
     return handle;
 }
@@ -52,11 +52,11 @@ HANDLE32 WINAPI CreateMutex32A( SECURITY_ATTRIBUTES *sa, BOOL32 owner,
 /***********************************************************************
  *           CreateMutex32W   (KERNEL32.167)
  */
-HANDLE32 WINAPI CreateMutex32W( SECURITY_ATTRIBUTES *sa, BOOL32 owner,
+HANDLE WINAPI CreateMutexW( SECURITY_ATTRIBUTES *sa, BOOL owner,
                                 LPCWSTR name )
 {
     LPSTR nameA = HEAP_strdupWtoA( GetProcessHeap(), 0, name );
-    HANDLE32 ret = CreateMutex32A( sa, owner, nameA );
+    HANDLE ret = CreateMutexA( sa, owner, nameA );
     if (nameA) HeapFree( GetProcessHeap(), 0, nameA );
     return ret;
 }
@@ -65,9 +65,9 @@ HANDLE32 WINAPI CreateMutex32W( SECURITY_ATTRIBUTES *sa, BOOL32 owner,
 /***********************************************************************
  *           OpenMutex32A   (KERNEL32.541)
  */
-HANDLE32 WINAPI OpenMutex32A( DWORD access, BOOL32 inherit, LPCSTR name )
+HANDLE WINAPI OpenMutexA( DWORD access, BOOL inherit, LPCSTR name )
 {
-    HANDLE32 handle = 0;
+    HANDLE handle = 0;
     K32OBJ *obj;
     struct open_named_obj_request req;
     struct open_named_obj_reply reply;
@@ -85,7 +85,7 @@ HANDLE32 WINAPI OpenMutex32A( DWORD access, BOOL32 inherit, LPCSTR name )
         {
             handle = HANDLE_Alloc( PROCESS_Current(), obj, access, inherit, reply.handle );
             K32OBJ_DecCount( obj );
-            if (handle == INVALID_HANDLE_VALUE32)
+            if (handle == INVALID_HANDLE_VALUE)
                 handle = 0; /* must return 0 on failure, not -1 */
         }
         else CLIENT_CloseHandle( reply.handle );
@@ -98,10 +98,10 @@ HANDLE32 WINAPI OpenMutex32A( DWORD access, BOOL32 inherit, LPCSTR name )
 /***********************************************************************
  *           OpenMutex32W   (KERNEL32.542)
  */
-HANDLE32 WINAPI OpenMutex32W( DWORD access, BOOL32 inherit, LPCWSTR name )
+HANDLE WINAPI OpenMutexW( DWORD access, BOOL inherit, LPCWSTR name )
 {
     LPSTR nameA = HEAP_strdupWtoA( GetProcessHeap(), 0, name );
-    HANDLE32 ret = OpenMutex32A( access, inherit, nameA );
+    HANDLE ret = OpenMutexA( access, inherit, nameA );
     if (nameA) HeapFree( GetProcessHeap(), 0, nameA );
     return ret;
 }
@@ -110,7 +110,7 @@ HANDLE32 WINAPI OpenMutex32W( DWORD access, BOOL32 inherit, LPCWSTR name )
 /***********************************************************************
  *           ReleaseMutex   (KERNEL32.582)
  */
-BOOL32 WINAPI ReleaseMutex( HANDLE32 handle )
+BOOL WINAPI ReleaseMutex( HANDLE handle )
 {
     struct release_mutex_request req;
 

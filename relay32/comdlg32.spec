@@ -2,26 +2,26 @@ name	comdlg32
 type	win32
 
  0 stub ArrowBtnWndProc
- 1 stdcall ChooseColorA(ptr) ChooseColor32A
- 2 stdcall ChooseColorW(ptr) ChooseColor32W
- 3 stdcall ChooseFontA(ptr) ChooseFont32A
- 4 stdcall ChooseFontW(ptr) ChooseFont32W
+ 1 stdcall ChooseColorA(ptr) ChooseColorA
+ 2 stdcall ChooseColorW(ptr) ChooseColorW
+ 3 stdcall ChooseFontA(ptr) ChooseFontA
+ 4 stdcall ChooseFontW(ptr) ChooseFontW
  5 stdcall CommDlgExtendedError() CommDlgExtendedError
- 6 stdcall FindTextA(ptr) FindText32A
- 7 stdcall FindTextW(ptr) FindText32W
- 8 stdcall GetFileTitleA(ptr ptr long) GetFileTitle32A
- 9 stdcall GetFileTitleW(ptr ptr long) GetFileTitle32W
-10 stdcall GetOpenFileNameA(ptr) GetOpenFileName32A
-11 stdcall GetOpenFileNameW(ptr) GetOpenFileName32W
-12 stdcall GetSaveFileNameA(ptr) GetSaveFileName32A
-13 stdcall GetSaveFileNameW(ptr) GetSaveFileName32W
+ 6 stdcall FindTextA(ptr) FindTextA
+ 7 stdcall FindTextW(ptr) FindTextW
+ 8 stdcall GetFileTitleA(ptr ptr long) GetFileTitleA
+ 9 stdcall GetFileTitleW(ptr ptr long) GetFileTitleW
+10 stdcall GetOpenFileNameA(ptr) GetOpenFileNameA
+11 stdcall GetOpenFileNameW(ptr) GetOpenFileNameW
+12 stdcall GetSaveFileNameA(ptr) GetSaveFileNameA
+13 stdcall GetSaveFileNameW(ptr) GetSaveFileNameW
 14 stub LoadAlterBitmap
-15 stdcall PageSetupDlgA(ptr) PageSetupDlg32A
+15 stdcall PageSetupDlgA(ptr) PageSetupDlgA
 16 stub PageSetupDlgW
-17 stdcall PrintDlgA(ptr) PrintDlg32A
-18 stdcall PrintDlgW(ptr) PrintDlg32W
-19 stdcall ReplaceTextA(ptr) ReplaceText32A
-20 stdcall ReplaceTextW(ptr) ReplaceText32W
+17 stdcall PrintDlgA(ptr) PrintDlgA
+18 stdcall PrintDlgW(ptr) PrintDlgW
+19 stdcall ReplaceTextA(ptr) ReplaceTextA
+20 stdcall ReplaceTextW(ptr) ReplaceTextW
 21 stub WantArrows
 22 stub dwLBSubclass
 23 stub dwOKSubclass

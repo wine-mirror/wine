@@ -25,8 +25,8 @@ void WINAPI SetRect16( LPRECT16 rect, INT16 left, INT16 top,
 /***********************************************************************
  *           SetRect32    (USER32.499)
  */
-BOOL32 WINAPI SetRect32( LPRECT32 rect, INT32 left, INT32 top,
-                       INT32 right, INT32 bottom )
+BOOL WINAPI SetRect( LPRECT rect, INT left, INT top,
+                       INT right, INT bottom )
 {
     rect->left   = left;
     rect->right  = right;
@@ -48,7 +48,7 @@ void WINAPI SetRectEmpty16( LPRECT16 rect )
 /***********************************************************************
  *           SetRectEmpty32    (USER32.500)
  */
-BOOL32 WINAPI SetRectEmpty32( LPRECT32 rect )
+BOOL WINAPI SetRectEmpty( LPRECT rect )
 {
     rect->left = rect->right = rect->top = rect->bottom = 0;
     return TRUE;
@@ -68,7 +68,7 @@ BOOL16 WINAPI CopyRect16( RECT16 *dest, const RECT16 *src )
 /***********************************************************************
  *           CopyRect32    (USER32.62)
  */
-BOOL32 WINAPI CopyRect32( RECT32 *dest, const RECT32 *src )
+BOOL WINAPI CopyRect( RECT *dest, const RECT *src )
 {
     *dest = *src;
     return TRUE;
@@ -87,7 +87,7 @@ BOOL16 WINAPI IsRectEmpty16( const RECT16 *rect )
 /***********************************************************************
  *           IsRectEmpty32    (USER32.347)
  */
-BOOL32 WINAPI IsRectEmpty32( const RECT32 *rect )
+BOOL WINAPI IsRectEmpty( const RECT *rect )
 {
     return ((rect->left == rect->right) || (rect->top == rect->bottom));
 }
@@ -106,7 +106,7 @@ BOOL16 WINAPI PtInRect16( const RECT16 *rect, POINT16 pt )
 /***********************************************************************
  *           PtInRect32    (USER32.424)
  */
-BOOL32 WINAPI PtInRect32( const RECT32 *rect, POINT32 pt )
+BOOL WINAPI PtInRect( const RECT *rect, POINT pt )
 {
     return ((pt.x >= rect->left) && (pt.x < rect->right) &&
 	    (pt.y >= rect->top) && (pt.y < rect->bottom));
@@ -128,7 +128,7 @@ void WINAPI OffsetRect16( LPRECT16 rect, INT16 x, INT16 y )
 /***********************************************************************
  *           OffsetRect32    (USER32.406)
  */
-BOOL32 WINAPI OffsetRect32( LPRECT32 rect, INT32 x, INT32 y )
+BOOL WINAPI OffsetRect( LPRECT rect, INT x, INT y )
 {
     rect->left   += x;
     rect->right  += x;
@@ -153,7 +153,7 @@ void WINAPI InflateRect16( LPRECT16 rect, INT16 x, INT16 y )
 /***********************************************************************
  *           InflateRect32    (USER32.321)
  */
-BOOL32 WINAPI InflateRect32( LPRECT32 rect, INT32 x, INT32 y )
+BOOL WINAPI InflateRect( LPRECT rect, INT x, INT y )
 {
     rect->left   -= x;
     rect->top 	 -= y;
@@ -187,14 +187,14 @@ BOOL16 WINAPI IntersectRect16( LPRECT16 dest, const RECT16 *src1,
 /***********************************************************************
  *           IntersectRect32    (USER32.327)
  */
-BOOL32 WINAPI IntersectRect32( LPRECT32 dest, const RECT32 *src1,
-                               const RECT32 *src2 )
+BOOL WINAPI IntersectRect( LPRECT dest, const RECT *src1,
+                               const RECT *src2 )
 {
-    if (IsRectEmpty32(src1) || IsRectEmpty32(src2) ||
+    if (IsRectEmpty(src1) || IsRectEmpty(src2) ||
 	(src1->left >= src2->right) || (src2->left >= src1->right) ||
 	(src1->top >= src2->bottom) || (src2->top >= src1->bottom))
     {
-	SetRectEmpty32( dest );
+	SetRectEmpty( dest );
 	return FALSE;
     }
     dest->left   = MAX( src1->left, src2->left );
@@ -238,21 +238,21 @@ BOOL16 WINAPI UnionRect16( LPRECT16 dest, const RECT16 *src1,
 /***********************************************************************
  *           UnionRect32    (USER32.559)
  */
-BOOL32 WINAPI UnionRect32( LPRECT32 dest, const RECT32 *src1,
-                           const RECT32 *src2 )
+BOOL WINAPI UnionRect( LPRECT dest, const RECT *src1,
+                           const RECT *src2 )
 {
-    if (IsRectEmpty32(src1))
+    if (IsRectEmpty(src1))
     {
-	if (IsRectEmpty32(src2))
+	if (IsRectEmpty(src2))
 	{
-	    SetRectEmpty32( dest );
+	    SetRectEmpty( dest );
 	    return FALSE;
 	}
 	else *dest = *src2;
     }
     else
     {
-	if (IsRectEmpty32(src2)) *dest = *src1;
+	if (IsRectEmpty(src2)) *dest = *src1;
 	else
 	{
 	    dest->left   = MIN( src1->left, src2->left );
@@ -278,7 +278,7 @@ BOOL16 WINAPI EqualRect16( const RECT16* rect1, const RECT16* rect2 )
 /***********************************************************************
  *           EqualRect32    (USER32.194)
  */
-BOOL32 WINAPI EqualRect32( const RECT32* rect1, const RECT32* rect2 )
+BOOL WINAPI EqualRect( const RECT* rect1, const RECT* rect2 )
 {
     return ((rect1->left == rect2->left) && (rect1->right == rect2->right) &&
 	    (rect1->top == rect2->top) && (rect1->bottom == rect2->bottom));
@@ -324,22 +324,22 @@ BOOL16 WINAPI SubtractRect16( LPRECT16 dest, const RECT16 *src1,
 /***********************************************************************
  *           SubtractRect32    (USER32.536)
  */
-BOOL32 WINAPI SubtractRect32( LPRECT32 dest, const RECT32 *src1,
-                              const RECT32 *src2 )
+BOOL WINAPI SubtractRect( LPRECT dest, const RECT *src1,
+                              const RECT *src2 )
 {
-    RECT32 tmp;
+    RECT tmp;
 
-    if (IsRectEmpty32( src1 ))
+    if (IsRectEmpty( src1 ))
     {
-	SetRectEmpty32( dest );
+	SetRectEmpty( dest );
 	return FALSE;
     }
     *dest = *src1;
-    if (IntersectRect32( &tmp, src1, src2 ))
+    if (IntersectRect( &tmp, src1, src2 ))
     {
-	if (EqualRect32( &tmp, dest ))
+	if (EqualRect( &tmp, dest ))
 	{
-	    SetRectEmpty32( dest );
+	    SetRectEmpty( dest );
 	    return FALSE;
 	}
 	if ((tmp.top == dest->top) && (tmp.bottom == dest->bottom))

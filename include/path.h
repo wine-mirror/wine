@@ -25,10 +25,10 @@ typedef enum tagGdiPathState
 typedef struct tagGdiPath
 {
    GdiPathState state;
-   POINT32      *pPoints;
+   POINT      *pPoints;
    BYTE         *pFlags;
    int          numEntriesUsed, numEntriesAllocated;
-   BOOL32       newStroke;
+   BOOL       newStroke;
 } GdiPath;
 
 #define PATH_IsPathOpen(path) ((path).state==PATH_Open)
@@ -39,16 +39,16 @@ typedef struct tagGdiPath
 
 extern void   PATH_InitGdiPath(GdiPath *pPath);
 extern void   PATH_DestroyGdiPath(GdiPath *pPath);
-extern BOOL32 PATH_AssignGdiPath(GdiPath *pPathDest,
+extern BOOL PATH_AssignGdiPath(GdiPath *pPathDest,
    const GdiPath *pPathSrc);
 
-extern BOOL32 PATH_MoveTo(HDC32 hdc);
-extern BOOL32 PATH_LineTo(HDC32 hdc, INT32 x, INT32 y);
-extern BOOL32 PATH_Rectangle(HDC32 hdc, INT32 x1, INT32 y1,
-   INT32 x2, INT32 y2);
-extern BOOL32 PATH_Ellipse(HDC32 hdc, INT32 x1, INT32 y1,
-   INT32 x2, INT32 y2);
-extern BOOL32 PATH_Arc(HDC32 hdc, INT32 x1, INT32 y1, INT32 x2, INT32 y2,
-   INT32 xStart, INT32 yStart, INT32 xEnd, INT32 yEnd);
+extern BOOL PATH_MoveTo(HDC hdc);
+extern BOOL PATH_LineTo(HDC hdc, INT x, INT y);
+extern BOOL PATH_Rectangle(HDC hdc, INT x1, INT y1,
+   INT x2, INT y2);
+extern BOOL PATH_Ellipse(HDC hdc, INT x1, INT y1,
+   INT x2, INT y2);
+extern BOOL PATH_Arc(HDC hdc, INT x1, INT y1, INT x2, INT y2,
+   INT xStart, INT yStart, INT xEnd, INT yEnd);
 
 #endif /* __WINE_PATH_H */

@@ -19,14 +19,14 @@ EDITMENU MENU LOADONCALL MOVEABLE DISCARDABLE
 {
 	POPUP ""
 	BEGIN
-                MENUITEM "&Annulla", EM_UNDO32
+                MENUITEM "&Annulla", EM_UNDO
 		MENUITEM SEPARATOR
                 MENUITEM "&Taglia", WM_CUT
                 MENUITEM "&Copia", WM_COPY
                 MENUITEM "&Incolla", WM_PASTE
                 MENUITEM "&Elimina", WM_CLEAR
 		MENUITEM SEPARATOR
-                MENUITEM "Sele&ziona tutto", EM_SETSEL32
+                MENUITEM "Sele&ziona tutto", EM_SETSEL
 	END
 }
 

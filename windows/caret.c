@@ -12,16 +12,16 @@
 
 typedef struct
 {
-    HWND32     hwnd;
-    UINT32     hidden;
-    BOOL32     on;
-    INT32      x;
-    INT32      y;
-    INT32      width;
-    INT32      height;
+    HWND     hwnd;
+    UINT     hidden;
+    BOOL     on;
+    INT      x;
+    INT      y;
+    INT      width;
+    INT      height;
     HBRUSH16   hBrush;
-    UINT32     timeout;
-    UINT32     timerid;
+    UINT     timeout;
+    UINT     timerid;
 } CARET;
 
 typedef enum
@@ -36,7 +36,7 @@ static CARET Caret = { 0, 0, FALSE, 0, 0, 2, 12, 0, 500, 0 };
 /*****************************************************************
  *              CARET_GetHwnd
  */
-HWND32 CARET_GetHwnd(void)
+HWND CARET_GetHwnd(void)
 {
     return Caret.hwnd;
 }
@@ -44,7 +44,7 @@ HWND32 CARET_GetHwnd(void)
 /*****************************************************************
  *              CARET_GetRect
  */
-void CARET_GetRect(LPRECT32 lprc)
+void CARET_GetRect(LPRECT lprc)
 {
     lprc->right = (lprc->left = Caret.x) + Caret.width - 1;
     lprc->bottom = (lprc->top = Caret.y) + Caret.height - 1;
@@ -55,7 +55,7 @@ void CARET_GetRect(LPRECT32 lprc)
  */
 static void CARET_DisplayCaret( DISPLAY_CARET status )
 {
-    HDC32 hdc;
+    HDC hdc;
     HBRUSH16 hPrevBrush;
 
     if (Caret.on && (status == CARET_ON)) return;
@@ -65,18 +65,18 @@ static void CARET_DisplayCaret( DISPLAY_CARET status )
 
     Caret.on = !Caret.on;
     /* do not use DCX_CACHE here, for x,y,width,height are in logical units */
-    if (!(hdc = GetDCEx32( Caret.hwnd, 0, DCX_USESTYLE /*| DCX_CACHE*/ ))) return;
-    hPrevBrush = SelectObject32( hdc, Caret.hBrush );
-    PatBlt32( hdc, Caret.x, Caret.y, Caret.width, Caret.height, PATINVERT );
-    SelectObject32( hdc, hPrevBrush );
-    ReleaseDC32( Caret.hwnd, hdc );
+    if (!(hdc = GetDCEx( Caret.hwnd, 0, DCX_USESTYLE /*| DCX_CACHE*/ ))) return;
+    hPrevBrush = SelectObject( hdc, Caret.hBrush );
+    PatBlt( hdc, Caret.x, Caret.y, Caret.width, Caret.height, PATINVERT );
+    SelectObject( hdc, hPrevBrush );
+    ReleaseDC( Caret.hwnd, hdc );
 }
 
   
 /*****************************************************************
  *               CARET_Callback
  */
-static VOID CALLBACK CARET_Callback( HWND32 hwnd, UINT32 msg, UINT32 id, DWORD ctime)
+static VOID CALLBACK CARET_Callback( HWND hwnd, UINT msg, UINT id, DWORD ctime)
 {
     TRACE(caret,"hwnd=%04x, timerid=%d, caret=%d\n",
                   hwnd, id, Caret.on);
@@ -89,8 +89,8 @@ static VOID CALLBACK CARET_Callback( HWND32 hwnd, UINT32 msg, UINT32 id, DWORD c
  */
 static void CARET_SetTimer(void)
 {
-    if (Caret.timerid) KillSystemTimer32( (HWND32)0, Caret.timerid );
-    Caret.timerid = SetSystemTimer32( (HWND32)0, 0, Caret.timeout,
+    if (Caret.timerid) KillSystemTimer( (HWND)0, Caret.timerid );
+    Caret.timerid = SetSystemTimer( (HWND)0, 0, Caret.timeout,
                                       CARET_Callback );
 }
 
@@ -102,8 +102,8 @@ static void CARET_ResetTimer(void)
 {
     if (Caret.timerid) 
     {
-	KillSystemTimer32( (HWND32)0, Caret.timerid );
-	Caret.timerid = SetSystemTimer32( (HWND32)0, 0, Caret.timeout,
+	KillSystemTimer( (HWND)0, Caret.timerid );
+	Caret.timerid = SetSystemTimer( (HWND)0, 0, Caret.timeout,
                                           CARET_Callback );
     }
 }
@@ -116,7 +116,7 @@ static void CARET_KillTimer(void)
 {
     if (Caret.timerid) 
     {
-	KillSystemTimer32( (HWND32)0, Caret.timerid );
+	KillSystemTimer( (HWND)0, Caret.timerid );
 	Caret.timerid = 0;
     }
 }
@@ -128,21 +128,21 @@ static void CARET_KillTimer(void)
 void WINAPI CreateCaret16( HWND16 hwnd, HBITMAP16 bitmap,
                            INT16 width, INT16 height )
 {
-    CreateCaret32( hwnd, bitmap, width, height );
+    CreateCaret( hwnd, bitmap, width, height );
 }
 
 /*****************************************************************
  *           CreateCaret32   (USER32.66)
  */
-BOOL32 WINAPI CreateCaret32( HWND32 hwnd, HBITMAP32 bitmap,
-                             INT32 width, INT32 height )
+BOOL WINAPI CreateCaret( HWND hwnd, HBITMAP bitmap,
+                             INT width, INT height )
 {
     TRACE(caret,"hwnd=%04x\n", hwnd);
 
     if (!hwnd) return FALSE;
 
     /* if cursor already exists, destroy it */
-    if (Caret.hwnd) DestroyCaret32();
+    if (Caret.hwnd) DestroyCaret();
 
     if (bitmap && (bitmap != 1))
     {
@@ -151,15 +151,15 @@ BOOL32 WINAPI CreateCaret32( HWND32 hwnd, HBITMAP32 bitmap,
         Caret.width = bmp.bmWidth;
         Caret.height = bmp.bmHeight;
         /* FIXME: we should make a copy of the bitmap instead of a brush */
-        Caret.hBrush = CreatePatternBrush32( bitmap );
+        Caret.hBrush = CreatePatternBrush( bitmap );
     }
     else
     {
-        Caret.width = width ? width : GetSystemMetrics32(SM_CXBORDER);
-        Caret.height = height ? height : GetSystemMetrics32(SM_CYBORDER);
-        Caret.hBrush = CreateSolidBrush32(bitmap ?
-                                          GetSysColor32(COLOR_GRAYTEXT) :
-                                          GetSysColor32(COLOR_WINDOW) );
+        Caret.width = width ? width : GetSystemMetrics(SM_CXBORDER);
+        Caret.height = height ? height : GetSystemMetrics(SM_CYBORDER);
+        Caret.hBrush = CreateSolidBrush(bitmap ?
+                                          GetSysColor(COLOR_GRAYTEXT) :
+                                          GetSysColor(COLOR_WINDOW) );
     }
 
     Caret.hwnd = hwnd;
@@ -168,7 +168,7 @@ BOOL32 WINAPI CreateCaret32( HWND32 hwnd, HBITMAP32 bitmap,
     Caret.x = 0;
     Caret.y = 0;
 
-    Caret.timeout = GetProfileInt32A( "windows", "CursorBlinkRate", 500 );
+    Caret.timeout = GetProfileIntA( "windows", "CursorBlinkRate", 500 );
     return TRUE;
 }
    
@@ -178,14 +178,14 @@ BOOL32 WINAPI CreateCaret32( HWND32 hwnd, HBITMAP32 bitmap,
  */
 void WINAPI DestroyCaret16(void)
 {
-    DestroyCaret32();
+    DestroyCaret();
 }
 
 
 /*****************************************************************
  *           DestroyCaret32   (USER32.131)
  */
-BOOL32 WINAPI DestroyCaret32(void)
+BOOL WINAPI DestroyCaret(void)
 {
     if (!Caret.hwnd) return FALSE;
 
@@ -194,7 +194,7 @@ BOOL32 WINAPI DestroyCaret32(void)
 
     CARET_KillTimer();
     CARET_DisplayCaret(CARET_OFF);
-    DeleteObject32( Caret.hBrush );
+    DeleteObject( Caret.hBrush );
     Caret.hwnd = 0;
     return TRUE;
 }
@@ -205,14 +205,14 @@ BOOL32 WINAPI DestroyCaret32(void)
  */
 void WINAPI SetCaretPos16( INT16 x, INT16 y )
 {
-    SetCaretPos32( x, y );
+    SetCaretPos( x, y );
 }
 
 
 /*****************************************************************
  *           SetCaretPos32   (USER32.466)
  */
-BOOL32 WINAPI SetCaretPos32( INT32 x, INT32 y)
+BOOL WINAPI SetCaretPos( INT x, INT y)
 {
     if (!Caret.hwnd) return FALSE;
     if ((x == Caret.x) && (y == Caret.y)) return TRUE;
@@ -237,14 +237,14 @@ BOOL32 WINAPI SetCaretPos32( INT32 x, INT32 y)
  */
 void WINAPI HideCaret16( HWND16 hwnd )
 {
-    HideCaret32( hwnd );
+    HideCaret( hwnd );
 }
 
 
 /*****************************************************************
  *           HideCaret32   (USER32.317)
  */
-BOOL32 WINAPI HideCaret32( HWND32 hwnd )
+BOOL WINAPI HideCaret( HWND hwnd )
 {
     if (!Caret.hwnd) return FALSE;
     if (hwnd && (Caret.hwnd != hwnd)) return FALSE;
@@ -264,14 +264,14 @@ BOOL32 WINAPI HideCaret32( HWND32 hwnd )
  */
 void WINAPI ShowCaret16( HWND16 hwnd )
 {
-    ShowCaret32( hwnd );
+    ShowCaret( hwnd );
 }
 
 
 /*****************************************************************
  *           ShowCaret32   (USER32.529)
  */
-BOOL32 WINAPI ShowCaret32( HWND32 hwnd )
+BOOL WINAPI ShowCaret( HWND hwnd )
 {
     if (!Caret.hwnd) return FALSE;
     if (hwnd && (Caret.hwnd != hwnd)) return FALSE;
@@ -297,13 +297,13 @@ BOOL32 WINAPI ShowCaret32( HWND32 hwnd )
  */
 void WINAPI SetCaretBlinkTime16( UINT16 msecs )
 {
-    SetCaretBlinkTime32( msecs );
+    SetCaretBlinkTime( msecs );
 }
 
 /*****************************************************************
  *           SetCaretBlinkTime32   (USER32.465)
  */
-BOOL32 WINAPI SetCaretBlinkTime32( UINT32 msecs )
+BOOL WINAPI SetCaretBlinkTime( UINT msecs )
 {
     if (!Caret.hwnd) return FALSE;
 
@@ -321,14 +321,14 @@ BOOL32 WINAPI SetCaretBlinkTime32( UINT32 msecs )
  */
 UINT16 WINAPI GetCaretBlinkTime16(void)
 {
-    return (UINT16)GetCaretBlinkTime32();
+    return (UINT16)GetCaretBlinkTime();
 }
 
 
 /*****************************************************************
  *           GetCaretBlinkTime32   (USER32.209)
  */
-UINT32 WINAPI GetCaretBlinkTime32(void)
+UINT WINAPI GetCaretBlinkTime(void)
 {
     return Caret.timeout;
 }
@@ -351,7 +351,7 @@ VOID WINAPI GetCaretPos16( LPPOINT16 pt )
 /*****************************************************************
  *           GetCaretPos32   (USER32.210)
  */
-BOOL32 WINAPI GetCaretPos32( LPPOINT32 pt )
+BOOL WINAPI GetCaretPos( LPPOINT pt )
 {
     if (!Caret.hwnd || !pt) return FALSE;
     pt->x = Caret.x;

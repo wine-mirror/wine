@@ -1,20 +1,20 @@
 name	wprocs
 type	win16
 
-14 pascal FileOpenDlgProc(word word word long) FileOpenDlgProc
-15 pascal FileSaveDlgProc(word word word long) FileSaveDlgProc
-16 pascal ColorDlgProc(word word word long) ColorDlgProc
+14 pascal FileOpenDlgProc(word word word long) FileOpenDlgProc16
+15 pascal FileSaveDlgProc(word word word long) FileSaveDlgProc16
+16 pascal ColorDlgProc(word word word long) ColorDlgProc16
 17 pascal FindTextDlgProc(word word word long) FindTextDlgProc16
 18 pascal ReplaceTextDlgProc(word word word long) ReplaceTextDlgProc16
-19 pascal PrintSetupDlgProc(word word word long) PrintSetupDlgProc
-20 pascal PrintDlgProc(word word word long) PrintDlgProc
+19 pascal PrintSetupDlgProc(word word word long) PrintSetupDlgProc16
+20 pascal PrintDlgProc(word word word long) PrintDlgProc16
 24 pascal16 TASK_Reschedule() TASK_Reschedule
 27 pascal EntryAddrProc(word word) NE_GetEntryPoint
 28 pascal MyAlloc(word word word) NE_AllocateSegment
 29 pascal DefResourceHandler(word word word) NE_DefResourceHandler
 30 pascal FormatCharDlgProc(word word word long) FormatCharDlgProc16
-31 pascal LoadDIBIconHandler(word word word) LoadDIBIconHandler
-32 pascal LoadDIBCursorHandler(word word word) LoadDIBCursorHandler
+31 pascal LoadDIBIconHandler(word word word) LoadDIBIconHandler16
+32 pascal LoadDIBCursorHandler(word word word) LoadDIBCursorHandler16
  
 # Interrupt vectors 0-255 are ordinals 100-355
 # The 'word' parameter are the flags pushed on the stack by the interrupt
@@ -111,7 +111,7 @@ type	win16
 189 register INT_Int59Handler(word) BUILTIN_DefaultIntHandler
 190 register INT_Int5aHandler(word) BUILTIN_DefaultIntHandler
 191 register INT_Int5bHandler(word) BUILTIN_DefaultIntHandler
-192 register INT_Int5cHandler(word) NetBIOSCall
+192 register INT_Int5cHandler(word) NetBIOSCall16
 193 register INT_Int5dHandler(word) BUILTIN_DefaultIntHandler
 194 register INT_Int5eHandler(word) BUILTIN_DefaultIntHandler
 195 register INT_Int5fHandler(word) BUILTIN_DefaultIntHandler

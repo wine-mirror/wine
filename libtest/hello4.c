@@ -30,7 +30,7 @@ LRESULT WndProc (HWND wnd, UINT msg, WPARAM w, LPARAM l)
     case WM_HSCROLL:
     case WM_VSCROLL:
 	InvalidateRect(wnd, &rectHola, TRUE );
-        ScrollChildren32(wnd, msg, w, l);
+        ScrollChildren(wnd, msg, w, l);
         return 0;
 
     case WM_PAINT:
@@ -81,7 +81,7 @@ LRESULT WndProc2 (HWND wnd, UINT msg, WPARAM w, LPARAM l)
     case WM_MOVE:
     case WM_SIZE:
 	InvalidateRect( wnd, &rectInfo, TRUE );
-	CalcChildScroll( (UINT16)GetParent(wnd), SB_BOTH );
+	CalcChildScroll16( (UINT16)GetParent(wnd), SB_BOTH );
 	break;
 
     case WM_DESTROY:

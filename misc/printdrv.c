@@ -55,7 +55,7 @@ INT16 WINAPI EndPage16( HDC16 hdc )
  *                  StartDoc32A  [GDI32.347]
  *
  */
-INT32 WINAPI StartDoc32A(HDC32 hdc ,const DOCINFO32A* doc)
+INT WINAPI StartDocA(HDC hdc ,const DOCINFOA* doc)
 {
   FIXME(gdi,"stub\n");
   SetLastError(ERROR_CALL_NOT_IMPLEMENTED); 
@@ -66,7 +66,7 @@ INT32 WINAPI StartDoc32A(HDC32 hdc ,const DOCINFO32A* doc)
  *                  StartDoc32W [GDI32.348]
  * 
  */
-INT32 WINAPI StartDoc32W(HDC32 hdc, const DOCINFO32W* doc) {
+INT WINAPI StartDocW(HDC hdc, const DOCINFOW* doc) {
   FIXME(gdi,"stub\n");
   SetLastError(ERROR_CALL_NOT_IMPLEMENTED); 
   return 0; /* failure*/
@@ -76,7 +76,7 @@ INT32 WINAPI StartDoc32W(HDC32 hdc, const DOCINFO32W* doc) {
  *                  StartPage32  [GDI32.349]
  *
  */
-INT32 WINAPI StartPage32(HDC32 hdc)
+INT WINAPI StartPage(HDC hdc)
 {
   FIXME(gdi,"stub\n");
   SetLastError(ERROR_CALL_NOT_IMPLEMENTED); 
@@ -87,7 +87,7 @@ INT32 WINAPI StartPage32(HDC32 hdc)
  *                  EndPage32  [GDI32.77]
  *
  */
-INT32 WINAPI EndPage32(HDC32 hdc)
+INT WINAPI EndPage(HDC hdc)
 {
   FIXME(gdi,"stub\n");
   SetLastError(ERROR_CALL_NOT_IMPLEMENTED); 
@@ -107,7 +107,7 @@ INT16 WINAPI EndDoc16(HDC16 hdc)
  *                  EndDoc32  [GDI32.76]
  *
  */
-INT32 WINAPI EndDoc32(HDC32 hdc)
+INT WINAPI EndDoc(HDC hdc)
 {
   FIXME(gdi,"stub\n");
   SetLastError(ERROR_CALL_NOT_IMPLEMENTED); 
@@ -125,7 +125,7 @@ INT16 WINAPI AbortDoc16(HDC16 hdc)
 /******************************************************************************
  *                 AbortDoc32  [GDI32.0]
  */
-INT32 WINAPI AbortDoc32(HDC32 hdc)
+INT WINAPI AbortDoc(HDC hdc)
 {
     FIXME(gdi, "(%d): stub\n", hdc);
     return 1;
@@ -143,21 +143,21 @@ LPBYTE lpPrinterData, int cbData, int what)
     HKEY hkey;
     DWORD dwType, cbQueryData;
 
-    if (!(RegOpenKey32A(HKEY_LOCAL_MACHINE, RegStr_Printer, &hkey))) {
+    if (!(RegOpenKeyA(HKEY_LOCAL_MACHINE, RegStr_Printer, &hkey))) {
         if (what == INT_PD_DEFAULT_DEVMODE) { /* "Default DevMode" */
-            if (!(RegQueryValueEx32A(hkey, DefaultDevMode, 0, &dwType, 0, &cbQueryData))) {
+            if (!(RegQueryValueExA(hkey, DefaultDevMode, 0, &dwType, 0, &cbQueryData))) {
                 if (!lpPrinterData)
 		    res = cbQueryData;
 		else if ((cbQueryData) && (cbQueryData <= cbData)) {
 		    cbQueryData = cbData;
-		    if (RegQueryValueEx32A(hkey, DefaultDevMode, 0,
+		    if (RegQueryValueExA(hkey, DefaultDevMode, 0,
 				&dwType, lpPrinterData, &cbQueryData))
 		        res = cbQueryData;
 		}
 	    }
 	} else { /* "Printer Driver" */
 	    cbQueryData = 32;
-	    RegQueryValueEx32A(hkey, "Printer Driver", 0,
+	    RegQueryValueExA(hkey, "Printer Driver", 0,
 			&dwType, lpPrinterData, &cbQueryData);
 	    res = cbQueryData;
 	}
@@ -170,7 +170,7 @@ LPBYTE lpPrinterData, int cbData, int what)
  *                DrvGetPrinterData     [GDI.282]
  *
  */
-DWORD WINAPI DrvGetPrinterData(LPSTR lpPrinter, LPSTR lpProfile,
+DWORD WINAPI DrvGetPrinterData16(LPSTR lpPrinter, LPSTR lpProfile,
                                LPDWORD lpType, LPBYTE lpPrinterData,
                                int cbData, LPDWORD lpNeeded)
 {
@@ -226,16 +226,16 @@ DWORD WINAPI DrvGetPrinterData(LPSTR lpPrinter, LPSTR lpProfile,
     }
     else
     {
-	if ((res = RegOpenKey32A(HKEY_LOCAL_MACHINE, RegStr_Printer, &hkey)))
+	if ((res = RegOpenKeyA(HKEY_LOCAL_MACHINE, RegStr_Printer, &hkey)))
 	    goto failed;
         cbPrinterAttr = 4;
-        if ((res = RegQueryValueEx32A(hkey, "Attributes", 0,
+        if ((res = RegQueryValueExA(hkey, "Attributes", 0,
                         &dwType, (LPBYTE)&PrinterAttr, &cbPrinterAttr)))
 	    goto failed;
-	if ((res = RegOpenKey32A(hkey, PrinterDriverData, &hkey2)))
+	if ((res = RegOpenKeyA(hkey, PrinterDriverData, &hkey2)))
 	    goto failed;
         *lpNeeded = cbData;
-        res = RegQueryValueEx32A(hkey2, lpProfile, 0,
+        res = RegQueryValueExA(hkey2, lpProfile, 0,
                 lpType, lpPrinterData, lpNeeded);
         if ((res != ERROR_CANTREAD) &&
          ((PrinterAttr &
@@ -248,7 +248,7 @@ DWORD WINAPI DrvGetPrinterData(LPSTR lpPrinter, LPSTR lpProfile,
 	else
         {
 	    SetData = -1;
-	    RegSetValueEx32A(hkey2, lpProfile, 0, REG_DWORD, (LPBYTE)&SetData, 4); /* no result returned */
+	    RegSetValueExA(hkey2, lpProfile, 0, REG_DWORD, (LPBYTE)&SetData, 4); /* no result returned */
 	}
     }
 	
@@ -264,7 +264,7 @@ failed:
  *                 DrvSetPrinterData     [GDI.281]
  *
  */
-DWORD WINAPI DrvSetPrinterData(LPSTR lpPrinter, LPSTR lpProfile,
+DWORD WINAPI DrvSetPrinterData16(LPSTR lpPrinter, LPSTR lpProfile,
                                DWORD lpType, LPBYTE lpPrinterData,
                                DWORD dwSize)
 {
@@ -294,9 +294,9 @@ DWORD WINAPI DrvSetPrinterData(LPSTR lpPrinter, LPSTR lpProfile,
 
     if (((DWORD)lpProfile == INT_PD_DEFAULT_DEVMODE) || (HIWORD(lpProfile) &&
     (!strcmp(lpProfile, DefaultDevMode)))) {
-	if ( RegOpenKey32A(HKEY_LOCAL_MACHINE, RegStr_Printer, &hkey) 
+	if ( RegOpenKeyA(HKEY_LOCAL_MACHINE, RegStr_Printer, &hkey) 
 	     != ERROR_SUCCESS ||
-	     RegSetValueEx32A(hkey, DefaultDevMode, 0, REG_BINARY, 
+	     RegSetValueExA(hkey, DefaultDevMode, 0, REG_BINARY, 
 			      lpPrinterData, dwSize) != ERROR_SUCCESS )
 	        res = ERROR_INVALID_PRINTER_NAME;
     }
@@ -304,13 +304,13 @@ DWORD WINAPI DrvSetPrinterData(LPSTR lpPrinter, LPSTR lpProfile,
     {
 	strcat(RegStr_Printer, "\\");
 
-	if( (res = RegOpenKey32A(HKEY_LOCAL_MACHINE, RegStr_Printer, &hkey)) ==
+	if( (res = RegOpenKeyA(HKEY_LOCAL_MACHINE, RegStr_Printer, &hkey)) ==
 	    ERROR_SUCCESS ) {
 
 	    if (!lpPrinterData) 
-	        res = RegDeleteValue32A(hkey, lpProfile);
+	        res = RegDeleteValueA(hkey, lpProfile);
 	    else
-                res = RegSetValueEx32A(hkey, lpProfile, 0, lpType,
+                res = RegSetValueExA(hkey, lpProfile, 0, lpType,
 				       lpPrinterData, dwSize);
 	}
     }
@@ -325,8 +325,8 @@ DWORD WINAPI DrvSetPrinterData(LPSTR lpPrinter, LPSTR lpProfile,
  *              DeviceCapabilities32A    [WINSPOOL.151]
  *
  */
-INT32 WINAPI DeviceCapabilities32A(LPCSTR printer,LPCSTR target,WORD z,
-                                   LPSTR a,LPDEVMODE32A b)
+INT WINAPI DeviceCapabilitiesA(LPCSTR printer,LPCSTR target,WORD z,
+                                   LPSTR a,LPDEVMODEA b)
 {
     FIXME(print,"(%s,%s,%d,%p,%p):stub.\n",printer,target,z,a,b);
     return 1;   	
@@ -336,9 +336,9 @@ INT32 WINAPI DeviceCapabilities32A(LPCSTR printer,LPCSTR target,WORD z,
 /*****************************************************************************
  *          DeviceCapabilities32W 
  */
-INT32 WINAPI DeviceCapabilities32W(LPCWSTR pDevice, LPCWSTR pPort,
+INT WINAPI DeviceCapabilitiesW(LPCWSTR pDevice, LPCWSTR pPort,
                                    WORD fwCapability, LPWSTR pOutput,
-                                   const DEVMODE32W *pDevMode)
+                                   const DEVMODEW *pDevMode)
 {
     FIXME(print,"(%p,%p,%d,%p,%p): stub\n",
           pDevice, pPort, fwCapability, pOutput, pDevMode);
@@ -349,9 +349,9 @@ INT32 WINAPI DeviceCapabilities32W(LPCWSTR pDevice, LPCWSTR pPort,
  *              DocumentProperties32A   [WINSPOOL.155]
  *
  */
-LONG WINAPI DocumentProperties32A(HWND32 hWnd,HANDLE32 hPrinter,
-                                LPSTR pDeviceName, LPDEVMODE32A pDevModeOutput,
-                                  LPDEVMODE32A pDevModeInput,DWORD fMode )
+LONG WINAPI DocumentPropertiesA(HWND hWnd,HANDLE hPrinter,
+                                LPSTR pDeviceName, LPDEVMODEA pDevModeOutput,
+                                  LPDEVMODEA pDevModeInput,DWORD fMode )
 {
     FIXME(print,"(%d,%d,%s,%p,%p,%ld):stub.\n",
 	hWnd,hPrinter,pDeviceName,pDevModeOutput,pDevModeInput,fMode
@@ -363,10 +363,10 @@ LONG WINAPI DocumentProperties32A(HWND32 hWnd,HANDLE32 hPrinter,
 /*****************************************************************************
  *          DocumentProperties32W 
  */
-LONG WINAPI DocumentProperties32W(HWND32 hWnd, HANDLE32 hPrinter,
+LONG WINAPI DocumentPropertiesW(HWND hWnd, HANDLE hPrinter,
                                   LPWSTR pDeviceName,
-                                  LPDEVMODE32W pDevModeOutput,
-                                  LPDEVMODE32W pDevModeInput, DWORD fMode)
+                                  LPDEVMODEW pDevModeOutput,
+                                  LPDEVMODEW pDevModeInput, DWORD fMode)
 {
     FIXME(print,"(%d,%d,%s,%p,%p,%ld): stub\n",
           hWnd,hPrinter,debugstr_w(pDeviceName),pDevModeOutput,pDevModeInput,
@@ -379,8 +379,8 @@ LONG WINAPI DocumentProperties32W(HWND32 hWnd, HANDLE32 hPrinter,
  *              OpenPrinter32A        [WINSPOOL.196]
  *
  */
-BOOL32 WINAPI OpenPrinter32A(LPSTR lpPrinterName,HANDLE32 *phPrinter,
-			     LPPRINTER_DEFAULTS32A pDefault)
+BOOL WINAPI OpenPrinterA(LPSTR lpPrinterName,HANDLE *phPrinter,
+			     LPPRINTER_DEFAULTSA pDefault)
 {
     FIXME(print,"(%s,%p,%p):stub\n",debugstr_a(lpPrinterName), phPrinter,
           pDefault);
@@ -392,8 +392,8 @@ BOOL32 WINAPI OpenPrinter32A(LPSTR lpPrinterName,HANDLE32 *phPrinter,
  *              OpenPrinter32W        [WINSPOOL.197]
  *
  */
-BOOL32 WINAPI OpenPrinter32W(LPWSTR lpPrinterName,HANDLE32 *phPrinter,
-			     LPPRINTER_DEFAULTS32W pDefault)
+BOOL WINAPI OpenPrinterW(LPWSTR lpPrinterName,HANDLE *phPrinter,
+			     LPPRINTER_DEFAULTSW pDefault)
 {
     FIXME(print,"(%s,%p,%p):stub\n",debugstr_w(lpPrinterName), phPrinter,
           pDefault);
@@ -405,7 +405,7 @@ BOOL32 WINAPI OpenPrinter32W(LPWSTR lpPrinterName,HANDLE32 *phPrinter,
  *              EnumPrinters32A        [WINSPOOL.174]
  *
  */
-BOOL32  WINAPI EnumPrinters32A(DWORD dwType, LPSTR lpszName,
+BOOL  WINAPI EnumPrintersA(DWORD dwType, LPSTR lpszName,
 			       DWORD dwLevel, LPBYTE lpbPrinters,
 			       DWORD cbBuf, LPDWORD lpdwNeeded,
 			       LPDWORD lpdwReturned)
@@ -420,7 +420,7 @@ BOOL32  WINAPI EnumPrinters32A(DWORD dwType, LPSTR lpszName,
  *              EnumPrinters32W        [WINSPOOL.175]
  *
  */
-BOOL32  WINAPI EnumPrinters32W(DWORD dwType, LPWSTR lpszName,
+BOOL  WINAPI EnumPrintersW(DWORD dwType, LPWSTR lpszName,
 			       DWORD dwLevel, LPBYTE lpbPrinters,
 			       DWORD cbBuf, LPDWORD lpdwNeeded,
 			       LPDWORD lpdwReturned)
@@ -435,7 +435,7 @@ BOOL32  WINAPI EnumPrinters32W(DWORD dwType, LPWSTR lpszName,
  *              AddMonitor32A        [WINSPOOL.107]
  *
  */
-BOOL32 WINAPI AddMonitor32A(LPCSTR pName, DWORD Level, LPBYTE pMonitors)
+BOOL WINAPI AddMonitorA(LPCSTR pName, DWORD Level, LPBYTE pMonitors)
 {
     FIXME(print, "(%s,%lx,%p):stub!\n", pName, Level, pMonitors);
     SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
@@ -446,8 +446,8 @@ BOOL32 WINAPI AddMonitor32A(LPCSTR pName, DWORD Level, LPBYTE pMonitors)
  *              DeletePrinterDriver32A        [WINSPOOL.146]
  *
  */
-BOOL32 WINAPI
-DeletePrinterDriver32A (LPSTR pName, LPSTR pEnvironment, LPSTR pDriverName)
+BOOL WINAPI
+DeletePrinterDriverA (LPSTR pName, LPSTR pEnvironment, LPSTR pDriverName)
 {
     FIXME(print,"(%s,%s,%s):stub\n",debugstr_a(pName),debugstr_a(pEnvironment),
           debugstr_a(pDriverName));
@@ -460,8 +460,8 @@ DeletePrinterDriver32A (LPSTR pName, LPSTR pEnvironment, LPSTR pDriverName)
  *              DeleteMonitor32A        [WINSPOOL.135]
  *
  */
-BOOL32 WINAPI
-DeleteMonitor32A (LPSTR pName, LPSTR pEnvironment, LPSTR pMonitorName)
+BOOL WINAPI
+DeleteMonitorA (LPSTR pName, LPSTR pEnvironment, LPSTR pMonitorName)
 {
     FIXME(print,"(%s,%s,%s):stub\n",debugstr_a(pName),debugstr_a(pEnvironment),
           debugstr_a(pMonitorName));
@@ -474,8 +474,8 @@ DeleteMonitor32A (LPSTR pName, LPSTR pEnvironment, LPSTR pMonitorName)
  *              DeletePort32A        [WINSPOOL.137]
  *
  */
-BOOL32 WINAPI
-DeletePort32A (LPSTR pName, HWND32 hWnd, LPSTR pPortName)
+BOOL WINAPI
+DeletePortA (LPSTR pName, HWND hWnd, LPSTR pPortName)
 {
     FIXME(print,"(%s,0x%08x,%s):stub\n",debugstr_a(pName),hWnd,
           debugstr_a(pPortName));
@@ -486,9 +486,9 @@ DeletePort32A (LPSTR pName, HWND32 hWnd, LPSTR pPortName)
 /******************************************************************************
  *    SetPrinter32W  [WINSPOOL.214]
  */
-BOOL32 WINAPI
-SetPrinter32W(
-  HANDLE32  hPrinter,
+BOOL WINAPI
+SetPrinterW(
+  HANDLE  hPrinter,
   DWORD     Level,
   LPBYTE    pPrinter,
   DWORD     Command) {
@@ -501,9 +501,9 @@ SetPrinter32W(
 /******************************************************************************
  *    WritePrinter32  [WINSPOOL.223]
  */
-BOOL32 WINAPI
-WritePrinter32( 
-  HANDLE32  hPrinter,
+BOOL WINAPI
+WritePrinter( 
+  HANDLE  hPrinter,
   LPVOID  pBuf,
   DWORD   cbBuf,
   LPDWORD pcWritten) {
@@ -516,7 +516,7 @@ WritePrinter32(
 /*****************************************************************************
  *          AddForm32A  [WINSPOOL.103]
  */
-BOOL32 WINAPI AddForm32A(HANDLE32 hPrinter, DWORD Level, LPBYTE pForm)
+BOOL WINAPI AddFormA(HANDLE hPrinter, DWORD Level, LPBYTE pForm)
 {
     FIXME(print, "(%d,%ld,%p): stub\n", hPrinter, Level, pForm);
     return 1;
@@ -525,7 +525,7 @@ BOOL32 WINAPI AddForm32A(HANDLE32 hPrinter, DWORD Level, LPBYTE pForm)
 /*****************************************************************************
  *          AddForm32W  [WINSPOOL.104]
  */
-BOOL32 WINAPI AddForm32W(HANDLE32 hPrinter, DWORD Level, LPBYTE pForm)
+BOOL WINAPI AddFormW(HANDLE hPrinter, DWORD Level, LPBYTE pForm)
 {
     FIXME(print, "(%d,%ld,%p): stub\n", hPrinter, Level, pForm);
     return 1;
@@ -534,7 +534,7 @@ BOOL32 WINAPI AddForm32W(HANDLE32 hPrinter, DWORD Level, LPBYTE pForm)
 /*****************************************************************************
  *          AddJob32A  [WINSPOOL.105]
  */
-BOOL32 WINAPI AddJob32A(HANDLE32 hPrinter, DWORD Level, LPBYTE pData,
+BOOL WINAPI AddJobA(HANDLE hPrinter, DWORD Level, LPBYTE pData,
                         DWORD cbBuf, LPDWORD pcbNeeded)
 {
     FIXME(print, "(%d,%ld,%p,%ld,%p): stub\n", hPrinter, Level, pData, cbBuf,
@@ -545,7 +545,7 @@ BOOL32 WINAPI AddJob32A(HANDLE32 hPrinter, DWORD Level, LPBYTE pData,
 /*****************************************************************************
  *          AddJob32W  [WINSPOOL.106]
  */
-BOOL32 WINAPI AddJob32W(HANDLE32 hPrinter, DWORD Level, LPBYTE pData, DWORD cbBuf,
+BOOL WINAPI AddJobW(HANDLE hPrinter, DWORD Level, LPBYTE pData, DWORD cbBuf,
                         LPDWORD pcbNeeded)
 {
     FIXME(print, "(%d,%ld,%p,%ld,%p): stub\n", hPrinter, Level, pData, cbBuf,
@@ -556,7 +556,7 @@ BOOL32 WINAPI AddJob32W(HANDLE32 hPrinter, DWORD Level, LPBYTE pData, DWORD cbBu
 /*****************************************************************************
  *          AddPrinter32A  [WINSPOOL.117]
  */
-HANDLE32 WINAPI AddPrinter32A(LPSTR pName, DWORD Level, LPBYTE pPrinter)
+HANDLE WINAPI AddPrinterA(LPSTR pName, DWORD Level, LPBYTE pPrinter)
 {
     FIXME(print, "(%s,%ld,%p): stub\n", pName, Level, pPrinter);
     return 0;
@@ -565,7 +565,7 @@ HANDLE32 WINAPI AddPrinter32A(LPSTR pName, DWORD Level, LPBYTE pPrinter)
 /*****************************************************************************
  *          AddPrinter32W  [WINSPOOL.122]
  */
-HANDLE32 WINAPI AddPrinter32W(LPWSTR pName, DWORD Level, LPBYTE pPrinter)
+HANDLE WINAPI AddPrinterW(LPWSTR pName, DWORD Level, LPBYTE pPrinter)
 {
     FIXME(print, "(%p,%ld,%p): stub\n", pName, Level, pPrinter);
     return 0;
@@ -575,7 +575,7 @@ HANDLE32 WINAPI AddPrinter32W(LPWSTR pName, DWORD Level, LPBYTE pPrinter)
 /*****************************************************************************
  *          ClosePrinter32  [WINSPOOL.126]
  */
-BOOL32 WINAPI ClosePrinter32(HANDLE32 hPrinter)
+BOOL WINAPI ClosePrinter(HANDLE hPrinter)
 {
     FIXME(print, "(%d): stub\n", hPrinter);
     return 1;
@@ -584,7 +584,7 @@ BOOL32 WINAPI ClosePrinter32(HANDLE32 hPrinter)
 /*****************************************************************************
  *          DeleteForm32A  [WINSPOOL.133]
  */
-BOOL32 WINAPI DeleteForm32A(HANDLE32 hPrinter, LPSTR pFormName)
+BOOL WINAPI DeleteFormA(HANDLE hPrinter, LPSTR pFormName)
 {
     FIXME(print, "(%d,%s): stub\n", hPrinter, pFormName);
     return 1;
@@ -593,7 +593,7 @@ BOOL32 WINAPI DeleteForm32A(HANDLE32 hPrinter, LPSTR pFormName)
 /*****************************************************************************
  *          DeleteForm32W  [WINSPOOL.134]
  */
-BOOL32 WINAPI DeleteForm32W(HANDLE32 hPrinter, LPWSTR pFormName)
+BOOL WINAPI DeleteFormW(HANDLE hPrinter, LPWSTR pFormName)
 {
     FIXME(print, "(%d,%s): stub\n", hPrinter, debugstr_w(pFormName));
     return 1;
@@ -602,7 +602,7 @@ BOOL32 WINAPI DeleteForm32W(HANDLE32 hPrinter, LPWSTR pFormName)
 /*****************************************************************************
  *          DeletePrinter32  [WINSPOOL.143]
  */
-BOOL32 WINAPI DeletePrinter32(HANDLE32 hPrinter)
+BOOL WINAPI DeletePrinter(HANDLE hPrinter)
 {
     FIXME(print, "(%d): stub\n", hPrinter);
     return 1;
@@ -611,7 +611,7 @@ BOOL32 WINAPI DeletePrinter32(HANDLE32 hPrinter)
 /*****************************************************************************
  *          SetPrinter32A  [WINSPOOL.211]
  */
-BOOL32 WINAPI SetPrinter32A(HANDLE32 hPrinter, DWORD Level, LPBYTE pPrinter,
+BOOL WINAPI SetPrinterA(HANDLE hPrinter, DWORD Level, LPBYTE pPrinter,
                            DWORD Command)
 {
     FIXME(print, "(%d,%ld,%p,%ld): stub\n",hPrinter,Level,pPrinter,Command);
@@ -621,7 +621,7 @@ BOOL32 WINAPI SetPrinter32A(HANDLE32 hPrinter, DWORD Level, LPBYTE pPrinter,
 /*****************************************************************************
  *          SetJob32A  [WINSPOOL.209]
  */
-BOOL32 WINAPI SetJob32A(HANDLE32 hPrinter, DWORD JobId, DWORD Level,
+BOOL WINAPI SetJobA(HANDLE hPrinter, DWORD JobId, DWORD Level,
                        LPBYTE pJob, DWORD Command)
 {
     FIXME(print, "(%d,%ld,%ld,%p,%ld): stub\n",hPrinter,JobId,Level,pJob,
@@ -632,7 +632,7 @@ BOOL32 WINAPI SetJob32A(HANDLE32 hPrinter, DWORD JobId, DWORD Level,
 /*****************************************************************************
  *          SetJob32W  [WINSPOOL.210]
  */
-BOOL32 WINAPI SetJob32W(HANDLE32 hPrinter, DWORD JobId, DWORD Level,
+BOOL WINAPI SetJobW(HANDLE hPrinter, DWORD JobId, DWORD Level,
                        LPBYTE pJob, DWORD Command)
 {
     FIXME(print, "(%d,%ld,%ld,%p,%ld): stub\n",hPrinter,JobId,Level,pJob,
@@ -643,7 +643,7 @@ BOOL32 WINAPI SetJob32W(HANDLE32 hPrinter, DWORD JobId, DWORD Level,
 /*****************************************************************************
  *          GetForm32A  [WINSPOOL.181]
  */
-BOOL32 WINAPI GetForm32A(HANDLE32 hPrinter, LPSTR pFormName, DWORD Level,
+BOOL WINAPI GetFormA(HANDLE hPrinter, LPSTR pFormName, DWORD Level,
                  LPBYTE pForm, DWORD cbBuf, LPDWORD pcbNeeded)
 {
     FIXME(print, "(%d,%s,%ld,%p,%ld,%p): stub\n",hPrinter,pFormName,
@@ -654,7 +654,7 @@ BOOL32 WINAPI GetForm32A(HANDLE32 hPrinter, LPSTR pFormName, DWORD Level,
 /*****************************************************************************
  *          GetForm32W  [WINSPOOL.182]
  */
-BOOL32 WINAPI GetForm32W(HANDLE32 hPrinter, LPWSTR pFormName, DWORD Level,
+BOOL WINAPI GetFormW(HANDLE hPrinter, LPWSTR pFormName, DWORD Level,
                  LPBYTE pForm, DWORD cbBuf, LPDWORD pcbNeeded)
 {
     FIXME(print, "(%d,%s,%ld,%p,%ld,%p): stub\n",hPrinter,
@@ -665,7 +665,7 @@ BOOL32 WINAPI GetForm32W(HANDLE32 hPrinter, LPWSTR pFormName, DWORD Level,
 /*****************************************************************************
  *          SetForm32A  [WINSPOOL.207]
  */
-BOOL32 WINAPI SetForm32A(HANDLE32 hPrinter, LPSTR pFormName, DWORD Level,
+BOOL WINAPI SetFormA(HANDLE hPrinter, LPSTR pFormName, DWORD Level,
                         LPBYTE pForm)
 {
     FIXME(print, "(%d,%s,%ld,%p): stub\n",hPrinter,pFormName,Level,pForm);
@@ -675,7 +675,7 @@ BOOL32 WINAPI SetForm32A(HANDLE32 hPrinter, LPSTR pFormName, DWORD Level,
 /*****************************************************************************
  *          SetForm32W  [WINSPOOL.208]
  */
-BOOL32 WINAPI SetForm32W(HANDLE32 hPrinter, LPWSTR pFormName, DWORD Level,
+BOOL WINAPI SetFormW(HANDLE hPrinter, LPWSTR pFormName, DWORD Level,
                         LPBYTE pForm)
 {
     FIXME(print, "(%d,%p,%ld,%p): stub\n",hPrinter,pFormName,Level,pForm);
@@ -685,7 +685,7 @@ BOOL32 WINAPI SetForm32W(HANDLE32 hPrinter, LPWSTR pFormName, DWORD Level,
 /*****************************************************************************
  *          ReadPrinter32  [WINSPOOL.202]
  */
-BOOL32 WINAPI ReadPrinter32(HANDLE32 hPrinter, LPVOID pBuf, DWORD cbBuf,
+BOOL WINAPI ReadPrinter(HANDLE hPrinter, LPVOID pBuf, DWORD cbBuf,
                            LPDWORD pNoBytesRead)
 {
     FIXME(print, "(%d,%p,%ld,%p): stub\n",hPrinter,pBuf,cbBuf,pNoBytesRead);
@@ -695,7 +695,7 @@ BOOL32 WINAPI ReadPrinter32(HANDLE32 hPrinter, LPVOID pBuf, DWORD cbBuf,
 /*****************************************************************************
  *          ResetPrinter32A  [WINSPOOL.203]
  */
-BOOL32 WINAPI ResetPrinter32A(HANDLE32 hPrinter, LPPRINTER_DEFAULTS32A pDefault)
+BOOL WINAPI ResetPrinterA(HANDLE hPrinter, LPPRINTER_DEFAULTSA pDefault)
 {
     FIXME(print, "(%d, %p): stub\n", hPrinter, pDefault);
     return FALSE;
@@ -704,7 +704,7 @@ BOOL32 WINAPI ResetPrinter32A(HANDLE32 hPrinter, LPPRINTER_DEFAULTS32A pDefault)
 /*****************************************************************************
  *          ResetPrinter32W  [WINSPOOL.204]
  */
-BOOL32 WINAPI ResetPrinter32W(HANDLE32 hPrinter, LPPRINTER_DEFAULTS32W pDefault)
+BOOL WINAPI ResetPrinterW(HANDLE hPrinter, LPPRINTER_DEFAULTSW pDefault)
 {
     FIXME(print, "(%d, %p): stub\n", hPrinter, pDefault);
     return FALSE;
@@ -713,7 +713,7 @@ BOOL32 WINAPI ResetPrinter32W(HANDLE32 hPrinter, LPPRINTER_DEFAULTS32W pDefault)
 /*****************************************************************************
  *          GetPrinter32A  [WINSPOOL.187]
  */
-BOOL32 WINAPI GetPrinter32A(HANDLE32 hPrinter, DWORD Level, LPBYTE pPrinter,
+BOOL WINAPI GetPrinterA(HANDLE hPrinter, DWORD Level, LPBYTE pPrinter,
                     DWORD cbBuf, LPDWORD pcbNeeded)
 {
     FIXME(print, "(%d,%ld,%p,%ld,%p): stub\n", hPrinter, Level, pPrinter, 
@@ -724,7 +724,7 @@ BOOL32 WINAPI GetPrinter32A(HANDLE32 hPrinter, DWORD Level, LPBYTE pPrinter,
 /*****************************************************************************
  *          GetPrinter32W  [WINSPOOL.194]
  */
-BOOL32 WINAPI GetPrinter32W(HANDLE32 hPrinter, DWORD Level, LPBYTE pPrinter,
+BOOL WINAPI GetPrinterW(HANDLE hPrinter, DWORD Level, LPBYTE pPrinter,
                     DWORD cbBuf, LPDWORD pcbNeeded)
 {
     FIXME(print, "(%d,%ld,%p,%ld,%p): stub\n", hPrinter, Level, pPrinter,
@@ -735,7 +735,7 @@ BOOL32 WINAPI GetPrinter32W(HANDLE32 hPrinter, DWORD Level, LPBYTE pPrinter,
 /*****************************************************************************
  *          GetPrinterDriver32A  [WINSPOOL.190]
  */
-BOOL32 WINAPI GetPrinterDriver32A(HANDLE32 hPrinter, LPSTR pEnvironment,
+BOOL WINAPI GetPrinterDriverA(HANDLE hPrinter, LPSTR pEnvironment,
                                  DWORD Level, LPBYTE pDriverInfo,
                                  DWORD cbBuf, LPDWORD pcbNeeded)
 {
@@ -747,7 +747,7 @@ BOOL32 WINAPI GetPrinterDriver32A(HANDLE32 hPrinter, LPSTR pEnvironment,
 /*****************************************************************************
  *          GetPrinterDriver32W  [WINSPOOL.193]
  */
-BOOL32 WINAPI GetPrinterDriver32W(HANDLE32 hPrinter, LPWSTR pEnvironment,
+BOOL WINAPI GetPrinterDriverW(HANDLE hPrinter, LPWSTR pEnvironment,
                                   DWORD Level, LPBYTE pDriverInfo, 
                                   DWORD cbBuf, LPDWORD pcbNeeded)
 {
@@ -758,7 +758,7 @@ BOOL32 WINAPI GetPrinterDriver32W(HANDLE32 hPrinter, LPWSTR pEnvironment,
 /*****************************************************************************
  *          AddPrinterDriver32A  [WINSPOOL.120]
  */
-BOOL32 WINAPI AddPrinterDriver32A(LPSTR printerName,DWORD level, 
+BOOL WINAPI AddPrinterDriverA(LPSTR printerName,DWORD level, 
 				   LPBYTE pDriverInfo)
 {
     FIXME(print, "(%s,%ld,%p): stub\n",printerName,level,pDriverInfo);
@@ -767,7 +767,7 @@ BOOL32 WINAPI AddPrinterDriver32A(LPSTR printerName,DWORD level,
 /*****************************************************************************
  *          AddPrinterDriver32W  [WINSPOOL.121]
  */
-BOOL32 WINAPI AddPrinterDriver32W(LPWSTR printerName,DWORD level, 
+BOOL WINAPI AddPrinterDriverW(LPWSTR printerName,DWORD level, 
 				   LPBYTE pDriverInfo)
 {
     FIXME(print, "(%s,%ld,%p): stub\n",debugstr_w(printerName),

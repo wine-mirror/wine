@@ -83,7 +83,7 @@ static DWORD WAVE_NotifyClient(UINT16 wDevID, WORD wMsg,
 	if (wDevID > MAX_WAVEOUTDRV) return MCIERR_INTERNAL;
 	
 	if (WOutDev[wDevID].wFlags != DCB_NULL && 
-	    !DriverCallback(
+	    !DriverCallback16(
 								  WOutDev[wDevID].waveDesc.dwCallBack, 
 								  WOutDev[wDevID].wFlags, 
 								  WOutDev[wDevID].waveDesc.hWave, 
@@ -102,7 +102,7 @@ static DWORD WAVE_NotifyClient(UINT16 wDevID, WORD wMsg,
 	if (wDevID > MAX_WAVEINDRV) return MCIERR_INTERNAL;
 	
 	if (WInDev[wDevID].wFlags != DCB_NULL && 
-	    !DriverCallback(
+	    !DriverCallback16(
 			    WInDev[wDevID].waveDesc.dwCallBack, 
 			    WInDev[wDevID].wFlags, 
 			    WInDev[wDevID].waveDesc.hWave, 
@@ -1079,7 +1079,7 @@ LONG WAVE_DriverProc16(DWORD dwDevID, HDRVR16 hDriv, WORD wMsg,
 /**************************************************************************
  * 				WAVE_DriverProc32		[sample driver]
  */
-LONG WAVE_DriverProc32(DWORD dwDevID, HDRVR16 hDriv, DWORD wMsg, 
+LONG WAVE_DriverProc(DWORD dwDevID, HDRVR16 hDriv, DWORD wMsg, 
 		       DWORD dwParam1, DWORD dwParam2)
 {
     TRACE(wave,"(%08lX, %04X, %08lX, %08lX, %08lX)\n", dwDevID, hDriv, wMsg, dwParam1, dwParam2);
@@ -1096,7 +1096,7 @@ LONG WAVE_DriverProc32(DWORD dwDevID, HDRVR16 hDriv, DWORD wMsg,
     case DRV_REMOVE:		return DRVCNF_RESTART;
     default:
 	FIXME(wave, "is probably wrong msg=0x%04lx\n", wMsg);
-	return DefDriverProc32(dwDevID, hDriv, wMsg, dwParam1, dwParam2);
+	return DefDriverProc(dwDevID, hDriv, wMsg, dwParam1, dwParam2);
     }
     return MMSYSERR_NOTENABLED;
 }
@@ -1135,7 +1135,7 @@ LONG WAVE_DriverProc16(DWORD dwDevID, HDRVR16 hDriv, WORD wMsg,
 /**************************************************************************
  * 				WAVE_DriverProc32		[sample driver]
  */
-LONG WAVE_DriverProc32(DWORD dwDevID, HDRVR16 hDriv, DWORD wMsg, 
+LONG WAVE_DriverProc(DWORD dwDevID, HDRVR16 hDriv, DWORD wMsg, 
 		       DWORD dwParam1, DWORD dwParam2)
 {
     return MMSYSERR_NOTENABLED;

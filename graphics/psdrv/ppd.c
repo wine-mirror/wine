@@ -64,7 +64,7 @@ static struct {
 static char *PSDRV_PPDDecodeHex(char *str)
 {
     char *buf, *in, *out;
-    BOOL32 inhex = FALSE;
+    BOOL inhex = FALSE;
 
     buf = HeapAlloc(PSDRV_Heap, 0, strlen(str) + 1);
     if(!buf)
@@ -112,7 +112,7 @@ static char *PSDRV_PPDDecodeHex(char *str)
  *		PSDRV_PPDGetTransValue
  *
  */
-static BOOL32 PSDRV_PPDGetTransValue(char *start, PPDTuple *tuple)
+static BOOL PSDRV_PPDGetTransValue(char *start, PPDTuple *tuple)
 {
     char *buf, *end;
 
@@ -135,7 +135,7 @@ static BOOL32 PSDRV_PPDGetTransValue(char *start, PPDTuple *tuple)
  * Passed string that should be surrounded by `"'s, return string alloced
  * from process heap.
  */
-static BOOL32 PSDRV_PPDGetInvocationValue(FILE *fp, char *pos, PPDTuple *tuple)
+static BOOL PSDRV_PPDGetInvocationValue(FILE *fp, char *pos, PPDTuple *tuple)
 {
     char *start, *end, *buf;
     char line[257];
@@ -177,7 +177,7 @@ static BOOL32 PSDRV_PPDGetInvocationValue(FILE *fp, char *pos, PPDTuple *tuple)
  * Passed string that should be surrounded by `"'s. Expand <xx> as hex
  * return string alloced from process heap.
  */
-static BOOL32 PSDRV_PPDGetQuotedValue(FILE *fp, char *pos, PPDTuple *tuple)
+static BOOL PSDRV_PPDGetQuotedValue(FILE *fp, char *pos, PPDTuple *tuple)
 {
     char *buf;
 
@@ -196,7 +196,7 @@ static BOOL32 PSDRV_PPDGetQuotedValue(FILE *fp, char *pos, PPDTuple *tuple)
  *
  * Just strip leading white space.
  */
-static BOOL32 PSDRV_PPDGetStringValue(char *str, PPDTuple *tuple)
+static BOOL PSDRV_PPDGetStringValue(char *str, PPDTuple *tuple)
 {
     char *start = str, *end;
 
@@ -220,7 +220,7 @@ static BOOL32 PSDRV_PPDGetStringValue(char *str, PPDTuple *tuple)
  *
  * Not implemented yet.
  */
-static BOOL32 PSDRV_PPDGetSymbolValue(char *pos, PPDTuple *tuple)
+static BOOL PSDRV_PPDGetSymbolValue(char *pos, PPDTuple *tuple)
 {
     FIXME(psdrv, "Stub\n");
     return FALSE;
@@ -234,10 +234,10 @@ static BOOL32 PSDRV_PPDGetSymbolValue(char *pos, PPDTuple *tuple)
  * Gets the next Keyword Option Value tuple from the file. Allocs space off
  * the process heap which should be free()ed by the caller if not needed.
  */
-static BOOL32 PSDRV_PPDGetNextTuple(FILE *fp, PPDTuple *tuple)
+static BOOL PSDRV_PPDGetNextTuple(FILE *fp, PPDTuple *tuple)
 {
     char line[257], *opt = NULL, *cp, *trans;
-    BOOL32 gotoption = TRUE;
+    BOOL gotoption = TRUE;
 
     memset(tuple, 0, sizeof(*tuple));
 

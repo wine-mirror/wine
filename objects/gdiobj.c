@@ -230,7 +230,7 @@ static void  ReadFontInformation(
  *
  * GDI initialization.
  */
-BOOL32 GDI_Init(void)
+BOOL GDI_Init(void)
 {
     /* Kill some warnings.  */
     (void)align_OEMFixedFont;
@@ -297,7 +297,7 @@ HGDIOBJ16 GDI_AllocObject( WORD size, WORD magic )
 /***********************************************************************
  *           GDI_FreeObject
  */
-BOOL32 GDI_FreeObject( HGDIOBJ16 handle )
+BOOL GDI_FreeObject( HGDIOBJ16 handle )
 {
     GDIOBJHDR * object;
 
@@ -346,14 +346,14 @@ GDIOBJHDR * GDI_GetObjPtr( HGDIOBJ16 handle, WORD magic )
  */
 BOOL16 WINAPI DeleteObject16( HGDIOBJ16 obj )
 {
-    return DeleteObject32( obj );
+    return DeleteObject( obj );
 }
 
 
 /***********************************************************************
  *           DeleteObject32    (GDI32.70)
  */
-BOOL32 WINAPI DeleteObject32( HGDIOBJ32 obj )
+BOOL WINAPI DeleteObject( HGDIOBJ obj )
 {
       /* Check if object is valid */
 
@@ -375,7 +375,7 @@ BOOL32 WINAPI DeleteObject32( HGDIOBJ32 obj )
       case PALETTE_MAGIC: return PALETTE_DeleteObject(obj,(PALETTEOBJ*)header);
       case BITMAP_MAGIC:  return BITMAP_DeleteObject( obj, (BITMAPOBJ*)header);
       case REGION_MAGIC:  return REGION_DeleteObject( obj, (RGNOBJ*)header );
-      case DC_MAGIC:      return DeleteDC32(obj);
+      case DC_MAGIC:      return DeleteDC(obj);
       case 0 :
         WARN(gdi, "Already deleted\n");
         break;
@@ -390,14 +390,14 @@ BOOL32 WINAPI DeleteObject32( HGDIOBJ32 obj )
  */
 HGDIOBJ16 WINAPI GetStockObject16( INT16 obj )
 {
-    return (HGDIOBJ16)GetStockObject32( obj );
+    return (HGDIOBJ16)GetStockObject( obj );
 }
 
 
 /***********************************************************************
  *           GetStockObject32    (GDI32.220)
  */
-HGDIOBJ32 WINAPI GetStockObject32( INT32 obj )
+HGDIOBJ WINAPI GetStockObject( INT obj )
 {
     if ((obj < 0) || (obj >= NB_STOCK_OBJECTS)) return 0;
     if (!StockObjects[obj]) return 0;
@@ -449,10 +449,10 @@ INT16 WINAPI GetObject16( HANDLE16 handle, INT16 count, LPVOID buffer )
 /***********************************************************************
  *           GetObject32A    (GDI32.204)
  */
-INT32 WINAPI GetObject32A( HANDLE32 handle, INT32 count, LPVOID buffer )
+INT WINAPI GetObjectA( HANDLE handle, INT count, LPVOID buffer )
 {
     GDIOBJHDR * ptr = NULL;
-    INT32 result = 0;
+    INT result = 0;
     TRACE(gdi, "%08x %d %p\n", handle, count, buffer );
     if (!count) return 0;
 
@@ -465,16 +465,16 @@ INT32 WINAPI GetObject32A( HANDLE32 handle, INT32 count, LPVOID buffer )
     switch(ptr->wMagic)
     {
       case PEN_MAGIC:
-	  result = PEN_GetObject32( (PENOBJ *)ptr, count, buffer );
+	  result = PEN_GetObject( (PENOBJ *)ptr, count, buffer );
 	  break;
       case BRUSH_MAGIC: 
-	  result = BRUSH_GetObject32( (BRUSHOBJ *)ptr, count, buffer );
+	  result = BRUSH_GetObject( (BRUSHOBJ *)ptr, count, buffer );
 	  break;
       case BITMAP_MAGIC: 
-	  result = BITMAP_GetObject32( (BITMAPOBJ *)ptr, count, buffer );
+	  result = BITMAP_GetObject( (BITMAPOBJ *)ptr, count, buffer );
 	  break;
       case FONT_MAGIC:
-	  result = FONT_GetObject32A( (FONTOBJ *)ptr, count, buffer );
+	  result = FONT_GetObjectA( (FONTOBJ *)ptr, count, buffer );
 	  break;
       case PALETTE_MAGIC:
 	  result = PALETTE_GetObject( (PALETTEOBJ *)ptr, count, buffer );
@@ -490,10 +490,10 @@ INT32 WINAPI GetObject32A( HANDLE32 handle, INT32 count, LPVOID buffer )
 /***********************************************************************
  *           GetObject32W    (GDI32.206)
  */
-INT32 WINAPI GetObject32W( HANDLE32 handle, INT32 count, LPVOID buffer )
+INT WINAPI GetObjectW( HANDLE handle, INT count, LPVOID buffer )
 {
     GDIOBJHDR * ptr = NULL;
-    INT32 result = 0;
+    INT result = 0;
     TRACE(gdi, "%08x %d %p\n", handle, count, buffer );
     if (!count) return 0;
 
@@ -506,16 +506,16 @@ INT32 WINAPI GetObject32W( HANDLE32 handle, INT32 count, LPVOID buffer )
     switch(ptr->wMagic)
     {
       case PEN_MAGIC:
-	  result = PEN_GetObject32( (PENOBJ *)ptr, count, buffer );
+	  result = PEN_GetObject( (PENOBJ *)ptr, count, buffer );
 	  break;
       case BRUSH_MAGIC: 
-	  result = BRUSH_GetObject32( (BRUSHOBJ *)ptr, count, buffer );
+	  result = BRUSH_GetObject( (BRUSHOBJ *)ptr, count, buffer );
 	  break;
       case BITMAP_MAGIC: 
-	  result = BITMAP_GetObject32( (BITMAPOBJ *)ptr, count, buffer );
+	  result = BITMAP_GetObject( (BITMAPOBJ *)ptr, count, buffer );
 	  break;
       case FONT_MAGIC:
-	  result = FONT_GetObject32W( (FONTOBJ *)ptr, count, buffer );
+	  result = FONT_GetObjectW( (FONTOBJ *)ptr, count, buffer );
 	  break;
       case PALETTE_MAGIC:
 	  result = PALETTE_GetObject( (PALETTEOBJ *)ptr, count, buffer );
@@ -532,10 +532,10 @@ INT32 WINAPI GetObject32W( HANDLE32 handle, INT32 count, LPVOID buffer )
 /***********************************************************************
  *           GetObjectType    (GDI32.205)
  */
-DWORD WINAPI GetObjectType( HANDLE32 handle )
+DWORD WINAPI GetObjectType( HANDLE handle )
 {
     GDIOBJHDR * ptr = NULL;
-    INT32 result = 0;
+    INT result = 0;
     TRACE(gdi, "%08x\n", handle );
 
     if ((handle >= FIRST_STOCK_HANDLE) && (handle <= LAST_STOCK_HANDLE))
@@ -589,7 +589,7 @@ DWORD WINAPI GetObjectType( HANDLE32 handle )
 /***********************************************************************
  *           GetCurrentObject    	(GDI32.166)
  */
-HANDLE32 WINAPI GetCurrentObject(HDC32 hdc,UINT32 type)
+HANDLE WINAPI GetCurrentObject(HDC hdc,UINT type)
 {
     DC * dc = DC_GetDCPtr( hdc );
 
@@ -614,14 +614,14 @@ HANDLE32 WINAPI GetCurrentObject(HDC32 hdc,UINT32 type)
  */
 HGDIOBJ16 WINAPI SelectObject16( HDC16 hdc, HGDIOBJ16 handle )
 {
-    return (HGDIOBJ16)SelectObject32( hdc, handle );
+    return (HGDIOBJ16)SelectObject( hdc, handle );
 }
 
 
 /***********************************************************************
  *           SelectObject32    (GDI32.299)
  */
-HGDIOBJ32 WINAPI SelectObject32( HDC32 hdc, HGDIOBJ32 handle )
+HGDIOBJ WINAPI SelectObject( HDC hdc, HGDIOBJ handle )
 {
     DC * dc = DC_GetDCPtr( hdc );
     if (!dc || !dc->funcs->pSelectObject) return 0;
@@ -635,16 +635,16 @@ HGDIOBJ32 WINAPI SelectObject32( HDC32 hdc, HGDIOBJ32 handle )
  */
 BOOL16 WINAPI UnrealizeObject16( HGDIOBJ16 obj )
 {
-    return UnrealizeObject32( obj );
+    return UnrealizeObject( obj );
 }
 
 
 /***********************************************************************
  *           UnrealizeObject    (GDI32.358)
  */
-BOOL32 WINAPI UnrealizeObject32( HGDIOBJ32 obj )
+BOOL WINAPI UnrealizeObject( HGDIOBJ obj )
 {
-    BOOL32 result = TRUE;
+    BOOL result = TRUE;
   /* Check if object is valid */
 
     GDIOBJHDR * header = (GDIOBJHDR *) GDI_HEAP_LOCK( obj );
@@ -751,8 +751,8 @@ INT16 WINAPI EnumObjects16( HDC16 hdc, INT16 nObjType,
 /***********************************************************************
  *           EnumObjects32    (GDI32.89)
  */
-INT32 WINAPI EnumObjects32( HDC32 hdc, INT32 nObjType,
-                            GOBJENUMPROC32 lpEnumFunc, LPARAM lParam )
+INT WINAPI EnumObjects( HDC hdc, INT nObjType,
+                            GOBJENUMPROC lpEnumFunc, LPARAM lParam )
 {
     /* Solid colors to enumerate */
     static const COLORREF solid_colors[] =
@@ -766,9 +766,9 @@ INT32 WINAPI EnumObjects32( HDC32 hdc, INT32 nObjType,
       RGB(0x80,0x80,0x80), RGB(0xc0,0xc0,0xc0)
     };
     
-    INT32 i, retval = 0;
-    LOGPEN32 pen;
-    LOGBRUSH32 brush;
+    INT i, retval = 0;
+    LOGPEN pen;
+    LOGBRUSH brush;
 
     TRACE(gdi, "%04x %d %08lx %08lx\n",
                  hdc, nObjType, (DWORD)lpEnumFunc, lParam );
@@ -829,7 +829,7 @@ INT32 WINAPI EnumObjects32( HDC32 hdc, INT32 nObjType,
  * 
  * returns type of object if valid (W95 system programming secrets p. 264-5)
  */
-BOOL16 WINAPI IsGDIObject( HGDIOBJ16 handle )
+BOOL16 WINAPI IsGDIObject16( HGDIOBJ16 handle )
 {
     UINT16 magic = 0;
 
@@ -896,7 +896,7 @@ void WINAPI SetObjectOwner16( HGDIOBJ16 handle, HANDLE16 owner )
 /***********************************************************************
  *           SetObjectOwner32    (GDI32.386)
  */
-void WINAPI SetObjectOwner32( HGDIOBJ32 handle, HANDLE32 owner )
+void WINAPI SetObjectOwner( HGDIOBJ handle, HANDLE owner )
 {
     /* Nothing to do */
 }
@@ -904,7 +904,7 @@ void WINAPI SetObjectOwner32( HGDIOBJ32 handle, HANDLE32 owner )
 /***********************************************************************
  *           MakeObjectPrivate    (GDI.463)
  */
-void WINAPI MakeObjectPrivate( HGDIOBJ16 handle, BOOL16 private )
+void WINAPI MakeObjectPrivate16( HGDIOBJ16 handle, BOOL16 private )
 {
     /* FIXME */
 }
@@ -913,7 +913,7 @@ void WINAPI MakeObjectPrivate( HGDIOBJ16 handle, BOOL16 private )
 /***********************************************************************
  *           GdiFlush    (GDI32.128)
  */
-BOOL32 WINAPI GdiFlush(void)
+BOOL WINAPI GdiFlush(void)
 {
     return TRUE;  /* FIXME */
 }
@@ -940,7 +940,7 @@ DWORD WINAPI GdiSetBatchLimit( DWORD limit )
 /***********************************************************************
  *           GdiSeeGdiDo   (GDI.452)
  */
-DWORD WINAPI GdiSeeGdiDo( WORD wReqType, WORD wParam1, WORD wParam2,
+DWORD WINAPI GdiSeeGdiDo16( WORD wReqType, WORD wParam1, WORD wParam2,
                           WORD wParam3 )
 {
     switch (wReqType)
@@ -962,7 +962,7 @@ DWORD WINAPI GdiSeeGdiDo( WORD wReqType, WORD wParam1, WORD wParam2,
 /***********************************************************************
  *           GdiFreeResources   (GDI.609)
  */
-WORD WINAPI GdiFreeResources( DWORD reserve )
+WORD WINAPI GdiFreeResources16( DWORD reserve )
 {
    return (WORD)( (int)LOCAL_CountFree( GDI_HeapSel ) * 100 /
                   (int)LOCAL_HeapSize( GDI_HeapSel ) );
@@ -973,7 +973,7 @@ WORD WINAPI GdiFreeResources( DWORD reserve )
  */
 INT16 WINAPI MulDiv16( INT16 foo, INT16 bar, INT16 baz )
 {
-    INT32 ret;
+    INT ret;
     if (!baz) return -32768;
     ret = (foo * bar) / baz;
     if ((ret > 32767) || (ret < -32767)) return -32768;
@@ -987,10 +987,10 @@ INT16 WINAPI MulDiv16( INT16 foo, INT16 bar, INT16 baz )
  *	Result of multiplication and division
  *	-1: Overflow occurred or Divisor was 0
  */
-INT32 WINAPI MulDiv32(
-	     INT32 nMultiplicand, 
-	     INT32 nMultiplier,
-	     INT32 nDivisor
+INT WINAPI MulDiv(
+	     INT nMultiplicand, 
+	     INT nMultiplier,
+	     INT nDivisor
 ) {
 #if (SIZEOF_LONG_LONG >= 8)
     long long ret;
@@ -1008,7 +1008,7 @@ INT32 WINAPI MulDiv32(
  *
  *
  */
-BOOL32 WINAPI GetColorAdjustment(HDC32 hdc, LPCOLORADJUSTMENT lpca)
+BOOL WINAPI GetColorAdjustment(HDC hdc, LPCOLORADJUSTMENT lpca)
 {
         FIXME(gdi, "GetColorAdjustment, stub\n");
         return 0;
@@ -1019,7 +1019,7 @@ BOOL32 WINAPI GetColorAdjustment(HDC32 hdc, LPCOLORADJUSTMENT lpca)
  *
  *
  */
-BOOL32 WINAPI GetMiterLimit(HDC32 hdc, PFLOAT peLimit)
+BOOL WINAPI GetMiterLimit(HDC hdc, PFLOAT peLimit)
 {
         FIXME(gdi, "GetMiterLimit, stub\n");
         return 0;
@@ -1030,7 +1030,7 @@ BOOL32 WINAPI GetMiterLimit(HDC32 hdc, PFLOAT peLimit)
  *
  *
  */
-BOOL32 WINAPI SetMiterLimit(HDC32 hdc, FLOAT eNewLimit, PFLOAT peOldLimit)
+BOOL WINAPI SetMiterLimit(HDC hdc, FLOAT eNewLimit, PFLOAT peOldLimit)
 {
         FIXME(gdi, "SetMiterLimit, stub\n");
         return 0;
@@ -1041,7 +1041,7 @@ BOOL32 WINAPI SetMiterLimit(HDC32 hdc, FLOAT eNewLimit, PFLOAT peOldLimit)
  *
  *
  */
-BOOL32 WINAPI GdiComment(HDC32 hdc, UINT32 cbSize, const BYTE *lpData)
+BOOL WINAPI GdiComment(HDC hdc, UINT cbSize, const BYTE *lpData)
 {
         FIXME(gdi, "GdiComment, stub\n");
         return 0;
@@ -1051,7 +1051,7 @@ BOOL32 WINAPI GdiComment(HDC32 hdc, UINT32 cbSize, const BYTE *lpData)
  *
  *
  */
-BOOL32 WINAPI SetColorAdjustment32(HDC32 hdc, const COLORADJUSTMENT* lpca)
+BOOL WINAPI SetColorAdjustment(HDC hdc, const COLORADJUSTMENT* lpca)
 {
         FIXME(gdi, "SetColorAdjustment, stub\n");
         return 0;

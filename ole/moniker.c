@@ -27,7 +27,7 @@ HRESULT WINAPI GetRunningObjectTable16(DWORD reserved, LPVOID *pprot) {
 /***********************************************************************
  *           GetRunningObjectTable32 (OLE2.73)
  */
-HRESULT WINAPI GetRunningObjectTable32(DWORD reserved, LPVOID *pprot) {
+HRESULT WINAPI GetRunningObjectTable(DWORD reserved, LPVOID *pprot) {
 	FIXME(ole,"(%ld,%p),stub!\n",reserved,pprot);
     return E_FAIL;
 }

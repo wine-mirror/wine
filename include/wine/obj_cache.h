@@ -34,11 +34,11 @@ typedef struct IOleCacheControl IOleCacheControl, *LPOLECACHECONTROL;
  */
 #define ICOM_INTERFACE IOleCache
 #define IOleCache_METHODS \
-	ICOM_METHOD3(HRESULT,Cache, FORMATETC32*,pformatetc, DWORD,advf, DWORD*, pdwConnection); \
+	ICOM_METHOD3(HRESULT,Cache, FORMATETC*,pformatetc, DWORD,advf, DWORD*, pdwConnection); \
 	ICOM_METHOD1(HRESULT,Uncache, DWORD,dwConnection); \
 	ICOM_METHOD1(HRESULT,EnumCache, IEnumSTATDATA**,ppenumSTATDATA); \
 	ICOM_METHOD1(HRESULT,InitCache, IDataObject*,pDataObject); \
-	ICOM_METHOD3(HRESULT,SetData, FORMATETC32*,pformatetc, STGMEDIUM32*,pmedium, BOOL32,fRelease);
+	ICOM_METHOD3(HRESULT,SetData, FORMATETC*,pformatetc, STGMEDIUM*,pmedium, BOOL,fRelease);
 #define IOleCache_IMETHODS \
 	IUnknown_IMETHODS \
 	IOleCache_METHODS

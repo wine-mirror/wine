@@ -138,10 +138,10 @@ typedef struct tagVS_FIXEDFILEINFO {
 
 #ifdef __WINE__
 
-DWORD WINAPI GetFileResourceSize32( LPCSTR lpszFileName,
+DWORD WINAPI GetFileResourceSize( LPCSTR lpszFileName,
                                     LPCSTR lpszResType, LPCSTR lpszResId,
                                     LPDWORD lpdwFileOffset );
-DWORD WINAPI GetFileResource32( LPCSTR lpszFileName,
+DWORD WINAPI GetFileResource( LPCSTR lpszFileName,
                                 LPCSTR lpszResType, LPCSTR lpszResId,
                                 DWORD dwFileOffset,
                                 DWORD dwResLen, LPVOID lpvData );

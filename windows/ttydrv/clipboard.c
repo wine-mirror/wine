@@ -27,14 +27,14 @@ void TTYDRV_CLIPBOARD_EmptyClipboard()
 /***********************************************************************
  *		TTYDRV_CLIPBOARD_SetClipboardData
  */
-void TTYDRV_CLIPBOARD_SetClipboardData(UINT32 wFormat)
+void TTYDRV_CLIPBOARD_SetClipboardData(UINT wFormat)
 {
 }
 
 /***********************************************************************
  *		TTYDRV_CLIPBOARD_RequestSelection
  */
-BOOL32 TTYDRV_CLIPBOARD_RequestSelection()
+BOOL TTYDRV_CLIPBOARD_RequestSelection()
 {
   return FALSE;
 }
@@ -42,6 +42,6 @@ BOOL32 TTYDRV_CLIPBOARD_RequestSelection()
 /***********************************************************************
  *		TTYDRV_CLIPBOARD_ResetOwner
  */
-void TTYDRV_CLIPBOARD_ResetOwner(WND *pWnd, BOOL32 bFooBar)
+void TTYDRV_CLIPBOARD_ResetOwner(WND *pWnd, BOOL bFooBar)
 {
 }

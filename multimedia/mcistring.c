@@ -37,7 +37,7 @@ extern struct WINE_MCIDRIVER mciDrv[MAXMCIDRIVERS];
 /* The reason why I just don't lowercase the keywords array in 
  * mciSendString is left as an exercise to the reader.
  */
-#define STRCMP(x,y) lstrcmpi32A(x,y)
+#define STRCMP(x,y) lstrcmpiA(x,y)
 
 /* standard function parameters for all functions */
 #define _MCISTR_PROTO_ 				       		\
@@ -52,7 +52,7 @@ extern struct WINE_MCIDRIVER mciDrv[MAXMCIDRIVERS];
 do {								\
     TRACE(mci, "->returns '%s'\n", s);				\
     if (lpstrReturnString) {					\
-	lstrcpyn32A(lpstrReturnString, s, uReturnLength);	\
+	lstrcpynA(lpstrReturnString, s, uReturnLength);	\
 	TRACE(mci, "-->'%s'\n", lpstrReturnString);		\
     }								\
 } while(0)
@@ -375,7 +375,7 @@ MCISTR_Open(_MCISTR_PROTO_)
 	      keywords[i]);
 	i++;
     }
-    res = mciSendCommand32A(0, MCI_OPEN, dwFlags, (DWORD)pU);
+    res = mciSendCommandA(0, MCI_OPEN, dwFlags, (DWORD)pU);
 
     free(pU->openParams.lpstrElementName);
     free(pU->openParams.lpstrDeviceType);
@@ -397,7 +397,7 @@ _MCISTR_determine_timeformat(LPCSTR dev,WORD wDevID,WORD uDevTyp,int *timef)
     if (!statusParams) return 0;
     statusParams->dwItem	= MCI_STATUS_TIME_FORMAT;
     statusParams->dwReturn	= 0;
-    res = mciSendCommand32A(wDevID, MCI_STATUS, dwFlags, (DWORD)statusParams);
+    res = mciSendCommandA(wDevID, MCI_STATUS, dwFlags, (DWORD)statusParams);
 
     if (res==0) *timef = statusParams->dwReturn;
     free(statusParams);
@@ -568,7 +568,7 @@ MCISTR_Status(_MCISTR_PROTO_) {
     if (!statusParams->dwItem) 
 	return MCIERR_MISSING_STRING_ARGUMENT;
     
-    res = mciSendCommand32A(wDevID, MCI_STATUS, dwFlags, (DWORD)statusParams);
+    res = mciSendCommandA(wDevID, MCI_STATUS, dwFlags, (DWORD)statusParams);
 
     if (res==0)
 	_MCISTR_convreturn(type,statusParams->dwReturn,lpstrReturnString,uReturnLength,uDevTyp,timef);
@@ -774,7 +774,7 @@ MCISTR_Set(_MCISTR_PROTO_) {
     }
     if (!dwFlags)
 	return MCIERR_MISSING_STRING_ARGUMENT;
-    res = mciSendCommand32A(wDevID, MCI_SET, dwFlags, (DWORD)pU);
+    res = mciSendCommandA(wDevID, MCI_SET, dwFlags, (DWORD)pU);
     free(pU);
     return res;
 }
@@ -806,7 +806,7 @@ MCISTR_Break(_MCISTR_PROTO_)
 	    continue;
 	}
     }
-    res = mciSendCommand32A(wDevID, MCI_BREAK, dwFlags, (DWORD)breakParams);
+    res = mciSendCommandA(wDevID, MCI_BREAK, dwFlags, (DWORD)breakParams);
     free(breakParams);
     return res;
 }
@@ -925,7 +925,7 @@ MCISTR_Capability(_MCISTR_PROTO_) {
 	}
 	i++;
     }
-    res = mciSendCommand32A(wDevID, MCI_GETDEVCAPS, dwFlags, (DWORD)gdcParams);
+    res = mciSendCommandA(wDevID, MCI_GETDEVCAPS, dwFlags, (DWORD)gdcParams);
 
     /* no timeformat needed */
     if (res==0)
@@ -944,7 +944,7 @@ MCISTR_Resume(_MCISTR_PROTO_)
     MCI_GENERIC_PARMS *genParams = xmalloc(sizeof(MCI_GENERIC_PARMS));
     int	res;
     genParams->dwCallback = hwndCallback;
-    res = mciSendCommand32A(wDevID, MCI_RESUME, dwFlags, (DWORD)genParams);
+    res = mciSendCommandA(wDevID, MCI_RESUME, dwFlags, (DWORD)genParams);
     free(genParams);
     return res;
 }
@@ -956,7 +956,7 @@ MCISTR_Pause(_MCISTR_PROTO_)
     MCI_GENERIC_PARMS *genParams = xmalloc(sizeof(MCI_GENERIC_PARMS));
     int res;
     genParams->dwCallback = hwndCallback;
-    res = mciSendCommand32A(wDevID, MCI_PAUSE, dwFlags, (DWORD)genParams);
+    res = mciSendCommandA(wDevID, MCI_PAUSE, dwFlags, (DWORD)genParams);
     free(genParams);
     return res;
 }
@@ -968,7 +968,7 @@ MCISTR_Stop(_MCISTR_PROTO_)
     MCI_GENERIC_PARMS *genParams = xmalloc(sizeof(MCI_GENERIC_PARMS));
     int res;
     genParams->dwCallback = hwndCallback;
-    res = mciSendCommand32A(wDevID, MCI_STOP, dwFlags, (DWORD)genParams);
+    res = mciSendCommandA(wDevID, MCI_STOP, dwFlags, (DWORD)genParams);
     free(genParams);
     return res;
 }
@@ -1043,7 +1043,7 @@ MCISTR_Record(_MCISTR_PROTO_) {
 	FLAG1("overwrite",MCI_RECORD_OVERWRITE);
 	i++;
     }
-    res = mciSendCommand32A(wDevID, MCI_RECORD, dwFlags, (DWORD)recordParams);
+    res = mciSendCommandA(wDevID, MCI_RECORD, dwFlags, (DWORD)recordParams);
     free(recordParams);
     return res;
 }
@@ -1156,7 +1156,7 @@ MCISTR_Play(_MCISTR_PROTO_) {
 	}
 	i++;
     }
-    res = mciSendCommand32A(wDevID, MCI_PLAY, dwFlags, (DWORD)pU);
+    res = mciSendCommandA(wDevID, MCI_PLAY, dwFlags, (DWORD)pU);
     free(pU);
     return res;
 }
@@ -1229,7 +1229,7 @@ MCISTR_Seek(_MCISTR_PROTO_) {
 	}
 	i++;
     }
-    res = mciSendCommand32A(wDevID, MCI_SEEK, dwFlags, (DWORD)seekParams);
+    res = mciSendCommandA(wDevID, MCI_SEEK, dwFlags, (DWORD)seekParams);
     free(seekParams);
     return res;
 }
@@ -1241,7 +1241,7 @@ MCISTR_Close(_MCISTR_PROTO_)
     MCI_GENERIC_PARMS*	closeParams = xmalloc(sizeof(MCI_GENERIC_PARMS));
     int res;
     
-    res = mciSendCommand32A(wDevID, MCI_CLOSE, dwFlags, (DWORD)closeParams);
+    res = mciSendCommandA(wDevID, MCI_CLOSE, dwFlags, (DWORD)closeParams);
     free(closeParams);
     return res;
 }
@@ -1282,7 +1282,7 @@ MCISTR_Info(_MCISTR_PROTO_)
     /* MCI driver will fill in lpstrReturn, dwRetSize.
      * FIXME: I don't know if this is correct behaviour
      */
-    res = mciSendCommand32A(wDevID, MCI_INFO, dwFlags, (DWORD)infoParams);
+    res = mciSendCommandA(wDevID, MCI_INFO, dwFlags, (DWORD)infoParams);
     if (res==0)
 	_MCI_STR(infoParams->lpstrReturn);
     free(infoParams);
@@ -1371,7 +1371,7 @@ MCISTR_Load(_MCISTR_PROTO_) {
     }
     pU->loadParams.lpfilename=s;
     dwFlags |= MCI_LOAD_FILE;
-    res = mciSendCommand32A(wDevID, MCI_LOAD, dwFlags, (DWORD)pU);
+    res = mciSendCommandA(wDevID, MCI_LOAD, dwFlags, (DWORD)pU);
     free(s);
     free(pU);
     return res;
@@ -1418,7 +1418,7 @@ MCISTR_Save(_MCISTR_PROTO_) {
     }
     pU->saveParams.lpfilename=s;
     dwFlags |= MCI_LOAD_FILE;
-    res = mciSendCommand32A(wDevID, MCI_SAVE, dwFlags, (DWORD)pU);
+    res = mciSendCommandA(wDevID, MCI_SAVE, dwFlags, (DWORD)pU);
     free(s);
     free(pU);
     return res;
@@ -1440,7 +1440,7 @@ MCISTR_Cue(_MCISTR_PROTO_) {
 	    break;
 	}
     }
-    res = mciSendCommand32A(wDevID, MCI_CUE, dwFlags, (DWORD)cueParams);
+    res = mciSendCommandA(wDevID, MCI_CUE, dwFlags, (DWORD)cueParams);
     free(cueParams);
     return res;
 }
@@ -1508,7 +1508,7 @@ MCISTR_Delete(_MCISTR_PROTO_) {
 	}
 	i++;
     }
-    res = mciSendCommand32A(wDevID, MCI_DELETE, dwFlags, (DWORD)deleteParams);
+    res = mciSendCommandA(wDevID, MCI_DELETE, dwFlags, (DWORD)deleteParams);
     free(deleteParams);
     return res;
 }
@@ -1537,7 +1537,7 @@ MCISTR_Escape(_MCISTR_PROTO_)
     }
     escapeParams->lpstrCommand = s;
     dwFlags |= MCI_VD_ESCAPE_STRING;
-    res = mciSendCommand32A(wDevID, MCI_ESCAPE, dwFlags, (DWORD)escapeParams);
+    res = mciSendCommandA(wDevID, MCI_ESCAPE, dwFlags, (DWORD)escapeParams);
     free(s);
     free(escapeParams);
     return res;
@@ -1566,7 +1566,7 @@ MCISTR_Unfreeze(_MCISTR_PROTO_)
 	}
 	i++;
     }
-    res = mciSendCommand32A(wDevID, MCI_UNFREEZE, dwFlags, (DWORD)unfreezeParams);
+    res = mciSendCommandA(wDevID, MCI_UNFREEZE, dwFlags, (DWORD)unfreezeParams);
     free(unfreezeParams);
     return res;
 }
@@ -1593,7 +1593,7 @@ MCISTR_Freeze(_MCISTR_PROTO_)
 	}
 	i++;
     }
-    res = mciSendCommand32A(wDevID, MCI_FREEZE, dwFlags, (DWORD)freezeParams);
+    res = mciSendCommandA(wDevID, MCI_FREEZE, dwFlags, (DWORD)freezeParams);
     free(freezeParams);
     return res;
 }
@@ -1653,7 +1653,7 @@ MCISTR_Put(_MCISTR_PROTO_) {
 	}
 	i++;
     }
-    res = mciSendCommand32A(wDevID, MCI_PUT, dwFlags, (DWORD)pU);
+    res = mciSendCommandA(wDevID, MCI_PUT, dwFlags, (DWORD)pU);
     free(pU);
     return res;
 }
@@ -1677,7 +1677,7 @@ MCISTR_Realize(_MCISTR_PROTO_)
 	FLAG1("normal",MCI_ANIM_REALIZE_NORM);
 	i++;
     }
-    res = mciSendCommand32A(wDevID, MCI_REALIZE, dwFlags, (DWORD)realizeParams);
+    res = mciSendCommandA(wDevID, MCI_REALIZE, dwFlags, (DWORD)realizeParams);
     free(realizeParams);
     return res;
 }
@@ -1700,7 +1700,7 @@ MCISTR_Spin(_MCISTR_PROTO_)
 	FLAG1("down",MCI_VD_SPIN_UP);
 	i++;
     }
-    res = mciSendCommand32A(wDevID, MCI_SPIN, dwFlags, (DWORD)spinParams);
+    res = mciSendCommandA(wDevID, MCI_SPIN, dwFlags, (DWORD)spinParams);
     free(spinParams);
     return res;
 }
@@ -1742,7 +1742,7 @@ MCISTR_Step(_MCISTR_PROTO_) {
 	}
 	i++;
     }
-    res = mciSendCommand32A(wDevID, MCI_STEP, dwFlags, (DWORD)pU);
+    res = mciSendCommandA(wDevID, MCI_STEP, dwFlags, (DWORD)pU);
     free(pU);
     return res;
 }
@@ -1776,7 +1776,7 @@ MCISTR_Update(_MCISTR_PROTO_) {
 	}
 	i++;
     }
-    res = mciSendCommand32A(wDevID, MCI_UPDATE, dwFlags, (DWORD)updateParams);
+    res = mciSendCommandA(wDevID, MCI_UPDATE, dwFlags, (DWORD)updateParams);
     free(updateParams);
     return res;
 }
@@ -1815,7 +1815,7 @@ MCISTR_Where(_MCISTR_PROTO_) {
 	}
 	i++;
     }
-    res = mciSendCommand32A(wDevID, MCI_WHERE, dwFlags, (DWORD)pU);
+    res = mciSendCommandA(wDevID, MCI_WHERE, dwFlags, (DWORD)pU);
     if (res==0) {
 	char	buf[100];
 	switch (uDevTyp) {
@@ -1998,7 +1998,7 @@ MCISTR_Window(_MCISTR_PROTO_) {
 	}
 	i++;
     }
-    res = mciSendCommand32A(wDevID, MCI_WINDOW, dwFlags, (DWORD)pU);
+    res = mciSendCommandA(wDevID, MCI_WINDOW, dwFlags, (DWORD)pU);
     if (s) free(s);
     free(pU);
     return res;
@@ -2071,7 +2071,7 @@ DWORD WINAPI mciSendString16(LPCSTR lpstrCommand, LPSTR lpstrReturnString,
     *dev++='\0';
     args=strchr(dev,' ');
     if (args!=NULL) *args++='\0';
-    CharUpper32A(dev);
+    CharUpperA(dev);
     if (args!=NULL) {
 	char	*s;
 	i=1;/* nrofkeywords = nrofspaces+1 */
@@ -2161,8 +2161,8 @@ DWORD WINAPI mciSendString16(LPCSTR lpstrCommand, LPSTR lpstrReturnString,
 /**************************************************************************
  * 				mciSendString32A	[MMSYSTEM.702][WINMM.51]
  */
-DWORD WINAPI mciSendString32A(LPCSTR lpstrCommand, LPSTR lpstrReturnString, 
-			      UINT32 uReturnLength, HWND32 hwndCallback)
+DWORD WINAPI mciSendStringA(LPCSTR lpstrCommand, LPSTR lpstrReturnString, 
+			      UINT uReturnLength, HWND hwndCallback)
 {
     return mciSendString16(lpstrCommand, lpstrReturnString, uReturnLength, hwndCallback);
 }
@@ -2170,11 +2170,11 @@ DWORD WINAPI mciSendString32A(LPCSTR lpstrCommand, LPSTR lpstrReturnString,
 /**************************************************************************
  * 				mciSendString32W	[WINMM.52]
  */
-DWORD WINAPI mciSendString32W(LPCWSTR lpwstrCommand, LPSTR lpstrReturnString, 
-			      UINT32 uReturnLength, HWND32 hwndCallback)
+DWORD WINAPI mciSendStringW(LPCWSTR lpwstrCommand, LPSTR lpstrReturnString, 
+			      UINT uReturnLength, HWND hwndCallback)
 {
     LPSTR 	lpstrCommand;
-    UINT32	ret;
+    UINT	ret;
 
     /* FIXME: is there something to do with lpstrReturnString ? */
     lpstrCommand = HEAP_strdupWtoA(GetProcessHeap(), 0, lpwstrCommand);

@@ -1,187 +1,187 @@
 name winmm
 type win32
 
-  1 stdcall PlaySoundA(ptr long long) PlaySound32A
-  2 stdcall WINMM_2(ptr long long) PlaySound32A
+  1 stdcall PlaySoundA(ptr long long) PlaySoundA
+  2 stdcall WINMM_2(ptr long long) PlaySoundA
   3 stub WINMM_3
-  4 stdcall CloseDriver(long long long) CloseDriver32
-  5 stdcall DefDriverProc(long long long long long) DefDriverProc32
+  4 stdcall CloseDriver(long long long) CloseDriver
+  5 stdcall DefDriverProc(long long long long long) DefDriverProc
   6 stub DriverCallback
   7 stub DrvClose
   8 stub DrvDefDriverProc
-  9 stdcall DrvGetModuleHandle(long) GetDriverModuleHandle32
+  9 stdcall DrvGetModuleHandle(long) GetDriverModuleHandle
  10 stub DrvOpen
  11 stub DrvOpenA
  12 stub DrvSendMessage
  13 stub GetDriverFlags
- 14 stdcall GetDriverModuleHandle(long) GetDriverModuleHandle32
- 15 stdcall OpenDriver(wstr wstr long) OpenDriver32W
- 16 stdcall OpenDriverA(str str long) OpenDriver32A
- 17 stdcall PlaySound(ptr long long) PlaySound32A
- 18 stdcall PlaySoundW(ptr long long) PlaySound32W
- 19 stdcall SendDriverMessage(long long long long) SendDriverMessage32
- 20 stdcall auxGetDevCapsA(long ptr long) auxGetDevCaps32A
- 21 stdcall auxGetDevCapsW(long ptr long) auxGetDevCaps32W
- 22 stdcall auxGetNumDevs() auxGetNumDevs32
- 23 stdcall auxGetVolume(long ptr) auxGetVolume32
- 24 stdcall auxOutMessage(long long long long) auxOutMessage32
- 25 stdcall auxSetVolume(long long) auxSetVolume32
+ 14 stdcall GetDriverModuleHandle(long) GetDriverModuleHandle
+ 15 stdcall OpenDriver(wstr wstr long) OpenDriverW
+ 16 stdcall OpenDriverA(str str long) OpenDriverA
+ 17 stdcall PlaySound(ptr long long) PlaySoundA
+ 18 stdcall PlaySoundW(ptr long long) PlaySoundW
+ 19 stdcall SendDriverMessage(long long long long) SendDriverMessage
+ 20 stdcall auxGetDevCapsA(long ptr long) auxGetDevCapsA
+ 21 stdcall auxGetDevCapsW(long ptr long) auxGetDevCapsW
+ 22 stdcall auxGetNumDevs() auxGetNumDevs
+ 23 stdcall auxGetVolume(long ptr) auxGetVolume
+ 24 stdcall auxOutMessage(long long long long) auxOutMessage
+ 25 stdcall auxSetVolume(long long) auxSetVolume
  26 stub joyConfigChanged
- 27 stdcall joyGetDevCapsA(long ptr long) joyGetDevCaps32A
- 28 stdcall joyGetDevCapsW(long ptr long) joyGetDevCaps32W
- 29 stdcall joyGetNumDevs() joyGetNumDevs32
- 30 stdcall joyGetPos(long ptr) joyGetPos32
+ 27 stdcall joyGetDevCapsA(long ptr long) joyGetDevCapsA
+ 28 stdcall joyGetDevCapsW(long ptr long) joyGetDevCapsW
+ 29 stdcall joyGetNumDevs() joyGetNumDevs
+ 30 stdcall joyGetPos(long ptr) joyGetPos
  31 stdcall joyGetPosEx(long ptr) joyGetPosEx
- 32 stdcall joyGetThreshold(long ptr) joyGetThreshold32
- 33 stdcall joyReleaseCapture(long) joyReleaseCapture32
- 34 stdcall joySetCapture(long long long long) joySetCapture32
- 35 stdcall joySetThreshold(long long) joySetThreshold32
- 36 stdcall mciDriverNotify(long long long) mciDriverNotify32
- 37 stdcall mciDriverYield(long) mciDriverYield32
+ 32 stdcall joyGetThreshold(long ptr) joyGetThreshold
+ 33 stdcall joyReleaseCapture(long) joyReleaseCapture
+ 34 stdcall joySetCapture(long long long long) joySetCapture
+ 35 stdcall joySetThreshold(long long) joySetThreshold
+ 36 stdcall mciDriverNotify(long long long) mciDriverNotify
+ 37 stdcall mciDriverYield(long) mciDriverYield
  38 stub mciExecute
- 39 stdcall mciFreeCommandResource(long) mciFreeCommandResource32
- 40 stdcall mciGetCreatorTask(long) mciGetCreatorTask32
- 41 stdcall mciGetDeviceIDA(str) mciGetDeviceID32A
- 42 stdcall mciGetDeviceIDFromElementIDW(long str) mciGetDeviceIDFromElementID32W
- 43 stdcall mciGetDeviceIDW(str) mciGetDeviceID32W
- 44 stdcall mciGetDriverData(long) mciGetDriverData32
- 45 stdcall mciGetErrorStringA(long ptr long) mciGetErrorString32A
- 46 stdcall mciGetErrorStringW(long ptr long) mciGetErrorString32W
- 47 stdcall mciGetYieldProc(long ptr) mciGetYieldProc32
- 48 stdcall mciLoadCommandResource(long wstr long) mciLoadCommandResource32 
- 49 stdcall mciSendCommandA(long long long long) mciSendCommand32A
- 50 stdcall mciSendCommandW(long long long long) mciSendCommand32W
- 51 stdcall mciSendStringA(str ptr long long) mciSendString32A
- 52 stdcall mciSendStringW(str ptr long long) mciSendString32W
- 53 stdcall mciSetDriverData(long long) mciSetDriverData32
- 54 stdcall mciSetYieldProc(ptr) mciSetYieldProc32
+ 39 stdcall mciFreeCommandResource(long) mciFreeCommandResource
+ 40 stdcall mciGetCreatorTask(long) mciGetCreatorTask
+ 41 stdcall mciGetDeviceIDA(str) mciGetDeviceIDA
+ 42 stdcall mciGetDeviceIDFromElementIDW(long str) mciGetDeviceIDFromElementIDW
+ 43 stdcall mciGetDeviceIDW(str) mciGetDeviceIDW
+ 44 stdcall mciGetDriverData(long) mciGetDriverData
+ 45 stdcall mciGetErrorStringA(long ptr long) mciGetErrorStringA
+ 46 stdcall mciGetErrorStringW(long ptr long) mciGetErrorStringW
+ 47 stdcall mciGetYieldProc(long ptr) mciGetYieldProc
+ 48 stdcall mciLoadCommandResource(long wstr long) mciLoadCommandResource 
+ 49 stdcall mciSendCommandA(long long long long) mciSendCommandA
+ 50 stdcall mciSendCommandW(long long long long) mciSendCommandW
+ 51 stdcall mciSendStringA(str ptr long long) mciSendStringA
+ 52 stdcall mciSendStringW(str ptr long long) mciSendStringW
+ 53 stdcall mciSetDriverData(long long) mciSetDriverData
+ 54 stdcall mciSetYieldProc(ptr) mciSetYieldProc
  55 stub midiConnect
  56 stub midiDisconnect
- 57 stdcall midiInAddBuffer(long ptr long) midiInAddBuffer32
- 58 stdcall midiInClose(long) midiInClose32
- 59 stdcall midiInGetDevCapsA(long ptr long) midiInGetDevCaps32A
- 60 stdcall midiInGetDevCapsW(long ptr long) midiInGetDevCaps32W
- 61 stdcall midiInGetErrorTextA(long ptr long) midiInGetErrorText32A
- 62 stdcall midiInGetErrorTextW(long ptr long) midiInGetErrorText32W
- 63 stdcall midiInGetID(long) midiInGetID32
- 64 stdcall midiInGetNumDevs() midiInGetNumDevs32
- 65 stdcall midiInMessage(long long long long) midiInMessage32
- 66 stdcall midiInOpen(ptr long long long long) midiInOpen32
- 67 stdcall midiInPrepareHeader(long ptr long) midiInPrepareHeader32
- 68 stdcall midiInReset(long) midiInReset32
- 69 stdcall midiInStart(long) midiInStart32
- 70 stdcall midiInStop(long) midiInStop32
- 71 stdcall midiInUnprepareHeader(long ptr long) midiInUnprepareHeader32
- 72 stdcall midiOutCacheDrumPatches(long long ptr long) midiOutCacheDrumPatches32
- 73 stdcall midiOutCachePatches(long long ptr long) midiOutCachePatches32
- 74 stdcall midiOutClose(long) midiOutClose32
- 75 stdcall midiOutGetDevCapsA(long ptr long) midiOutGetDevCaps32A
- 76 stdcall midiOutGetDevCapsW(long ptr long) midiOutGetDevCaps32W
- 77 stdcall midiOutGetErrorTextA(long ptr long) midiOutGetErrorText32A
- 78 stdcall midiOutGetErrorTextW(long ptr long) midiOutGetErrorText32W
- 79 stdcall midiOutGetID(long) midiOutGetID32
- 80 stdcall midiOutGetNumDevs() midiOutGetNumDevs32
- 81 stdcall midiOutGetVolume(long ptr) midiOutGetVolume32
- 82 stdcall midiOutLongMsg(long ptr long) midiOutLongMsg32
- 83 stdcall midiOutMessage(long long long long) midiOutMessage32
- 84 stdcall midiOutOpen(ptr long long long long) midiOutOpen32
- 85 stdcall midiOutPrepareHeader(long ptr long) midiOutPrepareHeader32
- 86 stdcall midiOutReset(long) midiOutReset32
- 87 stdcall midiOutSetVolume(long ptr) midiOutSetVolume32
- 88 stdcall midiOutShortMsg(long long) midiOutShortMsg32
- 89 stdcall midiOutUnprepareHeader(long ptr long) midiOutUnprepareHeader32
- 90 stdcall midiStreamClose(long) midiStreamClose32
- 91 stdcall midiStreamOpen(ptr ptr long long long long) midiStreamOpen32
- 92 stdcall midiStreamOut(long ptr long) midiStreamOut32
- 93 stdcall midiStreamPause(long) midiStreamPause32
- 94 stdcall midiStreamPosition(long ptr long) midiStreamPosition32
- 95 stdcall midiStreamProperty(long ptr long) midiStreamProperty32
- 96 stdcall midiStreamRestart(long) midiStreamRestart32
- 97 stdcall midiStreamStop(long) midiStreamStop32
- 98 stdcall mixerClose(long) mixerClose32
- 99 stdcall mixerGetControlDetailsA(long ptr long) mixerGetControlDetails32A
-100 stdcall mixerGetControlDetailsW(long ptr long) mixerGetControlDetails32W
-101 stdcall mixerGetDevCapsA(long ptr long) mixerGetDevCaps32A
-102 stdcall mixerGetDevCapsW(long ptr long) mixerGetDevCaps32W
-103 stdcall mixerGetID(long ptr long) mixerGetID32
-104 stdcall mixerGetLineControlsA(long ptr long) mixerGetLineControls32A
-105 stdcall mixerGetLineControlsW(long ptr long) mixerGetLineControls32W
-106 stdcall mixerGetLineInfoA(long ptr long) mixerGetLineInfo32A
-107 stdcall mixerGetLineInfoW(long ptr long) mixerGetLineInfo32W
-108 stdcall mixerGetNumDevs() mixerGetNumDevs32
-109 stdcall mixerMessage(long long long long) mixerMessage32
-110 stdcall mixerOpen(ptr long long long long) mixerOpen32
-111 stdcall mixerSetControlDetails(long ptr long) mixerSetControlDetails32
-112 stdcall mmioAdvance(long ptr long) mmioAdvance32
-113 stdcall mmioAscend(long ptr long) mmioAscend32
-114 stdcall mmioClose(long long) mmioClose32
-115 stdcall mmioCreateChunk(long ptr long) mmioCreateChunk32
+ 57 stdcall midiInAddBuffer(long ptr long) midiInAddBuffer
+ 58 stdcall midiInClose(long) midiInClose
+ 59 stdcall midiInGetDevCapsA(long ptr long) midiInGetDevCapsA
+ 60 stdcall midiInGetDevCapsW(long ptr long) midiInGetDevCapsW
+ 61 stdcall midiInGetErrorTextA(long ptr long) midiInGetErrorTextA
+ 62 stdcall midiInGetErrorTextW(long ptr long) midiInGetErrorTextW
+ 63 stdcall midiInGetID(long) midiInGetID
+ 64 stdcall midiInGetNumDevs() midiInGetNumDevs
+ 65 stdcall midiInMessage(long long long long) midiInMessage
+ 66 stdcall midiInOpen(ptr long long long long) midiInOpen
+ 67 stdcall midiInPrepareHeader(long ptr long) midiInPrepareHeader
+ 68 stdcall midiInReset(long) midiInReset
+ 69 stdcall midiInStart(long) midiInStart
+ 70 stdcall midiInStop(long) midiInStop
+ 71 stdcall midiInUnprepareHeader(long ptr long) midiInUnprepareHeader
+ 72 stdcall midiOutCacheDrumPatches(long long ptr long) midiOutCacheDrumPatches
+ 73 stdcall midiOutCachePatches(long long ptr long) midiOutCachePatches
+ 74 stdcall midiOutClose(long) midiOutClose
+ 75 stdcall midiOutGetDevCapsA(long ptr long) midiOutGetDevCapsA
+ 76 stdcall midiOutGetDevCapsW(long ptr long) midiOutGetDevCapsW
+ 77 stdcall midiOutGetErrorTextA(long ptr long) midiOutGetErrorTextA
+ 78 stdcall midiOutGetErrorTextW(long ptr long) midiOutGetErrorTextW
+ 79 stdcall midiOutGetID(long) midiOutGetID
+ 80 stdcall midiOutGetNumDevs() midiOutGetNumDevs
+ 81 stdcall midiOutGetVolume(long ptr) midiOutGetVolume
+ 82 stdcall midiOutLongMsg(long ptr long) midiOutLongMsg
+ 83 stdcall midiOutMessage(long long long long) midiOutMessage
+ 84 stdcall midiOutOpen(ptr long long long long) midiOutOpen
+ 85 stdcall midiOutPrepareHeader(long ptr long) midiOutPrepareHeader
+ 86 stdcall midiOutReset(long) midiOutReset
+ 87 stdcall midiOutSetVolume(long ptr) midiOutSetVolume
+ 88 stdcall midiOutShortMsg(long long) midiOutShortMsg
+ 89 stdcall midiOutUnprepareHeader(long ptr long) midiOutUnprepareHeader
+ 90 stdcall midiStreamClose(long) midiStreamClose
+ 91 stdcall midiStreamOpen(ptr ptr long long long long) midiStreamOpen
+ 92 stdcall midiStreamOut(long ptr long) midiStreamOut
+ 93 stdcall midiStreamPause(long) midiStreamPause
+ 94 stdcall midiStreamPosition(long ptr long) midiStreamPosition
+ 95 stdcall midiStreamProperty(long ptr long) midiStreamProperty
+ 96 stdcall midiStreamRestart(long) midiStreamRestart
+ 97 stdcall midiStreamStop(long) midiStreamStop
+ 98 stdcall mixerClose(long) mixerClose
+ 99 stdcall mixerGetControlDetailsA(long ptr long) mixerGetControlDetailsA
+100 stdcall mixerGetControlDetailsW(long ptr long) mixerGetControlDetailsW
+101 stdcall mixerGetDevCapsA(long ptr long) mixerGetDevCapsA
+102 stdcall mixerGetDevCapsW(long ptr long) mixerGetDevCapsW
+103 stdcall mixerGetID(long ptr long) mixerGetID
+104 stdcall mixerGetLineControlsA(long ptr long) mixerGetLineControlsA
+105 stdcall mixerGetLineControlsW(long ptr long) mixerGetLineControlsW
+106 stdcall mixerGetLineInfoA(long ptr long) mixerGetLineInfoA
+107 stdcall mixerGetLineInfoW(long ptr long) mixerGetLineInfoW
+108 stdcall mixerGetNumDevs() mixerGetNumDevs
+109 stdcall mixerMessage(long long long long) mixerMessage
+110 stdcall mixerOpen(ptr long long long long) mixerOpen
+111 stdcall mixerSetControlDetails(long ptr long) mixerSetControlDetails
+112 stdcall mmioAdvance(long ptr long) mmioAdvance
+113 stdcall mmioAscend(long ptr long) mmioAscend
+114 stdcall mmioClose(long long) mmioClose
+115 stdcall mmioCreateChunk(long ptr long) mmioCreateChunk
 116 stdcall mmioDescend(long ptr ptr long) mmioDescend
-117 stdcall mmioFlush(long long) mmioFlush32
-118 stdcall mmioGetInfo(long ptr long) mmioGetInfo32
+117 stdcall mmioFlush(long long) mmioFlush
+118 stdcall mmioGetInfo(long ptr long) mmioGetInfo
 119 stub mmioInstallIOProc16
-120 stdcall mmioInstallIOProcA(long ptr long) mmioInstallIOProc32A
+120 stdcall mmioInstallIOProcA(long ptr long) mmioInstallIOProcA
 121 stub mmioInstallIOProcW
-122 stdcall mmioOpenA(str ptr long) mmioOpen32A
-123 stdcall mmioOpenW(wstr ptr long) mmioOpen32W
-124 stdcall mmioRead(long ptr long) mmioRead32
-125 stdcall mmioRenameA(ptr ptr ptr long) mmioRename32A
-126 stdcall mmioRenameW(ptr ptr ptr long) mmioRename32W
-127 stdcall mmioSeek(long long long) mmioSeek32
+122 stdcall mmioOpenA(str ptr long) mmioOpenA
+123 stdcall mmioOpenW(wstr ptr long) mmioOpenW
+124 stdcall mmioRead(long ptr long) mmioRead
+125 stdcall mmioRenameA(ptr ptr ptr long) mmioRenameA
+126 stdcall mmioRenameW(ptr ptr ptr long) mmioRenameW
+127 stdcall mmioSeek(long long long) mmioSeek
 128 stdcall mmioSendMessage(long long long long) mmioSendMessage
-129 stdcall mmioSetBuffer(long ptr long long) mmioSetBuffer32
-130 stdcall mmioSetInfo(long ptr long) mmioSetInfo32
-131 stdcall mmioStringToFOURCCA(str long) mmioStringToFOURCC32A
-132 stdcall mmioStringToFOURCCW(wstr long) mmioStringToFOURCC32W
-133 stdcall mmioWrite(long ptr long) mmioWrite32
-134 stdcall mmsystemGetVersion() mmsystemGetVersion32
+129 stdcall mmioSetBuffer(long ptr long long) mmioSetBuffer
+130 stdcall mmioSetInfo(long ptr long) mmioSetInfo
+131 stdcall mmioStringToFOURCCA(str long) mmioStringToFOURCCA
+132 stdcall mmioStringToFOURCCW(wstr long) mmioStringToFOURCCW
+133 stdcall mmioWrite(long ptr long) mmioWrite
+134 stdcall mmsystemGetVersion() mmsystemGetVersion
 135 stdcall sndPlaySoundA(ptr long) sndPlaySound
 136 stdcall sndPlaySoundW(ptr long) sndPlaySound32W
-137 stdcall timeBeginPeriod(long) timeBeginPeriod32
-138 stdcall timeEndPeriod(long) timeEndPeriod32
-139 stdcall timeGetDevCaps(ptr long) timeGetDevCaps32
-140 stdcall timeGetSystemTime(ptr long) timeGetSystemTime32
+137 stdcall timeBeginPeriod(long) timeBeginPeriod
+138 stdcall timeEndPeriod(long) timeEndPeriod
+139 stdcall timeGetDevCaps(ptr long) timeGetDevCaps
+140 stdcall timeGetSystemTime(ptr long) timeGetSystemTime
 141 stdcall timeGetTime() timeGetTime
-142 stdcall timeKillEvent(long) timeKillEvent32
-143 stdcall timeSetEvent(long long ptr long long) timeSetEvent32
-144 stdcall waveInAddBuffer(long ptr long) waveInAddBuffer32
-145 stdcall waveInClose(long) waveInClose32
-146 stdcall waveInGetDevCapsA(long ptr long) waveInGetDevCaps32A
-147 stdcall waveInGetDevCapsW(long ptr long) waveInGetDevCaps32W
-148 stdcall waveInGetErrorTextA(long ptr long) waveInGetErrorText32A
-149 stdcall waveInGetErrorTextW(long ptr long) waveInGetErrorText32W
-150 stdcall waveInGetID(long ptr) waveInGetID32
-151 stdcall waveInGetNumDevs() waveInGetNumDevs32
-152 stdcall waveInGetPosition(long ptr long) waveInGetPosition32
-153 stdcall waveInMessage(long long long long) waveInMessage32
-154 stdcall waveInOpen(ptr long ptr long long long) waveInOpen32
-155 stdcall waveInPrepareHeader(long ptr long) waveInPrepareHeader32
-156 stdcall waveInReset(long) waveInReset32
-157 stdcall waveInStart(long) waveInStart32
-158 stdcall waveInStop(long) waveInStop32
-159 stdcall waveInUnprepareHeader(long ptr long) waveInUnprepareHeader32
-160 stdcall waveOutBreakLoop(long) waveOutBreakLoop32
-161 stdcall waveOutClose(long) waveOutClose32
-162 stdcall waveOutGetDevCapsA(long ptr long) waveOutGetDevCaps32A
-163 stdcall waveOutGetDevCapsW(long ptr long) waveOutGetDevCaps32W
-164 stdcall waveOutGetErrorTextA(long ptr long) waveOutGetErrorText32A
-165 stdcall waveOutGetErrorTextW(long ptr long) waveOutGetErrorText32W
-166 stdcall waveOutGetID(long ptr) waveOutGetID32
-167 stdcall waveOutGetNumDevs() waveOutGetNumDevs32
-168 stdcall waveOutGetPitch(long ptr) waveOutGetPitch32
-169 stdcall waveOutGetPlaybackRate(long ptr) waveOutGetPlaybackRate32
-170 stdcall waveOutGetPosition(long ptr long) waveOutGetPosition32
-171 stdcall waveOutGetVolume(long ptr) waveOutGetVolume32
-172 stdcall waveOutMessage(long long long long) waveOutMessage32
-173 stdcall waveOutOpen(ptr long ptr long long long) waveOutOpen32
-174 stdcall waveOutPause(long) waveOutPause32
-175 stdcall waveOutPrepareHeader(long ptr long) waveOutPrepareHeader32
-176 stdcall waveOutReset(long) waveOutReset32
-177 stdcall waveOutRestart(long) waveOutRestart32
-178 stdcall waveOutSetPitch(long long) waveOutSetPitch32
-179 stdcall waveOutSetPlaybackRate(long long) waveOutSetPlaybackRate32
-180 stdcall waveOutSetVolume(long long) waveOutSetVolume32
-181 stdcall waveOutUnprepareHeader(long ptr long) waveOutUnprepareHeader32
-182 stdcall waveOutWrite(long ptr long) waveOutWrite32
+142 stdcall timeKillEvent(long) timeKillEvent
+143 stdcall timeSetEvent(long long ptr long long) timeSetEvent
+144 stdcall waveInAddBuffer(long ptr long) waveInAddBuffer
+145 stdcall waveInClose(long) waveInClose
+146 stdcall waveInGetDevCapsA(long ptr long) waveInGetDevCapsA
+147 stdcall waveInGetDevCapsW(long ptr long) waveInGetDevCapsW
+148 stdcall waveInGetErrorTextA(long ptr long) waveInGetErrorTextA
+149 stdcall waveInGetErrorTextW(long ptr long) waveInGetErrorTextW
+150 stdcall waveInGetID(long ptr) waveInGetID
+151 stdcall waveInGetNumDevs() waveInGetNumDevs
+152 stdcall waveInGetPosition(long ptr long) waveInGetPosition
+153 stdcall waveInMessage(long long long long) waveInMessage
+154 stdcall waveInOpen(ptr long ptr long long long) waveInOpen
+155 stdcall waveInPrepareHeader(long ptr long) waveInPrepareHeader
+156 stdcall waveInReset(long) waveInReset
+157 stdcall waveInStart(long) waveInStart
+158 stdcall waveInStop(long) waveInStop
+159 stdcall waveInUnprepareHeader(long ptr long) waveInUnprepareHeader
+160 stdcall waveOutBreakLoop(long) waveOutBreakLoop
+161 stdcall waveOutClose(long) waveOutClose
+162 stdcall waveOutGetDevCapsA(long ptr long) waveOutGetDevCapsA
+163 stdcall waveOutGetDevCapsW(long ptr long) waveOutGetDevCapsW
+164 stdcall waveOutGetErrorTextA(long ptr long) waveOutGetErrorTextA
+165 stdcall waveOutGetErrorTextW(long ptr long) waveOutGetErrorTextW
+166 stdcall waveOutGetID(long ptr) waveOutGetID
+167 stdcall waveOutGetNumDevs() waveOutGetNumDevs
+168 stdcall waveOutGetPitch(long ptr) waveOutGetPitch
+169 stdcall waveOutGetPlaybackRate(long ptr) waveOutGetPlaybackRate
+170 stdcall waveOutGetPosition(long ptr long) waveOutGetPosition
+171 stdcall waveOutGetVolume(long ptr) waveOutGetVolume
+172 stdcall waveOutMessage(long long long long) waveOutMessage
+173 stdcall waveOutOpen(ptr long ptr long long long) waveOutOpen
+174 stdcall waveOutPause(long) waveOutPause
+175 stdcall waveOutPrepareHeader(long ptr long) waveOutPrepareHeader
+176 stdcall waveOutReset(long) waveOutReset
+177 stdcall waveOutRestart(long) waveOutRestart
+178 stdcall waveOutSetPitch(long long) waveOutSetPitch
+179 stdcall waveOutSetPlaybackRate(long long) waveOutSetPlaybackRate
+180 stdcall waveOutSetVolume(long long) waveOutSetVolume
+181 stdcall waveOutUnprepareHeader(long ptr long) waveOutUnprepareHeader
+182 stdcall waveOutWrite(long ptr long) waveOutWrite
 183 stub winmmf_ThunkData32
 184 stub winmmsl_ThunkData32

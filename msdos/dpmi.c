@@ -662,7 +662,7 @@ void WINAPI INT_Int31Handler( CONTEXT *context )
     {
     case 0x0000:  /* Allocate LDT descriptors */
     	TRACE(int31,"allocate LDT descriptors (%d)\n",CX_reg(context));
-        if (!(AX_reg(context) = AllocSelectorArray( CX_reg(context) )))
+        if (!(AX_reg(context) = AllocSelectorArray16( CX_reg(context) )))
         {
     	    TRACE(int31,"failed\n");
             AX_reg(context) = 0x8011;  /* descriptor unavailable */
@@ -673,7 +673,7 @@ void WINAPI INT_Int31Handler( CONTEXT *context )
 
     case 0x0001:  /* Free LDT descriptor */
     	TRACE(int31,"free LDT descriptor (0x%04x)\n",BX_reg(context));
-        if (FreeSelector( BX_reg(context) ))
+        if (FreeSelector16( BX_reg(context) ))
         {
             AX_reg(context) = 0x8022;  /* invalid selector */
             SET_CFLAG(context);
@@ -777,17 +777,17 @@ void WINAPI INT_Int31Handler( CONTEXT *context )
             }
         }
 #endif
-        SetSelectorLimit( BX_reg(context), dw );
+        SetSelectorLimit16( BX_reg(context), dw );
         break;
 
     case 0x0009:  /* Set selector access rights */
     	TRACE(int31,"set selector access rights(0x%04x,0x%04x)\n",BX_reg(context),CX_reg(context));
-        SelectorAccessRights( BX_reg(context), 1, CX_reg(context) );
+        SelectorAccessRights16( BX_reg(context), 1, CX_reg(context) );
         break;
 
     case 0x000a:  /* Allocate selector alias */
     	TRACE(int31,"allocate selector alias (0x%04x)\n",BX_reg(context));
-        if (!(AX_reg(context) = AllocCStoDSAlias( BX_reg(context) )))
+        if (!(AX_reg(context) = AllocCStoDSAlias16( BX_reg(context) )))
         {
             AX_reg(context) = 0x8011;  /* descriptor unavailable */
             SET_CFLAG(context);
@@ -826,7 +826,7 @@ void WINAPI INT_Int31Handler( CONTEXT *context )
         break;
     case 0x0100:  /* Allocate DOS memory block */
         TRACE(int31,"allocate DOS memory block (0x%x paragraphs)\n",BX_reg(context));
-        dw = GlobalDOSAlloc((DWORD)BX_reg(context)<<4);
+        dw = GlobalDOSAlloc16((DWORD)BX_reg(context)<<4);
         if (dw) {
             AX_reg(context) = HIWORD(dw);
             DX_reg(context) = LOWORD(dw);
@@ -838,7 +838,7 @@ void WINAPI INT_Int31Handler( CONTEXT *context )
         break;
     case 0x0101:  /* Free DOS memory block */
         TRACE(int31,"free DOS memory block (0x%04x)\n",DX_reg(context));
-        dw = GlobalDOSFree(DX_reg(context));
+        dw = GlobalDOSFree16(DX_reg(context));
         if (!dw) {
             AX_reg(context) = 0x0009; /* memory block address invalid */
             SET_CFLAG(context);
@@ -906,7 +906,7 @@ void WINAPI INT_Int31Handler( CONTEXT *context )
             MEMMANINFO mmi;
 
             mmi.dwSize = sizeof(mmi);
-            MemManInfo(&mmi);
+            MemManInfo16(&mmi);
             ptr = (BYTE *)PTR_SEG_OFF_TO_LIN(ES_reg(context),DI_reg(context));
             /* the layout is just the same as MEMMANINFO, but without
              * the dwSize entry.

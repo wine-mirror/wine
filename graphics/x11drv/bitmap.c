@@ -32,7 +32,7 @@ GC BITMAP_monoGC = 0, BITMAP_colorGC = 0;
 /***********************************************************************
  *           X11DRV_BITMAP_Init
  */
-BOOL32 X11DRV_BITMAP_Init(void)
+BOOL X11DRV_BITMAP_Init(void)
 {
     Pixmap tmpPixmap;
     
@@ -66,11 +66,11 @@ BOOL32 X11DRV_BITMAP_Init(void)
 /***********************************************************************
  *           X11DRV_BITMAP_SelectObject
  */
-HBITMAP32 X11DRV_BITMAP_SelectObject( DC * dc, HBITMAP32 hbitmap,
+HBITMAP X11DRV_BITMAP_SelectObject( DC * dc, HBITMAP hbitmap,
                                       BITMAPOBJ * bmp )
 {
-    HRGN32 hrgn;
-    HBITMAP32 prevHandle = dc->w.hBitmap;
+    HRGN hrgn;
+    HBITMAP prevHandle = dc->w.hBitmap;
     X11DRV_PHYSBITMAP *pbitmap;
     X11DRV_PDEVICE *physDev = (X11DRV_PDEVICE *)dc->physDev;
 
@@ -94,11 +94,11 @@ HBITMAP32 X11DRV_BITMAP_SelectObject( DC * dc, HBITMAP32 hbitmap,
     dc->w.totalExtent.bottom = bmp->bitmap.bmHeight;
 
     if (dc->w.hVisRgn)
-       SetRectRgn32( dc->w.hVisRgn, 0, 0,
+       SetRectRgn( dc->w.hVisRgn, 0, 0,
                      bmp->bitmap.bmWidth, bmp->bitmap.bmHeight );
     else
     { 
-       hrgn = CreateRectRgn32(0, 0, bmp->bitmap.bmWidth, bmp->bitmap.bmHeight);
+       hrgn = CreateRectRgn(0, 0, bmp->bitmap.bmWidth, bmp->bitmap.bmHeight);
        if (!hrgn) return 0;
        dc->w.hVisRgn    = hrgn;
     }
@@ -130,8 +130,8 @@ struct XPutImage_descr
 {
     BITMAPOBJ *bmp;
     XImage    *image;
-    INT32      width;
-    INT32      height;
+    INT      width;
+    INT      height;
 };
 
 static int XPutImage_wrapper( const struct XPutImage_descr *descr )
@@ -181,7 +181,7 @@ X11DRV_PHYSBITMAP *X11DRV_AllocBitmap( BITMAPOBJ *bmp )
  *
  */
 
-BOOL32 X11DRV_CreateBitmap( HBITMAP32 hbitmap )
+BOOL X11DRV_CreateBitmap( HBITMAP hbitmap )
 {
     X11DRV_PHYSBITMAP *pbitmap;
     BITMAPOBJ *bmp = (BITMAPOBJ *) GDI_GetObjPtr( hbitmap, BITMAP_MAGIC );
@@ -487,7 +487,7 @@ static LONG X11DRV_SetBitmapBits(BITMAPOBJ *bmp, void *bits, LONG count)
 /***********************************************************************
  *           X11DRV_BitmapBits
  */
-LONG X11DRV_BitmapBits(HBITMAP32 hbitmap, void *bits, LONG count, WORD flags)
+LONG X11DRV_BitmapBits(HBITMAP hbitmap, void *bits, LONG count, WORD flags)
 {
     BITMAPOBJ *bmp = (BITMAPOBJ *) GDI_GetObjPtr( hbitmap, BITMAP_MAGIC );
     LONG ret;
@@ -512,7 +512,7 @@ LONG X11DRV_BitmapBits(HBITMAP32 hbitmap, void *bits, LONG count, WORD flags)
 /***********************************************************************
  *           X11DRV_BITMAP_DeleteObject
  */
-BOOL32 X11DRV_BITMAP_DeleteObject( HBITMAP32 hbitmap, BITMAPOBJ * bmp )
+BOOL X11DRV_BITMAP_DeleteObject( HBITMAP hbitmap, BITMAPOBJ * bmp )
 {
     X11DRV_PHYSBITMAP *pbitmap = bmp->DDBitmap->physBitmap;
 

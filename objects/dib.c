@@ -117,7 +117,7 @@ INT16 WINAPI StretchDIBits16(HDC16 hdc, INT16 xDst, INT16 yDst, INT16 widthDst,
                        INT16 heightSrc, const VOID *bits,
                        const BITMAPINFO *info, UINT16 wUsage, DWORD dwRop )
 {
-    return (INT16)StretchDIBits32( hdc, xDst, yDst, widthDst, heightDst,
+    return (INT16)StretchDIBits( hdc, xDst, yDst, widthDst, heightDst,
                                    xSrc, ySrc, widthSrc, heightSrc, bits,
                                    info, wUsage, dwRop );
 }
@@ -126,10 +126,10 @@ INT16 WINAPI StretchDIBits16(HDC16 hdc, INT16 xDst, INT16 yDst, INT16 widthDst,
 /***********************************************************************
  *           StretchDIBits32   (GDI32.351)
  */
-INT32 WINAPI StretchDIBits32(HDC32 hdc, INT32 xDst, INT32 yDst, INT32 widthDst,
-                       INT32 heightDst, INT32 xSrc, INT32 ySrc, INT32 widthSrc,
-                       INT32 heightSrc, const void *bits,
-                       const BITMAPINFO *info, UINT32 wUsage, DWORD dwRop )
+INT WINAPI StretchDIBits(HDC hdc, INT xDst, INT yDst, INT widthDst,
+                       INT heightDst, INT xSrc, INT ySrc, INT widthSrc,
+                       INT heightSrc, const void *bits,
+                       const BITMAPINFO *info, UINT wUsage, DWORD dwRop )
 {
     DC *dc = DC_GetDCPtr( hdc );
     if(!dc) return FALSE;
@@ -140,20 +140,20 @@ INT32 WINAPI StretchDIBits32(HDC32 hdc, INT32 xDst, INT32 yDst, INT32 widthDst,
 					    heightSrc, bits, info, wUsage,
 					    dwRop);
     else { /* use StretchBlt32 */
-        HBITMAP32 hBitmap, hOldBitmap;
-	HDC32 hdcMem;
+        HBITMAP hBitmap, hOldBitmap;
+	HDC hdcMem;
     
-	hBitmap = CreateDIBitmap32( hdc, &info->bmiHeader, CBM_INIT,
+	hBitmap = CreateDIBitmap( hdc, &info->bmiHeader, CBM_INIT,
 				    bits, info, wUsage );
-	hdcMem = CreateCompatibleDC32( hdc );
-	hOldBitmap = SelectObject32( hdcMem, hBitmap );
+	hdcMem = CreateCompatibleDC( hdc );
+	hOldBitmap = SelectObject( hdcMem, hBitmap );
         /* Origin for DIBitmap is bottom left ! */
-        StretchBlt32( hdc, xDst, yDst, widthDst, heightDst,
+        StretchBlt( hdc, xDst, yDst, widthDst, heightDst,
                       hdcMem, xSrc, info->bmiHeader.biHeight - heightSrc - ySrc, 
                       widthSrc, heightSrc, dwRop );
-	SelectObject32( hdcMem, hOldBitmap );
-	DeleteDC32( hdcMem );
-	DeleteObject32( hBitmap );
+	SelectObject( hdcMem, hOldBitmap );
+	DeleteDC( hdcMem );
+	DeleteObject( hBitmap );
 	return heightSrc;
     }
 }
@@ -166,7 +166,7 @@ INT16 WINAPI SetDIBits16( HDC16 hdc, HBITMAP16 hbitmap, UINT16 startscan,
                           UINT16 lines, LPCVOID bits, const BITMAPINFO *info,
                           UINT16 coloruse )
 {
-    return SetDIBits32( hdc, hbitmap, startscan, lines, bits, info, coloruse );
+    return SetDIBits( hdc, hbitmap, startscan, lines, bits, info, coloruse );
 }
 
 
@@ -186,14 +186,14 @@ INT16 WINAPI SetDIBits16( HDC16 hdc, HBITMAP16 hbitmap, UINT16 startscan,
  *    Success: Number of scan lines copied
  *    Failure: 0
  */
-INT32 WINAPI SetDIBits32( HDC32 hdc, HBITMAP32 hbitmap, UINT32 startscan,
-                          UINT32 lines, LPCVOID bits, const BITMAPINFO *info,
-                          UINT32 coloruse )
+INT WINAPI SetDIBits( HDC hdc, HBITMAP hbitmap, UINT startscan,
+                          UINT lines, LPCVOID bits, const BITMAPINFO *info,
+                          UINT coloruse )
 {
     DIB_SETIMAGEBITS_DESCR descr;
     BITMAPOBJ * bmp;
     int height, tmpheight;
-    INT32 result;
+    INT result;
 
       /* Check parameters */
 
@@ -279,7 +279,7 @@ INT16 WINAPI SetDIBitsToDevice16(HDC16 hdc, INT16 xDest, INT16 yDest, INT16 cx,
                            UINT16 lines, LPCVOID bits, const BITMAPINFO *info,
                            UINT16 coloruse )
 {
-    return SetDIBitsToDevice32( hdc, xDest, yDest, cx, cy, xSrc, ySrc,
+    return SetDIBitsToDevice( hdc, xDest, yDest, cx, cy, xSrc, ySrc,
                                 startscan, lines, bits, info, coloruse );
 }
 
@@ -287,12 +287,12 @@ INT16 WINAPI SetDIBitsToDevice16(HDC16 hdc, INT16 xDest, INT16 yDest, INT16 cx,
 /***********************************************************************
  *           SetDIBitsToDevice32   (GDI32.313)
  */
-INT32 WINAPI SetDIBitsToDevice32(HDC32 hdc, INT32 xDest, INT32 yDest, DWORD cx,
-                           DWORD cy, INT32 xSrc, INT32 ySrc, UINT32 startscan,
-                           UINT32 lines, LPCVOID bits, const BITMAPINFO *info,
-                           UINT32 coloruse )
+INT WINAPI SetDIBitsToDevice(HDC hdc, INT xDest, INT yDest, DWORD cx,
+                           DWORD cy, INT xSrc, INT ySrc, UINT startscan,
+                           UINT lines, LPCVOID bits, const BITMAPINFO *info,
+                           UINT coloruse )
 {
-    INT32 ret;
+    INT ret;
     DC *dc;
 
     if (!(dc = DC_GetDCPtr( hdc ))) return 0;
@@ -316,13 +316,13 @@ INT32 WINAPI SetDIBitsToDevice32(HDC32 hdc, INT32 xDest, INT32 yDest, DWORD cx,
 UINT16 WINAPI SetDIBColorTable16( HDC16 hdc, UINT16 startpos, UINT16 entries,
 				  RGBQUAD *colors )
 {
-    return SetDIBColorTable32( hdc, startpos, entries, colors );
+    return SetDIBColorTable( hdc, startpos, entries, colors );
 }
 
 /***********************************************************************
  *           SetDIBColorTable32    (GDI32.311)
  */
-UINT32 WINAPI SetDIBColorTable32( HDC32 hdc, UINT32 startpos, UINT32 entries,
+UINT WINAPI SetDIBColorTable( HDC hdc, UINT startpos, UINT entries,
 				  RGBQUAD *colors )
 {
     DC * dc;
@@ -368,13 +368,13 @@ UINT32 WINAPI SetDIBColorTable32( HDC32 hdc, UINT32 startpos, UINT32 entries,
 UINT16 WINAPI GetDIBColorTable16( HDC16 hdc, UINT16 startpos, UINT16 entries,
 				  RGBQUAD *colors )
 {
-    return GetDIBColorTable32( hdc, startpos, entries, colors );
+    return GetDIBColorTable( hdc, startpos, entries, colors );
 }
 
 /***********************************************************************
  *           GetDIBColorTable32    (GDI32.169)
  */
-UINT32 WINAPI GetDIBColorTable32( HDC32 hdc, UINT32 startpos, UINT32 entries,
+UINT WINAPI GetDIBColorTable( HDC hdc, UINT startpos, UINT entries,
 				  RGBQUAD *colors )
 {
     DC * dc;
@@ -422,7 +422,7 @@ INT16 WINAPI GetDIBits16( HDC16 hdc, HBITMAP16 hbitmap, UINT16 startscan,
                           UINT16 lines, LPVOID bits, BITMAPINFO * info,
                           UINT16 coloruse )
 {
-    return GetDIBits32( hdc, hbitmap, startscan, lines, bits, info, coloruse );
+    return GetDIBits( hdc, hbitmap, startscan, lines, bits, info, coloruse );
 }
 
 
@@ -435,14 +435,14 @@ INT16 WINAPI GetDIBits16( HDC16 hdc, HBITMAP16 hbitmap, UINT16 startscan,
  *
  * http://www.microsoft.com/msdn/sdk/platforms/doc/sdk/win32/func/src/f30_14.htm
  */
-INT32 WINAPI GetDIBits32(
-    HDC32 hdc,         /* [in]  Handle to device context */
-    HBITMAP32 hbitmap, /* [in]  Handle to bitmap */
-    UINT32 startscan,  /* [in]  First scan line to set in dest bitmap */
-    UINT32 lines,      /* [in]  Number of scan lines to copy */
+INT WINAPI GetDIBits(
+    HDC hdc,         /* [in]  Handle to device context */
+    HBITMAP hbitmap, /* [in]  Handle to bitmap */
+    UINT startscan,  /* [in]  First scan line to set in dest bitmap */
+    UINT lines,      /* [in]  Number of scan lines to copy */
     LPVOID bits,       /* [out] Address of array for bitmap bits */
     BITMAPINFO * info, /* [out] Address of structure with bitmap data */
-    UINT32 coloruse)   /* [in]  RGB or palette index */
+    UINT coloruse)   /* [in]  RGB or palette index */
 {
     DC * dc;
     BITMAPOBJ * bmp;
@@ -636,19 +636,19 @@ HBITMAP16 WINAPI CreateDIBitmap16( HDC16 hdc, const BITMAPINFOHEADER * header,
                             DWORD init, LPCVOID bits, const BITMAPINFO * data,
                             UINT16 coloruse )
 {
-    return CreateDIBitmap32( hdc, header, init, bits, data, coloruse );
+    return CreateDIBitmap( hdc, header, init, bits, data, coloruse );
 }
 
 
 /***********************************************************************
  *           CreateDIBitmap32    (GDI32.37)
  */
-HBITMAP32 WINAPI CreateDIBitmap32( HDC32 hdc, const BITMAPINFOHEADER *header,
+HBITMAP WINAPI CreateDIBitmap( HDC hdc, const BITMAPINFOHEADER *header,
                             DWORD init, LPCVOID bits, const BITMAPINFO *data,
-                            UINT32 coloruse )
+                            UINT coloruse )
 {
-    HBITMAP32 handle;
-    BOOL32 fColor;
+    HBITMAP handle;
+    BOOL fColor;
     DWORD width;
     int height;
     WORD bpp;
@@ -701,12 +701,12 @@ HBITMAP32 WINAPI CreateDIBitmap32( HDC32 hdc, const BITMAPINFOHEADER *header,
 
     /* Now create the bitmap */
 
-    handle = fColor ? CreateBitmap32( width, height, 1, MONITOR_GetDepth(&MONITOR_PrimaryMonitor), NULL ) :
-                      CreateBitmap32( width, height, 1, 1, NULL );
+    handle = fColor ? CreateBitmap( width, height, 1, MONITOR_GetDepth(&MONITOR_PrimaryMonitor), NULL ) :
+                      CreateBitmap( width, height, 1, 1, NULL );
     if (!handle) return 0;
 
     if (init == CBM_INIT)
-        SetDIBits32( hdc, handle, 0, height, bits, data, coloruse );
+        SetDIBits( hdc, handle, 0, height, bits, data, coloruse );
     return handle;
 }
 
@@ -717,9 +717,9 @@ HBITMAP32 WINAPI CreateDIBitmap32( HDC32 hdc, const BITMAPINFOHEADER *header,
 static void DIB_DoProtectDIBSection( BITMAPOBJ *bmp, DWORD new_prot )
 {
     DIBSECTION *dib = &bmp->dib->dibSection;
-    INT32 effHeight = dib->dsBm.bmHeight >= 0? dib->dsBm.bmHeight
+    INT effHeight = dib->dsBm.bmHeight >= 0? dib->dsBm.bmHeight
                                              : -dib->dsBm.bmHeight;
-    INT32 totalSize = dib->dsBmih.biSizeImage? dib->dsBmih.biSizeImage
+    INT totalSize = dib->dsBmih.biSizeImage? dib->dsBmih.biSizeImage
                          : dib->dsBm.bmWidthBytes * effHeight;
     DWORD old_prot;
 
@@ -731,7 +731,7 @@ static void DIB_DoProtectDIBSection( BITMAPOBJ *bmp, DWORD new_prot )
 /***********************************************************************
  *           DIB_DoUpdateDIBSection
  */
-static void DIB_DoUpdateDIBSection( BITMAPOBJ *bmp, BOOL32 toDIB )
+static void DIB_DoUpdateDIBSection( BITMAPOBJ *bmp, BOOL toDIB )
 {
     DIBSECTIONOBJ *dib = bmp->dib;
     DIB_SETIMAGEBITS_DESCR descr;
@@ -776,12 +776,12 @@ static void DIB_DoUpdateDIBSection( BITMAPOBJ *bmp, BOOL32 toDIB )
 /***********************************************************************
  *           DIB_FaultHandler
  */
-static BOOL32 DIB_FaultHandler( LPVOID res, LPCVOID addr )
+static BOOL DIB_FaultHandler( LPVOID res, LPCVOID addr )
 {
-    BOOL32 handled = FALSE;
+    BOOL handled = FALSE;
     BITMAPOBJ *bmp;
 
-    bmp = (BITMAPOBJ *)GDI_GetObjPtr( (HBITMAP32)res, BITMAP_MAGIC );
+    bmp = (BITMAPOBJ *)GDI_GetObjPtr( (HBITMAP)res, BITMAP_MAGIC );
     if (!bmp) return FALSE;
 
     if (bmp->dib)
@@ -814,14 +814,14 @@ static BOOL32 DIB_FaultHandler( LPVOID res, LPCVOID addr )
             break;
         }
 
-    GDI_HEAP_UNLOCK( (HBITMAP32)res );
+    GDI_HEAP_UNLOCK( (HBITMAP)res );
     return handled;
 }
 
 /***********************************************************************
  *           DIB_UpdateDIBSection
  */
-void DIB_UpdateDIBSection( DC *dc, BOOL32 toDIB )
+void DIB_UpdateDIBSection( DC *dc, BOOL toDIB )
 {
     BITMAPOBJ *bmp;
 
@@ -906,10 +906,10 @@ void DIB_UpdateDIBSection( DC *dc, BOOL32 toDIB )
  *           CreateDIBSection16    (GDI.489)
  */
 HBITMAP16 WINAPI CreateDIBSection16 (HDC16 hdc, BITMAPINFO *bmi, UINT16 usage,
-				     SEGPTR *bits, HANDLE32 section,
+				     SEGPTR *bits, HANDLE section,
 				     DWORD offset)
 {
-    HBITMAP32 res = CreateDIBSection32(hdc, bmi, usage, NULL, section,
+    HBITMAP res = CreateDIBSection(hdc, bmi, usage, NULL, section,
 				       offset);
 
     if ( res )
@@ -918,9 +918,9 @@ HBITMAP16 WINAPI CreateDIBSection16 (HDC16 hdc, BITMAPINFO *bmi, UINT16 usage,
 	if ( bmp && bmp->dib )
 	{
 	    DIBSECTION *dib = &bmp->dib->dibSection;
-	    INT32 height = dib->dsBm.bmHeight >= 0 ?
+	    INT height = dib->dsBm.bmHeight >= 0 ?
 		dib->dsBm.bmHeight : -dib->dsBm.bmHeight;
-	    INT32 size = dib->dsBmih.biSizeImage ?
+	    INT size = dib->dsBmih.biSizeImage ?
 		dib->dsBmih.biSizeImage : dib->dsBm.bmWidthBytes * height;
 	    if ( dib->dsBm.bmBits )
 	    {
@@ -944,11 +944,11 @@ HBITMAP16 WINAPI CreateDIBSection16 (HDC16 hdc, BITMAPINFO *bmi, UINT16 usage,
 /***********************************************************************
  *           CreateDIBSection32    (GDI32.36)
  */
-HBITMAP32 WINAPI CreateDIBSection32 (HDC32 hdc, BITMAPINFO *bmi, UINT32 usage,
-				     LPVOID *bits,HANDLE32 section,
+HBITMAP WINAPI CreateDIBSection (HDC hdc, BITMAPINFO *bmi, UINT usage,
+				     LPVOID *bits,HANDLE section,
 				     DWORD offset)
 {
-    HBITMAP32 res = 0;
+    HBITMAP res = 0;
     BITMAPOBJ *bmp = NULL;
     DIBSECTIONOBJ *dib = NULL;
     int *colorMap = NULL;
@@ -956,8 +956,8 @@ HBITMAP32 WINAPI CreateDIBSection32 (HDC32 hdc, BITMAPINFO *bmi, UINT32 usage,
 
     /* Fill BITMAP32 structure with DIB data */
     BITMAPINFOHEADER *bi = &bmi->bmiHeader;
-    INT32 effHeight, totalSize;
-    BITMAP32 bm;
+    INT effHeight, totalSize;
+    BITMAP bm;
 
     TRACE(bitmap, "format (%ld,%ld), planes %d, bpp %d, size %ld, colors %ld (%s)\n",
 	  bi->biWidth, bi->biHeight, bi->biPlanes, bi->biBitCount,
@@ -1015,7 +1015,7 @@ HBITMAP32 WINAPI CreateDIBSection32 (HDC32 hdc, BITMAPINFO *bmi, UINT32 usage,
     /* Create Device Dependent Bitmap and add DIB pointer */
     if (dib) 
     {
-       res = CreateDIBitmap32(hdc, bi, 0, NULL, bmi, usage);
+       res = CreateDIBitmap(hdc, bi, 0, NULL, bmi, usage);
        if (res)
        {
            bmp = (BITMAPOBJ *) GDI_GetObjPtr(res, BITMAP_MAGIC);
@@ -1049,7 +1049,7 @@ HBITMAP32 WINAPI CreateDIBSection32 (HDC32 hdc, BITMAPINFO *bmi, UINT32 usage,
         if (dib && dib->image) { XDestroyImage(dib->image); dib->image = NULL; }
 	if (colorMap) { HeapFree(GetProcessHeap(), 0, colorMap); colorMap = NULL; }
 	if (dib) { HeapFree(GetProcessHeap(), 0, dib); dib = NULL; }
-	if (res) { DeleteObject32(res); res = 0; }
+	if (res) { DeleteObject(res); res = 0; }
     }
 
     /* Install fault handler, if possible */
@@ -1108,7 +1108,7 @@ void DIB_DeleteDIBSection( BITMAPOBJ *bmp )
  * Change color table entries when LR_LOADTRANSPARENT or LR_LOADMAP3DCOLORS
  * are in loadflags
  */
-void DIB_FixColorsToLoadflags(BITMAPINFO * bmi, UINT32 loadflags, BYTE pix)
+void DIB_FixColorsToLoadflags(BITMAPINFO * bmi, UINT loadflags, BYTE pix)
 {
   int colors;
   COLORREF c_W, c_S, c_F, c_L, c_C;
@@ -1125,10 +1125,10 @@ void DIB_FixColorsToLoadflags(BITMAPINFO * bmi, UINT32 loadflags, BYTE pix)
   colors = bmi->bmiHeader.biClrUsed;
   if (!colors && (bmi->bmiHeader.biBitCount <= 8))
     colors = 1 << bmi->bmiHeader.biBitCount;
-  c_W = GetSysColor32(COLOR_WINDOW);
-  c_S = GetSysColor32(COLOR_3DSHADOW);
-  c_F = GetSysColor32(COLOR_3DFACE);
-  c_L = GetSysColor32(COLOR_3DLIGHT);
+  c_W = GetSysColor(COLOR_WINDOW);
+  c_S = GetSysColor(COLOR_3DSHADOW);
+  c_F = GetSysColor(COLOR_3DFACE);
+  c_L = GetSysColor(COLOR_3DLIGHT);
   if (loadflags & LR_LOADTRANSPARENT) {
     switch (bmi->bmiHeader.biBitCount) {
       case 1: pix = pix >> 7; break;

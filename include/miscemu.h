@@ -22,17 +22,17 @@ extern DWORD DOSMEM_CollateTable;
 extern DWORD DOSMEM_ErrorCall;
 extern DWORD DOSMEM_ErrorBuffer;
 
-extern BOOL32 DOSMEM_Init(HMODULE16 hModule);
+extern BOOL DOSMEM_Init(HMODULE16 hModule);
 extern void   DOSMEM_Tick(WORD timer);
 extern WORD   DOSMEM_AllocSelector(WORD);
 extern char * DOSMEM_MemoryBase(HMODULE16 hModule);
-extern LPVOID DOSMEM_GetBlock(HMODULE16 hModule, UINT32 size, UINT16* p);
-extern BOOL32 DOSMEM_FreeBlock(HMODULE16 hModule, void* ptr);
-extern LPVOID DOSMEM_ResizeBlock(HMODULE16 hModule, void* ptr, UINT32 size, UINT16* p);
-extern UINT32 DOSMEM_Available(HMODULE16 hModule);
+extern LPVOID DOSMEM_GetBlock(HMODULE16 hModule, UINT size, UINT16* p);
+extern BOOL DOSMEM_FreeBlock(HMODULE16 hModule, void* ptr);
+extern LPVOID DOSMEM_ResizeBlock(HMODULE16 hModule, void* ptr, UINT size, UINT16* p);
+extern UINT DOSMEM_Available(HMODULE16 hModule);
 extern LPVOID DOSMEM_MapRealToLinear(DWORD); /* real-mode to linear */
-extern LPVOID DOSMEM_MapDosToLinear(UINT32); /* linear DOS to Wine */
-extern UINT32 DOSMEM_MapLinearToDos(LPVOID); /* linear Wine to DOS */
+extern LPVOID DOSMEM_MapDosToLinear(UINT); /* linear DOS to Wine */
+extern UINT DOSMEM_MapLinearToDos(LPVOID); /* linear Wine to DOS */
 
 /* msdos/interrupts.c */
 extern FARPROC16 INT_GetPMHandler( BYTE intnum );
@@ -101,9 +101,9 @@ extern void WINAPI DPMI_FreeInternalRMCB(FARPROC16);
 extern void WINAPI XMS_Handler(CONTEXT*);
 
 /* loader/signal.c */
-extern BOOL32 SIGNAL_Init(void);
+extern BOOL SIGNAL_Init(void);
 extern void SIGNAL_SetHandler( int sig, void (*func)(), int flags );
-extern void SIGNAL_MaskAsyncEvents( BOOL32 flag );
+extern void SIGNAL_MaskAsyncEvents( BOOL flag );
 extern void SIGNAL_InitHandlers(void);
 
 /* misc/aspi.c */

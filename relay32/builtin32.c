@@ -26,7 +26,7 @@ typedef struct
 typedef struct
 {
     const BUILTIN32_DESCRIPTOR *descr;     /* DLL descriptor */
-    BOOL32                      used;      /* Used by default */
+    BOOL                      used;      /* Used by default */
 } BUILTIN32_DLL;
 
 
@@ -120,7 +120,7 @@ extern void RELAY_CallFrom32();
  *
  * Load a built-in Win32 module. Helper function for BUILTIN32_LoadImage.
  */
-static HMODULE32 BUILTIN32_DoLoadImage( BUILTIN32_DLL *dll )
+static HMODULE BUILTIN32_DoLoadImage( BUILTIN32_DLL *dll )
 {
 
     IMAGE_DATA_DIRECTORY *dir;
@@ -131,7 +131,7 @@ static HMODULE32 BUILTIN32_DoLoadImage( BUILTIN32_DLL *dll )
     LPVOID *funcs;
     LPSTR *names;
     DEBUG_ENTRY_POINT *debug;
-    INT32 i, size;
+    INT i, size;
     BYTE *addr;
 
     /* Allocate the module */
@@ -286,7 +286,7 @@ static HMODULE32 BUILTIN32_DoLoadImage( BUILTIN32_DLL *dll )
         if (dll->descr->names[i])
             *names = (LPSTR)((BYTE *)dll->descr->names[i] - addr);
 
-    return (HMODULE32)addr;
+    return (HMODULE)addr;
 }
 
 /***********************************************************************
@@ -295,7 +295,7 @@ static HMODULE32 BUILTIN32_DoLoadImage( BUILTIN32_DLL *dll )
  * Load a built-in module. If the 'force' parameter is FALSE, we only
  * load the module if it has not been disabled via the -dll option.
  */
-HMODULE32 BUILTIN32_LoadImage( LPCSTR name, OFSTRUCT *ofs, BOOL32 force )
+HMODULE BUILTIN32_LoadImage( LPCSTR name, OFSTRUCT *ofs, BOOL force )
 {
     BUILTIN32_DLL *table;
     char dllname[16], *p;
@@ -303,11 +303,11 @@ HMODULE32 BUILTIN32_LoadImage( LPCSTR name, OFSTRUCT *ofs, BOOL32 force )
     /* Fix the name in case we have a full path and extension */
 
     if ((p = strrchr( name, '\\' ))) name = p + 1;
-    lstrcpyn32A( dllname, name, sizeof(dllname) );
+    lstrcpynA( dllname, name, sizeof(dllname) );
     if ((p = strrchr( dllname, '.' ))) *p = '\0';
 
     for (table = BuiltinDLLs; table->descr; table++)
-        if (!lstrcmpi32A( table->descr->name, dllname )) break;
+        if (!lstrcmpiA( table->descr->name, dllname )) break;
     if (!table->descr) return 0;
     if (!table->used)
     {
@@ -333,14 +333,14 @@ ENTRYPOINT32 BUILTIN32_GetEntryPoint( char *buffer, void *relay,
                                       unsigned int *typemask )
 {
     BUILTIN32_DLL *dll;
-    HMODULE32 hModule;
+    HMODULE hModule;
     int ordinal = 0, i;
 
     /* First find the module */
 
     for (dll = BuiltinDLLs; dll->descr; dll++)
         if (dll->used 
-            && ((hModule = GetModuleHandle32A(dll->descr->name)) != 0))
+            && ((hModule = GetModuleHandleA(dll->descr->name)) != 0))
         {
             IMAGE_SECTION_HEADER *sec = PE_SECTIONS(hModule);
             DEBUG_ENTRY_POINT *debug = 
@@ -374,9 +374,9 @@ ENTRYPOINT32 BUILTIN32_GetEntryPoint( char *buffer, void *relay,
  *
  * FIXME: enhance to do it module relative.
  */
-void BUILTIN32_SwitchRelayDebug(BOOL32 onoff) {
+void BUILTIN32_SwitchRelayDebug(BOOL onoff) {
     BUILTIN32_DLL *dll;
-    HMODULE32 hModule;
+    HMODULE hModule;
     int i;
 
 #ifdef __i386__
@@ -385,7 +385,7 @@ void BUILTIN32_SwitchRelayDebug(BOOL32 onoff) {
     for (dll = BuiltinDLLs; dll->descr; dll++) {
 	IMAGE_SECTION_HEADER *sec;
 	DEBUG_ENTRY_POINT *debug;
-        if (!dll->used || !(hModule = GetModuleHandle32A(dll->descr->name)))
+        if (!dll->used || !(hModule = GetModuleHandleA(dll->descr->name)))
 	    continue;
 
 	sec = PE_SECTIONS(hModule);
@@ -448,7 +448,7 @@ int BUILTIN32_EnableDLL( const char *name, int len, int enable )
 
     for (i = 0, dll = BuiltinDLLs; dll->descr; dll++)
     {
-        if (!lstrncmpi32A( name, dll->descr->name, len ))
+        if (!lstrncmpiA( name, dll->descr->name, len ))
         {
             dll->used = enable;
             return TRUE;

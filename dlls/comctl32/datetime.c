@@ -28,7 +28,7 @@
 
 
 static LRESULT
-DATETIME_Create (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
+DATETIME_Create (WND *wndPtr, WPARAM wParam, LPARAM lParam)
 {
     DATETIME_INFO *infoPtr;
 
@@ -55,7 +55,7 @@ DATETIME_Create (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 
 
 static LRESULT
-DATETIME_Destroy (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
+DATETIME_Destroy (WND *wndPtr, WPARAM wParam, LPARAM lParam)
 {
     DATETIME_INFO *infoPtr = DATETIME_GetInfoPtr(wndPtr);
 
@@ -69,7 +69,7 @@ DATETIME_Destroy (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 
 
 LRESULT WINAPI
-DATETIME_WindowProc (HWND32 hwnd, UINT32 uMsg, WPARAM32 wParam, LPARAM lParam)
+DATETIME_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     WND *wndPtr = WIN_FindWndPtr(hwnd);
 
@@ -92,11 +92,11 @@ DATETIME_WindowProc (HWND32 hwnd, UINT32 uMsg, WPARAM32 wParam, LPARAM lParam)
         FIXME (datetime, "Unimplemented msg DTM_SETRANGE\n");
         return 1;
 
-    case DTM_SETFORMAT32A:
+    case DTM_SETFORMATA:
         FIXME (datetime, "Unimplemented msg DTM_SETFORMAT32A\n");
         return 1;
 
-    case DTM_SETFORMAT32W:
+    case DTM_SETFORMATW:
         FIXME (datetime, "Unimplemented msg DTM_SETFORMAT32W\n");
         return 1;
 
@@ -130,7 +130,7 @@ DATETIME_WindowProc (HWND32 hwnd, UINT32 uMsg, WPARAM32 wParam, LPARAM lParam)
 	    if (uMsg >= WM_USER)
 		ERR (datetime, "unknown msg %04x wp=%08x lp=%08lx\n",
 		     uMsg, wParam, lParam);
-	    return DefWindowProc32A (hwnd, uMsg, wParam, lParam);
+	    return DefWindowProcA (hwnd, uMsg, wParam, lParam);
     }
     return 0;
 }
@@ -139,27 +139,27 @@ DATETIME_WindowProc (HWND32 hwnd, UINT32 uMsg, WPARAM32 wParam, LPARAM lParam)
 VOID
 DATETIME_Register (VOID)
 {
-    WNDCLASS32A wndClass;
+    WNDCLASSA wndClass;
 
-    if (GlobalFindAtom32A (DATETIMEPICK_CLASS32A)) return;
+    if (GlobalFindAtomA (DATETIMEPICK_CLASSA)) return;
 
-    ZeroMemory (&wndClass, sizeof(WNDCLASS32A));
+    ZeroMemory (&wndClass, sizeof(WNDCLASSA));
     wndClass.style         = CS_GLOBALCLASS;
-    wndClass.lpfnWndProc   = (WNDPROC32)DATETIME_WindowProc;
+    wndClass.lpfnWndProc   = (WNDPROC)DATETIME_WindowProc;
     wndClass.cbClsExtra    = 0;
     wndClass.cbWndExtra    = sizeof(DATETIME_INFO *);
-    wndClass.hCursor       = LoadCursor32A (0, IDC_ARROW32A);
-    wndClass.hbrBackground = (HBRUSH32)(COLOR_WINDOW + 1);
-    wndClass.lpszClassName = DATETIMEPICK_CLASS32A;
+    wndClass.hCursor       = LoadCursorA (0, IDC_ARROWA);
+    wndClass.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);
+    wndClass.lpszClassName = DATETIMEPICK_CLASSA;
  
-    RegisterClass32A (&wndClass);
+    RegisterClassA (&wndClass);
 }
 
 
 VOID
 DATETIME_Unregister (VOID)
 {
-    if (GlobalFindAtom32A (DATETIMEPICK_CLASS32A))
-	UnregisterClass32A (DATETIMEPICK_CLASS32A, (HINSTANCE32)NULL);
+    if (GlobalFindAtomA (DATETIMEPICK_CLASSA))
+	UnregisterClassA (DATETIMEPICK_CLASSA, (HINSTANCE)NULL);
 }
 

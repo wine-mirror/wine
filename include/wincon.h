@@ -20,7 +20,7 @@
 #define ENABLE_WRAP_AT_EOL_OUTPUT 0x02
 
 
-typedef BOOL32 HANDLER_ROUTINE(WORD);
+typedef BOOL HANDLER_ROUTINE(WORD);
 
 /* Attributes flags: */
 
@@ -35,7 +35,7 @@ typedef BOOL32 HANDLER_ROUTINE(WORD);
 
 typedef struct _CONSOLE_CURSOR_INFO {
     DWORD	dwSize;   /* Between 1 & 100 for percentage of cell filled */
-    BOOL32	bVisible; /* Visibility of cursor */
+    BOOL	bVisible; /* Visibility of cursor */
 } CONSOLE_CURSOR_INFO, *LPCONSOLE_CURSOR_INFO;
 
 /*
@@ -75,7 +75,7 @@ typedef struct tagCHAR_INFO
 
 typedef struct tagKEY_EVENT_RECORD
 {
-    BOOL32	bKeyDown;		/* 04 */
+    BOOL	bKeyDown;		/* 04 */
     WORD	wRepeatCount;		/* 08 */
     WORD	wVirtualKeyCode;	/* 0A */
     WORD	wVirtualScanCode;	/* 0C */
@@ -113,12 +113,12 @@ typedef struct tagWINDOW_BUFFER_SIZE_RECORD
 
 typedef struct tagMENU_EVENT_RECORD
 {
-    UINT32	dwCommandId; /* perhaps UINT16 ??? */
+    UINT	dwCommandId; /* perhaps UINT16 ??? */
 } MENU_EVENT_RECORD,*LPMENU_EVENT_RECORD;
 
 typedef struct tagFOCUS_EVENT_RECORD
 {
-    BOOL32      bSetFocus; /* perhaps BOOL16 ??? */
+    BOOL      bSetFocus; /* perhaps BOOL16 ??? */
 } FOCUS_EVENT_RECORD,*LPFOCUS_EVENT_RECORD;
 
 typedef struct tagINPUT_RECORD
@@ -141,36 +141,36 @@ typedef struct tagINPUT_RECORD
 #define MENU_EVENT			0x08
 #define FOCUS_EVENT 			0x10
 
-BOOL32 WINAPI WriteConsoleOutput32A( HANDLE32 hConsoleOutput, LPCHAR_INFO lpBuffer, COORD dwBufferSize, COORD dwBufferCoord, LPSMALL_RECT lpWriteRegion);
-BOOL32 WINAPI WriteConsoleOutput32W( HANDLE32 hConsoleOutput, LPCHAR_INFO lpBuffer, COORD dwBufferSize, COORD dwBufferCoord, LPSMALL_RECT lpWriteRegion);
+BOOL WINAPI WriteConsoleOutputA( HANDLE hConsoleOutput, LPCHAR_INFO lpBuffer, COORD dwBufferSize, COORD dwBufferCoord, LPSMALL_RECT lpWriteRegion);
+BOOL WINAPI WriteConsoleOutputW( HANDLE hConsoleOutput, LPCHAR_INFO lpBuffer, COORD dwBufferSize, COORD dwBufferCoord, LPSMALL_RECT lpWriteRegion);
 #define WriteConsoleOutput WINELIB_NAME_AW(WriteConsoleOutput)
-BOOL32 WINAPI WriteConsoleInput32A( HANDLE32 handle, INPUT_RECORD *buffer,
+BOOL WINAPI WriteConsoleInputA( HANDLE handle, INPUT_RECORD *buffer,
                                     DWORD count, LPDWORD written );
-BOOL32 WINAPI WriteConsoleInput32W( HANDLE32 handle, INPUT_RECORD *buffer,
+BOOL WINAPI WriteConsoleInputW( HANDLE handle, INPUT_RECORD *buffer,
                                     DWORD count, LPDWORD written );
 #define WriteConsoleInput WINELIB_NAME_AW(WriteConsoleInput)
-BOOL32 WINAPI PeekConsoleInput32A( HANDLE32 handle, LPINPUT_RECORD buffer,
+BOOL WINAPI PeekConsoleInputA( HANDLE handle, LPINPUT_RECORD buffer,
                                    DWORD count, LPDWORD read );
-BOOL32 WINAPI PeekConsoleInput32W( HANDLE32 handle, LPINPUT_RECORD buffer,
+BOOL WINAPI PeekConsoleInputW( HANDLE handle, LPINPUT_RECORD buffer,
                                    DWORD count, LPDWORD read );
 #define PeekConsoleInput WINELIB_NAME_AW(PeekConsoleInput)
-BOOL32 WINAPI ReadConsole32A(	HANDLE32 hConsoleInput, LPVOID lpBuffer,
+BOOL WINAPI ReadConsoleA(	HANDLE hConsoleInput, LPVOID lpBuffer,
 				DWORD nNumberOfCharsToRead,
 	  			LPDWORD lpNumberOfCharsRead, LPVOID lpReserved);
-BOOL32 WINAPI ReadConsole32W(	HANDLE32 hConsoleInput, LPVOID lpBuffer,
+BOOL WINAPI ReadConsoleW(	HANDLE hConsoleInput, LPVOID lpBuffer,
 				DWORD nNumberOfCharsToRead,
 	  			LPDWORD lpNumberOfCharsRead, LPVOID lpReserved);
 #define ReadConsole WINELIB_NAME_AW(ReadConsole)
-BOOL32 WINAPI ReadConsoleInput32A(HANDLE32 hConsoleInput,
+BOOL WINAPI ReadConsoleInputA(HANDLE hConsoleInput,
 				  LPINPUT_RECORD lpBuffer, DWORD nLength,
 				  LPDWORD lpNumberOfEventsRead);
-BOOL32 WINAPI ReadConsoleInput32W(HANDLE32 hConsoleInput,
+BOOL WINAPI ReadConsoleInputW(HANDLE hConsoleInput,
 				  LPINPUT_RECORD lpBuffer, DWORD nLength,
 				  LPDWORD lpNumberOfEventsRead);
 #define ReadConsoleInput WINELIB_NAME_AW(ReadConsoleInput)
 
 #ifdef __WINE__
-extern HANDLE32 CONSOLE_OpenHandle( BOOL32 output, DWORD access, LPSECURITY_ATTRIBUTES sa );
+extern HANDLE CONSOLE_OpenHandle( BOOL output, DWORD access, LPSECURITY_ATTRIBUTES sa );
 #endif
 
 #endif  /* __WINE_WINCON_H */

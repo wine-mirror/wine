@@ -74,7 +74,7 @@ const int X11DRV_XROPfunction[16] =
  * If fMapColors is TRUE, X pixels are mapped to Windows colors.
  * Return FALSE if brush is BS_NULL, TRUE otherwise.
  */
-BOOL32 X11DRV_SetupGCForPatBlt( DC * dc, GC gc, BOOL32 fMapColors )
+BOOL X11DRV_SetupGCForPatBlt( DC * dc, GC gc, BOOL fMapColors )
 {
     XGCValues val;
     unsigned long mask;
@@ -172,7 +172,7 @@ BOOL32 X11DRV_SetupGCForPatBlt( DC * dc, GC gc, BOOL32 fMapColors )
  * Setup physDev->gc for drawing operations using current brush.
  * Return FALSE if brush is BS_NULL, TRUE otherwise.
  */
-BOOL32 X11DRV_SetupGCForBrush( DC * dc )
+BOOL X11DRV_SetupGCForBrush( DC * dc )
 {
     X11DRV_PDEVICE *physDev = (X11DRV_PDEVICE *)dc->physDev;
     return X11DRV_SetupGCForPatBlt( dc, physDev->gc, FALSE );
@@ -185,7 +185,7 @@ BOOL32 X11DRV_SetupGCForBrush( DC * dc )
  * Setup physDev->gc for drawing operations using current pen.
  * Return FALSE if pen is PS_NULL, TRUE otherwise.
  */
-BOOL32 X11DRV_SetupGCForPen( DC * dc )
+BOOL X11DRV_SetupGCForPen( DC * dc )
 {
     XGCValues val;
     X11DRV_PDEVICE *physDev = (X11DRV_PDEVICE *)dc->physDev;
@@ -269,7 +269,7 @@ BOOL32 X11DRV_SetupGCForPen( DC * dc )
  * Setup physDev->gc for text drawing operations.
  * Return FALSE if the font is null, TRUE otherwise.
  */
-BOOL32 X11DRV_SetupGCForText( DC * dc )
+BOOL X11DRV_SetupGCForText( DC * dc )
 {
     X11DRV_PDEVICE *physDev = (X11DRV_PDEVICE *)dc->physDev;
     XFontStruct* xfs = XFONT_GetFontStruct( physDev->font );
@@ -299,8 +299,8 @@ BOOL32 X11DRV_SetupGCForText( DC * dc )
 /**********************************************************************
  *	     X11DRV_MoveToEx
  */
-BOOL32
-X11DRV_MoveToEx(DC *dc,INT32 x,INT32 y,LPPOINT32 pt) {
+BOOL
+X11DRV_MoveToEx(DC *dc,INT x,INT y,LPPOINT pt) {
     if (pt)
     {
 	pt->x = dc->w.CursPosX;
@@ -314,8 +314,8 @@ X11DRV_MoveToEx(DC *dc,INT32 x,INT32 y,LPPOINT32 pt) {
 /***********************************************************************
  *           X11DRV_LineTo
  */
-BOOL32
-X11DRV_LineTo( DC *dc, INT32 x, INT32 y )
+BOOL
+X11DRV_LineTo( DC *dc, INT x, INT y )
 {
     X11DRV_PDEVICE *physDev = (X11DRV_PDEVICE *)dc->physDev;
 
@@ -339,13 +339,13 @@ X11DRV_LineTo( DC *dc, INT32 x, INT32 y )
  * 'lines' is the number of lines to draw: 0 for Arc, 1 for Chord, 2 for Pie.
  *
  */
-static BOOL32
-X11DRV_DrawArc( DC *dc, INT32 left, INT32 top, INT32 right,
-                INT32 bottom, INT32 xstart, INT32 ystart,
-                INT32 xend, INT32 yend, INT32 lines )
+static BOOL
+X11DRV_DrawArc( DC *dc, INT left, INT top, INT right,
+                INT bottom, INT xstart, INT ystart,
+                INT xend, INT yend, INT lines )
 {
-    INT32 xcenter, ycenter, istart_angle, idiff_angle;
-    INT32 width, oldwidth, oldendcap;
+    INT xcenter, ycenter, istart_angle, idiff_angle;
+    INT width, oldwidth, oldendcap;
     double start_angle, end_angle;
     XPoint points[4];
     X11DRV_PDEVICE *physDev = (X11DRV_PDEVICE *)dc->physDev;
@@ -359,8 +359,8 @@ X11DRV_DrawArc( DC *dc, INT32 left, INT32 top, INT32 right,
     xend   = XLPTODP( dc, xend );
     yend   = YLPTODP( dc, yend );
 
-    if (right < left) { INT32 tmp = right; right = left; left = tmp; }
-    if (bottom < top) { INT32 tmp = bottom; bottom = top; top = tmp; }
+    if (right < left) { INT tmp = right; right = left; left = tmp; }
+    if (bottom < top) { INT tmp = bottom; bottom = top; top = tmp; }
     if ((left == right) || (top == bottom)
             ||(lines && ((right-left==1)||(bottom-top==1)))) return TRUE;
 
@@ -399,8 +399,8 @@ X11DRV_DrawArc( DC *dc, INT32 left, INT32 top, INT32 right,
     else
       if ((end_angle == PI)&&( start_angle <0))
 	end_angle = - PI;
-    istart_angle = (INT32)(start_angle * 180 * 64 / PI + 0.5);
-    idiff_angle  = (INT32)((end_angle - start_angle) * 180 * 64 / PI + 0.5);
+    istart_angle = (INT)(start_angle * 180 * 64 / PI + 0.5);
+    idiff_angle  = (INT)((end_angle - start_angle) * 180 * 64 / PI + 0.5);
     if (idiff_angle <= 0) idiff_angle += 360 * 64;
 
       /* Fill arc with brush if Chord() or Pie() */
@@ -442,7 +442,7 @@ X11DRV_DrawArc( DC *dc, INT32 left, INT32 top, INT32 right,
              * from these (compile switch or whatever)
              */
             if (lines == 2) {
-                INT32 dx1,dy1;
+                INT dx1,dy1;
                 points[3] = points[1];
 	points[1].x = dc->w.DCOrgX + xcenter;
 	points[1].y = dc->w.DCOrgY + ycenter;
@@ -485,9 +485,9 @@ X11DRV_DrawArc( DC *dc, INT32 left, INT32 top, INT32 right,
 /***********************************************************************
  *           X11DRV_Arc
  */
-BOOL32
-X11DRV_Arc( DC *dc, INT32 left, INT32 top, INT32 right, INT32 bottom,
-            INT32 xstart, INT32 ystart, INT32 xend, INT32 yend )
+BOOL
+X11DRV_Arc( DC *dc, INT left, INT top, INT right, INT bottom,
+            INT xstart, INT ystart, INT xend, INT yend )
 {
     return X11DRV_DrawArc( dc, left, top, right, bottom,
 			   xstart, ystart, xend, yend, 0 );
@@ -497,9 +497,9 @@ X11DRV_Arc( DC *dc, INT32 left, INT32 top, INT32 right, INT32 bottom,
 /***********************************************************************
  *           X11DRV_Pie
  */
-BOOL32
-X11DRV_Pie( DC *dc, INT32 left, INT32 top, INT32 right, INT32 bottom,
-            INT32 xstart, INT32 ystart, INT32 xend, INT32 yend )
+BOOL
+X11DRV_Pie( DC *dc, INT left, INT top, INT right, INT bottom,
+            INT xstart, INT ystart, INT xend, INT yend )
 {
     return X11DRV_DrawArc( dc, left, top, right, bottom,
 			   xstart, ystart, xend, yend, 2 );
@@ -508,9 +508,9 @@ X11DRV_Pie( DC *dc, INT32 left, INT32 top, INT32 right, INT32 bottom,
 /***********************************************************************
  *           X11DRV_Chord
  */
-BOOL32
-X11DRV_Chord( DC *dc, INT32 left, INT32 top, INT32 right, INT32 bottom,
-              INT32 xstart, INT32 ystart, INT32 xend, INT32 yend )
+BOOL
+X11DRV_Chord( DC *dc, INT left, INT top, INT right, INT bottom,
+              INT xstart, INT ystart, INT xend, INT yend )
 {
     return X11DRV_DrawArc( dc, left, top, right, bottom,
 		  	   xstart, ystart, xend, yend, 1 );
@@ -520,10 +520,10 @@ X11DRV_Chord( DC *dc, INT32 left, INT32 top, INT32 right, INT32 bottom,
 /***********************************************************************
  *           X11DRV_Ellipse
  */
-BOOL32
-X11DRV_Ellipse( DC *dc, INT32 left, INT32 top, INT32 right, INT32 bottom )
+BOOL
+X11DRV_Ellipse( DC *dc, INT left, INT top, INT right, INT bottom )
 {
-    INT32 width, oldwidth;
+    INT width, oldwidth;
     X11DRV_PDEVICE *physDev = (X11DRV_PDEVICE *)dc->physDev;
 
     left   = XLPTODP( dc, left );
@@ -532,8 +532,8 @@ X11DRV_Ellipse( DC *dc, INT32 left, INT32 top, INT32 right, INT32 bottom )
     bottom = YLPTODP( dc, bottom );
     if ((left == right) || (top == bottom)) return TRUE;
 
-    if (right < left) { INT32 tmp = right; right = left; left = tmp; }
-    if (bottom < top) { INT32 tmp = bottom; bottom = top; top = tmp; }
+    if (right < left) { INT tmp = right; right = left; left = tmp; }
+    if (bottom < top) { INT tmp = bottom; bottom = top; top = tmp; }
     
     oldwidth = width = physDev->pen.width;
     if (!width) width = 1;
@@ -567,10 +567,10 @@ X11DRV_Ellipse( DC *dc, INT32 left, INT32 top, INT32 right, INT32 bottom )
 /***********************************************************************
  *           X11DRV_Rectangle
  */
-BOOL32
-X11DRV_Rectangle(DC *dc, INT32 left, INT32 top, INT32 right, INT32 bottom)
+BOOL
+X11DRV_Rectangle(DC *dc, INT left, INT top, INT right, INT bottom)
 {
-    INT32 width, oldwidth, oldjoinstyle;
+    INT width, oldwidth, oldjoinstyle;
     X11DRV_PDEVICE *physDev = (X11DRV_PDEVICE *)dc->physDev;
 
     TRACE(graphics, "(%d %d %d %d)\n", 
@@ -583,8 +583,8 @@ X11DRV_Rectangle(DC *dc, INT32 left, INT32 top, INT32 right, INT32 bottom)
 
     if ((left == right) || (top == bottom)) return TRUE;
 
-    if (right < left) { INT32 tmp = right; right = left; left = tmp; }
-    if (bottom < top) { INT32 tmp = bottom; bottom = top; top = tmp; }
+    if (right < left) { INT tmp = right; right = left; left = tmp; }
+    if (bottom < top) { INT tmp = bottom; bottom = top; top = tmp; }
 
     oldwidth = width = physDev->pen.width;
     if (!width) width = 1;
@@ -626,11 +626,11 @@ X11DRV_Rectangle(DC *dc, INT32 left, INT32 top, INT32 right, INT32 bottom)
 /***********************************************************************
  *           X11DRV_RoundRect
  */
-BOOL32
-X11DRV_RoundRect( DC *dc, INT32 left, INT32 top, INT32 right,
-                  INT32 bottom, INT32 ell_width, INT32 ell_height )
+BOOL
+X11DRV_RoundRect( DC *dc, INT left, INT top, INT right,
+                  INT bottom, INT ell_width, INT ell_height )
 {
-    INT32 width, oldwidth, oldendcap;
+    INT width, oldwidth, oldendcap;
     X11DRV_PDEVICE *physDev = (X11DRV_PDEVICE *)dc->physDev;
 
     TRACE(graphics, "(%d %d %d %d  %d %d\n", 
@@ -651,8 +651,8 @@ X11DRV_RoundRect( DC *dc, INT32 left, INT32 top, INT32 right,
 
     /* Fix the coordinates */
 
-    if (right < left) { INT32 tmp = right; right = left; left = tmp; }
-    if (bottom < top) { INT32 tmp = bottom; bottom = top; top = tmp; }
+    if (right < left) { INT tmp = right; right = left; left = tmp; }
+    if (bottom < top) { INT tmp = bottom; bottom = top; top = tmp; }
 
     oldwidth = width = physDev->pen.width;
     oldendcap = physDev->pen.endcap;
@@ -820,7 +820,7 @@ X11DRV_RoundRect( DC *dc, INT32 left, INT32 top, INT32 right,
  *           X11DRV_SetPixel
  */
 COLORREF
-X11DRV_SetPixel( DC *dc, INT32 x, INT32 y, COLORREF color )
+X11DRV_SetPixel( DC *dc, INT x, INT y, COLORREF color )
 {
     Pixel pixel;
     X11DRV_PDEVICE *physDev = (X11DRV_PDEVICE *)dc->physDev;
@@ -843,7 +843,7 @@ X11DRV_SetPixel( DC *dc, INT32 x, INT32 y, COLORREF color )
  *           X11DRV_GetPixel
  */
 COLORREF
-X11DRV_GetPixel( DC *dc, INT32 x, INT32 y )
+X11DRV_GetPixel( DC *dc, INT x, INT y )
 {
     static Pixmap pixmap = 0;
     XImage * image;
@@ -879,35 +879,35 @@ X11DRV_GetPixel( DC *dc, INT32 x, INT32 y )
 /***********************************************************************
  *           X11DRV_PaintRgn
  */
-BOOL32
-X11DRV_PaintRgn( DC *dc, HRGN32 hrgn )
+BOOL
+X11DRV_PaintRgn( DC *dc, HRGN hrgn )
 {
-    RECT32 box;
-    HRGN32 tmpVisRgn, prevVisRgn;
-    HDC32  hdc = dc->hSelf; /* FIXME: should not mix dc/hdc this way */
+    RECT box;
+    HRGN tmpVisRgn, prevVisRgn;
+    HDC  hdc = dc->hSelf; /* FIXME: should not mix dc/hdc this way */
     X11DRV_PDEVICE *physDev = (X11DRV_PDEVICE *)dc->physDev;
 
-    if (!(tmpVisRgn = CreateRectRgn32( 0, 0, 0, 0 ))) return FALSE;
+    if (!(tmpVisRgn = CreateRectRgn( 0, 0, 0, 0 ))) return FALSE;
 
       /* Transform region into device co-ords */
     if (  !REGION_LPTODP( hdc, tmpVisRgn, hrgn )
-        || OffsetRgn32( tmpVisRgn, dc->w.DCOrgX, dc->w.DCOrgY ) == ERROR) {
-        DeleteObject32( tmpVisRgn );
+        || OffsetRgn( tmpVisRgn, dc->w.DCOrgX, dc->w.DCOrgY ) == ERROR) {
+        DeleteObject( tmpVisRgn );
 	return FALSE;
     }
 
       /* Modify visible region */
-    if (!(prevVisRgn = SaveVisRgn( hdc ))) {
-        DeleteObject32( tmpVisRgn );
+    if (!(prevVisRgn = SaveVisRgn16( hdc ))) {
+        DeleteObject( tmpVisRgn );
 	return FALSE;
     }
-    CombineRgn32( tmpVisRgn, prevVisRgn, tmpVisRgn, RGN_AND );
-    SelectVisRgn( hdc, tmpVisRgn );
-    DeleteObject32( tmpVisRgn );
+    CombineRgn( tmpVisRgn, prevVisRgn, tmpVisRgn, RGN_AND );
+    SelectVisRgn16( hdc, tmpVisRgn );
+    DeleteObject( tmpVisRgn );
 
       /* Fill the region */
 
-    GetRgnBox32( dc->w.hGCClipRgn, &box );
+    GetRgnBox( dc->w.hGCClipRgn, &box );
     if (X11DRV_SetupGCForBrush( dc ))
 	TSXFillRectangle( display, physDev->drawable, physDev->gc,
 		          box.left, box.top,
@@ -915,17 +915,17 @@ X11DRV_PaintRgn( DC *dc, HRGN32 hrgn )
 
       /* Restore the visible region */
 
-    RestoreVisRgn( hdc );
+    RestoreVisRgn16( hdc );
     return TRUE;
 }
 
 /**********************************************************************
  *          X11DRV_Polyline
  */
-BOOL32
-X11DRV_Polyline( DC *dc, const POINT32* pt, INT32 count )
+BOOL
+X11DRV_Polyline( DC *dc, const POINT* pt, INT count )
 {
-    INT32 oldwidth;
+    INT oldwidth;
     register int i;
     XPoint *points;
     X11DRV_PDEVICE *physDev = (X11DRV_PDEVICE *)dc->physDev;
@@ -952,8 +952,8 @@ X11DRV_Polyline( DC *dc, const POINT32* pt, INT32 count )
 /**********************************************************************
  *          X11DRV_Polygon
  */
-BOOL32
-X11DRV_Polygon( DC *dc, const POINT32* pt, INT32 count )
+BOOL
+X11DRV_Polygon( DC *dc, const POINT* pt, INT count )
 {
     register int i;
     XPoint *points;
@@ -983,18 +983,18 @@ X11DRV_Polygon( DC *dc, const POINT32* pt, INT32 count )
 /**********************************************************************
  *          X11DRV_PolyPolygon
  */
-BOOL32 
-X11DRV_PolyPolygon( DC *dc, const POINT32* pt, const INT32* counts, UINT32 polygons)
+BOOL 
+X11DRV_PolyPolygon( DC *dc, const POINT* pt, const INT* counts, UINT polygons)
 {
-    HRGN32 hrgn;
+    HRGN hrgn;
     X11DRV_PDEVICE *physDev = (X11DRV_PDEVICE *)dc->physDev;
 
     /* FIXME: The points should be converted to device coords before */
     /* creating the region. */
 
-    hrgn = CreatePolyPolygonRgn32( pt, counts, polygons, dc->w.polyFillMode );
+    hrgn = CreatePolyPolygonRgn( pt, counts, polygons, dc->w.polyFillMode );
     X11DRV_PaintRgn( dc, hrgn );
-    DeleteObject32( hrgn );
+    DeleteObject( hrgn );
 
       /* Draw the outline of the polygons */
 
@@ -1027,8 +1027,8 @@ X11DRV_PolyPolygon( DC *dc, const POINT32* pt, const INT32* counts, UINT32 polyg
 /**********************************************************************
  *          X11DRV_PolyPolyline
  */
-BOOL32 
-X11DRV_PolyPolyline( DC *dc, const POINT32* pt, const DWORD* counts, DWORD polylines )
+BOOL 
+X11DRV_PolyPolyline( DC *dc, const POINT* pt, const DWORD* counts, DWORD polylines )
 {
     X11DRV_PDEVICE *physDev = (X11DRV_PDEVICE *)dc->physDev;
     if (X11DRV_SetupGCForPen ( dc ))
@@ -1138,20 +1138,20 @@ static void X11DRV_InternalFloodFill(XImage *image, DC *dc,
 struct FloodFill_params
 {
     DC      *dc;
-    INT32    x;
-    INT32    y;
+    INT    x;
+    INT    y;
     COLORREF color;
-    UINT32   fillType;
+    UINT   fillType;
 };
 
-static BOOL32 X11DRV_DoFloodFill( const struct FloodFill_params *params )
+static BOOL X11DRV_DoFloodFill( const struct FloodFill_params *params )
 {
     XImage *image;
-    RECT32 rect;
+    RECT rect;
     DC *dc = params->dc;
     X11DRV_PDEVICE *physDev = (X11DRV_PDEVICE *)dc->physDev;
 
-    if (GetRgnBox32( dc->w.hGCClipRgn, &rect ) == ERROR) return FALSE;
+    if (GetRgnBox( dc->w.hGCClipRgn, &rect ) == ERROR) return FALSE;
 
     if (!(image = XGetImage( display, physDev->drawable,
                              rect.left,
@@ -1181,17 +1181,17 @@ static BOOL32 X11DRV_DoFloodFill( const struct FloodFill_params *params )
 /**********************************************************************
  *          X11DRV_ExtFloodFill
  */
-BOOL32
-X11DRV_ExtFloodFill( DC *dc, INT32 x, INT32 y, COLORREF color,
-                     UINT32 fillType )
+BOOL
+X11DRV_ExtFloodFill( DC *dc, INT x, INT y, COLORREF color,
+                     UINT fillType )
 {
-    BOOL32 result;
+    BOOL result;
     struct FloodFill_params params = { dc, x, y, color, fillType };
 
     TRACE(graphics, "X11DRV_ExtFloodFill %d,%d %06lx %d\n",
                       x, y, color, fillType );
 
-    if (!PtVisible32( dc->hSelf, x, y )) return FALSE;
+    if (!PtVisible( dc->hSelf, x, y )) return FALSE;
     EnterCriticalSection( &X11DRV_CritSection );
     result = CALL_LARGE_STACK( X11DRV_DoFloodFill, &params );
     LeaveCriticalSection( &X11DRV_CritSection );
@@ -1249,9 +1249,9 @@ X11DRV_ExtFloodFill( DC *dc, INT32 x, INT32 y, COLORREF color,
 *       level is the recursion depth
 *       returns true if the recusion can be terminated
 */
-static BOOL32 BezierCheck( int level, POINT32 *Points)
+static BOOL BezierCheck( int level, POINT *Points)
 { 
-    INT32 dx, dy;
+    INT dx, dy;
     dx=Points[3].x-Points[0].x;
     dy=Points[3].y-Points[0].y;
     if(ABS(dy)<=ABS(dx)){/* shallow line */
@@ -1316,7 +1316,7 @@ static BOOL32 BezierCheck( int level, POINT32 *Points)
  *   *pIx       nr points calculated sofar
  *   
  */
-static void X11DRV_Bezier(int level, DC * dc, POINT32 *Points, 
+static void X11DRV_Bezier(int level, DC * dc, POINT *Points, 
                           XPoint* xpoints, unsigned int* pIx)
 {
     X11DRV_PDEVICE *physDev = (X11DRV_PDEVICE *)dc->physDev;
@@ -1336,7 +1336,7 @@ static void X11DRV_Bezier(int level, DC * dc, POINT32 *Points,
         xpoints[*pIx].y= dc->w.DCOrgY + BEZIERSHIFTDOWN(Points[3].y);
         (*pIx) ++;
     } else {
-        POINT32 Points2[4]; /* for the second recursive call */
+        POINT Points2[4]; /* for the second recursive call */
         Points2[3]=Points[3];
         BEZIERMIDDLE(Points2[2], Points[2], Points[3]);
         BEZIERMIDDLE(Points2[0], Points[1], Points[2]);
@@ -1364,10 +1364,10 @@ static void X11DRV_Bezier(int level, DC * dc, POINT32 *Points,
  *      [i] count, number of points in BezierPoints, must be a 
  *          multiple of 3.
  */
-BOOL32
-X11DRV_PolyBezier(DC *dc, POINT32 start, const POINT32* BezierPoints, DWORD count)
+BOOL
+X11DRV_PolyBezier(DC *dc, POINT start, const POINT* BezierPoints, DWORD count)
 {
-    POINT32 Points[4]; 
+    POINT Points[4]; 
     int i;
     unsigned int ix=0;
     XPoint* xpoints;

@@ -32,46 +32,46 @@ typedef struct
 
 /* files/file.c */
 extern void FILE_SetDosError(void);
-extern HFILE32 FILE_DupUnixHandle( int fd, DWORD access );
-extern BOOL32 FILE_Stat( LPCSTR unixName, BY_HANDLE_FILE_INFORMATION *info );
+extern HFILE FILE_DupUnixHandle( int fd, DWORD access );
+extern BOOL FILE_Stat( LPCSTR unixName, BY_HANDLE_FILE_INFORMATION *info );
 extern HFILE16 FILE_Dup2( HFILE16 hFile1, HFILE16 hFile2 );
-extern HFILE32 FILE_CreateFile( LPCSTR filename, DWORD access, DWORD sharing,
+extern HFILE FILE_CreateFile( LPCSTR filename, DWORD access, DWORD sharing,
                                 LPSECURITY_ATTRIBUTES sa, DWORD creation,
-                                DWORD attributes, HANDLE32 template );
-extern HFILE32 FILE_CreateDevice( int client_id, DWORD access,
+                                DWORD attributes, HANDLE template );
+extern HFILE FILE_CreateDevice( int client_id, DWORD access,
                                   LPSECURITY_ATTRIBUTES sa );
 extern LPVOID FILE_dommap( int unix_handle, LPVOID start,
                            DWORD size_high, DWORD size_low,
                            DWORD offset_high, DWORD offset_low,
                            int prot, int flags );
 extern int FILE_munmap( LPVOID start, DWORD size_high, DWORD size_low );
-extern HFILE16 FILE_AllocDosHandle( HANDLE32 handle );
-extern BOOL32 FILE_InitProcessDosHandles( void );
-extern HANDLE32 FILE_GetHandle32( HFILE16 hfile );
-extern HFILE16 _lcreat16_uniq( LPCSTR path, INT32 attr );
+extern HFILE16 FILE_AllocDosHandle( HANDLE handle );
+extern BOOL FILE_InitProcessDosHandles( void );
+extern HANDLE FILE_GetHandle( HFILE16 hfile );
+extern HFILE16 _lcreat16_uniq( LPCSTR path, INT attr );
 
 /* files/directory.c */
 extern int DIR_Init(void);
-extern UINT32 DIR_GetWindowsUnixDir( LPSTR path, UINT32 count );
-extern UINT32 DIR_GetSystemUnixDir( LPSTR path, UINT32 count );
+extern UINT DIR_GetWindowsUnixDir( LPSTR path, UINT count );
+extern UINT DIR_GetSystemUnixDir( LPSTR path, UINT count );
 extern DWORD DIR_SearchPath( LPCSTR path, LPCSTR name, LPCSTR ext,
-                             DOS_FULL_NAME *full_name, BOOL32 win32 );
+                             DOS_FULL_NAME *full_name, BOOL win32 );
 
 /* files/dos_fs.c */
 extern void DOSFS_UnixTimeToFileTime( time_t unixtime, LPFILETIME ft,
                                       DWORD remainder );
 extern time_t DOSFS_FileTimeToUnixTime( const FILETIME *ft, DWORD *remainder );
-extern BOOL32 DOSFS_ToDosFCBFormat( LPCSTR name, LPSTR buffer );
+extern BOOL DOSFS_ToDosFCBFormat( LPCSTR name, LPSTR buffer );
 extern const DOS_DEVICE *DOSFS_GetDevice( const char *name );
-extern const DOS_DEVICE *DOSFS_GetDeviceByHandle( HFILE32 hFile );
-extern HFILE32 DOSFS_OpenDevice( const char *name, DWORD access );
-extern BOOL32 DOSFS_FindUnixName( LPCSTR path, LPCSTR name, LPSTR long_buf,
-                                  INT32 long_len, LPSTR short_buf,
-                                  BOOL32 ignore_case );
-extern BOOL32 DOSFS_GetFullName( LPCSTR name, BOOL32 check_last,
+extern const DOS_DEVICE *DOSFS_GetDeviceByHandle( HFILE hFile );
+extern HFILE DOSFS_OpenDevice( const char *name, DWORD access );
+extern BOOL DOSFS_FindUnixName( LPCSTR path, LPCSTR name, LPSTR long_buf,
+                                  INT long_len, LPSTR short_buf,
+                                  BOOL ignore_case );
+extern BOOL DOSFS_GetFullName( LPCSTR name, BOOL check_last,
                                  DOS_FULL_NAME *full );
 extern int DOSFS_FindNext( const char *path, const char *short_mask,
                            const char *long_mask, int drive, BYTE attr,
-                           int skip, WIN32_FIND_DATA32A *entry );
+                           int skip, WIN32_FIND_DATAA *entry );
 
 #endif  /* __WINE_FILE_H */

@@ -41,9 +41,9 @@ typedef struct
     Colormap    colorMap;
     UINT16      size;
     UINT16      flags;
-    INT32	monoPlane;	 /* bit plane different for white and black pixels */
+    INT	monoPlane;	 /* bit plane different for white and black pixels */
 
-    INT32	(*mapColor)( DC*, COLORREF );
+    INT	(*mapColor)( DC*, COLORREF );
 } CSPACE;
 
 static CSPACE cSpace = {0, 0, 0};
@@ -128,7 +128,7 @@ Colormap X11DRV_COLOR_GetColormap(void)
     return cSpace.colorMap;
 }
 
-BOOL32 COLOR_GetMonoPlane(INT32* plane)
+BOOL COLOR_GetMonoPlane(INT* plane)
 {
     *plane = cSpace.monoPlane;
     return (cSpace.flags & COLOR_WHITESET) ? TRUE : FALSE;
@@ -149,7 +149,7 @@ const PALETTEENTRY* COLOR_GetSystemPaletteTemplate(void)
     return __sysPalTemplate;
 }
 
-COLORREF COLOR_GetSystemPaletteEntry(UINT32 i)
+COLORREF COLOR_GetSystemPaletteEntry(UINT i)
 {
  return *(COLORREF*)(COLOR_sysPal + i) & 0x00ffffff;
 }
@@ -173,7 +173,7 @@ void COLOR_FormatSystemPalette(void)
   COLOR_freeList[j] = 0;
 }
 
-BOOL32 COLOR_CheckSysColor(COLORREF c)
+BOOL COLOR_CheckSysColor(COLORREF c)
 {
   int i;
   for( i = 0; i < NB_RESERVED_COLORS; i++ )
@@ -280,7 +280,7 @@ static void COLOR_FillDefaultColors(void)
  *
  * Allocate colorcells and initialize mapping tables.
  */
-static BOOL32 COLOR_BuildPrivateMap(CSPACE* cs)
+static BOOL COLOR_BuildPrivateMap(CSPACE* cs)
 {
     /* Private colormap - identity mapping */
 
@@ -332,7 +332,7 @@ static BOOL32 COLOR_BuildPrivateMap(CSPACE* cs)
     return FALSE;
 }
 
-static BOOL32 COLOR_BuildSharedMap(CSPACE* cs)
+static BOOL COLOR_BuildSharedMap(CSPACE* cs)
 {
    XColor		color;
    unsigned long        sysPixel[NB_RESERVED_COLORS];
@@ -571,7 +571,7 @@ static void COLOR_Computeshifts(unsigned long maskbits, int *shift, int *max)
  *
  * Initialize color management.
  */
-BOOL32 COLOR_Init(void)
+BOOL COLOR_Init(void)
 {
     int	mask, white, black;
 
@@ -690,7 +690,7 @@ void COLOR_Cleanup(void)
  *
  * Check whether 'color' can be represented with a solid color.
  */
-BOOL32 COLOR_IsSolid( COLORREF color )
+BOOL COLOR_IsSolid( COLORREF color )
 {
     int i;
     const PALETTEENTRY *pEntry = COLOR_sysPal;
@@ -714,7 +714,7 @@ BOOL32 COLOR_IsSolid( COLORREF color )
  *	     COLOR_PaletteLookupPixel
  */
 int COLOR_PaletteLookupPixel( PALETTEENTRY* palPalEntry, int size,
-                              int* mapping, COLORREF col, BOOL32 skipReserved )
+                              int* mapping, COLORREF col, BOOL skipReserved )
 {
     int i, best = 0, diff = 0x7fffffff;
     int r,g,b;
@@ -1000,7 +1000,7 @@ int COLOR_ToPhysical( DC *dc, COLORREF color )
  * Set the color-mapping table for selected palette. 
  * Return number of entries which mapping has changed.
  */
-int COLOR_SetMapping( PALETTEOBJ* palPtr, UINT32 uStart, UINT32 uNum, BOOL32 mapOnly )
+int COLOR_SetMapping( PALETTEOBJ* palPtr, UINT uStart, UINT uNum, BOOL mapOnly )
 {
     char flag;
     int  prevMapping = (palPtr->mapping) ? 1 : 0;

@@ -23,18 +23,18 @@
 
 
 static __inline__ LRESULT
-PAGER_ForwardMouse (WND *wndPtr, WPARAM32 wParam)
+PAGER_ForwardMouse (WND *wndPtr, WPARAM wParam)
 {
     PAGER_INFO *infoPtr = PAGER_GetInfoPtr(wndPtr);
 
-    infoPtr->bForward = (BOOL32)wParam;
+    infoPtr->bForward = (BOOL)wParam;
 
     return 0;
 }
 
 
 static __inline__ LRESULT
-PAGER_GetBkColor (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
+PAGER_GetBkColor (WND *wndPtr, WPARAM wParam, LPARAM lParam)
 {
     PAGER_INFO *infoPtr = PAGER_GetInfoPtr(wndPtr);
 
@@ -43,7 +43,7 @@ PAGER_GetBkColor (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 
 
 static __inline__ LRESULT
-PAGER_GetBorder (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
+PAGER_GetBorder (WND *wndPtr, WPARAM wParam, LPARAM lParam)
 {
     PAGER_INFO *infoPtr = PAGER_GetInfoPtr(wndPtr);
 
@@ -52,7 +52,7 @@ PAGER_GetBorder (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 
 
 static __inline__ LRESULT
-PAGER_GetButtonSize (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
+PAGER_GetButtonSize (WND *wndPtr, WPARAM wParam, LPARAM lParam)
 {
     PAGER_INFO *infoPtr = PAGER_GetInfoPtr(wndPtr);
 
@@ -61,7 +61,7 @@ PAGER_GetButtonSize (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 
 
 static LRESULT
-PAGER_GetButtonState (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
+PAGER_GetButtonState (WND *wndPtr, WPARAM wParam, LPARAM lParam)
 {
     /* PAGER_INFO *infoPtr = PAGER_GetInfoPtr(wndPtr); */
 
@@ -75,7 +75,7 @@ PAGER_GetButtonState (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 
 
 static __inline__ LRESULT
-PAGER_GetPos (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
+PAGER_GetPos (WND *wndPtr, WPARAM wParam, LPARAM lParam)
 {
     PAGER_INFO *infoPtr = PAGER_GetInfoPtr(wndPtr);
 
@@ -84,7 +84,7 @@ PAGER_GetPos (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 
 
 static LRESULT
-PAGER_RecalcSize (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
+PAGER_RecalcSize (WND *wndPtr, WPARAM wParam, LPARAM lParam)
 {
     PAGER_INFO *infoPtr = PAGER_GetInfoPtr(wndPtr);
     NMPGCALCSIZE nmpgcs;
@@ -96,8 +96,8 @@ PAGER_RecalcSize (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 	nmpgcs.hdr.code = PGN_CALCSIZE;
 	nmpgcs.dwFlag =
 	     (wndPtr->dwStyle & PGS_HORZ) ? PGF_CALCWIDTH : PGF_CALCHEIGHT;
-	SendMessage32A (GetParent32 (wndPtr->hwndSelf), WM_NOTIFY,
-			(WPARAM32)wndPtr->wIDmenu, (LPARAM)&nmpgcs);
+	SendMessageA (GetParent (wndPtr->hwndSelf), WM_NOTIFY,
+			(WPARAM)wndPtr->wIDmenu, (LPARAM)&nmpgcs);
 
 	infoPtr->nChildSize =
 	     (wndPtr->dwStyle & PGS_HORZ) ? nmpgcs.iWidth : nmpgcs.iHeight;
@@ -113,7 +113,7 @@ PAGER_RecalcSize (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 
 
 static __inline__ LRESULT
-PAGER_SetBkColor (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
+PAGER_SetBkColor (WND *wndPtr, WPARAM wParam, LPARAM lParam)
 {
     PAGER_INFO *infoPtr = PAGER_GetInfoPtr(wndPtr);
     COLORREF clrTemp = infoPtr->clrBk;
@@ -127,12 +127,12 @@ PAGER_SetBkColor (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 
 
 static __inline__ LRESULT
-PAGER_SetBorder (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
+PAGER_SetBorder (WND *wndPtr, WPARAM wParam, LPARAM lParam)
 {
     PAGER_INFO *infoPtr = PAGER_GetInfoPtr(wndPtr);
-    INT32 nTemp = infoPtr->nBorder;
+    INT nTemp = infoPtr->nBorder;
 
-    infoPtr->nBorder = (INT32)lParam;
+    infoPtr->nBorder = (INT)lParam;
 
     /* FIXME: redraw */
 
@@ -141,12 +141,12 @@ PAGER_SetBorder (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 
 
 static __inline__ LRESULT
-PAGER_SetButtonSize (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
+PAGER_SetButtonSize (WND *wndPtr, WPARAM wParam, LPARAM lParam)
 {
     PAGER_INFO *infoPtr = PAGER_GetInfoPtr(wndPtr);
-    INT32 nTemp = infoPtr->nButtonSize;
+    INT nTemp = infoPtr->nButtonSize;
 
-    infoPtr->nButtonSize = (INT32)lParam;
+    infoPtr->nButtonSize = (INT)lParam;
 
     FIXME (pager, "size=%d\n", infoPtr->nButtonSize);
 
@@ -157,18 +157,18 @@ PAGER_SetButtonSize (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 
 
 static __inline__ LRESULT
-PAGER_SetChild (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
+PAGER_SetChild (WND *wndPtr, WPARAM wParam, LPARAM lParam)
 {
     PAGER_INFO *infoPtr = PAGER_GetInfoPtr(wndPtr);
 
-    infoPtr->hwndChild = IsWindow32 ((HWND32)lParam) ? (HWND32)lParam : 0;
+    infoPtr->hwndChild = IsWindow ((HWND)lParam) ? (HWND)lParam : 0;
 
     FIXME (pager, "hwnd=%x\n", infoPtr->hwndChild);
 
     /* FIXME: redraw */
     if (infoPtr->hwndChild) {
-	SetParent32 (infoPtr->hwndChild, wndPtr->hwndSelf);
-	SetWindowPos32 (infoPtr->hwndChild, HWND_TOP,
+	SetParent (infoPtr->hwndChild, wndPtr->hwndSelf);
+	SetWindowPos (infoPtr->hwndChild, HWND_TOP,
 			0, 0, 0, 0, SWP_SHOWWINDOW | SWP_NOSIZE);
     }
 
@@ -177,16 +177,16 @@ PAGER_SetChild (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 
 
 static __inline__ LRESULT
-PAGER_SetPos (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
+PAGER_SetPos (WND *wndPtr, WPARAM wParam, LPARAM lParam)
 {
     PAGER_INFO *infoPtr = PAGER_GetInfoPtr(wndPtr);
 
-    infoPtr->nPos = (INT32)lParam;
+    infoPtr->nPos = (INT)lParam;
 
     FIXME (pager, "pos=%d\n", infoPtr->nPos);
 
     /* FIXME: redraw */
-    SetWindowPos32 (infoPtr->hwndChild, HWND_TOP,
+    SetWindowPos (infoPtr->hwndChild, HWND_TOP,
 		    0, 0, 0, 0, SWP_SHOWWINDOW | SWP_NOSIZE);
 
     return 0;
@@ -194,7 +194,7 @@ PAGER_SetPos (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 
 
 static LRESULT
-PAGER_Create (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
+PAGER_Create (WND *wndPtr, WPARAM wParam, LPARAM lParam)
 {
     PAGER_INFO *infoPtr;
 
@@ -213,8 +213,8 @@ PAGER_Create (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
     }
 
     /* set default settings */
-    infoPtr->hwndChild = (HWND32)NULL;
-    infoPtr->clrBk = GetSysColor32 (COLOR_BTNFACE);
+    infoPtr->hwndChild = (HWND)NULL;
+    infoPtr->clrBk = GetSysColor (COLOR_BTNFACE);
     infoPtr->nBorder = 0;
     infoPtr->nButtonSize = 0;
     infoPtr->nPos = 0;
@@ -225,7 +225,7 @@ PAGER_Create (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 
 
 static LRESULT
-PAGER_Destroy (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
+PAGER_Destroy (WND *wndPtr, WPARAM wParam, LPARAM lParam)
 {
     PAGER_INFO *infoPtr = PAGER_GetInfoPtr(wndPtr);
 
@@ -240,15 +240,15 @@ PAGER_Destroy (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 
 
 static LRESULT
-PAGER_EraseBackground (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
+PAGER_EraseBackground (WND *wndPtr, WPARAM wParam, LPARAM lParam)
 {
     PAGER_INFO *infoPtr = PAGER_GetInfoPtr(wndPtr);
-    HBRUSH32 hBrush = CreateSolidBrush32 (infoPtr->clrBk);
-    RECT32 rect;
+    HBRUSH hBrush = CreateSolidBrush (infoPtr->clrBk);
+    RECT rect;
 
-    GetClientRect32 (wndPtr->hwndSelf, &rect);
-    FillRect32 ((HDC32)wParam, &rect, hBrush);
-    DeleteObject32 (hBrush);
+    GetClientRect (wndPtr->hwndSelf, &rect);
+    FillRect ((HDC)wParam, &rect, hBrush);
+    DeleteObject (hBrush);
 
 /*    return TRUE; */
     return FALSE;
@@ -256,7 +256,7 @@ PAGER_EraseBackground (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 
 
 static LRESULT
-PAGER_MouseMove (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
+PAGER_MouseMove (WND *wndPtr, WPARAM wParam, LPARAM lParam)
 {
     /* PAGER_INFO *infoPtr = PAGER_GetInfoPtr(wndPtr); */
 
@@ -270,14 +270,14 @@ PAGER_MouseMove (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 
 
 static LRESULT
-PAGER_Size (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
+PAGER_Size (WND *wndPtr, WPARAM wParam, LPARAM lParam)
 {
     PAGER_INFO *infoPtr = PAGER_GetInfoPtr(wndPtr);
-    RECT32 rect;
+    RECT rect;
 
-    GetClientRect32 (wndPtr->hwndSelf, &rect);
+    GetClientRect (wndPtr->hwndSelf, &rect);
     if (infoPtr->hwndChild) {
-	SetWindowPos32 (infoPtr->hwndChild, HWND_TOP, rect.left, rect.top,
+	SetWindowPos (infoPtr->hwndChild, HWND_TOP, rect.left, rect.top,
 			rect.right - rect.left, rect.bottom - rect.top,
 			SWP_SHOWWINDOW);
 /*	MoveWindow32 (infoPtr->hwndChild, 1, 1, rect.right - 2, rect.bottom-2, TRUE); */
@@ -292,7 +292,7 @@ PAGER_Size (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 
 
 LRESULT WINAPI
-PAGER_WindowProc (HWND32 hwnd, UINT32 uMsg, WPARAM32 wParam, LPARAM lParam)
+PAGER_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     WND *wndPtr = WIN_FindWndPtr(hwnd);
 
@@ -350,7 +350,7 @@ PAGER_WindowProc (HWND32 hwnd, UINT32 uMsg, WPARAM32 wParam, LPARAM lParam)
 
 	case WM_NOTIFY:
 	case WM_COMMAND:
-	    return SendMessage32A (wndPtr->parent->hwndSelf, uMsg, wParam, lParam);
+	    return SendMessageA (wndPtr->parent->hwndSelf, uMsg, wParam, lParam);
 
 /*	case WM_PAINT: */
 /*	    return PAGER_Paint (wndPtr, wParam); */
@@ -362,7 +362,7 @@ PAGER_WindowProc (HWND32 hwnd, UINT32 uMsg, WPARAM32 wParam, LPARAM lParam)
 	    if (uMsg >= WM_USER)
 		ERR (pager, "unknown msg %04x wp=%08x lp=%08lx\n",
 		     uMsg, wParam, lParam);
-	    return DefWindowProc32A (hwnd, uMsg, wParam, lParam);
+	    return DefWindowProcA (hwnd, uMsg, wParam, lParam);
     }
     return 0;
 }
@@ -371,27 +371,27 @@ PAGER_WindowProc (HWND32 hwnd, UINT32 uMsg, WPARAM32 wParam, LPARAM lParam)
 VOID
 PAGER_Register (VOID)
 {
-    WNDCLASS32A wndClass;
+    WNDCLASSA wndClass;
 
-    if (GlobalFindAtom32A (WC_PAGESCROLLER32A)) return;
+    if (GlobalFindAtomA (WC_PAGESCROLLERA)) return;
 
-    ZeroMemory (&wndClass, sizeof(WNDCLASS32A));
+    ZeroMemory (&wndClass, sizeof(WNDCLASSA));
     wndClass.style         = CS_GLOBALCLASS | CS_DBLCLKS | CS_SAVEBITS;
-    wndClass.lpfnWndProc   = (WNDPROC32)PAGER_WindowProc;
+    wndClass.lpfnWndProc   = (WNDPROC)PAGER_WindowProc;
     wndClass.cbClsExtra    = 0;
     wndClass.cbWndExtra    = sizeof(PAGER_INFO *);
-    wndClass.hCursor       = LoadCursor32A (0, IDC_ARROW32A);
+    wndClass.hCursor       = LoadCursorA (0, IDC_ARROWA);
     wndClass.hbrBackground = 0;
-    wndClass.lpszClassName = WC_PAGESCROLLER32A;
+    wndClass.lpszClassName = WC_PAGESCROLLERA;
  
-    RegisterClass32A (&wndClass);
+    RegisterClassA (&wndClass);
 }
 
 
 VOID
 PAGER_Unregister (VOID)
 {
-    if (GlobalFindAtom32A (WC_PAGESCROLLER32A))
-	UnregisterClass32A (WC_PAGESCROLLER32A, (HINSTANCE32)NULL);
+    if (GlobalFindAtomA (WC_PAGESCROLLERA))
+	UnregisterClassA (WC_PAGESCROLLERA, (HINSTANCE)NULL);
 }
 

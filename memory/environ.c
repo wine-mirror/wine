@@ -48,11 +48,11 @@ static const char ENV_program_name[] = "C:\\WINDOWS\\SYSTEM\\KRNL386.EXE";
  * Find a variable in the environment and return a pointer to the value.
  * Helper function for GetEnvironmentVariable and ExpandEnvironmentStrings.
  */
-static LPCSTR ENV_FindVariable( LPCSTR env, LPCSTR name, INT32 len )
+static LPCSTR ENV_FindVariable( LPCSTR env, LPCSTR name, INT len )
 {
     while (*env)
     {
-        if (!lstrncmpi32A( name, env, len ) && (env[len] == '='))
+        if (!lstrncmpiA( name, env, len ) && (env[len] == '='))
             return env + len + 1;
         env += strlen(env) + 1;
     }
@@ -65,7 +65,7 @@ static LPCSTR ENV_FindVariable( LPCSTR env, LPCSTR name, INT32 len )
  *
  * Build the environment for the initial process
  */
-BOOL32 ENV_BuildEnvironment( PDB32 *pdb )
+BOOL ENV_BuildEnvironment( PDB *pdb )
 {
     extern char **environ;
     LPSTR p, *e;
@@ -102,7 +102,7 @@ BOOL32 ENV_BuildEnvironment( PDB32 *pdb )
  * Make a process inherit the environment from its parent or from an
  * explicit environment.
  */
-BOOL32 ENV_InheritEnvironment( PDB32 *pdb, LPCSTR env )
+BOOL ENV_InheritEnvironment( PDB *pdb, LPCSTR env )
 {
     DWORD size;
     LPCSTR src;
@@ -137,7 +137,7 @@ BOOL32 ENV_InheritEnvironment( PDB32 *pdb, LPCSTR env )
     while (*src)
     {
         if (pdb->flags & PDB32_WIN16_PROC)
-            lstrcpyn32A( dst, src, MAX_WIN16_LEN );
+            lstrcpynA( dst, src, MAX_WIN16_LEN );
         else
             strcpy( dst, src );
         src += strlen(src) + 1;
@@ -153,7 +153,7 @@ BOOL32 ENV_InheritEnvironment( PDB32 *pdb, LPCSTR env )
  *
  * Free a process environment.
  */
-void ENV_FreeEnvironment( PDB32 *pdb )
+void ENV_FreeEnvironment( PDB *pdb )
 {
     if (!pdb->env_db) return;
     if (pdb->env_db->env_sel) SELECTOR_FreeBlock( pdb->env_db->env_sel, 1 );
@@ -165,7 +165,7 @@ void ENV_FreeEnvironment( PDB32 *pdb )
 /***********************************************************************
  *           GetCommandLine32A      (KERNEL32.289)
  */
-LPCSTR WINAPI GetCommandLine32A(void)
+LPCSTR WINAPI GetCommandLineA(void)
 {
     return PROCESS_Current()->env_db->cmd_line;
 }
@@ -173,9 +173,9 @@ LPCSTR WINAPI GetCommandLine32A(void)
 /***********************************************************************
  *           GetCommandLine32W      (KERNEL32.290)
  */
-LPCWSTR WINAPI GetCommandLine32W(void)
+LPCWSTR WINAPI GetCommandLineW(void)
 {
-    PDB32 *pdb = PROCESS_Current();
+    PDB *pdb = PROCESS_Current();
     EnterCriticalSection( &pdb->env_db->section );
     if (!pdb->env_db->cmd_lineW)
         pdb->env_db->cmd_lineW = HEAP_strdupAtoW( pdb->heap, 0,
@@ -188,9 +188,9 @@ LPCWSTR WINAPI GetCommandLine32W(void)
 /***********************************************************************
  *           GetEnvironmentStrings32A   (KERNEL32.319) (KERNEL32.320)
  */
-LPSTR WINAPI GetEnvironmentStrings32A(void)
+LPSTR WINAPI GetEnvironmentStringsA(void)
 {
-    PDB32 *pdb = PROCESS_Current();
+    PDB *pdb = PROCESS_Current();
     return pdb->env_db->environ;
 }
 
@@ -198,11 +198,11 @@ LPSTR WINAPI GetEnvironmentStrings32A(void)
 /***********************************************************************
  *           GetEnvironmentStrings32W   (KERNEL32.321)
  */
-LPWSTR WINAPI GetEnvironmentStrings32W(void)
+LPWSTR WINAPI GetEnvironmentStringsW(void)
 {
-    INT32 size;
+    INT size;
     LPWSTR ret;
-    PDB32 *pdb = PROCESS_Current();
+    PDB *pdb = PROCESS_Current();
 
     EnterCriticalSection( &pdb->env_db->section );
     size = HeapSize( pdb->heap, 0, pdb->env_db->environ );
@@ -220,9 +220,9 @@ LPWSTR WINAPI GetEnvironmentStrings32W(void)
 /***********************************************************************
  *           FreeEnvironmentStrings32A   (KERNEL32.268)
  */
-BOOL32 WINAPI FreeEnvironmentStrings32A( LPSTR ptr )
+BOOL WINAPI FreeEnvironmentStringsA( LPSTR ptr )
 {
-    PDB32 *pdb = PROCESS_Current();
+    PDB *pdb = PROCESS_Current();
     if (ptr != pdb->env_db->environ)
     {
         SetLastError( ERROR_INVALID_PARAMETER );
@@ -235,7 +235,7 @@ BOOL32 WINAPI FreeEnvironmentStrings32A( LPSTR ptr )
 /***********************************************************************
  *           FreeEnvironmentStrings32W   (KERNEL32.269)
  */
-BOOL32 WINAPI FreeEnvironmentStrings32W( LPWSTR ptr )
+BOOL WINAPI FreeEnvironmentStringsW( LPWSTR ptr )
 {
     return HeapFree( GetProcessHeap(), 0, ptr );
 }
@@ -244,11 +244,11 @@ BOOL32 WINAPI FreeEnvironmentStrings32W( LPWSTR ptr )
 /***********************************************************************
  *           GetEnvironmentVariable32A   (KERNEL32.322)
  */
-DWORD WINAPI GetEnvironmentVariable32A( LPCSTR name, LPSTR value, DWORD size )
+DWORD WINAPI GetEnvironmentVariableA( LPCSTR name, LPSTR value, DWORD size )
 {
     LPCSTR p;
-    INT32 ret = 0;
-    PDB32 *pdb = PROCESS_Current();
+    INT ret = 0;
+    PDB *pdb = PROCESS_Current();
 
     if (!name || !*name)
     {
@@ -276,11 +276,11 @@ DWORD WINAPI GetEnvironmentVariable32A( LPCSTR name, LPSTR value, DWORD size )
 /***********************************************************************
  *           GetEnvironmentVariable32W   (KERNEL32.323)
  */
-DWORD WINAPI GetEnvironmentVariable32W( LPCWSTR nameW, LPWSTR valW, DWORD size)
+DWORD WINAPI GetEnvironmentVariableW( LPCWSTR nameW, LPWSTR valW, DWORD size)
 {
     LPSTR name = HEAP_strdupWtoA( GetProcessHeap(), 0, nameW );
     LPSTR val  = valW ? HeapAlloc( GetProcessHeap(), 0, size ) : NULL;
-    DWORD res  = GetEnvironmentVariable32A( name, val, size );
+    DWORD res  = GetEnvironmentVariableA( name, val, size );
     HeapFree( GetProcessHeap(), 0, name );
     if (val)
     {
@@ -294,12 +294,12 @@ DWORD WINAPI GetEnvironmentVariable32W( LPCWSTR nameW, LPWSTR valW, DWORD size)
 /***********************************************************************
  *           SetEnvironmentVariable32A   (KERNEL32.641)
  */
-BOOL32 WINAPI SetEnvironmentVariable32A( LPCSTR name, LPCSTR value )
+BOOL WINAPI SetEnvironmentVariableA( LPCSTR name, LPCSTR value )
 {
-    INT32 old_size, len, res;
+    INT old_size, len, res;
     LPSTR p, env, new_env;
-    BOOL32 ret = FALSE;
-    PDB32 *pdb = PROCESS_Current();
+    BOOL ret = FALSE;
+    PDB *pdb = PROCESS_Current();
 
     EnterCriticalSection( &pdb->env_db->section );
     env = p = pdb->env_db->environ;
@@ -310,7 +310,7 @@ BOOL32 WINAPI SetEnvironmentVariable32A( LPCSTR name, LPCSTR value )
     len = strlen(name);
     while (*p)
     {
-        if (!lstrncmpi32A( name, p, len ) && (p[len] == '=')) break;
+        if (!lstrncmpiA( name, p, len ) && (p[len] == '=')) break;
         p += strlen(p) + 1;
     }
     if (!value && !*p) goto done;  /* Value to remove doesn't exist */
@@ -352,11 +352,11 @@ done:
 /***********************************************************************
  *           SetEnvironmentVariable32W   (KERNEL32.642)
  */
-BOOL32 WINAPI SetEnvironmentVariable32W( LPCWSTR name, LPCWSTR value )
+BOOL WINAPI SetEnvironmentVariableW( LPCWSTR name, LPCWSTR value )
 {
     LPSTR nameA  = HEAP_strdupWtoA( GetProcessHeap(), 0, name );
     LPSTR valueA = HEAP_strdupWtoA( GetProcessHeap(), 0, value );
-    BOOL32 ret = SetEnvironmentVariable32A( nameA, valueA );
+    BOOL ret = SetEnvironmentVariableA( nameA, valueA );
     HeapFree( GetProcessHeap(), 0, nameA );
     HeapFree( GetProcessHeap(), 0, valueA );
     return ret;
@@ -368,11 +368,11 @@ BOOL32 WINAPI SetEnvironmentVariable32W( LPCWSTR name, LPCWSTR value )
  *
  * Note: overlapping buffers are not supported; this is how it should be.
  */
-DWORD WINAPI ExpandEnvironmentStrings32A( LPCSTR src, LPSTR dst, DWORD count )
+DWORD WINAPI ExpandEnvironmentStringsA( LPCSTR src, LPSTR dst, DWORD count )
 {
     DWORD len, total_size = 1;  /* 1 for terminating '\0' */
     LPCSTR p, var;
-    PDB32 *pdb = PROCESS_Current();
+    PDB *pdb = PROCESS_Current();
 
     if (!count) dst = NULL;
     EnterCriticalSection( &pdb->env_db->section );
@@ -435,11 +435,11 @@ DWORD WINAPI ExpandEnvironmentStrings32A( LPCSTR src, LPSTR dst, DWORD count )
 /***********************************************************************
  *           ExpandEnvironmentStrings32W   (KERNEL32.217)
  */
-DWORD WINAPI ExpandEnvironmentStrings32W( LPCWSTR src, LPWSTR dst, DWORD len )
+DWORD WINAPI ExpandEnvironmentStringsW( LPCWSTR src, LPWSTR dst, DWORD len )
 {
     LPSTR srcA = HEAP_strdupWtoA( GetProcessHeap(), 0, src );
     LPSTR dstA = dst ? HeapAlloc( GetProcessHeap(), 0, len ) : NULL;
-    DWORD ret  = ExpandEnvironmentStrings32A( srcA, dstA, len );
+    DWORD ret  = ExpandEnvironmentStringsA( srcA, dstA, len );
     if (dstA)
     {
         lstrcpyAtoW( dst, dstA );

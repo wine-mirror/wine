@@ -29,12 +29,12 @@ DWORD VFWAPI VideoForWindowsVersion(void);
 /* HIC32 struct (same layout as Win95 one) */
 typedef struct tagWINE_HIC {
 	DWORD		magic;		/* 00: 'Smag' */
-	HANDLE32	curthread;	/* 04: */
+	HANDLE	curthread;	/* 04: */
 	DWORD		type;		/* 08: */
 	DWORD		handler;	/* 0C: */
-	HDRVR32		hdrv;		/* 10: */
+	HDRVR		hdrv;		/* 10: */
 	DWORD		private;	/* 14:(handled by SendDriverMessage32)*/
-	FARPROC32	driverproc;	/* 18:(handled by SendDriverMessage32)*/
+	FARPROC	driverproc;	/* 18:(handled by SendDriverMessage32)*/
 	DWORD		x1;		/* 1c: name? */
 	WORD		x2;		/* 20: */
 	DWORD		x3;		/* 22: */
@@ -170,47 +170,41 @@ typedef struct {
     LPVOID		lpPrev;
 } ICCOMPRESS;
 
-DWORD VFWAPIV ICCompress32(
-	HIC32 hic,DWORD dwFlags,LPBITMAPINFOHEADER lpbiOutput,LPVOID lpData,
+DWORD VFWAPIV ICCompress(
+	HIC hic,DWORD dwFlags,LPBITMAPINFOHEADER lpbiOutput,LPVOID lpData,
 	LPBITMAPINFOHEADER lpbiInput,LPVOID lpBits,LPDWORD lpckid,
 	LPDWORD lpdwFlags,LONG lFrameNum,DWORD dwFrameSize,DWORD dwQuality,
 	LPBITMAPINFOHEADER lpbiPrev,LPVOID lpPrev
 );
 
-#define ICCompressGetFormat32(hic, lpbiInput, lpbiOutput) 		\
-	ICSendMessage32(						\
+#define ICCompressGetFormat(hic, lpbiInput, lpbiOutput) 		\
+	ICSendMessage(						\
 	    hic,ICM_COMPRESS_GET_FORMAT,(DWORD)(LPVOID)(lpbiInput),	\
 	    (DWORD)(LPVOID)(lpbiOutput)					\
 	)
-#define ICCompressGetFormat WINELIB_NAME(ICCompressGetFormat)
 
-#define ICCompressGetFormatSize32(hic,lpbi) ICCompressGetFormat32(hic,lpbi,NULL)
-#define ICCompressGetFormatSize WINELIB_NAME(ICCompressGetFormatSize)
+#define ICCompressGetFormatSize(hic,lpbi) ICCompressGetFormat(hic,lpbi,NULL)
 
-#define ICCompressBegin32(hic, lpbiInput, lpbiOutput) 			\
-    ICSendMessage32(							\
+#define ICCompressBegin(hic, lpbiInput, lpbiOutput) 			\
+    ICSendMessage(							\
     	hic, ICM_COMPRESS_BEGIN, (DWORD)(LPVOID)(lpbiInput),		\
 	(DWORD)(LPVOID)(lpbiOutput)					\
     )
-#define ICCompressBegin WINELIB_NAME(ICCompressBegin)
 
-#define ICCompressGetSize32(hic, lpbiInput, lpbiOutput) 		\
-    ICSendMessage32(							\
+#define ICCompressGetSize(hic, lpbiInput, lpbiOutput) 		\
+    ICSendMessage(							\
     	hic, ICM_COMPRESS_GET_SIZE, (DWORD)(LPVOID)(lpbiInput), 	\
 	(DWORD)(LPVOID)(lpbiOutput)					\
     )
-#define ICCompressGetSize WINELIB_NAME(ICCompressGetSize)
 
-#define ICCompressQuery32(hic, lpbiInput, lpbiOutput)		\
-    ICSendMessage32(						\
+#define ICCompressQuery(hic, lpbiInput, lpbiOutput)		\
+    ICSendMessage(						\
     	hic, ICM_COMPRESS_QUERY, (DWORD)(LPVOID)(lpbiInput),	\
 	(DWORD)(LPVOID)(lpbiOutput)				\
     )
-#define ICCompressQuery WINELIB_NAME(ICCompressQuery)
 
 
-#define ICCompressEnd32(hic) ICSendMessage32(hic, ICM_COMPRESS_END, 0, 0)
-#define ICCompressEnd WINELIB_NAME(ICCompressEnd)
+#define ICCompressEnd(hic) ICSendMessage(hic, ICM_COMPRESS_END, 0, 0)
 
 /* ICCOMPRESSFRAMES.dwFlags */
 #define ICCOMPRESSFRAMES_PADDING        0x00000001
@@ -260,8 +254,7 @@ typedef struct {
 	WCHAR	szDescription[128];	/* 38:long name */
 	WCHAR	szDriver[128];		/* 138:driver that contains compressor*/
 					/* 238: */
-} ICINFO32;
-DECL_WINELIB_TYPE(ICINFO)
+} ICINFO;
 
 /* ICINFO.dwFlags */
 #define	VIDCF_QUALITY		0x0001  /* supports quality */
@@ -280,22 +273,18 @@ DECL_WINELIB_TYPE(ICINFO)
 /* ICM_ABOUT */
 #define ICMF_ABOUT_QUERY         0x00000001
 
-#define ICQueryAbout32(hic) \
-	(ICSendMessage32(hic,ICM_ABOUT,(DWORD)-1,ICMF_ABOUT_QUERY)==ICERR_OK)
-#define ICQueryAbout WINELIB_NAME(ICQueryAbout)
+#define ICQueryAbout(hic) \
+	(ICSendMessage(hic,ICM_ABOUT,(DWORD)-1,ICMF_ABOUT_QUERY)==ICERR_OK)
 
-#define ICAbout32(hic, hwnd) ICSendMessage32(hic,ICM_ABOUT,(DWORD)(UINT)(hwnd),0)
-#define ICAbout WINELIB_NAME(ICAbout)
+#define ICAbout(hic, hwnd) ICSendMessage(hic,ICM_ABOUT,(DWORD)(UINT)(hwnd),0)
 
 /* ICM_CONFIGURE */
 #define ICMF_CONFIGURE_QUERY	0x00000001
-#define ICQueryConfigure32(hic) \
-	(ICSendMessage32(hic,ICM_CONFIGURE,(DWORD)-1,ICMF_CONFIGURE_QUERY)==ICERR_OK)
-#define ICQueryConfigure WINELIB_NAME(ICQueryConfigure)
+#define ICQueryConfigure(hic) \
+	(ICSendMessage(hic,ICM_CONFIGURE,(DWORD)-1,ICMF_CONFIGURE_QUERY)==ICERR_OK)
 
-#define ICConfigure32(hic,hwnd) \
-	ICSendMessage32(hic,ICM_CONFIGURE,(DWORD)(UINT)(hwnd),0)
-#define ICConfigure WINELIB_NAME(ICConfigure)
+#define ICConfigure(hic,hwnd) \
+	ICSendMessage(hic,ICM_CONFIGURE,(DWORD)(UINT)(hwnd),0)
 
 /* Decompression stuff */
 #define ICDECOMPRESS_HURRYUP		0x80000000	/* don't draw just buffer (hurry up!) */
@@ -321,100 +310,85 @@ typedef struct {
     LPVOID		lpDst;
 
     /* changed for ICM_DECOMPRESSEX */
-    INT32		xDst;       /* destination rectangle */
-    INT32		yDst;
-    INT32		dxDst;
-    INT32		dyDst;
+    INT		xDst;       /* destination rectangle */
+    INT		yDst;
+    INT		dxDst;
+    INT		dyDst;
 
-    INT32		xSrc;       /* source rectangle */
-    INT32		ySrc;
-    INT32		dxSrc;
-    INT32		dySrc;
+    INT		xSrc;       /* source rectangle */
+    INT		ySrc;
+    INT		dxSrc;
+    INT		dySrc;
 } ICDECOMPRESSEX;
 
-DWORD VFWAPIV ICDecompress32(HIC32 hic,DWORD dwFlags,LPBITMAPINFOHEADER lpbiFormat,LPVOID lpData,LPBITMAPINFOHEADER lpbi,LPVOID lpBits);
-#define ICDecompress WINELIB_NAME(ICDecompress)
+DWORD VFWAPIV ICDecompress(HIC hic,DWORD dwFlags,LPBITMAPINFOHEADER lpbiFormat,LPVOID lpData,LPBITMAPINFOHEADER lpbi,LPVOID lpBits);
 
 
-#define ICDecompressBegin32(hic, lpbiInput, lpbiOutput) 	\
-    ICSendMessage32(						\
+#define ICDecompressBegin(hic, lpbiInput, lpbiOutput) 	\
+    ICSendMessage(						\
     	hic, ICM_DECOMPRESS_BEGIN, (DWORD)(LPVOID)(lpbiInput),	\
 	(DWORD)(LPVOID)(lpbiOutput)				\
     )
-#define ICDecompressBegin WINELIB_NAME(ICDecompressBegin)
 
-#define ICDecompressQuery32(hic, lpbiInput, lpbiOutput) 	\
-    ICSendMessage32(						\
+#define ICDecompressQuery(hic, lpbiInput, lpbiOutput) 	\
+    ICSendMessage(						\
     	hic,ICM_DECOMPRESS_QUERY, (DWORD)(LPVOID)(lpbiInput),	\
 	(DWORD) (LPVOID)(lpbiOutput)				\
     )
-#define ICDecompressQuery WINELIB_NAME(ICDecompressQuery)
 
-#define ICDecompressGetFormat32(hic, lpbiInput, lpbiOutput)		\
-    ((LONG)ICSendMessage32(						\
+#define ICDecompressGetFormat(hic, lpbiInput, lpbiOutput)		\
+    ((LONG)ICSendMessage(						\
     	hic,ICM_DECOMPRESS_GET_FORMAT, (DWORD)(LPVOID)(lpbiInput),	\
 	(DWORD)(LPVOID)(lpbiOutput)					\
     ))
-#define ICDecompressGetFormat WINELIB_NAME(ICDecompressGetFormat)
 
-#define ICDecompressGetFormatSize32(hic, lpbi) 				\
-	ICDecompressGetFormat32(hic, lpbi, NULL)
-#define ICDecompressGetFormatSize WINELIB_NAME(ICDecompressGetFormatSize)
+#define ICDecompressGetFormatSize(hic, lpbi) 				\
+	ICDecompressGetFormat(hic, lpbi, NULL)
 
-#define ICDecompressGetPalette32(hic, lpbiInput, lpbiOutput)		\
-    ICSendMessage32(							\
+#define ICDecompressGetPalette(hic, lpbiInput, lpbiOutput)		\
+    ICSendMessage(							\
     	hic, ICM_DECOMPRESS_GET_PALETTE, (DWORD)(LPVOID)(lpbiInput), 	\
 	(DWORD)(LPVOID)(lpbiOutput)					\
     )
-#define ICDecompressGetPalette WINELIB_NAME(ICDecompressGetPalette)
 
-#define ICDecompressSetPalette32(hic,lpbiPalette)	\
-        ICSendMessage32(				\
+#define ICDecompressSetPalette(hic,lpbiPalette)	\
+        ICSendMessage(				\
 		hic,ICM_DECOMPRESS_SET_PALETTE,		\
 		(DWORD)(LPVOID)(lpbiPalette),0		\
 	)
-#define ICDecompressSetPalette WINELIB_NAME(ICDecompressSetPalette)
 
-#define ICDecompressEnd32(hic) ICSendMessage32(hic, ICM_DECOMPRESS_END, 0, 0)
-#define ICDecompressEnd WINELIB_NAME(ICDecompressEnd)
+#define ICDecompressEnd(hic) ICSendMessage(hic, ICM_DECOMPRESS_END, 0, 0)
 
 
 #define ICDRAW_QUERY        0x00000001L   /* test for support */
 #define ICDRAW_FULLSCREEN   0x00000002L   /* draw to full screen */
 #define ICDRAW_HDC          0x00000004L   /* draw to a HDC/HWND */
 
-BOOL32	VFWAPI	ICInfo32(DWORD fccType, DWORD fccHandler, ICINFO32 * lpicinfo);
-#define ICInfo WINELIB_NAME(ICInfo)
-LRESULT	VFWAPI	ICGetInfo32(HIC32 hic,ICINFO32 *picinfo, DWORD cb);
-#define ICGetInfo WINELIB_NAME(ICGetInfo)
-HIC32	VFWAPI	ICOpen32(DWORD fccType, DWORD fccHandler, UINT32 wMode);
-#define ICOpen WINELIB_NAME(ICOpen)
-LRESULT VFWAPI ICClose32(HIC32 hic);
-#define ICClose WINELIB_NAME(ICClose)
-LRESULT	VFWAPI	ICSendMessage32(HIC32 hic, UINT32 msg, DWORD dw1, DWORD dw2);
-#define ICSendMessage WINELIB_NAME(ICSendMessage)
-HIC32	VFWAPI ICLocate32(DWORD fccType, DWORD fccHandler, LPBITMAPINFOHEADER lpbiIn, LPBITMAPINFOHEADER lpbiOut, WORD wFlags);
-#define ICLocate WINELIB_NAME(ICLocate)
+BOOL	VFWAPI	ICInfo(DWORD fccType, DWORD fccHandler, ICINFO * lpicinfo);
+LRESULT	VFWAPI	ICGetInfo(HIC hic,ICINFO *picinfo, DWORD cb);
+HIC	VFWAPI	ICOpen(DWORD fccType, DWORD fccHandler, UINT wMode);
+LRESULT VFWAPI ICClose(HIC hic);
+LRESULT	VFWAPI	ICSendMessage(HIC hic, UINT msg, DWORD dw1, DWORD dw2);
+HIC	VFWAPI ICLocate(DWORD fccType, DWORD fccHandler, LPBITMAPINFOHEADER lpbiIn, LPBITMAPINFOHEADER lpbiOut, WORD wFlags);
 
-DWORD	VFWAPIV	ICDrawBegin32(
-        HIC32			hic,
+DWORD	VFWAPIV	ICDrawBegin(
+        HIC			hic,
         DWORD			dwFlags,/* flags */
-        HPALETTE32		hpal,	/* palette to draw with */
-        HWND32			hwnd,	/* window to draw to */
-        HDC32			hdc,	/* HDC to draw to */
-        INT32			xDst,	/* destination rectangle */
-        INT32			yDst,
-        INT32			dxDst,
-        INT32			dyDst,
+        HPALETTE		hpal,	/* palette to draw with */
+        HWND			hwnd,	/* window to draw to */
+        HDC			hdc,	/* HDC to draw to */
+        INT			xDst,	/* destination rectangle */
+        INT			yDst,
+        INT			dxDst,
+        INT			dyDst,
         LPBITMAPINFOHEADER	lpbi,	/* format of frame to draw */
-        INT32			xSrc,	/* source rectangle */
-        INT32			ySrc,
-        INT32			dxSrc,
-        INT32			dySrc,
+        INT			xSrc,	/* source rectangle */
+        INT			ySrc,
+        INT			dxSrc,
+        INT			dySrc,
         DWORD			dwRate,	/* frames/second = (dwRate/dwScale) */
         DWORD			dwScale
 );
-#define ICDrawBegin WINELIB_NAME(ICDrawBegin)
 
 /********************* AVIFILE function declarations *************************/
 
@@ -503,7 +477,7 @@ typedef struct _AVIPALCHANGE {
 
 #define	AVIGETFRAMEF_BESTDISPLAYFMT	1
 
-typedef struct _AVISTREAMINFO32A {
+typedef struct _AVISTREAMINFOA {
     DWORD	fccType;
     DWORD	fccHandler;
     DWORD	dwFlags;        /* AVIIF_* */
@@ -518,13 +492,13 @@ typedef struct _AVISTREAMINFO32A {
     DWORD	dwSuggestedBufferSize;
     DWORD	dwQuality;
     DWORD	dwSampleSize;
-    RECT32	rcFrame;
+    RECT	rcFrame;
     DWORD	dwEditCount;
     DWORD	dwFormatChangeCount;
     CHAR	szName[64];
-} AVISTREAMINFO32A, * LPAVISTREAMINFO32A, *PAVISTREAMINFO32A;
+} AVISTREAMINFOA, * LPAVISTREAMINFOA, *PAVISTREAMINFOA;
 
-typedef struct _AVISTREAMINFO32W {
+typedef struct _AVISTREAMINFOW {
     DWORD	fccType;
     DWORD	fccHandler;
     DWORD	dwFlags;
@@ -539,11 +513,11 @@ typedef struct _AVISTREAMINFO32W {
     DWORD	dwSuggestedBufferSize;
     DWORD	dwQuality;
     DWORD	dwSampleSize;
-    RECT32	rcFrame;
+    RECT	rcFrame;
     DWORD	dwEditCount;
     DWORD	dwFormatChangeCount;
     WCHAR	szName[64];
-} AVISTREAMINFO32W, * LPAVISTREAMINFO32W, *PAVISTREAMINFO32W;
+} AVISTREAMINFOW, * LPAVISTREAMINFOW, *PAVISTREAMINFOW;
 DECL_WINELIB_TYPE_AW(AVISTREAMINFO)
 DECL_WINELIB_TYPE_AW(LPAVISTREAMINFO)
 DECL_WINELIB_TYPE_AW(PAVISTREAMINFO)
@@ -564,7 +538,7 @@ DECL_WINELIB_TYPE_AW(PAVISTREAMINFO)
 #define AVIFILECAPS_ALLKEYFRAMES	0x00000010
 #define AVIFILECAPS_NOCOMPRESSION	0x00000020
 
-typedef struct _AVIFILEINFO32W {
+typedef struct _AVIFILEINFOW {
     DWORD               dwMaxBytesPerSec;
     DWORD               dwFlags;
     DWORD               dwCaps;
@@ -577,8 +551,8 @@ typedef struct _AVIFILEINFO32W {
     DWORD               dwLength;
     DWORD               dwEditCount;
     WCHAR               szFileType[64];
-} AVIFILEINFO32W, * LPAVIFILEINFO32W, *PAVIFILEINFO32W;
-typedef struct _AVIFILEINFO32A {
+} AVIFILEINFOW, * LPAVIFILEINFOW, *PAVIFILEINFOW;
+typedef struct _AVIFILEINFOA {
     DWORD               dwMaxBytesPerSec;
     DWORD               dwFlags;
     DWORD               dwCaps;
@@ -591,7 +565,7 @@ typedef struct _AVIFILEINFO32A {
     DWORD               dwLength;
     DWORD               dwEditCount;
     CHAR		szFileType[64];
-} AVIFILEINFO32A, * LPAVIFILEINFO32A, *PAVIFILEINFO32A;
+} AVIFILEINFOA, * LPAVIFILEINFOA, *PAVIFILEINFOA;
 DECL_WINELIB_TYPE_AW(AVIFILEINFO)
 DECL_WINELIB_TYPE_AW(PAVIFILEINFO)
 DECL_WINELIB_TYPE_AW(LPAVIFILEINFO)
@@ -631,11 +605,11 @@ DEFINE_AVIGUID(CLSID_AVIFile,           0x00020000, 0, 0);
 
 
 /* IAVIStream32 interface. */
-#define ICOM_INTERFACE IAVIStream32
-typedef struct IAVIStream32 IAVIStream32,*PAVISTREAM32;
-ICOM_BEGIN(IAVIStream32, IUnknown)
+#define ICOM_INTERFACE IAVIStream
+typedef struct IAVIStream IAVIStream,*PAVISTREAM;
+ICOM_BEGIN(IAVIStream, IUnknown)
     ICOM_METHOD2(HRESULT,Create,LPARAM,,LPARAM,);
-    ICOM_METHOD2(HRESULT,Info,AVISTREAMINFO32W*,,LONG,);
+    ICOM_METHOD2(HRESULT,Info,AVISTREAMINFOW*,,LONG,);
     ICOM_METHOD2(LONG,FindSample,LONG,,LONG,);
     ICOM_METHOD3(HRESULT,ReadFormat,LONG,,LPVOID,,LONG*,);
     ICOM_METHOD3(HRESULT,SetFormat,LONG,,LPVOID,,LONG,);
@@ -644,43 +618,37 @@ ICOM_BEGIN(IAVIStream32, IUnknown)
     ICOM_METHOD2(HRESULT,Delete,LONG,,LONG,);
     ICOM_METHOD3(HRESULT,ReadData,DWORD,,LPVOID,,LONG*,);
     ICOM_METHOD3(HRESULT,WriteData,DWORD,,LPVOID,,LONG,);
-    ICOM_METHOD2(HRESULT,SetInfo,AVISTREAMINFO32W*,,LONG,);
-ICOM_END(IAVIStream32)
+    ICOM_METHOD2(HRESULT,SetInfo,AVISTREAMINFOW*,,LONG,);
+ICOM_END(IAVIStream)
 #undef ICOM_INTERFACE
 
-DECL_WINELIB_TYPE(IAVIStream)
-DECL_WINELIB_TYPE(PAVISTREAM)
 
 /* IAVIFile32 interface. In Win32 this interface uses UNICODE only */
-#define ICOM_INTERFACE IAVIFile32
-typedef struct IAVIFile32 IAVIFile32,*PAVIFILE32;
-ICOM_BEGIN(IAVIFile32,IUnknown)
-	ICOM_METHOD2(HRESULT,Info,AVIFILEINFO32W*,,LONG,);
-	ICOM_METHOD3(HRESULT,GetStream,PAVISTREAM32*,,DWORD,,LONG,);
-	ICOM_METHOD2(HRESULT,CreateStream,PAVISTREAM32*,,AVISTREAMINFO32W*,);
+#define ICOM_INTERFACE IAVIFile
+typedef struct IAVIFile IAVIFile,*PAVIFILE;
+ICOM_BEGIN(IAVIFile,IUnknown)
+	ICOM_METHOD2(HRESULT,Info,AVIFILEINFOW*,,LONG,);
+	ICOM_METHOD3(HRESULT,GetStream,PAVISTREAM*,,DWORD,,LONG,);
+	ICOM_METHOD2(HRESULT,CreateStream,PAVISTREAM*,,AVISTREAMINFOW*,);
 	ICOM_METHOD3(HRESULT,WriteData,DWORD,,LPVOID,,LONG,);
 	ICOM_METHOD3(HRESULT,ReadData,DWORD,,LPVOID,,LONG*,);
 	ICOM_METHOD (HRESULT,EndRecord);
 	ICOM_METHOD2(HRESULT,DeleteStream,DWORD,,LONG,);
-ICOM_END(IAVIFile32)
+ICOM_END(IAVIFile)
 #undef ICOM_INTERFACE
 
-DECL_WINELIB_TYPE(IAVIFile)
-DECL_WINELIB_TYPE(PAVIFILE)
 
 /* IGetFrame32 interface */
-#define ICOM_INTERFACE IGetFrame32
-typedef struct IGetFrame32 IGetFrame32,*PGETFRAME32;
-ICOM_BEGIN(IGetFrame32,IUnknown)
+#define ICOM_INTERFACE IGetFrame
+typedef struct IGetFrame IGetFrame,*PGETFRAME;
+ICOM_BEGIN(IGetFrame,IUnknown)
 	ICOM_METHOD1(LPVOID,GetFrame,LONG,);
 	ICOM_METHOD3(HRESULT,Begin,LONG,,LONG,,LONG,);
 	ICOM_METHOD (HRESULT,End);
-	ICOM_METHOD6(HRESULT,SetFormat,LPBITMAPINFOHEADER,,LPVOID,,INT32,,INT32,,INT32,,INT32,);
-ICOM_END(IGetFrame32)
+	ICOM_METHOD6(HRESULT,SetFormat,LPBITMAPINFOHEADER,,LPVOID,,INT,,INT,,INT,,INT,);
+ICOM_END(IGetFrame)
 #undef ICOM_INTERFACE
 
-DECL_WINELIB_TYPE(IGetFrame)
-DECL_WINELIB_TYPE(PGETFRAME)
 
 #define AVIERR_OK		0
 #define MAKE_AVIERR(error)	MAKE_SCODE(SEVERITY_ERROR,FACILITY_ITF,0x4000+error)
@@ -705,55 +673,37 @@ DECL_WINELIB_TYPE(PGETFRAME)
 #define AVIERR_USERABORT	MAKE_AVIERR(198)
 #define AVIERR_ERROR		MAKE_AVIERR(199)
 
-HRESULT WINAPI AVIMakeCompressedStream32(PAVISTREAM32*ppsCompressed,PAVISTREAM32 ppsSource,AVICOMPRESSOPTIONS *lpOptions,CLSID*pclsidHandler); 
+HRESULT WINAPI AVIMakeCompressedStream(PAVISTREAM*ppsCompressed,PAVISTREAM ppsSource,AVICOMPRESSOPTIONS *lpOptions,CLSID*pclsidHandler); 
 #define AVIMakeCompressedStream WINELIB_NAME_AW(AVIMakeCompressedStream)
-HRESULT WINAPI AVIStreamSetFormat32(PAVISTREAM32 iface,LONG pos,LPVOID format,LONG formatsize);
-#define AVIStreamSetFormat WINELIB_NAME(AVIStreamSetFormat)
-HRESULT WINAPI AVIStreamWrite32(PAVISTREAM32 iface,LONG start,LONG samples,LPVOID buffer,LONG buffersize,DWORD flags,LONG *sampwritten,LONG *byteswritten);
-#define AVIStreamWrite WINELIB_NAME(AVIStreamWrite)
-ULONG WINAPI AVIStreamRelease32(PAVISTREAM32 iface);
-#define AVIStreamRelease WINELIB_NAME(AVIStreamRelease)
-LONG WINAPI AVIStreamStart32(PAVISTREAM32 iface);
-#define AVIStreamStart WINELIB_NAME(AVIStreamStart)
-LONG WINAPI AVIStreamLength32(PAVISTREAM32 iface);
-#define AVIStreamLength WINELIB_NAME(AVIStreamLength)
-HRESULT WINAPI AVIStreamReadFormat32(PAVISTREAM32 iface,LONG pos,LPVOID format,LONG *formatsize);
-#define AVIStreamReadFormat WINELIB_NAME(AVIStreamReadFormat)
-HRESULT WINAPI AVIStreamWrite32(PAVISTREAM32 iface,LONG start,LONG samples,LPVOID buffer,LONG buffersize,DWORD flags,LONG *sampwritten,LONG *byteswritten);
-#define AVIStreamWrite WINELIB_NAME(AVIStreamWrite)
-HRESULT WINAPI AVIStreamRead32(PAVISTREAM32 iface,LONG start,LONG samples,LPVOID buffer,LONG buffersize,LONG *bytesread,LONG *samplesread);
-#define AVIStreamRead WINELIB_NAME(AVIStreamRead)
-HRESULT WINAPI AVIStreamWriteData32(PAVISTREAM32 iface,DWORD fcc,LPVOID lp,LONG size);
-#define AVIStreamWriteData WINELIB_NAME(AVIStreamWriteData)
-HRESULT WINAPI AVIStreamReadData32(PAVISTREAM32 iface,DWORD fcc,LPVOID lp,LONG *lpread);
-#define AVIStreamReadData WINELIB_NAME(AVIStreamReadData)
-HRESULT WINAPI AVIStreamInfo32A(PAVISTREAM32 iface,AVISTREAMINFO32A *asi,LONG size);
-HRESULT WINAPI AVIStreamInfo32W(PAVISTREAM32 iface,AVISTREAMINFO32W *asi,LONG size);
+HRESULT WINAPI AVIStreamSetFormat(PAVISTREAM iface,LONG pos,LPVOID format,LONG formatsize);
+HRESULT WINAPI AVIStreamWrite(PAVISTREAM iface,LONG start,LONG samples,LPVOID buffer,LONG buffersize,DWORD flags,LONG *sampwritten,LONG *byteswritten);
+ULONG WINAPI AVIStreamRelease(PAVISTREAM iface);
+LONG WINAPI AVIStreamStart(PAVISTREAM iface);
+LONG WINAPI AVIStreamLength(PAVISTREAM iface);
+HRESULT WINAPI AVIStreamReadFormat(PAVISTREAM iface,LONG pos,LPVOID format,LONG *formatsize);
+HRESULT WINAPI AVIStreamWrite(PAVISTREAM iface,LONG start,LONG samples,LPVOID buffer,LONG buffersize,DWORD flags,LONG *sampwritten,LONG *byteswritten);
+HRESULT WINAPI AVIStreamRead(PAVISTREAM iface,LONG start,LONG samples,LPVOID buffer,LONG buffersize,LONG *bytesread,LONG *samplesread);
+HRESULT WINAPI AVIStreamWriteData(PAVISTREAM iface,DWORD fcc,LPVOID lp,LONG size);
+HRESULT WINAPI AVIStreamReadData(PAVISTREAM iface,DWORD fcc,LPVOID lp,LONG *lpread);
+HRESULT WINAPI AVIStreamInfoA(PAVISTREAM iface,AVISTREAMINFOA *asi,LONG size);
+HRESULT WINAPI AVIStreamInfoW(PAVISTREAM iface,AVISTREAMINFOW *asi,LONG size);
 #define AVIStreamInfo WINELIB_NAME_AW(AVIStreamInfo)
-PGETFRAME32 WINAPI AVIStreamGetFrameOpen32(PAVISTREAM32 pavi,LPBITMAPINFOHEADER lpbiWanted);
-#define AVIStreamGetFrameOpen WINELIB_NAME(AVIStreamGetFrameOpen)
-HRESULT WINAPI AVIStreamGetFrameClose32(PGETFRAME32 pg);
-#define AVIStreamGetFrameClose WINELIB_NAME(AVIStreamGetFrameClose)
-PGETFRAME32 WINAPI AVIStreamGetFrameOpen32(PAVISTREAM32 pavi,LPBITMAPINFOHEADER lpbiWanted);
-#define AVIStreamGetFrameOpen WINELIB_NAME(AVIStreamGetFrameOpen)
-LPVOID WINAPI AVIStreamGetFrame32(PGETFRAME32 pg,LONG pos);
-#define AVIStreamGetFrame WINELIB_NAME(AVIStreamGetFrame)
+PGETFRAME WINAPI AVIStreamGetFrameOpen(PAVISTREAM pavi,LPBITMAPINFOHEADER lpbiWanted);
+HRESULT WINAPI AVIStreamGetFrameClose(PGETFRAME pg);
+PGETFRAME WINAPI AVIStreamGetFrameOpen(PAVISTREAM pavi,LPBITMAPINFOHEADER lpbiWanted);
+LPVOID WINAPI AVIStreamGetFrame(PGETFRAME pg,LONG pos);
 
-void WINAPI AVIFileInit32(void);
-#define AVIFileInit WINELIB_NAME(AVIFileInit)
-HRESULT WINAPI AVIFileOpen32A(PAVIFILE32 * ppfile,LPCSTR szFile,UINT32 uMode,LPCLSID lpHandler);
+void WINAPI AVIFileInit(void);
+HRESULT WINAPI AVIFileOpenA(PAVIFILE * ppfile,LPCSTR szFile,UINT uMode,LPCLSID lpHandler);
 #define AVIFileOpen WINELIB_NAME_AW(AVIFileOpen)
-HRESULT WINAPI AVIFileCreateStream32A(PAVIFILE32 pfile,PAVISTREAM32 *ppavi,AVISTREAMINFO32A * psi);
-HRESULT WINAPI AVIFileCreateStream32W(PAVIFILE32 pfile,PAVISTREAM32 *ppavi,AVISTREAMINFO32W * psi);
+HRESULT WINAPI AVIFileCreateStreamA(PAVIFILE pfile,PAVISTREAM *ppavi,AVISTREAMINFOA * psi);
+HRESULT WINAPI AVIFileCreateStreamW(PAVIFILE pfile,PAVISTREAM *ppavi,AVISTREAMINFOW * psi);
 #define AVIFileCreateStream WINELIB_NAME_AW(AVIFileCreateStream)
-ULONG WINAPI AVIFileRelease32(PAVIFILE32 iface);
-#define AVIFileRelease WINELIB_NAME(AVIFileRelease)
-HRESULT WINAPI AVIFileInfo32A(PAVIFILE32 pfile,PAVIFILEINFO32A,LONG);
-HRESULT WINAPI AVIFileInfo32W(PAVIFILE32 pfile,PAVIFILEINFO32W,LONG);
+ULONG WINAPI AVIFileRelease(PAVIFILE iface);
+HRESULT WINAPI AVIFileInfoA(PAVIFILE pfile,PAVIFILEINFOA,LONG);
+HRESULT WINAPI AVIFileInfoW(PAVIFILE pfile,PAVIFILEINFOW,LONG);
 #define AVIFileInfo WINELIB_NAME_AW(AVIFileInfo)
-HRESULT WINAPI AVIFileGetStream32(PAVIFILE32 pfile,PAVISTREAM32*avis,DWORD fccType,LONG lParam);
-#define AVIFileGetStream WINELIB_NAME(AVIFileGetStream)
-void WINAPI AVIFileExit32(void);
-#define AVIFileExit WINELIB_NAME(AVIFileExit)
+HRESULT WINAPI AVIFileGetStream(PAVIFILE pfile,PAVISTREAM*avis,DWORD fccType,LONG lParam);
+void WINAPI AVIFileExit(void);
 
 #endif

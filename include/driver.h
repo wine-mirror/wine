@@ -47,10 +47,8 @@ typedef struct {
     DWORD   			dwDCISize;
     LPCWSTR  			lpszDCISectionName;
     LPCWSTR  			lpszDCIAliasName;
-} DRVCONFIGINFO32, *LPDRVCONFIGINFO32;
+} DRVCONFIGINFO, *LPDRVCONFIGINFO;
 
-DECL_WINELIB_TYPE(DRVCONFIGINFO)
-DECL_WINELIB_TYPE(LPDRVCONFIGINFO)
 
 /* GetDriverInfo16 references this structure, so this a struct defined
  * in the Win16 API.
@@ -66,31 +64,27 @@ typedef struct
 
 LRESULT WINAPI DefDriverProc16(DWORD dwDevID, HDRVR16 hDriv, UINT16 wMsg, 
                                LPARAM dwParam1, LPARAM dwParam2);
-LRESULT WINAPI DefDriverProc32(DWORD dwDriverIdentifier, HDRVR32 hdrvr,
-                               UINT32 Msg, LPARAM lParam1, LPARAM lParam2);
-#define DefDriverProc WINELIB_NAME(DefDriverProc)
+LRESULT WINAPI DefDriverProc(DWORD dwDriverIdentifier, HDRVR hdrvr,
+                               UINT Msg, LPARAM lParam1, LPARAM lParam2);
 HDRVR16 WINAPI OpenDriver16(LPCSTR szDriverName, LPCSTR szSectionName,
                             LPARAM lParam2);
-HDRVR32 WINAPI OpenDriver32A(LPCSTR szDriverName, LPCSTR szSectionName,
+HDRVR WINAPI OpenDriverA(LPCSTR szDriverName, LPCSTR szSectionName,
                              LPARAM lParam2);
-HDRVR32 WINAPI OpenDriver32W(LPCWSTR szDriverName, LPCWSTR szSectionName,
+HDRVR WINAPI OpenDriverW(LPCWSTR szDriverName, LPCWSTR szSectionName,
                              LPARAM lParam2);
 #define OpenDriver WINELIB_NAME_AW(OpenDriver)
 LRESULT WINAPI CloseDriver16(HDRVR16 hDriver, LPARAM lParam1, LPARAM lParam2);
-LRESULT WINAPI CloseDriver32(HDRVR32 hDriver, LPARAM lParam1, LPARAM lParam2);
-#define CloseDriver WINELIB_NAME(CloseDriver)
+LRESULT WINAPI CloseDriver(HDRVR hDriver, LPARAM lParam1, LPARAM lParam2);
 LRESULT WINAPI SendDriverMessage16( HDRVR16 hDriver, UINT16 message,
                                     LPARAM lParam1, LPARAM lParam2 );
-LRESULT WINAPI SendDriverMessage32( HDRVR32 hDriver, UINT32 message,
+LRESULT WINAPI SendDriverMessage( HDRVR hDriver, UINT message,
                                     LPARAM lParam1, LPARAM lParam2 );
-#define SendDriverMessage WINELIB_NAME(SendDriverMessage)
 HMODULE16 WINAPI GetDriverModuleHandle16(HDRVR16 hDriver);
-HMODULE32 WINAPI GetDriverModuleHandle32(HDRVR32 hDriver);
-#define GetDriverModuleHandle WINELIB_NAME(GetDriverModuleHandle)
+HMODULE WINAPI GetDriverModuleHandle(HDRVR hDriver);
 
 /* only win31 version for those below ? */
-HDRVR16 WINAPI GetNextDriver(HDRVR16, DWORD);
-BOOL16 WINAPI GetDriverInfo(HDRVR16, DRIVERINFOSTRUCT16 *);
+HDRVR16 WINAPI GetNextDriver16(HDRVR16, DWORD);
+BOOL16 WINAPI GetDriverInfo16(HDRVR16, DRIVERINFOSTRUCT16 *);
 
 /* The following definitions are WINE internals */
 /* FIXME: This is a WINE internal struct and should be moved in include/wine directory */
@@ -109,8 +103,8 @@ typedef struct tagWINE_DRIVER
 	  DRIVERPROC16          lpDrvProc;
        } d16;
        struct {
-	  HMODULE32		hModule;
-	  DRIVERPROC32		lpDrvProc;
+	  HMODULE		hModule;
+	  DRIVERPROC		lpDrvProc;
        } d32;
     } d;
     DWORD		  	dwDriverID;
@@ -125,18 +119,18 @@ typedef struct tagWINE_DRIVER
 #define WINE_DI_TYPE_32		0x00000002ul
 
 LPWINE_DRIVER	DRIVER_RegisterDriver16(LPCSTR, HMODULE16, DRIVERPROC16, LPARAM);
-LPWINE_DRIVER	DRIVER_RegisterDriver32(LPCSTR, HMODULE32, DRIVERPROC32, LPARAM);
+LPWINE_DRIVER	DRIVER_RegisterDriver32(LPCSTR, HMODULE, DRIVERPROC, LPARAM);
 
 #if 0
 #errro "it's never used"
 /* internal */
 typedef struct
 {
-    UINT32			length;
-    HDRVR32			hDriver;
-    HMODULE32			hModule;
+    UINT			length;
+    HDRVR			hDriver;
+    HMODULE			hModule;
     CHAR			szAliasName[128];
-} DRIVERINFOSTRUCT32A, *LPDRIVERINFOSTRUCT32A;
+} DRIVERINFOSTRUCTA, *LPDRIVERINFOSTRUCTA;
 #endif
 
 #endif  /* __WINE_DRIVER_H */

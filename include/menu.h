@@ -11,14 +11,14 @@
 #define MAGIC_RESTORE 2
 #define MAGIC_CLOSE   5
 
-extern BOOL32 MENU_Init(void);
-extern HMENU32 MENU_GetSysMenu(HWND32 hWndOwner, HMENU32 hSysPopup);
-extern UINT32 MENU_GetMenuBarHeight( HWND32 hwnd, UINT32 menubarWidth,
-                                     INT32 orgX, INT32 orgY );
-extern BOOL32 MENU_PatchResidentPopup( HQUEUE16, WND* );
-extern void MENU_TrackMouseMenuBar( WND *wnd, INT32 ht, POINT32 pt );
-extern void MENU_TrackKbdMenuBar( WND *wnd, UINT32 wParam, INT32 vkey );
-extern UINT32 MENU_DrawMenuBar( HDC32 hDC, LPRECT32 lprect,
-                                HWND32 hwnd, BOOL32 suppress_draw );
+extern BOOL MENU_Init(void);
+extern HMENU MENU_GetSysMenu(HWND hWndOwner, HMENU hSysPopup);
+extern UINT MENU_GetMenuBarHeight( HWND hwnd, UINT menubarWidth,
+                                     INT orgX, INT orgY );
+extern BOOL MENU_PatchResidentPopup( HQUEUE16, WND* );
+extern void MENU_TrackMouseMenuBar( WND *wnd, INT ht, POINT pt );
+extern void MENU_TrackKbdMenuBar( WND *wnd, UINT wParam, INT vkey );
+extern UINT MENU_DrawMenuBar( HDC hDC, LPRECT lprect,
+                                HWND hwnd, BOOL suppress_draw );
 
 #endif /* __WINE_MENU_H */

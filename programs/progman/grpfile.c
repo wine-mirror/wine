@@ -271,7 +271,7 @@ static HLOCAL GRPFILE_ScanProgram(LPCSTR buffer, INT size,
   if (iconANDbits_ptr + iconANDsize > buffer + size ||
       iconXORbits_ptr + iconXORsize > buffer + size) return(0);
 
-  hIcon = CreateCursorIconIndirect(Globals.hInstance, &iconinfo,
+  hIcon = CreateCursorIconIndirect16(Globals.hInstance, &iconinfo,
 				   (LPSTR)iconANDbits_ptr,
 				   (LPSTR)iconXORbits_ptr);
 
@@ -635,7 +635,7 @@ static BOOL GRPFILE_DoWriteGroupFile(HFILE file, GROUP *group)
       LPVOID XorBits, AndBits;
       INT sizeXor = iconinfo->nHeight * iconinfo->nWidthBytes;
       INT sizeAnd = iconinfo->nHeight * ((iconinfo->nWidth + 15) / 16 * 2);
-      DumpIcon(LocalLock(program->hIcon), 0, &XorBits, &AndBits);
+      DumpIcon16(LocalLock(program->hIcon), 0, &XorBits, &AndBits);
 
       PUT_SHORT(buffer, 0, iconinfo->ptHotSpot.x);
       PUT_SHORT(buffer, 2, iconinfo->ptHotSpot.y);

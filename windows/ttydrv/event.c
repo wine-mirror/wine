@@ -9,7 +9,7 @@
 /***********************************************************************
  *		TTYDRV_EVENT_Init
  */
-BOOL32 TTYDRV_EVENT_Init(void)
+BOOL TTYDRV_EVENT_Init(void)
 {
   return TRUE;
 }
@@ -31,7 +31,7 @@ void TTYDRV_EVENT_DeleteIO(int fd, unsigned flag)
 /***********************************************************************
  *		TTYDRV_EVENT_WaitNetEvent
  */
-BOOL32 TTYDRV_EVENT_WaitNetEvent(BOOL32 sleep, BOOL32 peek)
+BOOL TTYDRV_EVENT_WaitNetEvent(BOOL sleep, BOOL peek)
 {
   return TRUE;
 }
@@ -46,7 +46,7 @@ void TTYDRV_EVENT_Synchronize(void)
 /***********************************************************************
  *		TTYDRV_EVENT_CheckFocus
  */
-BOOL32 TTYDRV_EVENT_CheckFocus(void)
+BOOL TTYDRV_EVENT_CheckFocus(void)
 {
   return TRUE;
 }
@@ -54,7 +54,7 @@ BOOL32 TTYDRV_EVENT_CheckFocus(void)
 /***********************************************************************
  *		TTYDRV_EVENT_QueryPointer
  */
-BOOL32 TTYDRV_EVENT_QueryPointer(DWORD *posX, DWORD *posY, DWORD *state)
+BOOL TTYDRV_EVENT_QueryPointer(DWORD *posX, DWORD *posY, DWORD *state)
 {
   if(posX)
     *posX = 0;
@@ -78,7 +78,7 @@ void TTYDRV_EVENT_DummyMotionNotify(void)
 /***********************************************************************
  *		TTYDRV_EVENT_Pending
  */
-BOOL32 TTYDRV_EVENT_Pending(void)
+BOOL TTYDRV_EVENT_Pending(void)
 {
   return FALSE;
 }

@@ -12,14 +12,14 @@
 
 typedef struct
 {
-  UINT32      AccelCount;   /* Number of elements in AccelVect */
+  UINT      AccelCount;   /* Number of elements in AccelVect */
   UDACCEL*    AccelVect;    /* Vector containing AccelCount elements */
-  INT32       Base;         /* Base to display nr in the buddy window */
-  INT32       CurVal;       /* Current up-down value */
-  INT32       MinVal;       /* Minimum up-down value */
-  INT32       MaxVal;       /* Maximum up-down value */
-  HWND32      Buddy;        /* Handle to the buddy window */
-  INT32       Flags;        /* Internal Flags FLAG_* */
+  INT       Base;         /* Base to display nr in the buddy window */
+  INT       CurVal;       /* Current up-down value */
+  INT       MinVal;       /* Minimum up-down value */
+  INT       MaxVal;       /* Maximum up-down value */
+  HWND      Buddy;        /* Handle to the buddy window */
+  INT       Flags;        /* Internal Flags FLAG_* */
 } UPDOWN_INFO;
 
 typedef struct tagNM_UPDOWN

@@ -15,10 +15,10 @@ struct _DESKTOP_DRIVER;
 
 typedef struct tagDESKTOP
 {
-  HBRUSH32                hbrushPattern;
-  HBITMAP32               hbitmapWallPaper;
-  SIZE32                  bitmapSize;
-  BOOL32                  fTileWallPaper;
+  HBRUSH                hbrushPattern;
+  HBITMAP               hbitmapWallPaper;
+  SIZE                  bitmapSize;
+  BOOL                  fTileWallPaper;
   struct tagMONITOR      *pPrimaryMonitor;
   struct _DESKTOP_DRIVER *pDriver;         /* Desktop driver */
   void                   *pDriverData;     /* Desktop driver data */
@@ -33,8 +33,8 @@ extern int DESKTOP_GetScreenWidth(void);
 extern int DESKTOP_GetScreenHeight(void);
 extern int DESKTOP_GetScreenDepth(void);
 
-extern BOOL32 DESKTOP_SetPattern( LPCSTR pattern );
-extern LRESULT WINAPI DesktopWndProc( HWND32 hwnd, UINT32 message,
-                                      WPARAM32 wParam, LPARAM lParam );
+extern BOOL DESKTOP_SetPattern( LPCSTR pattern );
+extern LRESULT WINAPI DesktopWndProc( HWND hwnd, UINT message,
+                                      WPARAM wParam, LPARAM lParam );
 
 #endif  /* __WINE_DESKTOP_H */

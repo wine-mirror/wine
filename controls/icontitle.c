@@ -16,36 +16,36 @@
 
 static  LPCSTR	emptyTitleText = "<...>";
 
-	BOOL32	bMultiLineTitle;
-	HFONT32	hIconTitleFont;
+	BOOL	bMultiLineTitle;
+	HFONT	hIconTitleFont;
 
 /***********************************************************************
  *           ICONTITLE_Init
  */
-BOOL32 ICONTITLE_Init(void)
+BOOL ICONTITLE_Init(void)
 {
-    LOGFONT32A logFont;
+    LOGFONTA logFont;
 
-    SystemParametersInfo32A( SPI_GETICONTITLELOGFONT, 0, &logFont, 0 );
-    SystemParametersInfo32A( SPI_GETICONTITLEWRAP, 0, &bMultiLineTitle, 0 );
-    hIconTitleFont = CreateFontIndirect32A( &logFont );
+    SystemParametersInfoA( SPI_GETICONTITLELOGFONT, 0, &logFont, 0 );
+    SystemParametersInfoA( SPI_GETICONTITLEWRAP, 0, &bMultiLineTitle, 0 );
+    hIconTitleFont = CreateFontIndirectA( &logFont );
     return (hIconTitleFont) ? TRUE : FALSE;
 }
 
 /***********************************************************************
  *           ICONTITLE_Create
  */
-HWND32 ICONTITLE_Create( WND* wnd )
+HWND ICONTITLE_Create( WND* wnd )
 {
     WND* wndPtr;
-    HWND32 hWnd;
+    HWND hWnd;
 
     if( wnd->dwStyle & WS_CHILD )
-	hWnd = CreateWindowEx32A( 0, ICONTITLE_CLASS_ATOM, NULL,
+	hWnd = CreateWindowExA( 0, ICONTITLE_CLASS_ATOM, NULL,
 				  WS_CHILD | WS_CLIPSIBLINGS, 0, 0, 1, 1,
 				  wnd->parent->hwndSelf, 0, wnd->hInstance, NULL );
     else
-	hWnd = CreateWindowEx32A( 0, ICONTITLE_CLASS_ATOM, NULL,
+	hWnd = CreateWindowExA( 0, ICONTITLE_CLASS_ATOM, NULL,
 				  WS_CLIPSIBLINGS, 0, 0, 1, 1,
 				  wnd->hwndSelf, 0, wnd->hInstance, NULL );
     wndPtr = WIN_FindWndPtr( hWnd );
@@ -62,15 +62,15 @@ HWND32 ICONTITLE_Create( WND* wnd )
 /***********************************************************************
  *           ICONTITLE_GetTitlePos
  */
-static BOOL32 ICONTITLE_GetTitlePos( WND* wnd, LPRECT32 lpRect )
+static BOOL ICONTITLE_GetTitlePos( WND* wnd, LPRECT lpRect )
 {
     LPSTR str;
-    int length = lstrlen32A( wnd->owner->text );
+    int length = lstrlenA( wnd->owner->text );
 
     if( length )
     {
 	str = HeapAlloc( GetProcessHeap(), 0, length + 1 );
-	lstrcpy32A( str, wnd->owner->text );
+	lstrcpyA( str, wnd->owner->text );
 	while( str[length - 1] == ' ' ) /* remove trailing spaces */
 	{ 
 	    str[--length] = '\0';
@@ -84,25 +84,25 @@ static BOOL32 ICONTITLE_GetTitlePos( WND* wnd, LPRECT32 lpRect )
     if( !length ) 
     {
 	str = (LPSTR)emptyTitleText;
-	length = lstrlen32A( str );
+	length = lstrlenA( str );
     }
 
     if( str )
     {
-	HDC32 hDC = GetDC32( wnd->hwndSelf );
+	HDC hDC = GetDC( wnd->hwndSelf );
 	if( hDC )
 	{
-	    HFONT32 hPrevFont = SelectObject32( hDC, hIconTitleFont );
+	    HFONT hPrevFont = SelectObject( hDC, hIconTitleFont );
 
-	    SetRect32( lpRect, 0, 0, sysMetrics[SM_CXICONSPACING] -
+	    SetRect( lpRect, 0, 0, sysMetrics[SM_CXICONSPACING] -
 		       SYSMETRICS_CXBORDER * 2, SYSMETRICS_CYBORDER * 2 );
 
-	    DrawText32A( hDC, str, length, lpRect, DT_CALCRECT |
+	    DrawTextA( hDC, str, length, lpRect, DT_CALCRECT |
 			 DT_CENTER | DT_NOPREFIX | DT_WORDBREAK |
 			 (( bMultiLineTitle ) ? 0 : DT_SINGLELINE) );
 
-	    SelectObject32( hDC, hPrevFont );
-	    ReleaseDC32( wnd->hwndSelf, hDC );
+	    SelectObject( hDC, hPrevFont );
+	    ReleaseDC( wnd->hwndSelf, hDC );
 
 	    lpRect->right += 4 * SYSMETRICS_CXBORDER - lpRect->left;
 	    lpRect->left = wnd->owner->rectWindow.left + SYSMETRICS_CXICON / 2 -
@@ -119,16 +119,16 @@ static BOOL32 ICONTITLE_GetTitlePos( WND* wnd, LPRECT32 lpRect )
 /***********************************************************************
  *           ICONTITLE_Paint
  */
-static BOOL32 ICONTITLE_Paint( WND* wnd, HDC32 hDC, BOOL32 bActive )
+static BOOL ICONTITLE_Paint( WND* wnd, HDC hDC, BOOL bActive )
 {
-    HFONT32 hPrevFont;
-    HBRUSH32 hBrush = 0;
+    HFONT hPrevFont;
+    HBRUSH hBrush = 0;
     COLORREF textColor = 0;
 
     if( bActive )
     {
-	hBrush = GetSysColorBrush32(COLOR_ACTIVECAPTION);
-	textColor = GetSysColor32(COLOR_CAPTIONTEXT);
+	hBrush = GetSysColorBrush(COLOR_ACTIVECAPTION);
+	textColor = GetSysColor(COLOR_CAPTIONTEXT);
     }
     else 
     {
@@ -137,9 +137,9 @@ static BOOL32 ICONTITLE_Paint( WND* wnd, HDC32 hDC, BOOL32 bActive )
 	    hBrush = wnd->parent->class->hbrBackground;
 	    if( hBrush )
 	    {
-		INT32 level;
-		LOGBRUSH32 logBrush;
-		GetObject32A( hBrush, sizeof(logBrush), &logBrush );
+		INT level;
+		LOGBRUSH logBrush;
+		GetObjectA( hBrush, sizeof(logBrush), &logBrush );
 		level = GetRValue(logBrush.lbColor) +
 			   GetGValue(logBrush.lbColor) +
 			      GetBValue(logBrush.lbColor);
@@ -147,36 +147,36 @@ static BOOL32 ICONTITLE_Paint( WND* wnd, HDC32 hDC, BOOL32 bActive )
 		    textColor = RGB( 0xFF, 0xFF, 0xFF );
 	    }
 	    else
-		hBrush = GetStockObject32( WHITE_BRUSH );
+		hBrush = GetStockObject( WHITE_BRUSH );
 	}
 	else
 	{
-	    hBrush = GetStockObject32( BLACK_BRUSH );
+	    hBrush = GetStockObject( BLACK_BRUSH );
 	    textColor = RGB( 0xFF, 0xFF, 0xFF );    
 	}
     }
 
-    FillWindow( wnd->parent->hwndSelf, wnd->hwndSelf, hDC, hBrush );
+    FillWindow16( wnd->parent->hwndSelf, wnd->hwndSelf, hDC, hBrush );
 
-    hPrevFont = SelectObject32( hDC, hIconTitleFont );
+    hPrevFont = SelectObject( hDC, hIconTitleFont );
     if( hPrevFont )
     {
-        RECT32  rect;
-	INT32	length;
+        RECT  rect;
+	INT	length;
 	char	buffer[80];
 
 	rect.left = rect.top = 0;
 	rect.right = wnd->rectWindow.right - wnd->rectWindow.left;
 	rect.bottom = wnd->rectWindow.bottom - wnd->rectWindow.top;
 
-	length = GetWindowText32A( wnd->owner->hwndSelf, buffer, 80 );
-        SetTextColor32( hDC, textColor );
-        SetBkMode32( hDC, TRANSPARENT );
+	length = GetWindowTextA( wnd->owner->hwndSelf, buffer, 80 );
+        SetTextColor( hDC, textColor );
+        SetBkMode( hDC, TRANSPARENT );
 	
-	DrawText32A( hDC, buffer, length, &rect, DT_CENTER | DT_NOPREFIX |
+	DrawTextA( hDC, buffer, length, &rect, DT_CENTER | DT_NOPREFIX |
 		     DT_WORDBREAK | ((bMultiLineTitle) ? 0 : DT_SINGLELINE) ); 
 
-	SelectObject32( hDC, hPrevFont );
+	SelectObject( hDC, hPrevFont );
     }
     return ( hPrevFont ) ? TRUE : FALSE;
 }
@@ -184,8 +184,8 @@ static BOOL32 ICONTITLE_Paint( WND* wnd, HDC32 hDC, BOOL32 bActive )
 /***********************************************************************
  *           IconTitleWndProc
  */
-LRESULT WINAPI IconTitleWndProc( HWND32 hWnd, UINT32 msg,
-                                 WPARAM32 wParam, LPARAM lParam )
+LRESULT WINAPI IconTitleWndProc( HWND hWnd, UINT msg,
+                                 WPARAM wParam, LPARAM lParam )
 {
     WND *wnd = WIN_FindWndPtr( hWnd );
 
@@ -196,10 +196,10 @@ LRESULT WINAPI IconTitleWndProc( HWND32 hWnd, UINT32 msg,
 
 	case WM_NCMOUSEMOVE:
 	case WM_NCLBUTTONDBLCLK:
-	     return SendMessage32A( wnd->owner->hwndSelf, msg, wParam, lParam );	
+	     return SendMessageA( wnd->owner->hwndSelf, msg, wParam, lParam );	
 
 	case WM_ACTIVATE:
-	     if( wParam ) SetActiveWindow32( wnd->owner->hwndSelf );
+	     if( wParam ) SetActiveWindow( wnd->owner->hwndSelf );
 	     /* fall through */
 
 	case WM_CLOSE:
@@ -208,15 +208,15 @@ LRESULT WINAPI IconTitleWndProc( HWND32 hWnd, UINT32 msg,
 	case WM_SHOWWINDOW:
 	     if( wnd && wParam )
 	     {
-		 RECT32 titleRect;
+		 RECT titleRect;
 
 		 ICONTITLE_GetTitlePos( wnd, &titleRect );
 		 if( wnd->owner->next != wnd )	/* keep icon title behind the owner */
-		     SetWindowPos32( hWnd, wnd->owner->hwndSelf, 
+		     SetWindowPos( hWnd, wnd->owner->hwndSelf, 
 				     titleRect.left, titleRect.top,
 				     titleRect.right, titleRect.bottom, SWP_NOACTIVATE );
 		 else
-		     SetWindowPos32( hWnd, 0, titleRect.left, titleRect.top,
+		     SetWindowPos( hWnd, 0, titleRect.left, titleRect.top,
 				     titleRect.right, titleRect.bottom, 
 				     SWP_NOACTIVATE | SWP_NOZORDER );
 	     }
@@ -228,17 +228,17 @@ LRESULT WINAPI IconTitleWndProc( HWND32 hWnd, UINT32 msg,
 		 WND* iconWnd = wnd->owner;
 
 		 if( iconWnd->dwStyle & WS_CHILD )
-		     lParam = SendMessage32A( iconWnd->hwndSelf, WM_ISACTIVEICON, 0, 0 );
+		     lParam = SendMessageA( iconWnd->hwndSelf, WM_ISACTIVEICON, 0, 0 );
 		 else
 		     lParam = (iconWnd->hwndSelf == GetActiveWindow16());
 
-		 if( ICONTITLE_Paint( wnd, (HDC32)wParam, (BOOL32)lParam ) )
-		     ValidateRect32( hWnd, NULL );
+		 if( ICONTITLE_Paint( wnd, (HDC)wParam, (BOOL)lParam ) )
+		     ValidateRect( hWnd, NULL );
 	         return 1;
 	     }
     }
 
-    return DefWindowProc32A( hWnd, msg, wParam, lParam );
+    return DefWindowProcA( hWnd, msg, wParam, lParam );
 }
 
 

@@ -130,7 +130,7 @@ static DC *MFDRV_AllocMetaFile(void)
 /**********************************************************************
 *	     MFDRV_DeleteDC
  */
-static BOOL32 MFDRV_DeleteDC( DC *dc )
+static BOOL MFDRV_DeleteDC( DC *dc )
 {
     METAFILEDRV_PDEVICE *physDev = (METAFILEDRV_PDEVICE *)dc->physDev;
     
@@ -157,7 +157,7 @@ HDC16 WINAPI CreateMetaFile16(
 {
     DC *dc;
     METAFILEDRV_PDEVICE *physDev;
-    HFILE32 hFile;
+    HFILE hFile;
 
     TRACE(metafile, "'%s'\n", filename );
 
@@ -167,13 +167,13 @@ HDC16 WINAPI CreateMetaFile16(
     if (filename)  /* disk based metafile */
     {
         physDev->mh->mtType = METAFILE_DISK;
-        if ((hFile = _lcreat32( filename, 0 )) == HFILE_ERROR32)
+        if ((hFile = _lcreat( filename, 0 )) == HFILE_ERROR)
         {
             MFDRV_DeleteDC( dc );
             return 0;
         }
-        if (_lwrite32( hFile, (LPSTR)physDev->mh,
-                       sizeof(*physDev->mh)) == HFILE_ERROR32)
+        if (_lwrite( hFile, (LPSTR)physDev->mh,
+                       sizeof(*physDev->mh)) == HFILE_ERROR)
 	{
             MFDRV_DeleteDC( dc );
             return 0;
@@ -191,7 +191,7 @@ HDC16 WINAPI CreateMetaFile16(
 /**********************************************************************
  *	     CreateMetaFile32A   (GDI32.51)
  */
-HDC32 WINAPI CreateMetaFile32A( 
+HDC WINAPI CreateMetaFileA( 
 			      LPCSTR filename /* Filename of disk metafile */
 )
 {
@@ -201,24 +201,24 @@ HDC32 WINAPI CreateMetaFile32A(
 /**********************************************************************
  *          CreateMetaFile32W   (GDI32.52)
  */
-HDC32 WINAPI CreateMetaFile32W(LPCWSTR filename)
+HDC WINAPI CreateMetaFileW(LPCWSTR filename)
 {
     LPSTR filenameA;
-    HDC32 hReturnDC;
+    HDC hReturnDC;
 
     filenameA = HEAP_strdupWtoA( GetProcessHeap(), 0, filename );
 
-    hReturnDC = CreateMetaFile32A(filenameA);
+    hReturnDC = CreateMetaFileA(filenameA);
 
     HeapFree( GetProcessHeap(), 0, filenameA );
 
     return hReturnDC;
 }
 
-static DC *METAFILE_CloseMetaFile( HDC32 hdc ) 
+static DC *METAFILE_CloseMetaFile( HDC hdc ) 
 {
     DC *dc;
-    HFILE32 hFile;
+    HFILE hFile;
     METAFILEDRV_PDEVICE *physDev;
     
     TRACE(metafile, "(%04x)\n", hdc );
@@ -240,18 +240,18 @@ static DC *METAFILE_CloseMetaFile( HDC32 hdc )
     {
         hFile = physDev->mh->mtNoParameters;
 	physDev->mh->mtNoParameters = 0;
-        if (_llseek32(hFile, 0L, 0) == HFILE_ERROR32)
+        if (_llseek(hFile, 0L, 0) == HFILE_ERROR)
         {
             MFDRV_DeleteDC( dc );
             return 0;
         }
-        if (_lwrite32( hFile, (LPSTR)physDev->mh,
-                       sizeof(*physDev->mh)) == HFILE_ERROR32)
+        if (_lwrite( hFile, (LPSTR)physDev->mh,
+                       sizeof(*physDev->mh)) == HFILE_ERROR)
         {
             MFDRV_DeleteDC( dc );
             return 0;
         }
-        _lclose32(hFile);
+        _lclose(hFile);
     }
 
     return dc;
@@ -274,7 +274,7 @@ HMETAFILE16 WINAPI CloseMetaFile16(
 
     hmf = GLOBAL_CreateBlock( GMEM_MOVEABLE, physDev->mh,
                               physDev->mh->mtSize * sizeof(WORD),
-                              GetCurrentPDB(), FALSE, FALSE, FALSE, NULL );
+                              GetCurrentPDB16(), FALSE, FALSE, FALSE, NULL );
     physDev->mh = NULL;  /* So it won't be deleted */
     MFDRV_DeleteDC( dc );
     return hmf;
@@ -289,8 +289,8 @@ HMETAFILE16 WINAPI CloseMetaFile16(
  * RETURNS
  *  Handle of newly created metafile on success, NULL on failure.
  */
-HMETAFILE32 WINAPI CloseMetaFile32( 
-				   HDC32 hdc /* Metafile DC to close */
+HMETAFILE WINAPI CloseMetaFile( 
+				   HDC hdc /* Metafile DC to close */
 )
 {
   return CloseMetaFile16(hdc);
@@ -314,8 +314,8 @@ BOOL16 WINAPI DeleteMetaFile16(
  *  Delete a memory-based metafile.
  */
 
-BOOL32 WINAPI DeleteMetaFile32(
-	      HMETAFILE32 hmf
+BOOL WINAPI DeleteMetaFile(
+	      HMETAFILE hmf
 ) {
   return !GlobalFree16( hmf );
 }
@@ -332,17 +332,17 @@ BOOL32 WINAPI DeleteMetaFile32(
 /**********************************************************************
  *          CreateEnhMetaFile32A   (GDI32.41)
 */
-HDC32 WINAPI CreateEnhMetaFile32A( 
-    HDC32 hdc, /* optional reference DC */
+HDC WINAPI CreateEnhMetaFileA( 
+    HDC hdc, /* optional reference DC */
     LPCSTR filename, /* optional filename for disk metafiles */
-    const RECT32 *rect, /* optional bounding rectangle */
+    const RECT *rect, /* optional bounding rectangle */
     LPCSTR description /* optional description */ 
     )
 {
 #if 0
     DC *dc;
     METAFILEDRV_PDEVICE *physDev;
-    HFILE32 hFile;
+    HFILE hFile;
 
     if (!(dc = MFDRV_AllocMetaFile())) return 0;
     physDev = (METAFILEDRV_PDEVICE *)dc->physDev;
@@ -350,13 +350,13 @@ HDC32 WINAPI CreateEnhMetaFile32A(
     if (filename)  /* disk based metafile */
     {
         physDev->mh->mtType = METAFILE_DISK;
-        if ((hFile = _lcreat32( filename, 0 )) == HFILE_ERROR32)
+        if ((hFile = _lcreat( filename, 0 )) == HFILE_ERROR)
         {
             MFDRV_DeleteDC( dc );
             return 0;
         }
-        if (_lwrite32( hFile, (LPSTR)physDev->mh,
-                       sizeof(*physDev->mh)) == HFILE_ERROR32)
+        if (_lwrite( hFile, (LPSTR)physDev->mh,
+                       sizeof(*physDev->mh)) == HFILE_ERROR)
 	{
             MFDRV_DeleteDC( dc );
             return 0;
@@ -380,21 +380,21 @@ HDC32 WINAPI CreateEnhMetaFile32A(
 /**********************************************************************
  *          CreateEnhMetaFile32W   (GDI32.42)
  */
-HDC32 WINAPI CreateEnhMetaFile32W(
-    HDC32         hdc,        /* optional reference DC */
+HDC WINAPI CreateEnhMetaFileW(
+    HDC         hdc,        /* optional reference DC */
     LPCWSTR       filename,   /* optional filename for disk metafiles */
-    const RECT32* rect,       /* optional bounding rectangle */
+    const RECT* rect,       /* optional bounding rectangle */
     LPCWSTR       description /* optional description */ 
     )
 {
     LPSTR filenameA;
     LPSTR descriptionA;
-    HDC32 hReturnDC;
+    HDC hReturnDC;
 
     filenameA    = HEAP_strdupWtoA( GetProcessHeap(), 0, filename );
     descriptionA = HEAP_strdupWtoA( GetProcessHeap(), 0, description );
 
-    hReturnDC = CreateEnhMetaFile32A(hdc,
+    hReturnDC = CreateEnhMetaFileA(hdc,
                                     filenameA,
                                     rect,
                                     descriptionA);
@@ -405,7 +405,7 @@ HDC32 WINAPI CreateEnhMetaFile32W(
     return hReturnDC;
 }
 
-HENHMETAFILE32 WINAPI CloseEnhMetaFile( HDC32 hdc /* metafile DC */ )
+HENHMETAFILE WINAPI CloseEnhMetaFile( HDC hdc /* metafile DC */ )
 {
   /* write EMR_EOF(0x0, 0x10, 0x14) */
   return 0;

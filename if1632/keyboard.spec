@@ -8,7 +8,7 @@ type	win16
 5   pascal16 AnsiToOem(str ptr) AnsiToOem16
 6   pascal16 OemToAnsi(str ptr) OemToAnsi16
 7   return   SetSpeed 2 65535
-100	pascal	ScreenSwitchEnable(word) ScreenSwitchEnable
+100	pascal	ScreenSwitchEnable(word) ScreenSwitchEnable16
 #126	pascal	GetTableSeg
 #127	pascal	NewTable
 128 pascal   OemKeyScan(word) OemKeyScan

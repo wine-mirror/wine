@@ -95,7 +95,7 @@ HANDLER_DEF(ASYNC_sigio) {
  *
  * Makes the passed filedescriptor async (or not) depending on flag.
  */
-static BOOL32 ASYNC_MakeFDAsync(int unixfd,int async) {
+static BOOL ASYNC_MakeFDAsync(int unixfd,int async) {
     int	flags;
 
 #if !defined(FASYNC) && defined(FIOASYNC)

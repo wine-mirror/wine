@@ -42,7 +42,7 @@ static int nrofnotifys = 0;
 
 static FARPROC16 HookNotify = NULL;
 
-BOOL16 WINAPI NotifyRegister( HTASK16 htask, FARPROC16 lpfnCallback,
+BOOL16 WINAPI NotifyRegister16( HTASK16 htask, FARPROC16 lpfnCallback,
                               WORD wFlags )
 {
     int	i;
@@ -69,7 +69,7 @@ BOOL16 WINAPI NotifyRegister( HTASK16 htask, FARPROC16 lpfnCallback,
     return TRUE;
 }
 
-BOOL16 WINAPI NotifyUnregister( HTASK16 htask )
+BOOL16 WINAPI NotifyUnregister16( HTASK16 htask )
 {
     int	i;
     
@@ -87,17 +87,17 @@ BOOL16 WINAPI NotifyUnregister( HTASK16 htask )
     return TRUE;
 }
 
-BOOL16 WINAPI StackTraceCSIPFirst(STACKTRACEENTRY *ste, WORD wSS, WORD wCS, WORD wIP, WORD wBP)
+BOOL16 WINAPI StackTraceCSIPFirst16(STACKTRACEENTRY *ste, WORD wSS, WORD wCS, WORD wIP, WORD wBP)
 {
     return TRUE;
 }
 
-BOOL16 WINAPI StackTraceFirst(STACKTRACEENTRY *ste, HTASK16 Task)
+BOOL16 WINAPI StackTraceFirst16(STACKTRACEENTRY *ste, HTASK16 Task)
 {
     return TRUE;
 }
 
-BOOL16 WINAPI StackTraceNext(STACKTRACEENTRY *ste)
+BOOL16 WINAPI StackTraceNext16(STACKTRACEENTRY *ste)
 {
     return TRUE;
 }
@@ -106,7 +106,7 @@ BOOL16 WINAPI StackTraceNext(STACKTRACEENTRY *ste)
  *           ToolHelpHook                             (KERNEL.341)
  *	see "Undocumented Windows"
  */
-FARPROC16 WINAPI ToolHelpHook(FARPROC16 lpfnNotifyHandler)
+FARPROC16 WINAPI ToolHelpHook16(FARPROC16 lpfnNotifyHandler)
 {
 FARPROC16 tmp;
 	tmp = HookNotify;
@@ -119,7 +119,7 @@ FARPROC16 tmp;
 /***********************************************************************
  *           CreateToolHelp32Snapshot			(KERNEL32.179)
  */
-HANDLE32 WINAPI CreateToolhelp32Snapshot( DWORD flags, DWORD process ) 
+HANDLE WINAPI CreateToolhelp32Snapshot( DWORD flags, DWORD process ) 
 {
     SNAPSHOT_OBJECT *snapshot;
     struct create_snapshot_request req;
@@ -131,11 +131,11 @@ HANDLE32 WINAPI CreateToolhelp32Snapshot( DWORD flags, DWORD process )
     if (!(flags & TH32CS_SNAPPROCESS))
     {
         SetLastError( ERROR_CALL_NOT_IMPLEMENTED );
-        return INVALID_HANDLE_VALUE32;
+        return INVALID_HANDLE_VALUE;
     }
     /* Now do the snapshot */
     if (!(snapshot = HeapAlloc( SystemHeap, 0, sizeof(*snapshot) )))
-        return INVALID_HANDLE_VALUE32;
+        return INVALID_HANDLE_VALUE;
     snapshot->header.type = K32OBJ_TOOLHELP_SNAPSHOT;
     snapshot->header.refcount = 1;
 
@@ -145,7 +145,7 @@ HANDLE32 WINAPI CreateToolhelp32Snapshot( DWORD flags, DWORD process )
     if (CLIENT_WaitSimpleReply( &reply, sizeof(reply), NULL ))
     {
         HeapFree( SystemHeap, 0, snapshot );
-        return INVALID_HANDLE_VALUE32;
+        return INVALID_HANDLE_VALUE;
     }
     return HANDLE_Alloc( PROCESS_Current(), &snapshot->header, 0, req.inherit, reply.handle );
 }
@@ -156,12 +156,12 @@ HANDLE32 WINAPI CreateToolhelp32Snapshot( DWORD flags, DWORD process )
  *
  * Implementation of Process32First/Next
  */
-static BOOL32 TOOLHELP_Process32Next( HANDLE32 handle, LPPROCESSENTRY32 lppe, BOOL32 first )
+static BOOL TOOLHELP_Process32Next( HANDLE handle, LPPROCESSENTRY lppe, BOOL first )
 {
     struct next_process_request req;
     struct next_process_reply reply;
 
-    if (lppe->dwSize < sizeof (PROCESSENTRY32))
+    if (lppe->dwSize < sizeof (PROCESSENTRY))
     {
         SetLastError( ERROR_INSUFFICIENT_BUFFER );
         ERR (toolhelp, "Result buffer too small\n");
@@ -191,7 +191,7 @@ static BOOL32 TOOLHELP_Process32Next( HANDLE32 handle, LPPROCESSENTRY32 lppe, BO
  *
  * Return info about the first process in a toolhelp32 snapshot
  */
-BOOL32 WINAPI Process32First(HANDLE32 hSnapshot, LPPROCESSENTRY32 lppe)
+BOOL WINAPI Process32First(HANDLE hSnapshot, LPPROCESSENTRY lppe)
 {
     return TOOLHELP_Process32Next( hSnapshot, lppe, TRUE );
 }
@@ -201,7 +201,7 @@ BOOL32 WINAPI Process32First(HANDLE32 hSnapshot, LPPROCESSENTRY32 lppe)
  *
  * Return info about the "next" process in a toolhelp32 snapshot
  */
-BOOL32 WINAPI Process32Next(HANDLE32 hSnapshot, LPPROCESSENTRY32 lppe)
+BOOL WINAPI Process32Next(HANDLE hSnapshot, LPPROCESSENTRY lppe)
 {
     return TOOLHELP_Process32Next( hSnapshot, lppe, FALSE );
 }

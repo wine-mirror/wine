@@ -2,6 +2,6 @@
 #define __WINE_OLE_IFS_H
 
 extern LPMALLOC16 IMalloc16_Constructor();
-extern LPMALLOC32 IMalloc32_Constructor();
+extern LPMALLOC IMalloc_Constructor();
 
 #endif /* __WINE_OLE_IFS_H */

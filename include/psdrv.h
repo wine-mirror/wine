@@ -37,7 +37,7 @@ typedef struct _tagAFM {
     char		*EncodingScheme;
     int			Weight;			/* FW_NORMAL etc. */
     float		ItalicAngle;
-    BOOL32		IsFixedPitch;
+    BOOL		IsFixedPitch;
     float		UnderlinePosition;
     float		UnderlineThickness;
     AFMBBOX		FontBBox;
@@ -127,7 +127,7 @@ typedef struct _tagINPUTSLOT {
 typedef struct {
     char		*NickName;
     int			LanguageLevel;
-    BOOL32		ColorDevice;
+    BOOL		ColorDevice;
     int			DefaultResolution;
     signed int		LandscapeOrientation;
     char		*JCLBegin;
@@ -147,7 +147,7 @@ typedef struct {
     }				dmDocPrivate;
     struct _tagdrvprivate {
       char	ppdFileName[100]; /* Hack */
-      UINT32	numInstalledOptions; /* Options at end of struct */
+      UINT	numInstalledOptions; /* Options at end of struct */
     }				dmDrvPrivate;
 
 /* Now comes:
@@ -189,32 +189,32 @@ typedef struct {
 
 typedef struct {
     AFM			*afm;
-    TEXTMETRIC32A	tm;
-    INT32		size;
+    TEXTMETRICA	tm;
+    INT		size;
     float		scale;
-    INT32		escapement;
+    INT		escapement;
     PSCOLOR		color;
-    BOOL32		set;		/* Have we done a setfont yet */
+    BOOL		set;		/* Have we done a setfont yet */
 } PSFONT;
 
 typedef struct {
     PSCOLOR		color;
-    BOOL32		set;
+    BOOL		set;
 } PSBRUSH;
 
 typedef struct {
-    INT32		width;
+    INT		width;
     char		*dash;
     PSCOLOR		color;
-    BOOL32		set;
+    BOOL		set;
 } PSPEN;
 
 typedef struct {
     HANDLE16		hJob;
     LPSTR		output;		/* Output file/port */
-    BOOL32              banding;        /* Have we received a NEXTBAND */
-    BOOL32		NeedPageHeader; /* Page header not sent yet */
-    INT32		PageNo;
+    BOOL              banding;        /* Have we received a NEXTBAND */
+    BOOL		NeedPageHeader; /* Page header not sent yet */
+    INT		PageNo;
 } JOB;
 
 typedef struct {
@@ -228,109 +228,109 @@ typedef struct {
     PRINTERINFO		*pi;
 } PSDRV_PDEVICE;
 
-extern HANDLE32 PSDRV_Heap;
+extern HANDLE PSDRV_Heap;
 extern char *PSDRV_ANSIVector[256];
 
 extern void PSDRV_MergeDevmodes(PSDRV_DEVMODE16 *dm1, PSDRV_DEVMODE16 *dm2,
 			 PRINTERINFO *pi);
-extern BOOL32 PSDRV_GetFontMetrics(void);
+extern BOOL PSDRV_GetFontMetrics(void);
 extern PPD *PSDRV_ParsePPD(char *fname);
 extern PRINTERINFO *PSDRV_FindPrinterInfo(LPCSTR name);
 extern AFM *PSDRV_FindAFMinList(FONTFAMILY *head, char *name);
 extern void PSDRV_AddAFMtoList(FONTFAMILY **head, AFM *afm);
 extern void PSDRV_FreeAFMList( FONTFAMILY *head );
 
-extern BOOL32 PSDRV_Init(void);
+extern BOOL PSDRV_Init(void);
 extern HFONT16 PSDRV_FONT_SelectObject( DC *dc, HFONT16 hfont, FONTOBJ *font);
-extern HPEN32 PSDRV_PEN_SelectObject( DC * dc, HPEN32 hpen, PENOBJ * pen );
-extern HBRUSH32 PSDRV_BRUSH_SelectObject( DC * dc, HBRUSH32 hbrush,
+extern HPEN PSDRV_PEN_SelectObject( DC * dc, HPEN hpen, PENOBJ * pen );
+extern HBRUSH PSDRV_BRUSH_SelectObject( DC * dc, HBRUSH hbrush,
 					  BRUSHOBJ * brush );
 
-extern BOOL32 PSDRV_Brush(DC *dc, BOOL32 EO);
-extern BOOL32 PSDRV_SetFont( DC *dc );
-extern BOOL32 PSDRV_SetPen( DC *dc );
+extern BOOL PSDRV_Brush(DC *dc, BOOL EO);
+extern BOOL PSDRV_SetFont( DC *dc );
+extern BOOL PSDRV_SetPen( DC *dc );
 
-extern BOOL32 PSDRV_CmpColor(PSCOLOR *col1, PSCOLOR *col2);
-extern BOOL32 PSDRV_CopyColor(PSCOLOR *col1, PSCOLOR *col2);
+extern BOOL PSDRV_CmpColor(PSCOLOR *col1, PSCOLOR *col2);
+extern BOOL PSDRV_CopyColor(PSCOLOR *col1, PSCOLOR *col2);
 extern void PSDRV_CreateColor( PSDRV_PDEVICE *physDev, PSCOLOR *pscolor,
 		     COLORREF wincolor );
 
 
-extern INT32 PSDRV_WriteHeader( DC *dc, char *title, int len );
-extern INT32 PSDRV_WriteFooter( DC *dc );
-extern INT32 PSDRV_WriteNewPage( DC *dc );
-extern INT32 PSDRV_WriteEndPage( DC *dc );
-extern BOOL32 PSDRV_WriteMoveTo(DC *dc, INT32 x, INT32 y);
-extern BOOL32 PSDRV_WriteLineTo(DC *dc, INT32 x, INT32 y);
-extern BOOL32 PSDRV_WriteStroke(DC *dc);
-extern BOOL32 PSDRV_WriteRectangle(DC *dc, INT32 x, INT32 y, INT32 width, 
-			INT32 height);
-extern BOOL32 PSDRV_WriteSetFont(DC *dc, BOOL32 UseANSI);
-extern BOOL32 PSDRV_WriteShow(DC *dc, char *str, INT32 count);
-extern BOOL32 PSDRV_WriteReencodeFont(DC *dc);
-extern BOOL32 PSDRV_WriteSetPen(DC *dc);
-extern BOOL32 PSDRV_WriteArc(DC *dc, INT32 x, INT32 y, INT32 w, INT32 h,
+extern INT PSDRV_WriteHeader( DC *dc, char *title, int len );
+extern INT PSDRV_WriteFooter( DC *dc );
+extern INT PSDRV_WriteNewPage( DC *dc );
+extern INT PSDRV_WriteEndPage( DC *dc );
+extern BOOL PSDRV_WriteMoveTo(DC *dc, INT x, INT y);
+extern BOOL PSDRV_WriteLineTo(DC *dc, INT x, INT y);
+extern BOOL PSDRV_WriteStroke(DC *dc);
+extern BOOL PSDRV_WriteRectangle(DC *dc, INT x, INT y, INT width, 
+			INT height);
+extern BOOL PSDRV_WriteSetFont(DC *dc, BOOL UseANSI);
+extern BOOL PSDRV_WriteShow(DC *dc, char *str, INT count);
+extern BOOL PSDRV_WriteReencodeFont(DC *dc);
+extern BOOL PSDRV_WriteSetPen(DC *dc);
+extern BOOL PSDRV_WriteArc(DC *dc, INT x, INT y, INT w, INT h,
 			     double ang1, double ang2);
-extern BOOL32 PSDRV_WriteSetColor(DC *dc, PSCOLOR *color);
-extern BOOL32 PSDRV_WriteSetBrush(DC *dc);
-extern BOOL32 PSDRV_WriteFill(DC *dc);
-extern BOOL32 PSDRV_WriteEOFill(DC *dc);
-extern BOOL32 PSDRV_WriteGSave(DC *dc);
-extern BOOL32 PSDRV_WriteGRestore(DC *dc);
-extern BOOL32 PSDRV_WriteClosePath(DC *dc);
-extern BOOL32 PSDRV_WriteClip(DC *dc);
-extern BOOL32 PSDRV_WriteEOClip(DC *dc);
-extern BOOL32 PSDRV_WriteHatch(DC *dc);
-extern BOOL32 PSDRV_WriteRotate(DC *dc, float ang);
+extern BOOL PSDRV_WriteSetColor(DC *dc, PSCOLOR *color);
+extern BOOL PSDRV_WriteSetBrush(DC *dc);
+extern BOOL PSDRV_WriteFill(DC *dc);
+extern BOOL PSDRV_WriteEOFill(DC *dc);
+extern BOOL PSDRV_WriteGSave(DC *dc);
+extern BOOL PSDRV_WriteGRestore(DC *dc);
+extern BOOL PSDRV_WriteClosePath(DC *dc);
+extern BOOL PSDRV_WriteClip(DC *dc);
+extern BOOL PSDRV_WriteEOClip(DC *dc);
+extern BOOL PSDRV_WriteHatch(DC *dc);
+extern BOOL PSDRV_WriteRotate(DC *dc, float ang);
 
 
 
 
 
-extern BOOL32 PSDRV_Arc( DC *dc, INT32 left, INT32 top, INT32 right,
-			 INT32 bottom, INT32 xstart, INT32 ystart,
-			 INT32 xend, INT32 yend );
-extern BOOL32 PSDRV_Chord( DC *dc, INT32 left, INT32 top, INT32 right,
-			   INT32 bottom, INT32 xstart, INT32 ystart,
-			   INT32 xend, INT32 yend );
-extern BOOL32 PSDRV_Ellipse( DC *dc, INT32 left, INT32 top, INT32 right,
-			     INT32 bottom );
-extern BOOL32 PSDRV_EnumDeviceFonts( DC* dc, LPLOGFONT16 plf, 
+extern BOOL PSDRV_Arc( DC *dc, INT left, INT top, INT right,
+			 INT bottom, INT xstart, INT ystart,
+			 INT xend, INT yend );
+extern BOOL PSDRV_Chord( DC *dc, INT left, INT top, INT right,
+			   INT bottom, INT xstart, INT ystart,
+			   INT xend, INT yend );
+extern BOOL PSDRV_Ellipse( DC *dc, INT left, INT top, INT right,
+			     INT bottom );
+extern BOOL PSDRV_EnumDeviceFonts( DC* dc, LPLOGFONT16 plf, 
 				     DEVICEFONTENUMPROC proc, LPARAM lp );
-extern INT32 PSDRV_Escape( DC *dc, INT32 nEscape, INT32 cbInput, 
+extern INT PSDRV_Escape( DC *dc, INT nEscape, INT cbInput, 
 			   SEGPTR lpInData, SEGPTR lpOutData );
-extern BOOL32 PSDRV_ExtTextOut( DC *dc, INT32 x, INT32 y, UINT32 flags,
-				const RECT32 *lprect, LPCSTR str, UINT32 count,
-				const INT32 *lpDx );
-extern BOOL32 PSDRV_GetCharWidth( DC *dc, UINT32 firstChar, UINT32 lastChar,
-				  LPINT32 buffer );
-extern BOOL32 PSDRV_GetTextExtentPoint( DC *dc, LPCSTR str, INT32 count,
-					LPSIZE32 size );
-extern BOOL32 PSDRV_GetTextMetrics( DC *dc, TEXTMETRIC32A *metrics );
-extern BOOL32 PSDRV_LineTo( DC *dc, INT32 x, INT32 y );
-extern BOOL32 PSDRV_MoveToEx( DC *dc, INT32 x, INT32 y, LPPOINT32 pt );
-extern BOOL32 PSDRV_Pie( DC *dc, INT32 left, INT32 top, INT32 right,
-			 INT32 bottom, INT32 xstart, INT32 ystart,
-			 INT32 xend, INT32 yend );
-extern BOOL32 PSDRV_Polygon( DC *dc, const POINT32* pt, INT32 count );
-extern BOOL32 PSDRV_Polyline( DC *dc, const POINT32* pt, INT32 count );
-extern BOOL32 PSDRV_PolyPolygon( DC *dc, const POINT32* pts, const INT32* counts,
-				 UINT32 polygons );
-extern BOOL32 PSDRV_PolyPolyline( DC *dc, const POINT32* pts, const DWORD* counts,
+extern BOOL PSDRV_ExtTextOut( DC *dc, INT x, INT y, UINT flags,
+				const RECT *lprect, LPCSTR str, UINT count,
+				const INT *lpDx );
+extern BOOL PSDRV_GetCharWidth( DC *dc, UINT firstChar, UINT lastChar,
+				  LPINT buffer );
+extern BOOL PSDRV_GetTextExtentPoint( DC *dc, LPCSTR str, INT count,
+					LPSIZE size );
+extern BOOL PSDRV_GetTextMetrics( DC *dc, TEXTMETRICA *metrics );
+extern BOOL PSDRV_LineTo( DC *dc, INT x, INT y );
+extern BOOL PSDRV_MoveToEx( DC *dc, INT x, INT y, LPPOINT pt );
+extern BOOL PSDRV_Pie( DC *dc, INT left, INT top, INT right,
+			 INT bottom, INT xstart, INT ystart,
+			 INT xend, INT yend );
+extern BOOL PSDRV_Polygon( DC *dc, const POINT* pt, INT count );
+extern BOOL PSDRV_Polyline( DC *dc, const POINT* pt, INT count );
+extern BOOL PSDRV_PolyPolygon( DC *dc, const POINT* pts, const INT* counts,
+				 UINT polygons );
+extern BOOL PSDRV_PolyPolyline( DC *dc, const POINT* pts, const DWORD* counts,
 				  DWORD polylines );
-extern BOOL32 PSDRV_Rectangle( DC *dc, INT32 left, INT32 top, INT32 right,
-			      INT32 bottom );
-extern BOOL32 PSDRV_RoundRect(DC *dc, INT32 left, INT32 top, INT32 right,
-			      INT32 bottom, INT32 ell_width, INT32 ell_height);
-extern HGDIOBJ32 PSDRV_SelectObject( DC *dc, HGDIOBJ32 handle );
+extern BOOL PSDRV_Rectangle( DC *dc, INT left, INT top, INT right,
+			      INT bottom );
+extern BOOL PSDRV_RoundRect(DC *dc, INT left, INT top, INT right,
+			      INT bottom, INT ell_width, INT ell_height);
+extern HGDIOBJ PSDRV_SelectObject( DC *dc, HGDIOBJ handle );
 extern COLORREF PSDRV_SetBkColor( DC *dc, COLORREF color );
-extern COLORREF PSDRV_SetPixel( DC *dc, INT32 x, INT32 y, COLORREF color );
+extern COLORREF PSDRV_SetPixel( DC *dc, INT x, INT y, COLORREF color );
 extern COLORREF PSDRV_SetTextColor( DC *dc, COLORREF color );
-extern INT32 PSDRV_StretchDIBits( DC *dc, INT32 xDst, INT32 yDst,
-				  INT32 widthDst, INT32 heightDst, INT32 xSrc,
-				  INT32 ySrc, INT32 widthSrc, INT32 heightSrc,
+extern INT PSDRV_StretchDIBits( DC *dc, INT xDst, INT yDst,
+				  INT widthDst, INT heightDst, INT xSrc,
+				  INT ySrc, INT widthSrc, INT heightSrc,
 				  const void *bits, const BITMAPINFO *info,
-				  UINT32 wUsage, DWORD dwRop );
+				  UINT wUsage, DWORD dwRop );
 
 #endif
 

@@ -15,7 +15,7 @@
 /***********************************************************************
  *           EmptyWorkingSet (PSAPI.1)
  */
-BOOL32 WINAPI EmptyWorkingSet32(HANDLE32 hProcess)
+BOOL WINAPI EmptyWorkingSet(HANDLE hProcess)
 {
   return SetProcessWorkingSetSize(hProcess, 0xFFFFFFFF, 0xFFFFFFFF);
 }
@@ -23,7 +23,7 @@ BOOL32 WINAPI EmptyWorkingSet32(HANDLE32 hProcess)
 /***********************************************************************
  *           EnumDeviceDrivers (PSAPI.2)
  */
-BOOL32 WINAPI EnumDeviceDrivers(
+BOOL WINAPI EnumDeviceDrivers(
   LPVOID *lpImageBase, DWORD cb, LPDWORD lpcbNeeded)
 {
   FIXME(psapi, "(%p, %ld, %p): stub\n", lpImageBase, cb, lpcbNeeded);
@@ -38,7 +38,7 @@ BOOL32 WINAPI EnumDeviceDrivers(
 /***********************************************************************
  *           EnumProcesses (PSAPI.3)
  */
-BOOL32 WINAPI EnumProcesses(DWORD *lpidProcess, DWORD cb, DWORD *lpcbNeeded)
+BOOL WINAPI EnumProcesses(DWORD *lpidProcess, DWORD cb, DWORD *lpcbNeeded)
 {
   FIXME(psapi, "(%p, %ld, %p): stub\n", lpidProcess,cb, lpcbNeeded);
 
@@ -51,8 +51,8 @@ BOOL32 WINAPI EnumProcesses(DWORD *lpidProcess, DWORD cb, DWORD *lpcbNeeded)
 /***********************************************************************
  *           EnumProcessModules (PSAPI.4)
  */
-BOOL32 WINAPI EnumProcessModules(
-  HANDLE32 hProcess, HMODULE32 *lphModule, DWORD cb, LPDWORD lpcbNeeded)
+BOOL WINAPI EnumProcessModules(
+  HANDLE hProcess, HMODULE *lphModule, DWORD cb, LPDWORD lpcbNeeded)
 {
   FIXME(psapi, "(hProcess=0x%08x, %p, %ld, %p): stub\n",
     hProcess, lphModule, cb, lpcbNeeded
@@ -67,7 +67,7 @@ BOOL32 WINAPI EnumProcessModules(
 /***********************************************************************
  *          GetDeviceDriverBaseName32A (PSAPI.5)
  */
-DWORD WINAPI GetDeviceDriverBaseName32A(
+DWORD WINAPI GetDeviceDriverBaseNameA(
   LPVOID ImageBase, LPSTR lpBaseName, DWORD nSize)
 {
   FIXME(psapi, "(%p, %s, %ld): stub\n",
@@ -83,7 +83,7 @@ DWORD WINAPI GetDeviceDriverBaseName32A(
 /***********************************************************************
  *           GetDeviceDriverBaseName32W (PSAPI.6)
  */
-DWORD WINAPI GetDeviceDriverBaseName32W(
+DWORD WINAPI GetDeviceDriverBaseNameW(
   LPVOID ImageBase, LPWSTR lpBaseName, DWORD nSize)
 {
   FIXME(psapi, "(%p, %s, %ld): stub\n",
@@ -99,7 +99,7 @@ DWORD WINAPI GetDeviceDriverBaseName32W(
 /***********************************************************************
  *           GetDeviceDriverFileName32A (PSAPI.7)
  */
-DWORD WINAPI GetDeviceDriverFileName32A(
+DWORD WINAPI GetDeviceDriverFileNameA(
   LPVOID ImageBase, LPSTR lpFilename, DWORD nSize)
 {
   FIXME(psapi, "(%p, %s, %ld): stub\n",
@@ -115,7 +115,7 @@ DWORD WINAPI GetDeviceDriverFileName32A(
 /***********************************************************************
  *           GetDeviceDriverFileName32W (PSAPI.8)
  */
-DWORD WINAPI GetDeviceDriverFileName32W(
+DWORD WINAPI GetDeviceDriverFileNameW(
   LPVOID ImageBase, LPWSTR lpFilename, DWORD nSize)
 {
   FIXME(psapi, "(%p, %s, %ld): stub\n",
@@ -131,8 +131,8 @@ DWORD WINAPI GetDeviceDriverFileName32W(
 /***********************************************************************
  *           GetMappedFileName32A (PSAPI.9)
  */
-DWORD WINAPI GetMappedFileName32A(
-  HANDLE32 hProcess, LPVOID lpv, LPSTR lpFilename, DWORD nSize)
+DWORD WINAPI GetMappedFileNameA(
+  HANDLE hProcess, LPVOID lpv, LPSTR lpFilename, DWORD nSize)
 {
   FIXME(psapi, "(hProcess=0x%08x, %p, %s, %ld): stub\n",
     hProcess, lpv, debugstr_a(lpFilename), nSize
@@ -147,8 +147,8 @@ DWORD WINAPI GetMappedFileName32A(
 /***********************************************************************
  *           GetMappedFileName32W (PSAPI.10)
  */
-DWORD WINAPI GetMappedFileName32W(
-  HANDLE32 hProcess, LPVOID lpv, LPWSTR lpFilename, DWORD nSize)
+DWORD WINAPI GetMappedFileNameW(
+  HANDLE hProcess, LPVOID lpv, LPWSTR lpFilename, DWORD nSize)
 {
   FIXME(psapi, "(hProcess=0x%08x, %p, %s, %ld): stub\n",
     hProcess, lpv, debugstr_w(lpFilename), nSize
@@ -163,8 +163,8 @@ DWORD WINAPI GetMappedFileName32W(
 /***********************************************************************
  *           GetModuleBaseName32A (PSAPI.11)
  */
-DWORD WINAPI GetModuleBaseName32A(
-  HANDLE32 hProcess, HMODULE32 hModule, LPSTR lpBaseName, DWORD nSize)
+DWORD WINAPI GetModuleBaseNameA(
+  HANDLE hProcess, HMODULE hModule, LPSTR lpBaseName, DWORD nSize)
 {
   FIXME(psapi, "(hProcess=0x%08x, hModule=0x%08x, %s, %ld): stub\n",
     hProcess, hModule, debugstr_a(lpBaseName), nSize
@@ -179,8 +179,8 @@ DWORD WINAPI GetModuleBaseName32A(
 /***********************************************************************
  *           GetModuleBaseName32W (PSAPI.12)
  */
-DWORD WINAPI GetModuleBaseName32W(
-  HANDLE32 hProcess, HMODULE32 hModule, LPWSTR lpBaseName, DWORD nSize)
+DWORD WINAPI GetModuleBaseNameW(
+  HANDLE hProcess, HMODULE hModule, LPWSTR lpBaseName, DWORD nSize)
 {
   FIXME(psapi, "(hProcess=0x%08x, hModule=0x%08x, %s, %ld): stub\n",
     hProcess, hModule, debugstr_w(lpBaseName), nSize);
@@ -194,8 +194,8 @@ DWORD WINAPI GetModuleBaseName32W(
 /***********************************************************************
  *           GetModuleFileNameEx32A (PSAPI.13)
  */
-DWORD WINAPI GetModuleFileNameEx32A(
-  HANDLE32 hProcess, HMODULE32 hModule, LPSTR lpFilename, DWORD nSize)
+DWORD WINAPI GetModuleFileNameExA(
+  HANDLE hProcess, HMODULE hModule, LPSTR lpFilename, DWORD nSize)
 {
   FIXME(psapi, "(hProcess=0x%08x,hModule=0x%08x, %s, %ld): stub\n",
     hProcess, hModule, debugstr_a(lpFilename), nSize
@@ -210,8 +210,8 @@ DWORD WINAPI GetModuleFileNameEx32A(
 /***********************************************************************
  *           GetModuleFileNameEx32W (PSAPI.14)
  */
-DWORD WINAPI GetModuleFileNameEx32W(
-  HANDLE32 hProcess, HMODULE32 hModule, LPWSTR lpFilename, DWORD nSize)
+DWORD WINAPI GetModuleFileNameExW(
+  HANDLE hProcess, HMODULE hModule, LPWSTR lpFilename, DWORD nSize)
 {
   FIXME(psapi, "(hProcess=0x%08x,hModule=0x%08x, %s, %ld): stub\n",
     hProcess, hModule, debugstr_w(lpFilename), nSize
@@ -226,8 +226,8 @@ DWORD WINAPI GetModuleFileNameEx32W(
 /***********************************************************************
  *           GetModuleInformation32 (PSAPI.15)
  */
-BOOL32 WINAPI GetModuleInformation32(
-  HANDLE32 hProcess, HMODULE32 hModule, LPMODULEINFO32 lpmodinfo, DWORD cb)
+BOOL WINAPI GetModuleInformation(
+  HANDLE hProcess, HMODULE hModule, LPMODULEINFO lpmodinfo, DWORD cb)
 {
   FIXME(psapi, "(hProcess=0x%08x, hModule=0x%08x, %p, %ld): stub\n",
     hProcess, hModule, lpmodinfo, cb
@@ -241,8 +241,8 @@ BOOL32 WINAPI GetModuleInformation32(
 /***********************************************************************
  *           GetProcessMemoryInfo32 (PSAPI.16)
  */
-BOOL32 WINAPI GetProcessMemoryInfo32(
-  HANDLE32 Process, PPROCESS_MEMORY_COUNTERS32 ppsmemCounters, DWORD cb)
+BOOL WINAPI GetProcessMemoryInfo(
+  HANDLE Process, PPROCESS_MEMORY_COUNTERS ppsmemCounters, DWORD cb)
 {
   FIXME(psapi, "(hProcess=0x%08x, %p, %ld): stub\n",
     Process, ppsmemCounters, cb
@@ -256,8 +256,8 @@ BOOL32 WINAPI GetProcessMemoryInfo32(
 /***********************************************************************
  *           GetWsChanges32 (PSAPI.17)
  */
-BOOL32 WINAPI GetWsChanges32(
-  HANDLE32 hProcess, PPSAPI_WS_WATCH_INFORMATION32 lpWatchInfo, DWORD cb)
+BOOL WINAPI GetWsChanges(
+  HANDLE hProcess, PPSAPI_WS_WATCH_INFORMATION lpWatchInfo, DWORD cb)
 {
   FIXME(psapi, "(hProcess=0x%08x, %p, %ld): stub\n",
     hProcess, lpWatchInfo, cb
@@ -271,7 +271,7 @@ BOOL32 WINAPI GetWsChanges32(
 /***********************************************************************
  *           InitializeProcessForWsWatch32 (PSAPI.18)
  */
-BOOL32 WINAPI InitializeProcessForWsWatch32(HANDLE32 hProcess)
+BOOL WINAPI InitializeProcessForWsWatch(HANDLE hProcess)
 {
   FIXME(psapi, "(hProcess=0x%08x): stub\n", hProcess);
 
@@ -284,7 +284,7 @@ BOOL32 WINAPI InitializeProcessForWsWatch32(HANDLE32 hProcess)
  *     I haven't been able to find the ordinal for this function,
  *     This means it can't be called from outside the DLL.
  */
-BOOL32 WINAPI QueryWorkingSet32(HANDLE32 hProcess, LPVOID pv, DWORD cb)
+BOOL WINAPI QueryWorkingSet(HANDLE hProcess, LPVOID pv, DWORD cb)
 {
   FIXME(psapi, "(hProcess=0x%08x, %p, %ld)", hProcess, pv, cb);
 

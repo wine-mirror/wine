@@ -110,11 +110,11 @@ int DIR_Init(void)
 
     /* Set the environment variables */
 
-    SetEnvironmentVariable32A( "PATH", path );
-    SetEnvironmentVariable32A( "COMSPEC", "c:\\command.com" );
-    SetEnvironmentVariable32A( "TEMP", tmp_dir.short_name );
-    SetEnvironmentVariable32A( "windir", DIR_Windows.short_name );
-    SetEnvironmentVariable32A( "winsysdir", DIR_System.short_name );
+    SetEnvironmentVariableA( "PATH", path );
+    SetEnvironmentVariableA( "COMSPEC", "c:\\command.com" );
+    SetEnvironmentVariableA( "TEMP", tmp_dir.short_name );
+    SetEnvironmentVariableA( "windir", DIR_Windows.short_name );
+    SetEnvironmentVariableA( "winsysdir", DIR_System.short_name );
 
     TRACE(dosfs, "WindowsDir = %s (%s)\n",
           DIR_Windows.short_name, DIR_Windows.long_name );
@@ -133,12 +133,12 @@ int DIR_Init(void)
 /***********************************************************************
  *           GetTempPath32A   (KERNEL32.292)
  */
-UINT32 WINAPI GetTempPath32A( UINT32 count, LPSTR path )
+UINT WINAPI GetTempPathA( UINT count, LPSTR path )
 {
-    UINT32 ret;
-    if (!(ret = GetEnvironmentVariable32A( "TMP", path, count )))
-        if (!(ret = GetEnvironmentVariable32A( "TEMP", path, count )))
-            if (!(ret = GetCurrentDirectory32A( count, path )))
+    UINT ret;
+    if (!(ret = GetEnvironmentVariableA( "TMP", path, count )))
+        if (!(ret = GetEnvironmentVariableA( "TEMP", path, count )))
+            if (!(ret = GetCurrentDirectoryA( count, path )))
                 return 0;
     if (count && (ret < count - 1) && (path[ret-1] != '\\'))
     {
@@ -152,14 +152,14 @@ UINT32 WINAPI GetTempPath32A( UINT32 count, LPSTR path )
 /***********************************************************************
  *           GetTempPath32W   (KERNEL32.293)
  */
-UINT32 WINAPI GetTempPath32W( UINT32 count, LPWSTR path )
+UINT WINAPI GetTempPathW( UINT count, LPWSTR path )
 {
     static const WCHAR tmp[]  = { 'T', 'M', 'P', 0 };
     static const WCHAR temp[] = { 'T', 'E', 'M', 'P', 0 };
-    UINT32 ret;
-    if (!(ret = GetEnvironmentVariable32W( tmp, path, count )))
-        if (!(ret = GetEnvironmentVariable32W( temp, path, count )))
-            if (!(ret = GetCurrentDirectory32W( count, path )))
+    UINT ret;
+    if (!(ret = GetEnvironmentVariableW( tmp, path, count )))
+        if (!(ret = GetEnvironmentVariableW( temp, path, count )))
+            if (!(ret = GetCurrentDirectoryW( count, path )))
                 return 0;
     if (count && (ret < count - 1) && (path[ret-1] != '\\'))
     {
@@ -173,9 +173,9 @@ UINT32 WINAPI GetTempPath32W( UINT32 count, LPWSTR path )
 /***********************************************************************
  *           DIR_GetWindowsUnixDir
  */
-UINT32 DIR_GetWindowsUnixDir( LPSTR path, UINT32 count )
+UINT DIR_GetWindowsUnixDir( LPSTR path, UINT count )
 {
-    if (path) lstrcpyn32A( path, DIR_Windows.long_name, count );
+    if (path) lstrcpynA( path, DIR_Windows.long_name, count );
     return strlen( DIR_Windows.long_name );
 }
 
@@ -183,9 +183,9 @@ UINT32 DIR_GetWindowsUnixDir( LPSTR path, UINT32 count )
 /***********************************************************************
  *           DIR_GetSystemUnixDir
  */
-UINT32 DIR_GetSystemUnixDir( LPSTR path, UINT32 count )
+UINT DIR_GetSystemUnixDir( LPSTR path, UINT count )
 {
-    if (path) lstrcpyn32A( path, DIR_System.long_name, count );
+    if (path) lstrcpynA( path, DIR_System.long_name, count );
     return strlen( DIR_System.long_name );
 }
 
@@ -197,20 +197,20 @@ BYTE WINAPI GetTempDrive( BYTE ignored )
 {
     char *buffer;
     BYTE ret;
-    UINT32 len = GetTempPath32A( 0, NULL );
+    UINT len = GetTempPathA( 0, NULL );
 
     if (!(buffer = HeapAlloc( GetProcessHeap(), 0, len + 1 )) )
       return DRIVE_GetCurrentDrive() + 'A';
 
     /* FIXME: apparently Windows does something with the ignored byte */
-    if (!GetTempPath32A( len, buffer )) buffer[0] = 'C';
+    if (!GetTempPathA( len, buffer )) buffer[0] = 'C';
     ret = buffer[0];
     HeapFree( GetProcessHeap(), 0, buffer );
     return toupper(ret);
 }
 
 
-UINT32 WINAPI WIN16_GetTempDrive( BYTE ignored )
+UINT WINAPI WIN16_GetTempDrive( BYTE ignored )
 {
     /* A closer look at krnl386.exe shows what the SDK doesn't mention:
      *
@@ -229,16 +229,16 @@ UINT32 WINAPI WIN16_GetTempDrive( BYTE ignored )
  */
 UINT16 WINAPI GetWindowsDirectory16( LPSTR path, UINT16 count )
 {
-    return (UINT16)GetWindowsDirectory32A( path, count );
+    return (UINT16)GetWindowsDirectoryA( path, count );
 }
 
 
 /***********************************************************************
  *           GetWindowsDirectory32A   (KERNEL32.311)
  */
-UINT32 WINAPI GetWindowsDirectory32A( LPSTR path, UINT32 count )
+UINT WINAPI GetWindowsDirectoryA( LPSTR path, UINT count )
 {
-    if (path) lstrcpyn32A( path, DIR_Windows.short_name, count );
+    if (path) lstrcpynA( path, DIR_Windows.short_name, count );
     return strlen( DIR_Windows.short_name );
 }
 
@@ -246,7 +246,7 @@ UINT32 WINAPI GetWindowsDirectory32A( LPSTR path, UINT32 count )
 /***********************************************************************
  *           GetWindowsDirectory32W   (KERNEL32.312)
  */
-UINT32 WINAPI GetWindowsDirectory32W( LPWSTR path, UINT32 count )
+UINT WINAPI GetWindowsDirectoryW( LPWSTR path, UINT count )
 {
     if (path) lstrcpynAtoW( path, DIR_Windows.short_name, count );
     return strlen( DIR_Windows.short_name );
@@ -258,16 +258,16 @@ UINT32 WINAPI GetWindowsDirectory32W( LPWSTR path, UINT32 count )
  */
 UINT16 WINAPI GetSystemDirectory16( LPSTR path, UINT16 count )
 {
-    return (UINT16)GetSystemDirectory32A( path, count );
+    return (UINT16)GetSystemDirectoryA( path, count );
 }
 
 
 /***********************************************************************
  *           GetSystemDirectory32A   (KERNEL32.282)
  */
-UINT32 WINAPI GetSystemDirectory32A( LPSTR path, UINT32 count )
+UINT WINAPI GetSystemDirectoryA( LPSTR path, UINT count )
 {
-    if (path) lstrcpyn32A( path, DIR_System.short_name, count );
+    if (path) lstrcpynA( path, DIR_System.short_name, count );
     return strlen( DIR_System.short_name );
 }
 
@@ -275,7 +275,7 @@ UINT32 WINAPI GetSystemDirectory32A( LPSTR path, UINT32 count )
 /***********************************************************************
  *           GetSystemDirectory32W   (KERNEL32.283)
  */
-UINT32 WINAPI GetSystemDirectory32W( LPWSTR path, UINT32 count )
+UINT WINAPI GetSystemDirectoryW( LPWSTR path, UINT count )
 {
     if (path) lstrcpynAtoW( path, DIR_System.short_name, count );
     return strlen( DIR_System.short_name );
@@ -288,14 +288,14 @@ UINT32 WINAPI GetSystemDirectory32W( LPWSTR path, UINT32 count )
 BOOL16 WINAPI CreateDirectory16( LPCSTR path, LPVOID dummy )
 {
     TRACE(file,"(%s,%p)\n", path, dummy );
-    return (BOOL16)CreateDirectory32A( path, NULL );
+    return (BOOL16)CreateDirectoryA( path, NULL );
 }
 
 
 /***********************************************************************
  *           CreateDirectory32A   (KERNEL32.39)
  */
-BOOL32 WINAPI CreateDirectory32A( LPCSTR path,
+BOOL WINAPI CreateDirectoryA( LPCSTR path,
                                   LPSECURITY_ATTRIBUTES lpsecattribs )
 {
     DOS_FULL_NAME full_name;
@@ -321,11 +321,11 @@ BOOL32 WINAPI CreateDirectory32A( LPCSTR path,
 /***********************************************************************
  *           CreateDirectory32W   (KERNEL32.42)
  */
-BOOL32 WINAPI CreateDirectory32W( LPCWSTR path,
+BOOL WINAPI CreateDirectoryW( LPCWSTR path,
                                   LPSECURITY_ATTRIBUTES lpsecattribs )
 {
     LPSTR xpath = HEAP_strdupWtoA( GetProcessHeap(), 0, path );
-    BOOL32 ret = CreateDirectory32A( xpath, lpsecattribs );
+    BOOL ret = CreateDirectoryA( xpath, lpsecattribs );
     HeapFree( GetProcessHeap(), 0, xpath );
     return ret;
 }
@@ -334,20 +334,20 @@ BOOL32 WINAPI CreateDirectory32W( LPCWSTR path,
 /***********************************************************************
  *           CreateDirectoryEx32A   (KERNEL32.40)
  */
-BOOL32 WINAPI CreateDirectoryEx32A( LPCSTR template, LPCSTR path,
+BOOL WINAPI CreateDirectoryExA( LPCSTR template, LPCSTR path,
                                     LPSECURITY_ATTRIBUTES lpsecattribs)
 {
-    return CreateDirectory32A(path,lpsecattribs);
+    return CreateDirectoryA(path,lpsecattribs);
 }
 
 
 /***********************************************************************
  *           CreateDirectoryEx32W   (KERNEL32.41)
  */
-BOOL32 WINAPI CreateDirectoryEx32W( LPCWSTR template, LPCWSTR path,
+BOOL WINAPI CreateDirectoryExW( LPCWSTR template, LPCWSTR path,
                                     LPSECURITY_ATTRIBUTES lpsecattribs)
 {
-    return CreateDirectory32W(path,lpsecattribs);
+    return CreateDirectoryW(path,lpsecattribs);
 }
 
 
@@ -356,14 +356,14 @@ BOOL32 WINAPI CreateDirectoryEx32W( LPCWSTR template, LPCWSTR path,
  */
 BOOL16 WINAPI RemoveDirectory16( LPCSTR path )
 {
-    return (BOOL16)RemoveDirectory32A( path );
+    return (BOOL16)RemoveDirectoryA( path );
 }
 
 
 /***********************************************************************
  *           RemoveDirectory32A   (KERNEL32.437)
  */
-BOOL32 WINAPI RemoveDirectory32A( LPCSTR path )
+BOOL WINAPI RemoveDirectoryA( LPCSTR path )
 {
     DOS_FULL_NAME full_name;
 
@@ -388,10 +388,10 @@ BOOL32 WINAPI RemoveDirectory32A( LPCSTR path )
 /***********************************************************************
  *           RemoveDirectory32W   (KERNEL32.438)
  */
-BOOL32 WINAPI RemoveDirectory32W( LPCWSTR path )
+BOOL WINAPI RemoveDirectoryW( LPCWSTR path )
 {
     LPSTR xpath = HEAP_strdupWtoA( GetProcessHeap(), 0, path );
-    BOOL32 ret = RemoveDirectory32A( xpath );
+    BOOL ret = RemoveDirectoryA( xpath );
     HeapFree( GetProcessHeap(), 0, xpath );
     return ret;
 }
@@ -402,7 +402,7 @@ BOOL32 WINAPI RemoveDirectory32W( LPCWSTR path )
  *
  * Helper function for DIR_SearchPath.
  */
-static BOOL32 DIR_TryPath( const DOS_FULL_NAME *dir, LPCSTR name,
+static BOOL DIR_TryPath( const DOS_FULL_NAME *dir, LPCSTR name,
                            DOS_FULL_NAME *full_name )
 {
     LPSTR p_l = full_name->long_name + strlen(dir->long_name) + 1;
@@ -431,16 +431,16 @@ static BOOL32 DIR_TryPath( const DOS_FULL_NAME *dir, LPCSTR name,
  *
  * Helper function for DIR_SearchPath.
  */
-static BOOL32 DIR_TryEnvironmentPath( LPCSTR name, DOS_FULL_NAME *full_name )
+static BOOL DIR_TryEnvironmentPath( LPCSTR name, DOS_FULL_NAME *full_name )
 {
     LPSTR path, next, buffer;
-    BOOL32 ret = FALSE;
-    INT32 len = strlen(name);
-    DWORD size = GetEnvironmentVariable32A( "PATH", NULL, 0 );
+    BOOL ret = FALSE;
+    INT len = strlen(name);
+    DWORD size = GetEnvironmentVariableA( "PATH", NULL, 0 );
 
     if (!size) return FALSE;
     if (!(path = HeapAlloc( GetProcessHeap(), 0, size ))) return FALSE;
-    if (!GetEnvironmentVariable32A( "PATH", path, size )) goto done;
+    if (!GetEnvironmentVariableA( "PATH", path, size )) goto done;
     next = path;
     while (!ret && next)
     {
@@ -469,9 +469,9 @@ done:
  *
  * Helper function for DIR_SearchPath.
  */
-static BOOL32 DIR_TryModulePath( LPCSTR name, DOS_FULL_NAME *full_name )
+static BOOL DIR_TryModulePath( LPCSTR name, DOS_FULL_NAME *full_name )
 {
-    PDB32	*pdb = PROCESS_Current();
+    PDB	*pdb = PROCESS_Current();
 
     /* FIXME: for now, GetModuleFileName32A can't return more */
     /* than OFS_MAXPATHNAME. This may change with Win32. */
@@ -484,7 +484,7 @@ static BOOL32 DIR_TryModulePath( LPCSTR name, DOS_FULL_NAME *full_name )
 	if (!GetModuleFileName16( GetCurrentTask(), buffer, sizeof(buffer) ))
 		buffer[0]='\0';
     } else {
-	if (!GetModuleFileName32A( 0, buffer, sizeof(buffer) ))
+	if (!GetModuleFileNameA( 0, buffer, sizeof(buffer) ))
 		buffer[0]='\0';
     }
     if (!(p = strrchr( buffer, '\\' ))) return FALSE;
@@ -503,12 +503,12 @@ static BOOL32 DIR_TryModulePath( LPCSTR name, DOS_FULL_NAME *full_name )
  * FIXME: should return long path names.
  */
 DWORD DIR_SearchPath( LPCSTR path, LPCSTR name, LPCSTR ext,
-                      DOS_FULL_NAME *full_name, BOOL32 win32 )
+                      DOS_FULL_NAME *full_name, BOOL win32 )
 {
     DWORD len;
     LPCSTR p;
     LPSTR tmp = NULL;
-    BOOL32 ret = TRUE;
+    BOOL ret = TRUE;
 
     /* First check the supplied parameters */
 
@@ -612,20 +612,20 @@ done:
  * NOTES
  *    Should call SetLastError(but currently doesn't).
  */
-DWORD WINAPI SearchPath32A( LPCSTR path, LPCSTR name, LPCSTR ext, DWORD buflen,
+DWORD WINAPI SearchPathA( LPCSTR path, LPCSTR name, LPCSTR ext, DWORD buflen,
                             LPSTR buffer, LPSTR *lastpart )
 {
     LPSTR p, res;
     DOS_FULL_NAME full_name;
 
     if (!DIR_SearchPath( path, name, ext, &full_name, TRUE )) return 0;
-    lstrcpyn32A( buffer, full_name.short_name, buflen );
+    lstrcpynA( buffer, full_name.short_name, buflen );
     res = full_name.long_name +
               strlen(DRIVE_GetRoot( full_name.short_name[0] - 'A' ));
     while (*res == '/') res++;
     if (buflen)
     {
-        if (buflen > 3) lstrcpyn32A( buffer + 3, res, buflen - 3 );
+        if (buflen > 3) lstrcpynA( buffer + 3, res, buflen - 3 );
         for (p = buffer; *p; p++) if (*p == '/') *p = '\\';
         if (lastpart) *lastpart = strrchr( buffer, '\\' ) + 1;
     }
@@ -637,7 +637,7 @@ DWORD WINAPI SearchPath32A( LPCSTR path, LPCSTR name, LPCSTR ext, DWORD buflen,
 /***********************************************************************
  *           SearchPath32W   (KERNEL32.448)
  */
-DWORD WINAPI SearchPath32W( LPCWSTR path, LPCWSTR name, LPCWSTR ext,
+DWORD WINAPI SearchPathW( LPCWSTR path, LPCWSTR name, LPCWSTR ext,
                             DWORD buflen, LPWSTR buffer, LPWSTR *lastpart )
 {
     LPWSTR p;

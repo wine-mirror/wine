@@ -167,7 +167,7 @@ static DWORD CDAUDIO_mciStop(UINT16 wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS l
 /**************************************************************************
  * 				CDAUDIO_mciOpen			[internal]
  */
-static DWORD CDAUDIO_mciOpen(UINT16 wDevID, DWORD dwFlags, LPMCI_OPEN_PARMS32A lpOpenParms)
+static DWORD CDAUDIO_mciOpen(UINT16 wDevID, DWORD dwFlags, LPMCI_OPEN_PARMSA lpOpenParms)
 {
     DWORD		dwDeviceID;
     WINE_MCICDAUDIO* 	wmcda;
@@ -669,7 +669,7 @@ static DWORD CDAUDIO_mciSet(UINT16 wDevID, DWORD dwFlags, LPMCI_SET_PARMS lpParm
 /**************************************************************************
  * 			MCICDAUDIO_DriverProc32		[sample driver]
  */
-LONG MCICDAUDIO_DriverProc32(DWORD dwDevID, HDRVR16 hDriv, DWORD wMsg, 
+LONG MCICDAUDIO_DriverProc(DWORD dwDevID, HDRVR16 hDriv, DWORD wMsg, 
 			     DWORD dwParam1, DWORD dwParam2)
 {
     switch(wMsg) {
@@ -680,11 +680,11 @@ LONG MCICDAUDIO_DriverProc32(DWORD dwDevID, HDRVR16 hDriv, DWORD wMsg,
     case DRV_ENABLE:		return 1;	
     case DRV_DISABLE:		return 1;
     case DRV_QUERYCONFIGURE:	return 1;
-    case DRV_CONFIGURE:		MessageBox32A(0, "Sample Multimedia Linux Driver !", "MMLinux Driver", MB_OK); return 1;
+    case DRV_CONFIGURE:		MessageBoxA(0, "Sample Multimedia Linux Driver !", "MMLinux Driver", MB_OK); return 1;
     case DRV_INSTALL:		return DRVCNF_RESTART;
     case DRV_REMOVE:		return DRVCNF_RESTART;
 	
-    case MCI_OPEN_DRIVER:	return CDAUDIO_mciOpen(dwDevID, dwParam1, (LPMCI_OPEN_PARMS32A)dwParam2);
+    case MCI_OPEN_DRIVER:	return CDAUDIO_mciOpen(dwDevID, dwParam1, (LPMCI_OPEN_PARMSA)dwParam2);
     case MCI_CLOSE_DRIVER:	return CDAUDIO_mciClose(dwDevID, dwParam1, (LPMCI_GENERIC_PARMS)dwParam2);
     case MCI_GETDEVCAPS:	return CDAUDIO_mciGetDevCaps(dwDevID, dwParam1, (LPMCI_GETDEVCAPS_PARMS)dwParam2);
     case MCI_INFO:		return CDAUDIO_mciInfo(dwDevID, dwParam1, (LPMCI_INFO_PARMS16)dwParam2);
@@ -722,7 +722,7 @@ LONG MCICDAUDIO_DriverProc32(DWORD dwDevID, HDRVR16 hDriv, DWORD wMsg,
 	break;
     default:
 	TRACE(cdaudio, "Sending msg=%s to default driver proc\n", MCI_CommandToString(wMsg));
-	return DefDriverProc32(dwDevID, hDriv, wMsg, dwParam1, dwParam2);
+	return DefDriverProc(dwDevID, hDriv, wMsg, dwParam1, dwParam2);
     }
     return MCIERR_UNRECOGNIZED_COMMAND;
 }

@@ -41,7 +41,7 @@
 #define MAX_OP_LEN  6  /* Longest opcode + 1 for the terminating 0 */
 
 #define SWAP_INT32(i1,i2) \
-    do { INT32 __t = *(i1); *(i1) = *(i2); *(i2) = __t; } while(0)
+    do { INT __t = *(i1); *(i1) = *(i2); *(i2) = __t; } while(0)
 
 static const unsigned char BITBLT_Opcodes[256][MAX_OP_LEN] =
 {
@@ -527,10 +527,10 @@ main()
  * Stretch a row of pixels. Helper function for BITBLT_StretchImage.
  */
 static void BITBLT_StretchRow( int *rowSrc, int *rowDst,
-                               INT32 startDst, INT32 widthDst,
-                               INT32 xinc, INT32 xoff, WORD mode )
+                               INT startDst, INT widthDst,
+                               INT xinc, INT xoff, WORD mode )
 {
-    register INT32 xsrc = xinc * startDst + xoff;
+    register INT xsrc = xinc * startDst + xoff;
     rowDst += startDst;
     switch(mode)
     {
@@ -556,10 +556,10 @@ static void BITBLT_StretchRow( int *rowSrc, int *rowDst,
  * Shrink a row of pixels. Helper function for BITBLT_StretchImage.
  */
 static void BITBLT_ShrinkRow( int *rowSrc, int *rowDst,
-                              INT32 startSrc, INT32 widthSrc,
-                              INT32 xinc, INT32 xoff, WORD mode )
+                              INT startSrc, INT widthSrc,
+                              INT xinc, INT xoff, WORD mode )
 {
-    register INT32 xdst = xinc * startSrc + xoff;
+    register INT xdst = xinc * startSrc + xoff;
     rowSrc += startSrc;
     switch(mode)
     {
@@ -584,11 +584,11 @@ static void BITBLT_ShrinkRow( int *rowSrc, int *rowDst,
  *
  * Retrieve a row from an image. Helper function for BITBLT_StretchImage.
  */
-static void BITBLT_GetRow( XImage *image, int *pdata, INT32 row,
-                           INT32 start, INT32 width, INT32 depthDst,
-                           int fg, int bg, BOOL32 swap)
+static void BITBLT_GetRow( XImage *image, int *pdata, INT row,
+                           INT start, INT width, INT depthDst,
+                           int fg, int bg, BOOL swap)
 {
-    register INT32 i;
+    register INT i;
 
     assert( (row >= 0) && (row < image->height) );
     assert( (start >= 0) && (width <= image->width) );
@@ -639,16 +639,16 @@ static void BITBLT_GetRow( XImage *image, int *pdata, INT32 row,
  * FIXME: does not work for full 32-bit coordinates.
  */
 static void BITBLT_StretchImage( XImage *srcImage, XImage *dstImage,
-                                 INT32 widthSrc, INT32 heightSrc,
-                                 INT32 widthDst, INT32 heightDst,
-                                 RECT32 *visRectSrc, RECT32 *visRectDst,
+                                 INT widthSrc, INT heightSrc,
+                                 INT widthDst, INT heightDst,
+                                 RECT *visRectSrc, RECT *visRectDst,
                                  int foreground, int background, WORD mode )
 {
     int *rowSrc, *rowDst, *pixel;
     char *pdata;
-    INT32 xinc, xoff, yinc, ysrc, ydst;
-    register INT32 x, y;
-    BOOL32 hstretch, vstretch, hswap, vswap;
+    INT xinc, xoff, yinc, ysrc, ydst;
+    register INT x, y;
+    BOOL hstretch, vstretch, hswap, vswap;
 
     hswap = ((int)widthSrc * widthDst) < 0;
     vswap = ((int)heightSrc * heightDst) < 0;
@@ -814,25 +814,25 @@ static void BITBLT_StretchImage( XImage *srcImage, XImage *dstImage,
  */
 static void BITBLT_GetSrcAreaStretch( DC *dcSrc, DC *dcDst,
                                       Pixmap pixmap, GC gc,
-                                      INT32 xSrc, INT32 ySrc,
-                                      INT32 widthSrc, INT32 heightSrc,
-                                      INT32 xDst, INT32 yDst,
-                                      INT32 widthDst, INT32 heightDst,
-                                      RECT32 *visRectSrc, RECT32 *visRectDst )
+                                      INT xSrc, INT ySrc,
+                                      INT widthSrc, INT heightSrc,
+                                      INT xDst, INT yDst,
+                                      INT widthDst, INT heightDst,
+                                      RECT *visRectSrc, RECT *visRectDst )
 {
     XImage *imageSrc, *imageDst;
     X11DRV_PDEVICE *physDevSrc = (X11DRV_PDEVICE *)dcSrc->physDev;
     X11DRV_PDEVICE *physDevDst = (X11DRV_PDEVICE *)dcDst->physDev;
 
-    RECT32 rectSrc = *visRectSrc;
-    RECT32 rectDst = *visRectDst;
+    RECT rectSrc = *visRectSrc;
+    RECT rectDst = *visRectDst;
 
     if (widthSrc < 0) xSrc += widthSrc;
     if (widthDst < 0) xDst += widthDst;
     if (heightSrc < 0) ySrc += heightSrc;
     if (heightDst < 0) yDst += heightDst;
-    OffsetRect32( &rectSrc, -xSrc, -ySrc );
-    OffsetRect32( &rectDst, -xDst, -yDst );
+    OffsetRect( &rectSrc, -xSrc, -ySrc );
+    OffsetRect( &rectDst, -xDst, -yDst );
 
     /* FIXME: avoid BadMatch errors */
     imageSrc = XGetImage( display, physDevSrc->drawable,
@@ -862,12 +862,12 @@ static void BITBLT_GetSrcAreaStretch( DC *dcSrc, DC *dcDst,
  * pixels to Windows colors.
  */
 static void BITBLT_GetSrcArea( DC *dcSrc, DC *dcDst, Pixmap pixmap, GC gc,
-                               INT32 xSrc, INT32 ySrc, RECT32 *visRectSrc )
+                               INT xSrc, INT ySrc, RECT *visRectSrc )
 {
     XImage *imageSrc, *imageDst;
-    register INT32 x, y;
-    INT32 width  = visRectSrc->right - visRectSrc->left;
-    INT32 height = visRectSrc->bottom - visRectSrc->top;
+    register INT x, y;
+    INT width  = visRectSrc->right - visRectSrc->left;
+    INT height = visRectSrc->bottom - visRectSrc->top;
     X11DRV_PDEVICE *physDevSrc = (X11DRV_PDEVICE *)dcSrc->physDev;
     X11DRV_PDEVICE *physDevDst = (X11DRV_PDEVICE *)dcDst->physDev;
 
@@ -949,10 +949,10 @@ static void BITBLT_GetSrcArea( DC *dcSrc, DC *dcDst, Pixmap pixmap, GC gc,
  * Retrieve an area from the destination DC, mapping all the
  * pixels to Windows colors.
  */
-static void BITBLT_GetDstArea(DC *dc, Pixmap pixmap, GC gc, RECT32 *visRectDst)
+static void BITBLT_GetDstArea(DC *dc, Pixmap pixmap, GC gc, RECT *visRectDst)
 {
-    INT32 width  = visRectDst->right - visRectDst->left;
-    INT32 height = visRectDst->bottom - visRectDst->top;
+    INT width  = visRectDst->right - visRectDst->left;
+    INT height = visRectDst->bottom - visRectDst->top;
     X11DRV_PDEVICE *physDev = (X11DRV_PDEVICE *)dc->physDev;
 
     if (!COLOR_PixelToPalette || (dc->w.bitsPerPixel == 1) ||
@@ -963,7 +963,7 @@ static void BITBLT_GetDstArea(DC *dc, Pixmap pixmap, GC gc, RECT32 *visRectDst)
     }
     else
     {
-        register INT32 x, y;
+        register INT x, y;
         XImage *image;
 
         if (dc->w.flags & DC_MEMORY)
@@ -994,10 +994,10 @@ static void BITBLT_GetDstArea(DC *dc, Pixmap pixmap, GC gc, RECT32 *visRectDst)
  * Put an area back into the destination DC, mapping the pixel
  * colors to X pixels.
  */
-static void BITBLT_PutDstArea(DC *dc, Pixmap pixmap, GC gc, RECT32 *visRectDst)
+static void BITBLT_PutDstArea(DC *dc, Pixmap pixmap, GC gc, RECT *visRectDst)
 {
-    INT32 width  = visRectDst->right - visRectDst->left;
-    INT32 height = visRectDst->bottom - visRectDst->top;
+    INT width  = visRectDst->right - visRectDst->left;
+    INT height = visRectDst->bottom - visRectDst->top;
     X11DRV_PDEVICE *physDev = (X11DRV_PDEVICE *)dc->physDev;
 
     /* !COLOR_PaletteToPixel is _NOT_ enough */
@@ -1010,7 +1010,7 @@ static void BITBLT_PutDstArea(DC *dc, Pixmap pixmap, GC gc, RECT32 *visRectDst)
     }
     else
     {
-        register INT32 x, y;
+        register INT x, y;
         XImage *image = XGetImage( display, pixmap, 0, 0, width, height,
                                    AllPlanes, ZPixmap );
         for (y = 0; y < height; y++)
@@ -1032,41 +1032,41 @@ static void BITBLT_PutDstArea(DC *dc, Pixmap pixmap, GC gc, RECT32 *visRectDst)
  * Get the source and destination visible rectangles for StretchBlt().
  * Return FALSE if one of the rectangles is empty.
  */
-static BOOL32 BITBLT_GetVisRectangles( DC *dcDst, INT32 xDst, INT32 yDst,
-                                       INT32 widthDst, INT32 heightDst,
-                                       DC *dcSrc, INT32 xSrc, INT32 ySrc,
-                                       INT32 widthSrc, INT32 heightSrc,
-                                       RECT32 *visRectSrc, RECT32 *visRectDst )
+static BOOL BITBLT_GetVisRectangles( DC *dcDst, INT xDst, INT yDst,
+                                       INT widthDst, INT heightDst,
+                                       DC *dcSrc, INT xSrc, INT ySrc,
+                                       INT widthSrc, INT heightSrc,
+                                       RECT *visRectSrc, RECT *visRectDst )
 {
-    RECT32 rect, clipRect;
+    RECT rect, clipRect;
 
       /* Get the destination visible rectangle */
 
-    SetRect32( &rect, xDst, yDst, xDst + widthDst, yDst + heightDst );
+    SetRect( &rect, xDst, yDst, xDst + widthDst, yDst + heightDst );
     if (widthDst < 0) SWAP_INT32( &rect.left, &rect.right );
     if (heightDst < 0) SWAP_INT32( &rect.top, &rect.bottom );
-    GetRgnBox32( dcDst->w.hGCClipRgn, &clipRect );
-    if (!IntersectRect32( visRectDst, &rect, &clipRect )) return FALSE;
+    GetRgnBox( dcDst->w.hGCClipRgn, &clipRect );
+    if (!IntersectRect( visRectDst, &rect, &clipRect )) return FALSE;
 
       /* Get the source visible rectangle */
 
     if (!dcSrc) return TRUE;
-    SetRect32( &rect, xSrc, ySrc, xSrc + widthSrc, ySrc + heightSrc );
+    SetRect( &rect, xSrc, ySrc, xSrc + widthSrc, ySrc + heightSrc );
     if (widthSrc < 0) SWAP_INT32( &rect.left, &rect.right );
     if (heightSrc < 0) SWAP_INT32( &rect.top, &rect.bottom );
     /* Apparently the clipping and visible regions are only for output, 
        so just check against totalExtent here to avoid BadMatch errors */
-    if (!IntersectRect32( visRectSrc, &rect, &dcSrc->w.totalExtent )) 
+    if (!IntersectRect( visRectSrc, &rect, &dcSrc->w.totalExtent )) 
         return FALSE;
 
       /* Intersect the rectangles */
 
     if ((widthSrc == widthDst) && (heightSrc == heightDst)) /* no stretching */
     {
-        OffsetRect32( visRectSrc, xDst - xSrc, yDst - ySrc );
-        if (!IntersectRect32( &rect, visRectSrc, visRectDst )) return FALSE;
+        OffsetRect( visRectSrc, xDst - xSrc, yDst - ySrc );
+        if (!IntersectRect( &rect, visRectSrc, visRectDst )) return FALSE;
         *visRectSrc = *visRectDst = rect;
-        OffsetRect32( visRectSrc, xSrc - xDst, ySrc - yDst );
+        OffsetRect( visRectSrc, xSrc - xDst, ySrc - yDst );
     }
     else  /* stretching */
     {
@@ -1077,8 +1077,8 @@ static BOOL32 BITBLT_GetVisRectangles( DC *dcDst, INT32 xDst, INT32 yDst,
         rect.bottom = yDst + ((visRectSrc->bottom - ySrc)*heightDst)/heightSrc;
         if (rect.left > rect.right) SWAP_INT32( &rect.left, &rect.right );
         if (rect.top > rect.bottom) SWAP_INT32( &rect.top, &rect.bottom );
-        InflateRect32( &rect, 1, 1 );  /* Avoid rounding errors */
-        if (!IntersectRect32( visRectDst, &rect, visRectDst )) return FALSE;
+        InflateRect( &rect, 1, 1 );  /* Avoid rounding errors */
+        if (!IntersectRect( visRectDst, &rect, visRectDst )) return FALSE;
 
         /* Map destination rectangle back to source coordinates */
         rect = *visRectDst;
@@ -1088,8 +1088,8 @@ static BOOL32 BITBLT_GetVisRectangles( DC *dcDst, INT32 xDst, INT32 yDst,
         rect.bottom = ySrc + ((visRectDst->bottom - yDst)*heightSrc)/heightDst;
         if (rect.left > rect.right) SWAP_INT32( &rect.left, &rect.right );
         if (rect.top > rect.bottom) SWAP_INT32( &rect.top, &rect.bottom );
-        InflateRect32( &rect, 1, 1 );  /* Avoid rounding errors */
-        if (!IntersectRect32( visRectSrc, &rect, visRectSrc )) return FALSE;
+        InflateRect( &rect, 1, 1 );  /* Avoid rounding errors */
+        if (!IntersectRect( visRectSrc, &rect, visRectSrc )) return FALSE;
     }
     return TRUE;
 }
@@ -1100,15 +1100,15 @@ static BOOL32 BITBLT_GetVisRectangles( DC *dcDst, INT32 xDst, INT32 yDst,
  *
  * Implementation of PatBlt(), BitBlt() and StretchBlt().
  */
-static BOOL32 BITBLT_InternalStretchBlt( DC *dcDst, INT32 xDst, INT32 yDst,
-                                         INT32 widthDst, INT32 heightDst,
-                                         DC *dcSrc, INT32 xSrc, INT32 ySrc,
-                                         INT32 widthSrc, INT32 heightSrc,
+static BOOL BITBLT_InternalStretchBlt( DC *dcDst, INT xDst, INT yDst,
+                                         INT widthDst, INT heightDst,
+                                         DC *dcSrc, INT xSrc, INT ySrc,
+                                         INT widthSrc, INT heightSrc,
                                          DWORD rop )
 {
-    BOOL32 usePat, useSrc, useDst, destUsed, fStretch, fNullBrush;
-    RECT32 visRectDst, visRectSrc;
-    INT32 width, height;
+    BOOL usePat, useSrc, useDst, destUsed, fStretch, fNullBrush;
+    RECT visRectDst, visRectSrc;
+    INT width, height;
     const BYTE *opcode;
     Pixmap pixmaps[3] = { 0, 0, 0 };  /* pixmaps for DST, SRC, TMP */
     GC tmpGC = 0;
@@ -1359,15 +1359,15 @@ static BOOL32 BITBLT_InternalStretchBlt( DC *dcDst, INT32 xDst, INT32 yDst,
 struct StretchBlt_params
 {
     DC   *dcDst;
-    INT32 xDst;
-    INT32 yDst;
-    INT32 widthDst;
-    INT32 heightDst;
+    INT xDst;
+    INT yDst;
+    INT widthDst;
+    INT heightDst;
     DC   *dcSrc;
-    INT32 xSrc;
-    INT32 ySrc;
-    INT32 widthSrc;
-    INT32 heightSrc;
+    INT xSrc;
+    INT ySrc;
+    INT widthSrc;
+    INT heightSrc;
     DWORD rop;
 };
 
@@ -1388,15 +1388,15 @@ static int BITBLT_DoStretchBlt( const struct StretchBlt_params *p )
 /***********************************************************************
  *           X11DRV_PatBlt
  */
-BOOL32 X11DRV_PatBlt( DC *dc, INT32 left, INT32 top,
-                      INT32 width, INT32 height, DWORD rop )
+BOOL X11DRV_PatBlt( DC *dc, INT left, INT top,
+                      INT width, INT height, DWORD rop )
 {
     struct StretchBlt_params params = { dc, left, top, width, height,
                                         NULL, 0, 0, 0, 0, rop };
-    BOOL32 result;
+    BOOL result;
     DIB_UpdateDIBSection( dc, FALSE );
     EnterCriticalSection( &X11DRV_CritSection );
-    result = (BOOL32)CALL_LARGE_STACK( BITBLT_DoStretchBlt, &params );
+    result = (BOOL)CALL_LARGE_STACK( BITBLT_DoStretchBlt, &params );
     LeaveCriticalSection( &X11DRV_CritSection );
     DIB_UpdateDIBSection( dc, TRUE );
     return result;
@@ -1406,17 +1406,17 @@ BOOL32 X11DRV_PatBlt( DC *dc, INT32 left, INT32 top,
 /***********************************************************************
  *           X11DRV_BitBlt
  */
-BOOL32 X11DRV_BitBlt( DC *dcDst, INT32 xDst, INT32 yDst,
-                      INT32 width, INT32 height, DC *dcSrc,
-                      INT32 xSrc, INT32 ySrc, DWORD rop )
+BOOL X11DRV_BitBlt( DC *dcDst, INT xDst, INT yDst,
+                      INT width, INT height, DC *dcSrc,
+                      INT xSrc, INT ySrc, DWORD rop )
 {
     struct StretchBlt_params params = { dcDst, xDst, yDst, width, height,
                                         dcSrc, xSrc, ySrc, width, height, rop};
-    BOOL32 result;
+    BOOL result;
     DIB_UpdateDIBSection( dcDst, FALSE );
     DIB_UpdateDIBSection( dcSrc, FALSE );
     EnterCriticalSection( &X11DRV_CritSection );
-    result = (BOOL32)CALL_LARGE_STACK( BITBLT_DoStretchBlt, &params );
+    result = (BOOL)CALL_LARGE_STACK( BITBLT_DoStretchBlt, &params );
     LeaveCriticalSection( &X11DRV_CritSection );
     DIB_UpdateDIBSection( dcDst, TRUE );
     return result;
@@ -1426,19 +1426,19 @@ BOOL32 X11DRV_BitBlt( DC *dcDst, INT32 xDst, INT32 yDst,
 /***********************************************************************
  *           X11DRV_StretchBlt
  */
-BOOL32 X11DRV_StretchBlt( DC *dcDst, INT32 xDst, INT32 yDst,
-                          INT32 widthDst, INT32 heightDst,
-                          DC *dcSrc, INT32 xSrc, INT32 ySrc,
-                          INT32 widthSrc, INT32 heightSrc, DWORD rop )
+BOOL X11DRV_StretchBlt( DC *dcDst, INT xDst, INT yDst,
+                          INT widthDst, INT heightDst,
+                          DC *dcSrc, INT xSrc, INT ySrc,
+                          INT widthSrc, INT heightSrc, DWORD rop )
 {
     struct StretchBlt_params params = { dcDst, xDst, yDst, widthDst, heightDst,
                                         dcSrc, xSrc, ySrc, widthSrc, heightSrc,
                                         rop };
-    BOOL32 result;
+    BOOL result;
     DIB_UpdateDIBSection( dcDst, FALSE );
     DIB_UpdateDIBSection( dcSrc, FALSE );
     EnterCriticalSection( &X11DRV_CritSection );
-    result = (BOOL32)CALL_LARGE_STACK( BITBLT_DoStretchBlt, &params );
+    result = (BOOL)CALL_LARGE_STACK( BITBLT_DoStretchBlt, &params );
     LeaveCriticalSection( &X11DRV_CritSection );
     DIB_UpdateDIBSection( dcDst, TRUE );
     return result;

@@ -17,29 +17,29 @@
  * Set the focus to a control of the dialog, selecting the text if
  * the control is an edit dialog.
  */
-static void DEFDLG_SetFocus( HWND32 hwndDlg, HWND32 hwndCtrl )
+static void DEFDLG_SetFocus( HWND hwndDlg, HWND hwndCtrl )
 {
-    HWND32 hwndPrev = GetFocus32();
+    HWND hwndPrev = GetFocus();
 
-    if (IsChild32( hwndDlg, hwndPrev ))
+    if (IsChild( hwndDlg, hwndPrev ))
     {
         if (SendMessage16( hwndPrev, WM_GETDLGCODE, 0, 0 ) & DLGC_HASSETSEL)
             SendMessage16( hwndPrev, EM_SETSEL16, TRUE, MAKELONG( -1, 0 ) );
     }
     if (SendMessage16( hwndCtrl, WM_GETDLGCODE, 0, 0 ) & DLGC_HASSETSEL)
         SendMessage16( hwndCtrl, EM_SETSEL16, FALSE, MAKELONG( 0, -1 ) );
-    SetFocus32( hwndCtrl );
+    SetFocus( hwndCtrl );
 }
 
 
 /***********************************************************************
  *           DEFDLG_SaveFocus
  */
-static BOOL32 DEFDLG_SaveFocus( HWND32 hwnd, DIALOGINFO *infoPtr )
+static BOOL DEFDLG_SaveFocus( HWND hwnd, DIALOGINFO *infoPtr )
 {
-    HWND32 hwndFocus = GetFocus32();
+    HWND hwndFocus = GetFocus();
 
-    if (!hwndFocus || !IsChild32( hwnd, hwndFocus )) return FALSE;
+    if (!hwndFocus || !IsChild( hwnd, hwndFocus )) return FALSE;
     infoPtr->hwndFocus = hwndFocus;
       /* Remove default button */
     return TRUE;
@@ -49,10 +49,10 @@ static BOOL32 DEFDLG_SaveFocus( HWND32 hwnd, DIALOGINFO *infoPtr )
 /***********************************************************************
  *           DEFDLG_RestoreFocus
  */
-static BOOL32 DEFDLG_RestoreFocus( HWND32 hwnd, DIALOGINFO *infoPtr )
+static BOOL DEFDLG_RestoreFocus( HWND hwnd, DIALOGINFO *infoPtr )
 {
-    if (!infoPtr->hwndFocus || IsIconic32(hwnd)) return FALSE;
-    if (!IsWindow32( infoPtr->hwndFocus )) return FALSE;
+    if (!infoPtr->hwndFocus || IsIconic(hwnd)) return FALSE;
+    if (!IsWindow( infoPtr->hwndFocus )) return FALSE;
     DEFDLG_SetFocus( hwnd, infoPtr->hwndFocus );
     /* This used to set infoPtr->hwndFocus to NULL for no apparent reason,
        sometimes losing focus when receiving WM_SETFOCUS messages. */
@@ -65,14 +65,14 @@ static BOOL32 DEFDLG_RestoreFocus( HWND32 hwnd, DIALOGINFO *infoPtr )
  *
  * Find the current default push-button.
  */
-static HWND32 DEFDLG_FindDefButton( HWND32 hwndDlg )
+static HWND DEFDLG_FindDefButton( HWND hwndDlg )
 {
-    HWND32 hwndChild = GetWindow32( hwndDlg, GW_CHILD );
+    HWND hwndChild = GetWindow( hwndDlg, GW_CHILD );
     while (hwndChild)
     {
         if (SendMessage16( hwndChild, WM_GETDLGCODE, 0, 0 ) & DLGC_DEFPUSHBUTTON)
             break;
-        hwndChild = GetWindow32( hwndChild, GW_HWNDNEXT );
+        hwndChild = GetWindow( hwndChild, GW_HWNDNEXT );
     }
     return hwndChild;
 }
@@ -83,8 +83,8 @@ static HWND32 DEFDLG_FindDefButton( HWND32 hwndDlg )
  *
  * Set the new default button to be hwndNew.
  */
-static BOOL32 DEFDLG_SetDefButton( HWND32 hwndDlg, DIALOGINFO *dlgInfo,
-                                   HWND32 hwndNew )
+static BOOL DEFDLG_SetDefButton( HWND hwndDlg, DIALOGINFO *dlgInfo,
+                                   HWND hwndNew )
 {
     if (hwndNew &&
         !(SendMessage16(hwndNew, WM_GETDLGCODE, 0, 0 ) & DLGC_UNDEFPUSHBUTTON))
@@ -92,14 +92,14 @@ static BOOL32 DEFDLG_SetDefButton( HWND32 hwndDlg, DIALOGINFO *dlgInfo,
     
     if (dlgInfo->idResult)  /* There's already a default pushbutton */
     {
-        HWND32 hwndOld = GetDlgItem32( hwndDlg, dlgInfo->idResult );
-        if (SendMessage32A( hwndOld, WM_GETDLGCODE, 0, 0) & DLGC_DEFPUSHBUTTON)
-            SendMessage32A( hwndOld, BM_SETSTYLE32, BS_PUSHBUTTON, TRUE );
+        HWND hwndOld = GetDlgItem( hwndDlg, dlgInfo->idResult );
+        if (SendMessageA( hwndOld, WM_GETDLGCODE, 0, 0) & DLGC_DEFPUSHBUTTON)
+            SendMessageA( hwndOld, BM_SETSTYLE, BS_PUSHBUTTON, TRUE );
     }
     if (hwndNew)
     {
-        SendMessage32A( hwndNew, BM_SETSTYLE32, BS_DEFPUSHBUTTON, TRUE );
-        dlgInfo->idResult = GetDlgCtrlID32( hwndNew );
+        SendMessageA( hwndNew, BM_SETSTYLE, BS_DEFPUSHBUTTON, TRUE );
+        dlgInfo->idResult = GetDlgCtrlID( hwndNew );
     }
     else dlgInfo->idResult = 0;
     return TRUE;
@@ -112,13 +112,13 @@ static BOOL32 DEFDLG_SetDefButton( HWND32 hwndDlg, DIALOGINFO *dlgInfo,
  * Implementation of DefDlgProc(). Only handle messages that need special
  * handling for dialogs.
  */
-static LRESULT DEFDLG_Proc( HWND32 hwnd, UINT32 msg, WPARAM32 wParam,
+static LRESULT DEFDLG_Proc( HWND hwnd, UINT msg, WPARAM wParam,
                             LPARAM lParam, DIALOGINFO *dlgInfo )
 {
     switch(msg)
     {
         case WM_ERASEBKGND:
-	    FillWindow( hwnd, hwnd, (HDC16)wParam, (HBRUSH16)CTLCOLOR_DLG );
+	    FillWindow16( hwnd, hwnd, (HDC16)wParam, (HBRUSH16)CTLCOLOR_DLG );
 	    return 1;
 
 	case WM_NCDESTROY:
@@ -134,14 +134,14 @@ static LRESULT DEFDLG_Proc( HWND32 hwnd, UINT32 msg, WPARAM32 wParam,
 	      /* Delete font */
 	    if (dlgInfo->hUserFont)
 	    {
-		DeleteObject32( dlgInfo->hUserFont );
+		DeleteObject( dlgInfo->hUserFont );
 		dlgInfo->hUserFont = 0;
 	    }
 
 	      /* Delete menu */
 	    if (dlgInfo->hMenu)
 	    {		
-		DestroyMenu32( dlgInfo->hMenu );
+		DestroyMenu( dlgInfo->hMenu );
 		dlgInfo->hMenu = 0;
 	    }
 
@@ -151,11 +151,11 @@ static LRESULT DEFDLG_Proc( HWND32 hwnd, UINT32 msg, WPARAM32 wParam,
             dlgInfo->flags |= DF_END;  /* just in case */
 
 	      /* Window clean-up */
-	    return DefWindowProc32A( hwnd, msg, wParam, lParam );
+	    return DefWindowProcA( hwnd, msg, wParam, lParam );
 
 	case WM_SHOWWINDOW:
 	    if (!wParam) DEFDLG_SaveFocus( hwnd, dlgInfo );
-	    return DefWindowProc32A( hwnd, msg, wParam, lParam );
+	    return DefWindowProcA( hwnd, msg, wParam, lParam );
 
 	case WM_ACTIVATE:
 	    if (wParam) DEFDLG_RestoreFocus( hwnd, dlgInfo );
@@ -169,25 +169,25 @@ static LRESULT DEFDLG_Proc( HWND32 hwnd, UINT32 msg, WPARAM32 wParam,
         case DM_SETDEFID:
             if (dlgInfo->flags & DF_END) return 1;
             DEFDLG_SetDefButton( hwnd, dlgInfo,
-                                 wParam ? GetDlgItem32( hwnd, wParam ) : 0 );
+                                 wParam ? GetDlgItem( hwnd, wParam ) : 0 );
             return 1;
 
         case DM_GETDEFID:
             {
-                HWND32 hwndDefId;
+                HWND hwndDefId;
                 if (dlgInfo->flags & DF_END) return 0;
                 if (dlgInfo->idResult)
                     return MAKELONG( dlgInfo->idResult, DC_HASDEFID );
                 if ((hwndDefId = DEFDLG_FindDefButton( hwnd )))
-                    return MAKELONG( GetDlgCtrlID32( hwndDefId ), DC_HASDEFID);
+                    return MAKELONG( GetDlgCtrlID( hwndDefId ), DC_HASDEFID);
             }
 	    return 0;
 
 	case WM_NEXTDLGCTL:
 	    {
-                HWND32 hwndDest = (HWND32)wParam;
+                HWND hwndDest = (HWND)wParam;
                 if (!lParam)
-                    hwndDest = GetNextDlgTabItem32(hwnd, GetFocus32(), wParam);
+                    hwndDest = GetNextDlgTabItem(hwnd, GetFocus(), wParam);
                 if (hwndDest) DEFDLG_SetFocus( hwnd, hwndDest );
                 DEFDLG_SetDefButton( hwnd, dlgInfo, hwndDest );
             }
@@ -197,7 +197,7 @@ static LRESULT DEFDLG_Proc( HWND32 hwnd, UINT32 msg, WPARAM32 wParam,
         case WM_LBUTTONDOWN:
         case WM_NCLBUTTONDOWN:
             {
-                HWND32 hwndFocus = GetFocus32();
+                HWND hwndFocus = GetFocus();
                 if (hwndFocus)
                 {
                     WND *wnd = WIN_FindWndPtr( hwndFocus );
@@ -206,25 +206,25 @@ static LRESULT DEFDLG_Proc( HWND32 hwnd, UINT32 msg, WPARAM32 wParam,
                     {
                         /* always make combo box hide its listbox control */
 
-                        if( WIDGETS_IsControl32( wnd, BIC32_COMBO ) )
-                            SendMessage32A( hwndFocus, CB_SHOWDROPDOWN32,
+                        if( WIDGETS_IsControl( wnd, BIC32_COMBO ) )
+                            SendMessageA( hwndFocus, CB_SHOWDROPDOWN,
                                             FALSE, 0 );
-                        else if( WIDGETS_IsControl32( wnd, BIC32_EDIT ) &&
-                                 WIDGETS_IsControl32( wnd->parent,
+                        else if( WIDGETS_IsControl( wnd, BIC32_EDIT ) &&
+                                 WIDGETS_IsControl( wnd->parent,
                                                       BIC32_COMBO ))
-                            SendMessage32A( wnd->parent->hwndSelf, 
-                                            CB_SHOWDROPDOWN32, FALSE, 0 );
+                            SendMessageA( wnd->parent->hwndSelf, 
+                                            CB_SHOWDROPDOWN, FALSE, 0 );
                     }
                 }
             }
-	    return DefWindowProc32A( hwnd, msg, wParam, lParam );
+	    return DefWindowProcA( hwnd, msg, wParam, lParam );
 
 	case WM_GETFONT: 
 	    return dlgInfo->hUserFont;
 
         case WM_CLOSE:
-            PostMessage32A( hwnd, WM_COMMAND, IDCANCEL,
-                            (LPARAM)GetDlgItem32( hwnd, IDCANCEL ) );
+            PostMessageA( hwnd, WM_COMMAND, IDCANCEL,
+                            (LPARAM)GetDlgItem( hwnd, IDCANCEL ) );
             return 0;
     }
     return 0;
@@ -233,7 +233,7 @@ static LRESULT DEFDLG_Proc( HWND32 hwnd, UINT32 msg, WPARAM32 wParam,
 /***********************************************************************
  *           DEFDLG_Epilog
  */
-static LRESULT DEFDLG_Epilog(DIALOGINFO* dlgInfo, UINT32 msg, BOOL32 fResult)
+static LRESULT DEFDLG_Epilog(DIALOGINFO* dlgInfo, UINT msg, BOOL fResult)
 {
     /* see SDK 3.1 */
 
@@ -253,7 +253,7 @@ LRESULT WINAPI DefDlgProc16( HWND16 hwnd, UINT16 msg, WPARAM16 wParam,
                              LPARAM lParam )
 {
     DIALOGINFO * dlgInfo;
-    BOOL32 result = FALSE;
+    BOOL result = FALSE;
     WND * wndPtr = WIN_FindWndPtr( hwnd );
     
     if (!wndPtr) return 0;
@@ -268,7 +268,7 @@ LRESULT WINAPI DefDlgProc16( HWND16 hwnd, UINT16 msg, WPARAM16 wParam,
             result = LOWORD(result);
     }
 
-    if (!result && IsWindow32(hwnd))
+    if (!result && IsWindow(hwnd))
     {
         /* callback didn't process this message */
 
@@ -287,8 +287,8 @@ LRESULT WINAPI DefDlgProc16( HWND16 hwnd, UINT16 msg, WPARAM16 wParam,
             case WM_ENTERMENULOOP:
             case WM_LBUTTONDOWN:
             case WM_NCLBUTTONDOWN:
-                return DEFDLG_Proc( (HWND32)hwnd, msg, 
-                                    (WPARAM32)wParam, lParam, dlgInfo );
+                return DEFDLG_Proc( (HWND)hwnd, msg, 
+                                    (WPARAM)wParam, lParam, dlgInfo );
             case WM_INITDIALOG:
             case WM_VKEYTOITEM:
             case WM_COMPAREITEM:
@@ -306,11 +306,11 @@ LRESULT WINAPI DefDlgProc16( HWND16 hwnd, UINT16 msg, WPARAM16 wParam,
 /***********************************************************************
  *           DefDlgProc32A   (USER32.120)
  */
-LRESULT WINAPI DefDlgProc32A( HWND32 hwnd, UINT32 msg,
-                              WPARAM32 wParam, LPARAM lParam )
+LRESULT WINAPI DefDlgProcA( HWND hwnd, UINT msg,
+                              WPARAM wParam, LPARAM lParam )
 {
     DIALOGINFO * dlgInfo;
-    BOOL32 result = FALSE;
+    BOOL result = FALSE;
     WND * wndPtr = WIN_FindWndPtr( hwnd );
     
     if (!wndPtr) return 0;
@@ -318,14 +318,14 @@ LRESULT WINAPI DefDlgProc32A( HWND32 hwnd, UINT32 msg,
     dlgInfo->msgResult = 0;
 
     if (dlgInfo->dlgProc) {      /* Call dialog procedure */
-        result = CallWindowProc32A( (WNDPROC32)dlgInfo->dlgProc,
+        result = CallWindowProcA( (WNDPROC)dlgInfo->dlgProc,
                                             hwnd, msg, wParam, lParam );
         /* 16 bit dlg procs only return BOOL16 */
         if( WINPROC_GetProcType( dlgInfo->dlgProc ) == WIN_PROC_16 )
             result = LOWORD(result);
     }
 
-    if (!result && IsWindow32(hwnd))
+    if (!result && IsWindow(hwnd))
     {
         /* callback didn't process this message */
 
@@ -344,8 +344,8 @@ LRESULT WINAPI DefDlgProc32A( HWND32 hwnd, UINT32 msg,
             case WM_ENTERMENULOOP:
             case WM_LBUTTONDOWN:
             case WM_NCLBUTTONDOWN:
-                 return DEFDLG_Proc( (HWND32)hwnd, msg,
-                                     (WPARAM32)wParam, lParam, dlgInfo );
+                 return DEFDLG_Proc( (HWND)hwnd, msg,
+                                     (WPARAM)wParam, lParam, dlgInfo );
             case WM_INITDIALOG:
             case WM_VKEYTOITEM:
             case WM_COMPAREITEM:
@@ -353,7 +353,7 @@ LRESULT WINAPI DefDlgProc32A( HWND32 hwnd, UINT32 msg,
                  break;
 
             default:
-                 return DefWindowProc32A( hwnd, msg, wParam, lParam );
+                 return DefWindowProcA( hwnd, msg, wParam, lParam );
         }
     }
     return DEFDLG_Epilog(dlgInfo, msg, result);
@@ -363,11 +363,11 @@ LRESULT WINAPI DefDlgProc32A( HWND32 hwnd, UINT32 msg,
 /***********************************************************************
  *           DefDlgProc32W   (USER32.121)
  */
-LRESULT WINAPI DefDlgProc32W( HWND32 hwnd, UINT32 msg, WPARAM32 wParam,
+LRESULT WINAPI DefDlgProcW( HWND hwnd, UINT msg, WPARAM wParam,
                               LPARAM lParam )
 {
     DIALOGINFO * dlgInfo;
-    BOOL32 result = FALSE;
+    BOOL result = FALSE;
     WND * wndPtr = WIN_FindWndPtr( hwnd );
     
     if (!wndPtr) return 0;
@@ -375,14 +375,14 @@ LRESULT WINAPI DefDlgProc32W( HWND32 hwnd, UINT32 msg, WPARAM32 wParam,
     dlgInfo->msgResult = 0;
 
     if (dlgInfo->dlgProc) {      /* Call dialog procedure */
-        result = CallWindowProc32W( (WNDPROC32)dlgInfo->dlgProc,
+        result = CallWindowProcW( (WNDPROC)dlgInfo->dlgProc,
                                             hwnd, msg, wParam, lParam );
         /* 16 bit dlg procs only return BOOL16 */
         if( WINPROC_GetProcType( dlgInfo->dlgProc ) == WIN_PROC_16 )
             result = LOWORD(result);
     }
 
-    if (!result && IsWindow32(hwnd))
+    if (!result && IsWindow(hwnd))
     {
         /* callback didn't process this message */
 
@@ -401,8 +401,8 @@ LRESULT WINAPI DefDlgProc32W( HWND32 hwnd, UINT32 msg, WPARAM32 wParam,
             case WM_ENTERMENULOOP:
             case WM_LBUTTONDOWN:
             case WM_NCLBUTTONDOWN:
-                 return DEFDLG_Proc( (HWND32)hwnd, msg,
-                                     (WPARAM32)wParam, lParam, dlgInfo );
+                 return DEFDLG_Proc( (HWND)hwnd, msg,
+                                     (WPARAM)wParam, lParam, dlgInfo );
             case WM_INITDIALOG:
             case WM_VKEYTOITEM:
             case WM_COMPAREITEM:
@@ -410,7 +410,7 @@ LRESULT WINAPI DefDlgProc32W( HWND32 hwnd, UINT32 msg, WPARAM32 wParam,
                  break;
 
             default:
-                 return DefWindowProc32W( hwnd, msg, wParam, lParam );
+                 return DefWindowProcW( hwnd, msg, wParam, lParam );
         }
     }
     return DEFDLG_Epilog(dlgInfo, msg, result);

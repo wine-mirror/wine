@@ -48,8 +48,8 @@ typedef struct {
     int			nUseCount;          	/* Incremented for each shared open          */
     WORD		wNotifyDeviceID;    	/* MCI device ID with a pending notification */
     HANDLE16 		hCallback;         	/* Callback handle for pending notification  */
-    HMMIO32		hFile;	            	/* mmio file handle open as Element          */
-    MCI_OPEN_PARMS32A 	openParms;
+    HMMIO		hFile;	            	/* mmio file handle open as Element          */
+    MCI_OPEN_PARMSA 	openParms;
     HLOCAL16		hMidiHdr;
     WORD		dwStatus;		/* one from MCI_MODE_xxxx */
     DWORD		dwMciTimeFormat;	/* One of the supported MCI_FORMAT_xxxx */	       
@@ -92,7 +92,7 @@ static DWORD MIDI_mciReadByte(WINE_MCIMIDI* wmm, BYTE *lpbyt)
     DWORD	ret = 0;
     
     if (lpbyt == NULL || 
-	mmioRead32(wmm->hFile, (HPSTR)lpbyt, (long)sizeof(BYTE)) != (long)sizeof(BYTE)) {
+	mmioRead(wmm->hFile, (HPSTR)lpbyt, (long)sizeof(BYTE)) != (long)sizeof(BYTE)) {
 	WARN(mcimidi, "Error reading wmm=%p\n", wmm);
 	ret = MCIERR_INTERNAL;
     }
@@ -172,7 +172,7 @@ static DWORD	MIDI_mciReadNextEvent(WINE_MCIMIDI* wmm, MCI_MIDITRACK* mmt)
     DWORD	evtLength;
     DWORD	tmp;
     
-    if (mmioSeek32(wmm->hFile, mmt->dwIndex, SEEK_SET) != mmt->dwIndex) {
+    if (mmioSeek(wmm->hFile, mmt->dwIndex, SEEK_SET) != mmt->dwIndex) {
 	WARN(mcimidi, "Can't seek at %08lX \n", mmt->dwIndex);
 	return MCIERR_INTERNAL;
     }
@@ -240,7 +240,7 @@ static DWORD MIDI_mciReadMTrk(WINE_MCIMIDI* wmm, MCI_MIDITRACK* mmt)
     DWORD		toberead;
     FOURCC		fourcc;
     
-    if (mmioRead32(wmm->hFile, (HPSTR)&fourcc, (long)sizeof(FOURCC)) != 
+    if (mmioRead(wmm->hFile, (HPSTR)&fourcc, (long)sizeof(FOURCC)) != 
 	(long)sizeof(FOURCC)) {
 	return MCIERR_INTERNAL;
     }
@@ -253,7 +253,7 @@ static DWORD MIDI_mciReadMTrk(WINE_MCIMIDI* wmm, MCI_MIDITRACK* mmt)
     if (MIDI_mciReadLong(wmm, &toberead) != 0) {
 	return MCIERR_INTERNAL;
     }
-    mmt->dwFirst = mmioSeek32(wmm->hFile, 0, SEEK_CUR); /* >= 0 */
+    mmt->dwFirst = mmioSeek(wmm->hFile, 0, SEEK_CUR); /* >= 0 */
     mmt->dwLast = mmt->dwFirst + toberead;
     
     /* compute # of pulses in this track */
@@ -273,11 +273,11 @@ static DWORD MIDI_mciReadMTrk(WINE_MCIMIDI* wmm, MCI_MIDITRACK* mmt)
     mmt->dwIndex = mmt->dwFirst;
     mmt->dwEventPulse = 0;
     
-    if (mmioSeek32(wmm->hFile, 0, SEEK_CUR) != mmt->dwLast) {
+    if (mmioSeek(wmm->hFile, 0, SEEK_CUR) != mmt->dwLast) {
 	WARN(mcimidi, "Ouch, out of sync seek=%lu track=%lu\n", 
-	     mmioSeek32(wmm->hFile, 0, SEEK_CUR), mmt->dwLast);
+	     mmioSeek(wmm->hFile, 0, SEEK_CUR), mmt->dwLast);
 	/* position at end of this track, to be ready to read next track */
-	mmioSeek32(wmm->hFile, mmt->dwLast, SEEK_SET);
+	mmioSeek(wmm->hFile, mmt->dwLast, SEEK_SET);
     }
     
     return 0;
@@ -294,11 +294,11 @@ static DWORD MIDI_mciReadMThd(WINE_MCIMIDI* wmm, DWORD dwOffset)
     
     TRACE(mcimidi, "(%p, %08lX);\n", wmm, dwOffset);
     
-    if (mmioSeek32(wmm->hFile, dwOffset, SEEK_SET) != dwOffset) {
+    if (mmioSeek(wmm->hFile, dwOffset, SEEK_SET) != dwOffset) {
 	WARN(mcimidi, "Can't seek at %08lX begin of 'MThd' \n", dwOffset);
 	return MCIERR_INTERNAL;
     }
-    if (mmioRead32(wmm->hFile, (HPSTR)&fourcc,
+    if (mmioRead(wmm->hFile, (HPSTR)&fourcc,
 		   (long) sizeof(FOURCC)) != (long) sizeof(FOURCC))
 	return MCIERR_INTERNAL;
     
@@ -386,7 +386,7 @@ static DWORD MIDI_mciReadMThd(WINE_MCIMIDI* wmm, DWORD dwOffset)
     toberead -= 3 * sizeof(WORD); 
     if (toberead > 0) {
 	TRACE(mcimidi, "Size of MThd > 6, skipping %ld extra bytes\n", toberead);
-	mmioSeek32(wmm->hFile, toberead, SEEK_CUR);
+	mmioSeek(wmm->hFile, toberead, SEEK_CUR);
     }
     
     for (nt = 0; nt < wmm->nTracks; nt++) {
@@ -540,7 +540,7 @@ static	DWORD	MIDI_GetMThdLengthMS(WINE_MCIMIDI* wmm)
 /**************************************************************************
  * 				MIDI_mciOpen			[internal]	
  */
-static DWORD MIDI_mciOpen(UINT16 wDevID, DWORD dwFlags, LPMCI_OPEN_PARMS32A lpParms)
+static DWORD MIDI_mciOpen(UINT16 wDevID, DWORD dwFlags, LPMCI_OPEN_PARMSA lpParms)
 {
     MIDIOPENDESC 	midiOpenDesc;
     DWORD		dwRet = 0;
@@ -580,7 +580,7 @@ static DWORD MIDI_mciOpen(UINT16 wDevID, DWORD dwFlags, LPMCI_OPEN_PARMS32A lpPa
 	
 	TRACE(mcimidi, "MCI_OPEN_ELEMENT '%s' !\n", lpstrElementName);
 	if (lpstrElementName && strlen(lpstrElementName) > 0) {
-	    wmm->hFile = mmioOpen32A(lpstrElementName, NULL, 
+	    wmm->hFile = mmioOpenA(lpstrElementName, NULL, 
 				     MMIO_ALLOCBUF | MMIO_READWRITE | MMIO_EXCLUSIVE);
 	    if (wmm->hFile == 0) {
 		WARN(mcimidi, "Can't find file='%s' !\n", lpstrElementName);
@@ -593,7 +593,7 @@ static DWORD MIDI_mciOpen(UINT16 wDevID, DWORD dwFlags, LPMCI_OPEN_PARMS32A lpPa
     }
     TRACE(mcimidi, "hFile=%u\n", wmm->hFile);
     
-    memcpy(&wmm->openParms, lpParms, sizeof(MCI_OPEN_PARMS32A));
+    memcpy(&wmm->openParms, lpParms, sizeof(MCI_OPEN_PARMSA));
     
     wmm->wNotifyDeviceID = dwDeviceID;
     wmm->dwStatus = MCI_MODE_NOT_READY;	/* while loading file contents */
@@ -636,12 +636,12 @@ static DWORD MIDI_mciOpen(UINT16 wDevID, DWORD dwFlags, LPMCI_OPEN_PARMS32A lpPa
     if (dwRet != 0) {
 	wmm->nUseCount--;
 	if (wmm->hFile != 0)
-	    mmioClose32(wmm->hFile, 0);
+	    mmioClose(wmm->hFile, 0);
 	wmm->hFile = 0;
     } else {
 	wmm->dwPositionMS = 0;
 	wmm->dwStatus = MCI_MODE_STOP;
-	wmm->hMidiHdr = USER_HEAP_ALLOC(sizeof(MIDIHDR));
+	wmm->hMidiHdr = USER_HEAP_ALLOC(sizeof(MIDIHDR16));
 	
 	dwRet = modMessage(wDevID, MODM_OPEN, 0, (DWORD)&midiOpenDesc, CALLBACK_NULL);
 	/*	dwRet = midMessage(wDevID, MIDM_OPEN, 0, (DWORD)&midiOpenDesc, CALLBACK_NULL);*/
@@ -691,7 +691,7 @@ static DWORD MIDI_mciClose(UINT16 wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lpP
     wmm->nUseCount--;
     if (wmm->nUseCount == 0) {
 	if (wmm->hFile != 0) {
-	    mmioClose32(wmm->hFile, 0);
+	    mmioClose(wmm->hFile, 0);
 	    wmm->hFile = 0;
 	    TRACE(mcimidi, "hFile closed !\n");
 	}
@@ -767,7 +767,7 @@ static DWORD MIDI_mciPlay(UINT16 wDevID, DWORD dwFlags, LPMCI_PLAY_PARMS lpParms
     
     if (!(dwFlags & MCI_WAIT)) {	
 	/** FIXME: I'm not 100% sure that wNotifyDeviceID is the right value in all cases ??? */
-	return MCI_SendCommandAsync32(wmm->wNotifyDeviceID, MCI_PLAY, dwFlags, (DWORD)lpParms, sizeof(LPMCI_PLAY_PARMS));
+	return MCI_SendCommandAsync(wmm->wNotifyDeviceID, MCI_PLAY, dwFlags, (DWORD)lpParms, sizeof(LPMCI_PLAY_PARMS));
     }
     
     if (lpParms && (dwFlags & MCI_FROM)) {
@@ -850,7 +850,7 @@ static DWORD MIDI_mciPlay(UINT16 wDevID, DWORD dwFlags, LPMCI_PLAY_PARMS lpParms
 	    break;
 	case 0xFF:
 	    /* position after meta data header */
-	    mmioSeek32(wmm->hFile, mmt->dwIndex + HIWORD(mmt->dwEventData), SEEK_SET);
+	    mmioSeek(wmm->hFile, mmt->dwIndex + HIWORD(mmt->dwEventData), SEEK_SET);
 	    switch (HIBYTE(LOWORD(mmt->dwEventData))) {
 	    case 0x00: /* 16-bit sequence number */
 		if (TRACE_ON(midi)) {
@@ -878,7 +878,7 @@ static DWORD MIDI_mciPlay(UINT16 wDevID, DWORD dwFlags, LPMCI_PLAY_PARMS lpParms
 			WARN(mcimidi, "Buffer for text is too small (%d bytes, when %u are needed)\n", sizeof(buf) - 1, len);
 			len = sizeof(buf) - 1;
 		    }
-		    if (mmioRead32(wmm->hFile, (HPSTR)buf, len) == len) {
+		    if (mmioRead(wmm->hFile, (HPSTR)buf, len) == len) {
 			buf[len] = 0;	/* end string in case */
 			TRACE(mcimidi, "%s => \"%s\"\n", (idx < 8 ) ? info[idx] : "", buf);
 		    } else {
@@ -1026,7 +1026,7 @@ static DWORD MIDI_mciPlay(UINT16 wDevID, DWORD dwFlags, LPMCI_PLAY_PARMS lpParms
 static DWORD MIDI_mciRecord(UINT16 wDevID, DWORD dwFlags, LPMCI_RECORD_PARMS lpParms)
 {
     int			start, end;
-    LPMIDIHDR		lpMidiHdr;
+    LPMIDIHDR16		lpMidiHdr;
     DWORD		dwRet;
     WINE_MCIMIDI*	wmm = MIDI_mciGetOpenDev(wDevID);
     
@@ -1053,7 +1053,7 @@ static DWORD MIDI_mciRecord(UINT16 wDevID, DWORD dwFlags, LPMCI_RECORD_PARMS lpP
     lpMidiHdr->dwBufferLength = 1024;
     lpMidiHdr->dwUser = 0L;
     lpMidiHdr->dwFlags = 0L;
-    dwRet = midMessage(wDevID, MIDM_PREPARE, 0, (DWORD)lpMidiHdr, sizeof(MIDIHDR));
+    dwRet = midMessage(wDevID, MIDM_PREPARE, 0, (DWORD)lpMidiHdr, sizeof(MIDIHDR16));
     TRACE(mcimidi, "After MIDM_PREPARE \n");
     wmm->dwStatus = MCI_MODE_RECORD;
     while (wmm->dwStatus != MCI_MODE_STOP) {
@@ -1066,7 +1066,7 @@ static DWORD MIDI_mciRecord(UINT16 wDevID, DWORD dwFlags, LPMCI_RECORD_PARMS lpP
 	if (lpMidiHdr->dwBytesRecorded == 0) break;
     }
     TRACE(mcimidi, "Before MIDM_UNPREPARE \n");
-    dwRet = midMessage(wDevID, MIDM_UNPREPARE, 0, (DWORD)lpMidiHdr, sizeof(MIDIHDR));
+    dwRet = midMessage(wDevID, MIDM_UNPREPARE, 0, (DWORD)lpMidiHdr, sizeof(MIDIHDR16));
     TRACE(mcimidi, "After MIDM_UNPREPARE \n");
     if (lpMidiHdr->lpData != NULL) {
 	free(lpMidiHdr->lpData);
@@ -1383,7 +1383,7 @@ static DWORD MIDI_mciGetDevCaps(UINT16 wDevID, DWORD dwFlags,
 /**************************************************************************
  * 				MIDI_mciInfo			[internal]
  */
-static DWORD MIDI_mciInfo(UINT16 wDevID, DWORD dwFlags, LPMCI_INFO_PARMS32A lpParms)
+static DWORD MIDI_mciInfo(UINT16 wDevID, DWORD dwFlags, LPMCI_INFO_PARMSA lpParms)
 {
     DWORD		ret = 0;
     LPSTR		str = 0;
@@ -1473,7 +1473,7 @@ static DWORD MIDI_mciSeek(UINT16 wDevID, DWORD dwFlags, LPMCI_SEEK_PARMS lpParms
 /**************************************************************************
  * 				MCIMIDI_DriverProc32	[sample driver]
  */
-LONG MCIMIDI_DriverProc32(DWORD dwDevID, HDRVR16 hDriv, DWORD wMsg, 
+LONG MCIMIDI_DriverProc(DWORD dwDevID, HDRVR16 hDriv, DWORD wMsg, 
 				 DWORD dwParam1, DWORD dwParam2)
 {
     switch (wMsg) {
@@ -1484,11 +1484,11 @@ LONG MCIMIDI_DriverProc32(DWORD dwDevID, HDRVR16 hDriv, DWORD wMsg,
     case DRV_ENABLE:		return 1;
     case DRV_DISABLE:		return 1;
     case DRV_QUERYCONFIGURE:	return 1;
-    case DRV_CONFIGURE:		MessageBox32A(0, "Sample Midi Linux Driver !", "MMLinux Driver", MB_OK); return 1;
+    case DRV_CONFIGURE:		MessageBoxA(0, "Sample Midi Linux Driver !", "MMLinux Driver", MB_OK); return 1;
     case DRV_INSTALL:		return DRVCNF_RESTART;
     case DRV_REMOVE:		return DRVCNF_RESTART;
 #ifdef SNDCTL_MIDI_INFO
-    case MCI_OPEN_DRIVER:	return MIDI_mciOpen      (dwDevID, dwParam1, (LPMCI_OPEN_PARMS32A)   dwParam2);
+    case MCI_OPEN_DRIVER:	return MIDI_mciOpen      (dwDevID, dwParam1, (LPMCI_OPEN_PARMSA)   dwParam2);
     case MCI_CLOSE_DRIVER:	return MIDI_mciClose     (dwDevID, dwParam1, (LPMCI_GENERIC_PARMS)   dwParam2);
     case MCI_PLAY:		return MIDI_mciPlay      (dwDevID, dwParam1, (LPMCI_PLAY_PARMS)      dwParam2);
     case MCI_RECORD:		return MIDI_mciRecord    (dwDevID, dwParam1, (LPMCI_RECORD_PARMS)    dwParam2);
@@ -1498,7 +1498,7 @@ LONG MCIMIDI_DriverProc32(DWORD dwDevID, HDRVR16 hDriv, DWORD wMsg,
     case MCI_RESUME:		return MIDI_mciResume    (dwDevID, dwParam1, (LPMCI_GENERIC_PARMS)   dwParam2);
     case MCI_STATUS:		return MIDI_mciStatus    (dwDevID, dwParam1, (LPMCI_STATUS_PARMS)    dwParam2);
     case MCI_GETDEVCAPS:	return MIDI_mciGetDevCaps(dwDevID, dwParam1, (LPMCI_GETDEVCAPS_PARMS)dwParam2);
-    case MCI_INFO:		return MIDI_mciInfo      (dwDevID, dwParam1, (LPMCI_INFO_PARMS32A)   dwParam2);
+    case MCI_INFO:		return MIDI_mciInfo      (dwDevID, dwParam1, (LPMCI_INFO_PARMSA)   dwParam2);
     case MCI_SEEK:		return MIDI_mciSeek      (dwDevID, dwParam1, (LPMCI_SEEK_PARMS)      dwParam2);
 #else
     case MCI_OPEN_DRIVER:
@@ -1538,7 +1538,7 @@ LONG MCIMIDI_DriverProc32(DWORD dwDevID, HDRVR16 hDriv, DWORD wMsg,
 	break;
     default:			
 	TRACE(mcimidi, "Sending msg=%s to default driver proc\n", MCI_CommandToString(wMsg));
-	return DefDriverProc32(dwDevID, hDriv, wMsg, dwParam1, dwParam2);
+	return DefDriverProc(dwDevID, hDriv, wMsg, dwParam1, dwParam2);
     }
     return MCIERR_UNRECOGNIZED_COMMAND;
 }

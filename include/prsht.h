@@ -13,21 +13,21 @@ extern "C" {
  */
 
 
-#define WC_PROPSHEET32A      "SysPropertySheet"
-#define WC_PROPSHEET32W      L"SysPropertySheet"
+#define WC_PROPSHEETA      "SysPropertySheet"
+#define WC_PROPSHEETW      L"SysPropertySheet"
 #define WC_PROPSHEET         WINELIB_NAME_AW(WC_PROPSHEET)
 
-struct _PROPSHEETPAGE32A;  /** need to forward declare those structs **/
-struct _PROPSHEETPAGE32W;
+struct _PROPSHEETPAGEA;  /** need to forward declare those structs **/
+struct _PROPSHEETPAGEW;
 struct _PSP;
 typedef struct _PSP *HPROPSHEETPAGE;
 
 
-typedef UINT32 (CALLBACK *LPFNPSPCALLBACK32A)(HWND32, UINT32, struct _PROPSHEETPAGE32A*);
-typedef UINT32 (CALLBACK *LPFNPSPCALLBACK32W)(HWND32, UINT32, struct _PROPSHEETPAGE32W*);
-typedef INT32  (CALLBACK *PFNPROPSHEETCALLBACK32)(HWND32, UINT32, LPARAM);
-typedef BOOL32 (CALLBACK *LPFNADDPROPSHEETPAGE)(HPROPSHEETPAGE, LPARAM);
-typedef BOOL32 (CALLBACK *LPFNADDPROPSHEETPAGES)(LPVOID, LPFNADDPROPSHEETPAGE, LPARAM);
+typedef UINT (CALLBACK *LPFNPSPCALLBACKA)(HWND, UINT, struct _PROPSHEETPAGEA*);
+typedef UINT (CALLBACK *LPFNPSPCALLBACKW)(HWND, UINT, struct _PROPSHEETPAGEW*);
+typedef INT  (CALLBACK *PFNPROPSHEETCALLBACK)(HWND, UINT, LPARAM);
+typedef BOOL (CALLBACK *LPFNADDPROPSHEETPAGE)(HPROPSHEETPAGE, LPARAM);
+typedef BOOL (CALLBACK *LPFNADDPROPSHEETPAGES)(LPVOID, LPFNADDPROPSHEETPAGE, LPARAM);
 
 /* c++ likes nameless unions whereas c doesnt */
 /* (used in property sheet structures)        */
@@ -50,11 +50,11 @@ typedef BOOL32 (CALLBACK *LPFNADDPROPSHEETPAGES)(LPVOID, LPFNADDPROPSHEETPAGE, L
 /*
  * Property sheet support (structures)
  */
-typedef struct _PROPSHEETPAGE32A
+typedef struct _PROPSHEETPAGEA
 {
     DWORD              dwSize;
     DWORD              dwFlags;
-    HINSTANCE32        hInstance;
+    HINSTANCE        hInstance;
     union 
     {
         LPCSTR           pszTemplate;
@@ -62,25 +62,25 @@ typedef struct _PROPSHEETPAGE32A
     }DUMMYUNIONNAME1;
     union
     {
-        HICON32          hIcon;
+        HICON          hIcon;
         LPCSTR           pszIcon;
     }DUMMYUNIONNAME2;
     LPCSTR             pszTitle;
-    DLGPROC32          pfnDlgProc;
+    DLGPROC          pfnDlgProc;
     LPARAM             lParam;
-    LPFNPSPCALLBACK32A pfnCallback;
-    UINT32*            pcRefParent;
+    LPFNPSPCALLBACKA pfnCallback;
+    UINT*            pcRefParent;
     LPCWSTR            pszHeaderTitle;
     LPCWSTR            pszHeaderSubTitle;
-} PROPSHEETPAGE32A, *LPPROPSHEETPAGE32A;
+} PROPSHEETPAGEA, *LPPROPSHEETPAGEA;
 
-typedef const PROPSHEETPAGE32A *LPCPROPSHEETPAGE32A;
+typedef const PROPSHEETPAGEA *LPCPROPSHEETPAGEA;
 
-typedef struct _PROPSHEETPAGE32W
+typedef struct _PROPSHEETPAGEW
 {
     DWORD               dwSize;
     DWORD               dwFlags;
-    HINSTANCE32         hInstance;
+    HINSTANCE         hInstance;
     union 
     {
         LPCWSTR          pszTemplate;
@@ -88,111 +88,110 @@ typedef struct _PROPSHEETPAGE32W
     }DUMMYUNIONNAME1;
     union
     {
-        HICON32          hIcon;
+        HICON          hIcon;
         LPCWSTR          pszIcon;
     }DUMMYUNIONNAME2;
     LPCWSTR            pszTitle;
-    DLGPROC32          pfnDlgProc;
+    DLGPROC          pfnDlgProc;
     LPARAM             lParam;
-    LPFNPSPCALLBACK32W pfnCallback;
-    UINT32*            pcRefParent;
+    LPFNPSPCALLBACKW pfnCallback;
+    UINT*            pcRefParent;
     LPCWSTR            pszHeaderTitle;
     LPCWSTR            pszHeaderSubTitle;
-} PROPSHEETPAGE32W, *LPPROPSHEETPAGE32W;
+} PROPSHEETPAGEW, *LPPROPSHEETPAGEW;
 
-typedef const PROPSHEETPAGE32W *LPCPROPSHEETPAGE32W;
+typedef const PROPSHEETPAGEW *LPCPROPSHEETPAGEW;
 
 
-typedef struct _PROPSHEETHEADER32A
+typedef struct _PROPSHEETHEADERA
 {
     DWORD                    dwSize;
     DWORD                    dwFlags;
-    HWND32                   hwndParent;
-    HINSTANCE32              hInstance;
+    HWND                   hwndParent;
+    HINSTANCE              hInstance;
     union
     {
-      HICON32                  hIcon;
+      HICON                  hIcon;
       LPCSTR                   pszIcon;
     }DUMMYUNIONNAME1;
     LPCSTR                   pszCaption;
-    UINT32                   nPages;
+    UINT                   nPages;
     union
     {
-        UINT32                 nStartPage;
+        UINT                 nStartPage;
         LPCSTR                 pStartPage;
     }DUMMYUNIONNAME2;
     union
     {
-        LPCPROPSHEETPAGE32A    ppsp;
+        LPCPROPSHEETPAGEA    ppsp;
         HPROPSHEETPAGE*        phpage;
     }DUMMYUNIONNAME3;
-    PFNPROPSHEETCALLBACK32   pfnCallback;
+    PFNPROPSHEETCALLBACK   pfnCallback;
     union
     {
-        HBITMAP32              hbmWatermark;
+        HBITMAP              hbmWatermark;
         LPCSTR                 pszbmWatermark;
     }DUMMYUNIONNAME4;
-    HPALETTE32               hplWatermark;
+    HPALETTE               hplWatermark;
     union
     {
-        HBITMAP32              hbmHeader;
+        HBITMAP              hbmHeader;
         LPCSTR                 pszbmHeader;
     }DUMMYUNIONNAME5;
-} PROPSHEETHEADER32A, *LPPROPSHEETHEADER32A;
+} PROPSHEETHEADERA, *LPPROPSHEETHEADERA;
 
-typedef const PROPSHEETHEADER32A *LPCPROPSHEETHEADER32A;
+typedef const PROPSHEETHEADERA *LPCPROPSHEETHEADERA;
 
-typedef struct _PROPSHEETHEADER32W
+typedef struct _PROPSHEETHEADERW
 {
     DWORD                    dwSize;
     DWORD                    dwFlags;
-    HWND32                   hwndParent;
-    HINSTANCE32              hInstance;
+    HWND                   hwndParent;
+    HINSTANCE              hInstance;
     union
     {
-      HICON32                  hIcon;
+      HICON                  hIcon;
       LPCSTR                   pszIcon;
     }DUMMYUNIONNAME1;
     LPCWSTR                  pszCaption;
-    UINT32                   nPages;
+    UINT                   nPages;
     union
     {
-        UINT32                 nStartPage;
+        UINT                 nStartPage;
         LPCWSTR                pStartPage;
     }DUMMYUNIONNAME2;
     union
     {
-        LPCPROPSHEETPAGE32W    ppsp;
+        LPCPROPSHEETPAGEW    ppsp;
         HPROPSHEETPAGE*        phpage;
     }DUMMYUNIONNAME3;
-    PFNPROPSHEETCALLBACK32   pfnCallback;
+    PFNPROPSHEETCALLBACK   pfnCallback;
     union
     {
-        HBITMAP32              hbmWatermark;
+        HBITMAP              hbmWatermark;
         LPCWSTR                pszbmWatermark;
     }DUMMYUNIONNAME4;
-    HPALETTE32               hplWatermark;
+    HPALETTE               hplWatermark;
     union
     {
-        HBITMAP32              hbmHeader;
+        HBITMAP              hbmHeader;
         LPCWSTR                pszbmHeader;
     }DUMMYUNIONNAME5;
-} PROPSHEETHEADER32W, *LPPROPSHEETHEADER32W;
+} PROPSHEETHEADERW, *LPPROPSHEETHEADERW;
 
-typedef const PROPSHEETHEADER32W *LPCPROPSHEETHEADER32W;
+typedef const PROPSHEETHEADERW *LPCPROPSHEETHEADERW;
 
 
 /*
  * Property sheet support (methods)
  */
-INT32 WINAPI PropertySheet32A(LPCPROPSHEETHEADER32A);
-INT32 WINAPI PropertySheet32W(LPCPROPSHEETHEADER32W);
+INT WINAPI PropertySheetA(LPCPROPSHEETHEADERA);
+INT WINAPI PropertySheetW(LPCPROPSHEETHEADERW);
 #define PropertySheet WINELIB_NAME_AW(PropertySheet)
-HPROPSHEETPAGE WINAPI CreatePropertySheetPage32A(LPCPROPSHEETPAGE32A);
-HPROPSHEETPAGE WINAPI CreatePropertySheetPage32W(LPCPROPSHEETPAGE32W);
+HPROPSHEETPAGE WINAPI CreatePropertySheetPageA(LPCPROPSHEETPAGEA);
+HPROPSHEETPAGE WINAPI CreatePropertySheetPageW(LPCPROPSHEETPAGEW);
 #define CreatePropertySheetPage WINELIB_NAME_AW(CreatePropertySheetPage)
-BOOL32 WINAPI DestroyPropertySheetPage32(HPROPSHEETPAGE hPropPage);
-#define DestroyPropertySheetPage WINELIB_NAME(DestroyPropertySheetPage)
+BOOL WINAPI DestroyPropertySheetPage(HPROPSHEETPAGE hPropPage);
 
 /*
  * Property sheet support (UNICODE-WineLib)
@@ -205,7 +204,6 @@ DECL_WINELIB_TYPE_AW(PROPSHEETHEADER)
 DECL_WINELIB_TYPE_AW(LPPROPSHEETHEADER) 
 DECL_WINELIB_TYPE_AW(LPCPROPSHEETHEADER) 
 DECL_WINELIB_TYPE_AW(LPFNPSPCALLBACK) 
-DECL_WINELIB_TYPE(PFNPROPSHEETCALLBACK) 
 
 
 /*
@@ -273,14 +271,14 @@ DECL_WINELIB_TYPE(PFNPROPSHEETCALLBACK)
 #define PSM_QUERYSIBLINGS       (WM_USER + 108)
 #define PSM_UNCHANGED           (WM_USER + 109)
 #define PSM_APPLY               (WM_USER + 110)
-#define PSM_SETTITLE32A         (WM_USER + 111)
-#define PSM_SETTITLE32W         (WM_USER + 120)
+#define PSM_SETTITLEA         (WM_USER + 111)
+#define PSM_SETTITLEW         (WM_USER + 120)
 #define PSM_SETTITLE WINELIB_NAME_AW(PSM_SETTITLE)
 #define PSM_SETWIZBUTTONS       (WM_USER + 112)
 #define PSM_PRESSBUTTON         (WM_USER + 113)
 #define PSM_SETCURSELID         (WM_USER + 114)
-#define PSM_SETFINISHTEXT32A    (WM_USER + 115)
-#define PSM_SETFINISHTEXT32W    (WM_USER + 121)
+#define PSM_SETFINISHTEXTA    (WM_USER + 115)
+#define PSM_SETFINISHTEXTW    (WM_USER + 121)
 #define PSM_SETFINISHTEXT WINELIB_NAME_AW(PSM_SETFINISHTEXT)
 #define PSM_GETTABCONTROL       (WM_USER + 116)
 #define PSM_ISDIALOGMESSAGE     (WM_USER + 117)
@@ -326,7 +324,7 @@ DECL_WINELIB_TYPE(PFNPROPSHEETCALLBACK)
  */
 
 #define PropSheet_SetCurSel(hDlg, hpage, index) \
-	SeandMessage32A(hDlg, PSM_SETCURSEL, (WPARAM32)index, (LPARAM)hpage)
+	SeandMessage32A(hDlg, PSM_SETCURSEL, (WPARAM)index, (LPARAM)hpage)
 	 
 #define PropSheet_RemovePage(hDlg, index, hpage) \
 	SNDMSG(hDlg, PSM_REMOVEPAGE, index, (LPARAM)hpage)

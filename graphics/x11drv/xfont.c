@@ -170,11 +170,11 @@ static fontObject*      fontCache = NULL;		/* array */
 static int		fontCacheSize = FONTCACHE;
 static int		fontLF = -1, fontMRU = -1;	/* last free, most recently used */
 
-#define __PFONT(pFont)     ( fontCache + ((UINT32)(pFont) & 0x0000FFFF) )
-#define CHECK_PFONT(pFont) ( (((UINT32)(pFont) & 0xFFFF0000) == X_PFONT_MAGIC) &&\
-			     (((UINT32)(pFont) & 0x0000FFFF) < fontCacheSize) )
+#define __PFONT(pFont)     ( fontCache + ((UINT)(pFont) & 0x0000FFFF) )
+#define CHECK_PFONT(pFont) ( (((UINT)(pFont) & 0xFFFF0000) == X_PFONT_MAGIC) &&\
+			     (((UINT)(pFont) & 0x0000FFFF) < fontCacheSize) )
 
-static INT32 XFONT_IsSubset(fontInfo*, fontInfo*);
+static INT XFONT_IsSubset(fontInfo*, fontInfo*);
 static void  XFONT_CheckFIList(fontResource*, fontInfo*, int subset_action);
 static void  XFONT_GrowFreeList(int start, int end);
 static void XFONT_RemoveFontResource(fontResource** ppfr);
@@ -479,8 +479,8 @@ done:
  *       should be bulletproof enough to allow us to avoid hacks like
  *	 if( uRelax == 200 ) even despite LFD being so braindead.
  */
-static BOOL32  LFD_ComposeLFD( fontObject* fo, 
-			       INT32 height, LPSTR lpLFD, UINT32 uRelax )
+static BOOL  LFD_ComposeLFD( fontObject* fo, 
+			       INT height, LPSTR lpLFD, UINT uRelax )
 {
    fontEncodingTemplate* boba;
    int		i, h, w, ch, point = 0;
@@ -489,7 +489,7 @@ static BOOL32  LFD_ComposeLFD( fontObject* fo,
    char         h_string[64], point_string[64];
 
    *(lpLFD+MAX_LFD_LENGTH-1)=0;
-   lstrcpy32A( lpLFD, fo->fr->resource );
+   lstrcpyA( lpLFD, fo->fr->resource );
 
 /* add weight */
    switch( fo->fi->df.dfWeight )
@@ -593,7 +593,7 @@ static BOOL32  LFD_ComposeLFD( fontObject* fo,
 	case 255: /* no suffix */
    }
 
-   lpch = lpLFD + lstrlen32A(lpLFD);
+   lpch = lpLFD + lstrlenA(lpLFD);
    ch = (fo->fi->fi_flags & FI_SCALABLE) ? '0' : LFDSeparator[0];
 
    switch( uRelax )
@@ -656,13 +656,13 @@ static BOOL32  LFD_ComposeLFD( fontObject* fo,
  * font info		- http://www.microsoft.com/kb/articles/q65/1/23.htm
  * Windows font metrics	- http://www.microsoft.com/kb/articles/q32/6/67.htm
  */
-static BOOL32 XFONT_GetLeading( LPIFONTINFO16 pFI, XFontStruct* x_fs, INT32*
-       pIL, INT32* pEL, XFONTTRANS *XFT )
+static BOOL XFONT_GetLeading( LPIFONTINFO16 pFI, XFontStruct* x_fs, INT*
+       pIL, INT* pEL, XFONTTRANS *XFT )
 {
     unsigned long height;
     unsigned min = (unsigned char)pFI->dfFirstChar;
     unsigned max = (unsigned char)pFI->dfLastChar;
-    BOOL32 bHaveCapHeight = (pFI->dfCharSet == ANSI_CHARSET && 'X' >= min && 'X' <= max );
+    BOOL bHaveCapHeight = (pFI->dfCharSet == ANSI_CHARSET && 'X' >= min && 'X' <= max );
 
     if( pEL ) *pEL = 0;
 
@@ -670,7 +670,7 @@ static BOOL32 XFONT_GetLeading( LPIFONTINFO16 pFI, XFontStruct* x_fs, INT32*
         Atom RAW_CAP_HEIGHT = TSXInternAtom(display, "RAW_CAP_HEIGHT", TRUE);
 	if(TSXGetFontProperty(x_fs, RAW_CAP_HEIGHT, &height))
 	    *pIL = XFT->ascent - 
-                            (INT32)(XFT->pixelsize / 1000.0 * height);
+                            (INT)(XFT->pixelsize / 1000.0 * height);
 	else
 	    *pIL = 0;
 	return bHaveCapHeight && x_fs->per_char;
@@ -698,7 +698,7 @@ static BOOL32 XFONT_GetLeading( LPIFONTINFO16 pFI, XFontStruct* x_fs, INT32*
     return (bHaveCapHeight && x_fs->per_char);
 }
 
-static INT32 XFONT_GetAvgCharWidth( LPIFONTINFO16 pFI, XFontStruct* x_fs,
+static INT XFONT_GetAvgCharWidth( LPIFONTINFO16 pFI, XFontStruct* x_fs,
 				    XFONTTRANS *XFT)
 {
     unsigned min = (unsigned char)pFI->dfFirstChar;
@@ -723,7 +723,7 @@ static INT32 XFONT_GetAvgCharWidth( LPIFONTINFO16 pFI, XFontStruct* x_fs,
     return x_fs->min_bounds.width;
 }
 
-static INT32 XFONT_GetMaxCharWidth(fontObject *pfo)
+static INT XFONT_GetMaxCharWidth(fontObject *pfo)
 {
     unsigned min = (unsigned char)pfo->fs->min_char_or_byte2;
     unsigned max = (unsigned char)pfo->fs->max_char_or_byte2;
@@ -755,7 +755,7 @@ static INT32 XFONT_GetMaxCharWidth(fontObject *pfo)
 static void XFONT_SetFontMetric(fontInfo* fi, fontResource* fr, XFontStruct* xfs)
 {
     unsigned	 min, max;
-    INT32	 el, il;
+    INT	 el, il;
 
     fi->df.dfFirstChar = (BYTE)(min = xfs->min_char_or_byte2);
     fi->df.dfLastChar = (BYTE)(max = xfs->max_char_or_byte2);
@@ -775,7 +775,7 @@ static void XFONT_SetFontMetric(fontInfo* fi, fontResource* fr, XFontStruct* xfs
     fi->df.dfInternalLeading = (INT16)il;
     fi->df.dfExternalLeading = (INT16)el;
 
-    fi->df.dfPoints = (INT16)(((INT32)(fi->df.dfPixHeight - 
+    fi->df.dfPoints = (INT16)(((INT)(fi->df.dfPixHeight - 
 	       fi->df.dfInternalLeading) * 72 + (fi->df.dfVertRes >> 1)) / fi->df.dfVertRes);
 
     if( xfs->min_bounds.width != xfs->max_bounds.width )
@@ -798,7 +798,7 @@ static void XFONT_SetFontMetric(fontInfo* fi, fontResource* fr, XFontStruct* xfs
  *
  * GetTextMetrics() back end.
  */
-static void XFONT_GetTextMetric( fontObject* pfo, LPTEXTMETRIC32A pTM )
+static void XFONT_GetTextMetric( fontObject* pfo, LPTEXTMETRICA pTM )
 {
     LPIFONTINFO16 pdf = &pfo->fi->df;
 
@@ -837,7 +837,7 @@ static void XFONT_GetTextMetric( fontObject* pfo, LPTEXTMETRIC32A pTM )
 	pTM->tmWeight += 100;
     } 
 
-    *(INT32*)&pTM->tmFirstChar = *(INT32*)&pdf->dfFirstChar;
+    *(INT*)&pTM->tmFirstChar = *(INT*)&pdf->dfFirstChar;
 
     pTM->tmCharSet = pdf->dfCharSet;
     pTM->tmPitchAndFamily = pdf->dfPitchAndFamily;
@@ -851,7 +851,7 @@ static void XFONT_GetTextMetric( fontObject* pfo, LPTEXTMETRIC32A pTM )
  *
  * Retrieve font metric info (enumeration).
  */
-static UINT32 XFONT_GetFontMetric( fontInfo* pfi, LPENUMLOGFONTEX16 pLF,
+static UINT XFONT_GetFontMetric( fontInfo* pfi, LPENUMLOGFONTEX16 pLF,
                                                   LPNEWTEXTMETRIC16 pTM )
 {
     memset( pLF, 0, sizeof(*pLF) );
@@ -871,7 +871,7 @@ static UINT32 XFONT_GetFontMetric( fontInfo* pfi, LPENUMLOGFONTEX16 pLF,
     pTM->tmPitchAndFamily = pfi->df.dfPitchAndFamily;
     plf->lfPitchAndFamily = (pfi->df.dfPitchAndFamily & 0xF1) + 1;
 
-    lstrcpyn32A( plf->lfFaceName, pfi->df.dfFace, LF_FACESIZE );
+    lstrcpynA( plf->lfFaceName, pfi->df.dfFace, LF_FACESIZE );
 #undef plf
 
     pTM->tmAscent = pfi->df.dfAscent;
@@ -881,7 +881,7 @@ static UINT32 XFONT_GetFontMetric( fontInfo* pfi, LPENUMLOGFONTEX16 pLF,
     pTM->tmDigitizedAspectX = pfi->df.dfHorizRes;
     pTM->tmDigitizedAspectY = pfi->df.dfVertRes;
 
-    *(INT32*)&pTM->tmFirstChar = *(INT32*)&pfi->df.dfFirstChar;
+    *(INT*)&pTM->tmFirstChar = *(INT*)&pfi->df.dfFirstChar;
 
     /* return font type */
 
@@ -934,7 +934,7 @@ static BYTE XFONT_FixupFlags( LPCSTR lfFaceName )
  *
  * INIT ONLY
  */
-static BOOL32 XFONT_CheckResourceName( LPSTR resource, LPCSTR name, INT32 n )
+static BOOL XFONT_CheckResourceName( LPSTR resource, LPCSTR name, INT n )
 {
     resource = LFD_Advance( resource, 2 );
     if( resource )
@@ -1048,16 +1048,16 @@ static fontAlias* XFONT_CreateAlias( LPCSTR lpTypeFace, LPCSTR lpAlias )
 	else break;
     }
 
-    j = lstrlen32A(lpTypeFace) + 1;
+    j = lstrlenA(lpTypeFace) + 1;
     pfa->next = HeapAlloc( SystemHeap, 0, sizeof(fontAlias) +
-					  j + lstrlen32A(lpAlias) + 1 );
+					  j + lstrlenA(lpAlias) + 1 );
     if((pfa = pfa->next))
     {
 	pfa->next = NULL;
 	pfa->faTypeFace = (LPSTR)(pfa + 1);
-	lstrcpy32A( pfa->faTypeFace, lpTypeFace );
+	lstrcpyA( pfa->faTypeFace, lpTypeFace );
         pfa->faAlias = pfa->faTypeFace + j;
-        lstrcpy32A( pfa->faAlias, lpAlias );
+        lstrcpyA( pfa->faAlias, lpAlias );
 
         TRACE(font, "\tadded alias '%s' for %s\n", lpAlias, lpTypeFace );
 
@@ -1086,7 +1086,7 @@ static void XFONT_LoadAliases( char** buffer, int *buf_size )
     char* lpResource, *lpAlias;
     char  subsection[32];
     int	  i = 0, j = 0;
-    BOOL32 bHaveAlias = TRUE, bSubst = FALSE;
+    BOOL bHaveAlias = TRUE, bSubst = FALSE;
 
     if( *buf_size < 128 )
     {
@@ -1107,7 +1107,7 @@ static void XFONT_LoadAliases( char** buffer, int *buf_size )
 	{
 	    /* then WINE.CONF */
 
-	    wsprintf32A( subsection, "%s%i", INIAliasSection, i++ );
+	    wsprintfA( subsection, "%s%i", INIAliasSection, i++ );
 
 	    if( (bHaveAlias = PROFILE_GetWineIniString( INIFontSection, 
 					subsection, "", *buffer, 128 )) )
@@ -1166,7 +1166,7 @@ static void XFONT_LoadAliases( char** buffer, int *buf_size )
                         TRACE(font, "\tsubstituted '%s' with %s\n",
 						frMatch->lfFaceName, lpAlias );
 
-			lstrcpyn32A( frMatch->lfFaceName, lpAlias, LF_FACESIZE );
+			lstrcpynA( frMatch->lfFaceName, lpAlias, LF_FACESIZE );
 			frMatch->fr_flags |= FR_NAMESET;
 		    }
 		    else
@@ -1209,7 +1209,7 @@ static void XFONT_LoadPenalties( char** buffer, int *buf_size )
     }
     do
     {
-	wsprintf32A( subsection, "%s%i", INIIgnoreSection, i++ );
+	wsprintfA( subsection, "%s%i", INIIgnoreSection, i++ );
 
 	if( PROFILE_GetWineIniString( INIFontSection,
 				subsection, "", *buffer, 255 ) )
@@ -1268,7 +1268,7 @@ static char* XFONT_UserMetricsCache( char* buffer, int* buf_size )
  *
  * INIT ONLY
  */
-static BOOL32 XFONT_ReadCachedMetrics( int fd, int res, unsigned x_checksum, int x_count )
+static BOOL XFONT_ReadCachedMetrics( int fd, int res, unsigned x_checksum, int x_count )
 {
     if( fd >= 0 )
     {
@@ -1311,7 +1311,7 @@ static BOOL32 XFONT_ReadCachedMetrics( int fd, int res, unsigned x_checksum, int
 
 			   pfi->df.dfFace = pfr->lfFaceName;
 			   pfi->df.dfHorizRes = pfi->df.dfVertRes = res;
-			   pfi->df.dfPoints = (INT16)(((INT32)(pfi->df.dfPixHeight -
+			   pfi->df.dfPoints = (INT16)(((INT)(pfi->df.dfPixHeight -
 				pfi->df.dfInternalLeading) * 72 + (res >> 1)) / res );
 			   pfi->next = pfi + 1;
 
@@ -1363,7 +1363,7 @@ fail:
  *
  * INIT ONLY
  */
-static BOOL32 XFONT_WriteCachedMetrics( int fd, unsigned x_checksum, int x_count, int n_ff )
+static BOOL XFONT_WriteCachedMetrics( int fd, unsigned x_checksum, int x_count, int n_ff )
 {
     fontResource* pfr;
     fontInfo* pfi;
@@ -1643,7 +1643,7 @@ static int XFONT_BuildDefaultAliases( char** buffer, int* buf_size )
  *
  * Initialize font resource list and allocate font cache.
  */
-BOOL32 X11DRV_FONT_Init( DeviceCaps* pDevCaps )
+BOOL X11DRV_FONT_Init( DeviceCaps* pDevCaps )
 {
   XFontStruct*	x_fs;
   fontResource* fr, *pfr;
@@ -1729,7 +1729,7 @@ BOOL32 X11DRV_FONT_Init( DeviceCaps* pDevCaps )
 	   fr = (fontResource*) HeapAlloc(SystemHeap, 0, sizeof(fontResource)); 
 	   memset(fr, 0, sizeof(fontResource));
 	   fr->resource = (char*) HeapAlloc(SystemHeap, 0, j + 1 );
-	   lstrcpyn32A( fr->resource, typeface, j + 1 );
+	   lstrcpynA( fr->resource, typeface, j + 1 );
 
 	   TRACE(font,"    family: %s\n", fr->resource );
 
@@ -1861,9 +1861,9 @@ void XFONT_RemoveFontResource( fontResource** ppfr )
  *
  * Compare two fonts (only parameters set by the XFONT_InitFontInfo()).
  */
-static INT32 XFONT_IsSubset(fontInfo* match, fontInfo* fi)
+static INT XFONT_IsSubset(fontInfo* match, fontInfo* fi)
 {
-  INT32           m;
+  INT           m;
 
   /* 0 - keep both, 1 - keep match, -1 - keep fi */
 
@@ -1901,14 +1901,14 @@ static INT32 XFONT_IsSubset(fontInfo* match, fontInfo* fi)
  * NOTE: you can experiment with different penalty weights to see what happens.
  * http://premium.microsoft.com/msdn/library/techart/f365/f36b/f37b/d38b/sa8bf.htm
  */
-static UINT32 XFONT_Match( fontMatch* pfm )
+static UINT XFONT_Match( fontMatch* pfm )
 {
    fontInfo*    pfi = pfm->pfi;         /* device font to match */
    LPLOGFONT16  plf = pfm->plf;         /* wanted logical font */
-   UINT32       penalty = 0;
-   BOOL32       bR6 = pfm->flags & FO_MATCH_XYINDEP;    /* from TextCaps */
-   BOOL32       bScale = pfi->fi_flags & FI_SCALABLE;
-   INT32        d, h;
+   UINT       penalty = 0;
+   BOOL       bR6 = pfm->flags & FO_MATCH_XYINDEP;    /* from TextCaps */
+   BOOL       bScale = pfi->fi_flags & FI_SCALABLE;
+   INT        d, h;
 
    TRACE(font,"\t[ %-2ipt h=%-3i w=%-3i %s%s]\n", pfi->df.dfPoints,
 		 pfi->df.dfPixHeight, pfi->df.dfAvgWidth,
@@ -2017,10 +2017,10 @@ static UINT32 XFONT_Match( fontMatch* pfm )
  *
  * Scan a particular font resource for the best match.
  */
-static UINT32 XFONT_MatchFIList( fontMatch* pfm )
+static UINT XFONT_MatchFIList( fontMatch* pfm )
 {
-  BOOL32        skipRaster = (pfm->flags & FO_MATCH_NORASTER);
-  UINT32        current_score, score = (UINT32)(-1);
+  BOOL        skipRaster = (pfm->flags & FO_MATCH_NORASTER);
+  UINT        current_score, score = (UINT)(-1);
   UINT16        origflags = pfm->flags; /* Preserve FO_MATCH_XYINDEP */
   fontMatch     fm = *pfm;
 
@@ -2105,7 +2105,7 @@ static fontResource* XFONT_FindFIList( fontResource* pfr, const char* pTypeFace 
  *
  * Scan font resource tree.
  */
-static BOOL32 XFONT_MatchDeviceFont( fontResource* start, fontMatch* pfm )
+static BOOL XFONT_MatchDeviceFont( fontResource* start, fontMatch* pfm )
 {
     fontResource**	ppfr;
     fontMatch           fm = *pfm;
@@ -2140,7 +2140,7 @@ static BOOL32 XFONT_MatchDeviceFont( fontResource* start, fontMatch* pfm )
 
     if( !pfm->pfi )      /* match all available fonts */
     {
-        UINT32          current_score, score = (UINT32)(-1);
+        UINT          current_score, score = (UINT)(-1);
 
         fm.flags |= FO_MATCH_PAF;
         for( ppfr = &fontList; *ppfr && score; ppfr = &(*ppfr)->next )
@@ -2295,7 +2295,7 @@ static fontObject* XFONT_GetCacheEntry()
 
 static int XFONT_ReleaseCacheEntry(fontObject* pfo)
 {
-    UINT32	u = (UINT32)(pfo - fontCache);
+    UINT	u = (UINT)(pfo - fontCache);
 
     if( u < fontCacheSize ) return (--fontCache[u].count);
     return -1;
@@ -2304,7 +2304,7 @@ static int XFONT_ReleaseCacheEntry(fontObject* pfo)
 /**********************************************************************
  *	XFONT_SetX11Trans
  */
-static BOOL32 XFONT_SetX11Trans( fontObject *pfo )
+static BOOL XFONT_SetX11Trans( fontObject *pfo )
 {
   char *fontName;
   Atom nameAtom;
@@ -2352,7 +2352,7 @@ static X_PHYSFONT XFONT_RealizeFont( LPLOGFONT16 plf )
     if( !pfo )
     {
 	fontMatch	fm = { NULL, NULL, 0, 0, plf};
-	INT32		i, index;
+	INT		i, index;
 
 	if( XTextCaps & TC_SF_X_YINDEP ) fm.flags = FO_MATCH_XYINDEP;
 
@@ -2364,7 +2364,7 @@ static X_PHYSFONT XFONT_RealizeFont( LPLOGFONT16 plf )
 	    
 	    if( lpLFD ) /* initialize entry and load font */
 	    {
-		UINT32	uRelaxLevel = 0;
+		UINT	uRelaxLevel = 0;
 
 		TRACE(font,"(%u) '%s' h=%i weight=%i %s\n",
 			     plf->lfCharSet, plf->lfFaceName, plf->lfHeight, 
@@ -2446,7 +2446,7 @@ static X_PHYSFONT XFONT_RealizeFont( LPLOGFONT16 plf )
 
 	if( !pfo ) /* couldn't get a new entry, get one of the cached fonts */
 	{
-	    UINT32		current_score, score = (UINT32)(-1);
+	    UINT		current_score, score = (UINT)(-1);
 
 	    i = index = fontMRU; 
 	    fm.flags |= FO_MATCH_PAF;
@@ -2514,9 +2514,9 @@ LPIFONTINFO16 XFONT_GetFontInfo( X_PHYSFONT pFont )
 /***********************************************************************
  *           X11DRV_FONT_SelectObject
  */
-HFONT32 X11DRV_FONT_SelectObject( DC* dc, HFONT32 hfont, FONTOBJ* font )
+HFONT X11DRV_FONT_SelectObject( DC* dc, HFONT hfont, FONTOBJ* font )
 {
-    HFONT32 hPrevFont = 0;
+    HFONT hPrevFont = 0;
     LOGFONT16 lf;
     X11DRV_PDEVICE *physDev = (X11DRV_PDEVICE *)dc->physDev;
 
@@ -2544,13 +2544,13 @@ HFONT32 X11DRV_FONT_SelectObject( DC* dc, HFONT32 hfont, FONTOBJ* font )
  *
  *           X11DRV_EnumDeviceFonts
  */
-BOOL32	X11DRV_EnumDeviceFonts( DC* dc, LPLOGFONT16 plf, 
+BOOL	X11DRV_EnumDeviceFonts( DC* dc, LPLOGFONT16 plf, 
 				        DEVICEFONTENUMPROC proc, LPARAM lp )
 {
     ENUMLOGFONTEX16	lf;
     NEWTEXTMETRIC16	tm;
     fontResource* 	pfr = fontList;
-    BOOL32	  	b, bRet = 0;
+    BOOL	  	b, bRet = 0;
 
     if( plf->lfFaceName[0] )
     {
@@ -2590,8 +2590,8 @@ BOOL32	X11DRV_EnumDeviceFonts( DC* dc, LPLOGFONT16 plf,
 /***********************************************************************
  *           X11DRV_GetTextExtentPoint
  */
-BOOL32 X11DRV_GetTextExtentPoint( DC *dc, LPCSTR str, INT32 count,
-                                  LPSIZE32 size )
+BOOL X11DRV_GetTextExtentPoint( DC *dc, LPCSTR str, INT count,
+                                  LPSIZE size )
 {
     X11DRV_PDEVICE *physDev = (X11DRV_PDEVICE *)dc->physDev;
     fontObject* pfo = XFONT_GetFontObject( physDev->font );
@@ -2607,7 +2607,7 @@ BOOL32 X11DRV_GetTextExtentPoint( DC *dc, LPCSTR str, INT32 count,
 			   dc->wndExtY / dc->vportExtY);
 	} else {
 
-	    INT32 i;
+	    INT i;
 	    float x = 0.0, y = 0.0;
 	    for(i = 0; i < count; i++) {
 	        x += pfo->fs->per_char ? 
@@ -2631,7 +2631,7 @@ BOOL32 X11DRV_GetTextExtentPoint( DC *dc, LPCSTR str, INT32 count,
 /***********************************************************************
  *           X11DRV_GetTextMetrics
  */
-BOOL32 X11DRV_GetTextMetrics(DC *dc, TEXTMETRIC32A *metrics)
+BOOL X11DRV_GetTextMetrics(DC *dc, TEXTMETRICA *metrics)
 {
     X11DRV_PDEVICE *physDev = (X11DRV_PDEVICE *)dc->physDev;
 
@@ -2649,8 +2649,8 @@ BOOL32 X11DRV_GetTextMetrics(DC *dc, TEXTMETRIC32A *metrics)
 /***********************************************************************
  *           X11DRV_GetCharWidth
  */
-BOOL32 X11DRV_GetCharWidth( DC *dc, UINT32 firstChar, UINT32 lastChar,
-                            LPINT32 buffer )
+BOOL X11DRV_GetCharWidth( DC *dc, UINT firstChar, UINT lastChar,
+                            LPINT buffer )
 {
     X11DRV_PDEVICE *physDev = (X11DRV_PDEVICE *)dc->physDev;
     fontObject* pfo = XFONT_GetFontObject( physDev->font );
@@ -2716,14 +2716,14 @@ BOOL32 X11DRV_GetCharWidth( DC *dc, UINT32 firstChar, UINT32 lastChar,
  */
 INT16 WINAPI AddFontResource16( LPCSTR filename )
 {
-    return AddFontResource32A( filename );
+    return AddFontResourceA( filename );
 }
 
 
 /***********************************************************************
  *           AddFontResource32A    (GDI32.2)
  */
-INT32 WINAPI AddFontResource32A( LPCSTR str )
+INT WINAPI AddFontResourceA( LPCSTR str )
 {
     FIXME(font, "(%s): stub\n", debugres_a(str));
     return 1;
@@ -2733,7 +2733,7 @@ INT32 WINAPI AddFontResource32A( LPCSTR str )
 /***********************************************************************
  *           AddFontResource32W    (GDI32.4)
  */
-INT32 WINAPI AddFontResource32W( LPCWSTR str )
+INT WINAPI AddFontResourceW( LPCWSTR str )
 {
     FIXME(font, "(%s): stub\n", debugres_w(str) );
     return 1;
@@ -2752,7 +2752,7 @@ BOOL16 WINAPI RemoveFontResource16( SEGPTR str )
 /***********************************************************************
  *           RemoveFontResource32A    (GDI32.284)
  */
-BOOL32 WINAPI RemoveFontResource32A( LPCSTR str )
+BOOL WINAPI RemoveFontResourceA( LPCSTR str )
 {
 /*  This is how it should look like */
 /*
@@ -2784,7 +2784,7 @@ BOOL32 WINAPI RemoveFontResource32A( LPCSTR str )
 /***********************************************************************
  *           RemoveFontResource32W    (GDI32.286)
  */
-BOOL32 WINAPI RemoveFontResource32W( LPCWSTR str )
+BOOL WINAPI RemoveFontResourceW( LPCWSTR str )
 {
     FIXME(font, "(%s): stub\n", debugres_w(str) );
     return TRUE;

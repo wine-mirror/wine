@@ -35,9 +35,9 @@ typedef enum
 
 typedef struct
 {
-    UINT32         flags;
-    UINT32         width;
-    UINT32         precision;
+    UINT         flags;
+    UINT         width;
+    UINT         precision;
     WPRINTF_TYPE   type;
 } WPRINTF_FORMAT;
 
@@ -53,7 +53,7 @@ static const WCHAR null_stringW[] = { '(', 'n', 'u', 'l', 'l', ')', 0 };
  *
  * Return value is the length of the format specification in characters.
  */
-static INT32 WPRINTF_ParseFormatA( LPCSTR format, WPRINTF_FORMAT *res )
+static INT WPRINTF_ParseFormatA( LPCSTR format, WPRINTF_FORMAT *res )
 {
     LPCSTR p = format;
 
@@ -114,7 +114,7 @@ static INT32 WPRINTF_ParseFormatA( LPCSTR format, WPRINTF_FORMAT *res )
         p--;  /* print format as normal char */
         break;
     }
-    return (INT32)(p - format) + 1;
+    return (INT)(p - format) + 1;
 }
 
 
@@ -127,7 +127,7 @@ static INT32 WPRINTF_ParseFormatA( LPCSTR format, WPRINTF_FORMAT *res )
  *
  * Return value is the length of the format specification in characters.
  */
-static INT32 WPRINTF_ParseFormatW( LPCWSTR format, WPRINTF_FORMAT *res )
+static INT WPRINTF_ParseFormatW( LPCWSTR format, WPRINTF_FORMAT *res )
 {
     LPCWSTR p = format;
 
@@ -186,17 +186,17 @@ static INT32 WPRINTF_ParseFormatW( LPCWSTR format, WPRINTF_FORMAT *res )
         p--;  /* print format as normal char */
         break;
     }
-    return (INT32)(p - format) + 1;
+    return (INT)(p - format) + 1;
 }
 
 
 /***********************************************************************
  *           WPRINTF_GetLen
  */
-static UINT32 WPRINTF_GetLen( WPRINTF_FORMAT *format, LPCVOID arg,
-                              LPSTR number, UINT32 maxlen )
+static UINT WPRINTF_GetLen( WPRINTF_FORMAT *format, LPCVOID arg,
+                              LPSTR number, UINT maxlen )
 {
-    UINT32 len;
+    UINT len;
 
     if (format->flags & WPRINTF_LEFTALIGN) format->flags &= ~WPRINTF_ZEROPAD;
     if (format->width > maxlen) format->width = maxlen;
@@ -218,15 +218,15 @@ static UINT32 WPRINTF_GetLen( WPRINTF_FORMAT *format, LPCVOID arg,
         if (len > maxlen) len = maxlen;
         return (format->precision = len);
     case WPR_SIGNED:
-        len = sprintf( number, "%d", *(INT32 *)arg );
+        len = sprintf( number, "%d", *(INT *)arg );
         break;
     case WPR_UNSIGNED:
-        len = sprintf( number, "%u", *(UINT32 *)arg );
+        len = sprintf( number, "%u", *(UINT *)arg );
         break;
     case WPR_HEXA:
         len = sprintf( number,
                         (format->flags & WPRINTF_UPPER_HEX) ? "%X" : "%x",
-                        *(UINT32 *)arg );
+                        *(UINT *)arg );
         if (format->flags & WPRINTF_PREFIX_HEX) len += 2;
         break;
     default:
@@ -258,7 +258,7 @@ static LPVOID WPRINTF_ExtractVAPtr( WPRINTF_FORMAT *format, va_list* args )
         case WPR_HEXA:
         case WPR_SIGNED:
         case WPR_UNSIGNED:
-            return (LPVOID)va_arg( *args, INT32 ); 
+            return (LPVOID)va_arg( *args, INT ); 
         default:
             return NULL;
     }
@@ -272,7 +272,7 @@ INT16 WINAPI wvsnprintf16( LPSTR buffer, UINT16 maxlen, LPCSTR spec,
 {
     WPRINTF_FORMAT format;
     LPSTR p = buffer;
-    UINT32 i, len;
+    UINT i, len;
     CHAR number[20];
     DWORD cur_arg;
 
@@ -297,14 +297,14 @@ INT16 WINAPI wvsnprintf16( LPSTR buffer, UINT16 maxlen, LPCSTR spec,
         case WPR_SIGNED:
             if (!(format.flags & WPRINTF_LONG))
             {
-                cur_arg = (DWORD)(INT32)VA_ARG16( args, INT16 );
+                cur_arg = (DWORD)(INT)VA_ARG16( args, INT16 );
                 break;
             }
             /* fall through */
         case WPR_HEXA:
         case WPR_UNSIGNED:
             if (format.flags & WPRINTF_LONG)
-                cur_arg = (DWORD)VA_ARG16( args, UINT32 );
+                cur_arg = (DWORD)VA_ARG16( args, UINT );
             else
                 cur_arg = (DWORD)VA_ARG16( args, UINT16 );
             break;
@@ -354,19 +354,19 @@ INT16 WINAPI wvsnprintf16( LPSTR buffer, UINT16 maxlen, LPCSTR spec,
         maxlen -= len;
     }
     *p = 0;
-    return (maxlen > 1) ? (INT32)(p - buffer) : -1;
+    return (maxlen > 1) ? (INT)(p - buffer) : -1;
 }
 
 
 /***********************************************************************
  *           wvsnprintf32A   (Not a Windows API)
  */
-INT32 WINAPI wvsnprintf32A( LPSTR buffer, UINT32 maxlen, LPCSTR spec,
+INT WINAPI wvsnprintfA( LPSTR buffer, UINT maxlen, LPCSTR spec,
                             va_list args )
 {
     WPRINTF_FORMAT format;
     LPSTR p = buffer;
-    UINT32 i, len;
+    UINT i, len;
     CHAR number[20];
     LPVOID argPtr = NULL;
 
@@ -431,19 +431,19 @@ INT32 WINAPI wvsnprintf32A( LPSTR buffer, UINT32 maxlen, LPCSTR spec,
     }
     *p = 0;
     TRACE(string,"%s\n",buffer);
-    return (maxlen > 1) ? (INT32)(p - buffer) : -1;
+    return (maxlen > 1) ? (INT)(p - buffer) : -1;
 }
 
 
 /***********************************************************************
  *           wvsnprintf32W   (Not a Windows API)
  */
-INT32 WINAPI wvsnprintf32W( LPWSTR buffer, UINT32 maxlen, LPCWSTR spec,
+INT WINAPI wvsnprintfW( LPWSTR buffer, UINT maxlen, LPCWSTR spec,
                             va_list args )
 {
     WPRINTF_FORMAT format;
     LPWSTR p = buffer;
-    UINT32 i, len;
+    UINT i, len;
     CHAR number[20];
 
     while (*spec && (maxlen > 1))
@@ -493,7 +493,7 @@ INT32 WINAPI wvsnprintf32W( LPWSTR buffer, UINT32 maxlen, LPCWSTR spec,
         case WPR_UNSIGNED:
             for (i = len; i < format.precision; i++, maxlen--) *p++ = '0';
             for (i = 0; i < len; i++) *p++ = (WCHAR)number[i];
-            (void)va_arg( args, INT32 ); /* Go to the next arg */
+            (void)va_arg( args, INT ); /* Go to the next arg */
             break;
         case WPR_UNKNOWN:
             continue;
@@ -504,7 +504,7 @@ INT32 WINAPI wvsnprintf32W( LPWSTR buffer, UINT32 maxlen, LPCWSTR spec,
         maxlen -= len;
     }
     *p = 0;
-    return (maxlen > 1) ? (INT32)(p - buffer) : -1;
+    return (maxlen > 1) ? (INT)(p - buffer) : -1;
 }
 
 
@@ -521,20 +521,20 @@ INT16 WINAPI wvsprintf16( LPSTR buffer, LPCSTR spec, LPCVOID args )
 /***********************************************************************
  *           wvsprintf32A   (USER32.587)
  */
-INT32 WINAPI wvsprintf32A( LPSTR buffer, LPCSTR spec, va_list args )
+INT WINAPI wvsprintfA( LPSTR buffer, LPCSTR spec, va_list args )
 {
     TRACE(string,"for %p got:\n",buffer);
-    return wvsnprintf32A( buffer, 0xffffffff, spec, args );
+    return wvsnprintfA( buffer, 0xffffffff, spec, args );
 }
 
 
 /***********************************************************************
  *           wvsprintf32W   (USER32.588)
  */
-INT32 WINAPI wvsprintf32W( LPWSTR buffer, LPCWSTR spec, va_list args )
+INT WINAPI wvsprintfW( LPWSTR buffer, LPCWSTR spec, va_list args )
 {
     TRACE(string,"for %p got:\n",buffer);
-    return wvsnprintf32W( buffer, 0xffffffff, spec, args );
+    return wvsnprintfW( buffer, 0xffffffff, spec, args );
 }
 
 
@@ -550,7 +550,7 @@ INT16 WINAPIV wsprintf16( LPSTR buffer, LPCSTR spec, ... )
     TRACE(string,"for %p got:\n",buffer);
     va_start( valist, spec );
     /* Note: we call the 32-bit version, because the args are 32-bit */
-    res = (INT16)wvsnprintf32A( buffer, 0xffffffff, spec, valist );
+    res = (INT16)wvsnprintfA( buffer, 0xffffffff, spec, valist );
     va_end( valist );
     return res;
 }
@@ -576,14 +576,14 @@ INT16 WINAPIV WIN16_wsprintf16(void)
 /***********************************************************************
  *           wsprintf32A   (USER32.585)
  */
-INT32 WINAPIV wsprintf32A( LPSTR buffer, LPCSTR spec, ... )
+INT WINAPIV wsprintfA( LPSTR buffer, LPCSTR spec, ... )
 {
     va_list valist;
-    INT32 res;
+    INT res;
 
     TRACE(string,"for %p got:\n",buffer);
     va_start( valist, spec );
-    res = wvsnprintf32A( buffer, 0xffffffff, spec, valist );
+    res = wvsnprintfA( buffer, 0xffffffff, spec, valist );
     va_end( valist );
     return res;
 }
@@ -592,14 +592,14 @@ INT32 WINAPIV wsprintf32A( LPSTR buffer, LPCSTR spec, ... )
 /***********************************************************************
  *           wsprintf32W   (USER32.586)
  */
-INT32 WINAPIV wsprintf32W( LPWSTR buffer, LPCWSTR spec, ... )
+INT WINAPIV wsprintfW( LPWSTR buffer, LPCWSTR spec, ... )
 {
     va_list valist;
-    INT32 res;
+    INT res;
 
     TRACE(string,"wsprintf32W for %p\n",buffer);
     va_start( valist, spec );
-    res = wvsnprintf32W( buffer, 0xffffffff, spec, valist );
+    res = wvsnprintfW( buffer, 0xffffffff, spec, valist );
     va_end( valist );
     return res;
 }
@@ -623,13 +623,13 @@ INT16 WINAPIV wsnprintf16( LPSTR buffer, UINT16 maxlen, LPCSTR spec, ... )
 /***********************************************************************
  *           wsnprintf32A   (Not a Windows API)
  */
-INT32 WINAPIV wsnprintf32A( LPSTR buffer, UINT32 maxlen, LPCSTR spec, ... )
+INT WINAPIV wsnprintfA( LPSTR buffer, UINT maxlen, LPCSTR spec, ... )
 {
     va_list valist;
-    INT32 res;
+    INT res;
 
     va_start( valist, spec );
-    res = wvsnprintf32A( buffer, maxlen, spec, valist );
+    res = wvsnprintfA( buffer, maxlen, spec, valist );
     va_end( valist );
     return res;
 }
@@ -638,13 +638,13 @@ INT32 WINAPIV wsnprintf32A( LPSTR buffer, UINT32 maxlen, LPCSTR spec, ... )
 /***********************************************************************
  *           wsnprintf32W   (Not a Windows API)
  */
-INT32 WINAPIV wsnprintf32W( LPWSTR buffer, UINT32 maxlen, LPCWSTR spec, ... )
+INT WINAPIV wsnprintfW( LPWSTR buffer, UINT maxlen, LPCWSTR spec, ... )
 {
     va_list valist;
-    INT32 res;
+    INT res;
 
     va_start( valist, spec );
-    res = wvsnprintf32W( buffer, maxlen, spec, valist );
+    res = wvsnprintfW( buffer, maxlen, spec, valist );
     va_end( valist );
     return res;
 }

@@ -73,7 +73,7 @@ static HBITMAP16 hbitmapRestoreD = 0;
  * Compute the size of the window rectangle from the size of the
  * client rectangle.
  */
-static void NC_AdjustRect( LPRECT16 rect, DWORD style, BOOL32 menu,
+static void NC_AdjustRect( LPRECT16 rect, DWORD style, BOOL menu,
                            DWORD exStyle )
 {
     if (TWEAK_WineLook > WIN31_LOOK)
@@ -142,7 +142,7 @@ static void NC_AdjustRect( LPRECT16 rect, DWORD style, BOOL32 menu,
  *****************************************************************************/
 
 static void
-NC_AdjustRectOuter95 (LPRECT16 rect, DWORD style, BOOL32 menu, DWORD exStyle)
+NC_AdjustRectOuter95 (LPRECT16 rect, DWORD style, BOOL menu, DWORD exStyle)
 {
     if(style & WS_ICONIC) return;
 
@@ -236,12 +236,12 @@ NC_AdjustRectInner95 (LPRECT16 rect, DWORD style, DWORD exStyle)
 BOOL16 WINAPI
 DrawCaption16 (HWND16 hwnd, HDC16 hdc, const RECT16 *rect, UINT16 uFlags)
 {
-    RECT32 rect32;
+    RECT rect32;
 
     if (rect)
 	CONV_RECT16TO32 (rect, &rect32);
 
-    return (BOOL16)DrawCaptionTemp32A (hwnd, hdc, rect ? &rect32 : NULL,
+    return (BOOL16)DrawCaptionTempA (hwnd, hdc, rect ? &rect32 : NULL,
 				       0, 0, NULL, uFlags & 0x1F);
 }
 
@@ -260,10 +260,10 @@ DrawCaption16 (HWND16 hwnd, HDC16 hdc, const RECT16 *rect, UINT16 uFlags)
  *     Failure:
  */
 
-BOOL32 WINAPI
-DrawCaption32 (HWND32 hwnd, HDC32 hdc, const RECT32 *lpRect, UINT32 uFlags)
+BOOL WINAPI
+DrawCaption (HWND hwnd, HDC hdc, const RECT *lpRect, UINT uFlags)
 {
-    return DrawCaptionTemp32A (hwnd, hdc, lpRect, 0, 0, NULL, uFlags & 0x1F);
+    return DrawCaptionTempA (hwnd, hdc, lpRect, 0, 0, NULL, uFlags & 0x1F);
 }
 
 
@@ -281,12 +281,12 @@ BOOL16 WINAPI
 DrawCaptionTemp16 (HWND16 hwnd, HDC16 hdc, const RECT16 *rect, HFONT16 hFont,
 		   HICON16 hIcon, LPCSTR str, UINT16 uFlags)
 {
-    RECT32 rect32;
+    RECT rect32;
 
     if (rect)
 	CONV_RECT16TO32(rect,&rect32);
 
-    return (BOOL16)DrawCaptionTemp32A (hwnd, hdc, rect?&rect32:NULL, hFont,
+    return (BOOL16)DrawCaptionTempA (hwnd, hdc, rect?&rect32:NULL, hFont,
 				       hIcon, str, uFlags & 0x1F);
 }
 
@@ -301,53 +301,53 @@ DrawCaptionTemp16 (HWND16 hwnd, HDC16 hdc, const RECT16 *rect, HFONT16 hFont,
  *     Failure:
  */
 
-BOOL32 WINAPI
-DrawCaptionTemp32A (HWND32 hwnd, HDC32 hdc, const RECT32 *rect, HFONT32 hFont,
-		    HICON32 hIcon, LPCSTR str, UINT32 uFlags)
+BOOL WINAPI
+DrawCaptionTempA (HWND hwnd, HDC hdc, const RECT *rect, HFONT hFont,
+		    HICON hIcon, LPCSTR str, UINT uFlags)
 {
-    RECT32   rc = *rect;
+    RECT   rc = *rect;
 
     TRACE (nonclient, "(%08x,%08x,%p,%08x,%08x,\"%s\",%08x)\n",
 	   hwnd, hdc, rect, hFont, hIcon, str, uFlags);
 
     /* drawing background */
     if (uFlags & DC_INBUTTON) {
-	FillRect32 (hdc, &rc, GetSysColorBrush32 (COLOR_3DFACE));
+	FillRect (hdc, &rc, GetSysColorBrush (COLOR_3DFACE));
 
 	if (uFlags & DC_ACTIVE) {
-	    HBRUSH32 hbr = SelectObject32 (hdc, CACHE_GetPattern55AABrush ());
-	    PatBlt32 (hdc, rc.left, rc.top,
+	    HBRUSH hbr = SelectObject (hdc, CACHE_GetPattern55AABrush ());
+	    PatBlt (hdc, rc.left, rc.top,
 		      rc.right-rc.left, rc.bottom-rc.top, 0xFA0089);
-	    SelectObject32 (hdc, hbr);
+	    SelectObject (hdc, hbr);
 	}
     }
     else {
-	FillRect32 (hdc, &rc, GetSysColorBrush32 ((uFlags & DC_ACTIVE) ?
+	FillRect (hdc, &rc, GetSysColorBrush ((uFlags & DC_ACTIVE) ?
 		    COLOR_ACTIVECAPTION : COLOR_INACTIVECAPTION));
     }
 
 
     /* drawing icon */
     if ((uFlags & DC_ICON) && !(uFlags & DC_SMALLCAP)) {
-	POINT32 pt;
+	POINT pt;
 
 	pt.x = rc.left + 2;
 	pt.y = (rc.bottom + rc.top - sysMetrics[SM_CYSMICON]) / 2;
 
 	if (hIcon) {
-	    DrawIconEx32 (hdc, pt.x, pt.y, hIcon, sysMetrics[SM_CXSMICON],
+	    DrawIconEx (hdc, pt.x, pt.y, hIcon, sysMetrics[SM_CXSMICON],
 			  sysMetrics[SM_CYSMICON], 0, 0, DI_NORMAL);
 	}
 	else {
 	    WND *wndPtr = WIN_FindWndPtr(hwnd);
-	    HICON32 hAppIcon = 0;
+	    HICON hAppIcon = 0;
 
 	    if (wndPtr->class->hIconSm)
 		hAppIcon = wndPtr->class->hIconSm;
 	    else if (wndPtr->class->hIcon)
 		hAppIcon = wndPtr->class->hIcon;
 
-	    DrawIconEx32 (hdc, pt.x, pt.y, hAppIcon, sysMetrics[SM_CXSMICON],
+	    DrawIconEx (hdc, pt.x, pt.y, hAppIcon, sysMetrics[SM_CXSMICON],
 			  sysMetrics[SM_CYSMICON], 0, 0, DI_NORMAL);
 	}
 
@@ -356,44 +356,44 @@ DrawCaptionTemp32A (HWND32 hwnd, HDC32 hdc, const RECT32 *rect, HFONT32 hFont,
 
     /* drawing text */
     if (uFlags & DC_TEXT) {
-	HFONT32 hOldFont;
+	HFONT hOldFont;
 
 	if (uFlags & DC_INBUTTON)
-	    SetTextColor32 (hdc, GetSysColor32 (COLOR_BTNTEXT));
+	    SetTextColor (hdc, GetSysColor (COLOR_BTNTEXT));
 	else if (uFlags & DC_ACTIVE)
-	    SetTextColor32 (hdc, GetSysColor32 (COLOR_CAPTIONTEXT));
+	    SetTextColor (hdc, GetSysColor (COLOR_CAPTIONTEXT));
 	else
-	    SetTextColor32 (hdc, GetSysColor32 (COLOR_INACTIVECAPTIONTEXT));
+	    SetTextColor (hdc, GetSysColor (COLOR_INACTIVECAPTIONTEXT));
 
-	SetBkMode32 (hdc, TRANSPARENT);
+	SetBkMode (hdc, TRANSPARENT);
 
 	if (hFont)
-	    hOldFont = SelectObject32 (hdc, hFont);
+	    hOldFont = SelectObject (hdc, hFont);
 	else {
-	    NONCLIENTMETRICS32A nclm;
-	    HFONT32 hNewFont;
-	    nclm.cbSize = sizeof(NONCLIENTMETRICS32A);
-	    SystemParametersInfo32A (SPI_GETNONCLIENTMETRICS, 0, &nclm, 0);
-	    hNewFont = CreateFontIndirect32A ((uFlags & DC_SMALLCAP) ?
+	    NONCLIENTMETRICSA nclm;
+	    HFONT hNewFont;
+	    nclm.cbSize = sizeof(NONCLIENTMETRICSA);
+	    SystemParametersInfoA (SPI_GETNONCLIENTMETRICS, 0, &nclm, 0);
+	    hNewFont = CreateFontIndirectA ((uFlags & DC_SMALLCAP) ?
 		&nclm.lfSmCaptionFont : &nclm.lfCaptionFont);
-	    hOldFont = SelectObject32 (hdc, hNewFont);
+	    hOldFont = SelectObject (hdc, hNewFont);
 	}
 
 	if (str)
-	    DrawText32A (hdc, str, -1, &rc,
+	    DrawTextA (hdc, str, -1, &rc,
 			 DT_SINGLELINE | DT_VCENTER | DT_NOPREFIX | DT_LEFT);
 	else {
 	    CHAR szText[128];
-	    INT32 nLen;
-	    nLen = GetWindowText32A (hwnd, szText, 128);
-	    DrawText32A (hdc, szText, nLen, &rc,
+	    INT nLen;
+	    nLen = GetWindowTextA (hwnd, szText, 128);
+	    DrawTextA (hdc, szText, nLen, &rc,
 			 DT_SINGLELINE | DT_VCENTER | DT_NOPREFIX | DT_LEFT);
 	}
 
 	if (hFont)
-	    SelectObject32 (hdc, hOldFont);
+	    SelectObject (hdc, hOldFont);
 	else
-	    DeleteObject32 (SelectObject32 (hdc, hOldFont));
+	    DeleteObject (SelectObject (hdc, hOldFont));
     }
 
     /* drawing focus ??? */
@@ -414,12 +414,12 @@ DrawCaptionTemp32A (HWND32 hwnd, HDC32 hdc, const RECT32 *rect, HFONT32 hFont,
  *     Failure:
  */
 
-BOOL32 WINAPI
-DrawCaptionTemp32W (HWND32 hwnd, HDC32 hdc, const RECT32 *rect, HFONT32 hFont,
-		    HICON32 hIcon, LPCWSTR str, UINT32 uFlags)
+BOOL WINAPI
+DrawCaptionTempW (HWND hwnd, HDC hdc, const RECT *rect, HFONT hFont,
+		    HICON hIcon, LPCWSTR str, UINT uFlags)
 {
     LPSTR p = HEAP_strdupWtoA (GetProcessHeap (), 0, str);
-    BOOL32 res = DrawCaptionTemp32A (hwnd, hdc, rect, hFont, hIcon, p, uFlags);
+    BOOL res = DrawCaptionTempA (hwnd, hdc, rect, hFont, hIcon, p, uFlags);
     HeapFree (GetProcessHeap (), 0, p);
     return res;
 }
@@ -437,9 +437,9 @@ BOOL16 WINAPI AdjustWindowRect16( LPRECT16 rect, DWORD style, BOOL16 menu )
 /***********************************************************************
  *           AdjustWindowRect32    (USER32.2)
  */
-BOOL32 WINAPI AdjustWindowRect32( LPRECT32 rect, DWORD style, BOOL32 menu )
+BOOL WINAPI AdjustWindowRect( LPRECT rect, DWORD style, BOOL menu )
 {
-    return AdjustWindowRectEx32( rect, style, menu, 0 );
+    return AdjustWindowRectEx( rect, style, menu, 0 );
 }
 
 
@@ -476,11 +476,11 @@ BOOL16 WINAPI AdjustWindowRectEx16( LPRECT16 rect, DWORD style,
 /***********************************************************************
  *           AdjustWindowRectEx32    (USER32.3)
  */
-BOOL32 WINAPI AdjustWindowRectEx32( LPRECT32 rect, DWORD style,
-                                    BOOL32 menu, DWORD exStyle )
+BOOL WINAPI AdjustWindowRectEx( LPRECT rect, DWORD style,
+                                    BOOL menu, DWORD exStyle )
 {
     RECT16 rect16;
-    BOOL32 ret;
+    BOOL ret;
 
     CONV_RECT32TO16( rect, &rect16 );
     ret = AdjustWindowRectEx16( &rect16, style, (BOOL16)menu, exStyle );
@@ -494,7 +494,7 @@ BOOL32 WINAPI AdjustWindowRectEx32( LPRECT32 rect, DWORD style,
  *
  * Handle a WM_NCCALCSIZE message. Called from DefWindowProc().
  */
-LONG NC_HandleNCCalcSize( WND *pWnd, RECT32 *winRect )
+LONG NC_HandleNCCalcSize( WND *pWnd, RECT *winRect )
 {
     RECT16 tmpRect = { 0, 0, 0, 0 };
     LONG result = 0;
@@ -546,7 +546,7 @@ LONG NC_HandleNCCalcSize( WND *pWnd, RECT32 *winRect )
  * but without the borders (if any).
  * The rectangle is in window coordinates (for drawing with GetWindowDC()).
  */
-static void NC_GetInsideRect( HWND32 hwnd, RECT32 *rect )
+static void NC_GetInsideRect( HWND hwnd, RECT *rect )
 {
     WND * wndPtr = WIN_FindWndPtr( hwnd );
 
@@ -559,16 +559,16 @@ static void NC_GetInsideRect( HWND32 hwnd, RECT32 *rect )
     /* Remove frame from rectangle */
     if (HAS_DLGFRAME( wndPtr->dwStyle, wndPtr->dwExStyle ))
     {
-	InflateRect32( rect, -SYSMETRICS_CXDLGFRAME, -SYSMETRICS_CYDLGFRAME);
+	InflateRect( rect, -SYSMETRICS_CXDLGFRAME, -SYSMETRICS_CYDLGFRAME);
 	if (wndPtr->dwExStyle & WS_EX_DLGMODALFRAME)
-            InflateRect32( rect, -1, 0 );
+            InflateRect( rect, -1, 0 );
     }
     else
     {
 	if (HAS_THICKFRAME( wndPtr->dwStyle ))
-	    InflateRect32( rect, -SYSMETRICS_CXFRAME, -SYSMETRICS_CYFRAME );
+	    InflateRect( rect, -SYSMETRICS_CXFRAME, -SYSMETRICS_CYFRAME );
 	if (wndPtr->dwStyle & WS_BORDER)
-	    InflateRect32( rect, -SYSMETRICS_CXBORDER, -SYSMETRICS_CYBORDER );
+	    InflateRect( rect, -SYSMETRICS_CXBORDER, -SYSMETRICS_CYBORDER );
     }
 
     return;
@@ -584,7 +584,7 @@ static void NC_GetInsideRect( HWND32 hwnd, RECT32 *rect )
  */
 
 static void
-NC_GetInsideRect95 (HWND32 hwnd, RECT32 *rect)
+NC_GetInsideRect95 (HWND hwnd, RECT *rect)
 {
     WND * wndPtr = WIN_FindWndPtr( hwnd );
 
@@ -597,11 +597,11 @@ NC_GetInsideRect95 (HWND32 hwnd, RECT32 *rect)
     /* Remove frame from rectangle */
     if (HAS_FIXEDFRAME (wndPtr->dwStyle, wndPtr->dwExStyle ))
     {
-	InflateRect32( rect, -SYSMETRICS_CXFIXEDFRAME, -SYSMETRICS_CYFIXEDFRAME);
+	InflateRect( rect, -SYSMETRICS_CXFIXEDFRAME, -SYSMETRICS_CYFIXEDFRAME);
     }
     else if (HAS_SIZEFRAME (wndPtr->dwStyle))
     {
-	InflateRect32( rect, -SYSMETRICS_CXSIZEFRAME, -SYSMETRICS_CYSIZEFRAME );
+	InflateRect( rect, -SYSMETRICS_CXSIZEFRAME, -SYSMETRICS_CYSIZEFRAME );
 
 /*	if (wndPtr->dwStyle & WS_BORDER)
           InflateRect32( rect, -SYSMETRICS_CXBORDER, -SYSMETRICS_CYBORDER );*/
@@ -609,10 +609,10 @@ NC_GetInsideRect95 (HWND32 hwnd, RECT32 *rect)
 
     if (wndPtr->dwStyle & WS_CHILD) {
 	if (wndPtr->dwExStyle & WS_EX_CLIENTEDGE)
-	    InflateRect32 (rect, -SYSMETRICS_CXEDGE, -SYSMETRICS_CYEDGE);
+	    InflateRect (rect, -SYSMETRICS_CXEDGE, -SYSMETRICS_CYEDGE);
 
 	if (wndPtr->dwExStyle & WS_EX_STATICEDGE)
-	    InflateRect32 (rect, -SYSMETRICS_CXBORDER, -SYSMETRICS_CYBORDER);
+	    InflateRect (rect, -SYSMETRICS_CXBORDER, -SYSMETRICS_CYBORDER);
     }
 
     return;
@@ -905,7 +905,7 @@ NC_DoNCHitTest95 (WND *wndPtr, POINT16 pt )
  * Handle a WM_NCHITTEST message. Called from DefWindowProc().
  */
 LONG
-NC_HandleNCHitTest (HWND32 hwnd , POINT16 pt)
+NC_HandleNCHitTest (HWND hwnd , POINT16 pt)
 {
     WND *wndPtr = WIN_FindWndPtr (hwnd);
 
@@ -922,23 +922,23 @@ NC_HandleNCHitTest (HWND32 hwnd , POINT16 pt)
 /***********************************************************************
  *           NC_DrawSysButton
  */
-void NC_DrawSysButton( HWND32 hwnd, HDC32 hdc, BOOL32 down )
+void NC_DrawSysButton( HWND hwnd, HDC hdc, BOOL down )
 {
-    RECT32 rect;
-    HDC32 hdcMem;
-    HBITMAP32 hbitmap;
+    RECT rect;
+    HDC hdcMem;
+    HBITMAP hbitmap;
     WND *wndPtr = WIN_FindWndPtr( hwnd );
 
     if( !(wndPtr->flags & WIN_MANAGED) )
     {
       NC_GetInsideRect( hwnd, &rect );
-      hdcMem = CreateCompatibleDC32( hdc );
-      hbitmap = SelectObject32( hdcMem, hbitmapClose );
-      BitBlt32(hdc, rect.left, rect.top, SYSMETRICS_CXSIZE, SYSMETRICS_CYSIZE,
+      hdcMem = CreateCompatibleDC( hdc );
+      hbitmap = SelectObject( hdcMem, hbitmapClose );
+      BitBlt(hdc, rect.left, rect.top, SYSMETRICS_CXSIZE, SYSMETRICS_CYSIZE,
                hdcMem, (wndPtr->dwStyle & WS_CHILD) ? SYSMETRICS_CXSIZE : 0, 0,
                down ? NOTSRCCOPY : SRCCOPY );
-      SelectObject32( hdcMem, hbitmap );
-      DeleteDC32( hdcMem );
+      SelectObject( hdcMem, hbitmap );
+      DeleteDC( hdcMem );
     }
 }
 
@@ -946,23 +946,23 @@ void NC_DrawSysButton( HWND32 hwnd, HDC32 hdc, BOOL32 down )
 /***********************************************************************
  *           NC_DrawMaxButton
  */
-static void NC_DrawMaxButton( HWND32 hwnd, HDC16 hdc, BOOL32 down )
+static void NC_DrawMaxButton( HWND hwnd, HDC16 hdc, BOOL down )
 {
-    RECT32 rect;
+    RECT rect;
     WND *wndPtr = WIN_FindWndPtr( hwnd );
-    HDC32 hdcMem;
+    HDC hdcMem;
 
     if( !(wndPtr->flags & WIN_MANAGED) )
     {
       NC_GetInsideRect( hwnd, &rect );
-      hdcMem = CreateCompatibleDC32( hdc );
-      SelectObject32( hdcMem,  (IsZoomed32(hwnd) 
+      hdcMem = CreateCompatibleDC( hdc );
+      SelectObject( hdcMem,  (IsZoomed(hwnd) 
 			     ? (down ? hbitmapRestoreD : hbitmapRestore)
 			     : (down ? hbitmapMaximizeD : hbitmapMaximize)) );
-      BitBlt32( hdc, rect.right - SYSMETRICS_CXSIZE - 1, rect.top,
+      BitBlt( hdc, rect.right - SYSMETRICS_CXSIZE - 1, rect.top,
 		SYSMETRICS_CXSIZE + 1, SYSMETRICS_CYSIZE, hdcMem, 0, 0,
 		SRCCOPY );
-      DeleteDC32( hdcMem );
+      DeleteDC( hdcMem );
     }
 }
 
@@ -970,22 +970,22 @@ static void NC_DrawMaxButton( HWND32 hwnd, HDC16 hdc, BOOL32 down )
 /***********************************************************************
  *           NC_DrawMinButton
  */
-static void NC_DrawMinButton( HWND32 hwnd, HDC16 hdc, BOOL32 down )
+static void NC_DrawMinButton( HWND hwnd, HDC16 hdc, BOOL down )
 {
-    RECT32 rect;
+    RECT rect;
     WND *wndPtr = WIN_FindWndPtr( hwnd );
-    HDC32 hdcMem;
+    HDC hdcMem;
 
     if( !(wndPtr->flags & WIN_MANAGED) )
     {
       NC_GetInsideRect( hwnd, &rect );
-      hdcMem = CreateCompatibleDC32( hdc );
-      SelectObject32( hdcMem, (down ? hbitmapMinimizeD : hbitmapMinimize) );
+      hdcMem = CreateCompatibleDC( hdc );
+      SelectObject( hdcMem, (down ? hbitmapMinimizeD : hbitmapMinimize) );
       if (wndPtr->dwStyle & WS_MAXIMIZEBOX) rect.right -= SYSMETRICS_CXSIZE+1;
-      BitBlt32( hdc, rect.right - SYSMETRICS_CXSIZE - 1, rect.top,
+      BitBlt( hdc, rect.right - SYSMETRICS_CXSIZE - 1, rect.top,
 		SYSMETRICS_CXSIZE + 1, SYSMETRICS_CYSIZE, hdcMem, 0, 0,
 		SRCCOPY );
-      DeleteDC32( hdcMem );
+      DeleteDC( hdcMem );
     }
 }
 
@@ -1007,15 +1007,15 @@ static void NC_DrawMinButton( HWND32 hwnd, HDC16 hdc, BOOL32 down )
  *
  *****************************************************************************/
 
-BOOL32
-NC_DrawSysButton95 (HWND32 hwnd, HDC32 hdc, BOOL32 down)
+BOOL
+NC_DrawSysButton95 (HWND hwnd, HDC hdc, BOOL down)
 {
     WND *wndPtr = WIN_FindWndPtr( hwnd );
 
     if( !(wndPtr->flags & WIN_MANAGED) )
     {
-	HICON32  hIcon = 0;
-	RECT32 rect;
+	HICON  hIcon = 0;
+	RECT rect;
 
 	NC_GetInsideRect95( hwnd, &rect );
 
@@ -1025,7 +1025,7 @@ NC_DrawSysButton95 (HWND32 hwnd, HDC32 hdc, BOOL32 down)
 	    hIcon = wndPtr->class->hIcon;
 
 	if (hIcon)
-	    DrawIconEx32 (hdc, rect.left + 2, rect.top + 2, hIcon,
+	    DrawIconEx (hdc, rect.left + 2, rect.top + 2, hIcon,
 			  sysMetrics[SM_CXSMICON],
 			  sysMetrics[SM_CYSMICON],
 			  0, 0, DI_NORMAL);
@@ -1051,29 +1051,29 @@ NC_DrawSysButton95 (HWND32 hwnd, HDC32 hdc, BOOL32 down)
  *
  *****************************************************************************/
 
-void NC_DrawCloseButton95 (HWND32 hwnd, HDC32 hdc, BOOL32 down)
+void NC_DrawCloseButton95 (HWND hwnd, HDC hdc, BOOL down)
 {
-    RECT32 rect;
-    HDC32 hdcMem;
+    RECT rect;
+    HDC hdcMem;
     WND *wndPtr = WIN_FindWndPtr( hwnd );
 
     if( !(wndPtr->flags & WIN_MANAGED) )
     {
-	BITMAP32 bmp;
-	HBITMAP32 hBmp, hOldBmp;
+	BITMAP bmp;
+	HBITMAP hBmp, hOldBmp;
 
 	NC_GetInsideRect95( hwnd, &rect );
 
-	hdcMem = CreateCompatibleDC32( hdc );
+	hdcMem = CreateCompatibleDC( hdc );
 	hBmp = down ? hbitmapCloseD : hbitmapClose;
-	hOldBmp = SelectObject32 (hdcMem, hBmp);
-	GetObject32A (hBmp, sizeof(BITMAP32), &bmp);
-	BitBlt32 (hdc, rect.right - (sysMetrics[SM_CYCAPTION] + 1 + bmp.bmWidth) / 2,
+	hOldBmp = SelectObject (hdcMem, hBmp);
+	GetObjectA (hBmp, sizeof(BITMAP), &bmp);
+	BitBlt (hdc, rect.right - (sysMetrics[SM_CYCAPTION] + 1 + bmp.bmWidth) / 2,
 		  rect.top + (sysMetrics[SM_CYCAPTION] - 1 - bmp.bmHeight) / 2,
 		  bmp.bmWidth, bmp.bmHeight, hdcMem, 0, 0, down ? NOTSRCCOPY : SRCCOPY);
 
-	SelectObject32 (hdcMem, hOldBmp);
-	DeleteDC32 (hdcMem);
+	SelectObject (hdcMem, hOldBmp);
+	DeleteDC (hdcMem);
     }
 }
 
@@ -1097,33 +1097,33 @@ void NC_DrawCloseButton95 (HWND32 hwnd, HDC32 hdc, BOOL32 down)
  *
  *****************************************************************************/
 
-static void  NC_DrawMaxButton95(HWND32 hwnd,HDC16 hdc,BOOL32 down )
+static void  NC_DrawMaxButton95(HWND hwnd,HDC16 hdc,BOOL down )
 {
-    RECT32 rect;
-    HDC32 hdcMem;
+    RECT rect;
+    HDC hdcMem;
     WND *wndPtr = WIN_FindWndPtr( hwnd );
 
     if( !(wndPtr->flags & WIN_MANAGED))
     {
-        BITMAP32  bmp;
-        HBITMAP32  hBmp,hOldBmp;
+        BITMAP  bmp;
+        HBITMAP  hBmp,hOldBmp;
 
 	NC_GetInsideRect95( hwnd, &rect );
-	hdcMem = CreateCompatibleDC32( hdc );
-       hBmp = IsZoomed32(hwnd) ?
+	hdcMem = CreateCompatibleDC( hdc );
+       hBmp = IsZoomed(hwnd) ?
 				(down ? hbitmapRestoreD : hbitmapRestore ) :
                                (down ? hbitmapMaximizeD: hbitmapMaximize);
-	hOldBmp=SelectObject32( hdcMem, hBmp );
-	GetObject32A (hBmp, sizeof(BITMAP32), &bmp);
+	hOldBmp=SelectObject( hdcMem, hBmp );
+	GetObjectA (hBmp, sizeof(BITMAP), &bmp);
 
 	if (wndPtr->dwStyle & WS_SYSMENU)
 	    rect.right -= sysMetrics[SM_CYCAPTION] + 1;
 	
-	BitBlt32( hdc, rect.right - (sysMetrics[SM_CXSIZE] + bmp.bmWidth) / 2,
+	BitBlt( hdc, rect.right - (sysMetrics[SM_CXSIZE] + bmp.bmWidth) / 2,
 		  rect.top + (sysMetrics[SM_CYCAPTION] - 1 - bmp.bmHeight) / 2,
 		  bmp.bmWidth, bmp.bmHeight, hdcMem, 0, 0, SRCCOPY );
-	SelectObject32 (hdcMem, hOldBmp);
-	DeleteDC32( hdcMem );
+	SelectObject (hdcMem, hOldBmp);
+	DeleteDC( hdcMem );
     }
 }
 
@@ -1146,24 +1146,24 @@ static void  NC_DrawMaxButton95(HWND32 hwnd,HDC16 hdc,BOOL32 down )
  *
  *****************************************************************************/
 
-static void  NC_DrawMinButton95(HWND32 hwnd,HDC16 hdc,BOOL32 down )
+static void  NC_DrawMinButton95(HWND hwnd,HDC16 hdc,BOOL down )
 {
-    RECT32 rect;
-    HDC32 hdcMem;
+    RECT rect;
+    HDC hdcMem;
     WND *wndPtr = WIN_FindWndPtr( hwnd );
 
     if( !(wndPtr->flags & WIN_MANAGED))
         
     {
-       BITMAP32  bmp;
-       HBITMAP32  hBmp,hOldBmp;
+       BITMAP  bmp;
+       HBITMAP  hBmp,hOldBmp;
 	
 	NC_GetInsideRect95( hwnd, &rect );
 
-       hdcMem = CreateCompatibleDC32( hdc );
+       hdcMem = CreateCompatibleDC( hdc );
        hBmp = down ? hbitmapMinimizeD : hbitmapMinimize;
-       hOldBmp= SelectObject32( hdcMem, hBmp );
-	GetObject32A (hBmp, sizeof(BITMAP32), &bmp);
+       hOldBmp= SelectObject( hdcMem, hBmp );
+	GetObjectA (hBmp, sizeof(BITMAP), &bmp);
 
 	if (wndPtr->dwStyle & WS_SYSMENU)
 	    rect.right -= sysMetrics[SM_CYCAPTION] + 1;
@@ -1171,12 +1171,12 @@ static void  NC_DrawMinButton95(HWND32 hwnd,HDC16 hdc,BOOL32 down )
 	if (wndPtr->dwStyle & WS_MAXIMIZEBOX)
 	    rect.right += -1 - (sysMetrics[SM_CXSIZE] + bmp.bmWidth) / 2;
 
-	BitBlt32( hdc, rect.right - (sysMetrics[SM_CXSIZE] + bmp.bmWidth) / 2,
+	BitBlt( hdc, rect.right - (sysMetrics[SM_CXSIZE] + bmp.bmWidth) / 2,
 		  rect.top + (sysMetrics[SM_CYCAPTION] - 1 - bmp.bmHeight) / 2,
 		  bmp.bmWidth, bmp.bmHeight, hdcMem, 0, 0, SRCCOPY );
 
-       SelectObject32 (hdcMem, hOldBmp);
-	DeleteDC32( hdcMem );
+       SelectObject (hdcMem, hOldBmp);
+	DeleteDC( hdcMem );
     }
 }
 
@@ -1186,10 +1186,10 @@ static void  NC_DrawMinButton95(HWND32 hwnd,HDC16 hdc,BOOL32 down )
  * Draw a window frame inside the given rectangle, and update the rectangle.
  * The correct pen for the frame must be selected in the DC.
  */
-static void NC_DrawFrame( HDC32 hdc, RECT32 *rect, BOOL32 dlgFrame,
-                          BOOL32 active )
+static void NC_DrawFrame( HDC hdc, RECT *rect, BOOL dlgFrame,
+                          BOOL active )
 {
-    INT32 width, height;
+    INT width, height;
 
     if (TWEAK_WineLook != WIN31_LOOK)
 	ERR (nonclient, "Called in Win95 mode. Aiee! Please report this.\n" );
@@ -1198,63 +1198,63 @@ static void NC_DrawFrame( HDC32 hdc, RECT32 *rect, BOOL32 dlgFrame,
     {
 	width = SYSMETRICS_CXDLGFRAME - 1;
 	height = SYSMETRICS_CYDLGFRAME - 1;
-        SelectObject32( hdc, GetSysColorBrush32(active ? COLOR_ACTIVECAPTION :
+        SelectObject( hdc, GetSysColorBrush(active ? COLOR_ACTIVECAPTION :
 						COLOR_INACTIVECAPTION) );
     }
     else
     {
 	width = SYSMETRICS_CXFRAME - 1;
 	height = SYSMETRICS_CYFRAME - 1;
-        SelectObject32( hdc, GetSysColorBrush32(active ? COLOR_ACTIVEBORDER :
+        SelectObject( hdc, GetSysColorBrush(active ? COLOR_ACTIVEBORDER :
 						COLOR_INACTIVEBORDER) );
     }
 
       /* Draw frame */
-    PatBlt32( hdc, rect->left, rect->top,
+    PatBlt( hdc, rect->left, rect->top,
               rect->right - rect->left, height, PATCOPY );
-    PatBlt32( hdc, rect->left, rect->top,
+    PatBlt( hdc, rect->left, rect->top,
               width, rect->bottom - rect->top, PATCOPY );
-    PatBlt32( hdc, rect->left, rect->bottom,
+    PatBlt( hdc, rect->left, rect->bottom,
               rect->right - rect->left, -height, PATCOPY );
-    PatBlt32( hdc, rect->right, rect->top,
+    PatBlt( hdc, rect->right, rect->top,
               -width, rect->bottom - rect->top, PATCOPY );
 
     if (dlgFrame)
     {
-	InflateRect32( rect, -width, -height );
+	InflateRect( rect, -width, -height );
     } 
     else
     {
-        INT32 decYOff = SYSMETRICS_CXFRAME + SYSMETRICS_CXSIZE;
-	INT32 decXOff = SYSMETRICS_CYFRAME + SYSMETRICS_CYSIZE;
+        INT decYOff = SYSMETRICS_CXFRAME + SYSMETRICS_CXSIZE;
+	INT decXOff = SYSMETRICS_CYFRAME + SYSMETRICS_CYSIZE;
 
       /* Draw inner rectangle */
 
-	SelectObject32( hdc, GetStockObject32(NULL_BRUSH) );
-	Rectangle32( hdc, rect->left + width, rect->top + height,
+	SelectObject( hdc, GetStockObject(NULL_BRUSH) );
+	Rectangle( hdc, rect->left + width, rect->top + height,
 		     rect->right - width , rect->bottom - height );
 
       /* Draw the decorations */
 
-	MoveToEx32( hdc, rect->left, rect->top + decYOff, NULL );
-	LineTo32( hdc, rect->left + width, rect->top + decYOff );
-	MoveToEx32( hdc, rect->right - 1, rect->top + decYOff, NULL );
-	LineTo32( hdc, rect->right - width - 1, rect->top + decYOff );
-	MoveToEx32( hdc, rect->left, rect->bottom - decYOff, NULL );
-	LineTo32( hdc, rect->left + width, rect->bottom - decYOff );
-	MoveToEx32( hdc, rect->right - 1, rect->bottom - decYOff, NULL );
-	LineTo32( hdc, rect->right - width - 1, rect->bottom - decYOff );
+	MoveToEx( hdc, rect->left, rect->top + decYOff, NULL );
+	LineTo( hdc, rect->left + width, rect->top + decYOff );
+	MoveToEx( hdc, rect->right - 1, rect->top + decYOff, NULL );
+	LineTo( hdc, rect->right - width - 1, rect->top + decYOff );
+	MoveToEx( hdc, rect->left, rect->bottom - decYOff, NULL );
+	LineTo( hdc, rect->left + width, rect->bottom - decYOff );
+	MoveToEx( hdc, rect->right - 1, rect->bottom - decYOff, NULL );
+	LineTo( hdc, rect->right - width - 1, rect->bottom - decYOff );
 
-	MoveToEx32( hdc, rect->left + decXOff, rect->top, NULL );
-	LineTo32( hdc, rect->left + decXOff, rect->top + height);
-	MoveToEx32( hdc, rect->left + decXOff, rect->bottom - 1, NULL );
-	LineTo32( hdc, rect->left + decXOff, rect->bottom - height - 1 );
-	MoveToEx32( hdc, rect->right - decXOff, rect->top, NULL );
-	LineTo32( hdc, rect->right - decXOff, rect->top + height );
-	MoveToEx32( hdc, rect->right - decXOff, rect->bottom - 1, NULL );
-	LineTo32( hdc, rect->right - decXOff, rect->bottom - height - 1 );
+	MoveToEx( hdc, rect->left + decXOff, rect->top, NULL );
+	LineTo( hdc, rect->left + decXOff, rect->top + height);
+	MoveToEx( hdc, rect->left + decXOff, rect->bottom - 1, NULL );
+	LineTo( hdc, rect->left + decXOff, rect->bottom - height - 1 );
+	MoveToEx( hdc, rect->right - decXOff, rect->top, NULL );
+	LineTo( hdc, rect->right - decXOff, rect->top + height );
+	MoveToEx( hdc, rect->right - decXOff, rect->bottom - 1, NULL );
+	LineTo( hdc, rect->right - decXOff, rect->bottom - height - 1 );
 
-	InflateRect32( rect, -width - 1, -height - 1 );
+	InflateRect( rect, -width - 1, -height - 1 );
     }
 }
 
@@ -1290,12 +1290,12 @@ static void NC_DrawFrame( HDC32 hdc, RECT32 *rect, BOOL32 dlgFrame,
  *****************************************************************************/
 
 static void  NC_DrawFrame95(
-    HDC32  hdc,
-    RECT32  *rect,
-    BOOL32  dlgFrame,
-    BOOL32  active )
+    HDC  hdc,
+    RECT  *rect,
+    BOOL  dlgFrame,
+    BOOL  active )
 {
-    INT32 width, height;
+    INT width, height;
 
     if (dlgFrame)
     {
@@ -1308,20 +1308,20 @@ static void  NC_DrawFrame95(
 	height = sysMetrics[SM_CYFRAME] - sysMetrics[SM_CYEDGE];
     }
 
-    SelectObject32( hdc, GetSysColorBrush32(active ? COLOR_ACTIVEBORDER :
+    SelectObject( hdc, GetSysColorBrush(active ? COLOR_ACTIVEBORDER :
 		COLOR_INACTIVEBORDER) );
 
     /* Draw frame */
-    PatBlt32( hdc, rect->left, rect->top,
+    PatBlt( hdc, rect->left, rect->top,
               rect->right - rect->left, height, PATCOPY );
-    PatBlt32( hdc, rect->left, rect->top,
+    PatBlt( hdc, rect->left, rect->top,
               width, rect->bottom - rect->top, PATCOPY );
-    PatBlt32( hdc, rect->left, rect->bottom,
+    PatBlt( hdc, rect->left, rect->bottom,
               rect->right - rect->left, -height, PATCOPY );
-    PatBlt32( hdc, rect->right, rect->top,
+    PatBlt( hdc, rect->right, rect->top,
               -width, rect->bottom - rect->top, PATCOPY );
 
-    InflateRect32( rect, -width, -height );
+    InflateRect( rect, -width, -height );
 }
 
 /***********************************************************************
@@ -1331,16 +1331,16 @@ static void  NC_DrawFrame95(
  *
  * FIXME:  This causes problems in Win95 mode.  (why?)
  */
-static void NC_DrawMovingFrame( HDC32 hdc, RECT32 *rect, BOOL32 thickframe )
+static void NC_DrawMovingFrame( HDC hdc, RECT *rect, BOOL thickframe )
 {
     if (thickframe)
     {
         RECT16 r16;
         CONV_RECT32TO16( rect, &r16 );
-        FastWindowFrame( hdc, &r16, SYSMETRICS_CXFRAME,
+        FastWindowFrame16( hdc, &r16, SYSMETRICS_CXFRAME,
                          SYSMETRICS_CYFRAME, PATINVERT );
     }
-    else DrawFocusRect32( hdc, rect );
+    else DrawFocusRect( hdc, rect );
 }
 
 
@@ -1350,10 +1350,10 @@ static void NC_DrawMovingFrame( HDC32 hdc, RECT32 *rect, BOOL32 thickframe )
  * Draw the window caption.
  * The correct pen for the window frame must be selected in the DC.
  */
-static void NC_DrawCaption( HDC32 hdc, RECT32 *rect, HWND32 hwnd,
-			    DWORD style, BOOL32 active )
+static void NC_DrawCaption( HDC hdc, RECT *rect, HWND hwnd,
+			    DWORD style, BOOL active )
 {
-    RECT32 r = *rect;
+    RECT r = *rect;
     WND * wndPtr = WIN_FindWndPtr( hwnd );
     char buffer[256];
 
@@ -1374,24 +1374,24 @@ static void NC_DrawCaption( HDC32 hdc, RECT32 *rect, HWND32 hwnd,
     
     if (wndPtr->dwExStyle & WS_EX_DLGMODALFRAME)
     {
-        HBRUSH32 hbrushOld = SelectObject32(hdc, GetSysColorBrush32(COLOR_WINDOW) );
-	PatBlt32( hdc, r.left, r.top, 1, r.bottom-r.top+1,PATCOPY );
-	PatBlt32( hdc, r.right-1, r.top, 1, r.bottom-r.top+1, PATCOPY );
-	PatBlt32( hdc, r.left, r.top-1, r.right-r.left, 1, PATCOPY );
+        HBRUSH hbrushOld = SelectObject(hdc, GetSysColorBrush(COLOR_WINDOW) );
+	PatBlt( hdc, r.left, r.top, 1, r.bottom-r.top+1,PATCOPY );
+	PatBlt( hdc, r.right-1, r.top, 1, r.bottom-r.top+1, PATCOPY );
+	PatBlt( hdc, r.left, r.top-1, r.right-r.left, 1, PATCOPY );
 	r.left++;
 	r.right--;
-	SelectObject32( hdc, hbrushOld );
+	SelectObject( hdc, hbrushOld );
     }
 
-    MoveTo( hdc, r.left, r.bottom );
-    LineTo32( hdc, r.right, r.bottom );
+    MoveTo16( hdc, r.left, r.bottom );
+    LineTo( hdc, r.right, r.bottom );
 
     if (style & WS_SYSMENU)
     {
 	NC_DrawSysButton( hwnd, hdc, FALSE );
 	r.left += SYSMETRICS_CXSIZE + 1;
-	MoveTo( hdc, r.left - 1, r.top );
-	LineTo32( hdc, r.left - 1, r.bottom );
+	MoveTo16( hdc, r.left - 1, r.top );
+	LineTo( hdc, r.left - 1, r.bottom );
     }
     if (style & WS_MAXIMIZEBOX)
     {
@@ -1404,15 +1404,15 @@ static void NC_DrawCaption( HDC32 hdc, RECT32 *rect, HWND32 hwnd,
 	r.right -= SYSMETRICS_CXSIZE + 1;
     }
 
-    FillRect32( hdc, &r, GetSysColorBrush32(active ? COLOR_ACTIVECAPTION :
+    FillRect( hdc, &r, GetSysColorBrush(active ? COLOR_ACTIVECAPTION :
 					    COLOR_INACTIVECAPTION) );
 
-    if (GetWindowText32A( hwnd, buffer, sizeof(buffer) ))
+    if (GetWindowTextA( hwnd, buffer, sizeof(buffer) ))
     {
-	if (active) SetTextColor32( hdc, GetSysColor32( COLOR_CAPTIONTEXT ) );
-	else SetTextColor32( hdc, GetSysColor32( COLOR_INACTIVECAPTIONTEXT ) );
-	SetBkMode32( hdc, TRANSPARENT );
-	DrawText32A( hdc, buffer, -1, &r,
+	if (active) SetTextColor( hdc, GetSysColor( COLOR_CAPTIONTEXT ) );
+	else SetTextColor( hdc, GetSysColor( COLOR_INACTIVECAPTIONTEXT ) );
+	SetBkMode( hdc, TRANSPARENT );
+	DrawTextA( hdc, buffer, -1, &r,
                      DT_SINGLELINE | DT_CENTER | DT_VCENTER | DT_NOPREFIX );
     }
 }
@@ -1443,27 +1443,27 @@ static void NC_DrawCaption( HDC32 hdc, RECT32 *rect, HWND32 hwnd,
  *****************************************************************************/
 
 static void  NC_DrawCaption95(
-    HDC32  hdc,
-    RECT32 *rect,
-    HWND32 hwnd,
+    HDC  hdc,
+    RECT *rect,
+    HWND hwnd,
     DWORD  style,
     DWORD  exStyle,
-    BOOL32 active )
+    BOOL active )
 {
-    RECT32  r = *rect;
+    RECT  r = *rect;
     WND     *wndPtr = WIN_FindWndPtr( hwnd );
     char    buffer[256];
-    HPEN32  hPrevPen;
+    HPEN  hPrevPen;
 
     if (wndPtr->flags & WIN_MANAGED) return;
 
-    hPrevPen = SelectObject32( hdc, GetSysColorPen32(COLOR_3DFACE) );
-    MoveToEx32( hdc, r.left, r.bottom - 1, NULL );
-    LineTo32( hdc, r.right, r.bottom - 1 );
-    SelectObject32( hdc, hPrevPen );
+    hPrevPen = SelectObject( hdc, GetSysColorPen(COLOR_3DFACE) );
+    MoveToEx( hdc, r.left, r.bottom - 1, NULL );
+    LineTo( hdc, r.right, r.bottom - 1 );
+    SelectObject( hdc, hPrevPen );
     r.bottom--;
 
-    FillRect32( hdc, &r, GetSysColorBrush32(active ? COLOR_ACTIVECAPTION :
+    FillRect( hdc, &r, GetSysColorBrush(active ? COLOR_ACTIVECAPTION :
 					    COLOR_INACTIVECAPTION) );
 
     if (!hbitmapClose) {
@@ -1495,23 +1495,23 @@ static void  NC_DrawCaption95(
 	r.right -= SYSMETRICS_CXSIZE + 1;
     }
 
-    if (GetWindowText32A( hwnd, buffer, sizeof(buffer) )) {
-	NONCLIENTMETRICS32A nclm;
-	HFONT32 hFont, hOldFont;
-	nclm.cbSize = sizeof(NONCLIENTMETRICS32A);
-	SystemParametersInfo32A (SPI_GETNONCLIENTMETRICS, 0, &nclm, 0);
+    if (GetWindowTextA( hwnd, buffer, sizeof(buffer) )) {
+	NONCLIENTMETRICSA nclm;
+	HFONT hFont, hOldFont;
+	nclm.cbSize = sizeof(NONCLIENTMETRICSA);
+	SystemParametersInfoA (SPI_GETNONCLIENTMETRICS, 0, &nclm, 0);
 	if (exStyle & WS_EX_TOOLWINDOW)
-	    hFont = CreateFontIndirect32A (&nclm.lfSmCaptionFont);
+	    hFont = CreateFontIndirectA (&nclm.lfSmCaptionFont);
 	else
-	    hFont = CreateFontIndirect32A (&nclm.lfCaptionFont);
-	hOldFont = SelectObject32 (hdc, hFont);
-	if (active) SetTextColor32( hdc, GetSysColor32( COLOR_CAPTIONTEXT ) );
-	else SetTextColor32( hdc, GetSysColor32( COLOR_INACTIVECAPTIONTEXT ) );
-	SetBkMode32( hdc, TRANSPARENT );
+	    hFont = CreateFontIndirectA (&nclm.lfCaptionFont);
+	hOldFont = SelectObject (hdc, hFont);
+	if (active) SetTextColor( hdc, GetSysColor( COLOR_CAPTIONTEXT ) );
+	else SetTextColor( hdc, GetSysColor( COLOR_INACTIVECAPTIONTEXT ) );
+	SetBkMode( hdc, TRANSPARENT );
 	r.left += 2;
-	DrawText32A( hdc, buffer, -1, &r,
+	DrawTextA( hdc, buffer, -1, &r,
 		     DT_SINGLELINE | DT_VCENTER | DT_NOPREFIX | DT_LEFT );
-	DeleteObject32 (SelectObject32 (hdc, hOldFont));
+	DeleteObject (SelectObject (hdc, hOldFont));
     }
 }
 
@@ -1522,12 +1522,12 @@ static void  NC_DrawCaption95(
  *
  * Paint the non-client area. clip is currently unused.
  */
-void NC_DoNCPaint( WND* wndPtr, HRGN32 clip, BOOL32 suppress_menupaint )
+void NC_DoNCPaint( WND* wndPtr, HRGN clip, BOOL suppress_menupaint )
 {
-    HDC32 hdc;
-    RECT32 rect;
-    BOOL32 active;
-    HWND32 hwnd = wndPtr->hwndSelf;
+    HDC hdc;
+    RECT rect;
+    BOOL active;
+    HWND hwnd = wndPtr->hwndSelf;
 
     if ( wndPtr->dwStyle & WS_MINIMIZE ||
 	!WIN_IsWindowDrawable( wndPtr, 0 )) return; /* Nothing to do */
@@ -1536,15 +1536,15 @@ void NC_DoNCPaint( WND* wndPtr, HRGN32 clip, BOOL32 suppress_menupaint )
 
     TRACE(nonclient, "%04x %d\n", hwnd, active );
 
-    if (!(hdc = GetDCEx32( hwnd, 0, DCX_USESTYLE | DCX_WINDOW ))) return;
+    if (!(hdc = GetDCEx( hwnd, 0, DCX_USESTYLE | DCX_WINDOW ))) return;
 
-    if (ExcludeVisRect( hdc, wndPtr->rectClient.left-wndPtr->rectWindow.left,
+    if (ExcludeVisRect16( hdc, wndPtr->rectClient.left-wndPtr->rectWindow.left,
 		        wndPtr->rectClient.top-wndPtr->rectWindow.top,
 		        wndPtr->rectClient.right-wndPtr->rectWindow.left,
 		        wndPtr->rectClient.bottom-wndPtr->rectWindow.top )
 	== NULLREGION)
     {
-	ReleaseDC32( hwnd, hdc );
+	ReleaseDC( hwnd, hdc );
 	return;
     }
 
@@ -1552,16 +1552,16 @@ void NC_DoNCPaint( WND* wndPtr, HRGN32 clip, BOOL32 suppress_menupaint )
     rect.right  = wndPtr->rectWindow.right - wndPtr->rectWindow.left;
     rect.bottom = wndPtr->rectWindow.bottom - wndPtr->rectWindow.top;
 
-    SelectObject32( hdc, GetSysColorPen32(COLOR_WINDOWFRAME) );
+    SelectObject( hdc, GetSysColorPen(COLOR_WINDOWFRAME) );
 
     if (!(wndPtr->flags & WIN_MANAGED))
     {
         if ((wndPtr->dwStyle & WS_BORDER) || (wndPtr->dwStyle & WS_DLGFRAME) ||
             (wndPtr->dwExStyle & WS_EX_DLGMODALFRAME))
         {
-	    SelectObject32( hdc, GetStockObject32(NULL_BRUSH) );
-            Rectangle32( hdc, 0, 0, rect.right, rect.bottom );
-            InflateRect32( &rect, -1, -1 );
+	    SelectObject( hdc, GetStockObject(NULL_BRUSH) );
+            Rectangle( hdc, 0, 0, rect.right, rect.bottom );
+            InflateRect( &rect, -1, -1 );
         }
 
         if (HAS_DLGFRAME( wndPtr->dwStyle, wndPtr->dwExStyle )) 
@@ -1571,7 +1571,7 @@ void NC_DoNCPaint( WND* wndPtr, HRGN32 clip, BOOL32 suppress_menupaint )
 
         if ((wndPtr->dwStyle & WS_CAPTION) == WS_CAPTION)
         {
-            RECT32 r = rect;
+            RECT r = rect;
             r.bottom = rect.top + SYSMETRICS_CYSIZE;
             rect.top += SYSMETRICS_CYSIZE + SYSMETRICS_CYBORDER;
             NC_DrawCaption( hdc, &r, hwnd, wndPtr->dwStyle, active );
@@ -1580,7 +1580,7 @@ void NC_DoNCPaint( WND* wndPtr, HRGN32 clip, BOOL32 suppress_menupaint )
 
     if (HAS_MENU(wndPtr))
     {
-	RECT32 r = rect;
+	RECT r = rect;
 	r.bottom = rect.top + SYSMETRICS_CYMENU;  /* default height */
 	rect.top += MENU_DrawMenuBar( hdc, &r, hwnd, suppress_menupaint );
     }
@@ -1596,17 +1596,17 @@ void NC_DoNCPaint( WND* wndPtr, HRGN32 clip, BOOL32 suppress_menupaint )
 
     if ((wndPtr->dwStyle & WS_VSCROLL) && (wndPtr->dwStyle & WS_HSCROLL))
     {
-        RECT32 r = rect;
+        RECT r = rect;
         r.left = r.right - SYSMETRICS_CXVSCROLL + 1;
         r.top  = r.bottom - SYSMETRICS_CYHSCROLL + 1;
 	if(wndPtr->dwStyle & WS_BORDER) {
 	  r.left++;
 	  r.top++;
 	}
-        FillRect32( hdc, &r, GetSysColorBrush32(COLOR_SCROLLBAR) );
+        FillRect( hdc, &r, GetSysColorBrush(COLOR_SCROLLBAR) );
     }    
 
-    ReleaseDC32( hwnd, hdc );
+    ReleaseDC( hwnd, hdc );
 }
 
 
@@ -1634,13 +1634,13 @@ void NC_DoNCPaint( WND* wndPtr, HRGN32 clip, BOOL32 suppress_menupaint )
 
 void  NC_DoNCPaint95(
     WND  *wndPtr,
-    HRGN32  clip,
-    BOOL32  suppress_menupaint )
+    HRGN  clip,
+    BOOL  suppress_menupaint )
 {
-    HDC32 hdc;
-    RECT32 rect;
-    BOOL32 active;
-    HWND32 hwnd = wndPtr->hwndSelf;
+    HDC hdc;
+    RECT rect;
+    BOOL active;
+    HWND hwnd = wndPtr->hwndSelf;
 
     if ( wndPtr->dwStyle & WS_MINIMIZE ||
 	!WIN_IsWindowDrawable( wndPtr, 0 )) return; /* Nothing to do */
@@ -1649,15 +1649,15 @@ void  NC_DoNCPaint95(
 
     TRACE(nonclient, "%04x %d\n", hwnd, active );
 
-    if (!(hdc = GetDCEx32( hwnd, 0, DCX_USESTYLE | DCX_WINDOW ))) return;
+    if (!(hdc = GetDCEx( hwnd, 0, DCX_USESTYLE | DCX_WINDOW ))) return;
 
-    if (ExcludeVisRect( hdc, wndPtr->rectClient.left-wndPtr->rectWindow.left,
+    if (ExcludeVisRect16( hdc, wndPtr->rectClient.left-wndPtr->rectWindow.left,
 		        wndPtr->rectClient.top-wndPtr->rectWindow.top,
 		        wndPtr->rectClient.right-wndPtr->rectWindow.left,
 		        wndPtr->rectClient.bottom-wndPtr->rectWindow.top )
 	== NULLREGION)
     {
-	ReleaseDC32( hwnd, hdc );
+	ReleaseDC( hwnd, hdc );
 	return;
     }
 
@@ -1665,12 +1665,12 @@ void  NC_DoNCPaint95(
     rect.right  = wndPtr->rectWindow.right - wndPtr->rectWindow.left;
     rect.bottom = wndPtr->rectWindow.bottom - wndPtr->rectWindow.top;
 
-    SelectObject32( hdc, GetSysColorPen32(COLOR_WINDOWFRAME) );
+    SelectObject( hdc, GetSysColorPen(COLOR_WINDOWFRAME) );
 
     if(!(wndPtr->flags & WIN_MANAGED)) {
         if ((wndPtr->dwStyle & WS_BORDER) && ((wndPtr->dwStyle & WS_DLGFRAME) ||
 	    (wndPtr->dwExStyle & WS_EX_DLGMODALFRAME) || (wndPtr->dwStyle & WS_THICKFRAME))) {
-            DrawEdge32 (hdc, &rect, EDGE_RAISED, BF_RECT | BF_ADJUST);
+            DrawEdge (hdc, &rect, EDGE_RAISED, BF_RECT | BF_ADJUST);
         }
 
         if (HAS_FIXEDFRAME( wndPtr->dwStyle, wndPtr->dwExStyle )) 
@@ -1680,7 +1680,7 @@ void  NC_DoNCPaint95(
 
         if ((wndPtr->dwStyle & WS_CAPTION) == WS_CAPTION)
         {
-            RECT32  r = rect;
+            RECT  r = rect;
 	    if (wndPtr->dwExStyle & WS_EX_TOOLWINDOW) {
 		r.bottom = rect.top + sysMetrics[SM_CYSMCAPTION];
 		rect.top += sysMetrics[SM_CYSMCAPTION];
@@ -1696,7 +1696,7 @@ void  NC_DoNCPaint95(
 
     if (HAS_MENU(wndPtr))
     {
-	RECT32 r = rect;
+	RECT r = rect;
 	r.bottom = rect.top + sysMetrics[SM_CYMENU];
 	
 	TRACE(nonclient, "Calling DrawMenuBar with "
@@ -1710,10 +1710,10 @@ void  NC_DoNCPaint95(
 		       rect.left, rect.top, rect.right, rect.bottom );
 
     if (wndPtr->dwExStyle & WS_EX_CLIENTEDGE)
-	DrawEdge32 (hdc, &rect, EDGE_SUNKEN, BF_RECT | BF_ADJUST);
+	DrawEdge (hdc, &rect, EDGE_SUNKEN, BF_RECT | BF_ADJUST);
 
     if (wndPtr->dwExStyle & WS_EX_STATICEDGE)
-	DrawEdge32 (hdc, &rect, BDR_SUNKENOUTER, BF_RECT | BF_ADJUST);
+	DrawEdge (hdc, &rect, BDR_SUNKENOUTER, BF_RECT | BF_ADJUST);
 
     /* Draw the scroll-bars */
 
@@ -1725,13 +1725,13 @@ void  NC_DoNCPaint95(
     /* Draw the "size-box" */
     if ((wndPtr->dwStyle & WS_VSCROLL) && (wndPtr->dwStyle & WS_HSCROLL))
     {
-        RECT32 r = rect;
+        RECT r = rect;
         r.left = r.right - SYSMETRICS_CXVSCROLL + 1;
         r.top  = r.bottom - SYSMETRICS_CYHSCROLL + 1;
-        FillRect32( hdc, &r,  GetSysColorBrush32(COLOR_SCROLLBAR) );
+        FillRect( hdc, &r,  GetSysColorBrush(COLOR_SCROLLBAR) );
     }    
 
-    ReleaseDC32( hwnd, hdc );
+    ReleaseDC( hwnd, hdc );
 }
 
 
@@ -1742,7 +1742,7 @@ void  NC_DoNCPaint95(
  *
  * Handle a WM_NCPAINT message. Called from DefWindowProc().
  */
-LONG NC_HandleNCPaint( HWND32 hwnd , HRGN32 clip)
+LONG NC_HandleNCPaint( HWND hwnd , HRGN clip)
 {
     WND* wndPtr = WIN_FindWndPtr( hwnd );
 
@@ -1779,9 +1779,9 @@ LONG NC_HandleNCActivate( WND *wndPtr, WPARAM16 wParam )
 	if( wndPtr->dwStyle & WS_MINIMIZE ) 
 	    WINPOS_RedrawIconTitle( wndPtr->hwndSelf );
 	else if (TWEAK_WineLook == WIN31_LOOK)
-	    NC_DoNCPaint( wndPtr, (HRGN32)1, FALSE );
+	    NC_DoNCPaint( wndPtr, (HRGN)1, FALSE );
 	else
-	    NC_DoNCPaint95( wndPtr, (HRGN32)1, FALSE );
+	    NC_DoNCPaint95( wndPtr, (HRGN)1, FALSE );
     }
     return TRUE;
 }
@@ -1792,9 +1792,9 @@ LONG NC_HandleNCActivate( WND *wndPtr, WPARAM16 wParam )
  *
  * Handle a WM_SETCURSOR message. Called from DefWindowProc().
  */
-LONG NC_HandleSetCursor( HWND32 hwnd, WPARAM16 wParam, LPARAM lParam )
+LONG NC_HandleSetCursor( HWND hwnd, WPARAM16 wParam, LPARAM lParam )
 {
-    if (hwnd != (HWND32)wParam) return 0;  /* Don't set the cursor for child windows */
+    if (hwnd != (HWND)wParam) return 0;  /* Don't set the cursor for child windows */
 
     switch(LOWORD(lParam))
     {
@@ -1803,7 +1803,7 @@ LONG NC_HandleSetCursor( HWND32 hwnd, WPARAM16 wParam, LPARAM lParam )
 	    WORD msg = HIWORD( lParam );
 	    if ((msg == WM_LBUTTONDOWN) || (msg == WM_MBUTTONDOWN) ||
 		(msg == WM_RBUTTONDOWN))
-		MessageBeep32(0);
+		MessageBeep(0);
 	}
 	break;
 
@@ -1843,21 +1843,21 @@ LONG NC_HandleSetCursor( HWND32 hwnd, WPARAM16 wParam, LPARAM lParam )
 /***********************************************************************
  *           NC_GetSysPopupPos
  */
-BOOL32 NC_GetSysPopupPos( WND* wndPtr, RECT32* rect )
+BOOL NC_GetSysPopupPos( WND* wndPtr, RECT* rect )
 {
   if( wndPtr->hSysMenu )
   {
       if( wndPtr->dwStyle & WS_MINIMIZE )
-	  GetWindowRect32( wndPtr->hwndSelf, rect );
+	  GetWindowRect( wndPtr->hwndSelf, rect );
       else
       {
           if (TWEAK_WineLook == WIN31_LOOK)
               NC_GetInsideRect( wndPtr->hwndSelf, rect );
           else
               NC_GetInsideRect95( wndPtr->hwndSelf, rect );
-  	  OffsetRect32( rect, wndPtr->rectWindow.left, wndPtr->rectWindow.top);
+  	  OffsetRect( rect, wndPtr->rectWindow.left, wndPtr->rectWindow.top);
   	  if (wndPtr->dwStyle & WS_CHILD)
-     	      ClientToScreen32( wndPtr->parent->hwndSelf, (POINT32 *)rect );
+     	      ClientToScreen( wndPtr->parent->hwndSelf, (POINT *)rect );
           if (TWEAK_WineLook == WIN31_LOOK) {
             rect->right = rect->left + SYSMETRICS_CXSIZE;
             rect->bottom = rect->top + SYSMETRICS_CYSIZE;
@@ -1883,12 +1883,12 @@ static LONG NC_StartSizeMove( WND* wndPtr, WPARAM16 wParam,
 {
     LONG hittest = 0;
     POINT16 pt;
-    MSG32 msg;
+    MSG msg;
 
     if ((wParam & 0xfff0) == SC_MOVE)
     {
 	  /* Move pointer at the center of the caption */
-	RECT32 rect;
+	RECT rect;
         if (TWEAK_WineLook == WIN31_LOOK)
             NC_GetInsideRect( wndPtr->hwndSelf, &rect );
         else
@@ -1951,7 +1951,7 @@ static LONG NC_StartSizeMove( WND* wndPtr, WPARAM16 wParam,
 	}
 	*capturePoint = pt;
     }
-    SetCursorPos32( pt.x, pt.y );
+    SetCursorPos( pt.x, pt.y );
     NC_HandleSetCursor( wndPtr->hwndSelf, 
 			wndPtr->hwndSelf, MAKELONG( hittest, WM_MOUSEMOVE ));
     return hittest;
@@ -1963,24 +1963,24 @@ static LONG NC_StartSizeMove( WND* wndPtr, WPARAM16 wParam,
  *
  * Perform SC_MOVE and SC_SIZE commands.               `
  */
-static void NC_DoSizeMove( HWND32 hwnd, WORD wParam )
+static void NC_DoSizeMove( HWND hwnd, WORD wParam )
 {
-    MSG32 msg;
-    RECT32 sizingRect, mouseRect;
-    HDC32 hdc;
+    MSG msg;
+    RECT sizingRect, mouseRect;
+    HDC hdc;
     LONG hittest = (LONG)(wParam & 0x0f);
     HCURSOR16 hDragCursor = 0, hOldCursor = 0;
-    POINT32 minTrack, maxTrack;
+    POINT minTrack, maxTrack;
     POINT16 capturePoint, pt;
     WND *     wndPtr = WIN_FindWndPtr( hwnd );
-    BOOL32    thickframe = HAS_THICKFRAME( wndPtr->dwStyle );
-    BOOL32    iconic = wndPtr->dwStyle & WS_MINIMIZE;
-    BOOL32    moved = FALSE;
+    BOOL    thickframe = HAS_THICKFRAME( wndPtr->dwStyle );
+    BOOL    iconic = wndPtr->dwStyle & WS_MINIMIZE;
+    BOOL    moved = FALSE;
     DWORD     dwPoint = GetMessagePos ();
 
     capturePoint = pt = *(POINT16*)&dwPoint;
 
-    if (IsZoomed32(hwnd) || !IsWindowVisible32(hwnd) ||
+    if (IsZoomed(hwnd) || !IsWindowVisible(hwnd) ||
         (wndPtr->flags & WIN_MANAGED)) return;
 
     if ((wParam & 0xfff0) == SC_MOVE)
@@ -1996,7 +1996,7 @@ static void NC_DoSizeMove( HWND32 hwnd, WORD wParam )
 	if ( hittest && hittest != HTSYSMENU ) hittest += 2;
 	else
 	{
-	    SetCapture32(hwnd);
+	    SetCapture(hwnd);
 	    hittest = NC_StartSizeMove( wndPtr, wParam, &capturePoint );
 	    if (!hittest)
 	    {
@@ -2011,9 +2011,9 @@ static void NC_DoSizeMove( HWND32 hwnd, WORD wParam )
     WINPOS_GetMinMaxInfo( wndPtr, NULL, NULL, &minTrack, &maxTrack );
     sizingRect = wndPtr->rectWindow;
     if (wndPtr->dwStyle & WS_CHILD)
-	GetClientRect32( wndPtr->parent->hwndSelf, &mouseRect );
+	GetClientRect( wndPtr->parent->hwndSelf, &mouseRect );
     else 
-        SetRect32(&mouseRect, 0, 0, SYSMETRICS_CXSCREEN, SYSMETRICS_CYSCREEN);
+        SetRect(&mouseRect, 0, 0, SYSMETRICS_CXSCREEN, SYSMETRICS_CYSCREEN);
     if (ON_LEFT_BORDER(hittest))
     {
 	mouseRect.left  = MAX( mouseRect.left, sizingRect.right-maxTrack.x );
@@ -2036,21 +2036,21 @@ static void NC_DoSizeMove( HWND32 hwnd, WORD wParam )
     }
     if (wndPtr->dwStyle & WS_CHILD)
     {
-	MapWindowPoints32( wndPtr->parent->hwndSelf, 0, 
-		(LPPOINT32)&mouseRect, 2 );
+	MapWindowPoints( wndPtr->parent->hwndSelf, 0, 
+		(LPPOINT)&mouseRect, 2 );
     }
     SendMessage16( hwnd, WM_ENTERSIZEMOVE, 0, 0 );
 
-    if (GetCapture32() != hwnd) SetCapture32( hwnd );    
+    if (GetCapture() != hwnd) SetCapture( hwnd );    
 
     if (wndPtr->dwStyle & WS_CHILD)
     {
           /* Retrieve a default cache DC (without using the window style) */
-        hdc = GetDCEx32( wndPtr->parent->hwndSelf, 0, DCX_CACHE );
+        hdc = GetDCEx( wndPtr->parent->hwndSelf, 0, DCX_CACHE );
     }
     else
     {  /* Grab the server only when moving top-level windows without desktop */
-	hdc = GetDC32( 0 );
+	hdc = GetDC( 0 );
     }
 
     wndPtr->pDriver->pPreSizeMove(wndPtr);
@@ -2105,18 +2105,18 @@ static void NC_DoSizeMove( HWND32 hwnd, WORD wParam )
 		moved = TRUE;
         	if( iconic ) /* ok, no system popup tracking */
 		{
-		    hOldCursor = SetCursor32(hDragCursor);
-		    ShowCursor32( TRUE );
+		    hOldCursor = SetCursor(hDragCursor);
+		    ShowCursor( TRUE );
 		    WINPOS_ShowIconTitle( wndPtr, FALSE );
 		}
 	    }
 
-	    if (msg.message == WM_KEYDOWN) SetCursorPos32( pt.x, pt.y );
+	    if (msg.message == WM_KEYDOWN) SetCursorPos( pt.x, pt.y );
 	    else
 	    {
-		RECT32 newRect = sizingRect;
+		RECT newRect = sizingRect;
 
-		if (hittest == HTCAPTION) OffsetRect32( &newRect, dx, dy );
+		if (hittest == HTCAPTION) OffsetRect( &newRect, dx, dy );
 		if (ON_LEFT_BORDER(hittest)) newRect.left += dx;
 		else if (ON_RIGHT_BORDER(hittest)) newRect.right += dx;
 		if (ON_TOP_BORDER(hittest)) newRect.top += dy;
@@ -2137,19 +2137,19 @@ static void NC_DoSizeMove( HWND32 hwnd, WORD wParam )
     {
 	if( moved ) /* restore cursors, show icon title later on */
 	{
-	    ShowCursor32( FALSE );
-	    SetCursor32( hOldCursor );
+	    ShowCursor( FALSE );
+	    SetCursor( hOldCursor );
 	}
-        DestroyCursor32( hDragCursor );
+        DestroyCursor( hDragCursor );
     }
     else
 	NC_DrawMovingFrame( hdc, &sizingRect, thickframe );
 
     if (wndPtr->dwStyle & WS_CHILD)
-        ReleaseDC32( wndPtr->parent->hwndSelf, hdc );
+        ReleaseDC( wndPtr->parent->hwndSelf, hdc );
     else
     {
-	ReleaseDC32( 0, hdc );
+	ReleaseDC( 0, hdc );
     }
 
     wndPtr->pDriver->pPostSizeMove(wndPtr);
@@ -2174,13 +2174,13 @@ static void NC_DoSizeMove( HWND32 hwnd, WORD wParam )
     if( moved && !((msg.message == WM_KEYDOWN) && (msg.wParam == VK_ESCAPE)) )
     {
 	/* NOTE: SWP_NOACTIVATE prevents document window activation in Word 6 */
-	SetWindowPos32( hwnd, 0, sizingRect.left, sizingRect.top,
+	SetWindowPos( hwnd, 0, sizingRect.left, sizingRect.top,
 			sizingRect.right - sizingRect.left,
 			sizingRect.bottom - sizingRect.top,
 		      ( hittest == HTCAPTION ) ? SWP_NOSIZE : 0 );
     }
 
-    if( IsWindow32(hwnd) )
+    if( IsWindow(hwnd) )
 	if( wndPtr->dwStyle & WS_MINIMIZE )
 	{
 	    /* Single click brings up the system menu when iconized */
@@ -2201,15 +2201,15 @@ static void NC_DoSizeMove( HWND32 hwnd, WORD wParam )
  *
  * Track a mouse button press on the minimize or maximize box.
  */
-static void NC_TrackMinMaxBox( HWND32 hwnd, WORD wParam )
+static void NC_TrackMinMaxBox( HWND hwnd, WORD wParam )
 {
-    MSG32 msg;
+    MSG msg;
     POINT16 pt16;
-    HDC32 hdc = GetWindowDC32( hwnd );
-    BOOL32 pressed = TRUE;
-    void  (*paintButton)(HWND32, HDC16, BOOL32);
+    HDC hdc = GetWindowDC( hwnd );
+    BOOL pressed = TRUE;
+    void  (*paintButton)(HWND, HDC16, BOOL);
 
-    SetCapture32( hwnd );
+    SetCapture( hwnd );
     if (wParam == HTMINBUTTON)
 	paintButton =
 	    (TWEAK_WineLook == WIN31_LOOK) ? &NC_DrawMinButton : &NC_DrawMinButton95;
@@ -2221,7 +2221,7 @@ static void NC_TrackMinMaxBox( HWND32 hwnd, WORD wParam )
 
     do
     {
-	BOOL32 oldstate = pressed;
+	BOOL oldstate = pressed;
         MSG_InternalGetMessage( &msg, 0, 0, 0, PM_REMOVE, FALSE );
         CONV_POINT32TO16( &msg.pt, &pt16 );
 
@@ -2233,14 +2233,14 @@ static void NC_TrackMinMaxBox( HWND32 hwnd, WORD wParam )
     (*paintButton)( hwnd, hdc, FALSE );
 
     ReleaseCapture();
-    ReleaseDC32( hwnd, hdc );
+    ReleaseDC( hwnd, hdc );
     if (!pressed) return;
 
     if (wParam == HTMINBUTTON) 
 	SendMessage16( hwnd, WM_SYSCOMMAND, SC_MINIMIZE, *(LONG*)&pt16 );
     else
 	SendMessage16( hwnd, WM_SYSCOMMAND, 
-		  IsZoomed32(hwnd) ? SC_RESTORE:SC_MAXIMIZE, *(LONG*)&pt16 );
+		  IsZoomed(hwnd) ? SC_RESTORE:SC_MAXIMIZE, *(LONG*)&pt16 );
 }
 
 
@@ -2250,20 +2250,20 @@ static void NC_TrackMinMaxBox( HWND32 hwnd, WORD wParam )
  * Track a mouse button press on the Win95 close button.
  */
 static void
-NC_TrackCloseButton95 (HWND32 hwnd, WORD wParam)
+NC_TrackCloseButton95 (HWND hwnd, WORD wParam)
 {
-    MSG32 msg;
+    MSG msg;
     POINT16 pt16;
-    HDC32 hdc = GetWindowDC32( hwnd );
-    BOOL32 pressed = TRUE;
+    HDC hdc = GetWindowDC( hwnd );
+    BOOL pressed = TRUE;
 
-    SetCapture32( hwnd );
+    SetCapture( hwnd );
 
     NC_DrawCloseButton95 (hwnd, hdc, TRUE);
 
     do
     {
-	BOOL32 oldstate = pressed;
+	BOOL oldstate = pressed;
         MSG_InternalGetMessage( &msg, 0, 0, 0, PM_REMOVE, FALSE );
         CONV_POINT32TO16( &msg.pt, &pt16 );
 
@@ -2275,7 +2275,7 @@ NC_TrackCloseButton95 (HWND32 hwnd, WORD wParam)
     NC_DrawCloseButton95 (hwnd, hdc, FALSE);
 
     ReleaseCapture();
-    ReleaseDC32( hwnd, hdc );
+    ReleaseDC( hwnd, hdc );
     if (!pressed) return;
 
     SendMessage16( hwnd, WM_SYSCOMMAND, SC_CLOSE, *(LONG*)&pt16 );
@@ -2287,10 +2287,10 @@ NC_TrackCloseButton95 (HWND32 hwnd, WORD wParam)
  *
  * Track a mouse button press on the horizontal or vertical scroll-bar.
  */
-static void NC_TrackScrollBar( HWND32 hwnd, WPARAM32 wParam, POINT32 pt )
+static void NC_TrackScrollBar( HWND hwnd, WPARAM wParam, POINT pt )
 {
     MSG16 *msg;
-    INT32 scrollbar;
+    INT scrollbar;
     WND *wndPtr = WIN_FindWndPtr( hwnd );
 
     if ((wParam & 0xfff0) == SC_HSCROLL)
@@ -2307,7 +2307,7 @@ static void NC_TrackScrollBar( HWND32 hwnd, WPARAM32 wParam, POINT32 pt )
     if (!(msg = SEGPTR_NEW(MSG16))) return;
     pt.x -= wndPtr->rectWindow.left;
     pt.y -= wndPtr->rectWindow.top;
-    SetCapture32( hwnd );
+    SetCapture( hwnd );
     SCROLL_HandleScrollEvent( hwnd, scrollbar, WM_LBUTTONDOWN, pt );
 
     do
@@ -2329,7 +2329,7 @@ static void NC_TrackScrollBar( HWND32 hwnd, WPARAM32 wParam, POINT32 pt )
             DispatchMessage16( msg );
             break;
 	}
-        if (!IsWindow32( hwnd ))
+        if (!IsWindow( hwnd ))
         {
             ReleaseCapture();
             break;
@@ -2345,14 +2345,14 @@ static void NC_TrackScrollBar( HWND32 hwnd, WPARAM32 wParam, POINT32 pt )
  */
 LONG NC_HandleNCLButtonDown( WND* pWnd, WPARAM16 wParam, LPARAM lParam )
 {
-    HWND32 hwnd = pWnd->hwndSelf;
+    HWND hwnd = pWnd->hwndSelf;
 
     switch(wParam)  /* Hit test */
     {
     case HTCAPTION:
 	 hwnd = WIN_GetTopParent(hwnd);
 
-	 if( WINPOS_SetActiveWindow(hwnd, TRUE, TRUE) || (GetActiveWindow32() == hwnd) )
+	 if( WINPOS_SetActiveWindow(hwnd, TRUE, TRUE) || (GetActiveWindow() == hwnd) )
 		SendMessage16( pWnd->hwndSelf, WM_SYSCOMMAND, SC_MOVE + HTCAPTION, lParam );
 	 break;
 
@@ -2361,12 +2361,12 @@ LONG NC_HandleNCLButtonDown( WND* pWnd, WPARAM16 wParam, LPARAM lParam )
 	 {
 	     if( !(pWnd->dwStyle & WS_MINIMIZE) )
 	     {
-		HDC32 hDC = GetWindowDC32(hwnd);
+		HDC hDC = GetWindowDC(hwnd);
 		if (TWEAK_WineLook == WIN31_LOOK)
 		    NC_DrawSysButton( hwnd, hDC, TRUE );
 		else
 		    NC_DrawSysButton95( hwnd, hDC, TRUE );
-		ReleaseDC32( hwnd, hDC );
+		ReleaseDC( hwnd, hDC );
 	     }
 	     SendMessage16( hwnd, WM_SYSCOMMAND, SC_MOUSEMENU + HTSYSMENU, lParam );
 	 }
@@ -2464,10 +2464,10 @@ LONG NC_HandleNCLButtonDblClk( WND *pWnd, WPARAM16 wParam, LPARAM lParam )
  *
  * Handle a WM_SYSCOMMAND message. Called from DefWindowProc().
  */
-LONG NC_HandleSysCommand( HWND32 hwnd, WPARAM16 wParam, POINT16 pt )
+LONG NC_HandleSysCommand( HWND hwnd, WPARAM16 wParam, POINT16 pt )
 {
     WND *wndPtr = WIN_FindWndPtr( hwnd );
-    POINT32 pt32;
+    POINT pt32;
     UINT16 uCommand = wParam & 0xFFF0;
 
     TRACE(nonclient, "Handling WM_SYSCOMMAND %x %d,%d\n", 
@@ -2484,15 +2484,15 @@ LONG NC_HandleSysCommand( HWND32 hwnd, WPARAM16 wParam, POINT16 pt )
 	break;
 
     case SC_MINIMIZE:
-	ShowWindow32( hwnd, SW_MINIMIZE ); 
+	ShowWindow( hwnd, SW_MINIMIZE ); 
 	break;
 
     case SC_MAXIMIZE:
-	ShowWindow32( hwnd, SW_MAXIMIZE );
+	ShowWindow( hwnd, SW_MAXIMIZE );
 	break;
 
     case SC_RESTORE:
-	ShowWindow32( hwnd, SW_RESTORE );
+	ShowWindow( hwnd, SW_RESTORE );
 	break;
 
     case SC_CLOSE:
@@ -2514,12 +2514,12 @@ LONG NC_HandleSysCommand( HWND32 hwnd, WPARAM16 wParam, POINT16 pt )
 	break;
 	
     case SC_TASKLIST:
-	WinExec32( "taskman.exe", SW_SHOWNORMAL ); 
+	WinExec( "taskman.exe", SW_SHOWNORMAL ); 
 	break;
 
     case SC_SCREENSAVE:
 	if (wParam == SC_ABOUTWINE)
-            ShellAbout32A(hwnd,"Wine", WINE_RELEASE_INFO, 0);
+            ShellAboutA(hwnd,"Wine", WINE_RELEASE_INFO, 0);
 	else 
 	  if (wParam == SC_PUTMARK)
             TRACE(shell,"Mark requested by user\n");

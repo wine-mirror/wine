@@ -348,7 +348,7 @@ int CLIENT_CloseHandle( int handle )
  * Send a duplicate handle request. Return 0 if OK.
  */
 int CLIENT_DuplicateHandle( int src_process, int src_handle, int dst_process, int dst_handle,
-                            DWORD access, BOOL32 inherit, DWORD options )
+                            DWORD access, BOOL inherit, DWORD options )
 {
     struct dup_handle_request req;
     struct dup_handle_reply reply;
@@ -372,7 +372,7 @@ int CLIENT_DuplicateHandle( int src_process, int src_handle, int dst_process, in
  *
  * Open a handle to a process.
  */
-int CLIENT_OpenProcess( void *pid, DWORD access, BOOL32 inherit )
+int CLIENT_OpenProcess( void *pid, DWORD access, BOOL inherit )
 {
     struct open_process_request req;
     struct open_process_reply reply;

@@ -28,17 +28,17 @@
 typedef struct
 {
    WND*    	self;
-   HWND32  	owner;
-   UINT32  	dwStyle;
-   HWND32  	hWndEdit;
-   HWND32  	hWndLBox;
-   UINT32  	wState;
-   HFONT32 	hFont;
-   RECT32  	RectCombo;
-   RECT32  	RectEdit;
-   RECT32  	RectButton;
-   INT32   	droppedWidth;		/* last two are not used unless set */
-   INT32   	editHeight;		/* explicitly */
+   HWND  	owner;
+   UINT  	dwStyle;
+   HWND  	hWndEdit;
+   HWND  	hWndLBox;
+   UINT  	wState;
+   HFONT 	hFont;
+   RECT  	RectCombo;
+   RECT  	RectEdit;
+   RECT  	RectButton;
+   INT   	droppedWidth;		/* last two are not used unless set */
+   INT   	editHeight;		/* explicitly */
 } HEADCOMBO,*LPHEADCOMBO;
 
 /*
@@ -51,9 +51,9 @@ typedef struct
 #define CB_HASSTRINGS( lphc ) ((lphc)->dwStyle & CBS_HASSTRINGS)
 #define CB_HWND( lphc )       ((lphc)->self->hwndSelf)
 
-BOOL32 	COMBO_FlipListbox( LPHEADCOMBO, BOOL32 );
-HWND32 	COMBO_GetLBWindow( WND* );
-LRESULT COMBO_Directory( LPHEADCOMBO, UINT32, LPSTR, BOOL32 );
+BOOL 	COMBO_FlipListbox( LPHEADCOMBO, BOOL );
+HWND 	COMBO_GetLBWindow( WND* );
+LRESULT COMBO_Directory( LPHEADCOMBO, UINT, LPSTR, BOOL );
 
 #endif /* __WINE_COMBO_H */
 

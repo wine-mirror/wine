@@ -192,7 +192,7 @@ static HRESULT WINAPI IDirect3DViewport2_SetBackground(LPDIRECT3DVIEWPORT2 this,
 
 static HRESULT WINAPI IDirect3DViewport2_GetBackground(LPDIRECT3DVIEWPORT2 this,
 						       LPD3DMATERIALHANDLE lphMat,
-						       LPBOOL32 lpValid)
+						       LPBOOL lpValid)
 {
   FIXME(ddraw, "(%p)->(%p,%p): stub\n", this, lphMat, lpValid);
   
@@ -209,7 +209,7 @@ static HRESULT WINAPI IDirect3DViewport2_SetBackgroundDepth(LPDIRECT3DVIEWPORT2 
 
 static HRESULT WINAPI IDirect3DViewport2_GetBackgroundDepth(LPDIRECT3DVIEWPORT2 this,
 							    LPDIRECTDRAWSURFACE* lplpDDSurface,
-							    LPBOOL32 lpValid)
+							    LPBOOL lpValid)
 {
   FIXME(ddraw, "(%p)->(%p,%p): stub\n", this, lplpDDSurface, lpValid);
   

@@ -49,7 +49,7 @@
 
 static void MZ_InitPSP( LPVOID lpPSP, LPCSTR cmdline, WORD env )
 {
- PDB*psp=lpPSP;
+ PDB16*psp=lpPSP;
  const char*cmd=cmdline?strchr(cmdline,' '):NULL;
 
  psp->int20=0x20CD; /* int 20 */
@@ -230,7 +230,7 @@ static int MZ_LoadImage( HFILE16 hFile, LPCSTR name, LPCSTR cmdline,
 #endif
   old_com=1; /* assume .COM file */
   image_start=0;
-  image_size=GetFileSize(FILE_GetHandle32(hFile),NULL);
+  image_size=GetFileSize(FILE_GetHandle(hFile),NULL);
   min_size=0x10000; max_size=0x100000;
   mz_header.e_crlc=0;
   mz_header.e_ss=0; mz_header.e_sp=0xFFFE;
@@ -411,13 +411,13 @@ int MZ_InitTask( LPDOSTASK lpDosTask )
  return lpDosTask->hModule;
 }
 
-HINSTANCE16 MZ_CreateProcess( LPCSTR name, LPCSTR cmdline, LPCSTR env, BOOL32 inherit,
-                              LPSTARTUPINFO32A startup, LPPROCESS_INFORMATION info )
+HINSTANCE16 MZ_CreateProcess( LPCSTR name, LPCSTR cmdline, LPCSTR env, BOOL inherit,
+                              LPSTARTUPINFOA startup, LPPROCESS_INFORMATION info )
 {
  LPDOSTASK lpDosTask = NULL; /* keep gcc from complaining */
  HMODULE16 hModule;
  HINSTANCE16 hInstance;
- PDB32 *pdb = PROCESS_Current();
+ PDB *pdb = PROCESS_Current();
  TDB *pTask = (TDB*)GlobalLock16( GetCurrentTask() );
  NE_MODULE *pModule = pTask ? NE_GetPtr( pTask->hModule ) : NULL;
  HFILE16 hFile;
@@ -494,8 +494,8 @@ void MZ_KillModule( LPDOSTASK lpDosTask )
 
 #else /* !MZ_SUPPORTED */
 
-HINSTANCE16 MZ_CreateProcess( LPCSTR name, LPCSTR cmdline, LPCSTR env, BOOL32 inherit,
-                              LPSTARTUPINFO32A startup, LPPROCESS_INFORMATION info )
+HINSTANCE16 MZ_CreateProcess( LPCSTR name, LPCSTR cmdline, LPCSTR env, BOOL inherit,
+                              LPSTARTUPINFOA startup, LPPROCESS_INFORMATION info )
 {
  WARN(module,"DOS executables not supported on this architecture\n");
  return (HMODULE16)11;  /* invalid exe */

@@ -100,11 +100,11 @@ BOOL ExistFile(LPCSTR szFilename) {
  *           FALSE - if it does not
  */
    WIN32_FIND_DATA entry;
-   HANDLE32 hFile;
+   HANDLE hFile;
    
    hFile = FindFirstFile(szFilename, &entry);
    
-   return (hFile!=INVALID_HANDLE_VALUE32);
+   return (hFile!=INVALID_HANDLE_VALUE);
 }
 
 VOID DoSaveFile(VOID) {

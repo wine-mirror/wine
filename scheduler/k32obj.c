@@ -55,7 +55,7 @@ typedef struct _NE
 {
     struct _NE *next;
     K32OBJ     *obj;
-    UINT32      len;
+    UINT      len;
     char        name[1];
 } NAME_ENTRY;
 
@@ -126,9 +126,9 @@ static void K32OBJ_Destroy( K32OBJ *obj )
  *
  * Check if a pointer is a valid kernel object
  */
-BOOL32 K32OBJ_IsValid( K32OBJ *ptr, K32OBJ_TYPE type )
+BOOL K32OBJ_IsValid( K32OBJ *ptr, K32OBJ_TYPE type )
 {
-    if (IsBadReadPtr32( ptr, sizeof(*ptr) )) return FALSE;
+    if (IsBadReadPtr( ptr, sizeof(*ptr) )) return FALSE;
     return (ptr->type == type);
 }
 
@@ -139,10 +139,10 @@ BOOL32 K32OBJ_IsValid( K32OBJ *ptr, K32OBJ_TYPE type )
  * Add a name entry for an object. We don't check for duplicates here.
  * FIXME: should use some sort of hashing.
  */
-BOOL32 K32OBJ_AddName( K32OBJ *obj, LPCSTR name )
+BOOL K32OBJ_AddName( K32OBJ *obj, LPCSTR name )
 {
     NAME_ENTRY *entry;
-    UINT32 len;
+    UINT len;
 
     if (!name) return TRUE;  /* Anonymous object */
     len = strlen( name );
@@ -156,7 +156,7 @@ BOOL32 K32OBJ_AddName( K32OBJ *obj, LPCSTR name )
     entry->next = K32OBJ_FirstEntry;
     entry->obj  = obj;
     entry->len  = len;
-    lstrcpy32A( entry->name, name );
+    lstrcpyA( entry->name, name );
     K32OBJ_FirstEntry = entry;
     SYSTEM_UNLOCK();
     return TRUE;
@@ -171,9 +171,9 @@ BOOL32 K32OBJ_AddName( K32OBJ *obj, LPCSTR name )
  * The refcount of the object must be decremented once it is initialized.
  */
 K32OBJ *K32OBJ_Create( K32OBJ_TYPE type, DWORD size, LPCSTR name, int server_handle,
-                       DWORD access, SECURITY_ATTRIBUTES *sa, HANDLE32 *handle)
+                       DWORD access, SECURITY_ATTRIBUTES *sa, HANDLE *handle)
 {
-    BOOL32 inherit = (sa && (sa->nLength>=sizeof(*sa)) && sa->bInheritHandle);
+    BOOL inherit = (sa && (sa->nLength>=sizeof(*sa)) && sa->bInheritHandle);
 
     /* Check if the name already exists */
 
@@ -188,7 +188,7 @@ K32OBJ *K32OBJ_Create( K32OBJ_TYPE type, DWORD size, LPCSTR name, int server_han
         else
         {
             SetLastError( ERROR_DUP_NAME );
-            *handle = INVALID_HANDLE_VALUE32;
+            *handle = INVALID_HANDLE_VALUE;
             if (server_handle != -1) CLIENT_CloseHandle( server_handle );
         }
         K32OBJ_DecCount( obj );
@@ -201,7 +201,7 @@ K32OBJ *K32OBJ_Create( K32OBJ_TYPE type, DWORD size, LPCSTR name, int server_han
     if (!(obj = HeapAlloc( SystemHeap, 0, size )))
     {
         SYSTEM_UNLOCK();
-        *handle = INVALID_HANDLE_VALUE32;
+        *handle = INVALID_HANDLE_VALUE;
         if (server_handle != -1) CLIENT_CloseHandle( server_handle );
         return NULL;
     }
@@ -216,7 +216,7 @@ K32OBJ *K32OBJ_Create( K32OBJ_TYPE type, DWORD size, LPCSTR name, int server_han
          * initialized properly */
         HeapFree( SystemHeap, 0, obj );
         SYSTEM_UNLOCK();
-        *handle = INVALID_HANDLE_VALUE32;
+        *handle = INVALID_HANDLE_VALUE;
         if (server_handle != -1) CLIENT_CloseHandle( server_handle );
         return NULL;
     }
@@ -238,7 +238,7 @@ K32OBJ *K32OBJ_Create( K32OBJ_TYPE type, DWORD size, LPCSTR name, int server_han
 K32OBJ *K32OBJ_FindName( LPCSTR name )
 {
     NAME_ENTRY *entry;
-    UINT32 len;
+    UINT len;
 
     if (!name) return NULL;  /* Anonymous object */
     len = strlen( name );

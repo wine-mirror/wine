@@ -98,7 +98,7 @@ static void EVENT_SelectionRequest( WND *pWnd, XSelectionRequestEvent *event);
 static void EVENT_SelectionNotify( XSelectionEvent *event);
 static void EVENT_SelectionClear( WND *pWnd, XSelectionClearEvent *event);
 static void EVENT_ClientMessage( WND *pWnd, XClientMessageEvent *event );
-static void EVENT_MapNotify( HWND32 hwnd, XMapEvent *event );
+static void EVENT_MapNotify( HWND hwnd, XMapEvent *event );
 
 /* Usable only with OLVWM - compile option perhaps?
 static void EVENT_EnterNotify( WND *pWnd, XCrossingEvent *event );
@@ -113,7 +113,7 @@ static void EVENT_GetGeometry( Window win, int *px, int *py,
  *
  * Initialize network IO.
  */
-BOOL32 X11DRV_EVENT_Init(void)
+BOOL X11DRV_EVENT_Init(void)
 {
   int  i;
   for( i = 0; i < 3; i++ )
@@ -199,7 +199,7 @@ void EVENT_ReadWakeUpPipe(void)
  * 'peek' mode, FALSE otherwise.
  */
 
-BOOL32 X11DRV_EVENT_WaitNetEvent( BOOL32 sleep, BOOL32 peek )
+BOOL X11DRV_EVENT_WaitNetEvent( BOOL sleep, BOOL peek )
 {
   XEvent event;
   LONG maxWait = sleep ? TIMER_GetNextExpiration() : 0;
@@ -513,7 +513,7 @@ static void EVENT_ProcessEvent( XEvent *event )
  * Try to synchronize internal z-order with the window manager's.
  * Probably a futile endeavor.
  */
-static BOOL32 __check_query_condition( WND** pWndA, WND** pWndB )
+static BOOL __check_query_condition( WND** pWndA, WND** pWndB )
 {
   /* return TRUE if we have at least two managed windows */
   
@@ -567,10 +567,10 @@ static unsigned __td_lookup( Window w, Window* list, unsigned max )
   return i;
 }
 
-static BOOL32 EVENT_QueryZOrder( WND* pWndCheck )
+static BOOL EVENT_QueryZOrder( WND* pWndCheck )
 {
-  BOOL32      bRet = FALSE;
-  HWND32      hwndInsertAfter = HWND_TOP;
+  BOOL      bRet = FALSE;
+  HWND      hwndInsertAfter = HWND_TOP;
   WND*        pWnd, *pWndZ = WIN_GetDesktop()->child;
   Window      w, parent, *children = NULL;
   unsigned    total, check, pos, best;
@@ -633,7 +633,7 @@ static WORD EVENT_XStateToKeyState( int state )
 /***********************************************************************
  *           X11DRV_EVENT_QueryPointer
  */
-BOOL32 X11DRV_EVENT_QueryPointer(DWORD *posX, DWORD *posY, DWORD *state)
+BOOL X11DRV_EVENT_QueryPointer(DWORD *posX, DWORD *posY, DWORD *state)
 {
   Window root, child;
   int rootX, rootY, winX, winY;
@@ -658,7 +658,7 @@ BOOL32 X11DRV_EVENT_QueryPointer(DWORD *posX, DWORD *posY, DWORD *state)
  */
 static void EVENT_Expose( WND *pWnd, XExposeEvent *event )
 {
-  RECT32 rect;
+  RECT rect;
 
   /* Make position relative to client area instead of window */
   rect.left   = event->x - (pWnd? (pWnd->rectClient.left - pWnd->rectWindow.left) : 0);
@@ -666,7 +666,7 @@ static void EVENT_Expose( WND *pWnd, XExposeEvent *event )
   rect.right  = rect.left + event->width;
   rect.bottom = rect.top + event->height;
  
-  Callout.RedrawWindow32( pWnd? pWnd->hwndSelf : 0, &rect, 0,
+  Callout.RedrawWindow( pWnd? pWnd->hwndSelf : 0, &rect, 0,
                           RDW_INVALIDATE | RDW_FRAME | RDW_ALLCHILDREN | RDW_ERASE |
                           (event->count ? 0 : RDW_ERASENOW) );
 }
@@ -680,7 +680,7 @@ static void EVENT_Expose( WND *pWnd, XExposeEvent *event )
  */
 static void EVENT_GraphicsExpose( WND *pWnd, XGraphicsExposeEvent *event )
 {
-  RECT32 rect;
+  RECT rect;
   
   /* Make position relative to client area instead of window */
   rect.left   = event->x - (pWnd? (pWnd->rectClient.left - pWnd->rectWindow.left) : 0);
@@ -688,7 +688,7 @@ static void EVENT_GraphicsExpose( WND *pWnd, XGraphicsExposeEvent *event )
   rect.right  = rect.left + event->width;
   rect.bottom = rect.top + event->height;
   
-  Callout.RedrawWindow32( pWnd? pWnd->hwndSelf : 0, &rect, 0,
+  Callout.RedrawWindow( pWnd? pWnd->hwndSelf : 0, &rect, 0,
                           RDW_INVALIDATE | RDW_ALLCHILDREN | RDW_ERASE |
                           (event->count ? 0 : RDW_ERASENOW) );
 }
@@ -837,15 +837,15 @@ static void EVENT_FocusIn( WND *pWnd, XFocusChangeEvent *event )
   
   if (event->detail != NotifyPointer)
     { 
-      HWND32	hwnd = pWnd->hwndSelf;
+      HWND	hwnd = pWnd->hwndSelf;
 
-      if (hwnd != GetActiveWindow32()) 
+      if (hwnd != GetActiveWindow()) 
         {
 	  WINPOS_ChangeActiveWindow( hwnd, FALSE );
 	  X11DRV_KEYBOARD_UpdateState();
         }
-      if ((hwnd != GetFocus32()) && !IsChild32( hwnd, GetFocus32()))
-            SetFocus32( hwnd );
+      if ((hwnd != GetFocus()) && !IsChild( hwnd, GetFocus()))
+            SetFocus( hwnd );
     }
 }
 
@@ -859,19 +859,19 @@ static void EVENT_FocusOut( WND *pWnd, XFocusChangeEvent *event )
 {
   if (event->detail != NotifyPointer)
     {
-      HWND32	hwnd = pWnd->hwndSelf;
+      HWND	hwnd = pWnd->hwndSelf;
       
-      if (hwnd == GetActiveWindow32()) 
+      if (hwnd == GetActiveWindow()) 
 	WINPOS_ChangeActiveWindow( 0, FALSE );
-      if ((hwnd == GetFocus32()) || IsChild32( hwnd, GetFocus32()))
-	SetFocus32( 0 );
+      if ((hwnd == GetFocus()) || IsChild( hwnd, GetFocus()))
+	SetFocus( 0 );
     }
 }
 
 /**********************************************************************
  *              X11DRV_EVENT_CheckFocus
  */
-BOOL32 X11DRV_EVENT_CheckFocus(void)
+BOOL X11DRV_EVENT_CheckFocus(void)
 {
   WND*   pWnd;
   Window xW;
@@ -928,9 +928,9 @@ static void EVENT_GetGeometry( Window win, int *px, int *py,
  */
 static void EVENT_ConfigureNotify( WND *pWnd, XConfigureEvent *event )
 {
-  WINDOWPOS32 winpos;
-  RECT32 newWindowRect, newClientRect;
-  HRGN32 hrgnOldPos, hrgnNewPos;
+  WINDOWPOS winpos;
+  RECT newWindowRect, newClientRect;
+  HRGN hrgnOldPos, hrgnNewPos;
   Window above = event->above;
   int x, y;
   unsigned int width, height;
@@ -959,13 +959,13 @@ static void EVENT_ConfigureNotify( WND *pWnd, XConfigureEvent *event )
     winpos.flags |= SWP_NOSIZE;
   else
     {
-      RECT32 rect = { 0, 0, pWnd->rectWindow.right - pWnd->rectWindow.left,
+      RECT rect = { 0, 0, pWnd->rectWindow.right - pWnd->rectWindow.left,
 		      pWnd->rectWindow.bottom - pWnd->rectWindow.top };
       DCE_InvalidateDCE( pWnd, &rect );
     }
   
   /* Send WM_WINDOWPOSCHANGING */
-  SendMessage32A( winpos.hwnd, WM_WINDOWPOSCHANGING, 0, (LPARAM)&winpos );
+  SendMessageA( winpos.hwnd, WM_WINDOWPOSCHANGING, 0, (LPARAM)&winpos );
   
   /* Calculate new position and size */
   newWindowRect.left = x;
@@ -977,18 +977,18 @@ static void EVENT_ConfigureNotify( WND *pWnd, XConfigureEvent *event )
 			 &pWnd->rectWindow, &pWnd->rectClient,
 			 &winpos, &newClientRect );
   
-  hrgnOldPos = CreateRectRgnIndirect32( &pWnd->rectWindow );
-  hrgnNewPos = CreateRectRgnIndirect32( &newWindowRect );
-  CombineRgn32( hrgnOldPos, hrgnOldPos, hrgnNewPos, RGN_DIFF );
-  DeleteObject32(hrgnOldPos);
-  DeleteObject32(hrgnNewPos);
+  hrgnOldPos = CreateRectRgnIndirect( &pWnd->rectWindow );
+  hrgnNewPos = CreateRectRgnIndirect( &newWindowRect );
+  CombineRgn( hrgnOldPos, hrgnOldPos, hrgnNewPos, RGN_DIFF );
+  DeleteObject(hrgnOldPos);
+  DeleteObject(hrgnNewPos);
   
   /* Set new size and position */
   pWnd->rectWindow = newWindowRect;
   pWnd->rectClient = newClientRect;
-  SendMessage32A( winpos.hwnd, WM_WINDOWPOSCHANGED, 0, (LPARAM)&winpos );
+  SendMessageA( winpos.hwnd, WM_WINDOWPOSCHANGED, 0, (LPARAM)&winpos );
   
-  if (!IsWindow32( winpos.hwnd )) return;
+  if (!IsWindow( winpos.hwnd )) return;
   if( above == None )			/* absolute bottom */
     {
       WIN_UnlinkWindow( winpos.hwnd );
@@ -1023,7 +1023,7 @@ static void EVENT_SelectionRequest( WND *pWnd, XSelectionRequestEvent *event )
 	{
 	  /* open to make sure that clipboard is available */
 
-	  BOOL32 couldOpen = OpenClipboard32( pWnd->hwndSelf );
+	  BOOL couldOpen = OpenClipboard( pWnd->hwndSelf );
 	  char* lpstr = 0;
 	  
 	  hText = GetClipboardData16(CF_TEXT);
@@ -1048,7 +1048,7 @@ static void EVENT_SelectionRequest( WND *pWnd, XSelectionRequestEvent *event )
 	  
 	  /* close only if we opened before */
 	  
-	  if(couldOpen) CloseClipboard32();
+	  if(couldOpen) CloseClipboard();
 	}
     }
   
@@ -1102,7 +1102,7 @@ static void EVENT_DropFromOffiX( WND *pWnd, XClientMessageEvent *event )
   unsigned char*	p_data = NULL;
   union {
     Atom		atom_aux;
-    POINT32	pt_aux;
+    POINT	pt_aux;
     int		i;
   }		u;
   int			x, y;
@@ -1156,7 +1156,7 @@ static void EVENT_DropFromOffiX( WND *pWnd, XClientMessageEvent *event )
 	      if( u.i == -1 ) *p = -1;	/* mark as "bad" */
 	      else
 		{
-		  INT32 len = GetShortPathName32A( p, NULL, 0 );
+		  INT len = GetShortPathNameA( p, NULL, 0 );
 		  if (len) aux_long += len + 1;
 		  else *p = -1;
 		}
@@ -1187,7 +1187,7 @@ static void EVENT_DropFromOffiX( WND *pWnd, XClientMessageEvent *event )
 		    {
 		      if( *p != -1 )	/* use only "good" entries */
 			{
-                          GetShortPathName32A( p, p_drop, 65535 );
+                          GetShortPathNameA( p, p_drop, 65535 );
                           p_drop += strlen( p_drop ) + 1;
 			}
 		      p += strlen(p) + 1;
@@ -1222,13 +1222,13 @@ static void EVENT_DropURLs( WND *pWnd, XClientMessageEvent *event )
   int		x, y, drop32 = FALSE ;
   union {
     Atom	atom_aux;
-    POINT32	pt_aux;
+    POINT	pt_aux;
     int         i;
     Window      w_aux;
   }		u; /* unused */
   union {
     HDROP16     h16;
-    HDROP32     h32;
+    HDROP     h32;
   } hDrop;
 
   drop32 = pWnd->flags & WIN_ISWIN32;
@@ -1251,7 +1251,7 @@ static void EVENT_DropURLs( WND *pWnd, XClientMessageEvent *event )
     while (p) {
       if (next) *next=0;
       if (strncmp(p,"file:",5) == 0 ) {
-	INT32 len = GetShortPathName32A( p+5, NULL, 0 );
+	INT len = GetShortPathNameA( p+5, NULL, 0 );
 	if (len) drop_len += len + 1;
       }
       if (next) { 
@@ -1269,22 +1269,22 @@ static void EVENT_DropURLs( WND *pWnd, XClientMessageEvent *event )
       pDropWnd = WIN_FindWndPtr( pWnd->hwndSelf );
       
       if (drop32) {
-	LPDROPFILESTRUCT32        lpDrop;
-	drop_len += sizeof(DROPFILESTRUCT32) + 1; 
-	hDrop.h32 = (HDROP32)GlobalAlloc32( GMEM_SHARE, drop_len );
-	lpDrop = (LPDROPFILESTRUCT32) GlobalLock32( hDrop.h32 );
+	LPDROPFILESTRUCT        lpDrop;
+	drop_len += sizeof(DROPFILESTRUCT) + 1; 
+	hDrop.h32 = (HDROP)GlobalAlloc( GMEM_SHARE, drop_len );
+	lpDrop = (LPDROPFILESTRUCT) GlobalLock( hDrop.h32 );
 	
 	if( lpDrop ) {
-	  lpDrop->lSize = sizeof(DROPFILESTRUCT32);
-	  lpDrop->ptMousePos.x = (INT32)x;
-	  lpDrop->ptMousePos.y = (INT32)y;
-	  lpDrop->fInNonClientArea = (BOOL32) 
+	  lpDrop->lSize = sizeof(DROPFILESTRUCT);
+	  lpDrop->ptMousePos.x = (INT)x;
+	  lpDrop->ptMousePos.y = (INT)y;
+	  lpDrop->fInNonClientArea = (BOOL) 
 	    ( x < (pDropWnd->rectClient.left - pDropWnd->rectWindow.left)  ||
 	      y < (pDropWnd->rectClient.top - pDropWnd->rectWindow.top)    ||
 	      x > (pDropWnd->rectClient.right - pDropWnd->rectWindow.left) ||
 	      y > (pDropWnd->rectClient.bottom - pDropWnd->rectWindow.top) );
 	  lpDrop->fWideChar = FALSE;
-	  p_drop = ((char*)lpDrop) + sizeof(DROPFILESTRUCT32);
+	  p_drop = ((char*)lpDrop) + sizeof(DROPFILESTRUCT);
 	}
       } else {
 	LPDROPFILESTRUCT16        lpDrop;
@@ -1312,7 +1312,7 @@ static void EVENT_DropURLs( WND *pWnd, XClientMessageEvent *event )
 	while (p) {
 	  if (next) *next=0;
 	  if (strncmp(p,"file:",5) == 0 ) {
-	    INT32 len = GetShortPathName32A( p+5, p_drop, 65535 );
+	    INT len = GetShortPathNameA( p+5, p_drop, 65535 );
 	    if (len) {
 	      TRACE(event, "drop file %s as %s\n", p+5, p_drop);
 	      p_drop += len+1;
@@ -1336,9 +1336,9 @@ static void EVENT_DropURLs( WND *pWnd, XClientMessageEvent *event )
 	  /* can not use PostMessage32A because it is currently based on 
 	   * PostMessage16 and WPARAM32 would be truncated to WPARAM16
 	   */
-	  GlobalUnlock32(hDrop.h32);
-	  SendMessage32A( pWnd->hwndSelf, WM_DROPFILES,
-			  (WPARAM32)hDrop.h32, 0L );
+	  GlobalUnlock(hDrop.h32);
+	  SendMessageA( pWnd->hwndSelf, WM_DROPFILES,
+			  (WPARAM)hDrop.h32, 0L );
 	} else {
 	  GlobalUnlock16(hDrop.h16);
 	  PostMessage16( pWnd->hwndSelf, WM_DROPFILES,
@@ -1398,7 +1398,7 @@ static void EVENT_ClientMessage( WND *pWnd, XClientMessageEvent *event )
 void EVENT_EnterNotify( WND *pWnd, XCrossingEvent *event )
 {
   if( !Options.managed && X11DRV_GetXRootWindow() == DefaultRootWindow(display) &&
-      (COLOR_GetSystemPaletteFlags() & COLOR_PRIVATE) && GetFocus32() )
+      (COLOR_GetSystemPaletteFlags() & COLOR_PRIVATE) && GetFocus() )
     TSXInstallColormap( display, X11DRV_COLOR_GetColormap() );
 }
 #endif
@@ -1406,11 +1406,11 @@ void EVENT_EnterNotify( WND *pWnd, XCrossingEvent *event )
 /**********************************************************************
  *		EVENT_MapNotify
  */
-void EVENT_MapNotify( HWND32 hWnd, XMapEvent *event )
+void EVENT_MapNotify( HWND hWnd, XMapEvent *event )
 {
-  HWND32 hwndFocus = GetFocus32();
+  HWND hwndFocus = GetFocus();
   
-  if (hwndFocus && IsChild32( hWnd, hwndFocus ))
+  if (hwndFocus && IsChild( hWnd, hwndFocus ))
     X11DRV_WND_SetFocus( WIN_FindWndPtr( hwndFocus ) );
   
   return;
@@ -1419,7 +1419,7 @@ void EVENT_MapNotify( HWND32 hWnd, XMapEvent *event )
 /**********************************************************************
  *		X11DRV_EVENT_Pending
  */
-BOOL32 X11DRV_EVENT_Pending()
+BOOL X11DRV_EVENT_Pending()
 {
   return TSXPending(display);
 }

@@ -82,7 +82,7 @@ LPWSTR* WINAPI CommandLineToArgvW(LPWSTR cmdline,LPDWORD numargs)
  * http://premium.microsoft.com/msdn/library/techart/msdn193.htm
  */
 
-void WINAPI Control_RunDLL( HWND32 hwnd, LPCVOID code, LPCSTR cmd, DWORD arg4 )
+void WINAPI Control_RunDLL( HWND hwnd, LPCVOID code, LPCSTR cmd, DWORD arg4 )
 {
     FIXME(shell, "(0x%08x, %p, %s, 0x%08lx): stub\n", hwnd, code,
           debugstr_a(cmd), arg4);
@@ -95,9 +95,9 @@ void WINAPI Control_RunDLL( HWND32 hwnd, LPCVOID code, LPCSTR cmd, DWORD arg4 )
  *   
  */
 
-DWORD WINAPI SHGetFileInfo32A(LPCSTR path,DWORD dwFileAttributes,
-                              SHFILEINFO32A *psfi, UINT32 sizeofpsfi,
-                              UINT32 flags )
+DWORD WINAPI SHGetFileInfoA(LPCSTR path,DWORD dwFileAttributes,
+                              SHFILEINFOA *psfi, UINT sizeofpsfi,
+                              UINT flags )
 {	CHAR		szTemp[MAX_PATH];
 	LPPIDLDATA 	pData;
 	LPITEMIDLIST	pPidlTemp = NULL;
@@ -109,7 +109,7 @@ DWORD WINAPI SHGetFileInfo32A(LPCSTR path,DWORD dwFileAttributes,
 	/* translate the pidl to a path*/
 	if (flags & SHGFI_PIDL)
 	{ pPidlTemp = (LPCITEMIDLIST)path;
-	  SHGetPathFromIDList32A (pPidlTemp, szTemp);
+	  SHGetPathFromIDListA (pPidlTemp, szTemp);
 	  TRACE(shell,"pidl=%p is %s\n", path, szTemp);
 	}
 	else
@@ -227,9 +227,9 @@ DWORD WINAPI SHGetFileInfo32A(LPCSTR path,DWORD dwFileAttributes,
  *   
  */
 
-DWORD WINAPI SHGetFileInfo32W(LPCWSTR path,DWORD dwFileAttributes,
-                              SHFILEINFO32W *psfi, UINT32 sizeofpsfi,
-                              UINT32 flags )
+DWORD WINAPI SHGetFileInfoW(LPCWSTR path,DWORD dwFileAttributes,
+                              SHFILEINFOW *psfi, UINT sizeofpsfi,
+                              UINT flags )
 {	FIXME(shell,"(%s,0x%lx,%p,0x%x,0x%x)\n",
 	      debugstr_w(path),dwFileAttributes,psfi,sizeofpsfi,flags);
 	return 0;
@@ -238,9 +238,9 @@ DWORD WINAPI SHGetFileInfo32W(LPCWSTR path,DWORD dwFileAttributes,
 /*************************************************************************
  *             ExtractIcon32A   (SHELL32.133)
  */
-HICON32 WINAPI ExtractIcon32A( HINSTANCE32 hInstance, LPCSTR lpszExeFileName,
-	UINT32 nIconIndex )
-{   HGLOBAL16 handle = InternalExtractIcon(hInstance,lpszExeFileName,nIconIndex, 1);
+HICON WINAPI ExtractIconA( HINSTANCE hInstance, LPCSTR lpszExeFileName,
+	UINT nIconIndex )
+{   HGLOBAL16 handle = InternalExtractIcon16(hInstance,lpszExeFileName,nIconIndex, 1);
     TRACE(shell,"\n");
     if( handle )
     {
@@ -256,14 +256,14 @@ HICON32 WINAPI ExtractIcon32A( HINSTANCE32 hInstance, LPCSTR lpszExeFileName,
 /*************************************************************************
  *             ExtractIcon32W   (SHELL32.180)
  */
-HICON32 WINAPI ExtractIcon32W( HINSTANCE32 hInstance, LPCWSTR lpszExeFileName,
-	UINT32 nIconIndex )
+HICON WINAPI ExtractIconW( HINSTANCE hInstance, LPCWSTR lpszExeFileName,
+	UINT nIconIndex )
 { LPSTR  exefn;
-  HICON32  ret;
+  HICON  ret;
   TRACE(shell,"\n");
 
   exefn = HEAP_strdupWtoA(GetProcessHeap(),0,lpszExeFileName);
-  ret = ExtractIcon32A(hInstance,exefn,nIconIndex);
+  ret = ExtractIconA(hInstance,exefn,nIconIndex);
 
 	HeapFree(GetProcessHeap(),0,exefn);
 	return ret;
@@ -272,9 +272,9 @@ HICON32 WINAPI ExtractIcon32W( HINSTANCE32 hInstance, LPCWSTR lpszExeFileName,
 /*************************************************************************
  *             FindExecutable32A   (SHELL32.184)
  */
-HINSTANCE32 WINAPI FindExecutable32A( LPCSTR lpFile, LPCSTR lpDirectory,
+HINSTANCE WINAPI FindExecutableA( LPCSTR lpFile, LPCSTR lpDirectory,
                                       LPSTR lpResult )
-{ HINSTANCE32 retval=31;    /* default - 'No association was found' */
+{ HINSTANCE retval=31;    /* default - 'No association was found' */
     char old_dir[1024];
 
   TRACE(shell, "File %s, Dir %s\n", 
@@ -290,22 +290,22 @@ HINSTANCE32 WINAPI FindExecutable32A( LPCSTR lpFile, LPCSTR lpDirectory,
     }
 
     if (lpDirectory)
-  { GetCurrentDirectory32A( sizeof(old_dir), old_dir );
-        SetCurrentDirectory32A( lpDirectory );
+  { GetCurrentDirectoryA( sizeof(old_dir), old_dir );
+        SetCurrentDirectoryA( lpDirectory );
     }
 
     retval = SHELL_FindExecutable( lpFile, "open", lpResult );
 
   TRACE(shell, "returning %s\n", lpResult);
   if (lpDirectory)
-    SetCurrentDirectory32A( old_dir );
+    SetCurrentDirectoryA( old_dir );
     return retval;
 }
 
 /*************************************************************************
  *             FindExecutable32W   (SHELL32.219)
  */
-HINSTANCE32 WINAPI FindExecutable32W(LPCWSTR lpFile, LPCWSTR lpDirectory,
+HINSTANCE WINAPI FindExecutableW(LPCWSTR lpFile, LPCWSTR lpDirectory,
                                      LPWSTR lpResult)
 {
   FIXME(shell, "(%p,%p,%p): stub\n", lpFile, lpDirectory, lpResult);
@@ -315,7 +315,7 @@ HINSTANCE32 WINAPI FindExecutable32W(LPCWSTR lpFile, LPCWSTR lpDirectory,
 typedef struct
 { LPCSTR  szApp;
     LPCSTR  szOtherStuff;
-    HICON32 hIcon;
+    HICON hIcon;
 } ABOUT_INFO;
 
 #define		IDC_STATIC_TEXT		100
@@ -325,13 +325,13 @@ typedef struct
 #define		DROP_FIELD_TOP		(-15)
 #define		DROP_FIELD_HEIGHT	15
 
-extern HICON32 hIconTitleFont;
+extern HICON hIconTitleFont;
 
-static BOOL32 __get_dropline( HWND32 hWnd, LPRECT32 lprect )
-{ HWND32 hWndCtl = GetDlgItem32(hWnd, IDC_WINE_TEXT);
+static BOOL __get_dropline( HWND hWnd, LPRECT lprect )
+{ HWND hWndCtl = GetDlgItem(hWnd, IDC_WINE_TEXT);
     if( hWndCtl )
-  { GetWindowRect32( hWndCtl, lprect );
-	MapWindowPoints32( 0, hWnd, (LPPOINT32)lprect, 2 );
+  { GetWindowRect( hWndCtl, lprect );
+	MapWindowPoints( 0, hWnd, (LPPOINT)lprect, 2 );
 	lprect->bottom = (lprect->top += DROP_FIELD_TOP);
 	return TRUE;
     }
@@ -341,7 +341,7 @@ static BOOL32 __get_dropline( HWND32 hWnd, LPRECT32 lprect )
 /*************************************************************************
  *				SHAppBarMessage32	[SHELL32.207]
  */
-UINT32 WINAPI SHAppBarMessage32(DWORD msg, PAPPBARDATA data)
+UINT WINAPI SHAppBarMessage(DWORD msg, PAPPBARDATA data)
 { FIXME(shell,"(0x%08lx,%p): stub\n", msg, data);
 #if 0
   switch (msg)
@@ -408,9 +408,9 @@ DWORD WINAPI SHGetDesktopFolder(LPSHELLFOLDER *shellfolder)
 /*************************************************************************
  *			 SHGetPathFromIDList		[SHELL32.221][NT 4.0: SHELL32.219]
  */
-BOOL32 WINAPI SHGetPathFromIDList32(LPCITEMIDLIST pidl,LPSTR pszPath)     
+BOOL WINAPI SHGetPathFromIDListAW(LPCITEMIDLIST pidl,LPSTR pszPath)     
 { TRACE(shell,"(pidl=%p,%p)\n",pidl,pszPath);
-  return SHGetPathFromIDList32A(pidl,pszPath);
+  return SHGetPathFromIDListA(pidl,pszPath);
 }
 
 /*************************************************************************
@@ -430,7 +430,7 @@ BOOL32 WINAPI SHGetPathFromIDList32(LPCITEMIDLIST pidl,LPSTR pszPath)
  *   - look for "User Shell Folder" first
  *
  */
-HRESULT WINAPI SHGetSpecialFolderLocation(HWND32 hwndOwner, INT32 nFolder, LPITEMIDLIST * ppidl)
+HRESULT WINAPI SHGetSpecialFolderLocation(HWND hwndOwner, INT nFolder, LPITEMIDLIST * ppidl)
 { LPSHELLFOLDER shellfolder;
   DWORD pchEaten,tpathlen=MAX_PATH,type,dwdisp,res;
   CHAR pszTemp[256],buffer[256],tpath[MAX_PATH],npath[MAX_PATH];
@@ -448,7 +448,7 @@ HRESULT WINAPI SHGetSpecialFolderLocation(HWND32 hwndOwner, INT32 nFolder, LPITE
 
 	strcpy(buffer,"Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Shell Folders\\");
 
-	res=RegCreateKeyEx32A(HKEY_CURRENT_USER,buffer,0,NULL,REG_OPTION_NON_VOLATILE,KEY_WRITE,NULL,&key,&dwdisp);
+	res=RegCreateKeyExA(HKEY_CURRENT_USER,buffer,0,NULL,REG_OPTION_NON_VOLATILE,KEY_WRITE,NULL,&key,&dwdisp);
 	if (res)
 	{ ERR(shell,"Could not create key %s %08lx \n",buffer,res);
 	  return E_OUTOFMEMORY;
@@ -541,9 +541,9 @@ HRESULT WINAPI SHGetSpecialFolderLocation(HWND32 hwndOwner, INT32 nFolder, LPITE
 	{ case FT_DIR:
 	    /* Directory: get the value from the registry, if its not there 
 			create it and the directory*/
-	    if (RegQueryValueEx32A(key,buffer,NULL,&type,(LPBYTE)tpath,&tpathlen))
-  	    { GetWindowsDirectory32A(npath,MAX_PATH);
-	      PathAddBackslash32A(npath);
+	    if (RegQueryValueExA(key,buffer,NULL,&type,(LPBYTE)tpath,&tpathlen))
+  	    { GetWindowsDirectoryA(npath,MAX_PATH);
+	      PathAddBackslashA(npath);
 	      switch (nFolder)
 	      { case CSIDL_DESKTOPDIRECTORY:
 	        case CSIDL_COMMON_DESKTOPDIRECTORY:
@@ -573,7 +573,7 @@ HRESULT WINAPI SHGetSpecialFolderLocation(HWND32 hwndOwner, INT32 nFolder, LPITE
 	        case CSIDL_COMMON_PROGRAMS:
       		case CSIDL_PROGRAMS:
          	  strcat (npath,"Start Menu");			
-         	  CreateDirectory32A(npath,NULL);
+         	  CreateDirectoryA(npath,NULL);
          	  strcat (npath,"\\Programs");			
          	  break;
       		case CSIDL_RECENT:
@@ -589,7 +589,7 @@ HRESULT WINAPI SHGetSpecialFolderLocation(HWND32 hwndOwner, INT32 nFolder, LPITE
 	        case CSIDL_COMMON_STARTUP:  
       		case CSIDL_STARTUP:
          	  strcat (npath,"Start Menu");			
-         	  CreateDirectory32A(npath,NULL);
+         	  CreateDirectoryA(npath,NULL);
          	  strcat (npath,"\\Startup");			
          	  break;
       		case CSIDL_TEMPLATES:
@@ -599,13 +599,13 @@ HRESULT WINAPI SHGetSpecialFolderLocation(HWND32 hwndOwner, INT32 nFolder, LPITE
          	  RegCloseKey(key);
         	  return E_OUTOFMEMORY;
 	      }
-	      if (RegSetValueEx32A(key,buffer,0,REG_SZ,(LPBYTE)npath,sizeof(npath)+1))
+	      if (RegSetValueExA(key,buffer,0,REG_SZ,(LPBYTE)npath,sizeof(npath)+1))
 	      { ERR(shell,"could not create value %s\n",buffer);
 	        RegCloseKey(key);
 	        return E_OUTOFMEMORY;
 	      }
 	      TRACE(shell,"value %s=%s created\n",buffer,npath);
-	      CreateDirectory32A(npath,NULL);
+	      CreateDirectoryA(npath,NULL);
 	      strcpy(tpath,npath);
 	    }
 	    break;
@@ -624,7 +624,7 @@ HRESULT WINAPI SHGetSpecialFolderLocation(HWND32 hwndOwner, INT32 nFolder, LPITE
 	RegCloseKey(key);
 
 	TRACE(shell,"Value=%s\n",tpath);
-	LocalToWideChar32(lpszDisplayName, tpath, 256);
+	LocalToWideChar(lpszDisplayName, tpath, 256);
   
 	if (SHGetDesktopFolder(&shellfolder)==S_OK)
 	{ shellfolder->lpvtbl->fnParseDisplayName(shellfolder,hwndOwner, NULL,lpszDisplayName,&pchEaten,ppidl,NULL);
@@ -658,9 +658,9 @@ DWORD WINAPI SHLoadInProc (DWORD dwArg1)
 /*************************************************************************
  *             ShellExecute32A   (SHELL32.245)
  */
-HINSTANCE32 WINAPI ShellExecute32A( HWND32 hWnd, LPCSTR lpOperation,
+HINSTANCE WINAPI ShellExecuteA( HWND hWnd, LPCSTR lpOperation,
                                     LPCSTR lpFile, LPCSTR lpParameters,
-                                    LPCSTR lpDirectory, INT32 iShowCmd )
+                                    LPCSTR lpDirectory, INT iShowCmd )
 {   TRACE(shell,"\n");
     return ShellExecute16( hWnd, lpOperation, lpFile, lpParameters,
                            lpDirectory, iShowCmd );
@@ -672,14 +672,14 @@ HINSTANCE32 WINAPI ShellExecute32A( HWND32 hWnd, LPCSTR lpOperation,
  * WINSHELLAPI HINSTANCE APIENTRY ShellExecuteW(HWND hwnd, LPCWSTR lpOperation, 
  * LPCWSTR lpFile, LPCWSTR lpParameters, LPCWSTR lpDirectory, INT nShowCmd);   
  */
-HINSTANCE32 WINAPI 
-ShellExecute32W(
-       HWND32 hwnd, 
+HINSTANCE WINAPI 
+ShellExecuteW(
+       HWND hwnd, 
        LPCWSTR lpOperation, 
        LPCWSTR lpFile, 
        LPCWSTR lpParameters, 
        LPCWSTR lpDirectory, 
-       INT32 nShowCmd) {
+       INT nShowCmd) {
 
        FIXME(shell,": stub\n");
        return 0;
@@ -688,9 +688,9 @@ ShellExecute32W(
 /*************************************************************************
  *             AboutDlgProc32  (not an exported API function)
  */
-BOOL32 WINAPI AboutDlgProc32( HWND32 hWnd, UINT32 msg, WPARAM32 wParam,
+BOOL WINAPI AboutDlgProc( HWND hWnd, UINT msg, WPARAM wParam,
                               LPARAM lParam )
-{   HWND32 hWndCtl;
+{   HWND hWndCtl;
     char Template[512], AppTitle[512];
 
     TRACE(shell,"\n");
@@ -700,55 +700,55 @@ BOOL32 WINAPI AboutDlgProc32( HWND32 hWnd, UINT32 msg, WPARAM32 wParam,
       { ABOUT_INFO *info = (ABOUT_INFO *)lParam;
             if (info)
         { const char* const *pstr = SHELL_People;
-                SendDlgItemMessage32A(hWnd, stc1, STM_SETICON32,info->hIcon, 0);
-                GetWindowText32A( hWnd, Template, sizeof(Template) );
+                SendDlgItemMessageA(hWnd, stc1, STM_SETICON,info->hIcon, 0);
+                GetWindowTextA( hWnd, Template, sizeof(Template) );
                 sprintf( AppTitle, Template, info->szApp );
-                SetWindowText32A( hWnd, AppTitle );
-                SetWindowText32A( GetDlgItem32(hWnd, IDC_STATIC_TEXT),
+                SetWindowTextA( hWnd, AppTitle );
+                SetWindowTextA( GetDlgItem(hWnd, IDC_STATIC_TEXT),
                                   info->szOtherStuff );
-                hWndCtl = GetDlgItem32(hWnd, IDC_LISTBOX);
-                SendMessage32A( hWndCtl, WM_SETREDRAW, 0, 0 );
-                SendMessage32A( hWndCtl, WM_SETFONT, hIconTitleFont, 0 );
+                hWndCtl = GetDlgItem(hWnd, IDC_LISTBOX);
+                SendMessageA( hWndCtl, WM_SETREDRAW, 0, 0 );
+                SendMessageA( hWndCtl, WM_SETFONT, hIconTitleFont, 0 );
                 while (*pstr)
-          { SendMessage32A( hWndCtl, LB_ADDSTRING32, (WPARAM32)-1, (LPARAM)*pstr );
+          { SendMessageA( hWndCtl, LB_ADDSTRING, (WPARAM)-1, (LPARAM)*pstr );
                     pstr++;
                 }
-                SendMessage32A( hWndCtl, WM_SETREDRAW, 1, 0 );
+                SendMessageA( hWndCtl, WM_SETREDRAW, 1, 0 );
             }
         }
         return 1;
 
     case WM_PAINT:
-      { RECT32 rect;
-	    PAINTSTRUCT32 ps;
-	    HDC32 hDC = BeginPaint32( hWnd, &ps );
+      { RECT rect;
+	    PAINTSTRUCT ps;
+	    HDC hDC = BeginPaint( hWnd, &ps );
 
 	    if( __get_dropline( hWnd, &rect ) ) {
-	        SelectObject32( hDC, GetStockObject32( BLACK_PEN ) );
-	        MoveToEx32( hDC, rect.left, rect.top, NULL );
-		LineTo32( hDC, rect.right, rect.bottom );
+	        SelectObject( hDC, GetStockObject( BLACK_PEN ) );
+	        MoveToEx( hDC, rect.left, rect.top, NULL );
+		LineTo( hDC, rect.right, rect.bottom );
 	    }
-	    EndPaint32( hWnd, &ps );
+	    EndPaint( hWnd, &ps );
 	}
 	break;
 
     case WM_LBTRACKPOINT:
-	hWndCtl = GetDlgItem32(hWnd, IDC_LISTBOX);
+	hWndCtl = GetDlgItem(hWnd, IDC_LISTBOX);
 	if( (INT16)GetKeyState16( VK_CONTROL ) < 0 )
-      { if( DragDetect32( hWndCtl, *((LPPOINT32)&lParam) ) )
-        { INT32 idx = SendMessage32A( hWndCtl, LB_GETCURSEL32, 0, 0 );
+      { if( DragDetect( hWndCtl, *((LPPOINT)&lParam) ) )
+        { INT idx = SendMessageA( hWndCtl, LB_GETCURSEL, 0, 0 );
 		if( idx != -1 )
-          { INT32 length = SendMessage32A( hWndCtl, LB_GETTEXTLEN32, (WPARAM32)idx, 0 );
+          { INT length = SendMessageA( hWndCtl, LB_GETTEXTLEN, (WPARAM)idx, 0 );
 		    HGLOBAL16 hMemObj = GlobalAlloc16( GMEM_MOVEABLE, length + 1 );
 		    char* pstr = (char*)GlobalLock16( hMemObj );
 
 		    if( pstr )
             { HCURSOR16 hCursor = LoadCursor16( 0, MAKEINTRESOURCE16(OCR_DRAGOBJECT) );
-			SendMessage32A( hWndCtl, LB_GETTEXT32, (WPARAM32)idx, (LPARAM)pstr );
-			SendMessage32A( hWndCtl, LB_DELETESTRING32, (WPARAM32)idx, 0 );
-			UpdateWindow32( hWndCtl );
+			SendMessageA( hWndCtl, LB_GETTEXT, (WPARAM)idx, (LPARAM)pstr );
+			SendMessageA( hWndCtl, LB_DELETESTRING, (WPARAM)idx, 0 );
+			UpdateWindow( hWndCtl );
 			if( !DragObject16((HWND16)hWnd, (HWND16)hWnd, DRAGOBJ_DATA, 0, (WORD)hMemObj, hCursor) )
-			    SendMessage32A( hWndCtl, LB_ADDSTRING32, (WPARAM32)-1, (LPARAM)pstr );
+			    SendMessageA( hWndCtl, LB_ADDSTRING, (WPARAM)-1, (LPARAM)pstr );
 		    }
             if( hMemObj )
               GlobalFree16( hMemObj );
@@ -761,14 +761,14 @@ BOOL32 WINAPI AboutDlgProc32( HWND32 hWnd, UINT32 msg, WPARAM32 wParam,
 	if( wParam == 0 )
       { LPDRAGINFO lpDragInfo = (LPDRAGINFO)PTR_SEG_TO_LIN((SEGPTR)lParam);
 	    if( lpDragInfo && lpDragInfo->wFlags == DRAGOBJ_DATA )
-        { RECT32 rect;
+        { RECT rect;
 		if( __get_dropline( hWnd, &rect ) )
-          { POINT32 pt;
+          { POINT pt;
 	    pt.x=lpDragInfo->pt.x;
 	    pt.x=lpDragInfo->pt.y;
 		    rect.bottom += DROP_FIELD_HEIGHT;
-		    if( PtInRect32( &rect, pt ) )
-            { SetWindowLong32A( hWnd, DWL_MSGRESULT, 1 );
+		    if( PtInRect( &rect, pt ) )
+            { SetWindowLongA( hWnd, DWL_MSGRESULT, 1 );
 			return TRUE;
 		    }
 		}
@@ -784,21 +784,21 @@ BOOL32 WINAPI AboutDlgProc32( HWND32 hWnd, UINT32 msg, WPARAM32 wParam,
 		if( pstr )
           { static char __appendix_str[] = " with";
 
-		    hWndCtl = GetDlgItem32( hWnd, IDC_WINE_TEXT );
-		    SendMessage32A( hWndCtl, WM_GETTEXT, 512, (LPARAM)Template );
-		    if( !lstrncmp32A( Template, "WINE", 4 ) )
-			SetWindowText32A( GetDlgItem32(hWnd, IDC_STATIC_TEXT), Template );
+		    hWndCtl = GetDlgItem( hWnd, IDC_WINE_TEXT );
+		    SendMessageA( hWndCtl, WM_GETTEXT, 512, (LPARAM)Template );
+		    if( !lstrncmpA( Template, "WINE", 4 ) )
+			SetWindowTextA( GetDlgItem(hWnd, IDC_STATIC_TEXT), Template );
 		    else
           { char* pch = Template + strlen(Template) - strlen(__appendix_str);
 			*pch = '\0';
-			SendMessage32A( GetDlgItem32(hWnd, IDC_LISTBOX), LB_ADDSTRING32, 
-					(WPARAM32)-1, (LPARAM)Template );
+			SendMessageA( GetDlgItem(hWnd, IDC_LISTBOX), LB_ADDSTRING, 
+					(WPARAM)-1, (LPARAM)Template );
 		    }
 
-		    lstrcpy32A( Template, pstr );
-		    lstrcat32A( Template, __appendix_str );
-		    SetWindowText32A( hWndCtl, Template );
-		    SetWindowLong32A( hWnd, DWL_MSGRESULT, 1 );
+		    lstrcpyA( Template, pstr );
+		    lstrcatA( Template, __appendix_str );
+		    SetWindowTextA( hWndCtl, Template );
+		    SetWindowLongA( hWnd, DWL_MSGRESULT, 1 );
 		    return TRUE;
 		}
 	    }
@@ -807,7 +807,7 @@ BOOL32 WINAPI AboutDlgProc32( HWND32 hWnd, UINT32 msg, WPARAM32 wParam,
 
     case WM_COMMAND:
         if (wParam == IDOK)
-    {  EndDialog32(hWnd, TRUE);
+    {  EndDialog(hWnd, TRUE);
             return TRUE;
         }
         break;
@@ -819,26 +819,26 @@ BOOL32 WINAPI AboutDlgProc32( HWND32 hWnd, UINT32 msg, WPARAM32 wParam,
 /*************************************************************************
  *             ShellAbout32A   (SHELL32.243)
  */
-BOOL32 WINAPI ShellAbout32A( HWND32 hWnd, LPCSTR szApp, LPCSTR szOtherStuff,
-                             HICON32 hIcon )
+BOOL WINAPI ShellAboutA( HWND hWnd, LPCSTR szApp, LPCSTR szOtherStuff,
+                             HICON hIcon )
 {   ABOUT_INFO info;
     TRACE(shell,"\n");
     info.szApp        = szApp;
     info.szOtherStuff = szOtherStuff;
     info.hIcon        = hIcon;
     if (!hIcon) info.hIcon = LoadIcon16( 0, MAKEINTRESOURCE16(OIC_WINEICON) );
-    return DialogBoxIndirectParam32A( WIN_GetWindowInstance( hWnd ),
+    return DialogBoxIndirectParamA( WIN_GetWindowInstance( hWnd ),
                          SYSRES_GetResPtr( SYSRES_DIALOG_SHELL_ABOUT_MSGBOX ),
-                                      hWnd, AboutDlgProc32, (LPARAM)&info );
+                                      hWnd, AboutDlgProc, (LPARAM)&info );
 }
 
 
 /*************************************************************************
  *             ShellAbout32W   (SHELL32.244)
  */
-BOOL32 WINAPI ShellAbout32W( HWND32 hWnd, LPCWSTR szApp, LPCWSTR szOtherStuff,
-                             HICON32 hIcon )
-{   BOOL32 ret;
+BOOL WINAPI ShellAboutW( HWND hWnd, LPCWSTR szApp, LPCWSTR szOtherStuff,
+                             HICON hIcon )
+{   BOOL ret;
     ABOUT_INFO info;
 
     TRACE(shell,"\n");
@@ -847,9 +847,9 @@ BOOL32 WINAPI ShellAbout32W( HWND32 hWnd, LPCWSTR szApp, LPCWSTR szOtherStuff,
     info.szOtherStuff = HEAP_strdupWtoA( GetProcessHeap(), 0, szOtherStuff );
     info.hIcon        = hIcon;
     if (!hIcon) info.hIcon = LoadIcon16( 0, MAKEINTRESOURCE16(OIC_WINEICON) );
-    ret = DialogBoxIndirectParam32A( WIN_GetWindowInstance( hWnd ),
+    ret = DialogBoxIndirectParamA( WIN_GetWindowInstance( hWnd ),
                          SYSRES_GetResPtr( SYSRES_DIALOG_SHELL_ABOUT_MSGBOX ),
-                                      hWnd, AboutDlgProc32, (LPARAM)&info );
+                                      hWnd, AboutDlgProc, (LPARAM)&info );
     HeapFree( GetProcessHeap(), 0, (LPSTR)info.szApp );
     HeapFree( GetProcessHeap(), 0, (LPSTR)info.szOtherStuff );
     return ret;
@@ -861,7 +861,7 @@ BOOL32 WINAPI ShellAbout32W( HWND32 hWnd, LPCWSTR szApp, LPCWSTR szOtherStuff,
  *	This function is supposed to deal with the systray.
  *	Any ideas on how this is to be implimented?
  */
-BOOL32 WINAPI Shell_NotifyIcon(	DWORD dwMessage, PNOTIFYICONDATA pnid )
+BOOL WINAPI Shell_NotifyIcon(	DWORD dwMessage, PNOTIFYICONDATA pnid )
 {   TRACE(shell,"\n");
     return FALSE;
 }
@@ -872,7 +872,7 @@ BOOL32 WINAPI Shell_NotifyIcon(	DWORD dwMessage, PNOTIFYICONDATA pnid )
  *	This function is supposed to deal with the systray.
  *	Any ideas on how this is to be implimented?
  */
-BOOL32 WINAPI Shell_NotifyIconA(DWORD dwMessage, PNOTIFYICONDATA pnid )
+BOOL WINAPI Shell_NotifyIconA(DWORD dwMessage, PNOTIFYICONDATA pnid )
 {   TRACE(shell,"\n");
     return FALSE;
 }
@@ -900,7 +900,7 @@ void WINAPI FreeIconList( DWORD dw )
  * FIXME
  *  fnGetDisplayNameOf can return different types of OLEString
  */
-DWORD WINAPI SHGetPathFromIDList32A (LPCITEMIDLIST pidl,LPSTR pszPath)
+DWORD WINAPI SHGetPathFromIDListA (LPCITEMIDLIST pidl,LPSTR pszPath)
 {	STRRET lpName;
 	LPSHELLFOLDER shellfolder;
 	CHAR  buffer[MAX_PATH],tpath[MAX_PATH];
@@ -912,17 +912,17 @@ DWORD WINAPI SHGetPathFromIDList32A (LPCITEMIDLIST pidl,LPSTR pszPath)
   if (!pidl)
   {  strcpy(buffer,"Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Shell Folders\\");
 
-     if (RegCreateKeyEx32A(HKEY_CURRENT_USER,buffer,0,NULL,REG_OPTION_NON_VOLATILE,KEY_WRITE,NULL,&key,&dwdisp))
+     if (RegCreateKeyExA(HKEY_CURRENT_USER,buffer,0,NULL,REG_OPTION_NON_VOLATILE,KEY_WRITE,NULL,&key,&dwdisp))
      { return E_OUTOFMEMORY;
      }
      type=REG_SZ;    
      strcpy (buffer,"Desktop");					/*registry name*/
-     if ( RegQueryValueEx32A(key,buffer,NULL,&type,(LPBYTE)tpath,&tpathlen))
-     { GetWindowsDirectory32A(tpath,MAX_PATH);
-       PathAddBackslash32A(tpath);
+     if ( RegQueryValueExA(key,buffer,NULL,&type,(LPBYTE)tpath,&tpathlen))
+     { GetWindowsDirectoryA(tpath,MAX_PATH);
+       PathAddBackslashA(tpath);
        strcat (tpath,"Desktop");				/*folder name*/
-       RegSetValueEx32A(key,buffer,0,REG_SZ,(LPBYTE)tpath,tpathlen);
-       CreateDirectory32A(tpath,NULL);
+       RegSetValueExA(key,buffer,0,REG_SZ,(LPBYTE)tpath,tpathlen);
+       CreateDirectoryA(tpath,NULL);
      }
      RegCloseKey(key);
      strcpy(pszPath,tpath);
@@ -942,12 +942,12 @@ DWORD WINAPI SHGetPathFromIDList32A (LPCITEMIDLIST pidl,LPSTR pszPath)
 /*************************************************************************
  * SHGetPathFromIDList32W [SHELL32.262]
  */
-DWORD WINAPI SHGetPathFromIDList32W (LPCITEMIDLIST pidl,LPWSTR pszPath)
+DWORD WINAPI SHGetPathFromIDListW (LPCITEMIDLIST pidl,LPWSTR pszPath)
 {	char sTemp[MAX_PATH];
 
 	TRACE (shell,"(pidl=%p)\n", pidl);
 
-	SHGetPathFromIDList32A (pidl, sTemp);
+	SHGetPathFromIDListA (pidl, sTemp);
 	lstrcpyAtoW(pszPath, sTemp);
 
 	TRACE(shell,"-- (%s)\n",debugstr_w(pszPath));
@@ -960,39 +960,39 @@ DWORD WINAPI SHGetPathFromIDList32W (LPCITEMIDLIST pidl,LPWSTR pszPath)
  *
  */
 void	(WINAPI* pDLLInitComctl)(LPVOID);
-INT32	(WINAPI* pImageList_AddIcon) (HIMAGELIST himl, HICON32 hIcon);
-INT32	(WINAPI* pImageList_ReplaceIcon) (HIMAGELIST, INT32, HICON32);
-HIMAGELIST (WINAPI * pImageList_Create) (INT32,INT32,UINT32,INT32,INT32);
-HICON32	(WINAPI * pImageList_GetIcon) (HIMAGELIST, INT32, UINT32);
-INT32	(WINAPI* pImageList_GetImageCount)(HIMAGELIST);
+INT	(WINAPI* pImageList_AddIcon) (HIMAGELIST himl, HICON hIcon);
+INT	(WINAPI* pImageList_ReplaceIcon) (HIMAGELIST, INT, HICON);
+HIMAGELIST (WINAPI * pImageList_Create) (INT,INT,UINT,INT,INT);
+HICON	(WINAPI * pImageList_GetIcon) (HIMAGELIST, INT, UINT);
+INT	(WINAPI* pImageList_GetImageCount)(HIMAGELIST);
 
-LPVOID	(WINAPI* pCOMCTL32_Alloc) (INT32);  
-BOOL32	(WINAPI* pCOMCTL32_Free) (LPVOID);  
+LPVOID	(WINAPI* pCOMCTL32_Alloc) (INT);  
+BOOL	(WINAPI* pCOMCTL32_Free) (LPVOID);  
 
-HDPA	(WINAPI* pDPA_Create) (INT32);  
-INT32	(WINAPI* pDPA_InsertPtr) (const HDPA, INT32, LPVOID); 
-BOOL32	(WINAPI* pDPA_Sort) (const HDPA, PFNDPACOMPARE, LPARAM); 
-LPVOID	(WINAPI* pDPA_GetPtr) (const HDPA, INT32);   
-BOOL32	(WINAPI* pDPA_Destroy) (const HDPA); 
-INT32	(WINAPI *pDPA_Search) (const HDPA, LPVOID, INT32, PFNDPACOMPARE, LPARAM, UINT32);
+HDPA	(WINAPI* pDPA_Create) (INT);  
+INT	(WINAPI* pDPA_InsertPtr) (const HDPA, INT, LPVOID); 
+BOOL	(WINAPI* pDPA_Sort) (const HDPA, PFNDPACOMPARE, LPARAM); 
+LPVOID	(WINAPI* pDPA_GetPtr) (const HDPA, INT);   
+BOOL	(WINAPI* pDPA_Destroy) (const HDPA); 
+INT	(WINAPI *pDPA_Search) (const HDPA, LPVOID, INT, PFNDPACOMPARE, LPARAM, UINT);
 
 /* user32 */
-HICON32 (WINAPI *pLookupIconIdFromDirectoryEx32)(LPBYTE dir, BOOL32 bIcon, INT32 width, INT32 height, UINT32 cFlag);
-HICON32 (WINAPI *pCreateIconFromResourceEx32)(LPBYTE bits,UINT32 cbSize, BOOL32 bIcon, DWORD dwVersion, INT32 width, INT32 height,UINT32 cFlag);
+HICON (WINAPI *pLookupIconIdFromDirectoryEx)(LPBYTE dir, BOOL bIcon, INT width, INT height, UINT cFlag);
+HICON (WINAPI *pCreateIconFromResourceEx)(LPBYTE bits,UINT cbSize, BOOL bIcon, DWORD dwVersion, INT width, INT height,UINT cFlag);
 
-static BOOL32		bShell32IsInitialized = 0;
-static HINSTANCE32	hComctl32;
-static INT32		shell32_RefCount = 0;
+static BOOL		bShell32IsInitialized = 0;
+static HINSTANCE	hComctl32;
+static INT		shell32_RefCount = 0;
 
-INT32		shell32_ObjCount = 0;
-HINSTANCE32	shell32_hInstance; 
+INT		shell32_ObjCount = 0;
+HINSTANCE	shell32_hInstance; 
 /*************************************************************************
  * SHELL32 LibMain
  *
  */
 
-BOOL32 WINAPI Shell32LibMain(HINSTANCE32 hinstDLL, DWORD fdwReason, LPVOID fImpLoad)
-{	HMODULE32 hUser32;
+BOOL WINAPI Shell32LibMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID fImpLoad)
+{	HMODULE hUser32;
 
 	TRACE(shell,"0x%x 0x%lx %p\n", hinstDLL, fdwReason, fImpLoad);
 
@@ -1001,31 +1001,31 @@ BOOL32 WINAPI Shell32LibMain(HINSTANCE32 hinstDLL, DWORD fdwReason, LPVOID fImpL
 	switch (fdwReason)
 	{ case DLL_PROCESS_ATTACH:
 	    if (!bShell32IsInitialized)
-	    { hComctl32 = LoadLibrary32A("COMCTL32.DLL");	
-	      hUser32 = GetModuleHandle32A("USER32");
+	    { hComctl32 = LoadLibraryA("COMCTL32.DLL");	
+	      hUser32 = GetModuleHandleA("USER32");
 	      if (hComctl32 && hUser32)
-	      { pDLLInitComctl=(void*)GetProcAddress32(hComctl32,"InitCommonControlsEx");
+	      { pDLLInitComctl=(void*)GetProcAddress(hComctl32,"InitCommonControlsEx");
 	        if (pDLLInitComctl)
 	        { pDLLInitComctl(NULL);
 	        }
-	        pImageList_Create=(void*)GetProcAddress32(hComctl32,"ImageList_Create");
-	        pImageList_AddIcon=(void*)GetProcAddress32(hComctl32,"ImageList_AddIcon");
-	        pImageList_ReplaceIcon=(void*)GetProcAddress32(hComctl32,"ImageList_ReplaceIcon");
-	        pImageList_GetIcon=(void*)GetProcAddress32(hComctl32,"ImageList_GetIcon");
-	        pImageList_GetImageCount=(void*)GetProcAddress32(hComctl32,"ImageList_GetImageCount");
+	        pImageList_Create=(void*)GetProcAddress(hComctl32,"ImageList_Create");
+	        pImageList_AddIcon=(void*)GetProcAddress(hComctl32,"ImageList_AddIcon");
+	        pImageList_ReplaceIcon=(void*)GetProcAddress(hComctl32,"ImageList_ReplaceIcon");
+	        pImageList_GetIcon=(void*)GetProcAddress(hComctl32,"ImageList_GetIcon");
+	        pImageList_GetImageCount=(void*)GetProcAddress(hComctl32,"ImageList_GetImageCount");
 
 	        /* imports by ordinal, pray that it works*/
-	        pCOMCTL32_Alloc=(void*)GetProcAddress32(hComctl32, (LPCSTR)71L);
-	        pCOMCTL32_Free=(void*)GetProcAddress32(hComctl32, (LPCSTR)73L);
-	        pDPA_Create=(void*)GetProcAddress32(hComctl32, (LPCSTR)328L);
-	        pDPA_Destroy=(void*)GetProcAddress32(hComctl32, (LPCSTR)329L);
-	        pDPA_GetPtr=(void*)GetProcAddress32(hComctl32, (LPCSTR)332L);
-	        pDPA_InsertPtr=(void*)GetProcAddress32(hComctl32, (LPCSTR)334L);
-	        pDPA_Sort=(void*)GetProcAddress32(hComctl32, (LPCSTR)338L);
-	        pDPA_Search=(void*)GetProcAddress32(hComctl32, (LPCSTR)339L);
+	        pCOMCTL32_Alloc=(void*)GetProcAddress(hComctl32, (LPCSTR)71L);
+	        pCOMCTL32_Free=(void*)GetProcAddress(hComctl32, (LPCSTR)73L);
+	        pDPA_Create=(void*)GetProcAddress(hComctl32, (LPCSTR)328L);
+	        pDPA_Destroy=(void*)GetProcAddress(hComctl32, (LPCSTR)329L);
+	        pDPA_GetPtr=(void*)GetProcAddress(hComctl32, (LPCSTR)332L);
+	        pDPA_InsertPtr=(void*)GetProcAddress(hComctl32, (LPCSTR)334L);
+	        pDPA_Sort=(void*)GetProcAddress(hComctl32, (LPCSTR)338L);
+	        pDPA_Search=(void*)GetProcAddress(hComctl32, (LPCSTR)339L);
 	        /* user32 */
-	        pLookupIconIdFromDirectoryEx32=(void*)GetProcAddress32(hUser32,"LookupIconIdFromDirectoryEx");
-	        pCreateIconFromResourceEx32=(void*)GetProcAddress32(hUser32,"CreateIconFromResourceEx");
+	        pLookupIconIdFromDirectoryEx=(void*)GetProcAddress(hUser32,"LookupIconIdFromDirectoryEx");
+	        pCreateIconFromResourceEx=(void*)GetProcAddress(hUser32,"CreateIconFromResourceEx");
 	      }
 	      else
 	      { ERR(shell,"P A N I C SHELL32 loading failed\n");
@@ -1048,7 +1048,7 @@ BOOL32 WINAPI Shell32LibMain(HINSTANCE32 hinstDLL, DWORD fdwReason, LPVOID fImpL
 	  case DLL_PROCESS_DETACH:
 	    shell32_RefCount--;
 	    if ( !shell32_RefCount )
-	    { FreeLibrary32(hComctl32);
+	    { FreeLibrary(hComctl32);
 	      bShell32IsInitialized = FALSE;
 
 	      if (pdesktopfolder) 

@@ -40,8 +40,8 @@ void X11DRV_SetDeviceClipping( DC * dc )
     if (obj->rgn->numRects > 0)
     {
         XRectangle *pXr;
-        RECT32 *pRect = obj->rgn->rects;
-        RECT32 *pEndRect = obj->rgn->rects + obj->rgn->numRects;
+        RECT *pRect = obj->rgn->rects;
+        RECT *pEndRect = obj->rgn->rects + obj->rgn->numRects;
 
         pXrect = HeapAlloc( GetProcessHeap(), 0, 
 			    sizeof(*pXrect) * obj->rgn->numRects );

@@ -16,10 +16,10 @@
  *           Data
  */
 
-static PLOADED_IMAGE32 IMAGEHLP_pFirstLoadedImage32=NULL;
-static PLOADED_IMAGE32 IMAGEHLP_pLastLoadedImage32=NULL;
+static PLOADED_IMAGE IMAGEHLP_pFirstLoadedImage=NULL;
+static PLOADED_IMAGE IMAGEHLP_pLastLoadedImage=NULL;
 
-static LOADED_IMAGE32 IMAGEHLP_EmptyLoadedImage32 = {
+static LOADED_IMAGE IMAGEHLP_EmptyLoadedImage = {
   NULL,       /* ModuleName */
   0xffffffff, /* hFile */
   NULL,       /* MappedAddress */
@@ -30,16 +30,16 @@ static LOADED_IMAGE32 IMAGEHLP_EmptyLoadedImage32 = {
   1,          /* Characteristics */
   FALSE,      /* fSystemImage */
   FALSE,      /* fDOSImage */
-  { &IMAGEHLP_EmptyLoadedImage32.Links, &IMAGEHLP_EmptyLoadedImage32.Links }, /* Links */
+  { &IMAGEHLP_EmptyLoadedImage.Links, &IMAGEHLP_EmptyLoadedImage.Links }, /* Links */
   148,        /* SizeOfImage; */
 };
 
 /***********************************************************************
  *           EnumerateLoadedModules32 (IMAGEHLP.4)
  */
-BOOL32 WINAPI EnumerateLoadedModules32(
-  HANDLE32 hProcess,
-  PENUMLOADED_MODULES_CALLBACK32 EnumLoadedModulesCallback,
+BOOL WINAPI EnumerateLoadedModules(
+  HANDLE hProcess,
+  PENUMLOADED_MODULES_CALLBACK EnumLoadedModulesCallback,
   PVOID UserContext)
 {
   FIXME(imagehlp, "(0x%08x, %p, %p): stub\n",
@@ -52,7 +52,7 @@ BOOL32 WINAPI EnumerateLoadedModules32(
 /***********************************************************************
  *           GetTimestampForLoadedLibrary32 (IMAGEHLP.9)
  */
-DWORD WINAPI GetTimestampForLoadedLibrary32(HMODULE32 Module)
+DWORD WINAPI GetTimestampForLoadedLibrary(HMODULE Module)
 {
   FIXME(imagehlp, "(0x%08x): stub\n", Module);
   SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
@@ -62,9 +62,9 @@ DWORD WINAPI GetTimestampForLoadedLibrary32(HMODULE32 Module)
 /***********************************************************************
  *           GetImageConfigInformation32 (IMAGEHLP.7)
  */
-BOOL32 WINAPI GetImageConfigInformation32(
-  PLOADED_IMAGE32 LoadedImage,
-  PIMAGE_LOAD_CONFIG_DIRECTORY32 ImageConfigInformation)
+BOOL WINAPI GetImageConfigInformation(
+  PLOADED_IMAGE LoadedImage,
+  PIMAGE_LOAD_CONFIG_DIRECTORY ImageConfigInformation)
 {
   FIXME(imagehlp, "(%p, %p): stub\n",
     LoadedImage, ImageConfigInformation
@@ -76,8 +76,8 @@ BOOL32 WINAPI GetImageConfigInformation32(
 /***********************************************************************
  *           GetImageUnusedHeaderBytes32 (IMAGEHLP.8)
  */
-DWORD WINAPI GetImageUnusedHeaderBytes32(
-  PLOADED_IMAGE32 LoadedImage,
+DWORD WINAPI GetImageUnusedHeaderBytes(
+  PLOADED_IMAGE LoadedImage,
   LPDWORD SizeUnusedHeaderBytes)
 {
   FIXME(imagehlp, "(%p, %p): stub\n",
@@ -90,7 +90,7 @@ DWORD WINAPI GetImageUnusedHeaderBytes32(
 /***********************************************************************
  *           ImageDirectoryEntryToData32 (IMAGEHLP.11)
  */
-PVOID WINAPI ImageDirectoryEntryToData32(
+PVOID WINAPI ImageDirectoryEntryToData(
   PVOID Base, BOOLEAN MappedAsImage, USHORT DirectoryEntry, PULONG Size)
 {
   FIXME(imagehlp, "(%p, %d, %d, %p): stub\n",
@@ -103,27 +103,27 @@ PVOID WINAPI ImageDirectoryEntryToData32(
 /***********************************************************************
  *           ImageLoad32 (IMAGEHLP.16)
  */
-PLOADED_IMAGE32 WINAPI ImageLoad32(LPSTR DllName, LPSTR DllPath)
+PLOADED_IMAGE WINAPI ImageLoad(LPSTR DllName, LPSTR DllPath)
 {
-  PLOADED_IMAGE32 pLoadedImage = 
-    HeapAlloc(IMAGEHLP_hHeap32, 0, sizeof(LOADED_IMAGE32));
+  PLOADED_IMAGE pLoadedImage = 
+    HeapAlloc(IMAGEHLP_hHeap, 0, sizeof(LOADED_IMAGE));
   return pLoadedImage;
 }
 
 /***********************************************************************
  *           ImageNtHeader32 (IMAGEHLP.17)
  */
-PIMAGE_NT_HEADERS32 WINAPI ImageNtHeader32(PVOID Base)
+PIMAGE_NT_HEADERS WINAPI ImageNtHeader(PVOID Base)
 {
-  return (PIMAGE_NT_HEADERS32)
-    ((LPBYTE) Base + ((PIMAGE_DOS_HEADER32) Base)->e_lfanew);
+  return (PIMAGE_NT_HEADERS)
+    ((LPBYTE) Base + ((PIMAGE_DOS_HEADER) Base)->e_lfanew);
 }
 
 /***********************************************************************
  *           ImageRvaToSection32 (IMAGEHLP.19)
  */
-PIMAGE_SECTION_HEADER32 WINAPI ImageRvaToSection32(
-  PIMAGE_NT_HEADERS32 NtHeaders, PVOID Base, ULONG Rva)
+PIMAGE_SECTION_HEADER WINAPI ImageRvaToSection(
+  PIMAGE_NT_HEADERS NtHeaders, PVOID Base, ULONG Rva)
 {
   FIXME(imagehlp, "(%p, %p, %ld): stub\n", NtHeaders, Base, Rva);
   SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
@@ -133,9 +133,9 @@ PIMAGE_SECTION_HEADER32 WINAPI ImageRvaToSection32(
 /***********************************************************************
  *           ImageRvaToVa32 (IMAGEHLP.20)
  */
-PVOID WINAPI ImageRvaToVa32(
-  PIMAGE_NT_HEADERS32 NtHeaders, PVOID Base, ULONG Rva,
-  PIMAGE_SECTION_HEADER32 *LastRvaSection)
+PVOID WINAPI ImageRvaToVa(
+  PIMAGE_NT_HEADERS NtHeaders, PVOID Base, ULONG Rva,
+  PIMAGE_SECTION_HEADER *LastRvaSection)
 {
   FIXME(imagehlp, "(%p, %p, %ld, %p): stub\n",
     NtHeaders, Base, Rva, LastRvaSection
@@ -147,10 +147,10 @@ PVOID WINAPI ImageRvaToVa32(
 /***********************************************************************
  *           ImageUnload32 (IMAGEHLP.21)
  */
-BOOL32 WINAPI ImageUnload32(PLOADED_IMAGE32 pLoadedImage)
+BOOL WINAPI ImageUnload(PLOADED_IMAGE pLoadedImage)
 {
-  LIST_ENTRY32 *pCurrent, *pFind;
-  if(!IMAGEHLP_pFirstLoadedImage32 || !pLoadedImage)
+  LIST_ENTRY *pCurrent, *pFind;
+  if(!IMAGEHLP_pFirstLoadedImage || !pLoadedImage)
     {
       /* No image loaded or null pointer */
       SetLastError(ERROR_INVALID_PARAMETER);
@@ -158,7 +158,7 @@ BOOL32 WINAPI ImageUnload32(PLOADED_IMAGE32 pLoadedImage)
     }
 
   pFind=&pLoadedImage->Links;
-  pCurrent=&IMAGEHLP_pFirstLoadedImage32->Links;
+  pCurrent=&IMAGEHLP_pFirstLoadedImage->Links;
   while((pCurrent != pFind) && 
     (pCurrent != NULL)) 
       pCurrent = pCurrent->Flink;
@@ -172,14 +172,14 @@ BOOL32 WINAPI ImageUnload32(PLOADED_IMAGE32 pLoadedImage)
   if(pCurrent->Blink)
     pCurrent->Blink->Flink = pCurrent->Flink;
   else
-    IMAGEHLP_pFirstLoadedImage32 = pCurrent->Flink?CONTAINING_RECORD(
-      pCurrent->Flink, LOADED_IMAGE32, Links):NULL;
+    IMAGEHLP_pFirstLoadedImage = pCurrent->Flink?CONTAINING_RECORD(
+      pCurrent->Flink, LOADED_IMAGE, Links):NULL;
 
   if(pCurrent->Flink)
     pCurrent->Flink->Blink = pCurrent->Blink;
   else
-    IMAGEHLP_pLastLoadedImage32 = pCurrent->Blink?CONTAINING_RECORD(
-      pCurrent->Blink, LOADED_IMAGE32, Links):NULL;
+    IMAGEHLP_pLastLoadedImage = pCurrent->Blink?CONTAINING_RECORD(
+      pCurrent->Blink, LOADED_IMAGE, Links):NULL;
 
   return FALSE;
 }
@@ -187,29 +187,29 @@ BOOL32 WINAPI ImageUnload32(PLOADED_IMAGE32 pLoadedImage)
 /***********************************************************************
  *           MapAndLoad32 (IMAGEHLP.25)
  */
-BOOL32 WINAPI MapAndLoad32(
-  LPSTR pszImageName, LPSTR pszDllPath, PLOADED_IMAGE32 pLoadedImage,
-  BOOL32 bDotDll, BOOL32 bReadOnly)
+BOOL WINAPI MapAndLoad(
+  LPSTR pszImageName, LPSTR pszDllPath, PLOADED_IMAGE pLoadedImage,
+  BOOL bDotDll, BOOL bReadOnly)
 {
   CHAR szFileName[MAX_PATH];
-  HANDLE32 hFile = (HANDLE32) NULL;
-  HANDLE32 hFileMapping = (HANDLE32) NULL;
-  HMODULE32 hModule = (HMODULE32) NULL;
-  PIMAGE_NT_HEADERS32 pNtHeader = NULL;
+  HANDLE hFile = (HANDLE) NULL;
+  HANDLE hFileMapping = (HANDLE) NULL;
+  HMODULE hModule = (HMODULE) NULL;
+  PIMAGE_NT_HEADERS pNtHeader = NULL;
 
   /* PathCombine(&szFileName, pszDllPath, pszImageName); */
   /* PathRenameExtension(&szFileName, bDotDll?:"dll":"exe"); */
 
   /* FIXME: Check if the file already loaded (use IMAGEHLP_pFirstLoadedImage32) */
-  if(!(hFile = CreateFile32A(
+  if(!(hFile = CreateFileA(
     szFileName, GENERIC_READ, 1, /* FIXME: FILE_SHARE_READ not defined */
-    NULL, OPEN_EXISTING, 0, (HANDLE32) NULL)))
+    NULL, OPEN_EXISTING, 0, (HANDLE) NULL)))
     {
       SetLastError(ERROR_FILE_NOT_FOUND);
       goto Error;
     }
 
-  if(!(hFileMapping = CreateFileMapping32A(
+  if(!(hFileMapping = CreateFileMappingA(
     hFile, NULL, PAGE_READONLY | SEC_COMMIT, 0, 0, NULL)))
     {
       DWORD dwLastError = GetLastError();
@@ -218,9 +218,9 @@ BOOL32 WINAPI MapAndLoad32(
       goto Error;
     }
   CloseHandle(hFile);
-  hFile = (HANDLE32) NULL;
+  hFile = (HANDLE) NULL;
 
-  if(!(hModule = (HMODULE32) MapViewOfFile(
+  if(!(hModule = (HMODULE) MapViewOfFile(
     hFileMapping, FILE_MAP_READ, 0, 0, 0)))
     {
       DWORD dwLastError = GetLastError();
@@ -230,20 +230,20 @@ BOOL32 WINAPI MapAndLoad32(
     }
 
   CloseHandle(hFileMapping);
-  hFileMapping=(HANDLE32) NULL;
+  hFileMapping=(HANDLE) NULL;
 
-  pLoadedImage = (PLOADED_IMAGE32) HeapAlloc(
-    IMAGEHLP_hHeap32, 0, sizeof(LOADED_IMAGE32)
+  pLoadedImage = (PLOADED_IMAGE) HeapAlloc(
+    IMAGEHLP_hHeap, 0, sizeof(LOADED_IMAGE)
   );
 
-  pNtHeader = ImageNtHeader32((PVOID) hModule);
+  pNtHeader = ImageNtHeader((PVOID) hModule);
 
   pLoadedImage->ModuleName =
-    HEAP_strdupA(IMAGEHLP_hHeap32, 0, pszDllPath); /* FIXME: Correct? */
+    HEAP_strdupA(IMAGEHLP_hHeap, 0, pszDllPath); /* FIXME: Correct? */
   pLoadedImage->hFile = hFile;
   pLoadedImage->MappedAddress = (PUCHAR) hModule;
   pLoadedImage->FileHeader = pNtHeader;
-  pLoadedImage->Sections = (PIMAGE_SECTION_HEADER32)
+  pLoadedImage->Sections = (PIMAGE_SECTION_HEADER)
     ((LPBYTE) &pNtHeader->OptionalHeader +
       pNtHeader->FileHeader.SizeOfOptionalHeader);
   pLoadedImage->NumberOfSections =
@@ -259,12 +259,12 @@ BOOL32 WINAPI MapAndLoad32(
 
   /* FIXME: Make thread safe */
   pLoadedImage->Links.Flink = NULL;
-  pLoadedImage->Links.Blink = &IMAGEHLP_pLastLoadedImage32->Links;
-  if(IMAGEHLP_pLastLoadedImage32)
-    IMAGEHLP_pLastLoadedImage32->Links.Flink = &pLoadedImage->Links;
-  IMAGEHLP_pLastLoadedImage32 = pLoadedImage;
-  if(!IMAGEHLP_pFirstLoadedImage32)
-    IMAGEHLP_pFirstLoadedImage32 = pLoadedImage;
+  pLoadedImage->Links.Blink = &IMAGEHLP_pLastLoadedImage->Links;
+  if(IMAGEHLP_pLastLoadedImage)
+    IMAGEHLP_pLastLoadedImage->Links.Flink = &pLoadedImage->Links;
+  IMAGEHLP_pLastLoadedImage = pLoadedImage;
+  if(!IMAGEHLP_pFirstLoadedImage)
+    IMAGEHLP_pFirstLoadedImage = pLoadedImage;
 
   return TRUE;
 
@@ -281,9 +281,9 @@ Error:
 /***********************************************************************
  *           SetImageConfigInformation32 (IMAGEHLP.34)
  */
-BOOL32 WINAPI SetImageConfigInformation32(
-  PLOADED_IMAGE32 LoadedImage,
-  PIMAGE_LOAD_CONFIG_DIRECTORY32 ImageConfigInformation)
+BOOL WINAPI SetImageConfigInformation(
+  PLOADED_IMAGE LoadedImage,
+  PIMAGE_LOAD_CONFIG_DIRECTORY ImageConfigInformation)
 {
   FIXME(imagehlp, "(%p, %p): stub\n",
     LoadedImage, ImageConfigInformation
@@ -295,7 +295,7 @@ BOOL32 WINAPI SetImageConfigInformation32(
 /***********************************************************************
  *           UnMapAndLoad32 (IMAGEHLP.58)
  */
-BOOL32 WINAPI UnMapAndLoad32(PLOADED_IMAGE32 LoadedImage)
+BOOL WINAPI UnMapAndLoad(PLOADED_IMAGE LoadedImage)
 {
   FIXME(imagehlp, "(%p): stub\n", LoadedImage);
   SetLastError(ERROR_CALL_NOT_IMPLEMENTED);

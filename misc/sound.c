@@ -12,12 +12,12 @@ INT16 WINAPI OpenSound16(void)
   return -1;
 }
 
-void WINAPI OpenSound32(void)
+void WINAPI OpenSound(void)
 {
   FIXME(sound, "(void): stub\n");
 }
 
-void WINAPI CloseSound(void)
+void WINAPI CloseSound16(void)
 {
   FIXME(sound, "(void): stub\n");
 }
@@ -28,7 +28,7 @@ INT16 WINAPI SetVoiceQueueSize16(INT16 nVoice, INT16 nBytes)
   return 0;
 }
 
-DWORD WINAPI SetVoiceQueueSize32(DWORD nVoice, DWORD nBytes)
+DWORD WINAPI SetVoiceQueueSize(DWORD nVoice, DWORD nBytes)
 {
   FIXME(sound, "(%ld,%ld): stub\n",nVoice,nBytes);
   return 0;
@@ -41,7 +41,7 @@ INT16 WINAPI SetVoiceNote16(INT16 nVoice, INT16 nValue, INT16 nLength,
   return 0;
 }
 
-DWORD WINAPI SetVoiceNote32(DWORD nVoice, DWORD nValue, DWORD nLength,
+DWORD WINAPI SetVoiceNote(DWORD nVoice, DWORD nValue, DWORD nLength,
                             DWORD nCdots)
 {
   FIXME(sound, "(%ld,%ld,%ld,%ld): stub\n",nVoice,nValue,nLength,nCdots);
@@ -56,7 +56,7 @@ INT16 WINAPI SetVoiceAccent16(INT16 nVoice, INT16 nTempo, INT16 nVolume,
   return 0;
 }
 
-DWORD WINAPI SetVoiceAccent32(DWORD nVoice, DWORD nTempo, DWORD nVolume,
+DWORD WINAPI SetVoiceAccent(DWORD nVoice, DWORD nTempo, DWORD nVolume,
                               DWORD nMode, DWORD nPitch)
 {
   FIXME(sound, "(%ld,%ld,%ld,%ld,%ld): stub\n", nVoice, nTempo, 
@@ -70,7 +70,7 @@ INT16 WINAPI SetVoiceEnvelope16(INT16 nVoice, INT16 nShape, INT16 nRepeat)
   return 0;
 }
 
-DWORD WINAPI SetVoiceEnvelope32(DWORD nVoice, DWORD nShape, DWORD nRepeat)
+DWORD WINAPI SetVoiceEnvelope(DWORD nVoice, DWORD nShape, DWORD nRepeat)
 {
   FIXME(sound, "(%ld,%ld,%ld): stub\n",nVoice,nShape,nRepeat);
   return 0;
@@ -82,7 +82,7 @@ INT16 WINAPI SetSoundNoise16(INT16 nSource, INT16 nDuration)
   return 0;
 }
 
-DWORD WINAPI SetSoundNoise32(DWORD nSource, DWORD nDuration)
+DWORD WINAPI SetSoundNoise(DWORD nSource, DWORD nDuration)
 {
   FIXME(sound, "(%ld,%ld): stub\n",nSource,nDuration);
   return 0;
@@ -94,7 +94,7 @@ INT16 WINAPI SetVoiceSound16(INT16 nVoice, DWORD lFrequency, INT16 nDuration)
   return 0;
 }
 
-DWORD WINAPI SetVoiceSound32(DWORD nVoice, DWORD lFrequency, DWORD nDuration)
+DWORD WINAPI SetVoiceSound(DWORD nVoice, DWORD lFrequency, DWORD nDuration)
 {
   FIXME(sound, "(%ld, %ld, %ld): stub\n",nVoice,lFrequency, nDuration);
   return 0;
@@ -116,7 +116,7 @@ INT16 WINAPI WaitSoundState16(INT16 x)
     return 0;
 }
 
-DWORD WINAPI WaitSoundState32(DWORD x)
+DWORD WINAPI WaitSoundState(DWORD x)
 {
     FIXME(sound, "(%ld): stub\n", x);
     return 0;
@@ -128,7 +128,7 @@ INT16 WINAPI SyncAllVoices16(void)
     return 0;
 }
 
-DWORD WINAPI SyncAllVoices32(void)
+DWORD WINAPI SyncAllVoices(void)
 {
     FIXME(sound, "(void): stub\n");
     return 0;
@@ -140,7 +140,7 @@ INT16 WINAPI CountVoiceNotes16(INT16 x)
     return 0;
 }
 
-DWORD WINAPI CountVoiceNotes32(DWORD x)
+DWORD WINAPI CountVoiceNotes(DWORD x)
 {
     FIXME(sound, "(%ld): stub\n", x);
     return 0;
@@ -152,7 +152,7 @@ LPINT16 WINAPI GetThresholdEvent16(void)
     return NULL;
 }
 
-LPDWORD WINAPI GetThresholdEvent32(void)
+LPDWORD WINAPI GetThresholdEvent(void)
 {
     FIXME(sound, "(void): stub\n");
     return NULL;
@@ -164,7 +164,7 @@ INT16 WINAPI GetThresholdStatus16(void)
     return 0;
 }
 
-DWORD WINAPI GetThresholdStatus32(void)
+DWORD WINAPI GetThresholdStatus(void)
 {
     FIXME(sound, "(void): stub\n");
     return 0;
@@ -176,13 +176,13 @@ INT16 WINAPI SetVoiceThreshold16(INT16 a, INT16 b)
     return 0;
 }
 
-DWORD WINAPI SetVoiceThreshold32(DWORD a, DWORD b)
+DWORD WINAPI SetVoiceThreshold(DWORD a, DWORD b)
 {
     FIXME(sound, "(%ld,%ld): stub\n", a, b);
     return 0;
 }
 
-void WINAPI DoBeep(void)
+void WINAPI DoBeep16(void)
 {
     FIXME(sound, "(void): stub!\n");
 }

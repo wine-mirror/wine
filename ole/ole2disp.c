@@ -60,10 +60,10 @@ BSTR16 WINAPI SysAllocString16(LPOLESTR16 in)
 /******************************************************************************
  *		SysAllocString32	[OLEAUT32.2]
  */
-BSTR32 WINAPI SysAllocString32(LPOLESTR32 in)
+BSTR WINAPI SysAllocString(LPOLESTR in)
 {
     /* Delegate this to the SysAllocStringLen32 method. */
-    return SysAllocStringLen32(in, lstrlen32W(in));
+    return SysAllocStringLen(in, lstrlenW(in));
 }
 
 /******************************************************************************
@@ -80,7 +80,7 @@ INT16 WINAPI SysReAllocString16(LPBSTR16 old,LPOLESTR16 in)
 /******************************************************************************
  *		SysReAllocString32	[OLEAUT32.3]
  */
-INT32 WINAPI SysReAllocString32(LPBSTR32 old,LPOLESTR32 in)
+INT WINAPI SysReAllocString(LPBSTR old,LPOLESTR in)
 {
     /*
      * Sanity check
@@ -92,12 +92,12 @@ INT32 WINAPI SysReAllocString32(LPBSTR32 old,LPOLESTR32 in)
      * Make sure we free the old string.
      */
     if (*old!=NULL)      
-      SysFreeString32(*old);
+      SysFreeString(*old);
 
     /*
      * Allocate the new string
      */
-    *old = SysAllocString32(in);
+    *old = SysAllocString(in);
 
      return 1;
 }
@@ -123,7 +123,7 @@ BSTR16 WINAPI SysAllocStringLen16(char *in, int len)
  * the string. Meaning that the count is double the number of wide 
  * characters in the string.
  */
-BSTR32 WINAPI SysAllocStringLen32(WCHAR *in, int len)
+BSTR WINAPI SysAllocStringLen(WCHAR *in, int len)
 {
     DWORD  bufferSize;
     DWORD* newBuffer;
@@ -195,7 +195,7 @@ int WINAPI SysReAllocStringLen16(BSTR16 *old,char *in,int len)
 /******************************************************************************
  *             SysReAllocStringLen32   [OLEAUT32.5]
  */
-int WINAPI SysReAllocStringLen32(BSTR32* old, WCHAR* in, int len)
+int WINAPI SysReAllocStringLen(BSTR* old, WCHAR* in, int len)
 {
     /*
      * Sanity check
@@ -207,12 +207,12 @@ int WINAPI SysReAllocStringLen32(BSTR32* old, WCHAR* in, int len)
      * Make sure we free the old string.
      */
     if (*old!=NULL)      
-      SysFreeString32(*old);
+      SysFreeString(*old);
 
     /*
      * Allocate the new string
      */
-    *old = SysAllocStringLen32(in, len);
+    *old = SysAllocStringLen(in, len);
 
     return 1;
 }
@@ -228,7 +228,7 @@ void WINAPI SysFreeString16(BSTR16 in)
 /******************************************************************************
  *		SysFreeString32	[OLEAUT32.6]
  */
-void WINAPI SysFreeString32(BSTR32 in)
+void WINAPI SysFreeString(BSTR in)
 {
     DWORD* bufferPointer;
 
@@ -263,7 +263,7 @@ int WINAPI SysStringLen16(BSTR16 str)
  * It is the same number that was passed in as the "len" parameter if the
  * string was allocated with a SysAllocStringLen method call.
  */
-int WINAPI SysStringLen32(BSTR32 str)
+int WINAPI SysStringLen(BSTR str)
 {
     DWORD* bufferPointer;
 
@@ -286,15 +286,15 @@ int WINAPI SysStringLen32(BSTR32 str)
  * It is the same number that was passed in as the "len" parameter if the
  * string was allocated with a SysAllocStringLen method call.
  */
-int WINAPI SysStringByteLen(BSTR32 str)
+int WINAPI SysStringByteLen(BSTR str)
 {
-  return SysStringLen32(str)*sizeof(WCHAR);
+  return SysStringLen(str)*sizeof(WCHAR);
 }
 
 /******************************************************************************
  * CreateDispTypeInfo [OLE2DISP.31]
  */
-OLESTATUS WINAPI CreateDispTypeInfo(
+OLESTATUS WINAPI CreateDispTypeInfo16(
 	INTERFACEDATA *pidata,
 	LCID lcid,
 	LPVOID **pptinfo /*ITypeInfo*/ 
@@ -306,7 +306,7 @@ OLESTATUS WINAPI CreateDispTypeInfo(
 /******************************************************************************
  * RegisterActiveObject [OLE2DISP.35]
  */
-OLESTATUS WINAPI RegisterActiveObject(
+OLESTATUS WINAPI RegisterActiveObject16(
 	IUnknown * punk,REFCLSID rclsid,DWORD dwFlags, DWORD * pdwRegister
 ) {
 	char	buf[80];
@@ -318,9 +318,9 @@ OLESTATUS WINAPI RegisterActiveObject(
 /******************************************************************************
  *		OleTranslateColor	[OLEAUT32.421]
  */
-INT32 WINAPI OleTranslateColor(
+INT WINAPI OleTranslateColor(
   LONG clr,
-  HPALETTE32  hpal,
+  HPALETTE  hpal,
   COLORREF* pColorRef)
 {
   FIXME(ole,"():stub\n");

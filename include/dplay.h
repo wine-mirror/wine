@@ -334,14 +334,14 @@ typedef const DPCREDENTIALS *LPCDPCREDENTIALS;
 
 
 
-typedef BOOL32 (CALLBACK* LPDPENUMDPCALLBACKW)(
+typedef BOOL (CALLBACK* LPDPENUMDPCALLBACKW)(
     LPGUID      lpguidSP,
     LPWSTR      lpSPName,
     DWORD       dwMajorVersion,
     DWORD       dwMinorVersion,
     LPVOID      lpContext);
 
-typedef BOOL32 (CALLBACK* LPDPENUMDPCALLBACKA)(
+typedef BOOL (CALLBACK* LPDPENUMDPCALLBACKA)(
     LPGUID      lpguidSP,
     LPSTR       lpSPName,       /* ptr to str w/ driver description */
     DWORD       dwMajorVersion, /* Major # of driver spec in lpguidSP */
@@ -351,7 +351,7 @@ typedef BOOL32 (CALLBACK* LPDPENUMDPCALLBACKA)(
 typedef const GUID   *LPCGUID;
 typedef const DPNAME *LPCDPNAME;
 
-typedef BOOL32 (CALLBACK* LPDPENUMCONNECTIONSCALLBACK)(
+typedef BOOL (CALLBACK* LPDPENUMCONNECTIONSCALLBACK)(
     LPCGUID     lpguidSP,
     LPVOID      lpConnection,
     DWORD       dwConnectionSize,
@@ -359,7 +359,7 @@ typedef BOOL32 (CALLBACK* LPDPENUMCONNECTIONSCALLBACK)(
     DWORD       dwFlags,
     LPVOID      lpContext);
 
-typedef BOOL32 (CALLBACK* LPDPENUMSESSIONSCALLBACK)(
+typedef BOOL (CALLBACK* LPDPENUMSESSIONSCALLBACK)(
     LPDPSESSIONDESC lpDPSessionDesc,
     LPVOID      lpContext,
     LPDWORD     lpdwTimeOut,
@@ -384,30 +384,30 @@ extern HRESULT WINAPI DirectPlayLobbyCreateA(LPGUID, LPDIRECTPLAYLOBBYA *, IUnkn
 
 
 
-typedef BOOL32 (CALLBACK* LPDPENUMADDRESSCALLBACK)(
+typedef BOOL (CALLBACK* LPDPENUMADDRESSCALLBACK)(
     REFGUID         guidDataType,
     DWORD           dwDataSize,
     LPCVOID         lpData,
     LPVOID          lpContext );
 
-typedef BOOL32 (CALLBACK* LPDPLENUMADDRESSTYPESCALLBACK)(
+typedef BOOL (CALLBACK* LPDPLENUMADDRESSTYPESCALLBACK)(
     REFGUID         guidDataType,
     LPVOID          lpContext,
     DWORD           dwFlags );
 
-typedef BOOL32 (CALLBACK* LPDPLENUMLOCALAPPLICATIONSCALLBACK)(
+typedef BOOL (CALLBACK* LPDPLENUMLOCALAPPLICATIONSCALLBACK)(
     LPCDPLAPPINFO   lpAppInfo,
     LPVOID          lpContext,
     DWORD           dwFlags );
 
-typedef BOOL32 (CALLBACK* LPDPENUMPLAYERSCALLBACK2)(
+typedef BOOL (CALLBACK* LPDPENUMPLAYERSCALLBACK2)(
     DPID            dpId,
     DWORD           dwPlayerType,
     LPCDPNAME       lpName,
     DWORD           dwFlags,
     LPVOID          lpContext );
 
-typedef BOOL32 (CALLBACK* LPDPENUMSESSIONSCALLBACK2)(
+typedef BOOL (CALLBACK* LPDPENUMSESSIONSCALLBACK2)(
     LPCDPSESSIONDESC2   lpThisSD,
     LPDWORD             lpdwTimeOut,
     DWORD               dwFlags,
@@ -433,7 +433,7 @@ typedef struct tagLPDIRECTPLAY2_VTABLE
     STDMETHOD(AddPlayerToGroup)     (THIS_ DPID, DPID) PURE;
     STDMETHOD(Close)                (THIS) PURE;
     STDMETHOD(CreateGroup)          (THIS_ LPDPID,LPDPNAME,LPVOID,DWORD,DWORD) PURE;
-    STDMETHOD(CreatePlayer)         (THIS_ LPDPID,LPDPNAME,HANDLE32,LPVOID,DWORD,DWORD) PURE;
+    STDMETHOD(CreatePlayer)         (THIS_ LPDPID,LPDPNAME,HANDLE,LPVOID,DWORD,DWORD) PURE;
     STDMETHOD(DeletePlayerFromGroup)(THIS_ DPID,DPID) PURE;
     STDMETHOD(DestroyGroup)         (THIS_ DPID) PURE;
     STDMETHOD(DestroyPlayer)        (THIS_ DPID) PURE;
@@ -474,7 +474,7 @@ typedef struct tagLPDIRECTPLAY3_VTABLE
     STDMETHOD(AddPlayerToGroup)     (THIS_ DPID, DPID) PURE;
     STDMETHOD(Close)                (THIS) PURE;
     STDMETHOD(CreateGroup)          (THIS_ LPDPID,LPDPNAME,LPVOID,DWORD,DWORD) PURE;
-    STDMETHOD(CreatePlayer)         (THIS_ LPDPID,LPDPNAME,HANDLE32,LPVOID,DWORD,DWORD) PURE;
+    STDMETHOD(CreatePlayer)         (THIS_ LPDPID,LPDPNAME,HANDLE,LPVOID,DWORD,DWORD) PURE;
     STDMETHOD(DeletePlayerFromGroup)(THIS_ DPID,DPID) PURE;
     STDMETHOD(DestroyGroup)         (THIS_ DPID) PURE;
     STDMETHOD(DestroyPlayer)        (THIS_ DPID) PURE;
@@ -667,10 +667,10 @@ typedef struct tagLPDIRECTPLAYLOBBY_VTABLE
     STDMETHOD(EnumLocalApplications)(THIS_ LPDPLENUMLOCALAPPLICATIONSCALLBACK, LPVOID, DWORD) PURE;       
     STDMETHOD(GetConnectionSettings)(THIS_ DWORD, LPVOID, LPDWORD) PURE;                                  
     STDMETHOD(ReceiveLobbyMessage)  (THIS_ DWORD, DWORD, LPDWORD, LPVOID, LPDWORD) PURE;                  
-    STDMETHOD(RunApplication)       (THIS_ DWORD, LPDWORD, LPDPLCONNECTION, HANDLE32) PURE;               
+    STDMETHOD(RunApplication)       (THIS_ DWORD, LPDWORD, LPDPLCONNECTION, HANDLE) PURE;               
     STDMETHOD(SendLobbyMessage)     (THIS_ DWORD, DWORD, LPVOID, DWORD) PURE;                             
     STDMETHOD(SetConnectionSettings)(THIS_ DWORD, DWORD, LPDPLCONNECTION) PURE;                           
-    STDMETHOD(SetLobbyMessageEvent) (THIS_ DWORD, DWORD, HANDLE32) PURE;
+    STDMETHOD(SetLobbyMessageEvent) (THIS_ DWORD, DWORD, HANDLE) PURE;
 
 
 } DIRECTPLAYLOBBY_VTABLE, *LPDIRECTPLAYLOBBY_VTABLE;
@@ -692,10 +692,10 @@ typedef struct tagLPDIRECTPLAYLOBBY2_VTABLE
     STDMETHOD(EnumLocalApplications)(THIS_ LPDPLENUMLOCALAPPLICATIONSCALLBACK, LPVOID, DWORD) PURE;       
     STDMETHOD(GetConnectionSettings)(THIS_ DWORD, LPVOID, LPDWORD) PURE;                                  
     STDMETHOD(ReceiveLobbyMessage)  (THIS_ DWORD, DWORD, LPDWORD, LPVOID, LPDWORD) PURE;                  
-    STDMETHOD(RunApplication)       (THIS_ DWORD, LPDWORD, LPDPLCONNECTION, HANDLE32) PURE;               
+    STDMETHOD(RunApplication)       (THIS_ DWORD, LPDWORD, LPDPLCONNECTION, HANDLE) PURE;               
     STDMETHOD(SendLobbyMessage)     (THIS_ DWORD, DWORD, LPVOID, DWORD) PURE;                             
     STDMETHOD(SetConnectionSettings)(THIS_ DWORD, DWORD, LPDPLCONNECTION) PURE;                           
-    STDMETHOD(SetLobbyMessageEvent) (THIS_ DWORD, DWORD, HANDLE32) PURE;
+    STDMETHOD(SetLobbyMessageEvent) (THIS_ DWORD, DWORD, HANDLE) PURE;
 
     /*  IDirectPlayLobby2 Methods */
     STDMETHOD(CreateCompoundAddress)(THIS_ LPCDPCOMPOUNDADDRESSELEMENT, DWORD, LPVOID, LPDWORD) PURE;

@@ -25,7 +25,7 @@
  */
 void CLIPPING_UpdateGCRegion( DC * dc )
 {
-    if (!dc->w.hGCClipRgn) dc->w.hGCClipRgn = CreateRectRgn32( 0, 0, 0, 0 );
+    if (!dc->w.hGCClipRgn) dc->w.hGCClipRgn = CreateRectRgn( 0, 0, 0, 0 );
 
     if (!dc->w.hVisRgn)
     {
@@ -40,9 +40,9 @@ void CLIPPING_UpdateGCRegion( DC * dc )
     }
 
     if (!dc->w.hClipRgn)
-        CombineRgn32( dc->w.hGCClipRgn, dc->w.hVisRgn, 0, RGN_COPY );
+        CombineRgn( dc->w.hGCClipRgn, dc->w.hVisRgn, 0, RGN_COPY );
     else
-        CombineRgn32(dc->w.hGCClipRgn, dc->w.hClipRgn, dc->w.hVisRgn, RGN_AND);
+        CombineRgn(dc->w.hGCClipRgn, dc->w.hClipRgn, dc->w.hVisRgn, RGN_AND);
     if (dc->funcs->pSetDeviceClipping) dc->funcs->pSetDeviceClipping( dc );
 }
 
@@ -52,14 +52,14 @@ void CLIPPING_UpdateGCRegion( DC * dc )
  */
 INT16 WINAPI SelectClipRgn16( HDC16 hdc, HRGN16 hrgn )
 {
-    return (INT16)SelectClipRgn32( hdc, hrgn );
+    return (INT16)SelectClipRgn( hdc, hrgn );
 }
 
 
 /***********************************************************************
  *           SelectClipRgn32    (GDI32.297)
  */
-INT32 WINAPI SelectClipRgn32( HDC32 hdc, HRGN32 hrgn )
+INT WINAPI SelectClipRgn( HDC hdc, HRGN hrgn )
 {
     return ExtSelectClipRgn( hdc, hrgn, RGN_COPY );
 }
@@ -67,9 +67,9 @@ INT32 WINAPI SelectClipRgn32( HDC32 hdc, HRGN32 hrgn )
 /******************************************************************************
  *		ExtSelectClipRgn	[GDI32.97]
  */
-INT32 WINAPI ExtSelectClipRgn( HDC32 hdc, HRGN32 hrgn, INT32 fnMode )
+INT WINAPI ExtSelectClipRgn( HDC hdc, HRGN hrgn, INT fnMode )
 {
-    INT32 retval;
+    INT retval;
     DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
     if (!dc) return ERROR;
 
@@ -93,17 +93,17 @@ INT32 WINAPI ExtSelectClipRgn( HDC32 hdc, HRGN32 hrgn, INT32 fnMode )
     {
         if (!dc->w.hClipRgn)
         {
-            RECT32 rect;
-            GetRgnBox32( dc->w.hVisRgn, &rect );
-            dc->w.hClipRgn = CreateRectRgnIndirect32( &rect );
+            RECT rect;
+            GetRgnBox( dc->w.hVisRgn, &rect );
+            dc->w.hClipRgn = CreateRectRgnIndirect( &rect );
         }
 
-        OffsetRgn32( dc->w.hClipRgn, -dc->w.DCOrgX, -dc->w.DCOrgY );
+        OffsetRgn( dc->w.hClipRgn, -dc->w.DCOrgX, -dc->w.DCOrgY );
         if(fnMode == RGN_COPY)
-            retval = CombineRgn32( dc->w.hClipRgn, hrgn, 0, fnMode );
+            retval = CombineRgn( dc->w.hClipRgn, hrgn, 0, fnMode );
         else
-            retval = CombineRgn32( dc->w.hClipRgn, dc->w.hClipRgn, hrgn, fnMode);
-        OffsetRgn32( dc->w.hClipRgn, dc->w.DCOrgX, dc->w.DCOrgY );
+            retval = CombineRgn( dc->w.hClipRgn, dc->w.hClipRgn, hrgn, fnMode);
+        OffsetRgn( dc->w.hClipRgn, dc->w.DCOrgX, dc->w.DCOrgY );
     }
 
 
@@ -115,7 +115,7 @@ INT32 WINAPI ExtSelectClipRgn( HDC32 hdc, HRGN32 hrgn, INT32 fnMode )
 /***********************************************************************
  *           SelectVisRgn    (GDI.105)
  */
-INT16 WINAPI SelectVisRgn( HDC16 hdc, HRGN16 hrgn )
+INT16 WINAPI SelectVisRgn16( HDC16 hdc, HRGN16 hrgn )
 {
     int retval;
     DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
@@ -137,14 +137,14 @@ INT16 WINAPI SelectVisRgn( HDC16 hdc, HRGN16 hrgn )
  */
 INT16 WINAPI OffsetClipRgn16( HDC16 hdc, INT16 x, INT16 y )
 {
-    return (INT16)OffsetClipRgn32( hdc, x, y );
+    return (INT16)OffsetClipRgn( hdc, x, y );
 }
 
 
 /***********************************************************************
  *           OffsetClipRgn32    (GDI32.255)
  */
-INT32 WINAPI OffsetClipRgn32( HDC32 hdc, INT32 x, INT32 y )
+INT WINAPI OffsetClipRgn( HDC hdc, INT x, INT y )
 {
     DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
     if (!dc) 
@@ -160,7 +160,7 @@ INT32 WINAPI OffsetClipRgn32( HDC32 hdc, INT32 x, INT32 y )
 
     if (dc->w.hClipRgn)
     {
-	INT32 ret = OffsetRgn32( dc->w.hClipRgn, XLPTODP(dc,x), YLPTODP(dc,y));
+	INT ret = OffsetRgn( dc->w.hClipRgn, XLPTODP(dc,x), YLPTODP(dc,y));
 	CLIPPING_UpdateGCRegion( dc );
 	GDI_HEAP_UNLOCK( hdc );
 	return ret;
@@ -173,13 +173,13 @@ INT32 WINAPI OffsetClipRgn32( HDC32 hdc, INT32 x, INT32 y )
 /***********************************************************************
  *           OffsetVisRgn    (GDI.102)
  */
-INT16 WINAPI OffsetVisRgn( HDC16 hdc, INT16 x, INT16 y )
+INT16 WINAPI OffsetVisRgn16( HDC16 hdc, INT16 x, INT16 y )
 {
     INT16 retval;
     DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
     if (!dc) return ERROR;    
     TRACE(clipping, "%04x %d,%d\n", hdc, x, y );
-    retval = OffsetRgn32( dc->w.hVisRgn, x, y );
+    retval = OffsetRgn( dc->w.hVisRgn, x, y );
     CLIPPING_UpdateGCRegion( dc );
     GDI_HEAP_UNLOCK( hdc );
     return retval;
@@ -193,18 +193,18 @@ INT16 WINAPI OffsetVisRgn( HDC16 hdc, INT16 x, INT16 y )
  * elsewhere (like ExtTextOut()) to skip redundant metafile update and
  * coordinate conversion.
  */
-INT32 CLIPPING_IntersectClipRect( DC * dc, INT32 left, INT32 top,
-                                  INT32 right, INT32 bottom, UINT32 flags )
+INT CLIPPING_IntersectClipRect( DC * dc, INT left, INT top,
+                                  INT right, INT bottom, UINT flags )
 {
-    HRGN32 newRgn;
-    INT32 ret;
+    HRGN newRgn;
+    INT ret;
 
     left   += dc->w.DCOrgX;
     right  += dc->w.DCOrgX;
     top    += dc->w.DCOrgY;
     bottom += dc->w.DCOrgY;
 
-    if (!(newRgn = CreateRectRgn32( left, top, right, bottom ))) return ERROR;
+    if (!(newRgn = CreateRectRgn( left, top, right, bottom ))) return ERROR;
     if (!dc->w.hClipRgn)
     {
        if( flags & CLIP_INTERSECT )
@@ -215,21 +215,21 @@ INT32 CLIPPING_IntersectClipRect( DC * dc, INT32 left, INT32 top,
        }
        else if( flags & CLIP_EXCLUDE )
        {
-           dc->w.hClipRgn = CreateRectRgn32( 0, 0, 0, 0 );
-     	   CombineRgn32( dc->w.hClipRgn, dc->w.hVisRgn, 0, RGN_COPY );
+           dc->w.hClipRgn = CreateRectRgn( 0, 0, 0, 0 );
+     	   CombineRgn( dc->w.hClipRgn, dc->w.hVisRgn, 0, RGN_COPY );
        }
        else WARN(clipping,"No hClipRgn and flags are %x\n",flags);
     }
 
-    ret = CombineRgn32( newRgn, dc->w.hClipRgn, newRgn, 
+    ret = CombineRgn( newRgn, dc->w.hClipRgn, newRgn, 
                         (flags & CLIP_EXCLUDE) ? RGN_DIFF : RGN_AND );
     if (ret != ERROR)
     {
-        if (!(flags & CLIP_KEEPRGN)) DeleteObject32( dc->w.hClipRgn );
+        if (!(flags & CLIP_KEEPRGN)) DeleteObject( dc->w.hClipRgn );
         dc->w.hClipRgn = newRgn;    
         CLIPPING_UpdateGCRegion( dc );
     }
-    else DeleteObject32( newRgn );
+    else DeleteObject( newRgn );
     return ret;
 }
 
@@ -240,17 +240,17 @@ INT32 CLIPPING_IntersectClipRect( DC * dc, INT32 left, INT32 top,
 INT16 WINAPI ExcludeClipRect16( HDC16 hdc, INT16 left, INT16 top,
                                 INT16 right, INT16 bottom )
 {
-    return (INT16)ExcludeClipRect32( hdc, left, top, right, bottom );
+    return (INT16)ExcludeClipRect( hdc, left, top, right, bottom );
 }
 
 
 /***********************************************************************
  *           ExcludeClipRect32    (GDI32.92)
  */
-INT32 WINAPI ExcludeClipRect32( HDC32 hdc, INT32 left, INT32 top,
-                                INT32 right, INT32 bottom )
+INT WINAPI ExcludeClipRect( HDC hdc, INT left, INT top,
+                                INT right, INT bottom )
 {
-    INT32 ret;
+    INT ret;
     DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
     if (!dc) 
     {
@@ -280,17 +280,17 @@ INT32 WINAPI ExcludeClipRect32( HDC32 hdc, INT32 left, INT32 top,
 INT16 WINAPI IntersectClipRect16( HDC16 hdc, INT16 left, INT16 top,
                                   INT16 right, INT16 bottom )
 {
-    return (INT16)IntersectClipRect32( hdc, left, top, right, bottom );
+    return (INT16)IntersectClipRect( hdc, left, top, right, bottom );
 }
 
 
 /***********************************************************************
  *           IntersectClipRect32    (GDI32.245)
  */
-INT32 WINAPI IntersectClipRect32( HDC32 hdc, INT32 left, INT32 top,
-                                  INT32 right, INT32 bottom )
+INT WINAPI IntersectClipRect( HDC hdc, INT left, INT top,
+                                  INT right, INT bottom )
 {
-    INT32 ret;
+    INT ret;
     DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
     if (!dc) 
     {
@@ -321,39 +321,39 @@ INT32 WINAPI IntersectClipRect32( HDC32 hdc, INT32 left, INT32 top,
  * elsewhere (like ExtTextOut()) to skip redundant metafile update and
  * coordinate conversion.
  */
-INT32 CLIPPING_IntersectVisRect( DC * dc, INT32 left, INT32 top,
-                                 INT32 right, INT32 bottom,
-                                 BOOL32 exclude )
+INT CLIPPING_IntersectVisRect( DC * dc, INT left, INT top,
+                                 INT right, INT bottom,
+                                 BOOL exclude )
 {
-    HRGN32 tempRgn, newRgn;
-    INT32 ret;
+    HRGN tempRgn, newRgn;
+    INT ret;
 
     left   += dc->w.DCOrgX;
     right  += dc->w.DCOrgX;
     top    += dc->w.DCOrgY;
     bottom += dc->w.DCOrgY;
 
-    if (!(newRgn = CreateRectRgn32( 0, 0, 0, 0 ))) return ERROR;
-    if (!(tempRgn = CreateRectRgn32( left, top, right, bottom )))
+    if (!(newRgn = CreateRectRgn( 0, 0, 0, 0 ))) return ERROR;
+    if (!(tempRgn = CreateRectRgn( left, top, right, bottom )))
     {
-        DeleteObject32( newRgn );
+        DeleteObject( newRgn );
         return ERROR;
     }
-    ret = CombineRgn32( newRgn, dc->w.hVisRgn, tempRgn,
+    ret = CombineRgn( newRgn, dc->w.hVisRgn, tempRgn,
                         exclude ? RGN_DIFF : RGN_AND );
-    DeleteObject32( tempRgn );
+    DeleteObject( tempRgn );
 
     if (ret != ERROR)
     {
         RGNOBJ *newObj  = (RGNOBJ*)GDI_GetObjPtr( newRgn, REGION_MAGIC);
         RGNOBJ *prevObj = (RGNOBJ*)GDI_GetObjPtr( dc->w.hVisRgn, REGION_MAGIC);
         if (newObj && prevObj) newObj->header.hNext = prevObj->header.hNext;
-        DeleteObject32( dc->w.hVisRgn );
+        DeleteObject( dc->w.hVisRgn );
         dc->w.hVisRgn = newRgn;    
         CLIPPING_UpdateGCRegion( dc );
 	GDI_HEAP_UNLOCK( newRgn );
     }
-    else DeleteObject32( newRgn );
+    else DeleteObject( newRgn );
     return ret;
 }
 
@@ -361,7 +361,7 @@ INT32 CLIPPING_IntersectVisRect( DC * dc, INT32 left, INT32 top,
 /***********************************************************************
  *           ExcludeVisRect    (GDI.73)
  */
-INT16 WINAPI ExcludeVisRect( HDC16 hdc, INT16 left, INT16 top,
+INT16 WINAPI ExcludeVisRect16( HDC16 hdc, INT16 left, INT16 top,
                              INT16 right, INT16 bottom )
 {
     DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
@@ -382,7 +382,7 @@ INT16 WINAPI ExcludeVisRect( HDC16 hdc, INT16 left, INT16 top,
 /***********************************************************************
  *           IntersectVisRect    (GDI.98)
  */
-INT16 WINAPI IntersectVisRect( HDC16 hdc, INT16 left, INT16 top,
+INT16 WINAPI IntersectVisRect16( HDC16 hdc, INT16 left, INT16 top,
                                INT16 right, INT16 bottom )
 {
     DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
@@ -405,14 +405,14 @@ INT16 WINAPI IntersectVisRect( HDC16 hdc, INT16 left, INT16 top,
  */
 BOOL16 WINAPI PtVisible16( HDC16 hdc, INT16 x, INT16 y )
 {
-    return PtVisible32( hdc, x, y );
+    return PtVisible( hdc, x, y );
 }
 
 
 /***********************************************************************
  *           PtVisible32    (GDI32.279)
  */
-BOOL32 WINAPI PtVisible32( HDC32 hdc, INT32 x, INT32 y )
+BOOL WINAPI PtVisible( HDC hdc, INT x, INT y )
 {
     DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
     if (!dc) return ERROR;    
@@ -423,7 +423,7 @@ BOOL32 WINAPI PtVisible32( HDC32 hdc, INT32 x, INT32 y )
     if( dc->w.flags & DC_DIRTY ) UPDATE_DIRTY_DC(dc);
     dc->w.flags &= ~DC_DIRTY;
 
-    return PtInRegion32( dc->w.hGCClipRgn, XLPTODP(dc,x) + dc->w.DCOrgX, 
+    return PtInRegion( dc->w.hGCClipRgn, XLPTODP(dc,x) + dc->w.DCOrgX, 
                                            YLPTODP(dc,y) + dc->w.DCOrgY );
 }
 
@@ -450,7 +450,7 @@ BOOL16 WINAPI RectVisible16( HDC16 hdc, const RECT16* rect )
 /***********************************************************************
  *           RectVisible32    (GDI32.282)
  */
-BOOL32 WINAPI RectVisible32( HDC32 hdc, const RECT32* rect )
+BOOL WINAPI RectVisible( HDC hdc, const RECT* rect )
 {
     RECT16 rect16;
     CONV_RECT32TO16( rect, &rect16 );
@@ -478,14 +478,14 @@ INT16 WINAPI GetClipBox16( HDC16 hdc, LPRECT16 rect )
 /***********************************************************************
  *           GetClipBox32    (GDI32.162)
  */
-INT32 WINAPI GetClipBox32( HDC32 hdc, LPRECT32 rect )
+INT WINAPI GetClipBox( HDC hdc, LPRECT rect )
 {
-    INT32 ret;
+    INT ret;
     DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
     if (!dc) return ERROR;    
-    ret = GetRgnBox32( dc->w.hGCClipRgn, rect );
-    OffsetRect32( rect, -dc->w.DCOrgX, -dc->w.DCOrgY );
-    DPtoLP32( hdc, (LPPOINT32)rect, 2 );
+    ret = GetRgnBox( dc->w.hGCClipRgn, rect );
+    OffsetRect( rect, -dc->w.DCOrgX, -dc->w.DCOrgY );
+    DPtoLP( hdc, (LPPOINT)rect, 2 );
     return ret;
 }
 
@@ -493,7 +493,7 @@ INT32 WINAPI GetClipBox32( HDC32 hdc, LPRECT32 rect )
 /***********************************************************************
  *           GetClipRgn32  (GDI32.163)
  */
-INT32 WINAPI GetClipRgn32( HDC32 hdc, HRGN32 hRgn )
+INT WINAPI GetClipRgn( HDC hdc, HRGN hRgn )
 {
     DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
     if( dc && hRgn )
@@ -503,9 +503,9 @@ INT32 WINAPI GetClipRgn32( HDC32 hdc, HRGN32 hRgn )
 	/* this assumes that dc->w.hClipRgn is in coordinates
 	   relative to the device (not DC origin) */
 
-	if( CombineRgn32(hRgn, dc->w.hClipRgn, 0, RGN_COPY) != ERROR )
+	if( CombineRgn(hRgn, dc->w.hClipRgn, 0, RGN_COPY) != ERROR )
         {
-            OffsetRgn32( hRgn, -dc->w.DCOrgX, -dc->w.DCOrgY );
+            OffsetRgn( hRgn, -dc->w.DCOrgX, -dc->w.DCOrgY );
 	    return 1;
         }
       }
@@ -517,9 +517,9 @@ INT32 WINAPI GetClipRgn32( HDC32 hdc, HRGN32 hRgn )
 /***********************************************************************
  *           SaveVisRgn    (GDI.129)
  */
-HRGN16 WINAPI SaveVisRgn( HDC16 hdc )
+HRGN16 WINAPI SaveVisRgn16( HDC16 hdc )
 {
-    HRGN32 copy;
+    HRGN copy;
     RGNOBJ *obj, *copyObj;
     DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
     if (!dc) return 0;
@@ -537,13 +537,13 @@ HRGN16 WINAPI SaveVisRgn( HDC16 hdc )
         GDI_HEAP_UNLOCK( hdc );
 	return 0;
     }
-    if (!(copy = CreateRectRgn32( 0, 0, 0, 0 )))
+    if (!(copy = CreateRectRgn( 0, 0, 0, 0 )))
     {
         GDI_HEAP_UNLOCK( dc->w.hVisRgn );
         GDI_HEAP_UNLOCK( hdc );
         return 0;
     }  
-    CombineRgn32( copy, dc->w.hVisRgn, 0, RGN_COPY );
+    CombineRgn( copy, dc->w.hVisRgn, 0, RGN_COPY );
     if (!(copyObj = (RGNOBJ *) GDI_GetObjPtr( copy, REGION_MAGIC )))
     {
         GDI_HEAP_UNLOCK( dc->w.hVisRgn );
@@ -562,9 +562,9 @@ HRGN16 WINAPI SaveVisRgn( HDC16 hdc )
 /***********************************************************************
  *           RestoreVisRgn    (GDI.130)
  */
-INT16 WINAPI RestoreVisRgn( HDC16 hdc )
+INT16 WINAPI RestoreVisRgn16( HDC16 hdc )
 {
-    HRGN32 saved;
+    HRGN saved;
     RGNOBJ *obj, *savedObj;
     DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
     INT16 ret;
@@ -593,7 +593,7 @@ INT16 WINAPI RestoreVisRgn( HDC16 hdc )
         GDI_HEAP_UNLOCK( hdc );
         return ERROR;
     }
-    DeleteObject32( dc->w.hVisRgn );
+    DeleteObject( dc->w.hVisRgn );
     dc->w.hVisRgn = saved;
     CLIPPING_UpdateGCRegion( dc );
     GDI_HEAP_UNLOCK( hdc );

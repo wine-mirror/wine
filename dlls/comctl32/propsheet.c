@@ -16,7 +16,7 @@
 
 
 LRESULT WINAPI
-PROPSHEET_WindowProc (HWND32 hwnd, UINT32 uMsg, WPARAM32 wParam, LPARAM lParam);
+PROPSHEET_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
 
 
@@ -27,20 +27,20 @@ PROPSHEET_WindowProc (HWND32 hwnd, UINT32 uMsg, WPARAM32 wParam, LPARAM lParam);
 /*****************************************************************
  *            PropertySheet32A   (COMCTL32.84)(COMCTL32.83)
  */
-INT32 WINAPI PropertySheet32A(LPCPROPSHEETHEADER32A lppsh)
+INT WINAPI PropertySheetA(LPCPROPSHEETHEADERA lppsh)
 {
-	HWND32 hwnd;
+	HWND hwnd;
 
     FIXME(propsheet, "(%p): stub\n", lppsh);
 
 	if (lppsh->dwFlags & PSH_MODELESS) {
-        hwnd = CreateDialogParam32A ( lppsh->hInstance, WC_PROPSHEET32A,
-                    lppsh->hwndParent, (DLGPROC32)PROPSHEET_WindowProc,
+        hwnd = CreateDialogParamA ( lppsh->hInstance, WC_PROPSHEETA,
+                    lppsh->hwndParent, (DLGPROC)PROPSHEET_WindowProc,
 		    (LPARAM) lppsh );
-		ShowWindow32 (hwnd, TRUE);
+		ShowWindow (hwnd, TRUE);
 	} else {
-		hwnd =  DialogBoxParam32A ( lppsh->hInstance, WC_PROPSHEET32A,
-                    lppsh->hwndParent, (DLGPROC32)PROPSHEET_WindowProc,
+		hwnd =  DialogBoxParamA ( lppsh->hInstance, WC_PROPSHEETA,
+                    lppsh->hwndParent, (DLGPROC)PROPSHEET_WindowProc,
 		    (LPARAM) lppsh );
 	}
     return hwnd;
@@ -49,7 +49,7 @@ INT32 WINAPI PropertySheet32A(LPCPROPSHEETHEADER32A lppsh)
 /*****************************************************************
  *            PropertySheet32W   (COMCTL32.85)
  */
-INT32 WINAPI PropertySheet32W(LPCPROPSHEETHEADER32W propertySheetHeader)
+INT WINAPI PropertySheetW(LPCPROPSHEETHEADERW propertySheetHeader)
 {
     FIXME(propsheet, "(%p): stub\n", propertySheetHeader);
 
@@ -63,7 +63,7 @@ INT32 WINAPI PropertySheet32W(LPCPROPSHEETHEADER32W propertySheetHeader)
 /*****************************************************************
  *            CreatePropertySheetPage32A   (COMCTL32.19)(COMCTL32.18)
  */
-HPROPSHEETPAGE WINAPI CreatePropertySheetPage32A(LPCPROPSHEETPAGE32A lpPropSheetPage)
+HPROPSHEETPAGE WINAPI CreatePropertySheetPageA(LPCPROPSHEETPAGEA lpPropSheetPage)
 {
     FIXME(propsheet, "(%p): stub\n", lpPropSheetPage);
 
@@ -73,7 +73,7 @@ HPROPSHEETPAGE WINAPI CreatePropertySheetPage32A(LPCPROPSHEETPAGE32A lpPropSheet
 /*****************************************************************
  *            CreatePropertySheetPage32W   (COMCTL32.20)
  */
-HPROPSHEETPAGE WINAPI CreatePropertySheetPage32W(LPCPROPSHEETPAGE32W lpPropSheetPage)
+HPROPSHEETPAGE WINAPI CreatePropertySheetPageW(LPCPROPSHEETPAGEW lpPropSheetPage)
 {
     FIXME(propsheet, "(%p): stub\n", lpPropSheetPage);
 
@@ -83,7 +83,7 @@ HPROPSHEETPAGE WINAPI CreatePropertySheetPage32W(LPCPROPSHEETPAGE32W lpPropSheet
 /*****************************************************************
  *            DestroyPropertySheetPage32   (COMCTL32.24)
  */
-BOOL32 WINAPI DestroyPropertySheetPage32(HPROPSHEETPAGE hPropPage)
+BOOL WINAPI DestroyPropertySheetPage(HPROPSHEETPAGE hPropPage)
 {
     FIXME(propsheet, "(0x%08lx): stub\n", (DWORD)hPropPage);
     return FALSE;
@@ -92,7 +92,7 @@ BOOL32 WINAPI DestroyPropertySheetPage32(HPROPSHEETPAGE hPropPage)
 
 
 LRESULT WINAPI
-PROPSHEET_WindowProc (HWND32 hwnd, UINT32 uMsg, WPARAM32 wParam, LPARAM lParam)
+PROPSHEET_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     /* WND *wndPtr = WIN_FindWndPtr(hwnd); */
 
@@ -127,10 +127,10 @@ PROPSHEET_WindowProc (HWND32 hwnd, UINT32 uMsg, WPARAM32 wParam, LPARAM lParam)
        case PSM_APPLY:
            FIXME (propsheet, "Unimplemented msg PSM_APPLY\n");
            return 0;
-       case PSM_SETTITLE32A:
+       case PSM_SETTITLEA:
            FIXME (propsheet, "Unimplemented msg PSM_SETTITLE32A\n");
            return 0;
-       case PSM_SETTITLE32W:
+       case PSM_SETTITLEW:
            FIXME (propsheet, "Unimplemented msg PSM_SETTITLE32W\n");
            return 0;
        case PSM_SETWIZBUTTONS:
@@ -142,10 +142,10 @@ PROPSHEET_WindowProc (HWND32 hwnd, UINT32 uMsg, WPARAM32 wParam, LPARAM lParam)
        case PSM_SETCURSELID:
            FIXME (propsheet, "Unimplemented msg PSM_SETCURSELID\n");
            return 0;
-       case PSM_SETFINISHTEXT32A:
+       case PSM_SETFINISHTEXTA:
            FIXME (propsheet, "Unimplemented msg PSM_SETFINISHTEXT32A\n");
            return 0;
-       case PSM_SETFINISHTEXT32W:
+       case PSM_SETFINISHTEXTW:
            FIXME (propsheet, "Unimplemented msg PSM_SETFINISHTEXT32W\n");
            return 0;
        case PSM_GETTABCONTROL:
@@ -162,7 +162,7 @@ PROPSHEET_WindowProc (HWND32 hwnd, UINT32 uMsg, WPARAM32 wParam, LPARAM lParam)
         if (uMsg >= WM_USER)
 	    ERR (propsheet, "unknown msg %04x wp=%08x lp=%08lx\n",
 		 uMsg, wParam, lParam);
-	    return DefWindowProc32A (hwnd, uMsg, wParam, lParam);
+	    return DefWindowProcA (hwnd, uMsg, wParam, lParam);
     }
 }
 
@@ -170,26 +170,26 @@ PROPSHEET_WindowProc (HWND32 hwnd, UINT32 uMsg, WPARAM32 wParam, LPARAM lParam)
 VOID
 PROPSHEET_Register (VOID)
 {
-    WNDCLASS32A wndClass;
+    WNDCLASSA wndClass;
 
-    if (GlobalFindAtom32A (WC_PROPSHEET32A)) return;
+    if (GlobalFindAtomA (WC_PROPSHEETA)) return;
 
-    ZeroMemory (&wndClass, sizeof(WNDCLASS32A));
+    ZeroMemory (&wndClass, sizeof(WNDCLASSA));
     wndClass.style         = CS_GLOBALCLASS | CS_DBLCLKS | CS_SAVEBITS;
-    wndClass.lpfnWndProc   = (WNDPROC32)PROPSHEET_WindowProc;
+    wndClass.lpfnWndProc   = (WNDPROC)PROPSHEET_WindowProc;
     wndClass.cbClsExtra    = 0;
     wndClass.cbWndExtra    = sizeof(PROPSHEET_INFO *);
-    wndClass.hCursor       = LoadCursor32A (0, IDC_ARROW32A);
+    wndClass.hCursor       = LoadCursorA (0, IDC_ARROWA);
     wndClass.hbrBackground = 0;
-    wndClass.lpszClassName = WC_PROPSHEET32A;
+    wndClass.lpszClassName = WC_PROPSHEETA;
 
-    RegisterClass32A (&wndClass);
+    RegisterClassA (&wndClass);
 }
 
 
 VOID
 PROPSHEET_UnRegister (VOID)
 {
-    if (GlobalFindAtom32A (WC_PROPSHEET32A))
-        UnregisterClass32A (WC_PROPSHEET32A, (HINSTANCE32)NULL);
+    if (GlobalFindAtomA (WC_PROPSHEETA))
+        UnregisterClassA (WC_PROPSHEETA, (HINSTANCE)NULL);
 }

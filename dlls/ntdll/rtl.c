@@ -553,7 +553,7 @@ VOID WINAPI RtlInitAnsiString(PANSI_STRING target,LPCSTR source)
 	target->Buffer = (LPSTR)source;
 	if (!source)
 		return;
-	target->MaximumLength = lstrlen32A(target->Buffer);
+	target->MaximumLength = lstrlenA(target->Buffer);
 	target->Length = target->MaximumLength+1;
 }
 /**************************************************************************
@@ -565,7 +565,7 @@ VOID WINAPI RtlInitString(PSTRING target,LPCSTR source)
 	target->Buffer = (LPSTR)source;
 	if (!source)
 		return;
-	target->MaximumLength = lstrlen32A(target->Buffer);
+	target->MaximumLength = lstrlenA(target->Buffer);
 	target->Length = target->MaximumLength+1;
 }
 
@@ -578,7 +578,7 @@ VOID WINAPI RtlInitUnicodeString(PUNICODE_STRING target,LPCWSTR source)
 	target->Buffer = (LPWSTR)source;
 	if (!source)
 		return;
-	target->MaximumLength = lstrlen32W(target->Buffer)*2;
+	target->MaximumLength = lstrlenW(target->Buffer)*2;
 	target->Length = target->MaximumLength+2;
 }
 
@@ -658,7 +658,7 @@ DWORD WINAPI RtlEqualUnicodeString(PUNICODE_STRING s1,PUNICODE_STRING s2,DWORD x
 	return 0;
 	if (s1->Length != s2->Length)
 		return 1;
-	return !lstrncmp32W(s1->Buffer,s2->Buffer,s1->Length/2);
+	return !lstrncmpW(s1->Buffer,s2->Buffer,s1->Length/2);
 }
 
 /**************************************************************************
@@ -689,7 +689,7 @@ DWORD WINAPI RtlUpcaseUnicodeString(PUNICODE_STRING dest,PUNICODE_STRING src,BOO
 /**************************************************************************
  *                 RtlxOemStringToUnicodeSize		[NTDLL.549]
  */
-UINT32 WINAPI RtlxOemStringToUnicodeSize(PSTRING str)
+UINT WINAPI RtlxOemStringToUnicodeSize(PSTRING str)
 {
 	return str->Length*2+2;
 }
@@ -697,7 +697,7 @@ UINT32 WINAPI RtlxOemStringToUnicodeSize(PSTRING str)
 /**************************************************************************
  *                 RtlxAnsiStringToUnicodeSize		[NTDLL.548]
  */
-UINT32 WINAPI RtlxAnsiStringToUnicodeSize(PANSI_STRING str)
+UINT WINAPI RtlxAnsiStringToUnicodeSize(PANSI_STRING str)
 {
 	return str->Length*2+2;
 }
@@ -777,8 +777,8 @@ void WINAPI RtlInitializeResource(LPRTL_RWLOCK rwl)
 	rwl->hOwningThreadId = 0;
 	rwl->dwTimeoutBoost = 0; /* no info on this one, default value is 0 */
 	InitializeCriticalSection( &rwl->rtlCS );
-	rwl->hExclusiveReleaseSemaphore = CreateSemaphore32A( NULL, 0, 65535, NULL );
-	rwl->hSharedReleaseSemaphore = CreateSemaphore32A( NULL, 0, 65535, NULL );
+	rwl->hExclusiveReleaseSemaphore = CreateSemaphoreA( NULL, 0, 65535, NULL );
+	rwl->hSharedReleaseSemaphore = CreateSemaphoreA( NULL, 0, 65535, NULL );
     }
 }
 
@@ -833,7 +833,7 @@ wait:
 	     rwl->uExclusiveWaiters++;
 
 	     LeaveCriticalSection( &rwl->rtlCS );
-	     if( WaitForSingleObject( rwl->hExclusiveReleaseSemaphore, INFINITE32 ) == WAIT_FAILED )
+	     if( WaitForSingleObject( rwl->hExclusiveReleaseSemaphore, INFINITE ) == WAIT_FAILED )
 		 goto done;
 	     goto start; /* restart the acquisition to avoid deadlocks */
 	 }
@@ -873,7 +873,7 @@ start:
 	{
 	    rwl->uSharedWaiters++;
 	    LeaveCriticalSection( &rwl->rtlCS );
-	    if( (dwWait = WaitForSingleObject( rwl->hSharedReleaseSemaphore, INFINITE32 )) == WAIT_FAILED )
+	    if( (dwWait = WaitForSingleObject( rwl->hSharedReleaseSemaphore, INFINITE )) == WAIT_FAILED )
 		goto done;
 	    goto start;
 	}
@@ -920,7 +920,7 @@ wake_exclusive:
 	    else
 		if( rwl->uSharedWaiters )
 		{
-		    UINT32 n = rwl->uSharedWaiters;
+		    UINT n = rwl->uSharedWaiters;
 		    rwl->iNumberActive = rwl->uSharedWaiters; /* prevent new writers from joining until
 							       * all queued readers have done their thing */
 		    rwl->uSharedWaiters = 0;
@@ -957,7 +957,7 @@ void WINAPI RtlDumpResource(LPRTL_RWLOCK rwl)
 void __cdecl DbgPrint(LPCSTR fmt,LPVOID args) {
 	char buf[512];
 
-	wvsprintf32A(buf,fmt,&args);
+	wvsprintfA(buf,fmt,&args);
 	MSG("DbgPrint says: %s",buf);
 	/* hmm, raise exception? */
 }
@@ -1120,7 +1120,7 @@ DWORD WINAPI RtlTimeToElapsedTimeFields( DWORD x1, DWORD x2 )
 /******************************************************************************
  * RtlExtendedLargeIntegerDivide [NTDLL.359]
  */
-INT32 WINAPI RtlExtendedLargeIntegerDivide(
+INT WINAPI RtlExtendedLargeIntegerDivide(
 	LARGE_INTEGER dividend,
 	DWORD divisor,
 	LPDWORD rest
@@ -1144,7 +1144,7 @@ INT32 WINAPI RtlExtendedLargeIntegerDivide(
  */
 long long /*LARGE_INTEGER*/ 
 WINAPI RtlExtendedIntegerMultiply(
-	LARGE_INTEGER factor1,INT32 factor2
+	LARGE_INTEGER factor1,INT factor2
 ) {
 #if SIZEOF_LONG_LONG==8
 	return (*(long long*)&factor1)*factor2;

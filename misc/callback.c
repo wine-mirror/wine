@@ -27,7 +27,7 @@ static LRESULT WINAPI CALLBACK_CallWndProc( WNDPROC16 proc, HWND16 hwnd,
 /**********************************************************************
  *	     CALLBACK_CallRegisterProc
  */
-static LONG WINAPI CALLBACK_CallRegisterProc( CONTEXT *context, INT32 offset)
+static LONG WINAPI CALLBACK_CallRegisterProc( CONTEXT *context, INT offset)
 {
     ERR(relay, "Cannot call a register proc in Winelib\n" );
     assert( FALSE );
@@ -158,7 +158,7 @@ static DWORD WINAPI CALLBACK_CallWOWCallbackProc( FARPROC16 proc, DWORD dw )
  * Can call functions using CDECL or PASCAL calling conventions. The CDECL
  * ones are reversed (not 100% sure about that).
  */
-static BOOL32 WINAPI CALLBACK_CallWOWCallback16Ex( 
+static BOOL WINAPI CALLBACK_CallWOWCallback16Ex( 
 	FARPROC16 proc, DWORD dwFlags, DWORD cbArgs, LPVOID xargs,LPDWORD pdwret
 ) {
     LPDWORD	args = (LPDWORD)xargs;
@@ -239,9 +239,9 @@ static BOOL32 WINAPI CALLBACK_CallWOWCallback16Ex(
 /**********************************************************************
  *	     CALLBACK_CallTaskRescheduleProc
  */
-static BOOL32 WINAPI CALLBACK_CallTaskRescheduleProc( void )
+static BOOL WINAPI CALLBACK_CallTaskRescheduleProc( void )
 {
-    BOOL32 pending;
+    BOOL pending;
 
     SYSLEVEL_EnterWin16Lock();
     pending = TASK_Reschedule();
@@ -299,15 +299,15 @@ const CALLBACKS_TABLE *Callbacks = &CALLBACK_WinelibTable;
 
 CALLOUT_TABLE Callout = 
 {
-    PeekMessage16, PeekMessage32A, PeekMessage32W,
-    GetMessage16, GetMessage32A, GetMessage32W,
-    SendMessage16, SendMessage32A, SendMessage32W,
-    PostMessage16, PostMessage32A, PostMessage32W,
-    PostAppMessage16, PostThreadMessage32A, PostThreadMessage32W,
-    TranslateMessage16, TranslateMessage32,
-    DispatchMessage16, DispatchMessage32A, DispatchMessage32W,
-    RedrawWindow16, RedrawWindow32,
-    InitThreadInput,
-    UserYield
+    PeekMessage16, PeekMessageA, PeekMessageW,
+    GetMessage16, GetMessageA, GetMessageW,
+    SendMessage16, SendMessageA, SendMessageW,
+    PostMessage16, PostMessageA, PostMessageW,
+    PostAppMessage16, PostThreadMessageA, PostThreadMessageW,
+    TranslateMessage16, TranslateMessage,
+    DispatchMessage16, DispatchMessageA, DispatchMessageW,
+    RedrawWindow16, RedrawWindow,
+    InitThreadInput16,
+    UserYield16
 };
 

@@ -94,12 +94,12 @@ typedef enum tagSID_NAME_USE {
 
 typedef struct _RTL_RWLOCK {
 	CRITICAL_SECTION	rtlCS;
-	HANDLE32		hSharedReleaseSemaphore;
-	UINT32			uSharedWaiters;
-	HANDLE32		hExclusiveReleaseSemaphore;
-	UINT32			uExclusiveWaiters;
-	INT32			iNumberActive;
-	HANDLE32		hOwningThreadId;
+	HANDLE		hSharedReleaseSemaphore;
+	UINT			uSharedWaiters;
+	HANDLE		hExclusiveReleaseSemaphore;
+	UINT			uExclusiveWaiters;
+	INT			iNumberActive;
+	HANDLE		hOwningThreadId;
 	DWORD			dwTimeoutBoost;
 	PVOID			pDebugInfo;
 } RTL_RWLOCK, *LPRTL_RWLOCK;
@@ -111,27 +111,26 @@ BYTE   WINAPI RtlAcquireResourceShared(LPRTL_RWLOCK, BYTE fWait);
 VOID   WINAPI RtlReleaseResource(LPRTL_RWLOCK);
 VOID   WINAPI RtlDumpResource(LPRTL_RWLOCK);
 
-BOOL32 WINAPI IsValidSid(PSID);
-BOOL32 WINAPI EqualSid(PSID,PSID);
-BOOL32 WINAPI EqualPrefixSid(PSID,PSID);
+BOOL WINAPI IsValidSid(PSID);
+BOOL WINAPI EqualSid(PSID,PSID);
+BOOL WINAPI EqualPrefixSid(PSID,PSID);
 DWORD  WINAPI GetSidLengthRequired(BYTE);
-BOOL32 WINAPI AllocateAndInitializeSid(PSID_IDENTIFIER_AUTHORITY,BYTE,DWORD,
+BOOL WINAPI AllocateAndInitializeSid(PSID_IDENTIFIER_AUTHORITY,BYTE,DWORD,
                                        DWORD,DWORD,DWORD,DWORD,DWORD,DWORD,
                                        DWORD,PSID*);
 VOID*  WINAPI FreeSid(PSID);
-BOOL32 WINAPI InitializeSecurityDescriptor(SECURITY_DESCRIPTOR*,DWORD);
-BOOL32 WINAPI InitializeSid(PSID,PSID_IDENTIFIER_AUTHORITY,BYTE);
+BOOL WINAPI InitializeSecurityDescriptor(SECURITY_DESCRIPTOR*,DWORD);
+BOOL WINAPI InitializeSid(PSID,PSID_IDENTIFIER_AUTHORITY,BYTE);
 DWORD* WINAPI GetSidSubAuthority(PSID,DWORD);
 BYTE * WINAPI GetSidSubAuthorityCount(PSID);
 DWORD  WINAPI GetLengthSid(PSID);
-BOOL32 WINAPI CopySid(DWORD,PSID,PSID);
-BOOL32 WINAPI LookupAccountSid32A(LPCSTR,PSID,LPCSTR,LPDWORD,LPCSTR,LPDWORD,
+BOOL WINAPI CopySid(DWORD,PSID,PSID);
+BOOL WINAPI LookupAccountSidA(LPCSTR,PSID,LPCSTR,LPDWORD,LPCSTR,LPDWORD,
                                   PSID_NAME_USE);
-BOOL32 WINAPI LookupAccountSid32W(LPCWSTR,PSID,LPCWSTR,LPDWORD,LPCWSTR,LPDWORD,
+BOOL WINAPI LookupAccountSidW(LPCWSTR,PSID,LPCWSTR,LPDWORD,LPCWSTR,LPDWORD,
                                   PSID_NAME_USE);
 PSID_IDENTIFIER_AUTHORITY WINAPI GetSidIdentifierAuthority(PSID);
-INT32       WINAPI AccessResource32(HMODULE32,HRSRC32);
-#define     AccessResource WINELIB_NAME(AccessResource)
+INT       WINAPI AccessResource(HMODULE,HRSRC);
 
 #ifdef __cplusplus
 }

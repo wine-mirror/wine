@@ -17,21 +17,18 @@
  * API declarations
  */
 HRESULT     WINAPI RegisterDragDrop16(HWND16,LPDROPTARGET);
-HRESULT     WINAPI RegisterDragDrop32(HWND32,LPDROPTARGET);
-#define     RegisterDragDrop WINELIB_NAME(RegisterDragDrop)
+HRESULT     WINAPI RegisterDragDrop(HWND,LPDROPTARGET);
 HRESULT     WINAPI RevokeDragDrop16(HWND16);
-HRESULT     WINAPI RevokeDragDrop32(HWND32);
-#define     RevokeDragDrop WINELIB_NAME(RevokeDragDrop)
+HRESULT     WINAPI RevokeDragDrop(HWND);
 HRESULT     WINAPI DoDragDrop16(LPDATAOBJECT,LPDROPSOURCE,DWORD,DWORD*);
-HRESULT     WINAPI DoDragDrop32(LPDATAOBJECT,LPDROPSOURCE,DWORD,DWORD*);
-#define     DoDragDrop WINELIB_NAME(DoDragDrop)
+HRESULT     WINAPI DoDragDrop(LPDATAOBJECT,LPDROPSOURCE,DWORD,DWORD*);
 
-HOLEMENU32  WINAPI OleCreateMenuDescriptor(HMENU32              hmenuCombined,
-					   LPOLEMENUGROUPWIDTHS32 lpMenuWidths);
-void        WINAPI OleDestroyMenuDescriptor(HOLEMENU32 hmenuDescriptor);
-HRESULT     WINAPI OleSetMenuDescriptor(HOLEMENU32               hmenuDescriptor,
-					HWND32                   hwndFrame,
-					HWND32                   hwndActiveObject,
+HOLEMENU  WINAPI OleCreateMenuDescriptor(HMENU              hmenuCombined,
+					   LPOLEMENUGROUPWIDTHS lpMenuWidths);
+void        WINAPI OleDestroyMenuDescriptor(HOLEMENU hmenuDescriptor);
+HRESULT     WINAPI OleSetMenuDescriptor(HOLEMENU               hmenuDescriptor,
+					HWND                   hwndFrame,
+					HWND                   hwndActiveObject,
 					LPOLEINPLACEFRAME        lpFrame,
 					LPOLEINPLACEACTIVEOBJECT lpActiveObject);
 

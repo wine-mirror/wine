@@ -65,13 +65,13 @@ int PASCAL WinMain (HANDLE hInstance, HANDLE prev, LPSTR cmdline, int show)
     PROFILE_GetWineIniString("progman", "progman.ini", "progman.ini", 
 			     buffer, sizeof(buffer));
     Globals.lpszIniFile = p = LocalLock(LocalAlloc(LMEM_FIXED, lstrlen(buffer)+1));
-    hmemcpy(p, buffer, 1 + lstrlen(buffer));
+    hmemcpy16(p, buffer, 1 + lstrlen(buffer));
 
     /* Redirect `progman.ico' */
     PROFILE_GetWineIniString("progman", "progman.ico", "progman.ico", 
 			     buffer, sizeof(buffer));
     Globals.lpszIcoFile = p = LocalLock(LocalAlloc(LMEM_FIXED, lstrlen(buffer)+1));
-    hmemcpy(p, buffer, 1 + lstrlen(buffer));
+    hmemcpy16(p, buffer, 1 + lstrlen(buffer));
   }
 #endif
 
@@ -301,7 +301,7 @@ static VOID MAIN_MenuCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
       WritePrivateProfileString("Settings", "AutoArrange",
 				Globals.bAutoArrange ? "1" : "0",
 				Globals.lpszIniFile);
-      WriteOutProfiles();
+      WriteOutProfiles16();
       break;
 
     case PM_MIN_ON_RUN:
@@ -312,7 +312,7 @@ static VOID MAIN_MenuCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
       WritePrivateProfileString("Settings", "MinOnRun",
 				Globals.bMinOnRun ? "1" : "0",
 				Globals.lpszIniFile);
-      WriteOutProfiles();
+      WriteOutProfiles16();
       break;
 
     case PM_SAVE_SETTINGS:
@@ -323,7 +323,7 @@ static VOID MAIN_MenuCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
       WritePrivateProfileString("Settings", "SaveSettings",
 				Globals.bSaveSettings ? "1" : "0",
 				Globals.lpszIniFile);
-      WriteOutProfiles();
+      WriteOutProfiles16();
       break;
 
       /* Menu Windows */

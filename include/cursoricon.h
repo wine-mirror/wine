@@ -70,10 +70,10 @@ typedef struct
 #pragma pack(4)
 
 extern HCURSOR16 CURSORICON_IconToCursor( HICON16 hIcon,
-                                          BOOL32 bSemiTransparent );
+                                          BOOL bSemiTransparent );
 
-extern HGLOBAL32 CURSORICON_Load32( HINSTANCE32 hInstance, LPCWSTR name,
+extern HGLOBAL CURSORICON_Load( HINSTANCE hInstance, LPCWSTR name,
                                     int width, int height, int colors,
-                                    BOOL32 fCursor, UINT32 loadflags);
+                                    BOOL fCursor, UINT loadflags);
 				    
 #endif /* __WINE_CURSORICON_H */

@@ -13,7 +13,7 @@
 /***********************************************************************
  *           FindDebugInfoFile32 (IMAGEHLP.5)
  */
-HANDLE32 WINAPI FindDebugInfoFile32(
+HANDLE WINAPI FindDebugInfoFile(
   LPSTR FileName, LPSTR SymbolPath, LPSTR DebugFilePath)
 {
   FIXME(imagehlp, "(%s, %s, %s): stub\n",
@@ -21,13 +21,13 @@ HANDLE32 WINAPI FindDebugInfoFile32(
     debugstr_a(DebugFilePath)
   );
   SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-  return (HANDLE32) NULL;
+  return (HANDLE) NULL;
 }
 
 /***********************************************************************
  *           FindExecutableImage32 (IMAGEHLP.6)
  */
-HANDLE32 WINAPI FindExecutableImage32(
+HANDLE WINAPI FindExecutableImage(
   LPSTR FileName, LPSTR SymbolPath, LPSTR ImageFilePath)
 {
   FIXME(imagehlp, "(%s, %s, %s): stub\n",
@@ -35,14 +35,14 @@ HANDLE32 WINAPI FindExecutableImage32(
     debugstr_a(ImageFilePath)
   );
   SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-  return (HANDLE32) NULL;
+  return (HANDLE) NULL;
 }
 
 /***********************************************************************
  *           MapDebugInformation32 (IMAGEHLP.26)
  */
-PIMAGE_DEBUG_INFORMATION32 WINAPI MapDebugInformation32(
-  HANDLE32 FileHandle, LPSTR FileName,
+PIMAGE_DEBUG_INFORMATION WINAPI MapDebugInformation(
+  HANDLE FileHandle, LPSTR FileName,
   LPSTR SymbolPath, DWORD ImageBase)
 {
   FIXME(imagehlp, "(0x%08x, %s, %s, 0x%08lx): stub\n",
@@ -55,13 +55,13 @@ PIMAGE_DEBUG_INFORMATION32 WINAPI MapDebugInformation32(
 /***********************************************************************
  *           StackWalk32 (IMAGEHLP.36)
  */
-BOOL32 WINAPI StackWalk32(
-  DWORD MachineType, HANDLE32 hProcess, HANDLE32 hThread,
-  PSTACKFRAME32 StackFrame, PVOID ContextRecord,
-  PREAD_PROCESS_MEMORY_ROUTINE32 ReadMemoryRoutine,
-  PFUNCTION_TABLE_ACCESS_ROUTINE32 FunctionTableAccessRoutine,
-  PGET_MODULE_BASE_ROUTINE32 GetModuleBaseRoutine,
-  PTRANSLATE_ADDRESS_ROUTINE32 TranslateAddress)
+BOOL WINAPI StackWalk(
+  DWORD MachineType, HANDLE hProcess, HANDLE hThread,
+  PSTACKFRAME StackFrame, PVOID ContextRecord,
+  PREAD_PROCESS_MEMORY_ROUTINE ReadMemoryRoutine,
+  PFUNCTION_TABLE_ACCESS_ROUTINE FunctionTableAccessRoutine,
+  PGET_MODULE_BASE_ROUTINE GetModuleBaseRoutine,
+  PTRANSLATE_ADDRESS_ROUTINE TranslateAddress)
 {
   FIXME(imagehlp,
     "(%ld, 0x%08x, 0x%08x, %p, %p, %p, %p, %p, %p): stub\n",
@@ -76,7 +76,7 @@ BOOL32 WINAPI StackWalk32(
 /***********************************************************************
  *           UnDecorateSymbolName32 (IMAGEHLP.57)
  */
-DWORD WINAPI UnDecorateSymbolName32(
+DWORD WINAPI UnDecorateSymbolName(
   LPCSTR DecoratedName, LPSTR UnDecoratedName,
   DWORD UndecoratedLength, DWORD Flags)
 {
@@ -92,8 +92,8 @@ DWORD WINAPI UnDecorateSymbolName32(
  *           UnmapDebugInformation32 (IMAGEHLP.59)
  */
 
-BOOL32 WINAPI UnmapDebugInformation32(
-  PIMAGE_DEBUG_INFORMATION32 DebugInfo)
+BOOL WINAPI UnmapDebugInformation(
+  PIMAGE_DEBUG_INFORMATION DebugInfo)
 {
   FIXME(imagehlp, "(%p): stub\n", DebugInfo);
   SetLastError(ERROR_CALL_NOT_IMPLEMENTED);

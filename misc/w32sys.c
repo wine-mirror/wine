@@ -13,7 +13,7 @@
  * RETURNS
  *  0 on success, 1 on failure
  */
-WORD WINAPI GetWin32sInfo(
+WORD WINAPI GetWin32sInfo16(
 	LPWIN32SINFO lpInfo	/* [out] Win32S special information */
 ) {
     lpInfo->bMajor = 1;
@@ -30,7 +30,7 @@ WORD WINAPI GetWin32sInfo(
  * RETURNS
  *	dunno what.
  */
-WORD WINAPI GetPEResourceTable(
+WORD WINAPI GetPEResourceTable16(
 	HFILE16 hf		/* [in] filedescriptor to opened executeable */
 ) {
 	return 0;

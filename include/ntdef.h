@@ -52,7 +52,7 @@ typedef struct _UNICODE_STRING {
 
 typedef struct _OBJECT_ATTRIBUTES 
 {   ULONG Length;
-    HANDLE32 RootDirectory;
+    HANDLE RootDirectory;
     PUNICODE_STRING ObjectName;
     ULONG Attributes;
     PVOID SecurityDescriptor;        /* type SECURITY_DESCRIPTOR */

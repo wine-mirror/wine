@@ -17,10 +17,10 @@
 #include "debug.h"
 #include "wine/winuser16.h"
 
-FARPROC32 pfnSelectPalette = NULL;
-FARPROC32 pfnRealizePalette = NULL;
+FARPROC pfnSelectPalette = NULL;
+FARPROC pfnRealizePalette = NULL;
 
-static UINT32 SystemPaletteUse = SYSPAL_STATIC;  /* currently not considered */
+static UINT SystemPaletteUse = SYSPAL_STATIC;  /* currently not considered */
 
 static HPALETTE16 hPrimaryPalette = 0; /* used for WM_PALETTECHANGED */
 static HPALETTE16 hLastRealizedPalette = 0; /* UnrealizeObject() needs it */
@@ -85,7 +85,7 @@ void PALETTE_ValidateFlags(PALETTEENTRY* lpPalE, int size)
  */
 HPALETTE16 WINAPI CreatePalette16( const LOGPALETTE* palette )
 {
-    return CreatePalette32( palette );
+    return CreatePalette( palette );
 }
 
 
@@ -96,11 +96,11 @@ HPALETTE16 WINAPI CreatePalette16( const LOGPALETTE* palette )
  *    Success: Handle to logical palette
  *    Failure: NULL
  */
-HPALETTE32 WINAPI CreatePalette32(
+HPALETTE WINAPI CreatePalette(
     const LOGPALETTE* palette) /* [in] Pointer to logical color palette */
 {
     PALETTEOBJ * palettePtr;
-    HPALETTE32 hpalette;
+    HPALETTE hpalette;
     int size;
     
     if (!palette) return 0;
@@ -133,7 +133,7 @@ HPALETTE32 WINAPI CreatePalette32(
 HPALETTE16 WINAPI CreateHalftonePalette16(
     HDC16 hdc) /* [in] Handle to device context */
 {
-    return CreateHalftonePalette32(hdc);
+    return CreateHalftonePalette(hdc);
 	}
 
 	
@@ -146,8 +146,8 @@ HPALETTE16 WINAPI CreateHalftonePalette16(
  *
  * FIXME: not truly tested
  */
-HPALETTE32 WINAPI CreateHalftonePalette32(
-    HDC32 hdc) /* [in] Handle to device context */
+HPALETTE WINAPI CreateHalftonePalette(
+    HDC hdc) /* [in] Handle to device context */
 {
     int i, r, g, b;
     struct {
@@ -158,8 +158,8 @@ HPALETTE32 WINAPI CreateHalftonePalette32(
 	0x300, 256
     };
 
-    GetSystemPaletteEntries32(hdc, 0, 256, Palette.aEntries);
-    return CreatePalette32((LOGPALETTE *)&Palette);
+    GetSystemPaletteEntries(hdc, 0, 256, Palette.aEntries);
+    return CreatePalette((LOGPALETTE *)&Palette);
 
     for (r = 0; r < 6; r++) {
 	for (g = 0; g < 6; g++) {
@@ -179,7 +179,7 @@ HPALETTE32 WINAPI CreateHalftonePalette32(
 	Palette.aEntries[i].peBlue = v;
 	}
 	
-    return CreatePalette32((LOGPALETTE *)&Palette);
+    return CreatePalette((LOGPALETTE *)&Palette);
 }
 
 
@@ -189,7 +189,7 @@ HPALETTE32 WINAPI CreateHalftonePalette32(
 UINT16 WINAPI GetPaletteEntries16( HPALETTE16 hpalette, UINT16 start,
                                    UINT16 count, LPPALETTEENTRY entries )
 {
-    return GetPaletteEntries32( hpalette, start, count, entries );
+    return GetPaletteEntries( hpalette, start, count, entries );
 }
 
 
@@ -200,14 +200,14 @@ UINT16 WINAPI GetPaletteEntries16( HPALETTE16 hpalette, UINT16 start,
  *    Success: Number of entries from logical palette
  *    Failure: 0
  */
-UINT32 WINAPI GetPaletteEntries32(
-    HPALETTE32 hpalette,    /* [in]  Handle of logical palette */
-    UINT32 start,           /* [in]  First entry to receive */
-    UINT32 count,           /* [in]  Number of entries to receive */
+UINT WINAPI GetPaletteEntries(
+    HPALETTE hpalette,    /* [in]  Handle of logical palette */
+    UINT start,           /* [in]  First entry to receive */
+    UINT count,           /* [in]  Number of entries to receive */
     LPPALETTEENTRY entries) /* [out] Address of array receiving entries */
 {
     PALETTEOBJ * palPtr;
-    INT32 numEntries;
+    INT numEntries;
 
     TRACE(palette,"hpal = %04x, count=%i\n", hpalette, count );
         
@@ -241,7 +241,7 @@ UINT32 WINAPI GetPaletteEntries32(
 UINT16 WINAPI SetPaletteEntries16( HPALETTE16 hpalette, UINT16 start,
                                    UINT16 count, LPPALETTEENTRY entries )
 {
-    return SetPaletteEntries32( hpalette, start, count, entries );
+    return SetPaletteEntries( hpalette, start, count, entries );
 }
 
 
@@ -252,14 +252,14 @@ UINT16 WINAPI SetPaletteEntries16( HPALETTE16 hpalette, UINT16 start,
  *    Success: Number of entries that were set
  *    Failure: 0
  */
-UINT32 WINAPI SetPaletteEntries32(
-    HPALETTE32 hpalette,    /* [in] Handle of logical palette */
-    UINT32 start,           /* [in] Index of first entry to set */
-    UINT32 count,           /* [in] Number of entries to set */
+UINT WINAPI SetPaletteEntries(
+    HPALETTE hpalette,    /* [in] Handle of logical palette */
+    UINT start,           /* [in] Index of first entry to set */
+    UINT count,           /* [in] Number of entries to set */
     LPPALETTEENTRY entries) /* [in] Address of array of structures */
 {
     PALETTEOBJ * palPtr;
-    INT32 numEntries;
+    INT numEntries;
 
     TRACE(palette,"hpal=%04x,start=%i,count=%i\n",hpalette,start,count );
 
@@ -289,7 +289,7 @@ UINT32 WINAPI SetPaletteEntries32(
  */
 BOOL16 WINAPI ResizePalette16( HPALETTE16 hPal, UINT16 cEntries )
 {
-    return ResizePalette32( hPal, cEntries );
+    return ResizePalette( hPal, cEntries );
 }
 
 
@@ -300,12 +300,12 @@ BOOL16 WINAPI ResizePalette16( HPALETTE16 hPal, UINT16 cEntries )
  *    Success: TRUE
  *    Failure: FALSE
  */
-BOOL32 WINAPI ResizePalette32(
-    HPALETTE32 hPal, /* [in] Handle of logical palette */
-    UINT32 cEntries) /* [in] Number of entries in logical palette */
+BOOL WINAPI ResizePalette(
+    HPALETTE hPal, /* [in] Handle of logical palette */
+    UINT cEntries) /* [in] Number of entries in logical palette */
 {
     PALETTEOBJ * palPtr = (PALETTEOBJ *) GDI_GetObjPtr( hPal, PALETTE_MAGIC );
-    UINT32	 cPrevEnt, prevVer;
+    UINT	 cPrevEnt, prevVer;
     int		 prevsize, size = sizeof(LOGPALETTE) + (cEntries - 1) * sizeof(PALETTEENTRY);
     int*	 mapping = NULL;
 
@@ -349,7 +349,7 @@ BOOL32 WINAPI ResizePalette32(
 void WINAPI AnimatePalette16( HPALETTE16 hPal, UINT16 StartIndex,
                               UINT16 NumEntries, const PALETTEENTRY* PaletteColors)
 {
-    AnimatePalette32( hPal, StartIndex, NumEntries, PaletteColors );
+    AnimatePalette( hPal, StartIndex, NumEntries, PaletteColors );
 }
 
 
@@ -363,10 +363,10 @@ void WINAPI AnimatePalette16( HPALETTE16 hPal, UINT16 StartIndex,
  * FIXME
  *    Should use existing mapping when animating a primary palette
  */
-BOOL32 WINAPI AnimatePalette32(
-    HPALETTE32 hPal,              /* [in] Handle to logical palette */
-    UINT32 StartIndex,            /* [in] First entry in palette */
-    UINT32 NumEntries,            /* [in] Count of entries in palette */
+BOOL WINAPI AnimatePalette(
+    HPALETTE hPal,              /* [in] Handle to logical palette */
+    UINT StartIndex,            /* [in] First entry in palette */
+    UINT NumEntries,            /* [in] Count of entries in palette */
     const PALETTEENTRY* PaletteColors) /* [in] Pointer to first replacement */
 {
     TRACE(palette, "%04x (%i - %i)\n", hPal, StartIndex,StartIndex+NumEntries);
@@ -378,7 +378,7 @@ BOOL32 WINAPI AnimatePalette32(
 
 	if( (StartIndex + NumEntries) <= palPtr->logpalette.palNumEntries )
 	{
-	    UINT32 u;
+	    UINT u;
 	    for( u = 0; u < NumEntries; u++ )
 		palPtr->logpalette.palPalEntry[u + StartIndex] = PaletteColors[u];
 	    COLOR_SetMapping(palPtr, StartIndex, NumEntries,
@@ -396,7 +396,7 @@ BOOL32 WINAPI AnimatePalette32(
  */
 UINT16 WINAPI SetSystemPaletteUse16( HDC16 hdc, UINT16 use )
 {
-    return SetSystemPaletteUse32( hdc, use );
+    return SetSystemPaletteUse( hdc, use );
 }
 
 
@@ -407,11 +407,11 @@ UINT16 WINAPI SetSystemPaletteUse16( HDC16 hdc, UINT16 use )
  *    Success: Previous system palette
  *    Failure: SYSPAL_ERROR
  */
-UINT32 WINAPI SetSystemPaletteUse32(
-    HDC32 hdc,  /* [in] Handle of device context */
-    UINT32 use) /* [in] Palette-usage flag */
+UINT WINAPI SetSystemPaletteUse(
+    HDC hdc,  /* [in] Handle of device context */
+    UINT use) /* [in] Palette-usage flag */
 {
-    UINT32 old = SystemPaletteUse;
+    UINT old = SystemPaletteUse;
     FIXME(palette,"(%04x,%04x): stub\n", hdc, use );
     SystemPaletteUse = use;
     return old;
@@ -433,8 +433,8 @@ UINT16 WINAPI GetSystemPaletteUse16( HDC16 hdc )
  * RETURNS
  *    Current state of system palette
  */
-UINT32 WINAPI GetSystemPaletteUse32(
-    HDC32 hdc) /* [in] Handle of device context */
+UINT WINAPI GetSystemPaletteUse(
+    HDC hdc) /* [in] Handle of device context */
 {
     return SystemPaletteUse;
 }
@@ -446,7 +446,7 @@ UINT32 WINAPI GetSystemPaletteUse32(
 UINT16 WINAPI GetSystemPaletteEntries16( HDC16 hdc, UINT16 start, UINT16 count,
                                          LPPALETTEENTRY entries )
 {
-    return GetSystemPaletteEntries32( hdc, start, count, entries );
+    return GetSystemPaletteEntries( hdc, start, count, entries );
 }
 
 
@@ -457,13 +457,13 @@ UINT16 WINAPI GetSystemPaletteEntries16( HDC16 hdc, UINT16 start, UINT16 count,
  *    Success: Number of entries retrieved from palette
  *    Failure: 0
  */
-UINT32 WINAPI GetSystemPaletteEntries32(
-    HDC32 hdc,              /* [in]  Handle of device context */
-    UINT32 start,           /* [in]  Index of first entry to be retrieved */
-    UINT32 count,           /* [in]  Number of entries to be retrieved */
+UINT WINAPI GetSystemPaletteEntries(
+    HDC hdc,              /* [in]  Handle of device context */
+    UINT start,           /* [in]  Index of first entry to be retrieved */
+    UINT count,           /* [in]  Number of entries to be retrieved */
     LPPALETTEENTRY entries) /* [out] Array receiving system-palette entries */
 {
-    UINT32 i;
+    UINT i;
     DC *dc;
 
     TRACE(palette, "hdc=%04x,start=%i,count=%i\n", hdc,start,count);
@@ -494,7 +494,7 @@ UINT32 WINAPI GetSystemPaletteEntries32(
  */
 UINT16 WINAPI GetNearestPaletteIndex16( HPALETTE16 hpalette, COLORREF color )
 {
-    return GetNearestPaletteIndex32( hpalette, color );
+    return GetNearestPaletteIndex( hpalette, color );
 }
 
 
@@ -508,12 +508,12 @@ UINT16 WINAPI GetNearestPaletteIndex16( HPALETTE16 hpalette, COLORREF color )
  *    Success: Index of entry in logical palette
  *    Failure: CLR_INVALID
  */
-UINT32 WINAPI GetNearestPaletteIndex32(
-    HPALETTE32 hpalette, /* [in] Handle of logical color palette */
+UINT WINAPI GetNearestPaletteIndex(
+    HPALETTE hpalette, /* [in] Handle of logical color palette */
     COLORREF color)      /* [in] Color to be matched */
 {
     PALETTEOBJ*	palObj = (PALETTEOBJ*)GDI_GetObjPtr( hpalette, PALETTE_MAGIC );
-    UINT32 index  = 0;
+    UINT index  = 0;
 
     if( palObj )
         index = COLOR_PaletteLookupPixel( palObj->logpalette.palPalEntry, 
@@ -531,7 +531,7 @@ UINT32 WINAPI GetNearestPaletteIndex32(
  */
 COLORREF WINAPI GetNearestColor16( HDC16 hdc, COLORREF color )
 {
-    return GetNearestColor32( hdc, color );
+    return GetNearestColor( hdc, color );
 }
 
 
@@ -545,8 +545,8 @@ COLORREF WINAPI GetNearestColor16( HDC16 hdc, COLORREF color )
  *    Success: Color from system palette that corresponds to given color
  *    Failure: CLR_INVALID
  */
-COLORREF WINAPI GetNearestColor32(
-    HDC32 hdc,      /* [in] Handle of device context */
+COLORREF WINAPI GetNearestColor(
+    HDC hdc,      /* [in] Handle of device context */
     COLORREF color) /* [in] Color to be matched */
 {
     COLORREF 	 nearest = 0xFADECAFE;
@@ -585,7 +585,7 @@ int PALETTE_GetObject( PALETTEOBJ * palette, int count, LPSTR buffer )
 /***********************************************************************
  *           PALETTE_UnrealizeObject
  */
-BOOL32 PALETTE_UnrealizeObject( HPALETTE16 hpalette, PALETTEOBJ *palette )
+BOOL PALETTE_UnrealizeObject( HPALETTE16 hpalette, PALETTEOBJ *palette )
 {
     if (palette->mapping)
     {
@@ -600,7 +600,7 @@ BOOL32 PALETTE_UnrealizeObject( HPALETTE16 hpalette, PALETTEOBJ *palette )
 /***********************************************************************
  *           PALETTE_DeleteObject
  */
-BOOL32 PALETTE_DeleteObject( HPALETTE16 hpalette, PALETTEOBJ *palette )
+BOOL PALETTE_DeleteObject( HPALETTE16 hpalette, PALETTEOBJ *palette )
 {
     free( palette->mapping );
     if (hLastRealizedPalette == hpalette) hLastRealizedPalette = 0;
@@ -611,7 +611,7 @@ BOOL32 PALETTE_DeleteObject( HPALETTE16 hpalette, PALETTEOBJ *palette )
 /***********************************************************************
  *           GDISelectPalette    (GDI.361)
  */
-HPALETTE16 WINAPI GDISelectPalette( HDC16 hdc, HPALETTE16 hpal, WORD wBkg)
+HPALETTE16 WINAPI GDISelectPalette16( HDC16 hdc, HPALETTE16 hpal, WORD wBkg)
 {
     HPALETTE16 prev;
     DC *dc;
@@ -635,7 +635,7 @@ HPALETTE16 WINAPI GDISelectPalette( HDC16 hdc, HPALETTE16 hpal, WORD wBkg)
 /***********************************************************************
  *           GDIRealizePalette    (GDI.362)
  */
-UINT16 WINAPI GDIRealizePalette( HDC16 hdc )
+UINT16 WINAPI GDIRealizePalette16( HDC16 hdc )
 {
     PALETTEOBJ* palPtr;
     int realized = 0;
@@ -651,7 +651,7 @@ UINT16 WINAPI GDIRealizePalette( HDC16 hdc )
     if( dc &&  dc->w.hPalette != hLastRealizedPalette )
     {
 	if( dc->w.hPalette == STOCK_DEFAULT_PALETTE )
-            return RealizeDefaultPalette( hdc );
+            return RealizeDefaultPalette16( hdc );
 
         palPtr = (PALETTEOBJ *) GDI_GetObjPtr( dc->w.hPalette, PALETTE_MAGIC );
 
@@ -678,7 +678,7 @@ UINT16 WINAPI GDIRealizePalette( HDC16 hdc )
 /***********************************************************************
  *           RealizeDefaultPalette    (GDI.365)
  */
-UINT16 WINAPI RealizeDefaultPalette( HDC16 hdc )
+UINT16 WINAPI RealizeDefaultPalette16( HDC16 hdc )
 {
     DC          *dc;
     PALETTEOBJ*  palPtr;
@@ -721,7 +721,7 @@ UINT16 WINAPI RealizeDefaultPalette( HDC16 hdc )
 /***********************************************************************
  *           IsDCCurrentPalette   (GDI.412)
  */
-BOOL16 WINAPI IsDCCurrentPalette(HDC16 hDC)
+BOOL16 WINAPI IsDCCurrentPalette16(HDC16 hDC)
 {
     DC* dc = (DC *)GDI_GetObjPtr( hDC, DC_MAGIC );
     if (dc) 
@@ -739,7 +739,7 @@ BOOL16 WINAPI IsDCCurrentPalette(HDC16 hDC)
 HPALETTE16 WINAPI SelectPalette16( HDC16 hDC, HPALETTE16 hPal,
                                    BOOL16 bForceBackground )
 {
-    return SelectPalette32( hDC, hPal, bForceBackground );
+    return SelectPalette( hDC, hPal, bForceBackground );
 }
 
 
@@ -750,10 +750,10 @@ HPALETTE16 WINAPI SelectPalette16( HDC16 hDC, HPALETTE16 hPal,
  *    Success: Previous logical palette
  *    Failure: NULL
  */
-HPALETTE32 WINAPI SelectPalette32(
-    HDC32 hDC,               /* [in] Handle of device context */
-    HPALETTE32 hPal,         /* [in] Handle of logical color palette */
-    BOOL32 bForceBackground) /* [in] Foreground/background mode */
+HPALETTE WINAPI SelectPalette(
+    HDC hDC,               /* [in] Handle of device context */
+    HPALETTE hPal,         /* [in] Handle of logical color palette */
+    BOOL bForceBackground) /* [in] Foreground/background mode */
 {
     WORD	wBkgPalette = 1;
     PALETTEOBJ* lpt = (PALETTEOBJ*) GDI_GetObjPtr( hPal, PALETTE_MAGIC );
@@ -766,8 +766,8 @@ HPALETTE32 WINAPI SelectPalette32(
 
     if( hPal != STOCK_DEFAULT_PALETTE )
     {
-	HWND32 hWnd = WindowFromDC32( hDC );
-	HWND32 hActive = GetActiveWindow32();
+	HWND hWnd = WindowFromDC( hDC );
+	HWND hActive = GetActiveWindow();
 	
 	/* set primary palette if it's related to current active */
 
@@ -775,7 +775,7 @@ HPALETTE32 WINAPI SelectPalette32(
             !bForceBackground )
 	    wBkgPalette = 0;
     }
-    return GDISelectPalette( hDC, hPal, wBkgPalette);
+    return GDISelectPalette16( hDC, hPal, wBkgPalette);
 }
 
 
@@ -784,7 +784,7 @@ HPALETTE32 WINAPI SelectPalette32(
  */
 UINT16 WINAPI RealizePalette16( HDC16 hDC )
 {
-    return RealizePalette32( hDC );
+    return RealizePalette( hDC );
 }
 
 
@@ -795,20 +795,20 @@ UINT16 WINAPI RealizePalette16( HDC16 hDC )
  *    Success: Number of entries in logical palette
  *    Failure: GDI_ERROR
  */
-UINT32 WINAPI RealizePalette32(
-    HDC32 hDC) /* [in] Handle of device context */
+UINT WINAPI RealizePalette(
+    HDC hDC) /* [in] Handle of device context */
 {
-    UINT32 realized = GDIRealizePalette( hDC );
+    UINT realized = GDIRealizePalette16( hDC );
 
     /* do not send anything if no colors were changed */
 
-    if( IsDCCurrentPalette( hDC ) && realized && 
+    if( IsDCCurrentPalette16( hDC ) && realized && 
         !(COLOR_GetSystemPaletteFlags() & COLOR_VIRTUAL) )
     {
 	/* Send palette change notification */
 
-	HWND32 hWnd;
- 	if( (hWnd = WindowFromDC32( hDC )) )
+	HWND hWnd;
+ 	if( (hWnd = WindowFromDC( hDC )) )
             SendMessage16( HWND_BROADCAST, WM_PALETTECHANGED, hWnd, 0L);
     }
     return realized;
@@ -820,13 +820,13 @@ UINT32 WINAPI RealizePalette32(
  */
 INT16 WINAPI UpdateColors16( HDC16 hDC )
 {
-    HWND32 hWnd = WindowFromDC32( hDC );
+    HWND hWnd = WindowFromDC( hDC );
 
     /* Docs say that we have to remap current drawable pixel by pixel
      * but it would take forever given the speed of XGet/PutPixel.
      */
     if (hWnd && !(COLOR_GetSystemPaletteFlags() & COLOR_VIRTUAL) ) 
-	InvalidateRect32( hWnd, NULL, FALSE );
+	InvalidateRect( hWnd, NULL, FALSE );
     return 0x666;
 }
 
@@ -838,8 +838,8 @@ INT16 WINAPI UpdateColors16( HDC16 hDC )
  *    Success: TRUE
  *    Failure: FALSE
  */
-BOOL32 WINAPI UpdateColors32(
-    HDC32 hDC) /* [in] Handle of device context */
+BOOL WINAPI UpdateColors(
+    HDC hDC) /* [in] Handle of device context */
 {
     UpdateColors16( hDC );
     return TRUE;

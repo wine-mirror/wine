@@ -19,61 +19,54 @@
 #define HCF_INDICATOR       0x00000020
 #define HCF_HOTKEYAVAILABLE 0x00000040
 
-typedef struct tagHIGHCONTRAST32A
+typedef struct tagHIGHCONTRASTA
 {
-    UINT32  cbSize;
+    UINT  cbSize;
     DWORD   dwFlags;
     LPSTR   lpszDefaultScheme;
-} HIGHCONTRAST32A, *LPHIGHCONTRAST32A;
+} HIGHCONTRASTA, *LPHIGHCONTRASTA;
 
 typedef struct tagHIGHCONTRAST32W
 {
-    UINT32  cbSize;
+    UINT  cbSize;
     DWORD   dwFlags;
     LPWSTR  lpszDefaultScheme;
-} HIGHCONTRAST32W, *LPHIGHCONTRAST32W;
+} HIGHCONTRASTW, *LPHIGHCONTRASTW;
 
 DECL_WINELIB_TYPE_AW(HIGHCONTRAST)
 DECL_WINELIB_TYPE_AW(LPHIGHCONTRAST)
 
 typedef struct
 {
-    UINT32  message;
-    UINT32  paramL;
-    UINT32  paramH;
+    UINT  message;
+    UINT  paramL;
+    UINT  paramH;
     DWORD   time;
-    HWND32  hwnd;
-} EVENTMSG32, *LPEVENTMSG32;
+    HWND  hwnd;
+} EVENTMSG, *LPEVENTMSG;
 
-DECL_WINELIB_TYPE(EVENTMSG)
-DECL_WINELIB_TYPE(LPEVENTMSG)
 
     /* Mouse hook structure */
 
 typedef struct
 {
-    POINT32 pt;
-    HWND32  hwnd;
-    UINT32  wHitTestCode;
+    POINT pt;
+    HWND  hwnd;
+    UINT  wHitTestCode;
     DWORD   dwExtraInfo;
-} MOUSEHOOKSTRUCT32, *PMOUSEHOOKSTRUCT32, *LPMOUSEHOOKSTRUCT32;
+} MOUSEHOOKSTRUCT, *PMOUSEHOOKSTRUCT32, *LPMOUSEHOOKSTRUCT;
 
-DECL_WINELIB_TYPE(MOUSEHOOKSTRUCT)
-DECL_WINELIB_TYPE(PMOUSEHOOKSTRUCT)
-DECL_WINELIB_TYPE(LPMOUSEHOOKSTRUCT)
 
     /* Hardware hook structure */
 
 typedef struct
 {
-    HWND32    hWnd;
-    UINT32    wMessage;
-    WPARAM32  wParam;
+    HWND    hWnd;
+    UINT    wMessage;
+    WPARAM  wParam;
     LPARAM    lParam;
-} HARDWAREHOOKSTRUCT32, *LPHARDWAREHOOKSTRUCT32;
+} HARDWAREHOOKSTRUCT, *LPHARDWAREHOOKSTRUCT;
 
-DECL_WINELIB_TYPE(HARDWAREHOOKSTRUCT)
-DECL_WINELIB_TYPE(LPHARDWAREHOOKSTRUCT)
 
   /* Debug hook structure */
 
@@ -82,12 +75,10 @@ typedef struct
     DWORD       idThread;
     DWORD       idThreadInstaller;
     LPARAM      lParam;
-    WPARAM32    wParam;
-    INT32       code;
-} DEBUGHOOKINFO32, *LPDEBUGHOOKINFO32;
+    WPARAM    wParam;
+    INT       code;
+} DEBUGHOOKINFO, *LPDEBUGHOOKINFO;
 
-DECL_WINELIB_TYPE(DEBUGHOOKINFO)
-DECL_WINELIB_TYPE(LPDEBUGHOOKINFO)
 
   /***** Dialogs *****/
 #ifdef FSHIFT
@@ -104,40 +95,38 @@ DECL_WINELIB_TYPE(LPDEBUGHOOKINFO)
 
 typedef struct tagANIMATIONINFO
 {
-       UINT32          cbSize;
-       INT32           iMinAnimate;
+       UINT          cbSize;
+       INT           iMinAnimate;
 } ANIMATIONINFO, *LPANIMATIONINFO;
 
 typedef struct tagNMHDR
 {
-    HWND32  hwndFrom;
-    UINT32  idFrom;
-    UINT32  code;
+    HWND  hwndFrom;
+    UINT  idFrom;
+    UINT  code;
 } NMHDR, *LPNMHDR;
 
 typedef struct
 {
-	UINT32	cbSize;
-	INT32	iTabLength;
-	INT32	iLeftMargin;
-	INT32	iRightMargin;
-	UINT32	uiLengthDrawn;
+	UINT	cbSize;
+	INT	iTabLength;
+	INT	iLeftMargin;
+	INT	iRightMargin;
+	UINT	uiLengthDrawn;
 } DRAWTEXTPARAMS,*LPDRAWTEXTPARAMS;
 
 #define WM_USER             0x0400
 
 typedef struct
 {
-    UINT32   length;
-    UINT32   flags;
-    UINT32   showCmd;
-    POINT32  ptMinPosition WINE_PACKED;
-    POINT32  ptMaxPosition WINE_PACKED;
-    RECT32   rcNormalPosition WINE_PACKED;
-} WINDOWPLACEMENT32, *LPWINDOWPLACEMENT32;
+    UINT   length;
+    UINT   flags;
+    UINT   showCmd;
+    POINT  ptMinPosition WINE_PACKED;
+    POINT  ptMaxPosition WINE_PACKED;
+    RECT   rcNormalPosition WINE_PACKED;
+} WINDOWPLACEMENT, *LPWINDOWPLACEMENT;
 
-DECL_WINELIB_TYPE(WINDOWPLACEMENT)
-DECL_WINELIB_TYPE(LPWINDOWPLACEMENT)
 
   /* WINDOWPLACEMENT flags */
 #define WPF_SETMINPOSITION      0x0001
@@ -297,84 +286,47 @@ DECL_WINELIB_TYPE(LPWINDOWPLACEMENT)
 #define OIC_WINEICON        32519
 
 /* Edit control messages */
-#define EM_GETSEL32                0x00b0
-#define EM_GETSEL                  WINELIB_NAME(EM_GETSEL)
-#define EM_SETSEL32                0x00b1
-#define EM_SETSEL                  WINELIB_NAME(EM_SETSEL)
-#define EM_GETRECT32               0x00b2
-#define EM_GETRECT                 WINELIB_NAME(EM_GETRECT)
-#define EM_SETRECT32               0x00b3
-#define EM_SETRECT                 WINELIB_NAME(EM_SETRECT)
-#define EM_SETRECTNP32             0x00b4
-#define EM_SETRECTNP               WINELIB_NAME(EM_SETRECTNP)
-#define EM_SCROLL32                0x00b5
-#define EM_SCROLL                  WINELIB_NAME(EM_SCROLL)
-#define EM_LINESCROLL32            0x00b6
-#define EM_LINESCROLL              WINELIB_NAME(EM_LINESCROLL)
-#define EM_SCROLLCARET32           0x00b7
-#define EM_SCROLLCARET             WINELIB_NAME(EM_SCROLLCARET)
-#define EM_GETMODIFY32             0x00b8
-#define EM_GETMODIFY               WINELIB_NAME(EM_GETMODIFY)
-#define EM_SETMODIFY32             0x00b9
-#define EM_SETMODIFY               WINELIB_NAME(EM_SETMODIFY)
-#define EM_GETLINECOUNT32          0x00ba
-#define EM_GETLINECOUNT            WINELIB_NAME(EM_GETLINECOUNT)
-#define EM_LINEINDEX32             0x00bb
-#define EM_LINEINDEX               WINELIB_NAME(EM_LINEINDEX)
-#define EM_SETHANDLE32             0x00bc
-#define EM_SETHANDLE               WINELIB_NAME(EM_SETHANDLE)
-#define EM_GETHANDLE32             0x00bd
-#define EM_GETHANDLE               WINELIB_NAME(EM_GETHANDLE)
-#define EM_GETTHUMB32              0x00be
-#define EM_GETTHUMB                WINELIB_NAME(EM_GETTHUMB)
+#define EM_GETSEL                0x00b0
+#define EM_SETSEL                0x00b1
+#define EM_GETRECT               0x00b2
+#define EM_SETRECT               0x00b3
+#define EM_SETRECTNP             0x00b4
+#define EM_SCROLL                0x00b5
+#define EM_LINESCROLL            0x00b6
+#define EM_SCROLLCARET           0x00b7
+#define EM_GETMODIFY             0x00b8
+#define EM_SETMODIFY             0x00b9
+#define EM_GETLINECOUNT          0x00ba
+#define EM_LINEINDEX             0x00bb
+#define EM_SETHANDLE             0x00bc
+#define EM_GETHANDLE             0x00bd
+#define EM_GETTHUMB              0x00be
 /* FIXME : missing from specs 0x00bf and 0x00c0 */
-#define EM_LINELENGTH32            0x00c1
-#define EM_LINELENGTH              WINELIB_NAME(EM_LINELENGTH)
-#define EM_REPLACESEL32            0x00c2
-#define EM_REPLACESEL              WINELIB_NAME(EM_REPLACESEL)
+#define EM_LINELENGTH            0x00c1
+#define EM_REPLACESEL            0x00c2
 /* FIXME : missing from specs 0x00c3 */
-#define EM_GETLINE32               0x00c4
-#define EM_GETLINE                 WINELIB_NAME(EM_GETLINE)
-#define EM_LIMITTEXT32             0x00c5
-#define EM_LIMITTEXT               WINELIB_NAME(EM_LIMITTEXT)
-#define EM_CANUNDO32               0x00c6
-#define EM_CANUNDO                 WINELIB_NAME(EM_CANUNDO)
-#define EM_UNDO32                  0x00c7
-#define EM_UNDO                    WINELIB_NAME(EM_UNDO)
-#define EM_FMTLINES32              0x00c8
-#define EM_FMTLINES                WINELIB_NAME(EM_FMTLINES)
-#define EM_LINEFROMCHAR32          0x00c9
-#define EM_LINEFROMCHAR            WINELIB_NAME(EM_LINEFROMCHAR)
+#define EM_GETLINE               0x00c4
+#define EM_LIMITTEXT             0x00c5
+#define EM_CANUNDO               0x00c6
+#define EM_UNDO                  0x00c7
+#define EM_FMTLINES              0x00c8
+#define EM_LINEFROMCHAR          0x00c9
 /* FIXME : missing from specs 0x00ca */
-#define EM_SETTABSTOPS32           0x00cb
-#define EM_SETTABSTOPS             WINELIB_NAME(EM_SETTABSTOPS)
-#define EM_SETPASSWORDCHAR32       0x00cc
-#define EM_SETPASSWORDCHAR         WINELIB_NAME(EM_SETPASSWORDCHAR)
-#define EM_EMPTYUNDOBUFFER32       0x00cd
-#define EM_EMPTYUNDOBUFFER         WINELIB_NAME(EM_EMPTYUNDOBUFFER)
-#define EM_GETFIRSTVISIBLELINE32   0x00ce
-#define EM_GETFIRSTVISIBLELINE     WINELIB_NAME(EM_GETFIRSTVISIBLELINE)
-#define EM_SETREADONLY32           0x00cf
-#define EM_SETREADONLY             WINELIB_NAME(EM_SETREADONLY)
-#define EM_SETWORDBREAKPROC32      0x00d0
-#define EM_SETWORDBREAKPROC        WINELIB_NAME(EM_SETWORDBREAKPROC)
-#define EM_GETWORDBREAKPROC32      0x00d1
-#define EM_GETWORDBREAKPROC        WINELIB_NAME(EM_GETWORDBREAKPROC)
-#define EM_GETPASSWORDCHAR32       0x00d2
-#define EM_GETPASSWORDCHAR         WINELIB_NAME(EM_GETPASSWORDCHAR)
-#define EM_SETMARGINS32            0x00d3
-#define EM_SETMARGINS              WINELIB_NAME(EM_SETMARGINS)
-#define EM_GETMARGINS32            0x00d4
-#define EM_GETMARGINS              WINELIB_NAME(EM_GETMARGINS)
-#define EM_GETLIMITTEXT32          0x00d5
-#define EM_GETLIMITTEXT            WINELIB_NAME(EM_GETLIMITTEXT)
-#define EM_POSFROMCHAR32           0x00d6
-#define EM_POSFROMCHAR             WINELIB_NAME(EM_POSFROMCHAR)
-#define EM_CHARFROMPOS32           0x00d7
-#define EM_CHARFROMPOS             WINELIB_NAME(EM_CHARFROMPOS)
+#define EM_SETTABSTOPS           0x00cb
+#define EM_SETPASSWORDCHAR       0x00cc
+#define EM_EMPTYUNDOBUFFER       0x00cd
+#define EM_GETFIRSTVISIBLELINE   0x00ce
+#define EM_SETREADONLY           0x00cf
+#define EM_SETWORDBREAKPROC      0x00d0
+#define EM_GETWORDBREAKPROC      0x00d1
+#define EM_GETPASSWORDCHAR       0x00d2
+#define EM_SETMARGINS            0x00d3
+#define EM_GETMARGINS            0x00d4
+#define EM_GETLIMITTEXT          0x00d5
+#define EM_POSFROMCHAR           0x00d6
+#define EM_CHARFROMPOS           0x00d7
 /* a name change since win95 */
-#define EM_SETLIMITTEXT32          EM_LIMITTEXT32
-#define EM_SETLIMITTEXT            WINELIB_NAME(EM_SETLIMITTEXT)
+#define EM_SETLIMITTEXT          EM_LIMITTEXT
 
 /* EDITWORDBREAKPROC code values */
 #define WB_LEFT         0
@@ -691,72 +643,70 @@ DECL_WINELIB_TYPE(LPWINDOWPLACEMENT)
 typedef struct
 {
     LPVOID      lpCreateParams;
-    HINSTANCE32 hInstance;
-    HMENU32     hMenu;
-    HWND32      hwndParent;
-    INT32       cy;
-    INT32       cx;
-    INT32       y;
-    INT32       x;
+    HINSTANCE hInstance;
+    HMENU     hMenu;
+    HWND      hwndParent;
+    INT       cy;
+    INT       cx;
+    INT       y;
+    INT       x;
     LONG        style;
     LPCSTR      lpszName;
     LPCSTR      lpszClass;
     DWORD       dwExStyle;
-} CREATESTRUCT32A, *LPCREATESTRUCT32A;
+} CREATESTRUCTA, *LPCREATESTRUCTA;
 
 typedef struct
 {
     LPVOID      lpCreateParams;
-    HINSTANCE32 hInstance;
-    HMENU32     hMenu;
-    HWND32      hwndParent;
-    INT32       cy;
-    INT32       cx;
-    INT32       y;
-    INT32       x;
+    HINSTANCE hInstance;
+    HMENU     hMenu;
+    HWND      hwndParent;
+    INT       cy;
+    INT       cx;
+    INT       y;
+    INT       x;
     LONG        style;
     LPCWSTR     lpszName;
     LPCWSTR     lpszClass;
     DWORD       dwExStyle;
-} CREATESTRUCT32W, *LPCREATESTRUCT32W;
+} CREATESTRUCTW, *LPCREATESTRUCTW;
 
 DECL_WINELIB_TYPE_AW(CREATESTRUCT)
 DECL_WINELIB_TYPE_AW(LPCREATESTRUCT)
 
 typedef struct 
 {
-    HMENU32   hWindowMenu;
-    UINT32    idFirstChild;
-} CLIENTCREATESTRUCT32, *LPCLIENTCREATESTRUCT32;
+    HMENU   hWindowMenu;
+    UINT    idFirstChild;
+} CLIENTCREATESTRUCT, *LPCLIENTCREATESTRUCT;
 
-DECL_WINELIB_TYPE(CLIENTCREATESTRUCT)
-DECL_WINELIB_TYPE(LPCLIENTCREATESTRUCT)
 
 typedef struct
 {
     LPCSTR       szClass;
     LPCSTR       szTitle;
-    HINSTANCE32  hOwner;
-    INT32        x;
-    INT32        y;
-    INT32        cx;
-    INT32        cy;
+    HINSTANCE  hOwner;
+    INT        x;
+    INT        y;
+    INT        cx;
+    INT        cy;
     DWORD        style;
     LPARAM       lParam;
-} MDICREATESTRUCT32A, *LPMDICREATESTRUCT32A;
+} MDICREATESTRUCTA, *LPMDICREATESTRUCTA;
 
 typedef struct
 {
     LPCWSTR      szClass;
     LPCWSTR      szTitle;
-    HINSTANCE32  hOwner;
-    INT32        x;
-    INT32        y;
-    INT32        cx;
-    INT32        cy;
+    HINSTANCE  hOwner;
+    INT        x;
+    INT        y;
+    INT        cx;
+    INT        cy;
     DWORD        style;
     LPARAM       lParam;
-} MDICREATESTRUCT32W, *LPMDICREATESTRUCT32W;
+} MDICREATESTRUCTW, *LPMDICREATESTRUCTW;
 
 DECL_WINELIB_TYPE_AW(MDICREATESTRUCT)
 DECL_WINELIB_TYPE_AW(LPMDICREATESTRUCT)
@@ -798,16 +748,13 @@ typedef struct {
   /* WM_GETMINMAXINFO struct */
 typedef struct
 {
-    POINT32   ptReserved;
-    POINT32   ptMaxSize;
-    POINT32   ptMaxPosition;
-    POINT32   ptMinTrackSize;
-    POINT32   ptMaxTrackSize;
-} MINMAXINFO32, *PMINMAXINFO32, *LPMINMAXINFO32;
+    POINT   ptReserved;
+    POINT   ptMaxSize;
+    POINT   ptMaxPosition;
+    POINT   ptMinTrackSize;
+    POINT   ptMaxTrackSize;
+} MINMAXINFO, *PMINMAXINFO32, *LPMINMAXINFO32;
 
-DECL_WINELIB_TYPE(MINMAXINFO)
-DECL_WINELIB_TYPE(PMINMAXINFO)
-DECL_WINELIB_TYPE(LPMINMAXINFO)
 
   /* RedrawWindow() flags */
 #define RDW_INVALIDATE       0x0001
@@ -832,18 +779,15 @@ DECL_WINELIB_TYPE(LPMINMAXINFO)
   /* WM_WINDOWPOSCHANGING/CHANGED struct */
 typedef struct
 {
-    HWND32  hwnd;
-    HWND32  hwndInsertAfter;
-    INT32   x;
-    INT32   y;
-    INT32   cx;
-    INT32   cy;
-    UINT32  flags;
-} WINDOWPOS32, *PWINDOWPOS32, *LPWINDOWPOS32;
+    HWND  hwnd;
+    HWND  hwndInsertAfter;
+    INT   x;
+    INT   y;
+    INT   cx;
+    INT   cy;
+    UINT  flags;
+} WINDOWPOS, *PWINDOWPOS32, *LPWINDOWPOS;
 
-DECL_WINELIB_TYPE(WINDOWPOS)
-DECL_WINELIB_TYPE(PWINDOWPOS)
-DECL_WINELIB_TYPE(LPWINDOWPOS)
 
   /* WM_MOUSEACTIVATE return values */
 #define MA_ACTIVATE             1
@@ -859,12 +803,10 @@ DECL_WINELIB_TYPE(LPWINDOWPOS)
   /* WM_NCCALCSIZE parameter structure */
 typedef struct
 {
-    RECT32       rgrc[3];
-    WINDOWPOS32 *lppos;
-} NCCALCSIZE_PARAMS32, *LPNCCALCSIZE_PARAMS32;
+    RECT       rgrc[3];
+    WINDOWPOS *lppos;
+} NCCALCSIZE_PARAMS, *LPNCCALCSIZE_PARAMS;
 
-DECL_WINELIB_TYPE(NCCALCSIZE_PARAMS)
-DECL_WINELIB_TYPE(LPNCCALCSIZE_PARAMS)
 
   /* WM_NCCALCSIZE return flags */
 #define WVR_ALIGNTOP        0x0010
@@ -1014,31 +956,31 @@ DECL_WINELIB_TYPE(LPNCCALCSIZE_PARAMS)
 
 typedef struct
 {
-    UINT32      style;
-    WNDPROC32   lpfnWndProc;
-    INT32       cbClsExtra;
-    INT32       cbWndExtra;
-    HINSTANCE32 hInstance;
-    HICON32     hIcon;
-    HCURSOR32   hCursor;
-    HBRUSH32    hbrBackground;
+    UINT      style;
+    WNDPROC   lpfnWndProc;
+    INT       cbClsExtra;
+    INT       cbWndExtra;
+    HINSTANCE hInstance;
+    HICON     hIcon;
+    HCURSOR   hCursor;
+    HBRUSH    hbrBackground;
     LPCSTR      lpszMenuName;
     LPCSTR      lpszClassName;
-} WNDCLASS32A, *LPWNDCLASS32A;
+} WNDCLASSA, *LPWNDCLASSA;
 
 typedef struct
 {
-    UINT32      style;
-    WNDPROC32   lpfnWndProc;
-    INT32       cbClsExtra;
-    INT32       cbWndExtra;
-    HINSTANCE32 hInstance;
-    HICON32     hIcon;
-    HCURSOR32   hCursor;
-    HBRUSH32    hbrBackground;
+    UINT      style;
+    WNDPROC   lpfnWndProc;
+    INT       cbClsExtra;
+    INT       cbWndExtra;
+    HINSTANCE hInstance;
+    HICON     hIcon;
+    HCURSOR   hCursor;
+    HBRUSH    hbrBackground;
     LPCWSTR     lpszMenuName;
     LPCWSTR     lpszClassName;
-} WNDCLASS32W, *LPWNDCLASS32W;
+} WNDCLASSW, *LPWNDCLASSW;
 
 DECL_WINELIB_TYPE_AW(WNDCLASS)
 DECL_WINELIB_TYPE_AW(LPWNDCLASS)
@@ -1050,9 +992,9 @@ typedef struct {
 } COPYDATASTRUCT, *PCOPYDATASTRUCT, *LPCOPYDATASTRUCT;
 
 typedef struct {
-    HMENU32 hmenuIn;
-    HMENU32 hmenuNext;
-    HWND32  hwndNext;
+    HMENU hmenuIn;
+    HMENU hmenuNext;
+    HWND  hwndNext;
 } MDINEXTMENU, *PMDINEXTMENU, *LPMDINEXTMENU;
 
 /* WinHelp internal structure */
@@ -1126,64 +1068,60 @@ typedef struct {
 
 typedef struct
 {
-    UINT32      cbSize;
-    UINT32      style;
-    WNDPROC32   lpfnWndProc;
-    INT32       cbClsExtra;
-    INT32       cbWndExtra;
-    HINSTANCE32 hInstance;
-    HICON32     hIcon;
-    HCURSOR32   hCursor;
-    HBRUSH32    hbrBackground;
+    UINT      cbSize;
+    UINT      style;
+    WNDPROC   lpfnWndProc;
+    INT       cbClsExtra;
+    INT       cbWndExtra;
+    HINSTANCE hInstance;
+    HICON     hIcon;
+    HCURSOR   hCursor;
+    HBRUSH    hbrBackground;
     LPCSTR      lpszMenuName;
     LPCSTR      lpszClassName;
-    HICON32     hIconSm;
-} WNDCLASSEX32A, *LPWNDCLASSEX32A;
+    HICON     hIconSm;
+} WNDCLASSEXA, *LPWNDCLASSEXA;
 
 typedef struct
 {
-    UINT32      cbSize;
-    UINT32      style;
-    WNDPROC32   lpfnWndProc;
-    INT32       cbClsExtra;
-    INT32       cbWndExtra;
-    HINSTANCE32 hInstance;
-    HICON32     hIcon;
-    HCURSOR32   hCursor;
-    HBRUSH32    hbrBackground;
+    UINT      cbSize;
+    UINT      style;
+    WNDPROC   lpfnWndProc;
+    INT       cbClsExtra;
+    INT       cbWndExtra;
+    HINSTANCE hInstance;
+    HICON     hIcon;
+    HCURSOR   hCursor;
+    HBRUSH    hbrBackground;
     LPCWSTR     lpszMenuName;
     LPCWSTR     lpszClassName;
-    HICON32     hIconSm;
-} WNDCLASSEX32W, *LPWNDCLASSEX32W;
+    HICON     hIconSm;
+} WNDCLASSEXW, *LPWNDCLASSEXW;
 
 DECL_WINELIB_TYPE_AW(WNDCLASSEX)
 DECL_WINELIB_TYPE_AW(LPWNDCLASSEX)
 
 typedef struct
 {
-    HWND32    hwnd;
-    UINT32    message;
-    WPARAM32  wParam;
+    HWND    hwnd;
+    UINT    message;
+    WPARAM  wParam;
     LPARAM    lParam;
     DWORD     time;
-    POINT32   pt;
-} MSG32, *LPMSG32;
+    POINT   pt;
+} MSG, *LPMSG;
 
-DECL_WINELIB_TYPE(MSG)
-DECL_WINELIB_TYPE(LPMSG)
 	
 /* Cursors / Icons */
 
 typedef struct {
-	BOOL32		fIcon;
+	BOOL		fIcon;
 	DWORD		xHotspot;
 	DWORD		yHotspot;
-	HBITMAP32	hbmMask;
-	HBITMAP32	hbmColor;
-} ICONINFO32,*LPICONINFO32;
+	HBITMAP	hbmMask;
+	HBITMAP	hbmColor;
+} ICONINFO,*LPICONINFO;
 
-DECL_WINELIB_TYPE(ICONINFO)
-DECL_WINELIB_TYPE(LPICONINFO)
 
 /* this is the 6 byte accel struct used in Win32 when presented to the user */
 typedef struct
@@ -1192,7 +1130,7 @@ typedef struct
     BYTE   pad0;
     WORD   key;
     WORD   cmd;
-} ACCEL32, *LPACCEL32;
+} ACCEL, *LPACCEL;
 
 /* this is the 8 byte accel struct used in Win32 resources (internal only) */
 typedef struct
@@ -1204,8 +1142,6 @@ typedef struct
     WORD   pad1;
 } PE_ACCEL, *LPPE_ACCEL;
 
-DECL_WINELIB_TYPE(ACCEL)
-DECL_WINELIB_TYPE(LPACCEL)
 
 /* Flags for TrackPopupMenu */
 #define TPM_LEFTBUTTON    0x0000
@@ -1223,38 +1159,38 @@ DECL_WINELIB_TYPE(LPACCEL)
 
 typedef struct 
 {
-    UINT32   cbSize;
-    RECT32   rcExclude;
+    UINT   cbSize;
+    RECT   rcExclude;
 } TPMPARAMS, *LPTPMPARAMS;
 
 /* FIXME: not sure this one is correct */
 typedef struct {
-  UINT32    cbSize;
-  UINT32    fMask;
-  UINT32    fType;
-  UINT32    fState;
-  UINT32    wID;
-  HMENU32   hSubMenu;
-  HBITMAP32 hbmpChecked;
-  HBITMAP32 hbmpUnchecked;
+  UINT    cbSize;
+  UINT    fMask;
+  UINT    fType;
+  UINT    fState;
+  UINT    wID;
+  HMENU   hSubMenu;
+  HBITMAP hbmpChecked;
+  HBITMAP hbmpUnchecked;
   DWORD     dwItemData;
   LPSTR     dwTypeData;
-  UINT32    cch;
-} MENUITEMINFO32A, *LPMENUITEMINFO32A;
+  UINT    cch;
+} MENUITEMINFOA, *LPMENUITEMINFOA;
 
 typedef struct {
-  UINT32    cbSize;
-  UINT32    fMask;
-  UINT32    fType;
-  UINT32    fState;
-  UINT32    wID;
-  HMENU32   hSubMenu;
-  HBITMAP32 hbmpChecked;
-  HBITMAP32 hbmpUnchecked;
+  UINT    cbSize;
+  UINT    fMask;
+  UINT    fType;
+  UINT    fState;
+  UINT    wID;
+  HMENU   hSubMenu;
+  HBITMAP hbmpChecked;
+  HBITMAP hbmpUnchecked;
   DWORD     dwItemData;
   LPWSTR    dwTypeData;
-  UINT32    cch;
-} MENUITEMINFO32W, *LPMENUITEMINFO32W;
+  UINT    cch;
+} MENUITEMINFOW, *LPMENUITEMINFOW;
 
 DECL_WINELIB_TYPE_AW(MENUITEMINFO)
 DECL_WINELIB_TYPE_AW(LPMENUITEMINFO)
@@ -1268,8 +1204,7 @@ DECL_WINELIB_TYPE_AW(LPMENUITEMINFO)
 #define MIIM_DATA        0x00000020
 
 /* DrawState defines ... */
-typedef BOOL32 (CALLBACK *DRAWSTATEPROC32)(HDC32,LPARAM,WPARAM32,INT32,INT32);
-DECL_WINELIB_TYPE(DRAWSTATEPROC)
+typedef BOOL (CALLBACK *DRAWSTATEPROC)(HDC,LPARAM,WPARAM,INT,INT);
 
 /* WM_H/VSCROLL commands */
 #define SB_LINEUP           0
@@ -1320,23 +1255,15 @@ DECL_WINELIB_TYPE(DRAWSTATEPROC)
 #define ESB_DISABLE_RTDN    ESB_DISABLE_RIGHT
 
 /* Win32 button control messages */
-#define BM_GETCHECK32          0x00f0
-#define BM_SETCHECK32          0x00f1
-#define BM_GETSTATE32          0x00f2
-#define BM_SETSTATE32          0x00f3
-#define BM_SETSTYLE32          0x00f4
-#define BM_CLICK32             0x00f5
-#define BM_GETIMAGE32          0x00f6
-#define BM_SETIMAGE32          0x00f7
+#define BM_GETCHECK          0x00f0
+#define BM_SETCHECK          0x00f1
+#define BM_GETSTATE          0x00f2
+#define BM_SETSTATE          0x00f3
+#define BM_SETSTYLE          0x00f4
+#define BM_CLICK             0x00f5
+#define BM_GETIMAGE          0x00f6
+#define BM_SETIMAGE          0x00f7
 /* Winelib button control messages */
-#define BM_GETCHECK            WINELIB_NAME(BM_GETCHECK)
-#define BM_SETCHECK            WINELIB_NAME(BM_SETCHECK)
-#define BM_GETSTATE            WINELIB_NAME(BM_GETSTATE)
-#define BM_SETSTATE            WINELIB_NAME(BM_SETSTATE)
-#define BM_SETSTYLE            WINELIB_NAME(BM_SETSTYLE)
-#define BM_CLICK               WINELIB_NAME(BM_CLICK)
-#define BM_GETIMAGE            WINELIB_NAME(BM_GETIMAGE)
-#define BM_SETIMAGE            WINELIB_NAME(BM_SETIMAGE)
 
 /* Button notification codes */
 #define BN_CLICKED             0
@@ -1378,41 +1305,31 @@ DECL_WINELIB_TYPE(DRAWSTATEPROC)
 #define SS_SUNKEN           0x00001000L
 
 /* Static Control Messages */
-#define STM_SETICON32       0x0170
-#define STM_SETICON	    WINELIB_NAME(STM_SETICON)
-#define STM_GETICON32       0x0171
-#define STM_GETICON	    WINELIB_NAME(STM_GETICON)
+#define STM_SETICON       0x0170
+#define STM_GETICON       0x0171
 #define STM_SETIMAGE        0x0172
 #define STM_GETIMAGE        0x0173
 
 /* Scrollbar messages */
-#define SBM_SETPOS32             0x00e0
-#define SBM_SETPOS               WINELIB_NAME(SBM_SETPOS)
-#define SBM_GETPOS32             0x00e1
-#define SBM_GETPOS               WINELIB_NAME(SBM_GETPOS)
-#define SBM_SETRANGE32           0x00e2
-#define SBM_SETRANGE             WINELIB_NAME(SBM_SETRANGE)
-#define SBM_GETRANGE32           0x00e3
-#define SBM_GETRANGE             WINELIB_NAME(SBM_GETRANGE)
-#define SBM_ENABLE_ARROWS32      0x00e4
-#define SBM_ENABLE_ARROWS        WINELIB_NAME(SBM_ENABLE_ARROWS)
-#define SBM_SETRANGEREDRAW32     0x00e6
-#define SBM_SETRANGEREDRAW       WINELIB_NAME(SBM_SETRANGEREDRAW)
-#define SBM_SETSCROLLINFO32      0x00e9
-#define SBM_SETSCROLLINFO        WINELIB_NAME(SBM_SETSCROLLINFO)
-#define SBM_GETSCROLLINFO32      0x00ea
-#define SBM_GETSCROLLINFO        WINELIB_NAME(SBM_GETSCROLLINFO)
+#define SBM_SETPOS             0x00e0
+#define SBM_GETPOS             0x00e1
+#define SBM_SETRANGE           0x00e2
+#define SBM_GETRANGE           0x00e3
+#define SBM_ENABLE_ARROWS      0x00e4
+#define SBM_SETRANGEREDRAW     0x00e6
+#define SBM_SETSCROLLINFO      0x00e9
+#define SBM_GETSCROLLINFO      0x00ea
 
 /* Scrollbar info */
 typedef struct
 {
-    UINT32    cbSize;
-    UINT32    fMask;
-    INT32     nMin;
-    INT32     nMax;
-    UINT32    nPage;
-    INT32     nPos;
-    INT32     nTrackPos;
+    UINT    cbSize;
+    UINT    fMask;
+    INT     nMin;
+    INT     nMax;
+    UINT    nPage;
+    INT     nPos;
+    INT     nTrackPos;
 } SCROLLINFO, *LPSCROLLINFO;
  
 /* GetScrollInfo() flags */ 
@@ -1442,90 +1359,48 @@ typedef struct
 #define LBS_STANDARD  (LBS_NOTIFY | LBS_SORT | WS_VSCROLL | WS_BORDER)
 
 /* Listbox messages */
-#define LB_ADDSTRING32           0x0180
-#define LB_ADDSTRING             WINELIB_NAME(LB_ADDSTRING)
-#define LB_INSERTSTRING32        0x0181
-#define LB_INSERTSTRING          WINELIB_NAME(LB_INSERTSTRING)
-#define LB_DELETESTRING32        0x0182
-#define LB_DELETESTRING          WINELIB_NAME(LB_DELETESTRING)
-#define LB_SELITEMRANGEEX32      0x0183
-#define LB_SELITEMRANGEEX        WINELIB_NAME(LB_SELITEMRANGEEX)
-#define LB_RESETCONTENT32        0x0184
-#define LB_RESETCONTENT          WINELIB_NAME(LB_RESETCONTENT)
-#define LB_SETSEL32              0x0185
-#define LB_SETSEL                WINELIB_NAME(LB_SETSEL)
-#define LB_SETCURSEL32           0x0186
-#define LB_SETCURSEL             WINELIB_NAME(LB_SETCURSEL)
-#define LB_GETSEL32              0x0187
-#define LB_GETSEL                WINELIB_NAME(LB_GETSEL)
-#define LB_GETCURSEL32           0x0188
-#define LB_GETCURSEL             WINELIB_NAME(LB_GETCURSEL)
-#define LB_GETTEXT32             0x0189
-#define LB_GETTEXT               WINELIB_NAME(LB_GETTEXT)
-#define LB_GETTEXTLEN32          0x018a
-#define LB_GETTEXTLEN            WINELIB_NAME(LB_GETTEXTLEN)
-#define LB_GETCOUNT32            0x018b
-#define LB_GETCOUNT              WINELIB_NAME(LB_GETCOUNT)
-#define LB_SELECTSTRING32        0x018c
-#define LB_SELECTSTRING          WINELIB_NAME(LB_SELECTSTRING)
-#define LB_DIR32                 0x018d
-#define LB_DIR                   WINELIB_NAME(LB_DIR)
-#define LB_GETTOPINDEX32         0x018e
-#define LB_GETTOPINDEX           WINELIB_NAME(LB_GETTOPINDEX)
-#define LB_FINDSTRING32          0x018f
-#define LB_FINDSTRING            WINELIB_NAME(LB_FINDSTRING)
-#define LB_GETSELCOUNT32         0x0190
-#define LB_GETSELCOUNT           WINELIB_NAME(LB_GETSELCOUNT)
-#define LB_GETSELITEMS32         0x0191
-#define LB_GETSELITEMS           WINELIB_NAME(LB_GETSELITEMS)
-#define LB_SETTABSTOPS32         0x0192
-#define LB_SETTABSTOPS           WINELIB_NAME(LB_SETTABSTOPS)
-#define LB_GETHORIZONTALEXTENT32 0x0193
-#define LB_GETHORIZONTALEXTENT   WINELIB_NAME(LB_GETHORIZONTALEXTENT)
-#define LB_SETHORIZONTALEXTENT32 0x0194
-#define LB_SETHORIZONTALEXTENT   WINELIB_NAME(LB_SETHORIZONTALEXTENT)
-#define LB_SETCOLUMNWIDTH32      0x0195
-#define LB_SETCOLUMNWIDTH        WINELIB_NAME(LB_SETCOLUMNWIDTH)
-#define LB_ADDFILE32             0x0196
-#define LB_ADDFILE               WINELIB_NAME(LB_ADDFILE)
-#define LB_SETTOPINDEX32         0x0197
-#define LB_SETTOPINDEX           WINELIB_NAME(LB_SETTOPINDEX)
-#define LB_GETITEMRECT32         0x0198
-#define LB_GETITEMRECT           WINELIB_NAME(LB_GETITEMRECT)
-#define LB_GETITEMDATA32         0x0199
-#define LB_GETITEMDATA           WINELIB_NAME(LB_GETITEMDATA)
-#define LB_SETITEMDATA32         0x019a
-#define LB_SETITEMDATA           WINELIB_NAME(LB_SETITEMDATA)
-#define LB_SELITEMRANGE32        0x019b
-#define LB_SELITEMRANGE          WINELIB_NAME(LB_SELITEMRANGE)
-#define LB_SETANCHORINDEX32      0x019c
-#define LB_SETANCHORINDEX        WINELIB_NAME(LB_SETANCHORINDEX)
-#define LB_GETANCHORINDEX32      0x019d
-#define LB_GETANCHORINDEX        WINELIB_NAME(LB_GETANCHORINDEX)
-#define LB_SETCARETINDEX32       0x019e
-#define LB_SETCARETINDEX         WINELIB_NAME(LB_SETCARETINDEX)
-#define LB_GETCARETINDEX32       0x019f
-#define LB_GETCARETINDEX         WINELIB_NAME(LB_GETCARETINDEX)
-#define LB_SETITEMHEIGHT32       0x01a0
-#define LB_SETITEMHEIGHT         WINELIB_NAME(LB_SETITEMHEIGHT)
-#define LB_GETITEMHEIGHT32       0x01a1
-#define LB_GETITEMHEIGHT         WINELIB_NAME(LB_GETITEMHEIGHT)
-#define LB_FINDSTRINGEXACT32     0x01a2
-#define LB_FINDSTRINGEXACT       WINELIB_NAME(LB_FINDSTRINGEXACT)
-#define LB_CARETON32             0x01a3
-#define LB_CARETON               WINELIB_NAME(LB_CARETON)
-#define LB_CARETOFF32            0x01a4
-#define LB_CARETOFF              WINELIB_NAME(LB_CARETOFF)
-#define LB_SETLOCALE32           0x01a5
-#define LB_SETLOCALE             WINELIB_NAME(LB_SETLOCALE)
-#define LB_GETLOCALE32           0x01a6
-#define LB_GETLOCALE             WINELIB_NAME(LB_GETLOCALE)
-#define LB_SETCOUNT32            0x01a7
-#define LB_SETCOUNT              WINELIB_NAME(LB_SETCOUNT)
-#define LB_INITSTORAGE32         0x01a8
-#define LB_INITSTORAGE           WINELIB_NAME(LB_INITSTORAGE)
-#define LB_ITEMFROMPOINT32       0x01a9
-#define LB_ITEMFROMPOINT         WINELIB_NAME(LB_ITEMFROMPOINT)
+#define LB_ADDSTRING           0x0180
+#define LB_INSERTSTRING        0x0181
+#define LB_DELETESTRING        0x0182
+#define LB_SELITEMRANGEEX      0x0183
+#define LB_RESETCONTENT        0x0184
+#define LB_SETSEL              0x0185
+#define LB_SETCURSEL           0x0186
+#define LB_GETSEL              0x0187
+#define LB_GETCURSEL           0x0188
+#define LB_GETTEXT             0x0189
+#define LB_GETTEXTLEN          0x018a
+#define LB_GETCOUNT            0x018b
+#define LB_SELECTSTRING        0x018c
+#define LB_DIR                 0x018d
+#define LB_GETTOPINDEX         0x018e
+#define LB_FINDSTRING          0x018f
+#define LB_GETSELCOUNT         0x0190
+#define LB_GETSELITEMS         0x0191
+#define LB_SETTABSTOPS         0x0192
+#define LB_GETHORIZONTALEXTENT 0x0193
+#define LB_SETHORIZONTALEXTENT 0x0194
+#define LB_SETCOLUMNWIDTH      0x0195
+#define LB_ADDFILE             0x0196
+#define LB_SETTOPINDEX         0x0197
+#define LB_GETITEMRECT         0x0198
+#define LB_GETITEMDATA         0x0199
+#define LB_SETITEMDATA         0x019a
+#define LB_SELITEMRANGE        0x019b
+#define LB_SETANCHORINDEX      0x019c
+#define LB_GETANCHORINDEX      0x019d
+#define LB_SETCARETINDEX       0x019e
+#define LB_GETCARETINDEX       0x019f
+#define LB_SETITEMHEIGHT       0x01a0
+#define LB_GETITEMHEIGHT       0x01a1
+#define LB_FINDSTRINGEXACT     0x01a2
+#define LB_CARETON             0x01a3
+#define LB_CARETOFF            0x01a4
+#define LB_SETLOCALE           0x01a5
+#define LB_GETLOCALE           0x01a6
+#define LB_SETCOUNT            0x01a7
+#define LB_INITSTORAGE         0x01a8
+#define LB_ITEMFROMPOINT       0x01a9
 
 /* Listbox notification codes */
 #define LBN_ERRSPACE        (-2)
@@ -1560,74 +1435,40 @@ typedef struct
 
 
 /* Combo box messages */
-#define CB_GETEDITSEL32            0x0140
-#define CB_GETEDITSEL              WINELIB_NAME(CB_GETEDITSEL)
-#define CB_LIMITTEXT32             0x0141
-#define CB_LIMITTEXT               WINELIB_NAME(CB_LIMITTEXT)
-#define CB_SETEDITSEL32            0x0142
-#define CB_SETEDITSEL              WINELIB_NAME(CB_SETEDITSEL)
-#define CB_ADDSTRING32             0x0143
-#define CB_ADDSTRING               WINELIB_NAME(CB_ADDSTRING)
-#define CB_DELETESTRING32          0x0144
-#define CB_DELETESTRING            WINELIB_NAME(CB_DELETESTRING)
-#define CB_DIR32                   0x0145
-#define CB_DIR                     WINELIB_NAME(CB_DIR)
-#define CB_GETCOUNT32              0x0146
-#define CB_GETCOUNT                WINELIB_NAME(CB_GETCOUNT)
-#define CB_GETCURSEL32             0x0147
-#define CB_GETCURSEL               WINELIB_NAME(CB_GETCURSEL)
-#define CB_GETLBTEXT32             0x0148
-#define CB_GETLBTEXT               WINELIB_NAME(CB_GETLBTEXT)
-#define CB_GETLBTEXTLEN32          0x0149
-#define CB_GETLBTEXTLEN            WINELIB_NAME(CB_GETLBTEXTLEN)
-#define CB_INSERTSTRING32          0x014a
-#define CB_INSERTSTRING            WINELIB_NAME(CB_INSERTSTRING)
-#define CB_RESETCONTENT32          0x014b
-#define CB_RESETCONTENT            WINELIB_NAME(CB_RESETCONTENT)
-#define CB_FINDSTRING32            0x014c
-#define CB_FINDSTRING              WINELIB_NAME(CB_FINDSTRING)
-#define CB_SELECTSTRING32          0x014d
-#define CB_SELECTSTRING            WINELIB_NAME(CB_SELECTSTRING)
-#define CB_SETCURSEL32             0x014e
-#define CB_SETCURSEL               WINELIB_NAME(CB_SETCURSEL)
-#define CB_SHOWDROPDOWN32          0x014f
-#define CB_SHOWDROPDOWN            WINELIB_NAME(CB_SHOWDROPDOWN)
-#define CB_GETITEMDATA32           0x0150
-#define CB_GETITEMDATA             WINELIB_NAME(CB_GETITEMDATA)
-#define CB_SETITEMDATA32           0x0151
-#define CB_SETITEMDATA             WINELIB_NAME(CB_SETITEMDATA)
-#define CB_GETDROPPEDCONTROLRECT32 0x0152
-#define CB_GETDROPPEDCONTROLRECT   WINELIB_NAME(CB_GETDROPPEDCONTROLRECT)
-#define CB_SETITEMHEIGHT32         0x0153
-#define CB_SETITEMHEIGHT           WINELIB_NAME(CB_SETITEMHEIGHT)
-#define CB_GETITEMHEIGHT32         0x0154
-#define CB_GETITEMHEIGHT           WINELIB_NAME(CB_GETITEMHEIGHT)
-#define CB_SETEXTENDEDUI32         0x0155
-#define CB_SETEXTENDEDUI           WINELIB_NAME(CB_SETEXTENDEDUI)
-#define CB_GETEXTENDEDUI32         0x0156
-#define CB_GETEXTENDEDUI           WINELIB_NAME(CB_GETEXTENDEDUI)
-#define CB_GETDROPPEDSTATE32       0x0157
-#define CB_GETDROPPEDSTATE         WINELIB_NAME(CB_GETDROPPEDSTATE)
-#define CB_FINDSTRINGEXACT32       0x0158
-#define CB_FINDSTRINGEXACT         WINELIB_NAME(CB_FINDSTRINGEXACT)
-#define CB_SETLOCALE32             0x0159
-#define CB_SETLOCALE               WINELIB_NAME(CB_SETLOCALE)
-#define CB_GETLOCALE32             0x015a
-#define CB_GETLOCALE               WINELIB_NAME(CB_GETLOCALE)
-#define CB_GETTOPINDEX32           0x015b
-#define CB_GETTOPINDEX             WINELIB_NAME(CB_GETTOPINDEX)
-#define CB_SETTOPINDEX32           0x015c
-#define CB_SETTOPINDEX             WINELIB_NAME(CB_SETTOPINDEX)
-#define CB_GETHORIZONTALEXTENT32   0x015d
-#define CB_GETHORIZONTALEXTENT     WINELIB_NAME(CB_GETHORIZONTALEXTENT)
-#define CB_SETHORIZONTALEXTENT32   0x015e
-#define CB_SETHORIZONTALEXTENT     WINELIB_NAME(CB_SETHORIZONTALEXTENT)
-#define CB_GETDROPPEDWIDTH32       0x015f
-#define CB_GETDROPPEDWIDTH         WINELIB_NAME(CB_GETDROPPEDWIDTH)
-#define CB_SETDROPPEDWIDTH32       0x0160
-#define CB_SETDROPPEDWIDTH         WINELIB_NAME(CB_SETDROPPEDWIDTH)
-#define CB_INITSTORAGE32           0x0161
-#define CB_INITSTORAGE             WINELIB_NAME(CB_INITSTORAGE)
+#define CB_GETEDITSEL            0x0140
+#define CB_LIMITTEXT             0x0141
+#define CB_SETEDITSEL            0x0142
+#define CB_ADDSTRING             0x0143
+#define CB_DELETESTRING          0x0144
+#define CB_DIR                   0x0145
+#define CB_GETCOUNT              0x0146
+#define CB_GETCURSEL             0x0147
+#define CB_GETLBTEXT             0x0148
+#define CB_GETLBTEXTLEN          0x0149
+#define CB_INSERTSTRING          0x014a
+#define CB_RESETCONTENT          0x014b
+#define CB_FINDSTRING            0x014c
+#define CB_SELECTSTRING          0x014d
+#define CB_SETCURSEL             0x014e
+#define CB_SHOWDROPDOWN          0x014f
+#define CB_GETITEMDATA           0x0150
+#define CB_SETITEMDATA           0x0151
+#define CB_GETDROPPEDCONTROLRECT 0x0152
+#define CB_SETITEMHEIGHT         0x0153
+#define CB_GETITEMHEIGHT         0x0154
+#define CB_SETEXTENDEDUI         0x0155
+#define CB_GETEXTENDEDUI         0x0156
+#define CB_GETDROPPEDSTATE       0x0157
+#define CB_FINDSTRINGEXACT       0x0158
+#define CB_SETLOCALE             0x0159
+#define CB_GETLOCALE             0x015a
+#define CB_GETTOPINDEX           0x015b
+#define CB_SETTOPINDEX           0x015c
+#define CB_GETHORIZONTALEXTENT   0x015d
+#define CB_SETHORIZONTALEXTENT   0x015e
+#define CB_GETDROPPEDWIDTH       0x015f
+#define CB_SETDROPPEDWIDTH       0x0160
+#define CB_INITSTORAGE           0x0161
 
 /* Combo box notification codes */
 #define CBN_ERRSPACE        (-1)
@@ -1695,21 +1536,21 @@ typedef struct
 /* Structure pointed to by lParam of WM_HELP */
 typedef struct			
 {
-    UINT32	cbSize;		/* Size in bytes of this struct  */
-    INT32	iContextType;	/* Either HELPINFO_WINDOW or HELPINFO_MENUITEM */
-    INT32	iCtrlId;	/* Control Id or a Menu item Id. */
-    HANDLE32	hItemHandle;	/* hWnd of control or hMenu.     */
+    UINT	cbSize;		/* Size in bytes of this struct  */
+    INT	iContextType;	/* Either HELPINFO_WINDOW or HELPINFO_MENUITEM */
+    INT	iCtrlId;	/* Control Id or a Menu item Id. */
+    HANDLE	hItemHandle;	/* hWnd of control or hMenu.     */
     DWORD	dwContextId;	/* Context Id associated with this item */
-    POINT32	MousePos;	/* Mouse Position in screen co-ordinates */
+    POINT	MousePos;	/* Mouse Position in screen co-ordinates */
 }  HELPINFO,*LPHELPINFO;
 
 typedef void (CALLBACK *MSGBOXCALLBACK)(LPHELPINFO lpHelpInfo);
 
 typedef struct
 {
-    UINT32	cbSize;
-    HWND32	hwndOwner;
-    HINSTANCE32	hInstance;
+    UINT	cbSize;
+    HWND	hwndOwner;
+    HINSTANCE	hInstance;
     LPCSTR	lpszText;
     LPCSTR	lpszCaption;
     DWORD	dwStyle;
@@ -1717,13 +1558,13 @@ typedef struct
     DWORD	dwContextHelpId;
     MSGBOXCALLBACK	lpfnMsgBoxCallback;
     DWORD	dwLanguageId;
-} MSGBOXPARAMS32A,*LPMSGBOXPARAMS32A;
+} MSGBOXPARAMSA,*LPMSGBOXPARAMSA;
 
 typedef struct
 {
-    UINT32	cbSize;
-    HWND32	hwndOwner;
-    HINSTANCE32	hInstance;
+    UINT	cbSize;
+    HWND	hwndOwner;
+    HINSTANCE	hInstance;
     LPCWSTR	lpszText;
     LPCWSTR	lpszCaption;
     DWORD	dwStyle;
@@ -1731,28 +1572,28 @@ typedef struct
     DWORD	dwContextHelpId;
     MSGBOXCALLBACK	lpfnMsgBoxCallback;
     DWORD	dwLanguageId;
-} MSGBOXPARAMS32W,*LPMSGBOXPARAMS32W;
+} MSGBOXPARAMSW,*LPMSGBOXPARAMSW;
 
 DECL_WINELIB_TYPE_AW(MSGBOXPARAMS)
 DECL_WINELIB_TYPE_AW(LPMSGBOXPARAMS)
 
 typedef struct _numberfmt32a {
-    UINT32 NumDigits;
-    UINT32 LeadingZero;
-    UINT32 Grouping;
+    UINT NumDigits;
+    UINT LeadingZero;
+    UINT Grouping;
     LPCSTR lpDecimalSep;
     LPCSTR lpThousandSep;
-    UINT32 NegativeOrder;
-} NUMBERFMT32A;
+    UINT NegativeOrder;
+} NUMBERFMTA;
 
 typedef struct _numberfmt32w {
-    UINT32 NumDigits;
-    UINT32 LeadingZero;
-    UINT32 Grouping;
+    UINT NumDigits;
+    UINT LeadingZero;
+    UINT Grouping;
     LPCWSTR lpDecimalSep;
     LPCWSTR lpThousandSep;
-    UINT32 NegativeOrder;
-} NUMBERFMT32W;
+    UINT NegativeOrder;
+} NUMBERFMTW;
 
 #define MONITOR_DEFAULTTONULL       0x00000000
 #define MONITOR_DEFAULTTOPRIMARY    0x00000001
@@ -1763,27 +1604,27 @@ typedef struct _numberfmt32w {
 typedef struct tagMONITORINFO
 {
     DWORD   cbSize;
-    RECT32  rcMonitor;
-    RECT32  rcWork;
+    RECT  rcMonitor;
+    RECT  rcWork;
     DWORD   dwFlags;
 } MONITORINFO, *LPMONITORINFO;
 
-typedef struct tagMONITORINFOEX32A
+typedef struct tagMONITORINFOEXA
 {
     MONITORINFO dummy;
     CHAR        szDevice[CCHDEVICENAME];
-} MONITORINFOEX32A, *LPMONITORINFOEX32A;
+} MONITORINFOEXA, *LPMONITORINFOEXA;
 
-typedef struct tagMONITORINFOEX32W
+typedef struct tagMONITORINFOEXW
 {
     MONITORINFO dummy;
     WCHAR       szDevice[CCHDEVICENAME];
-} MONITORINFOEX32W, *LPMONITORINFOEX32W;
+} MONITORINFOEXW, *LPMONITORINFOEXW;
 
 DECL_WINELIB_TYPE_AW(MONITORINFOEX)
 DECL_WINELIB_TYPE_AW(LPMONITORINFOEX)
 
-typedef BOOL32  (CALLBACK *MONITORENUMPROC)(HMONITOR,HDC32,LPRECT32,LPARAM);
+typedef BOOL  (CALLBACK *MONITORENUMPROC)(HMONITOR,HDC,LPRECT,LPARAM);
 
 typedef struct tagDLGTEMPLATE
 {
@@ -1827,27 +1668,25 @@ typedef const DLGITEMTEMPLATE *LPCDLGITEMTEMPLATE;
 
 typedef struct
 {
-    CREATESTRUCT32A *lpcs;
-    HWND32           hwndInsertAfter;
-} CBT_CREATEWND32A, *LPCBT_CREATEWND32A;
+    CREATESTRUCTA *lpcs;
+    HWND           hwndInsertAfter;
+} CBT_CREATEWNDA, *LPCBT_CREATEWNDA;
 
 typedef struct
 {
-    CREATESTRUCT32W *lpcs;
-    HWND32           hwndInsertAfter;
-} CBT_CREATEWND32W, *LPCBT_CREATEWND32W;
+    CREATESTRUCTW *lpcs;
+    HWND           hwndInsertAfter;
+} CBT_CREATEWNDW, *LPCBT_CREATEWNDW;
 
 DECL_WINELIB_TYPE_AW(CBT_CREATEWND)
 DECL_WINELIB_TYPE_AW(LPCBT_CREATEWND)
 
 typedef struct
 {
-    BOOL32    fMouse;
-    HWND32    hWndActive;
-} CBTACTIVATESTRUCT32, *LPCBTACTIVATESTRUCT32;
+    BOOL    fMouse;
+    HWND    hWndActive;
+} CBTACTIVATESTRUCT, *LPCBTACTIVATESTRUCT;
 
-DECL_WINELIB_TYPE(CBTACTIVATESTRUCT)
-DECL_WINELIB_TYPE(LPCBTACTIVATESTRUCT)
 
 /* modifiers for RegisterHotKey */
 #define	MOD_ALT		0x0001
@@ -1892,69 +1731,69 @@ DECL_WINELIB_TYPE(LPCBTACTIVATESTRUCT)
 #define	SLE_WARNING	0x00000003
 
 /* Predefined resources */
-#define IDI_APPLICATION32A MAKEINTRESOURCE32A(32512)
-#define IDI_APPLICATION32W MAKEINTRESOURCE32W(32512)
+#define IDI_APPLICATIONA MAKEINTRESOURCEA(32512)
+#define IDI_APPLICATIONW MAKEINTRESOURCEW(32512)
 #define IDI_APPLICATION    WINELIB_NAME_AW(IDI_APPLICATION)
-#define IDI_HAND32A        MAKEINTRESOURCE32A(32513)
-#define IDI_HAND32W        MAKEINTRESOURCE32W(32513)
+#define IDI_HANDA        MAKEINTRESOURCEA(32513)
+#define IDI_HANDW        MAKEINTRESOURCEW(32513)
 #define IDI_HAND           WINELIB_NAME_AW(IDI_HAND)
-#define IDI_QUESTION32A    MAKEINTRESOURCE32A(32514)
-#define IDI_QUESTION32W    MAKEINTRESOURCE32W(32514)
+#define IDI_QUESTIONA    MAKEINTRESOURCEA(32514)
+#define IDI_QUESTIONW    MAKEINTRESOURCEW(32514)
 #define IDI_QUESTION       WINELIB_NAME_AW(IDI_QUESTION)
-#define IDI_EXCLAMATION32A MAKEINTRESOURCE32A(32515)
-#define IDI_EXCLAMATION32W MAKEINTRESOURCE32W(32515)
+#define IDI_EXCLAMATIONA MAKEINTRESOURCEA(32515)
+#define IDI_EXCLAMATIONW MAKEINTRESOURCEW(32515)
 #define IDI_EXCLAMATION    WINELIB_NAME_AW(IDI_EXCLAMATION)
-#define IDI_ASTERISK32A    MAKEINTRESOURCE32A(32516)
-#define IDI_ASTERISK32W    MAKEINTRESOURCE32W(32516)
+#define IDI_ASTERISKA    MAKEINTRESOURCEA(32516)
+#define IDI_ASTERISKW    MAKEINTRESOURCEW(32516)
 #define IDI_ASTERISK       WINELIB_NAME_AW(IDI_ASTERISK)
 
-#define IDC_BUMMER32A      MAKEINTRESOURCE32A(100)
-#define IDC_BUMMER32W      MAKEINTRESOURCE32W(100)
+#define IDC_BUMMERA      MAKEINTRESOURCEA(100)
+#define IDC_BUMMERW      MAKEINTRESOURCEW(100)
 #define IDC_BUMMER         WINELIB_NAME_AW(IDC_BUMMER)
-#define IDC_ARROW32A       MAKEINTRESOURCE32A(32512)
-#define IDC_ARROW32W       MAKEINTRESOURCE32W(32512)
+#define IDC_ARROWA       MAKEINTRESOURCEA(32512)
+#define IDC_ARROWW       MAKEINTRESOURCEW(32512)
 #define IDC_ARROW          WINELIB_NAME_AW(IDC_ARROW)
-#define IDC_IBEAM32A       MAKEINTRESOURCE32A(32513)
-#define IDC_IBEAM32W       MAKEINTRESOURCE32W(32513)
+#define IDC_IBEAMA       MAKEINTRESOURCEA(32513)
+#define IDC_IBEAMW       MAKEINTRESOURCEW(32513)
 #define IDC_IBEAM          WINELIB_NAME_AW(IDC_IBEAM)
-#define IDC_WAIT32A        MAKEINTRESOURCE32A(32514)
-#define IDC_WAIT32W        MAKEINTRESOURCE32W(32514)
+#define IDC_WAITA        MAKEINTRESOURCEA(32514)
+#define IDC_WAITW        MAKEINTRESOURCEW(32514)
 #define IDC_WAIT           WINELIB_NAME_AW(IDC_WAIT)
-#define IDC_CROSS32A       MAKEINTRESOURCE32A(32515)
-#define IDC_CROSS32W       MAKEINTRESOURCE32W(32515)
+#define IDC_CROSSA       MAKEINTRESOURCEA(32515)
+#define IDC_CROSSW       MAKEINTRESOURCEW(32515)
 #define IDC_CROSS          WINELIB_NAME_AW(IDC_CROSS)
-#define IDC_UPARROW32A     MAKEINTRESOURCE32A(32516)
-#define IDC_UPARROW32W     MAKEINTRESOURCE32W(32516)
+#define IDC_UPARROWA     MAKEINTRESOURCEA(32516)
+#define IDC_UPARROWW     MAKEINTRESOURCEW(32516)
 #define IDC_UPARROW        WINELIB_NAME_AW(IDC_UPARROW)
-#define IDC_SIZE32A        MAKEINTRESOURCE32A(32640)
-#define IDC_SIZE32W        MAKEINTRESOURCE32W(32640)
+#define IDC_SIZEA        MAKEINTRESOURCEA(32640)
+#define IDC_SIZEW        MAKEINTRESOURCEW(32640)
 #define IDC_SIZE           WINELIB_NAME_AW(IDC_SIZE)
-#define IDC_ICON32A        MAKEINTRESOURCE32A(32641)
-#define IDC_ICON32W        MAKEINTRESOURCE32W(32641)
+#define IDC_ICONA        MAKEINTRESOURCEA(32641)
+#define IDC_ICONW        MAKEINTRESOURCEW(32641)
 #define IDC_ICON           WINELIB_NAME_AW(IDC_ICON)
-#define IDC_SIZENWSE32A    MAKEINTRESOURCE32A(32642)
-#define IDC_SIZENWSE32W    MAKEINTRESOURCE32W(32642)
+#define IDC_SIZENWSEA    MAKEINTRESOURCEA(32642)
+#define IDC_SIZENWSEW    MAKEINTRESOURCEW(32642)
 #define IDC_SIZENWSE       WINELIB_NAME_AW(IDC_SIZENWSE)
-#define IDC_SIZENESW32A    MAKEINTRESOURCE32A(32643)
-#define IDC_SIZENESW32W    MAKEINTRESOURCE32W(32643)
+#define IDC_SIZENESWA    MAKEINTRESOURCEA(32643)
+#define IDC_SIZENESWW    MAKEINTRESOURCEW(32643)
 #define IDC_SIZENESW       WINELIB_NAME_AW(IDC_SIZENESW)
-#define IDC_SIZEWE32A      MAKEINTRESOURCE32A(32644)
-#define IDC_SIZEWE32W      MAKEINTRESOURCE32W(32644)
+#define IDC_SIZEWEA      MAKEINTRESOURCEA(32644)
+#define IDC_SIZEWEW      MAKEINTRESOURCEW(32644)
 #define IDC_SIZEWE         WINELIB_NAME_AW(IDC_SIZEWE)
-#define IDC_SIZENS32A      MAKEINTRESOURCE32A(32645)
-#define IDC_SIZENS32W      MAKEINTRESOURCE32W(32645)
+#define IDC_SIZENSA      MAKEINTRESOURCEA(32645)
+#define IDC_SIZENSW      MAKEINTRESOURCEW(32645)
 #define IDC_SIZENS         WINELIB_NAME_AW(IDC_SIZENS)
-#define IDC_SIZEALL32A     MAKEINTRESOURCE32A(32646)
-#define IDC_SIZEALL32W     MAKEINTRESOURCE32W(32646)
+#define IDC_SIZEALLA     MAKEINTRESOURCEA(32646)
+#define IDC_SIZEALLW     MAKEINTRESOURCEW(32646)
 #define IDC_SIZEALL        WINELIB_NAME_AW(IDC_SIZEALL)
-#define IDC_NO32A          MAKEINTRESOURCE32A(32648)
-#define IDC_NO32W          MAKEINTRESOURCE32W(32648)
+#define IDC_NOA          MAKEINTRESOURCEA(32648)
+#define IDC_NOW          MAKEINTRESOURCEW(32648)
 #define IDC_NO             WINELIB_NAME_AW(IDC_NO)
-#define IDC_APPSTARTING32A MAKEINTRESOURCE32A(32650)
-#define IDC_APPSTARTING32W MAKEINTRESOURCE32W(32650)
+#define IDC_APPSTARTINGA MAKEINTRESOURCEA(32650)
+#define IDC_APPSTARTINGW MAKEINTRESOURCEW(32650)
 #define IDC_APPSTARTING    WINELIB_NAME_AW(IDC_APPSTARTING)
-#define IDC_HELP32A        MAKEINTRESOURCE32A(32651)
-#define IDC_HELP32W        MAKEINTRESOURCE32W(32651)
+#define IDC_HELPA        MAKEINTRESOURCEA(32651)
+#define IDC_HELPW        MAKEINTRESOURCEW(32651)
 #define IDC_HELP           WINELIB_NAME_AW(IDC_HELP)
 
 /* SystemParametersInfo */
@@ -2168,8 +2007,7 @@ DECL_WINELIB_TYPE(LPCBTACTIVATESTRUCT)
 #define SW_ERASE               0x0004
 
 /* CreateWindow() coordinates */
-#define CW_USEDEFAULT32 ((INT32)0x80000000)
-#define CW_USEDEFAULT   WINELIB_NAME(CW_USEDEFAULT)
+#define CW_USEDEFAULT ((INT)0x80000000)
 
 /* ChildWindowFromPointEx Flags */
 #define CWP_ALL                0x0000
@@ -2237,14 +2075,14 @@ DECL_WINELIB_TYPE(LPCBTACTIVATESTRUCT)
 #define SWP_NOSENDCHANGING  0x0400
 #define SWP_DEFERERASE      0x2000
 
-#define HWND_DESKTOP        ((HWND32)0)
-#define HWND_BROADCAST      ((HWND32)0xffff)
+#define HWND_DESKTOP        ((HWND)0)
+#define HWND_BROADCAST      ((HWND)0xffff)
 
 /* SetWindowPos() hwndInsertAfter field values */
-#define HWND_TOP            ((HWND32)0)
-#define HWND_BOTTOM         ((HWND32)1)
-#define HWND_TOPMOST        ((HWND32)-1)
-#define HWND_NOTOPMOST      ((HWND32)-2)
+#define HWND_TOP            ((HWND)0)
+#define HWND_BOTTOM         ((HWND)1)
+#define HWND_TOPMOST        ((HWND)-1)
+#define HWND_NOTOPMOST      ((HWND)-2)
 
 #define MF_INSERT          0x0000
 #define MF_CHANGE          0x0080
@@ -2418,61 +2256,51 @@ DECL_WINELIB_TYPE(LPCBTACTIVATESTRUCT)
 
 typedef struct
 {
-    UINT32      CtlType;
-    UINT32      CtlID;
-    UINT32      itemID;
-    UINT32      itemAction;
-    UINT32      itemState;
-    HWND32      hwndItem;
-    HDC32       hDC;
-    RECT32      rcItem WINE_PACKED;
+    UINT      CtlType;
+    UINT      CtlID;
+    UINT      itemID;
+    UINT      itemAction;
+    UINT      itemState;
+    HWND      hwndItem;
+    HDC       hDC;
+    RECT      rcItem WINE_PACKED;
     DWORD       itemData WINE_PACKED;
-} DRAWITEMSTRUCT32, *PDRAWITEMSTRUCT32, *LPDRAWITEMSTRUCT32;
+} DRAWITEMSTRUCT, *PDRAWITEMSTRUCT, *LPDRAWITEMSTRUCT;
 
-DECL_WINELIB_TYPE(DRAWITEMSTRUCT)
-DECL_WINELIB_TYPE(PDRAWITEMSTRUCT)
-DECL_WINELIB_TYPE(LPDRAWITEMSTRUCT)
 
 typedef struct
 {
-    UINT32      CtlType;
-    UINT32      CtlID;
-    UINT32      itemID;
-    UINT32      itemWidth;
-    UINT32      itemHeight;
+    UINT      CtlType;
+    UINT      CtlID;
+    UINT      itemID;
+    UINT      itemWidth;
+    UINT      itemHeight;
     DWORD       itemData;
-} MEASUREITEMSTRUCT32, *PMEASUREITEMSTRUCT32, *LPMEASUREITEMSTRUCT32;
+} MEASUREITEMSTRUCT, *PMEASUREITEMSTRUCT, *LPMEASUREITEMSTRUCT;
 
-DECL_WINELIB_TYPE(MEASUREITEMSTRUCT)
-DECL_WINELIB_TYPE(PMEASUREITEMSTRUCT)
-DECL_WINELIB_TYPE(LPMEASUREITEMSTRUCT)
 
 typedef struct
 {
-    UINT32     CtlType;
-    UINT32     CtlID;
-    UINT32     itemID;
-    HWND32     hwndItem;
+    UINT     CtlType;
+    UINT     CtlID;
+    UINT     itemID;
+    HWND     hwndItem;
     DWORD      itemData;
-} DELETEITEMSTRUCT32, *LPDELETEITEMSTRUCT32;
+} DELETEITEMSTRUCT, *LPDELETEITEMSTRUCT;
 
-DECL_WINELIB_TYPE(DELETEITEMSTRUCT)
-DECL_WINELIB_TYPE(LPDELETEITEMSTRUCT)
 
 typedef struct
 {
-    UINT32      CtlType;
-    UINT32      CtlID;
-    HWND32      hwndItem;
-    UINT32      itemID1;
+    UINT      CtlType;
+    UINT      CtlID;
+    HWND      hwndItem;
+    UINT      itemID1;
     DWORD       itemData1;
-    UINT32      itemID2;
+    UINT      itemID2;
     DWORD       itemData2;
     DWORD       dwLocaleId;
-} COMPAREITEMSTRUCT32, *LPCOMPAREITEMSTRUCT32;
+} COMPAREITEMSTRUCT, *LPCOMPAREITEMSTRUCT;
 
-DECL_WINELIB_TYPE(COMPAREITEMSTRUCT)
-DECL_WINELIB_TYPE(LPCOMPAREITEMSTRUCT)
 
 /* WM_KEYUP/DOWN/CHAR HIWORD(lParam) flags */
 #define KF_EXTENDED         0x0100
@@ -2793,84 +2621,79 @@ typedef struct
 #define NF_REQUERY	    4
 
 #pragma pack(4)
-#define     EnumTaskWindows32(handle,proc,lparam) \
+#define     EnumTaskWindows(handle,proc,lparam) \
             EnumThreadWindows(handle,proc,lparam)
-#define     EnumTaskWindows WINELIB_NAME(EnumTaskWindows)
-#define     OemToAnsi32A OemToChar32A
-#define     OemToAnsi32W OemToChar32W
+#define     OemToAnsiA OemToCharA
+#define     OemToAnsiW OemToCharW
 #define     OemToAnsi WINELIB_NAME_AW(OemToAnsi)
-#define     OemToAnsiBuff32A OemToCharBuff32A
-#define     OemToAnsiBuff32W OemToCharBuff32W
+#define     OemToAnsiBuffA OemToCharBuffA
+#define     OemToAnsiBuffW OemToCharBuffW
 #define     OemToAnsiBuff WINELIB_NAME_AW(OemToAnsiBuff)
-#define     AnsiToOem32A CharToOem32A
-#define     AnsiToOem32W CharToOem32W
+#define     AnsiToOemA CharToOemA
+#define     AnsiToOemW CharToOemW
 #define     AnsiToOem WINELIB_NAME_AW(AnsiToOem)
-#define     AnsiToOemBuff32A CharToOemBuff32A
-#define     AnsiToOemBuff32W CharToOemBuff32W
+#define     AnsiToOemBuffA CharToOemBuffA
+#define     AnsiToOemBuffW CharToOemBuffW
 #define     AnsiToOemBuff WINELIB_NAME_AW(AnsiToOemBuff)
-WORD        WINAPI CascadeWindows (HWND32, UINT32, const LPRECT32,
-                                   UINT32, const HWND32 *);
-INT32       WINAPI CopyAcceleratorTable32A(HACCEL32,LPACCEL32,INT32);
-INT32       WINAPI CopyAcceleratorTable32W(HACCEL32,LPACCEL32,INT32);
+WORD        WINAPI CascadeWindows (HWND, UINT, const LPRECT,
+                                   UINT, const HWND *);
+INT       WINAPI CopyAcceleratorTableA(HACCEL,LPACCEL,INT);
+INT       WINAPI CopyAcceleratorTableW(HACCEL,LPACCEL,INT);
 #define     CopyAcceleratorTable WINELIB_NAME_AW(CopyAcceleratorTable)
-HICON32     WINAPI CreateIconIndirect(LPICONINFO32);
-BOOL32      WINAPI DestroyAcceleratorTable(HACCEL32);
-BOOL32      WINAPI EnumDisplayMonitors(HDC32,LPRECT32,MONITORENUMPROC,LPARAM);
-INT32       WINAPI EnumPropsEx32A(HWND32,PROPENUMPROCEX32A,LPARAM);
-INT32       WINAPI EnumPropsEx32W(HWND32,PROPENUMPROCEX32W,LPARAM);
+HICON     WINAPI CreateIconIndirect(LPICONINFO);
+BOOL      WINAPI DestroyAcceleratorTable(HACCEL);
+BOOL      WINAPI EnumDisplayMonitors(HDC,LPRECT,MONITORENUMPROC,LPARAM);
+INT       WINAPI EnumPropsExA(HWND,PROPENUMPROCEXA,LPARAM);
+INT       WINAPI EnumPropsExW(HWND,PROPENUMPROCEXW,LPARAM);
 #define     EnumPropsEx WINELIB_NAME_AW(EnumPropsEx)
-BOOL32      WINAPI EnumThreadWindows(DWORD,WNDENUMPROC32,LPARAM);
-BOOL32      WINAPI ExitWindowsEx(UINT32,DWORD);
-BOOL32      WINAPI GetIconInfo32(HICON32,LPICONINFO32);
-#define     GetIconInfo WINELIB_NAME(GetIconInfo)
-DWORD       WINAPI GetMenuContextHelpId32(HMENU32);
-#define     GetMenuContextHelpId WINELIB_NAME(GetMenuContextHelpId)
-UINT32      WINAPI GetMenuDefaultItem32(HMENU32,UINT32,UINT32);
-#define     GetMenuDefaultItem WINELIB_NAME(GetMenuDefaultItem)
-BOOL32      WINAPI GetMenuItemInfo32A(HMENU32,UINT32,BOOL32,MENUITEMINFO32A*);
-BOOL32      WINAPI GetMenuItemInfo32W(HMENU32,UINT32,BOOL32,MENUITEMINFO32W*);
+BOOL      WINAPI EnumThreadWindows(DWORD,WNDENUMPROC,LPARAM);
+BOOL      WINAPI ExitWindowsEx(UINT,DWORD);
+BOOL      WINAPI GetIconInfo(HICON,LPICONINFO);
+DWORD       WINAPI GetMenuContextHelpId(HMENU);
+UINT      WINAPI GetMenuDefaultItem(HMENU,UINT,UINT);
+BOOL      WINAPI GetMenuItemInfoA(HMENU,UINT,BOOL,MENUITEMINFOA*);
+BOOL      WINAPI GetMenuItemInfoW(HMENU,UINT,BOOL,MENUITEMINFOW*);
 #define     GetMenuItemInfo WINELIB_NAME_AW(GetMenuItemInfo)
-BOOL32      WINAPI GetMonitorInfo32A(HMONITOR,LPMONITORINFO);
-BOOL32      WINAPI GetMonitorInfo32W(HMONITOR,LPMONITORINFO);
+BOOL      WINAPI GetMonitorInfoA(HMONITOR,LPMONITORINFO);
+BOOL      WINAPI GetMonitorInfoW(HMONITOR,LPMONITORINFO);
 #define     GetMonitorInfo WINELIB_NAME_AW(GetMonitorInfo)
-INT32       WINAPI GetNumberFormat32A(LCID,DWORD,LPCSTR,const NUMBERFMT32A*,LPSTR,int);
-INT32       WINAPI GetNumberFormat32W(LCID,DWORD,LPCWSTR,const NUMBERFMT32W*,LPWSTR,int);
+INT       WINAPI GetNumberFormatA(LCID,DWORD,LPCSTR,const NUMBERFMTA*,LPSTR,int);
+INT       WINAPI GetNumberFormatW(LCID,DWORD,LPCWSTR,const NUMBERFMTW*,LPWSTR,int);
 #define     GetNumberFormat WINELIB_NAME_AW(GetNumberFormat);
-DWORD       WINAPI GetWindowContextHelpId(HWND32);
-DWORD       WINAPI GetWindowThreadProcessId(HWND32,LPDWORD);
-BOOL32      WINAPI IsWindowUnicode(HWND32);
-HKL32       WINAPI LoadKeyboardLayout32A(LPCSTR,UINT32);
-HKL32       WINAPI LoadKeyboardLayout32W(LPCWSTR,UINT32);
+DWORD       WINAPI GetWindowContextHelpId(HWND);
+DWORD       WINAPI GetWindowThreadProcessId(HWND,LPDWORD);
+BOOL      WINAPI IsWindowUnicode(HWND);
+HKL       WINAPI LoadKeyboardLayoutA(LPCSTR,UINT);
+HKL       WINAPI LoadKeyboardLayoutW(LPCWSTR,UINT);
 #define     LoadKeyboardLayout WINELIB_NAME_AW(LoadKeyboardLayout)
-INT32       WINAPI MessageBoxEx32A(HWND32,LPCSTR,LPCSTR,UINT32,WORD);
-INT32       WINAPI MessageBoxEx32W(HWND32,LPCWSTR,LPCWSTR,UINT32,WORD);
+INT       WINAPI MessageBoxExA(HWND,LPCSTR,LPCSTR,UINT,WORD);
+INT       WINAPI MessageBoxExW(HWND,LPCWSTR,LPCWSTR,UINT,WORD);
 #define     MessageBoxEx WINELIB_NAME_AW(MessageBoxEx)
-HMONITOR    WINAPI MonitorFromPoint(POINT32,DWORD);
-HMONITOR    WINAPI MonitorFromRect(LPRECT32,DWORD);
-HMONITOR    WINAPI MonitorFromWindow(HWND32,DWORD);
-DWORD       WINAPI MsgWaitForMultipleObjects(DWORD,HANDLE32*,BOOL32,DWORD,DWORD);
-BOOL32      WINAPI PaintDesktop(HDC32);
-BOOL32      WINAPI PostThreadMessage32A(DWORD, UINT32, WPARAM32, LPARAM);
-BOOL32      WINAPI PostThreadMessage32W(DWORD, UINT32, WPARAM32, LPARAM);
+HMONITOR    WINAPI MonitorFromPoint(POINT,DWORD);
+HMONITOR    WINAPI MonitorFromRect(LPRECT,DWORD);
+HMONITOR    WINAPI MonitorFromWindow(HWND,DWORD);
+DWORD       WINAPI MsgWaitForMultipleObjects(DWORD,HANDLE*,BOOL,DWORD,DWORD);
+BOOL      WINAPI PaintDesktop(HDC);
+BOOL      WINAPI PostThreadMessageA(DWORD, UINT, WPARAM, LPARAM);
+BOOL      WINAPI PostThreadMessageW(DWORD, UINT, WPARAM, LPARAM);
 #define     PostThreadMessage WINELIB_NAME_AW(PostThreadMessage)
-UINT32      WINAPI ReuseDDElParam(UINT32,UINT32,UINT32,UINT32,UINT32);
-BOOL32      WINAPI SendNotifyMessage32A(HWND32,UINT32,WPARAM32,LPARAM);
-BOOL32      WINAPI SendNotifyMessage32W(HWND32,UINT32,WPARAM32,LPARAM);
+UINT      WINAPI ReuseDDElParam(UINT,UINT,UINT,UINT,UINT);
+BOOL      WINAPI SendNotifyMessageA(HWND,UINT,WPARAM,LPARAM);
+BOOL      WINAPI SendNotifyMessageW(HWND,UINT,WPARAM,LPARAM);
 #define     SendNotifyMessage WINELIB_NAME_AW(SendNotifyMessage)
 VOID        WINAPI SetDebugErrorLevel(DWORD);
 VOID        WINAPI SetLastErrorEx(DWORD,DWORD);
-BOOL32      WINAPI SetMenuDefaultItem32(HMENU32,UINT32,UINT32);
-#define     SetMenuDefaultItem WINELIB_NAME(SetMenuDefaultItem)
-BOOL32      WINAPI SetMenuItemInfo32A(HMENU32,UINT32,BOOL32,const MENUITEMINFO32A*);
-BOOL32      WINAPI SetMenuItemInfo32W(HMENU32,UINT32,BOOL32,const MENUITEMINFO32W*);
+BOOL      WINAPI SetMenuDefaultItem(HMENU,UINT,UINT);
+BOOL      WINAPI SetMenuItemInfoA(HMENU,UINT,BOOL,const MENUITEMINFOA*);
+BOOL      WINAPI SetMenuItemInfoW(HMENU,UINT,BOOL,const MENUITEMINFOW*);
 #define     SetMenuItemInfo WINELIB_NAME_AW(SetMenuItemInfo)
-BOOL32      WINAPI SetWindowContextHelpId(HWND32,DWORD);
-WORD        WINAPI TileWindows (HWND32, UINT32, const LPRECT32,
-                                UINT32, const HWND32 *);
-BOOL32      WINAPI TrackPopupMenuEx(HMENU32,UINT32,INT32,INT32,HWND32,
+BOOL      WINAPI SetWindowContextHelpId(HWND,DWORD);
+WORD        WINAPI TileWindows (HWND, UINT, const LPRECT,
+                                UINT, const HWND *);
+BOOL      WINAPI TrackPopupMenuEx(HMENU,UINT,INT,INT,HWND,
                                     LPTPMPARAMS);
-UINT32      WINAPI UnpackDDElParam(UINT32,UINT32,UINT32*,UINT32*);
-DWORD       WINAPI WaitForInputIdle(HANDLE32,DWORD);
+UINT      WINAPI UnpackDDElParam(UINT,UINT,UINT*,UINT*);
+DWORD       WINAPI WaitForInputIdle(HANDLE,DWORD);
 VOID        WINAPI keybd_event(BYTE,BYTE,DWORD,DWORD);
 VOID        WINAPI mouse_event(DWORD,DWORD,DWORD,DWORD,DWORD);
 
@@ -2892,846 +2715,620 @@ VOID        WINAPI WaitMessage(VOID);
 
 /* Declarations for functions that change between Win16 and Win32 */
 
-BOOL32      WINAPI AdjustWindowRect32(LPRECT32,DWORD,BOOL32);
-#define     AdjustWindowRect WINELIB_NAME(AdjustWindowRect)
-BOOL32      WINAPI AdjustWindowRectEx32(LPRECT32,DWORD,BOOL32,DWORD);
-#define     AdjustWindowRectEx WINELIB_NAME(AdjustWindowRectEx)
-#define     AnsiLower32A CharLower32A
-#define     AnsiLower32W CharLower32W
+BOOL      WINAPI AdjustWindowRect(LPRECT,DWORD,BOOL);
+BOOL      WINAPI AdjustWindowRectEx(LPRECT,DWORD,BOOL,DWORD);
+#define     AnsiLowerA CharLowerA
+#define     AnsiLowerW CharLowerW
 #define     AnsiLower WINELIB_NAME_AW(AnsiLower)
-#define     AnsiLowerBuff32A CharLowerBuff32A
-#define     AnsiLowerBuff32W CharLowerBuff32W
+#define     AnsiLowerBuffA CharLowerBuffA
+#define     AnsiLowerBuffW CharLowerBuffW
 #define     AnsiLowerBuff WINELIB_NAME_AW(AnsiLowerBuff)
-#define     AnsiNext32A CharNext32A
-#define     AnsiNext32W CharNext32W
+#define     AnsiNextA CharNextA
+#define     AnsiNextW CharNextW
 #define     AnsiNext WINELIB_NAME_AW(AnsiNext)
-#define     AnsiPrev32A CharPrev32A
-#define     AnsiPrev32W CharPrev32W
+#define     AnsiPrevA CharPrevA
+#define     AnsiPrevW CharPrevW
 #define     AnsiPrev WINELIB_NAME_AW(AnsiPrev)
-#define     AnsiUpper32A CharUpper32A
-#define     AnsiUpper32W CharUpper32W
+#define     AnsiUpperA CharUpperA
+#define     AnsiUpperW CharUpperW
 #define     AnsiUpper WINELIB_NAME_AW(AnsiUpper)
-#define     AnsiUpperBuff32A CharUpperBuff32A
-#define     AnsiUpperBuff32W CharUpperBuff32W
+#define     AnsiUpperBuffA CharUpperBuffA
+#define     AnsiUpperBuffW CharUpperBuffW
 #define     AnsiUpperBuff WINELIB_NAME_AW(AnsiUpperBuff)
-BOOL32      WINAPI AnyPopup32(void);
-#define     AnyPopup WINELIB_NAME(AnyPopup)
-BOOL32      WINAPI AppendMenu32A(HMENU32,UINT32,UINT32,LPCSTR);
-BOOL32      WINAPI AppendMenu32W(HMENU32,UINT32,UINT32,LPCWSTR);
+BOOL      WINAPI AnyPopup(void);
+BOOL      WINAPI AppendMenuA(HMENU,UINT,UINT,LPCSTR);
+BOOL      WINAPI AppendMenuW(HMENU,UINT,UINT,LPCWSTR);
 #define     AppendMenu WINELIB_NAME_AW(AppendMenu)
-UINT32      WINAPI ArrangeIconicWindows32(HWND32);
-#define     ArrangeIconicWindows WINELIB_NAME(ArrangeIconicWindows)
-HDWP32      WINAPI BeginDeferWindowPos32(INT32);
-#define     BeginDeferWindowPos WINELIB_NAME(BeginDeferWindowPos)
-HDC32       WINAPI BeginPaint32(HWND32,LPPAINTSTRUCT32);
-#define     BeginPaint WINELIB_NAME(BeginPaint)
-BOOL32      WINAPI BringWindowToTop32(HWND32);
-#define     BringWindowToTop WINELIB_NAME(BringWindowToTop)
-BOOL32      WINAPI CallMsgFilter32A(LPMSG32,INT32);
-BOOL32      WINAPI CallMsgFilter32W(LPMSG32,INT32);
+UINT      WINAPI ArrangeIconicWindows(HWND);
+HDWP      WINAPI BeginDeferWindowPos(INT);
+HDC       WINAPI BeginPaint(HWND,LPPAINTSTRUCT);
+BOOL      WINAPI BringWindowToTop(HWND);
+BOOL      WINAPI CallMsgFilterA(LPMSG,INT);
+BOOL      WINAPI CallMsgFilterW(LPMSG,INT);
 #define     CallMsgFilter WINELIB_NAME_AW(CallMsgFilter)
-LRESULT     WINAPI CallNextHookEx32(HHOOK,INT32,WPARAM32,LPARAM);
-#define     CallNextHookEx WINELIB_NAME(CallNextHookEx)
-LRESULT     WINAPI CallWindowProc32A(WNDPROC32,HWND32,UINT32,WPARAM32,LPARAM);
-LRESULT     WINAPI CallWindowProc32W(WNDPROC32,HWND32,UINT32,WPARAM32,LPARAM);
+LRESULT     WINAPI CallNextHookEx(HHOOK,INT,WPARAM,LPARAM);
+LRESULT     WINAPI CallWindowProcA(WNDPROC,HWND,UINT,WPARAM,LPARAM);
+LRESULT     WINAPI CallWindowProcW(WNDPROC,HWND,UINT,WPARAM,LPARAM);
 #define     CallWindowProc WINELIB_NAME_AW(CallWindowProc)
-BOOL32      WINAPI ChangeClipboardChain32(HWND32,HWND32);
-#define     ChangeClipboardChain WINELIB_NAME(ChangeClipboardChain)
-BOOL32      WINAPI ChangeMenu32A(HMENU32,UINT32,LPCSTR,UINT32,UINT32);
-BOOL32      WINAPI ChangeMenu32W(HMENU32,UINT32,LPCWSTR,UINT32,UINT32);
+BOOL      WINAPI ChangeClipboardChain(HWND,HWND);
+BOOL      WINAPI ChangeMenuA(HMENU,UINT,LPCSTR,UINT,UINT);
+BOOL      WINAPI ChangeMenuW(HMENU,UINT,LPCWSTR,UINT,UINT);
 #define     ChangeMenu WINELIB_NAME_AW(ChangeMenu)
-LPSTR       WINAPI CharLower32A(LPSTR);
-LPWSTR      WINAPI CharLower32W(LPWSTR);
+LPSTR       WINAPI CharLowerA(LPSTR);
+LPWSTR      WINAPI CharLowerW(LPWSTR);
 #define     CharLower WINELIB_NAME_AW(CharLower)
-DWORD       WINAPI CharLowerBuff32A(LPSTR,DWORD);
-DWORD       WINAPI CharLowerBuff32W(LPWSTR,DWORD);
+DWORD       WINAPI CharLowerBuffA(LPSTR,DWORD);
+DWORD       WINAPI CharLowerBuffW(LPWSTR,DWORD);
 #define     CharLowerBuff WINELIB_NAME_AW(CharLowerBuff)
-LPSTR       WINAPI CharNext32A(LPCSTR);
-LPWSTR      WINAPI CharNext32W(LPCWSTR);
+LPSTR       WINAPI CharNextA(LPCSTR);
+LPWSTR      WINAPI CharNextW(LPCWSTR);
 #define     CharNext WINELIB_NAME_AW(CharNext)
-LPSTR       WINAPI CharNextEx32A(WORD,LPCSTR,DWORD);
-LPWSTR      WINAPI CharNextEx32W(WORD,LPCWSTR,DWORD);
+LPSTR       WINAPI CharNextExA(WORD,LPCSTR,DWORD);
+LPWSTR      WINAPI CharNextExW(WORD,LPCWSTR,DWORD);
 #define     CharNextEx WINELIB_NAME_AW(CharNextEx)
-LPSTR       WINAPI CharPrev32A(LPCSTR,LPCSTR);
-LPWSTR      WINAPI CharPrev32W(LPCWSTR,LPCWSTR);
+LPSTR       WINAPI CharPrevA(LPCSTR,LPCSTR);
+LPWSTR      WINAPI CharPrevW(LPCWSTR,LPCWSTR);
 #define     CharPrev WINELIB_NAME_AW(CharPrev)
-LPSTR       WINAPI CharPrevEx32A(WORD,LPCSTR,LPCSTR,DWORD);
-LPWSTR      WINAPI CharPrevEx32W(WORD,LPCWSTR,LPCWSTR,DWORD);
+LPSTR       WINAPI CharPrevExA(WORD,LPCSTR,LPCSTR,DWORD);
+LPWSTR      WINAPI CharPrevExW(WORD,LPCWSTR,LPCWSTR,DWORD);
 #define     CharPrevEx WINELIB_NAME_AW(CharPrevEx)
-LPSTR       WINAPI CharUpper32A(LPSTR);
-LPWSTR      WINAPI CharUpper32W(LPWSTR);
+LPSTR       WINAPI CharUpperA(LPSTR);
+LPWSTR      WINAPI CharUpperW(LPWSTR);
 #define     CharUpper WINELIB_NAME_AW(CharUpper)
-DWORD       WINAPI CharUpperBuff32A(LPSTR,DWORD);
-DWORD       WINAPI CharUpperBuff32W(LPWSTR,DWORD);
+DWORD       WINAPI CharUpperBuffA(LPSTR,DWORD);
+DWORD       WINAPI CharUpperBuffW(LPWSTR,DWORD);
 #define     CharUpperBuff WINELIB_NAME_AW(CharUpperBuff)
-BOOL32      WINAPI CharToOem32A(LPCSTR,LPSTR);
-BOOL32      WINAPI CharToOem32W(LPCWSTR,LPSTR);
+BOOL      WINAPI CharToOemA(LPCSTR,LPSTR);
+BOOL      WINAPI CharToOemW(LPCWSTR,LPSTR);
 #define     CharToOem WINELIB_NAME_AW(CharToOem)
-BOOL32      WINAPI CharToOemBuff32A(LPCSTR,LPSTR,DWORD);
-BOOL32      WINAPI CharToOemBuff32W(LPCWSTR,LPSTR,DWORD);
+BOOL      WINAPI CharToOemBuffA(LPCSTR,LPSTR,DWORD);
+BOOL      WINAPI CharToOemBuffW(LPCWSTR,LPSTR,DWORD);
 #define     CharToOemBuff WINELIB_NAME_AW(CharToOemBuff)
-BOOL32      WINAPI CheckDlgButton32(HWND32,INT32,UINT32);
-#define     CheckDlgButton WINELIB_NAME(CheckDlgButton)
-DWORD       WINAPI CheckMenuItem32(HMENU32,UINT32,UINT32);
-#define     CheckMenuItem WINELIB_NAME(CheckMenuItem)
-BOOL32      WINAPI CheckMenuRadioItem32(HMENU32,UINT32,UINT32,UINT32,UINT32);
-#define     CheckMenuRadioItem WINELIB_NAME(CheckMenuRadioItem)
-BOOL32      WINAPI CheckRadioButton32(HWND32,UINT32,UINT32,UINT32);
-#define     CheckRadioButton WINELIB_NAME(CheckRadioButton)
-HWND32      WINAPI ChildWindowFromPoint32(HWND32,POINT32);
-#define     ChildWindowFromPoint WINELIB_NAME(ChildWindowFromPoint)
-HWND32      WINAPI ChildWindowFromPointEx32(HWND32,POINT32,UINT32);
-#define     ChildWindowFromPointEx WINELIB_NAME(ChildWindowFromPointEx)
-BOOL32      WINAPI ClearCommBreak32(INT32);
-#define     ClearCommBreak WINELIB_NAME(ClearCommBreak)
-BOOL32      WINAPI ClientToScreen32(HWND32,LPPOINT32);
-#define     ClientToScreen WINELIB_NAME(ClientToScreen)
-BOOL32      WINAPI ClipCursor32(const RECT32*);
-#define     ClipCursor WINELIB_NAME(ClipCursor)
-BOOL32      WINAPI CloseClipboard32(void);
-#define     CloseClipboard WINELIB_NAME(CloseClipboard)
-BOOL32      WINAPI CloseWindow32(HWND32);
-#define     CloseWindow WINELIB_NAME(CloseWindow)
-#define     CopyCursor32(cur) ((HCURSOR32)CopyIcon32((HICON32)(cur)))
-#define     CopyCursor WINELIB_NAME(CopyCursor)
-HICON32     WINAPI CopyIcon32(HICON32);
-#define     CopyIcon WINELIB_NAME(CopyIcon)
-HICON32     WINAPI CopyImage32(HANDLE32,UINT32,INT32,INT32,UINT32);
-#define     CopyImage WINELIB_NAME(CopyImage)
-BOOL32      WINAPI CopyRect32(RECT32*,const RECT32*);
-#define     CopyRect WINELIB_NAME(CopyRect)
-INT32       WINAPI CountClipboardFormats32(void);
-#define     CountClipboardFormats WINELIB_NAME(CountClipboardFormats)
-BOOL32      WINAPI CreateCaret32(HWND32,HBITMAP32,INT32,INT32);
-#define     CreateCaret WINELIB_NAME(CreateCaret)
-HCURSOR32   WINAPI CreateCursor32(HINSTANCE32,INT32,INT32,INT32,INT32,LPCVOID,LPCVOID);
-#define     CreateCursor WINELIB_NAME(CreateCursor)
-#define     CreateDialog32A(inst,ptr,hwnd,dlg) \
-           CreateDialogParam32A(inst,ptr,hwnd,dlg,0)
-#define     CreateDialog32W(inst,ptr,hwnd,dlg) \
-           CreateDialogParam32W(inst,ptr,hwnd,dlg,0)
+BOOL      WINAPI CheckDlgButton(HWND,INT,UINT);
+DWORD       WINAPI CheckMenuItem(HMENU,UINT,UINT);
+BOOL      WINAPI CheckMenuRadioItem(HMENU,UINT,UINT,UINT,UINT);
+BOOL      WINAPI CheckRadioButton(HWND,UINT,UINT,UINT);
+HWND      WINAPI ChildWindowFromPoint(HWND,POINT);
+HWND      WINAPI ChildWindowFromPointEx(HWND,POINT,UINT);
+BOOL      WINAPI ClearCommBreak(INT);
+BOOL      WINAPI ClientToScreen(HWND,LPPOINT);
+BOOL      WINAPI ClipCursor(const RECT*);
+BOOL      WINAPI CloseClipboard(void);
+BOOL      WINAPI CloseWindow(HWND);
+#define     CopyCursor(cur) ((HCURSOR)CopyIcon((HICON)(cur)))
+HICON     WINAPI CopyIcon(HICON);
+HICON     WINAPI CopyImage(HANDLE,UINT,INT,INT,UINT);
+BOOL      WINAPI CopyRect(RECT*,const RECT*);
+INT       WINAPI CountClipboardFormats(void);
+BOOL      WINAPI CreateCaret(HWND,HBITMAP,INT,INT);
+HCURSOR   WINAPI CreateCursor(HINSTANCE,INT,INT,INT,INT,LPCVOID,LPCVOID);
+#define     CreateDialogA(inst,ptr,hwnd,dlg) \
+           CreateDialogParamA(inst,ptr,hwnd,dlg,0)
+#define     CreateDialogW(inst,ptr,hwnd,dlg) \
+           CreateDialogParamW(inst,ptr,hwnd,dlg,0)
 #define     CreateDialog WINELIB_NAME_AW(CreateDialog)
-#define     CreateDialogIndirect32A(inst,ptr,hwnd,dlg) \
-           CreateDialogIndirectParam32A(inst,ptr,hwnd,dlg,0)
-#define     CreateDialogIndirect32W(inst,ptr,hwnd,dlg) \
-           CreateDialogIndirectParam32W(inst,ptr,hwnd,dlg,0)
+#define     CreateDialogIndirectA(inst,ptr,hwnd,dlg) \
+           CreateDialogIndirectParamA(inst,ptr,hwnd,dlg,0)
+#define     CreateDialogIndirectW(inst,ptr,hwnd,dlg) \
+           CreateDialogIndirectParamW(inst,ptr,hwnd,dlg,0)
 #define     CreateDialogIndirect WINELIB_NAME_AW(CreateDialogIndirect)
-HWND32      WINAPI CreateDialogIndirectParam32A(HINSTANCE32,LPCVOID,HWND32,
-                                                DLGPROC32,LPARAM);
-HWND32      WINAPI CreateDialogIndirectParam32W(HINSTANCE32,LPCVOID,HWND32,
-                                                DLGPROC32,LPARAM);
+HWND      WINAPI CreateDialogIndirectParamA(HINSTANCE,LPCVOID,HWND,
+                                                DLGPROC,LPARAM);
+HWND      WINAPI CreateDialogIndirectParamW(HINSTANCE,LPCVOID,HWND,
+                                                DLGPROC,LPARAM);
 #define     CreateDialogIndirectParam WINELIB_NAME_AW(CreateDialogIndirectParam)
-HWND32      WINAPI CreateDialogParam32A(HINSTANCE32,LPCSTR,HWND32,DLGPROC32,LPARAM);
-HWND32      WINAPI CreateDialogParam32W(HINSTANCE32,LPCWSTR,HWND32,DLGPROC32,LPARAM);
+HWND      WINAPI CreateDialogParamA(HINSTANCE,LPCSTR,HWND,DLGPROC,LPARAM);
+HWND      WINAPI CreateDialogParamW(HINSTANCE,LPCWSTR,HWND,DLGPROC,LPARAM);
 #define     CreateDialogParam WINELIB_NAME_AW(CreateDialogParam)
-HICON32     WINAPI CreateIcon32(HINSTANCE32,INT32,INT32,BYTE,BYTE,LPCVOID,LPCVOID);
-#define     CreateIcon WINELIB_NAME(CreateIcon)
-HICON32     WINAPI CreateIconFromResource32(LPBYTE,UINT32,BOOL32,DWORD);
-#define     CreateIconFromResource WINELIB_NAME(CreateIconFromResource)
-HICON32     WINAPI CreateIconFromResourceEx32(LPBYTE,UINT32,BOOL32,DWORD,INT32,INT32,UINT32);
-#define     CreateIconFromResourceEx WINELIB_NAME(CreateIconFromResourceEx)
-HMENU32     WINAPI CreateMenu32(void);
-#define     CreateMenu WINELIB_NAME(CreateMenu)
-HMENU32     WINAPI CreatePopupMenu32(void);
-#define     CreatePopupMenu WINELIB_NAME(CreatePopupMenu)
-#define     CreateWindow32A(className,titleName,style,x,y,width,height,\
+HICON     WINAPI CreateIcon(HINSTANCE,INT,INT,BYTE,BYTE,LPCVOID,LPCVOID);
+HICON     WINAPI CreateIconFromResource(LPBYTE,UINT,BOOL,DWORD);
+HICON     WINAPI CreateIconFromResourceEx(LPBYTE,UINT,BOOL,DWORD,INT,INT,UINT);
+HMENU     WINAPI CreateMenu(void);
+HMENU     WINAPI CreatePopupMenu(void);
+#define     CreateWindowA(className,titleName,style,x,y,width,height,\
                             parent,menu,instance,param) \
-            CreateWindowEx32A(0,className,titleName,style,x,y,width,height,\
+            CreateWindowExA(0,className,titleName,style,x,y,width,height,\
                               parent,menu,instance,param)
-#define     CreateWindow32W(className,titleName,style,x,y,width,height,\
+#define     CreateWindowW(className,titleName,style,x,y,width,height,\
                             parent,menu,instance,param) \
-            CreateWindowEx32W(0,className,titleName,style,x,y,width,height,\
+            CreateWindowExW(0,className,titleName,style,x,y,width,height,\
                               parent,menu,instance,param)
 #define     CreateWindow WINELIB_NAME_AW(CreateWindow)
-HWND32      WINAPI CreateWindowEx32A(DWORD,LPCSTR,LPCSTR,DWORD,INT32,INT32,
-                                INT32,INT32,HWND32,HMENU32,HINSTANCE32,LPVOID);
-HWND32      WINAPI CreateWindowEx32W(DWORD,LPCWSTR,LPCWSTR,DWORD,INT32,INT32,
-                                INT32,INT32,HWND32,HMENU32,HINSTANCE32,LPVOID);
+HWND      WINAPI CreateWindowExA(DWORD,LPCSTR,LPCSTR,DWORD,INT,INT,
+                                INT,INT,HWND,HMENU,HINSTANCE,LPVOID);
+HWND      WINAPI CreateWindowExW(DWORD,LPCWSTR,LPCWSTR,DWORD,INT,INT,
+                                INT,INT,HWND,HMENU,HINSTANCE,LPVOID);
 #define     CreateWindowEx WINELIB_NAME_AW(CreateWindowEx)
-HWND32      WINAPI CreateMDIWindow32A(LPCSTR,LPCSTR,DWORD,INT32,INT32,
-                                INT32,INT32,HWND32,HINSTANCE32,LPARAM);
-HWND32      WINAPI CreateMDIWindow32W(LPCWSTR,LPCWSTR,DWORD,INT32,INT32,
-                                INT32,INT32,HWND32,HINSTANCE32,LPARAM);
+HWND      WINAPI CreateMDIWindowA(LPCSTR,LPCSTR,DWORD,INT,INT,
+                                INT,INT,HWND,HINSTANCE,LPARAM);
+HWND      WINAPI CreateMDIWindowW(LPCWSTR,LPCWSTR,DWORD,INT,INT,
+                                INT,INT,HWND,HINSTANCE,LPARAM);
 #define     CreateMDIWindow WINELIB_NAME_AW(CreateMDIWindow)
-LRESULT     WINAPI DefDlgProc32A(HWND32,UINT32,WPARAM32,LPARAM);
-LRESULT     WINAPI DefDlgProc32W(HWND32,UINT32,WPARAM32,LPARAM);
+LRESULT     WINAPI DefDlgProcA(HWND,UINT,WPARAM,LPARAM);
+LRESULT     WINAPI DefDlgProcW(HWND,UINT,WPARAM,LPARAM);
 #define     DefDlgProc WINELIB_NAME_AW(DefDlgProc)
-HDWP32      WINAPI DeferWindowPos32(HDWP32,HWND32,HWND32,INT32,INT32,INT32,INT32,UINT32);
-#define     DeferWindowPos WINELIB_NAME(DeferWindowPos)
-LRESULT     WINAPI DefFrameProc32A(HWND32,HWND32,UINT32,WPARAM32,LPARAM);
-LRESULT     WINAPI DefFrameProc32W(HWND32,HWND32,UINT32,WPARAM32,LPARAM);
+HDWP      WINAPI DeferWindowPos(HDWP,HWND,HWND,INT,INT,INT,INT,UINT);
+LRESULT     WINAPI DefFrameProcA(HWND,HWND,UINT,WPARAM,LPARAM);
+LRESULT     WINAPI DefFrameProcW(HWND,HWND,UINT,WPARAM,LPARAM);
 #define     DefFrameProc WINELIB_NAME_AW(DefFrameProc)
-#define     DefHookProc32(code,wparam,lparam,phhook) \
-            CallNextHookEx32(*(phhook),code,wparam,lparam)
-#define     DefHookProc WINELIB_NAME(DefHookProc)
-LRESULT     WINAPI DefMDIChildProc32A(HWND32,UINT32,WPARAM32,LPARAM);
-LRESULT     WINAPI DefMDIChildProc32W(HWND32,UINT32,WPARAM32,LPARAM);
+#define     DefHookProc(code,wparam,lparam,phhook) \
+            CallNextHookEx(*(phhook),code,wparam,lparam)
+LRESULT     WINAPI DefMDIChildProcA(HWND,UINT,WPARAM,LPARAM);
+LRESULT     WINAPI DefMDIChildProcW(HWND,UINT,WPARAM,LPARAM);
 #define     DefMDIChildProc WINELIB_NAME_AW(DefMDIChildProc)
-LRESULT     WINAPI DefWindowProc32A(HWND32,UINT32,WPARAM32,LPARAM);
-LRESULT     WINAPI DefWindowProc32W(HWND32,UINT32,WPARAM32,LPARAM);
+LRESULT     WINAPI DefWindowProcA(HWND,UINT,WPARAM,LPARAM);
+LRESULT     WINAPI DefWindowProcW(HWND,UINT,WPARAM,LPARAM);
 #define     DefWindowProc WINELIB_NAME_AW(DefWindowProc)
-BOOL32      WINAPI DeleteMenu32(HMENU32,UINT32,UINT32);
-#define     DeleteMenu WINELIB_NAME(DeleteMenu)
-BOOL32      WINAPI DestroyCaret32(void);
-#define     DestroyCaret WINELIB_NAME(DestroyCaret)
-BOOL32      WINAPI DestroyCursor32(HCURSOR32);
-#define     DestroyCursor WINELIB_NAME(DestroyCursor)
-BOOL32      WINAPI DestroyIcon32(HICON32);
-#define     DestroyIcon WINELIB_NAME(DestroyIcon)
-BOOL32      WINAPI DestroyMenu32(HMENU32);
-#define     DestroyMenu WINELIB_NAME(DestroyMenu)
-BOOL32      WINAPI DestroyWindow32(HWND32);
-#define     DestroyWindow WINELIB_NAME(DestroyWindow)
-#define     DialogBox32A(inst,template,owner,func) \
-            DialogBoxParam32A(inst,template,owner,func,0)
-#define     DialogBox32W(inst,template,owner,func) \
-            DialogBoxParam32W(inst,template,owner,func,0)
+BOOL      WINAPI DeleteMenu(HMENU,UINT,UINT);
+BOOL      WINAPI DestroyCaret(void);
+BOOL      WINAPI DestroyCursor(HCURSOR);
+BOOL      WINAPI DestroyIcon(HICON);
+BOOL      WINAPI DestroyMenu(HMENU);
+BOOL      WINAPI DestroyWindow(HWND);
+#define     DialogBoxA(inst,template,owner,func) \
+            DialogBoxParamA(inst,template,owner,func,0)
+#define     DialogBoxW(inst,template,owner,func) \
+            DialogBoxParamW(inst,template,owner,func,0)
 #define     DialogBox WINELIB_NAME_AW(DialogBox)
-#define     DialogBoxIndirect32A(inst,template,owner,func) \
-            DialogBoxIndirectParam32A(inst,template,owner,func,0)
-#define     DialogBoxIndirect32W(inst,template,owner,func) \
-            DialogBoxIndirectParam32W(inst,template,owner,func,0)
+#define     DialogBoxIndirectA(inst,template,owner,func) \
+            DialogBoxIndirectParamA(inst,template,owner,func,0)
+#define     DialogBoxIndirectW(inst,template,owner,func) \
+            DialogBoxIndirectParamW(inst,template,owner,func,0)
 #define     DialogBoxIndirect WINELIB_NAME_AW(DialogBoxIndirect)
-INT32       WINAPI DialogBoxIndirectParam32A(HINSTANCE32,LPCVOID,HWND32,DLGPROC32,LPARAM);
-INT32       WINAPI DialogBoxIndirectParam32W(HINSTANCE32,LPCVOID,HWND32,DLGPROC32,LPARAM);
+INT       WINAPI DialogBoxIndirectParamA(HINSTANCE,LPCVOID,HWND,DLGPROC,LPARAM);
+INT       WINAPI DialogBoxIndirectParamW(HINSTANCE,LPCVOID,HWND,DLGPROC,LPARAM);
 #define     DialogBoxIndirectParam WINELIB_NAME_AW(DialogBoxIndirectParam)
-INT32       WINAPI DialogBoxParam32A(HINSTANCE32,LPCSTR,HWND32,DLGPROC32,LPARAM);
-INT32       WINAPI DialogBoxParam32W(HINSTANCE32,LPCWSTR,HWND32,DLGPROC32,LPARAM);
+INT       WINAPI DialogBoxParamA(HINSTANCE,LPCSTR,HWND,DLGPROC,LPARAM);
+INT       WINAPI DialogBoxParamW(HINSTANCE,LPCWSTR,HWND,DLGPROC,LPARAM);
 #define     DialogBoxParam WINELIB_NAME_AW(DialogBoxParam)
-LONG        WINAPI DispatchMessage32A(const MSG32*);
-LONG        WINAPI DispatchMessage32W(const MSG32*);
+LONG        WINAPI DispatchMessageA(const MSG*);
+LONG        WINAPI DispatchMessageW(const MSG*);
 #define     DispatchMessage WINELIB_NAME_AW(DispatchMessage)
-INT32       WINAPI DlgDirList32A(HWND32,LPSTR,INT32,INT32,UINT32);
-INT32       WINAPI DlgDirList32W(HWND32,LPWSTR,INT32,INT32,UINT32);
+INT       WINAPI DlgDirListA(HWND,LPSTR,INT,INT,UINT);
+INT       WINAPI DlgDirListW(HWND,LPWSTR,INT,INT,UINT);
 #define     DlgDirList WINELIB_NAME_AW(DlgDirList)
-INT32       WINAPI DlgDirListComboBox32A(HWND32,LPSTR,INT32,INT32,UINT32);
-INT32       WINAPI DlgDirListComboBox32W(HWND32,LPWSTR,INT32,INT32,UINT32);
+INT       WINAPI DlgDirListComboBoxA(HWND,LPSTR,INT,INT,UINT);
+INT       WINAPI DlgDirListComboBoxW(HWND,LPWSTR,INT,INT,UINT);
 #define     DlgDirListComboBox WINELIB_NAME_AW(DlgDirListComboBox)
-BOOL32      WINAPI DlgDirSelectComboBoxEx32A(HWND32,LPSTR,INT32,INT32);
-BOOL32      WINAPI DlgDirSelectComboBoxEx32W(HWND32,LPWSTR,INT32,INT32);
+BOOL      WINAPI DlgDirSelectComboBoxExA(HWND,LPSTR,INT,INT);
+BOOL      WINAPI DlgDirSelectComboBoxExW(HWND,LPWSTR,INT,INT);
 #define     DlgDirSelectComboBoxEx WINELIB_NAME_AW(DlgDirSelectComboBoxEx)
-BOOL32      WINAPI DlgDirSelectEx32A(HWND32,LPSTR,INT32,INT32);
-BOOL32      WINAPI DlgDirSelectEx32W(HWND32,LPWSTR,INT32,INT32);
+BOOL      WINAPI DlgDirSelectExA(HWND,LPSTR,INT,INT);
+BOOL      WINAPI DlgDirSelectExW(HWND,LPWSTR,INT,INT);
 #define     DlgDirSelectEx WINELIB_NAME_AW(DlgDirSelectEx)
-BOOL32      WINAPI DragDetect32(HWND32,POINT32);
-#define     DragDetect WINELIB_NAME(DragDetect)
-DWORD       WINAPI DragObject32(HWND32,HWND32,UINT32,DWORD,HCURSOR32);
-#define     DragObject WINELIB_NAME(DragObject)
-BOOL32      WINAPI DrawAnimatedRects32(HWND32,int,const RECT32*,const RECT32*);
-#define     DrawAnimatedRects WINELIB_NAME(DrawAnimatedRects)
-BOOL32      WINAPI DrawCaption32(HWND32,HDC32,const RECT32*,UINT32);
-#define     DrawCaption WINELIB_NAME(DrawCaption)
-BOOL32      WINAPI DrawCaptionTemp32A(HWND32,HDC32,const RECT32*,HFONT32,HICON32,LPCSTR,UINT32);
-BOOL32      WINAPI DrawCaptionTemp32W(HWND32,HDC32,const RECT32*,HFONT32,HICON32,LPCWSTR,UINT32);
+BOOL      WINAPI DragDetect(HWND,POINT);
+DWORD       WINAPI DragObject(HWND,HWND,UINT,DWORD,HCURSOR);
+BOOL      WINAPI DrawAnimatedRects(HWND,int,const RECT*,const RECT*);
+BOOL      WINAPI DrawCaption(HWND,HDC,const RECT*,UINT);
+BOOL      WINAPI DrawCaptionTempA(HWND,HDC,const RECT*,HFONT,HICON,LPCSTR,UINT);
+BOOL      WINAPI DrawCaptionTempW(HWND,HDC,const RECT*,HFONT,HICON,LPCWSTR,UINT);
 #define     DrawCaptionTemp WINELIB_NAME_AW(DrawCaptionTemp)
-BOOL32      WINAPI DrawEdge32(HDC32,LPRECT32,UINT32,UINT32);
-#define     DrawEdge WINELIB_NAME(DrawEdge)
-BOOL32      WINAPI DrawFocusRect32(HDC32,const RECT32*);
-#define     DrawFocusRect WINELIB_NAME(DrawFocusRect)
-BOOL32      WINAPI DrawFrameControl32(HDC32,LPRECT32,UINT32,UINT32);
-#define     DrawFrameControl WINELIB_NAME(DrawFrameControl)
-BOOL32      WINAPI DrawIcon32(HDC32,INT32,INT32,HICON32);
-#define     DrawIcon WINELIB_NAME(DrawIcon)
-BOOL32      WINAPI DrawIconEx32(HDC32,INT32,INT32,HICON32,INT32,INT32,
-				UINT32,HBRUSH32,UINT32);
-#define     DrawIconEx WINELIB_NAME(DrawIconEx)
-BOOL32      WINAPI DrawMenuBar32(HWND32);
-#define     DrawMenuBar WINELIB_NAME(DrawMenuBar)
-BOOL32      WINAPI DrawState32A(HDC32,HBRUSH32,DRAWSTATEPROC32,LPARAM,WPARAM32,INT32,INT32,INT32,INT32,UINT32);
-BOOL32      WINAPI DrawState32W(HDC32,HBRUSH32,DRAWSTATEPROC32,LPARAM,WPARAM32,INT32,INT32,INT32,INT32,UINT32);
+BOOL      WINAPI DrawEdge(HDC,LPRECT,UINT,UINT);
+BOOL      WINAPI DrawFocusRect(HDC,const RECT*);
+BOOL      WINAPI DrawFrameControl(HDC,LPRECT,UINT,UINT);
+BOOL      WINAPI DrawIcon(HDC,INT,INT,HICON);
+BOOL      WINAPI DrawIconEx(HDC,INT,INT,HICON,INT,INT,
+				UINT,HBRUSH,UINT);
+BOOL      WINAPI DrawMenuBar(HWND);
+BOOL      WINAPI DrawStateA(HDC,HBRUSH,DRAWSTATEPROC,LPARAM,WPARAM,INT,INT,INT,INT,UINT);
+BOOL      WINAPI DrawStateW(HDC,HBRUSH,DRAWSTATEPROC,LPARAM,WPARAM,INT,INT,INT,INT,UINT);
 #define     DrawState WINELIB_NAME_AW(DrawState)
-INT32       WINAPI DrawText32A(HDC32,LPCSTR,INT32,LPRECT32,UINT32);
-INT32       WINAPI DrawText32W(HDC32,LPCWSTR,INT32,LPRECT32,UINT32);
+INT       WINAPI DrawTextA(HDC,LPCSTR,INT,LPRECT,UINT);
+INT       WINAPI DrawTextW(HDC,LPCWSTR,INT,LPRECT,UINT);
 #define     DrawText WINELIB_NAME_AW(DrawText)
-BOOL32      WINAPI EmptyClipboard32(void);
-#define     EmptyClipboard WINELIB_NAME(EmptyClipboard)
-UINT32      WINAPI EnableMenuItem32(HMENU32,UINT32,UINT32);
-#define     EnableMenuItem WINELIB_NAME(EnableMenuItem)
-BOOL32      WINAPI EnableScrollBar32(HWND32,INT32,UINT32);
-#define     EnableScrollBar WINELIB_NAME(EnableScrollBar)
-BOOL32      WINAPI EnableWindow32(HWND32,BOOL32);
-#define     EnableWindow WINELIB_NAME(EnableWindow)
-BOOL32      WINAPI EndDeferWindowPos32(HDWP32);
-#define     EndDeferWindowPos WINELIB_NAME(EndDeferWindowPos)
-BOOL32      WINAPI EndDialog32(HWND32,INT32);
-#define     EndDialog WINELIB_NAME(EndDialog)
-BOOL32      WINAPI EndPaint32(HWND32,const PAINTSTRUCT32*);
-#define     EndPaint WINELIB_NAME(EndPaint)
-BOOL32      WINAPI EnumChildWindows32(HWND32,WNDENUMPROC32,LPARAM);
-#define     EnumChildWindows WINELIB_NAME(EnumChildWindows)
-UINT32      WINAPI EnumClipboardFormats32(UINT32);
-#define     EnumClipboardFormats WINELIB_NAME(EnumClipboardFormats)
-INT32       WINAPI EnumProps32A(HWND32,PROPENUMPROC32A);
-INT32       WINAPI EnumProps32W(HWND32,PROPENUMPROC32W);
+BOOL      WINAPI EmptyClipboard(void);
+UINT      WINAPI EnableMenuItem(HMENU,UINT,UINT);
+BOOL      WINAPI EnableScrollBar(HWND,INT,UINT);
+BOOL      WINAPI EnableWindow(HWND,BOOL);
+BOOL      WINAPI EndDeferWindowPos(HDWP);
+BOOL      WINAPI EndDialog(HWND,INT);
+BOOL      WINAPI EndPaint(HWND,const PAINTSTRUCT*);
+BOOL      WINAPI EnumChildWindows(HWND,WNDENUMPROC,LPARAM);
+UINT      WINAPI EnumClipboardFormats(UINT);
+INT       WINAPI EnumPropsA(HWND,PROPENUMPROCA);
+INT       WINAPI EnumPropsW(HWND,PROPENUMPROCW);
 #define     EnumProps WINELIB_NAME_AW(EnumProps)
-BOOL32      WINAPI EnumWindows32(WNDENUMPROC32,LPARAM);
-#define     EnumWindows WINELIB_NAME(EnumWindows)
-BOOL32      WINAPI EqualRect32(const RECT32*,const RECT32*);
-#define     EqualRect WINELIB_NAME(EqualRect)
-BOOL32      WINAPI EscapeCommFunction32(INT32,UINT32);
-#define     EscapeCommFunction WINELIB_NAME(EscapeCommFunction)
-INT32       WINAPI ExcludeUpdateRgn32(HDC32,HWND32);
-#define     ExcludeUpdateRgn WINELIB_NAME(ExcludeUpdateRgn)
-#define     ExitWindows32(a,b) ExitWindowsEx(EWX_LOGOFF,0xffffffff)
-#define     ExitWindows WINELIB_NAME(ExitWindows)
-INT32       WINAPI FillRect32(HDC32,const RECT32*,HBRUSH32);
-#define     FillRect WINELIB_NAME(FillRect)
-HWND32      WINAPI FindWindow32A(LPCSTR,LPCSTR);
-HWND32      WINAPI FindWindow32W(LPCWSTR,LPCWSTR);
+BOOL      WINAPI EnumWindows(WNDENUMPROC,LPARAM);
+BOOL      WINAPI EqualRect(const RECT*,const RECT*);
+BOOL      WINAPI EscapeCommFunction(INT,UINT);
+INT       WINAPI ExcludeUpdateRgn(HDC,HWND);
+#define     ExitWindows(a,b) ExitWindowsEx(EWX_LOGOFF,0xffffffff)
+INT       WINAPI FillRect(HDC,const RECT*,HBRUSH);
+HWND      WINAPI FindWindowA(LPCSTR,LPCSTR);
+HWND      WINAPI FindWindowW(LPCWSTR,LPCWSTR);
 #define     FindWindow WINELIB_NAME_AW(FindWindow)
-HWND32      WINAPI FindWindowEx32A(HWND32,HWND32,LPCSTR,LPCSTR);
-HWND32      WINAPI FindWindowEx32W(HWND32,HWND32,LPCWSTR,LPCWSTR);
+HWND      WINAPI FindWindowExA(HWND,HWND,LPCSTR,LPCSTR);
+HWND      WINAPI FindWindowExW(HWND,HWND,LPCWSTR,LPCWSTR);
 #define     FindWindowEx WINELIB_NAME_AW(FindWindowEx)
-BOOL32      WINAPI FlashWindow32(HWND32,BOOL32);
-#define     FlashWindow WINELIB_NAME(FlashWindow)
-INT32       WINAPI FrameRect32(HDC32,const RECT32*,HBRUSH32);
-#define     FrameRect WINELIB_NAME(FrameRect)
-HWND32      WINAPI GetActiveWindow32(void);
-#define     GetActiveWindow WINELIB_NAME(GetActiveWindow)
-DWORD       WINAPI GetAppCompatFlags32(HTASK32);
-#define     GetAppCompatFlags WINELIB_NAME(GetAppCompatFlags)
-WORD        WINAPI GetAsyncKeyState32(INT32);
-#define     GetAsyncKeyState WINELIB_NAME(GetAsyncKeyState)
-HWND32      WINAPI GetCapture32(void);
-#define     GetCapture WINELIB_NAME(GetCapture)
-UINT32      WINAPI GetCaretBlinkTime32(void);
-#define     GetCaretBlinkTime WINELIB_NAME(GetCaretBlinkTime)
-BOOL32      WINAPI GetCaretPos32(LPPOINT32);
-#define     GetCaretPos WINELIB_NAME(GetCaretPos)
-BOOL32      WINAPI GetClassInfo32A(HINSTANCE32,LPCSTR,WNDCLASS32A *);
-BOOL32      WINAPI GetClassInfo32W(HINSTANCE32,LPCWSTR,WNDCLASS32W *);
+BOOL      WINAPI FlashWindow(HWND,BOOL);
+INT       WINAPI FrameRect(HDC,const RECT*,HBRUSH);
+HWND      WINAPI GetActiveWindow(void);
+DWORD       WINAPI GetAppCompatFlags(HTASK);
+WORD        WINAPI GetAsyncKeyState(INT);
+HWND      WINAPI GetCapture(void);
+UINT      WINAPI GetCaretBlinkTime(void);
+BOOL      WINAPI GetCaretPos(LPPOINT);
+BOOL      WINAPI GetClassInfoA(HINSTANCE,LPCSTR,WNDCLASSA *);
+BOOL      WINAPI GetClassInfoW(HINSTANCE,LPCWSTR,WNDCLASSW *);
 #define     GetClassInfo WINELIB_NAME_AW(GetClassInfo)
-BOOL32      WINAPI GetClassInfoEx32A(HINSTANCE32,LPCSTR,WNDCLASSEX32A *);
-BOOL32      WINAPI GetClassInfoEx32W(HINSTANCE32,LPCWSTR,WNDCLASSEX32W *);
+BOOL      WINAPI GetClassInfoExA(HINSTANCE,LPCSTR,WNDCLASSEXA *);
+BOOL      WINAPI GetClassInfoExW(HINSTANCE,LPCWSTR,WNDCLASSEXW *);
 #define     GetClassInfoEx WINELIB_NAME_AW(GetClassInfoEx)
-LONG        WINAPI GetClassLong32A(HWND32,INT32);
-LONG        WINAPI GetClassLong32W(HWND32,INT32);
+LONG        WINAPI GetClassLongA(HWND,INT);
+LONG        WINAPI GetClassLongW(HWND,INT);
 #define     GetClassLong WINELIB_NAME_AW(GetClassLong)
-INT32       WINAPI GetClassName32A(HWND32,LPSTR,INT32);
-INT32       WINAPI GetClassName32W(HWND32,LPWSTR,INT32);
+INT       WINAPI GetClassNameA(HWND,LPSTR,INT);
+INT       WINAPI GetClassNameW(HWND,LPWSTR,INT);
 #define     GetClassName WINELIB_NAME_AW(GetClassName)
-WORD        WINAPI GetClassWord32(HWND32,INT32);
-#define     GetClassWord WINELIB_NAME(GetClassWord)
-BOOL32      WINAPI GetClientRect32(HWND32,LPRECT32);
-#define     GetClientRect WINELIB_NAME(GetClientRect)
-HANDLE32    WINAPI GetClipboardData32(UINT32);
-#define     GetClipboardData WINELIB_NAME(GetClipboardData)
-INT32       WINAPI GetClipboardFormatName32A(UINT32,LPSTR,INT32);
-INT32       WINAPI GetClipboardFormatName32W(UINT32,LPWSTR,INT32);
+WORD        WINAPI GetClassWord(HWND,INT);
+BOOL      WINAPI GetClientRect(HWND,LPRECT);
+HANDLE    WINAPI GetClipboardData(UINT);
+INT       WINAPI GetClipboardFormatNameA(UINT,LPSTR,INT);
+INT       WINAPI GetClipboardFormatNameW(UINT,LPWSTR,INT);
 #define     GetClipboardFormatName WINELIB_NAME_AW(GetClipboardFormatName)
-HWND32      WINAPI GetClipboardOwner32(void);
-#define     GetClipboardOwner WINELIB_NAME(GetClipboardOwner)
-HWND32      WINAPI GetClipboardViewer32(void);
-#define     GetClipboardViewer WINELIB_NAME(GetClipboardViewer)
-BOOL32      WINAPI GetClipCursor32(LPRECT32);
-#define     GetClipCursor WINELIB_NAME(GetClipCursor)
-#define     GetCurrentTime32() GetTickCount()
-#define     GetCurrentTime WINELIB_NAME(GetCurrentTime)
-HCURSOR32   WINAPI GetCursor32(void);
-#define     GetCursor WINELIB_NAME(GetCursor)
-BOOL32      WINAPI GetCursorPos32(LPPOINT32);
-#define     GetCursorPos WINELIB_NAME(GetCursorPos)
-HDC32       WINAPI GetDC32(HWND32);
-#define     GetDC WINELIB_NAME(GetDC)
-HDC32       WINAPI GetDCEx32(HWND32,HRGN32,DWORD);
-#define     GetDCEx WINELIB_NAME(GetDCEx)
-HWND32      WINAPI GetDesktopWindow32(void);
-#define     GetDesktopWindow WINELIB_NAME(GetDesktopWindow)
-INT32       WINAPI GetDlgCtrlID32(HWND32);
-#define     GetDlgCtrlID WINELIB_NAME(GetDlgCtrlID)
-HWND32      WINAPI GetDlgItem32(HWND32,INT32);
-#define     GetDlgItem WINELIB_NAME(GetDlgItem)
-UINT32      WINAPI GetDlgItemInt32(HWND32,INT32,BOOL32*,BOOL32);
-#define     GetDlgItemInt WINELIB_NAME(GetDlgItemInt)
-INT32       WINAPI GetDlgItemText32A(HWND32,INT32,LPSTR,UINT32);
-INT32       WINAPI GetDlgItemText32W(HWND32,INT32,LPWSTR,UINT32);
+HWND      WINAPI GetClipboardOwner(void);
+HWND      WINAPI GetClipboardViewer(void);
+BOOL      WINAPI GetClipCursor(LPRECT);
+#define     GetCurrentTime() GetTickCount()
+HCURSOR   WINAPI GetCursor(void);
+BOOL      WINAPI GetCursorPos(LPPOINT);
+HDC       WINAPI GetDC(HWND);
+HDC       WINAPI GetDCEx(HWND,HRGN,DWORD);
+HWND      WINAPI GetDesktopWindow(void);
+INT       WINAPI GetDlgCtrlID(HWND);
+HWND      WINAPI GetDlgItem(HWND,INT);
+UINT      WINAPI GetDlgItemInt(HWND,INT,BOOL*,BOOL);
+INT       WINAPI GetDlgItemTextA(HWND,INT,LPSTR,UINT);
+INT       WINAPI GetDlgItemTextW(HWND,INT,LPWSTR,UINT);
 #define     GetDlgItemText WINELIB_NAME_AW(GetDlgItemText)
-UINT32      WINAPI GetDoubleClickTime32(void);
-#define     GetDoubleClickTime WINELIB_NAME(GetDoubleClickTime)
-HWND32      WINAPI GetFocus32(void);
-#define     GetFocus WINELIB_NAME(GetFocus)
-HWND32      WINAPI GetForegroundWindow32(void);
-#define     GetForegroundWindow WINELIB_NAME(GetForegroundWindow)
-BOOL32      WINAPI GetInputState32(void);
-#define     GetInputState WINELIB_NAME(GetInputState)
-UINT32      WINAPI GetInternalWindowPos32(HWND32,LPRECT32,LPPOINT32);
-#define     GetInternalWindowPos WINELIB_NAME(GetInternalWindowPos)
-UINT32      WINAPI GetKBCodePage32(void);
-#define     GetKBCodePage WINELIB_NAME(GetKBCodePage)
-INT32       WINAPI GetKeyboardType32(INT32);
-#define     GetKeyboardType WINELIB_NAME(GetKeyboardType)
-INT32       WINAPI GetKeyNameText32A(LONG,LPSTR,INT32);
-INT32       WINAPI GetKeyNameText32W(LONG,LPWSTR,INT32);
+UINT      WINAPI GetDoubleClickTime(void);
+HWND      WINAPI GetFocus(void);
+HWND      WINAPI GetForegroundWindow(void);
+BOOL      WINAPI GetInputState(void);
+UINT      WINAPI GetInternalWindowPos(HWND,LPRECT,LPPOINT);
+UINT      WINAPI GetKBCodePage(void);
+INT       WINAPI GetKeyboardType(INT);
+INT       WINAPI GetKeyNameTextA(LONG,LPSTR,INT);
+INT       WINAPI GetKeyNameTextW(LONG,LPWSTR,INT);
 #define     GetKeyNameText WINELIB_NAME_AW(GetKeyNameText)
-INT32       WINAPI GetKeyboardLayoutName32A(LPSTR);
-INT32       WINAPI GetKeyboardLayoutName32W(LPWSTR);
+INT       WINAPI GetKeyboardLayoutNameA(LPSTR);
+INT       WINAPI GetKeyboardLayoutNameW(LPWSTR);
 #define     GetKeyboardLayoutName WINELIB_NAME_AW(GetKeyboardLayoutName)
-INT16       WINAPI GetKeyState32(INT32);
-#define     GetKeyState WINELIB_NAME(GetKeyState)
-HWND32      WINAPI GetLastActivePopup32(HWND32);
-#define     GetLastActivePopup WINELIB_NAME(GetLastActivePopup)
-HMENU32     WINAPI GetMenu32(HWND32);
-#define     GetMenu WINELIB_NAME(GetMenu)
-INT32       WINAPI GetMenuItemCount32(HMENU32);
-#define     GetMenuItemCount WINELIB_NAME(GetMenuItemCount)
-UINT32      WINAPI GetMenuItemID32(HMENU32,INT32);
-#define     GetMenuItemID WINELIB_NAME(GetMenuItemID)
-BOOL32      WINAPI GetMenuItemRect32(HWND32,HMENU32,UINT32,LPRECT32);
-#define     GetMenuItemRect WINELIB_NAME(GetMenuItemRect)
-UINT32      WINAPI GetMenuState32(HMENU32,UINT32,UINT32);
-#define     GetMenuState WINELIB_NAME(GetMenuState)
-INT32       WINAPI GetMenuString32A(HMENU32,UINT32,LPSTR,INT32,UINT32);
-INT32       WINAPI GetMenuString32W(HMENU32,UINT32,LPWSTR,INT32,UINT32);
+INT16       WINAPI GetKeyState(INT);
+HWND      WINAPI GetLastActivePopup(HWND);
+HMENU     WINAPI GetMenu(HWND);
+INT       WINAPI GetMenuItemCount(HMENU);
+UINT      WINAPI GetMenuItemID(HMENU,INT);
+BOOL      WINAPI GetMenuItemRect(HWND,HMENU,UINT,LPRECT);
+UINT      WINAPI GetMenuState(HMENU,UINT,UINT);
+INT       WINAPI GetMenuStringA(HMENU,UINT,LPSTR,INT,UINT);
+INT       WINAPI GetMenuStringW(HMENU,UINT,LPWSTR,INT,UINT);
 #define     GetMenuString WINELIB_NAME_AW(GetMenuString)
-BOOL32      WINAPI GetMessage32A(LPMSG32,HWND32,UINT32,UINT32);
-BOOL32      WINAPI GetMessage32W(LPMSG32,HWND32,UINT32,UINT32);
+BOOL      WINAPI GetMessageA(LPMSG,HWND,UINT,UINT);
+BOOL      WINAPI GetMessageW(LPMSG,HWND,UINT,UINT);
 #define     GetMessage WINELIB_NAME_AW(GetMessage)
-HWND32      WINAPI GetNextDlgGroupItem32(HWND32,HWND32,BOOL32);
-#define     GetNextDlgGroupItem WINELIB_NAME(GetNextDlgGroupItem)
-HWND32      WINAPI GetNextDlgTabItem32(HWND32,HWND32,BOOL32);
-#define     GetNextDlgTabItem WINELIB_NAME(GetNextDlgTabItem)
-#define     GetNextWindow32 GetWindow32
-#define     GetNextWindow WINELIB_NAME(GetNextWindow)
-HWND32      WINAPI GetOpenClipboardWindow32(void);
-#define     GetOpenClipboardWindow WINELIB_NAME(GetOpenClipboardWindow)
-HWND32      WINAPI GetParent32(HWND32);
-#define     GetParent WINELIB_NAME(GetParent)
-INT32       WINAPI GetPriorityClipboardFormat32(UINT32*,INT32);
-#define     GetPriorityClipboardFormat WINELIB_NAME(GetPriorityClipboardFormat)
-HANDLE32    WINAPI GetProp32A(HWND32,LPCSTR);
-HANDLE32    WINAPI GetProp32W(HWND32,LPCWSTR);
+HWND      WINAPI GetNextDlgGroupItem(HWND,HWND,BOOL);
+HWND      WINAPI GetNextDlgTabItem(HWND,HWND,BOOL);
+#define     GetNextWindow GetWindow
+HWND      WINAPI GetOpenClipboardWindow(void);
+HWND      WINAPI GetParent(HWND);
+INT       WINAPI GetPriorityClipboardFormat(UINT*,INT);
+HANDLE    WINAPI GetPropA(HWND,LPCSTR);
+HANDLE    WINAPI GetPropW(HWND,LPCWSTR);
 #define     GetProp WINELIB_NAME_AW(GetProp)
-DWORD       WINAPI GetQueueStatus32(UINT32);
-#define     GetQueueStatus WINELIB_NAME(GetQueueStatus)
-BOOL32      WINAPI GetScrollInfo32(HWND32,INT32,LPSCROLLINFO);
-#define     GetScrollInfo WINELIB_NAME(GetScrollInfo)
-INT32       WINAPI GetScrollPos32(HWND32,INT32);
-#define     GetScrollPos WINELIB_NAME(GetScrollPos)
-BOOL32      WINAPI GetScrollRange32(HWND32,INT32,LPINT32,LPINT32);
-#define     GetScrollRange WINELIB_NAME(GetScrollRange)
-HWND32      WINAPI GetShellWindow32(void);
-#define     GetShellWindow WINELIB_NAME(GetShellWindow)
-HMENU32     WINAPI GetSubMenu32(HMENU32,INT32);
-#define     GetSubMenu WINELIB_NAME(GetSubMenu)
-COLORREF    WINAPI GetSysColor32(INT32);
-#define     GetSysColor WINELIB_NAME(GetSysColor)
-HBRUSH32    WINAPI GetSysColorBrush32(INT32);
-#define     GetSysColorBrush WINELIB_NAME(GetSysColorBrush)
-#define     GetSysModalWindow32() ((HWND32)0)
-#define     GetSysModalWindow WINELIB_NAME(GetSysModalWindow)
-HMENU32     WINAPI GetSystemMenu32(HWND32,BOOL32);
-#define     GetSystemMenu WINELIB_NAME(GetSystemMenu)
-INT32       WINAPI GetSystemMetrics32(INT32);
-#define     GetSystemMetrics WINELIB_NAME(GetSystemMetrics)
-DWORD       WINAPI GetTabbedTextExtent32A(HDC32,LPCSTR,INT32,INT32,const INT32*);
-DWORD       WINAPI GetTabbedTextExtent32W(HDC32,LPCWSTR,INT32,INT32,const INT32*);
+DWORD       WINAPI GetQueueStatus(UINT);
+BOOL      WINAPI GetScrollInfo(HWND,INT,LPSCROLLINFO);
+INT       WINAPI GetScrollPos(HWND,INT);
+BOOL      WINAPI GetScrollRange(HWND,INT,LPINT,LPINT);
+HWND      WINAPI GetShellWindow(void);
+HMENU     WINAPI GetSubMenu(HMENU,INT);
+COLORREF    WINAPI GetSysColor(INT);
+HBRUSH    WINAPI GetSysColorBrush(INT);
+#define     GetSysModalWindow() ((HWND)0)
+HMENU     WINAPI GetSystemMenu(HWND,BOOL);
+INT       WINAPI GetSystemMetrics(INT);
+DWORD       WINAPI GetTabbedTextExtentA(HDC,LPCSTR,INT,INT,const INT*);
+DWORD       WINAPI GetTabbedTextExtentW(HDC,LPCWSTR,INT,INT,const INT*);
 #define     GetTabbedTextExtent WINELIB_NAME_AW(GetTabbedTextExtent)
-HWND32      WINAPI GetTopWindow32(HWND32);
-#define     GetTopWindow WINELIB_NAME(GetTopWindow)
-BOOL32      WINAPI GetUpdateRect32(HWND32,LPRECT32,BOOL32);
-#define     GetUpdateRect WINELIB_NAME(GetUpdateRect)
-INT32       WINAPI GetUpdateRgn32(HWND32,HRGN32,BOOL32);
-#define     GetUpdateRgn WINELIB_NAME(GetUpdateRgn)
-HWND32      WINAPI GetWindow32(HWND32,WORD);
-#define     GetWindow WINELIB_NAME(GetWindow)
-HDC32       WINAPI GetWindowDC32(HWND32);
-#define     GetWindowDC WINELIB_NAME(GetWindowDC)
-LONG        WINAPI GetWindowLong32A(HWND32,INT32);
-LONG        WINAPI GetWindowLong32W(HWND32,INT32);
+HWND      WINAPI GetTopWindow(HWND);
+BOOL      WINAPI GetUpdateRect(HWND,LPRECT,BOOL);
+INT       WINAPI GetUpdateRgn(HWND,HRGN,BOOL);
+HWND      WINAPI GetWindow(HWND,WORD);
+HDC       WINAPI GetWindowDC(HWND);
+LONG        WINAPI GetWindowLongA(HWND,INT);
+LONG        WINAPI GetWindowLongW(HWND,INT);
 #define     GetWindowLong WINELIB_NAME_AW(GetWindowLong)
-BOOL32      WINAPI GetWindowPlacement32(HWND32,LPWINDOWPLACEMENT32);
-#define     GetWindowPlacement WINELIB_NAME(GetWindowPlacement)
-BOOL32      WINAPI GetWindowRect32(HWND32,LPRECT32);
-#define     GetWindowRect WINELIB_NAME(GetWindowRect)
-INT32       WINAPI GetWindowRgn32(HWND32,HRGN32);
-#define     GetWindowRgn WINELIB_NAME(GetWindowRgn)
-#define     GetWindowTask32(hwnd) ((HTASK32)GetWindowThreadProcessId(hwnd,NULL))
-#define     GetWindowTask WINELIB_NAME(GetWindowTask)
-INT32       WINAPI GetWindowText32A(HWND32,LPSTR,INT32);
-INT32       WINAPI GetWindowText32W(HWND32,LPWSTR,INT32);
+BOOL      WINAPI GetWindowPlacement(HWND,LPWINDOWPLACEMENT);
+BOOL      WINAPI GetWindowRect(HWND,LPRECT);
+INT       WINAPI GetWindowRgn(HWND,HRGN);
+#define     GetWindowTask(hwnd) ((HTASK)GetWindowThreadProcessId(hwnd,NULL))
+INT       WINAPI GetWindowTextA(HWND,LPSTR,INT);
+INT       WINAPI GetWindowTextW(HWND,LPWSTR,INT);
 #define     GetWindowText WINELIB_NAME_AW(GetWindowText)
-INT32       WINAPI GetWindowTextLength32A(HWND32);
-INT32       WINAPI GetWindowTextLength32W(HWND32);
+INT       WINAPI GetWindowTextLengthA(HWND);
+INT       WINAPI GetWindowTextLengthW(HWND);
 #define     GetWindowTextLength WINELIB_NAME_AW(GetWindowTextLength)
-WORD        WINAPI GetWindowWord32(HWND32,INT32);
-#define     GetWindowWord WINELIB_NAME(GetWindowWord)
-ATOM        WINAPI GlobalAddAtom32A(LPCSTR);
-ATOM        WINAPI GlobalAddAtom32W(LPCWSTR);
+WORD        WINAPI GetWindowWord(HWND,INT);
+ATOM        WINAPI GlobalAddAtomA(LPCSTR);
+ATOM        WINAPI GlobalAddAtomW(LPCWSTR);
 #define     GlobalAddAtom WINELIB_NAME_AW(GlobalAddAtom)
-ATOM        WINAPI GlobalFindAtom32A(LPCSTR);
-ATOM        WINAPI GlobalFindAtom32W(LPCWSTR);
+ATOM        WINAPI GlobalFindAtomA(LPCSTR);
+ATOM        WINAPI GlobalFindAtomW(LPCWSTR);
 #define     GlobalFindAtom WINELIB_NAME_AW(GlobalFindAtom)
-UINT32      WINAPI GlobalGetAtomName32A(ATOM,LPSTR,INT32);
-UINT32      WINAPI GlobalGetAtomName32W(ATOM,LPWSTR,INT32);
+UINT      WINAPI GlobalGetAtomNameA(ATOM,LPSTR,INT);
+UINT      WINAPI GlobalGetAtomNameW(ATOM,LPWSTR,INT);
 #define     GlobalGetAtomName WINELIB_NAME_AW(GlobalGetAtomName)
-BOOL32      WINAPI GrayString32A(HDC32,HBRUSH32,GRAYSTRINGPROC32,LPARAM,
-                                 INT32,INT32,INT32,INT32,INT32);
-BOOL32      WINAPI GrayString32W(HDC32,HBRUSH32,GRAYSTRINGPROC32,LPARAM,
-                                 INT32,INT32,INT32,INT32,INT32);
+BOOL      WINAPI GrayStringA(HDC,HBRUSH,GRAYSTRINGPROC,LPARAM,
+                                 INT,INT,INT,INT,INT);
+BOOL      WINAPI GrayStringW(HDC,HBRUSH,GRAYSTRINGPROC,LPARAM,
+                                 INT,INT,INT,INT,INT);
 #define     GrayString WINELIB_NAME_AW(GrayString)
-BOOL32      WINAPI HideCaret32(HWND32);
-#define     HideCaret WINELIB_NAME(HideCaret)
-BOOL32      WINAPI HiliteMenuItem32(HWND32,HMENU32,UINT32,UINT32);
-#define     HiliteMenuItem WINELIB_NAME(HiliteMenuItem)
-BOOL32      WINAPI InflateRect32(LPRECT32,INT32,INT32);
-#define     InflateRect WINELIB_NAME(InflateRect)
-BOOL32      WINAPI InSendMessage32(void);
-#define     InSendMessage WINELIB_NAME(InSendMessage)
-BOOL32      WINAPI InsertMenu32A(HMENU32,UINT32,UINT32,UINT32,LPCSTR);
-BOOL32      WINAPI InsertMenu32W(HMENU32,UINT32,UINT32,UINT32,LPCWSTR);
+BOOL      WINAPI HideCaret(HWND);
+BOOL      WINAPI HiliteMenuItem(HWND,HMENU,UINT,UINT);
+BOOL      WINAPI InflateRect(LPRECT,INT,INT);
+BOOL      WINAPI InSendMessage(void);
+BOOL      WINAPI InsertMenuA(HMENU,UINT,UINT,UINT,LPCSTR);
+BOOL      WINAPI InsertMenuW(HMENU,UINT,UINT,UINT,LPCWSTR);
 #define     InsertMenu WINELIB_NAME_AW(InsertMenu)
-BOOL32      WINAPI InsertMenuItem32A(HMENU32,UINT32,BOOL32,const MENUITEMINFO32A*);
-BOOL32      WINAPI InsertMenuItem32W(HMENU32,UINT32,BOOL32,const MENUITEMINFO32W*);
+BOOL      WINAPI InsertMenuItemA(HMENU,UINT,BOOL,const MENUITEMINFOA*);
+BOOL      WINAPI InsertMenuItemW(HMENU,UINT,BOOL,const MENUITEMINFOW*);
 #define     InsertMenuItem WINELIB_NAME_AW(InsertMenuItem)
-BOOL32      WINAPI IntersectRect32(LPRECT32,const RECT32*,const RECT32*);
-#define     IntersectRect WINELIB_NAME(IntersectRect)
-BOOL32      WINAPI InvalidateRect32(HWND32,const RECT32*,BOOL32);
-#define     InvalidateRect WINELIB_NAME(InvalidateRect)
-BOOL32      WINAPI InvalidateRgn32(HWND32,HRGN32,BOOL32);
-#define     InvalidateRgn WINELIB_NAME(InvalidateRgn)
-BOOL32      WINAPI InvertRect32(HDC32,const RECT32*);
-#define     InvertRect WINELIB_NAME(InvertRect)
-BOOL32      WINAPI IsCharAlpha32A(CHAR);
-BOOL32      WINAPI IsCharAlpha32W(WCHAR);
+BOOL      WINAPI IntersectRect(LPRECT,const RECT*,const RECT*);
+BOOL      WINAPI InvalidateRect(HWND,const RECT*,BOOL);
+BOOL      WINAPI InvalidateRgn(HWND,HRGN,BOOL);
+BOOL      WINAPI InvertRect(HDC,const RECT*);
+BOOL      WINAPI IsCharAlphaA(CHAR);
+BOOL      WINAPI IsCharAlphaW(WCHAR);
 #define     IsCharAlpha WINELIB_NAME_AW(IsCharAlpha)
-BOOL32      WINAPI IsCharAlphaNumeric32A(CHAR);
-BOOL32      WINAPI IsCharAlphaNumeric32W(WCHAR);
+BOOL      WINAPI IsCharAlphaNumericA(CHAR);
+BOOL      WINAPI IsCharAlphaNumericW(WCHAR);
 #define     IsCharAlphaNumeric WINELIB_NAME_AW(IsCharAlphaNumeric)
-BOOL32      WINAPI IsCharLower32A(CHAR);
-BOOL32      WINAPI IsCharLower32W(WCHAR);
+BOOL      WINAPI IsCharLowerA(CHAR);
+BOOL      WINAPI IsCharLowerW(WCHAR);
 #define     IsCharLower WINELIB_NAME_AW(IsCharLower)
-BOOL32      WINAPI IsCharUpper32A(CHAR);
-BOOL32      WINAPI IsCharUpper32W(WCHAR);
+BOOL      WINAPI IsCharUpperA(CHAR);
+BOOL      WINAPI IsCharUpperW(WCHAR);
 #define     IsCharUpper WINELIB_NAME_AW(IsCharUpper)
-BOOL32      WINAPI IsChild32(HWND32,HWND32);
-#define     IsChild WINELIB_NAME(IsChild)
-BOOL32      WINAPI IsClipboardFormatAvailable32(UINT32);
-#define     IsClipboardFormatAvailable WINELIB_NAME(IsClipboardFormatAvailable)
-BOOL32      WINAPI IsDialogMessage32A(HWND32,LPMSG32);
-BOOL32      WINAPI IsDialogMessage32W(HWND32,LPMSG32);
+BOOL      WINAPI IsChild(HWND,HWND);
+BOOL      WINAPI IsClipboardFormatAvailable(UINT);
+BOOL      WINAPI IsDialogMessageA(HWND,LPMSG);
+BOOL      WINAPI IsDialogMessageW(HWND,LPMSG);
 #define     IsDialogMessage WINELIB_NAME_AW(IsDialogMessage)
-UINT32      WINAPI IsDlgButtonChecked32(HWND32,UINT32);
-#define     IsDlgButtonChecked WINELIB_NAME(IsDlgButtonChecked)
-BOOL32      WINAPI IsIconic32(HWND32);
-#define     IsIconic WINELIB_NAME(IsIconic)
-BOOL32      WINAPI IsMenu32(HMENU32);
-#define     IsMenu WINELIB_NAME(IsMenu)
-BOOL32      WINAPI IsRectEmpty32(const RECT32*);
-#define     IsRectEmpty WINELIB_NAME(IsRectEmpty)
-BOOL32      WINAPI IsWindow32(HWND32);
-#define     IsWindow WINELIB_NAME(IsWindow)
-BOOL32      WINAPI IsWindowEnabled32(HWND32);
-#define     IsWindowEnabled WINELIB_NAME(IsWindowEnabled)
-BOOL32      WINAPI IsWindowVisible32(HWND32);
-#define     IsWindowVisible WINELIB_NAME(IsWindowVisible)
-BOOL32      WINAPI IsZoomed32(HWND32);
-#define     IsZoomed WINELIB_NAME(IsZoomed)
-BOOL32      WINAPI KillSystemTimer32(HWND32,UINT32);
-#define     KillSystemTimer WINELIB_NAME(KillSystemTimer)
-BOOL32      WINAPI KillTimer32(HWND32,UINT32);
-#define     KillTimer WINELIB_NAME(KillTimer)
-HACCEL32    WINAPI LoadAccelerators32A(HINSTANCE32,LPCSTR);
-HACCEL32    WINAPI LoadAccelerators32W(HINSTANCE32,LPCWSTR);
+UINT      WINAPI IsDlgButtonChecked(HWND,UINT);
+BOOL      WINAPI IsIconic(HWND);
+BOOL      WINAPI IsMenu(HMENU);
+BOOL      WINAPI IsRectEmpty(const RECT*);
+BOOL      WINAPI IsWindow(HWND);
+BOOL      WINAPI IsWindowEnabled(HWND);
+BOOL      WINAPI IsWindowVisible(HWND);
+BOOL      WINAPI IsZoomed(HWND);
+BOOL      WINAPI KillSystemTimer(HWND,UINT);
+BOOL      WINAPI KillTimer(HWND,UINT);
+HACCEL    WINAPI LoadAcceleratorsA(HINSTANCE,LPCSTR);
+HACCEL    WINAPI LoadAcceleratorsW(HINSTANCE,LPCWSTR);
 #define     LoadAccelerators WINELIB_NAME_AW(LoadAccelerators)
-HBITMAP32   WINAPI LoadBitmap32A(HANDLE32,LPCSTR);
-HBITMAP32   WINAPI LoadBitmap32W(HANDLE32,LPCWSTR);
+HBITMAP   WINAPI LoadBitmapA(HANDLE,LPCSTR);
+HBITMAP   WINAPI LoadBitmapW(HANDLE,LPCWSTR);
 #define     LoadBitmap WINELIB_NAME_AW(LoadBitmap)
-HCURSOR32   WINAPI LoadCursor32A(HINSTANCE32,LPCSTR);
-HCURSOR32   WINAPI LoadCursor32W(HINSTANCE32,LPCWSTR);
+HCURSOR   WINAPI LoadCursorA(HINSTANCE,LPCSTR);
+HCURSOR   WINAPI LoadCursorW(HINSTANCE,LPCWSTR);
 #define     LoadCursor WINELIB_NAME_AW(LoadCursor)
-HCURSOR32   WINAPI LoadCursorFromFile32A(LPCSTR);
-HCURSOR32   WINAPI LoadCursorFromFile32W(LPCWSTR);
+HCURSOR   WINAPI LoadCursorFromFileA(LPCSTR);
+HCURSOR   WINAPI LoadCursorFromFileW(LPCWSTR);
 #define     LoadCursorFromFile WINELIB_NAME_AW(LoadCursorFromFile)
-HICON32     WINAPI LoadIcon32A(HINSTANCE32,LPCSTR);
-HICON32     WINAPI LoadIcon32W(HINSTANCE32,LPCWSTR);
+HICON     WINAPI LoadIconA(HINSTANCE,LPCSTR);
+HICON     WINAPI LoadIconW(HINSTANCE,LPCWSTR);
 #define     LoadIcon WINELIB_NAME_AW(LoadIcon)
-HANDLE32    WINAPI LoadImage32A(HINSTANCE32,LPCSTR,UINT32,INT32,INT32,UINT32);
-HANDLE32    WINAPI LoadImage32W(HINSTANCE32,LPCWSTR,UINT32,INT32,INT32,UINT32);
+HANDLE    WINAPI LoadImageA(HINSTANCE,LPCSTR,UINT,INT,INT,UINT);
+HANDLE    WINAPI LoadImageW(HINSTANCE,LPCWSTR,UINT,INT,INT,UINT);
 #define     LoadImage WINELIB_NAME_AW(LoadImage)
-HMENU32     WINAPI LoadMenu32A(HINSTANCE32,LPCSTR);
-HMENU32     WINAPI LoadMenu32W(HINSTANCE32,LPCWSTR);
+HMENU     WINAPI LoadMenuA(HINSTANCE,LPCSTR);
+HMENU     WINAPI LoadMenuW(HINSTANCE,LPCWSTR);
 #define     LoadMenu WINELIB_NAME_AW(LoadMenu)
-HMENU32     WINAPI LoadMenuIndirect32A(LPCVOID);
-HMENU32     WINAPI LoadMenuIndirect32W(LPCVOID);
+HMENU     WINAPI LoadMenuIndirectA(LPCVOID);
+HMENU     WINAPI LoadMenuIndirectW(LPCVOID);
 #define     LoadMenuIndirect WINELIB_NAME_AW(LoadMenuIndirect)
-INT32       WINAPI LoadString32A(HINSTANCE32,UINT32,LPSTR,INT32);
-INT32       WINAPI LoadString32W(HINSTANCE32,UINT32,LPWSTR,INT32);
+INT       WINAPI LoadStringA(HINSTANCE,UINT,LPSTR,INT);
+INT       WINAPI LoadStringW(HINSTANCE,UINT,LPWSTR,INT);
 #define     LoadString WINELIB_NAME_AW(LoadString)
-BOOL32      WINAPI LockWindowUpdate32(HWND32);
-#define     LockWindowUpdate WINELIB_NAME(LockWindowUpdate)
-INT32       WINAPI LookupIconIdFromDirectory32(LPBYTE,BOOL32);
-#define     LookupIconIdFromDirectory WINELIB_NAME(LookupIconIdFromDirectory)
-INT32       WINAPI LookupIconIdFromDirectoryEx32(LPBYTE,BOOL32,INT32,INT32,UINT32);
-#define     LookupIconIdFromDirectoryEx WINELIB_NAME(LookupIconIdFromDirectoryEx)
-UINT32      WINAPI MapVirtualKey32A(UINT32,UINT32);
-UINT32      WINAPI MapVirtualKey32W(UINT32,UINT32);
+BOOL      WINAPI LockWindowUpdate(HWND);
+INT       WINAPI LookupIconIdFromDirectory(LPBYTE,BOOL);
+INT       WINAPI LookupIconIdFromDirectoryEx(LPBYTE,BOOL,INT,INT,UINT);
+UINT      WINAPI MapVirtualKeyA(UINT,UINT);
+UINT      WINAPI MapVirtualKeyW(UINT,UINT);
 #define     MapVirtualKey WINELIB_NAME_AW(MapVirtualKey)
-UINT32      WINAPI MapVirtualKeyEx32A(UINT32,UINT32,HKL32);
+UINT      WINAPI MapVirtualKeyEx32A(UINT,UINT,HKL);
 #define     MapVirtualKeyEx WINELIB_NAME_AW(MapVirtualKeyEx)
-BOOL32      WINAPI MapDialogRect32(HWND32,LPRECT32);
-#define     MapDialogRect WINELIB_NAME(MapDialogRect)
-INT32       WINAPI MapWindowPoints32(HWND32,HWND32,LPPOINT32,UINT32);
-#define     MapWindowPoints WINELIB_NAME(MapWindowPoints)
-BOOL32      WINAPI MessageBeep32(UINT32);
-#define     MessageBeep WINELIB_NAME(MessageBeep)
-INT32       WINAPI MessageBox32A(HWND32,LPCSTR,LPCSTR,UINT32);
-INT32       WINAPI MessageBox32W(HWND32,LPCWSTR,LPCWSTR,UINT32);
+BOOL      WINAPI MapDialogRect(HWND,LPRECT);
+INT       WINAPI MapWindowPoints(HWND,HWND,LPPOINT,UINT);
+BOOL      WINAPI MessageBeep(UINT);
+INT       WINAPI MessageBoxA(HWND,LPCSTR,LPCSTR,UINT);
+INT       WINAPI MessageBoxW(HWND,LPCWSTR,LPCWSTR,UINT);
 #define     MessageBox WINELIB_NAME_AW(MessageBox)
-INT32       WINAPI MessageBoxIndirect32A(LPMSGBOXPARAMS32A);
-INT32       WINAPI MessageBoxIndirect32W(LPMSGBOXPARAMS32W);
+INT       WINAPI MessageBoxIndirectA(LPMSGBOXPARAMSA);
+INT       WINAPI MessageBoxIndirectW(LPMSGBOXPARAMSW);
 #define     MessageBoxIndirect WINELIB_NAME_AW(MessageBoxIndirect)
-BOOL32      WINAPI ModifyMenu32A(HMENU32,UINT32,UINT32,UINT32,LPCSTR);
-BOOL32      WINAPI ModifyMenu32W(HMENU32,UINT32,UINT32,UINT32,LPCWSTR);
+BOOL      WINAPI ModifyMenuA(HMENU,UINT,UINT,UINT,LPCSTR);
+BOOL      WINAPI ModifyMenuW(HMENU,UINT,UINT,UINT,LPCWSTR);
 #define     ModifyMenu WINELIB_NAME_AW(ModifyMenu)
-BOOL32      WINAPI MoveWindow32(HWND32,INT32,INT32,INT32,INT32,BOOL32);
-#define     MoveWindow WINELIB_NAME(MoveWindow)
-BOOL32      WINAPI OemToChar32A(LPCSTR,LPSTR);
-BOOL32      WINAPI OemToChar32W(LPCSTR,LPWSTR);
+BOOL      WINAPI MoveWindow(HWND,INT,INT,INT,INT,BOOL);
+BOOL      WINAPI OemToCharA(LPCSTR,LPSTR);
+BOOL      WINAPI OemToCharW(LPCSTR,LPWSTR);
 #define     OemToChar WINELIB_NAME_AW(OemToChar)
-BOOL32      WINAPI OemToCharBuff32A(LPCSTR,LPSTR,DWORD);
-BOOL32      WINAPI OemToCharBuff32W(LPCSTR,LPWSTR,DWORD);
+BOOL      WINAPI OemToCharBuffA(LPCSTR,LPSTR,DWORD);
+BOOL      WINAPI OemToCharBuffW(LPCSTR,LPWSTR,DWORD);
 #define     OemToCharBuff WINELIB_NAME_AW(OemToCharBuff)
-BOOL32      WINAPI OffsetRect32(LPRECT32,INT32,INT32);
-#define     OffsetRect WINELIB_NAME(OffsetRect)
-BOOL32      WINAPI OpenClipboard32(HWND32);
-#define     OpenClipboard WINELIB_NAME(OpenClipboard)
-BOOL32      WINAPI OpenIcon32(HWND32);
-#define     OpenIcon WINELIB_NAME(OpenIcon)
-BOOL32      WINAPI PeekMessage32A(LPMSG32,HWND32,UINT32,UINT32,UINT32);
-BOOL32      WINAPI PeekMessage32W(LPMSG32,HWND32,UINT32,UINT32,UINT32);
+BOOL      WINAPI OffsetRect(LPRECT,INT,INT);
+BOOL      WINAPI OpenClipboard(HWND);
+BOOL      WINAPI OpenIcon(HWND);
+BOOL      WINAPI PeekMessageA(LPMSG,HWND,UINT,UINT,UINT);
+BOOL      WINAPI PeekMessageW(LPMSG,HWND,UINT,UINT,UINT);
 #define     PeekMessage WINELIB_NAME_AW(PeekMessage)
-#define     PostAppMessage32A(thread,msg,wparam,lparam) \
-            PostThreadMessage32A((DWORD)(thread),msg,wparam,lparam)
-#define     PostAppMessage32W(thread,msg,wparam,lparam) \
-            PostThreadMessage32W((DWORD)(thread),msg,wparam,lparam)
+#define     PostAppMessageA(thread,msg,wparam,lparam) \
+            PostThreadMessageA((DWORD)(thread),msg,wparam,lparam)
+#define     PostAppMessageW(thread,msg,wparam,lparam) \
+            PostThreadMessageW((DWORD)(thread),msg,wparam,lparam)
 #define     PostAppMessage WINELIB_NAME_AW(PostAppMessage)
-BOOL32      WINAPI PostMessage32A(HWND32,UINT32,WPARAM32,LPARAM);
-BOOL32      WINAPI PostMessage32W(HWND32,UINT32,WPARAM32,LPARAM);
+BOOL      WINAPI PostMessageA(HWND,UINT,WPARAM,LPARAM);
+BOOL      WINAPI PostMessageW(HWND,UINT,WPARAM,LPARAM);
 #define     PostMessage WINELIB_NAME_AW(PostMessage)
-void        WINAPI PostQuitMessage32(INT32);
-#define     PostQuitMessage WINELIB_NAME(PostQuitMessage)
-BOOL32      WINAPI PtInRect32(const RECT32*,POINT32);
-#define     PtInRect WINELIB_NAME(PtInRect)
-BOOL32      WINAPI RedrawWindow32(HWND32,const RECT32*,HRGN32,UINT32);
-#define     RedrawWindow WINELIB_NAME(RedrawWindow)
-ATOM        WINAPI RegisterClass32A(const WNDCLASS32A *);
-ATOM        WINAPI RegisterClass32W(const WNDCLASS32W *);
+void        WINAPI PostQuitMessage(INT);
+BOOL      WINAPI PtInRect(const RECT*,POINT);
+BOOL      WINAPI RedrawWindow(HWND,const RECT*,HRGN,UINT);
+ATOM        WINAPI RegisterClassA(const WNDCLASSA *);
+ATOM        WINAPI RegisterClassW(const WNDCLASSW *);
 #define     RegisterClass WINELIB_NAME_AW(RegisterClass)
-ATOM        WINAPI RegisterClassEx32A(const WNDCLASSEX32A *);
-ATOM        WINAPI RegisterClassEx32W(const WNDCLASSEX32W *);
+ATOM        WINAPI RegisterClassExA(const WNDCLASSEXA *);
+ATOM        WINAPI RegisterClassExW(const WNDCLASSEXW *);
 #define     RegisterClassEx WINELIB_NAME_AW(RegisterClassEx)
-UINT32      WINAPI RegisterClipboardFormat32A(LPCSTR);
-UINT32      WINAPI RegisterClipboardFormat32W(LPCWSTR);
+UINT      WINAPI RegisterClipboardFormatA(LPCSTR);
+UINT      WINAPI RegisterClipboardFormatW(LPCWSTR);
 #define     RegisterClipboardFormat WINELIB_NAME_AW(RegisterClipboardFormat)
-WORD        WINAPI RegisterWindowMessage32A(LPCSTR);
-WORD        WINAPI RegisterWindowMessage32W(LPCWSTR);
+WORD        WINAPI RegisterWindowMessageA(LPCSTR);
+WORD        WINAPI RegisterWindowMessageW(LPCWSTR);
 #define     RegisterWindowMessage WINELIB_NAME_AW(RegisterWindowMessage)
-INT32       WINAPI ReleaseDC32(HWND32,HDC32);
-#define     ReleaseDC WINELIB_NAME(ReleaseDC)
-BOOL32      WINAPI RemoveMenu32(HMENU32,UINT32,UINT32);
-#define     RemoveMenu WINELIB_NAME(RemoveMenu)
-HANDLE32    WINAPI RemoveProp32A(HWND32,LPCSTR);
-HANDLE32    WINAPI RemoveProp32W(HWND32,LPCWSTR);
+INT       WINAPI ReleaseDC(HWND,HDC);
+BOOL      WINAPI RemoveMenu(HMENU,UINT,UINT);
+HANDLE    WINAPI RemovePropA(HWND,LPCSTR);
+HANDLE    WINAPI RemovePropW(HWND,LPCWSTR);
 #define     RemoveProp WINELIB_NAME_AW(RemoveProp)
-BOOL32      WINAPI ReplyMessage32(LRESULT);
-#define     ReplyMessage WINELIB_NAME(ReplyMessage)
-BOOL32      WINAPI ScreenToClient32(HWND32,LPPOINT32);
-#define     ScreenToClient WINELIB_NAME(ScreenToClient)
-VOID        WINAPI ScrollChildren32(HWND32,UINT32,WPARAM32,LPARAM);
-#define     ScrollChildren WINELIB_NAME(ScrollChildren)
-BOOL32      WINAPI ScrollDC32(HDC32,INT32,INT32,const RECT32*,const RECT32*,
-                      HRGN32,LPRECT32);
-#define     ScrollDC WINELIB_NAME(ScrollDC)
-BOOL32      WINAPI ScrollWindow32(HWND32,INT32,INT32,const RECT32*,const RECT32*);
-#define     ScrollWindow WINELIB_NAME(ScrollWindow)
-INT32       WINAPI ScrollWindowEx32(HWND32,INT32,INT32,const RECT32*,
-                                    const RECT32*,HRGN32,LPRECT32,UINT32);
-#define     ScrollWindowEx WINELIB_NAME(ScrollWindowEx)
-LRESULT     WINAPI SendDlgItemMessage32A(HWND32,INT32,UINT32,WPARAM32,LPARAM);
-LRESULT     WINAPI SendDlgItemMessage32W(HWND32,INT32,UINT32,WPARAM32,LPARAM);
+BOOL      WINAPI ReplyMessage(LRESULT);
+BOOL      WINAPI ScreenToClient(HWND,LPPOINT);
+VOID        WINAPI ScrollChildren(HWND,UINT,WPARAM,LPARAM);
+BOOL      WINAPI ScrollDC(HDC,INT,INT,const RECT*,const RECT*,
+                      HRGN,LPRECT);
+BOOL      WINAPI ScrollWindow(HWND,INT,INT,const RECT*,const RECT*);
+INT       WINAPI ScrollWindowEx(HWND,INT,INT,const RECT*,
+                                    const RECT*,HRGN,LPRECT,UINT);
+LRESULT     WINAPI SendDlgItemMessageA(HWND,INT,UINT,WPARAM,LPARAM);
+LRESULT     WINAPI SendDlgItemMessageW(HWND,INT,UINT,WPARAM,LPARAM);
 #define     SendDlgItemMessage WINELIB_NAME_AW(SendDlgItemMessage)
-LRESULT     WINAPI SendMessage32A(HWND32,UINT32,WPARAM32,LPARAM);
-LRESULT     WINAPI SendMessage32W(HWND32,UINT32,WPARAM32,LPARAM);
+LRESULT     WINAPI SendMessageA(HWND,UINT,WPARAM,LPARAM);
+LRESULT     WINAPI SendMessageW(HWND,UINT,WPARAM,LPARAM);
 #define     SendMessage WINELIB_NAME_AW(SendMessage)
-LRESULT     WINAPI SendMessageTimeout32A(HWND32,UINT32,WPARAM32,LPARAM,UINT32,
-					 UINT32,LPDWORD);
-LRESULT     WINAPI SendMessageTimeout32W(HWND32,UINT32,WPARAM32,LPARAM,UINT32,
-					 UINT32,LPDWORD);
+LRESULT     WINAPI SendMessageTimeoutA(HWND,UINT,WPARAM,LPARAM,UINT,
+					 UINT,LPDWORD);
+LRESULT     WINAPI SendMessageTimeoutW(HWND,UINT,WPARAM,LPARAM,UINT,
+					 UINT,LPDWORD);
 #define     SendMessageTimeout WINELIB_NAME_AW(SendMessageTimeout)
-HWND32      WINAPI SetActiveWindow32(HWND32);
-#define     SetActiveWindow WINELIB_NAME(SetActiveWindow)
-HWND32      WINAPI SetCapture32(HWND32);
-#define     SetCapture WINELIB_NAME(SetCapture)
-BOOL32      WINAPI SetCaretBlinkTime32(UINT32);
-#define     SetCaretBlinkTime WINELIB_NAME(SetCaretBlinkTime)
-BOOL32      WINAPI SetCaretPos32(INT32,INT32);
-#define     SetCaretPos WINELIB_NAME(SetCaretPos)
-LONG        WINAPI SetClassLong32A(HWND32,INT32,LONG);
-LONG        WINAPI SetClassLong32W(HWND32,INT32,LONG);
+HWND      WINAPI SetActiveWindow(HWND);
+HWND      WINAPI SetCapture(HWND);
+BOOL      WINAPI SetCaretBlinkTime(UINT);
+BOOL      WINAPI SetCaretPos(INT,INT);
+LONG        WINAPI SetClassLongA(HWND,INT,LONG);
+LONG        WINAPI SetClassLongW(HWND,INT,LONG);
 #define     SetClassLong WINELIB_NAME_AW(SetClassLong)
-WORD        WINAPI SetClassWord32(HWND32,INT32,WORD);
-#define     SetClassWord WINELIB_NAME(SetClassWord)
-HANDLE32    WINAPI SetClipboardData32(UINT32,HANDLE32);
-#define     SetClipboardData WINELIB_NAME(SetClipboardData)
-HWND32      WINAPI SetClipboardViewer32(HWND32);
-#define     SetClipboardViewer WINELIB_NAME(SetClipboardViewer)
-BOOL32      WINAPI SetCommBreak32(INT32);
-#define     SetCommBreak WINELIB_NAME(SetCommBreak)
-HCURSOR32   WINAPI SetCursor32(HCURSOR32);
-#define     SetCursor WINELIB_NAME(SetCursor)
-BOOL32      WINAPI SetCursorPos32(INT32,INT32);
-#define     SetCursorPos WINELIB_NAME(SetCursorPos)
-BOOL32      WINAPI SetDeskWallPaper32(LPCSTR);
-#define     SetDeskWallPaper WINELIB_NAME(SetDeskWallPaper)
-BOOL32      WINAPI SetDlgItemInt32(HWND32,INT32,UINT32,BOOL32);
-#define     SetDlgItemInt WINELIB_NAME(SetDlgItemInt)
-BOOL32      WINAPI SetDlgItemText32A(HWND32,INT32,LPCSTR);
-BOOL32      WINAPI SetDlgItemText32W(HWND32,INT32,LPCWSTR);
+WORD        WINAPI SetClassWord(HWND,INT,WORD);
+HANDLE    WINAPI SetClipboardData(UINT,HANDLE);
+HWND      WINAPI SetClipboardViewer(HWND);
+BOOL      WINAPI SetCommBreak(INT);
+HCURSOR   WINAPI SetCursor(HCURSOR);
+BOOL      WINAPI SetCursorPos(INT,INT);
+BOOL      WINAPI SetDeskWallPaper(LPCSTR);
+BOOL      WINAPI SetDlgItemInt(HWND,INT,UINT,BOOL);
+BOOL      WINAPI SetDlgItemTextA(HWND,INT,LPCSTR);
+BOOL      WINAPI SetDlgItemTextW(HWND,INT,LPCWSTR);
 #define     SetDlgItemText WINELIB_NAME_AW(SetDlgItemText)
-BOOL32      WINAPI SetDoubleClickTime32(UINT32);
-#define     SetDoubleClickTime WINELIB_NAME(SetDoubleClickTime)
-HWND32      WINAPI SetFocus32(HWND32);
-#define     SetFocus WINELIB_NAME(SetFocus)
-BOOL32      WINAPI SetForegroundWindow32(HWND32);
-#define     SetForegroundWindow WINELIB_NAME(SetForegroundWindow)
-void        WINAPI SetInternalWindowPos32(HWND32,UINT32,LPRECT32,LPPOINT32);
-#define     SetInternalWindowPos WINELIB_NAME(SetInternalWindowPos)
-BOOL32      WINAPI SetMenu32(HWND32,HMENU32);
-#define     SetMenu WINELIB_NAME(SetMenu)
-BOOL32      WINAPI SetMenuContextHelpId32(HMENU32,DWORD);
-#define     SetMenuContextHelpId WINELIB_NAME(SetMenuContextHelpId)
-BOOL32      WINAPI SetMenuItemBitmaps32(HMENU32,UINT32,UINT32,HBITMAP32,HBITMAP32);
-#define     SetMenuItemBitmaps WINELIB_NAME(SetMenuItemBitmaps)
-BOOL32      WINAPI SetMessageQueue32(INT32);
-#define     SetMessageQueue WINELIB_NAME(SetMessageQueue)
-HWND32      WINAPI SetParent32(HWND32,HWND32);
-#define     SetParent WINELIB_NAME(SetParent)
-BOOL32      WINAPI SetProp32A(HWND32,LPCSTR,HANDLE32);
-BOOL32      WINAPI SetProp32W(HWND32,LPCWSTR,HANDLE32);
+BOOL      WINAPI SetDoubleClickTime(UINT);
+HWND      WINAPI SetFocus(HWND);
+BOOL      WINAPI SetForegroundWindow(HWND);
+void        WINAPI SetInternalWindowPos(HWND,UINT,LPRECT,LPPOINT);
+BOOL      WINAPI SetMenu(HWND,HMENU);
+BOOL      WINAPI SetMenuContextHelpId(HMENU,DWORD);
+BOOL      WINAPI SetMenuItemBitmaps(HMENU,UINT,UINT,HBITMAP,HBITMAP);
+BOOL      WINAPI SetMessageQueue(INT);
+HWND      WINAPI SetParent(HWND,HWND);
+BOOL      WINAPI SetPropA(HWND,LPCSTR,HANDLE);
+BOOL      WINAPI SetPropW(HWND,LPCWSTR,HANDLE);
 #define     SetProp WINELIB_NAME_AW(SetProp)
-BOOL32      WINAPI SetRect32(LPRECT32,INT32,INT32,INT32,INT32);
-#define     SetRect WINELIB_NAME(SetRect)
-BOOL32      WINAPI SetRectEmpty32(LPRECT32);
-#define     SetRectEmpty WINELIB_NAME(SetRectEmpty)
-INT32       WINAPI SetScrollInfo32(HWND32,INT32,const SCROLLINFO*,BOOL32);
-#define     SetScrollInfo WINELIB_NAME(SetScrollInfo)
-INT32       WINAPI SetScrollPos32(HWND32,INT32,INT32,BOOL32);
-#define     SetScrollPos WINELIB_NAME(SetScrollPos)
-BOOL32      WINAPI SetScrollRange32(HWND32,INT32,INT32,INT32,BOOL32);
-#define     SetScrollRange WINELIB_NAME(SetScrollRange)
-BOOL32      WINAPI SetSysColors32(INT32,const INT32*,const COLORREF*);
-#define     SetSysColors WINELIB_NAME(SetSysColors)
-#define     SetSysModalWindow32(hwnd) ((HWND32)0)
-#define     SetSysModalWindow WINELIB_NAME(SetSysModalWindow)
-BOOL32      WINAPI SetSystemMenu32(HWND32,HMENU32);
-#define     SetSystemMenu WINELIB_NAME(SetSystemMenu)
-UINT32      WINAPI SetSystemTimer32(HWND32,UINT32,UINT32,TIMERPROC32);
-#define     SetSystemTimer WINELIB_NAME(SetSystemTimer)
-UINT32      WINAPI SetTimer32(HWND32,UINT32,UINT32,TIMERPROC32);
-#define     SetTimer WINELIB_NAME(SetTimer)
-LONG        WINAPI SetWindowLong32A(HWND32,INT32,LONG);
-LONG        WINAPI SetWindowLong32W(HWND32,INT32,LONG);
+BOOL      WINAPI SetRect(LPRECT,INT,INT,INT,INT);
+BOOL      WINAPI SetRectEmpty(LPRECT);
+INT       WINAPI SetScrollInfo(HWND,INT,const SCROLLINFO*,BOOL);
+INT       WINAPI SetScrollPos(HWND,INT,INT,BOOL);
+BOOL      WINAPI SetScrollRange(HWND,INT,INT,INT,BOOL);
+BOOL      WINAPI SetSysColors(INT,const INT*,const COLORREF*);
+#define     SetSysModalWindow(hwnd) ((HWND)0)
+BOOL      WINAPI SetSystemMenu(HWND,HMENU);
+UINT      WINAPI SetSystemTimer(HWND,UINT,UINT,TIMERPROC);
+UINT      WINAPI SetTimer(HWND,UINT,UINT,TIMERPROC);
+LONG        WINAPI SetWindowLongA(HWND,INT,LONG);
+LONG        WINAPI SetWindowLongW(HWND,INT,LONG);
 #define     SetWindowLong WINELIB_NAME_AW(SetWindowLong)
-BOOL32      WINAPI SetWindowPlacement32(HWND32,const WINDOWPLACEMENT32*);
-#define     SetWindowPlacement WINELIB_NAME(SetWindowPlacement)
-HHOOK       WINAPI SetWindowsHook32A(INT32,HOOKPROC32);
-HHOOK       WINAPI SetWindowsHook32W(INT32,HOOKPROC32);
+BOOL      WINAPI SetWindowPlacement(HWND,const WINDOWPLACEMENT*);
+HHOOK       WINAPI SetWindowsHookA(INT,HOOKPROC);
+HHOOK       WINAPI SetWindowsHookW(INT,HOOKPROC);
 #define     SetWindowsHook WINELIB_NAME_AW(SetWindowsHook)
-HHOOK       WINAPI SetWindowsHookEx32A(INT32,HOOKPROC32,HINSTANCE32,DWORD);
-HHOOK       WINAPI SetWindowsHookEx32W(INT32,HOOKPROC32,HINSTANCE32,DWORD);
+HHOOK       WINAPI SetWindowsHookExA(INT,HOOKPROC,HINSTANCE,DWORD);
+HHOOK       WINAPI SetWindowsHookExW(INT,HOOKPROC,HINSTANCE,DWORD);
 #define     SetWindowsHookEx WINELIB_NAME_AW(SetWindowsHookEx)
-BOOL32      WINAPI SetWindowPos32(HWND32,HWND32,INT32,INT32,INT32,INT32,WORD);
-#define     SetWindowPos WINELIB_NAME(SetWindowPos)
-INT32       WINAPI SetWindowRgn32(HWND32,HRGN32,BOOL32);
-#define     SetWindowRgn WINELIB_NAME(SetWindowRgn)
-BOOL32      WINAPI SetWindowText32A(HWND32,LPCSTR);
-BOOL32      WINAPI SetWindowText32W(HWND32,LPCWSTR);
+BOOL      WINAPI SetWindowPos(HWND,HWND,INT,INT,INT,INT,WORD);
+INT       WINAPI SetWindowRgn(HWND,HRGN,BOOL);
+BOOL      WINAPI SetWindowTextA(HWND,LPCSTR);
+BOOL      WINAPI SetWindowTextW(HWND,LPCWSTR);
 #define     SetWindowText WINELIB_NAME_AW(SetWindowText)
-WORD        WINAPI SetWindowWord32(HWND32,INT32,WORD);
-#define     SetWindowWord WINELIB_NAME(SetWindowWord)
-BOOL32      WINAPI ShowCaret32(HWND32);
-#define     ShowCaret WINELIB_NAME(ShowCaret)
-INT32       WINAPI ShowCursor32(BOOL32);
-#define     ShowCursor WINELIB_NAME(ShowCursor)
-BOOL32      WINAPI ShowScrollBar32(HWND32,INT32,BOOL32);
-#define     ShowScrollBar WINELIB_NAME(ShowScrollBar)
-BOOL32      WINAPI ShowOwnedPopups32(HWND32,BOOL32);
-#define     ShowOwnedPopups WINELIB_NAME(ShowOwnedPopups)
-BOOL32      WINAPI ShowWindow32(HWND32,INT32);
-#define     ShowWindow WINELIB_NAME(ShowWindow)
-BOOL32      WINAPI SubtractRect32(LPRECT32,const RECT32*,const RECT32*);
-#define     SubtractRect WINELIB_NAME(SubtractRect)
-BOOL32      WINAPI SwapMouseButton32(BOOL32);
-#define     SwapMouseButton WINELIB_NAME(SwapMouseButton)
-VOID        WINAPI SwitchToThisWindow32(HWND32,BOOL32);
-#define     SwitchToThisWindow WINELIB_NAME(SwitchToThisWindow)
-BOOL32      WINAPI SystemParametersInfo32A(UINT32,UINT32,LPVOID,UINT32);
-BOOL32      WINAPI SystemParametersInfo32W(UINT32,UINT32,LPVOID,UINT32);
+WORD        WINAPI SetWindowWord(HWND,INT,WORD);
+BOOL      WINAPI ShowCaret(HWND);
+INT       WINAPI ShowCursor(BOOL);
+BOOL      WINAPI ShowScrollBar(HWND,INT,BOOL);
+BOOL      WINAPI ShowOwnedPopups(HWND,BOOL);
+BOOL      WINAPI ShowWindow(HWND,INT);
+BOOL      WINAPI SubtractRect(LPRECT,const RECT*,const RECT*);
+BOOL      WINAPI SwapMouseButton(BOOL);
+VOID        WINAPI SwitchToThisWindow(HWND,BOOL);
+BOOL      WINAPI SystemParametersInfoA(UINT,UINT,LPVOID,UINT);
+BOOL      WINAPI SystemParametersInfoW(UINT,UINT,LPVOID,UINT);
 #define     SystemParametersInfo WINELIB_NAME_AW(SystemParametersInfo)
-LONG        WINAPI TabbedTextOut32A(HDC32,INT32,INT32,LPCSTR,INT32,INT32,const INT32*,INT32);
-LONG        WINAPI TabbedTextOut32W(HDC32,INT32,INT32,LPCWSTR,INT32,INT32,const INT32*,INT32);
+LONG        WINAPI TabbedTextOutA(HDC,INT,INT,LPCSTR,INT,INT,const INT*,INT);
+LONG        WINAPI TabbedTextOutW(HDC,INT,INT,LPCWSTR,INT,INT,const INT*,INT);
 #define     TabbedTextOut WINELIB_NAME_AW(TabbedTextOut)
-INT32       WINAPI ToAscii32(UINT32,UINT32,LPBYTE,LPWORD,UINT32);
-#define     ToAscii WINELIB_NAME(ToAscii)
-BOOL32      WINAPI TrackPopupMenu32(HMENU32,UINT32,INT32,INT32,INT32,HWND32,const RECT32*);
-#define     TrackPopupMenu WINELIB_NAME(TrackPopupMenu)
-INT32       WINAPI TranslateAccelerator32(HWND32,HACCEL32,LPMSG32);
-#define     TranslateAccelerator WINELIB_NAME(TranslateAccelerator)
-BOOL32      WINAPI TranslateMDISysAccel32(HWND32,LPMSG32);
-#define     TranslateMDISysAccel WINELIB_NAME(TranslateMDISysAccel)
-BOOL32      WINAPI TranslateMessage32(const MSG32*);
-#define     TranslateMessage WINELIB_NAME(TranslateMessage)
-BOOL32      WINAPI UnhookWindowsHook32(INT32,HOOKPROC32);
-#define     UnhookWindowsHook WINELIB_NAME(UnhookWindowsHook)
-BOOL32      WINAPI UnhookWindowsHookEx32(HHOOK);
-#define     UnhookWindowsHookEx WINELIB_NAME(UnhookWindowsHookEx)
-BOOL32      WINAPI UnionRect32(LPRECT32,const RECT32*,const RECT32*);
-#define     UnionRect WINELIB_NAME(UnionRect)
-BOOL32      WINAPI UnregisterClass32A(LPCSTR,HINSTANCE32);
-BOOL32      WINAPI UnregisterClass32W(LPCWSTR,HINSTANCE32);
+INT       WINAPI ToAscii(UINT,UINT,LPBYTE,LPWORD,UINT);
+BOOL      WINAPI TrackPopupMenu(HMENU,UINT,INT,INT,INT,HWND,const RECT*);
+INT       WINAPI TranslateAccelerator(HWND,HACCEL,LPMSG);
+BOOL      WINAPI TranslateMDISysAccel(HWND,LPMSG);
+BOOL      WINAPI TranslateMessage(const MSG*);
+BOOL      WINAPI UnhookWindowsHook(INT,HOOKPROC);
+BOOL      WINAPI UnhookWindowsHookEx(HHOOK);
+BOOL      WINAPI UnionRect(LPRECT,const RECT*,const RECT*);
+BOOL      WINAPI UnregisterClassA(LPCSTR,HINSTANCE);
+BOOL      WINAPI UnregisterClassW(LPCWSTR,HINSTANCE);
 #define     UnregisterClass WINELIB_NAME_AW(UnregisterClass)
-VOID        WINAPI UpdateWindow32(HWND32);
-#define     UpdateWindow WINELIB_NAME(UpdateWindow)
-VOID        WINAPI ValidateRect32(HWND32,const RECT32*);
-#define     ValidateRect WINELIB_NAME(ValidateRect)
-VOID        WINAPI ValidateRgn32(HWND32,HRGN32);
-#define     ValidateRgn WINELIB_NAME(ValidateRgn)
-WORD        WINAPI VkKeyScan32A(CHAR);
-WORD        WINAPI VkKeyScan32W(WCHAR);
+VOID        WINAPI UpdateWindow(HWND);
+VOID        WINAPI ValidateRect(HWND,const RECT*);
+VOID        WINAPI ValidateRgn(HWND,HRGN);
+WORD        WINAPI VkKeyScanA(CHAR);
+WORD        WINAPI VkKeyScanW(WCHAR);
 #define     VkKeyScan WINELIB_NAME_AW(VkKeyScan)
-HWND32      WINAPI WindowFromDC32(HDC32);
-#define     WindowFromDC WINELIB_NAME(WindowFromDC)
-HWND32      WINAPI WindowFromPoint32(POINT32);
-#define     WindowFromPoint WINELIB_NAME(WindowFromPoint)
-BOOL32      WINAPI WinHelp32A(HWND32,LPCSTR,UINT32,DWORD);
-BOOL32      WINAPI WinHelp32W(HWND32,LPCWSTR,UINT32,DWORD);
+HWND      WINAPI WindowFromDC(HDC);
+HWND      WINAPI WindowFromPoint(POINT);
+BOOL      WINAPI WinHelpA(HWND,LPCSTR,UINT,DWORD);
+BOOL      WINAPI WinHelpW(HWND,LPCWSTR,UINT,DWORD);
 #define     WinHelp WINELIB_NAME_AW(WinHelp)
-UINT32      WINAPI WNetAddConnection32A(LPCSTR,LPCSTR,LPCSTR);
-UINT32      WINAPI WNetAddConnection32W(LPCWSTR,LPCWSTR,LPCWSTR);
+UINT      WINAPI WNetAddConnectionA(LPCSTR,LPCSTR,LPCSTR);
+UINT      WINAPI WNetAddConnectionW(LPCWSTR,LPCWSTR,LPCWSTR);
 #define     WNetAddConnection WINELIB_NAME_AW(WNetAddConnection)
-INT32       WINAPIV wsnprintf32A(LPSTR,UINT32,LPCSTR,...);
-INT32       WINAPIV wsnprintf32W(LPWSTR,UINT32,LPCWSTR,...);
+INT       WINAPIV wsnprintfA(LPSTR,UINT,LPCSTR,...);
+INT       WINAPIV wsnprintfW(LPWSTR,UINT,LPCWSTR,...);
 #define     wsnprintf WINELIB_NAME_AW(wsnprintf)
-INT32       WINAPIV wsprintf32A(LPSTR,LPCSTR,...);
-INT32       WINAPIV wsprintf32W(LPWSTR,LPCWSTR,...);
+INT       WINAPIV wsprintfA(LPSTR,LPCSTR,...);
+INT       WINAPIV wsprintfW(LPWSTR,LPCWSTR,...);
 #define     wsprintf WINELIB_NAME_AW(wsprintf)
-INT32       WINAPI wvsnprintf32A(LPSTR,UINT32,LPCSTR,va_list);
-INT32       WINAPI wvsnprintf32W(LPWSTR,UINT32,LPCWSTR,va_list);
+INT       WINAPI wvsnprintfA(LPSTR,UINT,LPCSTR,va_list);
+INT       WINAPI wvsnprintfW(LPWSTR,UINT,LPCWSTR,va_list);
 #define     wvsnprintf WINELIB_NAME_AW(wvsnprintf)
-INT32       WINAPI wvsprintf32A(LPSTR,LPCSTR,va_list);
-INT32       WINAPI wvsprintf32W(LPWSTR,LPCWSTR,va_list);
+INT       WINAPI wvsprintfA(LPSTR,LPCSTR,va_list);
+INT       WINAPI wvsprintfW(LPWSTR,LPCWSTR,va_list);
 #define     wvsprintf WINELIB_NAME_AW(wvsprintf)
 
-BOOL32      WINAPI RegisterShellHook(HWND16,UINT16);
+BOOL      WINAPI RegisterShellHook16(HWND16,UINT16);
 /* NOTE: This is SYSTEM.3, not USER.182, which is also named KillSystemTimer */
 WORD        WINAPI SYSTEM_KillSystemTimer( WORD );
 
 /* Extra functions that don't exist in the Windows API */
 
-HPEN32      WINAPI GetSysColorPen32(INT32);
-INT32       WINAPI LoadMessage32A(HMODULE32,UINT32,WORD,LPSTR,INT32);
-INT32       WINAPI LoadMessage32W(HMODULE32,UINT32,WORD,LPWSTR,INT32);
+HPEN      WINAPI GetSysColorPen(INT);
+INT       WINAPI LoadMessageA(HMODULE,UINT,WORD,LPSTR,INT);
+INT       WINAPI LoadMessageW(HMODULE,UINT,WORD,LPWSTR,INT);
 
-VOID        WINAPI ScreenSwitchEnable(WORD);
+VOID        WINAPI ScreenSwitchEnable16(WORD);
 
 #endif /* __INCLUDE_WINUSER_H */

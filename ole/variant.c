@@ -106,9 +106,9 @@ static const double DAYS_IN_ONE_YEAR = 365.2515;
  * the tm struct, tm_sec, tm_min, tm_hour, tm_year, tm_day, tm_mon.
  *
  ******************************************************************************/
-static BOOL32 DateTimeStringToTm( OLECHAR32* strIn, LCID lcid, struct tm* pTm )
+static BOOL DateTimeStringToTm( OLECHAR* strIn, LCID lcid, struct tm* pTm )
 {
-	BOOL32 res = FALSE;
+	BOOL res = FALSE;
 	double		fsec;
 	int 		tzp;
 	int 		dtype;
@@ -219,7 +219,7 @@ static BOOL32 DateTimeStringToTm( OLECHAR32* strIn, LCID lcid, struct tm* pTm )
  *
  * Returns TRUE if successfull.
  */
-static BOOL32 TmToDATE( struct tm* pTm, DATE *pDateOut )
+static BOOL TmToDATE( struct tm* pTm, DATE *pDateOut )
 {
 	if( (pTm->tm_year - 1900) >= 0 )
 	{
@@ -323,7 +323,7 @@ static BOOL32 TmToDATE( struct tm* pTm, DATE *pDateOut )
  *
  * Returns TRUE if successfull.
  */
-static BOOL32 DateToTm( DATE dateIn, LCID lcid, struct tm* pTm )
+static BOOL DateToTm( DATE dateIn, LCID lcid, struct tm* pTm )
 {
 	/* Do not process dates smaller than January 1, 1900.
 	 * Which corresponds to 2.0 in the windows DATE format.
@@ -513,12 +513,12 @@ static int SizeOfVariantData( VARIANT* parg )
  *	   StringDupAtoBstr		[INTERNAL]
  * 
  */
-static BSTR32 StringDupAtoBstr( char* strIn )
+static BSTR StringDupAtoBstr( char* strIn )
 {
-	BSTR32 bstr = NULL;
-	OLECHAR32* pNewString = NULL;
+	BSTR bstr = NULL;
+	OLECHAR* pNewString = NULL;
 	pNewString = HEAP_strdupAtoW( GetProcessHeap(), 0, strIn );
-	bstr = SysAllocString32( pNewString );
+	bstr = SysAllocString( pNewString );
 	HeapFree( GetProcessHeap(), 0, pNewString );
 	return bstr;
 }
@@ -531,7 +531,7 @@ static BSTR32 StringDupAtoBstr( char* strIn )
 static double round( double d )
 {
    double decimals = 0.0, integerValue = 0.0, roundedValue = 0.0;
-    BOOL32 bEvenNumber = FALSE;
+    BOOL bEvenNumber = FALSE;
     int nSign = 0;
 
     /* Save the sign of the number
@@ -620,27 +620,27 @@ static void RemoveCharacterFromString( LPSTR str, LPSTR strOfCharToRemove )
  *
  * Checks if the string is of proper format to be converted to a real value.
  */
-static BOOL32 IsValidRealString( LPSTR strRealString )
+static BOOL IsValidRealString( LPSTR strRealString )
 {
 	/* Real values that have a decimal point are required to either have
 	 * digits before or after the decimal point.  We will assume that
 	 * we do not have any digits at either position. If we do encounter
 	 * some we will disable this flag.
 	 */
-	BOOL32 bDigitsRequired = TRUE;
+	BOOL bDigitsRequired = TRUE;
 	/* Processed fields in the string representation of the real number.
 	 */
-	BOOL32 bWhiteSpaceProcessed = FALSE;
-	BOOL32 bFirstSignProcessed = FALSE;
-	BOOL32 bFirstDigitsProcessed = FALSE;
-	BOOL32 bDecimalPointProcessed = FALSE;
-	BOOL32 bSecondDigitsProcessed = FALSE;
-	BOOL32 bExponentProcessed = FALSE;
-	BOOL32 bSecondSignProcessed = FALSE;
-	BOOL32 bThirdDigitsProcessed = FALSE;
+	BOOL bWhiteSpaceProcessed = FALSE;
+	BOOL bFirstSignProcessed = FALSE;
+	BOOL bFirstDigitsProcessed = FALSE;
+	BOOL bDecimalPointProcessed = FALSE;
+	BOOL bSecondDigitsProcessed = FALSE;
+	BOOL bExponentProcessed = FALSE;
+	BOOL bSecondSignProcessed = FALSE;
+	BOOL bThirdDigitsProcessed = FALSE;
 	/* Assume string parameter "strRealString" is valid and try to disprove it.
 	 */
-	BOOL32 bValidRealString = TRUE;
+	BOOL bValidRealString = TRUE;
 
 	/* Used to count the number of tokens in the "strRealString".
 	 */
@@ -876,10 +876,10 @@ static HRESULT Coerce( VARIANTARG* pd, LCID lcid, ULONG dwFlags, VARIANTARG* ps,
 	{
 
     case( VT_EMPTY ):
-        res = VariantClear32( pd );
+        res = VariantClear( pd );
         break;
     case( VT_NULL ):
-        res = VariantClear32( pd );
+        res = VariantClear( pd );
         if( res == S_OK )
         {
             pd->vt = VT_NULL;
@@ -889,42 +889,42 @@ static HRESULT Coerce( VARIANTARG* pd, LCID lcid, ULONG dwFlags, VARIANTARG* ps,
 		switch( vtFrom )
         {
         case( VT_I1 ):
-            res = VariantCopy32( pd, ps );
+            res = VariantCopy( pd, ps );
             break;
 		case( VT_I2 ):
-			res = VarI1FromI232( ps->u.iVal, &(pd->u.cVal) );
+			res = VarI1FromI2( ps->u.iVal, &(pd->u.cVal) );
 			break;
 		case( VT_INT ):
 		case( VT_I4 ):
-			res = VarI1FromI432( ps->u.lVal, &(pd->u.cVal) );
+			res = VarI1FromI4( ps->u.lVal, &(pd->u.cVal) );
 			break;
 		case( VT_UI1 ):
-			res = VarI1FromUI132( ps->u.bVal, &(pd->u.cVal) );
+			res = VarI1FromUI1( ps->u.bVal, &(pd->u.cVal) );
 			break;
 		case( VT_UI2 ):
-			res = VarI1FromUI232( ps->u.uiVal, &(pd->u.cVal) );
+			res = VarI1FromUI2( ps->u.uiVal, &(pd->u.cVal) );
 			break;
 		case( VT_UINT ):
 		case( VT_UI4 ):
-			res = VarI1FromUI432( ps->u.ulVal, &(pd->u.cVal) );
+			res = VarI1FromUI4( ps->u.ulVal, &(pd->u.cVal) );
 			break;
 		case( VT_R4 ):
-			res = VarI1FromR432( ps->u.fltVal, &(pd->u.cVal) );
+			res = VarI1FromR4( ps->u.fltVal, &(pd->u.cVal) );
 			break;
 		case( VT_R8 ):
-			res = VarI1FromR832( ps->u.dblVal, &(pd->u.cVal) );
+			res = VarI1FromR8( ps->u.dblVal, &(pd->u.cVal) );
 			break;
 		case( VT_DATE ):
-			res = VarI1FromDate32( ps->u.date, &(pd->u.cVal) );
+			res = VarI1FromDate( ps->u.date, &(pd->u.cVal) );
 			break;
 		case( VT_BOOL ):
-			res = VarI1FromBool32( ps->u.boolVal, &(pd->u.cVal) );
+			res = VarI1FromBool( ps->u.boolVal, &(pd->u.cVal) );
 			break;
 		case( VT_BSTR ):
-			res = VarI1FromStr32( ps->u.bstrVal, lcid, dwFlags, &(pd->u.cVal) );
+			res = VarI1FromStr( ps->u.bstrVal, lcid, dwFlags, &(pd->u.cVal) );
 			break;
 		case( VT_CY ):
-	     res = VarI1FromCy32( ps->u.cyVal, &(pd->u.cVal) );
+	     res = VarI1FromCy( ps->u.cyVal, &(pd->u.cVal) );
 		case( VT_DISPATCH ):
 			/*res = VarI1FromDisp32( ps->u.pdispVal, lcid, &(pd->u.cVal) );*/
 		case( VT_UNKNOWN ):
@@ -942,42 +942,42 @@ static HRESULT Coerce( VARIANTARG* pd, LCID lcid, ULONG dwFlags, VARIANTARG* ps,
 		switch( vtFrom )
 		{
 		case( VT_I1 ):
-			res = VarI2FromI132( ps->u.cVal, &(pd->u.iVal) );
+			res = VarI2FromI1( ps->u.cVal, &(pd->u.iVal) );
 			break;
         case( VT_I2 ):
-            res = VariantCopy32( pd, ps );
+            res = VariantCopy( pd, ps );
             break;
 		case( VT_INT ):
 		case( VT_I4 ):
-			res = VarI2FromI432( ps->u.lVal, &(pd->u.iVal) );
+			res = VarI2FromI4( ps->u.lVal, &(pd->u.iVal) );
 			break;
 		case( VT_UI1 ):
-			res = VarI2FromUI132( ps->u.bVal, &(pd->u.iVal) );
+			res = VarI2FromUI1( ps->u.bVal, &(pd->u.iVal) );
 			break;
 		case( VT_UI2 ):
-			res = VarI2FromUI232( ps->u.uiVal, &(pd->u.iVal) );
+			res = VarI2FromUI2( ps->u.uiVal, &(pd->u.iVal) );
 			break;
 		case( VT_UINT ):
 		case( VT_UI4 ):
-			res = VarI2FromUI432( ps->u.ulVal, &(pd->u.iVal) );
+			res = VarI2FromUI4( ps->u.ulVal, &(pd->u.iVal) );
 			break;
 		case( VT_R4 ):
-			res = VarI2FromR432( ps->u.fltVal, &(pd->u.iVal) );
+			res = VarI2FromR4( ps->u.fltVal, &(pd->u.iVal) );
 			break;
 		case( VT_R8 ):
-			res = VarI2FromR832( ps->u.dblVal, &(pd->u.iVal) );
+			res = VarI2FromR8( ps->u.dblVal, &(pd->u.iVal) );
 			break;
 		case( VT_DATE ):
-			res = VarI2FromDate32( ps->u.date, &(pd->u.iVal) );
+			res = VarI2FromDate( ps->u.date, &(pd->u.iVal) );
 			break;
 		case( VT_BOOL ):
-			res = VarI2FromBool32( ps->u.boolVal, &(pd->u.iVal) );
+			res = VarI2FromBool( ps->u.boolVal, &(pd->u.iVal) );
 			break;
 		case( VT_BSTR ):
-			res = VarI2FromStr32( ps->u.bstrVal, lcid, dwFlags, &(pd->u.iVal) );
+			res = VarI2FromStr( ps->u.bstrVal, lcid, dwFlags, &(pd->u.iVal) );
 			break;
 		case( VT_CY ):
-	     res = VarI2FromCy32( ps->u.cyVal, &(pd->u.iVal) );
+	     res = VarI2FromCy( ps->u.cyVal, &(pd->u.iVal) );
 		case( VT_DISPATCH ):
 			/*res = VarI2FromDisp32( ps->u.pdispVal, lcid, &(pd->u.iVal) );*/
 		case( VT_UNKNOWN ):
@@ -996,42 +996,42 @@ static HRESULT Coerce( VARIANTARG* pd, LCID lcid, ULONG dwFlags, VARIANTARG* ps,
 		switch( vtFrom )
 		{
 		case( VT_I1 ):
-			res = VarI4FromI132( ps->u.cVal, &(pd->u.lVal) );
+			res = VarI4FromI1( ps->u.cVal, &(pd->u.lVal) );
 			break;
 		case( VT_I2 ):
-			res = VarI4FromI232( ps->u.iVal, &(pd->u.lVal) );
+			res = VarI4FromI2( ps->u.iVal, &(pd->u.lVal) );
             break;
         case( VT_INT ):
         case( VT_I4 ):
-            res = VariantCopy32( pd, ps );
+            res = VariantCopy( pd, ps );
             break;
 		case( VT_UI1 ):
-			res = VarI4FromUI132( ps->u.bVal, &(pd->u.lVal) );
+			res = VarI4FromUI1( ps->u.bVal, &(pd->u.lVal) );
 			break;
 		case( VT_UI2 ):
-			res = VarI4FromUI232( ps->u.uiVal, &(pd->u.lVal) );
+			res = VarI4FromUI2( ps->u.uiVal, &(pd->u.lVal) );
 			break;
 		case( VT_UINT ):
 		case( VT_UI4 ):
-			res = VarI4FromUI432( ps->u.ulVal, &(pd->u.lVal) );
+			res = VarI4FromUI4( ps->u.ulVal, &(pd->u.lVal) );
 			break;
 		case( VT_R4 ):
-			res = VarI4FromR432( ps->u.fltVal, &(pd->u.lVal) );
+			res = VarI4FromR4( ps->u.fltVal, &(pd->u.lVal) );
 			break;
 		case( VT_R8 ):
-			res = VarI4FromR832( ps->u.dblVal, &(pd->u.lVal) );
+			res = VarI4FromR8( ps->u.dblVal, &(pd->u.lVal) );
 			break;
 		case( VT_DATE ):
-			res = VarI4FromDate32( ps->u.date, &(pd->u.lVal) );
+			res = VarI4FromDate( ps->u.date, &(pd->u.lVal) );
 			break;
 		case( VT_BOOL ):
-			res = VarI4FromBool32( ps->u.boolVal, &(pd->u.lVal) );
+			res = VarI4FromBool( ps->u.boolVal, &(pd->u.lVal) );
 			break;
 		case( VT_BSTR ):
-			res = VarI4FromStr32( ps->u.bstrVal, lcid, dwFlags, &(pd->u.lVal) );
+			res = VarI4FromStr( ps->u.bstrVal, lcid, dwFlags, &(pd->u.lVal) );
 			break;
 		case( VT_CY ):
-	     res = VarI4FromCy32( ps->u.cyVal, &(pd->u.lVal) );
+	     res = VarI4FromCy( ps->u.cyVal, &(pd->u.lVal) );
 		case( VT_DISPATCH ):
 			/*res = VarI4FromDisp32( ps->u.pdispVal, lcid, &(pd->u.lVal) );*/
 		case( VT_UNKNOWN ):
@@ -1049,42 +1049,42 @@ static HRESULT Coerce( VARIANTARG* pd, LCID lcid, ULONG dwFlags, VARIANTARG* ps,
 		switch( vtFrom )
 		{
 		case( VT_I1 ):
-			res = VarUI1FromI132( ps->u.cVal, &(pd->u.bVal) );
+			res = VarUI1FromI1( ps->u.cVal, &(pd->u.bVal) );
 			break;
 		case( VT_I2 ):
-			res = VarUI1FromI232( ps->u.iVal, &(pd->u.bVal) );
+			res = VarUI1FromI2( ps->u.iVal, &(pd->u.bVal) );
 			break;
 		case( VT_INT ):
 		case( VT_I4 ):
-			res = VarUI1FromI432( ps->u.lVal, &(pd->u.bVal) );
+			res = VarUI1FromI4( ps->u.lVal, &(pd->u.bVal) );
 			break;
         case( VT_UI1 ):
-            res = VariantCopy32( pd, ps );
+            res = VariantCopy( pd, ps );
             break;
 		case( VT_UI2 ):
-			res = VarUI1FromUI232( ps->u.uiVal, &(pd->u.bVal) );
+			res = VarUI1FromUI2( ps->u.uiVal, &(pd->u.bVal) );
 			break;
 		case( VT_UINT ):
 		case( VT_UI4 ):
-			res = VarUI1FromUI432( ps->u.ulVal, &(pd->u.bVal) );
+			res = VarUI1FromUI4( ps->u.ulVal, &(pd->u.bVal) );
 			break;
 		case( VT_R4 ):
-			res = VarUI1FromR432( ps->u.fltVal, &(pd->u.bVal) );
+			res = VarUI1FromR4( ps->u.fltVal, &(pd->u.bVal) );
 			break;
 		case( VT_R8 ):
-			res = VarUI1FromR832( ps->u.dblVal, &(pd->u.bVal) );
+			res = VarUI1FromR8( ps->u.dblVal, &(pd->u.bVal) );
 			break;
 		case( VT_DATE ):
-			res = VarUI1FromDate32( ps->u.date, &(pd->u.bVal) );
+			res = VarUI1FromDate( ps->u.date, &(pd->u.bVal) );
 			break;
 		case( VT_BOOL ):
-			res = VarUI1FromBool32( ps->u.boolVal, &(pd->u.bVal) );
+			res = VarUI1FromBool( ps->u.boolVal, &(pd->u.bVal) );
 			break;
 		case( VT_BSTR ):
-			res = VarUI1FromStr32( ps->u.bstrVal, lcid, dwFlags, &(pd->u.bVal) );
+			res = VarUI1FromStr( ps->u.bstrVal, lcid, dwFlags, &(pd->u.bVal) );
 			break;
 		case( VT_CY ):
-	     res = VarUI1FromCy32( ps->u.cyVal, &(pd->u.bVal) );
+	     res = VarUI1FromCy( ps->u.cyVal, &(pd->u.bVal) );
 		case( VT_DISPATCH ):
 			/*res = VarUI1FromDisp32( ps->u.pdispVal, lcid, &(pd->u.bVal) );*/
 		case( VT_UNKNOWN ):
@@ -1102,42 +1102,42 @@ static HRESULT Coerce( VARIANTARG* pd, LCID lcid, ULONG dwFlags, VARIANTARG* ps,
 		switch( vtFrom )
 		{
 		case( VT_I1 ):
-			res = VarUI2FromI132( ps->u.cVal, &(pd->u.uiVal) );
+			res = VarUI2FromI1( ps->u.cVal, &(pd->u.uiVal) );
 			break;
 		case( VT_I2 ):
-			res = VarUI2FromI232( ps->u.iVal, &(pd->u.uiVal) );
+			res = VarUI2FromI2( ps->u.iVal, &(pd->u.uiVal) );
 			break;
 		case( VT_INT ):
 		case( VT_I4 ):
-			res = VarUI2FromI432( ps->u.lVal, &(pd->u.uiVal) );
+			res = VarUI2FromI4( ps->u.lVal, &(pd->u.uiVal) );
 			break;
 		case( VT_UI1 ):
-			res = VarUI2FromUI132( ps->u.bVal, &(pd->u.uiVal) );
+			res = VarUI2FromUI1( ps->u.bVal, &(pd->u.uiVal) );
 			break;
         case( VT_UI2 ):
-            res = VariantCopy32( pd, ps );
+            res = VariantCopy( pd, ps );
             break;
 		case( VT_UINT ):
 		case( VT_UI4 ):
-			res = VarUI2FromUI432( ps->u.ulVal, &(pd->u.uiVal) );
+			res = VarUI2FromUI4( ps->u.ulVal, &(pd->u.uiVal) );
 			break;
 		case( VT_R4 ):
-			res = VarUI2FromR432( ps->u.fltVal, &(pd->u.uiVal) );
+			res = VarUI2FromR4( ps->u.fltVal, &(pd->u.uiVal) );
 			break;
 		case( VT_R8 ):
-			res = VarUI2FromR832( ps->u.dblVal, &(pd->u.uiVal) );
+			res = VarUI2FromR8( ps->u.dblVal, &(pd->u.uiVal) );
 			break;
 		case( VT_DATE ):
-			res = VarUI2FromDate32( ps->u.date, &(pd->u.uiVal) );
+			res = VarUI2FromDate( ps->u.date, &(pd->u.uiVal) );
 			break;
 		case( VT_BOOL ):
-			res = VarUI2FromBool32( ps->u.boolVal, &(pd->u.uiVal) );
+			res = VarUI2FromBool( ps->u.boolVal, &(pd->u.uiVal) );
 			break;
 		case( VT_BSTR ):
-			res = VarUI2FromStr32( ps->u.bstrVal, lcid, dwFlags, &(pd->u.uiVal) );
+			res = VarUI2FromStr( ps->u.bstrVal, lcid, dwFlags, &(pd->u.uiVal) );
 			break;
 		case( VT_CY ):
-	     res = VarUI2FromCy32( ps->u.cyVal, &(pd->u.uiVal) );
+	     res = VarUI2FromCy( ps->u.cyVal, &(pd->u.uiVal) );
 		case( VT_DISPATCH ):
 			/*res = VarUI2FromDisp32( ps->u.pdispVal, lcid, &(pd->u.uiVal) );*/
 		case( VT_UNKNOWN ):
@@ -1156,41 +1156,41 @@ static HRESULT Coerce( VARIANTARG* pd, LCID lcid, ULONG dwFlags, VARIANTARG* ps,
 		switch( vtFrom )
 		{
 		case( VT_I1 ):
-			res = VarUI4FromI132( ps->u.cVal, &(pd->u.ulVal) );
+			res = VarUI4FromI1( ps->u.cVal, &(pd->u.ulVal) );
 			break;
 		case( VT_I2 ):
-			res = VarUI4FromI232( ps->u.iVal, &(pd->u.ulVal) );
+			res = VarUI4FromI2( ps->u.iVal, &(pd->u.ulVal) );
 			break;
 		case( VT_INT ):
 		case( VT_I4 ):
-			res = VarUI4FromI432( ps->u.lVal, &(pd->u.ulVal) );
+			res = VarUI4FromI4( ps->u.lVal, &(pd->u.ulVal) );
 			break;
 		case( VT_UI1 ):
-			res = VarUI4FromUI132( ps->u.bVal, &(pd->u.ulVal) );
+			res = VarUI4FromUI1( ps->u.bVal, &(pd->u.ulVal) );
 			break;
 		case( VT_UI2 ):
-			res = VarUI4FromUI232( ps->u.uiVal, &(pd->u.ulVal) );
+			res = VarUI4FromUI2( ps->u.uiVal, &(pd->u.ulVal) );
 			break;
         case( VT_UI4 ):
-            res = VariantCopy32( pd, ps );
+            res = VariantCopy( pd, ps );
             break;
 		case( VT_R4 ):
-			res = VarUI4FromR432( ps->u.fltVal, &(pd->u.ulVal) );
+			res = VarUI4FromR4( ps->u.fltVal, &(pd->u.ulVal) );
 			break;
 		case( VT_R8 ):
-			res = VarUI4FromR832( ps->u.dblVal, &(pd->u.ulVal) );
+			res = VarUI4FromR8( ps->u.dblVal, &(pd->u.ulVal) );
 			break;
 		case( VT_DATE ):
-			res = VarUI4FromDate32( ps->u.date, &(pd->u.ulVal) );
+			res = VarUI4FromDate( ps->u.date, &(pd->u.ulVal) );
 			break;
 		case( VT_BOOL ):
-			res = VarUI4FromBool32( ps->u.boolVal, &(pd->u.ulVal) );
+			res = VarUI4FromBool( ps->u.boolVal, &(pd->u.ulVal) );
 			break;
 		case( VT_BSTR ):
-			res = VarUI4FromStr32( ps->u.bstrVal, lcid, dwFlags, &(pd->u.ulVal) );
+			res = VarUI4FromStr( ps->u.bstrVal, lcid, dwFlags, &(pd->u.ulVal) );
 			break;
 		case( VT_CY ):
-	     res = VarUI4FromCy32( ps->u.cyVal, &(pd->u.ulVal) );
+	     res = VarUI4FromCy( ps->u.cyVal, &(pd->u.ulVal) );
 		case( VT_DISPATCH ):
 			/*res = VarUI4FromDisp32( ps->u.pdispVal, lcid, &(pd->u.ulVal) );*/
 		case( VT_UNKNOWN ):
@@ -1208,42 +1208,42 @@ static HRESULT Coerce( VARIANTARG* pd, LCID lcid, ULONG dwFlags, VARIANTARG* ps,
 		switch( vtFrom )
 		{
 		case( VT_I1 ):
-			res = VarR4FromI132( ps->u.cVal, &(pd->u.fltVal) );
+			res = VarR4FromI1( ps->u.cVal, &(pd->u.fltVal) );
 			break;
 		case( VT_I2 ):
-			res = VarR4FromI232( ps->u.iVal, &(pd->u.fltVal) );
+			res = VarR4FromI2( ps->u.iVal, &(pd->u.fltVal) );
 			break;
 		case( VT_INT ):
 		case( VT_I4 ):
-			res = VarR4FromI432( ps->u.lVal, &(pd->u.fltVal) );
+			res = VarR4FromI4( ps->u.lVal, &(pd->u.fltVal) );
 			break;
 		case( VT_UI1 ):
-			res = VarR4FromUI132( ps->u.bVal, &(pd->u.fltVal) );
+			res = VarR4FromUI1( ps->u.bVal, &(pd->u.fltVal) );
 			break;
 		case( VT_UI2 ):
-			res = VarR4FromUI232( ps->u.uiVal, &(pd->u.fltVal) );
+			res = VarR4FromUI2( ps->u.uiVal, &(pd->u.fltVal) );
 			break;
 		case( VT_UINT ):
 		case( VT_UI4 ):
-			res = VarR4FromUI432( ps->u.ulVal, &(pd->u.fltVal) );
+			res = VarR4FromUI4( ps->u.ulVal, &(pd->u.fltVal) );
 			break;
         case( VT_R4 ):
-            res = VariantCopy32( pd, ps );
+            res = VariantCopy( pd, ps );
             break;
 		case( VT_R8 ):
-			res = VarR4FromR832( ps->u.dblVal, &(pd->u.fltVal) );
+			res = VarR4FromR8( ps->u.dblVal, &(pd->u.fltVal) );
 			break;
 		case( VT_DATE ):
-			res = VarR4FromDate32( ps->u.date, &(pd->u.fltVal) );
+			res = VarR4FromDate( ps->u.date, &(pd->u.fltVal) );
 			break;
 		case( VT_BOOL ):
-			res = VarR4FromBool32( ps->u.boolVal, &(pd->u.fltVal) );
+			res = VarR4FromBool( ps->u.boolVal, &(pd->u.fltVal) );
 			break;
 		case( VT_BSTR ):
-			res = VarR4FromStr32( ps->u.bstrVal, lcid, dwFlags, &(pd->u.fltVal) );
+			res = VarR4FromStr( ps->u.bstrVal, lcid, dwFlags, &(pd->u.fltVal) );
 			break;
 		case( VT_CY ):
-	     res = VarR4FromCy32( ps->u.cyVal, &(pd->u.fltVal) );
+	     res = VarR4FromCy( ps->u.cyVal, &(pd->u.fltVal) );
 		case( VT_DISPATCH ):
 			/*res = VarR4FromDisp32( ps->u.pdispVal, lcid, &(pd->u.fltVal) );*/
 		case( VT_UNKNOWN ):
@@ -1261,42 +1261,42 @@ static HRESULT Coerce( VARIANTARG* pd, LCID lcid, ULONG dwFlags, VARIANTARG* ps,
 		switch( vtFrom )
 		{
 		case( VT_I1 ):
-			res = VarR8FromI132( ps->u.cVal, &(pd->u.dblVal) );
+			res = VarR8FromI1( ps->u.cVal, &(pd->u.dblVal) );
 			break;
 		case( VT_I2 ):
-			res = VarR8FromI232( ps->u.iVal, &(pd->u.dblVal) );
+			res = VarR8FromI2( ps->u.iVal, &(pd->u.dblVal) );
 			break;
 		case( VT_INT ):
 		case( VT_I4 ):
-			res = VarR8FromI432( ps->u.lVal, &(pd->u.dblVal) );
+			res = VarR8FromI4( ps->u.lVal, &(pd->u.dblVal) );
 			break;
 		case( VT_UI1 ):
-			res = VarR8FromUI132( ps->u.bVal, &(pd->u.dblVal) );
+			res = VarR8FromUI1( ps->u.bVal, &(pd->u.dblVal) );
 			break;
 		case( VT_UI2 ):
-			res = VarR8FromUI232( ps->u.uiVal, &(pd->u.dblVal) );
+			res = VarR8FromUI2( ps->u.uiVal, &(pd->u.dblVal) );
 			break;
 		case( VT_UINT ):
 		case( VT_UI4 ):
-			res = VarR8FromUI432( ps->u.ulVal, &(pd->u.dblVal) );
+			res = VarR8FromUI4( ps->u.ulVal, &(pd->u.dblVal) );
 			break;
 		case( VT_R4 ):
-			res = VarR8FromR432( ps->u.fltVal, &(pd->u.dblVal) );
+			res = VarR8FromR4( ps->u.fltVal, &(pd->u.dblVal) );
 			break;
         case( VT_R8 ):
-            res = VariantCopy32( pd, ps );
+            res = VariantCopy( pd, ps );
             break;
 		case( VT_DATE ):
-			res = VarR8FromDate32( ps->u.date, &(pd->u.dblVal) );
+			res = VarR8FromDate( ps->u.date, &(pd->u.dblVal) );
 			break;
 		case( VT_BOOL ):
-			res = VarR8FromBool32( ps->u.boolVal, &(pd->u.dblVal) );
+			res = VarR8FromBool( ps->u.boolVal, &(pd->u.dblVal) );
 			break;
 		case( VT_BSTR ):
-			res = VarR8FromStr32( ps->u.bstrVal, lcid, dwFlags, &(pd->u.dblVal) );
+			res = VarR8FromStr( ps->u.bstrVal, lcid, dwFlags, &(pd->u.dblVal) );
 			break;
 		case( VT_CY ):
-	     res = VarR8FromCy32( ps->u.cyVal, &(pd->u.dblVal) );
+	     res = VarR8FromCy( ps->u.cyVal, &(pd->u.dblVal) );
 		case( VT_DISPATCH ):
 			/*res = VarR8FromDisp32( ps->u.pdispVal, lcid, &(pd->u.dblVal) );*/
 		case( VT_UNKNOWN ):
@@ -1314,46 +1314,46 @@ static HRESULT Coerce( VARIANTARG* pd, LCID lcid, ULONG dwFlags, VARIANTARG* ps,
 		switch( vtFrom )
 		{
 		case( VT_I1 ):
-			res = VarDateFromI132( ps->u.cVal, &(pd->u.date) );
+			res = VarDateFromI1( ps->u.cVal, &(pd->u.date) );
 			break;
 		case( VT_I2 ):
-			res = VarDateFromI232( ps->u.iVal, &(pd->u.date) );
+			res = VarDateFromI2( ps->u.iVal, &(pd->u.date) );
 			break;
 		case( VT_INT ):
-			res = VarDateFromInt32( ps->u.intVal, &(pd->u.date) );
+			res = VarDateFromInt( ps->u.intVal, &(pd->u.date) );
 			break;
 		case( VT_I4 ):
-			res = VarDateFromI432( ps->u.lVal, &(pd->u.date) );
+			res = VarDateFromI4( ps->u.lVal, &(pd->u.date) );
 			break;
 		case( VT_UI1 ):
-			res = VarDateFromUI132( ps->u.bVal, &(pd->u.date) );
+			res = VarDateFromUI1( ps->u.bVal, &(pd->u.date) );
 			break;
 		case( VT_UI2 ):
-			res = VarDateFromUI232( ps->u.uiVal, &(pd->u.date) );
+			res = VarDateFromUI2( ps->u.uiVal, &(pd->u.date) );
 			break;
 		case( VT_UINT ):
-			res = VarDateFromUint32( ps->u.uintVal, &(pd->u.date) );
+			res = VarDateFromUint( ps->u.uintVal, &(pd->u.date) );
 			break;
 		case( VT_UI4 ):
-			res = VarDateFromUI432( ps->u.ulVal, &(pd->u.date) );
+			res = VarDateFromUI4( ps->u.ulVal, &(pd->u.date) );
 			break;
 		case( VT_R4 ):
-			res = VarDateFromR432( ps->u.fltVal, &(pd->u.date) );
+			res = VarDateFromR4( ps->u.fltVal, &(pd->u.date) );
 			break;
 		case( VT_R8 ):
-			res = VarDateFromR832( ps->u.dblVal, &(pd->u.date) );
+			res = VarDateFromR8( ps->u.dblVal, &(pd->u.date) );
 			break;
         case( VT_DATE ):
-            res = VariantCopy32( pd, ps );
+            res = VariantCopy( pd, ps );
             break;
 		case( VT_BOOL ):
-			res = VarDateFromBool32( ps->u.boolVal, &(pd->u.date) );
+			res = VarDateFromBool( ps->u.boolVal, &(pd->u.date) );
 			break;
 		case( VT_BSTR ):
-			res = VarDateFromStr32( ps->u.bstrVal, lcid, dwFlags, &(pd->u.date) );
+			res = VarDateFromStr( ps->u.bstrVal, lcid, dwFlags, &(pd->u.date) );
 			break;
 		case( VT_CY ):
-	     res = VarDateFromCy32( ps->u.cyVal, &(pd->u.date) );
+	     res = VarDateFromCy( ps->u.cyVal, &(pd->u.date) );
 		case( VT_DISPATCH ):
 			/*res = VarDateFromDisp32( ps->u.pdispVal, lcid, &(pd->u.date) );*/
 		case( VT_UNKNOWN ):
@@ -1371,46 +1371,46 @@ static HRESULT Coerce( VARIANTARG* pd, LCID lcid, ULONG dwFlags, VARIANTARG* ps,
 		switch( vtFrom )
 		{
 		case( VT_I1 ):
-			res = VarBoolFromI132( ps->u.cVal, &(pd->u.boolVal) );
+			res = VarBoolFromI1( ps->u.cVal, &(pd->u.boolVal) );
 			break;
 		case( VT_I2 ):
-			res = VarBoolFromI232( ps->u.iVal, &(pd->u.boolVal) );
+			res = VarBoolFromI2( ps->u.iVal, &(pd->u.boolVal) );
 			break;
 		case( VT_INT ):
-			res = VarBoolFromInt32( ps->u.intVal, &(pd->u.boolVal) );
+			res = VarBoolFromInt( ps->u.intVal, &(pd->u.boolVal) );
 			break;
 		case( VT_I4 ):
-			res = VarBoolFromI432( ps->u.lVal, &(pd->u.boolVal) );
+			res = VarBoolFromI4( ps->u.lVal, &(pd->u.boolVal) );
 			break;
 		case( VT_UI1 ):
-			res = VarBoolFromUI132( ps->u.bVal, &(pd->u.boolVal) );
+			res = VarBoolFromUI1( ps->u.bVal, &(pd->u.boolVal) );
 			break;
 		case( VT_UI2 ):
-			res = VarBoolFromUI232( ps->u.uiVal, &(pd->u.boolVal) );
+			res = VarBoolFromUI2( ps->u.uiVal, &(pd->u.boolVal) );
 			break;
 		case( VT_UINT ):
-			res = VarBoolFromUint32( ps->u.uintVal, &(pd->u.boolVal) );
+			res = VarBoolFromUint( ps->u.uintVal, &(pd->u.boolVal) );
 			break;
 		case( VT_UI4 ):
-			res = VarBoolFromUI432( ps->u.ulVal, &(pd->u.boolVal) );
+			res = VarBoolFromUI4( ps->u.ulVal, &(pd->u.boolVal) );
 			break;
 		case( VT_R4 ):
-			res = VarBoolFromR432( ps->u.fltVal, &(pd->u.boolVal) );
+			res = VarBoolFromR4( ps->u.fltVal, &(pd->u.boolVal) );
 			break;
 		case( VT_R8 ):
-			res = VarBoolFromR832( ps->u.dblVal, &(pd->u.boolVal) );
+			res = VarBoolFromR8( ps->u.dblVal, &(pd->u.boolVal) );
 			break;
 		case( VT_DATE ):
-			res = VarBoolFromDate32( ps->u.date, &(pd->u.boolVal) );
+			res = VarBoolFromDate( ps->u.date, &(pd->u.boolVal) );
 			break;
         case( VT_BOOL ):
-            res = VariantCopy32( pd, ps );
+            res = VariantCopy( pd, ps );
             break;
 		case( VT_BSTR ):
-			res = VarBoolFromStr32( ps->u.bstrVal, lcid, dwFlags, &(pd->u.boolVal) );
+			res = VarBoolFromStr( ps->u.bstrVal, lcid, dwFlags, &(pd->u.boolVal) );
 			break;
 		case( VT_CY ):
-	     res = VarBoolFromCy32( ps->u.cyVal, &(pd->u.boolVal) );
+	     res = VarBoolFromCy( ps->u.cyVal, &(pd->u.boolVal) );
 		case( VT_DISPATCH ):
 			/*res = VarBoolFromDisp32( ps->u.pdispVal, lcid, &(pd->u.boolVal) );*/
 		case( VT_UNKNOWN ):
@@ -1428,43 +1428,43 @@ static HRESULT Coerce( VARIANTARG* pd, LCID lcid, ULONG dwFlags, VARIANTARG* ps,
 		switch( vtFrom )
 		{
 		case( VT_I1 ):
-			res = VarBstrFromI132( ps->u.cVal, lcid, dwFlags, &(pd->u.bstrVal) );
+			res = VarBstrFromI1( ps->u.cVal, lcid, dwFlags, &(pd->u.bstrVal) );
 			break;
 		case( VT_I2 ):
-			res = VarBstrFromI232( ps->u.iVal, lcid, dwFlags, &(pd->u.bstrVal) );
+			res = VarBstrFromI2( ps->u.iVal, lcid, dwFlags, &(pd->u.bstrVal) );
 			break;
 		case( VT_INT ):
-			res = VarBstrFromInt32( ps->u.intVal, lcid, dwFlags, &(pd->u.bstrVal) );
+			res = VarBstrFromInt( ps->u.intVal, lcid, dwFlags, &(pd->u.bstrVal) );
 			break;
 		case( VT_I4 ):
-			res = VarBstrFromI432( ps->u.lVal, lcid, dwFlags, &(pd->u.bstrVal) );
+			res = VarBstrFromI4( ps->u.lVal, lcid, dwFlags, &(pd->u.bstrVal) );
 			break;
 		case( VT_UI1 ):
-			res = VarBstrFromUI132( ps->u.bVal, lcid, dwFlags, &(pd->u.bstrVal) );
+			res = VarBstrFromUI1( ps->u.bVal, lcid, dwFlags, &(pd->u.bstrVal) );
 			break;
 		case( VT_UI2 ):
-			res = VarBstrFromUI232( ps->u.uiVal, lcid, dwFlags, &(pd->u.bstrVal) );
+			res = VarBstrFromUI2( ps->u.uiVal, lcid, dwFlags, &(pd->u.bstrVal) );
 			break;
 		case( VT_UINT ):
-			res = VarBstrFromUint32( ps->u.uintVal, lcid, dwFlags, &(pd->u.bstrVal) );
+			res = VarBstrFromUint( ps->u.uintVal, lcid, dwFlags, &(pd->u.bstrVal) );
 			break;
 		case( VT_UI4 ):
-			res = VarBstrFromUI432( ps->u.ulVal, lcid, dwFlags, &(pd->u.bstrVal) );
+			res = VarBstrFromUI4( ps->u.ulVal, lcid, dwFlags, &(pd->u.bstrVal) );
 			break;
 		case( VT_R4 ):
-			res = VarBstrFromR432( ps->u.fltVal, lcid, dwFlags, &(pd->u.bstrVal) );
+			res = VarBstrFromR4( ps->u.fltVal, lcid, dwFlags, &(pd->u.bstrVal) );
 			break;
 		case( VT_R8 ):
-			res = VarBstrFromR832( ps->u.dblVal, lcid, dwFlags, &(pd->u.bstrVal) );
+			res = VarBstrFromR8( ps->u.dblVal, lcid, dwFlags, &(pd->u.bstrVal) );
 			break;
 		case( VT_DATE ):
-			res = VarBstrFromDate32( ps->u.date, lcid, dwFlags, &(pd->u.bstrVal) );
+			res = VarBstrFromDate( ps->u.date, lcid, dwFlags, &(pd->u.bstrVal) );
 			break;
 		case( VT_BOOL ):
-			res = VarBstrFromBool32( ps->u.boolVal, lcid, dwFlags, &(pd->u.bstrVal) );
+			res = VarBstrFromBool( ps->u.boolVal, lcid, dwFlags, &(pd->u.bstrVal) );
 			break;
         case( VT_BSTR ):
-            res = VariantCopy32( pd, ps );
+            res = VariantCopy( pd, ps );
             break;
 		case( VT_CY ):
 	     /*res = VarBstrFromCy32( ps->u.cyVal, lcid, dwFlags, &(pd->u.bstrVal) );*/
@@ -1485,43 +1485,43 @@ static HRESULT Coerce( VARIANTARG* pd, LCID lcid, ULONG dwFlags, VARIANTARG* ps,
 	switch( vtFrom )
 	  {
 	  case( VT_I1 ):
-	     res = VarCyFromI132( ps->u.cVal, &(pd->u.cyVal) );
+	     res = VarCyFromI1( ps->u.cVal, &(pd->u.cyVal) );
 	     break;
 	  case( VT_I2 ):
-	     res = VarCyFromI232( ps->u.iVal, &(pd->u.cyVal) );
+	     res = VarCyFromI2( ps->u.iVal, &(pd->u.cyVal) );
 	     break;
 	  case( VT_INT ):
-	     res = VarCyFromInt32( ps->u.intVal, &(pd->u.cyVal) );
+	     res = VarCyFromInt( ps->u.intVal, &(pd->u.cyVal) );
 	     break;
 	  case( VT_I4 ):
-	     res = VarCyFromI432( ps->u.lVal, &(pd->u.cyVal) );
+	     res = VarCyFromI4( ps->u.lVal, &(pd->u.cyVal) );
 	     break;
 	  case( VT_UI1 ):
-	     res = VarCyFromUI132( ps->u.bVal, &(pd->u.cyVal) );
+	     res = VarCyFromUI1( ps->u.bVal, &(pd->u.cyVal) );
 	     break;
 	  case( VT_UI2 ):
-	     res = VarCyFromUI232( ps->u.uiVal, &(pd->u.cyVal) );
+	     res = VarCyFromUI2( ps->u.uiVal, &(pd->u.cyVal) );
 	     break;
 	  case( VT_UINT ):
-	     res = VarCyFromUint32( ps->u.uintVal, &(pd->u.cyVal) );
+	     res = VarCyFromUint( ps->u.uintVal, &(pd->u.cyVal) );
 	     break;
 	  case( VT_UI4 ):
-	     res = VarCyFromUI432( ps->u.ulVal, &(pd->u.cyVal) );
+	     res = VarCyFromUI4( ps->u.ulVal, &(pd->u.cyVal) );
 	     break;
 	  case( VT_R4 ):
-	     res = VarCyFromR432( ps->u.fltVal, &(pd->u.cyVal) );
+	     res = VarCyFromR4( ps->u.fltVal, &(pd->u.cyVal) );
 	     break;
 	  case( VT_R8 ):
-	     res = VarCyFromR832( ps->u.dblVal, &(pd->u.cyVal) );
+	     res = VarCyFromR8( ps->u.dblVal, &(pd->u.cyVal) );
 	     break;
 	  case( VT_DATE ):
-	     res = VarCyFromDate32( ps->u.date, &(pd->u.cyVal) );
+	     res = VarCyFromDate( ps->u.date, &(pd->u.cyVal) );
 	     break;
 	  case( VT_BOOL ):
-	     res = VarCyFromBool32( ps->u.date, &(pd->u.cyVal) );
+	     res = VarCyFromBool( ps->u.date, &(pd->u.cyVal) );
 	     break;
 	  case( VT_CY ):
-	     res = VariantCopy32( pd, ps );
+	     res = VariantCopy( pd, ps );
 	     break;
 	  case( VT_BSTR ):
 	     /*res = VarCyFromStr32( ps->u.bstrVal, lcid, dwFlags, &(pd->u.cyVal) );*/
@@ -1642,7 +1642,7 @@ static HRESULT WINAPI ValidateVt( VARTYPE vt )
  * Initializes the Variant.  Unlike VariantClear it does not interpret the current
  * contents of the Variant.
  */
-void WINAPI VariantInit32(VARIANTARG* pvarg)
+void WINAPI VariantInit(VARIANTARG* pvarg)
 {
 	TRACE(ole,"(%p),stub\n",pvarg);
 
@@ -1662,7 +1662,7 @@ void WINAPI VariantInit32(VARIANTARG* pvarg)
  * freed.  If the vt is VT_BSTR the string is freed. If VT_DISPATCH the object is
  * released. If VT_ARRAY the array is freed.
  */
-HRESULT WINAPI VariantClear32(VARIANTARG* pvarg)
+HRESULT WINAPI VariantClear(VARIANTARG* pvarg)
 {
 	HRESULT res = S_OK;
 	TRACE(ole,"(%p),stub\n",pvarg);
@@ -1675,7 +1675,7 @@ HRESULT WINAPI VariantClear32(VARIANTARG* pvarg)
 			switch( pvarg->vt & VT_TYPEMASK )
 			{
 			case( VT_BSTR ):
-				SysFreeString32( pvarg->u.bstrVal );
+				SysFreeString( pvarg->u.bstrVal );
 				break;
 			case( VT_DISPATCH ):
 				break;
@@ -1706,7 +1706,7 @@ HRESULT WINAPI VariantClear32(VARIANTARG* pvarg)
  *
  * Frees up the designation variant and makes a copy of the source.
  */
-HRESULT WINAPI VariantCopy32(VARIANTARG* pvargDest, VARIANTARG* pvargSrc)
+HRESULT WINAPI VariantCopy(VARIANTARG* pvargDest, VARIANTARG* pvargSrc)
 {
 	HRESULT res = S_OK;
 	TRACE(ole,"(%p, %p),stub\n", pvargDest, pvargSrc);
@@ -1717,7 +1717,7 @@ HRESULT WINAPI VariantCopy32(VARIANTARG* pvargDest, VARIANTARG* pvargSrc)
 	 */
 	if( pvargDest != pvargSrc && res == S_OK )
 	{
-		res = VariantClear32( pvargDest );
+		res = VariantClear( pvargDest );
 		
 		if( res == S_OK )
 		{
@@ -1741,7 +1741,7 @@ HRESULT WINAPI VariantCopy32(VARIANTARG* pvargDest, VARIANTARG* pvargSrc)
 				switch( pvargSrc->vt & VT_TYPEMASK )
 				{
 				case( VT_BSTR ):
-				   pvargDest->u.bstrVal = SysAllocString32( pvargSrc->u.bstrVal );
+				   pvargDest->u.bstrVal = SysAllocString( pvargSrc->u.bstrVal );
 				   break;
 				case( VT_DISPATCH ):
 					break;
@@ -1770,7 +1770,7 @@ HRESULT WINAPI VariantCopy32(VARIANTARG* pvargDest, VARIANTARG* pvargSrc)
  * Frees up the destination variant and makes a copy of the source.  If
  * the source is of type VT_BYREF it performs the necessary indirections.
  */
-HRESULT WINAPI VariantCopyInd32(VARIANT* pvargDest, VARIANTARG* pvargSrc)
+HRESULT WINAPI VariantCopyInd(VARIANT* pvargDest, VARIANTARG* pvargSrc)
 {
 	HRESULT res = S_OK;
 	TRACE(ole,"(%p, %p),stub\n", pvargDest, pvargSrc);
@@ -1782,19 +1782,19 @@ HRESULT WINAPI VariantCopyInd32(VARIANT* pvargDest, VARIANTARG* pvargSrc)
 	if( pvargSrc->vt & VT_BYREF )
 	{
 		VARIANTARG varg;
-		VariantInit32( &varg );
+		VariantInit( &varg );
 		/* handle the in place copy.
 		 */
 		if( pvargDest == pvargSrc )
 		{
 			/* we will use a copy of the source instead.
 			 */
-			res = VariantCopy32( &varg, pvargSrc );
+			res = VariantCopy( &varg, pvargSrc );
 			pvargSrc = &varg;
 		}
 		if( res == S_OK )
 		{
-			res = VariantClear32( pvargDest );
+			res = VariantClear( pvargDest );
 			if( res == S_OK )
 			{
 				/* In the case of by reference we need
@@ -1805,7 +1805,7 @@ HRESULT WINAPI VariantCopyInd32(VARIANT* pvargDest, VARIANTARG* pvargSrc)
 				switch( pvargSrc->vt & VT_TYPEMASK )
 				{
 				case( VT_BSTR ):
-				   pvargDest->u.bstrVal = SysAllocString32( *(pvargSrc->u.pbstrVal) );
+				   pvargDest->u.bstrVal = SysAllocString( *(pvargSrc->u.pbstrVal) );
 				   break;
 				case( VT_DISPATCH ):
 					break;
@@ -1835,7 +1835,7 @@ HRESULT WINAPI VariantCopyInd32(VARIANT* pvargDest, VARIANTARG* pvargSrc)
 							(pvargSrc->u.pvarVal)->wReserved1 |= PROCESSING_INNER_VARIANT;
 							/* Dereference the inner variant.
 							 */
-							res = VariantCopyInd32( pvargDest, pvargSrc->u.pvarVal );
+							res = VariantCopyInd( pvargDest, pvargSrc->u.pvarVal );
 						}
 					}
 					break;
@@ -1860,11 +1860,11 @@ HRESULT WINAPI VariantCopyInd32(VARIANT* pvargDest, VARIANTARG* pvargSrc)
 		}
 		/* this should not fail.
 		 */
-		VariantClear32( &varg );
+		VariantClear( &varg );
 	}
 	else
 	{
-		res = VariantCopy32( pvargDest, pvargSrc );
+		res = VariantCopy( pvargDest, pvargSrc );
 	}
 	return res;
 }
@@ -1872,21 +1872,21 @@ HRESULT WINAPI VariantCopyInd32(VARIANT* pvargDest, VARIANTARG* pvargSrc)
 /******************************************************************************
  *		VariantChangeType32	[OLEAUT32.12]
  */
-HRESULT WINAPI VariantChangeType32(VARIANTARG* pvargDest, VARIANTARG* pvargSrc,
+HRESULT WINAPI VariantChangeType(VARIANTARG* pvargDest, VARIANTARG* pvargSrc,
 							USHORT wFlags, VARTYPE vt)
 {
-	return VariantChangeTypeEx32( pvargDest, pvargSrc, 0, wFlags, vt );
+	return VariantChangeTypeEx( pvargDest, pvargSrc, 0, wFlags, vt );
 }
 
 /******************************************************************************
  *		VariantChangeTypeEx32	[OLEAUT32.147]
  */
-HRESULT WINAPI VariantChangeTypeEx32(VARIANTARG* pvargDest, VARIANTARG* pvargSrc,
+HRESULT WINAPI VariantChangeTypeEx(VARIANTARG* pvargDest, VARIANTARG* pvargSrc,
 							  LCID lcid, USHORT wFlags, VARTYPE vt)
 {
 	HRESULT res = S_OK;
 	VARIANTARG varg;
-	VariantInit32( &varg );
+	VariantInit( &varg );
 	
 	TRACE(ole,"(%p, %p, %ld, %u, %u),stub\n", pvargDest, pvargSrc, lcid, wFlags, vt);
 
@@ -1905,7 +1905,7 @@ HRESULT WINAPI VariantChangeTypeEx32(VARIANTARG* pvargDest, VARIANTARG* pvargSrc
 	 */
 	if( res == S_OK && pvargDest == pvargSrc )
 	{
-		res = VariantCopy32( &varg, pvargSrc );
+		res = VariantCopy( &varg, pvargSrc );
 		pvargSrc = &varg;
 	}
 
@@ -1913,7 +1913,7 @@ HRESULT WINAPI VariantChangeTypeEx32(VARIANTARG* pvargDest, VARIANTARG* pvargSrc
 	{
 		/* free up the destination variant.
 		 */
-		res = VariantClear32( pvargDest );
+		res = VariantClear( pvargDest );
 	}
 
 	if( res == S_OK )
@@ -1923,14 +1923,14 @@ HRESULT WINAPI VariantChangeTypeEx32(VARIANTARG* pvargDest, VARIANTARG* pvargSrc
 			/* Convert the source variant to a "byvalue" variant.
 			 */
 			VARIANTARG Variant;
-			VariantInit32( &Variant );
-			res = VariantCopyInd32( &Variant, pvargSrc );
+			VariantInit( &Variant );
+			res = VariantCopyInd( &Variant, pvargSrc );
 			if( res == S_OK )
 			{
 				res = Coerce( pvargDest, lcid, wFlags, &Variant, vt );
 				/* this should not fail.
 				 */
-				VariantClear32( &Variant );
+				VariantClear( &Variant );
 			}
 	
 		}
@@ -1943,7 +1943,7 @@ HRESULT WINAPI VariantChangeTypeEx32(VARIANTARG* pvargDest, VARIANTARG* pvargSrc
 	}
 	/* this should not fail.
 	 */
-	VariantClear32( &varg );
+	VariantClear( &varg );
 	
 	return res;
 }
@@ -1954,7 +1954,7 @@ HRESULT WINAPI VariantChangeTypeEx32(VARIANTARG* pvargDest, VARIANTARG* pvargSrc
 /******************************************************************************
  *		VarUI1FromI232		[OLEAUT32.130]
  */
-HRESULT WINAPI VarUI1FromI232(short sIn, BYTE* pbOut)
+HRESULT WINAPI VarUI1FromI2(short sIn, BYTE* pbOut)
 {
 	TRACE( ole, "( %d, %p ), stub\n", sIn, pbOut );
 
@@ -1973,7 +1973,7 @@ HRESULT WINAPI VarUI1FromI232(short sIn, BYTE* pbOut)
 /******************************************************************************
  *		VarUI1FromI432		[OLEAUT32.131]
  */
-HRESULT WINAPI VarUI1FromI432(LONG lIn, BYTE* pbOut)
+HRESULT WINAPI VarUI1FromI4(LONG lIn, BYTE* pbOut)
 {
 	TRACE( ole, "( %ld, %p ), stub\n", lIn, pbOut );
 
@@ -1993,7 +1993,7 @@ HRESULT WINAPI VarUI1FromI432(LONG lIn, BYTE* pbOut)
 /******************************************************************************
  *		VarUI1FromR432		[OLEAUT32.132]
  */
-HRESULT WINAPI VarUI1FromR432(FLOAT fltIn, BYTE* pbOut)
+HRESULT WINAPI VarUI1FromR4(FLOAT fltIn, BYTE* pbOut)
 {
 	TRACE( ole, "( %f, %p ), stub\n", fltIn, pbOut );
 
@@ -2013,7 +2013,7 @@ HRESULT WINAPI VarUI1FromR432(FLOAT fltIn, BYTE* pbOut)
 /******************************************************************************
  *		VarUI1FromR832		[OLEAUT32.133]
  */
-HRESULT WINAPI VarUI1FromR832(double dblIn, BYTE* pbOut)
+HRESULT WINAPI VarUI1FromR8(double dblIn, BYTE* pbOut)
 {
 	TRACE( ole, "( %f, %p ), stub\n", dblIn, pbOut );
 
@@ -2033,7 +2033,7 @@ HRESULT WINAPI VarUI1FromR832(double dblIn, BYTE* pbOut)
 /******************************************************************************
  *		VarUI1FromDate32		[OLEAUT32.135]
  */
-HRESULT WINAPI VarUI1FromDate32(DATE dateIn, BYTE* pbOut)
+HRESULT WINAPI VarUI1FromDate(DATE dateIn, BYTE* pbOut)
 {
 	TRACE( ole, "( %f, %p ), stub\n", dateIn, pbOut );
 
@@ -2053,7 +2053,7 @@ HRESULT WINAPI VarUI1FromDate32(DATE dateIn, BYTE* pbOut)
 /******************************************************************************
  *		VarUI1FromBool32		[OLEAUT32.138]
  */
-HRESULT WINAPI VarUI1FromBool32(VARIANT_BOOL boolIn, BYTE* pbOut)
+HRESULT WINAPI VarUI1FromBool(VARIANT_BOOL boolIn, BYTE* pbOut)
 {
 	TRACE( ole, "( %d, %p ), stub\n", boolIn, pbOut );
 
@@ -2065,7 +2065,7 @@ HRESULT WINAPI VarUI1FromBool32(VARIANT_BOOL boolIn, BYTE* pbOut)
 /******************************************************************************
  *		VarUI1FromI132		[OLEAUT32.237]
  */
-HRESULT WINAPI VarUI1FromI132(CHAR cIn, BYTE* pbOut)
+HRESULT WINAPI VarUI1FromI1(CHAR cIn, BYTE* pbOut)
 {
 	TRACE( ole, "( %c, %p ), stub\n", cIn, pbOut );
 
@@ -2077,7 +2077,7 @@ HRESULT WINAPI VarUI1FromI132(CHAR cIn, BYTE* pbOut)
 /******************************************************************************
  *		VarUI1FromUI232		[OLEAUT32.238]
  */
-HRESULT WINAPI VarUI1FromUI232(USHORT uiIn, BYTE* pbOut)
+HRESULT WINAPI VarUI1FromUI2(USHORT uiIn, BYTE* pbOut)
 {
 	TRACE( ole, "( %d, %p ), stub\n", uiIn, pbOut );
 
@@ -2096,7 +2096,7 @@ HRESULT WINAPI VarUI1FromUI232(USHORT uiIn, BYTE* pbOut)
 /******************************************************************************
  *		VarUI1FromUI432		[OLEAUT32.239]
  */
-HRESULT WINAPI VarUI1FromUI432(ULONG ulIn, BYTE* pbOut)
+HRESULT WINAPI VarUI1FromUI4(ULONG ulIn, BYTE* pbOut)
 {
 	TRACE( ole, "( %ld, %p ), stub\n", ulIn, pbOut );
 
@@ -2116,7 +2116,7 @@ HRESULT WINAPI VarUI1FromUI432(ULONG ulIn, BYTE* pbOut)
 /******************************************************************************
  *		VarUI1FromStr32		[OLEAUT32.54]
  */
-HRESULT WINAPI VarUI1FromStr32(OLECHAR32* strIn, LCID lcid, ULONG dwFlags, BYTE* pbOut)
+HRESULT WINAPI VarUI1FromStr(OLECHAR* strIn, LCID lcid, ULONG dwFlags, BYTE* pbOut)
 {
 	double dValue = 0.0;
 	LPSTR pNewString = NULL;
@@ -2157,7 +2157,7 @@ HRESULT WINAPI VarUI1FromStr32(OLECHAR32* strIn, LCID lcid, ULONG dwFlags, BYTE*
  *              VarUI1FromCy32 [OLEAUT32.134]
  * Convert currency to unsigned char
  */
-HRESULT WINAPI VarUI1FromCy32(CY cyIn, BYTE* pbOut) {
+HRESULT WINAPI VarUI1FromCy(CY cyIn, BYTE* pbOut) {
    double t = round((((double)cyIn.u.Hi * 4294967296.0) + (double)cyIn.u.Lo) / 10000);
    
    if (t > UI1_MAX || t < UI1_MIN) return DISP_E_OVERFLOW;
@@ -2169,7 +2169,7 @@ HRESULT WINAPI VarUI1FromCy32(CY cyIn, BYTE* pbOut) {
 /******************************************************************************
  *		VarI2FromUI132		[OLEAUT32.48]
  */
-HRESULT WINAPI VarI2FromUI132(BYTE bIn, short* psOut)
+HRESULT WINAPI VarI2FromUI1(BYTE bIn, short* psOut)
 {
 	TRACE( ole, "( 0x%08x, %p ), stub\n", bIn, psOut );
 
@@ -2181,7 +2181,7 @@ HRESULT WINAPI VarI2FromUI132(BYTE bIn, short* psOut)
 /******************************************************************************
  *		VarI2FromI432		[OLEAUT32.49]
  */
-HRESULT WINAPI VarI2FromI432(LONG lIn, short* psOut)
+HRESULT WINAPI VarI2FromI4(LONG lIn, short* psOut)
 {
 	TRACE( ole, "( %lx, %p ), stub\n", lIn, psOut );
 
@@ -2200,7 +2200,7 @@ HRESULT WINAPI VarI2FromI432(LONG lIn, short* psOut)
 /******************************************************************************
  *		VarI2FromR432		[OLEAUT32.50]
  */
-HRESULT WINAPI VarI2FromR432(FLOAT fltIn, short* psOut)
+HRESULT WINAPI VarI2FromR4(FLOAT fltIn, short* psOut)
 {
 	TRACE( ole, "( %f, %p ), stub\n", fltIn, psOut );
 
@@ -2220,7 +2220,7 @@ HRESULT WINAPI VarI2FromR432(FLOAT fltIn, short* psOut)
 /******************************************************************************
  *		VarI2FromR832		[OLEAUT32.51]
  */
-HRESULT WINAPI VarI2FromR832(double dblIn, short* psOut)
+HRESULT WINAPI VarI2FromR8(double dblIn, short* psOut)
 {
 	TRACE( ole, "( %f, %p ), stub\n", dblIn, psOut );
 
@@ -2240,7 +2240,7 @@ HRESULT WINAPI VarI2FromR832(double dblIn, short* psOut)
 /******************************************************************************
  *		VarI2FromDate32		[OLEAUT32.53]
  */
-HRESULT WINAPI VarI2FromDate32(DATE dateIn, short* psOut)
+HRESULT WINAPI VarI2FromDate(DATE dateIn, short* psOut)
 {
 	TRACE( ole, "( %f, %p ), stub\n", dateIn, psOut );
 
@@ -2260,7 +2260,7 @@ HRESULT WINAPI VarI2FromDate32(DATE dateIn, short* psOut)
 /******************************************************************************
  *		VarI2FromBool32		[OLEAUT32.56]
  */
-HRESULT WINAPI VarI2FromBool32(VARIANT_BOOL boolIn, short* psOut)
+HRESULT WINAPI VarI2FromBool(VARIANT_BOOL boolIn, short* psOut)
 {
 	TRACE( ole, "( %d, %p ), stub\n", boolIn, psOut );
 
@@ -2272,7 +2272,7 @@ HRESULT WINAPI VarI2FromBool32(VARIANT_BOOL boolIn, short* psOut)
 /******************************************************************************
  *		VarI2FromI132		[OLEAUT32.48]
  */
-HRESULT WINAPI VarI2FromI132(CHAR cIn, short* psOut)
+HRESULT WINAPI VarI2FromI1(CHAR cIn, short* psOut)
 {
 	TRACE( ole, "( %c, %p ), stub\n", cIn, psOut );
 
@@ -2284,7 +2284,7 @@ HRESULT WINAPI VarI2FromI132(CHAR cIn, short* psOut)
 /******************************************************************************
  *		VarI2FromUI232		[OLEAUT32.206]
  */
-HRESULT WINAPI VarI2FromUI232(USHORT uiIn, short* psOut)
+HRESULT WINAPI VarI2FromUI2(USHORT uiIn, short* psOut)
 {
 	TRACE( ole, "( %d, %p ), stub\n", uiIn, psOut );
 
@@ -2303,7 +2303,7 @@ HRESULT WINAPI VarI2FromUI232(USHORT uiIn, short* psOut)
 /******************************************************************************
  *		VarI2FromUI432		[OLEAUT32.49]
  */
-HRESULT WINAPI VarI2FromUI432(ULONG ulIn, short* psOut)
+HRESULT WINAPI VarI2FromUI4(ULONG ulIn, short* psOut)
 {
 	TRACE( ole, "( %lx, %p ), stub\n", ulIn, psOut );
 
@@ -2322,7 +2322,7 @@ HRESULT WINAPI VarI2FromUI432(ULONG ulIn, short* psOut)
 /******************************************************************************
  *		VarI2FromStr32		[OLEAUT32.54]
  */
-HRESULT WINAPI VarI2FromStr32(OLECHAR32* strIn, LCID lcid, ULONG dwFlags, short* psOut)
+HRESULT WINAPI VarI2FromStr(OLECHAR* strIn, LCID lcid, ULONG dwFlags, short* psOut)
 {
 	double dValue = 0.0;
 	LPSTR pNewString = NULL;
@@ -2363,7 +2363,7 @@ HRESULT WINAPI VarI2FromStr32(OLECHAR32* strIn, LCID lcid, ULONG dwFlags, short*
  *              VarI2FromCy32 [OLEAUT32.52]
  * Convert currency to signed short
  */
-HRESULT WINAPI VarI2FromCy32(CY cyIn, short* psOut) {
+HRESULT WINAPI VarI2FromCy(CY cyIn, short* psOut) {
    double t = round((((double)cyIn.u.Hi * 4294967296.0) + (double)cyIn.u.Lo) / 10000);
    
    if (t > I2_MAX || t < I2_MIN) return DISP_E_OVERFLOW;
@@ -2375,7 +2375,7 @@ HRESULT WINAPI VarI2FromCy32(CY cyIn, short* psOut) {
 /******************************************************************************
  *		VarI4FromUI132		[OLEAUT32.58]
  */
-HRESULT WINAPI VarI4FromUI132(BYTE bIn, LONG* plOut)
+HRESULT WINAPI VarI4FromUI1(BYTE bIn, LONG* plOut)
 {
 	TRACE( ole, "( %X, %p ), stub\n", bIn, plOut );
 
@@ -2388,7 +2388,7 @@ HRESULT WINAPI VarI4FromUI132(BYTE bIn, LONG* plOut)
 /******************************************************************************
  *		VarI4FromR432		[OLEAUT32.60]
  */
-HRESULT WINAPI VarI4FromR432(FLOAT fltIn, LONG* plOut)
+HRESULT WINAPI VarI4FromR4(FLOAT fltIn, LONG* plOut)
 {
 	TRACE( ole, "( %f, %p ), stub\n", fltIn, plOut );
 
@@ -2408,7 +2408,7 @@ HRESULT WINAPI VarI4FromR432(FLOAT fltIn, LONG* plOut)
 /******************************************************************************
  *		VarI4FromR832		[OLEAUT32.61]
  */
-HRESULT WINAPI VarI4FromR832(double dblIn, LONG* plOut)
+HRESULT WINAPI VarI4FromR8(double dblIn, LONG* plOut)
 {
 	TRACE( ole, "( %f, %p ), stub\n", dblIn, plOut );
 
@@ -2428,7 +2428,7 @@ HRESULT WINAPI VarI4FromR832(double dblIn, LONG* plOut)
 /******************************************************************************
  *		VarI4FromDate32		[OLEAUT32.63]
  */
-HRESULT WINAPI VarI4FromDate32(DATE dateIn, LONG* plOut)
+HRESULT WINAPI VarI4FromDate(DATE dateIn, LONG* plOut)
 {
 	TRACE( ole, "( %f, %p ), stub\n", dateIn, plOut );
 
@@ -2448,7 +2448,7 @@ HRESULT WINAPI VarI4FromDate32(DATE dateIn, LONG* plOut)
 /******************************************************************************
  *		VarI4FromBool32		[OLEAUT32.66]
  */
-HRESULT WINAPI VarI4FromBool32(VARIANT_BOOL boolIn, LONG* plOut)
+HRESULT WINAPI VarI4FromBool(VARIANT_BOOL boolIn, LONG* plOut)
 {
 	TRACE( ole, "( %d, %p ), stub\n", boolIn, plOut );
 
@@ -2460,7 +2460,7 @@ HRESULT WINAPI VarI4FromBool32(VARIANT_BOOL boolIn, LONG* plOut)
 /******************************************************************************
  *		VarI4FromI132		[OLEAUT32.209]
  */
-HRESULT WINAPI VarI4FromI132(CHAR cIn, LONG* plOut)
+HRESULT WINAPI VarI4FromI1(CHAR cIn, LONG* plOut)
 {
 	TRACE( ole, "( %c, %p ), stub\n", cIn, plOut );
 
@@ -2472,7 +2472,7 @@ HRESULT WINAPI VarI4FromI132(CHAR cIn, LONG* plOut)
 /******************************************************************************
  *		VarI4FromUI232		[OLEAUT32.210]
  */
-HRESULT WINAPI VarI4FromUI232(USHORT uiIn, LONG* plOut)
+HRESULT WINAPI VarI4FromUI2(USHORT uiIn, LONG* plOut)
 {
 	TRACE( ole, "( %d, %p ), stub\n", uiIn, plOut );
 
@@ -2484,7 +2484,7 @@ HRESULT WINAPI VarI4FromUI232(USHORT uiIn, LONG* plOut)
 /******************************************************************************
  *		VarI4FromUI432		[OLEAUT32.211]
  */
-HRESULT WINAPI VarI4FromUI432(ULONG ulIn, LONG* plOut)
+HRESULT WINAPI VarI4FromUI4(ULONG ulIn, LONG* plOut)
 {
 	TRACE( ole, "( %lx, %p ), stub\n", ulIn, plOut );
 
@@ -2503,7 +2503,7 @@ HRESULT WINAPI VarI4FromUI432(ULONG ulIn, LONG* plOut)
 /******************************************************************************
  *		VarI4FromI232		[OLEAUT32.59]
  */
-HRESULT WINAPI VarI4FromI232(short sIn, LONG* plOut)
+HRESULT WINAPI VarI4FromI2(short sIn, LONG* plOut)
 {
 	TRACE( ole, "( %d, %p ), stub\n", sIn, plOut );
 
@@ -2515,7 +2515,7 @@ HRESULT WINAPI VarI4FromI232(short sIn, LONG* plOut)
 /******************************************************************************
  *		VarI4FromStr32		[OLEAUT32.64]
  */
-HRESULT WINAPI VarI4FromStr32(OLECHAR32* strIn, LCID lcid, ULONG dwFlags, LONG* plOut)
+HRESULT WINAPI VarI4FromStr(OLECHAR* strIn, LCID lcid, ULONG dwFlags, LONG* plOut)
 {
 	double dValue = 0.0;
 	LPSTR pNewString = NULL;
@@ -2556,7 +2556,7 @@ HRESULT WINAPI VarI4FromStr32(OLECHAR32* strIn, LCID lcid, ULONG dwFlags, LONG* 
  *              VarI4FromCy32 [OLEAUT32.62]
  * Convert currency to signed long
  */
-HRESULT WINAPI VarI4FromCy32(CY cyIn, LONG* plOut) {
+HRESULT WINAPI VarI4FromCy(CY cyIn, LONG* plOut) {
    double t = round((((double)cyIn.u.Hi * 4294967296.0) + (double)cyIn.u.Lo) / 10000);
    
    if (t > I4_MAX || t < I4_MIN) return DISP_E_OVERFLOW;
@@ -2568,7 +2568,7 @@ HRESULT WINAPI VarI4FromCy32(CY cyIn, LONG* plOut) {
 /******************************************************************************
  *		VarR4FromUI132		[OLEAUT32.68]
  */
-HRESULT WINAPI VarR4FromUI132(BYTE bIn, FLOAT* pfltOut)
+HRESULT WINAPI VarR4FromUI1(BYTE bIn, FLOAT* pfltOut)
 {
 	TRACE( ole, "( %X, %p ), stub\n", bIn, pfltOut );
 
@@ -2580,7 +2580,7 @@ HRESULT WINAPI VarR4FromUI132(BYTE bIn, FLOAT* pfltOut)
 /******************************************************************************
  *		VarR4FromI232		[OLEAUT32.69]
  */
-HRESULT WINAPI VarR4FromI232(short sIn, FLOAT* pfltOut)
+HRESULT WINAPI VarR4FromI2(short sIn, FLOAT* pfltOut)
 {
 	TRACE( ole, "( %d, %p ), stub\n", sIn, pfltOut );
 
@@ -2592,7 +2592,7 @@ HRESULT WINAPI VarR4FromI232(short sIn, FLOAT* pfltOut)
 /******************************************************************************
  *		VarR4FromI432		[OLEAUT32.70]
  */
-HRESULT WINAPI VarR4FromI432(LONG lIn, FLOAT* pfltOut)
+HRESULT WINAPI VarR4FromI4(LONG lIn, FLOAT* pfltOut)
 {
 	TRACE( ole, "( %lx, %p ), stub\n", lIn, pfltOut );
 
@@ -2604,7 +2604,7 @@ HRESULT WINAPI VarR4FromI432(LONG lIn, FLOAT* pfltOut)
 /******************************************************************************
  *		VarR4FromR832		[OLEAUT32.71]
  */
-HRESULT WINAPI VarR4FromR832(double dblIn, FLOAT* pfltOut)
+HRESULT WINAPI VarR4FromR8(double dblIn, FLOAT* pfltOut)
 {
 	TRACE( ole, "( %f, %p ), stub\n", dblIn, pfltOut );
 
@@ -2623,7 +2623,7 @@ HRESULT WINAPI VarR4FromR832(double dblIn, FLOAT* pfltOut)
 /******************************************************************************
  *		VarR4FromDate32		[OLEAUT32.73]
  */
-HRESULT WINAPI VarR4FromDate32(DATE dateIn, FLOAT* pfltOut)
+HRESULT WINAPI VarR4FromDate(DATE dateIn, FLOAT* pfltOut)
 {
 	TRACE( ole, "( %f, %p ), stub\n", dateIn, pfltOut );
 
@@ -2642,7 +2642,7 @@ HRESULT WINAPI VarR4FromDate32(DATE dateIn, FLOAT* pfltOut)
 /******************************************************************************
  *		VarR4FromBool32		[OLEAUT32.76]
  */
-HRESULT WINAPI VarR4FromBool32(VARIANT_BOOL boolIn, FLOAT* pfltOut)
+HRESULT WINAPI VarR4FromBool(VARIANT_BOOL boolIn, FLOAT* pfltOut)
 {
 	TRACE( ole, "( %d, %p ), stub\n", boolIn, pfltOut );
 
@@ -2654,7 +2654,7 @@ HRESULT WINAPI VarR4FromBool32(VARIANT_BOOL boolIn, FLOAT* pfltOut)
 /******************************************************************************
  *		VarR4FromI132		[OLEAUT32.213]
  */
-HRESULT WINAPI VarR4FromI132(CHAR cIn, FLOAT* pfltOut)
+HRESULT WINAPI VarR4FromI1(CHAR cIn, FLOAT* pfltOut)
 {
 	TRACE( ole, "( %c, %p ), stub\n", cIn, pfltOut );
 
@@ -2666,7 +2666,7 @@ HRESULT WINAPI VarR4FromI132(CHAR cIn, FLOAT* pfltOut)
 /******************************************************************************
  *		VarR4FromUI232		[OLEAUT32.214]
  */
-HRESULT WINAPI VarR4FromUI232(USHORT uiIn, FLOAT* pfltOut)
+HRESULT WINAPI VarR4FromUI2(USHORT uiIn, FLOAT* pfltOut)
 {
 	TRACE( ole, "( %d, %p ), stub\n", uiIn, pfltOut );
 
@@ -2678,7 +2678,7 @@ HRESULT WINAPI VarR4FromUI232(USHORT uiIn, FLOAT* pfltOut)
 /******************************************************************************
  *		VarR4FromUI432		[OLEAUT32.215]
  */
-HRESULT WINAPI VarR4FromUI432(ULONG ulIn, FLOAT* pfltOut)
+HRESULT WINAPI VarR4FromUI4(ULONG ulIn, FLOAT* pfltOut)
 {
 	TRACE( ole, "( %ld, %p ), stub\n", ulIn, pfltOut );
 
@@ -2690,7 +2690,7 @@ HRESULT WINAPI VarR4FromUI432(ULONG ulIn, FLOAT* pfltOut)
 /******************************************************************************
  *		VarR4FromStr32		[OLEAUT32.74]
  */
-HRESULT WINAPI VarR4FromStr32(OLECHAR32* strIn, LCID lcid, ULONG dwFlags, FLOAT* pfltOut)
+HRESULT WINAPI VarR4FromStr(OLECHAR* strIn, LCID lcid, ULONG dwFlags, FLOAT* pfltOut)
 {
 	double dValue = 0.0;
 	LPSTR pNewString = NULL;
@@ -2730,7 +2730,7 @@ HRESULT WINAPI VarR4FromStr32(OLECHAR32* strIn, LCID lcid, ULONG dwFlags, FLOAT*
  *              VarR4FromCy32 [OLEAUT32.72]
  * Convert currency to float
  */
-HRESULT WINAPI VarR4FromCy32(CY cyIn, FLOAT* pfltOut) {
+HRESULT WINAPI VarR4FromCy(CY cyIn, FLOAT* pfltOut) {
    *pfltOut = (FLOAT)((((double)cyIn.u.Hi * 4294967296.0) + (double)cyIn.u.Lo) / 10000);
    
    return S_OK;
@@ -2739,7 +2739,7 @@ HRESULT WINAPI VarR4FromCy32(CY cyIn, FLOAT* pfltOut) {
 /******************************************************************************
  *		VarR8FromUI132		[OLEAUT32.68]
  */
-HRESULT WINAPI VarR8FromUI132(BYTE bIn, double* pdblOut)
+HRESULT WINAPI VarR8FromUI1(BYTE bIn, double* pdblOut)
 {
 	TRACE( ole, "( %d, %p ), stub\n", bIn, pdblOut );
 
@@ -2751,7 +2751,7 @@ HRESULT WINAPI VarR8FromUI132(BYTE bIn, double* pdblOut)
 /******************************************************************************
  *		VarR8FromI232		[OLEAUT32.69]
  */
-HRESULT WINAPI VarR8FromI232(short sIn, double* pdblOut)
+HRESULT WINAPI VarR8FromI2(short sIn, double* pdblOut)
 {
 	TRACE( ole, "( %d, %p ), stub\n", sIn, pdblOut );
 
@@ -2763,7 +2763,7 @@ HRESULT WINAPI VarR8FromI232(short sIn, double* pdblOut)
 /******************************************************************************
  *		VarR8FromI432		[OLEAUT32.70]
  */
-HRESULT WINAPI VarR8FromI432(LONG lIn, double* pdblOut)
+HRESULT WINAPI VarR8FromI4(LONG lIn, double* pdblOut)
 {
 	TRACE( ole, "( %ld, %p ), stub\n", lIn, pdblOut );
 
@@ -2775,7 +2775,7 @@ HRESULT WINAPI VarR8FromI432(LONG lIn, double* pdblOut)
 /******************************************************************************
  *		VarR8FromR432		[OLEAUT32.81]
  */
-HRESULT WINAPI VarR8FromR432(FLOAT fltIn, double* pdblOut)
+HRESULT WINAPI VarR8FromR4(FLOAT fltIn, double* pdblOut)
 {
 	TRACE( ole, "( %f, %p ), stub\n", fltIn, pdblOut );
 
@@ -2787,7 +2787,7 @@ HRESULT WINAPI VarR8FromR432(FLOAT fltIn, double* pdblOut)
 /******************************************************************************
  *		VarR8FromDate32		[OLEAUT32.83]
  */
-HRESULT WINAPI VarR8FromDate32(DATE dateIn, double* pdblOut)
+HRESULT WINAPI VarR8FromDate(DATE dateIn, double* pdblOut)
 {
 	TRACE( ole, "( %f, %p ), stub\n", dateIn, pdblOut );
 
@@ -2799,7 +2799,7 @@ HRESULT WINAPI VarR8FromDate32(DATE dateIn, double* pdblOut)
 /******************************************************************************
  *		VarR8FromBool32		[OLEAUT32.86]
  */
-HRESULT WINAPI VarR8FromBool32(VARIANT_BOOL boolIn, double* pdblOut)
+HRESULT WINAPI VarR8FromBool(VARIANT_BOOL boolIn, double* pdblOut)
 {
 	TRACE( ole, "( %d, %p ), stub\n", boolIn, pdblOut );
 
@@ -2811,7 +2811,7 @@ HRESULT WINAPI VarR8FromBool32(VARIANT_BOOL boolIn, double* pdblOut)
 /******************************************************************************
  *		VarR8FromI132		[OLEAUT32.217]
  */
-HRESULT WINAPI VarR8FromI132(CHAR cIn, double* pdblOut)
+HRESULT WINAPI VarR8FromI1(CHAR cIn, double* pdblOut)
 {
 	TRACE( ole, "( %c, %p ), stub\n", cIn, pdblOut );
 
@@ -2823,7 +2823,7 @@ HRESULT WINAPI VarR8FromI132(CHAR cIn, double* pdblOut)
 /******************************************************************************
  *		VarR8FromUI232		[OLEAUT32.218]
  */
-HRESULT WINAPI VarR8FromUI232(USHORT uiIn, double* pdblOut)
+HRESULT WINAPI VarR8FromUI2(USHORT uiIn, double* pdblOut)
 {
 	TRACE( ole, "( %d, %p ), stub\n", uiIn, pdblOut );
 
@@ -2835,7 +2835,7 @@ HRESULT WINAPI VarR8FromUI232(USHORT uiIn, double* pdblOut)
 /******************************************************************************
  *		VarR8FromUI432		[OLEAUT32.219]
  */
-HRESULT WINAPI VarR8FromUI432(ULONG ulIn, double* pdblOut)
+HRESULT WINAPI VarR8FromUI4(ULONG ulIn, double* pdblOut)
 {
 	TRACE( ole, "( %ld, %p ), stub\n", ulIn, pdblOut );
 
@@ -2847,7 +2847,7 @@ HRESULT WINAPI VarR8FromUI432(ULONG ulIn, double* pdblOut)
 /******************************************************************************
  *		VarR8FromStr32		[OLEAUT32.84]
  */
-HRESULT WINAPI VarR8FromStr32(OLECHAR32* strIn, LCID lcid, ULONG dwFlags, double* pdblOut)
+HRESULT WINAPI VarR8FromStr(OLECHAR* strIn, LCID lcid, ULONG dwFlags, double* pdblOut)
 {
 	double dValue = 0.0;
 	LPSTR pNewString = NULL;
@@ -2880,7 +2880,7 @@ HRESULT WINAPI VarR8FromStr32(OLECHAR32* strIn, LCID lcid, ULONG dwFlags, double
  *              VarR8FromCy32 [OLEAUT32.82]
  * Convert currency to double
  */
-HRESULT WINAPI VarR8FromCy32(CY cyIn, double* pdblOut) {
+HRESULT WINAPI VarR8FromCy(CY cyIn, double* pdblOut) {
    *pdblOut = (double)((((double)cyIn.u.Hi * 4294967296.0) + (double)cyIn.u.Lo) / 10000);
    
    return S_OK;
@@ -2889,7 +2889,7 @@ HRESULT WINAPI VarR8FromCy32(CY cyIn, double* pdblOut) {
 /******************************************************************************
  *		VarDateFromUI132		[OLEAUT32.]
  */
-HRESULT WINAPI VarDateFromUI132(BYTE bIn, DATE* pdateOut)
+HRESULT WINAPI VarDateFromUI1(BYTE bIn, DATE* pdateOut)
 {
 	TRACE( ole, "( %d, %p ), stub\n", bIn, pdateOut );
 
@@ -2901,7 +2901,7 @@ HRESULT WINAPI VarDateFromUI132(BYTE bIn, DATE* pdateOut)
 /******************************************************************************
  *		VarDateFromI232		[OLEAUT32.222]
  */
-HRESULT WINAPI VarDateFromI232(short sIn, DATE* pdateOut)
+HRESULT WINAPI VarDateFromI2(short sIn, DATE* pdateOut)
 {
 	TRACE( ole, "( %d, %p ), stub\n", sIn, pdateOut );
 
@@ -2913,7 +2913,7 @@ HRESULT WINAPI VarDateFromI232(short sIn, DATE* pdateOut)
 /******************************************************************************
  *		VarDateFromI432		[OLEAUT32.90]
  */
-HRESULT WINAPI VarDateFromI432(LONG lIn, DATE* pdateOut)
+HRESULT WINAPI VarDateFromI4(LONG lIn, DATE* pdateOut)
 {
 	TRACE( ole, "( %ld, %p ), stub\n", lIn, pdateOut );
 
@@ -2930,7 +2930,7 @@ HRESULT WINAPI VarDateFromI432(LONG lIn, DATE* pdateOut)
 /******************************************************************************
  *		VarDateFromR432		[OLEAUT32.91]
  */
-HRESULT WINAPI VarDateFromR432(FLOAT fltIn, DATE* pdateOut)
+HRESULT WINAPI VarDateFromR4(FLOAT fltIn, DATE* pdateOut)
 {
     TRACE( ole, "( %f, %p ), stub\n", fltIn, pdateOut );
 
@@ -2947,7 +2947,7 @@ HRESULT WINAPI VarDateFromR432(FLOAT fltIn, DATE* pdateOut)
 /******************************************************************************
  *		VarDateFromR832		[OLEAUT32.92]
  */
-HRESULT WINAPI VarDateFromR832(double dblIn, DATE* pdateOut)
+HRESULT WINAPI VarDateFromR8(double dblIn, DATE* pdateOut)
 {
     TRACE( ole, "( %f, %p ), stub\n", dblIn, pdateOut );
 
@@ -2986,7 +2986,7 @@ HRESULT WINAPI VarDateFromR832(double dblIn, DATE* pdateOut)
  * These are the only characters allowed in a string representing a date and time:
  * [A-Z] [a-z] [0-9] ':' '-' '/' ',' ' ' '\t'
  */
-HRESULT WINAPI VarDateFromStr32(OLECHAR32* strIn, LCID lcid, ULONG dwFlags, DATE* pdateOut)
+HRESULT WINAPI VarDateFromStr(OLECHAR* strIn, LCID lcid, ULONG dwFlags, DATE* pdateOut)
 {
 	HRESULT ret = S_OK;
     struct tm TM = { 0,0,0,0,0,0,0,0,0 };
@@ -3012,7 +3012,7 @@ HRESULT WINAPI VarDateFromStr32(OLECHAR32* strIn, LCID lcid, ULONG dwFlags, DATE
 /******************************************************************************
  *		VarDateFromI132		[OLEAUT32.221]
  */
-HRESULT WINAPI VarDateFromI132(CHAR cIn, DATE* pdateOut)
+HRESULT WINAPI VarDateFromI1(CHAR cIn, DATE* pdateOut)
 {
 	TRACE( ole, "( %c, %p ), stub\n", cIn, pdateOut );
 
@@ -3024,7 +3024,7 @@ HRESULT WINAPI VarDateFromI132(CHAR cIn, DATE* pdateOut)
 /******************************************************************************
  *		VarDateFromUI232		[OLEAUT32.222]
  */
-HRESULT WINAPI VarDateFromUI232(USHORT uiIn, DATE* pdateOut)
+HRESULT WINAPI VarDateFromUI2(USHORT uiIn, DATE* pdateOut)
 {
 	TRACE( ole, "( %d, %p ), stub\n", uiIn, pdateOut );
 
@@ -3041,7 +3041,7 @@ HRESULT WINAPI VarDateFromUI232(USHORT uiIn, DATE* pdateOut)
 /******************************************************************************
  *		VarDateFromUI432		[OLEAUT32.223]
  */
-HRESULT WINAPI VarDateFromUI432(ULONG ulIn, DATE* pdateOut)
+HRESULT WINAPI VarDateFromUI4(ULONG ulIn, DATE* pdateOut)
 {
 	TRACE( ole, "( %ld, %p ), stub\n", ulIn, pdateOut );
 
@@ -3058,7 +3058,7 @@ HRESULT WINAPI VarDateFromUI432(ULONG ulIn, DATE* pdateOut)
 /******************************************************************************
  *		VarDateFromBool32		[OLEAUT32.96]
  */
-HRESULT WINAPI VarDateFromBool32(VARIANT_BOOL boolIn, DATE* pdateOut)
+HRESULT WINAPI VarDateFromBool(VARIANT_BOOL boolIn, DATE* pdateOut)
 {
 	TRACE( ole, "( %d, %p ), stub\n", boolIn, pdateOut );
 
@@ -3071,7 +3071,7 @@ HRESULT WINAPI VarDateFromBool32(VARIANT_BOOL boolIn, DATE* pdateOut)
  *              VarDateFromCy32 [OLEAUT32.93]
  * Convert currency to date
  */
-HRESULT WINAPI VarDateFromCy32(CY cyIn, DATE* pdateOut) {
+HRESULT WINAPI VarDateFromCy(CY cyIn, DATE* pdateOut) {
    *pdateOut = (DATE)((((double)cyIn.u.Hi * 4294967296.0) + (double)cyIn.u.Lo) / 10000);
 
    if (*pdateOut > DATE_MAX || *pdateOut < DATE_MIN) return DISP_E_TYPEMISMATCH;
@@ -3081,7 +3081,7 @@ HRESULT WINAPI VarDateFromCy32(CY cyIn, DATE* pdateOut) {
 /******************************************************************************
  *		VarBstrFromUI132		[OLEAUT32.108]
  */
-HRESULT WINAPI VarBstrFromUI132(BYTE bVal, LCID lcid, ULONG dwFlags, BSTR32* pbstrOut)
+HRESULT WINAPI VarBstrFromUI1(BYTE bVal, LCID lcid, ULONG dwFlags, BSTR* pbstrOut)
 {
 	TRACE( ole, "( %d, %ld, %ld, %p ), stub\n", bVal, lcid, dwFlags, pbstrOut );
 	sprintf( pBuffer, "%d", bVal );
@@ -3094,7 +3094,7 @@ HRESULT WINAPI VarBstrFromUI132(BYTE bVal, LCID lcid, ULONG dwFlags, BSTR32* pbs
 /******************************************************************************
  *		VarBstrFromI232		[OLEAUT32.109]
  */
-HRESULT WINAPI VarBstrFromI232(short iVal, LCID lcid, ULONG dwFlags, BSTR32* pbstrOut)
+HRESULT WINAPI VarBstrFromI2(short iVal, LCID lcid, ULONG dwFlags, BSTR* pbstrOut)
 {
 	TRACE( ole, "( %d, %ld, %ld, %p ), stub\n", iVal, lcid, dwFlags, pbstrOut );
 	sprintf( pBuffer, "%d", iVal );
@@ -3106,7 +3106,7 @@ HRESULT WINAPI VarBstrFromI232(short iVal, LCID lcid, ULONG dwFlags, BSTR32* pbs
 /******************************************************************************
  *		VarBstrFromI432		[OLEAUT32.110]
  */
-HRESULT WINAPI VarBstrFromI432(LONG lIn, LCID lcid, ULONG dwFlags, BSTR32* pbstrOut)
+HRESULT WINAPI VarBstrFromI4(LONG lIn, LCID lcid, ULONG dwFlags, BSTR* pbstrOut)
 {
 	TRACE( ole, "( %ld, %ld, %ld, %p ), stub\n", lIn, lcid, dwFlags, pbstrOut );
 
@@ -3119,7 +3119,7 @@ HRESULT WINAPI VarBstrFromI432(LONG lIn, LCID lcid, ULONG dwFlags, BSTR32* pbstr
 /******************************************************************************
  *		VarBstrFromR432		[OLEAUT32.111]
  */
-HRESULT WINAPI VarBstrFromR432(FLOAT fltIn, LCID lcid, ULONG dwFlags, BSTR32* pbstrOut)
+HRESULT WINAPI VarBstrFromR4(FLOAT fltIn, LCID lcid, ULONG dwFlags, BSTR* pbstrOut)
 {
 	TRACE( ole, "( %f, %ld, %ld, %p ), stub\n", fltIn, lcid, dwFlags, pbstrOut );
 
@@ -3132,7 +3132,7 @@ HRESULT WINAPI VarBstrFromR432(FLOAT fltIn, LCID lcid, ULONG dwFlags, BSTR32* pb
 /******************************************************************************
  *		VarBstrFromR832		[OLEAUT32.112]
  */
-HRESULT WINAPI VarBstrFromR832(double dblIn, LCID lcid, ULONG dwFlags, BSTR32* pbstrOut)
+HRESULT WINAPI VarBstrFromR8(double dblIn, LCID lcid, ULONG dwFlags, BSTR* pbstrOut)
 {
 	TRACE( ole, "( %f, %ld, %ld, %p ), stub\n", dblIn, lcid, dwFlags, pbstrOut );
 
@@ -3171,7 +3171,7 @@ HRESULT WINAPI VarBstrFromR832(double dblIn, LCID lcid, ULONG dwFlags, BSTR32* p
  *		  int tm_isdst;    daylight savings time flag
  *		  };
  */
-HRESULT WINAPI VarBstrFromDate32(DATE dateIn, LCID lcid, ULONG dwFlags, BSTR32* pbstrOut)
+HRESULT WINAPI VarBstrFromDate(DATE dateIn, LCID lcid, ULONG dwFlags, BSTR* pbstrOut)
 {
 		struct tm TM = {0,0,0,0,0,0,0,0,0};
 	 
@@ -3197,7 +3197,7 @@ HRESULT WINAPI VarBstrFromDate32(DATE dateIn, LCID lcid, ULONG dwFlags, BSTR32* 
 /******************************************************************************
  *		VarBstrFromBool32		[OLEAUT32.116]
  */
-HRESULT WINAPI VarBstrFromBool32(VARIANT_BOOL boolIn, LCID lcid, ULONG dwFlags, BSTR32* pbstrOut)
+HRESULT WINAPI VarBstrFromBool(VARIANT_BOOL boolIn, LCID lcid, ULONG dwFlags, BSTR* pbstrOut)
 {
 	TRACE( ole, "( %d, %ld, %ld, %p ), stub\n", boolIn, lcid, dwFlags, pbstrOut );
 
@@ -3218,7 +3218,7 @@ HRESULT WINAPI VarBstrFromBool32(VARIANT_BOOL boolIn, LCID lcid, ULONG dwFlags, 
 /******************************************************************************
  *		VarBstrFromI132		[OLEAUT32.229]
  */
-HRESULT WINAPI VarBstrFromI132(CHAR cIn, LCID lcid, ULONG dwFlags, BSTR32* pbstrOut)
+HRESULT WINAPI VarBstrFromI1(CHAR cIn, LCID lcid, ULONG dwFlags, BSTR* pbstrOut)
 {
 	TRACE( ole, "( %c, %ld, %ld, %p ), stub\n", cIn, lcid, dwFlags, pbstrOut );
 	sprintf( pBuffer, "%d", cIn );
@@ -3230,7 +3230,7 @@ HRESULT WINAPI VarBstrFromI132(CHAR cIn, LCID lcid, ULONG dwFlags, BSTR32* pbstr
 /******************************************************************************
  *		VarBstrFromUI232		[OLEAUT32.230]
  */
-HRESULT WINAPI VarBstrFromUI232(USHORT uiIn, LCID lcid, ULONG dwFlags, BSTR32* pbstrOut)
+HRESULT WINAPI VarBstrFromUI2(USHORT uiIn, LCID lcid, ULONG dwFlags, BSTR* pbstrOut)
 {
 	TRACE( ole, "( %d, %ld, %ld, %p ), stub\n", uiIn, lcid, dwFlags, pbstrOut );
 	sprintf( pBuffer, "%d", uiIn );
@@ -3242,7 +3242,7 @@ HRESULT WINAPI VarBstrFromUI232(USHORT uiIn, LCID lcid, ULONG dwFlags, BSTR32* p
 /******************************************************************************
  *		VarBstrFromUI432		[OLEAUT32.231]
  */
-HRESULT WINAPI VarBstrFromUI432(ULONG ulIn, LCID lcid, ULONG dwFlags, BSTR32* pbstrOut)
+HRESULT WINAPI VarBstrFromUI4(ULONG ulIn, LCID lcid, ULONG dwFlags, BSTR* pbstrOut)
 {
 	TRACE( ole, "( %ld, %ld, %ld, %p ), stub\n", ulIn, lcid, dwFlags, pbstrOut );
 	sprintf( pBuffer, "%ld", ulIn );
@@ -3254,7 +3254,7 @@ HRESULT WINAPI VarBstrFromUI432(ULONG ulIn, LCID lcid, ULONG dwFlags, BSTR32* pb
 /******************************************************************************
  *		VarBoolFromUI132		[OLEAUT32.118]
  */
-HRESULT WINAPI VarBoolFromUI132(BYTE bIn, VARIANT_BOOL* pboolOut)
+HRESULT WINAPI VarBoolFromUI1(BYTE bIn, VARIANT_BOOL* pboolOut)
 {
 	TRACE( ole, "( %d, %p ), stub\n", bIn, pboolOut );
 
@@ -3273,7 +3273,7 @@ HRESULT WINAPI VarBoolFromUI132(BYTE bIn, VARIANT_BOOL* pboolOut)
 /******************************************************************************
  *		VarBoolFromI232		[OLEAUT32.119]
  */
-HRESULT WINAPI VarBoolFromI232(short sIn, VARIANT_BOOL* pboolOut)
+HRESULT WINAPI VarBoolFromI2(short sIn, VARIANT_BOOL* pboolOut)
 {
 	TRACE( ole, "( %d, %p ), stub\n", sIn, pboolOut );
 
@@ -3292,7 +3292,7 @@ HRESULT WINAPI VarBoolFromI232(short sIn, VARIANT_BOOL* pboolOut)
 /******************************************************************************
  *		VarBoolFromI432		[OLEAUT32.120]
  */
-HRESULT WINAPI VarBoolFromI432(LONG lIn, VARIANT_BOOL* pboolOut)
+HRESULT WINAPI VarBoolFromI4(LONG lIn, VARIANT_BOOL* pboolOut)
 {
 	TRACE( ole, "( %ld, %p ), stub\n", lIn, pboolOut );
 
@@ -3311,7 +3311,7 @@ HRESULT WINAPI VarBoolFromI432(LONG lIn, VARIANT_BOOL* pboolOut)
 /******************************************************************************
  *		VarBoolFromR432		[OLEAUT32.121]
  */
-HRESULT WINAPI VarBoolFromR432(FLOAT fltIn, VARIANT_BOOL* pboolOut)
+HRESULT WINAPI VarBoolFromR4(FLOAT fltIn, VARIANT_BOOL* pboolOut)
 {
 	TRACE( ole, "( %f, %p ), stub\n", fltIn, pboolOut );
 
@@ -3330,7 +3330,7 @@ HRESULT WINAPI VarBoolFromR432(FLOAT fltIn, VARIANT_BOOL* pboolOut)
 /******************************************************************************
  *		VarBoolFromR832		[OLEAUT32.122]
  */
-HRESULT WINAPI VarBoolFromR832(double dblIn, VARIANT_BOOL* pboolOut)
+HRESULT WINAPI VarBoolFromR8(double dblIn, VARIANT_BOOL* pboolOut)
 {
 	TRACE( ole, "( %f, %p ), stub\n", dblIn, pboolOut );
 
@@ -3349,7 +3349,7 @@ HRESULT WINAPI VarBoolFromR832(double dblIn, VARIANT_BOOL* pboolOut)
 /******************************************************************************
  *		VarBoolFromDate32		[OLEAUT32.123]
  */
-HRESULT WINAPI VarBoolFromDate32(DATE dateIn, VARIANT_BOOL* pboolOut)
+HRESULT WINAPI VarBoolFromDate(DATE dateIn, VARIANT_BOOL* pboolOut)
 {
 	TRACE( ole, "( %f, %p ), stub\n", dateIn, pboolOut );
 
@@ -3368,7 +3368,7 @@ HRESULT WINAPI VarBoolFromDate32(DATE dateIn, VARIANT_BOOL* pboolOut)
 /******************************************************************************
  *		VarBoolFromStr32		[OLEAUT32.125]
  */
-HRESULT WINAPI VarBoolFromStr32(OLECHAR32* strIn, LCID lcid, ULONG dwFlags, VARIANT_BOOL* pboolOut)
+HRESULT WINAPI VarBoolFromStr(OLECHAR* strIn, LCID lcid, ULONG dwFlags, VARIANT_BOOL* pboolOut)
 {
 	HRESULT ret = S_OK;
 	char* pNewString = NULL;
@@ -3397,7 +3397,7 @@ HRESULT WINAPI VarBoolFromStr32(OLECHAR32* strIn, LCID lcid, ULONG dwFlags, VARI
 			/* Try converting the string to a floating point number.
 			 */
 			double dValue = 0.0;
-			HRESULT res = VarR8FromStr32( strIn, lcid, dwFlags, &dValue );
+			HRESULT res = VarR8FromStr( strIn, lcid, dwFlags, &dValue );
 			if( res != S_OK )
 			{
 				ret = DISP_E_TYPEMISMATCH;
@@ -3421,7 +3421,7 @@ HRESULT WINAPI VarBoolFromStr32(OLECHAR32* strIn, LCID lcid, ULONG dwFlags, VARI
 /******************************************************************************
  *		VarBoolFromI132		[OLEAUT32.233]
  */
-HRESULT WINAPI VarBoolFromI132(CHAR cIn, VARIANT_BOOL* pboolOut)
+HRESULT WINAPI VarBoolFromI1(CHAR cIn, VARIANT_BOOL* pboolOut)
 {
 	TRACE( ole, "( %c, %p ), stub\n", cIn, pboolOut );
 
@@ -3440,7 +3440,7 @@ HRESULT WINAPI VarBoolFromI132(CHAR cIn, VARIANT_BOOL* pboolOut)
 /******************************************************************************
  *		VarBoolFromUI232		[OLEAUT32.234]
  */
-HRESULT WINAPI VarBoolFromUI232(USHORT uiIn, VARIANT_BOOL* pboolOut)
+HRESULT WINAPI VarBoolFromUI2(USHORT uiIn, VARIANT_BOOL* pboolOut)
 {
 	TRACE( ole, "( %d, %p ), stub\n", uiIn, pboolOut );
 
@@ -3459,7 +3459,7 @@ HRESULT WINAPI VarBoolFromUI232(USHORT uiIn, VARIANT_BOOL* pboolOut)
 /******************************************************************************
  *		VarBoolFromUI432		[OLEAUT32.235]
  */
-HRESULT WINAPI VarBoolFromUI432(ULONG ulIn, VARIANT_BOOL* pboolOut)
+HRESULT WINAPI VarBoolFromUI4(ULONG ulIn, VARIANT_BOOL* pboolOut)
 {
 	TRACE( ole, "( %ld, %p ), stub\n", ulIn, pboolOut );
 
@@ -3479,7 +3479,7 @@ HRESULT WINAPI VarBoolFromUI432(ULONG ulIn, VARIANT_BOOL* pboolOut)
  *              VarBoolFromCy32 [OLEAUT32.124]
  * Convert currency to boolean
  */
-HRESULT WINAPI VarBoolFromCy32(CY cyIn, VARIANT_BOOL* pboolOut) {
+HRESULT WINAPI VarBoolFromCy(CY cyIn, VARIANT_BOOL* pboolOut) {
       if (cyIn.u.Hi || cyIn.u.Lo) *pboolOut = -1;
       else *pboolOut = 0;
       
@@ -3489,7 +3489,7 @@ HRESULT WINAPI VarBoolFromCy32(CY cyIn, VARIANT_BOOL* pboolOut) {
 /******************************************************************************
  *		VarI1FromUI132		[OLEAUT32.244]
  */
-HRESULT WINAPI VarI1FromUI132(BYTE bIn, CHAR* pcOut)
+HRESULT WINAPI VarI1FromUI1(BYTE bIn, CHAR* pcOut)
 {
 	TRACE( ole, "( %d, %p ), stub\n", bIn, pcOut );
 
@@ -3508,7 +3508,7 @@ HRESULT WINAPI VarI1FromUI132(BYTE bIn, CHAR* pcOut)
 /******************************************************************************
  *		VarI1FromI232		[OLEAUT32.245]
  */
-HRESULT WINAPI VarI1FromI232(short uiIn, CHAR* pcOut)
+HRESULT WINAPI VarI1FromI2(short uiIn, CHAR* pcOut)
 {
 	TRACE( ole, "( %d, %p ), stub\n", uiIn, pcOut );
 
@@ -3525,7 +3525,7 @@ HRESULT WINAPI VarI1FromI232(short uiIn, CHAR* pcOut)
 /******************************************************************************
  *		VarI1FromI432		[OLEAUT32.246]
  */
-HRESULT WINAPI VarI1FromI432(LONG lIn, CHAR* pcOut)
+HRESULT WINAPI VarI1FromI4(LONG lIn, CHAR* pcOut)
 {
 	TRACE( ole, "( %ld, %p ), stub\n", lIn, pcOut );
 
@@ -3542,7 +3542,7 @@ HRESULT WINAPI VarI1FromI432(LONG lIn, CHAR* pcOut)
 /******************************************************************************
  *		VarI1FromR432		[OLEAUT32.247]
  */
-HRESULT WINAPI VarI1FromR432(FLOAT fltIn, CHAR* pcOut)
+HRESULT WINAPI VarI1FromR4(FLOAT fltIn, CHAR* pcOut)
 {
 	TRACE( ole, "( %f, %p ), stub\n", fltIn, pcOut );
 
@@ -3560,7 +3560,7 @@ HRESULT WINAPI VarI1FromR432(FLOAT fltIn, CHAR* pcOut)
 /******************************************************************************
  *		VarI1FromR832		[OLEAUT32.248]
  */
-HRESULT WINAPI VarI1FromR832(double dblIn, CHAR* pcOut)
+HRESULT WINAPI VarI1FromR8(double dblIn, CHAR* pcOut)
 {
 	TRACE( ole, "( %f, %p ), stub\n", dblIn, pcOut );
 
@@ -3578,7 +3578,7 @@ HRESULT WINAPI VarI1FromR832(double dblIn, CHAR* pcOut)
 /******************************************************************************
  *		VarI1FromDate32		[OLEAUT32.249]
  */
-HRESULT WINAPI VarI1FromDate32(DATE dateIn, CHAR* pcOut)
+HRESULT WINAPI VarI1FromDate(DATE dateIn, CHAR* pcOut)
 {
 	TRACE( ole, "( %f, %p ), stub\n", dateIn, pcOut );
 
@@ -3596,7 +3596,7 @@ HRESULT WINAPI VarI1FromDate32(DATE dateIn, CHAR* pcOut)
 /******************************************************************************
  *		VarI1FromStr32		[OLEAUT32.251]
  */
-HRESULT WINAPI VarI1FromStr32(OLECHAR32* strIn, LCID lcid, ULONG dwFlags, CHAR* pcOut)
+HRESULT WINAPI VarI1FromStr(OLECHAR* strIn, LCID lcid, ULONG dwFlags, CHAR* pcOut)
 {
 	double dValue = 0.0;
 	LPSTR pNewString = NULL;
@@ -3636,7 +3636,7 @@ HRESULT WINAPI VarI1FromStr32(OLECHAR32* strIn, LCID lcid, ULONG dwFlags, CHAR* 
 /******************************************************************************
  *		VarI1FromBool32		[OLEAUT32.253]
  */
-HRESULT WINAPI VarI1FromBool32(VARIANT_BOOL boolIn, CHAR* pcOut)
+HRESULT WINAPI VarI1FromBool(VARIANT_BOOL boolIn, CHAR* pcOut)
 {
 	TRACE( ole, "( %d, %p ), stub\n", boolIn, pcOut );
 
@@ -3648,7 +3648,7 @@ HRESULT WINAPI VarI1FromBool32(VARIANT_BOOL boolIn, CHAR* pcOut)
 /******************************************************************************
  *		VarI1FromUI232		[OLEAUT32.254]
  */
-HRESULT WINAPI VarI1FromUI232(USHORT uiIn, CHAR* pcOut)
+HRESULT WINAPI VarI1FromUI2(USHORT uiIn, CHAR* pcOut)
 {
 	TRACE( ole, "( %d, %p ), stub\n", uiIn, pcOut );
 
@@ -3665,7 +3665,7 @@ HRESULT WINAPI VarI1FromUI232(USHORT uiIn, CHAR* pcOut)
 /******************************************************************************
  *		VarI1FromUI432		[OLEAUT32.255]
  */
-HRESULT WINAPI VarI1FromUI432(ULONG ulIn, CHAR* pcOut)
+HRESULT WINAPI VarI1FromUI4(ULONG ulIn, CHAR* pcOut)
 {
 	TRACE( ole, "( %ld, %p ), stub\n", ulIn, pcOut );
 
@@ -3683,7 +3683,7 @@ HRESULT WINAPI VarI1FromUI432(ULONG ulIn, CHAR* pcOut)
  *              VarI1FromCy32 [OLEAUT32.250]
  * Convert currency to signed char
  */
-HRESULT WINAPI VarI1FromCy32(CY cyIn, CHAR* pcOut) {
+HRESULT WINAPI VarI1FromCy(CY cyIn, CHAR* pcOut) {
    double t = round((((double)cyIn.u.Hi * 4294967296.0) + (double)cyIn.u.Lo) / 10000);
    
    if (t > CHAR_MAX || t < CHAR_MIN) return DISP_E_OVERFLOW;
@@ -3695,7 +3695,7 @@ HRESULT WINAPI VarI1FromCy32(CY cyIn, CHAR* pcOut) {
 /******************************************************************************
  *		VarUI2FromUI132		[OLEAUT32.257]
  */
-HRESULT WINAPI VarUI2FromUI132(BYTE bIn, USHORT* puiOut)
+HRESULT WINAPI VarUI2FromUI1(BYTE bIn, USHORT* puiOut)
 {
 	TRACE( ole, "( %d, %p ), stub\n", bIn, puiOut );
 
@@ -3707,7 +3707,7 @@ HRESULT WINAPI VarUI2FromUI132(BYTE bIn, USHORT* puiOut)
 /******************************************************************************
  *		VarUI2FromI232		[OLEAUT32.258]
  */
-HRESULT WINAPI VarUI2FromI232(short uiIn, USHORT* puiOut)
+HRESULT WINAPI VarUI2FromI2(short uiIn, USHORT* puiOut)
 {
 	TRACE( ole, "( %d, %p ), stub\n", uiIn, puiOut );
 
@@ -3724,7 +3724,7 @@ HRESULT WINAPI VarUI2FromI232(short uiIn, USHORT* puiOut)
 /******************************************************************************
  *		VarUI2FromI432		[OLEAUT32.259]
  */
-HRESULT WINAPI VarUI2FromI432(LONG lIn, USHORT* puiOut)
+HRESULT WINAPI VarUI2FromI4(LONG lIn, USHORT* puiOut)
 {
 	TRACE( ole, "( %ld, %p ), stub\n", lIn, puiOut );
 
@@ -3741,7 +3741,7 @@ HRESULT WINAPI VarUI2FromI432(LONG lIn, USHORT* puiOut)
 /******************************************************************************
  *		VarUI2FromR432		[OLEAUT32.260]
  */
-HRESULT WINAPI VarUI2FromR432(FLOAT fltIn, USHORT* puiOut)
+HRESULT WINAPI VarUI2FromR4(FLOAT fltIn, USHORT* puiOut)
 {
 	TRACE( ole, "( %f, %p ), stub\n", fltIn, puiOut );
 
@@ -3759,7 +3759,7 @@ HRESULT WINAPI VarUI2FromR432(FLOAT fltIn, USHORT* puiOut)
 /******************************************************************************
  *		VarUI2FromR832		[OLEAUT32.261]
  */
-HRESULT WINAPI VarUI2FromR832(double dblIn, USHORT* puiOut)
+HRESULT WINAPI VarUI2FromR8(double dblIn, USHORT* puiOut)
 {
 	TRACE( ole, "( %f, %p ), stub\n", dblIn, puiOut );
 
@@ -3777,7 +3777,7 @@ HRESULT WINAPI VarUI2FromR832(double dblIn, USHORT* puiOut)
 /******************************************************************************
  *		VarUI2FromDate32		[OLEAUT32.262]
  */
-HRESULT WINAPI VarUI2FromDate32(DATE dateIn, USHORT* puiOut)
+HRESULT WINAPI VarUI2FromDate(DATE dateIn, USHORT* puiOut)
 {
 	TRACE( ole, "( %f, %p ), stub\n", dateIn, puiOut );
 
@@ -3795,7 +3795,7 @@ HRESULT WINAPI VarUI2FromDate32(DATE dateIn, USHORT* puiOut)
 /******************************************************************************
  *		VarUI2FromStr32		[OLEAUT32.264]
  */
-HRESULT WINAPI VarUI2FromStr32(OLECHAR32* strIn, LCID lcid, ULONG dwFlags, USHORT* puiOut)
+HRESULT WINAPI VarUI2FromStr(OLECHAR* strIn, LCID lcid, ULONG dwFlags, USHORT* puiOut)
 {
 	double dValue = 0.0;
 	LPSTR pNewString = NULL;
@@ -3835,7 +3835,7 @@ HRESULT WINAPI VarUI2FromStr32(OLECHAR32* strIn, LCID lcid, ULONG dwFlags, USHOR
 /******************************************************************************
  *		VarUI2FromBool32		[OLEAUT32.266]
  */
-HRESULT WINAPI VarUI2FromBool32(VARIANT_BOOL boolIn, USHORT* puiOut)
+HRESULT WINAPI VarUI2FromBool(VARIANT_BOOL boolIn, USHORT* puiOut)
 {
 	TRACE( ole, "( %d, %p ), stub\n", boolIn, puiOut );
 
@@ -3847,7 +3847,7 @@ HRESULT WINAPI VarUI2FromBool32(VARIANT_BOOL boolIn, USHORT* puiOut)
 /******************************************************************************
  *		VarUI2FromI132		[OLEAUT32.267]
  */
-HRESULT WINAPI VarUI2FromI132(CHAR cIn, USHORT* puiOut)
+HRESULT WINAPI VarUI2FromI1(CHAR cIn, USHORT* puiOut)
 {
 	TRACE( ole, "( %c, %p ), stub\n", cIn, puiOut );
 
@@ -3859,7 +3859,7 @@ HRESULT WINAPI VarUI2FromI132(CHAR cIn, USHORT* puiOut)
 /******************************************************************************
  *		VarUI2FromUI432		[OLEAUT32.268]
  */
-HRESULT WINAPI VarUI2FromUI432(ULONG ulIn, USHORT* puiOut)
+HRESULT WINAPI VarUI2FromUI4(ULONG ulIn, USHORT* puiOut)
 {
 	TRACE( ole, "( %ld, %p ), stub\n", ulIn, puiOut );
 
@@ -3876,7 +3876,7 @@ HRESULT WINAPI VarUI2FromUI432(ULONG ulIn, USHORT* puiOut)
 /******************************************************************************
  *		VarUI4FromStr32		[OLEAUT32.277]
  */
-HRESULT WINAPI VarUI4FromStr32(OLECHAR32* strIn, LCID lcid, ULONG dwFlags, ULONG* pulOut)
+HRESULT WINAPI VarUI4FromStr(OLECHAR* strIn, LCID lcid, ULONG dwFlags, ULONG* pulOut)
 {
 	double dValue = 0.0;
 	LPSTR pNewString = NULL;
@@ -3917,7 +3917,7 @@ HRESULT WINAPI VarUI4FromStr32(OLECHAR32* strIn, LCID lcid, ULONG dwFlags, ULONG
  *              VarUI2FromCy32 [OLEAUT32.263]
  * Convert currency to unsigned short
  */
-HRESULT WINAPI VarUI2FromCy32(CY cyIn, USHORT* pusOut) {
+HRESULT WINAPI VarUI2FromCy(CY cyIn, USHORT* pusOut) {
    double t = round((((double)cyIn.u.Hi * 4294967296.0) + (double)cyIn.u.Lo) / 10000);
    
    if (t > UI2_MAX || t < UI2_MIN) return DISP_E_OVERFLOW;
@@ -3930,7 +3930,7 @@ HRESULT WINAPI VarUI2FromCy32(CY cyIn, USHORT* pusOut) {
 /******************************************************************************
  *		VarUI4FromUI132		[OLEAUT32.270]
  */
-HRESULT WINAPI VarUI4FromUI132(BYTE bIn, ULONG* pulOut)
+HRESULT WINAPI VarUI4FromUI1(BYTE bIn, ULONG* pulOut)
 {
 	TRACE( ole, "( %d, %p ), stub\n", bIn, pulOut );
 
@@ -3942,7 +3942,7 @@ HRESULT WINAPI VarUI4FromUI132(BYTE bIn, ULONG* pulOut)
 /******************************************************************************
  *		VarUI4FromI232		[OLEAUT32.271]
  */
-HRESULT WINAPI VarUI4FromI232(short uiIn, ULONG* pulOut)
+HRESULT WINAPI VarUI4FromI2(short uiIn, ULONG* pulOut)
 {
 	TRACE( ole, "( %d, %p ), stub\n", uiIn, pulOut );
 
@@ -3959,7 +3959,7 @@ HRESULT WINAPI VarUI4FromI232(short uiIn, ULONG* pulOut)
 /******************************************************************************
  *		VarUI4FromI432		[OLEAUT32.272]
  */
-HRESULT WINAPI VarUI4FromI432(LONG lIn, ULONG* pulOut)
+HRESULT WINAPI VarUI4FromI4(LONG lIn, ULONG* pulOut)
 {
 	TRACE( ole, "( %ld, %p ), stub\n", lIn, pulOut );
 
@@ -3976,7 +3976,7 @@ HRESULT WINAPI VarUI4FromI432(LONG lIn, ULONG* pulOut)
 /******************************************************************************
  *		VarUI4FromR432		[OLEAUT32.273]
  */
-HRESULT WINAPI VarUI4FromR432(FLOAT fltIn, ULONG* pulOut)
+HRESULT WINAPI VarUI4FromR4(FLOAT fltIn, ULONG* pulOut)
 {
     fltIn = round( fltIn );
     if( fltIn < UI4_MIN || fltIn > UI4_MAX )
@@ -3992,7 +3992,7 @@ HRESULT WINAPI VarUI4FromR432(FLOAT fltIn, ULONG* pulOut)
 /******************************************************************************
  *		VarUI4FromR832		[OLEAUT32.274]
  */
-HRESULT WINAPI VarUI4FromR832(double dblIn, ULONG* pulOut)
+HRESULT WINAPI VarUI4FromR8(double dblIn, ULONG* pulOut)
 {
 	TRACE( ole, "( %f, %p ), stub\n", dblIn, pulOut );
 
@@ -4010,7 +4010,7 @@ HRESULT WINAPI VarUI4FromR832(double dblIn, ULONG* pulOut)
 /******************************************************************************
  *		VarUI4FromDate32		[OLEAUT32.275]
  */
-HRESULT WINAPI VarUI4FromDate32(DATE dateIn, ULONG* pulOut)
+HRESULT WINAPI VarUI4FromDate(DATE dateIn, ULONG* pulOut)
 {
 	TRACE( ole, "( %f, %p ), stub\n", dateIn, pulOut );
 
@@ -4028,7 +4028,7 @@ HRESULT WINAPI VarUI4FromDate32(DATE dateIn, ULONG* pulOut)
 /******************************************************************************
  *		VarUI4FromBool32		[OLEAUT32.279]
  */
-HRESULT WINAPI VarUI4FromBool32(VARIANT_BOOL boolIn, ULONG* pulOut)
+HRESULT WINAPI VarUI4FromBool(VARIANT_BOOL boolIn, ULONG* pulOut)
 {
 	TRACE( ole, "( %d, %p ), stub\n", boolIn, pulOut );
 
@@ -4040,7 +4040,7 @@ HRESULT WINAPI VarUI4FromBool32(VARIANT_BOOL boolIn, ULONG* pulOut)
 /******************************************************************************
  *		VarUI4FromI132		[OLEAUT32.280]
  */
-HRESULT WINAPI VarUI4FromI132(CHAR cIn, ULONG* pulOut)
+HRESULT WINAPI VarUI4FromI1(CHAR cIn, ULONG* pulOut)
 {
 	TRACE( ole, "( %c, %p ), stub\n", cIn, pulOut );
 
@@ -4052,7 +4052,7 @@ HRESULT WINAPI VarUI4FromI132(CHAR cIn, ULONG* pulOut)
 /******************************************************************************
  *		VarUI4FromUI232		[OLEAUT32.281]
  */
-HRESULT WINAPI VarUI4FromUI232(USHORT uiIn, ULONG* pulOut)
+HRESULT WINAPI VarUI4FromUI2(USHORT uiIn, ULONG* pulOut)
 {
 	TRACE( ole, "( %d, %p ), stub\n", uiIn, pulOut );
 
@@ -4065,7 +4065,7 @@ HRESULT WINAPI VarUI4FromUI232(USHORT uiIn, ULONG* pulOut)
  *              VarUI4FromCy32 [OLEAUT32.276]
  * Convert currency to unsigned long
  */
-HRESULT WINAPI VarUI4FromCy32(CY cyIn, ULONG* pulOut) {
+HRESULT WINAPI VarUI4FromCy(CY cyIn, ULONG* pulOut) {
    double t = round((((double)cyIn.u.Hi * 4294967296.0) + (double)cyIn.u.Lo) / 10000);
    
    if (t > UI4_MAX || t < UI4_MIN) return DISP_E_OVERFLOW;
@@ -4079,7 +4079,7 @@ HRESULT WINAPI VarUI4FromCy32(CY cyIn, ULONG* pulOut) {
  *              VarCyFromUI132 [OLEAUT32.98]
  * Convert unsigned char to currency
  */
-HRESULT WINAPI VarCyFromUI132(BYTE bIn, CY* pcyOut) {
+HRESULT WINAPI VarCyFromUI1(BYTE bIn, CY* pcyOut) {
    pcyOut->u.Hi = 0;
    pcyOut->u.Lo = ((ULONG)bIn) * 10000;
    
@@ -4090,7 +4090,7 @@ HRESULT WINAPI VarCyFromUI132(BYTE bIn, CY* pcyOut) {
  *              VarCyFromI232 [OLEAUT32.99]
  * Convert signed short to currency
  */
-HRESULT WINAPI VarCyFromI232(short sIn, CY* pcyOut) {
+HRESULT WINAPI VarCyFromI2(short sIn, CY* pcyOut) {
    if (sIn < 0) pcyOut->u.Hi = -1;
    else pcyOut->u.Hi = 0;
    pcyOut->u.Lo = ((ULONG)sIn) * 10000;
@@ -4102,7 +4102,7 @@ HRESULT WINAPI VarCyFromI232(short sIn, CY* pcyOut) {
  *              VarCyFromI432 [OLEAUT32.100]
  * Convert signed long to currency
  */
-HRESULT WINAPI VarCyFromI432(LONG lIn, CY* pcyOut) {
+HRESULT WINAPI VarCyFromI4(LONG lIn, CY* pcyOut) {
       double t = (double)lIn * (double)10000;
       pcyOut->u.Hi = (LONG)(t / (double)4294967296.0);
       pcyOut->u.Lo = (ULONG)fmod(t, (double)4294967296.0);
@@ -4115,7 +4115,7 @@ HRESULT WINAPI VarCyFromI432(LONG lIn, CY* pcyOut) {
  *              VarCyFromR432 [OLEAUT32.101]
  * Convert float to currency
  */
-HRESULT WINAPI VarCyFromR432(FLOAT fltIn, CY* pcyOut) {
+HRESULT WINAPI VarCyFromR4(FLOAT fltIn, CY* pcyOut) {
    double t = round((double)fltIn * (double)10000);
    pcyOut->u.Hi = (LONG)(t / (double)4294967296.0);
    pcyOut->u.Lo = (ULONG)fmod(t, (double)4294967296.0);
@@ -4128,7 +4128,7 @@ HRESULT WINAPI VarCyFromR432(FLOAT fltIn, CY* pcyOut) {
  *              VarCyFromR832 [OLEAUT32.102]
  * Convert double to currency
  */
-HRESULT WINAPI VarCyFromR832(double dblIn, CY* pcyOut) {
+HRESULT WINAPI VarCyFromR8(double dblIn, CY* pcyOut) {
    double t = round(dblIn * (double)10000);
    pcyOut->u.Hi = (LONG)(t / (double)4294967296.0);
    pcyOut->u.Lo = (ULONG)fmod(t, (double)4294967296.0);
@@ -4141,7 +4141,7 @@ HRESULT WINAPI VarCyFromR832(double dblIn, CY* pcyOut) {
  *              VarCyFromDate32 [OLEAUT32.103]
  * Convert date to currency
  */
-HRESULT WINAPI VarCyFromDate32(DATE dateIn, CY* pcyOut) {
+HRESULT WINAPI VarCyFromDate(DATE dateIn, CY* pcyOut) {
    double t = round((double)dateIn * (double)10000);
    pcyOut->u.Hi = (LONG)(t / (double)4294967296.0);
    pcyOut->u.Lo = (ULONG)fmod(t, (double)4294967296.0);
@@ -4154,7 +4154,7 @@ HRESULT WINAPI VarCyFromDate32(DATE dateIn, CY* pcyOut) {
  *              VarCyFromBool32 [OLEAUT32.106]
  * Convert boolean to currency
  */
-HRESULT WINAPI VarCyFromBool32(VARIANT_BOOL boolIn, CY* pcyOut) {
+HRESULT WINAPI VarCyFromBool(VARIANT_BOOL boolIn, CY* pcyOut) {
    if (boolIn < 0) pcyOut->u.Hi = -1;
    else pcyOut->u.Hi = 0;
    pcyOut->u.Lo = (ULONG)boolIn * (ULONG)10000;
@@ -4166,7 +4166,7 @@ HRESULT WINAPI VarCyFromBool32(VARIANT_BOOL boolIn, CY* pcyOut) {
  *              VarCyFromI132 [OLEAUT32.225]
  * Convert signed char to currency
  */
-HRESULT WINAPI VarCyFromI132(CHAR cIn, CY* pcyOut) {
+HRESULT WINAPI VarCyFromI1(CHAR cIn, CY* pcyOut) {
    if (cIn < 0) pcyOut->u.Hi = -1;
    else pcyOut->u.Hi = 0;
    pcyOut->u.Lo = (ULONG)cIn * (ULONG)10000;
@@ -4178,7 +4178,7 @@ HRESULT WINAPI VarCyFromI132(CHAR cIn, CY* pcyOut) {
  *              VarCyFromUI232 [OLEAUT32.226]
  * Convert unsigned short to currency
  */
-HRESULT WINAPI VarCyFromUI232(USHORT usIn, CY* pcyOut) {
+HRESULT WINAPI VarCyFromUI2(USHORT usIn, CY* pcyOut) {
    pcyOut->u.Hi = 0;
    pcyOut->u.Lo = (ULONG)usIn * (ULONG)10000;
    
@@ -4189,7 +4189,7 @@ HRESULT WINAPI VarCyFromUI232(USHORT usIn, CY* pcyOut) {
  *              VarCyFromUI432 [OLEAUT32.227]
  * Convert unsigned long to currency
  */
-HRESULT WINAPI VarCyFromUI432(ULONG ulIn, CY* pcyOut) {
+HRESULT WINAPI VarCyFromUI4(ULONG ulIn, CY* pcyOut) {
    double t = (double)ulIn * (double)10000;
    pcyOut->u.Hi = (LONG)(t / (double)4294967296.0);
    pcyOut->u.Lo = (ULONG)fmod(t, (double)4294967296.0);

@@ -14,7 +14,7 @@
  *
  * Also handler for interrupt 5c. 
  */
-void WINAPI NetBIOSCall( CONTEXT *context )
+void WINAPI NetBIOSCall16( CONTEXT *context )
 {
     BYTE* ptr;
     ptr = (BYTE*) PTR_SEG_OFF_TO_LIN(ES_reg(context),BX_reg(context));

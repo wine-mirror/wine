@@ -15,7 +15,7 @@
   /* Message as stored in the queue (contains the extraInfo field) */
 typedef struct tagQMSG
 {
-    MSG32   msg;
+    MSG   msg;
     DWORD   extraInfo;  /* Only in 3.1 */
     
     struct tagQMSG *nextMsg;
@@ -32,9 +32,9 @@ typedef struct tagSMSG
     HQUEUE16       hSrcQueue;       /* sending Queue, (NULL if it didn't wait) */
     HQUEUE16       hDstQueue;       /* destination Queue */
 
-    HWND32         hWnd;            /* destinantion window */
-    UINT32         msg;             /* message sent */
-    WPARAM32       wParam;          /* wParam of the sent message */
+    HWND         hWnd;            /* destinantion window */
+    UINT         msg;             /* message sent */
+    WPARAM       wParam;          /* wParam of the sent message */
     LPARAM         lParam;          /* lParam of the sent message */
 
     LRESULT        lResult;         /* result of SendMessage */
@@ -68,9 +68,9 @@ typedef struct tagSMSG
  */
 typedef struct tagPERQUEUEDATA      
 {
-  HWND32    hWndFocus;              /* Focus window */
-  HWND32    hWndActive;             /* Active window */
-  HWND32    hWndCapture;            /* Capture window */
+  HWND    hWndFocus;              /* Focus window */
+  HWND    hWndActive;             /* Active window */
+  HWND    hWndCapture;            /* Capture window */
   INT16     nCaptureHT;             /* Capture info (hit-test) */
   ULONG     ulRefCount;             /* Reference count */
   CRITICAL_SECTION cSection;        /* Critical section for thread safe access */
@@ -82,7 +82,7 @@ typedef struct tagMESSAGEQUEUE
   HQUEUE16  next;                   /* Next queue */
   HQUEUE16  self;                   /* Handle to self (was: reserved) */
   THDB*     thdb;                   /* Thread owning queue */
-  HANDLE32  hEvent;                 /* Event handle */
+  HANDLE  hEvent;                 /* Event handle */
   CRITICAL_SECTION cSection;        /* Queue access critical section */
 
   DWORD     magic;                  /* magic number should be QUEUE_MAGIC */
@@ -132,12 +132,12 @@ typedef struct tagMESSAGEQUEUE
 PERQUEUEDATA* PERQDATA_CreateInstance( void );
 ULONG PERQDATA_Addref( PERQUEUEDATA* pQData );
 ULONG PERQDATA_Release( PERQUEUEDATA* pQData );
-HWND32 PERQDATA_GetFocusWnd( PERQUEUEDATA *pQData );
-HWND32 PERQDATA_SetFocusWnd( PERQUEUEDATA *pQData, HWND32 hWndFocus );
-HWND32 PERQDATA_GetActiveWnd( PERQUEUEDATA *pQData );
-HWND32 PERQDATA_SetActiveWnd( PERQUEUEDATA *pQData, HWND32 hWndActive );
-HWND32 PERQDATA_GetCaptureWnd( PERQUEUEDATA *pQData );
-HWND32 PERQDATA_SetCaptureWnd( PERQUEUEDATA *pQData, HWND32 hWndCapture );
+HWND PERQDATA_GetFocusWnd( PERQUEUEDATA *pQData );
+HWND PERQDATA_SetFocusWnd( PERQUEUEDATA *pQData, HWND hWndFocus );
+HWND PERQDATA_GetActiveWnd( PERQUEUEDATA *pQData );
+HWND PERQDATA_SetActiveWnd( PERQUEUEDATA *pQData, HWND hWndActive );
+HWND PERQDATA_GetCaptureWnd( PERQUEUEDATA *pQData );
+HWND PERQDATA_SetCaptureWnd( PERQUEUEDATA *pQData, HWND hWndCapture );
 INT16  PERQDATA_GetCaptureInfo( PERQUEUEDATA *pQData );
 INT16 PERQDATA_SetCaptureInfo( PERQUEUEDATA *pQData, INT16 nCaptureHT );
     
@@ -146,7 +146,7 @@ extern MESSAGEQUEUE *QUEUE_Lock( HQUEUE16 hQueue );
 extern void QUEUE_Unlock( MESSAGEQUEUE *queue );
 extern void QUEUE_DumpQueue( HQUEUE16 hQueue );
 extern void QUEUE_WalkQueues(void);
-extern BOOL32 QUEUE_IsExitingQueue( HQUEUE16 hQueue );
+extern BOOL QUEUE_IsExitingQueue( HQUEUE16 hQueue );
 extern void QUEUE_SetExitingQueue( HQUEUE16 hQueue );
 extern MESSAGEQUEUE *QUEUE_GetSysQueue(void);
 extern void QUEUE_SetWakeBit( MESSAGEQUEUE *queue, WORD bit );
@@ -157,18 +157,18 @@ extern void QUEUE_IncPaintCount( HQUEUE16 hQueue );
 extern void QUEUE_DecPaintCount( HQUEUE16 hQueue );
 extern void QUEUE_IncTimerCount( HQUEUE16 hQueue );
 extern void QUEUE_DecTimerCount( HQUEUE16 hQueue );
-extern BOOL32 QUEUE_CreateSysMsgQueue( int size );
-extern BOOL32 QUEUE_DeleteMsgQueue( HQUEUE16 hQueue );
+extern BOOL QUEUE_CreateSysMsgQueue( int size );
+extern BOOL QUEUE_DeleteMsgQueue( HQUEUE16 hQueue );
 extern HTASK16 QUEUE_GetQueueTask( HQUEUE16 hQueue );
-extern BOOL32 QUEUE_AddMsg( HQUEUE16 hQueue, MSG32 * msg, DWORD extraInfo );
-extern QMSG* QUEUE_FindMsg( MESSAGEQUEUE * msgQueue, HWND32 hwnd,
+extern BOOL QUEUE_AddMsg( HQUEUE16 hQueue, MSG * msg, DWORD extraInfo );
+extern QMSG* QUEUE_FindMsg( MESSAGEQUEUE * msgQueue, HWND hwnd,
                           int first, int last );
 extern void QUEUE_RemoveMsg( MESSAGEQUEUE * msgQueue, QMSG *qmsg );
 extern SMSG *QUEUE_RemoveSMSG( MESSAGEQUEUE *queue, int list, SMSG *smsg );
-extern BOOL32 QUEUE_AddSMSG( MESSAGEQUEUE *queue, int list, SMSG *smsg );
+extern BOOL QUEUE_AddSMSG( MESSAGEQUEUE *queue, int list, SMSG *smsg );
 extern void hardware_event( WORD message, WORD wParam, LONG lParam,
 			    int xPos, int yPos, DWORD time, DWORD extraInfo );
 
-extern HQUEUE16 WINAPI InitThreadInput( WORD unknown, WORD flags );
+extern HQUEUE16 WINAPI InitThreadInput16( WORD unknown, WORD flags );
 
 #endif  /* __WINE_QUEUE_H */

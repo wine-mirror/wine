@@ -14,31 +14,31 @@
 
 /**********************************************************************/
 
-static DWORD MSACM_dwProcessesAttached32 = 0;
+static DWORD MSACM_dwProcessesAttached = 0;
 
 /***********************************************************************
  *           MSACM_LibMain32 (MSACM32.init) 
  */
-BOOL32 WINAPI MSACM32_LibMain(
-  HINSTANCE32 hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
+BOOL WINAPI MSACM32_LibMain(
+  HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 {
   switch(fdwReason)
     {
     case DLL_PROCESS_ATTACH:
-      if(MSACM_dwProcessesAttached32 == 0)
+      if(MSACM_dwProcessesAttached == 0)
 	{
-	  MSACM_hHeap32 = HeapCreate(0, 0x10000, 0);
-	  MSACM_RegisterAllDrivers32();
+	  MSACM_hHeap = HeapCreate(0, 0x10000, 0);
+	  MSACM_RegisterAllDrivers();
 	}
-      MSACM_dwProcessesAttached32++;
+      MSACM_dwProcessesAttached++;
       break;
     case DLL_PROCESS_DETACH:
-      MSACM_dwProcessesAttached32--;
-      if(MSACM_dwProcessesAttached32 == 0)
+      MSACM_dwProcessesAttached--;
+      if(MSACM_dwProcessesAttached == 0)
 	{
-	  MSACM_UnregisterAllDrivers32();
-	  HeapDestroy(MSACM_hHeap32);
-	  MSACM_hHeap32 = (HANDLE32) NULL;
+	  MSACM_UnregisterAllDrivers();
+	  HeapDestroy(MSACM_hHeap);
+	  MSACM_hHeap = (HANDLE) NULL;
 	}
       break;
     case DLL_THREAD_ATTACH:
@@ -60,7 +60,7 @@ BOOL32 WINAPI MSACM32_LibMain(
 /***********************************************************************
  *           acmGetVersion32 (MSACM32.34)
  */
-DWORD WINAPI acmGetVersion32()
+DWORD WINAPI acmGetVersion()
 {
   switch(VERSION_GetVersion()) 
     {
@@ -82,11 +82,11 @@ DWORD WINAPI acmGetVersion32()
 /***********************************************************************
  *           acmMetrics (MSACM32.36)
  */
-MMRESULT32 WINAPI acmMetrics32(
-  HACMOBJ32 hao, UINT32 uMetric, LPVOID  pMetric)
+MMRESULT WINAPI acmMetrics(
+  HACMOBJ hao, UINT uMetric, LPVOID  pMetric)
 {
-  PWINE_ACMOBJ32 pao = MSACM_GetObj32(hao);
-  BOOL32 bLocal = TRUE;
+  PWINE_ACMOBJ pao = MSACM_GetObj(hao);
+  BOOL bLocal = TRUE;
 
   FIXME(msacm, "(0x%08x, %d, %p): stub\n", hao, uMetric, pMetric);
 

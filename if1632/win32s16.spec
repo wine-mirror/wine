@@ -2,7 +2,7 @@ name	win32s16
 type	win16
 
 1 stub WEP
-2 pascal16 BootTask() BootTask
+2 pascal16 BootTask() BootTask16
 3 stub CREATEPROCESS
 4 stub WAITFORDEBUGEVENT
 5 pascal CONTINUEDEBUGEVENT(long long long) ContinueDebugEvent
@@ -43,13 +43,13 @@ type	win16
 40 stub RMEMCPY
 41 stub INITRESLOADER
 42 stub FREESELECTOROFFSET
-43 pascal StackLinearToSegmented(word word) StackLinearToSegmented
+43 pascal StackLinearToSegmented(word word) StackLinearToSegmented16
 44 stub GETMODULEFILENAME32S
 45 stub FAPILOG16
 46 stub ALLOCCALLBACK
 47 stub LINEARTOHUGESELECTOROFFSET
-48 pascal UTSelectorOffsetToLinear(ptr) UTSelectorOffsetToLinear
-49 pascal UTLinearToSelectorOffset(ptr) UTLinearToSelectorOffset
+48 pascal UTSelectorOffsetToLinear(ptr) UTSelectorOffsetToLinear16
+49 pascal UTLinearToSelectorOffset(ptr) UTLinearToSelectorOffset16
 50 stub SELFOREIGNTIB
 51 stub MYGLOBALREALLOC
 52 stub CREATEPEHEADER

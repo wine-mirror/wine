@@ -11,21 +11,21 @@
 
 struct _IMAGELIST
 {
-    HBITMAP32 hbmImage;
-    HBITMAP32 hbmMask;
-    HBRUSH32  hbrBlend25;
-    HBRUSH32  hbrBlend50;
+    HBITMAP hbmImage;
+    HBITMAP hbmMask;
+    HBRUSH  hbrBlend25;
+    HBRUSH  hbrBlend50;
     COLORREF  clrBk;
     COLORREF  clrFg;
-    INT32     cInitial;
-    INT32     cGrow;
-    INT32     cMaxImage;
-    INT32     cCurImage;
-    INT32     cx;
-    INT32     cy;
-    UINT32    flags;
-    UINT32    uBitsPixel;
-    INT32     nOvlIdx[15];
+    INT     cInitial;
+    INT     cGrow;
+    INT     cMaxImage;
+    INT     cCurImage;
+    INT     cx;
+    INT     cy;
+    UINT    flags;
+    UINT    uBitsPixel;
+    INT     nOvlIdx[15];
 };
  
 typedef struct _IMAGELIST *HIMAGELIST;

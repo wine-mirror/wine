@@ -16,7 +16,7 @@
 /**********************************************************************
  *	     PSDRV_MoveToEx
  */
-BOOL32 PSDRV_MoveToEx(DC *dc, INT32 x, INT32 y, LPPOINT32 pt)
+BOOL PSDRV_MoveToEx(DC *dc, INT x, INT y, LPPOINT pt)
 {
     TRACE(psdrv, "%d %d\n", x, y);
     if (pt)
@@ -34,7 +34,7 @@ BOOL32 PSDRV_MoveToEx(DC *dc, INT32 x, INT32 y, LPPOINT32 pt)
 /***********************************************************************
  *           PSDRV_LineTo
  */
-BOOL32 PSDRV_LineTo(DC *dc, INT32 x, INT32 y)
+BOOL PSDRV_LineTo(DC *dc, INT x, INT y)
 {
     TRACE(psdrv, "%d %d\n", x, y);
 
@@ -53,11 +53,11 @@ BOOL32 PSDRV_LineTo(DC *dc, INT32 x, INT32 y)
 /***********************************************************************
  *           PSDRV_Rectangle
  */
-BOOL32 PSDRV_Rectangle( DC *dc, INT32 left, INT32 top, INT32 right,
-		       INT32 bottom )
+BOOL PSDRV_Rectangle( DC *dc, INT left, INT top, INT right,
+		       INT bottom )
 {
-    INT32 width = XLSTODS(dc, right - left);
-    INT32 height = YLSTODS(dc, bottom - top);
+    INT width = XLSTODS(dc, right - left);
+    INT height = YLSTODS(dc, bottom - top);
 
 
     TRACE(psdrv, "%d %d - %d %d\n", left, top, right, bottom);
@@ -75,8 +75,8 @@ BOOL32 PSDRV_Rectangle( DC *dc, INT32 left, INT32 top, INT32 right,
 /***********************************************************************
  *           PSDRV_RoundRect
  */
-BOOL32 PSDRV_RoundRect( DC *dc, INT32 left, INT32 top, INT32 right,
-			INT32 bottom, INT32 ell_width, INT32 ell_height )
+BOOL PSDRV_RoundRect( DC *dc, INT left, INT top, INT right,
+			INT bottom, INT ell_width, INT ell_height )
 {
     left = XLPTODP( dc, left );
     right = XLPTODP( dc, right );
@@ -85,8 +85,8 @@ BOOL32 PSDRV_RoundRect( DC *dc, INT32 left, INT32 top, INT32 right,
     ell_width = XLSTODS( dc, ell_width );
     ell_height = YLSTODS( dc, ell_height );
 
-    if( left > right ) { INT32 tmp = left; left = right; right = tmp; }
-    if( top > bottom ) { INT32 tmp = top; top = bottom; bottom = tmp; }
+    if( left > right ) { INT tmp = left; left = right; right = tmp; }
+    if( top > bottom ) { INT tmp = top; top = bottom; bottom = tmp; }
 
     if(ell_width > right - left) ell_width = right - left;
     if(ell_height > bottom - top) ell_height = bottom - top;
@@ -116,13 +116,13 @@ BOOL32 PSDRV_RoundRect( DC *dc, INT32 left, INT32 top, INT32 right,
  *
  * Does the work of Arc, Chord and Pie. lines is 0, 1 or 2 respectively.
  */
-static BOOL32 PSDRV_DrawArc( DC *dc, INT32 left, INT32 top, 
-			     INT32 right, INT32 bottom,
-			     INT32 xstart, INT32 ystart,
-			     INT32 xend, INT32 yend,
+static BOOL PSDRV_DrawArc( DC *dc, INT left, INT top, 
+			     INT right, INT bottom,
+			     INT xstart, INT ystart,
+			     INT xend, INT yend,
 			     int lines )
 {
-    INT32 x, y, h, w;
+    INT x, y, h, w;
     double start_angle, end_angle, ratio;
 
     x = XLPTODP(dc, (left + right)/2);
@@ -160,8 +160,8 @@ static BOOL32 PSDRV_DrawArc( DC *dc, INT32 left, INT32 top,
 /***********************************************************************
  *           PSDRV_Arc
  */
-BOOL32 PSDRV_Arc( DC *dc, INT32 left, INT32 top, INT32 right, INT32 bottom,
-		  INT32 xstart, INT32 ystart, INT32 xend, INT32 yend )
+BOOL PSDRV_Arc( DC *dc, INT left, INT top, INT right, INT bottom,
+		  INT xstart, INT ystart, INT xend, INT yend )
 {
     return PSDRV_DrawArc( dc, left, top, right, bottom, xstart, ystart,
 			 xend, yend, 0 );
@@ -170,8 +170,8 @@ BOOL32 PSDRV_Arc( DC *dc, INT32 left, INT32 top, INT32 right, INT32 bottom,
 /***********************************************************************
  *           PSDRV_Chord
  */
-BOOL32 PSDRV_Chord( DC *dc, INT32 left, INT32 top, INT32 right, INT32 bottom,
-		  INT32 xstart, INT32 ystart, INT32 xend, INT32 yend )
+BOOL PSDRV_Chord( DC *dc, INT left, INT top, INT right, INT bottom,
+		  INT xstart, INT ystart, INT xend, INT yend )
 {
     return PSDRV_DrawArc( dc, left, top, right, bottom, xstart, ystart,
 			 xend, yend, 1 );
@@ -181,8 +181,8 @@ BOOL32 PSDRV_Chord( DC *dc, INT32 left, INT32 top, INT32 right, INT32 bottom,
 /***********************************************************************
  *           PSDRV_Pie
  */
-BOOL32 PSDRV_Pie( DC *dc, INT32 left, INT32 top, INT32 right, INT32 bottom,
-		  INT32 xstart, INT32 ystart, INT32 xend, INT32 yend )
+BOOL PSDRV_Pie( DC *dc, INT left, INT top, INT right, INT bottom,
+		  INT xstart, INT ystart, INT xend, INT yend )
 {
     return PSDRV_DrawArc( dc, left, top, right, bottom, xstart, ystart,
 			 xend, yend, 2 );
@@ -192,9 +192,9 @@ BOOL32 PSDRV_Pie( DC *dc, INT32 left, INT32 top, INT32 right, INT32 bottom,
 /***********************************************************************
  *           PSDRV_Ellipse
  */
-BOOL32 PSDRV_Ellipse( DC *dc, INT32 left, INT32 top, INT32 right, INT32 bottom)
+BOOL PSDRV_Ellipse( DC *dc, INT left, INT top, INT right, INT bottom)
 {
-    INT32 x, y, w, h;
+    INT x, y, w, h;
 
     TRACE(psdrv, "%d %d - %d %d\n", left, top, right, bottom);
 
@@ -216,11 +216,11 @@ BOOL32 PSDRV_Ellipse( DC *dc, INT32 left, INT32 top, INT32 right, INT32 bottom)
 /***********************************************************************
  *           PSDRV_PolyPolyline
  */
-BOOL32 PSDRV_PolyPolyline( DC *dc, const POINT32* pts, const DWORD* counts,
+BOOL PSDRV_PolyPolyline( DC *dc, const POINT* pts, const DWORD* counts,
 			   DWORD polylines )
 {
     DWORD polyline, line;
-    const POINT32* pt;
+    const POINT* pt;
     TRACE(psdrv, "\n");
 
     pt = pts;
@@ -241,7 +241,7 @@ BOOL32 PSDRV_PolyPolyline( DC *dc, const POINT32* pts, const DWORD* counts,
 /***********************************************************************
  *           PSDRV_Polyline
  */
-BOOL32 PSDRV_Polyline( DC *dc, const POINT32* pt, INT32 count )
+BOOL PSDRV_Polyline( DC *dc, const POINT* pt, INT count )
 {
     return PSDRV_PolyPolyline( dc, pt, (LPDWORD) &count, 1 );
 }
@@ -250,11 +250,11 @@ BOOL32 PSDRV_Polyline( DC *dc, const POINT32* pt, INT32 count )
 /***********************************************************************
  *           PSDRV_PolyPolygon
  */
-BOOL32 PSDRV_PolyPolygon( DC *dc, const POINT32* pts, const INT32* counts,
-			  UINT32 polygons )
+BOOL PSDRV_PolyPolygon( DC *dc, const POINT* pts, const INT* counts,
+			  UINT polygons )
 {
     DWORD polygon, line;
-    const POINT32* pt;
+    const POINT* pt;
     TRACE(psdrv, "\n");
 
     pt = pts;
@@ -281,7 +281,7 @@ BOOL32 PSDRV_PolyPolygon( DC *dc, const POINT32* pts, const INT32* counts,
 /***********************************************************************
  *           PSDRV_Polygon
  */
-BOOL32 PSDRV_Polygon( DC *dc, const POINT32* pt, INT32 count )
+BOOL PSDRV_Polygon( DC *dc, const POINT* pt, INT count )
 {
      return PSDRV_PolyPolygon( dc, pt, &count, 1 );
 }
@@ -290,7 +290,7 @@ BOOL32 PSDRV_Polygon( DC *dc, const POINT32* pt, INT32 count )
 /***********************************************************************
  *           PSDRV_SetPixel
  */
-COLORREF PSDRV_SetPixel( DC *dc, INT32 x, INT32 y, COLORREF color )
+COLORREF PSDRV_SetPixel( DC *dc, INT x, INT y, COLORREF color )
 {
     PSDRV_PDEVICE *physDev = (PSDRV_PDEVICE *)dc->physDev;
     PSCOLOR pscolor;

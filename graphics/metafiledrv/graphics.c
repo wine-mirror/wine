@@ -16,8 +16,8 @@
 /**********************************************************************
  *	     MFDRV_MoveToEx
  */
-BOOL32
-MFDRV_MoveToEx(DC *dc,INT32 x,INT32 y,LPPOINT32 pt)
+BOOL
+MFDRV_MoveToEx(DC *dc,INT x,INT y,LPPOINT pt)
 {
     if (!MF_MetaParam2(dc,META_MOVETO,x,y))
     	return FALSE;
@@ -35,8 +35,8 @@ MFDRV_MoveToEx(DC *dc,INT32 x,INT32 y,LPPOINT32 pt)
 /***********************************************************************
  *           MFDRV_LineTo
  */
-BOOL32
-MFDRV_LineTo( DC *dc, INT32 x, INT32 y )
+BOOL
+MFDRV_LineTo( DC *dc, INT x, INT y )
 {
      return MF_MetaParam2(dc, META_LINETO, x, y);
 }
@@ -45,9 +45,9 @@ MFDRV_LineTo( DC *dc, INT32 x, INT32 y )
 /***********************************************************************
  *           MFDRV_Arc
  */
-BOOL32 
-MFDRV_Arc( DC *dc, INT32 left, INT32 top, INT32 right, INT32 bottom,
-           INT32 xstart, INT32 ystart, INT32 xend, INT32 yend )
+BOOL 
+MFDRV_Arc( DC *dc, INT left, INT top, INT right, INT bottom,
+           INT xstart, INT ystart, INT xend, INT yend )
 {
      return MF_MetaParam8(dc, META_ARC, left, top, right, bottom,
 			  xstart, ystart, xend, yend);
@@ -57,9 +57,9 @@ MFDRV_Arc( DC *dc, INT32 left, INT32 top, INT32 right, INT32 bottom,
 /***********************************************************************
  *           MFDRV_Pie
  */
-BOOL32
-MFDRV_Pie( DC *dc, INT32 left, INT32 top, INT32 right, INT32 bottom,
-           INT32 xstart, INT32 ystart, INT32 xend, INT32 yend )
+BOOL
+MFDRV_Pie( DC *dc, INT left, INT top, INT right, INT bottom,
+           INT xstart, INT ystart, INT xend, INT yend )
 {
     return MF_MetaParam8(dc, META_PIE, left, top, right, bottom,
 			 xstart, ystart, xend, yend);
@@ -69,9 +69,9 @@ MFDRV_Pie( DC *dc, INT32 left, INT32 top, INT32 right, INT32 bottom,
 /***********************************************************************
  *           MFDRV_Chord
  */
-BOOL32
-MFDRV_Chord( DC *dc, INT32 left, INT32 top, INT32 right, INT32 bottom,
-             INT32 xstart, INT32 ystart, INT32 xend, INT32 yend )
+BOOL
+MFDRV_Chord( DC *dc, INT left, INT top, INT right, INT bottom,
+             INT xstart, INT ystart, INT xend, INT yend )
 {
     return MF_MetaParam8(dc, META_CHORD, left, top, right, bottom,
 			 xstart, ystart, xend, yend);
@@ -80,8 +80,8 @@ MFDRV_Chord( DC *dc, INT32 left, INT32 top, INT32 right, INT32 bottom,
 /***********************************************************************
  *           MFDRV_Ellipse
  */
-BOOL32
-MFDRV_Ellipse( DC *dc, INT32 left, INT32 top, INT32 right, INT32 bottom )
+BOOL
+MFDRV_Ellipse( DC *dc, INT left, INT top, INT right, INT bottom )
 {
     return MF_MetaParam4(dc, META_ELLIPSE, left, top, right, bottom);
 }
@@ -89,8 +89,8 @@ MFDRV_Ellipse( DC *dc, INT32 left, INT32 top, INT32 right, INT32 bottom )
 /***********************************************************************
  *           MFDRV_Rectangle
  */
-BOOL32
-MFDRV_Rectangle(DC *dc, INT32 left, INT32 top, INT32 right, INT32 bottom)
+BOOL
+MFDRV_Rectangle(DC *dc, INT left, INT top, INT right, INT bottom)
 {
     return MF_MetaParam4(dc, META_RECTANGLE, left, top, right, bottom);
 }
@@ -98,9 +98,9 @@ MFDRV_Rectangle(DC *dc, INT32 left, INT32 top, INT32 right, INT32 bottom)
 /***********************************************************************
  *           MFDRV_RoundRect
  */
-BOOL32 
-MFDRV_RoundRect( DC *dc, INT32 left, INT32 top, INT32 right,
-                 INT32 bottom, INT32 ell_width, INT32 ell_height )
+BOOL 
+MFDRV_RoundRect( DC *dc, INT left, INT top, INT right,
+                 INT bottom, INT ell_width, INT ell_height )
 {
     return MF_MetaParam6(dc, META_ROUNDRECT, left, top, right, bottom,
 			 ell_width, ell_height);
@@ -110,7 +110,7 @@ MFDRV_RoundRect( DC *dc, INT32 left, INT32 top, INT32 right,
  *           MFDRV_SetPixel
  */
 COLORREF
-MFDRV_SetPixel( DC *dc, INT32 x, INT32 y, COLORREF color )
+MFDRV_SetPixel( DC *dc, INT x, INT y, COLORREF color )
 {
     return MF_MetaParam4(dc, META_SETPIXEL, x, y,HIWORD(color),LOWORD(color)); 
 }
@@ -119,8 +119,8 @@ MFDRV_SetPixel( DC *dc, INT32 x, INT32 y, COLORREF color )
 /**********************************************************************
  *          MFDRV_Polyline
  */
-BOOL32
-MFDRV_Polyline( DC *dc, const POINT32* pt, INT32 count )
+BOOL
+MFDRV_Polyline( DC *dc, const POINT* pt, INT count )
 {
     register int i;
     LPPOINT16	pt16;
@@ -138,8 +138,8 @@ MFDRV_Polyline( DC *dc, const POINT32* pt, INT32 count )
 /**********************************************************************
  *          MFDRV_Polygon
  */
-BOOL32
-MFDRV_Polygon( DC *dc, const POINT32* pt, INT32 count )
+BOOL
+MFDRV_Polygon( DC *dc, const POINT* pt, INT count )
 {
     register int i;
     LPPOINT16	pt16;
@@ -157,13 +157,13 @@ MFDRV_Polygon( DC *dc, const POINT32* pt, INT32 count )
 /**********************************************************************
  *          PolyPolygon
  */
-BOOL32 
-MFDRV_PolyPolygon( DC *dc, const POINT32* pt, const INT32* counts, UINT32 polygons)
+BOOL 
+MFDRV_PolyPolygon( DC *dc, const POINT* pt, const INT* counts, UINT polygons)
 {
     int		i,j;
     LPPOINT16	pt16;
-    const POINT32* curpt=pt;
-    BOOL32	ret;
+    const POINT* curpt=pt;
+    BOOL	ret;
 
     for (i=0;i<polygons;i++) {
     	pt16=(LPPOINT16)xmalloc(sizeof(POINT16)*counts[i]);
@@ -181,8 +181,8 @@ MFDRV_PolyPolygon( DC *dc, const POINT32* pt, const INT32* counts, UINT32 polygo
 /**********************************************************************
  *          MFDRV_ExtFloodFill
  */
-BOOL32 
-MFDRV_ExtFloodFill( DC *dc, INT32 x, INT32 y, COLORREF color, UINT32 fillType )
+BOOL 
+MFDRV_ExtFloodFill( DC *dc, INT x, INT y, COLORREF color, UINT fillType )
 {
     return MF_MetaParam4(dc,META_FLOODFILL,x,y,HIWORD(color),LOWORD(color)); 
 }
@@ -191,8 +191,8 @@ MFDRV_ExtFloodFill( DC *dc, INT32 x, INT32 y, COLORREF color, UINT32 fillType )
 /**********************************************************************
  *          MFDRV_PaintRgn
  */
-BOOL32
-MFDRV_PaintRgn( DC *dc, HRGN32 hrgn )
+BOOL
+MFDRV_PaintRgn( DC *dc, HRGN hrgn )
 {
     INT16 index;
     index = MF_CreateRegion( dc, hrgn );

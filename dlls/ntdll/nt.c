@@ -107,7 +107,7 @@ NTSTATUS WINAPI NtCreateTimer(
  *		NtSetTimer				[NTDLL.221]
  */
 NTSTATUS WINAPI NtSetTimer(
-	IN HANDLE32 TimerHandle,
+	IN HANDLE TimerHandle,
 	IN PLARGE_INTEGER DueTime,
 	IN PTIMERAPCROUTINE TimerApcRoutine,
 	IN PVOID TimerContext,
@@ -140,8 +140,8 @@ NTSTATUS WINAPI NtCreateEvent(
  *		NtDeviceIoControlFile			[NTDLL.94]
  */
 NTSTATUS WINAPI NtDeviceIoControlFile(
-	IN HANDLE32 DeviceHandle,
-	IN HANDLE32 Event OPTIONAL,
+	IN HANDLE DeviceHandle,
+	IN HANDLE Event OPTIONAL,
 	IN PIO_APC_ROUTINE UserApcRoutine OPTIONAL,
 	IN PVOID UserApcContext OPTIONAL,
 	OUT PIO_STATUS_BLOCK IoStatusBlock,
@@ -192,7 +192,7 @@ NTSTATUS WINAPI NtOpenDirectoryObject(
  *  DataWritten		Caller supplied storage for the number of bytes written (or NULL)
  */
 NTSTATUS WINAPI NtQueryDirectoryObject(
-	IN HANDLE32 DirObjHandle,
+	IN HANDLE DirObjHandle,
 	OUT POBJDIR_INFORMATION DirObjInformation,
 	IN ULONG BufferLength,
 	IN BOOLEAN GetNextIndex,
@@ -239,7 +239,7 @@ NTSTATUS WINAPI NtQuerySystemInformation(
  * NtQueryObject [NTDLL.161]
  */
 NTSTATUS WINAPI NtQueryObject(
-	IN HANDLE32 ObjectHandle,
+	IN HANDLE ObjectHandle,
 	IN OBJECT_INFORMATION_CLASS ObjectInformationClass,
 	OUT PVOID ObjectInformation,
 	IN ULONG Length,
@@ -255,7 +255,7 @@ NTSTATUS WINAPI NtQueryObject(
  * NtSetInformationProcess [NTDLL.207]
  */
 NTSTATUS WINAPI NtSetInformationProcess(
-	IN HANDLE32 ProcessHandle,
+	IN HANDLE ProcessHandle,
 	IN PROCESSINFOCLASS ProcessInformationClass,
 	IN PVOID ProcessInformation,
 	IN ULONG ProcessInformationLength)
@@ -269,8 +269,8 @@ NTSTATUS WINAPI NtSetInformationProcess(
  * NtFsControlFile [NTDLL.108]
  */
 NTSTATUS WINAPI NtFsControlFile(
-	IN HANDLE32 DeviceHandle,
-	IN HANDLE32 Event OPTIONAL,
+	IN HANDLE DeviceHandle,
+	IN HANDLE Event OPTIONAL,
 	IN PIO_APC_ROUTINE ApcRoutine OPTIONAL,
 	IN PVOID ApcContext OPTIONAL,
 	OUT PIO_STATUS_BLOCK IoStatusBlock,
@@ -301,7 +301,7 @@ NTSTATUS WINAPI NtQueryTimerResolution(DWORD x1,DWORD x2,DWORD x3)
  *	Handle	handle to close
  */
 NTSTATUS WINAPI NtClose(
-	HANDLE32 Handle) 
+	HANDLE Handle) 
 {
 	FIXME(ntdll,"(0x%08x),stub!\n",Handle);
 	return 1;
@@ -311,7 +311,7 @@ NTSTATUS WINAPI NtClose(
 *
 */
 NTSTATUS WINAPI NtQueryInformationProcess(
-	IN HANDLE32 ProcessHandle,
+	IN HANDLE ProcessHandle,
 	IN PROCESSINFOCLASS ProcessInformationClass,
 	OUT PVOID ProcessInformation,
 	IN ULONG ProcessInformationLength,
@@ -326,7 +326,7 @@ NTSTATUS WINAPI NtQueryInformationProcess(
 *
 */
 NTSTATUS WINAPI NtQueryInformationThread(
-	IN HANDLE32 ThreadHandle,
+	IN HANDLE ThreadHandle,
 	IN THREADINFOCLASS ThreadInformationClass,
 	OUT PVOID ThreadInformation,
 	IN ULONG ThreadInformationLength,
@@ -366,9 +366,9 @@ NTSTATUS WINAPI NtCreatePagingFile(
  *  NtDuplicateObject		[NTDLL] 
  */
 NTSTATUS WINAPI NtDuplicateObject(
-	IN HANDLE32 SourceProcessHandle,
+	IN HANDLE SourceProcessHandle,
 	IN PHANDLE SourceHandle,
-	IN HANDLE32 TargetProcessHandle,
+	IN HANDLE TargetProcessHandle,
 	OUT PHANDLE TargetHandle,
 	IN ACCESS_MASK DesiredAccess,
 	IN BOOLEAN InheritHandle,
@@ -397,7 +397,7 @@ NTSTATUS WINAPI NtDuplicateToken(
  * FIXME: parameters unsafe
  */
 NTSTATUS WINAPI NtAdjustPrivilegesToken(
-	IN HANDLE32 TokenHandle,
+	IN HANDLE TokenHandle,
 	IN BOOLEAN DisableAllPrivileges,
 	IN PTOKEN_PRIVILEGES NewState,
 	IN DWORD BufferLength,
@@ -421,7 +421,7 @@ NTSTATUS WINAPI NtOpenProcessToken(DWORD x1,DWORD x2,DWORD x3) {
  *  NtSetInformationThread		[NTDLL] 
  */
 NTSTATUS WINAPI NtSetInformationThread(
-	HANDLE32 ThreadHandle,
+	HANDLE ThreadHandle,
 	THREADINFOCLASS ThreadInformationClass,
 	PVOID ThreadInformation,
 	ULONG ThreadInformationLength)
@@ -443,7 +443,7 @@ NTSTATUS WINAPI NtOpenThreadToken(DWORD x1,DWORD x2,DWORD x3,DWORD x4) {
  *  NtSetVolumeInformationFile		[NTDLL] 
  */
 NTSTATUS WINAPI NtSetVolumeInformationFile(
-	IN HANDLE32 FileHandle,
+	IN HANDLE FileHandle,
 	IN PVOID VolumeInformationClass,
 	PVOID VolumeInformation,
 	ULONG Length) 
@@ -466,7 +466,7 @@ NTSTATUS WINAPI NtCreatePort(DWORD x1,DWORD x2,DWORD x3,DWORD x4,DWORD x5)
  *  NtSetInformationFile		[NTDLL] 
  */
 NTSTATUS WINAPI NtSetInformationFile(
-	HANDLE32 FileHandle,
+	HANDLE FileHandle,
 	PIO_STATUS_BLOCK IoStatusBlock,
 	PVOID FileInformation,
 	ULONG Length,
@@ -481,7 +481,7 @@ NTSTATUS WINAPI NtSetInformationFile(
  *  NtSetEvent		[NTDLL] 
  */
 NTSTATUS WINAPI NtSetEvent(
-	IN HANDLE32 EventHandle,
+	IN HANDLE EventHandle,
 	PULONG NumberOfThreadsReleased)
 {
 	FIXME(ntdll,"(0x%08x,%p)\n",
@@ -494,7 +494,7 @@ NTSTATUS WINAPI NtSetEvent(
  *  NtQueryInformationFile		[NTDLL] 
  */
 NTSTATUS WINAPI NtQueryInformationFile(
-	HANDLE32 FileHandle,
+	HANDLE FileHandle,
 	PIO_STATUS_BLOCK IoStatusBlock,
 	PVOID FileInformation,
 	ULONG Length,
@@ -590,8 +590,8 @@ NTSTATUS WINAPI NtCreateDirectoryObject(
  *  Protect		Protection for the committed region of the view
  */
 NTSTATUS WINAPI NtMapViewOfSection(
-	HANDLE32 SectionHandle,
-	HANDLE32 ProcessHandle,
+	HANDLE SectionHandle,
+	HANDLE ProcessHandle,
 	PVOID* BaseAddress,
 	ULONG ZeroBits,
 	ULONG CommitSize,
@@ -630,8 +630,8 @@ NTSTATUS WINAPI NtCreateMailslotFile(DWORD x1,DWORD x2,DWORD x3,DWORD x4,DWORD x
  *   PULONG 		Key 		OPTIONAL
  */
 NTSTATUS WINAPI NtReadFile (
-	HANDLE32 FileHandle,
-	HANDLE32 EventHandle,
+	HANDLE FileHandle,
+	HANDLE EventHandle,
 	PIO_APC_ROUTINE ApcRoutine,
 	PVOID ApcContext,
 	PIO_STATUS_BLOCK IoStatusBlock,
@@ -656,7 +656,7 @@ NTSTATUS WINAPI NtCreateSection(
 	IN PLARGE_INTEGER MaximumSize OPTIONAL,
 	IN ULONG SectionPageProtection OPTIONAL,
 	IN ULONG AllocationAttributes,
-	IN HANDLE32 FileHandle OPTIONAL)
+	IN HANDLE FileHandle OPTIONAL)
 {
 	FIXME(ntdll,"(%p,0x%08lx,%p(%s),%p,0x%08lx,0x%08lx,0x%08x) stub\n",
 	SectionHandle,DesiredAccess,ObjectAttributes,
@@ -669,7 +669,7 @@ NTSTATUS WINAPI NtCreateSection(
  *  NtResumeThread	[NTDLL] 
  */
 NTSTATUS WINAPI NtResumeThread(
-	IN HANDLE32 ThreadHandle,
+	IN HANDLE ThreadHandle,
 	IN PULONG SuspendCount) 
 {
 	FIXME(ntdll,"(0x%08x,%p),stub!\n",
@@ -713,7 +713,7 @@ NTSTATUS WINAPI NtRegisterThreadTerminatePort(DWORD x1) {
  *  NtTerminateThread	[NTDLL] 
  */
 NTSTATUS WINAPI NtTerminateThread(
-	IN HANDLE32 ThreadHandle,
+	IN HANDLE ThreadHandle,
 	IN NTSTATUS ExitStatus)
 {
 	if ( TerminateThread(ThreadHandle,ExitStatus) )
@@ -758,7 +758,7 @@ NTSTATUS WINAPI NtQueryPerformanceCounter(
  *  NtQuerySection	[NTDLL] 
  */
 NTSTATUS WINAPI NtQuerySection(
-	IN HANDLE32 SectionHandle,
+	IN HANDLE SectionHandle,
 	IN PVOID SectionInformationClass,
 	OUT PVOID SectionInformation,
 	IN ULONG Length,
@@ -796,7 +796,7 @@ NTSTATUS WINAPI NtCreateSemaphore(
  *  NtOpenSemaphore	[NTDLL] 
  */
 NTSTATUS WINAPI NtOpenSemaphore(
-	IN HANDLE32 SemaphoreHandle,
+	IN HANDLE SemaphoreHandle,
 	IN ACCESS_MASK DesiredAcces,
 	IN POBJECT_ATTRIBUTES ObjectAttributes)
 {
@@ -810,7 +810,7 @@ NTSTATUS WINAPI NtOpenSemaphore(
  *  NtQuerySemaphore	[NTDLL] 
  */
 NTSTATUS WINAPI NtQuerySemaphore(
-	HANDLE32 SemaphoreHandle,
+	HANDLE SemaphoreHandle,
 	PVOID SemaphoreInformationClass,
 	OUT PVOID SemaphoreInformation,
 	ULONG Length,
@@ -824,7 +824,7 @@ NTSTATUS WINAPI NtQuerySemaphore(
  *  NtQuerySemaphore	[NTDLL] 
  */
 NTSTATUS WINAPI NtReleaseSemaphore(
-	IN HANDLE32 SemaphoreHandle,
+	IN HANDLE SemaphoreHandle,
 	IN ULONG ReleaseCount,
 	IN PULONG PreviousCount)
 {
@@ -865,7 +865,7 @@ NTSTATUS WINAPI NtOpenSymbolicLinkObject(
  *  NtQuerySymbolicLinkObject	[NTDLL] 
  */
 NTSTATUS NtQuerySymbolicLinkObject(
-	IN HANDLE32 LinkHandle,
+	IN HANDLE LinkHandle,
 	IN OUT PUNICODE_STRING LinkTarget,
 	OUT PULONG ReturnedLength OPTIONAL)
 {

@@ -12,9 +12,9 @@
 /***********************************************************************
  *           MFDRV_SetMapMode
  */
-INT32 MFDRV_SetMapMode( DC *dc, INT32 mode )
+INT MFDRV_SetMapMode( DC *dc, INT mode )
 {
-    INT32 prevMode = dc->w.MapMode;
+    INT prevMode = dc->w.MapMode;
     MF_MetaParam1( dc, META_SETMAPMODE, mode );
     return prevMode;
 }
@@ -23,7 +23,7 @@ INT32 MFDRV_SetMapMode( DC *dc, INT32 mode )
 /***********************************************************************
  *           MFDRV_SetViewportExt
  */
-BOOL32 MFDRV_SetViewportExt( DC *dc, INT32 x, INT32 y )
+BOOL MFDRV_SetViewportExt( DC *dc, INT x, INT y )
 {
     MF_MetaParam2( dc, META_SETVIEWPORTEXT, x, y );
     return TRUE;
@@ -33,7 +33,7 @@ BOOL32 MFDRV_SetViewportExt( DC *dc, INT32 x, INT32 y )
 /***********************************************************************
  *           MFDRV_SetViewportOrg
  */
-BOOL32 MFDRV_SetViewportOrg( DC *dc, INT32 x, INT32 y )
+BOOL MFDRV_SetViewportOrg( DC *dc, INT x, INT y )
 {
     MF_MetaParam2( dc, META_SETVIEWPORTORG, x, y );
     return TRUE;
@@ -43,7 +43,7 @@ BOOL32 MFDRV_SetViewportOrg( DC *dc, INT32 x, INT32 y )
 /***********************************************************************
  *           MFDRV_SetWindowExt
  */
-BOOL32 MFDRV_SetWindowExt( DC *dc, INT32 x, INT32 y )
+BOOL MFDRV_SetWindowExt( DC *dc, INT x, INT y )
 {
     MF_MetaParam2( dc, META_SETWINDOWEXT, x, y );
     return TRUE;
@@ -53,7 +53,7 @@ BOOL32 MFDRV_SetWindowExt( DC *dc, INT32 x, INT32 y )
 /***********************************************************************
  *           MFDRV_SetWindowOrg
  */
-BOOL32 MFDRV_SetWindowOrg( DC *dc, INT32 x, INT32 y )
+BOOL MFDRV_SetWindowOrg( DC *dc, INT x, INT y )
 {
     MF_MetaParam2( dc, META_SETWINDOWORG, x, y );
     return TRUE;
@@ -63,7 +63,7 @@ BOOL32 MFDRV_SetWindowOrg( DC *dc, INT32 x, INT32 y )
 /***********************************************************************
  *           MFDRV_OffsetViewportOrg
  */
-BOOL32 MFDRV_OffsetViewportOrg( DC *dc, INT32 x, INT32 y )
+BOOL MFDRV_OffsetViewportOrg( DC *dc, INT x, INT y )
 {
     MF_MetaParam2( dc, META_OFFSETVIEWPORTORG, x, y );
     return TRUE;
@@ -73,7 +73,7 @@ BOOL32 MFDRV_OffsetViewportOrg( DC *dc, INT32 x, INT32 y )
 /***********************************************************************
  *           MFDRV_OffsetWindowOrg
  */
-BOOL32 MFDRV_OffsetWindowOrg( DC *dc, INT32 x, INT32 y )
+BOOL MFDRV_OffsetWindowOrg( DC *dc, INT x, INT y )
 {
     MF_MetaParam2( dc, META_OFFSETWINDOWORG, x, y );
     return TRUE;
@@ -83,8 +83,8 @@ BOOL32 MFDRV_OffsetWindowOrg( DC *dc, INT32 x, INT32 y )
 /***********************************************************************
  *           MFDRV_ScaleViewportExt
  */
-BOOL32 MFDRV_ScaleViewportExt( DC *dc, INT32 xNum, INT32 xDenom,
-                               INT32 yNum, INT32 yDenom )
+BOOL MFDRV_ScaleViewportExt( DC *dc, INT xNum, INT xDenom,
+                               INT yNum, INT yDenom )
 {
     MF_MetaParam4( dc, META_SCALEVIEWPORTEXT, xNum, xDenom, yNum, yDenom );
     return TRUE;
@@ -94,8 +94,8 @@ BOOL32 MFDRV_ScaleViewportExt( DC *dc, INT32 xNum, INT32 xDenom,
 /***********************************************************************
  *           MFDRV_ScaleWindowExt
  */
-BOOL32 MFDRV_ScaleWindowExt( DC *dc, INT32 xNum, INT32 xDenom,
-                             INT32 yNum, INT32 yDenom )
+BOOL MFDRV_ScaleWindowExt( DC *dc, INT xNum, INT xDenom,
+                             INT yNum, INT yDenom )
 {
     MF_MetaParam4( dc, META_SCALEWINDOWEXT, xNum, xDenom, yNum, yDenom );
     return TRUE;

@@ -14,9 +14,9 @@
 #include "winspool.h"
 #include "winerror.h"
 
-static BOOL32 PSDRV_CreateDC( DC *dc, LPCSTR driver, LPCSTR device,
+static BOOL PSDRV_CreateDC( DC *dc, LPCSTR driver, LPCSTR device,
                                LPCSTR output, const DEVMODE16* initData );
-static BOOL32 PSDRV_DeleteDC( DC *dc );
+static BOOL PSDRV_DeleteDC( DC *dc );
 
 static const DC_FUNCTIONS PSDRV_Funcs =
 {
@@ -170,10 +170,10 @@ static PSDRV_DEVMODE16 DefaultDevmode =
   }
 };
 
-HANDLE32 PSDRV_Heap = 0;
+HANDLE PSDRV_Heap = 0;
 
-static HANDLE32 PSDRV_DefaultFont = 0;
-static LOGFONT32A DefaultLogFont = {
+static HANDLE PSDRV_DefaultFont = 0;
+static LOGFONTA DefaultLogFont = {
     100, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, ANSI_CHARSET, 0, 0,
     DEFAULT_QUALITY, FIXED_PITCH | FF_MODERN, ""
 };
@@ -184,19 +184,19 @@ static LOGFONT32A DefaultLogFont = {
  * Initializes font metrics and registers driver. Called from GDI_Init()
  *
  */
-BOOL32 PSDRV_Init(void)
+BOOL PSDRV_Init(void)
 {
     TRACE(psdrv, "\n");
     PSDRV_Heap = HeapCreate(0, 0x10000, 0);
     PSDRV_GetFontMetrics();
-    PSDRV_DefaultFont = CreateFontIndirect32A(&DefaultLogFont);
+    PSDRV_DefaultFont = CreateFontIndirectA(&DefaultLogFont);
     return DRIVER_RegisterDriver( "WINEPS", &PSDRV_Funcs );
 }
 
 /**********************************************************************
  *	     PSDRV_CreateDC
  */
-static BOOL32 PSDRV_CreateDC( DC *dc, LPCSTR driver, LPCSTR device,
+static BOOL PSDRV_CreateDC( DC *dc, LPCSTR driver, LPCSTR device,
                                LPCSTR output, const DEVMODE16* initData )
 {
     PSDRV_PDEVICE *physDev;
@@ -268,7 +268,7 @@ static BOOL32 PSDRV_CreateDC( DC *dc, LPCSTR driver, LPCSTR device,
 
     dc->w.devCaps = devCaps;
 
-    dc->w.hVisRgn = CreateRectRgn32(0, 0, dc->w.devCaps->horzRes,
+    dc->w.hVisRgn = CreateRectRgn(0, 0, dc->w.devCaps->horzRes,
     			    dc->w.devCaps->vertRes);
     
     dc->w.hFont = PSDRV_DefaultFont;
@@ -281,7 +281,7 @@ static BOOL32 PSDRV_CreateDC( DC *dc, LPCSTR driver, LPCSTR device,
 /**********************************************************************
  *	     PSDRV_DeleteDC
  */
-static BOOL32 PSDRV_DeleteDC( DC *dc )
+static BOOL PSDRV_DeleteDC( DC *dc )
 {
     PSDRV_PDEVICE *physDev = (PSDRV_PDEVICE *)dc->physDev;
     
@@ -319,19 +319,19 @@ PRINTERINFO *PSDRV_FindPrinterInfo(LPCSTR name)
 
     pi = *last = HeapAlloc( PSDRV_Heap, 0, sizeof(*pi) );
     pi->FriendlyName = HEAP_strdupA( PSDRV_Heap, 0, name );
-    res = DrvGetPrinterData((LPSTR)name, (LPSTR)INT_PD_DEFAULT_DEVMODE, &type,
+    res = DrvGetPrinterData16((LPSTR)name, (LPSTR)INT_PD_DEFAULT_DEVMODE, &type,
 			    NULL, 0, &needed );
 
     if(res == ERROR_INVALID_PRINTER_NAME) {
         pi->Devmode = HeapAlloc( PSDRV_Heap, 0, sizeof(DefaultDevmode) );
 	memcpy(pi->Devmode, &DefaultDevmode, sizeof(DefaultDevmode) );
-	DrvSetPrinterData((LPSTR)name, (LPSTR)INT_PD_DEFAULT_DEVMODE,
+	DrvSetPrinterData16((LPSTR)name, (LPSTR)INT_PD_DEFAULT_DEVMODE,
 		 REG_BINARY, (LPBYTE)&DefaultDevmode, sizeof(DefaultDevmode) );
 
 	/* need to do something here AddPrinter?? */
     } else {
         pi->Devmode = HeapAlloc( PSDRV_Heap, 0, needed );
-	DrvGetPrinterData((LPSTR)name, (LPSTR)INT_PD_DEFAULT_DEVMODE, &type,
+	DrvGetPrinterData16((LPSTR)name, (LPSTR)INT_PD_DEFAULT_DEVMODE, &type,
 			  (LPBYTE)pi->Devmode, needed, &needed);
     }
 

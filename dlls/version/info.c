@@ -174,9 +174,9 @@ typedef struct
     ( ((VS_VERSION_INFO_STRUCT16 *)ver)->szKey[0] >= ' ' )
 
 #define VersionInfo16_Value( ver )  \
-    (LPBYTE)( ((DWORD)((ver)->szKey) + (lstrlen32A((ver)->szKey)+1) + 3) & ~3 )
+    (LPBYTE)( ((DWORD)((ver)->szKey) + (lstrlenA((ver)->szKey)+1) + 3) & ~3 )
 #define VersionInfo32_Value( ver )  \
-    (LPBYTE)( ((DWORD)((ver)->szKey) + 2*(lstrlen32W((ver)->szKey)+1) + 3) & ~3 )
+    (LPBYTE)( ((DWORD)((ver)->szKey) + 2*(lstrlenW((ver)->szKey)+1) + 3) & ~3 )
 
 #define VersionInfo16_Children( ver )  \
     (VS_VERSION_INFO_STRUCT16 *)( VersionInfo16_Value( ver ) + \
@@ -223,7 +223,7 @@ void ConvertVersionInfo32To16( VS_VERSION_INFO_STRUCT32 *info32,
     }
     else if ( bText )
     {
-        info16->wValueLength = lstrlen32W( (LPCWSTR)lpValue ) + 1;
+        info16->wValueLength = lstrlenW( (LPCWSTR)lpValue ) + 1;
         lstrcpyWtoA( VersionInfo16_Value( info16 ), (LPCWSTR)lpValue );
 
         TRACE( ver, "Copied value from %p to %p: %s\n", lpValue, 
@@ -262,7 +262,7 @@ void ConvertVersionInfo32To16( VS_VERSION_INFO_STRUCT32 *info32,
 /***********************************************************************
  *           GetFileVersionInfoSize32A         [VERSION.2]
  */
-DWORD WINAPI GetFileVersionInfoSize32A( LPCSTR filename, LPDWORD handle )
+DWORD WINAPI GetFileVersionInfoSizeA( LPCSTR filename, LPDWORD handle )
 {
     VS_FIXEDFILEINFO *vffi;
     DWORD len, ret, offset;
@@ -270,15 +270,15 @@ DWORD WINAPI GetFileVersionInfoSize32A( LPCSTR filename, LPDWORD handle )
 
     TRACE( ver, "(%s,%p)\n", debugstr_a(filename), handle );
 
-    len = GetFileResourceSize32( filename,
-                                 MAKEINTRESOURCE32A(VS_FILE_INFO),
-                                 MAKEINTRESOURCE32A(VS_VERSION_INFO),
+    len = GetFileResourceSize( filename,
+                                 MAKEINTRESOURCEA(VS_FILE_INFO),
+                                 MAKEINTRESOURCEA(VS_VERSION_INFO),
                                  &offset );
     if (!len) return 0;
 
-    ret = GetFileResource32( filename,
-                             MAKEINTRESOURCE32A(VS_FILE_INFO),
-                             MAKEINTRESOURCE32A(VS_VERSION_INFO),
+    ret = GetFileResource( filename,
+                             MAKEINTRESOURCEA(VS_FILE_INFO),
+                             MAKEINTRESOURCEA(VS_VERSION_INFO),
                              offset, sizeof( buf ), buf );
     if (!ret) return 0;
 
@@ -308,10 +308,10 @@ DWORD WINAPI GetFileVersionInfoSize32A( LPCSTR filename, LPDWORD handle )
 /***********************************************************************
  *           GetFileVersionInfoSize32W         [VERSION.3]
  */
-DWORD WINAPI GetFileVersionInfoSize32W( LPCWSTR filename, LPDWORD handle )
+DWORD WINAPI GetFileVersionInfoSizeW( LPCWSTR filename, LPDWORD handle )
 {
     LPSTR fn = HEAP_strdupWtoA( GetProcessHeap(), 0, filename );
-    DWORD ret = GetFileVersionInfoSize32A( fn, handle );
+    DWORD ret = GetFileVersionInfoSizeA( fn, handle );
     HeapFree( GetProcessHeap(), 0, fn );
     return ret;
 }
@@ -319,14 +319,14 @@ DWORD WINAPI GetFileVersionInfoSize32W( LPCWSTR filename, LPDWORD handle )
 /***********************************************************************
  *           GetFileVersionInfo32A             [VERSION.1]
  */
-DWORD WINAPI GetFileVersionInfo32A( LPCSTR filename, DWORD handle,
+DWORD WINAPI GetFileVersionInfoA( LPCSTR filename, DWORD handle,
                                     DWORD datasize, LPVOID data )
 {
     TRACE( ver, "(%s,%ld,size=%ld,data=%p)\n",
                 debugstr_a(filename), handle, datasize, data );
 
-    if ( !GetFileResource32( filename, MAKEINTRESOURCE32A(VS_FILE_INFO),
-                                       MAKEINTRESOURCE32A(VS_VERSION_INFO),
+    if ( !GetFileResource( filename, MAKEINTRESOURCEA(VS_FILE_INFO),
+                                       MAKEINTRESOURCEA(VS_VERSION_INFO),
                                        handle, datasize, data ) )
         return FALSE;
 
@@ -345,7 +345,7 @@ DWORD WINAPI GetFileVersionInfo32A( LPCSTR filename, DWORD handle,
 /***********************************************************************
  *           GetFileVersionInfo32W             [VERSION.4]
  */
-DWORD WINAPI GetFileVersionInfo32W( LPCWSTR filename, DWORD handle,
+DWORD WINAPI GetFileVersionInfoW( LPCWSTR filename, DWORD handle,
                                     DWORD datasize, LPVOID data )
 {
     LPSTR fn = HEAP_strdupWtoA( GetProcessHeap(), 0, filename );
@@ -354,8 +354,8 @@ DWORD WINAPI GetFileVersionInfo32W( LPCWSTR filename, DWORD handle,
     TRACE( ver, "(%s,%ld,size=%ld,data=%p)\n",
                 debugstr_a(fn), handle, datasize, data );
 
-    if ( !GetFileResource32( fn, MAKEINTRESOURCE32A(VS_FILE_INFO),
-                                 MAKEINTRESOURCE32A(VS_VERSION_INFO),
+    if ( !GetFileResource( fn, MAKEINTRESOURCEA(VS_FILE_INFO),
+                                 MAKEINTRESOURCEA(VS_VERSION_INFO),
                                  handle, datasize, data ) )
         retv = FALSE;
 
@@ -376,13 +376,13 @@ DWORD WINAPI GetFileVersionInfo32W( LPCWSTR filename, DWORD handle,
  *           VersionInfo16_FindChild             [internal]
  */
 VS_VERSION_INFO_STRUCT16 *VersionInfo16_FindChild( VS_VERSION_INFO_STRUCT16 *info, 
-                                            LPCSTR szKey, UINT32 cbKey )
+                                            LPCSTR szKey, UINT cbKey )
 {
     VS_VERSION_INFO_STRUCT16 *child = VersionInfo16_Children( info );
 
     while ( (DWORD)child < (DWORD)info + info->wLength )
     {
-        if ( !lstrncmpi32A( child->szKey, szKey, cbKey ) )
+        if ( !lstrncmpiA( child->szKey, szKey, cbKey ) )
             return child;
 
 	if (!(child->wLength)) return NULL;
@@ -396,13 +396,13 @@ VS_VERSION_INFO_STRUCT16 *VersionInfo16_FindChild( VS_VERSION_INFO_STRUCT16 *inf
  *           VersionInfo32_FindChild             [internal]
  */
 VS_VERSION_INFO_STRUCT32 *VersionInfo32_FindChild( VS_VERSION_INFO_STRUCT32 *info, 
-                                            LPCWSTR szKey, UINT32 cbKey )
+                                            LPCWSTR szKey, UINT cbKey )
 {
     VS_VERSION_INFO_STRUCT32 *child = VersionInfo32_Children( info );
 
     while ( (DWORD)child < (DWORD)info + info->wLength )
     {
-        if ( !lstrncmpi32W( child->szKey, szKey, cbKey ) )
+        if ( !lstrncmpiW( child->szKey, szKey, cbKey ) )
             return child;
 
         child = VersionInfo32_Next( child );
@@ -414,8 +414,8 @@ VS_VERSION_INFO_STRUCT32 *VersionInfo32_FindChild( VS_VERSION_INFO_STRUCT32 *inf
 /***********************************************************************
  *           VerQueryValue32A              [VERSION.12]
  */
-DWORD WINAPI VerQueryValue32A( LPVOID pBlock, LPCSTR lpSubBlock,
-                               LPVOID *lplpBuffer, UINT32 *puLen )
+DWORD WINAPI VerQueryValueA( LPVOID pBlock, LPCSTR lpSubBlock,
+                               LPVOID *lplpBuffer, UINT *puLen )
 {
     VS_VERSION_INFO_STRUCT16 *info = (VS_VERSION_INFO_STRUCT16 *)pBlock;
     if ( !VersionInfoIs16( info ) )
@@ -460,8 +460,8 @@ DWORD WINAPI VerQueryValue32A( LPVOID pBlock, LPCSTR lpSubBlock,
 /***********************************************************************
  *           VerQueryValue32W              [VERSION.13]
  */
-DWORD WINAPI VerQueryValue32W( LPVOID pBlock, LPCWSTR lpSubBlock,
-                               LPVOID *lplpBuffer, UINT32 *puLen )
+DWORD WINAPI VerQueryValueW( LPVOID pBlock, LPCWSTR lpSubBlock,
+                               LPVOID *lplpBuffer, UINT *puLen )
 {
     VS_VERSION_INFO_STRUCT32 *info = (VS_VERSION_INFO_STRUCT32 *)pBlock;
     if ( VersionInfoIs16( info ) )
@@ -503,12 +503,12 @@ DWORD WINAPI VerQueryValue32W( LPVOID pBlock, LPCWSTR lpSubBlock,
     return TRUE;
 }
 
-extern LPCSTR WINE_GetLanguageName( UINT32 langid );
+extern LPCSTR WINE_GetLanguageName( UINT langid );
 
 /***********************************************************************
  *           VerLanguageName32A              [VERSION.9]
  */
-DWORD WINAPI VerLanguageName32A( UINT32 wLang, LPSTR szLang, UINT32 nSize )
+DWORD WINAPI VerLanguageNameA( UINT wLang, LPSTR szLang, UINT nSize )
 {
     char    buffer[80];
     LPCSTR  name;
@@ -525,7 +525,7 @@ DWORD WINAPI VerLanguageName32A( UINT32 wLang, LPSTR szLang, UINT32 nSize )
              "\\System\\CurrentControlSet\\control\\Nls\\Locale\\%08x",
              wLang );
 
-    result = RegQueryValue32A( HKEY_LOCAL_MACHINE, buffer, szLang, (LPDWORD)&nSize );
+    result = RegQueryValueA( HKEY_LOCAL_MACHINE, buffer, szLang, (LPDWORD)&nSize );
     if ( result == ERROR_SUCCESS || result == ERROR_MORE_DATA ) 
         return nSize;
 
@@ -535,14 +535,14 @@ DWORD WINAPI VerLanguageName32A( UINT32 wLang, LPSTR szLang, UINT32 nSize )
      */
 
     name = WINE_GetLanguageName( wLang );
-    lstrcpyn32A( szLang, name, nSize );
-    return lstrlen32A( name );
+    lstrcpynA( szLang, name, nSize );
+    return lstrlenA( name );
 }
 
 /***********************************************************************
  *           VerLanguageName32W              [VERSION.10]
  */
-DWORD WINAPI VerLanguageName32W( UINT32 wLang, LPWSTR szLang, UINT32 nSize )
+DWORD WINAPI VerLanguageNameW( UINT wLang, LPWSTR szLang, UINT nSize )
 {
     char    buffer[80];
     LPWSTR  keyname;
@@ -561,7 +561,7 @@ DWORD WINAPI VerLanguageName32W( UINT32 wLang, LPWSTR szLang, UINT32 nSize )
              wLang );
 
     keyname = HEAP_strdupAtoW( GetProcessHeap(), 0, buffer );
-    result = RegQueryValue32W( HKEY_LOCAL_MACHINE, keyname, szLang, (LPDWORD)&nSize );
+    result = RegQueryValueW( HKEY_LOCAL_MACHINE, keyname, szLang, (LPDWORD)&nSize );
     HeapFree( GetProcessHeap(), 0, keyname );
 
     if ( result == ERROR_SUCCESS || result == ERROR_MORE_DATA ) 
@@ -574,7 +574,7 @@ DWORD WINAPI VerLanguageName32W( UINT32 wLang, LPWSTR szLang, UINT32 nSize )
 
     name = WINE_GetLanguageName( wLang );
     lstrcpynAtoW( szLang, name, nSize );
-    return lstrlen32A( name );
+    return lstrlenA( name );
 }
 
 

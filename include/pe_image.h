@@ -21,33 +21,33 @@ typedef struct {
 } PE_MODREF;
 
 struct _wine_modref;
-extern int PE_unloadImage(HMODULE32 hModule);
-extern FARPROC32 PE_FindExportedFunction(struct _wine_modref *wm, LPCSTR funcName, BOOL32 snoop);
-extern BOOL32 PE_EnumResourceTypes32A(HMODULE32,ENUMRESTYPEPROC32A,LONG);
-extern BOOL32 PE_EnumResourceTypes32W(HMODULE32,ENUMRESTYPEPROC32W,LONG);
-extern BOOL32 PE_EnumResourceNames32A(HMODULE32,LPCSTR,ENUMRESNAMEPROC32A,LONG);
-extern BOOL32 PE_EnumResourceNames32W(HMODULE32,LPCWSTR,ENUMRESNAMEPROC32W,LONG);
-extern BOOL32 PE_EnumResourceLanguages32A(HMODULE32,LPCSTR,LPCSTR,ENUMRESLANGPROC32A,LONG);
-extern BOOL32 PE_EnumResourceLanguages32W(HMODULE32,LPCWSTR,LPCWSTR,ENUMRESLANGPROC32W,LONG);
-extern HRSRC32 PE_FindResourceEx32W(struct _wine_modref*,LPCWSTR,LPCWSTR,WORD);
-extern DWORD PE_SizeofResource32(HMODULE32,HRSRC32);
-extern HMODULE32 PE_LoadLibraryEx32A(LPCSTR,HFILE32,DWORD);
-extern HGLOBAL32 PE_LoadResource32(struct _wine_modref *wm,HRSRC32);
-extern HMODULE32 PE_LoadImage( LPCSTR name, OFSTRUCT *ofs, LPCSTR *modName );
-extern struct _wine_modref *PE_CreateModule( HMODULE32 hModule, OFSTRUCT *ofs, 
-                                             DWORD flags, BOOL32 builtin );
+extern int PE_unloadImage(HMODULE hModule);
+extern FARPROC PE_FindExportedFunction(struct _wine_modref *wm, LPCSTR funcName, BOOL snoop);
+extern BOOL PE_EnumResourceTypesA(HMODULE,ENUMRESTYPEPROCA,LONG);
+extern BOOL PE_EnumResourceTypesW(HMODULE,ENUMRESTYPEPROCW,LONG);
+extern BOOL PE_EnumResourceNamesA(HMODULE,LPCSTR,ENUMRESNAMEPROCA,LONG);
+extern BOOL PE_EnumResourceNamesW(HMODULE,LPCWSTR,ENUMRESNAMEPROCW,LONG);
+extern BOOL PE_EnumResourceLanguagesA(HMODULE,LPCSTR,LPCSTR,ENUMRESLANGPROCA,LONG);
+extern BOOL PE_EnumResourceLanguagesW(HMODULE,LPCWSTR,LPCWSTR,ENUMRESLANGPROCW,LONG);
+extern HRSRC PE_FindResourceExW(struct _wine_modref*,LPCWSTR,LPCWSTR,WORD);
+extern DWORD PE_SizeofResource(HMODULE,HRSRC);
+extern HMODULE PE_LoadLibraryExA(LPCSTR,HFILE,DWORD);
+extern HGLOBAL PE_LoadResource(struct _wine_modref *wm,HRSRC);
+extern HMODULE PE_LoadImage( LPCSTR name, OFSTRUCT *ofs, LPCSTR *modName );
+extern struct _wine_modref *PE_CreateModule( HMODULE hModule, OFSTRUCT *ofs, 
+                                             DWORD flags, BOOL builtin );
 extern HINSTANCE16 PE_CreateProcess( LPCSTR name, LPCSTR cmd_line,
-                                     LPCSTR env, BOOL32 inherit, LPSTARTUPINFO32A startup,
+                                     LPCSTR env, BOOL inherit, LPSTARTUPINFOA startup,
                                      LPPROCESS_INFORMATION info );
 
 struct _THDB; /* forward definition */
 extern void PE_InitTls(struct _THDB*);
 extern void PE_InitDLL(struct _wine_modref *wm, DWORD type, LPVOID lpReserved);
 
-extern PIMAGE_RESOURCE_DIRECTORY GetResDirEntryA(PIMAGE_RESOURCE_DIRECTORY,LPCSTR,DWORD,BOOL32);
-extern PIMAGE_RESOURCE_DIRECTORY GetResDirEntryW(PIMAGE_RESOURCE_DIRECTORY,LPCWSTR,DWORD,BOOL32);
+extern PIMAGE_RESOURCE_DIRECTORY GetResDirEntryA(PIMAGE_RESOURCE_DIRECTORY,LPCSTR,DWORD,BOOL);
+extern PIMAGE_RESOURCE_DIRECTORY GetResDirEntryW(PIMAGE_RESOURCE_DIRECTORY,LPCWSTR,DWORD,BOOL);
 
-typedef DWORD (CALLBACK*DLLENTRYPROC32)(HMODULE32,DWORD,LPVOID);
+typedef DWORD (CALLBACK*DLLENTRYPROC)(HMODULE,DWORD,LPVOID);
 
 typedef struct {
 	WORD	popl	WINE_PACKED;	/* 0x8f 0x05 */
@@ -70,7 +70,7 @@ typedef struct {
 } ELF_MODREF;
 
 extern struct _wine_modref *ELF_CreateDummyModule(LPCSTR,LPCSTR);
-extern HMODULE32 ELF_LoadLibraryEx32A(LPCSTR,HFILE32,DWORD);
-extern FARPROC32 ELF_FindExportedFunction(struct _wine_modref *wm, LPCSTR funcName);
+extern HMODULE ELF_LoadLibraryExA(LPCSTR,HFILE,DWORD);
+extern FARPROC ELF_FindExportedFunction(struct _wine_modref *wm, LPCSTR funcName);
 
 #endif /* __WINE_PE_IMAGE_H */

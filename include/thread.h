@@ -28,7 +28,7 @@
 #define USE_THREADS
 #endif
 
-struct _PDB32;
+struct _PDB;
 
 /* Thread exception block */
 typedef struct _TEB
@@ -48,7 +48,7 @@ typedef struct _TEB
     HQUEUE16     queue;          /* 28 Message queue */
     WORD         pad1;           /* 2a */
     LPVOID      *tls_ptr;        /* 2c Pointer to TLS array */
-    struct _PDB32 *process;      /* 30 owning process (used by NT3.51 applets)*/
+    struct _PDB *process;      /* 30 owning process (used by NT3.51 applets)*/
 } TEB;
 
 /* Thread exception flags */
@@ -59,8 +59,8 @@ typedef struct _TEB
 typedef struct _THDB
 {
     K32OBJ         header;         /*  00 Kernel object header */
-    struct _PDB32 *process;        /*  08 Process owning this thread */
-    HANDLE32       event;          /*  0c Thread event */
+    struct _PDB *process;        /*  08 Process owning this thread */
+    HANDLE       event;          /*  0c Thread event */
     TEB            teb;            /*  10 Thread exception block */
     DWORD          flags;          /*  44 Flags */
     DWORD          exit_code;      /*  48 Termination status */
@@ -122,13 +122,13 @@ extern THDB *pCurrentThread;
 
 
 /* scheduler/thread.c */
-extern THDB *THREAD_CreateInitialThread( struct _PDB32 *pdb );
-extern THDB *THREAD_Create( struct _PDB32 *pdb, DWORD stack_size,
-                            BOOL32 alloc_stack16,
+extern THDB *THREAD_CreateInitialThread( struct _PDB *pdb );
+extern THDB *THREAD_Create( struct _PDB *pdb, DWORD stack_size,
+                            BOOL alloc_stack16,
                             int *server_thandle, int *server_phandle,
                             LPTHREAD_START_ROUTINE start_addr, LPVOID param );
 extern THDB *THREAD_Current(void);
-extern BOOL32 THREAD_IsWin16( THDB *thdb );
+extern BOOL THREAD_IsWin16( THDB *thdb );
 extern THDB *THREAD_IdToTHDB( DWORD id );
 extern void THREAD_Start( THDB *thdb );
 extern DWORD THREAD_TlsAlloc( THDB *thread );

@@ -53,7 +53,7 @@ void WINAPI XMS_Handler( CONTEXT *context )
 
         TRACE(int31, "query free extended memory\n");
 	mmi.dwSize = sizeof(mmi);
-	MemManInfo(&mmi);
+	MemManInfo16(&mmi);
         AX_reg(context) = mmi.dwLargestFreeBlock >> 10;
 	    DX_reg(context) = (mmi.dwFreePages * VIRTUAL_GetPageSize()) >> 10;
         TRACE(int31, "returning largest %dK, total %dK\n", AX_reg(context), DX_reg(context));

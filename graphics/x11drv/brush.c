@@ -99,7 +99,7 @@ static XImage *ditherImage = NULL;
  *
  * Create the X image used for dithering.
  */
-BOOL32 X11DRV_BRUSH_Init(void)
+BOOL X11DRV_BRUSH_Init(void)
 {
     XCREATEIMAGE( ditherImage, MATRIX_SIZE, MATRIX_SIZE, MONITOR_GetDepth(&MONITOR_PrimaryMonitor) );
     return (ditherImage != NULL);
@@ -172,7 +172,7 @@ static void BRUSH_SelectSolidBrush( DC *dc, COLORREF color )
 /***********************************************************************
  *           BRUSH_SelectPatternBrush
  */
-static BOOL32 BRUSH_SelectPatternBrush( DC * dc, HBITMAP32 hbitmap )
+static BOOL BRUSH_SelectPatternBrush( DC * dc, HBITMAP hbitmap )
 {
     X11DRV_PHYSBITMAP *pbitmap;
     X11DRV_PDEVICE *physDev = (X11DRV_PDEVICE *)dc->physDev;
@@ -226,7 +226,7 @@ static BOOL32 BRUSH_SelectPatternBrush( DC * dc, HBITMAP32 hbitmap )
 /***********************************************************************
  *           BRUSH_SelectObject
  */
-HBRUSH32 X11DRV_BRUSH_SelectObject( DC * dc, HBRUSH32 hbrush, BRUSHOBJ * brush )
+HBRUSH X11DRV_BRUSH_SelectObject( DC * dc, HBRUSH hbrush, BRUSHOBJ * brush )
 {
     HBITMAP16 hBitmap;
     BITMAPINFO * bmpInfo;
@@ -274,7 +274,7 @@ HBRUSH32 X11DRV_BRUSH_SelectObject( DC * dc, HBRUSH32 hbrush, BRUSHOBJ * brush )
 	if ((bmpInfo = (BITMAPINFO *) GlobalLock16( (HGLOBAL16)brush->logbrush.lbHatch )))
 	{
 	    int size = DIB_BitmapInfoSize( bmpInfo, brush->logbrush.lbColor );
-	    hBitmap = CreateDIBitmap32( dc->hSelf, &bmpInfo->bmiHeader,
+	    hBitmap = CreateDIBitmap( dc->hSelf, &bmpInfo->bmiHeader,
                                         CBM_INIT, ((char *)bmpInfo) + size,
                                         bmpInfo,
                                         (WORD)brush->logbrush.lbColor );

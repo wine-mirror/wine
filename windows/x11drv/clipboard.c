@@ -19,9 +19,9 @@
 #include "wintypes.h"
 #include "x11drv.h"
 
-extern HWND32 hWndClipOwner;
-extern HWND32 hWndClipWindow;
-extern CLIPFORMAT ClipFormats[];
+extern HWND hWndClipOwner;
+extern HWND hWndClipWindow;
+extern WINE_CLIPFORMAT ClipFormats[];
 
 static Bool   selectionWait = False;
 static Bool   selectionAcquired = False;
@@ -71,8 +71,8 @@ static void X11DRV_CLIPBOARD_CheckSelection(WND* pWnd)
  */
 void X11DRV_CLIPBOARD_ReadSelection(Window w,Atom prop)
 {
-    HANDLE32 	 hText = 0;
-    LPCLIPFORMAT lpFormat = ClipFormats; 
+    HANDLE 	 hText = 0;
+    LPWINE_CLIPFORMAT lpFormat = ClipFormats; 
 
     TRACE(clipboard,"ReadSelection callback\n");
 
@@ -107,8 +107,8 @@ void X11DRV_CLIPBOARD_ReadSelection(Window w,Atom prop)
 
 	      if( nitems )
 	      {
-	        hText=GlobalAlloc32(GMEM_MOVEABLE, nitems + inlcount + 1);
-	        if( (lpstr = (char*)GlobalLock32(hText)) )
+	        hText=GlobalAlloc(GMEM_MOVEABLE, nitems + inlcount + 1);
+	        if( (lpstr = (char*)GlobalLock(hText)) )
 	          for(i=0,inlcount=0; i <= nitems; i++)
 	          {
 	  	     if( val[i] == '\n' ) lpstr[inlcount++]='\r';
@@ -146,7 +146,7 @@ void X11DRV_CLIPBOARD_ReadSelection(Window w,Atom prop)
  * Wine might have lost XA_PRIMARY selection because of
  * EmptyClipboard() or other client. 
  */
-void X11DRV_CLIPBOARD_ReleaseSelection(Window w, HWND32 hwnd)
+void X11DRV_CLIPBOARD_ReleaseSelection(Window w, HWND hwnd)
 {
     /* w is the window that lost selection,
      * 
@@ -199,7 +199,7 @@ void X11DRV_CLIPBOARD_EmptyClipboard()
 /**************************************************************************
  *		X11DRV_CLIPBOARD_SetClipboardData
  */
-void X11DRV_CLIPBOARD_SetClipboardData(UINT32 wFormat)
+void X11DRV_CLIPBOARD_SetClipboardData(UINT wFormat)
 {
     Window       owner;
 
@@ -209,7 +209,7 @@ void X11DRV_CLIPBOARD_SetClipboardData(UINT32 wFormat)
 	(wFormat == CF_TEXT || wFormat == CF_OEMTEXT) )
     {
 	owner = X11DRV_WND_FindXWindow( 
-	    WIN_FindWndPtr( hWndClipWindow ? hWndClipWindow : AnyPopup32() ) 
+	    WIN_FindWndPtr( hWndClipWindow ? hWndClipWindow : AnyPopup() ) 
 	);
 
 	TSXSetSelectionOwner(display,XA_PRIMARY, owner, CurrentTime);
@@ -227,9 +227,9 @@ void X11DRV_CLIPBOARD_SetClipboardData(UINT32 wFormat)
 /**************************************************************************
  *		X11DRV_CLIPBOARD_RequestSelection
  */
-BOOL32 X11DRV_CLIPBOARD_RequestSelection()
+BOOL X11DRV_CLIPBOARD_RequestSelection()
 {
-    HWND32 hWnd = (hWndClipWindow) ? hWndClipWindow : GetActiveWindow32();
+    HWND hWnd = (hWndClipWindow) ? hWndClipWindow : GetActiveWindow();
 
     if( selectionAcquired )
       return TRUE;
@@ -260,7 +260,7 @@ BOOL32 X11DRV_CLIPBOARD_RequestSelection()
     TRACE(clipboard,"\tgot CF_OEMTEXT = %i\n", 
 		      ClipFormats[CF_OEMTEXT-1].wDataPresent);
 
-    return (BOOL32)ClipFormats[CF_OEMTEXT-1].wDataPresent;
+    return (BOOL)ClipFormats[CF_OEMTEXT-1].wDataPresent;
 }
 
 /**************************************************************************
@@ -268,9 +268,9 @@ BOOL32 X11DRV_CLIPBOARD_RequestSelection()
  *
  * Called from DestroyWindow().
  */
-void X11DRV_CLIPBOARD_ResetOwner(WND *pWnd, BOOL32 bFooBar)
+void X11DRV_CLIPBOARD_ResetOwner(WND *pWnd, BOOL bFooBar)
 {
-    LPCLIPFORMAT lpFormat = ClipFormats;
+    LPWINE_CLIPFORMAT lpFormat = ClipFormats;
 
     if(bFooBar && X11DRV_WND_GetXWindow(pWnd))
       return;

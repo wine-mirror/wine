@@ -24,12 +24,12 @@
 	       (i)*(size)) )
 
 static HASH_ITEM *locate_entry(HASH_CONTAINER* hash, DWORD key,
-			       HASH_VAL *seeked_data, BOOL32 skip_deleted);
+			       HASH_VAL *seeked_data, BOOL skip_deleted);
 
 static void copy_hash_items(HASH_CONTAINER *hash, HASH_ITEM *old_items,
 			    int old_n_items);
 
-static BOOL32 arrays_initialized = FALSE;
+static BOOL arrays_initialized = FALSE;
 static int primes[NO_OF_PRIMES];
 static int best_primes[NO_OF_PRIMES];
 static int no_of_primes;
@@ -37,7 +37,7 @@ static int no_of_best_primes;
 static int max_num;
 
 /* binary search for `num' in the `primes' array */
-static BOOL32 prime_binary_search_found(int num)
+static BOOL prime_binary_search_found(int num)
 {
   int min_idx, max_idx, idx;
   
@@ -56,7 +56,7 @@ static BOOL32 prime_binary_search_found(int num)
   return FALSE;
 }
 
-static BOOL32 is_prime(int num)
+static BOOL is_prime(int num)
 {
   int i;
   if ((num & 0x1) == 0)		   /* can be divided by 2 */
@@ -218,7 +218,7 @@ static void setup_arrays()
 static void static_collect_garbge(HASH_CONTAINER *hash)
 {
    int i;
-   BOOL32 change;
+   BOOL change;
    HASH_ITEM *items;
    HASH_ITEM *located;
    HASH_ITEM *item;
@@ -516,9 +516,9 @@ void detach_hash(HASH_CONTAINER *hash)
 
 
 /********** Hash usage *************/
-static __inline__ BOOL32
+static __inline__ BOOL
 correct_entry(HASH_ITEM *item, int key, HASH_VAL *seeked_data,
-	      HASH_ITEM_TEST *is_correct_item, BOOL32 skip_deleted)
+	      HASH_ITEM_TEST *is_correct_item, BOOL skip_deleted)
 {
    switch(item->key) {
       case FREE_ENTRY:
@@ -549,7 +549,7 @@ correct_entry(HASH_ITEM *item, int key, HASH_VAL *seeked_data,
  */
 
 static HASH_ITEM *locate_entry(HASH_CONTAINER* hash, DWORD key,
-			       HASH_VAL *seeked_data, BOOL32 skip_deleted)
+			       HASH_VAL *seeked_data, BOOL skip_deleted)
 {
    DWORD hash_idx, hash_leaps;
    HASH_ITEM *item;
@@ -619,7 +619,7 @@ HASH_VAL *hash_locate_item(HASH_CONTAINER* hash,
 }
 
 
-BOOL32 hash_add_item(HASH_CONTAINER* hash, int key, HASH_VAL *data)
+BOOL hash_add_item(HASH_CONTAINER* hash, int key, HASH_VAL *data)
 {
     HASH_SHARED *shared;
     HASH_ITEM *item;
@@ -649,7 +649,7 @@ BOOL32 hash_add_item(HASH_CONTAINER* hash, int key, HASH_VAL *data)
 }
 
 
-BOOL32 hash_delete_item(HASH_CONTAINER* hash, int key, HASH_VAL *seeked_data)
+BOOL hash_delete_item(HASH_CONTAINER* hash, int key, HASH_VAL *seeked_data)
 {
     HASH_ITEM *item;
     

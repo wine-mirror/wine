@@ -26,8 +26,8 @@ BOOL16 WINAPI PatBlt16( HDC16 hdc, INT16 left, INT16 top,
 /***********************************************************************
  *           PatBlt32    (GDI32.260)
  */
-BOOL32 WINAPI PatBlt32( HDC32 hdc, INT32 left, INT32 top,
-                        INT32 width, INT32 height, DWORD rop)
+BOOL WINAPI PatBlt( HDC hdc, INT left, INT top,
+                        INT width, INT height, DWORD rop)
 {
     DC * dc = DC_GetDCPtr( hdc );
     if (!dc || !dc->funcs->pPatBlt) return FALSE;
@@ -62,8 +62,8 @@ BOOL16 WINAPI BitBlt16( HDC16 hdcDst, INT16 xDst, INT16 yDst, INT16 width,
 /***********************************************************************
  *           BitBlt32    (GDI32.10)
  */
-BOOL32 WINAPI BitBlt32( HDC32 hdcDst, INT32 xDst, INT32 yDst, INT32 width,
-                        INT32 height, HDC32 hdcSrc, INT32 xSrc, INT32 ySrc,
+BOOL WINAPI BitBlt( HDC hdcDst, INT xDst, INT yDst, INT width,
+                        INT height, HDC hdcSrc, INT xSrc, INT ySrc,
                         DWORD rop )
 {
     DC *dcDst, *dcSrc;
@@ -107,10 +107,10 @@ BOOL16 WINAPI StretchBlt16( HDC16 hdcDst, INT16 xDst, INT16 yDst,
 /***********************************************************************
  *           StretchBlt32    (GDI32.350)
  */
-BOOL32 WINAPI StretchBlt32( HDC32 hdcDst, INT32 xDst, INT32 yDst,
-                            INT32 widthDst, INT32 heightDst,
-                            HDC32 hdcSrc, INT32 xSrc, INT32 ySrc,
-                            INT32 widthSrc, INT32 heightSrc, DWORD rop )
+BOOL WINAPI StretchBlt( HDC hdcDst, INT xDst, INT yDst,
+                            INT widthDst, INT heightDst,
+                            HDC hdcSrc, INT xSrc, INT ySrc,
+                            INT widthSrc, INT heightSrc, DWORD rop )
 {
     DC *dcDst, *dcSrc;
 
@@ -131,28 +131,28 @@ BOOL32 WINAPI StretchBlt32( HDC32 hdcDst, INT32 xDst, INT32 yDst,
 /***********************************************************************
  *           FastWindowFrame    (GDI.400)
  */
-BOOL16 WINAPI FastWindowFrame( HDC16 hdc, const RECT16 *rect,
+BOOL16 WINAPI FastWindowFrame16( HDC16 hdc, const RECT16 *rect,
                                INT16 width, INT16 height, DWORD rop )
 {
-    HBRUSH32 hbrush = SelectObject32( hdc, GetStockObject32( GRAY_BRUSH ) );
-    PatBlt32( hdc, rect->left, rect->top,
+    HBRUSH hbrush = SelectObject( hdc, GetStockObject( GRAY_BRUSH ) );
+    PatBlt( hdc, rect->left, rect->top,
               rect->right - rect->left - width, height, rop );
-    PatBlt32( hdc, rect->left, rect->top + height, width,
+    PatBlt( hdc, rect->left, rect->top + height, width,
               rect->bottom - rect->top - height, rop );
-    PatBlt32( hdc, rect->left + width, rect->bottom,
+    PatBlt( hdc, rect->left + width, rect->bottom,
               rect->right - rect->left - width, -height, rop );
-    PatBlt32( hdc, rect->right, rect->top, -width, 
+    PatBlt( hdc, rect->right, rect->top, -width, 
               rect->bottom - rect->top - height, rop );
-    SelectObject32( hdc, hbrush );
+    SelectObject( hdc, hbrush );
     return TRUE;
 }
 /***********************************************************************
  *           MaskBlt32 [GDI32.252]
  */
-BOOL32 WINAPI MaskBlt32(HDC32 hdcDest, INT32 nXDest, INT32 nYDest,
-                        INT32 nWidth, INT32 nHeight, HDC32 hdcSource,
-			INT32 nXSrc, INT32 nYSrc, HBITMAP32 hbmMask,
-			INT32 xMask, INT32 yMask, DWORD dwRop)
+BOOL WINAPI MaskBlt(HDC hdcDest, INT nXDest, INT nYDest,
+                        INT nWidth, INT nHeight, HDC hdcSource,
+			INT nXSrc, INT nYSrc, HBITMAP hbmMask,
+			INT xMask, INT yMask, DWORD dwRop)
 {
     FIXME(bitmap, "(%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%ld): stub\n",
              hdcDest,nXDest,nYDest,nWidth,nHeight,hdcSource,nXSrc,nYSrc,
@@ -164,9 +164,9 @@ BOOL32 WINAPI MaskBlt32(HDC32 hdcDest, INT32 nXDest, INT32 nYDest,
  *      PlgBlt [GDI.267]
  *
  */
-BOOL32 WINAPI PlgBlt32( HDC32 hdcDest, const POINT32 *lpPoint,
-                        HDC32 hdcSrc, INT32 nXDest, INT32 nYDest, INT32 nWidth,
-                        INT32 nHeight, HBITMAP32 hbmMask, INT32 xMask, INT32 yMask)
+BOOL WINAPI PlgBlt( HDC hdcDest, const POINT *lpPoint,
+                        HDC hdcSrc, INT nXDest, INT nYDest, INT nWidth,
+                        INT nHeight, HBITMAP hbmMask, INT xMask, INT yMask)
 {
         FIXME(gdi, "PlgBlt, stub\n");
         return 1;

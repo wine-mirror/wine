@@ -22,11 +22,9 @@ typedef struct
 {
     WORD   wFirst;
     WORD   wSecond;
-    INT32  iKernAmount;
-} KERNINGPAIR32, *LPKERNINGPAIR32;
+    INT  iKernAmount;
+} KERNINGPAIR, *LPKERNINGPAIR;
 
-DECL_WINELIB_TYPE(KERNINGPAIR)
-DECL_WINELIB_TYPE(LPKERNINGPAIR)
 
 typedef struct
 {
@@ -40,16 +38,14 @@ typedef struct
 
 typedef struct
 {
-    HDC32   hdc;
-    BOOL32  fErase;
-    RECT32  rcPaint;
-    BOOL32  fRestore;
-    BOOL32  fIncUpdate;
+    HDC   hdc;
+    BOOL  fErase;
+    RECT  rcPaint;
+    BOOL  fRestore;
+    BOOL  fIncUpdate;
     BYTE    rgbReserved[32];
-} PAINTSTRUCT32, *LPPAINTSTRUCT32;
+} PAINTSTRUCT, *LPPAINTSTRUCT;
 
-DECL_WINELIB_TYPE(PAINTSTRUCT)
-DECL_WINELIB_TYPE(LPPAINTSTRUCT)
 
 
 typedef struct tagPIXELFORMATDESCRIPTOR {
@@ -345,17 +341,15 @@ typedef struct
 
 typedef struct
 {
-    INT32  bmType;
-    INT32  bmWidth;
-    INT32  bmHeight;
-    INT32  bmWidthBytes;
+    INT  bmType;
+    INT  bmWidth;
+    INT  bmHeight;
+    INT  bmWidthBytes;
     WORD   bmPlanes;
     WORD   bmBitsPixel;
     LPVOID bmBits WINE_PACKED;
-} BITMAP32, *LPBITMAP32;
+} BITMAP, *LPBITMAP;
 
-DECL_WINELIB_TYPE(BITMAP)
-DECL_WINELIB_TYPE(LPBITMAP)
 
   /* Brushes */
 
@@ -368,13 +362,11 @@ typedef struct
 
 typedef struct
 { 
-    UINT32     lbStyle;
+    UINT     lbStyle;
     COLORREF   lbColor;
-    INT32      lbHatch;
-} LOGBRUSH32, *LPLOGBRUSH32;
+    INT      lbHatch;
+} LOGBRUSH, *LPLOGBRUSH;
 
-DECL_WINELIB_TYPE(LOGBRUSH)
-DECL_WINELIB_TYPE(LPLOGBRUSH)
 
   /* Brush styles */
 #define BS_SOLID	    0
@@ -426,11 +418,11 @@ typedef struct
 
 typedef struct
 {
-    INT32  lfHeight;
-    INT32  lfWidth;
-    INT32  lfEscapement;
-    INT32  lfOrientation;
-    INT32  lfWeight;
+    INT  lfHeight;
+    INT  lfWidth;
+    INT  lfEscapement;
+    INT  lfOrientation;
+    INT  lfWeight;
     BYTE   lfItalic;
     BYTE   lfUnderline;
     BYTE   lfStrikeOut;
@@ -440,15 +432,15 @@ typedef struct
     BYTE   lfQuality;
     BYTE   lfPitchAndFamily;
     CHAR   lfFaceName[LF_FACESIZE];
-} LOGFONT32A, *LPLOGFONT32A;
+} LOGFONTA, *LPLOGFONTA;
 
 typedef struct
 {
-    INT32  lfHeight;
-    INT32  lfWidth;
-    INT32  lfEscapement;
-    INT32  lfOrientation;
-    INT32  lfWeight;
+    INT  lfHeight;
+    INT  lfWidth;
+    INT  lfEscapement;
+    INT  lfOrientation;
+    INT  lfWeight;
     BYTE   lfItalic;
     BYTE   lfUnderline;
     BYTE   lfStrikeOut;
@@ -458,7 +450,7 @@ typedef struct
     BYTE   lfQuality;
     BYTE   lfPitchAndFamily;
     WCHAR  lfFaceName[LF_FACESIZE];
-} LOGFONT32W, *LPLOGFONT32W;
+} LOGFONTW, *LPLOGFONTW;
 
 DECL_WINELIB_TYPE_AW(LOGFONT)
 DECL_WINELIB_TYPE_AW(LPLOGFONT)
@@ -472,17 +464,17 @@ typedef struct
 
 typedef struct
 {
-  LOGFONT32A elfLogFont;
+  LOGFONTA elfLogFont;
   BYTE       elfFullName[LF_FULLFACESIZE] WINE_PACKED;
   BYTE       elfStyle[LF_FACESIZE] WINE_PACKED;
-} ENUMLOGFONT32A, *LPENUMLOGFONT32A;
+} ENUMLOGFONTA, *LPENUMLOGFONTA;
 
 typedef struct
 {
-  LOGFONT32W elfLogFont;
+  LOGFONTW elfLogFont;
   WCHAR      elfFullName[LF_FULLFACESIZE] WINE_PACKED;
   WCHAR      elfStyle[LF_FACESIZE] WINE_PACKED;
-} ENUMLOGFONT32W, *LPENUMLOGFONT32W;
+} ENUMLOGFONTW, *LPENUMLOGFONTW;
 
 typedef struct
 {
@@ -494,19 +486,19 @@ typedef struct
 
 typedef struct
 {
-  LOGFONT32A elfLogFont;
+  LOGFONTA elfLogFont;
   BYTE       elfFullName[LF_FULLFACESIZE] WINE_PACKED;
   BYTE       elfStyle[LF_FACESIZE] WINE_PACKED;
   BYTE       elfScript[LF_FACESIZE] WINE_PACKED;
-} ENUMLOGFONTEX32A,*LPENUMLOGFONTEX32A;
+} ENUMLOGFONTEXA,*LPENUMLOGFONTEXA;
 
 typedef struct
 {
-  LOGFONT32W elfLogFont;
+  LOGFONTW elfLogFont;
   WCHAR      elfFullName[LF_FULLFACESIZE] WINE_PACKED;
   WCHAR      elfStyle[LF_FACESIZE] WINE_PACKED;
   WCHAR      elfScript[LF_FACESIZE] WINE_PACKED;
-} ENUMLOGFONTEX32W,*LPENUMLOGFONTEX32W;
+} ENUMLOGFONTEXW,*LPENUMLOGFONTEXW;
 
 DECL_WINELIB_TYPE_AW(ENUMLOGFONT)
 DECL_WINELIB_TYPE_AW(LPENUMLOGFONT)
@@ -532,8 +524,8 @@ typedef struct
 
 typedef struct 
 {
-  UINT32	ciCharset; /* character set */
-  UINT32	ciACP; /* ANSI code page */
+  UINT	ciCharset; /* character set */
+  UINT	ciACP; /* ANSI code page */
   FONTSIGNATURE	fs;
 } CHARSETINFO,*LPCHARSETINFO;
 
@@ -733,17 +725,17 @@ typedef struct
 
 typedef struct
 {
-    INT32     tmHeight;
-    INT32     tmAscent;
-    INT32     tmDescent;
-    INT32     tmInternalLeading;
-    INT32     tmExternalLeading;
-    INT32     tmAveCharWidth;
-    INT32     tmMaxCharWidth;
-    INT32     tmWeight;
-    INT32     tmOverhang;
-    INT32     tmDigitizedAspectX;
-    INT32     tmDigitizedAspectY;
+    INT     tmHeight;
+    INT     tmAscent;
+    INT     tmDescent;
+    INT     tmInternalLeading;
+    INT     tmExternalLeading;
+    INT     tmAveCharWidth;
+    INT     tmMaxCharWidth;
+    INT     tmWeight;
+    INT     tmOverhang;
+    INT     tmDigitizedAspectX;
+    INT     tmDigitizedAspectY;
     BYTE      tmFirstChar;
     BYTE      tmLastChar;
     BYTE      tmDefaultChar;
@@ -753,21 +745,21 @@ typedef struct
     BYTE      tmStruckOut;
     BYTE      tmPitchAndFamily;
     BYTE      tmCharSet;
-} TEXTMETRIC32A, *LPTEXTMETRIC32A;
+} TEXTMETRICA, *LPTEXTMETRICA;
 
 typedef struct
 {
-    INT32     tmHeight;
-    INT32     tmAscent;
-    INT32     tmDescent;
-    INT32     tmInternalLeading;
-    INT32     tmExternalLeading;
-    INT32     tmAveCharWidth;
-    INT32     tmMaxCharWidth;
-    INT32     tmWeight;
-    INT32     tmOverhang;
-    INT32     tmDigitizedAspectX;
-    INT32     tmDigitizedAspectY;
+    INT     tmHeight;
+    INT     tmAscent;
+    INT     tmDescent;
+    INT     tmInternalLeading;
+    INT     tmExternalLeading;
+    INT     tmAveCharWidth;
+    INT     tmMaxCharWidth;
+    INT     tmWeight;
+    INT     tmOverhang;
+    INT     tmDigitizedAspectX;
+    INT     tmDigitizedAspectY;
     WCHAR     tmFirstChar;
     WCHAR     tmLastChar;
     WCHAR     tmDefaultChar;
@@ -777,7 +769,7 @@ typedef struct
     BYTE      tmStruckOut;
     BYTE      tmPitchAndFamily;
     BYTE      tmCharSet;
-} TEXTMETRIC32W, *LPTEXTMETRIC32W;
+} TEXTMETRICW, *LPTEXTMETRICW;
 
 DECL_WINELIB_TYPE_AW(TEXTMETRIC)
 DECL_WINELIB_TYPE_AW(LPTEXTMETRIC)
@@ -798,77 +790,77 @@ typedef struct tagPANOSE
 } PANOSE;
 
 
-typedef struct _OUTLINETEXTMETRIC32A
+typedef struct _OUTLINETEXTMETRICA
 {
-    UINT32          otmSize;
-    TEXTMETRIC32A   otmTextMetrics;
+    UINT          otmSize;
+    TEXTMETRICA   otmTextMetrics;
     BYTE            otmFilter;
     PANOSE          otmPanoseNumber;
-    UINT32          otmfsSelection;
-    UINT32          otmfsType;
-    INT32           otmsCharSlopeRise;
-    INT32           otmsCharSlopeRun;
-    INT32           otmItalicAngle;
-    UINT32          otmEMSquare;
-    INT32           otmAscent;
-    INT32           otmDescent;
-    UINT32          otmLineGap;
-    UINT32          otmsCapEmHeight;
-    UINT32          otmsXHeight;
-    RECT32          otmrcFontBox;
-    INT32           otmMacAscent;
-    INT32           otmMacDescent;
-    UINT32          otmMacLineGap;
-    UINT32          otmusMinimumPPEM;
-    POINT32         otmptSubscriptSize;
-    POINT32         otmptSubscriptOffset;
-    POINT32         otmptSuperscriptSize;
-    POINT32         otmptSuperscriptOffset;
-    UINT32          otmsStrikeoutSize;
-    INT32           otmsStrikeoutPosition;
-    INT32           otmsUnderscoreSize;
-    INT32           otmsUnderscorePosition;
+    UINT          otmfsSelection;
+    UINT          otmfsType;
+    INT           otmsCharSlopeRise;
+    INT           otmsCharSlopeRun;
+    INT           otmItalicAngle;
+    UINT          otmEMSquare;
+    INT           otmAscent;
+    INT           otmDescent;
+    UINT          otmLineGap;
+    UINT          otmsCapEmHeight;
+    UINT          otmsXHeight;
+    RECT          otmrcFontBox;
+    INT           otmMacAscent;
+    INT           otmMacDescent;
+    UINT          otmMacLineGap;
+    UINT          otmusMinimumPPEM;
+    POINT         otmptSubscriptSize;
+    POINT         otmptSubscriptOffset;
+    POINT         otmptSuperscriptSize;
+    POINT         otmptSuperscriptOffset;
+    UINT          otmsStrikeoutSize;
+    INT           otmsStrikeoutPosition;
+    INT           otmsUnderscoreSize;
+    INT           otmsUnderscorePosition;
     LPSTR           otmpFamilyName;
     LPSTR           otmpFaceName;
     LPSTR           otmpStyleName;
     LPSTR           otmpFullName;
-} OUTLINETEXTMETRIC32A, *LPOUTLINETEXTMETRIC32A;
+} OUTLINETEXTMETRICA, *LPOUTLINETEXTMETRICA;
 
-typedef struct _OUTLINETEXTMETRIC32W
+typedef struct _OUTLINETEXTMETRICW
 {
-    UINT32          otmSize;
-    TEXTMETRIC32W   otmTextMetrics;
+    UINT          otmSize;
+    TEXTMETRICW   otmTextMetrics;
     BYTE            otmFilter;
     PANOSE          otmPanoseNumber;
-    UINT32          otmfsSelection;
-    UINT32          otmfsType;
-    INT32           otmsCharSlopeRise;
-    INT32           otmsCharSlopeRun;
-    INT32           otmItalicAngle;
-    UINT32          otmEMSquare;
-    INT32           otmAscent;
-    INT32           otmDescent;
-    UINT32          otmLineGap;
-    UINT32          otmsCapEmHeight;
-    UINT32          otmsXHeight;
-    RECT32          otmrcFontBox;
-    INT32           otmMacAscent;
-    INT32           otmMacDescent;
-    UINT32          otmMacLineGap;
-    UINT32          otmusMinimumPPEM;
-    POINT32         otmptSubscriptSize;
-    POINT32         otmptSubscriptOffset;
-    POINT32         otmptSuperscriptSize;
-    POINT32         otmptSuperscriptOffset;
-    UINT32          otmsStrikeoutSize;
-    INT32           otmsStrikeoutPosition;
-    INT32           otmsUnderscoreSize;
-    INT32           otmsUnderscorePosition;
+    UINT          otmfsSelection;
+    UINT          otmfsType;
+    INT           otmsCharSlopeRise;
+    INT           otmsCharSlopeRun;
+    INT           otmItalicAngle;
+    UINT          otmEMSquare;
+    INT           otmAscent;
+    INT           otmDescent;
+    UINT          otmLineGap;
+    UINT          otmsCapEmHeight;
+    UINT          otmsXHeight;
+    RECT          otmrcFontBox;
+    INT           otmMacAscent;
+    INT           otmMacDescent;
+    UINT          otmMacLineGap;
+    UINT          otmusMinimumPPEM;
+    POINT         otmptSubscriptSize;
+    POINT         otmptSubscriptOffset;
+    POINT         otmptSuperscriptSize;
+    POINT         otmptSuperscriptOffset;
+    UINT          otmsStrikeoutSize;
+    INT           otmsStrikeoutPosition;
+    INT           otmsUnderscoreSize;
+    INT           otmsUnderscorePosition;
     LPSTR           otmpFamilyName;
     LPSTR           otmpFaceName;
     LPSTR           otmpStyleName;
     LPSTR           otmpFullName;
-} OUTLINETEXTMETRIC32W, *LPOUTLINETEXTMETRIC32W;
+} OUTLINETEXTMETRICW, *LPOUTLINETEXTMETRICW;
 
 typedef struct _OUTLINETEXTMETRIC16
 {
@@ -899,7 +891,7 @@ typedef struct _OUTLINETEXTMETRIC16
     UINT16          otmsStrikeoutSize;
     INT16           otmsStrikeoutPosition;
     INT16           otmsUnderscoreSize;
-    INT32           otmsUnderscorePosition;
+    INT           otmsUnderscorePosition;
     LPSTR           otmpFamilyName;
     LPSTR           otmpFaceName;
     LPSTR           otmpStyleName;
@@ -946,17 +938,17 @@ typedef struct
 
 typedef struct
 {
-    INT32     tmHeight;
-    INT32     tmAscent;
-    INT32     tmDescent;
-    INT32     tmInternalLeading;
-    INT32     tmExternalLeading;
-    INT32     tmAveCharWidth;
-    INT32     tmMaxCharWidth;
-    INT32     tmWeight;
-    INT32     tmOverhang;
-    INT32     tmDigitizedAspectX;
-    INT32     tmDigitizedAspectY;
+    INT     tmHeight;
+    INT     tmAscent;
+    INT     tmDescent;
+    INT     tmInternalLeading;
+    INT     tmExternalLeading;
+    INT     tmAveCharWidth;
+    INT     tmMaxCharWidth;
+    INT     tmWeight;
+    INT     tmOverhang;
+    INT     tmDigitizedAspectX;
+    INT     tmDigitizedAspectY;
     BYTE      tmFirstChar;
     BYTE      tmLastChar;
     BYTE      tmDefaultChar;
@@ -967,24 +959,24 @@ typedef struct
     BYTE      tmPitchAndFamily;
     BYTE      tmCharSet;
     DWORD     ntmFlags;
-    UINT32    ntmSizeEM;
-    UINT32    ntmCellHeight;
-    UINT32    ntmAvgWidth;
-} NEWTEXTMETRIC32A, *LPNEWTEXTMETRIC32A;
+    UINT    ntmSizeEM;
+    UINT    ntmCellHeight;
+    UINT    ntmAvgWidth;
+} NEWTEXTMETRICA, *LPNEWTEXTMETRICA;
 
 typedef struct
 {
-    INT32     tmHeight;
-    INT32     tmAscent;
-    INT32     tmDescent;
-    INT32     tmInternalLeading;
-    INT32     tmExternalLeading;
-    INT32     tmAveCharWidth;
-    INT32     tmMaxCharWidth;
-    INT32     tmWeight;
-    INT32     tmOverhang;
-    INT32     tmDigitizedAspectX;
-    INT32     tmDigitizedAspectY;
+    INT     tmHeight;
+    INT     tmAscent;
+    INT     tmDescent;
+    INT     tmInternalLeading;
+    INT     tmExternalLeading;
+    INT     tmAveCharWidth;
+    INT     tmMaxCharWidth;
+    INT     tmWeight;
+    INT     tmOverhang;
+    INT     tmDigitizedAspectX;
+    INT     tmDigitizedAspectY;
     WCHAR     tmFirstChar;
     WCHAR     tmLastChar;
     WCHAR     tmDefaultChar;
@@ -995,10 +987,10 @@ typedef struct
     BYTE      tmPitchAndFamily;
     BYTE      tmCharSet;
     DWORD     ntmFlags;
-    UINT32    ntmSizeEM;
-    UINT32    ntmCellHeight;
-    UINT32    ntmAvgWidth;
-} NEWTEXTMETRIC32W, *LPNEWTEXTMETRIC32W;
+    UINT    ntmSizeEM;
+    UINT    ntmCellHeight;
+    UINT    ntmAvgWidth;
+} NEWTEXTMETRICW, *LPNEWTEXTMETRICW;
 
 DECL_WINELIB_TYPE_AW(NEWTEXTMETRIC)
 DECL_WINELIB_TYPE_AW(LPNEWTEXTMETRIC)
@@ -1011,30 +1003,30 @@ typedef struct
 
 typedef struct
 {
-    NEWTEXTMETRIC32A	ntmetm;
+    NEWTEXTMETRICA	ntmetm;
     FONTSIGNATURE       ntmeFontSignature;
-} NEWTEXTMETRICEX32A,*LPNEWTEXTMETRICEX32A;
+} NEWTEXTMETRICEXA,*LPNEWTEXTMETRICEXA;
 
 typedef struct
 {
-    NEWTEXTMETRIC32W	ntmetm;
+    NEWTEXTMETRICW	ntmetm;
     FONTSIGNATURE       ntmeFontSignature;
-} NEWTEXTMETRICEX32W,*LPNEWTEXTMETRICEX32W;
+} NEWTEXTMETRICEXW,*LPNEWTEXTMETRICEXW;
 
 DECL_WINELIB_TYPE_AW(NEWTEXTMETRICEX)
 DECL_WINELIB_TYPE_AW(LPNEWTEXTMETRICEX)
 
 
 typedef INT16 (CALLBACK *FONTENUMPROC16)(SEGPTR,SEGPTR,UINT16,LPARAM);
-typedef INT32 (CALLBACK *FONTENUMPROC32A)(LPENUMLOGFONT32A,LPNEWTEXTMETRIC32A,
-                                          UINT32,LPARAM);
-typedef INT32 (CALLBACK *FONTENUMPROC32W)(LPENUMLOGFONT32W,LPNEWTEXTMETRIC32W,
-                                          UINT32,LPARAM);
+typedef INT (CALLBACK *FONTENUMPROCA)(LPENUMLOGFONTA,LPNEWTEXTMETRICA,
+                                          UINT,LPARAM);
+typedef INT (CALLBACK *FONTENUMPROCW)(LPENUMLOGFONTW,LPNEWTEXTMETRICW,
+                                          UINT,LPARAM);
 DECL_WINELIB_TYPE_AW(FONTENUMPROC)
 
 typedef INT16 (CALLBACK *FONTENUMPROCEX16)(SEGPTR,SEGPTR,UINT16,LPARAM);
-typedef INT32 (CALLBACK *FONTENUMPROCEX32A)(LPENUMLOGFONTEX32A,LPNEWTEXTMETRICEX32A,UINT32,LPARAM);
-typedef INT32 (CALLBACK *FONTENUMPROCEX32W)(LPENUMLOGFONTEX32W,LPNEWTEXTMETRICEX32W,UINT32,LPARAM);
+typedef INT (CALLBACK *FONTENUMPROCEXA)(LPENUMLOGFONTEXA,LPNEWTEXTMETRICEXA,UINT,LPARAM);
+typedef INT (CALLBACK *FONTENUMPROCEXW)(LPENUMLOGFONTEXW,LPNEWTEXTMETRICEXW,UINT,LPARAM);
 DECL_WINELIB_TYPE_AW(FONTENUMPROCEX)
 
   /* tmPitchAndFamily bits */
@@ -1069,15 +1061,13 @@ typedef struct
 
 typedef struct
 {
-    UINT32	gmBlackBoxX;
-    UINT32	gmBlackBoxY;
-    POINT32	gmptGlyphOrigin;
+    UINT	gmBlackBoxX;
+    UINT	gmBlackBoxY;
+    POINT	gmptGlyphOrigin;
     INT16	gmCellIncX;
     INT16	gmCellIncY;
-} GLYPHMETRICS32, *LPGLYPHMETRICS32;
+} GLYPHMETRICS, *LPGLYPHMETRICS;
 
-DECL_WINELIB_TYPE(GLYPHMETRICS)
-DECL_WINELIB_TYPE(LPGLYPHMETRICS)
 
 #define GGO_METRICS         0
 #define GGO_BITMAP          1
@@ -1107,40 +1097,38 @@ typedef struct
 
 typedef struct
 {
-    INT32   abcA;
-    UINT32  abcB;
-    INT32   abcC;
-} ABC32, *LPABC32;
+    INT   abcA;
+    UINT  abcB;
+    INT   abcC;
+} ABC, *LPABC;
 
-DECL_WINELIB_TYPE(ABC)
-DECL_WINELIB_TYPE(LPABC)
 
   /* for GetCharacterPlacement () */
-typedef struct tagGCP_RESULTS32A
+typedef struct tagGCP_RESULTSA
 {
     DWORD  lStructSize;
     LPSTR  lpOutString;
-    UINT32 *lpOrder;
-    INT32  *lpDx;
-    INT32  *lpCaretPos;
+    UINT *lpOrder;
+    INT  *lpDx;
+    INT  *lpCaretPos;
     LPSTR  lpClass;
-    UINT32 *lpGlyphs;
-    UINT32 nGlyphs;
-    UINT32 nMaxFit;
-} GCP_RESULTS32A;
+    UINT *lpGlyphs;
+    UINT nGlyphs;
+    UINT nMaxFit;
+} GCP_RESULTSA;
 
-typedef struct tagGCP_RESULTS32W
+typedef struct tagGCP_RESULTSW
 {
     DWORD  lStructSize;
     LPWSTR lpOutString;
-    UINT32 *lpOrder;
-    INT32  *lpDx;
-    INT32  *lpCaretPos;
+    UINT *lpOrder;
+    INT  *lpDx;
+    INT  *lpCaretPos;
     LPWSTR lpClass;
-    UINT32 *lpGlyphs;
-    UINT32 nGlyphs;
-    UINT32 nMaxFit;
-} GCP_RESULTS32W;
+    UINT *lpGlyphs;
+    UINT nGlyphs;
+    UINT nMaxFit;
+} GCP_RESULTSW;
 
 DECL_WINELIB_TYPE_AW(GCP_RESULTS)
 
@@ -1187,13 +1175,11 @@ typedef struct
 
 typedef struct
 {
-    UINT32   lopnStyle; 
-    POINT32  lopnWidth WINE_PACKED;
+    UINT   lopnStyle; 
+    POINT  lopnWidth WINE_PACKED;
     COLORREF lopnColor WINE_PACKED;
-} LOGPEN32, *LPLOGPEN32;
+} LOGPEN, *LPLOGPEN;
 
-DECL_WINELIB_TYPE(LOGPEN)
-DECL_WINELIB_TYPE(LPLOGPEN)
 
 typedef struct tagEXTLOGPEN
 {
@@ -1559,10 +1545,10 @@ typedef struct
 
 typedef struct 
 {
-	BITMAP32		dsBm;
+	BITMAP		dsBm;
 	BITMAPINFOHEADER	dsBmih;
 	DWORD			dsBitfields[3];
-	HANDLE32		dshSection;
+	HANDLE		dshSection;
 	DWORD			dsOffset;
 } DIBSECTION,*LPDIBSECTION;
 
@@ -1620,11 +1606,9 @@ typedef struct
 
 typedef struct
 {
-    HGDIOBJ32 objectHandle[1];
-} HANDLETABLE32, *LPHANDLETABLE32;
+    HGDIOBJ objectHandle[1];
+} HANDLETABLE, *LPHANDLETABLE;
 
-DECL_WINELIB_TYPE(HANDLETABLE)
-DECL_WINELIB_TYPE(LPHANDLETABLE)
 
 /* Clipboard metafile picture structure */
 typedef struct
@@ -1637,14 +1621,12 @@ typedef struct
 
 typedef struct
 {
-    INT32        mm;
-    INT32        xExt;
-    INT32        yExt;
-    HMETAFILE32  hMF;
-} METAFILEPICT32, *LPMETAFILEPICT32;
+    INT        mm;
+    INT        xExt;
+    INT        yExt;
+    HMETAFILE  hMF;
+} METAFILEPICT, *LPMETAFILEPICT;
 
-DECL_WINELIB_TYPE(METAFILEPICT)
-DECL_WINELIB_TYPE(LPMETAFILEPICT)
 
 /* Metafile functions */
 #define META_SETBKCOLOR              0x0201
@@ -1729,9 +1711,8 @@ DECL_WINELIB_TYPE(LPMETAFILEPICT)
 
 typedef INT16 (CALLBACK *MFENUMPROC16)(HDC16,HANDLETABLE16*,METARECORD*,
                                        INT16,LPARAM);
-typedef INT32 (CALLBACK *MFENUMPROC32)(HDC32,HANDLETABLE32*,METARECORD*,
-                                       INT32,LPARAM);
-DECL_WINELIB_TYPE(MFENUMPROC)
+typedef INT (CALLBACK *MFENUMPROC)(HDC,HANDLETABLE*,METARECORD*,
+                                       INT,LPARAM);
 
 /* enhanced metafile structures and functions */
 
@@ -1740,8 +1721,8 @@ DECL_WINELIB_TYPE(MFENUMPROC)
 typedef struct {
     DWORD iType; 
     DWORD nSize; 
-    RECT32 rclBounds; 
-    RECT32 rclFrame; 
+    RECT rclBounds; 
+    RECT rclFrame; 
     DWORD dSignature; 
     DWORD nVersion; 
     DWORD nBytes; 
@@ -1751,8 +1732,8 @@ typedef struct {
     DWORD nDescription; 
     DWORD offDescription; 
     DWORD nPalEntries; 
-    SIZE32 szlDevice; 
-    SIZE32 szlMillimeters;
+    SIZE szlDevice; 
+    SIZE szlMillimeters;
     DWORD cbPixelFormat;
     DWORD offPixelFormat;
     DWORD bOpenGL;
@@ -1764,8 +1745,8 @@ typedef struct {
     DWORD dParm[1]; 
 } ENHMETARECORD, *LPENHMETARECORD; 
 
-typedef INT32 (CALLBACK *ENHMFENUMPROC32)(HDC32, LPHANDLETABLE32, 
-					  LPENHMETARECORD, INT32, LPVOID);
+typedef INT (CALLBACK *ENHMFENUMPROC)(HDC, LPHANDLETABLE, 
+					  LPENHMETARECORD, INT, LPVOID);
 
 #define EMR_HEADER	1
 #define EMR_POLYBEZIER	2
@@ -1940,7 +1921,7 @@ typedef struct
     DWORD  dmDitherType;
     DWORD  dmReserved1;
     DWORD  dmReserved2;
-} DEVMODE32A, *LPDEVMODE32A;
+} DEVMODEA, *LPDEVMODEA;
 
 typedef struct
 {
@@ -1976,7 +1957,7 @@ typedef struct
     DWORD  dmDitherType;
     DWORD  dmReserved1;
     DWORD  dmReserved2;
-} DEVMODE32W, *LPDEVMODE32W;
+} DEVMODEW, *LPDEVMODEW;
 
 DECL_WINELIB_TYPE_AW(DEVMODE)
 DECL_WINELIB_TYPE_AW(LPDEVMODE)
@@ -1990,21 +1971,21 @@ typedef struct
 
 typedef struct 
 {
-    INT32    cbSize;
+    INT    cbSize;
     LPCSTR   lpszDocName;
     LPCSTR   lpszOutput;
     LPCSTR   lpszDatatype;
     DWORD    fwType;
-} DOCINFO32A, *LPDOCINFO32A;
+} DOCINFOA, *LPDOCINFOA;
 
 typedef struct 
 {
-    INT32    cbSize;
+    INT    cbSize;
     LPCWSTR  lpszDocName;
     LPCWSTR  lpszOutput;
     LPCWSTR  lpszDatatype;
     DWORD    fwType;
-} DOCINFO32W, *LPDOCINFO32W;
+} DOCINFOW, *LPDOCINFOW;
 
 DECL_WINELIB_TYPE_AW(DOCINFO)
 DECL_WINELIB_TYPE_AW(LPDOCINFO)
@@ -2028,40 +2009,40 @@ typedef struct {
 } NONCLIENTMETRICS16,*LPNONCLIENTMETRICS16;
 
 typedef struct {
-	UINT32		cbSize;
-	INT32		iBorderWidth;
-	INT32		iScrollWidth;
-	INT32		iScrollHeight;
-	INT32		iCaptionWidth;
-	INT32		iCaptionHeight;
-	LOGFONT32A	lfCaptionFont;
-	INT32		iSmCaptionWidth;
-	INT32		iSmCaptionHeight;
-	LOGFONT32A	lfSmCaptionFont;
-	INT32		iMenuWidth;
-	INT32		iMenuHeight;
-	LOGFONT32A	lfMenuFont;
-	LOGFONT32A	lfStatusFont;
-	LOGFONT32A	lfMessageFont;
-} NONCLIENTMETRICS32A,*LPNONCLIENTMETRICS32A;
+	UINT		cbSize;
+	INT		iBorderWidth;
+	INT		iScrollWidth;
+	INT		iScrollHeight;
+	INT		iCaptionWidth;
+	INT		iCaptionHeight;
+	LOGFONTA	lfCaptionFont;
+	INT		iSmCaptionWidth;
+	INT		iSmCaptionHeight;
+	LOGFONTA	lfSmCaptionFont;
+	INT		iMenuWidth;
+	INT		iMenuHeight;
+	LOGFONTA	lfMenuFont;
+	LOGFONTA	lfStatusFont;
+	LOGFONTA	lfMessageFont;
+} NONCLIENTMETRICSA,*LPNONCLIENTMETRICSA;
 
 typedef struct {
-	UINT32		cbSize;
-	INT32		iBorderWidth;
-	INT32		iScrollWidth;
-	INT32		iScrollHeight;
-	INT32		iCaptionWidth;
-	INT32		iCaptionHeight;
-	LOGFONT32W	lfCaptionFont;
-	INT32		iSmCaptionWidth;
-	INT32		iSmCaptionHeight;
-	LOGFONT32W	lfSmCaptionFont;
-	INT32		iMenuWidth;
-	INT32		iMenuHeight;
-	LOGFONT32W	lfMenuFont;
-	LOGFONT32W	lfStatusFont;
-	LOGFONT32W	lfMessageFont;
-} NONCLIENTMETRICS32W,*LPNONCLIENTMETRICS32W;
+	UINT		cbSize;
+	INT		iBorderWidth;
+	INT		iScrollWidth;
+	INT		iScrollHeight;
+	INT		iCaptionWidth;
+	INT		iCaptionHeight;
+	LOGFONTW	lfCaptionFont;
+	INT		iSmCaptionWidth;
+	INT		iSmCaptionHeight;
+	LOGFONTW	lfSmCaptionFont;
+	INT		iMenuWidth;
+	INT		iMenuHeight;
+	LOGFONTW	lfMenuFont;
+	LOGFONTW	lfStatusFont;
+	LOGFONTW	lfMessageFont;
+} NONCLIENTMETRICSW,*LPNONCLIENTMETRICSW;
 
 DECL_WINELIB_TYPE_AW(NONCLIENTMETRICS)
 DECL_WINELIB_TYPE_AW(LPNONCLIENTMETRICS)
@@ -2079,7 +2060,7 @@ typedef struct _RGNDATAHEADER {
     DWORD	iType;
     DWORD	nCount;
     DWORD	nRgnSize;
-    RECT32	rcBound;
+    RECT	rcBound;
 } RGNDATAHEADER,*LPRGNDATAHEADER;
 
 typedef struct _RGNDATA {
@@ -2088,769 +2069,601 @@ typedef struct _RGNDATA {
 } RGNDATA,*PRGNDATA,*LPRGNDATA;
 
 typedef BOOL16 (CALLBACK* ABORTPROC16)(HDC16, INT16);
-typedef BOOL32 (CALLBACK* ABORTPROC32)(HDC32, INT32);
-DECL_WINELIB_TYPE(ABORTPROC)
+typedef BOOL (CALLBACK* ABORTPROC)(HDC, INT);
 
 #pragma pack(4)
 
 /* Declarations for functions that exist only in Win16 */
 
-VOID        WINAPI Death(HDC16);
-VOID        WINAPI Resurrection(HDC16,WORD,WORD,WORD,WORD,WORD,WORD);
+VOID        WINAPI Death16(HDC16);
+VOID        WINAPI Resurrection16(HDC16,WORD,WORD,WORD,WORD,WORD,WORD);
 
 /* Declarations for functions that exist only in Win32 */
 
-BOOL32      WINAPI AngleArc(HDC32, INT32, INT32, DWORD, FLOAT, FLOAT);
-BOOL32      WINAPI ArcTo(HDC32, INT32, INT32, INT32, INT32, INT32, INT32, INT32, INT32); 
-HENHMETAFILE32 WINAPI CloseEnhMetaFile(HDC32);
-HBRUSH32    WINAPI CreateDIBPatternBrushPt(const void*,UINT32);
-HDC32       WINAPI CreateEnhMetaFile32A(HDC32,LPCSTR,const RECT32*,LPCSTR);
-HDC32       WINAPI CreateEnhMetaFile32W(HDC32,LPCWSTR,const RECT32*,LPCWSTR);
+BOOL      WINAPI AngleArc(HDC, INT, INT, DWORD, FLOAT, FLOAT);
+BOOL      WINAPI ArcTo(HDC, INT, INT, INT, INT, INT, INT, INT, INT); 
+HENHMETAFILE WINAPI CloseEnhMetaFile(HDC);
+HBRUSH    WINAPI CreateDIBPatternBrushPt(const void*,UINT);
+HDC       WINAPI CreateEnhMetaFileA(HDC,LPCSTR,const RECT*,LPCSTR);
+HDC       WINAPI CreateEnhMetaFileW(HDC,LPCWSTR,const RECT*,LPCWSTR);
 #define     CreateEnhMetaFile WINELIB_NAME_AW(CreateEnhMetaFile)
-INT32       WINAPI DrawEscape(HDC32,INT32,INT32,LPCSTR);
-INT16       WINAPI ExcludeVisRect(HDC16,INT16,INT16,INT16,INT16);
-BOOL16      WINAPI FastWindowFrame(HDC16,const RECT16*,INT16,INT16,DWORD);
-UINT16      WINAPI GDIRealizePalette(HDC16);
-HPALETTE16  WINAPI GDISelectPalette(HDC16,HPALETTE16,WORD);
-BOOL32      WINAPI GdiComment(HDC32,UINT32,const BYTE *);
-DWORD       WINAPI GetBitmapDimension(HBITMAP16);
-DWORD       WINAPI GetBrushOrg(HDC16);
-BOOL32      WINAPI GetCharABCWidthsFloat32A(HDC32,UINT32,UINT32,LPABCFLOAT);
-BOOL32      WINAPI GetCharABCWidthsFloat32W(HDC32,UINT32,UINT32,LPABCFLOAT);
+INT       WINAPI DrawEscape(HDC,INT,INT,LPCSTR);
+INT16       WINAPI ExcludeVisRect16(HDC16,INT16,INT16,INT16,INT16);
+BOOL16      WINAPI FastWindowFrame16(HDC16,const RECT16*,INT16,INT16,DWORD);
+UINT16      WINAPI GDIRealizePalette16(HDC16);
+HPALETTE16  WINAPI GDISelectPalette16(HDC16,HPALETTE16,WORD);
+BOOL      WINAPI GdiComment(HDC,UINT,const BYTE *);
+DWORD       WINAPI GetBitmapDimension16(HBITMAP16);
+DWORD       WINAPI GetBrushOrg16(HDC16);
+BOOL      WINAPI GetCharABCWidthsFloatA(HDC,UINT,UINT,LPABCFLOAT);
+BOOL      WINAPI GetCharABCWidthsFloatW(HDC,UINT,UINT,LPABCFLOAT);
 #define     GetCharABCWidthsFloat WINELIB_NAME_AW(GetCharABCWidthsFloat)
-BOOL32      WINAPI GetCharWidthFloat32A(HDC32,UINT32,UINT32,PFLOAT);
-BOOL32      WINAPI GetCharWidthFloat32W(HDC32,UINT32,UINT32,PFLOAT);
+BOOL      WINAPI GetCharWidthFloatA(HDC,UINT,UINT,PFLOAT);
+BOOL      WINAPI GetCharWidthFloatW(HDC,UINT,UINT,PFLOAT);
 #define     GetCharWidthFloat WINELIB_NAME_AW(GetCharWidthFloat)
-BOOL32      WINAPI GetColorAdjustment(HDC32, LPCOLORADJUSTMENT);
-HFONT16     WINAPI GetCurLogFont(HDC16);
-DWORD       WINAPI GetCurrentPosition(HDC16);
+BOOL      WINAPI GetColorAdjustment(HDC, LPCOLORADJUSTMENT);
+HFONT16     WINAPI GetCurLogFont16(HDC16);
+DWORD       WINAPI GetCurrentPosition16(HDC16);
 DWORD       WINAPI GetDCHook(HDC16,FARPROC16*);
-DWORD       WINAPI GetDCOrg(HDC16);
-HDC16       WINAPI GetDCState(HDC16);
-INT16       WINAPI GetEnvironment(LPCSTR,LPDEVMODE16,UINT16);
-HGLOBAL16   WINAPI GetMetaFileBits(HMETAFILE16);
-BOOL32      WINAPI GetMiterLimit(HDC32, PFLOAT);
-DWORD       WINAPI GetTextExtent(HDC16,LPCSTR,INT16);
-DWORD       WINAPI GetViewportExt(HDC16);
-DWORD       WINAPI GetViewportOrg(HDC16);
-DWORD       WINAPI GetWindowExt(HDC16);
-DWORD       WINAPI GetWindowOrg(HDC16);
-HRGN16      WINAPI InquireVisRgn(HDC16);
-INT16       WINAPI IntersectVisRect(HDC16,INT16,INT16,INT16,INT16);
-BOOL16      WINAPI IsDCCurrentPalette(HDC16);
-BOOL16      WINAPI IsGDIObject(HGDIOBJ16);
-BOOL16      WINAPI IsValidMetaFile(HMETAFILE16);
-BOOL32      WINAPI MaskBlt(HDC32,INT32,INT32,INT32,INT32,HDC32,INT32,INT32,HBITMAP32,INT32,INT32,DWORD);
-DWORD       WINAPI MoveTo(HDC16,INT16,INT16);
-DWORD       WINAPI OffsetViewportOrg(HDC16,INT16,INT16);
-INT16       WINAPI OffsetVisRgn(HDC16,INT16,INT16);
-DWORD       WINAPI OffsetWindowOrg(HDC16,INT16,INT16);
-BOOL32      WINAPI PlgBlt32(HDC32,const POINT32*,HDC32,INT32,INT32,INT32,INT32,HBITMAP32,INT32,INT32);
-BOOL32      WINAPI PolyDraw32(HDC32,const POINT32*,const BYTE*,DWORD);
-UINT16      WINAPI RealizeDefaultPalette(HDC16);
-INT16       WINAPI RestoreVisRgn(HDC16);
-HRGN16      WINAPI SaveVisRgn(HDC16);
-DWORD       WINAPI ScaleViewportExt(HDC16,INT16,INT16,INT16,INT16);
-DWORD       WINAPI ScaleWindowExt(HDC16,INT16,INT16,INT16,INT16);
-INT16       WINAPI SelectVisRgn(HDC16,HRGN16);
-DWORD       WINAPI SetBitmapDimension(HBITMAP16,INT16,INT16);
-DWORD       WINAPI SetBrushOrg(HDC16,INT16,INT16);
-BOOL32      WINAPI SetColorAdjustment32(HDC32,const COLORADJUSTMENT*);
+DWORD       WINAPI GetDCOrg16(HDC16);
+HDC16       WINAPI GetDCState16(HDC16);
+INT16       WINAPI GetEnvironment16(LPCSTR,LPDEVMODE16,UINT16);
+HGLOBAL16   WINAPI GetMetaFileBits16(HMETAFILE16);
+BOOL      WINAPI GetMiterLimit(HDC, PFLOAT);
+DWORD       WINAPI GetTextExtent16(HDC16,LPCSTR,INT16);
+DWORD       WINAPI GetViewportExt16(HDC16);
+DWORD       WINAPI GetViewportOrg16(HDC16);
+DWORD       WINAPI GetWindowExt16(HDC16);
+DWORD       WINAPI GetWindowOrg16(HDC16);
+HRGN16      WINAPI InquireVisRgn16(HDC16);
+INT16       WINAPI IntersectVisRect16(HDC16,INT16,INT16,INT16,INT16);
+BOOL16      WINAPI IsDCCurrentPalette16(HDC16);
+BOOL16      WINAPI IsGDIObject16(HGDIOBJ16);
+BOOL16      WINAPI IsValidMetaFile16(HMETAFILE16);
+BOOL      WINAPI MaskBlt(HDC,INT,INT,INT,INT,HDC,INT,INT,HBITMAP,INT,INT,DWORD);
+DWORD       WINAPI MoveTo16(HDC16,INT16,INT16);
+DWORD       WINAPI OffsetViewportOrg16(HDC16,INT16,INT16);
+INT16       WINAPI OffsetVisRgn16(HDC16,INT16,INT16);
+DWORD       WINAPI OffsetWindowOrg16(HDC16,INT16,INT16);
+BOOL      WINAPI PlgBlt(HDC,const POINT*,HDC,INT,INT,INT,INT,HBITMAP,INT,INT);
+BOOL      WINAPI PolyDraw(HDC,const POINT*,const BYTE*,DWORD);
+UINT16      WINAPI RealizeDefaultPalette16(HDC16);
+INT16       WINAPI RestoreVisRgn16(HDC16);
+HRGN16      WINAPI SaveVisRgn16(HDC16);
+DWORD       WINAPI ScaleViewportExt16(HDC16,INT16,INT16,INT16,INT16);
+DWORD       WINAPI ScaleWindowExt16(HDC16,INT16,INT16,INT16,INT16);
+INT16       WINAPI SelectVisRgn16(HDC16,HRGN16);
+DWORD       WINAPI SetBitmapDimension16(HBITMAP16,INT16,INT16);
+DWORD       WINAPI SetBrushOrg16(HDC16,INT16,INT16);
+BOOL      WINAPI SetColorAdjustment(HDC,const COLORADJUSTMENT*);
 BOOL16      WINAPI SetDCHook(HDC16,FARPROC16,DWORD);
-DWORD       WINAPI SetDCOrg(HDC16,INT16,INT16);
-VOID        WINAPI SetDCState(HDC16,HDC16);
-INT16       WINAPI SetEnvironment(LPCSTR,LPDEVMODE16,UINT16);
-WORD        WINAPI SetHookFlags(HDC16,WORD);
-HMETAFILE16 WINAPI SetMetaFileBits(HGLOBAL16);
-BOOL32      WINAPI SetMiterLimit(HDC32, FLOAT, PFLOAT);
-DWORD       WINAPI SetViewportExt(HDC16,INT16,INT16);
-DWORD       WINAPI SetViewportOrg(HDC16,INT16,INT16);
-DWORD       WINAPI SetWindowExt(HDC16,INT16,INT16);
-DWORD       WINAPI SetWindowOrg(HDC16,INT16,INT16);
-BOOL32      WINAPI CombineTransform(LPXFORM,const XFORM *,const XFORM *);
-HENHMETAFILE32 WINAPI CopyEnhMetaFile32A(HENHMETAFILE32,LPCSTR);
-HENHMETAFILE32 WINAPI CopyEnhMetaFile32W(HENHMETAFILE32,LPCWSTR);
+DWORD       WINAPI SetDCOrg16(HDC16,INT16,INT16);
+VOID        WINAPI SetDCState16(HDC16,HDC16);
+INT16       WINAPI SetEnvironment16(LPCSTR,LPDEVMODE16,UINT16);
+WORD        WINAPI SetHookFlags16(HDC16,WORD);
+HMETAFILE16 WINAPI SetMetaFileBits16(HGLOBAL16);
+BOOL      WINAPI SetMiterLimit(HDC, FLOAT, PFLOAT);
+DWORD       WINAPI SetViewportExt16(HDC16,INT16,INT16);
+DWORD       WINAPI SetViewportOrg16(HDC16,INT16,INT16);
+DWORD       WINAPI SetWindowExt16(HDC16,INT16,INT16);
+DWORD       WINAPI SetWindowOrg16(HDC16,INT16,INT16);
+BOOL      WINAPI CombineTransform(LPXFORM,const XFORM *,const XFORM *);
+HENHMETAFILE WINAPI CopyEnhMetaFileA(HENHMETAFILE,LPCSTR);
+HENHMETAFILE WINAPI CopyEnhMetaFileW(HENHMETAFILE,LPCWSTR);
 #define     CopyEnhMetaFile WINELIB_NAME_AW(CopyEnhMetaFile)
-HPALETTE32  WINAPI CreateHalftonePalette(HDC32);
-BOOL32      WINAPI DeleteEnhMetaFile(HENHMETAFILE32);
-INT32       WINAPI ExtSelectClipRgn(HDC32,HRGN32,INT32);
-HRGN32      WINAPI ExtCreateRegion(const XFORM*,DWORD,const RGNDATA*);
-INT32       WINAPI ExtEscape(HDC32,INT32,INT32,LPCSTR,INT32,LPSTR);
-BOOL32      WINAPI FixBrushOrgEx(HDC32,INT32,INT32,LPPOINT32);
-HANDLE32    WINAPI GetCurrentObject(HDC32,UINT32);
-BOOL32      WINAPI GetDCOrgEx(HDC32,LPPOINT32);
-HENHMETAFILE32 WINAPI GetEnhMetaFile32A(LPCSTR);
-HENHMETAFILE32 WINAPI GetEnhMetaFile32W(LPCWSTR);
+HPALETTE  WINAPI CreateHalftonePalette(HDC);
+BOOL      WINAPI DeleteEnhMetaFile(HENHMETAFILE);
+INT       WINAPI ExtSelectClipRgn(HDC,HRGN,INT);
+HRGN      WINAPI ExtCreateRegion(const XFORM*,DWORD,const RGNDATA*);
+INT       WINAPI ExtEscape(HDC,INT,INT,LPCSTR,INT,LPSTR);
+BOOL      WINAPI FixBrushOrgEx(HDC,INT,INT,LPPOINT);
+HANDLE    WINAPI GetCurrentObject(HDC,UINT);
+BOOL      WINAPI GetDCOrgEx(HDC,LPPOINT);
+HENHMETAFILE WINAPI GetEnhMetaFileA(LPCSTR);
+HENHMETAFILE WINAPI GetEnhMetaFileW(LPCWSTR);
 #define     GetEnhMetaFile WINELIB_NAME_AW(GetEnhMetaFile)
-UINT32      WINAPI GetEnhMetaFileBits(HENHMETAFILE32,UINT32,LPBYTE);
-UINT32      WINAPI GetEnhMetaFileHeader(HENHMETAFILE32,UINT32,LPENHMETAHEADER);
-UINT32      WINAPI GetEnhMetaFilePaletteEntries(HENHMETAFILE32,UINT32,LPPALETTEENTRY);
-INT32       WINAPI GetGraphicsMode(HDC32);
-UINT32      WINAPI GetMetaFileBitsEx(HMETAFILE32,UINT32,LPVOID);
-DWORD       WINAPI GetObjectType(HANDLE32);
-UINT32      WINAPI GetTextCharsetInfo(HDC32,LPFONTSIGNATURE,DWORD);
-BOOL32      WINAPI GetTextExtentExPoint32A(HDC32,LPCSTR,INT32,INT32,
-                                           LPINT32,LPINT32,LPSIZE32);
-BOOL32      WINAPI GetTextExtentExPoint32W(HDC32,LPCWSTR,INT32,INT32,
-                                           LPINT32,LPINT32,LPSIZE32);
+UINT      WINAPI GetEnhMetaFileBits(HENHMETAFILE,UINT,LPBYTE);
+UINT      WINAPI GetEnhMetaFileHeader(HENHMETAFILE,UINT,LPENHMETAHEADER);
+UINT      WINAPI GetEnhMetaFilePaletteEntries(HENHMETAFILE,UINT,LPPALETTEENTRY);
+INT       WINAPI GetGraphicsMode(HDC);
+UINT      WINAPI GetMetaFileBitsEx(HMETAFILE,UINT,LPVOID);
+DWORD       WINAPI GetObjectType(HANDLE);
+UINT      WINAPI GetTextCharsetInfo(HDC,LPFONTSIGNATURE,DWORD);
+BOOL      WINAPI GetTextExtentExPointA(HDC,LPCSTR,INT,INT,
+                                           LPINT,LPINT,LPSIZE);
+BOOL      WINAPI GetTextExtentExPointW(HDC,LPCWSTR,INT,INT,
+                                           LPINT,LPINT,LPSIZE);
 #define     GetTextExtentExPoint WINELIB_NAME_AW(GetTextExtentExPoint)
-BOOL32      WINAPI GetWorldTransform(HDC32,LPXFORM);
-BOOL32      WINAPI ModifyWorldTransform(HDC32,const XFORM *, DWORD);
-BOOL32      WINAPI PlayEnhMetaFile(HDC32,HENHMETAFILE32,const RECT32*);
-BOOL32      WINAPI PlayEnhMetaFileRecord(HDC32,LPHANDLETABLE32,const ENHMETARECORD*,UINT32);
-BOOL32      WINAPI PolyPolyline(HDC32,const POINT32*,const DWORD*,DWORD);
-BOOL32      WINAPI SetBrushOrgEx(HDC32,INT32,INT32,LPPOINT32);
-HENHMETAFILE32 WINAPI SetEnhMetaFileBits(UINT32,const BYTE *);
-INT32       WINAPI SetGraphicsMode(HDC32,INT32);
-HMETAFILE32 WINAPI SetMetaFileBitsEx(UINT32,const BYTE*);
-BOOL32      WINAPI SetWorldTransform(HDC32,const XFORM*);
-BOOL32      WINAPI TranslateCharsetInfo(LPDWORD,LPCHARSETINFO,DWORD);
+BOOL      WINAPI GetWorldTransform(HDC,LPXFORM);
+BOOL      WINAPI ModifyWorldTransform(HDC,const XFORM *, DWORD);
+BOOL      WINAPI PlayEnhMetaFile(HDC,HENHMETAFILE,const RECT*);
+BOOL      WINAPI PlayEnhMetaFileRecord(HDC,LPHANDLETABLE,const ENHMETARECORD*,UINT);
+BOOL      WINAPI PolyPolyline(HDC,const POINT*,const DWORD*,DWORD);
+BOOL      WINAPI SetBrushOrgEx(HDC,INT,INT,LPPOINT);
+HENHMETAFILE WINAPI SetEnhMetaFileBits(UINT,const BYTE *);
+INT       WINAPI SetGraphicsMode(HDC,INT);
+HMETAFILE WINAPI SetMetaFileBitsEx(UINT,const BYTE*);
+BOOL      WINAPI SetWorldTransform(HDC,const XFORM*);
+BOOL      WINAPI TranslateCharsetInfo(LPDWORD,LPCHARSETINFO,DWORD);
 
 /* Declarations for functions that change between Win16 and Win32 */
 
 INT16       WINAPI AbortDoc16(HDC16);
-INT32       WINAPI AbortDoc32(HDC32);
-#define     AbortDoc WINELIB_NAME(AbortDoc)
+INT       WINAPI AbortDoc(HDC);
 BOOL16      WINAPI AbortPath16(HDC16);
-BOOL32      WINAPI AbortPath32(HDC32);
-#define     AbortPath WINELIB_NAME(AbortPath)
+BOOL      WINAPI AbortPath(HDC);
 INT16       WINAPI AddFontResource16(LPCSTR);
-INT32       WINAPI AddFontResource32A(LPCSTR);
-INT32       WINAPI AddFontResource32W(LPCWSTR);
+INT       WINAPI AddFontResourceA(LPCSTR);
+INT       WINAPI AddFontResourceW(LPCWSTR);
 #define     AddFontResource WINELIB_NAME_AW(AddFontResource)
 void        WINAPI AnimatePalette16(HPALETTE16,UINT16,UINT16,const PALETTEENTRY*);
-BOOL32      WINAPI AnimatePalette32(HPALETTE32,UINT32,UINT32,const PALETTEENTRY*);
-#define     AnimatePalette WINELIB_NAME(AnimatePalette)
+BOOL      WINAPI AnimatePalette(HPALETTE,UINT,UINT,const PALETTEENTRY*);
 BOOL16      WINAPI Arc16(HDC16,INT16,INT16,INT16,INT16,INT16,INT16,INT16,INT16);
-BOOL32      WINAPI Arc32(HDC32,INT32,INT32,INT32,INT32,INT32,INT32,INT32,INT32);
-#define     Arc WINELIB_NAME(Arc)
+BOOL      WINAPI Arc(HDC,INT,INT,INT,INT,INT,INT,INT,INT);
 BOOL16      WINAPI BeginPath16(HDC16);
-BOOL32      WINAPI BeginPath32(HDC32);
-#define     BeginPath WINELIB_NAME(BeginPath)
+BOOL      WINAPI BeginPath(HDC);
 BOOL16      WINAPI BitBlt16(HDC16,INT16,INT16,INT16,INT16,HDC16,INT16,INT16,DWORD);
-BOOL32      WINAPI BitBlt32(HDC32,INT32,INT32,INT32,INT32,HDC32,INT32,INT32,DWORD);
-#define     BitBlt WINELIB_NAME(BitBlt)
-INT32       WINAPI ChoosePixelFormat(HDC32,const PIXELFORMATDESCRIPTOR*);
+BOOL      WINAPI BitBlt(HDC,INT,INT,INT,INT,HDC,INT,INT,DWORD);
+INT       WINAPI ChoosePixelFormat(HDC,const PIXELFORMATDESCRIPTOR*);
 BOOL16      WINAPI Chord16(HDC16,INT16,INT16,INT16,INT16,INT16,INT16,INT16,INT16);
-BOOL32      WINAPI Chord32(HDC32,INT32,INT32,INT32,INT32,INT32,INT32,INT32,INT32);
-#define     Chord WINELIB_NAME(Chord)
+BOOL      WINAPI Chord(HDC,INT,INT,INT,INT,INT,INT,INT,INT);
 BOOL16      WINAPI CloseFigure16(HDC16);
-BOOL32      WINAPI CloseFigure32(HDC32);
-#define     CloseFigure WINELIB_NAME(CloseFigure)
+BOOL      WINAPI CloseFigure(HDC);
 HMETAFILE16 WINAPI CloseMetaFile16(HDC16);
-HMETAFILE32 WINAPI CloseMetaFile32(HDC32);
-#define     CloseMetaFile WINELIB_NAME(CloseMetaFile)
+HMETAFILE WINAPI CloseMetaFile(HDC);
 INT16       WINAPI CombineRgn16(HRGN16,HRGN16,HRGN16,INT16);
-INT32       WINAPI CombineRgn32(HRGN32,HRGN32,HRGN32,INT32);
-#define     CombineRgn WINELIB_NAME(CombineRgn)
+INT       WINAPI CombineRgn(HRGN,HRGN,HRGN,INT);
 HMETAFILE16 WINAPI CopyMetaFile16(HMETAFILE16,LPCSTR);
-HMETAFILE32 WINAPI CopyMetaFile32A(HMETAFILE32,LPCSTR);
-HMETAFILE32 WINAPI CopyMetaFile32W(HMETAFILE32,LPCWSTR);
+HMETAFILE WINAPI CopyMetaFileA(HMETAFILE,LPCSTR);
+HMETAFILE WINAPI CopyMetaFileW(HMETAFILE,LPCWSTR);
 #define     CopyMetaFile WINELIB_NAME_AW(CopyMetaFile)
 HBITMAP16   WINAPI CreateBitmap16(INT16,INT16,UINT16,UINT16,LPCVOID);
-HBITMAP32   WINAPI CreateBitmap32(INT32,INT32,UINT32,UINT32,LPCVOID);
-#define     CreateBitmap WINELIB_NAME(CreateBitmap)
+HBITMAP   WINAPI CreateBitmap(INT,INT,UINT,UINT,LPCVOID);
 HBITMAP16   WINAPI CreateBitmapIndirect16(const BITMAP16*);
-HBITMAP32   WINAPI CreateBitmapIndirect32(const BITMAP32*);
-#define     CreateBitmapIndirect WINELIB_NAME(CreateBitmapIndirect)
+HBITMAP   WINAPI CreateBitmapIndirect(const BITMAP*);
 HBRUSH16    WINAPI CreateBrushIndirect16(const LOGBRUSH16*);
-HBRUSH32    WINAPI CreateBrushIndirect32(const LOGBRUSH32*);
-#define     CreateBrushIndirect WINELIB_NAME(CreateBrushIndirect)
+HBRUSH    WINAPI CreateBrushIndirect(const LOGBRUSH*);
 HBITMAP16   WINAPI CreateCompatibleBitmap16(HDC16,INT16,INT16);
-HBITMAP32   WINAPI CreateCompatibleBitmap32(HDC32,INT32,INT32);
-#define     CreateCompatibleBitmap WINELIB_NAME(CreateCompatibleBitmap)
+HBITMAP   WINAPI CreateCompatibleBitmap(HDC,INT,INT);
 HDC16       WINAPI CreateCompatibleDC16(HDC16);
-HDC32       WINAPI CreateCompatibleDC32(HDC32);
-#define     CreateCompatibleDC WINELIB_NAME(CreateCompatibleDC)
+HDC       WINAPI CreateCompatibleDC(HDC);
 HDC16       WINAPI CreateDC16(LPCSTR,LPCSTR,LPCSTR,const DEVMODE16*);
-HDC32       WINAPI CreateDC32A(LPCSTR,LPCSTR,LPCSTR,const DEVMODE32A*);
-HDC32       WINAPI CreateDC32W(LPCWSTR,LPCWSTR,LPCWSTR,const DEVMODE32W*);
+HDC       WINAPI CreateDCA(LPCSTR,LPCSTR,LPCSTR,const DEVMODEA*);
+HDC       WINAPI CreateDCW(LPCWSTR,LPCWSTR,LPCWSTR,const DEVMODEW*);
 #define     CreateDC WINELIB_NAME_AW(CreateDC)
 HBITMAP16   WINAPI CreateDIBitmap16(HDC16,const BITMAPINFOHEADER*,DWORD,
                                     LPCVOID,const BITMAPINFO*,UINT16);
-HBITMAP32   WINAPI CreateDIBitmap32(HDC32,const BITMAPINFOHEADER*,DWORD,
-                                    LPCVOID,const BITMAPINFO*,UINT32);
-#define     CreateDIBitmap WINELIB_NAME(CreateDIBitmap)
+HBITMAP   WINAPI CreateDIBitmap(HDC,const BITMAPINFOHEADER*,DWORD,
+                                    LPCVOID,const BITMAPINFO*,UINT);
 HBRUSH16    WINAPI CreateDIBPatternBrush16(HGLOBAL16,UINT16);
-HBRUSH32    WINAPI CreateDIBPatternBrush32(HGLOBAL32,UINT32);
-#define     CreateDIBPatternBrush WINELIB_NAME(CreateDIBPatternBrush)
+HBRUSH    WINAPI CreateDIBPatternBrush(HGLOBAL,UINT);
 HBITMAP16   WINAPI CreateDIBSection16 (HDC16, BITMAPINFO *, UINT16,
-				       SEGPTR *, HANDLE32, DWORD offset);
-HBITMAP32   WINAPI CreateDIBSection32 (HDC32, BITMAPINFO *, UINT32,
-				       LPVOID *, HANDLE32, DWORD offset);
-#define     CreateDIBSection WINELIB_NAME(CreateDIBSection)
+				       SEGPTR *, HANDLE, DWORD offset);
+HBITMAP   WINAPI CreateDIBSection (HDC, BITMAPINFO *, UINT,
+				       LPVOID *, HANDLE, DWORD offset);
 HBITMAP16   WINAPI CreateDiscardableBitmap16(HDC16,INT16,INT16);
-HBITMAP32   WINAPI CreateDiscardableBitmap32(HDC32,INT32,INT32);
-#define     CreateDiscardableBitmap WINELIB_NAME(CreateDiscardableBitmap)
+HBITMAP   WINAPI CreateDiscardableBitmap(HDC,INT,INT);
 HRGN16      WINAPI CreateEllipticRgn16(INT16,INT16,INT16,INT16);
-HRGN32      WINAPI CreateEllipticRgn32(INT32,INT32,INT32,INT32);
-#define     CreateEllipticRgn WINELIB_NAME(CreateEllipticRgn)
+HRGN      WINAPI CreateEllipticRgn(INT,INT,INT,INT);
 HRGN16      WINAPI CreateEllipticRgnIndirect16(const RECT16 *);
-HRGN32      WINAPI CreateEllipticRgnIndirect32(const RECT32 *);
-#define     CreateEllipticRgnIndirect WINELIB_NAME(CreateEllipticRgnIndirect)
+HRGN      WINAPI CreateEllipticRgnIndirect(const RECT *);
 HFONT16     WINAPI CreateFont16(INT16,INT16,INT16,INT16,INT16,BYTE,BYTE,BYTE,
                                 BYTE,BYTE,BYTE,BYTE,BYTE,LPCSTR);
-HFONT32     WINAPI CreateFont32A(INT32,INT32,INT32,INT32,INT32,DWORD,DWORD,
+HFONT     WINAPI CreateFontA(INT,INT,INT,INT,INT,DWORD,DWORD,
                                  DWORD,DWORD,DWORD,DWORD,DWORD,DWORD,LPCSTR);
-HFONT32     WINAPI CreateFont32W(INT32,INT32,INT32,INT32,INT32,DWORD,DWORD,
+HFONT     WINAPI CreateFontW(INT,INT,INT,INT,INT,DWORD,DWORD,
                                  DWORD,DWORD,DWORD,DWORD,DWORD,DWORD,LPCWSTR);
 #define     CreateFont WINELIB_NAME_AW(CreateFont)
 HFONT16     WINAPI CreateFontIndirect16(const LOGFONT16*);
-HFONT32     WINAPI CreateFontIndirect32A(const LOGFONT32A*);
-HFONT32     WINAPI CreateFontIndirect32W(const LOGFONT32W*);
+HFONT     WINAPI CreateFontIndirectA(const LOGFONTA*);
+HFONT     WINAPI CreateFontIndirectW(const LOGFONTW*);
 #define     CreateFontIndirect WINELIB_NAME_AW(CreateFontIndirect)
 HBRUSH16    WINAPI CreateHatchBrush16(INT16,COLORREF);
-HBRUSH32    WINAPI CreateHatchBrush32(INT32,COLORREF);
-#define     CreateHatchBrush WINELIB_NAME(CreateHatchBrush)
+HBRUSH    WINAPI CreateHatchBrush(INT,COLORREF);
 HDC16       WINAPI CreateIC16(LPCSTR,LPCSTR,LPCSTR,const DEVMODE16*);
-HDC32       WINAPI CreateIC32A(LPCSTR,LPCSTR,LPCSTR,const DEVMODE32A*);
-HDC32       WINAPI CreateIC32W(LPCWSTR,LPCWSTR,LPCWSTR,const DEVMODE32W*);
+HDC       WINAPI CreateICA(LPCSTR,LPCSTR,LPCSTR,const DEVMODEA*);
+HDC       WINAPI CreateICW(LPCWSTR,LPCWSTR,LPCWSTR,const DEVMODEW*);
 #define     CreateIC WINELIB_NAME_AW(CreateIC)
 HDC16       WINAPI CreateMetaFile16(LPCSTR);
-HDC32       WINAPI CreateMetaFile32A(LPCSTR);
-HDC32       WINAPI CreateMetaFile32W(LPCWSTR);
+HDC       WINAPI CreateMetaFileA(LPCSTR);
+HDC       WINAPI CreateMetaFileW(LPCWSTR);
 #define     CreateMetaFile WINELIB_NAME_AW(CreateMetaFile)
 HPALETTE16  WINAPI CreatePalette16(const LOGPALETTE*);
-HPALETTE32  WINAPI CreatePalette32(const LOGPALETTE*);
-#define     CreatePalette WINELIB_NAME(CreatePalette)
+HPALETTE  WINAPI CreatePalette(const LOGPALETTE*);
 HBRUSH16    WINAPI CreatePatternBrush16(HBITMAP16);
-HBRUSH32    WINAPI CreatePatternBrush32(HBITMAP32);
-#define     CreatePatternBrush WINELIB_NAME(CreatePatternBrush)
+HBRUSH    WINAPI CreatePatternBrush(HBITMAP);
 HPEN16      WINAPI CreatePen16(INT16,INT16,COLORREF);
-HPEN32      WINAPI CreatePen32(INT32,INT32,COLORREF);
-#define     CreatePen WINELIB_NAME(CreatePen)
+HPEN      WINAPI CreatePen(INT,INT,COLORREF);
 HPEN16      WINAPI CreatePenIndirect16(const LOGPEN16*);
-HPEN32      WINAPI CreatePenIndirect32(const LOGPEN32*);
-#define     CreatePenIndirect WINELIB_NAME(CreatePenIndirect)
+HPEN      WINAPI CreatePenIndirect(const LOGPEN*);
 HRGN16      WINAPI CreatePolyPolygonRgn16(const POINT16*,const INT16*,INT16,INT16);
-HRGN32      WINAPI CreatePolyPolygonRgn32(const POINT32*,const INT32*,INT32,INT32);
-#define     CreatePolyPolygonRgn WINELIB_NAME(CreatePolyPolygonRgn)
+HRGN      WINAPI CreatePolyPolygonRgn(const POINT*,const INT*,INT,INT);
 HRGN16      WINAPI CreatePolygonRgn16(const POINT16*,INT16,INT16);
-HRGN32      WINAPI CreatePolygonRgn32(const POINT32*,INT32,INT32);
-#define     CreatePolygonRgn WINELIB_NAME(CreatePolygonRgn)
+HRGN      WINAPI CreatePolygonRgn(const POINT*,INT,INT);
 HRGN16      WINAPI CreateRectRgn16(INT16,INT16,INT16,INT16);
-HRGN32      WINAPI CreateRectRgn32(INT32,INT32,INT32,INT32);
-#define     CreateRectRgn WINELIB_NAME(CreateRectRgn)
+HRGN      WINAPI CreateRectRgn(INT,INT,INT,INT);
 HRGN16      WINAPI CreateRectRgnIndirect16(const RECT16*);
-HRGN32      WINAPI CreateRectRgnIndirect32(const RECT32*);
-#define     CreateRectRgnIndirect WINELIB_NAME(CreateRectRgnIndirect)
+HRGN      WINAPI CreateRectRgnIndirect(const RECT*);
 HRGN16      WINAPI CreateRoundRectRgn16(INT16,INT16,INT16,INT16,INT16,INT16);
-HRGN32      WINAPI CreateRoundRectRgn32(INT32,INT32,INT32,INT32,INT32,INT32);
-#define     CreateRoundRectRgn WINELIB_NAME(CreateRoundRectRgn)
+HRGN      WINAPI CreateRoundRectRgn(INT,INT,INT,INT,INT,INT);
 BOOL16      WINAPI CreateScalableFontResource16(UINT16,LPCSTR,LPCSTR,LPCSTR);
-BOOL32      WINAPI CreateScalableFontResource32A(DWORD,LPCSTR,LPCSTR,LPCSTR);
-BOOL32      WINAPI CreateScalableFontResource32W(DWORD,LPCWSTR,LPCWSTR,LPCWSTR);
+BOOL      WINAPI CreateScalableFontResourceA(DWORD,LPCSTR,LPCSTR,LPCSTR);
+BOOL      WINAPI CreateScalableFontResourceW(DWORD,LPCWSTR,LPCWSTR,LPCWSTR);
 #define     CreateScalableFontResource WINELIB_NAME_AW(CreateScalableFontResource)
 HBRUSH16    WINAPI CreateSolidBrush16(COLORREF);
-HBRUSH32    WINAPI CreateSolidBrush32(COLORREF);
-#define     CreateSolidBrush WINELIB_NAME(CreateSolidBrush)
+HBRUSH    WINAPI CreateSolidBrush(COLORREF);
 BOOL16      WINAPI DeleteDC16(HDC16);
-BOOL32      WINAPI DeleteDC32(HDC32);
-#define     DeleteDC WINELIB_NAME(DeleteDC)
+BOOL      WINAPI DeleteDC(HDC);
 BOOL16      WINAPI DeleteMetaFile16(HMETAFILE16);
-BOOL32      WINAPI DeleteMetaFile32(HMETAFILE32);
-#define     DeleteMetaFile WINELIB_NAME(DeleteMetaFile)
+BOOL      WINAPI DeleteMetaFile(HMETAFILE);
 BOOL16      WINAPI DeleteObject16(HGDIOBJ16);
-BOOL32      WINAPI DeleteObject32(HGDIOBJ32);
-#define     DeleteObject WINELIB_NAME(DeleteObject)
-INT32       WINAPI DescribePixelFormat(HDC32,int,UINT32,
+BOOL      WINAPI DeleteObject(HGDIOBJ);
+INT       WINAPI DescribePixelFormat(HDC,int,UINT,
                                        LPPIXELFORMATDESCRIPTOR);
 BOOL16      WINAPI DPtoLP16(HDC16,LPPOINT16,INT16);
-BOOL32      WINAPI DPtoLP32(HDC32,LPPOINT32,INT32);
-#define     DPtoLP WINELIB_NAME(DPtoLP)
+BOOL      WINAPI DPtoLP(HDC,LPPOINT,INT);
 BOOL16      WINAPI Ellipse16(HDC16,INT16,INT16,INT16,INT16);
-BOOL32      WINAPI Ellipse32(HDC32,INT32,INT32,INT32,INT32);
-#define     Ellipse WINELIB_NAME(Ellipse)
+BOOL      WINAPI Ellipse(HDC,INT,INT,INT,INT);
 INT16       WINAPI EndDoc16(HDC16);
-INT32       WINAPI EndDoc32(HDC32);
-#define     EndDoc WINELIB_NAME(EndDoc)
+INT       WINAPI EndDoc(HDC);
 BOOL16      WINAPI EndPath16(HDC16);
-BOOL32      WINAPI EndPath32(HDC32);
-#define     EndPath WINELIB_NAME(EndPath)
+BOOL      WINAPI EndPath(HDC);
 INT16       WINAPI EnumFontFamilies16(HDC16,LPCSTR,FONTENUMPROC16,LPARAM);
-INT32       WINAPI EnumFontFamilies32A(HDC32,LPCSTR,FONTENUMPROC32A,LPARAM);
-INT32       WINAPI EnumFontFamilies32W(HDC32,LPCWSTR,FONTENUMPROC32W,LPARAM);
+INT       WINAPI EnumFontFamiliesA(HDC,LPCSTR,FONTENUMPROCA,LPARAM);
+INT       WINAPI EnumFontFamiliesW(HDC,LPCWSTR,FONTENUMPROCW,LPARAM);
 #define     EnumFontFamilies WINELIB_NAME_AW(EnumFontFamilies)
 INT16       WINAPI EnumFontFamiliesEx16(HDC16,LPLOGFONT16,FONTENUMPROCEX16,LPARAM,DWORD);
-INT32       WINAPI EnumFontFamiliesEx32A(HDC32,LPLOGFONT32A,FONTENUMPROCEX32A,LPARAM,DWORD);
-INT32       WINAPI EnumFontFamiliesEx32W(HDC32,LPLOGFONT32W,FONTENUMPROCEX32W,LPARAM,DWORD);
+INT       WINAPI EnumFontFamiliesExA(HDC,LPLOGFONTA,FONTENUMPROCEXA,LPARAM,DWORD);
+INT       WINAPI EnumFontFamiliesExW(HDC,LPLOGFONTW,FONTENUMPROCEXW,LPARAM,DWORD);
 #define     EnumFontFamiliesEx WINELIB_NAME_AW(EnumFontFamiliesEx)
 INT16       WINAPI EnumFonts16(HDC16,LPCSTR,FONTENUMPROC16,LPARAM);
-INT32       WINAPI EnumFonts32A(HDC32,LPCSTR,FONTENUMPROC32A,LPARAM);
-INT32       WINAPI EnumFonts32W(HDC32,LPCWSTR,FONTENUMPROC32W,LPARAM);
+INT       WINAPI EnumFontsA(HDC,LPCSTR,FONTENUMPROCA,LPARAM);
+INT       WINAPI EnumFontsW(HDC,LPCWSTR,FONTENUMPROCW,LPARAM);
 #define     EnumFonts WINELIB_NAME_AW(EnumFonts)
 BOOL16      WINAPI EnumMetaFile16(HDC16,HMETAFILE16,MFENUMPROC16,LPARAM);
-BOOL32      WINAPI EnumMetaFile32(HDC32,HMETAFILE32,MFENUMPROC32,LPARAM);
-#define     EnumMetaFile WINELIB_NAME(EnumMetaFile)
+BOOL      WINAPI EnumMetaFile(HDC,HMETAFILE,MFENUMPROC,LPARAM);
 INT16       WINAPI EnumObjects16(HDC16,INT16,GOBJENUMPROC16,LPARAM);
-INT32       WINAPI EnumObjects32(HDC32,INT32,GOBJENUMPROC32,LPARAM);
-#define     EnumObjects WINELIB_NAME(EnumObjects)
+INT       WINAPI EnumObjects(HDC,INT,GOBJENUMPROC,LPARAM);
 BOOL16      WINAPI EqualRgn16(HRGN16,HRGN16);
-BOOL32      WINAPI EqualRgn32(HRGN32,HRGN32);
-#define     EqualRgn WINELIB_NAME(EqualRgn)
+BOOL      WINAPI EqualRgn(HRGN,HRGN);
 INT16       WINAPI Escape16(HDC16,INT16,INT16,SEGPTR,SEGPTR);
-INT32       WINAPI Escape32(HDC32,INT32,INT32,LPCSTR,LPVOID);
-#define     Escape WINELIB_NAME(Escape)
+INT       WINAPI Escape(HDC,INT,INT,LPCSTR,LPVOID);
 INT16       WINAPI ExcludeClipRect16(HDC16,INT16,INT16,INT16,INT16);
-INT32       WINAPI ExcludeClipRect32(HDC32,INT32,INT32,INT32,INT32);
-#define     ExcludeClipRect WINELIB_NAME(ExcludeClipRect)
+INT       WINAPI ExcludeClipRect(HDC,INT,INT,INT,INT);
 HPEN16      WINAPI ExtCreatePen16(DWORD,DWORD,const LOGBRUSH16*,DWORD,const DWORD*);
-HPEN32      WINAPI ExtCreatePen32(DWORD,DWORD,const LOGBRUSH32*,DWORD,const DWORD*);
-#define     ExtCreatePen WINELIB_NAME(ExtCreatePen)
+HPEN      WINAPI ExtCreatePen(DWORD,DWORD,const LOGBRUSH*,DWORD,const DWORD*);
 BOOL16      WINAPI ExtFloodFill16(HDC16,INT16,INT16,COLORREF,UINT16);
-BOOL32      WINAPI ExtFloodFill32(HDC32,INT32,INT32,COLORREF,UINT32);
-#define     ExtFloodFill WINELIB_NAME(ExtFloodFill)
+BOOL      WINAPI ExtFloodFill(HDC,INT,INT,COLORREF,UINT);
 BOOL16      WINAPI ExtTextOut16(HDC16,INT16,INT16,UINT16,const RECT16*,
                                 LPCSTR,UINT16,const INT16*);
-BOOL32      WINAPI ExtTextOut32A(HDC32,INT32,INT32,UINT32,const RECT32*,
-                                 LPCSTR,UINT32,const INT32*);
-BOOL32      WINAPI ExtTextOut32W(HDC32,INT32,INT32,UINT32,const RECT32*,
-                                 LPCWSTR,UINT32,const INT32*);
+BOOL      WINAPI ExtTextOutA(HDC,INT,INT,UINT,const RECT*,
+                                 LPCSTR,UINT,const INT*);
+BOOL      WINAPI ExtTextOutW(HDC,INT,INT,UINT,const RECT*,
+                                 LPCWSTR,UINT,const INT*);
 #define     ExtTextOut WINELIB_NAME_AW(ExtTextOut)
 BOOL16      WINAPI FillPath16(HDC16);
-BOOL32      WINAPI FillPath32(HDC32);
-#define     FillPath WINELIB_NAME(FillPath)
+BOOL      WINAPI FillPath(HDC);
 BOOL16      WINAPI FillRgn16(HDC16,HRGN16,HBRUSH16);
-BOOL32      WINAPI FillRgn32(HDC32,HRGN32,HBRUSH32);
-#define     FillRgn WINELIB_NAME(FillRgn)
+BOOL      WINAPI FillRgn(HDC,HRGN,HBRUSH);
 BOOL16      WINAPI FlattenPath16(HDC16);
-BOOL32      WINAPI FlattenPath32(HDC32);
-#define     FlattenPath WINELIB_NAME(FlattenPath)
+BOOL      WINAPI FlattenPath(HDC);
 BOOL16      WINAPI FloodFill16(HDC16,INT16,INT16,COLORREF);
-BOOL32      WINAPI FloodFill32(HDC32,INT32,INT32,COLORREF);
-#define     FloodFill WINELIB_NAME(FloodFill)
+BOOL      WINAPI FloodFill(HDC,INT,INT,COLORREF);
 BOOL16      WINAPI FrameRgn16(HDC16,HRGN16,HBRUSH16,INT16,INT16);
-BOOL32      WINAPI FrameRgn32(HDC32,HRGN32,HBRUSH32,INT32,INT32);
-#define     FrameRgn WINELIB_NAME(FrameRgn)
+BOOL      WINAPI FrameRgn(HDC,HRGN,HBRUSH,INT,INT);
 INT16       WINAPI GetArcDirection16(HDC16);
-INT32       WINAPI GetArcDirection32(HDC32);
-#define     GetArcDirection WINELIB_NAME(GetArcDirection)
+INT       WINAPI GetArcDirection(HDC);
 BOOL16      WINAPI GetAspectRatioFilterEx16(HDC16,LPSIZE16);
-BOOL32      WINAPI GetAspectRatioFilterEx32(HDC32,LPSIZE32);
-#define     GetAspectRatioFilterEx WINELIB_NAME(GetAspectRatioFilterEx)
+BOOL      WINAPI GetAspectRatioFilterEx(HDC,LPSIZE);
 LONG        WINAPI GetBitmapBits16(HBITMAP16,LONG,LPVOID);
-LONG        WINAPI GetBitmapBits32(HBITMAP32,LONG,LPVOID);
-#define     GetBitmapBits WINELIB_NAME(GetBitmapBits)
+LONG        WINAPI GetBitmapBits(HBITMAP,LONG,LPVOID);
 BOOL16      WINAPI GetBitmapDimensionEx16(HBITMAP16,LPSIZE16);
-BOOL32      WINAPI GetBitmapDimensionEx32(HBITMAP32,LPSIZE32);
-#define     GetBitmapDimensionEx WINELIB_NAME(GetBitmapDimensionEx)
+BOOL      WINAPI GetBitmapDimensionEx(HBITMAP,LPSIZE);
 BOOL16      WINAPI GetBrushOrgEx16(HDC16,LPPOINT16);
-BOOL32      WINAPI GetBrushOrgEx32(HDC32,LPPOINT32);
-#define     GetBrushOrgEx WINELIB_NAME(GetBrushOrgEx)
+BOOL      WINAPI GetBrushOrgEx(HDC,LPPOINT);
 COLORREF    WINAPI GetBkColor16(HDC16);
-COLORREF    WINAPI GetBkColor32(HDC32);
-#define     GetBkColor WINELIB_NAME(GetBkColor)
+COLORREF    WINAPI GetBkColor(HDC);
 INT16       WINAPI GetBkMode16(HDC16);
-INT32       WINAPI GetBkMode32(HDC32);
-#define     GetBkMode WINELIB_NAME(GetBkMode)
+INT       WINAPI GetBkMode(HDC);
 UINT16      WINAPI GetBoundsRect16(HDC16,LPRECT16,UINT16);
-UINT32      WINAPI GetBoundsRect32(HDC32,LPRECT32,UINT32);
-#define     GetBoundsRect WINELIB_NAME(GetBoundsRect)
+UINT      WINAPI GetBoundsRect(HDC,LPRECT,UINT);
 BOOL16      WINAPI GetCharABCWidths16(HDC16,UINT16,UINT16,LPABC16);
-BOOL32      WINAPI GetCharABCWidths32A(HDC32,UINT32,UINT32,LPABC32);
-BOOL32      WINAPI GetCharABCWidths32W(HDC32,UINT32,UINT32,LPABC32);
+BOOL      WINAPI GetCharABCWidthsA(HDC,UINT,UINT,LPABC);
+BOOL      WINAPI GetCharABCWidthsW(HDC,UINT,UINT,LPABC);
 #define     GetCharABCWidths WINELIB_NAME_AW(GetCharABCWidths)
-DWORD       WINAPI GetCharacterPlacement32A(HDC32,LPCSTR,INT32,INT32,GCP_RESULTS32A*,DWORD);
-DWORD       WINAPI GetCharacterPlacement32W(HDC32,LPCWSTR,INT32,INT32,GCP_RESULTS32W*,DWORD);
+DWORD       WINAPI GetCharacterPlacementA(HDC,LPCSTR,INT,INT,GCP_RESULTSA*,DWORD);
+DWORD       WINAPI GetCharacterPlacementW(HDC,LPCWSTR,INT,INT,GCP_RESULTSW*,DWORD);
 #define     GetCharacterPlacement WINELIB_NAME_AW(GetCharacterPlacement)
 BOOL16      WINAPI GetCharWidth16(HDC16,UINT16,UINT16,LPINT16);
-BOOL32      WINAPI GetCharWidth32A(HDC32,UINT32,UINT32,LPINT32);
-BOOL32      WINAPI GetCharWidth32W(HDC32,UINT32,UINT32,LPINT32);
+BOOL      WINAPI GetCharWidth32A(HDC,UINT,UINT,LPINT);
+BOOL      WINAPI GetCharWidth32W(HDC,UINT,UINT,LPINT);
 #define     GetCharWidth WINELIB_NAME_AW(GetCharWidth)
 INT16       WINAPI GetClipBox16(HDC16,LPRECT16);
-INT32       WINAPI GetClipBox32(HDC32,LPRECT32);
-#define     GetClipBox WINELIB_NAME(GetClipBox)
+INT       WINAPI GetClipBox(HDC,LPRECT);
 HRGN16      WINAPI GetClipRgn16(HDC16);
-INT32       WINAPI GetClipRgn32(HDC32,HRGN32);
-#define     GetClipRgn WINELIB_NAME(GetClipRgn)
+INT       WINAPI GetClipRgn(HDC,HRGN);
 BOOL16      WINAPI GetCurrentPositionEx16(HDC16,LPPOINT16);
-BOOL32      WINAPI GetCurrentPositionEx32(HDC32,LPPOINT32);
-#define     GetCurrentPositionEx WINELIB_NAME(GetCurrentPositionEx)
+BOOL      WINAPI GetCurrentPositionEx(HDC,LPPOINT);
 INT16       WINAPI GetDeviceCaps16(HDC16,INT16);
-INT32       WINAPI GetDeviceCaps32(HDC32,INT32);
-#define     GetDeviceCaps WINELIB_NAME(GetDeviceCaps)
+INT       WINAPI GetDeviceCaps(HDC,INT);
 UINT16      WINAPI GetDIBColorTable16(HDC16,UINT16,UINT16,RGBQUAD*);
-UINT32      WINAPI GetDIBColorTable32(HDC32,UINT32,UINT32,RGBQUAD*);
-#define     GetDIBColorTable WINELIB_NAME(GetDIBColorTable)
+UINT      WINAPI GetDIBColorTable(HDC,UINT,UINT,RGBQUAD*);
 INT16       WINAPI GetDIBits16(HDC16,HBITMAP16,UINT16,UINT16,LPVOID,LPBITMAPINFO,UINT16);
-INT32       WINAPI GetDIBits32(HDC32,HBITMAP32,UINT32,UINT32,LPVOID,LPBITMAPINFO,UINT32);
-#define     GetDIBits WINELIB_NAME(GetDIBits)
-DWORD       WINAPI GetFontData32(HDC32,DWORD,DWORD,LPVOID,DWORD);
-#define     GetFontData WINELIB_NAME(GetFontData)
+INT       WINAPI GetDIBits(HDC,HBITMAP,UINT,UINT,LPVOID,LPBITMAPINFO,UINT);
+DWORD       WINAPI GetFontData(HDC,DWORD,DWORD,LPVOID,DWORD);
 DWORD       WINAPI GetFontLanguageInfo16(HDC16);
-DWORD       WINAPI GetFontLanguageInfo32(HDC32);
-#define     GetFontLanguageInfo WINELIB_NAME(GetFontLanguageInfo)
+DWORD       WINAPI GetFontLanguageInfo(HDC);
 DWORD       WINAPI GetGlyphOutline16(HDC16,UINT16,UINT16,LPGLYPHMETRICS16,DWORD,LPVOID,const MAT2*);
-DWORD       WINAPI GetGlyphOutline32A(HDC32,UINT32,UINT32,LPGLYPHMETRICS32,DWORD,LPVOID,const MAT2*);
-DWORD       WINAPI GetGlyphOutline32W(HDC32,UINT32,UINT32,LPGLYPHMETRICS32,DWORD,LPVOID,const MAT2*);
+DWORD       WINAPI GetGlyphOutlineA(HDC,UINT,UINT,LPGLYPHMETRICS,DWORD,LPVOID,const MAT2*);
+DWORD       WINAPI GetGlyphOutlineW(HDC,UINT,UINT,LPGLYPHMETRICS,DWORD,LPVOID,const MAT2*);
 #define     GetGlyphOutline WINELIB_NAME_AW(GetGlyphOutline)
 INT16       WINAPI GetKerningPairs16(HDC16,INT16,LPKERNINGPAIR16);
-DWORD       WINAPI GetKerningPairs32A(HDC32,DWORD,LPKERNINGPAIR32);
-DWORD       WINAPI GetKerningPairs32W(HDC32,DWORD,LPKERNINGPAIR32);
+DWORD       WINAPI GetKerningPairsA(HDC,DWORD,LPKERNINGPAIR);
+DWORD       WINAPI GetKerningPairsW(HDC,DWORD,LPKERNINGPAIR);
 #define     GetKerningPairs WINELIB_NAME_AW(GetKerningPairs)
 INT16       WINAPI GetMapMode16(HDC16);
-INT32       WINAPI GetMapMode32(HDC32);
-#define     GetMapMode WINELIB_NAME(GetMapMode)
+INT       WINAPI GetMapMode(HDC);
 HMETAFILE16 WINAPI GetMetaFile16(LPCSTR);
-HMETAFILE32 WINAPI GetMetaFile32A(LPCSTR);
-HMETAFILE32 WINAPI GetMetaFile32W(LPCWSTR);
+HMETAFILE WINAPI GetMetaFileA(LPCSTR);
+HMETAFILE WINAPI GetMetaFileW(LPCWSTR);
 #define     GetMetaFile WINELIB_NAME_AW(GetMetaFile)
 DWORD       WINAPI GetNearestColor16(HDC16,DWORD);
-DWORD       WINAPI GetNearestColor32(HDC32,DWORD);
-#define     GetNearestColor WINELIB_NAME(GetNearestColor)
+DWORD       WINAPI GetNearestColor(HDC,DWORD);
 UINT16      WINAPI GetNearestPaletteIndex16(HPALETTE16,COLORREF);
-UINT32      WINAPI GetNearestPaletteIndex32(HPALETTE32,COLORREF);
-#define     GetNearestPaletteIndex WINELIB_NAME(GetNearestPaletteIndex)
+UINT      WINAPI GetNearestPaletteIndex(HPALETTE,COLORREF);
 INT16       WINAPI GetObject16(HANDLE16,INT16,LPVOID);
-INT32       WINAPI GetObject32A(HANDLE32,INT32,LPVOID);
-INT32       WINAPI GetObject32W(HANDLE32,INT32,LPVOID);
+INT       WINAPI GetObjectA(HANDLE,INT,LPVOID);
+INT       WINAPI GetObjectW(HANDLE,INT,LPVOID);
 #define     GetObject WINELIB_NAME_AW(GetObject)
 UINT16      WINAPI GetOutlineTextMetrics16(HDC16,UINT16,LPOUTLINETEXTMETRIC16);
-UINT32      WINAPI GetOutlineTextMetrics32A(HDC32,UINT32,LPOUTLINETEXTMETRIC32A);
-UINT32      WINAPI GetOutlineTextMetrics32W(HDC32,UINT32,LPOUTLINETEXTMETRIC32W);
+UINT      WINAPI GetOutlineTextMetricsA(HDC,UINT,LPOUTLINETEXTMETRICA);
+UINT      WINAPI GetOutlineTextMetricsW(HDC,UINT,LPOUTLINETEXTMETRICW);
 #define     GetOutlineTextMetrics WINELIB_NAME_AW(GetOutlineTextMetrics)
 UINT16      WINAPI GetPaletteEntries16(HPALETTE16,UINT16,UINT16,LPPALETTEENTRY);
-UINT32      WINAPI GetPaletteEntries32(HPALETTE32,UINT32,UINT32,LPPALETTEENTRY);
-#define     GetPaletteEntries WINELIB_NAME(GetPaletteEntries)
+UINT      WINAPI GetPaletteEntries(HPALETTE,UINT,UINT,LPPALETTEENTRY);
 INT16       WINAPI GetPath16(HDC16,LPPOINT16,LPBYTE,INT16);
-INT32       WINAPI GetPath32(HDC32,LPPOINT32,LPBYTE,INT32);
-#define     GetPath WINELIB_NAME(GetPath)
+INT       WINAPI GetPath(HDC,LPPOINT,LPBYTE,INT);
 COLORREF    WINAPI GetPixel16(HDC16,INT16,INT16);
-COLORREF    WINAPI GetPixel32(HDC32,INT32,INT32);
-#define     GetPixel WINELIB_NAME(GetPixel)
-INT32       WINAPI GetPixelFormat(HDC32);
+COLORREF    WINAPI GetPixel(HDC,INT,INT);
+INT       WINAPI GetPixelFormat(HDC);
 INT16       WINAPI GetPolyFillMode16(HDC16);
-INT32       WINAPI GetPolyFillMode32(HDC32);
-#define     GetPolyFillMode WINELIB_NAME(GetPolyFillMode)
+INT       WINAPI GetPolyFillMode(HDC);
 BOOL16      WINAPI GetRasterizerCaps16(LPRASTERIZER_STATUS,UINT16);
-BOOL32      WINAPI GetRasterizerCaps32(LPRASTERIZER_STATUS,UINT32);
-#define     GetRasterizerCaps WINELIB_NAME(GetRasterizerCaps)
+BOOL      WINAPI GetRasterizerCaps(LPRASTERIZER_STATUS,UINT);
 DWORD       WINAPI GetRegionData16(HRGN16,DWORD,LPRGNDATA);
-DWORD       WINAPI GetRegionData32(HRGN32,DWORD,LPRGNDATA);
-#define     GetRegionData WINELIB_NAME(GetRegionData)
+DWORD       WINAPI GetRegionData(HRGN,DWORD,LPRGNDATA);
 INT16       WINAPI GetRelAbs16(HDC16);
-INT32       WINAPI GetRelAbs32(HDC32);
-#define     GetRelAbs WINELIB_NAME(GetRelAbs)
+INT       WINAPI GetRelAbs(HDC);
 INT16       WINAPI GetRgnBox16(HRGN16,LPRECT16);
-INT32       WINAPI GetRgnBox32(HRGN32,LPRECT32);
-#define     GetRgnBox WINELIB_NAME(GetRgnBox)
+INT       WINAPI GetRgnBox(HRGN,LPRECT);
 INT16       WINAPI GetROP216(HDC16);
-INT32       WINAPI GetROP232(HDC32);
-#define     GetROP2 WINELIB_NAME(GetROP2)
+INT       WINAPI GetROP2(HDC);
 HGDIOBJ16   WINAPI GetStockObject16(INT16);
-HGDIOBJ32   WINAPI GetStockObject32(INT32);
-#define     GetStockObject WINELIB_NAME(GetStockObject)
+HGDIOBJ   WINAPI GetStockObject(INT);
 INT16       WINAPI GetStretchBltMode16(HDC16);
-INT32       WINAPI GetStretchBltMode32(HDC32);
-#define     GetStretchBltMode WINELIB_NAME(GetStretchBltMode)
+INT       WINAPI GetStretchBltMode(HDC);
 UINT16      WINAPI GetSystemPaletteEntries16(HDC16,UINT16,UINT16,LPPALETTEENTRY);
-UINT32      WINAPI GetSystemPaletteEntries32(HDC32,UINT32,UINT32,LPPALETTEENTRY);
-#define     GetSystemPaletteEntries WINELIB_NAME(GetSystemPaletteEntries)
+UINT      WINAPI GetSystemPaletteEntries(HDC,UINT,UINT,LPPALETTEENTRY);
 UINT16      WINAPI GetSystemPaletteUse16(HDC16);
-UINT32      WINAPI GetSystemPaletteUse32(HDC32);
-#define     GetSystemPaletteUse WINELIB_NAME(GetSystemPaletteUse)
+UINT      WINAPI GetSystemPaletteUse(HDC);
 UINT16      WINAPI GetTextAlign16(HDC16);
-UINT32      WINAPI GetTextAlign32(HDC32);
-#define     GetTextAlign WINELIB_NAME(GetTextAlign)
+UINT      WINAPI GetTextAlign(HDC);
 INT16       WINAPI GetTextCharacterExtra16(HDC16);
-INT32       WINAPI GetTextCharacterExtra32(HDC32);
-#define     GetTextCharacterExtra WINELIB_NAME(GetTextCharacterExtra)
+INT       WINAPI GetTextCharacterExtra(HDC);
 UINT16      WINAPI GetTextCharset16(HDC16);
-UINT32      WINAPI GetTextCharset32(HDC32);
-#define     GetTextCharset WINELIB_NAME(GetTextCharset)
+UINT      WINAPI GetTextCharset(HDC);
 COLORREF    WINAPI GetTextColor16(HDC16);
-COLORREF    WINAPI GetTextColor32(HDC32);
-#define     GetTextColor WINELIB_NAME(GetTextColor)
+COLORREF    WINAPI GetTextColor(HDC);
 /* this one is different, because Win32 has *both* 
  * GetTextExtentPoint and GetTextExtentPoint32 !
  */
 BOOL16      WINAPI GetTextExtentPoint16(HDC16,LPCSTR,INT16,LPSIZE16);
-BOOL32      WINAPI GetTextExtentPoint32A(HDC32,LPCSTR,INT32,LPSIZE32);
-BOOL32      WINAPI GetTextExtentPoint32W(HDC32,LPCWSTR,INT32,LPSIZE32);
-BOOL32      WINAPI GetTextExtentPoint32ABuggy(HDC32,LPCSTR,INT32,LPSIZE32);
-BOOL32      WINAPI GetTextExtentPoint32WBuggy(HDC32,LPCWSTR,INT32,LPSIZE32);
+BOOL      WINAPI GetTextExtentPoint32A(HDC,LPCSTR,INT,LPSIZE);
+BOOL      WINAPI GetTextExtentPoint32W(HDC,LPCWSTR,INT,LPSIZE);
+BOOL      WINAPI GetTextExtentPointA(HDC,LPCSTR,INT,LPSIZE);
+BOOL      WINAPI GetTextExtentPointW(HDC,LPCWSTR,INT,LPSIZE);
 #ifdef UNICODE
-#define     GetTextExtentPoint GetTextExtentPoint32WBuggy
+#define     GetTextExtentPoint GetTextExtentPointW
 #define     GetTextExtentPoint32 GetTextExtentPoint32W
 #else
-#define     GetTextExtentPoint GetTextExtentPoint32ABuggy
+#define     GetTextExtentPoint GetTextExtentPointA
 #define     GetTextExtentPoint32 GetTextExtentPoint32A
 #endif
 INT16       WINAPI GetTextFace16(HDC16,INT16,LPSTR);
-INT32       WINAPI GetTextFace32A(HDC32,INT32,LPSTR);
-INT32       WINAPI GetTextFace32W(HDC32,INT32,LPWSTR);
+INT       WINAPI GetTextFaceA(HDC,INT,LPSTR);
+INT       WINAPI GetTextFaceW(HDC,INT,LPWSTR);
 #define     GetTextFace WINELIB_NAME_AW(GetTextFace)
 BOOL16      WINAPI GetTextMetrics16(HDC16,LPTEXTMETRIC16);
-BOOL32      WINAPI GetTextMetrics32A(HDC32,LPTEXTMETRIC32A);
-BOOL32      WINAPI GetTextMetrics32W(HDC32,LPTEXTMETRIC32W);
+BOOL      WINAPI GetTextMetricsA(HDC,LPTEXTMETRICA);
+BOOL      WINAPI GetTextMetricsW(HDC,LPTEXTMETRICW);
 #define     GetTextMetrics WINELIB_NAME_AW(GetTextMetrics)
 BOOL16      WINAPI GetViewportExtEx16(HDC16,LPSIZE16);
-BOOL32      WINAPI GetViewportExtEx32(HDC32,LPSIZE32);
-#define     GetViewportExtEx WINELIB_NAME(GetViewportExtEx)
+BOOL      WINAPI GetViewportExtEx(HDC,LPSIZE);
 BOOL16      WINAPI GetViewportOrgEx16(HDC16,LPPOINT16);
-BOOL32      WINAPI GetViewportOrgEx32(HDC32,LPPOINT32);
-#define     GetViewportOrgEx WINELIB_NAME(GetViewportOrgEx)
+BOOL      WINAPI GetViewportOrgEx(HDC,LPPOINT);
 BOOL16      WINAPI GetWindowExtEx16(HDC16,LPSIZE16);
-BOOL32      WINAPI GetWindowExtEx32(HDC32,LPSIZE32);
-#define     GetWindowExtEx WINELIB_NAME(GetWindowExtEx)
+BOOL      WINAPI GetWindowExtEx(HDC,LPSIZE);
 BOOL16      WINAPI GetWindowOrgEx16(HDC16,LPPOINT16);
-BOOL32      WINAPI GetWindowOrgEx32(HDC32,LPPOINT32);
-#define     GetWindowOrgEx WINELIB_NAME(GetWindowOrgEx)
+BOOL      WINAPI GetWindowOrgEx(HDC,LPPOINT);
 INT16       WINAPI IntersectClipRect16(HDC16,INT16,INT16,INT16,INT16);
-INT32       WINAPI IntersectClipRect32(HDC32,INT32,INT32,INT32,INT32);
-#define     IntersectClipRect WINELIB_NAME(IntersectClipRect)
+INT       WINAPI IntersectClipRect(HDC,INT,INT,INT,INT);
 BOOL16      WINAPI InvertRgn16(HDC16,HRGN16);
-BOOL32      WINAPI InvertRgn32(HDC32,HRGN32);
-#define     InvertRgn WINELIB_NAME(InvertRgn)
+BOOL      WINAPI InvertRgn(HDC,HRGN);
 VOID        WINAPI LineDDA16(INT16,INT16,INT16,INT16,LINEDDAPROC16,LPARAM);
-BOOL32      WINAPI LineDDA32(INT32,INT32,INT32,INT32,LINEDDAPROC32,LPARAM);
-#define     LineDDA WINELIB_NAME(LineDDA)
+BOOL      WINAPI LineDDA(INT,INT,INT,INT,LINEDDAPROC,LPARAM);
 BOOL16      WINAPI LineTo16(HDC16,INT16,INT16);
-BOOL32      WINAPI LineTo32(HDC32,INT32,INT32);
-#define     LineTo WINELIB_NAME(LineTo)
+BOOL      WINAPI LineTo(HDC,INT,INT);
 BOOL16      WINAPI LPtoDP16(HDC16,LPPOINT16,INT16);
-BOOL32      WINAPI LPtoDP32(HDC32,LPPOINT32,INT32);
-#define     LPtoDP WINELIB_NAME(LPtoDP)
+BOOL      WINAPI LPtoDP(HDC,LPPOINT,INT);
 BOOL16      WINAPI MoveToEx16(HDC16,INT16,INT16,LPPOINT16);
-BOOL32      WINAPI MoveToEx32(HDC32,INT32,INT32,LPPOINT32);
-#define     MoveToEx WINELIB_NAME(MoveToEx)
+BOOL      WINAPI MoveToEx(HDC,INT,INT,LPPOINT);
 INT16       WINAPI MulDiv16(INT16,INT16,INT16);
 /* FIXME This is defined in kernel32.spec !?*/
-INT32       WINAPI MulDiv32(INT32,INT32,INT32);
-#define     MulDiv WINELIB_NAME(MulDiv)
+INT       WINAPI MulDiv(INT,INT,INT);
 INT16       WINAPI OffsetClipRgn16(HDC16,INT16,INT16);
-INT32       WINAPI OffsetClipRgn32(HDC32,INT32,INT32);
-#define     OffsetClipRgn WINELIB_NAME(OffsetClipRgn)
+INT       WINAPI OffsetClipRgn(HDC,INT,INT);
 INT16       WINAPI OffsetRgn16(HRGN16,INT16,INT16);
-INT32       WINAPI OffsetRgn32(HRGN32,INT32,INT32);
-#define     OffsetRgn WINELIB_NAME(OffsetRgn)
+INT       WINAPI OffsetRgn(HRGN,INT,INT);
 BOOL16      WINAPI OffsetViewportOrgEx16(HDC16,INT16,INT16,LPPOINT16);
-BOOL32      WINAPI OffsetViewportOrgEx32(HDC32,INT32,INT32,LPPOINT32);
-#define     OffsetViewportOrgEx WINELIB_NAME(OffsetViewportOrgEx)
+BOOL      WINAPI OffsetViewportOrgEx(HDC,INT,INT,LPPOINT);
 BOOL16      WINAPI OffsetWindowOrgEx16(HDC16,INT16,INT16,LPPOINT16);
-BOOL32      WINAPI OffsetWindowOrgEx32(HDC32,INT32,INT32,LPPOINT32);
-#define     OffsetWindowOrgEx WINELIB_NAME(OffsetWindowOrgEx)
+BOOL      WINAPI OffsetWindowOrgEx(HDC,INT,INT,LPPOINT);
 BOOL16      WINAPI PaintRgn16(HDC16,HRGN16);
-BOOL32      WINAPI PaintRgn32(HDC32,HRGN32);
-#define     PaintRgn WINELIB_NAME(PaintRgn)
+BOOL      WINAPI PaintRgn(HDC,HRGN);
 BOOL16      WINAPI PatBlt16(HDC16,INT16,INT16,INT16,INT16,DWORD);
-BOOL32      WINAPI PatBlt32(HDC32,INT32,INT32,INT32,INT32,DWORD);
-#define     PatBlt WINELIB_NAME(PatBlt)
+BOOL      WINAPI PatBlt(HDC,INT,INT,INT,INT,DWORD);
 HRGN16      WINAPI PathToRegion16(HDC16);
-HRGN32      WINAPI PathToRegion32(HDC32);
-#define     PathToRegion WINELIB_NAME(PathToRegion)
+HRGN      WINAPI PathToRegion(HDC);
 BOOL16      WINAPI Pie16(HDC16,INT16,INT16,INT16,INT16,INT16,INT16,INT16,INT16);
-BOOL32      WINAPI Pie32(HDC32,INT32,INT32,INT32,INT32,INT32,INT32,INT32,INT32);
-#define     Pie WINELIB_NAME(Pie)
+BOOL      WINAPI Pie(HDC,INT,INT,INT,INT,INT,INT,INT,INT);
 BOOL16      WINAPI PlayMetaFile16(HDC16,HMETAFILE16);
-BOOL32      WINAPI PlayMetaFile32(HDC32,HMETAFILE32);
-#define     PlayMetaFile WINELIB_NAME(PlayMetaFile)
+BOOL      WINAPI PlayMetaFile(HDC,HMETAFILE);
 VOID        WINAPI PlayMetaFileRecord16(HDC16,LPHANDLETABLE16,LPMETARECORD,UINT16);
-BOOL32      WINAPI PlayMetaFileRecord32(HDC32,LPHANDLETABLE32,LPMETARECORD,UINT32);
-#define     PlayMetaFileRecord WINELIB_NAME(PlayMetaFileRecord)
+BOOL      WINAPI PlayMetaFileRecord(HDC,LPHANDLETABLE,LPMETARECORD,UINT);
 BOOL16      WINAPI PolyBezier16(HDC16,const POINT16*,INT16);
-BOOL32      WINAPI PolyBezier32(HDC32,const POINT32*,DWORD);
-#define     PolyBezier WINELIB_NAME(PolyBezier)
+BOOL      WINAPI PolyBezier(HDC,const POINT*,DWORD);
 BOOL16      WINAPI PolyBezierTo16(HDC16,const POINT16*,INT16);
-BOOL32      WINAPI PolyBezierTo32(HDC32,const POINT32*,DWORD);
-#define     PolyBezierTo WINELIB_NAME(PolyBezierTo)
+BOOL      WINAPI PolyBezierTo(HDC,const POINT*,DWORD);
 BOOL16      WINAPI PolyPolygon16(HDC16,const POINT16*,const INT16*,UINT16);
-BOOL32      WINAPI PolyPolygon32(HDC32,const POINT32*,const INT32*,UINT32);
-#define     PolyPolygon WINELIB_NAME(PolyPolygon)
+BOOL      WINAPI PolyPolygon(HDC,const POINT*,const INT*,UINT);
 BOOL16      WINAPI Polygon16(HDC16,const POINT16*,INT16);
-BOOL32      WINAPI Polygon32(HDC32,const POINT32*,INT32);
-#define     Polygon WINELIB_NAME(Polygon)
+BOOL      WINAPI Polygon(HDC,const POINT*,INT);
 BOOL16      WINAPI Polyline16(HDC16,const POINT16*,INT16);
-BOOL32      WINAPI Polyline32(HDC32,const POINT32*,INT32);
-#define     Polyline WINELIB_NAME(Polyline)
-BOOL32      WINAPI PolylineTo32(HDC32,const POINT32*,DWORD);
+BOOL      WINAPI Polyline(HDC,const POINT*,INT);
+BOOL      WINAPI PolylineTo(HDC,const POINT*,DWORD);
 BOOL16      WINAPI PtInRegion16(HRGN16,INT16,INT16);
-BOOL32      WINAPI PtInRegion32(HRGN32,INT32,INT32);
-#define     PtInRegion WINELIB_NAME(PtInRegion)
+BOOL      WINAPI PtInRegion(HRGN,INT,INT);
 BOOL16      WINAPI PtVisible16(HDC16,INT16,INT16);
-BOOL32      WINAPI PtVisible32(HDC32,INT32,INT32);
-#define     PtVisible WINELIB_NAME(PtVisible)
+BOOL      WINAPI PtVisible(HDC,INT,INT);
 /* FIXME This is defined in user.spec !? */
 UINT16      WINAPI RealizePalette16(HDC16);
-UINT32      WINAPI RealizePalette32(HDC32);
-#define     RealizePalette WINELIB_NAME(RealizePalette)
+UINT      WINAPI RealizePalette(HDC);
 BOOL16      WINAPI Rectangle16(HDC16,INT16,INT16,INT16,INT16);
-BOOL32      WINAPI Rectangle32(HDC32,INT32,INT32,INT32,INT32);
-#define     Rectangle WINELIB_NAME(Rectangle)
+BOOL      WINAPI Rectangle(HDC,INT,INT,INT,INT);
 BOOL16      WINAPI RectInRegion16(HRGN16,const RECT16 *);
-BOOL32      WINAPI RectInRegion32(HRGN32,const RECT32 *);
-#define     RectInRegion WINELIB_NAME(RectInRegion)
+BOOL      WINAPI RectInRegion(HRGN,const RECT *);
 BOOL16      WINAPI RectVisible16(HDC16,const RECT16*);
-BOOL32      WINAPI RectVisible32(HDC32,const RECT32*);
-#define     RectVisible WINELIB_NAME(RectVisible)
+BOOL      WINAPI RectVisible(HDC,const RECT*);
 BOOL16      WINAPI RemoveFontResource16(SEGPTR);
-BOOL32      WINAPI RemoveFontResource32A(LPCSTR);
-BOOL32      WINAPI RemoveFontResource32W(LPCWSTR);
+BOOL      WINAPI RemoveFontResourceA(LPCSTR);
+BOOL      WINAPI RemoveFontResourceW(LPCWSTR);
 #define     RemoveFontResource WINELIB_NAME_AW(RemoveFontResource)
 HDC16       WINAPI ResetDC16(HDC16,const DEVMODE16 *);
-HDC32       WINAPI ResetDC32A(HDC32,const DEVMODE32A *);
-HDC32       WINAPI ResetDC32W(HDC32,const DEVMODE32W *);
+HDC       WINAPI ResetDCA(HDC,const DEVMODEA *);
+HDC       WINAPI ResetDCW(HDC,const DEVMODEW *);
 #define     ResetDC WINELIB_NAME_AW(ResetDC)
 BOOL16      WINAPI ResizePalette16(HPALETTE16,UINT16);
-BOOL32      WINAPI ResizePalette32(HPALETTE32,UINT32);
-#define     ResizePalette WINELIB_NAME(ResizePalette)
+BOOL      WINAPI ResizePalette(HPALETTE,UINT);
 BOOL16      WINAPI RestoreDC16(HDC16,INT16);
-BOOL32      WINAPI RestoreDC32(HDC32,INT32);
-#define     RestoreDC WINELIB_NAME(RestoreDC)
+BOOL      WINAPI RestoreDC(HDC,INT);
 BOOL16      WINAPI RoundRect16(HDC16,INT16,INT16,INT16,INT16,INT16,INT16);
-BOOL32      WINAPI RoundRect32(HDC32,INT32,INT32,INT32,INT32,INT32,INT32);
-#define     RoundRect WINELIB_NAME(RoundRect)
+BOOL      WINAPI RoundRect(HDC,INT,INT,INT,INT,INT,INT);
 INT16       WINAPI SaveDC16(HDC16);
-INT32       WINAPI SaveDC32(HDC32);
-#define     SaveDC WINELIB_NAME(SaveDC)
+INT       WINAPI SaveDC(HDC);
 BOOL16      WINAPI ScaleViewportExtEx16(HDC16,INT16,INT16,INT16,INT16,LPSIZE16);
-BOOL32      WINAPI ScaleViewportExtEx32(HDC32,INT32,INT32,INT32,INT32,LPSIZE32);
-#define     ScaleViewportExtEx WINELIB_NAME(ScaleViewportExtEx)
+BOOL      WINAPI ScaleViewportExtEx(HDC,INT,INT,INT,INT,LPSIZE);
 BOOL16      WINAPI ScaleWindowExtEx16(HDC16,INT16,INT16,INT16,INT16,LPSIZE16);
-BOOL32      WINAPI ScaleWindowExtEx32(HDC32,INT32,INT32,INT32,INT32,LPSIZE32);
-#define     ScaleWindowExtEx WINELIB_NAME(ScaleWindowExtEx)
+BOOL      WINAPI ScaleWindowExtEx(HDC,INT,INT,INT,INT,LPSIZE);
 BOOL16      WINAPI SelectClipPath16(HDC16,INT16);
-BOOL32      WINAPI SelectClipPath32(HDC32,INT32);
-#define     SelectClipPath WINELIB_NAME(SelectClipPath)
+BOOL      WINAPI SelectClipPath(HDC,INT);
 INT16       WINAPI SelectClipRgn16(HDC16,HRGN16);
-INT32       WINAPI SelectClipRgn32(HDC32,HRGN32);
-#define     SelectClipRgn WINELIB_NAME(SelectClipRgn)
+INT       WINAPI SelectClipRgn(HDC,HRGN);
 HGDIOBJ16   WINAPI SelectObject16(HDC16,HGDIOBJ16);
-HGDIOBJ32   WINAPI SelectObject32(HDC32,HGDIOBJ32);
-#define     SelectObject WINELIB_NAME(SelectObject)
+HGDIOBJ   WINAPI SelectObject(HDC,HGDIOBJ);
 /* FIXME This is defined in user.spec !? */
 HPALETTE16  WINAPI SelectPalette16(HDC16,HPALETTE16,BOOL16);
-HPALETTE32  WINAPI SelectPalette32(HDC32,HPALETTE32,BOOL32);
-#define     SelectPalette WINELIB_NAME(SelectPalette)
+HPALETTE  WINAPI SelectPalette(HDC,HPALETTE,BOOL);
 INT16       WINAPI SetAbortProc16(HDC16,SEGPTR);
-INT32       WINAPI SetAbortProc32(HDC32,ABORTPROC32);
-#define     SetAbortProc WINELIB_NAME(SetAbortProc)
+INT       WINAPI SetAbortProc(HDC,ABORTPROC);
 INT16       WINAPI SetArcDirection16(HDC16,INT16);
-INT32       WINAPI SetArcDirection32(HDC32,INT32);
-#define     SetArcDirection WINELIB_NAME(SetArcDirection)
+INT       WINAPI SetArcDirection(HDC,INT);
 LONG        WINAPI SetBitmapBits16(HBITMAP16,LONG,LPCVOID);
-LONG        WINAPI SetBitmapBits32(HBITMAP32,LONG,LPCVOID);
-#define     SetBitmapBits WINELIB_NAME(SetBitmapBits)
+LONG        WINAPI SetBitmapBits(HBITMAP,LONG,LPCVOID);
 BOOL16      WINAPI SetBitmapDimensionEx16(HBITMAP16,INT16,INT16,LPSIZE16);
-BOOL32      WINAPI SetBitmapDimensionEx32(HBITMAP32,INT32,INT32,LPSIZE32);
-#define     SetBitmapDimensionEx WINELIB_NAME(SetBitmapDimensionEx)
+BOOL      WINAPI SetBitmapDimensionEx(HBITMAP,INT,INT,LPSIZE);
 COLORREF    WINAPI SetBkColor16(HDC16,COLORREF);
-COLORREF    WINAPI SetBkColor32(HDC32,COLORREF);
-#define     SetBkColor WINELIB_NAME(SetBkColor)
+COLORREF    WINAPI SetBkColor(HDC,COLORREF);
 INT16       WINAPI SetBkMode16(HDC16,INT16);
-INT32       WINAPI SetBkMode32(HDC32,INT32);
-#define     SetBkMode WINELIB_NAME(SetBkMode)
+INT       WINAPI SetBkMode(HDC,INT);
 UINT16      WINAPI SetBoundsRect16(HDC16,const RECT16*,UINT16);
-UINT32      WINAPI SetBoundsRect32(HDC32,const RECT32*,UINT32);
-#define     SetBoundsRect WINELIB_NAME(SetBoundsRect)
+UINT      WINAPI SetBoundsRect(HDC,const RECT*,UINT);
 UINT16      WINAPI SetDIBColorTable16(HDC16,UINT16,UINT16,RGBQUAD*);
-UINT32      WINAPI SetDIBColorTable32(HDC32,UINT32,UINT32,RGBQUAD*);
-#define     SetDIBColorTable WINELIB_NAME(SetDIBColorTable)
+UINT      WINAPI SetDIBColorTable(HDC,UINT,UINT,RGBQUAD*);
 INT16       WINAPI SetDIBits16(HDC16,HBITMAP16,UINT16,UINT16,LPCVOID,const BITMAPINFO*,UINT16);
-INT32       WINAPI SetDIBits32(HDC32,HBITMAP32,UINT32,UINT32,LPCVOID,const BITMAPINFO*,UINT32);
-#define     SetDIBits WINELIB_NAME(SetDIBits)
+INT       WINAPI SetDIBits(HDC,HBITMAP,UINT,UINT,LPCVOID,const BITMAPINFO*,UINT);
 INT16       WINAPI SetDIBitsToDevice16(HDC16,INT16,INT16,INT16,INT16,INT16,
                          INT16,UINT16,UINT16,LPCVOID,const BITMAPINFO*,UINT16);
-INT32       WINAPI SetDIBitsToDevice32(HDC32,INT32,INT32,DWORD,DWORD,INT32,
-                         INT32,UINT32,UINT32,LPCVOID,const BITMAPINFO*,UINT32);
-#define     SetDIBitsToDevice WINELIB_NAME(SetDIBitsToDevice)
+INT       WINAPI SetDIBitsToDevice(HDC,INT,INT,DWORD,DWORD,INT,
+                         INT,UINT,UINT,LPCVOID,const BITMAPINFO*,UINT);
 INT16       WINAPI SetMapMode16(HDC16,INT16);
-INT32       WINAPI SetMapMode32(HDC32,INT32);
-#define     SetMapMode WINELIB_NAME(SetMapMode)
+INT       WINAPI SetMapMode(HDC,INT);
 DWORD       WINAPI SetMapperFlags16(HDC16,DWORD);
-DWORD       WINAPI SetMapperFlags32(HDC32,DWORD);
-#define     SetMapperFlags WINELIB_NAME(SetMapperFlags)
+DWORD       WINAPI SetMapperFlags(HDC,DWORD);
 UINT16      WINAPI SetPaletteEntries16(HPALETTE16,UINT16,UINT16,LPPALETTEENTRY);
-UINT32      WINAPI SetPaletteEntries32(HPALETTE32,UINT32,UINT32,LPPALETTEENTRY);
-#define     SetPaletteEntries WINELIB_NAME(SetPaletteEntries)
+UINT      WINAPI SetPaletteEntries(HPALETTE,UINT,UINT,LPPALETTEENTRY);
 COLORREF    WINAPI SetPixel16(HDC16,INT16,INT16,COLORREF);
-COLORREF    WINAPI SetPixel32(HDC32,INT32,INT32,COLORREF);
-#define     SetPixel WINELIB_NAME(SetPixel)
-BOOL32      WINAPI SetPixelV32(HDC32,INT32,INT32,COLORREF);
-#define     SetPixelV WINELIB_NAME(SetPixelV)
-BOOL32      WINAPI SetPixelFormat(HDC32,int,const PIXELFORMATDESCRIPTOR*);
+COLORREF    WINAPI SetPixel(HDC,INT,INT,COLORREF);
+BOOL      WINAPI SetPixelV(HDC,INT,INT,COLORREF);
+BOOL      WINAPI SetPixelFormat(HDC,int,const PIXELFORMATDESCRIPTOR*);
 INT16       WINAPI SetPolyFillMode16(HDC16,INT16);
-INT32       WINAPI SetPolyFillMode32(HDC32,INT32);
-#define     SetPolyFillMode WINELIB_NAME(SetPolyFillMode)
+INT       WINAPI SetPolyFillMode(HDC,INT);
 VOID        WINAPI SetRectRgn16(HRGN16,INT16,INT16,INT16,INT16);
-VOID        WINAPI SetRectRgn32(HRGN32,INT32,INT32,INT32,INT32);
-#define     SetRectRgn WINELIB_NAME(SetRectRgn)
+VOID        WINAPI SetRectRgn(HRGN,INT,INT,INT,INT);
 INT16       WINAPI SetRelAbs16(HDC16,INT16);
-INT32       WINAPI SetRelAbs32(HDC32,INT32);
-#define     SetRelAbs WINELIB_NAME(SetRelAbs)
+INT       WINAPI SetRelAbs(HDC,INT);
 INT16       WINAPI SetROP216(HDC16,INT16);
-INT32       WINAPI SetROP232(HDC32,INT32);
-#define     SetROP2 WINELIB_NAME(SetROP2)
+INT       WINAPI SetROP2(HDC,INT);
 INT16       WINAPI SetStretchBltMode16(HDC16,INT16);
-INT32       WINAPI SetStretchBltMode32(HDC32,INT32);
-#define     SetStretchBltMode WINELIB_NAME(SetStretchBltMode)
+INT       WINAPI SetStretchBltMode(HDC,INT);
 UINT16      WINAPI SetSystemPaletteUse16(HDC16,UINT16);
-UINT32      WINAPI SetSystemPaletteUse32(HDC32,UINT32);
-#define     SetSystemPaletteUse WINELIB_NAME(SetSystemPaletteUse)
+UINT      WINAPI SetSystemPaletteUse(HDC,UINT);
 UINT16      WINAPI SetTextAlign16(HDC16,UINT16);
-UINT32      WINAPI SetTextAlign32(HDC32,UINT32);
-#define     SetTextAlign WINELIB_NAME(SetTextAlign)
+UINT      WINAPI SetTextAlign(HDC,UINT);
 INT16       WINAPI SetTextCharacterExtra16(HDC16,INT16);
-INT32       WINAPI SetTextCharacterExtra32(HDC32,INT32);
-#define     SetTextCharacterExtra WINELIB_NAME(SetTextCharacterExtra)
+INT       WINAPI SetTextCharacterExtra(HDC,INT);
 COLORREF    WINAPI SetTextColor16(HDC16,COLORREF);
-COLORREF    WINAPI SetTextColor32(HDC32,COLORREF);
-#define     SetTextColor WINELIB_NAME(SetTextColor)
+COLORREF    WINAPI SetTextColor(HDC,COLORREF);
 INT16       WINAPI SetTextJustification16(HDC16,INT16,INT16);
-BOOL32      WINAPI SetTextJustification32(HDC32,INT32,INT32);
-#define     SetTextJustification WINELIB_NAME(SetTextJustification)
+BOOL      WINAPI SetTextJustification(HDC,INT,INT);
 BOOL16      WINAPI SetViewportExtEx16(HDC16,INT16,INT16,LPSIZE16);
-BOOL32      WINAPI SetViewportExtEx32(HDC32,INT32,INT32,LPSIZE32);
-#define     SetViewportExtEx WINELIB_NAME(SetViewportExtEx)
+BOOL      WINAPI SetViewportExtEx(HDC,INT,INT,LPSIZE);
 BOOL16      WINAPI SetViewportOrgEx16(HDC16,INT16,INT16,LPPOINT16);
-BOOL32      WINAPI SetViewportOrgEx32(HDC32,INT32,INT32,LPPOINT32);
-#define     SetViewportOrgEx WINELIB_NAME(SetViewportOrgEx)
+BOOL      WINAPI SetViewportOrgEx(HDC,INT,INT,LPPOINT);
 BOOL16      WINAPI SetWindowExtEx16(HDC16,INT16,INT16,LPSIZE16);
-BOOL32      WINAPI SetWindowExtEx32(HDC32,INT32,INT32,LPSIZE32);
-#define     SetWindowExtEx WINELIB_NAME(SetWindowExtEx)
+BOOL      WINAPI SetWindowExtEx(HDC,INT,INT,LPSIZE);
 BOOL16      WINAPI SetWindowOrgEx16(HDC16,INT16,INT16,LPPOINT16);
-BOOL32      WINAPI SetWindowOrgEx32(HDC32,INT32,INT32,LPPOINT32);
-#define     SetWindowOrgEx WINELIB_NAME(SetWindowOrgEx)
-HENHMETAFILE32 WINAPI SetWinMetaFileBits(UINT32,CONST BYTE*,HDC32,CONST METAFILEPICT32 *);
+BOOL      WINAPI SetWindowOrgEx(HDC,INT,INT,LPPOINT);
+HENHMETAFILE WINAPI SetWinMetaFileBits(UINT,CONST BYTE*,HDC,CONST METAFILEPICT *);
 INT16       WINAPI StartDoc16(HDC16,const DOCINFO16*);
-INT32       WINAPI StartDoc32A(HDC32,const DOCINFO32A*);
-INT32       WINAPI StartDoc32W(HDC32,const DOCINFO32W*);
+INT       WINAPI StartDocA(HDC,const DOCINFOA*);
+INT       WINAPI StartDocW(HDC,const DOCINFOW*);
 #define     StartDoc WINELIB_NAME_AW(StartDoc)
 INT16       WINAPI StartPage16(HDC16);
-INT32       WINAPI StartPage32(HDC32);
-#define     StartPage WINELIB_NAME(StartPage)
+INT       WINAPI StartPage(HDC);
 INT16       WINAPI EndPage16(HDC16);
-INT32       WINAPI EndPage32(HDC32);
-#define     EndPage WINELIB_NAME(EndPage)
+INT       WINAPI EndPage(HDC);
 BOOL16      WINAPI StretchBlt16(HDC16,INT16,INT16,INT16,INT16,HDC16,INT16,
                                 INT16,INT16,INT16,DWORD);
-BOOL32      WINAPI StretchBlt32(HDC32,INT32,INT32,INT32,INT32,HDC32,INT32,
-                                INT32,INT32,INT32,DWORD);
-#define     StretchBlt WINELIB_NAME(StretchBlt)
+BOOL      WINAPI StretchBlt(HDC,INT,INT,INT,INT,HDC,INT,
+                                INT,INT,INT,DWORD);
 INT16       WINAPI StretchDIBits16(HDC16,INT16,INT16,INT16,INT16,INT16,INT16,
                        INT16,INT16,const VOID*,const BITMAPINFO*,UINT16,DWORD);
-INT32       WINAPI StretchDIBits32(HDC32,INT32,INT32,INT32,INT32,INT32,INT32,
-                       INT32,INT32,const VOID*,const BITMAPINFO*,UINT32,DWORD);
-#define     StretchDIBits WINELIB_NAME(StretchDIBits)
+INT       WINAPI StretchDIBits(HDC,INT,INT,INT,INT,INT,INT,
+                       INT,INT,const VOID*,const BITMAPINFO*,UINT,DWORD);
 BOOL16      WINAPI StrokeAndFillPath16(HDC16);
-BOOL32      WINAPI StrokeAndFillPath32(HDC32);
-#define     StrokeAndFillPath WINELIB_NAME(StrokeAndFillPath)
+BOOL      WINAPI StrokeAndFillPath(HDC);
 BOOL16      WINAPI StrokePath16(HDC16);
-BOOL32      WINAPI StrokePath32(HDC32);
-#define     StrokePath WINELIB_NAME(StrokePath)
-BOOL32      WINAPI SwapBuffers(HDC32);
+BOOL      WINAPI StrokePath(HDC);
+BOOL      WINAPI SwapBuffers(HDC);
 BOOL16      WINAPI TextOut16(HDC16,INT16,INT16,LPCSTR,INT16);
-BOOL32      WINAPI TextOut32A(HDC32,INT32,INT32,LPCSTR,INT32);
-BOOL32      WINAPI TextOut32W(HDC32,INT32,INT32,LPCWSTR,INT32);
+BOOL      WINAPI TextOutA(HDC,INT,INT,LPCSTR,INT);
+BOOL      WINAPI TextOutW(HDC,INT,INT,LPCWSTR,INT);
 #define     TextOut WINELIB_NAME_AW(TextOut)
 BOOL16      WINAPI UnrealizeObject16(HGDIOBJ16);
-BOOL32      WINAPI UnrealizeObject32(HGDIOBJ32);
-#define     UnrealizeObject WINELIB_NAME(UnrealizeObject)
+BOOL      WINAPI UnrealizeObject(HGDIOBJ);
 INT16       WINAPI UpdateColors16(HDC16);
-BOOL32      WINAPI UpdateColors32(HDC32);
-#define     UpdateColors WINELIB_NAME(UpdateColors)
+BOOL      WINAPI UpdateColors(HDC);
 BOOL16      WINAPI WidenPath16(HDC16);
-BOOL32      WINAPI WidenPath32(HDC32);
-#define     WidenPath WINELIB_NAME(WidenPath)
+BOOL      WINAPI WidenPath(HDC);
 
 #endif /* __WINE_WINGDI_H */

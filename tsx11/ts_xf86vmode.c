@@ -11,7 +11,7 @@
 #include "wintypes.h"
 #ifdef HAVE_LIBXXF86VM
 #define XMD_H
-
+typedef int INT32;
 #include <X11/Xlib.h>
 #include <X11/extensions/xf86vmode.h>
 #include "debug.h"

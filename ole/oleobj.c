@@ -199,7 +199,7 @@ IOleAdviseHolder_SendOnClose (LPOLEADVISEHOLDER this)
 /***********************************************************************
  * CreateOleAdviseHolder [OLE32.59]
  */
-HRESULT WINAPI CreateOleAdviseHolder32 (LPOLEADVISEHOLDER *ppOAHolder)
+HRESULT WINAPI CreateOleAdviseHolder (LPOLEADVISEHOLDER *ppOAHolder)
 {
     FIXME(ole,"(%p): stub!\n", ppOAHolder);
 

@@ -19,14 +19,14 @@
  *	         FOCUS_SwitchFocus 
  * pMsgQ is the queue whose perQData focus is to be modified
  */
-void FOCUS_SwitchFocus( MESSAGEQUEUE *pMsgQ, HWND32 hFocusFrom, HWND32 hFocusTo )
+void FOCUS_SwitchFocus( MESSAGEQUEUE *pMsgQ, HWND hFocusFrom, HWND hFocusTo )
 {
     WND *pFocusTo = WIN_FindWndPtr( hFocusTo );
 
     PERQDATA_SetFocusWnd( pMsgQ->pQData, hFocusTo );
     
 #if 0
-    if (hFocusFrom) SendMessage32A( hFocusFrom, WM_KILLFOCUS, hFocusTo, 0 );
+    if (hFocusFrom) SendMessageA( hFocusFrom, WM_KILLFOCUS, hFocusTo, 0 );
 #else
     /* FIXME: must be SendMessage16() because 32A doesn't do
      * intertask at this time */
@@ -42,7 +42,7 @@ void FOCUS_SwitchFocus( MESSAGEQUEUE *pMsgQ, HWND32 hFocusFrom, HWND32 hFocusTo 
     pFocusTo->pDriver->pSetFocus(pFocusTo);
 
 #if 0
-    SendMessage32A( hFocusTo, WM_SETFOCUS, hFocusFrom, 0 );
+    SendMessageA( hFocusTo, WM_SETFOCUS, hFocusFrom, 0 );
 #else
     SendMessage16( hFocusTo, WM_SETFOCUS, hFocusFrom, 0 );
 #endif
@@ -54,22 +54,22 @@ void FOCUS_SwitchFocus( MESSAGEQUEUE *pMsgQ, HWND32 hFocusFrom, HWND32 hFocusTo 
  */
 HWND16 WINAPI SetFocus16( HWND16 hwnd )
 {
-    return (HWND16)SetFocus32( hwnd );
+    return (HWND16)SetFocus( hwnd );
 }
 
 
 /*****************************************************************
  *               SetFocus32   (USER32.481)
  */
-HWND32 WINAPI SetFocus32( HWND32 hwnd )
+HWND WINAPI SetFocus( HWND hwnd )
 {
-    HWND32 hWndFocus = 0, hwndTop = hwnd;
+    HWND hWndFocus = 0, hwndTop = hwnd;
     WND *wndPtr = WIN_FindWndPtr( hwnd );
     MESSAGEQUEUE *pMsgQ = 0, *pCurMsgQ = 0;
     BOOL16 bRet = 0;
 
     /* Get the messageQ for the current thread */
-    if (!(pCurMsgQ = (MESSAGEQUEUE *)QUEUE_Lock( GetFastQueue() )))
+    if (!(pCurMsgQ = (MESSAGEQUEUE *)QUEUE_Lock( GetFastQueue16() )))
     {
         WARN( win, "\tCurrent message queue not found. Exiting!\n" );
         goto CLEANUP;
@@ -119,11 +119,11 @@ HWND32 WINAPI SetFocus32( HWND32 hwnd )
 	    goto CLEANUP;
 
         /* activate hwndTop if needed. */
-	if (hwndTop != GetActiveWindow32())
+	if (hwndTop != GetActiveWindow())
 	{
 	    if (!WINPOS_SetActiveWindow(hwndTop, 0, 0)) goto CLEANUP;
 
-	    if (!IsWindow32( hwnd )) goto CLEANUP;  /* Abort if window destroyed */
+	    if (!IsWindow( hwnd )) goto CLEANUP;  /* Abort if window destroyed */
 	}
 
         /* Get the current focus window from the perQ data */
@@ -163,20 +163,20 @@ CLEANUP:
  */
 HWND16 WINAPI GetFocus16(void)
 {
-    return (HWND16)GetFocus32();
+    return (HWND16)GetFocus();
 }
 
 
 /*****************************************************************
  *               GetFocus32   (USER32.240)
  */
-HWND32 WINAPI GetFocus32(void)
+HWND WINAPI GetFocus(void)
 {
     MESSAGEQUEUE *pCurMsgQ = 0;
-    HWND32 hwndFocus = 0;
+    HWND hwndFocus = 0;
 
     /* Get the messageQ for the current thread */
-    if (!(pCurMsgQ = (MESSAGEQUEUE *)QUEUE_Lock( GetFastQueue() )))
+    if (!(pCurMsgQ = (MESSAGEQUEUE *)QUEUE_Lock( GetFastQueue16() )))
     {
         WARN( win, "\tCurrent message queue not found. Exiting!\n" );
         return 0;

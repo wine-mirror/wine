@@ -95,8 +95,8 @@ typedef struct tagHEAP
 #define HEAP_DEF_SIZE        0x110000   /* Default heap size = 1Mb + 64Kb */
 #define HEAP_MIN_BLOCK_SIZE  (8+sizeof(ARENA_FREE))  /* Min. heap block size */
 
-HANDLE32 SystemHeap = 0;
-HANDLE32 SegptrHeap = 0;
+HANDLE SystemHeap = 0;
+HANDLE SegptrHeap = 0;
 CRITICAL_SECTION *HEAP_SystemLock = NULL;
 
 
@@ -186,7 +186,7 @@ void HEAP_Dump( HEAP *heap )
  *	NULL: Failure
  */
 static HEAP *HEAP_GetPtr(
-             HANDLE32 heap /* [in] Handle to the heap */
+             HANDLE heap /* [in] Handle to the heap */
 ) {
     HEAP *heapPtr = (HEAP *)heap;
     if (!heapPtr || (heapPtr->magic != HEAP_MAGIC))
@@ -251,7 +251,7 @@ static SUBHEAP *HEAP_FindSubHeap(
  *
  * Make sure the heap storage is committed up to (not including) ptr.
  */
-static BOOL32 HEAP_Commit( SUBHEAP *subheap, void *ptr )
+static BOOL HEAP_Commit( SUBHEAP *subheap, void *ptr )
 {
     DWORD size = (DWORD)((char *)ptr - (char *)subheap);
     size = (size + 0xfff) & 0xfffff000;  /* Align size on a page boundary */
@@ -277,7 +277,7 @@ static BOOL32 HEAP_Commit( SUBHEAP *subheap, void *ptr )
  *
  * If possible, decommit the heap storage from (including) 'ptr'.
  */
-static BOOL32 HEAP_Decommit( SUBHEAP *subheap, void *ptr )
+static BOOL HEAP_Decommit( SUBHEAP *subheap, void *ptr )
 {
     DWORD size = (DWORD)((char *)ptr - (char *)subheap);
     size = (size + 0xfff) & 0xfffff000;  /* Align size on a page boundary */
@@ -397,7 +397,7 @@ static void HEAP_MakeInUseBlockFree( SUBHEAP *subheap, ARENA_INUSE *pArena )
         if (pPrev) pPrev->next = subheap->next;
         /* Free the memory */
         subheap->magic = 0;
-        if (subheap->selector) FreeSelector( subheap->selector );
+        if (subheap->selector) FreeSelector16( subheap->selector );
         VirtualFree( subheap, 0, MEM_RELEASE );
         return;
     }
@@ -433,7 +433,7 @@ static void HEAP_ShrinkBlock(SUBHEAP *subheap, ARENA_INUSE *pArena, DWORD size)
 /***********************************************************************
  *           HEAP_InitSubHeap
  */
-static BOOL32 HEAP_InitSubHeap( HEAP *heap, LPVOID address, DWORD flags,
+static BOOL HEAP_InitSubHeap( HEAP *heap, LPVOID address, DWORD flags,
                                 DWORD commitSize, DWORD totalSize )
 {
     SUBHEAP *subheap = (SUBHEAP *)address;
@@ -625,7 +625,7 @@ static ARENA_FREE *HEAP_FindFreeBlock( HEAP *heap, DWORD size,
  *
  * Check that the pointer is inside the range possible for arenas.
  */
-static BOOL32 HEAP_IsValidArenaPtr( HEAP *heap, void *ptr )
+static BOOL HEAP_IsValidArenaPtr( HEAP *heap, void *ptr )
 {
     int i;
     SUBHEAP *subheap = HEAP_FindSubHeap( heap, ptr );
@@ -641,7 +641,7 @@ static BOOL32 HEAP_IsValidArenaPtr( HEAP *heap, void *ptr )
 /***********************************************************************
  *           HEAP_ValidateFreeArena
  */
-static BOOL32 HEAP_ValidateFreeArena( SUBHEAP *subheap, ARENA_FREE *pArena )
+static BOOL HEAP_ValidateFreeArena( SUBHEAP *subheap, ARENA_FREE *pArena )
 {
     char *heapEnd = (char *)subheap + subheap->size;
 
@@ -723,7 +723,7 @@ static BOOL32 HEAP_ValidateFreeArena( SUBHEAP *subheap, ARENA_FREE *pArena )
 /***********************************************************************
  *           HEAP_ValidateInUseArena
  */
-static BOOL32 HEAP_ValidateInUseArena( SUBHEAP *subheap, ARENA_INUSE *pArena )
+static BOOL HEAP_ValidateInUseArena( SUBHEAP *subheap, ARENA_INUSE *pArena )
 {
     char *heapEnd = (char *)subheap + subheap->size;
 
@@ -798,7 +798,7 @@ static BOOL32 HEAP_ValidateInUseArena( SUBHEAP *subheap, ARENA_INUSE *pArena )
  *	0: Failure
  */
 int HEAP_IsInsideHeap(
-    HANDLE32 heap, /* [in] Heap */
+    HANDLE heap, /* [in] Heap */
     DWORD flags,   /* [in] Flags */
     LPCVOID ptr    /* [in] Pointer */
 ) {
@@ -825,7 +825,7 @@ int HEAP_IsInsideHeap(
  * Transform a linear pointer into a SEGPTR. The pointer must have been
  * allocated from a HEAP_WINE_SEGPTR heap.
  */
-SEGPTR HEAP_GetSegptr( HANDLE32 heap, DWORD flags, LPCVOID ptr )
+SEGPTR HEAP_GetSegptr( HANDLE heap, DWORD flags, LPCVOID ptr )
 {
     HEAP *heapPtr = HEAP_GetPtr( heap );
     SUBHEAP *subheap;
@@ -867,7 +867,7 @@ SEGPTR HEAP_GetSegptr( HANDLE32 heap, DWORD flags, LPCVOID ptr )
  *	Handle of heap: Success
  *	NULL: Failure
  */
-HANDLE32 WINAPI HeapCreate(
+HANDLE WINAPI HeapCreate(
                 DWORD flags,       /* [in] Heap allocation flag */
                 DWORD initialSize, /* [in] Initial heap size */
                 DWORD maxSize      /* [in] Maximum heap size */
@@ -887,7 +887,7 @@ HANDLE32 WINAPI HeapCreate(
         return 0;
     }
 
-    return (HANDLE32)subheap;
+    return (HANDLE)subheap;
 }
 
 /***********************************************************************
@@ -896,8 +896,8 @@ HANDLE32 WINAPI HeapCreate(
  *	TRUE: Success
  *	FALSE: Failure
  */
-BOOL32 WINAPI HeapDestroy(
-              HANDLE32 heap /* [in] Handle of heap */
+BOOL WINAPI HeapDestroy(
+              HANDLE heap /* [in] Handle of heap */
 ) {
     HEAP *heapPtr = HEAP_GetPtr( heap );
     SUBHEAP *subheap;
@@ -910,7 +910,7 @@ BOOL32 WINAPI HeapDestroy(
     while (subheap)
     {
         SUBHEAP *next = subheap->next;
-        if (subheap->selector) FreeSelector( subheap->selector );
+        if (subheap->selector) FreeSelector16( subheap->selector );
         VirtualFree( subheap, 0, MEM_RELEASE );
         subheap = next;
     }
@@ -925,7 +925,7 @@ BOOL32 WINAPI HeapDestroy(
  *	NULL: Failure
  */
 LPVOID WINAPI HeapAlloc(
-              HANDLE32 heap, /* [in] Handle of private heap block */
+              HANDLE heap, /* [in] Handle of private heap block */
               DWORD flags,   /* [in] Heap allocation control flags */
               DWORD size     /* [in] Number of bytes to allocate */
 ) {
@@ -989,8 +989,8 @@ LPVOID WINAPI HeapAlloc(
  *	TRUE: Success
  *	FALSE: Failure
  */
-BOOL32 WINAPI HeapFree(
-              HANDLE32 heap, /* [in] Handle of heap */
+BOOL WINAPI HeapFree(
+              HANDLE heap, /* [in] Handle of heap */
               DWORD flags,   /* [in] Heap freeing flags */
               LPVOID ptr     /* [in] Address of memory to free */
 ) {
@@ -1040,7 +1040,7 @@ BOOL32 WINAPI HeapFree(
  *	NULL: Failure
  */
 LPVOID WINAPI HeapReAlloc(
-              HANDLE32 heap, /* [in] Handle of heap block */
+              HANDLE heap, /* [in] Handle of heap block */
               DWORD flags,   /* [in] Heap reallocation flags */
               LPVOID ptr,    /* [in] Address of memory to reallocate */
               DWORD size     /* [in] Number of bytes to reallocate */
@@ -1159,7 +1159,7 @@ LPVOID WINAPI HeapReAlloc(
 /***********************************************************************
  *           HeapCompact   (KERNEL32.335)
  */
-DWORD WINAPI HeapCompact( HANDLE32 heap, DWORD flags )
+DWORD WINAPI HeapCompact( HANDLE heap, DWORD flags )
 {
     return 0;
 }
@@ -1173,8 +1173,8 @@ DWORD WINAPI HeapCompact( HANDLE32 heap, DWORD flags )
  *	TRUE: Success
  *	FALSE: Failure
  */
-BOOL32 WINAPI HeapLock(
-              HANDLE32 heap /* [in] Handle of heap to lock for exclusive access */
+BOOL WINAPI HeapLock(
+              HANDLE heap /* [in] Handle of heap to lock for exclusive access */
 ) {
     HEAP *heapPtr = HEAP_GetPtr( heap );
     if (!heapPtr) return FALSE;
@@ -1191,8 +1191,8 @@ BOOL32 WINAPI HeapLock(
  *	TRUE: Success
  *	FALSE: Failure
  */
-BOOL32 WINAPI HeapUnlock(
-              HANDLE32 heap /* [in] Handle to the heap to unlock */
+BOOL WINAPI HeapUnlock(
+              HANDLE heap /* [in] Handle to the heap to unlock */
 ) {
     HEAP *heapPtr = HEAP_GetPtr( heap );
     if (!heapPtr) return FALSE;
@@ -1208,7 +1208,7 @@ BOOL32 WINAPI HeapUnlock(
  *	0xffffffff: Failure
  */
 DWORD WINAPI HeapSize(
-             HANDLE32 heap, /* [in] Handle of heap */
+             HANDLE heap, /* [in] Handle of heap */
              DWORD flags,   /* [in] Heap size control flags */
              LPVOID ptr     /* [in] Address of memory to return size for */
 ) {
@@ -1248,8 +1248,8 @@ DWORD WINAPI HeapSize(
  *	TRUE: Success
  *	FALSE: Failure
  */
-BOOL32 WINAPI HeapValidate(
-              HANDLE32 heap, /* [in] Handle to the heap */
+BOOL WINAPI HeapValidate(
+              HANDLE heap, /* [in] Handle to the heap */
               DWORD flags,   /* [in] Bit flags that control access during operation */
               LPCVOID block  /* [in] Optional pointer to memory block to validate */
 ) {
@@ -1309,8 +1309,8 @@ BOOL32 WINAPI HeapValidate(
  *	TRUE: Success
  *	FALSE: Failure
  */
-BOOL32 WINAPI HeapWalk(
-              HANDLE32 heap,               /* [in]  Handle to heap to enumerate */
+BOOL WINAPI HeapWalk(
+              HANDLE heap,               /* [in]  Handle to heap to enumerate */
               LPPROCESS_HEAP_ENTRY *entry  /* [out] Pointer to structure of enumeration info */
 ) {
     FIXME(heap, "(%08x): stub.\n", heap );
@@ -1323,7 +1323,7 @@ BOOL32 WINAPI HeapWalk(
  *
  * Same as HeapAlloc(), but die on failure.
  */
-LPVOID HEAP_xalloc( HANDLE32 heap, DWORD flags, DWORD size )
+LPVOID HEAP_xalloc( HANDLE heap, DWORD flags, DWORD size )
 {
     LPVOID p = HeapAlloc( heap, flags, size );
     if (!p)
@@ -1338,7 +1338,7 @@ LPVOID HEAP_xalloc( HANDLE32 heap, DWORD flags, DWORD size )
 /***********************************************************************
  *           HEAP_strdupA
  */
-LPSTR HEAP_strdupA( HANDLE32 heap, DWORD flags, LPCSTR str )
+LPSTR HEAP_strdupA( HANDLE heap, DWORD flags, LPCSTR str )
 {
     LPSTR p = HEAP_xalloc( heap, flags, strlen(str) + 1 );
     strcpy( p, str );
@@ -1349,11 +1349,11 @@ LPSTR HEAP_strdupA( HANDLE32 heap, DWORD flags, LPCSTR str )
 /***********************************************************************
  *           HEAP_strdupW
  */
-LPWSTR HEAP_strdupW( HANDLE32 heap, DWORD flags, LPCWSTR str )
+LPWSTR HEAP_strdupW( HANDLE heap, DWORD flags, LPCWSTR str )
 {
-    INT32 len = lstrlen32W(str) + 1;
+    INT len = lstrlenW(str) + 1;
     LPWSTR p = HEAP_xalloc( heap, flags, len * sizeof(WCHAR) );
-    lstrcpy32W( p, str );
+    lstrcpyW( p, str );
     return p;
 }
 
@@ -1361,7 +1361,7 @@ LPWSTR HEAP_strdupW( HANDLE32 heap, DWORD flags, LPCWSTR str )
 /***********************************************************************
  *           HEAP_strdupAtoW
  */
-LPWSTR HEAP_strdupAtoW( HANDLE32 heap, DWORD flags, LPCSTR str )
+LPWSTR HEAP_strdupAtoW( HANDLE heap, DWORD flags, LPCSTR str )
 {
     LPWSTR ret;
 
@@ -1375,12 +1375,12 @@ LPWSTR HEAP_strdupAtoW( HANDLE32 heap, DWORD flags, LPCSTR str )
 /***********************************************************************
  *           HEAP_strdupWtoA
  */
-LPSTR HEAP_strdupWtoA( HANDLE32 heap, DWORD flags, LPCWSTR str )
+LPSTR HEAP_strdupWtoA( HANDLE heap, DWORD flags, LPCWSTR str )
 {
     LPSTR ret;
 
     if (!str) return NULL;
-    ret = HEAP_xalloc( heap, flags, lstrlen32W(str) + 1 );
+    ret = HEAP_xalloc( heap, flags, lstrlenW(str) + 1 );
     lstrcpyWtoA( ret, str );
     return ret;
 }
@@ -1413,7 +1413,7 @@ typedef struct _LOCAL32HEADER
     DWORD    flags;
 
     DWORD    magic;
-    HANDLE32 heap;
+    HANDLE heap;
 
 } LOCAL32HEADER;
 #pragma pack(4)
@@ -1423,7 +1423,7 @@ typedef struct _LOCAL32HEADER
 /***********************************************************************
  *           Local32Init   (KERNEL.208)
  */
-HANDLE32 WINAPI Local32Init( WORD segment, DWORD tableSize,
+HANDLE WINAPI Local32Init16( WORD segment, DWORD tableSize,
                              DWORD heapSize, DWORD flags )
 {
     DWORD totSize, segSize = 0;
@@ -1438,7 +1438,7 @@ HANDLE32 WINAPI Local32Init( WORD segment, DWORD tableSize,
 
     if ( segment )
     {
-        if ( (segSize = GetSelectorLimit( segment )) == 0 )
+        if ( (segSize = GetSelectorLimit16( segment )) == 0 )
             return 0;
         else
             segSize++;
@@ -1479,7 +1479,7 @@ HANDLE32 WINAPI Local32Init( WORD segment, DWORD tableSize,
     header->limit   = HTABLE_PAGESIZE-1;
     header->flags   = 0;
     header->magic   = LOCAL32_MAGIC;
-    header->heap    = (HANDLE32)heap;
+    header->heap    = (HANDLE)heap;
 
     header->freeListFirst[0] = sizeof(LOCAL32HEADER);
     header->freeListLast[0]  = HTABLE_PAGESIZE - 4;
@@ -1532,7 +1532,7 @@ HANDLE32 WINAPI Local32Init( WORD segment, DWORD tableSize,
         HeapFree( SystemHeap, 0, oldBase );
     }
     
-    return (HANDLE32)header;
+    return (HANDLE)header;
 }
 
 /***********************************************************************
@@ -1627,7 +1627,7 @@ static VOID Local32_FromHandle( LOCAL32HEADER *header, INT16 type,
 /***********************************************************************
  *           Local32Alloc   (KERNEL.209)
  */
-DWORD WINAPI Local32Alloc( HANDLE32 heap, DWORD size, INT16 type, DWORD flags )
+DWORD WINAPI Local32Alloc16( HANDLE heap, DWORD size, INT16 type, DWORD flags )
 {
     LOCAL32HEADER *header = (LOCAL32HEADER *)heap;
     LPDWORD handle;
@@ -1705,7 +1705,7 @@ DWORD WINAPI Local32Alloc( HANDLE32 heap, DWORD size, INT16 type, DWORD flags )
 /***********************************************************************
  *           Local32ReAlloc   (KERNEL.210)
  */
-DWORD WINAPI Local32ReAlloc( HANDLE32 heap, DWORD addr, INT16 type,
+DWORD WINAPI Local32ReAlloc16( HANDLE heap, DWORD addr, INT16 type,
                              DWORD size, DWORD flags )
 {
     LOCAL32HEADER *header = (LOCAL32HEADER *)heap;
@@ -1713,7 +1713,7 @@ DWORD WINAPI Local32ReAlloc( HANDLE32 heap, DWORD addr, INT16 type,
     LPBYTE ptr;
 
     if (!addr)
-        return Local32Alloc( heap, size, type, flags );
+        return Local32Alloc16( heap, size, type, flags );
 
     /* Retrieve handle and pointer */
     Local32_ToHandle( header, type, addr, &handle, &ptr );
@@ -1739,7 +1739,7 @@ DWORD WINAPI Local32ReAlloc( HANDLE32 heap, DWORD addr, INT16 type,
 /***********************************************************************
  *           Local32Free   (KERNEL.211)
  */
-BOOL32 WINAPI Local32Free( HANDLE32 heap, DWORD addr, INT16 type )
+BOOL WINAPI Local32Free16( HANDLE heap, DWORD addr, INT16 type )
 {
     LOCAL32HEADER *header = (LOCAL32HEADER *)heap;
     LPDWORD handle;
@@ -1785,7 +1785,7 @@ BOOL32 WINAPI Local32Free( HANDLE32 heap, DWORD addr, INT16 type )
 /***********************************************************************
  *           Local32Translate   (KERNEL.213)
  */
-DWORD WINAPI Local32Translate( HANDLE32 heap, DWORD addr, INT16 type1, INT16 type2 )
+DWORD WINAPI Local32Translate16( HANDLE heap, DWORD addr, INT16 type1, INT16 type2 )
 {
     LOCAL32HEADER *header = (LOCAL32HEADER *)heap;
     LPDWORD handle;
@@ -1801,7 +1801,7 @@ DWORD WINAPI Local32Translate( HANDLE32 heap, DWORD addr, INT16 type1, INT16 typ
 /***********************************************************************
  *           Local32Size   (KERNEL.214)
  */
-DWORD WINAPI Local32Size( HANDLE32 heap, DWORD addr, INT16 type )
+DWORD WINAPI Local32Size16( HANDLE heap, DWORD addr, INT16 type )
 {
     LOCAL32HEADER *header = (LOCAL32HEADER *)heap;
     LPDWORD handle;
@@ -1816,7 +1816,7 @@ DWORD WINAPI Local32Size( HANDLE32 heap, DWORD addr, INT16 type )
 /***********************************************************************
  *           Local32ValidHandle   (KERNEL.215)
  */
-BOOL32 WINAPI Local32ValidHandle( HANDLE32 heap, WORD addr )
+BOOL WINAPI Local32ValidHandle16( HANDLE heap, WORD addr )
 {
     LOCAL32HEADER *header = (LOCAL32HEADER *)heap;
     LPDWORD handle;
@@ -1829,7 +1829,7 @@ BOOL32 WINAPI Local32ValidHandle( HANDLE32 heap, WORD addr )
 /***********************************************************************
  *           Local32GetSegment   (KERNEL.229)
  */
-WORD WINAPI Local32GetSegment( HANDLE32 heap )
+WORD WINAPI Local32GetSegment16( HANDLE heap )
 {
     LOCAL32HEADER *header = (LOCAL32HEADER *)heap;
     return header->segment;
@@ -1840,9 +1840,9 @@ WORD WINAPI Local32GetSegment( HANDLE32 heap )
  */
 static LOCAL32HEADER *Local32_GetHeap( HGLOBAL16 handle )
 {
-    WORD selector = GlobalHandleToSel( handle );
+    WORD selector = GlobalHandleToSel16( handle );
     DWORD base  = GetSelectorBase( selector ); 
-    DWORD limit = GetSelectorLimit( selector ); 
+    DWORD limit = GetSelectorLimit16( selector ); 
 
     /* Hmmm. This is a somewhat stupid heuristic, but Windows 95 does
        it this way ... */
@@ -1862,7 +1862,7 @@ static LOCAL32HEADER *Local32_GetHeap( HGLOBAL16 handle )
 /***********************************************************************
  *           Local32Info   (KERNEL.444)  (TOOLHELP.84)
  */
-BOOL16 WINAPI Local32Info( LOCAL32INFO *pLocal32Info, HGLOBAL16 handle )
+BOOL16 WINAPI Local32Info16( LOCAL32INFO *pLocal32Info, HGLOBAL16 handle )
 {
     SUBHEAP *heapPtr;
     LPBYTE ptr;
@@ -1916,7 +1916,7 @@ BOOL16 WINAPI Local32Info( LOCAL32INFO *pLocal32Info, HGLOBAL16 handle )
 /***********************************************************************
  *           Local32First   (KERNEL.445)  (TOOLHELP.85)
  */
-BOOL16 WINAPI Local32First( LOCAL32ENTRY *pLocal32Entry, HGLOBAL16 handle )
+BOOL16 WINAPI Local32First16( LOCAL32ENTRY *pLocal32Entry, HGLOBAL16 handle )
 {
     FIXME( heap, "(%p, %04X): stub!\n", pLocal32Entry, handle );
     return FALSE;
@@ -1925,7 +1925,7 @@ BOOL16 WINAPI Local32First( LOCAL32ENTRY *pLocal32Entry, HGLOBAL16 handle )
 /***********************************************************************
  *           Local32Next   (KERNEL.446)  (TOOLHELP.86)
  */
-BOOL16 WINAPI Local32Next( LOCAL32ENTRY *pLocal32Entry )
+BOOL16 WINAPI Local32Next16( LOCAL32ENTRY *pLocal32Entry )
 {
     FIXME( heap, "(%p): stub!\n", pLocal32Entry );
     return FALSE;

@@ -27,7 +27,7 @@
 /***********************************************************************
  *           HANDLE_GrowTable
  */
-static BOOL32 HANDLE_GrowTable( PDB32 *process, INT32 incr )
+static BOOL HANDLE_GrowTable( PDB *process, INT incr )
 {
     HANDLE_TABLE *table;
 
@@ -52,7 +52,7 @@ static BOOL32 HANDLE_GrowTable( PDB32 *process, INT32 incr )
  *
  * Create a process handle table, optionally inheriting the parent's handles.
  */
-BOOL32 HANDLE_CreateTable( PDB32 *pdb, BOOL32 inherit )
+BOOL HANDLE_CreateTable( PDB *pdb, BOOL inherit )
 {
     DWORD size;
 
@@ -74,7 +74,7 @@ BOOL32 HANDLE_CreateTable( PDB32 *pdb, BOOL32 inherit )
         {
             HANDLE_ENTRY *src = pdb->parent->handle_table->entries;
             HANDLE_ENTRY *dst = pdb->handle_table->entries;
-            HANDLE32 h;
+            HANDLE h;
 
             for (h = 0; h < size; h++, src++, dst++)
             {
@@ -107,10 +107,10 @@ BOOL32 HANDLE_CreateTable( PDB32 *pdb, BOOL32 inherit )
  *
  * Allocate a handle for a kernel object and increment its refcount.
  */
-HANDLE32 HANDLE_Alloc( PDB32 *pdb, K32OBJ *ptr, DWORD access,
-                       BOOL32 inherit, int server_handle )
+HANDLE HANDLE_Alloc( PDB *pdb, K32OBJ *ptr, DWORD access,
+                       BOOL inherit, int server_handle )
 {
-    HANDLE32 h;
+    HANDLE h;
     HANDLE_ENTRY *entry;
 
     assert( ptr );
@@ -138,7 +138,7 @@ HANDLE32 HANDLE_Alloc( PDB32 *pdb, K32OBJ *ptr, DWORD access,
     SYSTEM_UNLOCK();
     if (server_handle != -1) CLIENT_CloseHandle( server_handle );
     SetLastError( ERROR_OUTOFMEMORY );
-    return INVALID_HANDLE_VALUE32;
+    return INVALID_HANDLE_VALUE;
 }
 
 
@@ -148,7 +148,7 @@ HANDLE32 HANDLE_Alloc( PDB32 *pdb, K32OBJ *ptr, DWORD access,
  * Retrieve a pointer to a kernel object and increments its reference count.
  * The refcount must be decremented when the pointer is no longer used.
  */
-K32OBJ *HANDLE_GetObjPtr( PDB32 *pdb, HANDLE32 handle,
+K32OBJ *HANDLE_GetObjPtr( PDB *pdb, HANDLE handle,
                           K32OBJ_TYPE type, DWORD access,
                           int *server_handle )
 {
@@ -196,7 +196,7 @@ K32OBJ *HANDLE_GetObjPtr( PDB32 *pdb, HANDLE32 handle,
  *
  * Retrieve the server handle associated to an object.
  */
-int HANDLE_GetServerHandle( PDB32 *pdb, HANDLE32 handle,
+int HANDLE_GetServerHandle( PDB *pdb, HANDLE handle,
                             K32OBJ_TYPE type, DWORD access )
 {
     int server_handle;
@@ -215,9 +215,9 @@ int HANDLE_GetServerHandle( PDB32 *pdb, HANDLE32 handle,
 /*********************************************************************
  *           HANDLE_GetAccess
  */
-static BOOL32 HANDLE_GetAccess( PDB32 *pdb, HANDLE32 handle, LPDWORD access )
+static BOOL HANDLE_GetAccess( PDB *pdb, HANDLE handle, LPDWORD access )
 {
-    BOOL32 ret = FALSE;
+    BOOL ret = FALSE;
 
     SYSTEM_LOCK();
     if ((handle > 0) && (handle < pdb->handle_table->count))
@@ -238,9 +238,9 @@ static BOOL32 HANDLE_GetAccess( PDB32 *pdb, HANDLE32 handle, LPDWORD access )
 /*********************************************************************
  *           HANDLE_Close
  */
-static BOOL32 HANDLE_Close( PDB32 *pdb, HANDLE32 handle )
+static BOOL HANDLE_Close( PDB *pdb, HANDLE handle )
 {
-    BOOL32 ret = FALSE;
+    BOOL ret = FALSE;
     K32OBJ *ptr;
 
     if (HANDLE_IS_GLOBAL( handle ))
@@ -278,11 +278,11 @@ static BOOL32 HANDLE_Close( PDB32 *pdb, HANDLE32 handle )
  * Close all handles pointing to a given object (or all handles of the
  * process if the object is NULL)
  */
-void HANDLE_CloseAll( PDB32 *pdb, K32OBJ *obj )
+void HANDLE_CloseAll( PDB *pdb, K32OBJ *obj )
 {
     HANDLE_ENTRY *entry;
     K32OBJ *ptr;
-    HANDLE32 handle;
+    HANDLE handle;
 
     SYSTEM_LOCK();
     entry = pdb->handle_table->entries;
@@ -302,7 +302,7 @@ void HANDLE_CloseAll( PDB32 *pdb, K32OBJ *obj )
 /*********************************************************************
  *           CloseHandle   (KERNEL32.23)
  */
-BOOL32 WINAPI CloseHandle( HANDLE32 handle )
+BOOL WINAPI CloseHandle( HANDLE handle )
 {
     return HANDLE_Close( PROCESS_Current(), handle );
 }
@@ -311,10 +311,10 @@ BOOL32 WINAPI CloseHandle( HANDLE32 handle )
 /*********************************************************************
  *           GetHandleInformation   (KERNEL32.336)
  */
-BOOL32 WINAPI GetHandleInformation( HANDLE32 handle, LPDWORD flags )
+BOOL WINAPI GetHandleInformation( HANDLE handle, LPDWORD flags )
 {
-    BOOL32 ret = FALSE;
-    PDB32 *pdb = PROCESS_Current();
+    BOOL ret = FALSE;
+    PDB *pdb = PROCESS_Current();
 
     SYSTEM_LOCK();
     if ((handle > 0) && (handle < pdb->handle_table->count))
@@ -336,10 +336,10 @@ BOOL32 WINAPI GetHandleInformation( HANDLE32 handle, LPDWORD flags )
 /*********************************************************************
  *           SetHandleInformation   (KERNEL32.653)
  */
-BOOL32 WINAPI SetHandleInformation( HANDLE32 handle, DWORD mask, DWORD flags )
+BOOL WINAPI SetHandleInformation( HANDLE handle, DWORD mask, DWORD flags )
 {
-    BOOL32 ret = FALSE;
-    PDB32 *pdb = PROCESS_Current();
+    BOOL ret = FALSE;
+    PDB *pdb = PROCESS_Current();
 
     mask  = (mask << RESERVED_SHIFT) & RESERVED_ALL;
     flags = (flags << RESERVED_SHIFT) & RESERVED_ALL;
@@ -362,19 +362,19 @@ BOOL32 WINAPI SetHandleInformation( HANDLE32 handle, DWORD mask, DWORD flags )
 /*********************************************************************
  *           DuplicateHandle   (KERNEL32.192)
  */
-BOOL32 WINAPI DuplicateHandle( HANDLE32 source_process, HANDLE32 source,
-                               HANDLE32 dest_process, HANDLE32 *dest,
-                               DWORD access, BOOL32 inherit, DWORD options )
+BOOL WINAPI DuplicateHandle( HANDLE source_process, HANDLE source,
+                               HANDLE dest_process, HANDLE *dest,
+                               DWORD access, BOOL inherit, DWORD options )
 {
-    PDB32 *src_pdb = NULL, *dst_pdb = NULL;
+    PDB *src_pdb = NULL, *dst_pdb = NULL;
     K32OBJ *obj = NULL;
-    BOOL32 ret = FALSE;
-    HANDLE32 handle;
+    BOOL ret = FALSE;
+    HANDLE handle;
     int src_process, src_handle, dst_process, dst_handle;
 
     SYSTEM_LOCK();
 
-    if (!(src_pdb = (PDB32 *)HANDLE_GetObjPtr( PROCESS_Current(), source_process,
+    if (!(src_pdb = (PDB *)HANDLE_GetObjPtr( PROCESS_Current(), source_process,
                                     K32OBJ_PROCESS, PROCESS_DUP_HANDLE, &src_process )))
         goto done;
     if (!(obj = HANDLE_GetObjPtr( src_pdb, source, K32OBJ_UNKNOWN, 0, &src_handle )))
@@ -389,7 +389,7 @@ BOOL32 WINAPI DuplicateHandle( HANDLE32 source_process, HANDLE32 source,
 
     /* And duplicate the handle in the dest process */
 
-    if (!(dst_pdb = (PDB32 *)HANDLE_GetObjPtr( PROCESS_Current(), dest_process,
+    if (!(dst_pdb = (PDB *)HANDLE_GetObjPtr( PROCESS_Current(), dest_process,
                                     K32OBJ_PROCESS, PROCESS_DUP_HANDLE, &dst_process )))
         goto done;
 
@@ -400,7 +400,7 @@ BOOL32 WINAPI DuplicateHandle( HANDLE32 source_process, HANDLE32 source,
         dst_handle = -1;
 
     if ((handle = HANDLE_Alloc( dst_pdb, obj, access, inherit,
-                                dst_handle )) != INVALID_HANDLE_VALUE32)
+                                dst_handle )) != INVALID_HANDLE_VALUE)
     {
         if (dest) *dest = handle;
         ret = TRUE;
@@ -418,10 +418,10 @@ done:
 /***********************************************************************
  *           ConvertToGlobalHandle    		(KERNEL32)
  */
-HANDLE32 WINAPI ConvertToGlobalHandle(HANDLE32 hSrc)
+HANDLE WINAPI ConvertToGlobalHandle(HANDLE hSrc)
 {
     int src_handle, dst_handle;
-    HANDLE32 handle;
+    HANDLE handle;
     K32OBJ *obj = NULL;
     DWORD access;
 
@@ -440,7 +440,7 @@ HANDLE32 WINAPI ConvertToGlobalHandle(HANDLE32 hSrc)
         dst_handle = -1;
 
     if ((handle = HANDLE_Alloc( PROCESS_Initial(), obj, access, FALSE,
-                                dst_handle )) != INVALID_HANDLE_VALUE32)
+                                dst_handle )) != INVALID_HANDLE_VALUE)
         handle = HANDLE_LOCAL_TO_GLOBAL(handle);
     else
         handle = 0;

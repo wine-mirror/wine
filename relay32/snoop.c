@@ -61,12 +61,12 @@ typedef	struct tagSNOOP_FUN {
 	DWORD		snoopentry;	/* SNOOP_Entry relative */
 	/* unreached */
 	int		nrofargs;
-	FARPROC32	origfun;
+	FARPROC	origfun;
 	char		*name;
 } SNOOP_FUN;
 
 typedef struct tagSNOOP_DLL {
-	HMODULE32	hmod;
+	HMODULE	hmod;
 	SNOOP_FUN	*funs;
 	LPCSTR		name;
 	int		nrofordinals;
@@ -80,7 +80,7 @@ typedef struct tagSNOOP_RETURNENTRY {
 	 */
 	DWORD		snoopret;	/* SNOOP_Ret relative */
 	/* unreached */
-	FARPROC32	origreturn;
+	FARPROC	origreturn;
 	SNOOP_DLL	*dll;
 	DWORD		ordinal;
 	DWORD		origESP;
@@ -136,7 +136,7 @@ int SNOOP_ShowDebugmsgSnoop(const char *dll, int ord, const char *fname) {
 }
 
 void
-SNOOP_RegisterDLL(HMODULE32 hmod,LPCSTR name,DWORD nrofordinals) {
+SNOOP_RegisterDLL(HMODULE hmod,LPCSTR name,DWORD nrofordinals) {
 	SNOOP_DLL	**dll = &(firstdll);
 	char		*s;
 
@@ -162,8 +162,8 @@ SNOOP_RegisterDLL(HMODULE32 hmod,LPCSTR name,DWORD nrofordinals) {
 	}
 }
 
-FARPROC32
-SNOOP_GetProcAddress32(HMODULE32 hmod,LPCSTR name,DWORD ordinal,FARPROC32 origfun) {
+FARPROC
+SNOOP_GetProcAddress(HMODULE hmod,LPCSTR name,DWORD ordinal,FARPROC origfun) {
 	SNOOP_DLL			*dll = firstdll;
 	SNOOP_FUN			*fun;
 	int				j;
@@ -208,7 +208,7 @@ SNOOP_GetProcAddress32(HMODULE32 hmod,LPCSTR name,DWORD ordinal,FARPROC32 origfu
 	fun->snoopentry	= (char*)SNOOP_Entry-((char*)(&fun->nrofargs));
 	fun->origfun	= origfun;
 	fun->nrofargs	= -1;
-	return (FARPROC32)&(fun->lcall);
+	return (FARPROC)&(fun->lcall);
 }
 
 static char*
@@ -225,7 +225,7 @@ SNOOP_PrintArg(DWORD x) {
 		return buf;
 	}
 	i=0;nostring=0;
-	if (!IsBadStringPtr32A((LPSTR)x,80)) {
+	if (!IsBadStringPtrA((LPSTR)x,80)) {
 		while (i<80) {
 			LPBYTE	s=(LPBYTE)x;
 
@@ -244,7 +244,7 @@ SNOOP_PrintArg(DWORD x) {
 		}
 	}
 	i=0;nostring=0;
-	if (!IsBadStringPtr32W((LPWSTR)x,80)) {
+	if (!IsBadStringPtrW((LPWSTR)x,80)) {
 		while (i<80) {
 			LPWSTR	s=(LPWSTR)x;
 
@@ -321,7 +321,7 @@ REGS_ENTRYPOINT(SNOOP_Entry) {
 	ret->lcall	= 0xe8;
 	/* NOTE: origreturn struct member MUST come directly after snoopret */
 	ret->snoopret	= ((char*)SNOOP_Return)-(char*)(&ret->origreturn);
-	ret->origreturn	= (FARPROC32)CALLER1REF;
+	ret->origreturn	= (FARPROC)CALLER1REF;
 	CALLER1REF	= (DWORD)&ret->lcall;
 	ret->dll	= dll;
 	ret->args	= NULL;
@@ -378,12 +378,12 @@ REGS_ENTRYPOINT(SNOOP_Return) {
 	ret->origreturn = NULL; /* mark as empty */
 }
 #else	/* !__i386__ */
-void SNOOP_RegisterDLL(HMODULE32 hmod,LPCSTR name,DWORD nrofordinals) {
+void SNOOP_RegisterDLL(HMODULE hmod,LPCSTR name,DWORD nrofordinals) {
 	FIXME(snoop,"snooping works only on i386 for now.\n");
 	return;
 }
 
-FARPROC32 SNOOP_GetProcAddress32(HMODULE32 hmod,LPCSTR name,DWORD ordinal,FARPROC32 origfun) {
+FARPROC SNOOP_GetProcAddress(HMODULE hmod,LPCSTR name,DWORD ordinal,FARPROC origfun) {
 	return origfun;
 }
 #endif	/* !__i386__ */

@@ -25,7 +25,7 @@
  */
 typedef struct tagDropTargetNode
 {
-  HWND32          hwndTarget;
+  HWND          hwndTarget;
   IDropTarget*    dropTarget;
   struct tagDropTargetNode* prevDropTarget;
   struct tagDropTargetNode* nextDropTarget;
@@ -37,11 +37,11 @@ typedef struct tagTrackerWindowInfo
   IDropSource* dropSource;
   DWORD        dwOKEffect;
   DWORD*       pdwEffect;
-  BOOL32       trackingDone;
+  BOOL       trackingDone;
   HRESULT      returnValue;
 
-  BOOL32       escPressed;
-  HWND32       curDragTargetHWND;
+  BOOL       escPressed;
+  HWND       curDragTargetHWND;
   IDropTarget* curDragTarget;
 } TrackerWindowInfo;
 
@@ -69,21 +69,21 @@ static void            OLEDD_UnInitialize();
 static void            OLEDD_InsertDropTarget(
 			 DropTargetNode* nodeToAdd);
 static DropTargetNode* OLEDD_ExtractDropTarget(
-                         HWND32 hwndOfTarget);
+                         HWND hwndOfTarget);
 static DropTargetNode* OLEDD_FindDropTarget(
-                         HWND32 hwndOfTarget);
+                         HWND hwndOfTarget);
 static LRESULT WINAPI  OLEDD_DragTrackerWindowProc(
-			 HWND32   hwnd, 
-			 UINT32   uMsg,
-			 WPARAM32 wParam, 
+			 HWND   hwnd, 
+			 UINT   uMsg,
+			 WPARAM wParam, 
 			 LPARAM   lParam);
 static void OLEDD_TrackMouseMove(
                          TrackerWindowInfo* trackerInfo,
-			 POINT32            mousePos,
+			 POINT            mousePos,
 			 DWORD              keyState);
 static void OLEDD_TrackStateChange(
                          TrackerWindowInfo* trackerInfo,
-			 POINT32            mousePos,
+			 POINT            mousePos,
 			 DWORD              keyState);
 static DWORD OLEDD_GetButtonState();
 
@@ -109,7 +109,7 @@ HRESULT WINAPI OleInitialize(LPVOID reserved)
   /*
    * The first duty of the OleInitialize is to initialize the COM libraries.
    */
-  hr = CoInitializeEx32(NULL, COINIT_APARTMENTTHREADED);
+  hr = CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
 
   /*
    * If the CoInitializeEx call failed, the OLE libraries can't be 
@@ -188,13 +188,13 @@ void WINAPI OleUninitialize(void)
   /*
    * Then, uninitialize the COM libraries.
    */
-  CoUninitialize32();
+  CoUninitialize();
 }
 
 /***********************************************************************
  *           OleFlushClipboard   [OLE2.76]
  */
-HRESULT WINAPI OleFlushClipboard(void)
+HRESULT WINAPI OleFlushClipboard16(void)
 {
     return S_OK;
 }
@@ -211,7 +211,7 @@ HRESULT WINAPI OleSetClipboard(LPVOID pDataObj)
 /******************************************************************************
  *		CoRegisterMessageFilter32	[OLE32.38]
  */
-HRESULT WINAPI CoRegisterMessageFilter32(
+HRESULT WINAPI CoRegisterMessageFilter(
     LPMESSAGEFILTER lpMessageFilter,	/* Pointer to interface */
     LPMESSAGEFILTER *lplpMessageFilter	/* Indirect pointer to prior instance if non-NULL */
 ) {
@@ -244,8 +244,8 @@ HRESULT WINAPI RegisterDragDrop16(
 /***********************************************************************
  *           RegisterDragDrop32 (OLE32.139)
  */
-HRESULT WINAPI RegisterDragDrop32(
-	HWND32 hwnd,
+HRESULT WINAPI RegisterDragDrop(
+	HWND hwnd,
 	LPDROPTARGET pDropTarget) 
 {
   DropTargetNode* dropTargetInfo;
@@ -297,8 +297,8 @@ HRESULT WINAPI RevokeDragDrop16(
 /***********************************************************************
  *           RevokeDragDrop32 (OLE32.141)
  */
-HRESULT WINAPI RevokeDragDrop32(
-	HWND32 hwnd)
+HRESULT WINAPI RevokeDragDrop(
+	HWND hwnd)
 {
   DropTargetNode* dropTargetInfo;
 
@@ -328,10 +328,10 @@ HRESULT WINAPI RevokeDragDrop32(
 /***********************************************************************
  *           OleRegGetUserType (OLE32.122)
  */
-HRESULT WINAPI OleRegGetUserType32( 
+HRESULT WINAPI OleRegGetUserType( 
 	REFCLSID clsid, 
 	DWORD dwFormOfType,
-	LPOLESTR32* pszUserType)
+	LPOLESTR* pszUserType)
 {
 	FIXME(ole,",stub!\n");
 	return S_OK;
@@ -340,15 +340,15 @@ HRESULT WINAPI OleRegGetUserType32(
 /***********************************************************************
  * DoDragDrop32 [OLE32.65]
  */
-HRESULT WINAPI DoDragDrop32 (
+HRESULT WINAPI DoDragDrop (
   IDataObject *pDataObject,  /* ptr to the data obj           */
   IDropSource* pDropSource,  /* ptr to the source obj         */
   DWORD       dwOKEffect,    /* effects allowed by the source */
   DWORD       *pdwEffect)    /* ptr to effects of the source  */
 {
   TrackerWindowInfo trackerInfo;
-  HWND32            hwndTrackWindow;
-  MSG32             msg;
+  HWND            hwndTrackWindow;
+  MSG             msg;
 
   TRACE(ole,"(DataObject %p, DropSource %p)\n", pDataObject, pDropSource);
 
@@ -364,11 +364,11 @@ HRESULT WINAPI DoDragDrop32 (
   trackerInfo.curDragTargetHWND = 0;
   trackerInfo.curDragTarget     = 0;
 
-  hwndTrackWindow = CreateWindow32A(OLEDD_DRAGTRACKERCLASS,
+  hwndTrackWindow = CreateWindowA(OLEDD_DRAGTRACKERCLASS,
 				    "TrackerWindow",
 				    WS_POPUP,
-				    CW_USEDEFAULT32, CW_USEDEFAULT32,
-				    CW_USEDEFAULT32, CW_USEDEFAULT32,
+				    CW_USEDEFAULT, CW_USEDEFAULT,
+				    CW_USEDEFAULT, CW_USEDEFAULT,
 				    0,
 				    0,
 				    0,
@@ -379,12 +379,12 @@ HRESULT WINAPI DoDragDrop32 (
     /*
      * Capture the mouse input
      */
-    SetCapture32(hwndTrackWindow);
+    SetCapture(hwndTrackWindow);
 
     /*
      * Pump messages. All mouse input should go the the capture window.
      */
-    while (!trackerInfo.trackingDone && GetMessage32A(&msg, 0, 0, 0) )
+    while (!trackerInfo.trackingDone && GetMessageA(&msg, 0, 0, 0) )
     {
       if ( (msg.message >= WM_KEYFIRST) && 
 	   (msg.message <= WM_KEYFIRST) )
@@ -413,14 +413,14 @@ HRESULT WINAPI DoDragDrop32 (
 	/*
 	 * Dispatch the messages only when it's not a keyboard message.
 	 */
-	DispatchMessage32A(&msg);
+	DispatchMessageA(&msg);
       }
     }
 
     /*
      * Destroy the temporary window.
      */
-    DestroyWindow32(hwndTrackWindow);
+    DestroyWindow(hwndTrackWindow);
 
     return trackerInfo.returnValue;
   }
@@ -467,9 +467,9 @@ HRESULT WINAPI OleGetClipboard32(
 /***********************************************************************
  * OleCreateMenuDescriptor [OLE32.97]
  */
-HOLEMENU32 WINAPI OleCreateMenuDescriptor(
-  HMENU32                hmenuCombined,
-  LPOLEMENUGROUPWIDTHS32 lpMenuWidths)
+HOLEMENU WINAPI OleCreateMenuDescriptor(
+  HMENU                hmenuCombined,
+  LPOLEMENUGROUPWIDTHS lpMenuWidths)
 {
   FIXME(ole,"(%x,%p),stub!\n", hmenuCombined, lpMenuWidths);
 
@@ -480,7 +480,7 @@ HOLEMENU32 WINAPI OleCreateMenuDescriptor(
  * OleDestroyMenuDescriptor [OLE32.99]
  */
 void WINAPI OleDestroyMenuDescriptor(
-  HOLEMENU32 hmenuDescriptor)
+  HOLEMENU hmenuDescriptor)
 {
   FIXME(ole,"(%x),stub!\n", (unsigned int)hmenuDescriptor);
 }
@@ -489,9 +489,9 @@ void WINAPI OleDestroyMenuDescriptor(
  * OleSetMenuDescriptor [OLE32.129]
  */
 HRESULT WINAPI OleSetMenuDescriptor(
-  HOLEMENU32               hmenuDescriptor,
-  HWND32                   hwndFrame,
-  HWND32                   hwndActiveObject,
+  HOLEMENU               hmenuDescriptor,
+  HWND                   hwndFrame,
+  HWND                   hwndActiveObject,
   LPOLEINPLACEFRAME        lpFrame,
   LPOLEINPLACEACTIVEOBJECT lpActiveObject)
 {
@@ -512,18 +512,18 @@ HRESULT WINAPI OleSetMenuDescriptor(
  */
 static void OLEDD_Initialize()
 {
-    WNDCLASS32A wndClass;
+    WNDCLASSA wndClass;
 
-    ZeroMemory (&wndClass, sizeof(WNDCLASS32A));
+    ZeroMemory (&wndClass, sizeof(WNDCLASSA));
     wndClass.style         = CS_GLOBALCLASS;
-    wndClass.lpfnWndProc   = (WNDPROC32)OLEDD_DragTrackerWindowProc;
+    wndClass.lpfnWndProc   = (WNDPROC)OLEDD_DragTrackerWindowProc;
     wndClass.cbClsExtra    = 0;
     wndClass.cbWndExtra    = sizeof(TrackerWindowInfo*);
     wndClass.hCursor       = 0;
     wndClass.hbrBackground = 0;
     wndClass.lpszClassName = OLEDD_DRAGTRACKERCLASS;
  
-    RegisterClass32A (&wndClass);
+    RegisterClassA (&wndClass);
 }
 
 /***
@@ -538,7 +538,7 @@ static void OLEDD_UnInitialize()
    */
   while (targetListHead!=NULL)
   {
-    RevokeDragDrop32(targetListHead->hwndTarget);
+    RevokeDragDrop(targetListHead->hwndTarget);
   }
 }
 
@@ -603,7 +603,7 @@ static void OLEDD_InsertDropTarget(DropTargetNode* nodeToAdd)
  *
  * Removes the target node from the tree.
  */
-static DropTargetNode* OLEDD_ExtractDropTarget(HWND32 hwndOfTarget)
+static DropTargetNode* OLEDD_ExtractDropTarget(HWND hwndOfTarget)
 {
   DropTargetNode*  curNode;
   DropTargetNode** parentNodeLink;
@@ -676,7 +676,7 @@ static DropTargetNode* OLEDD_ExtractDropTarget(HWND32 hwndOfTarget)
  *
  * Finds information about the drop target.
  */
-static DropTargetNode* OLEDD_FindDropTarget(HWND32 hwndOfTarget)
+static DropTargetNode* OLEDD_FindDropTarget(HWND hwndOfTarget)
 {
   DropTargetNode*  curNode;
 
@@ -725,33 +725,33 @@ static DropTargetNode* OLEDD_FindDropTarget(HWND32 hwndOfTarget)
  * of this behavior.
  */
 static LRESULT WINAPI OLEDD_DragTrackerWindowProc(
-			 HWND32   hwnd, 
-			 UINT32   uMsg,
-			 WPARAM32 wParam, 
+			 HWND   hwnd, 
+			 UINT   uMsg,
+			 WPARAM wParam, 
 			 LPARAM   lParam)
 {
   switch (uMsg)
   {
     case WM_CREATE:
     {
-      LPCREATESTRUCT32A createStruct = (LPCREATESTRUCT32A)lParam;
+      LPCREATESTRUCTA createStruct = (LPCREATESTRUCTA)lParam;
 
-      SetWindowLong32A(hwnd, 0, (LONG)createStruct->lpCreateParams); 
+      SetWindowLongA(hwnd, 0, (LONG)createStruct->lpCreateParams); 
 
       
       break;
     }
     case WM_MOUSEMOVE:
     {
-      TrackerWindowInfo* trackerInfo = (TrackerWindowInfo*)GetWindowLong32A(hwnd, 0);
-      POINT32            mousePos;
+      TrackerWindowInfo* trackerInfo = (TrackerWindowInfo*)GetWindowLongA(hwnd, 0);
+      POINT            mousePos;
 
       /*
        * Get the current mouse position in screen coordinates.
        */
       mousePos.x = LOWORD(lParam);
       mousePos.y = HIWORD(lParam);
-      ClientToScreen32(hwnd, &mousePos);
+      ClientToScreen(hwnd, &mousePos);
 
       /*
        * Track the movement of the mouse.
@@ -767,15 +767,15 @@ static LRESULT WINAPI OLEDD_DragTrackerWindowProc(
     case WM_MBUTTONDOWN:
     case WM_RBUTTONDOWN:
     {
-      TrackerWindowInfo* trackerInfo = (TrackerWindowInfo*)GetWindowLong32A(hwnd, 0);
-      POINT32            mousePos;
+      TrackerWindowInfo* trackerInfo = (TrackerWindowInfo*)GetWindowLongA(hwnd, 0);
+      POINT            mousePos;
 
       /*
        * Get the current mouse position in screen coordinates.
        */
       mousePos.x = LOWORD(lParam);
       mousePos.y = HIWORD(lParam);
-      ClientToScreen32(hwnd, &mousePos);
+      ClientToScreen(hwnd, &mousePos);
 
       /*
        * Notify everyone that the button state changed
@@ -790,7 +790,7 @@ static LRESULT WINAPI OLEDD_DragTrackerWindowProc(
   /*
    * This is a window proc after all. Let's call the default.
    */
-  return DefWindowProc32A (hwnd, uMsg, wParam, lParam);
+  return DefWindowProcA (hwnd, uMsg, wParam, lParam);
 }
 
 /***
@@ -812,16 +812,16 @@ static LRESULT WINAPI OLEDD_DragTrackerWindowProc(
  */
 static void OLEDD_TrackMouseMove(
   TrackerWindowInfo* trackerInfo,
-  POINT32            mousePos,
+  POINT            mousePos,
   DWORD              keyState)
 {
-  HWND32   hwndNewTarget = 0;
+  HWND   hwndNewTarget = 0;
   HRESULT  hr = S_OK;
 
   /*
    * Get the handle of the window under the mouse
    */
-  hwndNewTarget = WindowFromPoint32(mousePos);
+  hwndNewTarget = WindowFromPoint(mousePos);
 
   /*
    * If we are hovering over the same target as before, send the
@@ -928,11 +928,11 @@ static void OLEDD_TrackMouseMove(
 	 (*trackerInfo->pdwEffect & DROPEFFECT_COPY) ||
 	 (*trackerInfo->pdwEffect & DROPEFFECT_LINK) )
     {
-      SetCursor32(LoadCursor32A(0, IDC_SIZEALL32A));
+      SetCursor(LoadCursorA(0, IDC_SIZEALLA));
     }
     else
     {
-      SetCursor32(LoadCursor32A(0, IDC_NO32A));
+      SetCursor(LoadCursorA(0, IDC_NOA));
     }
   }  
 }
@@ -955,7 +955,7 @@ static void OLEDD_TrackMouseMove(
  */
 static void OLEDD_TrackStateChange(
   TrackerWindowInfo* trackerInfo,
-  POINT32            mousePos,
+  POINT            mousePos,
   DWORD              keyState)
 {
   /*

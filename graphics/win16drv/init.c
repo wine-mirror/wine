@@ -35,9 +35,9 @@ SEGPTR		win16drv_SegPtr_DrawMode;
 LPDRAWMODE 	win16drv_DrawModeP;
 
 
-static BOOL32 WIN16DRV_CreateDC( DC *dc, LPCSTR driver, LPCSTR device,
+static BOOL WIN16DRV_CreateDC( DC *dc, LPCSTR driver, LPCSTR device,
                                  LPCSTR output, const DEVMODE16* initData );
-static INT32 WIN16DRV_Escape( DC *dc, INT32 nEscape, INT32 cbInput, 
+static INT WIN16DRV_Escape( DC *dc, INT nEscape, INT cbInput, 
                               SEGPTR lpInData, SEGPTR lpOutData );
 
 static const DC_FUNCTIONS WIN16DRV_Funcs =
@@ -117,7 +117,7 @@ static const DC_FUNCTIONS WIN16DRV_Funcs =
 /**********************************************************************
  *	     WIN16DRV_Init
  */
-BOOL32 WIN16DRV_Init(void)
+BOOL WIN16DRV_Init(void)
 {
     return DRIVER_RegisterDriver( NULL /* generic driver */, &WIN16DRV_Funcs );
         
@@ -158,7 +158,7 @@ void InitDrawMode(LPDRAWMODE lpDrawMode)
     lpDrawMode->LTextColor	= 0x00000000;     
 }
 
-BOOL32 WIN16DRV_CreateDC( DC *dc, LPCSTR driver, LPCSTR device, LPCSTR output,
+BOOL WIN16DRV_CreateDC( DC *dc, LPCSTR driver, LPCSTR device, LPCSTR output,
                           const DEVMODE16* initData )
 {
     LOADED_PRINTER_DRIVER *pLPD;
@@ -170,7 +170,7 @@ BOOL32 WIN16DRV_CreateDC( DC *dc, LPCSTR driver, LPCSTR device, LPCSTR output,
     char printerEnabled[20];
     PROFILE_GetWineIniString( "wine", "printer", "off",
                              printerEnabled, sizeof(printerEnabled) );
-    if (lstrcmpi32A(printerEnabled,"on"))
+    if (lstrcmpiA(printerEnabled,"on"))
     {
         MSG("Printing disabled in wine.conf or .winerc file\n");
         MSG("Use \"printer=on\" in the \"[wine]\" section to enable it.\n");
@@ -203,7 +203,7 @@ BOOL32 WIN16DRV_CreateDC( DC *dc, LPCSTR driver, LPCSTR device, LPCSTR output,
 
     /* Add this to the DC */
     dc->w.devCaps = printerDevCaps;
-    dc->w.hVisRgn = CreateRectRgn32(0, 0, dc->w.devCaps->horzRes, dc->w.devCaps->vertRes);
+    dc->w.hVisRgn = CreateRectRgn(0, 0, dc->w.devCaps->horzRes, dc->w.devCaps->vertRes);
     dc->w.bitsPerPixel = dc->w.devCaps->bitsPixel;
     
     TRACE(win16drv, "Got devcaps width %d height %d bits %d planes %d\n",
@@ -247,12 +247,12 @@ BOOL32 WIN16DRV_CreateDC( DC *dc, LPCSTR driver, LPCSTR device, LPCSTR output,
     return TRUE;
 }
 
-BOOL32 WIN16DRV_PatBlt( struct tagDC *dc, INT32 left, INT32 top,
-			INT32 width, INT32 height, DWORD rop )
+BOOL WIN16DRV_PatBlt( struct tagDC *dc, INT left, INT top,
+			INT width, INT height, DWORD rop )
 {
   
     WIN16DRV_PDEVICE *physDev = (WIN16DRV_PDEVICE *)dc->physDev;
-    BOOL32 bRet = 0;
+    BOOL bRet = 0;
 
     bRet = PRTDRV_StretchBlt( physDev->segptrPDEVICE, left, top, width, height, (SEGPTR)NULL, 0, 0, width, height,
                        PATCOPY, physDev->BrushInfo, win16drv_SegPtr_DrawMode, NULL);
@@ -262,7 +262,7 @@ BOOL32 WIN16DRV_PatBlt( struct tagDC *dc, INT32 left, INT32 top,
 /* 
  * Escape (GDI.38)
  */
-static INT32 WIN16DRV_Escape( DC *dc, INT32 nEscape, INT32 cbInput, 
+static INT WIN16DRV_Escape( DC *dc, INT nEscape, INT cbInput, 
                               SEGPTR lpInData, SEGPTR lpOutData )
 {
     WIN16DRV_PDEVICE *physDev = (WIN16DRV_PDEVICE *)dc->physDev;
@@ -328,7 +328,7 @@ static INT32 WIN16DRV_Escape( DC *dc, INT32 nEscape, INT32 cbInput,
 				  lpInData, lpOutData);
             if (nRet != -1)
             {
-              HDC32 *tmpHdc = SEGPTR_NEW(HDC32);
+              HDC *tmpHdc = SEGPTR_NEW(HDC);
 
 #define SETPRINTERDC SETABORTPROC
 

@@ -2,7 +2,7 @@ name	sound
 type	win16
 
 1  pascal16 OpenSound() OpenSound16
-2  pascal16 CloseSound() CloseSound
+2  pascal16 CloseSound() CloseSound16
 3  pascal16 SetVoiceQueueSize(word word) SetVoiceQueueSize16
 4  pascal16 SetVoiceNote(word word word word) SetVoiceNote16
 5  pascal16 SetVoiceAccent(word word word word word) SetVoiceAccent16
@@ -17,4 +17,4 @@ type	win16
 14 pascal   GetThresholdEvent() GetThresholdEvent16
 15 pascal16 GetThresholdStatus() GetThresholdStatus16
 16 pascal16 SetVoiceThreshold(word word) SetVoiceThreshold16
-17 pascal16 DoBeep() DoBeep
+17 pascal16 DoBeep() DoBeep16

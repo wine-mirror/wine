@@ -17,7 +17,7 @@
  *    EngineEnumerateFont [GDI.300] 
  */
 WORD WINAPI 
-EngineEnumerateFont(LPSTR fontname, FARPROC16 proc, DWORD data )
+EngineEnumerateFont16(LPSTR fontname, FARPROC16 proc, DWORD data )
 {
     FIXME(font,"(%s,%p,%lx),stub\n",fontname,proc,data);
     return 0;
@@ -26,7 +26,7 @@ EngineEnumerateFont(LPSTR fontname, FARPROC16 proc, DWORD data )
 /* **************************************************************** 
  *   EngineDeleteFont [GDI.301] 
  */
-WORD WINAPI EngineDeleteFont(LPFONTINFO16 lpFontInfo)
+WORD WINAPI EngineDeleteFont16(LPFONTINFO16 lpFontInfo)
 {
     WORD handle;
 
@@ -52,7 +52,7 @@ WORD WINAPI EngineDeleteFont(LPFONTINFO16 lpFontInfo)
 /* ****************************************************************
  *       EngineRealizeFont [GDI.302] 
  */
-WORD WINAPI EngineRealizeFont(LPLOGFONT16 lplogFont, LPTEXTXFORM16 lptextxform, LPFONTINFO16 lpfontInfo)
+WORD WINAPI EngineRealizeFont16(LPLOGFONT16 lplogFont, LPTEXTXFORM16 lptextxform, LPFONTINFO16 lpfontInfo)
 {
     FIXME(font,"(%p,%p,%p),stub\n",lplogFont,lptextxform,lpfontInfo);
     
@@ -62,7 +62,7 @@ WORD WINAPI EngineRealizeFont(LPLOGFONT16 lplogFont, LPTEXTXFORM16 lptextxform, 
 /* ****************************************************************
  *        EngineGetCharWidth [GDI.303] 
  */
-WORD WINAPI EngineGetCharWidth(LPFONTINFO16 lpFontInfo, BYTE firstChar, BYTE lastChar, LPINT16 buffer)
+WORD WINAPI EngineGetCharWidth16(LPFONTINFO16 lpFontInfo, BYTE firstChar, BYTE lastChar, LPINT16 buffer)
 {
     int i;
 

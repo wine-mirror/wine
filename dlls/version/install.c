@@ -95,7 +95,7 @@ static int  testFileExistence(
     /* Create the full pathname */
     strcat(filename, file);
 
-    if(OpenFile32(filename, &fileinfo, OF_EXIST) == HFILE_ERROR32)
+    if(OpenFile(filename, &fileinfo, OF_EXIST) == HFILE_ERROR)
 	retval = 0;
     else
 	retval = 1;
@@ -145,8 +145,8 @@ static int  testFileExclusiveExistence(
     /* Create the full pathname */
     strcat(filename, file);
 
-    if(OpenFile32(filename, &fileinfo, OF_EXIST | OF_SHARE_EXCLUSIVE) ==
-       HFILE_ERROR32)
+    if(OpenFile(filename, &fileinfo, OF_EXIST | OF_SHARE_EXCLUSIVE) ==
+       HFILE_ERROR)
 	retval = 0;
     else
 	retval = 1;
@@ -168,15 +168,15 @@ static int  testFileExclusiveExistence(
  ****************************************************************************/
 
 /* VerFindFile32A						[VERSION.5] */
-DWORD WINAPI VerFindFile32A(
-    UINT32 flags,
+DWORD WINAPI VerFindFileA(
+    UINT flags,
     LPCSTR lpszFilename,
     LPCSTR lpszWinDir,
     LPCSTR lpszAppDir,
     LPSTR lpszCurDir,
-    UINT32 *lpuCurDirLen,
+    UINT *lpuCurDirLen,
     LPSTR lpszDestDir,
-    UINT32 *lpuDestDirLen )
+    UINT *lpuDestDirLen )
 {
     DWORD  retval;
     char  curDir[256];
@@ -217,7 +217,7 @@ DWORD WINAPI VerFindFile32A(
     strcpy(destDir, "");
 
     if(flags & VFFF_ISSHAREDFILE) {
-	GetSystemDirectory32A(destDir, 256);
+	GetSystemDirectoryA(destDir, 256);
 
 	/* Were we given a filename?  If so, try to find the file. */
 	if(lpszFilename) {
@@ -240,7 +240,7 @@ DWORD WINAPI VerFindFile32A(
     else if(!(flags & VFFF_ISSHAREDFILE)) { /* not a shared file */
 	if(lpszAppDir) {
 	    char  systemDir[256];
-	    GetSystemDirectory32A(systemDir, 256);
+	    GetSystemDirectoryA(systemDir, 256);
 
 	    strcpy(destDir, lpszAppDir);
 
@@ -316,11 +316,11 @@ DWORD WINAPI VerFindFile32A(
 }
 
 /* VerFindFile32W						[VERSION.6] */
-DWORD WINAPI VerFindFile32W(
-	UINT32 flags,LPCWSTR filename,LPCWSTR windir,LPCWSTR appdir,
-	LPWSTR curdir,UINT32 *pcurdirlen,LPWSTR destdir,UINT32 *pdestdirlen )
+DWORD WINAPI VerFindFileW(
+	UINT flags,LPCWSTR filename,LPCWSTR windir,LPCWSTR appdir,
+	LPWSTR curdir,UINT *pcurdirlen,LPWSTR destdir,UINT *pdestdirlen )
 {
-    UINT32 curdirlen, destdirlen;
+    UINT curdirlen, destdirlen;
     LPSTR wfn,wwd,wad,wdd,wcd;
     DWORD ret;
 
@@ -329,7 +329,7 @@ DWORD WINAPI VerFindFile32W(
     wad = HEAP_strdupWtoA( GetProcessHeap(), 0, appdir );
     wcd = HeapAlloc( GetProcessHeap(), 0, *pcurdirlen );
     wdd = HeapAlloc( GetProcessHeap(), 0, *pdestdirlen );
-    ret = VerFindFile32A(flags,wfn,wwd,wad,wcd,&curdirlen,wdd,&destdirlen);
+    ret = VerFindFileA(flags,wfn,wwd,wad,wcd,&curdirlen,wdd,&destdirlen);
     lstrcpynAtoW(curdir,wcd,*pcurdirlen);
     lstrcpynAtoW(destdir,wdd,*pdestdirlen);
     *pcurdirlen = strlen(wcd);
@@ -351,7 +351,7 @@ _fetch_versioninfo(LPSTR fn,VS_FIXEDFILEINFO **vffi) {
     alloclen = 1000;
     buf= xmalloc(alloclen);
     while (1) {
-    	ret = GetFileVersionInfo32A(fn,0,alloclen,buf);
+    	ret = GetFileVersionInfoA(fn,0,alloclen,buf);
 	if (!ret) {
 	    free(buf);
 	    return 0;
@@ -387,13 +387,13 @@ _error2vif(DWORD error) {
 /******************************************************************************
  * VerInstallFile32A [VERSION.7]
  */
-DWORD WINAPI VerInstallFile32A(
-	UINT32 flags,LPCSTR srcfilename,LPCSTR destfilename,LPCSTR srcdir,
- 	LPCSTR destdir,LPCSTR curdir,LPSTR tmpfile,UINT32 *tmpfilelen )
+DWORD WINAPI VerInstallFileA(
+	UINT flags,LPCSTR srcfilename,LPCSTR destfilename,LPCSTR srcdir,
+ 	LPCSTR destdir,LPCSTR curdir,LPSTR tmpfile,UINT *tmpfilelen )
 {
     LPCSTR pdest;
     char	destfn[260],tmpfn[260],srcfn[260];
-    HFILE32	hfsrc,hfdst;
+    HFILE	hfsrc,hfdst;
     DWORD	attr,ret,xret,tmplast;
     LPBYTE	buf1,buf2;
     OFSTRUCT	ofs;
@@ -406,15 +406,15 @@ DWORD WINAPI VerInstallFile32A(
     if (!destdir || !*destdir) pdest = srcdir;
     else pdest = destdir;
     sprintf(destfn,"%s\\%s",pdest,destfilename);
-    hfsrc=LZOpenFile32A(srcfn,&ofs,OF_READ);
-    if (hfsrc==HFILE_ERROR32)
+    hfsrc=LZOpenFileA(srcfn,&ofs,OF_READ);
+    if (hfsrc==HFILE_ERROR)
     	return VIF_CANNOTREADSRC;
     sprintf(tmpfn,"%s\\%s",pdest,destfilename);
     tmplast=strlen(pdest)+1;
-    attr = GetFileAttributes32A(tmpfn);
+    attr = GetFileAttributesA(tmpfn);
     if (attr!=-1) {
 	if (attr & FILE_ATTRIBUTE_READONLY) {
-	    LZClose32(hfsrc);
+	    LZClose(hfsrc);
 	    return VIF_WRITEPROT;
 	}
 	/* FIXME: check if file currently in use and return VIF_FILEINUSE */
@@ -424,7 +424,7 @@ DWORD WINAPI VerInstallFile32A(
     	if (tmpfile[0]) {
 	    sprintf(tmpfn,"%s\\%s",pdest,tmpfile);
 	    tmplast = strlen(pdest)+1;
-	    attr = GetFileAttributes32A(tmpfn);
+	    attr = GetFileAttributesA(tmpfn);
 	    /* if it exists, it has been copied by the call before.
 	     * we jump over the copy part... 
 	     */
@@ -433,19 +433,19 @@ DWORD WINAPI VerInstallFile32A(
     if (attr == -1) {
     	char	*s;
 
-	GetTempFileName32A(pdest,"ver",0,tmpfn); /* should not fail ... */
+	GetTempFileNameA(pdest,"ver",0,tmpfn); /* should not fail ... */
 	s=strrchr(tmpfn,'\\');
 	if (s)
 	    tmplast = s-tmpfn;
 	else
 	    tmplast = 0;
-	hfdst = OpenFile32(tmpfn,&ofs,OF_CREATE);
-	if (hfdst == HFILE_ERROR32) {
-	    LZClose32(hfsrc);
+	hfdst = OpenFile(tmpfn,&ofs,OF_CREATE);
+	if (hfdst == HFILE_ERROR) {
+	    LZClose(hfsrc);
 	    return VIF_CANNOTCREATE; /* | translated dos error */
 	}
-	ret = LZCopy32(hfsrc,hfdst);
-	_lclose32(hfdst);
+	ret = LZCopy(hfsrc,hfdst);
+	_lclose(hfdst);
 	if (((long) ret) < 0) {
 	    /* translate LZ errors into VIF_xxx */
 	    switch (ret) {
@@ -468,7 +468,7 @@ DWORD WINAPI VerInstallFile32A(
 		break;
 	    }
 	    if (ret) {
-		LZClose32(hfsrc);
+		LZClose(hfsrc);
 		return ret;
 	    }
 	}
@@ -481,7 +481,7 @@ DWORD WINAPI VerInstallFile32A(
 	    buf2 = _fetch_versioninfo(tmpfn,&tmpvffi);
 	    if (buf2) {
 	    	char	*tbuf1,*tbuf2;
-		UINT32	len1,len2;
+		UINT	len1,len2;
 
 		len1=len2=40;
 
@@ -497,8 +497,8 @@ DWORD WINAPI VerInstallFile32A(
 		    (destvffi->dwFileSubtype!=tmpvffi->dwFileSubtype)
 		)
 		    xret |= VIF_MISMATCH|VIF_DIFFTYPE;
-		if (VerQueryValue32A(buf1,"\\VarFileInfo\\Translation",(LPVOID*)&tbuf1,&len1) &&
-		    VerQueryValue32A(buf2,"\\VarFileInfo\\Translation",(LPVOID*)&tbuf2,&len2)
+		if (VerQueryValueA(buf1,"\\VarFileInfo\\Translation",(LPVOID*)&tbuf1,&len1) &&
+		    VerQueryValueA(buf2,"\\VarFileInfo\\Translation",(LPVOID*)&tbuf2,&len2)
 		) {
 		    /* irgendwas mit tbuf1 und tbuf2 machen 
 		     * generiert DIFFLANG|MISMATCH
@@ -513,48 +513,48 @@ DWORD WINAPI VerInstallFile32A(
     if (xret) {
 	if (*tmpfilelen<strlen(tmpfn+tmplast)) {
 	    xret|=VIF_BUFFTOOSMALL;
-	    DeleteFile32A(tmpfn);
+	    DeleteFileA(tmpfn);
 	} else {
 	    strcpy(tmpfile,tmpfn+tmplast);
 	    *tmpfilelen = strlen(tmpfn+tmplast)+1;
 	    xret|=VIF_TEMPFILE;
 	}
     } else {
-    	if (-1!=GetFileAttributes32A(destfn))
-	    if (!DeleteFile32A(destfn)) {
+    	if (-1!=GetFileAttributesA(destfn))
+	    if (!DeleteFileA(destfn)) {
 		xret|=_error2vif(GetLastError())|VIF_CANNOTDELETE;
-		DeleteFile32A(tmpfn);
-		LZClose32(hfsrc);
+		DeleteFileA(tmpfn);
+		LZClose(hfsrc);
 		return xret;
 	    }
 	if ((!(flags & VIFF_DONTDELETEOLD))	&& 
 	    curdir				&& 
 	    *curdir				&&
-	    lstrcmpi32A(curdir,pdest)
+	    lstrcmpiA(curdir,pdest)
 	) {
 	    char curfn[260];
 
 	    sprintf(curfn,"%s\\%s",curdir,destfilename);
-	    if (-1!=GetFileAttributes32A(curfn)) {
+	    if (-1!=GetFileAttributesA(curfn)) {
 		/* FIXME: check if in use ... if it is, VIF_CANNOTDELETECUR */
-		if (!DeleteFile32A(curfn))
+		if (!DeleteFileA(curfn))
 	    	    xret|=_error2vif(GetLastError())|VIF_CANNOTDELETECUR;
 	    }
 	}
-	if (!MoveFile32A(tmpfn,destfn)) {
+	if (!MoveFileA(tmpfn,destfn)) {
 	    xret|=_error2vif(GetLastError())|VIF_CANNOTRENAME;
-	    DeleteFile32A(tmpfn);
+	    DeleteFileA(tmpfn);
 	}
     }
-    LZClose32(hfsrc);
+    LZClose(hfsrc);
     return xret;
 }
 
 
 /* VerInstallFile32W				[VERSION.8] */
-DWORD WINAPI VerInstallFile32W(
-	UINT32 flags,LPCWSTR srcfilename,LPCWSTR destfilename,LPCWSTR srcdir,
-	LPCWSTR destdir,LPCWSTR curdir,LPWSTR tmpfile,UINT32 *tmpfilelen )
+DWORD WINAPI VerInstallFileW(
+	UINT flags,LPCWSTR srcfilename,LPCWSTR destfilename,LPCWSTR srcdir,
+	LPCWSTR destdir,LPCWSTR curdir,LPWSTR tmpfile,UINT *tmpfilelen )
 {
     LPSTR wsrcf,wsrcd,wdestf,wdestd,wtmpf,wcurd;
     DWORD ret;
@@ -565,7 +565,7 @@ DWORD WINAPI VerInstallFile32W(
     wdestd = HEAP_strdupWtoA( GetProcessHeap(), 0, destdir );
     wtmpf  = HEAP_strdupWtoA( GetProcessHeap(), 0, tmpfile );
     wcurd  = HEAP_strdupWtoA( GetProcessHeap(), 0, curdir );
-    ret = VerInstallFile32A(flags,wsrcf,wdestf,wsrcd,wdestd,wcurd,wtmpf,tmpfilelen);
+    ret = VerInstallFileA(flags,wsrcf,wdestf,wsrcd,wdestd,wcurd,wtmpf,tmpfilelen);
     if (!ret)
     	lstrcpynAtoW(tmpfile,wtmpf,*tmpfilelen);
     HeapFree( GetProcessHeap(), 0, wsrcf );

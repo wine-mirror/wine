@@ -38,9 +38,9 @@ static ATOM GDI_GetNullPortAtom(void)
     {
         char NullPort[256];
         
-        GetProfileString32A( "windows", "nullport", "none",
+        GetProfileStringA( "windows", "nullport", "none",
                              NullPort, sizeof(NullPort) );
-        NullPortAtom = AddAtom32A( NullPort );
+        NullPortAtom = AddAtomA( NullPort );
     }
     return NullPortAtom;
 }
@@ -48,7 +48,7 @@ static ATOM GDI_GetNullPortAtom(void)
 static ATOM PortNameToAtom(LPCSTR lpPortName, BOOL16 add)
 {
     char *p;
-    BOOL32 needfree = FALSE;
+    BOOL needfree = FALSE;
     ATOM ret;
 
     if (lpPortName[strlen(lpPortName) - 1] == ':') {
@@ -60,9 +60,9 @@ static ATOM PortNameToAtom(LPCSTR lpPortName, BOOL16 add)
         p = (char *)lpPortName;
 
     if (add)
-        ret = AddAtom32A(p);
+        ret = AddAtomA(p);
     else
-        ret =  FindAtom32A(p);
+        ret =  FindAtomA(p);
 
     if(needfree) HeapFree(GetProcessHeap(), 0, p);
 
@@ -73,7 +73,7 @@ static ATOM PortNameToAtom(LPCSTR lpPortName, BOOL16 add)
 /***********************************************************************
  *           GetEnvironment   (GDI.134)
  */
-INT16 WINAPI GetEnvironment(LPCSTR lpPortName, LPDEVMODE16 lpdev, UINT16 nMaxSize)
+INT16 WINAPI GetEnvironment16(LPCSTR lpPortName, LPDEVMODE16 lpdev, UINT16 nMaxSize)
 {
     ATOM atom;
     LPCSTR p;
@@ -85,7 +85,7 @@ INT16 WINAPI GetEnvironment(LPCSTR lpPortName, LPDEVMODE16 lpdev, UINT16 nMaxSiz
     if (!(atom = PortNameToAtom(lpPortName, FALSE)))
 	return 0;
     if (atom == GDI_GetNullPortAtom())
-	if (!(atom = FindAtom32A((LPCSTR)lpdev)))
+	if (!(atom = FindAtomA((LPCSTR)lpdev)))
 	    return 0;
     if (!(env = SearchEnvTable(atom)))
 	return 0;
@@ -102,7 +102,7 @@ INT16 WINAPI GetEnvironment(LPCSTR lpPortName, LPDEVMODE16 lpdev, UINT16 nMaxSiz
 /***********************************************************************
  *          SetEnvironment   (GDI.132)
  */
-INT16 WINAPI SetEnvironment(LPCSTR lpPortName, LPDEVMODE16 lpdev, UINT16 nCount)
+INT16 WINAPI SetEnvironment16(LPCSTR lpPortName, LPDEVMODE16 lpdev, UINT16 nCount)
 {
     ATOM atom; 
     BOOL16 nullport = FALSE;
@@ -115,7 +115,7 @@ INT16 WINAPI SetEnvironment(LPCSTR lpPortName, LPDEVMODE16 lpdev, UINT16 nCount)
     if ((atom = PortNameToAtom(lpPortName, FALSE))) {
 	if (atom == GDI_GetNullPortAtom()) {
 	    nullport = TRUE;
-	    atom = FindAtom32A((LPCSTR)lpdev);
+	    atom = FindAtomA((LPCSTR)lpdev);
 	}
 	env = SearchEnvTable(atom);
         GlobalFree16(env->handle);

@@ -124,7 +124,7 @@ SNOOP16_RegisterDLL(NE_MODULE *pModule,LPCSTR name) {
 	(*dll)->name	= HEAP_strdupA(SystemHeap,0,name);
 	if ((s=strrchr((*dll)->name,'.')))
 		*s='\0';
-	(*dll)->funhandle = GlobalHandleToSel(GLOBAL_Alloc(GMEM_ZEROINIT,65535,0,TRUE,FALSE,FALSE));
+	(*dll)->funhandle = GlobalHandleToSel16(GLOBAL_Alloc(GMEM_ZEROINIT,65535,0,TRUE,FALSE,FALSE));
 	(*dll)->funs = GlobalLock16((*dll)->funhandle);
 	if (!(*dll)->funs) {
 		HeapFree(SystemHeap,0,*dll);
@@ -238,7 +238,7 @@ void WINAPI SNOOP16_Entry(CONTEXT *context) {
 		rets = &((*rets)->next);
 	}
 	if (!*rets) {
-		HANDLE16	hand = GlobalHandleToSel(GLOBAL_Alloc(GMEM_ZEROINIT,65535,0,TRUE,FALSE,FALSE));
+		HANDLE16	hand = GlobalHandleToSel16(GLOBAL_Alloc(GMEM_ZEROINIT,65535,0,TRUE,FALSE,FALSE));
 		*rets = GlobalLock16(hand);
 		memset(*rets,0,65535);
 		(*rets)->rethandle = hand;

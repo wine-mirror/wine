@@ -415,10 +415,10 @@ void mode_command(int newmode)
 static void DEBUG_Main( int signal )
 {
     static int loaded_symbols = 0;
-    static BOOL32 in_debugger = FALSE;
+    static BOOL in_debugger = FALSE;
     char SymbolTableFile[256];
     int newmode;
-    BOOL32 ret_ok;
+    BOOL ret_ok;
 #ifdef YYDEBUG
     yydebug = 0;
 #endif
@@ -573,10 +573,10 @@ static void DEBUG_Main( int signal )
 /***********************************************************************
  *           DebugBreak   (KERNEL.203) (KERNEL32.181)
  */
-void DebugBreak( CONTEXT *regs )
+void DebugBreak16( CONTEXT *regs )
 {
     char module[10];
-    if (!GetModuleName( GetCurrentTask(), module, sizeof(module) ))
+    if (!GetModuleName16( GetCurrentTask(), module, sizeof(module) ))
         strcpy( module, "???" );
     fprintf( stderr, "%s called DebugBreak\n", module );
     DEBUG_context = *regs;

@@ -24,7 +24,7 @@
  */
 DWORD WINAPI
 SHChangeNotifyRegister(
-    HWND32 hwnd,
+    HWND hwnd,
     LONG events1,
     LONG events2,
     DWORD msg,
@@ -49,7 +49,7 @@ SHChangeNotifyDeregister(LONG x1)
  *   (usually just one I think).
  */
 DWORD WINAPI NTSHChangeNotifyRegister(
-    HWND32 hwnd,
+    HWND hwnd,
     LONG events1,
     LONG events2,
     DWORD msg,
@@ -71,7 +71,7 @@ DWORD WINAPI NTSHChangeNotifyDeregister(LONG x1)
  * ParseField [SHELL32.58]
  *
  */
-DWORD WINAPI ParseField32A(LPCSTR src, DWORD field, LPSTR dst, DWORD len) 
+DWORD WINAPI ParseFieldA(LPCSTR src, DWORD field, LPSTR dst, DWORD len) 
 {	WARN(shell,"('%s',0x%08lx,%p,%ld) semi-stub.\n",src,field,dst,len);
 
 	if (!src || !src[0] || !dst || !len)
@@ -107,12 +107,12 @@ DWORD WINAPI PickIconDlg(DWORD x,DWORD y,DWORD z,DWORD a)
  * GetFileNameFromBrowse [SHELL32.63]
  * 
  */
-DWORD WINAPI GetFileNameFromBrowse(HWND32 howner, LPSTR targetbuf, DWORD len, DWORD x, LPCSTR suffix, LPCSTR y, LPCSTR cmd) 
+DWORD WINAPI GetFileNameFromBrowse(HWND howner, LPSTR targetbuf, DWORD len, DWORD x, LPCSTR suffix, LPCSTR y, LPCSTR cmd) 
 {	FIXME(shell,"(%04x,%p,%ld,%08lx,%s,%s,%s):stub.\n",
 	    howner,targetbuf,len,x,suffix,y,cmd);
     /* puts up a Open Dialog and requests input into targetbuf */
     /* OFN_HIDEREADONLY|OFN_NOCHANGEDIR|OFN_FILEMUSTEXIST|OFN_unknown */
-    lstrcpy32A(targetbuf,"x:\\dummy.exe");
+    lstrcpyA(targetbuf,"x:\\dummy.exe");
     return 1;
 }
 
@@ -140,7 +140,7 @@ DWORD WINAPI SHGetSettings(DWORD x,DWORD y,DWORD z)
  *    shell view to re-sort the item list. lParam identifies the column
  *    that was clicked.
  */
-int WINAPI SHShellFolderView_Message(HWND32 hwndCabinet,UINT32 uMsg,LPARAM lParam)
+int WINAPI SHShellFolderView_Message(HWND hwndCabinet,UINT uMsg,LPARAM lParam)
 { FIXME(shell,"%04x %08ux %08lx stub\n",hwndCabinet,uMsg,lParam);
   return 0;
 }
@@ -153,8 +153,8 @@ int WINAPI SHShellFolderView_Message(HWND32 hwndCabinet,UINT32 uMsg,LPARAM lPara
  * FIXME
  *  wrong implemented OleStr is NOT wide string !!!! (jsch)
  */
-BOOL32 WINAPI
-OleStrToStrN (LPSTR lpMulti, INT32 nMulti, LPCWSTR lpWide, INT32 nWide) {
+BOOL WINAPI
+OleStrToStrN (LPSTR lpMulti, INT nMulti, LPCWSTR lpWide, INT nWide) {
     return WideCharToMultiByte (0, 0, lpWide, nWide,
         lpMulti, nMulti, NULL, NULL);
 }
@@ -167,8 +167,8 @@ OleStrToStrN (LPSTR lpMulti, INT32 nMulti, LPCWSTR lpWide, INT32 nWide) {
  * FIXME
  *  wrong implemented OleStr is NOT wide string !!!! (jsch)
 */
-BOOL32 WINAPI
-StrToOleStrN (LPWSTR lpWide, INT32 nWide, LPCSTR lpMulti, INT32 nMulti) {
+BOOL WINAPI
+StrToOleStrN (LPWSTR lpWide, INT nWide, LPCSTR lpMulti, INT nMulti) {
     return MultiByteToWideChar (0, 0, lpMulti, nMulti, lpWide, nWide);
 }
 
@@ -182,7 +182,7 @@ StrToOleStrN (LPWSTR lpWide, INT32 nWide, LPCSTR lpMulti, INT32 nMulti) {
  * NOTES
  *     exported by ordinal
  */
-void WINAPI RegisterShellHook32(HWND32 hwnd, DWORD y) {
+void WINAPI RegisterShellHook(HWND hwnd, DWORD y) {
     FIXME(shell,"(0x%08x,0x%08lx):stub.\n",hwnd,y);
 }
 /*************************************************************************
@@ -196,8 +196,8 @@ void WINAPI RegisterShellHook32(HWND32 hwnd, DWORD y) {
  * NOTES
  *     exported by ordinal
  */
-INT32 __cdecl
-ShellMessageBoxW(HMODULE32 hmod,HWND32 hwnd,DWORD idText,DWORD idTitle,DWORD uType,LPCVOID arglist) 
+INT __cdecl
+ShellMessageBoxW(HMODULE hmod,HWND hwnd,DWORD idText,DWORD idTitle,DWORD uType,LPCVOID arglist) 
 {	WCHAR	szText[100],szTitle[100],szTemp[256];
 	LPWSTR   pszText = &szText[0], pszTitle = &szTitle[0];
 	LPVOID	args = &arglist;
@@ -205,24 +205,24 @@ ShellMessageBoxW(HMODULE32 hmod,HWND32 hwnd,DWORD idText,DWORD idTitle,DWORD uTy
 	TRACE(shell,"(%08lx,%08lx,%08lx,%08lx,%08lx,%p)\n",(DWORD)hmod,(DWORD)hwnd,idText,idTitle,uType,arglist);
 
 	if (!HIWORD (idTitle))
-	  LoadString32W(hmod,idTitle,pszTitle,100);
+	  LoadStringW(hmod,idTitle,pszTitle,100);
 	else
 	  pszTitle = (LPWSTR)idTitle;
 
 	if (! HIWORD (idText))
-	  LoadString32W(hmod,idText,pszText,100);
+	  LoadStringW(hmod,idText,pszText,100);
 	else
 	  pszText = (LPWSTR)idText;
 
-	FormatMessage32W(FORMAT_MESSAGE_FROM_STRING | FORMAT_MESSAGE_ARGUMENT_ARRAY ,szText,0,0,szTemp,256,args);
-	return MessageBox32W(hwnd,szTemp,szTitle,uType);
+	FormatMessageW(FORMAT_MESSAGE_FROM_STRING | FORMAT_MESSAGE_ARGUMENT_ARRAY ,szText,0,0,szTemp,256,args);
+	return MessageBoxW(hwnd,szTemp,szTitle,uType);
 }
 
 /*************************************************************************
  * ShellMessageBoxA [SHELL32.183]
  */
-INT32 __cdecl
-ShellMessageBoxA(HMODULE32 hmod,HWND32 hwnd,DWORD idText,DWORD idTitle,DWORD uType,LPCVOID arglist) 
+INT __cdecl
+ShellMessageBoxA(HMODULE hmod,HWND hwnd,DWORD idText,DWORD idTitle,DWORD uType,LPCVOID arglist) 
 {	char	szText[100],szTitle[100],szTemp[256];
 	LPSTR   pszText = &szText[0], pszTitle = &szTitle[0];
 	LPVOID	args = &arglist;
@@ -230,17 +230,17 @@ ShellMessageBoxA(HMODULE32 hmod,HWND32 hwnd,DWORD idText,DWORD idTitle,DWORD uTy
 	TRACE(shell,"(%08lx,%08lx,%08lx,%08lx,%08lx,%p)\n", (DWORD)hmod,(DWORD)hwnd,idText,idTitle,uType,arglist);
 
 	if (!HIWORD (idTitle))
-	  LoadString32A(hmod,idTitle,pszTitle,100);
+	  LoadStringA(hmod,idTitle,pszTitle,100);
 	else
 	  pszTitle = (LPSTR)idTitle;
 
 	if (! HIWORD (idText))
-	  LoadString32A(hmod,idText,pszText,100);
+	  LoadStringA(hmod,idText,pszText,100);
 	else
 	  pszText = (LPSTR)idText;
 
-	FormatMessage32A(FORMAT_MESSAGE_FROM_STRING | FORMAT_MESSAGE_ARGUMENT_ARRAY ,pszText,0,0,szTemp,256,args);
-	return MessageBox32A(hwnd,szTemp,pszTitle,uType);
+	FormatMessageA(FORMAT_MESSAGE_FROM_STRING | FORMAT_MESSAGE_ARGUMENT_ARRAY ,pszText,0,0,szTemp,256,args);
+	return MessageBoxA(hwnd,szTemp,pszTitle,uType);
 }
 
 /*************************************************************************
@@ -276,7 +276,7 @@ DWORD WINAPI SHRestricted (DWORD pol) {
 	HKEY	xhkey;
 
 	FIXME(shell,"(%08lx):stub.\n",pol);
-	if (RegOpenKey32A(HKEY_CURRENT_USER,"Software\\Microsoft\\Windows\\CurrentVersion\\Policies",&xhkey))
+	if (RegOpenKeyA(HKEY_CURRENT_USER,"Software\\Microsoft\\Windows\\CurrentVersion\\Policies",&xhkey))
 		return 0;
 	/* FIXME: do nothing for now, just return 0 (== "allowed") */
 	RegCloseKey(xhkey);
@@ -292,7 +292,7 @@ DWORD WINAPI SHRestricted (DWORD pol) {
  */
 DWORD WINAPI SHCreateDirectory(LPSECURITY_ATTRIBUTES sec,LPCSTR path) {
 	TRACE(shell,"(%p,%s):stub.\n",sec,path);
-	if (CreateDirectory32A(path,sec))
+	if (CreateDirectoryA(path,sec))
 		return TRUE;
 	/* SHChangeNotify(8,1,path,0); */
 	return FALSE;
@@ -352,7 +352,7 @@ DWORD WINAPI OpenRegStream(DWORD x1,DWORD x2,DWORD x3,DWORD x4) {
  * NOTES
  *     exported by ordinal
  */
-DWORD WINAPI SHRegisterDragDrop(HWND32 hwnd,DWORD x2) {
+DWORD WINAPI SHRegisterDragDrop(HWND hwnd,DWORD x2) {
     FIXME (shell, "(0x%08x,0x%08lx):stub.\n", hwnd, x2);
     return 0;
 }
@@ -375,8 +375,8 @@ DWORD WINAPI SHRevokeDragDrop(DWORD x) {
  *     Original name: RunFileDlg (exported by ordinal)
  */
 DWORD WINAPI
-RunFileDlg (HWND32 hwndOwner, DWORD dwParam1, DWORD dwParam2,
-	    LPSTR lpszTitle, LPSTR lpszPrompt, UINT32 uFlags)
+RunFileDlg (HWND hwndOwner, DWORD dwParam1, DWORD dwParam2,
+	    LPSTR lpszTitle, LPSTR lpszPrompt, UINT uFlags)
 {
     FIXME (shell,"(0x%08x 0x%lx 0x%lx \"%s\" \"%s\" 0x%x):stub.\n",
 	   hwndOwner, dwParam1, dwParam2, lpszTitle, lpszPrompt, uFlags);
@@ -390,7 +390,7 @@ RunFileDlg (HWND32 hwndOwner, DWORD dwParam1, DWORD dwParam2,
  *     exported by ordinal
  */
 DWORD WINAPI
-ExitWindowsDialog (HWND32 hwndOwner)
+ExitWindowsDialog (HWND hwndOwner)
 {
     FIXME (shell,"(0x%08x):stub.\n", hwndOwner);
     return 0;
@@ -449,7 +449,7 @@ SignalFileOpen (DWORD dwParam1)
  * NOTES
  *     exported by name
  */
-DWORD WINAPI SHAddToRecentDocs32 (UINT32 uFlags,LPCVOID pv)   
+DWORD WINAPI SHAddToRecentDocs (UINT uFlags,LPCVOID pv)   
 { if (SHARD_PIDL==uFlags)
   { FIXME (shell,"(0x%08x,pidl=%p):stub.\n", uFlags,pv);
 	}
@@ -462,7 +462,7 @@ DWORD WINAPI SHAddToRecentDocs32 (UINT32 uFlags,LPCVOID pv)
  * SHFileOperation32 [SHELL32.242]
  *
  */
-DWORD WINAPI SHFileOperation32(DWORD x)
+DWORD WINAPI SHFileOperationAW(DWORD x)
 {	FIXME(shell,"0x%08lx stub\n",x);
 	return 0;
 
@@ -474,7 +474,7 @@ DWORD WINAPI SHFileOperation32(DWORD x)
  * NOTES
  *     exported by name
  */
-DWORD WINAPI SHFileOperation32A (LPSHFILEOPSTRUCT32A lpFileOp)   
+DWORD WINAPI SHFileOperationA (LPSHFILEOPSTRUCTA lpFileOp)   
 { FIXME (shell,"(%p):stub.\n", lpFileOp);
   return 1;
 }
@@ -484,7 +484,7 @@ DWORD WINAPI SHFileOperation32A (LPSHFILEOPSTRUCT32A lpFileOp)
  * NOTES
  *     exported by name
  */
-DWORD WINAPI SHFileOperation32W (LPSHFILEOPSTRUCT32W lpFileOp)   
+DWORD WINAPI SHFileOperationW (LPSHFILEOPSTRUCTW lpFileOp)   
 { FIXME (shell,"(%p):stub.\n", lpFileOp);
   return 1;
 }
@@ -495,9 +495,9 @@ DWORD WINAPI SHFileOperation32W (LPSHFILEOPSTRUCT32W lpFileOp)
  * NOTES
  *     exported by name
  */
-DWORD WINAPI SHChangeNotify32 (
-    INT32   wEventId,  /* [IN] flags that specifies the event*/
-    UINT32  uFlags,   /* [IN] the meaning of dwItem[1|2]*/
+DWORD WINAPI SHChangeNotify (
+    INT   wEventId,  /* [IN] flags that specifies the event*/
+    UINT  uFlags,   /* [IN] the meaning of dwItem[1|2]*/
 		LPCVOID dwItem1,
 		LPCVOID dwItem2)
 { FIXME (shell,"(0x%08x,0x%08ux,%p,%p):stub.\n", wEventId,uFlags,dwItem1,dwItem2);
@@ -509,7 +509,7 @@ DWORD WINAPI SHChangeNotify32 (
  * NOTES
  *  see IShellFolder::CreateViewObject
  */
-HRESULT WINAPI SHCreateShellFolderViewEx32(
+HRESULT WINAPI SHCreateShellFolderViewEx(
   LPSHELLVIEWDATA psvcbi, /*[in ] shelltemplate struct*/
   LPVOID* ppv)            /*[out] IShellView pointer*/
 { FIXME (shell,"(%p,%p):stub.\n", psvcbi,ppv);
@@ -527,7 +527,7 @@ HRESULT WINAPI SHCreateShellFolderViewEx32(
  *  w			[in] no pointer
  *  x			[in] no pointer
  */
-HRESULT WINAPI SHFind_InitMenuPopup (HMENU32 hMenu, HWND32 hWndParent, DWORD w, DWORD x)
+HRESULT WINAPI SHFind_InitMenuPopup (HMENU hMenu, HWND hWndParent, DWORD w, DWORD x)
 {	FIXME(shell,"hmenu=0x%08x hwnd=0x%08x 0x%08lx 0x%08lx stub\n",
 		hMenu,hWndParent,w,x);
 	return 0;
@@ -561,7 +561,7 @@ HRESULT WINAPI FileMenu_Create (DWORD u, DWORD v, DWORD w, DWORD x, DWORD z)
  *  hWndParent		[in]
  *  z	could be rect (trace) or TPMPARAMS (TrackPopupMenuEx)
  */
-HRESULT WINAPI FileMenu_TrackPopupMenuEx (DWORD t, DWORD uFlags, DWORD posX, DWORD posY, HWND32 hWndParent, DWORD z)
+HRESULT WINAPI FileMenu_TrackPopupMenuEx (DWORD t, DWORD uFlags, DWORD posX, DWORD posY, HWND hWndParent, DWORD z)
 {	FIXME(shell,"0x%lx flags=0x%lx posx=0x%lx posy=0x%lx hwndp=0x%x 0x%lx stub\n",
 		t,uFlags,posX,posY, hWndParent,z);
 	return 0;
@@ -586,20 +586,20 @@ HRESULT WINAPI SHRunControlPanel (DWORD x, DWORD z)
  * ShellExecuteEx [SHELL32.291]
  *
  */
-BOOL32 WINAPI ShellExecuteEx32 (LPVOID sei)
+BOOL WINAPI ShellExecuteExAW (LPVOID sei)
 {	if (VERSION_OsIsUnicode())
-	  return ShellExecuteEx32W (sei);
-	return ShellExecuteEx32A (sei);
+	  return ShellExecuteExW (sei);
+	return ShellExecuteExA (sei);
 }
 /*************************************************************************
  * ShellExecuteEx32A [SHELL32.292]
  *
  */
-BOOL32 WINAPI ShellExecuteEx32A (LPSHELLEXECUTEINFO32A sei)
+BOOL WINAPI ShellExecuteExA (LPSHELLEXECUTEINFOA sei)
 { 	CHAR szApplicationName[MAX_PATH],szCommandline[MAX_PATH],szPidl[20];
 	LPSTR pos;
 	int gap, len;
-	STARTUPINFO32A  startupinfo;
+	STARTUPINFOA  startupinfo;
 	PROCESS_INFORMATION processinformation;
 			
   	WARN(shell,"mask=0x%08lx hwnd=0x%04x verb=%s file=%s parm=%s dir=%s show=0x%08x class=%s incomplete\n",
@@ -627,7 +627,7 @@ BOOL32 WINAPI ShellExecuteEx32A (LPSHELLEXECUTEINFO32A sei)
 
 	/* process the IDList */
 	if ( (sei->fMask & SEE_MASK_INVOKEIDLIST) == SEE_MASK_INVOKEIDLIST) /*0x0c*/
-	{ SHGetPathFromIDList32A (sei->lpIDList,szApplicationName);
+	{ SHGetPathFromIDListA (sei->lpIDList,szApplicationName);
 	  TRACE(shell,"-- idlist=%p (%s)\n", sei->lpIDList, szApplicationName);
 	}
 	else
@@ -635,7 +635,7 @@ BOOL32 WINAPI ShellExecuteEx32A (LPSHELLEXECUTEINFO32A sei)
 	  { /* %I is the adress of a global item ID*/
 	    pos = strstr(szCommandline, "%I");
 	    if (pos)
-	    { HGLOBAL32 hmem = SHAllocShared ( sei->lpIDList, ILGetSize(sei->lpIDList), 0);
+	    { HGLOBAL hmem = SHAllocShared ( sei->lpIDList, ILGetSize(sei->lpIDList), 0);
 	      sprintf(szPidl,":%li",(DWORD)SHLockShared(hmem,0) );
 	      SHUnlockShared(hmem);
 	    
@@ -657,10 +657,10 @@ BOOL32 WINAPI ShellExecuteEx32A (LPSHELLEXECUTEINFO32A sei)
 
 	TRACE(shell,"execute: %s %s\n",szApplicationName, szCommandline);
 
-	ZeroMemory(&startupinfo,sizeof(STARTUPINFO32A));
-	startupinfo.cb = sizeof(STARTUPINFO32A);
+	ZeroMemory(&startupinfo,sizeof(STARTUPINFOA));
+	startupinfo.cb = sizeof(STARTUPINFOA);
 
-	return CreateProcess32A(szApplicationName[0] ? szApplicationName:NULL,
+	return CreateProcessA(szApplicationName[0] ? szApplicationName:NULL,
 			 szCommandline[0] ? szCommandline : NULL,
 			 NULL, NULL, FALSE, 0, 
 			 NULL, NULL, &startupinfo, &processinformation);
@@ -671,13 +671,13 @@ BOOL32 WINAPI ShellExecuteEx32A (LPSHELLEXECUTEINFO32A sei)
  * ShellExecuteEx32W [SHELL32.293]
  *
  */
-BOOL32 WINAPI ShellExecuteEx32W (LPSHELLEXECUTEINFO32W sei)
-{	SHELLEXECUTEINFO32A seiA;
+BOOL WINAPI ShellExecuteExW (LPSHELLEXECUTEINFOW sei)
+{	SHELLEXECUTEINFOA seiA;
 	DWORD ret;
 
 	TRACE (shell,"%p\n", sei);
 
-	memcpy(&seiA, sei, sizeof(SHELLEXECUTEINFO32A));
+	memcpy(&seiA, sei, sizeof(SHELLEXECUTEINFOA));
 	
         if (sei->lpVerb)
 	  seiA.lpVerb = HEAP_strdupWtoA( GetProcessHeap(), 0, sei->lpVerb);
@@ -696,7 +696,7 @@ BOOL32 WINAPI ShellExecuteEx32W (LPSHELLEXECUTEINFO32W sei)
 	else
 	  seiA.lpClass = NULL;
 	  	  
-	ret = ShellExecuteEx32A(&seiA);
+	ret = ShellExecuteExA(&seiA);
 
         if (seiA.lpVerb)	HeapFree( GetProcessHeap(), 0, (LPSTR) seiA.lpVerb );
 	if (seiA.lpFile)	HeapFree( GetProcessHeap(), 0, (LPSTR) seiA.lpFile );
@@ -770,7 +770,7 @@ HRESULT WINAPI FileMenu_Destroy (DWORD u)
  * SHRegCloseKey32 [NT4.0:SHELL32.505]
  *
  */
-HRESULT WINAPI SHRegCloseKey32 (HKEY hkey)
+HRESULT WINAPI SHRegCloseKey (HKEY hkey)
 {	TRACE(shell,"0x%04x\n",hkey);
 	return RegCloseKey( hkey );
 }
@@ -778,25 +778,25 @@ HRESULT WINAPI SHRegCloseKey32 (HKEY hkey)
  * SHRegOpenKey32A [SHELL32.506]
  *
  */
-HRESULT WINAPI SHRegOpenKey32A(HKEY hKey, LPSTR lpSubKey, LPHKEY phkResult)
+HRESULT WINAPI SHRegOpenKeyA(HKEY hKey, LPSTR lpSubKey, LPHKEY phkResult)
 {	FIXME(shell,"(0x%08x, %s, %p)\n", hKey, debugstr_a(lpSubKey),
 	      phkResult);
-	return RegOpenKey32A(hKey, lpSubKey, phkResult);
+	return RegOpenKeyA(hKey, lpSubKey, phkResult);
 }
 
 /*************************************************************************
  * SHRegOpenKey32W [NT4.0:SHELL32.507]
  *
  */
-HRESULT WINAPI SHRegOpenKey32W (HKEY hkey, LPCWSTR lpszSubKey, LPHKEY retkey)
+HRESULT WINAPI SHRegOpenKeyW (HKEY hkey, LPCWSTR lpszSubKey, LPHKEY retkey)
 {	WARN(shell,"0x%04x %s %p\n",hkey,debugstr_w(lpszSubKey),retkey);
-	return RegOpenKey32W( hkey, lpszSubKey, retkey );
+	return RegOpenKeyW( hkey, lpszSubKey, retkey );
 }
 /*************************************************************************
  * SHRegQueryValueExA [SHELL32.509]
  *
  */
-HRESULT WINAPI SHRegQueryValueEx32A(DWORD u, LPSTR v, DWORD w, DWORD x,
+HRESULT WINAPI SHRegQueryValueExA(DWORD u, LPSTR v, DWORD w, DWORD x,
 				  DWORD y, DWORD z)
 {	FIXME(shell,"0x%04lx %s 0x%04lx 0x%04lx 0x%04lx  0x%04lx stub\n",
 		u,debugstr_a(v),w,x,y,z);
@@ -806,11 +806,11 @@ HRESULT WINAPI SHRegQueryValueEx32A(DWORD u, LPSTR v, DWORD w, DWORD x,
  * SHRegQueryValue32W [NT4.0:SHELL32.510]
  *
  */
-HRESULT WINAPI SHRegQueryValue32W (HKEY hkey, LPWSTR lpszSubKey,
+HRESULT WINAPI SHRegQueryValueW (HKEY hkey, LPWSTR lpszSubKey,
 				 LPWSTR lpszData, LPDWORD lpcbData )
 {	WARN(shell,"0x%04x %s %p %p semi-stub\n",
 		hkey, debugstr_w(lpszSubKey), lpszData, lpcbData);
-	return RegQueryValue32W( hkey, lpszSubKey, lpszData, lpcbData );
+	return RegQueryValueW( hkey, lpszSubKey, lpszData, lpcbData );
 }
 
 /*************************************************************************
@@ -820,12 +820,12 @@ HRESULT WINAPI SHRegQueryValue32W (HKEY hkey, LPWSTR lpszSubKey,
  *  if the datatype REG_EXPAND_SZ then expand the string and change
  *  *pdwType to REG_SZ. 
  */
-HRESULT WINAPI SHRegQueryValueEx32W (HKEY hkey, LPWSTR pszValue, LPDWORD pdwReserved,
+HRESULT WINAPI SHRegQueryValueExW (HKEY hkey, LPWSTR pszValue, LPDWORD pdwReserved,
 		 LPDWORD pdwType, LPVOID pvData, LPDWORD pcbData)
 {	DWORD ret;
 	WARN(shell,"0x%04x %s %p %p %p %p semi-stub\n",
 		hkey, debugstr_w(pszValue), pdwReserved, pdwType, pvData, pcbData);
-	ret = RegQueryValueEx32W ( hkey, pszValue, pdwReserved, pdwType, pvData, pcbData);
+	ret = RegQueryValueExW ( hkey, pszValue, pdwReserved, pdwType, pvData, pcbData);
 	return ret;
 }
 
@@ -849,7 +849,7 @@ HRESULT WINAPI WriteCabinetState(DWORD u)
  * FileIconInit [SHELL32.660]
  *
  */
-BOOL32 WINAPI FileIconInit(BOOL32 bFullInit)
+BOOL WINAPI FileIconInit(BOOL bFullInit)
 {	FIXME(shell,"(%s)\n", bFullInit ? "true" : "false");
 	return 0;
 }
@@ -925,7 +925,7 @@ LPWSTR WINAPI StrChrW (LPWSTR str, WCHAR x )
  *	StrCmpNIW		[NT 4.0:SHELL32.*]
  *
  */
-INT32 WINAPI StrCmpNIW ( LPWSTR wstr1, LPWSTR wstr2, INT32 len)
+INT WINAPI StrCmpNIW ( LPWSTR wstr1, LPWSTR wstr2, INT len)
 {	FIXME( shell,"%s %s %i stub\n", debugstr_w(wstr1),debugstr_w(wstr2),len);
 	return 0;
 }
@@ -942,22 +942,22 @@ INT32 WINAPI StrCmpNIW ( LPWSTR wstr1, LPWSTR wstr2, INT32 len)
  *  WM_USER+2 could be the undocumented CWM_SETPATH
  *  the allocated memory contains a pidl
  */
-HGLOBAL32 WINAPI SHAllocShared(LPVOID psrc, DWORD size, DWORD procID)
-{	HGLOBAL32 hmem;
+HGLOBAL WINAPI SHAllocShared(LPVOID psrc, DWORD size, DWORD procID)
+{	HGLOBAL hmem;
 	LPVOID pmem;
 	
 	TRACE(shell,"ptr=%p size=0x%04lx procID=0x%04lx\n",psrc,size,procID);
-	hmem = GlobalAlloc32(GMEM_FIXED, size);
+	hmem = GlobalAlloc(GMEM_FIXED, size);
 	if (!hmem)
 	  return 0;
 	
-	pmem =  GlobalLock32 (hmem);
+	pmem =  GlobalLock (hmem);
 
 	if (! pmem)
 	  return 0;
 	  
 	memcpy (pmem, psrc, size);
-	GlobalUnlock32(hmem); 
+	GlobalUnlock(hmem); 
 	return hmem;
 }
 /*************************************************************************
@@ -969,9 +969,9 @@ HGLOBAL32 WINAPI SHAllocShared(LPVOID psrc, DWORD size, DWORD procID)
  *  the receiver of (WM_USER+2) trys to lock the HANDLE (?) 
  *  the returnvalue seems to be a memoryadress
  */
-LPVOID WINAPI SHLockShared(HANDLE32 hmem, DWORD procID)
+LPVOID WINAPI SHLockShared(HANDLE hmem, DWORD procID)
 {	TRACE(shell,"handle=0x%04x procID=0x%04lx\n",hmem,procID);
-	return GlobalLock32(hmem);
+	return GlobalLock(hmem);
 }
 /*************************************************************************
  * SHUnlockShared [SHELL32.522]
@@ -979,9 +979,9 @@ LPVOID WINAPI SHLockShared(HANDLE32 hmem, DWORD procID)
  * NOTES
  *  parameter1 is return value from SHLockShared
  */
-BOOL32 WINAPI SHUnlockShared(HANDLE32 pmem)
+BOOL WINAPI SHUnlockShared(HANDLE pmem)
 {	TRACE(shell,"handle=0x%04x\n",pmem);
-	return GlobalUnlock32(pmem); 
+	return GlobalUnlock(pmem); 
 }
 /*************************************************************************
  * SHFreeShared [SHELL32.523]
@@ -990,16 +990,16 @@ BOOL32 WINAPI SHUnlockShared(HANDLE32 pmem)
  *  parameter1 is return value from SHAllocShared
  *  parameter2 is return value from GetCurrentProcessId
  */
-HANDLE32 WINAPI SHFreeShared(HANDLE32 hmem, DWORD procID)
+HANDLE WINAPI SHFreeShared(HANDLE hmem, DWORD procID)
 {	TRACE(shell,"handle=0x%04x 0x%04lx\n",hmem,procID);
-	return GlobalFree32(hmem);
+	return GlobalFree(hmem);
 }
 
 /*************************************************************************
  * SetAppStartingCursor32 [SHELL32.99]
  *
  */
-HRESULT WINAPI SetAppStartingCursor32(HWND32 u, DWORD v)
+HRESULT WINAPI SetAppStartingCursor(HWND u, DWORD v)
 {	FIXME(shell,"hwnd=0x%04x 0x%04lx stub\n",u,v );
 	return 0;
 }
@@ -1007,7 +1007,7 @@ HRESULT WINAPI SetAppStartingCursor32(HWND32 u, DWORD v)
  * SHLoadOLE32 [SHELL32.151]
  *
  */
-HRESULT WINAPI SHLoadOLE32(DWORD u)
+HRESULT WINAPI SHLoadOLE(DWORD u)
 {	FIXME(shell,"0x%04lx stub\n",u);
 	return S_OK;
 }
@@ -1015,14 +1015,14 @@ HRESULT WINAPI SHLoadOLE32(DWORD u)
  * Shell_MergeMenus32 [SHELL32.67]
  *
  */
-BOOL32 _SHIsMenuSeparator(HMENU32 hm, int i)
+BOOL _SHIsMenuSeparator(HMENU hm, int i)
 {
-	MENUITEMINFO32A mii;
+	MENUITEMINFOA mii;
 
-	mii.cbSize = sizeof(MENUITEMINFO32A);
+	mii.cbSize = sizeof(MENUITEMINFOA);
 	mii.fMask = MIIM_TYPE;
 	mii.cch = 0;    /* WARNING: We MUST initialize it to 0*/
-	if (!GetMenuItemInfo32A(hm, i, TRUE, &mii))
+	if (!GetMenuItemInfoA(hm, i, TRUE, &mii))
 	{ return(FALSE);
 	}
 
@@ -1034,13 +1034,13 @@ BOOL32 _SHIsMenuSeparator(HMENU32 hm, int i)
 }
 #define MM_ADDSEPARATOR         0x00000001L
 #define MM_SUBMENUSHAVEIDS      0x00000002L
-HRESULT WINAPI Shell_MergeMenus32 (HMENU32 hmDst, HMENU32 hmSrc, UINT32 uInsert, UINT32 uIDAdjust, UINT32 uIDAdjustMax, ULONG uFlags)
+HRESULT WINAPI Shell_MergeMenus (HMENU hmDst, HMENU hmSrc, UINT uInsert, UINT uIDAdjust, UINT uIDAdjustMax, ULONG uFlags)
 {	int		nItem;
-	HMENU32		hmSubMenu;
-	BOOL32		bAlreadySeparated;
-	MENUITEMINFO32A miiSrc;
+	HMENU		hmSubMenu;
+	BOOL		bAlreadySeparated;
+	MENUITEMINFOA miiSrc;
 	char		szName[256];
-	UINT32		uTemp, uIDMax = uIDAdjust;
+	UINT		uTemp, uIDMax = uIDAdjust;
 
 	FIXME(shell,"hmenu1=0x%04x hmenu2=0x%04x 0x%04x 0x%04x 0x%04x  0x%04lx stub\n",
 		 hmDst, hmSrc, uInsert, uIDAdjust, uIDAdjustMax, uFlags);
@@ -1049,9 +1049,9 @@ HRESULT WINAPI Shell_MergeMenus32 (HMENU32 hmDst, HMENU32 hmSrc, UINT32 uInsert,
 	{ return uIDMax;
 	}
 
-	nItem = GetMenuItemCount32(hmDst);
-	if (uInsert >= (UINT32)nItem)
-	{ uInsert = (UINT32)nItem;
+	nItem = GetMenuItemCount(hmDst);
+	if (uInsert >= (UINT)nItem)
+	{ uInsert = (UINT)nItem;
 	  bAlreadySeparated = TRUE;
 	}
 	else
@@ -1059,14 +1059,14 @@ HRESULT WINAPI Shell_MergeMenus32 (HMENU32 hmDst, HMENU32 hmSrc, UINT32 uInsert,
 	}
 	if ((uFlags & MM_ADDSEPARATOR) && !bAlreadySeparated)
 	{ /* Add a separator between the menus */
-	  InsertMenu32A(hmDst, uInsert, MF_BYPOSITION | MF_SEPARATOR, 0, NULL);
+	  InsertMenuA(hmDst, uInsert, MF_BYPOSITION | MF_SEPARATOR, 0, NULL);
 	  bAlreadySeparated = TRUE;
         }
 
 
         /* Go through the menu items and clone them*/
-        for (nItem = GetMenuItemCount32(hmSrc) - 1; nItem >= 0; nItem--)
-        { miiSrc.cbSize = sizeof(MENUITEMINFO32A);
+        for (nItem = GetMenuItemCount(hmSrc) - 1; nItem >= 0; nItem--)
+        { miiSrc.cbSize = sizeof(MENUITEMINFOA);
 	  miiSrc.fMask = MIIM_STATE | MIIM_ID | MIIM_SUBMENU | MIIM_CHECKMARKS | MIIM_TYPE | MIIM_DATA;
 	  /* We need to reset this every time through the loop in case
 	  menus DON'T have IDs*/
@@ -1075,7 +1075,7 @@ HRESULT WINAPI Shell_MergeMenus32 (HMENU32 hmDst, HMENU32 hmSrc, UINT32 uInsert,
 	  miiSrc.dwItemData = 0;
 	  miiSrc.cch = sizeof(szName);
 
-	  if (!GetMenuItemInfo32A(hmSrc, nItem, TRUE, &miiSrc))
+	  if (!GetMenuItemInfoA(hmSrc, nItem, TRUE, &miiSrc))
 	  { continue;
 	  }
 	  if (miiSrc.fType & MFT_SEPARATOR)
@@ -1101,11 +1101,11 @@ HRESULT WINAPI Shell_MergeMenus32 (HMENU32 hmDst, HMENU32 hmSrc, UINT32 uInsert,
 	      miiSrc.fMask &= ~MIIM_ID;
 	    }
 	    hmSubMenu = miiSrc.hSubMenu;
-	    miiSrc.hSubMenu = CreatePopupMenu32();
+	    miiSrc.hSubMenu = CreatePopupMenu();
 	    if (!miiSrc.hSubMenu)
 	    { return(uIDMax);
 	    }
-	    uTemp = Shell_MergeMenus32(miiSrc.hSubMenu, hmSubMenu, 0, uIDAdjust, uIDAdjustMax, uFlags&MM_SUBMENUSHAVEIDS);
+	    uTemp = Shell_MergeMenus(miiSrc.hSubMenu, hmSubMenu, 0, uIDAdjust, uIDAdjustMax, uFlags&MM_SUBMENUSHAVEIDS);
 	    if (uIDMax <= uTemp)
 	    { uIDMax = uTemp;
 	    }
@@ -1122,7 +1122,7 @@ HRESULT WINAPI Shell_MergeMenus32 (HMENU32 hmDst, HMENU32 hmSrc, UINT32 uInsert,
 	    }
 	    bAlreadySeparated = FALSE;
 	  }
-	  if (!InsertMenuItem32A(hmDst, uInsert, TRUE, &miiSrc))
+	  if (!InsertMenuItemA(hmDst, uInsert, TRUE, &miiSrc))
 	  { return(uIDMax);
 	  }
 	}
@@ -1131,19 +1131,19 @@ HRESULT WINAPI Shell_MergeMenus32 (HMENU32 hmDst, HMENU32 hmSrc, UINT32 uInsert,
         inserted menu items*/
         if (uInsert == 0)
         { if (bAlreadySeparated)
-	  { DeleteMenu32(hmDst, uInsert, MF_BYPOSITION);
+	  { DeleteMenu(hmDst, uInsert, MF_BYPOSITION);
 	  }
 	}
 	else
 	{ if (_SHIsMenuSeparator(hmDst, uInsert-1))
 	  { if (bAlreadySeparated)
-	    { DeleteMenu32(hmDst, uInsert, MF_BYPOSITION);
+	    { DeleteMenu(hmDst, uInsert, MF_BYPOSITION);
 	    }
 	  }
 	  else
 	  { if ((uFlags & MM_ADDSEPARATOR) && !bAlreadySeparated)
 	    { /* Add a separator between the menus*/
-	      InsertMenu32A(hmDst, uInsert, MF_BYPOSITION | MF_SEPARATOR, 0, NULL);
+	      InsertMenuA(hmDst, uInsert, MF_BYPOSITION | MF_SEPARATOR, 0, NULL);
 	    }
 	  }
 	}
@@ -1154,7 +1154,7 @@ HRESULT WINAPI Shell_MergeMenus32 (HMENU32 hmDst, HMENU32 hmSrc, UINT32 uInsert,
  * DriveType32 [SHELL32.64]
  *
  */
-HRESULT WINAPI DriveType32(DWORD u)
+HRESULT WINAPI DriveType(DWORD u)
 {	FIXME(shell,"0x%04lx stub\n",u);
 	return 0;
 }
@@ -1207,7 +1207,7 @@ LPWSTR WINAPI StrRChrW(LPWSTR lpStart, LPWSTR lpEnd, DWORD wMatch)
 /*************************************************************************
 *	StrFormatByteSize	[SHLWAPI]
 */
-LPSTR WINAPI StrFormatByteSize32A ( DWORD dw, LPSTR pszBuf, UINT32 cchBuf )
+LPSTR WINAPI StrFormatByteSizeA ( DWORD dw, LPSTR pszBuf, UINT cchBuf )
 {	char buf[64];
 	TRACE(shell,"%lx %p %i\n", dw, pszBuf, cchBuf);
 	if ( dw<1024L )
@@ -1225,7 +1225,7 @@ LPSTR WINAPI StrFormatByteSize32A ( DWORD dw, LPSTR pszBuf, UINT32 cchBuf )
 	strncpy (pszBuf, buf, cchBuf);
 	return pszBuf;	
 }
-LPWSTR WINAPI StrFormatByteSize32W ( DWORD dw, LPWSTR pszBuf, UINT32 cchBuf )
+LPWSTR WINAPI StrFormatByteSizeW ( DWORD dw, LPWSTR pszBuf, UINT cchBuf )
 {	char buf[64];
 	TRACE(shell,"%lx %p %i\n", dw, pszBuf, cchBuf);
 	if ( dw<1024L )
@@ -1255,7 +1255,7 @@ HRESULT WINAPI SHWaitForFileToOpen(DWORD u, DWORD v, DWORD w)
  * Control_FillCache_RunDLL [SHELL32.8]
  *
  */
-HRESULT WINAPI Control_FillCache_RunDLL(HWND32 hWnd, HANDLE32 hModule, DWORD w, DWORD x)
+HRESULT WINAPI Control_FillCache_RunDLL(HWND hWnd, HANDLE hModule, DWORD w, DWORD x)
 {	FIXME(shell,"0x%04x 0x%04x 0x%04lx 0x%04lx stub\n",hWnd, hModule,w,x);
 	return 0;
 }

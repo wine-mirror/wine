@@ -18,9 +18,9 @@ static char PEN_alternate[]  = "1";
 /***********************************************************************
  *           PSDRV_PEN_SelectObject
  */
-extern HPEN32 PSDRV_PEN_SelectObject( DC * dc, HPEN32 hpen, PENOBJ * pen )
+extern HPEN PSDRV_PEN_SelectObject( DC * dc, HPEN hpen, PENOBJ * pen )
 {
-    HPEN32 prevpen = dc->w.hPen;
+    HPEN prevpen = dc->w.hPen;
     PSDRV_PDEVICE *physDev = (PSDRV_PDEVICE *)dc->physDev;
 
     TRACE(psdrv, "hpen = %08x colour = %08lx\n", hpen, pen->logpen.lopnColor);
@@ -72,7 +72,7 @@ extern HPEN32 PSDRV_PEN_SelectObject( DC * dc, HPEN32 hpen, PENOBJ * pen )
  *	PSDRV_SetPen
  *
  */
-BOOL32 PSDRV_SetPen(DC *dc)
+BOOL PSDRV_SetPen(DC *dc)
 {
     PSDRV_PDEVICE *physDev = (PSDRV_PDEVICE *)dc->physDev;
 

@@ -504,7 +504,7 @@ typedef struct _D3DDeviceDesc {
 	D3DCOLORMODEL	dcmColorModel;
 	DWORD		dwDevCaps;
 	D3DTRANSFORMCAPS dtcTransformCaps;
-	BOOL32		bClipping;
+	BOOL		bClipping;
 	D3DLIGHTINGCAPS	dlcLightingCaps;
 	D3DPRIMCAPS	dpcLineCaps;
 	D3DPRIMCAPS	dpcTriCaps;
@@ -543,7 +543,7 @@ typedef HRESULT (CALLBACK* LPD3DVALIDATECALLBACK)(LPVOID lpUserArg, DWORD dwOffs
 typedef struct {
     DWORD		dwSize;
     DWORD		dwFlags;
-    BOOL32		bHardware;
+    BOOL		bHardware;
     D3DCOLORMODEL	dcmColorModel;
     GUID		guid;
     DWORD		dwCaps;
@@ -1106,7 +1106,7 @@ typedef struct _D3DTEXTURELOAD {
 typedef struct _D3DBRANCH { 
   DWORD dwMask; 
   DWORD dwValue; 
-  BOOL32  bNegate; 
+  BOOL  bNegate; 
   DWORD dwOffset; 
 } D3DBRANCH, *LPD3DBRANCH; 
 
@@ -1344,9 +1344,9 @@ typedef struct IDirect3Viewport_VTable {
   STDMETHOD(TransformVertices) (THIS_ DWORD, LPD3DTRANSFORMDATA, DWORD, LPDWORD) PURE;
   STDMETHOD(LightElements) (THIS_ DWORD, LPD3DLIGHTDATA) PURE;
   STDMETHOD(SetBackground) (THIS_ D3DMATERIALHANDLE) PURE;
-  STDMETHOD(GetBackground) (THIS_ LPD3DMATERIALHANDLE, LPBOOL32) PURE;
+  STDMETHOD(GetBackground) (THIS_ LPD3DMATERIALHANDLE, LPBOOL) PURE;
   STDMETHOD(SetBackgroundDepth) (THIS_ LPDIRECTDRAWSURFACE) PURE;
-  STDMETHOD(GetBackgroundDepth) (THIS_ LPDIRECTDRAWSURFACE*, LPBOOL32) PURE;
+  STDMETHOD(GetBackgroundDepth) (THIS_ LPDIRECTDRAWSURFACE*, LPBOOL) PURE;
   STDMETHOD(Clear) (THIS_ DWORD, LPD3DRECT, DWORD) PURE;
   STDMETHOD(AddLight) (THIS_ LPDIRECT3DLIGHT) PURE;
   STDMETHOD(DeleteLight) (THIS_ LPDIRECT3DLIGHT) PURE;
@@ -1372,9 +1372,9 @@ typedef struct IDirect3Viewport2_VTable {
   STDMETHOD(TransformVertices) (THIS_ DWORD, LPD3DTRANSFORMDATA, DWORD, LPDWORD) PURE;
   STDMETHOD(LightElements) (THIS_ DWORD, LPD3DLIGHTDATA) PURE;
   STDMETHOD(SetBackground) (THIS_ D3DMATERIALHANDLE) PURE;
-  STDMETHOD(GetBackground) (THIS_ LPD3DMATERIALHANDLE, LPBOOL32) PURE;
+  STDMETHOD(GetBackground) (THIS_ LPD3DMATERIALHANDLE, LPBOOL) PURE;
   STDMETHOD(SetBackgroundDepth) (THIS_ LPDIRECTDRAWSURFACE) PURE;
-  STDMETHOD(GetBackgroundDepth) (THIS_ LPDIRECTDRAWSURFACE*, LPBOOL32) PURE;
+  STDMETHOD(GetBackgroundDepth) (THIS_ LPDIRECTDRAWSURFACE*, LPBOOL) PURE;
   STDMETHOD(Clear) (THIS_ DWORD, LPD3DRECT, DWORD) PURE;
   STDMETHOD(AddLight) (THIS_ LPDIRECT3DLIGHT) PURE;
   STDMETHOD(DeleteLight) (THIS_ LPDIRECT3DLIGHT) PURE;
@@ -1456,7 +1456,7 @@ struct IDirect3DExecuteBuffer {
 
   /* This flags is set to TRUE if we allocated ourselves the
      data buffer */
-  BOOL32 need_free;
+  BOOL need_free;
 
   void (*execute)(LPDIRECT3DEXECUTEBUFFER this,
 		  LPDIRECT3DDEVICE dev,

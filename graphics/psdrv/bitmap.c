@@ -14,10 +14,10 @@
  *
  *	PSDRV_StretchDIBits
  */
-INT32 PSDRV_StretchDIBits( DC *dc, INT32 xDst, INT32 yDst, INT32 widthDst,
-			   INT32 heightDst, INT32 xSrc, INT32 ySrc,
-			   INT32 widthSrc, INT32 heightSrc, const void *bits,
-			   const BITMAPINFO *info, UINT32 wUsage, DWORD dwRop )
+INT PSDRV_StretchDIBits( DC *dc, INT xDst, INT yDst, INT widthDst,
+			   INT heightDst, INT xSrc, INT ySrc,
+			   INT widthSrc, INT heightSrc, const void *bits,
+			   const BITMAPINFO *info, UINT wUsage, DWORD dwRop )
 {
     TRACE(psdrv, "(%d,%d %dx%d) -> (%d,%d %dx%d) on %08x. %d colour bits\n",
 	  xSrc, ySrc, widthSrc, heightSrc, xDst, yDst, widthDst, heightDst,

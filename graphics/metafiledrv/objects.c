@@ -28,7 +28,7 @@ static HBITMAP16 MFDRV_BITMAP_SelectObject( DC * dc, HBITMAP16 hbitmap,
 /***********************************************************************
  *           MFDRV_BRUSH_SelectObject
  */
-static HBRUSH32 MFDRV_BRUSH_SelectObject( DC * dc, HBRUSH32 hbrush,
+static HBRUSH MFDRV_BRUSH_SelectObject( DC * dc, HBRUSH hbrush,
                                           BRUSHOBJ * brush )
 {
     LOGBRUSH16 logbrush = { brush->logbrush.lbStyle,
@@ -65,9 +65,9 @@ static HFONT16 MFDRV_FONT_SelectObject( DC * dc, HFONT16 hfont,
 /***********************************************************************
  *           MFDRV_PEN_SelectObject
  */
-static HPEN32 MFDRV_PEN_SelectObject( DC * dc, HPEN32 hpen, PENOBJ * pen )
+static HPEN MFDRV_PEN_SelectObject( DC * dc, HPEN hpen, PENOBJ * pen )
 {
-    HPEN32 prevHandle = dc->w.hPen;
+    HPEN prevHandle = dc->w.hPen;
     LOGPEN16 logpen = { pen->logpen.lopnStyle,
                         { pen->logpen.lopnWidth.x, pen->logpen.lopnWidth.y },
                         pen->logpen.lopnColor };
@@ -79,10 +79,10 @@ static HPEN32 MFDRV_PEN_SelectObject( DC * dc, HPEN32 hpen, PENOBJ * pen )
 /***********************************************************************
  *           MFDRV_SelectObject
  */
-HGDIOBJ32 MFDRV_SelectObject( DC *dc, HGDIOBJ32 handle )
+HGDIOBJ MFDRV_SelectObject( DC *dc, HGDIOBJ handle )
 {
     GDIOBJHDR * ptr = GDI_GetObjPtr( handle, MAGIC_DONTCARE );
-    HGDIOBJ32 ret = 0;
+    HGDIOBJ ret = 0;
 
     if (!ptr) return 0;
     TRACE(gdi, "hdc=%04x %04x\n", dc->hSelf, handle );

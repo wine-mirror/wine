@@ -56,42 +56,42 @@ int MONITOR_GetDepth(MONITOR *pMonitor)
 
 /**********************************************************************/
 
-HMONITOR WINAPI MonitorFromPoint(POINT32 ptScreenCoords, DWORD dwFlags)
+HMONITOR WINAPI MonitorFromPoint(POINT ptScreenCoords, DWORD dwFlags)
 {
     if ((dwFlags & (MONITOR_DEFAULTTOPRIMARY | MONITOR_DEFAULTTONEAREST)) ||
         ((ptScreenCoords.x >= 0) &&
-        (ptScreenCoords.x < GetSystemMetrics32(SM_CXSCREEN)) &&
+        (ptScreenCoords.x < GetSystemMetrics(SM_CXSCREEN)) &&
         (ptScreenCoords.y >= 0) &&
-        (ptScreenCoords.y < GetSystemMetrics32(SM_CYSCREEN))))
+        (ptScreenCoords.y < GetSystemMetrics(SM_CYSCREEN))))
     {
         return xPRIMARY_MONITOR;
     }
         return NULL;
 }
 
-HMONITOR WINAPI MonitorFromRect(LPRECT32 lprcScreenCoords, DWORD dwFlags)
+HMONITOR WINAPI MonitorFromRect(LPRECT lprcScreenCoords, DWORD dwFlags)
 {
     if ((dwFlags & (MONITOR_DEFAULTTOPRIMARY | MONITOR_DEFAULTTONEAREST)) ||
         ((lprcScreenCoords->right > 0) &&
         (lprcScreenCoords->bottom > 0) &&
-        (lprcScreenCoords->left < GetSystemMetrics32(SM_CXSCREEN)) &&
-        (lprcScreenCoords->top < GetSystemMetrics32(SM_CYSCREEN))))
+        (lprcScreenCoords->left < GetSystemMetrics(SM_CXSCREEN)) &&
+        (lprcScreenCoords->top < GetSystemMetrics(SM_CYSCREEN))))
     {
         return xPRIMARY_MONITOR;
     }
     return NULL;
 }
 
-HMONITOR WINAPI MonitorFromWindow(HWND32 hWnd, DWORD dwFlags)
+HMONITOR WINAPI MonitorFromWindow(HWND hWnd, DWORD dwFlags)
 {
-    WINDOWPLACEMENT32 wp;
+    WINDOWPLACEMENT wp;
 
     if (dwFlags & (MONITOR_DEFAULTTOPRIMARY | MONITOR_DEFAULTTONEAREST))
         return xPRIMARY_MONITOR;
 
-    if (IsIconic32(hWnd) ? 
-            GetWindowPlacement32(hWnd, &wp) : 
-            GetWindowRect32(hWnd, &wp.rcNormalPosition)) {
+    if (IsIconic(hWnd) ? 
+            GetWindowPlacement(hWnd, &wp) : 
+            GetWindowRect(hWnd, &wp.rcNormalPosition)) {
 
         return MonitorFromRect(&wp.rcNormalPosition, dwFlags);
     }
@@ -99,24 +99,24 @@ HMONITOR WINAPI MonitorFromWindow(HWND32 hWnd, DWORD dwFlags)
     return NULL;
 }
 
-BOOL32 WINAPI GetMonitorInfo32A(HMONITOR hMonitor, LPMONITORINFO lpMonitorInfo)
+BOOL WINAPI GetMonitorInfoA(HMONITOR hMonitor, LPMONITORINFO lpMonitorInfo)
 {
-    RECT32 rcWork;
+    RECT rcWork;
 
     if ((hMonitor == xPRIMARY_MONITOR) &&
         lpMonitorInfo &&
         (lpMonitorInfo->cbSize >= sizeof(MONITORINFO)) &&
-        SystemParametersInfo32A(SPI_GETWORKAREA, 0, &rcWork, 0))
+        SystemParametersInfoA(SPI_GETWORKAREA, 0, &rcWork, 0))
     {
         lpMonitorInfo->rcMonitor.left = 0;
         lpMonitorInfo->rcMonitor.top  = 0;
-        lpMonitorInfo->rcMonitor.right  = GetSystemMetrics32(SM_CXSCREEN);
-        lpMonitorInfo->rcMonitor.bottom = GetSystemMetrics32(SM_CYSCREEN);
+        lpMonitorInfo->rcMonitor.right  = GetSystemMetrics(SM_CXSCREEN);
+        lpMonitorInfo->rcMonitor.bottom = GetSystemMetrics(SM_CYSCREEN);
         lpMonitorInfo->rcWork = rcWork;
         lpMonitorInfo->dwFlags = MONITORINFOF_PRIMARY;
 	
-	if (lpMonitorInfo->cbSize >= sizeof(MONITORINFOEX32A))
-            lstrcpy32A(((MONITORINFOEX32A*)lpMonitorInfo)->szDevice, "DISPLAY");
+	if (lpMonitorInfo->cbSize >= sizeof(MONITORINFOEXA))
+            lstrcpyA(((MONITORINFOEXA*)lpMonitorInfo)->szDevice, "DISPLAY");
 
         return TRUE;
     }
@@ -124,24 +124,24 @@ BOOL32 WINAPI GetMonitorInfo32A(HMONITOR hMonitor, LPMONITORINFO lpMonitorInfo)
     return FALSE;
 }
 
-BOOL32 WINAPI GetMonitorInfo32W(HMONITOR hMonitor, LPMONITORINFO lpMonitorInfo)
+BOOL WINAPI GetMonitorInfoW(HMONITOR hMonitor, LPMONITORINFO lpMonitorInfo)
 {
-    RECT32 rcWork;
+    RECT rcWork;
 
     if ((hMonitor == xPRIMARY_MONITOR) &&
         lpMonitorInfo &&
         (lpMonitorInfo->cbSize >= sizeof(MONITORINFO)) &&
-        SystemParametersInfo32W(SPI_GETWORKAREA, 0, &rcWork, 0))
+        SystemParametersInfoW(SPI_GETWORKAREA, 0, &rcWork, 0))
     {
         lpMonitorInfo->rcMonitor.left = 0;
         lpMonitorInfo->rcMonitor.top  = 0;
-        lpMonitorInfo->rcMonitor.right  = GetSystemMetrics32(SM_CXSCREEN);
-        lpMonitorInfo->rcMonitor.bottom = GetSystemMetrics32(SM_CYSCREEN);
+        lpMonitorInfo->rcMonitor.right  = GetSystemMetrics(SM_CXSCREEN);
+        lpMonitorInfo->rcMonitor.bottom = GetSystemMetrics(SM_CYSCREEN);
         lpMonitorInfo->rcWork = rcWork;
         lpMonitorInfo->dwFlags = MONITORINFOF_PRIMARY;
 
-        if (lpMonitorInfo->cbSize >= sizeof(MONITORINFOEX32W))
-            lstrcpy32W(((MONITORINFOEX32W*)lpMonitorInfo)->szDevice, (LPCWSTR)"D\0I\0S\0P\0L\0A\0Y\0\0");
+        if (lpMonitorInfo->cbSize >= sizeof(MONITORINFOEXW))
+            lstrcpyW(((MONITORINFOEXW*)lpMonitorInfo)->szDevice, (LPCWSTR)"D\0I\0S\0P\0L\0A\0Y\0\0");
 
         return TRUE;
     }
@@ -149,37 +149,37 @@ BOOL32 WINAPI GetMonitorInfo32W(HMONITOR hMonitor, LPMONITORINFO lpMonitorInfo)
     return FALSE;
 }
 
-BOOL32 WINAPI EnumDisplayMonitors(
-        HDC32             hdcOptionalForPainting,
-        LPRECT32         lprcEnumMonitorsThatIntersect,
+BOOL WINAPI EnumDisplayMonitors(
+        HDC             hdcOptionalForPainting,
+        LPRECT         lprcEnumMonitorsThatIntersect,
         MONITORENUMPROC lpfnEnumProc,
         LPARAM          dwData)
 {
-    RECT32 rcLimit;
+    RECT rcLimit;
 
     if (!lpfnEnumProc)
         return FALSE;
 
     rcLimit.left   = 0;
     rcLimit.top    = 0;
-    rcLimit.right  = GetSystemMetrics32(SM_CXSCREEN);
-    rcLimit.bottom = GetSystemMetrics32(SM_CYSCREEN);
+    rcLimit.right  = GetSystemMetrics(SM_CXSCREEN);
+    rcLimit.bottom = GetSystemMetrics(SM_CYSCREEN);
 
     if (hdcOptionalForPainting)
     {
-        RECT32    rcClip;
-        POINT32   ptOrg;
+        RECT    rcClip;
+        POINT   ptOrg;
 
-        switch (GetClipBox32(hdcOptionalForPainting, &rcClip))
+        switch (GetClipBox(hdcOptionalForPainting, &rcClip))
         {
         default:
             if (!GetDCOrgEx(hdcOptionalForPainting, &ptOrg))
                 return FALSE;
 
-            OffsetRect32(&rcLimit, -ptOrg.x, -ptOrg.y);
-            if (IntersectRect32(&rcLimit, &rcLimit, &rcClip) &&
+            OffsetRect(&rcLimit, -ptOrg.x, -ptOrg.y);
+            if (IntersectRect(&rcLimit, &rcLimit, &rcClip) &&
                 (!lprcEnumMonitorsThatIntersect ||
-                     IntersectRect32(&rcLimit, &rcLimit, lprcEnumMonitorsThatIntersect))) {
+                     IntersectRect(&rcLimit, &rcLimit, lprcEnumMonitorsThatIntersect))) {
 
                 break;
             }
@@ -191,7 +191,7 @@ BOOL32 WINAPI EnumDisplayMonitors(
         }
     } else {
         if (    lprcEnumMonitorsThatIntersect &&
-                !IntersectRect32(&rcLimit, &rcLimit, lprcEnumMonitorsThatIntersect)) {
+                !IntersectRect(&rcLimit, &rcLimit, lprcEnumMonitorsThatIntersect)) {
 
             return TRUE;
         }

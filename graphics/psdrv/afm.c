@@ -431,7 +431,7 @@ static void PSDRV_DumpFontList(void)
  * Only exported function in this file. Parses all afm files listed in
  * [afmfiles] of wine.conf .
  */
-BOOL32 PSDRV_GetFontMetrics(void)
+BOOL PSDRV_GetFontMetrics(void)
 {
     PROFILE_EnumerateWineIniSection( "afmfiles", PSDRV_afmfilesCallback, NULL);
     PSDRV_DumpFontList();

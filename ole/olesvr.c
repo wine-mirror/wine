@@ -38,7 +38,7 @@ OLESTATUS WINAPI OleBlockServer16(LHSERVER hServer)
 /******************************************************************************
  *		OleBlockServer32	[OLESVR32.4]
  */
-OLESTATUS WINAPI OleBlockServer32(LHSERVER hServer)
+OLESTATUS WINAPI OleBlockServer(LHSERVER hServer)
 {
     FIXME(ole,"(%ld): stub\n",hServer);
     return OLE_OK;
@@ -58,7 +58,7 @@ OLESTATUS WINAPI OleUnblockServer16(LHSERVER hServer, BOOL16 *block)
 /******************************************************************************
  *		OleUnblockServer32	[OLESVR32.5]
  */
-OLESTATUS WINAPI OleUnblockServer32(LHSERVER hServer, BOOL32 *block)
+OLESTATUS WINAPI OleUnblockServer(LHSERVER hServer, BOOL *block)
 {
     FIXME(ole,"(%ld): stub\n",hServer);
     /* no more blocked messages :) */
@@ -90,7 +90,7 @@ OLESTATUS WINAPI OleRevokeServerDoc16(LHSERVERDOC hServerDoc)
 /******************************************************************************
  *		OleRevokeServerDoc32	[OLESVR32.7]
  */
-OLESTATUS WINAPI OleRevokeServerDoc32(LHSERVERDOC hServerDoc)
+OLESTATUS WINAPI OleRevokeServerDoc(LHSERVERDOC hServerDoc)
 {
     FIXME(ole,"(%ld): stub\n",hServerDoc);
     return OLE_OK;
@@ -99,7 +99,7 @@ OLESTATUS WINAPI OleRevokeServerDoc32(LHSERVERDOC hServerDoc)
 /******************************************************************************
  *		OleRevokeServer	[OLESVR.3]
  */
-OLESTATUS WINAPI OleRevokeServer(LHSERVER hServer)
+OLESTATUS WINAPI OleRevokeServer16(LHSERVER hServer)
 {
     FIXME(ole,"%ld - stub\n",hServer);
     return OLE_OK;
@@ -108,7 +108,7 @@ OLESTATUS WINAPI OleRevokeServer(LHSERVER hServer)
 /******************************************************************************
  * OleRegisterServer32 [OLESVR32.2]
  */
-OLESTATUS WINAPI OleRegisterServer32(LPCSTR svrname,LPOLESERVER olesvr,LHSERVER* hRet,HINSTANCE32 hinst,OLE_SERVER_USE osu) {
+OLESTATUS WINAPI OleRegisterServer(LPCSTR svrname,LPOLESERVER olesvr,LHSERVER* hRet,HINSTANCE hinst,OLE_SERVER_USE osu) {
 	FIXME(ole,"(%s,%p,%p,%08x,%d): stub!\n",svrname,olesvr,hRet,hinst,osu);
     	*hRet=++OLE_current_handle;
 	return OLE_OK;
@@ -117,7 +117,7 @@ OLESTATUS WINAPI OleRegisterServer32(LPCSTR svrname,LPOLESERVER olesvr,LHSERVER*
 /******************************************************************************
  * OleRegisterServerDoc32 [OLESVR32.6]
  */
-OLESTATUS WINAPI OleRegisterServerDoc32( LHSERVER hServer, LPCSTR docname,
+OLESTATUS WINAPI OleRegisterServerDoc( LHSERVER hServer, LPCSTR docname,
                                          LPOLESERVERDOC document,
                                          LHSERVERDOC *hRet)
 {
@@ -130,7 +130,7 @@ OLESTATUS WINAPI OleRegisterServerDoc32( LHSERVER hServer, LPCSTR docname,
  *		OleRenameServerDoc32	[OLESVR32.8]
  *
  */
-OLESTATUS WINAPI OleRenameServerDoc32(LHSERVERDOC hDoc, LPCSTR newName)
+OLESTATUS WINAPI OleRenameServerDoc(LHSERVERDOC hDoc, LPCSTR newName)
 {
     FIXME(ole,"(%ld,%s): stub.\n",hDoc, newName);
     return OLE_OK;

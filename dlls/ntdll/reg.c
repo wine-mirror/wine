@@ -29,7 +29,7 @@ NTSTATUS WINAPI NtCreateKey(
  * NtDeleteKey [NTDLL]
  * ZwDeleteKey
  */
-NTSTATUS NtDeleteKey(HANDLE32 KeyHandle)
+NTSTATUS NtDeleteKey(HANDLE KeyHandle)
 {
 	FIXME(ntdll,"(0x%08x) stub!\n",
 	KeyHandle);
@@ -41,7 +41,7 @@ NTSTATUS NtDeleteKey(HANDLE32 KeyHandle)
  * ZwDeleteValueKey
  */
 NTSTATUS WINAPI NtDeleteValueKey(
-	IN HANDLE32 KeyHandle,
+	IN HANDLE KeyHandle,
 	IN PUNICODE_STRING ValueName)
 {
 	FIXME(ntdll,"(0x%08x,%p(%s)) stub!\n",
@@ -54,7 +54,7 @@ NTSTATUS WINAPI NtDeleteValueKey(
  * ZwEnumerateKey
  */
 NTSTATUS WINAPI NtEnumerateKey(
-	HANDLE32 KeyHandle,
+	HANDLE KeyHandle,
 	ULONG Index,
 	KEY_INFORMATION_CLASS KeyInformationClass,
 	PVOID KeyInformation,
@@ -71,7 +71,7 @@ NTSTATUS WINAPI NtEnumerateKey(
  *  ZwEnumerateValueKey
  */
 NTSTATUS WINAPI NtEnumerateValueKey(
-	HANDLE32 KeyHandle,
+	HANDLE KeyHandle,
 	ULONG Index,
 	KEY_VALUE_INFORMATION_CLASS KeyInformationClass,
 	PVOID KeyInformation,
@@ -87,7 +87,7 @@ NTSTATUS WINAPI NtEnumerateValueKey(
  *  NtFlushKey	[NTDLL] 
  *  ZwFlushKey
  */
-NTSTATUS NtFlushKey(HANDLE32 KeyHandle)
+NTSTATUS NtFlushKey(HANDLE KeyHandle)
 {
 	FIXME(ntdll,"(0x%08x) stub!\n",
 	KeyHandle);
@@ -113,8 +113,8 @@ NTSTATUS WINAPI NtLoadKey(
  *  ZwNotifyChangeKey
  */
 NTSTATUS WINAPI NtNotifyChangeKey(
-	IN HANDLE32 KeyHandle,
-	IN HANDLE32 Event,
+	IN HANDLE KeyHandle,
+	IN HANDLE Event,
 	IN PIO_APC_ROUTINE ApcRoutine OPTIONAL,
 	IN PVOID ApcContext OPTIONAL,
 	OUT PIO_STATUS_BLOCK IoStatusBlock,
@@ -153,7 +153,7 @@ NTSTATUS WINAPI NtOpenKey(
  * ZwQueryKey
  */
 NTSTATUS WINAPI NtQueryKey(
-	HANDLE32 KeyHandle,
+	HANDLE KeyHandle,
 	KEY_INFORMATION_CLASS KeyInformationClass,
 	PVOID KeyInformation,
 	ULONG Length,
@@ -170,7 +170,7 @@ NTSTATUS WINAPI NtQueryKey(
  */
 
 NTSTATUS WINAPI NtQueryMultipleValueKey(
-	HANDLE32 KeyHandle,
+	HANDLE KeyHandle,
 	PVALENTW ListOfValuesToQuery,
 	ULONG NumberOfItems,
 	PVOID MultipleValueInformation,
@@ -188,7 +188,7 @@ NTSTATUS WINAPI NtQueryMultipleValueKey(
  * ZwQueryValueKey
  */
 NTSTATUS WINAPI NtQueryValueKey(
-	HANDLE32 KeyHandle,
+	HANDLE KeyHandle,
 	PUNICODE_STRING ValueName,
 	KEY_VALUE_INFORMATION_CLASS KeyValueInformationClass,
 	PVOID KeyValueInformation,
@@ -206,7 +206,7 @@ NTSTATUS WINAPI NtQueryValueKey(
  */
 NTSTATUS WINAPI NtReplaceKey(
 	IN POBJECT_ATTRIBUTES ObjectAttributes,
-	IN HANDLE32 Key,
+	IN HANDLE Key,
 	IN POBJECT_ATTRIBUTES ReplacedObjectAttributes)
 {
 	FIXME(ntdll,"(%p(%s),0x%08x,%p (%s)),stub!\n",
@@ -220,8 +220,8 @@ NTSTATUS WINAPI NtReplaceKey(
  * ZwRestoreKey
  */
 NTSTATUS WINAPI NtRestoreKey(
-	HANDLE32 KeyHandle,
-	HANDLE32 FileHandle,
+	HANDLE KeyHandle,
+	HANDLE FileHandle,
 	ULONG RestoreFlags)
 {
 	FIXME(ntdll,"(0x%08x,0x%08x,0x%08lx) stub\n",
@@ -234,8 +234,8 @@ NTSTATUS WINAPI NtRestoreKey(
  * ZwSaveKey
  */
 NTSTATUS WINAPI NtSaveKey(
-	IN HANDLE32 KeyHandle,
-	IN HANDLE32 FileHandle)
+	IN HANDLE KeyHandle,
+	IN HANDLE FileHandle)
 {
 	FIXME(ntdll,"(0x%08x,0x%08x) stub\n",
 	KeyHandle, FileHandle);
@@ -246,7 +246,7 @@ NTSTATUS WINAPI NtSaveKey(
  * ZwSetInformationKey
  */
 NTSTATUS WINAPI NtSetInformationKey(
-	IN HANDLE32 KeyHandle,
+	IN HANDLE KeyHandle,
 	IN const int KeyInformationClass,
 	IN PVOID KeyInformation,
 	IN ULONG KeyInformationLength)
@@ -260,7 +260,7 @@ NTSTATUS WINAPI NtSetInformationKey(
  * ZwSetValueKey
  */
 NTSTATUS WINAPI NtSetValueKey(
-	HANDLE32 KeyHandle,
+	HANDLE KeyHandle,
 	PUNICODE_STRING ValueName,
 	ULONG TitleIndex,
 	ULONG Type,
@@ -278,7 +278,7 @@ NTSTATUS WINAPI NtSetValueKey(
  * ZwUnloadKey
  */
 NTSTATUS WINAPI NtUnloadKey(
-	IN HANDLE32 KeyHandle)
+	IN HANDLE KeyHandle)
 {
 	FIXME(ntdll,"(0x%08x) stub\n",
 	KeyHandle);

@@ -26,17 +26,17 @@ static HRESULT WINAPI IShellFolder_QueryInterface(LPSHELLFOLDER,REFIID,LPVOID*);
 static ULONG WINAPI IShellFolder_AddRef(LPSHELLFOLDER);
 static ULONG WINAPI IShellFolder_Release(LPSHELLFOLDER);
 static HRESULT WINAPI IShellFolder_Initialize(LPSHELLFOLDER,LPCITEMIDLIST);
-static HRESULT WINAPI IShellFolder_ParseDisplayName(LPSHELLFOLDER,HWND32,LPBC,LPOLESTR32,DWORD*,LPITEMIDLIST*,DWORD*);
-static HRESULT WINAPI IShellFolder_EnumObjects(LPSHELLFOLDER,HWND32,DWORD,LPENUMIDLIST*);
+static HRESULT WINAPI IShellFolder_ParseDisplayName(LPSHELLFOLDER,HWND,LPBC,LPOLESTR,DWORD*,LPITEMIDLIST*,DWORD*);
+static HRESULT WINAPI IShellFolder_EnumObjects(LPSHELLFOLDER,HWND,DWORD,LPENUMIDLIST*);
 static HRESULT WINAPI IShellFolder_BindToObject(LPSHELLFOLDER,LPCITEMIDLIST,LPBC,REFIID,LPVOID*);
 static HRESULT WINAPI IShellFolder_BindToStorage(LPSHELLFOLDER,LPCITEMIDLIST,LPBC,REFIID,LPVOID*);
 static HRESULT WINAPI IShellFolder_CompareIDs(LPSHELLFOLDER,LPARAM,LPCITEMIDLIST,LPCITEMIDLIST);
-static HRESULT WINAPI IShellFolder_CreateViewObject(LPSHELLFOLDER,HWND32,REFIID,LPVOID*);
-static HRESULT WINAPI IShellFolder_GetAttributesOf(LPSHELLFOLDER,UINT32,LPCITEMIDLIST*,DWORD*);
-static HRESULT WINAPI IShellFolder_GetUIObjectOf(LPSHELLFOLDER,HWND32,UINT32,LPCITEMIDLIST*,REFIID,UINT32*,LPVOID*);
+static HRESULT WINAPI IShellFolder_CreateViewObject(LPSHELLFOLDER,HWND,REFIID,LPVOID*);
+static HRESULT WINAPI IShellFolder_GetAttributesOf(LPSHELLFOLDER,UINT,LPCITEMIDLIST*,DWORD*);
+static HRESULT WINAPI IShellFolder_GetUIObjectOf(LPSHELLFOLDER,HWND,UINT,LPCITEMIDLIST*,REFIID,UINT*,LPVOID*);
 static HRESULT WINAPI IShellFolder_GetDisplayNameOf(LPSHELLFOLDER,LPCITEMIDLIST,DWORD,LPSTRRET);
-static HRESULT WINAPI IShellFolder_SetNameOf(LPSHELLFOLDER,HWND32,LPCITEMIDLIST,LPCOLESTR32,DWORD,LPITEMIDLIST*);
-static BOOL32 WINAPI IShellFolder_GetFolderPath(LPSHELLFOLDER,LPSTR,DWORD);
+static HRESULT WINAPI IShellFolder_SetNameOf(LPSHELLFOLDER,HWND,LPCITEMIDLIST,LPCOLESTR,DWORD,LPITEMIDLIST*);
+static BOOL WINAPI IShellFolder_GetFolderPath(LPSHELLFOLDER,LPSTR,DWORD);
 
 /***************************************************************************
  * IDropTarget interface definition for the ShellFolder
@@ -216,7 +216,7 @@ LPSTR GetNextElement(LPSTR pszNext,LPSTR pszOut,DWORD dwOut)
 	{ pszTail++;
 	}
 	dwCopy=((LPBYTE)pszTail-(LPBYTE)pszNext)/sizeof(CHAR)+1;
-	lstrcpyn32A(pszOut, pszNext, (dwOut<dwCopy)? dwOut : dwCopy);
+	lstrcpynA(pszOut, pszNext, (dwOut<dwCopy)? dwOut : dwCopy);
 
 	if(*pszTail)
 	{  pszTail++;
@@ -277,7 +277,7 @@ LPSHELLFOLDER IShellFolder_Constructor(LPSHELLFOLDER pParent,LPITEMIDLIST pidl)
 	    *(sf->sMyPath)=0x00;
 	    if(pParent->sMyPath)			/* if the parent has a path, get it*/
 	    {  strcpy(sf->sMyPath, pParent->sMyPath);
-	       PathAddBackslash32A (sf->sMyPath);
+	       PathAddBackslashA (sf->sMyPath);
 	    }
 	    sf->pMyPidl = ILCombine(pParent->pMyPidl, pidl);
 	    len = strlen(sf->sMyPath);
@@ -374,9 +374,9 @@ static ULONG WINAPI IShellFolder_Release(LPSHELLFOLDER this)
 */
 static HRESULT WINAPI IShellFolder_ParseDisplayName(
 	LPSHELLFOLDER this,
-	HWND32 hwndOwner,
+	HWND hwndOwner,
 	LPBC pbcReserved,
-	LPOLESTR32 lpszDisplayName,
+	LPOLESTR lpszDisplayName,
 	DWORD *pchEaten,
 	LPITEMIDLIST *ppidl,
 	DWORD *pdwAttributes)
@@ -384,14 +384,14 @@ static HRESULT WINAPI IShellFolder_ParseDisplayName(
 	LPITEMIDLIST   pidlFull=NULL, pidlTemp = NULL, pidlOld = NULL;
 	LPSTR          pszNext=NULL;
 	CHAR           szTemp[MAX_PATH],szElement[MAX_PATH];
-	BOOL32         bIsFile;
+	BOOL         bIsFile;
        
 	TRACE(shell,"(%p)->(HWND=0x%08x,%p,%p=%s,%p,pidl=%p,%p)\n",
 		this,hwndOwner,pbcReserved,lpszDisplayName,
 		debugstr_w(lpszDisplayName),pchEaten,ppidl,pdwAttributes);
 
 	{ hr = E_FAIL;
-	  WideCharToLocal32(szTemp, lpszDisplayName, lstrlen32W(lpszDisplayName) + 1);
+	  WideCharToLocal(szTemp, lpszDisplayName, lstrlenW(lpszDisplayName) + 1);
 	  if(szTemp[0])
 	  { if (strcmp(szTemp,"Desktop")==0)
 	    { pidlFull = _ILCreateDesktop();
@@ -400,11 +400,11 @@ static HRESULT WINAPI IShellFolder_ParseDisplayName(
 	    { pidlFull = _ILCreateMyComputer();
 	    }
 	    else
-	    { if (!PathIsRoot32A(szTemp))
+	    { if (!PathIsRootA(szTemp))
 	      { if (this->sMyPath && strlen (this->sMyPath))
 	        { if (strcmp(this->sMyPath,"My Computer"))
 	          { strcpy (szElement,this->sMyPath);
-	            PathAddBackslash32A (szElement);
+	            PathAddBackslashA (szElement);
 		    strcat (szElement, szTemp);
 		    strcpy (szTemp, szElement);
 	          }
@@ -412,7 +412,7 @@ static HRESULT WINAPI IShellFolder_ParseDisplayName(
 	      }
 	      
 	      /* check if the lpszDisplayName is Folder or File*/
-	      bIsFile = ! (GetFileAttributes32A(szTemp) & FILE_ATTRIBUTE_DIRECTORY);
+	      bIsFile = ! (GetFileAttributesA(szTemp) & FILE_ATTRIBUTE_DIRECTORY);
 	      pszNext = GetNextElement(szTemp, szElement, MAX_PATH);
 
 	      pidlFull = _ILCreateMyComputer();
@@ -451,7 +451,7 @@ static HRESULT WINAPI IShellFolder_ParseDisplayName(
 */
 static HRESULT WINAPI IShellFolder_EnumObjects(
 	LPSHELLFOLDER this,
-	HWND32 hwndOwner,
+	HWND hwndOwner,
 	DWORD dwFlags,
 	LPENUMIDLIST* ppEnumIDList)
 {	TRACE(shell,"(%p)->(HWND=0x%08x flags=0x%08lx pplist=%p)\n",this,hwndOwner,dwFlags,ppEnumIDList);
@@ -608,7 +608,7 @@ static HRESULT WINAPI  IShellFolder_CompareIDs(LPSHELLFOLDER this,
 *  the same as SHCreateShellFolderViewEx ???
 */
 static HRESULT WINAPI IShellFolder_CreateViewObject( LPSHELLFOLDER this,
-		 HWND32 hwndOwner, REFIID riid, LPVOID *ppvOut)
+		 HWND hwndOwner, REFIID riid, LPVOID *ppvOut)
 {	LPSHELLVIEW pShellView;
 	char    xriid[50];
 	HRESULT       hr;
@@ -644,7 +644,7 @@ static HRESULT WINAPI IShellFolder_CreateViewObject( LPSHELLFOLDER this,
 *  passes ONE element in the array and writing to further elements will
 *  cause the shell to fail later.
 */
-static HRESULT WINAPI IShellFolder_GetAttributesOf(LPSHELLFOLDER this,UINT32 cidl,LPCITEMIDLIST *apidl,DWORD *rgfInOut)
+static HRESULT WINAPI IShellFolder_GetAttributesOf(LPSHELLFOLDER this,UINT cidl,LPCITEMIDLIST *apidl,DWORD *rgfInOut)
 { LPCITEMIDLIST * pidltemp;
   DWORD i;
 
@@ -709,11 +709,11 @@ static HRESULT WINAPI IShellFolder_GetAttributesOf(LPSHELLFOLDER this,UINT32 cid
 */
 static HRESULT WINAPI IShellFolder_GetUIObjectOf( 
   LPSHELLFOLDER this,
-  HWND32        hwndOwner,
-  UINT32        cidl,
+  HWND        hwndOwner,
+  UINT        cidl,
   LPCITEMIDLIST * apidl, 
   REFIID        riid, 
-  UINT32        *  prgfInOut,
+  UINT        *  prgfInOut,
   LPVOID        * ppvOut)
 {	
 	char		xclsid[50];
@@ -791,7 +791,7 @@ static HRESULT WINAPI IShellFolder_GetDisplayNameOf( LPSHELLFOLDER this, LPCITEM
 	CHAR	szDrive[MAX_PATH];
 	DWORD	dwVolumeSerialNumber,dwMaximumComponetLength,dwFileSystemFlags;
 	LPITEMIDLIST	pidlTemp=NULL;
-	BOOL32	bSimplePidl=FALSE;
+	BOOL	bSimplePidl=FALSE;
 		
 	TRACE(shell,"(%p)->(pidl=%p,0x%08lx,%p)\n",this,pidl,dwFlags,lpName);
 	pdump(pidl);
@@ -821,14 +821,14 @@ static HRESULT WINAPI IShellFolder_GetDisplayNameOf( LPSHELLFOLDER this, LPCITEM
 	  { _ILGetDrive( pidl, szTemp, MAX_PATH);
 
 	    if ( dwFlags==SHGDN_NORMAL || dwFlags==SHGDN_INFOLDER)	/* like "A1-dos (C:)" */
-	    { GetVolumeInformation32A(szTemp,szDrive,MAX_PATH,&dwVolumeSerialNumber,&dwMaximumComponetLength,&dwFileSystemFlags,NULL,0);
+	    { GetVolumeInformationA(szTemp,szDrive,MAX_PATH,&dwVolumeSerialNumber,&dwMaximumComponetLength,&dwFileSystemFlags,NULL,0);
 	      szTemp[2]=0x00;						/* overwrite '\' */
 	      strcat (szDrive," (");
 	      strcat (szDrive,szTemp);
 	      strcat (szDrive,")"); 
 	    }
 	    else							/* like "C:\" */
-	    {  PathAddBackslash32A (szTemp);
+	    {  PathAddBackslashA (szTemp);
 	       strcpy(szDrive,szTemp);
 	    }
 	  }
@@ -855,7 +855,7 @@ static HRESULT WINAPI IShellFolder_GetDisplayNameOf( LPSHELLFOLDER this, LPCITEM
 	        if (this->sMyPath && strlen (this->sMyPath))
 	        { if (strcmp(this->sMyPath,"My Computer"))
 	          { strcpy (szText,this->sMyPath);
-	            PathAddBackslash32A (szText);
+	            PathAddBackslashA (szText);
 	          }
 	        }
 	        pidlTemp = ILFindLastID(pidl);
@@ -904,9 +904,9 @@ static HRESULT WINAPI IShellFolder_GetDisplayNameOf( LPSHELLFOLDER this, LPCITEM
 */
 static HRESULT WINAPI IShellFolder_SetNameOf(
   	LPSHELLFOLDER this,
-		HWND32 hwndOwner, 
+		HWND hwndOwner, 
     LPCITEMIDLIST pidl, /*simple pidl*/
-    LPCOLESTR32 lpName, 
+    LPCOLESTR lpName, 
     DWORD dw, 
     LPITEMIDLIST *pPidlOut)
 {  FIXME(shell,"(%p)->(%u,pidl=%p,%s,%lu,%p),stub!\n",
@@ -917,7 +917,7 @@ static HRESULT WINAPI IShellFolder_SetNameOf(
 *  IShellFolder_GetFolderPath
 *  FIXME: drive not included
 */
-static BOOL32 WINAPI IShellFolder_GetFolderPath(LPSHELLFOLDER this, LPSTR lpszOut, DWORD dwOutSize)
+static BOOL WINAPI IShellFolder_GetFolderPath(LPSHELLFOLDER this, LPSTR lpszOut, DWORD dwOutSize)
 {	DWORD	dwSize;
 
 	TRACE(shell,"(%p)->(%p %lu)\n",this, lpszOut, dwOutSize);

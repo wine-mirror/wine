@@ -92,7 +92,7 @@ typedef unsigned long Pixel;
 static struct
 {
     char** data;   /* Pointer to bitmap data */
-    BOOL32 color;  /* Is it a color bitmap?  */
+    BOOL color;  /* Is it a color bitmap?  */
 } OBM_Pixmaps_Data[OBM_LAST-OBM_FIRST+1] = {
     { obm_closed_95,TRUE},      /* OBM_CLOSED */
     { obm_radiocheck, FALSE },	/* OBM_RADIOCHECK */
@@ -299,20 +299,20 @@ static XpmColorSymbol OBM_BlackAndWhite[2] =
 typedef struct
 {
     char     **data;      /* In: bitmap data */
-    BOOL32     color;     /* In: color or monochrome */
-    BOOL32     need_mask; /* In: do we need a mask? */
+    BOOL     color;     /* In: color or monochrome */
+    BOOL     need_mask; /* In: do we need a mask? */
     HBITMAP16  bitmap;    /* Out: resulting bitmap */
     HBITMAP16  mask;      /* Out: resulting mask (if needed) */
-    POINT32    hotspot;   /* Out: bitmap hotspot */
+    POINT    hotspot;   /* Out: bitmap hotspot */
 } OBM_BITMAP_DESCR;
 
 
 /***********************************************************************
  *           OBM_InitColorSymbols
  */
-static BOOL32 OBM_InitColorSymbols()
+static BOOL OBM_InitColorSymbols()
 {
-    static BOOL32 initialized = FALSE;
+    static BOOL initialized = FALSE;
     int i;
 
     if (initialized) return TRUE;  /* Already initialised */
@@ -322,7 +322,7 @@ static BOOL32 OBM_InitColorSymbols()
     {
         if (OBM_Colors[i].pixel & 0xff000000)  /* PALETTEINDEX */
             OBM_Colors[i].pixel = COLOR_ToPhysical( NULL,
-                                    GetSysColor32(OBM_Colors[i].pixel & 0xff));
+                                    GetSysColor(OBM_Colors[i].pixel & 0xff));
         else  /* RGB*/
             OBM_Colors[i].pixel = COLOR_ToPhysical( NULL, OBM_Colors[i].pixel);
     }
@@ -376,7 +376,7 @@ static HBITMAP16 OBM_MakeBitmap( WORD width, WORD height,
  *
  * The Xlib critical section must be entered before calling this function.
  */
-static BOOL32 OBM_CreateBitmaps( OBM_BITMAP_DESCR *descr )
+static BOOL OBM_CreateBitmaps( OBM_BITMAP_DESCR *descr )
 {
 #ifdef HAVE_LIBXXPM
     Pixmap pixmap, pixmask;
@@ -457,7 +457,7 @@ static HBITMAP16 OBM_LoadBitmap( WORD id )
 /***********************************************************************
  *           OBM_LoadCursorIcon
  */
-static HGLOBAL16 OBM_LoadCursorIcon( WORD id, BOOL32 fCursor )
+static HGLOBAL16 OBM_LoadCursorIcon( WORD id, BOOL fCursor )
 {
     OBM_BITMAP_DESCR descr;
     HGLOBAL16 handle;
@@ -512,8 +512,8 @@ static HGLOBAL16 OBM_LoadCursorIcon( WORD id, BOOL32 fCursor )
     if (!(handle = GlobalAlloc16( GMEM_MOVEABLE,
                                   sizeof(CURSORICONINFO) + sizeXor + sizeAnd)))
     {
-        DeleteObject32( descr.bitmap );
-        DeleteObject32( descr.mask );
+        DeleteObject( descr.bitmap );
+        DeleteObject( descr.mask );
         return 0;
     }
 
@@ -552,12 +552,12 @@ static HGLOBAL16 OBM_LoadCursorIcon( WORD id, BOOL32 fCursor )
         }
     }
 
-    if (descr.mask) GetBitmapBits32( descr.mask, sizeAnd, (char *)(pInfo + 1));
+    if (descr.mask) GetBitmapBits( descr.mask, sizeAnd, (char *)(pInfo + 1));
     else memset( (char *)(pInfo + 1), 0xff, sizeAnd );
-    GetBitmapBits32( descr.bitmap, sizeXor, (char *)(pInfo + 1) + sizeAnd );
+    GetBitmapBits( descr.bitmap, sizeXor, (char *)(pInfo + 1) + sizeAnd );
 
-    DeleteObject32( descr.bitmap );
-    DeleteObject32( descr.mask );
+    DeleteObject( descr.bitmap );
+    DeleteObject( descr.mask );
 
     if (fCursor) OBM_Cursors[id] = handle;
     return handle;
@@ -567,7 +567,7 @@ static HGLOBAL16 OBM_LoadCursorIcon( WORD id, BOOL32 fCursor )
  *           X11DRV_LoadOEMResource
  *
  */
-HANDLE32 X11DRV_LoadOEMResource(WORD resid, WORD type)
+HANDLE X11DRV_LoadOEMResource(WORD resid, WORD type)
 {
     switch(type) {
     case OEM_BITMAP:
@@ -591,7 +591,7 @@ HANDLE32 X11DRV_LoadOEMResource(WORD resid, WORD type)
  *
  * Initializes the OBM_Pixmaps_Data and OBM_Icons_Data struct
  */
-BOOL32 X11DRV_OBM_Init(void)
+BOOL X11DRV_OBM_Init(void)
 {
     if (TWEAK_WineLook == WIN31_LOOK) {
 	OBM_Pixmaps_Data[OBM_ZOOMD - OBM_FIRST].data = obm_zoomd;

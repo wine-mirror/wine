@@ -230,7 +230,7 @@ void *DDE_AttachHandle(HGLOBAL16 handle, SEGPTR *segptr)
   struct handle_info *h_info;
   SHMDATA shmdata;
   void *ptr;
-  HGLOBAL16 hOwner = GetCurrentPDB();
+  HGLOBAL16 hOwner = GetCurrentPDB16();
 
   assert(is_dde_handle(handle));
   if (segptr != NULL)

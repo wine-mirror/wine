@@ -53,7 +53,7 @@ static void _write_ftprolog(LPBYTE relayCode ,DWORD *targetTable) {
 	*x++	= 0x0f;*x++=0xb6;*x++=0xd1; /* movzbl edx,cl */
 	*x++	= 0x8B;*x++=0x14;*x++=0x95;*(DWORD**)x= targetTable;
 	x+=4;	/* mov edx, [4*edx + targetTable] */
-	*x++	= 0x68; *(DWORD*)x = (DWORD)GetProcAddress32(GetModuleHandle32A("KERNEL32"),"FT_Prolog");
+	*x++	= 0x68; *(DWORD*)x = (DWORD)GetProcAddress(GetModuleHandleA("KERNEL32"),"FT_Prolog");
 	x+=4; 	/* push FT_Prolog */
 	*x++	= 0xC3;		/* lret */
 	/* fill rest with 0xCC / int 3 */
@@ -80,7 +80,7 @@ static void _write_qtthunk(
 	*x++	= 0x8A;*x++=0x4D;*x++=0xFC; /* movb cl,[ebp-04] */
 	*x++	= 0x8B;*x++=0x14;*x++=0x8D;*(DWORD**)x= targetTable;
 	x+=4;	/* mov edx, [4*ecx + targetTable */
-	*x++	= 0xB8; *(DWORD*)x = (DWORD)GetProcAddress32(GetModuleHandle32A("KERNEL32"),"QT_Thunk");
+	*x++	= 0xB8; *(DWORD*)x = (DWORD)GetProcAddress(GetModuleHandleA("KERNEL32"),"QT_Thunk");
 	x+=4; 	/* mov eax , QT_Thunk */
 	*x++	= 0xFF; *x++ = 0xE0;	/* jmp eax */
 	/* should fill the rest of the 32 bytes with 0xCC */
@@ -93,7 +93,7 @@ static LPVOID _loadthunk(LPCSTR module, LPCSTR func, LPCSTR module32,
                          struct ThunkDataCommon *TD32, DWORD checksum)
 {
     struct ThunkDataCommon *TD16;
-    HMODULE32 hmod;
+    HMODULE hmod;
     int ordinal;
 
     if ((hmod = LoadLibrary16(module)) <= 32) 
@@ -158,24 +158,24 @@ LPVOID WINAPI GetThunkBuff(void)
  *		ThunkConnect32		(KERNEL32)
  * Connects a 32bit and a 16bit thunkbuffer.
  */
-UINT32 WINAPI ThunkConnect32( 
+UINT WINAPI ThunkConnect32( 
 	struct ThunkDataCommon *TD,  /* [in/out] thunkbuffer */
 	LPSTR thunkfun16,            /* [in] win16 thunkfunction */
 	LPSTR module16,              /* [in] name of win16 dll */
 	LPSTR module32,              /* [in] name of win32 dll */
-	HMODULE32 hmod32,            /* [in] hmodule of win32 dll */
+	HMODULE hmod32,            /* [in] hmodule of win32 dll */
 	DWORD dwReason               /* [in] initialisation argument */
 ) {
-    BOOL32 directionSL;
+    BOOL directionSL;
 
-    if (!lstrncmp32A(TD->magic, "SL01", 4))
+    if (!lstrncmpA(TD->magic, "SL01", 4))
     {
         directionSL = TRUE;
 
         TRACE(thunk, "SL01 thunk %s (%lx) <- %s (%s), Reason: %ld\n",
                      module32, (DWORD)TD, module16, thunkfun16, dwReason);
     }
-    else if (!lstrncmp32A(TD->magic, "LS01", 4))
+    else if (!lstrncmpA(TD->magic, "LS01", 4))
     {
         directionSL = FALSE;
 
@@ -478,7 +478,7 @@ DWORD WINAPI WOWCallback16(
  * RETURNS
  *	TRUE for success
  */
-BOOL32 WINAPI WOWCallback16Ex(
+BOOL WINAPI WOWCallback16Ex(
 	FARPROC16 vpfn16,	/* [in] win16 function to call */
 	DWORD dwFlags,		/* [in] flags */
 	DWORD cbArgs,		/* [in] nr of arguments */
@@ -687,13 +687,13 @@ LPVOID WINAPI ThunkInitLSF(
 	LPCSTR dll16,	/* [in] name of win16 dll */
 	LPCSTR dll32	/* [in] name of win32 dll */
 ) {
-	HMODULE32	hkrnl32 = GetModuleHandle32A("KERNEL32");
+	HMODULE	hkrnl32 = GetModuleHandleA("KERNEL32");
 	LPDWORD		addr,addr2;
 
 	/* FIXME: add checks for valid code ... */
 	/* write pointers to kernel32.89 and kernel32.90 (+ordinal base of 1) */
-	*(DWORD*)(thunk+0x35) = (DWORD)GetProcAddress32(hkrnl32,(LPSTR)90);
-	*(DWORD*)(thunk+0x6D) = (DWORD)GetProcAddress32(hkrnl32,(LPSTR)89);
+	*(DWORD*)(thunk+0x35) = (DWORD)GetProcAddress(hkrnl32,(LPSTR)90);
+	*(DWORD*)(thunk+0x6D) = (DWORD)GetProcAddress(hkrnl32,(LPSTR)89);
 
 	
 	if (!(addr = _loadthunk( dll16, thkbuf, dll32, NULL, len )))
@@ -793,7 +793,7 @@ VOID WINAPI ThunkInitSL(
  * RETURNS
  *	TRUE for success.
  */
-BOOL32 WINAPI SSInit()
+BOOL WINAPI SSInit16()
 {
     return TRUE;
 }
@@ -806,7 +806,7 @@ BOOL32 WINAPI SSInit()
  * RETURNS
  *	TRUE for success.
  */
-BOOL32 WINAPI SSOnBigStack()
+BOOL WINAPI SSOnBigStack()
 {
     TRACE(thunk, "Yes, thunking is initialized\n");
     return TRUE;
@@ -823,7 +823,7 @@ BOOL32 WINAPI SSOnBigStack()
 DWORD WINAPIV SSCall(
 	DWORD nr,	/* [in] number of argument bytes */
 	DWORD flags,	/* [in] FIXME: flags ? */
-	FARPROC32 fun,	/* [in] function to call */
+	FARPROC fun,	/* [in] function to call */
 	...		/* [in/out] arguments */
 ) {
     DWORD i,ret;
@@ -879,7 +879,7 @@ DWORD WINAPIV SSCall(
 REGS_ENTRYPOINT(W32S_BackTo32)
 {
     LPDWORD stack = (LPDWORD)ESP_reg( context );
-    FARPROC32 proc = (FARPROC32) stack[0];
+    FARPROC proc = (FARPROC) stack[0];
 
     EAX_reg( context ) = proc( stack[2], stack[3], stack[4], stack[5], stack[6],
                                stack[7], stack[8], stack[9], stack[10], stack[11] );
@@ -933,7 +933,7 @@ AllocSLCallback(
 	*x++=0x66;*x++=0x52;				/* pushl edx */
 	*x++=0xea;*(DWORD*)x=callback;x+=4;		/* jmpf callback */
 
-	*(PDB32**)(thunk+18) = PROCESS_Current();
+	*(PDB**)(thunk+18) = PROCESS_Current();
 
 	sel = SELECTOR_AllocBlock( thunk , 32, SEGMENT_CODE, FALSE, FALSE );
 	return (sel<<16)|0;
@@ -955,7 +955,7 @@ FreeSLCallback(
  * 		GetTEBSelectorFS	(KERNEL.475)
  * 	Set the 16-bit %fs to the 32-bit %fs (current TEB selector)
  */
-VOID WINAPI GetTEBSelectorFS( CONTEXT *context ) 
+VOID WINAPI GetTEBSelectorFS16( CONTEXT *context ) 
 {
     GET_FS( FS_reg(context) );
 }
@@ -968,36 +968,36 @@ VOID WINAPI GetTEBSelectorFS( CONTEXT *context )
  *  TRUE, if it is.
  *  FALSE if not.
  */
-BOOL16 WINAPI IsPeFormat(
+BOOL16 WINAPI IsPeFormat16(
 	LPSTR	fn,	/* [in] filename to executeable */
 	HFILE16 hf16	/* [in] open file, if filename is NULL */
 ) {
 	IMAGE_DOS_HEADER	mzh;
-        HFILE32                 hf=FILE_GetHandle32(hf16);
+        HFILE                 hf=FILE_GetHandle(hf16);
 	OFSTRUCT		ofs;
 	DWORD			xmagic;
 
 	if (fn) {
-		hf = OpenFile32(fn,&ofs,OF_READ);
-		if (hf==HFILE_ERROR32)
+		hf = OpenFile(fn,&ofs,OF_READ);
+		if (hf==HFILE_ERROR)
 			return FALSE;
 	}
-	_llseek32(hf,0,SEEK_SET);
-	if (sizeof(mzh)!=_lread32(hf,&mzh,sizeof(mzh))) {
-		_lclose32(hf);
+	_llseek(hf,0,SEEK_SET);
+	if (sizeof(mzh)!=_lread(hf,&mzh,sizeof(mzh))) {
+		_lclose(hf);
 		return FALSE;
 	}
 	if (mzh.e_magic!=IMAGE_DOS_SIGNATURE) {
 		WARN(dosmem,"File has not got dos signature!\n");
-		_lclose32(hf);
+		_lclose(hf);
 		return FALSE;
 	}
-	_llseek32(hf,mzh.e_lfanew,SEEK_SET);
-	if (sizeof(DWORD)!=_lread32(hf,&xmagic,sizeof(DWORD))) {
-		_lclose32(hf);
+	_llseek(hf,mzh.e_lfanew,SEEK_SET);
+	if (sizeof(DWORD)!=_lread(hf,&xmagic,sizeof(DWORD))) {
+		_lclose(hf);
 		return FALSE;
 	}
-	_lclose32(hf);
+	_lclose(hf);
 	return (xmagic == IMAGE_NT_SIGNATURE);
 }
 
@@ -1009,12 +1009,12 @@ BOOL16 WINAPI IsPeFormat(
  * RETURNS
  *	The new handle
  */
-HANDLE32 WINAPI WOWHandle32(
+HANDLE WINAPI WOWHandle32(
 	WORD handle,		/* [in] win16 handle */
 	WOW_HANDLE_TYPE type	/* [in] handle type */
 ) {
 	TRACE(win32,"(0x%04x,%d)\n",handle,type);
-	return (HANDLE32)handle;
+	return (HANDLE)handle;
 }
 
 /***********************************************************************
@@ -1115,8 +1115,8 @@ REGS_ENTRYPOINT(K32Thk1632Epilog)
 /***********************************************************************
  *           UpdateResource32A                 (KERNEL32.707)
  */
-BOOL32 WINAPI UpdateResource32A(
-  HANDLE32  hUpdate,
+BOOL WINAPI UpdateResourceA(
+  HANDLE  hUpdate,
   LPCSTR  lpType,
   LPCSTR  lpName,
   WORD    wLanguage,
@@ -1131,8 +1131,8 @@ BOOL32 WINAPI UpdateResource32A(
 /***********************************************************************
  *           UpdateResource32W                 (KERNEL32.708)
  */
-BOOL32 WINAPI UpdateResource32W(
-  HANDLE32  hUpdate,
+BOOL WINAPI UpdateResourceW(
+  HANDLE  hUpdate,
   LPCWSTR lpType,
   LPCWSTR lpName,
   WORD    wLanguage,
@@ -1148,7 +1148,7 @@ BOOL32 WINAPI UpdateResource32W(
 /***********************************************************************
  *           WaitNamedPipe32A                 [KERNEL32.725]
  */
-BOOL32 WINAPI WaitNamedPipe32A (LPCSTR lpNamedPipeName, DWORD nTimeOut)
+BOOL WINAPI WaitNamedPipeA (LPCSTR lpNamedPipeName, DWORD nTimeOut)
 {	FIXME (win32,"%s 0x%08lx\n",lpNamedPipeName,nTimeOut);
 	SetLastError(ERROR_PIPE_NOT_CONNECTED);
 	return FALSE;
@@ -1156,7 +1156,7 @@ BOOL32 WINAPI WaitNamedPipe32A (LPCSTR lpNamedPipeName, DWORD nTimeOut)
 /***********************************************************************
  *           WaitNamedPipe32W                 [KERNEL32.726]
  */
-BOOL32 WINAPI WaitNamedPipe32W (LPCWSTR lpNamedPipeName, DWORD nTimeOut)
+BOOL WINAPI WaitNamedPipeW (LPCWSTR lpNamedPipeName, DWORD nTimeOut)
 {	FIXME (win32,"%s 0x%08lx\n",debugstr_w(lpNamedPipeName),nTimeOut);
 	SetLastError(ERROR_PIPE_NOT_CONNECTED);
 	return FALSE;
@@ -1195,10 +1195,10 @@ BOOL32 WINAPI WaitNamedPipe32W (LPCWSTR lpNamedPipeName, DWORD nTimeOut)
  * determine if the file is an 16 or 32 bit Windows executable
  * by check the flags in the header.
  */
-BOOL32 WINAPI GetBinaryType32A (LPCSTR lpApplicationName, LPDWORD lpBinaryType)
+BOOL WINAPI GetBinaryTypeA (LPCSTR lpApplicationName, LPDWORD lpBinaryType)
 {
-	BOOL32 ret = FALSE;
-	HFILE32 hfile;
+	BOOL ret = FALSE;
+	HFILE hfile;
 	OFSTRUCT ofs;
 	IMAGE_DOS_HEADER mz_header;
 	char magic[4];
@@ -1214,26 +1214,26 @@ BOOL32 WINAPI GetBinaryType32A (LPCSTR lpApplicationName, LPDWORD lpBinaryType)
 
 	/* Open the file indicated by lpApplicationName for reading.
 	 */
-	hfile = OpenFile32( lpApplicationName, &ofs, OF_READ );
+	hfile = OpenFile( lpApplicationName, &ofs, OF_READ );
 
 	/* If we cannot read the file return failed.
 	 */
-	if( hfile == HFILE_ERROR32 )
+	if( hfile == HFILE_ERROR )
 	{
 		return FALSE;
 	}
 
 	/* Seek to the start of the file and read the DOS header information.
 	 */
-	if( _llseek32( hfile, 0, SEEK_SET ) >= 0  &&
-		_lread32( hfile, &mz_header, sizeof(mz_header) ) == sizeof(mz_header) )
+	if( _llseek( hfile, 0, SEEK_SET ) >= 0  &&
+		_lread( hfile, &mz_header, sizeof(mz_header) ) == sizeof(mz_header) )
 	{
 		/* Now that we have the header check the e_magic field
 		 * to see if this is a dos image.
 		 */
 		if( mz_header.e_magic == IMAGE_DOS_SIGNATURE )
 		{
-			BOOL32 lfanewValid = FALSE;
+			BOOL lfanewValid = FALSE;
 			/* We do have a DOS image so we will now try to seek into
 			 * the file by the amount indicated by the field
 			 * "Offset to extended header" and read in the
@@ -1252,8 +1252,8 @@ BOOL32 WINAPI GetBinaryType32A (LPCSTR lpApplicationName, LPDWORD lpBinaryType)
 					( mz_header.e_lfarlc >= sizeof(IMAGE_DOS_HEADER) ) )
 				{
 					if( mz_header.e_lfanew >= sizeof(IMAGE_DOS_HEADER) &&
-						_llseek32( hfile, mz_header.e_lfanew, SEEK_SET ) >= 0 &&
-						_lread32( hfile, magic, sizeof(magic) ) == sizeof(magic) )
+						_llseek( hfile, mz_header.e_lfanew, SEEK_SET ) >= 0 &&
+						_lread( hfile, magic, sizeof(magic) ) == sizeof(magic) )
 					{
 						lfanewValid = TRUE;
 					}
@@ -1295,7 +1295,7 @@ BOOL32 WINAPI GetBinaryType32A (LPCSTR lpApplicationName, LPDWORD lpBinaryType)
 					 * determine if it is a 16/32bit Windows executable.
 					 */
 					IMAGE_OS2_HEADER ne_header;
-					if( _lread32( hfile, &ne_header, sizeof(ne_header) ) == sizeof(ne_header) )
+					if( _lread( hfile, &ne_header, sizeof(ne_header) ) == sizeof(ne_header) )
 					{
 						/* Check the format flag to determine if it is
 						 * Win32 or not.
@@ -1333,9 +1333,9 @@ BOOL32 WINAPI GetBinaryType32A (LPCSTR lpApplicationName, LPDWORD lpBinaryType)
  *
  * See GetBinaryType32A.
  */
-BOOL32 WINAPI GetBinaryType32W (LPCWSTR lpApplicationName, LPDWORD lpBinaryType)
+BOOL WINAPI GetBinaryTypeW (LPCWSTR lpApplicationName, LPDWORD lpBinaryType)
 {
-	BOOL32 ret = FALSE;
+	BOOL ret = FALSE;
 	LPSTR strNew = NULL;
 	
 	TRACE (win32,"%s\n",debugstr_w(lpApplicationName));
@@ -1354,7 +1354,7 @@ BOOL32 WINAPI GetBinaryType32W (LPCWSTR lpApplicationName, LPDWORD lpBinaryType)
 
 	if( strNew != NULL )
 	{
-		ret = GetBinaryType32A( strNew, lpBinaryType );
+		ret = GetBinaryTypeA( strNew, lpBinaryType );
 
 		/* Free the allocated string.
 		 */
@@ -1381,5 +1381,5 @@ void WINAPI PK16FNF(LPSTR strPtr)
        FIXME(win32, "(%p): stub\n", strPtr);
 
        /* fill in a fake filename that'll be easy to recognize */
-       lstrcpy32A(strPtr, "WINESTUB.FIX");
+       lstrcpyA(strPtr, "WINESTUB.FIX");
 }

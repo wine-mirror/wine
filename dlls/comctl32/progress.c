@@ -29,33 +29,33 @@
  * Draws the progress bar.
  */
 static void
-PROGRESS_Draw (WND *wndPtr, HDC32 hdc)
+PROGRESS_Draw (WND *wndPtr, HDC hdc)
 {
   PROGRESS_INFO *infoPtr = PROGRESS_GetInfoPtr(wndPtr);
-  HBRUSH32 hbrBar, hbrBk;
+  HBRUSH hbrBar, hbrBk;
   int rightBar, rightMost, ledWidth;
-  RECT32 rect;
+  RECT rect;
 
   TRACE(progress, "refresh pos=%d min=%d, max=%d\n",
 	       infoPtr->CurVal, infoPtr->MinVal, infoPtr->MaxVal);
 
   /* get the required bar brush */
   if (infoPtr->ColorBar == CLR_DEFAULT)
-    hbrBar = GetSysColorBrush32(COLOR_HIGHLIGHT);
+    hbrBar = GetSysColorBrush(COLOR_HIGHLIGHT);
   else
-    hbrBar = CreateSolidBrush32 (infoPtr->ColorBar);
+    hbrBar = CreateSolidBrush (infoPtr->ColorBar);
 
   /* get the required background brush */
   if (infoPtr->ColorBk == CLR_DEFAULT)
-    hbrBk = GetSysColorBrush32 (COLOR_3DFACE);
+    hbrBk = GetSysColorBrush (COLOR_3DFACE);
   else
-    hbrBk = CreateSolidBrush32 (infoPtr->ColorBk);
+    hbrBk = CreateSolidBrush (infoPtr->ColorBk);
 
   /* get client rectangle */
-  GetClientRect32 (wndPtr->hwndSelf, &rect);
+  GetClientRect (wndPtr->hwndSelf, &rect);
 
   /* draw the background */
-  FillRect32(hdc, &rect, hbrBk);
+  FillRect(hdc, &rect, hbrBk);
 
   rect.left++; rect.right--; rect.top++; rect.bottom--;
 
@@ -63,19 +63,19 @@ PROGRESS_Draw (WND *wndPtr, HDC32 hdc)
   if (wndPtr->dwStyle & PBS_VERTICAL)
   {
     rightBar = rect.bottom - 
-      MulDiv32(infoPtr->CurVal-infoPtr->MinVal,
+      MulDiv(infoPtr->CurVal-infoPtr->MinVal,
 	       rect.bottom - rect.top,
 	       infoPtr->MaxVal-infoPtr->MinVal);
-    ledWidth = MulDiv32 ((rect.right - rect.left), 2, 3);
+    ledWidth = MulDiv ((rect.right - rect.left), 2, 3);
     rightMost = rect.top;
   }
   else
   {
     rightBar = rect.left + 
-      MulDiv32(infoPtr->CurVal-infoPtr->MinVal,
+      MulDiv(infoPtr->CurVal-infoPtr->MinVal,
 	       rect.right - rect.left,
 	       infoPtr->MaxVal-infoPtr->MinVal);
-    ledWidth = MulDiv32 ((rect.bottom - rect.top), 2, 3);
+    ledWidth = MulDiv ((rect.bottom - rect.top), 2, 3);
     rightMost = rect.right;
   }
 
@@ -86,7 +86,7 @@ PROGRESS_Draw (WND *wndPtr, HDC32 hdc)
       rect.top = rightBar;
     else
       rect.right = rightBar;
-    FillRect32(hdc, &rect, hbrBar);
+    FillRect(hdc, &rect, hbrBar);
   }
   else
   {
@@ -95,7 +95,7 @@ PROGRESS_Draw (WND *wndPtr, HDC32 hdc)
         rect.top = rect.bottom-ledWidth;
         if (rect.top < rightMost)
           rect.top = rightMost;
-        FillRect32(hdc, &rect, hbrBar);
+        FillRect(hdc, &rect, hbrBar);
         rect.bottom = rect.top-LED_GAP;
       }
     else
@@ -103,18 +103,18 @@ PROGRESS_Draw (WND *wndPtr, HDC32 hdc)
         rect.right = rect.left+ledWidth;
         if (rect.right > rightMost)
           rect.right = rightMost;
-        FillRect32(hdc, &rect, hbrBar);
+        FillRect(hdc, &rect, hbrBar);
         rect.left  = rect.right+LED_GAP;
       }
   }
 
   /* delete bar brush */
   if (infoPtr->ColorBar != CLR_DEFAULT)
-      DeleteObject32 (hbrBar);
+      DeleteObject (hbrBar);
 
   /* delete background brush */
   if (infoPtr->ColorBk != CLR_DEFAULT)
-      DeleteObject32 (hbrBk);
+      DeleteObject (hbrBk);
 }
 
 /***********************************************************************
@@ -124,11 +124,11 @@ PROGRESS_Draw (WND *wndPtr, HDC32 hdc)
 static void
 PROGRESS_Refresh (WND *wndPtr)
 {
-    HDC32 hdc;
+    HDC hdc;
 
-    hdc = GetDC32 (wndPtr->hwndSelf);
+    hdc = GetDC (wndPtr->hwndSelf);
     PROGRESS_Draw (wndPtr, hdc);
-    ReleaseDC32 (wndPtr->hwndSelf, hdc);
+    ReleaseDC (wndPtr->hwndSelf, hdc);
 }
 
 /***********************************************************************
@@ -139,12 +139,12 @@ PROGRESS_Refresh (WND *wndPtr)
 static void
 PROGRESS_Paint (WND *wndPtr)
 {
-    PAINTSTRUCT32 ps;
-    HDC32 hdc;
+    PAINTSTRUCT ps;
+    HDC hdc;
 
-    hdc = BeginPaint32 (wndPtr->hwndSelf, &ps);
+    hdc = BeginPaint (wndPtr->hwndSelf, &ps);
     PROGRESS_Draw (wndPtr, hdc);
-    EndPaint32 (wndPtr->hwndSelf, &ps);
+    EndPaint (wndPtr->hwndSelf, &ps);
 }
 
 
@@ -167,13 +167,13 @@ static void PROGRESS_CoercePos(WND *wndPtr)
  *           PROGRESS_SetFont
  * Set new Font for progress bar
  */
-static HFONT32
-PROGRESS_SetFont (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
+static HFONT
+PROGRESS_SetFont (WND *wndPtr, WPARAM wParam, LPARAM lParam)
 {
   PROGRESS_INFO *infoPtr = PROGRESS_GetInfoPtr(wndPtr); 
-  HFONT32 hOldFont = infoPtr->hFont;
+  HFONT hOldFont = infoPtr->hFont;
 
-  infoPtr->hFont = (HFONT32)wParam;
+  infoPtr->hFont = (HFONT)wParam;
   if (LOWORD(lParam))
     PROGRESS_Refresh (wndPtr);
   return hOldFont;
@@ -183,12 +183,12 @@ PROGRESS_SetFont (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 /***********************************************************************
  *           ProgressWindowProc
  */
-LRESULT WINAPI ProgressWindowProc(HWND32 hwnd, UINT32 message, 
-                                  WPARAM32 wParam, LPARAM lParam)
+LRESULT WINAPI ProgressWindowProc(HWND hwnd, UINT message, 
+                                  WPARAM wParam, LPARAM lParam)
 {
   WND *wndPtr = WIN_FindWndPtr(hwnd);
   PROGRESS_INFO *infoPtr = PROGRESS_GetInfoPtr(wndPtr); 
-  UINT32 temp;
+  UINT temp;
 
   switch(message)
     {
@@ -209,7 +209,7 @@ LRESULT WINAPI ProgressWindowProc(HWND32 hwnd, UINT32 message,
       infoPtr->Step=10;
       infoPtr->ColorBar=CLR_DEFAULT;
       infoPtr->ColorBk=CLR_DEFAULT;
-      infoPtr->hFont=(HANDLE32)NULL;
+      infoPtr->hFont=(HANDLE)NULL;
       TRACE(progress, "Progress Ctrl creation, hwnd=%04x\n", hwnd);
       break;
     
@@ -256,9 +256,9 @@ LRESULT WINAPI ProgressWindowProc(HWND32 hwnd, UINT32 message,
       }
       return temp;          
       
-    case PBM_SETRANGE:
+    case PBM_SETRANGE16:
       if (wParam)
-	UNKNOWN_PARAM(PBM_SETRANGE, wParam, lParam);
+	UNKNOWN_PARAM(PBM_SETRANGE16, wParam, lParam);
       temp = MAKELONG(infoPtr->MinVal, infoPtr->MaxVal);
       if(temp != lParam){
 	infoPtr->MinVal = LOWORD(lParam); 
@@ -288,12 +288,12 @@ LRESULT WINAPI ProgressWindowProc(HWND32 hwnd, UINT32 message,
 	PROGRESS_Refresh (wndPtr);
       return temp;
 
-    case PBM_SETRANGE32:
+    case PBM_SETRANGE:
       temp = MAKELONG(infoPtr->MinVal, infoPtr->MaxVal);
-      if((infoPtr->MinVal != (INT32)wParam) ||
-         (infoPtr->MaxVal != (INT32)lParam)) {
-	infoPtr->MinVal = (INT32)wParam;
-	infoPtr->MaxVal = (INT32)lParam;
+      if((infoPtr->MinVal != (INT)wParam) ||
+         (infoPtr->MaxVal != (INT)lParam)) {
+	infoPtr->MinVal = (INT)wParam;
+	infoPtr->MaxVal = (INT)lParam;
 	if(infoPtr->MaxVal <= infoPtr->MinVal)
 	  infoPtr->MaxVal = infoPtr->MinVal+1;
 	PROGRESS_CoercePos(wndPtr);
@@ -331,7 +331,7 @@ LRESULT WINAPI ProgressWindowProc(HWND32 hwnd, UINT32 message,
       if (message >= WM_USER) 
 	ERR(progress, "unknown msg %04x wp=%04x lp=%08lx\n", 
 		    message, wParam, lParam );
-      return DefWindowProc32A( hwnd, message, wParam, lParam ); 
+      return DefWindowProcA( hwnd, message, wParam, lParam ); 
     } 
 
     return 0;
@@ -347,19 +347,19 @@ LRESULT WINAPI ProgressWindowProc(HWND32 hwnd, UINT32 message,
 VOID
 PROGRESS_Register (VOID)
 {
-    WNDCLASS32A wndClass;
+    WNDCLASSA wndClass;
 
-    if (GlobalFindAtom32A (PROGRESS_CLASS32A)) return;
+    if (GlobalFindAtomA (PROGRESS_CLASSA)) return;
 
-    ZeroMemory (&wndClass, sizeof( WNDCLASS32A));
+    ZeroMemory (&wndClass, sizeof( WNDCLASSA));
     wndClass.style         = CS_GLOBALCLASS | CS_VREDRAW | CS_HREDRAW;
-    wndClass.lpfnWndProc   = (WNDPROC32)ProgressWindowProc;
+    wndClass.lpfnWndProc   = (WNDPROC)ProgressWindowProc;
     wndClass.cbClsExtra    = 0;
     wndClass.cbWndExtra    = sizeof (PROGRESS_INFO *);
-    wndClass.hCursor       = LoadCursor32A (0, IDC_ARROW32A);
-    wndClass.lpszClassName = PROGRESS_CLASS32A;
+    wndClass.hCursor       = LoadCursorA (0, IDC_ARROWA);
+    wndClass.lpszClassName = PROGRESS_CLASSA;
 
-    RegisterClass32A (&wndClass);
+    RegisterClassA (&wndClass);
 }
 
 
@@ -372,7 +372,7 @@ PROGRESS_Register (VOID)
 VOID
 PROGRESS_Unregister (VOID)
 {
-    if (GlobalFindAtom32A (PROGRESS_CLASS32A))
-	UnregisterClass32A (PROGRESS_CLASS32A, (HINSTANCE32)NULL);
+    if (GlobalFindAtomA (PROGRESS_CLASSA))
+	UnregisterClassA (PROGRESS_CLASSA, (HINSTANCE)NULL);
 }
 

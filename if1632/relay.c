@@ -21,7 +21,7 @@
 /***********************************************************************
  *           RELAY_Init
  */
-BOOL32 RELAY_Init(void)
+BOOL RELAY_Init(void)
 {
     WORD codesel;
 
@@ -316,7 +316,7 @@ void RELAY_DebugCallTo16Ret( int ret_val )
  * Real prototype is:
  *   INT16 WINAPI Catch( LPCATCHBUF lpbuf );
  */
-void WINAPI Catch( CONTEXT *context )
+void WINAPI Catch16( CONTEXT *context )
 {
     VA_LIST16 valist;
     SEGPTR buf;
@@ -363,7 +363,7 @@ void WINAPI Catch( CONTEXT *context )
  * Real prototype is:
  *   INT16 WINAPI Throw( LPCATCHBUF lpbuf, INT16 retval );
  */
-void WINAPI Throw( CONTEXT *context )
+void WINAPI Throw16( CONTEXT *context )
 {
     VA_LIST16 valist;
     SEGPTR buf;
@@ -425,7 +425,7 @@ void WINAPI Throw( CONTEXT *context )
 static DWORD RELAY_CallProc32W(int Ex)
 {
 	DWORD nrofargs, argconvmask;
-	FARPROC32 proc32;
+	FARPROC proc32;
 	DWORD *args, ret;
         VA_LIST16 valist;
 	int i;
@@ -435,7 +435,7 @@ static DWORD RELAY_CallProc32W(int Ex)
         VA_START16( valist );
         nrofargs    = VA_ARG16( valist, DWORD );
         argconvmask = VA_ARG16( valist, DWORD );
-        proc32      = VA_ARG16( valist, FARPROC32 );
+        proc32      = VA_ARG16( valist, FARPROC );
 	dsprintf(relay, "CallProc32W(%ld,%ld,%p, Ex%d args[",nrofargs,argconvmask,proc32,Ex);
 	args = (DWORD*)HEAP_xalloc( GetProcessHeap(), 0,
                                     sizeof(DWORD)*nrofargs );
@@ -507,7 +507,7 @@ static DWORD RELAY_CallProc32W(int Ex)
 /**********************************************************************
  *	     CallProc32W    (KERNEL.517)
  */
-DWORD WINAPI WIN16_CallProc32W()
+DWORD WINAPI CallProc32W_16()
 {
         return RELAY_CallProc32W(0);
 }
@@ -518,7 +518,7 @@ DWORD WINAPI WIN16_CallProc32W()
 *
 *      C - style linkage to CallProc32W - caller pops stack.
 */
-DWORD WINAPI WIN16_CallProcEx32W()
+DWORD WINAPI CallProcEx32W_16()
 {
 	return RELAY_CallProc32W(TRUE);
 }

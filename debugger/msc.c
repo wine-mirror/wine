@@ -47,13 +47,13 @@ static void LocateDebugInfoFile(char *filename, char *dbg_filename)
     file = strrchr(filename, '\\');
     if( file == NULL ) file = filename; else file++;
 
-    if (GetEnvironmentVariable32A("_NT_SYMBOL_PATH", str1, sizeof(str1)))
-	if (SearchPath32A(str1, file, NULL, sizeof(str2), str2, &name_part))
+    if (GetEnvironmentVariableA("_NT_SYMBOL_PATH", str1, sizeof(str1)))
+	if (SearchPathA(str1, file, NULL, sizeof(str2), str2, &name_part))
 	    goto ok;
-    if (GetEnvironmentVariable32A("_NT_ALT_SYMBOL_PATH", str1, sizeof(str1)))
-	if (SearchPath32A(str1, file, NULL, sizeof(str2), str2, &name_part))
+    if (GetEnvironmentVariableA("_NT_ALT_SYMBOL_PATH", str1, sizeof(str1)))
+	if (SearchPathA(str1, file, NULL, sizeof(str2), str2, &name_part))
 	    goto ok;
-    if (SearchPath32A(NULL, file, NULL, sizeof(str2), str2, &name_part))
+    if (SearchPathA(NULL, file, NULL, sizeof(str2), str2, &name_part))
 	goto ok;
     else
     {
@@ -270,16 +270,16 @@ union codeview_type
 
 };
 
-#define S_BPREL32	0x200
-#define S_LDATA32	0x201
-#define S_GDATA32	0x202
-#define S_PUB32		0x203
-#define S_LPROC32	0x204
-#define S_GPROC32	0x205
-#define S_THUNK32	0x206
-#define S_BLOCK32	0x207
-#define S_WITH32	0x208
-#define S_LABEL32	0x209
+#define S_BPREL	0x200
+#define S_LDATA	0x201
+#define S_GDATA	0x202
+#define S_PUB		0x203
+#define S_LPROC	0x204
+#define S_GPROC	0x205
+#define S_THUNK	0x206
+#define S_BLOCK	0x207
+#define S_WITH	0x208
+#define S_LABEL	0x209
 
 #define S_PROCREF	0x400
 #define S_DATAREF	0x401
@@ -546,7 +546,7 @@ struct deferred_debug_info
 	char				* module_name;
 	char				* dbg_info;
 	int				  dbg_size;
-        HMODULE32                         module;
+        HMODULE                         module;
 	PIMAGE_DEBUG_DIRECTORY           dbgdir;
         PIMAGE_SECTION_HEADER	          sectp;
 	int				  nsect;
@@ -918,7 +918,7 @@ DEBUG_InitCVDataTypes()
  * We don't fully process it here for performance reasons.
  */
 int
-DEBUG_RegisterDebugInfo( HMODULE32 hModule, const char *module_name)
+DEBUG_RegisterDebugInfo( HMODULE hModule, const char *module_name)
 {
   int			  has_codeview = FALSE;
   int			  rtn = FALSE;
@@ -1001,7 +1001,7 @@ DEBUG_RegisterDebugInfo( HMODULE32 hModule, const char *module_name)
                  * debug information. (Note the DataDirectory is mapped, not its content)
                  */
  
-                 if (GetModuleFileName32A(hModule, fn, sizeof(fn)) > 0 &&
+                 if (GetModuleFileNameA(hModule, fn, sizeof(fn)) > 0 &&
                     DOSFS_GetFullName(fn, TRUE, &full_name) &&
                     (fd = open(full_name.long_name, O_RDONLY)) > 0)
                 {
@@ -1675,9 +1675,9 @@ DEBUG_SnarfCodeView(      struct deferred_debug_info * deefer,
       memset(symname, 0, sizeof(symname));
       switch(sym->generic.id)
 	{
-	case S_GDATA32:
-	case S_LDATA32:
-	case S_PUB32:
+	case S_GDATA:
+	case S_LDATA:
+	case S_PUB:
 	  /*
 	   * First, a couple of sanity checks.
 	   */
@@ -1704,7 +1704,7 @@ DEBUG_SnarfCodeView(      struct deferred_debug_info * deefer,
 	    sym->data.offset;
 	  DEBUG_AddSymbol( symname, &new_addr, NULL, SYM_WIN32 | SYM_DATA );
 	  break;
-	case S_THUNK32:
+	case S_THUNK:
 	  /*
 	   * Sort of like a global function, but it just points
 	   * to a thunk, which is a stupid name for what amounts to
@@ -1720,8 +1720,8 @@ DEBUG_SnarfCodeView(      struct deferred_debug_info * deefer,
 				       SYM_WIN32 | SYM_FUNC);
 	  DEBUG_SetSymbolSize(thunk_sym, sym->thunk.thunk_len);
 	  break;
-	case S_GPROC32:
-	case S_LPROC32:
+	case S_GPROC:
+	case S_LPROC:
 	  /*
 	   * Global and static functions.
 	   */
@@ -1785,7 +1785,7 @@ DEBUG_SnarfCodeView(      struct deferred_debug_info * deefer,
 	  DEBUG_SetSymbolBPOff(curr_func, sym->proc.debug_start);
 	  DEBUG_SetSymbolSize(curr_func, sym->proc.proc_len);
 	  break;
-	case S_BPREL32:
+	case S_BPREL:
 	  /*
 	   * Function parameters and stack variables.
 	   */

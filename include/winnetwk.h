@@ -13,7 +13,7 @@ typedef struct {
 	LPSTR	lpRemoteName;
 	LPSTR	lpComment ;
 	LPSTR	lpProvider;
-} NETRESOURCE32A,*LPNETRESOURCE32A;
+} NETRESOURCEA,*LPNETRESOURCEA;
 
 typedef struct {
 	DWORD	dwScope;
@@ -24,25 +24,25 @@ typedef struct {
 	LPWSTR	lpRemoteName;
 	LPWSTR	lpComment ;
 	LPWSTR	lpProvider;
-} NETRESOURCE32W,*LPNETRESOURCE32W;
+} NETRESOURCEW,*LPNETRESOURCEW;
 
 DECL_WINELIB_TYPE_AW(NETRESOURCE)
 DECL_WINELIB_TYPE_AW(LPNETRESOURCE)
 
 typedef struct {
     DWORD cbStructure;       /* size of this structure in bytes */
-    HWND32 hwndOwner;          /* owner window for the dialog */
-    LPNETRESOURCE32A lpConnRes;/* Requested Resource info    */
+    HWND hwndOwner;          /* owner window for the dialog */
+    LPNETRESOURCEA lpConnRes;/* Requested Resource info    */
     DWORD dwFlags;           /* flags (see below) */
     DWORD dwDevNum;          /* number of devices connected to */
-} CONNECTDLGSTRUCT32A, *LPCONNECTDLGSTRUCT32A;
+} CONNECTDLGSTRUCTA, *LPCONNECTDLGSTRUCTA;
 typedef struct {
     DWORD cbStructure;       /* size of this structure in bytes */
-    HWND32 hwndOwner;          /* owner window for the dialog */
-    LPNETRESOURCE32W lpConnRes;/* Requested Resource info    */
+    HWND hwndOwner;          /* owner window for the dialog */
+    LPNETRESOURCEW lpConnRes;/* Requested Resource info    */
     DWORD dwFlags;           /* flags (see below) */
     DWORD dwDevNum;          /* number of devices connected to */
-} CONNECTDLGSTRUCT32W, *LPCONNECTDLGSTRUCT32W;
+} CONNECTDLGSTRUCTW, *LPCONNECTDLGSTRUCTW;
 
 DECL_WINELIB_TYPE_AW(CONNECTDLGSTRUCT)
 DECL_WINELIB_TYPE_AW(LPCONNECTDLGSTRUCT)
@@ -66,18 +66,18 @@ typedef struct {
 } NETCONNECTINFOSTRUCT,*LPNETCONNECTINFOSTRUCT;
   
 
-UINT32      WINAPI WNetAddConnection2_32A(LPNETRESOURCE32A,LPCSTR,LPCSTR,DWORD);
-UINT32      WINAPI WNetAddConnection2_32W(LPNETRESOURCE32W,LPCWSTR,LPCWSTR,DWORD);
+UINT      WINAPI WNetAddConnection2A(LPNETRESOURCEA,LPCSTR,LPCSTR,DWORD);
+UINT      WINAPI WNetAddConnection2W(LPNETRESOURCEW,LPCWSTR,LPCWSTR,DWORD);
 #define     WNetAddConnection2 WINELIB_NAME_AW(WNetAddConnection2_)
-UINT32      WINAPI WNetAddConnection3_32A(HWND32,LPNETRESOURCE32A,LPCSTR,LPCSTR,DWORD);
-UINT32      WINAPI WNetAddConnection3_32W(HWND32,LPNETRESOURCE32W,LPCWSTR,LPCWSTR,DWORD);
+UINT      WINAPI WNetAddConnection3A(HWND,LPNETRESOURCEA,LPCSTR,LPCSTR,DWORD);
+UINT      WINAPI WNetAddConnection3W(HWND,LPNETRESOURCEW,LPCWSTR,LPCWSTR,DWORD);
 #define     WNetAddConnection3 WINELIB_NAME_AW(WNetAddConnection3_)
-UINT32      WINAPI WNetConnectionDialog1_32(HWND32,DWORD);
-UINT32      WINAPI WNetConnectionDialog1_32A(LPCONNECTDLGSTRUCT32A);
-UINT32      WINAPI WNetConnectionDialog1_32W(LPCONNECTDLGSTRUCT32W);
+UINT      WINAPI WNetConnectionDialog1(HWND,DWORD);
+UINT      WINAPI WNetConnectionDialog1A(LPCONNECTDLGSTRUCTA);
+UINT      WINAPI WNetConnectionDialog1W(LPCONNECTDLGSTRUCTW);
 #define     WNetConnectionDialog1 WINELIB_NAME_AW(WNetConnectionDialog1_)
-UINT32      WINAPI MultinetGetErrorText32A(DWORD,DWORD,DWORD);
-UINT32      WINAPI MultinetGetErrorText32W(DWORD,DWORD,DWORD);
+UINT      WINAPI MultinetGetErrorTextA(DWORD,DWORD,DWORD);
+UINT      WINAPI MultinetGetErrorTextW(DWORD,DWORD,DWORD);
 #define     MultinetGetErrorText WINELIB_NAME_AW(MultinetGetErrorText_)
 
 

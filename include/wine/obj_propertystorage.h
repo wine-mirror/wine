@@ -85,7 +85,7 @@ typedef struct tagPROPSPEC
     union 
     {
         PROPID propid;
-        LPOLESTR32 lpwstr;
+        LPOLESTR lpwstr;
     } u;
 } PROPSPEC;
 
@@ -116,7 +116,7 @@ struct tagSTATPROPSETSTG
  */
 struct tagSTATPROPSTG
 {
-    LPOLESTR32 lpwstrName;
+    LPOLESTR lpwstrName;
     PROPID propid;
     VARTYPE vt;
 };
@@ -270,7 +270,7 @@ typedef struct tagCADATE
 typedef struct tagCABSTR
 {
     ULONG cElems;
-    BSTR32 *pElems;
+    BSTR *pElems;
 } CABSTR;
 
 typedef struct tagCABOOL
@@ -363,9 +363,9 @@ struct tagPROPVARIANT
         CLSID *puuid;
         BLOB blob;
         CLIPDATA *pclipdata;
-        IStream32 *pStream;
-        IStorage32 *pStorage;
-        BSTR32 bstrVal;
+        IStream *pStream;
+        IStorage *pStorage;
+        BSTR bstrVal;
         LPSTR pszVal;
         LPWSTR pwszVal;
         CAUB caub;
@@ -397,8 +397,8 @@ struct tagPROPVARIANT
     ICOM_METHOD3(HRESULT,ReadMultiple,        ULONG,cpspec, const PROPSPEC*,rgpspec, PROPVARIANT*,rgpropvar); \
     ICOM_METHOD4(HRESULT,WriteMultiple,       ULONG,cpspec, const PROPSPEC*,rgpspec, const PROPVARIANT*,rgpropvar, PROPID,propidNameFirst); \
     ICOM_METHOD2(HRESULT,DeleteMultiple,      ULONG,cpspec, const PROPSPEC*,rgpspec); \
-    ICOM_METHOD2(HRESULT,ReadPropertyNames,   const PROPID*,rgpropid, LPOLESTR32*,rglpwstrName); \
-    ICOM_METHOD3(HRESULT,WritePropertyNames,  ULONG,cpropid, const PROPID*,rgpropid, LPOLESTR32*,rglpwstrName); \
+    ICOM_METHOD2(HRESULT,ReadPropertyNames,   const PROPID*,rgpropid, LPOLESTR*,rglpwstrName); \
+    ICOM_METHOD3(HRESULT,WritePropertyNames,  ULONG,cpropid, const PROPID*,rgpropid, LPOLESTR*,rglpwstrName); \
     ICOM_METHOD2(HRESULT,DeletePropertyNames, ULONG,cpropid, const PROPID*,rgpropid); \
     ICOM_METHOD1(HRESULT,Commit,              DWORD,grfCommitFlags); \
     ICOM_METHOD (HRESULT,Revert); \

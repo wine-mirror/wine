@@ -13,18 +13,18 @@
 /***********************************************************************
  *           BindImage32 (IMAGEHLP.1)
  */
-BOOL32 WINAPI BindImage32(
+BOOL WINAPI BindImage(
   LPSTR ImageName, LPSTR DllPath, LPSTR SymbolPath)
 {
-  return BindImageEx32(0, ImageName, DllPath, SymbolPath, NULL);
+  return BindImageEx(0, ImageName, DllPath, SymbolPath, NULL);
 }
 
 /***********************************************************************
  *           BindImageEx32 (IMAGEHLP.2)
  */
-BOOL32 WINAPI BindImageEx32(
+BOOL WINAPI BindImageEx(
   DWORD Flags, LPSTR ImageName, LPSTR DllPath, LPSTR SymbolPath,
-  PIMAGEHLP_STATUS_ROUTINE32 StatusRoutine)
+  PIMAGEHLP_STATUS_ROUTINE StatusRoutine)
 {
   FIXME(imagehlp, "(%ld, %s, %s, %s, %p): stub\n", 
     Flags, debugstr_a(ImageName), debugstr_a(DllPath),
@@ -37,7 +37,7 @@ BOOL32 WINAPI BindImageEx32(
 /***********************************************************************
  *           CheckSumMappedFile32 (IMAGEHLP.3)
  */
-PIMAGE_NT_HEADERS32 WINAPI CheckSumMappedFile32(
+PIMAGE_NT_HEADERS WINAPI CheckSumMappedFile(
   LPVOID BaseAddress, DWORD FileLength, 
   LPDWORD HeaderSum, LPDWORD CheckSum)
 {
@@ -51,7 +51,7 @@ PIMAGE_NT_HEADERS32 WINAPI CheckSumMappedFile32(
 /***********************************************************************
  *           MapFileAndCheckSum32A (IMAGEHLP.27)
  */
-DWORD WINAPI MapFileAndCheckSum32A(
+DWORD WINAPI MapFileAndCheckSumA(
   LPSTR Filename, LPDWORD HeaderSum, LPDWORD CheckSum)
 {
   FIXME(imagehlp, "(%s, %p, %p): stub\n",
@@ -64,7 +64,7 @@ DWORD WINAPI MapFileAndCheckSum32A(
 /***********************************************************************
  *           MapFileAndCheckSum32W (IMAGEHLP.28)
  */
-DWORD WINAPI MapFileAndCheckSum32W(
+DWORD WINAPI MapFileAndCheckSumW(
   LPWSTR Filename, LPDWORD HeaderSum, LPDWORD CheckSum)
 {
   FIXME(imagehlp, "(%s, %p, %p): stub\n",
@@ -77,9 +77,9 @@ DWORD WINAPI MapFileAndCheckSum32W(
 /***********************************************************************
  *           ReBaseImage32 (IMAGEHLP.30)
  */
-BOOL32 WINAPI ReBaseImage32(
-  LPSTR CurrentImageName, LPSTR SymbolPath, BOOL32 fReBase,
-  BOOL32 fRebaseSysfileOk, BOOL32 fGoingDown, ULONG CheckImageSize,
+BOOL WINAPI ReBaseImage(
+  LPSTR CurrentImageName, LPSTR SymbolPath, BOOL fReBase,
+  BOOL fRebaseSysfileOk, BOOL fGoingDown, ULONG CheckImageSize,
   ULONG *OldImageSize, ULONG *OldImageBase, ULONG *NewImageSize,
   ULONG *NewImageBase, ULONG TimeStamp)
 {
@@ -96,7 +96,7 @@ BOOL32 WINAPI ReBaseImage32(
 /***********************************************************************
  *           RemovePrivateCvSymbolic32 (IMAGEHLP.31)
  */
-BOOL32 WINAPI RemovePrivateCvSymbolic32(
+BOOL WINAPI RemovePrivateCvSymbolic(
   PCHAR DebugData, PCHAR *NewDebugData, ULONG *NewDebugSize)
 {
   FIXME(imagehlp, "(%p, %p, %p): stub\n",
@@ -109,7 +109,7 @@ BOOL32 WINAPI RemovePrivateCvSymbolic32(
 /***********************************************************************
  *           RemoveRelocations32 (IMAGEHLP.32)
  */
-VOID WINAPI RemoveRelocations32(PCHAR ImageName)
+VOID WINAPI RemoveRelocations(PCHAR ImageName)
 {
   FIXME(imagehlp, "(%p): stub\n", ImageName);
   SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
@@ -118,7 +118,7 @@ VOID WINAPI RemoveRelocations32(PCHAR ImageName)
 /***********************************************************************
  *           SplitSymbols32 (IMAGEHLP.35)
  */
-BOOL32 WINAPI SplitSymbols32(
+BOOL WINAPI SplitSymbols(
   LPSTR ImageName, LPSTR SymbolsPath, 
   LPSTR SymbolFilePath, DWORD Flags)
 {
@@ -133,9 +133,9 @@ BOOL32 WINAPI SplitSymbols32(
 /***********************************************************************
  *           UpdateDebugInfoFile32 (IMAGEHLP.60)
  */
-BOOL32 WINAPI UpdateDebugInfoFile32(
+BOOL WINAPI UpdateDebugInfoFile(
   LPSTR ImageFileName, LPSTR SymbolPath,
-  LPSTR DebugFilePath, PIMAGE_NT_HEADERS32 NtHeaders)
+  LPSTR DebugFilePath, PIMAGE_NT_HEADERS NtHeaders)
 {
   FIXME(imagehlp, "(%s, %s, %s, %p): stub\n",
     debugstr_a(ImageFileName), debugstr_a(SymbolPath),
@@ -150,9 +150,9 @@ BOOL32 WINAPI UpdateDebugInfoFile32(
  * FIXME
  *   Function has no ordinal.
  */
-BOOL32 WINAPI UpdateDebugInfoFileEx32(
+BOOL WINAPI UpdateDebugInfoFileEx(
   LPSTR ImageFileName, LPSTR SymbolPath, LPSTR DebugFilePath,
-  PIMAGE_NT_HEADERS32 NtHeaders, DWORD OldChecksum)
+  PIMAGE_NT_HEADERS NtHeaders, DWORD OldChecksum)
 {
   FIXME(imagehlp, "(%s, %s, %s, %p, %ld): stub\n",
     debugstr_a(ImageFileName), debugstr_a(SymbolPath),

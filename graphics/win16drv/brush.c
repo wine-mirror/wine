@@ -10,7 +10,7 @@
 #include "heap.h"
 #include "debug.h"
 
-HBRUSH32 WIN16DRV_BRUSH_SelectObject( DC * dc, HBRUSH32 hbrush,
+HBRUSH WIN16DRV_BRUSH_SelectObject( DC * dc, HBRUSH hbrush,
                                       BRUSHOBJ * brush )
 {
     WIN16DRV_PDEVICE *physDev = (WIN16DRV_PDEVICE *)dc->physDev;

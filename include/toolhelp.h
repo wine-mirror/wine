@@ -77,12 +77,12 @@ typedef struct
 /* wFlags values */
 #define GF_PDB_OWNER        0x0100      /* Low byte is KERNEL flags */
 
-WORD   WINAPI GlobalHandleToSel( HGLOBAL16 handle );
-BOOL16 WINAPI GlobalInfo( GLOBALINFO *pInfo );
-BOOL16 WINAPI GlobalFirst( GLOBALENTRY *pGlobal, WORD wFlags );
-BOOL16 WINAPI GlobalNext( GLOBALENTRY *pGlobal, WORD wFlags) ;
-BOOL16 WINAPI GlobalEntryHandle( GLOBALENTRY *pGlobal, HGLOBAL16 hItem );
-BOOL16 WINAPI GlobalEntryModule( GLOBALENTRY *pGlobal, HMODULE16 hModule,
+WORD   WINAPI GlobalHandleToSel16( HGLOBAL16 handle );
+BOOL16 WINAPI GlobalInfo16( GLOBALINFO *pInfo );
+BOOL16 WINAPI GlobalFirst16( GLOBALENTRY *pGlobal, WORD wFlags );
+BOOL16 WINAPI GlobalNext16( GLOBALENTRY *pGlobal, WORD wFlags) ;
+BOOL16 WINAPI GlobalEntryHandle16( GLOBALENTRY *pGlobal, HGLOBAL16 hItem );
+BOOL16 WINAPI GlobalEntryModule16( GLOBALENTRY *pGlobal, HMODULE16 hModule,
                                  WORD wSeg );
 
 /* Local heap */
@@ -157,9 +157,9 @@ typedef struct
 #define LT_USER_HANDLETABLE         32
 #define LT_USER_MAX                 LT_USER_HANDLETABLE
 
-BOOL16 WINAPI LocalInfo( LOCALINFO *pLocalInfo, HGLOBAL16 handle );
-BOOL16 WINAPI LocalFirst( LOCALENTRY *pLocalEntry, HGLOBAL16 handle );
-BOOL16 WINAPI LocalNext( LOCALENTRY *pLocalEntry );
+BOOL16 WINAPI LocalInfo16( LOCALINFO *pLocalInfo, HGLOBAL16 handle );
+BOOL16 WINAPI LocalFirst16( LOCALENTRY *pLocalEntry, HGLOBAL16 handle );
+BOOL16 WINAPI LocalNext16( LOCALENTRY *pLocalEntry );
 
 /* Local 32-bit heap */
 
@@ -191,9 +191,9 @@ typedef struct
 /* LOCAL32ENTRY.wFlags same as LOCALENTRY.wFlags */
 /* LOCAL32ENTRY.wType same as LOCALENTRY.wType */
 
-BOOL16 WINAPI Local32Info( LOCAL32INFO *pLocal32Info, HGLOBAL16 handle );
-BOOL16 WINAPI Local32First( LOCAL32ENTRY *pLocal32Entry, HGLOBAL16 handle );
-BOOL16 WINAPI Local32Next( LOCAL32ENTRY *pLocal32Entry );
+BOOL16 WINAPI Local32Info16( LOCAL32INFO *pLocal32Info, HGLOBAL16 handle );
+BOOL16 WINAPI Local32First16( LOCAL32ENTRY *pLocal32Entry, HGLOBAL16 handle );
+BOOL16 WINAPI Local32Next16( LOCAL32ENTRY *pLocal32Entry );
 
 
 /* modules */
@@ -208,10 +208,10 @@ typedef struct
     HANDLE16   wNext;
 } MODULEENTRY, *LPMODULEENTRY;
 
-BOOL16 WINAPI ModuleFirst(MODULEENTRY *lpModule);
-BOOL16 WINAPI ModuleNext(MODULEENTRY *lpModule);
-BOOL16 WINAPI ModuleFindName(MODULEENTRY *lpModule, LPCSTR lpstrName);
-BOOL16 WINAPI ModuleFindHandle(MODULEENTRY *lpModule, HMODULE16 hModule);
+BOOL16 WINAPI ModuleFirst16(MODULEENTRY *lpModule);
+BOOL16 WINAPI ModuleNext16(MODULEENTRY *lpModule);
+BOOL16 WINAPI ModuleFindName16(MODULEENTRY *lpModule, LPCSTR lpstrName);
+BOOL16 WINAPI ModuleFindHandle16(MODULEENTRY *lpModule, HMODULE16 hModule);
 
 /* tasks */
 
@@ -234,9 +234,9 @@ typedef struct
     HANDLE16     hNext;
 } TASKENTRY, *LPTASKENTRY;
 
-BOOL16 WINAPI TaskFirst(LPTASKENTRY lpTask);
-BOOL16 WINAPI TaskNext(LPTASKENTRY lpTask);
-BOOL16 WINAPI TaskFindHandle(LPTASKENTRY lpTask, HTASK16 hTask);
+BOOL16 WINAPI TaskFirst16(LPTASKENTRY lpTask);
+BOOL16 WINAPI TaskNext16(LPTASKENTRY lpTask);
+BOOL16 WINAPI TaskFindHandle16(LPTASKENTRY lpTask, HTASK16 hTask);
 DWORD  WINAPI TaskSetCSIP(HTASK16 hTask, WORD wCS, WORD wIP);
 DWORD  WINAPI TaskGetCSIP(HTASK16 hTask);
 BOOL16 WINAPI TaskSwitch(HTASK16 hTask, DWORD dwNewCSIP);
@@ -267,8 +267,8 @@ typedef struct
     HGLOBAL16 hGDISegment;
 } SYSHEAPINFO;
 
-BOOL16 WINAPI MemManInfo(LPMEMMANINFO lpEnhMode);
-BOOL16 WINAPI SystemHeapInfo( SYSHEAPINFO *pHeapInfo );
+BOOL16 WINAPI MemManInfo16(LPMEMMANINFO lpEnhMode);
+BOOL16 WINAPI SystemHeapInfo16( SYSHEAPINFO *pHeapInfo );
 
 /* timer info */
 
@@ -278,7 +278,7 @@ typedef struct tagTIMERINFO {
 	DWORD dwmsThisVM;
 } TIMERINFO;
 
-BOOL16 WINAPI TimerCount( TIMERINFO *pTimerInfo );
+BOOL16 WINAPI TimerCount16( TIMERINFO *pTimerInfo );
 
 /* Window classes */
 
@@ -290,14 +290,14 @@ typedef struct
     HANDLE16  wNext;
 } CLASSENTRY;
 
-BOOL16 WINAPI ClassFirst( CLASSENTRY *pClassEntry );
-BOOL16 WINAPI ClassNext( CLASSENTRY *pClassEntry );
+BOOL16 WINAPI ClassFirst16( CLASSENTRY *pClassEntry );
+BOOL16 WINAPI ClassNext16( CLASSENTRY *pClassEntry );
 
 
 /* Memory read/write */
 
-DWORD WINAPI MemoryRead( WORD sel, DWORD offset, void *buffer, DWORD count );
-DWORD WINAPI MemoryWrite( WORD sel, DWORD offset, void *buffer, DWORD count );
+DWORD WINAPI MemoryRead16( WORD sel, DWORD offset, void *buffer, DWORD count );
+DWORD WINAPI MemoryWrite16( WORD sel, DWORD offset, void *buffer, DWORD count );
 
 /* flags to NotifyRegister() */
 #define NF_NORMAL	0	/* everything except taskswitches, debugerrors,
@@ -306,7 +306,7 @@ DWORD WINAPI MemoryWrite( WORD sel, DWORD offset, void *buffer, DWORD count );
 #define NF_TASKSWITCH	1	/* get taskswitch information */
 #define NF_RIP		2	/* get debugerrors of system */
 
-BOOL16 WINAPI NotifyRegister(HTASK16 htask,FARPROC16 lpfnCallback,WORD wFlags);
+BOOL16 WINAPI NotifyRegister16(HTASK16 htask,FARPROC16 lpfnCallback,WORD wFlags);
 
 #define NFY_UNKNOWN	0
 #define NFY_LOADSEG	1
@@ -401,7 +401,7 @@ typedef struct {
  * Process Entry list as created by CreateToolHelp32Snapshot 
  */
 
-typedef struct tagPROCESSENTRY32 { 
+typedef struct tagPROCESSENTRY { 
     DWORD dwSize; 
     DWORD cntUsage; 
     DWORD th32ProcessID; 
@@ -412,12 +412,12 @@ typedef struct tagPROCESSENTRY32 {
     LONG  pcPriClassBase; 
     DWORD dwFlags; 
     char szExeFile[MAX_PATH]; 
-} PROCESSENTRY32; 
-typedef PROCESSENTRY32 *  PPROCESSENTRY32; 
-typedef PROCESSENTRY32 *  LPPROCESSENTRY32; 
+} PROCESSENTRY; 
+typedef PROCESSENTRY *  PPROCESSENTRY; 
+typedef PROCESSENTRY *  LPPROCESSENTRY; 
 
-BOOL32      WINAPI Process32First(HANDLE32,LPPROCESSENTRY32);
-BOOL32      WINAPI Process32Next(HANDLE32,LPPROCESSENTRY32);
+BOOL      WINAPI Process32First(HANDLE,LPPROCESSENTRY);
+BOOL      WINAPI Process32Next(HANDLE,LPPROCESSENTRY);
 
 
 #endif /* __WINE_TOOLHELP_H */

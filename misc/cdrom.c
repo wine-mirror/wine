@@ -105,7 +105,7 @@ UINT16 CDAUDIO_GetNumberOfTracks(WINE_CDAUDIO* wcda)
 /**************************************************************************
  * 			CDAUDIO_GetTracksInfo			[internal]
  */
-BOOL32 CDAUDIO_GetTracksInfo(WINE_CDAUDIO* wcda)
+BOOL CDAUDIO_GetTracksInfo(WINE_CDAUDIO* wcda)
 {
 #if defined(linux) || defined(__FreeBSD__) || defined(__NetBSD__)
     int		i, length;
@@ -216,7 +216,7 @@ BOOL32 CDAUDIO_GetTracksInfo(WINE_CDAUDIO* wcda)
 /**************************************************************************
  * 				CDAUDIO_GetCDStatus		[internal]
  */
-BOOL32 CDAUDIO_GetCDStatus(WINE_CDAUDIO* wcda)
+BOOL CDAUDIO_GetCDStatus(WINE_CDAUDIO* wcda)
 {
 #if defined(linux) || defined(__FreeBSD__) || defined(__NetBSD__)
     int		oldmode = wcda->cdaMode;

@@ -214,7 +214,7 @@ BOOL16 WINAPI BuildCommDCB16(LPCSTR device, LPDCB16 lpdcb)
 	TRACE(comm, "(%s), ptr %p\n", device, lpdcb);
 	commerror = 0;
 
-	if (!lstrncmpi32A(device,"COM",3)) {
+	if (!lstrncmpiA(device,"COM",3)) {
 		port = device[3] - '0';
 	
 
@@ -231,7 +231,7 @@ BOOL16 WINAPI BuildCommDCB16(LPCSTR device, LPDCB16 lpdcb)
 		memset(lpdcb, 0, sizeof(DCB16)); /* initialize */
 
 		if (!COM[port].fd) {
-		    OpenComm(device, 0, 0);
+		    OpenComm16(device, 0, 0);
 		}
 		lpdcb->Id = COM[port].fd;
 		
@@ -300,15 +300,15 @@ BOOL16 WINAPI BuildCommDCB16(LPCSTR device, LPDCB16 lpdcb)
 /**************************************************************************
  *         BuildCommDCBA		(KERNEL32.14)
  */
-BOOL32 WINAPI BuildCommDCB32A(LPCSTR device,LPDCB32 lpdcb)
+BOOL WINAPI BuildCommDCBA(LPCSTR device,LPDCB lpdcb)
 {
-	return BuildCommDCBAndTimeouts32A(device,lpdcb,NULL);
+	return BuildCommDCBAndTimeoutsA(device,lpdcb,NULL);
 }
 
 /**************************************************************************
  *         BuildCommDCBAndTimeoutsA	(KERNEL32.15)
  */
-BOOL32 WINAPI BuildCommDCBAndTimeouts32A(LPCSTR device, LPDCB32 lpdcb,
+BOOL WINAPI BuildCommDCBAndTimeoutsA(LPCSTR device, LPDCB lpdcb,
                                          LPCOMMTIMEOUTS lptimeouts)
 {
 	int	port;
@@ -317,7 +317,7 @@ BOOL32 WINAPI BuildCommDCBAndTimeouts32A(LPCSTR device, LPDCB32 lpdcb,
 	TRACE(comm,"(%s,%p,%p)\n",device,lpdcb,lptimeouts);
 	commerror = 0;
 
-	if (!lstrncmpi32A(device,"COM",3)) {
+	if (!lstrncmpiA(device,"COM",3)) {
 		port=device[3]-'0';
 		if (port--==0) {
 			ERR(comm,"BUG! COM0 can't exists!.\n");
@@ -331,9 +331,9 @@ BOOL32 WINAPI BuildCommDCBAndTimeouts32A(LPCSTR device, LPDCB32 lpdcb,
 	} else
 		temp=(LPSTR)device;
 
-	memset(lpdcb, 0, sizeof(DCB32)); /* initialize */
+	memset(lpdcb, 0, sizeof(DCB)); /* initialize */
 
-	lpdcb->DCBlength	= sizeof(DCB32);
+	lpdcb->DCBlength	= sizeof(DCB);
 	if (strchr(temp,',')) {	/* old style */
 		DCB16	dcb16;
 		BOOL16	ret;
@@ -435,15 +435,15 @@ BOOL32 WINAPI BuildCommDCBAndTimeouts32A(LPCSTR device, LPDCB32 lpdcb,
 /**************************************************************************
  *         BuildCommDCBAndTimeoutsW		(KERNEL32.16)
  */
-BOOL32 WINAPI BuildCommDCBAndTimeouts32W( LPCWSTR devid, LPDCB32 lpdcb,
+BOOL WINAPI BuildCommDCBAndTimeoutsW( LPCWSTR devid, LPDCB lpdcb,
                                           LPCOMMTIMEOUTS lptimeouts )
 {
 	LPSTR	devidA;
-	BOOL32	ret;
+	BOOL	ret;
 
 	TRACE(comm,"(%p,%p,%p)\n",devid,lpdcb,lptimeouts);
 	devidA = HEAP_strdupWtoA( GetProcessHeap(), 0, devid );
-	ret=BuildCommDCBAndTimeouts32A(devidA,lpdcb,lptimeouts);
+	ret=BuildCommDCBAndTimeoutsA(devidA,lpdcb,lptimeouts);
         HeapFree( GetProcessHeap(), 0, devidA );
 	return ret;
 }
@@ -451,22 +451,22 @@ BOOL32 WINAPI BuildCommDCBAndTimeouts32W( LPCWSTR devid, LPDCB32 lpdcb,
 /**************************************************************************
  *         BuildCommDCBW		(KERNEL32.17)
  */
-BOOL32 WINAPI BuildCommDCB32W(LPCWSTR devid,LPDCB32 lpdcb)
+BOOL WINAPI BuildCommDCBW(LPCWSTR devid,LPDCB lpdcb)
 {
-	return BuildCommDCBAndTimeouts32W(devid,lpdcb,NULL);
+	return BuildCommDCBAndTimeoutsW(devid,lpdcb,NULL);
 }
 
 /*****************************************************************************
  *	OpenComm		(USER.200)
  */
-INT16 WINAPI OpenComm(LPCSTR device,UINT16 cbInQueue,UINT16 cbOutQueue)
+INT16 WINAPI OpenComm16(LPCSTR device,UINT16 cbInQueue,UINT16 cbOutQueue)
 {
 	int port,fd;
 
     	TRACE(comm, "%s, %d, %d\n", device, cbInQueue, cbOutQueue);
 	commerror = 0;
 
-	if (!lstrncmpi32A(device,"COM",3)) {
+	if (!lstrncmpiA(device,"COM",3)) {
 		port = device[3] - '0';
 
 		if (port-- == 0) {
@@ -502,7 +502,7 @@ INT16 WINAPI OpenComm(LPCSTR device,UINT16 cbInQueue,UINT16 cbOutQueue)
 		}
 	} 
 	else 
-	if (!lstrncmpi32A(device,"LPT",3)) {
+	if (!lstrncmpiA(device,"LPT",3)) {
 		port = device[3] - '0';
 	
 		if (!ValidLPTPort(port)) {
@@ -529,7 +529,7 @@ INT16 WINAPI OpenComm(LPCSTR device,UINT16 cbInQueue,UINT16 cbOutQueue)
 /*****************************************************************************
  *	CloseComm		(USER.207)
  */
-INT16 WINAPI CloseComm(INT16 fd)
+INT16 WINAPI CloseComm16(INT16 fd)
 {
         int port;
         
@@ -575,7 +575,7 @@ INT16 WINAPI SetCommBreak16(INT16 fd)
 /*****************************************************************************
  *	SetCommBreak		(KERNEL32.449)
  */
-BOOL32 WINAPI SetCommBreak32(INT32 fd)
+BOOL WINAPI SetCommBreak(INT fd)
 {
 
 	struct DosDeviceStruct *ptr;
@@ -612,7 +612,7 @@ INT16 WINAPI ClearCommBreak16(INT16 fd)
 /*****************************************************************************
  *	ClearCommBreak		(KERNEL32.20)
  */
-BOOL32 WINAPI ClearCommBreak32(INT32 fd)
+BOOL WINAPI ClearCommBreak(INT fd)
 {
 	struct DosDeviceStruct *ptr;
 
@@ -705,7 +705,7 @@ LONG WINAPI EscapeCommFunction16(UINT16 fd,UINT16 nFunction)
 /*****************************************************************************
  *	EscapeCommFunction	(KERNEL32.214)
  */
-BOOL32 WINAPI EscapeCommFunction32(INT32 fd,UINT32 nFunction)
+BOOL WINAPI EscapeCommFunction(INT fd,UINT nFunction)
 {
 	struct termios	port;
 	struct DosDeviceStruct *ptr;
@@ -777,7 +777,7 @@ BOOL32 WINAPI EscapeCommFunction32(INT32 fd,UINT32 nFunction)
 /*****************************************************************************
  *	FlushComm	(USER.215)
  */
-INT16 WINAPI FlushComm(INT16 fd,INT16 fnQueue)
+INT16 WINAPI FlushComm16(INT16 fd,INT16 fnQueue)
 {
 	int queue;
 
@@ -803,7 +803,7 @@ INT16 WINAPI FlushComm(INT16 fd,INT16 fnQueue)
 /********************************************************************
  *      PurgeComm        (KERNEL32.557)
  */
-BOOL32 WINAPI PurgeComm( HANDLE32 hFile, DWORD flags) 
+BOOL WINAPI PurgeComm( HANDLE hFile, DWORD flags) 
 {
     FIXME(comm, "(%08x %08lx) unimplemented stub\n",
                  hFile, flags);
@@ -813,7 +813,7 @@ BOOL32 WINAPI PurgeComm( HANDLE32 hFile, DWORD flags)
 /********************************************************************
  *	GetCommError	(USER.203)
  */
-INT16 WINAPI GetCommError(INT16 fd,LPCOMSTAT lpStat)
+INT16 WINAPI GetCommError16(INT16 fd,LPCOMSTAT lpStat)
 {
 	int		temperror;
 	unsigned long	cnt;
@@ -864,7 +864,7 @@ INT16 WINAPI GetCommError(INT16 fd,LPCOMSTAT lpStat)
 /*****************************************************************************
  *	ClearCommError	(KERNEL32.21)
  */
-BOOL32 WINAPI ClearCommError(INT32 fd,LPDWORD errors,LPCOMSTAT lpStat)
+BOOL WINAPI ClearCommError(INT fd,LPDWORD errors,LPCOMSTAT lpStat)
 {
 	int temperror;
 
@@ -878,7 +878,7 @@ BOOL32 WINAPI ClearCommError(INT32 fd,LPDWORD errors,LPCOMSTAT lpStat)
 /*****************************************************************************
  *	SetCommEventMask	(USER.208)
  */
-SEGPTR WINAPI SetCommEventMask(INT16 fd,UINT16 fuEvtMask)
+SEGPTR WINAPI SetCommEventMask16(INT16 fd,UINT16 fuEvtMask)
 {
         unsigned char *stol;
         int act;
@@ -903,7 +903,7 @@ SEGPTR WINAPI SetCommEventMask(INT16 fd,UINT16 fuEvtMask)
 /*****************************************************************************
  *	GetCommEventMask	(USER.209)
  */
-UINT16 WINAPI GetCommEventMask(INT16 fd,UINT16 fnEvtClear)
+UINT16 WINAPI GetCommEventMask16(INT16 fd,UINT16 fnEvtClear)
 {
 	int	events = 0;
 
@@ -944,7 +944,7 @@ UINT16 WINAPI GetCommEventMask(INT16 fd,UINT16 fnEvtClear)
 /*****************************************************************************
  *      SetupComm       (KERNEL32.676)
  */
-BOOL32 WINAPI SetupComm( HANDLE32 hFile, DWORD insize, DWORD outsize)
+BOOL WINAPI SetupComm( HANDLE hFile, DWORD insize, DWORD outsize)
 {
         FIXME(comm, "insize %ld outsize %ld unimplemented stub\n", insize, outsize);
        return FALSE;
@@ -953,7 +953,7 @@ BOOL32 WINAPI SetupComm( HANDLE32 hFile, DWORD insize, DWORD outsize)
 /*****************************************************************************
  *	GetCommMask	(KERNEL32.156)
  */
-BOOL32 WINAPI GetCommMask(HANDLE32 fd,LPDWORD evtmask)
+BOOL WINAPI GetCommMask(HANDLE fd,LPDWORD evtmask)
 {
     	TRACE(comm, "fd %d, mask %p\n", fd, evtmask);
 	*evtmask = eventmask;
@@ -963,7 +963,7 @@ BOOL32 WINAPI GetCommMask(HANDLE32 fd,LPDWORD evtmask)
 /*****************************************************************************
  *	SetCommMask	(KERNEL32.451)
  */
-BOOL32 WINAPI SetCommMask(INT32 fd,DWORD evtmask)
+BOOL WINAPI SetCommMask(INT fd,DWORD evtmask)
 {
     	TRACE(comm, "fd %d, mask %lx\n", fd, evtmask);
 	eventmask = evtmask;
@@ -1189,7 +1189,7 @@ INT16 WINAPI SetCommState16(LPDCB16 lpdcb)
 /*****************************************************************************
  *	SetCommState32	(KERNEL32.452)
  */
-BOOL32 WINAPI SetCommState32(INT32 fd,LPDCB32 lpdcb)
+BOOL WINAPI SetCommState(INT fd,LPDCB lpdcb)
 {
 	struct termios port;
 	struct DosDeviceStruct *ptr;
@@ -1529,7 +1529,7 @@ INT16 WINAPI GetCommState16(INT16 fd, LPDCB16 lpdcb)
 /*****************************************************************************
  *	GetCommState	(KERNEL32.159)
  */
-BOOL32 WINAPI GetCommState32(INT32 fd, LPDCB32 lpdcb)
+BOOL WINAPI GetCommState(INT fd, LPDCB lpdcb)
 {
 	struct termios	port;
 
@@ -1675,7 +1675,7 @@ INT16 WINAPI TransmitCommChar16(INT16 fd,CHAR chTransmit)
 /*****************************************************************************
  *	TransmitCommChar	(KERNEL32.535)
  */
-BOOL32 WINAPI TransmitCommChar32(INT32 fd,CHAR chTransmit)
+BOOL WINAPI TransmitCommChar(INT fd,CHAR chTransmit)
 {
 	struct DosDeviceStruct *ptr;
 
@@ -1701,7 +1701,7 @@ BOOL32 WINAPI TransmitCommChar32(INT32 fd,CHAR chTransmit)
 /*****************************************************************************
  *	UngetCommChar	(USER.212)
  */
-INT16 WINAPI UngetCommChar(INT16 fd,CHAR chUnget)
+INT16 WINAPI UngetCommChar16(INT16 fd,CHAR chUnget)
 {
 	struct DosDeviceStruct *ptr;
 
@@ -1725,7 +1725,7 @@ INT16 WINAPI UngetCommChar(INT16 fd,CHAR chUnget)
 /*****************************************************************************
  *	ReadComm	(USER.204)
  */
-INT16 WINAPI ReadComm(INT16 fd,LPSTR lpvBuf,INT16 cbRead)
+INT16 WINAPI ReadComm16(INT16 fd,LPSTR lpvBuf,INT16 cbRead)
 {
 	int status, length;
 	struct DosDeviceStruct *ptr;
@@ -1770,7 +1770,7 @@ INT16 WINAPI ReadComm(INT16 fd,LPSTR lpvBuf,INT16 cbRead)
 /*****************************************************************************
  *	WriteComm	(USER.205)
  */
-INT16 WINAPI WriteComm(INT16 fd, LPSTR lpvBuf, INT16 cbWrite)
+INT16 WINAPI WriteComm16(INT16 fd, LPSTR lpvBuf, INT16 cbWrite)
 {
 	int length;
 	struct DosDeviceStruct *ptr;
@@ -1803,7 +1803,7 @@ INT16 WINAPI WriteComm(INT16 fd, LPSTR lpvBuf, INT16 cbWrite)
 /*****************************************************************************
  *	GetCommTimeouts		(KERNEL32.160)
  */
-BOOL32 WINAPI GetCommTimeouts(INT32 fd,LPCOMMTIMEOUTS lptimeouts)
+BOOL WINAPI GetCommTimeouts(INT fd,LPCOMMTIMEOUTS lptimeouts)
 {
 	FIXME(comm,"(%x,%p):stub.\n",fd,lptimeouts);
 	return TRUE;
@@ -1812,7 +1812,7 @@ BOOL32 WINAPI GetCommTimeouts(INT32 fd,LPCOMMTIMEOUTS lptimeouts)
 /*****************************************************************************
  *	SetCommTimeouts		(KERNEL32.453)
  */
-BOOL32 WINAPI SetCommTimeouts(INT32 fd,LPCOMMTIMEOUTS lptimeouts) {
+BOOL WINAPI SetCommTimeouts(INT fd,LPCOMMTIMEOUTS lptimeouts) {
 	FIXME(comm,"(%x,%p):stub.\n",fd,lptimeouts);
 	return TRUE;
 }
@@ -1820,7 +1820,7 @@ BOOL32 WINAPI SetCommTimeouts(INT32 fd,LPCOMMTIMEOUTS lptimeouts) {
 /***********************************************************************
  *           EnableCommNotification   (USER.246)
  */
-BOOL16 WINAPI EnableCommNotification( INT16 fd, HWND16 hwnd,
+BOOL16 WINAPI EnableCommNotification16( INT16 fd, HWND16 hwnd,
                                       INT16 cbWriteNotify, INT16 cbOutQueue )
 {
 	FIXME(comm, "(%d, %x, %d, %d):stub.\n", fd, hwnd, cbWriteNotify, cbOutQueue);
@@ -1830,7 +1830,7 @@ BOOL16 WINAPI EnableCommNotification( INT16 fd, HWND16 hwnd,
 /***********************************************************************
  *           GetCommModemStatus   (KERNEL32.285)
  */
-BOOL32 WINAPI GetCommModemStatus(HANDLE32 hFile,LPDWORD lpModemStat )
+BOOL WINAPI GetCommModemStatus(HANDLE hFile,LPDWORD lpModemStat )
 {
 	FIXME(comm, "(%d %p)\n",hFile,lpModemStat );
 	return TRUE;
@@ -1838,7 +1838,7 @@ BOOL32 WINAPI GetCommModemStatus(HANDLE32 hFile,LPDWORD lpModemStat )
 /***********************************************************************
  *           WaitCommEvent   (KERNEL32.719)
  */
-BOOL32 WINAPI WaitCommEvent(HANDLE32 hFile,LPDWORD eventmask ,LPOVERLAPPED overlapped)
+BOOL WINAPI WaitCommEvent(HANDLE hFile,LPDWORD eventmask ,LPOVERLAPPED overlapped)
 {
 	FIXME(comm, "(%d %p %p )\n",hFile, eventmask,overlapped);
 	return TRUE;

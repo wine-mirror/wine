@@ -1,7 +1,7 @@
 name dinput
 type win32
 
-0 stdcall DirectInputCreateA(long long ptr ptr) DirectInputCreate32A
+0 stdcall DirectInputCreateA(long long ptr ptr) DirectInputCreateA
 1 stub DirectInputCreateW
 2 stub DllCanUnloadNow
 3 stub DllGetClassObject

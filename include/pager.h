@@ -10,14 +10,14 @@
 
 typedef struct tagPAGER_INFO
 {
-    HWND32   hwndChild;
+    HWND   hwndChild;
     COLORREF clrBk;
-    INT32    nBorder;
-    INT32    nButtonSize;
-    INT32    nPos;
-    BOOL32   bForward;
+    INT    nBorder;
+    INT    nButtonSize;
+    INT    nPos;
+    BOOL   bForward;
 
-    INT32    nChildSize;
+    INT    nChildSize;
 
 } PAGER_INFO;
 

@@ -41,7 +41,7 @@
 
 void (*fnWINE_Debugger)(int,SIGCONTEXT*) = NULL;
 void (*ctx_debug_call)(int sig,CONTEXT*ctx)=NULL;
-BOOL32 (*fnINSTR_EmulateInstruction)(SIGCONTEXT*ctx)=NULL;
+BOOL (*fnINSTR_EmulateInstruction)(SIGCONTEXT*ctx)=NULL;
 
 #ifdef __i386__
 
@@ -191,7 +191,7 @@ extern void ASYNC_sigio(int a);
 /**********************************************************************
  *              SIGNAL_MaskAsyncEvents
  */
-void SIGNAL_MaskAsyncEvents( BOOL32 flag )
+void SIGNAL_MaskAsyncEvents( BOOL flag )
 {
   sigprocmask( (flag) ? SIG_BLOCK : SIG_UNBLOCK , &async_signal_set, NULL);
 }
@@ -291,7 +291,7 @@ void SIGNAL_InitHandlers(void)
 /**********************************************************************
  *		SIGNAL_Init
  */
-BOOL32 SIGNAL_Init(void)
+BOOL SIGNAL_Init(void)
 {
 #ifdef HAVE_WORKING_SIGALTSTACK
     struct sigaltstack ss;

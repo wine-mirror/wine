@@ -28,7 +28,7 @@
 #include "debug.h"
 #include "xmalloc.h"
 
-#define SEL(x) GlobalHandleToSel(x)
+#define SEL(x) GlobalHandleToSel16(x)
 
 /***********************************************************************
  *           NE_GetRelocAddrName
@@ -51,14 +51,14 @@ static const char *NE_GetRelocAddrName( BYTE addr_type, int additive )
 /***********************************************************************
  *           NE_LoadSegment
  */
-BOOL32 NE_LoadSegment( NE_MODULE *pModule, WORD segnum )
+BOOL NE_LoadSegment( NE_MODULE *pModule, WORD segnum )
 {
     SEGTABLEENTRY *pSegTable, *pSeg;
     WORD *pModuleTable;
     WORD count, i, offset, next_offset;
     HMODULE16 module;
     FARPROC16 address = 0;
-    HFILE32 hf;
+    HFILE hf;
     DWORD res;
     struct relocation_entry_s *rep, *reloc_entries;
     BYTE *func_name;
@@ -94,7 +94,7 @@ BOOL32 NE_LoadSegment( NE_MODULE *pModule, WORD segnum )
         DWORD oldstack;
  	WORD old_hSeg, new_hSeg;
         THDB *thdb = THREAD_Current();
-        HFILE32 hFile32;
+        HFILE hFile32;
         HFILE16 hFile16;
 
  	selfloadheader = (SELFLOADHEADER *)
@@ -130,12 +130,12 @@ BOOL32 NE_LoadSegment( NE_MODULE *pModule, WORD segnum )
  	    memcpy(PTR_SEG_OFF_TO_LIN(SEL(old_hSeg),0),
  		   PTR_SEG_OFF_TO_LIN(SEL(new_hSeg),0), 
  		   pSeg->minsize ? pSeg->minsize : 0x10000);
- 	    FreeSelector(SEL(new_hSeg));
+ 	    FreeSelector16(SEL(new_hSeg));
  	    pSeg->hSeg = old_hSeg;
  	    TRACE(module, "New hSeg allocated for dgroup segment:Old=%d,New=%d\n", 
                 old_hSeg, new_hSeg);
  	  } else {
- 	    FreeSelector(SEL(pSeg->hSeg));
+ 	    FreeSelector16(SEL(pSeg->hSeg));
  	    pSeg->hSeg = new_hSeg;
  	  }
  	} 
@@ -308,7 +308,7 @@ BOOL32 NE_LoadSegment( NE_MODULE *pModule, WORD segnum )
 	if (rep->address_type > NE_RADDR_OFFSET32)
         {
             char module[10];
-            GetModuleName( pModule->self, module, sizeof(module) );
+            GetModuleName16( pModule->self, module, sizeof(module) );
             ERR( fixup, "WARNING: module %s: unknown reloc addr type = 0x%02x. Please report.\n",
                  module, rep->address_type );
         }
@@ -387,14 +387,14 @@ unknown:
 /***********************************************************************
  *           NE_LoadAllSegments
  */
-BOOL32 NE_LoadAllSegments( NE_MODULE *pModule )
+BOOL NE_LoadAllSegments( NE_MODULE *pModule )
 {
     int i;
     SEGTABLEENTRY * pSegTable = (SEGTABLEENTRY *) NE_SEG_TABLE(pModule);
 
     if (pModule->flags & NE_FFLAGS_SELFLOAD)
     {
-        HFILE32 hf;
+        HFILE hf;
         HFILE16 hFile16;
         /* Handle self loading modules */
         SELFLOADHEADER *selfloadheader;
@@ -413,7 +413,7 @@ BOOL32 NE_LoadAllSegments( NE_MODULE *pModule )
         selfloadheader->EntryAddrProc = NE_GetEntryPoint(hselfload,27);
         selfloadheader->MyAlloc  = NE_GetEntryPoint(hselfload,28);
         selfloadheader->SetOwner = NE_GetEntryPoint(GetModuleHandle16("KERNEL"),403);
-        pModule->self_loading_sel = GlobalHandleToSel(GLOBAL_Alloc(GMEM_ZEROINIT, 0xFF00, pModule->self, FALSE, FALSE, FALSE));
+        pModule->self_loading_sel = GlobalHandleToSel16(GLOBAL_Alloc(GMEM_ZEROINIT, 0xFF00, pModule->self, FALSE, FALSE, FALSE));
         oldstack = thdb->cur_stack;
         thdb->cur_stack = PTR_SEG_OFF_TO_SEGPTR(pModule->self_loading_sel,
                                                 0xff00 - sizeof(*stack16Top) );
@@ -459,7 +459,7 @@ BOOL32 NE_LoadAllSegments( NE_MODULE *pModule )
  */
 
 /* It does nothing */
-DWORD WINAPI PatchCodeHandle(HANDLE16 hSel)
+DWORD WINAPI PatchCodeHandle16(HANDLE16 hSel)
 {
     FIXME(module,"(%04x): stub.\n",hSel);
     return (DWORD)NULL;
@@ -606,7 +606,7 @@ static VOID NE_GetDLLInitParams( NE_MODULE *pModule,
  *
  * Call the DLL initialization code
  */
-static BOOL32 NE_InitDLL( TDB* pTask, NE_MODULE *pModule )
+static BOOL NE_InitDLL( TDB* pTask, NE_MODULE *pModule )
 {
     SEGTABLEENTRY *pSegTable;
     WORD hInst, ds, heap;
@@ -741,7 +741,7 @@ void NE_InitializeDLLs( HMODULE16 hModule )
  * If lib_only is TRUE, handle the module like a library even if it is a .EXE
  */
 HINSTANCE16 NE_CreateInstance( NE_MODULE *pModule, HINSTANCE16 *prev,
-                               BOOL32 lib_only )
+                               BOOL lib_only )
 {
     SEGTABLEENTRY *pSegment;
     int minsize;
@@ -812,20 +812,20 @@ DWORD WINAPI NE_AllocateSegment( WORD wFlags, WORD wSize, WORD wElem )
     if (	(wFlags & NE_SEGFLAGS_EXECUTEONLY) ||
     		!(wFlags & NE_SEGFLAGS_DATA)
     ) {
-        WORD hSel = GlobalHandleToSel(hMem);
-        WORD access = SelectorAccessRights(hSel,0,0);
+        WORD hSel = GlobalHandleToSel16(hMem);
+        WORD access = SelectorAccessRights16(hSel,0,0);
 
 	access |= 2<<2; /* SEGMENT_CODE */
-	SelectorAccessRights(hSel,1,access);
+	SelectorAccessRights16(hSel,1,access);
     }
-    return MAKELONG( hMem, GlobalHandleToSel(hMem) );
+    return MAKELONG( hMem, GlobalHandleToSel16(hMem) );
 }
 
 
 /***********************************************************************
  *           NE_CreateSegments
  */
-BOOL32 NE_CreateSegments( NE_MODULE *pModule )
+BOOL NE_CreateSegments( NE_MODULE *pModule )
 {
     SEGTABLEENTRY *pSegment;
     int i, minsize;
@@ -857,7 +857,7 @@ BOOL32 NE_CreateSegments( NE_MODULE *pModule )
 /**********************************************************************
  *	    IsSharedSelector    (KERNEL.345)
  */
-BOOL16 WINAPI IsSharedSelector( HANDLE16 selector )
+BOOL16 WINAPI IsSharedSelector16( HANDLE16 selector )
 {
     /* Check whether the selector belongs to a DLL */
     NE_MODULE *pModule = NE_GetPtr( selector );

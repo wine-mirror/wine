@@ -165,7 +165,7 @@ static char *MAIN_GetProgramName( int argc, char *argv[] )
  *  RETURNS
  *    TRUE if parsing was successful
  */
-BOOL32 MAIN_ParseDebugOptions(char *options)
+BOOL MAIN_ParseDebugOptions(char *options)
 {
   /* defined in relay32/relay386.c */
   extern char **debug_relay_includelist;
@@ -187,7 +187,7 @@ BOOL32 MAIN_ParseDebugOptions(char *options)
       int j;
 
       for(j=0; j<DEBUG_CLASS_COUNT; j++)
-	if(!lstrncmpi32A(options, debug_cl_name[j], strlen(debug_cl_name[j])))
+	if(!lstrncmpiA(options, debug_cl_name[j], strlen(debug_cl_name[j])))
 	  break;
       if(j==DEBUG_CLASS_COUNT)
 	goto error;
@@ -204,7 +204,7 @@ BOOL32 MAIN_ParseDebugOptions(char *options)
     else
       l=strlen(options);
 
-    if (!lstrncmpi32A(options+1,"all",l-1))
+    if (!lstrncmpiA(options+1,"all",l-1))
       {
 	int i, j;
 	for (i=0; i<DEBUG_CHANNEL_COUNT; i++)
@@ -212,14 +212,14 @@ BOOL32 MAIN_ParseDebugOptions(char *options)
 	    if(cls == -1 || cls == j)
 	      debug_msg_enabled[i][j]=(*options=='+');
       }
-    else if (!lstrncmpi32A(options+1, "relay=", 6) ||
-	     !lstrncmpi32A(options+1, "snoop=", 6))
+    else if (!lstrncmpiA(options+1, "relay=", 6) ||
+	     !lstrncmpiA(options+1, "snoop=", 6))
       {
 	int i, j;
 	char *s, *s2, ***output, c;
 
 	for (i=0; i<DEBUG_CHANNEL_COUNT; i++)
-	  if (debug_ch_name && (!lstrncmpi32A(debug_ch_name[i],options+1,5))){
+	  if (debug_ch_name && (!lstrncmpiA(debug_ch_name[i],options+1,5))){
 	    for(j=0; j<DEBUG_CLASS_COUNT; j++)
 	      if(cls == -1 || cls == j)
 		debug_msg_enabled[i][j]=TRUE;
@@ -259,7 +259,7 @@ BOOL32 MAIN_ParseDebugOptions(char *options)
       {
 	int i, j;
 	for (i=0; i<DEBUG_CHANNEL_COUNT; i++)
-	  if (debug_ch_name && (!lstrncmpi32A(options+1,debug_ch_name[i],l-1))){
+	  if (debug_ch_name && (!lstrncmpiA(options+1,debug_ch_name[i],l-1))){
 	    for(j=0; j<DEBUG_CLASS_COUNT; j++)
 	      if(cls == -1 || cls == j)
 		debug_msg_enabled[i][j]=(*options=='+');
@@ -672,7 +672,7 @@ void MAIN_ParseLanguageOption( char *arg )
     Options.language = LANG_Xx;  /* First (dummy) language */
     for (;p->name;p++)
     {
-        if (!lstrcmpi32A( p->name, arg ))
+        if (!lstrcmpiA( p->name, arg ))
         {
 	    WINE_LanguageId = p->langid;
 	    return;
@@ -693,8 +693,8 @@ void MAIN_ParseLanguageOption( char *arg )
  */
 void MAIN_ParseModeOption( char *arg )
 {
-    if (!lstrcmpi32A("enhanced", arg)) Options.mode = MODE_ENHANCED;
-    else if (!lstrcmpi32A("standard", arg)) Options.mode = MODE_STANDARD;
+    if (!lstrcmpiA("enhanced", arg)) Options.mode = MODE_ENHANCED;
+    else if (!lstrcmpiA("standard", arg)) Options.mode = MODE_STANDARD;
     else
     {
         MSG( "Invalid mode '%s' specified.\n", arg);
@@ -768,7 +768,7 @@ static void called_at_exit(void)
  *
  * Wine initialisation and command-line parsing
  */
-BOOL32 MAIN_WineInit( int *argc, char *argv[] )
+BOOL MAIN_WineInit( int *argc, char *argv[] )
 {    
     struct timeval tv;
 
@@ -822,14 +822,14 @@ BOOL32 MAIN_WineInit( int *argc, char *argv[] )
  */
 void WINAPI MessageBeep16( UINT16 i )
 {
-    MessageBeep32( i );
+    MessageBeep( i );
 }
 
 
 /***********************************************************************
  *           MessageBeep32   (USER32.390)
  */
-BOOL32 WINAPI MessageBeep32( UINT32 i )
+BOOL WINAPI MessageBeep( UINT i )
 {
     TSXBell( display, 0 );
     return TRUE;
@@ -839,7 +839,7 @@ BOOL32 WINAPI MessageBeep32( UINT32 i )
 /***********************************************************************
  *           Beep   (KERNEL32.11)
  */
-BOOL32 WINAPI Beep( DWORD dwFreq, DWORD dwDur )
+BOOL WINAPI Beep( DWORD dwFreq, DWORD dwDur )
 {
     /* dwFreq and dwDur are ignored by Win95 */
     TSXBell(display, 0);
@@ -850,7 +850,7 @@ BOOL32 WINAPI Beep( DWORD dwFreq, DWORD dwDur )
 /***********************************************************************
  *	GetTimerResolution (USER.14)
  */
-LONG WINAPI GetTimerResolution(void)
+LONG WINAPI GetTimerResolution16(void)
 {
 	return (1000);
 }
@@ -858,8 +858,8 @@ LONG WINAPI GetTimerResolution(void)
 /***********************************************************************
  *	SystemParametersInfo32A   (USER32.540)
  */
-BOOL32 WINAPI SystemParametersInfo32A( UINT32 uAction, UINT32 uParam,
-                                       LPVOID lpvParam, UINT32 fuWinIni )
+BOOL WINAPI SystemParametersInfoA( UINT uAction, UINT uParam,
+                                       LPVOID lpvParam, UINT fuWinIni )
 {
 	int timeout;
 	int temp;
@@ -869,63 +869,63 @@ BOOL32 WINAPI SystemParametersInfo32A( UINT32 uAction, UINT32 uParam,
 	case SPI_GETBEEP:
 		TSXGetKeyboardControl(display, &keyboard_state);
 		if (keyboard_state.bell_percent == 0)
-			*(BOOL32 *) lpvParam = FALSE;
+			*(BOOL *) lpvParam = FALSE;
 		else
-			*(BOOL32 *) lpvParam = TRUE;
+			*(BOOL *) lpvParam = TRUE;
 		break;
 
 	case SPI_GETBORDER:
-		*(INT32 *)lpvParam = GetSystemMetrics32( SM_CXFRAME );
+		*(INT *)lpvParam = GetSystemMetrics( SM_CXFRAME );
 		break;
 
 	case SPI_GETDRAGFULLWINDOWS:
-		*(BOOL32 *) lpvParam = FALSE;
+		*(BOOL *) lpvParam = FALSE;
 		break;
 
 	case SPI_SETDRAGFULLWINDOWS:
 		break;
 
 	case SPI_GETFASTTASKSWITCH:
-		if ( GetProfileInt32A( "windows", "CoolSwitch", 1 ) == 1 )
-			*(BOOL32 *) lpvParam = TRUE;
+		if ( GetProfileIntA( "windows", "CoolSwitch", 1 ) == 1 )
+			*(BOOL *) lpvParam = TRUE;
 		else
-			*(BOOL32 *) lpvParam = FALSE;
+			*(BOOL *) lpvParam = FALSE;
 		break;
 		
 	case SPI_GETGRIDGRANULARITY:
-		*(INT32*)lpvParam=GetProfileInt32A("desktop","GridGranularity",1);
+		*(INT*)lpvParam=GetProfileIntA("desktop","GridGranularity",1);
 		break;
 
 	case SPI_GETICONTITLEWRAP:
-		*(BOOL32*)lpvParam=GetProfileInt32A("desktop","IconTitleWrap",TRUE);
+		*(BOOL*)lpvParam=GetProfileIntA("desktop","IconTitleWrap",TRUE);
 		break;
 
 	case SPI_GETKEYBOARDDELAY:
-		*(INT32*)lpvParam=GetProfileInt32A("keyboard","KeyboardDelay",1);
+		*(INT*)lpvParam=GetProfileIntA("keyboard","KeyboardDelay",1);
 		break;
 
 	case SPI_GETKEYBOARDSPEED:
-		*(DWORD*)lpvParam=GetProfileInt32A("keyboard","KeyboardSpeed",30);
+		*(DWORD*)lpvParam=GetProfileIntA("keyboard","KeyboardSpeed",30);
 		break;
 
 	case SPI_GETMENUDROPALIGNMENT:
-		*(BOOL32*)lpvParam=GetSystemMetrics32(SM_MENUDROPALIGNMENT); /* XXX check this */
+		*(BOOL*)lpvParam=GetSystemMetrics(SM_MENUDROPALIGNMENT); /* XXX check this */
 		break;
 
 	case SPI_GETSCREENSAVEACTIVE:
-		if ( GetProfileInt32A( "windows", "ScreenSaveActive", 1 ) == 1 )
-			*(BOOL32*)lpvParam = TRUE;
+		if ( GetProfileIntA( "windows", "ScreenSaveActive", 1 ) == 1 )
+			*(BOOL*)lpvParam = TRUE;
 		else
-			*(BOOL32*)lpvParam = FALSE;
+			*(BOOL*)lpvParam = FALSE;
 		break;
 
 	case SPI_GETSCREENSAVETIMEOUT:
 #ifndef X_DISPLAY_MISSING
 	        TSXGetScreenSaver(display, &timeout, &temp,&temp,&temp);
 #else /* X_DISPLAY_MISSING */
-		timeout = GetProfileInt32A( "windows", "ScreenSaveTimeout", 300 );
+		timeout = GetProfileIntA( "windows", "ScreenSaveTimeout", 300 );
 #endif /* X_DISPLAY_MISSING */
-		*(INT32 *) lpvParam = timeout * 1000;
+		*(INT *) lpvParam = timeout * 1000;
 		break;
 
 	case SPI_ICONHORIZONTALSPACING:
@@ -933,7 +933,7 @@ BOOL32 WINAPI SystemParametersInfo32A( UINT32 uAction, UINT32 uParam,
 		if (lpvParam == NULL)
 			/*SetSystemMetrics( SM_CXICONSPACING, uParam )*/ ;
 		else
-			*(INT32*)lpvParam=GetSystemMetrics32(SM_CXICONSPACING);
+			*(INT*)lpvParam=GetSystemMetrics(SM_CXICONSPACING);
 		break;
 
 	case SPI_ICONVERTICALSPACING:
@@ -941,17 +941,17 @@ BOOL32 WINAPI SystemParametersInfo32A( UINT32 uAction, UINT32 uParam,
 		if (lpvParam == NULL)
 			/*SetSystemMetrics( SM_CYICONSPACING, uParam )*/ ;
 		else
-			*(INT32*)lpvParam=GetSystemMetrics32(SM_CYICONSPACING);
+			*(INT*)lpvParam=GetSystemMetrics(SM_CYICONSPACING);
 		break;
 
 	case SPI_GETICONTITLELOGFONT: {
-		LPLOGFONT32A lpLogFont = (LPLOGFONT32A)lpvParam;
+		LPLOGFONTA lpLogFont = (LPLOGFONTA)lpvParam;
 
 		/* from now on we always have an alias for MS Sans Serif */
 
-		GetProfileString32A("Desktop", "IconTitleFaceName", "MS Sans Serif", 
+		GetProfileStringA("Desktop", "IconTitleFaceName", "MS Sans Serif", 
 			lpLogFont->lfFaceName, LF_FACESIZE );
-		lpLogFont->lfHeight = -GetProfileInt32A("Desktop","IconTitleSize", 8);
+		lpLogFont->lfHeight = -GetProfileIntA("Desktop","IconTitleSize", 8);
 		lpLogFont->lfWidth = 0;
 		lpLogFont->lfEscapement = lpLogFont->lfOrientation = 0;
 		lpLogFont->lfWeight = FW_NORMAL;
@@ -965,29 +965,29 @@ BOOL32 WINAPI SystemParametersInfo32A( UINT32 uAction, UINT32 uParam,
 		break;
 	}
 	case SPI_GETWORKAREA:
-		SetRect32( (RECT32 *)lpvParam, 0, 0,
-			GetSystemMetrics32( SM_CXSCREEN ),
-			GetSystemMetrics32( SM_CYSCREEN )
+		SetRect( (RECT *)lpvParam, 0, 0,
+			GetSystemMetrics( SM_CXSCREEN ),
+			GetSystemMetrics( SM_CYSCREEN )
 		);
 		break;
 	case SPI_GETNONCLIENTMETRICS: 
 
-#define lpnm ((LPNONCLIENTMETRICS32A)lpvParam)
+#define lpnm ((LPNONCLIENTMETRICSA)lpvParam)
 		
-		if( lpnm->cbSize == sizeof(NONCLIENTMETRICS32A) )
+		if( lpnm->cbSize == sizeof(NONCLIENTMETRICSA) )
 		{
 		    /* FIXME: initialize geometry entries */
 
-		    SystemParametersInfo32A(SPI_GETICONTITLELOGFONT, 0,
+		    SystemParametersInfoA(SPI_GETICONTITLELOGFONT, 0,
 							(LPVOID)&(lpnm->lfCaptionFont),0);
 		    lpnm->lfCaptionFont.lfWeight = FW_BOLD;
-		    SystemParametersInfo32A(SPI_GETICONTITLELOGFONT, 0,
+		    SystemParametersInfoA(SPI_GETICONTITLELOGFONT, 0,
 							(LPVOID)&(lpnm->lfSmCaptionFont),0);
-		    SystemParametersInfo32A(SPI_GETICONTITLELOGFONT, 0,
+		    SystemParametersInfoA(SPI_GETICONTITLELOGFONT, 0,
 							(LPVOID)&(lpnm->lfMenuFont),0);
-		    SystemParametersInfo32A(SPI_GETICONTITLELOGFONT, 0,
+		    SystemParametersInfoA(SPI_GETICONTITLELOGFONT, 0,
 							(LPVOID)&(lpnm->lfStatusFont),0);
-		    SystemParametersInfo32A(SPI_GETICONTITLELOGFONT, 0,
+		    SystemParametersInfoA(SPI_GETICONTITLELOGFONT, 0,
 							(LPVOID)&(lpnm->lfMessageFont),0);
 		}
 #undef lpnm
@@ -1015,11 +1015,11 @@ BOOL32 WINAPI SystemParametersInfo32A( UINT32 uAction, UINT32 uParam,
 
         case SPI_GETHIGHCONTRAST:
         {
-                LPHIGHCONTRAST32A lpHighContrastA = (LPHIGHCONTRAST32A)lpvParam;
+                LPHIGHCONTRASTA lpHighContrastA = (LPHIGHCONTRASTA)lpvParam;
 
                 FIXME(system,"SPI_GETHIGHCONTRAST not fully implemented\n");
 
-                if ( lpHighContrastA->cbSize == sizeof( HIGHCONTRAST32A ) )
+                if ( lpHighContrastA->cbSize == sizeof( HIGHCONTRASTA ) )
                 {
                         /* Indicate that there is no high contrast available */
                         lpHighContrastA->dwFlags = 0;
@@ -1067,31 +1067,31 @@ BOOL16 WINAPI SystemParametersInfo16( UINT16 uAction, UINT16 uParam,
 			break;
 
 		case SPI_GETFASTTASKSWITCH:
-		    if ( GetProfileInt32A( "windows", "CoolSwitch", 1 ) == 1 )
+		    if ( GetProfileIntA( "windows", "CoolSwitch", 1 ) == 1 )
 			  *(BOOL16 *) lpvParam = TRUE;
 			else
 			  *(BOOL16 *) lpvParam = FALSE;
 			break;
 
 		case SPI_GETGRIDGRANULARITY:
-                    *(INT16 *) lpvParam = GetProfileInt32A( "desktop", 
+                    *(INT16 *) lpvParam = GetProfileIntA( "desktop", 
                                                           "GridGranularity",
                                                           1 );
                     break;
 
                 case SPI_GETICONTITLEWRAP:
-                    *(BOOL16 *) lpvParam = GetProfileInt32A( "desktop",
+                    *(BOOL16 *) lpvParam = GetProfileIntA( "desktop",
                                                            "IconTitleWrap",
                                                            TRUE );
                     break;
 
                 case SPI_GETKEYBOARDDELAY:
-                    *(INT16 *) lpvParam = GetProfileInt32A( "keyboard",
+                    *(INT16 *) lpvParam = GetProfileIntA( "keyboard",
                                                           "KeyboardDelay", 1 );
                     break;
 
                 case SPI_GETKEYBOARDSPEED:
-                    *(WORD *) lpvParam = GetProfileInt32A( "keyboard",
+                    *(WORD *) lpvParam = GetProfileIntA( "keyboard",
                                                            "KeyboardSpeed",
                                                            30 );
                     break;
@@ -1101,7 +1101,7 @@ BOOL16 WINAPI SystemParametersInfo16( UINT16 uAction, UINT16 uParam,
 			break;
 
 		case SPI_GETSCREENSAVEACTIVE:
-                    if ( GetProfileInt32A( "windows", "ScreenSaveActive", 1 ) == 1 )
+                    if ( GetProfileIntA( "windows", "ScreenSaveActive", 1 ) == 1 )
                         *(BOOL16 *) lpvParam = TRUE;
                     else
                         *(BOOL16 *) lpvParam = FALSE;
@@ -1111,7 +1111,7 @@ BOOL16 WINAPI SystemParametersInfo16( UINT16 uAction, UINT16 uParam,
 #ifndef X_DISPLAY_MISSING
 			TSXGetScreenSaver(display, &timeout, &temp,&temp,&temp);
 #else /* X_DISPLAY_MISSING */
-			timeout = GetProfileInt32A( "windows", "ScreenSaveTimeout", 300 );
+			timeout = GetProfileIntA( "windows", "ScreenSaveTimeout", 300 );
 #endif /* X_DISPLAY_MISSING */
 			*(INT16 *) lpvParam = timeout;
 			break;
@@ -1154,12 +1154,12 @@ BOOL16 WINAPI SystemParametersInfo16( UINT16 uAction, UINT16 uParam,
 			break;
 
 		case SPI_SETDESKWALLPAPER:
-			return (SetDeskWallPaper32((LPSTR) lpvParam));
+			return (SetDeskWallPaper((LPSTR) lpvParam));
 			break;
 
 		case SPI_SETDESKPATTERN:
 			if ((INT16)uParam == -1) {
-				GetProfileString32A("Desktop", "Pattern", 
+				GetProfileStringA("Desktop", "Pattern", 
 						"170 85 170 85 170 85 170 85", 
 						buffer, sizeof(buffer) );
 				return (DESKTOP_SetPattern((LPSTR) buffer));
@@ -1171,9 +1171,9 @@ BOOL16 WINAPI SystemParametersInfo16( UINT16 uAction, UINT16 uParam,
 	        {
                     LPLOGFONT16 lpLogFont = (LPLOGFONT16)lpvParam;
 
-		    GetProfileString32A("Desktop", "IconTitleFaceName", "MS Sans Serif", 
+		    GetProfileStringA("Desktop", "IconTitleFaceName", "MS Sans Serif", 
 					lpLogFont->lfFaceName, LF_FACESIZE );
-                    lpLogFont->lfHeight = -GetProfileInt32A("Desktop","IconTitleSize", 8);
+                    lpLogFont->lfHeight = -GetProfileIntA("Desktop","IconTitleSize", 8);
                     lpLogFont->lfWidth = 0;
                     lpLogFont->lfEscapement = lpLogFont->lfOrientation = 0;
                     lpLogFont->lfWeight = FW_NORMAL;
@@ -1205,7 +1205,7 @@ BOOL16 WINAPI SystemParametersInfo16( UINT16 uAction, UINT16 uParam,
 							(LPVOID)&(lpnm->lfMessageFont),0);
 		    }
 		    else /* winfile 95 sets sbSize to 340 */
-		        SystemParametersInfo32A( uAction, uParam, lpvParam, fuWinIni );
+		        SystemParametersInfoA( uAction, uParam, lpvParam, fuWinIni );
 #undef lpnm
 		    break;
 
@@ -1236,8 +1236,8 @@ BOOL16 WINAPI SystemParametersInfo16( UINT16 uAction, UINT16 uParam,
 /***********************************************************************
  *	SystemParametersInfo32W   (USER32.541)
  */
-BOOL32 WINAPI SystemParametersInfo32W( UINT32 uAction, UINT32 uParam,
-                                       LPVOID lpvParam, UINT32 fuWinIni )
+BOOL WINAPI SystemParametersInfoW( UINT uAction, UINT uParam,
+                                       LPVOID lpvParam, UINT fuWinIni )
 {
     char buffer[256];
 
@@ -1247,14 +1247,14 @@ BOOL32 WINAPI SystemParametersInfo32W( UINT32 uAction, UINT32 uParam,
         if (lpvParam)
         {
             lstrcpynWtoA(buffer,(LPWSTR)lpvParam,sizeof(buffer));
-            return SetDeskWallPaper32(buffer);
+            return SetDeskWallPaper(buffer);
         }
-        return SetDeskWallPaper32(NULL);
+        return SetDeskWallPaper(NULL);
 
     case SPI_SETDESKPATTERN:
-        if ((INT32) uParam == -1)
+        if ((INT) uParam == -1)
         {
-            GetProfileString32A("Desktop", "Pattern", 
+            GetProfileStringA("Desktop", "Pattern", 
                                 "170 85 170 85 170 85 170 85", 
                                 buffer, sizeof(buffer) );
             return (DESKTOP_SetPattern((LPSTR) buffer));
@@ -1268,8 +1268,8 @@ BOOL32 WINAPI SystemParametersInfo32W( UINT32 uAction, UINT32 uParam,
 
     case SPI_GETICONTITLELOGFONT:
         {
-            LPLOGFONT32W lpLogFont = (LPLOGFONT32W)lpvParam;
- 	    GetProfileString32A("Desktop", "IconTitleFaceName", "MS Sans Serif", 
+            LPLOGFONTW lpLogFont = (LPLOGFONTW)lpvParam;
+ 	    GetProfileStringA("Desktop", "IconTitleFaceName", "MS Sans Serif", 
 			 buffer, sizeof(buffer) );
 	    lstrcpynAtoW(lpLogFont->lfFaceName, buffer ,LF_FACESIZE);
             lpLogFont->lfHeight = 10;
@@ -1285,24 +1285,24 @@ BOOL32 WINAPI SystemParametersInfo32W( UINT32 uAction, UINT32 uParam,
         break;
     case SPI_GETNONCLIENTMETRICS: {
 	/* FIXME: implement correctly */
-	LPNONCLIENTMETRICS32W	lpnm=(LPNONCLIENTMETRICS32W)lpvParam;
+	LPNONCLIENTMETRICSW	lpnm=(LPNONCLIENTMETRICSW)lpvParam;
 
-	SystemParametersInfo32W(SPI_GETICONTITLELOGFONT,0,(LPVOID)&(lpnm->lfCaptionFont),0);
+	SystemParametersInfoW(SPI_GETICONTITLELOGFONT,0,(LPVOID)&(lpnm->lfCaptionFont),0);
 	lpnm->lfCaptionFont.lfWeight = FW_BOLD;
-	SystemParametersInfo32W(SPI_GETICONTITLELOGFONT,0,(LPVOID)&(lpnm->lfSmCaptionFont),0);
-	SystemParametersInfo32W(SPI_GETICONTITLELOGFONT,0,(LPVOID)&(lpnm->lfMenuFont),0);
-	SystemParametersInfo32W(SPI_GETICONTITLELOGFONT,0,(LPVOID)&(lpnm->lfStatusFont),0);
-	SystemParametersInfo32W(SPI_GETICONTITLELOGFONT,0,(LPVOID)&(lpnm->lfMessageFont),0);
+	SystemParametersInfoW(SPI_GETICONTITLELOGFONT,0,(LPVOID)&(lpnm->lfSmCaptionFont),0);
+	SystemParametersInfoW(SPI_GETICONTITLELOGFONT,0,(LPVOID)&(lpnm->lfMenuFont),0);
+	SystemParametersInfoW(SPI_GETICONTITLELOGFONT,0,(LPVOID)&(lpnm->lfStatusFont),0);
+	SystemParametersInfoW(SPI_GETICONTITLELOGFONT,0,(LPVOID)&(lpnm->lfMessageFont),0);
 	break;
     }
 
     case SPI_GETHIGHCONTRAST:
     {
-       LPHIGHCONTRAST32W lpHighContrastW = (LPHIGHCONTRAST32W)lpvParam;
+       LPHIGHCONTRASTW lpHighContrastW = (LPHIGHCONTRASTW)lpvParam;
 
        FIXME(system,"SPI_GETHIGHCONTRAST not fully implemented\n");
 
-       if ( lpHighContrastW->cbSize == sizeof( HIGHCONTRAST32W ) )
+       if ( lpHighContrastW->cbSize == sizeof( HIGHCONTRASTW ) )
        {
           /* Indicate that there is no high contrast available */
           lpHighContrastW->dwFlags = 0;
@@ -1317,7 +1317,7 @@ BOOL32 WINAPI SystemParametersInfo32W( UINT32 uAction, UINT32 uParam,
     }
 
     default:
-        return SystemParametersInfo32A(uAction,uParam,lpvParam,fuWinIni);
+        return SystemParametersInfoA(uAction,uParam,lpvParam,fuWinIni);
 	
     }
     return TRUE;
@@ -1327,7 +1327,7 @@ BOOL32 WINAPI SystemParametersInfo32W( UINT32 uAction, UINT32 uParam,
 /***********************************************************************
 *	FileCDR (KERNEL.130)
 */
-FARPROC16 WINAPI FileCDR(FARPROC16 x)
+FARPROC16 WINAPI FileCDR16(FARPROC16 x)
 {
 	FIXME(file,"(0x%8x): stub\n", (int) x);
 	return (FARPROC16)TRUE;

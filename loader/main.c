@@ -50,7 +50,7 @@ int __winelib = 1;  /* Winelib run-time flag */
 /***********************************************************************
  *           Main initialisation routine
  */
-BOOL32 MAIN_MainInit(void)
+BOOL MAIN_MainInit(void)
 {
     /* Set server debug level */
     /* To fool make_debug: TRACE(server) */
@@ -95,9 +95,9 @@ BOOL32 MAIN_MainInit(void)
 /***********************************************************************
  *           KERNEL initialisation routine
  */
-BOOL32 WINAPI MAIN_KernelInit(HINSTANCE32 hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
+BOOL WINAPI MAIN_KernelInit(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 {
-    static BOOL32 initDone = FALSE;
+    static BOOL initDone = FALSE;
 
     HMODULE16 hModule;
 
@@ -111,7 +111,7 @@ BOOL32 WINAPI MAIN_KernelInit(HINSTANCE32 hinstDLL, DWORD fdwReason, LPVOID lpvR
         WORD cs, ds;
 
         /* Initialize KERNEL.178 (__WINFLAGS) with the correct flags value */
-        NE_SetEntryPoint( hModule, 178, GetWinFlags() );
+        NE_SetEntryPoint( hModule, 178, GetWinFlags16() );
 
         /* Initialize KERNEL.454/455 (__FLATCS/__FLATDS) */
         GET_CS(cs); GET_DS(ds);
@@ -146,7 +146,7 @@ BOOL32 WINAPI MAIN_KernelInit(HINSTANCE32 hinstDLL, DWORD fdwReason, LPVOID lpvR
 /***********************************************************************
  *           GDI initialisation routine
  */
-BOOL32 WINAPI MAIN_GdiInit(HINSTANCE32 hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
+BOOL WINAPI MAIN_GdiInit(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 {
     NE_MODULE *pModule;
 
@@ -156,13 +156,13 @@ BOOL32 WINAPI MAIN_GdiInit(HINSTANCE32 hinstDLL, DWORD fdwReason, LPVOID lpvRese
     pModule = NE_GetPtr( GetModuleHandle16( "GDI" ) );
     if ( pModule )
     {
-        GDI_HeapSel = GlobalHandleToSel( (NE_SEG_TABLE( pModule ) + 
+        GDI_HeapSel = GlobalHandleToSel16( (NE_SEG_TABLE( pModule ) + 
                                           pModule->dgroup - 1)->hSeg );
     }
     else
     {
         GDI_HeapSel = GlobalAlloc16( GMEM_FIXED, GDI_HEAP_SIZE );
-        LocalInit( GDI_HeapSel, 0, GDI_HEAP_SIZE-1 );
+        LocalInit16( GDI_HeapSel, 0, GDI_HEAP_SIZE-1 );
     }
 
     if (!TWEAK_Init()) return FALSE;
@@ -180,7 +180,7 @@ BOOL32 WINAPI MAIN_GdiInit(HINSTANCE32 hinstDLL, DWORD fdwReason, LPVOID lpvRese
 /***********************************************************************
  *           USER initialisation routine
  */
-BOOL32 WINAPI MAIN_UserInit(HINSTANCE32 hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
+BOOL WINAPI MAIN_UserInit(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 {
     NE_MODULE *pModule;
     int queueSize;
@@ -191,13 +191,13 @@ BOOL32 WINAPI MAIN_UserInit(HINSTANCE32 hinstDLL, DWORD fdwReason, LPVOID lpvRes
     pModule = NE_GetPtr( GetModuleHandle16( "USER" ) );
     if ( pModule )
     {
-        USER_HeapSel = GlobalHandleToSel( (NE_SEG_TABLE( pModule ) + 
+        USER_HeapSel = GlobalHandleToSel16( (NE_SEG_TABLE( pModule ) + 
                                            pModule->dgroup - 1)->hSeg );
     }
     else
     {
         USER_HeapSel = GlobalAlloc16( GMEM_FIXED, 0x10000 );
-        LocalInit( USER_HeapSel, 0, 0xffff );
+        LocalInit16( USER_HeapSel, 0, 0xffff );
     }
 
      /* Global atom table initialisation */
@@ -232,15 +232,15 @@ BOOL32 WINAPI MAIN_UserInit(HINSTANCE32 hinstDLL, DWORD fdwReason, LPVOID lpvRes
     if (!TWEAK_CheckConfiguration()) return FALSE;
 
     /* Create system message queue */
-    queueSize = GetProfileInt32A( "windows", "TypeAhead", 120 );
+    queueSize = GetProfileIntA( "windows", "TypeAhead", 120 );
     if (!QUEUE_CreateSysMsgQueue( queueSize )) return FALSE;
 
     /* Set double click time */
-    SetDoubleClickTime32( GetProfileInt32A("windows","DoubleClickSpeed",452) );
+    SetDoubleClickTime( GetProfileIntA("windows","DoubleClickSpeed",452) );
 
     /* Create task message queue for the initial task */
-    queueSize = GetProfileInt32A( "windows", "DefaultQueueSize", 8 );
-    if (!SetMessageQueue32( queueSize )) return FALSE;
+    queueSize = GetProfileIntA( "windows", "DefaultQueueSize", 8 );
+    if (!SetMessageQueue( queueSize )) return FALSE;
 
     /* Create desktop window */
     if (!WIN_CreateDesktopWindow()) return FALSE;
@@ -261,7 +261,7 @@ BOOL32 WINAPI MAIN_UserInit(HINSTANCE32 hinstDLL, DWORD fdwReason, LPVOID lpvRes
 /***********************************************************************
  *           Winelib initialisation routine
  */
-HINSTANCE32 MAIN_WinelibInit( int *argc, char *argv[] )
+HINSTANCE MAIN_WinelibInit( int *argc, char *argv[] )
 {
     WINE_MODREF *wm;
     NE_MODULE *pModule;

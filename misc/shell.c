@@ -65,7 +65,7 @@ static UINT16	uMsgShellActivate = 0;
 /*************************************************************************
  *				DragAcceptFiles32		[SHELL32.54]
  */
-void WINAPI DragAcceptFiles32(HWND32 hWnd, BOOL32 b)
+void WINAPI DragAcceptFiles(HWND hWnd, BOOL b)
 {
   WND* wnd = WIN_FindWndPtr(hWnd);
   
@@ -79,17 +79,17 @@ void WINAPI DragAcceptFiles32(HWND32 hWnd, BOOL32 b)
  */
 void WINAPI DragAcceptFiles16(HWND16 hWnd, BOOL16 b)
 {
-  DragAcceptFiles32(hWnd, b);
+  DragAcceptFiles(hWnd, b);
 }
 
 /*************************************************************************
  *				SHELL_DragQueryFile	[internal]
  * 
  */
-static UINT32 SHELL_DragQueryFile(LPSTR lpDrop, LPWSTR lpwDrop, UINT32 lFile, 
-				  LPSTR lpszFile, LPWSTR lpszwFile, UINT32 lLength)
+static UINT SHELL_DragQueryFile(LPSTR lpDrop, LPWSTR lpwDrop, UINT lFile, 
+				  LPSTR lpszFile, LPWSTR lpszwFile, UINT lLength)
 {
-    UINT32 i;
+    UINT i;
 
     i = 0;
     if (lpDrop) {
@@ -107,19 +107,19 @@ static UINT32 SHELL_DragQueryFile(LPSTR lpDrop, LPWSTR lpwDrop, UINT32 lFile,
       }
     }
     
-    if (lpDrop)  i = lstrlen32A(lpDrop);
-    if (lpwDrop) i = lstrlen32W(lpwDrop);
+    if (lpDrop)  i = lstrlenA(lpDrop);
+    if (lpwDrop) i = lstrlenW(lpwDrop);
     i++;
     if (!lpszFile && !lpszwFile) {
       return i;   /* needed buffer size */
     }
     i = (lLength > i) ? i : lLength;
     if (lpszFile) {
-      if (lpDrop) lstrcpyn32A (lpszFile,  lpDrop,  i);
+      if (lpDrop) lstrcpynA (lpszFile,  lpDrop,  i);
       else        lstrcpynWtoA(lpszFile,  lpwDrop, i);
     } else {
       if (lpDrop) lstrcpynAtoW(lpszwFile, lpDrop,  i);
-      else        lstrcpyn32W (lpszwFile, lpwDrop, i);
+      else        lstrcpynW (lpszwFile, lpwDrop, i);
     }
     return i;
 }
@@ -127,47 +127,47 @@ static UINT32 SHELL_DragQueryFile(LPSTR lpDrop, LPWSTR lpwDrop, UINT32 lFile,
 /*************************************************************************
  *				DragQueryFile32A	[SHELL32.81] [shell32.82]
  */
-UINT32 WINAPI DragQueryFile32A(HDROP32 hDrop, UINT32 lFile, LPSTR lpszFile,
-			      UINT32 lLength)
+UINT WINAPI DragQueryFileA(HDROP hDrop, UINT lFile, LPSTR lpszFile,
+			      UINT lLength)
 { /* hDrop is a global memory block allocated with GMEM_SHARE 
      * with DROPFILESTRUCT as a header and filenames following
      * it, zero length filename is in the end */       
     
-    LPDROPFILESTRUCT32 lpDropFileStruct;
+    LPDROPFILESTRUCT lpDropFileStruct;
     LPSTR lpCurrent;
-    UINT32 i;
+    UINT i;
     
     TRACE(shell,"(%08x, %x, %p, %u)\n",	hDrop,lFile,lpszFile,lLength);
     
-    lpDropFileStruct = (LPDROPFILESTRUCT32) GlobalLock32(hDrop); 
+    lpDropFileStruct = (LPDROPFILESTRUCT) GlobalLock(hDrop); 
     if(!lpDropFileStruct)
       return 0;
 
     lpCurrent = (LPSTR) lpDropFileStruct + lpDropFileStruct->lSize;
     i = SHELL_DragQueryFile(lpCurrent, NULL, lFile, lpszFile, NULL, lLength);
-    GlobalUnlock32(hDrop);
+    GlobalUnlock(hDrop);
     return i;
 }
 
 /*************************************************************************
  *				DragQueryFile32W	[shell32.133]
  */
-UINT32 WINAPI DragQueryFile32W(HDROP32 hDrop, UINT32 lFile, LPWSTR lpszwFile,
-			      UINT32 lLength)
+UINT WINAPI DragQueryFileW(HDROP hDrop, UINT lFile, LPWSTR lpszwFile,
+			      UINT lLength)
 {
-    LPDROPFILESTRUCT32 lpDropFileStruct;
+    LPDROPFILESTRUCT lpDropFileStruct;
     LPWSTR lpwCurrent;
-    UINT32 i;
+    UINT i;
     
     TRACE(shell,"(%08x, %x, %p, %u)\n",	hDrop,lFile,lpszwFile,lLength);
     
-    lpDropFileStruct = (LPDROPFILESTRUCT32) GlobalLock32(hDrop); 
+    lpDropFileStruct = (LPDROPFILESTRUCT) GlobalLock(hDrop); 
     if(!lpDropFileStruct)
       return 0;
 
     lpwCurrent = (LPWSTR) lpDropFileStruct + lpDropFileStruct->lSize;
     i = SHELL_DragQueryFile(NULL, lpwCurrent, lFile, NULL, lpszwFile,lLength);
-    GlobalUnlock32(hDrop);
+    GlobalUnlock(hDrop);
     return i;
 }
 /*************************************************************************
@@ -202,9 +202,9 @@ UINT16 WINAPI DragQueryFile16(HDROP16 hDrop, WORD wFile, LPSTR lpszFile,
 /*************************************************************************
  *				DragFinish32		[SHELL32.80]
  */
-void WINAPI DragFinish32(HDROP32 h)
+void WINAPI DragFinish(HDROP h)
 { TRACE(shell,"\n");
-    GlobalFree32((HGLOBAL32)h);
+    GlobalFree((HGLOBAL)h);
 }
 
 /*************************************************************************
@@ -219,17 +219,17 @@ void WINAPI DragFinish16(HDROP16 h)
 /*************************************************************************
  *				DragQueryPoint32		[SHELL32.135]
  */
-BOOL32 WINAPI DragQueryPoint32(HDROP32 hDrop, POINT32 *p)
+BOOL WINAPI DragQueryPoint(HDROP hDrop, POINT *p)
 {
-  LPDROPFILESTRUCT32 lpDropFileStruct;  
-  BOOL32             bRet;
+  LPDROPFILESTRUCT lpDropFileStruct;  
+  BOOL             bRet;
   TRACE(shell,"\n");
-  lpDropFileStruct = (LPDROPFILESTRUCT32) GlobalLock32(hDrop);
+  lpDropFileStruct = (LPDROPFILESTRUCT) GlobalLock(hDrop);
   
-  memcpy(p,&lpDropFileStruct->ptMousePos,sizeof(POINT32));
+  memcpy(p,&lpDropFileStruct->ptMousePos,sizeof(POINT));
   bRet = lpDropFileStruct->fInNonClientArea;
   
-  GlobalUnlock32(hDrop);
+  GlobalUnlock(hDrop);
   return bRet;
 }
 
@@ -255,7 +255,7 @@ BOOL16 WINAPI DragQueryPoint16(HDROP16 hDrop, POINT16 *p)
  *
  * Utility for code sharing between FindExecutable and ShellExecute
  */
-HINSTANCE32 SHELL_FindExecutable( LPCSTR lpFile, 
+HINSTANCE SHELL_FindExecutable( LPCSTR lpFile, 
                                          LPCSTR lpOperation,
                                          LPSTR lpResult)
 { char *extension = NULL; /* pointer to file extension */
@@ -265,7 +265,7 @@ HINSTANCE32 SHELL_FindExecutable( LPCSTR lpFile,
     char command[256];      /* command from registry */
     LONG commandlen=256;    /* This is the most DOS can handle :) */
     char buffer[256];       /* Used to GetProfileString */
-    HINSTANCE32 retval=31;  /* default - 'No association was found' */
+    HINSTANCE retval=31;  /* default - 'No association was found' */
     char *tok;              /* token pointer */
     int i;                  /* random counter */
     char xlpFile[256];      /* result of SearchPath */
@@ -281,7 +281,7 @@ HINSTANCE32 SHELL_FindExecutable( LPCSTR lpFile,
         return 2; /* File not found. Close enough, I guess. */
     }
 
-    if (SearchPath32A( NULL, lpFile,".exe",sizeof(xlpFile),xlpFile,NULL))
+    if (SearchPathA( NULL, lpFile,".exe",sizeof(xlpFile),xlpFile,NULL))
   { TRACE(shell, "SearchPath32A returned non-zero\n");
         lpFile = xlpFile;
     }
@@ -298,8 +298,8 @@ HINSTANCE32 SHELL_FindExecutable( LPCSTR lpFile,
     }
 
     /* Make local copy & lowercase it for reg & 'programs=' lookup */
-    lstrcpyn32A( tmpext, extension, 5 );
-    CharLower32A( tmpext );
+    lstrcpynA( tmpext, extension, 5 );
+    CharLowerA( tmpext );
   TRACE(shell, "%s file\n", tmpext);
     
     /* Three places to check: */
@@ -313,7 +313,7 @@ HINSTANCE32 SHELL_FindExecutable( LPCSTR lpFile,
     /* See if it's a program - if GetProfileString fails, we skip this
      * section. Actually, if GetProfileString fails, we've probably
      * got a lot more to worry about than running a program... */
-    if ( GetProfileString32A("windows", "programs", "exe pif bat com",
+    if ( GetProfileStringA("windows", "programs", "exe pif bat com",
 						  buffer, sizeof(buffer)) > 0 )
   { for (i=0;i<strlen(buffer); i++) buffer[i]=tolower(buffer[i]);
 
@@ -373,7 +373,7 @@ HINSTANCE32 SHELL_FindExecutable( LPCSTR lpFile,
     {
 	/* Toss the leading dot */
 	extension++;
-	if ( GetProfileString32A( "extensions", extension, "", command,
+	if ( GetProfileStringA( "extensions", extension, "", command,
                                   sizeof(command)) > 0)
 	  {
 		if (strlen(command)!=0)
@@ -419,8 +419,8 @@ HINSTANCE16 WINAPI ShellExecute16( HWND16 hWnd, LPCSTR lpOperation,
       lpOperation="open";
 
     if (lpDirectory)
-    { GetCurrentDirectory32A( sizeof(old_dir), old_dir );
-        SetCurrentDirectory32A( lpDirectory );
+    { GetCurrentDirectoryA( sizeof(old_dir), old_dir );
+        SetCurrentDirectoryA( lpDirectory );
     }
 
     retval = SHELL_FindExecutable( lpFile, lpOperation, cmd );
@@ -432,10 +432,10 @@ HINSTANCE16 WINAPI ShellExecute16( HWND16 hWnd, LPCSTR lpOperation,
         }
 
       TRACE(shell,"starting %s\n",cmd);
-        retval = WinExec32( cmd, iShowCmd );
+        retval = WinExec( cmd, iShowCmd );
     }
     if (lpDirectory)
-      SetCurrentDirectory32A( old_dir );
+      SetCurrentDirectoryA( old_dir );
     return retval;
 }
 
@@ -444,7 +444,7 @@ HINSTANCE16 WINAPI ShellExecute16( HWND16 hWnd, LPCSTR lpOperation,
  */
 HINSTANCE16 WINAPI FindExecutable16( LPCSTR lpFile, LPCSTR lpDirectory,
                                      LPSTR lpResult )
-{ return (HINSTANCE16)FindExecutable32A( lpFile, lpDirectory, lpResult );
+{ return (HINSTANCE16)FindExecutableA( lpFile, lpDirectory, lpResult );
 }
 
 
@@ -453,7 +453,7 @@ HINSTANCE16 WINAPI FindExecutable16( LPCSTR lpFile, LPCSTR lpDirectory,
  */
 BOOL16 WINAPI AboutDlgProc16( HWND16 hWnd, UINT16 msg, WPARAM16 wParam,
                                LPARAM lParam )
-{ return AboutDlgProc32( hWnd, msg, wParam, lParam );
+{ return AboutDlgProc( hWnd, msg, wParam, lParam );
 }
 
 
@@ -462,13 +462,13 @@ BOOL16 WINAPI AboutDlgProc16( HWND16 hWnd, UINT16 msg, WPARAM16 wParam,
  */
 BOOL16 WINAPI ShellAbout16( HWND16 hWnd, LPCSTR szApp, LPCSTR szOtherStuff,
                             HICON16 hIcon )
-{ return ShellAbout32A( hWnd, szApp, szOtherStuff, hIcon );
+{ return ShellAboutA( hWnd, szApp, szOtherStuff, hIcon );
 }
 
 /*************************************************************************
  *				SHELL_GetResourceTable
  */
-static DWORD SHELL_GetResourceTable(HFILE32 hFile,LPBYTE *retptr)
+static DWORD SHELL_GetResourceTable(HFILE hFile,LPBYTE *retptr)
 {	IMAGE_DOS_HEADER	mz_header;
 	char			magic[4];
 	int			size;
@@ -476,8 +476,8 @@ static DWORD SHELL_GetResourceTable(HFILE32 hFile,LPBYTE *retptr)
 	TRACE(shell,"\n");  
 
 	*retptr = NULL;
-	_llseek32( hFile, 0, SEEK_SET );
-	if ((_lread32(hFile,&mz_header,sizeof(mz_header)) != sizeof(mz_header)) || (mz_header.e_magic != IMAGE_DOS_SIGNATURE))
+	_llseek( hFile, 0, SEEK_SET );
+	if ((_lread(hFile,&mz_header,sizeof(mz_header)) != sizeof(mz_header)) || (mz_header.e_magic != IMAGE_DOS_SIGNATURE))
 	{ /* .ICO file ? */
           if (mz_header.e_cblp == 1) 
 	  { /* ICONHEADER.idType, must be 1 */
@@ -487,12 +487,12 @@ static DWORD SHELL_GetResourceTable(HFILE32 hFile,LPBYTE *retptr)
 	  else
 	    return 0; /* failed */
 	}
-	_llseek32( hFile, mz_header.e_lfanew, SEEK_SET );
+	_llseek( hFile, mz_header.e_lfanew, SEEK_SET );
 
-	if (_lread32( hFile, magic, sizeof(magic) ) != sizeof(magic))
+	if (_lread( hFile, magic, sizeof(magic) ) != sizeof(magic))
 	  return 0;
 
-	_llseek32( hFile, mz_header.e_lfanew, SEEK_SET);
+	_llseek( hFile, mz_header.e_lfanew, SEEK_SET);
 
 	if (*(DWORD*)magic  == IMAGE_NT_SIGNATURE)
 	  return IMAGE_NT_SIGNATURE;
@@ -501,7 +501,7 @@ static DWORD SHELL_GetResourceTable(HFILE32 hFile,LPBYTE *retptr)
 	{ IMAGE_OS2_HEADER	ne_header;
 	  LPBYTE		pTypeInfo = (LPBYTE)-1;
 
-	  if (_lread32(hFile,&ne_header,sizeof(ne_header))!=sizeof(ne_header))
+	  if (_lread(hFile,&ne_header,sizeof(ne_header))!=sizeof(ne_header))
 	    return 0;
 
 	  if (ne_header.ne_magic != IMAGE_OS2_SIGNATURE)
@@ -512,8 +512,8 @@ static DWORD SHELL_GetResourceTable(HFILE32 hFile,LPBYTE *retptr)
 	  if( size > sizeof(NE_TYPEINFO) )
 	  { pTypeInfo = (BYTE*)HeapAlloc( GetProcessHeap(), 0, size);
 	    if( pTypeInfo ) 
-	    { _llseek32(hFile, mz_header.e_lfanew+ne_header.resource_tab_offset, SEEK_SET);
-	      if( _lread32( hFile, (char*)pTypeInfo, size) != size )
+	    { _llseek(hFile, mz_header.e_lfanew+ne_header.resource_tab_offset, SEEK_SET);
+	      if( _lread( hFile, (char*)pTypeInfo, size) != size )
 	      { HeapFree( GetProcessHeap(), 0, pTypeInfo); 
 		pTypeInfo = NULL;
 	      }
@@ -528,15 +528,15 @@ static DWORD SHELL_GetResourceTable(HFILE32 hFile,LPBYTE *retptr)
 /*************************************************************************
  *			SHELL_LoadResource
  */
-static HGLOBAL16 SHELL_LoadResource(HINSTANCE16 hInst, HFILE32 hFile, NE_NAMEINFO* pNInfo, WORD sizeShift)
+static HGLOBAL16 SHELL_LoadResource(HINSTANCE16 hInst, HFILE hFile, NE_NAMEINFO* pNInfo, WORD sizeShift)
 {	BYTE*  ptr;
-	HGLOBAL16 handle = DirectResAlloc( hInst, 0x10, (DWORD)pNInfo->length << sizeShift);
+	HGLOBAL16 handle = DirectResAlloc16( hInst, 0x10, (DWORD)pNInfo->length << sizeShift);
 
 	TRACE(shell,"\n");
 
 	if( (ptr = (BYTE*)GlobalLock16( handle )) )
-	{ _llseek32( hFile, (DWORD)pNInfo->offset << sizeShift, SEEK_SET);
-	  _lread32( hFile, (char*)ptr, pNInfo->length << sizeShift);
+	{ _llseek( hFile, (DWORD)pNInfo->offset << sizeShift, SEEK_SET);
+	  _lread( hFile, (char*)ptr, pNInfo->length << sizeShift);
 	  return handle;
 	}
 	return 0;
@@ -545,13 +545,13 @@ static HGLOBAL16 SHELL_LoadResource(HINSTANCE16 hInst, HFILE32 hFile, NE_NAMEINF
 /*************************************************************************
  *                      ICO_LoadIcon
  */
-static HGLOBAL16 ICO_LoadIcon(HINSTANCE16 hInst, HFILE32 hFile, LPicoICONDIRENTRY lpiIDE)
+static HGLOBAL16 ICO_LoadIcon(HINSTANCE16 hInst, HFILE hFile, LPicoICONDIRENTRY lpiIDE)
 {	BYTE*  ptr;
-	HGLOBAL16 handle = DirectResAlloc( hInst, 0x10, lpiIDE->dwBytesInRes);
+	HGLOBAL16 handle = DirectResAlloc16( hInst, 0x10, lpiIDE->dwBytesInRes);
 	TRACE(shell,"\n");
 	if( (ptr = (BYTE*)GlobalLock16( handle )) )
-	{ _llseek32( hFile, lpiIDE->dwImageOffset, SEEK_SET);
-	  _lread32( hFile, (char*)ptr, lpiIDE->dwBytesInRes);
+	{ _llseek( hFile, lpiIDE->dwImageOffset, SEEK_SET);
+	  _lread( hFile, (char*)ptr, lpiIDE->dwBytesInRes);
 	  return handle;
 	}
 	return 0;
@@ -562,14 +562,14 @@ static HGLOBAL16 ICO_LoadIcon(HINSTANCE16 hInst, HFILE32 hFile, LPicoICONDIRENTR
  *
  *  Read .ico file and build phony ICONDIR struct for GetIconID
  */
-static HGLOBAL16 ICO_GetIconDirectory(HINSTANCE16 hInst, HFILE32 hFile, LPicoICONDIR* lplpiID ) 
+static HGLOBAL16 ICO_GetIconDirectory(HINSTANCE16 hInst, HFILE hFile, LPicoICONDIR* lplpiID ) 
 { WORD    id[3];  /* idReserved, idType, idCount */
   LPicoICONDIR	lpiID;
   int		i;
  
   TRACE(shell,"\n"); 
-  _llseek32( hFile, 0, SEEK_SET );
-  if( _lread32(hFile,(char*)id,sizeof(id)) != sizeof(id) ) return 0;
+  _llseek( hFile, 0, SEEK_SET );
+  if( _lread(hFile,(char*)id,sizeof(id)) != sizeof(id) ) return 0;
 
   /* check .ICO header 
    *
@@ -582,8 +582,8 @@ static HGLOBAL16 ICO_GetIconDirectory(HINSTANCE16 hInst, HFILE32 hFile, LPicoICO
 
   lpiID = (LPicoICONDIR)HeapAlloc( GetProcessHeap(), 0, i);
 
-  if( _lread32(hFile,(char*)lpiID->idEntries,i) == i )
-  { HGLOBAL16 handle = DirectResAlloc( hInst, 0x10,
+  if( _lread(hFile,(char*)lpiID->idEntries,i) == i )
+  { HGLOBAL16 handle = DirectResAlloc16( hInst, 0x10,
                                      id[2]*sizeof(ICONDIRENTRY) + sizeof(id) );
      if( handle ) 
     { CURSORICONDIR*     lpID = (CURSORICONDIR*)GlobalLock16( handle );
@@ -610,22 +610,22 @@ static HGLOBAL16 ICO_GetIconDirectory(HINSTANCE16 hInst, HFILE32 hFile, LPicoICO
  *
  * This abortion is called directly by Progman
  */
-HGLOBAL16 WINAPI InternalExtractIcon(HINSTANCE16 hInstance,
+HGLOBAL16 WINAPI InternalExtractIcon16(HINSTANCE16 hInstance,
                                      LPCSTR lpszExeFileName, UINT16 nIconIndex, WORD n )
 {	HGLOBAL16	hRet = 0;
 	HGLOBAL16*	RetPtr = NULL;
 	LPBYTE		pData;
 	OFSTRUCT	ofs;
 	DWORD		sig;
-	HFILE32		hFile = OpenFile32( lpszExeFileName, &ofs, OF_READ );
+	HFILE		hFile = OpenFile( lpszExeFileName, &ofs, OF_READ );
 	UINT16		iconDirCount = 0,iconCount = 0;
 	LPBYTE		peimage;
-	HANDLE32	fmapping;
+	HANDLE	fmapping;
 	
 	TRACE(shell,"(%04x,file %s,start %d,extract %d\n", 
 		       hInstance, lpszExeFileName, nIconIndex, n);
 
-	if( hFile == HFILE_ERROR32 || !n )
+	if( hFile == HFILE_ERROR || !n )
 	  return 0;
 
 	hRet = GlobalAlloc16( GMEM_FIXED | GMEM_ZEROINIT, sizeof(HICON16)*n);
@@ -678,7 +678,7 @@ HGLOBAL16 WINAPI InternalExtractIcon(HINSTANCE16 hInstance,
 
 	        if( lpiID == NULL )
 	          hIcon = SHELL_LoadResource( hInstance, hFile, pIconDir + i, *(WORD*)pData );
-	        RetPtr[i-nIconIndex] = GetIconID( hIcon, 3 );
+	        RetPtr[i-nIconIndex] = GetIconID16( hIcon, 3 );
 	        GlobalFree16(hIcon); 
               }
 
@@ -695,8 +695,8 @@ HGLOBAL16 WINAPI InternalExtractIcon(HINSTANCE16 hInstance,
 	          }
 	        }
 	        if( hIcon )
-	        { RetPtr[icon-nIconIndex] = LoadIconHandler( hIcon, TRUE ); 
-	          FarSetOwner( RetPtr[icon-nIconIndex], GetExePtr(hInstance) );
+	        { RetPtr[icon-nIconIndex] = LoadIconHandler16( hIcon, TRUE ); 
+	          FarSetOwner16( RetPtr[icon-nIconIndex], GetExePtr(hInstance) );
 	        }
 	        else
 	        { RetPtr[icon-nIconIndex] = 0;
@@ -721,7 +721,7 @@ HGLOBAL16 WINAPI InternalExtractIcon(HINSTANCE16 hInstance,
 	  PIMAGE_RESOURCE_DIRECTORY_ENTRY	xresent;
 	  CURSORICONDIR		**cids;
 	
-	  fmapping = CreateFileMapping32A(hFile,NULL,PAGE_READONLY|SEC_COMMIT,0,0,NULL);
+	  fmapping = CreateFileMappingA(hFile,NULL,PAGE_READONLY|SEC_COMMIT,0,0,NULL);
 	  if (fmapping == 0) 
 	  { /* FIXME, INVALID_HANDLE_VALUE? */
 	    WARN(shell,"failed to create filemap.\n");
@@ -760,7 +760,7 @@ HGLOBAL16 WINAPI InternalExtractIcon(HINSTANCE16 hInstance,
 	    goto end_4;	/* failure */
 	  }
 
-	  icongroupresdir = GetResDirEntryW(rootresdir,RT_GROUP_ICON32W, (DWORD)rootresdir,FALSE);
+	  icongroupresdir = GetResDirEntryW(rootresdir,RT_GROUP_ICONW, (DWORD)rootresdir,FALSE);
 
 	  if (!icongroupresdir) 
 	  { WARN(shell,"No Icongroupresourcedirectory!\n");
@@ -822,10 +822,10 @@ HGLOBAL16 WINAPI InternalExtractIcon(HINSTANCE16 hInstance,
 	    /* found */
 	    cid = (CURSORICONDIR*)igdata;
 	    cids[i] = cid;
-	    RetPtr[i] = LookupIconIdFromDirectoryEx32(igdata,TRUE,SYSMETRICS_CXICON,SYSMETRICS_CYICON,0);
+	    RetPtr[i] = LookupIconIdFromDirectoryEx(igdata,TRUE,SYSMETRICS_CXICON,SYSMETRICS_CYICON,0);
 	  }
 
-	  iconresdir=GetResDirEntryW(rootresdir,RT_ICON32W,(DWORD)rootresdir,FALSE);
+	  iconresdir=GetResDirEntryW(rootresdir,RT_ICONW,(DWORD)rootresdir,FALSE);
 
 	  if (!iconresdir) 
 	  { WARN(shell,"No Iconresourcedirectory!\n");
@@ -852,7 +852,7 @@ HGLOBAL16 WINAPI InternalExtractIcon(HINSTANCE16 hInstance,
 	      RetPtr[i]=0;
 	      continue;
 	    }
-	    RetPtr[i] = CreateIconFromResourceEx32(idata,idataent->Size,TRUE,0x00030000,SYSMETRICS_CXICON,SYSMETRICS_CYICON,0);
+	    RetPtr[i] = CreateIconFromResourceEx(idata,idataent->Size,TRUE,0x00030000,SYSMETRICS_CXICON,SYSMETRICS_CYICON,0);
 	  }
 	  goto end_3;	/* sucess */
 	}
@@ -862,7 +862,7 @@ HGLOBAL16 WINAPI InternalExtractIcon(HINSTANCE16 hInstance,
 end_4:	hRet = 0;	/* failure */
 end_3:	UnmapViewOfFile(peimage);	/* success */
 end_2:	CloseHandle(fmapping);
-end_1:	_lclose32( hFile);
+end_1:	_lclose( hFile);
 	return hRet;
 }
 
@@ -872,7 +872,7 @@ end_1:	_lclose32( hFile);
 HICON16 WINAPI ExtractIcon16( HINSTANCE16 hInstance, LPCSTR lpszExeFileName,
 	UINT16 nIconIndex )
 {   TRACE(shell,"\n");
-    return ExtractIcon32A( hInstance, lpszExeFileName, nIconIndex );
+    return ExtractIconA( hInstance, lpszExeFileName, nIconIndex );
 }
 
 /*************************************************************************
@@ -882,19 +882,19 @@ HICON16 WINAPI ExtractIconEx16(
 	LPCSTR lpszFile, INT16 nIconIndex, HICON16 *phiconLarge,
 	HICON16 *phiconSmall, UINT16 nIcons
 ) {
-    HICON32	*ilarge,*ismall;
+    HICON	*ilarge,*ismall;
     UINT16	ret;
     int		i;
 
     if (phiconLarge)
-    	ilarge = (HICON32*)HeapAlloc(GetProcessHeap(),0,nIcons*sizeof(HICON32));
+    	ilarge = (HICON*)HeapAlloc(GetProcessHeap(),0,nIcons*sizeof(HICON));
     else
     	ilarge = NULL;
     if (phiconSmall)
-    	ismall = (HICON32*)HeapAlloc(GetProcessHeap(),0,nIcons*sizeof(HICON32));
+    	ismall = (HICON*)HeapAlloc(GetProcessHeap(),0,nIcons*sizeof(HICON));
     else
     	ismall = NULL;
-    ret = ExtractIconEx32A(lpszFile,nIconIndex,ilarge,ismall,nIcons);
+    ret = ExtractIconExA(lpszFile,nIconIndex,ilarge,ismall,nIcons);
     if (ilarge) {
     	for (i=0;i<nIcons;i++)
 	    phiconLarge[i]=ilarge[i];
@@ -914,7 +914,7 @@ HICON16 WINAPI ExtractIconEx16(
  * Return icon for given file (either from file itself or from associated
  * executable) and patch parameters if needed.
  */
-HICON32 WINAPI ExtractAssociatedIcon32A(HINSTANCE32 hInst, LPSTR lpIconPath, LPWORD lpiIcon)
+HICON WINAPI ExtractAssociatedIconA(HINSTANCE hInst, LPSTR lpIconPath, LPWORD lpiIcon)
 {	TRACE(shell,"\n");
 	return ExtractAssociatedIcon16(hInst,lpIconPath,lpiIcon);
 }
@@ -963,7 +963,7 @@ LPSTR SHELL_FindString(LPSTR lpEnv, LPCSTR entry)
 
   l = strlen(entry); 
   for( ; *lpEnv ; lpEnv+=strlen(lpEnv)+1 )
-  { if( lstrncmpi32A(lpEnv, entry, l) ) 
+  { if( lstrncmpiA(lpEnv, entry, l) ) 
       continue;
 	if( !*(lpEnv+l) )
 	    return (lpEnv + l); 		/* empty entry */
@@ -973,12 +973,12 @@ LPSTR SHELL_FindString(LPSTR lpEnv, LPCSTR entry)
     return NULL;
 }
 
-SEGPTR WINAPI FindEnvironmentString(LPSTR str)
+SEGPTR WINAPI FindEnvironmentString16(LPSTR str)
 { SEGPTR  spEnv;
   LPSTR lpEnv,lpString;
   TRACE(shell,"\n");
     
-  spEnv = GetDOSEnvironment();
+  spEnv = GetDOSEnvironment16();
 
   lpEnv = (LPSTR)PTR_SEG_TO_LIN(spEnv);
   lpString = (spEnv)?SHELL_FindString(lpEnv, str):NULL; 
@@ -994,14 +994,14 @@ SEGPTR WINAPI FindEnvironmentString(LPSTR str)
  * Replace %KEYWORD% in the str with the value of variable KEYWORD
  * from "DOS" environment.
  */
-DWORD WINAPI DoEnvironmentSubst(LPSTR str,WORD length)
+DWORD WINAPI DoEnvironmentSubst16(LPSTR str,WORD length)
 {
-  LPSTR   lpEnv = (LPSTR)PTR_SEG_TO_LIN(GetDOSEnvironment());
+  LPSTR   lpEnv = (LPSTR)PTR_SEG_TO_LIN(GetDOSEnvironment16());
   LPSTR   lpBuffer = (LPSTR)HeapAlloc( GetProcessHeap(), 0, length);
   LPSTR   lpstr = str;
   LPSTR   lpbstr = lpBuffer;
 
-  CharToOem32A(str,str);
+  CharToOemA(str,str);
 
   TRACE(shell,"accept %s\n", str);
 
@@ -1053,7 +1053,7 @@ DWORD WINAPI DoEnvironmentSubst(LPSTR str,WORD length)
 
   TRACE(shell,"-- return %s\n", str);
 
-  OemToChar32A(str,str);
+  OemToCharA(str,str);
   HeapFree( GetProcessHeap(), 0, lpBuffer);
 
   /*  Return str length in the LOWORD
@@ -1066,7 +1066,7 @@ DWORD WINAPI DoEnvironmentSubst(LPSTR str,WORD length)
  *				ShellHookProc		[SHELL.103]
  * System-wide WH_SHELL hook.
  */
-LRESULT WINAPI ShellHookProc(INT16 code, WPARAM16 wParam, LPARAM lParam)
+LRESULT WINAPI ShellHookProc16(INT16 code, WPARAM16 wParam, LPARAM lParam)
 {
     TRACE(shell,"%i, %04x, %08x\n", code, wParam, 
 						      (unsigned)lParam );
@@ -1087,18 +1087,18 @@ LRESULT WINAPI ShellHookProc(INT16 code, WPARAM16 wParam, LPARAM lParam)
 /*************************************************************************
  *				RegisterShellHook	[SHELL.102]
  */
-BOOL32 WINAPI RegisterShellHook(HWND16 hWnd, UINT16 uAction)
+BOOL WINAPI RegisterShellHook16(HWND16 hWnd, UINT16 uAction)
 { TRACE(shell,"%04x [%u]\n", hWnd, uAction );
 
     switch( uAction )
   { case 2:  /* register hWnd as a shell window */
 	     if( !SHELL_hHook )
       { HMODULE16 hShell = GetModuleHandle16( "SHELL" );
-        SHELL_hHook = SetWindowsHookEx16( WH_SHELL, ShellHookProc, hShell, 0 );
+        SHELL_hHook = SetWindowsHookEx16( WH_SHELL, ShellHookProc16, hShell, 0 );
 		if( SHELL_hHook )
-        { uMsgWndCreated = RegisterWindowMessage32A( lpstrMsgWndCreated );
-		    uMsgWndDestroyed = RegisterWindowMessage32A( lpstrMsgWndDestroyed );
-		    uMsgShellActivate = RegisterWindowMessage32A( lpstrMsgShellActivate );
+        { uMsgWndCreated = RegisterWindowMessageA( lpstrMsgWndCreated );
+		    uMsgWndDestroyed = RegisterWindowMessageA( lpstrMsgWndDestroyed );
+		    uMsgShellActivate = RegisterWindowMessageA( lpstrMsgShellActivate );
 		} 
         else 
           WARN(shell,"-- unable to install ShellHookProc()!\n");

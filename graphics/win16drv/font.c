@@ -17,8 +17,8 @@
 /***********************************************************************
  *           WIN16DRV_GetTextExtentPoint
  */
-BOOL32 WIN16DRV_GetTextExtentPoint( DC *dc, LPCSTR str, INT32 count,
-                                    LPSIZE32 size )
+BOOL WIN16DRV_GetTextExtentPoint( DC *dc, LPCSTR str, INT count,
+                                    LPSIZE size )
 {
     WIN16DRV_PDEVICE *physDev = (WIN16DRV_PDEVICE *)dc->physDev;
     DWORD dwRet;
@@ -42,7 +42,7 @@ BOOL32 WIN16DRV_GetTextExtentPoint( DC *dc, LPCSTR str, INT32 count,
 /***********************************************************************
  *           WIN16DRV_GetTextMetrics
  */
-BOOL32 WIN16DRV_GetTextMetrics( DC *dc, TEXTMETRIC32A *metrics )
+BOOL WIN16DRV_GetTextMetrics( DC *dc, TEXTMETRICA *metrics )
 {
     WIN16DRV_PDEVICE *physDev = (WIN16DRV_PDEVICE *)dc->physDev;
 
@@ -63,10 +63,10 @@ BOOL32 WIN16DRV_GetTextMetrics( DC *dc, TEXTMETRIC32A *metrics )
     return TRUE;
 }
 
-HFONT32 WIN16DRV_FONT_SelectObject( DC * dc, HFONT32 hfont, FONTOBJ * font)
+HFONT WIN16DRV_FONT_SelectObject( DC * dc, HFONT hfont, FONTOBJ * font)
 {
     WIN16DRV_PDEVICE *physDev = (WIN16DRV_PDEVICE *)dc->physDev;
-    HPEN32 prevHandle = dc->w.hFont;
+    HPEN prevHandle = dc->w.hFont;
     int	nSize;
 
     dc->w.hFont = hfont;
@@ -143,8 +143,8 @@ HFONT32 WIN16DRV_FONT_SelectObject( DC * dc, HFONT32 hfont, FONTOBJ * font)
 /***********************************************************************
  *           GetCharWidth32A    (GDI32.155)
  */
-BOOL32 WIN16DRV_GetCharWidth( DC *dc, UINT32 firstChar, UINT32 lastChar,
-			    LPINT32 buffer )
+BOOL WIN16DRV_GetCharWidth( DC *dc, UINT firstChar, UINT lastChar,
+			    LPINT buffer )
 {
     int i;
     WORD wRet;
@@ -172,7 +172,7 @@ BOOL32 WIN16DRV_GetCharWidth( DC *dc, UINT32 firstChar, UINT32 lastChar,
  *           WIN16DRV_EnumDeviceFonts
  */
 
-BOOL32	WIN16DRV_EnumDeviceFonts( DC* dc, LPLOGFONT16 plf, 
+BOOL	WIN16DRV_EnumDeviceFonts( DC* dc, LPLOGFONT16 plf, 
 				        DEVICEFONTENUMPROC proc, LPARAM lp )
 {
     WIN16DRV_PDEVICE *physDev = (WIN16DRV_PDEVICE *)dc->physDev;

@@ -20,14 +20,14 @@
 /***********************************************************************
  *           MFDRV_ExtTextOut
  */
-BOOL32
-MFDRV_ExtTextOut( DC *dc, INT32 x, INT32 y, UINT32 flags,
-                  const RECT32 *lprect, LPCSTR str, UINT32 count,
-                  const INT32 *lpDx )
+BOOL
+MFDRV_ExtTextOut( DC *dc, INT x, INT y, UINT flags,
+                  const RECT *lprect, LPCSTR str, UINT count,
+                  const INT *lpDx )
 {
     RECT16	rect16;
     LPINT16	lpdx16 = lpDx?(LPINT16)xmalloc(sizeof(INT16)*count):NULL;
-    BOOL32	ret;
+    BOOL	ret;
     int		i;
 
     if (lprect)	CONV_RECT32TO16(lprect,&rect16);

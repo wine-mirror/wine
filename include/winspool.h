@@ -58,68 +58,68 @@ extern "C" {
 #define PRINTER_ENUM_ICON8       0x00800000
 
 /* TYPES */
-typedef struct _PRINTER_DEFAULTS32A {
+typedef struct _PRINTER_DEFAULTSA {
   LPSTR        pDatatype;
-  LPDEVMODE32A pDevMode;
+  LPDEVMODEA pDevMode;
   ACCESS_MASK  DesiredAccess;
-} PRINTER_DEFAULTS32A, *LPPRINTER_DEFAULTS32A;
+} PRINTER_DEFAULTSA, *LPPRINTER_DEFAULTSA;
 
-typedef struct _PRINTER_DEFAULTS32W {
+typedef struct _PRINTER_DEFAULTSW {
   LPWSTR       pDatatype;
-  LPDEVMODE32W pDevMode;
+  LPDEVMODEW pDevMode;
   ACCESS_MASK  DesiredAccess;
-} PRINTER_DEFAULTS32W, *LPPRINTER_DEFAULTS32W;
+} PRINTER_DEFAULTSW, *LPPRINTER_DEFAULTSW;
 
 DECL_WINELIB_TYPE_AW(PRINTER_DEFAULTS)
 DECL_WINELIB_TYPE_AW(LPPRINTER_DEFAULTS)
 
-typedef struct _DRIVER_INFO_132A {
+typedef struct _DRIVER_INFO_1A {
   LPSTR     pName;
-} DRIVER_INFO_132A, *PDRIVER_INFO_132A, *LPDRIVER_INFO_132A;
+} DRIVER_INFO_1A, *PDRIVER_INFO_1A, *LPDRIVER_INFO_1A;
 
-typedef struct _DRIVER_INFO_132W {
+typedef struct _DRIVER_INFO_1W {
   LPWSTR    pName;
-} DRIVER_INFO_132W, *PDRIVER_INFO_132W, *LPDRIVER_INFO_132W;
+} DRIVER_INFO_1W, *PDRIVER_INFO_1W, *LPDRIVER_INFO_1W;
 
 DECL_WINELIB_TYPE_AW(DRIVER_INFO_1)
 DECL_WINELIB_TYPE_AW(PDRIVER_INFO_1)
 DECL_WINELIB_TYPE_AW(LPDRIVER_INFO_1)
 
-typedef struct _DRIVER_INFO_232A {
+typedef struct _DRIVER_INFO_2A {
   DWORD   cVersion;
   LPSTR     pName;
   LPSTR     pEnvironment;
   LPSTR     pDriverPath;
   LPSTR     pDataFile; 
   LPSTR     pConfigFile;
-} DRIVER_INFO_232A, *PDRIVER_INFO_232A, *LPDRIVER_INFO_232A;
+} DRIVER_INFO_2A, *PDRIVER_INFO_2A, *LPDRIVER_INFO_2A;
 
-typedef struct _DRIVER_INFO_232W {
+typedef struct _DRIVER_INFO_2W {
   DWORD   cVersion;
   LPWSTR    pName;     
   LPWSTR    pEnvironment;
   LPWSTR    pDriverPath;
   LPWSTR    pDataFile; 
   LPWSTR    pConfigFile;
-} DRIVER_INFO_232W, *PDRIVER_INFO_232W, *LPDRIVER_INFO_232W;
+} DRIVER_INFO_2W, *PDRIVER_INFO_2W, *LPDRIVER_INFO_2W;
 
 DECL_WINELIB_TYPE_AW(DRIVER_INFO_2)
 DECL_WINELIB_TYPE_AW(PDRIVER_INFO_2)
 DECL_WINELIB_TYPE_AW(LPDRIVER_INFO_2)
 
-typedef struct _PRINTER_INFO_132A {
+typedef struct _PRINTER_INFO_1A {
   DWORD   Flags;
   LPSTR   pDescription;
   LPSTR   pName;
   LPSTR   pComment;
-} PRINTER_INFO_132A, *PPRINTER_INFO_132A, *LPPRINTER_INFO_132A;
+} PRINTER_INFO_1A, *PPRINTER_INFO_1A, *LPPRINTER_INFO_1A;
 
-typedef struct _PRINTER_INFO_132W {
+typedef struct _PRINTER_INFO_1W {
   DWORD   Flags;
   LPWSTR  pDescription;
   LPWSTR  pName;
   LPWSTR  pComment;
-} PRINTER_INFO_132W, *PPRINTER_INFO_132W, *LPPRINTER_INFO_132W;
+} PRINTER_INFO_1W, *PPRINTER_INFO_1W, *LPPRINTER_INFO_1W;
 
 DECL_WINELIB_TYPE_AW(PRINTER_INFO_1)
 DECL_WINELIB_TYPE_AW(PPRINTER_INFO_1)
@@ -130,7 +130,7 @@ DECL_WINELIB_TYPE_AW(LPPRINTER_INFO_1)
  * therfore the following hack */
 #ifndef Status
 
-typedef struct _PRINTER_INFO_232A {
+typedef struct _PRINTER_INFO_2A {
   LPSTR     pServerName;
   LPSTR     pPrinterName;
   LPSTR     pShareName;
@@ -138,7 +138,7 @@ typedef struct _PRINTER_INFO_232A {
   LPSTR     pDriverName;
   LPSTR     pComment;
   LPSTR     pLocation;
-  LPDEVMODE32A pDevMode;
+  LPDEVMODEA pDevMode;
   LPSTR     pSepFile;
   LPSTR     pPrintProcessor;
   LPSTR     pDatatype;
@@ -152,9 +152,9 @@ typedef struct _PRINTER_INFO_232A {
   DWORD   Status;
   DWORD   cJobs;
   DWORD   AveragePPM;
-} PRINTER_INFO_232A, *PPRINTER_INFO_232A, *LPPRINTER_INFO_232A;
+} PRINTER_INFO_2A, *PPRINTER_INFO_2A, *LPPRINTER_INFO_2A;
 
-typedef struct _PRINTER_INFO_232W {
+typedef struct _PRINTER_INFO_2W {
   LPWSTR    pServerName;
   LPWSTR    pPrinterName;
   LPWSTR    pShareName;
@@ -162,7 +162,7 @@ typedef struct _PRINTER_INFO_232W {
   LPWSTR    pDriverName;
   LPWSTR    pComment;
   LPWSTR    pLocation;
-  LPDEVMODE32W pDevMode;
+  LPDEVMODEW pDevMode;
   LPWSTR    pSepFile;
   LPWSTR    pPrintProcessor;
   LPWSTR    pDatatype;
@@ -176,7 +176,7 @@ typedef struct _PRINTER_INFO_232W {
   DWORD   Status;
   DWORD   cJobs;
   DWORD   AveragePPM;
-} PRINTER_INFO_232W, *PPRINTER_INFO_232W, *LPPRINTER_INFO_232W;
+} PRINTER_INFO_2W, *PPRINTER_INFO_2W, *LPPRINTER_INFO_2W;
 
 DECL_WINELIB_TYPE_AW(PRINTER_INFO_2)
 DECL_WINELIB_TYPE_AW(PPRINTER_INFO_2)
@@ -185,47 +185,46 @@ DECL_WINELIB_TYPE_AW(LPPRINTER_INFO_2)
 #endif /* Status */
 
 /* DECLARATIONS */
-DWORD WINAPI DrvGetPrinterData(LPSTR lpPrinter, LPSTR lpProfile,
+DWORD WINAPI DrvGetPrinterData16(LPSTR lpPrinter, LPSTR lpProfile,
 	  LPDWORD lpType, LPBYTE lpPrinterData, int cbData, LPDWORD lpNeeded);
-DWORD WINAPI DrvSetPrinterData(LPSTR lpPrinter, LPSTR lpProfile,
+DWORD WINAPI DrvSetPrinterData16(LPSTR lpPrinter, LPSTR lpProfile,
           DWORD lpType, LPBYTE lpPrinterData, DWORD dwSize);
-HANDLE16 WINAPI OpenJob(LPSTR lpOutput, LPSTR lpTitle, HDC16 hDC);
-int WINAPI CloseJob(HANDLE16 hJob);
-int WINAPI WriteSpool(HANDLE16 hJob, LPSTR lpData, WORD cch);
-int WINAPI DeleteJob(HANDLE16 hJob, WORD wNotUsed);
-int WINAPI StartSpoolPage(HANDLE16 hJob);
-int WINAPI EndSpoolPage(HANDLE16 hJob);
-DWORD WINAPI GetSpoolJob(int nOption, LONG param);
-int WINAPI WriteDialog(HANDLE16 hJob, LPSTR lpMsg, WORD cchMsg);
+HANDLE16 WINAPI OpenJob16(LPSTR lpOutput, LPSTR lpTitle, HDC16 hDC);
+int WINAPI CloseJob16(HANDLE16 hJob);
+int WINAPI WriteSpool16(HANDLE16 hJob, LPSTR lpData, WORD cch);
+int WINAPI DeleteJob16(HANDLE16 hJob, WORD wNotUsed);
+int WINAPI StartSpoolPage16(HANDLE16 hJob);
+int WINAPI EndSpoolPage16(HANDLE16 hJob);
+DWORD WINAPI GetSpoolJob16(int nOption, LONG param);
+int WINAPI WriteDialog16(HANDLE16 hJob, LPSTR lpMsg, WORD cchMsg);
 
-INT32 WINAPI DeviceCapabilities32A(LPCSTR printer,LPCSTR target,WORD z,
-                                   LPSTR a,LPDEVMODE32A b);
-INT32 WINAPI DeviceCapabilities32W(LPCWSTR pDevice, LPCWSTR pPort,
+INT WINAPI DeviceCapabilitiesA(LPCSTR printer,LPCSTR target,WORD z,
+                                   LPSTR a,LPDEVMODEA b);
+INT WINAPI DeviceCapabilitiesW(LPCWSTR pDevice, LPCWSTR pPort,
                                    WORD fwCapability, LPWSTR pOutput,
-                                   const DEVMODE32W *pDevMode);
+                                   const DEVMODEW *pDevMode);
 
 #define DeviceCapabilities WINELIB_NAME_AW(DeviceCapabilities)
 
-LONG WINAPI DocumentProperties32A(HWND32 hWnd,HANDLE32 hPrinter,
-                                LPSTR pDeviceName, LPDEVMODE32A pDevModeOutput,
-                                  LPDEVMODE32A pDevModeInput,DWORD fMode );
-LONG WINAPI DocumentProperties32W(HWND32 hWnd, HANDLE32 hPrinter,
+LONG WINAPI DocumentPropertiesA(HWND hWnd,HANDLE hPrinter,
+                                LPSTR pDeviceName, LPDEVMODEA pDevModeOutput,
+                                  LPDEVMODEA pDevModeInput,DWORD fMode );
+LONG WINAPI DocumentPropertiesW(HWND hWnd, HANDLE hPrinter,
                                   LPWSTR pDeviceName,
-                                  LPDEVMODE32W pDevModeOutput,
-                                  LPDEVMODE32W pDevModeInput, DWORD fMode);
+                                  LPDEVMODEW pDevModeOutput,
+                                  LPDEVMODEW pDevModeInput, DWORD fMode);
 
 #define DocumentProperties WINELIB_NAME_AW(DocumentProperties)
 
-BOOL32 WINAPI OpenPrinter32A(LPSTR lpPrinterName,HANDLE32 *phPrinter,
-			     LPPRINTER_DEFAULTS32A pDefault);
-BOOL32 WINAPI OpenPrinter32W(LPWSTR lpPrinterName,HANDLE32 *phPrinter,
-			     LPPRINTER_DEFAULTS32W pDefault);
+BOOL WINAPI OpenPrinterA(LPSTR lpPrinterName,HANDLE *phPrinter,
+			     LPPRINTER_DEFAULTSA pDefault);
+BOOL WINAPI OpenPrinterW(LPWSTR lpPrinterName,HANDLE *phPrinter,
+			     LPPRINTER_DEFAULTSW pDefault);
 
 #define OpenPrinter WINELIB_NAME_AW(OpenPrinter)
 
-BOOL32 WINAPI ClosePrinter32 (HANDLE32 phPrinter);
+BOOL WINAPI ClosePrinter (HANDLE phPrinter);
 
-#define ClosePrinter WINELIB_NAME(ClosePrinter)
 
 #ifdef __cplusplus
 } // extern "C"

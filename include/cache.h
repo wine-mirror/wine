@@ -11,7 +11,7 @@
 
 #include "wintypes.h"
 
-HBRUSH32  CACHE_GetPattern55AABrush(void);
-HBITMAP32 CACHE_GetPattern55AABitmap(void);
+HBRUSH  CACHE_GetPattern55AABrush(void);
+HBITMAP CACHE_GetPattern55AABitmap(void);
 
 #endif /* __WINE_CACHE_H */

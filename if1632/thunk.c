@@ -30,8 +30,8 @@
 /* by the build program to generate the file if1632/callto16.S */
 
 /* ### start build ### */
-extern LONG CALLBACK CallTo16_sreg_(const CONTEXT *context, INT32 offset);
-extern LONG CALLBACK CallTo16_lreg_(const CONTEXT *context, INT32 offset);
+extern LONG CALLBACK CallTo16_sreg_(const CONTEXT *context, INT offset);
+extern LONG CALLBACK CallTo16_lreg_(const CONTEXT *context, INT offset);
 extern WORD CALLBACK CallTo16_word_     (FARPROC16);
 extern LONG CALLBACK CallTo16_long_     (FARPROC16);
 extern WORD CALLBACK CallTo16_word_w    (FARPROC16,WORD);
@@ -116,7 +116,7 @@ typedef struct tagTHUNK
 {
     BYTE             popl_eax;           /* 0x58  popl  %eax (return address)*/
     BYTE             pushl_func;         /* 0x68  pushl $proc */
-    FARPROC32        proc WINE_PACKED;
+    FARPROC        proc WINE_PACKED;
     BYTE             pushl_eax;          /* 0x50  pushl %eax */
     BYTE             jmp;                /* 0xe9  jmp   relay (relative jump)*/
     RELAY            relay WINE_PACKED;
@@ -126,7 +126,7 @@ typedef struct tagTHUNK
 #pragma pack(4)
 
 #define DECL_THUNK(name,proc,relay) \
-    THUNK name = { 0x58, 0x68, (FARPROC32)(proc), 0x50, 0xe9, \
+    THUNK name = { 0x58, 0x68, (FARPROC)(proc), 0x50, 0xe9, \
                    (RELAY)((char *)(relay) - (char *)(&(name).next)), NULL }
 
 
@@ -135,14 +135,14 @@ static THUNK *firstThunk = NULL;
 static LRESULT WINAPI THUNK_CallWndProc16( WNDPROC16 proc, HWND16 hwnd,
                                            UINT16 msg, WPARAM16 wParam,
                                            LPARAM lParam );
-static BOOL32 WINAPI THUNK_CallTaskReschedule(void);
-static BOOL32 WINAPI THUNK_WOWCallback16Ex( FARPROC16,DWORD,DWORD,
+static BOOL WINAPI THUNK_CallTaskReschedule(void);
+static BOOL WINAPI THUNK_WOWCallback16Ex( FARPROC16,DWORD,DWORD,
                                             LPVOID,LPDWORD );
 
 /* TASK_Reschedule() 16-bit entry point */
 static FARPROC16 TASK_RescheduleProc;
 
-static BOOL32 THUNK_ThunkletInit( void );
+static BOOL THUNK_ThunkletInit( void );
 
 extern void CallFrom16_p_long_wwwll(void);
 
@@ -182,7 +182,7 @@ static const CALLBACKS_TABLE CALLBACK_EmulatorTable =
 /***********************************************************************
  *           THUNK_Init
  */
-BOOL32 THUNK_Init(void)
+BOOL THUNK_Init(void)
 {
     /* Set the window proc calling functions */
     Callbacks = &CALLBACK_EmulatorTable;
@@ -195,7 +195,7 @@ BOOL32 THUNK_Init(void)
 /***********************************************************************
  *           THUNK_Alloc
  */
-static THUNK *THUNK_Alloc( FARPROC32 func, RELAY relay )
+static THUNK *THUNK_Alloc( FARPROC func, RELAY relay )
 {
     THUNK *thunk = HeapAlloc( GetProcessHeap(), 0, sizeof(*thunk) );
     if (thunk)
@@ -216,7 +216,7 @@ static THUNK *THUNK_Alloc( FARPROC32 func, RELAY relay )
 /***********************************************************************
  *           THUNK_Find
  */
-static THUNK *THUNK_Find( FARPROC32 func )
+static THUNK *THUNK_Find( FARPROC func )
 {
     THUNK *thunk = firstThunk;
     while (thunk && (thunk->proc != func)) thunk = thunk->next;
@@ -313,7 +313,7 @@ static LRESULT WINAPI THUNK_CallWndProc16( WNDPROC16 proc, HWND16 hwnd,
 /***********************************************************************
  *           THUNK_CallTaskReschedule
  */
-static BOOL32 WINAPI THUNK_CallTaskReschedule(void)
+static BOOL WINAPI THUNK_CallTaskReschedule(void)
 {
     return CallTo16_word_(TASK_RescheduleProc);
 }
@@ -450,7 +450,7 @@ BOOL16 WINAPI THUNK_GrayString16( HDC16 hdc, HBRUSH16 hbr,
  */
 FARPROC16 WINAPI THUNK_SetWindowsHook16( INT16 id, HOOKPROC16 proc )
 {
-    HINSTANCE16 hInst = FarGetOwner( HIWORD(proc) );
+    HINSTANCE16 hInst = FarGetOwner16( HIWORD(proc) );
     HTASK16 hTask = (id == WH_MSGFILTER) ? GetCurrentTask() : 0;
     THUNK *thunk = THUNK_Alloc( (FARPROC16)proc, (RELAY)CallTo16_long_wwl );
     if (!thunk) return 0;
@@ -514,11 +514,11 @@ BOOL16 WINAPI THUNK_SetDCHook( HDC16 hdc, FARPROC16 proc, DWORD dwHookData )
         thunk = THUNK_Alloc( proc, (RELAY)CallTo16_word_wwll );
         if (!thunk) return FALSE;
     }
-    else thunk = (THUNK *)DCHook;
+    else thunk = (THUNK *)DCHook16;
 
     /* Free the previous thunk */
     GetDCHook( hdc, (FARPROC16 *)&oldThunk );
-    if (oldThunk && (oldThunk != (THUNK *)DCHook)) THUNK_Free( oldThunk );
+    if (oldThunk && (oldThunk != (THUNK *)DCHook16)) THUNK_Free( oldThunk );
 
     return SetDCHook( hdc, (FARPROC16)thunk, dwHookData );
 }
@@ -533,7 +533,7 @@ DWORD WINAPI THUNK_GetDCHook( HDC16 hdc, FARPROC16 *phookProc )
     DWORD ret = GetDCHook( hdc, (FARPROC16 *)&thunk );
     if (thunk)
     {
-        if (thunk == (THUNK *)DCHook)
+        if (thunk == (THUNK *)DCHook16)
         {
             if (!defDCHookProc)  /* Get DCHook Win16 entry point */
                 defDCHookProc = NE_GetEntryPoint(GetModuleHandle16("USER"),362);
@@ -588,12 +588,12 @@ static DWORD CALLBACK THUNK_StartThread16( LPVOID threadArgs )
 
     return CallTo16_long_l( start, param );
 }
-HANDLE32 WINAPI THUNK_CreateThread16( SECURITY_ATTRIBUTES *sa, DWORD stack,
+HANDLE WINAPI THUNK_CreateThread16( SECURITY_ATTRIBUTES *sa, DWORD stack,
                                       FARPROC16 start, SEGPTR param,
                                       DWORD flags, LPDWORD id )
 {
     DWORD *threadArgs = HeapAlloc( GetProcessHeap(), 0, 2*sizeof(DWORD) );
-    if (!threadArgs) return INVALID_HANDLE_VALUE32;
+    if (!threadArgs) return INVALID_HANDLE_VALUE;
     threadArgs[0] = (DWORD)start;
     threadArgs[1] = (DWORD)param;
 
@@ -607,7 +607,7 @@ HANDLE32 WINAPI THUNK_CreateThread16( SECURITY_ATTRIBUTES *sa, DWORD stack,
  * RETURNS
  * 	TRUE if the call was done
  */
-static BOOL32 WINAPI THUNK_WOWCallback16Ex(
+static BOOL WINAPI THUNK_WOWCallback16Ex(
 	FARPROC16 proc,		/* [in] 16bit function to call */
 	DWORD dwFlags,		/* [in] flags (WCB_*) */
 	DWORD cbArgs,		/* [in] number of arguments */
@@ -744,7 +744,7 @@ VOID WINAPI THUNK_MOUSE_Enable( FARPROC16 proc )
 /***********************************************************************
  *           GetMouseEventProc   (USER.337)
  */
-FARPROC16 WINAPI GetMouseEventProc(void)
+FARPROC16 WINAPI GetMouseEventProc16(void)
 {
     HMODULE16 hmodule = GetModuleHandle16("USER");
     return NE_GetEntryPoint( hmodule, NE_GetOrdinal( hmodule, "mouse_event" ));
@@ -859,26 +859,26 @@ WORD WINAPI WIN16_CreateSystemTimer( WORD rate, FARPROC16 proc )
  */
 void THUNK_InitCallout(void)
 {
-    HMODULE32 hModule = GetModuleHandle32A( "USER32" );
+    HMODULE hModule = GetModuleHandleA( "USER32" );
     if ( hModule )
     {
 #define GETADDR( var, name )  \
-        *(FARPROC32 *)&Callout.##var = GetProcAddress32( hModule, name )
+        *(FARPROC *)&Callout.##var = GetProcAddress( hModule, name )
 
-        GETADDR( PeekMessage32A, "PeekMessageA" );
-        GETADDR( PeekMessage32W, "PeekMessageW" );
-        GETADDR( GetMessage32A, "GetMessageA" );
-        GETADDR( GetMessage32W, "GetMessageW" );
-        GETADDR( SendMessage32A, "SendMessageA" );
-        GETADDR( SendMessage32W, "SendMessageW" );
-        GETADDR( PostMessage32A, "PostMessageA" );
-        GETADDR( PostMessage32W, "PostMessageW" );
-        GETADDR( PostThreadMessage32A, "PostThreadMessageA" );
-        GETADDR( PostThreadMessage32W, "PostThreadMessageW" );
-        GETADDR( TranslateMessage32, "TranslateMessage" );
-        GETADDR( DispatchMessage32W, "DispatchMessageW" );
-        GETADDR( DispatchMessage32A, "DispatchMessageA" );
-        GETADDR( RedrawWindow32, "RedrawWindow" );
+        GETADDR( PeekMessageA, "PeekMessageA" );
+        GETADDR( PeekMessageW, "PeekMessageW" );
+        GETADDR( GetMessageA, "GetMessageA" );
+        GETADDR( GetMessageW, "GetMessageW" );
+        GETADDR( SendMessageA, "SendMessageA" );
+        GETADDR( SendMessageW, "SendMessageW" );
+        GETADDR( PostMessageA, "PostMessageA" );
+        GETADDR( PostMessageW, "PostMessageW" );
+        GETADDR( PostThreadMessageA, "PostThreadMessageA" );
+        GETADDR( PostThreadMessageW, "PostThreadMessageW" );
+        GETADDR( TranslateMessage, "TranslateMessage" );
+        GETADDR( DispatchMessageW, "DispatchMessageW" );
+        GETADDR( DispatchMessageA, "DispatchMessageA" );
+        GETADDR( RedrawWindow, "RedrawWindow" );
 
 #undef GETADDR
     }
@@ -887,7 +887,7 @@ void THUNK_InitCallout(void)
     if ( hModule )
     {
 #define GETADDR( var, name, thk )  \
-        *(FARPROC32 *)&Callout.##var = (FARPROC32) \
+        *(FARPROC *)&Callout.##var = (FARPROC) \
               THUNK_Alloc( WIN32_GetProcAddress16( hModule, name ), \
                            (RELAY)CallTo16_##thk )
 
@@ -899,8 +899,8 @@ void THUNK_InitCallout(void)
         GETADDR( TranslateMessage16, "TranslateMessage", word_l );
         GETADDR( DispatchMessage16, "DispatchMessage", long_l );
         GETADDR( RedrawWindow16, "RedrawWindow", word_wlww );
-        GETADDR( InitThreadInput, "InitThreadInput", word_ww );
-        GETADDR( UserYield, "UserYield", word_ );
+        GETADDR( InitThreadInput16, "InitThreadInput", word_ww );
+        GETADDR( UserYield16, "UserYield", word_ );
 
 #undef GETADDR
     }
@@ -914,7 +914,7 @@ void THUNK_InitCallout(void)
  *              ThunkConnect16          (KERNEL.651)
  * Connects a 32bit and a 16bit thunkbuffer.
  */
-UINT32 WINAPI ThunkConnect16(
+UINT WINAPI ThunkConnect16(
         LPSTR module16,              /* [in] name of win16 dll */
         LPSTR module32,              /* [in] name of win32 dll */
         HINSTANCE16 hInst16,         /* [in] hInst of win16 dll */
@@ -923,16 +923,16 @@ UINT32 WINAPI ThunkConnect16(
         LPSTR thunkfun32,            /* [in] win32 thunkfunction */
         WORD cs                      /* [in] CS of win16 dll */
 ) {
-    BOOL32 directionSL;
+    BOOL directionSL;
 
-    if (!lstrncmp32A(TD->magic, "SL01", 4))
+    if (!lstrncmpA(TD->magic, "SL01", 4))
     {
         directionSL = TRUE;
 
         TRACE(thunk, "SL01 thunk %s (%lx) -> %s (%s), Reason: %ld\n",
                      module16, (DWORD)TD, module32, thunkfun32, dwReason);
     }
-    else if (!lstrncmp32A(TD->magic, "LS01", 4))
+    else if (!lstrncmpA(TD->magic, "LS01", 4))
     {
         directionSL = FALSE;
 
@@ -965,8 +965,8 @@ UINT32 WINAPI ThunkConnect16(
                     SL->apiDB    = PTR_SEG_TO_LIN(SL16->apiDatabase);
                     SL->targetDB = NULL;
 
-                    lstrcpyn32A(SL->pszDll16, module16, 255);
-                    lstrcpyn32A(SL->pszDll32, module32, 255);
+                    lstrcpynA(SL->pszDll16, module16, 255);
+                    lstrcpynA(SL->pszDll32, module32, 255);
 
                     /* We should create a SEGPTR to the ThunkDataSL,
                        but since the contents are not in the original format,
@@ -979,7 +979,7 @@ UINT32 WINAPI ThunkConnect16(
                 if (SL->flags2 & 0x80000000)
                 {
                     TRACE(thunk, "Preloading 32-bit library\n");
-                    LoadLibrary32A(module32);
+                    LoadLibraryA(module32);
                 }
             }
             else
@@ -1110,7 +1110,7 @@ void WINAPI C16ThkSL01(CONTEXT *context)
         if (!tdb)
         {
             TRACE(thunk, "Loading 32-bit library %s\n", td->pszDll32);
-            LoadLibrary32A(td->pszDll32);
+            LoadLibraryA(td->pszDll32);
 
             for (tdb = td->targetDB; tdb; tdb = tdb->next)
                 if (tdb->process == PROCESS_Current())
@@ -1181,19 +1181,19 @@ typedef struct _THUNKLET
 #define THUNKLET_TYPE_LS  1
 #define THUNKLET_TYPE_SL  2
 
-static HANDLE32  ThunkletHeap = 0;
+static HANDLE  ThunkletHeap = 0;
 static THUNKLET *ThunkletAnchor = NULL;
 
-static FARPROC32 ThunkletSysthunkGlueLS = 0;
+static FARPROC ThunkletSysthunkGlueLS = 0;
 static SEGPTR    ThunkletSysthunkGlueSL = 0;
 
-static FARPROC32 ThunkletCallbackGlueLS = 0;
+static FARPROC ThunkletCallbackGlueLS = 0;
 static SEGPTR    ThunkletCallbackGlueSL = 0;
 
 /***********************************************************************
  *     THUNK_ThunkletInit
  */
-static BOOL32 THUNK_ThunkletInit( void )
+static BOOL THUNK_ThunkletInit( void )
 {
     LPBYTE thunk;
 
@@ -1203,7 +1203,7 @@ static BOOL32 THUNK_ThunkletInit( void )
     thunk = HeapAlloc( ThunkletHeap, 0, 5 );
     if (!thunk) return FALSE;
     
-    ThunkletSysthunkGlueLS = (FARPROC32)thunk;
+    ThunkletSysthunkGlueLS = (FARPROC)thunk;
     *thunk++ = 0x58;                             /* popl eax */
     *thunk++ = 0xC3;                             /* ret      */
 
@@ -1217,7 +1217,7 @@ static BOOL32 THUNK_ThunkletInit( void )
 /***********************************************************************
  *     SetThunkletCallbackGlue             (KERNEL.560)
  */
-void WINAPI SetThunkletCallbackGlue( FARPROC32 glueLS, SEGPTR glueSL )
+void WINAPI SetThunkletCallbackGlue16( FARPROC glueLS, SEGPTR glueSL )
 {
     ThunkletCallbackGlueLS = glueLS;
     ThunkletCallbackGlueSL = glueSL;
@@ -1245,8 +1245,8 @@ THUNKLET *THUNK_FindThunklet( DWORD target, DWORD relay,
 /***********************************************************************
  *     THUNK_AllocLSThunklet
  */
-FARPROC32 THUNK_AllocLSThunklet( SEGPTR target, DWORD relay, 
-                                 FARPROC32 glue, HTASK16 owner ) 
+FARPROC THUNK_AllocLSThunklet( SEGPTR target, DWORD relay, 
+                                 FARPROC glue, HTASK16 owner ) 
 {
     THUNKLET *thunk = THUNK_FindThunklet( (DWORD)target, relay, (DWORD)glue,
                                           THUNKLET_TYPE_LS );
@@ -1272,13 +1272,13 @@ FARPROC32 THUNK_AllocLSThunklet( SEGPTR target, DWORD relay,
         ThunkletAnchor = thunk;
     }
 
-    return (FARPROC32)thunk;
+    return (FARPROC)thunk;
 }
 
 /***********************************************************************
  *     THUNK_AllocSLThunklet
  */
-SEGPTR THUNK_AllocSLThunklet( FARPROC32 target, DWORD relay,
+SEGPTR THUNK_AllocSLThunklet( FARPROC target, DWORD relay,
                               SEGPTR glue, HTASK16 owner )
 {
     THUNKLET *thunk = THUNK_FindThunklet( (DWORD)target, relay, (DWORD)glue,
@@ -1321,7 +1321,7 @@ BOOL16 WINAPI IsLSThunklet( THUNKLET *thunk )
 /**********************************************************************
  *     IsSLThunklet                        (KERNEL.612)
  */
-BOOL16 WINAPI IsSLThunklet( THUNKLET *thunk )
+BOOL16 WINAPI IsSLThunklet16( THUNKLET *thunk )
 {
     return    thunk->prefix_target == 0x66 && thunk->pushl_target == 0x68
            && thunk->prefix_relay  == 0x66 && thunk->pushl_relay  == 0x68
@@ -1333,8 +1333,8 @@ BOOL16 WINAPI IsSLThunklet( THUNKLET *thunk )
 /***********************************************************************
  *     AllocLSThunkletSysthunk             (KERNEL.607)
  */
-FARPROC32 WINAPI AllocLSThunkletSysthunk( SEGPTR target, 
-                                          FARPROC32 relay, DWORD dummy )
+FARPROC WINAPI AllocLSThunkletSysthunk16( SEGPTR target, 
+                                          FARPROC relay, DWORD dummy )
 {
     return THUNK_AllocLSThunklet( (SEGPTR)relay, (DWORD)target, 
                                   ThunkletSysthunkGlueLS, GetCurrentTask() );
@@ -1343,10 +1343,10 @@ FARPROC32 WINAPI AllocLSThunkletSysthunk( SEGPTR target,
 /***********************************************************************
  *     AllocSLThunkletSysthunk             (KERNEL.608)
  */
-SEGPTR WINAPI AllocSLThunkletSysthunk( FARPROC32 target, 
+SEGPTR WINAPI AllocSLThunkletSysthunk16( FARPROC target, 
                                        SEGPTR relay, DWORD dummy )
 {
-    return THUNK_AllocSLThunklet( (FARPROC32)relay, (DWORD)target, 
+    return THUNK_AllocSLThunklet( (FARPROC)relay, (DWORD)target, 
                                   ThunkletSysthunkGlueSL, GetCurrentTask() );
 }
 
@@ -1354,13 +1354,13 @@ SEGPTR WINAPI AllocSLThunkletSysthunk( FARPROC32 target,
 /***********************************************************************
  *     AllocLSThunkletCallbackEx           (KERNEL.567)
  */
-FARPROC32 WINAPI AllocLSThunkletCallbackEx( SEGPTR target, 
+FARPROC WINAPI AllocLSThunkletCallbackEx16( SEGPTR target, 
                                             DWORD relay, HTASK16 task )
 {
     THUNKLET *thunk = (THUNKLET *)PTR_SEG_TO_LIN( target );
-    if (   IsSLThunklet( thunk ) && thunk->relay == relay 
+    if (   IsSLThunklet16( thunk ) && thunk->relay == relay 
         && thunk->glue == (DWORD)ThunkletCallbackGlueSL )
-        return (FARPROC32)thunk->target;
+        return (FARPROC)thunk->target;
 
     return THUNK_AllocLSThunklet( target, relay, 
                                   ThunkletCallbackGlueLS, task );
@@ -1369,7 +1369,7 @@ FARPROC32 WINAPI AllocLSThunkletCallbackEx( SEGPTR target,
 /***********************************************************************
  *     AllocSLThunkletCallbackEx           (KERNEL.568)
  */
-SEGPTR WINAPI AllocSLThunkletCallbackEx( FARPROC32 target, 
+SEGPTR WINAPI AllocSLThunkletCallbackEx16( FARPROC target, 
                                          DWORD relay, HTASK16 task )
 {
     THUNKLET *thunk = (THUNKLET *)target;
@@ -1384,39 +1384,39 @@ SEGPTR WINAPI AllocSLThunkletCallbackEx( FARPROC32 target,
 /***********************************************************************
  *     AllocLSThunkletCallback             (KERNEL.561) (KERNEL.606)
  */
-FARPROC32 WINAPI AllocLSThunkletCallback( SEGPTR target, DWORD relay )
+FARPROC WINAPI AllocLSThunkletCallback16( SEGPTR target, DWORD relay )
 {
-    return AllocLSThunkletCallbackEx( target, relay, GetCurrentTask() );
+    return AllocLSThunkletCallbackEx16( target, relay, GetCurrentTask() );
 }
 
 /***********************************************************************
  *     AllocSLThunkletCallback             (KERNEL.562) (KERNEL.605)
  */
-SEGPTR WINAPI AllocSLThunkletCallback( FARPROC32 target, DWORD relay )
+SEGPTR WINAPI AllocSLThunkletCallback16( FARPROC target, DWORD relay )
 {
-    return AllocSLThunkletCallbackEx( target, relay, GetCurrentTask() );
+    return AllocSLThunkletCallbackEx16( target, relay, GetCurrentTask() );
 }
 
 /***********************************************************************
  *     FindLSThunkletCallback              (KERNEL.563) (KERNEL.609)
  */
-FARPROC32 WINAPI FindLSThunkletCallback( SEGPTR target, DWORD relay )
+FARPROC WINAPI FindLSThunkletCallback( SEGPTR target, DWORD relay )
 {
     THUNKLET *thunk = (THUNKLET *)PTR_SEG_TO_LIN( target );
-    if (   thunk && IsSLThunklet( thunk ) && thunk->relay == relay 
+    if (   thunk && IsSLThunklet16( thunk ) && thunk->relay == relay 
         && thunk->glue == (DWORD)ThunkletCallbackGlueSL )
-        return (FARPROC32)thunk->target;
+        return (FARPROC)thunk->target;
 
     thunk = THUNK_FindThunklet( (DWORD)target, relay, 
                                 (DWORD)ThunkletCallbackGlueLS, 
                                 THUNKLET_TYPE_LS );
-    return (FARPROC32)thunk;
+    return (FARPROC)thunk;
 }
 
 /***********************************************************************
  *     FindSLThunkletCallback              (KERNEL.564) (KERNEL.610)
  */
-SEGPTR WINAPI FindSLThunkletCallback( FARPROC32 target, DWORD relay )
+SEGPTR WINAPI FindSLThunkletCallback( FARPROC target, DWORD relay )
 {
     THUNKLET *thunk = (THUNKLET *)target;
     if (   thunk && IsLSThunklet( thunk ) && thunk->relay == relay 
@@ -1439,13 +1439,13 @@ SEGPTR WINAPI FindSLThunkletCallback( FARPROC32 target, DWORD relay )
 #define N_CBC_TOTAL    (N_CBC_FIXED + N_CBC_VARIABLE)
 
 static SEGPTR    *CBClientRelay16[ N_CBC_TOTAL ];
-static FARPROC32 *CBClientRelay32[ N_CBC_TOTAL ];
+static FARPROC *CBClientRelay32[ N_CBC_TOTAL ];
 
 /***********************************************************************
  *     RegisterCBClient                    (KERNEL.619)
  */
-INT16 WINAPI RegisterCBClient( INT16 wCBCId, 
-                               SEGPTR *relay16, FARPROC32 *relay32 )
+INT16 WINAPI RegisterCBClient16( INT16 wCBCId, 
+                               SEGPTR *relay16, FARPROC *relay32 )
 {
     /* Search for free Callback ID */
     if ( wCBCId == -1 )
@@ -1468,8 +1468,8 @@ INT16 WINAPI RegisterCBClient( INT16 wCBCId,
 /***********************************************************************
  *     UnRegisterCBClient                  (KERNEL.622)
  */
-INT16 WINAPI UnRegisterCBClient( INT16 wCBCId, 
-                                 SEGPTR *relay16, FARPROC32 *relay32 )
+INT16 WINAPI UnRegisterCBClient16( INT16 wCBCId, 
+                                 SEGPTR *relay16, FARPROC *relay32 )
 {
     if (    wCBCId >= N_CBC_FIXED && wCBCId < N_CBC_TOTAL 
          && CBClientRelay16[ wCBCId ] == relay16 
@@ -1488,12 +1488,12 @@ INT16 WINAPI UnRegisterCBClient( INT16 wCBCId,
 /***********************************************************************
  *     InitCBClient                        (KERNEL.623)
  */
-void WINAPI InitCBClient( FARPROC32 glueLS )
+void WINAPI InitCBClient16( FARPROC glueLS )
 {
     HMODULE16 kernel = GetModuleHandle16( "KERNEL" );
     SEGPTR glueSL = (SEGPTR)WIN32_GetProcAddress16( kernel, (LPCSTR)604 );
 
-    SetThunkletCallbackGlue( glueLS, glueSL );
+    SetThunkletCallbackGlue16( glueLS, glueSL );
 }
 
 /***********************************************************************
@@ -1527,10 +1527,10 @@ void WINAPI CBClientGlueSL( CONTEXT *context )
 void WINAPI CBClientThunkSL( CONTEXT *context )
 {
     /* Call 32-bit relay code */
-    extern DWORD WINAPI CALL32_CBClient( FARPROC32 proc, LPWORD args );
+    extern DWORD WINAPI CALL32_CBClient( FARPROC proc, LPWORD args );
 
     LPWORD args = PTR_SEG_OFF_TO_LIN( SS_reg( context ), BP_reg( context ) );
-    FARPROC32 proc = CBClientRelay32[ args[2] ][ args[1] ];
+    FARPROC proc = CBClientRelay32[ args[2] ][ args[1] ];
 
     EAX_reg(context) = CALL32_CBClient( proc, args );
 }
@@ -1541,12 +1541,12 @@ void WINAPI CBClientThunkSL( CONTEXT *context )
 void WINAPI CBClientThunkSLEx( CONTEXT *context )
 {
     /* Call 32-bit relay code */
-    extern DWORD WINAPI CALL32_CBClientEx( FARPROC32 proc, 
-                                           LPWORD args, INT32 *nArgs );
+    extern DWORD WINAPI CALL32_CBClientEx( FARPROC proc, 
+                                           LPWORD args, INT *nArgs );
 
     LPWORD args = PTR_SEG_OFF_TO_LIN( SS_reg( context ), BP_reg( context ) );
-    FARPROC32 proc = CBClientRelay32[ args[2] ][ args[1] ];
-    INT32 nArgs;
+    FARPROC proc = CBClientRelay32[ args[2] ][ args[1] ];
+    INT nArgs;
     LPWORD stackLin;
 
     EAX_reg(context) = CALL32_CBClientEx( proc, args, &nArgs );

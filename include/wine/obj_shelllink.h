@@ -41,23 +41,23 @@ typedef enum
  */
 #define ICOM_INTERFACE IShellLink
 #define IShellLink_METHODS \
-    ICOM_METHOD4( HRESULT, GetPath, LPSTR, pszFile, INT32, cchMaxPath, WIN32_FIND_DATA32A *, pfd, DWORD, fFlags) \
+    ICOM_METHOD4( HRESULT, GetPath, LPSTR, pszFile, INT, cchMaxPath, WIN32_FIND_DATAA *, pfd, DWORD, fFlags) \
     ICOM_METHOD1( HRESULT, GetIDList, LPITEMIDLIST *, ppidl) \
     ICOM_METHOD1( HRESULT, SetIDList, LPCITEMIDLIST, pidl) \
-    ICOM_METHOD2( HRESULT, GetDescription, LPSTR, pszName, INT32, cchMaxName) \
+    ICOM_METHOD2( HRESULT, GetDescription, LPSTR, pszName, INT, cchMaxName) \
     ICOM_METHOD1( HRESULT, SetDescription, LPCSTR, pszName) \
-    ICOM_METHOD2( HRESULT, GetWorkingDirectory, LPSTR, pszDir,INT32, cchMaxPath) \
+    ICOM_METHOD2( HRESULT, GetWorkingDirectory, LPSTR, pszDir,INT, cchMaxPath) \
     ICOM_METHOD1( HRESULT, SetWorkingDirectory, LPCSTR, pszDir) \
-    ICOM_METHOD2( HRESULT, GetArguments, LPSTR, pszArgs, INT32, cchMaxPath) \
+    ICOM_METHOD2( HRESULT, GetArguments, LPSTR, pszArgs, INT, cchMaxPath) \
     ICOM_METHOD1( HRESULT, SetArguments, LPCSTR, pszArgs) \
     ICOM_METHOD1( HRESULT, GetHotkey, WORD*, pwHotkey) \
     ICOM_METHOD1( HRESULT, SetHotkey, WORD, wHotkey) \
-    ICOM_METHOD1( HRESULT, GetShowCmd, INT32*, piShowCmd) \
-    ICOM_METHOD1( HRESULT, SetShowCmd, INT32, iShowCmd) \
-    ICOM_METHOD3( HRESULT, GetIconLocation, LPSTR, pszIconPath, INT32, cchIconPath,INT32 *, piIcon) \
-    ICOM_METHOD2( HRESULT, SetIconLocation, LPCSTR, pszIconPath,INT32, iIcon) \
+    ICOM_METHOD1( HRESULT, GetShowCmd, INT*, piShowCmd) \
+    ICOM_METHOD1( HRESULT, SetShowCmd, INT, iShowCmd) \
+    ICOM_METHOD3( HRESULT, GetIconLocation, LPSTR, pszIconPath, INT, cchIconPath,INT *, piIcon) \
+    ICOM_METHOD2( HRESULT, SetIconLocation, LPCSTR, pszIconPath,INT, iIcon) \
     ICOM_METHOD2( HRESULT, SetRelativePath, LPCSTR, pszPathRel, DWORD, dwReserved) \
-    ICOM_METHOD2( HRESULT, Resolve, HWND32, hwnd, DWORD, fFlags) \
+    ICOM_METHOD2( HRESULT, Resolve, HWND, hwnd, DWORD, fFlags) \
     ICOM_METHOD1( HRESULT, SetPath, LPCSTR, pszFile)
 #define IShellLink_IMETHODS \
     IUnknown_IMETHODS \
@@ -96,23 +96,23 @@ ICOM_DEFINE(IShellLink,IUnknown)
  */
 #define ICOM_INTERFACE IShellLinkW
 #define IShellLinkW_METHODS \
-    ICOM_METHOD4( HRESULT, GetPath, LPWSTR, pszFile, INT32, cchMaxPath, WIN32_FIND_DATA32A *, pfd, DWORD, fFlags) \
+    ICOM_METHOD4( HRESULT, GetPath, LPWSTR, pszFile, INT, cchMaxPath, WIN32_FIND_DATAA *, pfd, DWORD, fFlags) \
     ICOM_METHOD1( HRESULT, GetIDList, LPITEMIDLIST *, ppidl) \
     ICOM_METHOD1( HRESULT, SetIDList, LPCITEMIDLIST, pidl) \
-    ICOM_METHOD2( HRESULT, GetDescription, LPWSTR, pszName, INT32, cchMaxName) \
+    ICOM_METHOD2( HRESULT, GetDescription, LPWSTR, pszName, INT, cchMaxName) \
     ICOM_METHOD1( HRESULT, SetDescription, LPCWSTR, pszName) \
-    ICOM_METHOD2( HRESULT, GetWorkingDirectory, LPWSTR, pszDir,INT32, cchMaxPath) \
+    ICOM_METHOD2( HRESULT, GetWorkingDirectory, LPWSTR, pszDir,INT, cchMaxPath) \
     ICOM_METHOD1( HRESULT, SetWorkingDirectory, LPCWSTR, pszDir) \
-    ICOM_METHOD2( HRESULT, GetArguments, LPWSTR, pszArgs, INT32, cchMaxPath) \
+    ICOM_METHOD2( HRESULT, GetArguments, LPWSTR, pszArgs, INT, cchMaxPath) \
     ICOM_METHOD1( HRESULT, SetArguments, LPCWSTR, pszArgs) \
     ICOM_METHOD1( HRESULT, GetHotkey, WORD*, pwHotkey) \
     ICOM_METHOD1( HRESULT, SetHotkey, WORD, wHotkey) \
-    ICOM_METHOD1( HRESULT, GetShowCmd, INT32*, piShowCmd) \
-    ICOM_METHOD1( HRESULT, SetShowCmd, INT32, iShowCmd) \
-    ICOM_METHOD3( HRESULT, GetIconLocation, LPWSTR, pszIconPath, INT32, cchIconPath,INT32 *, piIcon) \
-    ICOM_METHOD2( HRESULT, SetIconLocation, LPCWSTR, pszIconPath,INT32, iIcon) \
+    ICOM_METHOD1( HRESULT, GetShowCmd, INT*, piShowCmd) \
+    ICOM_METHOD1( HRESULT, SetShowCmd, INT, iShowCmd) \
+    ICOM_METHOD3( HRESULT, GetIconLocation, LPWSTR, pszIconPath, INT, cchIconPath,INT *, piIcon) \
+    ICOM_METHOD2( HRESULT, SetIconLocation, LPCWSTR, pszIconPath,INT, iIcon) \
     ICOM_METHOD2( HRESULT, SetRelativePath, LPCWSTR, pszPathRel, DWORD, dwReserved) \
-    ICOM_METHOD2( HRESULT, Resolve, HWND32, hwnd, DWORD, fFlags) \
+    ICOM_METHOD2( HRESULT, Resolve, HWND, hwnd, DWORD, fFlags) \
     ICOM_METHOD1( HRESULT, SetPath, LPCWSTR, pszFile)
 #define IShellLinkW_IMETHODS \
     IUnknown_IMETHODS \

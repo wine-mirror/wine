@@ -18,8 +18,8 @@
 /******************************************************************************
  * GetUserName32A [ADVAPI32.67]
  */
-BOOL32 WINAPI
-GetUserName32A( LPSTR lpszName, LPDWORD lpSize )
+BOOL WINAPI
+GetUserNameA( LPSTR lpszName, LPDWORD lpSize )
 {
   size_t len;
   char *name;
@@ -46,12 +46,12 @@ GetUserName32A( LPSTR lpszName, LPDWORD lpSize )
  *   lpszName []
  *   lpSize   []
  */
-BOOL32 WINAPI
-GetUserName32W( LPWSTR lpszName, LPDWORD lpSize )
+BOOL WINAPI
+GetUserNameW( LPWSTR lpszName, LPDWORD lpSize )
 {
 	LPSTR name = (LPSTR)HeapAlloc( GetProcessHeap(), 0, *lpSize );
 	DWORD	size = *lpSize;
-	BOOL32 res = GetUserName32A(name,lpSize);
+	BOOL res = GetUserNameA(name,lpSize);
 
 	lstrcpynAtoW(lpszName,name,size);
         HeapFree( GetProcessHeap(), 0, name );

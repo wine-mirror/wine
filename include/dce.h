@@ -37,21 +37,21 @@ typedef enum
 typedef struct tagDCE
 {
     struct tagDCE *next;
-    HDC32          hDC;
-    HWND32         hwndCurrent;
-    HWND32         hwndDC;
-    HRGN32         hClipRgn;
+    HDC          hDC;
+    HWND         hwndCurrent;
+    HWND         hwndDC;
+    HRGN         hClipRgn;
     DCE_TYPE       type;
     DWORD          DCXflags;
 } DCE;
 
 
 extern void  DCE_Init(void);
-extern DCE*  DCE_AllocDCE( HWND32 hWnd, DCE_TYPE type );
+extern DCE*  DCE_AllocDCE( HWND hWnd, DCE_TYPE type );
 extern DCE*  DCE_FreeDCE( DCE *dce );
 extern void  DCE_FreeWindowDCE( WND* );
-extern INT16 DCE_ExcludeRgn( HDC32, WND*, HRGN32 );
-extern HRGN32 DCE_GetVisRgn( HWND32, WORD, HWND32, WORD );
-extern BOOL32 DCE_InvalidateDCE( WND*, const RECT32* );
+extern INT16 DCE_ExcludeRgn( HDC, WND*, HRGN );
+extern HRGN DCE_GetVisRgn( HWND, WORD, HWND, WORD );
+extern BOOL DCE_InvalidateDCE( WND*, const RECT* );
 
 #endif  /* __WINE_DCE_H */

@@ -29,14 +29,14 @@
 #include "debug.h"
 #include "callback.h"
 
-extern BOOL32 THREAD_InitDone;
+extern BOOL THREAD_InitDone;
 
 
 /*************************************************************************
  *		MODULE32_LookupHMODULE
  * looks for the referenced HMODULE in the current process
  */
-WINE_MODREF *MODULE32_LookupHMODULE( HMODULE32 hmod )
+WINE_MODREF *MODULE32_LookupHMODULE( HMODULE hmod )
 {
     WINE_MODREF	*wm;
 
@@ -107,9 +107,9 @@ static void MODULE_DoInitializeDLLs( WINE_MODREF *wm,
            wm->module, type, lpReserved );
 }
 
-void MODULE_InitializeDLLs( HMODULE32 root, DWORD type, LPVOID lpReserved )
+void MODULE_InitializeDLLs( HMODULE root, DWORD type, LPVOID lpReserved )
 {
-    BOOL32 inProgress = FALSE;
+    BOOL inProgress = FALSE;
     WINE_MODREF *wm;
 
     /* Grab the process critical section to protect the recursion flags */
@@ -176,18 +176,18 @@ void MODULE_InitializeDLLs( HMODULE32 root, DWORD type, LPVOID lpReserved )
  *
  * Create a dummy NE module for Win32 or Winelib.
  */
-HMODULE32 MODULE_CreateDummyModule( const OFSTRUCT *ofs, LPCSTR modName )
+HMODULE MODULE_CreateDummyModule( const OFSTRUCT *ofs, LPCSTR modName )
 {
-    HMODULE32 hModule;
+    HMODULE hModule;
     NE_MODULE *pModule;
     SEGTABLEENTRY *pSegment;
     char *pStr,*s;
     int len;
     const char* basename;
 
-    INT32 of_size = sizeof(OFSTRUCT) - sizeof(ofs->szPathName)
+    INT of_size = sizeof(OFSTRUCT) - sizeof(ofs->szPathName)
                     + strlen(ofs->szPathName) + 1;
-    INT32 size = sizeof(NE_MODULE) +
+    INT size = sizeof(NE_MODULE) +
                  /* loaded file info */
                  of_size +
                  /* segment table: DS,CS */
@@ -198,9 +198,9 @@ HMODULE32 MODULE_CreateDummyModule( const OFSTRUCT *ofs, LPCSTR modName )
                  8;
 
     hModule = GlobalAlloc16( GMEM_MOVEABLE | GMEM_ZEROINIT, size );
-    if (!hModule) return (HMODULE32)11;  /* invalid exe */
+    if (!hModule) return (HMODULE)11;  /* invalid exe */
 
-    FarSetOwner( hModule, hModule );
+    FarSetOwner16( hModule, hModule );
     pModule = (NE_MODULE *)GlobalLock16( hModule );
 
     /* Set all used entries */
@@ -276,34 +276,34 @@ FARPROC16 MODULE_GetWndProcEntry16( LPCSTR name )
     if (__winelib)
     {
         /* FIXME: hack for Winelib */
-        extern LRESULT ColorDlgProc(HWND16,UINT16,WPARAM16,LPARAM);
-        extern LRESULT FileOpenDlgProc(HWND16,UINT16,WPARAM16,LPARAM);
-        extern LRESULT FileSaveDlgProc(HWND16,UINT16,WPARAM16,LPARAM);
+        extern LRESULT ColorDlgProc16(HWND16,UINT16,WPARAM16,LPARAM);
+        extern LRESULT FileOpenDlgProc16(HWND16,UINT16,WPARAM16,LPARAM);
+        extern LRESULT FileSaveDlgProc16(HWND16,UINT16,WPARAM16,LPARAM);
         extern LRESULT FindTextDlgProc16(HWND16,UINT16,WPARAM16,LPARAM);
-        extern LRESULT PrintDlgProc(HWND16,UINT16,WPARAM16,LPARAM);
-        extern LRESULT PrintSetupDlgProc(HWND16,UINT16,WPARAM16,LPARAM);
+        extern LRESULT PrintDlgProc16(HWND16,UINT16,WPARAM16,LPARAM);
+        extern LRESULT PrintSetupDlgProc16(HWND16,UINT16,WPARAM16,LPARAM);
         extern LRESULT ReplaceTextDlgProc16(HWND16,UINT16,WPARAM16,LPARAM);
 
         if (!strcmp(name,"ColorDlgProc"))
-            return (FARPROC16)ColorDlgProc;
+            return (FARPROC16)ColorDlgProc16;
         if (!strcmp(name,"FileOpenDlgProc"))
-            return (FARPROC16)FileOpenDlgProc;
+            return (FARPROC16)FileOpenDlgProc16;
         if (!strcmp(name,"FileSaveDlgProc"))
-            return (FARPROC16)FileSaveDlgProc;
+            return (FARPROC16)FileSaveDlgProc16;
         if (!strcmp(name,"FindTextDlgProc"))
             return (FARPROC16)FindTextDlgProc16;
         if (!strcmp(name,"PrintDlgProc"))
-            return (FARPROC16)PrintDlgProc;
+            return (FARPROC16)PrintDlgProc16;
         if (!strcmp(name,"PrintSetupDlgProc"))
-            return (FARPROC16)PrintSetupDlgProc;
+            return (FARPROC16)PrintSetupDlgProc16;
         if (!strcmp(name,"ReplaceTextDlgProc"))
             return (FARPROC16)ReplaceTextDlgProc16;
         if (!strcmp(name,"DefResourceHandler"))
             return (FARPROC16)NE_DefResourceHandler;
         if (!strcmp(name,"LoadDIBIconHandler"))
-            return (FARPROC16)LoadDIBIconHandler;
+            return (FARPROC16)LoadDIBIconHandler16;
         if (!strcmp(name,"LoadDIBCursorHandler"))
-            return (FARPROC16)LoadDIBCursorHandler;
+            return (FARPROC16)LoadDIBCursorHandler16;
         FIXME(module,"No mapping for %s(), add one in library/miscstubs.c\n",name);
         assert( FALSE );
         return NULL;
@@ -311,7 +311,7 @@ FARPROC16 MODULE_GetWndProcEntry16( LPCSTR name )
     else
     {
         WORD ordinal;
-        static HMODULE32 hModule = 0;
+        static HMODULE hModule = 0;
 
         if (!hModule) hModule = GetModuleHandle16( "WPROCS" );
         ordinal = NE_GetOrdinal( hModule, name );
@@ -337,7 +337,7 @@ FARPROC16 MODULE_GetWndProcEntry16( LPCSTR name )
  *	the module handle if found
  * 	0 if not
  */
-HMODULE32 MODULE_FindModule32(
+HMODULE MODULE_FindModule(
 	LPCSTR path	/* [in] pathname of module/library to be found */
 ) {
     LPSTR	filename;
@@ -408,7 +408,7 @@ HMODULE32 MODULE_FindModule32(
  *	    NE_CreateProcess
  */
 static HINSTANCE16 NE_CreateProcess( LPCSTR name, LPCSTR cmd_line, LPCSTR env, 
-                                     BOOL32 inherit, LPSTARTUPINFO32A startup, 
+                                     BOOL inherit, LPSTARTUPINFOA startup, 
                                      LPPROCESS_INFORMATION info )
 {
     HINSTANCE16 hInstance, hPrevInstance;
@@ -442,14 +442,14 @@ static HINSTANCE16 NE_CreateProcess( LPCSTR name, LPCSTR cmd_line, LPCSTR env,
  */
 HINSTANCE16 WINAPI LoadModule16( LPCSTR name, LPVOID paramBlock )
 {
-    LOADPARAMS *params;
+    LOADPARAMS16 *params;
     LPSTR cmd_line, new_cmd_line;
     LPCVOID env = NULL;
-    STARTUPINFO32A startup;
+    STARTUPINFOA startup;
     PROCESS_INFORMATION info;
     HINSTANCE16 hInstance, hPrevInstance;
     NE_MODULE *pModule;
-    PDB32 *pdb;
+    PDB *pdb;
 
     /* Load module */
 
@@ -465,7 +465,7 @@ HINSTANCE16 WINAPI LoadModule16( LPCSTR name, LPVOID paramBlock )
 
     pModule->flags |= NE_FFLAGS_GUI;  /* FIXME: is this necessary? */
 
-    params = (LOADPARAMS *)paramBlock;
+    params = (LOADPARAMS16 *)paramBlock;
     cmd_line = (LPSTR)PTR_SEG_TO_LIN( params->cmdLine );
     if (!cmd_line) cmd_line = "";
     else if (*cmd_line) cmd_line++;  /* skip the length byte */
@@ -507,13 +507,13 @@ HINSTANCE16 WINAPI LoadModule16( LPCSTR name, LPVOID paramBlock )
 /**********************************************************************
  *	    LoadModule32    (KERNEL32.499)
  */
-HINSTANCE32 WINAPI LoadModule32( LPCSTR name, LPVOID paramBlock ) 
+HINSTANCE WINAPI LoadModule( LPCSTR name, LPVOID paramBlock ) 
 {
-    LOADPARAMS32 *params = (LOADPARAMS32 *)paramBlock;
+    LOADPARAMS *params = (LOADPARAMS *)paramBlock;
     PROCESS_INFORMATION info;
-    STARTUPINFO32A startup;
-    HINSTANCE32 hInstance;
-    PDB32 *pdb;
+    STARTUPINFOA startup;
+    HINSTANCE hInstance;
+    PDB *pdb;
     TDB *tdb;
 
     memset( &startup, '\0', sizeof(startup) );
@@ -521,7 +521,7 @@ HINSTANCE32 WINAPI LoadModule32( LPCSTR name, LPVOID paramBlock )
     startup.dwFlags = STARTF_USESHOWWINDOW;
     startup.wShowWindow = params->lpCmdShow? params->lpCmdShow[1] : 0;
 
-    if (!CreateProcess32A( name, params->lpCmdLine,
+    if (!CreateProcessA( name, params->lpCmdLine,
                            NULL, NULL, FALSE, 0, params->lpEnvAddress,
                            NULL, &startup, &info ))
         return GetLastError();  /* guaranteed to be < 32 */
@@ -541,17 +541,17 @@ HINSTANCE32 WINAPI LoadModule32( LPCSTR name, LPVOID paramBlock )
 /**********************************************************************
  *       CreateProcess32A          (KERNEL32.171)
  */
-BOOL32 WINAPI CreateProcess32A( LPCSTR lpApplicationName, LPSTR lpCommandLine, 
+BOOL WINAPI CreateProcessA( LPCSTR lpApplicationName, LPSTR lpCommandLine, 
                                 LPSECURITY_ATTRIBUTES lpProcessAttributes,
                                 LPSECURITY_ATTRIBUTES lpThreadAttributes,
-                                BOOL32 bInheritHandles, DWORD dwCreationFlags,
+                                BOOL bInheritHandles, DWORD dwCreationFlags,
                                 LPVOID lpEnvironment, LPCSTR lpCurrentDirectory,
-                                LPSTARTUPINFO32A lpStartupInfo,
+                                LPSTARTUPINFOA lpStartupInfo,
                                 LPPROCESS_INFORMATION lpProcessInfo )
 {
     HINSTANCE16 hInstance;
     LPCSTR cmdline;
-    PDB32 *pdb;
+    PDB *pdb;
     char name[256];
 
     /* Get name and command line */
@@ -565,7 +565,7 @@ BOOL32 WINAPI CreateProcess32A( LPCSTR lpApplicationName, LPSTR lpCommandLine,
     cmdline = lpCommandLine? lpCommandLine : lpApplicationName;
 
     if (lpApplicationName)
-        lstrcpyn32A(name, lpApplicationName, sizeof(name) - 4);
+        lstrcpynA(name, lpApplicationName, sizeof(name) - 4);
     else {
         char	*ptr;
         int	len;
@@ -575,10 +575,10 @@ BOOL32 WINAPI CreateProcess32A( LPCSTR lpApplicationName, LPSTR lpCommandLine,
 	do {
 	    len = (ptr? ptr-lpCommandLine : strlen(lpCommandLine)) + 1;
 	    if (len > sizeof(name) - 4) len = sizeof(name) - 4;
-	    lstrcpyn32A(name, lpCommandLine, len);
+	    lstrcpynA(name, lpCommandLine, len);
 	    if (!strchr(name, '\\') && !strchr(name, '.'))
 		strcat(name, ".exe");
-	    if (GetFileAttributes32A(name)!=-1)
+	    if (GetFileAttributesA(name)!=-1)
 	    	break;
 	    /* if there is a space and no file found yet, include the word
 	     * up to the next space too. If there is no next space, just
@@ -590,7 +590,7 @@ BOOL32 WINAPI CreateProcess32A( LPCSTR lpApplicationName, LPSTR lpCommandLine,
 	        ptr = strchr(lpCommandLine, ' ');
 		len = (ptr? ptr-lpCommandLine : strlen(lpCommandLine)) + 1;
 		if (len > sizeof(name) - 4) len = sizeof(name) - 4;
-		lstrcpyn32A(name, lpCommandLine, len);
+		lstrcpynA(name, lpCommandLine, len);
 		break;
 	    }
 	} while (1);
@@ -699,21 +699,21 @@ BOOL32 WINAPI CreateProcess32A( LPCSTR lpApplicationName, LPSTR lpCommandLine,
  * NOTES
  *  lpReserved is not converted
  */
-BOOL32 WINAPI CreateProcess32W( LPCWSTR lpApplicationName, LPWSTR lpCommandLine, 
+BOOL WINAPI CreateProcessW( LPCWSTR lpApplicationName, LPWSTR lpCommandLine, 
                                 LPSECURITY_ATTRIBUTES lpProcessAttributes,
                                 LPSECURITY_ATTRIBUTES lpThreadAttributes,
-                                BOOL32 bInheritHandles, DWORD dwCreationFlags,
+                                BOOL bInheritHandles, DWORD dwCreationFlags,
                                 LPVOID lpEnvironment, LPCWSTR lpCurrentDirectory,
-                                LPSTARTUPINFO32W lpStartupInfo,
+                                LPSTARTUPINFOW lpStartupInfo,
                                 LPPROCESS_INFORMATION lpProcessInfo )
-{   BOOL32 ret;
-    STARTUPINFO32A StartupInfoA;
+{   BOOL ret;
+    STARTUPINFOA StartupInfoA;
     
     LPSTR lpApplicationNameA = HEAP_strdupWtoA (GetProcessHeap(),0,lpApplicationName);
     LPSTR lpCommandLineA = HEAP_strdupWtoA (GetProcessHeap(),0,lpCommandLine);
     LPSTR lpCurrentDirectoryA = HEAP_strdupWtoA (GetProcessHeap(),0,lpCurrentDirectory);
 
-    memcpy (&StartupInfoA, lpStartupInfo, sizeof(STARTUPINFO32A));
+    memcpy (&StartupInfoA, lpStartupInfo, sizeof(STARTUPINFOA));
     StartupInfoA.lpDesktop = HEAP_strdupWtoA (GetProcessHeap(),0,lpStartupInfo->lpDesktop);
     StartupInfoA.lpTitle = HEAP_strdupWtoA (GetProcessHeap(),0,lpStartupInfo->lpTitle);
 
@@ -722,7 +722,7 @@ BOOL32 WINAPI CreateProcess32W( LPCWSTR lpApplicationName, LPWSTR lpCommandLine,
     if (lpStartupInfo->lpReserved)
       FIXME(win32,"StartupInfo.lpReserved is used, please report (%s)\n", debugstr_w(lpStartupInfo->lpReserved));
       
-    ret = CreateProcess32A(  lpApplicationNameA,  lpCommandLineA, 
+    ret = CreateProcessA(  lpApplicationNameA,  lpCommandLineA, 
                              lpProcessAttributes, lpThreadAttributes,
                              bInheritHandles, dwCreationFlags,
                              lpEnvironment, lpCurrentDirectoryA,
@@ -739,19 +739,19 @@ BOOL32 WINAPI CreateProcess32W( LPCWSTR lpApplicationName, LPWSTR lpCommandLine,
 /***********************************************************************
  *              GetModuleHandle         (KERNEL32.237)
  */
-HMODULE32 WINAPI GetModuleHandle32A(LPCSTR module)
+HMODULE WINAPI GetModuleHandleA(LPCSTR module)
 {
     if (module == NULL)
     	return PROCESS_Current()->exe_modref->module;
     else
-	return MODULE_FindModule32( module );
+	return MODULE_FindModule( module );
 }
 
-HMODULE32 WINAPI GetModuleHandle32W(LPCWSTR module)
+HMODULE WINAPI GetModuleHandleW(LPCWSTR module)
 {
-    HMODULE32 hModule;
+    HMODULE hModule;
     LPSTR modulea = HEAP_strdupWtoA( GetProcessHeap(), 0, module );
-    hModule = GetModuleHandle32A( modulea );
+    hModule = GetModuleHandleA( modulea );
     HeapFree( GetProcessHeap(), 0, modulea );
     return hModule;
 }
@@ -760,8 +760,8 @@ HMODULE32 WINAPI GetModuleHandle32W(LPCWSTR module)
 /***********************************************************************
  *              GetModuleFileName32A      (KERNEL32.235)
  */
-DWORD WINAPI GetModuleFileName32A( 
-	HMODULE32 hModule,	/* [in] module handle (32bit) */
+DWORD WINAPI GetModuleFileNameA( 
+	HMODULE hModule,	/* [in] module handle (32bit) */
 	LPSTR lpFileName,	/* [out] filenamebuffer */
         DWORD size		/* [in] size of filenamebuffer */
 ) {                   
@@ -771,9 +771,9 @@ DWORD WINAPI GetModuleFileName32A(
     	return 0;
 
     if (PE_HEADER(wm->module)->OptionalHeader.MajorOperatingSystemVersion >= 4.0)
-      lstrcpyn32A( lpFileName, wm->longname, size );
+      lstrcpynA( lpFileName, wm->longname, size );
     else
-      lstrcpyn32A( lpFileName, wm->shortname, size );
+      lstrcpynA( lpFileName, wm->shortname, size );
        
     TRACE(module, "%s\n", lpFileName );
     return strlen(lpFileName);
@@ -783,11 +783,11 @@ DWORD WINAPI GetModuleFileName32A(
 /***********************************************************************
  *              GetModuleFileName32W      (KERNEL32.236)
  */
-DWORD WINAPI GetModuleFileName32W( HMODULE32 hModule, LPWSTR lpFileName,
+DWORD WINAPI GetModuleFileNameW( HMODULE hModule, LPWSTR lpFileName,
                                    DWORD size )
 {
     LPSTR fnA = (char*)HeapAlloc( GetProcessHeap(), 0, size );
-    DWORD res = GetModuleFileName32A( hModule, fnA, size );
+    DWORD res = GetModuleFileNameA( hModule, fnA, size );
     lstrcpynAtoW( lpFileName, fnA, size );
     HeapFree( GetProcessHeap(), 0, fnA );
     return res;
@@ -798,20 +798,20 @@ DWORD WINAPI GetModuleFileName32W( HMODULE32 hModule, LPWSTR lpFileName,
  *           LoadLibraryEx32W   (KERNEL.513)
  * FIXME
  */
-HMODULE32 WINAPI LoadLibraryEx32W16( LPCSTR libname, HANDLE16 hf,
+HMODULE WINAPI LoadLibraryEx32W16( LPCSTR libname, HANDLE16 hf,
                                        DWORD flags )
 {
     TRACE(module,"(%s,%d,%08lx)\n",libname,hf,flags);
-    return LoadLibraryEx32A(libname, hf,flags);
+    return LoadLibraryExA(libname, hf,flags);
 }
 
 /***********************************************************************
  *           LoadLibraryEx32A   (KERNEL32)
  */
-HMODULE32 WINAPI LoadLibraryEx32A(LPCSTR libname,HFILE32 hfile,DWORD flags)
+HMODULE WINAPI LoadLibraryExA(LPCSTR libname,HFILE hfile,DWORD flags)
 {
-    HMODULE32 hmod;
-    hmod = MODULE_LoadLibraryEx32A( libname, hfile, flags );
+    HMODULE hmod;
+    hmod = MODULE_LoadLibraryExA( libname, hfile, flags );
 
     /* at least call not the dllmain...*/
     if ( DONT_RESOLVE_DLL_REFERENCES==flags || LOAD_LIBRARY_AS_DATAFILE==flags )
@@ -826,39 +826,39 @@ HMODULE32 WINAPI LoadLibraryEx32A(LPCSTR libname,HFILE32 hfile,DWORD flags)
     return hmod;
 }
 
-HMODULE32 MODULE_LoadLibraryEx32A( LPCSTR libname, HFILE32 hfile, DWORD flags )
+HMODULE MODULE_LoadLibraryExA( LPCSTR libname, HFILE hfile, DWORD flags )
 {
-    HMODULE32 hmod;
+    HMODULE hmod;
     
-    hmod = ELF_LoadLibraryEx32A( libname, hfile, flags );
+    hmod = ELF_LoadLibraryExA( libname, hfile, flags );
     if (hmod) return hmod;
 
-    hmod = PE_LoadLibraryEx32A( libname, hfile, flags );
+    hmod = PE_LoadLibraryExA( libname, hfile, flags );
     return hmod;
 }
 
 /***********************************************************************
  *           LoadLibraryA         (KERNEL32)
  */
-HMODULE32 WINAPI LoadLibrary32A(LPCSTR libname) {
-	return LoadLibraryEx32A(libname,0,0);
+HMODULE WINAPI LoadLibraryA(LPCSTR libname) {
+	return LoadLibraryExA(libname,0,0);
 }
 
 /***********************************************************************
  *           LoadLibraryW         (KERNEL32)
  */
-HMODULE32 WINAPI LoadLibrary32W(LPCWSTR libnameW)
+HMODULE WINAPI LoadLibraryW(LPCWSTR libnameW)
 {
-    return LoadLibraryEx32W(libnameW,0,0);
+    return LoadLibraryExW(libnameW,0,0);
 }
 
 /***********************************************************************
  *           LoadLibraryExW       (KERNEL32)
  */
-HMODULE32 WINAPI LoadLibraryEx32W(LPCWSTR libnameW,HFILE32 hfile,DWORD flags)
+HMODULE WINAPI LoadLibraryExW(LPCWSTR libnameW,HFILE hfile,DWORD flags)
 {
     LPSTR libnameA = HEAP_strdupWtoA( GetProcessHeap(), 0, libnameW );
-    HMODULE32 ret = LoadLibraryEx32A( libnameA , hfile, flags );
+    HMODULE ret = LoadLibraryExA( libnameA , hfile, flags );
 
     HeapFree( GetProcessHeap(), 0, libnameA );
     return ret;
@@ -867,7 +867,7 @@ HMODULE32 WINAPI LoadLibraryEx32W(LPCWSTR libnameW,HFILE32 hfile,DWORD flags)
 /***********************************************************************
  *           FreeLibrary
  */
-BOOL32 WINAPI FreeLibrary32(HINSTANCE32 hLibModule)
+BOOL WINAPI FreeLibrary(HINSTANCE hLibModule)
 {
     FIXME(module,"(0x%08x): stub\n", hLibModule);
     return TRUE;  /* FIXME */
@@ -879,9 +879,9 @@ BOOL32 WINAPI FreeLibrary32(HINSTANCE32 hLibModule)
  *
  * FIXME: rough guesswork, don't know what "Private" means
  */
-HINSTANCE32 WINAPI PrivateLoadLibrary(LPCSTR libname)
+HINSTANCE WINAPI PrivateLoadLibrary(LPCSTR libname)
 {
-        return (HINSTANCE32)LoadLibrary16(libname);
+        return (HINSTANCE)LoadLibrary16(libname);
 }
 
 
@@ -891,7 +891,7 @@ HINSTANCE32 WINAPI PrivateLoadLibrary(LPCSTR libname)
  *
  * FIXME: rough guesswork, don't know what "Private" means
  */
-void WINAPI PrivateFreeLibrary(HINSTANCE32 handle)
+void WINAPI PrivateFreeLibrary(HINSTANCE handle)
 {
 	FreeLibrary16((HINSTANCE16)handle);
 }
@@ -902,19 +902,19 @@ void WINAPI PrivateFreeLibrary(HINSTANCE32 handle)
  */
 HINSTANCE16 WINAPI WinExec16( LPCSTR lpCmdLine, UINT16 nCmdShow )
 {
-    return WinExec32( lpCmdLine, nCmdShow );
+    return WinExec( lpCmdLine, nCmdShow );
 }
 
 
 /***********************************************************************
  *           WinExec32   (KERNEL32.566)
  */
-HINSTANCE32 WINAPI WinExec32( LPCSTR lpCmdLine, UINT32 nCmdShow )
+HINSTANCE WINAPI WinExec( LPCSTR lpCmdLine, UINT nCmdShow )
 {
-    HINSTANCE32 handle = 2;
+    HINSTANCE handle = 2;
     char *p, filename[256];
     int  spacelimit = 0, exhausted = 0;
-    LOADPARAMS32 params;
+    LOADPARAMS params;
     UINT16 paramCmdShow[2];
 
     if (!lpCmdLine)
@@ -939,7 +939,7 @@ HINSTANCE32 WINAPI WinExec32( LPCSTR lpCmdLine, UINT32 nCmdShow )
 
 	/* Build the filename and command-line */
 
-	lstrcpyn32A(filename, lpCmdLine,
+	lstrcpynA(filename, lpCmdLine,
 		    sizeof(filename) - 4 /* for extension */);
 
 	/* Keep grabbing characters until end-of-string, tab, or until the
@@ -966,7 +966,7 @@ HINSTANCE32 WINAPI WinExec32( LPCSTR lpCmdLine, UINT32 nCmdShow )
 
 	if (!__winelib)
 	{
-            handle = LoadModule32( filename, &params );
+            handle = LoadModule( filename, &params );
 	    if (handle == 2)  /* file not found */
 	    {
 		/* Check that the original file name did not have a suffix */
@@ -976,7 +976,7 @@ HINSTANCE32 WINAPI WinExec32( LPCSTR lpCmdLine, UINT32 nCmdShow )
 		{
 		    p = filename + strlen(filename);
 		    strcpy( p, ".exe" );
-                    handle = LoadModule32( filename, &params );
+                    handle = LoadModule( filename, &params );
                     *p = '\0';  /* Remove extension */
 		}
 	    }
@@ -1058,7 +1058,7 @@ HINSTANCE32 WINAPI WinExec32( LPCSTR lpCmdLine, UINT32 nCmdShow )
  *           WIN32_GetProcAddress16   (KERNEL32.36)
  * Get procaddress in 16bit module from win32... (kernel32 undoc. ordinal func)
  */
-FARPROC16 WINAPI WIN32_GetProcAddress16( HMODULE32 hModule, LPCSTR name )
+FARPROC16 WINAPI WIN32_GetProcAddress16( HMODULE hModule, LPCSTR name )
 {
     WORD	ordinal;
     FARPROC16	ret;
@@ -1084,7 +1084,7 @@ FARPROC16 WINAPI WIN32_GetProcAddress16( HMODULE32 hModule, LPCSTR name )
     }
     if (!ordinal) return (FARPROC16)0;
     ret = NE_GetEntryPoint( hModule, ordinal );
-    TRACE(module,"returning %08x\n",(UINT32)ret);
+    TRACE(module,"returning %08x\n",(UINT)ret);
     return ret;
 }
 
@@ -1115,7 +1115,7 @@ FARPROC16 WINAPI GetProcAddress16( HMODULE16 hModule, SEGPTR name )
 
     ret = NE_GetEntryPoint( hModule, ordinal );
 
-    TRACE(module, "returning %08x\n", (UINT32)ret );
+    TRACE(module, "returning %08x\n", (UINT)ret );
     return ret;
 }
 
@@ -1123,26 +1123,26 @@ FARPROC16 WINAPI GetProcAddress16( HMODULE16 hModule, SEGPTR name )
 /***********************************************************************
  *           GetProcAddress32   		(KERNEL32.257)
  */
-FARPROC32 WINAPI GetProcAddress32( HMODULE32 hModule, LPCSTR function )
+FARPROC WINAPI GetProcAddress( HMODULE hModule, LPCSTR function )
 {
-    return MODULE_GetProcAddress32( hModule, function, TRUE );
+    return MODULE_GetProcAddress( hModule, function, TRUE );
 }
 
 /***********************************************************************
  *           WIN16_GetProcAddress32   		(KERNEL.453)
  */
-FARPROC32 WINAPI WIN16_GetProcAddress32( HMODULE32 hModule, LPCSTR function )
+FARPROC WINAPI GetProcAddress32_16( HMODULE hModule, LPCSTR function )
 {
-    return MODULE_GetProcAddress32( hModule, function, FALSE );
+    return MODULE_GetProcAddress( hModule, function, FALSE );
 }
 
 /***********************************************************************
  *           MODULE_GetProcAddress32   		(internal)
  */
-FARPROC32 MODULE_GetProcAddress32( 
-	HMODULE32 hModule, 	/* [in] current module handle */
+FARPROC MODULE_GetProcAddress( 
+	HMODULE hModule, 	/* [in] current module handle */
 	LPCSTR function,	/* [in] function to be looked up */
-	BOOL32 snoop )
+	BOOL snoop )
 {
     WINE_MODREF	*wm = MODULE32_LookupHMODULE( hModule );
 
@@ -1151,7 +1151,7 @@ FARPROC32 MODULE_GetProcAddress32(
     else
 	TRACE(win32,"(%08lx,%p)\n",(DWORD)hModule,function);
     if (!wm)
-        return (FARPROC32)0;
+        return (FARPROC)0;
     switch (wm->type)
     {
     case MODULE32_PE:
@@ -1160,7 +1160,7 @@ FARPROC32 MODULE_GetProcAddress32(
     	return ELF_FindExportedFunction( wm, function);
     default:
     	ERR(module,"wine_modref type %d not handled.\n",wm->type);
-    	return (FARPROC32)0;
+    	return (FARPROC)0;
     }
 }
 
@@ -1168,7 +1168,7 @@ FARPROC32 MODULE_GetProcAddress32(
 /***********************************************************************
  *           RtlImageNtHeaders   (NTDLL)
  */
-PIMAGE_NT_HEADERS WINAPI RtlImageNtHeader(HMODULE32 hModule)
+PIMAGE_NT_HEADERS WINAPI RtlImageNtHeader(HMODULE hModule)
 {
     /* basically:
      * return  hModule+(((IMAGE_DOS_HEADER*)hModule)->e_lfanew); 
@@ -1195,14 +1195,14 @@ typedef struct _GPHANDLERDEF
 } GPHANDLERDEF;
 #pragma pack(4)
 
-SEGPTR WINAPI HasGPHandler( SEGPTR address )
+SEGPTR WINAPI HasGPHandler16( SEGPTR address )
 {
     HMODULE16 hModule;
     int gpOrdinal;
     SEGPTR gpPtr;
     GPHANDLERDEF *gpHandler;
    
-    if (    (hModule = FarGetOwner( SELECTOROF(address) )) != 0
+    if (    (hModule = FarGetOwner16( SELECTOROF(address) )) != 0
          && (gpOrdinal = NE_GetOrdinal( hModule, "__GP" )) != 0
          && (gpPtr = (SEGPTR)NE_GetEntryPointEx( hModule, gpOrdinal, FALSE )) != 0
          && !IsBadReadPtr16( gpPtr, sizeof(GPHANDLERDEF) )

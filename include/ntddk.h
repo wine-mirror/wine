@@ -317,8 +317,8 @@ DWORD WINAPI RtlUnicodeStringToOemString(PANSI_STRING oem,PUNICODE_STRING uni,BO
 DWORD WINAPI RtlUnicodeStringToAnsiString(PANSI_STRING oem,PUNICODE_STRING uni,BOOLEAN alloc);
 DWORD WINAPI RtlEqualUnicodeString(PUNICODE_STRING s1,PUNICODE_STRING s2,DWORD x);
 DWORD WINAPI RtlUpcaseUnicodeString(PUNICODE_STRING dest,PUNICODE_STRING src,BOOLEAN doalloc);
-UINT32 WINAPI RtlxOemStringToUnicodeSize(PSTRING str);
-UINT32 WINAPI RtlxAnsiStringToUnicodeSize(PANSI_STRING str);
+UINT WINAPI RtlxOemStringToUnicodeSize(PSTRING str);
+UINT WINAPI RtlxAnsiStringToUnicodeSize(PANSI_STRING str);
 DWORD WINAPI RtlIsTextUnicode(LPVOID buf, DWORD len, DWORD *pf);
 NTSTATUS WINAPI RtlCompareUnicodeString(PUNICODE_STRING String1, PUNICODE_STRING String2, BOOLEAN CaseInSensitive);
 
@@ -351,8 +351,8 @@ LPVOID WINAPI RtlNormalizeProcessParams(LPVOID x);
 DWORD WINAPI RtlNtStatusToDosError(DWORD error);
 BOOLEAN WINAPI RtlGetNtProductType(LPDWORD type);
 DWORD WINAPI RtlTimeToElapsedTimeFields( DWORD x1, DWORD x2 );
-INT32 WINAPI RtlExtendedLargeIntegerDivide(LARGE_INTEGER dividend, DWORD divisor, LPDWORD rest);
-LARGE_INTEGER WINAPI RtlExtendedIntegerMultiply(LARGE_INTEGER factor1,INT32 factor2);
+INT WINAPI RtlExtendedLargeIntegerDivide(LARGE_INTEGER dividend, DWORD divisor, LPDWORD rest);
+LARGE_INTEGER WINAPI RtlExtendedIntegerMultiply(LARGE_INTEGER factor1,INT factor2);
 DWORD WINAPI RtlFormatCurrentUserKeyPath(DWORD x);
 DWORD WINAPI RtlOpenCurrentUser(DWORD x1, DWORD *x2);
 BOOLEAN WINAPI RtlDosPathNameToNtPathName_U( LPWSTR from,PUNICODE_STRING us,DWORD x2,DWORD x3);

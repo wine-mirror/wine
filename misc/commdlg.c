@@ -37,9 +37,9 @@ static const char defaultfilter[]=" \0\0";
 /***********************************************************************
  * 				FileDlg_Init			[internal]
  */
-static BOOL32 FileDlg_Init(void)
+static BOOL FileDlg_Init(void)
 {
-    static BOOL32 initialized = 0;
+    static BOOL initialized = 0;
     
     if (!initialized) {
 	if (!hFolder) hFolder = LoadBitmap16(0, MAKEINTRESOURCE16(OBM_FOLDER));
@@ -63,10 +63,10 @@ static BOOL32 FileDlg_Init(void)
  */
 BOOL16 WINAPI GetOpenFileName16( SEGPTR ofn )
 {
-    HINSTANCE32 hInst;
-    HANDLE32 hDlgTmpl = 0, hResInfo;
-    BOOL32 bRet = FALSE, win32Format = FALSE;
-    HWND32 hwndDialog;
+    HINSTANCE hInst;
+    HANDLE hDlgTmpl = 0, hResInfo;
+    BOOL bRet = FALSE, win32Format = FALSE;
+    HWND hwndDialog;
     LPOPENFILENAME16 lpofn = (LPOPENFILENAME16)PTR_SEG_TO_LIN(ofn);
     LPCVOID template;
     char defaultopen[]="Open File";
@@ -74,10 +74,10 @@ BOOL16 WINAPI GetOpenFileName16( SEGPTR ofn )
 
     if (!lpofn || !FileDlg_Init()) return FALSE;
 
-    if (lpofn->Flags & OFN_WINE32) {
+    if (lpofn->Flags & OFN_WINE) {
 	    if (lpofn->Flags & OFN_ENABLETEMPLATEHANDLE)
 	    {
-		if (!(template = LockResource32( MapHModuleSL(lpofn->hInstance ))))
+		if (!(template = LockResource( MapHModuleSL(lpofn->hInstance ))))
 		{
 		    CommDlgLastError = CDERR_LOADRESFAILURE;
 		    return FALSE;
@@ -85,15 +85,15 @@ BOOL16 WINAPI GetOpenFileName16( SEGPTR ofn )
 	    }
 	    else if (lpofn->Flags & OFN_ENABLETEMPLATE)
 	    {
-		if (!(hResInfo = FindResource32A(MapHModuleSL(lpofn->hInstance),
-						PTR_SEG_TO_LIN(lpofn->lpTemplateName), RT_DIALOG32A)))
+		if (!(hResInfo = FindResourceA(MapHModuleSL(lpofn->hInstance),
+						PTR_SEG_TO_LIN(lpofn->lpTemplateName), RT_DIALOGA)))
 		{
 		    CommDlgLastError = CDERR_FINDRESFAILURE;
 		    return FALSE;
 		}
-		if (!(hDlgTmpl = LoadResource32( MapHModuleSL(lpofn->hInstance),
+		if (!(hDlgTmpl = LoadResource( MapHModuleSL(lpofn->hInstance),
 						 hResInfo )) ||
-		    !(template = LockResource32( hDlgTmpl )))
+		    !(template = LockResource( hDlgTmpl )))
 		{
 		    CommDlgLastError = CDERR_LOADRESFAILURE;
 		    return FALSE;
@@ -172,8 +172,8 @@ BOOL16 WINAPI GetOpenFileName16( SEGPTR ofn )
       }
 
     if (hDlgTmpl) {
-	    if (lpofn->Flags & OFN_WINE32)
-		    FreeResource32( hDlgTmpl );
+	    if (lpofn->Flags & OFN_WINE)
+		    FreeResource( hDlgTmpl );
 	    else
 		    FreeResource16( hDlgTmpl );
     }
@@ -189,21 +189,21 @@ BOOL16 WINAPI GetOpenFileName16( SEGPTR ofn )
  */
 BOOL16 WINAPI GetSaveFileName16( SEGPTR ofn)
 {
-    HINSTANCE32 hInst;
-    HANDLE32 hDlgTmpl = 0;
-    BOOL32 bRet = FALSE, win32Format = FALSE;
+    HINSTANCE hInst;
+    HANDLE hDlgTmpl = 0;
+    BOOL bRet = FALSE, win32Format = FALSE;
     LPOPENFILENAME16 lpofn = (LPOPENFILENAME16)PTR_SEG_TO_LIN(ofn);
     LPCVOID template;
-    HWND32 hwndDialog;
+    HWND hwndDialog;
     char defaultsave[]="Save as";
     char *str =0,*str1=0;
 
     if (!lpofn || !FileDlg_Init()) return FALSE;
 
-    if (lpofn->Flags & OFN_WINE32) {
+    if (lpofn->Flags & OFN_WINE) {
 	    if (lpofn->Flags & OFN_ENABLETEMPLATEHANDLE)
 	    {
-		if (!(template = LockResource32( MapHModuleSL(lpofn->hInstance ))))
+		if (!(template = LockResource( MapHModuleSL(lpofn->hInstance ))))
 		{
 		    CommDlgLastError = CDERR_LOADRESFAILURE;
 		    return FALSE;
@@ -211,17 +211,17 @@ BOOL16 WINAPI GetSaveFileName16( SEGPTR ofn)
 	    }
 	    else if (lpofn->Flags & OFN_ENABLETEMPLATE)
 	    {
-		HANDLE32 hResInfo;
-		if (!(hResInfo = FindResource32A(MapHModuleSL(lpofn->hInstance),
+		HANDLE hResInfo;
+		if (!(hResInfo = FindResourceA(MapHModuleSL(lpofn->hInstance),
 						 PTR_SEG_TO_LIN(lpofn->lpTemplateName),
-                                                 RT_DIALOG32A)))
+                                                 RT_DIALOGA)))
 		{
 		    CommDlgLastError = CDERR_FINDRESFAILURE;
 		    return FALSE;
 		}
-		if (!(hDlgTmpl = LoadResource32(MapHModuleSL(lpofn->hInstance),
+		if (!(hDlgTmpl = LoadResource(MapHModuleSL(lpofn->hInstance),
 						hResInfo)) ||
-		    !(template = LockResource32(hDlgTmpl)))
+		    !(template = LockResource(hDlgTmpl)))
 		{
 		    CommDlgLastError = CDERR_LOADRESFAILURE;
 		    return FALSE;
@@ -301,8 +301,8 @@ BOOL16 WINAPI GetSaveFileName16( SEGPTR ofn)
       }
     
     if (hDlgTmpl) {
-	    if (lpofn->Flags & OFN_WINE32)
-		    FreeResource32( hDlgTmpl );
+	    if (lpofn->Flags & OFN_WINE)
+		    FreeResource( hDlgTmpl );
 	    else
 		    FreeResource16( hDlgTmpl );
     }
@@ -320,7 +320,7 @@ static void FILEDLG_StripEditControl(HWND16 hwnd)
 {
     char temp[512], *cp;
 
-    GetDlgItemText32A( hwnd, edt1, temp, sizeof(temp) );
+    GetDlgItemTextA( hwnd, edt1, temp, sizeof(temp) );
     cp = strrchr(temp, '\\');
     if (cp != NULL) {
 	strcpy(temp, cp+1);
@@ -335,14 +335,14 @@ static void FILEDLG_StripEditControl(HWND16 hwnd)
 /***********************************************************************
  * 				FILEDLG_ScanDir			[internal]
  */
-static BOOL32 FILEDLG_ScanDir(HWND16 hWnd, LPSTR newPath)
+static BOOL FILEDLG_ScanDir(HWND16 hWnd, LPSTR newPath)
 {
     char 		buffer[512];
 	 char*  		str = buffer;
     int 			drive;
-    HWND32 		hlb;
+    HWND 		hlb;
 
-    lstrcpyn32A(buffer, newPath, sizeof(buffer));
+    lstrcpynA(buffer, newPath, sizeof(buffer));
 
     if (str[0] && (str[1] == ':')) {
         drive = toupper(str[0]) - 'A';
@@ -357,18 +357,18 @@ static BOOL32 FILEDLG_ScanDir(HWND16 hWnd, LPSTR newPath)
 		 return FALSE;
     }
 
-    GetDlgItemText32A(hWnd, edt1, buffer, sizeof(buffer));
-    if ((hlb = GetDlgItem32(hWnd, lst1)) != 0) {
+    GetDlgItemTextA(hWnd, edt1, buffer, sizeof(buffer));
+    if ((hlb = GetDlgItem(hWnd, lst1)) != 0) {
 		 char*	scptr; /* ptr on semi-colon */
 		 char*	filter = buffer;
 
 		 TRACE(commdlg, "Using filter %s\n", filter);
-		 SendMessage32A(hlb, LB_RESETCONTENT32, 0, 0);
+		 SendMessageA(hlb, LB_RESETCONTENT, 0, 0);
 		 while (filter) {
 			 scptr = strchr(filter, ';');
 			 if (scptr)	*scptr = 0;
 			 TRACE(commdlg, "Using file spec %s\n", filter);
-			 if (SendMessage32A(hlb, LB_DIR32, 0, (LPARAM)filter) == LB_ERR)
+			 if (SendMessageA(hlb, LB_DIR, 0, (LPARAM)filter) == LB_ERR)
 				 return FALSE;
 			 if (scptr) *scptr = ';';
 			 filter = (scptr) ? (scptr + 1) : 0;
@@ -376,7 +376,7 @@ static BOOL32 FILEDLG_ScanDir(HWND16 hWnd, LPSTR newPath)
 	 }
 
     strcpy(buffer, "*.*");
-    return DlgDirList32A(hWnd, buffer, lst2, stc1, 0x8010);
+    return DlgDirListA(hWnd, buffer, lst2, stc1, 0x8010);
 }
 
 /***********************************************************************
@@ -413,16 +413,16 @@ static LONG FILEDLG_WMDrawItem(HWND16 hWnd, WPARAM16 wParam, LPARAM lParam,int s
 {
     LPDRAWITEMSTRUCT16 lpdis = (LPDRAWITEMSTRUCT16)PTR_SEG_TO_LIN(lParam);
     char *str;
-    HBRUSH32 hBrush;
+    HBRUSH hBrush;
     HBITMAP16 hBitmap, hPrevBitmap;
     BITMAP16 bm;
-    HDC32 hMemDC;
+    HDC hMemDC;
 
     if (lpdis->CtlType == ODT_LISTBOX && lpdis->CtlID == lst1)
     {
         if (!(str = SEGPTR_ALLOC(512))) return FALSE;
-	hBrush = SelectObject32(lpdis->hDC, GetStockObject32(LTGRAY_BRUSH));
-	SelectObject32(lpdis->hDC, hBrush);
+	hBrush = SelectObject(lpdis->hDC, GetStockObject(LTGRAY_BRUSH));
+	SelectObject(lpdis->hDC, hBrush);
 	FillRect16(lpdis->hDC, &lpdis->rcItem, hBrush);
 	SendMessage16(lpdis->hwndItem, LB_GETTEXT16, lpdis->itemID, 
                       (LPARAM)SEGPTR_GET(str));
@@ -430,9 +430,9 @@ static LONG FILEDLG_WMDrawItem(HWND16 hWnd, WPARAM16 wParam, LPARAM lParam,int s
 	if (savedlg)       /* use _gray_ text in FileSaveDlg */
         {
 	  if (!lpdis->itemState)
-	    SetTextColor32(lpdis->hDC,GetSysColor32(COLOR_GRAYTEXT) );
+	    SetTextColor(lpdis->hDC,GetSysColor(COLOR_GRAYTEXT) );
 	  else  
-	    SetTextColor32(lpdis->hDC,GetSysColor32(COLOR_WINDOWTEXT) );
+	    SetTextColor(lpdis->hDC,GetSysColor(COLOR_WINDOWTEXT) );
 	    /* inversion of gray would be bad readable */	  	  
         }
 
@@ -448,8 +448,8 @@ static LONG FILEDLG_WMDrawItem(HWND16 hWnd, WPARAM16 wParam, LPARAM lParam,int s
     if (lpdis->CtlType == ODT_LISTBOX && lpdis->CtlID == lst2)
     {
         if (!(str = SEGPTR_ALLOC(512))) return FALSE;
-	hBrush = SelectObject32(lpdis->hDC, GetStockObject32(LTGRAY_BRUSH));
-	SelectObject32(lpdis->hDC, hBrush);
+	hBrush = SelectObject(lpdis->hDC, GetStockObject(LTGRAY_BRUSH));
+	SelectObject(lpdis->hDC, hBrush);
 	FillRect16(lpdis->hDC, &lpdis->rcItem, hBrush);
 	SendMessage16(lpdis->hwndItem, LB_GETTEXT16, lpdis->itemID, 
                       (LPARAM)SEGPTR_GET(str));
@@ -458,12 +458,12 @@ static LONG FILEDLG_WMDrawItem(HWND16 hWnd, WPARAM16 wParam, LPARAM lParam,int s
 	GetObject16( hBitmap, sizeof(bm), &bm );
 	TextOut16(lpdis->hDC, lpdis->rcItem.left + bm.bmWidth, 
                   lpdis->rcItem.top, str, strlen(str));
-	hMemDC = CreateCompatibleDC32(lpdis->hDC);
-	hPrevBitmap = SelectObject32(hMemDC, hBitmap);
-	BitBlt32(lpdis->hDC, lpdis->rcItem.left, lpdis->rcItem.top,
+	hMemDC = CreateCompatibleDC(lpdis->hDC);
+	hPrevBitmap = SelectObject(hMemDC, hBitmap);
+	BitBlt(lpdis->hDC, lpdis->rcItem.left, lpdis->rcItem.top,
                  bm.bmWidth, bm.bmHeight, hMemDC, 0, 0, SRCCOPY);
-	SelectObject32(hMemDC, hPrevBitmap);
-	DeleteDC32(hMemDC);
+	SelectObject(hMemDC, hPrevBitmap);
+	DeleteDC(hMemDC);
 	if (lpdis->itemState != 0) InvertRect16(lpdis->hDC, &lpdis->rcItem);
         SEGPTR_FREE(str);
 	return TRUE;
@@ -471,8 +471,8 @@ static LONG FILEDLG_WMDrawItem(HWND16 hWnd, WPARAM16 wParam, LPARAM lParam,int s
     if (lpdis->CtlType == ODT_COMBOBOX && lpdis->CtlID == cmb2)
     {
         if (!(str = SEGPTR_ALLOC(512))) return FALSE;
-	hBrush = SelectObject32(lpdis->hDC, GetStockObject32(LTGRAY_BRUSH));
-	SelectObject32(lpdis->hDC, hBrush);
+	hBrush = SelectObject(lpdis->hDC, GetStockObject(LTGRAY_BRUSH));
+	SelectObject(lpdis->hDC, hBrush);
 	FillRect16(lpdis->hDC, &lpdis->rcItem, hBrush);
 	SendMessage16(lpdis->hwndItem, CB_GETLBTEXT16, lpdis->itemID, 
                       (LPARAM)SEGPTR_GET(str));
@@ -487,12 +487,12 @@ static LONG FILEDLG_WMDrawItem(HWND16 hWnd, WPARAM16 wParam, LPARAM lParam,int s
 	GetObject16( hBitmap, sizeof(bm), &bm );
 	TextOut16(lpdis->hDC, lpdis->rcItem.left + bm.bmWidth, 
                   lpdis->rcItem.top, str, strlen(str));
-	hMemDC = CreateCompatibleDC32(lpdis->hDC);
-	hPrevBitmap = SelectObject32(hMemDC, hBitmap);
-	BitBlt32( lpdis->hDC, lpdis->rcItem.left, lpdis->rcItem.top,
+	hMemDC = CreateCompatibleDC(lpdis->hDC);
+	hPrevBitmap = SelectObject(hMemDC, hBitmap);
+	BitBlt( lpdis->hDC, lpdis->rcItem.left, lpdis->rcItem.top,
                   bm.bmWidth, bm.bmHeight, hMemDC, 0, 0, SRCCOPY );
-	SelectObject32(hMemDC, hPrevBitmap);
-	DeleteDC32(hMemDC);
+	SelectObject(hMemDC, hPrevBitmap);
+	DeleteDC(hMemDC);
 	if (lpdis->itemState != 0) InvertRect16(lpdis->hDC, &lpdis->rcItem);
         SEGPTR_FREE(str);
 	return TRUE;
@@ -531,25 +531,25 @@ static int FILEDLG_HookCallChk(LPOPENFILENAME16 lpofn)
  *
  * Adapt the structures back for win32 calls so the callee can read lpCustData
  */
-static BOOL32 FILEDLG_CallWindowProc(LPOPENFILENAME16 lpofn,HWND32 hwnd,
-	UINT32 wMsg,WPARAM32 wParam,LPARAM lParam
+static BOOL FILEDLG_CallWindowProc(LPOPENFILENAME16 lpofn,HWND hwnd,
+	UINT wMsg,WPARAM wParam,LPARAM lParam
 
 ) {
-	BOOL32	        needstruct;
-        BOOL32          result = FALSE;
+	BOOL	        needstruct;
+        BOOL          result = FALSE;
         WINDOWPROCTYPE  ProcType;               /* Type of Hook Function to be called. */
 
         /* TRUE if lParam points to the OPENFILENAME16 Structure */
 	needstruct = (PTR_SEG_TO_LIN(lParam) == lpofn);
 
-        ProcType   = (lpofn->Flags & OFN_WINE32)
+        ProcType   = (lpofn->Flags & OFN_WINE)
                      ? (lpofn->Flags & OFN_UNICODE)             /* 32-Bit call to GetOpenFileName */
                        ? WIN_PROC_32W : WIN_PROC_32A
                      : WIN_PROC_16;                             /* 16-Bit call to GetOpenFileName */
 
-	if (!(lpofn->Flags & OFN_WINE32))
+	if (!(lpofn->Flags & OFN_WINE))
                 /* Call to 16-Bit Hooking function... No Problem at all. */
-		return (BOOL32)CallWindowProc16(
+		return (BOOL)CallWindowProc16(
 			lpofn->lpfnHook,hwnd,(UINT16)wMsg,(WPARAM16)wParam,lParam
 		);
 	/* |OFN_WINE32 */
@@ -558,22 +558,22 @@ static BOOL32 FILEDLG_CallWindowProc(LPOPENFILENAME16 lpofn,HWND32 hwnd,
            /* Parameter lParam points to lpofn... Convert Structure Data... */
        	   if (lpofn->Flags & OFN_UNICODE)
            {
-                OPENFILENAME32W ofnw;
+                OPENFILENAMEW ofnw;
 
                 /* FIXME: probably needs more converted */
                 ofnw.lCustData = lpofn->lCustData;
-                return (BOOL32)CallWindowProc32W(
-                         (WNDPROC32)lpofn->lpfnHook,hwnd,wMsg,wParam,(LPARAM)&ofnw
+                return (BOOL)CallWindowProcW(
+                         (WNDPROC)lpofn->lpfnHook,hwnd,wMsg,wParam,(LPARAM)&ofnw
                 );
            }
            else /* ! |OFN_UNICODE */
            {
-		OPENFILENAME32A ofna;
+		OPENFILENAMEA ofna;
 
 		/* FIXME: probably needs more converted */
 		ofna.lCustData = lpofn->lCustData;
-		return (BOOL32)CallWindowProc32A(
-		        (WNDPROC32)lpofn->lpfnHook,hwnd,wMsg,wParam,(LPARAM)&ofna
+		return (BOOL)CallWindowProcA(
+		        (WNDPROC)lpofn->lpfnHook,hwnd,wMsg,wParam,(LPARAM)&ofna
 		);
            }
 	}
@@ -608,7 +608,7 @@ static LONG FILEDLG_WMInitDialog(HWND16 hWnd, WPARAM16 wParam, LPARAM lParam)
   LPOPENFILENAME16 lpofn;
   char tmpstr[512];
   LPSTR pstr, old_pstr;
-  SetWindowLong32A(hWnd, DWL_USER, lParam);
+  SetWindowLongA(hWnd, DWL_USER, lParam);
   lpofn = (LPOPENFILENAME16)PTR_SEG_TO_LIN(lParam);
   if (lpofn->lpstrTitle) SetWindowText16( hWnd, lpofn->lpstrTitle );
   /* read custom filter information */
@@ -657,10 +657,10 @@ static LONG FILEDLG_WMInitDialog(HWND16 hWnd, WPARAM16 wParam, LPARAM lParam)
   tmpstr[511]=0;
   TRACE(commdlg,"nFilterIndex = %ld, SetText of edt1 to '%s'\n", 
   			lpofn->nFilterIndex, tmpstr);
-  SetDlgItemText32A( hWnd, edt1, tmpstr );
+  SetDlgItemTextA( hWnd, edt1, tmpstr );
   /* get drive list */
   *tmpstr = 0;
-  DlgDirListComboBox32A(hWnd, tmpstr, cmb2, 0, 0xC000);
+  DlgDirListComboBoxA(hWnd, tmpstr, cmb2, 0, 0xC000);
   /* read initial directory */
   if (PTR_SEG_TO_LIN(lpofn->lpstrInitialDir) != NULL) 
     {
@@ -682,9 +682,9 @@ static LONG FILEDLG_WMInitDialog(HWND16 hWnd, WPARAM16 wParam, LPARAM lParam)
     if (DRIVE_IsValid(i))                  n++;
   SendDlgItemMessage16(hWnd, cmb2, CB_SETCURSEL16, n, 0);
   if (!(lpofn->Flags & OFN_SHOWHELP))
-    ShowWindow32(GetDlgItem32(hWnd, pshHelp), SW_HIDE);
+    ShowWindow(GetDlgItem(hWnd, pshHelp), SW_HIDE);
   if (lpofn->Flags & OFN_HIDEREADONLY)
-    ShowWindow32(GetDlgItem32(hWnd, chx1), SW_HIDE); 
+    ShowWindow(GetDlgItem(hWnd, chx1), SW_HIDE); 
   if (FILEDLG_HookCallChk(lpofn))
      return (BOOL16)FILEDLG_CallWindowProc(lpofn,hWnd,WM_INITDIALOG,wParam,lParam );
   else  
@@ -694,7 +694,7 @@ static LONG FILEDLG_WMInitDialog(HWND16 hWnd, WPARAM16 wParam, LPARAM lParam)
 /***********************************************************************
  *                              FILEDLG_WMCommand               [internal]
  */
-BOOL32 in_update=FALSE;
+BOOL in_update=FALSE;
 
 static LRESULT FILEDLG_WMCommand(HWND16 hWnd, WPARAM16 wParam, LPARAM lParam) 
 {
@@ -709,7 +709,7 @@ static LRESULT FILEDLG_WMCommand(HWND16 hWnd, WPARAM16 wParam, LPARAM lParam)
   control = wParam;
   notification = HIWORD(lParam);
     
-  lpofn = (LPOPENFILENAME16)PTR_SEG_TO_LIN(GetWindowLong32A(hWnd, DWL_USER));
+  lpofn = (LPOPENFILENAME16)PTR_SEG_TO_LIN(GetWindowLongA(hWnd, DWL_USER));
   switch (control)
     {
     case lst1: /* file list */
@@ -722,12 +722,12 @@ static LRESULT FILEDLG_WMCommand(HWND16 hWnd, WPARAM16 wParam, LPARAM lParam)
       {
           SendDlgItemMessage16(hWnd, lst1, LB_GETTEXT16, lRet,
                                (LPARAM)SEGPTR_GET(pstr));
-          SetDlgItemText32A( hWnd, edt1, pstr );
+          SetDlgItemTextA( hWnd, edt1, pstr );
           SEGPTR_FREE(pstr);
       }
       if (FILEDLG_HookCallChk(lpofn))
        FILEDLG_CallWindowProc(lpofn,hWnd,
-                  RegisterWindowMessage32A( LBSELCHSTRING ),
+                  RegisterWindowMessageA( LBSELCHSTRING ),
                   control, MAKELONG(lRet,CD_LBSELCHANGE));       
       /* FIXME: for OFN_ALLOWMULTISELECT we need CD_LBSELSUB, CD_SELADD, CD_LBSELNOITEMS */                  
       return TRUE;
@@ -777,13 +777,13 @@ static LRESULT FILEDLG_WMCommand(HWND16 hWnd, WPARAM16 wParam, LPARAM lParam)
 	return TRUE;
       pstr = (LPSTR)SendDlgItemMessage16(hWnd, cmb1, CB_GETITEMDATA16, lRet, 0);
       TRACE(commdlg,"Selected filter : %s\n", pstr);
-      SetDlgItemText32A( hWnd, edt1, pstr );
+      SetDlgItemTextA( hWnd, edt1, pstr );
       FILEDLG_ScanDir(hWnd, tmpstr);
       in_update=TRUE;
     case IDOK:
     almost_ok:
       ofn2=*lpofn; /* for later restoring */
-      GetDlgItemText32A( hWnd, edt1, tmpstr, sizeof(tmpstr) );
+      GetDlgItemTextA( hWnd, edt1, tmpstr, sizeof(tmpstr) );
       pstr = strrchr(tmpstr, '\\');
       if (pstr == NULL)
 	pstr = strrchr(tmpstr, ':');
@@ -801,7 +801,7 @@ static LRESULT FILEDLG_WMCommand(HWND16 hWnd, WPARAM16 wParam, LPARAM lParam)
 	      *tmpstr=0;
 	    }
 	  TRACE(commdlg,"tmpstr=%s, tmpstr2=%s\n", tmpstr, tmpstr2);
-          SetDlgItemText32A( hWnd, edt1, tmpstr2 );
+          SetDlgItemTextA( hWnd, edt1, tmpstr2 );
 	  FILEDLG_ScanDir(hWnd, tmpstr);
 	  return TRUE;
 	}
@@ -814,11 +814,11 @@ static LRESULT FILEDLG_WMCommand(HWND16 hWnd, WPARAM16 wParam, LPARAM lParam)
       if (lRet == LB_ERR) return TRUE;
       lpofn->nFilterIndex = lRet + 1;
       TRACE(commdlg,"lpofn->nFilterIndex=%ld\n", lpofn->nFilterIndex);
-      lstrcpyn32A(tmpstr2, 
+      lstrcpynA(tmpstr2, 
 	     FILEDLG_GetFileType(PTR_SEG_TO_LIN(lpofn->lpstrCustomFilter),
 				 PTR_SEG_TO_LIN(lpofn->lpstrFilter),
 				 lRet), sizeof(tmpstr2));
-      SetDlgItemText32A( hWnd, edt1, tmpstr2 );
+      SetDlgItemTextA( hWnd, edt1, tmpstr2 );
       if (!in_update)
       /* if ScanDir succeeds, we have changed the directory */
       if (FILEDLG_ScanDir(hWnd, tmpstr)) return TRUE;
@@ -828,13 +828,13 @@ static LRESULT FILEDLG_WMCommand(HWND16 hWnd, WPARAM16 wParam, LPARAM lParam)
 	{
 	  /* strip off the pathname */
 	  *pstr = 0;
-          SetDlgItemText32A( hWnd, edt1, pstr + 1 );
-	  lstrcpyn32A(tmpstr2, pstr+1, sizeof(tmpstr2) );
+          SetDlgItemTextA( hWnd, edt1, pstr + 1 );
+	  lstrcpynA(tmpstr2, pstr+1, sizeof(tmpstr2) );
 	  /* Should we MessageBox() if this fails? */
 	  if (!FILEDLG_ScanDir(hWnd, tmpstr)) return TRUE;
 	  strcpy(tmpstr, tmpstr2);
 	}
-      else SetDlgItemText32A( hWnd, edt1, tmpstr );
+      else SetDlgItemTextA( hWnd, edt1, tmpstr );
 #if 0
       ShowWindow16(hWnd, SW_HIDE);   /* this should not be necessary ?! (%%%) */
 #endif
@@ -848,7 +848,7 @@ static LRESULT FILEDLG_WMCommand(HWND16 hWnd, WPARAM16 wParam, LPARAM lParam)
 	   strcat(tmpstr2, "\\");
 	strncat(tmpstr2, tmpstr, 511-strlen(tmpstr2)); tmpstr2[511]=0;
 	if (lpofn->lpstrFile)
-	  lstrcpyn32A(PTR_SEG_TO_LIN(lpofn->lpstrFile), tmpstr2,lpofn->nMaxFile);
+	  lstrcpynA(PTR_SEG_TO_LIN(lpofn->lpstrFile), tmpstr2,lpofn->nMaxFile);
       }
       lpofn->nFileOffset = strrchr(tmpstr2,'\\') - tmpstr2 +1;
       lpofn->nFileExtension = 0;
@@ -863,7 +863,7 @@ static LRESULT FILEDLG_WMCommand(HWND16 hWnd, WPARAM16 wParam, LPARAM lParam)
        {
          if (FILEDLG_HookCallChk(lpofn))
            FILEDLG_CallWindowProc(lpofn,hWnd,
-                                  RegisterWindowMessage32A( LBSELCHSTRING ),
+                                  RegisterWindowMessageA( LBSELCHSTRING ),
                                   control, MAKELONG(lRet,CD_LBSELCHANGE));
 
          in_update = FALSE;
@@ -878,7 +878,7 @@ static LRESULT FILEDLG_WMCommand(HWND16 hWnd, WPARAM16 wParam, LPARAM lParam)
       if (FILEDLG_HookCallChk(lpofn))
       {
        lRet= (BOOL16)FILEDLG_CallWindowProc(lpofn,
-               hWnd, RegisterWindowMessage32A( FILEOKSTRING ), 0, lParam );
+               hWnd, RegisterWindowMessageA( FILEOKSTRING ), 0, lParam );
        if (lRet)       
        {
          *lpofn=ofn2; /* restore old state */
@@ -888,10 +888,10 @@ static LRESULT FILEDLG_WMCommand(HWND16 hWnd, WPARAM16 wParam, LPARAM lParam)
          break;
        }
       }
-      EndDialog32(hWnd, TRUE);
+      EndDialog(hWnd, TRUE);
       return TRUE;
     case IDCANCEL:
-      EndDialog32(hWnd, FALSE);
+      EndDialog(hWnd, FALSE);
       return TRUE;
     }
   return FALSE;
@@ -901,10 +901,10 @@ static LRESULT FILEDLG_WMCommand(HWND16 hWnd, WPARAM16 wParam, LPARAM lParam)
 /***********************************************************************
  *           FileOpenDlgProc   (COMMDLG.6)
  */
-LRESULT WINAPI FileOpenDlgProc(HWND16 hWnd, UINT16 wMsg, WPARAM16 wParam,
+LRESULT WINAPI FileOpenDlgProc16(HWND16 hWnd, UINT16 wMsg, WPARAM16 wParam,
                                LPARAM lParam)
 {  
- LPOPENFILENAME16 lpofn = (LPOPENFILENAME16)PTR_SEG_TO_LIN(GetWindowLong32A(hWnd, DWL_USER));
+ LPOPENFILENAME16 lpofn = (LPOPENFILENAME16)PTR_SEG_TO_LIN(GetWindowLongA(hWnd, DWL_USER));
  
  if (wMsg!=WM_INITDIALOG)
   if (FILEDLG_HookCallChk(lpofn))
@@ -945,10 +945,10 @@ LRESULT WINAPI FileOpenDlgProc(HWND16 hWnd, UINT16 wMsg, WPARAM16 wParam,
 /***********************************************************************
  *           FileSaveDlgProc   (COMMDLG.7)
  */
-LRESULT WINAPI FileSaveDlgProc(HWND16 hWnd, UINT16 wMsg, WPARAM16 wParam,
+LRESULT WINAPI FileSaveDlgProc16(HWND16 hWnd, UINT16 wMsg, WPARAM16 wParam,
                                LPARAM lParam)
 {
- LPOPENFILENAME16 lpofn = (LPOPENFILENAME16)PTR_SEG_TO_LIN(GetWindowLong32A(hWnd, DWL_USER));
+ LPOPENFILENAME16 lpofn = (LPOPENFILENAME16)PTR_SEG_TO_LIN(GetWindowLongA(hWnd, DWL_USER));
  
  if (wMsg!=WM_INITDIALOG)
   if (FILEDLG_HookCallChk(lpofn))
@@ -1015,7 +1015,7 @@ HWND16 WINAPI FindText16( SEGPTR find )
 /***********************************************************************
  *           FindText32A   (COMMDLG.6)
  */
-HWND32 WINAPI FindText32A( LPFINDREPLACE32A lpFind )
+HWND WINAPI FindTextA( LPFINDREPLACEA lpFind )
 {
     HANDLE16 hInst;
     LPCVOID ptr;
@@ -1029,13 +1029,13 @@ HWND32 WINAPI FindText32A( LPFINDREPLACE32A lpFind )
     ptr = SYSRES_GetResPtr( SYSRES_DIALOG_FIND_TEXT );
     hInst = WIN_GetWindowInstance( lpFind->hwndOwner );
     return DIALOG_CreateIndirect( hInst, ptr, TRUE, lpFind->hwndOwner,
-                (DLGPROC16)FindTextDlgProc32A, (LPARAM)lpFind, WIN_PROC_32A );
+                (DLGPROC16)FindTextDlgProcA, (LPARAM)lpFind, WIN_PROC_32A );
 }
 
 /***********************************************************************
  *           FindText32W   (COMMDLG.7)
  */
-HWND32 WINAPI FindText32W( LPFINDREPLACE32W lpFind )
+HWND WINAPI FindTextW( LPFINDREPLACEW lpFind )
 {
     HANDLE16 hInst;
     LPCVOID ptr;
@@ -1049,7 +1049,7 @@ HWND32 WINAPI FindText32W( LPFINDREPLACE32W lpFind )
     ptr = SYSRES_GetResPtr( SYSRES_DIALOG_FIND_TEXT );
     hInst = WIN_GetWindowInstance( lpFind->hwndOwner );
     return DIALOG_CreateIndirect( hInst, ptr, TRUE, lpFind->hwndOwner,
-                (DLGPROC16)FindTextDlgProc32W, (LPARAM)lpFind, WIN_PROC_32W );
+                (DLGPROC16)FindTextDlgProcW, (LPARAM)lpFind, WIN_PROC_32W );
 }
 
 /***********************************************************************
@@ -1077,7 +1077,7 @@ HWND16 WINAPI ReplaceText16( SEGPTR find )
 /***********************************************************************
  *           ReplaceText32A   (COMDLG32.19)
  */
-HWND32 WINAPI ReplaceText32A( LPFINDREPLACE32A lpFind )
+HWND WINAPI ReplaceTextA( LPFINDREPLACEA lpFind )
 {
     HANDLE16 hInst;
     LPCVOID ptr;
@@ -1091,13 +1091,13 @@ HWND32 WINAPI ReplaceText32A( LPFINDREPLACE32A lpFind )
     ptr = SYSRES_GetResPtr( SYSRES_DIALOG_REPLACE_TEXT );
     hInst = WIN_GetWindowInstance( lpFind->hwndOwner );
     return DIALOG_CreateIndirect( hInst, ptr, TRUE, lpFind->hwndOwner,
-		(DLGPROC16)ReplaceTextDlgProc32A, (LPARAM)lpFind, WIN_PROC_32A );
+		(DLGPROC16)ReplaceTextDlgProcA, (LPARAM)lpFind, WIN_PROC_32A );
 }
 
 /***********************************************************************
  *           ReplaceText32W   (COMDLG32.20)
  */
-HWND32 WINAPI ReplaceText32W( LPFINDREPLACE32W lpFind )
+HWND WINAPI ReplaceTextW( LPFINDREPLACEW lpFind )
 {
     HANDLE16 hInst;
     LPCVOID ptr;
@@ -1111,50 +1111,50 @@ HWND32 WINAPI ReplaceText32W( LPFINDREPLACE32W lpFind )
     ptr = SYSRES_GetResPtr( SYSRES_DIALOG_REPLACE_TEXT );
     hInst = WIN_GetWindowInstance( lpFind->hwndOwner );
     return DIALOG_CreateIndirect( hInst, ptr, TRUE, lpFind->hwndOwner,
-		(DLGPROC16)ReplaceTextDlgProc32W, (LPARAM)lpFind, WIN_PROC_32W );
+		(DLGPROC16)ReplaceTextDlgProcW, (LPARAM)lpFind, WIN_PROC_32W );
 }
 
 
 /***********************************************************************
  *                              FINDDLG_WMInitDialog            [internal]
  */
-static LRESULT FINDDLG_WMInitDialog(HWND32 hWnd, LPARAM lParam, LPDWORD lpFlags,
-                                    LPSTR lpstrFindWhat, BOOL32 fUnicode)
+static LRESULT FINDDLG_WMInitDialog(HWND hWnd, LPARAM lParam, LPDWORD lpFlags,
+                                    LPSTR lpstrFindWhat, BOOL fUnicode)
 {
-    SetWindowLong32A(hWnd, DWL_USER, lParam);
+    SetWindowLongA(hWnd, DWL_USER, lParam);
     *lpFlags &= ~(FR_FINDNEXT | FR_REPLACE | FR_REPLACEALL | FR_DIALOGTERM);
     /*
      * FIXME : If the initial FindWhat string is empty, we should disable the
      * FindNext (IDOK) button.  Only after typing some text, the button should be
      * enabled.
      */
-    if (fUnicode) SetDlgItemText32W(hWnd, edt1, (LPWSTR)lpstrFindWhat);
-	else SetDlgItemText32A(hWnd, edt1, lpstrFindWhat);
-    CheckRadioButton32(hWnd, rad1, rad2, (*lpFlags & FR_DOWN) ? rad2 : rad1);
+    if (fUnicode) SetDlgItemTextW(hWnd, edt1, (LPWSTR)lpstrFindWhat);
+	else SetDlgItemTextA(hWnd, edt1, lpstrFindWhat);
+    CheckRadioButton(hWnd, rad1, rad2, (*lpFlags & FR_DOWN) ? rad2 : rad1);
     if (*lpFlags & (FR_HIDEUPDOWN | FR_NOUPDOWN)) {
-	EnableWindow32(GetDlgItem32(hWnd, rad1), FALSE);
-	EnableWindow32(GetDlgItem32(hWnd, rad2), FALSE);
+	EnableWindow(GetDlgItem(hWnd, rad1), FALSE);
+	EnableWindow(GetDlgItem(hWnd, rad2), FALSE);
     }
     if (*lpFlags & FR_HIDEUPDOWN) {
-	ShowWindow32(GetDlgItem32(hWnd, rad1), SW_HIDE);
-	ShowWindow32(GetDlgItem32(hWnd, rad2), SW_HIDE);
-	ShowWindow32(GetDlgItem32(hWnd, grp1), SW_HIDE);
+	ShowWindow(GetDlgItem(hWnd, rad1), SW_HIDE);
+	ShowWindow(GetDlgItem(hWnd, rad2), SW_HIDE);
+	ShowWindow(GetDlgItem(hWnd, grp1), SW_HIDE);
     }
-    CheckDlgButton32(hWnd, chx1, (*lpFlags & FR_WHOLEWORD) ? 1 : 0);
+    CheckDlgButton(hWnd, chx1, (*lpFlags & FR_WHOLEWORD) ? 1 : 0);
     if (*lpFlags & (FR_HIDEWHOLEWORD | FR_NOWHOLEWORD))
-	EnableWindow32(GetDlgItem32(hWnd, chx1), FALSE);
+	EnableWindow(GetDlgItem(hWnd, chx1), FALSE);
     if (*lpFlags & FR_HIDEWHOLEWORD)
-	ShowWindow32(GetDlgItem32(hWnd, chx1), SW_HIDE);
-    CheckDlgButton32(hWnd, chx2, (*lpFlags & FR_MATCHCASE) ? 1 : 0);
+	ShowWindow(GetDlgItem(hWnd, chx1), SW_HIDE);
+    CheckDlgButton(hWnd, chx2, (*lpFlags & FR_MATCHCASE) ? 1 : 0);
     if (*lpFlags & (FR_HIDEMATCHCASE | FR_NOMATCHCASE))
-	EnableWindow32(GetDlgItem32(hWnd, chx2), FALSE);
+	EnableWindow(GetDlgItem(hWnd, chx2), FALSE);
     if (*lpFlags & FR_HIDEMATCHCASE)
-	ShowWindow32(GetDlgItem32(hWnd, chx2), SW_HIDE);
+	ShowWindow(GetDlgItem(hWnd, chx2), SW_HIDE);
     if (!(*lpFlags & FR_SHOWHELP)) {
-	EnableWindow32(GetDlgItem32(hWnd, pshHelp), FALSE);
-	ShowWindow32(GetDlgItem32(hWnd, pshHelp), SW_HIDE);
+	EnableWindow(GetDlgItem(hWnd, pshHelp), FALSE);
+	ShowWindow(GetDlgItem(hWnd, pshHelp), SW_HIDE);
     }
-    ShowWindow32(hWnd, SW_SHOWNORMAL);
+    ShowWindow(hWnd, SW_SHOWNORMAL);
     return TRUE;
 }    
 
@@ -1162,43 +1162,43 @@ static LRESULT FINDDLG_WMInitDialog(HWND32 hWnd, LPARAM lParam, LPDWORD lpFlags,
 /***********************************************************************
  *                              FINDDLG_WMCommand               [internal]
  */
-static LRESULT FINDDLG_WMCommand(HWND32 hWnd, WPARAM32 wParam, 
-			HWND32 hwndOwner, LPDWORD lpFlags,
+static LRESULT FINDDLG_WMCommand(HWND hWnd, WPARAM wParam, 
+			HWND hwndOwner, LPDWORD lpFlags,
 			LPSTR lpstrFindWhat, WORD wFindWhatLen, 
-			BOOL32 fUnicode)
+			BOOL fUnicode)
 {
-    int uFindReplaceMessage = RegisterWindowMessage32A( FINDMSGSTRING );
-    int uHelpMessage = RegisterWindowMessage32A( HELPMSGSTRING );
+    int uFindReplaceMessage = RegisterWindowMessageA( FINDMSGSTRING );
+    int uHelpMessage = RegisterWindowMessageA( HELPMSGSTRING );
 
     switch (wParam) {
 	case IDOK:
 	    if (fUnicode) 
-	      GetDlgItemText32W(hWnd, edt1, (LPWSTR)lpstrFindWhat, wFindWhatLen/2);
-	      else GetDlgItemText32A(hWnd, edt1, lpstrFindWhat, wFindWhatLen);
-	    if (IsDlgButtonChecked32(hWnd, rad2))
+	      GetDlgItemTextW(hWnd, edt1, (LPWSTR)lpstrFindWhat, wFindWhatLen/2);
+	      else GetDlgItemTextA(hWnd, edt1, lpstrFindWhat, wFindWhatLen);
+	    if (IsDlgButtonChecked(hWnd, rad2))
 		*lpFlags |= FR_DOWN;
 		else *lpFlags &= ~FR_DOWN;
-	    if (IsDlgButtonChecked32(hWnd, chx1))
+	    if (IsDlgButtonChecked(hWnd, chx1))
 		*lpFlags |= FR_WHOLEWORD; 
 		else *lpFlags &= ~FR_WHOLEWORD;
-	    if (IsDlgButtonChecked32(hWnd, chx2))
+	    if (IsDlgButtonChecked(hWnd, chx2))
 		*lpFlags |= FR_MATCHCASE; 
 		else *lpFlags &= ~FR_MATCHCASE;
             *lpFlags &= ~(FR_REPLACE | FR_REPLACEALL | FR_DIALOGTERM);
 	    *lpFlags |= FR_FINDNEXT;
-	    SendMessage32A(hwndOwner, uFindReplaceMessage, 0,
-                          GetWindowLong32A(hWnd, DWL_USER) );
+	    SendMessageA(hwndOwner, uFindReplaceMessage, 0,
+                          GetWindowLongA(hWnd, DWL_USER) );
 	    return TRUE;
 	case IDCANCEL:
             *lpFlags &= ~(FR_FINDNEXT | FR_REPLACE | FR_REPLACEALL);
 	    *lpFlags |= FR_DIALOGTERM;
-	    SendMessage32A(hwndOwner, uFindReplaceMessage, 0,
-                          GetWindowLong32A(hWnd, DWL_USER) );
-	    DestroyWindow32(hWnd);
+	    SendMessageA(hwndOwner, uFindReplaceMessage, 0,
+                          GetWindowLongA(hWnd, DWL_USER) );
+	    DestroyWindow(hWnd);
 	    return TRUE;
 	case pshHelp:
 	    /* FIXME : should lpfr structure be passed as an argument ??? */
-	    SendMessage32A(hwndOwner, uHelpMessage, 0, 0);
+	    SendMessageA(hwndOwner, uHelpMessage, 0, 0);
 	    return TRUE;
     }
     return FALSE;
@@ -1218,7 +1218,7 @@ LRESULT WINAPI FindTextDlgProc16(HWND16 hWnd, UINT16 wMsg, WPARAM16 wParam,
 	    return FINDDLG_WMInitDialog(hWnd, lParam, &(lpfr->Flags),
 		PTR_SEG_TO_LIN(lpfr->lpstrFindWhat), FALSE);
 	case WM_COMMAND:
-	    lpfr=(LPFINDREPLACE16)PTR_SEG_TO_LIN(GetWindowLong32A(hWnd, DWL_USER));
+	    lpfr=(LPFINDREPLACE16)PTR_SEG_TO_LIN(GetWindowLongA(hWnd, DWL_USER));
 	    return FINDDLG_WMCommand(hWnd, wParam, lpfr->hwndOwner,
 		&lpfr->Flags, PTR_SEG_TO_LIN(lpfr->lpstrFindWhat),
 		lpfr->wFindWhatLen, FALSE);
@@ -1229,17 +1229,17 @@ LRESULT WINAPI FindTextDlgProc16(HWND16 hWnd, UINT16 wMsg, WPARAM16 wParam,
 /***********************************************************************
  *           FindTextDlgProc32A
  */
-LRESULT WINAPI FindTextDlgProc32A(HWND32 hWnd, UINT32 wMsg, WPARAM32 wParam,
+LRESULT WINAPI FindTextDlgProcA(HWND hWnd, UINT wMsg, WPARAM wParam,
                                  LPARAM lParam)
 {
-    LPFINDREPLACE32A lpfr;
+    LPFINDREPLACEA lpfr;
     switch (wMsg) {
 	case WM_INITDIALOG:
-	    lpfr=(LPFINDREPLACE32A)lParam;
+	    lpfr=(LPFINDREPLACEA)lParam;
 	    return FINDDLG_WMInitDialog(hWnd, lParam, &(lpfr->Flags),
 	      lpfr->lpstrFindWhat, FALSE);
 	case WM_COMMAND:
-	    lpfr=(LPFINDREPLACE32A)GetWindowLong32A(hWnd, DWL_USER);
+	    lpfr=(LPFINDREPLACEA)GetWindowLongA(hWnd, DWL_USER);
 	    return FINDDLG_WMCommand(hWnd, wParam, lpfr->hwndOwner,
 		&lpfr->Flags, lpfr->lpstrFindWhat, lpfr->wFindWhatLen,
 		FALSE);
@@ -1250,17 +1250,17 @@ LRESULT WINAPI FindTextDlgProc32A(HWND32 hWnd, UINT32 wMsg, WPARAM32 wParam,
 /***********************************************************************
  *           FindTextDlgProc32W
  */
-LRESULT WINAPI FindTextDlgProc32W(HWND32 hWnd, UINT32 wMsg, WPARAM32 wParam,
+LRESULT WINAPI FindTextDlgProcW(HWND hWnd, UINT wMsg, WPARAM wParam,
                                  LPARAM lParam)
 {
-    LPFINDREPLACE32W lpfr;
+    LPFINDREPLACEW lpfr;
     switch (wMsg) {
 	case WM_INITDIALOG:
-	    lpfr=(LPFINDREPLACE32W)lParam;
+	    lpfr=(LPFINDREPLACEW)lParam;
 	    return FINDDLG_WMInitDialog(hWnd, lParam, &(lpfr->Flags),
 	      (LPSTR)lpfr->lpstrFindWhat, TRUE);
 	case WM_COMMAND:
-	    lpfr=(LPFINDREPLACE32W)GetWindowLong32A(hWnd, DWL_USER);
+	    lpfr=(LPFINDREPLACEW)GetWindowLongA(hWnd, DWL_USER);
 	    return FINDDLG_WMCommand(hWnd, wParam, lpfr->hwndOwner,
 		&lpfr->Flags, (LPSTR)lpfr->lpstrFindWhat, lpfr->wFindWhatLen,
 		TRUE);
@@ -1272,11 +1272,11 @@ LRESULT WINAPI FindTextDlgProc32W(HWND32 hWnd, UINT32 wMsg, WPARAM32 wParam,
 /***********************************************************************
  *                              REPLACEDLG_WMInitDialog         [internal]
  */
-static LRESULT REPLACEDLG_WMInitDialog(HWND32 hWnd, LPARAM lParam,
+static LRESULT REPLACEDLG_WMInitDialog(HWND hWnd, LPARAM lParam,
 		    LPDWORD lpFlags, LPSTR lpstrFindWhat, 
-		    LPSTR lpstrReplaceWith, BOOL32 fUnicode)
+		    LPSTR lpstrReplaceWith, BOOL fUnicode)
 {
-    SetWindowLong32A(hWnd, DWL_USER, lParam);
+    SetWindowLongA(hWnd, DWL_USER, lParam);
     *lpFlags &= ~(FR_FINDNEXT | FR_REPLACE | FR_REPLACEALL | FR_DIALOGTERM);
     /*
      * FIXME : If the initial FindWhat string is empty, we should disable the FinNext /
@@ -1285,28 +1285,28 @@ static LRESULT REPLACEDLG_WMInitDialog(HWND32 hWnd, LPARAM lParam,
      */
     if (fUnicode)     
     {
-	SetDlgItemText32W(hWnd, edt1, (LPWSTR)lpstrFindWhat);
-	SetDlgItemText32W(hWnd, edt2, (LPWSTR)lpstrReplaceWith);
+	SetDlgItemTextW(hWnd, edt1, (LPWSTR)lpstrFindWhat);
+	SetDlgItemTextW(hWnd, edt2, (LPWSTR)lpstrReplaceWith);
     } else
     {
-	SetDlgItemText32A(hWnd, edt1, lpstrFindWhat);
-	SetDlgItemText32A(hWnd, edt2, lpstrReplaceWith);
+	SetDlgItemTextA(hWnd, edt1, lpstrFindWhat);
+	SetDlgItemTextA(hWnd, edt2, lpstrReplaceWith);
     }
-    CheckDlgButton32(hWnd, chx1, (*lpFlags & FR_WHOLEWORD) ? 1 : 0);
+    CheckDlgButton(hWnd, chx1, (*lpFlags & FR_WHOLEWORD) ? 1 : 0);
     if (*lpFlags & (FR_HIDEWHOLEWORD | FR_NOWHOLEWORD))
-	EnableWindow32(GetDlgItem32(hWnd, chx1), FALSE);
+	EnableWindow(GetDlgItem(hWnd, chx1), FALSE);
     if (*lpFlags & FR_HIDEWHOLEWORD)
-	ShowWindow32(GetDlgItem32(hWnd, chx1), SW_HIDE);
-    CheckDlgButton32(hWnd, chx2, (*lpFlags & FR_MATCHCASE) ? 1 : 0);
+	ShowWindow(GetDlgItem(hWnd, chx1), SW_HIDE);
+    CheckDlgButton(hWnd, chx2, (*lpFlags & FR_MATCHCASE) ? 1 : 0);
     if (*lpFlags & (FR_HIDEMATCHCASE | FR_NOMATCHCASE))
-	EnableWindow32(GetDlgItem32(hWnd, chx2), FALSE);
+	EnableWindow(GetDlgItem(hWnd, chx2), FALSE);
     if (*lpFlags & FR_HIDEMATCHCASE)
-	ShowWindow32(GetDlgItem32(hWnd, chx2), SW_HIDE);
+	ShowWindow(GetDlgItem(hWnd, chx2), SW_HIDE);
     if (!(*lpFlags & FR_SHOWHELP)) {
-	EnableWindow32(GetDlgItem32(hWnd, pshHelp), FALSE);
-	ShowWindow32(GetDlgItem32(hWnd, pshHelp), SW_HIDE);
+	EnableWindow(GetDlgItem(hWnd, pshHelp), FALSE);
+	ShowWindow(GetDlgItem(hWnd, pshHelp), SW_HIDE);
     }
-    ShowWindow32(hWnd, SW_SHOWNORMAL);
+    ShowWindow(hWnd, SW_SHOWNORMAL);
     return TRUE;
 }    
 
@@ -1314,89 +1314,89 @@ static LRESULT REPLACEDLG_WMInitDialog(HWND32 hWnd, LPARAM lParam,
 /***********************************************************************
  *                              REPLACEDLG_WMCommand            [internal]
  */
-static LRESULT REPLACEDLG_WMCommand(HWND32 hWnd, WPARAM16 wParam,
-		    HWND32 hwndOwner, LPDWORD lpFlags,
+static LRESULT REPLACEDLG_WMCommand(HWND hWnd, WPARAM16 wParam,
+		    HWND hwndOwner, LPDWORD lpFlags,
 		    LPSTR lpstrFindWhat, WORD wFindWhatLen,
 		    LPSTR lpstrReplaceWith, WORD wReplaceWithLen,
-		    BOOL32 fUnicode)
+		    BOOL fUnicode)
 {
-    int uFindReplaceMessage = RegisterWindowMessage32A( FINDMSGSTRING );
-    int uHelpMessage = RegisterWindowMessage32A( HELPMSGSTRING );
+    int uFindReplaceMessage = RegisterWindowMessageA( FINDMSGSTRING );
+    int uHelpMessage = RegisterWindowMessageA( HELPMSGSTRING );
 
     switch (wParam) {
 	case IDOK:
 	    if (fUnicode)
 	    {
-		GetDlgItemText32W(hWnd, edt1, (LPWSTR)lpstrFindWhat, wFindWhatLen/2);
-		GetDlgItemText32W(hWnd, edt2, (LPWSTR)lpstrReplaceWith, wReplaceWithLen/2);
+		GetDlgItemTextW(hWnd, edt1, (LPWSTR)lpstrFindWhat, wFindWhatLen/2);
+		GetDlgItemTextW(hWnd, edt2, (LPWSTR)lpstrReplaceWith, wReplaceWithLen/2);
 	    }  else
 	    {
-		GetDlgItemText32A(hWnd, edt1, lpstrFindWhat, wFindWhatLen);
-		GetDlgItemText32A(hWnd, edt2, lpstrReplaceWith, wReplaceWithLen);
+		GetDlgItemTextA(hWnd, edt1, lpstrFindWhat, wFindWhatLen);
+		GetDlgItemTextA(hWnd, edt2, lpstrReplaceWith, wReplaceWithLen);
 	    }
-	    if (IsDlgButtonChecked32(hWnd, chx1))
+	    if (IsDlgButtonChecked(hWnd, chx1))
 		*lpFlags |= FR_WHOLEWORD; 
 		else *lpFlags &= ~FR_WHOLEWORD;
-	    if (IsDlgButtonChecked32(hWnd, chx2))
+	    if (IsDlgButtonChecked(hWnd, chx2))
 		*lpFlags |= FR_MATCHCASE; 
 		else *lpFlags &= ~FR_MATCHCASE;
             *lpFlags &= ~(FR_REPLACE | FR_REPLACEALL | FR_DIALOGTERM);
 	    *lpFlags |= FR_FINDNEXT;
-	    SendMessage32A(hwndOwner, uFindReplaceMessage, 0,
-                          GetWindowLong32A(hWnd, DWL_USER) );
+	    SendMessageA(hwndOwner, uFindReplaceMessage, 0,
+                          GetWindowLongA(hWnd, DWL_USER) );
 	    return TRUE;
 	case IDCANCEL:
             *lpFlags &= ~(FR_FINDNEXT | FR_REPLACE | FR_REPLACEALL);
 	    *lpFlags |= FR_DIALOGTERM;
-	    SendMessage32A(hwndOwner, uFindReplaceMessage, 0,
-                          GetWindowLong32A(hWnd, DWL_USER) );
-	    DestroyWindow32(hWnd);
+	    SendMessageA(hwndOwner, uFindReplaceMessage, 0,
+                          GetWindowLongA(hWnd, DWL_USER) );
+	    DestroyWindow(hWnd);
 	    return TRUE;
 	case psh1:
 	    if (fUnicode)
 	    {
-		GetDlgItemText32W(hWnd, edt1, (LPWSTR)lpstrFindWhat, wFindWhatLen/2);
-		GetDlgItemText32W(hWnd, edt2, (LPWSTR)lpstrReplaceWith, wReplaceWithLen/2);
+		GetDlgItemTextW(hWnd, edt1, (LPWSTR)lpstrFindWhat, wFindWhatLen/2);
+		GetDlgItemTextW(hWnd, edt2, (LPWSTR)lpstrReplaceWith, wReplaceWithLen/2);
 	    }  else
 	    {	
-		GetDlgItemText32A(hWnd, edt1, lpstrFindWhat, wFindWhatLen);
-		GetDlgItemText32A(hWnd, edt2, lpstrReplaceWith, wReplaceWithLen);
+		GetDlgItemTextA(hWnd, edt1, lpstrFindWhat, wFindWhatLen);
+		GetDlgItemTextA(hWnd, edt2, lpstrReplaceWith, wReplaceWithLen);
 	    }
-	    if (IsDlgButtonChecked32(hWnd, chx1))
+	    if (IsDlgButtonChecked(hWnd, chx1))
 		*lpFlags |= FR_WHOLEWORD; 
 		else *lpFlags &= ~FR_WHOLEWORD;
-	    if (IsDlgButtonChecked32(hWnd, chx2))
+	    if (IsDlgButtonChecked(hWnd, chx2))
 		*lpFlags |= FR_MATCHCASE; 
 		else *lpFlags &= ~FR_MATCHCASE;
             *lpFlags &= ~(FR_FINDNEXT | FR_REPLACEALL | FR_DIALOGTERM);
 	    *lpFlags |= FR_REPLACE;
-	    SendMessage32A(hwndOwner, uFindReplaceMessage, 0,
-                          GetWindowLong32A(hWnd, DWL_USER) );
+	    SendMessageA(hwndOwner, uFindReplaceMessage, 0,
+                          GetWindowLongA(hWnd, DWL_USER) );
 	    return TRUE;
 	case psh2:
 	    if (fUnicode)
 	    {
-		GetDlgItemText32W(hWnd, edt1, (LPWSTR)lpstrFindWhat, wFindWhatLen/2);
-		GetDlgItemText32W(hWnd, edt2, (LPWSTR)lpstrReplaceWith, wReplaceWithLen/2);
+		GetDlgItemTextW(hWnd, edt1, (LPWSTR)lpstrFindWhat, wFindWhatLen/2);
+		GetDlgItemTextW(hWnd, edt2, (LPWSTR)lpstrReplaceWith, wReplaceWithLen/2);
 	    }  else
 	    {
-		GetDlgItemText32A(hWnd, edt1, lpstrFindWhat, wFindWhatLen);
-		GetDlgItemText32A(hWnd, edt2, lpstrReplaceWith, wReplaceWithLen);
+		GetDlgItemTextA(hWnd, edt1, lpstrFindWhat, wFindWhatLen);
+		GetDlgItemTextA(hWnd, edt2, lpstrReplaceWith, wReplaceWithLen);
 	    }
-	    if (IsDlgButtonChecked32(hWnd, chx1))
+	    if (IsDlgButtonChecked(hWnd, chx1))
 		*lpFlags |= FR_WHOLEWORD; 
 		else *lpFlags &= ~FR_WHOLEWORD;
-	    if (IsDlgButtonChecked32(hWnd, chx2))
+	    if (IsDlgButtonChecked(hWnd, chx2))
 		*lpFlags |= FR_MATCHCASE; 
 		else *lpFlags &= ~FR_MATCHCASE;
             *lpFlags &= ~(FR_FINDNEXT | FR_REPLACE | FR_DIALOGTERM);
 	    *lpFlags |= FR_REPLACEALL;
-	    SendMessage32A(hwndOwner, uFindReplaceMessage, 0,
-                          GetWindowLong32A(hWnd, DWL_USER) );
+	    SendMessageA(hwndOwner, uFindReplaceMessage, 0,
+                          GetWindowLongA(hWnd, DWL_USER) );
 	    return TRUE;
 	case pshHelp:
 	    /* FIXME : should lpfr structure be passed as an argument ??? */
-	    SendMessage32A(hwndOwner, uHelpMessage, 0, 0);
+	    SendMessageA(hwndOwner, uHelpMessage, 0, 0);
 	    return TRUE;
     }
     return FALSE;
@@ -1417,7 +1417,7 @@ LRESULT WINAPI ReplaceTextDlgProc16(HWND16 hWnd, UINT16 wMsg, WPARAM16 wParam,
 		    PTR_SEG_TO_LIN(lpfr->lpstrFindWhat),
 		    PTR_SEG_TO_LIN(lpfr->lpstrReplaceWith), FALSE);
 	case WM_COMMAND:
-	    lpfr=(LPFINDREPLACE16)PTR_SEG_TO_LIN(GetWindowLong32A(hWnd, DWL_USER));
+	    lpfr=(LPFINDREPLACE16)PTR_SEG_TO_LIN(GetWindowLongA(hWnd, DWL_USER));
 	    return REPLACEDLG_WMCommand(hWnd, wParam, lpfr->hwndOwner, 
 		    &lpfr->Flags, PTR_SEG_TO_LIN(lpfr->lpstrFindWhat),
 		    lpfr->wFindWhatLen, PTR_SEG_TO_LIN(lpfr->lpstrReplaceWith),
@@ -1429,17 +1429,17 @@ LRESULT WINAPI ReplaceTextDlgProc16(HWND16 hWnd, UINT16 wMsg, WPARAM16 wParam,
 /***********************************************************************
  *           ReplaceTextDlgProc32A
  */ 
-LRESULT WINAPI ReplaceTextDlgProc32A(HWND32 hWnd, UINT32 wMsg, WPARAM32 wParam,
+LRESULT WINAPI ReplaceTextDlgProcA(HWND hWnd, UINT wMsg, WPARAM wParam,
                                     LPARAM lParam)
 {
-    LPFINDREPLACE32A lpfr;
+    LPFINDREPLACEA lpfr;
     switch (wMsg) {
 	case WM_INITDIALOG:
-            lpfr=(LPFINDREPLACE32A)lParam;
+            lpfr=(LPFINDREPLACEA)lParam;
 	    return REPLACEDLG_WMInitDialog(hWnd, lParam, &lpfr->Flags,
 		    lpfr->lpstrFindWhat, lpfr->lpstrReplaceWith, FALSE);
 	case WM_COMMAND:
-	    lpfr=(LPFINDREPLACE32A)GetWindowLong32A(hWnd, DWL_USER);
+	    lpfr=(LPFINDREPLACEA)GetWindowLongA(hWnd, DWL_USER);
 	    return REPLACEDLG_WMCommand(hWnd, wParam, lpfr->hwndOwner, 
 		    &lpfr->Flags, lpfr->lpstrFindWhat, lpfr->wFindWhatLen,
 		    lpfr->lpstrReplaceWith, lpfr->wReplaceWithLen, FALSE);
@@ -1450,18 +1450,18 @@ LRESULT WINAPI ReplaceTextDlgProc32A(HWND32 hWnd, UINT32 wMsg, WPARAM32 wParam,
 /***********************************************************************
  *           ReplaceTextDlgProc32W
  */ 
-LRESULT WINAPI ReplaceTextDlgProc32W(HWND32 hWnd, UINT32 wMsg, WPARAM32 wParam,
+LRESULT WINAPI ReplaceTextDlgProcW(HWND hWnd, UINT wMsg, WPARAM wParam,
                                     LPARAM lParam)
 {
-    LPFINDREPLACE32W lpfr;
+    LPFINDREPLACEW lpfr;
     switch (wMsg) {
 	case WM_INITDIALOG:
-            lpfr=(LPFINDREPLACE32W)lParam;
+            lpfr=(LPFINDREPLACEW)lParam;
 	    return REPLACEDLG_WMInitDialog(hWnd, lParam, &lpfr->Flags,
 		    (LPSTR)lpfr->lpstrFindWhat, (LPSTR)lpfr->lpstrReplaceWith,
 		    TRUE);
 	case WM_COMMAND:
-	    lpfr=(LPFINDREPLACE32W)GetWindowLong32A(hWnd, DWL_USER);
+	    lpfr=(LPFINDREPLACEW)GetWindowLongA(hWnd, DWL_USER);
 	    return REPLACEDLG_WMCommand(hWnd, wParam, lpfr->hwndOwner, 
 		    &lpfr->Flags, (LPSTR)lpfr->lpstrFindWhat, lpfr->wFindWhatLen,
 		    (LPSTR)lpfr->lpstrReplaceWith, lpfr->wReplaceWithLen, TRUE);
@@ -1478,7 +1478,7 @@ BOOL16 WINAPI PrintDlg16( SEGPTR printdlg )
     HANDLE16 hInst;
     BOOL16 bRet = FALSE;
     LPCVOID template;
-    HWND32 hwndDialog;
+    HWND hwndDialog;
     LPPRINTDLG16 lpPrint = (LPPRINTDLG16)PTR_SEG_TO_LIN(printdlg);
 
     TRACE(commdlg,"(%p) -- Flags=%08lX\n", lpPrint, lpPrint->Flags );
@@ -1507,7 +1507,7 @@ BOOL16 WINAPI PrintDlg16( SEGPTR printdlg )
 /***********************************************************************
  *           PrintDlg32A   (COMDLG32.17)
  */
-BOOL32 WINAPI PrintDlg32A( LPPRINTDLG32A printdlg )
+BOOL WINAPI PrintDlgA( LPPRINTDLGA printdlg )
 {
     FIXME(commdlg, "(%p): stub\n",printdlg);
     /* Altough returning FALSE is theoricaly the right thing
@@ -1523,7 +1523,7 @@ BOOL32 WINAPI PrintDlg32A( LPPRINTDLG32A printdlg )
 /***********************************************************************
  *           PrintDlg32W   (COMDLG32.18)
  */
-BOOL32 WINAPI PrintDlg32W( LPPRINTDLG32W printdlg )
+BOOL WINAPI PrintDlgW( LPPRINTDLGW printdlg )
 {
     FIXME(commdlg, "empty stub\n" );
     return FALSE;
@@ -1533,7 +1533,7 @@ BOOL32 WINAPI PrintDlg32W( LPPRINTDLG32W printdlg )
 /***********************************************************************
  *           PrintDlgProc   (COMMDLG.21)
  */
-LRESULT WINAPI PrintDlgProc(HWND16 hWnd, UINT16 wMsg, WPARAM16 wParam,
+LRESULT WINAPI PrintDlgProc16(HWND16 hWnd, UINT16 wMsg, WPARAM16 wParam,
                             LPARAM lParam)
 {
   switch (wMsg)
@@ -1546,10 +1546,10 @@ LRESULT WINAPI PrintDlgProc(HWND16 hWnd, UINT16 wMsg, WPARAM16 wParam,
       switch (wParam)
 	{
 	case IDOK:
-	  EndDialog32(hWnd, TRUE);
+	  EndDialog(hWnd, TRUE);
 	  return(TRUE);
 	case IDCANCEL:
-	  EndDialog32(hWnd, FALSE);
+	  EndDialog(hWnd, FALSE);
 	  return(TRUE);
 	}
       return(FALSE);
@@ -1561,7 +1561,7 @@ LRESULT WINAPI PrintDlgProc(HWND16 hWnd, UINT16 wMsg, WPARAM16 wParam,
 /***********************************************************************
  *           PrintSetupDlgProc   (COMMDLG.22)
  */
-LRESULT WINAPI PrintSetupDlgProc(HWND16 hWnd, UINT16 wMsg, WPARAM16 wParam,
+LRESULT WINAPI PrintSetupDlgProc16(HWND16 hWnd, UINT16 wMsg, WPARAM16 wParam,
                                  LPARAM lParam)
 {
   switch (wMsg)
@@ -1573,10 +1573,10 @@ LRESULT WINAPI PrintSetupDlgProc(HWND16 hWnd, UINT16 wMsg, WPARAM16 wParam,
     case WM_COMMAND:
       switch (wParam) {
       case IDOK:
-	EndDialog32(hWnd, TRUE);
+	EndDialog(hWnd, TRUE);
 	return(TRUE);
       case IDCANCEL:
-	EndDialog32(hWnd, FALSE);
+	EndDialog(hWnd, FALSE);
 	return(TRUE);
       }
       return(FALSE);
@@ -1596,7 +1596,7 @@ DWORD WINAPI CommDlgExtendedError(void)
 /***********************************************************************
  *           GetFileTitleA   (COMDLG32.8)
  */
-short WINAPI GetFileTitle32A(LPCSTR lpFile, LPSTR lpTitle, UINT32 cbBuf)
+short WINAPI GetFileTitleA(LPCSTR lpFile, LPSTR lpTitle, UINT cbBuf)
 {
     int i, len;
     TRACE(commdlg,"(%p %p %d); \n", lpFile, lpTitle, cbBuf);
@@ -1632,13 +1632,13 @@ short WINAPI GetFileTitle32A(LPCSTR lpFile, LPSTR lpTitle, UINT32 cbBuf)
 /***********************************************************************
  *           GetFileTitleA   (COMDLG32.8)
  */
-short WINAPI GetFileTitle32W(LPCWSTR lpFile, LPWSTR lpTitle, UINT32 cbBuf)
+short WINAPI GetFileTitleW(LPCWSTR lpFile, LPWSTR lpTitle, UINT cbBuf)
 {
 	LPSTR file = HEAP_strdupWtoA(GetProcessHeap(),0,lpFile);
 	LPSTR title = HeapAlloc(GetProcessHeap(),0,cbBuf);
 	short	ret;
 
-	ret = GetFileTitle32A(file,title,cbBuf);
+	ret = GetFileTitleA(file,title,cbBuf);
 
 	lstrcpynAtoW(lpTitle,title,cbBuf);
 	HeapFree(GetProcessHeap(),0,file);
@@ -1650,7 +1650,7 @@ short WINAPI GetFileTitle32W(LPCWSTR lpFile, LPWSTR lpTitle, UINT32 cbBuf)
  */
 short WINAPI GetFileTitle16(LPCSTR lpFile, LPSTR lpTitle, UINT16 cbBuf)
 {
-    return GetFileTitle32A(lpFile,lpTitle,cbBuf);
+    return GetFileTitleA(lpFile,lpTitle,cbBuf);
 }
 
 
@@ -1665,7 +1665,7 @@ BOOL16 WINAPI ChooseColor16(LPCHOOSECOLOR16 lpChCol)
     HANDLE16 hDlgTmpl = 0;
     BOOL16 bRet = FALSE, win32Format = FALSE;
     LPCVOID template;
-    HWND32 hwndDialog;
+    HWND hwndDialog;
 
     TRACE(commdlg,"ChooseColor\n");
     if (!lpChCol) return FALSE;    
@@ -1741,7 +1741,7 @@ struct CCPRIVATE
  UINT16 msetrgb;        /* # of SETRGBSTRING message (today not used)  */
  RECT16 old3angle;    /* last position of l-marker */
  RECT16 oldcross;     /* last position of color/satuation marker */
- BOOL32 updating;     /* to prevent recursive WM_COMMAND/EN_UPDATE procesing */
+ BOOL updating;     /* to prevent recursive WM_COMMAND/EN_UPDATE procesing */
  int h;
  int s;
  int l;               /* for temporary storing of hue,sat,lum */
@@ -1873,7 +1873,7 @@ static int CC_MouseCheckPredefColorArray(HWND16 hDlg,int dlgitem,int rows,int co
  int dx,dy,x,y;
 
  ClientToScreen16(hDlg,&point);
- hwnd=GetDlgItem32(hDlg,dlgitem);
+ hwnd=GetDlgItem(hDlg,dlgitem);
  GetWindowRect16(hwnd,&rect);
  if (PtInRect16(&rect,point))
  {
@@ -1905,7 +1905,7 @@ static int CC_MouseCheckUserColorArray(HWND16 hDlg,int dlgitem,int rows,int cols
  int dx,dy,x,y;
 
  ClientToScreen16(hDlg,&point);
- hwnd=GetDlgItem32(hDlg,dlgitem);
+ hwnd=GetDlgItem(hDlg,dlgitem);
  GetWindowRect16(hwnd,&rect);
  if (PtInRect16(&rect,point))
  {
@@ -1940,13 +1940,13 @@ static int CC_MouseCheckUserColorArray(HWND16 hDlg,int dlgitem,int rows,int cols
  */
 static int CC_MouseCheckColorGraph(HWND16 hDlg,int dlgitem,int *hori,int *vert,LPARAM lParam)
 {
- HWND32 hwnd;
+ HWND hwnd;
  POINT16 point = MAKEPOINT16(lParam);
  RECT16 rect;
  long x,y;
 
  ClientToScreen16(hDlg,&point);
- hwnd=GetDlgItem32(hDlg,dlgitem);
+ hwnd=GetDlgItem(hDlg,dlgitem);
  GetWindowRect16(hwnd,&rect);
  if (PtInRect16(&rect,point))
  {
@@ -1977,7 +1977,7 @@ static int CC_MouseCheckResultWindow(HWND16 hDlg,LPARAM lParam)
  RECT16 rect;
 
  ClientToScreen16(hDlg,&point);
- hwnd=GetDlgItem32(hDlg,0x2c5);
+ hwnd=GetDlgItem(hDlg,0x2c5);
  GetWindowRect16(hwnd,&rect);
  if (PtInRect16(&rect,point))
  {
@@ -1995,7 +1995,7 @@ static int CC_CheckDigitsInEdit(HWND16 hwnd,int maxval)
  int i,k,m,result,value;
  long editpos;
  char buffer[30];
- GetWindowText32A(hwnd,buffer,sizeof(buffer));
+ GetWindowTextA(hwnd,buffer,sizeof(buffer));
  m=strlen(buffer);
  result=0;
 
@@ -2020,7 +2020,7 @@ static int CC_CheckDigitsInEdit(HWND16 hwnd,int maxval)
  if (result)
  {
   editpos=SendMessage16(hwnd,EM_GETSEL16,0,0);
-  SetWindowText32A(hwnd,buffer);
+  SetWindowTextA(hwnd,buffer);
   SendMessage16(hwnd,EM_SETSEL16,0,editpos);
  }
  return value;
@@ -2034,28 +2034,28 @@ static int CC_CheckDigitsInEdit(HWND16 hwnd,int maxval)
 static void CC_PaintSelectedColor(HWND16 hDlg,COLORREF cr)
 {
  RECT16 rect;
- HDC32  hdc;
- HBRUSH32 hBrush;
- HWND32 hwnd=GetDlgItem32(hDlg,0x2c5);
- if (IsWindowVisible32(GetDlgItem32(hDlg,0x2c6)))   /* if full size */
+ HDC  hdc;
+ HBRUSH hBrush;
+ HWND hwnd=GetDlgItem(hDlg,0x2c5);
+ if (IsWindowVisible(GetDlgItem(hDlg,0x2c6)))   /* if full size */
  {
-  hdc=GetDC32(hwnd);
+  hdc=GetDC(hwnd);
   GetClientRect16 (hwnd, &rect) ;
-  hBrush = CreateSolidBrush32(cr);
+  hBrush = CreateSolidBrush(cr);
   if (hBrush)
   {
-   hBrush = SelectObject32 (hdc, hBrush) ;
-   Rectangle32(hdc, rect.left,rect.top,rect.right/2,rect.bottom);
-   DeleteObject32 (SelectObject32 (hdc,hBrush)) ;
-   hBrush=CreateSolidBrush32(GetNearestColor32(hdc,cr));
+   hBrush = SelectObject (hdc, hBrush) ;
+   Rectangle(hdc, rect.left,rect.top,rect.right/2,rect.bottom);
+   DeleteObject (SelectObject (hdc,hBrush)) ;
+   hBrush=CreateSolidBrush(GetNearestColor(hdc,cr));
    if (hBrush)
    {
-    hBrush= SelectObject32 (hdc, hBrush) ;
-    Rectangle32( hdc, rect.right/2-1,rect.top,rect.right,rect.bottom);
-    DeleteObject32( SelectObject32 (hdc, hBrush)) ;
+    hBrush= SelectObject (hdc, hBrush) ;
+    Rectangle( hdc, rect.right/2-1,rect.top,rect.right,rect.bottom);
+    DeleteObject( SelectObject (hdc, hBrush)) ;
    }
   }
-  ReleaseDC32(hwnd,hdc);
+  ReleaseDC(hwnd,hdc);
  }
 }
 
@@ -2064,21 +2064,21 @@ static void CC_PaintSelectedColor(HWND16 hDlg,COLORREF cr)
  */
 static void CC_PaintTriangle(HWND16 hDlg,int y)
 {
- HDC32 hDC;
+ HDC hDC;
  long temp;
  int w=GetDialogBaseUnits();
  POINT16 points[3];
  int height;
  int oben;
  RECT16 rect;
- HWND16 hwnd=GetDlgItem32(hDlg,0x2be);
- struct CCPRIVATE *lpp=(struct CCPRIVATE *)GetWindowLong32A(hDlg, DWL_USER); 
+ HWND16 hwnd=GetDlgItem(hDlg,0x2be);
+ struct CCPRIVATE *lpp=(struct CCPRIVATE *)GetWindowLongA(hDlg, DWL_USER); 
 
- if (IsWindowVisible32(GetDlgItem32(hDlg,0x2c6)))   /* if full size */
+ if (IsWindowVisible(GetDlgItem(hDlg,0x2c6)))   /* if full size */
  {
    GetClientRect16(hwnd,&rect);
    height=rect.bottom;
-   hDC=GetDC32(hDlg);
+   hDC=GetDC(hDlg);
 
    points[0].y=rect.top;
    points[0].x=rect.right;           /*  |  /|  */
@@ -2093,13 +2093,13 @@ static void CC_PaintTriangle(HWND16 hDlg,int y)
    points[2].x=points[1].x=points[0].x + w;
 
    if (lpp->old3angle.left)
-    FillRect16(hDC,&lpp->old3angle,GetStockObject32(WHITE_BRUSH));
+    FillRect16(hDC,&lpp->old3angle,GetStockObject(WHITE_BRUSH));
    lpp->old3angle.left  =points[0].x;
    lpp->old3angle.right =points[1].x+1;
    lpp->old3angle.top   =points[2].y-1;
    lpp->old3angle.bottom=points[1].y+1;
    Polygon16(hDC,points,3);
-   ReleaseDC32(hDlg,hDC);
+   ReleaseDC(hDlg,hDC);
  }
 }
 
@@ -2109,25 +2109,25 @@ static void CC_PaintTriangle(HWND16 hDlg,int y)
  */
 static void CC_PaintCross(HWND16 hDlg,int x,int y)
 {
- HDC32 hDC;
+ HDC hDC;
  int w=GetDialogBaseUnits();
- HWND16 hwnd=GetDlgItem32(hDlg,0x2c6);
- struct CCPRIVATE * lpp=(struct CCPRIVATE *)GetWindowLong32A(hDlg, DWL_USER); 
+ HWND16 hwnd=GetDlgItem(hDlg,0x2c6);
+ struct CCPRIVATE * lpp=(struct CCPRIVATE *)GetWindowLongA(hDlg, DWL_USER); 
  RECT16 rect;
  POINT16 point;
- HPEN32 hPen;
+ HPEN hPen;
 
- if (IsWindowVisible32(GetDlgItem32(hDlg,0x2c6)))   /* if full size */
+ if (IsWindowVisible(GetDlgItem(hDlg,0x2c6)))   /* if full size */
  {
    GetClientRect16(hwnd,&rect);
-   hDC=GetDC32(hwnd);
-   SelectClipRgn32(hDC,CreateRectRgnIndirect16(&rect));
-   hPen=CreatePen32(PS_SOLID,2,0);
-   hPen=SelectObject32(hDC,hPen);
+   hDC=GetDC(hwnd);
+   SelectClipRgn(hDC,CreateRectRgnIndirect16(&rect));
+   hPen=CreatePen(PS_SOLID,2,0);
+   hPen=SelectObject(hDC,hPen);
    point.x=((long)rect.right*(long)x)/(long)MAXHORI;
    point.y=rect.bottom-((long)rect.bottom*(long)y)/(long)MAXVERT;
    if (lpp->oldcross.left!=lpp->oldcross.right)
-     BitBlt32(hDC,lpp->oldcross.left,lpp->oldcross.top,
+     BitBlt(hDC,lpp->oldcross.left,lpp->oldcross.top,
               lpp->oldcross.right-lpp->oldcross.left,
               lpp->oldcross.bottom-lpp->oldcross.top,
               lpp->hdcMem,lpp->oldcross.left,lpp->oldcross.top,SRCCOPY);
@@ -2136,12 +2136,12 @@ static void CC_PaintCross(HWND16 hDlg,int x,int y)
    lpp->oldcross.top   =point.y-w-1;
    lpp->oldcross.bottom=point.y+w+1; 
 
-   MoveTo(hDC,point.x-w,point.y); 
-   LineTo32(hDC,point.x+w,point.y);
-   MoveTo(hDC,point.x,point.y-w); 
-   LineTo32(hDC,point.x,point.y+w);
-   DeleteObject32(SelectObject32(hDC,hPen));
-   ReleaseDC32(hwnd,hDC);
+   MoveTo16(hDC,point.x-w,point.y); 
+   LineTo(hDC,point.x+w,point.y);
+   MoveTo16(hDC,point.x,point.y-w); 
+   LineTo(hDC,point.x,point.y+w);
+   DeleteObject(SelectObject(hDC,hPen));
+   ReleaseDC(hwnd,hDC);
  }
 }
 
@@ -2156,18 +2156,18 @@ static void CC_PaintCross(HWND16 hDlg,int x,int y)
 static void CC_PrepareColorGraph(HWND16 hDlg)    
 {
  int sdif,hdif,xdif,ydif,r,g,b,hue,sat;
- HWND32 hwnd=GetDlgItem32(hDlg,0x2c6);
- struct CCPRIVATE * lpp=(struct CCPRIVATE *)GetWindowLong32A(hDlg, DWL_USER);  
- HBRUSH32 hbrush;
- HDC32 hdc ;
+ HWND hwnd=GetDlgItem(hDlg,0x2c6);
+ struct CCPRIVATE * lpp=(struct CCPRIVATE *)GetWindowLongA(hDlg, DWL_USER);  
+ HBRUSH hbrush;
+ HDC hdc ;
  RECT16 rect,client;
  HCURSOR16 hcursor=SetCursor16(LoadCursor16(0,IDC_WAIT16));
 
  GetClientRect16(hwnd,&client);
- hdc=GetDC32(hwnd);
- lpp->hdcMem = CreateCompatibleDC32(hdc);
- lpp->hbmMem = CreateCompatibleBitmap32(hdc,client.right,client.bottom);
- SelectObject32(lpp->hdcMem,lpp->hbmMem);
+ hdc=GetDC(hwnd);
+ lpp->hdcMem = CreateCompatibleDC(hdc);
+ lpp->hbmMem = CreateCompatibleBitmap(hdc,client.right,client.bottom);
+ SelectObject(lpp->hdcMem,lpp->hbmMem);
 
  xdif=client.right /XSTEPS;
  ydif=client.bottom/YSTEPS+1;
@@ -2183,14 +2183,14 @@ static void CC_PrepareColorGraph(HWND16 hDlg)
    r=CC_HSLtoRGB('R',hue,sat,120);
    g=CC_HSLtoRGB('G',hue,sat,120);
    b=CC_HSLtoRGB('B',hue,sat,120);
-   hbrush=CreateSolidBrush32(RGB(r,g,b));
+   hbrush=CreateSolidBrush(RGB(r,g,b));
    FillRect16(lpp->hdcMem,&rect,hbrush);
-   DeleteObject32(hbrush);
+   DeleteObject(hbrush);
    rect.bottom=rect.top;
   }
   rect.left=rect.right;
  }
- ReleaseDC32(hwnd,hdc);
+ ReleaseDC(hwnd,hdc);
  SetCursor16(hcursor);
 }
 
@@ -2199,22 +2199,22 @@ static void CC_PrepareColorGraph(HWND16 hDlg)
  */
 static void CC_PaintColorGraph(HWND16 hDlg)
 {
- HWND32 hwnd=GetDlgItem32(hDlg,0x2c6);
- struct CCPRIVATE * lpp=(struct CCPRIVATE *)GetWindowLong32A(hDlg, DWL_USER); 
- HDC32  hDC;
+ HWND hwnd=GetDlgItem(hDlg,0x2c6);
+ struct CCPRIVATE * lpp=(struct CCPRIVATE *)GetWindowLongA(hDlg, DWL_USER); 
+ HDC  hDC;
  RECT16 rect;
- if (IsWindowVisible32(hwnd))   /* if full size */
+ if (IsWindowVisible(hwnd))   /* if full size */
  {
   if (!lpp->hdcMem)
    CC_PrepareColorGraph(hDlg);   /* should not be necessary */
 
-  hDC=GetDC32(hwnd);
+  hDC=GetDC(hwnd);
   GetClientRect16(hwnd,&rect);
   if (lpp->hdcMem)
-      BitBlt32(hDC,0,0,rect.right,rect.bottom,lpp->hdcMem,0,0,SRCCOPY);
+      BitBlt(hDC,0,0,rect.right,rect.bottom,lpp->hdcMem,0,0,SRCCOPY);
   else
     WARN(commdlg,"choose color: hdcMem is not defined\n");
-  ReleaseDC32(hwnd,hDC);
+  ReleaseDC(hwnd,hDC);
  }
 }
 /***********************************************************************
@@ -2222,15 +2222,15 @@ static void CC_PaintColorGraph(HWND16 hDlg)
  */
 static void CC_PaintLumBar(HWND16 hDlg,int hue,int sat)
 {
- HWND32 hwnd=GetDlgItem32(hDlg,0x2be);
+ HWND hwnd=GetDlgItem(hDlg,0x2be);
  RECT16 rect,client;
  int lum,ldif,ydif,r,g,b;
- HBRUSH32 hbrush;
- HDC32 hDC;
+ HBRUSH hbrush;
+ HDC hDC;
 
- if (IsWindowVisible32(hwnd))
+ if (IsWindowVisible(hwnd))
  {
-  hDC=GetDC32(hwnd);
+  hDC=GetDC(hwnd);
   GetClientRect16(hwnd,&client);
   rect=client;
 
@@ -2242,14 +2242,14 @@ static void CC_PaintLumBar(HWND16 hDlg,int hue,int sat)
    r=CC_HSLtoRGB('R',hue,sat,lum);
    g=CC_HSLtoRGB('G',hue,sat,lum);
    b=CC_HSLtoRGB('B',hue,sat,lum);
-   hbrush=CreateSolidBrush32(RGB(r,g,b));
+   hbrush=CreateSolidBrush(RGB(r,g,b));
    FillRect16(hDC,&rect,hbrush);
-   DeleteObject32(hbrush);
+   DeleteObject(hbrush);
    rect.bottom=rect.top;
   }
   GetClientRect16(hwnd,&rect);
-  FrameRect16(hDC,&rect,GetStockObject32(BLACK_BRUSH));
-  ReleaseDC32(hwnd,hDC);
+  FrameRect16(hDC,&rect,GetStockObject(BLACK_BRUSH));
+  ReleaseDC(hwnd,hDC);
  }
 }
 
@@ -2259,19 +2259,19 @@ static void CC_PaintLumBar(HWND16 hDlg,int hue,int sat)
 static void CC_EditSetRGB(HWND16 hDlg,COLORREF cr)
 {
  char buffer[10];
- struct CCPRIVATE * lpp=(struct CCPRIVATE *)GetWindowLong32A(hDlg, DWL_USER); 
+ struct CCPRIVATE * lpp=(struct CCPRIVATE *)GetWindowLongA(hDlg, DWL_USER); 
  int r=GetRValue(cr);
  int g=GetGValue(cr);
  int b=GetBValue(cr);
- if (IsWindowVisible32(GetDlgItem32(hDlg,0x2c6)))   /* if full size */
+ if (IsWindowVisible(GetDlgItem(hDlg,0x2c6)))   /* if full size */
  {
    lpp->updating=TRUE;
    sprintf(buffer,"%d",r);
-   SetWindowText32A(GetDlgItem32(hDlg,0x2c2),buffer);
+   SetWindowTextA(GetDlgItem(hDlg,0x2c2),buffer);
    sprintf(buffer,"%d",g);
-   SetWindowText32A(GetDlgItem32(hDlg,0x2c3),buffer);
+   SetWindowTextA(GetDlgItem(hDlg,0x2c3),buffer);
    sprintf(buffer,"%d",b);
-   SetWindowText32A(GetDlgItem32(hDlg,0x2c4),buffer);
+   SetWindowTextA(GetDlgItem(hDlg,0x2c4),buffer);
    lpp->updating=FALSE;
  }
 }
@@ -2282,17 +2282,17 @@ static void CC_EditSetRGB(HWND16 hDlg,COLORREF cr)
 static void CC_EditSetHSL(HWND16 hDlg,int h,int s,int l)
 {
  char buffer[10];
- struct CCPRIVATE * lpp=(struct CCPRIVATE *)GetWindowLong32A(hDlg, DWL_USER); 
+ struct CCPRIVATE * lpp=(struct CCPRIVATE *)GetWindowLongA(hDlg, DWL_USER); 
  lpp->updating=TRUE;
- if (IsWindowVisible32(GetDlgItem32(hDlg,0x2c6)))   /* if full size */
+ if (IsWindowVisible(GetDlgItem(hDlg,0x2c6)))   /* if full size */
  {
    lpp->updating=TRUE;
    sprintf(buffer,"%d",h);
-   SetWindowText32A(GetDlgItem32(hDlg,0x2bf),buffer);
+   SetWindowTextA(GetDlgItem(hDlg,0x2bf),buffer);
    sprintf(buffer,"%d",s);
-   SetWindowText32A(GetDlgItem32(hDlg,0x2c0),buffer);
+   SetWindowTextA(GetDlgItem(hDlg,0x2c0),buffer);
    sprintf(buffer,"%d",l);
-   SetWindowText32A(GetDlgItem32(hDlg,0x2c1),buffer);
+   SetWindowTextA(GetDlgItem(hDlg,0x2c1),buffer);
    lpp->updating=FALSE;
  }
  CC_PaintLumBar(hDlg,h,s);
@@ -2304,24 +2304,24 @@ static void CC_EditSetHSL(HWND16 hDlg,int h,int s,int l)
 static void CC_SwitchToFullSize(HWND16 hDlg,COLORREF result,LPRECT16 lprect)
 {
  int i;
- struct CCPRIVATE * lpp=(struct CCPRIVATE *)GetWindowLong32A(hDlg, DWL_USER); 
+ struct CCPRIVATE * lpp=(struct CCPRIVATE *)GetWindowLongA(hDlg, DWL_USER); 
  
- EnableWindow32(GetDlgItem32(hDlg,0x2cf),FALSE);
+ EnableWindow(GetDlgItem(hDlg,0x2cf),FALSE);
  CC_PrepareColorGraph(hDlg);
  for (i=0x2bf;i<0x2c5;i++)
-   EnableWindow32(GetDlgItem32(hDlg,i),TRUE);
+   EnableWindow(GetDlgItem(hDlg,i),TRUE);
  for (i=0x2d3;i<0x2d9;i++)
-   EnableWindow32(GetDlgItem32(hDlg,i),TRUE);
- EnableWindow32(GetDlgItem32(hDlg,0x2c9),TRUE);
- EnableWindow32(GetDlgItem32(hDlg,0x2c8),TRUE);
+   EnableWindow(GetDlgItem(hDlg,i),TRUE);
+ EnableWindow(GetDlgItem(hDlg,0x2c9),TRUE);
+ EnableWindow(GetDlgItem(hDlg,0x2c8),TRUE);
 
  if (lprect)
-  SetWindowPos32(hDlg,0,0,0,lprect->right-lprect->left,
+  SetWindowPos(hDlg,0,0,0,lprect->right-lprect->left,
    lprect->bottom-lprect->top, SWP_NOMOVE|SWP_NOZORDER);
 
- ShowWindow32(GetDlgItem32(hDlg,0x2c6),SW_SHOW);
- ShowWindow32(GetDlgItem32(hDlg,0x2be),SW_SHOW);
- ShowWindow32(GetDlgItem32(hDlg,0x2c5),SW_SHOW);
+ ShowWindow(GetDlgItem(hDlg,0x2c6),SW_SHOW);
+ ShowWindow(GetDlgItem(hDlg,0x2be),SW_SHOW);
+ ShowWindow(GetDlgItem(hDlg,0x2c5),SW_SHOW);
 
  CC_EditSetRGB(hDlg,result);
  CC_EditSetHSL(hDlg,lpp->h,lpp->s,lpp->l);
@@ -2332,10 +2332,10 @@ static void CC_SwitchToFullSize(HWND16 hDlg,COLORREF result,LPRECT16 lprect)
  */
 static void CC_PaintPredefColorArray(HWND16 hDlg,int rows,int cols)
 {
- HWND32 hwnd=GetDlgItem32(hDlg,0x2d0);
+ HWND hwnd=GetDlgItem(hDlg,0x2d0);
  RECT16 rect;
- HDC32  hdc;
- HBRUSH32 hBrush;
+ HDC  hdc;
+ HBRUSH hBrush;
  int dx,dy,i,j,k;
 
  GetClientRect16(hwnd,&rect);
@@ -2343,27 +2343,27 @@ static void CC_PaintPredefColorArray(HWND16 hDlg,int rows,int cols)
  dy=rect.bottom/rows;
  k=rect.left;
 
- hdc=GetDC32(hwnd);
+ hdc=GetDC(hwnd);
  GetClientRect16 (hwnd, &rect) ;
 
  for (j=0;j<rows;j++)
  {
   for (i=0;i<cols;i++)
   {
-   hBrush = CreateSolidBrush32(predefcolors[j][i]);
+   hBrush = CreateSolidBrush(predefcolors[j][i]);
    if (hBrush)
    {
-    hBrush = SelectObject32 (hdc, hBrush) ;
-    Rectangle32(hdc, rect.left, rect.top,
+    hBrush = SelectObject (hdc, hBrush) ;
+    Rectangle(hdc, rect.left, rect.top,
                 rect.left+dx-DISTANCE, rect.top+dy-DISTANCE);
     rect.left=rect.left+dx;
-    DeleteObject32( SelectObject32 (hdc, hBrush)) ;
+    DeleteObject( SelectObject (hdc, hBrush)) ;
    }
   }
   rect.top=rect.top+dy;
   rect.left=k;
  }
- ReleaseDC32(hwnd,hdc);
+ ReleaseDC(hwnd,hdc);
  /* FIXME: draw_a_focus_rect */
 }
 /***********************************************************************
@@ -2371,10 +2371,10 @@ static void CC_PaintPredefColorArray(HWND16 hDlg,int rows,int cols)
  */
 static void CC_PaintUserColorArray(HWND16 hDlg,int rows,int cols,COLORREF* lpcr)
 {
- HWND32 hwnd=GetDlgItem32(hDlg,0x2d1);
+ HWND hwnd=GetDlgItem(hDlg,0x2d1);
  RECT16 rect;
- HDC32  hdc;
- HBRUSH32 hBrush;
+ HDC  hdc;
+ HBRUSH hBrush;
  int dx,dy,i,j,k;
 
  GetClientRect16(hwnd,&rect);
@@ -2383,27 +2383,27 @@ static void CC_PaintUserColorArray(HWND16 hDlg,int rows,int cols,COLORREF* lpcr)
  dy=rect.bottom/rows;
  k=rect.left;
 
- hdc=GetDC32(hwnd);
+ hdc=GetDC(hwnd);
  if (hdc)
  {
   for (j=0;j<rows;j++)
   {
    for (i=0;i<cols;i++)
    {
-    hBrush = CreateSolidBrush32(lpcr[i+j*cols]);
+    hBrush = CreateSolidBrush(lpcr[i+j*cols]);
     if (hBrush)
     {
-     hBrush = SelectObject32 (hdc, hBrush) ;
-     Rectangle32( hdc, rect.left, rect.top,
+     hBrush = SelectObject (hdc, hBrush) ;
+     Rectangle( hdc, rect.left, rect.top,
                   rect.left+dx-DISTANCE, rect.top+dy-DISTANCE);
      rect.left=rect.left+dx;
-     DeleteObject32( SelectObject32 (hdc, hBrush)) ;
+     DeleteObject( SelectObject (hdc, hBrush)) ;
     }
    }
    rect.top=rect.top+dy;
    rect.left=k;
   }
-  ReleaseDC32(hwnd,hdc);
+  ReleaseDC(hwnd,hdc);
  }
  /* FIXME: draw_a_focus_rect */
 }
@@ -2413,7 +2413,7 @@ static void CC_PaintUserColorArray(HWND16 hDlg,int rows,int cols,COLORREF* lpcr)
 /***********************************************************************
  *                             CC_HookCallChk                 [internal]
  */
-static BOOL32 CC_HookCallChk(LPCHOOSECOLOR16 lpcc)
+static BOOL CC_HookCallChk(LPCHOOSECOLOR16 lpcc)
 {
  if (lpcc)
   if(lpcc->Flags & CC_ENABLEHOOK)
@@ -2440,14 +2440,14 @@ static LONG CC_WMInitDialog(HWND16 hDlg, WPARAM16 wParam, LPARAM lParam)
 
    if (lpp->lpcc->lStructSize != sizeof(CHOOSECOLOR16))
    {
-      EndDialog32 (hDlg, 0) ;
+      EndDialog (hDlg, 0) ;
       return FALSE;
    }
-   SetWindowLong32A(hDlg, DWL_USER, (LONG)lpp); 
+   SetWindowLongA(hDlg, DWL_USER, (LONG)lpp); 
 
    if (!(lpp->lpcc->Flags & CC_SHOWHELP))
-      ShowWindow32(GetDlgItem32(hDlg,0x40e),SW_HIDE);
-   lpp->msetrgb=RegisterWindowMessage32A( SETRGBSTRING );
+      ShowWindow(GetDlgItem(hDlg,0x40e),SW_HIDE);
+   lpp->msetrgb=RegisterWindowMessageA( SETRGBSTRING );
 
 #if 0
    cpos=MAKELONG(5,7); /* init */
@@ -2468,29 +2468,29 @@ static LONG CC_WMInitDialog(HWND16 hDlg, WPARAM16 wParam, LPARAM lParam)
    GetWindowRect16(hDlg,&lpp->fullsize);
    if (lpp->lpcc->Flags & CC_FULLOPEN || lpp->lpcc->Flags & CC_PREVENTFULLOPEN)
    {
-      hwnd=GetDlgItem32(hDlg,0x2cf);
-      EnableWindow32(hwnd,FALSE);
+      hwnd=GetDlgItem(hDlg,0x2cf);
+      EnableWindow(hwnd,FALSE);
    }
    if (!(lpp->lpcc->Flags & CC_FULLOPEN) || lpp->lpcc->Flags & CC_PREVENTFULLOPEN)
    {
       rect=lpp->fullsize;
       res=rect.bottom-rect.top;
-      hwnd=GetDlgItem32(hDlg,0x2c6); /* cut at left border */
+      hwnd=GetDlgItem(hDlg,0x2c6); /* cut at left border */
       point.x=point.y=0;
       ClientToScreen16(hwnd,&point);
       ScreenToClient16(hDlg,&point);
       GetClientRect16(hDlg,&rect);
-      point.x+=GetSystemMetrics32(SM_CXDLGFRAME);
-      SetWindowPos32(hDlg,0,0,0,point.x,res,SWP_NOMOVE|SWP_NOZORDER);
+      point.x+=GetSystemMetrics(SM_CXDLGFRAME);
+      SetWindowPos(hDlg,0,0,0,point.x,res,SWP_NOMOVE|SWP_NOZORDER);
 
-      ShowWindow32(GetDlgItem32(hDlg,0x2c6),SW_HIDE);
-      ShowWindow32(GetDlgItem32(hDlg,0x2c5),SW_HIDE);
+      ShowWindow(GetDlgItem(hDlg,0x2c6),SW_HIDE);
+      ShowWindow(GetDlgItem(hDlg,0x2c5),SW_HIDE);
    }
    else
       CC_SwitchToFullSize(hDlg,lpp->lpcc->rgbResult,NULL);
    res=TRUE;
    for (i=0x2bf;i<0x2c5;i++)
-     SendMessage16(GetDlgItem32(hDlg,i),EM_LIMITTEXT16,3,0);      /* max 3 digits:  xyz  */
+     SendMessage16(GetDlgItem(hDlg,i),EM_LIMITTEXT16,3,0);      /* max 3 digits:  xyz  */
    if (CC_HookCallChk(lpp->lpcc))
       res=CallWindowProc16(lpp->lpcc->lpfnHook,hDlg,WM_INITDIALOG,wParam,lParam);
 
@@ -2506,12 +2506,12 @@ static LONG CC_WMInitDialog(HWND16 hDlg, WPARAM16 wParam, LPARAM lParam)
    lpp->l=CC_RGBtoHSL('L',r,g,b);
 
    /* Doing it the long way becaus CC_EditSetRGB/HSL doesn'nt seem to work */
-   SetDlgItemInt32(hDlg, 703, lpp->h, TRUE);
-   SetDlgItemInt32(hDlg, 704, lpp->s, TRUE);
-   SetDlgItemInt32(hDlg, 705, lpp->l, TRUE);
-   SetDlgItemInt32(hDlg, 706, r, TRUE);
-   SetDlgItemInt32(hDlg, 707, g, TRUE);
-   SetDlgItemInt32(hDlg, 708, b, TRUE);
+   SetDlgItemInt(hDlg, 703, lpp->h, TRUE);
+   SetDlgItemInt(hDlg, 704, lpp->s, TRUE);
+   SetDlgItemInt(hDlg, 705, lpp->l, TRUE);
+   SetDlgItemInt(hDlg, 706, r, TRUE);
+   SetDlgItemInt(hDlg, 707, g, TRUE);
+   SetDlgItemInt(hDlg, 708, b, TRUE);
 
    CC_PaintCross(hDlg,lpp->h,lpp->s);
    CC_PaintTriangle(hDlg,lpp->l);
@@ -2526,9 +2526,9 @@ static LRESULT CC_WMCommand(HWND16 hDlg, WPARAM16 wParam, LPARAM lParam)
 {
     int r,g,b,i,xx;
     UINT16 cokmsg;
-    HDC32 hdc;
+    HDC hdc;
     COLORREF *cr;
-    struct CCPRIVATE * lpp=(struct CCPRIVATE *)GetWindowLong32A(hDlg, DWL_USER); 
+    struct CCPRIVATE * lpp=(struct CCPRIVATE *)GetWindowLongA(hDlg, DWL_USER); 
     TRACE(commdlg,"CC_WMCommand wParam=%x lParam=%lx\n",wParam,lParam);
     switch (wParam)
     {
@@ -2591,8 +2591,8 @@ static LRESULT CC_WMCommand(HWND16 hDlg, WPARAM16 wParam, LPARAM lParam)
 	       
           case 0x2cf:
                CC_SwitchToFullSize(hDlg,lpp->lpcc->rgbResult,&lpp->fullsize);
-	       InvalidateRect32( hDlg, NULL, TRUE );
-	       SetFocus32(GetDlgItem32(hDlg,0x2bf));
+	       InvalidateRect( hDlg, NULL, TRUE );
+	       SetFocus(GetDlgItem(hDlg,0x2bf));
 	       break;
 
           case 0x2c8:    /* add colors ... column by column */
@@ -2604,9 +2604,9 @@ static LRESULT CC_WMCommand(HWND16 hDlg, WPARAM16 wParam, LPARAM lParam)
 	       break;
 
           case 0x2c9:              /* resulting color */
-	       hdc=GetDC32(hDlg);
-	       lpp->lpcc->rgbResult=GetNearestColor32(hdc,lpp->lpcc->rgbResult);
-	       ReleaseDC32(hDlg,hdc);
+	       hdc=GetDC(hDlg);
+	       lpp->lpcc->rgbResult=GetNearestColor(hdc,lpp->lpcc->rgbResult);
+	       ReleaseDC(hDlg,hdc);
 	       CC_EditSetRGB(hDlg,lpp->lpcc->rgbResult);
 	       CC_PaintSelectedColor(hDlg,lpp->lpcc->rgbResult);
 	       r=GetRValue(lpp->lpcc->rgbResult);
@@ -2621,7 +2621,7 @@ static LRESULT CC_WMCommand(HWND16 hDlg, WPARAM16 wParam, LPARAM lParam)
 	       break;
 
 	  case 0x40e:           /* Help! */ /* The Beatles, 1965  ;-) */
-	       i=RegisterWindowMessage32A( HELPMSGSTRING );
+	       i=RegisterWindowMessageA( HELPMSGSTRING );
 	       if (lpp->lpcc->hwndOwner)
 		   SendMessage16(lpp->lpcc->hwndOwner,i,0,(LPARAM)lpp->lpcc);
 	       if (CC_HookCallChk(lpp->lpcc))
@@ -2630,16 +2630,16 @@ static LRESULT CC_WMCommand(HWND16 hDlg, WPARAM16 wParam, LPARAM lParam)
 	       break;
 
           case IDOK :
-		cokmsg=RegisterWindowMessage32A( COLOROKSTRING );
+		cokmsg=RegisterWindowMessageA( COLOROKSTRING );
 		if (lpp->lpcc->hwndOwner)
 			if (SendMessage16(lpp->lpcc->hwndOwner,cokmsg,0,(LPARAM)lpp->lpcc))
 			   break;    /* do NOT close */
 
-		EndDialog32 (hDlg, 1) ;
+		EndDialog (hDlg, 1) ;
 		return TRUE ;
 	
 	  case IDCANCEL :
-		EndDialog32 (hDlg, 0) ;
+		EndDialog (hDlg, 0) ;
 		return TRUE ;
 
        }
@@ -2651,12 +2651,12 @@ static LRESULT CC_WMCommand(HWND16 hDlg, WPARAM16 wParam, LPARAM lParam)
  */
 static LRESULT CC_WMPaint(HWND16 hDlg, WPARAM16 wParam, LPARAM lParam) 
 {
-    HDC32 hdc;
-    PAINTSTRUCT32 ps;
-    struct CCPRIVATE * lpp=(struct CCPRIVATE *)GetWindowLong32A(hDlg, DWL_USER); 
+    HDC hdc;
+    PAINTSTRUCT ps;
+    struct CCPRIVATE * lpp=(struct CCPRIVATE *)GetWindowLongA(hDlg, DWL_USER); 
 
-    hdc=BeginPaint32(hDlg,&ps);
-    EndPaint32(hDlg,&ps);
+    hdc=BeginPaint(hDlg,&ps);
+    EndPaint(hDlg,&ps);
     /* we have to paint dialog children except text and buttons */
  
     CC_PaintPredefColorArray(hDlg,6,8);
@@ -2668,11 +2668,11 @@ static LRESULT CC_WMPaint(HWND16 hDlg, WPARAM16 wParam, LPARAM lParam)
     CC_PaintSelectedColor(hDlg,lpp->lpcc->rgbResult);
 
     /* special necessary for Wine */
-    ValidateRect32(GetDlgItem32(hDlg,0x2d0),NULL);
-    ValidateRect32(GetDlgItem32(hDlg,0x2d1),NULL);
-    ValidateRect32(GetDlgItem32(hDlg,0x2c6),NULL);
-    ValidateRect32(GetDlgItem32(hDlg,0x2be),NULL);
-    ValidateRect32(GetDlgItem32(hDlg,0x2c5),NULL);
+    ValidateRect(GetDlgItem(hDlg,0x2d0),NULL);
+    ValidateRect(GetDlgItem(hDlg,0x2d1),NULL);
+    ValidateRect(GetDlgItem(hDlg,0x2c6),NULL);
+    ValidateRect(GetDlgItem(hDlg,0x2be),NULL);
+    ValidateRect(GetDlgItem(hDlg,0x2c5),NULL);
     /* hope we can remove it later -->FIXME */
  return TRUE;
 }
@@ -2683,7 +2683,7 @@ static LRESULT CC_WMPaint(HWND16 hDlg, WPARAM16 wParam, LPARAM lParam)
  */
 static LRESULT CC_WMLButtonDown(HWND16 hDlg, WPARAM16 wParam, LPARAM lParam) 
 {
-   struct CCPRIVATE * lpp=(struct CCPRIVATE *)GetWindowLong32A(hDlg, DWL_USER); 
+   struct CCPRIVATE * lpp=(struct CCPRIVATE *)GetWindowLongA(hDlg, DWL_USER); 
    int r,g,b,i;
    i=0;
    if (CC_MouseCheckPredefColorArray(hDlg,0x2d0,6,8,lParam,&lpp->lpcc->rgbResult))
@@ -2729,11 +2729,11 @@ static LRESULT CC_WMLButtonDown(HWND16 hDlg, WPARAM16 wParam, LPARAM lParam)
 /***********************************************************************
  *           ColorDlgProc   (COMMDLG.8)
  */
-LRESULT WINAPI ColorDlgProc(HWND16 hDlg, UINT16 message,
+LRESULT WINAPI ColorDlgProc16(HWND16 hDlg, UINT16 message,
                             WPARAM16 wParam, LONG lParam)
 {
  int res;
- struct CCPRIVATE * lpp=(struct CCPRIVATE *)GetWindowLong32A(hDlg, DWL_USER); 
+ struct CCPRIVATE * lpp=(struct CCPRIVATE *)GetWindowLongA(hDlg, DWL_USER); 
  if (message!=WM_INITDIALOG)
  {
   if (!lpp)
@@ -2755,10 +2755,10 @@ LRESULT WINAPI ColorDlgProc(HWND16 hDlg, UINT16 message,
 	  case WM_INITDIALOG:
 	                return CC_WMInitDialog(hDlg,wParam,lParam);
 	  case WM_NCDESTROY:
-	                DeleteDC32(lpp->hdcMem); 
-	                DeleteObject32(lpp->hbmMem); 
+	                DeleteDC(lpp->hdcMem); 
+	                DeleteObject(lpp->hbmMem); 
 	                free(lpp);
-	                SetWindowLong32A(hDlg, DWL_USER, 0L); /* we don't need it anymore */
+	                SetWindowLongA(hDlg, DWL_USER, 0L); /* we don't need it anymore */
 	                break;
 	  case WM_COMMAND:
 	                if (CC_WMCommand(hDlg, wParam, lParam))
@@ -2784,9 +2784,9 @@ LRESULT WINAPI ColorDlgProc(HWND16 hDlg, UINT16 message,
      return FALSE ;
 }
 
-static void CFn_CHOOSEFONT16to32A(LPCHOOSEFONT16 chf16, LPCHOOSEFONT32A chf32a)
+static void CFn_CHOOSEFONT16to32A(LPCHOOSEFONT16 chf16, LPCHOOSEFONTA chf32a)
 {
-  chf32a->lStructSize=sizeof(CHOOSEFONT32A);
+  chf32a->lStructSize=sizeof(CHOOSEFONTA);
   chf32a->hwndOwner=chf16->hwndOwner;
   chf32a->hDC=chf16->hDC;
   chf32a->iPointSize=chf16->iPointSize;
@@ -2813,9 +2813,9 @@ BOOL16 WINAPI ChooseFont16(LPCHOOSEFONT16 lpChFont)
     HANDLE16 hDlgTmpl = 0;
     BOOL16 bRet = FALSE, win32Format = FALSE;
     LPCVOID template;
-    HWND32 hwndDialog;
-    CHOOSEFONT32A cf32a;
-    LOGFONT32A lf32a;
+    HWND hwndDialog;
+    CHOOSEFONTA cf32a;
+    LOGFONTA lf32a;
     SEGPTR lpTemplateName;
     
     cf32a.lpLogFont=&lf32a;
@@ -2877,16 +2877,16 @@ BOOL16 WINAPI ChooseFont16(LPCHOOSEFONT16 lpChFont)
 /***********************************************************************
  *           ChooseFont32A   (COMDLG32.3)
  */
-BOOL32 WINAPI ChooseFont32A(LPCHOOSEFONT32A lpChFont)
+BOOL WINAPI ChooseFontA(LPCHOOSEFONTA lpChFont)
 {
-  BOOL32 bRet=FALSE;
-  HWND32 hwndDialog;
-  HINSTANCE32 hInst=WIN_GetWindowInstance( lpChFont->hwndOwner );
+  BOOL bRet=FALSE;
+  HWND hwndDialog;
+  HINSTANCE hInst=WIN_GetWindowInstance( lpChFont->hwndOwner );
   LPCVOID template = SYSRES_GetResPtr( SYSRES_DIALOG_CHOOSE_FONT );
   if (lpChFont->Flags & (CF_SELECTSCRIPT | CF_NOVERTFONTS | CF_ENABLETEMPLATE |
     CF_ENABLETEMPLATEHANDLE)) FIXME(commdlg, ": unimplemented flag (ignored)\n");
   hwndDialog = DIALOG_CreateIndirect(hInst, template, TRUE, lpChFont->hwndOwner,
-            (DLGPROC16)FormatCharDlgProc32A, (LPARAM)lpChFont, WIN_PROC_32A );
+            (DLGPROC16)FormatCharDlgProcA, (LPARAM)lpChFont, WIN_PROC_32A );
   if (hwndDialog) bRet = DIALOG_DoDialogBox(hwndDialog, lpChFont->hwndOwner);  
   return bRet;
 }
@@ -2894,28 +2894,28 @@ BOOL32 WINAPI ChooseFont32A(LPCHOOSEFONT32A lpChFont)
 /***********************************************************************
  *           ChooseFont32W   (COMDLG32.4)
  */
-BOOL32 WINAPI ChooseFont32W(LPCHOOSEFONT32W lpChFont)
+BOOL WINAPI ChooseFontW(LPCHOOSEFONTW lpChFont)
 {
-  BOOL32 bRet=FALSE;
-  HWND32 hwndDialog;
-  HINSTANCE32 hInst=WIN_GetWindowInstance( lpChFont->hwndOwner );
-  CHOOSEFONT32A cf32a;
-  LOGFONT32A lf32a;
+  BOOL bRet=FALSE;
+  HWND hwndDialog;
+  HINSTANCE hInst=WIN_GetWindowInstance( lpChFont->hwndOwner );
+  CHOOSEFONTA cf32a;
+  LOGFONTA lf32a;
   LPCVOID template = SYSRES_GetResPtr( SYSRES_DIALOG_CHOOSE_FONT );
   if (lpChFont->Flags & (CF_SELECTSCRIPT | CF_NOVERTFONTS | CF_ENABLETEMPLATE |
     CF_ENABLETEMPLATEHANDLE)) FIXME(commdlg, ": unimplemented flag (ignored)\n");
   memcpy(&cf32a, lpChFont, sizeof(cf32a));
-  memcpy(&lf32a, lpChFont->lpLogFont, sizeof(LOGFONT32A));
+  memcpy(&lf32a, lpChFont->lpLogFont, sizeof(LOGFONTA));
   lstrcpynWtoA(lf32a.lfFaceName, lpChFont->lpLogFont->lfFaceName, LF_FACESIZE);
   cf32a.lpLogFont=&lf32a;
   cf32a.lpszStyle=HEAP_strdupWtoA(GetProcessHeap(), 0, lpChFont->lpszStyle);
   lpChFont->lpTemplateName=(LPWSTR)&cf32a;
   hwndDialog=DIALOG_CreateIndirect(hInst, template, TRUE, lpChFont->hwndOwner,
-            (DLGPROC16)FormatCharDlgProc32W, (LPARAM)lpChFont, WIN_PROC_32W );
+            (DLGPROC16)FormatCharDlgProcW, (LPARAM)lpChFont, WIN_PROC_32W );
   if (hwndDialog)bRet=DIALOG_DoDialogBox(hwndDialog, lpChFont->hwndOwner);  
   HeapFree(GetProcessHeap(), 0, cf32a.lpszStyle);
   lpChFont->lpTemplateName=(LPWSTR)cf32a.lpTemplateName;
-  memcpy(lpChFont->lpLogFont, &lf32a, sizeof(CHOOSEFONT32A));
+  memcpy(lpChFont->lpLogFont, &lf32a, sizeof(CHOOSEFONTA));
   lstrcpynAtoW(lpChFont->lpLogFont->lfFaceName, lf32a.lfFaceName, LF_FACESIZE);
   return bRet;
 }
@@ -2935,7 +2935,7 @@ static const COLORREF textcolors[TEXT_COLORS]=
 /***********************************************************************
  *                          CFn_HookCallChk                 [internal]
  */
-static BOOL32 CFn_HookCallChk(LPCHOOSEFONT16 lpcf)
+static BOOL CFn_HookCallChk(LPCHOOSEFONT16 lpcf)
 {
  if (lpcf)
   if(lpcf->Flags & CF_ENABLEHOOK)
@@ -2947,7 +2947,7 @@ static BOOL32 CFn_HookCallChk(LPCHOOSEFONT16 lpcf)
 /***********************************************************************
  *                          CFn_HookCallChk32                 [internal]
  */
-static BOOL32 CFn_HookCallChk32(LPCHOOSEFONT32A lpcf)
+static BOOL CFn_HookCallChk32(LPCHOOSEFONTA lpcf)
 {
  if (lpcf)
   if(lpcf->Flags & CF_ENABLEHOOK)
@@ -2960,8 +2960,8 @@ static BOOL32 CFn_HookCallChk32(LPCHOOSEFONT32A lpcf)
 /*************************************************************************
  *              AddFontFamily                               [internal]
  */
-static INT32 AddFontFamily(LPLOGFONT32A lplf, UINT32 nFontType, 
-                           LPCHOOSEFONT32A lpcf, HWND32 hwnd)
+static INT AddFontFamily(LPLOGFONTA lplf, UINT nFontType, 
+                           LPCHOOSEFONTA lpcf, HWND hwnd)
 {
   int i;
   WORD w;
@@ -2978,11 +2978,11 @@ static INT32 AddFontFamily(LPLOGFONT32A lplf, UINT32 nFontType,
    if (!(nFontType & TRUETYPE_FONTTYPE))
      return 1;   
 
-  i=SendMessage32A(hwnd, CB_ADDSTRING32, 0, (LPARAM)lplf->lfFaceName);
+  i=SendMessageA(hwnd, CB_ADDSTRING, 0, (LPARAM)lplf->lfFaceName);
   if (i!=CB_ERR)
   {
     w=(lplf->lfCharSet << 8) | lplf->lfPitchAndFamily;
-    SendMessage32A(hwnd, CB_SETITEMDATA32, i, MAKELONG(nFontType,w));
+    SendMessageA(hwnd, CB_SETITEMDATA, i, MAKELONG(nFontType,w));
     return 1 ;        /* store some important font information */
   }
   else
@@ -2991,16 +2991,16 @@ static INT32 AddFontFamily(LPLOGFONT32A lplf, UINT32 nFontType,
 
 typedef struct
 {
-  HWND32 hWnd1;
-  HWND32 hWnd2;
-  LPCHOOSEFONT32A lpcf32a;
+  HWND hWnd1;
+  HWND hWnd2;
+  LPCHOOSEFONTA lpcf32a;
 } CFn_ENUMSTRUCT, *LPCFn_ENUMSTRUCT;
 
 /*************************************************************************
  *              FontFamilyEnumProc32                           [internal]
  */
-INT32 WINAPI FontFamilyEnumProc32(LPENUMLOGFONT32A lpEnumLogFont, 
-	  LPNEWTEXTMETRIC32A metrics, UINT32 nFontType, LPARAM lParam)
+INT WINAPI FontFamilyEnumProc(LPENUMLOGFONTA lpEnumLogFont, 
+	  LPNEWTEXTMETRICA metrics, UINT nFontType, LPARAM lParam)
 {
   LPCFn_ENUMSTRUCT e;
   e=(LPCFn_ENUMSTRUCT)lParam;
@@ -3015,11 +3015,11 @@ INT16 WINAPI FontFamilyEnumProc16( SEGPTR logfont, SEGPTR metrics,
 {
   HWND16 hwnd=LOWORD(lParam);
   HWND16 hDlg=GetParent16(hwnd);
-  LPCHOOSEFONT16 lpcf=(LPCHOOSEFONT16)GetWindowLong32A(hDlg, DWL_USER); 
+  LPCHOOSEFONT16 lpcf=(LPCHOOSEFONT16)GetWindowLongA(hDlg, DWL_USER); 
   LOGFONT16 *lplf = (LOGFONT16 *)PTR_SEG_TO_LIN( logfont );
-  LOGFONT32A lf32a;
+  LOGFONTA lf32a;
   FONT_LogFont16To32A(lplf, &lf32a);
-  return AddFontFamily(&lf32a, nFontType, (LPCHOOSEFONT32A)lpcf->lpTemplateName,
+  return AddFontFamily(&lf32a, nFontType, (LPCHOOSEFONTA)lpcf->lpTemplateName,
                        hwnd);
 }
 
@@ -3028,7 +3028,7 @@ INT16 WINAPI FontFamilyEnumProc16( SEGPTR logfont, SEGPTR metrics,
  *
  * Fill font style information into combobox  (without using font.c directly)
  */
-static int SetFontStylesToCombo2(HWND32 hwnd, HDC32 hdc, LPLOGFONT32A lplf)
+static int SetFontStylesToCombo2(HWND hwnd, HDC hdc, LPLOGFONTA lplf)
 {
    #define FSTYLES 4
    struct FONTSTYLE
@@ -3046,11 +3046,11 @@ static int SetFontStylesToCombo2(HWND32 hwnd, HDC32 hdc, LPLOGFONT32A lplf)
    {
      lplf->lfItalic=fontstyles[i].italic;
      lplf->lfWeight=fontstyles[i].weight;
-     hf=CreateFontIndirect32A(lplf);
-     hf=SelectObject32(hdc,hf);
+     hf=CreateFontIndirectA(lplf);
+     hf=SelectObject(hdc,hf);
      GetTextMetrics16(hdc,&tm);
-     hf=SelectObject32(hdc,hf);
-     DeleteObject32(hf);
+     hf=SelectObject(hdc,hf);
+     DeleteObject(hf);
 
      if (tm.tmWeight==fontstyles[i].weight &&
          tm.tmItalic==fontstyles[i].italic)    /* font successful created ? */
@@ -3070,7 +3070,7 @@ static int SetFontStylesToCombo2(HWND32 hwnd, HDC32 hdc, LPLOGFONT32A lplf)
 /*************************************************************************
  *              AddFontSizeToCombo3                           [internal]
  */
-static int AddFontSizeToCombo3(HWND32 hwnd, UINT32 h, LPCHOOSEFONT32A lpcf)
+static int AddFontSizeToCombo3(HWND hwnd, UINT h, LPCHOOSEFONTA lpcf)
 {
     int j;
     char buffer[20];
@@ -3079,11 +3079,11 @@ static int AddFontSizeToCombo3(HWND32 hwnd, UINT32 h, LPCHOOSEFONT32A lpcf)
         ((lpcf->Flags & CF_LIMITSIZE) && (h >= lpcf->nSizeMin) && (h <= lpcf->nSizeMax)))
     {
         sprintf(buffer, "%2d", h);
-	j=SendMessage32A(hwnd, CB_FINDSTRINGEXACT32, -1, (LPARAM)buffer);
+	j=SendMessageA(hwnd, CB_FINDSTRINGEXACT, -1, (LPARAM)buffer);
 	if (j==CB_ERR)
 	{
-    	    j=SendMessage32A(hwnd, CB_ADDSTRING32, 0, (LPARAM)buffer);	
-    	    if (j!=CB_ERR) j = SendMessage32A(hwnd, CB_SETITEMDATA32, j, h); 
+    	    j=SendMessageA(hwnd, CB_ADDSTRING, 0, (LPARAM)buffer);	
+    	    if (j!=CB_ERR) j = SendMessageA(hwnd, CB_SETITEMDATA, j, h); 
     	    if (j==CB_ERR) return 1;
 	}
     }
@@ -3093,7 +3093,7 @@ static int AddFontSizeToCombo3(HWND32 hwnd, UINT32 h, LPCHOOSEFONT32A lpcf)
 /*************************************************************************
  *              SetFontSizesToCombo3                           [internal]
  */
-static int SetFontSizesToCombo3(HWND32 hwnd, LPCHOOSEFONT32A lpcf)
+static int SetFontSizesToCombo3(HWND hwnd, LPCHOOSEFONTA lpcf)
 {
   static const int sizes[]={8,9,10,11,12,14,16,18,20,22,24,26,28,36,48,72,0};
   int i;
@@ -3106,8 +3106,8 @@ static int SetFontSizesToCombo3(HWND32 hwnd, LPCHOOSEFONT32A lpcf)
 /***********************************************************************
  *                 AddFontStyle                          [internal]
  */
-INT32 AddFontStyle(LPLOGFONT32A lplf, UINT32 nFontType, 
-    LPCHOOSEFONT32A lpcf, HWND32 hcmb2, HWND32 hcmb3, HWND32 hDlg)
+INT AddFontStyle(LPLOGFONTA lplf, UINT nFontType, 
+    LPCHOOSEFONTA lpcf, HWND hcmb2, HWND hcmb3, HWND hDlg)
 {
   int i;
   
@@ -3124,12 +3124,12 @@ INT32 AddFontStyle(LPLOGFONT32A lplf, UINT32 nFontType,
     if (AddFontSizeToCombo3(hcmb3, lplf->lfHeight, lpcf)) return 0;
   } else if (SetFontSizesToCombo3(hcmb3, lpcf)) return 0;
 
-  if (!SendMessage32A(hcmb2, CB_GETCOUNT32, 0, 0))
+  if (!SendMessageA(hcmb2, CB_GETCOUNT, 0, 0))
   {
-       HDC32 hdc= (lpcf->Flags & CF_PRINTERFONTS && lpcf->hDC) ? lpcf->hDC : GetDC32(hDlg);
+       HDC hdc= (lpcf->Flags & CF_PRINTERFONTS && lpcf->hDC) ? lpcf->hDC : GetDC(hDlg);
        i=SetFontStylesToCombo2(hcmb2,hdc,lplf);
        if (!(lpcf->Flags & CF_PRINTERFONTS && lpcf->hDC))
-         ReleaseDC32(hDlg,hdc);
+         ReleaseDC(hDlg,hdc);
        if (i)
         return 0;
   }
@@ -3146,24 +3146,24 @@ INT16 WINAPI FontStyleEnumProc16( SEGPTR logfont, SEGPTR metrics,
   HWND16 hcmb2=LOWORD(lParam);
   HWND16 hcmb3=HIWORD(lParam);
   HWND16 hDlg=GetParent16(hcmb3);
-  LPCHOOSEFONT16 lpcf=(LPCHOOSEFONT16)GetWindowLong32A(hDlg, DWL_USER); 
+  LPCHOOSEFONT16 lpcf=(LPCHOOSEFONT16)GetWindowLongA(hDlg, DWL_USER); 
   LOGFONT16 *lplf = (LOGFONT16 *)PTR_SEG_TO_LIN(logfont);
-  LOGFONT32A lf32a;
+  LOGFONTA lf32a;
   FONT_LogFont16To32A(lplf, &lf32a);
-  return AddFontStyle(&lf32a, nFontType, (LPCHOOSEFONT32A)lpcf->lpTemplateName,
+  return AddFontStyle(&lf32a, nFontType, (LPCHOOSEFONTA)lpcf->lpTemplateName,
                       hcmb2, hcmb3, hDlg);
 }
 
 /***********************************************************************
  *                 FontStyleEnumProc32                     [internal]
  */
-INT32 WINAPI FontStyleEnumProc32( LPENUMLOGFONT32A lpFont, 
-          LPNEWTEXTMETRIC32A metrics, UINT32 nFontType, LPARAM lParam )
+INT WINAPI FontStyleEnumProc( LPENUMLOGFONTA lpFont, 
+          LPNEWTEXTMETRICA metrics, UINT nFontType, LPARAM lParam )
 {
   LPCFn_ENUMSTRUCT s=(LPCFn_ENUMSTRUCT)lParam;
-  HWND32 hcmb2=s->hWnd1;
-  HWND32 hcmb3=s->hWnd2;
-  HWND32 hDlg=GetParent32(hcmb3);
+  HWND hcmb2=s->hWnd1;
+  HWND hcmb3=s->hWnd2;
+  HWND hDlg=GetParent(hcmb3);
   return AddFontStyle(&lpFont->elfLogFont, nFontType, s->lpcf32a, hcmb2,
                       hcmb3, hDlg);
 }
@@ -3171,36 +3171,36 @@ INT32 WINAPI FontStyleEnumProc32( LPENUMLOGFONT32A lpFont,
 /***********************************************************************
  *           CFn_WMInitDialog                            [internal]
  */
-LRESULT CFn_WMInitDialog(HWND32 hDlg, WPARAM32 wParam, LPARAM lParam,
-                         LPCHOOSEFONT32A lpcf)
+LRESULT CFn_WMInitDialog(HWND hDlg, WPARAM wParam, LPARAM lParam,
+                         LPCHOOSEFONTA lpcf)
 {
-  HDC32 hdc;
+  HDC hdc;
   int i,j,res,init=0;
   long l;
-  LPLOGFONT32A lpxx;
-  HCURSOR32 hcursor=SetCursor32(LoadCursor32A(0,IDC_WAIT32A));
+  LPLOGFONTA lpxx;
+  HCURSOR hcursor=SetCursor(LoadCursorA(0,IDC_WAITA));
 
-  SetWindowLong32A(hDlg, DWL_USER, lParam); 
+  SetWindowLongA(hDlg, DWL_USER, lParam); 
   lpxx=lpcf->lpLogFont;
   TRACE(commdlg,"WM_INITDIALOG lParam=%08lX\n", lParam);
 
-  if (lpcf->lStructSize != sizeof(CHOOSEFONT32A))
+  if (lpcf->lStructSize != sizeof(CHOOSEFONTA))
   {
     ERR(commdlg,"structure size failure !!!\n");
-    EndDialog32 (hDlg, 0); 
+    EndDialog (hDlg, 0); 
     return FALSE;
   }
   if (!hBitmapTT)
-    hBitmapTT = LoadBitmap32A(0, MAKEINTRESOURCE32A(OBM_TRTYPE));
+    hBitmapTT = LoadBitmapA(0, MAKEINTRESOURCEA(OBM_TRTYPE));
 
   /* This font will be deleted by WM_COMMAND */
-  SendDlgItemMessage32A(hDlg,stc6,WM_SETFONT,
-     CreateFont32A(0, 0, 1, 1, 400, 0, 0, 0, 0, 0, 0, 0, 0, NULL),FALSE);
+  SendDlgItemMessageA(hDlg,stc6,WM_SETFONT,
+     CreateFontA(0, 0, 1, 1, 400, 0, 0, 0, 0, 0, 0, 0, 0, NULL),FALSE);
 			 
-  if (!(lpcf->Flags & CF_SHOWHELP) || !IsWindow32(lpcf->hwndOwner))
-    ShowWindow32(GetDlgItem32(hDlg,pshHelp),SW_HIDE);
+  if (!(lpcf->Flags & CF_SHOWHELP) || !IsWindow(lpcf->hwndOwner))
+    ShowWindow(GetDlgItem(hDlg,pshHelp),SW_HIDE);
   if (!(lpcf->Flags & CF_APPLY))
-    ShowWindow32(GetDlgItem32(hDlg,psh3),SW_HIDE);
+    ShowWindow(GetDlgItem(hDlg,psh3),SW_HIDE);
   if (lpcf->Flags & CF_EFFECTS)
   {
     for (res=1,i=0;res && i<TEXT_COLORS;i++)
@@ -3208,83 +3208,83 @@ LRESULT CFn_WMInitDialog(HWND32 hDlg, WPARAM32 wParam, LPARAM lParam,
       /* FIXME: load color name from resource:  res=LoadString(...,i+....,buffer,.....); */
       char name[20];
       strcpy( name, "[color name]" );
-      j=SendDlgItemMessage32A(hDlg, cmb4, CB_ADDSTRING32, 0, (LPARAM)name);
-      SendDlgItemMessage32A(hDlg, cmb4, CB_SETITEMDATA16, j, textcolors[j]);
+      j=SendDlgItemMessageA(hDlg, cmb4, CB_ADDSTRING, 0, (LPARAM)name);
+      SendDlgItemMessageA(hDlg, cmb4, CB_SETITEMDATA16, j, textcolors[j]);
       /* look for a fitting value in color combobox */
       if (textcolors[j]==lpcf->rgbColors)
-        SendDlgItemMessage32A(hDlg,cmb4, CB_SETCURSEL32,j,0);
+        SendDlgItemMessageA(hDlg,cmb4, CB_SETCURSEL,j,0);
     }
   }
   else
   {
-    ShowWindow32(GetDlgItem32(hDlg,cmb4),SW_HIDE);
-    ShowWindow32(GetDlgItem32(hDlg,chx1),SW_HIDE);
-    ShowWindow32(GetDlgItem32(hDlg,chx2),SW_HIDE);
-    ShowWindow32(GetDlgItem32(hDlg,grp1),SW_HIDE);
-    ShowWindow32(GetDlgItem32(hDlg,stc4),SW_HIDE);
+    ShowWindow(GetDlgItem(hDlg,cmb4),SW_HIDE);
+    ShowWindow(GetDlgItem(hDlg,chx1),SW_HIDE);
+    ShowWindow(GetDlgItem(hDlg,chx2),SW_HIDE);
+    ShowWindow(GetDlgItem(hDlg,grp1),SW_HIDE);
+    ShowWindow(GetDlgItem(hDlg,stc4),SW_HIDE);
   }
-  hdc= (lpcf->Flags & CF_PRINTERFONTS && lpcf->hDC) ? lpcf->hDC : GetDC32(hDlg);
+  hdc= (lpcf->Flags & CF_PRINTERFONTS && lpcf->hDC) ? lpcf->hDC : GetDC(hDlg);
   if (hdc)
   {
     CFn_ENUMSTRUCT s;
-    s.hWnd1=GetDlgItem32(hDlg,cmb1);
+    s.hWnd1=GetDlgItem(hDlg,cmb1);
     s.lpcf32a=lpcf;
-    if (!EnumFontFamilies32A(hdc, NULL, FontFamilyEnumProc32, (LPARAM)&s))
+    if (!EnumFontFamiliesA(hdc, NULL, FontFamilyEnumProc, (LPARAM)&s))
       TRACE(commdlg,"EnumFontFamilies returns 0\n");
     if (lpcf->Flags & CF_INITTOLOGFONTSTRUCT)
     {
       /* look for fitting font name in combobox1 */
-      j=SendDlgItemMessage32A(hDlg,cmb1,CB_FINDSTRING32,-1,(LONG)lpxx->lfFaceName);
+      j=SendDlgItemMessageA(hDlg,cmb1,CB_FINDSTRING,-1,(LONG)lpxx->lfFaceName);
       if (j!=CB_ERR)
       {
-        SendDlgItemMessage32A(hDlg, cmb1, CB_SETCURSEL32, j, 0);
-	SendMessage32A(hDlg, WM_COMMAND, MAKEWPARAM(cmb1, CBN_SELCHANGE),
-                       GetDlgItem32(hDlg,cmb1));
+        SendDlgItemMessageA(hDlg, cmb1, CB_SETCURSEL, j, 0);
+	SendMessageA(hDlg, WM_COMMAND, MAKEWPARAM(cmb1, CBN_SELCHANGE),
+                       GetDlgItem(hDlg,cmb1));
         init=1;
         /* look for fitting font style in combobox2 */
         l=MAKELONG(lpxx->lfWeight > FW_MEDIUM ? FW_BOLD:FW_NORMAL,lpxx->lfItalic !=0);
         for (i=0;i<TEXT_EXTRAS;i++)
         {
-          if (l==SendDlgItemMessage32A(hDlg, cmb2, CB_GETITEMDATA32, i, 0))
-            SendDlgItemMessage32A(hDlg, cmb2, CB_SETCURSEL32, i, 0);
+          if (l==SendDlgItemMessageA(hDlg, cmb2, CB_GETITEMDATA, i, 0))
+            SendDlgItemMessageA(hDlg, cmb2, CB_SETCURSEL, i, 0);
         }
       
         /* look for fitting font size in combobox3 */
-        j=SendDlgItemMessage32A(hDlg, cmb3, CB_GETCOUNT32, 0, 0);
+        j=SendDlgItemMessageA(hDlg, cmb3, CB_GETCOUNT, 0, 0);
         for (i=0;i<j;i++)
         {
-          if (lpxx->lfHeight==(int)SendDlgItemMessage32A(hDlg,cmb3, CB_GETITEMDATA32,i,0))
-            SendDlgItemMessage32A(hDlg,cmb3,CB_SETCURSEL32,i,0);
+          if (lpxx->lfHeight==(int)SendDlgItemMessageA(hDlg,cmb3, CB_GETITEMDATA,i,0))
+            SendDlgItemMessageA(hDlg,cmb3,CB_SETCURSEL,i,0);
         }
       }
     }
     if (!init)
     {
-      SendDlgItemMessage32A(hDlg,cmb1,CB_SETCURSEL32,0,0);
-      SendMessage32A(hDlg, WM_COMMAND, MAKEWPARAM(cmb1, CBN_SELCHANGE),
-                       GetDlgItem32(hDlg,cmb1));
+      SendDlgItemMessageA(hDlg,cmb1,CB_SETCURSEL,0,0);
+      SendMessageA(hDlg, WM_COMMAND, MAKEWPARAM(cmb1, CBN_SELCHANGE),
+                       GetDlgItem(hDlg,cmb1));
     }    
     if (lpcf->Flags & CF_USESTYLE && lpcf->lpszStyle)
     {
-      j=SendDlgItemMessage32A(hDlg,cmb2,CB_FINDSTRING32,-1,(LONG)lpcf->lpszStyle);
+      j=SendDlgItemMessageA(hDlg,cmb2,CB_FINDSTRING,-1,(LONG)lpcf->lpszStyle);
       if (j!=CB_ERR)
       {
-        j=SendDlgItemMessage32A(hDlg,cmb2,CB_SETCURSEL32,j,0);
-        SendMessage32A(hDlg,WM_COMMAND,cmb2,
-                       MAKELONG(GetDlgItem32(hDlg,cmb2),CBN_SELCHANGE));
+        j=SendDlgItemMessageA(hDlg,cmb2,CB_SETCURSEL,j,0);
+        SendMessageA(hDlg,WM_COMMAND,cmb2,
+                       MAKELONG(GetDlgItem(hDlg,cmb2),CBN_SELCHANGE));
       }
     }
   }
   else
   {
     WARN(commdlg,"HDC failure !!!\n");
-    EndDialog32 (hDlg, 0); 
+    EndDialog (hDlg, 0); 
     return FALSE;
   }
 
   if (!(lpcf->Flags & CF_PRINTERFONTS && lpcf->hDC))
-    ReleaseDC32(hDlg,hdc);
-  SetCursor32(hcursor);   
+    ReleaseDC(hDlg,hdc);
+  SetCursor(hcursor);   
   return TRUE;
 }
 
@@ -3292,13 +3292,13 @@ LRESULT CFn_WMInitDialog(HWND32 hDlg, WPARAM32 wParam, LPARAM lParam,
 /***********************************************************************
  *           CFn_WMMeasureItem                           [internal]
  */
-LRESULT CFn_WMMeasureItem(HWND32 hDlg, WPARAM32 wParam, LPARAM lParam)
+LRESULT CFn_WMMeasureItem(HWND hDlg, WPARAM wParam, LPARAM lParam)
 {
-  BITMAP32 bm;
-  LPMEASUREITEMSTRUCT32 lpmi=(LPMEASUREITEMSTRUCT32)lParam;
+  BITMAP bm;
+  LPMEASUREITEMSTRUCT lpmi=(LPMEASUREITEMSTRUCT)lParam;
   if (!hBitmapTT)
-    hBitmapTT = LoadBitmap32A(0, MAKEINTRESOURCE32A(OBM_TRTYPE));
-  GetObject32A( hBitmapTT, sizeof(bm), &bm );
+    hBitmapTT = LoadBitmapA(0, MAKEINTRESOURCEA(OBM_TRTYPE));
+  GetObjectA( hBitmapTT, sizeof(bm), &bm );
   lpmi->itemHeight=bm.bmHeight;
   /* FIXME: use MAX of bm.bmHeight and tm.tmHeight .*/
   return 0;
@@ -3308,37 +3308,37 @@ LRESULT CFn_WMMeasureItem(HWND32 hDlg, WPARAM32 wParam, LPARAM lParam)
 /***********************************************************************
  *           CFn_WMDrawItem                              [internal]
  */
-LRESULT CFn_WMDrawItem(HWND32 hDlg, WPARAM32 wParam, LPARAM lParam)
+LRESULT CFn_WMDrawItem(HWND hDlg, WPARAM wParam, LPARAM lParam)
 {
-  HBRUSH32 hBrush;
+  HBRUSH hBrush;
   char buffer[40];
-  BITMAP32 bm;
+  BITMAP bm;
   COLORREF cr, oldText=0, oldBk=0;
-  RECT32 rect;
+  RECT rect;
 #if 0  
-  HDC32 hMemDC;
+  HDC hMemDC;
   int nFontType;
-  HBITMAP32 hBitmap; /* for later TT usage */
+  HBITMAP hBitmap; /* for later TT usage */
 #endif  
-  LPDRAWITEMSTRUCT32 lpdi = (LPDRAWITEMSTRUCT32)lParam;
+  LPDRAWITEMSTRUCT lpdi = (LPDRAWITEMSTRUCT)lParam;
 
   if (lpdi->itemID == 0xFFFF) 			/* got no items */
-    DrawFocusRect32(lpdi->hDC, &lpdi->rcItem);
+    DrawFocusRect(lpdi->hDC, &lpdi->rcItem);
   else
   {
    if (lpdi->CtlType == ODT_COMBOBOX)
    {
      if (lpdi->itemState ==ODS_SELECTED)
      {
-       hBrush=GetSysColorBrush32(COLOR_HIGHLIGHT);
-       oldText=SetTextColor32(lpdi->hDC, GetSysColor32(COLOR_HIGHLIGHTTEXT));
-       oldBk=SetBkColor32(lpdi->hDC, GetSysColor32(COLOR_HIGHLIGHT));
+       hBrush=GetSysColorBrush(COLOR_HIGHLIGHT);
+       oldText=SetTextColor(lpdi->hDC, GetSysColor(COLOR_HIGHLIGHTTEXT));
+       oldBk=SetBkColor(lpdi->hDC, GetSysColor(COLOR_HIGHLIGHT));
      }  else
      {
-       hBrush = SelectObject32(lpdi->hDC, GetStockObject32(LTGRAY_BRUSH));
-       SelectObject32(lpdi->hDC, hBrush);
+       hBrush = SelectObject(lpdi->hDC, GetStockObject(LTGRAY_BRUSH));
+       SelectObject(lpdi->hDC, hBrush);
      }
-     FillRect32(lpdi->hDC, &lpdi->rcItem, hBrush);
+     FillRect(lpdi->hDC, &lpdi->rcItem, hBrush);
    }
    else
      return TRUE;	/* this should never happen */
@@ -3347,50 +3347,50 @@ LRESULT CFn_WMDrawItem(HWND32 hDlg, WPARAM32 wParam, LPARAM lParam)
    switch (lpdi->CtlID)
    {
     case cmb1:	/* TRACE(commdlg,"WM_Drawitem cmb1\n"); */
-		SendMessage32A(lpdi->hwndItem, CB_GETLBTEXT32, lpdi->itemID,
+		SendMessageA(lpdi->hwndItem, CB_GETLBTEXT, lpdi->itemID,
 			       (LPARAM)buffer);	          
-		GetObject32A( hBitmapTT, sizeof(bm), &bm );
-		TextOut32A(lpdi->hDC, lpdi->rcItem.left + bm.bmWidth + 10,
-                           lpdi->rcItem.top, buffer, lstrlen32A(buffer));
+		GetObjectA( hBitmapTT, sizeof(bm), &bm );
+		TextOutA(lpdi->hDC, lpdi->rcItem.left + bm.bmWidth + 10,
+                           lpdi->rcItem.top, buffer, lstrlenA(buffer));
 #if 0
-		nFontType = SendMessage32A(lpdi->hwndItem, CB_GETITEMDATA32, lpdi->itemID,0L);
+		nFontType = SendMessageA(lpdi->hwndItem, CB_GETITEMDATA, lpdi->itemID,0L);
 		  /* FIXME: draw bitmap if truetype usage */
 		if (nFontType&TRUETYPE_FONTTYPE)
 		{
-		  hMemDC = CreateCompatibleDC32(lpdi->hDC);
-		  hBitmap = SelectObject32(hMemDC, hBitmapTT);
-		  BitBlt32(lpdi->hDC, lpdi->rcItem.left, lpdi->rcItem.top,
+		  hMemDC = CreateCompatibleDC(lpdi->hDC);
+		  hBitmap = SelectObject(hMemDC, hBitmapTT);
+		  BitBlt(lpdi->hDC, lpdi->rcItem.left, lpdi->rcItem.top,
                            bm.bmWidth, bm.bmHeight, hMemDC, 0, 0, SRCCOPY);
-		  SelectObject32(hMemDC, hBitmap);
-		  DeleteDC32(hMemDC);
+		  SelectObject(hMemDC, hBitmap);
+		  DeleteDC(hMemDC);
 		}
 #endif
 		break;
     case cmb2:
     case cmb3:	/* TRACE(commdlg,"WM_DRAWITEN cmb2,cmb3\n"); */
-		SendMessage32A(lpdi->hwndItem, CB_GETLBTEXT32, lpdi->itemID,
+		SendMessageA(lpdi->hwndItem, CB_GETLBTEXT, lpdi->itemID,
 		               (LPARAM)buffer);
-		TextOut32A(lpdi->hDC, lpdi->rcItem.left,
-                           lpdi->rcItem.top, buffer, lstrlen32A(buffer));
+		TextOutA(lpdi->hDC, lpdi->rcItem.left,
+                           lpdi->rcItem.top, buffer, lstrlenA(buffer));
 		break;
 
     case cmb4:	/* TRACE(commdlg,"WM_DRAWITEM cmb4 (=COLOR)\n"); */
-		SendMessage32A(lpdi->hwndItem, CB_GETLBTEXT32, lpdi->itemID,
+		SendMessageA(lpdi->hwndItem, CB_GETLBTEXT, lpdi->itemID,
     		               (LPARAM)buffer);
-		TextOut32A(lpdi->hDC, lpdi->rcItem.left +  25+5,
-                           lpdi->rcItem.top, buffer, lstrlen32A(buffer));
-		cr = SendMessage32A(lpdi->hwndItem, CB_GETITEMDATA32, lpdi->itemID,0L);
-		hBrush = CreateSolidBrush32(cr);
+		TextOutA(lpdi->hDC, lpdi->rcItem.left +  25+5,
+                           lpdi->rcItem.top, buffer, lstrlenA(buffer));
+		cr = SendMessageA(lpdi->hwndItem, CB_GETITEMDATA, lpdi->itemID,0L);
+		hBrush = CreateSolidBrush(cr);
 		if (hBrush)
 		{
-		  hBrush = SelectObject32 (lpdi->hDC, hBrush) ;
+		  hBrush = SelectObject (lpdi->hDC, hBrush) ;
 		  rect.right=rect.left+25;
 		  rect.top++;
 		  rect.left+=5;
 		  rect.bottom--;
-		  Rectangle32( lpdi->hDC, rect.left, rect.top,
+		  Rectangle( lpdi->hDC, rect.left, rect.top,
                                rect.right, rect.bottom );
-		  DeleteObject32( SelectObject32 (lpdi->hDC, hBrush)) ;
+		  DeleteObject( SelectObject (lpdi->hDC, hBrush)) ;
 		}
 		rect=lpdi->rcItem;
 		rect.left+=25+5;
@@ -3400,8 +3400,8 @@ LRESULT CFn_WMDrawItem(HWND32 hDlg, WPARAM32 wParam, LPARAM lParam)
    }
    if (lpdi->itemState == ODS_SELECTED)
    {
-     SetTextColor32(lpdi->hDC, oldText);
-     SetBkColor32(lpdi->hDC, oldBk);
+     SetTextColor(lpdi->hDC, oldText);
+     SetBkColor(lpdi->hDC, oldBk);
    }
  }
  return TRUE;
@@ -3410,14 +3410,14 @@ LRESULT CFn_WMDrawItem(HWND32 hDlg, WPARAM32 wParam, LPARAM lParam)
 /***********************************************************************
  *           CFn_WMCtlColor                              [internal]
  */
-LRESULT CFn_WMCtlColorStatic(HWND32 hDlg, WPARAM32 wParam, LPARAM lParam,
-                             LPCHOOSEFONT32A lpcf)
+LRESULT CFn_WMCtlColorStatic(HWND hDlg, WPARAM wParam, LPARAM lParam,
+                             LPCHOOSEFONTA lpcf)
 {
   if (lpcf->Flags & CF_EFFECTS)
-   if (GetDlgCtrlID32(lParam)==stc6)
+   if (GetDlgCtrlID(lParam)==stc6)
    {
-     SetTextColor32((HDC32)wParam, lpcf->rgbColors);
-     return GetStockObject32(WHITE_BRUSH);
+     SetTextColor((HDC)wParam, lpcf->rgbColors);
+     return GetStockObject(WHITE_BRUSH);
    }
   return 0;
 }
@@ -3425,47 +3425,47 @@ LRESULT CFn_WMCtlColorStatic(HWND32 hDlg, WPARAM32 wParam, LPARAM lParam,
 /***********************************************************************
  *           CFn_WMCommand                               [internal]
  */
-LRESULT CFn_WMCommand(HWND32 hDlg, WPARAM32 wParam, LPARAM lParam,
-                      LPCHOOSEFONT32A lpcf)
+LRESULT CFn_WMCommand(HWND hDlg, WPARAM wParam, LPARAM lParam,
+                      LPCHOOSEFONTA lpcf)
 {
-  HFONT32 hFont;
+  HFONT hFont;
   int i,j;
   long l;
-  HDC32 hdc;
-  LPLOGFONT32A lpxx=lpcf->lpLogFont;
+  HDC hdc;
+  LPLOGFONTA lpxx=lpcf->lpLogFont;
   
   TRACE(commdlg,"WM_COMMAND wParam=%08lX lParam=%08lX\n", (LONG)wParam, lParam);
   switch (LOWORD(wParam))
   {
 	case cmb1:if (HIWORD(wParam)==CBN_SELCHANGE)
 		  {
-		    hdc=(lpcf->Flags & CF_PRINTERFONTS && lpcf->hDC) ? lpcf->hDC : GetDC32(hDlg);
+		    hdc=(lpcf->Flags & CF_PRINTERFONTS && lpcf->hDC) ? lpcf->hDC : GetDC(hDlg);
 		    if (hdc)
 		    {
-                      SendDlgItemMessage32A(hDlg, cmb2, CB_RESETCONTENT16, 0, 0); 
-		      SendDlgItemMessage32A(hDlg, cmb3, CB_RESETCONTENT16, 0, 0);
-		      i=SendDlgItemMessage32A(hDlg, cmb1, CB_GETCURSEL16, 0, 0);
+                      SendDlgItemMessageA(hDlg, cmb2, CB_RESETCONTENT16, 0, 0); 
+		      SendDlgItemMessageA(hDlg, cmb3, CB_RESETCONTENT16, 0, 0);
+		      i=SendDlgItemMessageA(hDlg, cmb1, CB_GETCURSEL16, 0, 0);
 		      if (i!=CB_ERR)
 		      {
-		        HCURSOR32 hcursor=SetCursor32(LoadCursor32A(0,IDC_WAIT32A));
+		        HCURSOR hcursor=SetCursor(LoadCursorA(0,IDC_WAITA));
 			CFn_ENUMSTRUCT s;
                         char str[256];
-                        SendDlgItemMessage32A(hDlg, cmb1, CB_GETLBTEXT32, i,
+                        SendDlgItemMessageA(hDlg, cmb1, CB_GETLBTEXT, i,
                                               (LPARAM)str);
 	                TRACE(commdlg,"WM_COMMAND/cmb1 =>%s\n",str);
-			s.hWnd1=GetDlgItem32(hDlg, cmb2);
-			s.hWnd2=GetDlgItem32(hDlg, cmb3);
+			s.hWnd1=GetDlgItem(hDlg, cmb2);
+			s.hWnd2=GetDlgItem(hDlg, cmb3);
 			s.lpcf32a=lpcf;
-       		        EnumFontFamilies32A(hdc, str, FontStyleEnumProc32, (LPARAM)&s);
-		        SetCursor32(hcursor);
+       		        EnumFontFamiliesA(hdc, str, FontStyleEnumProc, (LPARAM)&s);
+		        SetCursor(hcursor);
 		      }
 		      if (!(lpcf->Flags & CF_PRINTERFONTS && lpcf->hDC))
- 		        ReleaseDC32(hDlg,hdc);
+ 		        ReleaseDC(hDlg,hdc);
  		    }
  		    else
                     {
                       WARN(commdlg,"HDC failure !!!\n");
-                      EndDialog32 (hDlg, 0); 
+                      EndDialog (hDlg, 0); 
                       return TRUE;
                     }
 	          }
@@ -3476,14 +3476,14 @@ LRESULT CFn_WMCommand(HWND32 hDlg, WPARAM32 wParam, LPARAM lParam,
 	          {
                     char str[256];
                     TRACE(commdlg,"WM_COMMAND/cmb2,3 =%08lX\n", lParam);
-		    i=SendDlgItemMessage32A(hDlg,cmb1,CB_GETCURSEL32,0,0);
+		    i=SendDlgItemMessageA(hDlg,cmb1,CB_GETCURSEL,0,0);
 		    if (i==CB_ERR)
-                      i=GetDlgItemText32A( hDlg, cmb1, str, 256 );
+                      i=GetDlgItemTextA( hDlg, cmb1, str, 256 );
                     else
                     {
-		      SendDlgItemMessage32A(hDlg,cmb1,CB_GETLBTEXT32,i,
+		      SendDlgItemMessageA(hDlg,cmb1,CB_GETLBTEXT,i,
 		                            (LPARAM)str);
-		      l=SendDlgItemMessage32A(hDlg,cmb1,CB_GETITEMDATA32,i,0);
+		      l=SendDlgItemMessageA(hDlg,cmb1,CB_GETITEMDATA,i,0);
 		      j=HIWORD(l);
 		      lpcf->nFontType = LOWORD(l);
 		      /* FIXME:   lpcf->nFontType |= ....  SIMULATED_FONTTYPE and so */
@@ -3493,50 +3493,50 @@ LRESULT CFn_WMCommand(HWND32 hDlg, WPARAM32 wParam, LPARAM lParam,
 		      lpxx->lfCharSet=j>>8;
                     }
                     strcpy(lpxx->lfFaceName,str);
-		    i=SendDlgItemMessage32A(hDlg, cmb2, CB_GETCURSEL32, 0, 0);
+		    i=SendDlgItemMessageA(hDlg, cmb2, CB_GETCURSEL, 0, 0);
 		    if (i!=CB_ERR)
 		    {
-		      l=SendDlgItemMessage32A(hDlg, cmb2, CB_GETITEMDATA32, i, 0);
+		      l=SendDlgItemMessageA(hDlg, cmb2, CB_GETITEMDATA, i, 0);
 		      if (0!=(lpxx->lfItalic=HIWORD(l)))
 		        lpcf->nFontType |= ITALIC_FONTTYPE;
 		      if ((lpxx->lfWeight=LOWORD(l)) > FW_MEDIUM)
 		        lpcf->nFontType |= BOLD_FONTTYPE;
 		    }
-		    i=SendDlgItemMessage32A(hDlg, cmb3, CB_GETCURSEL32, 0, 0);
+		    i=SendDlgItemMessageA(hDlg, cmb3, CB_GETCURSEL, 0, 0);
 		    if (i!=CB_ERR)
-		      lpxx->lfHeight=-LOWORD(SendDlgItemMessage32A(hDlg, cmb3, CB_GETITEMDATA32, i, 0));
+		      lpxx->lfHeight=-LOWORD(SendDlgItemMessageA(hDlg, cmb3, CB_GETITEMDATA, i, 0));
 		    else
 		      lpxx->lfHeight=0;
-		    lpxx->lfStrikeOut=IsDlgButtonChecked32(hDlg,chx1);
-		    lpxx->lfUnderline=IsDlgButtonChecked32(hDlg,chx2);
+		    lpxx->lfStrikeOut=IsDlgButtonChecked(hDlg,chx1);
+		    lpxx->lfUnderline=IsDlgButtonChecked(hDlg,chx2);
 		    lpxx->lfWidth=lpxx->lfOrientation=lpxx->lfEscapement=0;
 		    lpxx->lfOutPrecision=OUT_DEFAULT_PRECIS;
 		    lpxx->lfClipPrecision=CLIP_DEFAULT_PRECIS;
 		    lpxx->lfQuality=DEFAULT_QUALITY;
                     lpcf->iPointSize= -10*lpxx->lfHeight;
 
-		    hFont=CreateFontIndirect32A(lpxx);
+		    hFont=CreateFontIndirectA(lpxx);
 		    if (hFont)
 		    {
-		      HFONT32 oldFont=SendDlgItemMessage32A(hDlg, stc6, 
+		      HFONT oldFont=SendDlgItemMessageA(hDlg, stc6, 
 		          WM_GETFONT, 0, 0);
-		      SendDlgItemMessage32A(hDlg,stc6,WM_SETFONT,hFont,TRUE);
-		      DeleteObject32(oldFont);
+		      SendDlgItemMessageA(hDlg,stc6,WM_SETFONT,hFont,TRUE);
+		      DeleteObject(oldFont);
 		    }
                   }
                   break;
 
-	case cmb4:i=SendDlgItemMessage32A(hDlg, cmb4, CB_GETCURSEL32, 0, 0);
+	case cmb4:i=SendDlgItemMessageA(hDlg, cmb4, CB_GETCURSEL, 0, 0);
 		  if (i!=CB_ERR)
 		  {
 		   lpcf->rgbColors=textcolors[i];
-		   InvalidateRect32( GetDlgItem32(hDlg,stc6), NULL, 0 );
+		   InvalidateRect( GetDlgItem(hDlg,stc6), NULL, 0 );
 		  }
 		  break;
 	
-	case psh15:i=RegisterWindowMessage32A( HELPMSGSTRING );
+	case psh15:i=RegisterWindowMessageA( HELPMSGSTRING );
 		  if (lpcf->hwndOwner)
-		    SendMessage32A(lpcf->hwndOwner, i, 0, (LPARAM)GetWindowLong32A(hDlg, DWL_USER));
+		    SendMessageA(lpcf->hwndOwner, i, 0, (LPARAM)GetWindowLongA(hDlg, DWL_USER));
 /*		  if (CFn_HookCallChk(lpcf))
 		    CallWindowProc16(lpcf->lpfnHook,hDlg,WM_COMMAND,psh15,(LPARAM)lpcf);*/
 		  break;
@@ -3545,24 +3545,24 @@ LRESULT CFn_WMCommand(HWND32 hDlg, WPARAM32 wParam, LPARAM lParam,
                      ( (lpcf->Flags & CF_LIMITSIZE) && 
                       (-lpxx->lfHeight >= lpcf->nSizeMin) && 
                       (-lpxx->lfHeight <= lpcf->nSizeMax)))
-	             EndDialog32(hDlg, TRUE);
+	             EndDialog(hDlg, TRUE);
 	          else
 	          {
                    char buffer[80];
 	           sprintf(buffer,"Select a font size between %d and %d points.",
                            lpcf->nSizeMin,lpcf->nSizeMax);
-	           MessageBox32A(hDlg, buffer, NULL, MB_OK);
+	           MessageBoxA(hDlg, buffer, NULL, MB_OK);
 	          } 
 		  return(TRUE);
-	case IDCANCEL:EndDialog32(hDlg, FALSE);
+	case IDCANCEL:EndDialog(hDlg, FALSE);
 		  return(TRUE);
 	}
       return(FALSE);
 }
 
-static LRESULT CFn_WMDestroy(HWND32 hwnd, WPARAM32 wParam, LPARAM lParam)
+static LRESULT CFn_WMDestroy(HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
-  DeleteObject32(SendDlgItemMessage32A(hwnd, stc6, WM_GETFONT, 0, 0));
+  DeleteObject(SendDlgItemMessageA(hwnd, stc6, WM_GETFONT, 0, 0));
   return TRUE;
 }
 
@@ -3577,13 +3577,13 @@ LRESULT WINAPI FormatCharDlgProc16(HWND16 hDlg, UINT16 message, WPARAM16 wParam,
                                    LPARAM lParam)
 {
   LPCHOOSEFONT16 lpcf;
-  LPCHOOSEFONT32A lpcf32a;
-  UINT32 uMsg32;
-  WPARAM32 wParam32;
+  LPCHOOSEFONTA lpcf32a;
+  UINT uMsg32;
+  WPARAM wParam32;
   LRESULT res=0;  
   if (message!=WM_INITDIALOG)
   {
-   lpcf=(LPCHOOSEFONT16)GetWindowLong32A(hDlg, DWL_USER);   
+   lpcf=(LPCHOOSEFONT16)GetWindowLongA(hDlg, DWL_USER);   
    if (!lpcf)
       return FALSE;
    if (CFn_HookCallChk(lpcf))
@@ -3594,7 +3594,7 @@ LRESULT WINAPI FormatCharDlgProc16(HWND16 hDlg, UINT16 message, WPARAM16 wParam,
   else
   {
     lpcf=(LPCHOOSEFONT16)lParam;
-    lpcf32a=(LPCHOOSEFONT32A)lpcf->lpTemplateName;
+    lpcf32a=(LPCHOOSEFONTA)lpcf->lpTemplateName;
     if (!CFn_WMInitDialog(hDlg, wParam, lParam, lpcf32a)) 
     {
       TRACE(commdlg, "CFn_WMInitDialog returned FALSE\n");
@@ -3604,7 +3604,7 @@ LRESULT WINAPI FormatCharDlgProc16(HWND16 hDlg, UINT16 message, WPARAM16 wParam,
       return CallWindowProc16(lpcf->lpfnHook,hDlg,WM_INITDIALOG,wParam,lParam);
   }
   WINPROC_MapMsg16To32A(message, wParam, &uMsg32, &wParam32, &lParam);
-  lpcf32a=(LPCHOOSEFONT32A)lpcf->lpTemplateName;
+  lpcf32a=(LPCHOOSEFONTA)lpcf->lpTemplateName;
   switch (uMsg32)
     {
       case WM_MEASUREITEM:
@@ -3635,31 +3635,31 @@ LRESULT WINAPI FormatCharDlgProc16(HWND16 hDlg, UINT16 message, WPARAM16 wParam,
 /***********************************************************************
  *           FormatCharDlgProc32A   [internal]
  */
-LRESULT WINAPI FormatCharDlgProc32A(HWND32 hDlg, UINT32 uMsg, WPARAM32 wParam,
+LRESULT WINAPI FormatCharDlgProcA(HWND hDlg, UINT uMsg, WPARAM wParam,
                                     LPARAM lParam)
 {
-  LPCHOOSEFONT32A lpcf;
+  LPCHOOSEFONTA lpcf;
   LRESULT res=FALSE;
   if (uMsg!=WM_INITDIALOG)
   {
-   lpcf=(LPCHOOSEFONT32A)GetWindowLong32A(hDlg, DWL_USER);   
+   lpcf=(LPCHOOSEFONTA)GetWindowLongA(hDlg, DWL_USER);   
    if (!lpcf)
      return FALSE;
    if (CFn_HookCallChk32(lpcf))
-     res=CallWindowProc32A(lpcf->lpfnHook, hDlg, uMsg, wParam, lParam);
+     res=CallWindowProcA(lpcf->lpfnHook, hDlg, uMsg, wParam, lParam);
    if (res)
      return res;
   }
   else
   {
-    lpcf=(LPCHOOSEFONT32A)lParam;
+    lpcf=(LPCHOOSEFONTA)lParam;
     if (!CFn_WMInitDialog(hDlg, wParam, lParam, lpcf)) 
     {
       TRACE(commdlg, "CFn_WMInitDialog returned FALSE\n");
       return FALSE;
     }  
     if (CFn_HookCallChk32(lpcf))
-      return CallWindowProc32A(lpcf->lpfnHook,hDlg,WM_INITDIALOG,wParam,lParam);
+      return CallWindowProcA(lpcf->lpfnHook,hDlg,WM_INITDIALOG,wParam,lParam);
   }
   switch (uMsg)
     {
@@ -3685,35 +3685,35 @@ LRESULT WINAPI FormatCharDlgProc32A(HWND32 hDlg, UINT32 uMsg, WPARAM32 wParam,
 /***********************************************************************
  *           FormatCharDlgProc32W   [internal]
  */
-LRESULT WINAPI FormatCharDlgProc32W(HWND32 hDlg, UINT32 uMsg, WPARAM32 wParam,
+LRESULT WINAPI FormatCharDlgProcW(HWND hDlg, UINT uMsg, WPARAM wParam,
                                     LPARAM lParam)
 {
-  LPCHOOSEFONT32W lpcf32w;
-  LPCHOOSEFONT32A lpcf32a;
+  LPCHOOSEFONTW lpcf32w;
+  LPCHOOSEFONTA lpcf32a;
   LRESULT res=FALSE;
   if (uMsg!=WM_INITDIALOG)
   {
-   lpcf32w=(LPCHOOSEFONT32W)GetWindowLong32A(hDlg, DWL_USER);   
+   lpcf32w=(LPCHOOSEFONTW)GetWindowLongA(hDlg, DWL_USER);   
    if (!lpcf32w)
      return FALSE;
-   if (CFn_HookCallChk32((LPCHOOSEFONT32A)lpcf32w))
-     res=CallWindowProc32W(lpcf32w->lpfnHook, hDlg, uMsg, wParam, lParam);
+   if (CFn_HookCallChk32((LPCHOOSEFONTA)lpcf32w))
+     res=CallWindowProcW(lpcf32w->lpfnHook, hDlg, uMsg, wParam, lParam);
    if (res)
      return res;
   }
   else
   {
-    lpcf32w=(LPCHOOSEFONT32W)lParam;
-    lpcf32a=(LPCHOOSEFONT32A)lpcf32w->lpTemplateName;
+    lpcf32w=(LPCHOOSEFONTW)lParam;
+    lpcf32a=(LPCHOOSEFONTA)lpcf32w->lpTemplateName;
     if (!CFn_WMInitDialog(hDlg, wParam, lParam, lpcf32a)) 
     {
       TRACE(commdlg, "CFn_WMInitDialog returned FALSE\n");
       return FALSE;
     }  
-    if (CFn_HookCallChk32((LPCHOOSEFONT32A)lpcf32w))
-      return CallWindowProc32W(lpcf32w->lpfnHook,hDlg,WM_INITDIALOG,wParam,lParam);
+    if (CFn_HookCallChk32((LPCHOOSEFONTA)lpcf32w))
+      return CallWindowProcW(lpcf32w->lpfnHook,hDlg,WM_INITDIALOG,wParam,lParam);
   }
-  lpcf32a=(LPCHOOSEFONT32A)lpcf32w->lpTemplateName;
+  lpcf32a=(LPCHOOSEFONTA)lpcf32w->lpTemplateName;
   switch (uMsg)
     {
       case WM_MEASUREITEM:
@@ -3736,8 +3736,8 @@ LRESULT WINAPI FormatCharDlgProc32W(HWND32 hDlg, UINT32 uMsg, WPARAM32 wParam,
 }
 
 
-static BOOL32 Commdlg_GetFileName32A( BOOL16 (CALLBACK *dofunction)(SEGPTR x),
-                                      LPOPENFILENAME32A ofn )
+static BOOL Commdlg_GetFileNameA( BOOL16 (CALLBACK *dofunction)(SEGPTR x),
+                                      LPOPENFILENAMEA ofn )
 {
 	BOOL16 ret;
 	LPOPENFILENAME16 ofn16 = SEGPTR_ALLOC(sizeof(OPENFILENAME16));
@@ -3782,7 +3782,7 @@ static BOOL32 Commdlg_GetFileName32A( BOOL16 (CALLBACK *dofunction)(SEGPTR x),
 	    ofn16->lpstrInitialDir = SEGPTR_GET(SEGPTR_STRDUP(ofn->lpstrInitialDir));
 	if (ofn->lpstrTitle)
 	    ofn16->lpstrTitle = SEGPTR_GET(SEGPTR_STRDUP(ofn->lpstrTitle));
-	ofn16->Flags = ofn->Flags|OFN_WINE32;
+	ofn16->Flags = ofn->Flags|OFN_WINE;
 	ofn16->nFileOffset = ofn->nFileOffset;
 	ofn16->nFileExtension = ofn->nFileExtension;
 	if (ofn->lpstrDefExt)
@@ -3825,8 +3825,8 @@ static BOOL32 Commdlg_GetFileName32A( BOOL16 (CALLBACK *dofunction)(SEGPTR x),
 	return ret;
 }
 
-static BOOL32 Commdlg_GetFileName32W( BOOL16 (CALLBACK *dofunction)(SEGPTR x), 
-                                      LPOPENFILENAME32W ofn )
+static BOOL Commdlg_GetFileNameW( BOOL16 (CALLBACK *dofunction)(SEGPTR x), 
+                                      LPOPENFILENAMEW ofn )
 {
 	BOOL16 ret;
 	LPOPENFILENAME16 ofn16 = SEGPTR_ALLOC(sizeof(OPENFILENAME16));
@@ -3843,15 +3843,15 @@ static BOOL32 Commdlg_GetFileName32W( BOOL16 (CALLBACK *dofunction)(SEGPTR x),
 		/* filter is a list...  title\0ext\0......\0\0 */
 		s = (LPWSTR)ofn->lpstrFilter;
 		while (*s)
-			s = s+lstrlen32W(s)+1;
+			s = s+lstrlenW(s)+1;
 		s++;
 		n = s - ofn->lpstrFilter; /* already divides by 2. ptr magic */
 		x = y = (LPSTR)SEGPTR_ALLOC(n);
 		s = (LPWSTR)ofn->lpstrFilter;
 		while (*s) {
 			lstrcpyWtoA(x,s);
-			x+=lstrlen32A(x)+1;
-			s+=lstrlen32W(s)+1;
+			x+=lstrlenA(x)+1;
+			s+=lstrlenW(s)+1;
 		}
 		*x=0;
 		ofn16->lpstrFilter = SEGPTR_GET(y);
@@ -3864,15 +3864,15 @@ static BOOL32 Commdlg_GetFileName32W( BOOL16 (CALLBACK *dofunction)(SEGPTR x),
 		/* filter is a list...  title\0ext\0......\0\0 */
 		s = (LPWSTR)ofn->lpstrCustomFilter;
 		while (*s)
-			s = s+lstrlen32W(s)+1;
+			s = s+lstrlenW(s)+1;
 		s++;
 		n = s - ofn->lpstrCustomFilter;
 		x = y = (LPSTR)SEGPTR_ALLOC(n);
 		s = (LPWSTR)ofn->lpstrCustomFilter;
 		while (*s) {
 			lstrcpyWtoA(x,s);
-			x+=lstrlen32A(x)+1;
-			s+=lstrlen32W(s)+1;
+			x+=lstrlenA(x)+1;
+			s+=lstrlenW(s)+1;
 		}
 		*x=0;
 		ofn16->lpstrCustomFilter = SEGPTR_GET(y);
@@ -3889,7 +3889,7 @@ static BOOL32 Commdlg_GetFileName32W( BOOL16 (CALLBACK *dofunction)(SEGPTR x),
 		ofn16->lpstrInitialDir = SEGPTR_GET(SEGPTR_STRDUP_WtoA(ofn->lpstrInitialDir));
 	if (ofn->lpstrTitle)
 		ofn16->lpstrTitle = SEGPTR_GET(SEGPTR_STRDUP_WtoA(ofn->lpstrTitle));
-	ofn16->Flags = ofn->Flags|OFN_WINE32|OFN_UNICODE;
+	ofn16->Flags = ofn->Flags|OFN_WINE|OFN_UNICODE;
 	ofn16->nFileOffset = ofn->nFileOffset;
 	ofn16->nFileExtension = ofn->nFileExtension;
 	if (ofn->lpstrDefExt)
@@ -3931,43 +3931,43 @@ static BOOL32 Commdlg_GetFileName32W( BOOL16 (CALLBACK *dofunction)(SEGPTR x),
 /***********************************************************************
  *            GetOpenFileName32A  (COMDLG32.10)
  */
-BOOL32 WINAPI GetOpenFileName32A( LPOPENFILENAME32A ofn )
+BOOL WINAPI GetOpenFileNameA( LPOPENFILENAMEA ofn )
 {
    BOOL16 (CALLBACK * dofunction)(SEGPTR ofn16) = GetOpenFileName16;
-   return Commdlg_GetFileName32A(dofunction,ofn);
+   return Commdlg_GetFileNameA(dofunction,ofn);
 }
 
 /***********************************************************************
  *            GetOpenFileName32W (COMDLG32.11)
  */
-BOOL32 WINAPI GetOpenFileName32W( LPOPENFILENAME32W ofn )
+BOOL WINAPI GetOpenFileNameW( LPOPENFILENAMEW ofn )
 {
    BOOL16 (CALLBACK * dofunction)(SEGPTR ofn16) = GetOpenFileName16;
-   return Commdlg_GetFileName32W(dofunction,ofn);
+   return Commdlg_GetFileNameW(dofunction,ofn);
 }
 
 /***********************************************************************
  *            GetSaveFileName32A  (COMDLG32.12)
  */
-BOOL32 WINAPI GetSaveFileName32A( LPOPENFILENAME32A ofn )
+BOOL WINAPI GetSaveFileNameA( LPOPENFILENAMEA ofn )
 {
    BOOL16 (CALLBACK * dofunction)(SEGPTR ofn16) = GetSaveFileName16;
-   return Commdlg_GetFileName32A(dofunction,ofn);
+   return Commdlg_GetFileNameA(dofunction,ofn);
 }
 
 /***********************************************************************
  *            GetSaveFileName32W  (COMDLG32.13)
  */
-BOOL32 WINAPI GetSaveFileName32W( LPOPENFILENAME32W ofn )
+BOOL WINAPI GetSaveFileNameW( LPOPENFILENAMEW ofn )
 {
    BOOL16 (CALLBACK * dofunction)(SEGPTR ofn16) = GetSaveFileName16;
-   return Commdlg_GetFileName32W(dofunction,ofn);
+   return Commdlg_GetFileNameW(dofunction,ofn);
 }
 
 /***********************************************************************
  *            ChooseColorA  (COMDLG32.1)
  */
-BOOL32 WINAPI ChooseColor32A(LPCHOOSECOLOR32A lpChCol )
+BOOL WINAPI ChooseColorA(LPCHOOSECOLORA lpChCol )
 
 {
   BOOL16 ret;
@@ -3999,13 +3999,13 @@ BOOL32 WINAPI ChooseColor32A(LPCHOOSECOLOR32A lpChCol )
   memcpy(lpChCol->lpCustColors,ccref,64);
   SEGPTR_FREE(ccref);
   SEGPTR_FREE(lpcc16);
-  return (BOOL32)ret;
+  return (BOOL)ret;
 }
 
 /***********************************************************************
  *            ChooseColorW  (COMDLG32.2)
  */
-BOOL32 WINAPI ChooseColor32W(LPCHOOSECOLOR32W lpChCol )
+BOOL WINAPI ChooseColorW(LPCHOOSECOLORW lpChCol )
 
 {
   BOOL16 ret;
@@ -4037,13 +4037,13 @@ BOOL32 WINAPI ChooseColor32W(LPCHOOSECOLOR32W lpChCol )
   memcpy(lpChCol->lpCustColors,ccref,64);
   SEGPTR_FREE(ccref);
   SEGPTR_FREE(lpcc16);
-  return (BOOL32)ret;
+  return (BOOL)ret;
 }
 
 /***********************************************************************
  *            PageSetupDlgA  (COMDLG32.15)
  */
-BOOL32 WINAPI PageSetupDlg32A(LPPAGESETUPDLG32A setupdlg) {
+BOOL WINAPI PageSetupDlgA(LPPAGESETUPDLGA setupdlg) {
 	FIXME(commdlg,"(%p), stub!\n",setupdlg);
 	return FALSE;
 }

@@ -10,7 +10,7 @@
 #include "wintypes.h"
 #include "debug.h"
 
-void WINAPI BootTask()
+void WINAPI BootTask16()
 {
 	MSG("BootTask(): should only be used by WIN32S.EXE.\n");
 }
@@ -20,7 +20,7 @@ void WINAPI BootTask()
  *
  * Written without any docu.
  */
-SEGPTR WINAPI StackLinearToSegmented(WORD w1, WORD w2)
+SEGPTR WINAPI StackLinearToSegmented16(WORD w1, WORD w2)
 {
 	FIXME(dll,"(%d,%d):stub.\n",w1,w2);
 	return (SEGPTR)NULL;

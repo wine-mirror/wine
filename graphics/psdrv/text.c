@@ -12,13 +12,13 @@
 /***********************************************************************
  *           PSDRV_ExtTextOut
  */
-BOOL32 PSDRV_ExtTextOut( DC *dc, INT32 x, INT32 y, UINT32 flags,
-                   const RECT32 *lprect, LPCSTR str, UINT32 count,
-                   const INT32 *lpDx )
+BOOL PSDRV_ExtTextOut( DC *dc, INT x, INT y, UINT flags,
+                   const RECT *lprect, LPCSTR str, UINT count,
+                   const INT *lpDx )
 {
     PSDRV_PDEVICE *physDev = (PSDRV_PDEVICE *)dc->physDev;
     char *strbuf;
-    SIZE32 sz;
+    SIZE sz;
 
     TRACE(psdrv, "(x=%d, y=%d, flags=0x%08x, str='%.*s', count=%d)\n", x, y,
 	  flags, (int)count, str, count);

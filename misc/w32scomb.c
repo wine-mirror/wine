@@ -22,8 +22,8 @@
  * A 16:16 segmented pointer to the function is returned.
  * Written without any docu.
  */
-SEGPTR WINAPI Get16DLLAddress(HMODULE32 handle, LPSTR func_name) {
-	HANDLE32 ThunkHeap = HeapCreate(HEAP_WINE_SEGPTR | HEAP_WINE_CODESEG, 0, 64);
+SEGPTR WINAPI Get16DLLAddress(HMODULE handle, LPSTR func_name) {
+	HANDLE ThunkHeap = HeapCreate(HEAP_WINE_SEGPTR | HEAP_WINE_CODESEG, 0, 64);
         LPBYTE x;
 	LPVOID tmpheap = HeapAlloc(ThunkHeap, 0, 32);
 	SEGPTR thunk = HEAP_GetSegptr(ThunkHeap, 0, tmpheap);
@@ -35,7 +35,7 @@ SEGPTR WINAPI Get16DLLAddress(HMODULE32 handle, LPSTR func_name) {
 
         x=PTR_SEG_TO_LIN(thunk);
         *x++=0xba; *(DWORD*)x=proc_16;x+=4;             /* movl proc_16, $edx */
-        *x++=0xea; *(DWORD*)x=(DWORD)GetProcAddress32(GetModuleHandle32A("KERNEL32"),"QT_Thunk");x+=4;     /* jmpl QT_Thunk */
+        *x++=0xea; *(DWORD*)x=(DWORD)GetProcAddress(GetModuleHandleA("KERNEL32"),"QT_Thunk");x+=4;     /* jmpl QT_Thunk */
 	GET_CS(cs); *(WORD*)x=(WORD)cs;
         return thunk;
 }

@@ -34,7 +34,7 @@ typedef struct
     BYTE      fcb2[20];                /* 6c Second FCB */
     BYTE      cmdLine[128];            /* 80 Command-line (first byte is len)*/
     BYTE      padding[16];             /* Some apps access beyond the end of the cmd line */
-} PDB;
+} PDB16;
 
 
   /* Segment containing MakeProcInstance() thunks */
@@ -108,7 +108,7 @@ typedef struct _TDB
     BYTE      module_name[8];             /* f2 Module name for task */
     WORD      magic;                      /* fa TDB signature */
     DWORD     unused7;                    /* fc */
-    PDB       pdb;                        /* 100 PDB for this task */
+    PDB16       pdb;                        /* 100 PDB for this task */
 } TDB;
 
 #define TDB_MAGIC    ('T' | ('D' << 8))
@@ -152,13 +152,13 @@ extern HTASK16 TASK_Create( struct _THDB *thdb, struct _NE_MODULE *pModule,
 extern void TASK_StartTask( HTASK16 hTask );
 extern void TASK_KillCurrentTask( INT16 exitCode );
 extern HTASK16 TASK_GetNextTask( HTASK16 hTask );
-extern BOOL32 TASK_Reschedule(void);
+extern BOOL TASK_Reschedule(void);
 extern void TASK_InstallTHHook( THHOOK *pNewThook );
 
-extern HQUEUE16 WINAPI SetThreadQueue( DWORD thread, HQUEUE16 hQueue );
-extern HQUEUE16 WINAPI GetThreadQueue( DWORD thread );
-extern VOID WINAPI SetFastQueue( DWORD thread, HANDLE32 hQueue );
-extern HANDLE32 WINAPI GetFastQueue( void );
+extern HQUEUE16 WINAPI SetThreadQueue16( DWORD thread, HQUEUE16 hQueue );
+extern HQUEUE16 WINAPI GetThreadQueue16( DWORD thread );
+extern VOID WINAPI SetFastQueue16( DWORD thread, HANDLE hQueue );
+extern HANDLE WINAPI GetFastQueue16( void );
 
 
 #endif /* __WINE_TASK_H */

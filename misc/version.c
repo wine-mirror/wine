@@ -22,7 +22,7 @@ typedef struct
 {
     LONG             getVersion16; 
     LONG             getVersion32;
-    OSVERSIONINFO32A getVersionEx;
+    OSVERSIONINFOA getVersionEx;
 } VERSION_DATA;
 
 
@@ -34,7 +34,7 @@ static VERSION_DATA VersionData[NB_WINDOWS_VERSIONS] =
 	MAKELONG( 0x0a03, 0x0616 ), /* DOS 6.22 */
 	MAKELONG( 0x0a03, 0x8000 ),
 	{
-            sizeof(OSVERSIONINFO32A), 3, 10, 0,
+            sizeof(OSVERSIONINFOA), 3, 10, 0,
             VER_PLATFORM_WIN32s, "Win32s 1.3" 
 	}
     },
@@ -43,7 +43,7 @@ static VERSION_DATA VersionData[NB_WINDOWS_VERSIONS] =
         0x07005F03,
         0xC0000004,
 	{
-            sizeof(OSVERSIONINFO32A), 4, 0, 0x40003B6,
+            sizeof(OSVERSIONINFOA), 4, 0, 0x40003B6,
             VER_PLATFORM_WIN32_WINDOWS, "Win95"
 	}
     },
@@ -52,7 +52,7 @@ static VERSION_DATA VersionData[NB_WINDOWS_VERSIONS] =
         0x05000A03,
         0x04213303,
         {
-            sizeof(OSVERSIONINFO32A), 3, 51, 0x421,
+            sizeof(OSVERSIONINFOA), 3, 51, 0x421,
             VER_PLATFORM_WIN32_NT, "Service Pack 2"
 	}
     },
@@ -61,7 +61,7 @@ static VERSION_DATA VersionData[NB_WINDOWS_VERSIONS] =
         0x05000A03,
         0x05650004,
         {
-            sizeof(OSVERSIONINFO32A), 4, 0, 0x565,
+            sizeof(OSVERSIONINFOA), 4, 0, 0x565,
             VER_PLATFORM_WIN32_NT, "Service Pack 3"
         }
     }
@@ -76,7 +76,7 @@ static const char *WinVersionNames[NB_WINDOWS_VERSIONS] =
 };
 
 /* the current version has not been autodetected but forced via cmdline */
-static BOOL32 versionForced = FALSE;
+static BOOL versionForced = FALSE;
 static WINDOWS_VERSION defaultWinVersion = WIN31;
 
 
@@ -195,7 +195,7 @@ LONG WINAPI GetVersion16(void)
 /***********************************************************************
  *         GetVersion32   (KERNEL32.427)
  */
-LONG WINAPI GetVersion32(void)
+LONG WINAPI GetVersion(void)
 {
     WINDOWS_VERSION ver = VERSION_GetVersion();
     return VersionData[ver].getVersion32;
@@ -225,10 +225,10 @@ BOOL16 WINAPI GetVersionEx16(OSVERSIONINFO16 *v)
 /***********************************************************************
  *         GetVersionEx32A   (KERNEL32.428)
  */
-BOOL32 WINAPI GetVersionEx32A(OSVERSIONINFO32A *v)
+BOOL WINAPI GetVersionExA(OSVERSIONINFOA *v)
 {
     WINDOWS_VERSION ver = VERSION_GetVersion();
-    if (v->dwOSVersionInfoSize != sizeof(OSVERSIONINFO32A))
+    if (v->dwOSVersionInfoSize != sizeof(OSVERSIONINFOA))
     {
         WARN(ver,"wrong OSVERSIONINFO size from app");
         return FALSE;
@@ -245,11 +245,11 @@ BOOL32 WINAPI GetVersionEx32A(OSVERSIONINFO32A *v)
 /***********************************************************************
  *         GetVersionEx32W   (KERNEL32.429)
  */
-BOOL32 WINAPI GetVersionEx32W(OSVERSIONINFO32W *v)
+BOOL WINAPI GetVersionExW(OSVERSIONINFOW *v)
 {
     WINDOWS_VERSION ver = VERSION_GetVersion();
 
-    if (v->dwOSVersionInfoSize!=sizeof(OSVERSIONINFO32W))
+    if (v->dwOSVersionInfoSize!=sizeof(OSVERSIONINFOW))
     {
         WARN(ver,"wrong OSVERSIONINFO size from app");
         return FALSE;
@@ -266,12 +266,12 @@ BOOL32 WINAPI GetVersionEx32W(OSVERSIONINFO32W *v)
 /***********************************************************************
  *	    GetWinFlags   (KERNEL.132)
  */
-DWORD WINAPI GetWinFlags(void)
+DWORD WINAPI GetWinFlags16(void)
 {
   static const long cpuflags[5] =
     { WF_CPU086, WF_CPU186, WF_CPU286, WF_CPU386, WF_CPU486 };
   SYSTEM_INFO si;
-  OSVERSIONINFO32A ovi;
+  OSVERSIONINFOA ovi;
   DWORD result;
 
   GetSystemInfo(&si);
@@ -295,7 +295,7 @@ DWORD WINAPI GetWinFlags(void)
   }
   if (si.wProcessorLevel >= 4) result |= WF_HASCPUID;
   ovi.dwOSVersionInfoSize = sizeof(ovi);
-  GetVersionEx32A(&ovi);
+  GetVersionExA(&ovi);
   if (ovi.dwPlatformId == VER_PLATFORM_WIN32_NT)
       result |= WF_WIN32WOW; /* undocumented WF_WINNT */
   return result;
@@ -305,7 +305,7 @@ DWORD WINAPI GetWinFlags(void)
 /***********************************************************************
  *	    GetWinDebugInfo   (KERNEL.355)
  */
-BOOL16 WINAPI GetWinDebugInfo(WINDEBUGINFO *lpwdi, UINT16 flags)
+BOOL16 WINAPI GetWinDebugInfo16(WINDEBUGINFO *lpwdi, UINT16 flags)
 {
     FIXME(ver, "(%8lx,%d): stub returning 0\n",
 	  (unsigned long)lpwdi, flags);
@@ -319,7 +319,7 @@ BOOL16 WINAPI GetWinDebugInfo(WINDEBUGINFO *lpwdi, UINT16 flags)
 /***********************************************************************
  *	    SetWinDebugInfo   (KERNEL.356)
  */
-BOOL16 WINAPI SetWinDebugInfo(WINDEBUGINFO *lpwdi)
+BOOL16 WINAPI SetWinDebugInfo16(WINDEBUGINFO *lpwdi)
 {
     FIXME(ver, "(%8lx): stub returning 0\n", (unsigned long)lpwdi);
     /* 0 means not in debugging mode/version */
@@ -345,7 +345,7 @@ void WINAPI DebugFillBuffer(LPSTR lpBuffer, WORD wBytes)
  *
  * returns TRUE if Win called with "/b" (bootlog.txt)
  */
-BOOL16 WINAPI DiagQuery()
+BOOL16 WINAPI DiagQuery16()
 {
 	/* perhaps implement a Wine "/b" command line flag sometime ? */
 	return FALSE;
@@ -356,7 +356,7 @@ BOOL16 WINAPI DiagQuery()
  *
  * writes a debug string into <windir>\bootlog.txt
  */
-void WINAPI DiagOutput(LPCSTR str)
+void WINAPI DiagOutput16(LPCSTR str)
 {
         /* FIXME */
 	DPRINTF("DIAGOUTPUT:%s\n", debugstr_a(str));
@@ -365,7 +365,7 @@ void WINAPI DiagOutput(LPCSTR str)
 /***********************************************************************
  *           OaBuildVersion           [OLEAUT32.170]
  */
-UINT32 WINAPI OaBuildVersion()
+UINT WINAPI OaBuildVersion()
 {
     WINDOWS_VERSION ver = VERSION_GetVersion();
 
@@ -392,7 +392,7 @@ UINT32 WINAPI OaBuildVersion()
  *   some functions getting sometimes LPSTR sometimes LPWSTR...
  *
  */
-BOOL32 VERSION_OsIsUnicode(void)
+BOOL VERSION_OsIsUnicode(void)
 {
     switch(VERSION_GetVersion())
     {

@@ -71,7 +71,7 @@ int RELAY_CallFrom32( int ret_addr, ... )
 {
     int i, ret;
     char buffer[80];
-    FARPROC32 func;
+    FARPROC func;
     unsigned int mask, typemask;
     WORD fs;
 
@@ -81,7 +81,7 @@ int RELAY_CallFrom32( int ret_addr, ... )
     WORD nb_args = *(WORD *)(relay_addr + 1) / sizeof(int);
 
     assert(TRACE_ON(relay));
-    func = (FARPROC32)BUILTIN32_GetEntryPoint( buffer, relay_addr - 5,
+    func = (FARPROC)BUILTIN32_GetEntryPoint( buffer, relay_addr - 5,
                                                &typemask );
       DPRINTF( "Call %s(", buffer );
       args++;

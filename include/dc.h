@@ -15,16 +15,16 @@
 #define CLIP_KEEPRGN	0x0004
 
 extern DC * DC_AllocDC( const DC_FUNCTIONS *funcs );
-extern DC * DC_GetDCPtr( HDC32 hdc );
+extern DC * DC_GetDCPtr( HDC hdc );
 extern void DC_InitDC( DC * dc );
 extern void DC_UpdateXforms( DC * dc );
 
 
 /* objects/clipping.c */
-INT32 CLIPPING_IntersectClipRect( DC * dc, INT32 left, INT32 top,
-    INT32 right, INT32 bottom, UINT32 flags );
-INT32 CLIPPING_IntersectVisRect( DC * dc, INT32 left, INT32 top,
-    INT32 right, INT32 bottom, BOOL32 exclude );
+INT CLIPPING_IntersectClipRect( DC * dc, INT left, INT top,
+    INT right, INT bottom, UINT flags );
+INT CLIPPING_IntersectVisRect( DC * dc, INT left, INT top,
+    INT right, INT bottom, BOOL exclude );
 extern void CLIPPING_UpdateGCRegion( DC * dc );
 
 #endif /* __WINE_DC_H */

@@ -26,9 +26,9 @@ typedef struct IStdMarshalInfo IStdMarshalInfo,*LPSTDMARSHALINFO;
 #define IMarshal_METHODS \
     ICOM_METHOD6(HRESULT,GetUnmarshalClass,  REFIID,riid, void*,pv, DWORD,dwDestContext, void*,pvDestContext, DWORD,mshlflags, CLSID*,pCid); \
     ICOM_METHOD6(HRESULT,GetMarshalSizeMax,  REFIID,riid, void*,pv, DWORD,dwDestContext, void*,pvDestContext, DWORD,mshlflags, DWORD*,pSize); \
-    ICOM_METHOD6(HRESULT,MarshalInterface,   IStream32*,pStm, REFIID,riid, void*,pv, DWORD,dwDestContext, void*,pvDestContext, DWORD,mshlflags); \
-    ICOM_METHOD3(HRESULT,UnmarshalInterface, IStream32*,pStm, REFIID,riid, void**,ppv); \
-    ICOM_METHOD1(HRESULT,ReleaseMarshalData, IStream32*,pStm); \
+    ICOM_METHOD6(HRESULT,MarshalInterface,   IStream*,pStm, REFIID,riid, void*,pv, DWORD,dwDestContext, void*,pvDestContext, DWORD,mshlflags); \
+    ICOM_METHOD3(HRESULT,UnmarshalInterface, IStream*,pStm, REFIID,riid, void**,ppv); \
+    ICOM_METHOD1(HRESULT,ReleaseMarshalData, IStream*,pStm); \
     ICOM_METHOD1(HRESULT,DisconnectObject,   DWORD,dwReserved);
 #define IMarshal_IMETHODS \
     IUnknown_IMETHODS \
@@ -81,7 +81,7 @@ ICOM_DEFINE(IStdMarshalInfo,IUnknown)
 HRESULT WINAPI CoCreateFreeThreadedMarshaler(LPUNKNOWN punkOuter, LPUNKNOWN* ppunkMarshal);
 
 /* FIXME: not implemented */
-HRESULT WINAPI CoGetInterfaceAndReleaseStream(LPSTREAM32 pStm, REFIID iid, LPVOID* ppv);
+HRESULT WINAPI CoGetInterfaceAndReleaseStream(LPSTREAM pStm, REFIID iid, LPVOID* ppv);
 
 /* FIXME: not implemented */
 HRESULT WINAPI CoGetMarshalSizeMax(ULONG* pulSize, REFIID riid, LPUNKNOWN pUnk, DWORD dwDestContext, LPVOID pvDestContext, DWORD mshlflags);
@@ -90,22 +90,22 @@ HRESULT WINAPI CoGetMarshalSizeMax(ULONG* pulSize, REFIID riid, LPUNKNOWN pUnk, 
 HRESULT WINAPI CoGetStandardMarshal(REFIID riid, LPUNKNOWN pUnk, DWORD dwDestContext, LPVOID pvDestContext, DWORD mshlflags, LPMARSHAL* ppMarshal);
 
 /* FIXME: not implemented */
-HRESULT WINAPI CoMarshalHresult(LPSTREAM32 pstm, HRESULT hresult);
+HRESULT WINAPI CoMarshalHresult(LPSTREAM pstm, HRESULT hresult);
 
 /* FIXME: not implemented */
-HRESULT WINAPI CoMarshalInterface(LPSTREAM32 pStm, REFIID riid, LPUNKNOWN pUnk, DWORD dwDestContext, LPVOID pvDestContext, DWORD mshlflags);
+HRESULT WINAPI CoMarshalInterface(LPSTREAM pStm, REFIID riid, LPUNKNOWN pUnk, DWORD dwDestContext, LPVOID pvDestContext, DWORD mshlflags);
 
 /* FIXME: not implemented */
-HRESULT WINAPI CoMarshalInterThreadInterfaceInStream(REFIID riid, LPUNKNOWN pUnk, LPSTREAM32* ppStm);
+HRESULT WINAPI CoMarshalInterThreadInterfaceInStream(REFIID riid, LPUNKNOWN pUnk, LPSTREAM* ppStm);
 
 /* FIXME: not implemented */
-HRESULT WINAPI CoReleaseMarshalData(LPSTREAM32 pStm);
+HRESULT WINAPI CoReleaseMarshalData(LPSTREAM pStm);
 
 /* FIXME: not implemented */
-HRESULT WINAPI CoUnmarshalHresult(LPSTREAM32 pstm, HRESULT* phresult);
+HRESULT WINAPI CoUnmarshalHresult(LPSTREAM pstm, HRESULT* phresult);
 
 /* FIXME: not implemented */
-HRESULT WINAPI CoUnmarshalInterface(LPSTREAM32 pStm, REFIID riid, LPVOID* ppv);
+HRESULT WINAPI CoUnmarshalInterface(LPSTREAM pStm, REFIID riid, LPVOID* ppv);
 
 
 #endif /* __WINE_WINE_OBJ_MARSHAL_H */

@@ -17,9 +17,9 @@
 /***********************************************************************
  *              GetStartupInfoA         (KERNEL32.273)
  */
-VOID WINAPI GetStartupInfo32A(LPSTARTUPINFO32A lpStartupInfo)
+VOID WINAPI GetStartupInfoA(LPSTARTUPINFOA lpStartupInfo)
 {
-    lpStartupInfo->cb = sizeof(STARTUPINFO32A);
+    lpStartupInfo->cb = sizeof(STARTUPINFOA);
     lpStartupInfo->lpReserved = "<Reserved>";
     lpStartupInfo->lpDesktop = "Desktop";
     lpStartupInfo->lpTitle = "Title";
@@ -27,46 +27,46 @@ VOID WINAPI GetStartupInfo32A(LPSTARTUPINFO32A lpStartupInfo)
     lpStartupInfo->cbReserved2 = 0;
     lpStartupInfo->lpReserved2 = NULL; /* must be NULL for VC runtime */
     lpStartupInfo->dwFlags    = STARTF_USESTDHANDLES;
-    lpStartupInfo->hStdInput  = (HANDLE32)0;
-    lpStartupInfo->hStdOutput = (HANDLE32)1;
-    lpStartupInfo->hStdError  = (HANDLE32)2;
+    lpStartupInfo->hStdInput  = (HANDLE)0;
+    lpStartupInfo->hStdOutput = (HANDLE)1;
+    lpStartupInfo->hStdError  = (HANDLE)2;
 }
 
 /***********************************************************************
  *              GetStartupInfoW         (KERNEL32.274)
  */
-VOID WINAPI GetStartupInfo32W(LPSTARTUPINFO32W lpStartupInfo)
+VOID WINAPI GetStartupInfoW(LPSTARTUPINFOW lpStartupInfo)
 {
-    lpStartupInfo->cb = sizeof(STARTUPINFO32W);
+    lpStartupInfo->cb = sizeof(STARTUPINFOW);
     lpStartupInfo->lpReserved = HEAP_strdupAtoW(GetProcessHeap(),0,"<Reserved>");
     lpStartupInfo->lpDesktop = HEAP_strdupAtoW(GetProcessHeap(), 0, "Desktop");
     lpStartupInfo->lpTitle = HEAP_strdupAtoW(GetProcessHeap(), 0, "Title");
 
     lpStartupInfo->cbReserved2 = 0;
     lpStartupInfo->lpReserved2 = NULL; /* must be NULL for VC runtime */
-    lpStartupInfo->hStdInput  = (HANDLE32)0;
-    lpStartupInfo->hStdOutput = (HANDLE32)1;
-    lpStartupInfo->hStdError  = (HANDLE32)2;
+    lpStartupInfo->hStdInput  = (HANDLE)0;
+    lpStartupInfo->hStdOutput = (HANDLE)1;
+    lpStartupInfo->hStdError  = (HANDLE)2;
 }
 
 /***********************************************************************
  *              GetComputerNameA         (KERNEL32.165)
  */
-BOOL32 WINAPI GetComputerName32A(LPSTR name,LPDWORD size)
+BOOL WINAPI GetComputerNameA(LPSTR name,LPDWORD size)
 {
 	if (-1==gethostname(name,*size))
 		return FALSE;
-	*size = lstrlen32A(name);
+	*size = lstrlenA(name);
 	return TRUE;
 }
 
 /***********************************************************************
  *              GetComputerNameW         (KERNEL32.166)
  */
-BOOL32 WINAPI GetComputerName32W(LPWSTR name,LPDWORD size)
+BOOL WINAPI GetComputerNameW(LPWSTR name,LPDWORD size)
 {
     LPSTR nameA = (LPSTR)HeapAlloc( GetProcessHeap(), 0, *size);
-    BOOL32 ret = GetComputerName32A(nameA,size);
+    BOOL ret = GetComputerNameA(nameA,size);
     if (ret) lstrcpynAtoW(name,nameA,*size+1);
     HeapFree( GetProcessHeap(), 0, nameA );
     return ret;

@@ -5,11 +5,11 @@
 
 #define RAS_MaxEntryName	256
 
-typedef struct tagRASCONN32A {
+typedef struct tagRASCONNA {
 	DWORD		dwSize;
-	HRASCONN32	hRasConn;
+	HRASCONN	hRasConn;
 	CHAR		szEntryName[RAS_MaxEntryName+1];
-} RASCONN32A,*LPRASCONN32A;
+} RASCONNA,*LPRASCONNA;
 
-DWORD WINAPI RasEnumConnections32A( LPRASCONN32A rc, LPDWORD x, LPDWORD y);
+DWORD WINAPI RasEnumConnectionsA( LPRASCONNA rc, LPDWORD x, LPDWORD y);
 #endif

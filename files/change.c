@@ -27,8 +27,8 @@ typedef struct
 /****************************************************************************
  *		FindFirstChangeNotification32A (KERNEL32.248)
  */
-HANDLE32 WINAPI FindFirstChangeNotification32A( LPCSTR lpPathName,
-                                                BOOL32 bWatchSubtree,
+HANDLE WINAPI FindFirstChangeNotificationA( LPCSTR lpPathName,
+                                                BOOL bWatchSubtree,
                                                 DWORD dwNotifyFilter ) 
 {
     CHANGE_OBJECT *change;
@@ -39,13 +39,13 @@ HANDLE32 WINAPI FindFirstChangeNotification32A( LPCSTR lpPathName,
     req.filter  = dwNotifyFilter;
     CLIENT_SendRequest( REQ_CREATE_CHANGE_NOTIFICATION, -1, 1, &req, sizeof(req) );
     CLIENT_WaitSimpleReply( &reply, sizeof(reply), NULL );
-    if (reply.handle == -1) return INVALID_HANDLE_VALUE32;
+    if (reply.handle == -1) return INVALID_HANDLE_VALUE;
 
     change = HeapAlloc( SystemHeap, 0, sizeof(CHANGE_OBJECT) );
     if (!change)
     {
         CLIENT_CloseHandle( reply.handle );
-        return INVALID_HANDLE_VALUE32;
+        return INVALID_HANDLE_VALUE;
     }
     change->header.type = K32OBJ_CHANGE;
     change->header.refcount = 1;
@@ -57,12 +57,12 @@ HANDLE32 WINAPI FindFirstChangeNotification32A( LPCSTR lpPathName,
 /****************************************************************************
  *		FindFirstChangeNotification32W (KERNEL32.249)
  */
-HANDLE32 WINAPI FindFirstChangeNotification32W( LPCWSTR lpPathName,
-                                                BOOL32 bWatchSubtree,
+HANDLE WINAPI FindFirstChangeNotificationW( LPCWSTR lpPathName,
+                                                BOOL bWatchSubtree,
                                                 DWORD dwNotifyFilter) 
 {
     LPSTR nameA = HEAP_strdupWtoA( GetProcessHeap(), 0, lpPathName );
-    HANDLE32 ret = FindFirstChangeNotification32A( nameA, bWatchSubtree, 
+    HANDLE ret = FindFirstChangeNotificationA( nameA, bWatchSubtree, 
                                                           dwNotifyFilter );
     if (nameA) HeapFree( GetProcessHeap(), 0, nameA );
     return ret;
@@ -71,7 +71,7 @@ HANDLE32 WINAPI FindFirstChangeNotification32W( LPCWSTR lpPathName,
 /****************************************************************************
  *		FindNextChangeNotification (KERNEL32.252)
  */
-BOOL32 WINAPI FindNextChangeNotification( HANDLE32 handle ) 
+BOOL WINAPI FindNextChangeNotification( HANDLE handle ) 
 {
     if (HANDLE_GetServerHandle( PROCESS_Current(), handle,
                                 K32OBJ_FILE, 0 ) == -1)
@@ -83,7 +83,7 @@ BOOL32 WINAPI FindNextChangeNotification( HANDLE32 handle )
 /****************************************************************************
  *		FindCloseChangeNotification (KERNEL32.247)
  */
-BOOL32 WINAPI FindCloseChangeNotification( HANDLE32 handle) 
+BOOL WINAPI FindCloseChangeNotification( HANDLE handle) 
 {
     return CloseHandle( handle );
 }

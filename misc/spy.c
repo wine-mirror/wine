@@ -605,7 +605,7 @@ static int SPY_IndentLevel  = 0;
 /***********************************************************************
  *           SPY_GetMsgName
  */
-const char *SPY_GetMsgName( UINT32 msg )
+const char *SPY_GetMsgName( UINT msg )
 {
     static char msg_buffer[20];
 
@@ -621,14 +621,14 @@ const char *SPY_GetMsgName( UINT32 msg )
 /***********************************************************************
  *           SPY_GetWndName
  */
-const char *SPY_GetWndName( HWND32 hwnd )
+const char *SPY_GetWndName( HWND hwnd )
 {
     static char wnd_buffer[16];
 
     WND* pWnd = WIN_FindWndPtr( hwnd );
     if( pWnd )
     {
-	INT32 n = sizeof(wnd_buffer) - 6;
+	INT n = sizeof(wnd_buffer) - 6;
 	LPSTR p = wnd_buffer;
 	LPSTR src;
 	
@@ -642,11 +642,11 @@ const char *SPY_GetWndName( HWND32 hwnd )
 	}
 	else /* get class name */
 	{
-	    INT32 len;
+	    INT len;
 
 	    *(p++)='{';
-	    GlobalGetAtomName32A( pWnd->class->atomName, p, n + 1);
-	    src = p += (len = lstrlen32A(p));
+	    GlobalGetAtomNameA( pWnd->class->atomName, p, n + 1);
+	    src = p += (len = lstrlenA(p));
 	    if( len >= n ) src = wnd_buffer;	/* something nonzero */
 	    postfix = '}';
 	}
@@ -654,15 +654,15 @@ const char *SPY_GetWndName( HWND32 hwnd )
 	*(p++) = postfix;
 	*(p++) = '\0';
     }
-    else lstrcpy32A( wnd_buffer, "\"NULL\"" );
+    else lstrcpyA( wnd_buffer, "\"NULL\"" );
     return wnd_buffer;
 }
 
 /***********************************************************************
  *           SPY_EnterMessage
  */
-void SPY_EnterMessage( INT32 iFlag, HWND32 hWnd, UINT32 msg,
-                       WPARAM32 wParam, LPARAM lParam )
+void SPY_EnterMessage( INT iFlag, HWND hWnd, UINT msg,
+                       WPARAM wParam, LPARAM lParam )
 {
     LPCSTR pname;
 
@@ -678,7 +678,7 @@ void SPY_EnterMessage( INT32 iFlag, HWND32 hWnd, UINT32 msg,
                         wParam, lParam);
         break;
 
-    case SPY_DISPATCHMESSAGE32:
+    case SPY_DISPATCHMESSAGE:
 	pname = SPY_GetWndName(hWnd);
         TRACE(message,"%*s(%08x) %-16s message [%04x] %s dispatched  wp=%08x lp=%08lx\n",
                         SPY_IndentLevel, "", hWnd, pname, msg, SPY_GetMsgName( msg ),
@@ -686,7 +686,7 @@ void SPY_EnterMessage( INT32 iFlag, HWND32 hWnd, UINT32 msg,
         break;
 
     case SPY_SENDMESSAGE16:
-    case SPY_SENDMESSAGE32:
+    case SPY_SENDMESSAGE:
         {
             char taskName[30];
             HTASK16 hTask = GetWindowTask16(hWnd);
@@ -696,7 +696,7 @@ void SPY_EnterMessage( INT32 iFlag, HWND32 hWnd, UINT32 msg,
             else
             {
                 sprintf( taskName, "task %04x ???", hTask );
-                GetModuleName( hTask, taskName + 10, sizeof(taskName) - 10 );
+                GetModuleName16( hTask, taskName + 10, sizeof(taskName) - 10 );
             }
 	    pname = SPY_GetWndName(hWnd);
 
@@ -718,7 +718,7 @@ void SPY_EnterMessage( INT32 iFlag, HWND32 hWnd, UINT32 msg,
                         msg, wParam, lParam );
         break;
 
-    case SPY_DEFWNDPROC32:
+    case SPY_DEFWNDPROC:
 	if( SPY_ExcludeDWP ) return;
         TRACE(message, "%*s(%08x)  DefWindowProc32: %s [%04x]  wp=%08x lp=%08lx\n",
                         SPY_IndentLevel, "", hWnd, SPY_GetMsgName( msg ),
@@ -732,12 +732,12 @@ void SPY_EnterMessage( INT32 iFlag, HWND32 hWnd, UINT32 msg,
 /***********************************************************************
  *           SPY_ExitMessage
  */
-void SPY_ExitMessage( INT32 iFlag, HWND32 hWnd, UINT32 msg, LRESULT lReturn )
+void SPY_ExitMessage( INT iFlag, HWND hWnd, UINT msg, LRESULT lReturn )
 {
     LPCSTR pname;
 
     if (!TRACE_ON(message) || SPY_EXCLUDE(msg) ||
-	(SPY_ExcludeDWP && (iFlag == SPY_RESULT_DEFWND16 || iFlag == SPY_RESULT_DEFWND32)) )
+	(SPY_ExcludeDWP && (iFlag == SPY_RESULT_DEFWND16 || iFlag == SPY_RESULT_DEFWND)) )
 	return;
 
     if (SPY_IndentLevel) SPY_IndentLevel -= SPY_INDENT_UNIT;
@@ -749,7 +749,7 @@ void SPY_ExitMessage( INT32 iFlag, HWND32 hWnd, UINT32 msg, LRESULT lReturn )
 			SPY_IndentLevel, "", hWnd, SPY_GetMsgName( msg ), msg, lReturn );
 	break;
 
-    case SPY_RESULT_DEFWND32:
+    case SPY_RESULT_DEFWND:
 	TRACE(message," %*s(%08x)  DefWindowProc32: %s [%04x] returned %08lx\n",
 			SPY_IndentLevel, "", hWnd, SPY_GetMsgName( msg ), msg, lReturn );
 	break;
@@ -761,7 +761,7 @@ void SPY_ExitMessage( INT32 iFlag, HWND32 hWnd, UINT32 msg, LRESULT lReturn )
                         SPY_GetMsgName( msg ), lReturn );
         break;
 
-    case SPY_RESULT_OK32:
+    case SPY_RESULT_OK:
 	pname = SPY_GetWndName(hWnd);
         TRACE(message," %*s(%08x) %-16s message [%04x] %s returned %08lx\n",
                         SPY_IndentLevel, "", hWnd, pname, msg,
@@ -775,7 +775,7 @@ void SPY_ExitMessage( INT32 iFlag, HWND32 hWnd, UINT32 msg, LRESULT lReturn )
                         SPY_GetMsgName( msg ) );
         break;
 
-    case SPY_RESULT_INVALIDHWND32:
+    case SPY_RESULT_INVALIDHWND:
 	pname = SPY_GetWndName(hWnd);
         WARN(message, " %*s(%08x) %-16s message [%04x] %s HAS INVALID HWND\n",
                         SPY_IndentLevel, "", hWnd, pname, msg,

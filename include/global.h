@@ -27,19 +27,19 @@ extern HGLOBAL16 GLOBAL_Alloc( WORD flags, DWORD size, HGLOBAL16 hOwner,
                                BOOL16 isCode, BOOL16 is32Bit,
                                BOOL16 isReadOnly );
 
-extern WORD WINAPI GlobalHandleToSel( HGLOBAL16 handle );
+extern WORD WINAPI GlobalHandleToSel16( HGLOBAL16 handle );
 
 /* memory/virtual.c */
-extern BOOL32 VIRTUAL_Init( void );
+extern BOOL VIRTUAL_Init( void );
 extern DWORD VIRTUAL_GetPageSize(void);
 extern DWORD VIRTUAL_GetGranularity(void);
 extern LPVOID VIRTUAL_MapFileW( LPCWSTR name );
 
-typedef BOOL32 (*HANDLERPROC)(LPVOID, LPCVOID);
-extern BOOL32 VIRTUAL_SetFaultHandler(LPCVOID addr, HANDLERPROC proc, LPVOID arg);
-extern BOOL32 VIRTUAL_HandleFault(LPCVOID addr);
+typedef BOOL (*HANDLERPROC)(LPVOID, LPCVOID);
+extern BOOL VIRTUAL_SetFaultHandler(LPCVOID addr, HANDLERPROC proc, LPVOID arg);
+extern BOOL VIRTUAL_HandleFault(LPCVOID addr);
 
 /* memory/atom.c */
-extern BOOL32 ATOM_Init( WORD globalTableSel );
+extern BOOL ATOM_Init( WORD globalTableSel );
 
 #endif  /* __WINE_GLOBAL_H */

@@ -59,11 +59,11 @@ SOFTWARE.
 
 
 typedef struct {
-    INT32 size;
-    INT32 numRects;
-    INT32 type; /* NULL, SIMPLE or COMPLEX */
-    RECT32 *rects;
-    RECT32 extents;
+    INT size;
+    INT numRects;
+    INT type; /* NULL, SIMPLE or COMPLEX */
+    RECT *rects;
+    RECT extents;
 } WINEREGION;
 
   /* GDI logical region object */
@@ -88,7 +88,7 @@ typedef struct
 #define MEMCHECK(reg, rect, firstrect){\
         if ((reg)->numRects >= ((reg)->size - 1)){\
           (firstrect) = HeapReAlloc( SystemHeap, 0, \
-           (firstrect), (2 * (sizeof(RECT32)) * ((reg)->size)));\
+           (firstrect), (2 * (sizeof(RECT)) * ((reg)->size)));\
           if ((firstrect) == 0)\
             return;\
           (reg)->size *= 2;\
@@ -124,7 +124,7 @@ typedef struct
  */
 
 typedef struct _POINTBLOCK {
-    POINT32 pts[NUMPTSTOBUFFER];
+    POINT pts[NUMPTSTOBUFFER];
     struct _POINTBLOCK *next;
 } POINTBLOCK;
 
@@ -221,10 +221,10 @@ typedef struct _POINTBLOCK {
  *     register declarations.
  */
 typedef struct {
-    INT32 minor_axis;	/* minor axis        */
-    INT32 d;		/* decision variable */
-    INT32 m, m1;       	/* slope and slope+1 */
-    INT32 incr1, incr2;	/* error increments */
+    INT minor_axis;	/* minor axis        */
+    INT d;		/* decision variable */
+    INT m, m1;       	/* slope and slope+1 */
+    INT incr1, incr2;	/* error increments */
 } BRESINFO;
 
 
@@ -290,7 +290,7 @@ typedef struct {
 #define COUNTERCLOCKWISE  -1 
 
 typedef struct _EdgeTableEntry {
-     INT32 ymax;           /* ycoord at which we exit this edge. */
+     INT ymax;           /* ycoord at which we exit this edge. */
      BRESINFO bres;        /* Bresenham info to run the edge     */
      struct _EdgeTableEntry *next;       /* next in the list     */
      struct _EdgeTableEntry *back;       /* for insertion sort   */
@@ -300,15 +300,15 @@ typedef struct _EdgeTableEntry {
 
 
 typedef struct _ScanLineList{
-     INT32 scanline;            /* the scanline represented */
+     INT scanline;            /* the scanline represented */
      EdgeTableEntry *edgelist;  /* header node              */
      struct _ScanLineList *next;  /* next in the list       */
 } ScanLineList;
 
 
 typedef struct {
-     INT32 ymax;               /* ymax for the polygon     */
-     INT32 ymin;               /* ymin for the polygon     */
+     INT ymax;               /* ymax for the polygon     */
+     INT ymin;               /* ymin for the polygon     */
      ScanLineList scanlines;   /* header node              */
 } EdgeTable;
 
@@ -376,10 +376,10 @@ typedef struct _ScanLineListBlock {
    } \
 }
 
-extern BOOL32 REGION_DeleteObject( HRGN32 hrgn, RGNOBJ * obj );
-extern BOOL32 REGION_UnionRectWithRgn( HRGN32 hrgn, const RECT32 *lpRect );
-extern BOOL32 REGION_FrameRgn( HRGN32 dest, HRGN32 src, INT32 x, INT32 y );
-extern BOOL32 REGION_LPTODP( HDC32 hdc, HRGN32 hDest, HRGN32 hSrc );
+extern BOOL REGION_DeleteObject( HRGN hrgn, RGNOBJ * obj );
+extern BOOL REGION_UnionRectWithRgn( HRGN hrgn, const RECT *lpRect );
+extern BOOL REGION_FrameRgn( HRGN dest, HRGN src, INT x, INT y );
+extern BOOL REGION_LPTODP( HDC hdc, HRGN hDest, HRGN hSrc );
 
 #endif  /* __WINE_REGION_H */
 

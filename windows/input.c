@@ -32,11 +32,11 @@
 #include "winerror.h"
 #include "task.h"
 
-static BOOL32 InputEnabled = TRUE;
-static BOOL32 SwappedButtons = FALSE;
+static BOOL InputEnabled = TRUE;
+static BOOL SwappedButtons = FALSE;
 
-BOOL32 MouseButtonsStates[3];
-BOOL32 AsyncMouseButtonsStates[3];
+BOOL MouseButtonsStates[3];
+BOOL AsyncMouseButtonsStates[3];
 BYTE InputKeyStateTable[256];
 BYTE QueueKeyStateTable[256];
 BYTE AsyncKeyStateTable[256];
@@ -76,7 +76,7 @@ void WINAPI keybd_event( BYTE bVk, BYTE bScan,
      * Otherwise, we need to determine that info ourselves (probably
      * less accurate, but we can't help that ...).
      */
-    if (   !IsBadReadPtr32( (LPVOID)dwExtraInfo, sizeof(WINE_KEYBDEVENT) )
+    if (   !IsBadReadPtr( (LPVOID)dwExtraInfo, sizeof(WINE_KEYBDEVENT) )
         && ((WINE_KEYBDEVENT *)dwExtraInfo)->magic == WINE_KEYBDEVENT_MAGIC )
     {
         WINE_KEYBDEVENT *wke = (WINE_KEYBDEVENT *)dwExtraInfo;
@@ -106,7 +106,7 @@ void WINAPI keybd_event( BYTE bVk, BYTE bScan,
 
     if ( dwFlags & KEYEVENTF_KEYUP )
     {
-        BOOL32 sysKey = (InputKeyStateTable[VK_MENU] & 0x80)
+        BOOL sysKey = (InputKeyStateTable[VK_MENU] & 0x80)
                 && !(InputKeyStateTable[VK_CONTROL] & 0x80)
                 && !(dwFlags & KEYEVENTF_WINE_FORCEEXTENDED); /* for Alt from AltGr */
 
@@ -155,7 +155,7 @@ void WINAPI mouse_event( DWORD dwFlags, DWORD dx, DWORD dy,
      * Otherwise, we need to determine that info ourselves (probably
      * less accurate, but we can't help that ...).
      */
-    if (   !IsBadReadPtr32( (LPVOID)dwExtraInfo, sizeof(WINE_MOUSEEVENT) )
+    if (   !IsBadReadPtr( (LPVOID)dwExtraInfo, sizeof(WINE_MOUSEEVENT) )
         && ((WINE_MOUSEEVENT *)dwExtraInfo)->magic == WINE_MOUSEEVENT_MAGIC )
     {
         WINE_MOUSEEVENT *wme = (WINE_MOUSEEVENT *)dwExtraInfo;
@@ -188,7 +188,7 @@ void WINAPI mouse_event( DWORD dwFlags, DWORD dx, DWORD dy,
                 posY += dy;
             }
             /* We have to actually move the cursor */
-            SetCursorPos32( posX, posY );
+            SetCursorPos( posX, posY );
         }
     }
 
@@ -238,7 +238,7 @@ void WINAPI mouse_event( DWORD dwFlags, DWORD dx, DWORD dy,
 /**********************************************************************
  *                      EnableHardwareInput   (USER.331)
  */
-BOOL16 WINAPI EnableHardwareInput(BOOL16 bEnable)
+BOOL16 WINAPI EnableHardwareInput16(BOOL16 bEnable)
 {
   BOOL16 bOldState = InputEnabled;
   FIXME(event,"(%d) - stub\n", bEnable);
@@ -261,9 +261,9 @@ BOOL16 WINAPI SwapMouseButton16( BOOL16 fSwap )
 /***********************************************************************
  *           SwapMouseButton32   (USER32.537)
  */
-BOOL32 WINAPI SwapMouseButton32( BOOL32 fSwap )
+BOOL WINAPI SwapMouseButton( BOOL fSwap )
 {
-    BOOL32 ret = SwappedButtons;
+    BOOL ret = SwappedButtons;
     SwappedButtons = fSwap;
     return ret;
 }
@@ -274,15 +274,15 @@ BOOL32 WINAPI SwapMouseButton32( BOOL32 fSwap )
  * We need this to be able to generate double click messages
  * when menu code captures mouse in the window without CS_DBLCLK style.
  */
-HWND32 EVENT_Capture(HWND32 hwnd, INT16 ht)
+HWND EVENT_Capture(HWND hwnd, INT16 ht)
 {
-    HWND32 capturePrev = 0, captureWnd = 0;
+    HWND capturePrev = 0, captureWnd = 0;
     MESSAGEQUEUE *pMsgQ = 0, *pCurMsgQ = 0;
     WND* wndPtr = 0;
     INT16 captureHT = 0;
 
     /* Get the messageQ for the current thread */
-    if (!(pCurMsgQ = (MESSAGEQUEUE *)QUEUE_Lock( GetFastQueue() )))
+    if (!(pCurMsgQ = (MESSAGEQUEUE *)QUEUE_Lock( GetFastQueue16() )))
     {
         WARN( win, "\tCurrent message queue not found. Exiting!\n" );
         goto CLEANUP;
@@ -334,7 +334,7 @@ HWND32 EVENT_Capture(HWND32 hwnd, INT16 ht)
     {
         WND* wndPtr = WIN_FindWndPtr( capturePrev );
         if( wndPtr && (wndPtr->flags & WIN_ISWIN32) )
-            SendMessage32A( capturePrev, WM_CAPTURECHANGED, 0L, hwnd);
+            SendMessageA( capturePrev, WM_CAPTURECHANGED, 0L, hwnd);
     }
 }
 
@@ -361,7 +361,7 @@ HWND16 WINAPI SetCapture16( HWND16 hwnd )
 /**********************************************************************
  *              SetCapture32   (USER32.464)
  */
-HWND32 WINAPI SetCapture32( HWND32 hwnd )
+HWND WINAPI SetCapture( HWND hwnd )
 {
     return EVENT_Capture( hwnd, HTCLIENT );
 }
@@ -381,19 +381,19 @@ void WINAPI ReleaseCapture(void)
  */
 HWND16 WINAPI GetCapture16(void)
 {
-    return (HWND16)GetCapture32();
+    return (HWND16)GetCapture();
 }
 
 /**********************************************************************
  *              GetCapture32   (USER32.208)
  */
-HWND32 WINAPI GetCapture32(void)
+HWND WINAPI GetCapture(void)
 {
     MESSAGEQUEUE *pCurMsgQ = 0;
-    HWND32 hwndCapture = 0;
+    HWND hwndCapture = 0;
 
     /* Get the messageQ for the current thread */
-    if (!(pCurMsgQ = (MESSAGEQUEUE *)QUEUE_Lock( GetFastQueue() )))
+    if (!(pCurMsgQ = (MESSAGEQUEUE *)QUEUE_Lock( GetFastQueue16() )))
 {
         TRACE( win, "GetCapture32:  Current message queue not found. Exiting!\n" );
         return 0;
@@ -411,7 +411,7 @@ HWND32 WINAPI GetCapture32(void)
  */
 INT16 WINAPI GetKeyState16(INT16 vkey)
 {
-    return GetKeyState32(vkey);
+    return GetKeyState(vkey);
 }
 
 /**********************************************************************
@@ -421,9 +421,9 @@ INT16 WINAPI GetKeyState16(INT16 vkey)
  * keyboard-input message.  This function retrieves the state of the key
  * at the time the input message was generated.  (SDK 3.1 Vol 2. p 390)
  */
-INT16 WINAPI GetKeyState32(INT32 vkey)
+INT16 WINAPI GetKeyState(INT vkey)
 {
-    INT32 retval;
+    INT retval;
 
     switch (vkey)
 	{
@@ -491,7 +491,7 @@ VOID WINAPI SetKeyboardState(LPBYTE lpKeyState)
  * mouse or key had been depressed since the last call to 
  * GetAsyncKeyState.
  */
-WORD WINAPI GetAsyncKeyState32(INT32 nKey)
+WORD WINAPI GetAsyncKeyState(INT nKey)
 {
     short retval;	
 
@@ -527,7 +527,7 @@ WORD WINAPI GetAsyncKeyState32(INT32 nKey)
  */
 WORD WINAPI GetAsyncKeyState16(INT16 nKey)
 {
-    return GetAsyncKeyState32(nKey);
+    return GetAsyncKeyState(nKey);
 }
 
 /**********************************************************************
@@ -535,10 +535,10 @@ WORD WINAPI GetAsyncKeyState16(INT16 nKey)
  *
  * FIXME: should send some WM_INITMENU or/and WM_INITMENUPOPUP  -messages
  */
-static BOOL32 KBD_translate_accelerator(HWND32 hWnd,LPMSG32 msg,
+static BOOL KBD_translate_accelerator(HWND hWnd,LPMSG msg,
                                         BYTE fVirt,WORD key,WORD cmd)
 {
-    BOOL32	sendmsg = FALSE;
+    BOOL	sendmsg = FALSE;
 
     if(msg->wParam == key) 
     {
@@ -551,12 +551,12 @@ static BOOL32 KBD_translate_accelerator(HWND32 hWnd,LPMSG32 msg,
    	}  
       } else {
        if(fVirt & FVIRTKEY) {
-	INT32 mask = 0;
+	INT mask = 0;
         TRACE(accel,"found accel for virt_key %04x (scan %04x)\n",
   	                       msg->wParam,0xff & HIWORD(msg->lParam));                
-	if(GetKeyState32(VK_SHIFT) & 0x8000) mask |= FSHIFT;
-	if(GetKeyState32(VK_CONTROL) & 0x8000) mask |= FCONTROL;
-	if(GetKeyState32(VK_MENU) & 0x8000) mask |= FALT;
+	if(GetKeyState(VK_SHIFT) & 0x8000) mask |= FSHIFT;
+	if(GetKeyState(VK_CONTROL) & 0x8000) mask |= FCONTROL;
+	if(GetKeyState(VK_MENU) & 0x8000) mask |= FALT;
 	if(mask == (fVirt & (FSHIFT | FCONTROL | FALT)))
           sendmsg=TRUE;			    
         else
@@ -583,19 +583,19 @@ static BOOL32 KBD_translate_accelerator(HWND32 hWnd,LPMSG32 msg,
         if (msg->message == WM_KEYUP || msg->message == WM_SYSKEYUP)
           mesg=1;
         else 
-         if (GetCapture32())
+         if (GetCapture())
            mesg=2;
          else
-          if (!IsWindowEnabled32(hWnd))
+          if (!IsWindowEnabled(hWnd))
             mesg=3;
           else
           {
 	    WND* wndPtr = WIN_FindWndPtr(hWnd);
 
-            hMenu = (wndPtr->dwStyle & WS_CHILD) ? 0 : (HMENU32)wndPtr->wIDmenu;
-	    iSysStat = (wndPtr->hSysMenu) ? GetMenuState32(GetSubMenu16(wndPtr->hSysMenu, 0),
+            hMenu = (wndPtr->dwStyle & WS_CHILD) ? 0 : (HMENU)wndPtr->wIDmenu;
+	    iSysStat = (wndPtr->hSysMenu) ? GetMenuState(GetSubMenu16(wndPtr->hSysMenu, 0),
 					    cmd, MF_BYCOMMAND) : -1 ;
-	    iStat = (hMenu) ? GetMenuState32(hMenu,
+	    iStat = (hMenu) ? GetMenuState(hMenu,
 					    cmd, MF_BYCOMMAND) : -1 ;
 
             if (iSysStat!=-1)
@@ -609,7 +609,7 @@ static BOOL32 KBD_translate_accelerator(HWND32 hWnd,LPMSG32 msg,
             {
               if (iStat!=-1)
               {
-                if (IsIconic32(hWnd))
+                if (IsIconic(hWnd))
                   mesg=5;
                 else
                 {
@@ -628,7 +628,7 @@ static BOOL32 KBD_translate_accelerator(HWND32 hWnd,LPMSG32 msg,
               TRACE(accel,", sending %s, wParam=%0x\n",
                   mesg==WM_COMMAND ? "WM_COMMAND" : "WM_SYSCOMMAND",
                   cmd);
-	      SendMessage32A(hWnd, mesg, cmd, 0x00010000L);
+	      SendMessageA(hWnd, mesg, cmd, 0x00010000L);
 	  }
 	  else
 	  {
@@ -654,7 +654,7 @@ static BOOL32 KBD_translate_accelerator(HWND32 hWnd,LPMSG32 msg,
 /**********************************************************************
  *      TranslateAccelerator32      (USER32.551)(USER32.552)(USER32.553)
  */
-INT32 WINAPI TranslateAccelerator32(HWND32 hWnd, HACCEL32 hAccel, LPMSG32 msg)
+INT WINAPI TranslateAccelerator(HWND hWnd, HACCEL hAccel, LPMSG msg)
 {
     /* YES, Accel16! */
     LPACCEL16	lpAccelTbl = (LPACCEL16)LockResource16(hAccel);
@@ -695,7 +695,7 @@ INT16 WINAPI TranslateAccelerator16(HWND16 hWnd, HACCEL16 hAccel, LPMSG16 msg)
 {
     LPACCEL16	lpAccelTbl = (LPACCEL16)LockResource16(hAccel);
     int 	i;
-    MSG32	msg32;
+    MSG	msg32;
     
     if (hAccel == 0 || msg == NULL ||
 	(msg->message != WM_KEYDOWN &&
@@ -728,7 +728,7 @@ msg->hwnd=%04x, msg->message=%04x\n", hAccel,hWnd,msg->hwnd,msg->message);
 /**********************************************************************
  *           VkKeyScanA      (USER32.573)
  */
-WORD WINAPI VkKeyScan32A(CHAR cChar)
+WORD WINAPI VkKeyScanA(CHAR cChar)
 {
 	return VkKeyScan16(cChar);
 }
@@ -736,15 +736,15 @@ WORD WINAPI VkKeyScan32A(CHAR cChar)
 /******************************************************************************
  *    	VkKeyScanW      (USER32.576)
  */
-WORD WINAPI VkKeyScan32W(WCHAR cChar)
+WORD WINAPI VkKeyScanW(WCHAR cChar)
 {
-	return VkKeyScan32A((CHAR)cChar); /* FIXME: check unicode */
+	return VkKeyScanA((CHAR)cChar); /* FIXME: check unicode */
 }
 
 /******************************************************************************
  *    	GetKeyboardType32      (USER32.255)
  */
-INT32 WINAPI GetKeyboardType32(INT32 nTypeFlag)
+INT WINAPI GetKeyboardType(INT nTypeFlag)
 {
   return GetKeyboardType16(nTypeFlag);
 }
@@ -752,7 +752,7 @@ INT32 WINAPI GetKeyboardType32(INT32 nTypeFlag)
 /******************************************************************************
  *    	MapVirtualKey32A      (USER32.383)
  */
-UINT32 WINAPI MapVirtualKey32A(UINT32 code, UINT32 maptype)
+UINT WINAPI MapVirtualKeyA(UINT code, UINT maptype)
 {
     return MapVirtualKey16(code,maptype);
 }
@@ -760,7 +760,7 @@ UINT32 WINAPI MapVirtualKey32A(UINT32 code, UINT32 maptype)
 /******************************************************************************
  *    	MapVirtualKey32W      (USER32.385)
  */
-UINT32 WINAPI MapVirtualKey32W(UINT32 code, UINT32 maptype)
+UINT WINAPI MapVirtualKeyW(UINT code, UINT maptype)
 {
     return MapVirtualKey16(code,maptype);
 }
@@ -768,7 +768,7 @@ UINT32 WINAPI MapVirtualKey32W(UINT32 code, UINT32 maptype)
 /******************************************************************************
  *    	MapVirtualKeyEx32A      (USER32.384)
  */
-UINT32 WINAPI MapVirtualKeyEx32A(UINT32 code, UINT32 maptype, HKL32 hkl)
+UINT WINAPI MapVirtualKeyEx32A(UINT code, UINT maptype, HKL hkl)
 {
     if (hkl)
     	FIXME(keyboard,"(%d,%d,0x%08lx), hkl unhandled!\n",code,maptype,(DWORD)hkl);
@@ -778,7 +778,7 @@ UINT32 WINAPI MapVirtualKeyEx32A(UINT32 code, UINT32 maptype, HKL32 hkl)
 /****************************************************************************
  *	GetKBCodePage32   (USER32.246)
  */
-UINT32 WINAPI GetKBCodePage32(void)
+UINT WINAPI GetKBCodePage(void)
 {
     return GetKBCodePage16();
 }
@@ -788,13 +788,13 @@ UINT32 WINAPI GetKBCodePage32(void)
  */
 INT16 WINAPI GetKeyboardLayoutName16(LPSTR pwszKLID)
 {
-	return GetKeyboardLayoutName32A(pwszKLID);
+	return GetKeyboardLayoutNameA(pwszKLID);
 }
 
 /****************************************************************************
  *	GetKeyboardLayoutName32A   (USER32.252)
  */
-INT32 WINAPI GetKeyboardLayoutName32A(LPSTR pwszKLID)
+INT WINAPI GetKeyboardLayoutNameA(LPSTR pwszKLID)
 {
         FIXME(keyboard,"always returns primary U.S. English layout\n");
         strcpy(pwszKLID,"00000409");
@@ -804,10 +804,10 @@ INT32 WINAPI GetKeyboardLayoutName32A(LPSTR pwszKLID)
 /****************************************************************************
  *	GetKeyboardLayoutName32W   (USER32.253)
  */
-INT32 WINAPI GetKeyboardLayoutName32W(LPWSTR pwszKLID)
+INT WINAPI GetKeyboardLayoutNameW(LPWSTR pwszKLID)
 {
 	LPSTR buf = HEAP_xalloc( GetProcessHeap(), 0, strlen("00000409")+1);
-	int res = GetKeyboardLayoutName32A(buf);
+	int res = GetKeyboardLayoutNameA(buf);
 	lstrcpyAtoW(pwszKLID,buf);
 	HeapFree( GetProcessHeap(), 0, buf );
 	return res;
@@ -816,7 +816,7 @@ INT32 WINAPI GetKeyboardLayoutName32W(LPWSTR pwszKLID)
 /****************************************************************************
  *	GetKeyNameText32A   (USER32.247)
  */
-INT32 WINAPI GetKeyNameText32A(LONG lParam, LPSTR lpBuffer, INT32 nSize)
+INT WINAPI GetKeyNameTextA(LONG lParam, LPSTR lpBuffer, INT nSize)
 {
 	return GetKeyNameText16(lParam,lpBuffer,nSize);
 }
@@ -824,10 +824,10 @@ INT32 WINAPI GetKeyNameText32A(LONG lParam, LPSTR lpBuffer, INT32 nSize)
 /****************************************************************************
  *	GetKeyNameText32W   (USER32.248)
  */
-INT32 WINAPI GetKeyNameText32W(LONG lParam, LPWSTR lpBuffer, INT32 nSize)
+INT WINAPI GetKeyNameTextW(LONG lParam, LPWSTR lpBuffer, INT nSize)
 {
 	LPSTR buf = HEAP_xalloc( GetProcessHeap(), 0, nSize );
-	int res = GetKeyNameText32A(lParam,buf,nSize);
+	int res = GetKeyNameTextA(lParam,buf,nSize);
 
 	lstrcpynAtoW(lpBuffer,buf,nSize);
 	HeapFree( GetProcessHeap(), 0, buf );
@@ -837,8 +837,8 @@ INT32 WINAPI GetKeyNameText32W(LONG lParam, LPWSTR lpBuffer, INT32 nSize)
 /****************************************************************************
  *	ToAscii32      (USER32.546)
  */
-INT32 WINAPI ToAscii32( UINT32 virtKey,UINT32 scanCode,LPBYTE lpKeyState,
-                        LPWORD lpChar,UINT32 flags )
+INT WINAPI ToAscii( UINT virtKey,UINT scanCode,LPBYTE lpKeyState,
+                        LPWORD lpChar,UINT flags )
 {
     return ToAscii16(virtKey,scanCode,lpKeyState,lpChar,flags);
 }
@@ -846,9 +846,9 @@ INT32 WINAPI ToAscii32( UINT32 virtKey,UINT32 scanCode,LPBYTE lpKeyState,
 /***********************************************************************
  *           GetKeyboardLayout			(USER32.250)
  */
-HKL32 WINAPI GetKeyboardLayout(DWORD dwLayout)
+HKL WINAPI GetKeyboardLayout(DWORD dwLayout)
 {
-        HKL32 layout;
+        HKL layout;
 	FIXME(keyboard,"(%ld): stub\n",dwLayout);
         layout = (0xcafe<<16)|GetSystemDefaultLCID(); /* FIXME */
         TRACE(keyboard,"returning %x\n",layout);
@@ -858,7 +858,7 @@ HKL32 WINAPI GetKeyboardLayout(DWORD dwLayout)
 /**********************************************************************
  *           ActivateKeyboardLayout32      (USER32.1)
  */
-HKL32 WINAPI ActivateKeyboardLayout32(HKL32 hLayout, UINT32 flags)
+HKL WINAPI ActivateKeyboardLayout(HKL hLayout, UINT flags)
 {
     FIXME(keyboard, "(%d, %d): stub\n", hLayout, flags);
 
@@ -870,7 +870,7 @@ HKL32 WINAPI ActivateKeyboardLayout32(HKL32 hLayout, UINT32 flags)
  *           GetKeyboardLayoutList		(USER32.251)
  * FIXME
  */
-INT32 WINAPI GetKeyboardLayoutList(INT32 nBuff,HKL32 *layouts)
+INT WINAPI GetKeyboardLayoutList(INT nBuff,HKL *layouts)
 {
 	FIXME(keyboard,"(%d,%p): stub\n",nBuff,layouts);
 	if (layouts)
@@ -882,7 +882,7 @@ INT32 WINAPI GetKeyboardLayoutList(INT32 nBuff,HKL32 *layouts)
 /***********************************************************************
  *           RegisterHotKey			(USER32.433)
  */
-BOOL32 WINAPI RegisterHotKey(HWND32 hwnd,INT32 id,UINT32 modifiers,UINT32 vk) {
+BOOL WINAPI RegisterHotKey(HWND hwnd,INT id,UINT modifiers,UINT vk) {
 	FIXME(keyboard,"(0x%08x,%d,0x%08x,%d): stub\n",hwnd,id,modifiers,vk);
 	return TRUE;
 }
@@ -890,7 +890,7 @@ BOOL32 WINAPI RegisterHotKey(HWND32 hwnd,INT32 id,UINT32 modifiers,UINT32 vk) {
 /***********************************************************************
  *           UnregisterHotKey			(USER32.565)
  */
-BOOL32 WINAPI UnregisterHotKey(HWND32 hwnd,INT32 id) {
+BOOL WINAPI UnregisterHotKey(HWND hwnd,INT id) {
 	FIXME(keyboard,"(0x%08x,%d): stub\n",hwnd,id);
 	return TRUE;
 }
@@ -899,13 +899,13 @@ BOOL32 WINAPI UnregisterHotKey(HWND32 hwnd,INT32 id) {
 /***********************************************************************
  *           ToUnicode32                       (USER32.548)
  */
-INT32 WINAPI ToUnicode32(
-  UINT32 wVirtKey,
-  UINT32 wScanCode,
+INT WINAPI ToUnicode(
+  UINT wVirtKey,
+  UINT wScanCode,
   PBYTE  lpKeyState,
   LPWSTR pwszBuff,
   int    cchBuff,
-  UINT32 wFlags) {
+  UINT wFlags) {
 
        FIXME(keyboard,": stub\n");
        return 0;
@@ -914,7 +914,7 @@ INT32 WINAPI ToUnicode32(
 /***********************************************************************
  *           LoadKeyboardLayout32A                (USER32.367)
  */
-HKL32 WINAPI LoadKeyboardLayout32A(LPCSTR pwszKLID, UINT32 Flags)
+HKL WINAPI LoadKeyboardLayoutA(LPCSTR pwszKLID, UINT Flags)
 {
   FIXME(keyboard, "%s, %d): stub\n", pwszKLID, Flags);
   return 0; 
@@ -923,7 +923,7 @@ HKL32 WINAPI LoadKeyboardLayout32A(LPCSTR pwszKLID, UINT32 Flags)
 /***********************************************************************
  *           LoadKeyboardLayout32W                (USER32.368)
  */
-HKL32 WINAPI LoadKeyboardLayout32W(LPCWSTR pwszKLID, UINT32 Flags)
+HKL WINAPI LoadKeyboardLayoutW(LPCWSTR pwszKLID, UINT Flags)
 {
   FIXME(keyboard, "%p, %d): stub\n", pwszKLID, Flags);
   return 0;

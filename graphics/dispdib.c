@@ -29,9 +29,9 @@ static WORD DISPDIB_Begin(WORD wFlags)
     }
     /* more or less dummy calls to Death/Resurrection, for completeness */
     /* FIXME: what arguments should they get? */
-    Death(0);
+    Death16(0);
     if (VGA_SetMode(Xres,Yres,Depth)) {
-         Resurrection(0,0,0,0,0,0,0);
+         Resurrection16(0,0,0,0,0,0,0);
          return DISPLAYDIB_NOTSUPPORTED;
     }
     return DISPLAYDIB_NOERROR;
@@ -39,7 +39,7 @@ static WORD DISPDIB_Begin(WORD wFlags)
 
 static void DISPDIB_End(void)
 {
-    Resurrection(0,0,0,0,0,0,0); /* FIXME: arguments */
+    Resurrection16(0,0,0,0,0,0,0); /* FIXME: arguments */
     VGA_Exit();
 }
 

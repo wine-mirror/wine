@@ -145,7 +145,7 @@ void dde_proc_add(dde_proc procs)
 }
 
 /* wait for dde - acknowledge message - or timout */
-static BOOL32 get_ack()
+static BOOL get_ack()
 {
     struct timeval timeout;
     int size;
@@ -183,7 +183,7 @@ static BOOL32 get_ack()
 }
 
 /* Transfer one message to a given process */
-static BOOL32 DDE_DoOneMessage (int proc_idx, int size, struct msgbuf *msgbuf)
+static BOOL DDE_DoOneMessage (int proc_idx, int size, struct msgbuf *msgbuf)
 {
   dde_proc proc= &main_block->proc[ proc_idx ];
 
@@ -282,13 +282,13 @@ static HWND16 HWND_Local2Remote(HWND16 orig)
   return 0;			
 }
 
-static BOOL32 DDE_DoMessage( MSG16 *msg, int type )
+static BOOL DDE_DoMessage( MSG16 *msg, int type )
 {
   int proc_idx;
 
   MSG16 *remote_message;
   struct msg_dat msg_dat;
-  BOOL32 success;
+  BOOL success;
   
   if (msg->wParam == 0)
       return FALSE;
@@ -337,18 +337,18 @@ static BOOL32 DDE_DoMessage( MSG16 *msg, int type )
   }
 }
 
-BOOL32 DDE_SendMessage( MSG16 *msg)
+BOOL DDE_SendMessage( MSG16 *msg)
 {
   return DDE_DoMessage(msg, DDE_SEND);
 }
 
-BOOL32 DDE_PostMessage( MSG16 *msg)
+BOOL DDE_PostMessage( MSG16 *msg)
 {
   return DDE_DoMessage(msg, DDE_POST);
 }
 
 
-void dde_proc_send_ack(HWND16 wnd, BOOL32 val) {
+void dde_proc_send_ack(HWND16 wnd, BOOL val) {
    int proc,msg;
 
    static struct msgbuf msg_ack={DDE_ACK,{'0'}};
@@ -373,8 +373,8 @@ int DDE_GetRemoteMessage()
   MSG16 *remote_message;
   int size;
   struct msg_dat msg_dat;
-  BOOL32 was_sent;		   /* sent/received */
-  BOOL32 passed;
+  BOOL was_sent;		   /* sent/received */
+  BOOL passed;
   WND *wndPtr;
 
   if (curr_proc_idx==-1)	   /* do we have DDE initialized ? */
@@ -460,7 +460,7 @@ int DDE_GetRemoteMessage()
   }
 
   /* iterate through all the windows */
-  for (wndPtr = WIN_FindWndPtr(GetTopWindow32(GetDesktopWindow32()));
+  for (wndPtr = WIN_FindWndPtr(GetTopWindow(GetDesktopWindow()));
        wndPtr != NULL;
        wndPtr = wndPtr->next)
   {
@@ -653,7 +653,7 @@ void dde_wnd_setup()
     main_block->windows[i].proc_idx = FREE_WND;
 }
 
-static BOOL32 DDE_ProcHasWindows(int proc_idx)
+static BOOL DDE_ProcHasWindows(int proc_idx)
 {
   WND_DATA *tested;
   int i;

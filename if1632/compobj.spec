@@ -93,8 +93,8 @@ type	win16
 91 stub LRPCREVOKEMONITOR
 92 stub LRPCGETTHREADWINDOW
 93 stub TIMERCALLBACKPROC
-94 pascal LookupETask(ptr ptr) LookupETask
-95 pascal16 SetETask(word ptr) SetETask
+94 pascal LookupETask(ptr ptr) LookupETask16
+95 pascal16 SetETask(word ptr) SetETask16
 96 stub LRPCFREEMONITORDATA
 97 stub REMLOOKUPSHUNK
 98 stub SHRGETSIZE

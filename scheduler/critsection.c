@@ -38,7 +38,7 @@ void WINAPI InitializeCriticalSection( CRITICAL_SECTION *crit )
     crit->LockSemaphore  = 0;
     if (SystemHeap)
     {
-        crit->LockSemaphore = CreateSemaphore32A( NULL, 0, 1, NULL );
+        crit->LockSemaphore = CreateSemaphoreA( NULL, 0, 1, NULL );
         crit->Reserved      = (DWORD)-1;
     }
     else
@@ -100,7 +100,7 @@ void WINAPI EnterCriticalSection( CRITICAL_SECTION *crit )
         if (crit->LockSemaphore)
         {
             /* FIXME: should set a timeout and raise an exception */
-            WaitForSingleObject( crit->LockSemaphore, INFINITE32 );
+            WaitForSingleObject( crit->LockSemaphore, INFINITE );
         }
         else if (crit->Reserved != (DWORD)-1)
         {
@@ -128,7 +128,7 @@ void WINAPI EnterCriticalSection( CRITICAL_SECTION *crit )
 /***********************************************************************
  *           TryEnterCriticalSection   (KERNEL32.898) (NTDLL.969)
  */
-BOOL32 WINAPI TryEnterCriticalSection( CRITICAL_SECTION *crit )
+BOOL WINAPI TryEnterCriticalSection( CRITICAL_SECTION *crit )
 {
     if (InterlockedIncrement( &crit->LockCount ))
     {

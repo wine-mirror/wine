@@ -13,17 +13,17 @@ typedef struct tagIPADDRESS_INFO
 	BYTE LowerLimit[4];
 	BYTE UpperLimit[4];
 
-	RECT32 	rcClient;
-	INT32	uFocus;
+	RECT 	rcClient;
+	INT	uFocus;
 } IPADDRESS_INFO;
 
 typedef struct tagIP_SUBCLASS_INFO
 {
-    WNDPROC32 wpOrigProc[4];
-    HWND32    hwndIP[4];
+    WNDPROC wpOrigProc[4];
+    HWND    hwndIP[4];
 	IPADDRESS_INFO *infoPtr;
 	WND 	  *wndPtr;
-    UINT32    uRefCount;
+    UINT    uRefCount;
 } IP_SUBCLASS_INFO, *LPIP_SUBCLASS_INFO;
 
 

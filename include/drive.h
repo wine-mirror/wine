@@ -39,13 +39,13 @@ extern const char * DRIVE_GetLabel( int drive );
 extern DWORD DRIVE_GetSerialNumber( int drive );
 extern int DRIVE_SetSerialNumber( int drive, DWORD serial );
 extern DRIVETYPE DRIVE_GetType( int drive );
-extern UINT32 DRIVE_GetFlags( int drive );
+extern UINT DRIVE_GetFlags( int drive );
 extern int DRIVE_Chdir( int drive, const char *path );
 extern int DRIVE_Disable( int drive  );
 extern int DRIVE_Enable( int drive  );
 extern int DRIVE_SetLogicalMapping ( int existing_drive, int new_drive );
 extern int DRIVE_OpenDevice( int drive, int flags );
-extern int DRIVE_RawRead(BYTE drive, DWORD begin, DWORD length, BYTE *dataptr, BOOL32 fake_success );
-extern int DRIVE_RawWrite(BYTE drive, DWORD begin, DWORD length, BYTE *dataptr, BOOL32 fake_success );
+extern int DRIVE_RawRead(BYTE drive, DWORD begin, DWORD length, BYTE *dataptr, BOOL fake_success );
+extern int DRIVE_RawWrite(BYTE drive, DWORD begin, DWORD length, BYTE *dataptr, BOOL fake_success );
 
 #endif  /* __WINE_DRIVE_H */

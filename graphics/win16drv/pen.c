@@ -12,10 +12,10 @@
 /***********************************************************************
  *           PEN_SelectObject
  */
-HPEN32 WIN16DRV_PEN_SelectObject( DC * dc, HPEN32 hpen, PENOBJ * pen )
+HPEN WIN16DRV_PEN_SelectObject( DC * dc, HPEN hpen, PENOBJ * pen )
 {
     WIN16DRV_PDEVICE *physDev = (WIN16DRV_PDEVICE *)dc->physDev;
-    HPEN32 prevHandle = dc->w.hPen;
+    HPEN prevHandle = dc->w.hPen;
     int		 nSize;
     LOGPEN16 	 lPen16;
     dc->w.hPen = hpen;

@@ -5,10 +5,10 @@ type	win16
 2      pascal  SNDPLAYSOUND(ptr word) sndPlaySound
 3      stub    PLAYSOUND
 5      pascal  mmsystemGetVersion() mmsystemGetVersion16
-6      pascal  DriverProc(long word word long long) DriverProc
+6      pascal  DriverProc(long word word long long) DriverProc16
 8      stub    WMMMIDIRUNONCE
 30     pascal16 OutputDebugStr(str) OutputDebugString16
-31     pascal  DriverCallback(long word word word long long long) DriverCallback
+31     pascal  DriverCallback(long word word word long long long) DriverCallback16
 32     stub    STACKENTER
 33     stub    STACKLEAVE
 34     stub    MMDRVINSTALL

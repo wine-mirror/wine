@@ -9,9 +9,9 @@
 
 typedef struct tagHOTKEY_INFO
 {
-    HFONT32 hFont;
-    BOOL32  bFocus;
-    INT32   nHeight;
+    HFONT hFont;
+    BOOL  bFocus;
+    INT   nHeight;
 
 } HOTKEY_INFO;
 

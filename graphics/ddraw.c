@@ -34,7 +34,7 @@
 /* X is retarted and insists on declaring INT32, INT16 etc in Xmd.h,
    this is a crude hack to get around it */
 #define XMD_H
-#include "wintypes.h"
+typedef int INT32;
 #include "ts_xf86vmode.h"
 #endif /* defined(HAVE_LIBXXF86VM) */
 
@@ -106,7 +106,7 @@ static XF86VidModeModeInfo *orig_mode = NULL;
 static int XShmErrorFlag = 0;
 #endif
 
-BOOL32
+BOOL
 DDRAW_DGA_Available(void)
 {
 #ifdef HAVE_LIBXXF86DGA
@@ -128,7 +128,7 @@ DDRAW_DGA_Available(void)
 }
 
 HRESULT WINAPI
-DirectDrawEnumerate32A(LPDDENUMCALLBACK32A ddenumproc,LPVOID data) {
+DirectDrawEnumerateA(LPDDENUMCALLBACKA ddenumproc,LPVOID data) {
 	if (DDRAW_DGA_Available()) {
 	  TRACE(ddraw, "Enumerating DGA interface\n");
 		ddenumproc(&DGA_DirectDraw_GUID,"WINE with XFree86 DGA","display",data);
@@ -420,7 +420,7 @@ static int _getpixelformat(LPDIRECTDRAW2 ddraw,LPDDPIXELFORMAT pf) {
  * using different DirectDrawSurfaceX version), just added flags and functions)
  */
 static HRESULT WINAPI IDirectDrawSurface4_Lock(
-    LPDIRECTDRAWSURFACE4 this,LPRECT32 lprect,LPDDSURFACEDESC lpddsd,DWORD flags, HANDLE32 hnd
+    LPDIRECTDRAWSURFACE4 this,LPRECT lprect,LPDDSURFACEDESC lpddsd,DWORD flags, HANDLE hnd
 ) {
         TRACE(ddraw, "(%p)->Lock(%p,%p,%08lx,%08lx)\n",
 		this,lprect,lpddsd,flags,(DWORD)hnd);
@@ -688,9 +688,9 @@ static HRESULT WINAPI DGA_IDirectDrawSurface4_SetPalette(
 }
 
 static HRESULT WINAPI IDirectDrawSurface4_Blt(
-	LPDIRECTDRAWSURFACE4 this,LPRECT32 rdst,LPDIRECTDRAWSURFACE4 src,LPRECT32 rsrc,DWORD dwFlags,LPDDBLTFX lpbltfx
+	LPDIRECTDRAWSURFACE4 this,LPRECT rdst,LPDIRECTDRAWSURFACE4 src,LPRECT rsrc,DWORD dwFlags,LPDDBLTFX lpbltfx
 ) {
-	RECT32	xdst,xsrc;
+	RECT	xdst,xsrc;
 	DDSURFACEDESC	ddesc,sdesc;
 	int	i,j;
 
@@ -915,7 +915,7 @@ static HRESULT WINAPI IDirectDrawSurface4_Blt(
 }
 
 static HRESULT WINAPI IDirectDrawSurface4_BltFast(
-	LPDIRECTDRAWSURFACE4 this,DWORD dstx,DWORD dsty,LPDIRECTDRAWSURFACE4 src,LPRECT32 rsrc,DWORD trans
+	LPDIRECTDRAWSURFACE4 this,DWORD dstx,DWORD dsty,LPDIRECTDRAWSURFACE4 src,LPRECT rsrc,DWORD trans
 ) {
 	int		i,bpp,w,h;
 	DDSURFACEDESC	ddesc,sdesc;
@@ -1157,18 +1157,18 @@ static HRESULT WINAPI IDirectDrawSurface4_AddAttachedSurface(
 	return DD_OK;
 }
 
-static HRESULT WINAPI IDirectDrawSurface4_GetDC(LPDIRECTDRAWSURFACE4 this,HDC32* lphdc) {
+static HRESULT WINAPI IDirectDrawSurface4_GetDC(LPDIRECTDRAWSURFACE4 this,HDC* lphdc) {
 	FIXME(ddraw,"(%p)->GetDC(%p)\n",this,lphdc);
-	*lphdc = BeginPaint32(this->s.ddraw->d.window,&this->s.ddraw->d.ps);
+	*lphdc = BeginPaint(this->s.ddraw->d.window,&this->s.ddraw->d.ps);
 	return DD_OK;
 }
 
-static HRESULT WINAPI IDirectDrawSurface4_ReleaseDC(LPDIRECTDRAWSURFACE4 this,HDC32 hdc) {
+static HRESULT WINAPI IDirectDrawSurface4_ReleaseDC(LPDIRECTDRAWSURFACE4 this,HDC hdc) {
   	DDSURFACEDESC	desc;
 	DWORD x, y;
 	
 	FIXME(ddraw,"(%p)->(0x%08lx),stub!\n",this,(long)hdc);
-	EndPaint32(this->s.ddraw->d.window,&this->s.ddraw->d.ps);
+	EndPaint(this->s.ddraw->d.window,&this->s.ddraw->d.ps);
 
 	/* Well, as what the application did paint in this DC is NOT saved in the surface,
 	   I fill it with 'dummy' values to have something on the screen */
@@ -1299,7 +1299,7 @@ static HRESULT WINAPI IDirectDrawSurface4_SetColorKey(
 
 static HRESULT WINAPI IDirectDrawSurface4_AddOverlayDirtyRect(
         LPDIRECTDRAWSURFACE4 this, 
-        LPRECT32 lpRect )
+        LPRECT lpRect )
 {
   FIXME(ddraw,"(%p)->(%p),stub!\n",this,lpRect); 
 
@@ -1405,9 +1405,9 @@ static HRESULT WINAPI IDirectDrawSurface4_SetOverlayPosition(
 
 static HRESULT WINAPI IDirectDrawSurface4_UpdateOverlay(
         LPDIRECTDRAWSURFACE4 this,
-        LPRECT32 lpSrcRect,
+        LPRECT lpSrcRect,
         LPDIRECTDRAWSURFACE4 lpDDDestSurface,
-        LPRECT32 lpDestRect,
+        LPRECT lpDestRect,
         DWORD dwFlags,
         LPDDOVERLAYFX lpDDOverlayFx )
 {
@@ -1631,7 +1631,7 @@ HRESULT WINAPI DirectDrawCreateClipper( DWORD dwFlags,
  *			IDirectDrawClipper
  */
 static HRESULT WINAPI IDirectDrawClipper_SetHwnd(
-	LPDIRECTDRAWCLIPPER this,DWORD x,HWND32 hwnd
+	LPDIRECTDRAWCLIPPER this,DWORD x,HWND hwnd
 ) {
 	FIXME(ddraw,"(%p)->SetHwnd(0x%08lx,0x%08lx),stub!\n",this,x,(DWORD)hwnd);
 	return DD_OK;
@@ -1648,7 +1648,7 @@ static ULONG WINAPI IDirectDrawClipper_Release(LPDIRECTDRAWCLIPPER this) {
 }
 
 static HRESULT WINAPI IDirectDrawClipper_GetClipList(
-	LPDIRECTDRAWCLIPPER this,LPRECT32 rects,LPRGNDATA lprgn,LPDWORD hmm
+	LPDIRECTDRAWCLIPPER this,LPRECT rects,LPRGNDATA lprgn,LPDWORD hmm
 ) {
 	FIXME(ddraw,"(%p,%p,%p,%p),stub!\n",this,rects,lprgn,hmm);
 	if (hmm) *hmm=0;
@@ -1679,7 +1679,7 @@ static ULONG WINAPI IDirectDrawClipper_AddRef( LPDIRECTDRAWCLIPPER this )
 
 static HRESULT WINAPI IDirectDrawClipper_GetHWnd(
          LPDIRECTDRAWCLIPPER this,
-         HWND32* HWndPtr )
+         HWND* HWndPtr )
 {
    FIXME(ddraw,"(%p)->(%p),stub!\n",this,HWndPtr);
    return DD_OK;
@@ -1696,7 +1696,7 @@ static HRESULT WINAPI IDirectDrawClipper_Initialize(
 
 static HRESULT WINAPI IDirectDrawClipper_IsClipListChanged(
          LPDIRECTDRAWCLIPPER this,
-         BOOL32* lpbChanged )
+         BOOL* lpbChanged )
 {
    FIXME(ddraw,"(%p)->(%p),stub!\n",this,lpbChanged);
    return DD_OK;
@@ -2169,7 +2169,7 @@ static struct IDirect3D2_VTable d3d2vt = {
 /* Used in conjunction with cbWndExtra for storage of the this ptr for the window.
  * Please adjust allocation in Xlib_DirectDrawCreate if you store more data here.
  */
-static INT32 ddrawXlibThisOffset = 0;
+static INT ddrawXlibThisOffset = 0;
 
 static HRESULT common_off_screen_CreateSurface(LPDIRECTDRAW2 this,
 					       LPDDSURFACEDESC lpddsd,
@@ -2581,7 +2581,7 @@ static HRESULT WINAPI IDirectDraw2_DuplicateSurface(
  * even when the approbiate bitmasks are not specified.
  */
 static HRESULT WINAPI IDirectDraw2_SetCooperativeLevel(
-	LPDIRECTDRAW2 this,HWND32 hwnd,DWORD cooplevel
+	LPDIRECTDRAW2 this,HWND hwnd,DWORD cooplevel
 ) {
 	int	i;
 	const struct {
@@ -2621,18 +2621,18 @@ static HRESULT WINAPI IDirectDraw2_SetCooperativeLevel(
  * one (for mouse and keyboard input) and drawing in the Xlib implementation.
  */
 static void _common_IDirectDraw_SetDisplayMode(LPDIRECTDRAW this) {
-	RECT32	rect;
+	RECT	rect;
 
 	/* Do not destroy the application supplied cooperative window */
 	if (this->d.window && this->d.window != this->d.mainWindow) {
-		DestroyWindow32(this->d.window);
+		DestroyWindow(this->d.window);
 		this->d.window = 0;
 	}
 	/* Sanity check cooperative window before assigning it to drawing. */
-	if (	IsWindow32(this->d.mainWindow) &&
-		IsWindowVisible32(this->d.mainWindow)
+	if (	IsWindow(this->d.mainWindow) &&
+		IsWindowVisible(this->d.mainWindow)
 	) {
-		GetWindowRect32(this->d.mainWindow,&rect);
+		GetWindowRect(this->d.mainWindow,&rect);
 		if (((rect.right-rect.left) >= this->d.width)	&&
 		    ((rect.bottom-rect.top) >= this->d.height)
 		)
@@ -2640,7 +2640,7 @@ static void _common_IDirectDraw_SetDisplayMode(LPDIRECTDRAW this) {
 	}
 	/* ... failed, create new one. */
 	if (!this->d.window) {
-	    this->d.window = CreateWindowEx32A(
+	    this->d.window = CreateWindowExA(
 		    0,
 		    "WINE_DirectDraw",
 		    "WINE_DirectDraw",
@@ -2654,11 +2654,11 @@ static void _common_IDirectDraw_SetDisplayMode(LPDIRECTDRAW this) {
 		    NULL
 	    );
 	    /*Store THIS with the window. We'll use it in the window procedure*/
-	    SetWindowLong32A(this->d.window,ddrawXlibThisOffset,(LONG)this);
-	    ShowWindow32(this->d.window,TRUE);
-	    UpdateWindow32(this->d.window);
+	    SetWindowLongA(this->d.window,ddrawXlibThisOffset,(LONG)this);
+	    ShowWindow(this->d.window,TRUE);
+	    UpdateWindow(this->d.window);
 	}
-	SetFocus32(this->d.window);
+	SetFocus(this->d.window);
 }
 
 static HRESULT WINAPI DGA_IDirectDraw_SetDisplayMode(
@@ -2787,7 +2787,7 @@ static HRESULT WINAPI Xlib_IDirectDraw_SetDisplayMode(
 
 	  if (i==depcount) {
 		sprintf(buf,"SetDisplayMode(w=%ld,h=%ld,d=%ld), unsupported depth!",width,height,depth);
-		MessageBox32A(0,buf,"WINE DirectDraw",MB_OK|MB_ICONSTOP);
+		MessageBoxA(0,buf,"WINE DirectDraw",MB_OK|MB_ICONSTOP);
 	    TSXFree(depths);
 		return DDERR_UNSUPPORTEDMODE;
 	  } else {
@@ -3020,7 +3020,7 @@ static HRESULT WINAPI Xlib_IDirectDraw2_RestoreDisplayMode(LPDIRECTDRAW2 this) {
 }
 
 static HRESULT WINAPI IDirectDraw2_WaitForVerticalBlank(
-	LPDIRECTDRAW2 this,DWORD x,HANDLE32 h
+	LPDIRECTDRAW2 this,DWORD x,HANDLE h
 ) {
 	TRACE(ddraw,"(%p)->(0x%08lx,0x%08x)\n",this,x,h);
 	return DD_OK;
@@ -3039,7 +3039,7 @@ static ULONG WINAPI DGA_IDirectDraw2_Release(LPDIRECTDRAW2 this) {
 	if (!--(this->ref)) {
 		TSXF86DGADirectVideo(display,DefaultScreen(display),0);
 		if (this->d.window && (this->d.mainWindow != this->d.window))
-			DestroyWindow32(this->d.window);
+			DestroyWindow(this->d.window);
 #ifdef HAVE_LIBXXF86VM
 		if (orig_mode) {
 			TSXF86VidModeSwitchToMode(
@@ -3068,7 +3068,7 @@ static ULONG WINAPI Xlib_IDirectDraw2_Release(LPDIRECTDRAW2 this) {
 
 	if (!--(this->ref)) {
 		if (this->d.window && (this->d.mainWindow != this->d.window))
-			DestroyWindow32(this->d.window);
+			DestroyWindow(this->d.window);
 		HeapFree(GetProcessHeap(),0,this);
 		return 0;
 	}
@@ -3225,7 +3225,7 @@ static HRESULT WINAPI Xlib_IDirectDraw2_QueryInterface(
 }
 
 static HRESULT WINAPI IDirectDraw2_GetVerticalBlankStatus(
-	LPDIRECTDRAW2 this,BOOL32 *status
+	LPDIRECTDRAW2 this,BOOL *status
 ) {
         TRACE(ddraw,"(%p)->(%p)\n",this,status);
 	*status = TRUE;
@@ -3570,7 +3570,7 @@ static struct IDirectDraw2_VTable xlib_dd2vt = {
  */
 
 static HRESULT WINAPI IDirectDraw4_GetSurfaceFromDC(LPDIRECTDRAW4 this,
-						    HDC32 hdc,
+						    HDC hdc,
 						    LPDIRECTDRAWSURFACE *lpDDS) {
   FIXME(ddraw, "(%p)->(%08ld,%p)\n", this, (DWORD) hdc, lpDDS);
 
@@ -3672,7 +3672,7 @@ static struct IDirectDraw4_VTable xlib_dd4vt = {
  * 				DirectDrawCreate
  */
 
-LRESULT WINAPI Xlib_DDWndProc(HWND32 hwnd,UINT32 msg,WPARAM32 wParam,LPARAM lParam)
+LRESULT WINAPI Xlib_DDWndProc(HWND hwnd,UINT msg,WPARAM wParam,LPARAM lParam)
 {
    LRESULT ret;
    LPDIRECTDRAW ddraw = NULL;
@@ -3681,7 +3681,7 @@ LRESULT WINAPI Xlib_DDWndProc(HWND32 hwnd,UINT32 msg,WPARAM32 wParam,LPARAM lPar
    /* FIXME(ddraw,"(0x%04x,%s,0x%08lx,0x%08lx),stub!\n",(int)hwnd,SPY_GetMsgName(msg),(long)wParam,(long)lParam); */
 
    SetLastError( ERROR_SUCCESS );
-   ddraw  = (LPDIRECTDRAW)GetWindowLong32A( hwnd, ddrawXlibThisOffset );
+   ddraw  = (LPDIRECTDRAW)GetWindowLongA( hwnd, ddrawXlibThisOffset );
    if( (!ddraw)  &&
        ( ( lastError = GetLastError() ) != ERROR_SUCCESS )
      ) 
@@ -3707,25 +3707,25 @@ LRESULT WINAPI Xlib_DDWndProc(HWND32 hwnd,UINT32 msg,WPARAM32 wParam,LPARAM lPar
 	   instead of those of the window provided by the application.
 	   And with this patch, mouse clicks work with Monkey Island III
 	     - Lionel */
-	ret = DefWindowProc32A( ddraw->d.mainWindow, msg, wParam, lParam );
+	ret = DefWindowProcA( ddraw->d.mainWindow, msg, wParam, lParam );
 
         if( !ret )
         {
           /* We didn't handle the message - give it to the application */
 	  if (ddraw && ddraw->d.mainWindow && WIN_FindWndPtr(ddraw->d.mainWindow)) {
-          	ret = CallWindowProc32A( WIN_FindWndPtr( ddraw->d.mainWindow )->winproc,
+          	ret = CallWindowProcA( WIN_FindWndPtr( ddraw->d.mainWindow )->winproc,
                	                   ddraw->d.mainWindow, msg, wParam, lParam );
 	  }
         }
         
       } else {
-        ret = DefWindowProc32A(hwnd, msg, wParam, lParam );
+        ret = DefWindowProcA(hwnd, msg, wParam, lParam );
       } 
 
     }
     else
     {
-	ret = DefWindowProc32A(hwnd,msg,wParam,lParam);
+	ret = DefWindowProcA(hwnd,msg,wParam,lParam);
     }
 
     return ret;
@@ -3743,7 +3743,7 @@ HRESULT WINAPI DGA_DirectDrawCreate( LPDIRECTDRAW *lplpDD, LPUNKNOWN pUnkOuter) 
 	
 	if (fd  == -1) {
 	  MSG("Must be able to access /dev/mem to use XF86DGA!\n");
-	  MessageBox32A(0,"Using the XF86DGA extension requires access to /dev/mem.","WINE DirectDraw",MB_OK|MB_ICONSTOP);
+	  MessageBoxA(0,"Using the XF86DGA extension requires access to /dev/mem.","WINE DirectDraw",MB_OK|MB_ICONSTOP);
 	  return E_UNEXPECTED;
 	}
 	if (!DDRAW_DGA_Available()) {
@@ -3790,7 +3790,7 @@ HRESULT WINAPI DGA_DirectDrawCreate( LPDIRECTDRAW *lplpDD, LPUNKNOWN pUnkOuter) 
 #endif /* defined(HAVE_LIBXXF86DGA) */
 }
 
-BOOL32
+BOOL
 DDRAW_XSHM_Available(void)
    {
 #ifdef HAVE_LIBXXSHM
@@ -3835,7 +3835,7 @@ HRESULT WINAPI Xlib_DirectDrawCreate( LPDIRECTDRAW *lplpDD, LPUNKNOWN pUnkOuter)
 
 HRESULT WINAPI DirectDrawCreate( LPGUID lpGUID, LPDIRECTDRAW *lplpDD, LPUNKNOWN pUnkOuter ) {
 	char	xclsid[50];
-	WNDCLASS32A	wc;
+	WNDCLASSA	wc;
         WND*            pParentWindow; 
 	HRESULT ret;
 
@@ -3869,11 +3869,11 @@ HRESULT WINAPI DirectDrawCreate( LPGUID lpGUID, LPDIRECTDRAW *lplpDD, LPUNKNOWN 
         wc.hInstance    = 0; 
 
 	wc.hIcon	= 0;
-	wc.hCursor	= (HCURSOR32)IDC_ARROW32A;
+	wc.hCursor	= (HCURSOR)IDC_ARROWA;
 	wc.hbrBackground= NULL_BRUSH;
 	wc.lpszMenuName	= 0;
 	wc.lpszClassName= "WINE_DirectDraw";
-	RegisterClass32A(&wc);
+	RegisterClassA(&wc);
 
 	if (!memcmp(lpGUID, &DGA_DirectDraw_GUID, sizeof(GUID)))
 		ret = DGA_DirectDrawCreate(lplpDD, pUnkOuter);
@@ -3883,7 +3883,7 @@ HRESULT WINAPI DirectDrawCreate( LPGUID lpGUID, LPDIRECTDRAW *lplpDD, LPUNKNOWN 
 	  goto err;
 
 
-	(*lplpDD)->d.winclass = RegisterClass32A(&wc);
+	(*lplpDD)->d.winclass = RegisterClassA(&wc);
 	return ret;
 
       err:

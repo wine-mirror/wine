@@ -13,9 +13,9 @@
 /***********************************************************************
  *           PSDRV_BRUSH_SelectObject
  */
-HBRUSH32 PSDRV_BRUSH_SelectObject( DC * dc, HBRUSH32 hbrush, BRUSHOBJ * brush )
+HBRUSH PSDRV_BRUSH_SelectObject( DC * dc, HBRUSH hbrush, BRUSHOBJ * brush )
 {
-    HBRUSH32 prevbrush = dc->w.hBrush;
+    HBRUSH prevbrush = dc->w.hBrush;
     PSDRV_PDEVICE *physDev = (PSDRV_PDEVICE *)dc->physDev;
 
     TRACE(psdrv, "hbrush = %08x\n", hbrush);
@@ -55,7 +55,7 @@ HBRUSH32 PSDRV_BRUSH_SelectObject( DC * dc, HBRUSH32 hbrush, BRUSHOBJ * brush )
  *	PSDRV_SetBrush
  *
  */
-static BOOL32 PSDRV_SetBrush(DC *dc)
+static BOOL PSDRV_SetBrush(DC *dc)
 {
     PSDRV_PDEVICE *physDev = (PSDRV_PDEVICE *)dc->physDev;
     BRUSHOBJ *brush = (BRUSHOBJ *)GDI_GetObjPtr( dc->w.hBrush, BRUSH_MAGIC );
@@ -89,7 +89,7 @@ static BOOL32 PSDRV_SetBrush(DC *dc)
  *	PSDRV_Fill
  *
  */
-static BOOL32 PSDRV_Fill(DC *dc, BOOL32 EO)
+static BOOL PSDRV_Fill(DC *dc, BOOL EO)
 {
     if(!EO)
         return PSDRV_WriteFill(dc);
@@ -103,7 +103,7 @@ static BOOL32 PSDRV_Fill(DC *dc, BOOL32 EO)
  *	PSDRV_Clip
  *
  */
-static BOOL32 PSDRV_Clip(DC *dc, BOOL32 EO)
+static BOOL PSDRV_Clip(DC *dc, BOOL EO)
 {
     if(!EO)
         return PSDRV_WriteClip(dc);
@@ -116,7 +116,7 @@ static BOOL32 PSDRV_Clip(DC *dc, BOOL32 EO)
  *	PSDRV_Brush
  *
  */
-BOOL32 PSDRV_Brush(DC *dc, BOOL32 EO)
+BOOL PSDRV_Brush(DC *dc, BOOL EO)
 {
     BRUSHOBJ *brush = (BRUSHOBJ *)GDI_GetObjPtr( dc->w.hBrush, BRUSH_MAGIC );
 

@@ -18,8 +18,8 @@ typedef struct {
     BOOL16  		fShareable;         	/* TRUE if first open was shareable 	     */
     WORD		wNotifyDeviceID;    	/* MCI device ID with a pending notification */
     HANDLE16 		hCallback;         	/* Callback handle for pending notification  */
-    HMMIO32		hFile;	            	/* mmio file handle open as Element          */
-    MCI_OPEN_PARMS32A 	openParms;
+    HMMIO		hFile;	            	/* mmio file handle open as Element          */
+    MCI_OPEN_PARMSA 	openParms;
     DWORD		dwTimeFormat;
 } WINE_MCIAVI;
 
@@ -44,7 +44,7 @@ static WINE_MCIAVI*  AVI_mciGetOpenDev(UINT16 wDevID)
 
 static	DWORD	AVI_mciStop(UINT16 wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lpParms);
 
-static	DWORD	AVI_mciOpen(UINT16 wDevID, DWORD dwFlags, LPMCI_OPEN_PARMS32A lpParms)
+static	DWORD	AVI_mciOpen(UINT16 wDevID, DWORD dwFlags, LPMCI_OPEN_PARMSA lpParms)
 {
     WINE_MCIAVI*	wma;
 
@@ -203,7 +203,7 @@ static	DWORD	AVI_mciGetDevCaps(UINT16 wDevID, DWORD dwFlags,  LPMCI_GETDEVCAPS_P
     return 0;
 }
 
-static	DWORD	AVI_mciInfo(UINT16 wDevID, DWORD dwFlags, LPMCI_INFO_PARMS32A lpParms)
+static	DWORD	AVI_mciInfo(UINT16 wDevID, DWORD dwFlags, LPMCI_INFO_PARMSA lpParms)
 {
     DWORD		ret = 0;
     LPSTR		str = 0;
@@ -271,10 +271,10 @@ LONG MCIAVI_DriverProc32(DWORD dwDevID, HDRVR16 hDriv, DWORD wMsg,
     case DRV_ENABLE:		return 1;
     case DRV_DISABLE:		return 1;
     case DRV_QUERYCONFIGURE:	return 1;
-    case DRV_CONFIGURE:		MessageBox32A(0, "Sample AVI Wine Driver !", "MM-Wine Driver", MB_OK); return 1;
+    case DRV_CONFIGURE:		MessageBoxA(0, "Sample AVI Wine Driver !", "MM-Wine Driver", MB_OK); return 1;
     case DRV_INSTALL:		return DRVCNF_RESTART;
     case DRV_REMOVE:		return DRVCNF_RESTART;
-    case MCI_OPEN_DRIVER:	return AVI_mciOpen      (dwDevID, dwParam1, (LPMCI_OPEN_PARMS32A)   dwParam2);
+    case MCI_OPEN_DRIVER:	return AVI_mciOpen      (dwDevID, dwParam1, (LPMCI_OPEN_PARMSA)   dwParam2);
     case MCI_CLOSE_DRIVER:	return AVI_mciClose     (dwDevID, dwParam1, (LPMCI_GENERIC_PARMS)   dwParam2);
     case MCI_PLAY:		return AVI_mciPlay      (dwDevID, dwParam1, (LPMCI_PLAY_PARMS)      dwParam2);
     case MCI_RECORD:		return AVI_mciRecord    (dwDevID, dwParam1, (LPMCI_RECORD_PARMS)    dwParam2);
@@ -284,7 +284,7 @@ LONG MCIAVI_DriverProc32(DWORD dwDevID, HDRVR16 hDriv, DWORD wMsg,
     case MCI_RESUME:		return AVI_mciResume    (dwDevID, dwParam1, (LPMCI_GENERIC_PARMS)   dwParam2);
     case MCI_STATUS:		return AVI_mciStatus    (dwDevID, dwParam1, (LPMCI_STATUS_PARMS)    dwParam2);
     case MCI_GETDEVCAPS:	return AVI_mciGetDevCaps(dwDevID, dwParam1, (LPMCI_GETDEVCAPS_PARMS)dwParam2);
-    case MCI_INFO:		return AVI_mciInfo      (dwDevID, dwParam1, (LPMCI_INFO_PARMS32A)   dwParam2);
+    case MCI_INFO:		return AVI_mciInfo      (dwDevID, dwParam1, (LPMCI_INFO_PARMSA)   dwParam2);
     case MCI_SEEK:		return AVI_mciSeek      (dwDevID, dwParam1, (LPMCI_SEEK_PARMS)      dwParam2);
     case MCI_LOAD:		
     case MCI_SAVE:		
@@ -310,7 +310,7 @@ LONG MCIAVI_DriverProc32(DWORD dwDevID, HDRVR16 hDriv, DWORD wMsg,
 	break;
     default:			
 	TRACE(mciavi, "Sending msg=%s to default driver proc\n", MCI_CommandToString(wMsg));
-	return DefDriverProc32(dwDevID, hDriv, wMsg, dwParam1, dwParam2);
+	return DefDriverProc(dwDevID, hDriv, wMsg, dwParam1, dwParam2);
     }
     return MCIERR_UNRECOGNIZED_COMMAND;
 }

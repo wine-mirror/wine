@@ -31,12 +31,12 @@ typedef struct
 
 typedef struct
 {
-  LPLOGFONT32W          lpLogFontParam;
-  FONTENUMPROC32W       lpEnumFunc;
+  LPLOGFONTW          lpLogFontParam;
+  FONTENUMPROCW       lpEnumFunc;
   LPARAM                lpData;
 
-  LPNEWTEXTMETRICEX32W  lpTextMetric;
-  LPENUMLOGFONTEX32W    lpLogFont;
+  LPNEWTEXTMETRICEXW  lpTextMetric;
+  LPENUMLOGFONTEXW    lpLogFont;
   DWORD                 dwFlags;
 } fontEnum32;
  
@@ -88,50 +88,50 @@ static CHARSETINFO FONT_tci[MAXTCIINDEX] = {
 /***********************************************************************
  *              LOGFONT conversion functions.
  */
-static void __logfont32to16( INT16* plf16, const INT32* plf32 )
+static void __logfont32to16( INT16* plf16, const INT* plf32 )
 {
     int  i;
     for( i = 0; i < 5; i++ ) *plf16++ = *plf32++;
-   *((INT32*)plf16)++ = *plf32++;
-   *((INT32*)plf16)   = *plf32;
+   *((INT*)plf16)++ = *plf32++;
+   *((INT*)plf16)   = *plf32;
 }
 
-static void __logfont16to32( INT32* plf32, const INT16* plf16 )
+static void __logfont16to32( INT* plf32, const INT16* plf16 )
 {
     int i;
     for( i = 0; i < 5; i++ ) *plf32++ = *plf16++;
-   *plf32++ = *((INT32*)plf16)++;
-   *plf32   = *((INT32*)plf16);
+   *plf32++ = *((INT*)plf16)++;
+   *plf32   = *((INT*)plf16);
 }
 
-void FONT_LogFont32ATo16( const LOGFONT32A* font32, LPLOGFONT16 font16 )
+void FONT_LogFont32ATo16( const LOGFONTA* font32, LPLOGFONT16 font16 )
 {
-  __logfont32to16( (INT16*)font16, (const INT32*)font32 );
-    lstrcpyn32A( font16->lfFaceName, font32->lfFaceName, LF_FACESIZE );
+  __logfont32to16( (INT16*)font16, (const INT*)font32 );
+    lstrcpynA( font16->lfFaceName, font32->lfFaceName, LF_FACESIZE );
 }
 
-void FONT_LogFont32WTo16( const LOGFONT32W* font32, LPLOGFONT16 font16 )
+void FONT_LogFont32WTo16( const LOGFONTW* font32, LPLOGFONT16 font16 )
 {
-  __logfont32to16( (INT16*)font16, (const INT32*)font32 );
+  __logfont32to16( (INT16*)font16, (const INT*)font32 );
     lstrcpynWtoA( font16->lfFaceName, font32->lfFaceName, LF_FACESIZE );
 }
 
-void FONT_LogFont16To32A( const LPLOGFONT16 font16, LPLOGFONT32A font32 )
+void FONT_LogFont16To32A( const LPLOGFONT16 font16, LPLOGFONTA font32 )
 {
-  __logfont16to32( (INT32*)font32, (const INT16*)font16 );
-    lstrcpyn32A( font32->lfFaceName, font16->lfFaceName, LF_FACESIZE );
+  __logfont16to32( (INT*)font32, (const INT16*)font16 );
+    lstrcpynA( font32->lfFaceName, font16->lfFaceName, LF_FACESIZE );
 }
 
-void FONT_LogFont16To32W( const LPLOGFONT16 font16, LPLOGFONT32W font32 )
+void FONT_LogFont16To32W( const LPLOGFONT16 font16, LPLOGFONTW font32 )
 {
-  __logfont16to32( (INT32*)font32, (const INT16*)font16 );
+  __logfont16to32( (INT*)font32, (const INT16*)font16 );
     lstrcpynAtoW( font32->lfFaceName, font16->lfFaceName, LF_FACESIZE );
 }
 
 /***********************************************************************
  *              TEXTMETRIC conversion functions.
  */
-void FONT_TextMetric32Ato16(const LPTEXTMETRIC32A ptm32, LPTEXTMETRIC16 ptm16 )
+void FONT_TextMetric32Ato16(const LPTEXTMETRICA ptm32, LPTEXTMETRIC16 ptm16 )
 {
     ptm16->tmHeight = ptm32->tmHeight;
     ptm16->tmAscent = ptm32->tmAscent;
@@ -155,7 +155,7 @@ void FONT_TextMetric32Ato16(const LPTEXTMETRIC32A ptm32, LPTEXTMETRIC16 ptm16 )
     ptm16->tmCharSet = ptm32->tmCharSet;
 }
 
-void FONT_TextMetric32Wto16(const LPTEXTMETRIC32W ptm32, LPTEXTMETRIC16 ptm16 )
+void FONT_TextMetric32Wto16(const LPTEXTMETRICW ptm32, LPTEXTMETRIC16 ptm16 )
 {
     ptm16->tmHeight = ptm32->tmHeight;
     ptm16->tmAscent = ptm32->tmAscent;
@@ -179,7 +179,7 @@ void FONT_TextMetric32Wto16(const LPTEXTMETRIC32W ptm32, LPTEXTMETRIC16 ptm16 )
     ptm16->tmCharSet = ptm32->tmCharSet;
 }
 
-void FONT_TextMetric16to32A(const LPTEXTMETRIC16 ptm16, LPTEXTMETRIC32A ptm32 )
+void FONT_TextMetric16to32A(const LPTEXTMETRIC16 ptm16, LPTEXTMETRICA ptm32 )
 {
     ptm32->tmHeight = ptm16->tmHeight;
     ptm32->tmAscent = ptm16->tmAscent;
@@ -203,7 +203,7 @@ void FONT_TextMetric16to32A(const LPTEXTMETRIC16 ptm16, LPTEXTMETRIC32A ptm32 )
     ptm32->tmCharSet = ptm16->tmCharSet;
 }
 
-void FONT_TextMetric16to32W(const LPTEXTMETRIC16 ptm16, LPTEXTMETRIC32W ptm32 )
+void FONT_TextMetric16to32W(const LPTEXTMETRIC16 ptm16, LPTEXTMETRICW ptm32 )
 {
     ptm32->tmHeight = ptm16->tmHeight;
     ptm32->tmAscent = ptm16->tmAscent;
@@ -227,7 +227,7 @@ void FONT_TextMetric16to32W(const LPTEXTMETRIC16 ptm16, LPTEXTMETRIC32W ptm32 )
     ptm32->tmCharSet = ptm16->tmCharSet;
 }
 
-void FONT_TextMetric32Ato32W(const LPTEXTMETRIC32A ptm32A, LPTEXTMETRIC32W ptm32W )
+void FONT_TextMetric32Ato32W(const LPTEXTMETRICA ptm32A, LPTEXTMETRICW ptm32W )
 {
     ptm32W->tmHeight = ptm32A->tmHeight;
     ptm32W->tmAscent = ptm32A->tmAscent;
@@ -293,7 +293,7 @@ HFONT16 WINAPI CreateFontIndirect16( const LOGFONT16 *font )
 /***********************************************************************
  *           CreateFontIndirect32A   (GDI32.44)
  */
-HFONT32 WINAPI CreateFontIndirect32A( const LOGFONT32A *font )
+HFONT WINAPI CreateFontIndirectA( const LOGFONTA *font )
 {
     LOGFONT16 font16;
 
@@ -304,7 +304,7 @@ HFONT32 WINAPI CreateFontIndirect32A( const LOGFONT32A *font )
 /***********************************************************************
  *           CreateFontIndirect32W   (GDI32.45)
  */
-HFONT32 WINAPI CreateFontIndirect32W( const LOGFONT32W *font )
+HFONT WINAPI CreateFontIndirectW( const LOGFONTW *font )
 {
     LOGFONT16 font16;
 
@@ -327,7 +327,7 @@ HFONT16 WINAPI CreateFont16(INT16 height, INT16 width, INT16 esc, INT16 orient,
     TRACE(font,"('%s',%d,%d)\n",
 		 (name ? name : "(null)") , height, width);
     if (name) 
-	lstrcpyn32A(logfont.lfFaceName,name,sizeof(logfont.lfFaceName));
+	lstrcpynA(logfont.lfFaceName,name,sizeof(logfont.lfFaceName));
     else 
 	logfont.lfFaceName[0] = '\0';
     return CreateFontIndirect16( &logfont );
@@ -336,13 +336,13 @@ HFONT16 WINAPI CreateFont16(INT16 height, INT16 width, INT16 esc, INT16 orient,
 /*************************************************************************
  *           CreateFont32A    (GDI32.43)
  */
-HFONT32 WINAPI CreateFont32A( INT32 height, INT32 width, INT32 esc,
-                              INT32 orient, INT32 weight, DWORD italic,
+HFONT WINAPI CreateFontA( INT height, INT width, INT esc,
+                              INT orient, INT weight, DWORD italic,
                               DWORD underline, DWORD strikeout, DWORD charset,
                               DWORD outpres, DWORD clippres, DWORD quality,
                               DWORD pitch, LPCSTR name )
 {
-    return (HFONT32)CreateFont16( height, width, esc, orient, weight, italic,
+    return (HFONT)CreateFont16( height, width, esc, orient, weight, italic,
                                   underline, strikeout, charset, outpres,
                                   clippres, quality, pitch, name );
 }
@@ -350,14 +350,14 @@ HFONT32 WINAPI CreateFont32A( INT32 height, INT32 width, INT32 esc,
 /*************************************************************************
  *           CreateFont32W    (GDI32.46)
  */
-HFONT32 WINAPI CreateFont32W( INT32 height, INT32 width, INT32 esc,
-                              INT32 orient, INT32 weight, DWORD italic,
+HFONT WINAPI CreateFontW( INT height, INT width, INT esc,
+                              INT orient, INT weight, DWORD italic,
                               DWORD underline, DWORD strikeout, DWORD charset,
                               DWORD outpres, DWORD clippres, DWORD quality,
                               DWORD pitch, LPCWSTR name )
 {
     LPSTR namea = HEAP_strdupWtoA( GetProcessHeap(), 0, name );
-    HFONT32 ret = (HFONT32)CreateFont16( height, width, esc, orient, weight,
+    HFONT ret = (HFONT)CreateFont16( height, width, esc, orient, weight,
                                          italic, underline, strikeout, charset,
                                          outpres, clippres, quality, pitch,
                                          namea );
@@ -379,9 +379,9 @@ INT16 FONT_GetObject16( FONTOBJ * font, INT16 count, LPSTR buffer )
 /***********************************************************************
  *           FONT_GetObject32A
  */
-INT32 FONT_GetObject32A( FONTOBJ *font, INT32 count, LPSTR buffer )
+INT FONT_GetObjectA( FONTOBJ *font, INT count, LPSTR buffer )
 {
-    LOGFONT32A fnt32;
+    LOGFONTA fnt32;
 
     FONT_LogFont16To32A( &font->logfont, &fnt32 );
 
@@ -392,9 +392,9 @@ INT32 FONT_GetObject32A( FONTOBJ *font, INT32 count, LPSTR buffer )
 /***********************************************************************
  *           FONT_GetObject32W
  */
-INT32 FONT_GetObject32W( FONTOBJ *font, INT32 count, LPSTR buffer )
+INT FONT_GetObjectW( FONTOBJ *font, INT count, LPSTR buffer )
 {
-    LOGFONT32W fnt32;
+    LOGFONTW fnt32;
 
     FONT_LogFont16To32W( &font->logfont, &fnt32 );
 
@@ -410,7 +410,7 @@ INT32 FONT_GetObject32W( FONTOBJ *font, INT32 count, LPSTR buffer )
  * Called by the device driver layer to pass font info
  * down to the application.
  */
-static INT32 FONT_EnumInstance16( LPENUMLOGFONT16 plf, 
+static INT FONT_EnumInstance16( LPENUMLOGFONT16 plf, 
 				  LPNEWTEXTMETRIC16 ptm, UINT16 fType, LPARAM lp )
 {
 #define pfe ((fontEnum16*)lp)
@@ -429,7 +429,7 @@ static INT32 FONT_EnumInstance16( LPENUMLOGFONT16 plf,
 /***********************************************************************
  *              FONT_EnumInstance32
  */
-static INT32 FONT_EnumInstance32( LPENUMLOGFONT16 plf,
+static INT FONT_EnumInstance( LPENUMLOGFONT16 plf,
 				  LPNEWTEXTMETRIC16 ptm, UINT16 fType, LPARAM lp )
 {
     /* lfCharSet is at the same offset in both LOGFONT32A and LOGFONT32W */
@@ -442,17 +442,17 @@ static INT32 FONT_EnumInstance32( LPENUMLOGFONT16 plf,
 
 	if( pfe->dwFlags & ENUM_UNICODE )
 	{
-	    FONT_LogFont16To32W( &plf->elfLogFont, (LPLOGFONT32W)(pfe->lpLogFont) );
-	    FONT_TextMetric16to32W( (LPTEXTMETRIC16)ptm, (LPTEXTMETRIC32W)(pfe->lpTextMetric) );
+	    FONT_LogFont16To32W( &plf->elfLogFont, (LPLOGFONTW)(pfe->lpLogFont) );
+	    FONT_TextMetric16to32W( (LPTEXTMETRIC16)ptm, (LPTEXTMETRICW)(pfe->lpTextMetric) );
 	}
 	else
 	{
-	    FONT_LogFont16To32A( &plf->elfLogFont, (LPLOGFONT32A)pfe->lpLogFont );
-	    FONT_TextMetric16to32A( (LPTEXTMETRIC16)ptm, (LPTEXTMETRIC32A)pfe->lpTextMetric );
+	    FONT_LogFont16To32A( &plf->elfLogFont, (LPLOGFONTA)pfe->lpLogFont );
+	    FONT_TextMetric16to32A( (LPTEXTMETRIC16)ptm, (LPTEXTMETRICA)pfe->lpTextMetric );
 	}
 
-        return pfe->lpEnumFunc( (LPENUMLOGFONT32W)pfe->lpLogFont, 
-				(LPNEWTEXTMETRIC32W)pfe->lpTextMetric, fType, pfe->lpData );
+        return pfe->lpEnumFunc( (LPENUMLOGFONTW)pfe->lpLogFont, 
+				(LPNEWTEXTMETRICW)pfe->lpTextMetric, fType, pfe->lpData );
     }
 #undef pfe
     return 1;
@@ -492,7 +492,7 @@ INT16 WINAPI EnumFontFamiliesEx16( HDC16 hDC, LPLOGFONT16 plf,
 /***********************************************************************
  *		FONT_EnumFontFamiliesEx32
  */
-static INT32 FONT_EnumFontFamiliesEx32( HDC32 hDC, LPLOGFONT32W plf, FONTENUMPROC32W efproc, 
+static INT FONT_EnumFontFamiliesEx( HDC hDC, LPLOGFONTW plf, FONTENUMPROCW efproc, 
 					           LPARAM lParam, DWORD dwUnicode)
 {
     DC*		dc = (DC*) GDI_GetObjPtr( hDC, DC_MAGIC );
@@ -500,8 +500,8 @@ static INT32 FONT_EnumFontFamiliesEx32( HDC32 hDC, LPLOGFONT32W plf, FONTENUMPRO
     if( dc && dc->funcs->pEnumDeviceFonts )
     {
 	LOGFONT16		lf16;
-	NEWTEXTMETRICEX32W 	tm32w;
-	ENUMLOGFONTEX32W	lf32w;
+	NEWTEXTMETRICEXW 	tm32w;
+	ENUMLOGFONTEXW	lf32w;
 	fontEnum32		fe32 = { plf, efproc, lParam, &tm32w, &lf32w, dwUnicode }; 
 
 	/* the only difference between LOGFONT32A and LOGFONT32W is in the lfFaceName */
@@ -511,12 +511,12 @@ static INT32 FONT_EnumFontFamiliesEx32( HDC32 hDC, LPLOGFONT32W plf, FONTENUMPRO
 	    if( dwUnicode )
 		lstrcpynWtoA( lf16.lfFaceName, plf->lfFaceName, LF_FACESIZE );
 	    else
-		lstrcpyn32A( lf16.lfFaceName, (LPCSTR)plf->lfFaceName, LF_FACESIZE );
+		lstrcpynA( lf16.lfFaceName, (LPCSTR)plf->lfFaceName, LF_FACESIZE );
 	}
 	else lf16.lfFaceName[0] = '\0';
 	lf16.lfCharSet = plf->lfCharSet;
 
-	return dc->funcs->pEnumDeviceFonts( dc, &lf16, FONT_EnumInstance32, (LPARAM)&fe32 );
+	return dc->funcs->pEnumDeviceFonts( dc, &lf16, FONT_EnumInstance, (LPARAM)&fe32 );
     }
     return 0;
 }
@@ -524,23 +524,23 @@ static INT32 FONT_EnumFontFamiliesEx32( HDC32 hDC, LPLOGFONT32W plf, FONTENUMPRO
 /***********************************************************************
  *              EnumFontFamiliesEx32W	(GDI32.82)
  */
-INT32 WINAPI EnumFontFamiliesEx32W( HDC32 hDC, LPLOGFONT32W plf,
-                                    FONTENUMPROCEX32W efproc, 
+INT WINAPI EnumFontFamiliesExW( HDC hDC, LPLOGFONTW plf,
+                                    FONTENUMPROCEXW efproc, 
                                     LPARAM lParam, DWORD dwFlags )
 {
-    return  FONT_EnumFontFamiliesEx32( hDC, plf, (FONTENUMPROC32W)efproc, 
+    return  FONT_EnumFontFamiliesEx( hDC, plf, (FONTENUMPROCW)efproc, 
 						  lParam, ENUM_UNICODE );
 }
 
 /***********************************************************************
  *              EnumFontFamiliesEx32A	(GDI32.81)
  */
-INT32 WINAPI EnumFontFamiliesEx32A( HDC32 hDC, LPLOGFONT32A plf,
-                                    FONTENUMPROCEX32A efproc, 
+INT WINAPI EnumFontFamiliesExA( HDC hDC, LPLOGFONTA plf,
+                                    FONTENUMPROCEXA efproc, 
                                     LPARAM lParam, DWORD dwFlags)
 {
-    return  FONT_EnumFontFamiliesEx32( hDC, (LPLOGFONT32W)plf, 
-				      (FONTENUMPROC32W)efproc, lParam, 0);
+    return  FONT_EnumFontFamiliesEx( hDC, (LPLOGFONTW)plf, 
+				      (FONTENUMPROCW)efproc, lParam, 0);
 }
 
 /***********************************************************************
@@ -552,7 +552,7 @@ INT16 WINAPI EnumFontFamilies16( HDC16 hDC, LPCSTR lpFamily,
     LOGFONT16	lf;
 
     lf.lfCharSet = DEFAULT_CHARSET;
-    if( lpFamily ) lstrcpyn32A( lf.lfFaceName, lpFamily, LF_FACESIZE );
+    if( lpFamily ) lstrcpynA( lf.lfFaceName, lpFamily, LF_FACESIZE );
     else lf.lfFaceName[0] = '\0';
 
     return EnumFontFamiliesEx16( hDC, &lf, (FONTENUMPROCEX16)efproc, lpData, 0 );
@@ -561,32 +561,32 @@ INT16 WINAPI EnumFontFamilies16( HDC16 hDC, LPCSTR lpFamily,
 /***********************************************************************
  *              EnumFontFamilies32A	(GDI32.80)
  */
-INT32 WINAPI EnumFontFamilies32A( HDC32 hDC, LPCSTR lpFamily,
-                                  FONTENUMPROC32A efproc, LPARAM lpData )
+INT WINAPI EnumFontFamiliesA( HDC hDC, LPCSTR lpFamily,
+                                  FONTENUMPROCA efproc, LPARAM lpData )
 {
-    LOGFONT32A	lf;
+    LOGFONTA	lf;
 
     lf.lfCharSet = DEFAULT_CHARSET;
-    if( lpFamily ) lstrcpyn32A( lf.lfFaceName, lpFamily, LF_FACESIZE );
+    if( lpFamily ) lstrcpynA( lf.lfFaceName, lpFamily, LF_FACESIZE );
     else lf.lfFaceName[0] = lf.lfFaceName[1] = '\0';
 
-    return FONT_EnumFontFamiliesEx32( hDC, (LPLOGFONT32W)&lf, 
-					   (FONTENUMPROC32W)efproc, lpData, 0 );
+    return FONT_EnumFontFamiliesEx( hDC, (LPLOGFONTW)&lf, 
+					   (FONTENUMPROCW)efproc, lpData, 0 );
 }
 
 /***********************************************************************
  *              EnumFontFamilies32W	(GDI32.83)
  */
-INT32 WINAPI EnumFontFamilies32W( HDC32 hDC, LPCWSTR lpFamily,
-                                  FONTENUMPROC32W efproc, LPARAM lpData )
+INT WINAPI EnumFontFamiliesW( HDC hDC, LPCWSTR lpFamily,
+                                  FONTENUMPROCW efproc, LPARAM lpData )
 {
-    LOGFONT32W  lf;
+    LOGFONTW  lf;
 
     lf.lfCharSet = DEFAULT_CHARSET;
-    if( lpFamily ) lstrcpyn32W( lf.lfFaceName, lpFamily, LF_FACESIZE );
+    if( lpFamily ) lstrcpynW( lf.lfFaceName, lpFamily, LF_FACESIZE );
     else lf.lfFaceName[0] = 0;
 
-    return FONT_EnumFontFamiliesEx32( hDC, &lf, efproc, lpData, ENUM_UNICODE );
+    return FONT_EnumFontFamiliesEx( hDC, &lf, efproc, lpData, ENUM_UNICODE );
 }
 
 /***********************************************************************
@@ -601,19 +601,19 @@ INT16 WINAPI EnumFonts16( HDC16 hDC, LPCSTR lpName, FONTENUMPROC16 efproc,
 /***********************************************************************
  *              EnumFonts32A		(GDI32.84)
  */
-INT32 WINAPI EnumFonts32A( HDC32 hDC, LPCSTR lpName, FONTENUMPROC32A efproc,
+INT WINAPI EnumFontsA( HDC hDC, LPCSTR lpName, FONTENUMPROCA efproc,
                            LPARAM lpData )
 {
-    return EnumFontFamilies32A( hDC, lpName, efproc, lpData );
+    return EnumFontFamiliesA( hDC, lpName, efproc, lpData );
 }
 
 /***********************************************************************
  *              EnumFonts32W		(GDI32.85)
  */
-INT32 WINAPI EnumFonts32W( HDC32 hDC, LPCWSTR lpName, FONTENUMPROC32W efproc,
+INT WINAPI EnumFontsW( HDC hDC, LPCWSTR lpName, FONTENUMPROCW efproc,
                            LPARAM lpData )
 {
-    return EnumFontFamilies32W( hDC, lpName, efproc, lpData );
+    return EnumFontFamiliesW( hDC, lpName, efproc, lpData );
 }
 
 
@@ -632,7 +632,7 @@ INT16 WINAPI GetTextCharacterExtra16( HDC16 hdc )
 /***********************************************************************
  *           GetTextCharacterExtra32    (GDI32.225)
  */
-INT32 WINAPI GetTextCharacterExtra32( HDC32 hdc )
+INT WINAPI GetTextCharacterExtra( HDC hdc )
 {
     DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
     if (!dc) return 0;
@@ -646,16 +646,16 @@ INT32 WINAPI GetTextCharacterExtra32( HDC32 hdc )
  */
 INT16 WINAPI SetTextCharacterExtra16( HDC16 hdc, INT16 extra )
 {
-    return (INT16)SetTextCharacterExtra32( hdc, extra );
+    return (INT16)SetTextCharacterExtra( hdc, extra );
 }
 
 
 /***********************************************************************
  *           SetTextCharacterExtra32    (GDI32.337)
  */
-INT32 WINAPI SetTextCharacterExtra32( HDC32 hdc, INT32 extra )
+INT WINAPI SetTextCharacterExtra( HDC hdc, INT extra )
 {
-    INT32 prev;
+    INT prev;
     DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
     if (!dc) return 0;
     extra = (extra * dc->vportExtX + dc->wndExtX / 2) / dc->wndExtX;
@@ -670,14 +670,14 @@ INT32 WINAPI SetTextCharacterExtra32( HDC32 hdc, INT32 extra )
  */
 INT16 WINAPI SetTextJustification16( HDC16 hdc, INT16 extra, INT16 breaks )
 {
-    return SetTextJustification32( hdc, extra, breaks );
+    return SetTextJustification( hdc, extra, breaks );
 }
 
 
 /***********************************************************************
  *           SetTextJustification32    (GDI32.339)
  */
-BOOL32 WINAPI SetTextJustification32( HDC32 hdc, INT32 extra, INT32 breaks )
+BOOL WINAPI SetTextJustification( HDC hdc, INT extra, INT breaks )
 {
     DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
     if (!dc) return 0;
@@ -705,13 +705,13 @@ BOOL32 WINAPI SetTextJustification32( HDC32 hdc, INT32 extra, INT32 breaks )
  */
 INT16 WINAPI GetTextFace16( HDC16 hdc, INT16 count, LPSTR name )
 {
-        return GetTextFace32A(hdc,count,name);
+        return GetTextFaceA(hdc,count,name);
 }
 
 /***********************************************************************
  *           GetTextFace32A    (GDI32.234)
  */
-INT32 WINAPI GetTextFace32A( HDC32 hdc, INT32 count, LPSTR name )
+INT WINAPI GetTextFaceA( HDC hdc, INT count, LPSTR name )
 {
     FONTOBJ *font;
 
@@ -720,7 +720,7 @@ INT32 WINAPI GetTextFace32A( HDC32 hdc, INT32 count, LPSTR name )
     if (!(font = (FONTOBJ *) GDI_GetObjPtr( dc->w.hFont, FONT_MAGIC )))
         return 0;
     if (name) 
-        lstrcpyn32A( name, font->logfont.lfFaceName, count );
+        lstrcpynA( name, font->logfont.lfFaceName, count );
     GDI_HEAP_UNLOCK( dc->w.hFont );
     if (name)
         return strlen(name);
@@ -731,10 +731,10 @@ INT32 WINAPI GetTextFace32A( HDC32 hdc, INT32 count, LPSTR name )
 /***********************************************************************
  *           GetTextFace32W    (GDI32.235)
  */
-INT32 WINAPI GetTextFace32W( HDC32 hdc, INT32 count, LPWSTR name )
+INT WINAPI GetTextFaceW( HDC hdc, INT count, LPWSTR name )
 {
     LPSTR nameA = HeapAlloc( GetProcessHeap(), 0, count );
-    INT32 res = GetTextFace32A(hdc,count,nameA);
+    INT res = GetTextFaceA(hdc,count,nameA);
     lstrcpyAtoW( name, nameA );
     HeapFree( GetProcessHeap(), 0, nameA );
     return res;
@@ -744,7 +744,7 @@ INT32 WINAPI GetTextFace32W( HDC32 hdc, INT32 count, LPWSTR name )
 /***********************************************************************
  *           GetTextExtent    (GDI.91)
  */
-DWORD WINAPI GetTextExtent( HDC16 hdc, LPCSTR str, INT16 count )
+DWORD WINAPI GetTextExtent16( HDC16 hdc, LPCSTR str, INT16 count )
 {
     SIZE16 size;
     if (!GetTextExtentPoint16( hdc, str, count, &size )) return 0;
@@ -762,8 +762,8 @@ DWORD WINAPI GetTextExtent( HDC16 hdc, LPCSTR str, INT16 count )
 BOOL16 WINAPI GetTextExtentPoint16( HDC16 hdc, LPCSTR str, INT16 count,
                                     LPSIZE16 size )
 {
-    SIZE32 size32;
-    BOOL32 ret = GetTextExtentPoint32A( hdc, str, count, &size32 );
+    SIZE size32;
+    BOOL ret = GetTextExtentPoint32A( hdc, str, count, &size32 );
     CONV_SIZE32TO16( &size32, size );
     return (BOOL16)ret;
 }
@@ -772,8 +772,8 @@ BOOL16 WINAPI GetTextExtentPoint16( HDC16 hdc, LPCSTR str, INT16 count,
 /***********************************************************************
  *           GetTextExtentPoint32A    (GDI32.230)
  */
-BOOL32 WINAPI GetTextExtentPoint32A( HDC32 hdc, LPCSTR str, INT32 count,
-                                     LPSIZE32 size )
+BOOL WINAPI GetTextExtentPoint32A( HDC hdc, LPCSTR str, INT count,
+                                     LPSIZE size )
 {
     DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
     if (!dc)
@@ -802,14 +802,14 @@ BOOL32 WINAPI GetTextExtentPoint32A( HDC32 hdc, LPCSTR str, INT32 count,
  *    Success: TRUE
  *    Failure: FALSE
  */
-BOOL32 WINAPI GetTextExtentPoint32W(
-    HDC32 hdc,     /* [in]  Handle of device context */
+BOOL WINAPI GetTextExtentPoint32W(
+    HDC hdc,     /* [in]  Handle of device context */
     LPCWSTR str,   /* [in]  Address of text string */
-    INT32 count,   /* [in]  Number of characters in string */
-    LPSIZE32 size) /* [out] Address of structure for string size */
+    INT count,   /* [in]  Number of characters in string */
+    LPSIZE size) /* [out] Address of structure for string size */
 {
     LPSTR p = HEAP_strdupWtoA( GetProcessHeap(), 0, str );
-    BOOL32 ret = GetTextExtentPoint32A( hdc, p, count, size );
+    BOOL ret = GetTextExtentPoint32A( hdc, p, count, size );
     HeapFree( GetProcessHeap(), 0, p );
     return ret;
 }
@@ -818,8 +818,8 @@ BOOL32 WINAPI GetTextExtentPoint32W(
 /***********************************************************************
  *           GetTextExtentPoint32ABuggy    (GDI32.232)
  */
-BOOL32 WINAPI GetTextExtentPoint32ABuggy( HDC32 hdc, LPCSTR str, INT32 count,
-                                          LPSIZE32 size )
+BOOL WINAPI GetTextExtentPointA( HDC hdc, LPCSTR str, INT count,
+                                          LPSIZE size )
 {
     TRACE(font, "not bug compatible.\n");
     return GetTextExtentPoint32A( hdc, str, count, size );
@@ -828,8 +828,8 @@ BOOL32 WINAPI GetTextExtentPoint32ABuggy( HDC32 hdc, LPCSTR str, INT32 count,
 /***********************************************************************
  *           GetTextExtentPoint32WBuggy    (GDI32.233)
  */
-BOOL32 WINAPI GetTextExtentPoint32WBuggy( HDC32 hdc, LPCWSTR str, INT32 count,
-                                          LPSIZE32 size )
+BOOL WINAPI GetTextExtentPointW( HDC hdc, LPCWSTR str, INT count,
+                                          LPSIZE size )
 {
     TRACE(font, "not bug compatible.\n");
     return GetTextExtentPoint32W( hdc, str, count, size );
@@ -839,12 +839,12 @@ BOOL32 WINAPI GetTextExtentPoint32WBuggy( HDC32 hdc, LPCWSTR str, INT32 count,
 /***********************************************************************
  *           GetTextExtentExPoint32A    (GDI32.228)
  */
-BOOL32 WINAPI GetTextExtentExPoint32A( HDC32 hdc, LPCSTR str, INT32 count,
-                                       INT32 maxExt, LPINT32 lpnFit,
-                                       LPINT32 alpDx, LPSIZE32 size )
+BOOL WINAPI GetTextExtentExPointA( HDC hdc, LPCSTR str, INT count,
+                                       INT maxExt, LPINT lpnFit,
+                                       LPINT alpDx, LPSIZE size )
 {
     int index, nFit, extent;
-    SIZE32 tSize;
+    SIZE tSize;
     DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
 
     if (!dc)
@@ -881,12 +881,12 @@ BOOL32 WINAPI GetTextExtentExPoint32A( HDC32 hdc, LPCSTR str, INT32 count,
  *           GetTextExtentExPoint32W    (GDI32.229)
  */
 
-BOOL32 WINAPI GetTextExtentExPoint32W( HDC32 hdc, LPCWSTR str, INT32 count,
-                                       INT32 maxExt, LPINT32 lpnFit,
-                                       LPINT32 alpDx, LPSIZE32 size )
+BOOL WINAPI GetTextExtentExPointW( HDC hdc, LPCWSTR str, INT count,
+                                       INT maxExt, LPINT lpnFit,
+                                       LPINT alpDx, LPSIZE size )
 {
     LPSTR p = HEAP_strdupWtoA( GetProcessHeap(), 0, str );
-    BOOL32 ret = GetTextExtentExPoint32A( hdc, p, count, maxExt,
+    BOOL ret = GetTextExtentExPointA( hdc, p, count, maxExt,
                                         lpnFit, alpDx, size);
     HeapFree( GetProcessHeap(), 0, p );
     return ret;
@@ -897,9 +897,9 @@ BOOL32 WINAPI GetTextExtentExPoint32W( HDC32 hdc, LPCWSTR str, INT32 count,
  */
 BOOL16 WINAPI GetTextMetrics16( HDC16 hdc, TEXTMETRIC16 *metrics )
 {
-    TEXTMETRIC32A tm32;
+    TEXTMETRICA tm32;
 
-    if (!GetTextMetrics32A( (HDC32)hdc, &tm32 )) return FALSE;
+    if (!GetTextMetricsA( (HDC)hdc, &tm32 )) return FALSE;
     FONT_TextMetric32Ato16( &tm32, metrics );
     return TRUE;
 }
@@ -908,7 +908,7 @@ BOOL16 WINAPI GetTextMetrics16( HDC16 hdc, TEXTMETRIC16 *metrics )
 /***********************************************************************
  *           GetTextMetrics32A    (GDI32.236)
  */
-BOOL32 WINAPI GetTextMetrics32A( HDC32 hdc, TEXTMETRIC32A *metrics )
+BOOL WINAPI GetTextMetricsA( HDC hdc, TEXTMETRICA *metrics )
 {
     DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
     if (!dc)
@@ -967,10 +967,10 @@ BOOL32 WINAPI GetTextMetrics32A( HDC32 hdc, TEXTMETRIC32A *metrics )
 /***********************************************************************
  *           GetTextMetrics32W    (GDI32.237)
  */
-BOOL32 WINAPI GetTextMetrics32W( HDC32 hdc, TEXTMETRIC32W *metrics )
+BOOL WINAPI GetTextMetricsW( HDC hdc, TEXTMETRICW *metrics )
 {
-    TEXTMETRIC32A tm;
-    if (!GetTextMetrics32A( (HDC16)hdc, &tm )) return FALSE;
+    TEXTMETRICA tm;
+    if (!GetTextMetricsA( (HDC16)hdc, &tm )) return FALSE;
     FONT_TextMetric32Ato32W( &tm, metrics );
     return TRUE;
 }
@@ -1004,23 +1004,23 @@ UINT16 WINAPI GetOutlineTextMetrics16(
  *    Success: Non-zero or size of required buffer
  *    Failure: 0
  */
-UINT32 WINAPI GetOutlineTextMetrics32A(
-    HDC32 hdc,    /* [in]  Handle of device context */
-    UINT32 cbData, /* [in]  Size of metric data array */
-    LPOUTLINETEXTMETRIC32A lpOTM)  /* [out] Address of metric data array */
+UINT WINAPI GetOutlineTextMetricsA(
+    HDC hdc,    /* [in]  Handle of device context */
+    UINT cbData, /* [in]  Size of metric data array */
+    LPOUTLINETEXTMETRICA lpOTM)  /* [out] Address of metric data array */
 {
 
 
-    UINT32 rtn = FALSE;
-    LPTEXTMETRIC32A lptxtMetr;
+    UINT rtn = FALSE;
+    LPTEXTMETRICA lptxtMetr;
 
 
 
     if (lpOTM == 0)
     {
         
-        lpOTM = (LPOUTLINETEXTMETRIC32A)HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(OUTLINETEXTMETRIC32A));
-        rtn = sizeof(OUTLINETEXTMETRIC32A);
+        lpOTM = (LPOUTLINETEXTMETRICA)HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(OUTLINETEXTMETRICA));
+        rtn = sizeof(OUTLINETEXTMETRICA);
         cbData = rtn;
     } else
     {
@@ -1030,14 +1030,14 @@ UINT32 WINAPI GetOutlineTextMetrics32A(
 
     lpOTM->otmSize = cbData;
 
-    lptxtMetr =HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(TEXTMETRIC32A));
+    lptxtMetr =HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(TEXTMETRICA));
     
-    if (!GetTextMetrics32A(hdc,lptxtMetr))
+    if (!GetTextMetricsA(hdc,lptxtMetr))
     {
         return 0;
     } else
     {
-       memcpy(&(lpOTM->otmTextMetrics),lptxtMetr,sizeof(TEXTMETRIC32A));
+       memcpy(&(lpOTM->otmTextMetrics),lptxtMetr,sizeof(TEXTMETRICA));
     };
 
     HeapFree(GetProcessHeap(),HEAP_ZERO_MEMORY,lptxtMetr);
@@ -1069,10 +1069,10 @@ UINT32 WINAPI GetOutlineTextMetrics32A(
 /***********************************************************************
  *           GetOutlineTextMetrics32W [GDI32.208]
  */
-UINT32 WINAPI GetOutlineTextMetrics32W(
-    HDC32 hdc,    /* [in]  Handle of device context */
-    UINT32 cbData, /* [in]  Size of metric data array */
-    LPOUTLINETEXTMETRIC32W lpOTM)  /* [out] Address of metric data array */
+UINT WINAPI GetOutlineTextMetricsW(
+    HDC hdc,    /* [in]  Handle of device context */
+    UINT cbData, /* [in]  Size of metric data array */
+    LPOUTLINETEXTMETRICW lpOTM)  /* [out] Address of metric data array */
 {
     FIXME(font, "(%d,%d,%p): stub\n", hdc, cbData, lpOTM);
     return 0; 
@@ -1084,15 +1084,15 @@ UINT32 WINAPI GetOutlineTextMetrics32W(
 BOOL16 WINAPI GetCharWidth16( HDC16 hdc, UINT16 firstChar, UINT16 lastChar,
                               LPINT16 buffer )
 {
-    BOOL32	retVal = FALSE;
+    BOOL	retVal = FALSE;
 
     if( firstChar != lastChar )
     {
-	LPINT32	buf32 = (LPINT32)HeapAlloc(GetProcessHeap(), 0,
-				 sizeof(INT32)*(1 + (lastChar - firstChar)));
+	LPINT	buf32 = (LPINT)HeapAlloc(GetProcessHeap(), 0,
+				 sizeof(INT)*(1 + (lastChar - firstChar)));
 	if( buf32 )
 	{
-	    LPINT32	obuf32 = buf32;
+	    LPINT	obuf32 = buf32;
 	    int		i;
 
             retVal = GetCharWidth32A(hdc, firstChar, lastChar, buf32);
@@ -1106,7 +1106,7 @@ BOOL16 WINAPI GetCharWidth16( HDC16 hdc, UINT16 firstChar, UINT16 lastChar,
     }
     else /* happens quite often to warrant a special treatment */
     {
-	INT32 chWidth;
+	INT chWidth;
 	retVal = GetCharWidth32A(hdc, firstChar, lastChar, &chWidth );
        *buffer = chWidth;
     }
@@ -1117,10 +1117,10 @@ BOOL16 WINAPI GetCharWidth16( HDC16 hdc, UINT16 firstChar, UINT16 lastChar,
 /***********************************************************************
  *           GetCharWidth32A    (GDI32.155)
  */
-BOOL32 WINAPI GetCharWidth32A( HDC32 hdc, UINT32 firstChar, UINT32 lastChar,
-                               LPINT32 buffer )
+BOOL WINAPI GetCharWidth32A( HDC hdc, UINT firstChar, UINT lastChar,
+                               LPINT buffer )
 {
-    UINT32 i, extra;
+    UINT i, extra;
     DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
     if (!dc)
     {
@@ -1145,8 +1145,8 @@ BOOL32 WINAPI GetCharWidth32A( HDC32 hdc, UINT32 firstChar, UINT32 lastChar,
 /***********************************************************************
  *           GetCharWidth32W    (GDI32.158)
  */
-BOOL32 WINAPI GetCharWidth32W( HDC32 hdc, UINT32 firstChar, UINT32 lastChar,
-                               LPINT32 buffer )
+BOOL WINAPI GetCharWidth32W( HDC hdc, UINT firstChar, UINT lastChar,
+                               LPINT buffer )
 {
     return GetCharWidth32A( hdc, firstChar, lastChar, buffer );
 }
@@ -1160,14 +1160,14 @@ BOOL32 WINAPI GetCharWidth32W( HDC32 hdc, UINT32 firstChar, UINT32 lastChar,
  */
 DWORD WINAPI SetMapperFlags16( HDC16 hDC, DWORD dwFlag )
 {
-    return SetMapperFlags32( hDC, dwFlag );
+    return SetMapperFlags( hDC, dwFlag );
 }
 
 
 /***********************************************************************
  *           SetMapperFlags32    (GDI32.322)
  */
-DWORD WINAPI SetMapperFlags32( HDC32 hDC, DWORD dwFlag )
+DWORD WINAPI SetMapperFlags( HDC hDC, DWORD dwFlag )
 {
     FIXME(font, "(0x%04x, 0x%08lx): stub - harmless\n", hDC, dwFlag);
     return 0;
@@ -1186,7 +1186,7 @@ BOOL16 WINAPI GetAspectRatioFilterEx16( HDC16 hdc, LPSIZE16 pAspectRatio )
 /***********************************************************************
  *          GetAspectRatioFilterEx32  (GDI32.142)
  */
-BOOL32 WINAPI GetAspectRatioFilterEx32( HDC32 hdc, LPSIZE32 pAspectRatio )
+BOOL WINAPI GetAspectRatioFilterEx( HDC hdc, LPSIZE pAspectRatio )
 {
   FIXME(font, "(%04x, %p): -- Empty Stub !\n",
         hdc, pAspectRatio);
@@ -1199,8 +1199,8 @@ BOOL32 WINAPI GetAspectRatioFilterEx32( HDC32 hdc, LPSIZE32 pAspectRatio )
 BOOL16 WINAPI GetCharABCWidths16( HDC16 hdc, UINT16 firstChar, UINT16 lastChar,
                                   LPABC16 abc )
 {
-    ABC32 abc32;
-    if (!GetCharABCWidths32A( hdc, firstChar, lastChar, &abc32 )) return FALSE;
+    ABC abc32;
+    if (!GetCharABCWidthsA( hdc, firstChar, lastChar, &abc32 )) return FALSE;
     abc->abcA = abc32.abcA;
     abc->abcB = abc32.abcB;
     abc->abcC = abc32.abcC;
@@ -1211,10 +1211,10 @@ BOOL16 WINAPI GetCharABCWidths16( HDC16 hdc, UINT16 firstChar, UINT16 lastChar,
 /***********************************************************************
  *           GetCharABCWidths32A   (GDI32.149)
  */
-BOOL32 WINAPI GetCharABCWidths32A(HDC32 hdc, UINT32 firstChar, UINT32 lastChar,
-                                  LPABC32 abc )
+BOOL WINAPI GetCharABCWidthsA(HDC hdc, UINT firstChar, UINT lastChar,
+                                  LPABC abc )
 {
-    return GetCharABCWidths32W( hdc, firstChar, lastChar, abc );
+    return GetCharABCWidthsW( hdc, firstChar, lastChar, abc );
 }
 
 
@@ -1234,8 +1234,8 @@ BOOL32 WINAPI GetCharABCWidths32A(HDC32 hdc, UINT32 firstChar, UINT32 lastChar,
  *    Success: TRUE
  *    Failure: FALSE
  */
-BOOL32 WINAPI GetCharABCWidths32W( HDC32 hdc, UINT32 firstChar, UINT32 lastChar,
-                                   LPABC32 abc )
+BOOL WINAPI GetCharABCWidthsW( HDC hdc, UINT firstChar, UINT lastChar,
+                                   LPABC abc )
 {
     /* No TrueType fonts in Wine so far */
     FIXME(font, "(%04x,%04x,%04x,%p): stub\n", hdc, firstChar, lastChar, abc);
@@ -1259,8 +1259,8 @@ DWORD WINAPI GetGlyphOutline16( HDC16 hdc, UINT16 uChar, UINT16 fuFormat,
 /***********************************************************************
  *           GetGlyphOutline32A    (GDI32.186)
  */
-DWORD WINAPI GetGlyphOutline32A( HDC32 hdc, UINT32 uChar, UINT32 fuFormat,
-                                 LPGLYPHMETRICS32 lpgm, DWORD cbBuffer,
+DWORD WINAPI GetGlyphOutlineA( HDC hdc, UINT uChar, UINT fuFormat,
+                                 LPGLYPHMETRICS lpgm, DWORD cbBuffer,
                                  LPVOID lpBuffer, const MAT2 *lpmat2 )
 {
     FIXME(font,"(%04x, '%c', %04x, %p, %ld, %p, %p): stub\n",
@@ -1271,8 +1271,8 @@ DWORD WINAPI GetGlyphOutline32A( HDC32 hdc, UINT32 uChar, UINT32 fuFormat,
 /***********************************************************************
  *           GetGlyphOutline32W    (GDI32.187)
  */
-DWORD WINAPI GetGlyphOutline32W( HDC32 hdc, UINT32 uChar, UINT32 fuFormat,
-                                 LPGLYPHMETRICS32 lpgm, DWORD cbBuffer,
+DWORD WINAPI GetGlyphOutlineW( HDC hdc, UINT uChar, UINT fuFormat,
+                                 LPGLYPHMETRICS lpgm, DWORD cbBuffer,
                                  LPVOID lpBuffer, const MAT2 *lpmat2 )
 {
     FIXME(font,"(%04x, '%c', %04x, %p, %ld, %p, %p): stub\n",
@@ -1287,14 +1287,14 @@ BOOL16 WINAPI CreateScalableFontResource16( UINT16 fHidden,
                                             LPCSTR lpszResourceFile,
                                             LPCSTR fontFile, LPCSTR path )
 {
-    return CreateScalableFontResource32A( fHidden, lpszResourceFile,
+    return CreateScalableFontResourceA( fHidden, lpszResourceFile,
                                           fontFile, path );
 }
 
 /***********************************************************************
  *           CreateScalableFontResource32A   (GDI32.62)
  */
-BOOL32 WINAPI CreateScalableFontResource32A( DWORD fHidden,
+BOOL WINAPI CreateScalableFontResourceA( DWORD fHidden,
                                              LPCSTR lpszResourceFile,
                                              LPCSTR lpszFontFile,
                                              LPCSTR lpszCurrentPath )
@@ -1311,7 +1311,7 @@ BOOL32 WINAPI CreateScalableFontResource32A( DWORD fHidden,
 /***********************************************************************
  *           CreateScalableFontResource32W   (GDI32.63)
  */
-BOOL32 WINAPI CreateScalableFontResource32W( DWORD fHidden,
+BOOL WINAPI CreateScalableFontResourceW( DWORD fHidden,
                                              LPCWSTR lpszResourceFile,
                                              LPCWSTR lpszFontFile,
                                              LPCWSTR lpszCurrentPath )
@@ -1327,14 +1327,14 @@ BOOL32 WINAPI CreateScalableFontResource32W( DWORD fHidden,
  */
 BOOL16 WINAPI GetRasterizerCaps16( LPRASTERIZER_STATUS lprs, UINT16 cbNumBytes)
 {
-    return GetRasterizerCaps32( lprs, cbNumBytes );
+    return GetRasterizerCaps( lprs, cbNumBytes );
 }
 
 
 /*************************************************************************
  *             GetRasterizerCaps32   (GDI32.216)
  */
-BOOL32 WINAPI GetRasterizerCaps32( LPRASTERIZER_STATUS lprs, UINT32 cbNumBytes)
+BOOL WINAPI GetRasterizerCaps( LPRASTERIZER_STATUS lprs, UINT cbNumBytes)
 {
   lprs->nSize = sizeof(RASTERIZER_STATUS);
   lprs->wFlags = TT_AVAILABLE|TT_ENABLED;
@@ -1363,8 +1363,8 @@ INT16 WINAPI GetKerningPairs16( HDC16 hDC, INT16 cPairs,
 /*************************************************************************
  *             GetKerningPairs32A   (GDI32.192)
  */
-DWORD WINAPI GetKerningPairs32A( HDC32 hDC, DWORD cPairs,
-                                 LPKERNINGPAIR32 lpKerningPairs )
+DWORD WINAPI GetKerningPairsA( HDC hDC, DWORD cPairs,
+                                 LPKERNINGPAIR lpKerningPairs )
 {
     int i;
     FIXME(font,"(%x,%ld,%p): almost empty stub!\n",
@@ -1378,10 +1378,10 @@ DWORD WINAPI GetKerningPairs32A( HDC32 hDC, DWORD cPairs,
 /*************************************************************************
  *             GetKerningPairs32W   (GDI32.193)
  */
-DWORD WINAPI GetKerningPairs32W( HDC32 hDC, DWORD cPairs,
-                                 LPKERNINGPAIR32 lpKerningPairs )
+DWORD WINAPI GetKerningPairsW( HDC hDC, DWORD cPairs,
+                                 LPKERNINGPAIR lpKerningPairs )
 {
-    return GetKerningPairs32A( hDC, cPairs, lpKerningPairs );
+    return GetKerningPairsA( hDC, cPairs, lpKerningPairs );
 }
 
 /*************************************************************************
@@ -1399,7 +1399,7 @@ DWORD WINAPI GetKerningPairs32W( HDC32 hDC, DWORD cPairs,
  *   TRUE on success, FALSE on failure.
  *
  */
-BOOL32 WINAPI TranslateCharsetInfo(
+BOOL WINAPI TranslateCharsetInfo(
   LPDWORD lpSrc, /*
        if flags == TCI_SRCFONTSIG: pointer to fsCsb of a FONTSIGNATURE
        if flags == TCI_SRCCHARSET: a character set value
@@ -1414,10 +1414,10 @@ BOOL32 WINAPI TranslateCharsetInfo(
 	while (!(*lpSrc>>index & 0x0001) && index<MAXTCIINDEX) index++;
       break;
     case TCI_SRCCODEPAGE:
-      while ((UINT32) (lpSrc) != FONT_tci[index].ciACP && index < MAXTCIINDEX) index++;
+      while ((UINT) (lpSrc) != FONT_tci[index].ciACP && index < MAXTCIINDEX) index++;
       break;
     case TCI_SRCCHARSET:
-      while ((UINT32) (lpSrc) != FONT_tci[index].ciCharset && index < MAXTCIINDEX) index++;
+      while ((UINT) (lpSrc) != FONT_tci[index].ciCharset && index < MAXTCIINDEX) index++;
       break;
     default:
       return FALSE;
@@ -1430,7 +1430,7 @@ BOOL32 WINAPI TranslateCharsetInfo(
 /*************************************************************************
  *             GetFontLanguageInfo   (GDI32.182)
  */
-DWORD WINAPI GetFontLanguageInfo32(HDC32 hdc) {
+DWORD WINAPI GetFontLanguageInfo(HDC hdc) {
 	/* return value 0 is correct for most cases anyway */
         FIXME(font,"(%x):stub!\n", hdc);
 	return 0;
@@ -1461,7 +1461,7 @@ DWORD WINAPI GetFontLanguageInfo16(HDC16 hdc) {
  *
  * Unimplemented
  */
-DWORD WINAPI GetFontData32(HDC32 hdc, DWORD table, DWORD offset, 
+DWORD WINAPI GetFontData(HDC hdc, DWORD table, DWORD offset, 
     LPVOID buffer, DWORD length)
 {
     FIXME(font, "(%x,%ld,%ld,%p,%ld): stub\n", 
@@ -1474,8 +1474,8 @@ DWORD WINAPI GetFontData32(HDC32 hdc, DWORD table, DWORD offset,
  * GetCharacterPlacement32A [GDI32.160]
  */
 DWORD WINAPI
-GetCharacterPlacement32A(HDC32 hdc, LPCSTR lpString, INT32 uCount,
-			 INT32 nMaxExtent, GCP_RESULTS32A *lpResults,
+GetCharacterPlacementA(HDC hdc, LPCSTR lpString, INT uCount,
+			 INT nMaxExtent, GCP_RESULTSA *lpResults,
 			 DWORD dwFlags)
 {
     /* return value 0 is correct for most cases anyway */
@@ -1487,8 +1487,8 @@ GetCharacterPlacement32A(HDC32 hdc, LPCSTR lpString, INT32 uCount,
  * GetCharacterPlacement32W [GDI32.161]
  */
 DWORD WINAPI
-GetCharacterPlacement32W(HDC32 hdc, LPCWSTR lpString, INT32 uCount,
-			 INT32 nMaxExtent, GCP_RESULTS32W *lpResults,
+GetCharacterPlacementW(HDC hdc, LPCWSTR lpString, INT uCount,
+			 INT nMaxExtent, GCP_RESULTSW *lpResults,
 			 DWORD dwFlags)
 {
     /* return value 0 is correct for most cases anyway */
@@ -1499,7 +1499,7 @@ GetCharacterPlacement32W(HDC32 hdc, LPCWSTR lpString, INT32 uCount,
 /*************************************************************************
  *      GetCharABCWidthsFloat32A [GDI32.150]
  */
-BOOL32 WINAPI GetCharABCWidthsFloat32A(HDC32 hdc, UINT32 iFirstChar, UINT32 iLastChar,
+BOOL WINAPI GetCharABCWidthsFloatA(HDC hdc, UINT iFirstChar, UINT iLastChar,
 		                        LPABCFLOAT lpABCF)
 {
        FIXME(gdi, "GetCharABCWidthsFloatA, stub\n");
@@ -1509,8 +1509,8 @@ BOOL32 WINAPI GetCharABCWidthsFloat32A(HDC32 hdc, UINT32 iFirstChar, UINT32 iLas
 /*************************************************************************
  *      GetCharABCWidthsFloat32W [GDI32.151]
  */
-BOOL32 WINAPI GetCharABCWidthsFloat32W(HDC32 hdc, UINT32 iFirstChar,
-		                        UINT32 iLastChar, LPABCFLOAT lpABCF)
+BOOL WINAPI GetCharABCWidthsFloatW(HDC hdc, UINT iFirstChar,
+		                        UINT iLastChar, LPABCFLOAT lpABCF)
 {
        FIXME(gdi, "GetCharABCWidthsFloatW, stub\n");
        return 0;
@@ -1519,8 +1519,8 @@ BOOL32 WINAPI GetCharABCWidthsFloat32W(HDC32 hdc, UINT32 iFirstChar,
 /*************************************************************************
  *      GetCharWidthFloat32A [GDI32.156]
  */
-BOOL32 WINAPI GetCharWidthFloat32A(HDC32 hdc, UINT32 iFirstChar,
-		                    UINT32 iLastChar, PFLOAT pxBuffer)
+BOOL WINAPI GetCharWidthFloatA(HDC hdc, UINT iFirstChar,
+		                    UINT iLastChar, PFLOAT pxBuffer)
 {
        FIXME(gdi, "GetCharWidthFloatA, stub\n");
        return 0;
@@ -1529,8 +1529,8 @@ BOOL32 WINAPI GetCharWidthFloat32A(HDC32 hdc, UINT32 iFirstChar,
 /*************************************************************************
  *      GetCharWidthFloat32W [GDI32.157]
  */
-BOOL32 WINAPI GetCharWidthFloat32W(HDC32 hdc, UINT32 iFirstChar,
-		                    UINT32 iLastChar, PFLOAT pxBuffer)
+BOOL WINAPI GetCharWidthFloatW(HDC hdc, UINT iFirstChar,
+		                    UINT iLastChar, PFLOAT pxBuffer)
 {
        FIXME(gdi, "GetCharWidthFloatW, stub\n");
        return 0;

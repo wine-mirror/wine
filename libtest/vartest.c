@@ -64,7 +64,7 @@
 #ifdef WINDOWS
 #else
 #include <debugstr.h>
-extern LPWSTR HEAP_strdupAtoW( HANDLE32 heap, DWORD flags, LPCSTR str );
+extern LPWSTR HEAP_strdupAtoW( HANDLE heap, DWORD flags, LPCSTR str );
 #endif
 
 

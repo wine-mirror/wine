@@ -32,7 +32,7 @@ typedef struct IMultiQI IMultiQI,*LPMULTIQI;
  */
 #define ICOM_INTERFACE IEnumString
 #define IEnumString_METHODS \
-    ICOM_METHOD3(HRESULT,Next,  ULONG,celt, LPOLESTR32*,rgelt, ULONG*,pceltFethed); \
+    ICOM_METHOD3(HRESULT,Next,  ULONG,celt, LPOLESTR*,rgelt, ULONG*,pceltFethed); \
     ICOM_METHOD1(HRESULT,Skip,  ULONG,celt); \
     ICOM_METHOD (HRESULT,Reset); \
     ICOM_METHOD1 (HRESULT, Clone, IEnumString**, ppenum);
@@ -54,7 +54,6 @@ ICOM_DEFINE(IEnumString,IUnknown)
 #define IEnumString_Clone(p,a)    ICOM_CALL1(Clone,p,a)
 #endif
 
-#define CreateEnumString WINELIB_NAME(CreateEnumString)
 
 
 /*****************************************************************************
@@ -92,14 +91,14 @@ ICOM_DEFINE(IEnumUnknown,IUnknown)
 #define IMallocSpy_METHODS \
     ICOM_METHOD1 (ULONG,PreAlloc,        ULONG,cbRequest); \
     ICOM_VMETHOD1(      PostAlloc,       void*,pActual); \
-    ICOM_METHOD2 (void*,PreFree,         void*,pRequest, BOOL32,fSpyed); \
-    ICOM_VMETHOD1(      PostFree,        BOOL32,fSpyed); \
-    ICOM_METHOD4 (ULONG,PreRealloc,      void*,pRequest, ULONG,cbRequest, void**,ppNewRequest, BOOL32,fSpyed); \
-    ICOM_METHOD2 (void*,PostRealloc,     void*,pActual, BOOL32,fSpyed); \
-    ICOM_METHOD2 (void*,PreGetSize,      void*,pRequest, BOOL32,fSpyed); \
-    ICOM_METHOD2 (ULONG,PostGetSize,     ULONG,cbActual, BOOL32,fSpyed); \
-    ICOM_METHOD2 (void*,PreDidAlloc,     void*,pRequest, BOOL32,fSpyed); \
-    ICOM_METHOD3 (int,  PostDidAlloc,    void*,pRequest, BOOL32,fSpyed, int,fActual); \
+    ICOM_METHOD2 (void*,PreFree,         void*,pRequest, BOOL,fSpyed); \
+    ICOM_VMETHOD1(      PostFree,        BOOL,fSpyed); \
+    ICOM_METHOD4 (ULONG,PreRealloc,      void*,pRequest, ULONG,cbRequest, void**,ppNewRequest, BOOL,fSpyed); \
+    ICOM_METHOD2 (void*,PostRealloc,     void*,pActual, BOOL,fSpyed); \
+    ICOM_METHOD2 (void*,PreGetSize,      void*,pRequest, BOOL,fSpyed); \
+    ICOM_METHOD2 (ULONG,PostGetSize,     ULONG,cbActual, BOOL,fSpyed); \
+    ICOM_METHOD2 (void*,PreDidAlloc,     void*,pRequest, BOOL,fSpyed); \
+    ICOM_METHOD3 (int,  PostDidAlloc,    void*,pRequest, BOOL,fSpyed, int,fActual); \
     ICOM_METHOD  (int,  PreHeapMinimize); \
     ICOM_METHOD  (int,  PostHeapMinimize);
 #define IMallocSpy_IMETHODS \

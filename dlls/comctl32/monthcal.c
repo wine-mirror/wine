@@ -28,7 +28,7 @@
 
 
 static LRESULT
-MONTHCAL_Create (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
+MONTHCAL_Create (WND *wndPtr, WPARAM wParam, LPARAM lParam)
 {
     MONTHCAL_INFO *infoPtr;
 
@@ -55,7 +55,7 @@ MONTHCAL_Create (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 
 
 static LRESULT
-MONTHCAL_Destroy (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
+MONTHCAL_Destroy (WND *wndPtr, WPARAM wParam, LPARAM lParam)
 {
     MONTHCAL_INFO *infoPtr = MONTHCAL_GetInfoPtr(wndPtr);
 
@@ -74,7 +74,7 @@ MONTHCAL_Destroy (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 
 
 LRESULT WINAPI
-MONTHCAL_WindowProc (HWND32 hwnd, UINT32 uMsg, WPARAM32 wParam, LPARAM lParam)
+MONTHCAL_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     WND *wndPtr = WIN_FindWndPtr(hwnd);
 
@@ -92,7 +92,7 @@ MONTHCAL_WindowProc (HWND32 hwnd, UINT32 uMsg, WPARAM32 wParam, LPARAM lParam)
 	    if (uMsg >= WM_USER)
 		ERR (monthcal, "unknown msg %04x wp=%08x lp=%08lx\n",
 		     uMsg, wParam, lParam);
-	    return DefWindowProc32A (hwnd, uMsg, wParam, lParam);
+	    return DefWindowProcA (hwnd, uMsg, wParam, lParam);
     }
     return 0;
 }
@@ -101,27 +101,27 @@ MONTHCAL_WindowProc (HWND32 hwnd, UINT32 uMsg, WPARAM32 wParam, LPARAM lParam)
 VOID
 MONTHCAL_Register (VOID)
 {
-    WNDCLASS32A wndClass;
+    WNDCLASSA wndClass;
 
-    if (GlobalFindAtom32A (MONTHCAL_CLASS32A)) return;
+    if (GlobalFindAtomA (MONTHCAL_CLASSA)) return;
 
-    ZeroMemory (&wndClass, sizeof(WNDCLASS32A));
+    ZeroMemory (&wndClass, sizeof(WNDCLASSA));
     wndClass.style         = CS_GLOBALCLASS;
-    wndClass.lpfnWndProc   = (WNDPROC32)MONTHCAL_WindowProc;
+    wndClass.lpfnWndProc   = (WNDPROC)MONTHCAL_WindowProc;
     wndClass.cbClsExtra    = 0;
     wndClass.cbWndExtra    = sizeof(MONTHCAL_INFO *);
-    wndClass.hCursor       = LoadCursor32A (0, IDC_ARROW32A);
-    wndClass.hbrBackground = (HBRUSH32)(COLOR_WINDOW + 1);
-    wndClass.lpszClassName = MONTHCAL_CLASS32A;
+    wndClass.hCursor       = LoadCursorA (0, IDC_ARROWA);
+    wndClass.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);
+    wndClass.lpszClassName = MONTHCAL_CLASSA;
  
-    RegisterClass32A (&wndClass);
+    RegisterClassA (&wndClass);
 }
 
 
 VOID
 MONTHCAL_Unregister (VOID)
 {
-    if (GlobalFindAtom32A (MONTHCAL_CLASS32A))
-	UnregisterClass32A (MONTHCAL_CLASS32A, (HINSTANCE32)NULL);
+    if (GlobalFindAtomA (MONTHCAL_CLASSA))
+	UnregisterClassA (MONTHCAL_CLASSA, (HINSTANCE)NULL);
 }
 

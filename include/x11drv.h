@@ -46,7 +46,7 @@ typedef struct
 } X_PHYSBRUSH;
 
   /* X physical font */
-typedef UINT32	 X_PHYSFONT;
+typedef UINT	 X_PHYSFONT;
 
   /* X physical device */
 typedef struct
@@ -74,98 +74,98 @@ extern GC BITMAP_monoGC, BITMAP_colorGC;
 
 /* Wine driver X11 functions */
 
-extern BOOL32 X11DRV_Init(void);
-extern BOOL32 X11DRV_BitBlt( struct tagDC *dcDst, INT32 xDst, INT32 yDst,
-                             INT32 width, INT32 height, struct tagDC *dcSrc,
-                             INT32 xSrc, INT32 ySrc, DWORD rop );
-extern BOOL32 X11DRV_EnumDeviceFonts( struct tagDC *dc, LPLOGFONT16 plf,
+extern BOOL X11DRV_Init(void);
+extern BOOL X11DRV_BitBlt( struct tagDC *dcDst, INT xDst, INT yDst,
+                             INT width, INT height, struct tagDC *dcSrc,
+                             INT xSrc, INT ySrc, DWORD rop );
+extern BOOL X11DRV_EnumDeviceFonts( struct tagDC *dc, LPLOGFONT16 plf,
 				      DEVICEFONTENUMPROC dfeproc, LPARAM lp );
-extern BOOL32 X11DRV_GetCharWidth( struct tagDC *dc, UINT32 firstChar,
-                                   UINT32 lastChar, LPINT32 buffer );
-extern BOOL32 X11DRV_GetTextExtentPoint( struct tagDC *dc, LPCSTR str,
-                                         INT32 count, LPSIZE32 size );
-extern BOOL32 X11DRV_GetTextMetrics(struct tagDC *dc, TEXTMETRIC32A *metrics);
-extern BOOL32 X11DRV_PatBlt( struct tagDC *dc, INT32 left, INT32 top,
-                             INT32 width, INT32 height, DWORD rop );
+extern BOOL X11DRV_GetCharWidth( struct tagDC *dc, UINT firstChar,
+                                   UINT lastChar, LPINT buffer );
+extern BOOL X11DRV_GetTextExtentPoint( struct tagDC *dc, LPCSTR str,
+                                         INT count, LPSIZE size );
+extern BOOL X11DRV_GetTextMetrics(struct tagDC *dc, TEXTMETRICA *metrics);
+extern BOOL X11DRV_PatBlt( struct tagDC *dc, INT left, INT top,
+                             INT width, INT height, DWORD rop );
 extern VOID   X11DRV_SetDeviceClipping(struct tagDC *dc);
-extern BOOL32 X11DRV_StretchBlt( struct tagDC *dcDst, INT32 xDst, INT32 yDst,
-                                 INT32 widthDst, INT32 heightDst,
-                                 struct tagDC *dcSrc, INT32 xSrc, INT32 ySrc,
-                                 INT32 widthSrc, INT32 heightSrc, DWORD rop );
-extern BOOL32 X11DRV_MoveToEx( struct tagDC *dc, INT32 x, INT32 y,LPPOINT32 pt);
-extern BOOL32 X11DRV_LineTo( struct tagDC *dc, INT32 x, INT32 y);
-extern BOOL32 X11DRV_Arc( struct tagDC *dc, INT32 left, INT32 top, INT32 right,
-			  INT32 bottom, INT32 xstart, INT32 ystart, INT32 xend,
-			  INT32 yend );
-extern BOOL32 X11DRV_Pie( struct tagDC *dc, INT32 left, INT32 top, INT32 right,
-			  INT32 bottom, INT32 xstart, INT32 ystart, INT32 xend,
-			  INT32 yend );
-extern BOOL32 X11DRV_Chord( struct tagDC *dc, INT32 left, INT32 top,
-			    INT32 right, INT32 bottom, INT32 xstart,
-			    INT32 ystart, INT32 xend, INT32 yend );
-extern BOOL32 X11DRV_Ellipse( struct tagDC *dc, INT32 left, INT32 top,
-			      INT32 right, INT32 bottom );
-extern BOOL32 X11DRV_Rectangle(struct tagDC *dc, INT32 left, INT32 top,
-			      INT32 right, INT32 bottom);
-extern BOOL32 X11DRV_RoundRect( struct tagDC *dc, INT32 left, INT32 top,
-				INT32 right, INT32 bottom, INT32 ell_width,
-				INT32 ell_height );
-extern COLORREF X11DRV_SetPixel( struct tagDC *dc, INT32 x, INT32 y,
+extern BOOL X11DRV_StretchBlt( struct tagDC *dcDst, INT xDst, INT yDst,
+                                 INT widthDst, INT heightDst,
+                                 struct tagDC *dcSrc, INT xSrc, INT ySrc,
+                                 INT widthSrc, INT heightSrc, DWORD rop );
+extern BOOL X11DRV_MoveToEx( struct tagDC *dc, INT x, INT y,LPPOINT pt);
+extern BOOL X11DRV_LineTo( struct tagDC *dc, INT x, INT y);
+extern BOOL X11DRV_Arc( struct tagDC *dc, INT left, INT top, INT right,
+			  INT bottom, INT xstart, INT ystart, INT xend,
+			  INT yend );
+extern BOOL X11DRV_Pie( struct tagDC *dc, INT left, INT top, INT right,
+			  INT bottom, INT xstart, INT ystart, INT xend,
+			  INT yend );
+extern BOOL X11DRV_Chord( struct tagDC *dc, INT left, INT top,
+			    INT right, INT bottom, INT xstart,
+			    INT ystart, INT xend, INT yend );
+extern BOOL X11DRV_Ellipse( struct tagDC *dc, INT left, INT top,
+			      INT right, INT bottom );
+extern BOOL X11DRV_Rectangle(struct tagDC *dc, INT left, INT top,
+			      INT right, INT bottom);
+extern BOOL X11DRV_RoundRect( struct tagDC *dc, INT left, INT top,
+				INT right, INT bottom, INT ell_width,
+				INT ell_height );
+extern COLORREF X11DRV_SetPixel( struct tagDC *dc, INT x, INT y,
 				 COLORREF color );
-extern COLORREF X11DRV_GetPixel( struct tagDC *dc, INT32 x, INT32 y);
-extern BOOL32 X11DRV_PaintRgn( struct tagDC *dc, HRGN32 hrgn );
-extern BOOL32 X11DRV_Polyline( struct tagDC *dc,const POINT32* pt,INT32 count);
-extern BOOL32 X11DRV_PolyBezier( struct tagDC *dc, const POINT32 start, const POINT32* lppt, DWORD cPoints);
-extern BOOL32 X11DRV_Polygon( struct tagDC *dc, const POINT32* pt, INT32 count );
-extern BOOL32 X11DRV_PolyPolygon( struct tagDC *dc, const POINT32* pt, 
-				  const INT32* counts, UINT32 polygons);
-extern BOOL32 X11DRV_PolyPolyline( struct tagDC *dc, const POINT32* pt, 
+extern COLORREF X11DRV_GetPixel( struct tagDC *dc, INT x, INT y);
+extern BOOL X11DRV_PaintRgn( struct tagDC *dc, HRGN hrgn );
+extern BOOL X11DRV_Polyline( struct tagDC *dc,const POINT* pt,INT count);
+extern BOOL X11DRV_PolyBezier( struct tagDC *dc, const POINT start, const POINT* lppt, DWORD cPoints);
+extern BOOL X11DRV_Polygon( struct tagDC *dc, const POINT* pt, INT count );
+extern BOOL X11DRV_PolyPolygon( struct tagDC *dc, const POINT* pt, 
+				  const INT* counts, UINT polygons);
+extern BOOL X11DRV_PolyPolyline( struct tagDC *dc, const POINT* pt, 
 				  const DWORD* counts, DWORD polylines);
 
-extern HGDIOBJ32 X11DRV_SelectObject( struct tagDC *dc, HGDIOBJ32 handle );
+extern HGDIOBJ X11DRV_SelectObject( struct tagDC *dc, HGDIOBJ handle );
 
 extern COLORREF X11DRV_SetBkColor( struct tagDC *dc, COLORREF color );
 extern COLORREF X11DRV_SetTextColor( struct tagDC *dc, COLORREF color );
-extern BOOL32 X11DRV_ExtFloodFill( struct tagDC *dc, INT32 x, INT32 y,
-				   COLORREF color, UINT32 fillType );
-extern BOOL32 X11DRV_ExtTextOut( struct tagDC *dc, INT32 x, INT32 y,
-				 UINT32 flags, const RECT32 *lprect,
-				 LPCSTR str, UINT32 count, const INT32 *lpDx );
-extern BOOL32 X11DRV_CreateBitmap( HBITMAP32 hbitmap );
-extern BOOL32 X11DRV_DeleteObject( HGDIOBJ32 handle );
-extern LONG X11DRV_BitmapBits( HBITMAP32 hbitmap, void *bits, LONG count,
+extern BOOL X11DRV_ExtFloodFill( struct tagDC *dc, INT x, INT y,
+				   COLORREF color, UINT fillType );
+extern BOOL X11DRV_ExtTextOut( struct tagDC *dc, INT x, INT y,
+				 UINT flags, const RECT *lprect,
+				 LPCSTR str, UINT count, const INT *lpDx );
+extern BOOL X11DRV_CreateBitmap( HBITMAP hbitmap );
+extern BOOL X11DRV_DeleteObject( HGDIOBJ handle );
+extern LONG X11DRV_BitmapBits( HBITMAP hbitmap, void *bits, LONG count,
 			       WORD flags );
-extern INT32 X11DRV_SetDIBitsToDevice( struct tagDC *dc, INT32 xDest,
-				       INT32 yDest, DWORD cx, DWORD cy,
-				       INT32 xSrc, INT32 ySrc,
-				       UINT32 startscan, UINT32 lines,
+extern INT X11DRV_SetDIBitsToDevice( struct tagDC *dc, INT xDest,
+				       INT yDest, DWORD cx, DWORD cy,
+				       INT xSrc, INT ySrc,
+				       UINT startscan, UINT lines,
 				       LPCVOID bits, const BITMAPINFO *info,
-				       UINT32 coloruse );
-extern INT32 X11DRV_DeviceBitmapBits( struct tagDC *dc, HBITMAP32 hbitmap,
-				      WORD fGet, UINT32 startscan,
-				      UINT32 lines, LPSTR bits,
-				      LPBITMAPINFO info, UINT32 coloruse );
-extern HANDLE32 X11DRV_LoadOEMResource( WORD id, WORD type );
+				       UINT coloruse );
+extern INT X11DRV_DeviceBitmapBits( struct tagDC *dc, HBITMAP hbitmap,
+				      WORD fGet, UINT startscan,
+				      UINT lines, LPSTR bits,
+				      LPBITMAPINFO info, UINT coloruse );
+extern HANDLE X11DRV_LoadOEMResource( WORD id, WORD type );
 
 /* X11 driver internal functions */
 
-extern BOOL32 X11DRV_BITMAP_Init(void);
-extern BOOL32 X11DRV_BRUSH_Init(void);
-extern BOOL32 X11DRV_DIB_Init(void);
-extern BOOL32 X11DRV_FONT_Init( struct tagDeviceCaps* );
-extern BOOL32 X11DRV_OBM_Init(void);
+extern BOOL X11DRV_BITMAP_Init(void);
+extern BOOL X11DRV_BRUSH_Init(void);
+extern BOOL X11DRV_DIB_Init(void);
+extern BOOL X11DRV_FONT_Init( struct tagDeviceCaps* );
+extern BOOL X11DRV_OBM_Init(void);
 
 struct tagBITMAPOBJ;
 extern XImage *X11DRV_BITMAP_GetXImage( const struct tagBITMAPOBJ *bmp );
 extern int X11DRV_DIB_GetXImageWidthBytes( int width, int depth );
-extern BOOL32 X11DRV_DIB_Init(void);
+extern BOOL X11DRV_DIB_Init(void);
 extern X11DRV_PHYSBITMAP *X11DRV_AllocBitmap( struct tagBITMAPOBJ *bmp );
 
-extern BOOL32 X11DRV_SetupGCForPatBlt( struct tagDC *dc, GC gc,
-				       BOOL32 fMapColors );
-extern BOOL32 X11DRV_SetupGCForBrush( struct tagDC *dc );
-extern BOOL32 X11DRV_SetupGCForPen( struct tagDC *dc );
-extern BOOL32 X11DRV_SetupGCForText( struct tagDC *dc );
+extern BOOL X11DRV_SetupGCForPatBlt( struct tagDC *dc, GC gc,
+				       BOOL fMapColors );
+extern BOOL X11DRV_SetupGCForBrush( struct tagDC *dc );
+extern BOOL X11DRV_SetupGCForPen( struct tagDC *dc );
+extern BOOL X11DRV_SetupGCForText( struct tagDC *dc );
 
 extern const int X11DRV_XROPfunction[];
 
@@ -219,12 +219,12 @@ extern int *X11DRV_DIB_BuildColorMap( struct tagDC *dc, WORD coloruse,
 extern struct _CLIPBOARD_DRIVER X11DRV_CLIPBOARD_Driver;
 
 extern void X11DRV_CLIPBOARD_EmptyClipboard(void);
-extern void X11DRV_CLIPBOARD_SetClipboardData(UINT32 wFormat);
-extern BOOL32 X11DRV_CLIPBOARD_RequestSelection(void);
-extern void X11DRV_CLIPBOARD_ResetOwner(struct tagWND *pWnd, BOOL32 bFooBar);
+extern void X11DRV_CLIPBOARD_SetClipboardData(UINT wFormat);
+extern BOOL X11DRV_CLIPBOARD_RequestSelection(void);
+extern void X11DRV_CLIPBOARD_ResetOwner(struct tagWND *pWnd, BOOL bFooBar);
 
 void X11DRV_CLIPBOARD_ReadSelection(Window w, Atom prop);
-void X11DRV_CLIPBOARD_ReleaseSelection(Window w, HWND32 hwnd);
+void X11DRV_CLIPBOARD_ReleaseSelection(Window w, HWND hwnd);
 
 /* X11 color driver */
 
@@ -252,15 +252,15 @@ extern int X11DRV_DESKTOP_GetScreenDepth(struct tagDESKTOP *pDesktop);
 
 extern struct _EVENT_DRIVER X11DRV_EVENT_Driver;
 
-extern BOOL32 X11DRV_EVENT_Init(void);
+extern BOOL X11DRV_EVENT_Init(void);
 extern void X11DRV_EVENT_AddIO(int fd, unsigned flag);
 extern void X11DRV_EVENT_DeleteIO(int fd, unsigned flag);
-extern BOOL32 X11DRV_EVENT_WaitNetEvent(BOOL32 sleep, BOOL32 peek);
+extern BOOL X11DRV_EVENT_WaitNetEvent(BOOL sleep, BOOL peek);
 extern void X11DRV_EVENT_Synchronize(void);
-extern BOOL32 X11DRV_EVENT_CheckFocus( void );
-extern BOOL32 X11DRV_EVENT_QueryPointer(DWORD *posX, DWORD *posY, DWORD *state);
+extern BOOL X11DRV_EVENT_CheckFocus( void );
+extern BOOL X11DRV_EVENT_QueryPointer(DWORD *posX, DWORD *posY, DWORD *state);
 extern void X11DRV_EVENT_DummyMotionNotify(void);
-extern BOOL32 X11DRV_EVENT_Pending(void);
+extern BOOL X11DRV_EVENT_Pending(void);
 extern BOOL16 X11DRV_EVENT_IsUserIdle(void);
 extern void X11DRV_EVENT_WakeUp(void);
 
@@ -334,18 +334,18 @@ extern Window X11DRV_WND_GetXRootWindow(struct tagWND *wndPtr);
 
 extern void X11DRV_WND_Initialize(struct tagWND *wndPtr);
 extern void X11DRV_WND_Finalize(struct tagWND *wndPtr);
-extern BOOL32 X11DRV_WND_CreateDesktopWindow(struct tagWND *wndPtr, struct tagCLASS *classPtr, BOOL32 bUnicode);
-extern BOOL32 X11DRV_WND_CreateWindow(struct tagWND *wndPtr, struct tagCLASS *classPtr, CREATESTRUCT32A *cs, BOOL32 bUnicode);
-extern BOOL32 X11DRV_WND_DestroyWindow(struct tagWND *pWnd);
+extern BOOL X11DRV_WND_CreateDesktopWindow(struct tagWND *wndPtr, struct tagCLASS *classPtr, BOOL bUnicode);
+extern BOOL X11DRV_WND_CreateWindow(struct tagWND *wndPtr, struct tagCLASS *classPtr, CREATESTRUCTA *cs, BOOL bUnicode);
+extern BOOL X11DRV_WND_DestroyWindow(struct tagWND *pWnd);
 extern struct tagWND *X11DRV_WND_SetParent(struct tagWND *wndPtr, struct tagWND *pWndParent);
 extern void X11DRV_WND_ForceWindowRaise(struct tagWND *pWnd);
-extern void X11DRV_WND_SetWindowPos(struct tagWND *wndPtr, const WINDOWPOS32 *winpos, BOOL32 bSMC_SETXPOS);
+extern void X11DRV_WND_SetWindowPos(struct tagWND *wndPtr, const WINDOWPOS *winpos, BOOL bSMC_SETXPOS);
 extern void X11DRV_WND_SetText(struct tagWND *wndPtr, LPCSTR text);
 extern void X11DRV_WND_SetFocus(struct tagWND *wndPtr);
 extern void X11DRV_WND_PreSizeMove(struct tagWND *wndPtr);
 extern void X11DRV_WND_PostSizeMove(struct tagWND *wndPtr);
-extern void X11DRV_WND_ScrollWindow(struct tagWND *wndPtr, struct tagDC *dcPtr, INT32 dx, INT32 dy, const RECT32 *clipRect, BOOL32 bUpdate);
-extern void X11DRV_WND_SetDrawable(struct tagWND *wndPtr, struct tagDC *dc, WORD flags, BOOL32 bSetClipOrigin);
-extern BOOL32 X11DRV_WND_IsSelfClipping(struct tagWND *wndPtr);
+extern void X11DRV_WND_ScrollWindow(struct tagWND *wndPtr, struct tagDC *dcPtr, INT dx, INT dy, const RECT *clipRect, BOOL bUpdate);
+extern void X11DRV_WND_SetDrawable(struct tagWND *wndPtr, struct tagDC *dc, WORD flags, BOOL bSetClipOrigin);
+extern BOOL X11DRV_WND_IsSelfClipping(struct tagWND *wndPtr);
 
 #endif  /* __WINE_X11DRV_H */

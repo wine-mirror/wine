@@ -31,8 +31,8 @@
 extern "C" {
 #endif
 
-BOOL32 WINAPI ShowHideMenuCtl (HWND32, UINT32, LPINT32);
-VOID WINAPI GetEffectiveClientRect (HWND32, LPRECT32, LPINT32);
+BOOL WINAPI ShowHideMenuCtl (HWND, UINT, LPINT);
+VOID WINAPI GetEffectiveClientRect (HWND, LPRECT, LPINT);
 VOID WINAPI InitCommonControls (VOID);
 
 typedef struct tagINITCOMMONCONTROLSEX {
@@ -40,7 +40,7 @@ typedef struct tagINITCOMMONCONTROLSEX {
     DWORD dwICC;
 } INITCOMMONCONTROLSEX, *LPINITCOMMONCONTROLSEX;
 
-BOOL32 WINAPI InitCommonControlsEx (LPINITCOMMONCONTROLSEX);
+BOOL WINAPI InitCommonControlsEx (LPINITCOMMONCONTROLSEX);
 
 #define ICC_LISTVIEW_CLASSES   0x00000001  /* listview, header */
 #define ICC_TREEVIEW_CLASSES   0x00000002  /* treeview, tooltips */
@@ -106,8 +106,8 @@ BOOL32 WINAPI InitCommonControlsEx (LPINITCOMMONCONTROLSEX);
 
 
 /* callback constants */
-#define LPSTR_TEXTCALLBACK32A    ((LPSTR)-1L)
-#define LPSTR_TEXTCALLBACK32W    ((LPWSTR)-1L)
+#define LPSTR_TEXTCALLBACKA    ((LPSTR)-1L)
+#define LPSTR_TEXTCALLBACKW    ((LPWSTR)-1L)
 #define LPSTR_TEXTCALLBACK WINELIB_NAME_AW(LPSTR_TEXTCALLBACK)
 
 #define I_IMAGECALLBACK          (-1)
@@ -124,13 +124,13 @@ BOOL32 WINAPI InitCommonControlsEx (LPINITCOMMONCONTROLSEX);
 typedef struct tagNMTOOLTIPSCREATED
 {
     NMHDR  hdr;
-    HWND32 hwndToolTips;
+    HWND hwndToolTips;
 } NMTOOLTIPSCREATED, *LPNMTOOLTIPSCREATED;
 
 
 #ifndef CCSIZEOF_STRUCT
 #define CCSIZEOF_STRUCT(name, member) \
-    (((INT32)((LPBYTE)(&((name*)0)->member)-((LPBYTE)((name*)0))))+ \
+    (((INT)((LPBYTE)(&((name*)0)->member)-((LPBYTE)((name*)0))))+ \
     sizeof(((name*)0)->member))
 #endif
 
@@ -183,17 +183,17 @@ typedef struct tagNMCUSTOMDRAWINFO
 {
 	NMHDR	hdr;
 	DWORD	dwDrawStage;
-	HDC32	hdc;
-	RECT32	rc;
+	HDC	hdc;
+	RECT	rc;
 	DWORD	dwItemSpec; 
-	UINT32	uItemState;
+	UINT	uItemState;
 	LPARAM	lItemlParam;
 } NMCUSTOMDRAW, *LPNMCUSTOMDRAW;
 
 typedef struct tagNMTTCUSTOMDRAW
 {
     NMCUSTOMDRAW nmcd;
-    UINT32       uDrawFlags;
+    UINT       uDrawFlags;
 } NMTTCUSTOMDRAW, *LPNMTTCUSTOMDRAW;
 
 
@@ -202,14 +202,14 @@ typedef struct tagNMTTCUSTOMDRAW
 /* StatusWindow */
 
 #define STATUSCLASSNAME16	"msctls_statusbar"
-#define STATUSCLASSNAME32A	"msctls_statusbar32"
+#define STATUSCLASSNAMEA	"msctls_statusbar32"
 /* Does not work. gcc creates 4 byte wide strings.
  * #define STATUSCLASSNAME32W	L"msctls_statusbar32"
  */
 static const WCHAR	_scn32w[] = {
 'm','s','c','t','l','s','_','s','t','a','t','u','s','b','a','r','3','2',0
 };
-#define STATUSCLASSNAME32W	_scn32w
+#define STATUSCLASSNAMEW	_scn32w
 #define STATUSCLASSNAME		WINELIB_NAME_AW(STATUSCLASSNAME)
 
 #define SBT_NOBORDERS		0x0100
@@ -220,14 +220,14 @@ static const WCHAR	_scn32w[] = {
 
 #define SBARS_SIZEGRIP		0x0100
 
-#define SB_SETTEXT32A		(WM_USER+1)
-#define SB_SETTEXT32W		(WM_USER+11)
+#define SB_SETTEXTA		(WM_USER+1)
+#define SB_SETTEXTW		(WM_USER+11)
 #define SB_SETTEXT		WINELIB_NAME_AW(SB_SETTEXT)
-#define SB_GETTEXT32A		(WM_USER+2)
-#define SB_GETTEXT32W		(WM_USER+13)
+#define SB_GETTEXTA		(WM_USER+2)
+#define SB_GETTEXTW		(WM_USER+13)
 #define SB_GETTEXT		WINELIB_NAME_AW(SB_GETTEXT)
-#define SB_GETTEXTLENGTH32A	(WM_USER+3)
-#define SB_GETTEXTLENGTH32W	(WM_USER+12)
+#define SB_GETTEXTLENGTHA	(WM_USER+3)
+#define SB_GETTEXTLENGTHW	(WM_USER+12)
 #define SB_GETTEXTLENGTH	WINELIB_NAME_AW(SB_GETTEXTLENGTH)
 #define SB_SETPARTS		(WM_USER+4)
 #define SB_GETPARTS		(WM_USER+6)
@@ -237,11 +237,11 @@ static const WCHAR	_scn32w[] = {
 #define SB_GETRECT		(WM_USER+10)
 #define SB_ISSIMPLE		(WM_USER+14)
 #define SB_SETICON		(WM_USER+15)
-#define SB_SETTIPTEXT32A	(WM_USER+16)
-#define SB_SETTIPTEXT32W	(WM_USER+17)
+#define SB_SETTIPTEXTA	(WM_USER+16)
+#define SB_SETTIPTEXTW	(WM_USER+17)
 #define SB_SETTIPTEXT		WINELIB_NAME_AW(SB_SETTIPTEXT)
-#define SB_GETTIPTEXT32A	(WM_USER+18)
-#define SB_GETTIPTEXT32W	(WM_USER+19)
+#define SB_GETTIPTEXTA	(WM_USER+18)
+#define SB_GETTIPTEXTW	(WM_USER+19)
 #define SB_GETTIPTEXT		WINELIB_NAME_AW(SB_GETTIPTEXT)
 #define SB_GETICON		(WM_USER+20)
 #define SB_SETBKCOLOR		CCM_SETBKCOLOR   /* lParam = bkColor */
@@ -252,14 +252,14 @@ static const WCHAR	_scn32w[] = {
 #define SBN_LAST		(0U-899U)
 #define SBN_SIMPLEMODECHANGE	(SBN_FIRST-0)
 
-HWND32 WINAPI CreateStatusWindow32A (INT32, LPCSTR, HWND32, UINT32);
-HWND32 WINAPI CreateStatusWindow32W (INT32, LPCWSTR, HWND32, UINT32);
+HWND WINAPI CreateStatusWindowA (INT, LPCSTR, HWND, UINT);
+HWND WINAPI CreateStatusWindowW (INT, LPCWSTR, HWND, UINT);
 #define CreateStatusWindow WINELIB_NAME_AW(CreateStatusWindow)
-VOID WINAPI DrawStatusText32A (HDC32, LPRECT32, LPCSTR, UINT32);
-VOID WINAPI DrawStatusText32W (HDC32, LPRECT32, LPCWSTR, UINT32);
+VOID WINAPI DrawStatusTextA (HDC, LPRECT, LPCSTR, UINT);
+VOID WINAPI DrawStatusTextW (HDC, LPRECT, LPCWSTR, UINT);
 #define DrawStatusText WINELIB_NAME_AW(DrawStatusText)
-VOID WINAPI MenuHelp (UINT32, WPARAM32, LPARAM, HMENU32,
-                      HINSTANCE32, HWND32, LPUINT32);
+VOID WINAPI MenuHelp (UINT, WPARAM, LPARAM, HMENU,
+                      HINSTANCE, HWND, LPUINT);
 
 /**************************************************************************
  *  Drag List control
@@ -267,9 +267,9 @@ VOID WINAPI MenuHelp (UINT32, WPARAM32, LPARAM, HMENU32,
 
 typedef struct tagDRAGLISTINFO
 {
-    UINT32  uNotification;
-    HWND32  hWnd;
-    POINT32 ptCursor;
+    UINT  uNotification;
+    HWND  hWnd;
+    POINT ptCursor;
 } DRAGLISTINFO, *LPDRAGLISTINFO;
 
 #define DL_BEGINDRAG            (WM_USER+133)
@@ -284,22 +284,22 @@ typedef struct tagDRAGLISTINFO
 
 #define DRAGLISTMSGSTRING       TEXT("commctrl_DragListMsg")
 
-BOOL32 WINAPI MakeDragList (HWND32);
-VOID   WINAPI DrawInsert (HWND32, HWND32, INT32);
-INT32  WINAPI LBItemFromPt (HWND32, POINT32, BOOL32);
+BOOL WINAPI MakeDragList (HWND);
+VOID   WINAPI DrawInsert (HWND, HWND, INT);
+INT  WINAPI LBItemFromPt (HWND, POINT, BOOL);
 
   
 /* UpDown */
 
 #define UPDOWN_CLASS16          "msctls_updown"
-#define UPDOWN_CLASS32A         "msctls_updown32"
-#define UPDOWN_CLASS32W         L"msctls_updown32"
+#define UPDOWN_CLASSA         "msctls_updown32"
+#define UPDOWN_CLASSW         L"msctls_updown32"
 #define UPDOWN_CLASS            WINELIB_NAME_AW(UPDOWN_CLASS)
 
 typedef struct tagUDACCEL
 {
-    UINT32 nSec;
-    UINT32 nInc;
+    UINT nSec;
+    UINT nInc;
 } UDACCEL;
 
 #define UD_MAXVAL          0x7fff
@@ -318,8 +318,8 @@ typedef struct tagUDACCEL
 #define UDN_LAST           (0U-740)
 #define UDN_DELTAPOS       (UDN_FIRST-1)
 
-#define UDM_SETRANGE       (WM_USER+101)
-#define UDM_GETRANGE       (WM_USER+102)
+#define UDM_SETRANGE16       (WM_USER+101)
+#define UDM_GETRANGE16       (WM_USER+102)
 #define UDM_SETPOS         (WM_USER+103)
 #define UDM_GETPOS         (WM_USER+104)
 #define UDM_SETBUDDY       (WM_USER+105)
@@ -328,26 +328,26 @@ typedef struct tagUDACCEL
 #define UDM_GETACCEL       (WM_USER+108)
 #define UDM_SETBASE        (WM_USER+109)
 #define UDM_GETBASE        (WM_USER+110)
-#define UDM_SETRANGE32     (WM_USER+111)
-#define UDM_GETRANGE32     (WM_USER+112)
+#define UDM_SETRANGE     (WM_USER+111)
+#define UDM_GETRANGE     (WM_USER+112)
 
-HWND32 WINAPI CreateUpDownControl (DWORD, INT32, INT32, INT32, INT32,
-                                   HWND32, INT32, HINSTANCE32, HWND32,
-                                   INT32, INT32, INT32);
+HWND WINAPI CreateUpDownControl (DWORD, INT, INT, INT, INT,
+                                   HWND, INT, HINSTANCE, HWND,
+                                   INT, INT, INT);
 
 /* Progress Bar */
 
-#define PROGRESS_CLASS32A   "msctls_progress32"
-#define PROGRESS_CLASS32W  L"msctls_progress32"
+#define PROGRESS_CLASSA   "msctls_progress32"
+#define PROGRESS_CLASSW  L"msctls_progress32"
 #define PROGRESS_CLASS16    "msctls_progress"
 #define PROGRESS_CLASS      WINELIB_NAME_AW(PROGRESS_CLASS)
 
-#define PBM_SETRANGE        (WM_USER+1)
+#define PBM_SETRANGE16        (WM_USER+1)
 #define PBM_SETPOS          (WM_USER+2)
 #define PBM_DELTAPOS        (WM_USER+3)
 #define PBM_SETSTEP         (WM_USER+4)
 #define PBM_STEPIT          (WM_USER+5)
-#define PBM_SETRANGE32      (WM_USER+6)
+#define PBM_SETRANGE      (WM_USER+6)
 #define PBM_GETRANGE        (WM_USER+7)
 #define PBM_GETPOS          (WM_USER+8)
 #define PBM_SETBARCOLOR     (WM_USER+9)
@@ -358,8 +358,8 @@ HWND32 WINAPI CreateUpDownControl (DWORD, INT32, INT32, INT32, INT32,
 
 typedef struct
 {
-    INT32 iLow;
-    INT32 iHigh;
+    INT iLow;
+    INT iHigh;
 } PBRANGE, *PPBRANGE;
 
 
@@ -405,11 +405,11 @@ typedef struct _IMAGELIST *HIMAGELIST;
 
 typedef struct _IMAGEINFO
 {
-    HBITMAP32 hbmImage;
-    HBITMAP32 hbmMask;
-    INT32     Unused1;
-    INT32     Unused2;
-    RECT32    rcImage;
+    HBITMAP hbmImage;
+    HBITMAP hbmMask;
+    INT     Unused1;
+    INT     Unused2;
+    RECT    rcImage;
 } IMAGEINFO;
 
 
@@ -417,65 +417,65 @@ typedef struct _IMAGELISTDRAWPARAMS
 {
     DWORD       cbSize;
     HIMAGELIST  himl;
-    INT32       i;
-    HDC32       hdcDst;
-    INT32       x;
-    INT32       y;
-    INT32       cx;
-    INT32       cy;
-    INT32       xBitmap;  /* x offest from the upperleft of bitmap */
-    INT32       yBitmap;  /* y offset from the upperleft of bitmap */
+    INT       i;
+    HDC       hdcDst;
+    INT       x;
+    INT       y;
+    INT       cx;
+    INT       cy;
+    INT       xBitmap;  /* x offest from the upperleft of bitmap */
+    INT       yBitmap;  /* y offset from the upperleft of bitmap */
     COLORREF    rgbBk;
     COLORREF    rgbFg;
-    UINT32      fStyle;
+    UINT      fStyle;
     DWORD       dwRop;
 } IMAGELISTDRAWPARAMS, *LPIMAGELISTDRAWPARAMS;
 
  
-INT32      WINAPI ImageList_Add(HIMAGELIST,HBITMAP32,HBITMAP32);
-INT32      WINAPI ImageList_AddIcon (HIMAGELIST, HICON32);
-INT32      WINAPI ImageList_AddMasked(HIMAGELIST,HBITMAP32,COLORREF);
-BOOL32     WINAPI ImageList_BeginDrag(HIMAGELIST,INT32,INT32,INT32);
-BOOL32     WINAPI ImageList_Copy(HIMAGELIST,INT32,HIMAGELIST,INT32,INT32);
-HIMAGELIST WINAPI ImageList_Create(INT32,INT32,UINT32,INT32,INT32);
-BOOL32     WINAPI ImageList_Destroy(HIMAGELIST);
-BOOL32     WINAPI ImageList_DragEnter(HWND32,INT32,INT32);
-BOOL32     WINAPI ImageList_DragLeave(HWND32); 
-BOOL32     WINAPI ImageList_DragMove(INT32,INT32);
-BOOL32     WINAPI ImageList_DragShowNolock (BOOL32);
-BOOL32     WINAPI ImageList_Draw(HIMAGELIST,INT32,HDC32,INT32,INT32,UINT32);
-BOOL32     WINAPI ImageList_DrawEx(HIMAGELIST,INT32,HDC32,INT32,INT32,INT32,
-                                   INT32,COLORREF,COLORREF,UINT32);
-BOOL32     WINAPI ImageList_DrawIndirect(IMAGELISTDRAWPARAMS*); 
+INT      WINAPI ImageList_Add(HIMAGELIST,HBITMAP,HBITMAP);
+INT      WINAPI ImageList_AddIcon (HIMAGELIST, HICON);
+INT      WINAPI ImageList_AddMasked(HIMAGELIST,HBITMAP,COLORREF);
+BOOL     WINAPI ImageList_BeginDrag(HIMAGELIST,INT,INT,INT);
+BOOL     WINAPI ImageList_Copy(HIMAGELIST,INT,HIMAGELIST,INT,INT);
+HIMAGELIST WINAPI ImageList_Create(INT,INT,UINT,INT,INT);
+BOOL     WINAPI ImageList_Destroy(HIMAGELIST);
+BOOL     WINAPI ImageList_DragEnter(HWND,INT,INT);
+BOOL     WINAPI ImageList_DragLeave(HWND); 
+BOOL     WINAPI ImageList_DragMove(INT,INT);
+BOOL     WINAPI ImageList_DragShowNolock (BOOL);
+BOOL     WINAPI ImageList_Draw(HIMAGELIST,INT,HDC,INT,INT,UINT);
+BOOL     WINAPI ImageList_DrawEx(HIMAGELIST,INT,HDC,INT,INT,INT,
+                                   INT,COLORREF,COLORREF,UINT);
+BOOL     WINAPI ImageList_DrawIndirect(IMAGELISTDRAWPARAMS*); 
 HIMAGELIST WINAPI ImageList_Duplicate(HIMAGELIST);
-BOOL32     WINAPI ImageList_EndDrag(VOID);
+BOOL     WINAPI ImageList_EndDrag(VOID);
 COLORREF   WINAPI ImageList_GetBkColor(HIMAGELIST);
-HIMAGELIST WINAPI ImageList_GetDragImage(POINT32*,POINT32*);
-HICON32    WINAPI ImageList_GetIcon(HIMAGELIST,INT32,UINT32);
-BOOL32     WINAPI ImageList_GetIconSize(HIMAGELIST,INT32*,INT32*);
-INT32      WINAPI ImageList_GetImageCount(HIMAGELIST);
-BOOL32     WINAPI ImageList_GetImageInfo(HIMAGELIST,INT32,IMAGEINFO*);
-BOOL32     WINAPI ImageList_GetImageRect(HIMAGELIST,INT32,LPRECT32);
-HIMAGELIST WINAPI ImageList_LoadImage32A(HINSTANCE32,LPCSTR,INT32,INT32,
-                                         COLORREF,UINT32,UINT32);
-HIMAGELIST WINAPI ImageList_LoadImage32W(HINSTANCE32,LPCWSTR,INT32,INT32,
-                                         COLORREF,UINT32,UINT32);
+HIMAGELIST WINAPI ImageList_GetDragImage(POINT*,POINT*);
+HICON    WINAPI ImageList_GetIcon(HIMAGELIST,INT,UINT);
+BOOL     WINAPI ImageList_GetIconSize(HIMAGELIST,INT*,INT*);
+INT      WINAPI ImageList_GetImageCount(HIMAGELIST);
+BOOL     WINAPI ImageList_GetImageInfo(HIMAGELIST,INT,IMAGEINFO*);
+BOOL     WINAPI ImageList_GetImageRect(HIMAGELIST,INT,LPRECT);
+HIMAGELIST WINAPI ImageList_LoadImageA(HINSTANCE,LPCSTR,INT,INT,
+                                         COLORREF,UINT,UINT);
+HIMAGELIST WINAPI ImageList_LoadImageW(HINSTANCE,LPCWSTR,INT,INT,
+                                         COLORREF,UINT,UINT);
 #define    ImageList_LoadImage WINELIB_NAME_AW(ImageList_LoadImage)
-HIMAGELIST WINAPI ImageList_Merge(HIMAGELIST,INT32,HIMAGELIST,INT32,INT32,INT32);
+HIMAGELIST WINAPI ImageList_Merge(HIMAGELIST,INT,HIMAGELIST,INT,INT,INT);
 #ifdef __IStream_INTREFACE_DEFINED__
-HIMAGELIST WINAPI ImageList_Read(LPSTREAM32);
+HIMAGELIST WINAPI ImageList_Read(LPSTREAM);
 #endif
-BOOL32     WINAPI ImageList_Remove(HIMAGELIST,INT32);
-BOOL32     WINAPI ImageList_Replace(HIMAGELIST,INT32,HBITMAP32,HBITMAP32);
-INT32      WINAPI ImageList_ReplaceIcon(HIMAGELIST,INT32,HICON32);
+BOOL     WINAPI ImageList_Remove(HIMAGELIST,INT);
+BOOL     WINAPI ImageList_Replace(HIMAGELIST,INT,HBITMAP,HBITMAP);
+INT      WINAPI ImageList_ReplaceIcon(HIMAGELIST,INT,HICON);
 COLORREF   WINAPI ImageList_SetBkColor(HIMAGELIST,COLORREF);
-BOOL32     WINAPI ImageList_SetDragCursorImage(HIMAGELIST,INT32,INT32,INT32);
+BOOL     WINAPI ImageList_SetDragCursorImage(HIMAGELIST,INT,INT,INT);
 
-BOOL32     WINAPI ImageList_SetIconSize(HIMAGELIST,INT32,INT32);
-BOOL32     WINAPI ImageList_SetImageCount(HIMAGELIST,INT32);
-BOOL32     WINAPI ImageList_SetOverlayImage(HIMAGELIST,INT32,INT32);
+BOOL     WINAPI ImageList_SetIconSize(HIMAGELIST,INT,INT);
+BOOL     WINAPI ImageList_SetImageCount(HIMAGELIST,INT);
+BOOL     WINAPI ImageList_SetOverlayImage(HIMAGELIST,INT,INT);
 #ifdef __IStream_INTREFACE_DEFINED__
-BOOL32     WINAPI ImageList_Write(HIMAGELIST, LPSTREAM32);
+BOOL     WINAPI ImageList_Write(HIMAGELIST, LPSTREAM);
 #endif
 
 #ifndef __WINE__
@@ -490,29 +490,29 @@ BOOL32     WINAPI ImageList_Write(HIMAGELIST, LPSTREAM32);
 /* Flat Scrollbar control */
 
 #define FLATSB_CLASS16        "flatsb_class"
-#define FLATSB_CLASS32A       "flatsb_class32"
-#define FLATSB_CLASS32W       L"flatsb_class32"
+#define FLATSB_CLASSA       "flatsb_class32"
+#define FLATSB_CLASSW       L"flatsb_class32"
 #define FLATSB_CLASS          WINELIB_NAME_AW(FLATSB_CLASS)
 
-BOOL32  WINAPI FlatSB_EnableScrollBar(HWND32, INT32, UINT32);
-BOOL32  WINAPI FlatSB_ShowScrollBar(HWND32, INT32, BOOL32);
-BOOL32  WINAPI FlatSB_GetScrollRange(HWND32, INT32, LPINT32, LPINT32);
-BOOL32  WINAPI FlatSB_GetScrollInfo(HWND32, INT32, LPSCROLLINFO);
-INT32   WINAPI FlatSB_GetScrollPos(HWND32, INT32);
-BOOL32  WINAPI FlatSB_GetScrollProp(HWND32, INT32, LPINT32);
-INT32   WINAPI FlatSB_SetScrollPos(HWND32, INT32, INT32, BOOL32);
-INT32   WINAPI FlatSB_SetScrollInfo(HWND32, INT32, LPSCROLLINFO, BOOL32);
-INT32   WINAPI FlatSB_SetScrollRange(HWND32, INT32, INT32, INT32, BOOL32);
-BOOL32  WINAPI FlatSB_SetScrollProp(HWND32, UINT32, INT32, BOOL32);
-BOOL32  WINAPI InitializeFlatSB(HWND32);
-HRESULT WINAPI UninitializeFlatSB(HWND32);
+BOOL  WINAPI FlatSB_EnableScrollBar(HWND, INT, UINT);
+BOOL  WINAPI FlatSB_ShowScrollBar(HWND, INT, BOOL);
+BOOL  WINAPI FlatSB_GetScrollRange(HWND, INT, LPINT, LPINT);
+BOOL  WINAPI FlatSB_GetScrollInfo(HWND, INT, LPSCROLLINFO);
+INT   WINAPI FlatSB_GetScrollPos(HWND, INT);
+BOOL  WINAPI FlatSB_GetScrollProp(HWND, INT, LPINT);
+INT   WINAPI FlatSB_SetScrollPos(HWND, INT, INT, BOOL);
+INT   WINAPI FlatSB_SetScrollInfo(HWND, INT, LPSCROLLINFO, BOOL);
+INT   WINAPI FlatSB_SetScrollRange(HWND, INT, INT, INT, BOOL);
+BOOL  WINAPI FlatSB_SetScrollProp(HWND, UINT, INT, BOOL);
+BOOL  WINAPI InitializeFlatSB(HWND);
+HRESULT WINAPI UninitializeFlatSB(HWND);
 
 
 /* Header control */
 
 #define WC_HEADER16		"SysHeader" 
-#define WC_HEADER32A		"SysHeader32" 
-#define WC_HEADER32W		L"SysHeader32" 
+#define WC_HEADERA		"SysHeader32" 
+#define WC_HEADERW		L"SysHeader32" 
 #define WC_HEADER		WINELIB_NAME_AW(WC_HEADER)
  
 #define HDS_HORZ                0x0000 
@@ -554,15 +554,15 @@ HRESULT WINAPI UninitializeFlatSB(HWND32);
 
 #define HDM_FIRST               0x1200
 #define HDM_GETITEMCOUNT        (HDM_FIRST+0)
-#define HDM_INSERTITEM32A       (HDM_FIRST+1)
-#define HDM_INSERTITEM32W       (HDM_FIRST+10)
+#define HDM_INSERTITEMA       (HDM_FIRST+1)
+#define HDM_INSERTITEMW       (HDM_FIRST+10)
 #define HDM_INSERTITEM		WINELIB_NAME_AW(HDM_INSERTITEM)
 #define HDM_DELETEITEM          (HDM_FIRST+2)
-#define HDM_GETITEM32A          (HDM_FIRST+3)
-#define HDM_GETITEM32W          (HDM_FIRST+11)
+#define HDM_GETITEMA          (HDM_FIRST+3)
+#define HDM_GETITEMW          (HDM_FIRST+11)
 #define HDM_GETITEM		WINELIB_NAME_AW(HDM_GETITEM)
-#define HDM_SETITEM32A          (HDM_FIRST+4)
-#define HDM_SETITEM32W          (HDM_FIRST+12)
+#define HDM_SETITEMA          (HDM_FIRST+4)
+#define HDM_SETITEMW          (HDM_FIRST+12)
 #define HDM_SETITEM		WINELIB_NAME_AW(HDM_SETITEM)
 #define HDM_LAYOUT              (HDM_FIRST+5)
 #define HDM_HITTEST             (HDM_FIRST+6)
@@ -580,180 +580,180 @@ HRESULT WINAPI UninitializeFlatSB(HWND32);
 
 #define HDN_FIRST               (0U-300U)
 #define HDN_LAST                (0U-399U)
-#define HDN_ITEMCHANGING32A     (HDN_FIRST-0)
-#define HDN_ITEMCHANGING32W     (HDN_FIRST-20)
+#define HDN_ITEMCHANGINGA     (HDN_FIRST-0)
+#define HDN_ITEMCHANGINGW     (HDN_FIRST-20)
 #define HDN_ITEMCHANGING WINELIB_NAME_AW(HDN_ITEMCHANGING)
-#define HDN_ITEMCHANGED32A      (HDN_FIRST-1)
-#define HDN_ITEMCHANGED32W      (HDN_FIRST-21)
+#define HDN_ITEMCHANGEDA      (HDN_FIRST-1)
+#define HDN_ITEMCHANGEDW      (HDN_FIRST-21)
 #define HDN_ITEMCHANGED WINELIB_NAME_AW(HDN_ITEMCHANGED)
-#define HDN_ITEMCLICK32A        (HDN_FIRST-2)
-#define HDN_ITEMCLICK32W        (HDN_FIRST-22)
+#define HDN_ITEMCLICKA        (HDN_FIRST-2)
+#define HDN_ITEMCLICKW        (HDN_FIRST-22)
 #define HDN_ITEMCLICK WINELIB_NAME_AW(HDN_ITEMCLICK)
-#define HDN_ITEMDBLCLICK32A     (HDN_FIRST-3)
-#define HDN_ITEMDBLCLICK32W     (HDN_FIRST-23)
+#define HDN_ITEMDBLCLICKA     (HDN_FIRST-3)
+#define HDN_ITEMDBLCLICKW     (HDN_FIRST-23)
 #define HDN_ITEMDBLCLICK WINELIB_NAME_AW(HDN_ITEMDBLCLICK)
-#define HDN_DIVIDERDBLCLICK32A  (HDN_FIRST-5)
-#define HDN_DIVIDERDBLCLICK32W  (HDN_FIRST-25)
+#define HDN_DIVIDERDBLCLICKA  (HDN_FIRST-5)
+#define HDN_DIVIDERDBLCLICKW  (HDN_FIRST-25)
 #define HDN_DIVIDERDBLCLICK WINELIB_NAME_AW(HDN_DIVIDERDBLCLICK)
-#define HDN_BEGINTRACK32A       (HDN_FIRST-6)
-#define HDN_BEGINTRACK32W       (HDN_FIRST-26)
+#define HDN_BEGINTRACKA       (HDN_FIRST-6)
+#define HDN_BEGINTRACKW       (HDN_FIRST-26)
 #define HDN_BEGINTRACK WINELIB_NAME_AW(HDN_BEGINTRACK)
-#define HDN_ENDTRACK32A         (HDN_FIRST-7)
-#define HDN_ENDTRACK32W         (HDN_FIRST-27)
+#define HDN_ENDTRACKA         (HDN_FIRST-7)
+#define HDN_ENDTRACKW         (HDN_FIRST-27)
 #define HDN_ENDTRACK WINELIB_NAME_AW(HDN_ENDTRACK)
-#define HDN_TRACK32A            (HDN_FIRST-8)
-#define HDN_TRACK32W            (HDN_FIRST-28)
+#define HDN_TRACKA            (HDN_FIRST-8)
+#define HDN_TRACKW            (HDN_FIRST-28)
 #define HDN_TRACK WINELIB_NAME_AW(HDN_TRACK)
-#define HDN_GETDISPINFO32A      (HDN_FIRST-9)
-#define HDN_GETDISPINFO32W      (HDN_FIRST-29)
+#define HDN_GETDISPINFOA      (HDN_FIRST-9)
+#define HDN_GETDISPINFOW      (HDN_FIRST-29)
 #define HDN_GETDISPINFO WINELIB_NAME_AW(HDN_GETDISPINFO)
 #define HDN_BEGINDRACK          (HDN_FIRST-10)
 #define HDN_ENDDRACK            (HDN_FIRST-11)
 
 typedef struct _HD_LAYOUT
 {
-    RECT32      *prc;
-    WINDOWPOS32 *pwpos;
+    RECT      *prc;
+    WINDOWPOS *pwpos;
 } HDLAYOUT, *LPHDLAYOUT;
 
 #define HD_LAYOUT   HDLAYOUT
 
-typedef struct _HD_ITEM32A
+typedef struct _HD_ITEMA
 {
-    UINT32    mask;
-    INT32     cxy;
+    UINT    mask;
+    INT     cxy;
     LPSTR     pszText;
-    HBITMAP32 hbm;
-    INT32     cchTextMax;
-    INT32     fmt;
+    HBITMAP hbm;
+    INT     cchTextMax;
+    INT     fmt;
     LPARAM    lParam;
-    INT32     iImage;
-    INT32     iOrder;
-} HDITEM32A, *LPHDITEM32A;
+    INT     iImage;
+    INT     iOrder;
+} HDITEMA, *LPHDITEMA;
 
-typedef struct _HD_ITEM32W
+typedef struct _HD_ITEMW
 {
-    UINT32    mask;
-    INT32     cxy;
+    UINT    mask;
+    INT     cxy;
     LPWSTR    pszText;
-    HBITMAP32 hbm;
-    INT32     cchTextMax;
-    INT32     fmt;
+    HBITMAP hbm;
+    INT     cchTextMax;
+    INT     fmt;
     LPARAM    lParam;
-    INT32     iImage;
-    INT32     iOrder;
-} HDITEM32W, *LPHDITEM32W;
+    INT     iImage;
+    INT     iOrder;
+} HDITEMW, *LPHDITEMW;
 
 #define HDITEM   WINELIB_NAME_AW(HDITEM)
 #define LPHDITEM WINELIB_NAME_AW(LPHDITEM)
 #define HD_ITEM  HDITEM
 
-#define HDITEM_V1_SIZE32A CCSIZEOF_STRUCT(HDITEM32A, lParam)
-#define HDITEM_V1_SIZE32W CCSIZEOF_STRUCT(HDITEM32W, lParam)
+#define HDITEM_V1_SIZEA CCSIZEOF_STRUCT(HDITEMA, lParam)
+#define HDITEM_V1_SIZEW CCSIZEOF_STRUCT(HDITEMW, lParam)
 #define HDITEM_V1_SIZE WINELIB_NAME_AW(HDITEM_V1_SIZE)
 
 typedef struct _HD_HITTESTINFO
 {
-    POINT32 pt;
-    UINT32  flags;
-    INT32   iItem;
+    POINT pt;
+    UINT  flags;
+    INT   iItem;
 } HDHITTESTINFO, *LPHDHITTESTINFO;
 
 #define HD_HITTESTINFO   HDHITTESTINFO
 
-typedef struct tagNMHEADER32A
+typedef struct tagNMHEADERA
 {
     NMHDR     hdr;
-    INT32     iItem;
-    INT32     iButton;
-    HDITEM32A *pitem;
-} NMHEADER32A, *LPNMHEADER32A;
+    INT     iItem;
+    INT     iButton;
+    HDITEMA *pitem;
+} NMHEADERA, *LPNMHEADERA;
 
-typedef struct tagNMHEADER32W
+typedef struct tagNMHEADERW
 {
     NMHDR     hdr;
-    INT32     iItem;
-    INT32     iButton;
-    HDITEM32W *pitem;
-} NMHEADER32W, *LPNMHEADER32W;
+    INT     iItem;
+    INT     iButton;
+    HDITEMW *pitem;
+} NMHEADERW, *LPNMHEADERW;
 
 #define NMHEADER		WINELIB_NAME_AW(NMHEADER)
 #define LPNMHEADER		WINELIB_NAME_AW(LPNMHEADER)
 #define HD_NOTIFY               NMHEADER
 
-typedef struct tagNMHDDISPINFO32A
+typedef struct tagNMHDDISPINFOA
 {
     NMHDR     hdr;
-    INT32     iItem;
-    UINT32    mask;
+    INT     iItem;
+    UINT    mask;
     LPSTR     pszText;
-    INT32     cchTextMax;
-    INT32     iImage;
+    INT     cchTextMax;
+    INT     iImage;
     LPARAM    lParam;
-} NMHDDISPINFO32A, *LPNMHDDISPINFO32A;
+} NMHDDISPINFOA, *LPNMHDDISPINFOA;
 
-typedef struct tagNMHDDISPINFO32W
+typedef struct tagNMHDDISPINFOW
 {
     NMHDR     hdr;
-    INT32     iItem;
-    UINT32    mask;
+    INT     iItem;
+    UINT    mask;
     LPWSTR    pszText;
-    INT32     cchTextMax;
-    INT32     iImage;
+    INT     cchTextMax;
+    INT     iImage;
     LPARAM    lParam;
-} NMHDDISPINFO32W, *LPNMHDDISPINFO32W;
+} NMHDDISPINFOW, *LPNMHDDISPINFOW;
 
 #define NMHDDISPINFO		WINELIB_NAME_AW(NMHDDISPINFO)
 #define LPNMHDDISPINFO		WINELIB_NAME_AW(LPNMHDDISPINFO)
 
 #define Header_GetItemCount(hwndHD) \
-  (INT32)SendMessage32A((hwndHD),HDM_GETITEMCOUNT,0,0L)
-#define Header_InsertItem32A(hwndHD,i,phdi) \
-  (INT32)SendMessage32A((hwndHD),HDM_INSERTITEM32A,(WPARAM32)(INT32)(i),(LPARAM)(const HDITEM32A*)(phdi))
-#define Header_InsertItem32W(hwndHD,i,phdi) \
-  (INT32)SendMessage32W((hwndHD),HDM_INSERTITEM32W,(WPARAM32)(INT32)(i),(LPARAM)(const HDITEM32W*)(phdi))
+  (INT)SendMessageA((hwndHD),HDM_GETITEMCOUNT,0,0L)
+#define Header_InsertItemA(hwndHD,i,phdi) \
+  (INT)SendMessageA((hwndHD),HDM_INSERTITEMA,(WPARAM)(INT)(i),(LPARAM)(const HDITEMA*)(phdi))
+#define Header_InsertItemW(hwndHD,i,phdi) \
+  (INT)SendMessageW((hwndHD),HDM_INSERTITEMW,(WPARAM)(INT)(i),(LPARAM)(const HDITEMW*)(phdi))
 #define Header_InsertItem WINELIB_NAME_AW(Header_InsertItem)
 #define Header_DeleteItem(hwndHD,i) \
-  (BOOL32)SendMessage32A((hwndHD),HDM_DELETEITEM,(WPARAM32)(INT32)(i),0L)
-#define Header_GetItem32A(hwndHD,i,phdi) \
-  (BOOL32)SendMessage32A((hwndHD),HDM_GETITEM32A,(WPARAM32)(INT32)(i),(LPARAM)(HDITEM32A*)(phdi))
-#define Header_GetItem32W(hwndHD,i,phdi) \
-  (BOOL32)SendMessage32W((hwndHD),HDM_GETITEM32W,(WPARAM32)(INT32)(i),(LPARAM)(HDITEM32W*)(phdi))
+  (BOOL)SendMessageA((hwndHD),HDM_DELETEITEM,(WPARAM)(INT)(i),0L)
+#define Header_GetItemA(hwndHD,i,phdi) \
+  (BOOL)SendMessageA((hwndHD),HDM_GETITEMA,(WPARAM)(INT)(i),(LPARAM)(HDITEMA*)(phdi))
+#define Header_GetItemW(hwndHD,i,phdi) \
+  (BOOL)SendMessageW((hwndHD),HDM_GETITEMW,(WPARAM)(INT)(i),(LPARAM)(HDITEMW*)(phdi))
 #define Header_GetItem WINELIB_NAME_AW(Header_GetItem)
-#define Header_SetItem32A(hwndHD,i,phdi) \
-  (BOOL32)SendMessage32A((hwndHD),HDM_SETITEM32A,(WPARAM32)(INT32)(i),(LPARAM)(const HDITEM32A*)(phdi))
-#define Header_SetItem32W(hwndHD,i,phdi) \
-  (BOOL32)SendMessage32W((hwndHD),HDM_SETITEM32W,(WPARAM32)(INT32)(i),(LPARAM)(const HDITEM32W*)(phdi))
+#define Header_SetItemA(hwndHD,i,phdi) \
+  (BOOL)SendMessageA((hwndHD),HDM_SETITEMA,(WPARAM)(INT)(i),(LPARAM)(const HDITEMA*)(phdi))
+#define Header_SetItemW(hwndHD,i,phdi) \
+  (BOOL)SendMessageW((hwndHD),HDM_SETITEMW,(WPARAM)(INT)(i),(LPARAM)(const HDITEMW*)(phdi))
 #define Header_SetItem WINELIB_NAME_AW(Header_SetItem)
 #define Header_Layout(hwndHD,playout) \
-  (BOOL32)SendMessage32A((hwndHD),HDM_LAYOUT,0,(LPARAM)(LPHDLAYOUT)(playout))
+  (BOOL)SendMessageA((hwndHD),HDM_LAYOUT,0,(LPARAM)(LPHDLAYOUT)(playout))
 #define Header_GetItemRect(hwnd,iItem,lprc) \
-  (BOOL32)SendMessage32A((hwnd),HDM_GETITEMRECT,(WPARAM32)iItem,(LPARAM)lprc)
+  (BOOL)SendMessageA((hwnd),HDM_GETITEMRECT,(WPARAM)iItem,(LPARAM)lprc)
 #define Header_SetImageList(hwnd,himl) \
-  (HIMAGELIST)SendMessage32A((hwnd),HDM_SETIMAGELIST,0,(LPARAM)himl)
+  (HIMAGELIST)SendMessageA((hwnd),HDM_SETIMAGELIST,0,(LPARAM)himl)
 #define Header_GetImageList(hwnd) \
-  (HIMAGELIST)SendMessage32A((hwnd),HDM_GETIMAGELIST,0,0)
+  (HIMAGELIST)SendMessageA((hwnd),HDM_GETIMAGELIST,0,0)
 #define Header_OrderToIndex(hwnd,i) \
-  (INT32)SendMessage32A((hwnd),HDM_ORDERTOINDEX,(WPARAM32)i,0)
+  (INT)SendMessageA((hwnd),HDM_ORDERTOINDEX,(WPARAM)i,0)
 #define Header_CreateDragImage(hwnd,i) \
-  (HIMAGELIST)SendMessage32A((hwnd),HDM_CREATEDRAGIMAGE,(WPARAM32)i,0)
+  (HIMAGELIST)SendMessageA((hwnd),HDM_CREATEDRAGIMAGE,(WPARAM)i,0)
 #define Header_GetOrderArray(hwnd,iCount,lpi) \
-  (BOOL32)SendMessage32A((hwnd),HDM_GETORDERARRAY,(WPARAM32)iCount,(LPARAM)lpi)
+  (BOOL)SendMessageA((hwnd),HDM_GETORDERARRAY,(WPARAM)iCount,(LPARAM)lpi)
 #define Header_SetOrderArray(hwnd,iCount,lpi) \
-  (BOOL32)SendMessage32A((hwnd),HDM_SETORDERARRAY,(WPARAM32)iCount,(LPARAM)lpi)
+  (BOOL)SendMessageA((hwnd),HDM_SETORDERARRAY,(WPARAM)iCount,(LPARAM)lpi)
 #define Header_SetHotDivider(hwnd,fPos,dw) \
-  (INT32)SendMessage32A((hwnd),HDM_SETHOTDIVIDER,(WPARAM32)fPos,(LPARAM)dw)
+  (INT)SendMessageA((hwnd),HDM_SETHOTDIVIDER,(WPARAM)fPos,(LPARAM)dw)
 #define Header_SetUnicodeFormat(hwnd,fUnicode) \
-  (BOOL32)SendMessage32A((hwnd),HDM_SETUNICODEFORMAT,(WPARAM32)(fUnicode),0)
+  (BOOL)SendMessageA((hwnd),HDM_SETUNICODEFORMAT,(WPARAM)(fUnicode),0)
 #define Header_GetUnicodeFormat(hwnd) \
-  (BOOL32)SendMessage32A((hwnd),HDM_GETUNICODEFORMAT,0,0)
+  (BOOL)SendMessageA((hwnd),HDM_GETUNICODEFORMAT,0,0)
 
 
 /* Toolbar */
 
 #define TOOLBARCLASSNAME16      "ToolbarWindow" 
-#define TOOLBARCLASSNAME32W     L"ToolbarWindow32" 
-#define TOOLBARCLASSNAME32A     "ToolbarWindow32" 
+#define TOOLBARCLASSNAMEW     L"ToolbarWindow32" 
+#define TOOLBARCLASSNAMEA     "ToolbarWindow32" 
 #define TOOLBARCLASSNAME WINELIB_NAME_AW(TOOLBARCLASSNAME)
 
 #define CMB_MASKED              0x02 
@@ -805,23 +805,23 @@ typedef struct tagNMHDDISPINFO32W
 #define TB_SETSTATE              (WM_USER+17)
 #define TB_GETSTATE              (WM_USER+18)
 #define TB_ADDBITMAP             (WM_USER+19)
-#define TB_ADDBUTTONS32A         (WM_USER+20)
-#define TB_ADDBUTTONS32W         (WM_USER+68)
+#define TB_ADDBUTTONSA         (WM_USER+20)
+#define TB_ADDBUTTONSW         (WM_USER+68)
 #define TB_ADDBUTTONS WINELIB_NAME_AW(TB_ADDBUTTONS)
 #define TB_HITTEST               (WM_USER+69)
-#define TB_INSERTBUTTON32A       (WM_USER+21)
-#define TB_INSERTBUTTON32W       (WM_USER+67)
+#define TB_INSERTBUTTONA       (WM_USER+21)
+#define TB_INSERTBUTTONW       (WM_USER+67)
 #define TB_INSERTBUTTON WINELIB_NAME_AW(TB_INSERTBUTTON)
 #define TB_DELETEBUTTON          (WM_USER+22)
 #define TB_GETBUTTON             (WM_USER+23)
 #define TB_BUTTONCOUNT           (WM_USER+24)
 #define TB_COMMANDTOINDEX        (WM_USER+25)
-#define TB_SAVERESTORE32A        (WM_USER+26)
-#define TB_SAVERESTORE32W        (WM_USER+76)
+#define TB_SAVERESTOREA        (WM_USER+26)
+#define TB_SAVERESTOREW        (WM_USER+76)
 #define TB_SAVERESTORE WINELIB_NAME_AW(TB_SAVERESTORE)
 #define TB_CUSTOMIZE             (WM_USER+27)
-#define TB_ADDSTRING32A          (WM_USER+28) 
-#define TB_ADDSTRING32W          (WM_USER+77) 
+#define TB_ADDSTRINGA          (WM_USER+28) 
+#define TB_ADDSTRINGW          (WM_USER+77) 
 #define TB_ADDSTRING WINELIB_NAME_AW(TB_ADDSTRING)
 #define TB_GETITEMRECT           (WM_USER+29)
 #define TB_BUTTONSTRUCTSIZE      (WM_USER+30)
@@ -837,8 +837,8 @@ typedef struct tagNMHDDISPINFO32W
 #define TB_SETCMDID              (WM_USER+42)
 #define TB_CHANGEBITMAP          (WM_USER+43)
 #define TB_GETBITMAP             (WM_USER+44)
-#define TB_GETBUTTONTEXT32A      (WM_USER+45)
-#define TB_GETBUTTONTEXT32W      (WM_USER+75)
+#define TB_GETBUTTONTEXTA      (WM_USER+45)
+#define TB_GETBUTTONTEXTW      (WM_USER+75)
 #define TB_GETBUTTONTEXT WINELIB_NAME_AW(TB_GETBUTTONTEXT)
 #define TB_REPLACEBITMAP         (WM_USER+46)
 #define TB_SETINDENT             (WM_USER+47)
@@ -857,19 +857,19 @@ typedef struct tagNMHDDISPINFO32W
 #define TB_SETMAXTEXTROWS        (WM_USER+60)
 #define TB_GETTEXTROWS           (WM_USER+61)
 #define TB_GETOBJECT             (WM_USER+62)
-#define TB_GETBUTTONINFO32W      (WM_USER+63)
-#define TB_GETBUTTONINFO32A      (WM_USER+65)
+#define TB_GETBUTTONINFOW      (WM_USER+63)
+#define TB_GETBUTTONINFOA      (WM_USER+65)
 #define TB_GETBUTTONINFO WINELIB_NAME_AW(TB_GETBUTTONINFO)
-#define TB_SETBUTTONINFO32W      (WM_USER+64)
-#define TB_SETBUTTONINFO32A      (WM_USER+66)
+#define TB_SETBUTTONINFOW      (WM_USER+64)
+#define TB_SETBUTTONINFOA      (WM_USER+66)
 #define TB_SETBUTTONINFO WINELIB_NAME_AW(TB_SETBUTTONINFO)
 #define TB_SETDRAWTEXTFLAGS      (WM_USER+70)
 #define TB_GETHOTITEM            (WM_USER+71)
 #define TB_SETHOTITEM            (WM_USER+72)
 #define TB_SETANCHORHIGHLIGHT    (WM_USER+73)
 #define TB_GETANCHORHIGHLIGHT    (WM_USER+74)
-#define TB_MAPACCELERATOR32A     (WM_USER+78)
-#define TB_MAPACCELERATOR32W     (WM_USER+90)
+#define TB_MAPACCELERATORA     (WM_USER+78)
+#define TB_MAPACCELERATORW     (WM_USER+90)
 #define TB_MAPACCELERATOR WINELIB_NAME_AW(TB_MAPACCELERATOR)
 #define TB_GETINSERTMARK         (WM_USER+79)
 #define TB_SETINSERTMARK         (WM_USER+80)
@@ -889,19 +889,19 @@ typedef struct tagNMHDDISPINFO32W
 
 #define TBN_FIRST               (0U-700U)
 #define TBN_LAST                (0U-720U)
-#define TBN_GETBUTTONINFO32A    (TBN_FIRST-0)
-#define TBN_GETBUTTONINFO32W    (TBN_FIRST-20)
+#define TBN_GETBUTTONINFOA    (TBN_FIRST-0)
+#define TBN_GETBUTTONINFOW    (TBN_FIRST-20)
 #define TBN_GETBUTTONINFO WINELIB_NAME_AW(TBN_GETBUTTONINFO)
-#define TBN_GETINFOTIP32A       (TBN_FIRST-18)
-#define TBN_GETINFOTIP32W       (TBN_FIRST-19)
+#define TBN_GETINFOTIPA       (TBN_FIRST-18)
+#define TBN_GETINFOTIPW       (TBN_FIRST-19)
 #define TBN_GETINFOTIP WINELIB_NAME_AW(TBN_GETINFOTIP)
 
 
 /* This is just for old CreateToolbar. */
 /* Don't use it in new programs. */
 typedef struct _OLDTBBUTTON {
-    INT32 iBitmap;
-    INT32 idCommand;
+    INT iBitmap;
+    INT idCommand;
     BYTE  fsState;
     BYTE  fsStyle;
     BYTE  bReserved[2];
@@ -911,13 +911,13 @@ typedef const OLDTBBUTTON *LPCOLDTBBUTTON;
 
 
 typedef struct _TBBUTTON {
-    INT32 iBitmap;
-    INT32 idCommand;
+    INT iBitmap;
+    INT idCommand;
     BYTE  fsState;
     BYTE  fsStyle;
     BYTE  bReserved[2];
     DWORD dwData;
-    INT32 iString;
+    INT iString;
 } TBBUTTON, *PTBBUTTON, *LPTBBUTTON;
 typedef const TBBUTTON *LPCTBBUTTON;
 
@@ -928,11 +928,11 @@ typedef struct _COLORMAP {
 } COLORMAP, *LPCOLORMAP;
 
 typedef struct tagTBADDBITMAP {
-    HINSTANCE32 hInst;
-    UINT32      nID;
+    HINSTANCE hInst;
+    UINT      nID;
 } TBADDBITMAP, *LPTBADDBITMAP;
 
-#define HINST_COMMCTRL         ((HINSTANCE32)-1)
+#define HINST_COMMCTRL         ((HINSTANCE)-1)
 #define IDB_STD_SMALL_COLOR     0
 #define IDB_STD_LARGE_COLOR     1
 #define IDB_VIEW_SMALL_COLOR    4
@@ -973,44 +973,44 @@ typedef struct tagTBSAVEPARAMSA {
     HKEY   hkr;
     LPCSTR pszSubKey;
     LPCSTR pszValueName;
-} TBSAVEPARAMS32A, *LPTBSAVEPARAMS32A;
+} TBSAVEPARAMSA, *LPTBSAVEPARAMSA;
 
 typedef struct tagTBSAVEPARAMSW {
     HKEY   hkr;
     LPCWSTR pszSubKey;
     LPCWSTR pszValueName;
-} TBSAVEPARAMSA32W, *LPTBSAVEPARAMSA32W;
+} TBSAVEPARAMSAW, *LPTBSAVEPARAMSAW;
 
 #define TBSAVEPARAMS   WINELIB_NAME_AW(TBSAVEPARAMS)
 #define LPTBSAVEPARAMS WINELIB_NAME_AW(LPTBSAVEPARAMS)
 
 typedef struct
 {
-    UINT32 cbSize;
+    UINT cbSize;
     DWORD  dwMask;
-    INT32  idCommand;
-    INT32  iImage;
+    INT  idCommand;
+    INT  iImage;
     BYTE   fsState;
     BYTE   fsStyle;
     WORD   cx;
     DWORD  lParam;
     LPSTR  pszText;
-    INT32  cchText;
-} TBBUTTONINFO32A, *LPTBBUTTONINFO32A;
+    INT  cchText;
+} TBBUTTONINFOA, *LPTBBUTTONINFOA;
 
 typedef struct
 {
-    UINT32 cbSize;
+    UINT cbSize;
     DWORD  dwMask;
-    INT32  idCommand;
-    INT32  iImage;
+    INT  idCommand;
+    INT  iImage;
     BYTE   fsState;
     BYTE   fsStyle;
     WORD   cx;
     DWORD  lParam;
     LPWSTR pszText;
-    INT32  cchText;
-} TBBUTTONINFO32W, *LPTBBUTTONINFO32W;
+    INT  cchText;
+} TBBUTTONINFOW, *LPTBBUTTONINFOW;
 
 #define TBBUTTONINFO   WINELIB_NAME_AW(TBBUTTONINFO)
 #define LPTBBUTTONINFO WINELIB_NAME_AW(LPTBBUTTONINFO)
@@ -1019,49 +1019,49 @@ typedef struct tagNMTBGETINFOTIPA
 {
     NMHDR  hdr;
     LPSTR  pszText;
-    INT32  cchTextMax;
-    INT32  iItem;
+    INT  cchTextMax;
+    INT  iItem;
     LPARAM lParam;
-} NMTBGETINFOTIP32A, *LPNMTBGETINFOTIP32A;
+} NMTBGETINFOTIPA, *LPNMTBGETINFOTIPA;
 
 typedef struct tagNMTBGETINFOTIPW
 {
     NMHDR  hdr;
     LPWSTR pszText;
-    INT32  cchTextMax;
-    INT32  iItem;
+    INT  cchTextMax;
+    INT  iItem;
     LPARAM lParam;
-} NMTBGETINFOTIP32W, *LPNMTBGETINFOTIP32W;
+} NMTBGETINFOTIPW, *LPNMTBGETINFOTIPW;
 
 #define NMTBGETINFOTIP   WINELIB_NAME_AW(NMTBGETINFOFTIP)
 #define LPNMTBGETINFOTIP WINELIB_NAME_AW(LPNMTBGETINFOTIP)
 
 typedef struct
 {
-	HINSTANCE32 hInstOld;
-	UINT32      nIDOld;
-	HINSTANCE32 hInstNew;
-	UINT32      nIDNew;
-	INT32       nButtons;
+	HINSTANCE hInstOld;
+	UINT      nIDOld;
+	HINSTANCE hInstNew;
+	UINT      nIDNew;
+	INT       nButtons;
 } TBREPLACEBITMAP, *LPTBREPLACEBITMAP;
 
-HWND32 WINAPI
-CreateToolbar(HWND32, DWORD, UINT32, INT32, HINSTANCE32,
-              UINT32, LPCOLDTBBUTTON, INT32); 
+HWND WINAPI
+CreateToolbar(HWND, DWORD, UINT, INT, HINSTANCE,
+              UINT, LPCOLDTBBUTTON, INT); 
  
-HWND32 WINAPI
-CreateToolbarEx(HWND32, DWORD, UINT32, INT32,
-                HINSTANCE32, UINT32, LPCTBBUTTON, 
-                INT32, INT32, INT32, INT32, INT32, UINT32); 
+HWND WINAPI
+CreateToolbarEx(HWND, DWORD, UINT, INT,
+                HINSTANCE, UINT, LPCTBBUTTON, 
+                INT, INT, INT, INT, INT, UINT); 
 
-HBITMAP32 WINAPI
-CreateMappedBitmap (HINSTANCE32, INT32, UINT32, LPCOLORMAP, INT32); 
+HBITMAP WINAPI
+CreateMappedBitmap (HINSTANCE, INT, UINT, LPCOLORMAP, INT); 
 
 
 /* Tool tips */
 
 #define TOOLTIPS_CLASS16        "tooltips_class"
-#define TOOLTIPS_CLASS32A       "tooltips_class32"
+#define TOOLTIPS_CLASSA       "tooltips_class32"
 #define TOOLTIPS_CLASS32W       L"tooltips_class32"
 #define TOOLTIPS_CLASS          WINELIB_NAME_AW(TOOLTIPS_CLASS)
 
@@ -1088,37 +1088,37 @@ CreateMappedBitmap (HINSTANCE32, INT32, UINT32, LPCOLORMAP, INT32);
 
 #define TTM_ACTIVATE            (WM_USER+1)
 #define TTM_SETDELAYTIME        (WM_USER+3)
-#define TTM_ADDTOOL32A          (WM_USER+4)
-#define TTM_ADDTOOL32W          (WM_USER+50)
+#define TTM_ADDTOOLA          (WM_USER+4)
+#define TTM_ADDTOOLW          (WM_USER+50)
 #define TTM_ADDTOOL WINELIB_NAME_AW(TTM_ADDTOOL)
-#define TTM_DELTOOL32A          (WM_USER+5)
-#define TTM_DELTOOL32W          (WM_USER+51)
+#define TTM_DELTOOLA          (WM_USER+5)
+#define TTM_DELTOOLW          (WM_USER+51)
 #define TTM_DELTOOL WINELIB_NAME_AW(TTM_DELTOOL)
-#define TTM_NEWTOOLRECT32A      (WM_USER+6)
-#define TTM_NEWTOOLRECT32W      (WM_USER+52)
+#define TTM_NEWTOOLRECTA      (WM_USER+6)
+#define TTM_NEWTOOLRECTW      (WM_USER+52)
 #define TTM_NEWTOOLRECT WINELIB_NAME_AW(TTM_NEWTOOLRECT)
 #define TTM_RELAYEVENT          (WM_USER+7)
-#define TTM_GETTOOLINFO32A      (WM_USER+8)
-#define TTM_GETTOOLINFO32W      (WM_USER+53)
+#define TTM_GETTOOLINFOA      (WM_USER+8)
+#define TTM_GETTOOLINFOW      (WM_USER+53)
 #define TTM_GETTOOLINFO WINELIB_NAME_AW(TTM_GETTOOLINFO)
-#define TTM_SETTOOLINFO32A      (WM_USER+9)
-#define TTM_SETTOOLINFO32W      (WM_USER+54)
+#define TTM_SETTOOLINFOA      (WM_USER+9)
+#define TTM_SETTOOLINFOW      (WM_USER+54)
 #define TTM_SETTOOLINFO WINELIB_NAME_AW(TTM_SETTOOLINFO)
-#define TTM_HITTEST32A          (WM_USER+10)
-#define TTM_HITTEST32W          (WM_USER+55)
+#define TTM_HITTESTA          (WM_USER+10)
+#define TTM_HITTESTW          (WM_USER+55)
 #define TTM_HITTEST WINELIB_NAME_AW(TTM_HITTEST)
-#define TTM_GETTEXT32A          (WM_USER+11)
-#define TTM_GETTEXT32W          (WM_USER+56)
+#define TTM_GETTEXTA          (WM_USER+11)
+#define TTM_GETTEXTW          (WM_USER+56)
 #define TTM_GETTEXT WINELIB_NAME_AW(TTM_GETTEXT)
-#define TTM_UPDATETIPTEXT32A    (WM_USER+12)
-#define TTM_UPDATETIPTEXT32W    (WM_USER+57)
+#define TTM_UPDATETIPTEXTA    (WM_USER+12)
+#define TTM_UPDATETIPTEXTW    (WM_USER+57)
 #define TTM_UPDATETIPTEXT WINELIB_NAME_AW(TTM_UPDATETIPTEXT)
 #define TTM_GETTOOLCOUNT        (WM_USER+13)
-#define TTM_ENUMTOOLS32A        (WM_USER+14)
-#define TTM_ENUMTOOLS32W        (WM_USER+58)
+#define TTM_ENUMTOOLSA        (WM_USER+14)
+#define TTM_ENUMTOOLSW        (WM_USER+58)
 #define TTM_ENUMTOOLS WINELIB_NAME_AW(TTM_ENUMTOOLS)
-#define TTM_GETCURRENTTOOL32A   (WM_USER+15)
-#define TTM_GETCURRENTTOOL32W   (WM_USER+59)
+#define TTM_GETCURRENTTOOLA   (WM_USER+15)
+#define TTM_GETCURRENTTOOLW   (WM_USER+59)
 #define TTM_GETCURRENTTOOL WINELIB_NAME_AW(TTM_GETCURRENTTOOL)
 #define TTM_WINDOWFROMPOINT     (WM_USER+16)
 #define TTM_TRACKACTIVATE       (WM_USER+17)
@@ -1138,37 +1138,37 @@ CreateMappedBitmap (HINSTANCE32, INT32, UINT32, LPCOLORMAP, INT32);
 
 #define TTN_FIRST               (0U-520U)
 #define TTN_LAST                (0U-549U)
-#define TTN_GETDISPINFO32A      (TTN_FIRST-0)
-#define TTN_GETDISPINFO32W      (TTN_FIRST-10)
+#define TTN_GETDISPINFOA      (TTN_FIRST-0)
+#define TTN_GETDISPINFOW      (TTN_FIRST-10)
 #define TTN_GETDISPINFO WINELIB_NAME_AW(TTN_GETDISPINFO)
 #define TTN_SHOW                (TTN_FIRST-1)
 #define TTN_POP                 (TTN_FIRST-2)
 
 #define TTN_NEEDTEXT TTN_GETDISPINFO
-#define TTN_NEEDTEXTA TTN_GETDISPINFO32A
-#define TTN_NEEDTEXTW TTN_GETDISPINFO32W
+#define TTN_NEEDTEXTA TTN_GETDISPINFOA
+#define TTN_NEEDTEXTW TTN_GETDISPINFOW
 
 typedef struct tagTOOLINFOA {
-    UINT32 cbSize;
-    UINT32 uFlags;
-    HWND32 hwnd;
-    UINT32 uId;
-    RECT32 rect;
-    HINSTANCE32 hinst;
+    UINT cbSize;
+    UINT uFlags;
+    HWND hwnd;
+    UINT uId;
+    RECT rect;
+    HINSTANCE hinst;
     LPSTR lpszText;
     LPARAM lParam;
-} TTTOOLINFO32A, *LPTOOLINFO32A, *PTOOLINFO32A, *LPTTTOOLINFO32A;
+} TTTOOLINFOA, *LPTOOLINFOA, *PTOOLINFOA, *LPTTTOOLINFOA;
 
 typedef struct tagTOOLINFOW {
-    UINT32 cbSize;
-    UINT32 uFlags;
-    HWND32 hwnd;
-    UINT32 uId;
-    RECT32 rect;
-    HINSTANCE32 hinst;
+    UINT cbSize;
+    UINT uFlags;
+    HWND hwnd;
+    UINT uId;
+    RECT rect;
+    HINSTANCE hinst;
     LPWSTR lpszText;
     LPARAM lParam;
-} TTTOOLINFO32W, *LPTOOLINFO32W, *PTOOLINFO32W, *LPTTTOOLINFO32W;
+} TTTOOLINFOW, *LPTOOLINFOW, *PTOOLINFOW, *LPTTTOOLINFOW;
 
 #define TTTOOLINFO WINELIB_NAME_AW(TTTOOLINFO)
 #define TOOLINFO WINELIB_NAME_AW(TTTOOLINFO)
@@ -1176,23 +1176,23 @@ typedef struct tagTOOLINFOW {
 #define LPTTTOOLINFO WINELIB_NAME_AW(LPTTTOOLINFO)
 #define LPTOOLINFO WINELIB_NAME_AW(LPTOOLINFO)
 
-#define TTTOOLINFO_V1_SIZE32A CCSIZEOF_STRUCT(TTTOOLINFO32A, lpszText)
-#define TTTOOLINFO_V1_SIZE32W CCSIZEOF_STRUCT(TTTOOLINFO32W, lpszText)
+#define TTTOOLINFO_V1_SIZEA CCSIZEOF_STRUCT(TTTOOLINFOA, lpszText)
+#define TTTOOLINFO_V1_SIZEW CCSIZEOF_STRUCT(TTTOOLINFOW, lpszText)
 #define TTTOOLINFO_V1_SIZE WINELIB_NAME_AW(TTTOOLINFO_V1_SIZE)
 
 typedef struct _TT_HITTESTINFOA
 {
-    HWND32        hwnd;
-    POINT32       pt;
-    TTTOOLINFO32A ti;
-} TTHITTESTINFO32A, *LPTTHITTESTINFO32A;
+    HWND        hwnd;
+    POINT       pt;
+    TTTOOLINFOA ti;
+} TTHITTESTINFOA, *LPTTHITTESTINFOA;
 
 typedef struct _TT_HITTESTINFOW
 {
-    HWND32        hwnd;
-    POINT32       pt;
-    TTTOOLINFO32W ti;
-} TTHITTESTINFO32W, *LPTTHITTESTINFO32W;
+    HWND        hwnd;
+    POINT       pt;
+    TTTOOLINFOW ti;
+} TTHITTESTINFOW, *LPTTHITTESTINFOW;
 
 #define TTHITTESTINFO WINELIB_NAME_AW(TTHITTESTINFO)
 #define LPTTHITTESTINFO WINELIB_NAME_AW(LPTTHITTESTINFO)
@@ -1202,30 +1202,30 @@ typedef struct tagNMTTDISPINFOA
     NMHDR hdr;
     LPSTR lpszText;
     CHAR  szText[80];
-    HINSTANCE32 hinst;
-    UINT32      uFlags;
+    HINSTANCE hinst;
+    UINT      uFlags;
     LPARAM      lParam;
-} NMTTDISPINFO32A, *LPNMTTDISPINFO32A;
+} NMTTDISPINFOA, *LPNMTTDISPINFOA;
 
 typedef struct tagNMTTDISPINFOW
 {
     NMHDR       hdr;
     LPWSTR      lpszText;
     WCHAR       szText[80];
-    HINSTANCE32 hinst;
-    UINT32      uFlags;
+    HINSTANCE hinst;
+    UINT      uFlags;
     LPARAM      lParam;
-} NMTTDISPINFO32W, *LPNMTTDISPINFO32W;
+} NMTTDISPINFOW, *LPNMTTDISPINFOW;
 
 #define NMTTDISPINFO WINELIB_NAME_AW(NMTTDISPINFO)
 #define LPNMTTDISPINFO WINELIB_NAME_AW(LPNMTTDISPINFO)
 
-#define NMTTDISPINFO_V1_SIZE32A CCSIZEOF_STRUCT(NMTTDISPINFO32A, uFlags)
-#define NMTTDISPINFO_V1_SIZE32W CCSIZEOF_STRUCT(NMTTDISPINFO32W, uFlags)
+#define NMTTDISPINFO_V1_SIZEA CCSIZEOF_STRUCT(NMTTDISPINFOA, uFlags)
+#define NMTTDISPINFO_V1_SIZEW CCSIZEOF_STRUCT(NMTTDISPINFOW, uFlags)
 #define NMTTDISPINFO_V1_SIZE WINELIB_NAME_AW(NMTTDISPINFO_V1_SIZE)
 
-#define TOOLTIPTEXTW    NMTTDISPINFO32W
-#define TOOLTIPTEXTA    NMTTDISPINFO32A
+#define TOOLTIPTEXTW    NMTTDISPINFOW
+#define TOOLTIPTEXTA    NMTTDISPINFOA
 #define TOOLTIPTEXT     NMTTDISPINFO
 #define LPTOOLTIPTEXTW  LPNMTTDISPINFOW
 #define LPTOOLTIPTEXTA  LPNMTTDISPINFOA
@@ -1235,8 +1235,8 @@ typedef struct tagNMTTDISPINFOW
 /* Rebar control */
 
 #define REBARCLASSNAME16        "ReBarWindow"
-#define REBARCLASSNAME32A       "ReBarWindow32"
-#define REBARCLASSNAME32W       L"ReBarWindow32"
+#define REBARCLASSNAMEA       "ReBarWindow32"
+#define REBARCLASSNAMEW       L"ReBarWindow32"
 #define REBARCLASSNAME          WINELIB_NAME_AW(REBARCLASSNAME)
 
 #define RBS_TOOLTIPS            0x0100
@@ -1282,15 +1282,15 @@ typedef struct tagNMTTDISPINFOW
 #define RBHT_CLIENT             0x0003
 #define RBHT_GRABBER            0x0004
 
-#define RB_INSERTBAND32A        (WM_USER+1)
-#define RB_INSERTBAND32W        (WM_USER+10)
+#define RB_INSERTBANDA        (WM_USER+1)
+#define RB_INSERTBANDW        (WM_USER+10)
 #define RB_INSERTBAND           WINELIB_NAME_AW(RB_INSERTBAND)
 #define RB_DELETEBAND           (WM_USER+2)
 #define RB_GETBARINFO           (WM_USER+3)
 #define RB_SETBARINFO           (WM_USER+4)
-#define RB_GETBANDINFO32        (WM_USER+5)   /* just for compatibility */
-#define RB_SETBANDINFO32A       (WM_USER+6)
-#define RB_SETBANDINFO32W       (WM_USER+11)
+#define RB_GETBANDINFO        (WM_USER+5)   /* just for compatibility */
+#define RB_SETBANDINFOA       (WM_USER+6)
+#define RB_SETBANDINFOW       (WM_USER+11)
 #define RB_SETBANDINFO          WINELIB_NAME_AW(RB_SETBANDINFO)
 #define RB_SETPARENT            (WM_USER+7)
 #define RB_HITTEST              (WM_USER+8)
@@ -1310,9 +1310,9 @@ typedef struct tagNMTTDISPINFOW
 #define RB_ENDDRAG              (WM_USER+25)
 #define RB_DRAGMOVE             (WM_USER+26)
 #define RB_GETBARHEIGHT         (WM_USER+27)
-#define RB_GETBANDINFO32W       (WM_USER+28)
-#define RB_GETBANDINFO32A       (WM_USER+29)
-#define RB_GETBANDINFO          WINELIB_NAME_AW(RB_GETBANDINFO)
+#define RB_GETBANDINFOW       (WM_USER+28)
+#define RB_GETBANDINFOA       (WM_USER+29)
+#define RB_GETBANDINFO16          WINELIB_NAME_AW(RB_GETBANDINFO16)
 #define RB_MINIMIZEBAND         (WM_USER+30)
 #define RB_MAXIMIZEBAND         (WM_USER+31)
 #define RB_GETBANDBORDERS       (WM_USER+34)
@@ -1340,111 +1340,111 @@ typedef struct tagNMTTDISPINFOW
 
 typedef struct tagREBARINFO
 {
-    UINT32     cbSize;
-    UINT32     fMask;
+    UINT     cbSize;
+    UINT     fMask;
     HIMAGELIST himl;
 } REBARINFO, *LPREBARINFO;
 
 typedef struct tagREBARBANDINFOA
 {
-    UINT32    cbSize;
-    UINT32    fMask;
-    UINT32    fStyle;
+    UINT    cbSize;
+    UINT    fMask;
+    UINT    fStyle;
     COLORREF  clrFore;
     COLORREF  clrBack;
     LPSTR     lpText;
-    UINT32    cch;
-    INT32     iImage;
-    HWND32    hwndChild;
-    UINT32    cxMinChild;
-    UINT32    cyMinChild;
-    UINT32    cx;
-    HBITMAP32 hbmBack;
-    UINT32    wID;
-    UINT32    cyChild;
-    UINT32    cyMaxChild;
-    UINT32    cyIntegral;
-    UINT32    cxIdeal;
+    UINT    cch;
+    INT     iImage;
+    HWND    hwndChild;
+    UINT    cxMinChild;
+    UINT    cyMinChild;
+    UINT    cx;
+    HBITMAP hbmBack;
+    UINT    wID;
+    UINT    cyChild;
+    UINT    cyMaxChild;
+    UINT    cyIntegral;
+    UINT    cxIdeal;
     LPARAM    lParam;
-    UINT32    cxHeader;
-} REBARBANDINFO32A, *LPREBARBANDINFO32A;
+    UINT    cxHeader;
+} REBARBANDINFOA, *LPREBARBANDINFOA;
 
-typedef REBARBANDINFO32A const *LPCREBARBANDINFO32A;
+typedef REBARBANDINFOA const *LPCREBARBANDINFOA;
 
 typedef struct tagREBARBANDINFOW
 {
-    UINT32    cbSize;
-    UINT32    fMask;
-    UINT32    fStyle;
+    UINT    cbSize;
+    UINT    fMask;
+    UINT    fStyle;
     COLORREF  clrFore;
     COLORREF  clrBack;
     LPWSTR    lpText;
-    UINT32    cch;
-    INT32     iImage;
-    HWND32    hwndChild;
-    UINT32    cxMinChild;
-    UINT32    cyMinChild;
-    UINT32    cx;
-    HBITMAP32 hbmBack;
-    UINT32    wID;
-    UINT32    cyChild;
-    UINT32    cyMaxChild;
-    UINT32    cyIntegral;
-    UINT32    cxIdeal;
+    UINT    cch;
+    INT     iImage;
+    HWND    hwndChild;
+    UINT    cxMinChild;
+    UINT    cyMinChild;
+    UINT    cx;
+    HBITMAP hbmBack;
+    UINT    wID;
+    UINT    cyChild;
+    UINT    cyMaxChild;
+    UINT    cyIntegral;
+    UINT    cxIdeal;
     LPARAM    lParam;
-    UINT32    cxHeader;
-} REBARBANDINFO32W, *LPREBARBANDINFO32W;
+    UINT    cxHeader;
+} REBARBANDINFOW, *LPREBARBANDINFOW;
 
-typedef REBARBANDINFO32W const *LPCREBARBANDINFO32W;
+typedef REBARBANDINFOW const *LPCREBARBANDINFOW;
 
 #define REBARBANDINFO    WINELIB_NAME_AW(REBARBANDINFO)
 #define LPREBARBANDINFO  WINELIB_NAME_AW(LPREBARBANDINFO)
 #define LPCREBARBANDINFO WINELIB_NAME_AW(LPCREBARBANDINFO)
 
-#define REBARBANDINFO_V3_SIZE32A CCSIZEOF_STRUCT(REBARBANDINFO32A, wID)
-#define REBARBANDINFO_V3_SIZE32W CCSIZEOF_STRUCT(REBARBANDINFO32W, wID)
+#define REBARBANDINFO_V3_SIZEA CCSIZEOF_STRUCT(REBARBANDINFOA, wID)
+#define REBARBANDINFO_V3_SIZEW CCSIZEOF_STRUCT(REBARBANDINFOW, wID)
 #define REBARBANDINFO_V3_SIZE WINELIB_NAME_AW(REBARBANDINFO_V3_SIZE)
 
 typedef struct tagNMREBARCHILDSIZE
 {
     NMHDR  hdr;
-    UINT32 uBand;
-    UINT32 wID;
-    RECT32 rcChild;
-    RECT32 rcBand;
+    UINT uBand;
+    UINT wID;
+    RECT rcChild;
+    RECT rcBand;
 } NMREBARCHILDSIZE, *LPNMREBARCHILDSIZE;
 
 typedef struct tagNMREBAR
 {
     NMHDR  hdr;
     DWORD  dwMask;
-    UINT32 uBand;
-    UINT32 fStyle;
-    UINT32 wID;
+    UINT uBand;
+    UINT fStyle;
+    UINT wID;
     LPARAM lParam;
 } NMREBAR, *LPNMREBAR;
 
 typedef struct tagNMRBAUTOSIZE
 {
     NMHDR hdr;
-    BOOL32 fChanged;
-    RECT32 rcTarget;
-    RECT32 rcActual;
+    BOOL fChanged;
+    RECT rcTarget;
+    RECT rcActual;
 } NMRBAUTOSIZE, *LPNMRBAUTOSIZE;
 
 typedef struct _RB_HITTESTINFO
 {
-    POINT32 pt;
-    UINT32  flags;
-    INT32   iBand;
+    POINT pt;
+    UINT  flags;
+    INT   iBand;
 } RBHITTESTINFO, *LPRBHITTESTINFO;
 
 
 /* Trackbar control */
 
 #define TRACKBAR_CLASS16        "msctls_trackbar"
-#define TRACKBAR_CLASS32A       "msctls_trackbar32"
-#define TRACKBAR_CLASS32W       L"msctls_trackbar32"
+#define TRACKBAR_CLASSA       "msctls_trackbar32"
+#define TRACKBAR_CLASSW       L"msctls_trackbar32"
 #define TRACKBAR_CLASS  WINELIB_NAME_AW(TRACKBAR_CLASS)
 
 #define TBS_AUTOTICKS           0x0001
@@ -1519,8 +1519,8 @@ typedef struct _RB_HITTESTINFO
 
 /* Pager control */
 
-#define WC_PAGESCROLLER32A      "SysPager"
-#define WC_PAGESCROLLER32W      L"SysPager"
+#define WC_PAGESCROLLERA      "SysPager"
+#define WC_PAGESCROLLERW      L"SysPager"
 #define WC_PAGESCROLLER  WINELIB_NAME_AW(WC_PAGESCROLLER)
 
 #define PGS_VERT                0x00000000
@@ -1575,34 +1575,34 @@ typedef struct
 {
     NMHDR hdr;
     WORD  fwKeys;
-    RECT32 rcParent;
-    INT32  iDir;
-    INT32  iXpos;
-    INT32  iYpos;
-    INT32  iScroll;
+    RECT rcParent;
+    INT  iDir;
+    INT  iXpos;
+    INT  iYpos;
+    INT  iScroll;
 } NMPGSCROLL, *LPNMPGSCROLL;
 
 typedef struct
 {
     NMHDR hdr;
     DWORD dwFlag;
-    INT32 iWidth;
-    INT32 iHeight;
+    INT iWidth;
+    INT iHeight;
 } NMPGCALCSIZE, *LPNMPGCALCSIZE;
 
 
 /* Treeview control */
 
-#define WC_TREEVIEW32A          "SysTreeView32"
-#define WC_TREEVIEW32W          L"SysTreeView32"
+#define WC_TREEVIEWA          "SysTreeView32"
+#define WC_TREEVIEWW          L"SysTreeView32"
 #define WC_TREEVIEW             WINELIB_NAME_AW(WC_TREEVIEW)
 
 #define TVSIL_NORMAL            0
 #define TVSIL_STATE             2
 
 #define TV_FIRST                0x1100
-#define TVM_INSERTITEM32A       (TV_FIRST+0)
-#define TVM_INSERTITEM32W       (TV_FIRST+50)
+#define TVM_INSERTITEMA       (TV_FIRST+0)
+#define TVM_INSERTITEMW       (TV_FIRST+50)
 #define TVM_INSERTITEM          WINELIB_NAME_AW(TVM_INSERTITEM)
 #define TVM_DELETEITEM          (TV_FIRST+1)
 #define TVM_EXPAND              (TV_FIRST+2)
@@ -1614,14 +1614,14 @@ typedef struct
 #define TVM_SETIMAGELIST        (TV_FIRST+9)
 #define TVM_GETNEXTITEM         (TV_FIRST+10)
 #define TVM_SELECTITEM          (TV_FIRST+11)
-#define TVM_GETITEM32A          (TV_FIRST+12)
-#define TVM_GETITEM32W          (TV_FIRST+62)
+#define TVM_GETITEMA          (TV_FIRST+12)
+#define TVM_GETITEMW          (TV_FIRST+62)
 #define TVM_GETITEM             WINELIB_NAME_AW(TVM_GETITEM)
-#define TVM_SETITEM32A          (TV_FIRST+13)
-#define TVM_SETITEM32W          (TV_FIRST+63)
+#define TVM_SETITEMA          (TV_FIRST+13)
+#define TVM_SETITEMW          (TV_FIRST+63)
 #define TVM_SETITEM             WINELIB_NAME_AW(TVM_SETITEM)
-#define TVM_EDITLABEL32A        (TV_FIRST+14)
-#define TVM_EDITLABEL32W        (TV_FIRST+65)
+#define TVM_EDITLABELA        (TV_FIRST+14)
+#define TVM_EDITLABELW        (TV_FIRST+65)
 #define TVM_EDITLABEL           WINELIB_NAME_AW(TVM_EDITLABEL)
 #define TVM_GETEDITCONTROL      (TV_FIRST+15)
 #define TVM_GETVISIBLECOUNT     (TV_FIRST+16)
@@ -1631,8 +1631,8 @@ typedef struct
 #define TVM_ENSUREVISIBLE       (TV_FIRST+20)
 #define TVM_SORTCHILDRENCB      (TV_FIRST+21)
 #define TVM_ENDEDITLABELNOW     (TV_FIRST+22)
-#define TVM_GETISEARCHSTRING32A (TV_FIRST+23)
-#define TVM_GETISEARCHSTRING32W (TV_FIRST+64)
+#define TVM_GETISEARCHSTRINGA (TV_FIRST+23)
+#define TVM_GETISEARCHSTRINGW (TV_FIRST+64)
 #define TVM_GETISEARCHSTRING    WINELIB_NAME_AW(TVM_GETISEARCHSTRING)
 #define TVM_SETTOOLTIPS         (TV_FIRST+24)
 #define TVM_GETTOOLTIPS         (TV_FIRST+25)
@@ -1771,128 +1771,128 @@ typedef struct
 typedef struct _TREEITEM *HTREEITEM;
 
 typedef struct {
-      UINT32 mask;
+      UINT mask;
       HTREEITEM hItem;
-      UINT32 state;
-      UINT32 stateMask;
+      UINT state;
+      UINT stateMask;
       LPSTR  pszText;
-      INT32  cchTextMax;
-      INT32  iImage;
-      INT32  iSelectedImage;
-      INT32  cChildren;
+      INT  cchTextMax;
+      INT  iImage;
+      INT  iSelectedImage;
+      INT  cChildren;
       LPARAM lParam;
-} TVITEM32A, *LPTVITEM32A;
+} TVITEMA, *LPTVITEMA;
 
 typedef struct {
-      UINT32 mask;
+      UINT mask;
       HTREEITEM hItem;
-      UINT32 state;
-      UINT32 stateMask;
+      UINT state;
+      UINT stateMask;
       LPWSTR pszText;
-      INT32 cchTextMax;
-      INT32 iImage;
-      INT32 iSelectedImage;
-      INT32 cChildren;
+      INT cchTextMax;
+      INT iImage;
+      INT iSelectedImage;
+      INT cChildren;
       LPARAM lParam;
-} TVITEM32W, *LPTVITEM32W;
+} TVITEMW, *LPTVITEMW;
 
 #define TVITEM     WINELIB_NAME_AW(TVITEM)
 #define LPTVITEM   WINELIB_NAME_AW(LPTVITEM)
 #define TV_ITEM	    TVITEM
 
 typedef struct {
-      UINT32 mask;
+      UINT mask;
       HTREEITEM hItem;
-      UINT32 state;
-      UINT32 stateMask;
+      UINT state;
+      UINT stateMask;
       LPSTR  pszText;
-      INT32  cchTextMax;
-      INT32  iImage;
-      INT32  iSelectedImage;
-      INT32  cChildren;
+      INT  cchTextMax;
+      INT  iImage;
+      INT  iSelectedImage;
+      INT  cChildren;
       LPARAM lParam;
-      INT32 iIntegral;
-} TVITEMEX32A, *LPTVITEMEX32A;
+      INT iIntegral;
+} TVITEMEXA, *LPTVITEMEXA;
 
 typedef struct {
-      UINT32 mask;
+      UINT mask;
       HTREEITEM hItem;
-      UINT32 state;
-      UINT32 stateMask;
+      UINT state;
+      UINT stateMask;
       LPWSTR pszText;
-      INT32 cchTextMax;
-      INT32 iImage;
-      INT32 iSelectedImage;
-      INT32 cChildren;
+      INT cchTextMax;
+      INT iImage;
+      INT iSelectedImage;
+      INT cChildren;
       LPARAM lParam;
-      INT32 iIntegral;
-} TVITEMEX32W, *LPTVITEMEX32W;
+      INT iIntegral;
+} TVITEMEXW, *LPTVITEMEXW;
 
 #define TVITEMEX   WINELIB_NAME_AW(TVITEMEX)
 #define LPTVITEMEX WINELIB_NAME_AW(LPTVITEMEX)
 
-typedef struct tagTVINSERTSTRUCT32A {
+typedef struct tagTVINSERTSTRUCTA {
         HTREEITEM hParent;
         HTREEITEM hInsertAfter;
         union {
-           TVITEMEX32A itemex;
-           TVITEM32A   item;
+           TVITEMEXA itemex;
+           TVITEMA   item;
         } DUMMYUNIONNAME;
-} TVINSERTSTRUCT32A, *LPTVINSERTSTRUCT32A;
+} TVINSERTSTRUCTA, *LPTVINSERTSTRUCTA;
 
-typedef struct tagTVINSERTSTRUCT32W {
+typedef struct tagTVINSERTSTRUCTW {
         HTREEITEM hParent;
         HTREEITEM hInsertAfter;
         union {
-           TVITEMEX32W itemex;
-           TVITEM32W   item;
+           TVITEMEXW itemex;
+           TVITEMW   item;
         } DUMMYUNIONNAME;
-} TVINSERTSTRUCT32W, *LPTVINSERTSTRUCT32W;
+} TVINSERTSTRUCTW, *LPTVINSERTSTRUCTW;
 
 #define TV_INSERTSTRUCT   WINELIB_NAME_AW(TVINSERTSTRUCT)
 #define LPTV_INSERTSTRUCT WINELIB_NAME_AW(LPTVINSERTSTRUCT)
 
-#define TVINSERTSTRUCT_V1_SIZE32A CCSIZEOF_STRUCT(TVINSERTSTRUCT32A, item)
-#define TVINSERTSTRUCT_V1_SIZE32W CCSIZEOF_STRUCT(TVINSERTSTRUCT32W, item)
+#define TVINSERTSTRUCT_V1_SIZEA CCSIZEOF_STRUCT(TVINSERTSTRUCTA, item)
+#define TVINSERTSTRUCT_V1_SIZEW CCSIZEOF_STRUCT(TVINSERTSTRUCTW, item)
 #define TVINSERTSTRUCT_V1_SIZE    WINELIB_NAME_AW(TVINSERTSTRUCT_V1_SIZE)
 
 
 
-typedef struct tagNMTREEVIEW32A {
+typedef struct tagNMTREEVIEWA {
 	NMHDR	hdr;
-	UINT32	action;
-	TVITEM32A	itemOld;
-	TVITEM32A	itemNew;
-	POINT32	ptDrag;
-} NMTREEVIEW32A, *LPNMTREEVIEW32A;
+	UINT	action;
+	TVITEMA	itemOld;
+	TVITEMA	itemNew;
+	POINT	ptDrag;
+} NMTREEVIEWA, *LPNMTREEVIEWA;
 
-typedef struct tagNMTREEVIEW32W {
+typedef struct tagNMTREEVIEWW {
 	NMHDR	hdr;
-	UINT32	action;
-	TVITEM32W	itemOld;
-	TVITEM32W	itemNew;
-	POINT32	ptDrag;
-} NMTREEVIEW32W, *LPNMTREEVIEW32W;
+	UINT	action;
+	TVITEMW	itemOld;
+	TVITEMW	itemNew;
+	POINT	ptDrag;
+} NMTREEVIEWW, *LPNMTREEVIEWW;
 
 #define NMTREEVIEW     WINELIB_NAME_AW(NMTREEVIEW)
 #define NM_TREEVIEW    WINELIB_NAME_AW(NMTREEVIEW)
 #define LPNMTREEVIEW   WINELIB_NAME_AW(LPNMTREEVIEW)
 
-typedef struct tagTVDISPINFO32A {
+typedef struct tagTVDISPINFOA {
 	NMHDR	hdr;
-	TVITEM32A	item;
-} NMTVDISPINFO32A, *LPNMTVDISPINFO32A;
+	TVITEMA	item;
+} NMTVDISPINFOA, *LPNMTVDISPINFOA;
 
-typedef struct tagTVDISPINFO32W {
+typedef struct tagTVDISPINFOW {
 	NMHDR	hdr;
-	TVITEM32W	item;
-} NMTVDISPINFO32W, *LPNMTVDISPINFO32W;
+	TVITEMW	item;
+} NMTVDISPINFOW, *LPNMTVDISPINFOW;
 
 #define NMTVDISPINFO            WINELIB_NAME_AW(NMTVDISPINFO)
 #define LPNMTVDISPINFO          WINELIB_NAME_AW(LPNMTVDISPINFO)
 #define TV_DISPINFO             NMTVDISPINFO
 
-typedef INT32 (CALLBACK *PFNTVCOMPARE)(LPARAM, LPARAM, LPARAM);
+typedef INT (CALLBACK *PFNTVCOMPARE)(LPARAM, LPARAM, LPARAM);
 
 typedef struct tagTVSORTCB
 {
@@ -1905,8 +1905,8 @@ typedef struct tagTVSORTCB
 #define LPTV_SORTCB LPTVSORTCB
 
 typedef struct tagTVHITTESTINFO {
-        POINT32 pt;
-        UINT32 flags;
+        POINT pt;
+        UINT flags;
         HTREEITEM hItem;
 } TVHITTESTINFO, *LPTVHITTESTINFO;
 
@@ -1924,67 +1924,66 @@ typedef struct tagNMTVCUSTOMDRAW
     NMCUSTOMDRAW nmcd;
     COLORREF     clrText;
     COLORREF     clrTextBk;
-    INT32 iLevel;                 /* IE>0x0400 */
+    INT iLevel;                 /* IE>0x0400 */
 } NMTVCUSTOMDRAW, *LPNMTVCUSTOMDRAW;
 
 /* Treeview tooltips */
 
-typedef struct tagNMTVGETINFOTIP32A
+typedef struct tagNMTVGETINFOTIPA
 {
     NMHDR hdr;
     LPSTR pszText;
-    INT32 cchTextMax;
+    INT cchTextMax;
     HTREEITEM hItem;
     LPARAM lParam;
-} NMTVGETINFOTIP32A, *LPNMTVGETINFOTIP32A;
+} NMTVGETINFOTIPA, *LPNMTVGETINFOTIPA;
 
-typedef struct tagNMTVGETINFOTIP32W
+typedef struct tagNMTVGETINFOTIPW
 {
     NMHDR hdr;
     LPWSTR pszText;
-    INT32 cchTextMax;
+    INT cchTextMax;
     HTREEITEM hItem;
     LPARAM lParam;
-} NMTVGETINFOTIP32W, *LPNMTVGETINFOTIP32W;
-
-
-#define NMTVGETINFOTIP          WINELIB_NAME(NMTVGETINFOTIP)
+} NMTVGETINFOTIPW, *LPNMTVGETINFOTIPW;
 
 
 
 
 
-#define TreeView_InsertItem32A(hwnd, phdi) \
-  (INT32)SendMessage32A((hwnd), TVM_INSERTITEM32A, 0, \
-                            (LPARAM)(LPTVINSERTSTRUCT32A)(phdi))
+
+
+#define TreeView_InsertItemA(hwnd, phdi) \
+  (INT)SendMessageA((hwnd), TVM_INSERTITEMA, 0, \
+                            (LPARAM)(LPTVINSERTSTRUCTA)(phdi))
 #define TreeView_DeleteItem(hwnd, hItem) \
-  (BOOL32)SendMessage32A((hwnd), TVM_DELETEITEM, 0, (LPARAM)(HTREEITEM)(hItem))
+  (BOOL)SendMessageA((hwnd), TVM_DELETEITEM, 0, (LPARAM)(HTREEITEM)(hItem))
 #define TreeView_DeleteAllItems(hwnd) \
-  (BOOL32)SendMessage32A((hwnd), TVM_DELETEITEM, 0, (LPARAM)TVI_ROOT)
+  (BOOL)SendMessageA((hwnd), TVM_DELETEITEM, 0, (LPARAM)TVI_ROOT)
 #define TreeView_Expand(hwnd, hitem, code) \
- (BOOL32)SendMessage32A((hwnd), TVM_EXPAND, (WPARAM)code, \
+ (BOOL)SendMessageA((hwnd), TVM_EXPAND, (WPARAM)code, \
 	(LPARAM)(HTREEITEM)(hitem))
 
 #define TreeView_GetItemRect(hwnd, hitem, prc, code) \
- (*(HTREEITEM *)prc = (hitem), (BOOL)SendMessage32A((hwnd), \
-			TVM_GETITEMRECT, (WPARAM32)(code), (LPARAM)(RECT *)(prc)))
+ (*(HTREEITEM *)prc = (hitem), (BOOL)SendMessageA((hwnd), \
+			TVM_GETITEMRECT, (WPARAM)(code), (LPARAM)(RECT *)(prc)))
 
 #define TreeView_GetCount(hwnd) \
-    (UINT32)SendMessage32A((hwnd), TVM_GETCOUNT, 0, 0)
+    (UINT)SendMessageA((hwnd), TVM_GETCOUNT, 0, 0)
 #define TreeView_GetIndent(hwnd) \
-    (UINT32)SendMessage32A((hwnd), TVM_GETINDENT, 0, 0)
+    (UINT)SendMessageA((hwnd), TVM_GETINDENT, 0, 0)
 #define TreeView_SetIndent(hwnd, indent) \
-    (BOOL32)SendMessage32A((hwnd), TVM_SETINDENT, (WPARAM)indent, 0)
+    (BOOL)SendMessageA((hwnd), TVM_SETINDENT, (WPARAM)indent, 0)
 
 #define TreeView_GetImageList(hwnd, iImage) \
-    (HIMAGELIST)SendMessage32A((hwnd), TVM_GETIMAGELIST, iImage, 0)
+    (HIMAGELIST)SendMessageA((hwnd), TVM_GETIMAGELIST, iImage, 0)
 
 #define TreeView_SetImageList(hwnd, himl, iImage) \
-    (HIMAGELIST)SendMessage32A((hwnd), TVM_SETIMAGELIST, iImage, \
- (LPARAM)(UINT32)(HIMAGELIST)(himl))
+    (HIMAGELIST)SendMessageA((hwnd), TVM_SETIMAGELIST, iImage, \
+ (LPARAM)(UINT)(HIMAGELIST)(himl))
 
 #define TreeView_GetNextItem(hwnd, hitem, code) \
-    (HTREEITEM)SendMessage32A((hwnd), TVM_GETNEXTITEM, (WPARAM)code,\
+    (HTREEITEM)SendMessageA((hwnd), TVM_GETNEXTITEM, (WPARAM)code,\
 (LPARAM)(HTREEITEM) (hitem))
 
 #define TreeView_GetChild(hwnd, hitem) \
@@ -2014,8 +2013,8 @@ typedef struct tagNMTVGETINFOTIP32W
 
 
 #define TreeView_Select(hwnd, hitem, code) \
- (UINT32)SendMessage32A((hwnd), TVM_SELECTITEM, (WPARAM32)code, \
-(LPARAM)(UINT32)(hitem))
+ (UINT)SendMessageA((hwnd), TVM_SELECTITEM, (WPARAM)code, \
+(LPARAM)(UINT)(hitem))
 
 
 #define TreeView_SelectItem(hwnd, hitem) \
@@ -2027,75 +2026,75 @@ typedef struct tagNMTVGETINFOTIP32W
 		TreeView_Select(hwnd, hitem, TVGN_FIRSTVISIBLE)
 */
 
-#define TreeView_GetItem32A(hwnd, pitem) \
- (BOOL32)SendMessage32A((hwnd), TVM_GETITEM32A, 0, (LPARAM) (TVITEM32A *)(pitem))
+#define TreeView_GetItemA(hwnd, pitem) \
+ (BOOL)SendMessageA((hwnd), TVM_GETITEMA, 0, (LPARAM) (TVITEMA *)(pitem))
 
-#define TreeView_SetItem32A(hwnd, pitem) \
- (BOOL32)SendMessage32A((hwnd), TVM_SETITEM32A, 0, (LPARAM)(const TVITEM32A *)(pitem)) 
+#define TreeView_SetItemA(hwnd, pitem) \
+ (BOOL)SendMessageA((hwnd), TVM_SETITEMA, 0, (LPARAM)(const TVITEMA *)(pitem)) 
 
 #define TreeView_EditLabel(hwnd, hitem) \
-    (HWND)SendMessage32A((hwnd), TVM_EDITLABEL, 0, (LPARAM)(HTREEITEM)(hitem))
+    (HWND)SendMessageA((hwnd), TVM_EDITLABEL, 0, (LPARAM)(HTREEITEM)(hitem))
 
 
 #define TreeView_GetEditControl(hwnd) \
-    (HWND)SendMessage32A((hwnd), TVM_GETEDITCONTROL, 0, 0)
+    (HWND)SendMessageA((hwnd), TVM_GETEDITCONTROL, 0, 0)
 
 #define TreeView_GetVisibleCount(hwnd) \
-    (UINT32)SendMessage32A((hwnd), TVM_GETVISIBLECOUNT, 0, 0)
+    (UINT)SendMessageA((hwnd), TVM_GETVISIBLECOUNT, 0, 0)
 
 #define TreeView_HitTest(hwnd, lpht) \
-    (HTREEITEM)SendMessage32A((hwnd), TVM_HITTEST, 0,\
+    (HTREEITEM)SendMessageA((hwnd), TVM_HITTEST, 0,\
 (LPARAM)(LPTVHITTESTINFO)(lpht))
 
 #define TreeView_CreateDragImage(hwnd, hitem) \
-    (HIMAGELIST)SendMessage32A((hwnd), TVM_CREATEDRAGIMAGE, 0,\
+    (HIMAGELIST)SendMessageA((hwnd), TVM_CREATEDRAGIMAGE, 0,\
 (LPARAM)(HTREEITEM)(hitem))
 
 #define TreeView_SortChildren(hwnd, hitem, recurse) \
-    (BOOL32)SendMessage32A((hwnd), TVM_SORTCHILDREN, (WPARAM32)recurse,\
+    (BOOL)SendMessageA((hwnd), TVM_SORTCHILDREN, (WPARAM)recurse,\
 (LPARAM)(HTREEITEM)(hitem))
 
 #define TreeView_EnsureVisible(hwnd, hitem) \
-    (BOOL32)SendMessage32A((hwnd), TVM_ENSUREVISIBLE, 0, (LPARAM)(UINT32)(hitem))
+    (BOOL)SendMessageA((hwnd), TVM_ENSUREVISIBLE, 0, (LPARAM)(UINT)(hitem))
 
 #define TreeView_SortChildrenCB(hwnd, psort, recurse) \
-    (BOOL32)SendMessage32A((hwnd), TVM_SORTCHILDRENCB, (WPARAM32)recurse, \
+    (BOOL)SendMessageA((hwnd), TVM_SORTCHILDRENCB, (WPARAM)recurse, \
     (LPARAM)(LPTV_SORTCB)(psort))
 
 #define TreeView_EndEditLabelNow(hwnd, fCancel) \
-    (BOOL32)SendMessage32A((hwnd), TVM_ENDEDITLABELNOW, (WPARAM32)fCancel, 0)
+    (BOOL)SendMessageA((hwnd), TVM_ENDEDITLABELNOW, (WPARAM)fCancel, 0)
 
 #define TreeView_GetISearchString(hwndTV, lpsz) \
-    (BOOL32)SendMessage32A((hwndTV), TVM_GETISEARCHSTRING, 0, \
+    (BOOL)SendMessageA((hwndTV), TVM_GETISEARCHSTRING, 0, \
 							(LPARAM)(LPTSTR)lpsz)
 
 #define TreeView_SetItemHeight(hwnd,  iHeight) \
-    (INT32)SendMessage32A((hwnd), TVM_SETITEMHEIGHT, (WPARAM32)iHeight, 0)
+    (INT)SendMessageA((hwnd), TVM_SETITEMHEIGHT, (WPARAM)iHeight, 0)
 #define TreeView_GetItemHeight(hwnd) \
-    (INT32)SendMessage32A((hwnd), TVM_GETITEMHEIGHT, 0, 0)
+    (INT)SendMessageA((hwnd), TVM_GETITEMHEIGHT, 0, 0)
 
 #define TreeView_SetBkColor(hwnd, clr) \
-    (COLORREF)SendMessage32A((hwnd), TVM_SETBKCOLOR, 0, (LPARAM)clr)
+    (COLORREF)SendMessageA((hwnd), TVM_SETBKCOLOR, 0, (LPARAM)clr)
 
 #define TreeView_SetTextColor(hwnd, clr) \
-    (COLORREF)SendMessage32A((hwnd), TVM_SETTEXTCOLOR, 0, (LPARAM)clr)
+    (COLORREF)SendMessageA((hwnd), TVM_SETTEXTCOLOR, 0, (LPARAM)clr)
 
 #define TreeView_GetBkColor(hwnd) \
-    (COLORREF)SendMessage32A((hwnd), TVM_GETBKCOLOR, 0, 0)
+    (COLORREF)SendMessageA((hwnd), TVM_GETBKCOLOR, 0, 0)
 
 #define TreeView_GetTextColor(hwnd) \
-    (COLORREF)SendMessage32A((hwnd), TVM_GETTEXTCOLOR, 0, 0)
+    (COLORREF)SendMessageA((hwnd), TVM_GETTEXTCOLOR, 0, 0)
 
 #define TreeView_SetScrollTime(hwnd, uTime) \
-    (UINT32)SendMessage32A((hwnd), TVM_SETSCROLLTIME, uTime, 0)
+    (UINT)SendMessageA((hwnd), TVM_SETSCROLLTIME, uTime, 0)
 
 #define TreeView_GetScrollTime(hwnd) \
-    (UINT32)SendMessage32A((hwnd), TVM_GETSCROLLTIME, 0, 0)
+    (UINT)SendMessageA((hwnd), TVM_GETSCROLLTIME, 0, 0)
 
 #define TreeView_SetInsertMarkColor(hwnd, clr) \
-    (COLORREF)SendMessage32A((hwnd), TVM_SETINSERTMARKCOLOR, 0, (LPARAM)clr)
+    (COLORREF)SendMessageA((hwnd), TVM_SETINSERTMARKCOLOR, 0, (LPARAM)clr)
 #define TreeView_GetInsertMarkColor(hwnd) \
-    (COLORREF)SendMessage32A((hwnd), TVM_GETINSERTMARKCOLOR, 0, 0)
+    (COLORREF)SendMessageA((hwnd), TVM_GETINSERTMARKCOLOR, 0, 0)
 
 
 
@@ -2107,8 +2106,8 @@ typedef struct tagNMTVGETINFOTIP32W
 
 /* Listview control */
 
-#define WC_LISTVIEW32A          "SysListView32"
-#define WC_LISTVIEW32W          L"SysListView32"
+#define WC_LISTVIEWA          "SysListView32"
+#define WC_LISTVIEWW          L"SysListView32"
 #define WC_LISTVIEW  WINELIB_NAME_AW(WC_LISTVIEW)
 
 #define LVS_ICON                0x0000
@@ -2214,46 +2213,46 @@ typedef struct tagNMTVGETINFOTIP32W
 #define LVM_GETIMAGELIST        (LVM_FIRST+2)
 #define LVM_SETIMAGELIST        (LVM_FIRST+3)
 #define LVM_GETITEMCOUNT        (LVM_FIRST+4)
-#define LVM_GETITEM32A          (LVM_FIRST+5)
-#define LVM_GETITEM32W          (LVM_FIRST+75)
+#define LVM_GETITEMA          (LVM_FIRST+5)
+#define LVM_GETITEMW          (LVM_FIRST+75)
 #define LVM_GETITEM             WINELIB_NAME_AW(LVM_GETITEM)
-#define LVM_SETITEM32A          (LVM_FIRST+6)
-#define LVM_SETITEM32W          (LVM_FIRST+76)
+#define LVM_SETITEMA          (LVM_FIRST+6)
+#define LVM_SETITEMW          (LVM_FIRST+76)
 #define LVM_SETITEM             WINELIB_NAME_AW(LVM_SETITEM)
-#define LVM_INSERTITEM32A       (LVM_FIRST+7)
-#define LVM_INSERTITEM32W       (LVM_FIRST+77)
+#define LVM_INSERTITEMA       (LVM_FIRST+7)
+#define LVM_INSERTITEMW       (LVM_FIRST+77)
 #define LVM_INSERTITEM          WINELIB_NAME_AW(LVM_INSERTITEM)
 #define LVM_DELETEITEM          (LVM_FIRST+8)
 #define LVM_DELETEALLITEMS      (LVM_FIRST+9)
 #define LVM_GETCALLBACKMASK     (LVM_FIRST+10)
 #define LVM_SETCALLBACKMASK     (LVM_FIRST+11)
 #define LVM_GETNEXTITEM         (LVM_FIRST+12)
-#define LVM_FINDITEM32A         (LVM_FIRST+13)
-#define LVM_FINDITEM32W         (LVM_FIRST+83)
+#define LVM_FINDITEMA         (LVM_FIRST+13)
+#define LVM_FINDITEMW         (LVM_FIRST+83)
 #define LVM_FINDITEM            WINELIB_NAME_AW(LVM_FINDITEM)
 #define LVM_GETITEMRECT         (LVM_FIRST+14)
-#define LVM_SETITEMPOSITION     (LVM_FIRST+15)
+#define LVM_SETITEMPOSITION16     (LVM_FIRST+15)
 #define LVM_GETITEMPOSITION     (LVM_FIRST+16)
-#define LVM_GETSTRINGWIDTH32A   (LVM_FIRST+17)
-#define LVM_GETSTRINGWIDTH32W   (LVM_FIRST+87)
+#define LVM_GETSTRINGWIDTHA   (LVM_FIRST+17)
+#define LVM_GETSTRINGWIDTHW   (LVM_FIRST+87)
 #define LVM_GETSTRINGWIDTH      WINELIB_NAME_AW(LVM_GETSTRINGWIDTH)
 #define LVM_HITTEST             (LVM_FIRST+18)
 #define LVM_ENSUREVISIBLE       (LVM_FIRST+19)
 #define LVM_SCROLL              (LVM_FIRST+20)
 #define LVM_REDRAWITEMS         (LVM_FIRST+21)
 #define LVM_ARRANGE             (LVM_FIRST+22)
-#define LVM_EDITLABEL32A        (LVM_FIRST+23)
-#define LVM_EDITLABEL32W        (LVM_FIRST+118)
+#define LVM_EDITLABELA        (LVM_FIRST+23)
+#define LVM_EDITLABELW        (LVM_FIRST+118)
 #define LVM_EDITLABEL           WINELIB_NAME_AW(LVM_EDITLABEL)
 #define LVM_GETEDITCONTROL      (LVM_FIRST+24)
-#define LVM_GETCOLUMN32A        (LVM_FIRST+25)
-#define LVM_GETCOLUMN32W        (LVM_FIRST+95)
+#define LVM_GETCOLUMNA        (LVM_FIRST+25)
+#define LVM_GETCOLUMNW        (LVM_FIRST+95)
 #define LVM_GETCOLUMN           WINELIB_NAME_AW(LVM_GETCOLUMN)
-#define LVM_SETCOLUMN32A        (LVM_FIRST+26)
-#define LVM_SETCOLUMN32W        (LVM_FIRST+96)
+#define LVM_SETCOLUMNA        (LVM_FIRST+26)
+#define LVM_SETCOLUMNW        (LVM_FIRST+96)
 #define LVM_SETCOLUMN           WINELIB_NAME_AW(LVM_SETCOLUMN)
-#define LVM_INSERTCOLUMN32A     (LVM_FIRST+27)
-#define LVM_INSERTCOLUMN32W     (LVM_FIRST+97)
+#define LVM_INSERTCOLUMNA     (LVM_FIRST+27)
+#define LVM_INSERTCOLUMNW     (LVM_FIRST+97)
 #define LVM_INSERTCOLUMN        WINELIB_NAME_AW(LVM_INSERTCOLUMN)
 #define LVM_DELETECOLUMN        (LVM_FIRST+28)
 #define LVM_GETCOLUMNWIDTH      (LVM_FIRST+29)
@@ -2272,19 +2271,19 @@ typedef struct tagNMTVGETINFOTIP32W
 #define LVM_UPDATE              (LVM_FIRST+42)
 #define LVM_SETITEMSTATE        (LVM_FIRST+43)
 #define LVM_GETITEMSTATE        (LVM_FIRST+44)
-#define LVM_GETITEMTEXT32A      (LVM_FIRST+45)
-#define LVM_GETITEMTEXT32W      (LVM_FIRST+115)
+#define LVM_GETITEMTEXTA      (LVM_FIRST+45)
+#define LVM_GETITEMTEXTW      (LVM_FIRST+115)
 #define LVM_GETITEMTEXT         WINELIB_NAME_AW(LVM_GETITEMTEXT)
-#define LVM_SETITEMTEXT32A      (LVM_FIRST+46)
-#define LVM_SETITEMTEXT32W      (LVM_FIRST+116)
+#define LVM_SETITEMTEXTA      (LVM_FIRST+46)
+#define LVM_SETITEMTEXTW      (LVM_FIRST+116)
 #define LVM_SETITEMTEXT         WINELIB_NAME_AW(LVM_SETITEMTEXT)
 #define LVM_SETITEMCOUNT        (LVM_FIRST+47)
 #define LVM_SORTITEMS           (LVM_FIRST+48)
-#define LVM_SETITEMPOSITION32   (LVM_FIRST+49)
+#define LVM_SETITEMPOSITION   (LVM_FIRST+49)
 #define LVM_GETSELECTEDCOUNT    (LVM_FIRST+50)
 #define LVM_GETITEMSPACING      (LVM_FIRST+51)
-#define LVM_GETISEARCHSTRING32A (LVM_FIRST+52)
-#define LVM_GETISEARCHSTRING32W (LVM_FIRST+117)
+#define LVM_GETISEARCHSTRINGA (LVM_FIRST+52)
+#define LVM_GETISEARCHSTRINGW (LVM_FIRST+117)
 #define LVM_GETISEARCHSTRING    WINELIB_NAME_AW(LVM_GETISEARCHSTRING)
 #define LVM_SETICONSPACING      (LVM_FIRST+53)
 #define LVM_SETEXTENDEDLISTVIEWSTYLE (LVM_FIRST+54)
@@ -2301,11 +2300,11 @@ typedef struct tagNMTVGETINFOTIP32W
 #define LVM_SETWORKAREAS        (LVM_FIRST+65)
 #define LVM_GETSELECTIONMARK    (LVM_FIRST+66)
 #define LVM_SETSELECTIONMARK    (LVM_FIRST+67)
-#define LVM_SETBKIMAGE32A       (LVM_FIRST+68)
-#define LVM_SETBKIMAGE32W       (LVM_FIRST+138)
+#define LVM_SETBKIMAGEA       (LVM_FIRST+68)
+#define LVM_SETBKIMAGEW       (LVM_FIRST+138)
 #define LVM_SETBKIMAGE          WINELIB_NAME_AW(LVM_SETBKIMAGE)
-#define LVM_GETBKIMAGE32A       (LVM_FIRST+69)
-#define LVM_GETBKIMAGE32W       (LVM_FIRST+139)
+#define LVM_GETBKIMAGEA       (LVM_FIRST+69)
+#define LVM_GETBKIMAGEW       (LVM_FIRST+139)
 #define LVM_GETBKIMAGE          WINELIB_NAME_AW(LVM_GETBKIMAGE)
 #define LVM_GETWORKAREAS        (LVM_FIRST+70)
 #define LVM_SETHOVERTIME        (LVM_FIRST+71)
@@ -2322,27 +2321,27 @@ typedef struct tagNMTVGETINFOTIP32W
 #define LVN_INSERTITEM          (LVN_FIRST-2)
 #define LVN_DELETEITEM          (LVN_FIRST-3)
 #define LVN_DELETEALLITEMS      (LVN_FIRST-4)
-#define LVN_BEGINLABELEDIT32A   (LVN_FIRST-5)
-#define LVN_BEGINLABELEDIT32W   (LVN_FIRST-75)
+#define LVN_BEGINLABELEDITA   (LVN_FIRST-5)
+#define LVN_BEGINLABELEDITW   (LVN_FIRST-75)
 #define LVN_BEGINLABELEDIT WINELIB_NAME_AW(LVN_BEGINLABELEDIT)
-#define LVN_ENDLABELEDIT32A     (LVN_FIRST-6)
-#define LVN_ENDLABELEDIT32W     (LVN_FIRST-76)
+#define LVN_ENDLABELEDITA     (LVN_FIRST-6)
+#define LVN_ENDLABELEDITW     (LVN_FIRST-76)
 #define LVN_ENDLABELEDIT WINELIB_NAME_AW(LVN_ENDLABELEDIT)
 #define LVN_COLUMNCLICK         (LVN_FIRST-8)
 #define LVN_BEGINDRAG           (LVN_FIRST-9)
 #define LVN_BEGINRDRAG          (LVN_FIRST-11)
 #define LVN_ODCACHEHINT         (LVN_FIRST-13)
-#define LVN_ODFINDITEM32A       (LVN_FIRST-52)
-#define LVN_ODFINDITEM32W       (LVN_FIRST-79)
+#define LVN_ODFINDITEMA       (LVN_FIRST-52)
+#define LVN_ODFINDITEMW       (LVN_FIRST-79)
 #define LVN_ODFINDITEM WINELIB_NAME_AW(LVN_ODFINDITEM)
 #define LVN_ITEMACTIVATE        (LVN_FIRST-14)
 #define LVN_ODSTATECHANGED      (LVN_FIRST-15)
 #define LVN_HOTTRACK            (LVN_FIRST-21)
-#define LVN_GETDISPINFO32A      (LVN_FIRST-50)
-#define LVN_GETDISPINFO32W      (LVN_FIRST-77)
+#define LVN_GETDISPINFOA      (LVN_FIRST-50)
+#define LVN_GETDISPINFOW      (LVN_FIRST-77)
 #define LVN_GETDISPINFO WINELIB_NAME_AW(LVN_GETDISPINFO)
-#define LVN_SETDISPINFO32A      (LVN_FIRST-51)
-#define LVN_SETDISPINFO32W      (LVN_FIRST-78)
+#define LVN_SETDISPINFOA      (LVN_FIRST-51)
+#define LVN_SETDISPINFOW      (LVN_FIRST-78)
 #define LVN_SETDISPINFO WINELIB_NAME_AW(LVN_SETDISPINFO)
 
 #define LVA_ALIGNLEFT           0x0000
@@ -2352,70 +2351,70 @@ typedef struct tagNMTVGETINFOTIP32W
 
 typedef struct tagLVITEMA
 {
-    UINT32 mask;
-    INT32  iItem;
-    INT32  iSubItem;
-    UINT32 state;
-    UINT32 stateMask;
+    UINT mask;
+    INT  iItem;
+    INT  iSubItem;
+    UINT state;
+    UINT stateMask;
     LPSTR  pszText;
-    INT32  cchTextMax;
-    INT32  iImage;
+    INT  cchTextMax;
+    INT  iImage;
     LPARAM lParam;
-    INT32  iIndent;	/* (_WIN32_IE >= 0x0300) */
-} LVITEM32A, *LPLVITEM32A;
+    INT  iIndent;	/* (_WIN32_IE >= 0x0300) */
+} LVITEMA, *LPLVITEMA;
 
 typedef struct tagLVITEMW
 {
-    UINT32 mask;
-    INT32  iItem;
-    INT32  iSubItem;
-    UINT32 state;
-    UINT32 stateMask;
+    UINT mask;
+    INT  iItem;
+    INT  iSubItem;
+    UINT state;
+    UINT stateMask;
     LPWSTR pszText;
-    INT32  cchTextMax;
-    INT32  iImage;
+    INT  cchTextMax;
+    INT  iImage;
     LPARAM lParam;
-    INT32  iIndent;	/* (_WIN32_IE >= 0x0300) */
-} LVITEM32W, *LPLVITEM32W;
+    INT  iIndent;	/* (_WIN32_IE >= 0x0300) */
+} LVITEMW, *LPLVITEMW;
 
 #define LVITEM   WINELIB_NAME_AW(LVITEM)
 #define LPLVITEM WINELIB_NAME_AW(LPLVITEM)
 
-#define LVITEM_V1_SIZE32A CCSIZEOF_STRUCT(LVITEM32A, lParam)
-#define LVITEM_V1_SIZE32W CCSIZEOF_STRUCT(LVITEM32W, lParam)
+#define LVITEM_V1_SIZEA CCSIZEOF_STRUCT(LVITEMA, lParam)
+#define LVITEM_V1_SIZEW CCSIZEOF_STRUCT(LVITEMW, lParam)
 #define LVITEM_V1_SIZE WINELIB_NAME_AW(LVITEM_V1_SIZE)
 
 #define LV_ITEM LVITEM
 
 typedef struct tagLVCOLUMNA
 {
-    UINT32 mask;
-    INT32  fmt;
-    INT32  cx;
+    UINT mask;
+    INT  fmt;
+    INT  cx;
     LPSTR  pszText;
-    INT32  cchTextMax;
-    INT32  iSubItem;
-    INT32  iImage;  /* (_WIN32_IE >= 0x0300) */
-    INT32  iOrder;  /* (_WIN32_IE >= 0x0300) */
-} LVCOLUMN32A, *LPLVCOLUMN32A;
+    INT  cchTextMax;
+    INT  iSubItem;
+    INT  iImage;  /* (_WIN32_IE >= 0x0300) */
+    INT  iOrder;  /* (_WIN32_IE >= 0x0300) */
+} LVCOLUMNA, *LPLVCOLUMNA;
 
 typedef struct tagLVCOLUMNW
 {
-    UINT32 mask;
-    INT32  fmt;
-    INT32  cx;
+    UINT mask;
+    INT  fmt;
+    INT  cx;
     LPWSTR pszText;
-    INT32  cchTextMax;
-    INT32  iSubItem;
-    INT32  iImage;	/* (_WIN32_IE >= 0x0300) */
-    INT32  iOrder;	/* (_WIN32_IE >= 0x0300) */
-} LVCOLUMN32W, *LPLVCOLUMN32W;
+    INT  cchTextMax;
+    INT  iSubItem;
+    INT  iImage;	/* (_WIN32_IE >= 0x0300) */
+    INT  iOrder;	/* (_WIN32_IE >= 0x0300) */
+} LVCOLUMNW, *LPLVCOLUMNW;
 
 #define LVCOLUMN   WINELIB_NAME_AW(LVCOLUMN)
 #define LPLVCOLUMN WINELIB_NAME_AW(LPLVCOLUMN)
 
-#define LVCOLUMN_V1_SIZE32A CCSIZEOF_STRUCT(LVCOLUMN32A, iSubItem)
-#define LVCOLUMN_V1_SIZE32W CCSIZEOF_STRUCT(LVCOLUMN32W, iSubItem)
+#define LVCOLUMN_V1_SIZEA CCSIZEOF_STRUCT(LVCOLUMNA, iSubItem)
+#define LVCOLUMN_V1_SIZEW CCSIZEOF_STRUCT(LVCOLUMNW, iSubItem)
 #define LVCOLUMN_V1_SIZE WINELIB_NAME_AW(LVCOLUMN_V1_SIZE)
 
 #define LV_COLUMN       LVCOLUMN
@@ -2424,12 +2423,12 @@ typedef struct tagLVCOLUMNW
 typedef struct tagNMLISTVIEW
 {
     NMHDR   hdr;
-    INT32   iItem;
-    INT32   iSubItem;
-    UINT32  uNewState;
-    UINT32  uOldState;
-    UINT32  uChanged;
-    POINT32 ptAction;
+    INT   iItem;
+    INT   iSubItem;
+    UINT  uNewState;
+    UINT  uOldState;
+    UINT  uChanged;
+    POINT ptAction;
     LPARAM  lParam;
 } NMLISTVIEW, *LPNMLISTVIEW;
 
@@ -2440,14 +2439,14 @@ typedef struct tagNMLISTVIEW
 typedef struct tagLVDISPINFO
 {
     NMHDR     hdr;
-    LVITEM32A item;
-} NMLVDISPINFO32A, *LPNMLVDISPINFO32A;
+    LVITEMA item;
+} NMLVDISPINFOA, *LPNMLVDISPINFOA;
 
 typedef struct tagLVDISPINFOW
 {
     NMHDR     hdr;
-    LVITEM32W item;
-} NMLVDISPINFO32W, *LPNMLVDISPINFO32W;
+    LVITEMW item;
+} NMLVDISPINFOW, *LPNMLVDISPINFOW;
 
 #define NMLVDISPINFO   WINELIB_NAME_AW(NMLVDISPINFO)
 #define LPNMLVDISPINFO WINELIB_NAME_AW(LPNMLVDISPINFO)
@@ -2460,17 +2459,17 @@ typedef struct tagLVKEYDOWN
 {
   NMHDR hdr;
   WORD  wVKey;
-  UINT32 flags;
+  UINT flags;
 } NMLVKEYDOWN, *LPNMLVKEYDOWN;
 
 #define LV_KEYDOWN     NMLVKEYDOWN
 
 typedef struct tagLVHITTESTINFO
 {
-    POINT32 pt;
-    UINT32  flags;
-    INT32   iItem;
-    INT32   iSubItem;
+    POINT pt;
+    UINT  flags;
+    INT   iItem;
+    INT   iSubItem;
 } LVHITTESTINFO, *LPLVHITTESTINFO;
 
 #define LV_HITTESTINFO LVHITTESTINFO
@@ -2479,65 +2478,65 @@ typedef struct tagLVHITTESTINFO
 
 typedef struct tagLVFINDINFO
 {
-	UINT32 flags;
+	UINT flags;
 	LPCSTR psz;
 	LPARAM lParam;
-	POINT32 pt;
-	UINT32 vkDirection;
+	POINT pt;
+	UINT vkDirection;
 } LVFINDINFO, *LPLVFINDINFO;
 
 #define LV_FINDINFO LVFINDINFO
 
 typedef struct tagTCHITTESTINFO
 {
-	POINT32 pt;
-	UINT32 flags;
+	POINT pt;
+	UINT flags;
 } TCHITTESTINFO, *LPTCHITTESTINFO;
 
 #define TC_HITTESTINFO TCHITTESTINFO
 
-typedef INT32 (CALLBACK *PFNLVCOMPARE)(LPARAM, LPARAM, LPARAM);
+typedef INT (CALLBACK *PFNLVCOMPARE)(LPARAM, LPARAM, LPARAM);
 
 #define ListView_SetBkColor(hwnd,clrBk) \
-    (BOOL32)SendMessage32A((hwnd),LVM_SETBKCOLOR,0,(LPARAM)(COLORREF)(clrBk))
+    (BOOL)SendMessageA((hwnd),LVM_SETBKCOLOR,0,(LPARAM)(COLORREF)(clrBk))
 #define ListView_GetImageList(hwnd,iImageList) \
-    (HIMAGELIST)SendMessage32A((hwnd),LVM_GETIMAGELIST,(WPARAM)(INT32)(iImageList),0L)
+    (HIMAGELIST)SendMessageA((hwnd),LVM_GETIMAGELIST,(WPARAM)(INT)(iImageList),0L)
 #define ListView_SetImageList(hwnd,himl,iImageList) \
-    (HIMAGELIST)(UINT32)SendMessage32A((hwnd),LVM_SETIMAGELIST,(WPARAM32)(iImageList),(LPARAM)(UINT32)(HIMAGELIST)(himl))
+    (HIMAGELIST)(UINT)SendMessageA((hwnd),LVM_SETIMAGELIST,(WPARAM)(iImageList),(LPARAM)(UINT)(HIMAGELIST)(himl))
 #define ListView_GetItemCount(hwnd) \
-    (INT32)SendMessage32A((hwnd),LVM_GETITEMCOUNT,0,0L)
-#define ListView_GetItem32A(hwnd,pitem) \
-    (BOOL32)SendMessage32A((hwnd),LVM_GETITEM32A,0,(LPARAM)(LVITEM32A *)(pitem))
-#define ListView_GetItem32W(hwnd,pitem) \
-    (BOOL32)SendMessage32W((hwnd),LVM_GETITEM32W,0,(LPARAM)(LVITEM32W *)(pitem))
+    (INT)SendMessageA((hwnd),LVM_GETITEMCOUNT,0,0L)
+#define ListView_GetItemA(hwnd,pitem) \
+    (BOOL)SendMessageA((hwnd),LVM_GETITEMA,0,(LPARAM)(LVITEMA *)(pitem))
+#define ListView_GetItemW(hwnd,pitem) \
+    (BOOL)SendMessageW((hwnd),LVM_GETITEMW,0,(LPARAM)(LVITEMW *)(pitem))
 #define ListView_GetItem WINELIB_NAME_AW(ListView_GetItem)
 #define ListView_HitTest(hwnd,pinfo) \
-    (INT32)SendMessage32A((hwnd),LVMHITTEST,0,(LPARAM)(LPLVHITTESTINFO)(pinfo))
-#define ListView_InsertItem32A(hwnd,pitem) \
-    (INT32)SendMessage32A((hwnd),LVM_INSERTITEM32A,0,(LPARAM)(const LVITEM32A *)(pitem))
-#define ListView_InsertItem32W(hwnd,pitem) \
-    (INT32)SendMessage32W((hwnd),LVM_INSERTITEM32W,0,(LPARAM)(const LVITEM32W *)(pitem))
+    (INT)SendMessageA((hwnd),LVMHITTEST,0,(LPARAM)(LPLVHITTESTINFO)(pinfo))
+#define ListView_InsertItemA(hwnd,pitem) \
+    (INT)SendMessageA((hwnd),LVM_INSERTITEMA,0,(LPARAM)(const LVITEMA *)(pitem))
+#define ListView_InsertItemW(hwnd,pitem) \
+    (INT)SendMessageW((hwnd),LVM_INSERTITEMW,0,(LPARAM)(const LVITEMW *)(pitem))
 #define ListView_InsertItem WINELIB_NAME_AW(ListView_InsertItem)
 #define ListView_DeleteAllItems(hwnd) \
-    (BOOL32)SendMessage32A((hwnd),LVM_DELETEALLITEMS,0,0L)
-#define ListView_InsertColumn32A(hwnd,iCol,pcol) \
-    (INT32)SendMessage32A((hwnd),LVM_INSERTCOLUMN32A,(WPARAM32)(INT32)(iCol),(LPARAM)(const LVCOLUMN32A *)(pcol))
-#define ListView_InsertColumn32W(hwnd,iCol,pcol) \
-    (INT32)SendMessage32W((hwnd),LVM_INSERTCOLUMN32W,(WPARAM32)(INT32)(iCol),(LPARAM)(const LVCOLUMN32W *)(pcol))
+    (BOOL)SendMessageA((hwnd),LVM_DELETEALLITEMS,0,0L)
+#define ListView_InsertColumnA(hwnd,iCol,pcol) \
+    (INT)SendMessageA((hwnd),LVM_INSERTCOLUMNA,(WPARAM)(INT)(iCol),(LPARAM)(const LVCOLUMNA *)(pcol))
+#define ListView_InsertColumnW(hwnd,iCol,pcol) \
+    (INT)SendMessageW((hwnd),LVM_INSERTCOLUMNW,(WPARAM)(INT)(iCol),(LPARAM)(const LVCOLUMNW *)(pcol))
 #define ListView_InsertColumn WINELIB_NAME_AW(ListView_InsertColumn)
 #define ListView_SortItems(hwndLV,_pfnCompare,_lPrm) \
-    (BOOL32)SendMessage32A((hwndLV),LVM_SORTITEMS,(WPARAM32)(LPARAM)_lPrm,(LPARAM)(PFNLVCOMPARE)_pfnCompare)
+    (BOOL)SendMessageA((hwndLV),LVM_SORTITEMS,(WPARAM)(LPARAM)_lPrm,(LPARAM)(PFNLVCOMPARE)_pfnCompare)
 #define ListView_SetItemPosition(hwndLV, i, x, y) \
-    (BOOL32)SendMessage32A((hwndLV),LVM_SETITEMPOSITION,(WPARAM32)(INT32)(i),MAKELPARAM((x),(y)))
+    (BOOL)SendMessageA((hwndLV),LVM_SETITEMPOSITION16,(WPARAM)(INT)(i),MAKELPARAM((x),(y)))
 #define ListView_GetSelectedCount(hwndLV) \
-    (UINT32)SendMessage32A((hwndLV),LVM_GETSELECTEDCOUNT,0,0L)
+    (UINT)SendMessageA((hwndLV),LVM_GETSELECTEDCOUNT,0,0L)
 
 
 /* Tab Control */
 
 #define WC_TABCONTROL16		 "SysTabControl"
-#define WC_TABCONTROL32A	 "SysTabControl32"
-#define WC_TABCONTROL32W	L"SysTabControl32"
+#define WC_TABCONTROLA	 "SysTabControl32"
+#define WC_TABCONTROLW	L"SysTabControl32"
 
 #define WC_TABCONTROL		WINELIB_NAME_AW(WC_TABCONTROL)
 
@@ -2572,13 +2571,13 @@ typedef INT32 (CALLBACK *PFNLVCOMPARE)(LPARAM, LPARAM, LPARAM);
 #define TCM_SETIMAGELIST        (TCM_FIRST + 3)
 #define TCM_GETITEMCOUNT	(TCM_FIRST + 4)
 #define TCM_GETITEM				WINELIB_NAME_AW(TCM_GETITEM)
-#define TCM_GETITEM32A			(TCM_FIRST + 5)
-#define TCM_GETITEM32W			(TCM_FIRST + 60)
-#define TCM_SETITEM32A			(TCM_FIRST + 6)
-#define TCM_SETITEM32W			(TCM_FIRST + 61)
+#define TCM_GETITEMA			(TCM_FIRST + 5)
+#define TCM_GETITEMW			(TCM_FIRST + 60)
+#define TCM_SETITEMA			(TCM_FIRST + 6)
+#define TCM_SETITEMW			(TCM_FIRST + 61)
 #define TCM_SETITEM				WINELIB_NAME_AW(TCM_SETITEM)
-#define TCM_INSERTITEM32A		(TCM_FIRST + 7)
-#define TCM_INSERTITEM32W		(TCM_FIRST + 62)
+#define TCM_INSERTITEMA		(TCM_FIRST + 7)
+#define TCM_INSERTITEMW		(TCM_FIRST + 62)
 #define TCM_INSERTITEM			WINELIB_NAME_AW(TCM_INSERTITEM)
 #define TCM_DELETEITEM          (TCM_FIRST + 8)
 #define TCM_DELETEALLITEMS      (TCM_FIRST + 9)
@@ -2623,26 +2622,26 @@ typedef INT32 (CALLBACK *PFNLVCOMPARE)(LPARAM, LPARAM, LPARAM);
 #define TCHT_ONITEM       (TCHT_ONITEMICON | TCHT_ONITEMLABEL)
 
 
-typedef struct tagTCITEM32A {
-    UINT32 mask;
-    UINT32 dwState;
-    UINT32 dwStateMask;
+typedef struct tagTCITEMA {
+    UINT mask;
+    UINT dwState;
+    UINT dwStateMask;
     LPSTR  pszText;
-    INT32  cchTextMax;
-    INT32  iImage;
+    INT  cchTextMax;
+    INT  iImage;
     LPARAM lParam;
-} TCITEM32A, *LPTCITEM32A;
+} TCITEMA, *LPTCITEMA;
 
-typedef struct tagTCITEM32W
+typedef struct tagTCITEMW
 {
-    UINT32 mask;
+    UINT mask;
     DWORD  dwState;
     DWORD  dwStateMask;
     LPWSTR pszText;
-    INT32  cchTextMax;
-    INT32  iImage;
+    INT  cchTextMax;
+    INT  iImage;
     LPARAM lParam;
-} TCITEM32W, *LPTCITEM32W;
+} TCITEMW, *LPTCITEMW;
 
 #define TCITEM   WINELIB_NAME_AW(TCITEM)
 #define LPTCITEM WINELIB_NAME_AW(LPTCITEM)
@@ -2658,20 +2657,20 @@ typedef struct tagTCITEM32W
 
 /* ComboBoxEx control */
 
-#define WC_COMBOBOXEX32A        "ComboBoxEx32"
-#define WC_COMBOBOXEX32W        L"ComboBoxEx32"
+#define WC_COMBOBOXEXA        "ComboBoxEx32"
+#define WC_COMBOBOXEXW        L"ComboBoxEx32"
 #define WC_COMBOBOXEX           WINELIB_NAME_AW(WC_COMBOBOXEX)
 
-#define CBEM_INSERTITEM32A      (WM_USER+1)
-#define CBEM_INSERTITEM32W      (WM_USER+11)
+#define CBEM_INSERTITEMA      (WM_USER+1)
+#define CBEM_INSERTITEMW      (WM_USER+11)
 #define CBEM_INSERTITEM         WINELIB_NAME_AW(CBEM_INSERTITEM)
 #define CBEM_SETIMAGELIST       (WM_USER+2)
 #define CBEM_GETIMAGELIST       (WM_USER+3)
-#define CBEM_GETITEM32A         (WM_USER+4)
-#define CBEM_GETITEM32W         (WM_USER+13)
+#define CBEM_GETITEMA         (WM_USER+4)
+#define CBEM_GETITEMW         (WM_USER+13)
 #define CBEM_GETITEM            WINELIB_NAME_AW(CBEM_GETITEM)
-#define CBEM_SETITEM32A         (WM_USER+5)
-#define CBEM_SETITEM32W         (WM_USER+12)
+#define CBEM_SETITEMA         (WM_USER+5)
+#define CBEM_SETITEMW         (WM_USER+12)
 #define CBEM_SETITEM            WINELIB_NAME_AW(CBEM_SETITEM)
 #define CBEM_GETCOMBOCONTROL    (WM_USER+6)
 #define CBEM_GETEDITCONTROL     (WM_USER+7)
@@ -2690,8 +2689,8 @@ typedef struct tagTCITEM32W
 /* Hotkey control */
 
 #define HOTKEY_CLASS16          "msctls_hotkey"
-#define HOTKEY_CLASS32A         "msctls_hotkey32"
-#define HOTKEY_CLASS32W         L"msctls_hotkey32"
+#define HOTKEY_CLASSA         "msctls_hotkey32"
+#define HOTKEY_CLASSW         L"msctls_hotkey32"
 #define HOTKEY_CLASS            WINELIB_NAME_AW(HOTKEY_CLASS)
 
 #define HOTKEYF_SHIFT           0x01
@@ -2715,8 +2714,8 @@ typedef struct tagTCITEM32W
 
 /* animate control */
 
-#define ANIMATE_CLASS32A        "SysAnimate32"
-#define ANIMATE_CLASS32W        L"SysAnimate32"
+#define ANIMATE_CLASSA        "SysAnimate32"
+#define ANIMATE_CLASSW        L"SysAnimate32"
 #define ANIMATE_CLASS           WINELIB_NAME_AW(ANIMATE_CLASS)
 
 #define ACS_CENTER              0x0001
@@ -2724,8 +2723,8 @@ typedef struct tagTCITEM32W
 #define ACS_AUTOPLAY            0x0004
 #define ACS_TIMER               0x0008  /* no threads, just timers */
 
-#define ACM_OPEN32A             (WM_USER+100)
-#define ACM_OPEN32W             (WM_USER+103)
+#define ACM_OPENA             (WM_USER+100)
+#define ACM_OPENW             (WM_USER+103)
 #define ACM_OPEN                WINELIB_NAME_AW(ACM_OPEN)
 #define ACM_PLAY                (WM_USER+101)
 #define ACM_STOP                (WM_USER+102)
@@ -2733,37 +2732,37 @@ typedef struct tagTCITEM32W
 #define ACN_START               1
 #define ACN_STOP                2
 
-#define Animate_Create32A(hwndP,id,dwStyle,hInstance) \
-    CreateWindow32A(ANIMATE_CLASS32A,NULL,dwStyle,0,0,0,0,hwndP,(HMENU32)(id),hInstance,NULL)
-#define Animate_Create32W(hwndP,id,dwStyle,hInstance) \
-    CreateWindow32W(ANIMATE_CLASS32W,NULL,dwStyle,0,0,0,0,hwndP,(HMENU32)(id),hInstance,NULL)
+#define Animate_CreateA(hwndP,id,dwStyle,hInstance) \
+    CreateWindowA(ANIMATE_CLASSA,NULL,dwStyle,0,0,0,0,hwndP,(HMENU)(id),hInstance,NULL)
+#define Animate_CreateW(hwndP,id,dwStyle,hInstance) \
+    CreateWindowW(ANIMATE_CLASSW,NULL,dwStyle,0,0,0,0,hwndP,(HMENU)(id),hInstance,NULL)
 #define Animate_Create WINELIB_NAME_AW(Animate_Create)
-#define Animate_Open32A(hwnd,szName) \
-    (BOOL32)SendMessage32A(hwnd,ACM_OPEN32A,0,(LPARAM)(LPSTR)(szName))
-#define Animate_Open32W(hwnd,szName) \
-    (BOOL32)SendMessage32W(hwnd,ACM_OPEN32W,0,(LPARAM)(LPWSTR)(szName))
+#define Animate_OpenA(hwnd,szName) \
+    (BOOL)SendMessageA(hwnd,ACM_OPENA,0,(LPARAM)(LPSTR)(szName))
+#define Animate_OpenW(hwnd,szName) \
+    (BOOL)SendMessageW(hwnd,ACM_OPENW,0,(LPARAM)(LPWSTR)(szName))
 #define Animate_Open WINELIB_NAME_AW(Animate_Open)
-#define Animate_OpenEx32A(hwnd,hInst,szName) \
-    (BOOL32)SendMessage32A(hwnd,ACM_OPEN32A,(WPARAM32)hInst,(LPARAM)(LPSTR)(szName))
-#define Animate_OpenEx32W(hwnd,hInst,szName) \
-    (BOOL32)SendMessage32W(hwnd,ACM_OPEN32W,(WPARAM32)hInst,(LPARAM)(LPWSTR)(szName))
+#define Animate_OpenExA(hwnd,hInst,szName) \
+    (BOOL)SendMessageA(hwnd,ACM_OPENA,(WPARAM)hInst,(LPARAM)(LPSTR)(szName))
+#define Animate_OpenExW(hwnd,hInst,szName) \
+    (BOOL)SendMessageW(hwnd,ACM_OPENW,(WPARAM)hInst,(LPARAM)(LPWSTR)(szName))
 #define Animate_OpenEx WINELIB_NAME_AW(Animate_OpenEx)
 #define Animate_Play(hwnd,from,to,rep) \
-    (BOOL32)SendMessage32A(hwnd,ACM_PLAY,(WPARAM32)(UINT32)(rep),(LPARAM)MAKELONG(from,to))
+    (BOOL)SendMessageA(hwnd,ACM_PLAY,(WPARAM)(UINT)(rep),(LPARAM)MAKELONG(from,to))
 #define Animate_Stop(hwnd) \
-    (BOOL32)SendMessage32A(hwnd,ACM_STOP,0,0)
+    (BOOL)SendMessageA(hwnd,ACM_STOP,0,0)
 #define Animate_Close(hwnd) \
-    (BOOL32)SendMessage32A(hwnd,ACM_OPEN32A,0,0)
+    (BOOL)SendMessageA(hwnd,ACM_OPENA,0,0)
 #define Animate_Seek(hwnd,frame) \
-    (BOOL32)SendMessage32A(hwnd,ACM_PLAY,1,(LPARAM)MAKELONG(frame,frame))
+    (BOOL)SendMessageA(hwnd,ACM_PLAY,1,(LPARAM)MAKELONG(frame,frame))
 
 
 /**************************************************************************
  * IP Address control
  */
 
-#define WC_IPADDRESS32A		"SysIPAddress32"
-#define WC_IPADDRESS32W		L"SysIPAddress32"
+#define WC_IPADDRESSA		"SysIPAddress32"
+#define WC_IPADDRESSW		L"SysIPAddress32"
 #define WC_IPADDRESS		WINELIB_NAME_AW(WC_IPADDRESS)
 
 #define IPM_CLEARADDRESS	(WM_USER+100)
@@ -2780,8 +2779,8 @@ typedef struct tagTCITEM32W
 typedef struct tagNMIPADDRESS
 {
     NMHDR hdr;
-    INT32 iField;
-    INT32 iValue;
+    INT iField;
+    INT iValue;
 } NMIPADDRESS, *LPNMIPADDRESS;
 
 #define MAKEIPRANGE(low,high) \
@@ -2799,8 +2798,8 @@ typedef struct tagNMIPADDRESS
  * Native Font control
  */
 
-#define WC_NATIVEFONTCTL32A	"NativeFontCtl"
-#define WC_NATIVEFONTCTL32W	L"NativeFontCtl"
+#define WC_NATIVEFONTCTLA	"NativeFontCtl"
+#define WC_NATIVEFONTCTLW	L"NativeFontCtl"
 #define WC_NATIVEFONTCTL	WINELIB_NAME_AW(WC_NATIVEFONTCTL)
 
 #define NFS_EDIT		0x0001
@@ -2814,8 +2813,8 @@ typedef struct tagNMIPADDRESS
  * Month calendar control
  */
 
-#define MONTHCAL_CLASS32A	"SysMonthCal32"
-#define MONTHCAL_CLASS32W	L"SysMonthCal32"
+#define MONTHCAL_CLASSA	"SysMonthCal32"
+#define MONTHCAL_CLASSW	L"SysMonthCal32"
 #define MONTHCAL_CLASS		WINELIB_NAME_AW(MONTHCAL_CLASS)
 
 
@@ -2823,8 +2822,8 @@ typedef struct tagNMIPADDRESS
  * Date and time picker control
  */
 
-#define DATETIMEPICK_CLASS32A	"SysDateTimePick32"
-#define DATETIMEPICK_CLASS32W	L"SysDateTimePick32"
+#define DATETIMEPICK_CLASSA	"SysDateTimePick32"
+#define DATETIMEPICK_CLASSW	L"SysDateTimePick32"
 #define DATETIMEPICK_CLASS	WINELIB_NAME_AW(DATETIMEPICK_CLASS)
 
 #define DTM_FIRST        0x1000
@@ -2833,8 +2832,8 @@ typedef struct tagNMIPADDRESS
 #define DTM_SETSYSTEMTIME	(DTM_FIRST+2)
 #define DTM_GETRANGE		(DTM_FIRST+3)
 #define DTM_SETRANGE		(DTM_FIRST+4)
-#define DTM_SETFORMAT32A	(DTM_FIRST+5)
-#define DTM_SETFORMAT32W	(DTM_FIRST + 50)
+#define DTM_SETFORMATA	(DTM_FIRST+5)
+#define DTM_SETFORMATW	(DTM_FIRST + 50)
 #define DTM_SETFORMAT		WINELIB_NAME_AW(DTM_SETFORMAT)
 #define DTM_SETMCCOLOR		(DTM_FIRST+6)
 #define DTM_GETMCCOLOR		(DTM_FIRST+7)
@@ -2864,14 +2863,14 @@ typedef struct tagNMIPADDRESS
 
 LPVOID WINAPI COMCTL32_Alloc (DWORD);
 LPVOID WINAPI COMCTL32_ReAlloc (LPVOID, DWORD);
-BOOL32 WINAPI COMCTL32_Free (LPVOID);
+BOOL WINAPI COMCTL32_Free (LPVOID);
 DWORD  WINAPI COMCTL32_GetSize (LPVOID);
 
 
-INT32  WINAPI Str_GetPtr32A (LPCSTR, LPSTR, INT32);
-BOOL32 WINAPI Str_SetPtr32A (LPSTR *, LPCSTR);
-INT32  WINAPI Str_GetPtr32W (LPCWSTR, LPWSTR, INT32);
-BOOL32 WINAPI Str_SetPtr32W (LPWSTR *, LPCWSTR);
+INT  WINAPI Str_GetPtrA (LPCSTR, LPSTR, INT);
+BOOL WINAPI Str_SetPtrA (LPSTR *, LPCSTR);
+INT  WINAPI Str_GetPtrW (LPCWSTR, LPWSTR, INT);
+BOOL WINAPI Str_SetPtrW (LPWSTR *, LPCWSTR);
 #define Str_GetPtr WINELIB_NAME_AW(Str_GetPtr)
 #define Str_SetPtr WINELIB_NAME_AW(Str_SetPtr)
 
@@ -2880,79 +2879,79 @@ BOOL32 WINAPI Str_SetPtr32W (LPWSTR *, LPCWSTR);
 
 typedef struct _DSA
 {
-    INT32  nItemCount;
+    INT  nItemCount;
     LPVOID pData;
-    INT32  nMaxCount;
-    INT32  nItemSize;
-    INT32  nGrow;
+    INT  nMaxCount;
+    INT  nItemSize;
+    INT  nGrow;
 } DSA, *HDSA;
 
-HDSA   WINAPI DSA_Create (INT32, INT32);
-BOOL32 WINAPI DSA_DeleteAllItems (const HDSA);
-INT32  WINAPI DSA_DeleteItem (const HDSA, INT32);
-BOOL32 WINAPI DSA_Destroy (const HDSA);
-BOOL32 WINAPI DSA_GetItem (const HDSA, INT32, LPVOID);
-LPVOID WINAPI DSA_GetItemPtr (const HDSA, INT32);
-INT32  WINAPI DSA_InsertItem (const HDSA, INT32, LPVOID);
-BOOL32 WINAPI DSA_SetItem (const HDSA, INT32, LPVOID);
+HDSA   WINAPI DSA_Create (INT, INT);
+BOOL WINAPI DSA_DeleteAllItems (const HDSA);
+INT  WINAPI DSA_DeleteItem (const HDSA, INT);
+BOOL WINAPI DSA_Destroy (const HDSA);
+BOOL WINAPI DSA_GetItem (const HDSA, INT, LPVOID);
+LPVOID WINAPI DSA_GetItemPtr (const HDSA, INT);
+INT  WINAPI DSA_InsertItem (const HDSA, INT, LPVOID);
+BOOL WINAPI DSA_SetItem (const HDSA, INT, LPVOID);
 
-typedef INT32 (CALLBACK *DSAENUMPROC)(LPVOID, DWORD);
+typedef INT (CALLBACK *DSAENUMPROC)(LPVOID, DWORD);
 VOID   WINAPI DSA_EnumCallback (const HDSA, DSAENUMPROC, LPARAM);
-BOOL32 WINAPI DSA_DestroyCallback (const HDSA, DSAENUMPROC, LPARAM);
+BOOL WINAPI DSA_DestroyCallback (const HDSA, DSAENUMPROC, LPARAM);
 
 
 /* Dynamic Pointer Array */
 
 typedef struct _DPA
 {
-    INT32    nItemCount;
+    INT    nItemCount;
     LPVOID   *ptrs; 
-    HANDLE32 hHeap;
-    INT32    nGrow;
-    INT32    nMaxCount;
+    HANDLE hHeap;
+    INT    nGrow;
+    INT    nMaxCount;
 } DPA, *HDPA;
 
-HDPA   WINAPI DPA_Create (INT32);
-HDPA   WINAPI DPA_CreateEx (INT32, HANDLE32);
-BOOL32 WINAPI DPA_Destroy (const HDPA);
+HDPA   WINAPI DPA_Create (INT);
+HDPA   WINAPI DPA_CreateEx (INT, HANDLE);
+BOOL WINAPI DPA_Destroy (const HDPA);
 HDPA   WINAPI DPA_Clone (const HDPA, const HDPA);
-LPVOID WINAPI DPA_GetPtr (const HDPA, INT32);
-INT32  WINAPI DPA_GetPtrIndex (const HDPA, LPVOID);
-BOOL32 WINAPI DPA_Grow (const HDPA, INT32);
-BOOL32 WINAPI DPA_SetPtr (const HDPA, INT32, LPVOID);
-INT32  WINAPI DPA_InsertPtr (const HDPA, INT32, LPVOID);
-LPVOID WINAPI DPA_DeletePtr (const HDPA, INT32);
-BOOL32 WINAPI DPA_DeleteAllPtrs (const HDPA);
+LPVOID WINAPI DPA_GetPtr (const HDPA, INT);
+INT  WINAPI DPA_GetPtrIndex (const HDPA, LPVOID);
+BOOL WINAPI DPA_Grow (const HDPA, INT);
+BOOL WINAPI DPA_SetPtr (const HDPA, INT, LPVOID);
+INT  WINAPI DPA_InsertPtr (const HDPA, INT, LPVOID);
+LPVOID WINAPI DPA_DeletePtr (const HDPA, INT);
+BOOL WINAPI DPA_DeleteAllPtrs (const HDPA);
 
-typedef INT32 (CALLBACK *PFNDPACOMPARE)(LPVOID, LPVOID, LPARAM);
-BOOL32 WINAPI DPA_Sort (const HDPA, PFNDPACOMPARE, LPARAM);
+typedef INT (CALLBACK *PFNDPACOMPARE)(LPVOID, LPVOID, LPARAM);
+BOOL WINAPI DPA_Sort (const HDPA, PFNDPACOMPARE, LPARAM);
 
 #define DPAS_SORTED             0x0001
 #define DPAS_INSERTBEFORE       0x0002
 #define DPAS_INSERTAFTER        0x0004
  
-INT32  WINAPI DPA_Search (const HDPA, LPVOID, INT32, PFNDPACOMPARE, LPARAM, UINT32);
+INT  WINAPI DPA_Search (const HDPA, LPVOID, INT, PFNDPACOMPARE, LPARAM, UINT);
 
 #define DPAM_SORT               0x0001
 
-BOOL32 WINAPI DPA_Merge (const HDPA, const HDPA, DWORD, PFNDPACOMPARE, LPVOID, LPARAM);
+BOOL WINAPI DPA_Merge (const HDPA, const HDPA, DWORD, PFNDPACOMPARE, LPVOID, LPARAM);
 
-typedef INT32 (CALLBACK *DPAENUMPROC)(LPVOID, DWORD);
+typedef INT (CALLBACK *DPAENUMPROC)(LPVOID, DWORD);
 VOID   WINAPI DPA_EnumCallback (const HDPA, DPAENUMPROC, LPARAM);
-BOOL32 WINAPI DPA_DestroyCallback (const HDPA, DPAENUMPROC, LPARAM);
+BOOL WINAPI DPA_DestroyCallback (const HDPA, DPAENUMPROC, LPARAM);
 
 
-#define DPA_GetPtrCount(hdpa)  (*(INT32*)(hdpa))
-#define DPA_GetPtrPtr(hdpa)    (*((LPVOID**)((BYTE*)(hdpa)+sizeof(INT32))))
+#define DPA_GetPtrCount(hdpa)  (*(INT*)(hdpa))
+#define DPA_GetPtrPtr(hdpa)    (*((LPVOID**)((BYTE*)(hdpa)+sizeof(INT))))
 #define DPA_FastGetPtr(hdpa,i) (DPA_GetPtrPtr(hdpa)[i])
 
 
 /* notification helper functions */
 
-LRESULT WINAPI COMCTL32_SendNotify (HWND32, HWND32, UINT32, LPNMHDR);
+LRESULT WINAPI COMCTL32_SendNotify (HWND, HWND, UINT, LPNMHDR);
 
 /* type and functionality of last parameter is still unknown */
-LRESULT WINAPI COMCTL32_SendNotifyEx (HWND32, HWND32, UINT32, LPNMHDR, DWORD);
+LRESULT WINAPI COMCTL32_SendNotifyEx (HWND, HWND, UINT, LPNMHDR, DWORD);
 
 #ifdef __cplusplus
 }

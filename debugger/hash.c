@@ -58,7 +58,7 @@ struct name_hash
 };
 
 
-static BOOL32 DEBUG_GetStackSymbolValue( const char * name, DBG_ADDR *addr );
+static BOOL DEBUG_GetStackSymbolValue( const char * name, DBG_ADDR *addr );
 static int sortlist_valid = FALSE;
 
 static int sorttab_nsym;
@@ -285,7 +285,7 @@ DEBUG_AddSymbol( const char * name, const DBG_ADDR *addr, const char * source,
     return new;
 }
 
-BOOL32 DEBUG_Normalize(struct name_hash * nh )
+BOOL DEBUG_Normalize(struct name_hash * nh )
 {
 
   /*
@@ -319,7 +319,7 @@ BOOL32 DEBUG_Normalize(struct name_hash * nh )
  *
  * Get the address of a named symbol.
  */
-BOOL32 DEBUG_GetSymbolValue( const char * name, const int lineno, 
+BOOL DEBUG_GetSymbolValue( const char * name, const int lineno, 
 			     DBG_ADDR *addr, int bp_flag )
 {
     char buffer[256];
@@ -368,7 +368,7 @@ BOOL32 DEBUG_GetSymbolValue( const char * name, const int lineno,
  *
  * Get the address of a named symbol.
  */
-BOOL32 DEBUG_GetLineNumberAddr( struct name_hash * nh, const int lineno, 
+BOOL DEBUG_GetLineNumberAddr( struct name_hash * nh, const int lineno, 
 				DBG_ADDR *addr, int bp_flag )
 {
     int i;
@@ -416,7 +416,7 @@ BOOL32 DEBUG_GetLineNumberAddr( struct name_hash * nh, const int lineno,
  *
  * Set the address of a named symbol.
  */
-BOOL32 DEBUG_SetSymbolValue( const char * name, const DBG_ADDR *addr )
+BOOL DEBUG_SetSymbolValue( const char * name, const DBG_ADDR *addr )
 {
     char buffer[256];
     struct name_hash *nh;
@@ -795,7 +795,7 @@ static void DEBUG_LoadEntryPoints16( HMODULE16 hModule, NE_MODULE *pModule,
  *
  * Load the entry points of a Win32 module into the hash table.
  */
-static void DEBUG_LoadEntryPoints32( HMODULE32 hModule, const char *name )
+static void DEBUG_LoadEntryPoints32( HMODULE hModule, const char *name )
 {
 #define RVA(x) (hModule+(DWORD)(x))
 
@@ -879,12 +879,12 @@ void DEBUG_LoadEntryPoints(void)
 {
     MODULEENTRY entry;
     NE_MODULE *pModule;
-    BOOL32 ok;
+    BOOL ok;
     WINE_MODREF	*wm;
     int rowcount = 3;
 
     fprintf( stderr, "   " );
-    for (ok = ModuleFirst(&entry); ok; ok = ModuleNext(&entry))
+    for (ok = ModuleFirst16(&entry); ok; ok = ModuleNext16(&entry))
     {
         if (!(pModule = NE_GetPtr( entry.hModule ))) continue;
         if (!(pModule->flags & NE_FFLAGS_WIN32))  /* NE module */
@@ -1237,7 +1237,7 @@ DEBUG_GetFuncInfo( struct list_id * ret, const char * filename,
  * Get the address of a named symbol from the current stack frame.
  */
 static
-BOOL32 DEBUG_GetStackSymbolValue( const char * name, DBG_ADDR *addr )
+BOOL DEBUG_GetStackSymbolValue( const char * name, DBG_ADDR *addr )
 {
   struct name_hash * curr_func;
   unsigned int	     ebp;

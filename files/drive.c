@@ -53,7 +53,7 @@ typedef struct
     char      label[12]; /* drive label */
     DWORD     serial;    /* drive serial number */
     DRIVETYPE type;      /* drive type */
-    UINT32    flags;     /* drive flags */
+    UINT    flags;     /* drive flags */
     dev_t     dev;       /* unix device number */
     ino_t     ino;       /* unix inode number */
 } DOSDRIVE;
@@ -73,7 +73,7 @@ static const char * const DRIVE_Types[] =
 typedef struct
 {
     const char *name;
-    UINT32      flags;
+    UINT      flags;
 } FS_DESCR;
 
 static const FS_DESCR DRIVE_Filesystems[] =
@@ -115,7 +115,7 @@ static DRIVETYPE DRIVE_GetDriveType( const char *name )
 /***********************************************************************
  *           DRIVE_GetFSFlags
  */
-static UINT32 DRIVE_GetFSFlags( const char *name, const char *value )
+static UINT DRIVE_GetFSFlags( const char *name, const char *value )
 {
     const FS_DESCR *descr;
 
@@ -435,7 +435,7 @@ DRIVETYPE DRIVE_GetType( int drive )
 /***********************************************************************
  *           DRIVE_GetFlags
  */
-UINT32 DRIVE_GetFlags( int drive )
+UINT DRIVE_GetFlags( int drive )
 {
     if ((drive < 0) || (drive >= MAX_DOS_DRIVES)) return 0;
     return DOSDrives[drive].flags;
@@ -456,7 +456,7 @@ int DRIVE_Chdir( int drive, const char *path )
     strcpy( buffer, "A:" );
     buffer[0] += drive;
     TRACE(dosfs, "(%c:,%s)\n", buffer[0], path );
-    lstrcpyn32A( buffer + 2, path, sizeof(buffer) - 2 );
+    lstrcpynA( buffer + 2, path, sizeof(buffer) - 2 );
 
     if (!DOSFS_GetFullName( buffer, TRUE, &full_name )) return 0;
     if (!FILE_Stat( full_name.long_name, &info )) return 0;
@@ -480,7 +480,7 @@ int DRIVE_Chdir( int drive, const char *path )
     if (pTask && (pTask->curdrive & 0x80) && 
         ((pTask->curdrive & ~0x80) == drive))
     {
-        lstrcpyn32A( pTask->curdir, full_name.short_name + 2,
+        lstrcpynA( pTask->curdir, full_name.short_name + 2,
                      sizeof(pTask->curdir) );
         DRIVE_LastTask = GetCurrentTask();
     }
@@ -585,7 +585,7 @@ int DRIVE_OpenDevice( int drive, int flags )
  *
  * Read raw sectors from a device
  */
-int DRIVE_RawRead(BYTE drive, DWORD begin, DWORD nr_sect, BYTE *dataptr, BOOL32 fake_success)
+int DRIVE_RawRead(BYTE drive, DWORD begin, DWORD nr_sect, BYTE *dataptr, BOOL fake_success)
 {
     int fd;
 
@@ -616,7 +616,7 @@ int DRIVE_RawRead(BYTE drive, DWORD begin, DWORD nr_sect, BYTE *dataptr, BOOL32 
  *
  * Write raw sectors to a device
  */
-int DRIVE_RawWrite(BYTE drive, DWORD begin, DWORD nr_sect, BYTE *dataptr, BOOL32 fake_success)
+int DRIVE_RawWrite(BYTE drive, DWORD begin, DWORD nr_sect, BYTE *dataptr, BOOL fake_success)
 {
 	int fd;
 
@@ -690,7 +690,7 @@ BOOL16 WINAPI GetDiskFreeSpace16( LPCSTR root, LPDWORD cluster_sectors,
                                   LPDWORD sector_bytes, LPDWORD free_clusters,
                                   LPDWORD total_clusters )
 {
-    return GetDiskFreeSpace32A( root, cluster_sectors, sector_bytes,
+    return GetDiskFreeSpaceA( root, cluster_sectors, sector_bytes,
                                 free_clusters, total_clusters );
 }
 
@@ -722,7 +722,7 @@ BOOL16 WINAPI GetDiskFreeSpace16( LPCSTR root, LPDWORD cluster_sectors,
  * "E:\\TEST"  "C:"   TRUE  (when CurrDir of "C:" set to "\\")
  * "E:\\TEST"  "C:"   FALSE (when CurrDir of "C:" set to "\\TEST")
  */
-BOOL32 WINAPI GetDiskFreeSpace32A( LPCSTR root, LPDWORD cluster_sectors,
+BOOL WINAPI GetDiskFreeSpaceA( LPCSTR root, LPDWORD cluster_sectors,
                                    LPDWORD sector_bytes, LPDWORD free_clusters,
                                    LPDWORD total_clusters )
 {
@@ -790,15 +790,15 @@ BOOL32 WINAPI GetDiskFreeSpace32A( LPCSTR root, LPDWORD cluster_sectors,
 /***********************************************************************
  *           GetDiskFreeSpace32W   (KERNEL32.207)
  */
-BOOL32 WINAPI GetDiskFreeSpace32W( LPCWSTR root, LPDWORD cluster_sectors,
+BOOL WINAPI GetDiskFreeSpaceW( LPCWSTR root, LPDWORD cluster_sectors,
                                    LPDWORD sector_bytes, LPDWORD free_clusters,
                                    LPDWORD total_clusters )
 {
     LPSTR xroot;
-    BOOL32 ret;
+    BOOL ret;
 
     xroot = HEAP_strdupWtoA( GetProcessHeap(), 0, root);
-    ret = GetDiskFreeSpace32A( xroot,cluster_sectors, sector_bytes,
+    ret = GetDiskFreeSpaceA( xroot,cluster_sectors, sector_bytes,
                                free_clusters, total_clusters );
     HeapFree( GetProcessHeap(), 0, xroot );
     return ret;
@@ -808,7 +808,7 @@ BOOL32 WINAPI GetDiskFreeSpace32W( LPCWSTR root, LPDWORD cluster_sectors,
 /***********************************************************************
  *           GetDiskFreeSpaceEx32A   (KERNEL32.871)
  */
-BOOL32 WINAPI GetDiskFreeSpaceEx32A( LPCSTR root,
+BOOL WINAPI GetDiskFreeSpaceExA( LPCSTR root,
 				     PULARGE_INTEGER avail,
 				     PULARGE_INTEGER total,
 				     PULARGE_INTEGER totalfree)
@@ -842,15 +842,15 @@ BOOL32 WINAPI GetDiskFreeSpaceEx32A( LPCSTR root,
 /***********************************************************************
  *           GetDiskFreeSpaceEx32W   (KERNEL32.873)
  */
-BOOL32 WINAPI GetDiskFreeSpaceEx32W( LPCWSTR root, PULARGE_INTEGER avail,
+BOOL WINAPI GetDiskFreeSpaceExW( LPCWSTR root, PULARGE_INTEGER avail,
 				     PULARGE_INTEGER total,
 				     PULARGE_INTEGER  totalfree)
 {
     LPSTR xroot;
-    BOOL32 ret;
+    BOOL ret;
 
     xroot = HEAP_strdupWtoA( GetProcessHeap(), 0, root);
-    ret = GetDiskFreeSpaceEx32A( xroot, avail, total, totalfree);
+    ret = GetDiskFreeSpaceExA( xroot, avail, total, totalfree);
     HeapFree( GetProcessHeap(), 0, xroot );
     return ret;
 }
@@ -911,7 +911,7 @@ UINT16 WINAPI GetDriveType16(
  *
  *  DRIVE_RAMDISK is unsupported.
  */
-UINT32 WINAPI GetDriveType32A(LPCSTR root /* String describing drive */)
+UINT WINAPI GetDriveTypeA(LPCSTR root /* String describing drive */)
 {
     int drive;
     TRACE(dosfs, "(%s)\n", debugstr_a(root));
@@ -941,10 +941,10 @@ UINT32 WINAPI GetDriveType32A(LPCSTR root /* String describing drive */)
 /***********************************************************************
  *           GetDriveType32W   (KERNEL32.209)
  */
-UINT32 WINAPI GetDriveType32W( LPCWSTR root )
+UINT WINAPI GetDriveTypeW( LPCWSTR root )
 {
     LPSTR xpath = HEAP_strdupWtoA( GetProcessHeap(), 0, root );
-    UINT32 ret = GetDriveType32A( xpath );
+    UINT ret = GetDriveTypeA( xpath );
     HeapFree( GetProcessHeap(), 0, xpath );
     return ret;
 }
@@ -955,7 +955,7 @@ UINT32 WINAPI GetDriveType32W( LPCWSTR root )
  */
 UINT16 WINAPI GetCurrentDirectory16( UINT16 buflen, LPSTR buf )
 {
-    return (UINT16)GetCurrentDirectory32A( buflen, buf );
+    return (UINT16)GetCurrentDirectoryA( buflen, buf );
 }
 
 
@@ -967,17 +967,17 @@ UINT16 WINAPI GetCurrentDirectory16( UINT16 buflen, LPSTR buf )
  * Despite the API description, return required length including the 
  * terminating null when buffer too small. This is the real behaviour.
  */
-UINT32 WINAPI GetCurrentDirectory32A( UINT32 buflen, LPSTR buf )
+UINT WINAPI GetCurrentDirectoryA( UINT buflen, LPSTR buf )
 {
-    UINT32 ret;
+    UINT ret;
     const char *s = DRIVE_GetDosCwd( DRIVE_GetCurrentDrive() );
 
     assert(s);
     ret = strlen(s) + 3; /* length of WHOLE current directory */
     if (ret >= buflen) return ret + 1;
-    lstrcpyn32A( buf, "A:\\", MIN( 4, buflen ) );
+    lstrcpynA( buf, "A:\\", MIN( 4, buflen ) );
     if (buflen) buf[0] += DRIVE_GetCurrentDrive();
-    if (buflen > 3) lstrcpyn32A( buf + 3, s, buflen - 3 );
+    if (buflen > 3) lstrcpynA( buf + 3, s, buflen - 3 );
     return ret;
 }
 
@@ -985,10 +985,10 @@ UINT32 WINAPI GetCurrentDirectory32A( UINT32 buflen, LPSTR buf )
 /***********************************************************************
  *           GetCurrentDirectory32W   (KERNEL32.197)
  */
-UINT32 WINAPI GetCurrentDirectory32W( UINT32 buflen, LPWSTR buf )
+UINT WINAPI GetCurrentDirectoryW( UINT buflen, LPWSTR buf )
 {
     LPSTR xpath = HeapAlloc( GetProcessHeap(), 0, buflen+1 );
-    UINT32 ret = GetCurrentDirectory32A( buflen, xpath );
+    UINT ret = GetCurrentDirectoryA( buflen, xpath );
     lstrcpyAtoW( buf, xpath );
     HeapFree( GetProcessHeap(), 0, xpath );
     return ret;
@@ -1000,14 +1000,14 @@ UINT32 WINAPI GetCurrentDirectory32W( UINT32 buflen, LPWSTR buf )
  */
 BOOL16 WINAPI SetCurrentDirectory16( LPCSTR dir )
 {
-    return SetCurrentDirectory32A( dir );
+    return SetCurrentDirectoryA( dir );
 }
 
 
 /***********************************************************************
  *           SetCurrentDirectory32A   (KERNEL32.479)
  */
-BOOL32 WINAPI SetCurrentDirectory32A( LPCSTR dir )
+BOOL WINAPI SetCurrentDirectoryA( LPCSTR dir )
 {
     int olddrive, drive = DRIVE_GetCurrentDrive();
 
@@ -1038,10 +1038,10 @@ BOOL32 WINAPI SetCurrentDirectory32A( LPCSTR dir )
 /***********************************************************************
  *           SetCurrentDirectory32W   (KERNEL32.480)
  */
-BOOL32 WINAPI SetCurrentDirectory32W( LPCWSTR dirW )
+BOOL WINAPI SetCurrentDirectoryW( LPCWSTR dirW )
 {
     LPSTR dir = HEAP_strdupWtoA( GetProcessHeap(), 0, dirW );
-    BOOL32 res = SetCurrentDirectory32A( dir );
+    BOOL res = SetCurrentDirectoryA( dir );
     HeapFree( GetProcessHeap(), 0, dir );
     return res;
 }
@@ -1050,7 +1050,7 @@ BOOL32 WINAPI SetCurrentDirectory32W( LPCWSTR dirW )
 /***********************************************************************
  *           GetLogicalDriveStrings32A   (KERNEL32.231)
  */
-UINT32 WINAPI GetLogicalDriveStrings32A( UINT32 len, LPSTR buffer )
+UINT WINAPI GetLogicalDriveStringsA( UINT len, LPSTR buffer )
 {
     int drive, count;
 
@@ -1076,7 +1076,7 @@ UINT32 WINAPI GetLogicalDriveStrings32A( UINT32 len, LPSTR buffer )
 /***********************************************************************
  *           GetLogicalDriveStrings32W   (KERNEL32.232)
  */
-UINT32 WINAPI GetLogicalDriveStrings32W( UINT32 len, LPWSTR buffer )
+UINT WINAPI GetLogicalDriveStringsW( UINT len, LPWSTR buffer )
 {
     int drive, count;
 
@@ -1116,7 +1116,7 @@ DWORD WINAPI GetLogicalDrives(void)
 /***********************************************************************
  *           GetVolumeInformation32A   (KERNEL32.309)
  */
-BOOL32 WINAPI GetVolumeInformation32A( LPCSTR root, LPSTR label,
+BOOL WINAPI GetVolumeInformationA( LPCSTR root, LPSTR label,
                                        DWORD label_len, DWORD *serial,
                                        DWORD *filename_len, DWORD *flags,
                                        LPSTR fsname, DWORD fsname_len )
@@ -1139,7 +1139,7 @@ BOOL32 WINAPI GetVolumeInformation32A( LPCSTR root, LPSTR label,
     if (!DRIVE_IsValid( drive )) return FALSE;
     if (label)
     {
-       lstrcpyn32A( label, DRIVE_GetLabel(drive), label_len );
+       lstrcpynA( label, DRIVE_GetLabel(drive), label_len );
        for (cp = label; *cp; cp++);
        while (cp != label && *(cp-1) == ' ') cp--;
        *cp = '\0';
@@ -1166,9 +1166,9 @@ BOOL32 WINAPI GetVolumeInformation32A( LPCSTR root, LPSTR label,
     if (fsname) {
     	/* Diablo checks that return code ... */
     	if (DRIVE_GetType(drive)==TYPE_CDROM)
-	    lstrcpyn32A( fsname, "CDFS", fsname_len );
+	    lstrcpynA( fsname, "CDFS", fsname_len );
 	else
-	    lstrcpyn32A( fsname, "FAT", fsname_len );
+	    lstrcpynA( fsname, "FAT", fsname_len );
     }
     return TRUE;
 }
@@ -1177,7 +1177,7 @@ BOOL32 WINAPI GetVolumeInformation32A( LPCSTR root, LPSTR label,
 /***********************************************************************
  *           GetVolumeInformation32W   (KERNEL32.310)
  */
-BOOL32 WINAPI GetVolumeInformation32W( LPCWSTR root, LPWSTR label,
+BOOL WINAPI GetVolumeInformationW( LPCWSTR root, LPWSTR label,
                                        DWORD label_len, DWORD *serial,
                                        DWORD *filename_len, DWORD *flags,
                                        LPWSTR fsname, DWORD fsname_len )
@@ -1185,7 +1185,7 @@ BOOL32 WINAPI GetVolumeInformation32W( LPCWSTR root, LPWSTR label,
     LPSTR xroot    = HEAP_strdupWtoA( GetProcessHeap(), 0, root );
     LPSTR xvolname = label ? HeapAlloc(GetProcessHeap(),0,label_len) : NULL;
     LPSTR xfsname  = fsname ? HeapAlloc(GetProcessHeap(),0,fsname_len) : NULL;
-    BOOL32 ret = GetVolumeInformation32A( xroot, xvolname, label_len, serial,
+    BOOL ret = GetVolumeInformationA( xroot, xvolname, label_len, serial,
                                           filename_len, flags, xfsname,
                                           fsname_len );
     if (ret)
@@ -1199,7 +1199,7 @@ BOOL32 WINAPI GetVolumeInformation32W( LPCWSTR root, LPWSTR label,
     return ret;
 }
 
-BOOL32 WINAPI SetVolumeLabel32A(LPCSTR rootpath,LPCSTR volname) {
+BOOL WINAPI SetVolumeLabelA(LPCSTR rootpath,LPCSTR volname) {
 	FIXME(dosfs,"(%s,%s),stub!\n",rootpath,volname);
 	return TRUE;
 }

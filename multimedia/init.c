@@ -67,7 +67,7 @@ int unixToWindowsDeviceType(int type)
  * Initializes the MIDI devices information variables
  *
  */
-BOOL32 MULTIMEDIA_MidiInit(void)
+BOOL MULTIMEDIA_MidiInit(void)
 {
 #if defined(HAVE_OSS) && !defined(__NetBSD__) && !defined(__OpenBSD__)
     int 		i, status, numsynthdevs = 255, nummididevs = 255;
@@ -255,7 +255,7 @@ extern	int	mciInstalledCount;
 extern	int	mciInstalledListLen;
 extern	LPSTR	lpmciInstallNames;
 
-BOOL32 MULTIMEDIA_MciInit(void)
+BOOL MULTIMEDIA_MciInit(void)
 {
     int		len;
     LPSTR	ptr;
@@ -265,7 +265,7 @@ BOOL32 MULTIMEDIA_MciInit(void)
     mciInstalledListLen = 0;
     ptr = lpmciInstallNames = xmalloc(2048);
     /* FIXME: should do also some registry diving here */
-    GetPrivateProfileString32A("mci", NULL, "", lpmciInstallNames, 2000, SysFile);
+    GetPrivateProfileStringA("mci", NULL, "", lpmciInstallNames, 2000, SysFile);
     while (strlen(ptr) > 0) {
 	TRACE(mci, "---> '%s' \n", ptr);
 	len = strlen(ptr) + 1;
@@ -282,7 +282,7 @@ BOOL32 MULTIMEDIA_MciInit(void)
  * Initializes the multimedia information variables
  *
  */
-BOOL32 MULTIMEDIA_Init(void)
+BOOL MULTIMEDIA_Init(void)
 {
     return MULTIMEDIA_MidiInit() && MULTIMEDIA_MciInit();
 }

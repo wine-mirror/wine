@@ -138,7 +138,7 @@ static const char *GetParamErrorString(UINT16 uErr) {
 /***********************************************************************
 *	LogError (KERNEL.324)
 */
-VOID WINAPI LogError(UINT16 uErr, LPVOID lpvInfo)
+VOID WINAPI LogError16(UINT16 uErr, LPVOID lpvInfo)
 {
 	MSG("(%s, %p)\n", GetErrorString(uErr), lpvInfo);
 }
@@ -147,7 +147,7 @@ VOID WINAPI LogError(UINT16 uErr, LPVOID lpvInfo)
 /***********************************************************************
 *	LogParamError (KERNEL.325)
 */
-void WINAPI LogParamError(UINT16 uErr, FARPROC16 lpfn, LPVOID lpvParam)
+void WINAPI LogParamError16(UINT16 uErr, FARPROC16 lpfn, LPVOID lpvParam)
 {
 	/* FIXME: is it possible to get the module name/function
 	 * from the lpfn param?
@@ -166,7 +166,7 @@ void WINAPI HandleParamError( CONTEXT *context )
         LPVOID lpvParam = (LPVOID)MAKELONG( AX_reg( context ), 
                                             CX_reg( context ) );
 	
-	LogParamError( uErr, lpfn, lpvParam );
+	LogParamError16( uErr, lpfn, lpvParam );
 
 	if (!(uErr & ERR_WARNING))
 	{

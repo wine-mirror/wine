@@ -23,13 +23,13 @@ typedef struct
 /***********************************************************************
  *           CreateEvent32A    (KERNEL32.156)
  */
-HANDLE32 WINAPI CreateEvent32A( SECURITY_ATTRIBUTES *sa, BOOL32 manual_reset,
-                                BOOL32 initial_state, LPCSTR name )
+HANDLE WINAPI CreateEventA( SECURITY_ATTRIBUTES *sa, BOOL manual_reset,
+                                BOOL initial_state, LPCSTR name )
 {
     struct create_event_request req;
     struct create_event_reply reply;
     int len = name ? strlen(name) + 1 : 0;
-    HANDLE32 handle;
+    HANDLE handle;
     EVENT *event;
 
     req.manual_reset = manual_reset;
@@ -46,7 +46,7 @@ HANDLE32 WINAPI CreateEvent32A( SECURITY_ATTRIBUTES *sa, BOOL32 manual_reset,
     if (event)
         K32OBJ_DecCount( &event->header );
     SYSTEM_UNLOCK();
-    if (handle == INVALID_HANDLE_VALUE32) handle = 0;
+    if (handle == INVALID_HANDLE_VALUE) handle = 0;
     return handle;
 }
 
@@ -54,11 +54,11 @@ HANDLE32 WINAPI CreateEvent32A( SECURITY_ATTRIBUTES *sa, BOOL32 manual_reset,
 /***********************************************************************
  *           CreateEvent32W    (KERNEL32.157)
  */
-HANDLE32 WINAPI CreateEvent32W( SECURITY_ATTRIBUTES *sa, BOOL32 manual_reset,
-                                BOOL32 initial_state, LPCWSTR name )
+HANDLE WINAPI CreateEventW( SECURITY_ATTRIBUTES *sa, BOOL manual_reset,
+                                BOOL initial_state, LPCWSTR name )
 {
     LPSTR nameA = HEAP_strdupWtoA( GetProcessHeap(), 0, name );
-    HANDLE32 ret = CreateEvent32A( sa, manual_reset, initial_state, nameA );
+    HANDLE ret = CreateEventA( sa, manual_reset, initial_state, nameA );
     if (nameA) HeapFree( GetProcessHeap(), 0, nameA );
     return ret;
 }
@@ -66,18 +66,18 @@ HANDLE32 WINAPI CreateEvent32W( SECURITY_ATTRIBUTES *sa, BOOL32 manual_reset,
 /***********************************************************************
  *           WIN16_CreateEvent    (KERNEL.457)
  */
-HANDLE32 WINAPI WIN16_CreateEvent( BOOL32 manual_reset, BOOL32 initial_state )
+HANDLE WINAPI WIN16_CreateEvent( BOOL manual_reset, BOOL initial_state )
 {
-    return CreateEvent32A( NULL, manual_reset, initial_state, NULL );
+    return CreateEventA( NULL, manual_reset, initial_state, NULL );
 }
 
 
 /***********************************************************************
  *           OpenEvent32A    (KERNEL32.536)
  */
-HANDLE32 WINAPI OpenEvent32A( DWORD access, BOOL32 inherit, LPCSTR name )
+HANDLE WINAPI OpenEventA( DWORD access, BOOL inherit, LPCSTR name )
 {
-    HANDLE32 handle = 0;
+    HANDLE handle = 0;
     K32OBJ *obj;
     struct open_named_obj_request req;
     struct open_named_obj_reply reply;
@@ -95,7 +95,7 @@ HANDLE32 WINAPI OpenEvent32A( DWORD access, BOOL32 inherit, LPCSTR name )
         {
             handle = HANDLE_Alloc( PROCESS_Current(), obj, access, inherit, reply.handle );
             K32OBJ_DecCount( obj );
-            if (handle == INVALID_HANDLE_VALUE32)
+            if (handle == INVALID_HANDLE_VALUE)
                 handle = 0; /* must return 0 on failure, not -1 */
         }
         else CLIENT_CloseHandle( reply.handle );
@@ -108,10 +108,10 @@ HANDLE32 WINAPI OpenEvent32A( DWORD access, BOOL32 inherit, LPCSTR name )
 /***********************************************************************
  *           OpenEvent32W    (KERNEL32.537)
  */
-HANDLE32 WINAPI OpenEvent32W( DWORD access, BOOL32 inherit, LPCWSTR name )
+HANDLE WINAPI OpenEventW( DWORD access, BOOL inherit, LPCWSTR name )
 {
     LPSTR nameA = HEAP_strdupWtoA( GetProcessHeap(), 0, name );
-    HANDLE32 ret = OpenEvent32A( access, inherit, nameA );
+    HANDLE ret = OpenEventA( access, inherit, nameA );
     if (nameA) HeapFree( GetProcessHeap(), 0, nameA );
     return ret;
 }
@@ -122,7 +122,7 @@ HANDLE32 WINAPI OpenEvent32W( DWORD access, BOOL32 inherit, LPCWSTR name )
  *
  * Execute an event operation (set,reset,pulse).
  */
-static BOOL32 EVENT_Operation( HANDLE32 handle, enum event_op op )
+static BOOL EVENT_Operation( HANDLE handle, enum event_op op )
 {
     struct event_op_request req;
 
@@ -138,7 +138,7 @@ static BOOL32 EVENT_Operation( HANDLE32 handle, enum event_op op )
 /***********************************************************************
  *           PulseEvent    (KERNEL32.557)
  */
-BOOL32 WINAPI PulseEvent( HANDLE32 handle )
+BOOL WINAPI PulseEvent( HANDLE handle )
 {
     return EVENT_Operation( handle, PULSE_EVENT );
 }
@@ -147,7 +147,7 @@ BOOL32 WINAPI PulseEvent( HANDLE32 handle )
 /***********************************************************************
  *           SetEvent    (KERNEL32.644)
  */
-BOOL32 WINAPI SetEvent( HANDLE32 handle )
+BOOL WINAPI SetEvent( HANDLE handle )
 {
     return EVENT_Operation( handle, SET_EVENT );
 }
@@ -156,7 +156,7 @@ BOOL32 WINAPI SetEvent( HANDLE32 handle )
 /***********************************************************************
  *           ResetEvent    (KERNEL32.586)
  */
-BOOL32 WINAPI ResetEvent( HANDLE32 handle )
+BOOL WINAPI ResetEvent( HANDLE handle )
 {
     return EVENT_Operation( handle, RESET_EVENT );
 }
@@ -172,16 +172,16 @@ BOOL32 WINAPI ResetEvent( HANDLE32 handle )
 /***********************************************************************
  *       VWin32_EventCreate	(KERNEL.442)
  */
-HANDLE32 WINAPI VWin32_EventCreate(VOID)
+HANDLE WINAPI VWin32_EventCreate(VOID)
 {
-    HANDLE32 hEvent = CreateEvent32A( NULL, FALSE, 0, NULL );
+    HANDLE hEvent = CreateEventA( NULL, FALSE, 0, NULL );
     return ConvertToGlobalHandle( hEvent );
 }
 
 /***********************************************************************
  *       VWin32_EventDestroy	(KERNEL.443)
  */
-VOID WINAPI VWin32_EventDestroy(HANDLE32 event)
+VOID WINAPI VWin32_EventDestroy(HANDLE event)
 {
     CloseHandle( event );
 }
@@ -189,17 +189,17 @@ VOID WINAPI VWin32_EventDestroy(HANDLE32 event)
 /***********************************************************************
  *       VWin32_EventWait	(KERNEL.450) 
  */
-VOID WINAPI VWin32_EventWait(HANDLE32 event)
+VOID WINAPI VWin32_EventWait(HANDLE event)
 {
     SYSLEVEL_ReleaseWin16Lock();
-    WaitForSingleObject( event, INFINITE32 );
+    WaitForSingleObject( event, INFINITE );
     SYSLEVEL_RestoreWin16Lock();
 }
 
 /***********************************************************************
  *       VWin32_EventSet	(KERNEL.451)
  */
-VOID WINAPI VWin32_EventSet(HANDLE32 event)
+VOID WINAPI VWin32_EventSet(HANDLE event)
 {
     SetEvent( event );
 }

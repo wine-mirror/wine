@@ -23,22 +23,22 @@
 /***********************************************************************
  *           read_xx_header         [internal]
  */
-static int read_xx_header( HFILE32 lzfd )
+static int read_xx_header( HFILE lzfd )
 {
     IMAGE_DOS_HEADER mzh;
     char magic[3];
 
-    LZSeek32( lzfd, 0, SEEK_SET );
-    if ( sizeof(mzh) != LZRead32( lzfd, &mzh, sizeof(mzh) ) )
+    LZSeek( lzfd, 0, SEEK_SET );
+    if ( sizeof(mzh) != LZRead( lzfd, &mzh, sizeof(mzh) ) )
         return 0;
     if ( mzh.e_magic != IMAGE_DOS_SIGNATURE )
         return 0;
 
-    LZSeek32( lzfd, mzh.e_lfanew, SEEK_SET );
-    if ( 2 != LZRead32( lzfd, magic, 2 ) )
+    LZSeek( lzfd, mzh.e_lfanew, SEEK_SET );
+    if ( 2 != LZRead( lzfd, magic, 2 ) )
         return 0;
 
-    LZSeek32( lzfd, mzh.e_lfanew, SEEK_SET );
+    LZSeek( lzfd, mzh.e_lfanew, SEEK_SET );
 
     if ( magic[0] == 'N' && magic[1] == 'E' )
         return IMAGE_OS2_SIGNATURE;
@@ -53,7 +53,7 @@ static int read_xx_header( HFILE32 lzfd )
 /***********************************************************************
  *           load_ne_resource         [internal]
  */
-static BOOL32 find_ne_resource( HFILE32 lzfd, LPCSTR typeid, LPCSTR resid,
+static BOOL find_ne_resource( HFILE lzfd, LPCSTR typeid, LPCSTR resid,
                                 DWORD *resLen, DWORD *resOff )
 {
     IMAGE_OS2_HEADER nehd;
@@ -64,8 +64,8 @@ static BOOL32 find_ne_resource( HFILE32 lzfd, LPCSTR typeid, LPCSTR resid,
     DWORD resTabSize;
 
     /* Read in NE header */ 
-    nehdoffset = LZSeek32( lzfd, 0, SEEK_CUR );
-    if ( sizeof(nehd) != LZRead32( lzfd, &nehd, sizeof(nehd) ) ) return 0;
+    nehdoffset = LZSeek( lzfd, 0, SEEK_CUR );
+    if ( sizeof(nehd) != LZRead( lzfd, &nehd, sizeof(nehd) ) ) return 0;
 
     resTabSize = nehd.rname_tab_offset - nehd.resource_tab_offset; 
     if ( !resTabSize )
@@ -78,8 +78,8 @@ static BOOL32 find_ne_resource( HFILE32 lzfd, LPCSTR typeid, LPCSTR resid,
     resTab = HeapAlloc( GetProcessHeap(), 0, resTabSize );
     if ( !resTab ) return FALSE;
 
-    LZSeek32( lzfd, nehd.resource_tab_offset + nehdoffset, SEEK_SET );
-    if ( resTabSize != LZRead32( lzfd, resTab, resTabSize ) )
+    LZSeek( lzfd, nehd.resource_tab_offset + nehdoffset, SEEK_SET );
+    if ( resTabSize != LZRead( lzfd, resTab, resTabSize ) )
     {
         HeapFree( GetProcessHeap(), 0, resTab );
         return FALSE;
@@ -113,7 +113,7 @@ static BOOL32 find_ne_resource( HFILE32 lzfd, LPCSTR typeid, LPCSTR resid,
 /***********************************************************************
  *           load_pe_resource         [internal]
  */
-static BOOL32 find_pe_resource( HFILE32 lzfd, LPCSTR typeid, LPCSTR resid,
+static BOOL find_pe_resource( HFILE lzfd, LPCSTR typeid, LPCSTR resid,
                                 DWORD *resLen, DWORD *resOff )
 {
     IMAGE_NT_HEADERS pehd;
@@ -129,8 +129,8 @@ static BOOL32 find_pe_resource( HFILE32 lzfd, LPCSTR typeid, LPCSTR resid,
 
 
     /* Read in PE header */
-    pehdoffset = LZSeek32( lzfd, 0, SEEK_CUR );
-    if ( sizeof(pehd) != LZRead32( lzfd, &pehd, sizeof(pehd) ) ) return 0;
+    pehdoffset = LZSeek( lzfd, 0, SEEK_CUR );
+    if ( sizeof(pehd) != LZRead( lzfd, &pehd, sizeof(pehd) ) ) return 0;
 
     resDataDir = pehd.OptionalHeader.DataDirectory+IMAGE_FILE_RESOURCE_DIRECTORY;
     if ( !resDataDir->Size )
@@ -145,13 +145,13 @@ static BOOL32 find_pe_resource( HFILE32 lzfd, LPCSTR typeid, LPCSTR resid,
                           nSections * sizeof(IMAGE_SECTION_HEADER) );
     if ( !sections ) return FALSE;
 
-    LZSeek32( lzfd, pehdoffset +
+    LZSeek( lzfd, pehdoffset +
                     sizeof(DWORD) + /* Signature */
                     sizeof(IMAGE_FILE_HEADER) +
                     pehd.FileHeader.SizeOfOptionalHeader, SEEK_SET );
 
     if ( nSections * sizeof(IMAGE_SECTION_HEADER) !=
-         LZRead32( lzfd, sections, nSections * sizeof(IMAGE_SECTION_HEADER) ) )
+         LZRead( lzfd, sections, nSections * sizeof(IMAGE_SECTION_HEADER) ) )
     {
         HeapFree( GetProcessHeap(), 0, sections );
         return FALSE;
@@ -180,8 +180,8 @@ static BOOL32 find_pe_resource( HFILE32 lzfd, LPCSTR typeid, LPCSTR resid,
         return FALSE;
     }
 
-    LZSeek32( lzfd, sections[i].PointerToRawData, SEEK_SET );
-    if ( resSectionSize != LZRead32( lzfd, resSection, resSectionSize ) )
+    LZSeek( lzfd, sections[i].PointerToRawData, SEEK_SET );
+    if ( resSectionSize != LZRead( lzfd, resSection, resSectionSize ) )
     {
         HeapFree( GetProcessHeap(), 0, resSection );
         HeapFree( GetProcessHeap(), 0, sections );
@@ -247,12 +247,12 @@ static BOOL32 find_pe_resource( HFILE32 lzfd, LPCSTR typeid, LPCSTR resid,
 /***********************************************************************
  *           GetFileResourceSize32         [internal]
  */
-DWORD WINAPI GetFileResourceSize32( LPCSTR lpszFileName,
+DWORD WINAPI GetFileResourceSize( LPCSTR lpszFileName,
                                     LPCSTR lpszResType, LPCSTR lpszResId,
                                     LPDWORD lpdwFileOffset )
 {
-    BOOL32 retv = FALSE;
-    HFILE32 lzfd;
+    BOOL retv = FALSE;
+    HFILE lzfd;
     OFSTRUCT ofs;
     DWORD reslen;
 
@@ -260,7 +260,7 @@ DWORD WINAPI GetFileResourceSize32( LPCSTR lpszFileName,
                 debugstr_a(lpszFileName), (LONG)lpszResType, (LONG)lpszResId, 
                 lpszResId );
 
-    lzfd = LZOpenFile32A( lpszFileName, &ofs, OF_READ );
+    lzfd = LZOpenFileA( lpszFileName, &ofs, OF_READ );
     if ( !lzfd ) return 0;
 
     switch ( read_xx_header( lzfd ) )
@@ -276,20 +276,20 @@ DWORD WINAPI GetFileResourceSize32( LPCSTR lpszFileName,
         break;
     }
 
-    LZClose32( lzfd );
+    LZClose( lzfd );
     return retv? reslen : 0;
 }
 
 /***********************************************************************
  *           GetFileResource32         [internal]
  */
-DWORD WINAPI GetFileResource32( LPCSTR lpszFileName,
+DWORD WINAPI GetFileResource( LPCSTR lpszFileName,
                                 LPCSTR lpszResType, LPCSTR lpszResId,
                                 DWORD dwFileOffset,
                                 DWORD dwResLen, LPVOID lpvData )
 {
-    BOOL32 retv = FALSE;
-    HFILE32 lzfd;
+    BOOL retv = FALSE;
+    HFILE lzfd;
     OFSTRUCT ofs;
     DWORD reslen = dwResLen;
 
@@ -297,7 +297,7 @@ DWORD WINAPI GetFileResource32( LPCSTR lpszFileName,
 		debugstr_a(lpszFileName), (LONG)lpszResType, (LONG)lpszResId, 
                 dwFileOffset, dwResLen, lpvData );
 
-    lzfd = LZOpenFile32A( lpszFileName, &ofs, OF_READ );
+    lzfd = LZOpenFileA( lpszFileName, &ofs, OF_READ );
     if ( lzfd == 0 ) return 0;
 
     if ( !dwFileOffset )
@@ -317,14 +317,14 @@ DWORD WINAPI GetFileResource32( LPCSTR lpszFileName,
 
         if ( !retv ) 
         {
-            LZClose32( lzfd );
+            LZClose( lzfd );
             return 0;
         }
     }
 
-    LZSeek32( lzfd, dwFileOffset, SEEK_SET );
-    reslen = LZRead32( lzfd, lpvData, min( reslen, dwResLen ) );
-    LZClose32( lzfd );
+    LZSeek( lzfd, dwFileOffset, SEEK_SET );
+    reslen = LZRead( lzfd, lpvData, min( reslen, dwResLen ) );
+    LZClose( lzfd );
 
     return reslen;
 }

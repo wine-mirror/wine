@@ -9,24 +9,24 @@
 
 typedef struct
 {
-    INT32	x;
-    INT32	style;
-    RECT32	bound;
+    INT	x;
+    INT	style;
+    RECT	bound;
     LPWSTR	text;
-    HICON32     hIcon;
+    HICON     hIcon;
 } STATUSWINDOWPART;
 
 typedef struct
 {
     UINT16              numParts;
     UINT16              textHeight;
-    UINT32              height;
-    BOOL32              simple;
-    HWND32              hwndToolTip;
-    HFONT32             hFont;
-    HFONT32             hDefaultFont;
+    UINT              height;
+    BOOL              simple;
+    HWND              hwndToolTip;
+    HFONT             hFont;
+    HFONT             hDefaultFont;
     COLORREF            clrBk;     /* background color */
-    BOOL32              bUnicode;  /* unicode flag */
+    BOOL              bUnicode;  /* unicode flag */
     STATUSWINDOWPART	part0;	   /* simple window */
     STATUSWINDOWPART   *parts;
 } STATUSWINDOWINFO;

@@ -150,9 +150,9 @@ ULONG PERQDATA_Release( PERQUEUEDATA *pQData )
  *
  * Get the focus hwnd member in a threadsafe manner
  */
-HWND32 PERQDATA_GetFocusWnd( PERQUEUEDATA *pQData )
+HWND PERQDATA_GetFocusWnd( PERQUEUEDATA *pQData )
 {
-    HWND32 hWndFocus;
+    HWND hWndFocus;
     assert(pQData != 0 );
 
     EnterCriticalSection( &pQData->cSection );
@@ -168,9 +168,9 @@ HWND32 PERQDATA_GetFocusWnd( PERQUEUEDATA *pQData )
  *
  * Set the focus hwnd member in a threadsafe manner
  */
-HWND32 PERQDATA_SetFocusWnd( PERQUEUEDATA *pQData, HWND32 hWndFocus )
+HWND PERQDATA_SetFocusWnd( PERQUEUEDATA *pQData, HWND hWndFocus )
 {
-    HWND32 hWndFocusPrv;
+    HWND hWndFocusPrv;
     assert(pQData != 0 );
 
     EnterCriticalSection( &pQData->cSection );
@@ -187,9 +187,9 @@ HWND32 PERQDATA_SetFocusWnd( PERQUEUEDATA *pQData, HWND32 hWndFocus )
  *
  * Get the active hwnd member in a threadsafe manner
  */
-HWND32 PERQDATA_GetActiveWnd( PERQUEUEDATA *pQData )
+HWND PERQDATA_GetActiveWnd( PERQUEUEDATA *pQData )
 {
-    HWND32 hWndActive;
+    HWND hWndActive;
     assert(pQData != 0 );
 
     EnterCriticalSection( &pQData->cSection );
@@ -205,9 +205,9 @@ HWND32 PERQDATA_GetActiveWnd( PERQUEUEDATA *pQData )
  *
  * Set the active focus hwnd member in a threadsafe manner
  */
-HWND32 PERQDATA_SetActiveWnd( PERQUEUEDATA *pQData, HWND32 hWndActive )
+HWND PERQDATA_SetActiveWnd( PERQUEUEDATA *pQData, HWND hWndActive )
 {
-    HWND32 hWndActivePrv;
+    HWND hWndActivePrv;
     assert(pQData != 0 );
 
     EnterCriticalSection( &pQData->cSection );
@@ -224,9 +224,9 @@ HWND32 PERQDATA_SetActiveWnd( PERQUEUEDATA *pQData, HWND32 hWndActive )
  *
  * Get the capture hwnd member in a threadsafe manner
  */
-HWND32 PERQDATA_GetCaptureWnd( PERQUEUEDATA *pQData )
+HWND PERQDATA_GetCaptureWnd( PERQUEUEDATA *pQData )
 {
-    HWND32 hWndCapture;
+    HWND hWndCapture;
     assert(pQData != 0 );
 
     EnterCriticalSection( &pQData->cSection );
@@ -242,9 +242,9 @@ HWND32 PERQDATA_GetCaptureWnd( PERQUEUEDATA *pQData )
  *
  * Set the capture hwnd member in a threadsafe manner
  */
-HWND32 PERQDATA_SetCaptureWnd( PERQUEUEDATA *pQData, HWND32 hWndCapture )
+HWND PERQDATA_SetCaptureWnd( PERQUEUEDATA *pQData, HWND hWndCapture )
 {
-    HWND32 hWndCapturePrv;
+    HWND hWndCapturePrv;
     assert(pQData != 0 );
 
     EnterCriticalSection( &pQData->cSection );
@@ -397,7 +397,7 @@ void QUEUE_WalkQueues(void)
             WARN( msg, "Bad queue handle %04x\n", hQueue );
             return;
         }
-        if (!GetModuleName( queue->thdb->process->task, module, sizeof(module )))
+        if (!GetModuleName16( queue->thdb->process->task, module, sizeof(module )))
             strcpy( module, "???" );
         DUMP( "%04x %4d %p %04x %s\n", hQueue,queue->msgCount,
               queue->thdb, queue->thdb->process->task, module );
@@ -411,7 +411,7 @@ void QUEUE_WalkQueues(void)
 /***********************************************************************
  *	     QUEUE_IsExitingQueue
  */
-BOOL32 QUEUE_IsExitingQueue( HQUEUE16 hQueue )
+BOOL QUEUE_IsExitingQueue( HQUEUE16 hQueue )
 {
     return (hExitingQueue && (hQueue == hExitingQueue));
 }
@@ -458,7 +458,7 @@ static HQUEUE16 QUEUE_CreateMsgQueue( BOOL16 bCreatePerQData )
        only */
     if ( !THREAD_IsWin16( THREAD_Current() ) )
     {
-        msgQueue->hEvent = CreateEvent32A( NULL, FALSE, FALSE, NULL);
+        msgQueue->hEvent = CreateEventA( NULL, FALSE, FALSE, NULL);
 
         if (msgQueue->hEvent == 0)
         {
@@ -526,7 +526,7 @@ void QUEUE_FlushMessages( MESSAGEQUEUE *queue )
  * Note: We need to mask asynchronous events to make sure PostMessage works
  * even in the signal handler.
  */
-BOOL32 QUEUE_DeleteMsgQueue( HQUEUE16 hQueue )
+BOOL QUEUE_DeleteMsgQueue( HQUEUE16 hQueue )
 {
     MESSAGEQUEUE * msgQueue = (MESSAGEQUEUE*)QUEUE_Lock(hQueue);
     HQUEUE16 *pPrev;
@@ -591,7 +591,7 @@ BOOL32 QUEUE_DeleteMsgQueue( HQUEUE16 hQueue )
  * Create the system message queue, and set the double-click speed.
  * Must be called only once.
  */
-BOOL32 QUEUE_CreateSysMsgQueue( int size )
+BOOL QUEUE_CreateSysMsgQueue( int size )
 {
     /* Note: We dont need perQ data for the system message queue */
     if (!(hmemSysMsgQueue = QUEUE_CreateMsgQueue( FALSE )))
@@ -617,11 +617,11 @@ MESSAGEQUEUE *QUEUE_GetSysQueue(void)
 static void QUEUE_Wait( DWORD wait_mask )
 {
     if ( THREAD_IsWin16( THREAD_Current() ) )
-        WaitEvent( 0 );
+        WaitEvent16( 0 );
     else
     {
         TRACE(msg, "current task is 32-bit, calling SYNC_DoWait\n");
-        MsgWaitForMultipleObjects( 0, NULL, FALSE, INFINITE32, wait_mask );
+        MsgWaitForMultipleObjects( 0, NULL, FALSE, INFINITE, wait_mask );
     }
 }
 
@@ -646,7 +646,7 @@ void QUEUE_SetWakeBit( MESSAGEQUEUE *queue, WORD bit )
         
         /* Wake up thread waiting for message */
         if ( THREAD_IsWin16( queue->thdb ) )
-            PostEvent( queue->thdb->process->task );
+            PostEvent16( queue->thdb->process->task );
         else
         {
             SetEvent( queue->hEvent );
@@ -674,11 +674,11 @@ void QUEUE_WaitBits( WORD bits )
 {
     MESSAGEQUEUE *queue;
 
-    TRACE(msg,"q %04x waiting for %04x\n", GetFastQueue(), bits);
+    TRACE(msg,"q %04x waiting for %04x\n", GetFastQueue16(), bits);
 
     for (;;)
     {
-        if (!(queue = (MESSAGEQUEUE *)QUEUE_Lock( GetFastQueue() ))) return;
+        if (!(queue = (MESSAGEQUEUE *)QUEUE_Lock( GetFastQueue16() ))) return;
 
         if (queue->changeBits & bits)
         {
@@ -719,7 +719,7 @@ void QUEUE_WaitBits( WORD bits )
  * This routine is called when a SMSG need to be added to one of the three
  * SM list.  (SM_PROCESSING_LIST, SM_PENDING_LIST, SM_WAITING_LIST)
  */
-BOOL32 QUEUE_AddSMSG( MESSAGEQUEUE *queue, int list, SMSG *smsg )
+BOOL QUEUE_AddSMSG( MESSAGEQUEUE *queue, int list, SMSG *smsg )
 {
     TRACE(sendmsg,"queue=%x, list=%d, smsg=%p msg=%s\n", queue->self, list,
           smsg, SPY_GetMsgName(smsg->msg));
@@ -881,7 +881,7 @@ void QUEUE_ReceiveMessage( MESSAGEQUEUE *queue )
     TRACE(sendmsg,"RM: %s [%04x] (%04x -> %04x)\n",
        	    SPY_GetMsgName(smsg->msg), smsg->msg, smsg->hSrcQueue, smsg->hDstQueue );
 
-    if (IsWindow32( smsg->hWnd ))
+    if (IsWindow( smsg->hWnd ))
     {
         WND *wndPtr = WIN_FindWndPtr( smsg->hWnd );
         DWORD extraInfo = queue->GetMessageExtraInfoVal; /* save ExtraInfo */
@@ -899,11 +899,11 @@ void QUEUE_ReceiveMessage( MESSAGEQUEUE *queue )
         {
             TRACE(sendmsg, "\trcm: msg is Win32\n" );
             if (smsg->flags & SMSG_UNICODE)
-                result = CallWindowProc32W( wndPtr->winproc,
+                result = CallWindowProcW( wndPtr->winproc,
                                             smsg->hWnd, smsg->msg,
                                             smsg->wParam, smsg->lParam );
             else
-                result = CallWindowProc32A( wndPtr->winproc,
+                result = CallWindowProcA( wndPtr->winproc,
                                             smsg->hWnd, smsg->msg,
                                             smsg->wParam, smsg->lParam );
         }
@@ -965,7 +965,7 @@ void QUEUE_ReceiveMessage( MESSAGEQUEUE *queue )
         /* set SMSG_SENDING_REPLY flag to tell ReplyMessage16, it's not
          an early reply */
         smsg->flags |= SMSG_SENDING_REPLY;
-        ReplyMessage32( result );
+        ReplyMessage( result );
   }  
 
     TRACE( sendmsg,"done! \n" );
@@ -978,7 +978,7 @@ void QUEUE_ReceiveMessage( MESSAGEQUEUE *queue )
  *
  * Add a message to the queue. Return FALSE if queue is full.
  */
-BOOL32 QUEUE_AddMsg( HQUEUE16 hQueue, MSG32 *msg, DWORD extraInfo )
+BOOL QUEUE_AddMsg( HQUEUE16 hQueue, MSG *msg, DWORD extraInfo )
 {
     MESSAGEQUEUE *msgQueue;
     QMSG         *qmsg;
@@ -1028,7 +1028,7 @@ BOOL32 QUEUE_AddMsg( HQUEUE16 hQueue, MSG32 *msg, DWORD extraInfo )
  *
  * Find a message matching the given parameters. Return -1 if none available.
  */
-QMSG* QUEUE_FindMsg( MESSAGEQUEUE * msgQueue, HWND32 hwnd, int first, int last )
+QMSG* QUEUE_FindMsg( MESSAGEQUEUE * msgQueue, HWND hwnd, int first, int last )
 {
     QMSG* qmsg;
 
@@ -1043,7 +1043,7 @@ QMSG* QUEUE_FindMsg( MESSAGEQUEUE * msgQueue, HWND32 hwnd, int first, int last )
         /* look in linked list for message matching first and last criteria */
         for (qmsg = msgQueue->firstMsg; qmsg; qmsg = qmsg->nextMsg)
     {
-            MSG32 *msg = &(qmsg->msg);
+            MSG *msg = &(qmsg->msg);
 
 	if (!hwnd || (msg->hwnd == hwnd))
 	{
@@ -1100,11 +1100,11 @@ void QUEUE_RemoveMsg( MESSAGEQUEUE * msgQueue, QMSG *qmsg )
  *
  * Wake a queue upon reception of a hardware event.
  */
-static void QUEUE_WakeSomeone( UINT32 message )
+static void QUEUE_WakeSomeone( UINT message )
 {
     WND*	  wndPtr = NULL;
     WORD          wakeBit;
-    HWND32 hwnd;
+    HWND hwnd;
     HQUEUE16     hQueue = 0;
     MESSAGEQUEUE *queue = NULL;
 
@@ -1120,7 +1120,7 @@ static void QUEUE_WakeSomeone( UINT32 message )
     else 
     {
        wakeBit = (message == WM_MOUSEMOVE) ? QS_MOUSEMOVE : QS_MOUSEBUTTON;
-       if( (hwnd = GetCapture32()) )
+       if( (hwnd = GetCapture()) )
 	 if( (wndPtr = WIN_FindWndPtr( hwnd )) ) 
            {
                hQueue = wndPtr->hmemTaskQ;
@@ -1168,7 +1168,7 @@ static void QUEUE_WakeSomeone( UINT32 message )
 void hardware_event( WORD message, WORD wParam, LONG lParam,
 		     int xPos, int yPos, DWORD time, DWORD extraInfo )
 {
-    MSG32 *msg;
+    MSG *msg;
     QMSG  *qmsg = sysMsgQueue->lastMsg;
     int  mergeMsg = 0;
 
@@ -1309,7 +1309,7 @@ void QUEUE_DecTimerCount( HQUEUE16 hQueue )
  */
 void WINAPI PostQuitMessage16( INT16 exitCode )
 {
-    PostQuitMessage32( exitCode );
+    PostQuitMessage( exitCode );
 }
 
 
@@ -1327,11 +1327,11 @@ void WINAPI PostQuitMessage16( INT16 exitCode )
  *
  *  ECMA-234, Win32
  */
-void WINAPI PostQuitMessage32( INT32 exitCode )
+void WINAPI PostQuitMessage( INT exitCode )
 {
     MESSAGEQUEUE *queue;
 
-    if (!(queue = (MESSAGEQUEUE *)QUEUE_Lock( GetFastQueue() ))) return;
+    if (!(queue = (MESSAGEQUEUE *)QUEUE_Lock( GetFastQueue16() ))) return;
     queue->wPostQMsg = TRUE;
     queue->wExitCode = (WORD)exitCode;
     QUEUE_Unlock( queue );
@@ -1352,7 +1352,7 @@ HTASK16 WINAPI GetWindowTask16( HWND16 hwnd )
 /***********************************************************************
  *           GetWindowThreadProcessId   (USER32.313)
  */
-DWORD WINAPI GetWindowThreadProcessId( HWND32 hwnd, LPDWORD process )
+DWORD WINAPI GetWindowThreadProcessId( HWND hwnd, LPDWORD process )
 {
     HTASK16 htask;
     TDB	*tdb;
@@ -1373,20 +1373,20 @@ DWORD WINAPI GetWindowThreadProcessId( HWND32 hwnd, LPDWORD process )
  */
 BOOL16 WINAPI SetMessageQueue16( INT16 size )
 {
-    return SetMessageQueue32( size );
+    return SetMessageQueue( size );
 }
 
 
 /***********************************************************************
  *           SetMessageQueue32   (USER32.494)
  */
-BOOL32 WINAPI SetMessageQueue32( INT32 size )
+BOOL WINAPI SetMessageQueue( INT size )
 {
     /* now obsolete the message queue will be expanded dynamically
      as necessary */
 
     /* access the queue to create it if it's not existing */
-    GetFastQueue();
+    GetFastQueue16();
 
     return TRUE;
 }
@@ -1394,7 +1394,7 @@ BOOL32 WINAPI SetMessageQueue32( INT32 size )
 /***********************************************************************
  *           InitThreadInput   (USER.409)
  */
-HQUEUE16 WINAPI InitThreadInput( WORD unknown, WORD flags )
+HQUEUE16 WINAPI InitThreadInput16( WORD unknown, WORD flags )
 {
     HQUEUE16 hQueue;
     MESSAGEQUEUE *queuePtr;
@@ -1420,7 +1420,7 @@ HQUEUE16 WINAPI InitThreadInput( WORD unknown, WORD flags )
         queuePtr->thdb = THREAD_Current();
 
         SYSTEM_LOCK();
-        SetThreadQueue( 0, hQueue );
+        SetThreadQueue16( 0, hQueue );
         thdb->teb.queue = hQueue;
             
         queuePtr->next  = hFirstQueue;
@@ -1441,7 +1441,7 @@ DWORD WINAPI GetQueueStatus16( UINT16 flags )
     MESSAGEQUEUE *queue;
     DWORD ret;
 
-    if (!(queue = (MESSAGEQUEUE *)QUEUE_Lock( GetFastQueue() ))) return 0;
+    if (!(queue = (MESSAGEQUEUE *)QUEUE_Lock( GetFastQueue16() ))) return 0;
     ret = MAKELONG( queue->changeBits, queue->wakeBits );
     queue->changeBits = 0;
     QUEUE_Unlock( queue );
@@ -1452,12 +1452,12 @@ DWORD WINAPI GetQueueStatus16( UINT16 flags )
 /***********************************************************************
  *           GetQueueStatus32   (USER32.283)
  */
-DWORD WINAPI GetQueueStatus32( UINT32 flags )
+DWORD WINAPI GetQueueStatus( UINT flags )
 {
     MESSAGEQUEUE *queue;
     DWORD ret;
 
-    if (!(queue = (MESSAGEQUEUE *)QUEUE_Lock( GetFastQueue() ))) return 0;
+    if (!(queue = (MESSAGEQUEUE *)QUEUE_Lock( GetFastQueue16() ))) return 0;
     ret = MAKELONG( queue->changeBits, queue->wakeBits );
     queue->changeBits = 0;
     QUEUE_Unlock( queue );
@@ -1471,13 +1471,13 @@ DWORD WINAPI GetQueueStatus32( UINT32 flags )
  */
 BOOL16 WINAPI GetInputState16(void)
 {
-    return GetInputState32();
+    return GetInputState();
 }
 
 /***********************************************************************
  *           WaitForInputIdle   (USER32.577)
  */
-DWORD WINAPI WaitForInputIdle (HANDLE32 hProcess, DWORD dwTimeOut)
+DWORD WINAPI WaitForInputIdle (HANDLE hProcess, DWORD dwTimeOut)
 {
   FIXME (msg, "(hProcess=%d, dwTimeOut=%ld): stub\n", hProcess, dwTimeOut);
 
@@ -1488,12 +1488,12 @@ DWORD WINAPI WaitForInputIdle (HANDLE32 hProcess, DWORD dwTimeOut)
 /***********************************************************************
  *           GetInputState32   (USER32.244)
  */
-BOOL32 WINAPI GetInputState32(void)
+BOOL WINAPI GetInputState(void)
 {
     MESSAGEQUEUE *queue;
-    BOOL32 ret;
+    BOOL ret;
 
-    if (!(queue = (MESSAGEQUEUE *)QUEUE_Lock( GetFastQueue() )))
+    if (!(queue = (MESSAGEQUEUE *)QUEUE_Lock( GetFastQueue16() )))
         return FALSE;
     ret = queue->wakeBits & (QS_KEY | QS_MOUSEBUTTON);
     QUEUE_Unlock( queue );
@@ -1504,7 +1504,7 @@ BOOL32 WINAPI GetInputState32(void)
 /***********************************************************************
  *           UserYield  (USER.332)
  */
-void WINAPI UserYield(void)
+void WINAPI UserYield16(void)
 {
     TDB *pCurTask = (TDB *)GlobalLock16( GetCurrentTask() );
     MESSAGEQUEUE *queue = (MESSAGEQUEUE *)QUEUE_Lock( pCurTask->hQueue );
@@ -1522,7 +1522,7 @@ void WINAPI UserYield(void)
 
     QUEUE_Unlock( queue );
     
-    OldYield();
+    OldYield16();
 
     queue = (MESSAGEQUEUE *)QUEUE_Lock( pCurTask->hQueue );
     while (queue && (queue->wakeBits & QS_SENDMESSAGE))
@@ -1557,7 +1557,7 @@ DWORD WINAPI GetMessagePos(void)
     MESSAGEQUEUE *queue;
     DWORD ret;
 
-    if (!(queue = (MESSAGEQUEUE *)QUEUE_Lock( GetFastQueue() ))) return 0;
+    if (!(queue = (MESSAGEQUEUE *)QUEUE_Lock( GetFastQueue16() ))) return 0;
     ret = queue->GetMessagePosVal;
     QUEUE_Unlock( queue );
 
@@ -1589,7 +1589,7 @@ LONG WINAPI GetMessageTime(void)
     MESSAGEQUEUE *queue;
     LONG ret;
 
-    if (!(queue = (MESSAGEQUEUE *)QUEUE_Lock( GetFastQueue() ))) return 0;
+    if (!(queue = (MESSAGEQUEUE *)QUEUE_Lock( GetFastQueue16() ))) return 0;
     ret = queue->GetMessageTimeVal;
     QUEUE_Unlock( queue );
     
@@ -1605,7 +1605,7 @@ LONG WINAPI GetMessageExtraInfo(void)
     MESSAGEQUEUE *queue;
     LONG ret;
 
-    if (!(queue = (MESSAGEQUEUE *)QUEUE_Lock( GetFastQueue() ))) return 0;
+    if (!(queue = (MESSAGEQUEUE *)QUEUE_Lock( GetFastQueue16() ))) return 0;
     ret = queue->GetMessageExtraInfoVal;
     QUEUE_Unlock( queue );
 

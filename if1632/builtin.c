@@ -160,7 +160,7 @@ static HMODULE16 BUILTIN_DoLoadModule16( const WIN16_DESCRIPTOR *descr )
                                             descr->module_size, 0,
                                             FALSE, FALSE, FALSE, NULL );
     if (!hModule) return 0;
-    FarSetOwner( hModule, hModule );
+    FarSetOwner16( hModule, hModule );
 
     TRACE(module, "Built-in %s: hmodule=%04x\n",
                     descr->name, hModule );
@@ -187,7 +187,7 @@ static HMODULE16 BUILTIN_DoLoadModule16( const WIN16_DESCRIPTOR *descr )
     if (pSegTable->minsize) memcpy( GlobalLock16( pSegTable->hSeg ),
                                     descr->data_start, pSegTable->minsize);
     if (pModule->heap_size)
-        LocalInit( GlobalHandleToSel(pSegTable->hSeg),
+        LocalInit16( GlobalHandleToSel16(pSegTable->hSeg),
 		pSegTable->minsize, minsize );
 
     NE_RegisterModule( pModule );
@@ -200,7 +200,7 @@ static HMODULE16 BUILTIN_DoLoadModule16( const WIN16_DESCRIPTOR *descr )
  *
  * Load all built-in modules marked as 'always used'.
  */
-BOOL32 BUILTIN_Init(void)
+BOOL BUILTIN_Init(void)
 {
     BUILTIN16_DLL *dll;
     WORD vector;
@@ -237,7 +237,7 @@ BOOL32 BUILTIN_Init(void)
  * Load a built-in module. If the 'force' parameter is FALSE, we only
  * load the module if it has not been disabled via the -dll option.
  */
-HMODULE16 BUILTIN_LoadModule( LPCSTR name, BOOL32 force )
+HMODULE16 BUILTIN_LoadModule( LPCSTR name, BOOL force )
 {
     BUILTIN16_DLL *table;
     char dllname[16], *p;
@@ -245,11 +245,11 @@ HMODULE16 BUILTIN_LoadModule( LPCSTR name, BOOL32 force )
     /* Fix the name in case we have a full path and extension */
 
     if ((p = strrchr( name, '\\' ))) name = p + 1;
-    lstrcpyn32A( dllname, name, sizeof(dllname) );
+    lstrcpynA( dllname, name, sizeof(dllname) );
     if ((p = strrchr( dllname, '.' ))) *p = '\0';
 
     for (table = BuiltinDLLs; table->descr; table++)
-        if (!lstrcmpi32A( table->descr->name, dllname )) break;
+        if (!lstrcmpiA( table->descr->name, dllname )) break;
     if (!table->descr) return 0;
     if ((table->flags & DLL_FLAG_NOT_USED) && !force) return 0;
 
@@ -270,7 +270,7 @@ LPCSTR BUILTIN_GetEntryPoint16( WORD cs, WORD ip, WORD *pOrd )
     register BYTE *p;
     NE_MODULE *pModule;
 
-    if (!(pModule = NE_GetPtr( FarGetOwner( GlobalHandle16(cs) ))))
+    if (!(pModule = NE_GetPtr( FarGetOwner16( GlobalHandle16(cs) ))))
         return NULL;
 
     /* Search for the ordinal */
@@ -351,7 +351,7 @@ void BUILTIN_DefaultIntHandler( CONTEXT *context )
  *
  * Set runtime DLL usage flags
  */
-BOOL32 BUILTIN_ParseDLLOptions( const char *str )
+BOOL BUILTIN_ParseDLLOptions( const char *str )
 {
     BUILTIN16_DLL *dll;
     const char *p;
@@ -367,7 +367,7 @@ BOOL32 BUILTIN_ParseDLLOptions( const char *str )
         if (p == str) return FALSE;
         for (dll = BuiltinDLLs; dll->descr; dll++)
         {
-            if (!lstrncmpi32A( str, dll->descr->name, (int)(p - str) ))
+            if (!lstrncmpiA( str, dll->descr->name, (int)(p - str) ))
             {
 	        if (dll->descr->name[(int)(p-str)])  /* only partial match */
 			continue;

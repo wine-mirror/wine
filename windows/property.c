@@ -13,7 +13,7 @@
 typedef struct tagPROPERTY
 {
     struct tagPROPERTY *next;     /* Next property in window list */
-    HANDLE32            handle;   /* User's data */
+    HANDLE            handle;   /* User's data */
     LPSTR               string;   /* Property string (or atom) */
 } PROPERTY;
 
@@ -21,7 +21,7 @@ typedef struct tagPROPERTY
 /***********************************************************************
  *           PROP_FindProp
  */
-static PROPERTY *PROP_FindProp( HWND32 hwnd, LPCSTR str )
+static PROPERTY *PROP_FindProp( HWND hwnd, LPCSTR str )
 {
     ATOM atom;
     PROPERTY *prop;
@@ -30,12 +30,12 @@ static PROPERTY *PROP_FindProp( HWND32 hwnd, LPCSTR str )
     if (!pWnd) return NULL;
     if (HIWORD(str))
     {
-        atom = GlobalFindAtom32A( str );
+        atom = GlobalFindAtomA( str );
         for (prop = pWnd->pProp; prop; prop = prop->next)
         {
             if (HIWORD(prop->string))
             {
-                if (!lstrcmpi32A( prop->string, str )) return prop;
+                if (!lstrcmpiA( prop->string, str )) return prop;
             }
             else if (LOWORD(prop->string) == atom) return prop;
         }
@@ -47,7 +47,7 @@ static PROPERTY *PROP_FindProp( HWND32 hwnd, LPCSTR str )
         {
             if (HIWORD(prop->string))
             {
-                if (GlobalFindAtom32A( prop->string ) == atom) return prop;
+                if (GlobalFindAtomA( prop->string ) == atom) return prop;
             }
             else if (LOWORD(prop->string) == atom) return prop;
         }
@@ -61,14 +61,14 @@ static PROPERTY *PROP_FindProp( HWND32 hwnd, LPCSTR str )
  */
 HANDLE16 WINAPI GetProp16( HWND16 hwnd, LPCSTR str )
 {
-    return (HANDLE16)GetProp32A( hwnd, str );
+    return (HANDLE16)GetPropA( hwnd, str );
 }
 
 
 /***********************************************************************
  *           GetProp32A   (USER32.281)
  */
-HANDLE32 WINAPI GetProp32A( HWND32 hwnd, LPCSTR str )
+HANDLE WINAPI GetPropA( HWND hwnd, LPCSTR str )
 {
     PROPERTY *prop = PROP_FindProp( hwnd, str );
 
@@ -86,14 +86,14 @@ HANDLE32 WINAPI GetProp32A( HWND32 hwnd, LPCSTR str )
 /***********************************************************************
  *           GetProp32W   (USER32.282)
  */
-HANDLE32 WINAPI GetProp32W( HWND32 hwnd, LPCWSTR str )
+HANDLE WINAPI GetPropW( HWND hwnd, LPCWSTR str )
 {
     LPSTR strA;
-    HANDLE32 ret;
+    HANDLE ret;
 
-    if (!HIWORD(str)) return GetProp32A( hwnd, (LPCSTR)(UINT32)LOWORD(str) );
+    if (!HIWORD(str)) return GetPropA( hwnd, (LPCSTR)(UINT)LOWORD(str) );
     strA = HEAP_strdupWtoA( GetProcessHeap(), 0, str );
-    ret = GetProp32A( hwnd, strA );
+    ret = GetPropA( hwnd, strA );
     HeapFree( GetProcessHeap(), 0, strA );
     return ret;
 }
@@ -104,14 +104,14 @@ HANDLE32 WINAPI GetProp32W( HWND32 hwnd, LPCWSTR str )
  */
 BOOL16 WINAPI SetProp16( HWND16 hwnd, LPCSTR str, HANDLE16 handle )
 {
-    return (BOOL16)SetProp32A( hwnd, str, handle );
+    return (BOOL16)SetPropA( hwnd, str, handle );
 }
 
 
 /***********************************************************************
  *           SetProp32A   (USER32.497)
  */
-BOOL32 WINAPI SetProp32A( HWND32 hwnd, LPCSTR str, HANDLE32 handle )
+BOOL WINAPI SetPropA( HWND hwnd, LPCSTR str, HANDLE handle )
 {
     PROPERTY *prop;
 
@@ -143,15 +143,15 @@ BOOL32 WINAPI SetProp32A( HWND32 hwnd, LPCSTR str, HANDLE32 handle )
 /***********************************************************************
  *           SetProp32W   (USER32.498)
  */
-BOOL32 WINAPI SetProp32W( HWND32 hwnd, LPCWSTR str, HANDLE32 handle )
+BOOL WINAPI SetPropW( HWND hwnd, LPCWSTR str, HANDLE handle )
 {
-    BOOL32 ret;
+    BOOL ret;
     LPSTR strA;
 
     if (!HIWORD(str))
-        return SetProp32A( hwnd, (LPCSTR)(UINT32)LOWORD(str), handle );
+        return SetPropA( hwnd, (LPCSTR)(UINT)LOWORD(str), handle );
     strA = HEAP_strdupWtoA( GetProcessHeap(), 0, str );
-    ret = SetProp32A( hwnd, strA, handle );
+    ret = SetPropA( hwnd, strA, handle );
     HeapFree( GetProcessHeap(), 0, strA );
     return ret;
 }
@@ -162,17 +162,17 @@ BOOL32 WINAPI SetProp32W( HWND32 hwnd, LPCWSTR str, HANDLE32 handle )
  */
 HANDLE16 WINAPI RemoveProp16( HWND16 hwnd, LPCSTR str )
 {
-    return (HANDLE16)RemoveProp32A( hwnd, str );
+    return (HANDLE16)RemovePropA( hwnd, str );
 }
 
 
 /***********************************************************************
  *           RemoveProp32A   (USER32.442)
  */
-HANDLE32 WINAPI RemoveProp32A( HWND32 hwnd, LPCSTR str )
+HANDLE WINAPI RemovePropA( HWND hwnd, LPCSTR str )
 {
     ATOM atom;
-    HANDLE32 handle;
+    HANDLE handle;
     PROPERTY **pprop, *prop;
     WND *pWnd = WIN_FindWndPtr( hwnd );
 
@@ -182,15 +182,15 @@ HANDLE32 WINAPI RemoveProp32A( HWND32 hwnd, LPCSTR str )
       TRACE(prop, "%04x #%04x\n", hwnd, LOWORD(str));
 
 
-    if (!pWnd) return (HANDLE32)0;
+    if (!pWnd) return (HANDLE)0;
     if (HIWORD(str))
     {
-        atom = GlobalFindAtom32A( str );
+        atom = GlobalFindAtomA( str );
         for (pprop=(PROPERTY**)&pWnd->pProp; (*pprop); pprop = &(*pprop)->next)
         {
             if (HIWORD((*pprop)->string))
             {
-                if (!lstrcmpi32A( (*pprop)->string, str )) break;
+                if (!lstrcmpiA( (*pprop)->string, str )) break;
             }
             else if (LOWORD((*pprop)->string) == atom) break;
         }
@@ -202,7 +202,7 @@ HANDLE32 WINAPI RemoveProp32A( HWND32 hwnd, LPCSTR str )
         {
             if (HIWORD((*pprop)->string))
             {
-                if (GlobalFindAtom32A( (*pprop)->string ) == atom) break;
+                if (GlobalFindAtomA( (*pprop)->string ) == atom) break;
             }
             else if (LOWORD((*pprop)->string) == atom) break;
         }
@@ -220,15 +220,15 @@ HANDLE32 WINAPI RemoveProp32A( HWND32 hwnd, LPCSTR str )
 /***********************************************************************
  *           RemoveProp32W   (USER32.443)
  */
-HANDLE32 WINAPI RemoveProp32W( HWND32 hwnd, LPCWSTR str )
+HANDLE WINAPI RemovePropW( HWND hwnd, LPCWSTR str )
 {
     LPSTR strA;
-    HANDLE32 ret;
+    HANDLE ret;
 
     if (!HIWORD(str))
-        return RemoveProp32A( hwnd, (LPCSTR)(UINT32)LOWORD(str) );
+        return RemovePropA( hwnd, (LPCSTR)(UINT)LOWORD(str) );
     strA = HEAP_strdupWtoA( GetProcessHeap(), 0, str );
-    ret = RemoveProp32A( hwnd, strA );
+    ret = RemovePropA( hwnd, strA );
     HeapFree( GetProcessHeap(), 0, strA );
     return ret;
 }
@@ -262,7 +262,7 @@ INT16 WINAPI EnumProps16( HWND16 hwnd, PROPENUMPROC16 func )
     WND *pWnd;
     INT16 ret = -1;
 
-    TRACE(prop, "%04x %08x\n", hwnd, (UINT32)func );
+    TRACE(prop, "%04x %08x\n", hwnd, (UINT)func );
     if (!(pWnd = WIN_FindWndPtr( hwnd ))) return -1;
     for (prop = pWnd->pProp; (prop); prop = next)
     {
@@ -282,32 +282,32 @@ INT16 WINAPI EnumProps16( HWND16 hwnd, PROPENUMPROC16 func )
 /***********************************************************************
  *           EnumProps32A   (USER32.186)
  */
-INT32 WINAPI EnumProps32A( HWND32 hwnd, PROPENUMPROC32A func )
+INT WINAPI EnumPropsA( HWND hwnd, PROPENUMPROCA func )
 {
-    return EnumPropsEx32A( hwnd, (PROPENUMPROCEX32A)func, 0 );
+    return EnumPropsExA( hwnd, (PROPENUMPROCEXA)func, 0 );
 }
 
 
 /***********************************************************************
  *           EnumProps32W   (USER32.189)
  */
-INT32 WINAPI EnumProps32W( HWND32 hwnd, PROPENUMPROC32W func )
+INT WINAPI EnumPropsW( HWND hwnd, PROPENUMPROCW func )
 {
-    return EnumPropsEx32W( hwnd, (PROPENUMPROCEX32W)func, 0 );
+    return EnumPropsExW( hwnd, (PROPENUMPROCEXW)func, 0 );
 }
 
 
 /***********************************************************************
  *           EnumPropsEx32A   (USER32.187)
  */
-INT32 WINAPI EnumPropsEx32A(HWND32 hwnd, PROPENUMPROCEX32A func, LPARAM lParam)
+INT WINAPI EnumPropsExA(HWND hwnd, PROPENUMPROCEXA func, LPARAM lParam)
 {
     PROPERTY *prop, *next;
     WND *pWnd;
-    INT32 ret = -1;
+    INT ret = -1;
 
     TRACE(prop, "%04x %08x %08lx\n",
-                  hwnd, (UINT32)func, lParam );
+                  hwnd, (UINT)func, lParam );
     if (!(pWnd = WIN_FindWndPtr( hwnd ))) return -1;
     for (prop = pWnd->pProp; (prop); prop = next)
     {
@@ -327,14 +327,14 @@ INT32 WINAPI EnumPropsEx32A(HWND32 hwnd, PROPENUMPROCEX32A func, LPARAM lParam)
 /***********************************************************************
  *           EnumPropsEx32W   (USER32.188)
  */
-INT32 WINAPI EnumPropsEx32W(HWND32 hwnd, PROPENUMPROCEX32W func, LPARAM lParam)
+INT WINAPI EnumPropsExW(HWND hwnd, PROPENUMPROCEXW func, LPARAM lParam)
 {
     PROPERTY *prop, *next;
     WND *pWnd;
-    INT32 ret = -1;
+    INT ret = -1;
 
     TRACE(prop, "%04x %08x %08lx\n",
-                  hwnd, (UINT32)func, lParam );
+                  hwnd, (UINT)func, lParam );
     if (!(pWnd = WIN_FindWndPtr( hwnd ))) return -1;
     for (prop = pWnd->pProp; (prop); prop = next)
     {
@@ -351,7 +351,7 @@ INT32 WINAPI EnumPropsEx32W(HWND32 hwnd, PROPENUMPROCEX32W func, LPARAM lParam)
             HeapFree( GetProcessHeap(), 0, str );
         }
         else
-            ret = func( hwnd, (LPCWSTR)(UINT32)LOWORD( prop->string ),
+            ret = func( hwnd, (LPCWSTR)(UINT)LOWORD( prop->string ),
                         prop->handle, lParam );
         if (!ret) break;
     }

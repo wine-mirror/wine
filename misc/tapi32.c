@@ -10,9 +10,9 @@
 #include "wintypes.h"
 #include "debug.h"
 
-UINT32 WINAPI lineInitialize(
+UINT WINAPI lineInitialize(
   LPVOID lphLineApp, /* FIXME */
-  HINSTANCE32 hInstance,
+  HINSTANCE hInstance,
   LPVOID lpfnCallback, /* FIXME */
   LPCSTR lpszAppName,
   LPDWORD lpdwNumDevs)
@@ -21,14 +21,14 @@ UINT32 WINAPI lineInitialize(
     return 0;
 }
 
-UINT32 WINAPI lineShutdown( HANDLE32 hLineApp ) /* FIXME */
+UINT WINAPI lineShutdown( HANDLE hLineApp ) /* FIXME */
 {
     FIXME(comm, "stub.\n");
     return 0;
 }
 
-UINT32 WINAPI lineNegotiateAPIVersion(
-  HANDLE32 hLineApp, /* FIXME */
+UINT WINAPI lineNegotiateAPIVersion(
+  HANDLE hLineApp, /* FIXME */
   DWORD dwDeviceID,
   DWORD dwAPILowVersion,
   DWORD dwAPIHighVersion,
@@ -45,8 +45,8 @@ UINT32 WINAPI lineNegotiateAPIVersion(
  * lineRedirect32 [TAPI32.53]
  * 
  */
-LONG WINAPI lineRedirect32(
-  HANDLE32* hCall,
+LONG WINAPI lineRedirect(
+  HANDLE* hCall,
   LPCSTR lpszDestAddress,
   DWORD  dwCountryCode) {
 
@@ -59,7 +59,7 @@ LONG WINAPI lineRedirect32(
  * tapiRequestMakeCall32 [TAPI32.113]
  * 
  */
-LONG WINAPI tapiRequestMakeCall32(
+LONG WINAPI tapiRequestMakeCall(
   LPCSTR lpszDestAddress,
   LPCSTR lpszAppName,
   LPCSTR lpszCalledParty,

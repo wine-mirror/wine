@@ -13,16 +13,16 @@ file	gdi.exe
 8   pascal16 SetTextCharacterExtra(word s_word) SetTextCharacterExtra16
 9   pascal   SetTextColor(word long) SetTextColor16
 10  pascal16 SetTextJustification(word s_word s_word) SetTextJustification16
-11  pascal SetWindowOrg(word s_word s_word) SetWindowOrg
-12  pascal SetWindowExt(word s_word s_word) SetWindowExt
-13  pascal SetViewportOrg(word s_word s_word) SetViewportOrg
-14  pascal SetViewportExt(word s_word s_word) SetViewportExt
-15  pascal OffsetWindowOrg(word s_word s_word) OffsetWindowOrg
-16  pascal ScaleWindowExt(word s_word s_word s_word s_word) ScaleWindowExt
-17  pascal OffsetViewportOrg(word s_word s_word) OffsetViewportOrg
-18  pascal ScaleViewportExt(word s_word s_word s_word s_word) ScaleViewportExt
+11  pascal SetWindowOrg(word s_word s_word) SetWindowOrg16
+12  pascal SetWindowExt(word s_word s_word) SetWindowExt16
+13  pascal SetViewportOrg(word s_word s_word) SetViewportOrg16
+14  pascal SetViewportExt(word s_word s_word) SetViewportExt16
+15  pascal OffsetWindowOrg(word s_word s_word) OffsetWindowOrg16
+16  pascal ScaleWindowExt(word s_word s_word s_word s_word) ScaleWindowExt16
+17  pascal OffsetViewportOrg(word s_word s_word) OffsetViewportOrg16
+18  pascal ScaleViewportExt(word s_word s_word s_word s_word) ScaleViewportExt16
 19  pascal16 LineTo(word s_word s_word) LineTo16
-20  pascal   MoveTo(word s_word s_word) MoveTo
+20  pascal   MoveTo(word s_word s_word) MoveTo16
 21  pascal16 ExcludeClipRect(word s_word s_word s_word s_word) ExcludeClipRect16
 22  pascal16 IntersectClipRect(word s_word s_word s_word s_word) IntersectClipRect16
 23  pascal16 Arc(word s_word s_word s_word s_word s_word s_word s_word s_word)
@@ -80,13 +80,13 @@ file	gdi.exe
 70  pascal16 EnumFonts(word str segptr long) THUNK_EnumFonts16
 71  pascal16 EnumObjects(word word segptr long) THUNK_EnumObjects16
 72  pascal16 EqualRgn(word word) EqualRgn16
-73  pascal16 ExcludeVisRect(word s_word s_word s_word s_word) ExcludeVisRect
+73  pascal16 ExcludeVisRect(word s_word s_word s_word s_word) ExcludeVisRect16
 74  pascal GetBitmapBits(word long ptr) GetBitmapBits16
 75  pascal   GetBkColor(word) GetBkColor16
 76  pascal16 GetBkMode(word) GetBkMode16
 77  pascal16 GetClipBox(word ptr) GetClipBox16
-78  pascal   GetCurrentPosition(word) GetCurrentPosition
-79  pascal   GetDCOrg(word) GetDCOrg
+78  pascal   GetCurrentPosition(word) GetCurrentPosition16
+79  pascal   GetDCOrg(word) GetDCOrg16
 80  pascal16 GetDeviceCaps(word s_word) GetDeviceCaps16
 81  pascal16 GetMapMode(word) GetMapMode16
 82  pascal16 GetObject(word s_word ptr) GetObject16
@@ -98,79 +98,79 @@ file	gdi.exe
 88  pascal16 GetStretchBltMode(word) GetStretchBltMode16
 89  pascal16 GetTextCharacterExtra(word) GetTextCharacterExtra16
 90  pascal   GetTextColor(word) GetTextColor16
-91  pascal   GetTextExtent(word ptr s_word) GetTextExtent
+91  pascal   GetTextExtent(word ptr s_word) GetTextExtent16
 92  pascal16 GetTextFace(word s_word ptr) GetTextFace16
 93  pascal16 GetTextMetrics(word ptr) GetTextMetrics16
-94  pascal   GetViewportExt(word) GetViewportExt
-95  pascal   GetViewportOrg(word) GetViewportOrg
-96  pascal   GetWindowExt(word) GetWindowExt
-97  pascal   GetWindowOrg(word) GetWindowOrg
+94  pascal   GetViewportExt(word) GetViewportExt16
+95  pascal   GetViewportOrg(word) GetViewportOrg16
+96  pascal   GetWindowExt(word) GetWindowExt16
+97  pascal   GetWindowOrg(word) GetWindowOrg16
 98  pascal16 IntersectVisRect(word s_word s_word s_word s_word)
-             IntersectVisRect
+             IntersectVisRect16
 99  pascal16 LPtoDP(word ptr s_word) LPtoDP16
 100 pascal16 LineDDA(s_word s_word s_word s_word segptr long) THUNK_LineDDA16
 101 pascal16 OffsetRgn(word s_word s_word) OffsetRgn16
-102 pascal16 OffsetVisRgn(word s_word s_word) OffsetVisRgn
+102 pascal16 OffsetVisRgn(word s_word s_word) OffsetVisRgn16
 103 pascal16 PtVisible(word s_word s_word) PtVisible16
 104 pascal16 RectVisibleOld(word ptr) RectVisible16
-105 pascal16 SelectVisRgn(word word) SelectVisRgn
+105 pascal16 SelectVisRgn(word word) SelectVisRgn16
 106 pascal SetBitmapBits(word long ptr) SetBitmapBits16
-117 pascal SetDCOrg(word s_word s_word) SetDCOrg
+117 pascal SetDCOrg(word s_word s_word) SetDCOrg16
 119 pascal16 AddFontResource(str) AddFontResource16
-121 pascal16 Death(word) Death
-122 pascal16 Resurrection(word word word word word word word) Resurrection
+121 pascal16 Death(word) Death16
+122 pascal16 Resurrection(word word word word word word word) Resurrection16
 123 pascal16 PlayMetaFile(word word) PlayMetaFile16
 124 pascal16 GetMetaFile(str) GetMetaFile16
 125 pascal16 CreateMetaFile(str) CreateMetaFile16
 126 pascal16 CloseMetaFile(word) CloseMetaFile16
 127 pascal16 DeleteMetaFile(word) DeleteMetaFile16
 128 pascal16 MulDiv(s_word s_word s_word) MulDiv16
-129 pascal16 SaveVisRgn(word) SaveVisRgn
-130 pascal16 RestoreVisRgn(word) RestoreVisRgn
-131 pascal16 InquireVisRgn(word) InquireVisRgn
-132 pascal16 SetEnvironment(str str word) SetEnvironment
-133 pascal16 GetEnvironment(str str word) GetEnvironment
+129 pascal16 SaveVisRgn(word) SaveVisRgn16
+130 pascal16 RestoreVisRgn(word) RestoreVisRgn16
+131 pascal16 InquireVisRgn(word) InquireVisRgn16
+132 pascal16 SetEnvironment(str str word) SetEnvironment16
+133 pascal16 GetEnvironment(str str word) GetEnvironment16
 134 pascal16 GetRgnBox(word ptr) GetRgnBox16
 #135 pascal ScanLr
 136 pascal16 RemoveFontResource(segptr) RemoveFontResource16
-148 pascal SetBrushOrg(word s_word s_word) SetBrushOrg
-149 pascal GetBrushOrg(word) GetBrushOrg
+148 pascal SetBrushOrg(word s_word s_word) SetBrushOrg16
+149 pascal GetBrushOrg(word) GetBrushOrg16
 150 pascal16 UnrealizeObject(word) UnrealizeObject16
 151 pascal16 CopyMetaFile(word str) CopyMetaFile16
 153 pascal16 CreateIC(str str str ptr) CreateIC16
 154 pascal   GetNearestColor(word long) GetNearestColor16
-155 pascal16 QueryAbort(word word) QueryAbort
+155 pascal16 QueryAbort(word word) QueryAbort16
 156 pascal16 CreateDiscardableBitmap(word word word) CreateDiscardableBitmap16
 158 pascal16 EnumCallback(ptr ptr word long) WineEnumDFontCallback
-159 pascal16 GetMetaFileBits(word) GetMetaFileBits
-160 pascal16 SetMetaFileBits(word) SetMetaFileBits
+159 pascal16 GetMetaFileBits(word) GetMetaFileBits16
+160 pascal16 SetMetaFileBits(word) SetMetaFileBits16
 161 pascal16 PtInRegion(word s_word s_word) PtInRegion16
-162 pascal   GetBitmapDimension(word) GetBitmapDimension
-163 pascal   SetBitmapDimension(word s_word s_word) SetBitmapDimension
+162 pascal   GetBitmapDimension(word) GetBitmapDimension16
+163 pascal   SetBitmapDimension(word s_word s_word) SetBitmapDimension16
 169 stub IsDCDirty
 170 stub SetDCStatus
 172 pascal16 SetRectRgn(word s_word s_word s_word s_word) SetRectRgn16
 173 pascal16 GetClipRgn(word) GetClipRgn16
 175 pascal16 EnumMetaFile(word word segptr long) THUNK_EnumMetaFile16
 176 pascal16 PlayMetaFileRecord(word ptr ptr word) PlayMetaFileRecord16
-179 pascal16 GetDCState(word) GetDCState
-180 pascal16 SetDCState(word word) SetDCState
+179 pascal16 GetDCState(word) GetDCState16
+180 pascal16 SetDCState(word word) SetDCState16
 181 pascal16 RectInRegionOld(word ptr) RectInRegion16
 188 stub GetTextExtentEx
 190 pascal16 SetDCHook(word segptr long) THUNK_SetDCHook
 191 pascal   GetDCHook(word ptr) THUNK_GetDCHook
-192 pascal16 SetHookFlags(word word) SetHookFlags
+192 pascal16 SetHookFlags(word word) SetHookFlags16
 193 pascal16 SetBoundsRect(word ptr word) SetBoundsRect16
 194 pascal16 GetBoundsRect(word ptr word) GetBoundsRect16
 195 stub SelectBitmap
-196 pascal16 SetMetaFileBitsBetter(word) SetMetaFileBitsBetter
+196 pascal16 SetMetaFileBitsBetter(word) SetMetaFileBitsBetter16
 201 stub DMBITBLT
 202 stub DMCOLORINFO
-206 pascal16 dmEnumDFonts(ptr str ptr ptr) dmEnumDFonts
+206 pascal16 dmEnumDFonts(ptr str ptr ptr) dmEnumDFonts16
 207 stub DMENUMOBJ
 208 stub DMOUTPUT
 209 stub DMPIXEL
-210 pascal16 dmRealizeObject(ptr word ptr ptr segptr) dmRealizeObject
+210 pascal16 dmRealizeObject(ptr word ptr ptr segptr) dmRealizeObject16
 211 stub DMSTRBLT
 212 stub DMSCANLR
 213 stub BRUTE
@@ -181,22 +181,22 @@ file	gdi.exe
 218 stub DMSTRETCHDIBITS
 219 stub DMSETDIBTODEV
 220 stub DMTRANSPOSE
-230 pascal16 CreatePQ(word) CreatePQ
-231 pascal16 MinPQ(word) MinPQ
-232 pascal16 ExtractPQ(word) ExtractPQ
-233 pascal16 InsertPQ(word word word) InsertPQ
-234 pascal16 SizePQ(word word) SizePQ
-235 pascal16 DeletePQ(word) DeletePQ
-240 pascal16 OpenJob(ptr ptr word) OpenJob
-241 pascal16 WriteSpool(word ptr word) WriteSpool
-242 pascal16 WriteDialog(word ptr word) WriteDialog
-243 pascal16 CloseJob(word) CloseJob
-244 pascal16 DeleteJob(word word) DeleteJob
-245 pascal GetSpoolJob(word ptr) GetSpoolJob
-246 pascal16 StartSpoolPage(word) StartSpoolPage
-247 pascal16 EndSpoolPage(word) EndSpoolPage
+230 pascal16 CreatePQ(word) CreatePQ16
+231 pascal16 MinPQ(word) MinPQ16
+232 pascal16 ExtractPQ(word) ExtractPQ16
+233 pascal16 InsertPQ(word word word) InsertPQ16
+234 pascal16 SizePQ(word word) SizePQ16
+235 pascal16 DeletePQ(word) DeletePQ16
+240 pascal16 OpenJob(ptr ptr word) OpenJob16
+241 pascal16 WriteSpool(word ptr word) WriteSpool16
+242 pascal16 WriteDialog(word ptr word) WriteDialog16
+243 pascal16 CloseJob(word) CloseJob16
+244 pascal16 DeleteJob(word word) DeleteJob16
+245 pascal GetSpoolJob(word ptr) GetSpoolJob16
+246 pascal16 StartSpoolPage(word) StartSpoolPage16
+247 pascal16 EndSpoolPage(word) EndSpoolPage16
 248 stub QueryJob
-250 pascal16 Copy(ptr ptr word) Copy
+250 pascal16 Copy(ptr ptr word) Copy16
 253 stub DeleteSpoolPage
 254 stub SpoolFile
 267 stub StartDocPrintEra
@@ -207,13 +207,13 @@ file	gdi.exe
 272 stub EndDocPrinter
 274 stub ClosePrinter
 280 stub GetRealDriverInfo
-281 pascal DrvSetPrinterData(ptr ptr long ptr long) DrvSetPrinterData
-282 pascal DrvGetPrinterData(ptr ptr ptr ptr long ptr) DrvGetPrinterData
+281 pascal DrvSetPrinterData(ptr ptr long ptr long) DrvSetPrinterData16
+282 pascal DrvGetPrinterData(ptr ptr ptr ptr long ptr) DrvGetPrinterData16
 299 stub ENGINEGETCHARWIDTHEX
-300 pascal EngineEnumerateFont(ptr segptr long) EngineEnumerateFont
-301 pascal16 EngineDeleteFont(ptr) EngineDeleteFont
-302 pascal EngineRealizeFont(ptr ptr ptr) EngineRealizeFont
-303 pascal16 EngineGetCharWidth(ptr word word ptr) EngineGetCharWidth
+300 pascal EngineEnumerateFont(ptr segptr long) EngineEnumerateFont16
+301 pascal16 EngineDeleteFont(ptr) EngineDeleteFont16
+302 pascal EngineRealizeFont(ptr ptr ptr) EngineRealizeFont16
+303 pascal16 EngineGetCharWidth(ptr word word ptr) EngineGetCharWidth16
 304 stub ENGINESETFONTCONTEXT
 305 stub ENGINEGETGLYPHBMP
 306 stub ENGINEMAKEFONTDIR
@@ -242,11 +242,11 @@ file	gdi.exe
 354 stub ShrinkGDIHeap
 355 stub FTrapping0
 360 pascal16 CreatePalette(ptr) CreatePalette16
-361 pascal16 GDISelectPalette(word word word) GDISelectPalette
-362 pascal16 GDIRealizePalette(word) GDIRealizePalette
+361 pascal16 GDISelectPalette(word word word) GDISelectPalette16
+362 pascal16 GDIRealizePalette(word) GDIRealizePalette16
 363 pascal16 GetPaletteEntries(word word word ptr) GetPaletteEntries16
 364 pascal16 SetPaletteEntries(word word word ptr) SetPaletteEntries16
-365 pascal16 RealizeDefaultPalette(word) RealizeDefaultPalette
+365 pascal16 RealizeDefaultPalette(word) RealizeDefaultPalette16
 366 pascal16 UpdateColors(word) UpdateColors16
 367 pascal16 AnimatePalette(word word word ptr) AnimatePalette16
 368 pascal16 ResizePalette(word word) ResizePalette16
@@ -262,16 +262,16 @@ file	gdi.exe
 380 pascal16 EndPage(word) EndPage16
 381 pascal16 SetAbortProc(word segptr) SetAbortProc16
 382 pascal16 AbortDoc() stub_GDI_382
-400 pascal16 FastWindowFrame(word ptr s_word s_word long) FastWindowFrame
+400 pascal16 FastWindowFrame(word ptr s_word s_word long) FastWindowFrame16
 401 stub GDIMOVEBITMAP
 403 stub GDIINIT2
 404 stub GetTTGlyphIndexMap
 405 stub FINALGDIINIT
 407 pascal16 CreateUserBitmap(word word word word ptr) CreateUserBitmap16
 409 pascal16 CreateUserDiscardableBitmap(word word word) CreateUserDiscardableBitmap16
-410 pascal16 IsValidMetaFile (word) IsValidMetaFile
-411 pascal16 GetCurLogFont(word) GetCurLogFont
-412 pascal16 IsDCCurrentPalette(word) IsDCCurrentPalette
+410 pascal16 IsValidMetaFile (word) IsValidMetaFile16
+411 pascal16 GetCurLogFont(word) GetCurLogFont16
+412 pascal16 IsDCCurrentPalette(word) IsDCCurrentPalette16
 439 pascal16 StretchDIBits (word s_word s_word s_word s_word s_word s_word
                             s_word s_word ptr ptr word long) StretchDIBits16
 440 pascal16 SetDIBits(word word word word ptr ptr word) SetDIBits16
@@ -285,11 +285,11 @@ file	gdi.exe
 449 stub DEVICECOLORMATCH
 450 pascal16 PolyPolygon(word ptr ptr word) PolyPolygon16
 451 pascal16 CreatePolyPolygonRgn(ptr ptr word word) CreatePolyPolygonRgn16
-452 pascal   GdiSeeGdiDo(word word word word) GdiSeeGdiDo
+452 pascal   GdiSeeGdiDo(word word word word) GdiSeeGdiDo16
 460 stub GDITASKTERMINATION
 461 pascal16 SetObjectOwner(word word) SetObjectOwner16
-462 pascal16 IsGDIObject(word) IsGDIObject
-463 pascal16 MakeObjectPrivate(word word) MakeObjectPrivate
+462 pascal16 IsGDIObject(word) IsGDIObject16
+463 pascal16 MakeObjectPrivate(word word) MakeObjectPrivate16
 464 stub FIXUPBOGUSPUBLISHERMETAFILE
 465 pascal16 RectVisible(word ptr) RectVisible16
 466 pascal16 RectInRegion(word ptr) RectInRegion16
@@ -378,7 +378,7 @@ file	gdi.exe
 606 pascal16 SetMagicColors(word long word) SetMagicColors16
 607 pascal GetRegionData(word long ptr) GetRegionData16
 608 stub ExtCreateRegion
-609 pascal16 GdiFreeResources(long) GdiFreeResources
+609 pascal16 GdiFreeResources(long) GdiFreeResources16
 610 stub GDISignalProc32
 611 stub GetRandomRgn
 612 pascal16 GetTextCharset(word) GetTextCharset16

@@ -13,7 +13,7 @@ int PASCAL WinMain (HANDLE hInstance, HANDLE prev, LPSTR cmdline, int show)
     char	buf[128],type[5],handler[5];
     HMODULE	msvfw32 = LoadLibrary("msvfw32.dll");
 
-BOOL32  (VFWAPI  *fnICInfo)(DWORD fccType, DWORD fccHandler, ICINFO * lpicinfo);
+BOOL  (VFWAPI  *fnICInfo)(DWORD fccType, DWORD fccHandler, ICINFO * lpicinfo);
 LRESULT (VFWAPI *fnICClose)(HIC hic);
 HIC	(VFWAPI	*fnICOpen)(DWORD fccType, DWORD fccHandler, UINT wMode);
 LRESULT	(VFWAPI	*fnICGetInfo)(HIC hic,ICINFO *picinfo, DWORD cb);
@@ -69,7 +69,7 @@ LRESULT	(VFWAPI	*fnICSendMessage)(HIC hic, UINT msg, DWORD dw1, DWORD dw2);
 	w2s(ii.szDescription,buf);
 	printf("\tszDescription: %s\n",buf);
 	if (doabout) ICAbout(hic,0);
-	if (doconfigure && ICQueryConfigure32(hic))
+	if (doconfigure && ICQueryConfigure(hic))
 		ICConfigure(hic,0);
 	fnICClose(hic);
     }

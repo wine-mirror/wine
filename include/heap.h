@@ -9,17 +9,17 @@
 
 #include "winbase.h"
 
-extern HANDLE32 SystemHeap;
-extern HANDLE32 SegptrHeap;
+extern HANDLE SystemHeap;
+extern HANDLE SegptrHeap;
 extern CRITICAL_SECTION *HEAP_SystemLock;
 
-extern int HEAP_IsInsideHeap( HANDLE32 heap, DWORD flags, LPCVOID ptr );
-extern SEGPTR HEAP_GetSegptr( HANDLE32 heap, DWORD flags, LPCVOID ptr );
-extern LPVOID HEAP_xalloc( HANDLE32 heap, DWORD flags, DWORD size );
-extern LPSTR HEAP_strdupA( HANDLE32 heap, DWORD flags, LPCSTR str );
-extern LPWSTR HEAP_strdupW( HANDLE32 heap, DWORD flags, LPCWSTR str );
-extern LPWSTR HEAP_strdupAtoW( HANDLE32 heap, DWORD flags, LPCSTR str );
-extern LPSTR HEAP_strdupWtoA( HANDLE32 heap, DWORD flags, LPCWSTR str );
+extern int HEAP_IsInsideHeap( HANDLE heap, DWORD flags, LPCVOID ptr );
+extern SEGPTR HEAP_GetSegptr( HANDLE heap, DWORD flags, LPCVOID ptr );
+extern LPVOID HEAP_xalloc( HANDLE heap, DWORD flags, DWORD size );
+extern LPSTR HEAP_strdupA( HANDLE heap, DWORD flags, LPCSTR str );
+extern LPWSTR HEAP_strdupW( HANDLE heap, DWORD flags, LPCWSTR str );
+extern LPWSTR HEAP_strdupAtoW( HANDLE heap, DWORD flags, LPCSTR str );
+extern LPSTR HEAP_strdupWtoA( HANDLE heap, DWORD flags, LPCWSTR str );
 
 /* SEGPTR helper macros */
 
@@ -56,7 +56,7 @@ typedef struct
     WORD wFlags;
     union {
         struct {
-            HANDLE32 hMem;
+            HANDLE hMem;
             DWORD dwReserved[3];
         } Block;
         struct {

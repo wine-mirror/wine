@@ -25,9 +25,9 @@
  *
  * Return number of bytes to pad a scanline of 16-bit aligned Windows DDB data.
  */
-INT32 BITMAP_GetPadding( int bmWidth, int bpp )
+INT BITMAP_GetPadding( int bmWidth, int bpp )
 {
-    INT32 pad;
+    INT pad;
 
     switch (bpp) 
     {
@@ -67,7 +67,7 @@ INT32 BITMAP_GetPadding( int bmWidth, int bpp )
  * Return number of bytes taken by a scanline of 16-bit aligned Windows DDB
  * data.
  */
-INT32 BITMAP_GetWidthBytes( INT32 bmWidth, INT32 bpp )
+INT BITMAP_GetWidthBytes( INT bmWidth, INT bpp )
 {
     switch(bpp)
     {
@@ -120,7 +120,7 @@ HBITMAP16 WINAPI CreateUserDiscardableBitmap16( WORD dummy,
 HBITMAP16 WINAPI CreateBitmap16( INT16 width, INT16 height, UINT16 planes,
                                  UINT16 bpp, LPCVOID bits )
 {
-    return CreateBitmap32( width, height, planes, bpp, bits );
+    return CreateBitmap( width, height, planes, bpp, bits );
 }
 
 
@@ -138,11 +138,11 @@ HBITMAP16 WINAPI CreateBitmap16( INT16 width, INT16 height, UINT16 planes,
  *    Success: Handle to bitmap
  *    Failure: 0
  */
-HBITMAP32 WINAPI CreateBitmap32( INT32 width, INT32 height, UINT32 planes,
-                                 UINT32 bpp, LPCVOID bits )
+HBITMAP WINAPI CreateBitmap( INT width, INT height, UINT planes,
+                                 UINT bpp, LPCVOID bits )
 {
     BITMAPOBJ *bmp;
-    HBITMAP32 hbitmap;
+    HBITMAP hbitmap;
 
     planes = (BYTE)planes;
     bpp    = (BYTE)bpp;
@@ -180,7 +180,7 @@ HBITMAP32 WINAPI CreateBitmap32( INT32 width, INT32 height, UINT32 planes,
     bmp->dib = NULL;
 
     if (bits) /* Set bitmap bits */
-	SetBitmapBits32( hbitmap, height * bmp->bitmap.bmWidthBytes,
+	SetBitmapBits( hbitmap, height * bmp->bitmap.bmWidthBytes,
                          bits );
     GDI_HEAP_UNLOCK( hbitmap );
     return hbitmap;
@@ -192,7 +192,7 @@ HBITMAP32 WINAPI CreateBitmap32( INT32 width, INT32 height, UINT32 planes,
  */
 HBITMAP16 WINAPI CreateCompatibleBitmap16(HDC16 hdc, INT16 width, INT16 height)
 {
-    return CreateCompatibleBitmap32( hdc, width, height );
+    return CreateCompatibleBitmap( hdc, width, height );
 }
 
 
@@ -208,9 +208,9 @@ HBITMAP16 WINAPI CreateCompatibleBitmap16(HDC16 hdc, INT16 width, INT16 height)
  *    Success: Handle to bitmap
  *    Failure: 0
  */
-HBITMAP32 WINAPI CreateCompatibleBitmap32( HDC32 hdc, INT32 width, INT32 height)
+HBITMAP WINAPI CreateCompatibleBitmap( HDC hdc, INT width, INT height)
 {
-    HBITMAP32 hbmpRet = 0;
+    HBITMAP hbmpRet = 0;
     DC *dc;
 
     TRACE(bitmap, "(%04x,%d,%d) = \n", hdc, width, height );
@@ -219,7 +219,7 @@ HBITMAP32 WINAPI CreateCompatibleBitmap32( HDC32 hdc, INT32 width, INT32 height)
 	FIXME(bitmap,"got bad width %d or height %d, please look for reason\n",
 	      width, height );
     } else {
-        hbmpRet = CreateBitmap32( width, height, 1, dc->w.bitsPerPixel, NULL );
+        hbmpRet = CreateBitmap( width, height, 1, dc->w.bitsPerPixel, NULL );
 	if(dc->funcs->pCreateBitmap)
 	    dc->funcs->pCreateBitmap( hbmpRet );
     }
@@ -246,10 +246,10 @@ HBITMAP16 WINAPI CreateBitmapIndirect16( const BITMAP16 * bmp )
  *    Success: Handle to bitmap
  *    Failure: NULL
  */
-HBITMAP32 WINAPI CreateBitmapIndirect32(
-    const BITMAP32 * bmp) /* [in] Pointer to the bitmap data */
+HBITMAP WINAPI CreateBitmapIndirect(
+    const BITMAP * bmp) /* [in] Pointer to the bitmap data */
 {
-    return CreateBitmap32( bmp->bmWidth, bmp->bmHeight, bmp->bmPlanes,
+    return CreateBitmap( bmp->bmWidth, bmp->bmHeight, bmp->bmPlanes,
                            bmp->bmBitsPixel, bmp->bmBits );
 }
 
@@ -259,7 +259,7 @@ HBITMAP32 WINAPI CreateBitmapIndirect32(
  */
 LONG WINAPI GetBitmapBits16( HBITMAP16 hbitmap, LONG count, LPVOID buffer )
 {
-    return GetBitmapBits32( hbitmap, count, buffer );
+    return GetBitmapBits( hbitmap, count, buffer );
 }
 
 
@@ -270,8 +270,8 @@ LONG WINAPI GetBitmapBits16( HBITMAP16 hbitmap, LONG count, LPVOID buffer )
  *    Success: Number of bytes copied
  *    Failure: 0
  */
-LONG WINAPI GetBitmapBits32(
-    HBITMAP32 hbitmap, /* [in]  Handle to bitmap */
+LONG WINAPI GetBitmapBits(
+    HBITMAP hbitmap, /* [in]  Handle to bitmap */
     LONG count,        /* [in]  Number of bytes to copy */
     LPVOID bits)       /* [out] Pointer to buffer to receive bits */
 {
@@ -334,7 +334,7 @@ LONG WINAPI GetBitmapBits32(
  */
 LONG WINAPI SetBitmapBits16( HBITMAP16 hbitmap, LONG count, LPCVOID buffer )
 {
-    return SetBitmapBits32( hbitmap, count, buffer );
+    return SetBitmapBits( hbitmap, count, buffer );
 }
 
 
@@ -345,8 +345,8 @@ LONG WINAPI SetBitmapBits16( HBITMAP16 hbitmap, LONG count, LPCVOID buffer )
  *    Success: Number of bytes used in setting the bitmap bits
  *    Failure: 0
  */
-LONG WINAPI SetBitmapBits32(
-    HBITMAP32 hbitmap, /* [in] Handle to bitmap */
+LONG WINAPI SetBitmapBits(
+    HBITMAP hbitmap, /* [in] Handle to bitmap */
     LONG count,        /* [in] Number of bytes in bitmap array */
     LPCVOID bits)      /* [in] Address of array with bitmap bits */
 {
@@ -429,15 +429,15 @@ HANDLE16 WINAPI LoadImage16( HINSTANCE16 hinst, LPCSTR name, UINT16 type,
  * FIXME: implementation lacks some features, see LR_ defines in windows.h
  */
 
-HANDLE32 WINAPI LoadImage32A( HINSTANCE32 hinst, LPCSTR name, UINT32 type,
-                              INT32 desiredx, INT32 desiredy, UINT32 loadflags)
+HANDLE WINAPI LoadImageA( HINSTANCE hinst, LPCSTR name, UINT type,
+                              INT desiredx, INT desiredy, UINT loadflags)
 {
-    HANDLE32 res;
+    HANDLE res;
     LPWSTR u_name;
 
     if (HIWORD(name)) u_name = HEAP_strdupAtoW(GetProcessHeap(), 0, name);
     else u_name=(LPWSTR)name;
-    res = LoadImage32W(hinst, u_name, type, desiredx, desiredy, loadflags);
+    res = LoadImageW(hinst, u_name, type, desiredx, desiredy, loadflags);
     if (HIWORD(name)) HeapFree(GetProcessHeap(), 0, u_name);
     return res;
 }
@@ -460,8 +460,8 @@ HANDLE32 WINAPI LoadImage32A( HINSTANCE32 hinst, LPCSTR name, UINT32 type,
  *
  * FIXME: Implementation lacks some features, see LR_ defines in windows.h
  */
-HANDLE32 WINAPI LoadImage32W( HINSTANCE32 hinst, LPCWSTR name, UINT32 type,
-                INT32 desiredx, INT32 desiredy, UINT32 loadflags )
+HANDLE WINAPI LoadImageW( HINSTANCE hinst, LPCWSTR name, UINT type,
+                INT desiredx, INT desiredy, UINT loadflags )
 {
     if (HIWORD(name)) {
         TRACE(resource,"(0x%04x,%p,%d,%d,%d,0x%08x)\n",
@@ -482,20 +482,20 @@ HANDLE32 WINAPI LoadImage32W( HINSTANCE32 hinst, LPCWSTR name, UINT32 type,
     if (loadflags & LR_LOADFROMFILE) loadflags &= ~LR_SHARED;
     switch (type) {
     case IMAGE_BITMAP:
-        return BITMAP_LoadBitmap32W(hinst, name, loadflags);
+        return BITMAP_LoadBitmapW(hinst, name, loadflags);
 
     case IMAGE_ICON:
         {
-	HDC32 hdc = GetDC32(0);
-	UINT32 palEnts = GetSystemPaletteEntries32(hdc, 0, 0, NULL);
-	ReleaseDC32(0, hdc);
+	HDC hdc = GetDC(0);
+	UINT palEnts = GetSystemPaletteEntries(hdc, 0, 0, NULL);
+	ReleaseDC(0, hdc);
 
-	return CURSORICON_Load32(hinst, name, desiredx, desiredy,
+	return CURSORICON_Load(hinst, name, desiredx, desiredy,
 				 MIN(16, palEnts), FALSE, loadflags);
 	}
 
     case IMAGE_CURSOR:
-        return CURSORICON_Load32(hinst, name, desiredx, desiredy,
+        return CURSORICON_Load(hinst, name, desiredx, desiredy,
 				 1, TRUE, loadflags);
     }
     return 0;
@@ -506,23 +506,23 @@ HANDLE32 WINAPI LoadImage32W( HINSTANCE32 hinst, LPCWSTR name, UINT32 type,
  *		BITMAP_CopyBitmap
  *
  */
-HBITMAP32 BITMAP_CopyBitmap(HBITMAP32 hbitmap)
+HBITMAP BITMAP_CopyBitmap(HBITMAP hbitmap)
 {
     BITMAPOBJ *bmp = (BITMAPOBJ *) GDI_GetObjPtr( hbitmap, BITMAP_MAGIC );
-    HBITMAP32 res = 0;
-    BITMAP32 bm;
+    HBITMAP res = 0;
+    BITMAP bm;
 
     if(!bmp) return 0;
 
     bm = bmp->bitmap;
     bm.bmBits = NULL;
-    res = CreateBitmapIndirect32(&bm);
+    res = CreateBitmapIndirect(&bm);
 
     if(res) {
         char *buf = HeapAlloc( GetProcessHeap(), 0, bm.bmWidthBytes *
 			       bm.bmHeight );
-        GetBitmapBits32 (hbitmap, bm.bmWidthBytes * bm.bmHeight, buf);
-	SetBitmapBits32 (res, bm.bmWidthBytes * bm.bmHeight, buf);
+        GetBitmapBits (hbitmap, bm.bmWidthBytes * bm.bmHeight, buf);
+	SetBitmapBits (res, bm.bmWidthBytes * bm.bmHeight, buf);
 	HeapFree( GetProcessHeap(), 0, buf );
     }
 
@@ -537,8 +537,8 @@ HBITMAP32 BITMAP_CopyBitmap(HBITMAP32 hbitmap)
 HICON16 WINAPI CopyImage16( HANDLE16 hnd, UINT16 type, INT16 desiredx,
                              INT16 desiredy, UINT16 flags )
 {
-    return (HICON16)CopyImage32((HANDLE32)hnd, (UINT32)type, (INT32)desiredx,
-                                (INT32)desiredy, (UINT32)flags);
+    return (HICON16)CopyImage((HANDLE)hnd, (UINT)type, (INT)desiredx,
+                                (INT)desiredy, (UINT)flags);
 }
 
 /******************************************************************************
@@ -558,17 +558,17 @@ HICON16 WINAPI CopyImage16( HANDLE16 hnd, UINT16 type, INT16 desiredx,
  * FIXME: implementation still lacks nearly all features, see LR_*
  * defines in windows.h
  */
-HICON32 WINAPI CopyImage32( HANDLE32 hnd, UINT32 type, INT32 desiredx,
-                             INT32 desiredy, UINT32 flags )
+HICON WINAPI CopyImage( HANDLE hnd, UINT type, INT desiredx,
+                             INT desiredy, UINT flags )
 {
     switch (type)
     {
 	case IMAGE_BITMAP:
 		return BITMAP_CopyBitmap(hnd);
 	case IMAGE_ICON:
-		return CopyIcon32(hnd);
+		return CopyIcon(hnd);
 	case IMAGE_CURSOR:
-		return CopyCursor32(hnd);
+		return CopyCursor(hnd);
     }
     return 0;
 }
@@ -581,8 +581,8 @@ HICON32 WINAPI CopyImage32( HANDLE32 hnd, UINT32 type, INT32 desiredx,
  */
 HBITMAP16 WINAPI LoadBitmap16( HINSTANCE16 instance, SEGPTR name )
 {
-    HBITMAP32 hbitmap = 0;
-    HDC32 hdc;
+    HBITMAP hbitmap = 0;
+    HDC hdc;
     HRSRC16 hRsrc;
     HGLOBAL16 handle;
     BITMAPINFO *info;
@@ -599,17 +599,17 @@ HBITMAP16 WINAPI LoadBitmap16( HINSTANCE16 instance, SEGPTR name )
 
     if (!instance)  /* OEM bitmap */
     {
-        HDC32 hdc;
+        HDC hdc;
 	DC *dc;
 
         if (HIWORD((int)name)) return 0;
-	hdc = CreateDC32A( "DISPLAY", NULL, NULL, NULL );
+	hdc = CreateDCA( "DISPLAY", NULL, NULL, NULL );
 	dc = DC_GetDCPtr( hdc );
 	if(dc->funcs->pLoadOEMResource)
 	  hbitmap = dc->funcs->pLoadOEMResource( LOWORD((int)name),
 						 OEM_BITMAP );
 	GDI_HEAP_UNLOCK( hdc );
-	DeleteDC32( hdc );
+	DeleteDC( hdc );
 	return hbitmap;
     }
 
@@ -617,12 +617,12 @@ HBITMAP16 WINAPI LoadBitmap16( HINSTANCE16 instance, SEGPTR name )
     if (!(handle = LoadResource16( instance, hRsrc ))) return 0;
 
     info = (BITMAPINFO *)LockResource16( handle );
-    if ((hdc = GetDC32(0)) != 0)
+    if ((hdc = GetDC(0)) != 0)
     {
         char *bits = (char *)info + DIB_BitmapInfoSize( info, DIB_RGB_COLORS );
-        hbitmap = CreateDIBitmap32( hdc, &info->bmiHeader, CBM_INIT,
+        hbitmap = CreateDIBitmap( hdc, &info->bmiHeader, CBM_INIT,
                                     bits, info, DIB_RGB_COLORS );
-        ReleaseDC32( 0, hdc );
+        ReleaseDC( 0, hdc );
     }
     FreeResource16( handle );
     return hbitmap;
@@ -632,39 +632,39 @@ HBITMAP16 WINAPI LoadBitmap16( HINSTANCE16 instance, SEGPTR name )
 /**********************************************************************
  *       BITMAP_LoadBitmap32W
  */
-HBITMAP32 BITMAP_LoadBitmap32W(HINSTANCE32 instance,LPCWSTR name, 
-			       UINT32 loadflags)
+HBITMAP BITMAP_LoadBitmapW(HINSTANCE instance,LPCWSTR name, 
+			       UINT loadflags)
 {
-    HBITMAP32 hbitmap = 0;
-    HDC32 hdc;
-    HRSRC32 hRsrc;
-    HGLOBAL32 handle;
+    HBITMAP hbitmap = 0;
+    HDC hdc;
+    HRSRC hRsrc;
+    HGLOBAL handle;
     char *ptr = NULL;
     BITMAPINFO *info, *fix_info=NULL;
-    HGLOBAL32 hFix;
+    HGLOBAL hFix;
     int size;
 
     if (!(loadflags & LR_LOADFROMFILE)) {
       if (!instance)  /* OEM bitmap */
       {
-          HDC32 hdc;
+          HDC hdc;
 	  DC *dc;
 
 	  if (HIWORD((int)name)) return 0;
-	  hdc = CreateDC32A( "DISPLAY", NULL, NULL, NULL );
+	  hdc = CreateDCA( "DISPLAY", NULL, NULL, NULL );
 	  dc = DC_GetDCPtr( hdc );
 	  if(dc->funcs->pLoadOEMResource)
 	      hbitmap = dc->funcs->pLoadOEMResource( LOWORD((int)name), 
 						     OEM_BITMAP );
 	  GDI_HEAP_UNLOCK( hdc );
-	  DeleteDC32( hdc );
+	  DeleteDC( hdc );
 	  return hbitmap;
       }
 
-      if (!(hRsrc = FindResource32W( instance, name, RT_BITMAP32W ))) return 0;
-      if (!(handle = LoadResource32( instance, hRsrc ))) return 0;
+      if (!(hRsrc = FindResourceW( instance, name, RT_BITMAPW ))) return 0;
+      if (!(handle = LoadResource( instance, hRsrc ))) return 0;
 
-      if ((info = (BITMAPINFO *)LockResource32( handle )) == NULL) return 0;
+      if ((info = (BITMAPINFO *)LockResource( handle )) == NULL) return 0;
     }
     else
     {
@@ -672,25 +672,25 @@ HBITMAP32 BITMAP_LoadBitmap32W(HINSTANCE32 instance,LPCWSTR name,
         info = (BITMAPINFO *)(ptr + sizeof(BITMAPFILEHEADER));
     }
     size = DIB_BitmapInfoSize(info, DIB_RGB_COLORS);
-    if ((hFix = GlobalAlloc32(0, size))) fix_info=GlobalLock32(hFix);
+    if ((hFix = GlobalAlloc(0, size))) fix_info=GlobalLock(hFix);
     if (fix_info) {
       BYTE pix;
 
       memcpy(fix_info, info, size);
       pix = *((LPBYTE)info+DIB_BitmapInfoSize(info, DIB_RGB_COLORS));
       DIB_FixColorsToLoadflags(fix_info, loadflags, pix);
-      if ((hdc = GetDC32(0)) != 0) {
+      if ((hdc = GetDC(0)) != 0) {
 	if (loadflags & LR_CREATEDIBSECTION)
-	  hbitmap = CreateDIBSection32(hdc, fix_info, DIB_RGB_COLORS, NULL, 0, 0);
+	  hbitmap = CreateDIBSection(hdc, fix_info, DIB_RGB_COLORS, NULL, 0, 0);
         else {
           char *bits = (char *)info + size;;
-          hbitmap = CreateDIBitmap32( hdc, &fix_info->bmiHeader, CBM_INIT,
+          hbitmap = CreateDIBitmap( hdc, &fix_info->bmiHeader, CBM_INIT,
                                       bits, fix_info, DIB_RGB_COLORS );
 	}
-        ReleaseDC32( 0, hdc );
+        ReleaseDC( 0, hdc );
       }
-      GlobalUnlock32(hFix);
-      GlobalFree32(hFix);
+      GlobalUnlock(hFix);
+      GlobalFree(hFix);
     }
     if (loadflags & LR_LOADFROMFILE) UnmapViewOfFile( ptr );
     return hbitmap;
@@ -704,25 +704,25 @@ HBITMAP32 BITMAP_LoadBitmap32W(HINSTANCE32 instance,LPCWSTR name,
  *    Success: Handle to specified bitmap
  *    Failure: NULL
  */
-HBITMAP32 WINAPI LoadBitmap32W(
-    HINSTANCE32 instance, /* [in] Handle to application instance */
+HBITMAP WINAPI LoadBitmapW(
+    HINSTANCE instance, /* [in] Handle to application instance */
     LPCWSTR name)         /* [in] Address of bitmap resource name */
 {
-    return BITMAP_LoadBitmap32W(instance, name, 0);
+    return BITMAP_LoadBitmapW(instance, name, 0);
 }
 
 
 /**********************************************************************
  *	    LoadBitmap32A   (USER32.357)
  */
-HBITMAP32 WINAPI LoadBitmap32A( HINSTANCE32 instance, LPCSTR name )
+HBITMAP WINAPI LoadBitmapA( HINSTANCE instance, LPCSTR name )
 {
-    HBITMAP32 res;
-    if (!HIWORD(name)) res = LoadBitmap32W( instance, (LPWSTR)name );
+    HBITMAP res;
+    if (!HIWORD(name)) res = LoadBitmapW( instance, (LPWSTR)name );
     else
     {
         LPWSTR uni = HEAP_strdupAtoW( GetProcessHeap(), 0, name );
-        res = LoadBitmap32W( instance, uni );
+        res = LoadBitmapW( instance, uni );
         HeapFree( GetProcessHeap(), 0, uni );
     }
     return res;
@@ -732,7 +732,7 @@ HBITMAP32 WINAPI LoadBitmap32A( HINSTANCE32 instance, LPCSTR name )
 /***********************************************************************
  *           BITMAP_DeleteObject
  */
-BOOL32 BITMAP_DeleteObject( HBITMAP16 hbitmap, BITMAPOBJ * bmp )
+BOOL BITMAP_DeleteObject( HBITMAP16 hbitmap, BITMAPOBJ * bmp )
 {
     if( bmp->DDBitmap ) {
         if( bmp->DDBitmap->funcs->pDeleteObject )
@@ -757,7 +757,7 @@ INT16 BITMAP_GetObject16( BITMAPOBJ * bmp, INT16 count, LPVOID buffer )
     {
         if ( count <= sizeof(BITMAP16) )
         {
-            BITMAP32 *bmp32 = &bmp->dib->dibSection.dsBm;
+            BITMAP *bmp32 = &bmp->dib->dibSection.dsBm;
 	    BITMAP16 bmp16;
 	    bmp16.bmType       = bmp32->bmType;
 	    bmp16.bmWidth      = bmp32->bmWidth;
@@ -795,13 +795,13 @@ INT16 BITMAP_GetObject16( BITMAPOBJ * bmp, INT16 count, LPVOID buffer )
 /***********************************************************************
  *           BITMAP_GetObject32
  */
-INT32 BITMAP_GetObject32( BITMAPOBJ * bmp, INT32 count, LPVOID buffer )
+INT BITMAP_GetObject( BITMAPOBJ * bmp, INT count, LPVOID buffer )
 {
     if (bmp->dib)
     {
 	if (count < sizeof(DIBSECTION))
 	{
-	    if (count > sizeof(BITMAP32)) count = sizeof(BITMAP32);
+	    if (count > sizeof(BITMAP)) count = sizeof(BITMAP);
 	}
 	else
 	{
@@ -813,7 +813,7 @@ INT32 BITMAP_GetObject32( BITMAPOBJ * bmp, INT32 count, LPVOID buffer )
     }
     else
     {
-	if (count > sizeof(BITMAP32)) count = sizeof(BITMAP32);
+	if (count > sizeof(BITMAP)) count = sizeof(BITMAP);
 	memcpy( buffer, &bmp->bitmap, count );
 	return count;
     }
@@ -837,12 +837,12 @@ HBITMAP16 WINAPI CreateDiscardableBitmap16( HDC16 hdc, INT16 width,
  *    Success: Handle to bitmap
  *    Failure: NULL
  */
-HBITMAP32 WINAPI CreateDiscardableBitmap32(
-    HDC32 hdc,    /* [in] Handle to device context */
-    INT32 width,  /* [in] Bitmap width */
-    INT32 height) /* [in] Bitmap height */
+HBITMAP WINAPI CreateDiscardableBitmap(
+    HDC hdc,    /* [in] Handle to device context */
+    INT width,  /* [in] Bitmap width */
+    INT height) /* [in] Bitmap height */
 {
-    return CreateCompatibleBitmap32( hdc, width, height );
+    return CreateCompatibleBitmap( hdc, width, height );
 }
 
 
@@ -869,9 +869,9 @@ BOOL16 WINAPI GetBitmapDimensionEx16( HBITMAP16 hbitmap, LPSIZE16 size )
  *    Success: TRUE
  *    Failure: FALSE
  */
-BOOL32 WINAPI GetBitmapDimensionEx32(
-    HBITMAP32 hbitmap, /* [in]  Handle to bitmap */
-    LPSIZE32 size)     /* [out] Address of struct receiving dimensions */
+BOOL WINAPI GetBitmapDimensionEx(
+    HBITMAP hbitmap, /* [in]  Handle to bitmap */
+    LPSIZE size)     /* [out] Address of struct receiving dimensions */
 {
     BITMAPOBJ * bmp = (BITMAPOBJ *) GDI_GetObjPtr( hbitmap, BITMAP_MAGIC );
     if (!bmp) return FALSE;
@@ -884,7 +884,7 @@ BOOL32 WINAPI GetBitmapDimensionEx32(
 /***********************************************************************
  *           GetBitmapDimension    (GDI.162)
  */
-DWORD WINAPI GetBitmapDimension( HBITMAP16 hbitmap )
+DWORD WINAPI GetBitmapDimension16( HBITMAP16 hbitmap )
 {
     SIZE16 size;
     if (!GetBitmapDimensionEx16( hbitmap, &size )) return 0;
@@ -915,11 +915,11 @@ BOOL16 WINAPI SetBitmapDimensionEx16( HBITMAP16 hbitmap, INT16 x, INT16 y,
  *    Success: TRUE
  *    Failure: FALSE
  */
-BOOL32 WINAPI SetBitmapDimensionEx32(
-    HBITMAP32 hbitmap, /* [in]  Handle to bitmap */
-    INT32 x,           /* [in]  Bitmap width */
-    INT32 y,           /* [in]  Bitmap height */
-    LPSIZE32 prevSize) /* [out] Address of structure for orig dims */
+BOOL WINAPI SetBitmapDimensionEx(
+    HBITMAP hbitmap, /* [in]  Handle to bitmap */
+    INT x,           /* [in]  Bitmap width */
+    INT y,           /* [in]  Bitmap height */
+    LPSIZE prevSize) /* [out] Address of structure for orig dims */
 {
     BITMAPOBJ * bmp = (BITMAPOBJ *) GDI_GetObjPtr( hbitmap, BITMAP_MAGIC );
     if (!bmp) return FALSE;
@@ -934,7 +934,7 @@ BOOL32 WINAPI SetBitmapDimensionEx32(
 /***********************************************************************
  *           SetBitmapDimension    (GDI.163)
  */
-DWORD WINAPI SetBitmapDimension( HBITMAP16 hbitmap, INT16 x, INT16 y )
+DWORD WINAPI SetBitmapDimension16( HBITMAP16 hbitmap, INT16 x, INT16 y )
 {
     SIZE16 size;
     if (!SetBitmapDimensionEx16( hbitmap, x, y, &size )) return 0;

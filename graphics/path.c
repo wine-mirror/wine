@@ -61,17 +61,17 @@
 #define GROW_FACTOR_DENOM    1  /* Denominator of grow factor             */
 
 
-static BOOL32 PATH_PathToRegion(const GdiPath *pPath, INT32 nPolyFillMode,
-   HRGN32 *pHrgn);
+static BOOL PATH_PathToRegion(const GdiPath *pPath, INT nPolyFillMode,
+   HRGN *pHrgn);
 static void   PATH_EmptyPath(GdiPath *pPath);
-static BOOL32 PATH_AddEntry(GdiPath *pPath, const POINT32 *pPoint,
+static BOOL PATH_AddEntry(GdiPath *pPath, const POINT *pPoint,
    BYTE flags);
-static BOOL32 PATH_ReserveEntries(GdiPath *pPath, INT32 numEntries);
-static BOOL32 PATH_GetPathFromHDC(HDC32 hdc, GdiPath **ppPath);
-static BOOL32 PATH_DoArcPart(GdiPath *pPath, FLOAT_POINT corners[],
-   double angleStart, double angleEnd, BOOL32 addMoveTo);
+static BOOL PATH_ReserveEntries(GdiPath *pPath, INT numEntries);
+static BOOL PATH_GetPathFromHDC(HDC hdc, GdiPath **ppPath);
+static BOOL PATH_DoArcPart(GdiPath *pPath, FLOAT_POINT corners[],
+   double angleStart, double angleEnd, BOOL addMoveTo);
 static void PATH_ScaleNormalizedPoint(FLOAT_POINT corners[], double x,
-   double y, POINT32 *pPoint);
+   double y, POINT *pPoint);
 static void PATH_NormalizePoint(FLOAT_POINT corners[], const FLOAT_POINT
    *pPoint, double *pX, double *pY);
 
@@ -81,14 +81,14 @@ static void PATH_NormalizePoint(FLOAT_POINT corners[], const FLOAT_POINT
  */
 BOOL16 WINAPI BeginPath16(HDC16 hdc)
 {
-   return (BOOL16)BeginPath32((HDC32)hdc);
+   return (BOOL16)BeginPath((HDC)hdc);
 }
 
 
 /***********************************************************************
  *           BeginPath32    (GDI32.9)
  */
-BOOL32 WINAPI BeginPath32(HDC32 hdc)
+BOOL WINAPI BeginPath(HDC hdc)
 {
    GdiPath *pPath;
    
@@ -119,14 +119,14 @@ BOOL32 WINAPI BeginPath32(HDC32 hdc)
  */
 BOOL16 WINAPI EndPath16(HDC16 hdc)
 {
-   return (BOOL16)EndPath32((HDC32)hdc);
+   return (BOOL16)EndPath((HDC)hdc);
 }
 
 
 /***********************************************************************
  *           EndPath32    (GDI32.78)
  */
-BOOL32 WINAPI EndPath32(HDC32 hdc)
+BOOL WINAPI EndPath(HDC hdc)
 {
    GdiPath *pPath;
    
@@ -156,7 +156,7 @@ BOOL32 WINAPI EndPath32(HDC32 hdc)
  */
 BOOL16 WINAPI AbortPath16(HDC16 hdc)
 {
-   return (BOOL16)AbortPath32((HDC32)hdc);
+   return (BOOL16)AbortPath((HDC)hdc);
 }
 
 
@@ -172,7 +172,7 @@ BOOL16 WINAPI AbortPath16(HDC16 hdc)
  *
  * RETURNS STD
  */
-BOOL32 WINAPI AbortPath32( HDC32 hdc )
+BOOL WINAPI AbortPath( HDC hdc )
 {
    GdiPath *pPath;
    
@@ -195,7 +195,7 @@ BOOL32 WINAPI AbortPath32( HDC32 hdc )
  */
 BOOL16 WINAPI CloseFigure16(HDC16 hdc)
 {
-   return (BOOL16)CloseFigure32((HDC32)hdc);
+   return (BOOL16)CloseFigure((HDC)hdc);
 }
 
 
@@ -204,7 +204,7 @@ BOOL16 WINAPI CloseFigure16(HDC16 hdc)
  *
  * FIXME: Check that SetLastError is being called correctly 
  */
-BOOL32 WINAPI CloseFigure32(HDC32 hdc)
+BOOL WINAPI CloseFigure(HDC hdc)
 {
    GdiPath *pPath;
    
@@ -250,8 +250,8 @@ INT16 WINAPI GetPath16(HDC16 hdc, LPPOINT16 pPoints, LPBYTE pTypes,
 /***********************************************************************
  *           GetPath32    (GDI32.210)
  */
-INT32 WINAPI GetPath32(HDC32 hdc, LPPOINT32 pPoints, LPBYTE pTypes,
-   INT32 nSize)
+INT WINAPI GetPath(HDC hdc, LPPOINT pPoints, LPBYTE pTypes,
+   INT nSize)
 {
    GdiPath *pPath;
    
@@ -278,11 +278,11 @@ INT32 WINAPI GetPath32(HDC32 hdc, LPPOINT32 pPoints, LPBYTE pTypes,
    }
    else
    {
-      memcpy(pPoints, pPath->pPoints, sizeof(POINT32)*pPath->numEntriesUsed);
+      memcpy(pPoints, pPath->pPoints, sizeof(POINT)*pPath->numEntriesUsed);
       memcpy(pTypes, pPath->pFlags, sizeof(BYTE)*pPath->numEntriesUsed);
 
       /* Convert the points to logical coordinates */
-      if(!DPtoLP32(hdc, pPoints, pPath->numEntriesUsed))
+      if(!DPtoLP(hdc, pPoints, pPath->numEntriesUsed))
       {
 	 /* FIXME: Is this the correct value? */
          SetLastError(ERROR_CAN_NOT_COMPLETE);
@@ -303,10 +303,10 @@ INT32 WINAPI GetPath32(HDC32 hdc, LPPOINT32 pPoints, LPBYTE pTypes,
  * The documentation does not state this explicitly, but a test under Windows
  * shows that the region which is returned should be in device coordinates.
  */
-HRGN32 WINAPI PathToRegion32(HDC32 hdc)
+HRGN WINAPI PathToRegion(HDC hdc)
 {
    GdiPath *pPath;
-   HRGN32  hrgnRval;
+   HRGN  hrgnRval;
 
    /* Get pointer to path */
    if(!PATH_GetPathFromHDC(hdc, &pPath))
@@ -323,7 +323,7 @@ HRGN32 WINAPI PathToRegion32(HDC32 hdc)
    }
    
    /* FIXME: Should we empty the path even if conversion failed? */
-   if(PATH_PathToRegion(pPath, GetPolyFillMode32(hdc), &hrgnRval))
+   if(PATH_PathToRegion(pPath, GetPolyFillMode(hdc), &hrgnRval))
       PATH_EmptyPath(pPath);
    else
       hrgnRval=0;
@@ -338,14 +338,14 @@ HRGN32 WINAPI PathToRegion32(HDC32 hdc)
  * FIXME
  *    Check that SetLastError is being called correctly 
  */
-BOOL32 WINAPI FillPath32(HDC32 hdc)
+BOOL WINAPI FillPath(HDC hdc)
 {
    GdiPath *pPath;
-   INT32   mapMode, graphicsMode;
-   SIZE32  ptViewportExt, ptWindowExt;
-   POINT32 ptViewportOrg, ptWindowOrg;
+   INT   mapMode, graphicsMode;
+   SIZE  ptViewportExt, ptWindowExt;
+   POINT ptViewportOrg, ptWindowOrg;
    XFORM   xform;
-   HRGN32  hrgn;
+   HRGN  hrgn;
    
    /* Get pointer to path */
    if(!PATH_GetPathFromHDC(hdc, &pPath))
@@ -362,7 +362,7 @@ BOOL32 WINAPI FillPath32(HDC32 hdc)
    }
    
    /* Construct a region from the path and fill it */
-   if(PATH_PathToRegion(pPath, GetPolyFillMode32(hdc), &hrgn))
+   if(PATH_PathToRegion(pPath, GetPolyFillMode(hdc), &hrgn))
    {
       /* Since PaintRgn interprets the region as being in logical coordinates
        * but the points we store for the path are already in device
@@ -373,11 +373,11 @@ BOOL32 WINAPI FillPath32(HDC32 hdc)
        */
        
       /* Save the information about the old mapping mode */
-      mapMode=GetMapMode32(hdc);
-      GetViewportExtEx32(hdc, &ptViewportExt);
-      GetViewportOrgEx32(hdc, &ptViewportOrg);
-      GetWindowExtEx32(hdc, &ptWindowExt);
-      GetWindowOrgEx32(hdc, &ptWindowOrg);
+      mapMode=GetMapMode(hdc);
+      GetViewportExtEx(hdc, &ptViewportExt);
+      GetViewportOrgEx(hdc, &ptViewportOrg);
+      GetWindowExtEx(hdc, &ptWindowExt);
+      GetWindowOrgEx(hdc, &ptWindowOrg);
       
       /* Save world transform
        * NB: The Windows documentation on world transforms would lead one to
@@ -388,17 +388,17 @@ BOOL32 WINAPI FillPath32(HDC32 hdc)
       GetWorldTransform(hdc, &xform);
       
       /* Set MM_TEXT */
-      SetMapMode32(hdc, MM_TEXT);
+      SetMapMode(hdc, MM_TEXT);
       
       /* Paint the region */
-      PaintRgn32(hdc, hrgn);
+      PaintRgn(hdc, hrgn);
 
       /* Restore the old mapping mode */
-      SetMapMode32(hdc, mapMode);
-      SetViewportExtEx32(hdc, ptViewportExt.cx, ptViewportExt.cy, NULL);
-      SetViewportOrgEx32(hdc, ptViewportOrg.x, ptViewportOrg.y, NULL);
-      SetWindowExtEx32(hdc, ptWindowExt.cx, ptWindowExt.cy, NULL);
-      SetWindowOrgEx32(hdc, ptWindowOrg.x, ptWindowOrg.y, NULL);
+      SetMapMode(hdc, mapMode);
+      SetViewportExtEx(hdc, ptViewportExt.cx, ptViewportExt.cy, NULL);
+      SetViewportOrgEx(hdc, ptViewportOrg.x, ptViewportOrg.y, NULL);
+      SetWindowExtEx(hdc, ptWindowExt.cx, ptWindowExt.cy, NULL);
+      SetWindowOrgEx(hdc, ptWindowOrg.x, ptWindowOrg.y, NULL);
 
       /* Go to GM_ADVANCED temporarily to restore the world transform */
       graphicsMode=GetGraphicsMode(hdc);
@@ -424,11 +424,11 @@ BOOL32 WINAPI FillPath32(HDC32 hdc)
  * FIXME 
  *  Check that SetLastError is being called correctly 
  */
-BOOL32 WINAPI SelectClipPath32(HDC32 hdc, INT32 iMode)
+BOOL WINAPI SelectClipPath(HDC hdc, INT iMode)
 {
    GdiPath *pPath;
-   HRGN32  hrgnPath;
-   BOOL32  success;
+   HRGN  hrgnPath;
+   BOOL  success;
    
    /* Get pointer to path */
    if(!PATH_GetPathFromHDC(hdc, &pPath))
@@ -445,10 +445,10 @@ BOOL32 WINAPI SelectClipPath32(HDC32 hdc, INT32 iMode)
    }
    
    /* Construct a region from the path */
-   if(PATH_PathToRegion(pPath, GetPolyFillMode32(hdc), &hrgnPath))
+   if(PATH_PathToRegion(pPath, GetPolyFillMode(hdc), &hrgnPath))
    {
       success = ExtSelectClipRgn( hdc, hrgnPath, iMode ) != ERROR;
-      DeleteObject32(hrgnPath);
+      DeleteObject(hrgnPath);
 
       /* Empty the path */
       if(success)
@@ -503,7 +503,7 @@ void PATH_DestroyGdiPath(GdiPath *pPath)
  * not a copy constructor).
  * Returns TRUE if successful, else FALSE.
  */
-BOOL32 PATH_AssignGdiPath(GdiPath *pPathDest, const GdiPath *pPathSrc)
+BOOL PATH_AssignGdiPath(GdiPath *pPathDest, const GdiPath *pPathSrc)
 {
    assert(pPathDest!=NULL && pPathSrc!=NULL);
 
@@ -513,9 +513,9 @@ BOOL32 PATH_AssignGdiPath(GdiPath *pPathDest, const GdiPath *pPathSrc)
 
    /* Perform the copy operation */
    memcpy(pPathDest->pPoints, pPathSrc->pPoints,
-      sizeof(POINT32)*pPathSrc->numEntriesUsed);
+      sizeof(POINT)*pPathSrc->numEntriesUsed);
    memcpy(pPathDest->pFlags, pPathSrc->pFlags,
-      sizeof(INT32)*pPathSrc->numEntriesUsed);
+      sizeof(INT)*pPathSrc->numEntriesUsed);
    pPathDest->state=pPathSrc->state;
    pPathDest->numEntriesUsed=pPathSrc->numEntriesUsed;
    pPathDest->newStroke=pPathSrc->newStroke;
@@ -529,7 +529,7 @@ BOOL32 PATH_AssignGdiPath(GdiPath *pPathDest, const GdiPath *pPathSrc)
  * open path. This starts a new stroke. Returns TRUE if successful, else
  * FALSE.
  */
-BOOL32 PATH_MoveTo(HDC32 hdc)
+BOOL PATH_MoveTo(HDC hdc)
 {
    GdiPath *pPath;
    
@@ -555,10 +555,10 @@ BOOL32 PATH_MoveTo(HDC32 hdc)
  * a PT_MOVETO entry, if this is the first LineTo in a stroke).
  * Returns TRUE if successful, else FALSE.
  */
-BOOL32 PATH_LineTo(HDC32 hdc, INT32 x, INT32 y)
+BOOL PATH_LineTo(HDC hdc, INT x, INT y)
 {
    GdiPath *pPath;
-   POINT32 point, pointCurPos;
+   POINT point, pointCurPos;
    
    /* Get pointer to path */
    if(!PATH_GetPathFromHDC(hdc, &pPath))
@@ -571,15 +571,15 @@ BOOL32 PATH_LineTo(HDC32 hdc, INT32 x, INT32 y)
    /* Convert point to device coordinates */
    point.x=x;
    point.y=y;
-   if(!LPtoDP32(hdc, &point, 1))
+   if(!LPtoDP(hdc, &point, 1))
       return FALSE;
    
    /* Add a PT_MOVETO if necessary */
    if(pPath->newStroke)
    {
       pPath->newStroke=FALSE;
-      if(!GetCurrentPositionEx32(hdc, &pointCurPos) ||
-         !LPtoDP32(hdc, &pointCurPos, 1))
+      if(!GetCurrentPositionEx(hdc, &pointCurPos) ||
+         !LPtoDP(hdc, &pointCurPos, 1))
          return FALSE;
       if(!PATH_AddEntry(pPath, &pointCurPos, PT_MOVETO))
          return FALSE;
@@ -594,11 +594,11 @@ BOOL32 PATH_LineTo(HDC32 hdc, INT32 x, INT32 y)
  * Should be called when a call to Rectangle is performed on a DC that has
  * an open path. Returns TRUE if successful, else FALSE.
  */
-BOOL32 PATH_Rectangle(HDC32 hdc, INT32 x1, INT32 y1, INT32 x2, INT32 y2)
+BOOL PATH_Rectangle(HDC hdc, INT x1, INT y1, INT x2, INT y2)
 {
    GdiPath *pPath;
-   POINT32 corners[2], pointTemp;
-   INT32   temp;
+   POINT corners[2], pointTemp;
+   INT   temp;
 
    /* Get pointer to path */
    if(!PATH_GetPathFromHDC(hdc, &pPath))
@@ -613,7 +613,7 @@ BOOL32 PATH_Rectangle(HDC32 hdc, INT32 x1, INT32 y1, INT32 x2, INT32 y2)
    corners[0].y=y1;
    corners[1].x=x2;
    corners[1].y=y2;
-   if(!LPtoDP32(hdc, corners, 2))
+   if(!LPtoDP(hdc, corners, 2))
       return FALSE;
    
    /* Make sure first corner is top left and second corner is bottom right */
@@ -638,7 +638,7 @@ BOOL32 PATH_Rectangle(HDC32 hdc, INT32 x1, INT32 y1, INT32 x2, INT32 y2)
    }
 
    /* Close any previous figure */
-   if(!CloseFigure32(hdc))
+   if(!CloseFigure(hdc))
    {
       /* The CloseFigure call shouldn't have failed */
       assert(FALSE);
@@ -660,7 +660,7 @@ BOOL32 PATH_Rectangle(HDC32 hdc, INT32 x1, INT32 y1, INT32 x2, INT32 y2)
       return FALSE;
 
    /* Close the rectangle figure */
-   if(!CloseFigure32(hdc))
+   if(!CloseFigure(hdc))
    {
       /* The CloseFigure call shouldn't have failed */
       assert(FALSE);
@@ -676,7 +676,7 @@ BOOL32 PATH_Rectangle(HDC32 hdc, INT32 x1, INT32 y1, INT32 x2, INT32 y2)
  * an open path. This adds four Bezier splines representing the ellipse
  * to the path. Returns TRUE if successful, else FALSE.
  */
-BOOL32 PATH_Ellipse(HDC32 hdc, INT32 x1, INT32 y1, INT32 x2, INT32 y2)
+BOOL PATH_Ellipse(HDC hdc, INT x1, INT y1, INT x2, INT y2)
 {
    /* TODO: This should probably be revised to call PATH_AngleArc */
    /* (once it exists) */
@@ -689,8 +689,8 @@ BOOL32 PATH_Ellipse(HDC32 hdc, INT32 x1, INT32 y1, INT32 x2, INT32 y2)
  * an open path. This adds up to five Bezier splines representing the arc
  * to the path. Returns TRUE if successful, else FALSE.
  */
-BOOL32 PATH_Arc(HDC32 hdc, INT32 x1, INT32 y1, INT32 x2, INT32 y2,
-   INT32 xStart, INT32 yStart, INT32 xEnd, INT32 yEnd)
+BOOL PATH_Arc(HDC hdc, INT x1, INT y1, INT x2, INT y2,
+   INT xStart, INT yStart, INT xEnd, INT yEnd)
 {
    GdiPath     *pPath;
    DC          *pDC;
@@ -698,8 +698,8 @@ BOOL32 PATH_Arc(HDC32 hdc, INT32 x1, INT32 y1, INT32 x2, INT32 y2,
                /* Initialize angleEndQuadrant to silence gcc's warning */
    double      x, y;
    FLOAT_POINT corners[2], pointStart, pointEnd;
-   BOOL32      start, end;
-   INT32       temp;
+   BOOL      start, end;
+   INT       temp;
 
    /* FIXME: This function should check for all possible error returns */
    /* FIXME: Do we have to respect newStroke? */
@@ -759,7 +759,7 @@ BOOL32 PATH_Arc(HDC32 hdc, INT32 x1, INT32 y1, INT32 x2, INT32 y2,
    angleEnd=atan2(y, x);
 
    /* Make sure the end angle is "on the right side" of the start angle */
-   if(GetArcDirection32(hdc)==AD_CLOCKWISE)
+   if(GetArcDirection(hdc)==AD_CLOCKWISE)
    {
       if(angleEnd<=angleStart)
       {
@@ -793,7 +793,7 @@ BOOL32 PATH_Arc(HDC32 hdc, INT32 x1, INT32 y1, INT32 x2, INT32 y2,
       if(start)
       {
          angleStartQuadrant=angleStart;
-	 if(GetArcDirection32(hdc)==AD_CLOCKWISE)
+	 if(GetArcDirection(hdc)==AD_CLOCKWISE)
 	    angleEndQuadrant=(floor(angleStart/M_PI_2)+1.0)*M_PI_2;
 	 else
 	    angleEndQuadrant=(ceil(angleStart/M_PI_2)-1.0)*M_PI_2;
@@ -801,16 +801,16 @@ BOOL32 PATH_Arc(HDC32 hdc, INT32 x1, INT32 y1, INT32 x2, INT32 y2,
       else
       {
 	 angleStartQuadrant=angleEndQuadrant;
-	 if(GetArcDirection32(hdc)==AD_CLOCKWISE)
+	 if(GetArcDirection(hdc)==AD_CLOCKWISE)
 	    angleEndQuadrant+=M_PI_2;
 	 else
 	    angleEndQuadrant-=M_PI_2;
       }
 
       /* Have we reached the last part of the arc? */
-      if((GetArcDirection32(hdc)==AD_CLOCKWISE &&
+      if((GetArcDirection(hdc)==AD_CLOCKWISE &&
          angleEnd<angleEndQuadrant) ||
-	 (GetArcDirection32(hdc)==AD_COUNTERCLOCKWISE &&
+	 (GetArcDirection(hdc)==AD_COUNTERCLOCKWISE &&
 	 angleEnd>angleEndQuadrant))
       {
 	 /* Adjust the end angle for this quadrant */
@@ -839,12 +839,12 @@ BOOL32 PATH_Arc(HDC32 hdc, INT32 x1, INT32 y1, INT32 x2, INT32 y2,
  * error occurs, SetLastError is called with the appropriate value and
  * FALSE is returned.
  */
-static BOOL32 PATH_PathToRegion(const GdiPath *pPath, INT32 nPolyFillMode,
-   HRGN32 *pHrgn)
+static BOOL PATH_PathToRegion(const GdiPath *pPath, INT nPolyFillMode,
+   HRGN *pHrgn)
 {
    int    numStrokes, iStroke, i;
-   INT32  *pNumPointsInStroke;
-   HRGN32 hrgn;
+   INT  *pNumPointsInStroke;
+   HRGN hrgn;
 
    assert(pPath!=NULL);
    assert(pHrgn!=NULL);
@@ -881,9 +881,9 @@ static BOOL32 PATH_PathToRegion(const GdiPath *pPath, INT32 nPolyFillMode,
    }
 
    /* Create a region from the strokes */
-   hrgn=CreatePolyPolygonRgn32(pPath->pPoints, pNumPointsInStroke,
+   hrgn=CreatePolyPolygonRgn(pPath->pPoints, pNumPointsInStroke,
       numStrokes, nPolyFillMode);
-   if(hrgn==(HRGN32)0)
+   if(hrgn==(HRGN)0)
    {
       SetLastError(ERROR_NOT_ENOUGH_MEMORY);
       return FALSE;
@@ -915,7 +915,7 @@ static void PATH_EmptyPath(GdiPath *pPath)
  * or PT_BEZIERTO, optionally ORed with PT_CLOSEFIGURE. Returns TRUE if
  * successful, FALSE otherwise (e.g. if not enough memory was available).
  */
-BOOL32 PATH_AddEntry(GdiPath *pPath, const POINT32 *pPoint, BYTE flags)
+BOOL PATH_AddEntry(GdiPath *pPath, const POINT *pPoint, BYTE flags)
 {
    assert(pPath!=NULL);
    
@@ -951,10 +951,10 @@ BOOL32 PATH_AddEntry(GdiPath *pPath, const POINT32 *pPoint, BYTE flags)
  * been allocated; allocates larger arrays and copies the existing entries
  * to those arrays, if necessary. Returns TRUE if successful, else FALSE.
  */
-static BOOL32 PATH_ReserveEntries(GdiPath *pPath, INT32 numEntries)
+static BOOL PATH_ReserveEntries(GdiPath *pPath, INT numEntries)
 {
-   INT32   numEntriesToAllocate;
-   POINT32 *pPointsNew;
+   INT   numEntriesToAllocate;
+   POINT *pPointsNew;
    BYTE    *pFlagsNew;
    
    assert(pPath!=NULL);
@@ -977,7 +977,7 @@ static BOOL32 PATH_ReserveEntries(GdiPath *pPath, INT32 numEntries)
          numEntriesToAllocate=NUM_ENTRIES_INITIAL;
 
       /* Allocate new arrays */
-      pPointsNew=(POINT32 *)malloc(numEntriesToAllocate * sizeof(POINT32));
+      pPointsNew=(POINT *)malloc(numEntriesToAllocate * sizeof(POINT));
       if(!pPointsNew)
          return FALSE;
       pFlagsNew=(BYTE *)malloc(numEntriesToAllocate * sizeof(BYTE));
@@ -993,7 +993,7 @@ static BOOL32 PATH_ReserveEntries(GdiPath *pPath, INT32 numEntries)
          assert(pPath->pFlags);
 
 	 memcpy(pPointsNew, pPath->pPoints,
-	     sizeof(POINT32)*pPath->numEntriesUsed);
+	     sizeof(POINT)*pPath->numEntriesUsed);
 	 memcpy(pFlagsNew, pPath->pFlags,
 	     sizeof(BYTE)*pPath->numEntriesUsed);
 
@@ -1013,7 +1013,7 @@ static BOOL32 PATH_ReserveEntries(GdiPath *pPath, INT32 numEntries)
  * Retrieves a pointer to the GdiPath structure contained in an HDC and
  * places it in *ppPath. TRUE is returned if successful, FALSE otherwise.
  */
-static BOOL32 PATH_GetPathFromHDC(HDC32 hdc, GdiPath **ppPath)
+static BOOL PATH_GetPathFromHDC(HDC hdc, GdiPath **ppPath)
 {
    DC *pDC;
 
@@ -1036,12 +1036,12 @@ static BOOL32 PATH_GetPathFromHDC(HDC32 hdc, GdiPath **ppPath)
  * point is added to the path; otherwise, it is assumed that the current
  * position is equal to the first control point.
  */
-static BOOL32 PATH_DoArcPart(GdiPath *pPath, FLOAT_POINT corners[],
-   double angleStart, double angleEnd, BOOL32 addMoveTo)
+static BOOL PATH_DoArcPart(GdiPath *pPath, FLOAT_POINT corners[],
+   double angleStart, double angleEnd, BOOL addMoveTo)
 {
    double  halfAngle, a;
    double  xNorm[4], yNorm[4];
-   POINT32 point;
+   POINT point;
    int     i;
 
    assert(fabs(angleEnd-angleStart)<=M_PI_2);
@@ -1096,7 +1096,7 @@ static BOOL32 PATH_DoArcPart(GdiPath *pPath, FLOAT_POINT corners[],
  * (1.0, 1.0) correspond to corners[1].
  */
 static void PATH_ScaleNormalizedPoint(FLOAT_POINT corners[], double x,
-   double y, POINT32 *pPoint)
+   double y, POINT *pPoint)
 {
    pPoint->x=GDI_ROUND( (double)corners[0].x +
       (double)(corners[1].x-corners[0].x)*0.5*(x+1.0) );
@@ -1124,7 +1124,7 @@ static void PATH_NormalizePoint(FLOAT_POINT corners[],
  *
  *
  */
-BOOL32 WINAPI FlattenPath32(HDC32 hdc)
+BOOL WINAPI FlattenPath(HDC hdc)
 {
         FIXME(gdi, "FlattenPath, stub\n");
         return 0;
@@ -1135,7 +1135,7 @@ BOOL32 WINAPI FlattenPath32(HDC32 hdc)
  *
  *
  */
-BOOL32 WINAPI StrokeAndFillPath32(HDC32 hdc)
+BOOL WINAPI StrokeAndFillPath(HDC hdc)
 {
         FIXME(gdi, "StrokeAndFillPath, stub\n");
         return 0;
@@ -1146,7 +1146,7 @@ BOOL32 WINAPI StrokeAndFillPath32(HDC32 hdc)
  *
  *
  */
-BOOL32 WINAPI StrokePath32(HDC32 hdc)
+BOOL WINAPI StrokePath(HDC hdc)
 {
         FIXME(gdi, "StrokePath, stub\n");
         return 0;
@@ -1157,7 +1157,7 @@ BOOL32 WINAPI StrokePath32(HDC32 hdc)
  *
  *
  */
-BOOL32 WINAPI WidenPath32(HDC32 hdc)
+BOOL WINAPI WidenPath(HDC hdc)
 {
         FIXME(gdi, "WidenPath, stub\n");
         return 0;

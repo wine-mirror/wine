@@ -20,26 +20,26 @@
 
 #define WM_MDICALCCHILDSCROLL   0x10AC /* this is exactly what Windows uses */
 
-extern LRESULT WINAPI MDIClientWndProc( HWND32 hwnd, UINT32 message, 
-                                        WPARAM32 wParam, LPARAM lParam );
+extern LRESULT WINAPI MDIClientWndProc( HWND hwnd, UINT message, 
+                                        WPARAM wParam, LPARAM lParam );
 
 typedef struct 
 {
-    UINT32      nActiveChildren;
-    HWND32      hwndChildMaximized;
-    HWND32      hwndActiveChild;
-    HMENU32     hWindowMenu;
-    UINT32      idFirstChild;
+    UINT      nActiveChildren;
+    HWND      hwndChildMaximized;
+    HWND      hwndActiveChild;
+    HMENU     hWindowMenu;
+    UINT      idFirstChild;
     LPSTR       frameTitle;
-    UINT32      nTotalCreated;
-    UINT32      mdiFlags;
-    UINT32      sbRecalc;   /* SB_xxx flags for scrollbar fixup */
-    HWND32      self;
+    UINT      nTotalCreated;
+    UINT      mdiFlags;
+    UINT      sbRecalc;   /* SB_xxx flags for scrollbar fixup */
+    HWND      self;
 } MDICLIENTINFO;
 
-extern HWND32  MDI_CreateMDIWindow32A(LPCSTR,LPCSTR,DWORD,INT32,INT32,
-                                INT32,INT32,HWND32,HINSTANCE32,LPARAM);
-extern HWND32  MDI_CreateMDIWindow32W(LPCWSTR,LPCWSTR,DWORD,INT32,INT32,
-                                INT32,INT32,HWND32,HINSTANCE32,LPARAM);
+extern HWND  MDI_CreateMDIWindowA(LPCSTR,LPCSTR,DWORD,INT,INT,
+                                INT,INT,HWND,HINSTANCE,LPARAM);
+extern HWND  MDI_CreateMDIWindowW(LPCWSTR,LPCWSTR,DWORD,INT,INT,
+                                INT,INT,HWND,HINSTANCE,LPARAM);
 #endif /* __WINE_MDI_H */
 

@@ -19,11 +19,11 @@
 /***********************************************************************
  *           acmDriverAddA (MSACM32.2)
  */
-MMRESULT32 WINAPI acmDriverAdd32A(
-  PHACMDRIVERID32 phadid, HINSTANCE32 hinstModule,
+MMRESULT WINAPI acmDriverAddA(
+  PHACMDRIVERID phadid, HINSTANCE hinstModule,
   LPARAM lParam, DWORD dwPriority, DWORD fdwAdd)
 {
-  PWINE_ACMLOCALDRIVER32 pld;
+  PWINE_ACMLOCALDRIVER pld;
   if(!phadid)
     return MMSYSERR_INVALPARAM;
 
@@ -38,10 +38,10 @@ MMRESULT32 WINAPI acmDriverAdd32A(
      (fdwAdd & ACM_DRIVERADDF_NOTIFYHWND))
     return MMSYSERR_INVALFLAG;
 
-  pld = HeapAlloc(MSACM_hHeap32, 0, sizeof(WINE_ACMLOCALDRIVER32));
-  pld->pfnDriverProc = (DRIVERPROC32) 
-    GetProcAddress32(hinstModule, "DriverProc");
-  *phadid = (HACMDRIVERID32) MSACM_RegisterDriver32(NULL, NULL, pld);
+  pld = HeapAlloc(MSACM_hHeap, 0, sizeof(WINE_ACMLOCALDRIVER));
+  pld->pfnDriverProc = (DRIVERPROC) 
+    GetProcAddress(hinstModule, "DriverProc");
+  *phadid = (HACMDRIVERID) MSACM_RegisterDriver(NULL, NULL, pld);
 
   /* FIXME: lParam, dwPriority and fdwAdd ignored */
 
@@ -53,8 +53,8 @@ MMRESULT32 WINAPI acmDriverAdd32A(
  * FIXME
  *   Not implemented
  */
-MMRESULT32 WINAPI acmDriverAdd32W(
-  PHACMDRIVERID32 phadid, HINSTANCE32 hinstModule,
+MMRESULT WINAPI acmDriverAddW(
+  PHACMDRIVERID phadid, HINSTANCE hinstModule,
   LPARAM lParam, DWORD dwPriority, DWORD fdwAdd)
 {
   FIXME(msacm, "(%p, 0x%08x, %ld, %ld, %ld): stub\n",
@@ -67,15 +67,15 @@ MMRESULT32 WINAPI acmDriverAdd32W(
 /***********************************************************************
  *           acmDriverClose (MSACM32.4)
  */
-MMRESULT32 WINAPI acmDriverClose32(
-  HACMDRIVER32 had, DWORD fdwClose)
+MMRESULT WINAPI acmDriverClose(
+  HACMDRIVER had, DWORD fdwClose)
 {
-  PWINE_ACMDRIVER32 p;
+  PWINE_ACMDRIVER p;
 
   if(fdwClose)
     return MMSYSERR_INVALFLAG;
 
-  p = MSACM_GetDriver32(had);
+  p = MSACM_GetDriver(had);
   if(!p)
     return MMSYSERR_INVALHANDLE;
 
@@ -84,10 +84,10 @@ MMRESULT32 WINAPI acmDriverClose32(
   /* FIXME: CloseDriver32 not implemented */
 #if 0
   if(p->hDrvr)
-    CloseDriver32(p->hDrvr, 0, 0);
+    CloseDriver(p->hDrvr, 0, 0);
 #endif
 
-  HeapFree(MSACM_hHeap32, 0, p);
+  HeapFree(MSACM_hHeap, 0, p);
 
   return MMSYSERR_NOERROR;
 }
@@ -95,14 +95,14 @@ MMRESULT32 WINAPI acmDriverClose32(
 /***********************************************************************
  *           acmDriverDetailsA (MSACM32.5)
  */
-MMRESULT32 WINAPI acmDriverDetails32A(
-  HACMDRIVERID32 hadid, PACMDRIVERDETAILS32A padd, DWORD fdwDetails)
+MMRESULT WINAPI acmDriverDetailsA(
+  HACMDRIVERID hadid, PACMDRIVERDETAILSA padd, DWORD fdwDetails)
 {
-  PWINE_ACMDRIVERID32 p;
-  MMRESULT32 mmr;
-  BOOL32 bOpenTemporary;
+  PWINE_ACMDRIVERID p;
+  MMRESULT mmr;
+  BOOL bOpenTemporary;
 
-  p = MSACM_GetDriverID32(hadid);
+  p = MSACM_GetDriverID(hadid);
   if(!p)
     return MMSYSERR_INVALHANDLE;
   
@@ -112,7 +112,7 @@ MMRESULT32 WINAPI acmDriverDetails32A(
   bOpenTemporary = !p->pACMDriver;
   if(bOpenTemporary) {
     bOpenTemporary = TRUE;
-    acmDriverOpen32((PHACMDRIVER32) &p->pACMDriver, hadid, 0);
+    acmDriverOpen((PHACMDRIVER) &p->pACMDriver, hadid, 0);
   }
   
   /* FIXME
@@ -120,13 +120,13 @@ MMRESULT32 WINAPI acmDriverDetails32A(
    *   the UNICODE variant of PACMDRIVERDETAILS is used?
    *   It might check cbStruct or does it only accept ANSI.
    */
-  mmr = (MMRESULT32) acmDriverMessage32(
-    (HACMDRIVER32) p->pACMDriver, ACMDM_DRIVER_DETAILS, 
+  mmr = (MMRESULT) acmDriverMessage(
+    (HACMDRIVER) p->pACMDriver, ACMDM_DRIVER_DETAILS, 
     (LPARAM) padd,  0
   );
 
   if(bOpenTemporary) {
-    acmDriverClose32((HACMDRIVER32) p->pACMDriver, 0);
+    acmDriverClose((HACMDRIVER) p->pACMDriver, 0);
     p->pACMDriver = NULL;
   }
 
@@ -138,8 +138,8 @@ MMRESULT32 WINAPI acmDriverDetails32A(
  * FIXME
  *   Not implemented
  */
-MMRESULT32 WINAPI acmDriverDetails32W(
-  HACMDRIVERID32 hadid, PACMDRIVERDETAILS32W padd, DWORD fdwDetails)
+MMRESULT WINAPI acmDriverDetailsW(
+  HACMDRIVERID hadid, PACMDRIVERDETAILSW padd, DWORD fdwDetails)
 {
   FIXME(msacm, "(0x%08x, %p, %ld): stub\n", hadid, padd, fdwDetails);
   SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
@@ -149,10 +149,10 @@ MMRESULT32 WINAPI acmDriverDetails32W(
 /***********************************************************************
  *           acmDriverEnum (MSACM32.7)
  */
-MMRESULT32 WINAPI acmDriverEnum32(
-  ACMDRIVERENUMCB32 fnCallback, DWORD dwInstance, DWORD fdwEnum)
+MMRESULT WINAPI acmDriverEnum(
+  ACMDRIVERENUMCB fnCallback, DWORD dwInstance, DWORD fdwEnum)
 {
-  PWINE_ACMDRIVERID32 p;
+  PWINE_ACMDRIVERID p;
 
   if(!fnCallback)
     {
@@ -164,10 +164,10 @@ MMRESULT32 WINAPI acmDriverEnum32(
       return MMSYSERR_INVALFLAG;
     }
 
-  p = MSACM_pFirstACMDriverID32;
+  p = MSACM_pFirstACMDriverID;
   while(p)
     {
-      (*fnCallback)((HACMDRIVERID32) p, dwInstance, ACMDRIVERDETAILS_SUPPORTF_CODEC);
+      (*fnCallback)((HACMDRIVERID) p, dwInstance, ACMDRIVERDETAILS_SUPPORTF_CODEC);
       p = p->pNextACMDriverID;
     }
 
@@ -177,12 +177,12 @@ MMRESULT32 WINAPI acmDriverEnum32(
 /***********************************************************************
  *           acmDriverID (MSACM32.8)
  */
-MMRESULT32 WINAPI acmDriverID32(
-  HACMOBJ32 hao, PHACMDRIVERID32 phadid, DWORD fdwDriverID)
+MMRESULT WINAPI acmDriverID(
+  HACMOBJ hao, PHACMDRIVERID phadid, DWORD fdwDriverID)
 {
-  PWINE_ACMOBJ32 pao;
+  PWINE_ACMOBJ pao;
 
-  pao = MSACM_GetObj32(hao);
+  pao = MSACM_GetObj(hao);
   if(!pao)
     return MMSYSERR_INVALHANDLE;
 
@@ -192,7 +192,7 @@ MMRESULT32 WINAPI acmDriverID32(
   if(fdwDriverID)
     return MMSYSERR_INVALFLAG;
 
-  *phadid = (HACMDRIVERID32) pao->pACMDriverID;
+  *phadid = (HACMDRIVERID) pao->pACMDriverID;
 
   return MMSYSERR_NOERROR;
 }
@@ -202,16 +202,16 @@ MMRESULT32 WINAPI acmDriverID32(
  * FIXME
  *   Not implemented
  */
-LRESULT WINAPI acmDriverMessage32(
-  HACMDRIVER32 had, UINT32 uMsg, LPARAM lParam1, LPARAM lParam2)
+LRESULT WINAPI acmDriverMessage(
+  HACMDRIVER had, UINT uMsg, LPARAM lParam1, LPARAM lParam2)
 {
-  PWINE_ACMDRIVER32 pad = MSACM_GetDriver32(had);
+  PWINE_ACMDRIVER pad = MSACM_GetDriver(had);
   if(!pad)
     return MMSYSERR_INVALPARAM;
 
   /* FIXME: Check if uMsg legal */
 
-  if(!SendDriverMessage32(pad->hDrvr, uMsg, lParam1, lParam2))
+  if(!SendDriverMessage(pad->hDrvr, uMsg, lParam1, lParam2))
     return MMSYSERR_NOTSUPPORTED;
 
   return MMSYSERR_NOERROR;
@@ -221,15 +221,15 @@ LRESULT WINAPI acmDriverMessage32(
 /***********************************************************************
  *           acmDriverOpen (MSACM32.10)
  */
-MMRESULT32 WINAPI acmDriverOpen32(
-  PHACMDRIVER32 phad, HACMDRIVERID32 hadid, DWORD fdwOpen)
+MMRESULT WINAPI acmDriverOpen(
+  PHACMDRIVER phad, HACMDRIVERID hadid, DWORD fdwOpen)
 {
-  PWINE_ACMDRIVERID32 padid;
+  PWINE_ACMDRIVERID padid;
 
   if(!phad)
     return MMSYSERR_INVALPARAM;
 
-  padid = MSACM_GetDriverID32(hadid); 
+  padid = MSACM_GetDriverID(hadid); 
   if(!padid)
     return MMSYSERR_INVALHANDLE;
 
@@ -244,16 +244,16 @@ MMRESULT32 WINAPI acmDriverOpen32(
     }
 
   padid->pACMDriver = HeapAlloc(
-    MSACM_hHeap32, 0, sizeof(WINE_ACMDRIVER32)
+    MSACM_hHeap, 0, sizeof(WINE_ACMDRIVER)
   );
   padid->pACMDriver->obj.pACMDriverID = padid;
   
   if(!padid->pACMLocalDriver)
       padid->pACMDriver->hDrvr =
-        OpenDriver32A(padid->pszDriverAlias, "drivers32", 0);
+        OpenDriverA(padid->pszDriverAlias, "drivers32", 0);
   else
     {
-      padid->pACMDriver->hDrvr = MSACM_OpenDriverProc32(
+      padid->pACMDriver->hDrvr = MSACM_OpenDriverProc(
 	padid->pACMLocalDriver->pfnDriverProc
       );
     }
@@ -262,7 +262,7 @@ MMRESULT32 WINAPI acmDriverOpen32(
     return MMSYSERR_ERROR;
  
   /* FIXME: Create a WINE_ACMDRIVER32 */
-  *phad = (HACMDRIVER32) NULL;
+  *phad = (HACMDRIVER) NULL;
 
   return MMSYSERR_ERROR;
 }
@@ -270,10 +270,10 @@ MMRESULT32 WINAPI acmDriverOpen32(
 /***********************************************************************
  *           acmDriverPriority (MSACM32.11)
  */
-MMRESULT32 WINAPI acmDriverPriority32(
-  HACMDRIVERID32 hadid, DWORD dwPriority, DWORD fdwPriority)
+MMRESULT WINAPI acmDriverPriority(
+  HACMDRIVERID hadid, DWORD dwPriority, DWORD fdwPriority)
 {
-  PWINE_ACMDRIVERID32 padid;
+  PWINE_ACMDRIVERID padid;
   CHAR szSubKey[17];
   CHAR szBuffer[256];
   LONG lBufferLength = sizeof(szBuffer);
@@ -281,7 +281,7 @@ MMRESULT32 WINAPI acmDriverPriority32(
   HKEY hPriorityKey;
   DWORD dwPriorityCounter;
 
-  padid = MSACM_GetDriverID32(hadid);
+  padid = MSACM_GetDriverID(hadid);
   if(!padid)
     return MMSYSERR_INVALHANDLE;
 
@@ -301,7 +301,7 @@ MMRESULT32 WINAPI acmDriverPriority32(
     (fdwPriority & ACM_DRIVERPRIORITYF_END))
     return MMSYSERR_INVALFLAG;
 
-  lError = RegOpenKey32A(HKEY_CURRENT_USER, 
+  lError = RegOpenKeyA(HKEY_CURRENT_USER, 
     "Software\\Microsoft\\Multimedia\\"
       "Audio Compression Manager\\Priority v4.00",
     &hPriorityKey
@@ -312,8 +312,8 @@ MMRESULT32 WINAPI acmDriverPriority32(
 
   for(dwPriorityCounter = 1; ; dwPriorityCounter++)
   {
-    wsnprintf32A(szSubKey, 17, "Priorty%ld", dwPriorityCounter);
-    lError = RegQueryValue32A(hPriorityKey, szSubKey, szBuffer, &lBufferLength);
+    wsnprintfA(szSubKey, 17, "Priorty%ld", dwPriorityCounter);
+    lError = RegQueryValueA(hPriorityKey, szSubKey, szBuffer, &lBufferLength);
     if(lError != ERROR_SUCCESS)
       break;
 
@@ -331,19 +331,19 @@ MMRESULT32 WINAPI acmDriverPriority32(
 /***********************************************************************
  *           acmDriverRemove (MSACM32.12)
  */
-MMRESULT32 WINAPI acmDriverRemove32(
-  HACMDRIVERID32 hadid, DWORD fdwRemove)
+MMRESULT WINAPI acmDriverRemove(
+  HACMDRIVERID hadid, DWORD fdwRemove)
 {
-  PWINE_ACMDRIVERID32 padid;
+  PWINE_ACMDRIVERID padid;
 
-  padid = MSACM_GetDriverID32(hadid);
+  padid = MSACM_GetDriverID(hadid);
   if(!padid)
     return MMSYSERR_INVALHANDLE;
 
   if(fdwRemove)
     return MMSYSERR_INVALFLAG;
 
-  MSACM_UnregisterDriver32(padid);
+  MSACM_UnregisterDriver(padid);
 
   return MMSYSERR_NOERROR;
 }

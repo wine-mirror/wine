@@ -268,7 +268,7 @@ extern "C" {
 #define _nmsize     _msize
 #define _nrealloc   realloc
 #define _nstrdup    _strdup
-#define hmemcpy     MoveMemory
+#define hmemcpy16     MoveMemory
 
 #ifdef __cplusplus
 }

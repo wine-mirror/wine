@@ -49,7 +49,7 @@ extern DWORD CallFrom16_Start,CallFrom16_End;
  *
  * See Undocumented Windows, Chapter 5, __0040.
  */
-static BOOL32 INSTR_ReplaceSelector( SIGCONTEXT *context, WORD *sel )
+static BOOL INSTR_ReplaceSelector( SIGCONTEXT *context, WORD *sel )
 {
     if (IS_SELECTOR_SYSTEM(CS_sig(context)) &&
         (EIP_sig(context) >= (DWORD)&CallFrom16_Start) &&
@@ -234,7 +234,7 @@ static BYTE *INSTR_GetOperandAddr( SIGCONTEXT *context, BYTE *instr,
  *
  * Emulate the LDS (and LES,LFS,etc.) instruction.
  */
-static BOOL32 INSTR_EmulateLDS( SIGCONTEXT *context, BYTE *instr, int long_op,
+static BOOL INSTR_EmulateLDS( SIGCONTEXT *context, BYTE *instr, int long_op,
                                 int long_addr, int segprefix, int *len )
 {
     WORD seg;
@@ -317,7 +317,7 @@ static BOOL32 INSTR_EmulateLDS( SIGCONTEXT *context, BYTE *instr, int long_op,
  *
  * Emulate a priviledged instruction. Returns TRUE if emulation successful.
  */
-BOOL32 INSTR_EmulateInstruction( SIGCONTEXT *context )
+BOOL INSTR_EmulateInstruction( SIGCONTEXT *context )
 {
     int prefix, segprefix, prefixlen, len, repX, long_op, long_addr;
     SEGPTR gpHandler;
@@ -767,7 +767,7 @@ BOOL32 INSTR_EmulateInstruction( SIGCONTEXT *context )
 
 
     /* Check for Win16 __GP handler */
-    gpHandler = HasGPHandler( PTR_SEG_OFF_TO_SEGPTR( CS_sig(context),
+    gpHandler = HasGPHandler16( PTR_SEG_OFF_TO_SEGPTR( CS_sig(context),
                                                      EIP_sig(context) ) );
     if (gpHandler)
     {

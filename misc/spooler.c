@@ -30,7 +30,7 @@
  * TRUE if no AbortProc avail or AbortProc wants to continue printing.
  * FALSE if AbortProc wants to abort printing.
  */
-BOOL16 WINAPI QueryAbort(HDC16 hdc, INT16 reserved)
+BOOL16 WINAPI QueryAbort16(HDC16 hdc, INT16 reserved)
 {
     DC *dc = DC_GetDCPtr( hdc );
 
@@ -52,7 +52,7 @@ INT16 WINAPI SetAbortProc16(HDC16 hdc, SEGPTR abrtprc)
  *           SetAbortProc32   (GDI32.301)
  *
  */
-INT32 WINAPI SetAbortProc32(HDC32 hdc, ABORTPROC32 abrtprc)
+INT WINAPI SetAbortProc(HDC hdc, ABORTPROC abrtprc)
 {
     FIXME(print, "stub\n");
     SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
@@ -81,7 +81,7 @@ static struct hpq *hpqueue;
  *           CreatePQ   (GDI.230)
  *
  */
-HPQ WINAPI CreatePQ(int size) 
+HPQ WINAPI CreatePQ16(int size) 
 {
 #if 0
     HGLOBAL16 hpq = 0;
@@ -109,7 +109,7 @@ HPQ WINAPI CreatePQ(int size)
  *           DeletePQ   (GDI.235)
  *
  */
-int WINAPI DeletePQ(HPQ hPQ) 
+int WINAPI DeletePQ16(HPQ hPQ) 
 {
     return GlobalFree16((HGLOBAL16)hPQ);
 }
@@ -118,7 +118,7 @@ int WINAPI DeletePQ(HPQ hPQ)
  *           ExtractPQ   (GDI.232)
  *
  */
-int WINAPI ExtractPQ(HPQ hPQ) 
+int WINAPI ExtractPQ16(HPQ hPQ) 
 { 
     struct hpq *queue, *prev, *current, *currentPrev;
     int key = 0, tag = -1;
@@ -160,7 +160,7 @@ int WINAPI ExtractPQ(HPQ hPQ)
  *           InsertPQ   (GDI.233)
  *
  */
-int WINAPI InsertPQ(HPQ hPQ, int tag, int key) 
+int WINAPI InsertPQ16(HPQ hPQ, int tag, int key) 
 {
     struct hpq *queueItem = xmalloc(sizeof(struct hpq));
     queueItem->next = hpqueue;
@@ -176,7 +176,7 @@ int WINAPI InsertPQ(HPQ hPQ, int tag, int key)
  *           MinPQ   (GDI.231)
  *
  */
-int WINAPI MinPQ(HPQ hPQ) 
+int WINAPI MinPQ16(HPQ hPQ) 
 {
     FIXME(print, "(%x): stub\n", hPQ); 
     return 0;
@@ -186,7 +186,7 @@ int WINAPI MinPQ(HPQ hPQ)
  *           SizePQ   (GDI.234)
  *
  */
-int WINAPI SizePQ(HPQ hPQ, int sizechange) 
+int WINAPI SizePQ16(HPQ hPQ, int sizechange) 
 {  
     FIXME(print, "(%x %d): stub\n", hPQ, sizechange); 
     return -1; 
@@ -303,7 +303,7 @@ static int FreePrintJob(HANDLE16 hJob)
  *           OpenJob   (GDI.240)
  *
  */
-HANDLE16 WINAPI OpenJob(LPSTR lpOutput, LPSTR lpTitle, HDC16 hDC)
+HANDLE16 WINAPI OpenJob16(LPSTR lpOutput, LPSTR lpTitle, HDC16 hDC)
 {
     HANDLE16 hHandle = (HANDLE16)SP_ERROR;
     PPRINTJOB pPrintJob;
@@ -342,7 +342,7 @@ HANDLE16 WINAPI OpenJob(LPSTR lpOutput, LPSTR lpTitle, HDC16 hDC)
  *           CloseJob   (GDI.243)
  *
  */
-int WINAPI CloseJob(HANDLE16 hJob)
+int WINAPI CloseJob16(HANDLE16 hJob)
 {
     int nRet = SP_ERROR;
     PPRINTJOB pPrintJob = NULL;
@@ -364,7 +364,7 @@ int WINAPI CloseJob(HANDLE16 hJob)
  *           WriteSpool   (GDI.241)
  *
  */
-int WINAPI WriteSpool(HANDLE16 hJob, LPSTR lpData, WORD cch)
+int WINAPI WriteSpool16(HANDLE16 hJob, LPSTR lpData, WORD cch)
 {
     int nRet = SP_ERROR;
     PPRINTJOB pPrintJob = NULL;
@@ -381,9 +381,9 @@ int WINAPI WriteSpool(HANDLE16 hJob, LPSTR lpData, WORD cch)
 	if (pPrintJob->hDC == 0) {
 	    TRACE(print, "hDC == 0 so no QueryAbort\n");
 	}
-        else if (!(QueryAbort(pPrintJob->hDC, (nRet == SP_OUTOFDISK) ? nRet : 0 )))
+        else if (!(QueryAbort16(pPrintJob->hDC, (nRet == SP_OUTOFDISK) ? nRet : 0 )))
 	{
-	    CloseJob(hJob); /* printing aborted */
+	    CloseJob16(hJob); /* printing aborted */
 	    nRet = SP_APPABORT;
 	}
     }
@@ -394,7 +394,7 @@ int WINAPI WriteSpool(HANDLE16 hJob, LPSTR lpData, WORD cch)
  *           WriteDialog   (GDI.242)
  *
  */
-int WINAPI WriteDialog(HANDLE16 hJob, LPSTR lpMsg, WORD cchMsg)
+int WINAPI WriteDialog16(HANDLE16 hJob, LPSTR lpMsg, WORD cchMsg)
 {
     int nRet = 0;
 
@@ -409,7 +409,7 @@ int WINAPI WriteDialog(HANDLE16 hJob, LPSTR lpMsg, WORD cchMsg)
  *           DeleteJob  (GDI.244)
  *
  */
-int WINAPI DeleteJob(HANDLE16 hJob, WORD wNotUsed)
+int WINAPI DeleteJob16(HANDLE16 hJob, WORD wNotUsed)
 {
     int nRet;
 
@@ -429,7 +429,7 @@ int WINAPI DeleteJob(HANDLE16 hJob, WORD wNotUsed)
  *           StartSpoolPage   (GDI.246)
  *
  */
-int WINAPI StartSpoolPage(HANDLE16 hJob)
+int WINAPI StartSpoolPage16(HANDLE16 hJob)
 {
     FIXME(print, "StartSpoolPage GDI.246 unimplemented\n");
     return 1;
@@ -441,7 +441,7 @@ int WINAPI StartSpoolPage(HANDLE16 hJob)
  *           EndSpoolPage   (GDI.247)
  *
  */
-int WINAPI EndSpoolPage(HANDLE16 hJob)
+int WINAPI EndSpoolPage16(HANDLE16 hJob)
 {
     FIXME(print, "EndSpoolPage GDI.247 unimplemented\n");
     return 1;
@@ -452,7 +452,7 @@ int WINAPI EndSpoolPage(HANDLE16 hJob)
  *           GetSpoolJob   (GDI.245)
  *
  */
-DWORD WINAPI GetSpoolJob(int nOption, LONG param)
+DWORD WINAPI GetSpoolJob16(int nOption, LONG param)
 {
     DWORD retval = 0;
     TRACE(print, "In GetSpoolJob param 0x%lx noption %d\n",param, nOption);

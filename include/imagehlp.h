@@ -13,13 +13,13 @@
  * Types
  */
 
-typedef PVOID DIGEST_HANDLE32; 
+typedef PVOID DIGEST_HANDLE; 
 
 /***********************************************************************
  * Enums/Defines
  */
 
-typedef enum _IMAGEHLP_STATUS_REASON32 {
+typedef enum _IMAGEHLP_STATUS_REASON {
   BindOutOfMemory,
   BindRvaToVaFailed,
   BindNoRoomInImage,
@@ -34,7 +34,7 @@ typedef enum _IMAGEHLP_STATUS_REASON32 {
   BindImageComplete,
   BindMismatchedSymbols,
   BindSymbolsNotUpdated
-} IMAGEHLP_STATUS_REASON32;
+} IMAGEHLP_STATUS_REASON;
 
 #define BIND_NO_BOUND_IMPORTS  0x00000001
 #define BIND_NO_UPDATE         0x00000002
@@ -82,12 +82,12 @@ typedef enum _IMAGEHLP_STATUS_REASON32 {
 #define CHECKSUM_MAPVIEW_FAILURE 3
 #define CHECKSUM_UNICODE_FAILURE 4
 
-typedef enum _ADRESS_MODE32 {
+typedef enum _ADRESS_MODE {
   AddrMode1616,
   AddrMode1632,
   AddrModeReal,
   AddrModeFlat
-} ADDRESS_MODE32;
+} ADDRESS_MODE;
 
 #define SYMOPT_CASE_INSENSITIVE  0x00000001
 #define SYMOPT_UNDNAME           0x00000002
@@ -99,7 +99,7 @@ typedef enum _ADRESS_MODE32 {
 #define SYMF_OMAP_GENERATED   0x00000001
 #define SYMF_OMAP_MODIFIED    0x00000002
 
-typedef enum _SYM_TYPE32 {
+typedef enum _SYM_TYPE {
   SymNone,
   SymCoff,
   SymCv,
@@ -143,14 +143,14 @@ typedef enum _SYM_TYPE32 {
  * Structures
  */
 
-typedef struct _IMAGE_DATA_DIRECTORY32 {
+typedef struct _IMAGE_DATA_DIRECTORY {
   DWORD VirtualAddress;
   DWORD Size;
-} IMAGE_DATA_DIRECTORY32, *PIMAGE_DATA_DIRECTORY32;
+} IMAGE_DATA_DIRECTORY, *PIMAGE_DATA_DIRECTORY;
 
 #define IMAGE_NUMBEROF_DIRECTORY_ENTRIES 16
 
-typedef struct _IMAGE_OPTIONAL_HEADER32 {
+typedef struct _IMAGE_OPTIONAL_HEADER {
 
   /* Standard fields */
 
@@ -187,10 +187,10 @@ typedef struct _IMAGE_OPTIONAL_HEADER32 {
   DWORD SizeOfHeapCommit;
   DWORD LoaderFlags;
   DWORD NumberOfRvaAndSizes;
-  IMAGE_DATA_DIRECTORY32 DataDirectory[IMAGE_NUMBEROF_DIRECTORY_ENTRIES];
-} IMAGE_OPTIONAL_HEADER32, *PIMAGE_OPTIONAL_HEADER32;
+  IMAGE_DATA_DIRECTORY DataDirectory[IMAGE_NUMBEROF_DIRECTORY_ENTRIES];
+} IMAGE_OPTIONAL_HEADER, *PIMAGE_OPTIONAL_HEADER;
 
-typedef struct _IMAGE_FILE_HEADER32 {
+typedef struct _IMAGE_FILE_HEADER {
   WORD  Machine;
   WORD  NumberOfSections;
   DWORD TimeDateStamp;
@@ -198,17 +198,17 @@ typedef struct _IMAGE_FILE_HEADER32 {
   DWORD NumberOfSymbols;
   WORD  SizeOfOptionalHeader;
   WORD  Characteristics;
-} IMAGE_FILE_HEADER32, *PIMAGE_FILE_HEADER32;
+} IMAGE_FILE_HEADER, *PIMAGE_FILE_HEADER;
 
-typedef struct _IMAGE_NT_HEADERS32 {
+typedef struct _IMAGE_NT_HEADERS {
   DWORD Signature;
-  IMAGE_FILE_HEADER32 FileHeader;
-  IMAGE_OPTIONAL_HEADER32 OptionalHeader;
-} IMAGE_NT_HEADERS32, *PIMAGE_NT_HEADERS32;
+  IMAGE_FILE_HEADER FileHeader;
+  IMAGE_OPTIONAL_HEADER OptionalHeader;
+} IMAGE_NT_HEADERS, *PIMAGE_NT_HEADERS;
 
 #define IMAGE_SIZEOF_SHORT_NAME 8
 
-typedef struct _IMAGE_SECTION_HEADER32 {
+typedef struct _IMAGE_SECTION_HEADER {
   BYTE  Name[IMAGE_SIZEOF_SHORT_NAME];
   union {
     DWORD PhysicalAddress;
@@ -222,24 +222,24 @@ typedef struct _IMAGE_SECTION_HEADER32 {
   WORD  NumberOfRelocations;
   WORD  NumberOfLinenumbers;
   DWORD Characteristics;
-} IMAGE_SECTION_HEADER32, *PIMAGE_SECTION_HEADER32;
+} IMAGE_SECTION_HEADER, *PIMAGE_SECTION_HEADER;
 
-typedef struct _LOADED_IMAGE32 {
+typedef struct _LOADED_IMAGE {
   LPSTR                   ModuleName;
-  HANDLE32                hFile;
+  HANDLE                hFile;
   PUCHAR                  MappedAddress;
-  PIMAGE_NT_HEADERS32     FileHeader;
-  PIMAGE_SECTION_HEADER32 LastRvaSection;
+  PIMAGE_NT_HEADERS     FileHeader;
+  PIMAGE_SECTION_HEADER LastRvaSection;
   ULONG                   NumberOfSections;
-  PIMAGE_SECTION_HEADER32 Sections;
+  PIMAGE_SECTION_HEADER Sections;
   ULONG                   Characteristics;
   BOOLEAN                 fSystemImage;
   BOOLEAN                 fDOSImage;
-  LIST_ENTRY32            Links;
+  LIST_ENTRY            Links;
   ULONG                   SizeOfImage;
-} LOADED_IMAGE32, *PLOADED_IMAGE32;
+} LOADED_IMAGE, *PLOADED_IMAGE;
 
-typedef struct _IMAGE_LOAD_CONFIG_DIRECTORY32 {
+typedef struct _IMAGE_LOAD_CONFIG_DIRECTORY {
   DWORD Characteristics;
   DWORD TimeDateStamp;
   WORD  MajorVersion;
@@ -258,29 +258,29 @@ typedef struct _IMAGE_LOAD_CONFIG_DIRECTORY32 {
   WORD  Reserved1;
   PVOID EditList;
   DWORD Reserved[1];
-} IMAGE_LOAD_CONFIG_DIRECTORY32, *PIMAGE_LOAD_CONFIG_DIRECTORY32;
+} IMAGE_LOAD_CONFIG_DIRECTORY, *PIMAGE_LOAD_CONFIG_DIRECTORY;
 
-typedef struct _WIN_CERTIFICATE32 {
+typedef struct _WIN_CERTIFICATE {
   DWORD dwLength;
   WORD  wRevision;                   /*  WIN_CERT_REVISON_xxx */ 
   WORD  wCertificateType;            /*  WIN_CERT_TYPE_xxx */
   BYTE  bCertificate[ANYSIZE_ARRAY];
-} WIN_CERTIFICATE32, *PWIN_CERTIFICATE32;
+} WIN_CERTIFICATE, *PWIN_CERTIFICATE;
 
-typedef struct _API_VERSION32 {
+typedef struct _API_VERSION {
   USHORT  MajorVersion;
   USHORT  MinorVersion;
   USHORT  Revision;
   USHORT  Reserved;
-} API_VERSION32, *PAPI_VERSION32;
+} API_VERSION, *PAPI_VERSION;
 
-typedef struct _IMAGE_FUNCTION_ENTRY32 {
+typedef struct _IMAGE_FUNCTION_ENTRY {
   DWORD StartingAddress;
   DWORD EndingAddress;
   DWORD EndOfPrologue;
-} IMAGE_FUNCTION_ENTRY32, *PIMAGE_FUNCTION_ENTRY32;
+} IMAGE_FUNCTION_ENTRY, *PIMAGE_FUNCTION_ENTRY;
 
-typedef struct _IMAGE_DEBUG_DIRECTORY32 {
+typedef struct _IMAGE_DEBUG_DIRECTORY {
   DWORD Characteristics;
   DWORD TimeDateStamp;
   WORD  MajorVersion;
@@ -289,9 +289,9 @@ typedef struct _IMAGE_DEBUG_DIRECTORY32 {
   DWORD SizeOfData;
   DWORD AddressOfRawData;
   DWORD PointerToRawData;
-} IMAGE_DEBUG_DIRECTORY32, *PIMAGE_DEBUG_DIRECTORY32;
+} IMAGE_DEBUG_DIRECTORY, *PIMAGE_DEBUG_DIRECTORY;
 
-typedef struct _IMAGE_COFF_SYMBOLS_HEADER32 {
+typedef struct _IMAGE_COFF_SYMBOLS_HEADER {
   DWORD NumberOfSymbols;
   DWORD LvaToFirstSymbol;
   DWORD NumberOfLinenumbers;
@@ -300,9 +300,9 @@ typedef struct _IMAGE_COFF_SYMBOLS_HEADER32 {
   DWORD RvaToLastByteOfCode;
   DWORD RvaToFirstByteOfData;
   DWORD RvaToLastByteOfData;
-} IMAGE_COFF_SYMBOLS_HEADER32, *PIMAGE_COFF_SYMBOLS_HEADER32;
+} IMAGE_COFF_SYMBOLS_HEADER, *PIMAGE_COFF_SYMBOLS_HEADER;
 
-typedef struct _FPO_DATA32 {
+typedef struct _FPO_DATA {
   DWORD ulOffStart;
   DWORD cbProcSize;
   DWORD cdwLocals;
@@ -313,10 +313,10 @@ typedef struct _FPO_DATA32 {
   WORD  fUseBP   : 1;
   WORD  reserved : 1;
   WORD  cbFrame  : 2;
-} FPO_DATA32, *PFPO_DATA32;
+} FPO_DATA, *PFPO_DATA;
 
-typedef struct _IMAGE_DEBUG_INFORMATION32 {
-  LIST_ENTRY32 List;
+typedef struct _IMAGE_DEBUG_INFORMATION {
+  LIST_ENTRY List;
   DWORD        Size;
   PVOID        MappedBase;
   USHORT       Machine;
@@ -326,21 +326,21 @@ typedef struct _IMAGE_DEBUG_INFORMATION32 {
   DWORD        SizeOfImage;
   
   DWORD NumberOfSections;
-  PIMAGE_SECTION_HEADER32 Sections;
+  PIMAGE_SECTION_HEADER Sections;
 
   DWORD ExportedNamesSize;
   LPSTR ExportedNames;
 
   DWORD NumberOfFunctionTableEntries;
-  PIMAGE_FUNCTION_ENTRY32 FunctionTableEntries;
+  PIMAGE_FUNCTION_ENTRY FunctionTableEntries;
   DWORD LowestFunctionStartingAddress;
   DWORD HighestFunctionEndingAddress;
 
   DWORD NumberOfFpoTableEntries;
-  PFPO_DATA32 FpoTableEntries;
+  PFPO_DATA FpoTableEntries;
 
   DWORD SizeOfCoffSymbols;
-  PIMAGE_COFF_SYMBOLS_HEADER32 CoffSymbols;
+  PIMAGE_COFF_SYMBOLS_HEADER CoffSymbols;
 
   DWORD SizeOfCodeViewSymbols;
   PVOID CodeViewSymbols;
@@ -351,20 +351,20 @@ typedef struct _IMAGE_DEBUG_INFORMATION32 {
 
   DWORD TimeDateStamp;
 
-  BOOL32 RomImage;
-  PIMAGE_DEBUG_DIRECTORY32 DebugDirectory;
+  BOOL RomImage;
+  PIMAGE_DEBUG_DIRECTORY DebugDirectory;
   DWORD  NumberOfDebugDirectories;
 
   DWORD Reserved[3];
-} IMAGE_DEBUG_INFORMATION32, *PIMAGE_DEBUG_INFORMATION32;
+} IMAGE_DEBUG_INFORMATION, *PIMAGE_DEBUG_INFORMATION;
 
-typedef struct _ADDRESS32 {
+typedef struct _ADDRESS {
     DWORD          Offset;
     WORD           Segment;
-    ADDRESS_MODE32 Mode;
-} ADDRESS32, *PADDRESS32;
+    ADDRESS_MODE Mode;
+} ADDRESS, *PADDRESS;
 
-typedef struct _KDHELP32 {
+typedef struct _KDHELP {
   DWORD Thread;
   DWORD ThCallbackStack;
   DWORD NextCallback;
@@ -372,31 +372,31 @@ typedef struct _KDHELP32 {
   DWORD KiCallUserMode;
   DWORD KeUserCallbackDispatcher;
   DWORD SystemRangeStart;
-} KDHELP32, *PKDHELP32;
+} KDHELP, *PKDHELP;
 
-typedef struct _STACKFRAME32 {
-  ADDRESS32 AddrPC;
-  ADDRESS32 AddrReturn;
-  ADDRESS32 AddrFrame;
-  ADDRESS32 AddrStack;
+typedef struct _STACKFRAME {
+  ADDRESS AddrPC;
+  ADDRESS AddrReturn;
+  ADDRESS AddrFrame;
+  ADDRESS AddrStack;
   PVOID     FuncTableEntry;
   DWORD     Params[4];
-  BOOL32    Far;
-  BOOL32    Virtual;
+  BOOL    Far;
+  BOOL    Virtual;
   DWORD     Reserved[3];
-  KDHELP32  KdHelp;
-} STACKFRAME32, *PSTACKFRAME32;
+  KDHELP  KdHelp;
+} STACKFRAME, *PSTACKFRAME;
 
-typedef struct _IMAGEHLP_SYMBOL32 {
+typedef struct _IMAGEHLP_SYMBOL {
   DWORD SizeOfStruct;
   DWORD Address;
   DWORD Size;
   DWORD Flags;
   DWORD MaxNameLength;
   CHAR  Name[ANYSIZE_ARRAY];
-} IMAGEHLP_SYMBOL32, *PIMAGEHLP_SYMBOL32;
+} IMAGEHLP_SYMBOL, *PIMAGEHLP_SYMBOL;
 
-typedef struct _IMAGEHLP_MODULE32 {
+typedef struct _IMAGEHLP_MODULE {
   DWORD      SizeOfStruct;
   DWORD      BaseOfImage;
   DWORD      ImageSize;
@@ -407,33 +407,33 @@ typedef struct _IMAGEHLP_MODULE32 {
   CHAR       ModuleName[32];
   CHAR       ImageName[256];
   CHAR       LoadedImageName[256];
-} IMAGEHLP_MODULE32, *PIMAGEHLP_MODULE32;
+} IMAGEHLP_MODULE, *PIMAGEHLP_MODULE;
 
-typedef struct _IMAGEHLP_LINE32 {
+typedef struct _IMAGEHLP_LINE {
   DWORD SizeOfStruct;
   DWORD Key;
   DWORD LineNumber;
   PCHAR FileName;
   DWORD Address;
-} IMAGEHLP_LINE32, *PIMAGEHLP_LINE32;
+} IMAGEHLP_LINE, *PIMAGEHLP_LINE;
 
-typedef struct _IMAGEHLP_DEFERRED_SYMBOL_LOAD32 {
+typedef struct _IMAGEHLP_DEFERRED_SYMBOL_LOAD {
   DWORD   SizeOfStruct;
   DWORD   BaseOfImage;
   DWORD   CheckSum;
   DWORD   TimeDateStamp;
   CHAR    FileName[MAX_PATH];
   BOOLEAN Reparse;
-} IMAGEHLP_DEFERRED_SYMBOL_LOAD32, *PIMAGEHLP_DEFERRED_SYMBOL_LOAD32;
+} IMAGEHLP_DEFERRED_SYMBOL_LOAD, *PIMAGEHLP_DEFERRED_SYMBOL_LOAD;
 
-typedef struct _IMAGEHLP_DUPLICATE_SYMBOL32 {
+typedef struct _IMAGEHLP_DUPLICATE_SYMBOL {
   DWORD              SizeOfStruct;
   DWORD              NumberOfDups;
-  PIMAGEHLP_SYMBOL32 Symbol;
+  PIMAGEHLP_SYMBOL Symbol;
   ULONG              SelectedSymbol;
-} IMAGEHLP_DUPLICATE_SYMBOL32, *PIMAGEHLP_DUPLICATE_SYMBOL32;
+} IMAGEHLP_DUPLICATE_SYMBOL, *PIMAGEHLP_DUPLICATE_SYMBOL;
 
-typedef struct _IMAGE_DOS_HEADER32 {
+typedef struct _IMAGE_DOS_HEADER {
   WORD e_magic;
   WORD e_cblp;
   WORD e_cp;
@@ -453,9 +453,9 @@ typedef struct _IMAGE_DOS_HEADER32 {
   WORD e_oeminfo;
   WORD e_res2[10];
   LONG e_lfanew;
-} IMAGE_DOS_HEADER32, *PIMAGE_DOS_HEADER32;
+} IMAGE_DOS_HEADER, *PIMAGE_DOS_HEADER;
 
-typedef struct _IMAGE_OS2_HEADER32 {
+typedef struct _IMAGE_OS2_HEADER {
   WORD ne_magic;
   CHAR ne_ver;
   CHAR ne_rev;
@@ -486,9 +486,9 @@ typedef struct _IMAGE_OS2_HEADER32 {
   WORD ne_psegrefbytes;
   WORD ne_swaparea;
   WORD ne_expver;
-} IMAGE_OS2_HEADER32, *PIMAGE_OS2_HEADER32;
+} IMAGE_OS2_HEADER, *PIMAGE_OS2_HEADER;
 
-typedef struct _IMAGE_VXD_HEADER32 {
+typedef struct _IMAGE_VXD_HEADER {
   WORD  e32_magic;
   BYTE  e32_border;
   BYTE  e32_worder;
@@ -540,278 +540,278 @@ typedef struct _IMAGE_VXD_HEADER32 {
   DWORD e32_winreslen;
   WORD  e32_devid;
   WORD  e32_ddkver;
-} IMAGE_VXD_HEADER32, *PIMAGE_VXD_HEADER32;
+} IMAGE_VXD_HEADER, *PIMAGE_VXD_HEADER;
 
 /***********************************************************************
  * Callbacks
  */
 
-typedef BOOL32 (CALLBACK *PIMAGEHLP_STATUS_ROUTINE32)(
-  IMAGEHLP_STATUS_REASON32 Reason, LPSTR ImageName, LPSTR DllName,
+typedef BOOL (CALLBACK *PIMAGEHLP_STATUS_ROUTINE)(
+  IMAGEHLP_STATUS_REASON Reason, LPSTR ImageName, LPSTR DllName,
   ULONG Va, ULONG Parameter
 );
 
-typedef BOOL32 (CALLBACK *PSYM_ENUMMODULES_CALLBACK32)(
+typedef BOOL (CALLBACK *PSYM_ENUMMODULES_CALLBACK)(
   LPSTR ModuleName, ULONG BaseOfDll, PVOID UserContext
 );
 
-typedef BOOL32 (CALLBACK *PSYM_ENUMSYMBOLS_CALLBACK32)(
+typedef BOOL (CALLBACK *PSYM_ENUMSYMBOLS_CALLBACK)(
   LPSTR SymbolName, ULONG SymbolAddress, ULONG SymbolSize, 
   PVOID UserContext
 );
 
-typedef BOOL32 (CALLBACK *PENUMLOADED_MODULES_CALLBACK32)(
+typedef BOOL (CALLBACK *PENUMLOADED_MODULES_CALLBACK)(
   LPSTR ModuleName, ULONG ModuleBase, ULONG ModuleSize, 
   PVOID UserContext
 );
 
-typedef BOOL32 (CALLBACK *PSYMBOL_REGISTERED_CALLBACK32)(
-  HANDLE32 hProcess, ULONG ActionCode, PVOID CallbackData,
+typedef BOOL (CALLBACK *PSYMBOL_REGISTERED_CALLBACK)(
+  HANDLE hProcess, ULONG ActionCode, PVOID CallbackData,
   PVOID UserContext
 );
 
-typedef BOOL32 (CALLBACK *DIGEST_FUNCTION32)(
-  DIGEST_HANDLE32 refdata, PBYTE pData, DWORD dwLength
+typedef BOOL (CALLBACK *DIGEST_FUNCTION)(
+  DIGEST_HANDLE refdata, PBYTE pData, DWORD dwLength
 );
 
-typedef BOOL32 (CALLBACK *PREAD_PROCESS_MEMORY_ROUTINE32)(
-  HANDLE32  hProcess, PCVOID lpBaseAddress, PVOID lpBuffer,
+typedef BOOL (CALLBACK *PREAD_PROCESS_MEMORY_ROUTINE)(
+  HANDLE  hProcess, PCVOID lpBaseAddress, PVOID lpBuffer,
   DWORD nSize, PDWORD lpNumberOfBytesRead
 );
 
-typedef PVOID (CALLBACK *PFUNCTION_TABLE_ACCESS_ROUTINE32)(
-  HANDLE32 hProcess, DWORD AddrBase
+typedef PVOID (CALLBACK *PFUNCTION_TABLE_ACCESS_ROUTINE)(
+  HANDLE hProcess, DWORD AddrBase
 );
 
-typedef DWORD (CALLBACK *PGET_MODULE_BASE_ROUTINE32)(
-  HANDLE32 hProcess, DWORD ReturnAddress);
+typedef DWORD (CALLBACK *PGET_MODULE_BASE_ROUTINE)(
+  HANDLE hProcess, DWORD ReturnAddress);
 
-typedef DWORD (CALLBACK *PTRANSLATE_ADDRESS_ROUTINE32)(
-  HANDLE32 hProcess, HANDLE32 hThread, PADDRESS32 lpaddr
+typedef DWORD (CALLBACK *PTRANSLATE_ADDRESS_ROUTINE)(
+  HANDLE hProcess, HANDLE hThread, PADDRESS lpaddr
 );
 
 /***********************************************************************
  * Functions
  */
 
-BOOL32 WINAPI BindImage32(
+BOOL WINAPI BindImage(
   LPSTR ImageName, LPSTR DllPath, LPSTR SymbolPath
 );
-BOOL32 WINAPI BindImageEx32(
+BOOL WINAPI BindImageEx(
   DWORD Flags, LPSTR ImageName, LPSTR DllPath, LPSTR SymbolPath,
-  PIMAGEHLP_STATUS_ROUTINE32 StatusRoutine
+  PIMAGEHLP_STATUS_ROUTINE StatusRoutine
 );
-PIMAGE_NT_HEADERS32 WINAPI CheckSumMappedFile32(
+PIMAGE_NT_HEADERS WINAPI CheckSumMappedFile(
   LPVOID BaseAddress, DWORD FileLength, 
   LPDWORD HeaderSum, LPDWORD CheckSum
 );
-BOOL32 WINAPI EnumerateLoadedModules32(
-  HANDLE32 hProcess,
-  PENUMLOADED_MODULES_CALLBACK32 EnumLoadedModulesCallback,
+BOOL WINAPI EnumerateLoadedModules(
+  HANDLE hProcess,
+  PENUMLOADED_MODULES_CALLBACK EnumLoadedModulesCallback,
   PVOID UserContext
 );
-HANDLE32 WINAPI FindDebugInfoFile32(
+HANDLE WINAPI FindDebugInfoFile(
   LPSTR FileName, LPSTR SymbolPath, LPSTR DebugFilePath
 );
-HANDLE32 WINAPI FindExecutableImage32(
+HANDLE WINAPI FindExecutableImage(
   LPSTR FileName, LPSTR SymbolPath, LPSTR ImageFilePath
 );
-BOOL32 WINAPI GetImageConfigInformation32(
-  PLOADED_IMAGE32 LoadedImage, 
-  PIMAGE_LOAD_CONFIG_DIRECTORY32 ImageConfigInformation
+BOOL WINAPI GetImageConfigInformation(
+  PLOADED_IMAGE LoadedImage, 
+  PIMAGE_LOAD_CONFIG_DIRECTORY ImageConfigInformation
 );
-DWORD WINAPI GetImageUnusedHeaderBytes32(
-  PLOADED_IMAGE32 LoadedImage,
+DWORD WINAPI GetImageUnusedHeaderBytes(
+  PLOADED_IMAGE LoadedImage,
   LPDWORD SizeUnusedHeaderBytes
 );
-DWORD WINAPI GetTimestampForLoadedLibrary32(
-  HMODULE32 Module
+DWORD WINAPI GetTimestampForLoadedLibrary(
+  HMODULE Module
 );
-BOOL32 WINAPI ImageAddCertificate32(
-  HANDLE32 FileHandle, PWIN_CERTIFICATE32 Certificate, PDWORD Index
+BOOL WINAPI ImageAddCertificate(
+  HANDLE FileHandle, PWIN_CERTIFICATE Certificate, PDWORD Index
 );
-PVOID WINAPI ImageDirectoryEntryToData32(
+PVOID WINAPI ImageDirectoryEntryToData(
   PVOID Base, BOOLEAN MappedAsImage, USHORT DirectoryEntry, PULONG Size
 );
-BOOL32 WINAPI ImageEnumerateCertificates32(
-  HANDLE32 FileHandle, WORD TypeFilter, PDWORD CertificateCount,
+BOOL WINAPI ImageEnumerateCertificates(
+  HANDLE FileHandle, WORD TypeFilter, PDWORD CertificateCount,
   PDWORD Indices, DWORD IndexCount
 );
-BOOL32 WINAPI ImageGetCertificateData32(
-  HANDLE32 FileHandle, DWORD CertificateIndex,
-  PWIN_CERTIFICATE32 Certificate, PDWORD RequiredLength
+BOOL WINAPI ImageGetCertificateData(
+  HANDLE FileHandle, DWORD CertificateIndex,
+  PWIN_CERTIFICATE Certificate, PDWORD RequiredLength
 );
-BOOL32 WINAPI ImageGetCertificateHeader32(
-  HANDLE32 FileHandle, DWORD CertificateIndex,
-  PWIN_CERTIFICATE32 Certificateheader
+BOOL WINAPI ImageGetCertificateHeader(
+  HANDLE FileHandle, DWORD CertificateIndex,
+  PWIN_CERTIFICATE Certificateheader
 );
-BOOL32 WINAPI ImageGetDigestStream32(
-  HANDLE32 FileHandle, DWORD DigestLevel,
-  DIGEST_FUNCTION32 DigestFunction, DIGEST_HANDLE32 DigestHandle
+BOOL WINAPI ImageGetDigestStream(
+  HANDLE FileHandle, DWORD DigestLevel,
+  DIGEST_FUNCTION DigestFunction, DIGEST_HANDLE DigestHandle
 );
-PLOADED_IMAGE32 WINAPI ImageLoad32(
+PLOADED_IMAGE WINAPI ImageLoad(
   LPSTR DllName, LPSTR DllPath
 );
-PIMAGE_NT_HEADERS32 WINAPI ImageNtHeader32(
+PIMAGE_NT_HEADERS WINAPI ImageNtHeader(
   PVOID Base
 );
-BOOL32 WINAPI ImageRemoveCertificate32(
-  HANDLE32 FileHandle, DWORD Index
+BOOL WINAPI ImageRemoveCertificate(
+  HANDLE FileHandle, DWORD Index
 );
-PIMAGE_SECTION_HEADER32 WINAPI ImageRvaToSection32(
-  PIMAGE_NT_HEADERS32 NtHeaders, PVOID Base, ULONG Rva
+PIMAGE_SECTION_HEADER WINAPI ImageRvaToSection(
+  PIMAGE_NT_HEADERS NtHeaders, PVOID Base, ULONG Rva
 );
-PVOID WINAPI ImageRvaToVa32(
-  PIMAGE_NT_HEADERS32 NtHeaders, PVOID Base, ULONG Rva,
-  PIMAGE_SECTION_HEADER32 *LastRvaSection
+PVOID WINAPI ImageRvaToVa(
+  PIMAGE_NT_HEADERS NtHeaders, PVOID Base, ULONG Rva,
+  PIMAGE_SECTION_HEADER *LastRvaSection
 );
-BOOL32 WINAPI ImageUnload32(
-  PLOADED_IMAGE32 LoadedImage
+BOOL WINAPI ImageUnload(
+  PLOADED_IMAGE LoadedImage
 );
-PAPI_VERSION32 WINAPI ImagehlpApiVersion32(
+PAPI_VERSION WINAPI ImagehlpApiVersion(
   void 
 );
-PAPI_VERSION32 WINAPI ImagehlpApiVersionEx32(
-  PAPI_VERSION32 AppVersion
+PAPI_VERSION WINAPI ImagehlpApiVersionEx(
+  PAPI_VERSION AppVersion
 );
-BOOL32 WINAPI MakeSureDirectoryPathExists32(
+BOOL WINAPI MakeSureDirectoryPathExists(
   LPCSTR DirPath
 );
-BOOL32 WINAPI MapAndLoad32(
-  LPSTR ImageName, LPSTR DllPath, PLOADED_IMAGE32 LoadedImage,
-  BOOL32 DotDll, BOOL32 ReadOnly
+BOOL WINAPI MapAndLoad(
+  LPSTR ImageName, LPSTR DllPath, PLOADED_IMAGE LoadedImage,
+  BOOL DotDll, BOOL ReadOnly
 );
-PIMAGE_DEBUG_INFORMATION32 WINAPI MapDebugInformation32(
-  HANDLE32 FileHandle, LPSTR FileName,
+PIMAGE_DEBUG_INFORMATION WINAPI MapDebugInformation(
+  HANDLE FileHandle, LPSTR FileName,
   LPSTR SymbolPath, DWORD ImageBase
 );
-DWORD WINAPI MapFileAndCheckSum32A(
+DWORD WINAPI MapFileAndCheckSumA(
   LPSTR Filename, LPDWORD HeaderSum, LPDWORD CheckSum
 );
-DWORD WINAPI MapFileAndCheckSum32W(
+DWORD WINAPI MapFileAndCheckSumW(
   LPWSTR Filename, LPDWORD HeaderSum, LPDWORD CheckSum
 );
-BOOL32 WINAPI ReBaseImage32(
-  LPSTR CurrentImageName, LPSTR SymbolPath, BOOL32 fReBase,
-  BOOL32 fRebaseSysfileOk, BOOL32 fGoingDown, ULONG CheckImageSize,
+BOOL WINAPI ReBaseImage(
+  LPSTR CurrentImageName, LPSTR SymbolPath, BOOL fReBase,
+  BOOL fRebaseSysfileOk, BOOL fGoingDown, ULONG CheckImageSize,
   ULONG *OldImageSize, ULONG *OldImageBase, ULONG *NewImageSize,
   ULONG *NewImageBase, ULONG TimeStamp
 );
-BOOL32 WINAPI RemovePrivateCvSymbolic32(
+BOOL WINAPI RemovePrivateCvSymbolic(
   PCHAR DebugData, PCHAR *NewDebugData, ULONG *NewDebugSize
 );
-VOID WINAPI RemoveRelocations32(
+VOID WINAPI RemoveRelocations(
   PCHAR ImageName
 );
-BOOL32 WINAPI SearchTreeForFile32(
+BOOL WINAPI SearchTreeForFile(
   LPSTR RootPath, LPSTR InputPathName, LPSTR OutputPathBuffer
 );
-BOOL32 WINAPI SetImageConfigInformation32(
-  PLOADED_IMAGE32 LoadedImage,
-  PIMAGE_LOAD_CONFIG_DIRECTORY32 ImageConfigInformation
+BOOL WINAPI SetImageConfigInformation(
+  PLOADED_IMAGE LoadedImage,
+  PIMAGE_LOAD_CONFIG_DIRECTORY ImageConfigInformation
 );
-BOOL32 WINAPI SplitSymbols32(
+BOOL WINAPI SplitSymbols(
   LPSTR ImageName, LPSTR SymbolsPath, 
   LPSTR SymbolFilePath, DWORD Flags
 );
-BOOL32 WINAPI StackWalk32(
-  DWORD MachineType, HANDLE32 hProcess, HANDLE32 hThread,
-  PSTACKFRAME32 StackFrame, PVOID ContextRecord,
-  PREAD_PROCESS_MEMORY_ROUTINE32 ReadMemoryRoutine,
-  PFUNCTION_TABLE_ACCESS_ROUTINE32 FunctionTableAccessRoutine,
-  PGET_MODULE_BASE_ROUTINE32 GetModuleBaseRoutine,
-  PTRANSLATE_ADDRESS_ROUTINE32 TranslateAddress
+BOOL WINAPI StackWalk(
+  DWORD MachineType, HANDLE hProcess, HANDLE hThread,
+  PSTACKFRAME StackFrame, PVOID ContextRecord,
+  PREAD_PROCESS_MEMORY_ROUTINE ReadMemoryRoutine,
+  PFUNCTION_TABLE_ACCESS_ROUTINE FunctionTableAccessRoutine,
+  PGET_MODULE_BASE_ROUTINE GetModuleBaseRoutine,
+  PTRANSLATE_ADDRESS_ROUTINE TranslateAddress
 );
-BOOL32 WINAPI SymCleanup32(
-  HANDLE32 hProcess
+BOOL WINAPI SymCleanup(
+  HANDLE hProcess
 );
-BOOL32 WINAPI SymEnumerateModules32(
-  HANDLE32 hProcess, PSYM_ENUMMODULES_CALLBACK32 EnumModulesCallback,
+BOOL WINAPI SymEnumerateModules(
+  HANDLE hProcess, PSYM_ENUMMODULES_CALLBACK EnumModulesCallback,
   PVOID UserContext
 );
-BOOL32 WINAPI SymEnumerateSymbols32(
-  HANDLE32 hProcess, DWORD BaseOfDll,
-  PSYM_ENUMSYMBOLS_CALLBACK32 EnumSymbolsCallback, PVOID UserContext
+BOOL WINAPI SymEnumerateSymbols(
+  HANDLE hProcess, DWORD BaseOfDll,
+  PSYM_ENUMSYMBOLS_CALLBACK EnumSymbolsCallback, PVOID UserContext
 );
-PVOID WINAPI SymFunctionTableAccess32(
-  HANDLE32 hProcess, DWORD AddrBase
+PVOID WINAPI SymFunctionTableAccess(
+  HANDLE hProcess, DWORD AddrBase
 );
-DWORD WINAPI SymGetModuleBase32(
-  HANDLE32 hProcess, DWORD dwAddr
+DWORD WINAPI SymGetModuleBase(
+  HANDLE hProcess, DWORD dwAddr
 );
-BOOL32 WINAPI SymGetModuleInfo32(
-  HANDLE32 hProcess, DWORD dwAddr,
-  PIMAGEHLP_MODULE32 ModuleInfo
+BOOL WINAPI SymGetModuleInfo(
+  HANDLE hProcess, DWORD dwAddr,
+  PIMAGEHLP_MODULE ModuleInfo
 );
-DWORD WINAPI SymGetOptions32(
+DWORD WINAPI SymGetOptions(
   void
 );
-BOOL32 WINAPI SymGetSearchPath32(
-  HANDLE32 hProcess, LPSTR szSearchPath, DWORD SearchPathLength
+BOOL WINAPI SymGetSearchPath(
+  HANDLE hProcess, LPSTR szSearchPath, DWORD SearchPathLength
 );
-BOOL32 WINAPI SymGetSymFromAddr32(
-  HANDLE32 hProcess, DWORD dwAddr,
-  PDWORD pdwDisplacement, PIMAGEHLP_SYMBOL32 Symbol
+BOOL WINAPI SymGetSymFromAddr(
+  HANDLE hProcess, DWORD dwAddr,
+  PDWORD pdwDisplacement, PIMAGEHLP_SYMBOL Symbol
 );
-BOOL32 WINAPI SymGetSymFromName32(
-  HANDLE32 hProcess, LPSTR Name, PIMAGEHLP_SYMBOL32 Symbol
+BOOL WINAPI SymGetSymFromName(
+  HANDLE hProcess, LPSTR Name, PIMAGEHLP_SYMBOL Symbol
 );
-BOOL32 WINAPI SymGetSymNext32(
-  HANDLE32 hProcess, PIMAGEHLP_SYMBOL32 Symbol
+BOOL WINAPI SymGetSymNext(
+  HANDLE hProcess, PIMAGEHLP_SYMBOL Symbol
 );
-BOOL32 WINAPI SymGetSymPrev32(
-  HANDLE32 hProcess, PIMAGEHLP_SYMBOL32 Symbol
+BOOL WINAPI SymGetSymPrev(
+  HANDLE hProcess, PIMAGEHLP_SYMBOL Symbol
 );
-BOOL32 WINAPI SymInitialize32(
-  HANDLE32 hProcess, LPSTR UserSearchPath, BOOL32 fInvadeProcess
+BOOL WINAPI SymInitialize(
+  HANDLE hProcess, LPSTR UserSearchPath, BOOL fInvadeProcess
 );
-BOOL32 WINAPI SymLoadModule32(
-  HANDLE32 hProcess, HANDLE32 hFile, LPSTR ImageName, LPSTR ModuleName,
+BOOL WINAPI SymLoadModule(
+  HANDLE hProcess, HANDLE hFile, LPSTR ImageName, LPSTR ModuleName,
   DWORD BaseOfDll, DWORD SizeOfDll
 );
-BOOL32 WINAPI SymRegisterCallback32(
-  HANDLE32 hProcess, PSYMBOL_REGISTERED_CALLBACK32 CallbackFunction,
+BOOL WINAPI SymRegisterCallback(
+  HANDLE hProcess, PSYMBOL_REGISTERED_CALLBACK CallbackFunction,
   PVOID UserContext
 );
-DWORD WINAPI SymSetOptions32(
+DWORD WINAPI SymSetOptions(
   DWORD SymOptions
 );
-BOOL32 WINAPI SymSetSearchPath32(
-  HANDLE32 hProcess, LPSTR szSearchPath
+BOOL WINAPI SymSetSearchPath(
+  HANDLE hProcess, LPSTR szSearchPath
 );
-BOOL32 WINAPI SymUnDName32(
-  PIMAGEHLP_SYMBOL32 sym, LPSTR UnDecName, DWORD UnDecNameLength
+BOOL WINAPI SymUnDName(
+  PIMAGEHLP_SYMBOL sym, LPSTR UnDecName, DWORD UnDecNameLength
 );
-BOOL32 WINAPI SymUnloadModule32(
-  HANDLE32 hProcess, DWORD BaseOfDll
+BOOL WINAPI SymUnloadModule(
+  HANDLE hProcess, DWORD BaseOfDll
 );
-BOOL32 WINAPI TouchFileTimes32(
-  HANDLE32 FileHandle, LPSYSTEMTIME lpSystemTime
+BOOL WINAPI TouchFileTimes(
+  HANDLE FileHandle, LPSYSTEMTIME lpSystemTime
 );
-DWORD WINAPI UnDecorateSymbolName32(
+DWORD WINAPI UnDecorateSymbolName(
   LPCSTR DecoratedName, LPSTR UnDecoratedName,
   DWORD UndecoratedLength, DWORD Flags
 );
-BOOL32 WINAPI UnMapAndLoad32(
-  PLOADED_IMAGE32 LoadedImage
+BOOL WINAPI UnMapAndLoad(
+  PLOADED_IMAGE LoadedImage
 );
-BOOL32 WINAPI UnmapDebugInformation32(
-  PIMAGE_DEBUG_INFORMATION32 DebugInfo
+BOOL WINAPI UnmapDebugInformation(
+  PIMAGE_DEBUG_INFORMATION DebugInfo
 );
-BOOL32 WINAPI UpdateDebugInfoFile32(
+BOOL WINAPI UpdateDebugInfoFile(
   LPSTR ImageFileName, LPSTR SymbolPath,
-  LPSTR DebugFilePath, PIMAGE_NT_HEADERS32 NtHeaders
+  LPSTR DebugFilePath, PIMAGE_NT_HEADERS NtHeaders
 );
-BOOL32 WINAPI UpdateDebugInfoFileEx32(
+BOOL WINAPI UpdateDebugInfoFileEx(
   LPSTR ImageFileName, LPSTR SymbolPath, LPSTR DebugFilePath,
-  PIMAGE_NT_HEADERS32 NtHeaders, DWORD OldChecksum
+  PIMAGE_NT_HEADERS NtHeaders, DWORD OldChecksum
 );
 
 /***********************************************************************
  * Wine specific
  */
 
-extern HANDLE32 IMAGEHLP_hHeap32;
+extern HANDLE IMAGEHLP_hHeap;
 
 #endif  /* __WINE_IMAGEHLP_H */
 

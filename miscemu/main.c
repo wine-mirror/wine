@@ -24,7 +24,7 @@ static char **MAIN_argv;
 /***********************************************************************
  *           Emulator initialisation
  */
-BOOL32 MAIN_EmulatorInit(void)
+BOOL MAIN_EmulatorInit(void)
 {
     /* Main initialization */
     if (!MAIN_MainInit()) return FALSE;
@@ -46,13 +46,13 @@ void MAIN_EmulatorRun( void )
 {
     extern void THUNK_InitCallout( void );
     char startProg[256], defProg[256];
-    HINSTANCE32 handle;
+    HINSTANCE handle;
     int i, tasks = 0;
-    MSG32 msg;
+    MSG msg;
 
     /* Load system DLLs into the initial process (and initialize them) */
-    if (   !LoadLibrary16("GDI.EXE" ) || !LoadLibrary32A("GDI32.DLL" )
-        || !LoadLibrary16("USER.EXE") || !LoadLibrary32A("USER32.DLL"))
+    if (   !LoadLibrary16("GDI.EXE" ) || !LoadLibraryA("GDI32.DLL" )
+        || !LoadLibrary16("USER.EXE") || !LoadLibraryA("USER32.DLL"))
         ExitProcess( 1 );
 
     /* Get pointers to USER routines called by KERNEL */
@@ -81,7 +81,7 @@ void MAIN_EmulatorRun( void )
     /* Load and run executables given on command line */
     for (i = 1; i < MAIN_argc; i++)
     {
-        if ((handle = WinExec32( MAIN_argv[i], SW_SHOWNORMAL )) < 32)
+        if ((handle = WinExec( MAIN_argv[i], SW_SHOWNORMAL )) < 32)
         {
             MSG("wine: can't exec '%s': ", MAIN_argv[i]);
             switch (handle)
@@ -103,10 +103,10 @@ void MAIN_EmulatorRun( void )
 
     /* Start message loop for desktop window */
 
-    while ( GetNumTasks() > 1 && Callout.GetMessage32A( &msg, 0, 0, 0 ) )
+    while ( GetNumTasks16() > 1 && Callout.GetMessageA( &msg, 0, 0, 0 ) )
     {
-        Callout.TranslateMessage32( &msg );
-        Callout.DispatchMessage32A( &msg );
+        Callout.TranslateMessage( &msg );
+        Callout.DispatchMessageA( &msg );
     }
 
     ExitProcess( 0 );
@@ -162,7 +162,7 @@ int main( int argc, char *argv[] )
 
     /* Load kernel modules */
     if (!LoadLibrary16(  "KERNEL" )) return 1;
-    if (!LoadLibrary32A( "KERNEL32" )) return 1;
+    if (!LoadLibraryA( "KERNEL32" )) return 1;
 
     /* Create initial task */
     if ( !(pModule = NE_GetPtr( GetModuleHandle16( "KERNEL32" ) )) ) return 1;

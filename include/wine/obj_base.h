@@ -35,21 +35,18 @@
  * GUID API
  */
 HRESULT WINAPI StringFromCLSID16(REFCLSID id, LPOLESTR16*);
-HRESULT WINAPI StringFromCLSID32(REFCLSID id, LPOLESTR32*);
-#define StringFromCLSID WINELIB_NAME(StringFromCLSID)
+HRESULT WINAPI StringFromCLSID(REFCLSID id, LPOLESTR*);
 
 HRESULT WINAPI CLSIDFromString16(LPCOLESTR16, CLSID *);
-HRESULT WINAPI CLSIDFromString32(LPCOLESTR32, CLSID *);
-#define CLSIDFromString WINELIB_NAME(CLSIDFromString)
+HRESULT WINAPI CLSIDFromString(LPCOLESTR, CLSID *);
 
 HRESULT WINAPI CLSIDFromProgID16(LPCOLESTR16 progid, LPCLSID riid);
-HRESULT WINAPI CLSIDFromProgID32(LPCOLESTR32 progid, LPCLSID riid);
-#define CLSIDFromProgID WINELIB_NAME(CLSIDFromProgID)
+HRESULT WINAPI CLSIDFromProgID(LPCOLESTR progid, LPCLSID riid);
 
-INT32 WINAPI StringFromGUID2(REFGUID id, LPOLESTR32 str, INT32 cmax);
+INT WINAPI StringFromGUID2(REFGUID id, LPOLESTR str, INT cmax);
 
 BOOL16 WINAPI IsEqualGUID16(GUID* g1,GUID* g2);
-BOOL32 WINAPI IsEqualGUID32(REFGUID rguid1,REFGUID rguid2);
+BOOL WINAPI IsEqualGUID32(REFGUID rguid1,REFGUID rguid2);
 /*#define IsEqualGUID WINELIB_NAME(IsEqualGUID)*/
 #define IsEqualGUID(rguid1, rguid2) (!memcmp(rguid1, rguid2, sizeof(GUID)))
 #define IsEqualIID(riid1, riid2) IsEqualGUID(riid1, riid2)
@@ -668,9 +665,7 @@ typedef struct IClassFactory IClassFactory, *LPCLASSFACTORY;
 
 DEFINE_OLEGUID(IID_IMalloc,		0x00000002L, 0, 0);
 typedef struct IMalloc16 IMalloc16,*LPMALLOC16;
-typedef struct IMalloc32 IMalloc32,*LPMALLOC32;
-DECL_WINELIB_TYPE(IMalloc)
-DECL_WINELIB_TYPE(LPMALLOC)
+typedef struct IMalloc IMalloc,*LPMALLOC;
 
 DEFINE_OLEGUID(IID_IUnknown,		0x00000000L, 0, 0);
 typedef struct IUnknown IUnknown, *LPUNKNOWN;
@@ -719,7 +714,7 @@ struct IUnknown {
 #define ICOM_INTERFACE IClassFactory
 #define IClassFactory_METHODS \
     ICOM_METHOD3(HRESULT,CreateInstance, LPUNKNOWN,pUnkOuter, REFIID,riid, LPVOID*,ppvObject) \
-    ICOM_METHOD1(HRESULT,LockServer,     BOOL32,fLock)
+    ICOM_METHOD1(HRESULT,LockServer,     BOOL,fLock)
 #define IClassFactory_IMETHODS \
     IUnknown_IMETHODS \
     IClassFactory_METHODS
@@ -769,32 +764,32 @@ ICOM_DEFINE(IMalloc16,IUnknown)
 #endif
 
 
-#define ICOM_INTERFACE IMalloc32
-#define IMalloc32_METHODS \
+#define ICOM_INTERFACE IMalloc
+#define IMalloc_METHODS \
     ICOM_METHOD1 (LPVOID,Alloc,       DWORD,cb) \
     ICOM_METHOD2 (LPVOID,Realloc,     LPVOID,pv, DWORD,cb) \
     ICOM_VMETHOD1(       Free,        LPVOID,pv) \
     ICOM_CMETHOD1(DWORD, GetSize,     LPVOID,pv) \
-    ICOM_CMETHOD1(INT32, DidAlloc,    LPVOID,pv) \
+    ICOM_CMETHOD1(INT, DidAlloc,    LPVOID,pv) \
     ICOM_METHOD  (LPVOID,HeapMinimize)
-#define IMalloc32_IMETHODS \
+#define IMalloc_IMETHODS \
     IUnknown_IMETHODS \
-    IMalloc32_METHODS
-ICOM_DEFINE(IMalloc32,IUnknown)
+    IMalloc_METHODS
+ICOM_DEFINE(IMalloc,IUnknown)
 #undef ICOM_INTERFACE
 
 #ifdef ICOM_CINTERFACE
 /*** IUnknown methods ***/
-#define IMalloc32_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
-#define IMalloc32_AddRef(p)             ICOM_CALL (AddRef,p)
-#define IMalloc32_Release(p)            ICOM_CALL (Release,p)
+#define IMalloc_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
+#define IMalloc_AddRef(p)             ICOM_CALL (AddRef,p)
+#define IMalloc_Release(p)            ICOM_CALL (Release,p)
 /*** IMalloc32 methods ***/
-#define IMalloc32_Alloc(p,a)      ICOM_CALL1(Alloc,p,a)
-#define IMalloc32_Realloc(p,a,b)  ICOM_CALL2(Realloc,p,a,b)
-#define IMalloc32_Free(p,a)       ICOM_CALL1(Free,p,a)
-#define IMalloc32_GetSize(p,a)    ICOM_CALL1(GetSize,p,a)
-#define IMalloc32_DidAlloc(p,a)   ICOM_CALL1(DidAlloc,p,a)
-#define IMalloc32_HeapMinimize(p) ICOM_CALL (HeapMinimize,p)
+#define IMalloc_Alloc(p,a)      ICOM_CALL1(Alloc,p,a)
+#define IMalloc_Realloc(p,a,b)  ICOM_CALL2(Realloc,p,a,b)
+#define IMalloc_Free(p,a)       ICOM_CALL1(Free,p,a)
+#define IMalloc_GetSize(p,a)    ICOM_CALL1(GetSize,p,a)
+#define IMalloc_DidAlloc(p,a)   ICOM_CALL1(DidAlloc,p,a)
+#define IMalloc_HeapMinimize(p) ICOM_CALL (HeapMinimize,p)
 
 #ifndef __WINE__
 /* Duplicated for WINELIB */
@@ -814,11 +809,9 @@ ICOM_DEFINE(IMalloc32,IUnknown)
 
 
 HRESULT WINAPI CoCreateStandardMalloc16(DWORD dwMemContext, LPMALLOC16* lpMalloc);
-#define CoCreateStandardMalloc WINELIB_NAME(CoCreateStandardMalloc)
 
 HRESULT WINAPI CoGetMalloc16(DWORD dwMemContext,LPMALLOC16* lpMalloc);
-HRESULT WINAPI CoGetMalloc32(DWORD dwMemContext,LPMALLOC32* lpMalloc);
-#define CoGetMalloc WINELIB_NAME(CoGetMalloc)
+HRESULT WINAPI CoGetMalloc(DWORD dwMemContext,LPMALLOC* lpMalloc);
 
 LPVOID WINAPI CoTaskMemAlloc(ULONG size);
 
@@ -836,7 +829,7 @@ HRESULT WINAPI CoCreateGuid(GUID* pguid);
 
 void WINAPI CoFreeAllLibraries(void);
 
-void WINAPI CoFreeLibrary(HINSTANCE32 hLibrary);
+void WINAPI CoFreeLibrary(HINSTANCE hLibrary);
 
 void WINAPI CoFreeUnusedLibraries(void);
 
@@ -845,8 +838,7 @@ HRESULT WINAPI CoCreateInstance(REFCLSID rclsid, LPUNKNOWN pUnkOuter, DWORD dwCl
 HRESULT WINAPI CoGetClassObject(REFCLSID rclsid, DWORD dwClsContext, LPVOID pvReserved, REFIID iid, LPVOID *ppv);
 
 HRESULT WINAPI CoInitialize16(LPVOID lpReserved);
-HRESULT WINAPI CoInitialize32(LPVOID lpReserved);
-#define CoInitialize WINELIB_NAME(CoInitialize)
+HRESULT WINAPI CoInitialize(LPVOID lpReserved);
 
 typedef enum tagCOINIT
 {
@@ -856,17 +848,15 @@ typedef enum tagCOINIT
     COINIT_SPEED_OVER_MEMORY  = 0x8  /* Trade memory for speed */
 } COINIT;
 
-HRESULT WINAPI CoInitializeEx32(LPVOID lpReserved, DWORD dwCoInit);
-#define CoInitializeEx WINELIB_NAME(CoInitializeEx)
+HRESULT WINAPI CoInitializeEx(LPVOID lpReserved, DWORD dwCoInit);
 
 /* FIXME: not implemented */
-BOOL32 WINAPI CoIsOle1Class(REFCLSID rclsid);
+BOOL WINAPI CoIsOle1Class(REFCLSID rclsid);
 
-HINSTANCE32 WINAPI CoLoadLibrary(LPOLESTR16 lpszLibName, BOOL32 bAutoFree);
+HINSTANCE WINAPI CoLoadLibrary(LPOLESTR16 lpszLibName, BOOL bAutoFree);
 
 HRESULT WINAPI CoLockObjectExternal16(LPUNKNOWN pUnk, BOOL16 fLock, BOOL16 fLastUnlockReleases);
-HRESULT WINAPI CoLockObjectExternal32(LPUNKNOWN pUnk, BOOL32 fLock, BOOL32 fLastUnlockReleases);
-#define CoLockObjectExternal WINELIB_NAME(CoLockObjectExternal)
+HRESULT WINAPI CoLockObjectExternal(LPUNKNOWN pUnk, BOOL fLock, BOOL fLastUnlockReleases);
 
 /* class registration flags; passed to CoRegisterClassObject */
 typedef enum tagREGCLS
@@ -878,15 +868,12 @@ typedef enum tagREGCLS
 } REGCLS;
 
 HRESULT WINAPI CoRegisterClassObject16(REFCLSID rclsid, LPUNKNOWN pUnk, DWORD dwClsContext, DWORD flags, LPDWORD lpdwRegister);
-HRESULT WINAPI CoRegisterClassObject32(REFCLSID rclsid,LPUNKNOWN pUnk,DWORD dwClsContext,DWORD flags,LPDWORD lpdwRegister);
-#define CoRegisterClassObject WINELIB_NAME(CoRegisterClassObject)
+HRESULT WINAPI CoRegisterClassObject(REFCLSID rclsid,LPUNKNOWN pUnk,DWORD dwClsContext,DWORD flags,LPDWORD lpdwRegister);
 
-HRESULT WINAPI CoRevokeClassObject32(DWORD dwRegister);
-#define CoRevokeClassObject WINELIB_NAME(CoRevokeClassObject)
+HRESULT WINAPI CoRevokeClassObject(DWORD dwRegister);
 
 void WINAPI CoUninitialize16(void);
-void WINAPI CoUninitialize32(void);
-#define CoUninitialize WINELIB_NAME(CoUninitialize)
+void WINAPI CoUninitialize(void);
 
 
 /*****************************************************************************

@@ -689,9 +689,9 @@ void VXD_Win32s( CONTEXT *context )
         IMAGE_NT_HEADERS *nt_header = PE_HEADER(module->baseAddr);
         IMAGE_SECTION_HEADER *pe_seg = PE_SECTIONS(module->baseAddr);
 
-        HFILE32 image = _lopen32(module->pathName, OF_READ);
-        BOOL32 error = (image == INVALID_HANDLE_VALUE32);
-        UINT32 i;
+        HFILE image = _lopen(module->pathName, OF_READ);
+        BOOL error = (image == INVALID_HANDLE_VALUE);
+        UINT i;
 
         TRACE(vxd, "MapModule: Loading %s\n", module->pathName);
 
@@ -708,12 +708,12 @@ void VXD_Win32s( CONTEXT *context )
                            "Section %d at %08lx from %08lx len %08lx\n", 
                            i, (DWORD)addr, off, len);
 
-                if (   _llseek32(image, off, SEEK_SET) != off
-                    || _lread32(image, addr, len) != len)
+                if (   _llseek(image, off, SEEK_SET) != off
+                    || _lread(image, addr, len) != len)
                     error = TRUE;
             }
         
-        _lclose32(image);
+        _lclose(image);
 
         if (error)
             ERR(vxd, "MapModule: Unable to load %s\n", module->pathName);
@@ -1005,38 +1005,38 @@ void VXD_Win32s( CONTEXT *context )
          */
     {
         DWORD *stack    = (DWORD *)   W32S_APP2WINE(EDX_reg(context), W32S_OFFSET);
-        HANDLE32 *retv  = (HANDLE32 *)W32S_APP2WINE(stack[0], W32S_OFFSET);
+        HANDLE *retv  = (HANDLE *)W32S_APP2WINE(stack[0], W32S_OFFSET);
         DWORD  flags1   = stack[1];
         DWORD  atom     = stack[2];
         LARGE_INTEGER *size = (LARGE_INTEGER *)W32S_APP2WINE(stack[3], W32S_OFFSET);
         DWORD  protect  = stack[4];
         DWORD  flags2   = stack[5];
-        HFILE32 hFile   = FILE_GetHandle32(stack[6]);
+        HFILE hFile   = FILE_GetHandle(stack[6]);
         DWORD  psp      = stack[7];
 
-        HANDLE32 result = INVALID_HANDLE_VALUE32;
+        HANDLE result = INVALID_HANDLE_VALUE;
         char name[128];
 
         TRACE(vxd, "NtCreateSection(%lx, %lx, %lx, %lx, %lx, %lx, %lx, %lx)\n",
                    (DWORD)retv, flags1, atom, (DWORD)size, protect, flags2,
                    (DWORD)hFile, psp);
 
-        if (!atom || GlobalGetAtomName32A(atom, name, sizeof(name)))
+        if (!atom || GlobalGetAtomNameA(atom, name, sizeof(name)))
         {
             TRACE(vxd, "NtCreateSection: name=%s\n", atom? name : NULL);
 
-            result = CreateFileMapping32A(hFile, NULL, protect, 
+            result = CreateFileMappingA(hFile, NULL, protect, 
                                           size? size->HighPart : 0, 
                                           size? size->LowPart  : 0, 
                                           atom? name : NULL);
         }
 
-        if (result == INVALID_HANDLE_VALUE32)
+        if (result == INVALID_HANDLE_VALUE)
             WARN(vxd, "NtCreateSection: failed!\n");
         else
             TRACE(vxd, "NtCreateSection: returned %lx\n", (DWORD)result);
 
-        if (result != INVALID_HANDLE_VALUE32)
+        if (result != INVALID_HANDLE_VALUE)
             *retv            = result,
             EAX_reg(context) = STATUS_SUCCESS;
         else
@@ -1058,29 +1058,29 @@ void VXD_Win32s( CONTEXT *context )
          */
     {
         DWORD *stack    = (DWORD *)W32S_APP2WINE(EDX_reg(context), W32S_OFFSET);
-        HANDLE32 *retv  = (HANDLE32 *)W32S_APP2WINE(stack[0], W32S_OFFSET);
+        HANDLE *retv  = (HANDLE *)W32S_APP2WINE(stack[0], W32S_OFFSET);
         DWORD  protect  = stack[1];
         DWORD  atom     = stack[2];
 
-        HANDLE32 result = INVALID_HANDLE_VALUE32;
+        HANDLE result = INVALID_HANDLE_VALUE;
         char name[128];
 
         TRACE(vxd, "NtOpenSection(%lx, %lx, %lx)\n", 
                    (DWORD)retv, protect, atom);
 
-        if (atom && GlobalGetAtomName32A(atom, name, sizeof(name)))
+        if (atom && GlobalGetAtomNameA(atom, name, sizeof(name)))
         {
             TRACE(vxd, "NtOpenSection: name=%s\n", name);
 
-            result = OpenFileMapping32A(protect, FALSE, name);
+            result = OpenFileMappingA(protect, FALSE, name);
         }
 
-        if (result == INVALID_HANDLE_VALUE32)
+        if (result == INVALID_HANDLE_VALUE)
             WARN(vxd, "NtOpenSection: failed!\n");
         else
             TRACE(vxd, "NtOpenSection: returned %lx\n", (DWORD)result);
 
-        if (result != INVALID_HANDLE_VALUE32)
+        if (result != INVALID_HANDLE_VALUE)
             *retv            = result,
             EAX_reg(context) = STATUS_SUCCESS;
         else
@@ -1101,7 +1101,7 @@ void VXD_Win32s( CONTEXT *context )
          */
     {
         DWORD *stack    = (DWORD *)W32S_APP2WINE(EDX_reg(context), W32S_OFFSET);
-        HANDLE32 handle = stack[0];
+        HANDLE handle = stack[0];
         DWORD *id       = (DWORD *)W32S_APP2WINE(stack[1], W32S_OFFSET);
 
         TRACE(vxd, "NtCloseSection(%lx, %lx)\n", (DWORD)handle, (DWORD)id);
@@ -1124,8 +1124,8 @@ void VXD_Win32s( CONTEXT *context )
          */
     {
         DWORD *stack    = (DWORD *)W32S_APP2WINE(EDX_reg(context), W32S_OFFSET);
-        HANDLE32 handle = stack[0];
-        HANDLE32 new_handle;
+        HANDLE handle = stack[0];
+        HANDLE new_handle;
 
         TRACE(vxd, "NtDupSection(%lx)\n", (DWORD)handle);
  
@@ -1156,7 +1156,7 @@ void VXD_Win32s( CONTEXT *context )
          */
     {
         DWORD *  stack          = (DWORD *)W32S_APP2WINE(EDX_reg(context), W32S_OFFSET);
-        HANDLE32 SectionHandle  = stack[0];
+        HANDLE SectionHandle  = stack[0];
         DWORD    ProcessHandle  = stack[1]; /* ignored */
         DWORD *  BaseAddress    = (DWORD *)W32S_APP2WINE(stack[2], W32S_OFFSET);
         DWORD    ZeroBits       = stack[3];
@@ -1317,7 +1317,7 @@ void VXD_Win32s( CONTEXT *context )
             EDX_reg(context) = 0x80;
         else
         {
-            PDB *psp = PTR_SEG_OFF_TO_LIN(BX_reg(context), 0);
+            PDB16 *psp = PTR_SEG_OFF_TO_LIN(BX_reg(context), 0);
             psp->nbFiles = 32;
             psp->fileHandlesPtr = MAKELONG(HIWORD(EBX_reg(context)), 0x5c);
             memset((LPBYTE)psp + 0x5c, '\xFF', 32);
@@ -1561,7 +1561,7 @@ void VXD_Win32s( CONTEXT *context )
          */
     {
         DWORD *ptr = (DWORD *)W32S_APP2WINE(ECX_reg(context), W32S_OFFSET);
-        BOOL32 set = EDX_reg(context);
+        BOOL set = EDX_reg(context);
         
         TRACE(vxd, "FWorkingSetSize(%lx, %lx)\n", (DWORD)ptr, (DWORD)set);
 

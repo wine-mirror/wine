@@ -318,7 +318,7 @@ static void LOCAL_PrintHeap( HANDLE16 ds )
 /***********************************************************************
  *           LocalInit   (KERNEL.4)
  */
-BOOL16 WINAPI LocalInit( HANDLE16 selector, WORD start, WORD end )
+BOOL16 WINAPI LocalInit16( HANDLE16 selector, WORD start, WORD end )
 {
     char *ptr;
     WORD heapInfoArena, freeArena, lastArena;
@@ -352,7 +352,7 @@ BOOL16 WINAPI LocalInit( HANDLE16 selector, WORD start, WORD end )
 	if ((pModule = NE_GetPtr( selector )))
 	{
 	    SEGTABLEENTRY *pSeg = NE_SEG_TABLE( pModule ) + pModule->dgroup - 1;
-	    if (pModule->dgroup && (GlobalHandleToSel(pSeg->hSeg) == selector))
+	    if (pModule->dgroup && (GlobalHandleToSel16(pSeg->hSeg) == selector))
 	    {
 		/* We can't just use the simple method of using the value
                  * of minsize + stacksize, since there are programs that
@@ -1627,7 +1627,7 @@ UINT16 WINAPI LocalCompact16( UINT16 minfree )
  *   otherwise LogError() gets called.
  *   hMem = handle; wArg = flags
  */
-FARPROC16 WINAPI LocalNotify( FARPROC16 func )
+FARPROC16 WINAPI LocalNotify16( FARPROC16 func )
 {
     LOCALHEAPINFO *pInfo;
     FARPROC16 oldNotify;
@@ -1660,14 +1660,14 @@ UINT16 WINAPI LocalShrink16( HGLOBAL16 handle, UINT16 newsize )
 /***********************************************************************
  *           GetHeapSpaces   (KERNEL.138)
  */
-DWORD WINAPI GetHeapSpaces( HMODULE16 module )
+DWORD WINAPI GetHeapSpaces16( HMODULE16 module )
 {
     NE_MODULE *pModule;
     WORD ds;
 
     if (!(pModule = NE_GetPtr( module ))) return 0;
     ds =
-    GlobalHandleToSel((NE_SEG_TABLE( pModule ) + pModule->dgroup - 1)->hSeg);
+    GlobalHandleToSel16((NE_SEG_TABLE( pModule ) + pModule->dgroup - 1)->hSeg);
     return MAKELONG( LOCAL_CountFree( ds ), LOCAL_HeapSize( ds ) );
 }
 
@@ -1675,7 +1675,7 @@ DWORD WINAPI GetHeapSpaces( HMODULE16 module )
 /***********************************************************************
  *           LocalCountFree   (KERNEL.161)
  */
-WORD WINAPI LocalCountFree(void)
+WORD WINAPI LocalCountFree16(void)
 {
     return LOCAL_CountFree( CURRENT_DS );
 }
@@ -1684,7 +1684,7 @@ WORD WINAPI LocalCountFree(void)
 /***********************************************************************
  *           LocalHeapSize   (KERNEL.162)
  */
-WORD WINAPI LocalHeapSize(void)
+WORD WINAPI LocalHeapSize16(void)
 {
     TRACE(local, "(void)\n" );
     return LOCAL_HeapSize( CURRENT_DS );
@@ -1694,7 +1694,7 @@ WORD WINAPI LocalHeapSize(void)
 /***********************************************************************
  *           LocalHandleDelta   (KERNEL.310)
  */
-WORD WINAPI LocalHandleDelta( WORD delta )
+WORD WINAPI LocalHandleDelta16( WORD delta )
 {
     LOCALHEAPINFO *pInfo;
 
@@ -1713,7 +1713,7 @@ WORD WINAPI LocalHandleDelta( WORD delta )
 /***********************************************************************
  *           LocalInfo   (TOOLHELP.56)
  */
-BOOL16 WINAPI LocalInfo( LOCALINFO *pLocalInfo, HGLOBAL16 handle )
+BOOL16 WINAPI LocalInfo16( LOCALINFO *pLocalInfo, HGLOBAL16 handle )
 {
     LOCALHEAPINFO *pInfo = LOCAL_GetHeap(SELECTOROF(WIN16_GlobalLock16(handle)));
     if (!pInfo) return FALSE;
@@ -1725,9 +1725,9 @@ BOOL16 WINAPI LocalInfo( LOCALINFO *pLocalInfo, HGLOBAL16 handle )
 /***********************************************************************
  *           LocalFirst   (TOOLHELP.57)
  */
-BOOL16 WINAPI LocalFirst( LOCALENTRY *pLocalEntry, HGLOBAL16 handle )
+BOOL16 WINAPI LocalFirst16( LOCALENTRY *pLocalEntry, HGLOBAL16 handle )
 {
-    WORD ds = GlobalHandleToSel( handle );
+    WORD ds = GlobalHandleToSel16( handle );
     char *ptr = PTR_SEG_OFF_TO_LIN( ds, 0 );
     LOCALHEAPINFO *pInfo = LOCAL_GetHeap( ds );
     if (!pInfo) return FALSE;
@@ -1748,9 +1748,9 @@ BOOL16 WINAPI LocalFirst( LOCALENTRY *pLocalEntry, HGLOBAL16 handle )
 /***********************************************************************
  *           LocalNext   (TOOLHELP.58)
  */
-BOOL16 WINAPI LocalNext( LOCALENTRY *pLocalEntry )
+BOOL16 WINAPI LocalNext16( LOCALENTRY *pLocalEntry )
 {
-    WORD ds = GlobalHandleToSel( pLocalEntry->hHeap );
+    WORD ds = GlobalHandleToSel16( pLocalEntry->hHeap );
     char *ptr = PTR_SEG_OFF_TO_LIN( ds, 0 );
     LOCALARENA *pArena;
 
@@ -1778,18 +1778,18 @@ BOOL16 WINAPI LocalNext( LOCALENTRY *pLocalEntry )
  *	Handle: Success
  *	NULL: Failure
  */
-HLOCAL32 WINAPI LocalAlloc32(
-                UINT32 flags, /* [in] Allocation attributes */
+HLOCAL WINAPI LocalAlloc(
+                UINT flags, /* [in] Allocation attributes */
                 DWORD size    /* [in] Number of bytes to allocate */
 ) {
-    return (HLOCAL32)GlobalAlloc32( flags, size );
+    return (HLOCAL)GlobalAlloc( flags, size );
 }
 
 
 /***********************************************************************
  *           LocalCompact32   (KERNEL32.372)
  */
-UINT32 WINAPI LocalCompact32( UINT32 minfree )
+UINT WINAPI LocalCompact( UINT minfree )
 {
     return 0;  /* LocalCompact does nothing in Win32 */
 }
@@ -1801,10 +1801,10 @@ UINT32 WINAPI LocalCompact32( UINT32 minfree )
  *	Value specifying allocation flags and lock count.
  *	LMEM_INVALID_HANDLE: Failure
  */
-UINT32 WINAPI LocalFlags32(
-              HLOCAL32 handle /* [in] Handle of memory object */
+UINT WINAPI LocalFlags(
+              HLOCAL handle /* [in] Handle of memory object */
 ) {
-    return GlobalFlags32( (HGLOBAL32)handle );
+    return GlobalFlags( (HGLOBAL)handle );
 }
 
 
@@ -1814,10 +1814,10 @@ UINT32 WINAPI LocalFlags32(
  *	NULL: Success
  *	Handle: Failure
  */
-HLOCAL32 WINAPI LocalFree32(
-                HLOCAL32 handle /* [in] Handle of memory object */
+HLOCAL WINAPI LocalFree(
+                HLOCAL handle /* [in] Handle of memory object */
 ) {
-    return (HLOCAL32)GlobalFree32( (HGLOBAL32)handle );
+    return (HLOCAL)GlobalFree( (HGLOBAL)handle );
 }
 
 
@@ -1827,10 +1827,10 @@ HLOCAL32 WINAPI LocalFree32(
  *	Handle: Success
  *	NULL: Failure
  */
-HLOCAL32 WINAPI LocalHandle32(
+HLOCAL WINAPI LocalHandle(
                 LPCVOID ptr /* [in] Address of local memory object */
 ) {
-    return (HLOCAL32)GlobalHandle32( ptr );
+    return (HLOCAL)GlobalHandle( ptr );
 }
 
 
@@ -1843,10 +1843,10 @@ HLOCAL32 WINAPI LocalHandle32(
  *	Pointer: Success
  *	NULL: Failure
  */
-LPVOID WINAPI LocalLock32(
-              HLOCAL32 handle /* [in] Address of local memory object */
+LPVOID WINAPI LocalLock(
+              HLOCAL handle /* [in] Address of local memory object */
 ) {
-    return GlobalLock32( (HGLOBAL32)handle );
+    return GlobalLock( (HGLOBAL)handle );
 }
 
 
@@ -1856,19 +1856,19 @@ LPVOID WINAPI LocalLock32(
  *	Handle: Success
  *	NULL: Failure
  */
-HLOCAL32 WINAPI LocalReAlloc32(
-                HLOCAL32 handle, /* [in] Handle of memory object */
+HLOCAL WINAPI LocalReAlloc(
+                HLOCAL handle, /* [in] Handle of memory object */
                 DWORD size,      /* [in] New size of block */
-                UINT32 flags     /* [in] How to reallocate object */
+                UINT flags     /* [in] How to reallocate object */
 ) {
-    return (HLOCAL32)GlobalReAlloc32( (HGLOBAL32)handle, size, flags );
+    return (HLOCAL)GlobalReAlloc( (HGLOBAL)handle, size, flags );
 }
 
 
 /***********************************************************************
  *           LocalShrink32   (KERNEL32.379)
  */
-UINT32 WINAPI LocalShrink32( HGLOBAL32 handle, UINT32 newsize )
+UINT WINAPI LocalShrink( HGLOBAL handle, UINT newsize )
 {
     return 0;  /* LocalShrink does nothing in Win32 */
 }
@@ -1880,10 +1880,10 @@ UINT32 WINAPI LocalShrink32( HGLOBAL32 handle, UINT32 newsize )
  *	Size: Success
  *	0: Failure
  */
-UINT32 WINAPI LocalSize32(
-              HLOCAL32 handle /* [in] Handle of memory object */
+UINT WINAPI LocalSize(
+              HLOCAL handle /* [in] Handle of memory object */
 ) {
-    return GlobalSize32( (HGLOBAL32)handle );
+    return GlobalSize( (HGLOBAL)handle );
 }
 
 
@@ -1893,8 +1893,8 @@ UINT32 WINAPI LocalSize32(
  *	TRUE: Object is still locked
  *	FALSE: Object is unlocked
  */
-BOOL32 WINAPI LocalUnlock32(
-              HLOCAL32 handle /* [in] Handle of memory object */
+BOOL WINAPI LocalUnlock(
+              HLOCAL handle /* [in] Handle of memory object */
 ) {
-    return GlobalUnlock32( (HGLOBAL32)handle );
+    return GlobalUnlock( (HGLOBAL)handle );
 }

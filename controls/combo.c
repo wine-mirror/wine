@@ -29,47 +29,47 @@
 
 #define CB_GETPTR( wnd )      (*(LPHEADCOMBO*)((wnd)->wExtra))
 #define CB_NOTIFY( lphc, code ) \
-	(SendMessage32A( (lphc)->owner, WM_COMMAND, \
+	(SendMessageA( (lphc)->owner, WM_COMMAND, \
 			 MAKEWPARAM((lphc)->self->wIDmenu, (code)), (lphc)->self->hwndSelf))
 #define CB_GETEDITTEXTLENGTH( lphc ) \
-	(SendMessage32A( (lphc)->hWndEdit, WM_GETTEXTLENGTH, 0, 0 ))
+	(SendMessageA( (lphc)->hWndEdit, WM_GETTEXTLENGTH, 0, 0 ))
 
-static HBITMAP32 	hComboBmp = 0;
-static UINT32		CBitHeight, CBitWidth;
-static UINT32		CBitOffset = 8;
+static HBITMAP 	hComboBmp = 0;
+static UINT		CBitHeight, CBitWidth;
+static UINT		CBitOffset = 8;
 
 /***********************************************************************
  *           COMBO_Init
  *
  * Load combo button bitmap.
  */
-static BOOL32 COMBO_Init()
+static BOOL COMBO_Init()
 {
-  HDC32		hDC;
+  HDC		hDC;
   
   if( hComboBmp ) return TRUE;
-  if( (hDC = CreateCompatibleDC32(0)) )
+  if( (hDC = CreateCompatibleDC(0)) )
   {
-    BOOL32	bRet = FALSE;
-    if( (hComboBmp = LoadBitmap32A(0, MAKEINTRESOURCE32A(OBM_COMBO))) )
+    BOOL	bRet = FALSE;
+    if( (hComboBmp = LoadBitmapA(0, MAKEINTRESOURCEA(OBM_COMBO))) )
     {
-      BITMAP32      bm;
-      HBITMAP32     hPrevB;
-      RECT32        r;
+      BITMAP      bm;
+      HBITMAP     hPrevB;
+      RECT        r;
 
-      GetObject32A( hComboBmp, sizeof(bm), &bm );
+      GetObjectA( hComboBmp, sizeof(bm), &bm );
       CBitHeight = bm.bmHeight;
       CBitWidth  = bm.bmWidth;
 
       TRACE(combo, "combo bitmap [%i,%i]\n", CBitWidth, CBitHeight );
 
       hPrevB = SelectObject16( hDC, hComboBmp);
-      SetRect32( &r, 0, 0, CBitWidth, CBitHeight );
-      InvertRect32( hDC, &r );
-      SelectObject32( hDC, hPrevB );
+      SetRect( &r, 0, 0, CBitWidth, CBitHeight );
+      InvertRect( hDC, &r );
+      SelectObject( hDC, hPrevB );
       bRet = TRUE;
     }
-    DeleteDC32( hDC );
+    DeleteDC( hDC );
     return bRet;
   }
   return FALSE;
@@ -85,7 +85,7 @@ static LRESULT COMBO_NCCreate(WND* wnd, LPARAM lParam)
    if ( wnd && COMBO_Init() &&
       (lphc = HeapAlloc(GetProcessHeap(), 0, sizeof(HEADCOMBO))) )
    {
-	LPCREATESTRUCT32A     lpcs = (CREATESTRUCT32A*)lParam;
+	LPCREATESTRUCTA     lpcs = (CREATESTRUCTA*)lParam;
        
 	memset( lphc, 0, sizeof(HEADCOMBO) );
        *(LPHEADCOMBO*)wnd->wExtra = lphc;
@@ -101,9 +101,9 @@ static LRESULT COMBO_NCCreate(WND* wnd, LPARAM lParam)
 	      lphc->wState |= CBF_NOTIFY;
 
 	TRACE(combo, "[0x%08x], style = %08x\n", 
-		     (UINT32)lphc, lphc->dwStyle );
+		     (UINT)lphc, lphc->dwStyle );
 
-	return (LRESULT)(UINT32)wnd->hwndSelf; 
+	return (LRESULT)(UINT)wnd->hwndSelf; 
     }
     return (LRESULT)FALSE;
 }
@@ -121,7 +121,7 @@ static LRESULT COMBO_NCDestroy( LPHEADCOMBO lphc )
        TRACE(combo,"[%04x]: freeing storage\n", CB_HWND(lphc));
 
        if( (CB_GETTYPE(lphc) != CBS_SIMPLE) && lphc->hWndLBox ) 
-   	   DestroyWindow32( lphc->hWndLBox );
+   	   DestroyWindow( lphc->hWndLBox );
 
        HeapFree( GetProcessHeap(), 0, lphc );
        wnd->wExtra[0] = 0;
@@ -132,23 +132,23 @@ static LRESULT COMBO_NCDestroy( LPHEADCOMBO lphc )
 /***********************************************************************
  *           CBGetDefaultTextHeight
  */
-static void CBGetDefaultTextHeight( LPHEADCOMBO lphc, LPSIZE32 lpSize )
+static void CBGetDefaultTextHeight( LPHEADCOMBO lphc, LPSIZE lpSize )
 {
    if( lphc->editHeight ) /* explicitly set height */
        lpSize->cy = lphc->editHeight;
    else
    {
-       HDC32    hDC = GetDC32( lphc->self->hwndSelf );
-       HFONT32  hPrevFont = 0;
+       HDC    hDC = GetDC( lphc->self->hwndSelf );
+       HFONT  hPrevFont = 0;
 
-       if( lphc->hFont ) hPrevFont = SelectObject32( hDC, lphc->hFont );
+       if( lphc->hFont ) hPrevFont = SelectObject( hDC, lphc->hFont );
 
        GetTextExtentPoint32A( hDC, "0", 1, lpSize);
 
        lpSize->cy += lpSize->cy / 4 + 4 * SYSMETRICS_CYBORDER;
 
-       if( hPrevFont ) SelectObject32( hDC, hPrevFont );
-       ReleaseDC32( lphc->self->hwndSelf, hDC );
+       if( hPrevFont ) SelectObject( hDC, hPrevFont );
+       ReleaseDC( lphc->self->hwndSelf, hDC );
    }
    lpSize->cx = lphc->RectCombo.right - lphc->RectCombo.left;
 }
@@ -159,21 +159,21 @@ static void CBGetDefaultTextHeight( LPHEADCOMBO lphc, LPSIZE32 lpSize )
  *
  * Set up component coordinates given valid lphc->RectCombo.
  */
-static void CBCalcPlacement( LPHEADCOMBO lphc, LPRECT32 lprEdit, 
-			     LPRECT32 lprButton, LPRECT32 lprLB )
+static void CBCalcPlacement( LPHEADCOMBO lphc, LPRECT lprEdit, 
+			     LPRECT lprButton, LPRECT lprLB )
 {
-   RECT32	rect = lphc->RectCombo;
-   SIZE32	size;
+   RECT	rect = lphc->RectCombo;
+   SIZE	size;
 
    /* get combo height and width */
 
    if( CB_OWNERDRAWN(lphc) )
    {
-       UINT32	u = lphc->RectEdit.bottom - lphc->RectEdit.top;
+       UINT	u = lphc->RectEdit.bottom - lphc->RectEdit.top;
 
        if( lphc->wState & CBF_MEASUREITEM ) /* first initialization */
        {
-	   MEASUREITEMSTRUCT32        mi32;
+	   MEASUREITEMSTRUCT        mi32;
 
 	   /* calculate defaults before sending WM_MEASUREITEM */
 
@@ -187,8 +187,8 @@ static void CBCalcPlacement( LPHEADCOMBO lphc, LPRECT32 lprEdit,
 	   mi32.itemWidth  = size.cx;
 	   mi32.itemHeight = size.cy - 6; /* ownerdrawn cb is taller */
 	   mi32.itemData   = 0;
-	   SendMessage32A(lphc->owner, WM_MEASUREITEM, 
-				(WPARAM32)mi32.CtlID, (LPARAM)&mi32);
+	   SendMessageA(lphc->owner, WM_MEASUREITEM, 
+				(WPARAM)mi32.CtlID, (LPARAM)&mi32);
 	   u = 6 + (UINT16)mi32.itemHeight;
        }
        else
@@ -205,7 +205,7 @@ static void CBCalcPlacement( LPHEADCOMBO lphc, LPRECT32 lprEdit,
        lprButton->left = lprButton->right = lprButton->bottom = 0;
    else
    {
-       INT32	i = size.cx - CBitWidth - 10;	/* seems ok */
+       INT	i = size.cx - CBitWidth - 10;	/* seems ok */
 
        lprButton->right = size.cx;
        lprButton->left = (INT16)i;
@@ -250,7 +250,7 @@ static void CBCalcPlacement( LPHEADCOMBO lphc, LPRECT32 lprEdit,
 /***********************************************************************
  *           CBGetDroppedControlRect32
  */
-static void CBGetDroppedControlRect32( LPHEADCOMBO lphc, LPRECT32 lpRect)
+static void CBGetDroppedControlRect( LPHEADCOMBO lphc, LPRECT lpRect)
 {
    lpRect->left = lphc->RectCombo.left +
                       (lphc->wState & CBF_EDIT) ? CBitOffset : 0;
@@ -268,7 +268,7 @@ static LRESULT COMBO_Create( LPHEADCOMBO lphc, WND* wnd, LPARAM lParam)
   static char clbName[] = "ComboLBox";
   static char editName[] = "Edit";
 
-  LPCREATESTRUCT32A  lpcs = (CREATESTRUCT32A*)lParam;
+  LPCREATESTRUCTA  lpcs = (CREATESTRUCTA*)lParam;
   
   if( !CB_GETTYPE(lphc) ) lphc->dwStyle |= CBS_SIMPLE;
   else if( CB_GETTYPE(lphc) != CBS_DROPDOWNLIST ) lphc->wState |= CBF_EDIT;
@@ -280,10 +280,10 @@ static LRESULT COMBO_Create( LPHEADCOMBO lphc, WND* wnd, LPARAM lParam)
 
   if( lphc->owner || !(lpcs->style & WS_VISIBLE) )
   {
-      UINT32	lbeStyle;
-      RECT32	editRect, btnRect, lbRect;
+      UINT	lbeStyle;
+      RECT	editRect, btnRect, lbRect;
 
-      GetWindowRect32( wnd->hwndSelf, &lphc->RectCombo );
+      GetWindowRect( wnd->hwndSelf, &lphc->RectCombo );
 
       lphc->wState |= CBF_MEASUREITEM;
       CBCalcPlacement( lphc, &editRect, &btnRect, &lbRect );
@@ -309,24 +309,24 @@ static LRESULT COMBO_Create( LPHEADCOMBO lphc, WND* wnd, LPARAM lParam)
       else					/* popup listbox */
       {
 	lbeStyle |= WS_POPUP;
-	OffsetRect32( &lbRect, lphc->RectCombo.left, lphc->RectCombo.top );
+	OffsetRect( &lbRect, lphc->RectCombo.left, lphc->RectCombo.top );
       }
 
      /* Dropdown ComboLBox is not a child window and we cannot pass 
       * ID_CB_LISTBOX directly because it will be treated as a menu handle.
       */
 
-      lphc->hWndLBox = CreateWindowEx32A( 0, clbName, NULL, lbeStyle, 
+      lphc->hWndLBox = CreateWindowExA( 0, clbName, NULL, lbeStyle, 
 		        lbRect.left + SYSMETRICS_CXBORDER, 
 		        lbRect.top + SYSMETRICS_CYBORDER, 
 			lbRect.right - lbRect.left - 2 * SYSMETRICS_CXBORDER, 
 			lbRect.bottom - lbRect.top - 2 * SYSMETRICS_CYBORDER, 
 			lphc->self->hwndSelf, 
-		       (lphc->dwStyle & CBS_DROPDOWN)? (HMENU32)0 : (HMENU32)ID_CB_LISTBOX,
+		       (lphc->dwStyle & CBS_DROPDOWN)? (HMENU)0 : (HMENU)ID_CB_LISTBOX,
 			lphc->self->hInstance, (LPVOID)lphc );
       if( lphc->hWndLBox )
       {
-	  BOOL32	bEdit = TRUE;
+	  BOOL	bEdit = TRUE;
 	  lbeStyle = WS_CHILD | WS_VISIBLE | WS_BORDER | ES_NOHIDESEL | ES_LEFT;
 	  if( lphc->wState & CBF_EDIT ) 
 	  {
@@ -338,10 +338,10 @@ static LRESULT COMBO_Create( LPHEADCOMBO lphc, WND* wnd, LPARAM lParam)
 		  lbeStyle |= ES_LOWERCASE;
 	      else if( lphc->dwStyle & CBS_UPPERCASE )
 		  lbeStyle |= ES_UPPERCASE;
-	      lphc->hWndEdit = CreateWindowEx32A( 0, editName, NULL, lbeStyle,
+	      lphc->hWndEdit = CreateWindowExA( 0, editName, NULL, lbeStyle,
 		  	editRect.left, editRect.top, editRect.right - editRect.left,
 			editRect.bottom - editRect.top, lphc->self->hwndSelf, 
-			(HMENU32)ID_CB_EDIT, lphc->self->hInstance, NULL );
+			(HMENU)ID_CB_EDIT, lphc->self->hInstance, NULL );
 	      if( !lphc->hWndEdit ) bEdit = FALSE;
 	  } 
 
@@ -351,7 +351,7 @@ static LRESULT COMBO_Create( LPHEADCOMBO lphc, WND* wnd, LPARAM lParam)
 	      if( CB_GETTYPE(lphc) != CBS_SIMPLE )
 	      {
 		lphc->wState |= CBF_NORESIZE;
-		SetWindowPos32( wnd->hwndSelf, 0, 0, 0, 
+		SetWindowPos( wnd->hwndSelf, 0, 0, 0, 
 				lphc->RectCombo.right - lphc->RectCombo.left,
 				lphc->RectEdit.bottom - lphc->RectEdit.top,
 				SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE );
@@ -374,48 +374,48 @@ static LRESULT COMBO_Create( LPHEADCOMBO lphc, WND* wnd, LPARAM lParam)
  *
  * Paint combo button (normal, pressed, and disabled states).
  */
-static void CBPaintButton(LPHEADCOMBO lphc, HDC32 hdc)
+static void CBPaintButton(LPHEADCOMBO lphc, HDC hdc)
 {
-    RECT32 	r;
-    UINT32 	x, y;
-    BOOL32 	bBool;
-    HDC32       hMemDC;
-    HBRUSH32    hPrevBrush;
+    RECT 	r;
+    UINT 	x, y;
+    BOOL 	bBool;
+    HDC       hMemDC;
+    HBRUSH    hPrevBrush;
     COLORREF    oldTextColor, oldBkColor;
 
     if( lphc->wState & CBF_NOREDRAW ) return;
 
-    hPrevBrush = SelectObject32(hdc, GetSysColorBrush32(COLOR_BTNFACE));
+    hPrevBrush = SelectObject(hdc, GetSysColorBrush(COLOR_BTNFACE));
     CONV_RECT16TO32( &lphc->RectButton, &r );
 
-    Rectangle32(hdc, r.left, r.top, r.right, r.bottom );
+    Rectangle(hdc, r.left, r.top, r.right, r.bottom );
     if( (bBool = lphc->wState & CBF_BUTTONDOWN) )
     {
-	DrawEdge32( hdc, &r, EDGE_SUNKEN, BF_RECT );
-	OffsetRect32( &r, 1, 1 );
+	DrawEdge( hdc, &r, EDGE_SUNKEN, BF_RECT );
+	OffsetRect( &r, 1, 1 );
     } else {
         r.top++, r.left++;
-	DrawEdge32( hdc, &r, EDGE_RAISED, BF_RECT );
+	DrawEdge( hdc, &r, EDGE_RAISED, BF_RECT );
 	r.top--, r.left--;
     }
 
-    InflateRect32( &r, -1, -1 );	
+    InflateRect( &r, -1, -1 );	
 
     x = (r.left + r.right - CBitWidth) >> 1;
     y = (r.top + r.bottom - CBitHeight) >> 1;
 
-    InflateRect32( &r, -3, -3 );
+    InflateRect( &r, -3, -3 );
 
-    hMemDC = CreateCompatibleDC32( hdc );
-    SelectObject32( hMemDC, hComboBmp );
-    oldTextColor = SetTextColor32( hdc, GetSysColor32(COLOR_BTNFACE) );
-    oldBkColor = SetBkColor32( hdc, CB_DISABLED(lphc) ? RGB(128,128,128) :
+    hMemDC = CreateCompatibleDC( hdc );
+    SelectObject( hMemDC, hComboBmp );
+    oldTextColor = SetTextColor( hdc, GetSysColor(COLOR_BTNFACE) );
+    oldBkColor = SetBkColor( hdc, CB_DISABLED(lphc) ? RGB(128,128,128) :
 			       RGB(0,0,0) );
-    BitBlt32( hdc, x, y, 8, 8, hMemDC, 0, 0, SRCCOPY );
-    SetBkColor32( hdc, oldBkColor );
-    SetTextColor32( hdc, oldTextColor );
-    DeleteDC32( hMemDC );
-    SelectObject32( hdc, hPrevBrush );
+    BitBlt( hdc, x, y, 8, 8, hMemDC, 0, 0, SRCCOPY );
+    SetBkColor( hdc, oldBkColor );
+    SetTextColor( hdc, oldTextColor );
+    DeleteDC( hMemDC );
+    SelectObject( hdc, hPrevBrush );
 }
 
 /***********************************************************************
@@ -423,9 +423,9 @@ static void CBPaintButton(LPHEADCOMBO lphc, HDC32 hdc)
  *
  * Paint CBS_DROPDOWNLIST text field / update edit control contents.
  */
-static void CBPaintText(LPHEADCOMBO lphc, HDC32 hdc)
+static void CBPaintText(LPHEADCOMBO lphc, HDC hdc)
 {
-   INT32	id, size = 0;
+   INT	id, size = 0;
    LPSTR	pText = NULL;
 
    if( lphc->wState & CBF_NOREDRAW ) return;
@@ -433,64 +433,64 @@ static void CBPaintText(LPHEADCOMBO lphc, HDC32 hdc)
    /* follow Windows combobox that sends a bunch of text 
     * inquiries to its listbox while processing WM_PAINT. */
 
-   if( (id = SendMessage32A(lphc->hWndLBox, LB_GETCURSEL32, 0, 0) ) != LB_ERR )
+   if( (id = SendMessageA(lphc->hWndLBox, LB_GETCURSEL, 0, 0) ) != LB_ERR )
    {
-        size = SendMessage32A( lphc->hWndLBox, LB_GETTEXTLEN32, id, 0);
+        size = SendMessageA( lphc->hWndLBox, LB_GETTEXTLEN, id, 0);
         if( (pText = HeapAlloc( GetProcessHeap(), 0, size + 1)) )
 	{
-	    SendMessage32A( lphc->hWndLBox, LB_GETTEXT32, (WPARAM32)id, (LPARAM)pText );
+	    SendMessageA( lphc->hWndLBox, LB_GETTEXT, (WPARAM)id, (LPARAM)pText );
 	    pText[size] = '\0';	/* just in case */
 	} else return;
    }
 
    if( lphc->wState & CBF_EDIT )
    {
-	if( CB_HASSTRINGS(lphc) ) SetWindowText32A( lphc->hWndEdit, pText ? pText : "" );
+	if( CB_HASSTRINGS(lphc) ) SetWindowTextA( lphc->hWndEdit, pText ? pText : "" );
 	if( lphc->wState & CBF_FOCUSED ) 
-	    SendMessage32A( lphc->hWndEdit, EM_SETSEL32, 0, (LPARAM)(-1));
+	    SendMessageA( lphc->hWndEdit, EM_SETSEL, 0, (LPARAM)(-1));
    }
    else /* paint text field ourselves */
    {
-        HBRUSH32 hPrevBrush = 0;
-	HDC32	 hDC = hdc;
+        HBRUSH hPrevBrush = 0;
+	HDC	 hDC = hdc;
 
 	if( !hDC ) 
 	{
-	    if ((hDC = GetDC32(lphc->self->hwndSelf)))
+	    if ((hDC = GetDC(lphc->self->hwndSelf)))
             {
-                HBRUSH32 hBrush = SendMessage32A( lphc->owner,
+                HBRUSH hBrush = SendMessageA( lphc->owner,
                                                   WM_CTLCOLORLISTBOX, 
                                                   hDC, lphc->self->hwndSelf );
-                hPrevBrush = SelectObject32( hDC, 
-                           (hBrush) ? hBrush : GetStockObject32(WHITE_BRUSH) );
+                hPrevBrush = SelectObject( hDC, 
+                           (hBrush) ? hBrush : GetStockObject(WHITE_BRUSH) );
             }
 	}
 	if( hDC )
 	{
-	    RECT32	rect;
-	    UINT32	itemState;
-	    HFONT32	hPrevFont = (lphc->hFont) ? SelectObject32(hDC, lphc->hFont) : 0;
+	    RECT	rect;
+	    UINT	itemState;
+	    HFONT	hPrevFont = (lphc->hFont) ? SelectObject(hDC, lphc->hFont) : 0;
 
-	    PatBlt32( hDC, (rect.left = lphc->RectEdit.left + SYSMETRICS_CXBORDER),
+	    PatBlt( hDC, (rect.left = lphc->RectEdit.left + SYSMETRICS_CXBORDER),
 			   (rect.top = lphc->RectEdit.top + SYSMETRICS_CYBORDER),
 			   (rect.right = lphc->RectEdit.right - SYSMETRICS_CXBORDER),
 			   (rect.bottom = lphc->RectEdit.bottom - SYSMETRICS_CYBORDER) - 1, PATCOPY );
-	    InflateRect32( &rect, -1, -1 );
+	    InflateRect( &rect, -1, -1 );
 
 	    if( lphc->wState & CBF_FOCUSED && 
 	        !(lphc->wState & CBF_DROPPED) )
 	    {
 		/* highlight */
 
-		FillRect32( hDC, &rect, GetSysColorBrush32(COLOR_HIGHLIGHT) );
-                SetBkColor32( hDC, GetSysColor32( COLOR_HIGHLIGHT ) );
-                SetTextColor32( hDC, GetSysColor32( COLOR_HIGHLIGHTTEXT ) );
+		FillRect( hDC, &rect, GetSysColorBrush(COLOR_HIGHLIGHT) );
+                SetBkColor( hDC, GetSysColor( COLOR_HIGHLIGHT ) );
+                SetTextColor( hDC, GetSysColor( COLOR_HIGHLIGHTTEXT ) );
 		itemState = ODS_SELECTED | ODS_FOCUS;
 	    } else itemState = 0;
 
 	    if( CB_OWNERDRAWN(lphc) )
 	    {
-		DRAWITEMSTRUCT32 dis;
+		DRAWITEMSTRUCT dis;
 
 		if( lphc->self->dwStyle & WS_DISABLED ) itemState |= ODS_DISABLED;
 
@@ -502,25 +502,25 @@ static void CBPaintText(LPHEADCOMBO lphc, HDC32 hdc)
 		dis.itemState	= itemState;
 		dis.hDC		= hDC;
 		dis.rcItem	= rect;
-		dis.itemData	= SendMessage32A( lphc->hWndLBox, LB_GETITEMDATA32, 
-						  		  (WPARAM32)id, 0 );
-		SendMessage32A( lphc->owner, WM_DRAWITEM, 
+		dis.itemData	= SendMessageA( lphc->hWndLBox, LB_GETITEMDATA, 
+						  		  (WPARAM)id, 0 );
+		SendMessageA( lphc->owner, WM_DRAWITEM, 
 				lphc->self->wIDmenu, (LPARAM)&dis );
 	    }
 	    else
 	    {
-		ExtTextOut32A( hDC, rect.left + 1, rect.top + 1,
+		ExtTextOutA( hDC, rect.left + 1, rect.top + 1,
                                ETO_OPAQUE | ETO_CLIPPED, &rect,
                                pText ? pText : "" , size, NULL );
 		if(lphc->wState & CBF_FOCUSED && !(lphc->wState & CBF_DROPPED))
-		    DrawFocusRect32( hDC, &rect );
+		    DrawFocusRect( hDC, &rect );
 	    }
 
-	    if( hPrevFont ) SelectObject32(hDC, hPrevFont );
+	    if( hPrevFont ) SelectObject(hDC, hPrevFont );
 	    if( !hdc ) 
 	    {
-		if( hPrevBrush ) SelectObject32( hDC, hPrevBrush );
-		ReleaseDC32( lphc->self->hwndSelf, hDC );
+		if( hPrevBrush ) SelectObject( hDC, hPrevBrush );
+		ReleaseDC( lphc->self->hwndSelf, hDC );
 	    }
 	}
    }
@@ -531,27 +531,27 @@ static void CBPaintText(LPHEADCOMBO lphc, HDC32 hdc)
 /***********************************************************************
  *           COMBO_Paint
  */
-static LRESULT COMBO_Paint(LPHEADCOMBO lphc, HDC32 hParamDC)
+static LRESULT COMBO_Paint(LPHEADCOMBO lphc, HDC hParamDC)
 {
-  PAINTSTRUCT32 ps;
-  HDC32 	hDC;
+  PAINTSTRUCT ps;
+  HDC 	hDC;
   
   hDC = (hParamDC) ? hParamDC
-		   : BeginPaint32( lphc->self->hwndSelf, &ps);
+		   : BeginPaint( lphc->self->hwndSelf, &ps);
   if( hDC && !(lphc->wState & CBF_NOREDRAW) )
   {
-      HBRUSH32	hPrevBrush, hBkgBrush;
+      HBRUSH	hPrevBrush, hBkgBrush;
 
-      hBkgBrush = SendMessage32A( lphc->owner, WM_CTLCOLORLISTBOX,
+      hBkgBrush = SendMessageA( lphc->owner, WM_CTLCOLORLISTBOX,
 				  hDC, lphc->self->hwndSelf );
-      if( !hBkgBrush ) hBkgBrush = GetStockObject32(WHITE_BRUSH);
+      if( !hBkgBrush ) hBkgBrush = GetStockObject(WHITE_BRUSH);
 
-      hPrevBrush = SelectObject32( hDC, hBkgBrush );
-      if( !IsRectEmpty32(&lphc->RectButton) )
+      hPrevBrush = SelectObject( hDC, hBkgBrush );
+      if( !IsRectEmpty(&lphc->RectButton) )
       {
 	  /* paint everything to the right of the text field */
 
-	  PatBlt32( hDC, lphc->RectEdit.right, lphc->RectEdit.top,
+	  PatBlt( hDC, lphc->RectEdit.right, lphc->RectEdit.top,
 			 lphc->RectButton.right - lphc->RectEdit.right,
 			 lphc->RectEdit.bottom - lphc->RectEdit.top, PATCOPY );
           CBPaintButton( lphc, hDC );
@@ -561,17 +561,17 @@ static LRESULT COMBO_Paint(LPHEADCOMBO lphc, HDC32 hParamDC)
       {
 	  /* paint text field */
 	  
-	  HPEN32 hPrevPen = SelectObject32( hDC, GetSysColorPen32(
+	  HPEN hPrevPen = SelectObject( hDC, GetSysColorPen(
 							  COLOR_WINDOWFRAME) );
 
-	  Rectangle32( hDC, lphc->RectEdit.left, lphc->RectEdit.top,
+	  Rectangle( hDC, lphc->RectEdit.left, lphc->RectEdit.top,
 		       lphc->RectEdit.right, lphc->RectButton.bottom );
-	  SelectObject32( hDC, hPrevPen );
+	  SelectObject( hDC, hPrevPen );
 	  CBPaintText( lphc, hDC );
       }
-      if( hPrevBrush ) SelectObject32( hDC, hPrevBrush );
+      if( hPrevBrush ) SelectObject( hDC, hPrevBrush );
   }
-  if( !hParamDC ) EndPaint32(lphc->self->hwndSelf, &ps);
+  if( !hParamDC ) EndPaint(lphc->self->hwndSelf, &ps);
   return 0;
 }
 
@@ -580,9 +580,9 @@ static LRESULT COMBO_Paint(LPHEADCOMBO lphc, HDC32 hParamDC)
  *
  * Select listbox entry according to the contents of the edit control.
  */
-static INT32 CBUpdateLBox( LPHEADCOMBO lphc )
+static INT CBUpdateLBox( LPHEADCOMBO lphc )
 {
-   INT32	length, idx, ret;
+   INT	length, idx, ret;
    LPSTR	pText = NULL;
    
    idx = ret = LB_ERR;
@@ -595,10 +595,10 @@ static INT32 CBUpdateLBox( LPHEADCOMBO lphc )
 
    if( pText )
    {
-       if( length ) GetWindowText32A( lphc->hWndEdit, pText, length + 1);
+       if( length ) GetWindowTextA( lphc->hWndEdit, pText, length + 1);
        else pText[0] = '\0';
-       idx = SendMessage32A( lphc->hWndLBox, LB_FINDSTRING32, 
-			     (WPARAM32)(-1), (LPARAM)pText );
+       idx = SendMessageA( lphc->hWndLBox, LB_FINDSTRING, 
+			     (WPARAM)(-1), (LPARAM)pText );
        if( idx == LB_ERR ) idx = 0;	/* select first item */
        else ret = idx;
        HeapFree( GetProcessHeap(), 0, pText );
@@ -606,13 +606,13 @@ static INT32 CBUpdateLBox( LPHEADCOMBO lphc )
 
    /* select entry */
 
-   SendMessage32A( lphc->hWndLBox, LB_SETCURSEL32, (WPARAM32)idx, 0 );
+   SendMessageA( lphc->hWndLBox, LB_SETCURSEL, (WPARAM)idx, 0 );
    
    if( idx >= 0 )
    {
-       SendMessage32A( lphc->hWndLBox, LB_SETTOPINDEX32, (WPARAM32)idx, 0 );
+       SendMessageA( lphc->hWndLBox, LB_SETTOPINDEX, (WPARAM)idx, 0 );
        /* probably superfluous but Windows sends this too */
-       SendMessage32A( lphc->hWndLBox, LB_SETCARETINDEX32, (WPARAM32)idx, 0 );
+       SendMessageA( lphc->hWndLBox, LB_SETCARETINDEX, (WPARAM)idx, 0 );
    }
    return ret;
 }
@@ -622,9 +622,9 @@ static INT32 CBUpdateLBox( LPHEADCOMBO lphc )
  *
  * Copy a listbox entry to the edit control.
  */
-static void CBUpdateEdit( LPHEADCOMBO lphc , INT32 index )
+static void CBUpdateEdit( LPHEADCOMBO lphc , INT index )
 {
-   INT32	length;
+   INT	length;
    LPSTR	pText = NULL;
 
    TRACE(combo,"\t %i\n", index );
@@ -636,9 +636,9 @@ static void CBUpdateEdit( LPHEADCOMBO lphc , INT32 index )
        {
            if( (pText = (LPSTR) HeapAlloc( GetProcessHeap(), 0, length + 1)) )
            {
- 	   	GetWindowText32A( lphc->hWndEdit, pText, length + 1 );
-	   	index = SendMessage32A( lphc->hWndLBox, LB_FINDSTRING32,
-				        (WPARAM32)(-1), (LPARAM)pText );
+ 	   	GetWindowTextA( lphc->hWndEdit, pText, length + 1 );
+	   	index = SendMessageA( lphc->hWndLBox, LB_FINDSTRING,
+				        (WPARAM)(-1), (LPARAM)pText );
 	   	HeapFree( GetProcessHeap(), 0, pText );
            }
        }
@@ -646,15 +646,15 @@ static void CBUpdateEdit( LPHEADCOMBO lphc , INT32 index )
 
    if( index >= 0 ) /* got an entry */
    {
-       length = SendMessage32A( lphc->hWndLBox, LB_GETTEXTLEN32, (WPARAM32)index, 0);
+       length = SendMessageA( lphc->hWndLBox, LB_GETTEXTLEN, (WPARAM)index, 0);
        if( length )
        {
 	   if( (pText = (LPSTR) HeapAlloc( GetProcessHeap(), 0, length + 1)) )
 	   {
-		SendMessage32A( lphc->hWndLBox, LB_GETTEXT32, 
-				(WPARAM32)index, (LPARAM)pText );
-		SendMessage32A( lphc->hWndEdit, WM_SETTEXT, 0, (LPARAM)pText );
-		SendMessage32A( lphc->hWndEdit, EM_SETSEL32, 0, (LPARAM)(-1) );
+		SendMessageA( lphc->hWndLBox, LB_GETTEXT, 
+				(WPARAM)index, (LPARAM)pText );
+		SendMessageA( lphc->hWndEdit, WM_SETTEXT, 0, (LPARAM)pText );
+		SendMessageA( lphc->hWndEdit, EM_SETSEL, 0, (LPARAM)(-1) );
 		HeapFree( GetProcessHeap(), 0, pText );
 	   }
        }
@@ -668,9 +668,9 @@ static void CBUpdateEdit( LPHEADCOMBO lphc , INT32 index )
  */
 static void CBDropDown( LPHEADCOMBO lphc )
 {
-   INT32	index;
-   RECT32	rect;
-   LPRECT32	pRect = NULL;
+   INT	index;
+   RECT	rect;
+   LPRECT	pRect = NULL;
 
    TRACE(combo,"[%04x]: drop down\n", CB_HWND(lphc));
 
@@ -686,16 +686,16 @@ static void CBDropDown( LPHEADCOMBO lphc )
    }
    else
    {
-       index = SendMessage32A( lphc->hWndLBox, LB_GETCURSEL32, 0, 0 );
+       index = SendMessageA( lphc->hWndLBox, LB_GETCURSEL, 0, 0 );
        if( index == LB_ERR ) index = 0;
-       SendMessage32A( lphc->hWndLBox, LB_SETTOPINDEX32, (WPARAM32)index, 0 );
-       SendMessage32A( lphc->hWndLBox, LB_CARETON32, 0, 0 );
+       SendMessageA( lphc->hWndLBox, LB_SETTOPINDEX, (WPARAM)index, 0 );
+       SendMessageA( lphc->hWndLBox, LB_CARETON, 0, 0 );
        pRect = &lphc->RectEdit;
    }
 
    /* now set popup position */
 
-   GetWindowRect32( lphc->self->hwndSelf, &rect );
+   GetWindowRect( lphc->self->hwndSelf, &rect );
    
    rect.top += lphc->RectEdit.bottom - lphc->RectEdit.top - SYSMETRICS_CYBORDER;
    rect.bottom = rect.top + lphc->RectCombo.bottom - 
@@ -703,15 +703,15 @@ static void CBDropDown( LPHEADCOMBO lphc )
    rect.right = rect.left + lphc->RectCombo.right - lphc->RectCombo.left;
    rect.left += ( CB_GETTYPE(lphc) == CBS_DROPDOWNLIST ) ? 0 : CBitOffset;
 
-   SetWindowPos32( lphc->hWndLBox, HWND_TOP, rect.left, rect.top, 
+   SetWindowPos( lphc->hWndLBox, HWND_TOP, rect.left, rect.top, 
 		 rect.right - rect.left, rect.bottom - rect.top, 
 		 SWP_NOACTIVATE | SWP_NOSIZE | SWP_NOREDRAW);
 
    if( !(lphc->wState & CBF_NOREDRAW) )
        if( pRect )
-           RedrawWindow32( lphc->self->hwndSelf, pRect, 0, RDW_INVALIDATE | 
+           RedrawWindow( lphc->self->hwndSelf, pRect, 0, RDW_INVALIDATE | 
 			   RDW_ERASE | RDW_UPDATENOW | RDW_NOCHILDREN );
-   ShowWindow32( lphc->hWndLBox, SW_SHOWNA );
+   ShowWindow( lphc->hWndLBox, SW_SHOWNA );
 }
 
 /***********************************************************************
@@ -719,37 +719,37 @@ static void CBDropDown( LPHEADCOMBO lphc )
  *
  * Hide listbox popup.
  */
-static void CBRollUp( LPHEADCOMBO lphc, BOOL32 ok, BOOL32 bButton )
+static void CBRollUp( LPHEADCOMBO lphc, BOOL ok, BOOL bButton )
 {
-   HWND32	hWnd = lphc->self->hwndSelf;
+   HWND	hWnd = lphc->self->hwndSelf;
 
    CB_NOTIFY( lphc, (ok) ? CBN_SELENDOK : CBN_SELENDCANCEL );
 
-   if( IsWindow32( hWnd ) && CB_GETTYPE(lphc) != CBS_SIMPLE )
+   if( IsWindow( hWnd ) && CB_GETTYPE(lphc) != CBS_SIMPLE )
    {
 
-       TRACE(combo,"[%04x]: roll up [%i]\n", CB_HWND(lphc), (INT32)ok );
+       TRACE(combo,"[%04x]: roll up [%i]\n", CB_HWND(lphc), (INT)ok );
 
        /* always send WM_LBUTTONUP? */
-       SendMessage32A( lphc->hWndLBox, WM_LBUTTONUP, 0, (LPARAM)(-1) );
+       SendMessageA( lphc->hWndLBox, WM_LBUTTONUP, 0, (LPARAM)(-1) );
 
        if( lphc->wState & CBF_DROPPED ) 
        {
-	   RECT32	rect;
+	   RECT	rect;
 
 	   lphc->wState &= ~CBF_DROPPED;
-	   ShowWindow32( lphc->hWndLBox, SW_HIDE );
+	   ShowWindow( lphc->hWndLBox, SW_HIDE );
 
 	   if( CB_GETTYPE(lphc) == CBS_DROPDOWN )
 	   {
-	       INT32 index = SendMessage32A( lphc->hWndLBox, LB_GETCURSEL32, 0, 0 );
+	       INT index = SendMessageA( lphc->hWndLBox, LB_GETCURSEL, 0, 0 );
 	       CBUpdateEdit( lphc, index );
 	       rect = lphc->RectButton;
 	   }
 	   else 
            {
 	       if( bButton )
-	           UnionRect32( &rect, &lphc->RectButton,
+	           UnionRect( &rect, &lphc->RectButton,
 				       &lphc->RectEdit );
 	       else
 		   rect = lphc->RectEdit;
@@ -757,7 +757,7 @@ static void CBRollUp( LPHEADCOMBO lphc, BOOL32 ok, BOOL32 bButton )
 	   }
 
 	   if( bButton && !(lphc->wState & CBF_NOREDRAW) )
-	       RedrawWindow32( hWnd, &rect, 0, RDW_INVALIDATE | 
+	       RedrawWindow( hWnd, &rect, 0, RDW_INVALIDATE | 
 			       RDW_ERASE | RDW_UPDATENOW | RDW_NOCHILDREN );
 	   CB_NOTIFY( lphc, CBN_CLOSEUP );
        }
@@ -769,7 +769,7 @@ static void CBRollUp( LPHEADCOMBO lphc, BOOL32 ok, BOOL32 bButton )
  *
  * Used by the ComboLBox to show/hide itself in response to VK_F4, etc...
  */
-BOOL32 COMBO_FlipListbox( LPHEADCOMBO lphc, BOOL32 bRedrawButton )
+BOOL COMBO_FlipListbox( LPHEADCOMBO lphc, BOOL bRedrawButton )
 {
    if( lphc->wState & CBF_DROPPED )
    {
@@ -786,7 +786,7 @@ BOOL32 COMBO_FlipListbox( LPHEADCOMBO lphc, BOOL32 bRedrawButton )
  *
  * Edit control helper.
  */
-HWND32 COMBO_GetLBWindow( WND* pWnd )
+HWND COMBO_GetLBWindow( WND* pWnd )
 {
   LPHEADCOMBO       lphc = CB_GETPTR(pWnd);
   if( lphc ) return lphc->hWndLBox;
@@ -799,12 +799,12 @@ HWND32 COMBO_GetLBWindow( WND* pWnd )
  */
 static void CBRepaintButton( LPHEADCOMBO lphc )
 {
-   HDC32        hDC = GetDC32( lphc->self->hwndSelf );
+   HDC        hDC = GetDC( lphc->self->hwndSelf );
 
    if( hDC )
    {
        CBPaintButton( lphc, hDC );
-       ReleaseDC32( lphc->self->hwndSelf, hDC );
+       ReleaseDC( lphc->self->hwndSelf, hDC );
    }
 }
 
@@ -816,10 +816,10 @@ static void COMBO_SetFocus( LPHEADCOMBO lphc )
    if( !(lphc->wState & CBF_FOCUSED) )
    {
        if( CB_GETTYPE(lphc) == CBS_DROPDOWNLIST )
-           SendMessage32A( lphc->hWndLBox, LB_CARETON32, 0, 0 );
+           SendMessageA( lphc->hWndLBox, LB_CARETON, 0, 0 );
 
        if( lphc->wState & CBF_EDIT )
-           SendMessage32A( lphc->hWndEdit, EM_SETSEL32, 0, (LPARAM)(-1) );
+           SendMessageA( lphc->hWndEdit, EM_SETSEL, 0, (LPARAM)(-1) );
        lphc->wState |= CBF_FOCUSED;
        if( !(lphc->wState & CBF_EDIT) ) CBPaintText( lphc, 0 );
 
@@ -832,23 +832,23 @@ static void COMBO_SetFocus( LPHEADCOMBO lphc )
  */
 static void COMBO_KillFocus( LPHEADCOMBO lphc )
 {
-   HWND32	hWnd = lphc->self->hwndSelf;
+   HWND	hWnd = lphc->self->hwndSelf;
 
    if( lphc->wState & CBF_FOCUSED )
    {
-       SendMessage32A( hWnd, WM_LBUTTONUP, 0, (LPARAM)(-1) );
+       SendMessageA( hWnd, WM_LBUTTONUP, 0, (LPARAM)(-1) );
 
        CBRollUp( lphc, FALSE, TRUE );
-       if( IsWindow32( hWnd ) )
+       if( IsWindow( hWnd ) )
        {
            if( CB_GETTYPE(lphc) == CBS_DROPDOWNLIST )
-               SendMessage32A( lphc->hWndLBox, LB_CARETOFF32, 0, 0 );
+               SendMessageA( lphc->hWndLBox, LB_CARETOFF, 0, 0 );
 
  	   lphc->wState &= ~CBF_FOCUSED;
 
            /* redraw text */
            if( lphc->wState & CBF_EDIT )
-               SendMessage32A( lphc->hWndEdit, EM_SETSEL32, (WPARAM32)(-1), 0 );
+               SendMessageA( lphc->hWndEdit, EM_SETSEL, (WPARAM)(-1), 0 );
            else CBPaintText( lphc, 0 );
 
            CB_NOTIFY( lphc, CBN_KILLFOCUS );
@@ -859,7 +859,7 @@ static void COMBO_KillFocus( LPHEADCOMBO lphc )
 /***********************************************************************
  *           COMBO_Command
  */
-static LRESULT COMBO_Command( LPHEADCOMBO lphc, WPARAM32 wParam, HWND32 hWnd )
+static LRESULT COMBO_Command( LPHEADCOMBO lphc, WPARAM wParam, HWND hWnd )
 {
    if( lphc->wState & CBF_EDIT && lphc->hWndEdit == hWnd )
    {
@@ -947,14 +947,14 @@ static LRESULT COMBO_Command( LPHEADCOMBO lphc, WPARAM32 wParam, HWND32 hWnd )
  *
  * Fixup an ownerdrawn item operation and pass it up to the combobox owner.
  */
-static LRESULT COMBO_ItemOp32( LPHEADCOMBO lphc, UINT32 msg, 
-			       WPARAM32 wParam, LPARAM lParam ) 
+static LRESULT COMBO_ItemOp( LPHEADCOMBO lphc, UINT msg, 
+			       WPARAM wParam, LPARAM lParam ) 
 {
-   HWND32	hWnd = lphc->self->hwndSelf;
+   HWND	hWnd = lphc->self->hwndSelf;
 
    TRACE(combo,"[%04x]: ownerdraw op %04x\n", CB_HWND(lphc), msg );
 
-#define lpIS    ((LPDELETEITEMSTRUCT32)lParam)
+#define lpIS    ((LPDELETEITEMSTRUCT)lParam)
 
    /* two first items are the same in all 4 structs */
    lpIS->CtlType = ODT_COMBOBOX;
@@ -967,39 +967,39 @@ static LRESULT COMBO_ItemOp32( LPHEADCOMBO lphc, UINT32 msg,
 #undef  lpIS
 	     break;
 	case WM_DRAWITEM: 
-#define lpIS    ((LPDRAWITEMSTRUCT32)lParam)
+#define lpIS    ((LPDRAWITEMSTRUCT)lParam)
 	     lpIS->hwndItem = hWnd; 
 #undef  lpIS
 	     break;
 	case WM_COMPAREITEM: 
-#define lpIS    ((LPCOMPAREITEMSTRUCT32)lParam)
+#define lpIS    ((LPCOMPAREITEMSTRUCT)lParam)
 	     lpIS->hwndItem = hWnd; 
 #undef  lpIS
 	     break;
    }
 
-   return SendMessage32A( lphc->owner, msg, lphc->self->wIDmenu, lParam );
+   return SendMessageA( lphc->owner, msg, lphc->self->wIDmenu, lParam );
 }
 
 /***********************************************************************
  *           COMBO_GetText
  */
-static LRESULT COMBO_GetText( LPHEADCOMBO lphc, UINT32 N, LPSTR lpText)
+static LRESULT COMBO_GetText( LPHEADCOMBO lphc, UINT N, LPSTR lpText)
 {
    if( lphc->wState & CBF_EDIT )
-       return SendMessage32A( lphc->hWndEdit, WM_GETTEXT, 
-			     (WPARAM32)N, (LPARAM)lpText );     
+       return SendMessageA( lphc->hWndEdit, WM_GETTEXT, 
+			     (WPARAM)N, (LPARAM)lpText );     
 
    /* get it from the listbox */
 
    if( lphc->hWndLBox )
    {
-       INT32 idx = SendMessage32A( lphc->hWndLBox, LB_GETCURSEL32, 0, 0 );
+       INT idx = SendMessageA( lphc->hWndLBox, LB_GETCURSEL, 0, 0 );
        if( idx != LB_ERR )
        {
            LPSTR	lpBuffer;
-           INT32	length = SendMessage32A( lphc->hWndLBox, LB_GETTEXTLEN32,
-					        (WPARAM32)idx, 0 );
+           INT	length = SendMessageA( lphc->hWndLBox, LB_GETTEXTLEN,
+					        (WPARAM)idx, 0 );
 
            /* 'length' is without the terminating character */
            if( length >= N )
@@ -1009,8 +1009,8 @@ static LRESULT COMBO_GetText( LPHEADCOMBO lphc, UINT32 N, LPSTR lpText)
 
            if( lpBuffer )
            {
-	       INT32    n = SendMessage32A( lphc->hWndLBox, LB_GETTEXT32, 
-					   (WPARAM32)idx, (LPARAM)lpBuffer );
+	       INT    n = SendMessageA( lphc->hWndLBox, LB_GETTEXT, 
+					   (WPARAM)idx, (LPARAM)lpBuffer );
 
 	       /* truncate if buffer is too short */
 
@@ -1036,25 +1036,25 @@ static LRESULT COMBO_GetText( LPHEADCOMBO lphc, UINT32 N, LPSTR lpText)
  * This function sets window positions according to the updated 
  * component placement struct.
  */
-static void CBResetPos( LPHEADCOMBO lphc, LPRECT32 lbRect, BOOL32 bRedraw )
+static void CBResetPos( LPHEADCOMBO lphc, LPRECT lbRect, BOOL bRedraw )
 {
-   BOOL32	bDrop = (CB_GETTYPE(lphc) != CBS_SIMPLE);
+   BOOL	bDrop = (CB_GETTYPE(lphc) != CBS_SIMPLE);
 
    /* NOTE: logs sometimes have WM_LBUTTONUP before a cascade of
     * sizing messages */
 
    if( lphc->wState & CBF_EDIT )
-       SetWindowPos32( lphc->hWndEdit, 0, lphc->RectEdit.left, lphc->RectEdit.top,
+       SetWindowPos( lphc->hWndEdit, 0, lphc->RectEdit.left, lphc->RectEdit.top,
                        lphc->RectEdit.right - lphc->RectEdit.left,
                        lphc->RectEdit.bottom - lphc->RectEdit.top,
                        SWP_NOZORDER | SWP_NOACTIVATE | ((bDrop) ? SWP_NOREDRAW : 0) );
 
    if( bDrop )
-       OffsetRect32( lbRect, lphc->RectCombo.left, lphc->RectCombo.top );
+       OffsetRect( lbRect, lphc->RectCombo.left, lphc->RectCombo.top );
 
    lbRect->right -= lbRect->left;	/* convert to width */
    lbRect->bottom -= lbRect->top;
-   SetWindowPos32( lphc->hWndLBox, 0, lbRect->left, lbRect->top,
+   SetWindowPos( lphc->hWndLBox, 0, lbRect->left, lbRect->top,
                    lbRect->right, lbRect->bottom, 
 		   SWP_NOACTIVATE | SWP_NOZORDER | ((bDrop) ? SWP_NOREDRAW : 0) );
 
@@ -1063,18 +1063,18 @@ static void CBResetPos( LPHEADCOMBO lphc, LPRECT32 lbRect, BOOL32 bRedraw )
        if( lphc->wState & CBF_DROPPED )
        {
            lphc->wState &= ~CBF_DROPPED;
-           ShowWindow32( lphc->hWndLBox, SW_HIDE );
+           ShowWindow( lphc->hWndLBox, SW_HIDE );
        }
 
        lphc->wState |= CBF_NORESIZE;
-       SetWindowPos32( lphc->self->hwndSelf, 0, 0, 0,
+       SetWindowPos( lphc->self->hwndSelf, 0, 0, 0,
                        lphc->RectCombo.right - lphc->RectCombo.left,
                        lphc->RectEdit.bottom - lphc->RectEdit.top,
                        SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE | SWP_NOREDRAW );
        lphc->wState &= ~CBF_NORESIZE;
 
        if( bRedraw && !(lphc->wState & CBF_NOREDRAW) )
-           RedrawWindow32( lphc->self->hwndSelf, NULL, 0,
+           RedrawWindow( lphc->self->hwndSelf, NULL, 0,
                            RDW_INVALIDATE | RDW_ERASE | RDW_UPDATENOW );
    }
 }
@@ -1085,10 +1085,10 @@ static void CBResetPos( LPHEADCOMBO lphc, LPRECT32 lbRect, BOOL32 bRedraw )
  */
 static void COMBO_Size( LPHEADCOMBO lphc )
 {
-  RECT32	rect;
-  INT32		w, h;
+  RECT	rect;
+  INT		w, h;
 
-  GetWindowRect32( lphc->self->hwndSelf, &rect );
+  GetWindowRect( lphc->self->hwndSelf, &rect );
   w = rect.right - rect.left; h = rect.bottom - rect.top;
 
   TRACE(combo,"w = %i, h = %i\n", w, h );
@@ -1113,18 +1113,18 @@ static void COMBO_Size( LPHEADCOMBO lphc )
 /***********************************************************************
  *           COMBO_Font
  */
-static void COMBO_Font( LPHEADCOMBO lphc, HFONT32 hFont, BOOL32 bRedraw )
+static void COMBO_Font( LPHEADCOMBO lphc, HFONT hFont, BOOL bRedraw )
 {
-  RECT32        rect;
+  RECT        rect;
 
   lphc->hFont = hFont;
 
   if( lphc->wState & CBF_EDIT )
-      SendMessage32A( lphc->hWndEdit, WM_SETFONT, (WPARAM32)hFont, bRedraw );
-  SendMessage32A( lphc->hWndLBox, WM_SETFONT, (WPARAM32)hFont, bRedraw );
+      SendMessageA( lphc->hWndEdit, WM_SETFONT, (WPARAM)hFont, bRedraw );
+  SendMessageA( lphc->hWndLBox, WM_SETFONT, (WPARAM)hFont, bRedraw );
 
-  GetWindowRect32( lphc->self->hwndSelf, &rect );
-  OffsetRect32( &lphc->RectCombo, rect.left - lphc->RectCombo.left,
+  GetWindowRect( lphc->self->hwndSelf, &rect );
+  OffsetRect( &lphc->RectCombo, rect.left - lphc->RectCombo.left,
                                   rect.top - lphc->RectCombo.top );
   CBCalcPlacement( lphc, &lphc->RectEdit,
                          &lphc->RectButton, &rect );
@@ -1135,7 +1135,7 @@ static void COMBO_Font( LPHEADCOMBO lphc, HFONT32 hFont, BOOL32 bRedraw )
 /***********************************************************************
  *           COMBO_SetItemHeight
  */
-static LRESULT COMBO_SetItemHeight( LPHEADCOMBO lphc, INT32 index, INT32 height )
+static LRESULT COMBO_SetItemHeight( LPHEADCOMBO lphc, INT index, INT height )
 {
    LRESULT	lRet = CB_ERR;
 
@@ -1143,11 +1143,11 @@ static LRESULT COMBO_SetItemHeight( LPHEADCOMBO lphc, INT32 index, INT32 height 
    {
        if( height < 32768 )
        {
-           RECT32	rect;
+           RECT	rect;
 
            lphc->editHeight = height;
-           GetWindowRect32( lphc->self->hwndSelf, &rect );
-           OffsetRect32( &lphc->RectCombo, rect.left - lphc->RectCombo.left,
+           GetWindowRect( lphc->self->hwndSelf, &rect );
+           OffsetRect( &lphc->RectCombo, rect.left - lphc->RectCombo.left,
 				           rect.top - lphc->RectCombo.top );
            CBCalcPlacement( lphc, &lphc->RectEdit,
 			          &lphc->RectButton, &rect );
@@ -1156,18 +1156,18 @@ static LRESULT COMBO_SetItemHeight( LPHEADCOMBO lphc, INT32 index, INT32 height 
        }
    } 
    else if ( CB_OWNERDRAWN(lphc) )	/* set listbox item height */
-	lRet = SendMessage32A( lphc->hWndLBox, LB_SETITEMHEIGHT32, 
-			      (WPARAM32)index, (LPARAM)height );
+	lRet = SendMessageA( lphc->hWndLBox, LB_SETITEMHEIGHT, 
+			      (WPARAM)index, (LPARAM)height );
    return lRet;
 }
 
 /***********************************************************************
  *           COMBO_SelectString
  */
-static LRESULT COMBO_SelectString( LPHEADCOMBO lphc, INT32 start, LPCSTR pText )
+static LRESULT COMBO_SelectString( LPHEADCOMBO lphc, INT start, LPCSTR pText )
 {
-   INT32 index = SendMessage32A( lphc->hWndLBox, LB_SELECTSTRING32, 
-				 (WPARAM32)start, (LPARAM)pText );
+   INT index = SendMessageA( lphc->hWndLBox, LB_SELECTSTRING, 
+				 (WPARAM)start, (LPARAM)pText );
    if( index >= 0 )
    {
         if( lphc->wState & CBF_EDIT )
@@ -1183,9 +1183,9 @@ static LRESULT COMBO_SelectString( LPHEADCOMBO lphc, INT32 start, LPCSTR pText )
  */
 static void COMBO_LButtonDown( LPHEADCOMBO lphc, LPARAM lParam )
 {
-   POINT32     pt = { LOWORD(lParam), HIWORD(lParam) };
-   BOOL32      bButton = PtInRect32(&lphc->RectButton, pt);
-   HWND32      hWnd = lphc->self->hwndSelf;
+   POINT     pt = { LOWORD(lParam), HIWORD(lParam) };
+   BOOL      bButton = PtInRect(&lphc->RectButton, pt);
+   HWND      hWnd = lphc->self->hwndSelf;
 
    if( (CB_GETTYPE(lphc) == CBS_DROPDOWNLIST) ||
        (bButton && (CB_GETTYPE(lphc) == CBS_DROPDOWN)) )
@@ -1196,7 +1196,7 @@ static void COMBO_LButtonDown( LPHEADCOMBO lphc, LPARAM lParam )
 	   /* got a click to cancel selection */
 
            CBRollUp( lphc, TRUE, FALSE );
-	   if( !IsWindow32( hWnd ) ) return;
+	   if( !IsWindow( hWnd ) ) return;
 
            if( lphc->wState & CBF_CAPTURE )
            {
@@ -1211,7 +1211,7 @@ static void COMBO_LButtonDown( LPHEADCOMBO lphc, LPARAM lParam )
 
            lphc->wState |= CBF_CAPTURE;
            CBDropDown( lphc );
-           SetCapture32( hWnd );
+           SetCapture( hWnd );
        }
        if( bButton ) CBRepaintButton( lphc );
    }
@@ -1229,7 +1229,7 @@ static void COMBO_LButtonUp( LPHEADCOMBO lphc, LPARAM lParam )
        lphc->wState &= ~CBF_CAPTURE;
        if( CB_GETTYPE(lphc) == CBS_DROPDOWN )
        {
-	   INT32 index = CBUpdateLBox( lphc );
+	   INT index = CBUpdateLBox( lphc );
 	   CBUpdateEdit( lphc, index );
        }
        ReleaseCapture();
@@ -1248,14 +1248,14 @@ static void COMBO_LButtonUp( LPHEADCOMBO lphc, LPARAM lParam )
  * Two things to do - track combo button and release capture when
  * pointer goes into the listbox.
  */
-static void COMBO_MouseMove( LPHEADCOMBO lphc, WPARAM32 wParam, LPARAM lParam )
+static void COMBO_MouseMove( LPHEADCOMBO lphc, WPARAM wParam, LPARAM lParam )
 {
-   POINT32  pt = { LOWORD(lParam), HIWORD(lParam) };
-   RECT32   lbRect;
+   POINT  pt = { LOWORD(lParam), HIWORD(lParam) };
+   RECT   lbRect;
 
    if( lphc->wState & CBF_BUTTONDOWN )
    {
-       BOOL32	bButton = PtInRect32(&lphc->RectButton, pt);
+       BOOL	bButton = PtInRect(&lphc->RectButton, pt);
 
        if( !bButton )
        {
@@ -1264,16 +1264,16 @@ static void COMBO_MouseMove( LPHEADCOMBO lphc, WPARAM32 wParam, LPARAM lParam )
        }
    }
 
-   GetClientRect32( lphc->hWndLBox, &lbRect );
-   MapWindowPoints32( lphc->self->hwndSelf, lphc->hWndLBox, &pt, 1 );
-   if( PtInRect32(&lbRect, pt) )
+   GetClientRect( lphc->hWndLBox, &lbRect );
+   MapWindowPoints( lphc->self->hwndSelf, lphc->hWndLBox, &pt, 1 );
+   if( PtInRect(&lbRect, pt) )
    {
        lphc->wState &= ~CBF_CAPTURE;
        ReleaseCapture();
        if( CB_GETTYPE(lphc) == CBS_DROPDOWN ) CBUpdateLBox( lphc );
 
        /* hand over pointer tracking */
-       SendMessage32A( lphc->hWndLBox, WM_LBUTTONDOWN, wParam, lParam );
+       SendMessageA( lphc->hWndLBox, WM_LBUTTONDOWN, wParam, lParam );
    }
 }
 
@@ -1283,8 +1283,8 @@ static void COMBO_MouseMove( LPHEADCOMBO lphc, WPARAM32 wParam, LPARAM lParam )
  *
  * http://www.microsoft.com/msdn/sdk/platforms/doc/sdk/win32/ctrl/src/combobox_15.htm
  */
-LRESULT WINAPI ComboWndProc( HWND32 hwnd, UINT32 message,
-                             WPARAM32 wParam, LPARAM lParam )
+LRESULT WINAPI ComboWndProc( HWND hwnd, UINT message,
+                             WPARAM wParam, LPARAM lParam )
 {
     WND*	pWnd = WIN_FindWndPtr(hwnd);
    
@@ -1327,7 +1327,7 @@ LRESULT WINAPI ComboWndProc( HWND32 hwnd, UINT32 message,
 		return TRUE;
 
 	case WM_SETFONT:
-		COMBO_Font( lphc, (HFONT16)wParam, (BOOL32)lParam );
+		COMBO_Font( lphc, (HFONT16)wParam, (BOOL)lParam );
 		return TRUE;
 
 	case WM_GETFONT:
@@ -1335,7 +1335,7 @@ LRESULT WINAPI ComboWndProc( HWND32 hwnd, UINT32 message,
 
 	case WM_SETFOCUS:
 		if( lphc->wState & CBF_EDIT )
-		    SetFocus32( lphc->hWndEdit );
+		    SetFocus( lphc->hWndEdit );
 		else
 		    COMBO_SetFocus( lphc );
 		return TRUE;
@@ -1349,10 +1349,10 @@ LRESULT WINAPI ComboWndProc( HWND32 hwnd, UINT32 message,
 		return TRUE;
 
 	case WM_COMMAND:
-		return COMBO_Command( lphc, wParam, (HWND32)lParam );
+		return COMBO_Command( lphc, wParam, (HWND)lParam );
 
 	case WM_GETTEXT:
-		return COMBO_GetText( lphc, (UINT32)wParam, (LPSTR)lParam );
+		return COMBO_GetText( lphc, (UINT)wParam, (LPSTR)lParam );
 
 	case WM_SETTEXT:
 	case WM_GETTEXTLENGTH:
@@ -1361,19 +1361,19 @@ LRESULT WINAPI ComboWndProc( HWND32 hwnd, UINT32 message,
         case WM_PASTE:
 	case WM_COPY:
 		if( lphc->wState & CBF_EDIT )
-		    return SendMessage32A( lphc->hWndEdit, message, wParam, lParam );
+		    return SendMessageA( lphc->hWndEdit, message, wParam, lParam );
 		return CB_ERR;
 
 	case WM_DRAWITEM:
 	case WM_DELETEITEM:
 	case WM_COMPAREITEM:
 	case WM_MEASUREITEM:
-		return COMBO_ItemOp32( lphc, message, wParam, lParam );
+		return COMBO_ItemOp( lphc, message, wParam, lParam );
 
 	case WM_ENABLE:
 		if( lphc->wState & CBF_EDIT )
-		    EnableWindow32( lphc->hWndEdit, (BOOL32)wParam ); 
-		EnableWindow32( lphc->hWndLBox, (BOOL32)wParam );
+		    EnableWindow( lphc->hWndEdit, (BOOL)wParam ); 
+		EnableWindow( lphc->hWndLBox, (BOOL)wParam );
 		return TRUE;
 
 	case WM_SETREDRAW:
@@ -1383,8 +1383,8 @@ LRESULT WINAPI ComboWndProc( HWND32 hwnd, UINT32 message,
 		    lphc->wState |= CBF_NOREDRAW;
 
 		if( lphc->wState & CBF_EDIT )
-		    SendMessage32A( lphc->hWndEdit, message, wParam, lParam );
-		SendMessage32A( lphc->hWndLBox, message, wParam, lParam );
+		    SendMessageA( lphc->hWndEdit, message, wParam, lParam );
+		SendMessageA( lphc->hWndLBox, message, wParam, lParam );
 		return 0;
 		
 	case WM_SYSKEYDOWN:
@@ -1396,12 +1396,12 @@ LRESULT WINAPI ComboWndProc( HWND32 hwnd, UINT32 message,
 	case WM_CHAR:
 	case WM_KEYDOWN:
 		if( lphc->wState & CBF_EDIT )
-		    return SendMessage32A( lphc->hWndEdit, message, wParam, lParam );
+		    return SendMessageA( lphc->hWndEdit, message, wParam, lParam );
 		else
-		    return SendMessage32A( lphc->hWndLBox, message, wParam, lParam );
+		    return SendMessageA( lphc->hWndLBox, message, wParam, lParam );
 
 	case WM_LBUTTONDOWN: 
-		if( !(lphc->wState & CBF_FOCUSED) ) SetFocus32( lphc->self->hwndSelf );
+		if( !(lphc->wState & CBF_FOCUSED) ) SetFocus( lphc->self->hwndSelf );
 		if( lphc->wState & CBF_FOCUSED ) COMBO_LButtonDown( lphc, lParam );
 		return TRUE;
 
@@ -1418,110 +1418,110 @@ LRESULT WINAPI ComboWndProc( HWND32 hwnd, UINT32 message,
 
 	case CB_ADDSTRING16:
 		if( CB_HASSTRINGS(lphc) ) lParam = (LPARAM)PTR_SEG_TO_LIN(lParam);
-	case CB_ADDSTRING32:
-		return SendMessage32A( lphc->hWndLBox, LB_ADDSTRING32, 0, lParam);
+	case CB_ADDSTRING:
+		return SendMessageA( lphc->hWndLBox, LB_ADDSTRING, 0, lParam);
 
 	case CB_INSERTSTRING16:
-		wParam = (INT32)(INT16)wParam;
+		wParam = (INT)(INT16)wParam;
 		if( CB_HASSTRINGS(lphc) ) lParam = (LPARAM)PTR_SEG_TO_LIN(lParam);
-	case CB_INSERTSTRING32:
-		return SendMessage32A( lphc->hWndLBox, LB_INSERTSTRING32, wParam, lParam);
+	case CB_INSERTSTRING:
+		return SendMessageA( lphc->hWndLBox, LB_INSERTSTRING, wParam, lParam);
 
 	case CB_DELETESTRING16:
-	case CB_DELETESTRING32:
-		return SendMessage32A( lphc->hWndLBox, LB_DELETESTRING32, wParam, 0);
+	case CB_DELETESTRING:
+		return SendMessageA( lphc->hWndLBox, LB_DELETESTRING, wParam, 0);
 
 	case CB_SELECTSTRING16:
-		wParam = (INT32)(INT16)wParam;
+		wParam = (INT)(INT16)wParam;
 		if( CB_HASSTRINGS(lphc) ) lParam = (LPARAM)PTR_SEG_TO_LIN(lParam);
-	case CB_SELECTSTRING32:
-		return COMBO_SelectString( lphc, (INT32)wParam, (LPSTR)lParam );
+	case CB_SELECTSTRING:
+		return COMBO_SelectString( lphc, (INT)wParam, (LPSTR)lParam );
 
 	case CB_FINDSTRING16:
-		wParam = (INT32)(INT16)wParam;
+		wParam = (INT)(INT16)wParam;
 		if( CB_HASSTRINGS(lphc) ) lParam = (LPARAM)PTR_SEG_TO_LIN(lParam);
-	case CB_FINDSTRING32:
-		return SendMessage32A( lphc->hWndLBox, LB_FINDSTRING32, wParam, lParam);
+	case CB_FINDSTRING:
+		return SendMessageA( lphc->hWndLBox, LB_FINDSTRING, wParam, lParam);
 
 	case CB_FINDSTRINGEXACT16:
-		wParam = (INT32)(INT16)wParam;
+		wParam = (INT)(INT16)wParam;
 		if( CB_HASSTRINGS(lphc) ) lParam = (LPARAM)PTR_SEG_TO_LIN(lParam);
-	case CB_FINDSTRINGEXACT32:
-		return SendMessage32A( lphc->hWndLBox, LB_FINDSTRINGEXACT32, 
+	case CB_FINDSTRINGEXACT:
+		return SendMessageA( lphc->hWndLBox, LB_FINDSTRINGEXACT, 
 						       wParam, lParam );
 	case CB_SETITEMHEIGHT16:
-		wParam = (INT32)(INT16)wParam;	/* signed integer */
-	case CB_SETITEMHEIGHT32:
-		return COMBO_SetItemHeight( lphc, (INT32)wParam, (INT32)lParam);
+		wParam = (INT)(INT16)wParam;	/* signed integer */
+	case CB_SETITEMHEIGHT:
+		return COMBO_SetItemHeight( lphc, (INT)wParam, (INT)lParam);
 
 	case CB_GETITEMHEIGHT16:
-		wParam = (INT32)(INT16)wParam;
-	case CB_GETITEMHEIGHT32:
-		if( (INT32)wParam >= 0 )	/* listbox item */
-		    return SendMessage32A( lphc->hWndLBox, LB_GETITEMHEIGHT32, wParam, 0);
+		wParam = (INT)(INT16)wParam;
+	case CB_GETITEMHEIGHT:
+		if( (INT)wParam >= 0 )	/* listbox item */
+		    return SendMessageA( lphc->hWndLBox, LB_GETITEMHEIGHT, wParam, 0);
 		return (lphc->RectEdit.bottom - lphc->RectEdit.top);
 
 	case CB_RESETCONTENT16: 
-	case CB_RESETCONTENT32:
-		SendMessage32A( lphc->hWndLBox, LB_RESETCONTENT32, 0, 0 );
+	case CB_RESETCONTENT:
+		SendMessageA( lphc->hWndLBox, LB_RESETCONTENT, 0, 0 );
 		CBPaintText( lphc, 0 );
 		return TRUE;
 
-	case CB_INITSTORAGE32:
-		return SendMessage32A( lphc->hWndLBox, LB_INITSTORAGE32, wParam, lParam);
+	case CB_INITSTORAGE:
+		return SendMessageA( lphc->hWndLBox, LB_INITSTORAGE, wParam, lParam);
 
-	case CB_GETHORIZONTALEXTENT32:
-		return SendMessage32A( lphc->hWndLBox, LB_GETHORIZONTALEXTENT32, 0, 0);
+	case CB_GETHORIZONTALEXTENT:
+		return SendMessageA( lphc->hWndLBox, LB_GETHORIZONTALEXTENT, 0, 0);
 
-	case CB_SETHORIZONTALEXTENT32:
-		return SendMessage32A( lphc->hWndLBox, LB_SETHORIZONTALEXTENT32, wParam, 0);
+	case CB_SETHORIZONTALEXTENT:
+		return SendMessageA( lphc->hWndLBox, LB_SETHORIZONTALEXTENT, wParam, 0);
 
-	case CB_GETTOPINDEX32:
-		return SendMessage32A( lphc->hWndLBox, LB_GETTOPINDEX32, 0, 0);
+	case CB_GETTOPINDEX:
+		return SendMessageA( lphc->hWndLBox, LB_GETTOPINDEX, 0, 0);
 
-	case CB_GETLOCALE32:
-		return SendMessage32A( lphc->hWndLBox, LB_GETLOCALE32, 0, 0);
+	case CB_GETLOCALE:
+		return SendMessageA( lphc->hWndLBox, LB_GETLOCALE, 0, 0);
 
-	case CB_SETLOCALE32:
-		return SendMessage32A( lphc->hWndLBox, LB_SETLOCALE32, wParam, 0);
+	case CB_SETLOCALE:
+		return SendMessageA( lphc->hWndLBox, LB_SETLOCALE, wParam, 0);
 
-	case CB_GETDROPPEDWIDTH32:
+	case CB_GETDROPPEDWIDTH:
 		if( lphc->droppedWidth )
 		    return lphc->droppedWidth;
 		return lphc->RectCombo.right - lphc->RectCombo.left - 
 		           (lphc->wState & CBF_EDIT) ? CBitOffset : 0;
 
-	case CB_SETDROPPEDWIDTH32:
+	case CB_SETDROPPEDWIDTH:
 		if( (CB_GETTYPE(lphc) != CBS_SIMPLE) &&
-		    (INT32)wParam < 32768 ) lphc->droppedWidth = (INT32)wParam;
+		    (INT)wParam < 32768 ) lphc->droppedWidth = (INT)wParam;
 		return CB_ERR;
 
 	case CB_GETDROPPEDCONTROLRECT16:
 		lParam = (LPARAM)PTR_SEG_TO_LIN(lParam);
 		if( lParam ) 
 		{
-		    RECT32	r;
-		    CBGetDroppedControlRect32( lphc, &r );
+		    RECT	r;
+		    CBGetDroppedControlRect( lphc, &r );
 		    CONV_RECT32TO16( &r, (LPRECT16)lParam );
 		}
 		return CB_OKAY;
 
-	case CB_GETDROPPEDCONTROLRECT32:
-		if( lParam ) CBGetDroppedControlRect32(lphc, (LPRECT32)lParam );
+	case CB_GETDROPPEDCONTROLRECT:
+		if( lParam ) CBGetDroppedControlRect(lphc, (LPRECT)lParam );
 		return CB_OKAY;
 
 	case CB_GETDROPPEDSTATE16:
-	case CB_GETDROPPEDSTATE32:
+	case CB_GETDROPPEDSTATE:
 		return (lphc->wState & CBF_DROPPED) ? TRUE : FALSE;
 
 	case CB_DIR16: 
                 lParam = (LPARAM)PTR_SEG_TO_LIN(lParam);
                 /* fall through */
-	case CB_DIR32:
-		return COMBO_Directory( lphc, (UINT32)wParam, 
-				       (LPSTR)lParam, (message == CB_DIR32));
+	case CB_DIR:
+		return COMBO_Directory( lphc, (UINT)wParam, 
+				       (LPSTR)lParam, (message == CB_DIR));
 	case CB_SHOWDROPDOWN16:
-	case CB_SHOWDROPDOWN32:
+	case CB_SHOWDROPDOWN:
 		if( CB_GETTYPE(lphc) != CBS_SIMPLE )
 		{
 		    if( wParam )
@@ -1536,17 +1536,17 @@ LRESULT WINAPI ComboWndProc( HWND32 hwnd, UINT32 message,
 		return TRUE;
 
 	case CB_GETCOUNT16: 
-	case CB_GETCOUNT32:
-		return SendMessage32A( lphc->hWndLBox, LB_GETCOUNT32, 0, 0);
+	case CB_GETCOUNT:
+		return SendMessageA( lphc->hWndLBox, LB_GETCOUNT, 0, 0);
 
 	case CB_GETCURSEL16: 
-	case CB_GETCURSEL32:
-		return SendMessage32A( lphc->hWndLBox, LB_GETCURSEL32, 0, 0);
+	case CB_GETCURSEL:
+		return SendMessageA( lphc->hWndLBox, LB_GETCURSEL, 0, 0);
 
 	case CB_SETCURSEL16:
-		wParam = (INT32)(INT16)wParam;
-	case CB_SETCURSEL32:
-		lParam = SendMessage32A( lphc->hWndLBox, LB_SETCURSEL32, wParam, 0);
+		wParam = (INT)(INT16)wParam;
+	case CB_SETCURSEL:
+		lParam = SendMessageA( lphc->hWndLBox, LB_SETCURSEL, wParam, 0);
 		if( lphc->wState & CBF_SELCHANGE )
 		{
 		    /* no LBN_SELCHANGE in this case, update manually */
@@ -1557,48 +1557,48 @@ LRESULT WINAPI ComboWndProc( HWND32 hwnd, UINT32 message,
 	        return lParam;
 
 	case CB_GETLBTEXT16: 
-		wParam = (INT32)(INT16)wParam;
+		wParam = (INT)(INT16)wParam;
 		lParam = (LPARAM)PTR_SEG_TO_LIN(lParam);
-	case CB_GETLBTEXT32:
-		return SendMessage32A( lphc->hWndLBox, LB_GETTEXT32, wParam, lParam);
+	case CB_GETLBTEXT:
+		return SendMessageA( lphc->hWndLBox, LB_GETTEXT, wParam, lParam);
 
 	case CB_GETLBTEXTLEN16: 
-		wParam = (INT32)(INT16)wParam;
-	case CB_GETLBTEXTLEN32:
-		return SendMessage32A( lphc->hWndLBox, LB_GETTEXTLEN32, wParam, 0);
+		wParam = (INT)(INT16)wParam;
+	case CB_GETLBTEXTLEN:
+		return SendMessageA( lphc->hWndLBox, LB_GETTEXTLEN, wParam, 0);
 
 	case CB_GETITEMDATA16:
-		wParam = (INT32)(INT16)wParam;
-	case CB_GETITEMDATA32:
-		return SendMessage32A( lphc->hWndLBox, LB_GETITEMDATA32, wParam, 0);
+		wParam = (INT)(INT16)wParam;
+	case CB_GETITEMDATA:
+		return SendMessageA( lphc->hWndLBox, LB_GETITEMDATA, wParam, 0);
 
 	case CB_SETITEMDATA16:
-		wParam = (INT32)(INT16)wParam;
-	case CB_SETITEMDATA32:
-		return SendMessage32A( lphc->hWndLBox, LB_SETITEMDATA32, wParam, lParam);
+		wParam = (INT)(INT16)wParam;
+	case CB_SETITEMDATA:
+		return SendMessageA( lphc->hWndLBox, LB_SETITEMDATA, wParam, lParam);
 
 	case CB_GETEDITSEL16: 
 		wParam = lParam = 0;   /* just in case */
-	case CB_GETEDITSEL32:
+	case CB_GETEDITSEL:
 		if( lphc->wState & CBF_EDIT )
 		{
-		    INT32	a, b;
+		    INT	a, b;
 
-		    return SendMessage32A( lphc->hWndEdit, EM_GETSEL32,
-					   (wParam) ? wParam : (WPARAM32)&a,
+		    return SendMessageA( lphc->hWndEdit, EM_GETSEL,
+					   (wParam) ? wParam : (WPARAM)&a,
 					   (lParam) ? lParam : (LPARAM)&b );
 		}
 		return CB_ERR;
 
 	case CB_SETEDITSEL16: 
-	case CB_SETEDITSEL32:
+	case CB_SETEDITSEL:
 		if( lphc->wState & CBF_EDIT ) 
-		    return SendMessage32A( lphc->hWndEdit, EM_SETSEL32, 
-			  (INT32)(INT16)LOWORD(lParam), (INT32)(INT16)HIWORD(lParam) );
+		    return SendMessageA( lphc->hWndEdit, EM_SETSEL, 
+			  (INT)(INT16)LOWORD(lParam), (INT)(INT16)HIWORD(lParam) );
 		return CB_ERR;
 
 	case CB_SETEXTENDEDUI16:
-	case CB_SETEXTENDEDUI32:
+	case CB_SETEXTENDEDUI:
 		if( CB_GETTYPE(lphc) == CBS_SIMPLE ) return CB_ERR;
 
 		if( wParam )
@@ -1607,13 +1607,13 @@ LRESULT WINAPI ComboWndProc( HWND32 hwnd, UINT32 message,
 		return CB_OKAY;
 
 	case CB_GETEXTENDEDUI16:
-	case CB_GETEXTENDEDUI32:
+	case CB_GETEXTENDEDUI:
 		return (lphc->wState & CBF_EUI) ? TRUE : FALSE;
 
 	case (WM_USER + 0x1B):
 	        WARN(combo, "[%04x]: undocumented msg!\n", hwnd );
     }
-    return DefWindowProc32A(hwnd, message, wParam, lParam);
+    return DefWindowProcA(hwnd, message, wParam, lParam);
   }
   return CB_ERR;
 }

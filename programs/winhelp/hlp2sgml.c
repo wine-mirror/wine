@@ -252,19 +252,19 @@ int main(int argc, char **argv)
 
 static FILE *file = 0;
 
-HFILE WINAPI OpenFile32( LPCSTR path, OFSTRUCT *ofs, UINT mode )
+HFILE WINAPI OpenFile( LPCSTR path, OFSTRUCT *ofs, UINT mode )
 {
   file = *path ? fopen(path, "r") : stdin;
   return file ? 1 : HFILE_ERROR;
 }
 
-HFILE WINAPI _lclose32( HFILE hFile )
+HFILE WINAPI _lclose( HFILE hFile )
 {
   fclose(file);
   return 0;
 }
 
-LONG WINAPI _hread32( HFILE hFile, LPVOID buffer, LONG count )
+LONG WINAPI _hread( HFILE hFile, LPVOID buffer, LONG count )
 {
   return fread(buffer, 1, count, file);
 }
@@ -314,14 +314,14 @@ INT WINAPI lstrlen(LPCSTR str)
   return strlen(str);
 }
 
-LPSTR WINAPI lstrcpy32A( LPSTR dst, LPCSTR src )
+LPSTR WINAPI lstrcpyA( LPSTR dst, LPCSTR src )
 {
     if (!src || !dst) return NULL;
     strcpy( dst, src );
     return dst;
 }
 
-void WINAPI hmemcpy(LPVOID hpvDest, LPCVOID hpvSource, LONG cbCopy)
+void WINAPI hmemcpy16(LPVOID hpvDest, LPCVOID hpvSource, LONG cbCopy)
 {
   memcpy(hpvDest, hpvSource, cbCopy);
 }

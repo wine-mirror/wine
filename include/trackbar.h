@@ -9,29 +9,29 @@
 
 typedef struct tagTRACKBAR_INFO
 {
-    INT32  nRangeMin;
-    INT32  nRangeMax;
-    INT32  nLineSize;
-    INT32  nPageSize;
-    INT32  nSelMin;
-    INT32  nSelMax;
-    INT32  nPos;
-    UINT32 uThumbLen;
-    UINT32 uNumTics;
-	UINT32  uTicFreq;
-	HWND32 hwndNotify;
-    HWND32 hwndToolTip;
-    HWND32 hwndBuddyLA;
-    HWND32 hwndBuddyRB;
-    INT32  fLocation;
+    INT  nRangeMin;
+    INT  nRangeMax;
+    INT  nLineSize;
+    INT  nPageSize;
+    INT  nSelMin;
+    INT  nSelMax;
+    INT  nPos;
+    UINT uThumbLen;
+    UINT uNumTics;
+	UINT  uTicFreq;
+	HWND hwndNotify;
+    HWND hwndToolTip;
+    HWND hwndBuddyLA;
+    HWND hwndBuddyRB;
+    INT  fLocation;
 	COLORREF clrBk;
 	
-	INT32  flags;
-    BOOL32 bFocus;
-    RECT32 rcChannel;
-    RECT32 rcSelection;
-    RECT32 rcThumb;
-	INT32  dragPos;
+	INT  flags;
+    BOOL bFocus;
+    RECT rcChannel;
+    RECT rcSelection;
+    RECT rcThumb;
+	INT  dragPos;
     LPLONG tics;
 } TRACKBAR_INFO;
 

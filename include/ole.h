@@ -16,8 +16,7 @@
 
 
 #define OLESTR16(x) x
-#define OLESTR32(x) L##x	/* probably wrong */
-#define OLESTR WINELIB_NAME(OLESTR)
+#define OLESTR(x) L##x	/* probably wrong */
 
 /* object types */
 #define OT_LINK		1
@@ -274,7 +273,7 @@ OLESTATUS WINAPI OleRevokeServer16(LHSERVER);
 
 /* com functions */
 void WINAPI CoFreeUnusedLibraries(void);
-HINSTANCE32 WINAPI CoLoadLibrary(LPSTR lpszLibName, BOOL32 bAutoFree);
+HINSTANCE WINAPI CoLoadLibrary(LPSTR lpszLibName, BOOL bAutoFree);
 void WINAPI CoFreeUnusedLibraries(void);
 void WINAPI CoFreeAllLibraries(void);
 

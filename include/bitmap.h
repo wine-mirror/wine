@@ -48,8 +48,8 @@ typedef struct {
 typedef struct tagBITMAPOBJ
 {
     GDIOBJHDR   header;
-    BITMAP32    bitmap;
-    SIZE32      size;   /* For SetBitmapDimension() */
+    BITMAP    bitmap;
+    SIZE      size;   /* For SetBitmapDimension() */
 
     DDBITMAP	*DDBitmap;
 
@@ -60,23 +60,23 @@ typedef struct tagBITMAPOBJ
 
   /* objects/bitmap.c */
 extern INT16   BITMAP_GetObject16( BITMAPOBJ * bmp, INT16 count, LPVOID buffer );
-extern INT32   BITMAP_GetObject32( BITMAPOBJ * bmp, INT32 count, LPVOID buffer );
-extern BOOL32  BITMAP_DeleteObject( HBITMAP16 hbitmap, BITMAPOBJ * bitmap );
-extern INT32   BITMAP_GetPadding( INT32 width, INT32 depth );
-extern INT32   BITMAP_GetWidthBytes( INT32 width, INT32 depth );
-extern HBITMAP32 BITMAP_LoadBitmap32W(HINSTANCE32 instance,LPCWSTR name,
-  UINT32 loadflags);
-extern HBITMAP32 BITMAP_CopyBitmap( HBITMAP32 hbitmap );
+extern INT   BITMAP_GetObject( BITMAPOBJ * bmp, INT count, LPVOID buffer );
+extern BOOL  BITMAP_DeleteObject( HBITMAP16 hbitmap, BITMAPOBJ * bitmap );
+extern INT   BITMAP_GetPadding( INT width, INT depth );
+extern INT   BITMAP_GetWidthBytes( INT width, INT depth );
+extern HBITMAP BITMAP_LoadBitmapW(HINSTANCE instance,LPCWSTR name,
+  UINT loadflags);
+extern HBITMAP BITMAP_CopyBitmap( HBITMAP hbitmap );
 
   /* objects/dib.c */
 extern int DIB_GetDIBWidthBytes( int width, int depth );
 extern int DIB_BitmapInfoSize( BITMAPINFO * info, WORD coloruse );
 extern int DIB_GetBitmapInfo( const BITMAPINFOHEADER *header, DWORD *width,
                               int *height, WORD *bpp, WORD *compr );
-extern void DIB_UpdateDIBSection( DC *dc, BOOL32 toDIB );
+extern void DIB_UpdateDIBSection( DC *dc, BOOL toDIB );
 extern void DIB_DeleteDIBSection( BITMAPOBJ *bmp );
 extern void DIB_SelectDIBSection( DC *dc, BITMAPOBJ *bmp );
-extern void DIB_FixColorsToLoadflags(BITMAPINFO * bmi, UINT32 loadflags,
+extern void DIB_FixColorsToLoadflags(BITMAPINFO * bmi, UINT loadflags,
   BYTE pix);
 
 #endif  /* __WINE_BITMAP_H */

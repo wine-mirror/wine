@@ -22,8 +22,8 @@
 typedef struct
 {
     SYSTEMTIMERPROC callback;  /* NULL if not in use */
-    INT32     rate;
-    INT32     ticks;
+    INT     rate;
+    INT     ticks;
 } SYSTEM_TIMER;
 
 #define NB_SYS_TIMERS   8
@@ -31,7 +31,7 @@ typedef struct
 
 static SYSTEM_TIMER SYS_Timers[NB_SYS_TIMERS];
 static int SYS_NbTimers = 0;
-static BOOL32 SYS_TimersDisabled = FALSE;
+static BOOL SYS_TimersDisabled = FALSE;
 
 
 /***********************************************************************
@@ -60,7 +60,7 @@ static HANDLER_DEF(SYSTEM_TimerTick)
  */
 static void SYSTEM_StartTicks(void)
 {
-    static BOOL32 handler_installed = FALSE;
+    static BOOL handler_installed = FALSE;
 
     if (!handler_installed)
     {
@@ -104,7 +104,7 @@ static void SYSTEM_StopTicks(void)
  * Note: the function always takes 2 WORD arguments, contrary to what
  *       "Undocumented Windows" says.
   */
-DWORD WINAPI InquireSystem( WORD code, WORD arg )
+DWORD WINAPI InquireSystem16( WORD code, WORD arg )
 {
     WORD drivetype;
 
@@ -135,7 +135,7 @@ WORD WINAPI CreateSystemTimer( WORD rate, SYSTEMTIMERPROC callback )
     for (i = 0; i < NB_SYS_TIMERS; i++)
         if (!SYS_Timers[i].callback)  /* Found one */
         {
-            SYS_Timers[i].rate = (UINT32)rate * 1000;
+            SYS_Timers[i].rate = (UINT)rate * 1000;
             if (SYS_Timers[i].rate < SYS_TIMER_RATE)
                 SYS_Timers[i].rate = SYS_TIMER_RATE;
             SYS_Timers[i].ticks = SYS_Timers[i].rate;
@@ -165,7 +165,7 @@ WORD WINAPI SYSTEM_KillSystemTimer( WORD timer )
 /***********************************************************************
  *           EnableSystemTimers   (SYSTEM.4)
  */
-void WINAPI EnableSystemTimers(void)
+void WINAPI EnableSystemTimers16(void)
 {
     SYS_TimersDisabled = FALSE;
     if (SYS_NbTimers) SYSTEM_StartTicks();
@@ -175,7 +175,7 @@ void WINAPI EnableSystemTimers(void)
 /***********************************************************************
  *           DisableSystemTimers   (SYSTEM.5)
  */
-void WINAPI DisableSystemTimers(void)
+void WINAPI DisableSystemTimers16(void)
 {
     SYS_TimersDisabled = TRUE;
     if (SYS_NbTimers) SYSTEM_StopTicks();

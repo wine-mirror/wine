@@ -67,7 +67,7 @@ WORD WINAPI KEYBOARD_Inquire(LPKBINFO kbInfo)
 VOID WINAPI KEYBOARD_Enable( LPKEYBD_EVENT_PROC lpKeybEventProc, 
                              LPBYTE lpKeyState )
 {
-  static BOOL32 initDone = FALSE;
+  static BOOL initDone = FALSE;
   
   DefKeybEventProc = lpKeybEventProc;
   pKeyStateTable = lpKeyState;
@@ -111,7 +111,7 @@ void KEYBOARD_SendEvent( BYTE bVk, BYTE bScan, DWORD dwFlags,
 /**********************************************************************
  *           ScreenSwitchEnable      (KEYBOARD.100)
  */
-VOID WINAPI ScreenSwitchEnable(WORD unused)
+VOID WINAPI ScreenSwitchEnable16(WORD unused)
 {
   FIXME(keyboard,"(%04x): stub\n",unused);
 }

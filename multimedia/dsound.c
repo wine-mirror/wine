@@ -95,8 +95,8 @@ static void DSOUND_CloseAudio(void);
 
 #endif
 
-HRESULT WINAPI DirectSoundEnumerate32A(
-	LPDSENUMCALLBACK32A enumcb,
+HRESULT WINAPI DirectSoundEnumerateA(
+	LPDSENUMCALLBACKA enumcb,
 	LPVOID context)
 {
 	TRACE(dsound, "enumcb = %p, context = %p\n", enumcb, context);
@@ -1147,7 +1147,7 @@ static struct tagLPDIRECTSOUNDBUFFER_VTABLE dsbvt = {
  */
 
 static HRESULT WINAPI IDirectSound_SetCooperativeLevel(
-	LPDIRECTSOUND this,HWND32 hwnd,DWORD level
+	LPDIRECTSOUND this,HWND hwnd,DWORD level
 ) {
 	FIXME(dsound,"(%p,%08lx,%ld):stub\n",this,(DWORD)hwnd,level);
 	return 0;
@@ -1586,7 +1586,7 @@ static inline BYTE cvtS16toU8(INT16 word)
 /* We should be able to optimize these two inline functions */
 /* so that we aren't doing 8->16->8 conversions when it is */
 /* not necessary. But this is still a WIP. Optimize later. */
-static inline void get_fields(const IDirectSoundBuffer *dsb, BYTE *buf, INT32 *fl, INT32 *fr)
+static inline void get_fields(const IDirectSoundBuffer *dsb, BYTE *buf, INT *fl, INT *fr)
 {
 	INT16	*bufs = (INT16 *) buf;
 
@@ -1619,7 +1619,7 @@ static inline void get_fields(const IDirectSoundBuffer *dsb, BYTE *buf, INT32 *f
 	return;
 }
 
-static inline void set_fields(BYTE *buf, INT32 fl, INT32 fr)
+static inline void set_fields(BYTE *buf, INT fl, INT fr)
 {
 	INT16 *bufs = (INT16 *) buf;
 
@@ -1649,12 +1649,12 @@ static inline void set_fields(BYTE *buf, INT32 fl, INT32 fr)
 }
 
 /* Now with PerfectPitch (tm) technology */
-static INT32 DSOUND_MixerNorm(IDirectSoundBuffer *dsb, BYTE *buf, INT32 len)
+static INT DSOUND_MixerNorm(IDirectSoundBuffer *dsb, BYTE *buf, INT len)
 {
-	INT32	i, size, ipos, ilen, fieldL, fieldR;
+	INT	i, size, ipos, ilen, fieldL, fieldR;
 	BYTE	*ibp, *obp;
-	INT32	iAdvance = dsb->wfx.nBlockAlign;
-	INT32	oAdvance = primarybuf->wfx.nBlockAlign;
+	INT	iAdvance = dsb->wfx.nBlockAlign;
+	INT	oAdvance = primarybuf->wfx.nBlockAlign;
 
 	ibp = dsb->buffer + dsb->playpos;
 	obp = buf;
@@ -1717,9 +1717,9 @@ static INT32 DSOUND_MixerNorm(IDirectSoundBuffer *dsb, BYTE *buf, INT32 len)
 	return ilen;
 }
 
-static void DSOUND_MixerVol(IDirectSoundBuffer *dsb, BYTE *buf, INT32 len)
+static void DSOUND_MixerVol(IDirectSoundBuffer *dsb, BYTE *buf, INT len)
 {
-	INT32	i, inc = primarybuf->wfx.wBitsPerSample >> 3;
+	INT	i, inc = primarybuf->wfx.wBitsPerSample >> 3;
 	BYTE	*bpc = buf;
 	INT16	*bps = (INT16 *) buf;
 	
@@ -1735,7 +1735,7 @@ static void DSOUND_MixerVol(IDirectSoundBuffer *dsb, BYTE *buf, INT32 len)
 	/* this method. Oh well, tough patooties. */
 
 	for (i = 0; i < len; i += inc) {
-		INT32	val;
+		INT	val;
 
 		switch (inc) {
 
@@ -1762,7 +1762,7 @@ static void DSOUND_MixerVol(IDirectSoundBuffer *dsb, BYTE *buf, INT32 len)
 }
 
 #ifdef USE_DSOUND3D
-static void DSOUND_Mixer3D(IDirectSoundBuffer *dsb, BYTE *buf, INT32 len)
+static void DSOUND_Mixer3D(IDirectSoundBuffer *dsb, BYTE *buf, INT len)
 {
 	BYTE	*ibp, *obp;
 	DWORD	buflen, playpos;
@@ -1791,16 +1791,16 @@ static void DSOUND_Mixer3D(IDirectSoundBuffer *dsb, BYTE *buf, INT32 len)
 
 static DWORD DSOUND_MixInBuffer(IDirectSoundBuffer *dsb)
 {
-	INT32	i, len, ilen, temp, field;
-	INT32	advance = primarybuf->wfx.wBitsPerSample >> 3;
+	INT	i, len, ilen, temp, field;
+	INT	advance = primarybuf->wfx.wBitsPerSample >> 3;
 	BYTE	*buf, *ibuf, *obuf;
 	INT16	*ibufs, *obufs;
 
 	len = DSOUND_FRAGLEN;			/* The most we will use */
 	if (!(dsb->playflags & DSBPLAY_LOOPING)) {
-		temp = MulDiv32(primarybuf->wfx.nAvgBytesPerSec, dsb->buflen,
+		temp = MulDiv(primarybuf->wfx.nAvgBytesPerSec, dsb->buflen,
 			dsb->nAvgBytesPerSec) -
-		       MulDiv32(primarybuf->wfx.nAvgBytesPerSec, dsb->playpos,
+		       MulDiv(primarybuf->wfx.nAvgBytesPerSec, dsb->playpos,
 			dsb->nAvgBytesPerSec);
 		len = (len > temp) ? temp : len;
 	}
@@ -1882,7 +1882,7 @@ static DWORD DSOUND_MixInBuffer(IDirectSoundBuffer *dsb)
 
 static DWORD WINAPI DSOUND_MixPrimary(void)
 {
-	INT32			i, len, maxlen = 0;
+	INT			i, len, maxlen = 0;
 	IDirectSoundBuffer	*dsb;
 
 	for (i = dsound->nrofbuffers - 1; i >= 0; i--) {
@@ -2128,7 +2128,7 @@ HRESULT WINAPI DirectSoundCreate(REFGUID lpGUID,LPDIRECTSOUND *ppDS,IUnknown *pU
 	(*ppDS)->wfx.wBitsPerSample	= 8;
 
 	if (!dsound) {
-		HANDLE32	hnd;
+		HANDLE	hnd;
 		DWORD		xid;
 
 		dsound = (*ppDS);
@@ -2150,7 +2150,7 @@ HRESULT WINAPI DirectSoundCreate(REFGUID lpGUID,LPDIRECTSOUND *ppDS,IUnknown *pU
 	}
 	return DS_OK;
 #else
-	MessageBox32A(0,"DirectSound needs the Open Sound System Driver, which has not been found by ./configure.","WINE DirectSound",MB_OK|MB_ICONSTOP);
+	MessageBoxA(0,"DirectSound needs the Open Sound System Driver, which has not been found by ./configure.","WINE DirectSound",MB_OK|MB_ICONSTOP);
 	return DSERR_NODRIVER;
 #endif
 }
@@ -2205,7 +2205,7 @@ static HRESULT WINAPI DSCF_CreateInstance(
 	return E_NOINTERFACE;
 }
 
-static HRESULT WINAPI DSCF_LockServer(LPCLASSFACTORY iface,BOOL32 dolock) {
+static HRESULT WINAPI DSCF_LockServer(LPCLASSFACTORY iface,BOOL dolock) {
 	ICOM_THIS(IClassFactoryImpl,iface);
 	FIXME(dsound,"(%p)->(%d),stub!\n",This,dolock);
 	return S_OK;

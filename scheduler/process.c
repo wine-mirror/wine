@@ -32,15 +32,15 @@ const K32OBJ_OPS PROCESS_Ops =
 };
 
 /* The initial process PDB */
-static PDB32 initial_pdb;
+static PDB initial_pdb;
 
-static PDB32 *PROCESS_PDBList = NULL;
+static PDB *PROCESS_PDBList = NULL;
 static DWORD PROCESS_PDBList_Size = 0;
 
 /***********************************************************************
  *           PROCESS_Current
  */
-PDB32 *PROCESS_Current(void)
+PDB *PROCESS_Current(void)
 {
     return THREAD_Current()->process;
 }
@@ -53,7 +53,7 @@ PDB32 *PROCESS_Current(void)
  *        into all address spaces as is KERNEL32 in Windows 95)
  *
  */
-PDB32 *PROCESS_Initial(void)
+PDB *PROCESS_Initial(void)
 {
     return &initial_pdb;
 }
@@ -63,7 +63,7 @@ PDB32 *PROCESS_Initial(void)
  *
  * Retrieve information about a process
  */
-static BOOL32 PROCESS_QueryInfo( HANDLE32 handle,
+static BOOL PROCESS_QueryInfo( HANDLE handle,
                                  struct get_process_info_reply *reply )
 {
     struct get_process_info_request req;
@@ -78,7 +78,7 @@ static BOOL32 PROCESS_QueryInfo( HANDLE32 handle,
  *
  * Check if a handle is to the current process
  */
-BOOL32 PROCESS_IsCurrent( HANDLE32 handle )
+BOOL PROCESS_IsCurrent( HANDLE handle )
 {
     struct get_process_info_reply reply;
     return (PROCESS_QueryInfo( handle, &reply ) &&
@@ -91,9 +91,9 @@ BOOL32 PROCESS_IsCurrent( HANDLE32 handle )
  *
  * Convert a process id to a PDB, making sure it is valid.
  */
-PDB32 *PROCESS_IdToPDB( DWORD id )
+PDB *PROCESS_IdToPDB( DWORD id )
 {
-    PDB32 *pdb;
+    PDB *pdb;
 
     if (!id) return PROCESS_Current();
     pdb = PROCESS_ID_TO_PDB( id );
@@ -112,7 +112,7 @@ PDB32 *PROCESS_IdToPDB( DWORD id )
  *
  * Build the env DB for the initial process
  */
-static BOOL32 PROCESS_BuildEnvDB( PDB32 *pdb )
+static BOOL PROCESS_BuildEnvDB( PDB *pdb )
 {
     /* Allocate the env DB (FIXME: should not be on the system heap) */
 
@@ -122,7 +122,7 @@ static BOOL32 PROCESS_BuildEnvDB( PDB32 *pdb )
 
     /* Allocate startup info */
     if (!(pdb->env_db->startup_info = 
-          HeapAlloc( SystemHeap, HEAP_ZERO_MEMORY, sizeof(STARTUPINFO32A) )))
+          HeapAlloc( SystemHeap, HEAP_ZERO_MEMORY, sizeof(STARTUPINFOA) )))
         return FALSE;
 
     /* Allocate the standard handles */
@@ -144,8 +144,8 @@ static BOOL32 PROCESS_BuildEnvDB( PDB32 *pdb )
 /***********************************************************************
  *           PROCESS_InheritEnvDB
  */
-static BOOL32 PROCESS_InheritEnvDB( PDB32 *pdb, LPCSTR cmd_line, LPCSTR env,
-                                    BOOL32 inherit_handles, STARTUPINFO32A *startup )
+static BOOL PROCESS_InheritEnvDB( PDB *pdb, LPCSTR cmd_line, LPCSTR env,
+                                    BOOL inherit_handles, STARTUPINFOA *startup )
 {
     if (!(pdb->env_db = HeapAlloc(pdb->heap, HEAP_ZERO_MEMORY, sizeof(ENVDB))))
         return FALSE;
@@ -162,7 +162,7 @@ static BOOL32 PROCESS_InheritEnvDB( PDB32 *pdb, LPCSTR cmd_line, LPCSTR env,
 
     /* Remember startup info */
     if (!(pdb->env_db->startup_info = 
-          HeapAlloc( pdb->heap, HEAP_ZERO_MEMORY, sizeof(STARTUPINFO32A) )))
+          HeapAlloc( pdb->heap, HEAP_ZERO_MEMORY, sizeof(STARTUPINFOA) )))
         return FALSE;
     *pdb->env_db->startup_info = *startup;
 
@@ -189,7 +189,7 @@ static BOOL32 PROCESS_InheritEnvDB( PDB32 *pdb, LPCSTR cmd_line, LPCSTR env,
  * Insert this PDB into the global PDB list
  */
 
-static void PROCESS_PDBList_Insert (PDB32 *pdb)
+static void PROCESS_PDBList_Insert (PDB *pdb)
 {
   TRACE (process, "Inserting PDB 0x%0lx, #%ld current\n", 
 	 PDB_TO_PROCESS_ID (pdb), PROCESS_PDBList_Size);
@@ -206,7 +206,7 @@ static void PROCESS_PDBList_Insert (PDB32 *pdb)
     }
   else
     {
-      PDB32 *first = PROCESS_PDBList, *last = PROCESS_PDBList;
+      PDB *first = PROCESS_PDBList, *last = PROCESS_PDBList;
       if (first->list_prev) last = first->list_prev;
 
       PROCESS_PDBList = pdb;
@@ -224,9 +224,9 @@ static void PROCESS_PDBList_Insert (PDB32 *pdb)
  * Remove this PDB from the global PDB list
  */
 
-static void PROCESS_PDBList_Remove (PDB32 *pdb)
+static void PROCESS_PDBList_Remove (PDB *pdb)
 {
-  PDB32 *next = pdb->list_next, *prev = pdb->list_prev;
+  PDB *next = pdb->list_next, *prev = pdb->list_prev;
   
   TRACE (process, "Removing PDB 0x%0lx, #%ld current\n", 
 	 PDB_TO_PROCESS_ID (pdb), PROCESS_PDBList_Size);
@@ -268,7 +268,7 @@ int	PROCESS_PDBList_Getsize ()
  * Return the head of the PDB list
  */
 
-PDB32*	PROCESS_PDBList_Getfirst ()
+PDB*	PROCESS_PDBList_Getfirst ()
 {
   return PROCESS_PDBList;
 }
@@ -279,7 +279,7 @@ PDB32*	PROCESS_PDBList_Getfirst ()
  * If at the end of the list, return NULL.
  */
 
-PDB32*	PROCESS_PDBList_Getnext (PDB32 *pdb)
+PDB*	PROCESS_PDBList_Getnext (PDB *pdb)
 {
   return (pdb->list_next != PROCESS_PDBList) ? pdb->list_next : NULL;
 }
@@ -289,7 +289,7 @@ PDB32*	PROCESS_PDBList_Getnext (PDB32 *pdb)
  *
  * Free a PDB and all associated storage.
  */
-static void PROCESS_FreePDB( PDB32 *pdb )
+static void PROCESS_FreePDB( PDB *pdb )
 {
     /*
      * FIXME: 
@@ -313,9 +313,9 @@ static void PROCESS_FreePDB( PDB32 *pdb )
  * Allocate and fill a PDB structure.
  * Runs in the context of the parent process.
  */
-static PDB32 *PROCESS_CreatePDB( PDB32 *parent, BOOL32 inherit )
+static PDB *PROCESS_CreatePDB( PDB *parent, BOOL inherit )
 {
-    PDB32 *pdb = HeapAlloc( SystemHeap, HEAP_ZERO_MEMORY, sizeof(PDB32) );
+    PDB *pdb = HeapAlloc( SystemHeap, HEAP_ZERO_MEMORY, sizeof(PDB) );
 
     if (!pdb) return NULL;
     pdb->header.type     = K32OBJ_PROCESS;
@@ -348,11 +348,11 @@ error:
  *
  * Second part of CreatePDB
  */
-static BOOL32 PROCESS_FinishCreatePDB( PDB32 *pdb )
+static BOOL PROCESS_FinishCreatePDB( PDB *pdb )
 {
     InitializeCriticalSection( &pdb->crit_section );
     /* Allocate the event */
-    if (!(pdb->load_done_evt = CreateEvent32A( NULL, TRUE, FALSE, NULL )))
+    if (!(pdb->load_done_evt = CreateEventA( NULL, TRUE, FALSE, NULL )))
         return FALSE;
     return TRUE;
 }
@@ -361,7 +361,7 @@ static BOOL32 PROCESS_FinishCreatePDB( PDB32 *pdb )
 /***********************************************************************
  *           PROCESS_Init
  */
-BOOL32 PROCESS_Init(void)
+BOOL PROCESS_Init(void)
 {
     THDB *thdb;
 
@@ -409,21 +409,21 @@ BOOL32 PROCESS_Init(void)
  *
  * Create a new process database and associated info.
  */
-PDB32 *PROCESS_Create( NE_MODULE *pModule, LPCSTR cmd_line, LPCSTR env,
+PDB *PROCESS_Create( NE_MODULE *pModule, LPCSTR cmd_line, LPCSTR env,
                        HINSTANCE16 hInstance, HINSTANCE16 hPrevInstance,
-                       BOOL32 inherit, STARTUPINFO32A *startup,
+                       BOOL inherit, STARTUPINFOA *startup,
                        PROCESS_INFORMATION *info )
 {
     DWORD size, commit;
     int server_thandle, server_phandle;
-    UINT32 cmdShow = 0;
+    UINT cmdShow = 0;
     THDB *thdb = NULL;
-    PDB32 *parent = PROCESS_Current();
-    PDB32 *pdb = PROCESS_CreatePDB( parent, inherit );
+    PDB *parent = PROCESS_Current();
+    PDB *pdb = PROCESS_CreatePDB( parent, inherit );
     TDB *pTask;
 
     if (!pdb) return NULL;
-    info->hThread = info->hProcess = INVALID_HANDLE_VALUE32;
+    info->hThread = info->hProcess = INVALID_HANDLE_VALUE;
     if (!PROCESS_FinishCreatePDB( pdb )) goto error;
 
     /* Create the heap */
@@ -455,10 +455,10 @@ PDB32 *PROCESS_Create( NE_MODULE *pModule, LPCSTR cmd_line, LPCSTR env,
     if (!(thdb = THREAD_Create( pdb, size, FALSE, &server_thandle, &server_phandle,
                                 NULL, NULL ))) goto error;
     if ((info->hThread = HANDLE_Alloc( parent, &thdb->header, THREAD_ALL_ACCESS,
-                                       FALSE, server_thandle )) == INVALID_HANDLE_VALUE32)
+                                       FALSE, server_thandle )) == INVALID_HANDLE_VALUE)
         goto error;
     if ((info->hProcess = HANDLE_Alloc( parent, &pdb->header, PROCESS_ALL_ACCESS,
-                                        FALSE, server_phandle )) == INVALID_HANDLE_VALUE32)
+                                        FALSE, server_phandle )) == INVALID_HANDLE_VALUE)
         goto error;
     info->dwProcessId = PDB_TO_PROCESS_ID(pdb);
     info->dwThreadId  = THDB_TO_THREAD_ID(thdb);
@@ -492,8 +492,8 @@ PDB32 *PROCESS_Create( NE_MODULE *pModule, LPCSTR cmd_line, LPCSTR env,
     return pdb;
 
 error:
-    if (info->hThread != INVALID_HANDLE_VALUE32) CloseHandle( info->hThread );
-    if (info->hProcess != INVALID_HANDLE_VALUE32) CloseHandle( info->hProcess );
+    if (info->hThread != INVALID_HANDLE_VALUE) CloseHandle( info->hThread );
+    if (info->hProcess != INVALID_HANDLE_VALUE) CloseHandle( info->hProcess );
     if (thdb) K32OBJ_DecCount( &thdb->header );
     PROCESS_FreePDB( pdb );
     return NULL;
@@ -505,7 +505,7 @@ error:
  */
 static void PROCESS_Destroy( K32OBJ *ptr )
 {
-    PDB32 *pdb = (PDB32 *)ptr;
+    PDB *pdb = (PDB *)ptr;
     assert( ptr->type == K32OBJ_PROCESS );
 
     /* Free everything */
@@ -520,7 +520,7 @@ static void PROCESS_Destroy( K32OBJ *ptr )
  */
 void WINAPI ExitProcess( DWORD status )
 {
-    PDB32 *pdb = PROCESS_Current();
+    PDB *pdb = PROCESS_Current();
     TDB *pTask = (TDB *)GlobalLock16( pdb->task );
     if ( pTask ) pTask->nEvents++;
 
@@ -541,7 +541,7 @@ void WINAPI ExitProcess( DWORD status )
 /******************************************************************************
  *           TerminateProcess   (KERNEL32.684)
  */
-BOOL32 WINAPI TerminateProcess( HANDLE32 handle, DWORD exit_code )
+BOOL WINAPI TerminateProcess( HANDLE handle, DWORD exit_code )
 {
     struct terminate_process_request req;
 
@@ -555,7 +555,7 @@ BOOL32 WINAPI TerminateProcess( HANDLE32 handle, DWORD exit_code )
 /***********************************************************************
  *           GetCurrentProcess   (KERNEL32.198)
  */
-HANDLE32 WINAPI GetCurrentProcess(void)
+HANDLE WINAPI GetCurrentProcess(void)
 {
     return CURRENT_PROCESS_PSEUDOHANDLE;
 }
@@ -564,10 +564,10 @@ HANDLE32 WINAPI GetCurrentProcess(void)
 /*********************************************************************
  *           OpenProcess   (KERNEL32.543)
  */
-HANDLE32 WINAPI OpenProcess( DWORD access, BOOL32 inherit, DWORD id )
+HANDLE WINAPI OpenProcess( DWORD access, BOOL inherit, DWORD id )
 {
     int server_handle;
-    PDB32 *pdb = PROCESS_ID_TO_PDB(id);
+    PDB *pdb = PROCESS_ID_TO_PDB(id);
     if (!K32OBJ_IsValid( &pdb->header, K32OBJ_PROCESS ))
     {
         SetLastError( ERROR_INVALID_HANDLE );
@@ -588,7 +588,7 @@ HANDLE32 WINAPI OpenProcess( DWORD access, BOOL32 inherit, DWORD id )
  */
 DWORD WINAPI GetCurrentProcessId(void)
 {
-    PDB32 *pdb = PROCESS_Current();
+    PDB *pdb = PROCESS_Current();
     return PDB_TO_PROCESS_ID( pdb );
 }
 
@@ -596,9 +596,9 @@ DWORD WINAPI GetCurrentProcessId(void)
 /***********************************************************************
  *           GetProcessHeap    (KERNEL32.259)
  */
-HANDLE32 WINAPI GetProcessHeap(void)
+HANDLE WINAPI GetProcessHeap(void)
 {
-    PDB32 *pdb = PROCESS_Current();
+    PDB *pdb = PROCESS_Current();
     return pdb->heap ? pdb->heap : SystemHeap;
 }
 
@@ -615,7 +615,7 @@ LCID WINAPI GetThreadLocale(void)
 /***********************************************************************
  *           SetPriorityClass   (KERNEL32.503)
  */
-BOOL32 WINAPI SetPriorityClass( HANDLE32 hprocess, DWORD priorityclass )
+BOOL WINAPI SetPriorityClass( HANDLE hprocess, DWORD priorityclass )
 {
     struct set_process_info_request req;
     req.handle = HANDLE_GetServerHandle( PROCESS_Current(), hprocess,
@@ -631,7 +631,7 @@ BOOL32 WINAPI SetPriorityClass( HANDLE32 hprocess, DWORD priorityclass )
 /***********************************************************************
  *           GetPriorityClass   (KERNEL32.250)
  */
-DWORD WINAPI GetPriorityClass(HANDLE32 hprocess)
+DWORD WINAPI GetPriorityClass(HANDLE hprocess)
 {
     struct get_process_info_reply reply;
     if (!PROCESS_QueryInfo( hprocess, &reply )) return 0;
@@ -642,7 +642,7 @@ DWORD WINAPI GetPriorityClass(HANDLE32 hprocess)
 /***********************************************************************
  *          SetProcessAffinityMask   (KERNEL32.662)
  */
-BOOL32 WINAPI SetProcessAffinityMask( HANDLE32 hProcess, DWORD affmask )
+BOOL WINAPI SetProcessAffinityMask( HANDLE hProcess, DWORD affmask )
 {
     struct set_process_info_request req;
     req.handle = HANDLE_GetServerHandle( PROCESS_Current(), hProcess,
@@ -657,7 +657,7 @@ BOOL32 WINAPI SetProcessAffinityMask( HANDLE32 hProcess, DWORD affmask )
 /**********************************************************************
  *          GetProcessAffinityMask    (KERNEL32.373)
  */
-BOOL32 WINAPI GetProcessAffinityMask( HANDLE32 hProcess,
+BOOL WINAPI GetProcessAffinityMask( HANDLE hProcess,
                                       LPDWORD lpProcessAffinityMask,
                                       LPDWORD lpSystemAffinityMask )
 {
@@ -672,9 +672,9 @@ BOOL32 WINAPI GetProcessAffinityMask( HANDLE32 hProcess,
 /***********************************************************************
  *           GetStdHandle    (KERNEL32.276)
  */
-HANDLE32 WINAPI GetStdHandle( DWORD std_handle )
+HANDLE WINAPI GetStdHandle( DWORD std_handle )
 {
-    PDB32 *pdb = PROCESS_Current();
+    PDB *pdb = PROCESS_Current();
 
     switch(std_handle)
     {
@@ -683,16 +683,16 @@ HANDLE32 WINAPI GetStdHandle( DWORD std_handle )
     case STD_ERROR_HANDLE:  return pdb->env_db->hStderr;
     }
     SetLastError( ERROR_INVALID_PARAMETER );
-    return INVALID_HANDLE_VALUE32;
+    return INVALID_HANDLE_VALUE;
 }
 
 
 /***********************************************************************
  *           SetStdHandle    (KERNEL32.506)
  */
-BOOL32 WINAPI SetStdHandle( DWORD std_handle, HANDLE32 handle )
+BOOL WINAPI SetStdHandle( DWORD std_handle, HANDLE handle )
 {
-    PDB32 *pdb = PROCESS_Current();
+    PDB *pdb = PROCESS_Current();
     /* FIXME: should we close the previous handle? */
     switch(std_handle)
     {
@@ -716,7 +716,7 @@ BOOL32 WINAPI SetStdHandle( DWORD std_handle, HANDLE32 handle )
 DWORD WINAPI GetProcessVersion( DWORD processid )
 {
     TDB *pTask;
-    PDB32 *pdb = PROCESS_IdToPDB( processid );
+    PDB *pdb = PROCESS_IdToPDB( processid );
 
     if (!pdb) return 0;
     if (!(pTask = (TDB *)GlobalLock16( pdb->task ))) return 0;
@@ -728,7 +728,7 @@ DWORD WINAPI GetProcessVersion( DWORD processid )
  */
 DWORD WINAPI GetProcessFlags( DWORD processid )
 {
-    PDB32 *pdb = PROCESS_IdToPDB( processid );
+    PDB *pdb = PROCESS_IdToPDB( processid );
     if (!pdb) return 0;
     return pdb->flags;
 }
@@ -744,7 +744,7 @@ DWORD WINAPI GetProcessFlags( DWORD processid )
  *
  * RETURNS  STD
  */
-BOOL32 WINAPI SetProcessWorkingSetSize(HANDLE32 hProcess,DWORD minset,
+BOOL WINAPI SetProcessWorkingSetSize(HANDLE hProcess,DWORD minset,
                                        DWORD maxset)
 {
     FIXME(process,"(0x%08x,%ld,%ld): stub - harmless\n",hProcess,minset,maxset);
@@ -758,7 +758,7 @@ BOOL32 WINAPI SetProcessWorkingSetSize(HANDLE32 hProcess,DWORD minset,
 /***********************************************************************
  *           GetProcessWorkingSetSize    (KERNEL32)
  */
-BOOL32 WINAPI GetProcessWorkingSetSize(HANDLE32 hProcess,LPDWORD minset,
+BOOL WINAPI GetProcessWorkingSetSize(HANDLE hProcess,LPDWORD minset,
                                        LPDWORD maxset)
 {
 	FIXME(process,"(0x%08x,%p,%p): stub\n",hProcess,minset,maxset);
@@ -779,7 +779,7 @@ BOOL32 WINAPI GetProcessWorkingSetSize(HANDLE32 hProcess,LPDWORD minset,
 #define SHUTDOWN_NORETRY 1
 static unsigned int shutdown_noretry = 0;
 static unsigned int shutdown_priority = 0x280L;
-BOOL32 WINAPI SetProcessShutdownParameters(DWORD level,DWORD flags)
+BOOL WINAPI SetProcessShutdownParameters(DWORD level,DWORD flags)
 {
     if (flags & SHUTDOWN_NORETRY)
       shutdown_noretry = 1;
@@ -800,7 +800,7 @@ BOOL32 WINAPI SetProcessShutdownParameters(DWORD level,DWORD flags)
  * GetProcessShutdownParameters                 (KERNEL32)
  *
  */
-BOOL32 WINAPI GetProcessShutdownParameters( LPDWORD lpdwLevel,
+BOOL WINAPI GetProcessShutdownParameters( LPDWORD lpdwLevel,
 					    LPDWORD lpdwFlags )
 {
   (*lpdwLevel) = shutdown_priority;
@@ -810,7 +810,7 @@ BOOL32 WINAPI GetProcessShutdownParameters( LPDWORD lpdwLevel,
 /***********************************************************************
  *           SetProcessPriorityBoost    (KERNEL32)
  */
-BOOL32 WINAPI SetProcessPriorityBoost(HANDLE32 hprocess,BOOL32 disableboost)
+BOOL WINAPI SetProcessPriorityBoost(HANDLE hprocess,BOOL disableboost)
 {
     FIXME(process,"(%d,%d): stub\n",hprocess,disableboost);
     /* Say we can do it. I doubt the program will notice that we don't. */
@@ -822,7 +822,7 @@ BOOL32 WINAPI SetProcessPriorityBoost(HANDLE32 hprocess,BOOL32 disableboost)
  * FIXME: check this, if we ever run win32 binaries in different addressspaces
  *	  ... and add a sizecheck
  */
-BOOL32 WINAPI ReadProcessMemory( HANDLE32 hProcess, LPCVOID lpBaseAddress,
+BOOL WINAPI ReadProcessMemory( HANDLE hProcess, LPCVOID lpBaseAddress,
                                  LPVOID lpBuffer, DWORD nSize,
                                  LPDWORD lpNumberOfBytesRead )
 {
@@ -836,7 +836,7 @@ BOOL32 WINAPI ReadProcessMemory( HANDLE32 hProcess, LPCVOID lpBaseAddress,
  * FIXME: check this, if we ever run win32 binaries in different addressspaces
  *	  ... and add a sizecheck
  */
-BOOL32 WINAPI WriteProcessMemory(HANDLE32 hProcess, LPVOID lpBaseAddress,
+BOOL WINAPI WriteProcessMemory(HANDLE hProcess, LPVOID lpBaseAddress,
                                  LPVOID lpBuffer, DWORD nSize,
                                  LPDWORD lpNumberOfBytesWritten )
 {
@@ -866,8 +866,8 @@ DWORD WINAPI RegisterServiceProcess(DWORD dwProcessId, DWORD dwType)
  *   Success: TRUE
  *   Failure: FALSE
  */
-BOOL32 WINAPI GetExitCodeProcess(
-    HANDLE32 hProcess,  /* [I] handle to the process */
+BOOL WINAPI GetExitCodeProcess(
+    HANDLE hProcess,  /* [I] handle to the process */
     LPDWORD lpExitCode) /* [O] address to receive termination status */
 {
     struct get_process_info_reply reply;
@@ -880,7 +880,7 @@ BOOL32 WINAPI GetExitCodeProcess(
 /***********************************************************************
  * GetProcessHeaps [KERNEL32.376]
  */
-DWORD WINAPI GetProcessHeaps(DWORD nrofheaps,HANDLE32 *heaps) {
+DWORD WINAPI GetProcessHeaps(DWORD nrofheaps,HANDLE *heaps) {
 	FIXME(win32,"(%ld,%p), incomplete implementation.\n",nrofheaps,heaps);
 
 	if (nrofheaps) {
@@ -899,7 +899,7 @@ DWORD WINAPI GetProcessHeaps(DWORD nrofheaps,HANDLE32 *heaps) {
 void PROCESS_SuspendOtherThreads(void)
 {
 #if 0
-    PDB32 *pdb;
+    PDB *pdb;
     THREAD_ENTRY *entry;
 
     SYSTEM_LOCK();
@@ -910,7 +910,7 @@ void PROCESS_SuspendOtherThreads(void)
     {
          if (entry->thread != THREAD_Current() && !THREAD_IsWin16(entry->thread))
          {
-             HANDLE32 handle = HANDLE_Alloc( PROCESS_Current(), 
+             HANDLE handle = HANDLE_Alloc( PROCESS_Current(), 
                                              &entry->thread->header,
                                              THREAD_ALL_ACCESS, FALSE, -1 );
              SuspendThread(handle);
@@ -931,7 +931,7 @@ void PROCESS_SuspendOtherThreads(void)
 void PROCESS_ResumeOtherThreads(void)
 {
 #if 0
-    PDB32 *pdb;
+    PDB *pdb;
     THREAD_ENTRY *entry;
 
     SYSTEM_LOCK();
@@ -942,7 +942,7 @@ void PROCESS_ResumeOtherThreads(void)
     {
          if (entry->thread != THREAD_Current() && !THREAD_IsWin16(entry->thread))
          {
-             HANDLE32 handle = HANDLE_Alloc( PROCESS_Current(), 
+             HANDLE handle = HANDLE_Alloc( PROCESS_Current(), 
                                              &entry->thread->header,
                                              THREAD_ALL_ACCESS, FALSE, -1 );
              ResumeThread(handle);

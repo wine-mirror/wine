@@ -68,14 +68,14 @@
 /*
  * Switch to disassemble 16-bit code.
  */
-static BOOL32 db_disasm_16 = FALSE;
+static BOOL db_disasm_16 = FALSE;
 
 /*
  * Flag to indicate whether we need to display instruction,
  * or whether we just need to know the address of the next
  * instruction.
  */
-static BOOL32 db_display = FALSE;
+static BOOL db_display = FALSE;
 
 /*
  * Size attributes
@@ -1152,7 +1152,7 @@ void DEBUG_Disasm( DBG_ADDR *addr, int display )
 	int	i_size;
 	int	i_mode;
 	int	regmodrm = 0;
-	BOOL32  first;
+	BOOL  first;
 	int	displ;
 	int	prefix;
 	int	imm;

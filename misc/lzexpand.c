@@ -34,7 +34,7 @@ struct lzfileheader {
 static BYTE LZMagic[8]={'S','Z','D','D',0x88,0xf0,0x27,0x33};
 
 struct lzstate {
-	HFILE32	realfd;		/* the real filedescriptor */
+	HFILE	realfd;		/* the real filedescriptor */
 	CHAR	lastchar;	/* the last char of the filename */
 
 	DWORD	reallength;	/* the decompressed length of the file */
@@ -42,7 +42,7 @@ struct lzstate {
 	DWORD	realwanted;	/* the position the user wants to read from */
 
 	BYTE	table[0x1000];	/* the rotating LZ table */
-	UINT32	curtabent;	/* CURrent TABle ENTry */
+	UINT	curtabent;	/* CURrent TABle ENTry */
 
 	BYTE	stringlen;	/* length and position of current string */ 
 	DWORD	stringpos;	/* from stringtable */
@@ -71,9 +71,9 @@ _lzget(struct lzstate *lzs,BYTE *b) {
 		*b		= lzs->get[lzs->getcur++];
 		return		1;
 	} else {
-		int ret = _lread32(lzs->realfd,lzs->get,GETLEN);
-		if (ret==HFILE_ERROR32)
-			return HFILE_ERROR32;
+		int ret = _lread(lzs->realfd,lzs->get,GETLEN);
+		if (ret==HFILE_ERROR)
+			return HFILE_ERROR;
 		if (ret==0)
 			return 0;
 		lzs->getlen	= ret;
@@ -88,17 +88,17 @@ _lzget(struct lzstate *lzs,BYTE *b) {
  * return UNKNOWNALG for unknown algorithm
  * returns lzfileheader in *head
  */
-static INT32 read_header(HFILE32 fd,struct lzfileheader *head)
+static INT read_header(HFILE fd,struct lzfileheader *head)
 {
 	BYTE	buf[14];
 
-	if (_llseek32(fd,0,SEEK_SET)==-1)
+	if (_llseek(fd,0,SEEK_SET)==-1)
 		return LZERROR_BADINHANDLE;
 
 	/* We can't directly read the lzfileheader struct due to 
 	 * structure element alignment
 	 */
-	if (_lread32(fd,buf,14)<14)
+	if (_lread(fd,buf,14)<14)
 		return 0;
 	memcpy(head->magic,buf,8);
 	memcpy(&(head->compressiontype),buf+8,1);
@@ -127,7 +127,7 @@ INT16 WINAPI LZStart16(void)
 /***********************************************************************
  *           LZStart32   (LZ32.6)
  */
-INT32 WINAPI LZStart32(void)
+INT WINAPI LZStart(void)
 {
     TRACE(file,"(void)\n");
     return 1;
@@ -139,9 +139,9 @@ INT32 WINAPI LZStart32(void)
  */
 HFILE16 WINAPI LZInit16( HFILE16 hfSrc )
 {
-    HFILE32 ret = LZInit32( FILE_GetHandle32(hfSrc) );
+    HFILE ret = LZInit( FILE_GetHandle(hfSrc) );
     if (IS_LZ_HANDLE(ret)) return ret;
-    if ((INT32)ret <= 0) return ret;
+    if ((INT)ret <= 0) return ret;
     return hfSrc;
 }
 
@@ -157,7 +157,7 @@ HFILE16 WINAPI LZInit16( HFILE16 hfSrc )
  * since _llseek uses the same types as libc.lseek, we just use the macros of 
  *  libc
  */
-HFILE32 WINAPI LZInit32( HFILE32 hfSrc )
+HFILE WINAPI LZInit( HFILE hfSrc )
 {
 
 	struct	lzfileheader	head;
@@ -168,7 +168,7 @@ HFILE32 WINAPI LZInit32( HFILE32 hfSrc )
 	TRACE(file,"(%d)\n",hfSrc);
 	ret=read_header(hfSrc,&head);
 	if (ret<=0) {
-		_llseek32(hfSrc,0,SEEK_SET);
+		_llseek(hfSrc,0,SEEK_SET);
 		return ret?ret:hfSrc;
 	}
         for (i = 0; i < MAX_LZSTATES; i++) if (!lzstates[i]) break;
@@ -206,7 +206,7 @@ void WINAPI LZDone(void)
  */
 INT16 WINAPI GetExpandedName16( LPCSTR in, LPSTR out )
 {
-    return (INT16)GetExpandedName32A( in, out );
+    return (INT16)GetExpandedNameA( in, out );
 }
 
 
@@ -221,24 +221,24 @@ INT16 WINAPI GetExpandedName16( LPCSTR in, LPSTR out )
  * "FILE.BL_" (with lastchar 'a') is being translated to "FILE.BLA"
  */
 
-INT32 WINAPI GetExpandedName32A( LPCSTR in, LPSTR out )
+INT WINAPI GetExpandedNameA( LPCSTR in, LPSTR out )
 {
 	struct lzfileheader	head;
-	HFILE32		fd;
+	HFILE		fd;
 	OFSTRUCT	ofs;
-	INT32		fnislowercased,ret,len;
+	INT		fnislowercased,ret,len;
 	LPSTR		s,t;
 
 	TRACE(file,"(%s)\n",in);
-	fd=OpenFile32(in,&ofs,OF_READ);
-	if (fd==HFILE_ERROR32)
-		return (INT32)(INT16)LZERROR_BADINHANDLE;
+	fd=OpenFile(in,&ofs,OF_READ);
+	if (fd==HFILE_ERROR)
+		return (INT)(INT16)LZERROR_BADINHANDLE;
 	strcpy(out,in);
 	ret=read_header(fd,&head);
 	if (ret<=0) {
 		/* not a LZ compressed file, so the expanded name is the same
 		 * as the input name */
-		_lclose32(fd);
+		_lclose(fd);
 		return 1;
 	}
 
@@ -252,7 +252,7 @@ INT32 WINAPI GetExpandedName32A( LPCSTR in, LPSTR out )
 	if (!*s) {
 		/* FIXME: hmm. shouldn't happen? */
 		WARN(file,"Specified a directory or what? (%s)\n",in);
-		_lclose32(fd);
+		_lclose(fd);
 		return 1;
 	}
 	/* see if we should use lowercase or uppercase on the last char */
@@ -283,7 +283,7 @@ INT32 WINAPI GetExpandedName32A( LPCSTR in, LPSTR out )
 				t[len]=head.lastchar;
 		}
 	} /* else no modification necessary */
-	_lclose32(fd);
+	_lclose(fd);
 	return 1;
 }
 
@@ -291,12 +291,12 @@ INT32 WINAPI GetExpandedName32A( LPCSTR in, LPSTR out )
 /***********************************************************************
  *           GetExpandedName32W   (LZ32.11)
  */
-INT32 WINAPI GetExpandedName32W( LPCWSTR in, LPWSTR out )
+INT WINAPI GetExpandedNameW( LPCWSTR in, LPWSTR out )
 {
 	char	*xin,*xout;
-	INT32	ret;
+	INT	ret;
 
-	xout	= HeapAlloc( GetProcessHeap(), 0, lstrlen32W(in)+3 );
+	xout	= HeapAlloc( GetProcessHeap(), 0, lstrlenW(in)+3 );
 	xin	= HEAP_strdupWtoA( GetProcessHeap(), 0, in );
 	ret	= GetExpandedName16(xin,xout);
 	if (ret>0) lstrcpyAtoW(out,xout);
@@ -311,7 +311,7 @@ INT32 WINAPI GetExpandedName32W( LPCWSTR in, LPWSTR out )
  */
 INT16 WINAPI LZRead16( HFILE16 fd, LPVOID buf, UINT16 toread )
 {
-    if (IS_LZ_HANDLE(fd)) return LZRead32( fd, buf, toread );
+    if (IS_LZ_HANDLE(fd)) return LZRead( fd, buf, toread );
     return _lread16( fd, buf, toread );
 }
 
@@ -319,7 +319,7 @@ INT16 WINAPI LZRead16( HFILE16 fd, LPVOID buf, UINT16 toread )
 /***********************************************************************
  *           LZRead32   (LZ32.4)
  */
-INT32 WINAPI LZRead32( HFILE32 fd, LPVOID vbuf, UINT32 toread )
+INT WINAPI LZRead( HFILE fd, LPVOID vbuf, UINT toread )
 {
 	int	howmuch;
 	BYTE	b,*buf;
@@ -328,7 +328,7 @@ INT32 WINAPI LZRead32( HFILE32 fd, LPVOID vbuf, UINT32 toread )
 	buf=(LPBYTE)vbuf;
 	TRACE(file,"(%d,%p,%d)\n",fd,buf,toread);
 	howmuch=toread;
-	if (!(lzs = GET_LZ_STATE(fd))) return _lread32(fd,buf,toread);
+	if (!(lzs = GET_LZ_STATE(fd))) return _lread(fd,buf,toread);
 
 /* The decompressor itself is in a define, cause we need it twice
  * in this function. (the decompressed byte will be in b)
@@ -383,7 +383,7 @@ INT32 WINAPI LZRead32( HFILE32 fd, LPVOID vbuf, UINT32 toread )
 		 */
 		if (lzs->realcurrent>lzs->realwanted) {
 			/* flush decompressor state */
-			_llseek32(lzs->realfd,14,SEEK_SET);
+			_llseek(lzs->realfd,14,SEEK_SET);
 			GET_FLUSH(lzs);
 			lzs->realcurrent= 0;
 			lzs->bytetype	= 0;
@@ -412,7 +412,7 @@ INT32 WINAPI LZRead32( HFILE32 fd, LPVOID vbuf, UINT32 toread )
  */
 LONG WINAPI LZSeek16( HFILE16 fd, LONG off, INT16 type )
 {
-    if (IS_LZ_HANDLE(fd)) return LZSeek32( fd, off, type );
+    if (IS_LZ_HANDLE(fd)) return LZSeek( fd, off, type );
     return _llseek16( fd, off, type );
 }
 
@@ -420,14 +420,14 @@ LONG WINAPI LZSeek16( HFILE16 fd, LONG off, INT16 type )
 /***********************************************************************
  *           LZSeek32   (LZ32.3)
  */
-LONG WINAPI LZSeek32( HFILE32 fd, LONG off, INT32 type )
+LONG WINAPI LZSeek( HFILE fd, LONG off, INT type )
 {
 	struct	lzstate	*lzs;
 	LONG	newwanted;
 
 	TRACE(file,"(%d,%ld,%d)\n",fd,off,type);
 	/* not compressed? just use normal _llseek() */
-        if (!(lzs = GET_LZ_STATE(fd))) return _llseek32(fd,off,type);
+        if (!(lzs = GET_LZ_STATE(fd))) return _llseek(fd,off,type);
 	newwanted = lzs->realwanted;
 	switch (type) {
 	case 1:	/* SEEK_CUR */
@@ -456,19 +456,19 @@ LONG WINAPI LZSeek32( HFILE32 fd, LONG off, INT32 type )
 LONG WINAPI LZCopy16( HFILE16 src, HFILE16 dest )
 {
     /* already a LZ handle? */
-    if (IS_LZ_HANDLE(src)) return LZCopy32( src, FILE_GetHandle32(dest) );
+    if (IS_LZ_HANDLE(src)) return LZCopy( src, FILE_GetHandle(dest) );
 
     /* no, try to open one */
     src = LZInit16(src);
     if ((INT16)src <= 0) return 0;
     if (IS_LZ_HANDLE(src))
     {
-        LONG ret = LZCopy32( src, FILE_GetHandle32(dest) );
-        LZClose32( src );
+        LONG ret = LZCopy( src, FILE_GetHandle(dest) );
+        LZClose( src );
         return ret;
     }
     /* it was not a compressed file */
-    return LZCopy32( FILE_GetHandle32(src), FILE_GetHandle32(dest) );
+    return LZCopy( FILE_GetHandle(src), FILE_GetHandle(dest) );
 }
 
 
@@ -479,27 +479,27 @@ LONG WINAPI LZCopy16( HFILE16 src, HFILE16 dest )
  * if src is a LZ compressed file, it will be uncompressed.
  * will return the number of bytes written to dest or errors.
  */
-LONG WINAPI LZCopy32( HFILE32 src, HFILE32 dest )
+LONG WINAPI LZCopy( HFILE src, HFILE dest )
 {
 	int	usedlzinit=0,ret,wret;
 	LONG	len;
-	HFILE32	oldsrc = src;
+	HFILE	oldsrc = src;
 #define BUFLEN	1000
 	BYTE	buf[BUFLEN];
-	UINT32	WINAPI (*xread)(HFILE32,LPVOID,UINT32);
+	UINT	WINAPI (*xread)(HFILE,LPVOID,UINT);
 
 	TRACE(file,"(%d,%d)\n",src,dest);
 	if (!IS_LZ_HANDLE(src)) {
-		src = LZInit32(src);
-                if ((INT32)src <= 0) return 0;
+		src = LZInit(src);
+                if ((INT)src <= 0) return 0;
 		if (src != oldsrc) usedlzinit=1;
 	}
 
 	/* not compressed? just copy */
         if (!IS_LZ_HANDLE(src))
-		xread=_lread32;
+		xread=_lread;
 	else	/* Note: Ignore warning, just mismatched INT/UINT */
-		xread=LZRead32; 
+		xread=LZRead; 
 	len=0;
 	while (1) {
 		ret=xread(src,buf,BUFLEN);
@@ -511,12 +511,12 @@ LONG WINAPI LZCopy32( HFILE32 src, HFILE32 dest )
 			return ret;
 		}
 		len    += ret;
-		wret	= _lwrite32(dest,buf,ret);
+		wret	= _lwrite(dest,buf,ret);
 		if (wret!=ret)
 			return LZERROR_WRITE;
 	}
 	if (usedlzinit)
-		LZClose32(src);
+		LZClose(src);
 	return len;
 #undef BUFLEN
 }
@@ -545,9 +545,9 @@ static LPSTR LZEXPAND_MangleName( LPCSTR fn )
  */
 HFILE16 WINAPI LZOpenFile16( LPCSTR fn, LPOFSTRUCT ofs, UINT16 mode )
 {
-    HFILE32 hfret = LZOpenFile32A( fn, ofs, mode );
+    HFILE hfret = LZOpenFileA( fn, ofs, mode );
     /* return errors and LZ handles unmodified */
-    if ((INT32)hfret <= 0) return hfret;
+    if ((INT)hfret <= 0) return hfret;
     if (IS_LZ_HANDLE(hfret)) return hfret;
     /* but allocate a dos handle for 'normal' files */
     return FILE_AllocDosHandle(hfret);
@@ -559,25 +559,25 @@ HFILE16 WINAPI LZOpenFile16( LPCSTR fn, LPOFSTRUCT ofs, UINT16 mode )
  *
  * Opens a file. If not compressed, open it as a normal file.
  */
-HFILE32 WINAPI LZOpenFile32A( LPCSTR fn, LPOFSTRUCT ofs, UINT32 mode )
+HFILE WINAPI LZOpenFileA( LPCSTR fn, LPOFSTRUCT ofs, UINT mode )
 {
-	HFILE32	fd,cfd;
+	HFILE	fd,cfd;
 
 	TRACE(file,"(%s,%p,%d)\n",fn,ofs,mode);
 	/* 0x70 represents all OF_SHARE_* flags, ignore them for the check */
-	fd=OpenFile32(fn,ofs,mode);
-	if (fd==HFILE_ERROR32)
+	fd=OpenFile(fn,ofs,mode);
+	if (fd==HFILE_ERROR)
         {
             LPSTR mfn = LZEXPAND_MangleName(fn);
-            fd = OpenFile32(mfn,ofs,mode);
+            fd = OpenFile(mfn,ofs,mode);
             HeapFree( GetProcessHeap(), 0, mfn );
 	}
 	if ((mode&~0x70)!=OF_READ)
 		return fd;
-	if (fd==HFILE_ERROR32)
-		return HFILE_ERROR32;
-	cfd=LZInit32(fd);
-	if ((INT32)cfd <= 0) return fd;
+	if (fd==HFILE_ERROR)
+		return HFILE_ERROR;
+	cfd=LZInit(fd);
+	if ((INT)cfd <= 0) return fd;
 	return cfd;
 }
 
@@ -585,19 +585,19 @@ HFILE32 WINAPI LZOpenFile32A( LPCSTR fn, LPOFSTRUCT ofs, UINT32 mode )
 /***********************************************************************
  *           LZOpenFile32W   (LZ32.10)
  */
-HFILE32 WINAPI LZOpenFile32W( LPCWSTR fn, LPOFSTRUCT ofs, UINT32 mode )
+HFILE WINAPI LZOpenFileW( LPCWSTR fn, LPOFSTRUCT ofs, UINT mode )
 {
 	LPSTR	xfn;
 	LPWSTR	yfn;
-	HFILE32	ret;
+	HFILE	ret;
 
 	xfn	= HEAP_strdupWtoA( GetProcessHeap(), 0, fn);
 	ret	= LZOpenFile16(xfn,ofs,mode);
 	HeapFree( GetProcessHeap(), 0, xfn );
-	if (ret!=HFILE_ERROR32) {
+	if (ret!=HFILE_ERROR) {
 		/* ofs->szPathName is an array with the OFSTRUCT */
                 yfn = HEAP_strdupAtoW( GetProcessHeap(), 0, ofs->szPathName );
-		memcpy(ofs->szPathName,yfn,lstrlen32W(yfn)*2+2);
+		memcpy(ofs->szPathName,yfn,lstrlenW(yfn)*2+2);
                 HeapFree( GetProcessHeap(), 0, yfn );
 	}
 	return	ret;
@@ -609,7 +609,7 @@ HFILE32 WINAPI LZOpenFile32W( LPCWSTR fn, LPOFSTRUCT ofs, UINT32 mode )
  */
 void WINAPI LZClose16( HFILE16 fd )
 {
-    if (IS_LZ_HANDLE(fd)) LZClose32( fd );
+    if (IS_LZ_HANDLE(fd)) LZClose( fd );
     else _lclose16( fd );
 }
 
@@ -617,12 +617,12 @@ void WINAPI LZClose16( HFILE16 fd )
 /***********************************************************************
  *           LZClose32   (LZ32.5)
  */
-void WINAPI LZClose32( HFILE32 fd )
+void WINAPI LZClose( HFILE fd )
 {
 	struct lzstate *lzs;
 
 	TRACE(file,"(%d)\n",fd);
-        if (!(lzs = GET_LZ_STATE(fd))) _lclose32(fd);
+        if (!(lzs = GET_LZ_STATE(fd))) _lclose(fd);
         else
         {
             if (lzs->get) HeapFree( GetProcessHeap(), 0, lzs->get );
@@ -648,8 +648,8 @@ LONG WINAPI CopyLZFile16( HFILE16 src, HFILE16 dest )
  * Copy src to dest (including uncompressing src).
  * NOTE: Yes. This is exactly the same function as LZCopy.
  */
-LONG WINAPI CopyLZFile32( HFILE32 src, HFILE32 dest )
+LONG WINAPI CopyLZFile( HFILE src, HFILE dest )
 {
     TRACE(file,"(%d,%d)\n",src,dest);
-    return LZCopy32(src,dest);
+    return LZCopy(src,dest);
 }

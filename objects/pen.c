@@ -14,20 +14,20 @@
  */
 HPEN16 WINAPI CreatePen16( INT16 style, INT16 width, COLORREF color )
 {
-    LOGPEN32 logpen = { style, { width, 0 }, color };
+    LOGPEN logpen = { style, { width, 0 }, color };
     TRACE(gdi, "%d %d %06lx\n", style, width, color );
-    return CreatePenIndirect32( &logpen );
+    return CreatePenIndirect( &logpen );
 }
 
 
 /***********************************************************************
  *           CreatePen32    (GDI32.55)
  */
-HPEN32 WINAPI CreatePen32( INT32 style, INT32 width, COLORREF color )
+HPEN WINAPI CreatePen( INT style, INT width, COLORREF color )
 {
-    LOGPEN32 logpen = { style, { width, 0 }, color };
+    LOGPEN logpen = { style, { width, 0 }, color };
     TRACE(gdi, "%d %d %06lx\n", style, width, color );
-    return CreatePenIndirect32( &logpen );
+    return CreatePenIndirect( &logpen );
 }
 
 
@@ -54,10 +54,10 @@ HPEN16 WINAPI CreatePenIndirect16( const LOGPEN16 * pen )
 /***********************************************************************
  *           CreatePenIndirect32    (GDI32.56)
  */
-HPEN32 WINAPI CreatePenIndirect32( const LOGPEN32 * pen )
+HPEN WINAPI CreatePenIndirect( const LOGPEN * pen )
 {
     PENOBJ * penPtr;
-    HPEN32 hpen;
+    HPEN hpen;
 
     if (pen->lopnStyle > PS_INSIDEFRAME) return 0;
     hpen = GDI_AllocObject( sizeof(PENOBJ), PEN_MAGIC );
@@ -76,11 +76,11 @@ HPEN32 WINAPI CreatePenIndirect32( const LOGPEN32 * pen )
  * FIXME: PS_USERSTYLE not handled
  */
 
-HPEN32 WINAPI ExtCreatePen32( DWORD style, DWORD width,
-                              const LOGBRUSH32 * brush, DWORD style_count,
+HPEN WINAPI ExtCreatePen( DWORD style, DWORD width,
+                              const LOGBRUSH * brush, DWORD style_count,
                               const DWORD *style_bits )
 {
-    LOGPEN32 logpen;
+    LOGPEN logpen;
 
     if ((style & PS_STYLE_MASK) == PS_USERSTYLE)
 	FIXME(gdi, "PS_USERSTYLE not handled\n");
@@ -92,7 +92,7 @@ HPEN32 WINAPI ExtCreatePen32( DWORD style, DWORD width,
     logpen.lopnWidth.x = (style & PS_GEOMETRIC) ? width : 1;
     logpen.lopnWidth.y = 0;
     logpen.lopnColor = brush->lbColor;
-    return CreatePenIndirect32( &logpen );
+    return CreatePenIndirect( &logpen );
 }
 
 /***********************************************************************
@@ -113,7 +113,7 @@ INT16 PEN_GetObject16( PENOBJ * pen, INT16 count, LPSTR buffer )
 /***********************************************************************
  *           PEN_GetObject32
  */
-INT32 PEN_GetObject32( PENOBJ * pen, INT32 count, LPSTR buffer )
+INT PEN_GetObject( PENOBJ * pen, INT count, LPSTR buffer )
 {
     if (count > sizeof(pen->logpen)) count = sizeof(pen->logpen);
     memcpy( buffer, &pen->logpen, count );

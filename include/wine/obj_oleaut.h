@@ -159,8 +159,8 @@ struct tagVARIANT {
 		CHAR cVal;
 		USHORT uiVal;
 		ULONG ulVal;
-		INT32 intVal;
-		UINT32 uintVal;
+		INT intVal;
+		UINT uintVal;
 		BYTE bVal;
 		short iVal;
 		long lVal;
@@ -169,7 +169,7 @@ struct tagVARIANT {
 		VARIANT_BOOL boolVal;
 		SCODE scode;
 		DATE date;
-		BSTR32 bstrVal;
+		BSTR bstrVal;
 		CY cyVal;
         /*
         DECIMAL decVal;
@@ -183,8 +183,8 @@ struct tagVARIANT {
 		CHAR* pcVal;
 		USHORT* puiVal;
 		ULONG* pulVal;
-		INT32* pintVal;
-		UINT32* puintVal;
+		INT* pintVal;
+		UINT* puintVal;
 		BYTE* pbVal;
 		short* piVal;
 		long* plVal;
@@ -193,7 +193,7 @@ struct tagVARIANT {
 		VARIANT_BOOL* pboolVal;
 		SCODE* pscode;
 		DATE* pdate;
-		BSTR32* pbstrVal;
+		BSTR* pbstrVal;
 		VARIANT* pvarVal;
 		PVOID byref;
 		CY* pcyVal;
@@ -212,16 +212,16 @@ typedef struct  tagDISPPARAMS
 {
   VARIANTARG* rgvarg;
   DISPID*     rgdispidNamedArgs;
-  UINT32      cArgs;
-  UINT32      cNamedArgs;
+  UINT      cArgs;
+  UINT      cNamedArgs;
 } DISPPARAMS;
 
 typedef struct tagEXCEPINFO {
     WORD  wCode;
     WORD  wReserved;
-    BSTR32  bstrSource;
-    BSTR32  bstrDescription;
-    BSTR32  bstrHelpFile;
+    BSTR  bstrSource;
+    BSTR  bstrDescription;
+    BSTR  bstrHelpFile;
     DWORD dwHelpContext;
     PVOID pvReserved;
     HRESULT (__stdcall *pfnDeferredFillIn)(struct tagEXCEPINFO *);
@@ -233,10 +233,10 @@ typedef struct tagEXCEPINFO {
  */
 #define ICOM_INTERFACE IDispatch
 #define IDispatch_METHODS \
-  ICOM_METHOD1(HRESULT, GetTypeInfoCount, UINT32*, pctinfo); \
-  ICOM_METHOD3(HRESULT, GetTypeInfo, UINT32, iTInfo, LCID, lcid, ITypeInfo**, ppTInfo); \
-  ICOM_METHOD5(HRESULT, GetIDsOfNames, REFIID, riid, LPOLESTR32*, rgszNames, UINT32, cNames, LCID, lcid, DISPID*, rgDispId); \
-  ICOM_METHOD8(HRESULT, Invoke, DISPID, dispIdMember, REFIID, riid, LCID, lcid, WORD, wFlags, DISPPARAMS*, pDispParams, VARIANT*, pVarResult, EXCEPINFO*, pExepInfo, UINT32*, puArgErr); 
+  ICOM_METHOD1(HRESULT, GetTypeInfoCount, UINT*, pctinfo); \
+  ICOM_METHOD3(HRESULT, GetTypeInfo, UINT, iTInfo, LCID, lcid, ITypeInfo**, ppTInfo); \
+  ICOM_METHOD5(HRESULT, GetIDsOfNames, REFIID, riid, LPOLESTR*, rgszNames, UINT, cNames, LCID, lcid, DISPID*, rgDispId); \
+  ICOM_METHOD8(HRESULT, Invoke, DISPID, dispIdMember, REFIID, riid, LCID, lcid, WORD, wFlags, DISPPARAMS*, pDispParams, VARIANT*, pVarResult, EXCEPINFO*, pExepInfo, UINT*, puArgErr); 
 #define IDispatch_IMETHODS \
   ICOM_INHERITS(IDispatch,IUnknown)
 ICOM_DEFINE(IDispatch,IUnknown)

@@ -26,18 +26,18 @@
 /***********************************************************************
  *           X11DRV_ExtTextOut
  */
-BOOL32
-X11DRV_ExtTextOut( DC *dc, INT32 x, INT32 y, UINT32 flags,
-                   const RECT32 *lprect, LPCSTR str, UINT32 count,
-                   const INT32 *lpDx )
+BOOL
+X11DRV_ExtTextOut( DC *dc, INT x, INT y, UINT flags,
+                   const RECT *lprect, LPCSTR str, UINT count,
+                   const INT *lpDx )
 {
     int 	        i;
     fontObject*		pfo;
-    INT32	 	width, ascent, descent, xwidth, ywidth;
+    INT	 	width, ascent, descent, xwidth, ywidth;
     XFontStruct*	font;
-    RECT32 		rect;
+    RECT 		rect;
     char		dfBreakChar, lfUnderline, lfStrikeOut;
-    BOOL32		rotated = FALSE;
+    BOOL		rotated = FALSE;
     X11DRV_PDEVICE      *physDev = (X11DRV_PDEVICE *)dc->physDev;
 
     if (!X11DRV_SetupGCForText( dc )) return TRUE;
@@ -75,7 +75,7 @@ X11DRV_ExtTextOut( DC *dc, INT32 x, INT32 y, UINT32 flags,
     {
         if (!lprect)  /* not always */
         {
-            SIZE32 sz;
+            SIZE sz;
             if (flags & ETO_CLIPPED)  /* Can't clip with no rectangle */
 	      return FALSE;
 	    if (!X11DRV_GetTextExtentPoint( dc, str, count, &sz ))
@@ -123,7 +123,7 @@ X11DRV_ExtTextOut( DC *dc, INT32 x, INT32 y, UINT32 flags,
     }
     else
     {
-        SIZE32 sz;
+        SIZE sz;
         if (!X11DRV_GetTextExtentPoint( dc, str, count, &sz ))
 	    return FALSE;
 	width = XLSTODS(dc, sz.cx);
@@ -179,7 +179,7 @@ X11DRV_ExtTextOut( DC *dc, INT32 x, INT32 y, UINT32 flags,
 
     if (flags & ETO_CLIPPED)
     {
-        SaveVisRgn( dc->hSelf );
+        SaveVisRgn16( dc->hSelf );
         CLIPPING_IntersectVisRect( dc, rect.left, rect.top, rect.right,
                                    rect.bottom, FALSE );
     }
@@ -345,7 +345,7 @@ X11DRV_ExtTextOut( DC *dc, INT32 x, INT32 y, UINT32 flags,
     }
 
     if (flags & ETO_CLIPPED) 
-        RestoreVisRgn( dc->hSelf );
+        RestoreVisRgn16( dc->hSelf );
 
     return TRUE;
 }

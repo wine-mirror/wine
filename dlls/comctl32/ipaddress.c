@@ -32,10 +32,10 @@
 #define IPADDRESS_GetInfoPtr(wndPtr) ((IPADDRESS_INFO *)wndPtr->wExtra[0])
 
 
-static BOOL32 
-IPADDRESS_SendNotify (WND *wndPtr, UINT32 command);
-static BOOL32 
-IPADDRESS_SendIPAddressNotify (WND *wndPtr, UINT32 field, BYTE newValue);
+static BOOL 
+IPADDRESS_SendNotify (WND *wndPtr, UINT command);
+static BOOL 
+IPADDRESS_SendIPAddressNotify (WND *wndPtr, UINT field, BYTE newValue);
 
 
 /* property name of tooltip window handle */
@@ -43,34 +43,34 @@ IPADDRESS_SendIPAddressNotify (WND *wndPtr, UINT32 field, BYTE newValue);
 
 
 static LRESULT CALLBACK
-IPADDRESS_SubclassProc (HWND32 hwnd, UINT32 uMsg, WPARAM32 wParam, LPARAM lParam);
+IPADDRESS_SubclassProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
 
 
 
 static VOID
-IPADDRESS_Refresh (WND *wndPtr, HDC32 hdc)
+IPADDRESS_Refresh (WND *wndPtr, HDC hdc)
 {
-	RECT32 rcClient;
-	HBRUSH32 hbr;
-	COLORREF clr=GetSysColor32 (COLOR_3DDKSHADOW);
+	RECT rcClient;
+	HBRUSH hbr;
+	COLORREF clr=GetSysColor (COLOR_3DDKSHADOW);
     int i,x,fieldsize;
 
-    GetClientRect32 (wndPtr->hwndSelf, &rcClient);
-	hbr =  CreateSolidBrush32 (RGB(255,255,255));
-    DrawEdge32 (hdc, &rcClient, EDGE_SUNKEN, BF_RECT | BF_ADJUST);
-	FillRect32 (hdc, &rcClient, hbr);
-    DeleteObject32 (hbr);
+    GetClientRect (wndPtr->hwndSelf, &rcClient);
+	hbr =  CreateSolidBrush (RGB(255,255,255));
+    DrawEdge (hdc, &rcClient, EDGE_SUNKEN, BF_RECT | BF_ADJUST);
+	FillRect (hdc, &rcClient, hbr);
+    DeleteObject (hbr);
 
 	x=rcClient.left;
 	fieldsize=(rcClient.right-rcClient.left) /4;
 
 	for (i=0; i<3; i++) {		/* Should draw text "." here */
 		x+=fieldsize;
-		SetPixel32 (hdc, x,   13, clr);
-		SetPixel32 (hdc, x,   14, clr);
-		SetPixel32 (hdc, x+1, 13, clr);
-		SetPixel32 (hdc, x+1, 14, clr);
+		SetPixel (hdc, x,   13, clr);
+		SetPixel (hdc, x,   14, clr);
+		SetPixel (hdc, x+1, 13, clr);
+		SetPixel (hdc, x+1, 14, clr);
 
 	}
 
@@ -81,10 +81,10 @@ IPADDRESS_Refresh (WND *wndPtr, HDC32 hdc)
 
 
 static LRESULT
-IPADDRESS_Create (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
+IPADDRESS_Create (WND *wndPtr, WPARAM wParam, LPARAM lParam)
 {
     IPADDRESS_INFO *infoPtr;
-	RECT32 rcClient, edit;
+	RECT rcClient, edit;
 	int i,fieldsize;
 	LPIP_SUBCLASS_INFO lpipsi;
 	
@@ -97,7 +97,7 @@ IPADDRESS_Create (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
     	return 0;
     }
 
-    GetClientRect32 (wndPtr->hwndSelf, &rcClient);
+    GetClientRect (wndPtr->hwndSelf, &rcClient);
 
 	fieldsize=(rcClient.right-rcClient.left) /4;
 
@@ -105,13 +105,13 @@ IPADDRESS_Create (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 	edit.bottom=rcClient.bottom-2;
 
 	lpipsi=(LPIP_SUBCLASS_INFO)
-			GetProp32A ((HWND32)wndPtr->hwndSelf,IP_SUBCLASS_PROP);
+			GetPropA ((HWND)wndPtr->hwndSelf,IP_SUBCLASS_PROP);
 	if (lpipsi == NULL)  {
 		lpipsi= (LPIP_SUBCLASS_INFO) COMCTL32_Alloc (sizeof(IP_SUBCLASS_INFO));
 		lpipsi->wndPtr=wndPtr;
 		lpipsi->uRefCount++;
-		SetProp32A ((HWND32)wndPtr->hwndSelf, IP_SUBCLASS_PROP,
-					(HANDLE32)lpipsi);
+		SetPropA ((HWND)wndPtr->hwndSelf, IP_SUBCLASS_PROP,
+					(HANDLE)lpipsi);
 /*		infoPtr->lpipsi= lpipsi; */
 	} else 
 		WARN (ipaddress,"IP-create called twice\n");
@@ -121,15 +121,15 @@ IPADDRESS_Create (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 		infoPtr->UpperLimit[i]=255;
 		edit.left=rcClient.left+i*fieldsize+3;
 		edit.right=rcClient.left+(i+1)*fieldsize-2;
-		lpipsi->hwndIP[i]= CreateWindow32A ("edit", NULL, 
+		lpipsi->hwndIP[i]= CreateWindowA ("edit", NULL, 
 				WS_CHILD | WS_VISIBLE | ES_LEFT,
 				edit.left, edit.top, edit.right-edit.left, edit.bottom-edit.top,
-				wndPtr->hwndSelf, (HMENU32) 1, wndPtr->hInstance, NULL);
-		lpipsi->wpOrigProc[i]= (WNDPROC32)
-					SetWindowLong32A (lpipsi->hwndIP[i],GWL_WNDPROC, (LONG)
+				wndPtr->hwndSelf, (HMENU) 1, wndPtr->hInstance, NULL);
+		lpipsi->wpOrigProc[i]= (WNDPROC)
+					SetWindowLongA (lpipsi->hwndIP[i],GWL_WNDPROC, (LONG)
 					IPADDRESS_SubclassProc);
-		SetProp32A ((HWND32)lpipsi->hwndIP[i], IP_SUBCLASS_PROP,
-					(HANDLE32)lpipsi);
+		SetPropA ((HWND)lpipsi->hwndIP[i], IP_SUBCLASS_PROP,
+					(HANDLE)lpipsi);
 	}
 
 	lpipsi->infoPtr= infoPtr;
@@ -139,15 +139,15 @@ IPADDRESS_Create (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 
 
 static LRESULT
-IPADDRESS_Destroy (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
+IPADDRESS_Destroy (WND *wndPtr, WPARAM wParam, LPARAM lParam)
 {
 	int i;
     IPADDRESS_INFO *infoPtr = IPADDRESS_GetInfoPtr(wndPtr);
 	LPIP_SUBCLASS_INFO lpipsi=(LPIP_SUBCLASS_INFO)
-            GetProp32A ((HWND32)wndPtr->hwndSelf,IP_SUBCLASS_PROP);
+            GetPropA ((HWND)wndPtr->hwndSelf,IP_SUBCLASS_PROP);
 
 	for (i=0; i<=3; i++) {
-		SetWindowLong32A ((HWND32)lpipsi->hwndIP[i], GWL_WNDPROC,
+		SetWindowLongA ((HWND)lpipsi->hwndIP[i], GWL_WNDPROC,
                   (LONG)lpipsi->wpOrigProc[i]);
 	}
 
@@ -157,54 +157,54 @@ IPADDRESS_Destroy (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 
 
 static LRESULT
-IPADDRESS_KillFocus (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
+IPADDRESS_KillFocus (WND *wndPtr, WPARAM wParam, LPARAM lParam)
 {
-    HDC32 hdc;
+    HDC hdc;
 
 	TRACE (ipaddress,"\n");
-    hdc = GetDC32 (wndPtr->hwndSelf);
+    hdc = GetDC (wndPtr->hwndSelf);
     IPADDRESS_Refresh (wndPtr, hdc);
-    ReleaseDC32 (wndPtr->hwndSelf, hdc);
+    ReleaseDC (wndPtr->hwndSelf, hdc);
 
 	IPADDRESS_SendIPAddressNotify (wndPtr, 0, 0);  /* FIXME: should use -1 */
 	IPADDRESS_SendNotify (wndPtr, EN_KILLFOCUS);       
-    InvalidateRect32 (wndPtr->hwndSelf, NULL, TRUE);
+    InvalidateRect (wndPtr->hwndSelf, NULL, TRUE);
 
     return 0;
 }
 
 
 static LRESULT
-IPADDRESS_Paint (WND *wndPtr, WPARAM32 wParam)
+IPADDRESS_Paint (WND *wndPtr, WPARAM wParam)
 {
-    HDC32 hdc;
-    PAINTSTRUCT32 ps;
+    HDC hdc;
+    PAINTSTRUCT ps;
 
-    hdc = wParam==0 ? BeginPaint32 (wndPtr->hwndSelf, &ps) : (HDC32)wParam;
+    hdc = wParam==0 ? BeginPaint (wndPtr->hwndSelf, &ps) : (HDC)wParam;
     IPADDRESS_Refresh (wndPtr, hdc);
     if(!wParam)
-	EndPaint32 (wndPtr->hwndSelf, &ps);
+	EndPaint (wndPtr->hwndSelf, &ps);
     return 0;
 }
 
 
 static LRESULT
-IPADDRESS_SetFocus (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
+IPADDRESS_SetFocus (WND *wndPtr, WPARAM wParam, LPARAM lParam)
 {
-    HDC32 hdc;
+    HDC hdc;
 
 	TRACE (ipaddress,"\n");
 
-    hdc = GetDC32 (wndPtr->hwndSelf);
+    hdc = GetDC (wndPtr->hwndSelf);
     IPADDRESS_Refresh (wndPtr, hdc);
-    ReleaseDC32 (wndPtr->hwndSelf, hdc);
+    ReleaseDC (wndPtr->hwndSelf, hdc);
 
     return 0;
 }
 
 
 static LRESULT
-IPADDRESS_Size (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
+IPADDRESS_Size (WND *wndPtr, WPARAM wParam, LPARAM lParam)
 {
     /* IPADDRESS_INFO *infoPtr = IPADDRESS_GetInfoPtr(wndPtr); */
 	TRACE (ipaddress,"\n");
@@ -212,18 +212,18 @@ IPADDRESS_Size (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 }
 
 
-static BOOL32
-IPADDRESS_SendNotify (WND *wndPtr, UINT32 command)
+static BOOL
+IPADDRESS_SendNotify (WND *wndPtr, UINT command)
 
 {
     TRACE (ipaddress, "%x\n",command);
-    return (BOOL32)SendMessage32A (GetParent32 (wndPtr->hwndSelf), WM_COMMAND,
+    return (BOOL)SendMessageA (GetParent (wndPtr->hwndSelf), WM_COMMAND,
               MAKEWPARAM (wndPtr->wIDmenu,command), (LPARAM) wndPtr->hwndSelf);
 }
 
 
-static BOOL32
-IPADDRESS_SendIPAddressNotify (WND *wndPtr, UINT32 field, BYTE newValue)
+static BOOL
+IPADDRESS_SendIPAddressNotify (WND *wndPtr, UINT field, BYTE newValue)
 
 {
 	NMIPADDRESS nmip;
@@ -236,46 +236,46 @@ IPADDRESS_SendIPAddressNotify (WND *wndPtr, UINT32 field, BYTE newValue)
 	nmip.iField=field;
 	nmip.iValue=newValue;
 
-    return (BOOL32)SendMessage32A (GetParent32 (wndPtr->hwndSelf), WM_NOTIFY,
-                                   (WPARAM32)wndPtr->wIDmenu, (LPARAM)&nmip);
+    return (BOOL)SendMessageA (GetParent (wndPtr->hwndSelf), WM_NOTIFY,
+                                   (WPARAM)wndPtr->wIDmenu, (LPARAM)&nmip);
 }
 
 
 
 
 static LRESULT
-IPADDRESS_ClearAddress (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
+IPADDRESS_ClearAddress (WND *wndPtr, WPARAM wParam, LPARAM lParam)
 {
 	int i;
-	HDC32 hdc;
+	HDC hdc;
 	char buf[1];
 	LPIP_SUBCLASS_INFO lpipsi=(LPIP_SUBCLASS_INFO)
-            GetProp32A ((HWND32)wndPtr->hwndSelf,IP_SUBCLASS_PROP);
+            GetPropA ((HWND)wndPtr->hwndSelf,IP_SUBCLASS_PROP);
 
 	TRACE (ipaddress,"\n");
 
 	buf[0]=0;
 	for (i=0; i<=3; i++) 
-		SetWindowText32A (lpipsi->hwndIP[i],buf);
+		SetWindowTextA (lpipsi->hwndIP[i],buf);
 	
-  	hdc = GetDC32 (wndPtr->hwndSelf);
+  	hdc = GetDC (wndPtr->hwndSelf);
     IPADDRESS_Refresh (wndPtr, hdc);
-    ReleaseDC32 (wndPtr->hwndSelf, hdc);
+    ReleaseDC (wndPtr->hwndSelf, hdc);
 	return 0;
 }
 
 static LRESULT
-IPADDRESS_IsBlank (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
+IPADDRESS_IsBlank (WND *wndPtr, WPARAM wParam, LPARAM lParam)
 {
  int i;
  char buf[20];
  LPIP_SUBCLASS_INFO lpipsi=(LPIP_SUBCLASS_INFO)
-            GetProp32A ((HWND32)wndPtr->hwndSelf,IP_SUBCLASS_PROP);
+            GetPropA ((HWND)wndPtr->hwndSelf,IP_SUBCLASS_PROP);
 
  TRACE (ipaddress,"\n");
 
  for (i=0; i<=3; i++) {
-		GetWindowText32A (lpipsi->hwndIP[i],buf,5);
+		GetWindowTextA (lpipsi->hwndIP[i],buf,5);
 		if (buf[0]) return 0;
 	}
 
@@ -283,21 +283,21 @@ IPADDRESS_IsBlank (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 }
 
 static LRESULT
-IPADDRESS_GetAddress (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
+IPADDRESS_GetAddress (WND *wndPtr, WPARAM wParam, LPARAM lParam)
 {
  char field[20];
  int i,valid,fieldvalue;
  DWORD ip_addr;
  IPADDRESS_INFO *infoPtr = IPADDRESS_GetInfoPtr(wndPtr);
  LPIP_SUBCLASS_INFO lpipsi=(LPIP_SUBCLASS_INFO)
-            GetProp32A ((HWND32)wndPtr->hwndSelf,IP_SUBCLASS_PROP);
+            GetPropA ((HWND)wndPtr->hwndSelf,IP_SUBCLASS_PROP);
 
  TRACE (ipaddress,"\n");
 
  valid=0;
  ip_addr=0;
  for (i=0; i<=3; i++) {
-		GetWindowText32A (lpipsi->hwndIP[i],field,4);
+		GetWindowTextA (lpipsi->hwndIP[i],field,4);
 		ip_addr*=256;
 		if (field[0]) {
 			field[3]=0;
@@ -317,15 +317,15 @@ IPADDRESS_GetAddress (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 }
 
 static LRESULT
-IPADDRESS_SetRange (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
+IPADDRESS_SetRange (WND *wndPtr, WPARAM wParam, LPARAM lParam)
 
 {
     IPADDRESS_INFO *infoPtr = IPADDRESS_GetInfoPtr(wndPtr);
-	INT32 index;
+	INT index;
 	
  	TRACE (ipaddress,"\n");
 
-	index=(INT32) wParam;
+	index=(INT) wParam;
 	if ((index<0) || (index>3)) return 0;
 
 	infoPtr->LowerLimit[index]=lParam & 0xff;
@@ -334,12 +334,12 @@ IPADDRESS_SetRange (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 }
 
 static LRESULT
-IPADDRESS_SetAddress (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
+IPADDRESS_SetAddress (WND *wndPtr, WPARAM wParam, LPARAM lParam)
 {
-	HDC32 hdc;
+	HDC hdc;
     IPADDRESS_INFO *infoPtr = IPADDRESS_GetInfoPtr(wndPtr);
 	LPIP_SUBCLASS_INFO lpipsi=(LPIP_SUBCLASS_INFO)
-            GetProp32A ((HWND32)wndPtr->hwndSelf,IP_SUBCLASS_PROP);
+            GetPropA ((HWND)wndPtr->hwndSelf,IP_SUBCLASS_PROP);
 	int i,ip_address,value;
     char buf[20];
 
@@ -351,15 +351,15 @@ IPADDRESS_SetAddress (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 		if ((value>=infoPtr->LowerLimit[i]) && (value<=infoPtr->UpperLimit[i])) 
 			{
 			 sprintf (buf,"%d",value);
-			 SetWindowText32A (lpipsi->hwndIP[i],buf);
+			 SetWindowTextA (lpipsi->hwndIP[i],buf);
 			 IPADDRESS_SendNotify (wndPtr, EN_CHANGE);
 		}
 		ip_address/=256;
 	}
 
-	hdc = GetDC32 (wndPtr->hwndSelf);		/* & send notifications */
+	hdc = GetDC (wndPtr->hwndSelf);		/* & send notifications */
     IPADDRESS_Refresh (wndPtr, hdc);
-    ReleaseDC32 (wndPtr->hwndSelf, hdc);
+    ReleaseDC (wndPtr->hwndSelf, hdc);
 
  return TRUE;
 }
@@ -368,29 +368,29 @@ IPADDRESS_SetAddress (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 
 
 static LRESULT
-IPADDRESS_SetFocusToField (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
+IPADDRESS_SetFocusToField (WND *wndPtr, WPARAM wParam, LPARAM lParam)
 {
     /* IPADDRESS_INFO *infoPtr = IPADDRESS_GetInfoPtr(wndPtr); */
 	LPIP_SUBCLASS_INFO lpipsi=(LPIP_SUBCLASS_INFO)
-            GetProp32A ((HWND32)wndPtr->hwndSelf,IP_SUBCLASS_PROP);
-	INT32 index;
+            GetPropA ((HWND)wndPtr->hwndSelf,IP_SUBCLASS_PROP);
+	INT index;
 
-	index=(INT32) wParam;
+	index=(INT) wParam;
  	TRACE (ipaddress," %d\n", index);
 	if ((index<0) || (index>3)) return 0;
 	
-	SetFocus32 (lpipsi->hwndIP[index]);
+	SetFocus (lpipsi->hwndIP[index]);
 	
     return 1;
 }
 
 
 static LRESULT
-IPADDRESS_LButtonDown (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
+IPADDRESS_LButtonDown (WND *wndPtr, WPARAM wParam, LPARAM lParam)
 {
     TRACE (ipaddress, "\n");
 
-	SetFocus32 (wndPtr->hwndSelf);
+	SetFocus (wndPtr->hwndSelf);
 	IPADDRESS_SendNotify (wndPtr, EN_SETFOCUS);
 	IPADDRESS_SetFocusToField (wndPtr, 0, 0);
 
@@ -416,7 +416,7 @@ IPADDRESS_GotoNextField (LPIP_SUBCLASS_INFO lpipsi, int currentfield)
  IPADDRESS_INFO *infoPtr=lpipsi->infoPtr;
 
  TRACE (ipaddress,"\n");
- GetWindowText32A (lpipsi->hwndIP[currentfield],field,4);
+ GetWindowTextA (lpipsi->hwndIP[currentfield],field,4);
  if (field[0]) {
 	field[3]=0;	
 	newField=-1;
@@ -427,24 +427,24 @@ IPADDRESS_GotoNextField (LPIP_SUBCLASS_INFO lpipsi, int currentfield)
 		newField=infoPtr->UpperLimit[currentfield];
 	if (newField>=0) {
 		sprintf (field,"%d",newField);
-		SetWindowText32A (lpipsi->hwndIP[currentfield], field);
+		SetWindowTextA (lpipsi->hwndIP[currentfield], field);
 		return 1;
 	}
  }
 
  if (currentfield<3) 
-		SetFocus32 (lpipsi->hwndIP[currentfield+1]);
+		SetFocus (lpipsi->hwndIP[currentfield+1]);
  return 0;
 }
 
 
 LRESULT CALLBACK
-IPADDRESS_SubclassProc (HWND32 hwnd, UINT32 uMsg, WPARAM32 wParam, LPARAM lParam)
+IPADDRESS_SubclassProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
  int i,l,index;
  IPADDRESS_INFO *infoPtr;
  LPIP_SUBCLASS_INFO lpipsi=(LPIP_SUBCLASS_INFO)
-            GetProp32A ((HWND32)hwnd,IP_SUBCLASS_PROP); 
+            GetPropA ((HWND)hwnd,IP_SUBCLASS_PROP); 
 
  infoPtr = lpipsi->infoPtr;
  index=0;             /* FIXME */
@@ -456,14 +456,14 @@ IPADDRESS_SubclassProc (HWND32 hwnd, UINT32 uMsg, WPARAM32 wParam, LPARAM lParam
 	case WM_KEYDOWN: {
 			char c=(char) wParam;
 			if (c==VK_TAB) {
- 				HWND32 pwnd;
+ 				HWND pwnd;
 				int shift;
-				shift = GetKeyState32(VK_SHIFT) & 0x8000;
+				shift = GetKeyState(VK_SHIFT) & 0x8000;
 				if (shift)
-					pwnd=GetNextDlgTabItem32 (GetParent32 (hwnd), 0, TRUE);
+					pwnd=GetNextDlgTabItem (GetParent (hwnd), 0, TRUE);
 				else
-					pwnd=GetNextDlgTabItem32 (GetParent32 (hwnd), 0, FALSE);
-				if (pwnd) SetFocus32 (pwnd);
+					pwnd=GetNextDlgTabItem (GetParent (hwnd), 0, FALSE);
+				if (pwnd) SetFocus (pwnd);
 				break;
 			}
 			
@@ -479,7 +479,7 @@ IPADDRESS_SubclassProc (HWND32 hwnd, UINT32 uMsg, WPARAM32 wParam, LPARAM lParam
 			if (c==VK_RETURN) {
 			}
 			if (((c>='0') && (c<='9')) || (iscntrl(c))) {
-				l=GetWindowTextLength32A (lpipsi->hwndIP[index]);
+				l=GetWindowTextLengthA (lpipsi->hwndIP[index]);
 				if (l==3) 
 					if (IPADDRESS_GotoNextField (lpipsi,index)) {
 						wParam=0;
@@ -494,11 +494,11 @@ IPADDRESS_SubclassProc (HWND32 hwnd, UINT32 uMsg, WPARAM32 wParam, LPARAM lParam
 		}
  }
 
- return CallWindowProc32A (lpipsi->wpOrigProc[index], hwnd, uMsg, wParam, lParam);
+ return CallWindowProcA (lpipsi->wpOrigProc[index], hwnd, uMsg, wParam, lParam);
 }
 
 LRESULT WINAPI
-IPADDRESS_WindowProc (HWND32 hwnd, UINT32 uMsg, WPARAM32 wParam, LPARAM lParam)
+IPADDRESS_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     WND *wndPtr = WIN_FindWndPtr(hwnd);
 
@@ -550,7 +550,7 @@ IPADDRESS_WindowProc (HWND32 hwnd, UINT32 uMsg, WPARAM32 wParam, LPARAM lParam)
 	    if (uMsg >= WM_USER)
 		ERR (ipaddress, "unknown msg %04x wp=%08x lp=%08lx\n",
 		     uMsg, wParam, lParam);
-	    return DefWindowProc32A (hwnd, uMsg, wParam, lParam);
+	    return DefWindowProcA (hwnd, uMsg, wParam, lParam);
     }
     return 0;
 }
@@ -559,26 +559,26 @@ IPADDRESS_WindowProc (HWND32 hwnd, UINT32 uMsg, WPARAM32 wParam, LPARAM lParam)
 void
 IPADDRESS_Register (void)
 {
-    WNDCLASS32A wndClass;
+    WNDCLASSA wndClass;
 
-    if (GlobalFindAtom32A (WC_IPADDRESS32A)) return;
+    if (GlobalFindAtomA (WC_IPADDRESSA)) return;
 
-    ZeroMemory (&wndClass, sizeof(WNDCLASS32A));
+    ZeroMemory (&wndClass, sizeof(WNDCLASSA));
     wndClass.style         = CS_GLOBALCLASS;
-    wndClass.lpfnWndProc   = (WNDPROC32)IPADDRESS_WindowProc;
+    wndClass.lpfnWndProc   = (WNDPROC)IPADDRESS_WindowProc;
     wndClass.cbClsExtra    = 0;
     wndClass.cbWndExtra    = sizeof(IPADDRESS_INFO *);
-    wndClass.hCursor       = LoadCursor32A (0, IDC_ARROW32A);
-    wndClass.hbrBackground = (HBRUSH32)(COLOR_3DFACE + 1);
-    wndClass.lpszClassName = WC_IPADDRESS32A;
+    wndClass.hCursor       = LoadCursorA (0, IDC_ARROWA);
+    wndClass.hbrBackground = (HBRUSH)(COLOR_3DFACE + 1);
+    wndClass.lpszClassName = WC_IPADDRESSA;
  
-    RegisterClass32A (&wndClass);
+    RegisterClassA (&wndClass);
 }
 
 VOID
 IPADDRESS_Unregister (VOID)
 {
-    if (GlobalFindAtom32A (WC_IPADDRESS32A))
-    UnregisterClass32A (WC_IPADDRESS32A, (HINSTANCE32)NULL);
+    if (GlobalFindAtomA (WC_IPADDRESSA))
+    UnregisterClassA (WC_IPADDRESSA, (HINSTANCE)NULL);
 }
 

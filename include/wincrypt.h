@@ -11,7 +11,7 @@ typedef unsigned long HCRYPTHASH;
 
 /* function declarations */
 
-BOOL32 WINAPI CryptAcquireContextA(HCRYPTPROV *phProv, LPCSTR pszContainer,
+BOOL WINAPI CryptAcquireContextA(HCRYPTPROV *phProv, LPCSTR pszContainer,
 				   LPCSTR pszProvider, DWORD dwProvType, 
 				   DWORD dwFlags);
 #endif

@@ -34,12 +34,12 @@ static void DRIVER_LoadStartupDrivers(void)
     char  	str[256];
     LPSTR	ptr;
 
-    if (GetPrivateProfileString32A("drivers", NULL, "", str, sizeof(str), "SYSTEM.INI") < 2) {
+    if (GetPrivateProfileStringA("drivers", NULL, "", str, sizeof(str), "SYSTEM.INI") < 2) {
     	ERR(driver,"Can't find drivers section in system.ini\n");
 	return;
     }
 
-    for (ptr = str; lstrlen32A(ptr) != 0; ptr += lstrlen32A(ptr) + 1) {
+    for (ptr = str; lstrlenA(ptr) != 0; ptr += lstrlenA(ptr) + 1) {
 	TRACE(driver, "str='%s'\n", ptr);
 	hDrv = OpenDriver16(ptr, "drivers", 0L);
 	TRACE(driver, "hDrv=%04x\n", hDrv);
@@ -128,11 +128,11 @@ int	DRIVER_MapMsg16To32(WORD wMsg, DWORD* lParam1, DWORD* lParam2)
     case DRV_INSTALL:
 	/* lParam1 is a handle to a window (or not used), lParam2 is a pointer to DRVCONFIGINFO */
 	if (*lParam2) {
-            LPDRVCONFIGINFO32	dci32 = HeapAlloc(SystemHeap, 0, sizeof(DRVCONFIGINFO32));
+            LPDRVCONFIGINFO	dci32 = HeapAlloc(SystemHeap, 0, sizeof(DRVCONFIGINFO));
             LPDRVCONFIGINFO16	dci16 = PTR_SEG_TO_LIN(*lParam2);
 
 	    if (dci32) {
-		dci32->dwDCISize = sizeof(DRVCONFIGINFO32);
+		dci32->dwDCISize = sizeof(DRVCONFIGINFO);
 		dci32->lpszDCISectionName = HEAP_strdupAtoW(SystemHeap, 0, PTR_SEG_TO_LIN(dci16->lpszDCISectionName));
 		dci32->lpszDCIAliasName   = HEAP_strdupAtoW(SystemHeap, 0, PTR_SEG_TO_LIN(dci16->lpszDCIAliasName));
 		if (dci32->lpszDCISectionName == NULL || dci32->lpszDCIAliasName == NULL)
@@ -184,7 +184,7 @@ int	DRIVER_UnMapMsg16To32(WORD wMsg, DWORD lParam1, DWORD lParam2)
     case DRV_INSTALL:
 	/* lParam1 is a handle to a window (or not used), lParam2 is a pointer to DRVCONFIGINFO, lParam2 */
 	if (lParam2) {
-	    LPDRVCONFIGINFO32	dci32 = (LPDRVCONFIGINFO32)lParam2;
+	    LPDRVCONFIGINFO	dci32 = (LPDRVCONFIGINFO)lParam2;
 	    HeapFree(SystemHeap, 0, (LPVOID)dci32->lpszDCISectionName);
 	    HeapFree(SystemHeap, 0, (LPVOID)dci32->lpszDCIAliasName);
 	    HeapFree(SystemHeap, 0, dci32);
@@ -243,7 +243,7 @@ int	DRIVER_MapMsg32To16(WORD wMsg, DWORD* lParam1, DWORD* lParam2)
 	/* lParam1 is a handle to a window (or not used), lParam2 is a pointer to DRVCONFIGINFO */
 	if (*lParam2) {
             LPDRVCONFIGINFO16	dci16 = (LPDRVCONFIGINFO16)SEGPTR_ALLOC(sizeof(DRVCONFIGINFO16));
-            LPDRVCONFIGINFO32	dci32 = (LPDRVCONFIGINFO32)lParam2;
+            LPDRVCONFIGINFO	dci32 = (LPDRVCONFIGINFO)lParam2;
 
 	    if (dci16) {
 		LPSTR	str1, str2;
@@ -369,7 +369,7 @@ LRESULT WINAPI SendDriverMessage16(HDRVR16 hDriver, UINT16 msg, LPARAM lParam1,
 /**************************************************************************
  *				SendDriverMessage		[WINMM.19]
  */
-LRESULT WINAPI SendDriverMessage32(HDRVR32 hDriver, UINT32 msg, LPARAM lParam1,
+LRESULT WINAPI SendDriverMessage(HDRVR hDriver, UINT msg, LPARAM lParam1,
                                    LPARAM lParam2)
 {
     LPWINE_DRIVER	lpDrv = (LPWINE_DRIVER)hDriver;
@@ -411,15 +411,15 @@ LRESULT WINAPI SendDriverMessage32(HDRVR32 hDriver, UINT32 msg, LPARAM lParam1,
  * Adds a driver struct to the list of open drivers.
  * Generates all the logic to handle driver creation / open.
  */
-static	BOOL32	DRIVER_AddToList(LPWINE_DRIVER lpNewDrv, LPARAM lParam)
+static	BOOL	DRIVER_AddToList(LPWINE_DRIVER lpNewDrv, LPARAM lParam)
 {
     /* First driver to be loaded for this module, need to load correctly the module */
     if (DRIVER_GetNumberOfModuleRefs(lpNewDrv) == 0) {
-	if (SendDriverMessage32((HDRVR32)lpNewDrv, DRV_LOAD,   0L, 0L) != DRV_SUCCESS) {
+	if (SendDriverMessage((HDRVR)lpNewDrv, DRV_LOAD,   0L, 0L) != DRV_SUCCESS) {
 	    TRACE(driver, "DRV_LOAD failed on driver 0x%08lx\n", (DWORD)lpNewDrv);
 	    return FALSE;
 	}
-	if (SendDriverMessage32((HDRVR32)lpNewDrv, DRV_ENABLE, 0L, 0L) != DRV_SUCCESS) {
+	if (SendDriverMessage((HDRVR)lpNewDrv, DRV_ENABLE, 0L, 0L) != DRV_SUCCESS) {
 	    TRACE(driver, "DRV_ENABLE failed on driver 0x%08lx\n", (DWORD)lpNewDrv);
 	    return FALSE;
 	}
@@ -431,7 +431,7 @@ static	BOOL32	DRIVER_AddToList(LPWINE_DRIVER lpNewDrv, LPARAM lParam)
      * + and we send it through SendDriverMessage32 as a 32 bit value...
      * => so we might have trouble with this little guy (FIXME ???)
      */
-    lpNewDrv->dwDriverID = SendDriverMessage32((HDRVR32)lpNewDrv, DRV_OPEN, (DWORD)lpNewDrv->szAliasName, lParam);
+    lpNewDrv->dwDriverID = SendDriverMessage((HDRVR)lpNewDrv, DRV_OPEN, (DWORD)lpNewDrv->szAliasName, lParam);
     if (lpNewDrv->dwDriverID == 0) {
 	TRACE(driver, "DRV_OPEN failed on driver 0x%08lx\n", (DWORD)lpNewDrv);
 	return FALSE;
@@ -458,14 +458,14 @@ static	BOOL32	DRIVER_AddToList(LPWINE_DRIVER lpNewDrv, LPARAM lParam)
  * Generates all the logic to handle driver closure / deletion
  * Removes a driver struct to the list of open drivers.
  */
-static	BOOL32	DRIVER_RemoveFromList(LPWINE_DRIVER lpDrv, LPARAM lParam1, LPARAM lParam2)
+static	BOOL	DRIVER_RemoveFromList(LPWINE_DRIVER lpDrv, LPARAM lParam1, LPARAM lParam2)
 {
-    SendDriverMessage32((HDRVR32)lpDrv, DRV_CLOSE, lParam1, lParam2);
+    SendDriverMessage((HDRVR)lpDrv, DRV_CLOSE, lParam1, lParam2);
 
     lpDrv->dwDriverID = 0;
     if (DRIVER_GetNumberOfModuleRefs(lpDrv) == 1) {
-	SendDriverMessage16((HDRVR32)lpDrv, DRV_DISABLE, 0L, 0L);
-	SendDriverMessage16((HDRVR32)lpDrv, DRV_FREE,    0L, 0L);
+	SendDriverMessage16((HDRVR)lpDrv, DRV_DISABLE, 0L, 0L);
+	SendDriverMessage16((HDRVR)lpDrv, DRV_FREE,    0L, 0L);
 
 	if (lpDrv->lpPrevItem)
 	    lpDrv->lpPrevItem->lpNextItem = lpDrv->lpNextItem;
@@ -518,7 +518,7 @@ LPWINE_DRIVER DRIVER_RegisterDriver16(LPCSTR lpName, HMODULE16 hModule, DRIVERPR
  * Creates all the WINE internal representations for a 32 bit driver.
  * The driver is also open by sending the correct messages.
  */
-LPWINE_DRIVER DRIVER_RegisterDriver32(LPCSTR lpName, HMODULE32 hModule, DRIVERPROC32 lpProc, LPARAM lParam)
+LPWINE_DRIVER DRIVER_RegisterDriver32(LPCSTR lpName, HMODULE hModule, DRIVERPROC lpProc, LPARAM lParam)
 {
     LPWINE_DRIVER	lpDrv;
 
@@ -553,7 +553,7 @@ static	HDRVR16	DRIVER_TryOpenDriver16(LPCSTR lpFileName, LPARAM lParam)
 
     TRACE(driver,"('%s', %08lX);\n", lpFileName, lParam);
 
-    if (lstrlen32A(lpFileName) < 1) 
+    if (lstrlenA(lpFileName) < 1) 
 	return 0;
 
     lpSFN = strrchr(lpFileName, '\\');
@@ -576,23 +576,23 @@ static	HDRVR16	DRIVER_TryOpenDriver16(LPCSTR lpFileName, LPARAM lParam)
  *
  * Tries to load a 32 bit driver whose DLL's (module) name is lpFileName.
  */
-static	HDRVR32	DRIVER_TryOpenDriver32(LPCSTR lpFileName, LPARAM lParam)
+static	HDRVR	DRIVER_TryOpenDriver32(LPCSTR lpFileName, LPARAM lParam)
 {
     LPWINE_DRIVER 	lpDrv = NULL;
     LPCSTR		lpSFN;
-    HMODULE32		hModule;
-    DRIVERPROC32	lpProc;
+    HMODULE		hModule;
+    DRIVERPROC	lpProc;
 
     TRACE(driver,"('%s', %08lX);\n", lpFileName, lParam);
 
-    if (lstrlen32A(lpFileName) < 1) 
+    if (lstrlenA(lpFileName) < 1) 
 	return 0;
 
     lpSFN = strrchr(lpFileName, '\\');
     lpSFN = (lpSFN) ? (lpSFN + 1) : lpFileName;
 
-    if ((hModule = LoadLibrary32A(lpFileName)) != 0) {
-	if ((lpProc = GetProcAddress32(hModule, "DriverProc")) != NULL) {
+    if ((hModule = LoadLibraryA(lpFileName)) != 0) {
+	if ((lpProc = GetProcAddress(hModule, "DriverProc")) != NULL) {
 	    lpDrv = DRIVER_RegisterDriver32(lpSFN, hModule, lpProc, lParam);
 	} else {
 	    TRACE(driver, "No DriverProc found\n");
@@ -600,7 +600,7 @@ static	HDRVR32	DRIVER_TryOpenDriver32(LPCSTR lpFileName, LPARAM lParam)
     } else {
 	TRACE(driver, "Unable to load module (%s)\n", lpFileName);
     }
-    return (HDRVR32)lpDrv;
+    return (HDRVR)lpDrv;
 }
 
 /**************************************************************************
@@ -620,7 +620,7 @@ HDRVR16 WINAPI OpenDriver16(LPCSTR lpDriverName, LPCSTR lpSectionName, LPARAM lP
 	    lpSectionName = "Drivers";
 	}
     }
-    if (!hDriver && GetPrivateProfileString32A(lpSectionName, lpDriverName, "", 
+    if (!hDriver && GetPrivateProfileStringA(lpSectionName, lpDriverName, "", 
 					       drvName, sizeof(drvName), "SYSTEM.INI") > 0) {
 	hDriver = DRIVER_TryOpenDriver16(drvName, lParam);
     }
@@ -633,9 +633,9 @@ HDRVR16 WINAPI OpenDriver16(LPCSTR lpDriverName, LPCSTR lpSectionName, LPARAM lP
  * (0,1,DRV_ENABLE,0       ,0)
  * (0,1,DRV_OPEN  ,buf[256],0)
  */
-HDRVR32 WINAPI OpenDriver32A(LPCSTR lpDriverName, LPCSTR lpSectionName, LPARAM lParam) 
+HDRVR WINAPI OpenDriverA(LPCSTR lpDriverName, LPCSTR lpSectionName, LPARAM lParam) 
 {
-    HDRVR32 		hDriver = 0;
+    HDRVR 		hDriver = 0;
     char 		drvName[128];
 
     TRACE(driver,"('%s', '%s', %08lX);\n", lpDriverName, lpSectionName, lParam);
@@ -648,21 +648,21 @@ HDRVR32 WINAPI OpenDriver32A(LPCSTR lpDriverName, LPCSTR lpSectionName, LPARAM l
 	    hDriver = DRIVER_TryOpenDriver16(lpDriverName, lParam);
 	}
 	if (!hDriver) {
-	    if (GetPrivateProfileString32A("Drivers32", lpDriverName, "", drvName,
+	    if (GetPrivateProfileStringA("Drivers32", lpDriverName, "", drvName,
 					   sizeof(drvName), "SYSTEM.INI")) {
 		hDriver = DRIVER_TryOpenDriver32(drvName, lParam);
 		
 	    }
 	}
 	if (!hDriver) {
-	    if (GetPrivateProfileString32A("Drivers", lpDriverName, "", drvName,
+	    if (GetPrivateProfileStringA("Drivers", lpDriverName, "", drvName,
 					   sizeof(drvName), "SYSTEM.INI")) {
 		hDriver = DRIVER_TryOpenDriver16(drvName, lParam);
 		
 	    }
 	}
     } else {
-	if (GetPrivateProfileString32A(lpSectionName, lpDriverName, "", drvName,
+	if (GetPrivateProfileStringA(lpSectionName, lpDriverName, "", drvName,
 				       sizeof(drvName), "SYSTEM.INI")) {
 	    hDriver = DRIVER_TryOpenDriver32(drvName, lParam);
 	}
@@ -675,11 +675,11 @@ HDRVR32 WINAPI OpenDriver32A(LPCSTR lpDriverName, LPCSTR lpSectionName, LPARAM l
 /**************************************************************************
  *				OpenDriver32W		        [WINMM.15]
  */
-HDRVR32 WINAPI OpenDriver32W(LPCWSTR lpDriverName, LPCWSTR lpSectionName, LPARAM lParam)
+HDRVR WINAPI OpenDriverW(LPCWSTR lpDriverName, LPCWSTR lpSectionName, LPARAM lParam)
 {
     LPSTR 	dn = HEAP_strdupWtoA(GetProcessHeap(), 0, lpDriverName);
     LPSTR 	sn = HEAP_strdupWtoA(GetProcessHeap(), 0, lpSectionName);
-    HDRVR32	ret = OpenDriver32A(dn, sn, lParam);
+    HDRVR	ret = OpenDriverA(dn, sn, lParam);
 
     if (dn) HeapFree(GetProcessHeap(), 0, dn);
     if (sn) HeapFree(GetProcessHeap(), 0, sn);
@@ -707,7 +707,7 @@ LRESULT WINAPI CloseDriver16(HDRVR16 hDrvr, LPARAM lParam1, LPARAM lParam2)
 /**************************************************************************
  *			CloseDriver32				[WINMM.4]
  */
-LRESULT WINAPI CloseDriver32(HDRVR32 hDrvr, LPARAM lParam1, LPARAM lParam2)
+LRESULT WINAPI CloseDriver(HDRVR hDrvr, LPARAM lParam1, LPARAM lParam2)
 {
     LPWINE_DRIVER lpDrv;
 
@@ -744,10 +744,10 @@ HMODULE16 WINAPI GetDriverModuleHandle16(HDRVR16 hDrvr)
 /**************************************************************************
  *				GetDriverModuleHandle	[USER.254]
  */
-HMODULE32 WINAPI GetDriverModuleHandle32(HDRVR32 hDrvr)
+HMODULE WINAPI GetDriverModuleHandle(HDRVR hDrvr)
 {
     LPWINE_DRIVER 	lpDrv = (LPWINE_DRIVER)hDrvr;
-    HMODULE32		hModule = 0;
+    HMODULE		hModule = 0;
 
     TRACE(driver, "(%04x);\n", hDrvr);
 
@@ -771,7 +771,7 @@ LRESULT WINAPI DefDriverProc16(DWORD dwDevID, HDRVR16 hDriv, UINT16 wMsg,
     case DRV_ENABLE:		return (LRESULT)0L;
     case DRV_DISABLE:		return (LRESULT)0L;
     case DRV_QUERYCONFIGURE:	return (LRESULT)0L;
-    case DRV_CONFIGURE:		MessageBox32A(0, "Driver isn't configurable !", "Wine Driver", MB_OK); return (LRESULT)0L;
+    case DRV_CONFIGURE:		MessageBoxA(0, "Driver isn't configurable !", "Wine Driver", MB_OK); return (LRESULT)0L;
     case DRV_INSTALL:		return (LRESULT)DRVCNF_RESTART;
     case DRV_REMOVE:		return (LRESULT)DRVCNF_RESTART;
     default:			return (LRESULT)0L;
@@ -781,7 +781,7 @@ LRESULT WINAPI DefDriverProc16(DWORD dwDevID, HDRVR16 hDriv, UINT16 wMsg,
 /**************************************************************************
  *				GetDriverInfo			[USER.256]
  */
-BOOL16 WINAPI GetDriverInfo(HDRVR16 hDrvr, LPDRIVERINFOSTRUCT16 lpDrvInfo)
+BOOL16 WINAPI GetDriverInfo16(HDRVR16 hDrvr, LPDRIVERINFOSTRUCT16 lpDrvInfo)
 {
     LPWINE_DRIVER 	lpDrv;
     BOOL16		ret = FALSE;
@@ -806,7 +806,7 @@ BOOL16 WINAPI GetDriverInfo(HDRVR16 hDrvr, LPDRIVERINFOSTRUCT16 lpDrvInfo)
 /**************************************************************************
  *				GetNextDriver			[USER.257]
  */
-HDRVR16 WINAPI GetNextDriver(HDRVR16 hDrvr, DWORD dwFlags)
+HDRVR16 WINAPI GetNextDriver16(HDRVR16 hDrvr, DWORD dwFlags)
 {
     HDRVR16 		hRetDrv = 0;
     LPWINE_DRIVER 	lpDrv;

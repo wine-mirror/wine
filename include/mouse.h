@@ -36,12 +36,12 @@ typedef struct _WINE_MOUSEEVENT
     DWORD magic;
     DWORD keyState;
     DWORD time;
-    HWND32 hWnd;
+    HWND hWnd;
 
 } WINE_MOUSEEVENT;
 
 void MOUSE_SendEvent( DWORD mouseStatus, DWORD posX, DWORD posY,
-                      DWORD keyState, DWORD time, HWND32 hWnd );
+                      DWORD keyState, DWORD time, HWND hWnd );
 
 /***********************************
  * 	MouseWheel support (defines)

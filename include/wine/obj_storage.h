@@ -15,8 +15,7 @@
  * Predeclare the structures
  */
 typedef LPOLESTR16 *SNB16;
-typedef LPOLESTR32 *SNB32;
-DECL_WINELIB_TYPE(SNB)
+typedef LPOLESTR *SNB;
 
 typedef struct STATSTG STATSTG;
 
@@ -59,15 +58,11 @@ typedef struct ISequentialStream ISequentialStream,*LPSEQUENTIALSTREAM;
 
 DEFINE_OLEGUID(IID_IStorage,		0x0000000bL, 0, 0);
 typedef struct IStorage16 IStorage16,*LPSTORAGE16;
-typedef struct IStorage32 IStorage32,*LPSTORAGE32;
-DECL_WINELIB_TYPE(IStorage)
-DECL_WINELIB_TYPE(LPSTORAGE)
+typedef struct IStorage IStorage,*LPSTORAGE;
 
 DEFINE_OLEGUID(IID_IStream,		0x0000000cL, 0, 0);
 typedef struct IStream16 IStream16,*LPSTREAM16;
-typedef struct IStream32 IStream32,*LPSTREAM32;
-DECL_WINELIB_TYPE(IStream)
-DECL_WINELIB_TYPE(LPSTREAM)
+typedef struct IStream IStream,*LPSTREAM;
 
 
 /*****************************************************************************
@@ -172,7 +167,7 @@ ICOM_DEFINE(IEnumSTATSTG,IUnknown)
     ICOM_METHOD3(HRESULT,FillAppend,  const void*,pv, ULONG,cb, ULONG*,pcbWritten) \
     ICOM_METHOD4(HRESULT,FillAt,      ULARGE_INTEGER,ulOffset, const void*,pv, ULONG,cb, ULONG*,pcbWritten) \
     ICOM_METHOD1(HRESULT,SetFillSize, ULARGE_INTEGER,ulSize) \
-    ICOM_METHOD1(HRESULT,Terminate,   BOOL32,bCanceled)
+    ICOM_METHOD1(HRESULT,Terminate,   BOOL,bCanceled)
 #define IFillLockBytes_IMETHODS \
     IUnknown_IMETHODS \
     IFillLockBytes_METHODS
@@ -292,10 +287,10 @@ ICOM_DEFINE(IPersist,IUnknown)
 #define ICOM_INTERFACE IPersistFile
 #define IPersistFile_METHODS \
     ICOM_CMETHOD (HRESULT,IsDirty) \
-    ICOM_METHOD2 (HRESULT,Load,          LPCOLESTR32,pszFileName, DWORD,dwMode) \
-    ICOM_METHOD2 (HRESULT,Save,          LPCOLESTR32,pszFileName, BOOL32,fRemember) \
-    ICOM_METHOD1 (HRESULT,SaveCompleted, LPCOLESTR32,pszFileName) \
-    ICOM_CMETHOD1(HRESULT,GetCurFile,    LPOLESTR32*,ppszFileName)
+    ICOM_METHOD2 (HRESULT,Load,          LPCOLESTR,pszFileName, DWORD,dwMode) \
+    ICOM_METHOD2 (HRESULT,Save,          LPCOLESTR,pszFileName, BOOL,fRemember) \
+    ICOM_METHOD1 (HRESULT,SaveCompleted, LPCOLESTR,pszFileName) \
+    ICOM_CMETHOD1(HRESULT,GetCurFile,    LPOLESTR*,ppszFileName)
 #define IPersistFile_IMETHODS \
     IPersist_IMETHODS \
     IPersistFile_METHODS
@@ -324,10 +319,10 @@ ICOM_DEFINE(IPersistFile,IPersist)
 #define ICOM_INTERFACE IPersistStorage
 #define IPersistStorage_METHODS \
     ICOM_METHOD (HRESULT,IsDirty) \
-    ICOM_METHOD1(HRESULT,InitNew,        IStorage32*,pStg) \
-    ICOM_METHOD1(HRESULT,Load,           IStorage32*,pStg) \
-    ICOM_METHOD2(HRESULT,Save,           IStorage32*,pStg, BOOL32,fSameAsLoad) \
-    ICOM_METHOD1(HRESULT,SaveCompleted,  IStorage32*,pStgNew) \
+    ICOM_METHOD1(HRESULT,InitNew,        IStorage*,pStg) \
+    ICOM_METHOD1(HRESULT,Load,           IStorage*,pStg) \
+    ICOM_METHOD2(HRESULT,Save,           IStorage*,pStg, BOOL,fSameAsLoad) \
+    ICOM_METHOD1(HRESULT,SaveCompleted,  IStorage*,pStgNew) \
 		ICOM_METHOD (HRESULT,HandsOffStorage)
 #define IPersistStorage_IMETHODS \
     IPersist_IMETHODS \
@@ -358,8 +353,8 @@ ICOM_DEFINE(IPersistStorage,IPersist)
 #define ICOM_INTERFACE IPersistStream
 #define IPersistStream_METHODS \
     ICOM_METHOD (HRESULT,IsDirty) \
-    ICOM_METHOD1(HRESULT,Load,       IStream32*,pStm) \
-    ICOM_METHOD2(HRESULT,Save,       IStream32*,pStm, BOOL32,fClearDirty) \
+    ICOM_METHOD1(HRESULT,Load,       IStream*,pStm) \
+    ICOM_METHOD2(HRESULT,Save,       IStream*,pStm, BOOL,fClearDirty) \
     ICOM_METHOD1(HRESULT,GetSizeMax, ULARGE_INTEGER*,pcbSize)
 #define IPersistStream_IMETHODS \
     IPersist_IMETHODS \
@@ -387,7 +382,7 @@ ICOM_DEFINE(IPersistStream,IPersist)
  */
 #define ICOM_INTERFACE IProgressNotify
 #define IProgressNotify_METHODS \
-    ICOM_METHOD4(HRESULT,OnProgress, DWORD,dwProgressCurrent, DWORD,dwProgressMaximum, BOOL32,fAccurate, BOOL32,fOwner)
+    ICOM_METHOD4(HRESULT,OnProgress, DWORD,dwProgressCurrent, DWORD,dwProgressMaximum, BOOL,fAccurate, BOOL,fOwner)
 #define IProgressNotify_IMETHODS \
     IUnknown_IMETHODS \
     IProgressNotify_METHODS
@@ -409,7 +404,7 @@ ICOM_DEFINE(IProgressNotify,IUnknown)
  */
 #define ICOM_INTERFACE IRootStorage
 #define IRootStorage_METHODS \
-    ICOM_METHOD1(HRESULT,SwitchToFile, LPOLESTR32,pszFile)
+    ICOM_METHOD1(HRESULT,SwitchToFile, LPOLESTR,pszFile)
 #define IRootStorage_IMETHODS \
     IUnknown_IMETHODS \
     IRootStorage_METHODS
@@ -500,50 +495,50 @@ ICOM_DEFINE(IStorage16,IUnknown)
 #endif
 
 
-#define ICOM_INTERFACE IStorage32
-#define IStorage32_METHODS \
-    ICOM_METHOD5(HRESULT,CreateStream,   LPCOLESTR32,pwcsName, DWORD,grfMode, DWORD,reserved1, DWORD,reserved2, IStream32**,ppstm) \
-    ICOM_METHOD5(HRESULT,OpenStream,     LPCOLESTR32,pwcsName, void*,reserved1, DWORD,grfMode, DWORD,reserved2, IStream32**,ppstm) \
-    ICOM_METHOD5(HRESULT,CreateStorage,  LPCOLESTR32,pwcsName, DWORD,grfMode, DWORD,dwStgFmt, DWORD,reserved2, IStorage32**,ppstg) \
-    ICOM_METHOD6(HRESULT,OpenStorage,    LPCOLESTR32,pwcsName, IStorage32*,pstgPriority, DWORD,grfMode, SNB32,snb16Exclude, DWORD,reserved, IStorage32**,ppstg) \
-    ICOM_METHOD4(HRESULT,CopyTo,         DWORD,ciidExclude, const IID*,rgiidExclude, SNB32,snb16Exclude, IStorage32*,pstgDest) \
-    ICOM_METHOD4(HRESULT,MoveElementTo,  LPCOLESTR32,pwcsName, IStorage32*,pstgDest, LPCOLESTR32,pwcsNewName, DWORD,grfFlags) \
+#define ICOM_INTERFACE IStorage
+#define IStorage_METHODS \
+    ICOM_METHOD5(HRESULT,CreateStream,   LPCOLESTR,pwcsName, DWORD,grfMode, DWORD,reserved1, DWORD,reserved2, IStream**,ppstm) \
+    ICOM_METHOD5(HRESULT,OpenStream,     LPCOLESTR,pwcsName, void*,reserved1, DWORD,grfMode, DWORD,reserved2, IStream**,ppstm) \
+    ICOM_METHOD5(HRESULT,CreateStorage,  LPCOLESTR,pwcsName, DWORD,grfMode, DWORD,dwStgFmt, DWORD,reserved2, IStorage**,ppstg) \
+    ICOM_METHOD6(HRESULT,OpenStorage,    LPCOLESTR,pwcsName, IStorage*,pstgPriority, DWORD,grfMode, SNB,snb16Exclude, DWORD,reserved, IStorage**,ppstg) \
+    ICOM_METHOD4(HRESULT,CopyTo,         DWORD,ciidExclude, const IID*,rgiidExclude, SNB,snb16Exclude, IStorage*,pstgDest) \
+    ICOM_METHOD4(HRESULT,MoveElementTo,  LPCOLESTR,pwcsName, IStorage*,pstgDest, LPCOLESTR,pwcsNewName, DWORD,grfFlags) \
     ICOM_METHOD1(HRESULT,Commit,         DWORD,grfCommitFlags) \
     ICOM_METHOD (HRESULT,Revert) \
     ICOM_METHOD4(HRESULT,EnumElements,   DWORD,reserved1, void*,reserved2, DWORD,reserved3, IEnumSTATSTG**,ppenum) \
-    ICOM_METHOD1(HRESULT,DestroyElement, LPCOLESTR32,pwcsName) \
-    ICOM_METHOD2(HRESULT,RenameElement,  LPCOLESTR32,pwcsOldName, LPCOLESTR32,pwcsNewName) \
-    ICOM_METHOD4(HRESULT,SetElementTimes,LPCOLESTR32,pwcsName, const FILETIME*,pctime, const FILETIME*,patime, const FILETIME*,pmtime) \
+    ICOM_METHOD1(HRESULT,DestroyElement, LPCOLESTR,pwcsName) \
+    ICOM_METHOD2(HRESULT,RenameElement,  LPCOLESTR,pwcsOldName, LPCOLESTR,pwcsNewName) \
+    ICOM_METHOD4(HRESULT,SetElementTimes,LPCOLESTR,pwcsName, const FILETIME*,pctime, const FILETIME*,patime, const FILETIME*,pmtime) \
     ICOM_METHOD1(HRESULT,SetClass,       REFCLSID,clsid) \
     ICOM_METHOD2(HRESULT,SetStateBits,   DWORD,grfStateBits, DWORD,grfMask) \
     ICOM_METHOD2(HRESULT,Stat,           STATSTG*,pstatstg, DWORD,grfStatFlag)
-#define IStorage32_IMETHODS \
+#define IStorage_IMETHODS \
     IUnknown_IMETHODS \
-    IStorage32_METHODS
-ICOM_DEFINE(IStorage32,IUnknown)
+    IStorage_METHODS
+ICOM_DEFINE(IStorage,IUnknown)
 #undef ICOM_INTERFACE
 
 #ifdef ICOM_CINTERFACE
 /*** IUnknown methods ***/
-#define IStorage32_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
-#define IStorage32_AddRef(p)             ICOM_CALL (AddRef,p)
-#define IStorage32_Release(p)            ICOM_CALL (Release,p)
+#define IStorage_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
+#define IStorage_AddRef(p)             ICOM_CALL (AddRef,p)
+#define IStorage_Release(p)            ICOM_CALL (Release,p)
 /*** IStorage32 methods ***/
-#define IStorage32_CreateStream(p,a,b,c,d,e)  ICOM_CALL5(CreateStream,p,a,b,c,d,e)
-#define IStorage32_OpenStream(p,a,b,c,d,e)    ICOM_CALL5(OpenStream,p,a,b,c,d,e)
-#define IStorage32_CreateStorage(p,a,b,c,d,e) ICOM_CALL5(CreateStorage,p,a,b,c,d,e)
-#define IStorage32_OpenStorage(p,a,b,c,d,e,f) ICOM_CALL6(OpenStorage,p,a,b,c,d,e,f)
-#define IStorage32_CopyTo(p,a,b,c,d)          ICOM_CALL4(CopyTo,p,a,b,c,d)
-#define IStorage32_MoveElementTo(p,a,b,c,d)   ICOM_CALL4(MoveElementTo,p,a,b,c,d)
-#define IStorage32_Commit(p,a)                ICOM_CALL1(Commit,p,a)
-#define IStorage32_Revert(p)                  ICOM_CALL (Revert,p)
-#define IStorage32_EnumElements(p,a,b,c,d)    ICOM_CALL4(EnumElements,p,a,b,c,d)
-#define IStorage32_DestroyElement(p,a)        ICOM_CALL1(DestroyElement,p,a)
-#define IStorage32_RenameElement(p,a,b)       ICOM_CALL2(RenameElement,p,a,b)
-#define IStorage32_SetElementTimes(p,a,b,c,d) ICOM_CALL4(SetElementTimes,p,a,b,c,d)
-#define IStorage32_SetClass(p,a)              ICOM_CALL1(SetClass,p,a)
-#define IStorage32_SetStateBits(p,a,b)        ICOM_CALL2(SetStateBits,p,a,b)
-#define IStorage32_Stat(p,a,b)                ICOM_CALL2(Stat,p,a,b)
+#define IStorage_CreateStream(p,a,b,c,d,e)  ICOM_CALL5(CreateStream,p,a,b,c,d,e)
+#define IStorage_OpenStream(p,a,b,c,d,e)    ICOM_CALL5(OpenStream,p,a,b,c,d,e)
+#define IStorage_CreateStorage(p,a,b,c,d,e) ICOM_CALL5(CreateStorage,p,a,b,c,d,e)
+#define IStorage_OpenStorage(p,a,b,c,d,e,f) ICOM_CALL6(OpenStorage,p,a,b,c,d,e,f)
+#define IStorage_CopyTo(p,a,b,c,d)          ICOM_CALL4(CopyTo,p,a,b,c,d)
+#define IStorage_MoveElementTo(p,a,b,c,d)   ICOM_CALL4(MoveElementTo,p,a,b,c,d)
+#define IStorage_Commit(p,a)                ICOM_CALL1(Commit,p,a)
+#define IStorage_Revert(p)                  ICOM_CALL (Revert,p)
+#define IStorage_EnumElements(p,a,b,c,d)    ICOM_CALL4(EnumElements,p,a,b,c,d)
+#define IStorage_DestroyElement(p,a)        ICOM_CALL1(DestroyElement,p,a)
+#define IStorage_RenameElement(p,a,b)       ICOM_CALL2(RenameElement,p,a,b)
+#define IStorage_SetElementTimes(p,a,b,c,d) ICOM_CALL4(SetElementTimes,p,a,b,c,d)
+#define IStorage_SetClass(p,a)              ICOM_CALL1(SetClass,p,a)
+#define IStorage_SetStateBits(p,a,b)        ICOM_CALL2(SetStateBits,p,a,b)
+#define IStorage_Stat(p,a,b)                ICOM_CALL2(Stat,p,a,b)
 
 #ifndef __WINE__
 /* Duplicated for WINELIB */
@@ -612,41 +607,41 @@ ICOM_DEFINE(IStream16,ISequentialStream)
 #endif
 
 
-#define ICOM_INTERFACE IStream32
-#define IStream32_METHODS \
+#define ICOM_INTERFACE IStream
+#define IStream_METHODS \
     ICOM_METHOD3(HRESULT,Seek,        LARGE_INTEGER,dlibMove, DWORD,dwOrigin, ULARGE_INTEGER*,plibNewPosition) \
     ICOM_METHOD1(HRESULT,SetSize,     ULARGE_INTEGER,libNewSize) \
-    ICOM_METHOD4(HRESULT,CopyTo,      IStream32*,pstm, ULARGE_INTEGER,cb, ULARGE_INTEGER*,pcbRead, ULARGE_INTEGER*,pcbWritten) \
+    ICOM_METHOD4(HRESULT,CopyTo,      IStream*,pstm, ULARGE_INTEGER,cb, ULARGE_INTEGER*,pcbRead, ULARGE_INTEGER*,pcbWritten) \
     ICOM_METHOD1(HRESULT,Commit,      DWORD,grfCommitFlags) \
     ICOM_METHOD (HRESULT,Revert) \
     ICOM_METHOD3(HRESULT,LockRegion,  ULARGE_INTEGER,libOffset, ULARGE_INTEGER,cb, DWORD,dwLockType) \
     ICOM_METHOD3(HRESULT,UnlockRegion,ULARGE_INTEGER,libOffset, ULARGE_INTEGER,cb, DWORD,dwLockType) \
     ICOM_METHOD2(HRESULT,Stat,        STATSTG*,pstatstg, DWORD,grfStatFlag) \
-    ICOM_METHOD1(HRESULT,Clone,       IStream32**,ppstm)
-#define IStream32_IMETHODS \
+    ICOM_METHOD1(HRESULT,Clone,       IStream**,ppstm)
+#define IStream_IMETHODS \
     ISequentialStream_IMETHODS \
-    IStream32_METHODS
-ICOM_DEFINE(IStream32,ISequentialStream)
+    IStream_METHODS
+ICOM_DEFINE(IStream,ISequentialStream)
 #undef ICOM_INTERFACE
 
 #ifdef ICOM_CINTERFACE
 /*** IUnknown methods ***/
-#define IStream32_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
-#define IStream32_AddRef(p)             ICOM_CALL (AddRef,p)
-#define IStream32_Release(p)            ICOM_CALL (Release,p)
+#define IStream_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
+#define IStream_AddRef(p)             ICOM_CALL (AddRef,p)
+#define IStream_Release(p)            ICOM_CALL (Release,p)
 /*** ISequentialStream methods ***/
-#define IStream32_Read(p,a,b,c)  ICOM_CALL3(Read,p,a,b,c)
-#define IStream32_Write(p,a,b,c) ICOM_CALL3(Write,p,a,b,c)
+#define IStream_Read(p,a,b,c)  ICOM_CALL3(Read,p,a,b,c)
+#define IStream_Write(p,a,b,c) ICOM_CALL3(Write,p,a,b,c)
 /*** IStream32 methods ***/
-#define IStream32_Seek(p,a,b,c)         ICOM_CALL3(Seek,p,a,b,c)
-#define IStream32_SetSize(p,a)          ICOM_CALL1(SetSize,p,a)
-#define IStream32_CopyTo(pa,b,c,d)      ICOM_CALL4(CopyTo,pa,b,c,d)
-#define IStream32_Commit(p,a)           ICOM_CALL1(Commit,p,a)
-#define IStream32_Revert(p)             ICOM_CALL (Revert,p)
-#define IStream32_LockRegion(pa,b,c)    ICOM_CALL3(LockRegion,pa,b,c)
-#define IStream32_UnlockRegion(p,a,b,c) ICOM_CALL3(UnlockRegion,p,a,b,c)
-#define IStream32_Stat(p,a,b)           ICOM_CALL2(Stat,p,a,b)
-#define IStream32_Clone(p,a)            ICOM_CALL1(Clone,p,a)
+#define IStream_Seek(p,a,b,c)         ICOM_CALL3(Seek,p,a,b,c)
+#define IStream_SetSize(p,a)          ICOM_CALL1(SetSize,p,a)
+#define IStream_CopyTo(pa,b,c,d)      ICOM_CALL4(CopyTo,pa,b,c,d)
+#define IStream_Commit(p,a)           ICOM_CALL1(Commit,p,a)
+#define IStream_Revert(p)             ICOM_CALL (Revert,p)
+#define IStream_LockRegion(pa,b,c)    ICOM_CALL3(LockRegion,pa,b,c)
+#define IStream_UnlockRegion(p,a,b,c) ICOM_CALL3(UnlockRegion,p,a,b,c)
+#define IStream_Stat(p,a,b)           ICOM_CALL2(Stat,p,a,b)
+#define IStream_Clone(p,a)            ICOM_CALL1(Clone,p,a)
 
 #ifndef __WINE__
 /* Duplicated for WINELIB */
@@ -676,19 +671,15 @@ ICOM_DEFINE(IStream32,ISequentialStream)
  */
 /* FIXME: many functions are missing */
 HRESULT WINAPI StgCreateDocFile16(LPCOLESTR16 pwcsName,DWORD grfMode,DWORD reserved,IStorage16 **ppstgOpen);
-HRESULT WINAPI StgCreateDocfile32(LPCOLESTR32 pwcsName,DWORD grfMode,DWORD reserved,IStorage32 **ppstgOpen);
-#define StgCreateDocfile WINELIB_NAME(StgCreateDocfile)
+HRESULT WINAPI StgCreateDocfile(LPCOLESTR pwcsName,DWORD grfMode,DWORD reserved,IStorage **ppstgOpen);
 
 HRESULT WINAPI StgIsStorageFile16(LPCOLESTR16 fn);
-HRESULT WINAPI StgIsStorageFile32(LPCOLESTR32 fn);
-#define StgIsStorageFile WINELIB_NAME(StgIsStorageFile)
+HRESULT WINAPI StgIsStorageFile(LPCOLESTR fn);
 
 HRESULT WINAPI StgOpenStorage16(const OLECHAR16* pwcsName,IStorage16* pstgPriority,DWORD grfMode,SNB16 snbExclude,DWORD reserved,IStorage16**ppstgOpen);
-HRESULT WINAPI StgOpenStorage32(const OLECHAR32* pwcsName,IStorage32* pstgPriority,DWORD grfMode,SNB32 snbExclude,DWORD reserved,IStorage32**ppstgOpen);
-#define StgOpenStorage WINELIB_NAME(StgOpenStorage)
+HRESULT WINAPI StgOpenStorage(const OLECHAR* pwcsName,IStorage* pstgPriority,DWORD grfMode,SNB snbExclude,DWORD reserved,IStorage**ppstgOpen);
 
-HRESULT WINAPI WriteClassStg32(IStorage32* pStg, REFCLSID rclsid);
-#define WriteClassStg WINELIB_NAME(WriteClassStg)
+HRESULT WINAPI WriteClassStg(IStorage* pStg, REFCLSID rclsid);
 
 
 /*****************************************************************************
@@ -696,10 +687,10 @@ HRESULT WINAPI WriteClassStg32(IStorage32* pStg, REFCLSID rclsid);
  */
 
 /* FIXME: not implemented */
-BOOL32 WINAPI CoDosDateTimeToFileTime(WORD nDosDate, WORD nDosTime, FILETIME* lpFileTime);
+BOOL WINAPI CoDosDateTimeToFileTime(WORD nDosDate, WORD nDosTime, FILETIME* lpFileTime);
 
 /* FIXME: not implemented */
-BOOL32 WINAPI CoFileTimeToDosDateTime(FILETIME* lpFileTime, WORD* lpDosDate, WORD* lpDosTime);
+BOOL WINAPI CoFileTimeToDosDateTime(FILETIME* lpFileTime, WORD* lpDosDate, WORD* lpDosTime);
 
 
 #endif /* __WINE_WINE_OBJ_STORAGE_H */

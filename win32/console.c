@@ -62,7 +62,7 @@ FILE *wine_openpty(int *master, int *slave, char *name,
 /****************************************************************************
  *		CONSOLE_GetInfo
  */
-static BOOL32 CONSOLE_GetInfo( HANDLE32 handle, struct get_console_info_reply *reply )
+static BOOL CONSOLE_GetInfo( HANDLE handle, struct get_console_info_reply *reply )
 {
     struct get_console_info_request req;
 
@@ -80,7 +80,7 @@ static BOOL32 CONSOLE_GetInfo( HANDLE32 handle, struct get_console_info_reply *r
  * queue. Does translation of vt100 style function keys and xterm-mouse clicks.
  */
 static void
-CONSOLE_string_to_IR( HANDLE32 hConsoleInput,unsigned char *buf,int len) {
+CONSOLE_string_to_IR( HANDLE hConsoleInput,unsigned char *buf,int len) {
     int			j,k;
     INPUT_RECORD	ir;
     DWORD		junk;
@@ -130,9 +130,9 @@ CONSOLE_string_to_IR( HANDLE32 hConsoleInput,unsigned char *buf,int len) {
 		}
 	    }
 
-	    assert(WriteConsoleInput32A( hConsoleInput, &ir, 1, &junk ));
+	    assert(WriteConsoleInputA( hConsoleInput, &ir, 1, &junk ));
 	    ir.Event.KeyEvent.bKeyDown = 0;
-	    assert(WriteConsoleInput32A( hConsoleInput, &ir, 1, &junk ));
+	    assert(WriteConsoleInputA( hConsoleInput, &ir, 1, &junk ));
 	    continue;
 	}
 	/* inchar is ESC */
@@ -147,9 +147,9 @@ CONSOLE_string_to_IR( HANDLE32 hConsoleInput,unsigned char *buf,int len) {
 	    );
 	    ir.Event.KeyEvent.dwControlKeyState = 0;
 	    ir.Event.KeyEvent.uChar.AsciiChar	= 27;
-	    assert(WriteConsoleInput32A( hConsoleInput, &ir, 1, &junk ));
+	    assert(WriteConsoleInputA( hConsoleInput, &ir, 1, &junk ));
 	    ir.Event.KeyEvent.bKeyDown = 0;
-	    assert(WriteConsoleInput32A( hConsoleInput, &ir, 1, &junk ));
+	    assert(WriteConsoleInputA( hConsoleInput, &ir, 1, &junk ));
 	    continue;
 	}
 	for (k=j;k<len;k++) {
@@ -216,7 +216,7 @@ CONSOLE_string_to_IR( HANDLE32 hConsoleInput,unsigned char *buf,int len) {
 		    else
 			ir.Event.MouseEvent.dwButtonState = 1<<(buf[k+1]-' ');
 		    ir.Event.MouseEvent.dwEventFlags	  = 0; /* FIXME */
-		    assert(WriteConsoleInput32A( hConsoleInput, &ir, 1, &junk));
+		    assert(WriteConsoleInputA( hConsoleInput, &ir, 1, &junk));
 		    j=k+3;
 		}
 	    	break;
@@ -225,9 +225,9 @@ CONSOLE_string_to_IR( HANDLE32 hConsoleInput,unsigned char *buf,int len) {
 	    if (scancode) {
 		ir.Event.KeyEvent.wVirtualScanCode = scancode;
 		ir.Event.KeyEvent.wVirtualKeyCode = MapVirtualKey16(scancode,1);
-		assert(WriteConsoleInput32A( hConsoleInput, &ir, 1, &junk ));
+		assert(WriteConsoleInputA( hConsoleInput, &ir, 1, &junk ));
 		ir.Event.KeyEvent.bKeyDown		= 0;
-		assert(WriteConsoleInput32A( hConsoleInput, &ir, 1, &junk ));
+		assert(WriteConsoleInputA( hConsoleInput, &ir, 1, &junk ));
 		j=k;
 		continue;
 	    }
@@ -242,7 +242,7 @@ CONSOLE_string_to_IR( HANDLE32 hConsoleInput,unsigned char *buf,int len) {
  * in an internal queue.
  */
 static void
-CONSOLE_get_input( HANDLE32 handle, BOOL32 blockwait )
+CONSOLE_get_input( HANDLE handle, BOOL blockwait )
 {
     char	*buf = HeapAlloc(GetProcessHeap(),0,1);
     int		len = 0;
@@ -281,7 +281,7 @@ CONSOLE_get_input( HANDLE32 handle, BOOL32 blockwait )
  */
 static unsigned int console_ignore_ctrl_c = 0;
 static HANDLER_ROUTINE *handlers[]={0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
-BOOL32 WINAPI SetConsoleCtrlHandler( HANDLER_ROUTINE *func, BOOL32 add )
+BOOL WINAPI SetConsoleCtrlHandler( HANDLER_ROUTINE *func, BOOL add )
 {
   unsigned int alloc_loop = sizeof(handlers)/sizeof(HANDLER_ROUTINE *);
   unsigned int done = 0;
@@ -334,7 +334,7 @@ BOOL32 WINAPI SetConsoleCtrlHandler( HANDLER_ROUTINE *func, BOOL32 add )
  *    Success: True
  *    Failure: False (and *should* [but doesn't] set LastError)
  */
-BOOL32 WINAPI GenerateConsoleCtrlEvent( DWORD dwCtrlEvent,
+BOOL WINAPI GenerateConsoleCtrlEvent( DWORD dwCtrlEvent,
 					DWORD dwProcessGroupID )
 {
   if (dwCtrlEvent != CTRL_C_EVENT && dwCtrlEvent != CTRL_BREAK_EVENT)
@@ -372,21 +372,21 @@ BOOL32 WINAPI GenerateConsoleCtrlEvent( DWORD dwCtrlEvent,
  *    Success: Handle to new console screen buffer
  *    Failure: INVALID_HANDLE_VALUE
  */
-HANDLE32 WINAPI CreateConsoleScreenBuffer( DWORD dwDesiredAccess,
+HANDLE WINAPI CreateConsoleScreenBuffer( DWORD dwDesiredAccess,
                 DWORD dwShareMode, LPSECURITY_ATTRIBUTES sa,
                 DWORD dwFlags, LPVOID lpScreenBufferData )
 {
     FIXME(console, "(%ld,%ld,%p,%ld,%p): stub\n",dwDesiredAccess,
           dwShareMode, sa, dwFlags, lpScreenBufferData);
     SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-    return INVALID_HANDLE_VALUE32;
+    return INVALID_HANDLE_VALUE;
 }
 
 
 /***********************************************************************
  *           GetConsoleScreenBufferInfo   (KERNEL32.190)
  */
-BOOL32 WINAPI GetConsoleScreenBufferInfo( HANDLE32 hConsoleOutput,
+BOOL WINAPI GetConsoleScreenBufferInfo( HANDLE hConsoleOutput,
                                           LPCONSOLE_SCREEN_BUFFER_INFO csbi )
 {
     csbi->dwSize.x = 80;
@@ -411,8 +411,8 @@ BOOL32 WINAPI GetConsoleScreenBufferInfo( HANDLE32 hConsoleOutput,
  *    Success: TRUE
  *    Failure: FALSE
  */
-BOOL32 WINAPI SetConsoleActiveScreenBuffer(
-    HANDLE32 hConsoleOutput) /* [in] Handle to console screen buffer */
+BOOL WINAPI SetConsoleActiveScreenBuffer(
+    HANDLE hConsoleOutput) /* [in] Handle to console screen buffer */
 {
     FIXME(console, "(%x): stub\n", hConsoleOutput);
     return FALSE;
@@ -422,7 +422,7 @@ BOOL32 WINAPI SetConsoleActiveScreenBuffer(
 /***********************************************************************
  *            GetLargestConsoleWindowSize   (KERNEL32.226)
  */
-DWORD WINAPI GetLargestConsoleWindowSize( HANDLE32 hConsoleOutput )
+DWORD WINAPI GetLargestConsoleWindowSize( HANDLE hConsoleOutput )
 {
     return (DWORD)MAKELONG(80,24);
 }
@@ -430,10 +430,10 @@ DWORD WINAPI GetLargestConsoleWindowSize( HANDLE32 hConsoleOutput )
 /***********************************************************************
  *            FreeConsole (KERNEL32.267)
  */
-BOOL32 WINAPI FreeConsole(VOID)
+BOOL WINAPI FreeConsole(VOID)
 {
 
-	PDB32 *pdb = PROCESS_Current();
+	PDB *pdb = PROCESS_Current();
 	CONSOLE *console;
 
 	SYSTEM_LOCK();
@@ -466,19 +466,19 @@ BOOL32 WINAPI FreeConsole(VOID)
  *
  * Open a handle to the current process console.
  */
-HANDLE32 CONSOLE_OpenHandle( BOOL32 output, DWORD access, LPSECURITY_ATTRIBUTES sa )
+HANDLE CONSOLE_OpenHandle( BOOL output, DWORD access, LPSECURITY_ATTRIBUTES sa )
 {
     struct open_console_request req;
     struct open_console_reply reply;
     CONSOLE *console;
-    HANDLE32 handle;
+    HANDLE handle;
 
     req.output  = output;
     req.access  = access;
     req.inherit = (sa && (sa->nLength>=sizeof(*sa)) && sa->bInheritHandle);
     CLIENT_SendRequest( REQ_OPEN_CONSOLE, -1, 1, &req, sizeof(req) );
     CLIENT_WaitSimpleReply( &reply, sizeof(reply), NULL );
-    if (reply.handle == -1) return INVALID_HANDLE_VALUE32;
+    if (reply.handle == -1) return INVALID_HANDLE_VALUE;
 
     SYSTEM_LOCK();
     if (!(console = (CONSOLE*)HeapAlloc( SystemHeap, 0, sizeof(*console))))
@@ -510,7 +510,7 @@ HANDLE32 CONSOLE_OpenHandle( BOOL32 output, DWORD access, LPSECURITY_ATTRIBUTES 
  *
  * To test for complex console: pid == 0 -> simple, otherwise complex.
  */
-static BOOL32 CONSOLE_make_complex(HANDLE32 handle)
+static BOOL CONSOLE_make_complex(HANDLE handle)
 {
         struct set_console_fd_request req;
         struct get_console_info_reply info;
@@ -571,7 +571,7 @@ static BOOL32 CONSOLE_make_complex(HANDLE32 handle)
 	sprintf(buf,"%c[?1001s%c[?1000h",27,27);
 	WriteFile(handle,buf,strlen(buf),&xlen,NULL);
         
-        if (GetConsoleTitle32A( buf, sizeof(buf) ))
+        if (GetConsoleTitleA( buf, sizeof(buf) ))
         {
 	    WriteFile(handle,"\033]2;",4,&xlen,NULL);
 	    WriteFile(handle,buf,strlen(buf),&xlen,NULL);
@@ -587,13 +587,13 @@ static BOOL32 CONSOLE_make_complex(HANDLE32 handle)
  *
  * creates an xterm with a pty to our program
  */
-BOOL32 WINAPI AllocConsole(VOID)
+BOOL WINAPI AllocConsole(VOID)
 {
         struct open_console_request req;
         struct open_console_reply reply;
-	PDB32 *pdb = PROCESS_Current();
+	PDB *pdb = PROCESS_Current();
 	CONSOLE *console;
-	HANDLE32 hIn, hOut, hErr;
+	HANDLE hIn, hOut, hErr;
 
 	SYSTEM_LOCK();		/* FIXME: really only need to lock the process */
 
@@ -634,7 +634,7 @@ BOOL32 WINAPI AllocConsole(VOID)
             return FALSE;
         }
 	if ((hIn = HANDLE_Alloc(pdb,&console->header, req.access,
-                                FALSE, reply.handle)) == INVALID_HANDLE_VALUE32)
+                                FALSE, reply.handle)) == INVALID_HANDLE_VALUE)
         {
             K32OBJ_DecCount(&console->header);
             SYSTEM_UNLOCK();
@@ -651,7 +651,7 @@ BOOL32 WINAPI AllocConsole(VOID)
             return FALSE;
         }
 	if ((hOut = HANDLE_Alloc(pdb,&console->header, req.access,
-                                 FALSE, reply.handle)) == INVALID_HANDLE_VALUE32)
+                                 FALSE, reply.handle)) == INVALID_HANDLE_VALUE)
         {
             CloseHandle(hIn);
             K32OBJ_DecCount(&console->header);
@@ -681,7 +681,7 @@ BOOL32 WINAPI AllocConsole(VOID)
 
 	SetLastError(ERROR_SUCCESS);
 	SYSTEM_UNLOCK();
-	SetConsoleTitle32A("Wine Console");
+	SetConsoleTitleA("Wine Console");
 	return TRUE;
 }
 
@@ -692,7 +692,7 @@ BOOL32 WINAPI AllocConsole(VOID)
  * RETURNS
  *    Code page code
  */
-UINT32 WINAPI GetConsoleCP(VOID)
+UINT WINAPI GetConsoleCP(VOID)
 {
     return GetACP();
 }
@@ -701,7 +701,7 @@ UINT32 WINAPI GetConsoleCP(VOID)
 /***********************************************************************
  *            GetConsoleOutputCP   (KERNEL32.189)
  */
-UINT32 WINAPI GetConsoleOutputCP(VOID)
+UINT WINAPI GetConsoleOutputCP(VOID)
 {
     return GetConsoleCP();
 }
@@ -709,7 +709,7 @@ UINT32 WINAPI GetConsoleOutputCP(VOID)
 /***********************************************************************
  *            GetConsoleMode   (KERNEL32.188)
  */
-BOOL32 WINAPI GetConsoleMode(HANDLE32 hcon,LPDWORD mode)
+BOOL WINAPI GetConsoleMode(HANDLE hcon,LPDWORD mode)
 {
     struct get_console_mode_request req;
     struct get_console_mode_reply reply;
@@ -735,7 +735,7 @@ BOOL32 WINAPI GetConsoleMode(HANDLE32 hcon,LPDWORD mode)
  *    Success: TRUE
  *    Failure: FALSE
  */
-BOOL32 WINAPI SetConsoleMode( HANDLE32 hcon, DWORD mode )
+BOOL WINAPI SetConsoleMode( HANDLE hcon, DWORD mode )
 {
     struct set_console_mode_request req;
 
@@ -751,16 +751,16 @@ BOOL32 WINAPI SetConsoleMode( HANDLE32 hcon, DWORD mode )
 /***********************************************************************
  *            GetConsoleTitleA   (KERNEL32.191)
  */
-DWORD WINAPI GetConsoleTitle32A(LPSTR title,DWORD size)
+DWORD WINAPI GetConsoleTitleA(LPSTR title,DWORD size)
 {
     struct get_console_info_request req;
     struct get_console_info_reply reply;
     int len;
     DWORD ret = 0;
-    HANDLE32 hcon;
+    HANDLE hcon;
 
-    if ((hcon = CreateFile32A( "CONOUT$", GENERIC_READ, 0, NULL,
-                               OPEN_EXISTING, 0, 0 )) == INVALID_HANDLE_VALUE32)
+    if ((hcon = CreateFileA( "CONOUT$", GENERIC_READ, 0, NULL,
+                               OPEN_EXISTING, 0, 0 )) == INVALID_HANDLE_VALUE)
         return 0;
     if ((req.handle = HANDLE_GetServerHandle( PROCESS_Current(), hcon,
                                               K32OBJ_CONSOLE, GENERIC_READ )) == -1)
@@ -790,13 +790,13 @@ DWORD WINAPI GetConsoleTitle32A(LPSTR title,DWORD size)
  *    Success: Length of string copied
  *    Failure: 0
  */
-DWORD WINAPI GetConsoleTitle32W( LPWSTR title, DWORD size )
+DWORD WINAPI GetConsoleTitleW( LPWSTR title, DWORD size )
 {
     char *tmp;
     DWORD ret;
 
     if (!(tmp = HeapAlloc( GetProcessHeap(), 0, size ))) return 0;
-    ret = GetConsoleTitle32A( tmp, size );
+    ret = GetConsoleTitleA( tmp, size );
     lstrcpyAtoW( title, tmp );
     HeapFree( GetProcessHeap(), 0, tmp );
     return ret;
@@ -806,7 +806,7 @@ DWORD WINAPI GetConsoleTitle32W( LPWSTR title, DWORD size )
 /***********************************************************************
  *            WriteConsoleA   (KERNEL32.729)
  */
-BOOL32 WINAPI WriteConsole32A( HANDLE32 hConsoleOutput,
+BOOL WINAPI WriteConsoleA( HANDLE hConsoleOutput,
                                LPCVOID lpBuffer,
                                DWORD nNumberOfCharsToWrite,
                                LPDWORD lpNumberOfCharsWritten,
@@ -827,7 +827,7 @@ BOOL32 WINAPI WriteConsole32A( HANDLE32 hConsoleOutput,
 /***********************************************************************
  *            WriteConsoleOutputA   (KERNEL32.732)
  */
-BOOL32 WINAPI WriteConsoleOutput32A( HANDLE32 hConsoleOutput,
+BOOL WINAPI WriteConsoleOutputA( HANDLE hConsoleOutput,
                                      LPCHAR_INFO lpBuffer,
                                      COORD dwBufferSize,
                                      COORD dwBufferCoord,
@@ -880,13 +880,13 @@ BOOL32 WINAPI WriteConsoleOutput32A( HANDLE32 hConsoleOutput,
 /***********************************************************************
  *            WriteConsoleW   (KERNEL32.577)
  */
-BOOL32 WINAPI WriteConsole32W( HANDLE32 hConsoleOutput,
+BOOL WINAPI WriteConsoleW( HANDLE hConsoleOutput,
                                LPCVOID lpBuffer,
                                DWORD nNumberOfCharsToWrite,
                                LPDWORD lpNumberOfCharsWritten,
                                LPVOID lpReserved )
 {
-        BOOL32 ret;
+        BOOL ret;
         LPSTR xstring=HeapAlloc( GetProcessHeap(), 0, nNumberOfCharsToWrite );
 
 	lstrcpynWtoA( xstring,  lpBuffer,nNumberOfCharsToWrite);
@@ -902,7 +902,7 @@ BOOL32 WINAPI WriteConsole32W( HANDLE32 hConsoleOutput,
 /***********************************************************************
  *            ReadConsoleA   (KERNEL32.419)
  */
-BOOL32 WINAPI ReadConsole32A( HANDLE32 hConsoleInput,
+BOOL WINAPI ReadConsoleA( HANDLE hConsoleInput,
                               LPVOID lpBuffer,
                               DWORD nNumberOfCharsToRead,
                               LPDWORD lpNumberOfCharsRead,
@@ -951,16 +951,16 @@ BOOL32 WINAPI ReadConsole32A( HANDLE32 hConsoleInput,
 /***********************************************************************
  *            ReadConsoleW   (KERNEL32.427)
  */
-BOOL32 WINAPI ReadConsole32W( HANDLE32 hConsoleInput,
+BOOL WINAPI ReadConsoleW( HANDLE hConsoleInput,
                               LPVOID lpBuffer,
                               DWORD nNumberOfCharsToRead,
                               LPDWORD lpNumberOfCharsRead,
                               LPVOID lpReserved )
 {
-    BOOL32 ret;
+    BOOL ret;
     LPSTR buf = (LPSTR)HeapAlloc(GetProcessHeap(), 0, nNumberOfCharsToRead);
 
-    ret = ReadConsole32A(
+    ret = ReadConsoleA(
     	hConsoleInput,
 	buf,
 	nNumberOfCharsToRead,
@@ -987,7 +987,7 @@ BOOL32 WINAPI ReadConsole32W( HANDLE32 hConsoleInput,
  *    Success: TRUE
  *    Failure: FALSE
  */
-BOOL32 WINAPI ReadConsoleInput32A(HANDLE32 hConsoleInput,
+BOOL WINAPI ReadConsoleInputA(HANDLE hConsoleInput,
 				  LPINPUT_RECORD lpBuffer,
 				  DWORD nLength, LPDWORD lpNumberOfEventsRead)
 {
@@ -1019,18 +1019,18 @@ BOOL32 WINAPI ReadConsoleInput32A(HANDLE32 hConsoleInput,
 /***********************************************************************
  *            ReadConsoleInput32W   (KERNEL32.570)
  */
-BOOL32 WINAPI ReadConsoleInput32W( HANDLE32 handle, LPINPUT_RECORD buffer,
+BOOL WINAPI ReadConsoleInputW( HANDLE handle, LPINPUT_RECORD buffer,
                                    DWORD count, LPDWORD read )
 {
     /* FIXME: Fix this if we get UNICODE input. */
-    return ReadConsoleInput32A( handle, buffer, count, read );
+    return ReadConsoleInputA( handle, buffer, count, read );
 }
 
 
 /***********************************************************************
  *            FlushConsoleInputBuffer   (KERNEL32.132)
  */
-BOOL32 WINAPI FlushConsoleInputBuffer( HANDLE32 handle )
+BOOL WINAPI FlushConsoleInputBuffer( HANDLE handle )
 {
     struct read_console_input_request req;
     int len;
@@ -1052,7 +1052,7 @@ BOOL32 WINAPI FlushConsoleInputBuffer( HANDLE32 handle )
  *
  * Does not need a complex console.
  */
-BOOL32 WINAPI PeekConsoleInput32A( HANDLE32 handle, LPINPUT_RECORD buffer,
+BOOL WINAPI PeekConsoleInputA( HANDLE handle, LPINPUT_RECORD buffer,
                                    DWORD count, LPDWORD read )
 {
     struct read_console_input_request req;
@@ -1078,13 +1078,13 @@ BOOL32 WINAPI PeekConsoleInput32A( HANDLE32 handle, LPINPUT_RECORD buffer,
 /***********************************************************************
  *            PeekConsoleInputW   (KERNEL32.551)
  */
-BOOL32 WINAPI PeekConsoleInput32W(HANDLE32 hConsoleInput,
+BOOL WINAPI PeekConsoleInputW(HANDLE hConsoleInput,
                                   LPINPUT_RECORD pirBuffer,
                                   DWORD cInRecords,
                                   LPDWORD lpcRead)
 {
     /* FIXME: Hmm. Fix this if we get UNICODE input. */
-    return PeekConsoleInput32A(hConsoleInput,pirBuffer,cInRecords,lpcRead);
+    return PeekConsoleInputA(hConsoleInput,pirBuffer,cInRecords,lpcRead);
 }
 
 
@@ -1092,7 +1092,7 @@ BOOL32 WINAPI PeekConsoleInput32W(HANDLE32 hConsoleInput,
  * WriteConsoleInput32A [KERNEL32.730]  Write data to a console input buffer
  *
  */
-BOOL32 WINAPI WriteConsoleInput32A( HANDLE32 handle, INPUT_RECORD *buffer,
+BOOL WINAPI WriteConsoleInputA( HANDLE handle, INPUT_RECORD *buffer,
                                     DWORD count, LPDWORD written )
 {
     struct write_console_input_request req;
@@ -1119,15 +1119,15 @@ BOOL32 WINAPI WriteConsoleInput32A( HANDLE32 handle, INPUT_RECORD *buffer,
  * but should remember the title and set it on creation of the latter.
  * (not fixed at this time).
  */
-BOOL32 WINAPI SetConsoleTitle32A(LPCSTR title)
+BOOL WINAPI SetConsoleTitleA(LPCSTR title)
 {
 #if 0
-    PDB32 *pdb = PROCESS_Current();
+    PDB *pdb = PROCESS_Current();
     CONSOLE *console;
     DWORD written;
     char titleformat[]="\033]2;%s\a"; /*this should work for xterms*/
     LPSTR titlestring; 
-    BOOL32 ret=FALSE;
+    BOOL ret=FALSE;
 
     TRACE(console,"(%s)\n",title);
 
@@ -1164,11 +1164,11 @@ BOOL32 WINAPI SetConsoleTitle32A(LPCSTR title)
 
     struct set_console_info_request req;
     struct get_console_info_reply info;
-    HANDLE32 hcon;
+    HANDLE hcon;
     DWORD written;
 
-    if ((hcon = CreateFile32A( "CONOUT$", GENERIC_READ|GENERIC_WRITE, 0, NULL,
-                               OPEN_EXISTING, 0, 0 )) == INVALID_HANDLE_VALUE32)
+    if ((hcon = CreateFileA( "CONOUT$", GENERIC_READ|GENERIC_WRITE, 0, NULL,
+                               OPEN_EXISTING, 0, 0 )) == INVALID_HANDLE_VALUE)
         return FALSE;
     if ((req.handle = HANDLE_GetServerHandle( PROCESS_Current(), hcon,
                                               K32OBJ_CONSOLE, GENERIC_WRITE )) == -1)
@@ -1204,12 +1204,12 @@ BOOL32 WINAPI SetConsoleTitle32A(LPCSTR title)
  *    Success: TRUE
  *    Failure: FALSE
  */
-BOOL32 WINAPI SetConsoleTitle32W( LPCWSTR title )
+BOOL WINAPI SetConsoleTitleW( LPCWSTR title )
 {
-    BOOL32 ret;
+    BOOL ret;
 
     LPSTR titleA = HEAP_strdupWtoA( GetProcessHeap(), 0, title );
-    ret = SetConsoleTitle32A(titleA);
+    ret = SetConsoleTitleA(titleA);
     HeapFree( GetProcessHeap(), 0, titleA );
     return ret;
 }
@@ -1224,7 +1224,7 @@ BOOL32 WINAPI SetConsoleTitle32W( LPCWSTR title )
  *
  * RETURNS STD
  */
-BOOL32 WINAPI SetConsoleCursorPosition( HANDLE32 hcon, COORD pos )
+BOOL WINAPI SetConsoleCursorPosition( HANDLE hcon, COORD pos )
 {
     char 	xbuf[20];
     DWORD	xlen;
@@ -1249,7 +1249,7 @@ BOOL32 WINAPI SetConsoleCursorPosition( HANDLE32 hcon, COORD pos )
 /***********************************************************************
  *            GetNumberOfConsoleInputEvents   (KERNEL32.246)
  */
-BOOL32 WINAPI GetNumberOfConsoleInputEvents(HANDLE32 hcon,LPDWORD nrofevents)
+BOOL WINAPI GetNumberOfConsoleInputEvents(HANDLE hcon,LPDWORD nrofevents)
 {
     CONSOLE_get_input(hcon,FALSE);
     *nrofevents = 1; /* UMM */
@@ -1259,7 +1259,7 @@ BOOL32 WINAPI GetNumberOfConsoleInputEvents(HANDLE32 hcon,LPDWORD nrofevents)
 /***********************************************************************
  *            GetNumberOfConsoleMouseButtons   (KERNEL32.358)
  */
-BOOL32 WINAPI GetNumberOfConsoleMouseButtons(LPDWORD nrofbuttons)
+BOOL WINAPI GetNumberOfConsoleMouseButtons(LPDWORD nrofbuttons)
 {
     FIXME(console,"(%p): stub\n", nrofbuttons);
     *nrofbuttons = 2;
@@ -1277,7 +1277,7 @@ BOOL32 WINAPI GetNumberOfConsoleMouseButtons(LPDWORD nrofbuttons)
  *    Success: TRUE
  *    Failure: FALSE
  */
-BOOL32 WINAPI GetConsoleCursorInfo32( HANDLE32 hcon,
+BOOL WINAPI GetConsoleCursorInfo( HANDLE hcon,
                                       LPCONSOLE_CURSOR_INFO cinfo )
 {
     struct get_console_info_reply reply;
@@ -1299,8 +1299,8 @@ BOOL32 WINAPI GetConsoleCursorInfo32( HANDLE32 hcon,
  *    Success: TRUE
  *    Failure: FALSE
  */
-BOOL32 WINAPI SetConsoleCursorInfo32( 
-    HANDLE32 hcon,                /* [in] Handle to console screen buffer */
+BOOL WINAPI SetConsoleCursorInfo( 
+    HANDLE hcon,                /* [in] Handle to console screen buffer */
     LPCONSOLE_CURSOR_INFO cinfo)  /* [in] Address of cursor information */
 {
     struct set_console_info_request req;
@@ -1329,9 +1329,9 @@ BOOL32 WINAPI SetConsoleCursorInfo32(
  *    Success: TRUE
  *    Failure: FALSE
  */
-BOOL32 WINAPI SetConsoleWindowInfo(
-    HANDLE32 hcon,       /* [in] Handle to console screen buffer */
-    BOOL32 bAbsolute,    /* [in] Coordinate type flag */
+BOOL WINAPI SetConsoleWindowInfo(
+    HANDLE hcon,       /* [in] Handle to console screen buffer */
+    BOOL bAbsolute,    /* [in] Coordinate type flag */
     LPSMALL_RECT window) /* [in] Address of new window rectangle */
 {
     FIXME(console, "(%x,%d,%p): stub\n", hcon, bAbsolute, window);
@@ -1349,7 +1349,7 @@ BOOL32 WINAPI SetConsoleWindowInfo(
  *    Success: TRUE
  *    Failure: FALSE
  */
-BOOL32 WINAPI SetConsoleTextAttribute32(HANDLE32 hConsoleOutput,WORD wAttr)
+BOOL WINAPI SetConsoleTextAttribute(HANDLE hConsoleOutput,WORD wAttr)
 {
     const int colormap[8] = {
     	0,4,2,6,
@@ -1381,7 +1381,7 @@ BOOL32 WINAPI SetConsoleTextAttribute32(HANDLE32 hConsoleOutput,WORD wAttr)
  *    Success: TRUE
  *    Failure: FALSE
  */
-BOOL32 WINAPI SetConsoleScreenBufferSize( HANDLE32 hConsoleOutput, 
+BOOL WINAPI SetConsoleScreenBufferSize( HANDLE hConsoleOutput, 
                                           COORD dwSize )
 {
     FIXME(console, "(%d,%dx%d): stub\n",hConsoleOutput,dwSize.x,dwSize.y);
@@ -1403,8 +1403,8 @@ BOOL32 WINAPI SetConsoleScreenBufferSize( HANDLE32 hConsoleOutput,
  *    Success: TRUE
  *    Failure: FALSE
  */
-BOOL32 WINAPI FillConsoleOutputCharacterA(
-    HANDLE32 hConsoleOutput,
+BOOL WINAPI FillConsoleOutputCharacterA(
+    HANDLE hConsoleOutput,
     BYTE cCharacter,
     DWORD nLength,
     COORD dwCoord,
@@ -1435,7 +1435,7 @@ BOOL32 WINAPI FillConsoleOutputCharacterA(
  *    Success: TRUE
  *    Failure: FALSE
  */
-BOOL32 WINAPI FillConsoleOutputCharacterW(HANDLE32 hConsoleOutput,
+BOOL WINAPI FillConsoleOutputCharacterW(HANDLE hConsoleOutput,
                                             WCHAR cCharacter,
                                             DWORD nLength,
                                            COORD dwCoord, 
@@ -1469,7 +1469,7 @@ BOOL32 WINAPI FillConsoleOutputCharacterW(HANDLE32 hConsoleOutput,
  *    Success: TRUE
  *    Failure: FALSE
  */
-BOOL32 WINAPI FillConsoleOutputAttribute( HANDLE32 hConsoleOutput, 
+BOOL WINAPI FillConsoleOutputAttribute( HANDLE hConsoleOutput, 
               WORD wAttribute, DWORD nLength, COORD dwCoord, 
               LPDWORD lpNumAttrsWritten)
 {
@@ -1485,7 +1485,7 @@ BOOL32 WINAPI FillConsoleOutputAttribute( HANDLE32 hConsoleOutput,
  * BUGS
  *   Unimplemented
  */
-BOOL32 WINAPI ReadConsoleOutputCharacter32A(HANDLE32 hConsoleOutput, 
+BOOL WINAPI ReadConsoleOutputCharacterA(HANDLE hConsoleOutput, 
 	      LPSTR lpstr, DWORD dword, COORD coord, LPDWORD lpdword)
 {
     FIXME(console, "(%d,%p,%ld,%dx%d,%p): stub\n", hConsoleOutput,lpstr,
@@ -1501,7 +1501,7 @@ BOOL32 WINAPI ReadConsoleOutputCharacter32A(HANDLE32 hConsoleOutput,
  * BUGS
  *   Unimplemented
  */
-BOOL32 WINAPI ScrollConsoleScreenBuffer( HANDLE32 hConsoleOutput, 
+BOOL WINAPI ScrollConsoleScreenBuffer( HANDLE hConsoleOutput, 
 	      LPSMALL_RECT lpScrollRect, LPSMALL_RECT lpClipRect,
               COORD dwDestOrigin, LPCHAR_INFO lpFill)
 {

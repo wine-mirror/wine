@@ -103,17 +103,17 @@ void joySendMessages(void)
                         js.x = js.x*37;
                         js.y = js.y*37;
                         if ((joyCapData[joy].wXpos != js.x) || (joyCapData[joy].wYpos != js.y)) {
-                                SendMessage32A(CaptureWnd[joy], MM_JOY1MOVE + joy, js.buttons, MAKELONG(js.x, js.y));
+                                SendMessageA(CaptureWnd[joy], MM_JOY1MOVE + joy, js.buttons, MAKELONG(js.x, js.y));
                                 joyCapData[joy].wXpos = js.x;
                                 joyCapData[joy].wYpos = js.y;
                         }
                         if (joyCapData[joy].wButtons != js.buttons) {
 				unsigned int ButtonChanged = (WORD)(joyCapData[joy].wButtons ^ js.buttons)<<8;
                                 if (joyCapData[joy].wButtons < js.buttons)
-                                SendMessage32A(CaptureWnd[joy], MM_JOY1BUTTONDOWN + joy, ButtonChanged, MAKELONG(js.x, js.y));
+                                SendMessageA(CaptureWnd[joy], MM_JOY1BUTTONDOWN + joy, ButtonChanged, MAKELONG(js.x, js.y));
 				else
                                 if (joyCapData[joy].wButtons > js.buttons)
-                                SendMessage32A(CaptureWnd[joy], MM_JOY1BUTTONUP
+                                SendMessageA(CaptureWnd[joy], MM_JOY1BUTTONUP
 + joy, ButtonChanged, MAKELONG(js.x, js.y));
                                 joyCapData[joy].wButtons = js.buttons;
                         }
@@ -125,7 +125,7 @@ void joySendMessages(void)
 /**************************************************************************
  * 				JoyGetNumDevs		[MMSYSTEM.101]
  */
-UINT32 WINAPI joyGetNumDevs32(void)
+UINT WINAPI joyGetNumDevs(void)
 {
 	return joyGetNumDevs16();
 }
@@ -154,7 +154,7 @@ UINT16 WINAPI joyGetNumDevs16(void)
 /**************************************************************************
  * 				JoyGetDevCaps		[WINMM.27]
  */
-MMRESULT32 WINAPI joyGetDevCaps32A(UINT32 wID, LPJOYCAPS32A lpCaps,UINT32 wSize)
+MMRESULT WINAPI joyGetDevCapsA(UINT wID, LPJOYCAPSA lpCaps,UINT wSize)
 {
 	JOYCAPS16	jc16;
 	MMRESULT16	ret = joyGetDevCaps16(wID,&jc16,sizeof(jc16));
@@ -190,7 +190,7 @@ MMRESULT32 WINAPI joyGetDevCaps32A(UINT32 wID, LPJOYCAPS32A lpCaps,UINT32 wSize)
 /**************************************************************************
  * 				JoyGetDevCaps		[WINMM.28]
  */
-MMRESULT32 WINAPI joyGetDevCaps32W(UINT32 wID, LPJOYCAPS32W lpCaps,UINT32 wSize)
+MMRESULT WINAPI joyGetDevCapsW(UINT wID, LPJOYCAPSW lpCaps,UINT wSize)
 {
 	JOYCAPS16	jc16;
 	MMRESULT16	ret = joyGetDevCaps16(wID,&jc16,sizeof(jc16));
@@ -267,7 +267,7 @@ MMRESULT16 WINAPI joyGetDevCaps16(UINT16 wID, LPJOYCAPS16 lpCaps, UINT16 wSize)
 /**************************************************************************
  *                              JoyGetPosEx             [WINMM.31]
  */
-MMRESULT32 WINAPI joyGetPosEx(UINT32 wID, LPJOYINFOEX lpInfo)
+MMRESULT WINAPI joyGetPosEx(UINT wID, LPJOYINFOEX lpInfo)
 {
 	/* FIXME: implement it */
 	return MMSYSERR_NODRIVER;
@@ -276,7 +276,7 @@ MMRESULT32 WINAPI joyGetPosEx(UINT32 wID, LPJOYINFOEX lpInfo)
 /**************************************************************************
  * 				JoyGetPos	       	[WINMM.30]
  */
-MMRESULT32 WINAPI joyGetPos32(UINT32 wID, LPJOYINFO32 lpInfo)
+MMRESULT WINAPI joyGetPos(UINT wID, LPJOYINFO lpInfo)
 {
 	JOYINFO16	ji;
 	MMRESULT16	ret = joyGetPos16(wID,&ji);
@@ -316,7 +316,7 @@ MMRESULT16 WINAPI joyGetPos16(UINT16 wID, LPJOYINFO16 lpInfo)
 /**************************************************************************
  * 				JoyGetThreshold		[WINMM.32]
  */
-MMRESULT32 WINAPI joyGetThreshold32(UINT32 wID, LPUINT32 lpThreshold)
+MMRESULT WINAPI joyGetThreshold(UINT wID, LPUINT lpThreshold)
 {
 	UINT16		thresh;
 	MMRESULT16	ret = joyGetThreshold16(wID,&thresh);
@@ -339,7 +339,7 @@ MMRESULT16 WINAPI joyGetThreshold16(UINT16 wID, LPUINT16 lpThreshold)
 /**************************************************************************
  * 				JoyReleaseCapture	[WINMM.33]
  */
-MMRESULT32 WINAPI joyReleaseCapture32(UINT32 wID)
+MMRESULT WINAPI joyReleaseCapture(UINT wID)
 {
 	return joyReleaseCapture16(wID);
 }
@@ -360,7 +360,7 @@ MMRESULT16 WINAPI joyReleaseCapture16(UINT16 wID)
 /**************************************************************************
  * 				JoySetCapture		[MMSYSTEM.106]
  */
-MMRESULT32 WINAPI joySetCapture32(HWND32 hWnd,UINT32 wID,UINT32 wPeriod,BOOL32 bChanged)
+MMRESULT WINAPI joySetCapture(HWND hWnd,UINT wID,UINT wPeriod,BOOL bChanged)
 {
 	return joySetCapture16(hWnd,wID,wPeriod,bChanged);
 }
@@ -387,7 +387,7 @@ MMRESULT16 WINAPI joySetCapture16(HWND16 hWnd,UINT16 wID,UINT16 wPeriod,BOOL16 b
 /**************************************************************************
  * 				JoySetThreshold		[WINMM.35]
  */
-MMRESULT32 WINAPI joySetThreshold32(UINT32 wID, UINT32 wThreshold)
+MMRESULT WINAPI joySetThreshold(UINT wID, UINT wThreshold)
 {
 	return joySetThreshold16(wID,wThreshold);
 }

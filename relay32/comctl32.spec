@@ -10,8 +10,8 @@ init	COMCTL32_LibMain
   2 stdcall MenuHelp(long long long long long long ptr) MenuHelp
   3 stdcall ShowHideMenuCtl(long long ptr) ShowHideMenuCtl
   4 stdcall GetEffectiveClientRect(long long long) GetEffectiveClientRect
-  5 stdcall DrawStatusTextA(long ptr str long) DrawStatusText32A
-  6 stdcall CreateStatusWindowA(long str long long) CreateStatusWindow32A
+  5 stdcall DrawStatusTextA(long ptr str long) DrawStatusTextA
+  6 stdcall CreateStatusWindowA(long str long long) CreateStatusWindowA
   7 stdcall CreateToolbar(long long long long long long ptr long) CreateToolbar
   8 stdcall CreateMappedBitmap(long long long ptr long) CreateMappedBitmap
   9 stub COMCTL32_9
@@ -23,17 +23,17 @@ init	COMCTL32_LibMain
  15 stdcall DrawInsert(long long long) DrawInsert
  16 stdcall CreateUpDownControl(long long long long long long long long long long long long) CreateUpDownControl
  17 stdcall InitCommonControls() InitCommonControls
- 18 stdcall CreatePropertySheetPage(ptr) CreatePropertySheetPage32A
- 19 stdcall CreatePropertySheetPageA(ptr) CreatePropertySheetPage32A
- 20 stdcall CreatePropertySheetPageW(ptr) CreatePropertySheetPage32W
- 21 stdcall CreateStatusWindow(long str long long) CreateStatusWindow32A
- 22 stdcall CreateStatusWindowW(long wstr long long) CreateStatusWindow32W
+ 18 stdcall CreatePropertySheetPage(ptr) CreatePropertySheetPageA
+ 19 stdcall CreatePropertySheetPageA(ptr) CreatePropertySheetPageA
+ 20 stdcall CreatePropertySheetPageW(ptr) CreatePropertySheetPageW
+ 21 stdcall CreateStatusWindow(long str long long) CreateStatusWindowA
+ 22 stdcall CreateStatusWindowW(long wstr long long) CreateStatusWindowW
  23 stdcall CreateToolbarEx(long long long long long long ptr long long long long long long) CreateToolbarEx
- 24 stdcall DestroyPropertySheetPage(long) DestroyPropertySheetPage32
+ 24 stdcall DestroyPropertySheetPage(long) DestroyPropertySheetPage
  25 stdcall DllGetVersion(ptr) COMCTL32_DllGetVersion
  26 stub DllInstall
- 27 stdcall DrawStatusText(long ptr ptr long) DrawStatusText32A
- 28 stdcall DrawStatusTextW(long ptr wstr long) DrawStatusText32W
+ 27 stdcall DrawStatusText(long ptr ptr long) DrawStatusTextA
+ 28 stdcall DrawStatusTextW(long ptr wstr long) DrawStatusTextW
  29 stdcall FlatSB_EnableScrollBar (long long long) FlatSB_EnableScrollBar
  30 stdcall FlatSB_GetScrollInfo (long long ptr) FlatSB_GetScrollInfo
  31 stdcall FlatSB_GetScrollPos (long long) FlatSB_GetScrollPos
@@ -67,9 +67,9 @@ init	COMCTL32_LibMain
  59 stdcall ImageList_GetImageCount(ptr) ImageList_GetImageCount
  60 stdcall ImageList_GetImageInfo(ptr long ptr) ImageList_GetImageInfo
  61 stdcall ImageList_GetImageRect(ptr long ptr) ImageList_GetImageRect
- 62 stdcall ImageList_LoadImage(long str long long long long long) ImageList_LoadImage32A
- 63 stdcall ImageList_LoadImageA(long str long long long long long) ImageList_LoadImage32A
- 64 stdcall ImageList_LoadImageW(long wstr long long long long long) ImageList_LoadImage32W
+ 62 stdcall ImageList_LoadImage(long str long long long long long) ImageList_LoadImageA
+ 63 stdcall ImageList_LoadImageA(long str long long long long long) ImageList_LoadImageA
+ 64 stdcall ImageList_LoadImageW(long wstr long long long long long) ImageList_LoadImageW
  65 stdcall ImageList_Merge(ptr long ptr long long long) ImageList_Merge
  66 stdcall ImageList_Read(ptr) ImageList_Read
  67 stdcall ImageList_Remove(ptr long) ImageList_Remove
@@ -88,19 +88,19 @@ init	COMCTL32_LibMain
  80 stdcall ImageList_Write(ptr ptr) ImageList_Write
  81 stdcall InitCommonControlsEx(ptr) InitCommonControlsEx
  82 stdcall InitializeFlatSB(long) InitializeFlatSB
- 83 stdcall PropertySheet(ptr) PropertySheet32A
- 84 stdcall PropertySheetA(ptr) PropertySheet32A
- 85 stdcall PropertySheetW(ptr) PropertySheet32W
+ 83 stdcall PropertySheet(ptr) PropertySheetA
+ 84 stdcall PropertySheetA(ptr) PropertySheetA
+ 85 stdcall PropertySheetW(ptr) PropertySheetW
  86 stdcall UninitializeFlatSB(long) UninitializeFlatSB
  87 stub _TrackMouseEvent
 
-151 stdcall CreateMRUListA(ptr) CreateMRUList32A
-152 stdcall FreeMRUList(ptr) FreeMRUList32A
+151 stdcall CreateMRUListA(ptr) CreateMRUListA
+152 stdcall FreeMRUList(ptr) FreeMRUListA
 153 stub AddMRUStringA@8
 154 stub EnumMRUListA@16
 155 stub FindMRUStringA@12
 156 stub DelMRUString@8
-157 stdcall CreateMRUListLazyA(ptr long long long) CreateMRUListLazy32A
+157 stdcall CreateMRUListLazyA(ptr long long long) CreateMRUListLazyA
 
 163 stub CreatePage
 164 stub CreateProxyPage
@@ -108,10 +108,10 @@ init	COMCTL32_LibMain
 167 stdcall AddMRUData(ptr long long) AddMRUData
 169 stdcall FindMRUData(ptr long long long) FindMRUData
 
-233 stdcall Str_GetPtrA(str str long) Str_GetPtr32A
-234 stdcall Str_SetPtrA(str str) Str_SetPtr32A
-235 stdcall Str_GetPtrW(wstr wstr long) Str_GetPtr32W
-236 stdcall Str_SetPtrW(wstr wstr) Str_SetPtr32W
+233 stdcall Str_GetPtrA(str str long) Str_GetPtrA
+234 stdcall Str_SetPtrA(str str) Str_SetPtrA
+235 stdcall Str_GetPtrW(wstr wstr long) Str_GetPtrW
+236 stdcall Str_SetPtrW(wstr wstr) Str_SetPtrW
 
 320 stdcall DSA_Create(long long) DSA_Create
 321 stdcall DSA_Destroy(ptr) DSA_Destroy

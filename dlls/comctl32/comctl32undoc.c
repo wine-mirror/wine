@@ -23,7 +23,7 @@
 #include "debug.h"
 
 
-extern HANDLE32 COMCTL32_hHeap; /* handle to the private heap */
+extern HANDLE COMCTL32_hHeap; /* handle to the private heap */
 
 /*
  * We put some function prototypes here that don't seem to belong in
@@ -50,26 +50,26 @@ extern LPWSTR WINAPI strstrw(LPCWSTR, LPCWSTR);
  *     No more information available yet!
  */
 
-BOOL32 WINAPI
+BOOL WINAPI
 DPA_Merge (const HDPA hdpa1, const HDPA hdpa2, DWORD dwFlags,
 	   PFNDPACOMPARE pfnCompare, LPVOID pfnParam5, LPARAM lParam)
 {
     /* LPVOID *pWork1, *pWork2; */
-    INT32  nCount1, nCount2;
+    INT  nCount1, nCount2;
 
     TRACE (commctrl, "(%p %p %08lx %p %p %08lx): stub!\n",
 	   hdpa1, hdpa2, dwFlags, pfnCompare, pfnParam5, lParam);
 
-    if (IsBadWritePtr32 (hdpa1, sizeof(DPA)))
+    if (IsBadWritePtr (hdpa1, sizeof(DPA)))
 	return FALSE;
 
-    if (IsBadWritePtr32 (hdpa2, sizeof(DPA)))
+    if (IsBadWritePtr (hdpa2, sizeof(DPA)))
 	return FALSE;
 
-    if (IsBadCodePtr32 ((FARPROC32)pfnCompare))
+    if (IsBadCodePtr ((FARPROC)pfnCompare))
 	return FALSE;
 
-    if (IsBadCodePtr32 ((FARPROC32)pfnParam5))
+    if (IsBadCodePtr ((FARPROC)pfnParam5))
 	return FALSE;
 
     if (dwFlags & DPAM_SORT) {
@@ -190,7 +190,7 @@ COMCTL32_ReAlloc (LPVOID lpSrc, DWORD dwSize)
  *     Failure: FALSE
  */
 
-BOOL32 WINAPI
+BOOL WINAPI
 COMCTL32_Free (LPVOID lpMem)
 {
     TRACE (commctrl, "(%p)\n", lpMem);
@@ -251,7 +251,7 @@ typedef struct tagMRU
 } MRU, *HMRU;
 
 LPVOID WINAPI
-CreateMRUListLazy32A (LPMRUINFO lpmi, DWORD dwParam2,
+CreateMRUListLazyA (LPMRUINFO lpmi, DWORD dwParam2,
 		    DWORD dwParam3, DWORD dwParam4);
 
 
@@ -265,26 +265,26 @@ CreateMRUListLazy32A (LPMRUINFO lpmi, DWORD dwParam2,
  */
 
 LPVOID WINAPI
-CreateMRUList32A (LPMRUINFO lpmi)
+CreateMRUListA (LPMRUINFO lpmi)
 {
-     return CreateMRUListLazy32A (lpmi, 0, 0, 0);
+     return CreateMRUListLazyA (lpmi, 0, 0, 0);
 }
 
 
 DWORD WINAPI
-FreeMRUList32A (HMRU hmru)
+FreeMRUListA (HMRU hmru)
 {
     FIXME (commctrl, "(%p) empty stub!\n", hmru);
 
 #if 0
     if (!(hmru->dwParam1 & 1001)) {
-	RegSetValueEx32A (hmru->hKeyMRU, "MRUList", 0, REG_SZ,
+	RegSetValueExA (hmru->hKeyMRU, "MRUList", 0, REG_SZ,
 			  hmru->lpszMRUString,
-			  lstrlen32A (hmru->lpszMRUString));
+			  lstrlenA (hmru->lpszMRUString));
     }
 
 
-    RegClosKey32 (hmru->hkeyMRU
+    RegClosKey (hmru->hkeyMRU
     COMCTL32_Free32 (hmru->lpszMRUString);
 #endif
 
@@ -316,7 +316,7 @@ FindMRUData (DWORD dwParam1, DWORD dwParam2, DWORD dwParam3, DWORD dwParam4)
 
 
 LPVOID WINAPI
-CreateMRUListLazy32A (LPMRUINFO lpmi, DWORD dwParam2, DWORD dwParam3, DWORD dwParam4)
+CreateMRUListLazyA (LPMRUINFO lpmi, DWORD dwParam2, DWORD dwParam3, DWORD dwParam4)
 {
     /* DWORD  dwLocal1;   *
      * HKEY   hkeyResult; *
@@ -360,15 +360,15 @@ CreateMRUListLazy32A (LPMRUINFO lpmi, DWORD dwParam2, DWORD dwParam3, DWORD dwPa
  * RETURNS
  */
 
-INT32 WINAPI
-Str_GetPtr32A (LPCSTR lpSrc, LPSTR lpDest, INT32 nMaxLen)
+INT WINAPI
+Str_GetPtrA (LPCSTR lpSrc, LPSTR lpDest, INT nMaxLen)
 {
-    INT32 len;
+    INT len;
 
     TRACE (commctrl, "(%p %p %d)\n", lpSrc, lpDest, nMaxLen);
 
     if (!lpDest && lpSrc)
-	return lstrlen32A (lpSrc);
+	return lstrlenA (lpSrc);
 
     if (nMaxLen == 0)
 	return 0;
@@ -378,7 +378,7 @@ Str_GetPtr32A (LPCSTR lpSrc, LPSTR lpDest, INT32 nMaxLen)
 	return 0;
     }
 
-    len = lstrlen32A (lpSrc);
+    len = lstrlenA (lpSrc);
     if (len >= nMaxLen)
 	len = nMaxLen - 1;
 
@@ -399,16 +399,16 @@ Str_GetPtr32A (LPCSTR lpSrc, LPSTR lpDest, INT32 nMaxLen)
  * RETURNS
  */
 
-BOOL32 WINAPI
-Str_SetPtr32A (LPSTR *lppDest, LPCSTR lpSrc)
+BOOL WINAPI
+Str_SetPtrA (LPSTR *lppDest, LPCSTR lpSrc)
 {
     TRACE (commctrl, "(%p %p)\n", lppDest, lpSrc);
  
     if (lpSrc) {
-	LPSTR ptr = COMCTL32_ReAlloc (*lppDest, lstrlen32A (lpSrc) + 1);
+	LPSTR ptr = COMCTL32_ReAlloc (*lppDest, lstrlenA (lpSrc) + 1);
 	if (!ptr)
 	    return FALSE;
-	lstrcpy32A (ptr, lpSrc);
+	lstrcpyA (ptr, lpSrc);
 	*lppDest = ptr;
     }
     else {
@@ -433,15 +433,15 @@ Str_SetPtr32A (LPSTR *lppDest, LPCSTR lpSrc)
  * RETURNS
  */
 
-INT32 WINAPI
-Str_GetPtr32W (LPCWSTR lpSrc, LPWSTR lpDest, INT32 nMaxLen)
+INT WINAPI
+Str_GetPtrW (LPCWSTR lpSrc, LPWSTR lpDest, INT nMaxLen)
 {
-    INT32 len;
+    INT len;
 
     TRACE (commctrl, "(%p %p %d)\n", lpSrc, lpDest, nMaxLen);
 
     if (!lpDest && lpSrc)
-	return lstrlen32W (lpSrc);
+	return lstrlenW (lpSrc);
 
     if (nMaxLen == 0)
 	return 0;
@@ -451,7 +451,7 @@ Str_GetPtr32W (LPCWSTR lpSrc, LPWSTR lpDest, INT32 nMaxLen)
 	return 0;
     }
 
-    len = lstrlen32W (lpSrc);
+    len = lstrlenW (lpSrc);
     if (len >= nMaxLen)
 	len = nMaxLen - 1;
 
@@ -472,17 +472,17 @@ Str_GetPtr32W (LPCWSTR lpSrc, LPWSTR lpDest, INT32 nMaxLen)
  * RETURNS
  */
 
-BOOL32 WINAPI
-Str_SetPtr32W (LPWSTR *lppDest, LPCWSTR lpSrc)
+BOOL WINAPI
+Str_SetPtrW (LPWSTR *lppDest, LPCWSTR lpSrc)
 {
     TRACE (commctrl, "(%p %p)\n", lppDest, lpSrc);
  
     if (lpSrc) {
-	INT32 len = lstrlen32W (lpSrc) + 1;
+	INT len = lstrlenW (lpSrc) + 1;
 	LPWSTR ptr = COMCTL32_ReAlloc (*lppDest, len * sizeof(WCHAR));
 	if (!ptr)
 	    return FALSE;
-	lstrcpy32W (ptr, lpSrc);
+	lstrcpyW (ptr, lpSrc);
 	*lppDest = ptr;
     }
     else {
@@ -515,7 +515,7 @@ Str_SetPtr32W (LPWSTR *lppDest, LPCWSTR lpSrc)
  */
 
 HDSA WINAPI
-DSA_Create (INT32 nSize, INT32 nGrow)
+DSA_Create (INT nSize, INT nGrow)
 {
     HDSA hdsa;
 
@@ -546,7 +546,7 @@ DSA_Create (INT32 nSize, INT32 nGrow)
  *     Failure: FALSE
  */
 
-BOOL32 WINAPI
+BOOL WINAPI
 DSA_Destroy (const HDSA hdsa)
 {
     TRACE (commctrl, "(%p)\n", hdsa);
@@ -574,8 +574,8 @@ DSA_Destroy (const HDSA hdsa)
  *     Failure: FALSE
  */
 
-BOOL32 WINAPI
-DSA_GetItem (const HDSA hdsa, INT32 nIndex, LPVOID pDest)
+BOOL WINAPI
+DSA_GetItem (const HDSA hdsa, INT nIndex, LPVOID pDest)
 {
     LPVOID pSrc;
 
@@ -608,7 +608,7 @@ DSA_GetItem (const HDSA hdsa, INT32 nIndex, LPVOID pDest)
  */
 
 LPVOID WINAPI
-DSA_GetItemPtr (const HDSA hdsa, INT32 nIndex)
+DSA_GetItemPtr (const HDSA hdsa, INT nIndex)
 {
     LPVOID pSrc;
 
@@ -642,10 +642,10 @@ DSA_GetItemPtr (const HDSA hdsa, INT32 nIndex)
  *     Failure: FALSE
  */
 
-BOOL32 WINAPI
-DSA_SetItem (const HDSA hdsa, INT32 nIndex, LPVOID pSrc)
+BOOL WINAPI
+DSA_SetItem (const HDSA hdsa, INT nIndex, LPVOID pSrc)
 {
-    INT32  nSize, nNewItems;
+    INT  nSize, nNewItems;
     LPVOID pDest, lpTemp;
     
     TRACE (commctrl, "(%p %d %p)\n", hdsa, nIndex, pSrc);
@@ -662,7 +662,7 @@ DSA_SetItem (const HDSA hdsa, INT32 nIndex, LPVOID pSrc)
 	else {
 	    /* resize the block of memory */
 	    nNewItems =
-		hdsa->nGrow * ((INT32)((nIndex - 1) / hdsa->nGrow) + 1);
+		hdsa->nGrow * ((INT)((nIndex - 1) / hdsa->nGrow) + 1);
 	    nSize = hdsa->nItemSize * nNewItems;
 
 	    lpTemp = (LPVOID)COMCTL32_ReAlloc (hdsa->pData, nSize);
@@ -697,10 +697,10 @@ DSA_SetItem (const HDSA hdsa, INT32 nIndex, LPVOID pSrc)
  *     Failure: -1
  */
 
-INT32 WINAPI
-DSA_InsertItem (const HDSA hdsa, INT32 nIndex, LPVOID pSrc)
+INT WINAPI
+DSA_InsertItem (const HDSA hdsa, INT nIndex, LPVOID pSrc)
 {
-    INT32   nNewItems, nSize, i;
+    INT   nNewItems, nSize, i;
     LPVOID  lpTemp, lpDest;
     LPDWORD p;
     
@@ -711,7 +711,7 @@ DSA_InsertItem (const HDSA hdsa, INT32 nIndex, LPVOID pSrc)
 
     for (i = 0; i < hdsa->nItemSize; i += 4) {
 	p = *(DWORD**)(pSrc + i);
-	if (IsBadStringPtr32A ((char*)p, 256))
+	if (IsBadStringPtrA ((char*)p, 256))
 	    TRACE (commctrl, "-- %d=%p\n", i, (DWORD*)p);
 	else
 	    TRACE (commctrl, "-- %d=%p [%s]\n", i, p, debugstr_a((char*)p));
@@ -767,11 +767,11 @@ DSA_InsertItem (const HDSA hdsa, INT32 nIndex, LPVOID pSrc)
  *     Failure: -1
  */
 
-INT32 WINAPI
-DSA_DeleteItem (const HDSA hdsa, INT32 nIndex)
+INT WINAPI
+DSA_DeleteItem (const HDSA hdsa, INT nIndex)
 {
     LPVOID lpDest,lpSrc;
-    INT32  nSize;
+    INT  nSize;
     
     TRACE (commctrl, "(%p %d)\n", hdsa, nIndex);
 
@@ -821,7 +821,7 @@ DSA_DeleteItem (const HDSA hdsa, INT32 nIndex)
  *     Failure: FALSE
  */
 
-BOOL32 WINAPI
+BOOL WINAPI
 DSA_DeleteAllItems (const HDSA hdsa)
 {
     TRACE (commctrl, "(%p)\n", hdsa);
@@ -856,7 +856,7 @@ DSA_DeleteAllItems (const HDSA hdsa)
  */
 
 HDPA WINAPI
-DPA_Create (INT32 nGrow)
+DPA_Create (INT nGrow)
 {
     HDPA hdpa;
 
@@ -888,7 +888,7 @@ DPA_Create (INT32 nGrow)
  *     Failure: FALSE
  */
 
-BOOL32 WINAPI
+BOOL WINAPI
 DPA_Destroy (const HDPA hdpa)
 {
     TRACE (commctrl, "(%p)\n", hdpa);
@@ -917,8 +917,8 @@ DPA_Destroy (const HDPA hdpa)
  *     Failure: FALSE
  */
 
-BOOL32 WINAPI
-DPA_Grow (const HDPA hdpa, INT32 nGrow)
+BOOL WINAPI
+DPA_Grow (const HDPA hdpa, INT nGrow)
 {
     TRACE (commctrl, "(%p %d)\n", hdpa, nGrow);
 
@@ -954,7 +954,7 @@ DPA_Grow (const HDPA hdpa, INT32 nGrow)
 HDPA WINAPI
 DPA_Clone (const HDPA hdpa, const HDPA hdpaNew)
 {
-    INT32 nNewItems, nSize;
+    INT nNewItems, nSize;
     HDPA hdpaTemp;
 
     if (!hdpa)
@@ -982,7 +982,7 @@ DPA_Clone (const HDPA hdpa, const HDPA hdpaNew)
 
     /* create a new pointer array */
     nNewItems = hdpaTemp->nGrow *
-		((INT32)((hdpa->nItemCount - 1) / hdpaTemp->nGrow) + 1);
+		((INT)((hdpa->nItemCount - 1) / hdpaTemp->nGrow) + 1);
     nSize = nNewItems * sizeof(LPVOID);
     hdpaTemp->ptrs =
 	(LPVOID*)HeapAlloc (hdpaTemp->hHeap, HEAP_ZERO_MEMORY, nSize);
@@ -1012,7 +1012,7 @@ DPA_Clone (const HDPA hdpa, const HDPA hdpaNew)
  */
 
 LPVOID WINAPI
-DPA_GetPtr (const HDPA hdpa, INT32 i)
+DPA_GetPtr (const HDPA hdpa, INT i)
 {
     TRACE (commctrl, "(%p %d)\n", hdpa, i);
 
@@ -1043,10 +1043,10 @@ DPA_GetPtr (const HDPA hdpa, INT32 i)
  *     Failure: -1
  */
 
-INT32 WINAPI
+INT WINAPI
 DPA_GetPtrIndex (const HDPA hdpa, LPVOID p)
 {
-    INT32 i;
+    INT i;
 
     if (!hdpa->ptrs)
 	return -1;
@@ -1075,10 +1075,10 @@ DPA_GetPtrIndex (const HDPA hdpa, LPVOID p)
  *     Failure: -1
  */
 
-INT32 WINAPI
-DPA_InsertPtr (const HDPA hdpa, INT32 i, LPVOID p)
+INT WINAPI
+DPA_InsertPtr (const HDPA hdpa, INT i, LPVOID p)
 {
-    INT32   nNewItems, nSize, nIndex = 0;
+    INT   nNewItems, nSize, nIndex = 0;
     LPVOID  *lpTemp, *lpDest;
 
     TRACE (commctrl, "(%p %d %p)\n", hdpa, i, p);
@@ -1148,8 +1148,8 @@ DPA_InsertPtr (const HDPA hdpa, INT32 i, LPVOID p)
  *     Failure: FALSE
  */
 
-BOOL32 WINAPI
-DPA_SetPtr (const HDPA hdpa, INT32 i, LPVOID p)
+BOOL WINAPI
+DPA_SetPtr (const HDPA hdpa, INT i, LPVOID p)
 {
     LPVOID *lpTemp;
     
@@ -1166,9 +1166,9 @@ DPA_SetPtr (const HDPA hdpa, INT32 i, LPVOID p)
 	}
 	else {
 	    /* resize the block of memory */
-	    INT32 nNewItems =
-		hdpa->nGrow * ((INT32)((i - 1) / hdpa->nGrow) + 1);
-	    INT32 nSize = nNewItems * sizeof(LPVOID);
+	    INT nNewItems =
+		hdpa->nGrow * ((INT)((i - 1) / hdpa->nGrow) + 1);
+	    INT nSize = nNewItems * sizeof(LPVOID);
 
 	    lpTemp = (LPVOID*)HeapReAlloc (hdpa->hHeap, HEAP_ZERO_MEMORY,
 					   hdpa->ptrs, nSize);
@@ -1202,10 +1202,10 @@ DPA_SetPtr (const HDPA hdpa, INT32 i, LPVOID p)
  */
 
 LPVOID WINAPI
-DPA_DeletePtr (const HDPA hdpa, INT32 i)
+DPA_DeletePtr (const HDPA hdpa, INT i)
 {
     LPVOID *lpDest, *lpSrc, lpTemp = NULL;
-    INT32  nSize;
+    INT  nSize;
     
     TRACE (commctrl, "(%p %d)\n", hdpa, i);
 
@@ -1228,7 +1228,7 @@ DPA_DeletePtr (const HDPA hdpa, INT32 i)
     
     /* free memory ?*/
     if ((hdpa->nMaxCount - hdpa->nItemCount) >= hdpa->nGrow) {
-	INT32 nNewItems = MIN(hdpa->nGrow * 2, hdpa->nItemCount);
+	INT nNewItems = MIN(hdpa->nGrow * 2, hdpa->nItemCount);
 	nSize = nNewItems * sizeof(LPVOID);
 	lpDest = (LPVOID)HeapReAlloc (hdpa->hHeap, HEAP_ZERO_MEMORY,
 				      hdpa->ptrs, nSize);
@@ -1256,7 +1256,7 @@ DPA_DeletePtr (const HDPA hdpa, INT32 i)
  *     Failure: FALSE
  */
 
-BOOL32 WINAPI
+BOOL WINAPI
 DPA_DeleteAllPtrs (const HDPA hdpa)
 {
     TRACE (commctrl, "(%p)\n", hdpa);
@@ -1293,11 +1293,11 @@ DPA_DeleteAllPtrs (const HDPA hdpa)
  */
 
 static VOID
-DPA_QuickSort (LPVOID *lpPtrs, INT32 l, INT32 r,
+DPA_QuickSort (LPVOID *lpPtrs, INT l, INT r,
 	       PFNDPACOMPARE pfnCompare, LPARAM lParam)
 {
     LPVOID t, v;
-    INT32  i, j;
+    INT  i, j;
 
     TRACE (commctrl, "l=%i r=%i\n", l, r);
  
@@ -1334,7 +1334,7 @@ DPA_QuickSort (LPVOID *lpPtrs, INT32 l, INT32 r,
  *     Failure: FALSE
  */
 
-BOOL32 WINAPI
+BOOL WINAPI
 DPA_Sort (const HDPA hdpa, PFNDPACOMPARE pfnCompare, LPARAM lParam)
 {
     if (!hdpa || !pfnCompare)
@@ -1373,9 +1373,9 @@ DPA_Sort (const HDPA hdpa, PFNDPACOMPARE pfnCompare, LPARAM lParam)
  *     If something goes wrong, blame HIM not ME! (Eric Kohl)
  */
 
-INT32 WINAPI
-DPA_Search (const HDPA hdpa, LPVOID pFind, INT32 nStart,
-	    PFNDPACOMPARE pfnCompare, LPARAM lParam, UINT32 uOptions)
+INT WINAPI
+DPA_Search (const HDPA hdpa, LPVOID pFind, INT nStart,
+	    PFNDPACOMPARE pfnCompare, LPARAM lParam, UINT uOptions)
 {
     if (!hdpa || !pfnCompare || !pFind)
 	return -1;
@@ -1385,7 +1385,7 @@ DPA_Search (const HDPA hdpa, LPVOID pFind, INT32 nStart,
 
     if (uOptions & DPAS_SORTED) {
 	/* array is sorted --> use binary search */
-	INT32 l, r, x, n;
+	INT l, r, x, n;
 	LPVOID *lpPtr;
 
 	TRACE (commctrl, "binary search\n");
@@ -1419,7 +1419,7 @@ DPA_Search (const HDPA hdpa, LPVOID pFind, INT32 nStart,
     else {
 	/* array is not sorted --> use linear search */
 	LPVOID *lpPtr;
-	INT32  nIndex;
+	INT  nIndex;
 
 	TRACE (commctrl, "linear search\n");
 	
@@ -1453,7 +1453,7 @@ DPA_Search (const HDPA hdpa, LPVOID pFind, INT32 nStart,
  */
 
 HDPA WINAPI
-DPA_CreateEx (INT32 nGrow, HANDLE32 hHeap)
+DPA_CreateEx (INT nGrow, HANDLE hHeap)
 {
     HDPA hdpa;
 
@@ -1485,8 +1485,8 @@ DPA_CreateEx (INT32 nGrow, HANDLE32 hHeap)
 
 typedef struct tagNOTIFYDATA
 {
-    HWND32 hwndFrom;
-    HWND32 hwndTo;
+    HWND hwndFrom;
+    HWND hwndTo;
     DWORD  dwParam3;
     DWORD  dwParam4;
     DWORD  dwParam5;
@@ -1499,11 +1499,11 @@ typedef struct tagNOTIFYDATA
  */
 
 static LRESULT
-DoNotify (LPNOTIFYDATA lpNotify, UINT32 uCode, LPNMHDR lpHdr)
+DoNotify (LPNOTIFYDATA lpNotify, UINT uCode, LPNMHDR lpHdr)
 {
     NMHDR nmhdr;
     LPNMHDR lpNmh = NULL;
-    UINT32 idFrom = 0;
+    UINT idFrom = 0;
 
     TRACE (commctrl, "(0x%04x 0x%04x %d %p 0x%08lx)\n",
 	   lpNotify->hwndFrom, lpNotify->hwndTo, uCode, lpHdr,
@@ -1518,11 +1518,11 @@ DoNotify (LPNOTIFYDATA lpNotify, UINT32 uCode, LPNMHDR lpHdr)
     }
     else {
 	if (lpNotify->hwndFrom) {
-	    HWND32 hwndParent = GetParent32 (lpNotify->hwndFrom);
+	    HWND hwndParent = GetParent (lpNotify->hwndFrom);
 	    if (hwndParent) {
-		hwndParent = GetWindow32 (lpNotify->hwndFrom, GW_OWNER);
+		hwndParent = GetWindow (lpNotify->hwndFrom, GW_OWNER);
 		if (hwndParent)
-		    idFrom = GetDlgCtrlID32 (lpNotify->hwndFrom);
+		    idFrom = GetDlgCtrlID (lpNotify->hwndFrom);
 	    }
 	}
 
@@ -1533,7 +1533,7 @@ DoNotify (LPNOTIFYDATA lpNotify, UINT32 uCode, LPNMHDR lpHdr)
 	lpNmh->code = uCode;
     }
 
-    return SendMessage32A (lpNotify->hwndTo, WM_NOTIFY, idFrom, (LPARAM)lpNmh);
+    return SendMessageA (lpNotify->hwndTo, WM_NOTIFY, idFrom, (LPARAM)lpNmh);
 }
 
 
@@ -1552,8 +1552,8 @@ DoNotify (LPNOTIFYDATA lpNotify, UINT32 uCode, LPNMHDR lpHdr)
  */
 
 LRESULT WINAPI
-COMCTL32_SendNotify (HWND32 hwndFrom, HWND32 hwndTo,
-		     UINT32 uCode, LPNMHDR lpHdr)
+COMCTL32_SendNotify (HWND hwndFrom, HWND hwndTo,
+		     UINT uCode, LPNMHDR lpHdr)
 {
     NOTIFYDATA notify;
 
@@ -1585,19 +1585,19 @@ COMCTL32_SendNotify (HWND32 hwndFrom, HWND32 hwndTo,
  */
 
 LRESULT WINAPI
-COMCTL32_SendNotifyEx (HWND32 hwndTo, HWND32 hwndFrom, UINT32 uCode,
+COMCTL32_SendNotifyEx (HWND hwndTo, HWND hwndFrom, UINT uCode,
 		       LPNMHDR lpHdr, DWORD dwParam5)
 {
     NOTIFYDATA notify;
-    HWND32 hwndNotify;
+    HWND hwndNotify;
 
     TRACE (commctrl, "(0x%04x 0x%04x %d %p 0x%08lx)\n",
 	   hwndFrom, hwndTo, uCode, lpHdr, dwParam5);
 
     hwndNotify = hwndTo;
     if (!hwndTo) {
-	if (IsWindow32 (hwndFrom)) {
-	    hwndNotify = GetParent32 (hwndFrom);
+	if (IsWindow (hwndFrom)) {
+	    hwndNotify = GetParent (hwndFrom);
 	    if (!hwndNotify)
 		return 0;
 	}
@@ -1631,7 +1631,7 @@ COMCTL32_StrChrA (LPCSTR lpString, CHAR cChar)
 LPSTR WINAPI
 COMCTL32_StrStrIA (LPCSTR lpStr1, LPCSTR lpStr2)
 {
-    INT32 len1, len2, i;
+    INT len1, len2, i;
     CHAR  first;
 
     if (*lpStr2 == 0)
@@ -1661,7 +1661,7 @@ COMCTL32_StrStrIA (LPCSTR lpStr1, LPCSTR lpStr2)
  * StrToIntA [COMCTL32.357] Converts a string to a signed integer.
  */
 
-INT32 WINAPI
+INT WINAPI
 COMCTL32_StrToIntA (LPSTR lpString)
 {
     return atoi(lpString);
@@ -1685,7 +1685,7 @@ COMCTL32_StrToIntA (LPSTR lpString)
 VOID WINAPI
 DPA_EnumCallback (const HDPA hdpa, DPAENUMPROC enumProc, LPARAM lParam)
 {
-    INT32 i;
+    INT i;
 
     TRACE (commctrl, "(%p %p %08lx)\n", hdpa, enumProc, lParam);
 
@@ -1718,7 +1718,7 @@ DPA_EnumCallback (const HDPA hdpa, DPAENUMPROC enumProc, LPARAM lParam)
  *     Failure: FALSE
  */
 
-BOOL32 WINAPI
+BOOL WINAPI
 DPA_DestroyCallback (const HDPA hdpa, DPAENUMPROC enumProc, LPARAM lParam)
 {
     TRACE (commctrl, "(%p %p %08lx)\n", hdpa, enumProc, lParam);
@@ -1746,7 +1746,7 @@ DPA_DestroyCallback (const HDPA hdpa, DPAENUMPROC enumProc, LPARAM lParam)
 VOID WINAPI
 DSA_EnumCallback (const HDSA hdsa, DSAENUMPROC enumProc, LPARAM lParam)
 {
-    INT32 i;
+    INT i;
 
     TRACE (commctrl, "(%p %p %08lx)\n", hdsa, enumProc, lParam);
 
@@ -1780,7 +1780,7 @@ DSA_EnumCallback (const HDSA hdsa, DSAENUMPROC enumProc, LPARAM lParam)
  *     Failure: FALSE
  */
 
-BOOL32 WINAPI
+BOOL WINAPI
 DSA_DestroyCallback (const HDSA hdsa, DSAENUMPROC enumProc, LPARAM lParam)
 {
     TRACE (commctrl, "(%p %p %08lx)\n", hdsa, enumProc, lParam);
@@ -1794,7 +1794,7 @@ DSA_DestroyCallback (const HDSA hdsa, DSAENUMPROC enumProc, LPARAM lParam)
  * StrCSpnA [COMCTL32.356]
  *
  */
-INT32 WINAPI COMCTL32_StrCSpnA( LPCSTR lpStr, LPCSTR lpSet) {
+INT WINAPI COMCTL32_StrCSpnA( LPCSTR lpStr, LPCSTR lpSet) {
   return strcspn(lpStr, lpSet);
 }
 
@@ -1810,16 +1810,16 @@ LPWSTR WINAPI COMCTL32_StrChrW( LPCWSTR lpStart, WORD wMatch) {
  * StrCmpNA [COMCTL32.352]
  *
  */
-INT32 WINAPI COMCTL32_StrCmpNA( LPCSTR lpStr1, LPCSTR lpStr2, int nChar) {
-  return lstrncmp32A(lpStr1, lpStr2, nChar);
+INT WINAPI COMCTL32_StrCmpNA( LPCSTR lpStr1, LPCSTR lpStr2, int nChar) {
+  return lstrncmpA(lpStr1, lpStr2, nChar);
 }
 
 /**************************************************************************
  * StrCmpNW [COMCTL32.360]
  *
  */
-INT32 WINAPI COMCTL32_StrCmpNW( LPCWSTR lpStr1, LPCWSTR lpStr2, int nChar) {
-  return lstrncmp32W(lpStr1, lpStr2, nChar);
+INT WINAPI COMCTL32_StrCmpNW( LPCWSTR lpStr1, LPCWSTR lpStr2, int nChar) {
+  return lstrncmpW(lpStr1, lpStr2, nChar);
 }
 
 /**************************************************************************
@@ -1858,7 +1858,7 @@ LPWSTR WINAPI COMCTL32_StrStrW( LPCWSTR lpFirst, LPCWSTR lpSrch) {
  * StrSpnW [COMCTL32.364]
  *
  */
-INT32 WINAPI COMCTL32_StrSpnW( LPWSTR lpStr, LPWSTR lpSet) {
+INT WINAPI COMCTL32_StrSpnW( LPWSTR lpStr, LPWSTR lpSet) {
   LPWSTR lpLoop = lpStr;
 
   /* validate ptr */
@@ -1868,9 +1868,9 @@ INT32 WINAPI COMCTL32_StrSpnW( LPWSTR lpStr, LPWSTR lpSet) {
 
   for(; (*lpLoop != 0); lpLoop++)
     if( CRTDLL_wcschr(lpSet, *(WORD*)lpLoop))
-      return (INT32)(lpLoop-lpStr);
+      return (INT)(lpLoop-lpStr);
   
-  return (INT32)(lpLoop-lpStr);
+  return (INT)(lpLoop-lpStr);
 }
 
 

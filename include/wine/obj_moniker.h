@@ -72,10 +72,10 @@ typedef struct tagBIND_OPTS2
     ICOM_METHOD1 (HRESULT, SetBindOptions,       LPBIND_OPTS2,pbindopts) \
     ICOM_METHOD1 (HRESULT, GetBindOptions,       LPBIND_OPTS2,pbindopts) \
     ICOM_METHOD1 (HRESULT, GetRunningObjectTable,IRunningObjectTable**,pprot) \
-    ICOM_METHOD2 (HRESULT, RegisterObjectParam,  LPOLESTR32,pszkey, IUnknown*,punk) \
-    ICOM_METHOD2 (HRESULT, GetObjectParam,       LPOLESTR32,pszkey, IUnknown*,punk) \
+    ICOM_METHOD2 (HRESULT, RegisterObjectParam,  LPOLESTR,pszkey, IUnknown*,punk) \
+    ICOM_METHOD2 (HRESULT, GetObjectParam,       LPOLESTR,pszkey, IUnknown*,punk) \
     ICOM_METHOD1 (HRESULT, EnumObjectParam,      IEnumString**,ppenum) \
-    ICOM_METHOD1 (HRESULT, RevokeObjectParam,    LPOLESTR32,pszkey)
+    ICOM_METHOD1 (HRESULT, RevokeObjectParam,    LPOLESTR,pszkey)
 #define IBindCtx_IMETHODS \
     IUnknown_IMETHODS \
     IBindCtx_METHODS
@@ -101,8 +101,7 @@ ICOM_DEFINE(IBindCtx,IUnknown)
 #endif
 
 HRESULT WINAPI CreateBindCtx16(DWORD reserved, LPBC* ppbc);
-HRESULT WINAPI CreateBindCtx32(DWORD reserved, LPBC* ppbc);
-#define CreateBindCtx WINELIB_NAME(CreateBindCtx)
+HRESULT WINAPI CreateBindCtx(DWORD reserved, LPBC* ppbc);
 
 
 /*****************************************************************************
@@ -183,8 +182,8 @@ typedef enum tagMKREDUCE
     ICOM_METHOD4(HRESULT,BindToObject,        IBindCtx*,pbc, IMoniker*,pmkToLeft, REFIID,riidResult, void**,ppvResult) \
     ICOM_METHOD4(HRESULT,BindToStorage,       IBindCtx*,pbc, IMoniker*,pmkToLeft, REFIID,riid, void**,ppvObj) \
     ICOM_METHOD4(HRESULT,Reduce,              IBindCtx*,pbc, DWORD,dwReduceHowFar, IMoniker**,ppmkToLeft, IMoniker**,ppmkReduced) \
-    ICOM_METHOD3(HRESULT,ComposeWith,         IMoniker*,pmkRight, BOOL32,fOnlyIfNotGeneric, IMoniker**,ppmkComposite) \
-    ICOM_METHOD2(HRESULT,Enum,                BOOL32,fForward, IEnumMoniker**,ppenumMoniker) \
+    ICOM_METHOD3(HRESULT,ComposeWith,         IMoniker*,pmkRight, BOOL,fOnlyIfNotGeneric, IMoniker**,ppmkComposite) \
+    ICOM_METHOD2(HRESULT,Enum,                BOOL,fForward, IEnumMoniker**,ppenumMoniker) \
     ICOM_METHOD1(HRESULT,IsEqual,             IMoniker*,pmkOtherMoniker) \
     ICOM_METHOD1(HRESULT,Hash,                DWORD*,pdwHash) \
     ICOM_METHOD3(HRESULT,IsRunning,           IBindCtx*,pbc, IMoniker*,pmkToLeft, IMoniker*,pmkNewlyRunning) \
@@ -192,8 +191,8 @@ typedef enum tagMKREDUCE
     ICOM_METHOD1(HRESULT,Inverse,             IMoniker**,ppmk) \
     ICOM_METHOD2(HRESULT,CommonPrefixWith,    IMoniker*,pmkOtherMoniker, IMoniker**,ppmkPrefix) \
     ICOM_METHOD2(HRESULT,RelativePathTo,      IMoniker*,pmkOther, IMoniker**,ppmkRelPath) \
-    ICOM_METHOD3(HRESULT,GetDisplayName,      IBindCtx*,pbc, IMoniker*,pmkToLeft, LPOLESTR32*,ppszDisplayName) \
-    ICOM_METHOD5(HRESULT,ParseDisplayName,    IBindCtx*,pbc, IMoniker*,pmkToLeft, LPOLESTR32,pszDisplayName, ULONG*,pchEaten, IMoniker**,ppmkOut) \
+    ICOM_METHOD3(HRESULT,GetDisplayName,      IBindCtx*,pbc, IMoniker*,pmkToLeft, LPOLESTR*,ppszDisplayName) \
+    ICOM_METHOD5(HRESULT,ParseDisplayName,    IBindCtx*,pbc, IMoniker*,pmkToLeft, LPOLESTR,pszDisplayName, ULONG*,pchEaten, IMoniker**,ppmkOut) \
     ICOM_METHOD1(HRESULT,IsSystemMoniker,     DWORD*,pdwMksys)
 #define IMoniker_IMETHODS \
     IPersistStream_IMETHODS \
@@ -241,12 +240,10 @@ HRESULT WINAPI CreateAntiMoniker(LPMONIKER* ppmk);
 HRESULT WINAPI CreateClassMoniker(REFCLSID rclsid, LPMONIKER* ppmk);
 
 HRESULT WINAPI CreateFileMoniker16(LPCOLESTR16 lpszPathName, LPMONIKER* ppmk);
-HRESULT WINAPI CreateFileMoniker32(LPCOLESTR32 lpszPathName, LPMONIKER* ppmk);
-#define CreateFileMoniker WINELIB_NAME(CreateFileMoniker)
+HRESULT WINAPI CreateFileMoniker(LPCOLESTR lpszPathName, LPMONIKER* ppmk);
 
-HRESULT WINAPI CreateItemMoniker16(LPCOLESTR16 lpszDelim, LPCOLESTR32  lpszItem, LPMONIKER* ppmk);
-HRESULT WINAPI CreateItemMoniker32(LPCOLESTR32 lpszDelim, LPCOLESTR32  lpszItem, LPMONIKER* ppmk);
-#define CreateItemMoniker WINELIB_NAME(CreateItemMoniker)
+HRESULT WINAPI CreateItemMoniker16(LPCOLESTR16 lpszDelim, LPCOLESTR  lpszItem, LPMONIKER* ppmk);
+HRESULT WINAPI CreateItemMoniker(LPCOLESTR lpszDelim, LPCOLESTR  lpszItem, LPMONIKER* ppmk);
 
 /* FIXME: not implemented */
 HRESULT WINAPI CreateGenericComposite(LPMONIKER pmkFirst, LPMONIKER pmkRest, LPMONIKER* ppmkComposite);
@@ -284,9 +281,9 @@ ICOM_DEFINE(IROTData,IUnknown)
 #define IRunnableObject_METHODS \
     ICOM_METHOD1(HRESULT,GetRunningClass,    LPCLSID,lpClsid) \
     ICOM_METHOD1(HRESULT,Run,                IBindCtx*,pbc) \
-    ICOM_METHOD (BOOL32,IsRunning) \
-    ICOM_METHOD2(HRESULT,LockRunning,        BOOL32,fLock, BOOL32,fLastUnlockCloses) \
-    ICOM_METHOD1(HRESULT,SetContainedObject, BOOL32,fContained)
+    ICOM_METHOD (BOOL,IsRunning) \
+    ICOM_METHOD2(HRESULT,LockRunning,        BOOL,fLock, BOOL,fLastUnlockCloses) \
+    ICOM_METHOD1(HRESULT,SetContainedObject, BOOL,fContained)
 #define IRunnableObject_IMETHODS \
     IUnknown_IMETHODS \
     IRunnableObject_METHODS
@@ -346,10 +343,10 @@ ICOM_DEFINE(IRunningObjectTable,IUnknown)
  */
 
 /* FIXME: not implemented */
-HRESULT WINAPI CoGetInstanceFromFile(COSERVERINFO* pServerInfo, CLSID* pClsid, IUnknown* punkOuter, DWORD dwClsCtx, DWORD grfMode, OLECHAR32* pwszName, DWORD dwCount, MULTI_QI* pResults);
+HRESULT WINAPI CoGetInstanceFromFile(COSERVERINFO* pServerInfo, CLSID* pClsid, IUnknown* punkOuter, DWORD dwClsCtx, DWORD grfMode, OLECHAR* pwszName, DWORD dwCount, MULTI_QI* pResults);
 
 /* FIXME: not implemented */
-HRESULT WINAPI CoGetInstanceFromIStorage(COSERVERINFO* pServerInfo, CLSID* pClsid, IUnknown* punkOuter, DWORD dwClsCtx, IStorage32* pstg, DWORD dwCount, MULTI_QI* pResults);
+HRESULT WINAPI CoGetInstanceFromIStorage(COSERVERINFO* pServerInfo, CLSID* pClsid, IUnknown* punkOuter, DWORD dwClsCtx, IStorage* pstg, DWORD dwCount, MULTI_QI* pResults);
 
 
 #endif /* __WINE_WINE_OBJ_MONIKER_H */

@@ -17,7 +17,7 @@
  * RETURNS
  *    Current ANSI code-page identifier, default if no current defined
  */
-UINT32 WINAPI GetACP(void)
+UINT WINAPI GetACP(void)
 {
     /* This introduces too many messages */
 /*    FIXME(win32, "(void): stub\n"); */
@@ -28,7 +28,7 @@ UINT32 WINAPI GetACP(void)
 /***********************************************************************
  *           GetCPInfo            (KERNEL32.154)
  */
-BOOL32 WINAPI GetCPInfo( UINT32 codepage, LPCPINFO cpinfo )
+BOOL WINAPI GetCPInfo( UINT codepage, LPCPINFO cpinfo )
 {
     cpinfo->DefaultChar[0] = '?';
     switch (codepage)
@@ -64,7 +64,7 @@ BOOL32 WINAPI GetCPInfo( UINT32 codepage, LPCPINFO cpinfo )
 /***********************************************************************
  *              GetOEMCP                (KERNEL32.248)
  */
-UINT32 WINAPI GetOEMCP(void)
+UINT WINAPI GetOEMCP(void)
 {
     return 437;    /* MS-DOS United States */
 }
@@ -72,7 +72,7 @@ UINT32 WINAPI GetOEMCP(void)
 /***********************************************************************
  *           IsValidCodePage   (KERNEL32.360)
  */
-BOOL32 WINAPI IsValidCodePage(UINT32 CodePage)
+BOOL WINAPI IsValidCodePage(UINT CodePage)
 {
     switch ( CodePage )
     {
@@ -115,14 +115,14 @@ BOOL32 WINAPI IsValidCodePage(UINT32 CodePage)
  *   Does not properly handle flags.
  *
  */
-INT32 WINAPI MultiByteToWideChar(UINT32 page, DWORD flags,
-			         LPCSTR src, INT32 srclen,
-                                 LPWSTR dst, INT32 dstlen)
+INT WINAPI MultiByteToWideChar(UINT page, DWORD flags,
+			         LPCSTR src, INT srclen,
+                                 LPWSTR dst, INT dstlen)
 {
     int ret;
 
     if (srclen == -1)
-	srclen = lstrlen32A(src)+1;
+	srclen = lstrlenA(src)+1;
     if (!dstlen || !dst)
 	return srclen;
 
@@ -171,9 +171,9 @@ INT32 WINAPI MultiByteToWideChar(UINT32 page, DWORD flags,
  *   Does not properly handle flags.
  *
  */
-INT32 WINAPI WideCharToMultiByte(UINT32 page, DWORD flags, LPCWSTR src,
-				 INT32 srclen,LPSTR dst, INT32 dstlen,
-				 LPCSTR defchar, BOOL32 *used)
+INT WINAPI WideCharToMultiByte(UINT page, DWORD flags, LPCWSTR src,
+				 INT srclen,LPSTR dst, INT dstlen,
+				 LPCSTR defchar, BOOL *used)
 {
     int count = 0;
     int eos = 0;
@@ -195,7 +195,7 @@ INT32 WINAPI WideCharToMultiByte(UINT32 page, DWORD flags, LPCWSTR src,
 	*used=0;
     if (srclen == -1)
       {
-	srclen = lstrlen32W(src)+1;
+	srclen = lstrlenW(src)+1;
 	 care_for_eos=1;
       }
     while(srclen && (dont_copy || dstlen))
@@ -238,7 +238,7 @@ INT32 WINAPI WideCharToMultiByte(UINT32 page, DWORD flags, LPCWSTR src,
 /***********************************************************************
  *           IsDBCSLeadByteEx   (KERNEL32.359)
  */
-BOOL32 WINAPI IsDBCSLeadByteEx( UINT32 codepage, BYTE testchar )
+BOOL WINAPI IsDBCSLeadByteEx( UINT codepage, BYTE testchar )
 {
     CPINFO cpinfo;
     int i;
@@ -267,7 +267,7 @@ BOOL16 WINAPI IsDBCSLeadByte16( BYTE testchar )
 /***********************************************************************
  *           IsDBCSLeadByte32   (KERNEL32.358)
  */
-BOOL32 WINAPI IsDBCSLeadByte32( BYTE testchar )
+BOOL WINAPI IsDBCSLeadByte( BYTE testchar )
 {
     return IsDBCSLeadByteEx(GetACP(), testchar);
 }
@@ -276,7 +276,7 @@ BOOL32 WINAPI IsDBCSLeadByte32( BYTE testchar )
 /***********************************************************************
  *              EnumSystemCodePages32A                (KERNEL32.92)
  */
-BOOL32 WINAPI EnumSystemCodePages32A(CODEPAGE_ENUMPROC32A lpfnCodePageEnum,DWORD flags)
+BOOL WINAPI EnumSystemCodePagesA(CODEPAGE_ENUMPROCA lpfnCodePageEnum,DWORD flags)
 {
 	TRACE(win32,"(%p,%08lx)\n",lpfnCodePageEnum,flags);
 	lpfnCodePageEnum("437");
@@ -286,7 +286,7 @@ BOOL32 WINAPI EnumSystemCodePages32A(CODEPAGE_ENUMPROC32A lpfnCodePageEnum,DWORD
 /***********************************************************************
  *              EnumSystemCodePages32W                (KERNEL32.93)
  */
-BOOL32 WINAPI EnumSystemCodePages32W( CODEPAGE_ENUMPROC32W lpfnCodePageEnum,
+BOOL WINAPI EnumSystemCodePagesW( CODEPAGE_ENUMPROCW lpfnCodePageEnum,
                                       DWORD flags)
 {
     WCHAR	*cp;

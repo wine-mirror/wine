@@ -54,9 +54,9 @@ void pdump (LPCITEMIDLIST pidl)
 /*************************************************************************
  * ILGetDisplayName			[SHELL32.15]
  */
-BOOL32 WINAPI ILGetDisplayName(LPCITEMIDLIST pidl,LPSTR path)
+BOOL WINAPI ILGetDisplayName(LPCITEMIDLIST pidl,LPSTR path)
 {	FIXME(shell,"pidl=%p %p semi-stub\n",pidl,path);
-	return SHGetPathFromIDList32A(pidl, path);
+	return SHGetPathFromIDListA(pidl, path);
 }
 /*************************************************************************
  * ILFindLastID [SHELL32.16]
@@ -79,7 +79,7 @@ LPITEMIDLIST WINAPI ILFindLastID(LPITEMIDLIST pidl)
  * NOTES
  *  Removes the last item 
  */
-BOOL32 WINAPI ILRemoveLastID(LPCITEMIDLIST pidl)
+BOOL WINAPI ILRemoveLastID(LPCITEMIDLIST pidl)
 {	TRACE(shell,"pidl=%p\n",pidl);
 	if (!pidl || !pidl->mkid.cb)
 	  return 0;
@@ -148,7 +148,7 @@ LPITEMIDLIST WINAPI ILCloneFirst(LPCITEMIDLIST pidl)
  * NOTES
  *     exported by ordinal
  */
-LPITEMIDLIST WINAPI SHCloneSpecialIDList(HWND32 hwndOwner,DWORD nFolder,DWORD x3)
+LPITEMIDLIST WINAPI SHCloneSpecialIDList(HWND hwndOwner,DWORD nFolder,DWORD x3)
 {	LPITEMIDLIST ppidl;
 	WARN(shell,"(hwnd=0x%x,csidl=0x%lx,0x%lx):semi-stub.\n",
 					 hwndOwner,nFolder,x3);
@@ -184,7 +184,7 @@ LPITEMIDLIST WINAPI ILGlobalClone(LPCITEMIDLIST pidl)
  * ILIsEqual [SHELL32.21]
  *
  */
-BOOL32 WINAPI ILIsEqual(LPCITEMIDLIST pidl1, LPCITEMIDLIST pidl2)
+BOOL WINAPI ILIsEqual(LPCITEMIDLIST pidl1, LPCITEMIDLIST pidl2)
 {	LPPIDLDATA ppidldata;
 	CHAR * szData1;
 	CHAR * szData2;
@@ -416,7 +416,7 @@ LPITEMIDLIST WINAPI ILGetNext(LPITEMIDLIST pidl)
  *  otherwise adds the item to the end. (???)
  *  Destroys the passed in idlist! (???)
  */
-LPITEMIDLIST WINAPI ILAppend(LPITEMIDLIST pidl,LPCITEMIDLIST item,BOOL32 bEnd)
+LPITEMIDLIST WINAPI ILAppend(LPITEMIDLIST pidl,LPCITEMIDLIST item,BOOL bEnd)
 {	LPITEMIDLIST idlRet;
 	WARN(pidl,"(pidl=%p,pidl=%p,%08u)semi-stub\n",pidl,item,bEnd);
 	pdump (pidl);
@@ -477,11 +477,11 @@ LPITEMIDLIST WINAPI ILCreateFromPath(LPVOID path)
 	
 	if ( !VERSION_OsIsUnicode())
 	{ TRACE(pidl,"(path=%s)\n",(LPSTR)path);
-	  LocalToWideChar32(lpszDisplayName, path, MAX_PATH);
+	  LocalToWideChar(lpszDisplayName, path, MAX_PATH);
   	}
 	else
 	{ TRACE(pidl,"(path=L%s)\n",debugstr_w(path));
-	  lstrcpy32W(lpszDisplayName, path);
+	  lstrcpyW(lpszDisplayName, path);
 	}
 
 	if (SHGetDesktopFolder(&shellfolder)==S_OK)
@@ -494,7 +494,7 @@ LPITEMIDLIST WINAPI ILCreateFromPath(LPVOID path)
  *  SHSimpleIDListFromPath [SHELL32.162]
  *
  */
-LPITEMIDLIST WINAPI SHSimpleIDListFromPath32AW (LPVOID lpszPath)
+LPITEMIDLIST WINAPI SHSimpleIDListFromPathAW (LPVOID lpszPath)
 {	LPCSTR	lpszElement;
 	char	lpszTemp[MAX_PATH];
 
@@ -503,15 +503,15 @@ LPITEMIDLIST WINAPI SHSimpleIDListFromPath32AW (LPVOID lpszPath)
 
 	if ( VERSION_OsIsUnicode())
 	{ TRACE(pidl,"(path=L%s)\n",debugstr_w((LPWSTR)lpszPath));
-	  WideCharToLocal32(lpszTemp, lpszPath, MAX_PATH);
+	  WideCharToLocal(lpszTemp, lpszPath, MAX_PATH);
   	}
 	else
 	{ TRACE(pidl,"(path=%s)\n",(LPSTR)lpszPath);
 	  strcpy(lpszTemp, lpszPath);
 	}
 		
-	lpszElement = PathFindFilename32A(lpszTemp);
-	if( GetFileAttributes32A(lpszTemp) & FILE_ATTRIBUTE_DIRECTORY )
+	lpszElement = PathFindFilenameA(lpszTemp);
+	if( GetFileAttributesA(lpszTemp) & FILE_ATTRIBUTE_DIRECTORY )
 	{ return _ILCreateFolder(NULL, lpszElement);	/*FIXME: fill shortname */
 	}
 	return _ILCreateValue(NULL, lpszElement);	/*FIXME: fill shortname */
@@ -520,7 +520,7 @@ LPITEMIDLIST WINAPI SHSimpleIDListFromPath32AW (LPVOID lpszPath)
  * SHGetDataFromIDListA [SHELL32.247]
  *
  */
-HRESULT WINAPI SHGetDataFromIDList32A(LPSHELLFOLDER psf, LPCITEMIDLIST pidl, int nFormat, LPVOID dest, int len)
+HRESULT WINAPI SHGetDataFromIDListA(LPSHELLFOLDER psf, LPCITEMIDLIST pidl, int nFormat, LPVOID dest, int len)
 {	FIXME(shell,"sf=%p pidl=%p 0x%04x %p 0x%04x stub\n",psf,pidl,nFormat,dest,len);
 	switch (nFormat)
 	{ case SHGDFIL_FINDDATA:
@@ -536,9 +536,9 @@ HRESULT WINAPI SHGetDataFromIDList32A(LPSHELLFOLDER psf, LPCITEMIDLIST pidl, int
  * SHGetDataFromIDListW [SHELL32.247]
  *
  */
-HRESULT WINAPI SHGetDataFromIDList32W(LPSHELLFOLDER psf, LPCITEMIDLIST pidl, int nFormat, LPVOID dest, int len)
+HRESULT WINAPI SHGetDataFromIDListW(LPSHELLFOLDER psf, LPCITEMIDLIST pidl, int nFormat, LPVOID dest, int len)
 {	FIXME(shell,"sf=%p pidl=%p 0x%04x %p 0x%04x stub\n",psf,pidl,nFormat,dest,len);
-	return SHGetDataFromIDList32A( psf, pidl, nFormat, dest, len);
+	return SHGetDataFromIDListA( psf, pidl, nFormat, dest, len);
 }
 
 /**************************************************************************
@@ -662,30 +662,30 @@ DWORD WINAPI _ILGetItemText(LPCITEMIDLIST pidl, LPSTR lpszText, UINT16 uSize)
  *  _ILIsFolder()
  *  _ILIsValue()
  */
-BOOL32 WINAPI _ILIsDesktop(LPCITEMIDLIST pidl)
+BOOL WINAPI _ILIsDesktop(LPCITEMIDLIST pidl)
 {	TRACE(pidl,"(%p)\n",pidl);
 	return ( !pidl || (pidl && pidl->mkid.cb == 0x00) );
 }
 
-BOOL32 WINAPI _ILIsMyComputer(LPCITEMIDLIST pidl)
+BOOL WINAPI _ILIsMyComputer(LPCITEMIDLIST pidl)
 {	LPPIDLDATA lpPData = _ILGetDataPointer(pidl);
 	TRACE(pidl,"(%p)\n",pidl);
 	return (pidl && lpPData && PT_MYCOMP == lpPData->type);
 }
 
-BOOL32 WINAPI _ILIsDrive(LPCITEMIDLIST pidl)
+BOOL WINAPI _ILIsDrive(LPCITEMIDLIST pidl)
 {	LPPIDLDATA lpPData = _ILGetDataPointer(pidl);
 	TRACE(pidl,"(%p)\n",pidl);
 	return (pidl && lpPData && PT_DRIVE == lpPData->type);
 }
 
-BOOL32 WINAPI _ILIsFolder(LPCITEMIDLIST pidl)
+BOOL WINAPI _ILIsFolder(LPCITEMIDLIST pidl)
 {	LPPIDLDATA lpPData = _ILGetDataPointer(pidl);
 	TRACE(pidl,"(%p)\n",pidl);
 	return (pidl && lpPData && PT_FOLDER == lpPData->type);
 }
 
-BOOL32 WINAPI _ILIsValue(LPCITEMIDLIST pidl)
+BOOL WINAPI _ILIsValue(LPCITEMIDLIST pidl)
 {	LPPIDLDATA lpPData = _ILGetDataPointer(pidl);
 	TRACE(pidl,"(%p)\n",pidl);
 	return (pidl && lpPData && PT_VALUE == lpPData->type);
@@ -904,7 +904,7 @@ LPITEMIDLIST WINAPI _ILCreate(PIDLTYPE type, LPVOID pIn, UINT16 uInSize)
  * RETURNS
  *  length of data (raw)
  */
-DWORD WINAPI _ILGetData(PIDLTYPE type, LPCITEMIDLIST pidl, LPVOID pOut, UINT32 uOutSize)
+DWORD WINAPI _ILGetData(PIDLTYPE type, LPCITEMIDLIST pidl, LPVOID pOut, UINT uOutSize)
 {	LPPIDLDATA  pData;
 	DWORD       dwReturn=0; 
 	LPSTR	    pszSrc;
@@ -1001,7 +1001,7 @@ LPSTR WINAPI _ILGetSTextPointer(PIDLTYPE type, LPPIDLDATA pidldata)
 	}
 	return NULL;
 }
-BOOL32 WINAPI _ILGetFileDate (LPCITEMIDLIST pidl, LPSTR pOut, UINT32 uOutSize)
+BOOL WINAPI _ILGetFileDate (LPCITEMIDLIST pidl, LPSTR pOut, UINT uOutSize)
 {	LPPIDLDATA pdata =_ILGetDataPointer(pidl);
 	FILETIME ft;
 	SYSTEMTIME time;
@@ -1020,9 +1020,9 @@ BOOL32 WINAPI _ILGetFileDate (LPCITEMIDLIST pidl, LPSTR pOut, UINT32 uOutSize)
 	    return FALSE;
 	}
 	FileTimeToSystemTime (&ft, &time);
-	return GetDateFormat32A(LOCALE_USER_DEFAULT,DATE_SHORTDATE,&time, NULL,  pOut, uOutSize);
+	return GetDateFormatA(LOCALE_USER_DEFAULT,DATE_SHORTDATE,&time, NULL,  pOut, uOutSize);
 }
-BOOL32 WINAPI _ILGetFileSize (LPCITEMIDLIST pidl, LPSTR pOut, UINT32 uOutSize)
+BOOL WINAPI _ILGetFileSize (LPCITEMIDLIST pidl, LPSTR pOut, UINT uOutSize)
 {	LPPIDLDATA pdata =_ILGetDataPointer(pidl);
 	char stemp[20]; /* for filesize */
 	
@@ -1036,12 +1036,12 @@ BOOL32 WINAPI _ILGetFileSize (LPCITEMIDLIST pidl, LPSTR pOut, UINT32 uOutSize)
 	  default:
 	    return FALSE;
 	}
-	StrFormatByteSize32A(pdata->u.file.dwFileSize, stemp, 20);
+	StrFormatByteSizeA(pdata->u.file.dwFileSize, stemp, 20);
 	strncpy( pOut, stemp, 20);
 	return TRUE;
 }
 
-BOOL32 WINAPI _ILGetExtension (LPCITEMIDLIST pidl, LPSTR pOut, UINT32 uOutSize)
+BOOL WINAPI _ILGetExtension (LPCITEMIDLIST pidl, LPSTR pOut, UINT uOutSize)
 {	char pTemp[MAX_PATH];
 	int i;
 
@@ -1066,12 +1066,12 @@ BOOL32 WINAPI _ILGetExtension (LPCITEMIDLIST pidl, LPSTR pOut, UINT32 uOutSize)
  *  IDLList "Item ID List List"
  * 
  */
-static UINT32 WINAPI IDLList_GetState(LPIDLLIST this);
-static LPITEMIDLIST WINAPI IDLList_GetElement(LPIDLLIST this, UINT32 nIndex);
-static UINT32 WINAPI IDLList_GetCount(LPIDLLIST this);
-static BOOL32 WINAPI IDLList_StoreItem(LPIDLLIST this, LPITEMIDLIST pidl);
-static BOOL32 WINAPI IDLList_AddItems(LPIDLLIST this, LPITEMIDLIST *apidl, UINT32 cidl);
-static BOOL32 WINAPI IDLList_InitList(LPIDLLIST this);
+static UINT WINAPI IDLList_GetState(LPIDLLIST this);
+static LPITEMIDLIST WINAPI IDLList_GetElement(LPIDLLIST this, UINT nIndex);
+static UINT WINAPI IDLList_GetCount(LPIDLLIST this);
+static BOOL WINAPI IDLList_StoreItem(LPIDLLIST this, LPITEMIDLIST pidl);
+static BOOL WINAPI IDLList_AddItems(LPIDLLIST this, LPITEMIDLIST *apidl, UINT cidl);
+static BOOL WINAPI IDLList_InitList(LPIDLLIST this);
 static void WINAPI IDLList_CleanList(LPIDLLIST this);
 
 static IDLList_VTable idllvt = 
@@ -1084,7 +1084,7 @@ static IDLList_VTable idllvt =
 	IDLList_CleanList
 };
 
-LPIDLLIST IDLList_Constructor (UINT32 uStep)
+LPIDLLIST IDLList_Constructor (UINT uStep)
 {	LPIDLLIST lpidll;
 	if (!(lpidll = (LPIDLLIST)HeapAlloc(GetProcessHeap(),0,sizeof(IDLList))))
 	  return NULL;
@@ -1101,7 +1101,7 @@ void IDLList_Destructor(LPIDLLIST this)
 	IDLList_CleanList(this);
 }
  
-static UINT32 WINAPI IDLList_GetState(LPIDLLIST this)
+static UINT WINAPI IDLList_GetState(LPIDLLIST this)
 {	TRACE (shell,"(%p)->(uStep=%u dpa=%p)\n",this, this->uStep, this->dpa);
 
 	if (this->uStep == 0)
@@ -1111,15 +1111,15 @@ static UINT32 WINAPI IDLList_GetState(LPIDLLIST this)
         }
         return(State_UnInit);
 }
-static LPITEMIDLIST WINAPI IDLList_GetElement(LPIDLLIST this, UINT32 nIndex)
+static LPITEMIDLIST WINAPI IDLList_GetElement(LPIDLLIST this, UINT nIndex)
 {	TRACE (shell,"(%p)->(index=%u)\n",this, nIndex);
 	return((LPITEMIDLIST)pDPA_GetPtr(this->dpa, nIndex));
 }
-static UINT32 WINAPI IDLList_GetCount(LPIDLLIST this)
+static UINT WINAPI IDLList_GetCount(LPIDLLIST this)
 {	TRACE (shell,"(%p)\n",this);
 	return(IDLList_GetState(this)==State_Init ? DPA_GetPtrCount(this->dpa) : 0);
 }
-static BOOL32 WINAPI IDLList_StoreItem(LPIDLLIST this, LPITEMIDLIST pidl)
+static BOOL WINAPI IDLList_StoreItem(LPIDLLIST this, LPITEMIDLIST pidl)
 {	TRACE (shell,"(%p)->(pidl=%p)\n",this, pidl);
 	if (pidl)
         { if (IDLList_InitList(this) && pDPA_InsertPtr(this->dpa, 0x7fff, (LPSTR)pidl)>=0)
@@ -1129,8 +1129,8 @@ static BOOL32 WINAPI IDLList_StoreItem(LPIDLLIST this, LPITEMIDLIST pidl)
         IDLList_CleanList(this);
         return(FALSE);
 }
-static BOOL32 WINAPI IDLList_AddItems(LPIDLLIST this, LPITEMIDLIST *apidl, UINT32 cidl)
-{	INT32 i;
+static BOOL WINAPI IDLList_AddItems(LPIDLLIST this, LPITEMIDLIST *apidl, UINT cidl)
+{	INT i;
 	TRACE (shell,"(%p)->(apidl=%p cidl=%u)\n",this, apidl, cidl);
 
 	for (i=0; i<cidl; ++i)
@@ -1139,7 +1139,7 @@ static BOOL32 WINAPI IDLList_AddItems(LPIDLLIST this, LPITEMIDLIST *apidl, UINT3
         }
         return(TRUE);
 }
-static BOOL32 WINAPI IDLList_InitList(LPIDLLIST this)
+static BOOL WINAPI IDLList_InitList(LPIDLLIST this)
 {	TRACE (shell,"(%p)\n",this);
 	switch (IDLList_GetState(this))
         { case State_Init:
@@ -1156,7 +1156,7 @@ static BOOL32 WINAPI IDLList_InitList(LPIDLLIST this)
         }
 }
 static void WINAPI IDLList_CleanList(LPIDLLIST this)
-{	INT32 i;
+{	INT i;
 	TRACE (shell,"(%p)\n",this);
 
 	if (this->uStep != 0)

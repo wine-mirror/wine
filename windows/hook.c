@@ -32,7 +32,7 @@
 typedef struct
 {
     HANDLE16   next;               /* 00 Next hook in chain */
-    HOOKPROC32 proc WINE_PACKED;   /* 02 Hook procedure */
+    HOOKPROC proc WINE_PACKED;   /* 02 Hook procedure */
     INT16      id;                 /* 06 Hook id (WH_xxx) */
     HQUEUE16   ownerQueue;         /* 08 Owner queue (0 for system hook) */
     HMODULE16  ownerModule;        /* 0a Owner module */
@@ -46,15 +46,15 @@ typedef struct
   /* This should probably reside in USER heap */
 static HANDLE16 HOOK_systemHooks[WH_NB_HOOKS] = { 0, };
 
-typedef VOID (*HOOK_MapFunc)(INT32, INT32, WPARAM32 *, LPARAM *);
-typedef VOID (*HOOK_UnMapFunc)(INT32, INT32, WPARAM32, LPARAM, WPARAM32,
+typedef VOID (*HOOK_MapFunc)(INT, INT, WPARAM *, LPARAM *);
+typedef VOID (*HOOK_UnMapFunc)(INT, INT, WPARAM, LPARAM, WPARAM,
 			       LPARAM);
 
 /***********************************************************************
  *           HOOK_Map16To32Common
  */
-static void HOOK_Map16To32Common(INT32 id, INT32 code, WPARAM32 *pwParam,
-				 LPARAM *plParam, BOOL32 bA )
+static void HOOK_Map16To32Common(INT id, INT code, WPARAM *pwParam,
+				 LPARAM *plParam, BOOL bA )
 {
 
    switch( id )
@@ -65,7 +65,7 @@ static void HOOK_Map16To32Common(INT32 id, INT32 code, WPARAM32 *pwParam,
 	case WH_JOURNALRECORD:
         {
             LPMSG16 lpmsg16 = PTR_SEG_TO_LIN(*plParam);
-            LPMSG32 lpmsg32 = HeapAlloc( SystemHeap, 0, sizeof(*lpmsg32) );
+            LPMSG lpmsg32 = HeapAlloc( SystemHeap, 0, sizeof(*lpmsg32) );
 	
             STRUCT32_MSG16to32( lpmsg16, lpmsg32 );
             *plParam = (LPARAM)lpmsg32;
@@ -75,7 +75,7 @@ static void HOOK_Map16To32Common(INT32 id, INT32 code, WPARAM32 *pwParam,
 	case WH_JOURNALPLAYBACK:
         {
             LPEVENTMSG16 lpem16 = PTR_SEG_TO_LIN(*plParam);
-            LPEVENTMSG32 lpem32 = HeapAlloc( SystemHeap, 0, sizeof(*lpem32) );
+            LPEVENTMSG lpem32 = HeapAlloc( SystemHeap, 0, sizeof(*lpem32) );
 
             lpem32->message = lpem16->message;
             lpem32->paramL = lpem16->paramL;
@@ -90,7 +90,7 @@ static void HOOK_Map16To32Common(INT32 id, INT32 code, WPARAM32 *pwParam,
 	case WH_CALLWNDPROC:
 	{
 	    LPCWPSTRUCT16   lpcwp16 = PTR_SEG_TO_LIN(*plParam);
-	    LPCWPSTRUCT32   lpcwp32 = HeapAlloc( SystemHeap, 0, sizeof(*lpcwp32) );
+	    LPCWPSTRUCT   lpcwp32 = HeapAlloc( SystemHeap, 0, sizeof(*lpcwp32) );
 	    
 	    lpcwp32->hwnd = lpcwp16->hwnd;
 	    lpcwp32->lParam = lpcwp16->lParam;
@@ -112,13 +112,13 @@ static void HOOK_Map16To32Common(INT32 id, INT32 code, WPARAM32 *pwParam,
 	    {
 		LPCBT_CREATEWND16  lpcbtcw16 = PTR_SEG_TO_LIN(*plParam);
 		LPCREATESTRUCT16   lpcs16 = PTR_SEG_TO_LIN(lpcbtcw16->lpcs);
-		LPCBT_CREATEWND32A lpcbtcw32 = HeapAlloc( SystemHeap, 0,
+		LPCBT_CREATEWNDA lpcbtcw32 = HeapAlloc( SystemHeap, 0,
 							  sizeof(*lpcbtcw32) );
 		lpcbtcw32->lpcs = HeapAlloc( SystemHeap, 0,
 					     sizeof(*lpcbtcw32->lpcs) );
 
 		STRUCT32_CREATESTRUCT16to32A( lpcs16,
-					     (LPCREATESTRUCT32A)lpcbtcw32->lpcs );
+					     (LPCREATESTRUCTA)lpcbtcw32->lpcs );
 
 		if (HIWORD(lpcs16->lpszName))
 		    lpcbtcw32->lpcs->lpszName = 
@@ -144,7 +144,7 @@ static void HOOK_Map16To32Common(INT32 id, INT32 code, WPARAM32 *pwParam,
 	    case HCBT_ACTIVATE:
             {
                 LPCBTACTIVATESTRUCT16 lpcas16 = PTR_SEG_TO_LIN(*plParam);
-                LPCBTACTIVATESTRUCT32 lpcas32 = HeapAlloc( SystemHeap, 0,
+                LPCBTACTIVATESTRUCT lpcas32 = HeapAlloc( SystemHeap, 0,
                                                            sizeof(*lpcas32) );
                 lpcas32->fMouse = lpcas16->fMouse;
                 lpcas32->hWndActive = lpcas16->hWndActive;
@@ -154,14 +154,14 @@ static void HOOK_Map16To32Common(INT32 id, INT32 code, WPARAM32 *pwParam,
             case HCBT_CLICKSKIPPED:
             {
                 LPMOUSEHOOKSTRUCT16 lpms16 = PTR_SEG_TO_LIN(*plParam);
-                LPMOUSEHOOKSTRUCT32 lpms32 = HeapAlloc( SystemHeap, 0,
+                LPMOUSEHOOKSTRUCT lpms32 = HeapAlloc( SystemHeap, 0,
                                                         sizeof(*lpms32) );
 
                 CONV_POINT16TO32( &lpms16->pt, &lpms32->pt );
 
                 /* wHitTestCode may be negative, so convince compiler to do
                    correct sign extension. Yay. :| */
-                lpms32->wHitTestCode = (INT32)((INT16)lpms16->wHitTestCode);
+                lpms32->wHitTestCode = (INT)((INT16)lpms16->wHitTestCode);
 
                 lpms32->dwExtraInfo = lpms16->dwExtraInfo;
                 lpms32->hwnd = lpms16->hwnd;
@@ -171,7 +171,7 @@ static void HOOK_Map16To32Common(INT32 id, INT32 code, WPARAM32 *pwParam,
             case HCBT_MOVESIZE:
             {
                 LPRECT16 lprect16 = PTR_SEG_TO_LIN(*plParam);
-                LPRECT32 lprect32 = HeapAlloc( SystemHeap, 0,
+                LPRECT lprect32 = HeapAlloc( SystemHeap, 0,
                                                sizeof(*lprect32) );
 
                 CONV_RECT16TO32( lprect16, lprect32 );
@@ -184,14 +184,14 @@ static void HOOK_Map16To32Common(INT32 id, INT32 code, WPARAM32 *pwParam,
 	case WH_MOUSE:
         {
             LPMOUSEHOOKSTRUCT16 lpms16 = PTR_SEG_TO_LIN(*plParam);
-            LPMOUSEHOOKSTRUCT32 lpms32 = HeapAlloc( SystemHeap, 0,
+            LPMOUSEHOOKSTRUCT lpms32 = HeapAlloc( SystemHeap, 0,
                                                     sizeof(*lpms32) );
 
             CONV_POINT16TO32( &lpms16->pt, &lpms32->pt );
 
             /* wHitTestCode may be negative, so convince compiler to do
                correct sign extension. Yay. :| */
-            lpms32->wHitTestCode = (INT32)((INT16)lpms16->wHitTestCode);
+            lpms32->wHitTestCode = (INT)((INT16)lpms16->wHitTestCode);
             lpms32->dwExtraInfo = lpms16->dwExtraInfo;
             lpms32->hwnd = lpms16->hwnd;
             *plParam = (LPARAM)lpms32;
@@ -201,7 +201,7 @@ static void HOOK_Map16To32Common(INT32 id, INT32 code, WPARAM32 *pwParam,
 	case WH_DEBUG:
         {
             LPDEBUGHOOKINFO16 lpdh16 = PTR_SEG_TO_LIN(*plParam);
-            LPDEBUGHOOKINFO32 lpdh32 = HeapAlloc( SystemHeap, 0,
+            LPDEBUGHOOKINFO lpdh32 = HeapAlloc( SystemHeap, 0,
                                                   sizeof(*lpdh32) );
 
             lpdh32->idThread = 0;               /* FIXME */
@@ -232,7 +232,7 @@ static void HOOK_Map16To32Common(INT32 id, INT32 code, WPARAM32 *pwParam,
 /***********************************************************************
  *           HOOK_Map16To32A
  */
-static void HOOK_Map16To32A(INT32 id, INT32 code, WPARAM32 *pwParam,
+static void HOOK_Map16To32A(INT id, INT code, WPARAM *pwParam,
 			    LPARAM *plParam)
 {
     HOOK_Map16To32Common( id, code, pwParam, plParam, TRUE );
@@ -242,7 +242,7 @@ static void HOOK_Map16To32A(INT32 id, INT32 code, WPARAM32 *pwParam,
 /***********************************************************************
  *           HOOK_Map16To32W
  */
-static void HOOK_Map16To32W(INT32 id, INT32 code, WPARAM32 *pwParam,
+static void HOOK_Map16To32W(INT id, INT code, WPARAM *pwParam,
 			    LPARAM *plParam)
 {
     HOOK_Map16To32Common( id, code, pwParam, plParam, FALSE );
@@ -252,9 +252,9 @@ static void HOOK_Map16To32W(INT32 id, INT32 code, WPARAM32 *pwParam,
 /***********************************************************************
  *           HOOK_UnMap16To32Common
  */
-static void HOOK_UnMap16To32Common(INT32 id, INT32 code, WPARAM32 wParamOrig,
-				   LPARAM lParamOrig, WPARAM32 wParam,
-				   LPARAM lParam, BOOL32 bA)
+static void HOOK_UnMap16To32Common(INT id, INT code, WPARAM wParamOrig,
+				   LPARAM lParamOrig, WPARAM wParam,
+				   LPARAM lParam, BOOL bA)
 {
     switch (id)
     {
@@ -268,7 +268,7 @@ static void HOOK_UnMap16To32Common(INT32 id, INT32 code, WPARAM32 wParamOrig,
 
 	case WH_CALLWNDPROC:
 	{
-            LPCWPSTRUCT32   lpcwp32 = (LPCWPSTRUCT32)lParam;
+            LPCWPSTRUCT   lpcwp32 = (LPCWPSTRUCT)lParam;
             if (bA) WINPROC_UnmapMsg16To32A( lpcwp32->hwnd,lpcwp32->message, lpcwp32->wParam,
                                              lpcwp32->lParam, 0 );
             else WINPROC_UnmapMsg16To32W( lpcwp32->hwnd,lpcwp32->message, lpcwp32->wParam,
@@ -280,7 +280,7 @@ static void HOOK_UnMap16To32Common(INT32 id, INT32 code, WPARAM32 wParamOrig,
 	case WH_GETMESSAGE:
         {
 	    LPMSG16 lpmsg16 = PTR_SEG_TO_LIN(lParamOrig);
-	    STRUCT32_MSG32to16( (LPMSG32)lParam, lpmsg16 );
+	    STRUCT32_MSG32to16( (LPMSG)lParam, lpmsg16 );
 	    HeapFree( SystemHeap, 0, (LPVOID)lParam );
 	    break;
         }
@@ -296,7 +296,7 @@ static void HOOK_UnMap16To32Common(INT32 id, INT32 code, WPARAM32 wParamOrig,
   	    {
 	      case HCBT_CREATEWND:
 	      {
-		LPCBT_CREATEWND32A lpcbtcw32 = (LPCBT_CREATEWND32A)lParam;
+		LPCBT_CREATEWNDA lpcbtcw32 = (LPCBT_CREATEWNDA)lParam;
 		LPCBT_CREATEWND16  lpcbtcw16 = PTR_SEG_TO_LIN(lParamOrig);
 
 		if( !bA )
@@ -337,8 +337,8 @@ static void HOOK_UnMap16To32Common(INT32 id, INT32 code, WPARAM32 wParamOrig,
 /***********************************************************************
  *           HOOK_UnMap16To32A
  */
-static void HOOK_UnMap16To32A(INT32 id, INT32 code, WPARAM32 wParamOrig,
-			      LPARAM lParamOrig, WPARAM32 wParam,
+static void HOOK_UnMap16To32A(INT id, INT code, WPARAM wParamOrig,
+			      LPARAM lParamOrig, WPARAM wParam,
 			      LPARAM lParam)
 {
     HOOK_UnMap16To32Common( id, code, wParamOrig, lParamOrig, wParam,
@@ -349,8 +349,8 @@ static void HOOK_UnMap16To32A(INT32 id, INT32 code, WPARAM32 wParamOrig,
 /***********************************************************************
  *           HOOK_UnMap16To32W
  */
-static void HOOK_UnMap16To32W(INT32 id, INT32 code, WPARAM32 wParamOrig,
-			      LPARAM lParamOrig, WPARAM32 wParam,
+static void HOOK_UnMap16To32W(INT id, INT code, WPARAM wParamOrig,
+			      LPARAM lParamOrig, WPARAM wParam,
 			      LPARAM lParam)
 {
     HOOK_UnMap16To32Common( id, code, wParamOrig, lParamOrig, wParam, 
@@ -361,8 +361,8 @@ static void HOOK_UnMap16To32W(INT32 id, INT32 code, WPARAM32 wParamOrig,
 /***********************************************************************
  *           HOOK_Map32To16Common
  */
-static void HOOK_Map32To16Common(INT32 id, INT32 code, WPARAM32 *pwParam,
-				 LPARAM *plParam, BOOL32 bA)
+static void HOOK_Map32To16Common(INT id, INT code, WPARAM *pwParam,
+				 LPARAM *plParam, BOOL bA)
 {
     switch (id)
     {
@@ -371,7 +371,7 @@ static void HOOK_Map32To16Common(INT32 id, INT32 code, WPARAM32 *pwParam,
       case WH_GETMESSAGE:
       case WH_JOURNALRECORD:
       {
-	  LPMSG32 lpmsg32 = (LPMSG32)*plParam;
+	  LPMSG lpmsg32 = (LPMSG)*plParam;
 	  LPMSG16 lpmsg16 = SEGPTR_NEW( MSG16 );
 
 	  STRUCT32_MSG32to16( lpmsg32, lpmsg16 );
@@ -382,7 +382,7 @@ static void HOOK_Map32To16Common(INT32 id, INT32 code, WPARAM32 *pwParam,
 
       case WH_JOURNALPLAYBACK:
       {
-	  LPEVENTMSG32 lpem32 = (LPEVENTMSG32)*plParam;
+	  LPEVENTMSG lpem32 = (LPEVENTMSG)*plParam;
 	  LPEVENTMSG16 lpem16 = SEGPTR_NEW( EVENTMSG16 );
 
 	  lpem16->message = lpem32->message;
@@ -396,7 +396,7 @@ static void HOOK_Map32To16Common(INT32 id, INT32 code, WPARAM32 *pwParam,
 
       case WH_CALLWNDPROC:
       {
-          LPCWPSTRUCT32   lpcwp32 = (LPCWPSTRUCT32)*plParam;
+          LPCWPSTRUCT   lpcwp32 = (LPCWPSTRUCT)*plParam;
 	  LPCWPSTRUCT16   lpcwp16 = SEGPTR_NEW( CWPSTRUCT16 );
 
           lpcwp16->hwnd = lpcwp32->hwnd;
@@ -417,7 +417,7 @@ static void HOOK_Map32To16Common(INT32 id, INT32 code, WPARAM32 *pwParam,
 	{
 	  case HCBT_ACTIVATE:
 	  {
-	      LPCBTACTIVATESTRUCT32 lpcas32 = (LPCBTACTIVATESTRUCT32)*plParam;
+	      LPCBTACTIVATESTRUCT lpcas32 = (LPCBTACTIVATESTRUCT)*plParam;
 	      LPCBTACTIVATESTRUCT16 lpcas16 =SEGPTR_NEW( CBTACTIVATESTRUCT16 );
 
 	      lpcas16->fMouse     = lpcas32->fMouse;
@@ -429,7 +429,7 @@ static void HOOK_Map32To16Common(INT32 id, INT32 code, WPARAM32 *pwParam,
 	      
 	  case HCBT_CLICKSKIPPED:
 	  {
-	      LPMOUSEHOOKSTRUCT32 lpms32 = (LPMOUSEHOOKSTRUCT32)*plParam;
+	      LPMOUSEHOOKSTRUCT lpms32 = (LPMOUSEHOOKSTRUCT)*plParam;
 	      LPMOUSEHOOKSTRUCT16 lpms16 = SEGPTR_NEW( MOUSEHOOKSTRUCT16 );
 
 	      CONV_POINT32TO16( &lpms32->pt, &lpms16->pt );
@@ -444,7 +444,7 @@ static void HOOK_Map32To16Common(INT32 id, INT32 code, WPARAM32 *pwParam,
 
 	  case HCBT_MOVESIZE:
 	  {
-	      LPRECT32 lprect32 = (LPRECT32)*plParam;
+	      LPRECT lprect32 = (LPRECT)*plParam;
 	      LPRECT16 lprect16 = SEGPTR_NEW( RECT16 );
 
 	      CONV_RECT32TO16( lprect32, lprect16 );
@@ -457,7 +457,7 @@ static void HOOK_Map32To16Common(INT32 id, INT32 code, WPARAM32 *pwParam,
 
       case WH_MOUSE:
       {
-	  LPMOUSEHOOKSTRUCT32 lpms32 = (LPMOUSEHOOKSTRUCT32)*plParam;
+	  LPMOUSEHOOKSTRUCT lpms32 = (LPMOUSEHOOKSTRUCT)*plParam;
 	  LPMOUSEHOOKSTRUCT16 lpms16 = SEGPTR_NEW( MOUSEHOOKSTRUCT16 );
 
 	  CONV_POINT32TO16( &lpms32->pt, &lpms16->pt );
@@ -472,7 +472,7 @@ static void HOOK_Map32To16Common(INT32 id, INT32 code, WPARAM32 *pwParam,
 
       case WH_DEBUG:
       {
-	  LPDEBUGHOOKINFO32 lpdh32 = (LPDEBUGHOOKINFO32)*plParam;
+	  LPDEBUGHOOKINFO lpdh32 = (LPDEBUGHOOKINFO)*plParam;
 	  LPDEBUGHOOKINFO16 lpdh16 = SEGPTR_NEW( DEBUGHOOKINFO16 );
 
 	  lpdh16->hModuleHook = 0;	/* FIXME */
@@ -500,12 +500,12 @@ static void HOOK_Map32To16Common(INT32 id, INT32 code, WPARAM32 *pwParam,
 /***********************************************************************
  *           HOOK_Map32ATo16
  */
-static void HOOK_Map32ATo16(INT32 id, INT32 code, WPARAM32 *pwParam,
+static void HOOK_Map32ATo16(INT id, INT code, WPARAM *pwParam,
 			    LPARAM *plParam)
 {
     if (id == WH_CBT && code == HCBT_CREATEWND)
     {
-	LPCBT_CREATEWND32A lpcbtcw32 = (LPCBT_CREATEWND32A)*plParam;
+	LPCBT_CREATEWNDA lpcbtcw32 = (LPCBT_CREATEWNDA)*plParam;
 	LPCBT_CREATEWND16 lpcbtcw16 = SEGPTR_NEW( CBT_CREATEWND16 );
 	LPCREATESTRUCT16 lpcs16 = SEGPTR_NEW( CREATESTRUCT16 );
 
@@ -535,18 +535,18 @@ static void HOOK_Map32ATo16(INT32 id, INT32 code, WPARAM32 *pwParam,
 /***********************************************************************
  *           HOOK_Map32WTo16
  */
-static void HOOK_Map32WTo16(INT32 id, INT32 code, WPARAM32 *pwParam,
+static void HOOK_Map32WTo16(INT id, INT code, WPARAM *pwParam,
 			    LPARAM *plParam)
 {
     if (id == WH_CBT && code == HCBT_CREATEWND)
     {
         LPSTR name, cls;
-	LPCBT_CREATEWND32W lpcbtcw32 = (LPCBT_CREATEWND32W)*plParam;
+	LPCBT_CREATEWNDW lpcbtcw32 = (LPCBT_CREATEWNDW)*plParam;
 	LPCBT_CREATEWND16 lpcbtcw16 = SEGPTR_NEW( CBT_CREATEWND16 );
 	LPCREATESTRUCT16 lpcs16 = SEGPTR_NEW( CREATESTRUCT16 );
 
 	lpcbtcw16->lpcs = (LPCREATESTRUCT16)SEGPTR_GET( lpcs16 );
-	STRUCT32_CREATESTRUCT32Ato16( (LPCREATESTRUCT32A)lpcbtcw32->lpcs,
+	STRUCT32_CREATESTRUCT32Ato16( (LPCREATESTRUCTA)lpcbtcw32->lpcs,
 				      lpcs16 );
 
         name = SEGPTR_STRDUP_WtoA( lpcbtcw32->lpcs->lpszName );
@@ -564,9 +564,9 @@ static void HOOK_Map32WTo16(INT32 id, INT32 code, WPARAM32 *pwParam,
 /***********************************************************************
  *           HOOK_UnMap32To16Common
  */
-static void HOOK_UnMap32To16Common(INT32 id, INT32 code, WPARAM32 wParamOrig,
-				   LPARAM lParamOrig, WPARAM32 wParam,
-				   LPARAM lParam, BOOL32 bA)
+static void HOOK_UnMap32To16Common(INT id, INT code, WPARAM wParamOrig,
+				   LPARAM lParamOrig, WPARAM wParam,
+				   LPARAM lParam, BOOL bA)
 {
     switch (id)
     {
@@ -582,7 +582,7 @@ static void HOOK_UnMap32To16Common(INT32 id, INT32 code, WPARAM32 wParamOrig,
       case WH_CALLWNDPROC:
       {
           LPCWPSTRUCT16   lpcwp16 = (LPCWPSTRUCT16)PTR_SEG_TO_LIN(lParam);
-	  LPCWPSTRUCT32   lpcwp32 = (LPCWPSTRUCT32)lParamOrig;
+	  LPCWPSTRUCT   lpcwp32 = (LPCWPSTRUCT)lParamOrig;
 	  MSGPARAM16	  mp16 = { lpcwp16->wParam, lpcwp16->lParam, 0 };
 
           if (bA) WINPROC_UnmapMsg32ATo16( lpcwp32->hwnd,lpcwp32->message, lpcwp32->wParam,
@@ -595,7 +595,7 @@ static void HOOK_UnMap32To16Common(INT32 id, INT32 code, WPARAM32 wParamOrig,
 
       case WH_GETMESSAGE:
       {
-	  LPMSG32 lpmsg32 = (LPMSG32)lParamOrig;
+	  LPMSG lpmsg32 = (LPMSG)lParamOrig;
 
 	  STRUCT32_MSG16to32( (LPMSG16)PTR_SEG_TO_LIN(lParam), lpmsg32 );
 	  SEGPTR_FREE( PTR_SEG_TO_LIN(lParam) );
@@ -607,7 +607,7 @@ static void HOOK_UnMap32To16Common(INT32 id, INT32 code, WPARAM32 wParamOrig,
 	{
 	  case HCBT_CREATEWND:
 	  {
-	       LPCBT_CREATEWND32A lpcbtcw32 = (LPCBT_CREATEWND32A)(lParamOrig);
+	       LPCBT_CREATEWNDA lpcbtcw32 = (LPCBT_CREATEWNDA)(lParamOrig);
                LPCBT_CREATEWND16 lpcbtcw16 = PTR_SEG_TO_LIN(lParam);
                LPCREATESTRUCT16  lpcs16 = PTR_SEG_TO_LIN(lpcbtcw16->lpcs);
 
@@ -646,8 +646,8 @@ static void HOOK_UnMap32To16Common(INT32 id, INT32 code, WPARAM32 wParamOrig,
 /***********************************************************************
  *           HOOK_UnMap32ATo16
  */
-static void HOOK_UnMap32ATo16(INT32 id, INT32 code, WPARAM32 wParamOrig,
-			      LPARAM lParamOrig, WPARAM32 wParam,
+static void HOOK_UnMap32ATo16(INT id, INT code, WPARAM wParamOrig,
+			      LPARAM lParamOrig, WPARAM wParam,
 			      LPARAM lParam)
 {
     HOOK_UnMap32To16Common( id, code, wParamOrig, lParamOrig, wParam,
@@ -658,8 +658,8 @@ static void HOOK_UnMap32ATo16(INT32 id, INT32 code, WPARAM32 wParamOrig,
 /***********************************************************************
  *           HOOK_UnMap32WTo16
  */
-static void HOOK_UnMap32WTo16(INT32 id, INT32 code, WPARAM32 wParamOrig,
-			      LPARAM lParamOrig, WPARAM32 wParam,
+static void HOOK_UnMap32WTo16(INT id, INT code, WPARAM wParamOrig,
+			      LPARAM lParamOrig, WPARAM wParam,
 			      LPARAM lParam)
 {
     HOOK_UnMap32To16Common( id, code, wParamOrig, lParamOrig, wParam,
@@ -670,18 +670,18 @@ static void HOOK_UnMap32WTo16(INT32 id, INT32 code, WPARAM32 wParamOrig,
 /***********************************************************************
  *           HOOK_Map32ATo32W
  */
-static void HOOK_Map32ATo32W(INT32 id, INT32 code, WPARAM32 *pwParam,
+static void HOOK_Map32ATo32W(INT id, INT code, WPARAM *pwParam,
 			     LPARAM *plParam)
 {
     if (id == WH_CBT && code == HCBT_CREATEWND)
     {
-	LPCBT_CREATEWND32A lpcbtcwA = (LPCBT_CREATEWND32A)*plParam;
-	LPCBT_CREATEWND32W lpcbtcwW = HeapAlloc( SystemHeap, 0,
+	LPCBT_CREATEWNDA lpcbtcwA = (LPCBT_CREATEWNDA)*plParam;
+	LPCBT_CREATEWNDW lpcbtcwW = HeapAlloc( SystemHeap, 0,
 						 sizeof(*lpcbtcwW) );
 	lpcbtcwW->lpcs = HeapAlloc( SystemHeap, 0, sizeof(*lpcbtcwW->lpcs) );
 
 	lpcbtcwW->hwndInsertAfter = lpcbtcwA->hwndInsertAfter;
-	*lpcbtcwW->lpcs = *(LPCREATESTRUCT32W)lpcbtcwA->lpcs;
+	*lpcbtcwW->lpcs = *(LPCREATESTRUCTW)lpcbtcwA->lpcs;
 
 	if (HIWORD(lpcbtcwA->lpcs->lpszName))
 	{
@@ -707,13 +707,13 @@ static void HOOK_Map32ATo32W(INT32 id, INT32 code, WPARAM32 *pwParam,
 /***********************************************************************
  *           HOOK_UnMap32ATo32W
  */
-static void HOOK_UnMap32ATo32W(INT32 id, INT32 code, WPARAM32 wParamOrig,
-			       LPARAM lParamOrig, WPARAM32 wParam,
+static void HOOK_UnMap32ATo32W(INT id, INT code, WPARAM wParamOrig,
+			       LPARAM lParamOrig, WPARAM wParam,
 			       LPARAM lParam)
 {
     if (id == WH_CBT && code == HCBT_CREATEWND)
     {
-	LPCBT_CREATEWND32W lpcbtcwW = (LPCBT_CREATEWND32W)lParam;
+	LPCBT_CREATEWNDW lpcbtcwW = (LPCBT_CREATEWNDW)lParam;
 	if (HIWORD(lpcbtcwW->lpcs->lpszName))
             HeapFree( SystemHeap, 0, (LPWSTR)lpcbtcwW->lpcs->lpszName );
 	if (HIWORD(lpcbtcwW->lpcs->lpszClass))
@@ -728,18 +728,18 @@ static void HOOK_UnMap32ATo32W(INT32 id, INT32 code, WPARAM32 wParamOrig,
 /***********************************************************************
  *           HOOK_Map32WTo32A
  */
-static void HOOK_Map32WTo32A(INT32 id, INT32 code, WPARAM32 *pwParam,
+static void HOOK_Map32WTo32A(INT id, INT code, WPARAM *pwParam,
 			     LPARAM *plParam)
 {
     if (id == WH_CBT && code == HCBT_CREATEWND)
     {
-	LPCBT_CREATEWND32W lpcbtcwW = (LPCBT_CREATEWND32W)*plParam;
-	LPCBT_CREATEWND32A lpcbtcwA = HeapAlloc( SystemHeap, 0,
+	LPCBT_CREATEWNDW lpcbtcwW = (LPCBT_CREATEWNDW)*plParam;
+	LPCBT_CREATEWNDA lpcbtcwA = HeapAlloc( SystemHeap, 0,
 						 sizeof(*lpcbtcwA) );
 	lpcbtcwA->lpcs = HeapAlloc( SystemHeap, 0, sizeof(*lpcbtcwA->lpcs) );
 
 	lpcbtcwA->hwndInsertAfter = lpcbtcwW->hwndInsertAfter;
-	*lpcbtcwA->lpcs = *(LPCREATESTRUCT32A)lpcbtcwW->lpcs;
+	*lpcbtcwA->lpcs = *(LPCREATESTRUCTA)lpcbtcwW->lpcs;
 
 	if (HIWORD(lpcbtcwW->lpcs->lpszName))
 	  lpcbtcwA->lpcs->lpszName = HEAP_strdupWtoA( SystemHeap, 0,
@@ -761,13 +761,13 @@ static void HOOK_Map32WTo32A(INT32 id, INT32 code, WPARAM32 *pwParam,
 /***********************************************************************
  *           HOOK_UnMap32WTo32A
  */
-static void HOOK_UnMap32WTo32A(INT32 id, INT32 code, WPARAM32 wParamOrig,
-			       LPARAM lParamOrig, WPARAM32 wParam,
+static void HOOK_UnMap32WTo32A(INT id, INT code, WPARAM wParamOrig,
+			       LPARAM lParamOrig, WPARAM wParam,
 			       LPARAM lParam)
 {
     if (id == WH_CBT && code == HCBT_CREATEWND)
     {
-	LPCBT_CREATEWND32A lpcbtcwA = (LPCBT_CREATEWND32A)lParam;
+	LPCBT_CREATEWNDA lpcbtcwA = (LPCBT_CREATEWNDA)lParam;
 	if (HIWORD(lpcbtcwA->lpcs->lpszName))
             HeapFree( SystemHeap, 0, (LPSTR)lpcbtcwA->lpcs->lpszName );
 	if (HIWORD(lpcbtcwA->lpcs->lpszClass))
@@ -843,7 +843,7 @@ static HANDLE16 HOOK_GetHook( INT16 id, HQUEUE16 hQueue )
  *
  * Install a given hook.
  */
-static HHOOK HOOK_SetHook( INT16 id, LPVOID proc, INT32 type,
+static HHOOK HOOK_SetHook( INT16 id, LPVOID proc, INT type,
 		           HMODULE16 hModule, DWORD dwThreadId )
 {
     HOOKDATA *data;
@@ -853,18 +853,18 @@ static HHOOK HOOK_SetHook( INT16 id, LPVOID proc, INT32 type,
     if ((id < WH_MINHOOK) || (id > WH_MAXHOOK)) return 0;
 
     TRACE(hook, "Setting hook %d: %08x %04x %08lx\n",
-                  id, (UINT32)proc, hModule, dwThreadId );
+                  id, (UINT)proc, hModule, dwThreadId );
 
     /* Create task queue if none present */
-    GetFastQueue();
+    GetFastQueue16();
 
-    if (id == WH_JOURNALPLAYBACK) EnableHardwareInput(FALSE);
+    if (id == WH_JOURNALPLAYBACK) EnableHardwareInput16(FALSE);
 
     if (dwThreadId)  /* Task-specific hook */
     {
 	if ((id == WH_JOURNALRECORD) || (id == WH_JOURNALPLAYBACK) ||
 	    (id == WH_SYSMSGFILTER)) return 0;  /* System-only hooks */
-        if (!(hQueue = GetThreadQueue( dwThreadId )))
+        if (!(hQueue = GetThreadQueue16( dwThreadId )))
             return 0;
     }
 
@@ -904,7 +904,7 @@ static HHOOK HOOK_SetHook( INT16 id, LPVOID proc, INT32 type,
  *
  * Remove a hook from the list.
  */
-static BOOL32 HOOK_RemoveHook( HANDLE16 hook )
+static BOOL HOOK_RemoveHook( HANDLE16 hook )
 {
     HOOKDATA *data;
     HANDLE16 *prevHook;
@@ -916,11 +916,11 @@ static BOOL32 HOOK_RemoveHook( HANDLE16 hook )
     {
         /* Mark it for deletion later on */
         WARN(hook, "Hook still running, deletion delayed\n" );
-        data->proc = (HOOKPROC32)0;
+        data->proc = (HOOKPROC)0;
         return TRUE;
     }
 
-    if (data->id == WH_JOURNALPLAYBACK) EnableHardwareInput(TRUE);
+    if (data->id == WH_JOURNALPLAYBACK) EnableHardwareInput16(TRUE);
      
     /* Remove it from the linked list */
 
@@ -964,15 +964,15 @@ static HANDLE16 HOOK_FindValidHook( HANDLE16 hook )
  *
  * Call a hook procedure.
  */
-static LRESULT HOOK_CallHook( HANDLE16 hook, INT32 fromtype, INT32 code,
-                              WPARAM32 wParam, LPARAM lParam )
+static LRESULT HOOK_CallHook( HANDLE16 hook, INT fromtype, INT code,
+                              WPARAM wParam, LPARAM lParam )
 {
     MESSAGEQUEUE *queue;
     HANDLE16 prevHook;
     HOOKDATA *data = (HOOKDATA *)USER_HEAP_LIN_ADDR(hook);
     LRESULT ret;
 
-    WPARAM32 wParamOrig = wParam;
+    WPARAM wParamOrig = wParam;
     LPARAM lParamOrig = lParam;
     HOOK_MapFunc MapFunc;
     HOOK_UnMapFunc UnMapFunc;
@@ -985,7 +985,7 @@ static LRESULT HOOK_CallHook( HANDLE16 hook, INT32 fromtype, INT32 code,
 
     /* Now call it */
 
-    if (!(queue = (MESSAGEQUEUE *)QUEUE_Lock( GetFastQueue() ))) return 0;
+    if (!(queue = (MESSAGEQUEUE *)QUEUE_Lock( GetFastQueue16() ))) return 0;
     prevHook = queue->hCurHook;
     queue->hCurHook = hook;
     data->flags |= HOOK_INUSE;
@@ -1034,12 +1034,12 @@ HOOKPROC16 HOOK_GetProc16( HHOOK hhook )
  *
  * Replacement for calling HOOK_GetHook from other modules.
  */
-BOOL32 HOOK_IsHooked( INT16 id )
+BOOL HOOK_IsHooked( INT16 id )
 {
     /* Hmmm. Use GetThreadQueue(0) instead of GetFastQueue() here to 
        avoid queue being created if someone wants to merely check ... */
 
-    return HOOK_GetHook( id, GetThreadQueue(0) ) != 0;
+    return HOOK_GetHook( id, GetThreadQueue16(0) ) != 0;
 }
 
 
@@ -1053,7 +1053,7 @@ LRESULT HOOK_CallHooks16( INT16 id, INT16 code, WPARAM16 wParam,
 {
     HANDLE16 hook; 
 
-    if (!(hook = HOOK_GetHook( id, GetFastQueue() ))) return 0;
+    if (!(hook = HOOK_GetHook( id, GetFastQueue16() ))) return 0;
     if (!(hook = HOOK_FindValidHook(hook))) return 0;
     return HOOK_CallHook( hook, HOOK_WIN16, code, wParam, lParam );
 }
@@ -1063,12 +1063,12 @@ LRESULT HOOK_CallHooks16( INT16 id, INT16 code, WPARAM16 wParam,
  *
  * Call a hook chain.
  */
-LRESULT HOOK_CallHooks32A( INT32 id, INT32 code, WPARAM32 wParam,
+LRESULT HOOK_CallHooksA( INT id, INT code, WPARAM wParam,
                            LPARAM lParam )
 {
     HANDLE16 hook; 
 
-    if (!(hook = HOOK_GetHook( id, GetFastQueue() ))) return 0;
+    if (!(hook = HOOK_GetHook( id, GetFastQueue16() ))) return 0;
     if (!(hook = HOOK_FindValidHook(hook))) return 0;
     return HOOK_CallHook( hook, HOOK_WIN32A, code, wParam, lParam );
 }
@@ -1078,12 +1078,12 @@ LRESULT HOOK_CallHooks32A( INT32 id, INT32 code, WPARAM32 wParam,
  *
  * Call a hook chain.
  */
-LRESULT HOOK_CallHooks32W( INT32 id, INT32 code, WPARAM32 wParam,
+LRESULT HOOK_CallHooksW( INT id, INT code, WPARAM wParam,
                            LPARAM lParam )
 {
     HANDLE16 hook; 
 
-    if (!(hook = HOOK_GetHook( id, GetFastQueue() ))) return 0;
+    if (!(hook = HOOK_GetHook( id, GetFastQueue16() ))) return 0;
     if (!(hook = HOOK_FindValidHook(hook))) return 0;
     return HOOK_CallHook( hook, HOOK_WIN32W, code, wParam,
 			  lParam );
@@ -1183,7 +1183,7 @@ void HOOK_FreeQueueHooks( HQUEUE16 hQueue )
  */
 FARPROC16 WINAPI SetWindowsHook16( INT16 id, HOOKPROC16 proc )
 {
-    HINSTANCE16 hInst = FarGetOwner( HIWORD(proc) );
+    HINSTANCE16 hInst = FarGetOwner16( HIWORD(proc) );
 
     /* WH_MSGFILTER is the only task-specific hook for SetWindowsHook() */
     HTASK16 hTask = (id == WH_MSGFILTER) ? GetCurrentTask() : 0;
@@ -1194,17 +1194,17 @@ FARPROC16 WINAPI SetWindowsHook16( INT16 id, HOOKPROC16 proc )
 /***********************************************************************
  *           SetWindowsHook32A   (USER32.525)
  */
-HHOOK WINAPI SetWindowsHook32A( INT32 id, HOOKPROC32 proc )
+HHOOK WINAPI SetWindowsHookA( INT id, HOOKPROC proc )
 {
-    return SetWindowsHookEx32A( id, proc, 0, GetCurrentThreadId() );
+    return SetWindowsHookExA( id, proc, 0, GetCurrentThreadId() );
 }
 
 /***********************************************************************
  *           SetWindowsHook32W   (USER32.528)
  */
-HHOOK WINAPI SetWindowsHook32W( INT32 id, HOOKPROC32 proc )
+HHOOK WINAPI SetWindowsHookW( INT id, HOOKPROC proc )
 {
-    return SetWindowsHookEx32W( id, proc, 0, GetCurrentThreadId() );
+    return SetWindowsHookExW( id, proc, 0, GetCurrentThreadId() );
 }
 
 
@@ -1225,7 +1225,7 @@ HHOOK WINAPI SetWindowsHookEx16( INT16 id, HOOKPROC16 proc, HINSTANCE16 hInst,
 /***********************************************************************
  *           SetWindowsHookEx32A   (USER32.526)
  */
-HHOOK WINAPI SetWindowsHookEx32A( INT32 id, HOOKPROC32 proc, HINSTANCE32 hInst,
+HHOOK WINAPI SetWindowsHookExA( INT id, HOOKPROC proc, HINSTANCE hInst,
                                   DWORD dwThreadId )
 {
     return HOOK_SetHook( id, proc, HOOK_WIN32A, MapHModuleLS(hInst), dwThreadId );
@@ -1234,7 +1234,7 @@ HHOOK WINAPI SetWindowsHookEx32A( INT32 id, HOOKPROC32 proc, HINSTANCE32 hInst,
 /***********************************************************************
  *           SetWindowsHookEx32W   (USER32.527)
  */
-HHOOK WINAPI SetWindowsHookEx32W( INT32 id, HOOKPROC32 proc, HINSTANCE32 hInst,
+HHOOK WINAPI SetWindowsHookExW( INT id, HOOKPROC proc, HINSTANCE hInst,
                                   DWORD dwThreadId )
 {
     return HOOK_SetHook( id, proc, HOOK_WIN32W, MapHModuleLS(hInst), dwThreadId );
@@ -1246,15 +1246,15 @@ HHOOK WINAPI SetWindowsHookEx32W( INT32 id, HOOKPROC32 proc, HINSTANCE32 hInst,
  */
 BOOL16 WINAPI UnhookWindowsHook16( INT16 id, HOOKPROC16 proc )
 {
-    return UnhookWindowsHook32( id, (HOOKPROC32)proc );
+    return UnhookWindowsHook( id, (HOOKPROC)proc );
 }
 
 /***********************************************************************
  *           UnhookWindowsHook32   (USER32.557)
  */
-BOOL32 WINAPI UnhookWindowsHook32( INT32 id, HOOKPROC32 proc )
+BOOL WINAPI UnhookWindowsHook( INT id, HOOKPROC proc )
 {
-    HANDLE16 hook = HOOK_GetHook( id, GetFastQueue() );
+    HANDLE16 hook = HOOK_GetHook( id, GetFastQueue16() );
 
     TRACE(hook, "%d %08lx\n", id, (DWORD)proc );
 
@@ -1274,13 +1274,13 @@ BOOL32 WINAPI UnhookWindowsHook32( INT32 id, HOOKPROC32 proc )
  */
 BOOL16 WINAPI UnhookWindowsHookEx16( HHOOK hhook )
 {
-    return UnhookWindowsHookEx32( hhook );
+    return UnhookWindowsHookEx( hhook );
 }
 
 /***********************************************************************
  *           UnhookWindowHookEx32   (USER32.558)
  */
-BOOL32 WINAPI UnhookWindowsHookEx32( HHOOK hhook )
+BOOL WINAPI UnhookWindowsHookEx( HHOOK hhook )
 {
     if (HIWORD(hhook) != HOOK_MAGIC) return FALSE;  /* Not a new format hook */
     return HOOK_RemoveHook( LOWORD(hhook) );
@@ -1310,11 +1310,11 @@ LRESULT WINAPI CallNextHookEx16( HHOOK hhook, INT16 code, WPARAM16 wParam,
  *
  * There aren't ANSI and UNICODE versions of this.
  */
-LRESULT WINAPI CallNextHookEx32( HHOOK hhook, INT32 code, WPARAM32 wParam,
+LRESULT WINAPI CallNextHookEx( HHOOK hhook, INT code, WPARAM wParam,
                                  LPARAM lParam )
 {
     HANDLE16 next;
-    INT32 fromtype;	/* figure out Ansi/Unicode */
+    INT fromtype;	/* figure out Ansi/Unicode */
     HOOKDATA *oldhook;
 
     if (HIWORD(hhook) != HOOK_MAGIC) return 0;  /* Not a new format hook */
@@ -1341,7 +1341,7 @@ LRESULT WINAPI DefHookProc16( INT16 code, WPARAM16 wParam, LPARAM lParam,
     MESSAGEQUEUE *queue;
     LRESULT ret;
 
-    if (!(queue = (MESSAGEQUEUE *)QUEUE_Lock( GetFastQueue() ))) return 0;
+    if (!(queue = (MESSAGEQUEUE *)QUEUE_Lock( GetFastQueue16() ))) return 0;
     ret = CallNextHookEx16( queue->hCurHook, code, wParam, lParam );
     QUEUE_Unlock( queue );
     return ret;
@@ -1362,9 +1362,9 @@ BOOL16 WINAPI CallMsgFilter16( SEGPTR msg, INT16 code )
 /***********************************************************************
  *           WIN16_CallMsgFilter32   (USER.823)
  */
-BOOL16 WINAPI WIN16_CallMsgFilter32( SEGPTR msg16_32, INT16 code, BOOL16 wHaveParamHigh )
+BOOL16 WINAPI CallMsgFilter32_16( SEGPTR msg16_32, INT16 code, BOOL16 wHaveParamHigh )
 {
-    MSG16_32 *lpmsg16_32 = (MSG16_32 *)PTR_SEG_TO_LIN(msg16_32);
+    MSG32_16 *lpmsg16_32 = (MSG32_16 *)PTR_SEG_TO_LIN(msg16_32);
 
     if (wHaveParamHigh == FALSE)
     {
@@ -1374,7 +1374,7 @@ BOOL16 WINAPI WIN16_CallMsgFilter32( SEGPTR msg16_32, INT16 code, BOOL16 wHavePa
     }
     else
     {
-        MSG32 msg32;
+        MSG msg32;
         BOOL16 ret;
 
         msg32.hwnd		= lpmsg16_32->msg.hwnd;
@@ -1383,10 +1383,10 @@ BOOL16 WINAPI WIN16_CallMsgFilter32( SEGPTR msg16_32, INT16 code, BOOL16 wHavePa
                      MAKELONG(lpmsg16_32->msg.wParam, lpmsg16_32->wParamHigh);
         msg32.lParam	= lpmsg16_32->msg.lParam;
         msg32.time		= lpmsg16_32->msg.time;
-        msg32.pt.x		= (INT32)lpmsg16_32->msg.pt.x;
-        msg32.pt.y      = (INT32)lpmsg16_32->msg.pt.y;
+        msg32.pt.x		= (INT)lpmsg16_32->msg.pt.x;
+        msg32.pt.y      = (INT)lpmsg16_32->msg.pt.y;
         
-        ret = (BOOL16)CallMsgFilter32A(&msg32, (INT32)code);
+        ret = (BOOL16)CallMsgFilterA(&msg32, (INT)code);
 
         lpmsg16_32->msg.hwnd    = msg32.hwnd;
         lpmsg16_32->msg.message = msg32.message;
@@ -1409,23 +1409,23 @@ BOOL16 WINAPI WIN16_CallMsgFilter32( SEGPTR msg16_32, INT16 code, BOOL16 wHavePa
  * FIXME: There are ANSI and UNICODE versions of this, plus an unspecified
  * version, plus USER (the 16bit one) has a CallMsgFilter32 function.
  */
-BOOL32 WINAPI CallMsgFilter32A( LPMSG32 msg, INT32 code )
+BOOL WINAPI CallMsgFilterA( LPMSG msg, INT code )
 {
     if (GetSysModalWindow16()) return FALSE;	/* ??? */
-    if (HOOK_CallHooks32A( WH_SYSMSGFILTER, code, 0, (LPARAM)msg ))
+    if (HOOK_CallHooksA( WH_SYSMSGFILTER, code, 0, (LPARAM)msg ))
       return TRUE;
-    return HOOK_CallHooks32A( WH_MSGFILTER, code, 0, (LPARAM)msg );
+    return HOOK_CallHooksA( WH_MSGFILTER, code, 0, (LPARAM)msg );
 }
 
 
 /***********************************************************************
  *           CallMsgFilter32W   (USER32.16)
  */
-BOOL32 WINAPI CallMsgFilter32W( LPMSG32 msg, INT32 code )
+BOOL WINAPI CallMsgFilterW( LPMSG msg, INT code )
 {
     if (GetSysModalWindow16()) return FALSE;	/* ??? */
-    if (HOOK_CallHooks32W( WH_SYSMSGFILTER, code, 0, (LPARAM)msg ))
+    if (HOOK_CallHooksW( WH_SYSMSGFILTER, code, 0, (LPARAM)msg ))
       return TRUE;
-    return HOOK_CallHooks32W( WH_MSGFILTER, code, 0, (LPARAM)msg );
+    return HOOK_CallHooksW( WH_MSGFILTER, code, 0, (LPARAM)msg );
 }
 

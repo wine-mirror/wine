@@ -145,17 +145,17 @@ extern CONTEXT DEBUG_context;  /* debugger/registers.c */
 extern unsigned int dbg_mode;
 
   /* debugger/break.c */
-extern void DEBUG_SetBreakpoints( BOOL32 set );
+extern void DEBUG_SetBreakpoints( BOOL set );
 extern int DEBUG_FindBreakpoint( const DBG_ADDR *addr );
 extern void DEBUG_AddBreakpoint( const DBG_ADDR *addr );
 extern void DEBUG_DelBreakpoint( int num );
-extern void DEBUG_EnableBreakpoint( int num, BOOL32 enable );
+extern void DEBUG_EnableBreakpoint( int num, BOOL enable );
 extern void DEBUG_InfoBreakpoints(void);
 extern void DEBUG_AddTaskEntryBreakpoint( HTASK16 hTask );
-extern BOOL32 DEBUG_HandleTrap(void);
-extern BOOL32 DEBUG_ShouldContinue( enum exec_mode mode, int * count );
+extern BOOL DEBUG_HandleTrap(void);
+extern BOOL DEBUG_ShouldContinue( enum exec_mode mode, int * count );
 extern enum exec_mode DEBUG_RestartExecution( enum exec_mode mode, int count );
-extern BOOL32 DEBUG_IsFctReturn(void);
+extern BOOL DEBUG_IsFctReturn(void);
 
   /* debugger/db_disasm.c */
 extern void DEBUG_Disasm( DBG_ADDR *addr, int display );
@@ -200,9 +200,9 @@ extern struct name_hash * DEBUG_AddSymbol( const char *name,
 extern struct name_hash * DEBUG_AddInvSymbol( const char *name, 
 					   const DBG_ADDR *addr,
 					   const char * sourcefile);
-extern BOOL32 DEBUG_GetSymbolValue( const char * name, const int lineno,
+extern BOOL DEBUG_GetSymbolValue( const char * name, const int lineno,
 				    DBG_ADDR *addr, int );
-extern BOOL32 DEBUG_SetSymbolValue( const char * name, const DBG_ADDR *addr );
+extern BOOL DEBUG_SetSymbolValue( const char * name, const DBG_ADDR *addr );
 extern const char * DEBUG_FindNearestSymbol( const DBG_ADDR *addr, int flag,
 					     struct name_hash ** rtn,
 					     unsigned int ebp,
@@ -224,12 +224,12 @@ extern int DEBUG_SetSymbolSize(struct name_hash * sym, unsigned int len);
 extern int DEBUG_SetSymbolBPOff(struct name_hash * sym, unsigned int len);
 extern int DEBUG_GetSymbolAddr(struct name_hash * sym, DBG_ADDR * addr);
 extern int DEBUG_cmp_sym(const void * p1, const void * p2);
-extern BOOL32 DEBUG_GetLineNumberAddr( struct name_hash *, const int lineno, 
+extern BOOL DEBUG_GetLineNumberAddr( struct name_hash *, const int lineno, 
 				DBG_ADDR *addr, int bp_flag );
 
 extern int DEBUG_SetLocalSymbolType(struct wine_locals * sym, 
 				    struct datatype * type);
-BOOL32 DEBUG_Normalize(struct name_hash * nh );
+BOOL DEBUG_Normalize(struct name_hash * nh );
 
   /* debugger/info.c */
 extern void DEBUG_PrintBasic( const DBG_ADDR *addr, int count, char format );
@@ -243,8 +243,8 @@ extern struct symbol_info DEBUG_PrintAddressAndArgs( const DBG_ADDR *addr,
 						     int flag );
 
   /* debugger/memory.c */
-extern BOOL32 DEBUG_IsBadReadPtr( const DBG_ADDR *address, int size );
-extern BOOL32 DEBUG_IsBadWritePtr( const DBG_ADDR *address, int size );
+extern BOOL DEBUG_IsBadReadPtr( const DBG_ADDR *address, int size );
+extern BOOL DEBUG_IsBadWritePtr( const DBG_ADDR *address, int size );
 extern int DEBUG_ReadMemory( const DBG_ADDR *address );
 extern void DEBUG_WriteMemory( const DBG_ADDR *address, int value );
 extern void DEBUG_ExamineMemory( const DBG_ADDR *addr, int count, char format);
@@ -253,7 +253,7 @@ extern void DEBUG_ExamineMemory( const DBG_ADDR *addr, int count, char format);
 extern void DEBUG_SetRegister( enum debug_regs reg, int val );
 extern int DEBUG_GetRegister( enum debug_regs reg );
 extern void DEBUG_InfoRegisters(void);
-extern BOOL32 DEBUG_ValidateRegisters(void);
+extern BOOL DEBUG_ValidateRegisters(void);
 extern void DEBUG_SetSigContext( const SIGCONTEXT *sigcontext );
 extern void DEBUG_GetSigContext( SIGCONTEXT *sigcontext );
 extern int DEBUG_PrintRegister(enum debug_regs reg);
@@ -273,7 +273,7 @@ extern int DEBUG_ReadExecutableDbgInfo(void);
 extern int DEBUG_ParseStabs(char * addr, unsigned int load_offset, unsigned int staboff, int stablen, unsigned int strtaboff, int strtablen);
 
   /* debugger/msc.c */
-extern int DEBUG_RegisterDebugInfo( HMODULE32, const char *);
+extern int DEBUG_RegisterDebugInfo( HMODULE, const char *);
 extern int DEBUG_ProcessDeferredDebug(void);
 extern int DEBUG_RegisterELFDebugInfo(int load_addr, u_long size, char * name);
 extern void DEBUG_InfoShare(void);
@@ -321,12 +321,12 @@ extern void ctx_debug( int signal, CONTEXT *regs );
 extern void wine_debug( int signal, SIGCONTEXT *regs );
 
   /* miscemu/instr.c */
-extern BOOL32 INSTR_EmulateInstruction( SIGCONTEXT* );
+extern BOOL INSTR_EmulateInstruction( SIGCONTEXT* );
 
   /* loader/signal.c */
 extern void (*fnWINE_Debugger)(int,SIGCONTEXT*);
 extern void (*ctx_debug_call)( int, CONTEXT* );
-extern BOOL32 (*fnINSTR_EmulateInstruction)( SIGCONTEXT* );
+extern BOOL (*fnINSTR_EmulateInstruction)( SIGCONTEXT* );
 
 
 #endif  /* __WINE_DEBUGGER_H */

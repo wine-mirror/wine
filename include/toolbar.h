@@ -10,54 +10,54 @@
 
 typedef struct tagTBUTTON_INFO
 {
-    INT32 iBitmap;
-    INT32 idCommand;
+    INT iBitmap;
+    INT idCommand;
     BYTE  fsState;
     BYTE  fsStyle;
     DWORD dwData;
-    INT32 iString;
+    INT iString;
 
-    INT32 nRow;
-    RECT32 rect;
+    INT nRow;
+    RECT rect;
 } TBUTTON_INFO; 
 
 
 typedef struct tagTOOLBAR_INFO
 {
     DWORD      dwStructSize;   /* size of TBBUTTON struct */
-    INT32      nHeight;        /* height of the toolbar */
-    INT32      nWidth;         /* width of the toolbar */
-    INT32      nButtonHeight;
-    INT32      nButtonWidth;
-    INT32      nBitmapHeight;
-    INT32      nBitmapWidth;
-    INT32      nIndent;
-    INT32      nRows;           /* number of button rows */
-    INT32      nMaxTextRows;    /* maximum number of text rows */
-    INT32      cxMin;           /* minimum button width */
-    INT32      cxMax;           /* maximum button width */
-    INT32      nNumButtons;     /* number of buttons */
-    INT32      nNumBitmaps;     /* number of bitmaps */
-    INT32      nNumStrings;     /* number of strings */
-    BOOL32     bUnicode;        /* ASCII (FALSE) or Unicode (TRUE)? */
-    BOOL32     bCaptured;       /* mouse captured? */
-    INT32      nButtonDown;
-    INT32      nOldHit;
-    INT32      nHotItem;        /* index of the "hot" item */
-    HFONT32    hFont;           /* text font */
+    INT      nHeight;        /* height of the toolbar */
+    INT      nWidth;         /* width of the toolbar */
+    INT      nButtonHeight;
+    INT      nButtonWidth;
+    INT      nBitmapHeight;
+    INT      nBitmapWidth;
+    INT      nIndent;
+    INT      nRows;           /* number of button rows */
+    INT      nMaxTextRows;    /* maximum number of text rows */
+    INT      cxMin;           /* minimum button width */
+    INT      cxMax;           /* maximum button width */
+    INT      nNumButtons;     /* number of buttons */
+    INT      nNumBitmaps;     /* number of bitmaps */
+    INT      nNumStrings;     /* number of strings */
+    BOOL     bUnicode;        /* ASCII (FALSE) or Unicode (TRUE)? */
+    BOOL     bCaptured;       /* mouse captured? */
+    INT      nButtonDown;
+    INT      nOldHit;
+    INT      nHotItem;        /* index of the "hot" item */
+    HFONT    hFont;           /* text font */
     HIMAGELIST himlStd;         /* standard image list */
     HIMAGELIST himlDef;         /* default image list */
     HIMAGELIST himlHot;         /* hot image list */
     HIMAGELIST himlDis;         /* disabled image list */
-    HWND32     hwndToolTip;     /* handle to tool tip control */
-    HWND32     hwndNotify;      /* handle to the window that gets notifications */
-    BOOL32     bTransparent;    /* background transparency flag */
-    BOOL32     bAutoSize;       /* auto size deadlock indicator */
+    HWND     hwndToolTip;     /* handle to tool tip control */
+    HWND     hwndNotify;      /* handle to the window that gets notifications */
+    BOOL     bTransparent;    /* background transparency flag */
+    BOOL     bAutoSize;       /* auto size deadlock indicator */
     DWORD      dwExStyle;       /* extended toolbar style */
     DWORD      dwDTFlags;       /* DrawText flags */
 
     COLORREF   clrInsertMark;   /* insert mark color */
-    RECT32     rcBound;         /* bounding rectangle */
+    RECT     rcBound;         /* bounding rectangle */
 
     TBUTTON_INFO *buttons;      /* pointer to button array */
     LPWSTR       *strings;      /* pointer to string array */

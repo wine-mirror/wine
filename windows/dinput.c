@@ -78,7 +78,7 @@ struct SysMouseAImpl
         /* Previous position for relative moves */
         LONG prevX, prevY;
         LPMOUSE_EVENT_PROC prev_handler;
-        HWND32 win;
+        HWND win;
         int xwin;
         DWORD win_centerX, win_centerY;
         LPDIDEVICEOBJECTDATA data_queue;
@@ -138,7 +138,7 @@ struct IDirectInputAImpl
 /******************************************************************************
  *	DirectInputCreate32A
  */
-HRESULT WINAPI DirectInputCreate32A(HINSTANCE32 hinst, DWORD dwVersion, LPDIRECTINPUTA *ppDI, LPUNKNOWN punkOuter)
+HRESULT WINAPI DirectInputCreateA(HINSTANCE hinst, DWORD dwVersion, LPDIRECTINPUTA *ppDI, LPUNKNOWN punkOuter)
 {
 	IDirectInputAImpl* This;
 	TRACE(dinput, "(0x%08lx,%04lx,%p,%p)\n",
@@ -154,17 +154,17 @@ HRESULT WINAPI DirectInputCreate32A(HINSTANCE32 hinst, DWORD dwVersion, LPDIRECT
  *	IDirectInputA_EnumDevices
  */
 static HRESULT WINAPI IDirectInputAImpl_EnumDevices(
-	LPDIRECTINPUTA iface, DWORD dwDevType, LPDIENUMDEVICESCALLBACK32A lpCallback,
+	LPDIRECTINPUTA iface, DWORD dwDevType, LPDIENUMDEVICESCALLBACKA lpCallback,
 	LPVOID pvRef, DWORD dwFlags
 )
 {
   ICOM_THIS(IDirectInputAImpl,iface);
-  DIDEVICEINSTANCE32A devInstance;
+  DIDEVICEINSTANCEA devInstance;
   int ret;
 
   TRACE(dinput, "(this=%p,0x%04lx,%p,%p,%04lx)\n", This, dwDevType, lpCallback, pvRef, dwFlags);
 
-  devInstance.dwSize = sizeof(DIDEVICEINSTANCE32A);
+  devInstance.dwSize = sizeof(DIDEVICEINSTANCEA);
   
   if ((dwDevType == 0) || (dwDevType == DIDEVTYPE_KEYBOARD)) {
   /* Return keyboard */
@@ -269,7 +269,7 @@ static HRESULT WINAPI IDirectInputAImpl_QueryInterface(
 }
 
 static HRESULT WINAPI IDirectInputAImpl_Initialize(
-	LPDIRECTINPUTA iface,HINSTANCE32 hinst,DWORD x
+	LPDIRECTINPUTA iface,HINSTANCE hinst,DWORD x
 ) {
 	return DIERR_ALREADYINITIALIZED;
 }
@@ -286,7 +286,7 @@ static HRESULT WINAPI IDirectInputAImpl_GetDeviceStatus(LPDIRECTINPUTA iface,
 }
 
 static HRESULT WINAPI IDirectInputAImpl_RunControlPanel(LPDIRECTINPUTA iface,
-							HWND32 hwndOwner,
+							HWND hwndOwner,
 							DWORD dwFlags) {
   ICOM_THIS(IDirectInputAImpl,iface);
   FIXME(dinput,"(%p)->(%08lx,%08lx): stub\n",This, (DWORD) hwndOwner, dwFlags);
@@ -339,7 +339,7 @@ static HRESULT WINAPI IDirectInputDevice2AImpl_SetDataFormat(
 }
 
 static HRESULT WINAPI IDirectInputDevice2AImpl_SetCooperativeLevel(
-	LPDIRECTINPUTDEVICE2A iface,HWND32 hwnd,DWORD dwflags
+	LPDIRECTINPUTDEVICE2A iface,HWND hwnd,DWORD dwflags
 ) {
 	ICOM_THIS(IDirectInputDevice2AImpl,iface);
 	FIXME(dinput,"(this=%p,0x%08lx,0x%08lx): stub\n",This,(DWORD)hwnd,dwflags);
@@ -349,7 +349,7 @@ static HRESULT WINAPI IDirectInputDevice2AImpl_SetCooperativeLevel(
 }
 
 static HRESULT WINAPI IDirectInputDevice2AImpl_SetEventNotification(
-	LPDIRECTINPUTDEVICE2A iface,HANDLE32 hnd
+	LPDIRECTINPUTDEVICE2A iface,HANDLE hnd
 ) {
 	ICOM_THIS(IDirectInputDevice2AImpl,iface);
 	FIXME(dinput,"(this=%p,0x%08lx): stub\n",This,(DWORD)hnd);
@@ -520,7 +520,7 @@ static HRESULT WINAPI IDirectInputDevice2AImpl_GetCapabilities(
 
 static HRESULT WINAPI IDirectInputDevice2AImpl_EnumObjects(
 	LPDIRECTINPUTDEVICE2A iface,
-	LPDIENUMDEVICEOBJECTSCALLBACK32A lpCallback,
+	LPDIENUMDEVICEOBJECTSCALLBACKA lpCallback,
 	LPVOID lpvRef,
 	DWORD dwFlags)
 {
@@ -543,7 +543,7 @@ static HRESULT WINAPI IDirectInputDevice2AImpl_GetProperty(
 
 static HRESULT WINAPI IDirectInputDevice2AImpl_GetObjectInfo(
 	LPDIRECTINPUTDEVICE2A iface,
-	LPDIDEVICEOBJECTINSTANCE32A pdidoi,
+	LPDIDEVICEOBJECTINSTANCEA pdidoi,
 	DWORD dwObj,
 	DWORD dwHow)
 {
@@ -553,7 +553,7 @@ static HRESULT WINAPI IDirectInputDevice2AImpl_GetObjectInfo(
 	
 static HRESULT WINAPI IDirectInputDevice2AImpl_GetDeviceInfo(
 	LPDIRECTINPUTDEVICE2A iface,
-	LPDIDEVICEINSTANCE32A pdidi)
+	LPDIDEVICEINSTANCEA pdidi)
 {
 	FIXME(dinput, "stub!\n");
 	return DI_OK;
@@ -561,7 +561,7 @@ static HRESULT WINAPI IDirectInputDevice2AImpl_GetDeviceInfo(
 	
 static HRESULT WINAPI IDirectInputDevice2AImpl_RunControlPanel(
 	LPDIRECTINPUTDEVICE2A iface,
-	HWND32 hwndOwner,
+	HWND hwndOwner,
 	DWORD dwFlags)
 {
 	FIXME(dinput, "stub!\n");
@@ -570,7 +570,7 @@ static HRESULT WINAPI IDirectInputDevice2AImpl_RunControlPanel(
 	
 static HRESULT WINAPI IDirectInputDevice2AImpl_Initialize(
 	LPDIRECTINPUTDEVICE2A iface,
-	HINSTANCE32 hinst,
+	HINSTANCE hinst,
 	DWORD dwVersion,
 	REFGUID rguid)
 {
@@ -702,7 +702,7 @@ static ULONG WINAPI SysMouseAImpl_Release(LPDIRECTINPUTDEVICE2A iface)
   *   grabbing.
   */
 static HRESULT WINAPI SysMouseAImpl_SetCooperativeLevel(
-	LPDIRECTINPUTDEVICE2A iface,HWND32 hwnd,DWORD dwflags
+	LPDIRECTINPUTDEVICE2A iface,HWND hwnd,DWORD dwflags
 )
 {
   ICOM_THIS(SysMouseAImpl,iface);
@@ -791,7 +791,7 @@ static void WINAPI dinput_mouse_event( DWORD dwFlags, DWORD dx, DWORD dy,
   DWORD posX, posY, keyState, time, extra;
   SysMouseAImpl* This = (SysMouseAImpl*) current_lock;
   
-  if (   !IsBadReadPtr32( (LPVOID)dwExtraInfo, sizeof(WINE_MOUSEEVENT) )
+  if (   !IsBadReadPtr( (LPVOID)dwExtraInfo, sizeof(WINE_MOUSEEVENT) )
       && ((WINE_MOUSEEVENT *)dwExtraInfo)->magic == WINE_MOUSEEVENT_MAGIC ) {
     WINE_MOUSEEVENT *wme = (WINE_MOUSEEVENT *)dwExtraInfo;
     keyState = wme->keyState;
@@ -886,7 +886,7 @@ static void WINAPI dinput_mouse_event( DWORD dwFlags, DWORD dx, DWORD dy,
 static HRESULT WINAPI SysMouseAImpl_Acquire(LPDIRECTINPUTDEVICE2A iface)
 {
   ICOM_THIS(SysMouseAImpl,iface);
-  RECT32	rect;
+  RECT	rect;
   
   TRACE(dinput,"(this=%p)\n",This);
 
@@ -902,7 +902,7 @@ static HRESULT WINAPI SysMouseAImpl_Acquire(LPDIRECTINPUTDEVICE2A iface)
     MOUSE_Enable(dinput_mouse_event);
     
     /* Get the window dimension and find the center */
-    GetWindowRect32(This->win, &rect);
+    GetWindowRect(This->win, &rect);
     This->xwin = ((X11DRV_WND_DATA *) WIN_FindWndPtr(This->win)->pDriverData)->window;
     This->win_centerX = (rect.right  - rect.left) / 2;
     This->win_centerY = (rect.bottom - rect.top ) / 2;

@@ -71,7 +71,7 @@ static void DEBUG_SetOpcode( const DBG_ADDR *addr, BYTE op )
  * Determine if the instruction at CS:EIP is an instruction that
  * we need to step over (like a call or a repetitive string move).
  */
-static BOOL32 DEBUG_IsStepOverInstr()
+static BOOL DEBUG_IsStepOverInstr()
 {
     BYTE *instr = (BYTE *)CTX_SEG_OFF_TO_LIN( &DEBUG_context,
                                               CS_reg(&DEBUG_context),
@@ -139,7 +139,7 @@ static BOOL32 DEBUG_IsStepOverInstr()
  * Determine if the instruction at CS:EIP is an instruction that
  * is a function return.
  */
-BOOL32 DEBUG_IsFctReturn(void)
+BOOL DEBUG_IsFctReturn(void)
 {
     BYTE *instr = (BYTE *)CTX_SEG_OFF_TO_LIN( &DEBUG_context,
                                               CS_reg(&DEBUG_context),
@@ -164,7 +164,7 @@ BOOL32 DEBUG_IsFctReturn(void)
  *
  * Set or remove all the breakpoints.
  */
-void DEBUG_SetBreakpoints( BOOL32 set )
+void DEBUG_SetBreakpoints( BOOL set )
 {
     int i;
 
@@ -291,7 +291,7 @@ void DEBUG_DelBreakpoint( int num )
  *
  * Enable or disable a break point.
  */
-void DEBUG_EnableBreakpoint( int num, BOOL32 enable )
+void DEBUG_EnableBreakpoint( int num, BOOL enable )
 {
     if ((num <= 0) || (num >= next_bp) || !breakpoints[num].in_use)
     {
@@ -357,7 +357,7 @@ void DEBUG_AddTaskEntryBreakpoint( HTASK16 hTask )
         if (!(pModule->flags & NE_FFLAGS_WIN32))  /* NE module */
         {
             addr.seg =
-		GlobalHandleToSel(NE_SEG_TABLE(pModule)[pModule->cs-1].hSeg);
+		GlobalHandleToSel16(NE_SEG_TABLE(pModule)[pModule->cs-1].hSeg);
             addr.off = pModule->ip;
             fprintf( stderr, "Win16 task '%s': ", NE_MODULE_NAME( pModule ) );
             DEBUG_AddBreakpoint( &addr );
@@ -382,7 +382,7 @@ void DEBUG_AddTaskEntryBreakpoint( HTASK16 hTask )
  * Determine if we should continue execution after a SIGTRAP signal when
  * executing in the given mode.
  */
-BOOL32 DEBUG_ShouldContinue( enum exec_mode mode, int * count )
+BOOL DEBUG_ShouldContinue( enum exec_mode mode, int * count )
 {
     DBG_ADDR addr;
     DBG_ADDR cond_addr;

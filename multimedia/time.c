@@ -23,15 +23,15 @@ static MMTIME16 mmSysTimeMS;
 static MMTIME16 mmSysTimeSMPTE;
 
 typedef struct tagTIMERENTRY {
-    UINT32			wDelay;
-    UINT32			wResol;
+    UINT			wDelay;
+    UINT			wResol;
     FARPROC16 			lpFunc;
-    HINSTANCE32			hInstance;
+    HINSTANCE			hInstance;
     DWORD			dwUser;
-    UINT32			wFlags;
-    UINT32			wTimerID;
-    UINT32			wCurTime;
-    UINT32			isWin32;
+    UINT			wFlags;
+    UINT			wTimerID;
+    UINT			wCurTime;
+    UINT			isWin32;
     struct tagTIMERENTRY*	Next;
 } TIMERENTRY, *LPTIMERENTRY;
 
@@ -39,7 +39,7 @@ static LPTIMERENTRY lpTimerList = NULL;
 
 #ifdef USE_FAKE_MM_TIMERS
 static DWORD dwLastCBTick = 0;
-static BOOL32 bUseFakeTimers = FALSE;
+static BOOL bUseFakeTimers = FALSE;
 static WORD wInCallBackLoop = 0;
 #endif
 
@@ -78,10 +78,10 @@ static	void	TIME_TriggerCallBack(LPTIMERENTRY lpTimer, DWORD dwCurrent)
 						lpTimer->dwUser,0,0);
 		break;
 	case TIME_CALLBACK_EVENT_SET:
-		SetEvent((HANDLE32)lpTimer->lpFunc);
+		SetEvent((HANDLE)lpTimer->lpFunc);
 		break;
 	case TIME_CALLBACK_EVENT_PULSE:
-		PulseEvent((HANDLE32)lpTimer->lpFunc);
+		PulseEvent((HANDLE)lpTimer->lpFunc);
 		break;
 	default:
 		FIXME(mmtime,"Unknown callback type 0x%04x for mmtime callback (%p),ignored.\n",lpTimer->wFlags,lpTimer->lpFunc);
@@ -90,14 +90,14 @@ static	void	TIME_TriggerCallBack(LPTIMERENTRY lpTimer, DWORD dwCurrent)
 	TRACE(mmtime, "after CallBack16 !\n");
     }
     if (lpTimer->wFlags & TIME_ONESHOT)
-	timeKillEvent32(lpTimer->wTimerID);
+	timeKillEvent(lpTimer->wTimerID);
 }
 
 /**************************************************************************
  *           TIME_MMSysTimeCallback
  */
-static VOID WINAPI TIME_MMSysTimeCallback( HWND32 hwnd, UINT32 msg,
-                                    UINT32 id, DWORD dwTime )
+static VOID WINAPI TIME_MMSysTimeCallback( HWND hwnd, UINT msg,
+                                    UINT id, DWORD dwTime )
 {
     LPTIMERENTRY lpTimer;
     
@@ -127,7 +127,7 @@ static VOID WINAPI TIME_MMSysTimeCallback( HWND32 hwnd, UINT32 msg,
  */
 static void StartMMTime()
 {
-    static BOOL32 	mmTimeStarted = FALSE;
+    static BOOL 	mmTimeStarted = FALSE;
     
     if (!mmTimeStarted) {
 	mmTimeStarted = TRUE;
@@ -140,7 +140,7 @@ static void StartMMTime()
 	mmSysTimeSMPTE.u.smpte.frame = 0;
 	mmSysTimeSMPTE.u.smpte.fps = 0;
 	mmSysTimeSMPTE.u.smpte.dummy = 0;
-	SetTimer32( 0, 0, MMSYSTIME_MININTERVAL, TIME_MMSysTimeCallback );
+	SetTimer( 0, 0, MMSYSTIME_MININTERVAL, TIME_MMSysTimeCallback );
 #ifdef USE_FAKE_MM_TIMERS
 	bUseFakeTimers = PROFILE_GetWineIniBool("options", "MMFakeTimers", TRUE);
 	TRACE(mmtime, "FakeTimer=%c\n", bUseFakeTimers ? 'Y' : 'N');
@@ -153,7 +153,7 @@ static void StartMMTime()
 /**************************************************************************
  * 				timeGetSystemTime	[WINMM.140]
  */
-MMRESULT32 WINAPI timeGetSystemTime32(LPMMTIME32 lpTime, UINT32 wSize)
+MMRESULT WINAPI timeGetSystemTime(LPMMTIME lpTime, UINT wSize)
 {
     TRACE(mmsys, "(%p, %u);\n", lpTime, wSize);
     StartMMTime();
@@ -174,9 +174,9 @@ MMRESULT16 WINAPI timeGetSystemTime16(LPMMTIME16 lpTime, UINT16 wSize)
     return 0;
 }
 
-static	WORD	timeSetEventInternal(UINT32 wDelay,UINT32 wResol,
+static	WORD	timeSetEventInternal(UINT wDelay,UINT wResol,
 				     FARPROC16 lpFunc,DWORD dwUser,
-				     UINT32 wFlags, UINT16 isWin32)
+				     UINT wFlags, UINT16 isWin32)
 {
     WORD 		wNewID = 0;
     LPTIMERENTRY	lpNewTimer;
@@ -201,7 +201,7 @@ static	WORD	timeSetEventInternal(UINT32 wDelay,UINT32 wResol,
     lpNewTimer->wResol = wResol;
     lpNewTimer->lpFunc = lpFunc;
     lpNewTimer->isWin32 = isWin32;
-    lpNewTimer->hInstance = GetTaskDS();
+    lpNewTimer->hInstance = GetTaskDS16();
     TRACE(mmtime, "hInstance=%04X !\n", lpNewTimer->hInstance);
     TRACE(mmtime, "lpFunc=0x%08lx !\n", (DWORD)lpFunc );
     lpNewTimer->dwUser = dwUser;
@@ -212,9 +212,9 @@ static	WORD	timeSetEventInternal(UINT32 wDelay,UINT32 wResol,
 /**************************************************************************
  * 				timeSetEvent		[MMSYSTEM.602]
  */
-MMRESULT32 WINAPI timeSetEvent32(UINT32 wDelay,UINT32 wResol,
-				 LPTIMECALLBACK32 lpFunc,DWORD dwUser,
-				 UINT32 wFlags)
+MMRESULT WINAPI timeSetEvent(UINT wDelay,UINT wResol,
+				 LPTIMECALLBACK lpFunc,DWORD dwUser,
+				 UINT wFlags)
 {
     return timeSetEventInternal(wDelay, wResol, (FARPROC16)lpFunc, 
 				dwUser, wFlags, 1);
@@ -234,7 +234,7 @@ MMRESULT16 WINAPI timeSetEvent16(UINT16 wDelay, UINT16 wResol,
 /**************************************************************************
  * 				timeKillEvent		[WINMM.142]
  */
-MMRESULT32 WINAPI timeKillEvent32(UINT32 wID)
+MMRESULT WINAPI timeKillEvent(UINT wID)
 {
     LPTIMERENTRY*	lpTimer;
     
@@ -255,13 +255,13 @@ MMRESULT32 WINAPI timeKillEvent32(UINT32 wID)
  */
 MMRESULT16 WINAPI timeKillEvent16(UINT16 wID)
 {
-    return timeKillEvent32(wID);
+    return timeKillEvent(wID);
 }
 
 /**************************************************************************
  * 				timeGetDevCaps		[WINMM.139]
  */
-MMRESULT32 WINAPI timeGetDevCaps32(LPTIMECAPS32 lpCaps,UINT32 wSize)
+MMRESULT WINAPI timeGetDevCaps(LPTIMECAPS lpCaps,UINT wSize)
 {
     TRACE(mmtime, "(%p, %u) !\n", lpCaps, wSize);
     StartMMTime();
@@ -285,7 +285,7 @@ MMRESULT16 WINAPI timeGetDevCaps16(LPTIMECAPS16 lpCaps, UINT16 wSize)
 /**************************************************************************
  * 				timeBeginPeriod		[WINMM.137]
  */
-MMRESULT32 WINAPI timeBeginPeriod32(UINT32 wPeriod)
+MMRESULT WINAPI timeBeginPeriod(UINT wPeriod)
 {
     TRACE(mmtime, "(%u) !\n", wPeriod);
     StartMMTime();
@@ -308,7 +308,7 @@ MMRESULT16 WINAPI timeBeginPeriod16(UINT16 wPeriod)
 /**************************************************************************
  * 				timeEndPeriod		[WINMM.138]
  */
-MMRESULT32 WINAPI timeEndPeriod32(UINT32 wPeriod)
+MMRESULT WINAPI timeEndPeriod(UINT wPeriod)
 {
     TRACE(mmtime, "(%u) !\n", wPeriod);
     StartMMTime();

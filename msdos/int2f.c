@@ -255,7 +255,7 @@ static void do_int2f_16( CONTEXT *context )
     switch(AL_reg(context))
     {
     case 0x00:  /* Windows enhanced mode installation check */
-        AX_reg(context) = (GetWinFlags() & WF_ENHANCED) ?
+        AX_reg(context) = (GetWinFlags16() & WF_ENHANCED) ?
                                                   LOWORD(GetVersion16()) : 0;
         break;
 	
@@ -263,7 +263,7 @@ static void do_int2f_16( CONTEXT *context )
         AX_reg(context) = 0;
         BX_reg(context) = (LOWORD(GetVersion16()) << 8) |
                           (LOWORD(GetVersion16()) >> 8);
-        CX_reg(context) = (GetWinFlags() & WF_ENHANCED) ? 3 : 2;
+        CX_reg(context) = (GetWinFlags16() & WF_ENHANCED) ? 3 : 2;
         break;
 
     case 0x0b:  /* Identify Windows-aware TSRs */

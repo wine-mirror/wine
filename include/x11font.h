@@ -103,7 +103,7 @@ typedef struct tagFontResource
   UINT16			fo_count;
   fontInfo*			fi;
   char*                         resource;
-  HANDLE32			hOwner;		/*  For FR_SOFTFONT/FR_SOFTRESOURCE fonts */
+  HANDLE			hOwner;		/*  For FR_SOFTFONT/FR_SOFTRESOURCE fonts */
   CHAR				lfFaceName[LF_FACESIZE];
 } fontResource;
 
@@ -182,12 +182,12 @@ typedef struct
 
 typedef struct
 {
-  LPLOGFONT32W		lpLogFontParam;
-  FONTENUMPROC32W	lpEnumFunc;
+  LPLOGFONTW		lpLogFontParam;
+  FONTENUMPROCW	lpEnumFunc;
   LPARAM		lpData;
 
-  LPNEWTEXTMETRICEX32W  lpTextMetric;
-  LPENUMLOGFONTEX32W    lpLogFont;
+  LPNEWTEXTMETRICEXW  lpTextMetric;
+  LPENUMLOGFONTEXW    lpLogFont;
   DWORD			dwFlags;
 } fontEnum32;
 

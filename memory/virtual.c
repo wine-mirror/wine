@@ -38,11 +38,11 @@ typedef struct _FV
 {
     struct _FV   *next;        /* Next view */
     struct _FV   *prev;        /* Prev view */
-    UINT32        base;        /* Base address */
-    UINT32        size;        /* Size in bytes */
-    UINT32        flags;       /* Allocation flags */
-    UINT32        offset;      /* Offset from start of mapped file */
-    HANDLE32      mapping;     /* Handle to the file mapping */
+    UINT        base;        /* Base address */
+    UINT        size;        /* Size in bytes */
+    UINT        flags;       /* Allocation flags */
+    UINT        offset;      /* Offset from start of mapped file */
+    HANDLE      mapping;     /* Handle to the file mapping */
     HANDLERPROC   handlerProc; /* Fault handler */
     LPVOID        handlerArg;  /* Fault handler argument */
     BYTE          protect;     /* Protection for all pages at allocation time */
@@ -82,16 +82,16 @@ static FILE_VIEW *VIRTUAL_FirstView;
 # define page_shift 12
 # define granularity_mask 0xffff
 #else
-static UINT32 page_shift;
-static UINT32 page_mask;
-static UINT32 granularity_mask;  /* Allocation granularity (usually 64k) */
+static UINT page_shift;
+static UINT page_mask;
+static UINT granularity_mask;  /* Allocation granularity (usually 64k) */
 #endif  /* __i386__ */
 
 #define ROUND_ADDR(addr) \
-   ((UINT32)(addr) & ~page_mask)
+   ((UINT)(addr) & ~page_mask)
 
 #define ROUND_SIZE(addr,size) \
-   (((UINT32)(size) + ((UINT32)(addr) & page_mask) + page_mask) & ~page_mask)
+   (((UINT)(size) + ((UINT)(addr) & page_mask) + page_mask) & ~page_mask)
 
 #define VIRTUAL_DEBUG_DUMP_VIEW(view) \
    if (!TRACE_ON(virtual)); else VIRTUAL_DumpView(view)
@@ -118,8 +118,8 @@ static const char *VIRTUAL_GetProtStr( BYTE prot )
  */
 static void VIRTUAL_DumpView( FILE_VIEW *view )
 {
-    UINT32 i, count;
-    UINT32 addr = view->base;
+    UINT i, count;
+    UINT addr = view->base;
     BYTE prot = view->prot[0];
 
     DUMP( "View: %08x - %08x%s",
@@ -172,7 +172,7 @@ void VIRTUAL_Dump(void)
  *	NULL: Failure
  */
 static FILE_VIEW *VIRTUAL_FindView(
-                  UINT32 addr /* [in] Address */
+                  UINT addr /* [in] Address */
 ) {
     FILE_VIEW *view = VIRTUAL_FirstView;
     while (view)
@@ -190,9 +190,9 @@ static FILE_VIEW *VIRTUAL_FindView(
  *
  * Create a new view and add it in the linked list.
  */
-static FILE_VIEW *VIRTUAL_CreateView( UINT32 base, UINT32 size, UINT32 offset,
-                                      UINT32 flags, BYTE vprot,
-                                      HANDLE32 mapping )
+static FILE_VIEW *VIRTUAL_CreateView( UINT base, UINT size, UINT offset,
+                                      UINT flags, BYTE vprot,
+                                      HANDLE mapping )
 {
     FILE_VIEW *view, *prev;
 
@@ -363,10 +363,10 @@ static BYTE VIRTUAL_GetProt(
  *	TRUE: Success
  *	FALSE: Failure
  */
-static BOOL32 VIRTUAL_SetProt(
+static BOOL VIRTUAL_SetProt(
               FILE_VIEW *view, /* [in] Pointer to view */
-              UINT32 base,     /* [in] Starting address */
-              UINT32 size,     /* [in] Size in bytes */
+              UINT base,     /* [in] Starting address */
+              UINT size,     /* [in] Size in bytes */
               BYTE vprot       /* [in] Protections to use */
 ) {
     TRACE(virtual, "%08x-%08x %s\n",
@@ -391,13 +391,13 @@ static BOOL32 VIRTUAL_SetProt(
  *	TRUE: They do
  *	FALSE: They do not
  */
-static BOOL32 VIRTUAL_CheckFlags(
-              UINT32 base, /* [in] Starting address */
-              UINT32 size, /* [in] Size in bytes */
+static BOOL VIRTUAL_CheckFlags(
+              UINT base, /* [in] Starting address */
+              UINT size, /* [in] Size in bytes */
               BYTE flags   /* [in] Flags to check for */
 ) {
     FILE_VIEW *view;
-    UINT32 page;
+    UINT page;
 
     if (!size) return TRUE;
     if (!(view = VIRTUAL_FindView( base ))) return FALSE;
@@ -412,7 +412,7 @@ static BOOL32 VIRTUAL_CheckFlags(
 /***********************************************************************
  *           VIRTUAL_Init
  */
-BOOL32 VIRTUAL_Init(void)
+BOOL VIRTUAL_Init(void)
 {
 #ifndef __i386__
     DWORD page_size;
@@ -496,11 +496,11 @@ DWORD VIRTUAL_GetGranularity(void)
 /***********************************************************************
  *           VIRTUAL_SetFaultHandler
  */
-BOOL32 VIRTUAL_SetFaultHandler( LPCVOID addr, HANDLERPROC proc, LPVOID arg )
+BOOL VIRTUAL_SetFaultHandler( LPCVOID addr, HANDLERPROC proc, LPVOID arg )
 {
     FILE_VIEW *view;
 
-    if (!(view = VIRTUAL_FindView((UINT32)addr))) return FALSE;
+    if (!(view = VIRTUAL_FindView((UINT)addr))) return FALSE;
     view->handlerProc = proc;
     view->handlerArg  = arg;
     return TRUE;
@@ -509,9 +509,9 @@ BOOL32 VIRTUAL_SetFaultHandler( LPCVOID addr, HANDLERPROC proc, LPVOID arg )
 /***********************************************************************
  *           VIRTUAL_HandleFault
  */
-BOOL32 VIRTUAL_HandleFault( LPCVOID addr )
+BOOL VIRTUAL_HandleFault( LPCVOID addr )
 {
-    FILE_VIEW *view = VIRTUAL_FindView((UINT32)addr);
+    FILE_VIEW *view = VIRTUAL_FindView((UINT)addr);
 
     if (view && view->handlerProc)
         return view->handlerProc(view->handlerArg, addr);
@@ -534,11 +534,11 @@ LPVOID WINAPI VirtualAlloc(
               DWORD protect /* [in] Type of access protection */
 ) {
     FILE_VIEW *view;
-    UINT32 base, ptr, view_size;
+    UINT base, ptr, view_size;
     BYTE vprot;
 
     TRACE(virtual, "%08x %08lx %lx %08lx\n",
-                     (UINT32)addr, size, type, protect );
+                     (UINT)addr, size, type, protect );
 
     /* Round parameters to a page boundary */
 
@@ -550,10 +550,10 @@ LPVOID WINAPI VirtualAlloc(
     if (addr)
     {
         if (type & MEM_RESERVE) /* Round down to 64k boundary */
-            base = ((UINT32)addr + granularity_mask) & ~granularity_mask;
+            base = ((UINT)addr + granularity_mask) & ~granularity_mask;
         else
             base = ROUND_ADDR( addr );
-        size = (((UINT32)addr + size + page_mask) & ~page_mask) - base;
+        size = (((UINT)addr + size + page_mask) & ~page_mask) - base;
         if (base + size < base)  /* Disallow wrap-around */
         {
             SetLastError( ERROR_INVALID_PARAMETER );
@@ -590,9 +590,9 @@ LPVOID WINAPI VirtualAlloc(
     if ((type & MEM_RESERVE) || !base)
     {
         view_size = size + (base ? 0 : granularity_mask + 1);
-        ptr = (UINT32)FILE_dommap( -1, (LPVOID)base, 0, view_size, 0, 0,
+        ptr = (UINT)FILE_dommap( -1, (LPVOID)base, 0, view_size, 0, 0,
                                    VIRTUAL_GetUnixProt( vprot ), MAP_PRIVATE );
-        if (ptr == (UINT32)-1)
+        if (ptr == (UINT)-1)
         {
             SetLastError( ERROR_OUTOFMEMORY );
             return NULL;
@@ -604,7 +604,7 @@ LPVOID WINAPI VirtualAlloc(
 
             if (ptr & granularity_mask)
             {
-                UINT32 extra = granularity_mask + 1 - (ptr & granularity_mask);
+                UINT extra = granularity_mask + 1 - (ptr & granularity_mask);
                 FILE_munmap( (void *)ptr, 0, extra );
                 ptr += extra;
                 view_size -= extra;
@@ -651,16 +651,16 @@ LPVOID WINAPI VirtualAlloc(
  *	TRUE: Success
  *	FALSE: Failure
  */
-BOOL32 WINAPI VirtualFree(
+BOOL WINAPI VirtualFree(
               LPVOID addr, /* [in] Address of region of committed pages */
               DWORD size,  /* [in] Size of region */
               DWORD type   /* [in] Type of operation */
 ) {
     FILE_VIEW *view;
-    UINT32 base;
+    UINT base;
 
     TRACE(virtual, "%08x %08lx %lx\n",
-                     (UINT32)addr, size, type );
+                     (UINT)addr, size, type );
 
     /* Fix the parameters */
 
@@ -711,7 +711,7 @@ BOOL32 WINAPI VirtualFree(
  *	TRUE: Success
  *	FALSE: Failure
  */
-BOOL32 WINAPI VirtualLock(
+BOOL WINAPI VirtualLock(
               LPVOID addr, /* [in] Address of first byte of range to lock */
               DWORD size   /* [in] Number of bytes in range to lock */
 ) {
@@ -730,7 +730,7 @@ BOOL32 WINAPI VirtualLock(
  *	TRUE: Success
  *	FALSE: Failure
  */
-BOOL32 WINAPI VirtualUnlock(
+BOOL WINAPI VirtualUnlock(
               LPVOID addr, /* [in] Address of first byte of range */
               DWORD size   /* [in] Number of bytes in range */
 ) {
@@ -746,18 +746,18 @@ BOOL32 WINAPI VirtualUnlock(
  *	TRUE: Success
  *	FALSE: Failure
  */
-BOOL32 WINAPI VirtualProtect(
+BOOL WINAPI VirtualProtect(
               LPVOID addr,     /* [in] Address of region of committed pages */
               DWORD size,      /* [in] Size of region */
               DWORD new_prot,  /* [in] Desired access protection */
               LPDWORD old_prot /* [out] Address of variable to get old protection */
 ) {
     FILE_VIEW *view;
-    UINT32 base, i;
+    UINT base, i;
     BYTE vprot, *p;
 
     TRACE(virtual, "%08x %08lx %08lx\n",
-                     (UINT32)addr, size, new_prot );
+                     (UINT)addr, size, new_prot );
 
     /* Fix the parameters */
 
@@ -798,8 +798,8 @@ BOOL32 WINAPI VirtualProtect(
  *	TRUE: Success
  *	FALSE: Failure
  */
-BOOL32 WINAPI VirtualProtectEx(
-              HANDLE32 handle, /* [in]  Handle of process */
+BOOL WINAPI VirtualProtectEx(
+              HANDLE handle, /* [in]  Handle of process */
               LPVOID addr,     /* [in]  Address of region of committed pages */
               DWORD size,      /* [in]  Size of region */
               DWORD new_prot,  /* [in]  Desired access protection */
@@ -825,9 +825,9 @@ DWORD WINAPI VirtualQuery(
              DWORD len                        /* [in]  Size of buffer */
 ) {
     FILE_VIEW *view = VIRTUAL_FirstView;
-    UINT32 base = ROUND_ADDR( addr );
-    UINT32 alloc_base = 0;
-    UINT32 size = 0;
+    UINT base = ROUND_ADDR( addr );
+    UINT alloc_base = 0;
+    UINT size = 0;
 
     /* Find the view containing the address */
 
@@ -889,7 +889,7 @@ DWORD WINAPI VirtualQuery(
  *	Number of bytes returned in information buffer
  */
 DWORD WINAPI VirtualQueryEx(
-             HANDLE32 handle,                 /* [in] Handle of process */
+             HANDLE handle,                 /* [in] Handle of process */
              LPCVOID addr,                    /* [in] Address of region */
              LPMEMORY_BASIC_INFORMATION info, /* [out] Address of info buffer */
              DWORD len                        /* [in] Size of buffer */ )
@@ -908,11 +908,11 @@ DWORD WINAPI VirtualQueryEx(
  *	FALSE: Process has read access to entire block
  *      TRUE: Otherwise
  */
-BOOL32 WINAPI IsBadReadPtr32(
+BOOL WINAPI IsBadReadPtr(
               LPCVOID ptr, /* Address of memory block */
-              UINT32 size  /* Size of block */
+              UINT size  /* Size of block */
 ) {
-    return !VIRTUAL_CheckFlags( (UINT32)ptr, size,
+    return !VIRTUAL_CheckFlags( (UINT)ptr, size,
                                 VPROT_READ | VPROT_COMMITTED );
 }
 
@@ -924,11 +924,11 @@ BOOL32 WINAPI IsBadReadPtr32(
  *	FALSE: Process has write access to entire block
  *      TRUE: Otherwise
  */
-BOOL32 WINAPI IsBadWritePtr32(
+BOOL WINAPI IsBadWritePtr(
               LPVOID ptr, /* [in] Address of memory block */
-              UINT32 size /* [in] Size of block in bytes */
+              UINT size /* [in] Size of block in bytes */
 ) {
-    return !VIRTUAL_CheckFlags( (UINT32)ptr, size,
+    return !VIRTUAL_CheckFlags( (UINT)ptr, size,
                                 VPROT_WRITE | VPROT_COMMITTED );
 }
 
@@ -939,11 +939,11 @@ BOOL32 WINAPI IsBadWritePtr32(
  *	FALSE: Process has read access to entire block
  *      TRUE: Otherwise
  */
-BOOL32 WINAPI IsBadHugeReadPtr32(
+BOOL WINAPI IsBadHugeReadPtr(
               LPCVOID ptr, /* [in] Address of memory block */
-              UINT32 size  /* [in] Size of block */
+              UINT size  /* [in] Size of block */
 ) {
-    return IsBadReadPtr32( ptr, size );
+    return IsBadReadPtr( ptr, size );
 }
 
 
@@ -953,11 +953,11 @@ BOOL32 WINAPI IsBadHugeReadPtr32(
  *	FALSE: Process has write access to entire block
  *      TRUE: Otherwise
  */
-BOOL32 WINAPI IsBadHugeWritePtr32(
+BOOL WINAPI IsBadHugeWritePtr(
               LPVOID ptr, /* [in] Address of memory block */
-              UINT32 size /* [in] Size of block */
+              UINT size /* [in] Size of block */
 ) {
-    return IsBadWritePtr32( ptr, size );
+    return IsBadWritePtr( ptr, size );
 }
 
 
@@ -968,10 +968,10 @@ BOOL32 WINAPI IsBadHugeWritePtr32(
  *	FALSE: Process has read access to specified memory
  *	TRUE: Otherwise
  */
-BOOL32 WINAPI IsBadCodePtr32(
-              FARPROC32 ptr /* [in] Address of function */
+BOOL WINAPI IsBadCodePtr(
+              FARPROC ptr /* [in] Address of function */
 ) {
-    return !VIRTUAL_CheckFlags( (UINT32)ptr, 1, VPROT_EXEC | VPROT_COMMITTED );
+    return !VIRTUAL_CheckFlags( (UINT)ptr, 1, VPROT_EXEC | VPROT_COMMITTED );
 }
 
 
@@ -982,17 +982,17 @@ BOOL32 WINAPI IsBadCodePtr32(
  *	FALSE: Read access to all bytes in string
  *	TRUE: Else
  */
-BOOL32 WINAPI IsBadStringPtr32A(
+BOOL WINAPI IsBadStringPtrA(
               LPCSTR str, /* [in] Address of string */
-              UINT32 max  /* [in] Maximum size of string */
+              UINT max  /* [in] Maximum size of string */
 ) {
     FILE_VIEW *view;
-    UINT32 page, count;
+    UINT page, count;
 
     if (!max) return FALSE;
-    if (!(view = VIRTUAL_FindView( (UINT32)str ))) return TRUE;
-    page  = ((UINT32)str - view->base) >> page_shift;
-    count = page_mask + 1 - ((UINT32)str & page_mask);
+    if (!(view = VIRTUAL_FindView( (UINT)str ))) return TRUE;
+    page  = ((UINT)str - view->base) >> page_shift;
+    count = page_mask + 1 - ((UINT)str & page_mask);
 
     while (max)
     {
@@ -1013,15 +1013,15 @@ BOOL32 WINAPI IsBadStringPtr32A(
  *             IsBadStringPtr32W   (KERNEL32.356)
  * See IsBadStringPtr32A
  */
-BOOL32 WINAPI IsBadStringPtr32W( LPCWSTR str, UINT32 max )
+BOOL WINAPI IsBadStringPtrW( LPCWSTR str, UINT max )
 {
     FILE_VIEW *view;
-    UINT32 page, count;
+    UINT page, count;
 
     if (!max) return FALSE;
-    if (!(view = VIRTUAL_FindView( (UINT32)str ))) return TRUE;
-    page  = ((UINT32)str - view->base) >> page_shift;
-    count = (page_mask + 1 - ((UINT32)str & page_mask)) / sizeof(WCHAR);
+    if (!(view = VIRTUAL_FindView( (UINT)str ))) return TRUE;
+    page  = ((UINT)str - view->base) >> page_shift;
+    count = (page_mask + 1 - ((UINT)str & page_mask)) / sizeof(WCHAR);
 
     while (max)
     {
@@ -1047,8 +1047,8 @@ BOOL32 WINAPI IsBadStringPtr32W( LPCWSTR str, UINT32 max )
  *	0: Mapping object does not exist
  *	NULL: Failure
  */
-HANDLE32 WINAPI CreateFileMapping32A(
-                HFILE32 hFile,   /* [in] Handle of file to map */
+HANDLE WINAPI CreateFileMappingA(
+                HFILE hFile,   /* [in] Handle of file to map */
                 SECURITY_ATTRIBUTES *sa, /* [in] Optional security attributes*/
                 DWORD protect,   /* [in] Protection for mapping object */
                 DWORD size_high, /* [in] High-order 32 bits of object size */
@@ -1058,9 +1058,9 @@ HANDLE32 WINAPI CreateFileMapping32A(
     FILE_MAPPING *mapping = NULL;
     struct create_mapping_request req;
     struct create_mapping_reply reply = { -1 };
-    HANDLE32 handle;
+    HANDLE handle;
     BYTE vprot;
-    BOOL32 inherit = (sa && (sa->nLength>=sizeof(*sa)) && sa->bInheritHandle);
+    BOOL inherit = (sa && (sa->nLength>=sizeof(*sa)) && sa->bInheritHandle);
 
     /* First search for an object with the same name */
 
@@ -1098,7 +1098,7 @@ HANDLE32 WINAPI CreateFileMapping32A(
     vprot = VIRTUAL_GetProt( protect );
     if (protect & SEC_RESERVE)
     {
-        if (hFile != INVALID_HANDLE_VALUE32)
+        if (hFile != INVALID_HANDLE_VALUE)
         {
             SetLastError( ERROR_INVALID_PARAMETER );
             return 0;
@@ -1109,7 +1109,7 @@ HANDLE32 WINAPI CreateFileMapping32A(
 
     /* Compute the size and extend the file if necessary */
 
-    if (hFile == INVALID_HANDLE_VALUE32)
+    if (hFile == INVALID_HANDLE_VALUE)
     {
 	if (!size_high && !size_low)
 	{
@@ -1120,9 +1120,9 @@ HANDLE32 WINAPI CreateFileMapping32A(
 	{
 	    CHAR	buf[260];
 
-	    GetTempPath32A(260,buf);
-	    GetTempFileName32A(buf,"wine",0,buf);
-	    hFile = CreateFile32A(
+	    GetTempPathA(260,buf);
+	    GetTempFileNameA(buf,"wine",0,buf);
+	    hFile = CreateFileA(
 	    	buf,
 		GENERIC_READ|GENERIC_WRITE,
 	    	FILE_SHARE_READ|FILE_SHARE_WRITE,/* so we can reuse the tmpfn */
@@ -1132,12 +1132,12 @@ HANDLE32 WINAPI CreateFileMapping32A(
 		0
 	    );
 	    /* FIXME: bad hack to avoid lots of leftover tempfiles */
-	    DeleteFile32A(buf); 
-	    if (hFile == INVALID_HANDLE_VALUE32)
+	    DeleteFileA(buf); 
+	    if (hFile == INVALID_HANDLE_VALUE)
 	    	FIXME(virtual,"could not create temp. file for anon shared mapping: reason was 0x%08lx\n",GetLastError());
 	}
     }
-    if (hFile != INVALID_HANDLE_VALUE32) /* We have a file */
+    if (hFile != INVALID_HANDLE_VALUE) /* We have a file */
     {
         BY_HANDLE_FILE_INFORMATION info;
         DWORD access = GENERIC_READ;
@@ -1203,12 +1203,12 @@ error:
  *             CreateFileMapping32W   (KERNEL32.47)
  * See CreateFileMapping32A
  */
-HANDLE32 WINAPI CreateFileMapping32W( HFILE32 hFile, LPSECURITY_ATTRIBUTES attr, 
+HANDLE WINAPI CreateFileMappingW( HFILE hFile, LPSECURITY_ATTRIBUTES attr, 
                                       DWORD protect, DWORD size_high,  
                                       DWORD size_low, LPCWSTR name )
 {
     LPSTR nameA = HEAP_strdupWtoA( GetProcessHeap(), 0, name );
-    HANDLE32 ret = CreateFileMapping32A( hFile, attr, protect,
+    HANDLE ret = CreateFileMappingA( hFile, attr, protect,
                                          size_high, size_low, nameA );
     HeapFree( GetProcessHeap(), 0, nameA );
     return ret;
@@ -1223,12 +1223,12 @@ HANDLE32 WINAPI CreateFileMapping32W( HFILE32 hFile, LPSECURITY_ATTRIBUTES attr,
  *	Handle: Success
  *	NULL: Failure
  */
-HANDLE32 WINAPI OpenFileMapping32A(
+HANDLE WINAPI OpenFileMappingA(
                 DWORD access,   /* [in] Access mode */
-                BOOL32 inherit, /* [in] Inherit flag */
+                BOOL inherit, /* [in] Inherit flag */
                 LPCSTR name )   /* [in] Name of file-mapping object */
 {
-    HANDLE32 handle = 0;
+    HANDLE handle = 0;
     K32OBJ *obj;
     struct open_named_obj_request req;
     struct open_named_obj_reply reply;
@@ -1247,7 +1247,7 @@ HANDLE32 WINAPI OpenFileMapping32A(
         {
             handle = HANDLE_Alloc( PROCESS_Current(), obj, access, inherit, reply.handle );
             K32OBJ_DecCount( obj );
-            if (handle == INVALID_HANDLE_VALUE32)
+            if (handle == INVALID_HANDLE_VALUE)
                 handle = 0; /* must return 0 on failure, not -1 */
         }
         else CLIENT_CloseHandle( reply.handle );
@@ -1261,10 +1261,10 @@ HANDLE32 WINAPI OpenFileMapping32A(
  *             OpenFileMapping32W   (KERNEL32.398)
  * See OpenFileMapping32A
  */
-HANDLE32 WINAPI OpenFileMapping32W( DWORD access, BOOL32 inherit, LPCWSTR name)
+HANDLE WINAPI OpenFileMappingW( DWORD access, BOOL inherit, LPCWSTR name)
 {
     LPSTR nameA = HEAP_strdupWtoA( GetProcessHeap(), 0, name );
-    HANDLE32 ret = OpenFileMapping32A( access, inherit, nameA );
+    HANDLE ret = OpenFileMappingA( access, inherit, nameA );
     HeapFree( GetProcessHeap(), 0, nameA );
     return ret;
 }
@@ -1279,7 +1279,7 @@ HANDLE32 WINAPI OpenFileMapping32W( DWORD access, BOOL32 inherit, LPCWSTR name)
  *	NULL: Failure
  */
 LPVOID WINAPI MapViewOfFile(
-              HANDLE32 mapping,  /* [in] File-mapping object to map */
+              HANDLE mapping,  /* [in] File-mapping object to map */
               DWORD access,      /* [in] Access mode */
               DWORD offset_high, /* [in] High-order 32 bits of file offset */
               DWORD offset_low,  /* [in] Low-order 32 bits of file offset */
@@ -1299,7 +1299,7 @@ LPVOID WINAPI MapViewOfFile(
  *	NULL: Failure
  */
 LPVOID WINAPI MapViewOfFileEx(
-              HANDLE32 handle,   /* [in] File-mapping object to map */
+              HANDLE handle,   /* [in] File-mapping object to map */
               DWORD access,      /* [in] Access mode */
               DWORD offset_high, /* [in] High-order 32 bits of file offset */
               DWORD offset_low,  /* [in] Low-order 32 bits of file offset */
@@ -1307,7 +1307,7 @@ LPVOID WINAPI MapViewOfFileEx(
               LPVOID addr        /* [in] Suggested starting address for mapped view */
 ) {
     FILE_VIEW *view;
-    UINT32 ptr = (UINT32)-1, size = 0;
+    UINT ptr = (UINT)-1, size = 0;
     int flags = MAP_PRIVATE;
     int unix_handle = -1;
     struct get_mapping_info_request req;
@@ -1316,7 +1316,7 @@ LPVOID WINAPI MapViewOfFileEx(
     /* Check parameters */
 
     if ((offset_low & granularity_mask) ||
-        (addr && ((UINT32)addr & granularity_mask)))
+        (addr && ((UINT)addr & granularity_mask)))
     {
         SetLastError( ERROR_INVALID_PARAMETER );
         return NULL;
@@ -1367,11 +1367,11 @@ LPVOID WINAPI MapViewOfFileEx(
     TRACE(virtual, "handle=%x size=%x offset=%lx\n",
                      handle, size, offset_low );
 
-    ptr = (UINT32)FILE_dommap( unix_handle,
+    ptr = (UINT)FILE_dommap( unix_handle,
                                addr, 0, size, 0, offset_low,
                                VIRTUAL_GetUnixProt( info.protect ),
                                flags );
-    if (ptr == (UINT32)-1) {
+    if (ptr == (UINT)-1) {
         /* KB: Q125713, 25-SEP-1995, "Common File Mapping Problems and
 	 * Platform Differences": 
 	 * Windows NT: ERROR_INVALID_PARAMETER
@@ -1396,7 +1396,7 @@ LPVOID WINAPI MapViewOfFileEx(
 
 error:
     if (unix_handle != -1) close( unix_handle );
-    if (ptr != (UINT32)-1) FILE_munmap( (void *)ptr, 0, size );
+    if (ptr != (UINT)-1) FILE_munmap( (void *)ptr, 0, size );
     return NULL;
 }
 
@@ -1409,12 +1409,12 @@ error:
  *	TRUE: Success
  *	FALSE: Failure
  */
-BOOL32 WINAPI FlushViewOfFile(
+BOOL WINAPI FlushViewOfFile(
               LPCVOID base, /* [in] Start address of byte range to flush */
               DWORD cbFlush /* [in] Number of bytes in range */
 ) {
     FILE_VIEW *view;
-    UINT32 addr = ROUND_ADDR( base );
+    UINT addr = ROUND_ADDR( base );
 
     TRACE(virtual, "FlushViewOfFile at %p for %ld bytes\n",
                      base, cbFlush );
@@ -1442,11 +1442,11 @@ BOOL32 WINAPI FlushViewOfFile(
  *	TRUE: Success
  *	FALSE: Failure
  */
-BOOL32 WINAPI UnmapViewOfFile(
+BOOL WINAPI UnmapViewOfFile(
               LPVOID addr /* [in] Address where mapped view begins */
 ) {
     FILE_VIEW *view;
-    UINT32 base = ROUND_ADDR( addr );
+    UINT base = ROUND_ADDR( addr );
     if (!(view = VIRTUAL_FindView( base )) || (base != view->base))
     {
         SetLastError( ERROR_INVALID_PARAMETER );
@@ -1465,14 +1465,14 @@ BOOL32 WINAPI UnmapViewOfFile(
  */
 LPVOID VIRTUAL_MapFileW( LPCWSTR name )
 {
-    HANDLE32 hFile, hMapping;
+    HANDLE hFile, hMapping;
     LPVOID ptr = NULL;
 
-    hFile = CreateFile32W( name, GENERIC_READ, FILE_SHARE_READ, NULL, 
+    hFile = CreateFileW( name, GENERIC_READ, FILE_SHARE_READ, NULL, 
                            OPEN_EXISTING, FILE_FLAG_RANDOM_ACCESS, 0);
-    if (hFile != INVALID_HANDLE_VALUE32)
+    if (hFile != INVALID_HANDLE_VALUE)
     {
-        hMapping = CreateFileMapping32A( hFile, NULL, PAGE_READONLY, 0, 0, NULL );
+        hMapping = CreateFileMappingA( hFile, NULL, PAGE_READONLY, 0, 0, NULL );
         CloseHandle( hFile );
         if (hMapping)
         {

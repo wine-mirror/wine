@@ -85,11 +85,11 @@ static const char * const DefSysColors95[] =
 #define NUM_SYS_COLORS     (COLOR_GRADIENTINACTIVECAPTION+1)
 
 static COLORREF SysColors[NUM_SYS_COLORS];
-static HBRUSH32 SysColorBrushes[NUM_SYS_COLORS];
-static HPEN32   SysColorPens[NUM_SYS_COLORS];
+static HBRUSH SysColorBrushes[NUM_SYS_COLORS];
+static HPEN   SysColorPens[NUM_SYS_COLORS];
 
 #define MAKE_SOLID(color) \
-       (PALETTEINDEX(GetNearestPaletteIndex32(STOCK_DEFAULT_PALETTE,(color))))
+       (PALETTEINDEX(GetNearestPaletteIndex(STOCK_DEFAULT_PALETTE,(color))))
 
 /*************************************************************************
  *             SYSCOLOR_SetColor
@@ -98,10 +98,10 @@ static void SYSCOLOR_SetColor( int index, COLORREF color )
 {
     if (index < 0 || index >= NUM_SYS_COLORS) return;
     SysColors[index] = color;
-    if (SysColorBrushes[index]) DeleteObject32( SysColorBrushes[index] );
-    SysColorBrushes[index] = CreateSolidBrush32( color );
-    if (SysColorPens[index]) DeleteObject32( SysColorPens[index] ); 
-    SysColorPens[index] = CreatePen32( PS_SOLID, 1, color );
+    if (SysColorBrushes[index]) DeleteObject( SysColorBrushes[index] );
+    SysColorBrushes[index] = CreateSolidBrush( color );
+    if (SysColorPens[index]) DeleteObject( SysColorPens[index] ); 
+    SysColorPens[index] = CreatePen( PS_SOLID, 1, color );
 }
 
 
@@ -117,7 +117,7 @@ void SYSCOLOR_Init(void)
     p = (TWEAK_WineLook == WIN31_LOOK) ? DefSysColors : DefSysColors95;
     for (i = 0; i < NUM_SYS_COLORS; i++, p += 2)
     {
-	GetProfileString32A( "colors", p[0], p[1], buffer, 100 );
+	GetProfileStringA( "colors", p[0], p[1], buffer, 100 );
 	if (sscanf( buffer, " %d %d %d", &r, &g, &b ) != 3) r = g = b = 0;
 	SYSCOLOR_SetColor( i, RGB(r,g,b) );
     }
@@ -129,14 +129,14 @@ void SYSCOLOR_Init(void)
  */
 COLORREF WINAPI GetSysColor16( INT16 nIndex )
 {
-    return GetSysColor32 (nIndex);
+    return GetSysColor (nIndex);
 }
 
 
 /*************************************************************************
  *             GetSysColor32   (USER32.289)
  */
-COLORREF WINAPI GetSysColor32( INT32 nIndex )
+COLORREF WINAPI GetSysColor( INT nIndex )
 {
     if (nIndex >= 0 && nIndex < NUM_SYS_COLORS)
 	return SysColors[nIndex];
@@ -160,11 +160,11 @@ VOID WINAPI SetSysColors16( INT16 nChanges, const INT16 *lpSysColor,
 
     /* Send WM_SYSCOLORCHANGE message to all windows */
 
-    SendMessage32A( HWND_BROADCAST, WM_SYSCOLORCHANGE, 0, 0 );
+    SendMessageA( HWND_BROADCAST, WM_SYSCOLORCHANGE, 0, 0 );
 
     /* Repaint affected portions of all visible windows */
 
-    RedrawWindow32( GetDesktopWindow32(), NULL, 0,
+    RedrawWindow( GetDesktopWindow(), NULL, 0,
                 RDW_INVALIDATE | RDW_ERASE | RDW_UPDATENOW | RDW_ALLCHILDREN );
 }
 
@@ -172,7 +172,7 @@ VOID WINAPI SetSysColors16( INT16 nChanges, const INT16 *lpSysColor,
 /*************************************************************************
  *             SetSysColors32   (USER32.505)
  */
-BOOL32 WINAPI SetSysColors32( INT32 nChanges, const INT32 *lpSysColor,
+BOOL WINAPI SetSysColors( INT nChanges, const INT *lpSysColor,
                               const COLORREF *lpColorValues )
 {
     int i;
@@ -184,11 +184,11 @@ BOOL32 WINAPI SetSysColors32( INT32 nChanges, const INT32 *lpSysColor,
 
     /* Send WM_SYSCOLORCHANGE message to all windows */
 
-    SendMessage32A( HWND_BROADCAST, WM_SYSCOLORCHANGE, 0, 0 );
+    SendMessageA( HWND_BROADCAST, WM_SYSCOLORCHANGE, 0, 0 );
 
     /* Repaint affected portions of all visible windows */
 
-    RedrawWindow32( GetDesktopWindow32(), NULL, 0,
+    RedrawWindow( GetDesktopWindow(), NULL, 0,
                 RDW_INVALIDATE | RDW_ERASE | RDW_UPDATENOW | RDW_ALLCHILDREN );
     return TRUE;
 }
@@ -199,19 +199,19 @@ BOOL32 WINAPI SetSysColors32( INT32 nChanges, const INT32 *lpSysColor,
  */
 HBRUSH16 WINAPI GetSysColorBrush16( INT16 index )
 {
-    return (HBRUSH16)GetSysColorBrush32(index);
+    return (HBRUSH16)GetSysColorBrush(index);
 }
 
 
 /***********************************************************************
  *           GetSysColorBrush32    (USER32.290)
  */
-HBRUSH32 WINAPI GetSysColorBrush32( INT32 index )
+HBRUSH WINAPI GetSysColorBrush( INT index )
 {
     if (0 <= index && index < NUM_SYS_COLORS)
         return SysColorBrushes[index];
     WARN(syscolor, "Unknown index(%d)\n", index );
-    return GetStockObject32(LTGRAY_BRUSH);
+    return GetStockObject(LTGRAY_BRUSH);
 }
 
 
@@ -220,7 +220,7 @@ HBRUSH32 WINAPI GetSysColorBrush32( INT32 index )
  */
 HPEN16 WINAPI GetSysColorPen16( INT16 index )
 {
-    return (HPEN16)GetSysColorPen32(index);
+    return (HPEN16)GetSysColorPen(index);
 }
 
 
@@ -231,7 +231,7 @@ HPEN16 WINAPI GetSysColorPen16( INT16 index )
  * Windows. However, it is a natural complement for GetSysColorBrush
  * in the Win32 API and is needed quite a bit inside Wine.
  */
-HPEN32 WINAPI GetSysColorPen32( INT32 index )
+HPEN WINAPI GetSysColorPen( INT index )
 {
     /* We can assert here, because this function is internal to Wine */
     assert (0 <= index && index < NUM_SYS_COLORS);

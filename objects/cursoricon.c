@@ -49,9 +49,9 @@
 #include "message.h"
 #include "winerror.h"
 
-static HCURSOR32 hActiveCursor = 0;  /* Active cursor */
-static INT32 CURSOR_ShowCount = 0;   /* Cursor display count */
-static RECT32 CURSOR_ClipRect;       /* Cursor clipping rect */
+static HCURSOR hActiveCursor = 0;  /* Active cursor */
+static INT CURSOR_ShowCount = 0;   /* Cursor display count */
+static RECT CURSOR_ClipRect;       /* Cursor clipping rect */
 
 /**********************************************************************
  *	    CURSORICON_FindBestIcon
@@ -217,7 +217,7 @@ static CURSORDIRENTRY *CURSORICON_FindBestCursor( CURSORICONDIR *dir,
  *		directly from corresponding DIB sections
  * Note: wResId is index to array of pointer returned in ptrs (origin is 1)
  */
-BOOL32 CURSORICON_SimulateLoadingFromResourceW( LPWSTR filename, BOOL32 fCursor,
+BOOL CURSORICON_SimulateLoadingFromResourceW( LPWSTR filename, BOOL fCursor,
                                                 CURSORICONDIR **res, LPBYTE **ptr)
 {
     LPBYTE   _free;
@@ -305,9 +305,9 @@ fail:
  * Load the icon/cursor directory for a given resource name and find the
  * best matching entry.
  */
-static BOOL32 CURSORICON_LoadDirEntry16( HINSTANCE32 hInstance, SEGPTR name,
-                                         INT32 width, INT32 height, INT32 colors, 
-					 BOOL32 fCursor, CURSORICONDIRENTRY *dirEntry )
+static BOOL CURSORICON_LoadDirEntry16( HINSTANCE hInstance, SEGPTR name,
+                                         INT width, INT height, INT colors, 
+					 BOOL fCursor, CURSORICONDIRENTRY *dirEntry )
 {
     HRSRC16 hRsrc;
     HGLOBAL16 hMem;
@@ -339,20 +339,20 @@ static BOOL32 CURSORICON_LoadDirEntry16( HINSTANCE32 hInstance, SEGPTR name,
  * Load the icon/cursor directory for a given resource name and find the
  * best matching entry.
  */
-static BOOL32 CURSORICON_LoadDirEntry32( HINSTANCE32 hInstance, LPCWSTR name,
-                                         INT32 width, INT32 height, INT32 colors,
-                                         BOOL32 fCursor, CURSORICONDIRENTRY *dirEntry )
+static BOOL CURSORICON_LoadDirEntry( HINSTANCE hInstance, LPCWSTR name,
+                                         INT width, INT height, INT colors,
+                                         BOOL fCursor, CURSORICONDIRENTRY *dirEntry )
 {
-    HANDLE32 hRsrc;
-    HANDLE32 hMem;
+    HANDLE hRsrc;
+    HANDLE hMem;
     CURSORICONDIR *dir;
     CURSORICONDIRENTRY *entry = NULL;
 
-    if (!(hRsrc = FindResource32W( hInstance, name,
-                            fCursor ? RT_GROUP_CURSOR32W : RT_GROUP_ICON32W )))
+    if (!(hRsrc = FindResourceW( hInstance, name,
+                            fCursor ? RT_GROUP_CURSORW : RT_GROUP_ICONW )))
         return FALSE;
-    if (!(hMem = LoadResource32( hInstance, hRsrc ))) return FALSE;
-    if ((dir = (CURSORICONDIR*)LockResource32( hMem )))
+    if (!(hMem = LoadResource( hInstance, hRsrc ))) return FALSE;
+    if ((dir = (CURSORICONDIR*)LockResource( hMem )))
     {
         if (fCursor)
             entry = (CURSORICONDIRENTRY *)CURSORICON_FindBestCursor( dir,
@@ -362,7 +362,7 @@ static BOOL32 CURSORICON_LoadDirEntry32( HINSTANCE32 hInstance, LPCWSTR name,
                                                        width, height, colors );
         if (entry) *dirEntry = *entry;
     }
-    FreeResource32( hMem );
+    FreeResource( hMem );
     return (entry != NULL);
 }
 
@@ -376,17 +376,17 @@ static BOOL32 CURSORICON_LoadDirEntry32( HINSTANCE32 hInstance, LPCWSTR name,
  *        with cbSize parameter as well.
  */
 static HGLOBAL16 CURSORICON_CreateFromResource( HINSTANCE16 hInstance, HGLOBAL16 hObj, LPBYTE bits,
-	 					UINT32 cbSize, BOOL32 bIcon, DWORD dwVersion, 
-						INT32 width, INT32 height, UINT32 loadflags )
+	 					UINT cbSize, BOOL bIcon, DWORD dwVersion, 
+						INT width, INT height, UINT loadflags )
 {
     int sizeAnd, sizeXor;
-    HBITMAP32 hAndBits = 0, hXorBits = 0; /* error condition for later */
+    HBITMAP hAndBits = 0, hXorBits = 0; /* error condition for later */
     BITMAPOBJ *bmpXor, *bmpAnd;
     POINT16 hotspot = { 0 ,0 };
     BITMAPINFO *bmi;
-    HDC32 hdc;
-    BOOL32 DoStretch;
-    INT32 size;
+    HDC hdc;
+    BOOL DoStretch;
+    INT size;
 
     TRACE(cursor,"%08x (%u bytes), ver %08x, %ix%i %s %s\n",
                         (unsigned)bits, cbSize, (unsigned)dwVersion, width, height,
@@ -422,7 +422,7 @@ static HGLOBAL16 CURSORICON_CreateFromResource( HINSTANCE16 hInstance, HGLOBAL16
           return 0;
     }
 
-    if( (hdc = GetDC32( 0 )) )
+    if( (hdc = GetDC( 0 )) )
     {
 	BITMAPINFO* pInfo;
 
@@ -446,22 +446,22 @@ static HGLOBAL16 CURSORICON_CreateFromResource( HINSTANCE16 hInstance, HGLOBAL16
 	    /* Create the XOR bitmap */
 
 	    if (DoStretch) {
-	      if ((hXorBits = CreateCompatibleBitmap32(hdc, width, height))) {
-		HBITMAP32 hOld;
-		HDC32 hMem = CreateCompatibleDC32(hdc);
-		BOOL32 res;
+	      if ((hXorBits = CreateCompatibleBitmap(hdc, width, height))) {
+		HBITMAP hOld;
+		HDC hMem = CreateCompatibleDC(hdc);
+		BOOL res;
 
 		if (hMem) {
-		  hOld = SelectObject32(hMem, hXorBits);
-	          res = StretchDIBits32(hMem, 0, 0, width, height, 0, 0,
+		  hOld = SelectObject(hMem, hXorBits);
+	          res = StretchDIBits(hMem, 0, 0, width, height, 0, 0,
 		    bmi->bmiHeader.biWidth, bmi->bmiHeader.biHeight/2,
 		    (char*)bmi + size, pInfo, DIB_RGB_COLORS, SRCCOPY);
-		  SelectObject32(hMem, hOld);
-		  DeleteDC32(hMem);
+		  SelectObject(hMem, hOld);
+		  DeleteDC(hMem);
 	        } else res = FALSE;
-		if (!res) { DeleteObject32(hXorBits); hXorBits = 0; }
+		if (!res) { DeleteObject(hXorBits); hXorBits = 0; }
 	      }
-	    } else hXorBits = CreateDIBitmap32( hdc, &pInfo->bmiHeader,
+	    } else hXorBits = CreateDIBitmap( hdc, &pInfo->bmiHeader,
 		CBM_INIT, (char*)bmi + size, pInfo, DIB_RGB_COLORS );
 	    if( hXorBits )
 	    {
@@ -490,29 +490,29 @@ static HGLOBAL16 CURSORICON_CreateFromResource( HINSTANCE16 hInstance, HGLOBAL16
 	        /* Create the AND bitmap */
 
 	    if (DoStretch) {
-	      if ((hAndBits = CreateBitmap32(width, height, 1, 1, NULL))) {
-		HBITMAP32 hOld;
-		HDC32 hMem = CreateCompatibleDC32(hdc);
-		BOOL32 res;
+	      if ((hAndBits = CreateBitmap(width, height, 1, 1, NULL))) {
+		HBITMAP hOld;
+		HDC hMem = CreateCompatibleDC(hdc);
+		BOOL res;
 
 		if (hMem) {
-		  hOld = SelectObject32(hMem, hAndBits);
-	          res = StretchDIBits32(hMem, 0, 0, width, height, 0, 0,
+		  hOld = SelectObject(hMem, hAndBits);
+	          res = StretchDIBits(hMem, 0, 0, width, height, 0, 0,
 		    pInfo->bmiHeader.biWidth, pInfo->bmiHeader.biHeight,
 		    bits, pInfo, DIB_RGB_COLORS, SRCCOPY);
-		  SelectObject32(hMem, hOld);
-		  DeleteDC32(hMem);
+		  SelectObject(hMem, hOld);
+		  DeleteDC(hMem);
 	        } else res = FALSE;
-		if (!res) { DeleteObject32(hAndBits); hAndBits = 0; }
+		if (!res) { DeleteObject(hAndBits); hAndBits = 0; }
 	      }
-	    } else hAndBits = CreateDIBitmap32( hdc, &pInfo->bmiHeader,
+	    } else hAndBits = CreateDIBitmap( hdc, &pInfo->bmiHeader,
 	      CBM_INIT, bits, pInfo, DIB_RGB_COLORS );
 
-		if( !hAndBits ) DeleteObject32( hXorBits );
+		if( !hAndBits ) DeleteObject( hXorBits );
 	    }
 	    HeapFree( GetProcessHeap(), 0, pInfo ); 
 	}
-	ReleaseDC32( 0, hdc );
+	ReleaseDC( 0, hdc );
     }
 
     if( !hXorBits || !hAndBits ) 
@@ -536,7 +536,7 @@ static HGLOBAL16 CURSORICON_CreateFromResource( HINSTANCE16 hInstance, HGLOBAL16
 	CURSORICONINFO *info;
 
 	/* Make it owned by the module */
-	if (hInstance) FarSetOwner( hObj, GetExePtr(hInstance) );
+	if (hInstance) FarSetOwner16( hObj, GetExePtr(hInstance) );
 
 	info = (CURSORICONINFO *)GlobalLock16( hObj );
 	info->ptHotSpot.x   = hotspot.x;
@@ -549,13 +549,13 @@ static HGLOBAL16 CURSORICON_CreateFromResource( HINSTANCE16 hInstance, HGLOBAL16
 
 	/* Transfer the bitmap bits to the CURSORICONINFO structure */
 
-	GetBitmapBits32( hAndBits, sizeAnd, (char *)(info + 1) );
-	GetBitmapBits32( hXorBits, sizeXor, (char *)(info + 1) + sizeAnd );
+	GetBitmapBits( hAndBits, sizeAnd, (char *)(info + 1) );
+	GetBitmapBits( hXorBits, sizeXor, (char *)(info + 1) + sizeAnd );
 	GlobalUnlock16( hObj );
     }
 
-    DeleteObject32( hXorBits );
-    DeleteObject32( hAndBits );
+    DeleteObject( hXorBits );
+    DeleteObject( hAndBits );
     return hObj;
 }
 
@@ -568,7 +568,7 @@ static HGLOBAL16 CURSORICON_CreateFromResource( HINSTANCE16 hInstance, HGLOBAL16
 HICON16 WINAPI CreateIconFromResourceEx16( LPBYTE bits, UINT16 cbSize, BOOL16 bIcon,
                                     DWORD dwVersion, INT16 width, INT16 height, UINT16 cFlag )
 {
-    return CreateIconFromResourceEx32(bits, cbSize, bIcon, dwVersion, 
+    return CreateIconFromResourceEx(bits, cbSize, bIcon, dwVersion, 
       width, height, cFlag);
 }
 
@@ -576,20 +576,20 @@ HICON16 WINAPI CreateIconFromResourceEx16( LPBYTE bits, UINT16 cbSize, BOOL16 bI
 /**********************************************************************
  *          CreateIconFromResource          (USER32.76)
  */
-HICON32 WINAPI CreateIconFromResource32( LPBYTE bits, UINT32 cbSize,
-                                           BOOL32 bIcon, DWORD dwVersion)
+HICON WINAPI CreateIconFromResource( LPBYTE bits, UINT cbSize,
+                                           BOOL bIcon, DWORD dwVersion)
 {
-    return CreateIconFromResourceEx32( bits, cbSize, bIcon, dwVersion, 0,0,0);
+    return CreateIconFromResourceEx( bits, cbSize, bIcon, dwVersion, 0,0,0);
 }
 
 
 /**********************************************************************
  *          CreateIconFromResourceEx32          (USER32.77)
  */
-HICON32 WINAPI CreateIconFromResourceEx32( LPBYTE bits, UINT32 cbSize,
-                                           BOOL32 bIcon, DWORD dwVersion,
-                                           INT32 width, INT32 height,
-                                           UINT32 cFlag )
+HICON WINAPI CreateIconFromResourceEx( LPBYTE bits, UINT cbSize,
+                                           BOOL bIcon, DWORD dwVersion,
+                                           INT width, INT height,
+                                           UINT cFlag )
 {
     TDB* pTask = (TDB*)GlobalLock16( GetCurrentTask() );
     if( pTask )
@@ -605,8 +605,8 @@ HICON32 WINAPI CreateIconFromResourceEx32( LPBYTE bits, UINT32 cbSize,
  * Load a cursor or icon from a 16-bit resource.
  */
 static HGLOBAL16 CURSORICON_Load16( HINSTANCE16 hInstance, SEGPTR name,
-                                    INT32 width, INT32 height, INT32 colors,
-                                    BOOL32 fCursor, UINT32 loadflags)
+                                    INT width, INT height, INT colors,
+                                    BOOL fCursor, UINT loadflags)
 {
     HGLOBAL16 handle = 0;
     HRSRC16 hRsrc;
@@ -614,7 +614,7 @@ static HGLOBAL16 CURSORICON_Load16( HINSTANCE16 hInstance, SEGPTR name,
 
     if (!hInstance)  /* OEM cursor/icon */
     {
-        HDC32 hdc;
+        HDC hdc;
 	DC *dc;
 
         if (HIWORD(name))  /* Check for '#xxx' name */
@@ -623,13 +623,13 @@ static HGLOBAL16 CURSORICON_Load16( HINSTANCE16 hInstance, SEGPTR name,
             if (ptr[0] != '#') return 0;
             if (!(name = (SEGPTR)atoi( ptr + 1 ))) return 0;
         }
-	hdc = CreateDC32A( "DISPLAY", NULL, NULL, NULL );
+	hdc = CreateDCA( "DISPLAY", NULL, NULL, NULL );
 	dc = DC_GetDCPtr( hdc );
 	if(dc->funcs->pLoadOEMResource)
 	    handle = dc->funcs->pLoadOEMResource( LOWORD(name), fCursor ?
 						  OEM_CURSOR : OEM_ICON);
 	GDI_HEAP_UNLOCK( hdc );
-	DeleteDC32( hdc );
+	DeleteDC( hdc );
 	return handle;
     }
 
@@ -659,12 +659,12 @@ static HGLOBAL16 CURSORICON_Load16( HINSTANCE16 hInstance, SEGPTR name,
  *
  * Load a cursor or icon from a 32-bit resource.
  */
-HGLOBAL32 CURSORICON_Load32( HINSTANCE32 hInstance, LPCWSTR name,
+HGLOBAL CURSORICON_Load( HINSTANCE hInstance, LPCWSTR name,
                              int width, int height, int colors,
-                             BOOL32 fCursor, UINT32 loadflags )
+                             BOOL fCursor, UINT loadflags )
 {
-    HANDLE32 handle = 0, h = 0;
-    HANDLE32 hRsrc;
+    HANDLE handle = 0, h = 0;
+    HANDLE hRsrc;
     CURSORICONDIRENTRY dirEntry;
     LPBYTE bits;
 
@@ -673,7 +673,7 @@ HGLOBAL32 CURSORICON_Load32( HINSTANCE32 hInstance, LPCWSTR name,
         if (!hInstance)  /* OEM cursor/icon */
         {
             WORD resid;
-	    HDC32 hdc;
+	    HDC hdc;
 	    DC *dc;
 
             if(HIWORD(name))
@@ -691,31 +691,31 @@ HGLOBAL32 CURSORICON_Load32( HINSTANCE32 hInstance, LPCWSTR name,
                 }
             }
             else resid = LOWORD(name);
-	    hdc = CreateDC32A( "DISPLAY", NULL, NULL, NULL );
+	    hdc = CreateDCA( "DISPLAY", NULL, NULL, NULL );
 	    dc = DC_GetDCPtr( hdc );
 	    if(dc->funcs->pLoadOEMResource)
 	        handle = dc->funcs->pLoadOEMResource( resid, fCursor ?
 						      OEM_CURSOR : OEM_ICON );
 	    GDI_HEAP_UNLOCK( hdc );
-	    DeleteDC32(  hdc );
+	    DeleteDC(  hdc );
             return handle;
         }
 
         /* Find the best entry in the directory */
  
-        if (!CURSORICON_LoadDirEntry32( hInstance, name, width, height,
+        if (!CURSORICON_LoadDirEntry( hInstance, name, width, height,
                                         colors, fCursor, &dirEntry ) )  return 0;
         /* Load the resource */
 
-        if (!(hRsrc = FindResource32W(hInstance,MAKEINTRESOURCE32W(dirEntry.icon.wResId),
-                                      fCursor ? RT_CURSOR32W : RT_ICON32W ))) return 0;
-        if (!(handle = LoadResource32( hInstance, hRsrc ))) return 0;
+        if (!(hRsrc = FindResourceW(hInstance,MAKEINTRESOURCEW(dirEntry.icon.wResId),
+                                      fCursor ? RT_CURSORW : RT_ICONW ))) return 0;
+        if (!(handle = LoadResource( hInstance, hRsrc ))) return 0;
         /* Hack to keep LoadCursor/Icon32() from spawning multiple
          * copies of the same object.
          */
 #define pRsrcEntry ((PIMAGE_RESOURCE_DATA_ENTRY)hRsrc)
         if( pRsrcEntry->ResourceHandle ) return pRsrcEntry->ResourceHandle;
-        bits = (LPBYTE)LockResource32( handle );
+        bits = (LPBYTE)LockResource( handle );
         h = CURSORICON_CreateFromResource( 0, 0, bits, dirEntry.icon.dwBytesInRes, 
                                            !fCursor, 0x00030000, width, height, loadflags);
         pRsrcEntry->ResourceHandle = h;
@@ -756,7 +756,7 @@ static HGLOBAL16 CURSORICON_Copy( HINSTANCE16 hInstance, HGLOBAL16 handle )
     if (!(hInstance = GetExePtr( hInstance ))) return 0;
     size = GlobalSize16( handle );
     hNew = GlobalAlloc16( GMEM_MOVEABLE, size );
-    FarSetOwner( hNew, hInstance );
+    FarSetOwner16( hNew, hInstance );
     ptrNew = (char *)GlobalLock16( hNew );
     memcpy( ptrNew, ptrOld, size );
     GlobalUnlock16( handle );
@@ -770,7 +770,7 @@ static HGLOBAL16 CURSORICON_Copy( HINSTANCE16 hInstance, HGLOBAL16 handle )
  * Converts bitmap to mono and truncates if icon is too large (should
  * probably do StretchBlt() instead).
  */
-HCURSOR16 CURSORICON_IconToCursor(HICON16 hIcon, BOOL32 bSemiTransparent)
+HCURSOR16 CURSORICON_IconToCursor(HICON16 hIcon, BOOL bSemiTransparent)
 {
  HCURSOR16       hRet = 0;
  CURSORICONINFO *pIcon = NULL;
@@ -842,7 +842,7 @@ HCURSOR16 CURSORICON_IconToCursor(HICON16 hIcon, BOOL32 bSemiTransparent)
               pxbPtr += 4;
            }
 
-           hRet = CreateCursorIconIndirect( pTask->hInstance , &cI, pAndBits, pXorBits);
+           hRet = CreateCursorIconIndirect16( pTask->hInstance , &cI, pAndBits, pXorBits);
 
            if( !hRet ) /* fall back on default drag cursor */
                 hRet = CURSORICON_Copy( pTask->hInstance ,
@@ -876,9 +876,9 @@ HCURSOR16 WINAPI LoadCursor16( HINSTANCE16 hInstance, SEGPTR name )
  */
 HICON16 WINAPI LoadIcon16( HINSTANCE16 hInstance, SEGPTR name )
 {
-    HDC32 hdc = GetDC32(0);
-    UINT32 palEnts = GetSystemPaletteEntries32(hdc, 0, 0, NULL);
-    ReleaseDC32(0, hdc);
+    HDC hdc = GetDC(0);
+    UINT palEnts = GetSystemPaletteEntries(hdc, 0, 0, NULL);
+    ReleaseDC(0, hdc);
 
     if (HIWORD(name))
         TRACE(icon, "%04x '%s'\n",
@@ -905,23 +905,23 @@ HCURSOR16 WINAPI CreateCursor16( HINSTANCE16 hInstance,
 
     TRACE(cursor, "%dx%d spot=%d,%d xor=%p and=%p\n",
                     nWidth, nHeight, xHotSpot, yHotSpot, lpXORbits, lpANDbits);
-    return CreateCursorIconIndirect( hInstance, &info, lpANDbits, lpXORbits );
+    return CreateCursorIconIndirect16( hInstance, &info, lpANDbits, lpXORbits );
 }
 
 
 /***********************************************************************
  *           CreateCursor32    (USER32.67)
  */
-HCURSOR32 WINAPI CreateCursor32( HINSTANCE32 hInstance,
-                                 INT32 xHotSpot, INT32 yHotSpot,
-                                 INT32 nWidth, INT32 nHeight,
+HCURSOR WINAPI CreateCursor( HINSTANCE hInstance,
+                                 INT xHotSpot, INT yHotSpot,
+                                 INT nWidth, INT nHeight,
                                  LPCVOID lpANDbits, LPCVOID lpXORbits )
 {
     CURSORICONINFO info = { { xHotSpot, yHotSpot }, nWidth, nHeight, 0, 1, 1 };
 
     TRACE(cursor, "%dx%d spot=%d,%d xor=%p and=%p\n",
                     nWidth, nHeight, xHotSpot, yHotSpot, lpXORbits, lpANDbits);
-    return CreateCursorIconIndirect( 0, &info, lpANDbits, lpXORbits );
+    return CreateCursorIconIndirect16( 0, &info, lpANDbits, lpXORbits );
 }
 
 
@@ -936,29 +936,29 @@ HICON16 WINAPI CreateIcon16( HINSTANCE16 hInstance, INT16 nWidth,
 
     TRACE(icon, "%dx%dx%d, xor=%p, and=%p\n",
                   nWidth, nHeight, bPlanes * bBitsPixel, lpXORbits, lpANDbits);
-    return CreateCursorIconIndirect( hInstance, &info, lpANDbits, lpXORbits );
+    return CreateCursorIconIndirect16( hInstance, &info, lpANDbits, lpXORbits );
 }
 
 
 /***********************************************************************
  *           CreateIcon32    (USER32.75)
  */
-HICON32 WINAPI CreateIcon32( HINSTANCE32 hInstance, INT32 nWidth,
-                             INT32 nHeight, BYTE bPlanes, BYTE bBitsPixel,
+HICON WINAPI CreateIcon( HINSTANCE hInstance, INT nWidth,
+                             INT nHeight, BYTE bPlanes, BYTE bBitsPixel,
                              LPCVOID lpANDbits, LPCVOID lpXORbits )
 {
     CURSORICONINFO info = { { 0, 0 }, nWidth, nHeight, 0, bPlanes, bBitsPixel};
 
     TRACE(icon, "%dx%dx%d, xor=%p, and=%p\n",
                   nWidth, nHeight, bPlanes * bBitsPixel, lpXORbits, lpANDbits);
-    return CreateCursorIconIndirect( 0, &info, lpANDbits, lpXORbits );
+    return CreateCursorIconIndirect16( 0, &info, lpANDbits, lpXORbits );
 }
 
 
 /***********************************************************************
  *           CreateCursorIconIndirect    (USER.408)
  */
-HGLOBAL16 WINAPI CreateCursorIconIndirect( HINSTANCE16 hInstance,
+HGLOBAL16 WINAPI CreateCursorIconIndirect16( HINSTANCE16 hInstance,
                                            CURSORICONINFO *info,
                                            LPCVOID lpANDbits,
                                            LPCVOID lpXORbits )
@@ -975,7 +975,7 @@ HGLOBAL16 WINAPI CreateCursorIconIndirect( HINSTANCE16 hInstance,
     if (!(handle = GlobalAlloc16( GMEM_MOVEABLE,
                                   sizeof(CURSORICONINFO) + sizeXor + sizeAnd)))
         return 0;
-    if (hInstance) FarSetOwner( handle, hInstance );
+    if (hInstance) FarSetOwner16( handle, hInstance );
     ptr = (char *)GlobalLock16( handle );
     memcpy( ptr, info, sizeof(*info) );
     memcpy( ptr + sizeof(CURSORICONINFO), lpANDbits, sizeAnd );
@@ -998,7 +998,7 @@ HICON16 WINAPI CopyIcon16( HINSTANCE16 hInstance, HICON16 hIcon )
 /***********************************************************************
  *           CopyIcon32    (USER32.60)
  */
-HICON32 WINAPI CopyIcon32( HICON32 hIcon )
+HICON WINAPI CopyIcon( HICON hIcon )
 {
   HTASK16 hTask = GetCurrentTask ();
   TDB* pTask = (TDB *) GlobalLock16 (hTask);
@@ -1031,7 +1031,7 @@ BOOL16 WINAPI DestroyIcon16( HICON16 hIcon )
 /***********************************************************************
  *           DestroyIcon32    (USER32.133)
  */
-BOOL32 WINAPI DestroyIcon32( HICON32 hIcon )
+BOOL WINAPI DestroyIcon( HICON hIcon )
 {
     TRACE(icon, "%04x\n", hIcon );
     /* FIXME: should check for OEM/global heap icon here */
@@ -1068,7 +1068,7 @@ BOOL16 WINAPI DestroyCursor16( HCURSOR16 hCursor )
 /***********************************************************************
  *           DestroyCursor32    (USER32.132)
  */
-BOOL32 WINAPI DestroyCursor32( HCURSOR32 hCursor )
+BOOL WINAPI DestroyCursor( HCURSOR hCursor )
 {
     TRACE(cursor, "%04x\n", hCursor );
     /* FIXME: should check for OEM/global heap cursor here */
@@ -1083,44 +1083,44 @@ BOOL32 WINAPI DestroyCursor32( HCURSOR32 hCursor )
  */
 BOOL16 WINAPI DrawIcon16( HDC16 hdc, INT16 x, INT16 y, HICON16 hIcon )
 {
-    return DrawIcon32( hdc, x, y, hIcon );
+    return DrawIcon( hdc, x, y, hIcon );
 }
 
 
 /***********************************************************************
  *           DrawIcon32    (USER32.159)
  */
-BOOL32 WINAPI DrawIcon32( HDC32 hdc, INT32 x, INT32 y, HICON32 hIcon )
+BOOL WINAPI DrawIcon( HDC hdc, INT x, INT y, HICON hIcon )
 {
     CURSORICONINFO *ptr;
-    HDC32 hMemDC;
-    HBITMAP32 hXorBits, hAndBits;
+    HDC hMemDC;
+    HBITMAP hXorBits, hAndBits;
     COLORREF oldFg, oldBg;
 
     if (!(ptr = (CURSORICONINFO *)GlobalLock16( hIcon ))) return FALSE;
-    if (!(hMemDC = CreateCompatibleDC32( hdc ))) return FALSE;
-    hAndBits = CreateBitmap32( ptr->nWidth, ptr->nHeight, 1, 1,
+    if (!(hMemDC = CreateCompatibleDC( hdc ))) return FALSE;
+    hAndBits = CreateBitmap( ptr->nWidth, ptr->nHeight, 1, 1,
                                (char *)(ptr+1) );
-    hXorBits = CreateBitmap32( ptr->nWidth, ptr->nHeight, ptr->bPlanes,
+    hXorBits = CreateBitmap( ptr->nWidth, ptr->nHeight, ptr->bPlanes,
                                ptr->bBitsPerPixel, (char *)(ptr + 1)
                         + ptr->nHeight * BITMAP_GetWidthBytes(ptr->nWidth,1) );
-    oldFg = SetTextColor32( hdc, RGB(0,0,0) );
-    oldBg = SetBkColor32( hdc, RGB(255,255,255) );
+    oldFg = SetTextColor( hdc, RGB(0,0,0) );
+    oldBg = SetBkColor( hdc, RGB(255,255,255) );
 
     if (hXorBits && hAndBits)
     {
-        HBITMAP32 hBitTemp = SelectObject32( hMemDC, hAndBits );
-        BitBlt32( hdc, x, y, ptr->nWidth, ptr->nHeight, hMemDC, 0, 0, SRCAND );
-        SelectObject32( hMemDC, hXorBits );
-        BitBlt32(hdc, x, y, ptr->nWidth, ptr->nHeight, hMemDC, 0, 0,SRCINVERT);
-        SelectObject32( hMemDC, hBitTemp );
+        HBITMAP hBitTemp = SelectObject( hMemDC, hAndBits );
+        BitBlt( hdc, x, y, ptr->nWidth, ptr->nHeight, hMemDC, 0, 0, SRCAND );
+        SelectObject( hMemDC, hXorBits );
+        BitBlt(hdc, x, y, ptr->nWidth, ptr->nHeight, hMemDC, 0, 0,SRCINVERT);
+        SelectObject( hMemDC, hBitTemp );
     }
-    DeleteDC32( hMemDC );
-    if (hXorBits) DeleteObject32( hXorBits );
-    if (hAndBits) DeleteObject32( hAndBits );
+    DeleteDC( hMemDC );
+    if (hXorBits) DeleteObject( hXorBits );
+    if (hAndBits) DeleteObject( hAndBits );
     GlobalUnlock16( hIcon );
-    SetTextColor32( hdc, oldFg );
-    SetBkColor32( hdc, oldBg );
+    SetTextColor( hdc, oldFg );
+    SetBkColor( hdc, oldBg );
     return TRUE;
 }
 
@@ -1128,7 +1128,7 @@ BOOL32 WINAPI DrawIcon32( HDC32 hdc, INT32 x, INT32 y, HICON32 hIcon )
 /***********************************************************************
  *           DumpIcon    (USER.459)
  */
-DWORD WINAPI DumpIcon( SEGPTR pInfo, WORD *lpLen,
+DWORD WINAPI DumpIcon16( SEGPTR pInfo, WORD *lpLen,
                        SEGPTR *lpXorBits, SEGPTR *lpAndBits )
 {
     CURSORICONINFO *info = PTR_SEG_TO_LIN( pInfo );
@@ -1149,7 +1149,7 @@ DWORD WINAPI DumpIcon( SEGPTR pInfo, WORD *lpLen,
  */
 HCURSOR16 WINAPI SetCursor16( HCURSOR16 hCursor )
 {
-    return (HCURSOR16)SetCursor32( hCursor );
+    return (HCURSOR16)SetCursor( hCursor );
 }
 
 
@@ -1158,10 +1158,10 @@ HCURSOR16 WINAPI SetCursor16( HCURSOR16 hCursor )
  * RETURNS:
  *	A handle to the previous cursor shape.
  */
-HCURSOR32 WINAPI SetCursor32(
-	         HCURSOR32 hCursor /* Handle of cursor to show */
+HCURSOR WINAPI SetCursor(
+	         HCURSOR hCursor /* Handle of cursor to show */
 ) {
-    HCURSOR32 hOldCursor;
+    HCURSOR hOldCursor;
 
     if (hCursor == hActiveCursor) return hActiveCursor;  /* No change */
     TRACE(cursor, "%04x\n", hCursor );
@@ -1182,14 +1182,14 @@ HCURSOR32 WINAPI SetCursor32(
  */
 void WINAPI SetCursorPos16( INT16 x, INT16 y )
 {
-    SetCursorPos32( x, y );
+    SetCursorPos( x, y );
 }
 
 
 /***********************************************************************
  *           SetCursorPos32    (USER32.474)
  */
-BOOL32 WINAPI SetCursorPos32( INT32 x, INT32 y )
+BOOL WINAPI SetCursorPos( INT x, INT y )
 {
     DISPLAY_MoveCursor( x, y );
     return TRUE;
@@ -1201,14 +1201,14 @@ BOOL32 WINAPI SetCursorPos32( INT32 x, INT32 y )
  */
 INT16 WINAPI ShowCursor16( BOOL16 bShow )
 {
-    return ShowCursor32( bShow );
+    return ShowCursor( bShow );
 }
 
 
 /***********************************************************************
  *           ShowCursor32    (USER32.530)
  */
-INT32 WINAPI ShowCursor32( BOOL32 bShow )
+INT WINAPI ShowCursor( BOOL bShow )
 {
     TRACE(cursor, "%d, count=%d\n",
                     bShow, CURSOR_ShowCount );
@@ -1242,7 +1242,7 @@ HCURSOR16 WINAPI GetCursor16(void)
 /***********************************************************************
  *           GetCursor32    (USER32.227)
  */
-HCURSOR32 WINAPI GetCursor32(void)
+HCURSOR WINAPI GetCursor(void)
 {
     return hActiveCursor;
 }
@@ -1253,7 +1253,7 @@ HCURSOR32 WINAPI GetCursor32(void)
  */
 BOOL16 WINAPI ClipCursor16( const RECT16 *rect )
 {
-    if (!rect) SetRectEmpty32( &CURSOR_ClipRect );
+    if (!rect) SetRectEmpty( &CURSOR_ClipRect );
     else CONV_RECT16TO32( rect, &CURSOR_ClipRect );
     return TRUE;
 }
@@ -1262,10 +1262,10 @@ BOOL16 WINAPI ClipCursor16( const RECT16 *rect )
 /***********************************************************************
  *           ClipCursor32    (USER32.53)
  */
-BOOL32 WINAPI ClipCursor32( const RECT32 *rect )
+BOOL WINAPI ClipCursor( const RECT *rect )
 {
-    if (!rect) SetRectEmpty32( &CURSOR_ClipRect );
-    else CopyRect32( &CURSOR_ClipRect, rect );
+    if (!rect) SetRectEmpty( &CURSOR_ClipRect );
+    else CopyRect( &CURSOR_ClipRect, rect );
     return TRUE;
 }
 
@@ -1305,9 +1305,9 @@ BOOL16 WINAPI GetCursorPos16( POINT16 *pt )
 /***********************************************************************
  *           GetCursorPos32    (USER32.229)
  */
-BOOL32 WINAPI GetCursorPos32( POINT32 *pt )
+BOOL WINAPI GetCursorPos( POINT *pt )
 {
-    BOOL32 ret;
+    BOOL ret;
 
     POINT16 pt16;
     ret = GetCursorPos16( &pt16 );
@@ -1328,11 +1328,11 @@ void WINAPI GetClipCursor16( RECT16 *rect )
 /***********************************************************************
  *           GetClipCursor32    (USER32.221)
  */
-BOOL32 WINAPI GetClipCursor32( RECT32 *rect )
+BOOL WINAPI GetClipCursor( RECT *rect )
 {
     if (rect) 
     {
-       CopyRect32( rect, &CURSOR_ClipRect );
+       CopyRect( rect, &CURSOR_ClipRect );
        return TRUE;
     }
     return FALSE;
@@ -1350,10 +1350,10 @@ INT16 WINAPI LookupIconIdFromDirectoryEx16( LPBYTE xdir, BOOL16 bIcon,
     UINT16 retVal = 0;
     if( dir && !dir->idReserved && (dir->idType & 3) )
     {
-        HDC32 hdc = GetDC32(0);
-	UINT32 palEnts = GetSystemPaletteEntries32(hdc, 0, 0, NULL);
+        HDC hdc = GetDC(0);
+	UINT palEnts = GetSystemPaletteEntries(hdc, 0, 0, NULL);
 	int colors = (cFlag & LR_MONOCHROME) ? 2 : palEnts;
-	ReleaseDC32(0, hdc);
+	ReleaseDC(0, hdc);
 
 	if( bIcon )
 	{
@@ -1375,8 +1375,8 @@ INT16 WINAPI LookupIconIdFromDirectoryEx16( LPBYTE xdir, BOOL16 bIcon,
 /**********************************************************************
  *          LookupIconIdFromDirectoryEx32       (USER32.380)
  */
-INT32 WINAPI LookupIconIdFromDirectoryEx32( LPBYTE dir, BOOL32 bIcon,
-             INT32 width, INT32 height, UINT32 cFlag )
+INT WINAPI LookupIconIdFromDirectoryEx( LPBYTE dir, BOOL bIcon,
+             INT width, INT height, UINT cFlag )
 {
     return LookupIconIdFromDirectoryEx16( dir, bIcon, width, height, cFlag );
 }
@@ -1394,9 +1394,9 @@ INT16 WINAPI LookupIconIdFromDirectory16( LPBYTE dir, BOOL16 bIcon )
 /**********************************************************************
  *          LookupIconIdFromDirectory		(USER32.379)
  */
-INT32 WINAPI LookupIconIdFromDirectory32( LPBYTE dir, BOOL32 bIcon )
+INT WINAPI LookupIconIdFromDirectory( LPBYTE dir, BOOL bIcon )
 {
-    return LookupIconIdFromDirectoryEx32( dir, bIcon, 
+    return LookupIconIdFromDirectoryEx( dir, bIcon, 
 	   bIcon ? SYSMETRICS_CXICON : SYSMETRICS_CXCURSOR,
 	   bIcon ? SYSMETRICS_CYICON : SYSMETRICS_CYCURSOR, bIcon ? 0 : LR_MONOCHROME );
 }
@@ -1404,7 +1404,7 @@ INT32 WINAPI LookupIconIdFromDirectory32( LPBYTE dir, BOOL32 bIcon )
 /**********************************************************************
  *	    GetIconID    (USER.455)
  */
-WORD WINAPI GetIconID( HGLOBAL16 hResource, DWORD resType )
+WORD WINAPI GetIconID16( HGLOBAL16 hResource, DWORD resType )
 {
     LPBYTE lpDir = (LPBYTE)GlobalLock16(hResource);
 
@@ -1430,7 +1430,7 @@ WORD WINAPI GetIconID( HGLOBAL16 hResource, DWORD resType )
  *
  * Supposed to load resources of Windows 2.x applications.
  */
-HGLOBAL16 WINAPI LoadCursorIconHandler( HGLOBAL16 hResource, HMODULE16 hModule, HRSRC16 hRsrc )
+HGLOBAL16 WINAPI LoadCursorIconHandler16( HGLOBAL16 hResource, HMODULE16 hModule, HRSRC16 hRsrc )
 {
     FIXME(cursor,"(%04x,%04x,%04x): old 2.x resources are not supported!\n", 
 	  hResource, hModule, hRsrc);
@@ -1443,7 +1443,7 @@ HGLOBAL16 WINAPI LoadCursorIconHandler( HGLOBAL16 hResource, HMODULE16 hModule, 
  * RT_ICON resource loader, installed by USER_SignalProc when module
  * is initialized.
  */
-HGLOBAL16 WINAPI LoadDIBIconHandler( HGLOBAL16 hMemObj, HMODULE16 hModule, HRSRC16 hRsrc )
+HGLOBAL16 WINAPI LoadDIBIconHandler16( HGLOBAL16 hMemObj, HMODULE16 hModule, HRSRC16 hRsrc )
 {
     /* If hResource is zero we must allocate a new memory block, if it's
      * non-zero but GlobalLock() returns NULL then it was discarded and
@@ -1467,7 +1467,7 @@ HGLOBAL16 WINAPI LoadDIBIconHandler( HGLOBAL16 hMemObj, HMODULE16 hModule, HRSRC
  *
  * RT_CURSOR resource loader. Same as above.
  */
-HGLOBAL16 WINAPI LoadDIBCursorHandler( HGLOBAL16 hMemObj, HMODULE16 hModule, HRSRC16 hRsrc )
+HGLOBAL16 WINAPI LoadDIBCursorHandler16( HGLOBAL16 hMemObj, HMODULE16 hModule, HRSRC16 hRsrc )
 {
     hMemObj = USER_CallDefaultRsrcHandler( hMemObj, hModule, hRsrc );
     if( hMemObj )
@@ -1483,7 +1483,7 @@ HGLOBAL16 WINAPI LoadDIBCursorHandler( HGLOBAL16 hMemObj, HMODULE16 hModule, HRS
 /**********************************************************************
  *	    LoadIconHandler    (USER.456)
  */
-HICON16 WINAPI LoadIconHandler( HGLOBAL16 hResource, BOOL16 bNew )
+HICON16 WINAPI LoadIconHandler16( HGLOBAL16 hResource, BOOL16 bNew )
 {
     LPBYTE bits = (LPBYTE)LockResource16( hResource );
 
@@ -1496,24 +1496,24 @@ HICON16 WINAPI LoadIconHandler( HGLOBAL16 hResource, BOOL16 bNew )
 /***********************************************************************
  *           LoadCursorW                (USER32.362)
  */
-HCURSOR32 WINAPI LoadCursor32W(HINSTANCE32 hInstance, LPCWSTR name)
+HCURSOR WINAPI LoadCursorW(HINSTANCE hInstance, LPCWSTR name)
 {
-    return CURSORICON_Load32( hInstance, name,
+    return CURSORICON_Load( hInstance, name,
                               SYSMETRICS_CXCURSOR, SYSMETRICS_CYCURSOR, 1, TRUE, 0);
 }
 
 /***********************************************************************
  *           LoadCursorA                (USER32.359)
  */
-HCURSOR32 WINAPI LoadCursor32A(HINSTANCE32 hInstance, LPCSTR name)
+HCURSOR WINAPI LoadCursorA(HINSTANCE hInstance, LPCSTR name)
 {
-        HCURSOR32 res=0;
+        HCURSOR res=0;
         if(!HIWORD(name))
-                return LoadCursor32W(hInstance,(LPCWSTR)name);
+                return LoadCursorW(hInstance,(LPCWSTR)name);
         else
         {
             LPWSTR uni = HEAP_strdupAtoW( GetProcessHeap(), 0, name );
-            res = LoadCursor32W(hInstance, uni);
+            res = LoadCursorW(hInstance, uni);
             HeapFree( GetProcessHeap(), 0, uni);
         }
         return res;
@@ -1521,20 +1521,20 @@ HCURSOR32 WINAPI LoadCursor32A(HINSTANCE32 hInstance, LPCSTR name)
 /***********************************************************************
 *            LoadCursorFromFile32W    (USER32.361)
 */
-HCURSOR32 WINAPI LoadCursorFromFile32W (LPCWSTR name)
+HCURSOR WINAPI LoadCursorFromFileW (LPCWSTR name)
 {
-    return LoadImage32W(0, name, IMAGE_CURSOR, SYSMETRICS_CXCURSOR,
+    return LoadImageW(0, name, IMAGE_CURSOR, SYSMETRICS_CXCURSOR,
       SYSMETRICS_CYCURSOR, LR_LOADFROMFILE);
 }
 
 /***********************************************************************
 *            LoadCursorFromFile32A    (USER32.360)
 */
-HCURSOR32 WINAPI LoadCursorFromFile32A (LPCSTR name)
+HCURSOR WINAPI LoadCursorFromFileA (LPCSTR name)
 {
-    HCURSOR32 hcur;
+    HCURSOR hcur;
     LPWSTR u_name = HEAP_strdupAtoW( GetProcessHeap(), 0, name );
-    hcur = LoadCursorFromFile32W(u_name);
+    hcur = LoadCursorFromFileW(u_name);
     HeapFree( GetProcessHeap(), 0, u_name );
     return hcur;
 }
@@ -1542,13 +1542,13 @@ HCURSOR32 WINAPI LoadCursorFromFile32A (LPCSTR name)
 /***********************************************************************
  *           LoadIconW          (USER32.364)
  */
-HICON32 WINAPI LoadIcon32W(HINSTANCE32 hInstance, LPCWSTR name)
+HICON WINAPI LoadIconW(HINSTANCE hInstance, LPCWSTR name)
 {
-    HDC32 hdc = GetDC32(0);
-    UINT32 palEnts = GetSystemPaletteEntries32(hdc, 0, 0, NULL);
-    ReleaseDC32(0, hdc);
+    HDC hdc = GetDC(0);
+    UINT palEnts = GetSystemPaletteEntries(hdc, 0, 0, NULL);
+    ReleaseDC(0, hdc);
 
-    return CURSORICON_Load32( hInstance, name,
+    return CURSORICON_Load( hInstance, name,
                               SYSMETRICS_CXICON, SYSMETRICS_CYICON,
                               MIN( 16, palEnts ), FALSE, 0);
 }
@@ -1556,16 +1556,16 @@ HICON32 WINAPI LoadIcon32W(HINSTANCE32 hInstance, LPCWSTR name)
 /***********************************************************************
  *           LoadIconA          (USER32.363)
  */
-HICON32 WINAPI LoadIcon32A(HINSTANCE32 hInstance, LPCSTR name)
+HICON WINAPI LoadIconA(HINSTANCE hInstance, LPCSTR name)
 {
-    HICON32 res=0;
+    HICON res=0;
 
     if( !HIWORD(name) )
-	return LoadIcon32W(hInstance, (LPCWSTR)name);
+	return LoadIconW(hInstance, (LPCWSTR)name);
     else
     {
 	LPWSTR uni = HEAP_strdupAtoW( GetProcessHeap(), 0, name );
-	res = LoadIcon32W( hInstance, uni );
+	res = LoadIconW( hInstance, uni );
 	HeapFree( GetProcessHeap(), 0, uni );
     }
     return res;
@@ -1576,8 +1576,8 @@ HICON32 WINAPI LoadIcon32A(HINSTANCE32 hInstance, LPCSTR name)
  */
 BOOL16 WINAPI GetIconInfo16(HICON16 hIcon,LPICONINFO16 iconinfo)
 {
-    ICONINFO32	ii32;
-    BOOL16	ret = GetIconInfo32((HICON32)hIcon, &ii32);
+    ICONINFO	ii32;
+    BOOL16	ret = GetIconInfo((HICON)hIcon, &ii32);
 
     iconinfo->fIcon = ii32.fIcon;
     iconinfo->xHotspot = ii32.xHotspot;
@@ -1590,7 +1590,7 @@ BOOL16 WINAPI GetIconInfo16(HICON16 hIcon,LPICONINFO16 iconinfo)
 /**********************************************************************
  *          GetIconInfo32		(USER32.242)
  */
-BOOL32 WINAPI GetIconInfo32(HICON32 hIcon,LPICONINFO32 iconinfo) {
+BOOL WINAPI GetIconInfo(HICON hIcon,LPICONINFO iconinfo) {
     CURSORICONINFO	*ciconinfo;
 
     ciconinfo = GlobalLock16(hIcon);
@@ -1600,12 +1600,12 @@ BOOL32 WINAPI GetIconInfo32(HICON32 hIcon,LPICONINFO32 iconinfo) {
     iconinfo->yHotspot = ciconinfo->ptHotSpot.y;
     iconinfo->fIcon    = TRUE; /* hmm */
 
-    iconinfo->hbmColor = CreateBitmap32 ( ciconinfo->nWidth, ciconinfo->nHeight,
+    iconinfo->hbmColor = CreateBitmap ( ciconinfo->nWidth, ciconinfo->nHeight,
                                 ciconinfo->bPlanes, ciconinfo->bBitsPerPixel,
                                 (char *)(ciconinfo + 1)
                                 + ciconinfo->nHeight *
                                 BITMAP_GetWidthBytes (ciconinfo->nWidth,1) );
-    iconinfo->hbmMask = CreateBitmap32 ( ciconinfo->nWidth, ciconinfo->nHeight,
+    iconinfo->hbmMask = CreateBitmap ( ciconinfo->nWidth, ciconinfo->nHeight,
                                 1, 1, (char *)(ciconinfo + 1));
 
     GlobalUnlock16(hIcon);
@@ -1616,9 +1616,9 @@ BOOL32 WINAPI GetIconInfo32(HICON32 hIcon,LPICONINFO32 iconinfo) {
 /**********************************************************************
  *          CreateIconIndirect		(USER32.78)
  */
-HICON32 WINAPI CreateIconIndirect(LPICONINFO32 iconinfo) {
+HICON WINAPI CreateIconIndirect(LPICONINFO iconinfo) {
     BITMAPOBJ *bmpXor,*bmpAnd;
-    HICON32 hObj;
+    HICON hObj;
     int	sizeXor,sizeAnd;
 
     bmpXor = (BITMAPOBJ *) GDI_GetObjPtr( iconinfo->hbmColor, BITMAP_MAGIC );
@@ -1644,8 +1644,8 @@ HICON32 WINAPI CreateIconIndirect(LPICONINFO32 iconinfo) {
 
 	/* Transfer the bitmap bits to the CURSORICONINFO structure */
 
-	GetBitmapBits32( iconinfo->hbmMask ,sizeAnd,(char*)(info + 1) );
-	GetBitmapBits32( iconinfo->hbmColor,sizeXor,(char*)(info + 1) +sizeAnd);
+	GetBitmapBits( iconinfo->hbmMask ,sizeAnd,(char*)(info + 1) );
+	GetBitmapBits( iconinfo->hbmColor,sizeXor,(char*)(info + 1) +sizeAnd);
 	GlobalUnlock16( hObj );
     }
     return hObj;
@@ -1660,7 +1660,7 @@ BOOL16 WINAPI DrawIconEx16 (HDC16 hdc, INT16 xLeft, INT16 yTop, HICON16 hIcon,
 			    INT16 cxWidth, INT16 cyWidth, UINT16 istep,
 			    HBRUSH16 hbr, UINT16 flags)
 {
-    return DrawIconEx32(hdc, xLeft, yTop, hIcon, cxWidth, cyWidth,
+    return DrawIconEx(hdc, xLeft, yTop, hIcon, cxWidth, cyWidth,
                         istep, hbr, flags);
 }
 
@@ -1686,14 +1686,14 @@ BOOL16 WINAPI DrawIconEx16 (HDC16 hdc, INT16 xLeft, INT16 yTop, HICON16 hIcon,
  *    Success: TRUE
  *    Failure: FALSE
  */
-BOOL32 WINAPI DrawIconEx32( HDC32 hdc, INT32 x0, INT32 y0, HICON32 hIcon,
-                            INT32 cxWidth, INT32 cyWidth, UINT32 istep, 
-                            HBRUSH32 hbr, UINT32 flags )
+BOOL WINAPI DrawIconEx( HDC hdc, INT x0, INT y0, HICON hIcon,
+                            INT cxWidth, INT cyWidth, UINT istep, 
+                            HBRUSH hbr, UINT flags )
 {
     CURSORICONINFO *ptr = (CURSORICONINFO *)GlobalLock16 (hIcon);
-    HDC32 hDC_off = 0, hMemDC = CreateCompatibleDC32 (hdc);
-    BOOL32 result = FALSE, DoOffscreen = FALSE;
-    HBITMAP32 hB_off = 0, hOld = 0;
+    HDC hDC_off = 0, hMemDC = CreateCompatibleDC (hdc);
+    BOOL result = FALSE, DoOffscreen = FALSE;
+    HBITMAP hB_off = 0, hOld = 0;
 
     if (!ptr) return FALSE;
 
@@ -1706,14 +1706,14 @@ BOOL32 WINAPI DrawIconEx32( HDC32 hdc, INT32 x0, INT32 y0, HICON32 hIcon,
     if (cxWidth == 0)
     {
       if (flags & DI_DEFAULTSIZE)
-	cxWidth = GetSystemMetrics32 (SM_CXICON);
+	cxWidth = GetSystemMetrics (SM_CXICON);
       else
 	cxWidth = ptr->nWidth;
     }
     if (cyWidth == 0)
     {
       if (flags & DI_DEFAULTSIZE)
-        cyWidth = GetSystemMetrics32 (SM_CYICON);
+        cyWidth = GetSystemMetrics (SM_CYICON);
       else
 	cyWidth = ptr->nHeight;
     }
@@ -1730,73 +1730,73 @@ BOOL32 WINAPI DrawIconEx32( HDC32 hdc, INT32 x0, INT32 y0, HICON32 hIcon,
 	}
     }
     if (DoOffscreen) {
-      RECT32 r = {0, 0, cxWidth, cxWidth};
+      RECT r = {0, 0, cxWidth, cxWidth};
 
-      hDC_off = CreateCompatibleDC32(hdc);
-      hB_off = CreateCompatibleBitmap32(hdc, cxWidth, cyWidth);
+      hDC_off = CreateCompatibleDC(hdc);
+      hB_off = CreateCompatibleBitmap(hdc, cxWidth, cyWidth);
       if (hDC_off && hB_off) {
-	hOld = SelectObject32(hDC_off, hB_off);
-	FillRect32(hDC_off, &r, hbr);
+	hOld = SelectObject(hDC_off, hB_off);
+	FillRect(hDC_off, &r, hbr);
       }
     };
 
     if (hMemDC && (!DoOffscreen || (hDC_off && hB_off)))
     {
-	HBITMAP32 hXorBits, hAndBits;
+	HBITMAP hXorBits, hAndBits;
 	COLORREF  oldFg, oldBg;
-	INT32     nStretchMode;
+	INT     nStretchMode;
 
-	nStretchMode = SetStretchBltMode32 (hdc, STRETCH_DELETESCANS);
+	nStretchMode = SetStretchBltMode (hdc, STRETCH_DELETESCANS);
 
-	hXorBits = CreateBitmap32 ( ptr->nWidth, ptr->nHeight,
+	hXorBits = CreateBitmap ( ptr->nWidth, ptr->nHeight,
 				    ptr->bPlanes, ptr->bBitsPerPixel,
 				    (char *)(ptr + 1)
 				    + ptr->nHeight *
 				    BITMAP_GetWidthBytes(ptr->nWidth,1) );
-	hAndBits = CreateBitmap32 ( ptr->nWidth, ptr->nHeight,
+	hAndBits = CreateBitmap ( ptr->nWidth, ptr->nHeight,
 				    1, 1, (char *)(ptr+1) );
-	oldFg = SetTextColor32( hdc, RGB(0,0,0) );
-	oldBg = SetBkColor32( hdc, RGB(255,255,255) );
+	oldFg = SetTextColor( hdc, RGB(0,0,0) );
+	oldBg = SetBkColor( hdc, RGB(255,255,255) );
 
 	if (hXorBits && hAndBits)
 	{
-	    HBITMAP32 hBitTemp = SelectObject32( hMemDC, hAndBits );
+	    HBITMAP hBitTemp = SelectObject( hMemDC, hAndBits );
 	    if (flags & DI_MASK)
             {
 	      if (DoOffscreen) 
-		StretchBlt32 (hDC_off, 0, 0, cxWidth, cyWidth,
+		StretchBlt (hDC_off, 0, 0, cxWidth, cyWidth,
 			      hMemDC, 0, 0, ptr->nWidth, ptr->nHeight, SRCAND);
 	      else 
-	        StretchBlt32 (hdc, x0, y0, cxWidth, cyWidth,
+	        StretchBlt (hdc, x0, y0, cxWidth, cyWidth,
 			      hMemDC, 0, 0, ptr->nWidth, ptr->nHeight, SRCAND);
             }
-	    SelectObject32( hMemDC, hXorBits );
+	    SelectObject( hMemDC, hXorBits );
 	    if (flags & DI_IMAGE)
             {
 	      if (DoOffscreen) 
-		StretchBlt32 (hDC_off, 0, 0, cxWidth, cyWidth,
+		StretchBlt (hDC_off, 0, 0, cxWidth, cyWidth,
 			  hMemDC, 0, 0, ptr->nWidth, ptr->nHeight, SRCPAINT);
 	      else
-		StretchBlt32 (hdc, x0, y0, cxWidth, cyWidth,
+		StretchBlt (hdc, x0, y0, cxWidth, cyWidth,
 			      hMemDC, 0, 0, ptr->nWidth, ptr->nHeight, SRCPAINT);
             }
-	    SelectObject32( hMemDC, hBitTemp );
+	    SelectObject( hMemDC, hBitTemp );
 	    result = TRUE;
 	}
 
-	SetTextColor32( hdc, oldFg );
-	SetBkColor32( hdc, oldBg );
-	if (hXorBits) DeleteObject32( hXorBits );
-	if (hAndBits) DeleteObject32( hAndBits );
-	SetStretchBltMode32 (hdc, nStretchMode);
+	SetTextColor( hdc, oldFg );
+	SetBkColor( hdc, oldBg );
+	if (hXorBits) DeleteObject( hXorBits );
+	if (hAndBits) DeleteObject( hAndBits );
+	SetStretchBltMode (hdc, nStretchMode);
 	if (DoOffscreen) {
-	  BitBlt32(hdc, x0, y0, cxWidth, cyWidth, hDC_off, 0, 0, SRCCOPY);
-	  SelectObject32(hDC_off, hOld);
+	  BitBlt(hdc, x0, y0, cxWidth, cyWidth, hDC_off, 0, 0, SRCCOPY);
+	  SelectObject(hDC_off, hOld);
 	}
     }
-    if (hMemDC) DeleteDC32( hMemDC );
-    if (hDC_off) DeleteDC32(hDC_off);
-    if (hB_off) DeleteObject32(hB_off);
+    if (hMemDC) DeleteDC( hMemDC );
+    if (hDC_off) DeleteDC(hDC_off);
+    if (hB_off) DeleteObject(hB_off);
     GlobalUnlock16( hIcon );
     return result;
 }

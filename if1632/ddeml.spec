@@ -9,13 +9,13 @@ type	win16
 7 pascal   DdeConnect(long long long ptr) DdeConnect16
 8 pascal16 DdeDisconnect(long) DdeDisconnect16
 9 stub DdeQueryConvInfo #(word long ptr) DdeQueryConvInfo
-10 pascal DdeSetUserHandle(word long long) DdeSetUserHandle
+10 pascal DdeSetUserHandle(word long long) DdeSetUserHandle16
 11 pascal   DdeClientTransaction(ptr long long long s_word s_word long ptr)
             DdeClientTransaction16
-12 pascal DdeAbandonTransaction(long word long) DdeAbandonTransaction
+12 pascal DdeAbandonTransaction(long word long) DdeAbandonTransaction16
 13 pascal DdePostAdvise(long word word) DdePostAdvise16
 14 pascal DdeCreateDataHandle(long ptr long long word word word) DdeCreateDataHandle16
-15 pascal DdeAddData(word ptr long long) DdeAddData
+15 pascal DdeAddData(word ptr long long) DdeAddData16
 16 pascal DdeGetData(word ptr long long) DdeGetData16
 17 pascal DdeAccessData(word ptr) DdeAccessData16
 18 pascal DdeUnaccessData(word) DdeUnaccessData16

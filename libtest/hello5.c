@@ -8,7 +8,7 @@ int PASCAL WinMain (HANDLE inst, HANDLE prev, LPSTR cmdline, int show)
 {
 	SYSTEM_INFO	si;
 	void (CALLBACK *fnGetSystemInfo)(LPSYSTEM_INFO si);
-	HMODULE32	kernel32;
+	HMODULE	kernel32;
 
 	kernel32 = LoadLibrary("KERNEL32");
 	if (kernel32<32) {

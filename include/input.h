@@ -7,8 +7,8 @@
 #ifndef __WINE_INPUT_H
 #define __WINE_INPUT_H
 
-extern BOOL32 MouseButtonsStates[3];
-extern BOOL32 AsyncMouseButtonsStates[3];
+extern BOOL MouseButtonsStates[3];
+extern BOOL AsyncMouseButtonsStates[3];
 extern BYTE InputKeyStateTable[256];
 extern BYTE QueueKeyStateTable[256];
 extern BYTE AsyncKeyStateTable[256];

@@ -28,7 +28,7 @@ typedef struct {
 	BOOL16  	fShareable;         /* TRUE if first open was shareable */
 	WORD    	wNotifyDeviceID;    /* MCI device ID with a pending notification */
 	HANDLE16 	hCallback;          /* Callback handle for pending notification */
-	MCI_OPEN_PARMS32A 	openParms;
+	MCI_OPEN_PARMSA 	openParms;
 	DWORD		dwTimeFormat;
 	int		mode;
 	UINT16		nCurTrack;
@@ -58,7 +58,7 @@ static WINE_MCIANIM*  ANIM_mciGetOpenDrv(UINT16 wDevID)
 /**************************************************************************
  * 				ANIM_mciOpen			[internal]
  */
-static DWORD ANIM_mciOpen(UINT16 wDevID, DWORD dwFlags, LPMCI_OPEN_PARMS32A lpOpenParms)
+static DWORD ANIM_mciOpen(UINT16 wDevID, DWORD dwFlags, LPMCI_OPEN_PARMSA lpOpenParms)
 {
     DWORD		dwDeviceID;
     WINE_MCIANIM*	wma;
@@ -96,7 +96,7 @@ static DWORD ANIM_mciOpen(UINT16 wDevID, DWORD dwFlags, LPMCI_OPEN_PARMS32A lpOp
 	}
 	FIXME(mcianim, "element is not opened\n");
     }
-    memcpy(&wma->openParms, lpOpenParms, sizeof(MCI_OPEN_PARMS32A));
+    memcpy(&wma->openParms, lpOpenParms, sizeof(MCI_OPEN_PARMSA));
     wma->wNotifyDeviceID = dwDeviceID;
     wma->mode = 0;
     wma->dwTimeFormat = MCI_FORMAT_TMSF;
@@ -585,7 +585,7 @@ static DWORD ANIM_mciSet(UINT16 wDevID, DWORD dwFlags, LPMCI_SET_PARMS lpParms)
 /**************************************************************************
  * 				ANIM_DriverProc32		[sample driver]
  */
-LONG MCIANIM_DriverProc32(DWORD dwDevID, HDRVR16 hDriv, DWORD wMsg, 
+LONG MCIANIM_DriverProc(DWORD dwDevID, HDRVR16 hDriv, DWORD wMsg, 
 		       DWORD dwParam1, DWORD dwParam2)
 {
     switch(wMsg) {
@@ -596,11 +596,11 @@ LONG MCIANIM_DriverProc32(DWORD dwDevID, HDRVR16 hDriv, DWORD wMsg,
     case DRV_ENABLE:		return 1;
     case DRV_DISABLE:		return 1;
     case DRV_QUERYCONFIGURE:	return 1;
-    case DRV_CONFIGURE:		MessageBox32A(0, "Sample MultiMedia Linux Driver !", "MMLinux Driver", MB_OK); return 1;
+    case DRV_CONFIGURE:		MessageBoxA(0, "Sample MultiMedia Linux Driver !", "MMLinux Driver", MB_OK); return 1;
     case DRV_INSTALL:		return DRVCNF_RESTART;
     case DRV_REMOVE:		return DRVCNF_RESTART;
 
-    case MCI_OPEN_DRIVER:	return ANIM_mciOpen(dwDevID, dwParam1, (LPMCI_OPEN_PARMS32A)dwParam2); 
+    case MCI_OPEN_DRIVER:	return ANIM_mciOpen(dwDevID, dwParam1, (LPMCI_OPEN_PARMSA)dwParam2); 
     case MCI_CLOSE_DRIVER:	return ANIM_mciClose(dwDevID, dwParam1, (LPMCI_GENERIC_PARMS)dwParam2);
     case MCI_GETDEVCAPS:	return ANIM_mciGetDevCaps(dwDevID, dwParam1, (LPMCI_GETDEVCAPS_PARMS)dwParam2);
     case MCI_INFO:		return ANIM_mciInfo(dwDevID, dwParam1, (LPMCI_INFO_PARMS16)dwParam2);
@@ -635,7 +635,7 @@ LONG MCIANIM_DriverProc32(DWORD dwDevID, HDRVR16 hDriv, DWORD wMsg,
 	break;
     default:			
 	TRACE(mcianim, "Sending msg=%s to default driver proc\n", MCI_CommandToString(wMsg));
-	return DefDriverProc32(dwDevID, hDriv, wMsg, dwParam1, dwParam2);
+	return DefDriverProc(dwDevID, hDriv, wMsg, dwParam1, dwParam2);
     }
     return MCIERR_UNRECOGNIZED_COMMAND;
 }

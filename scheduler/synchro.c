@@ -29,7 +29,7 @@ VOID WINAPI Sleep( DWORD timeout )
 /******************************************************************************
  *              SleepEx   (KERNEL32.680)
  */
-DWORD WINAPI SleepEx( DWORD timeout, BOOL32 alertable )
+DWORD WINAPI SleepEx( DWORD timeout, BOOL alertable )
 {
     DWORD ret = WaitForMultipleObjectsEx( 0, NULL, FALSE, timeout, alertable );
     if (ret != WAIT_IO_COMPLETION) ret = 0;
@@ -40,7 +40,7 @@ DWORD WINAPI SleepEx( DWORD timeout, BOOL32 alertable )
 /***********************************************************************
  *           WaitForSingleObject   (KERNEL32.723)
  */
-DWORD WINAPI WaitForSingleObject( HANDLE32 handle, DWORD timeout )
+DWORD WINAPI WaitForSingleObject( HANDLE handle, DWORD timeout )
 {
     return WaitForMultipleObjectsEx( 1, &handle, FALSE, timeout, FALSE );
 }
@@ -49,8 +49,8 @@ DWORD WINAPI WaitForSingleObject( HANDLE32 handle, DWORD timeout )
 /***********************************************************************
  *           WaitForSingleObjectEx   (KERNEL32.724)
  */
-DWORD WINAPI WaitForSingleObjectEx( HANDLE32 handle, DWORD timeout,
-                                    BOOL32 alertable )
+DWORD WINAPI WaitForSingleObjectEx( HANDLE handle, DWORD timeout,
+                                    BOOL alertable )
 {
     return WaitForMultipleObjectsEx( 1, &handle, FALSE, timeout, alertable );
 }
@@ -59,8 +59,8 @@ DWORD WINAPI WaitForSingleObjectEx( HANDLE32 handle, DWORD timeout,
 /***********************************************************************
  *           WaitForMultipleObjects   (KERNEL32.721)
  */
-DWORD WINAPI WaitForMultipleObjects( DWORD count, const HANDLE32 *handles,
-                                     BOOL32 wait_all, DWORD timeout )
+DWORD WINAPI WaitForMultipleObjects( DWORD count, const HANDLE *handles,
+                                     BOOL wait_all, DWORD timeout )
 {
     return WaitForMultipleObjectsEx( count, handles, wait_all, timeout, FALSE );
 }
@@ -69,9 +69,9 @@ DWORD WINAPI WaitForMultipleObjects( DWORD count, const HANDLE32 *handles,
 /***********************************************************************
  *           WaitForMultipleObjectsEx   (KERNEL32.722)
  */
-DWORD WINAPI WaitForMultipleObjectsEx( DWORD count, const HANDLE32 *handles,
-                                       BOOL32 wait_all, DWORD timeout,
-                                       BOOL32 alertable )
+DWORD WINAPI WaitForMultipleObjectsEx( DWORD count, const HANDLE *handles,
+                                       BOOL wait_all, DWORD timeout,
+                                       BOOL alertable )
 {
     struct select_request req;
     struct select_reply reply;
@@ -103,7 +103,7 @@ DWORD WINAPI WaitForMultipleObjectsEx( DWORD count, const HANDLE32 *handles,
 
     if (wait_all) req.flags |= SELECT_ALL;
     if (alertable) req.flags |= SELECT_ALERTABLE;
-    if (timeout != INFINITE32) req.flags |= SELECT_TIMEOUT;
+    if (timeout != INFINITE) req.flags |= SELECT_TIMEOUT;
 
     CLIENT_SendRequest( REQ_SELECT, -1, 2,
                         &req, sizeof(req),
@@ -127,7 +127,7 @@ DWORD WINAPI WaitForMultipleObjectsEx( DWORD count, const HANDLE32 *handles,
 /***********************************************************************
  *           WIN16_WaitForSingleObject   (KERNEL.460)
  */
-DWORD WINAPI WIN16_WaitForSingleObject( HANDLE32 handle, DWORD timeout )
+DWORD WINAPI WIN16_WaitForSingleObject( HANDLE handle, DWORD timeout )
 {
     DWORD retval;
 
@@ -141,8 +141,8 @@ DWORD WINAPI WIN16_WaitForSingleObject( HANDLE32 handle, DWORD timeout )
 /***********************************************************************
  *           WIN16_WaitForMultipleObjects   (KERNEL.461)
  */
-DWORD WINAPI WIN16_WaitForMultipleObjects( DWORD count, const HANDLE32 *handles,
-                                           BOOL32 wait_all, DWORD timeout )
+DWORD WINAPI WIN16_WaitForMultipleObjects( DWORD count, const HANDLE *handles,
+                                           BOOL wait_all, DWORD timeout )
 {
     DWORD retval;
 
@@ -157,9 +157,9 @@ DWORD WINAPI WIN16_WaitForMultipleObjects( DWORD count, const HANDLE32 *handles,
  *           WIN16_WaitForMultipleObjectsEx   (KERNEL.495)
  */
 DWORD WINAPI WIN16_WaitForMultipleObjectsEx( DWORD count, 
-                                             const HANDLE32 *handles,
-                                             BOOL32 wait_all, DWORD timeout,
-                                             BOOL32 alertable )
+                                             const HANDLE *handles,
+                                             BOOL wait_all, DWORD timeout,
+                                             BOOL alertable )
 {
     DWORD retval;
 

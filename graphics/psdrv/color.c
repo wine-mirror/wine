@@ -13,7 +13,7 @@
  *
  * Return TRUE if col1 == col2
  */ 
-BOOL32 PSDRV_CmpColor(PSCOLOR *col1, PSCOLOR *col2)
+BOOL PSDRV_CmpColor(PSCOLOR *col1, PSCOLOR *col2)
 {
     if(col1->type != col2->type)
         return FALSE;
@@ -41,7 +41,7 @@ BOOL32 PSDRV_CmpColor(PSCOLOR *col1, PSCOLOR *col2)
  *
  * Copies col2 into col1. Return FALSE on error.
  */ 
-BOOL32 PSDRV_CopyColor(PSCOLOR *col1, PSCOLOR *col2)
+BOOL PSDRV_CopyColor(PSCOLOR *col1, PSCOLOR *col2)
 {
 
     switch(col2->type) {

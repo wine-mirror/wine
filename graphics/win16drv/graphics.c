@@ -12,8 +12,8 @@
 /**********************************************************************
  *	     WIN16DRV_MoveToEx
  */
-BOOL32
-WIN16DRV_MoveToEx(DC *dc,INT32 x,INT32 y,LPPOINT32 pt) 
+BOOL
+WIN16DRV_MoveToEx(DC *dc,INT x,INT y,LPPOINT pt) 
 {
     if (pt)
     {
@@ -28,10 +28,10 @@ WIN16DRV_MoveToEx(DC *dc,INT32 x,INT32 y,LPPOINT32 pt)
 /***********************************************************************
  *           WIN16DRV_LineTo
  */
-BOOL32
-WIN16DRV_LineTo( DC *dc, INT32 x, INT32 y )
+BOOL
+WIN16DRV_LineTo( DC *dc, INT x, INT y )
 {
-    BOOL32 bRet ;
+    BOOL bRet ;
     WIN16DRV_PDEVICE *physDev = (WIN16DRV_PDEVICE *)dc->physDev;
     POINT16 points[2];
     points[0].x = dc->w.DCOrgX + XLPTODP( dc, dc->w.CursPosX );
@@ -53,11 +53,11 @@ WIN16DRV_LineTo( DC *dc, INT32 x, INT32 y )
 /***********************************************************************
  *           WIN16DRV_Rectangle
  */
-BOOL32
-WIN16DRV_Rectangle(DC *dc, INT32 left, INT32 top, INT32 right, INT32 bottom)
+BOOL
+WIN16DRV_Rectangle(DC *dc, INT left, INT top, INT right, INT bottom)
 {
     WIN16DRV_PDEVICE *physDev = (WIN16DRV_PDEVICE *)dc->physDev;
-    BOOL32 bRet = 0;
+    BOOL bRet = 0;
     POINT16 points[2];
 
     TRACE(win16drv, "In WIN16DRV_Rectangle, x %d y %d DCOrgX %d y %d\n",
@@ -83,11 +83,11 @@ WIN16DRV_Rectangle(DC *dc, INT32 left, INT32 top, INT32 right, INT32 bottom)
 /***********************************************************************
  *           WIN16DRV_Polygon
  */
-BOOL32
-WIN16DRV_Polygon(DC *dc, const POINT32* pt, INT32 count )
+BOOL
+WIN16DRV_Polygon(DC *dc, const POINT* pt, INT count )
 {
     WIN16DRV_PDEVICE *physDev = (WIN16DRV_PDEVICE *)dc->physDev;
-    BOOL32 bRet = 0;
+    BOOL bRet = 0;
     LPPOINT16 points;
     int i;
 
@@ -116,11 +116,11 @@ WIN16DRV_Polygon(DC *dc, const POINT32* pt, INT32 count )
 /***********************************************************************
  *           WIN16DRV_Polyline
  */
-BOOL32
-WIN16DRV_Polyline(DC *dc, const POINT32* pt, INT32 count )
+BOOL
+WIN16DRV_Polyline(DC *dc, const POINT* pt, INT count )
 {
     WIN16DRV_PDEVICE *physDev = (WIN16DRV_PDEVICE *)dc->physDev;
-    BOOL32 bRet = 0;
+    BOOL bRet = 0;
     LPPOINT16 points;
     int i;
 
@@ -146,11 +146,11 @@ WIN16DRV_Polyline(DC *dc, const POINT32* pt, INT32 count )
 /***********************************************************************
  *           WIN16DRV_Ellipse
  */
-BOOL32
-WIN16DRV_Ellipse(DC *dc, INT32 left, INT32 top, INT32 right, INT32 bottom)
+BOOL
+WIN16DRV_Ellipse(DC *dc, INT left, INT top, INT right, INT bottom)
 {
     WIN16DRV_PDEVICE *physDev = (WIN16DRV_PDEVICE *)dc->physDev;
-    BOOL32 bRet = 0;
+    BOOL bRet = 0;
     POINT16 points[2];
     TRACE(win16drv, "In WIN16DRV_Ellipse, x %d y %d DCOrgX %d y %d\n",
            left, top, dc->w.DCOrgX, dc->w.DCOrgY);

@@ -22,7 +22,7 @@
 /**********************************************************************
  *  ContinueDebugEvent [KERNEL32.146]
  */
-BOOL32 WINAPI ContinueDebugEvent(DWORD pid,DWORD tid,DWORD contstatus) {
+BOOL WINAPI ContinueDebugEvent(DWORD pid,DWORD tid,DWORD contstatus) {
     FIXME(win32,"(0x%lx,%ld,%ld): stub\n",pid,tid,contstatus);
 	return TRUE;
 }
@@ -46,12 +46,12 @@ void Process_ClockTimeToFileTime( clock_t unix_time, LPFILETIME filetime )
     /* Yes, double, because long int might overflow here. */
 #if (SIZEOF_LONG_LONG >= 8)
     unsigned long long t = td;
-    filetime->dwLowDateTime  = (UINT32) t;
-    filetime->dwHighDateTime = (UINT32) (t >> 32);
+    filetime->dwLowDateTime  = (UINT) t;
+    filetime->dwHighDateTime = (UINT) (t >> 32);
 #else
     double divider = 1. * (1 << 16) * (1 << 16);
-    filetime->dwHighDateTime = (UINT32) (td / divider);
-    filetime->dwLowDateTime  = (UINT32) (td - filetime->dwHighDateTime*divider);
+    filetime->dwHighDateTime = (UINT) (td / divider);
+    filetime->dwLowDateTime  = (UINT) (td - filetime->dwHighDateTime*divider);
     /* using floor() produces wierd results, better leave this as it is 
      * ( with (UINT32) convertion )
      */
@@ -67,8 +67,8 @@ void Process_ClockTimeToFileTime( clock_t unix_time, LPFILETIME filetime )
  *                    Also, there is a need to separate times
  *                    used by different applications.
  */
-BOOL32 WINAPI GetProcessTimes(
-	HANDLE32 hprocess,LPFILETIME lpCreationTime,LPFILETIME lpExitTime,
+BOOL WINAPI GetProcessTimes(
+	HANDLE hprocess,LPFILETIME lpCreationTime,LPFILETIME lpExitTime,
 	LPFILETIME lpKernelTime, LPFILETIME lpUserTime
 ) {
 	struct tms tms;

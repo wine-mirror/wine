@@ -10,11 +10,11 @@
 
 typedef struct tagLISTVIEW_ITEM
 {
-    UINT32 state;
+    UINT state;
     LPSTR  pszText;
-    INT32  iImage;
+    INT  iImage;
     LPARAM lParam;
-    INT32  iIndent;
+    INT  iIndent;
 
 } LISTVIEW_ITEM;
 
@@ -27,20 +27,20 @@ typedef struct tagLISTVIEW_INFO
     HIMAGELIST himlNormal;
     HIMAGELIST himlSmall;
     HIMAGELIST himlState;
-  BOOL32 bLButtonDown;
-  BOOL32 bRButtonDown;
-    INT32      nColumnCount;
-  INT32 nFocusedItem;
-  INT32 nItemCount;
-  INT32 nItemHeight;
-  INT32 nColumnWidth;
-  INT32 nSelectionMark;
-    HWND32     hwndHeader;
-    HFONT32    hDefaultFont;
-    HFONT32    hFont;
-  INT32 nWidth;
-  INT32 nHeight;
-    BOOL32     bFocus;
+  BOOL bLButtonDown;
+  BOOL bRButtonDown;
+    INT      nColumnCount;
+  INT nFocusedItem;
+  INT nItemCount;
+  INT nItemHeight;
+  INT nColumnWidth;
+  INT nSelectionMark;
+    HWND     hwndHeader;
+    HFONT    hDefaultFont;
+    HFONT    hFont;
+  INT nWidth;
+  INT nHeight;
+    BOOL     bFocus;
     DWORD      dwExStyle;    /* extended listview style */
     HDPA       hdpaItems;
 

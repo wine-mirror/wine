@@ -13,7 +13,7 @@
 /***********************************************************************
  *           InitializeListHead32
  */
-VOID InitializeListHead32(PLIST_ENTRY32 pListHead)
+VOID InitializeListHead(PLIST_ENTRY pListHead)
 {
   pListHead->Flink = pListHead;
   pListHead->Blink = pListHead;
@@ -22,7 +22,7 @@ VOID InitializeListHead32(PLIST_ENTRY32 pListHead)
 /***********************************************************************
  *           InsertHeadList32
  */
-VOID InsertHeadList32(PLIST_ENTRY32 pListHead, PLIST_ENTRY32 pEntry)
+VOID InsertHeadList(PLIST_ENTRY pListHead, PLIST_ENTRY pEntry)
 {
   pEntry->Blink = pListHead;
   pEntry->Flink = pListHead->Flink;
@@ -32,7 +32,7 @@ VOID InsertHeadList32(PLIST_ENTRY32 pListHead, PLIST_ENTRY32 pEntry)
 /***********************************************************************
  *           InsertTailList32
  */
-VOID InsertTailList32(PLIST_ENTRY32 pListHead, PLIST_ENTRY32 pEntry)
+VOID InsertTailList(PLIST_ENTRY pListHead, PLIST_ENTRY pEntry)
 {
   pEntry->Flink = pListHead;
   pEntry->Blink = pListHead->Blink;
@@ -42,7 +42,7 @@ VOID InsertTailList32(PLIST_ENTRY32 pListHead, PLIST_ENTRY32 pEntry)
 /***********************************************************************
  *           IsListEmpty32
  */
-BOOLEAN IsListEmpty32(PLIST_ENTRY32 pListHead)
+BOOLEAN IsListEmpty(PLIST_ENTRY pListHead)
 {
   return !pListHead;
 }
@@ -50,7 +50,7 @@ BOOLEAN IsListEmpty32(PLIST_ENTRY32 pListHead)
 /***********************************************************************
  *           PopEntryList32
  */
-PSINGLE_LIST_ENTRY32 PopEntryList32(PSINGLE_LIST_ENTRY32 pListHead)
+PSINGLE_LIST_ENTRY PopEntryList(PSINGLE_LIST_ENTRY pListHead)
 {
   pListHead->Next = NULL;
   return pListHead;
@@ -59,8 +59,8 @@ PSINGLE_LIST_ENTRY32 PopEntryList32(PSINGLE_LIST_ENTRY32 pListHead)
 /***********************************************************************
  *           PushEntryList32
  */
-VOID PushEntryList32(
-  PSINGLE_LIST_ENTRY32 pListHead, PSINGLE_LIST_ENTRY32 pEntry)
+VOID PushEntryList(
+  PSINGLE_LIST_ENTRY pListHead, PSINGLE_LIST_ENTRY pEntry)
 {
   pEntry->Next=pListHead;
 }
@@ -68,7 +68,7 @@ VOID PushEntryList32(
 /***********************************************************************
  *           RemoveEntryList32
  */
-VOID RemoveEntryList32(PLIST_ENTRY32 pEntry)
+VOID RemoveEntryList(PLIST_ENTRY pEntry)
 {
   pEntry->Flink->Blink = pEntry->Blink;
   pEntry->Blink->Flink = pEntry->Flink;
@@ -79,13 +79,13 @@ VOID RemoveEntryList32(PLIST_ENTRY32 pEntry)
 /***********************************************************************
  *           RemoveHeadList32
  */
-PLIST_ENTRY32 RemoveHeadList32(PLIST_ENTRY32 pListHead)
+PLIST_ENTRY RemoveHeadList(PLIST_ENTRY pListHead)
 {
-  PLIST_ENTRY32 p = pListHead->Flink;
+  PLIST_ENTRY p = pListHead->Flink;
   
   if(p != pListHead)
     {
-      RemoveEntryList32(pListHead); 
+      RemoveEntryList(pListHead); 
       return p;
     }
   else
@@ -99,9 +99,9 @@ PLIST_ENTRY32 RemoveHeadList32(PLIST_ENTRY32 pListHead)
 /***********************************************************************
  *           RemoveTailList32
  */
-PLIST_ENTRY32 RemoveTailList32(PLIST_ENTRY32 pListHead)
+PLIST_ENTRY RemoveTailList(PLIST_ENTRY pListHead)
 {
-  RemoveHeadList32(pListHead->Blink);
+  RemoveHeadList(pListHead->Blink);
   if(pListHead != pListHead->Blink)
     return pListHead;
   else

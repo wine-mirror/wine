@@ -11,7 +11,7 @@
 typedef struct tagANIMATE_INFO
 {
     LPVOID  lpAvi;   /* pointer to avi data */
-    HFILE32 hFile;   /* handle to avi file */
+    HFILE hFile;   /* handle to avi file */
 } ANIMATE_INFO;
 
 

@@ -24,7 +24,7 @@
 
 #ifdef linux
 static int
-ASPI_OpenDevice32(SRB_ExecSCSICmd32 *prb)
+ASPI_OpenDevice(SRB_ExecSCSICmd *prb)
 {
     int	fd;
     char	idstr[20];
@@ -80,7 +80,7 @@ ASPI_OpenDevice32(SRB_ExecSCSICmd32 *prb)
 
 
 static void
-ASPI_DebugPrintCmd32(SRB_ExecSCSICmd32 *prb)
+ASPI_DebugPrintCmd(SRB_ExecSCSICmd *prb)
 {
   BYTE	cmd;
   int	i;
@@ -137,7 +137,7 @@ ASPI_DebugPrintCmd32(SRB_ExecSCSICmd32 *prb)
 }
 
 static void
-ASPI_PrintSenseArea32(SRB_ExecSCSICmd32 *prb)
+ASPI_PrintSenseArea(SRB_ExecSCSICmd *prb)
 {
   int	i;
   BYTE *cdb;
@@ -152,7 +152,7 @@ ASPI_PrintSenseArea32(SRB_ExecSCSICmd32 *prb)
 }
 
 static void
-ASPI_DebugPrintResult32(SRB_ExecSCSICmd32 *prb)
+ASPI_DebugPrintResult(SRB_ExecSCSICmd *prb)
 {
 
   switch (prb->CDBByte[0]) {
@@ -160,13 +160,13 @@ ASPI_DebugPrintResult32(SRB_ExecSCSICmd32 *prb)
     TRACE(aspi, "Vendor: '%s'\n", prb->SRB_BufPointer + INQUIRY_VENDOR);
     break;
   case CMD_TEST_UNIT_READY:
-    ASPI_PrintSenseArea32(prb);
+    ASPI_PrintSenseArea(prb);
     break;
   }
 }
 
 static WORD
-ASPI_ExecScsiCmd32(SRB_ExecSCSICmd32 *lpPRB)
+ASPI_ExecScsiCmd(SRB_ExecSCSICmd *lpPRB)
 {
   struct sg_header *sg_hd, *sg_reply_hdr;
   int	status;
@@ -174,9 +174,9 @@ ASPI_ExecScsiCmd32(SRB_ExecSCSICmd32 *lpPRB)
   int	error_code = 0;
   int	fd;
 
-  ASPI_DebugPrintCmd32(lpPRB);
+  ASPI_DebugPrintCmd(lpPRB);
 
-  fd = ASPI_OpenDevice32(lpPRB);
+  fd = ASPI_OpenDevice(lpPRB);
   if (fd == -1) {
       ERR(aspi, "Failed: could not open device. Device permissions !?\n");
       lpPRB->SRB_Status = SS_ERR;
@@ -282,13 +282,13 @@ ASPI_ExecScsiCmd32(SRB_ExecSCSICmd32 *lpPRB)
     }
     else
     if (lpPRB->SRB_Flags & SRB_EVENT_NOTIFY) {
-      TRACE(aspi, "Setting event %04x\n", (HANDLE32)lpPRB->SRB_PostProc);
-      SetEvent((HANDLE32)lpPRB->SRB_PostProc); /* FIXME: correct ? */
+      TRACE(aspi, "Setting event %04x\n", (HANDLE)lpPRB->SRB_PostProc);
+      SetEvent((HANDLE)lpPRB->SRB_PostProc); /* FIXME: correct ? */
     }
   }
   free(sg_reply_hdr);
   free(sg_hd);
-  ASPI_DebugPrintResult32(lpPRB);
+  ASPI_DebugPrintResult(lpPRB);
   return SS_COMP;
   
 error_exit:
@@ -322,7 +322,7 @@ error_exit:
  *    HIBYTE of LOWORD: status (SS_COMP or SS_FAILED_INIT)
  *    LOBYTE of LOWORD: # of host adapters.  
  */
-DWORD WINAPI GetASPI32SupportInfo32()
+DWORD WINAPI GetASPI32SupportInfo()
 {
     return ((SS_COMP << 8) | 1); /* FIXME: get # of host adapters installed */
 }
@@ -331,7 +331,7 @@ DWORD WINAPI GetASPI32SupportInfo32()
 /***********************************************************************
  *             SendASPI32Command32 (WNASPI32.1)
  */
-DWORD __cdecl SendASPI32Command32(LPSRB32 lpSRB)
+DWORD __cdecl SendASPI32Command(LPSRB lpSRB)
 {
 #ifdef linux
   switch (lpSRB->common.SRB_Cmd) {
@@ -349,7 +349,7 @@ DWORD __cdecl SendASPI32Command32(LPSRB32 lpSRB)
     FIXME(aspi, "Not implemented SC_GET_DEV_TYPE\n");
     break;
   case SC_EXEC_SCSI_CMD:
-    return ASPI_ExecScsiCmd32(&lpSRB->cmd);
+    return ASPI_ExecScsiCmd(&lpSRB->cmd);
     break;
   case SC_RESET_DEV:
     FIXME(aspi, "Not implemented SC_RESET_DEV\n");
@@ -368,7 +368,7 @@ DWORD __cdecl SendASPI32Command32(LPSRB32 lpSRB)
  *             GetASPI32DLLVersion32   (WNASPI32.3)
  */
 
-DWORD WINAPI GetASPI32DLLVersion32()
+DWORD WINAPI GetASPI32DLLVersion()
 {
 #ifdef linux
         return (DWORD)1;

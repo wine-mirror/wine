@@ -19,14 +19,14 @@ EDITMENU MENU LOADONCALL MOVEABLE DISCARDABLE
 BEGIN
         POPUP ""
         BEGIN
-                MENUITEM "&Visszavonás", EM_UNDO32
+                MENUITEM "&Visszavonás", EM_UNDO
                 MENUITEM SEPARATOR
                 MENUITEM "&Kivágás", WM_CUT
                 MENUITEM "&Másolás", WM_COPY
                 MENUITEM "&Beillesztés", WM_PASTE
                 MENUITEM "&Törlés", WM_CLEAR
                 MENUITEM SEPARATOR
-                MENUITEM "M&inden kijelölése", EM_SETSEL32
+                MENUITEM "M&inden kijelölése", EM_SETSEL
         END
 END
 

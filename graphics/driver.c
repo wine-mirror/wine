@@ -22,7 +22,7 @@ static GRAPHICS_DRIVER *genericDriver = NULL;
 /**********************************************************************
  *	     DRIVER_RegisterDriver
  */
-BOOL32 DRIVER_RegisterDriver( LPCSTR name, const DC_FUNCTIONS *funcs )
+BOOL DRIVER_RegisterDriver( LPCSTR name, const DC_FUNCTIONS *funcs )
 {
     GRAPHICS_DRIVER *driver = HeapAlloc( SystemHeap, 0, sizeof(*driver) );
     if (!driver) return FALSE;
@@ -66,7 +66,7 @@ const DC_FUNCTIONS *DRIVER_FindDriver( LPCSTR name )
 /**********************************************************************
  *	     DRIVER_UnregisterDriver
  */
-BOOL32 DRIVER_UnregisterDriver( LPCSTR name )
+BOOL DRIVER_UnregisterDriver( LPCSTR name )
 {
     if (name)
     {

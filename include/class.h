@@ -17,16 +17,16 @@ struct tagDCE;
 typedef struct tagCLASS
 {
     struct tagCLASS *next;          /* Next class */
-    UINT32           magic;         /* Magic number */
-    UINT32           cWindows;      /* Count of existing windows */
-    UINT32           style;         /* Class style */
+    UINT           magic;         /* Magic number */
+    UINT           cWindows;      /* Count of existing windows */
+    UINT           style;         /* Class style */
     HWINDOWPROC      winproc;       /* Window procedure */ 
-    INT32            cbClsExtra;    /* Class extra bytes */
-    INT32            cbWndExtra;    /* Window extra bytes */
+    INT            cbClsExtra;    /* Class extra bytes */
+    INT            cbWndExtra;    /* Window extra bytes */
     LPSTR            menuNameA;     /* Default menu name (ASCII string) */
     LPWSTR           menuNameW;     /* Default menu name (Unicode) */
     struct tagDCE   *dce;           /* Class DCE (if CS_CLASSDC) */
-    HINSTANCE32      hInstance;     /* Module that created the task */
+    HINSTANCE      hInstance;     /* Module that created the task */
     HICON16          hIcon;         /* Default icon */
     HICON16          hIconSm;       /* Default small icon */
     HCURSOR16        hCursor;       /* Default cursor */
@@ -40,6 +40,6 @@ typedef struct tagCLASS
 extern void CLASS_DumpClass( CLASS *class );
 extern void CLASS_WalkClasses(void);
 extern void CLASS_FreeModuleClasses( HMODULE16 hModule );
-extern CLASS *CLASS_FindClassByAtom( ATOM atom, HINSTANCE32 hinstance );
+extern CLASS *CLASS_FindClassByAtom( ATOM atom, HINSTANCE hinstance );
 
 #endif  /* __WINE_CLASS_H */

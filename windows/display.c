@@ -67,7 +67,7 @@ VOID WINAPI DISPLAY_CheckCursor()
 /***********************************************************************
  *           UserRepaintDisable			(DISPLAY.500)
  */
-VOID WINAPI UserRepaintDisable( BOOL16 disable )
+VOID WINAPI UserRepaintDisable16( BOOL16 disable )
 {
     TRACE( cursor, "(%d): stub\n", disable );
 }

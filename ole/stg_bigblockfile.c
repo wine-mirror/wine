@@ -96,7 +96,7 @@ static DWORD BIGBLOCKFILE_GetProtectMode(DWORD openFlags);
  * and the blocks in use list.
  */
 BigBlockFile * BIGBLOCKFILE_Construct(
-  HANDLE32 hFile, 
+  HANDLE hFile, 
     DWORD    openFlags,
   ULONG    blocksize)
 {
@@ -109,7 +109,7 @@ BigBlockFile * BIGBLOCKFILE_Construct(
 
   This->hfile = hFile;
   
-  if (This->hfile == INVALID_HANDLE_VALUE32)
+  if (This->hfile == INVALID_HANDLE_VALUE)
   {
     HeapFree(GetProcessHeap(), 0, This);
     return NULL;
@@ -119,7 +119,7 @@ BigBlockFile * BIGBLOCKFILE_Construct(
 
   /* create the file mapping object
    */
-  This->hfilemap = CreateFileMapping32A(This->hfile,
+  This->hfilemap = CreateFileMappingA(This->hfile,
 					NULL,
 					This->flProtect, 
 					0, 0,
@@ -330,7 +330,7 @@ void BIGBLOCKFILE_SetSize(LPBIGBLOCKFILE This, ULARGE_INTEGER newSize)
   /*
    * re-create the file mapping object
    */
-  This->hfilemap = CreateFileMapping32A(This->hfile,
+  This->hfilemap = CreateFileMappingA(This->hfile,
 					NULL,
 					This->flProtect,
 					0, 0, 
@@ -828,9 +828,9 @@ static void BIGBLOCKFILE_FreeAllMappedPages(
 static DWORD BIGBLOCKFILE_GetProtectMode(DWORD openFlags)
 {
   DWORD flProtect        = PAGE_READONLY;
-  BOOL32 bSTGM_WRITE     = ((openFlags & STGM_WRITE) == STGM_WRITE);
-  BOOL32 bSTGM_READWRITE = ((openFlags & STGM_READWRITE) == STGM_READWRITE);
-  BOOL32 bSTGM_READ      = ! (bSTGM_WRITE || bSTGM_READWRITE);
+  BOOL bSTGM_WRITE     = ((openFlags & STGM_WRITE) == STGM_WRITE);
+  BOOL bSTGM_READWRITE = ((openFlags & STGM_READWRITE) == STGM_READWRITE);
+  BOOL bSTGM_READ      = ! (bSTGM_WRITE || bSTGM_READWRITE);
 
   if (bSTGM_READ)
     flProtect = PAGE_READONLY;

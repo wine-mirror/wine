@@ -22,9 +22,9 @@ static HRESULT WINAPI IEnumIDList_Next(LPENUMIDLIST,ULONG,LPITEMIDLIST*,ULONG*);
 static HRESULT WINAPI IEnumIDList_Skip(LPENUMIDLIST,ULONG);
 static HRESULT WINAPI IEnumIDList_Reset(LPENUMIDLIST);
 static HRESULT WINAPI IEnumIDList_Clone(LPENUMIDLIST,LPENUMIDLIST*);
-static BOOL32 WINAPI IEnumIDList_CreateEnumList(LPENUMIDLIST,LPCSTR, DWORD);
-static BOOL32 WINAPI IEnumIDList_AddToEnumList(LPENUMIDLIST,LPITEMIDLIST);
-static BOOL32 WINAPI IEnumIDList_DeleteList(LPENUMIDLIST);
+static BOOL WINAPI IEnumIDList_CreateEnumList(LPENUMIDLIST,LPCSTR, DWORD);
+static BOOL WINAPI IEnumIDList_AddToEnumList(LPENUMIDLIST,LPITEMIDLIST);
+static BOOL WINAPI IEnumIDList_DeleteList(LPENUMIDLIST);
 
 /**************************************************************************
  *  IEnumIDList_VTable
@@ -206,11 +206,11 @@ static HRESULT WINAPI IEnumIDList_Clone(
  *  fixme: devices not handled
  *  fixme: add wildcards to path
  */
-static BOOL32 WINAPI IEnumIDList_CreateEnumList(LPENUMIDLIST this, LPCSTR lpszPath, DWORD dwFlags)
+static BOOL WINAPI IEnumIDList_CreateEnumList(LPENUMIDLIST this, LPCSTR lpszPath, DWORD dwFlags)
 {	LPITEMIDLIST	pidl=NULL;
 	LPPIDLDATA 	pData=NULL;
-	WIN32_FIND_DATA32A stffile;	
-	HANDLE32 hFile;
+	WIN32_FIND_DATAA stffile;	
+	HANDLE hFile;
 	DWORD dwDrivemap;
 	CHAR  szDriveName[4];
 	CHAR  szPath[MAX_PATH];
@@ -219,7 +219,7 @@ static BOOL32 WINAPI IEnumIDList_CreateEnumList(LPENUMIDLIST this, LPCSTR lpszPa
 
 	if (lpszPath && lpszPath[0]!='\0')
 	{ strcpy(szPath, lpszPath);
-	  PathAddBackslash32A(szPath);
+	  PathAddBackslashA(szPath);
 	  strcat(szPath,"*.*");
 	}
 
@@ -254,8 +254,8 @@ static BOOL32 WINAPI IEnumIDList_CreateEnumList(LPENUMIDLIST this, LPCSTR lpszPa
 	  }
     	  else
 	  { TRACE (shell,"-- (%p)-> enumerate SHCONTF_FOLDERS of %s\n",this,debugstr_a(szPath));
-	    hFile = FindFirstFile32A(szPath,&stffile);
-	    if ( hFile != INVALID_HANDLE_VALUE32 )
+	    hFile = FindFirstFileA(szPath,&stffile);
+	    if ( hFile != INVALID_HANDLE_VALUE )
 	    { do
 	      { if ( (stffile.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) && strcmp (stffile.cFileName, ".") && strcmp (stffile.cFileName, ".."))
 	        { pidl = _ILCreateFolder( stffile.cAlternateFileName, stffile.cFileName);
@@ -272,8 +272,8 @@ static BOOL32 WINAPI IEnumIDList_CreateEnumList(LPENUMIDLIST this, LPCSTR lpszPa
 	          { return FALSE;
 	          }   
 	        }
-	      } while( FindNextFile32A(hFile,&stffile));
-			FindClose32 (hFile);
+	      } while( FindNextFileA(hFile,&stffile));
+			FindClose (hFile);
 	    }
 	  }   
 	}   
@@ -281,8 +281,8 @@ static BOOL32 WINAPI IEnumIDList_CreateEnumList(LPENUMIDLIST this, LPCSTR lpszPa
 	if(dwFlags & SHCONTF_NONFOLDERS)
 	{ if(lpszPath)
 	  { TRACE (shell,"-- (%p)-> enumerate SHCONTF_NONFOLDERS of %s\n",this,debugstr_a(szPath));
-	    hFile = FindFirstFile32A(szPath,&stffile);
-	    if ( hFile != INVALID_HANDLE_VALUE32 )
+	    hFile = FindFirstFileA(szPath,&stffile);
+	    if ( hFile != INVALID_HANDLE_VALUE )
 	    { do
 	      { if (! (stffile.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) )
 	        { pidl = _ILCreateValue( stffile.cAlternateFileName, stffile.cFileName);
@@ -299,8 +299,8 @@ static BOOL32 WINAPI IEnumIDList_CreateEnumList(LPENUMIDLIST this, LPCSTR lpszPa
 	          { return FALSE;
 	          }   
 	        }
-	      } while( FindNextFile32A(hFile,&stffile));
-	      FindClose32 (hFile);
+	      } while( FindNextFileA(hFile,&stffile));
+	      FindClose (hFile);
 	    } 
 	  }
 	} 
@@ -310,7 +310,7 @@ static BOOL32 WINAPI IEnumIDList_CreateEnumList(LPENUMIDLIST this, LPCSTR lpszPa
 /**************************************************************************
  *  EnumIDList_AddToEnumList()
  */
-static BOOL32 WINAPI IEnumIDList_AddToEnumList(LPENUMIDLIST this,LPITEMIDLIST pidl)
+static BOOL WINAPI IEnumIDList_AddToEnumList(LPENUMIDLIST this,LPITEMIDLIST pidl)
 { LPENUMLIST  pNew;
 
   TRACE(shell,"(%p)->(pidl=%p)\n",this,pidl);
@@ -341,7 +341,7 @@ static BOOL32 WINAPI IEnumIDList_AddToEnumList(LPENUMIDLIST this,LPITEMIDLIST pi
 /**************************************************************************
 *   EnumIDList_DeleteList()
 */
-static BOOL32 WINAPI IEnumIDList_DeleteList(LPENUMIDLIST this)
+static BOOL WINAPI IEnumIDList_DeleteList(LPENUMIDLIST this)
 { LPENUMLIST  pDelete;
 
   TRACE(shell,"(%p)->()\n",this);

@@ -36,7 +36,7 @@ extern WORD WINE_LanguageId;
 
 typedef struct _HRSRC_ELEM
 {
-    HANDLE32 hRsrc;
+    HANDLE hRsrc;
     WORD     type;
 } HRSRC_ELEM;
 
@@ -50,7 +50,7 @@ typedef struct _HRSRC_MAP
 /**********************************************************************
  *          MapHRsrc32To16
  */
-static HRSRC16 MapHRsrc32To16( NE_MODULE *pModule, HANDLE32 hRsrc32, WORD type )
+static HRSRC16 MapHRsrc32To16( NE_MODULE *pModule, HANDLE hRsrc32, WORD type )
 {
     HRSRC_MAP *map = (HRSRC_MAP *)pModule->hRsrcMap;
     HRSRC_ELEM *newElem;
@@ -99,7 +99,7 @@ static HRSRC16 MapHRsrc32To16( NE_MODULE *pModule, HANDLE32 hRsrc32, WORD type )
 /**********************************************************************
  *          MapHRsrc16To32
  */
-static HANDLE32 MapHRsrc16To32( NE_MODULE *pModule, HRSRC16 hRsrc16 )
+static HANDLE MapHRsrc16To32( NE_MODULE *pModule, HRSRC16 hRsrc16 )
 {
     HRSRC_MAP *map = (HRSRC_MAP *)pModule->hRsrcMap;
     if ( !map || !hRsrc16 || (int)hRsrc16 > map->nUsed ) return 0;
@@ -131,7 +131,7 @@ HRSRC16 WINAPI FindResource16( HMODULE16 hModule, SEGPTR name, SEGPTR type )
 
     if ( pModule->module32 )
     {
-        HANDLE32 hRsrc32 = FindResource32A( pModule->module32, nameStr, typeStr );
+        HANDLE hRsrc32 = FindResourceA( pModule->module32, nameStr, typeStr );
         return MapHRsrc32To16( pModule, hRsrc32, HIWORD(type)? 0 : type );
     }
 
@@ -141,19 +141,19 @@ HRSRC16 WINAPI FindResource16( HMODULE16 hModule, SEGPTR name, SEGPTR type )
 /**********************************************************************
  *	    FindResource32A    (KERNEL32.128)
  */
-HANDLE32 WINAPI FindResource32A( HMODULE32 hModule, LPCSTR name, LPCSTR type)
+HANDLE WINAPI FindResourceA( HMODULE hModule, LPCSTR name, LPCSTR type)
 {
-    return FindResourceEx32A(hModule,type,name,WINE_LanguageId);
+    return FindResourceExA(hModule,type,name,WINE_LanguageId);
 }
 
 /**********************************************************************
  *	    FindResourceEx32A    (KERNEL32.129)
  */
-HANDLE32 WINAPI FindResourceEx32A( HMODULE32 hModule, LPCSTR type, LPCSTR name,
+HANDLE WINAPI FindResourceExA( HMODULE hModule, LPCSTR type, LPCSTR name,
 				   WORD lang
 ) {
     LPWSTR xname,xtype;
-    HANDLE32 ret;
+    HANDLE ret;
 
     if (HIWORD((DWORD)name))
         xname = HEAP_strdupAtoW( GetProcessHeap(), 0, name );
@@ -163,7 +163,7 @@ HANDLE32 WINAPI FindResourceEx32A( HMODULE32 hModule, LPCSTR type, LPCSTR name,
         xtype = HEAP_strdupAtoW( GetProcessHeap(), 0, type);
     else
         xtype = (LPWSTR)type;
-    ret = FindResourceEx32W( hModule, xtype, xname, lang );
+    ret = FindResourceExW( hModule, xtype, xname, lang );
     if (HIWORD((DWORD)name)) HeapFree( GetProcessHeap(), 0, xname );
     if (HIWORD((DWORD)type)) HeapFree( GetProcessHeap(), 0, xtype );
     return ret;
@@ -173,23 +173,23 @@ HANDLE32 WINAPI FindResourceEx32A( HMODULE32 hModule, LPCSTR type, LPCSTR name,
 /**********************************************************************
  *	    FindResourceEx32W    (KERNEL32.130)
  */
-HRSRC32 WINAPI FindResourceEx32W( HMODULE32 hModule, LPCWSTR type,
+HRSRC WINAPI FindResourceExW( HMODULE hModule, LPCWSTR type,
                                   LPCWSTR name, WORD lang )
 {
     WINE_MODREF	*wm = MODULE32_LookupHMODULE( hModule );
-    HRSRC32	hrsrc;
+    HRSRC	hrsrc;
 
     TRACE(resource, "module=%08x(%s) type=%s name=%s\n",
 	  hModule, wm->modname,
 	  debugres_w (type),
 	  debugres_w (name));
 
-    if (!wm) return (HRSRC32)0;
+    if (!wm) return (HRSRC)0;
 
     switch (wm->type) 
     {
     case MODULE32_PE:
-        hrsrc = PE_FindResourceEx32W(wm,name,type,lang);
+        hrsrc = PE_FindResourceExW(wm,name,type,lang);
         break;
 
     case MODULE32_ELF:
@@ -198,7 +198,7 @@ HRSRC32 WINAPI FindResourceEx32W( HMODULE32 hModule, LPCWSTR type,
 	
     default:
         ERR(module,"unknown module type %d\n",wm->type);
-        return (HRSRC32)0;
+        return (HRSRC)0;
     }
 
     if ( !hrsrc )
@@ -212,9 +212,9 @@ HRSRC32 WINAPI FindResourceEx32W( HMODULE32 hModule, LPCWSTR type,
 /**********************************************************************
  *	    FindResource32W    (KERNEL32.131)
  */
-HRSRC32 WINAPI FindResource32W(HINSTANCE32 hModule, LPCWSTR name, LPCWSTR type)
+HRSRC WINAPI FindResourceW(HINSTANCE hModule, LPCWSTR name, LPCWSTR type)
 {
-    return FindResourceEx32W(hModule,type,name,WINE_LanguageId);
+    return FindResourceExW(hModule,type,name,WINE_LanguageId);
 }
 
 /**********************************************************************
@@ -227,11 +227,11 @@ HGLOBAL16 WINAPI LoadResource16( HMODULE16 hModule, HRSRC16 hRsrc )
 
     if ( pModule->module32 )
     {
-        HANDLE32 hRsrc32 = MapHRsrc16To32( pModule, hRsrc );
+        HANDLE hRsrc32 = MapHRsrc16To32( pModule, hRsrc );
         WORD type = MapHRsrc16ToType( pModule, hRsrc );
-        HGLOBAL32 image = LoadResource32( pModule->module32, hRsrc32 );
-        DWORD size = SizeofResource32( pModule->module32, hRsrc32 );
-        LPVOID bits = LockResource32( image );
+        HGLOBAL image = LoadResource( pModule->module32, hRsrc32 );
+        DWORD size = SizeofResource( pModule->module32, hRsrc32 );
+        LPVOID bits = LockResource( image );
 
         return NE_LoadPEResource( pModule, type, bits, size );
     }
@@ -246,9 +246,9 @@ HGLOBAL16 WINAPI LoadResource16( HMODULE16 hModule, HRSRC16 hRsrc )
  * RETURNS
  *	pointer into the mapped resource of the passed module
  */
-HGLOBAL32 WINAPI LoadResource32( 
-	HINSTANCE32 hModule,	/* [in] module handle */
-	HRSRC32 hRsrc )		/* [in] resource handle */
+HGLOBAL WINAPI LoadResource( 
+	HINSTANCE hModule,	/* [in] module handle */
+	HRSRC hRsrc )		/* [in] resource handle */
 {
     WINE_MODREF	*wm = MODULE32_LookupHMODULE( hModule );
 
@@ -263,7 +263,7 @@ HGLOBAL32 WINAPI LoadResource32(
     switch (wm->type) 
     {
     case MODULE32_PE:
-        return PE_LoadResource32(wm,hRsrc);
+        return PE_LoadResource(wm,hRsrc);
 
     case MODULE32_ELF:
         return LIBRES_LoadResource( hModule, hRsrc );
@@ -294,7 +294,7 @@ LPVOID WINAPI LockResource16( HGLOBAL16 handle )
 /**********************************************************************
  *	    LockResource32    (KERNEL32.384)
  */
-LPVOID WINAPI LockResource32( HGLOBAL32 handle )
+LPVOID WINAPI LockResource( HGLOBAL handle )
 {
     return (LPVOID)handle;
 }
@@ -305,7 +305,7 @@ LPVOID WINAPI LockResource32( HGLOBAL32 handle )
  */
 BOOL16 WINAPI FreeResource16( HGLOBAL16 handle )
 {
-    NE_MODULE *pModule = NE_GetPtr( FarGetOwner(handle) );
+    NE_MODULE *pModule = NE_GetPtr( FarGetOwner16(handle) );
     if ( !pModule ) return handle;
 
     if ( pModule->module32 )
@@ -317,7 +317,7 @@ BOOL16 WINAPI FreeResource16( HGLOBAL16 handle )
 /**********************************************************************
  *	    FreeResource32    (KERNEL32.145)
  */
-BOOL32 WINAPI FreeResource32( HGLOBAL32 handle )
+BOOL WINAPI FreeResource( HGLOBAL handle )
 {
     /* no longer used in Win32 */
     return TRUE;
@@ -333,8 +333,8 @@ INT16 WINAPI AccessResource16( HINSTANCE16 hModule, HRSRC16 hRsrc )
 
     if ( pModule->module32 )
     {
-        HANDLE32 hRsrc32 = MapHRsrc16To32( pModule, hRsrc );
-        HFILE32 hFile32 = AccessResource32( pModule->module32, hRsrc32 );
+        HANDLE hRsrc32 = MapHRsrc16To32( pModule, hRsrc );
+        HFILE hFile32 = AccessResource( pModule->module32, hRsrc32 );
         return FILE_AllocDosHandle( hFile32 );
     }
 
@@ -344,7 +344,7 @@ INT16 WINAPI AccessResource16( HINSTANCE16 hModule, HRSRC16 hRsrc )
 /**********************************************************************
  *	    AccessResource32    (KERNEL32.64)
  */
-INT32 WINAPI AccessResource32( HMODULE32 hModule, HRSRC32 hRsrc )
+INT WINAPI AccessResource( HMODULE hModule, HRSRC hRsrc )
 {
     FIXME(resource,"(module=%08x res=%08x),not implemented\n", hModule, hRsrc);
     return 0;
@@ -361,8 +361,8 @@ DWORD WINAPI SizeofResource16( HMODULE16 hModule, HRSRC16 hRsrc )
 
     if ( pModule->module32 )
     {
-        HANDLE32 hRsrc32 = MapHRsrc16To32( pModule, hRsrc );
-        return SizeofResource32( hModule, hRsrc32 );
+        HANDLE hRsrc32 = MapHRsrc16To32( pModule, hRsrc );
+        return SizeofResource( hModule, hRsrc32 );
     }
 
     return NE_SizeofResource( pModule, hRsrc );
@@ -371,7 +371,7 @@ DWORD WINAPI SizeofResource16( HMODULE16 hModule, HRSRC16 hRsrc )
 /**********************************************************************
  *	    SizeofResource32    (KERNEL32.522)
  */
-DWORD WINAPI SizeofResource32( HINSTANCE32 hModule, HRSRC32 hRsrc )
+DWORD WINAPI SizeofResource( HINSTANCE hModule, HRSRC hRsrc )
 {
     WINE_MODREF	*wm = MODULE32_LookupHMODULE( hModule );
 
@@ -381,7 +381,7 @@ DWORD WINAPI SizeofResource32( HINSTANCE32 hModule, HRSRC32 hRsrc )
     switch (wm->type)
     {
     case MODULE32_PE:
-        return PE_SizeofResource32(hModule,hRsrc);
+        return PE_SizeofResource(hModule,hRsrc);
 
     case MODULE32_ELF:
         return LIBRES_SizeofResource( hModule, hRsrc );
@@ -426,10 +426,10 @@ HACCEL16 WINAPI LoadAccelerators16(HINSTANCE16 instance, SEGPTR lpTableName)
  * 04:	WORD	IDval		
  * 06:	WORD	pad		(to DWORD boundary)
  */
-HACCEL32 WINAPI LoadAccelerators32W(HINSTANCE32 instance,LPCWSTR lpTableName)
+HACCEL WINAPI LoadAcceleratorsW(HINSTANCE instance,LPCWSTR lpTableName)
 {
-    HRSRC32 hRsrc;
-    HACCEL32 hMem,hRetval=0;
+    HRSRC hRsrc;
+    HACCEL hMem,hRetval=0;
     DWORD size;
 
     if (HIWORD(lpTableName))
@@ -439,12 +439,12 @@ HACCEL32 WINAPI LoadAccelerators32W(HINSTANCE32 instance,LPCWSTR lpTableName)
         TRACE(accel, "%p 0x%04x\n",
                        (LPVOID)instance, LOWORD(lpTableName) );
 
-    if (!(hRsrc = FindResource32W( instance, lpTableName, RT_ACCELERATOR32W )))
+    if (!(hRsrc = FindResourceW( instance, lpTableName, RT_ACCELERATORW )))
     {
       WARN(accel, "couldn't find accelerator table resource\n");
     } else {
-      hMem = LoadResource32( instance, hRsrc );
-      size = SizeofResource32( instance, hRsrc );
+      hMem = LoadResource( instance, hRsrc );
+      size = SizeofResource( instance, hRsrc );
       if(size>=sizeof(PE_ACCEL))
       {
 	LPPE_ACCEL accel_table = (LPPE_ACCEL) hMem;
@@ -465,15 +465,15 @@ HACCEL32 WINAPI LoadAccelerators32W(HINSTANCE32 instance,LPCWSTR lpTableName)
     return hRetval;
 }
 
-HACCEL32 WINAPI LoadAccelerators32A(HINSTANCE32 instance,LPCSTR lpTableName)
+HACCEL WINAPI LoadAcceleratorsA(HINSTANCE instance,LPCSTR lpTableName)
 {
 	LPWSTR	 uni;
-	HACCEL32 result;
+	HACCEL result;
 	if (HIWORD(lpTableName))
 		uni = HEAP_strdupAtoW( GetProcessHeap(), 0, lpTableName );
 	else
 		uni = (LPWSTR)lpTableName;
-	result = LoadAccelerators32W(instance,uni);
+	result = LoadAcceleratorsW(instance,uni);
 	if (HIWORD(uni)) HeapFree( GetProcessHeap(), 0, uni);
 	return result;
 }
@@ -481,9 +481,9 @@ HACCEL32 WINAPI LoadAccelerators32A(HINSTANCE32 instance,LPCSTR lpTableName)
 /**********************************************************************
  *             CopyAcceleratorTable32A   (USER32.58)
  */
-INT32 WINAPI CopyAcceleratorTable32A(HACCEL32 src, LPACCEL32 dst, INT32 entries)
+INT WINAPI CopyAcceleratorTableA(HACCEL src, LPACCEL dst, INT entries)
 {
-  return CopyAcceleratorTable32W(src, dst, entries);
+  return CopyAcceleratorTableW(src, dst, entries);
 }
 
 /**********************************************************************
@@ -491,16 +491,16 @@ INT32 WINAPI CopyAcceleratorTable32A(HACCEL32 src, LPACCEL32 dst, INT32 entries)
  *
  * By mortene@pvv.org 980321
  */
-INT32 WINAPI CopyAcceleratorTable32W(HACCEL32 src, LPACCEL32 dst,
-				     INT32 entries)
+INT WINAPI CopyAcceleratorTableW(HACCEL src, LPACCEL dst,
+				     INT entries)
 {
   int i,xsize;
   LPACCEL16 accel = (LPACCEL16)GlobalLock16(src);
-  BOOL32 done = FALSE;
+  BOOL done = FALSE;
 
   /* Do parameter checking to avoid the explosions and the screaming
      as far as possible. */
-  if((dst && (entries < 1)) || (src == (HACCEL32)NULL) || !accel) {
+  if((dst && (entries < 1)) || (src == (HACCEL)NULL) || !accel) {
     WARN(accel, "Application sent invalid parameters (%p %p %d).\n",
 	 (LPVOID)src, (LPVOID)dst, entries);
     return 0;
@@ -545,9 +545,9 @@ INT32 WINAPI CopyAcceleratorTable32W(HACCEL32 src, LPACCEL32 dst,
  *
  * By mortene@pvv.org 980321
  */
-HACCEL32 WINAPI CreateAcceleratorTable32A(LPACCEL32 lpaccel, INT32 cEntries)
+HACCEL WINAPI CreateAcceleratorTableA(LPACCEL lpaccel, INT cEntries)
 {
-  HACCEL32	hAccel;
+  HACCEL	hAccel;
   LPACCEL16	accel;
   int		i;
 
@@ -557,7 +557,7 @@ HACCEL32 WINAPI CreateAcceleratorTable32A(LPACCEL32 lpaccel, INT32 cEntries)
     WARN(accel, "Application sent invalid parameters (%p %d).\n",
 	 lpaccel, cEntries);
     SetLastError(ERROR_INVALID_PARAMETER);
-    return (HACCEL32)NULL;
+    return (HACCEL)NULL;
   }
   FIXME(accel, "should check that the accelerator descriptions are valid,"
 	" return NULL and SetLastError() if not.\n");
@@ -570,7 +570,7 @@ HACCEL32 WINAPI CreateAcceleratorTable32A(LPACCEL32 lpaccel, INT32 cEntries)
   if(!hAccel) {
     ERR(accel, "Out of memory.\n");
     SetLastError(ERROR_NOT_ENOUGH_MEMORY);
-    return (HACCEL32)NULL;
+    return (HACCEL)NULL;
   }
   accel = GlobalLock16(hAccel);
   for (i=0;i<cEntries;i++) {
@@ -598,7 +598,7 @@ HACCEL32 WINAPI CreateAcceleratorTable32A(LPACCEL32 lpaccel, INT32 cEntries)
  *
  * RETURNS STD
  */
-BOOL32 WINAPI DestroyAcceleratorTable( HACCEL32 handle )
+BOOL WINAPI DestroyAcceleratorTable( HACCEL handle )
 {
     FIXME(accel, "(0x%x): stub\n", handle);
     /* FIXME: GlobalFree16(handle); */
@@ -654,27 +654,27 @@ INT16 WINAPI LoadString16( HINSTANCE16 instance, UINT16 resource_id,
 /**********************************************************************
  *	LoadString32W		(USER32.376)
  */
-INT32 WINAPI LoadString32W( HINSTANCE32 instance, UINT32 resource_id,
-                            LPWSTR buffer, INT32 buflen )
+INT WINAPI LoadStringW( HINSTANCE instance, UINT resource_id,
+                            LPWSTR buffer, INT buflen )
 {
-    HGLOBAL32 hmem;
-    HRSRC32 hrsrc;
+    HGLOBAL hmem;
+    HRSRC hrsrc;
     WCHAR *p;
     int string_num;
     int i;
 
     if (HIWORD(resource_id)==0xFFFF) /* netscape 3 passes this */
-	resource_id = (UINT32)(-((INT32)resource_id));
+	resource_id = (UINT)(-((INT)resource_id));
     TRACE(resource, "instance = %04x, id = %04x, buffer = %08x, "
 	   "length = %d\n", instance, (int)resource_id, (int) buffer, buflen);
 
-    hrsrc = FindResource32W( instance, (LPCWSTR)((resource_id>>4)+1),
-                             RT_STRING32W );
+    hrsrc = FindResourceW( instance, (LPCWSTR)((resource_id>>4)+1),
+                             RT_STRINGW );
     if (!hrsrc) return 0;
-    hmem = LoadResource32( instance, hrsrc );
+    hmem = LoadResource( instance, hrsrc );
     if (!hmem) return 0;
     
-    p = LockResource32(hmem);
+    p = LockResource(hmem);
     string_num = resource_id & 0x000f;
     for (i = 0; i < string_num; i++)
 	p += *p + 1;
@@ -704,20 +704,20 @@ INT32 WINAPI LoadString32W( HINSTANCE32 instance, UINT32 resource_id,
 /**********************************************************************
  *	LoadString32A	(USER32.375)
  */
-INT32 WINAPI LoadString32A( HINSTANCE32 instance, UINT32 resource_id,
-                            LPSTR buffer, INT32 buflen )
+INT WINAPI LoadStringA( HINSTANCE instance, UINT resource_id,
+                            LPSTR buffer, INT buflen )
 {
-    INT32 retval;
+    INT retval;
     LPWSTR buffer2 = NULL;
     if (buffer && buflen)
 	buffer2 = HeapAlloc( GetProcessHeap(), 0, buflen * 2 );
-    retval = LoadString32W(instance,resource_id,buffer2,buflen);
+    retval = LoadStringW(instance,resource_id,buffer2,buflen);
 
     if (buffer2)
     {
 	if (retval) {
 	    lstrcpynWtoA( buffer, buffer2, buflen );
-	    retval = lstrlen32A( buffer );
+	    retval = lstrlenA( buffer );
 	}
 	else
 	    *buffer = 0;
@@ -751,11 +751,11 @@ INT32 WINAPI LoadString32A( HINSTANCE32 instance, UINT32 resource_id,
 /**********************************************************************
  *	LoadMessage32A		(internal)
  */
-INT32 WINAPI LoadMessage32A( HMODULE32 instance, UINT32 id, WORD lang,
-                      LPSTR buffer, INT32 buflen )
+INT WINAPI LoadMessageA( HMODULE instance, UINT id, WORD lang,
+                      LPSTR buffer, INT buflen )
 {
-    HGLOBAL32	hmem;
-    HRSRC32	hrsrc;
+    HGLOBAL	hmem;
+    HRSRC	hrsrc;
     BYTE	*p;
     int		nrofentries,i,slen;
     struct	_subentry {
@@ -772,12 +772,12 @@ INT32 WINAPI LoadMessage32A( HMODULE32 instance, UINT32 id, WORD lang,
     TRACE(resource, "instance = %08lx, id = %08lx, buffer = %p, length = %ld\n", (DWORD)instance, (DWORD)id, buffer, (DWORD)buflen);
 
     /*FIXME: I am not sure about the '1' ... But I've only seen those entries*/
-    hrsrc = FindResourceEx32W(instance,RT_MESSAGELIST32W,(LPWSTR)1,lang);
+    hrsrc = FindResourceExW(instance,RT_MESSAGELISTW,(LPWSTR)1,lang);
     if (!hrsrc) return 0;
-    hmem = LoadResource32( instance, hrsrc );
+    hmem = LoadResource( instance, hrsrc );
     if (!hmem) return 0;
     
-    p = LockResource32(hmem);
+    p = LockResource(hmem);
     nrofentries = *(DWORD*)p;
     stre = NULL;
     se = (struct _subentry*)(p+4);
@@ -802,7 +802,7 @@ INT32 WINAPI LoadMessage32A( HMODULE32 instance, UINT32 id, WORD lang,
     if (buffer == NULL)
 	return slen; /* different to LoadString */
     if (i>0) {
-	lstrcpyn32A(buffer,stre->str,i);
+	lstrcpynA(buffer,stre->str,i);
 	buffer[i]=0;
     } else {
 	if (buflen>1) {
@@ -818,19 +818,19 @@ INT32 WINAPI LoadMessage32A( HMODULE32 instance, UINT32 id, WORD lang,
 /**********************************************************************
  *	LoadMessage32W	(internal)
  */
-INT32 WINAPI LoadMessage32W( HMODULE32 instance, UINT32 id, WORD lang,
-                      LPWSTR buffer, INT32 buflen )
+INT WINAPI LoadMessageW( HMODULE instance, UINT id, WORD lang,
+                      LPWSTR buffer, INT buflen )
 {
-    INT32 retval;
+    INT retval;
     LPSTR buffer2 = NULL;
     if (buffer && buflen)
 	buffer2 = HeapAlloc( GetProcessHeap(), 0, buflen );
-    retval = LoadMessage32A(instance,id,lang,buffer2,buflen);
+    retval = LoadMessageA(instance,id,lang,buffer2,buflen);
     if (buffer)
     {
 	if (retval) {
 	    lstrcpynAtoW( buffer, buffer2, buflen );
-	    retval = lstrlen32W( buffer );
+	    retval = lstrlenW( buffer );
 	}
 	HeapFree( GetProcessHeap(), 0, buffer2 );
     }
@@ -841,59 +841,59 @@ INT32 WINAPI LoadMessage32W( HMODULE32 instance, UINT32 id, WORD lang,
 /**********************************************************************
  *	EnumResourceTypesA	(KERNEL32.90)
  */
-BOOL32 WINAPI EnumResourceTypes32A( HMODULE32 hmodule,ENUMRESTYPEPROC32A lpfun,
+BOOL WINAPI EnumResourceTypesA( HMODULE hmodule,ENUMRESTYPEPROCA lpfun,
                                     LONG lParam)
 {
 	/* FIXME: move WINE_MODREF stuff here */
-    return PE_EnumResourceTypes32A(hmodule,lpfun,lParam);
+    return PE_EnumResourceTypesA(hmodule,lpfun,lParam);
 }
 
 /**********************************************************************
  *	EnumResourceTypesW	(KERNEL32.91)
  */
-BOOL32 WINAPI EnumResourceTypes32W( HMODULE32 hmodule,ENUMRESTYPEPROC32W lpfun,
+BOOL WINAPI EnumResourceTypesW( HMODULE hmodule,ENUMRESTYPEPROCW lpfun,
                                     LONG lParam)
 {
 	/* FIXME: move WINE_MODREF stuff here */
-    return PE_EnumResourceTypes32W(hmodule,lpfun,lParam);
+    return PE_EnumResourceTypesW(hmodule,lpfun,lParam);
 }
 
 /**********************************************************************
  *	EnumResourceNamesA	(KERNEL32.88)
  */
-BOOL32 WINAPI EnumResourceNames32A( HMODULE32 hmodule, LPCSTR type,
-                                    ENUMRESNAMEPROC32A lpfun, LONG lParam )
+BOOL WINAPI EnumResourceNamesA( HMODULE hmodule, LPCSTR type,
+                                    ENUMRESNAMEPROCA lpfun, LONG lParam )
 {
 	/* FIXME: move WINE_MODREF stuff here */
-    return PE_EnumResourceNames32A(hmodule,type,lpfun,lParam);
+    return PE_EnumResourceNamesA(hmodule,type,lpfun,lParam);
 }
 /**********************************************************************
  *	EnumResourceNamesW	(KERNEL32.89)
  */
-BOOL32 WINAPI EnumResourceNames32W( HMODULE32 hmodule, LPCWSTR type,
-                                    ENUMRESNAMEPROC32W lpfun, LONG lParam )
+BOOL WINAPI EnumResourceNamesW( HMODULE hmodule, LPCWSTR type,
+                                    ENUMRESNAMEPROCW lpfun, LONG lParam )
 {
 	/* FIXME: move WINE_MODREF stuff here */
-    return PE_EnumResourceNames32W(hmodule,type,lpfun,lParam);
+    return PE_EnumResourceNamesW(hmodule,type,lpfun,lParam);
 }
 
 /**********************************************************************
  *	EnumResourceLanguagesA	(KERNEL32.86)
  */
-BOOL32 WINAPI EnumResourceLanguages32A( HMODULE32 hmodule, LPCSTR type,
-                                        LPCSTR name, ENUMRESLANGPROC32A lpfun,
+BOOL WINAPI EnumResourceLanguagesA( HMODULE hmodule, LPCSTR type,
+                                        LPCSTR name, ENUMRESLANGPROCA lpfun,
                                         LONG lParam)
 {
 	/* FIXME: move WINE_MODREF stuff here */
-    return PE_EnumResourceLanguages32A(hmodule,type,name,lpfun,lParam);
+    return PE_EnumResourceLanguagesA(hmodule,type,name,lpfun,lParam);
 }
 /**********************************************************************
  *	EnumResourceLanguagesW	(KERNEL32.87)
  */
-BOOL32 WINAPI EnumResourceLanguages32W( HMODULE32 hmodule, LPCWSTR type,
-                                        LPCWSTR name, ENUMRESLANGPROC32W lpfun,
+BOOL WINAPI EnumResourceLanguagesW( HMODULE hmodule, LPCWSTR type,
+                                        LPCWSTR name, ENUMRESLANGPROCW lpfun,
                                         LONG lParam)
 {
 	/* FIXME: move WINE_MODREF stuff here */
-    return PE_EnumResourceLanguages32W(hmodule,type,name,lpfun,lParam);
+    return PE_EnumResourceLanguagesW(hmodule,type,name,lpfun,lParam);
 }

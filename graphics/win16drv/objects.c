@@ -13,22 +13,22 @@
 #include "debug.h"
 
 
-extern HBITMAP32 WIN16DRV_BITMAP_SelectObject( DC * dc, HBITMAP32 hbitmap,
+extern HBITMAP WIN16DRV_BITMAP_SelectObject( DC * dc, HBITMAP hbitmap,
                                              BITMAPOBJ * bmp );
-extern HBRUSH32 WIN16DRV_BRUSH_SelectObject( DC * dc, HBRUSH32 hbrush,
+extern HBRUSH WIN16DRV_BRUSH_SelectObject( DC * dc, HBRUSH hbrush,
                                            BRUSHOBJ * brush );
-extern HFONT32 WIN16DRV_FONT_SelectObject( DC * dc, HFONT32 hfont,
+extern HFONT WIN16DRV_FONT_SelectObject( DC * dc, HFONT hfont,
                                          FONTOBJ * font );
-extern HPEN32 WIN16DRV_PEN_SelectObject( DC * dc, HPEN32 hpen, PENOBJ * pen );
+extern HPEN WIN16DRV_PEN_SelectObject( DC * dc, HPEN hpen, PENOBJ * pen );
 
 
 /***********************************************************************
  *           WIN16DRV_SelectObject
  */
-HGDIOBJ32 WIN16DRV_SelectObject( DC *dc, HGDIOBJ32 handle )
+HGDIOBJ WIN16DRV_SelectObject( DC *dc, HGDIOBJ handle )
 {
     GDIOBJHDR *ptr = GDI_GetObjPtr( handle, MAGIC_DONTCARE );
-    HGDIOBJ32 ret = 0;
+    HGDIOBJ ret = 0;
 
     if (!ptr) return 0;
     TRACE(gdi, "hdc=%04x %04x\n", dc->hSelf, handle );

@@ -32,10 +32,10 @@ HBRUSH16 WINAPI CreateBrushIndirect16( const LOGBRUSH16 * brush )
 /***********************************************************************
  *           CreateBrushIndirect32    (GDI32.27)
  */
-HBRUSH32 WINAPI CreateBrushIndirect32( const LOGBRUSH32 * brush )
+HBRUSH WINAPI CreateBrushIndirect( const LOGBRUSH * brush )
 {
     BRUSHOBJ * brushPtr;
-    HBRUSH32 hbrush = GDI_AllocObject( sizeof(BRUSHOBJ), BRUSH_MAGIC );
+    HBRUSH hbrush = GDI_AllocObject( sizeof(BRUSHOBJ), BRUSH_MAGIC );
     if (!hbrush) return 0;
     brushPtr = (BRUSHOBJ *) GDI_HEAP_LOCK( hbrush );
     brushPtr->logbrush.lbStyle = brush->lbStyle;
@@ -52,22 +52,22 @@ HBRUSH32 WINAPI CreateBrushIndirect32( const LOGBRUSH32 * brush )
  */
 HBRUSH16 WINAPI CreateHatchBrush16( INT16 style, COLORREF color )
 {
-    LOGBRUSH32 logbrush = { BS_HATCHED, color, style };
+    LOGBRUSH logbrush = { BS_HATCHED, color, style };
     TRACE(gdi, "%d %06lx\n", style, color );
     if ((style < 0) || (style >= NB_HATCH_STYLES)) return 0;
-    return CreateBrushIndirect32( &logbrush );
+    return CreateBrushIndirect( &logbrush );
 }
 
 
 /***********************************************************************
  *           CreateHatchBrush32    (GDI32.48)
  */
-HBRUSH32 WINAPI CreateHatchBrush32( INT32 style, COLORREF color )
+HBRUSH WINAPI CreateHatchBrush( INT style, COLORREF color )
 {
-    LOGBRUSH32 logbrush = { BS_HATCHED, color, style };
+    LOGBRUSH logbrush = { BS_HATCHED, color, style };
     TRACE(gdi, "%d %06lx\n", style, color );
     if ((style < 0) || (style >= NB_HATCH_STYLES)) return 0;
-    return CreateBrushIndirect32( &logbrush );
+    return CreateBrushIndirect( &logbrush );
 }
 
 
@@ -76,23 +76,23 @@ HBRUSH32 WINAPI CreateHatchBrush32( INT32 style, COLORREF color )
  */
 HBRUSH16 WINAPI CreatePatternBrush16( HBITMAP16 hbitmap )
 {
-    return (HBRUSH16)CreatePatternBrush32( hbitmap );
+    return (HBRUSH16)CreatePatternBrush( hbitmap );
 }
 
 
 /***********************************************************************
  *           CreatePatternBrush32    (GDI32.54)
  */
-HBRUSH32 WINAPI CreatePatternBrush32( HBITMAP32 hbitmap )
+HBRUSH WINAPI CreatePatternBrush( HBITMAP hbitmap )
 {
-    LOGBRUSH32 logbrush = { BS_PATTERN, 0, 0 };
+    LOGBRUSH logbrush = { BS_PATTERN, 0, 0 };
     TRACE(gdi, "%04x\n", hbitmap );
 
-    logbrush.lbHatch = (INT32)BITMAP_CopyBitmap( hbitmap );
+    logbrush.lbHatch = (INT)BITMAP_CopyBitmap( hbitmap );
     if(!logbrush.lbHatch)
         return 0;
     else
-        return CreateBrushIndirect32( &logbrush );
+        return CreateBrushIndirect( &logbrush );
 }
 
 
@@ -101,9 +101,9 @@ HBRUSH32 WINAPI CreatePatternBrush32( HBITMAP32 hbitmap )
  */
 HBRUSH16 WINAPI CreateDIBPatternBrush16( HGLOBAL16 hbitmap, UINT16 coloruse )
 {
-    LOGBRUSH32 logbrush = { BS_DIBPATTERN, coloruse, 0 };
+    LOGBRUSH logbrush = { BS_DIBPATTERN, coloruse, 0 };
     BITMAPINFO *info, *newInfo;
-    INT32 size;
+    INT size;
     
     TRACE(gdi, "%04x\n", hbitmap );
 
@@ -128,7 +128,7 @@ HBRUSH16 WINAPI CreateDIBPatternBrush16( HGLOBAL16 hbitmap, UINT16 coloruse )
     memcpy( newInfo, info, size );
     GlobalUnlock16( (HGLOBAL16)logbrush.lbHatch );
     GlobalUnlock16( hbitmap );
-    return CreateBrushIndirect32( &logbrush );
+    return CreateBrushIndirect( &logbrush );
 }
 
 
@@ -146,20 +146,20 @@ HBRUSH16 WINAPI CreateDIBPatternBrush16( HGLOBAL16 hbitmap, UINT16 coloruse )
  * BUGS
  *	
  */
-HBRUSH32 WINAPI CreateDIBPatternBrush32( 
-		HGLOBAL32 hbitmap, 		/* Global object containg BITMAPINFO structure */
-		UINT32 coloruse 		/* Specifies color format, if provided */
+HBRUSH WINAPI CreateDIBPatternBrush( 
+		HGLOBAL hbitmap, 		/* Global object containg BITMAPINFO structure */
+		UINT coloruse 		/* Specifies color format, if provided */
 )
 {
-    LOGBRUSH32 logbrush = { BS_DIBPATTERN, coloruse, 0 };
+    LOGBRUSH logbrush = { BS_DIBPATTERN, coloruse, 0 };
     BITMAPINFO *info, *newInfo;
-    INT32 size;
+    INT size;
     
     TRACE(gdi, "%04x\n", hbitmap );
 
       /* Make a copy of the bitmap */
 
-    if (!(info = (BITMAPINFO *)GlobalLock32( hbitmap ))) return 0;
+    if (!(info = (BITMAPINFO *)GlobalLock( hbitmap ))) return 0;
 
     if (info->bmiHeader.biCompression)
         size = info->bmiHeader.biSizeImage;
@@ -169,7 +169,7 @@ HBRUSH32 WINAPI CreateDIBPatternBrush32(
 	       info->bmiHeader.biHeight;
     size += DIB_BitmapInfoSize( info, coloruse );
 
-    if (!(logbrush.lbHatch = (INT32)GlobalAlloc16( GMEM_MOVEABLE, size )))
+    if (!(logbrush.lbHatch = (INT)GlobalAlloc16( GMEM_MOVEABLE, size )))
     {
 	GlobalUnlock16( hbitmap );
 	return 0;
@@ -177,8 +177,8 @@ HBRUSH32 WINAPI CreateDIBPatternBrush32(
     newInfo = (BITMAPINFO *) GlobalLock16( (HGLOBAL16)logbrush.lbHatch );
     memcpy( newInfo, info, size );
     GlobalUnlock16( (HGLOBAL16)logbrush.lbHatch );
-    GlobalUnlock32( hbitmap );
-    return CreateBrushIndirect32( &logbrush );
+    GlobalUnlock( hbitmap );
+    return CreateBrushIndirect( &logbrush );
 }
 
 
@@ -194,15 +194,15 @@ HBRUSH32 WINAPI CreateDIBPatternBrush32(
  * BUGS
  *	
  */
-HBRUSH32 WINAPI CreateDIBPatternBrushPt(
+HBRUSH WINAPI CreateDIBPatternBrushPt(
 		const void* data,		/* Pointer to a BITMAPINFO structure followed by more data */ 
-		UINT32 coloruse 		/* Specifies color format, if provided */
+		UINT coloruse 		/* Specifies color format, if provided */
 )
 {
     BITMAPINFO *info=(BITMAPINFO*)data;
-    LOGBRUSH32 logbrush = { BS_DIBPATTERN, coloruse, 0 };
+    LOGBRUSH logbrush = { BS_DIBPATTERN, coloruse, 0 };
     BITMAPINFO  *newInfo;
-    INT32 size;
+    INT size;
     
     TRACE(gdi, "%p\n", info );
 
@@ -217,14 +217,14 @@ HBRUSH32 WINAPI CreateDIBPatternBrushPt(
 	       info->bmiHeader.biHeight;
     size += DIB_BitmapInfoSize( info, coloruse );
 
-    if (!(logbrush.lbHatch = (INT32)GlobalAlloc16( GMEM_MOVEABLE, size )))
+    if (!(logbrush.lbHatch = (INT)GlobalAlloc16( GMEM_MOVEABLE, size )))
     {
 	return 0;
     }
     newInfo = (BITMAPINFO *) GlobalLock16( (HGLOBAL16)logbrush.lbHatch );
     memcpy( newInfo, info, size );
     GlobalUnlock16( (HGLOBAL16)logbrush.lbHatch );
-    return CreateBrushIndirect32( &logbrush );
+    return CreateBrushIndirect( &logbrush );
 }
 
 
@@ -233,27 +233,27 @@ HBRUSH32 WINAPI CreateDIBPatternBrushPt(
  */
 HBRUSH16 WINAPI CreateSolidBrush16( COLORREF color )
 {
-    LOGBRUSH32 logbrush = { BS_SOLID, color, 0 };
+    LOGBRUSH logbrush = { BS_SOLID, color, 0 };
     TRACE(gdi, "%06lx\n", color );
-    return CreateBrushIndirect32( &logbrush );
+    return CreateBrushIndirect( &logbrush );
 }
 
 
 /***********************************************************************
  *           CreateSolidBrush32    (GDI32.64)
  */
-HBRUSH32 WINAPI CreateSolidBrush32( COLORREF color )
+HBRUSH WINAPI CreateSolidBrush( COLORREF color )
 {
-    LOGBRUSH32 logbrush = { BS_SOLID, color, 0 };
+    LOGBRUSH logbrush = { BS_SOLID, color, 0 };
     TRACE(gdi, "%06lx\n", color );
-    return CreateBrushIndirect32( &logbrush );
+    return CreateBrushIndirect( &logbrush );
 }
 
 
 /***********************************************************************
  *           SetBrushOrg    (GDI.148)
  */
-DWORD WINAPI SetBrushOrg( HDC16 hdc, INT16 x, INT16 y )
+DWORD WINAPI SetBrushOrg16( HDC16 hdc, INT16 x, INT16 y )
 {
     DWORD retval;
     DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
@@ -268,7 +268,7 @@ DWORD WINAPI SetBrushOrg( HDC16 hdc, INT16 x, INT16 y )
 /***********************************************************************
  *           SetBrushOrgEx    (GDI32.308)
  */
-BOOL32 WINAPI SetBrushOrgEx( HDC32 hdc, INT32 x, INT32 y, LPPOINT32 oldorg )
+BOOL WINAPI SetBrushOrgEx( HDC hdc, INT x, INT y, LPPOINT oldorg )
 {
     DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
 
@@ -287,7 +287,7 @@ BOOL32 WINAPI SetBrushOrgEx( HDC32 hdc, INT32 x, INT32 y, LPPOINT32 oldorg )
  *           FixBrushOrgEx    (GDI32.102)
  * SDK says discontinued, but in Win95 GDI32 this is the same as SetBrushOrgEx
  */
-BOOL32 WINAPI FixBrushOrgEx( HDC32 hdc, INT32 x, INT32 y, LPPOINT32 oldorg )
+BOOL WINAPI FixBrushOrgEx( HDC hdc, INT x, INT y, LPPOINT oldorg )
 {
     return SetBrushOrgEx(hdc,x,y,oldorg);
 }
@@ -296,12 +296,12 @@ BOOL32 WINAPI FixBrushOrgEx( HDC32 hdc, INT32 x, INT32 y, LPPOINT32 oldorg )
 /***********************************************************************
  *           BRUSH_DeleteObject
  */
-BOOL32 BRUSH_DeleteObject( HBRUSH16 hbrush, BRUSHOBJ * brush )
+BOOL BRUSH_DeleteObject( HBRUSH16 hbrush, BRUSHOBJ * brush )
 {
     switch(brush->logbrush.lbStyle)
     {
       case BS_PATTERN:
-	  DeleteObject32( (HGDIOBJ32)brush->logbrush.lbHatch );
+	  DeleteObject( (HGDIOBJ)brush->logbrush.lbHatch );
 	  break;
       case BS_DIBPATTERN:
 	  GlobalFree16( (HGLOBAL16)brush->logbrush.lbHatch );
@@ -330,7 +330,7 @@ INT16 BRUSH_GetObject16( BRUSHOBJ * brush, INT16 count, LPSTR buffer )
 /***********************************************************************
  *           BRUSH_GetObject32
  */
-INT32 BRUSH_GetObject32( BRUSHOBJ * brush, INT32 count, LPSTR buffer )
+INT BRUSH_GetObject( BRUSHOBJ * brush, INT count, LPSTR buffer )
 {
     if (count > sizeof(brush->logbrush)) count = sizeof(brush->logbrush);
     memcpy( buffer, &brush->logbrush, count );

@@ -31,7 +31,7 @@ typedef struct tagSOLE_AUTHENTICATION_SERVICE
 {
     DWORD dwAuthnSvc;
     DWORD dwAuthzSvc;
-    OLECHAR32* pPrincipalName;
+    OLECHAR* pPrincipalName;
     HRESULT hr;
 } SOLE_AUTHENTICATION_SERVICE, *PSOLE_AUTHENTICATION_SERVICE;
 
@@ -45,8 +45,8 @@ typedef enum tagEOLE_AUTHENTICATION_CAPABILITIES
 
 #define ICOM_INTERFACE IClientSecurity
 #define IClientSecurity_METHODS \
-     ICOM_METHOD8(HRESULT,QueryBlanket, IUnknown*,pProxy, DWORD*,pAuthnSvc, DWORD*,pAuthzSvc, OLECHAR32**,pServerPrincName, DWORD*,pAuthnLevel, DWORD*,pImpLevel, void**,pAuthInfo, DWORD*,pCapabilites); \
-    ICOM_METHOD8(HRESULT,SetBlanket,   IUnknown*,pProxy, DWORD,pAuthnSvc, DWORD,pAuthzSvc, OLECHAR32*,pServerPrincName, DWORD,pAuthnLevel, DWORD,pImpLevel, void*,pAuthInfo, DWORD,pCapabilites); \
+     ICOM_METHOD8(HRESULT,QueryBlanket, IUnknown*,pProxy, DWORD*,pAuthnSvc, DWORD*,pAuthzSvc, OLECHAR**,pServerPrincName, DWORD*,pAuthnLevel, DWORD*,pImpLevel, void**,pAuthInfo, DWORD*,pCapabilites); \
+    ICOM_METHOD8(HRESULT,SetBlanket,   IUnknown*,pProxy, DWORD,pAuthnSvc, DWORD,pAuthzSvc, OLECHAR*,pServerPrincName, DWORD,pAuthnLevel, DWORD,pImpLevel, void*,pAuthInfo, DWORD,pCapabilites); \
     ICOM_METHOD2(HRESULT,CopyProxy,    IUnknown*,pProxy, IUnknown**,ppCopy);
 #define IClientSecurity_IMETHODS \
     IUnknown_IMETHODS \
@@ -79,7 +79,7 @@ typedef enum tagEXTCONN
 #define ICOM_INTERFACE IExternalConnection
 #define IExternalConnection_METHODS \
     ICOM_METHOD2(DWORD,AddConnection,     DWORD,extconn, DWORD,reserved); \
-    ICOM_METHOD3(DWORD,ReleaseConnection, DWORD,extconn, DWORD,reserved, BOOL32,fLastReleaseCloses);
+    ICOM_METHOD3(DWORD,ReleaseConnection, DWORD,extconn, DWORD,reserved, BOOL,fLastReleaseCloses);
 #define IExternalConnection_IMETHODS \
     IUnknown_IMETHODS \
     IExternalConnection_METHODS
@@ -141,9 +141,9 @@ typedef struct tagINTERFACEINFO
 
 #define ICOM_INTERFACE IMessageFilter
 #define IMessageFilter_METHODS \
-    ICOM_METHOD4(DWORD,HandleInComingCall, DWORD,dwCallType, HTASK32,htaskCaller, DWORD,dwTickCount, LPINTERFACEINFO,lpInterfaceInfo); \
-    ICOM_METHOD3(DWORD,RetryRejectedCall,  HTASK32,htaskCallee, DWORD,dwTickCount, DWORD,dwRejectType); \
-    ICOM_METHOD3(DWORD,MessagePending,     HTASK32,htaskCallee, DWORD,dwTickCount, DWORD,dwRejectType);
+    ICOM_METHOD4(DWORD,HandleInComingCall, DWORD,dwCallType, HTASK,htaskCaller, DWORD,dwTickCount, LPINTERFACEINFO,lpInterfaceInfo); \
+    ICOM_METHOD3(DWORD,RetryRejectedCall,  HTASK,htaskCallee, DWORD,dwTickCount, DWORD,dwRejectType); \
+    ICOM_METHOD3(DWORD,MessagePending,     HTASK,htaskCallee, DWORD,dwTickCount, DWORD,dwRejectType);
 #define IMessageFilter_IMETHODS \
     IUnknown_IMETHODS \
     IMessageFilter_METHODS
@@ -163,8 +163,7 @@ ICOM_DEFINE(IMessageFilter,IUnknown)
 
 
 HRESULT WINAPI CoRegisterMessageFilter16(LPMESSAGEFILTER lpMessageFilter,LPMESSAGEFILTER *lplpMessageFilter);
-HRESULT WINAPI CoRegisterMessageFilter32(LPMESSAGEFILTER lpMessageFilter,LPMESSAGEFILTER *lplpMessageFilter);
-#define CoRegisterMessageFilter WINELIB_NAME(CoRegisterMessageFilter)
+HRESULT WINAPI CoRegisterMessageFilter(LPMESSAGEFILTER lpMessageFilter,LPMESSAGEFILTER *lplpMessageFilter);
 
 
 /*****************************************************************************
@@ -172,10 +171,10 @@ HRESULT WINAPI CoRegisterMessageFilter32(LPMESSAGEFILTER lpMessageFilter,LPMESSA
  */
 #define ICOM_INTERFACE IServerSecurity
 #define IServerSecurity_METHODS \
-    ICOM_METHOD7(HRESULT,QueryBlanket,     DWORD*,pAuthnSvc, DWORD*,pAuthzSvc, OLECHAR32**,pServerPrincName, DWORD*,pAuthnLevel, DWORD*,pImpLevel, void**,pPrivs, DWORD*,pCapabilities); \
+    ICOM_METHOD7(HRESULT,QueryBlanket,     DWORD*,pAuthnSvc, DWORD*,pAuthzSvc, OLECHAR**,pServerPrincName, DWORD*,pAuthnLevel, DWORD*,pImpLevel, void**,pPrivs, DWORD*,pCapabilities); \
     ICOM_METHOD (HRESULT,ImpersonateClient); \
     ICOM_METHOD (HRESULT,RevertToSelf); \
-    ICOM_METHOD (BOOL32,   IsImpersonating);
+    ICOM_METHOD (BOOL,   IsImpersonating);
 #define IServerSecurity_IMETHODS \
     IUnknown_IMETHODS \
     IServerSecurity_METHODS
@@ -203,10 +202,10 @@ ICOM_DEFINE(IServerSecurity,IUnknown)
 HRESULT WINAPI CoCopyProxy(IUnknown* pProxy, IUnknown** ppCopy);
 
 /* FIXME: not implemented */
-HRESULT WINAPI CoQueryProxyBlanket(IUnknown* pProxy, DWORD* pwAuthnSvc, DWORD* pAuthzSvc, OLECHAR32** pServerPrincName, DWORD* pAuthnLevel, DWORD* pImpLevel, RPC_AUTH_IDENTITY_HANDLE* pAuthInfo, DWORD* pCapabilites);
+HRESULT WINAPI CoQueryProxyBlanket(IUnknown* pProxy, DWORD* pwAuthnSvc, DWORD* pAuthzSvc, OLECHAR** pServerPrincName, DWORD* pAuthnLevel, DWORD* pImpLevel, RPC_AUTH_IDENTITY_HANDLE* pAuthInfo, DWORD* pCapabilites);
 
 /* FIXME: not implemented */
-HRESULT WINAPI CoSetProxyBlanket(IUnknown* pProxy, DWORD dwAuthnSvc, DWORD dwAuthzSvc, OLECHAR32* pServerPrincName, DWORD dwAuthnLevel, DWORD dwImpLevel, RPC_AUTH_IDENTITY_HANDLE pAuthInfo, DWORD dwCapabilities);
+HRESULT WINAPI CoSetProxyBlanket(IUnknown* pProxy, DWORD dwAuthnSvc, DWORD dwAuthzSvc, OLECHAR* pServerPrincName, DWORD dwAuthnLevel, DWORD dwImpLevel, RPC_AUTH_IDENTITY_HANDLE pAuthInfo, DWORD dwCapabilities);
 
 
 /*****************************************************************************
@@ -246,7 +245,7 @@ HRESULT WINAPI CoGetPSClsid(REFIID riid, CLSID* pClsid);
 HRESULT WINAPI CoInitializeSecurity(PSECURITY_DESCRIPTOR pSecDesc, LONG cAuthSvc, SOLE_AUTHENTICATION_SERVICE* asAuthSvc, void* pReserved1, DWORD dwAuthnLevel, DWORD dwImpLevel, void* pReserved2, DWORD dwCapabilities, void* pReserved3);
 
 /* FIXME: not implemented */
-BOOL32 WINAPI CoIsHandlerConnected(LPUNKNOWN pUnk);
+BOOL WINAPI CoIsHandlerConnected(LPUNKNOWN pUnk);
 
 /* FIXME: not implemented */
 HRESULT WINAPI CoQueryAuthenticationServices(DWORD* pcAuthSvc, SOLE_AUTHENTICATION_SERVICE** asAuthSvc);

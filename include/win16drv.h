@@ -182,7 +182,7 @@ extern WORD PRTDRV_Output(LPPDEVICE 	 lpDestDev,
 			  LPLOGPEN16 	 lpPen,
 			  LPLOGBRUSH16	 lpBrush,
 			  SEGPTR	 lpDrawMode,
-			  HRGN32 	 hClipRgn);
+			  HRGN 	 hClipRgn);
 
 DWORD PRTDRV_StretchBlt(LPPDEVICE lpDestDev,
                         WORD wDestX, WORD wDestY,
@@ -195,33 +195,33 @@ DWORD PRTDRV_StretchBlt(LPPDEVICE lpDestDev,
                         SEGPTR lpDrawMode,
                         RECT16 *lpClipRect);
 
-extern WORD PRTDRV_GetCharWidth(LPPDEVICE lpDestDev, LPINT32 lpBuffer, 
+extern WORD PRTDRV_GetCharWidth(LPPDEVICE lpDestDev, LPINT lpBuffer, 
 		      WORD wFirstChar, WORD wLastChar, LPFONTINFO16 lpFontInfo,
 		      SEGPTR lpDrawMode, SEGPTR lpTextXForm );
 
 /* Wine driver functions */
 
-extern BOOL32 WIN16DRV_Init(void);
-extern BOOL32 WIN16DRV_GetCharWidth( struct tagDC *dc, UINT32 firstChar, UINT32 lastChar,
-				   LPINT32 buffer );
+extern BOOL WIN16DRV_Init(void);
+extern BOOL WIN16DRV_GetCharWidth( struct tagDC *dc, UINT firstChar, UINT lastChar,
+				   LPINT buffer );
 
-extern BOOL32 WIN16DRV_GetTextExtentPoint( DC *dc, LPCSTR str, INT32 count,
-                                           LPSIZE32 size );
-extern BOOL32 WIN16DRV_GetTextMetrics( DC *dc, TEXTMETRIC32A *metrics );
+extern BOOL WIN16DRV_GetTextExtentPoint( DC *dc, LPCSTR str, INT count,
+                                           LPSIZE size );
+extern BOOL WIN16DRV_GetTextMetrics( DC *dc, TEXTMETRICA *metrics );
 
-extern BOOL32 WIN16DRV_ExtTextOut( DC *dc, INT32 x, INT32 y, UINT32 flags,
-                                  const RECT32 *lprect, LPCSTR str, UINT32 count,
-                                  const INT32 *lpDx );
-extern BOOL32 WIN16DRV_LineTo( DC *dc, INT32 x, INT32 y );
-extern BOOL32 WIN16DRV_MoveToEx(DC *dc,INT32 x,INT32 y,LPPOINT32 pt);
-extern BOOL32 WIN16DRV_Polygon(DC *dc, const POINT32* pt, INT32 count );
-extern BOOL32 WIN16DRV_Polyline(DC *dc, const POINT32* pt, INT32 count );
-extern BOOL32 WIN16DRV_Rectangle(DC *dc, INT32 left, INT32 top, INT32 right, INT32 bottom);
-extern HGDIOBJ32 WIN16DRV_SelectObject( DC *dc, HGDIOBJ32 handle );
-extern BOOL32 WIN16DRV_PatBlt( struct tagDC *dc, INT32 left, INT32 top,
-                               INT32 width, INT32 height, DWORD rop );
-extern BOOL32 WIN16DRV_Ellipse(DC *dc, INT32 left, INT32 top, INT32 right, INT32 bottom);
-extern BOOL32 WIN16DRV_EnumDeviceFonts( DC* dc, LPLOGFONT16 plf, 
+extern BOOL WIN16DRV_ExtTextOut( DC *dc, INT x, INT y, UINT flags,
+                                  const RECT *lprect, LPCSTR str, UINT count,
+                                  const INT *lpDx );
+extern BOOL WIN16DRV_LineTo( DC *dc, INT x, INT y );
+extern BOOL WIN16DRV_MoveToEx(DC *dc,INT x,INT y,LPPOINT pt);
+extern BOOL WIN16DRV_Polygon(DC *dc, const POINT* pt, INT count );
+extern BOOL WIN16DRV_Polyline(DC *dc, const POINT* pt, INT count );
+extern BOOL WIN16DRV_Rectangle(DC *dc, INT left, INT top, INT right, INT bottom);
+extern HGDIOBJ WIN16DRV_SelectObject( DC *dc, HGDIOBJ handle );
+extern BOOL WIN16DRV_PatBlt( struct tagDC *dc, INT left, INT top,
+                               INT width, INT height, DWORD rop );
+extern BOOL WIN16DRV_Ellipse(DC *dc, INT left, INT top, INT right, INT bottom);
+extern BOOL WIN16DRV_EnumDeviceFonts( DC* dc, LPLOGFONT16 plf, 
 				        DEVICEFONTENUMPROC proc, LPARAM lp );
 
 

@@ -29,14 +29,14 @@
 UINT16 WINAPI WNetAddConnection16(LPCSTR lpNetPath, LPCSTR lpPassWord,
                                 LPCSTR lpLocalName)
 {	
-   return WNetAddConnection32A(lpNetPath, lpPassWord, lpLocalName);
+   return WNetAddConnectionA(lpNetPath, lpPassWord, lpLocalName);
 }
 
 /*********************************************************************
  *  WNetAddConnection32 [MPR.50] 
  */
 
-UINT32 WINAPI WNetAddConnection32A(LPCSTR NetPath, LPCSTR PassWord,
+UINT WINAPI WNetAddConnectionA(LPCSTR NetPath, LPCSTR PassWord,
 			    LPCSTR LocalName)
 {
    FIXME(wnet, "('%s', %p, '%s'): stub\n",
@@ -46,7 +46,7 @@ UINT32 WINAPI WNetAddConnection32A(LPCSTR NetPath, LPCSTR PassWord,
 
 /* [MPR.51] */
 
-UINT32 WINAPI WNetAddConnection32W(LPCWSTR NetPath, 
+UINT WINAPI WNetAddConnectionW(LPCWSTR NetPath, 
 			    LPCWSTR PassWord,
 			    LPCWSTR LocalName)
 {
@@ -59,8 +59,8 @@ UINT32 WINAPI WNetAddConnection32W(LPCWSTR NetPath,
  * WNetAddConnection2_32A [MPR.46] 
  */
 
-UINT32 WINAPI
-WNetAddConnection2_32A(LPNETRESOURCE32A netresource, /* [in] */
+UINT WINAPI
+WNetAddConnection2A(LPNETRESOURCEA netresource, /* [in] */
 		       LPCSTR password,        /* [in] */     
 		       LPCSTR username,        /* [in] */
 		       DWORD flags             /* [in] */  )
@@ -75,8 +75,8 @@ WNetAddConnection2_32A(LPNETRESOURCE32A netresource, /* [in] */
  * WNetAddConnection2W [MPR.47]
  */
 
-UINT32 WINAPI
-WNetAddConnection2_32W(LPNETRESOURCE32W netresource, /* [in] */
+UINT WINAPI
+WNetAddConnection2W(LPNETRESOURCEW netresource, /* [in] */
 		       LPCWSTR password,        /* [in] */     
 		       LPCWSTR username,        /* [in] */
 		       DWORD flags              /* [in] */  )
@@ -90,14 +90,14 @@ WNetAddConnection2_32W(LPNETRESOURCE32W netresource, /* [in] */
  * WNetAddConnection3_32A [MPR.48]
  */
 
-UINT32 WINAPI WNetAddConnection3_32A(HWND32 owner,
-		      LPNETRESOURCE32A netresource,
+UINT WINAPI WNetAddConnection3A(HWND owner,
+		      LPNETRESOURCEA netresource,
 		      LPCSTR password,
 		      LPCSTR username,
 		      DWORD flags)
 {
    TRACE(wnet, "owner = 0x%x\n", owner);
-   return WNetAddConnection2_32A(netresource, 
+   return WNetAddConnection2A(netresource, 
 				 password, username, flags);
 }
 
@@ -105,21 +105,21 @@ UINT32 WINAPI WNetAddConnection3_32A(HWND32 owner,
  * WNetAddConnection3W [MPR.49]
  */
 
-UINT32 WINAPI WNetAddConnection3_32W(HWND32 owner,
-			      LPNETRESOURCE32W netresource,
+UINT WINAPI WNetAddConnection3W(HWND owner,
+			      LPNETRESOURCEW netresource,
 			      LPCWSTR username,
 			      LPCWSTR password,
 			      DWORD flags)
 {
    TRACE(wnet,"owner = 0x%x\n", owner);
-   return WNetAddConnection2_32W(netresource, username, password,
+   return WNetAddConnection2W(netresource, username, password,
 				 flags); 
 } 
 
 /*******************************************************************
  * WNetConnectionDialog1_32A [MPR.59]
  */
-UINT32 WINAPI WNetConnectionDialog1_32A (LPCONNECTDLGSTRUCT32A lpConnDlgStruct)
+UINT WINAPI WNetConnectionDialog1A (LPCONNECTDLGSTRUCTA lpConnDlgStruct)
 { FIXME(wnet,"%p stub\n", lpConnDlgStruct);   
   SetLastError(WN_NO_NETWORK);
   return ERROR_NO_NETWORK;
@@ -127,7 +127,7 @@ UINT32 WINAPI WNetConnectionDialog1_32A (LPCONNECTDLGSTRUCT32A lpConnDlgStruct)
 /*******************************************************************
  * WNetConnectionDialog1_32W [MPR.60]
  */ 
-UINT32 WINAPI WNetConnectionDialog1_32W (LPCONNECTDLGSTRUCT32W lpConnDlgStruct)
+UINT WINAPI WNetConnectionDialog1W (LPCONNECTDLGSTRUCTW lpConnDlgStruct)
 { FIXME(wnet,"%p stub\n", lpConnDlgStruct);
   SetLastError(WN_NO_NETWORK);
   return ERROR_NO_NETWORK;
@@ -136,7 +136,7 @@ UINT32 WINAPI WNetConnectionDialog1_32W (LPCONNECTDLGSTRUCT32W lpConnDlgStruct)
 /*******************************************************************
  * WNetConnectionDialog_32 [MPR.61]
  */ 
-UINT32 WINAPI WNetConnectionDialog_32(HWND32 owner, DWORD flags  )
+UINT WINAPI WNetConnectionDialog(HWND owner, DWORD flags  )
 { FIXME(wnet,"owner = 0x%x, flags=0x%lx stub\n", owner,flags);
   SetLastError(WN_NO_NETWORK);
   return ERROR_NO_NETWORK;
@@ -146,7 +146,7 @@ UINT32 WINAPI WNetConnectionDialog_32(HWND32 owner, DWORD flags  )
 /*******************************************************************
  * WNetEnumCachedPasswords32 [MPR.61]
  */
-UINT32 WINAPI WNetEnumCachedPasswords32(LPSTR sometext, DWORD count1,
+UINT WINAPI WNetEnumCachedPasswords(LPSTR sometext, DWORD count1,
 		DWORD res_nr, DWORD *enumPasswordProc)
 {
     return ERROR_NO_NETWORK;
@@ -155,7 +155,7 @@ UINT32 WINAPI WNetEnumCachedPasswords32(LPSTR sometext, DWORD count1,
 /********************************************************************
  *   WNetCancelConnection	[USER.518]  undirects a local device
  */
-UINT16 WINAPI WNetCancelConnection(LPCSTR lpName, BOOL16 bForce)
+UINT16 WINAPI WNetCancelConnection16(LPCSTR lpName, BOOL16 bForce)
 {
     FIXME(wnet, "('%s', %04X): stub\n", lpName, bForce);
     return WN_NO_NETWORK;
@@ -165,7 +165,7 @@ UINT16 WINAPI WNetCancelConnection(LPCSTR lpName, BOOL16 bForce)
 /**************************************************************************
  *              WNetErrorText16       [USER.499]
  */
-int WINAPI WNetErrorText(WORD nError,LPSTR lpszText,WORD cbText)
+int WINAPI WNetErrorText16(WORD nError,LPSTR lpszText,WORD cbText)
 {
         FIXME(wnet, "(%x,%p,%x): stub\n",nError,lpszText,cbText);
 	return FALSE;
@@ -174,7 +174,7 @@ int WINAPI WNetErrorText(WORD nError,LPSTR lpszText,WORD cbText)
 /**************************************************************************
  *              WNetOpenJob16       [USER.501]
  */
-int WINAPI WNetOpenJob(LPSTR szQueue,LPSTR szJobTitle,WORD nCopies,LPWORD pfh)
+int WINAPI WNetOpenJob16(LPSTR szQueue,LPSTR szJobTitle,WORD nCopies,LPWORD pfh)
 {
 	FIXME(wnet, "('%s','%s',%x,%p): stub\n",
 	      szQueue,szJobTitle,nCopies,pfh);
@@ -184,7 +184,7 @@ int WINAPI WNetOpenJob(LPSTR szQueue,LPSTR szJobTitle,WORD nCopies,LPWORD pfh)
 /**************************************************************************
  *              WNetCloseJob       [USER.502]
  */
-int WINAPI WNetCloseJob(WORD fh,LPWORD pidJob,LPSTR szQueue)
+int WINAPI WNetCloseJob16(WORD fh,LPWORD pidJob,LPSTR szQueue)
 {
 	FIXME(wnet, "(%x,%p,'%s'): stub\n",fh,pidJob,szQueue);
 	return WN_NET_ERROR;
@@ -193,7 +193,7 @@ int WINAPI WNetCloseJob(WORD fh,LPWORD pidJob,LPSTR szQueue)
 /**************************************************************************
  *              WNetAbortJob       [USER.503]
  */
-int WINAPI WNetAbortJob(LPSTR szQueue,WORD wJobId)
+int WINAPI WNetAbortJob16(LPSTR szQueue,WORD wJobId)
 {
 	FIXME(wnet, "('%s',%x): stub\n",szQueue,wJobId);
 	return WN_NET_ERROR;
@@ -202,7 +202,7 @@ int WINAPI WNetAbortJob(LPSTR szQueue,WORD wJobId)
 /**************************************************************************
  *              WNetHoldJob       [USER.504]
  */
-int WINAPI WNetHoldJob(LPSTR szQueue,WORD wJobId)
+int WINAPI WNetHoldJob16(LPSTR szQueue,WORD wJobId)
 {
 	FIXME(wnet, "('%s',%x): stub\n",szQueue,wJobId);
 	return WN_NET_ERROR;
@@ -211,7 +211,7 @@ int WINAPI WNetHoldJob(LPSTR szQueue,WORD wJobId)
 /**************************************************************************
  *              WNetReleaseJob       [USER.505]
  */
-int WINAPI WNetReleaseJob(LPSTR szQueue,WORD wJobId)
+int WINAPI WNetReleaseJob16(LPSTR szQueue,WORD wJobId)
 {
 	FIXME(wnet, "('%s',%x): stub\n",szQueue,wJobId);
 	return WN_NET_ERROR;
@@ -220,7 +220,7 @@ int WINAPI WNetReleaseJob(LPSTR szQueue,WORD wJobId)
 /**************************************************************************
  *              WNetCancelJob       [USER.506]
  */
-int WINAPI WNetCancelJob(LPSTR szQueue,WORD wJobId)
+int WINAPI WNetCancelJob16(LPSTR szQueue,WORD wJobId)
 {
 	FIXME(wnet, "('%s',%x): stub\n",szQueue,wJobId);
 	return WN_NET_ERROR;
@@ -229,7 +229,7 @@ int WINAPI WNetCancelJob(LPSTR szQueue,WORD wJobId)
 /**************************************************************************
  *              WNetSetJobCopies       [USER.507]
  */
-int WINAPI WNetSetJobCopies(LPSTR szQueue,WORD wJobId,WORD nCopies)
+int WINAPI WNetSetJobCopies16(LPSTR szQueue,WORD wJobId,WORD nCopies)
 {
 	FIXME(wnet, "('%s',%x,%x): stub\n",szQueue,wJobId,nCopies);
 	return WN_NET_ERROR;
@@ -238,7 +238,7 @@ int WINAPI WNetSetJobCopies(LPSTR szQueue,WORD wJobId,WORD nCopies)
 /**************************************************************************
  *              WNetWatchQueue       [USER.508]
  */
-int WINAPI WNetWatchQueue(HWND16 hWnd,LPSTR szLocal,LPSTR szUser,WORD nQueue)
+int WINAPI WNetWatchQueue16(HWND16 hWnd,LPSTR szLocal,LPSTR szUser,WORD nQueue)
 {
 	FIXME(wnet, "(%04x,'%s','%s',%x): stub\n",hWnd,szLocal,szUser,nQueue);
 	return WN_NET_ERROR;
@@ -247,7 +247,7 @@ int WINAPI WNetWatchQueue(HWND16 hWnd,LPSTR szLocal,LPSTR szUser,WORD nQueue)
 /**************************************************************************
  *              WNetUnwatchQueue       [USER.509]
  */
-int WINAPI WNetUnwatchQueue(LPSTR szQueue)
+int WINAPI WNetUnwatchQueue16(LPSTR szQueue)
 {
 	FIXME(wnet, "('%s'): stub\n", szQueue);
 	return WN_NET_ERROR;
@@ -256,7 +256,7 @@ int WINAPI WNetUnwatchQueue(LPSTR szQueue)
 /**************************************************************************
  *              WNetLockQueueData       [USER.510]
  */
-int WINAPI WNetLockQueueData(LPSTR szQueue,LPSTR szUser,void *lplpQueueStruct)
+int WINAPI WNetLockQueueData16(LPSTR szQueue,LPSTR szUser,void *lplpQueueStruct)
 {
 	FIXME(wnet, "('%s','%s',%p): stub\n",szQueue,szUser,lplpQueueStruct);
 	return WN_NET_ERROR;
@@ -265,7 +265,7 @@ int WINAPI WNetLockQueueData(LPSTR szQueue,LPSTR szUser,void *lplpQueueStruct)
 /**************************************************************************
  *              WNetUnlockQueueData       [USER.511]
  */
-int WINAPI WNetUnlockQueueData(LPSTR szQueue)
+int WINAPI WNetUnlockQueueData16(LPSTR szQueue)
 {
 	FIXME(wnet, "('%s'): stub\n",szQueue);
 	return WN_NET_ERROR;
@@ -314,7 +314,7 @@ int WINAPI WNetGetConnection16(LPCSTR lpLocalName,
  *				WNetGetConnectionA	[MPR.70]
  */
 DWORD WINAPI
-WNetGetConnection32A(LPCSTR localname,LPSTR remotename,LPDWORD buflen)
+WNetGetConnectionA(LPCSTR localname,LPSTR remotename,LPDWORD buflen)
 {
 	UINT16	x;
 	DWORD	ret = WNetGetConnection16(localname,remotename,&x);
@@ -326,7 +326,7 @@ WNetGetConnection32A(LPCSTR localname,LPSTR remotename,LPDWORD buflen)
  *				WNetGetConnectionW	[MPR.72]
  */
 DWORD WINAPI
-WNetGetConnection32W(LPCWSTR localnameW,LPWSTR remotenameW,LPDWORD buflen)
+WNetGetConnectionW(LPCWSTR localnameW,LPWSTR remotenameW,LPDWORD buflen)
 {
 	UINT16	x;
 	CHAR	buf[200];	
@@ -334,7 +334,7 @@ WNetGetConnection32W(LPCWSTR localnameW,LPWSTR remotenameW,LPDWORD buflen)
 	DWORD	ret = WNetGetConnection16(lnA,buf,&x);
 
 	lstrcpyAtoW(remotenameW,buf);
-	*buflen=lstrlen32W(remotenameW);
+	*buflen=lstrlenW(remotenameW);
 	HeapFree(GetProcessHeap(),0,lnA);
 	return ret;
 }
@@ -342,7 +342,7 @@ WNetGetConnection32W(LPCWSTR localnameW,LPWSTR remotenameW,LPDWORD buflen)
 /**************************************************************************
  *				WNetGetCaps		[USER.513]
  */
-int WINAPI WNetGetCaps(WORD capability)
+int WINAPI WNetGetCaps16(WORD capability)
 {
 	switch (capability) {
 		case WNNC_SPEC_VERSION:
@@ -415,7 +415,7 @@ int WINAPI WNetGetCaps(WORD capability)
 /**************************************************************************
  *              WNetDeviceMode       [USER.514]
  */
-int WINAPI WNetDeviceMode(HWND16 hWndOwner)
+int WINAPI WNetDeviceMode16(HWND16 hWndOwner)
 {
 	FIXME(wnet, "(%04x): stub\n",hWndOwner);
 	return WN_NO_NETWORK;
@@ -424,7 +424,7 @@ int WINAPI WNetDeviceMode(HWND16 hWndOwner)
 /**************************************************************************
  *              WNetBrowseDialog       [USER.515]
  */
-int WINAPI WNetBrowseDialog(HWND16 hParent,WORD nType,LPSTR szPath)
+int WINAPI WNetBrowseDialog16(HWND16 hParent,WORD nType,LPSTR szPath)
 {
 	FIXME(wnet, "(%04x,%x,'%s'): stub\n",hParent,nType,szPath);
 	return WN_NO_NETWORK;
@@ -433,7 +433,7 @@ int WINAPI WNetBrowseDialog(HWND16 hParent,WORD nType,LPSTR szPath)
 /**************************************************************************
  *				WNetGetUser			[USER.516]
  */
-UINT16 WINAPI WNetGetUser(LPSTR lpLocalName, LPSTR lpUserName, DWORD *lpSize)
+UINT16 WINAPI WNetGetUser16(LPSTR lpLocalName, LPSTR lpUserName, DWORD *lpSize)
 {
 	FIXME(wnet, "(%p, %p, %p): stub\n", lpLocalName, lpUserName, lpSize);
 	return WN_NO_NETWORK;
@@ -443,7 +443,7 @@ UINT16 WINAPI WNetGetUser(LPSTR lpLocalName, LPSTR lpUserName, DWORD *lpSize)
  *				WNetGetUser			[MPR.86]
  * FIXME: we should not return ourselves, but the owner of the drive lpLocalName
  */
-DWORD WINAPI WNetGetUser32A(LPCSTR lpLocalName, LPSTR lpUserName, DWORD *lpSize)
+DWORD WINAPI WNetGetUserA(LPCSTR lpLocalName, LPSTR lpUserName, DWORD *lpSize)
 {
 	struct passwd	*pwd = getpwuid(getuid());
 
@@ -467,7 +467,7 @@ DWORD WINAPI WNetGetUser32A(LPCSTR lpLocalName, LPSTR lpUserName, DWORD *lpSize)
 /**************************************************************************
  *              WNetGetError       [USER.519]
  */
-int WINAPI WNetGetError(LPWORD nError)
+int WINAPI WNetGetError16(LPWORD nError)
 {
 	FIXME(wnet, "(%p): stub\n",nError);
 	return WN_NO_NETWORK;
@@ -476,7 +476,7 @@ int WINAPI WNetGetError(LPWORD nError)
 /**************************************************************************
  *              WNetGetErrorText       [USER.520]
  */
-int WINAPI WNetGetErrorText(WORD nError, LPSTR lpBuffer, LPWORD nBufferSize)
+int WINAPI WNetGetErrorText16(WORD nError, LPSTR lpBuffer, LPWORD nBufferSize)
 {
 	FIXME(wnet, "(%x,%p,%p): stub\n",nError,lpBuffer,nBufferSize);
 	return WN_NET_ERROR;
@@ -485,7 +485,7 @@ int WINAPI WNetGetErrorText(WORD nError, LPSTR lpBuffer, LPWORD nBufferSize)
 /**************************************************************************
  *              WNetRestoreConnection       [USER.523]
  */
-int WINAPI WNetRestoreConnection(HWND16 hwndOwner,LPSTR lpszDevice)
+int WINAPI WNetRestoreConnection16(HWND16 hwndOwner,LPSTR lpszDevice)
 {
 	FIXME(wnet, "(%04x,'%s'): stub\n",hwndOwner,lpszDevice);
 	return WN_NO_NETWORK;
@@ -494,7 +494,7 @@ int WINAPI WNetRestoreConnection(HWND16 hwndOwner,LPSTR lpszDevice)
 /**************************************************************************
  *              WNetWriteJob       [USER.524]
  */
-int WINAPI WNetWriteJob(HANDLE16 hJob,void *lpData,LPWORD lpcbData)
+int WINAPI WNetWriteJob16(HANDLE16 hJob,void *lpData,LPWORD lpcbData)
 {
 	FIXME(wnet, "(%04x,%p,%p): stub\n",hJob,lpData,lpcbData);
 	return WN_NO_NETWORK;
@@ -512,7 +512,7 @@ UINT16 WINAPI WNetConnectDialog(HWND16 hWndParent, WORD iType)
 /**************************************************************************
  *              WNetDisconnectDialog       [USER.526]
  */
-int WINAPI WNetDisconnectDialog(HWND16 hwndOwner, WORD iType)
+int WINAPI WNetDisconnectDialog16(HWND16 hwndOwner, WORD iType)
 {
 	FIXME(wnet, "(%04x,%x): stub\n",hwndOwner,iType);
 	return WN_NO_NETWORK;
@@ -521,7 +521,7 @@ int WINAPI WNetDisconnectDialog(HWND16 hwndOwner, WORD iType)
 /**************************************************************************
  *              WnetConnectionDialog     [USER.527]
  */
-UINT16 WINAPI WNetConnectionDialog(HWND16 hWndParent, WORD iType)
+UINT16 WINAPI WNetConnectionDialog16(HWND16 hWndParent, WORD iType)
 {
 	FIXME(wnet, "(%04x, %4X): stub\n", hWndParent, iType);
 	return WN_SUCCESS;
@@ -532,7 +532,7 @@ UINT16 WINAPI WNetConnectionDialog(HWND16 hWndParent, WORD iType)
 /**************************************************************************
  *              WNetViewQueueDialog       [USER.528]
  */
-int WINAPI WNetViewQueueDialog(HWND16 hwndOwner,LPSTR lpszQueue)
+int WINAPI WNetViewQueueDialog16(HWND16 hwndOwner,LPSTR lpszQueue)
 {
 	FIXME(wnet, "(%04x,'%s'): stub\n",hwndOwner,lpszQueue);
 	return WN_NO_NETWORK;
@@ -541,7 +541,7 @@ int WINAPI WNetViewQueueDialog(HWND16 hwndOwner,LPSTR lpszQueue)
 /**************************************************************************
  *              WNetPropertyDialog       [USER.529]
  */
-int WINAPI WNetPropertyDialog(HWND16 hwndParent,WORD iButton,
+int WINAPI WNetPropertyDialog16(HWND16 hwndParent,WORD iButton,
                               WORD nPropSel,LPSTR lpszName,WORD nType)
 {
 	FIXME(wnet, "(%04x,%x,%x,'%s',%x): stub\n",
@@ -559,10 +559,10 @@ int WINAPI WNetPropertyDialog(HWND16 hwndParent,WORD iButton,
  */
 int WINAPI WNetGetDirectoryType16(LPSTR lpName, LPINT16 lpType)
 {
-        UINT32 type = GetDriveType32A(lpName);
+        UINT type = GetDriveTypeA(lpName);
 
 	if (type == DRIVE_DOESNOTEXIST)
-	  type = GetDriveType32A(NULL);
+	  type = GetDriveTypeA(NULL);
 	*lpType = (type==DRIVE_REMOTE)?WNDT_NETWORK:WNDT_NORMAL;
 	TRACE(wnet,"%s is %s\n",lpName,(*lpType==WNDT_NETWORK)?
 	      "WNDT_NETWORK":"WNDT_NORMAL");
@@ -573,7 +573,7 @@ int WINAPI WNetGetDirectoryType16(LPSTR lpName, LPINT16 lpType)
  *              WNetGetDirectoryTypeA     [MPR.109]
  */
 
-UINT32 WINAPI WNetGetDirectoryType32A(LPSTR lpName,void *lpType)
+UINT WINAPI WNetGetDirectoryTypeA(LPSTR lpName,void *lpType)
 {
    return WNetGetDirectoryType16(lpName, lpType);
 }
@@ -581,7 +581,7 @@ UINT32 WINAPI WNetGetDirectoryType32A(LPSTR lpName,void *lpType)
 /**************************************************************************
  *              WNetDirectoryNotify       [USER.531]
  */
-int WINAPI WNetDirectoryNotify(HWND16 hwndOwner,void *lpDir,WORD wOper)
+int WINAPI WNetDirectoryNotify16(HWND16 hwndOwner,void *lpDir,WORD wOper)
 {
 	FIXME(wnet, "(%04x,%p,%x): stub\n",hwndOwner,lpDir,wOper);
 	return WN_NO_NETWORK;
@@ -590,7 +590,7 @@ int WINAPI WNetDirectoryNotify(HWND16 hwndOwner,void *lpDir,WORD wOper)
 /**************************************************************************
  *              WNetGetPropertyText       [USER.532]
  */
-int WINAPI WNetGetPropertyText(WORD iButton, WORD nPropSel, LPSTR lpszName,
+int WINAPI WNetGetPropertyText16(WORD iButton, WORD nPropSel, LPSTR lpszName,
                           LPSTR lpszButtonName, WORD cbButtonName, WORD nType)
 {
 	FIXME(wnet, "(%04x,%04x,'%s','%s',%04x): stub\n",
@@ -633,8 +633,8 @@ UINT16 WINAPI WNetOpenEnum16(DWORD dwScope, DWORD dwType,
 /**************************************************************************
  *				WNetOpenEnumA		[MPR.92]
  */
-UINT32 WINAPI WNetOpenEnum32A(DWORD dwScope, DWORD dwType, DWORD dwUsage,
-                              LPNETRESOURCE32A lpNet, HANDLE32 *lphEnum)
+UINT WINAPI WNetOpenEnumA(DWORD dwScope, DWORD dwType, DWORD dwUsage,
+                              LPNETRESOURCEA lpNet, HANDLE *lphEnum)
 {
 	FIXME(wnet, "(%08lX, %08lX, %08lX, %p, %p): stub\n",
 	      dwScope, dwType, dwUsage, lpNet, lphEnum);
@@ -645,8 +645,8 @@ UINT32 WINAPI WNetOpenEnum32A(DWORD dwScope, DWORD dwType, DWORD dwUsage,
 /**************************************************************************
  *                             WNetOpenEnumW           [MPR.93]
  */
-UINT32 WINAPI WNetOpenEnum32W(DWORD dwScope, DWORD dwType, DWORD dwUsage,
-                              LPNETRESOURCE32A lpNet, HANDLE32 *lphEnum)
+UINT WINAPI WNetOpenEnumW(DWORD dwScope, DWORD dwType, DWORD dwUsage,
+                              LPNETRESOURCEA lpNet, HANDLE *lphEnum)
 {
        FIXME(wnet, "(%08lX, %08lX, %08lX, %p, %p): stub\n",
              dwScope, dwType, dwUsage, lpNet, lphEnum);
@@ -659,8 +659,8 @@ UINT32 WINAPI WNetOpenEnum32W(DWORD dwScope, DWORD dwType, DWORD dwUsage,
  * */
 
 DWORD WINAPI 
-WNetGetResourceInformation32A(
-	LPNETRESOURCE32A netres,LPVOID buf,LPDWORD buflen,LPSTR systemstr
+WNetGetResourceInformationA(
+	LPNETRESOURCEA netres,LPVOID buf,LPDWORD buflen,LPSTR systemstr
 ) {
 	FIXME(wnet,"(%p,%p,%p,%p): stub!\n",netres,buf,buflen,systemstr);
   SetLastError(WN_NO_NETWORK);
@@ -719,8 +719,8 @@ DWORD WINAPI WNetGetCachedPassword(
  *             ERROR_BAD_NET_NAME, ERROR_INVALID_PARAMETER, 
  *             ERROR_NO_NETWORK, ERROR_EXTENDED_ERROR
  */
-DWORD WINAPI MultinetGetConnectionPerformance32A(
-	LPNETRESOURCE32A lpNetResource,
+DWORD WINAPI MultinetGetConnectionPerformanceA(
+	LPNETRESOURCEA lpNetResource,
 	LPNETCONNECTINFOSTRUCT lpNetConnectInfoStruct
 ) {
 	FIXME(mpr,"(%p,%p): stub\n",lpNetResource,lpNetConnectInfoStruct);
@@ -742,7 +742,7 @@ DWORD WINAPI _MPR_22(DWORD x)
  *  MultinetGetErrorTextA [MPR.28]
  */
 
-UINT32 WINAPI MultinetGetErrorText32A (DWORD x, DWORD y, DWORD z)
+UINT WINAPI MultinetGetErrorTextA (DWORD x, DWORD y, DWORD z)
 {	FIXME(mpr,"(%lx,%lx,%lx): stub\n",x,y,z);
   return 0;
 }
@@ -750,7 +750,7 @@ UINT32 WINAPI MultinetGetErrorText32A (DWORD x, DWORD y, DWORD z)
 /*****************************************************************
  *  MultinetGetErrorTextW [MPR.29]
  */
-UINT32 WINAPI MultinetGetErrorText32W (DWORD x, DWORD y, DWORD z)
+UINT WINAPI MultinetGetErrorTextW (DWORD x, DWORD y, DWORD z)
 {	FIXME(mpr,"(%lx,%lx,%lx): stub\n",x,y,z);
   return 0;
 }
@@ -758,7 +758,7 @@ UINT32 WINAPI MultinetGetErrorText32W (DWORD x, DWORD y, DWORD z)
 /*****************************************************************
  *  NPSGetProviderHandle [MPR.33]
  */
-DWORD WINAPI NPSGetProviderHandle32A(DWORD x) {
+DWORD WINAPI NPSGetProviderHandleA(DWORD x) {
 	FIXME(mpr,"(0x%08lx),stub!\n",x);
 	return 0;
 }
@@ -766,10 +766,10 @@ DWORD WINAPI NPSGetProviderHandle32A(DWORD x) {
 /*****************************************************************
  *  WNetCancelConnection232A [MPR.53]
  */
-DWORD WINAPI WNetCancelConnection232A(
+DWORD WINAPI WNetCancelConnection2A(
   LPCSTR lpName, 
   DWORD dwFlags, 
-  BOOL32 fForce) {
+  BOOL fForce) {
 
   FIXME(wnet,": stub\n");
   return WN_SUCCESS;
@@ -778,10 +778,10 @@ DWORD WINAPI WNetCancelConnection232A(
 /*****************************************************************
  *  WNetCancelConnection232W [MPR.54]
  */
-DWORD WINAPI WNetCancelConnection232W(
+DWORD WINAPI WNetCancelConnection2W(
   LPCWSTR lpName, 
   DWORD dwFlags, 
-  BOOL32 fForce) {
+  BOOL fForce) {
 
   FIXME(wnet,": stub\n");
   return WN_SUCCESS;
@@ -790,10 +790,10 @@ DWORD WINAPI WNetCancelConnection232W(
 /*****************************************************************
  *  WNetCancelConnection32A [MPR.55]
  */
-DWORD WINAPI WNetCancelConnection32A(
+DWORD WINAPI WNetCancelConnectionA(
   LPCSTR lpName, 
   DWORD dwFlags, 
-  BOOL32 fForce) {
+  BOOL fForce) {
 
   FIXME(wnet,": stub\n");
   return WN_SUCCESS;
@@ -802,10 +802,10 @@ DWORD WINAPI WNetCancelConnection32A(
 /*****************************************************************
  *  WNetCancelConnection32W [MPR.56]
  */
-DWORD WINAPI WNetCancelConnection32W(
+DWORD WINAPI WNetCancelConnectionW(
   LPCWSTR lpName, 
   DWORD dwFlags, 
-  BOOL32 fForce) {
+  BOOL fForce) {
 
   FIXME(wnet,": stub\n");
   return WN_SUCCESS;
@@ -814,7 +814,7 @@ DWORD WINAPI WNetCancelConnection32W(
 /*****************************************************************
  *  WNetGetUser32W [MPR.87]
  */
-DWORD WINAPI WNetGetUser32W(
+DWORD WINAPI WNetGetUserW(
   LPCWSTR  lpName,
   LPWSTR   lpUserName,
   LPDWORD  lpnLength) {

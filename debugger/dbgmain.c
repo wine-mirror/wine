@@ -66,7 +66,7 @@ void QUEUE_DumpQueue( HQUEUE16 hQueue )
   exit(0);
 }
 
-void WIN_DumpWindow( HWND32 hwnd )
+void WIN_DumpWindow( HWND hwnd )
 {
   exit(0);
 }
@@ -87,7 +87,7 @@ void QUEUE_WalkQueues()
   exit(0);
 }
 
-void WIN_WalkWindows( HWND32 hwnd, int indent )
+void WIN_WalkWindows( HWND hwnd, int indent )
 {
   exit(0);
 }
@@ -112,12 +112,12 @@ LPVOID     GlobalLock16(HGLOBAL16 h)
   exit(0);
 }
 
-BOOL16 ModuleFirst(MODULEENTRY *lpModule)
+BOOL16 ModuleFirst16(MODULEENTRY *lpModule)
 {
   return 0;
 }
 
-BOOL16 ModuleNext(MODULEENTRY *lpModule)
+BOOL16 ModuleNext16(MODULEENTRY *lpModule)
 {
   return 0;
 }
@@ -127,7 +127,7 @@ BOOL16     IsBadReadPtr16(SEGPTR s,UINT16 o)
   exit(0);
 }
 
-BOOL32     IsBadReadPtr32(LPCVOID s,UINT32 o)
+BOOL     IsBadReadPtr(LPCVOID s,UINT o)
 {
   exit(0);
 }

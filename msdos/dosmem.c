@@ -277,7 +277,7 @@ static void DOSMEM_InitCollateTable()
 	unsigned char	*tbl;
 	int		i;
 
-	x = GlobalDOSAlloc(258);
+	x = GlobalDOSAlloc16(258);
 	DOSMEM_CollateTable = MAKELONG(0,(x>>16));
 	tbl = DOSMEM_MapRealToLinear(DOSMEM_CollateTable);
 	*(WORD*)tbl	= 0x100;
@@ -327,7 +327,7 @@ static void DOSMEM_InitErrorTable()
         /* interface (a farcall returned with INT 24 (AX = 0x122e, DL = */
         /* 0x08) which lets us have a smaller memory footprint anyway. */
  
- 	x = GlobalDOSAlloc(SIZE_TO_ALLOCATE);  
+ 	x = GlobalDOSAlloc16(SIZE_TO_ALLOCATE);  
 
 	DOSMEM_ErrorCall = MAKELONG(0,(x>>16));
         DOSMEM_ErrorBuffer = DOSMEM_ErrorCall + code;
@@ -373,7 +373,7 @@ static void DOSMEM_InitMemory(HMODULE16 hModule)
  * Create the dos memory segments, and store them into the KERNEL
  * exported values.
  */
-BOOL32 DOSMEM_Init(HMODULE16 hModule)
+BOOL DOSMEM_Init(HMODULE16 hModule)
 {
     if (!hModule)
     {
@@ -428,9 +428,9 @@ void DOSMEM_Tick( WORD timer )
  *
  * Carve a chunk of the DOS memory block (without selector).
  */
-LPVOID DOSMEM_GetBlock(HMODULE16 hModule, UINT32 size, UINT16* pseg)
+LPVOID DOSMEM_GetBlock(HMODULE16 hModule, UINT size, UINT16* pseg)
 {
-   UINT32  	 blocksize;
+   UINT  	 blocksize;
    char         *block = NULL;
    dosmem_info  *info_block = DOSMEM_InfoBlock(hModule);
    dosmem_entry *dm;
@@ -446,7 +446,7 @@ LPVOID DOSMEM_GetBlock(HMODULE16 hModule, UINT32 size, UINT16* pseg)
 #ifdef __DOSMEM_DEBUG__
        if( (dm->size & DM_BLOCK_DEBUG) != DM_BLOCK_DEBUG )
        {
-	    WARN(dosmem,"MCB overrun! [prev = 0x%08x]\n", 4 + (UINT32)prev);
+	    WARN(dosmem,"MCB overrun! [prev = 0x%08x]\n", 4 + (UINT)prev);
 	    return NULL;
        }
        prev = dm;
@@ -501,7 +501,7 @@ LPVOID DOSMEM_GetBlock(HMODULE16 hModule, UINT32 size, UINT16* pseg)
 /***********************************************************************
  *           DOSMEM_FreeBlock
  */
-BOOL32 DOSMEM_FreeBlock(HMODULE16 hModule, void* ptr)
+BOOL DOSMEM_FreeBlock(HMODULE16 hModule, void* ptr)
 {
    dosmem_info  *info_block = DOSMEM_InfoBlock(hModule);
 
@@ -530,7 +530,7 @@ BOOL32 DOSMEM_FreeBlock(HMODULE16 hModule, void* ptr)
 /***********************************************************************
  *           DOSMEM_ResizeBlock
  */
-LPVOID DOSMEM_ResizeBlock(HMODULE16 hModule, void* ptr, UINT32 size, UINT16* pseg)
+LPVOID DOSMEM_ResizeBlock(HMODULE16 hModule, void* ptr, UINT size, UINT16* pseg)
 {
    char         *block = NULL;
    dosmem_info  *info_block = DOSMEM_InfoBlock(hModule);
@@ -547,7 +547,7 @@ LPVOID DOSMEM_ResizeBlock(HMODULE16 hModule, void* ptr, UINT32 size, UINT16* pse
 	 )
        {
 	     dosmem_entry  *next = NEXT_BLOCK(dm);
-	     UINT32 blocksize, orgsize = dm->size & DM_BLOCK_MASK;
+	     UINT blocksize, orgsize = dm->size & DM_BLOCK_MASK;
 
 	     while( next->size & DM_BLOCK_FREE ) /* collapse free blocks */
 	     {
@@ -593,9 +593,9 @@ LPVOID DOSMEM_ResizeBlock(HMODULE16 hModule, void* ptr, UINT32 size, UINT16* pse
 /***********************************************************************
  *           DOSMEM_Available
  */
-UINT32 DOSMEM_Available(HMODULE16 hModule)
+UINT DOSMEM_Available(HMODULE16 hModule)
 {
-   UINT32  	 blocksize, available = 0;
+   UINT  	 blocksize, available = 0;
    dosmem_entry *dm;
    
    dm = DOSMEM_RootBlock(hModule);
@@ -605,7 +605,7 @@ UINT32 DOSMEM_Available(HMODULE16 hModule)
 #ifdef __DOSMEM_DEBUG__
        if( (dm->size & DM_BLOCK_DEBUG) != DM_BLOCK_DEBUG )
        {
-	    WARN(dosmem,"MCB overrun! [prev = 0x%08x]\n", 4 + (UINT32)prev);
+	    WARN(dosmem,"MCB overrun! [prev = 0x%08x]\n", 4 + (UINT)prev);
 	    return NULL;
        }
        prev = dm;
@@ -636,12 +636,12 @@ UINT32 DOSMEM_Available(HMODULE16 hModule)
  *
  * Linear address to the DOS address space.
  */
-UINT32 DOSMEM_MapLinearToDos(LPVOID ptr)
+UINT DOSMEM_MapLinearToDos(LPVOID ptr)
 {
     if (((char*)ptr >= DOSMEM_MemoryBase(0)) &&
         ((char*)ptr < DOSMEM_MemoryBase(0) + 0x100000))
-	  return (UINT32)ptr - (UINT32)DOSMEM_MemoryBase(0);
-    return (UINT32)ptr;
+	  return (UINT)ptr - (UINT)DOSMEM_MemoryBase(0);
+    return (UINT)ptr;
 }
 
 
@@ -650,9 +650,9 @@ UINT32 DOSMEM_MapLinearToDos(LPVOID ptr)
  *
  * DOS linear address to the linear address space.
  */
-LPVOID DOSMEM_MapDosToLinear(UINT32 ptr)
+LPVOID DOSMEM_MapDosToLinear(UINT ptr)
 {
-    if (ptr < 0x100000) return (LPVOID)(ptr + (UINT32)DOSMEM_MemoryBase(0));
+    if (ptr < 0x100000) return (LPVOID)(ptr + (UINT)DOSMEM_MemoryBase(0));
     return (LPVOID)ptr;
 }
 

@@ -48,7 +48,7 @@ typedef struct hash_share_struct {
 				/* changes to the pointer. */
     HASH_PTR items;		/* pointer to the items */
 } HASH_SHARED;
-typedef BOOL32 HASH_ITEM_TEST(HASH_VAL *value, HASH_VAL *seeked_data);
+typedef BOOL HASH_ITEM_TEST(HASH_VAL *value, HASH_VAL *seeked_data);
 
 /* NOTE:
  * 1. Keys 0 and -1 are reserved.
@@ -62,7 +62,7 @@ typedef struct hash_container_struct {
 				   (Function of maximum_load) */
 
     int last_ptr_update;	/* to be compared with shared.ptr_updates */
-    BOOL32 shared_was_malloced;	/* Need that to know how to destroy hash */
+    BOOL shared_was_malloced;	/* Need that to know how to destroy hash */
     
     /* This is an optional handler.
      * If not NULL, this function is used for distinguishing between
@@ -129,8 +129,8 @@ void detach_hash(HASH_CONTAINER *hash);
  *        2. data to store. (for hash_add_item).
  */
 HASH_VAL *hash_locate_item(HASH_CONTAINER* hash,int key, HASH_VAL* seeked_data);
-BOOL32 hash_add_item(HASH_CONTAINER* hash, int key, HASH_VAL* data);
-BOOL32 hash_delete_item(HASH_CONTAINER* hash, int key, HASH_VAL* seeked_data);
+BOOL hash_add_item(HASH_CONTAINER* hash, int key, HASH_VAL* data);
+BOOL hash_delete_item(HASH_CONTAINER* hash, int key, HASH_VAL* seeked_data);
 
 
 void *ret_null();		/* function returning null (used for */

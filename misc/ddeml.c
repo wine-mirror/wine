@@ -33,8 +33,8 @@ static const char	inst_string[]= "DDEMaxInstance";
 static LPCWSTR 		DDEInstanceAccess = (LPCWSTR)&inst_string;
 static const char	handle_string[] = "DDEHandleAccess";
 static LPCWSTR      	DDEHandleAccess = (LPCWSTR)&handle_string;
-static HANDLE32	     	inst_count_mutex = 0;
-static HANDLE32	     	handle_mutex = 0;
+static HANDLE	     	inst_count_mutex = 0;
+static HANDLE	     	handle_mutex = 0;
        DDE_HANDLE_ENTRY *this_instance;
        SECURITY_ATTRIBUTES *s_att= NULL;
        DWORD 	     	err_no = 0;
@@ -151,7 +151,7 @@ static void FreeAndRemoveHSZNodes( DWORD idInst )
      */
     while( pHSZNodes != NULL )
     {
-        DdeFreeStringHandle32( idInst, pHSZNodes->hsz );
+        DdeFreeStringHandle( idInst, pHSZNodes->hsz );
     }
 }
 
@@ -208,7 +208,7 @@ static void InsertHSZNode( DWORD idInst, HSZ hsz )
  *  1.0      Jan 1999  Keith Matthews        Initial version
  *
  */
- DWORD Release_reserved_mutex (HANDLE32 mutex, LPTSTR mutex_name, BOOL32 release_handle_m, BOOL32 release_this_i )
+ DWORD Release_reserved_mutex (HANDLE mutex, LPTSTR mutex_name, BOOL release_handle_m, BOOL release_this_i )
 {
 	ReleaseMutex(mutex);
         if ( (err_no=GetLastError()) != 0 )
@@ -252,7 +252,7 @@ DWORD IncrementInstanceId()
 		s_attrib.bInheritHandle = TRUE;
 		s_attrib.lpSecurityDescriptor = NULL;
 		s_attrib.nLength = sizeof(s_attrib);
-		inst_count_mutex = CreateMutex32W(&s_attrib,1,DDEInstanceAccess); // 1st time through
+		inst_count_mutex = CreateMutexW(&s_attrib,1,DDEInstanceAccess); // 1st time through
 	} else {
 		WaitForSingleObject(inst_count_mutex,1000); // subsequent calls
 		/*  FIXME  - needs refinement with popup for timeout, also is timeout interval OK */
@@ -275,7 +275,7 @@ DWORD IncrementInstanceId()
 UINT16 WINAPI DdeInitialize16( LPDWORD pidInst, PFNCALLBACK16 pfnCallback,
                                DWORD afCmd, DWORD ulRes)
 {
-    return (UINT16)DdeInitialize32A(pidInst,(PFNCALLBACK32)pfnCallback,
+    return (UINT16)DdeInitializeA(pidInst,(PFNCALLBACK)pfnCallback,
                                     afCmd, ulRes);
 }
 
@@ -283,10 +283,10 @@ UINT16 WINAPI DdeInitialize16( LPDWORD pidInst, PFNCALLBACK16 pfnCallback,
 /******************************************************************************
  *            DdeInitialize32A   (USER32.106)
  */
-UINT32 WINAPI DdeInitialize32A( LPDWORD pidInst, PFNCALLBACK32 pfnCallback,
+UINT WINAPI DdeInitializeA( LPDWORD pidInst, PFNCALLBACK pfnCallback,
                                 DWORD afCmd, DWORD ulRes )
 {
-    return DdeInitialize32W(pidInst,pfnCallback,afCmd,ulRes);
+    return DdeInitializeW(pidInst,pfnCallback,afCmd,ulRes);
 }
 
 
@@ -314,7 +314,7 @@ UINT32 WINAPI DdeInitialize32A( LPDWORD pidInst, PFNCALLBACK32 pfnCallback,
  *  1.1      Jan 1999  Keith Matthews        Initial (near-)complete version
  *
  */
-UINT32 WINAPI DdeInitialize32W( LPDWORD pidInst, PFNCALLBACK32 pfnCallback,
+UINT WINAPI DdeInitializeW( LPDWORD pidInst, PFNCALLBACK pfnCallback,
                                 DWORD afCmd, DWORD ulRes )
 {
     DDE_HANDLE_ENTRY *reference_inst;
@@ -382,7 +382,7 @@ UINT32 WINAPI DdeInitialize32W( LPDWORD pidInst, PFNCALLBACK32 pfnCallback,
 	s_att->bInheritHandle = TRUE;
 	s_att->lpSecurityDescriptor = NULL;
 	s_att->nLength = sizeof(s_att);
-	handle_mutex = CreateMutex32W(s_att,1,DDEHandleAccess);
+	handle_mutex = CreateMutexW(s_att,1,DDEHandleAccess);
 	if ( (err_no=GetLastError()) == ERROR_INVALID_HANDLE )
 	{
 		ERR(ddeml,"CreateMutex failed - handle list  %li\n",err_no);
@@ -541,7 +541,7 @@ UINT32 WINAPI DdeInitialize32W( LPDWORD pidInst, PFNCALLBACK32 pfnCallback,
  */
 BOOL16 WINAPI DdeUninitialize16( DWORD idInst )
 {
-    return (BOOL16)DdeUninitialize32( idInst );
+    return (BOOL16)DdeUninitialize( idInst );
 }
 
 
@@ -555,7 +555,7 @@ BOOL16 WINAPI DdeUninitialize16( DWORD idInst )
  *    Success: TRUE
  *    Failure: FALSE
  */
-BOOL32 WINAPI DdeUninitialize32( DWORD idInst )
+BOOL WINAPI DdeUninitialize( DWORD idInst )
 {
 
     FIXME(ddeml, "(%ld): stub\n", idInst);
@@ -575,8 +575,8 @@ BOOL32 WINAPI DdeUninitialize32( DWORD idInst )
 HCONVLIST WINAPI DdeConnectList16( DWORD idInst, HSZ hszService, HSZ hszTopic,
                  HCONVLIST hConvList, LPCONVCONTEXT16 pCC )
 {
-    return DdeConnectList32(idInst, hszService, hszTopic, hConvList, 
-                            (LPCONVCONTEXT32)pCC);
+    return DdeConnectList(idInst, hszService, hszTopic, hConvList, 
+                            (LPCONVCONTEXT)pCC);
 }
 
 
@@ -594,8 +594,8 @@ HCONVLIST WINAPI DdeConnectList16( DWORD idInst, HSZ hszService, HSZ hszTopic,
  *    Success: Handle to new conversation list
  *    Failure: 0
  */
-HCONVLIST WINAPI DdeConnectList32( DWORD idInst, HSZ hszService, HSZ hszTopic,
-                 HCONVLIST hConvList, LPCONVCONTEXT32 pCC )
+HCONVLIST WINAPI DdeConnectList( DWORD idInst, HSZ hszService, HSZ hszTopic,
+                 HCONVLIST hConvList, LPCONVCONTEXT pCC )
 {
     FIXME(ddeml, "(%ld,%ld,%ld,%ld,%p): stub\n", idInst, hszService, hszTopic,
           hConvList,pCC);
@@ -608,14 +608,14 @@ HCONVLIST WINAPI DdeConnectList32( DWORD idInst, HSZ hszService, HSZ hszTopic,
  */
 HCONV WINAPI DdeQueryNextServer16( HCONVLIST hConvList, HCONV hConvPrev )
 {
-    return DdeQueryNextServer32(hConvList, hConvPrev);
+    return DdeQueryNextServer(hConvList, hConvPrev);
 }
 
 
 /*****************************************************************
  * DdeQueryNextServer32 [USER32.112]
  */
-HCONV WINAPI DdeQueryNextServer32( HCONVLIST hConvList, HCONV hConvPrev )
+HCONV WINAPI DdeQueryNextServer( HCONVLIST hConvList, HCONV hConvPrev )
 {
     FIXME(ddeml, "(%ld,%ld): stub\n",hConvList,hConvPrev);
     return 0;
@@ -624,7 +624,7 @@ HCONV WINAPI DdeQueryNextServer32( HCONVLIST hConvList, HCONV hConvPrev )
 /*****************************************************************
  * DdeQueryString32A [USER32.113]
  */
-DWORD WINAPI DdeQueryString32A(DWORD idInst, HSZ hsz, LPSTR psz, DWORD cchMax, INT32 iCodePage)
+DWORD WINAPI DdeQueryStringA(DWORD idInst, HSZ hsz, LPSTR psz, DWORD cchMax, INT iCodePage)
 {
     DWORD ret = 0;
     CHAR pString[MAX_BUFFER_LEN];
@@ -648,7 +648,7 @@ DWORD WINAPI DdeQueryString32A(DWORD idInst, HSZ hsz, LPSTR psz, DWORD cchMax, I
             cchMax = MAX_BUFFER_LEN;
 }
 
-        ret = GlobalGetAtomName32A( hsz, (LPSTR)psz, cchMax );
+        ret = GlobalGetAtomNameA( hsz, (LPSTR)psz, cchMax );
     }
     
     return ret;
@@ -657,7 +657,7 @@ DWORD WINAPI DdeQueryString32A(DWORD idInst, HSZ hsz, LPSTR psz, DWORD cchMax, I
 /*****************************************************************
  * DdeQueryString32W [USER32.114]
  */
-DWORD WINAPI DdeQueryString32W(DWORD idInst, HSZ hsz, LPWSTR psz, DWORD cchMax, INT32 iCodePage)
+DWORD WINAPI DdeQueryStringW(DWORD idInst, HSZ hsz, LPWSTR psz, DWORD cchMax, INT iCodePage)
 {
     DWORD ret = 0;
     WCHAR pString[MAX_BUFFER_LEN];
@@ -685,7 +685,7 @@ DWORD WINAPI DdeQueryString32W(DWORD idInst, HSZ hsz, LPWSTR psz, DWORD cchMax, 
              */
             factor = (int) sizeof(WCHAR)/sizeof(BYTE);
         }
-        ret = GlobalGetAtomName32W( hsz, (LPWSTR)psz, cchMax ) * factor;
+        ret = GlobalGetAtomNameW( hsz, (LPWSTR)psz, cchMax ) * factor;
     }
     return ret;
 }
@@ -696,7 +696,7 @@ DWORD WINAPI DdeQueryString32W(DWORD idInst, HSZ hsz, LPWSTR psz, DWORD cchMax, 
  */
 BOOL16 WINAPI DdeDisconnectList16( HCONVLIST hConvList )
 {
-    return (BOOL16)DdeDisconnectList32(hConvList);
+    return (BOOL16)DdeDisconnectList(hConvList);
 }
 
 
@@ -707,7 +707,7 @@ BOOL16 WINAPI DdeDisconnectList16( HCONVLIST hConvList )
  *    Success: TRUE
  *    Failure: FALSE
  */
-BOOL32 WINAPI DdeDisconnectList32(
+BOOL WINAPI DdeDisconnectList(
     HCONVLIST hConvList) /* [in] Handle to conversation list */
 {
     FIXME(ddeml, "(%ld): stub\n", hConvList);
@@ -729,8 +729,8 @@ HCONV WINAPI DdeConnect16( DWORD idInst, HSZ hszService, HSZ hszTopic,
 /*****************************************************************
  *            DdeConnect32   (USER32.92)
  */
-HCONV WINAPI DdeConnect32( DWORD idInst, HSZ hszService, HSZ hszTopic,
-                           LPCONVCONTEXT32 pCC )
+HCONV WINAPI DdeConnect( DWORD idInst, HSZ hszService, HSZ hszTopic,
+                           LPCONVCONTEXT pCC )
 {
     FIXME(ddeml, "(0x%lx,%ld,%ld,%p): stub\n",idInst,hszService,hszTopic,
           pCC);
@@ -743,13 +743,13 @@ HCONV WINAPI DdeConnect32( DWORD idInst, HSZ hszService, HSZ hszTopic,
  */
 BOOL16 WINAPI DdeDisconnect16( HCONV hConv )
 {
-    return (BOOL16)DdeDisconnect32( hConv );
+    return (BOOL16)DdeDisconnect( hConv );
 }
 
 /*****************************************************************
  *            DdeSetUserHandle (DDEML.10)
  */
-BOOL16 WINAPI DdeSetUserHandle( HCONV hConv, DWORD id, DWORD hUser )
+BOOL16 WINAPI DdeSetUserHandle16( HCONV hConv, DWORD id, DWORD hUser )
 {
     FIXME( ddeml, "(%ld,%ld,%ld): stub\n",hConv,id, hUser );
     return 0;
@@ -762,7 +762,7 @@ HDDEDATA WINAPI DdeCreateDataHandle16( DWORD idInst, LPBYTE pSrc, DWORD cb,
                                      DWORD cbOff, HSZ hszItem, UINT16 wFmt, 
                                      UINT16 afCmd )
 {
-    return DdeCreateDataHandle32(idInst,
+    return DdeCreateDataHandle(idInst,
                                 pSrc,
                                 cb,
                                 cbOff,
@@ -774,9 +774,9 @@ HDDEDATA WINAPI DdeCreateDataHandle16( DWORD idInst, LPBYTE pSrc, DWORD cb,
 /*****************************************************************
  *            DdeCreateDataHandle32 (USER32.94)
  */
-HDDEDATA WINAPI DdeCreateDataHandle32( DWORD idInst, LPBYTE pSrc, DWORD cb, 
-                                       DWORD cbOff, HSZ hszItem, UINT32 wFmt, 
-                                       UINT32 afCmd )
+HDDEDATA WINAPI DdeCreateDataHandle( DWORD idInst, LPBYTE pSrc, DWORD cb, 
+                                       DWORD cbOff, HSZ hszItem, UINT wFmt, 
+                                       UINT afCmd )
 {
     FIXME( ddeml,
           "(%ld,%p,%ld,%ld,0x%lx,%d,%d): stub\n",
@@ -794,7 +794,7 @@ HDDEDATA WINAPI DdeCreateDataHandle32( DWORD idInst, LPBYTE pSrc, DWORD cb,
 /*****************************************************************
  *            DdeDisconnect32   (USER32.97)
  */
-BOOL32 WINAPI DdeDisconnect32( HCONV hConv )
+BOOL WINAPI DdeDisconnect( HCONV hConv )
 {
     FIXME( ddeml, "empty stub\n" );
     return 0;
@@ -816,7 +816,7 @@ HCONV WINAPI DdeReconnect( HCONV hConv )
  */
 HSZ WINAPI DdeCreateStringHandle16( DWORD idInst, LPCSTR str, INT16 codepage )
 {
-    return DdeCreateStringHandle32A( idInst, str, codepage );
+    return DdeCreateStringHandleA( idInst, str, codepage );
 }
 
 
@@ -827,14 +827,14 @@ HSZ WINAPI DdeCreateStringHandle16( DWORD idInst, LPCSTR str, INT16 codepage )
  *    Success: String handle
  *    Failure: 0
  */
-HSZ WINAPI DdeCreateStringHandle32A( DWORD idInst, LPCSTR psz, INT32 codepage )
+HSZ WINAPI DdeCreateStringHandleA( DWORD idInst, LPCSTR psz, INT codepage )
 {
   HSZ hsz = 0;
   TRACE(ddeml, "(%ld,%s,%d): stub\n",idInst,debugstr_a(psz),codepage);
   
   if (codepage==CP_WINANSI)
   {
-      hsz = GlobalAddAtom32A (psz);
+      hsz = GlobalAddAtomA (psz);
       /* Save the handle so we know to clean it when
        * uninitialize is called.
        */
@@ -852,10 +852,10 @@ HSZ WINAPI DdeCreateStringHandle32A( DWORD idInst, LPCSTR psz, INT32 codepage )
  *    Success: String handle
  *    Failure: 0
  */
-HSZ WINAPI DdeCreateStringHandle32W(
+HSZ WINAPI DdeCreateStringHandleW(
     DWORD idInst,   /* [in] Instance identifier */
     LPCWSTR psz,    /* [in] Pointer to string */
-    INT32 codepage) /* [in] Code page identifier */
+    INT codepage) /* [in] Code page identifier */
 {
   HSZ hsz = 0;
 
@@ -863,7 +863,7 @@ HSZ WINAPI DdeCreateStringHandle32W(
 
   if (codepage==CP_WINUNICODE)
   {
-      hsz = GlobalAddAtom32W (psz);
+      hsz = GlobalAddAtomW (psz);
       /* Save the handle so we know to clean it when
        * uninitialize is called.
        */
@@ -879,7 +879,7 @@ HSZ WINAPI DdeCreateStringHandle32W(
  */
 BOOL16 WINAPI DdeFreeStringHandle16( DWORD idInst, HSZ hsz )
 {
-    return (BOOL32)DdeFreeStringHandle32( idInst, hsz );
+    return (BOOL)DdeFreeStringHandle( idInst, hsz );
 }
 
 
@@ -888,7 +888,7 @@ BOOL16 WINAPI DdeFreeStringHandle16( DWORD idInst, HSZ hsz )
  * RETURNS: success: nonzero
  *          fail:    zero
  */
-BOOL32 WINAPI DdeFreeStringHandle32( DWORD idInst, HSZ hsz )
+BOOL WINAPI DdeFreeStringHandle( DWORD idInst, HSZ hsz )
 {
     TRACE( ddeml, "(%ld,%ld): stub\n",idInst, hsz );
     /* Remove the node associated with this HSZ.
@@ -905,14 +905,14 @@ BOOL32 WINAPI DdeFreeStringHandle32( DWORD idInst, HSZ hsz )
  */
 BOOL16 WINAPI DdeFreeDataHandle16( HDDEDATA hData )
 {
-    return (BOOL32)DdeFreeDataHandle32( hData );
+    return (BOOL)DdeFreeDataHandle( hData );
 }
 
 
 /*****************************************************************
  *            DdeFreeDataHandle32   (USER32.100)
  */
-BOOL32 WINAPI DdeFreeDataHandle32( HDDEDATA hData )
+BOOL WINAPI DdeFreeDataHandle( HDDEDATA hData )
 {
     FIXME( ddeml, "empty stub\n" );
     return TRUE;
@@ -926,14 +926,14 @@ BOOL32 WINAPI DdeFreeDataHandle32( HDDEDATA hData )
  */
 BOOL16 WINAPI DdeKeepStringHandle16( DWORD idInst, HSZ hsz )
 {
-    return (BOOL32)DdeKeepStringHandle32( idInst, hsz );
+    return (BOOL)DdeKeepStringHandle( idInst, hsz );
 }
 
 
 /*****************************************************************
  *            DdeKeepStringHandle32  (USER32.108)
  */
-BOOL32 WINAPI DdeKeepStringHandle32( DWORD idInst, HSZ hsz )
+BOOL WINAPI DdeKeepStringHandle( DWORD idInst, HSZ hsz )
 {
     FIXME( ddeml, "empty stub\n" );
     return TRUE;
@@ -948,7 +948,7 @@ HDDEDATA WINAPI DdeClientTransaction16( LPVOID pData, DWORD cbData,
                                         UINT16 wType, DWORD dwTimeout,
                                         LPDWORD pdwResult )
 {
-    return DdeClientTransaction32( (LPBYTE)pData, cbData, hConv, hszItem,
+    return DdeClientTransaction( (LPBYTE)pData, cbData, hConv, hszItem,
                                    wFmt, wType, dwTimeout, pdwResult );
 }
 
@@ -956,9 +956,9 @@ HDDEDATA WINAPI DdeClientTransaction16( LPVOID pData, DWORD cbData,
 /*****************************************************************
  *            DdeClientTransaction32  (USER32.90)
  */
-HDDEDATA WINAPI DdeClientTransaction32( LPBYTE pData, DWORD cbData,
-                                        HCONV hConv, HSZ hszItem, UINT32 wFmt,
-                                        UINT32 wType, DWORD dwTimeout,
+HDDEDATA WINAPI DdeClientTransaction( LPBYTE pData, DWORD cbData,
+                                        HCONV hConv, HSZ hszItem, UINT wFmt,
+                                        UINT wType, DWORD dwTimeout,
                                         LPDWORD pdwResult )
 {
     FIXME( ddeml, "empty stub\n" );
@@ -968,7 +968,7 @@ HDDEDATA WINAPI DdeClientTransaction32( LPBYTE pData, DWORD cbData,
 /*****************************************************************
  *            DdeAbandonTransaction (DDEML.12)
  */
-BOOL16 WINAPI DdeAbandonTransaction( DWORD idInst, HCONV hConv, 
+BOOL16 WINAPI DdeAbandonTransaction16( DWORD idInst, HCONV hConv, 
                                      DWORD idTransaction )
 {
     FIXME( ddeml, "empty stub\n" );
@@ -981,7 +981,7 @@ BOOL16 WINAPI DdeAbandonTransaction( DWORD idInst, HCONV hConv,
  */
 BOOL16 WINAPI DdePostAdvise16( DWORD idInst, HSZ hszTopic, HSZ hszItem )
 {
-    return (BOOL16)DdePostAdvise32(idInst, hszTopic, hszItem);
+    return (BOOL16)DdePostAdvise(idInst, hszTopic, hszItem);
 }
 
 
@@ -992,7 +992,7 @@ BOOL16 WINAPI DdePostAdvise16( DWORD idInst, HSZ hszTopic, HSZ hszItem )
  *    Success: TRUE
  *    Failure: FALSE
  */
-BOOL32 WINAPI DdePostAdvise32(
+BOOL WINAPI DdePostAdvise(
     DWORD idInst, /* [in] Instance identifier */
     HSZ hszTopic, /* [in] Handle to topic name string */
     HSZ hszItem)  /* [in] Handle to item name string */
@@ -1005,7 +1005,7 @@ BOOL32 WINAPI DdePostAdvise32(
 /*****************************************************************
  *            DdeAddData (DDEML.15)
  */
-HDDEDATA WINAPI DdeAddData( HDDEDATA hData, LPBYTE pSrc, DWORD cb,
+HDDEDATA WINAPI DdeAddData16( HDDEDATA hData, LPBYTE pSrc, DWORD cb,
                             DWORD cbOff )
 {
     FIXME( ddeml, "empty stub\n" );
@@ -1019,7 +1019,7 @@ HDDEDATA WINAPI DdeAddData( HDDEDATA hData, LPBYTE pSrc, DWORD cb,
  * RETURNS
  *    Size of memory object associated with handle
  */
-DWORD WINAPI DdeGetData32(
+DWORD WINAPI DdeGetData(
     HDDEDATA hData, /* [in] Handle to DDE object */
     LPBYTE pDst,    /* [in] Pointer to destination buffer */
     DWORD cbMax,    /* [in] Amount of data to copy */
@@ -1039,7 +1039,7 @@ DWORD WINAPI DdeGetData16(
     DWORD cbMax, 
     DWORD cbOff)
 {
-    return DdeGetData32(hData, pDst, cbMax, cbOff);
+    return DdeGetData(hData, pDst, cbMax, cbOff);
 }
 
 
@@ -1048,13 +1048,13 @@ DWORD WINAPI DdeGetData16(
  */
 LPBYTE WINAPI DdeAccessData16( HDDEDATA hData, LPDWORD pcbDataSize )
 {
-     return DdeAccessData32(hData, pcbDataSize);
+     return DdeAccessData(hData, pcbDataSize);
 }
 
 /*****************************************************************
  *            DdeAccessData32 (USER32.88)
  */
-LPBYTE WINAPI DdeAccessData32( HDDEDATA hData, LPDWORD pcbDataSize )
+LPBYTE WINAPI DdeAccessData( HDDEDATA hData, LPDWORD pcbDataSize )
 {
      FIXME( ddeml, "(%ld,%p): stub\n", hData, pcbDataSize);
      return 0;
@@ -1065,13 +1065,13 @@ LPBYTE WINAPI DdeAccessData32( HDDEDATA hData, LPDWORD pcbDataSize )
  */
 BOOL16 WINAPI DdeUnaccessData16( HDDEDATA hData )
 {
-     return DdeUnaccessData32(hData);
+     return DdeUnaccessData(hData);
 }
 
 /*****************************************************************
  *            DdeUnaccessData32 (USER32.118)
  */
-BOOL32 WINAPI DdeUnaccessData32( HDDEDATA hData )
+BOOL WINAPI DdeUnaccessData( HDDEDATA hData )
 {
      FIXME( ddeml, "(0x%lx): stub\n", hData);
 
@@ -1083,13 +1083,13 @@ BOOL32 WINAPI DdeUnaccessData32( HDDEDATA hData )
  */
 BOOL16 WINAPI DdeEnableCallback16( DWORD idInst, HCONV hConv, UINT16 wCmd )
 {
-     return DdeEnableCallback32(idInst, hConv, wCmd);
+     return DdeEnableCallback(idInst, hConv, wCmd);
 }
 
 /*****************************************************************
  *            DdeEnableCallback32 (USER32.99)
  */
-BOOL32 WINAPI DdeEnableCallback32( DWORD idInst, HCONV hConv, UINT32 wCmd )
+BOOL WINAPI DdeEnableCallback( DWORD idInst, HCONV hConv, UINT wCmd )
 {
      FIXME( ddeml, "(%ld, 0x%lx, %d) stub\n", idInst, hConv, wCmd);
 
@@ -1102,7 +1102,7 @@ BOOL32 WINAPI DdeEnableCallback32( DWORD idInst, HCONV hConv, UINT32 wCmd )
 HDDEDATA WINAPI DdeNameService16( DWORD idInst, HSZ hsz1, HSZ hsz2,
                                   UINT16 afCmd )
 {
-    return DdeNameService32( idInst, hsz1, hsz2, afCmd );
+    return DdeNameService( idInst, hsz1, hsz2, afCmd );
 }
 
 
@@ -1119,8 +1119,8 @@ HDDEDATA WINAPI DdeNameService16( DWORD idInst, HSZ hsz1, HSZ hsz2,
  *    Success: Non-zero
  *    Failure: 0
  */
-HDDEDATA WINAPI DdeNameService32( DWORD idInst, HSZ hsz1, HSZ hsz2,
-                UINT32 afCmd )
+HDDEDATA WINAPI DdeNameService( DWORD idInst, HSZ hsz1, HSZ hsz2,
+                UINT afCmd )
 {
     FIXME(ddeml, "(%ld,%ld,%ld,%d): stub\n",idInst,hsz1,hsz2,afCmd);
     return 1;
@@ -1132,7 +1132,7 @@ HDDEDATA WINAPI DdeNameService32( DWORD idInst, HSZ hsz1, HSZ hsz2,
  */
 UINT16 WINAPI DdeGetLastError16( DWORD idInst )
 {
-    return (UINT16)DdeGetLastError32( idInst );
+    return (UINT16)DdeGetLastError( idInst );
 }
 
 
@@ -1145,7 +1145,7 @@ UINT16 WINAPI DdeGetLastError16( DWORD idInst )
  * RETURNS
  *    Last error code
  */
-UINT32 WINAPI DdeGetLastError32( DWORD idInst )
+UINT WINAPI DdeGetLastError( DWORD idInst )
 {
     FIXME(ddeml, "(%ld): stub\n",idInst);
     return 0;
@@ -1157,7 +1157,7 @@ UINT32 WINAPI DdeGetLastError32( DWORD idInst )
  */
 int WINAPI DdeCmpStringHandles16( HSZ hsz1, HSZ hsz2 )
 {
-     return DdeCmpStringHandles32(hsz1, hsz2);
+     return DdeCmpStringHandles(hsz1, hsz2);
 }
 
 /*****************************************************************
@@ -1171,7 +1171,7 @@ int WINAPI DdeCmpStringHandles16( HSZ hsz1, HSZ hsz2 )
  * 0  The values of hsz 1 and 2 are the same or both zero.
  * 1  The value of hsz2 is zero of less than hsz1
  */
-int WINAPI DdeCmpStringHandles32( HSZ hsz1, HSZ hsz2 )
+int WINAPI DdeCmpStringHandles( HSZ hsz1, HSZ hsz2 )
 {
     CHAR psz1[MAX_BUFFER_LEN];
     CHAR psz2[MAX_BUFFER_LEN];
@@ -1180,8 +1180,8 @@ int WINAPI DdeCmpStringHandles32( HSZ hsz1, HSZ hsz2 )
 
     TRACE( ddeml, "handle 1, handle 2\n" );
 
-    ret1 = GlobalGetAtomName32A( hsz1, psz1, MAX_BUFFER_LEN );
-    ret2 = GlobalGetAtomName32A( hsz2, psz2, MAX_BUFFER_LEN );
+    ret1 = GlobalGetAtomNameA( hsz1, psz1, MAX_BUFFER_LEN );
+    ret2 = GlobalGetAtomNameA( hsz2, psz2, MAX_BUFFER_LEN );
     /* Make sure we found both strings.
      */
     if( ret1 == 0 && ret2 == 0 )
@@ -1232,7 +1232,7 @@ int WINAPI DdeCmpStringHandles32( HSZ hsz1, HSZ hsz2 )
  *   success: nonzero
  *   failure: zero
  */
-UINT32 WINAPI PackDDElParam(UINT32 msg, UINT32 uiLo, UINT32 uiHi)
+UINT WINAPI PackDDElParam(UINT msg, UINT uiLo, UINT uiHi)
 {
     FIXME(ddeml, "stub.\n");
     return 0;
@@ -1246,8 +1246,8 @@ UINT32 WINAPI PackDDElParam(UINT32 msg, UINT32 uiLo, UINT32 uiHi)
  *   success: nonzero
  *   failure: zero
  */
-UINT32 WINAPI UnpackDDElParam(UINT32 msg, UINT32 lParam,
-                              UINT32 *uiLo, UINT32 *uiHi)
+UINT WINAPI UnpackDDElParam(UINT msg, UINT lParam,
+                              UINT *uiLo, UINT *uiHi)
 {
     FIXME(ddeml, "stub.\n");
     return 0;
@@ -1261,7 +1261,7 @@ UINT32 WINAPI UnpackDDElParam(UINT32 msg, UINT32 lParam,
  *   success: nonzero
  *   failure: zero
  */
-UINT32 WINAPI FreeDDElParam(UINT32 msg, UINT32 lParam)
+UINT WINAPI FreeDDElParam(UINT msg, UINT lParam)
 {
     FIXME(ddeml, "stub.\n");
     return 0;
@@ -1271,8 +1271,8 @@ UINT32 WINAPI FreeDDElParam(UINT32 msg, UINT32 lParam)
  *            ReuseDDElParam (USER32.446)
  *
  */
-UINT32 WINAPI ReuseDDElParam(UINT32 lParam, UINT32 msgIn, UINT32 msgOut,
-                             UINT32 uiLi, UINT32 uiHi)
+UINT WINAPI ReuseDDElParam(UINT lParam, UINT msgIn, UINT msgOut,
+                             UINT uiLi, UINT uiHi)
 {
     FIXME(ddeml, "stub.\n");
     return 0;

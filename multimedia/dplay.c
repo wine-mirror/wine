@@ -826,7 +826,7 @@ static HRESULT WINAPI IDirectPlayLobbyA_RunApplication
   DWORD dwFlags,
   LPDWORD lpdwAppID,
   LPDPLCONNECTION lpConn,
-  HANDLE32 hReceiveEvent )
+  HANDLE hReceiveEvent )
 {
   FIXME( dplay, ":stub\n");
   return DPERR_OUTOFMEMORY;
@@ -837,7 +837,7 @@ static HRESULT WINAPI IDirectPlayLobby2A_RunApplication
   DWORD dwFlags,
   LPDWORD lpdwAppID,
   LPDPLCONNECTION lpConn,
-  HANDLE32 hReceiveEvent )
+  HANDLE hReceiveEvent )
 {
   return IDirectPlayLobbyA_RunApplication( (LPDIRECTPLAYLOBBYA)this, dwFlags,
                                            lpdwAppID, lpConn, hReceiveEvent );
@@ -848,7 +848,7 @@ static HRESULT WINAPI IDirectPlayLobbyW_RunApplication
   DWORD dwFlags,
   LPDWORD lpdwAppID,
   LPDPLCONNECTION lpConn,
-  HANDLE32 hReceiveEvent )
+  HANDLE hReceiveEvent )
 {
   FIXME( dplay, ":stub\n");
   return DPERR_OUTOFMEMORY;
@@ -859,7 +859,7 @@ static HRESULT WINAPI IDirectPlayLobby2W_RunApplication
   DWORD dwFlags,
   LPDWORD lpdwAppID,
   LPDPLCONNECTION lpConn,
-  HANDLE32 hReceiveEvent )
+  HANDLE hReceiveEvent )
 {
   return IDirectPlayLobbyW_RunApplication( (LPDIRECTPLAYLOBBY)this, dwFlags,
                                            lpdwAppID, lpConn, hReceiveEvent );
@@ -1052,7 +1052,7 @@ static HRESULT WINAPI IDirectPlayLobbyA_SetLobbyMessageEvent
 ( LPDIRECTPLAYLOBBYA this,
   DWORD dwFlags,
   DWORD dwAppID,
-  HANDLE32 hReceiveEvent )
+  HANDLE hReceiveEvent )
 {
   FIXME( dplay, ":stub\n");
   return DPERR_OUTOFMEMORY;
@@ -1062,7 +1062,7 @@ static HRESULT WINAPI IDirectPlayLobby2A_SetLobbyMessageEvent
 ( LPDIRECTPLAYLOBBY2A this,
   DWORD dwFlags,
   DWORD dwAppID,
-  HANDLE32 hReceiveEvent )
+  HANDLE hReceiveEvent )
 {
   return IDirectPlayLobbyA_SetLobbyMessageEvent( (LPDIRECTPLAYLOBBYA)this, dwFlags,
                                                  dwAppID, hReceiveEvent ); 
@@ -1072,7 +1072,7 @@ static HRESULT WINAPI IDirectPlayLobbyW_SetLobbyMessageEvent
 ( LPDIRECTPLAYLOBBY this,
   DWORD dwFlags,
   DWORD dwAppID,
-  HANDLE32 hReceiveEvent )
+  HANDLE hReceiveEvent )
 {
   FIXME( dplay, ":stub\n");
   return DPERR_OUTOFMEMORY;
@@ -1082,7 +1082,7 @@ static HRESULT WINAPI IDirectPlayLobby2W_SetLobbyMessageEvent
 ( LPDIRECTPLAYLOBBY2 this,
   DWORD dwFlags,
   DWORD dwAppID,
-  HANDLE32 hReceiveEvent )
+  HANDLE hReceiveEvent )
 {
   return IDirectPlayLobbyW_SetLobbyMessageEvent( (LPDIRECTPLAYLOBBY)this, dwFlags,
                                                  dwAppID, hReceiveEvent ); 
@@ -1317,7 +1317,7 @@ HRESULT WINAPI DirectPlayEnumerateA( LPDPENUMDPCALLBACKA lpEnumCallback,
   }
 
   /* Need to loop over the service providers in the registry */
-  if( RegOpenKeyEx32A( HKEY_LOCAL_MACHINE, searchSubKey,
+  if( RegOpenKeyExA( HKEY_LOCAL_MACHINE, searchSubKey,
                        0, KEY_ENUMERATE_SUB_KEYS, &hkResult ) != ERROR_SUCCESS )
   {
     /* Hmmm. Does this mean that there are no service providers? */ 
@@ -1327,7 +1327,7 @@ HRESULT WINAPI DirectPlayEnumerateA( LPDPENUMDPCALLBACKA lpEnumCallback,
 
   /* Traverse all the service providers we have available */
   for( dwIndex=0;
-       RegEnumKey32A( hkResult, dwIndex, subKeyName, sizeOfSubKeyName ) !=
+       RegEnumKeyA( hkResult, dwIndex, subKeyName, sizeOfSubKeyName ) !=
          ERROR_NO_MORE_ITEMS;
        ++dwIndex )
   {
@@ -1341,7 +1341,7 @@ HRESULT WINAPI DirectPlayEnumerateA( LPDPENUMDPCALLBACKA lpEnumCallback,
     TRACE( dplay, " this time through: %s\n", subKeyName );
 
     /* Get a handle for this particular service provider */
-    if( RegOpenKeyEx32A( hkResult, subKeyName, 0, KEY_QUERY_VALUE,
+    if( RegOpenKeyExA( hkResult, subKeyName, 0, KEY_QUERY_VALUE,
                          &hkServiceProvider ) != ERROR_SUCCESS )
     {
       ERR( dplay, ": what the heck is going on?\n" );
@@ -1351,7 +1351,7 @@ HRESULT WINAPI DirectPlayEnumerateA( LPDPENUMDPCALLBACKA lpEnumCallback,
     /* Get the GUID, Device major number and device minor number 
      * from the registry. 
      */
-    if( RegQueryValueEx32A( hkServiceProvider, guidDataSubKey,
+    if( RegQueryValueExA( hkServiceProvider, guidDataSubKey,
                             NULL, &returnTypeGUID, returnBuffer,
                             &sizeOfReturnBuffer ) != ERROR_SUCCESS )
     {
@@ -1361,12 +1361,12 @@ HRESULT WINAPI DirectPlayEnumerateA( LPDPENUMDPCALLBACKA lpEnumCallback,
 
     /* FIXME: Check return types to ensure we're interpreting data right */
     lpWGUIDString = HEAP_strdupAtoW( GetProcessHeap(), 0, returnBuffer );
-    CLSIDFromString32( (LPCOLESTR32)lpWGUIDString, &serviceProviderGUID ); 
+    CLSIDFromString( (LPCOLESTR)lpWGUIDString, &serviceProviderGUID ); 
     HeapFree( GetProcessHeap(), 0, lpWGUIDString );
 
     sizeOfReturnBuffer = 50;
  
-    if( RegQueryValueEx32A( hkServiceProvider, majVerDataSubKey,
+    if( RegQueryValueExA( hkServiceProvider, majVerDataSubKey,
                             NULL, &returnTypeReserved1, returnBuffer,
                             &sizeOfReturnBuffer ) != ERROR_SUCCESS )
     {
@@ -1701,14 +1701,14 @@ HRESULT WINAPI DirectPlay3W_CreateGroup
 }
 
 HRESULT WINAPI DirectPlay3A_CreatePlayer
-          ( LPDIRECTPLAY3A this, LPDPID a, LPDPNAME b, HANDLE32 c, LPVOID d, DWORD e, DWORD f )
+          ( LPDIRECTPLAY3A this, LPDPID a, LPDPNAME b, HANDLE c, LPVOID d, DWORD e, DWORD f )
 {
   FIXME( dplay,"(%p)->(%p,%p,%d,%p,0x%08lx,0x%08lx): stub", this, a, b, c, d, e, f );
   return DP_OK;
 }
 
 HRESULT WINAPI DirectPlay3W_CreatePlayer
-          ( LPDIRECTPLAY3 this, LPDPID a, LPDPNAME b, HANDLE32 c, LPVOID d, DWORD e, DWORD f )
+          ( LPDIRECTPLAY3 this, LPDPID a, LPDPNAME b, HANDLE c, LPVOID d, DWORD e, DWORD f )
 {
   FIXME( dplay,"(%p)->(%p,%p,%d,%p,0x%08lx,0x%08lx): stub", this, a, b, c, d, e, f );
   return DP_OK;

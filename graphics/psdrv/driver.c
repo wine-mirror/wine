@@ -84,23 +84,23 @@ void PSDRV_MergeDevmodes(PSDRV_DEVMODE16 *dm1, PSDRV_DEVMODE16 *dm2,
  *
  *
  */
-LRESULT WINAPI PSDRV_NewPrinterDlgProc32(HWND32 hWnd, UINT32 wMsg,
-					    WPARAM32 wParam, LPARAM lParam)
+LRESULT WINAPI PSDRV_NewPrinterDlgProc(HWND hWnd, UINT wMsg,
+					    WPARAM wParam, LPARAM lParam)
 {
   switch (wMsg) {
   case WM_INITDIALOG:
     TRACE(psdrv,"WM_INITDIALOG lParam=%08lX\n", lParam);
-    ShowWindow32(hWnd, SW_SHOWNORMAL);
+    ShowWindow(hWnd, SW_SHOWNORMAL);
     return TRUE;
  
   case WM_COMMAND:
     switch (LOWORD(wParam)) {
     case IDOK:
-      EndDialog32(hWnd, TRUE);
+      EndDialog(hWnd, TRUE);
       return TRUE;
   
     case IDCANCEL:
-      EndDialog32(hWnd, FALSE);
+      EndDialog(hWnd, FALSE);
       return TRUE;
     
     default:
@@ -112,31 +112,31 @@ LRESULT WINAPI PSDRV_NewPrinterDlgProc32(HWND32 hWnd, UINT32 wMsg,
   }
 }
 
-LRESULT WINAPI PSDRV_AdvancedSetupDlgProc32(HWND32 hWnd, UINT32 wMsg,
-					    WPARAM32 wParam, LPARAM lParam)
+LRESULT WINAPI PSDRV_AdvancedSetupDlgProc(HWND hWnd, UINT wMsg,
+					    WPARAM wParam, LPARAM lParam)
 {
   switch (wMsg) {
   case WM_INITDIALOG:
     TRACE(psdrv,"WM_INITDIALOG lParam=%08lX\n", lParam);
-    SendDlgItemMessage32A(hWnd, 99, CB_ADDSTRING32, 0, 
+    SendDlgItemMessageA(hWnd, 99, CB_ADDSTRING, 0, 
 			  (LPARAM)"Default Tray");
-    ShowWindow32(hWnd, SW_SHOWNORMAL);
+    ShowWindow(hWnd, SW_SHOWNORMAL);
     return TRUE;
 
   case WM_COMMAND:
     switch (LOWORD(wParam)) {
     case IDOK:
-      EndDialog32(hWnd, TRUE);
+      EndDialog(hWnd, TRUE);
       return TRUE;
 
     case IDCANCEL:
-      EndDialog32(hWnd, FALSE);
+      EndDialog(hWnd, FALSE);
       return TRUE;
 
     case 200:
-      DialogBoxIndirectParam32A( WIN_GetWindowInstance( hWnd ),
+      DialogBoxIndirectParamA( WIN_GetWindowInstance( hWnd ),
 			  SYSRES_GetResPtr( SYSRES_DIALOG_PSDRV_NEWPRINTER ),
-			  hWnd, PSDRV_NewPrinterDlgProc32, (LPARAM) NULL );
+			  hWnd, PSDRV_NewPrinterDlgProc, (LPARAM) NULL );
       return TRUE;
 
     default:
@@ -164,9 +164,9 @@ WORD WINAPI PSDRV_AdvancedSetupDialog16(HWND16 hwnd, HANDLE16 hDriver,
 
 
 #if 0
-  return DialogBoxIndirectParam32A( WIN_GetWindowInstance( hwnd ),
+  return DialogBoxIndirectParamA( WIN_GetWindowInstance( hwnd ),
 	SYSRES_GetResPtr( SYSRES_DIALOG_PSDRV_ADVANCEDSETUP ),
-	hwnd, PSDRV_AdvancedSetupDlgProc32, (LPARAM) NULL );
+	hwnd, PSDRV_AdvancedSetupDlgProc, (LPARAM) NULL );
 #endif
 
 

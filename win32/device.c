@@ -33,26 +33,26 @@
 #include "server.h"
 
 
-static BOOL32 DeviceIo_VTDAPI(DWORD dwIoControlCode, 
+static BOOL DeviceIo_VTDAPI(DWORD dwIoControlCode, 
 			      LPVOID lpvInBuffer, DWORD cbInBuffer,
 			      LPVOID lpvOutBuffer, DWORD cbOutBuffer,
 			      LPDWORD lpcbBytesReturned,
 			      LPOVERLAPPED lpOverlapped);
-static BOOL32 DeviceIo_MONODEBG(DWORD dwIoControlCode, 
-			      LPVOID lpvInBuffer, DWORD cbInBuffer,
-			      LPVOID lpvOutBuffer, DWORD cbOutBuffer,
-			      LPDWORD lpcbBytesReturned,
-			      LPOVERLAPPED lpOverlapped);
-
-static BOOL32 VxDCall_VMM( DWORD *retv, DWORD service, CONTEXT *context );
-
-static BOOL32 DeviceIo_IFSMgr(DWORD dwIoControlCode, 
+static BOOL DeviceIo_MONODEBG(DWORD dwIoControlCode, 
 			      LPVOID lpvInBuffer, DWORD cbInBuffer,
 			      LPVOID lpvOutBuffer, DWORD cbOutBuffer,
 			      LPDWORD lpcbBytesReturned,
 			      LPOVERLAPPED lpOverlapped);
 
-static BOOL32 DeviceIo_VWin32(DWORD dwIoControlCode, 
+static BOOL VxDCall_VMM( DWORD *retv, DWORD service, CONTEXT *context );
+
+static BOOL DeviceIo_IFSMgr(DWORD dwIoControlCode, 
+			      LPVOID lpvInBuffer, DWORD cbInBuffer,
+			      LPVOID lpvOutBuffer, DWORD cbOutBuffer,
+			      LPDWORD lpcbBytesReturned,
+			      LPOVERLAPPED lpOverlapped);
+
+static BOOL DeviceIo_VWin32(DWORD dwIoControlCode, 
 			      LPVOID lpvInBuffer, DWORD cbInBuffer,
 			      LPVOID lpvOutBuffer, DWORD cbOutBuffer,
 			      LPDWORD lpcbBytesReturned,
@@ -66,8 +66,8 @@ struct VxDInfo
 {
     LPCSTR  name;
     WORD    id;
-    BOOL32  (*vxdcall)(DWORD *, DWORD, CONTEXT *);
-    BOOL32  (*deviceio)(DWORD, LPVOID, DWORD, 
+    BOOL  (*vxdcall)(DWORD *, DWORD, CONTEXT *);
+    BOOL  (*deviceio)(DWORD, LPVOID, DWORD, 
                         LPVOID, DWORD, LPDWORD, LPOVERLAPPED);
 };
 
@@ -254,20 +254,20 @@ LPCSTR VMM_Service_Name[N_VMM_SERVICE] =
     "<KERNEL32.101>"          /* 0x0028 -- What does this do??? */
 };
 
-HANDLE32 DEVICE_Open( LPCSTR filename, DWORD access,
+HANDLE DEVICE_Open( LPCSTR filename, DWORD access,
                       LPSECURITY_ATTRIBUTES sa )
 {
     const struct VxDInfo *info;
 
     for (info = VxDList; info->name; info++)
-        if (!lstrcmpi32A( info->name, filename ))
+        if (!lstrcmpiA( info->name, filename ))
             return FILE_CreateDevice( info->id | 0x10000, access, sa );
 
     FIXME(win32, "Unknown VxD %s\n", filename);
     return FILE_CreateDevice( 0x10000, access, sa );
 }
 
-static const struct VxDInfo *DEVICE_GetInfo( HANDLE32 handle )
+static const struct VxDInfo *DEVICE_GetInfo( HANDLE handle )
 {
     struct get_file_info_request req;
     struct get_file_info_reply reply;
@@ -298,7 +298,7 @@ static const struct VxDInfo *DEVICE_GetInfo( HANDLE32 handle )
  * A return value of FALSE indicates that something has gone wrong which
  * GetLastError can decypher.
  */
-BOOL32 WINAPI DeviceIoControl(HANDLE32 hDevice, DWORD dwIoControlCode, 
+BOOL WINAPI DeviceIoControl(HANDLE hDevice, DWORD dwIoControlCode, 
 			      LPVOID lpvInBuffer, DWORD cbInBuffer,
 			      LPVOID lpvOutBuffer, DWORD cbOutBuffer,
 			      LPDWORD lpcbBytesReturned,
@@ -386,12 +386,12 @@ BOOL32 WINAPI DeviceIoControl(HANDLE32 hDevice, DWORD dwIoControlCode,
 /***********************************************************************
  *           DeviceIo_VTDAPI
  */
-static BOOL32 DeviceIo_VTDAPI(DWORD dwIoControlCode, LPVOID lpvInBuffer, DWORD cbInBuffer,
+static BOOL DeviceIo_VTDAPI(DWORD dwIoControlCode, LPVOID lpvInBuffer, DWORD cbInBuffer,
 			      LPVOID lpvOutBuffer, DWORD cbOutBuffer,
 			      LPDWORD lpcbBytesReturned,
 			      LPOVERLAPPED lpOverlapped)
 {
-    BOOL32 retv = TRUE;
+    BOOL retv = TRUE;
 
     switch (dwIoControlCode)
     {
@@ -472,9 +472,9 @@ REGS_ENTRYPOINT(VxDCall8) { VxDCall( context, 8 ); }
 /***********************************************************************
  *           VxDCall_VMM
  */
-BOOL32 VxDCall_VMM( DWORD *retv, DWORD service, CONTEXT *context )
+BOOL VxDCall_VMM( DWORD *retv, DWORD service, CONTEXT *context )
 {
-    BOOL32 ok = TRUE;
+    BOOL ok = TRUE;
 
     switch ( LOWORD(service) )
     {
@@ -483,7 +483,7 @@ BOOL32 VxDCall_VMM( DWORD *retv, DWORD service, CONTEXT *context )
         HKEY    hkey       = (HKEY)   STACK32_POP( context );
         LPCSTR  lpszSubKey = (LPCSTR) STACK32_POP( context );
         LPHKEY  retkey     = (LPHKEY) STACK32_POP( context );
-        *retv = RegOpenKey32A( hkey, lpszSubKey, retkey );
+        *retv = RegOpenKeyA( hkey, lpszSubKey, retkey );
     }
     break;
 
@@ -492,7 +492,7 @@ BOOL32 VxDCall_VMM( DWORD *retv, DWORD service, CONTEXT *context )
         HKEY    hkey       = (HKEY)   STACK32_POP( context );
         LPCSTR  lpszSubKey = (LPCSTR) STACK32_POP( context );
         LPHKEY  retkey     = (LPHKEY) STACK32_POP( context );
-        *retv = RegCreateKey32A( hkey, lpszSubKey, retkey );
+        *retv = RegCreateKeyA( hkey, lpszSubKey, retkey );
     }
     break;
 
@@ -507,7 +507,7 @@ BOOL32 VxDCall_VMM( DWORD *retv, DWORD service, CONTEXT *context )
     {
         HKEY    hkey       = (HKEY)   STACK32_POP( context );
         LPCSTR  lpszSubKey = (LPCSTR) STACK32_POP( context );
-        *retv = RegDeleteKey32A( hkey, lpszSubKey );
+        *retv = RegDeleteKeyA( hkey, lpszSubKey );
     }
     break;
 
@@ -518,7 +518,7 @@ BOOL32 VxDCall_VMM( DWORD *retv, DWORD service, CONTEXT *context )
         DWORD   dwType     = (DWORD)  STACK32_POP( context );
         LPCSTR  lpszData   = (LPCSTR) STACK32_POP( context );
         DWORD   cbData     = (DWORD)  STACK32_POP( context );
-        *retv = RegSetValue32A( hkey, lpszSubKey, dwType, lpszData, cbData );
+        *retv = RegSetValueA( hkey, lpszSubKey, dwType, lpszData, cbData );
     }
     break;
 
@@ -526,7 +526,7 @@ BOOL32 VxDCall_VMM( DWORD *retv, DWORD service, CONTEXT *context )
     {
         HKEY    hkey       = (HKEY)   STACK32_POP( context );
         LPSTR   lpszValue  = (LPSTR)  STACK32_POP( context );
-        *retv = RegDeleteValue32A( hkey, lpszValue );
+        *retv = RegDeleteValueA( hkey, lpszValue );
     }
     break;
 
@@ -536,7 +536,7 @@ BOOL32 VxDCall_VMM( DWORD *retv, DWORD service, CONTEXT *context )
         LPSTR   lpszSubKey = (LPSTR)  STACK32_POP( context );
         LPSTR   lpszData   = (LPSTR)  STACK32_POP( context );
         LPDWORD lpcbData   = (LPDWORD)STACK32_POP( context );
-        *retv = RegQueryValue32A( hkey, lpszSubKey, lpszData, lpcbData );
+        *retv = RegQueryValueA( hkey, lpszSubKey, lpszData, lpcbData );
     }
     break;
 
@@ -546,7 +546,7 @@ BOOL32 VxDCall_VMM( DWORD *retv, DWORD service, CONTEXT *context )
         DWORD   iSubkey    = (DWORD)  STACK32_POP( context );
         LPSTR   lpszName   = (LPSTR)  STACK32_POP( context );
         DWORD   lpcchName  = (DWORD)  STACK32_POP( context );
-        *retv = RegEnumKey32A( hkey, iSubkey, lpszName, lpcchName );
+        *retv = RegEnumKeyA( hkey, iSubkey, lpszName, lpcchName );
     }
     break;
 
@@ -560,7 +560,7 @@ BOOL32 VxDCall_VMM( DWORD *retv, DWORD service, CONTEXT *context )
         LPDWORD lpdwType   = (LPDWORD)STACK32_POP( context );
         LPBYTE  lpbData    = (LPBYTE) STACK32_POP( context );
         LPDWORD lpcbData   = (LPDWORD)STACK32_POP( context );
-        *retv = RegEnumValue32A( hkey, iValue, lpszValue, lpcchValue, 
+        *retv = RegEnumValueA( hkey, iValue, lpszValue, lpcchValue, 
                                  lpReserved, lpdwType, lpbData, lpcbData );
     }
     break;
@@ -573,7 +573,7 @@ BOOL32 VxDCall_VMM( DWORD *retv, DWORD service, CONTEXT *context )
         LPDWORD lpdwType   = (LPDWORD)STACK32_POP( context );
         LPBYTE  lpbData    = (LPBYTE) STACK32_POP( context );
         LPDWORD lpcbData   = (LPDWORD)STACK32_POP( context );
-        *retv = RegQueryValueEx32A( hkey, lpszValue, lpReserved, 
+        *retv = RegQueryValueExA( hkey, lpszValue, lpReserved, 
                                     lpdwType, lpbData, lpcbData );
     }
     break;
@@ -586,7 +586,7 @@ BOOL32 VxDCall_VMM( DWORD *retv, DWORD service, CONTEXT *context )
         DWORD   dwType     = (DWORD)  STACK32_POP( context );
         LPBYTE  lpbData    = (LPBYTE) STACK32_POP( context );
         DWORD   cbData     = (DWORD)STACK32_POP( context );
-        *retv = RegSetValueEx32A( hkey, lpszValue, dwReserved, 
+        *retv = RegSetValueExA( hkey, lpszValue, dwReserved, 
                                   dwType, lpbData, cbData );
     }
     break;
@@ -613,7 +613,7 @@ BOOL32 VxDCall_VMM( DWORD *retv, DWORD service, CONTEXT *context )
                            = (LPDWORD)STACK32_POP( context );
         LPDWORD lpcchMaxValueData 
                            = (LPDWORD)STACK32_POP( context );
-        *retv = RegQueryInfoKey32A( hkey, NULL, NULL, NULL, lpcSubKeys, lpcchMaxSubKey,
+        *retv = RegQueryInfoKeyA( hkey, NULL, NULL, NULL, lpcSubKeys, lpcchMaxSubKey,
                                     NULL, lpcValues, lpcchMaxValueName, lpcchMaxValueData,
                                     NULL, NULL );
     }
@@ -624,7 +624,7 @@ BOOL32 VxDCall_VMM( DWORD *retv, DWORD service, CONTEXT *context )
         HKEY    hkey       = (HKEY)   STACK32_POP( context );
         LPCSTR  lpszSubKey = (LPCSTR) STACK32_POP( context );
         LPCSTR  lpszFile   = (LPCSTR) STACK32_POP( context );
-        *retv = RegLoadKey32A( hkey, lpszSubKey, lpszFile );
+        *retv = RegLoadKeyA( hkey, lpszSubKey, lpszFile );
     }
     break;
 
@@ -632,7 +632,7 @@ BOOL32 VxDCall_VMM( DWORD *retv, DWORD service, CONTEXT *context )
     {
         HKEY    hkey       = (HKEY)   STACK32_POP( context );
         LPCSTR  lpszSubKey = (LPCSTR) STACK32_POP( context );
-        *retv = RegUnLoadKey32A( hkey, lpszSubKey );
+        *retv = RegUnLoadKeyA( hkey, lpszSubKey );
     }
     break;
 
@@ -642,7 +642,7 @@ BOOL32 VxDCall_VMM( DWORD *retv, DWORD service, CONTEXT *context )
         LPCSTR  lpszFile   = (LPCSTR) STACK32_POP( context );
         LPSECURITY_ATTRIBUTES sa = 
                (LPSECURITY_ATTRIBUTES)STACK32_POP( context );
-        *retv = RegSaveKey32A( hkey, lpszFile, sa );
+        *retv = RegSaveKeyA( hkey, lpszFile, sa );
     }
     break;
 
@@ -657,7 +657,7 @@ BOOL32 VxDCall_VMM( DWORD *retv, DWORD service, CONTEXT *context )
         LPCSTR  lpszSubKey = (LPCSTR) STACK32_POP( context );
         LPCSTR  lpszNewFile= (LPCSTR) STACK32_POP( context );
         LPCSTR  lpszOldFile= (LPCSTR) STACK32_POP( context );
-        *retv = RegReplaceKey32A( hkey, lpszSubKey, lpszNewFile, lpszOldFile );
+        *retv = RegReplaceKeyA( hkey, lpszSubKey, lpszNewFile, lpszOldFile );
     }
     break;
 
@@ -747,12 +747,12 @@ static void CONTEXT_2_win32apieq(CONTEXT *pCxt,struct win32apireq *pOut)
 	/* FIXME: pOut->ar_pad ignored */
 }
 
-static BOOL32 DeviceIo_IFSMgr(DWORD dwIoControlCode, LPVOID lpvInBuffer, DWORD cbInBuffer,
+static BOOL DeviceIo_IFSMgr(DWORD dwIoControlCode, LPVOID lpvInBuffer, DWORD cbInBuffer,
 			      LPVOID lpvOutBuffer, DWORD cbOutBuffer,
 			      LPDWORD lpcbBytesReturned,
 			      LPOVERLAPPED lpOverlapped)
 {
-    BOOL32 retv = TRUE;
+    BOOL retv = TRUE;
 	TRACE(win32,"(%ld,%p,%ld,%p,%ld,%p,%p): stub\n",
 			dwIoControlCode,
 			lpvInBuffer,cbInBuffer,
@@ -847,13 +847,13 @@ static void CONTEXT_2_DIOCRegs( CONTEXT *pCxt, DIOC_REGISTERS *pOut )
 }
 
 
-static BOOL32 DeviceIo_VWin32(DWORD dwIoControlCode, 
+static BOOL DeviceIo_VWin32(DWORD dwIoControlCode, 
 			      LPVOID lpvInBuffer, DWORD cbInBuffer,
 			      LPVOID lpvOutBuffer, DWORD cbOutBuffer,
 			      LPDWORD lpcbBytesReturned,
 			      LPOVERLAPPED lpOverlapped)
 {
-    BOOL32 retv = TRUE;
+    BOOL retv = TRUE;
 
     switch (dwIoControlCode)
     {
@@ -909,7 +909,7 @@ static BOOL32 DeviceIo_VWin32(DWORD dwIoControlCode,
 
 
 /* this is used by some Origin games */
-static BOOL32 DeviceIo_MONODEBG(DWORD dwIoControlCode, 
+static BOOL DeviceIo_MONODEBG(DWORD dwIoControlCode, 
 			      LPVOID lpvInBuffer, DWORD cbInBuffer,
 			      LPVOID lpvOutBuffer, DWORD cbOutBuffer,
 			      LPDWORD lpcbBytesReturned,

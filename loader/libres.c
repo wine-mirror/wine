@@ -34,7 +34,7 @@ void LIBRES_RegisterResources(const wrc_resource32_t * const * Res)
 /**********************************************************************
  *	    LIBRES_FindResource
  */
-HRSRC32 LIBRES_FindResource( HINSTANCE32 hModule, LPCWSTR name, LPCWSTR type )
+HRSRC LIBRES_FindResource( HINSTANCE hModule, LPCWSTR name, LPCWSTR type )
 {
   int nameid=0,typeid;
   ResListE* ResBlock;
@@ -77,12 +77,12 @@ HRSRC32 LIBRES_FindResource( HINSTANCE32 hModule, LPCWSTR name, LPCWSTR type )
     for(Res=ResBlock->Resources; *Res; Res++)
       if(name)
       {
-	if((*Res)->restype==typeid && !lstrncmpi32W((LPCWSTR)((*Res)->resname+1), name, *((*Res)->resname)))
-	  return (HRSRC32)*Res;
+	if((*Res)->restype==typeid && !lstrncmpiW((LPCWSTR)((*Res)->resname+1), name, *((*Res)->resname)))
+	  return (HRSRC)*Res;
       }
       else
 	if((*Res)->restype==typeid && (*Res)->resid==nameid)
-	  return (HRSRC32)*Res;
+	  return (HRSRC)*Res;
   return 0;
 }
 
@@ -90,16 +90,16 @@ HRSRC32 LIBRES_FindResource( HINSTANCE32 hModule, LPCWSTR name, LPCWSTR type )
 /**********************************************************************
  *	    LIBRES_LoadResource    
  */
-HGLOBAL32 LIBRES_LoadResource( HINSTANCE32 hModule, HRSRC32 hRsrc )
+HGLOBAL LIBRES_LoadResource( HINSTANCE hModule, HRSRC hRsrc )
 {
-  return (HGLOBAL32)(((wrc_resource32_t*)hRsrc)->data);
+  return (HGLOBAL)(((wrc_resource32_t*)hRsrc)->data);
 }
 
 
 /**********************************************************************
  *	    LIBRES_SizeofResource    
  */
-DWORD LIBRES_SizeofResource( HINSTANCE32 hModule, HRSRC32 hRsrc )
+DWORD LIBRES_SizeofResource( HINSTANCE hModule, HRSRC hRsrc )
 {
   return (DWORD)(((wrc_resource32_t*)hRsrc)->datasize);
 }

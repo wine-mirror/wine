@@ -60,31 +60,31 @@ static void         OLEFontImpl_Destroy(OLEFontImpl* fontDesc);
 static HRESULT      WINAPI OLEFontImpl_QueryInterface(IFont* iface, REFIID riid, VOID** ppvoid);
 static ULONG        WINAPI OLEFontImpl_AddRef(IFont* iface);
 static ULONG        WINAPI OLEFontImpl_Release(IFont* iface);
-static HRESULT      WINAPI OLEFontImpl_get_Name(IFont* iface, BSTR32* pname);
-static HRESULT      WINAPI OLEFontImpl_put_Name(IFont* iface, BSTR32 name);
+static HRESULT      WINAPI OLEFontImpl_get_Name(IFont* iface, BSTR* pname);
+static HRESULT      WINAPI OLEFontImpl_put_Name(IFont* iface, BSTR name);
 static HRESULT      WINAPI OLEFontImpl_get_Size(IFont* iface, CY* psize);
 static HRESULT      WINAPI OLEFontImpl_put_Size(IFont* iface, CY size);
-static HRESULT      WINAPI OLEFontImpl_get_Bold(IFont* iface, BOOL32* pbold);
-static HRESULT      WINAPI OLEFontImpl_put_Bold(IFont* iface, BOOL32 bold);
-static HRESULT      WINAPI OLEFontImpl_get_Italic(IFont* iface, BOOL32* pitalic);
-static HRESULT      WINAPI OLEFontImpl_put_Italic(IFont* iface, BOOL32 italic);
-static HRESULT      WINAPI OLEFontImpl_get_Underline(IFont* iface, BOOL32* punderline);
-static HRESULT      WINAPI OLEFontImpl_put_Underline(IFont* iface, BOOL32 underline);
-static HRESULT      WINAPI OLEFontImpl_get_Strikethrough(IFont* iface, BOOL32* pstrikethrough);
-static HRESULT      WINAPI OLEFontImpl_put_Strikethrough(IFont* iface, BOOL32 strikethrough);
+static HRESULT      WINAPI OLEFontImpl_get_Bold(IFont* iface, BOOL* pbold);
+static HRESULT      WINAPI OLEFontImpl_put_Bold(IFont* iface, BOOL bold);
+static HRESULT      WINAPI OLEFontImpl_get_Italic(IFont* iface, BOOL* pitalic);
+static HRESULT      WINAPI OLEFontImpl_put_Italic(IFont* iface, BOOL italic);
+static HRESULT      WINAPI OLEFontImpl_get_Underline(IFont* iface, BOOL* punderline);
+static HRESULT      WINAPI OLEFontImpl_put_Underline(IFont* iface, BOOL underline);
+static HRESULT      WINAPI OLEFontImpl_get_Strikethrough(IFont* iface, BOOL* pstrikethrough);
+static HRESULT      WINAPI OLEFontImpl_put_Strikethrough(IFont* iface, BOOL strikethrough);
 static HRESULT      WINAPI OLEFontImpl_get_Weight(IFont* iface, short* pweight);
 static HRESULT      WINAPI OLEFontImpl_put_Weight(IFont* iface, short weight);
 static HRESULT      WINAPI OLEFontImpl_get_Charset(IFont* iface, short* pcharset);
 static HRESULT      WINAPI OLEFontImpl_put_Charset(IFont* iface, short charset);
-static HRESULT      WINAPI OLEFontImpl_get_hFont(IFont* iface, HFONT32* phfont);
-static HRESULT      WINAPI OLEFontImpl_put_hFont(IFont* iface, HFONT32 hfont);
+static HRESULT      WINAPI OLEFontImpl_get_hFont(IFont* iface, HFONT* phfont);
+static HRESULT      WINAPI OLEFontImpl_put_hFont(IFont* iface, HFONT hfont);
 static HRESULT      WINAPI OLEFontImpl_Clone(IFont* iface, IFont** ppfont);
 static HRESULT      WINAPI OLEFontImpl_IsEqual(IFont* iface, IFont* pFontOther);
 static HRESULT      WINAPI OLEFontImpl_SetRatio(IFont* iface, long cyLogical, long cyHimetric);
 static HRESULT      WINAPI OLEFontImpl_QueryTextMetrics(IFont* iface, TEXTMETRICOLE* ptm);
-static HRESULT      WINAPI OLEFontImpl_AddRefHfont(IFont* iface, HFONT32 hfont);
-static HRESULT      WINAPI OLEFontImpl_ReleaseHfont(IFont* iface, HFONT32 hfont);
-static HRESULT      WINAPI OLEFontImpl_SetHdc(IFont* iface, HDC32 hdc);
+static HRESULT      WINAPI OLEFontImpl_AddRefHfont(IFont* iface, HFONT hfont);
+static HRESULT      WINAPI OLEFontImpl_ReleaseHfont(IFont* iface, HFONT hfont);
+static HRESULT      WINAPI OLEFontImpl_SetHdc(IFont* iface, HDC hdc);
 
 /***********************************************************************
  * Prototypes for the implementation functions for the IDispatch
@@ -98,13 +98,13 @@ static ULONG   WINAPI OLEFontImpl_IDispatch_Release(IDispatch* iface);
 static HRESULT WINAPI OLEFontImpl_GetTypeInfoCount(IDispatch*    iface, 
 					           unsigned int* pctinfo);
 static HRESULT WINAPI OLEFontImpl_GetTypeInfo(IDispatch*  iface, 
-				       	      UINT32      iTInfo,
+				       	      UINT      iTInfo,
 				              LCID        lcid, 
 				              ITypeInfo** ppTInfo);
 static HRESULT WINAPI OLEFontImpl_GetIDsOfNames(IDispatch*  iface,
 					        REFIID      riid, 
-					        LPOLESTR32* rgszNames, 
-					        UINT32      cNames, 
+					        LPOLESTR* rgszNames, 
+					        UINT      cNames, 
 					        LCID        lcid,
 					        DISPID*     rgDispId);
 static HRESULT WINAPI OLEFontImpl_Invoke(IDispatch*  iface,
@@ -115,7 +115,7 @@ static HRESULT WINAPI OLEFontImpl_Invoke(IDispatch*  iface,
 				         DISPPARAMS* pDispParams,
 				         VARIANT*    pVarResult, 
 				         EXCEPINFO*  pExepInfo,
-				         UINT32*     puArgErr); 
+				         UINT*     puArgErr); 
 
 /*
  * Virtual function tables for the OLEFontImpl class.
@@ -251,8 +251,8 @@ static OLEFontImpl* OLEFontImpl_Construct(LPFONTDESC fontDesc)
   newObject->description.cbSizeofstruct = sizeof(FONTDESC);
   newObject->description.lpstrName = HeapAlloc(GetProcessHeap(),
 					       0, 
-					       (lstrlen32W(fontDesc->lpstrName)+1) * sizeof(WCHAR));
-  lstrcpy32W(newObject->description.lpstrName, fontDesc->lpstrName);
+					       (lstrlenW(fontDesc->lpstrName)+1) * sizeof(WCHAR));
+  lstrcpyW(newObject->description.lpstrName, fontDesc->lpstrName);
   newObject->description.cySize         = fontDesc->cySize;
   newObject->description.sWeight        = fontDesc->sWeight;
   newObject->description.sCharset       = fontDesc->sCharset;
@@ -387,7 +387,7 @@ ULONG WINAPI OLEFontImpl_Release(
  */
 static HRESULT WINAPI OLEFontImpl_get_Name(
   IFont*  iface, 
-  BSTR32* pname)
+  BSTR* pname)
 {
   _ICOM_THIS(OLEFontImpl, iface);
 
@@ -398,7 +398,7 @@ static HRESULT WINAPI OLEFontImpl_get_Name(
     return E_POINTER;
 
   if (this->description.lpstrName!=0)
-    *pname = SysAllocString32(this->description.lpstrName);
+    *pname = SysAllocString(this->description.lpstrName);
   else
     *pname = 0;
 
@@ -412,7 +412,7 @@ static HRESULT WINAPI OLEFontImpl_get_Name(
  */
 static HRESULT WINAPI OLEFontImpl_put_Name(
   IFont* iface, 
-  BSTR32 name)
+  BSTR name)
 {
   _ICOM_THIS(OLEFontImpl, iface);
 
@@ -420,20 +420,20 @@ static HRESULT WINAPI OLEFontImpl_put_Name(
   {
     this->description.lpstrName = HeapAlloc(GetProcessHeap(),
 					    0, 
-					    (lstrlen32W(name)+1) * sizeof(WCHAR));
+					    (lstrlenW(name)+1) * sizeof(WCHAR));
   }
   else
   {
     this->description.lpstrName = HeapReAlloc(GetProcessHeap(),
 					      0, 
 					      this->description.lpstrName,
-					      (lstrlen32W(name)+1) * sizeof(WCHAR));
+					      (lstrlenW(name)+1) * sizeof(WCHAR));
   }
 
   if (this->description.lpstrName==0)
     return E_OUTOFMEMORY;
 
-  lstrcpy32W(this->description.lpstrName, name);
+  lstrcpyW(this->description.lpstrName, name);
 
   return S_OK;
 }
@@ -483,7 +483,7 @@ static HRESULT WINAPI OLEFontImpl_put_Size(
  */
 static HRESULT WINAPI OLEFontImpl_get_Bold(
   IFont*  iface, 
-  BOOL32* pbold)
+  BOOL* pbold)
 {
   FIXME(ole,"():Stub\n");
   return E_NOTIMPL;
@@ -496,7 +496,7 @@ static HRESULT WINAPI OLEFontImpl_get_Bold(
  */
 static HRESULT WINAPI OLEFontImpl_put_Bold(
   IFont* iface,
-  BOOL32 bold)
+  BOOL bold)
 {
   FIXME(ole,"():Stub\n");
   return E_NOTIMPL;
@@ -509,7 +509,7 @@ static HRESULT WINAPI OLEFontImpl_put_Bold(
  */
 static HRESULT WINAPI OLEFontImpl_get_Italic(
   IFont*  iface, 
-  BOOL32* pitalic)
+  BOOL* pitalic)
 {
   _ICOM_THIS(OLEFontImpl, iface);
 
@@ -531,7 +531,7 @@ static HRESULT WINAPI OLEFontImpl_get_Italic(
  */
 static HRESULT WINAPI OLEFontImpl_put_Italic(
   IFont* iface, 
-  BOOL32 italic)
+  BOOL italic)
 {
   _ICOM_THIS(OLEFontImpl, iface);
 
@@ -547,7 +547,7 @@ static HRESULT WINAPI OLEFontImpl_put_Italic(
  */
 static HRESULT WINAPI OLEFontImpl_get_Underline(
   IFont*  iface, 
-  BOOL32* punderline)
+  BOOL* punderline)
 {
   _ICOM_THIS(OLEFontImpl, iface);
 
@@ -569,7 +569,7 @@ static HRESULT WINAPI OLEFontImpl_get_Underline(
  */
 static HRESULT WINAPI OLEFontImpl_put_Underline(
   IFont* iface,
-  BOOL32 underline)
+  BOOL underline)
 {
   _ICOM_THIS(OLEFontImpl, iface);
 
@@ -585,7 +585,7 @@ static HRESULT WINAPI OLEFontImpl_put_Underline(
  */
 static HRESULT WINAPI OLEFontImpl_get_Strikethrough(
   IFont*  iface, 
-  BOOL32* pstrikethrough)
+  BOOL* pstrikethrough)
 {
   _ICOM_THIS(OLEFontImpl, iface);
 
@@ -607,7 +607,7 @@ static HRESULT WINAPI OLEFontImpl_get_Strikethrough(
  */
 static HRESULT WINAPI OLEFontImpl_put_Strikethrough(
  IFont* iface, 
- BOOL32 strikethrough)
+ BOOL strikethrough)
 {
   _ICOM_THIS(OLEFontImpl, iface);
 
@@ -699,7 +699,7 @@ static HRESULT WINAPI OLEFontImpl_put_Charset(
  */
 static HRESULT WINAPI OLEFontImpl_get_hFont(
   IFont*   iface,
-  HFONT32* phfont)
+  HFONT* phfont)
 {
   FIXME(ole,"():Stub\n");
   return E_NOTIMPL;
@@ -712,7 +712,7 @@ static HRESULT WINAPI OLEFontImpl_get_hFont(
  */
 static HRESULT WINAPI OLEFontImpl_put_hFont(
   IFont*  iface,
-  HFONT32 hfont)
+  HFONT hfont)
 {
   FIXME(ole,"():Stub\n");
   return E_NOTIMPL;
@@ -778,7 +778,7 @@ static HRESULT      WINAPI OLEFontImpl_QueryTextMetrics(
  */
 static HRESULT WINAPI OLEFontImpl_AddRefHfont(
   IFont*  iface, 
-  HFONT32 hfont)
+  HFONT hfont)
 {
   FIXME(ole,"():Stub\n");
   return E_NOTIMPL;
@@ -791,7 +791,7 @@ static HRESULT WINAPI OLEFontImpl_AddRefHfont(
  */
 static HRESULT WINAPI OLEFontImpl_ReleaseHfont(
   IFont*  iface,
-  HFONT32 hfont)
+  HFONT hfont)
 {
   FIXME(ole,"():Stub\n");
   return E_NOTIMPL;
@@ -804,7 +804,7 @@ static HRESULT WINAPI OLEFontImpl_ReleaseHfont(
  */
 static HRESULT WINAPI OLEFontImpl_SetHdc(
   IFont* iface,
-  HDC32  hdc)
+  HDC  hdc)
 {
   FIXME(ole,"():Stub\n");
   return E_NOTIMPL;
@@ -872,7 +872,7 @@ static HRESULT WINAPI OLEFontImpl_GetTypeInfoCount(
  */
 static HRESULT WINAPI OLEFontImpl_GetTypeInfo(
   IDispatch*  iface, 
-  UINT32      iTInfo,
+  UINT      iTInfo,
   LCID        lcid, 
   ITypeInfo** ppTInfo)
 {
@@ -889,8 +889,8 @@ static HRESULT WINAPI OLEFontImpl_GetTypeInfo(
 static HRESULT WINAPI OLEFontImpl_GetIDsOfNames(
   IDispatch*  iface,
   REFIID      riid, 
-  LPOLESTR32* rgszNames, 
-  UINT32      cNames, 
+  LPOLESTR* rgszNames, 
+  UINT      cNames, 
   LCID        lcid,
   DISPID*     rgDispId)
 {
@@ -913,7 +913,7 @@ static HRESULT WINAPI OLEFontImpl_Invoke(
   DISPPARAMS* pDispParams,
   VARIANT*    pVarResult, 
   EXCEPINFO*  pExepInfo,
-  UINT32*     puArgErr)
+  UINT*     puArgErr)
 {
   FIXME(ole,"():Stub\n");
 

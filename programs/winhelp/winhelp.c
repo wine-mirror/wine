@@ -906,7 +906,7 @@ static BOOL WINHELP_AppendText(WINHELP_LINE ***linep, WINHELP_LINE_PART ***partp
       ptr    += sizeof(WINHELP_LINE_PART);
     }
 
-  hmemcpy(ptr, text, textlen);
+  hmemcpy16(ptr, text, textlen);
   part->rect.left     = line->rect.right + (*partp ? space->cx : 0);
   part->rect.right    = part->rect.left + textsize->cx;
   line->rect.right    = part->rect.right;

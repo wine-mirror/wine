@@ -142,7 +142,7 @@ long FAR PASCAL ChildProc(HWND hwnd, WORD message, WPARAM wParam, LPARAM lParam)
             break;
             hDC = BeginPaint(hwnd, &ps);
 */
-            MoveTo(hDC, 0, 0);
+            MoveTo16(hDC, 0, 0);
             LineTo(hDC, 500, 500);
             EndPaint(hwnd, &ps);
             break;

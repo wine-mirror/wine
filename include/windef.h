@@ -23,8 +23,7 @@
 #define MAX_PATH 260
 
 #define HFILE_ERROR16   ((HFILE16)-1)
-#define HFILE_ERROR32   ((HFILE32)-1)
-#define HFILE_ERROR     WINELIB_NAME(HFILE_ERROR)
+#define HFILE_ERROR   ((HFILE)-1)
 
 #pragma pack(4)
 

@@ -10,40 +10,40 @@
 
 typedef struct 
 {
-    INT32     cxy;
-    HBITMAP32 hbm;
+    INT     cxy;
+    HBITMAP hbm;
     LPWSTR    pszText;
-    INT32     fmt;
+    INT     fmt;
     LPARAM    lParam;
-    INT32     iImage;
-    INT32     iOrder;		/* see documentation of HD_ITEM */
+    INT     iImage;
+    INT     iOrder;		/* see documentation of HD_ITEM */
 
-    BOOL32    bDown;		/* is item pressed? (used for drawing) */
-    RECT32    rect;		/* bounding rectangle of the item */
+    BOOL    bDown;		/* is item pressed? (used for drawing) */
+    RECT    rect;		/* bounding rectangle of the item */
 } HEADER_ITEM;
 
 
 typedef struct
 {
-    UINT32      uNumItem;	/* number of items (columns) */
-    INT32       nHeight;	/* height of the header (pixels) */
-    HFONT32     hFont;		/* handle to the current font */
-    HCURSOR32   hcurArrow;	/* handle to the arrow cursor */
-    HCURSOR32   hcurDivider;	/* handle to a cursor (used over dividers) <-|-> */
-    HCURSOR32   hcurDivopen;	/* handle to a cursor (used over dividers) <-||-> */
-    BOOL32      bCaptured;	/* Is the mouse captured? */
-    BOOL32      bPressed;	/* Is a header item pressed (down)? */
-    BOOL32      bTracking;	/* Is in tracking mode? */
-    BOOL32      bUnicode;       /* Unicode flag */
-    INT32       iMoveItem;	/* index of tracked item. (Tracking mode) */
-    INT32       xTrackOffset;	/* distance between the right side of the tracked item and the cursor */
-    INT32       xOldTrack;	/* track offset (see above) after the last WM_MOUSEMOVE */
-    INT32       nOldWidth;	/* width of a sizing item after the last WM_MOUSEMOVE */
-    INT32       iHotItem;	/* index of hot item (cursor is over this item) */
+    UINT      uNumItem;	/* number of items (columns) */
+    INT       nHeight;	/* height of the header (pixels) */
+    HFONT     hFont;		/* handle to the current font */
+    HCURSOR   hcurArrow;	/* handle to the arrow cursor */
+    HCURSOR   hcurDivider;	/* handle to a cursor (used over dividers) <-|-> */
+    HCURSOR   hcurDivopen;	/* handle to a cursor (used over dividers) <-||-> */
+    BOOL      bCaptured;	/* Is the mouse captured? */
+    BOOL      bPressed;	/* Is a header item pressed (down)? */
+    BOOL      bTracking;	/* Is in tracking mode? */
+    BOOL      bUnicode;       /* Unicode flag */
+    INT       iMoveItem;	/* index of tracked item. (Tracking mode) */
+    INT       xTrackOffset;	/* distance between the right side of the tracked item and the cursor */
+    INT       xOldTrack;	/* track offset (see above) after the last WM_MOUSEMOVE */
+    INT       nOldWidth;	/* width of a sizing item after the last WM_MOUSEMOVE */
+    INT       iHotItem;	/* index of hot item (cursor is over this item) */
 
     HIMAGELIST  himl;		/* handle to a image list (may be 0) */
     HEADER_ITEM *items;		/* pointer to array of HEADER_ITEM's */
-    LPINT32     pOrder;         /* pointer to order array */
+    LPINT     pOrder;         /* pointer to order array */
 } HEADER_INFO;
 
 

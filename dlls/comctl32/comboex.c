@@ -30,7 +30,7 @@
 
 
 __inline__ static LRESULT
-COMBOEX_GetComboControl (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
+COMBOEX_GetComboControl (WND *wndPtr, WPARAM wParam, LPARAM lParam)
 {
     COMBOEX_INFO *infoPtr = COMBOEX_GetInfoPtr(wndPtr);
 
@@ -41,21 +41,21 @@ COMBOEX_GetComboControl (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 
 
 __inline__ static LRESULT
-COMBOEX_GetEditControl (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
+COMBOEX_GetEditControl (WND *wndPtr, WPARAM wParam, LPARAM lParam)
 {
     COMBOEX_INFO *infoPtr = COMBOEX_GetInfoPtr(wndPtr);
 
     if ((wndPtr->dwStyle & CBS_DROPDOWNLIST) != CBS_DROPDOWN)
 	return 0;
 
-    TRACE (comboex, "-- 0x%x\n", GetDlgItem32 (infoPtr->hwndCombo, ID_CB_EDIT));
+    TRACE (comboex, "-- 0x%x\n", GetDlgItem (infoPtr->hwndCombo, ID_CB_EDIT));
 
-    return (LRESULT)GetDlgItem32 (infoPtr->hwndCombo, ID_CB_EDIT);
+    return (LRESULT)GetDlgItem (infoPtr->hwndCombo, ID_CB_EDIT);
 }
 
 
 __inline__ static LRESULT
-COMBOEX_GetExtendedStyle (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
+COMBOEX_GetExtendedStyle (WND *wndPtr, WPARAM wParam, LPARAM lParam)
 {
     COMBOEX_INFO *infoPtr = COMBOEX_GetInfoPtr(wndPtr);
 
@@ -64,7 +64,7 @@ COMBOEX_GetExtendedStyle (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 
 
 __inline__ static LRESULT
-COMBOEX_GetImageList (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
+COMBOEX_GetImageList (WND *wndPtr, WPARAM wParam, LPARAM lParam)
 {
     COMBOEX_INFO *infoPtr = COMBOEX_GetInfoPtr(wndPtr);
 
@@ -77,7 +77,7 @@ COMBOEX_GetImageList (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 
 
 static LRESULT
-COMBOEX_InsertItem32A (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
+COMBOEX_InsertItemA (WND *wndPtr, WPARAM wParam, LPARAM lParam)
 {
     /* COMBOEX_INFO *infoPtr = COMBOEX_GetInfoPtr(wndPtr); */
 
@@ -89,7 +89,7 @@ COMBOEX_InsertItem32A (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 
 
 static LRESULT
-COMBOEX_SetExtendedStyle (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
+COMBOEX_SetExtendedStyle (WND *wndPtr, WPARAM wParam, LPARAM lParam)
 {
     COMBOEX_INFO *infoPtr = COMBOEX_GetInfoPtr(wndPtr);
     DWORD dwTemp;
@@ -111,7 +111,7 @@ COMBOEX_SetExtendedStyle (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 
 
 __inline__ static LRESULT
-COMBOEX_SetImageList (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
+COMBOEX_SetImageList (WND *wndPtr, WPARAM wParam, LPARAM lParam)
 {
     COMBOEX_INFO *infoPtr = COMBOEX_GetInfoPtr(wndPtr);
     HIMAGELIST himlTemp;
@@ -126,7 +126,7 @@ COMBOEX_SetImageList (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 
 
 static LRESULT
-COMBOEX_SetItem32A (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
+COMBOEX_SetItemA (WND *wndPtr, WPARAM wParam, LPARAM lParam)
 {
     /* COMBOEX_INFO *infoPtr = COMBOEX_GetInfoPtr(wndPtr); */
 
@@ -140,21 +140,21 @@ COMBOEX_SetItem32A (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 
 
 __inline__ static LRESULT
-COMBOEX_Forward (WND *wndPtr, UINT32 uMsg, WPARAM32 wParam, LPARAM lParam)
+COMBOEX_Forward (WND *wndPtr, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     COMBOEX_INFO *infoPtr = COMBOEX_GetInfoPtr(wndPtr);
 
     FIXME (comboex, "(0x%x 0x%x 0x%lx): stub\n", uMsg, wParam, lParam);
 
     if (infoPtr->hwndCombo)    
-	return SendMessage32A (infoPtr->hwndCombo, uMsg, wParam, lParam);
+	return SendMessageA (infoPtr->hwndCombo, uMsg, wParam, lParam);
 
     return 0;
 }
 
 
 static LRESULT
-COMBOEX_Create (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
+COMBOEX_Create (WND *wndPtr, WPARAM wParam, LPARAM lParam)
 {
     COMBOEX_INFO *infoPtr;
     DWORD dwComboStyle;
@@ -182,9 +182,9 @@ COMBOEX_Create (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 	wndPtr->dwStyle & (CBS_SIMPLE|CBS_DROPDOWN|CBS_DROPDOWNLIST|WS_CHILD);
 
     infoPtr->hwndCombo =
-	CreateWindow32A ("ComboBox", "",
+	CreateWindowA ("ComboBox", "",
 			 WS_CHILD | WS_VISIBLE | CBS_OWNERDRAWFIXED | dwComboStyle,
-			 0, 0, 0, 0, wndPtr->hwndSelf, (HMENU32)1,
+			 0, 0, 0, 0, wndPtr->hwndSelf, (HMENU)1,
 			 wndPtr->hInstance, NULL);
 
 
@@ -193,13 +193,13 @@ COMBOEX_Create (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 
 
 static LRESULT
-COMBOEX_Destroy (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
+COMBOEX_Destroy (WND *wndPtr, WPARAM wParam, LPARAM lParam)
 {
     COMBOEX_INFO *infoPtr = COMBOEX_GetInfoPtr(wndPtr);
 
 
     if (infoPtr->hwndCombo)
-	DestroyWindow32 (infoPtr->hwndCombo);
+	DestroyWindow (infoPtr->hwndCombo);
 
 
 
@@ -212,14 +212,14 @@ COMBOEX_Destroy (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 
 
 static LRESULT
-COMBOEX_Size (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
+COMBOEX_Size (WND *wndPtr, WPARAM wParam, LPARAM lParam)
 {
     COMBOEX_INFO *infoPtr = COMBOEX_GetInfoPtr(wndPtr);
-    RECT32 rect;
+    RECT rect;
 
-    GetClientRect32 (wndPtr->hwndSelf, &rect);
+    GetClientRect (wndPtr->hwndSelf, &rect);
 
-    MoveWindow32 (infoPtr->hwndCombo, 0, 0, rect.right -rect.left,
+    MoveWindow (infoPtr->hwndCombo, 0, 0, rect.right -rect.left,
 		  rect.bottom - rect.top, TRUE);
 
     return 0;
@@ -227,7 +227,7 @@ COMBOEX_Size (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 
 
 LRESULT WINAPI
-COMBOEX_WindowProc (HWND32 hwnd, UINT32 uMsg, WPARAM32 wParam, LPARAM lParam)
+COMBOEX_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     WND *wndPtr = WIN_FindWndPtr(hwnd);
 
@@ -253,8 +253,8 @@ COMBOEX_WindowProc (HWND32 hwnd, UINT32 uMsg, WPARAM32 wParam, LPARAM lParam)
 	case CBEM_HASEDITCHANGED:
 */
 
-	case CBEM_INSERTITEM32A:
-	    return COMBOEX_InsertItem32A (wndPtr, wParam, lParam);
+	case CBEM_INSERTITEMA:
+	    return COMBOEX_InsertItemA (wndPtr, wParam, lParam);
 
 /*	case CBEM_INSERTITEM32W: */
 
@@ -264,33 +264,33 @@ COMBOEX_WindowProc (HWND32 hwnd, UINT32 uMsg, WPARAM32 wParam, LPARAM lParam)
 	case CBEM_SETIMAGELIST:
 	    return COMBOEX_SetImageList (wndPtr, wParam, lParam);
 
-	case CBEM_SETITEM32A:
-	    return COMBOEX_SetItem32A (wndPtr, wParam, lParam);
+	case CBEM_SETITEMA:
+	    return COMBOEX_SetItemA (wndPtr, wParam, lParam);
 
 /*	case CBEM_SETITEM32W:
 	case CBEM_SETUNICODEFORMAT:
 */
 
-	case CB_DELETESTRING32:
-	case CB_FINDSTRINGEXACT32:
-	case CB_GETCOUNT32:
-	case CB_GETCURSEL32:
-	case CB_GETDROPPEDCONTROLRECT32:
-	case CB_GETDROPPEDSTATE32:
-	case CB_GETITEMDATA32:
-	case CB_GETITEMHEIGHT32:
-	case CB_GETLBTEXT32:
-	case CB_GETLBTEXTLEN32:
-	case CB_GETEXTENDEDUI32:
-	case CB_LIMITTEXT32:
-	case CB_RESETCONTENT32:
-	case CB_SELECTSTRING32:
-	case CB_SETCURSEL32:
-	case CB_SETDROPPEDWIDTH32:
-	case CB_SETEXTENDEDUI32:
-	case CB_SETITEMDATA32:
-	case CB_SETITEMHEIGHT32:
-	case CB_SHOWDROPDOWN32:
+	case CB_DELETESTRING:
+	case CB_FINDSTRINGEXACT:
+	case CB_GETCOUNT:
+	case CB_GETCURSEL:
+	case CB_GETDROPPEDCONTROLRECT:
+	case CB_GETDROPPEDSTATE:
+	case CB_GETITEMDATA:
+	case CB_GETITEMHEIGHT:
+	case CB_GETLBTEXT:
+	case CB_GETLBTEXTLEN:
+	case CB_GETEXTENDEDUI:
+	case CB_LIMITTEXT:
+	case CB_RESETCONTENT:
+	case CB_SELECTSTRING:
+	case CB_SETCURSEL:
+	case CB_SETDROPPEDWIDTH:
+	case CB_SETEXTENDEDUI:
+	case CB_SETITEMDATA:
+	case CB_SETITEMHEIGHT:
+	case CB_SHOWDROPDOWN:
 	    return COMBOEX_Forward (wndPtr, uMsg, wParam, lParam);
 
 
@@ -307,7 +307,7 @@ COMBOEX_WindowProc (HWND32 hwnd, UINT32 uMsg, WPARAM32 wParam, LPARAM lParam)
 	    if (uMsg >= WM_USER)
 		ERR (comboex, "unknown msg %04x wp=%08x lp=%08lx\n",
 		     uMsg, wParam, lParam);
-	    return DefWindowProc32A (hwnd, uMsg, wParam, lParam);
+	    return DefWindowProcA (hwnd, uMsg, wParam, lParam);
     }
     return 0;
 }
@@ -316,27 +316,27 @@ COMBOEX_WindowProc (HWND32 hwnd, UINT32 uMsg, WPARAM32 wParam, LPARAM lParam)
 VOID
 COMBOEX_Register (VOID)
 {
-    WNDCLASS32A wndClass;
+    WNDCLASSA wndClass;
 
-    if (GlobalFindAtom32A (WC_COMBOBOXEX32A)) return;
+    if (GlobalFindAtomA (WC_COMBOBOXEXA)) return;
 
-    ZeroMemory (&wndClass, sizeof(WNDCLASS32A));
+    ZeroMemory (&wndClass, sizeof(WNDCLASSA));
     wndClass.style         = CS_GLOBALCLASS;
-    wndClass.lpfnWndProc   = (WNDPROC32)COMBOEX_WindowProc;
+    wndClass.lpfnWndProc   = (WNDPROC)COMBOEX_WindowProc;
     wndClass.cbClsExtra    = 0;
     wndClass.cbWndExtra    = sizeof(COMBOEX_INFO *);
-    wndClass.hCursor       = LoadCursor32A (0, IDC_ARROW32A);
-    wndClass.hbrBackground = (HBRUSH32)(COLOR_WINDOW + 1);
-    wndClass.lpszClassName = WC_COMBOBOXEX32A;
+    wndClass.hCursor       = LoadCursorA (0, IDC_ARROWA);
+    wndClass.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);
+    wndClass.lpszClassName = WC_COMBOBOXEXA;
  
-    RegisterClass32A (&wndClass);
+    RegisterClassA (&wndClass);
 }
 
 
 VOID
 COMBOEX_Unregister (VOID)
 {
-    if (GlobalFindAtom32A (WC_COMBOBOXEX32A))
-	UnregisterClass32A (WC_COMBOBOXEX32A, (HINSTANCE32)NULL);
+    if (GlobalFindAtomA (WC_COMBOBOXEXA))
+	UnregisterClassA (WC_COMBOBOXEXA, (HINSTANCE)NULL);
 }
 

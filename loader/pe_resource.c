@@ -30,7 +30,7 @@
  * small helper function to get a PE_MODREF from a passed HMODULE32
  */
 static PE_MODREF*
-HMODULE32toPE_MODREF(HMODULE32 hmod) {
+HMODULE32toPE_MODREF(HMODULE hmod) {
 	WINE_MODREF	*wm;
 
 	wm = MODULE32_LookupHMODULE( hmod );
@@ -47,7 +47,7 @@ HMODULE32toPE_MODREF(HMODULE32 hmod) {
  */
 PIMAGE_RESOURCE_DIRECTORY GetResDirEntryW(PIMAGE_RESOURCE_DIRECTORY resdirptr,
 					   LPCWSTR name,DWORD root,
-					   BOOL32 allowdefault)
+					   BOOL allowdefault)
 {
     int entrynum;
     PIMAGE_RESOURCE_DIRECTORY_ENTRY entryTable;
@@ -63,7 +63,7 @@ PIMAGE_RESOURCE_DIRECTORY GetResDirEntryW(PIMAGE_RESOURCE_DIRECTORY resdirptr,
 	entryTable = (PIMAGE_RESOURCE_DIRECTORY_ENTRY) (
 			(BYTE *) resdirptr + 
                         sizeof(IMAGE_RESOURCE_DIRECTORY));
-	namelen = lstrlen32W(name);
+	namelen = lstrlenW(name);
 	for (entrynum = 0; entrynum < resdirptr->NumberOfNamedEntries; entrynum++)
 	{
 		PIMAGE_RESOURCE_DIR_STRING_U str =
@@ -71,7 +71,7 @@ PIMAGE_RESOURCE_DIRECTORY GetResDirEntryW(PIMAGE_RESOURCE_DIRECTORY resdirptr,
 			entryTable[entrynum].u1.s.NameOffset);
 		if(namelen != str->Length)
 			continue;
-		if(lstrncmpi32W(name,str->NameString,str->Length)==0)
+		if(lstrncmpiW(name,str->NameString,str->Length)==0)
 			return (PIMAGE_RESOURCE_DIRECTORY) (
 				root +
 				entryTable[entrynum].u2.s.OffsetToDirectory);
@@ -101,7 +101,7 @@ PIMAGE_RESOURCE_DIRECTORY GetResDirEntryW(PIMAGE_RESOURCE_DIRECTORY resdirptr,
  */
 PIMAGE_RESOURCE_DIRECTORY GetResDirEntryA( PIMAGE_RESOURCE_DIRECTORY resdirptr,
 					   LPCSTR name, DWORD root,
-					   BOOL32 allowdefault )
+					   BOOL allowdefault )
 {
     PIMAGE_RESOURCE_DIRECTORY retv;
     LPWSTR nameW = HIWORD(name)? HEAP_strdupAtoW( GetProcessHeap(), 0, name ) 
@@ -117,12 +117,12 @@ PIMAGE_RESOURCE_DIRECTORY GetResDirEntryA( PIMAGE_RESOURCE_DIRECTORY resdirptr,
 /**********************************************************************
  *	    PE_FindResourceEx32W
  */
-HANDLE32 PE_FindResourceEx32W(
+HANDLE PE_FindResourceExW(
 	WINE_MODREF *wm,LPCWSTR name,LPCWSTR type,WORD lang
 ) {
     PIMAGE_RESOURCE_DIRECTORY resdirptr;
     DWORD root;
-    HANDLE32 result;
+    HANDLE result;
     PE_MODREF	*pem = &(wm->binfmt.pe);
 
     if (!pem || !pem->pe_resource)
@@ -134,10 +134,10 @@ HANDLE32 PE_FindResourceEx32W(
 	return 0;
     if ((resdirptr = GetResDirEntryW(resdirptr, name, root, FALSE)) == NULL)
 	return 0;
-    result = (HANDLE32)GetResDirEntryW(resdirptr, (LPCWSTR)(UINT32)lang, root, FALSE);
+    result = (HANDLE)GetResDirEntryW(resdirptr, (LPCWSTR)(UINT)lang, root, FALSE);
 	/* Try LANG_NEUTRAL, too */
     if(!result)
-        return (HANDLE32)GetResDirEntryW(resdirptr, (LPCWSTR)0, root, TRUE);
+        return (HANDLE)GetResDirEntryW(resdirptr, (LPCWSTR)0, root, TRUE);
     return result;
 }
 
@@ -145,18 +145,18 @@ HANDLE32 PE_FindResourceEx32W(
 /**********************************************************************
  *	    PE_LoadResource32
  */
-HANDLE32 PE_LoadResource32( WINE_MODREF *wm, HANDLE32 hRsrc )
+HANDLE PE_LoadResource( WINE_MODREF *wm, HANDLE hRsrc )
 {
     if (!hRsrc || !wm || wm->type!=MODULE32_PE)
     	return 0;
-    return (HANDLE32) (wm->module + ((PIMAGE_RESOURCE_DATA_ENTRY)hRsrc)->OffsetToData);
+    return (HANDLE) (wm->module + ((PIMAGE_RESOURCE_DATA_ENTRY)hRsrc)->OffsetToData);
 }
 
 
 /**********************************************************************
  *	    PE_SizeofResource32
  */
-DWORD PE_SizeofResource32( HINSTANCE32 hModule, HANDLE32 hRsrc )
+DWORD PE_SizeofResource( HINSTANCE hModule, HANDLE hRsrc )
 {
     /* we don't need hModule */
     if (!hRsrc)
@@ -167,14 +167,14 @@ DWORD PE_SizeofResource32( HINSTANCE32 hModule, HANDLE32 hRsrc )
 /**********************************************************************
  *	    PE_EnumResourceTypes32A
  */
-BOOL32
-PE_EnumResourceTypes32A(HMODULE32 hmod,ENUMRESTYPEPROC32A lpfun,LONG lparam) {
+BOOL
+PE_EnumResourceTypesA(HMODULE hmod,ENUMRESTYPEPROCA lpfun,LONG lparam) {
     PE_MODREF	*pem = HMODULE32toPE_MODREF(hmod);
     int		i;
     PIMAGE_RESOURCE_DIRECTORY		resdir;
     PIMAGE_RESOURCE_DIRECTORY_ENTRY	et;
-    BOOL32	ret;
-    HANDLE32	heap = GetProcessHeap();	
+    BOOL	ret;
+    HANDLE	heap = GetProcessHeap();	
 
     if (!pem || !pem->pe_resource)
     	return FALSE;
@@ -201,13 +201,13 @@ PE_EnumResourceTypes32A(HMODULE32 hmod,ENUMRESTYPEPROC32A lpfun,LONG lparam) {
 /**********************************************************************
  *	    PE_EnumResourceTypes32W
  */
-BOOL32
-PE_EnumResourceTypes32W(HMODULE32 hmod,ENUMRESTYPEPROC32W lpfun,LONG lparam) {
+BOOL
+PE_EnumResourceTypesW(HMODULE hmod,ENUMRESTYPEPROCW lpfun,LONG lparam) {
     PE_MODREF	*pem = HMODULE32toPE_MODREF(hmod);
     int		i;
     PIMAGE_RESOURCE_DIRECTORY		resdir;
     PIMAGE_RESOURCE_DIRECTORY_ENTRY	et;
-    BOOL32	ret;
+    BOOL	ret;
 
     if (!pem || !pem->pe_resource)
     	return FALSE;
@@ -232,16 +232,16 @@ PE_EnumResourceTypes32W(HMODULE32 hmod,ENUMRESTYPEPROC32W lpfun,LONG lparam) {
 /**********************************************************************
  *	    PE_EnumResourceNames32A
  */
-BOOL32
-PE_EnumResourceNames32A(
-	HMODULE32 hmod,LPCSTR type,ENUMRESNAMEPROC32A lpfun,LONG lparam
+BOOL
+PE_EnumResourceNamesA(
+	HMODULE hmod,LPCSTR type,ENUMRESNAMEPROCA lpfun,LONG lparam
 ) {
     PE_MODREF	*pem = HMODULE32toPE_MODREF(hmod);
     int		i;
     PIMAGE_RESOURCE_DIRECTORY		resdir;
     PIMAGE_RESOURCE_DIRECTORY_ENTRY	et;
-    BOOL32	ret;
-    HANDLE32	heap = GetProcessHeap();	
+    BOOL	ret;
+    HANDLE	heap = GetProcessHeap();	
     LPWSTR	typeW;
 
     if (!pem || !pem->pe_resource)
@@ -276,15 +276,15 @@ PE_EnumResourceNames32A(
 /**********************************************************************
  *	    PE_EnumResourceNames32W
  */
-BOOL32
-PE_EnumResourceNames32W(
-	HMODULE32 hmod,LPCWSTR type,ENUMRESNAMEPROC32W lpfun,LONG lparam
+BOOL
+PE_EnumResourceNamesW(
+	HMODULE hmod,LPCWSTR type,ENUMRESNAMEPROCW lpfun,LONG lparam
 ) {
     PE_MODREF	*pem = HMODULE32toPE_MODREF(hmod);
     int		i;
     PIMAGE_RESOURCE_DIRECTORY		resdir;
     PIMAGE_RESOURCE_DIRECTORY_ENTRY	et;
-    BOOL32	ret;
+    BOOL	ret;
 
     if (!pem || !pem->pe_resource)
     	return FALSE;
@@ -311,17 +311,17 @@ PE_EnumResourceNames32W(
 /**********************************************************************
  *	    PE_EnumResourceNames32A
  */
-BOOL32
-PE_EnumResourceLanguages32A(
-	HMODULE32 hmod,LPCSTR name,LPCSTR type,ENUMRESLANGPROC32A lpfun,
+BOOL
+PE_EnumResourceLanguagesA(
+	HMODULE hmod,LPCSTR name,LPCSTR type,ENUMRESLANGPROCA lpfun,
 	LONG lparam
 ) {
     PE_MODREF	*pem = HMODULE32toPE_MODREF(hmod);
     int		i;
     PIMAGE_RESOURCE_DIRECTORY		resdir;
     PIMAGE_RESOURCE_DIRECTORY_ENTRY	et;
-    BOOL32	ret;
-    HANDLE32	heap = GetProcessHeap();	
+    BOOL	ret;
+    HANDLE	heap = GetProcessHeap();	
     LPWSTR	nameW,typeW;
 
     if (!pem || !pem->pe_resource)
@@ -360,16 +360,16 @@ PE_EnumResourceLanguages32A(
 /**********************************************************************
  *	    PE_EnumResourceLanguages32W
  */
-BOOL32
-PE_EnumResourceLanguages32W(
-	HMODULE32 hmod,LPCWSTR name,LPCWSTR type,ENUMRESLANGPROC32W lpfun,
+BOOL
+PE_EnumResourceLanguagesW(
+	HMODULE hmod,LPCWSTR name,LPCWSTR type,ENUMRESLANGPROCW lpfun,
 	LONG lparam
 ) {
     PE_MODREF	*pem = HMODULE32toPE_MODREF(hmod);
     int		i;
     PIMAGE_RESOURCE_DIRECTORY		resdir;
     PIMAGE_RESOURCE_DIRECTORY_ENTRY	et;
-    BOOL32	ret;
+    BOOL	ret;
 
     if (!pem || !pem->pe_resource)
     	return FALSE;

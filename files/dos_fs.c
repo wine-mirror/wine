@@ -152,7 +152,7 @@ static int DOSFS_ValidDOSName( const char *name, int ignore_case )
  * Return FALSE if the name is not a valid DOS name.
  * 'buffer' must be at least 12 characters long.
  */
-BOOL32 DOSFS_ToDosFCBFormat( LPCSTR name, LPSTR buffer )
+BOOL DOSFS_ToDosFCBFormat( LPCSTR name, LPSTR buffer )
 {
     static const char invalid_chars[] = INVALID_DOS_CHARS;
     const char *p = name;
@@ -371,7 +371,7 @@ static void DOSFS_CloseDir( DOS_DIR *dir )
 /***********************************************************************
  *           DOSFS_ReadDir
  */
-static BOOL32 DOSFS_ReadDir( DOS_DIR *dir, LPCSTR *long_name,
+static BOOL DOSFS_ReadDir( DOS_DIR *dir, LPCSTR *long_name,
                              LPCSTR *short_name )
 {
     struct dirent *dirent;
@@ -407,8 +407,8 @@ static BOOL32 DOSFS_ReadDir( DOS_DIR *dir, LPCSTR *long_name,
  * File name can be terminated by '\0', '\\' or '/'.
  * 'buffer' must be at least 13 characters long.
  */
-static void DOSFS_Hash( LPCSTR name, LPSTR buffer, BOOL32 dir_format,
-                        BOOL32 ignore_case )
+static void DOSFS_Hash( LPCSTR name, LPSTR buffer, BOOL dir_format,
+                        BOOL ignore_case )
 {
     static const char invalid_chars[] = INVALID_DOS_CHARS "~.";
     static const char hash_chars[32] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ012345";
@@ -505,13 +505,13 @@ static void DOSFS_Hash( LPCSTR name, LPSTR buffer, BOOL32 dir_format,
  * turns out to be larger than that, the function returns FALSE.
  * 'short_buf' must be at least 13 characters long.
  */
-BOOL32 DOSFS_FindUnixName( LPCSTR path, LPCSTR name, LPSTR long_buf,
-                           INT32 long_len, LPSTR short_buf, BOOL32 ignore_case)
+BOOL DOSFS_FindUnixName( LPCSTR path, LPCSTR name, LPSTR long_buf,
+                           INT long_len, LPSTR short_buf, BOOL ignore_case)
 {
     DOS_DIR *dir;
     LPCSTR long_name, short_name;
     char dos_name[12], tmp_buf[13];
-    BOOL32 ret;
+    BOOL ret;
 
     const char *p = strchr( name, '/' );
     int len = p ? (int)(p - name) : strlen(name);
@@ -536,11 +536,11 @@ BOOL32 DOSFS_FindUnixName( LPCSTR path, LPCSTR name, LPSTR long_buf,
         {
             if (!ignore_case)
             {
-                if (!lstrncmp32A( long_name, name, len )) break;
+                if (!lstrncmpA( long_name, name, len )) break;
             }
             else
             {
-                if (!lstrncmpi32A( long_name, name, len )) break;
+                if (!lstrncmpiA( long_name, name, len )) break;
             }
         }
         if (dos_name[0])
@@ -591,7 +591,7 @@ const DOS_DEVICE *DOSFS_GetDevice( const char *name )
     for (i = 0; i < sizeof(DOSFS_Devices)/sizeof(DOSFS_Devices[0]); i++)
     {
         const char *dev = DOSFS_Devices[i].name;
-        if (!lstrncmpi32A( dev, name, strlen(dev) ))
+        if (!lstrncmpiA( dev, name, strlen(dev) ))
         {
             p = name + strlen( dev );
             if (!*p || (*p == '.')) return &DOSFS_Devices[i];
@@ -604,7 +604,7 @@ const DOS_DEVICE *DOSFS_GetDevice( const char *name )
 /***********************************************************************
  *           DOSFS_GetDeviceByHandle
  */
-const DOS_DEVICE *DOSFS_GetDeviceByHandle( HFILE32 hFile )
+const DOS_DEVICE *DOSFS_GetDeviceByHandle( HFILE hFile )
 {
     struct get_file_info_request req;
     struct get_file_info_reply reply;
@@ -629,19 +629,19 @@ const DOS_DEVICE *DOSFS_GetDeviceByHandle( HFILE32 hFile )
  *
  * Open a DOS device. This might not map 1:1 into the UNIX device concept.
  */
-HFILE32 DOSFS_OpenDevice( const char *name, DWORD access )
+HFILE DOSFS_OpenDevice( const char *name, DWORD access )
 {
     int i;
     const char *p;
 
-    if (!name) return (HFILE32)NULL; /* if FILE_DupUnixHandle was used */
+    if (!name) return (HFILE)NULL; /* if FILE_DupUnixHandle was used */
     if (name[0] && (name[1] == ':')) name += 2;
     if ((p = strrchr( name, '/' ))) name = p + 1;
     if ((p = strrchr( name, '\\' ))) name = p + 1;
     for (i = 0; i < sizeof(DOSFS_Devices)/sizeof(DOSFS_Devices[0]); i++)
     {
         const char *dev = DOSFS_Devices[i].name;
-        if (!lstrncmpi32A( dev, name, strlen(dev) ))
+        if (!lstrncmpiA( dev, name, strlen(dev) ))
         {
             p = name + strlen( dev );
             if (!*p || (*p == '.')) {
@@ -651,8 +651,8 @@ HFILE32 DOSFS_OpenDevice( const char *name, DWORD access )
                                             FILE_SHARE_READ|FILE_SHARE_WRITE, NULL,
                                             OPEN_EXISTING, 0, -1 );
 		if (!strcmp(DOSFS_Devices[i].name,"CON")) {
-			HFILE32 to_dup;
-			HFILE32 handle;
+			HFILE to_dup;
+			HFILE handle;
 			switch (access & (GENERIC_READ|GENERIC_WRITE)) {
 			case GENERIC_READ:
 				to_dup = GetStdHandle( STD_INPUT_HANDLE );
@@ -662,12 +662,12 @@ HFILE32 DOSFS_OpenDevice( const char *name, DWORD access )
 				break;
 			default:
 				FIXME(dosfs,"can't open CON read/write\n");
-				return HFILE_ERROR32;
+				return HFILE_ERROR;
 				break;
 			}
 			if (!DuplicateHandle( GetCurrentProcess(), to_dup, GetCurrentProcess(),
 					      &handle, 0, FALSE, DUPLICATE_SAME_ACCESS ))
-			    handle = HFILE_ERROR32;
+			    handle = HFILE_ERROR;
 			return handle;
 		}
 		if (!strcmp(DOSFS_Devices[i].name,"SCSIMGR$") ||
@@ -676,11 +676,11 @@ HFILE32 DOSFS_OpenDevice( const char *name, DWORD access )
                     return FILE_CreateDevice( i, access, NULL );
 		}
 		FIXME(dosfs,"device open %s not supported (yet)\n",DOSFS_Devices[i].name);
-    		return HFILE_ERROR32;
+    		return HFILE_ERROR;
 	    }
         }
     }
-    return HFILE_ERROR32;
+    return HFILE_ERROR;
 }
 
 
@@ -729,10 +729,10 @@ static int DOSFS_GetPathDrive( const char **name )
  * The buffers pointed to by 'long_buf' and 'short_buf' must be
  * at least MAX_PATHNAME_LEN long.
  */
-BOOL32 DOSFS_GetFullName( LPCSTR name, BOOL32 check_last, DOS_FULL_NAME *full )
+BOOL DOSFS_GetFullName( LPCSTR name, BOOL check_last, DOS_FULL_NAME *full )
 {
-    BOOL32 found;
-    UINT32 flags;
+    BOOL found;
+    UINT flags;
     char *p_l, *p_s, *root;
 
     TRACE(dosfs, "%s (last=%d)\n",
@@ -741,7 +741,7 @@ BOOL32 DOSFS_GetFullName( LPCSTR name, BOOL32 check_last, DOS_FULL_NAME *full )
     if ((full->drive = DOSFS_GetPathDrive( &name )) == -1) return FALSE;
     flags = DRIVE_GetFlags( full->drive );
 
-    lstrcpyn32A( full->long_name, DRIVE_GetRoot( full->drive ),
+    lstrcpynA( full->long_name, DRIVE_GetRoot( full->drive ),
                  sizeof(full->long_name) );
     if (full->long_name[1]) root = full->long_name + strlen(full->long_name);
     else root = full->long_name;  /* root directory */
@@ -755,10 +755,10 @@ BOOL32 DOSFS_GetFullName( LPCSTR name, BOOL32 check_last, DOS_FULL_NAME *full )
     }
     else  /* Relative path */
     {
-        lstrcpyn32A( root + 1, DRIVE_GetUnixCwd( full->drive ),
+        lstrcpynA( root + 1, DRIVE_GetUnixCwd( full->drive ),
                      sizeof(full->long_name) - (root - full->long_name) - 1 );
         if (root[1]) *root = '/';
-        lstrcpyn32A( full->short_name + 3, DRIVE_GetDosCwd( full->drive ),
+        lstrcpynA( full->short_name + 3, DRIVE_GetDosCwd( full->drive ),
                      sizeof(full->short_name) - 3 );
     }
 
@@ -862,7 +862,7 @@ BOOL32 DOSFS_GetFullName( LPCSTR name, BOOL32 check_last, DOS_FULL_NAME *full )
  *  longpath=NULL: LastError=ERROR_INVALID_PARAMETER, ret=0
  *  *longpath="" or invalid: LastError=ERROR_BAD_PATHNAME, ret=0
  */
-DWORD WINAPI GetShortPathName32A( LPCSTR longpath, LPSTR shortpath,
+DWORD WINAPI GetShortPathNameA( LPCSTR longpath, LPSTR shortpath,
                                   DWORD shortlen )
 {
     DOS_FULL_NAME full_name;
@@ -885,7 +885,7 @@ DWORD WINAPI GetShortPathName32A( LPCSTR longpath, LPSTR shortpath,
         SetLastError(ERROR_BAD_PATHNAME);
         return 0;
     }
-    lstrcpyn32A( shortpath, full_name.short_name, shortlen );
+    lstrcpynA( shortpath, full_name.short_name, shortlen );
     return strlen( full_name.short_name );
 }
 
@@ -893,7 +893,7 @@ DWORD WINAPI GetShortPathName32A( LPCSTR longpath, LPSTR shortpath,
 /***********************************************************************
  *           GetShortPathName32W   (KERNEL32.272)
  */
-DWORD WINAPI GetShortPathName32W( LPCWSTR longpath, LPWSTR shortpath,
+DWORD WINAPI GetShortPathNameW( LPCWSTR longpath, LPWSTR shortpath,
                                   DWORD shortlen )
 {
     DOS_FULL_NAME full_name;
@@ -929,7 +929,7 @@ DWORD WINAPI GetShortPathName32W( LPCWSTR longpath, LPWSTR shortpath,
 /***********************************************************************
  *           GetLongPathName32A   (KERNEL32.xxx)
  */
-DWORD WINAPI GetLongPathName32A( LPCSTR shortpath, LPSTR longpath,
+DWORD WINAPI GetLongPathNameA( LPCSTR shortpath, LPSTR longpath,
                                   DWORD longlen )
 {
     DOS_FULL_NAME full_name;
@@ -938,7 +938,7 @@ DWORD WINAPI GetLongPathName32A( LPCSTR shortpath, LPSTR longpath,
     DWORD shortpathlen;
     
     if (!DOSFS_GetFullName( shortpath, TRUE, &full_name )) return 0;
-    lstrcpyn32A( longpath, full_name.short_name, longlen );
+    lstrcpynA( longpath, full_name.short_name, longlen );
     /* Do some hackery to get the long filename.
      * FIXME: Would be better if it returned the
      * long version of the directories too
@@ -948,7 +948,7 @@ DWORD WINAPI GetLongPathName32A( LPCSTR shortpath, LPSTR longpath,
       if ((p = strrchr( longpath, '\\' )) != NULL) {
 	p++;
 	longlen -= (p-longpath);
-	lstrcpyn32A( p, longfilename , longlen);
+	lstrcpynA( p, longfilename , longlen);
       }
     }
     shortpathlen =
@@ -960,7 +960,7 @@ DWORD WINAPI GetLongPathName32A( LPCSTR shortpath, LPSTR longpath,
 /***********************************************************************
  *           GetLongPathName32W   (KERNEL32.269)
  */
-DWORD WINAPI GetLongPathName32W( LPCWSTR shortpath, LPWSTR longpath,
+DWORD WINAPI GetLongPathNameW( LPCWSTR shortpath, LPWSTR longpath,
                                   DWORD longlen )
 {
     DOS_FULL_NAME full_name;
@@ -984,7 +984,7 @@ DWORD WINAPI GetLongPathName32W( LPCWSTR shortpath, LPWSTR longpath,
  * Implementation of GetFullPathName32A/W.
  */
 static DWORD DOSFS_DoGetFullPathName( LPCSTR name, DWORD len, LPSTR result,
-                                      BOOL32 unicode )
+                                      BOOL unicode )
 {
     char buffer[MAX_PATHNAME_LEN];
     int drive;
@@ -1013,7 +1013,7 @@ static DWORD DOSFS_DoGetFullPathName( LPCSTR name, DWORD len, LPSTR result,
     else  /* Relative path or empty path */
     {
         *p++ = '\\';
-        lstrcpyn32A( p, DRIVE_GetDosCwd(drive), sizeof(buffer) - 4 );
+        lstrcpynA( p, DRIVE_GetDosCwd(drive), sizeof(buffer) - 4 );
         if ( *p )
         {
             p += strlen(p);
@@ -1059,12 +1059,12 @@ static DWORD DOSFS_DoGetFullPathName( LPCSTR name, DWORD len, LPSTR result,
     *p = '\0';
 
     if (!(DRIVE_GetFlags(drive) & DRIVE_CASE_PRESERVING))
-        CharUpper32A( buffer );
+        CharUpperA( buffer );
        
     if (unicode)
         lstrcpynAtoW( (LPWSTR)result, buffer, len );
     else
-        lstrcpyn32A( result, buffer, len );
+        lstrcpynA( result, buffer, len );
 
     TRACE(dosfs, "returning '%s'\n", buffer );
 
@@ -1085,7 +1085,7 @@ static DWORD DOSFS_DoGetFullPathName( LPCSTR name, DWORD len, LPSTR result,
  * NOTES
  *   if the path closed with '\', *lastpart is 0 
  */
-DWORD WINAPI GetFullPathName32A( LPCSTR name, DWORD len, LPSTR buffer,
+DWORD WINAPI GetFullPathNameA( LPCSTR name, DWORD len, LPSTR buffer,
                                  LPSTR *lastpart )
 {
     DWORD ret = DOSFS_DoGetFullPathName( name, len, buffer, FALSE );
@@ -1107,7 +1107,7 @@ DWORD WINAPI GetFullPathName32A( LPCSTR name, DWORD len, LPSTR buffer,
 /***********************************************************************
  *           GetFullPathName32W   (KERNEL32.273)
  */
-DWORD WINAPI GetFullPathName32W( LPCWSTR name, DWORD len, LPWSTR buffer,
+DWORD WINAPI GetFullPathNameW( LPCWSTR name, DWORD len, LPWSTR buffer,
                                  LPWSTR *lastpart )
 {
     LPSTR nameA = HEAP_strdupWtoA( GetProcessHeap(), 0, name );
@@ -1115,7 +1115,7 @@ DWORD WINAPI GetFullPathName32W( LPCWSTR name, DWORD len, LPWSTR buffer,
     HeapFree( GetProcessHeap(), 0, nameA );
     if (ret && lastpart)
     {
-        LPWSTR p = buffer + lstrlen32W(buffer);
+        LPWSTR p = buffer + lstrlenW(buffer);
         if (*p != (WCHAR)'\\')
         {
             while ((p > buffer + 2) && (*p != (WCHAR)'\\')) p--;
@@ -1129,10 +1129,10 @@ DWORD WINAPI GetFullPathName32W( LPCWSTR name, DWORD len, LPWSTR buffer,
 /***********************************************************************
  *           DOSFS_FindNextEx
  */
-static int DOSFS_FindNextEx( FIND_FIRST_INFO *info, WIN32_FIND_DATA32A *entry )
+static int DOSFS_FindNextEx( FIND_FIRST_INFO *info, WIN32_FIND_DATAA *entry )
 {
     BYTE attr = info->attr | FA_UNUSED | FA_ARCHIVE | FA_RDONLY;
-    UINT32 flags = DRIVE_GetFlags( info->drive );
+    UINT flags = DRIVE_GetFlags( info->drive );
     char *p, buffer[MAX_PATHNAME_LEN];
     const char *drive_path;
     int drive_root;
@@ -1161,7 +1161,7 @@ static int DOSFS_FindNextEx( FIND_FIRST_INFO *info, WIN32_FIND_DATA32A *entry )
     while ((*drive_path == '/') || (*drive_path == '\\')) drive_path++;
     drive_root = !*drive_path;
 
-    lstrcpyn32A( buffer, info->path, sizeof(buffer) - 1 );
+    lstrcpynA( buffer, info->path, sizeof(buffer) - 1 );
     strcat( buffer, "/" );
     p = buffer + strlen(buffer);
 
@@ -1197,7 +1197,7 @@ static int DOSFS_FindNextEx( FIND_FIRST_INFO *info, WIN32_FIND_DATA32A *entry )
 
         /* Check the file attributes */
 
-        lstrcpyn32A( p, long_name, sizeof(buffer) - (int)(p - buffer) );
+        lstrcpynA( p, long_name, sizeof(buffer) - (int)(p - buffer) );
         if (!FILE_Stat( buffer, &fileinfo ))
         {
             WARN(dosfs, "can't stat %s\n", buffer);
@@ -1220,8 +1220,8 @@ static int DOSFS_FindNextEx( FIND_FIRST_INFO *info, WIN32_FIND_DATA32A *entry )
             DOSFS_Hash( long_name, entry->cAlternateFileName, FALSE,
                         !(flags & DRIVE_CASE_SENSITIVE) );
 
-        lstrcpyn32A( entry->cFileName, long_name, sizeof(entry->cFileName) );
-        if (!(flags & DRIVE_CASE_PRESERVING)) CharLower32A( entry->cFileName );
+        lstrcpynA( entry->cFileName, long_name, sizeof(entry->cFileName) );
+        if (!(flags & DRIVE_CASE_PRESERVING)) CharLowerA( entry->cFileName );
         TRACE(dosfs, "returning %s (%s) %02lx %ld\n",
                        entry->cFileName, entry->cAlternateFileName,
                        entry->dwFileAttributes, entry->nFileSizeLow );
@@ -1245,7 +1245,7 @@ static int DOSFS_FindNextEx( FIND_FIRST_INFO *info, WIN32_FIND_DATA32A *entry )
  */
 int DOSFS_FindNext( const char *path, const char *short_mask,
                     const char *long_mask, int drive, BYTE attr,
-                    int skip, WIN32_FIND_DATA32A *entry )
+                    int skip, WIN32_FIND_DATAA *entry )
 {
     static FIND_FIRST_INFO info = { NULL };
     LPCSTR short_name, long_name;
@@ -1298,7 +1298,7 @@ int DOSFS_FindNext( const char *path, const char *short_mask,
 /*************************************************************************
  *           FindFirstFile16   (KERNEL.413)
  */
-HANDLE16 WINAPI FindFirstFile16( LPCSTR path, WIN32_FIND_DATA32A *data )
+HANDLE16 WINAPI FindFirstFile16( LPCSTR path, WIN32_FIND_DATAA *data )
 {
     DOS_FULL_NAME full_name;
     HGLOBAL16 handle;
@@ -1336,10 +1336,10 @@ HANDLE16 WINAPI FindFirstFile16( LPCSTR path, WIN32_FIND_DATA32A *data )
 /*************************************************************************
  *           FindFirstFile32A   (KERNEL32.123)
  */
-HANDLE32 WINAPI FindFirstFile32A( LPCSTR path, WIN32_FIND_DATA32A *data )
+HANDLE WINAPI FindFirstFileA( LPCSTR path, WIN32_FIND_DATAA *data )
 {
-    HANDLE32 handle = FindFirstFile16( path, data );
-    if (handle == INVALID_HANDLE_VALUE16) return INVALID_HANDLE_VALUE32;
+    HANDLE handle = FindFirstFile16( path, data );
+    if (handle == INVALID_HANDLE_VALUE16) return INVALID_HANDLE_VALUE;
     return handle;
 }
 
@@ -1347,13 +1347,13 @@ HANDLE32 WINAPI FindFirstFile32A( LPCSTR path, WIN32_FIND_DATA32A *data )
 /*************************************************************************
  *           FindFirstFile32W   (KERNEL32.124)
  */
-HANDLE32 WINAPI FindFirstFile32W( LPCWSTR path, WIN32_FIND_DATA32W *data )
+HANDLE WINAPI FindFirstFileW( LPCWSTR path, WIN32_FIND_DATAW *data )
 {
-    WIN32_FIND_DATA32A dataA;
+    WIN32_FIND_DATAA dataA;
     LPSTR pathA = HEAP_strdupWtoA( GetProcessHeap(), 0, path );
-    HANDLE32 handle = FindFirstFile32A( pathA, &dataA );
+    HANDLE handle = FindFirstFileA( pathA, &dataA );
     HeapFree( GetProcessHeap(), 0, pathA );
-    if (handle != INVALID_HANDLE_VALUE32)
+    if (handle != INVALID_HANDLE_VALUE)
     {
         data->dwFileAttributes = dataA.dwFileAttributes;
         data->ftCreationTime   = dataA.ftCreationTime;
@@ -1371,7 +1371,7 @@ HANDLE32 WINAPI FindFirstFile32W( LPCWSTR path, WIN32_FIND_DATA32W *data )
 /*************************************************************************
  *           FindNextFile16   (KERNEL.414)
  */
-BOOL16 WINAPI FindNextFile16( HANDLE16 handle, WIN32_FIND_DATA32A *data )
+BOOL16 WINAPI FindNextFile16( HANDLE16 handle, WIN32_FIND_DATAA *data )
 {
     FIND_FIRST_INFO *info;
 
@@ -1401,7 +1401,7 @@ BOOL16 WINAPI FindNextFile16( HANDLE16 handle, WIN32_FIND_DATA32A *data )
 /*************************************************************************
  *           FindNextFile32A   (KERNEL32.126)
  */
-BOOL32 WINAPI FindNextFile32A( HANDLE32 handle, WIN32_FIND_DATA32A *data )
+BOOL WINAPI FindNextFileA( HANDLE handle, WIN32_FIND_DATAA *data )
 {
     return FindNextFile16( handle, data );
 }
@@ -1410,10 +1410,10 @@ BOOL32 WINAPI FindNextFile32A( HANDLE32 handle, WIN32_FIND_DATA32A *data )
 /*************************************************************************
  *           FindNextFile32W   (KERNEL32.127)
  */
-BOOL32 WINAPI FindNextFile32W( HANDLE32 handle, WIN32_FIND_DATA32W *data )
+BOOL WINAPI FindNextFileW( HANDLE handle, WIN32_FIND_DATAW *data )
 {
-    WIN32_FIND_DATA32A dataA;
-    if (!FindNextFile32A( handle, &dataA )) return FALSE;
+    WIN32_FIND_DATAA dataA;
+    if (!FindNextFileA( handle, &dataA )) return FALSE;
     data->dwFileAttributes = dataA.dwFileAttributes;
     data->ftCreationTime   = dataA.ftCreationTime;
     data->ftLastAccessTime = dataA.ftLastAccessTime;
@@ -1450,7 +1450,7 @@ BOOL16 WINAPI FindClose16( HANDLE16 handle )
 /*************************************************************************
  *           FindClose32   (KERNEL32.119)
  */
-BOOL32 WINAPI FindClose32( HANDLE32 handle )
+BOOL WINAPI FindClose( HANDLE handle )
 {
     return FindClose16( (HANDLE16)handle );
 }
@@ -1533,14 +1533,14 @@ void DOSFS_UnixTimeToFileTime( time_t unix_time, FILETIME *filetime,
     t *= 10000000;
     t += 116444736000000000LL;
     t += remainder;
-    filetime->dwLowDateTime  = (UINT32)t;
-    filetime->dwHighDateTime = (UINT32)(t >> 32);
+    filetime->dwLowDateTime  = (UINT)t;
+    filetime->dwHighDateTime = (UINT)(t >> 32);
 
 #else  /* ISO version */
 
-    UINT32 a0;			/* 16 bit, low    bits */
-    UINT32 a1;			/* 16 bit, medium bits */
-    UINT32 a2;			/* 32 bit, high   bits */
+    UINT a0;			/* 16 bit, low    bits */
+    UINT a1;			/* 16 bit, medium bits */
+    UINT a2;			/* 32 bit, high   bits */
 
     /* Copy the unix time to a2/a1/a0 */
     a0 =  unix_time & 0xffff;
@@ -1593,7 +1593,7 @@ time_t DOSFS_FileTimeToUnixTime( const FILETIME *filetime, DWORD *remainder )
 
     long long int t = filetime->dwHighDateTime;
     t <<= 32;
-    t += (UINT32)filetime->dwLowDateTime;
+    t += (UINT)filetime->dwLowDateTime;
     t -= 116444736000000000LL;
     if (t < 0)
     {
@@ -1608,17 +1608,17 @@ time_t DOSFS_FileTimeToUnixTime( const FILETIME *filetime, DWORD *remainder )
 
 #else  /* ISO version */
 
-    UINT32 a0;			/* 16 bit, low    bits */
-    UINT32 a1;			/* 16 bit, medium bits */
-    UINT32 a2;			/* 32 bit, high   bits */
-    UINT32 r;			/* remainder of division */
+    UINT a0;			/* 16 bit, low    bits */
+    UINT a1;			/* 16 bit, medium bits */
+    UINT a2;			/* 32 bit, high   bits */
+    UINT r;			/* remainder of division */
     unsigned int carry;		/* carry bit for subtraction */
     int negative;		/* whether a represents a negative value */
 
     /* Copy the time values to a2/a1/a0 */
-    a2 =  (UINT32)filetime->dwHighDateTime;
-    a1 = ((UINT32)filetime->dwLowDateTime ) >> 16;
-    a0 = ((UINT32)filetime->dwLowDateTime ) & 0xffff;
+    a2 =  (UINT)filetime->dwHighDateTime;
+    a1 = ((UINT)filetime->dwLowDateTime ) >> 16;
+    a0 = ((UINT)filetime->dwLowDateTime ) & 0xffff;
 
     /* Subtract the time difference */
     if (a0 >= 32768           ) a0 -=             32768        , carry = 0;
@@ -1630,7 +1630,7 @@ time_t DOSFS_FileTimeToUnixTime( const FILETIME *filetime, DWORD *remainder )
     a2 -= 27111902 + carry;
     
     /* If a is negative, replace a by (-1-a) */
-    negative = (a2 >= ((UINT32)1) << 31);
+    negative = (a2 >= ((UINT)1) << 31);
     if (negative)
     {
 	/* Set a to -a - 1 (a is a2/a1/a0) */
@@ -1678,7 +1678,7 @@ time_t DOSFS_FileTimeToUnixTime( const FILETIME *filetime, DWORD *remainder )
 /***********************************************************************
  *           DosDateTimeToFileTime   (KERNEL32.76)
  */
-BOOL32 WINAPI DosDateTimeToFileTime( WORD fatdate, WORD fattime, LPFILETIME ft)
+BOOL WINAPI DosDateTimeToFileTime( WORD fatdate, WORD fattime, LPFILETIME ft)
 {
     struct tm newtm;
 
@@ -1696,7 +1696,7 @@ BOOL32 WINAPI DosDateTimeToFileTime( WORD fatdate, WORD fattime, LPFILETIME ft)
 /***********************************************************************
  *           FileTimeToDosDateTime   (KERNEL32.111)
  */
-BOOL32 WINAPI FileTimeToDosDateTime( const FILETIME *ft, LPWORD fatdate,
+BOOL WINAPI FileTimeToDosDateTime( const FILETIME *ft, LPWORD fatdate,
                                      LPWORD fattime )
 {
     time_t unixtime = DOSFS_FileTimeToUnixTime( ft, NULL );
@@ -1713,7 +1713,7 @@ BOOL32 WINAPI FileTimeToDosDateTime( const FILETIME *ft, LPWORD fatdate,
 /***********************************************************************
  *           LocalFileTimeToFileTime   (KERNEL32.373)
  */
-BOOL32 WINAPI LocalFileTimeToFileTime( const FILETIME *localft,
+BOOL WINAPI LocalFileTimeToFileTime( const FILETIME *localft,
                                        LPFILETIME utcft )
 {
     struct tm *xtm;
@@ -1730,7 +1730,7 @@ BOOL32 WINAPI LocalFileTimeToFileTime( const FILETIME *localft,
 /***********************************************************************
  *           FileTimeToLocalFileTime   (KERNEL32.112)
  */
-BOOL32 WINAPI FileTimeToLocalFileTime( const FILETIME *utcft,
+BOOL WINAPI FileTimeToLocalFileTime( const FILETIME *utcft,
                                        LPFILETIME localft )
 {
     DWORD remainder;
@@ -1760,7 +1760,7 @@ BOOL32 WINAPI FileTimeToLocalFileTime( const FILETIME *utcft,
 /***********************************************************************
  *           FileTimeToSystemTime   (KERNEL32.113)
  */
-BOOL32 WINAPI FileTimeToSystemTime( const FILETIME *ft, LPSYSTEMTIME syst )
+BOOL WINAPI FileTimeToSystemTime( const FILETIME *ft, LPSYSTEMTIME syst )
 {
     struct tm *xtm;
     DWORD remainder;
@@ -1782,7 +1782,7 @@ BOOL32 WINAPI FileTimeToSystemTime( const FILETIME *ft, LPSYSTEMTIME syst )
  *
  * returns array of strings terminated by \0, terminated by \0
  */
-DWORD WINAPI QueryDosDevice32A(LPCSTR devname,LPSTR target,DWORD bufsize)
+DWORD WINAPI QueryDosDeviceA(LPCSTR devname,LPSTR target,DWORD bufsize)
 {
     LPSTR s;
     char  buffer[200];
@@ -1790,17 +1790,17 @@ DWORD WINAPI QueryDosDevice32A(LPCSTR devname,LPSTR target,DWORD bufsize)
     TRACE(dosfs,"(%s,...)\n",devname?devname:"<null>");
     if (!devname) {
 	/* return known MSDOS devices */
-	lstrcpy32A(buffer,"CON COM1 COM2 LPT1 NUL ");
+	lstrcpyA(buffer,"CON COM1 COM2 LPT1 NUL ");
 	while ((s=strchr(buffer,' ')))
 		*s='\0';
 
-	lstrcpyn32A(target,buffer,bufsize);
+	lstrcpynA(target,buffer,bufsize);
 	return strlen(buffer);
     }
-    lstrcpy32A(buffer,"\\DEV\\");
-    lstrcat32A(buffer,devname);
+    lstrcpyA(buffer,"\\DEV\\");
+    lstrcatA(buffer,devname);
     if ((s=strchr(buffer,':'))) *s='\0';
-    lstrcpyn32A(target,buffer,bufsize);
+    lstrcpynA(target,buffer,bufsize);
     return strlen(buffer);
 }
 
@@ -1810,11 +1810,11 @@ DWORD WINAPI QueryDosDevice32A(LPCSTR devname,LPSTR target,DWORD bufsize)
  *
  * returns array of strings terminated by \0, terminated by \0
  */
-DWORD WINAPI QueryDosDevice32W(LPCWSTR devname,LPWSTR target,DWORD bufsize)
+DWORD WINAPI QueryDosDeviceW(LPCWSTR devname,LPWSTR target,DWORD bufsize)
 {
     LPSTR devnameA = devname?HEAP_strdupWtoA(GetProcessHeap(),0,devname):NULL;
     LPSTR targetA = (LPSTR)HEAP_xalloc(GetProcessHeap(),0,bufsize);
-    DWORD ret = QueryDosDevice32A(devnameA,targetA,bufsize);
+    DWORD ret = QueryDosDeviceA(devnameA,targetA,bufsize);
 
     lstrcpynAtoW(target,targetA,bufsize);
     if (devnameA) HeapFree(GetProcessHeap(),0,devnameA);
@@ -1826,7 +1826,7 @@ DWORD WINAPI QueryDosDevice32W(LPCWSTR devname,LPWSTR target,DWORD bufsize)
 /***********************************************************************
  *           SystemTimeToFileTime   (KERNEL32.526)
  */
-BOOL32 WINAPI SystemTimeToFileTime( const SYSTEMTIME *syst, LPFILETIME ft )
+BOOL WINAPI SystemTimeToFileTime( const SYSTEMTIME *syst, LPFILETIME ft )
 {
 #ifdef HAVE_TIMEGM
     struct tm xtm;
@@ -1859,7 +1859,7 @@ BOOL32 WINAPI SystemTimeToFileTime( const SYSTEMTIME *syst, LPFILETIME ft )
     return TRUE; 
 }
 
-BOOL32 WINAPI DefineDosDevice32A(DWORD flags,LPCSTR devname,LPCSTR targetpath) {
+BOOL WINAPI DefineDosDeviceA(DWORD flags,LPCSTR devname,LPCSTR targetpath) {
 	FIXME(dosfs,"(0x%08lx,%s,%s),stub!\n",flags,devname,targetpath);
 	SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
 	return FALSE;

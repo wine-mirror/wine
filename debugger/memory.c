@@ -21,7 +21,7 @@
  ************************************************************/
 
 #if defined(linux) || defined(__FreeBSD__) || defined(__OpenBSD__)
-BOOL32 DEBUG_checkmap_bad( const char *addr, size_t size, int rwflag)
+BOOL DEBUG_checkmap_bad( const char *addr, size_t size, int rwflag)
 {
   FILE *fp;
   char buf[80];      /* temporary line buffer */
@@ -86,7 +86,7 @@ BOOL32 DEBUG_checkmap_bad( const char *addr, size_t size, int rwflag)
 }
 #else  /* linux || FreeBSD */
 /* FIXME: code needed for BSD et al. */
-BOOL32 DEBUG_checkmap_bad(char *addr, size_t size, int rwflag)
+BOOL DEBUG_checkmap_bad(char *addr, size_t size, int rwflag)
 {
     return FALSE;
 }
@@ -98,7 +98,7 @@ BOOL32 DEBUG_checkmap_bad(char *addr, size_t size, int rwflag)
  *
  * Check if we are allowed to read memory at 'address'.
  */
-BOOL32 DEBUG_IsBadReadPtr( const DBG_ADDR *address, int size )
+BOOL DEBUG_IsBadReadPtr( const DBG_ADDR *address, int size )
 {
     if (!IS_SELECTOR_V86(address->seg))
     if (address->seg)  /* segmented addr */
@@ -116,7 +116,7 @@ BOOL32 DEBUG_IsBadReadPtr( const DBG_ADDR *address, int size )
  *
  * Check if we are allowed to write memory at 'address'.
  */
-BOOL32 DEBUG_IsBadWritePtr( const DBG_ADDR *address, int size )
+BOOL DEBUG_IsBadWritePtr( const DBG_ADDR *address, int size )
 {
     if (!IS_SELECTOR_V86(address->seg))
     if (address->seg)  /* segmented addr */

@@ -95,7 +95,7 @@ ASPI_DebugPrintCmd(SRB_ExecSCSICmd16 *prb, UINT16 mode)
       case ASPI_DOS:
 	/* translate real mode address */
 	if (prb->SRB_BufPointer)
-	    lpBuf = (BYTE *)DOSMEM_MapRealToLinear((UINT32)prb->SRB_BufPointer);
+	    lpBuf = (BYTE *)DOSMEM_MapRealToLinear((UINT)prb->SRB_BufPointer);
 	break;
       case ASPI_WIN16:
 	lpBuf = PTR_SEG_TO_LIN(prb->SRB_BufPointer);
@@ -177,7 +177,7 @@ ASPI_DebugPrintResult(SRB_ExecSCSICmd16 *prb, UINT16 mode)
       case ASPI_DOS:
 	/* translate real mode address */
 	if (prb->SRB_BufPointer)
-	    lpBuf = (BYTE *)DOSMEM_MapRealToLinear((UINT32)prb->SRB_BufPointer);
+	    lpBuf = (BYTE *)DOSMEM_MapRealToLinear((UINT)prb->SRB_BufPointer);
 	break;
       case ASPI_WIN16:
 	lpBuf = PTR_SEG_TO_LIN(prb->SRB_BufPointer);
@@ -235,7 +235,7 @@ ASPI_ExecScsiCmd(DWORD ptrPRB, UINT16 mode)
       case ASPI_DOS:
 	/* translate real mode address */
 	if (ptrPRB)
-	    lpBuf = (BYTE *)DOSMEM_MapRealToLinear((UINT32)lpPRB->SRB_BufPointer);
+	    lpBuf = (BYTE *)DOSMEM_MapRealToLinear((UINT)lpPRB->SRB_BufPointer);
 	break;
       case ASPI_WIN16:
 	lpBuf = PTR_SEG_TO_LIN(lpPRB->SRB_BufPointer);

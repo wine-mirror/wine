@@ -58,7 +58,7 @@ static int MF_AddHandleDC( DC *dc )
  */
 HMETAFILE16 WINAPI GetMetaFile16( LPCSTR lpFilename )
 {
-    return GetMetaFile32A( lpFilename );
+    return GetMetaFileA( lpFilename );
 }
 
 
@@ -67,14 +67,14 @@ HMETAFILE16 WINAPI GetMetaFile16( LPCSTR lpFilename )
  *
  *  Read a metafile from a file. Returns handle to a disk-based metafile.
  */
-HMETAFILE32 WINAPI GetMetaFile32A( 
+HMETAFILE WINAPI GetMetaFileA( 
 				  LPCSTR lpFilename 
 		      /* pointer to string containing filename to read */
 )
 {
   HMETAFILE16 hmf;
   METAHEADER *mh;
-  HFILE32 hFile;
+  HFILE hFile;
   DWORD size;
   
   TRACE(metafile,"%s\n", lpFilename);
@@ -91,15 +91,15 @@ HMETAFILE32 WINAPI GetMetaFile32A(
     return 0;
   }
   
-  if ((hFile = _lopen32(lpFilename, OF_READ)) == HFILE_ERROR32)
+  if ((hFile = _lopen(lpFilename, OF_READ)) == HFILE_ERROR)
   {
     GlobalFree16(hmf);
     return 0;
   }
   
-  if (_lread32(hFile, (char *)mh, MFHEADERSIZE) == HFILE_ERROR32)
+  if (_lread(hFile, (char *)mh, MFHEADERSIZE) == HFILE_ERROR)
   {
-    _lclose32( hFile );
+    _lclose( hFile );
     GlobalFree16(hmf);
     return 0;
   }
@@ -111,20 +111,20 @@ HMETAFILE32 WINAPI GetMetaFile32A(
   
   if (!mh)
   {
-    _lclose32( hFile );
+    _lclose( hFile );
     GlobalFree16(hmf);
     return 0;
   }
   
-  if (_lread32(hFile, (char*)mh + mh->mtHeaderSize * 2, 
-	        size - mh->mtHeaderSize * 2) == HFILE_ERROR32)
+  if (_lread(hFile, (char*)mh + mh->mtHeaderSize * 2, 
+	        size - mh->mtHeaderSize * 2) == HFILE_ERROR)
   {
-    _lclose32( hFile );
+    _lclose( hFile );
     GlobalFree16(hmf);
     return 0;
   }
   
-  _lclose32(hFile);
+  _lclose(hFile);
 
   if (mh->mtType != 1)
   {
@@ -141,10 +141,10 @@ HMETAFILE32 WINAPI GetMetaFile32A(
 /******************************************************************
  *         GetMetaFile32W   (GDI32.199)
  */
-HMETAFILE32 WINAPI GetMetaFile32W( LPCWSTR lpFilename )
+HMETAFILE WINAPI GetMetaFileW( LPCWSTR lpFilename )
 {
     LPSTR p = HEAP_strdupWtoA( GetProcessHeap(), 0, lpFilename );
-    HMETAFILE32 ret = GetMetaFile32A( p );
+    HMETAFILE ret = GetMetaFileA( p );
     HeapFree( GetProcessHeap(), 0, p );
     return ret;
 }
@@ -156,7 +156,7 @@ HMETAFILE32 WINAPI GetMetaFile32W( LPCWSTR lpFilename )
 
 HMETAFILE16 WINAPI CopyMetaFile16( HMETAFILE16 hSrcMetaFile, LPCSTR lpFilename )
 {
-    return CopyMetaFile32A( hSrcMetaFile, lpFilename );
+    return CopyMetaFileA( hSrcMetaFile, lpFilename );
 }
 
 
@@ -175,14 +175,14 @@ HMETAFILE16 WINAPI CopyMetaFile16( HMETAFILE16 hSrcMetaFile, LPCSTR lpFilename )
  *
  *  Copying to disk returns NULL even if successful.
  */
-HMETAFILE32 WINAPI CopyMetaFile32A(
-		   HMETAFILE32 hSrcMetaFile, /* handle of metafile to copy */
+HMETAFILE WINAPI CopyMetaFileA(
+		   HMETAFILE hSrcMetaFile, /* handle of metafile to copy */
 		   LPCSTR lpFilename /* filename if copying to a file */
 ) {
     HMETAFILE16 handle = 0;
     METAHEADER *mh;
     METAHEADER *mh2;
-    HFILE32 hFile;
+    HFILE hFile;
     
     TRACE(metafile,"(%08x,%s)\n", hSrcMetaFile, lpFilename);
     
@@ -194,12 +194,12 @@ HMETAFILE32 WINAPI CopyMetaFile32A(
     if (lpFilename)          /* disk based metafile */
         {
         int i,j;
-	hFile = _lcreat32(lpFilename, 0);
+	hFile = _lcreat(lpFilename, 0);
 	j=mh->mtType;
 	mh->mtType=1;        /* disk file version stores 1 here */
-	i=_lwrite32(hFile, (char *)mh, mh->mtSize * 2) ;
+	i=_lwrite(hFile, (char *)mh, mh->mtSize * 2) ;
 	mh->mtType=j;        /* restore old value  [0 or 1] */	
-        _lclose32(hFile);
+        _lclose(hFile);
 	if (i == -1)
 	    return 0;
         /* FIXME: return value */
@@ -220,11 +220,11 @@ HMETAFILE32 WINAPI CopyMetaFile32A(
 /******************************************************************
  *         CopyMetaFile32W   (GDI32.24)
  */
-HMETAFILE32 WINAPI CopyMetaFile32W( HMETAFILE32 hSrcMetaFile,
+HMETAFILE WINAPI CopyMetaFileW( HMETAFILE hSrcMetaFile,
                                     LPCWSTR lpFilename )
 {
     LPSTR p = HEAP_strdupWtoA( GetProcessHeap(), 0, lpFilename );
-    HMETAFILE32 ret = CopyMetaFile32A( hSrcMetaFile, p );
+    HMETAFILE ret = CopyMetaFileA( hSrcMetaFile, p );
     HeapFree( GetProcessHeap(), 0, p );
     return ret;
 }
@@ -245,7 +245,7 @@ HMETAFILE32 WINAPI CopyMetaFile32W( HMETAFILE32 hSrcMetaFile,
  *  for details.
  */
 
-BOOL16 WINAPI IsValidMetaFile(HMETAFILE16 hmf)
+BOOL16 WINAPI IsValidMetaFile16(HMETAFILE16 hmf)
 {
     BOOL16 resu=FALSE;
     METAHEADER *mh = (METAHEADER *)GlobalLock16(hmf);
@@ -267,7 +267,7 @@ BOOL16 WINAPI IsValidMetaFile(HMETAFILE16 hmf)
  */
 BOOL16 WINAPI PlayMetaFile16( HDC16 hdc, HMETAFILE16 hmf )
 {
-    return PlayMetaFile32( hdc, hmf );
+    return PlayMetaFile( hdc, hmf );
 }
 
 /******************************************************************
@@ -276,9 +276,9 @@ BOOL16 WINAPI PlayMetaFile16( HDC16 hdc, HMETAFILE16 hmf )
  *  Renders the metafile specified by hmf in the DC specified by
  *  hdc. Returns FALSE on failure, TRUE on success.
  */
-BOOL32 WINAPI PlayMetaFile32( 
-			     HDC32 hdc, /* handle of DC to render in */
-			     HMETAFILE32 hmf /* handle of metafile to render */
+BOOL WINAPI PlayMetaFile( 
+			     HDC hdc, /* handle of DC to render in */
+			     HMETAFILE hmf /* handle of metafile to render */
 )
 {
     METAHEADER *mh = (METAHEADER *)GlobalLock16(hmf);
@@ -287,9 +287,9 @@ BOOL32 WINAPI PlayMetaFile32(
     HGLOBAL16 hHT;
     int offset = 0;
     WORD i;
-    HPEN32 hPen;
-    HBRUSH32 hBrush;
-    HFONT32 hFont;
+    HPEN hPen;
+    HBRUSH hBrush;
+    HFONT hFont;
     DC *dc;
     
     TRACE(metafile,"(%04x %04x)\n",hdc,hmf);
@@ -323,14 +323,14 @@ BOOL32 WINAPI PlayMetaFile32(
 	PlayMetaFileRecord16( hdc, ht, mr, mh->mtNoObjects );
     }
 
-    SelectObject32(hdc, hBrush);
-    SelectObject32(hdc, hPen);
-    SelectObject32(hdc, hFont);
+    SelectObject(hdc, hBrush);
+    SelectObject(hdc, hPen);
+    SelectObject(hdc, hFont);
 
     /* free objects in handle table */
     for(i = 0; i < mh->mtNoObjects; i++)
       if(*(ht->objectHandle + i) != 0)
-        DeleteObject32(*(ht->objectHandle + i));
+        DeleteObject(*(ht->objectHandle + i));
     
     /* free handle table */
     GlobalFree16(hHT);
@@ -367,9 +367,9 @@ BOOL16 WINAPI EnumMetaFile16(
     SEGPTR spht;
     int offset = 0;
     WORD i, seg;
-    HPEN32 hPen;
-    HBRUSH32 hBrush;
-    HFONT32 hFont;
+    HPEN hPen;
+    HBRUSH hBrush;
+    HFONT hFont;
     DC *dc;
     BOOL16 result = TRUE;
     
@@ -388,7 +388,7 @@ BOOL16 WINAPI EnumMetaFile16(
 		     sizeof(HANDLETABLE16) * mh->mtNoObjects);
     spht = WIN16_GlobalLock16(hHT);
    
-    seg = GlobalHandleToSel(hmf);
+    seg = GlobalHandleToSel16(hmf);
     offset = mh->mtHeaderSize * 2;
     
     /* loop through metafile records */
@@ -408,16 +408,16 @@ BOOL16 WINAPI EnumMetaFile16(
 	offset += (mr->rdSize * 2);
     }
 
-    SelectObject32(hdc, hBrush);
-    SelectObject32(hdc, hPen);
-    SelectObject32(hdc, hFont);
+    SelectObject(hdc, hBrush);
+    SelectObject(hdc, hPen);
+    SelectObject(hdc, hFont);
 
     ht = (HANDLETABLE16 *)GlobalLock16(hHT);
 
     /* free objects in handle table */
     for(i = 0; i < mh->mtNoObjects; i++)
       if(*(ht->objectHandle + i) != 0)
-        DeleteObject32(*(ht->objectHandle + i));
+        DeleteObject(*(ht->objectHandle + i));
 
     /* free handle table */
     GlobalFree16(hHT);
@@ -425,21 +425,21 @@ BOOL16 WINAPI EnumMetaFile16(
     return result;
 }
 
-BOOL32 WINAPI EnumMetaFile32( 
-			     HDC32 hdc, 
-			     HMETAFILE32 hmf,
-			     MFENUMPROC32 lpEnumFunc, 
+BOOL WINAPI EnumMetaFile( 
+			     HDC hdc, 
+			     HMETAFILE hmf,
+			     MFENUMPROC lpEnumFunc, 
 			     LPARAM lpData 
 ) {
     METAHEADER *mh = (METAHEADER *)GlobalLock16(hmf);
     METARECORD *mr;
-    HANDLETABLE32 *ht;
-    BOOL32 result = TRUE;
+    HANDLETABLE *ht;
+    BOOL result = TRUE;
     int i, offset = 0;
     DC *dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
-    HPEN32 hPen;
-    HBRUSH32 hBrush;
-    HFONT32 hFont;
+    HPEN hPen;
+    HBRUSH hBrush;
+    HFONT hFont;
 
     TRACE(metafile,"(%08x,%08x,%p,%p)\n",
 		     hdc, hmf, lpEnumFunc, (void*)lpData);
@@ -453,8 +453,8 @@ BOOL32 WINAPI EnumMetaFile32(
     GDI_HEAP_UNLOCK(hdc);
 
 
-    ht = (HANDLETABLE32 *) GlobalAlloc32(GPTR, 
-			    sizeof(HANDLETABLE32) * mh->mtNoObjects);
+    ht = (HANDLETABLE *) GlobalAlloc(GPTR, 
+			    sizeof(HANDLETABLE) * mh->mtNoObjects);
     
     /* loop through metafile records */
     offset = mh->mtHeaderSize * 2;
@@ -472,22 +472,22 @@ BOOL32 WINAPI EnumMetaFile32(
     }
 
     /* restore pen, brush and font */
-    SelectObject32(hdc, hBrush);
-    SelectObject32(hdc, hPen);
-    SelectObject32(hdc, hFont);
+    SelectObject(hdc, hBrush);
+    SelectObject(hdc, hPen);
+    SelectObject(hdc, hFont);
 
     /* free objects in handle table */
     for(i = 0; i < mh->mtNoObjects; i++)
       if(*(ht->objectHandle + i) != 0)
-        DeleteObject32(*(ht->objectHandle + i));
+        DeleteObject(*(ht->objectHandle + i));
 
     /* free handle table */
-    GlobalFree32((HGLOBAL32)ht);
+    GlobalFree((HGLOBAL)ht);
     GlobalUnlock16(hmf);
     return result;
 }
 
-static BOOL32 MF_Meta_CreateRegion( METARECORD *mr, HRGN32 hrgn );
+static BOOL MF_Meta_CreateRegion( METARECORD *mr, HRGN hrgn );
 
 /******************************************************************
  *             PlayMetaFileRecord16   (GDI.176)
@@ -524,7 +524,7 @@ void WINAPI PlayMetaFileRecord16(
       break;
 
     case META_DELETEOBJECT:
-      DeleteObject32(*(ht->objectHandle + *(mr->rdParm)));
+      DeleteObject(*(ht->objectHandle + *(mr->rdParm)));
       *(ht->objectHandle + *(mr->rdParm)) = 0;
       break;
 
@@ -561,45 +561,45 @@ void WINAPI PlayMetaFileRecord16(
 	break;
 
     case META_SETWINDOWORG:
-	SetWindowOrg(hdc, *(mr->rdParm + 1), *(mr->rdParm));
+	SetWindowOrg16(hdc, *(mr->rdParm + 1), *(mr->rdParm));
 	break;
 
     case META_SETWINDOWEXT:
-	SetWindowExt(hdc, *(mr->rdParm + 1), *(mr->rdParm));
+	SetWindowExt16(hdc, *(mr->rdParm + 1), *(mr->rdParm));
 	break;
 
     case META_SETVIEWPORTORG:
-	SetViewportOrg(hdc, *(mr->rdParm + 1), *(mr->rdParm));
+	SetViewportOrg16(hdc, *(mr->rdParm + 1), *(mr->rdParm));
 	break;
 
     case META_SETVIEWPORTEXT:
-	SetViewportExt(hdc, *(mr->rdParm + 1), *(mr->rdParm));
+	SetViewportExt16(hdc, *(mr->rdParm + 1), *(mr->rdParm));
 	break;
 
     case META_OFFSETWINDOWORG:
-	OffsetWindowOrg(hdc, *(mr->rdParm + 1), *(mr->rdParm));
+	OffsetWindowOrg16(hdc, *(mr->rdParm + 1), *(mr->rdParm));
 	break;
 
     case META_SCALEWINDOWEXT:
-	ScaleWindowExt(hdc, *(mr->rdParm + 3), *(mr->rdParm + 2),
+	ScaleWindowExt16(hdc, *(mr->rdParm + 3), *(mr->rdParm + 2),
 		       *(mr->rdParm + 1), *(mr->rdParm));
 	break;
 
     case META_OFFSETVIEWPORTORG:
-	OffsetViewportOrg(hdc, *(mr->rdParm + 1), *(mr->rdParm));
+	OffsetViewportOrg16(hdc, *(mr->rdParm + 1), *(mr->rdParm));
 	break;
 
     case META_SCALEVIEWPORTEXT:
-	ScaleViewportExt(hdc, *(mr->rdParm + 3), *(mr->rdParm + 2),
+	ScaleViewportExt16(hdc, *(mr->rdParm + 3), *(mr->rdParm + 2),
 			 *(mr->rdParm + 1), *(mr->rdParm));
 	break;
 
     case META_LINETO:
-	LineTo32(hdc, (INT16)*(mr->rdParm + 1), (INT16)*(mr->rdParm));
+	LineTo(hdc, (INT16)*(mr->rdParm + 1), (INT16)*(mr->rdParm));
 	break;
 
     case META_MOVETO:
-	MoveTo(hdc, *(mr->rdParm + 1), *(mr->rdParm));
+	MoveTo16(hdc, *(mr->rdParm + 1), *(mr->rdParm));
 	break;
 
     case META_EXCLUDECLIPRECT:
@@ -613,36 +613,36 @@ void WINAPI PlayMetaFileRecord16(
 	break;
 
     case META_ARC:
-	Arc32(hdc, (INT16)*(mr->rdParm + 7), (INT16)*(mr->rdParm + 6),
+	Arc(hdc, (INT16)*(mr->rdParm + 7), (INT16)*(mr->rdParm + 6),
 	      (INT16)*(mr->rdParm + 5), (INT16)*(mr->rdParm + 4),
 	      (INT16)*(mr->rdParm + 3), (INT16)*(mr->rdParm + 2),
              (INT16)*(mr->rdParm + 1), (INT16)*(mr->rdParm));
 	break;
 
     case META_ELLIPSE:
-	Ellipse32(hdc, (INT16)*(mr->rdParm + 3), (INT16)*(mr->rdParm + 2),
+	Ellipse(hdc, (INT16)*(mr->rdParm + 3), (INT16)*(mr->rdParm + 2),
                   (INT16)*(mr->rdParm + 1), (INT16)*(mr->rdParm));
 	break;
 
     case META_FLOODFILL:
-	FloodFill32(hdc, (INT16)*(mr->rdParm + 3), (INT16)*(mr->rdParm + 2),
+	FloodFill(hdc, (INT16)*(mr->rdParm + 3), (INT16)*(mr->rdParm + 2),
                     MAKELONG(*(mr->rdParm), *(mr->rdParm + 1)));
 	break;
 
     case META_PIE:
-	Pie32(hdc, (INT16)*(mr->rdParm + 7), (INT16)*(mr->rdParm + 6),
+	Pie(hdc, (INT16)*(mr->rdParm + 7), (INT16)*(mr->rdParm + 6),
 	      (INT16)*(mr->rdParm + 5), (INT16)*(mr->rdParm + 4),
 	      (INT16)*(mr->rdParm + 3), (INT16)*(mr->rdParm + 2),
              (INT16)*(mr->rdParm + 1), (INT16)*(mr->rdParm));
 	break;
 
     case META_RECTANGLE:
-	Rectangle32(hdc, (INT16)*(mr->rdParm + 3), (INT16)*(mr->rdParm + 2),
+	Rectangle(hdc, (INT16)*(mr->rdParm + 3), (INT16)*(mr->rdParm + 2),
                     (INT16)*(mr->rdParm + 1), (INT16)*(mr->rdParm));
 	break;
 
     case META_ROUNDRECT:
-	RoundRect32(hdc, (INT16)*(mr->rdParm + 5), (INT16)*(mr->rdParm + 4),
+	RoundRect(hdc, (INT16)*(mr->rdParm + 5), (INT16)*(mr->rdParm + 4),
                     (INT16)*(mr->rdParm + 3), (INT16)*(mr->rdParm + 2),
                     (INT16)*(mr->rdParm + 1), (INT16)*(mr->rdParm));
 	break;
@@ -654,11 +654,11 @@ void WINAPI PlayMetaFileRecord16(
 	break;
 
     case META_SAVEDC:
-	SaveDC32(hdc);
+	SaveDC(hdc);
 	break;
 
     case META_SETPIXEL:
-	SetPixel32(hdc, (INT16)*(mr->rdParm + 3), (INT16)*(mr->rdParm + 2),
+	SetPixel(hdc, (INT16)*(mr->rdParm + 3), (INT16)*(mr->rdParm + 2),
                    MAKELONG(*(mr->rdParm), *(mr->rdParm + 1)));
 	break;
 
@@ -687,15 +687,15 @@ void WINAPI PlayMetaFileRecord16(
 	break;
 
     case META_RESTOREDC:
-	RestoreDC32(hdc, (INT16)*(mr->rdParm));
+	RestoreDC(hdc, (INT16)*(mr->rdParm));
 	break;
 
     case META_SELECTOBJECT:
-	SelectObject32(hdc, *(ht->objectHandle + *(mr->rdParm)));
+	SelectObject(hdc, *(ht->objectHandle + *(mr->rdParm)));
 	break;
 
     case META_CHORD:
-	Chord32(hdc, (INT16)*(mr->rdParm + 7), (INT16)*(mr->rdParm + 6),
+	Chord(hdc, (INT16)*(mr->rdParm + 7), (INT16)*(mr->rdParm + 6),
 		(INT16)*(mr->rdParm+5), (INT16)*(mr->rdParm + 4),
 		(INT16)*(mr->rdParm + 3), (INT16)*(mr->rdParm + 2),
                (INT16)*(mr->rdParm + 1), (INT16)*(mr->rdParm));
@@ -707,7 +707,7 @@ void WINAPI PlayMetaFileRecord16(
 	case BS_PATTERN:
 	    infohdr = (BITMAPINFOHEADER *)(mr->rdParm + 2);
 	    MF_AddHandle(ht, nHandles,
-			 CreatePatternBrush32(CreateBitmap32(infohdr->biWidth, 
+			 CreatePatternBrush(CreateBitmap(infohdr->biWidth, 
 				      infohdr->biHeight, 
 				      infohdr->biPlanes, 
 				      infohdr->biBitCount,
@@ -722,7 +722,7 @@ void WINAPI PlayMetaFileRecord16(
 	    memcpy(ptr, mr->rdParm + 2, s1);
 	    GlobalUnlock16(hndl);
 	    MF_AddHandle(ht, nHandles,
-			 CreateDIBPatternBrush32(hndl, *(mr->rdParm + 1)));
+			 CreateDIBPatternBrush(hndl, *(mr->rdParm + 1)));
 	    GlobalFree16(hndl);
 	}
 	break;
@@ -834,42 +834,42 @@ void WINAPI PlayMetaFileRecord16(
     case META_STRETCHBLT:
       {
        HDC16 hdcSrc=CreateCompatibleDC16(hdc);
-       HBITMAP32 hbitmap=CreateBitmap32(mr->rdParm[10], /*Width */
+       HBITMAP hbitmap=CreateBitmap(mr->rdParm[10], /*Width */
                                         mr->rdParm[11], /*Height*/
                                         mr->rdParm[13], /*Planes*/
                                         mr->rdParm[14], /*BitsPixel*/
                                         (LPSTR)&mr->rdParm[15]);  /*bits*/
-       SelectObject32(hdcSrc,hbitmap);
+       SelectObject(hdcSrc,hbitmap);
        StretchBlt16(hdc,mr->rdParm[9],mr->rdParm[8],
                     mr->rdParm[7],mr->rdParm[6],
 		    hdcSrc,mr->rdParm[5],mr->rdParm[4],
 		    mr->rdParm[3],mr->rdParm[2],
 		    MAKELONG(mr->rdParm[0],mr->rdParm[1]));
-       DeleteDC32(hdcSrc);		    
+       DeleteDC(hdcSrc);		    
       }
       break;
 
     case META_BITBLT:            /* <-- not yet debugged */
       {
        HDC16 hdcSrc=CreateCompatibleDC16(hdc);
-       HBITMAP32 hbitmap=CreateBitmap32(mr->rdParm[7]/*Width */,
+       HBITMAP hbitmap=CreateBitmap(mr->rdParm[7]/*Width */,
                                         mr->rdParm[8]/*Height*/,
                                         mr->rdParm[10]/*Planes*/,
                                         mr->rdParm[11]/*BitsPixel*/,
                                         (LPSTR)&mr->rdParm[12]/*bits*/);
-       SelectObject32(hdcSrc,hbitmap);
-       BitBlt32(hdc,(INT16)mr->rdParm[6],(INT16)mr->rdParm[5],
+       SelectObject(hdcSrc,hbitmap);
+       BitBlt(hdc,(INT16)mr->rdParm[6],(INT16)mr->rdParm[5],
                 (INT16)mr->rdParm[4],(INT16)mr->rdParm[3],
                 hdcSrc, (INT16)mr->rdParm[2],(INT16)mr->rdParm[1],
                 MAKELONG(0,mr->rdParm[0]));
-       DeleteDC32(hdcSrc);		    
+       DeleteDC(hdcSrc);		    
       }
       break;
 
        /* --- Begin of new metafile operations. April, 1997 (ak) ----*/
     case META_CREATEREGION:
       {
-	HRGN32 hrgn = CreateRectRgn32(0,0,0,0);
+	HRGN hrgn = CreateRectRgn(0,0,0,0);
  
 	MF_Meta_CreateRegion(mr, hrgn);
 	MF_AddHandle(ht, nHandles, hrgn);
@@ -890,7 +890,7 @@ void WINAPI PlayMetaFileRecord16(
         break;
 
      case META_SELECTCLIPREGION:
-       	SelectClipRgn32(hdc, *(ht->objectHandle + *(mr->rdParm)));
+       	SelectClipRgn(hdc, *(ht->objectHandle + *(mr->rdParm)));
 	break;
 
      case META_DIBCREATEPATTERNBRUSH:
@@ -921,7 +921,7 @@ void WINAPI PlayMetaFileRecord16(
 	    break;
 
      case META_SETTEXTJUSTIFICATION:
-       	SetTextJustification32(hdc, *(mr->rdParm + 1), *(mr->rdParm));
+       	SetTextJustification(hdc, *(mr->rdParm + 1), *(mr->rdParm));
 	break;
 
 #define META_UNIMP(x) case x: FIXME(metafile, "PlayMetaFileRecord:record type "#x" not implemented.\n");break;
@@ -950,14 +950,14 @@ void WINAPI PlayMetaFileRecord16(
 }
 
 
-BOOL32 WINAPI PlayMetaFileRecord32( 
-     HDC32 hdc, 
-     HANDLETABLE32 *handletable, 
+BOOL WINAPI PlayMetaFileRecord( 
+     HDC hdc, 
+     HANDLETABLE *handletable, 
      METARECORD *metarecord, 
-     UINT32 handles  
+     UINT handles  
     )
 {
-  HANDLETABLE16 * ht = (void *)GlobalAlloc32(GPTR, 
+  HANDLETABLE16 * ht = (void *)GlobalAlloc(GPTR, 
                                handles*sizeof(HANDLETABLE16));
   int i = 0;
   TRACE(metafile, "(%08x,%p,%p,%d)\n", hdc, handletable, metarecord, handles); 
@@ -966,7 +966,7 @@ BOOL32 WINAPI PlayMetaFileRecord32(
   PlayMetaFileRecord16(hdc, ht, metarecord, handles);
   for (i=0; i<handles; i++) 
     handletable->objectHandle[i] = ht->objectHandle[i];
-  GlobalFree32((HGLOBAL32)ht);
+  GlobalFree((HGLOBAL)ht);
   return TRUE;
 }
 
@@ -977,7 +977,7 @@ BOOL32 WINAPI PlayMetaFileRecord32(
  *
  */
 
-HGLOBAL16 WINAPI GetMetaFileBits(
+HGLOBAL16 WINAPI GetMetaFileBits16(
 				 HMETAFILE16 hmf /* metafile handle */
 				 )
 {
@@ -993,7 +993,7 @@ HGLOBAL16 WINAPI GetMetaFileBits(
  * problems will occur when it is used. Validity of the memory is not
  * checked. The function is essentially just the identity function.
  */
-HMETAFILE16 WINAPI SetMetaFileBits( 
+HMETAFILE16 WINAPI SetMetaFileBits16( 
 				   HGLOBAL16 hMem 
 			/* handle to a memory region holding a metafile */
 )
@@ -1013,9 +1013,9 @@ HMETAFILE16 WINAPI SetMetaFileBits(
  * RETURNS
  *  Handle to a metafile on success, NULL on failure..
  */
-HMETAFILE16 WINAPI SetMetaFileBitsBetter( HMETAFILE16 hMeta )
+HMETAFILE16 WINAPI SetMetaFileBitsBetter16( HMETAFILE16 hMeta )
 {
-   if( IsValidMetaFile( hMeta ) )
+   if( IsValidMetaFile16( hMeta ) )
        return (HMETAFILE16)GlobalReAlloc16( hMeta, 0, 
 			   GMEM_SHARE | GMEM_NODISCARD | GMEM_MODIFY);
    return (HMETAFILE16)0;
@@ -1027,12 +1027,12 @@ HMETAFILE16 WINAPI SetMetaFileBitsBetter( HMETAFILE16 hMeta )
  *  Create a metafile from raw data. No checking of the data is performed.
  *  Use _GetMetaFileBitsEx_ to get raw data from a metafile.
  */
-HMETAFILE32 WINAPI SetMetaFileBitsEx( 
-     UINT32 size, /* size of metafile, in bytes */
+HMETAFILE WINAPI SetMetaFileBitsEx( 
+     UINT size, /* size of metafile, in bytes */
      const BYTE *lpData /* pointer to metafile data */  
     )
 {
-  HMETAFILE32 hmf = GlobalAlloc16(GHND, size);
+  HMETAFILE hmf = GlobalAlloc16(GHND, size);
   BYTE *p = GlobalLock16(hmf) ;
   TRACE(metafile, "(%d,%p) returning %08x\n", size, lpData, hmf);
   if (!hmf || !p) return 0;
@@ -1048,13 +1048,13 @@ HMETAFILE32 WINAPI SetMetaFileBitsEx(
  *  If _buf_ is zero, returns size of buffer required. Otherwise,
  *  returns number of bytes copied.
  */
-UINT32 WINAPI GetMetaFileBitsEx( 
-     HMETAFILE32 hmf, /* metafile */
-     UINT32 nSize, /* size of buf */ 
+UINT WINAPI GetMetaFileBitsEx( 
+     HMETAFILE hmf, /* metafile */
+     UINT nSize, /* size of buf */ 
      LPVOID buf   /* buffer to receive raw metafile data */  
 ) {
   METAHEADER *h = GlobalLock16(hmf);
-  UINT32 mfSize;
+  UINT mfSize;
 
   TRACE(metafile, "(%08x,%d,%p)\n", hmf, nSize, buf);
   if (!h) return 0;  /* FIXME: error code */
@@ -1073,9 +1073,9 @@ UINT32 WINAPI GetMetaFileBitsEx(
 /******************************************************************
  *         GetWinMetaFileBits [GDI32.241]
  */
-UINT32 WINAPI GetWinMetaFileBits(HENHMETAFILE32 hemf,
-                                UINT32 cbBuffer, LPBYTE lpbBuffer,
-                                INT32 fnMapMode, HDC32 hdcRef)
+UINT WINAPI GetWinMetaFileBits(HENHMETAFILE hemf,
+                                UINT cbBuffer, LPBYTE lpbBuffer,
+                                INT fnMapMode, HDC hdcRef)
 {
   FIXME(metafile, "(%d,%d,%p,%d,%d): stub\n",
         hemf, cbBuffer, lpbBuffer, fnMapMode, hdcRef);
@@ -1114,43 +1114,43 @@ UINT32 WINAPI GetWinMetaFileBits(HENHMETAFILE32 hemf,
  *
  */
 
-static BOOL32 MF_Meta_CreateRegion( METARECORD *mr, HRGN32 hrgn )
+static BOOL MF_Meta_CreateRegion( METARECORD *mr, HRGN hrgn )
 {
     WORD band, pair;
     WORD *start, *end;
     INT16 y0, y1;
-    HRGN32 hrgn2 = CreateRectRgn32( 0, 0, 0, 0 );
+    HRGN hrgn2 = CreateRectRgn( 0, 0, 0, 0 );
 
     for(band  = 0, start = &(mr->rdParm[11]); band < mr->rdParm[5];
  					        band++, start = end + 1) {
         if(*start / 2 != (*start + 1) / 2) {
  	    WARN(metafile, "Delimiter not even.\n");
-	    DeleteObject32( hrgn2 );
+	    DeleteObject( hrgn2 );
  	    return FALSE;
         }
 
 	end = start + *start + 3;
 	if(end > (WORD *)mr + mr->rdSize) {
 	    WARN(metafile, "End points outside record.\n");
-	    DeleteObject32( hrgn2 );
+	    DeleteObject( hrgn2 );
 	    return FALSE;
         }
 
 	if(*start != *end) {
 	    WARN(metafile, "Mismatched delimiters.\n");
-	    DeleteObject32( hrgn2 );
+	    DeleteObject( hrgn2 );
 	    return FALSE;
 	}
 
 	y0 = *(INT16 *)(start + 1);
 	y1 = *(INT16 *)(start + 2);
 	for(pair = 0; pair < *start / 2; pair++) {
-	    SetRectRgn32( hrgn2, *(INT16 *)(start + 3 + 2*pair), y0,
+	    SetRectRgn( hrgn2, *(INT16 *)(start + 3 + 2*pair), y0,
 				 *(INT16 *)(start + 4 + 2*pair), y1 );
-	    CombineRgn32(hrgn, hrgn, hrgn2, RGN_OR);
+	    CombineRgn(hrgn, hrgn, hrgn2, RGN_OR);
         }
     }
-    DeleteObject32( hrgn2 );
+    DeleteObject( hrgn2 );
     return TRUE;
  }
  
@@ -1161,7 +1161,7 @@ static BOOL32 MF_Meta_CreateRegion( METARECORD *mr, HRGN32 hrgn )
  * Warning: this function can change the metafile handle.
  */
 
-static BOOL32 MF_WriteRecord( DC *dc, METARECORD *mr, DWORD rlen)
+static BOOL MF_WriteRecord( DC *dc, METARECORD *mr, DWORD rlen)
 {
     DWORD len;
     METAHEADER *mh;
@@ -1178,7 +1178,7 @@ static BOOL32 MF_WriteRecord( DC *dc, METARECORD *mr, DWORD rlen)
         break;
     case METAFILE_DISK:
         TRACE(metafile,"Writing record to disk\n");
-	if (_lwrite32(physDev->mh->mtNoParameters, (char *)mr, rlen) == -1)
+	if (_lwrite(physDev->mh->mtNoParameters, (char *)mr, rlen) == -1)
 	    return FALSE;
         break;
     default:
@@ -1196,7 +1196,7 @@ static BOOL32 MF_WriteRecord( DC *dc, METARECORD *mr, DWORD rlen)
  *         MF_MetaParam0
  */
 
-BOOL32 MF_MetaParam0(DC *dc, short func)
+BOOL MF_MetaParam0(DC *dc, short func)
 {
     char buffer[8];
     METARECORD *mr = (METARECORD *)&buffer;
@@ -1210,7 +1210,7 @@ BOOL32 MF_MetaParam0(DC *dc, short func)
 /******************************************************************
  *         MF_MetaParam1
  */
-BOOL32 MF_MetaParam1(DC *dc, short func, short param1)
+BOOL MF_MetaParam1(DC *dc, short func, short param1)
 {
     char buffer[8];
     METARECORD *mr = (METARECORD *)&buffer;
@@ -1225,7 +1225,7 @@ BOOL32 MF_MetaParam1(DC *dc, short func, short param1)
 /******************************************************************
  *         MF_MetaParam2
  */
-BOOL32 MF_MetaParam2(DC *dc, short func, short param1, short param2)
+BOOL MF_MetaParam2(DC *dc, short func, short param1, short param2)
 {
     char buffer[10];
     METARECORD *mr = (METARECORD *)&buffer;
@@ -1242,7 +1242,7 @@ BOOL32 MF_MetaParam2(DC *dc, short func, short param1, short param2)
  *         MF_MetaParam4
  */
 
-BOOL32 MF_MetaParam4(DC *dc, short func, short param1, short param2, 
+BOOL MF_MetaParam4(DC *dc, short func, short param1, short param2, 
 		   short param3, short param4)
 {
     char buffer[14];
@@ -1262,7 +1262,7 @@ BOOL32 MF_MetaParam4(DC *dc, short func, short param1, short param2,
  *         MF_MetaParam6
  */
 
-BOOL32 MF_MetaParam6(DC *dc, short func, short param1, short param2, 
+BOOL MF_MetaParam6(DC *dc, short func, short param1, short param2, 
 		   short param3, short param4, short param5, short param6)
 {
     char buffer[18];
@@ -1283,7 +1283,7 @@ BOOL32 MF_MetaParam6(DC *dc, short func, short param1, short param2,
 /******************************************************************
  *         MF_MetaParam8
  */
-BOOL32 MF_MetaParam8(DC *dc, short func, short param1, short param2, 
+BOOL MF_MetaParam8(DC *dc, short func, short param1, short param2, 
 		   short param3, short param4, short param5,
 		   short param6, short param7, short param8)
 {
@@ -1308,7 +1308,7 @@ BOOL32 MF_MetaParam8(DC *dc, short func, short param1, short param2,
  *         MF_CreateBrushIndirect
  */
 
-BOOL32 MF_CreateBrushIndirect(DC *dc, HBRUSH16 hBrush, LOGBRUSH16 *logbrush)
+BOOL MF_CreateBrushIndirect(DC *dc, HBRUSH16 hBrush, LOGBRUSH16 *logbrush)
 {
     int index;
     char buffer[sizeof(METARECORD) - 2 + sizeof(*logbrush)];
@@ -1332,7 +1332,7 @@ BOOL32 MF_CreateBrushIndirect(DC *dc, HBRUSH16 hBrush, LOGBRUSH16 *logbrush)
  *         MF_CreatePatternBrush
  */
 
-BOOL32 MF_CreatePatternBrush(DC *dc, HBRUSH16 hBrush, LOGBRUSH16 *logbrush)
+BOOL MF_CreatePatternBrush(DC *dc, HBRUSH16 hBrush, LOGBRUSH16 *logbrush)
 {
     DWORD len, bmSize, biSize;
     HGLOBAL16 hmr;
@@ -1417,7 +1417,7 @@ BOOL32 MF_CreatePatternBrush(DC *dc, HBRUSH16 hBrush, LOGBRUSH16 *logbrush)
  *         MF_CreatePenIndirect
  */
 
-BOOL32 MF_CreatePenIndirect(DC *dc, HPEN16 hPen, LOGPEN16 *logpen)
+BOOL MF_CreatePenIndirect(DC *dc, HPEN16 hPen, LOGPEN16 *logpen)
 {
     int index;
     char buffer[sizeof(METARECORD) - 2 + sizeof(*logpen)];
@@ -1441,7 +1441,7 @@ BOOL32 MF_CreatePenIndirect(DC *dc, HPEN16 hPen, LOGPEN16 *logpen)
  *         MF_CreateFontIndirect
  */
 
-BOOL32 MF_CreateFontIndirect(DC *dc, HFONT16 hFont, LOGFONT16 *logfont)
+BOOL MF_CreateFontIndirect(DC *dc, HFONT16 hFont, LOGFONT16 *logfont)
 {
     int index;
     char buffer[sizeof(METARECORD) - 2 + sizeof(LOGFONT16)];
@@ -1464,9 +1464,9 @@ BOOL32 MF_CreateFontIndirect(DC *dc, HFONT16 hFont, LOGFONT16 *logfont)
 /******************************************************************
  *         MF_TextOut
  */
-BOOL32 MF_TextOut(DC *dc, short x, short y, LPCSTR str, short count)
+BOOL MF_TextOut(DC *dc, short x, short y, LPCSTR str, short count)
 {
-    BOOL32 ret;
+    BOOL ret;
     DWORD len;
     HGLOBAL16 hmr;
     METARECORD *mr;
@@ -1491,10 +1491,10 @@ BOOL32 MF_TextOut(DC *dc, short x, short y, LPCSTR str, short count)
 /******************************************************************
  *         MF_ExtTextOut
  */
-BOOL32 MF_ExtTextOut(DC*dc, short x, short y, UINT16 flags, const RECT16 *rect,
+BOOL MF_ExtTextOut(DC*dc, short x, short y, UINT16 flags, const RECT16 *rect,
                      LPCSTR str, short count, const INT16 *lpDx)
 {
-    BOOL32 ret;
+    BOOL ret;
     DWORD len;
     HGLOBAL16 hmr;
     METARECORD *mr;
@@ -1531,9 +1531,9 @@ BOOL32 MF_ExtTextOut(DC*dc, short x, short y, UINT16 flags, const RECT16 *rect,
 /******************************************************************
  *         MF_MetaPoly - implements Polygon and Polyline
  */
-BOOL32 MF_MetaPoly(DC *dc, short func, LPPOINT16 pt, short count)
+BOOL MF_MetaPoly(DC *dc, short func, LPPOINT16 pt, short count)
 {
-    BOOL32 ret;
+    BOOL ret;
     DWORD len;
     HGLOBAL16 hmr;
     METARECORD *mr;
@@ -1557,10 +1557,10 @@ BOOL32 MF_MetaPoly(DC *dc, short func, LPPOINT16 pt, short count)
 /******************************************************************
  *         MF_BitBlt
  */
-BOOL32 MF_BitBlt(DC *dcDest, short xDest, short yDest, short width,
+BOOL MF_BitBlt(DC *dcDest, short xDest, short yDest, short width,
                  short height, DC *dcSrc, short xSrc, short ySrc, DWORD rop)
 {
-    BOOL32 ret;
+    BOOL ret;
     DWORD len;
     HGLOBAL16 hmr;
     METARECORD *mr;
@@ -1578,7 +1578,7 @@ BOOL32 MF_BitBlt(DC *dcDest, short xDest, short yDest, short width,
     *(mr->rdParm +10) = BM.bmPlanes;
     *(mr->rdParm +11) = BM.bmBitsPixel;
     TRACE(metafile,"MF_StretchBlt->len = %ld  rop=%lx  \n",len,rop);
-    if (GetBitmapBits32(dcSrc->w.hBitmap,BM.bmWidthBytes * BM.bmHeight,
+    if (GetBitmapBits(dcSrc->w.hBitmap,BM.bmWidthBytes * BM.bmHeight,
                         mr->rdParm +12))
     {
       mr->rdSize = len / sizeof(INT16);
@@ -1606,11 +1606,11 @@ BOOL32 MF_BitBlt(DC *dcDest, short xDest, short yDest, short width,
  */
 #define STRETCH_VIA_DIB
 #undef  STRETCH_VIA_DIB
-BOOL32 MF_StretchBlt(DC *dcDest, short xDest, short yDest, short widthDest,
+BOOL MF_StretchBlt(DC *dcDest, short xDest, short yDest, short widthDest,
                      short heightDest, DC *dcSrc, short xSrc, short ySrc, 
                      short widthSrc, short heightSrc, DWORD rop)
 {
-    BOOL32 ret;
+    BOOL ret;
     DWORD len;
     HGLOBAL16 hmr;
     METARECORD *mr;
@@ -1638,13 +1638,13 @@ BOOL32 MF_StretchBlt(DC *dcDest, short xDest, short yDest, short widthDest,
     lpBMI->biClrUsed   = nBPP != 24 ? 1 << nBPP : 0;
     lpBMI->biSizeImage = ((lpBMI->biWidth * nBPP + 31) / 32) * 4 * lpBMI->biHeight;
     lpBMI->biCompression = BI_RGB;
-    lpBMI->biXPelsPerMeter = MulDiv32(GetDeviceCaps(dcSrc->hSelf,LOGPIXELSX),3937,100);
-    lpBMI->biYPelsPerMeter = MulDiv32(GetDeviceCaps(dcSrc->hSelf,LOGPIXELSY),3937,100);
+    lpBMI->biXPelsPerMeter = MulDiv(GetDeviceCaps(dcSrc->hSelf,LOGPIXELSX),3937,100);
+    lpBMI->biYPelsPerMeter = MulDiv(GetDeviceCaps(dcSrc->hSelf,LOGPIXELSY),3937,100);
     lpBMI->biClrImportant  = 0;                          /* 1 meter  = 39.37 inch */
 
     TRACE(metafile,"MF_StretchBltViaDIB->len = %ld  rop=%lx  PixYPM=%ld Caps=%d\n",
                len,rop,lpBMI->biYPelsPerMeter,GetDeviceCaps(hdcSrc,LOGPIXELSY));
-    if (GetDIBits(hdcSrc,dcSrc->w.hBitmap,0,(UINT32)lpBMI->biHeight,
+    if (GetDIBits(hdcSrc,dcSrc->w.hBitmap,0,(UINT)lpBMI->biHeight,
                   (LPSTR)lpBMI + DIB_BitmapInfoSize( (BITMAPINFO *)lpBMI,
                                                      DIB_RGB_COLORS ),
                   (LPBITMAPINFO)lpBMI, DIB_RGB_COLORS))
@@ -1660,7 +1660,7 @@ BOOL32 MF_StretchBlt(DC *dcDest, short xDest, short yDest, short widthDest,
     *(mr->rdParm +13) = BM.bmPlanes;
     *(mr->rdParm +14) = BM.bmBitsPixel;
     TRACE(metafile,"MF_StretchBlt->len = %ld  rop=%lx  \n",len,rop);
-    if (GetBitmapBits32( dcSrc->w.hBitmap, BM.bmWidthBytes * BM.bmHeight,
+    if (GetBitmapBits( dcSrc->w.hBitmap, BM.bmWidthBytes * BM.bmHeight,
                          mr->rdParm +15))
 #endif    
     {
@@ -1687,22 +1687,22 @@ BOOL32 MF_StretchBlt(DC *dcDest, short xDest, short yDest, short widthDest,
 /******************************************************************
  *         MF_CreateRegion
  */
-INT16 MF_CreateRegion(DC *dc, HRGN32 hrgn)
+INT16 MF_CreateRegion(DC *dc, HRGN hrgn)
 {
     DWORD len;
     METARECORD *mr;
     RGNDATA *rgndata;
-    RECT32 *pCurRect, *pEndRect;
+    RECT *pCurRect, *pEndRect;
     WORD Bands = 0, MaxBands = 0;
     WORD *Param, *StartBand;
-    BOOL32 ret;
+    BOOL ret;
 
-    len = GetRegionData32( hrgn, 0, NULL );
+    len = GetRegionData( hrgn, 0, NULL );
     if( !(rgndata = HeapAlloc( SystemHeap, 0, len )) ) {
         WARN(metafile, "MF_CreateRegion: can't alloc rgndata buffer\n");
 	return -1;
     }
-    GetRegionData32( hrgn, len, rgndata );
+    GetRegionData( hrgn, len, rgndata );
 
     /* Overestimate of length:
      * Assume every rect is a separate band -> 6 WORDs per rect
@@ -1719,8 +1719,8 @@ INT16 MF_CreateRegion(DC *dc, HRGN32 hrgn)
     Param = mr->rdParm + 11;
     StartBand = NULL;
 
-    pEndRect = (RECT32 *)rgndata->Buffer + rgndata->rdh.nCount;
-    for(pCurRect = (RECT32 *)rgndata->Buffer; pCurRect < pEndRect; pCurRect++)
+    pEndRect = (RECT *)rgndata->Buffer + rgndata->rdh.nCount;
+    for(pCurRect = (RECT *)rgndata->Buffer; pCurRect < pEndRect; pCurRect++)
     {
         if( StartBand && pCurRect->top == *(StartBand + 1) )
         {

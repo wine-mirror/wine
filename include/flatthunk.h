@@ -96,7 +96,7 @@ struct ThunkDataSL
 struct SLTargetDB
 {
      struct SLTargetDB *   next;
-     PDB32 *               process;
+     PDB *               process;
      DWORD *               targetTable;
 };
 

@@ -34,60 +34,60 @@ init	Shell32LibMain
   26 stub ILLoadFromStream@8
   27 stub ILSaveToStream@8
   28 stub SHILCreateFromPath@12
-  29 stdcall PathIsRoot(ptr) PathIsRoot32AW
-  30 stdcall PathBuildRoot(ptr long) PathBuildRoot32A
-  31 stdcall PathFindExtension(ptr) PathFindExtension32AW
-  32 stdcall PathAddBackslash(ptr) PathAddBackslash32AW
-  33 stdcall PathRemoveBlanks(str) PathRemoveBlanks32AW
-  34 stdcall PathFindFilename(ptr) PathFindFilename32AW
-  35 stdcall PathRemoveFileSpec(str) PathRemoveFileSpec32A
-  36 stdcall PathAppend(str str) PathAppend32A
-  37 stdcall PathCombine(ptr ptr ptr) PathCombine32AW
+  29 stdcall PathIsRoot(ptr) PathIsRootAW
+  30 stdcall PathBuildRoot(ptr long) PathBuildRootA
+  31 stdcall PathFindExtension(ptr) PathFindExtensionAW
+  32 stdcall PathAddBackslash(ptr) PathAddBackslashAW
+  33 stdcall PathRemoveBlanks(str) PathRemoveBlanksAW
+  34 stdcall PathFindFilename(ptr) PathFindFilenameAW
+  35 stdcall PathRemoveFileSpec(str) PathRemoveFileSpecA
+  36 stdcall PathAppend(str str) PathAppendA
+  37 stdcall PathCombine(ptr ptr ptr) PathCombineAW
   38 stub PathStripPath
-  39 stdcall PathIsUNC (ptr) PathIsUNC32AW
-  40 stdcall PathIsRelative (ptr) PathIsRelative32AW
+  39 stdcall PathIsUNC (ptr) PathIsUNCAW
+  40 stdcall PathIsRelative (ptr) PathIsRelativeAW
   41 stub Control_RunDLLA@16
   42 stub Control_RunDLLW@16
-  43 stdcall PathIsExe (ptr) PathIsExe32AW
+  43 stdcall PathIsExe (ptr) PathIsExeAW
   44 stub DoEnvironmentSubstA@8
-  45 stdcall PathFileExists(str) PathFileExists32A
-  46 stdcall PathMatchSpec (str str) PathMatchSpec32AW
+  45 stdcall PathFileExists(str) PathFileExistsA
+  46 stdcall PathMatchSpec (str str) PathMatchSpecAW
   47 stub PathMakeUniqueName@20
-  48 stdcall PathSetDlgItemPath (long long ptr) PathSetDlgItemPath32AW
-  49 stdcall PathQualify (ptr) PathQualify32AW
+  48 stdcall PathSetDlgItemPath (long long ptr) PathSetDlgItemPathAW
+  49 stdcall PathQualify (ptr) PathQualifyAW
   50 stub PathStripToRoot@4
   51 stdcall PathResolve(str long long) PathResolve
-  52 stdcall PathGetArgs(str) PathGetArgs32AW
+  52 stdcall PathGetArgs(str) PathGetArgsAW
   53 stub DoEnvironmentSubstW@8
-  54 stdcall DragAcceptFiles(long long) DragAcceptFiles32
-  55 stdcall PathQuoteSpaces (ptr) PathQuoteSpaces32AW
-  56 stdcall PathUnquoteSpaces(str) PathUnquoteSpaces32AW
-  57 stdcall PathGetDriveNumber (str) PathGetDriveNumber32
-  58 stdcall ParseField(str long ptr long) ParseField32A
+  54 stdcall DragAcceptFiles(long long) DragAcceptFiles
+  55 stdcall PathQuoteSpaces (ptr) PathQuoteSpacesAW
+  56 stdcall PathUnquoteSpaces(str) PathUnquoteSpacesAW
+  57 stdcall PathGetDriveNumber (str) PathGetDriveNumber
+  58 stdcall ParseField(str long ptr long) ParseFieldA
   59 stub RestartDialog@12
   60 stdcall ExitWindowsDialog(long) ExitWindowsDialog
   61 stdcall RunFileDlg(long long long str str long) RunFileDlg
   62 stdcall PickIconDlg(long long long long) PickIconDlg
   63 stdcall GetFileNameFromBrowse(long long long long str str str) GetFileNameFromBrowse
-  64 stdcall DriveType (long) DriveType32
+  64 stdcall DriveType (long) DriveType
   65 stub InvalidateDriveType
   66 stub IsNetDrive
-  67 stdcall Shell_MergeMenus (long long long long long long) Shell_MergeMenus32
+  67 stdcall Shell_MergeMenus (long long long long long long) Shell_MergeMenus
   68 stdcall SHGetSettings(long long long) SHGetSettings
   69 stub SHGetNetResource
   70 stub SHCreateDefClassObject
   71 stdcall Shell_GetImageList(ptr ptr) Shell_GetImageList
-  72 stdcall Shell_GetCachedImageIndex(ptr ptr long) Shell_GetCachedImageIndex32A # ASCII!!!
+  72 stdcall Shell_GetCachedImageIndex(ptr ptr long) Shell_GetCachedImageIndexA # ASCII!!!
   73 stub SHShellFolderView_Message
   74 stub SHCreateStdEnumFmtEtc
-  75 stdcall PathYetAnotherMakeUniqueName(ptr ptr) PathYetAnotherMakeUniqueName32A
+  75 stdcall PathYetAnotherMakeUniqueName(ptr ptr) PathYetAnotherMakeUniqueNameA
   76 stub DragQueryInfo
   77 stdcall SHMapPIDLToSystemImageListIndex(long long long) SHMapPIDLToSystemImageListIndex
   78 stdcall OleStrToStrN(str long wstr long) OleStrToStrN
   79 stdcall StrToOleStrN(wstr long str long) StrToOleStrN
-  80 stdcall DragFinish(long) DragFinish32
-  81 stdcall DragQueryFile(long long ptr long) DragQueryFile32A
-  82 stdcall DragQueryFileA(long long ptr long) DragQueryFile32A
+  80 stdcall DragFinish(long) DragFinish
+  81 stdcall DragQueryFile(long long ptr long) DragQueryFileA
+  82 stdcall DragQueryFileA(long long ptr long) DragQueryFileA
   83 stub CIDLData_CreateFromIDArray
   84 stub SHIsBadInterfacePtr
   85 stdcall OpenRegStream(long long long long) OpenRegStream
@@ -104,7 +104,7 @@ init	Shell32LibMain
   96 stdcall StrRetToStrN (long long long long) StrRetToStrN
   97 stdcall SHWaitForFileToOpen (long long long) SHWaitForFileToOpen
   98 stdcall SHGetRealIDL (long long long) SHGetRealIDL
-  99 stdcall SetAppStartingCursor (long long) SetAppStartingCursor32
+  99 stdcall SetAppStartingCursor (long long) SetAppStartingCursor
  100 stdcall SHRestricted(long) SHRestricted
  101 stub DragQueryFileAorW   # exported by name
  102 stdcall SHCoCreateInstance(ptr ptr long ptr ptr) SHCoCreateInstance
@@ -124,7 +124,7 @@ init	Shell32LibMain
  116 stdcall FileMenu_TrackPopupMenuEx (long long long long long long) FileMenu_TrackPopupMenuEx
  117 stub FileMenu_DeleteItemByCmd
  118 stdcall FileMenu_Destroy (long) FileMenu_Destroy
- 119 stdcall IsLFNDrive(str) IsLFNDrive32A
+ 119 stdcall IsLFNDrive(str) IsLFNDriveA
  120 stub FileMenu_AbortInitMenu
  121 stdcall SHFlushClipboard () SHFlushClipboard
  122 stdcall RunDLL_CallEntry16 (long long long long long) RunDLL_CallEntry16 #name wrong?
@@ -138,9 +138,9 @@ init	Shell32LibMain
  130 stub DAD_DragEnter
  131 stub DAD_DragEnterEx
  132 stub DAD_DragLeave
- 133 stdcall DragQueryFileW(long long ptr long) DragQueryFile32W
+ 133 stdcall DragQueryFileW(long long ptr long) DragQueryFileW
  134 stub DAD_DragMove
- 135 stdcall DragQueryPoint(long ptr) DragQueryPoint32
+ 135 stdcall DragQueryPoint(long ptr) DragQueryPoint
  136 stub DAD_SetDragImage
  137 stdcall DAD_ShowDragImage (long) DAD_ShowDragImage
  138 stub DuplicateIcon   # exported by name
@@ -150,24 +150,24 @@ init	Shell32LibMain
  142 stub FileMenu_DeleteSeparator
  143 stub FileMenu_EnableItemByCmd
  144 stub FileMenu_GetItemExtent
- 145 stdcall PathFindOnPath (ptr ptr) PathFindOnPath32AW
+ 145 stdcall PathFindOnPath (ptr ptr) PathFindOnPathAW
  146 stub RLBuildListOfPaths
  147 stdcall SHCLSIDFromString(long long) SHCLSIDFromString
- 148 stdcall ExtractAssociatedIconA(long ptr long) ExtractAssociatedIcon32A   # exported by name
+ 148 stdcall ExtractAssociatedIconA(long ptr long) ExtractAssociatedIconA   # exported by name
  149 stdcall SHFind_InitMenuPopup(long long long long) SHFind_InitMenuPopup
  150 stub ExtractAssociatedIconExA   # exported by name
- 151 stdcall SHLoadOLE (long) SHLoadOLE32
+ 151 stdcall SHLoadOLE (long) SHLoadOLE
  152 stdcall ILGetSize(ptr) ILGetSize
  153 stdcall ILGetNext(ptr) ILGetNext
  154 stdcall ILAppend (long long long) ILAppend
  155 stdcall ILFree (ptr) ILFree
  156 stdcall ILGlobalFree (ptr) ILGlobalFree
  157 stdcall ILCreateFromPath (ptr) ILCreateFromPath
- 158 stdcall PathGetExtension(str long long) PathGetExtension32AW
+ 158 stdcall PathGetExtension(str long long) PathGetExtensionAW
  159 stub PathIsDirectory
  160 stub SHNetConnectionDialog
  161 stdcall SHRunControlPanel (long long) SHRunControlPanel
- 162 stdcall SHSimpleIDListFromPath (ptr) SHSimpleIDListFromPath32AW
+ 162 stdcall SHSimpleIDListFromPath (ptr) SHSimpleIDListFromPathAW
  163 stub StrToOleStr
  164 stub Win32DeleteFile
  165 stdcall SHCreateDirectory(long long) SHCreateDirectory
@@ -179,27 +179,27 @@ init	Shell32LibMain
  171 stub PathCleanupSpec
  172 stub SHCreateLinks
  173 stub SHValidateUNC
- 174 stdcall SHCreateShellFolderViewEx (ptr ptr) SHCreateShellFolderViewEx32
- 175 stdcall SHGetSpecialFolderPath(long long long long) SHGetSpecialFolderPath32
+ 174 stdcall SHCreateShellFolderViewEx (ptr ptr) SHCreateShellFolderViewEx
+ 175 stdcall SHGetSpecialFolderPath(long long long long) SHGetSpecialFolderPath
  176 stdcall SHSetInstanceExplorer (long) SHSetInstanceExplorer
  177 stub DAD_SetDragImageFromListView
  178 stub SHObjectProperties
  179 stub SHGetNewLinkInfoA
  180 stub SHGetNewLinkInfoW
- 181 stdcall RegisterShellHook(long long) RegisterShellHook32
+ 181 stdcall RegisterShellHook(long long) RegisterShellHook
  182 cdecl ShellMessageBoxW(long long long str long long) ShellMessageBoxW
  183 cdecl ShellMessageBoxA(long long long str long long) ShellMessageBoxA
  184 stdcall ArrangeWindows(long long long long long) ArrangeWindows
  185 stub SHHandleDiskFull
  186 stub ExtractAssociatedIconExW   # exported by name
  187 stub ExtractAssociatedIconW   # exported by name
- 188 stdcall ExtractIconA(long str long) ExtractIcon32A   # exported by name
- 189 stdcall ExtractIconEx(ptr long ptr ptr long) ExtractIconEx32AW
- 190 stdcall ExtractIconExA(str long ptr ptr long) ExtractIconEx32A
- 191 stdcall ExtractIconExW(wstr long ptr ptr long) ExtractIconEx32W
+ 188 stdcall ExtractIconA(long str long) ExtractIconA   # exported by name
+ 189 stdcall ExtractIconEx(ptr long ptr ptr long) ExtractIconExAW
+ 190 stdcall ExtractIconExA(str long ptr ptr long) ExtractIconExA
+ 191 stdcall ExtractIconExW(wstr long ptr ptr long) ExtractIconExW
  192 stub ExtractIconResInfoA   # exported by name
  193 stub ExtractIconResInfoW   # exported by name
- 194 stdcall ExtractIconW(long wstr long) ExtractIcon32W   # exported by name
+ 194 stdcall ExtractIconW(long wstr long) ExtractIconW   # exported by name
  195 stdcall SHFree(ptr) SHFree
  196 stdcall SHAlloc(long) SHAlloc
  197 stub SHGlobalDefect
@@ -223,8 +223,8 @@ init	Shell32LibMain
  215 stub SHStartNetConnectionDialog@12
  216 stub ExtractVersionResource16W   # exported by name
  217 stub FindExeDlgProc   # exported by name
- 218 stdcall FindExecutableA(ptr ptr ptr) FindExecutable32A   # exported by name
- 219 stdcall FindExecutableW(wstr wstr wstr) FindExecutable32W   # exported by name
+ 218 stdcall FindExecutableA(ptr ptr ptr) FindExecutableA   # exported by name
+ 219 stdcall FindExecutableW(wstr wstr wstr) FindExecutableW   # exported by name
  220 stdcall FreeIconList(long) FreeIconList   # exported by name
  221 stub InternalExtractIconListA   # exported by name
  222 stub InternalExtractIconListW   # exported by name
@@ -239,35 +239,35 @@ init	Shell32LibMain
  231 stub RealShellExecuteExW   # exported by name
  232 stub RealShellExecuteW   # exported by name
  233 stub RegenerateUserEnvironment   # exported by name
- 234 stdcall SHAddToRecentDocs (long ptr) SHAddToRecentDocs32  # exported by name
- 235 stdcall SHAppBarMessage(long ptr) SHAppBarMessage32   # exported by name
- 236 stdcall SHBrowseForFolder(ptr) SHBrowseForFolder32A   # exported by name
- 237 stdcall SHBrowseForFolderA(ptr) SHBrowseForFolder32A   # exported by name
+ 234 stdcall SHAddToRecentDocs (long ptr) SHAddToRecentDocs  # exported by name
+ 235 stdcall SHAppBarMessage(long ptr) SHAppBarMessage   # exported by name
+ 236 stdcall SHBrowseForFolder(ptr) SHBrowseForFolderA   # exported by name
+ 237 stdcall SHBrowseForFolderA(ptr) SHBrowseForFolderA   # exported by name
  238 stub SHBrowseForFolderW@4   # exported by name
- 239 stdcall SHChangeNotify (long long ptr ptr) SHChangeNotify32  # exported by name
+ 239 stdcall SHChangeNotify (long long ptr ptr) SHChangeNotify  # exported by name
  240 stub SHEmptyRecycleBinA@12   # exported by name
  241 stub SHEmptyRecycleBinW@12   # exported by name
- 242 stdcall SHFileOperation (ptr) SHFileOperation32   # exported by name
- 243 stdcall SHFileOperationA (ptr) SHFileOperation32A  # exported by name
- 244 stdcall SHFileOperationW (ptr) SHFileOperation32W   # exported by name
+ 242 stdcall SHFileOperation (ptr) SHFileOperationAW   # exported by name
+ 243 stdcall SHFileOperationA (ptr) SHFileOperationA  # exported by name
+ 244 stdcall SHFileOperationW (ptr) SHFileOperationW   # exported by name
  245 stub SHFormatDrive@16   # exported by name
  246 stub SHFreeNameMappings@4   # exported by name
- 247 stdcall SHGetDataFromIDListA (ptr ptr long ptr long) SHGetDataFromIDList32A
- 248 stdcall SHGetDataFromIDListW (ptr ptr long ptr long) SHGetDataFromIDList32W
+ 247 stdcall SHGetDataFromIDListA (ptr ptr long ptr long) SHGetDataFromIDListA
+ 248 stdcall SHGetDataFromIDListW (ptr ptr long ptr long) SHGetDataFromIDListW
  249 stub PathParseIconLocation@4
  250 stub PathRemoveExtension@4
  251 stub PathRemoveArgs@4
  252 stdcall SHGetDesktopFolder(ptr) SHGetDesktopFolder   # exported by name
- 253 stdcall SHGetFileInfo(ptr long ptr long long) SHGetFileInfo32A   # exported by name
- 254 stdcall SHGetFileInfoA(ptr long ptr long long) SHGetFileInfo32A   # exported by name
- 255 stdcall SHGetFileInfoW(ptr long ptr long long) SHGetFileInfo32W # exported by name
+ 253 stdcall SHGetFileInfo(ptr long ptr long long) SHGetFileInfoA   # exported by name
+ 254 stdcall SHGetFileInfoA(ptr long ptr long long) SHGetFileInfoA   # exported by name
+ 255 stdcall SHGetFileInfoW(ptr long ptr long long) SHGetFileInfoW # exported by name
  256 stdcall SHGetInstanceExplorer (long) SHGetInstanceExplorer
  257 stdcall SHGetMalloc(ptr) SHGetMalloc   # exported by name
  258 stub SHGetNewLinkInfo@20   # exported by name
- 259 stdcall SHGetPathFromIDList(ptr ptr) SHGetPathFromIDList32   # exported by name
+ 259 stdcall SHGetPathFromIDList(ptr ptr) SHGetPathFromIDListAW   # exported by name
  260 stub SHGetPathFromIDList@8 # exported by name
- 261 stdcall SHGetPathFromIDListA (long long) SHGetPathFromIDList32A # exported by name
- 262 stdcall SHGetPathFromIDListW (long long) SHGetPathFromIDList32W # exported by name
+ 261 stdcall SHGetPathFromIDListA (long long) SHGetPathFromIDListA # exported by name
+ 262 stdcall SHGetPathFromIDListW (long long) SHGetPathFromIDListW # exported by name
  263 stdcall SHGetSpecialFolderLocation(long long ptr) SHGetSpecialFolderLocation   # exported by name
  264 stdcall SHHelpShortcuts_RunDLL(long long long long) SHHelpShortcuts_RunDLL   # exported by name
  265 stub SHHelpShortcuts_RunDLLA@16   # exported by name
@@ -280,27 +280,27 @@ init	Shell32LibMain
  271 stub SheChangeDirA
  272 stub SheChangeDirExA
  273 stub SheChangeDirExW
- 274 stdcall SheChangeDirW(wstr) SheChangeDir32W
+ 274 stdcall SheChangeDirW(wstr) SheChangeDirW
  275 stub SheConvertPathW
  276 stub SheFullPathA
  277 stub SheFullPathW
  278 stub SheGetCurDrive
  279 stub SheGetDirA@8
  280 stub SheGetDirExW@12
- 281 stdcall SheGetDirW (long long) SheGetDir32W
+ 281 stdcall SheGetDirW (long long) SheGetDirW
  282 stub SheGetPathOffsetW
  283 stub SheRemoveQuotesA
  284 stub SheRemoveQuotesW
  285 stub SheSetCurDrive
  286 stub SheShortenPathA
  287 stub SheShortenPathW
- 288 stdcall ShellAboutA(long str str long) ShellAbout32A
- 289 stdcall ShellAboutW(long wstr wstr long) ShellAbout32W
- 290 stdcall ShellExecuteA(long str str str str long) ShellExecute32A
- 291 stdcall ShellExecuteEx (long) ShellExecuteEx32
- 292 stdcall ShellExecuteExA (long) ShellExecuteEx32A
- 293 stdcall ShellExecuteExW (long) ShellExecuteEx32W
- 294 stdcall ShellExecuteW (long wstr wstr wstr wstr long) ShellExecute32W
+ 288 stdcall ShellAboutA(long str str long) ShellAboutA
+ 289 stdcall ShellAboutW(long wstr wstr long) ShellAboutW
+ 290 stdcall ShellExecuteA(long str str str str long) ShellExecuteA
+ 291 stdcall ShellExecuteEx (long) ShellExecuteExAW
+ 292 stdcall ShellExecuteExA (long) ShellExecuteExA
+ 293 stdcall ShellExecuteExW (long) ShellExecuteExW
+ 294 stdcall ShellExecuteW (long wstr wstr wstr wstr long) ShellExecuteW
  295 stub ShellHookProc   # exported by name
  296 stdcall Shell_NotifyIcon(long ptr) Shell_NotifyIcon
  297 stdcall Shell_NotifyIconA(long ptr) Shell_NotifyIconA
@@ -337,13 +337,13 @@ init	Shell32LibMain
  328 stub StrStrW # proper ordinal unknown 
  329 stub WOWShellExecute # proper ordinal unknown
 
- 505 stdcall SHRegCloseKey (long) SHRegCloseKey32
- 506 stdcall SHRegOpenKeyA (long str long) SHRegOpenKey32A
- 507 stdcall SHRegOpenKeyW (long wstr long) SHRegOpenKey32W
+ 505 stdcall SHRegCloseKey (long) SHRegCloseKey
+ 506 stdcall SHRegOpenKeyA (long str long) SHRegOpenKeyA
+ 507 stdcall SHRegOpenKeyW (long wstr long) SHRegOpenKeyW
  508 stub SHRegQueryValueA@16
- 509 stdcall SHRegQueryValueExA(long str ptr ptr ptr ptr) SHRegQueryValueEx32A
- 510 stdcall SHRegQueryValueW (long long long long) SHRegQueryValue32W
- 511 stdcall SHRegQueryValueExW (long wstr ptr ptr ptr ptr) SHRegQueryValueEx32W
+ 509 stdcall SHRegQueryValueExA(long str ptr ptr ptr ptr) SHRegQueryValueExA
+ 510 stdcall SHRegQueryValueW (long long long long) SHRegQueryValueW
+ 511 stdcall SHRegQueryValueExW (long wstr ptr ptr ptr ptr) SHRegQueryValueExW
  512 stub SHRegDeleteKeyW@8
 
  520 stdcall SHAllocShared (long long long) SHAllocShared
@@ -375,5 +375,5 @@ init	Shell32LibMain
 1217 stub FOOBAR1217   # no joke! This is the real name!!
 
 # later additions ... FIXME: incorrect ordinals
-1218 stdcall SHGetSpecialFolderPathA(long ptr long long) SHGetSpecialFolderPath32A
+1218 stdcall SHGetSpecialFolderPathA(long ptr long long) SHGetSpecialFolderPathA
 1219 stub DoEnvironmentSubstW

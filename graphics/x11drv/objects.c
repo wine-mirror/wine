@@ -18,23 +18,23 @@
 #include "debug.h"
 
 
-extern HBITMAP32 X11DRV_BITMAP_SelectObject( DC * dc, HBITMAP32 hbitmap,
+extern HBITMAP X11DRV_BITMAP_SelectObject( DC * dc, HBITMAP hbitmap,
                                              BITMAPOBJ * bmp );
-extern HBRUSH32 X11DRV_BRUSH_SelectObject( DC * dc, HBRUSH32 hbrush,
+extern HBRUSH X11DRV_BRUSH_SelectObject( DC * dc, HBRUSH hbrush,
                                            BRUSHOBJ * brush );
-extern HFONT32 X11DRV_FONT_SelectObject( DC * dc, HFONT32 hfont,
+extern HFONT X11DRV_FONT_SelectObject( DC * dc, HFONT hfont,
                                          FONTOBJ * font );
-extern HPEN32 X11DRV_PEN_SelectObject( DC * dc, HPEN32 hpen, PENOBJ * pen );
+extern HPEN X11DRV_PEN_SelectObject( DC * dc, HPEN hpen, PENOBJ * pen );
 
-extern BOOL32 X11DRV_BITMAP_DeleteObject( HBITMAP32 hbitmap, BITMAPOBJ *bmp );
+extern BOOL X11DRV_BITMAP_DeleteObject( HBITMAP hbitmap, BITMAPOBJ *bmp );
 
 /***********************************************************************
  *           X11DRV_SelectObject
  */
-HGDIOBJ32 X11DRV_SelectObject( DC *dc, HGDIOBJ32 handle )
+HGDIOBJ X11DRV_SelectObject( DC *dc, HGDIOBJ handle )
 {
     GDIOBJHDR *ptr = GDI_GetObjPtr( handle, MAGIC_DONTCARE );
-    HGDIOBJ32 ret = 0;
+    HGDIOBJ ret = 0;
 
     if (!ptr) return 0;
     TRACE(gdi, "hdc=%04x %04x\n", dc->hSelf, handle );
@@ -65,10 +65,10 @@ HGDIOBJ32 X11DRV_SelectObject( DC *dc, HGDIOBJ32 handle )
 /***********************************************************************
  *           X11DRV_DeleteObject
  */
-BOOL32 X11DRV_DeleteObject( HGDIOBJ32 handle )
+BOOL X11DRV_DeleteObject( HGDIOBJ handle )
 {
     GDIOBJHDR *ptr = GDI_GetObjPtr( handle, MAGIC_DONTCARE );
-    BOOL32 ret = 0;
+    BOOL ret = 0;
 
     if (!ptr) return FALSE;
      

@@ -22,9 +22,9 @@ static const char PEN_alternate[]  = { 1,1 };      /* FIXME */
 /***********************************************************************
  *           PEN_SelectObject
  */
-HPEN32 X11DRV_PEN_SelectObject( DC * dc, HPEN32 hpen, PENOBJ * pen )
+HPEN X11DRV_PEN_SelectObject( DC * dc, HPEN hpen, PENOBJ * pen )
 {
-    HPEN32 prevHandle = dc->w.hPen;
+    HPEN prevHandle = dc->w.hPen;
     X11DRV_PDEVICE *physDev = (X11DRV_PDEVICE *)dc->physDev;
 
     dc->w.hPen = hpen;

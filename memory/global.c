@@ -165,7 +165,7 @@ BOOL16 GLOBAL_FreeBlock( HGLOBAL16 handle )
     GLOBALARENA *pArena;
 
     if (!handle) return TRUE;
-    sel = GlobalHandleToSel( handle ); 
+    sel = GlobalHandleToSel16( handle ); 
     if (!VALID_HANDLE(sel))
     	return FALSE;
     pArena = GET_ARENA_PTR(sel);
@@ -183,7 +183,7 @@ BOOL16 GLOBAL_MoveBlock( HGLOBAL16 handle, const void *ptr, DWORD size )
     GLOBALARENA *pArena;
 
     if (!handle) return TRUE;
-    sel = GlobalHandleToSel( handle ); 
+    sel = GlobalHandleToSel16( handle ); 
     if (!VALID_HANDLE(sel))
     	return FALSE;
     pArena = GET_ARENA_PTR(sel);
@@ -194,7 +194,7 @@ BOOL16 GLOBAL_MoveBlock( HGLOBAL16 handle, const void *ptr, DWORD size )
     pArena->size = size;
 
     SELECTOR_MoveBlock( sel, ptr );
-    SetSelectorLimit( sel, size-1 );
+    SetSelectorLimit16( sel, size-1 );
 
     return TRUE;
 }
@@ -304,7 +304,7 @@ HGLOBAL16 WINAPI GlobalAlloc16(
                  UINT16 flags, /* [in] Object allocation attributes */
                  DWORD size    /* [in] Number of bytes to allocate */
 ) {
-    HANDLE16 owner = GetCurrentPDB();
+    HANDLE16 owner = GetCurrentPDB16();
 
     if (flags & GMEM_DDESHARE)
         owner = GetExePtr(owner);  /* Make it a module handle */
@@ -327,7 +327,7 @@ HGLOBAL16 WINAPI GlobalReAlloc16(
     DWORD oldsize;
     void *ptr;
     GLOBALARENA *pArena, *pNewArena;
-    WORD sel = GlobalHandleToSel( handle );
+    WORD sel = GlobalHandleToSel16( handle );
 
     TRACE(global, "%04x %ld flags=%04x\n",
                     handle, size, flags );
@@ -466,7 +466,7 @@ HGLOBAL16 WINAPI GlobalFree16(
 SEGPTR WINAPI WIN16_GlobalLock16( HGLOBAL16 handle )
 {
     TRACE(global, "(%04x) -> %08lx\n",
-                    handle, MAKELONG( 0, GlobalHandleToSel(handle)) );
+                    handle, MAKELONG( 0, GlobalHandleToSel16(handle)) );
     if (handle)
     {
 	if (handle == (HGLOBAL16)-1) handle = CURRENT_DS;
@@ -482,7 +482,7 @@ SEGPTR WINAPI WIN16_GlobalLock16( HGLOBAL16 handle )
 	}
 	if (!GET_ARENA_PTR(handle)->base) return (SEGPTR)0;
         GET_ARENA_PTR(handle)->lockCount++;
-	return PTR_SEG_OFF_TO_SEGPTR( GlobalHandleToSel(handle), 0 );
+	return PTR_SEG_OFF_TO_SEGPTR( GlobalHandleToSel16(handle), 0 );
 	/* FIXME: put segment value in CX as well */
     }
     return (SEGPTR)0;
@@ -541,7 +541,7 @@ BOOL16 WINAPI GlobalUnlock16(
  * *all* registers, even AX/DX !
  *
  */
-void WINAPI GlobalChangeLockCount( CONTEXT *context )
+void WINAPI GlobalChangeLockCount16( CONTEXT *context )
 {
     LPWORD args = PTR_SEG_OFF_TO_LIN( SS_reg( context ), SP_reg( context ) );
     HGLOBAL16 handle = (HGLOBAL16)args[3];
@@ -589,18 +589,18 @@ DWORD WINAPI GlobalHandle16(
 	WARN(global,"Invalid handle 0x%04x passed to GlobalHandle16!\n",sel);
 	return 0;
     }
-    return MAKELONG( GET_ARENA_PTR(sel)->handle, GlobalHandleToSel(sel) );
+    return MAKELONG( GET_ARENA_PTR(sel)->handle, GlobalHandleToSel16(sel) );
 }
 
 /***********************************************************************
  *           GlobalHandleNoRIP   (KERNEL.159)
  */
-DWORD WINAPI GlobalHandleNoRIP( WORD sel )
+DWORD WINAPI GlobalHandleNoRIP16( WORD sel )
 {
     int i;
     for (i = globalArenaSize-1 ; i>=0 ; i--) {
         if (pGlobalArena[i].size!=0 && pGlobalArena[i].handle == sel)
-		return MAKELONG( GET_ARENA_PTR(sel)->handle, GlobalHandleToSel(sel) );
+		return MAKELONG( GET_ARENA_PTR(sel)->handle, GlobalHandleToSel16(sel) );
     }
     return 0;
 }
@@ -677,7 +677,7 @@ DWORD WINAPI GlobalCompact16( DWORD desired )
 /***********************************************************************
  *           GlobalFreeAll   (KERNEL.26)
  */
-void WINAPI GlobalFreeAll( HGLOBAL16 owner )
+void WINAPI GlobalFreeAll16( HGLOBAL16 owner )
 {
     DWORD i;
     GLOBALARENA *pArena;
@@ -722,7 +722,7 @@ LONG WINAPI SetSwapAreaSize16( WORD size )
 /***********************************************************************
  *           GlobalLRUOldest   (KERNEL.163)
  */
-HGLOBAL16 WINAPI GlobalLRUOldest( HGLOBAL16 handle )
+HGLOBAL16 WINAPI GlobalLRUOldest16( HGLOBAL16 handle )
 {
     TRACE(global, "%04x\n", handle );
     if (handle == (HGLOBAL16)-1) handle = CURRENT_DS;
@@ -733,7 +733,7 @@ HGLOBAL16 WINAPI GlobalLRUOldest( HGLOBAL16 handle )
 /***********************************************************************
  *           GlobalLRUNewest   (KERNEL.164)
  */
-HGLOBAL16 WINAPI GlobalLRUNewest( HGLOBAL16 handle )
+HGLOBAL16 WINAPI GlobalLRUNewest16( HGLOBAL16 handle )
 {
     TRACE(global, "%04x\n", handle );
     if (handle == (HGLOBAL16)-1) handle = CURRENT_DS;
@@ -756,7 +756,7 @@ DWORD WINAPI GetFreeSpace16( UINT16 wFlags )
  * RETURNS
  *	Address (HW=Paragraph segment; LW=Selector)
  */
-DWORD WINAPI GlobalDOSAlloc(
+DWORD WINAPI GlobalDOSAlloc16(
              DWORD size /* [in] Number of bytes to be allocated */
 ) {
    UINT16    uParagraph;
@@ -781,7 +781,7 @@ DWORD WINAPI GlobalDOSAlloc(
  *	NULL: Success
  *	sel: Failure
  */
-WORD WINAPI GlobalDOSFree(
+WORD WINAPI GlobalDOSFree16(
             WORD sel /* [in] Selector */
 ) {
    DWORD   block = GetSelectorBase(sel);
@@ -800,7 +800,7 @@ WORD WINAPI GlobalDOSFree(
 /***********************************************************************
  *           GlobalPageLock   (KERNEL.191)
  */
-WORD WINAPI GlobalPageLock( HGLOBAL16 handle )
+WORD WINAPI GlobalPageLock16( HGLOBAL16 handle )
 {
     TRACE(global, "%04x\n", handle );
     if (!VALID_HANDLE(handle)) {
@@ -814,7 +814,7 @@ WORD WINAPI GlobalPageLock( HGLOBAL16 handle )
 /***********************************************************************
  *           GlobalPageUnlock   (KERNEL.192)
  */
-WORD WINAPI GlobalPageUnlock( HGLOBAL16 handle )
+WORD WINAPI GlobalPageUnlock16( HGLOBAL16 handle )
 {
     TRACE(global, "%04x\n", handle );
     if (!VALID_HANDLE(handle)) {
@@ -837,7 +837,7 @@ WORD WINAPI GlobalFix16( HGLOBAL16 handle )
     }
     GET_ARENA_PTR(handle)->lockCount++;
 
-    return GlobalHandleToSel(handle);
+    return GlobalHandleToSel16(handle);
 }
 
 
@@ -858,7 +858,7 @@ void WINAPI GlobalUnfix16( HGLOBAL16 handle )
 /***********************************************************************
  *           FarSetOwner   (KERNEL.403)
  */
-void WINAPI FarSetOwner( HGLOBAL16 handle, HANDLE16 hOwner )
+void WINAPI FarSetOwner16( HGLOBAL16 handle, HANDLE16 hOwner )
 {
     if (!VALID_HANDLE(handle)) {
 	WARN(global,"Invalid handle 0x%04x passed to FarSetOwner!\n",handle);
@@ -871,7 +871,7 @@ void WINAPI FarSetOwner( HGLOBAL16 handle, HANDLE16 hOwner )
 /***********************************************************************
  *           FarGetOwner   (KERNEL.404)
  */
-HANDLE16 WINAPI FarGetOwner( HGLOBAL16 handle )
+HANDLE16 WINAPI FarGetOwner16( HGLOBAL16 handle )
 {
     if (!VALID_HANDLE(handle)) {
 	WARN(global,"Invalid handle 0x%04x passed to FarGetOwner!\n",handle);
@@ -884,7 +884,7 @@ HANDLE16 WINAPI FarGetOwner( HGLOBAL16 handle )
 /***********************************************************************
  *           GlobalHandleToSel   (TOOLHELP.50)
  */
-WORD WINAPI GlobalHandleToSel( HGLOBAL16 handle )
+WORD WINAPI GlobalHandleToSel16( HGLOBAL16 handle )
 {
     TRACE(toolhelp, "%04x\n", handle );
     if (!handle) return 0;
@@ -907,18 +907,18 @@ WORD WINAPI GlobalHandleToSel( HGLOBAL16 handle )
 /***********************************************************************
  *           GlobalFirst   (TOOLHELP.51)
  */
-BOOL16 WINAPI GlobalFirst( GLOBALENTRY *pGlobal, WORD wFlags )
+BOOL16 WINAPI GlobalFirst16( GLOBALENTRY *pGlobal, WORD wFlags )
 {
     if (wFlags == GLOBAL_LRU) return FALSE;
     pGlobal->dwNext = 0;
-    return GlobalNext( pGlobal, wFlags );
+    return GlobalNext16( pGlobal, wFlags );
 }
 
 
 /***********************************************************************
  *           GlobalNext   (TOOLHELP.52)
  */
-BOOL16 WINAPI GlobalNext( GLOBALENTRY *pGlobal, WORD wFlags)
+BOOL16 WINAPI GlobalNext16( GLOBALENTRY *pGlobal, WORD wFlags)
 {
     GLOBALARENA *pArena;
 
@@ -938,7 +938,7 @@ BOOL16 WINAPI GlobalNext( GLOBALENTRY *pGlobal, WORD wFlags)
     pGlobal->hBlock       = pArena->handle;
     pGlobal->wcLock       = pArena->lockCount;
     pGlobal->wcPageLock   = pArena->pageLockCount;
-    pGlobal->wFlags       = (GetCurrentPDB() == pArena->hOwner);
+    pGlobal->wFlags       = (GetCurrentPDB16() == pArena->hOwner);
     pGlobal->wHeapPresent = FALSE;
     pGlobal->hOwner       = pArena->hOwner;
     pGlobal->wType        = GT_UNKNOWN;
@@ -951,7 +951,7 @@ BOOL16 WINAPI GlobalNext( GLOBALENTRY *pGlobal, WORD wFlags)
 /***********************************************************************
  *           GlobalInfo   (TOOLHELP.53)
  */
-BOOL16 WINAPI GlobalInfo( GLOBALINFO *pInfo )
+BOOL16 WINAPI GlobalInfo16( GLOBALINFO *pInfo )
 {
     int i;
     GLOBALARENA *pArena;
@@ -968,7 +968,7 @@ BOOL16 WINAPI GlobalInfo( GLOBALINFO *pInfo )
 /***********************************************************************
  *           GlobalEntryHandle   (TOOLHELP.54)
  */
-BOOL16 WINAPI GlobalEntryHandle( GLOBALENTRY *pGlobal, HGLOBAL16 hItem )
+BOOL16 WINAPI GlobalEntryHandle16( GLOBALENTRY *pGlobal, HGLOBAL16 hItem )
 {
     GLOBALARENA *pArena = GET_ARENA_PTR(hItem);
 
@@ -977,7 +977,7 @@ BOOL16 WINAPI GlobalEntryHandle( GLOBALENTRY *pGlobal, HGLOBAL16 hItem )
     pGlobal->hBlock       = pArena->handle;
     pGlobal->wcLock       = pArena->lockCount;
     pGlobal->wcPageLock   = pArena->pageLockCount;
-    pGlobal->wFlags       = (GetCurrentPDB() == pArena->hOwner);
+    pGlobal->wFlags       = (GetCurrentPDB16() == pArena->hOwner);
     pGlobal->wHeapPresent = FALSE;
     pGlobal->hOwner       = pArena->hOwner;
     pGlobal->wType        = GT_UNKNOWN;
@@ -990,7 +990,7 @@ BOOL16 WINAPI GlobalEntryHandle( GLOBALENTRY *pGlobal, HGLOBAL16 hItem )
 /***********************************************************************
  *           GlobalEntryModule   (TOOLHELP.55)
  */
-BOOL16 WINAPI GlobalEntryModule( GLOBALENTRY *pGlobal, HMODULE16 hModule,
+BOOL16 WINAPI GlobalEntryModule16( GLOBALENTRY *pGlobal, HMODULE16 hModule,
                                  WORD wSeg )
 {
     return FALSE;
@@ -1000,7 +1000,7 @@ BOOL16 WINAPI GlobalEntryModule( GLOBALENTRY *pGlobal, HMODULE16 hModule,
 /***********************************************************************
  *           MemManInfo   (TOOLHELP.72)
  */
-BOOL16 WINAPI MemManInfo( MEMMANINFO *info )
+BOOL16 WINAPI MemManInfo16( MEMMANINFO *info )
 {
     MEMORYSTATUS status;
 
@@ -1026,10 +1026,10 @@ BOOL16 WINAPI MemManInfo( MEMMANINFO *info )
 /***********************************************************************
  *           GetFreeMemInfo   (KERNEL.316)
  */
-DWORD WINAPI GetFreeMemInfo(void)
+DWORD WINAPI GetFreeMemInfo16(void)
 {
     MEMMANINFO info;
-    MemManInfo( &info );
+    MemManInfo16( &info );
     return MAKELONG( info.dwTotalLinearSpace, info.dwMaxPagesAvailable );
 }
 
@@ -1048,8 +1048,8 @@ DWORD WINAPI GetFreeMemInfo(void)
 #define MAGIC_GLOBAL_USED 0x5342
 #define GLOBAL_LOCK_MAX   0xFF
 #define HANDLE_TO_INTERN(h)  ((PGLOBAL32_INTERN)(((char *)(h))-2))
-#define INTERN_TO_HANDLE(i)  ((HGLOBAL32) &((i)->Pointer))
-#define POINTER_TO_HANDLE(p) (*(((HGLOBAL32 *)(p))-1))
+#define INTERN_TO_HANDLE(i)  ((HGLOBAL) &((i)->Pointer))
+#define POINTER_TO_HANDLE(p) (*(((HGLOBAL *)(p))-1))
 #define ISHANDLE(h)          (((DWORD)(h)&2)!=0)
 #define ISPOINTER(h)         (((DWORD)(h)&2)==0)
 
@@ -1068,8 +1068,8 @@ typedef struct __GLOBAL32_INTERN
  *	Handle: Success
  *	NULL: Failure
  */
-HGLOBAL32 WINAPI GlobalAlloc32(
-                 UINT32 flags, /* [in] Object allocation attributes */
+HGLOBAL WINAPI GlobalAlloc(
+                 UINT flags, /* [in] Object allocation attributes */
                  DWORD size    /* [in] Number of bytes to allocate */
 ) {
    PGLOBAL32_INTERN     pintern;
@@ -1084,7 +1084,7 @@ HGLOBAL32 WINAPI GlobalAlloc32(
    if((flags & GMEM_MOVEABLE)==0) /* POINTER */
    {
       palloc=HeapAlloc(GetProcessHeap(), hpflags, size);
-      return (HGLOBAL32) palloc;
+      return (HGLOBAL) palloc;
    }
    else  /* HANDLE */
    {
@@ -1093,9 +1093,9 @@ HGLOBAL32 WINAPI GlobalAlloc32(
       pintern=HeapAlloc(GetProcessHeap(), 0,  sizeof(GLOBAL32_INTERN));
       if(size)
       {
-	 palloc=HeapAlloc(GetProcessHeap(), hpflags, size+sizeof(HGLOBAL32));
-	 *(HGLOBAL32 *)palloc=INTERN_TO_HANDLE(pintern);
-	 pintern->Pointer=palloc+sizeof(HGLOBAL32);
+	 palloc=HeapAlloc(GetProcessHeap(), hpflags, size+sizeof(HGLOBAL));
+	 *(HGLOBAL *)palloc=INTERN_TO_HANDLE(pintern);
+	 pintern->Pointer=palloc+sizeof(HGLOBAL);
       }
       else
 	 pintern->Pointer=NULL;
@@ -1116,8 +1116,8 @@ HGLOBAL32 WINAPI GlobalAlloc32(
  *	Pointer to first byte of block
  *	NULL: Failure
  */
-LPVOID WINAPI GlobalLock32(
-              HGLOBAL32 hmem /* [in] Handle of global memory object */
+LPVOID WINAPI GlobalLock(
+              HGLOBAL hmem /* [in] Handle of global memory object */
 ) {
    PGLOBAL32_INTERN pintern;
    LPVOID           palloc;
@@ -1150,11 +1150,11 @@ LPVOID WINAPI GlobalLock32(
  *	TRUE: Object is still locked
  *	FALSE: Object is unlocked
  */
-BOOL32 WINAPI GlobalUnlock32(
-              HGLOBAL32 hmem /* [in] Handle of global memory object */
+BOOL WINAPI GlobalUnlock(
+              HGLOBAL hmem /* [in] Handle of global memory object */
 ) {
    PGLOBAL32_INTERN       pintern;
-   BOOL32                 locked;
+   BOOL                 locked;
 
    if(ISPOINTER(hmem))
       return FALSE;
@@ -1191,10 +1191,10 @@ BOOL32 WINAPI GlobalUnlock32(
  *	Handle: Success
  *	NULL: Failure
  */
-HGLOBAL32 WINAPI GlobalHandle32(
+HGLOBAL WINAPI GlobalHandle(
                  LPCVOID pmem /* [in] Pointer to global memory block */
 ) {
-    HGLOBAL32 handle;
+    HGLOBAL handle;
 
     if (!HEAP_IsInsideHeap( GetProcessHeap(), 0, pmem )) goto error;
     handle = POINTER_TO_HANDLE(pmem);
@@ -1205,7 +1205,7 @@ HGLOBAL32 WINAPI GlobalHandle32(
     }
     /* maybe FIXED block */
     if (HeapValidate( GetProcessHeap(), 0, pmem ))
-        return (HGLOBAL32)pmem;  /* valid fixed block */
+        return (HGLOBAL)pmem;  /* valid fixed block */
 
 error:
     SetLastError( ERROR_INVALID_HANDLE );
@@ -1219,13 +1219,13 @@ error:
  *	Handle: Success
  *	NULL: Failure
  */
-HGLOBAL32 WINAPI GlobalReAlloc32(
-                 HGLOBAL32 hmem, /* [in] Handle of global memory object */
+HGLOBAL WINAPI GlobalReAlloc(
+                 HGLOBAL hmem, /* [in] Handle of global memory object */
                  DWORD size,     /* [in] New size of block */
-                 UINT32 flags    /* [in] How to reallocate object */
+                 UINT flags    /* [in] How to reallocate object */
 ) {
    LPVOID               palloc;
-   HGLOBAL32            hnew;
+   HGLOBAL            hnew;
    PGLOBAL32_INTERN     pintern;
 
    hnew = 0;
@@ -1244,11 +1244,11 @@ HGLOBAL32 WINAPI GlobalReAlloc32(
     	     return 0;
          }
 	 size=HeapSize(GetProcessHeap(), 0, (LPVOID) hmem);
-	 hnew=GlobalAlloc32( flags, size);
-	 palloc=GlobalLock32(hnew);
+	 hnew=GlobalAlloc( flags, size);
+	 palloc=GlobalLock(hnew);
 	 memcpy(palloc, (LPVOID) hmem, size);
-	 GlobalUnlock32(hnew);
-	 GlobalFree32(hmem);
+	 GlobalUnlock(hnew);
+	 GlobalFree(hmem);
       }
       else if( ISPOINTER(hmem) &&(flags & GMEM_DISCARDABLE))
       {
@@ -1268,7 +1268,7 @@ HGLOBAL32 WINAPI GlobalReAlloc32(
       if(ISPOINTER(hmem))
       {
 	 /* reallocate fixed memory */
-	 hnew=(HGLOBAL32)HeapReAlloc(GetProcessHeap(), 0, (LPVOID) hmem, size);
+	 hnew=(HGLOBAL)HeapReAlloc(GetProcessHeap(), 0, (LPVOID) hmem, size);
       }
       else
       {
@@ -1283,22 +1283,22 @@ HGLOBAL32 WINAPI GlobalReAlloc32(
 	    if(pintern->Pointer)
 	    {
 	       palloc=HeapReAlloc(GetProcessHeap(), 0,
-				  pintern->Pointer-sizeof(HGLOBAL32),
-				  size+sizeof(HGLOBAL32) );
-	       pintern->Pointer=palloc+sizeof(HGLOBAL32);
+				  pintern->Pointer-sizeof(HGLOBAL),
+				  size+sizeof(HGLOBAL) );
+	       pintern->Pointer=palloc+sizeof(HGLOBAL);
 	    }
 	    else
 	    {
-	       palloc=HeapAlloc(GetProcessHeap(), 0, size+sizeof(HGLOBAL32));
-	       *(HGLOBAL32 *)palloc=hmem;
-	       pintern->Pointer=palloc+sizeof(HGLOBAL32);
+	       palloc=HeapAlloc(GetProcessHeap(), 0, size+sizeof(HGLOBAL));
+	       *(HGLOBAL *)palloc=hmem;
+	       pintern->Pointer=palloc+sizeof(HGLOBAL);
 	    }
 	 }
 	 else
 	 {
 	    if(pintern->Pointer)
 	    {
-	       HeapFree(GetProcessHeap(), 0, pintern->Pointer-sizeof(HGLOBAL32));
+	       HeapFree(GetProcessHeap(), 0, pintern->Pointer-sizeof(HGLOBAL));
 	       pintern->Pointer=NULL;
 	    }
 	 }
@@ -1315,11 +1315,11 @@ HGLOBAL32 WINAPI GlobalReAlloc32(
  *	NULL: Success
  *	Handle: Failure
  */
-HGLOBAL32 WINAPI GlobalFree32(
-                 HGLOBAL32 hmem /* [in] Handle of global memory object */
+HGLOBAL WINAPI GlobalFree(
+                 HGLOBAL hmem /* [in] Handle of global memory object */
 ) {
    PGLOBAL32_INTERN pintern;
-   HGLOBAL32        hreturned = 0;
+   HGLOBAL        hreturned = 0;
    
    if(ISPOINTER(hmem)) /* POINTER */
    {
@@ -1336,7 +1336,7 @@ HGLOBAL32 WINAPI GlobalFree32(
 	    SetLastError(ERROR_INVALID_HANDLE);
 	 if(pintern->Pointer)
 	    if(!HeapFree(GetProcessHeap(), 0, 
-	                 (char *)(pintern->Pointer)-sizeof(HGLOBAL32)))
+	                 (char *)(pintern->Pointer)-sizeof(HGLOBAL)))
 	       hreturned=hmem;
 	 if(!HeapFree(GetProcessHeap(), 0, pintern)) 
 	    hreturned=hmem;
@@ -1353,8 +1353,8 @@ HGLOBAL32 WINAPI GlobalFree32(
  *	Size in bytes of the global memory object
  *	0: Failure
  */
-DWORD WINAPI GlobalSize32(
-             HGLOBAL32 hmem /* [in] Handle of global memory object */
+DWORD WINAPI GlobalSize(
+             HGLOBAL hmem /* [in] Handle of global memory object */
 ) {
    DWORD                retval;
    PGLOBAL32_INTERN     pintern;
@@ -1373,7 +1373,7 @@ DWORD WINAPI GlobalSize32(
         if (!pintern->Pointer) /* handle case of GlobalAlloc( ??,0) */
             return 0;
 	 retval=HeapSize(GetProcessHeap(), 0, 
-	                 (char *)(pintern->Pointer)-sizeof(HGLOBAL32))-4;
+	                 (char *)(pintern->Pointer)-sizeof(HGLOBAL))-4;
       }
       else
       {
@@ -1391,36 +1391,36 @@ DWORD WINAPI GlobalSize32(
 /***********************************************************************
  *           GlobalWire32   (KERNEL32.333)
  */
-LPVOID WINAPI GlobalWire32(HGLOBAL32 hmem)
+LPVOID WINAPI GlobalWire(HGLOBAL hmem)
 {
-   return GlobalLock32( hmem );
+   return GlobalLock( hmem );
 }
 
 
 /***********************************************************************
  *           GlobalUnWire32   (KERNEL32.330)
  */
-BOOL32 WINAPI GlobalUnWire32(HGLOBAL32 hmem)
+BOOL WINAPI GlobalUnWire(HGLOBAL hmem)
 {
-   return GlobalUnlock32( hmem);
+   return GlobalUnlock( hmem);
 }
 
 
 /***********************************************************************
  *           GlobalFix32   (KERNEL32.320)
  */
-VOID WINAPI GlobalFix32(HGLOBAL32 hmem)
+VOID WINAPI GlobalFix(HGLOBAL hmem)
 {
-    GlobalLock32( hmem );
+    GlobalLock( hmem );
 }
 
 
 /***********************************************************************
  *           GlobalUnfix32   (KERNEL32.331)
  */
-VOID WINAPI GlobalUnfix32(HGLOBAL32 hmem)
+VOID WINAPI GlobalUnfix(HGLOBAL hmem)
 {
-   GlobalUnlock32( hmem);
+   GlobalUnlock( hmem);
 }
 
 
@@ -1435,8 +1435,8 @@ VOID WINAPI GlobalUnfix32(HGLOBAL32 hmem)
  *	Value specifying allocation flags and lock count
  *	GMEM_INVALID_HANDLE: Failure
  */
-UINT32 WINAPI GlobalFlags32(
-              HGLOBAL32 hmem /* [in] Handle to global memory object */
+UINT WINAPI GlobalFlags(
+              HGLOBAL hmem /* [in] Handle to global memory object */
 ) {
    DWORD                retval;
    PGLOBAL32_INTERN     pintern;
@@ -1469,7 +1469,7 @@ UINT32 WINAPI GlobalFlags32(
 /***********************************************************************
  *           GlobalCompact32   (KERNEL32.316)
  */
-DWORD WINAPI GlobalCompact32( DWORD minfree )
+DWORD WINAPI GlobalCompact( DWORD minfree )
 {
     return 0;  /* GlobalCompact does nothing in Win32 */
 }

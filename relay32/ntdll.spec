@@ -916,7 +916,7 @@ type	win32
 908 stub pow
 909 stub qsort
 910 stub sin
-911 varargs sprintf() wsprintf32A
+911 varargs sprintf() wsprintfA
 912 stub sqrt
 913 varargs sscanf() sscanf
 914 cdecl strcat(str str) strcat
@@ -932,7 +932,7 @@ type	win32
 924 cdecl strrchr(str long) strrchr
 925 cdecl strspn(str str) strspn
 926 cdecl strstr(str str) strstr
-927 varargs swprintf() wsprintf32W
+927 varargs swprintf() wsprintfW
 928 stub tan
 929 cdecl tolower(long) tolower
 930 cdecl toupper(long) toupper

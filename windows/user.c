@@ -31,7 +31,7 @@
 /***********************************************************************
  *           GetFreeSystemResources   (USER.284)
  */
-WORD WINAPI GetFreeSystemResources( WORD resType )
+WORD WINAPI GetFreeSystemResources16( WORD resType )
 {
     int userPercent, gdiPercent;
 
@@ -66,10 +66,10 @@ WORD WINAPI GetFreeSystemResources( WORD resType )
 /***********************************************************************
  *           SystemHeapInfo   (TOOLHELP.71)
  */
-BOOL16 WINAPI SystemHeapInfo( SYSHEAPINFO *pHeapInfo )
+BOOL16 WINAPI SystemHeapInfo16( SYSHEAPINFO *pHeapInfo )
 {
-    pHeapInfo->wUserFreePercent = GetFreeSystemResources( GFSR_USERRESOURCES );
-    pHeapInfo->wGDIFreePercent  = GetFreeSystemResources( GFSR_GDIRESOURCES );
+    pHeapInfo->wUserFreePercent = GetFreeSystemResources16( GFSR_USERRESOURCES );
+    pHeapInfo->wGDIFreePercent  = GetFreeSystemResources16( GFSR_GDIRESOURCES );
     pHeapInfo->hUserSegment = USER_HeapSel;
     pHeapInfo->hGDISegment  = GDI_HeapSel;
     return TRUE;
@@ -79,7 +79,7 @@ BOOL16 WINAPI SystemHeapInfo( SYSHEAPINFO *pHeapInfo )
 /***********************************************************************
  *           TimerCount   (TOOLHELP.80)
  */
-BOOL16 WINAPI TimerCount( TIMERINFO *pTimerInfo )
+BOOL16 WINAPI TimerCount16( TIMERINFO *pTimerInfo )
 {
     /* FIXME
      * In standard mode, dwmsSinceStart = dwmsThisVM 
@@ -118,11 +118,11 @@ static void USER_InstallRsrcHandler( HINSTANCE16 hInstance )
     /* SetResourceHandler() returns previous function which is set
      * when a module's resource table is loaded. */
 
-    proc = SetResourceHandler( hInstance, RT_ICON16,
+    proc = SetResourceHandler16( hInstance, RT_ICON16,
                                MODULE_GetWndProcEntry16("LoadDIBIconHandler") );
     if (!__r16loader) __r16loader = proc;
 
-    proc = SetResourceHandler( hInstance, RT_CURSOR16,
+    proc = SetResourceHandler16( hInstance, RT_CURSOR16,
                                MODULE_GetWndProcEntry16("LoadDIBCursorHandler") );
     if (!__r16loader) __r16loader = proc;
 }
@@ -130,7 +130,7 @@ static void USER_InstallRsrcHandler( HINSTANCE16 hInstance )
 /**********************************************************************
  *           InitApp   (USER.5)
  */
-INT16 WINAPI InitApp( HINSTANCE16 hInstance )
+INT16 WINAPI InitApp16( HINSTANCE16 hInstance )
 {
       /* InitTask() calls LibMain()'s of implicitly loaded DLLs 
        * prior to InitApp() so there is no clean way to do
@@ -146,7 +146,7 @@ INT16 WINAPI InitApp( HINSTANCE16 hInstance )
     INT_SetPMHandler( 0, INT_GetPMHandler( 0xff ) );
 
     /* Create task message queue */
-    if ( !GetFastQueue() ) return 0;
+    if ( !GetFastQueue16() ) return 0;
 
     return 1;
 }
@@ -199,14 +199,14 @@ static void USER_AppExit( HTASK16 hTask, HINSTANCE16 hInstance, HQUEUE16 hQueue 
 
     /* Patch desktop window */
     if( desktop->hmemTaskQ == hQueue )
-        desktop->hmemTaskQ = GetTaskQueue(TASK_GetNextTask(hTask));
+        desktop->hmemTaskQ = GetTaskQueue16(TASK_GetNextTask(hTask));
                   
     USER_QueueCleanup(hQueue);
 
     /* ModuleUnload() in "Internals" */
 
     hInstance = GetExePtr( hInstance );
-    if( GetModuleUsage( hInstance ) <= 1 ) 
+    if( GetModuleUsage16( hInstance ) <= 1 ) 
 	USER_ModuleUnload( hInstance );
 }
 
@@ -222,7 +222,7 @@ void USER_ExitWindows(void)
 {
     /* Do the clean-up stuff */
 
-    WriteOutProfiles();
+    WriteOutProfiles16();
     SHELL_SaveRegistry();
 
     exit(0);
@@ -280,10 +280,10 @@ BOOL16 WINAPI ExitWindowsExec16( LPCSTR lpszExe, LPCSTR lpszParams )
 /***********************************************************************
  *           ExitWindowsEx   (USER32.196)
  */
-BOOL32 WINAPI ExitWindowsEx( UINT32 flags, DWORD reserved )
+BOOL WINAPI ExitWindowsEx( UINT flags, DWORD reserved )
 {
     int i;
-    BOOL32 result;
+    BOOL result;
     WND **list, **ppWnd;
         
     /* We have to build a list of all windows first, as in EnumWindows */
@@ -295,7 +295,7 @@ BOOL32 WINAPI ExitWindowsEx( UINT32 flags, DWORD reserved )
     for (ppWnd = list, i = 0; *ppWnd; ppWnd++, i++)
     {
         /* Make sure that the window still exists */
-        if (!IsWindow32( (*ppWnd)->hwndSelf )) continue;
+        if (!IsWindow( (*ppWnd)->hwndSelf )) continue;
 	if (!SendMessage16( (*ppWnd)->hwndSelf, WM_QUERYENDSESSION, 0, 0 ))
             break;
     }
@@ -305,7 +305,7 @@ BOOL32 WINAPI ExitWindowsEx( UINT32 flags, DWORD reserved )
 
     for (ppWnd = list; i > 0; i--, ppWnd++)
     {
-        if (!IsWindow32( (*ppWnd)->hwndSelf )) continue;
+        if (!IsWindow( (*ppWnd)->hwndSelf )) continue;
 	SendMessage16( (*ppWnd)->hwndSelf, WM_ENDSESSION, result, 0 );
     }
     HeapFree( SystemHeap, 0, list );
@@ -318,7 +318,7 @@ BOOL32 WINAPI ExitWindowsEx( UINT32 flags, DWORD reserved )
 /***********************************************************************
  *           ChangeDisplaySettingA    (USER32.589)
  */
-LONG WINAPI ChangeDisplaySettings32A( LPDEVMODE32A devmode, DWORD flags )
+LONG WINAPI ChangeDisplaySettingsA( LPDEVMODEA devmode, DWORD flags )
 {
   FIXME(system, ": stub\n");
   if (devmode==NULL)
@@ -350,10 +350,10 @@ LONG WINAPI ChangeDisplaySettings32A( LPDEVMODE32A devmode, DWORD flags )
  *	TRUE if nth setting exists found (described in the LPDEVMODE32A struct)
  *	FALSE if we do not have the nth setting
  */
-BOOL32 WINAPI EnumDisplaySettings32A(
+BOOL WINAPI EnumDisplaySettingsA(
 	LPCSTR name,		/* [in] huh? */
 	DWORD n,		/* [in] nth entry in display settings list*/
-	LPDEVMODE32A devmode	/* [out] devmode for that setting */
+	LPDEVMODEA devmode	/* [out] devmode for that setting */
 ) {
 #define NRMODES 5
 #define NRDEPTHS 4
@@ -381,10 +381,10 @@ BOOL32 WINAPI EnumDisplaySettings32A(
 /***********************************************************************
  *           EnumDisplaySettingsW   (USER32.593)
  */
-BOOL32 WINAPI EnumDisplaySettings32W(LPCWSTR name,DWORD n,LPDEVMODE32W devmode) {
+BOOL WINAPI EnumDisplaySettingsW(LPCWSTR name,DWORD n,LPDEVMODEW devmode) {
 	LPSTR nameA = HEAP_strdupWtoA(GetProcessHeap(),0,name);
-	DEVMODE32A	devmodeA; 
-	BOOL32 ret = EnumDisplaySettings32A(nameA,n,&devmodeA); 
+	DEVMODEA	devmodeA; 
+	BOOL ret = EnumDisplaySettingsA(nameA,n,&devmodeA); 
 
 	if (ret) {
 		devmode->dmBitsPerPel	= devmodeA.dmBitsPerPel;
@@ -401,16 +401,16 @@ BOOL32 WINAPI EnumDisplaySettings32W(LPCWSTR name,DWORD n,LPDEVMODE32W devmode) 
  *
  *	Used by Turbo Debugger for Windows
  */
-FARPROC16 WINAPI SetEventHook(FARPROC16 lpfnEventHook)
+FARPROC16 WINAPI SetEventHook16(FARPROC16 lpfnEventHook)
 {
-	FIXME(hook, "(lpfnEventHook=%08x): stub\n", (UINT32)lpfnEventHook);
+	FIXME(hook, "(lpfnEventHook=%08x): stub\n", (UINT)lpfnEventHook);
 	return NULL;
 }
 
 /***********************************************************************
  *           UserSeeUserDo   (USER.216)
  */
-DWORD WINAPI UserSeeUserDo(WORD wReqType, WORD wParam1, WORD wParam2, WORD wParam3)
+DWORD WINAPI UserSeeUserDo16(WORD wReqType, WORD wParam1, WORD wParam2, WORD wParam3)
 {
     switch (wReqType)
     {
@@ -434,7 +434,7 @@ DWORD WINAPI UserSeeUserDo(WORD wReqType, WORD wParam1, WORD wParam2, WORD wPara
 /***********************************************************************
  *           RegisterLogonProcess   (USER32.434)
  */
-DWORD WINAPI RegisterLogonProcess(HANDLE32 hprocess,BOOL32 x) {
+DWORD WINAPI RegisterLogonProcess(HANDLE hprocess,BOOL x) {
 	FIXME(win32,"(%d,%d),stub!\n",hprocess,x);
 	return 1;
 }
@@ -442,7 +442,7 @@ DWORD WINAPI RegisterLogonProcess(HANDLE32 hprocess,BOOL32 x) {
 /***********************************************************************
  *           CreateWindowStation32W   (USER32.86)
  */
-HWINSTA32 WINAPI CreateWindowStation32W(
+HWINSTA WINAPI CreateWindowStationW(
 	LPWSTR winstation,DWORD res1,DWORD desiredaccess,
 	LPSECURITY_ATTRIBUTES lpsa
 ) {
@@ -455,7 +455,7 @@ HWINSTA32 WINAPI CreateWindowStation32W(
 /***********************************************************************
  *           SetProcessWindowStation   (USER32.496)
  */
-BOOL32 WINAPI SetProcessWindowStation(HWINSTA32 hWinSta) {
+BOOL WINAPI SetProcessWindowStation(HWINSTA hWinSta) {
 	FIXME(win32,"(%d),stub!\n",hWinSta);
 	return TRUE;
 }
@@ -463,8 +463,8 @@ BOOL32 WINAPI SetProcessWindowStation(HWINSTA32 hWinSta) {
 /***********************************************************************
  *           SetUserObjectSecurity   (USER32.514)
  */
-BOOL32 WINAPI SetUserObjectSecurity(
-	HANDLE32 hObj,
+BOOL WINAPI SetUserObjectSecurity(
+	HANDLE hObj,
 	/*LPSECURITY_INFORMATION*/LPVOID pSIRequested,
 	PSECURITY_DESCRIPTOR pSID
 ) {
@@ -475,8 +475,8 @@ BOOL32 WINAPI SetUserObjectSecurity(
 /***********************************************************************
  *           CreateDesktop32W   (USER32.69)
  */
-HDESK32 WINAPI CreateDesktop32W(
-	LPWSTR lpszDesktop,LPWSTR lpszDevice,LPDEVMODE32W pDevmode,
+HDESK WINAPI CreateDesktopW(
+	LPWSTR lpszDesktop,LPWSTR lpszDevice,LPDEVMODEW pDevmode,
 	DWORD dwFlags,DWORD dwDesiredAccess,LPSECURITY_ATTRIBUTES lpsa
 ) {
 	FIXME(win32,"(%s,%s,%p,0x%08lx,0x%08lx,%p),stub!\n",
@@ -497,7 +497,7 @@ DWORD WINAPI SetWindowStationUser(DWORD x1,DWORD x2) {
 /***********************************************************************
  *           SetLogonNotifyWindow   (USER32.486)
  */
-DWORD WINAPI SetLogonNotifyWindow(HWINSTA32 hwinsta,HWND32 hwnd) {
+DWORD WINAPI SetLogonNotifyWindow(HWINSTA hwinsta,HWND hwnd) {
 	FIXME(win32,"(0x%x,%04x),stub!\n",hwinsta,hwnd);
 	return 1;
 }
@@ -512,21 +512,21 @@ VOID WINAPI LoadLocalFonts(VOID) {
 /***********************************************************************
  *           GetUserObjectInformation32A   (USER32.299)
  */
-BOOL32 WINAPI GetUserObjectInformation32A( HANDLE32 hObj, int nIndex, LPVOID pvInfo, DWORD nLength, LPDWORD lpnLen )
+BOOL WINAPI GetUserObjectInformationA( HANDLE hObj, int nIndex, LPVOID pvInfo, DWORD nLength, LPDWORD lpnLen )
 {	FIXME(win32,"(0x%x %i %p %ld %p),stub!\n", hObj, nIndex, pvInfo, nLength, lpnLen );
 	return TRUE;
 }
 /***********************************************************************
  *           GetUserObjectInformation32W   (USER32.300)
  */
-BOOL32 WINAPI GetUserObjectInformation32W( HANDLE32 hObj, int nIndex, LPVOID pvInfo, DWORD nLength, LPDWORD lpnLen )
+BOOL WINAPI GetUserObjectInformationW( HANDLE hObj, int nIndex, LPVOID pvInfo, DWORD nLength, LPDWORD lpnLen )
 {	FIXME(win32,"(0x%x %i %p %ld %p),stub!\n", hObj, nIndex, pvInfo, nLength, lpnLen );
 	return TRUE;
 }
 /***********************************************************************
  *           GetUserObjectSecurity32   (USER32.300)
  */
-BOOL32 WINAPI GetUserObjectSecurity32(HANDLE32 hObj, SECURITY_INFORMATION * pSIRequested,
+BOOL WINAPI GetUserObjectSecurity(HANDLE hObj, SECURITY_INFORMATION * pSIRequested,
 	PSECURITY_DESCRIPTOR pSID, DWORD nLength, LPDWORD lpnLengthNeeded)
 {	FIXME(win32,"(0x%x %p %p len=%ld %p),stub!\n",  hObj, pSIRequested, pSID, nLength, lpnLengthNeeded);
 	return TRUE;

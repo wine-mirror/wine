@@ -24,19 +24,19 @@
 
 #define		IDD_TREEVIEW 99
 
-static HWND32		hwndTreeView;
-static LPBROWSEINFO32A  lpBrowseInfo;
+static HWND		hwndTreeView;
+static LPBROWSEINFOA  lpBrowseInfo;
 static LPITEMIDLIST	pidlRet;
 
 static void FillTreeView(LPSHELLFOLDER lpsf, LPITEMIDLIST  lpifq, HTREEITEM hParent);
 
-static void InitializeTreeView(HWND32 hwndParent)
+static void InitializeTreeView(HWND hwndParent)
 {
 	HIMAGELIST	hImageList;
 	LPSHELLFOLDER	lpsf;
 	HRESULT	hr;
 
-	hwndTreeView = GetDlgItem32 (hwndParent, IDD_TREEVIEW);
+	hwndTreeView = GetDlgItem (hwndParent, IDD_TREEVIEW);
 	Shell_GetImageList(NULL, &hImageList);
 	
 	TRACE(shell,"dlg=%x tree=%x\n", hwndParent, hwndTreeView );
@@ -57,13 +57,13 @@ static void InitializeTreeView(HWND32 hwndParent)
 	}
 }
 
-static int GetIcon(LPITEMIDLIST lpi, UINT32 uFlags)
-{	SHFILEINFO32A    sfi;
-	SHGetFileInfo32A((LPCSTR)lpi,0,&sfi, sizeof(SHFILEINFO32A), uFlags);
+static int GetIcon(LPITEMIDLIST lpi, UINT uFlags)
+{	SHFILEINFOA    sfi;
+	SHGetFileInfoA((LPCSTR)lpi,0,&sfi, sizeof(SHFILEINFOA), uFlags);
 	return sfi.iIcon;
 }
 
-static void GetNormalAndSelectedIcons(LPITEMIDLIST lpifq,LPTVITEM32A lpTV_ITEM)
+static void GetNormalAndSelectedIcons(LPITEMIDLIST lpifq,LPTVITEMA lpTV_ITEM)
 {	TRACE (shell,"%p %p\n",lpifq, lpTV_ITEM);
 
 	lpTV_ITEM->iImage = GetIcon(lpifq, SHGFI_PIDL | SHGFI_SYSICONINDEX | SHGFI_SMALLICON);
@@ -79,9 +79,9 @@ typedef struct tagID
    LPITEMIDLIST  lpifq;
 } TV_ITEMDATA, *LPTV_ITEMDATA;
 
-static BOOL32 GetName(LPSHELLFOLDER lpsf, LPITEMIDLIST lpi, DWORD dwFlags, LPSTR lpFriendlyName)
+static BOOL GetName(LPSHELLFOLDER lpsf, LPITEMIDLIST lpi, DWORD dwFlags, LPSTR lpFriendlyName)
 {
-	BOOL32   bSuccess=TRUE;
+	BOOL   bSuccess=TRUE;
 	STRRET str;
 
 	TRACE(shell,"%p %p %lx %p\n", lpsf, lpi, dwFlags, lpFriendlyName);
@@ -97,8 +97,8 @@ static BOOL32 GetName(LPSHELLFOLDER lpsf, LPITEMIDLIST lpi, DWORD dwFlags, LPSTR
 
 static void FillTreeView(LPSHELLFOLDER lpsf, LPITEMIDLIST  pidl, HTREEITEM hParent)
 {
-	TVITEM32A 			tvi;
-	TVINSERTSTRUCT32A 	tvins;
+	TVITEMA 			tvi;
+	TVINSERTSTRUCTA 	tvins;
 	HTREEITEM       hPrev = 0;
 	LPENUMIDLIST    lpe=0;
 	LPITEMIDLIST	pidlTemp=0;
@@ -106,12 +106,12 @@ static void FillTreeView(LPSHELLFOLDER lpsf, LPITEMIDLIST  pidl, HTREEITEM hPare
 	ULONG		ulFetched;
 	HRESULT		hr;
 	char		szBuff[256];
-	HWND32		hwnd=GetParent32(hwndTreeView);
+	HWND		hwnd=GetParent(hwndTreeView);
 
-	TRACE(shell, "%p %p %x\n",lpsf, pidl, (INT32)hParent);
+	TRACE(shell, "%p %p %x\n",lpsf, pidl, (INT)hParent);
 	
-	SetCapture32(GetParent32(hwndTreeView));
-	SetCursor32(LoadCursor32A(0, IDC_WAIT32A));
+	SetCapture(GetParent(hwndTreeView));
+	SetCursor(LoadCursorA(0, IDC_WAITA));
 
 	hr=lpsf->lpvtbl->fnEnumObjects(lpsf,hwnd, SHCONTF_FOLDERS | SHCONTF_NONFOLDERS,&lpe);
 
@@ -148,7 +148,7 @@ static void FillTreeView(LPSHELLFOLDER lpsf, LPITEMIDLIST  pidl, HTREEITEM hPare
 	        tvins.hInsertAfter = hPrev;
 	        tvins.hParent      = hParent;
 
-	        hPrev = (HTREEITEM)TreeView_InsertItem32A (hwndTreeView, &tvins);
+	        hPrev = (HTREEITEM)TreeView_InsertItemA (hwndTreeView, &tvins);
 
 	      }
 	    }
@@ -159,15 +159,15 @@ static void FillTreeView(LPSHELLFOLDER lpsf, LPITEMIDLIST  pidl, HTREEITEM hPare
 
 Done:
 	ReleaseCapture();
-	SetCursor32(LoadCursor32A(0, IDC_ARROW32A));
+	SetCursor(LoadCursorA(0, IDC_ARROWA));
 
 	if (lpe)  lpe->lpvtbl->fnRelease(lpe);
 	if (pidlTemp )           SHFree(pidlTemp);
 }
 
-static LRESULT MsgNotify(HWND32 hWnd,  UINT32 CtlID, LPNMHDR lpnmh)
+static LRESULT MsgNotify(HWND hWnd,  UINT CtlID, LPNMHDR lpnmh)
 {	
-	NMTREEVIEW32A	*pnmtv   = (NMTREEVIEW32A *)lpnmh;
+	NMTREEVIEWA	*pnmtv   = (NMTREEVIEWA *)lpnmh;
 	LPTV_ITEMDATA	lptvid;  //Long pointer to TreeView item data
 	LPSHELLFOLDER	lpsf2=0;
 	
@@ -221,14 +221,14 @@ static LRESULT MsgNotify(HWND32 hWnd,  UINT32 CtlID, LPNMHDR lpnmh)
 /*************************************************************************
  *             BrsFolderDlgProc32  (not an exported API function)
  */
-BOOL32 WINAPI BrsFolderDlgProc32( HWND32 hWnd, UINT32 msg, WPARAM32 wParam,
+BOOL WINAPI BrsFolderDlgProc( HWND hWnd, UINT msg, WPARAM wParam,
                                LPARAM lParam )
 {    TRACE(shell,"hwnd=%i msg=%i 0x%08x 0x%08lx\n", hWnd,  msg, wParam, lParam );
 
 	switch(msg)
 	{ case WM_INITDIALOG:
 	    pidlRet = NULL;
-	    lpBrowseInfo = (LPBROWSEINFO32A) lParam;
+	    lpBrowseInfo = (LPBROWSEINFOA) lParam;
 	    if (lpBrowseInfo->lpfn)
 	      FIXME(shell,"Callbacks not implemented\n");
 	    if (lpBrowseInfo->ulFlags)
@@ -242,7 +242,7 @@ BOOL32 WINAPI BrsFolderDlgProc32( HWND32 hWnd, UINT32 msg, WPARAM32 wParam,
 	    return 1;
 
 	  case WM_NOTIFY:
-	    MsgNotify( hWnd, (UINT32)wParam, (LPNMHDR)lParam);
+	    MsgNotify( hWnd, (UINT)wParam, (LPNMHDR)lParam);
 	    break;
 	    
 	  case WM_COMMAND:
@@ -250,11 +250,11 @@ BOOL32 WINAPI BrsFolderDlgProc32( HWND32 hWnd, UINT32 msg, WPARAM32 wParam,
 	    { case IDOK:
 		pdump ( pidlRet );
 		_ILGetPidlPath (pidlRet, lpBrowseInfo->pszDisplayName, MAX_PATH);
-	        EndDialog32(hWnd, (DWORD) ILClone(pidlRet));
+	        EndDialog(hWnd, (DWORD) ILClone(pidlRet));
 	        return TRUE;
 
 	      case IDCANCEL:
-	        EndDialog32(hWnd, 0);
+	        EndDialog(hWnd, 0);
 	        return TRUE;
 	    }
 	    break;
@@ -267,11 +267,11 @@ extern LPCVOID _Resource_Dlg_SHBRSFORFOLDER_MSGBOX_0_data ;
  * SHBrowseForFolderA [SHELL32.209]
  *
  */
-LPITEMIDLIST WINAPI SHBrowseForFolder32A (LPBROWSEINFO32A lpbi)
+LPITEMIDLIST WINAPI SHBrowseForFolderA (LPBROWSEINFOA lpbi)
 {
 	TRACE(shell, "(%lx,%s) empty stub!\n", (DWORD)lpbi, lpbi->lpszTitle);
 
-	return (LPITEMIDLIST) DialogBoxIndirectParam32A( 0, 
+	return (LPITEMIDLIST) DialogBoxIndirectParamA( 0, 
 			&_Resource_Dlg_SHBRSFORFOLDER_MSGBOX_0_data, 0, 
-			BrsFolderDlgProc32, (INT32)lpbi );
+			BrsFolderDlgProc, (INT)lpbi );
 }

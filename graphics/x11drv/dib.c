@@ -26,7 +26,7 @@ static int ximageDepthTable[] = { 0, 0, 0,  0,  0,  0,  0 };
 /***********************************************************************
  *           X11DRV_DIB_Init
  */
-BOOL32 X11DRV_DIB_Init(void)
+BOOL X11DRV_DIB_Init(void)
 {
     int		i;
     XImage*	testimage;
@@ -73,7 +73,7 @@ int *X11DRV_DIB_BuildColorMap( DC *dc, WORD coloruse, WORD depth,
                                const BITMAPINFO *info, int *nColors )
 {
     int i, colors;
-    BOOL32 isInfo;
+    BOOL isInfo;
     WORD *colorPtr;
     int *colorMapping;
 
@@ -1125,14 +1125,14 @@ int X11DRV_DIB_GetImageBits( const DIB_SETIMAGEBITS_DESCR *descr )
  *		X11DRV_SetDIBitsToDevice
  *
  */
-INT32 X11DRV_SetDIBitsToDevice( DC *dc, INT32 xDest, INT32 yDest, DWORD cx,
-				DWORD cy, INT32 xSrc, INT32 ySrc,
-				UINT32 startscan, UINT32 lines, LPCVOID bits,
-				const BITMAPINFO *info, UINT32 coloruse )
+INT X11DRV_SetDIBitsToDevice( DC *dc, INT xDest, INT yDest, DWORD cx,
+				DWORD cy, INT xSrc, INT ySrc,
+				UINT startscan, UINT lines, LPCVOID bits,
+				const BITMAPINFO *info, UINT coloruse )
 {
     DIB_SETIMAGEBITS_DESCR descr;
     DWORD width, oldcy = cy;
-    INT32 result;
+    INT result;
     int height, tmpheight;
     X11DRV_PDEVICE *physDev = (X11DRV_PDEVICE *)dc->physDev;
 

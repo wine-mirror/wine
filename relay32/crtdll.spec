@@ -484,7 +484,7 @@ type	win32
 480 cdecl strtol(str ptr long) strtol
 481 cdecl strtoul(str ptr long) strtoul
 482 cdecl strxfrm(ptr str long) strxfrm
-483 varargs swprintf() wsprintf32W
+483 varargs swprintf() wsprintfW
 484 stub swscanf
 485 cdecl system(str) CRTDLL_system
 486 cdecl tan(double) tan

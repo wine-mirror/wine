@@ -63,7 +63,7 @@ static DWORD NE_FindNameTableId( NE_MODULE *pModule, LPCSTR typeId, LPCSTR resId
                 if (p[1] & 0x8000)
                 {
                     if (!HIWORD(typeId)) continue;
-                    if (lstrcmpi32A( typeId,
+                    if (lstrcmpiA( typeId,
                                      (char *)(p + 3) )) continue;
                 }
                 else if (HIWORD(typeId) || (((DWORD)typeId & ~0x8000)!= p[1]))
@@ -74,7 +74,7 @@ static DWORD NE_FindNameTableId( NE_MODULE *pModule, LPCSTR typeId, LPCSTR resId
                 if (p[2] & 0x8000)
                 {
                     if (!HIWORD(resId)) continue;
-                    if (lstrcmpi32A( resId,
+                    if (lstrcmpiA( resId,
                                (char*)(p+3)+strlen((char*)(p+3))+1 )) continue;
                     
                 }
@@ -113,7 +113,7 @@ NE_TYPEINFO *NE_FindTypeSection( LPBYTE pResTab,
 	    if (!(pTypeInfo->type_id & 0x8000))
 	    {
 		BYTE *p = pResTab + pTypeInfo->type_id;
-		if ((*p == len) && !lstrncmpi32A( p+1, str, len ))
+		if ((*p == len) && !lstrncmpiA( p+1, str, len ))
 		{
 		    TRACE(resource, "  Found type '%s'\n", str );
 		    return pTypeInfo;
@@ -160,7 +160,7 @@ NE_NAMEINFO *NE_FindResourceFromType( LPBYTE pResTab,
         {
             if (pNameInfo->id & 0x8000) continue;
             p = pResTab + pNameInfo->id;
-            if ((*p == len) && !lstrncmpi32A( p+1, str, len ))
+            if ((*p == len) && !lstrncmpiA( p+1, str, len ))
                 return pNameInfo;
         }
     }
@@ -183,7 +183,7 @@ NE_NAMEINFO *NE_FindResourceFromType( LPBYTE pResTab,
 HGLOBAL16 WINAPI NE_DefResourceHandler( HGLOBAL16 hMemObj, HMODULE16 hModule,
                                         HRSRC16 hRsrc )
 {
-    HANDLE32 fd;
+    HANDLE fd;
     NE_MODULE* pModule = NE_GetPtr( hModule );
     if (pModule && (fd = NE_OpenFile( pModule )) >= 0)
     {
@@ -197,7 +197,7 @@ HGLOBAL16 WINAPI NE_DefResourceHandler( HGLOBAL16 hMemObj, HMODULE16 hModule,
 	if( hMemObj )
 	    handle = GlobalReAlloc16( hMemObj, pNameInfo->length << sizeShift, 0 );
 	else
-	    handle = AllocResource( hModule, hRsrc, 0 );
+	    handle = AllocResource16( hModule, hRsrc, 0 );
 
 	if( handle )
 	{
@@ -216,7 +216,7 @@ HGLOBAL16 WINAPI NE_DefResourceHandler( HGLOBAL16 hMemObj, HMODULE16 hModule,
  *
  * Fill in 'resloader' fields in the resource table.
  */
-BOOL32 NE_InitResourceHandler( HMODULE16 hModule )
+BOOL NE_InitResourceHandler( HMODULE16 hModule )
 {
     NE_MODULE *pModule = NE_GetPtr( hModule );
     NE_TYPEINFO *pTypeInfo = (NE_TYPEINFO *)((char *)pModule + pModule->res_table + 2);
@@ -237,7 +237,7 @@ BOOL32 NE_InitResourceHandler( HMODULE16 hModule )
 /**********************************************************************
  *	SetResourceHandler	(KERNEL.43)
  */
-FARPROC16 WINAPI SetResourceHandler( HMODULE16 hModule, SEGPTR typeId,
+FARPROC16 WINAPI SetResourceHandler16( HMODULE16 hModule, SEGPTR typeId,
                                      FARPROC16 resourceHandler )
 {
     FARPROC16 prevHandler = NULL;
@@ -333,7 +333,7 @@ HRSRC16 NE_FindResource( NE_MODULE *pModule, LPCSTR name, LPCSTR type )
 /**********************************************************************
  *	    AllocResource    (KERNEL.66)
  */
-HGLOBAL16 WINAPI AllocResource( HMODULE16 hModule, HRSRC16 hRsrc, DWORD size)
+HGLOBAL16 WINAPI AllocResource16( HMODULE16 hModule, HRSRC16 hRsrc, DWORD size)
 {
     NE_NAMEINFO *pNameInfo=NULL;
     WORD sizeShift;
@@ -356,7 +356,7 @@ HGLOBAL16 WINAPI AllocResource( HMODULE16 hModule, HRSRC16 hRsrc, DWORD size)
  *
  * Check Schulman, p. 232 for details
  */
-HGLOBAL16 WINAPI DirectResAlloc( HINSTANCE16 hInstance, WORD wType,
+HGLOBAL16 WINAPI DirectResAlloc16( HINSTANCE16 hInstance, WORD wType,
                                  UINT16 wSize )
 {
     TRACE(resource,"(%04x,%04x,%04x)\n",

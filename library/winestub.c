@@ -4,13 +4,13 @@
 #include "windows.h"
 #include "xmalloc.h"
 
-extern int PASCAL WinMain(HINSTANCE32,HINSTANCE32,LPSTR,int);
+extern int PASCAL WinMain(HINSTANCE,HINSTANCE,LPSTR,int);
 
 /* external declaration here because we don't want to depend on Wine headers */
 #ifdef __cplusplus
-extern "C" HINSTANCE32 MAIN_WinelibInit( int *argc, char *argv[] );
+extern "C" HINSTANCE MAIN_WinelibInit( int *argc, char *argv[] );
 #else
-extern HINSTANCE32 MAIN_WinelibInit( int *argc, char *argv[] );
+extern HINSTANCE MAIN_WinelibInit( int *argc, char *argv[] );
 #endif
 
 /* Most Windows C/C++ compilers use something like this to */
@@ -20,7 +20,7 @@ char **_ARGV;
 
 int main( int argc, char *argv [] )
 {
-  HINSTANCE32 hInstance;
+  HINSTANCE hInstance;
   LPSTR lpszCmdParam;
   int i, len = 0;
   _ARGC = argc;

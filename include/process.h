@@ -30,7 +30,7 @@ typedef struct
 } HANDLE_TABLE;
 
 /* Current Process pseudo-handle - Returned by GetCurrentProcess*/
-#define CURRENT_PROCESS_PSEUDOHANDLE ((HANDLE32)0x7fffffff)
+#define CURRENT_PROCESS_PSEUDOHANDLE ((HANDLE)0x7fffffff)
 
 /* Win32 process environment database */
 typedef struct
@@ -39,10 +39,10 @@ typedef struct
     DWORD            unknown1;         /* 04 Unknown */
     LPSTR            cmd_line;         /* 08 Command line */
     LPSTR            cur_dir;          /* 0c Current directory */
-    STARTUPINFO32A  *startup_info;     /* 10 Startup information */
-    HANDLE32         hStdin;           /* 14 Handle for standard input */
-    HANDLE32         hStdout;          /* 18 Handle for standard output */
-    HANDLE32         hStderr;          /* 1c Handle for standard error */
+    STARTUPINFOA  *startup_info;     /* 10 Startup information */
+    HANDLE         hStdin;           /* 14 Handle for standard input */
+    HANDLE         hStdout;          /* 18 Handle for standard output */
+    HANDLE         hStderr;          /* 1c Handle for standard error */
     DWORD            unknown2;         /* 20 Unknown */
     DWORD            inherit_console;  /* 24 Inherit console flag */
     DWORD            break_type;       /* 28 Console events flag */
@@ -57,15 +57,15 @@ typedef struct
 } ENVDB;
 
 /* Win32 process database */
-typedef struct _PDB32
+typedef struct _PDB
 {
     K32OBJ           header;           /* 00 Kernel object header */
     DWORD            unknown1;         /* 08 Unknown */
     K32OBJ          *event;            /* 0c Pointer to an event object (unused) */
     DWORD            exit_code;        /* 10 Process exit code */
     DWORD            unknown2;         /* 14 Unknown */
-    HANDLE32         heap;             /* 18 Default process heap */
-    HANDLE32         mem_context;      /* 1c Process memory context */
+    HANDLE         heap;             /* 18 Default process heap */
+    HANDLE         mem_context;      /* 1c Process memory context */
     DWORD            flags;            /* 20 Flags */
     void            *pdb16;            /* 24 DOS PSP */
     WORD             PSP_sel;          /* 28 Selector to DOS PSP */
@@ -74,12 +74,12 @@ typedef struct _PDB32
     WORD             running_threads;  /* 2e Number of running threads */
     WORD             unknown3;         /* 30 Unknown */
     WORD             ring0_threads;    /* 32 Number of ring 0 threads */
-    HANDLE32         system_heap;      /* 34 System heap to allocate handles */
-    HTASK32          task;             /* 38 Win16 task */
+    HANDLE         system_heap;      /* 34 System heap to allocate handles */
+    HTASK          task;             /* 38 Win16 task */
     void            *mem_map_files;    /* 3c Pointer to mem-mapped files */
     ENVDB           *env_db;           /* 40 Environment database */
     HANDLE_TABLE    *handle_table;     /* 44 Handle table */
-    struct _PDB32   *parent;           /* 48 Parent process */
+    struct _PDB   *parent;           /* 48 Parent process */
     WINE_MODREF     *modref_list;      /* 4c MODREF list */
     void            *thread_list;      /* 50 List of threads */
     void            *debuggee_CB;      /* 54 Debuggee context block */
@@ -90,26 +90,26 @@ typedef struct _PDB32
     K32OBJ          *console;          /* 84 Console */
     DWORD            tls_bits[2];      /* 88 TLS in-use bits */
     DWORD            process_dword;    /* 90 Unknown */
-    struct _PDB32   *group;            /* 94 Process group */
+    struct _PDB   *group;            /* 94 Process group */
     WINE_MODREF     *exe_modref;       /* 98 MODREF for the process EXE */
     LPTOP_LEVEL_EXCEPTION_FILTER top_filter; /* 9c Top exception filter */
     DWORD            priority;         /* a0 Priority level */
-    HANDLE32         heap_list;        /* a4 Head of process heap list */
+    HANDLE         heap_list;        /* a4 Head of process heap list */
     void            *heap_handles;     /* a8 Head of heap handles list */
     DWORD            unknown6;         /* ac Unknown */
     K32OBJ          *console_provider; /* b0 Console provider (??) */
     WORD             env_selector;     /* b4 Selector to process environment */
     WORD             error_mode;       /* b6 Error mode */
-    HANDLE32         load_done_evt;    /* b8 Event for process loading done */
+    HANDLE         load_done_evt;    /* b8 Event for process loading done */
     DWORD            unknown7;         /* bc Unknown */
     DWORD            unknown8;         /* c0 Unknown (NT) */
     LCID             locale;           /* c4 Locale to be queried by GetThreadLocale (NT) */
     /* The following are Wine-specific fields */
     void            *server_pid;       /*    Server id for this process */
-    HANDLE32        *dos_handles;      /*    Handles mapping DOS -> Win32 */
-    struct _PDB32   *list_next;        /*    List reference - list of PDB's */
-    struct _PDB32   *list_prev;        /*    List reference - list of PDB's */
-} PDB32;
+    HANDLE        *dos_handles;      /*    Handles mapping DOS -> Win32 */
+    struct _PDB   *list_next;        /*    List reference - list of PDB's */
+    struct _PDB   *list_prev;        /*    List reference - list of PDB's */
+} PDB;
 
 /* Process flags */
 #define PDB32_WIN16_PROC    0x0008  /* Win16 process */
@@ -120,44 +120,44 @@ typedef struct _PDB32
 
 /* PDB <-> Process id conversion macros */
 #define PROCESS_OBFUSCATOR     ((DWORD)0xdeadbeef)
-#define PROCESS_ID_TO_PDB(id)  ((PDB32 *)((id) ^ PROCESS_OBFUSCATOR))
+#define PROCESS_ID_TO_PDB(id)  ((PDB *)((id) ^ PROCESS_OBFUSCATOR))
 #define PDB_TO_PROCESS_ID(pdb) ((DWORD)(pdb) ^ PROCESS_OBFUSCATOR)
 
 /* scheduler/environ.c */
-extern BOOL32 ENV_BuildEnvironment( PDB32 *pdb );
-extern BOOL32 ENV_InheritEnvironment( PDB32 *pdb, LPCSTR env );
-extern void ENV_FreeEnvironment( PDB32 *pdb );
+extern BOOL ENV_BuildEnvironment( PDB *pdb );
+extern BOOL ENV_InheritEnvironment( PDB *pdb, LPCSTR env );
+extern void ENV_FreeEnvironment( PDB *pdb );
 
 /* scheduler/handle.c */
-extern BOOL32 HANDLE_CreateTable( PDB32 *pdb, BOOL32 inherit );
-extern HANDLE32 HANDLE_Alloc( PDB32 *pdb, K32OBJ *ptr, DWORD access,
-                              BOOL32 inherit, int server_handle );
-extern int HANDLE_GetServerHandle( PDB32 *pdb, HANDLE32 handle,
+extern BOOL HANDLE_CreateTable( PDB *pdb, BOOL inherit );
+extern HANDLE HANDLE_Alloc( PDB *pdb, K32OBJ *ptr, DWORD access,
+                              BOOL inherit, int server_handle );
+extern int HANDLE_GetServerHandle( PDB *pdb, HANDLE handle,
                                    K32OBJ_TYPE type, DWORD access );
-extern void HANDLE_CloseAll( PDB32 *pdb, K32OBJ *ptr );
+extern void HANDLE_CloseAll( PDB *pdb, K32OBJ *ptr );
 
 /* Global handle macros */
 #define HANDLE_OBFUSCATOR         ((DWORD)0x544a4def)
 #define HANDLE_IS_GLOBAL(h)       (((DWORD)(h) ^ HANDLE_OBFUSCATOR) < 0x10000)
-#define HANDLE_LOCAL_TO_GLOBAL(h) ((HANDLE32)((DWORD)(h) ^ HANDLE_OBFUSCATOR))
-#define HANDLE_GLOBAL_TO_LOCAL(h) ((HANDLE32)((DWORD)(h) ^ HANDLE_OBFUSCATOR))
+#define HANDLE_LOCAL_TO_GLOBAL(h) ((HANDLE)((DWORD)(h) ^ HANDLE_OBFUSCATOR))
+#define HANDLE_GLOBAL_TO_LOCAL(h) ((HANDLE)((DWORD)(h) ^ HANDLE_OBFUSCATOR))
 
 
 /* scheduler/process.c */
-extern BOOL32 PROCESS_Init( void );
-extern PDB32 *PROCESS_Current(void);
-extern BOOL32 PROCESS_IsCurrent( HANDLE32 handle );
-extern PDB32 *PROCESS_Initial(void);
-extern PDB32 *PROCESS_IdToPDB( DWORD id );
-extern PDB32 *PROCESS_Create( struct _NE_MODULE *pModule, LPCSTR cmd_line,
+extern BOOL PROCESS_Init( void );
+extern PDB *PROCESS_Current(void);
+extern BOOL PROCESS_IsCurrent( HANDLE handle );
+extern PDB *PROCESS_Initial(void);
+extern PDB *PROCESS_IdToPDB( DWORD id );
+extern PDB *PROCESS_Create( struct _NE_MODULE *pModule, LPCSTR cmd_line,
                               LPCSTR env, HINSTANCE16 hInstance,
-                              HINSTANCE16 hPrevInstance, BOOL32 inherit,
-                              STARTUPINFO32A *startup, PROCESS_INFORMATION *info );
+                              HINSTANCE16 hPrevInstance, BOOL inherit,
+                              STARTUPINFOA *startup, PROCESS_INFORMATION *info );
 extern void PROCESS_SuspendOtherThreads(void);
 extern void PROCESS_ResumeOtherThreads(void);
 extern int  	PROCESS_PDBList_Getsize (void);
-extern PDB32*  	PROCESS_PDBList_Getfirst (void);
-extern PDB32*  	PROCESS_PDBList_Getnext (PDB32*);
+extern PDB*  	PROCESS_PDBList_Getfirst (void);
+extern PDB*  	PROCESS_PDBList_Getnext (PDB*);
 
 #endif  /* __WINE_PROCESS_H */
 

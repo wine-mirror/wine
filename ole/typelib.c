@@ -62,12 +62,12 @@ QueryPathOfRegTypeLib16(
  *	path of typelib
  */
 HRESULT WINAPI
-QueryPathOfRegTypeLib32(	
+QueryPathOfRegTypeLib(	
 	REFGUID guid,	/* [in] referenced guid */
 	WORD wMaj,	/* [in] major version */
 	WORD wMin,	/* [in] minor version */
 	LCID lcid,	/* [in] locale id */
-	LPBSTR32 path	/* [out] path of typelib */
+	LPBSTR path	/* [out] path of typelib */
 ) {
 	char	xguid[80];
 	char	typelibkey[100],pathname[260];
@@ -104,7 +104,7 @@ QueryPathOfRegTypeLib32(
  *    Failure: Status
  */
 HRESULT WINAPI LoadTypeLib16(
-    OLECHAR32 *szFile, /* [in] Name of file to load from */
+    OLECHAR *szFile, /* [in] Name of file to load from */
     void * *pptLib) /* [out] Pointer to pointer to loaded type library */
 {
     FIXME(ole, "('%s',%p): stub\n",debugstr_w((LPWSTR)szFile),pptLib);
@@ -126,8 +126,8 @@ HRESULT WINAPI LoadTypeLib16(
  *    Success: S_OK
  *    Failure: Status
  */
-HRESULT WINAPI LoadTypeLib32(
-    OLECHAR32 *szFile,   /* [in] Name of file to load from */
+HRESULT WINAPI LoadTypeLib(
+    OLECHAR *szFile,   /* [in] Name of file to load from */
     void * *pptLib) /* [out] Pointer to pointer to loaded type library */
 {
     FIXME(ole, "('%s',%p): stub\n",debugstr_w(szFile),pptLib);
@@ -168,10 +168,10 @@ HRESULT WINAPI LoadRegTypeLib(
  *    Success: S_OK
  *    Failure: Status
  */
-HRESULT WINAPI RegisterTypeLib32(
+HRESULT WINAPI RegisterTypeLib(
      ITypeLib * ptlib,      /*[in] Pointer to the library*/
-     OLECHAR32 * szFullPath, /*[in] full Path of the library*/
-     OLECHAR32 * szHelpDir)  /*[in] dir to the helpfile for the library, may be NULL*/
+     OLECHAR * szFullPath, /*[in] full Path of the library*/
+     OLECHAR * szHelpDir)  /*[in] dir to the helpfile for the library, may be NULL*/
 {   FIXME(ole, "(%p,%s,%s): stub\n",ptlib, debugstr_w(szFullPath),debugstr_w(szHelpDir));
     return S_OK;	/* FIXME: pretend everything is OK */
 }
@@ -181,7 +181,7 @@ HRESULT WINAPI RegisterTypeLib32(
  * RETURNS
  *	path of typelib
  */
-DWORD WINAPI OABuildVersion(void)
+DWORD WINAPI OABuildVersion16(void)
 {
 WINDOWS_VERSION ver = VERSION_GetVersion();
 

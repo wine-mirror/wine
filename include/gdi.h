@@ -107,117 +107,117 @@ typedef struct
     short         breakExtra;        /* breakTotalExtra / breakCount */
     short         breakRem;          /* breakTotalExtra % breakCount */
 
-    RECT32        totalExtent;
+    RECT        totalExtent;
     BYTE          bitsPerPixel;
 
-    INT32         MapMode;
-    INT32         GraphicsMode;      /* Graphics mode */
-    INT32         DCOrgX;            /* DC origin */
-    INT32         DCOrgY;
+    INT         MapMode;
+    INT         GraphicsMode;      /* Graphics mode */
+    INT         DCOrgX;            /* DC origin */
+    INT         DCOrgY;
     FARPROC16     lpfnPrint;         /* AbortProc for Printing */
-    INT32         CursPosX;          /* Current position */
-    INT32         CursPosY;
-    INT32         ArcDirection;
+    INT         CursPosX;          /* Current position */
+    INT         CursPosY;
+    INT         ArcDirection;
     XFORM         xformWorld2Wnd;    /* World-to-window transformation */
     XFORM         xformWorld2Vport;  /* World-to-viewport transformation */
     XFORM         xformVport2World;  /* Inverse of the above transformation */
-    BOOL32        vport2WorldValid;  /* Is xformVport2World valid? */
+    BOOL        vport2WorldValid;  /* Is xformVport2World valid? */
 } WIN_DC_INFO;
 
 typedef struct tagDC
 {
     GDIOBJHDR      header;
-    HDC32          hSelf;            /* Handle to this DC */
+    HDC          hSelf;            /* Handle to this DC */
     const struct tagDC_FUNCS *funcs; /* DC function table */
     void          *physDev;          /* Physical device (driver-specific) */
-    INT32          saveLevel;
+    INT          saveLevel;
     DWORD          dwHookData;
     FARPROC16      hookProc;
 
-    INT32          wndOrgX;          /* Window origin */
-    INT32          wndOrgY;
-    INT32          wndExtX;          /* Window extent */
-    INT32          wndExtY;
-    INT32          vportOrgX;        /* Viewport origin */
-    INT32          vportOrgY;
-    INT32          vportExtX;        /* Viewport extent */
-    INT32          vportExtY;
+    INT          wndOrgX;          /* Window origin */
+    INT          wndOrgY;
+    INT          wndExtX;          /* Window extent */
+    INT          wndExtY;
+    INT          vportOrgX;        /* Viewport origin */
+    INT          vportOrgY;
+    INT          vportExtX;        /* Viewport extent */
+    INT          vportExtY;
 
     WIN_DC_INFO w;
 } DC;
 
 /* Device functions for the Wine driver interface */
 
-typedef INT32 (*DEVICEFONTENUMPROC)(LPENUMLOGFONT16,LPNEWTEXTMETRIC16,UINT16,LPARAM);
+typedef INT (*DEVICEFONTENUMPROC)(LPENUMLOGFONT16,LPNEWTEXTMETRIC16,UINT16,LPARAM);
 
 typedef struct tagDC_FUNCS
 {
-    BOOL32     (*pArc)(DC*,INT32,INT32,INT32,INT32,INT32,INT32,INT32,INT32);
-    BOOL32     (*pBitBlt)(DC*,INT32,INT32,INT32,INT32,DC*,INT32,INT32,DWORD);
-    LONG       (*pBitmapBits)(HBITMAP32,void*,LONG,WORD);
-    BOOL32     (*pChord)(DC*,INT32,INT32,INT32,INT32,INT32,INT32,INT32,INT32);
-    BOOL32     (*pCreateBitmap)(HBITMAP32); 
-    BOOL32     (*pCreateDC)(DC*,LPCSTR,LPCSTR,LPCSTR,const DEVMODE16*);
-    BOOL32     (*pDeleteDC)(DC*);
-    BOOL32     (*pDeleteObject)(HGDIOBJ32);
-    BOOL32     (*pEllipse)(DC*,INT32,INT32,INT32,INT32);
-    BOOL32     (*pEnumDeviceFonts)(DC*,LPLOGFONT16,DEVICEFONTENUMPROC,LPARAM);
-    INT32      (*pEscape)(DC*,INT32,INT32,SEGPTR,SEGPTR);
-    INT32      (*pExcludeClipRect)(DC*,INT32,INT32,INT32,INT32);
-    INT32      (*pExcludeVisRect)(DC*,INT32,INT32,INT32,INT32);
-    BOOL32     (*pExtFloodFill)(DC*,INT32,INT32,COLORREF,UINT32);
-    BOOL32     (*pExtTextOut)(DC*,INT32,INT32,UINT32,const RECT32*,LPCSTR,UINT32,const INT32*);
-    BOOL32     (*pGetCharWidth)(DC*,UINT32,UINT32,LPINT32);
-    COLORREF   (*pGetPixel)(DC*,INT32,INT32);
-    BOOL32     (*pGetTextExtentPoint)(DC*,LPCSTR,INT32,LPSIZE32);
-    BOOL32     (*pGetTextMetrics)(DC*,TEXTMETRIC32A*);
-    INT32      (*pIntersectClipRect)(DC*,INT32,INT32,INT32,INT32);
-    INT32      (*pIntersectVisRect)(DC*,INT32,INT32,INT32,INT32);
-    BOOL32     (*pLineTo)(DC*,INT32,INT32);
-    HANDLE32   (*pLoadOEMResource)(WORD,WORD);
-    BOOL32     (*pMoveToEx)(DC*,INT32,INT32,LPPOINT32);
-    INT32      (*pOffsetClipRgn)(DC*,INT32,INT32);
-    BOOL32     (*pOffsetViewportOrg)(DC*,INT32,INT32);
-    BOOL32     (*pOffsetWindowOrg)(DC*,INT32,INT32);
-    BOOL32     (*pPaintRgn)(DC*,HRGN32);
-    BOOL32     (*pPatBlt)(DC*,INT32,INT32,INT32,INT32,DWORD);
-    BOOL32     (*pPie)(DC*,INT32,INT32,INT32,INT32,INT32,INT32,INT32,INT32);
-    BOOL32     (*pPolyPolygon)(DC*,const POINT32*,const INT32*,UINT32);
-    BOOL32     (*pPolyPolyline)(DC*,const POINT32*,const DWORD*,DWORD);
-    BOOL32     (*pPolygon)(DC*,const POINT32*,INT32);
-    BOOL32     (*pPolyline)(DC*,const POINT32*,INT32);
-    BOOL32     (*pPolyBezier)(DC*,POINT32, const POINT32*,DWORD);
-    UINT32     (*pRealizePalette)(DC*);
-    BOOL32     (*pRectangle)(DC*,INT32,INT32,INT32,INT32);
-    BOOL32     (*pRestoreDC)(DC*,INT32);
-    BOOL32     (*pRoundRect)(DC*,INT32,INT32,INT32,INT32,INT32,INT32);
-    INT32      (*pSaveDC)(DC*);
-    BOOL32     (*pScaleViewportExt)(DC*,INT32,INT32,INT32,INT32);
-    BOOL32     (*pScaleWindowExt)(DC*,INT32,INT32,INT32,INT32);
-    INT32      (*pSelectClipRgn)(DC*,HRGN32);
-    HANDLE32   (*pSelectObject)(DC*,HANDLE32);
-    HPALETTE32 (*pSelectPalette)(DC*,HPALETTE32,BOOL32);
+    BOOL     (*pArc)(DC*,INT,INT,INT,INT,INT,INT,INT,INT);
+    BOOL     (*pBitBlt)(DC*,INT,INT,INT,INT,DC*,INT,INT,DWORD);
+    LONG       (*pBitmapBits)(HBITMAP,void*,LONG,WORD);
+    BOOL     (*pChord)(DC*,INT,INT,INT,INT,INT,INT,INT,INT);
+    BOOL     (*pCreateBitmap)(HBITMAP); 
+    BOOL     (*pCreateDC)(DC*,LPCSTR,LPCSTR,LPCSTR,const DEVMODE16*);
+    BOOL     (*pDeleteDC)(DC*);
+    BOOL     (*pDeleteObject)(HGDIOBJ);
+    BOOL     (*pEllipse)(DC*,INT,INT,INT,INT);
+    BOOL     (*pEnumDeviceFonts)(DC*,LPLOGFONT16,DEVICEFONTENUMPROC,LPARAM);
+    INT      (*pEscape)(DC*,INT,INT,SEGPTR,SEGPTR);
+    INT      (*pExcludeClipRect)(DC*,INT,INT,INT,INT);
+    INT      (*pExcludeVisRect)(DC*,INT,INT,INT,INT);
+    BOOL     (*pExtFloodFill)(DC*,INT,INT,COLORREF,UINT);
+    BOOL     (*pExtTextOut)(DC*,INT,INT,UINT,const RECT*,LPCSTR,UINT,const INT*);
+    BOOL     (*pGetCharWidth)(DC*,UINT,UINT,LPINT);
+    COLORREF   (*pGetPixel)(DC*,INT,INT);
+    BOOL     (*pGetTextExtentPoint)(DC*,LPCSTR,INT,LPSIZE);
+    BOOL     (*pGetTextMetrics)(DC*,TEXTMETRICA*);
+    INT      (*pIntersectClipRect)(DC*,INT,INT,INT,INT);
+    INT      (*pIntersectVisRect)(DC*,INT,INT,INT,INT);
+    BOOL     (*pLineTo)(DC*,INT,INT);
+    HANDLE   (*pLoadOEMResource)(WORD,WORD);
+    BOOL     (*pMoveToEx)(DC*,INT,INT,LPPOINT);
+    INT      (*pOffsetClipRgn)(DC*,INT,INT);
+    BOOL     (*pOffsetViewportOrg)(DC*,INT,INT);
+    BOOL     (*pOffsetWindowOrg)(DC*,INT,INT);
+    BOOL     (*pPaintRgn)(DC*,HRGN);
+    BOOL     (*pPatBlt)(DC*,INT,INT,INT,INT,DWORD);
+    BOOL     (*pPie)(DC*,INT,INT,INT,INT,INT,INT,INT,INT);
+    BOOL     (*pPolyPolygon)(DC*,const POINT*,const INT*,UINT);
+    BOOL     (*pPolyPolyline)(DC*,const POINT*,const DWORD*,DWORD);
+    BOOL     (*pPolygon)(DC*,const POINT*,INT);
+    BOOL     (*pPolyline)(DC*,const POINT*,INT);
+    BOOL     (*pPolyBezier)(DC*,POINT, const POINT*,DWORD);
+    UINT     (*pRealizePalette)(DC*);
+    BOOL     (*pRectangle)(DC*,INT,INT,INT,INT);
+    BOOL     (*pRestoreDC)(DC*,INT);
+    BOOL     (*pRoundRect)(DC*,INT,INT,INT,INT,INT,INT);
+    INT      (*pSaveDC)(DC*);
+    BOOL     (*pScaleViewportExt)(DC*,INT,INT,INT,INT);
+    BOOL     (*pScaleWindowExt)(DC*,INT,INT,INT,INT);
+    INT      (*pSelectClipRgn)(DC*,HRGN);
+    HANDLE   (*pSelectObject)(DC*,HANDLE);
+    HPALETTE (*pSelectPalette)(DC*,HPALETTE,BOOL);
     COLORREF   (*pSetBkColor)(DC*,COLORREF);
     WORD       (*pSetBkMode)(DC*,WORD);
     VOID       (*pSetDeviceClipping)(DC*);
-    INT32      (*pSetDIBitsToDevice)(DC*,INT32,INT32,DWORD,DWORD,INT32,INT32,UINT32,UINT32,LPCVOID,const BITMAPINFO*,UINT32);
-    INT32      (*pSetMapMode)(DC*,INT32);
+    INT      (*pSetDIBitsToDevice)(DC*,INT,INT,DWORD,DWORD,INT,INT,UINT,UINT,LPCVOID,const BITMAPINFO*,UINT);
+    INT      (*pSetMapMode)(DC*,INT);
     DWORD      (*pSetMapperFlags)(DC*,DWORD);
-    COLORREF   (*pSetPixel)(DC*,INT32,INT32,COLORREF);
+    COLORREF   (*pSetPixel)(DC*,INT,INT,COLORREF);
     WORD       (*pSetPolyFillMode)(DC*,WORD);
     WORD       (*pSetROP2)(DC*,WORD);
     WORD       (*pSetRelAbs)(DC*,WORD);
     WORD       (*pSetStretchBltMode)(DC*,WORD);
     WORD       (*pSetTextAlign)(DC*,WORD);
-    INT32      (*pSetTextCharacterExtra)(DC*,INT32);
+    INT      (*pSetTextCharacterExtra)(DC*,INT);
     DWORD      (*pSetTextColor)(DC*,DWORD);
-    INT32      (*pSetTextJustification)(DC*,INT32,INT32);
-    BOOL32     (*pSetViewportExt)(DC*,INT32,INT32);
-    BOOL32     (*pSetViewportOrg)(DC*,INT32,INT32);
-    BOOL32     (*pSetWindowExt)(DC*,INT32,INT32);
-    BOOL32     (*pSetWindowOrg)(DC*,INT32,INT32);
-    BOOL32     (*pStretchBlt)(DC*,INT32,INT32,INT32,INT32,DC*,INT32,INT32,INT32,INT32,DWORD);
-    INT32     (*pStretchDIBits)(DC*,INT32,INT32,INT32,INT32,INT32,INT32,INT32,INT32,const void *,const BITMAPINFO *,UINT32,DWORD);
+    INT      (*pSetTextJustification)(DC*,INT,INT);
+    BOOL     (*pSetViewportExt)(DC*,INT,INT);
+    BOOL     (*pSetViewportOrg)(DC*,INT,INT);
+    BOOL     (*pSetWindowExt)(DC*,INT,INT);
+    BOOL     (*pSetWindowOrg)(DC*,INT,INT);
+    BOOL     (*pStretchBlt)(DC*,INT,INT,INT,INT,DC*,INT,INT,INT,INT,DWORD);
+    INT     (*pStretchDIBits)(DC*,INT,INT,INT,INT,INT,INT,INT,INT,const void *,const BITMAPINFO *,UINT,DWORD);
 } DC_FUNCTIONS;
 
   /* LoadOEMResource types */
@@ -284,7 +284,7 @@ typedef struct tagFLOAT_POINT
  * transformation process is done in floating point internally. This function
  * is then used to round these coordinates to integer values.
  */
-static __inline__ INT32 WINE_UNUSED GDI_ROUND(FLOAT val)
+static __inline__ INT WINE_UNUSED GDI_ROUND(FLOAT val)
 {
    return (int)floor(val + 0.5);
 }
@@ -292,7 +292,7 @@ static __inline__ INT32 WINE_UNUSED GDI_ROUND(FLOAT val)
 /* Performs a viewport-to-world transformation on the specified point (which
  * is in floating point format). Returns TRUE if successful, else FALSE.
  */
-static __inline__ BOOL32 WINE_UNUSED INTERNAL_DPTOLP_FLOAT(DC *dc, FLOAT_POINT *point)
+static __inline__ BOOL WINE_UNUSED INTERNAL_DPTOLP_FLOAT(DC *dc, FLOAT_POINT *point)
 {
     FLOAT x, y;
     
@@ -316,7 +316,7 @@ static __inline__ BOOL32 WINE_UNUSED INTERNAL_DPTOLP_FLOAT(DC *dc, FLOAT_POINT *
 /* Performs a viewport-to-world transformation on the specified point (which
  * is in integer format). Returns TRUE if successful, else FALSE.
  */
-static __inline__ BOOL32 WINE_UNUSED INTERNAL_DPTOLP(DC *dc, LPPOINT32 point)
+static __inline__ BOOL WINE_UNUSED INTERNAL_DPTOLP(DC *dc, LPPOINT point)
 {
     FLOAT_POINT floatPoint;
     
@@ -354,7 +354,7 @@ static __inline__ void WINE_UNUSED INTERNAL_LPTODP_FLOAT(DC *dc, FLOAT_POINT *po
 /* Performs a world-to-viewport transformation on the specified point (which
  * is in integer format).
  */
-static __inline__ void WINE_UNUSED INTERNAL_LPTODP(DC *dc, LPPOINT32 point)
+static __inline__ void WINE_UNUSED INTERNAL_LPTODP(DC *dc, LPPOINT point)
 {
     FLOAT_POINT floatPoint;
     
@@ -410,13 +410,13 @@ extern WORD GDI_HeapSel;
       ((HGDIOBJ16)(handle)<=LAST_STOCK_HANDLE)) ? \
       0 : LOCAL_Unlock( GDI_HeapSel, (handle) ))
 
-extern BOOL32 GDI_Init(void);
+extern BOOL GDI_Init(void);
 extern HGDIOBJ16 GDI_AllocObject( WORD, WORD );
-extern BOOL32 GDI_FreeObject( HGDIOBJ16 );
+extern BOOL GDI_FreeObject( HGDIOBJ16 );
 extern GDIOBJHDR * GDI_GetObjPtr( HGDIOBJ16, WORD );
 
-extern BOOL32 DRIVER_RegisterDriver( LPCSTR name, const DC_FUNCTIONS *funcs );
+extern BOOL DRIVER_RegisterDriver( LPCSTR name, const DC_FUNCTIONS *funcs );
 extern const DC_FUNCTIONS *DRIVER_FindDriver( LPCSTR name );
-extern BOOL32 DRIVER_UnregisterDriver( LPCSTR name );
+extern BOOL DRIVER_UnregisterDriver( LPCSTR name );
 
 #endif  /* __WINE_GDI_H */

@@ -193,7 +193,7 @@ REGS_ENTRYPOINT(RaiseException)
 DWORD WINAPI UnhandledExceptionFilter(PEXCEPTION_POINTERS epointers)
 {
     char message[80];
-    PDB32 *pdb = PROCESS_Current();
+    PDB *pdb = PROCESS_Current();
 
     /* FIXME: Should check if the process is being debugged */
 
@@ -208,7 +208,7 @@ DWORD WINAPI UnhandledExceptionFilter(PEXCEPTION_POINTERS epointers)
     sprintf( message, "Unhandled exception 0x%08lx at address 0x%08lx.",
              epointers->ExceptionRecord->ExceptionCode,
              (DWORD)epointers->ExceptionRecord->ExceptionAddress );
-    MessageBox32A( 0, message, "Error", MB_OK | MB_ICONHAND );
+    MessageBoxA( 0, message, "Error", MB_OK | MB_ICONHAND );
     return EXCEPTION_EXECUTE_HANDLER;
 }
 
@@ -219,7 +219,7 @@ DWORD WINAPI UnhandledExceptionFilter(PEXCEPTION_POINTERS epointers)
 LPTOP_LEVEL_EXCEPTION_FILTER WINAPI SetUnhandledExceptionFilter(
                                           LPTOP_LEVEL_EXCEPTION_FILTER filter )
 {
-    PDB32 *pdb = PROCESS_Current();
+    PDB *pdb = PROCESS_Current();
     LPTOP_LEVEL_EXCEPTION_FILTER old = pdb->top_filter;
     pdb->top_filter = filter;
     return old;

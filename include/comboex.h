@@ -11,7 +11,7 @@
 typedef struct tagCOMBOEX_INFO
 {
     HIMAGELIST himl;
-    HWND32     hwndCombo;
+    HWND     hwndCombo;
     DWORD      dwExtStyle;
 
 

@@ -20,7 +20,7 @@ HFONT16 PSDRV_FONT_SelectObject( DC * dc, HFONT16 hfont,
     HFONT16 prevfont = dc->w.hFont;
     PSDRV_PDEVICE *physDev = (PSDRV_PDEVICE *)dc->physDev;
     LOGFONT16 *lf = &(font->logfont);
-    BOOL32 bd = FALSE, it = FALSE;
+    BOOL bd = FALSE, it = FALSE;
     AFMLISTENTRY *afmle;
     AFM *afm;
     FONTFAMILY *family;
@@ -143,7 +143,7 @@ HFONT16 PSDRV_FONT_SelectObject( DC * dc, HFONT16 hfont,
 /***********************************************************************
  *           PSDRV_GetTextMetrics
  */
-BOOL32 PSDRV_GetTextMetrics(DC *dc, TEXTMETRIC32A *metrics)
+BOOL PSDRV_GetTextMetrics(DC *dc, TEXTMETRICA *metrics)
 {
     PSDRV_PDEVICE *physDev = (PSDRV_PDEVICE *)dc->physDev;
 
@@ -155,11 +155,11 @@ BOOL32 PSDRV_GetTextMetrics(DC *dc, TEXTMETRIC32A *metrics)
 /***********************************************************************
  *           PSDRV_GetTextExtentPoint
  */
-BOOL32 PSDRV_GetTextExtentPoint( DC *dc, LPCSTR str, INT32 count,
-                                  LPSIZE32 size )
+BOOL PSDRV_GetTextExtentPoint( DC *dc, LPCSTR str, INT count,
+                                  LPSIZE size )
 {
     PSDRV_PDEVICE *physDev = (PSDRV_PDEVICE *)dc->physDev;
-    INT32 i;
+    INT i;
     float width;
 
     size->cy = YDSTOLS(dc, physDev->font.tm.tmHeight);
@@ -180,11 +180,11 @@ BOOL32 PSDRV_GetTextExtentPoint( DC *dc, LPCSTR str, INT32 count,
 /***********************************************************************
  *           PSDRV_GetCharWidth
  */
-BOOL32 PSDRV_GetCharWidth( DC *dc, UINT32 firstChar, UINT32 lastChar,
-			   LPINT32 buffer )
+BOOL PSDRV_GetCharWidth( DC *dc, UINT firstChar, UINT lastChar,
+			   LPINT buffer )
 {
     PSDRV_PDEVICE *physDev = (PSDRV_PDEVICE *)dc->physDev;
-    UINT32 i;
+    UINT i;
 
     TRACE(psdrv, "first = %d last = %d\n", firstChar, lastChar);
 
@@ -198,10 +198,10 @@ BOOL32 PSDRV_GetCharWidth( DC *dc, UINT32 firstChar, UINT32 lastChar,
 /***********************************************************************
  *           PSDRV_SetFont
  */
-BOOL32 PSDRV_SetFont( DC *dc )
+BOOL PSDRV_SetFont( DC *dc )
 {
     PSDRV_PDEVICE *physDev = (PSDRV_PDEVICE *)dc->physDev;
-    BOOL32 ReEncode = FALSE;
+    BOOL ReEncode = FALSE;
 
     PSDRV_WriteSetColor(dc, &physDev->font.color);
     if(physDev->font.set) return TRUE;
@@ -220,7 +220,7 @@ BOOL32 PSDRV_SetFont( DC *dc )
 /***********************************************************************
  *           PSDRV_GetFontMetric
  */
-static UINT32 PSDRV_GetFontMetric(DC *dc, AFM *pafm, NEWTEXTMETRIC16 *pTM, 
+static UINT PSDRV_GetFontMetric(DC *dc, AFM *pafm, NEWTEXTMETRIC16 *pTM, 
               ENUMLOGFONTEX16 *pLF, INT16 size)
 
 {
@@ -253,7 +253,7 @@ static UINT32 PSDRV_GetFontMetric(DC *dc, AFM *pafm, NEWTEXTMETRIC16 *pTM,
     pTM->tmDigitizedAspectX = dc->w.devCaps->logPixelsY;
     pTM->tmDigitizedAspectY = dc->w.devCaps->logPixelsX;
 
-    *(INT32*)&pTM->tmFirstChar = 32;
+    *(INT*)&pTM->tmFirstChar = 32;
 
     /* return font type */
 
@@ -264,12 +264,12 @@ static UINT32 PSDRV_GetFontMetric(DC *dc, AFM *pafm, NEWTEXTMETRIC16 *pTM,
 /***********************************************************************
  *           PSDRV_EnumDeviceFonts
  */
-BOOL32 PSDRV_EnumDeviceFonts( DC* dc, LPLOGFONT16 plf, 
+BOOL PSDRV_EnumDeviceFonts( DC* dc, LPLOGFONT16 plf, 
 				        DEVICEFONTENUMPROC proc, LPARAM lp )
 {
     ENUMLOGFONTEX16	lf;
     NEWTEXTMETRIC16	tm;
-    BOOL32	  	b, bRet = 0;
+    BOOL	  	b, bRet = 0;
     AFMLISTENTRY	*afmle;
     FONTFAMILY		*family;
     PSDRV_PDEVICE	*physDev = (PSDRV_PDEVICE *)dc->physDev;

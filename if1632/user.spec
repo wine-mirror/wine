@@ -7,14 +7,14 @@ file	user.exe
 2   stub OldExitWindows
 3   stub EnableOEMLayer
 4   stub DisableOEMLayer
-5   pascal16 InitApp(word) InitApp
+5   pascal16 InitApp(word) InitApp16
 6   pascal16 PostQuitMessage(word) PostQuitMessage16
 7   pascal16 ExitWindows(long word) ExitWindows16
 10  pascal16 SetTimer(word word word segptr) SetTimer16
 11  pascal16 SetSystemTimer(word word word segptr) SetSystemTimer16
 12  pascal16 KillTimer(word word) KillTimer16
 13  pascal   GetTickCount() GetTickCount
-14  pascal   GetTimerResolution() GetTimerResolution
+14  pascal   GetTimerResolution() GetTimerResolution16
 15  pascal   GetCurrentTime() GetCurrentTime16
 16  pascal16 ClipCursor(ptr) ClipCursor16
 17  pascal16 GetCursorPos(ptr) GetCursorPos16
@@ -100,7 +100,7 @@ file	user.exe
 96  pascal16 CheckRadioButton(word word word word) CheckRadioButton16
 97  pascal16 CheckDlgButton(word word word) CheckDlgButton16
 98  pascal16 IsDlgButtonChecked(word word) IsDlgButtonChecked16
-99  pascal16 DlgDirSelect(word ptr word) DlgDirSelect
+99  pascal16 DlgDirSelect(word ptr word) DlgDirSelect16
 100 pascal16 DlgDirList(word ptr word word word) DlgDirList16
 101 pascal   SendDlgItemMessage(word word word word long) SendDlgItemMessage16
 102 pascal16 AdjustWindowRect(ptr long word) AdjustWindowRect16
@@ -195,31 +195,31 @@ file	user.exe
 191 pascal16 ChildWindowFromPoint(word long) ChildWindowFromPoint16
 192 pascal16 InSendMessage() InSendMessage16
 193 pascal16 IsClipboardFormatAvailable(word) IsClipboardFormatAvailable16
-194 pascal16 DlgDirSelectComboBox(word ptr word) DlgDirSelectComboBox
+194 pascal16 DlgDirSelectComboBox(word ptr word) DlgDirSelectComboBox16
 195 pascal16 DlgDirListComboBox(word ptr word word word) DlgDirListComboBox16
 196 pascal   TabbedTextOut(word s_word s_word ptr s_word s_word ptr s_word)
              TabbedTextOut16
 197 pascal   GetTabbedTextExtent(word ptr word word ptr) GetTabbedTextExtent16
-198 pascal16 CascadeChildWindows(word word) CascadeChildWindows
-199 pascal16 TileChildWindows(word word) TileChildWindows
-200 pascal16 OpenComm(str word word) OpenComm
+198 pascal16 CascadeChildWindows(word word) CascadeChildWindows16
+199 pascal16 TileChildWindows(word word) TileChildWindows16
+200 pascal16 OpenComm(str word word) OpenComm16
 201 pascal16 SetCommState(ptr) SetCommState16
 202 pascal16 GetCommState(word ptr) GetCommState16
-203 pascal16 GetCommError(word ptr) GetCommError
-204 pascal16 ReadComm(word ptr word) ReadComm
-205 pascal16 WriteComm(word ptr word) WriteComm
+203 pascal16 GetCommError(word ptr) GetCommError16
+204 pascal16 ReadComm(word ptr word) ReadComm16
+205 pascal16 WriteComm(word ptr word) WriteComm16
 206 pascal16 TransmitCommChar(word word) TransmitCommChar16
-207 pascal16 CloseComm(word) CloseComm
-208 pascal   SetCommEventMask(word word) SetCommEventMask
-209 pascal16 GetCommEventMask(word word) GetCommEventMask
+207 pascal16 CloseComm(word) CloseComm16
+208 pascal   SetCommEventMask(word word) SetCommEventMask16
+209 pascal16 GetCommEventMask(word word) GetCommEventMask16
 210 pascal16 SetCommBreak(word) SetCommBreak16
 211 pascal16 ClearCommBreak(word) ClearCommBreak16
-212 pascal16 UngetCommChar(word word) UngetCommChar
+212 pascal16 UngetCommChar(word word) UngetCommChar16
 213 pascal16 BuildCommDCB(ptr ptr) BuildCommDCB16
 214 pascal   EscapeCommFunction(word word) EscapeCommFunction16
-215 pascal16 FlushComm(word word) FlushComm
-216 pascal   UserSeeUserDo(word word word word) UserSeeUserDo
-217 pascal16 LookupMenuHandle(word s_word) LookupMenuHandle
+215 pascal16 FlushComm(word word) FlushComm16
+216 pascal   UserSeeUserDo(word word word word) UserSeeUserDo16
+217 pascal16 LookupMenuHandle(word s_word) LookupMenuHandle16
 218 pascal16 DialogBoxIndirect(word word word segptr) DialogBoxIndirect16
 219 pascal16 CreateDialogIndirect(word ptr word segptr) CreateDialogIndirect16
 220 pascal16 LoadMenuIndirect(ptr) LoadMenuIndirect16
@@ -249,7 +249,7 @@ file	user.exe
              CreateDialogIndirectParam16
 243 pascal   GetDialogBaseUnits() GetDialogBaseUnits
 244 pascal16 EqualRect(ptr ptr) EqualRect16
-245 pascal16 EnableCommNotification(s_word word s_word s_word) EnableCommNotification
+245 pascal16 EnableCommNotification(s_word word s_word s_word) EnableCommNotification16
 246 pascal16 ExitWindowsExec(str str) ExitWindowsExec16
 247 pascal16 GetCursor() GetCursor16
 248 pascal16 GetOpenClipboardWindow() GetOpenClipboardWindow16
@@ -260,8 +260,8 @@ file	user.exe
 253 pascal   CloseDriver(word long long) CloseDriver16
 254 pascal16 GetDriverModuleHandle(word) GetDriverModuleHandle16
 255 pascal   DefDriverProc(long word word long long) DefDriverProc16
-256 pascal16 GetDriverInfo(word ptr) GetDriverInfo
-257 pascal16 GetNextDriver(word long) GetNextDriver
+256 pascal16 GetDriverInfo(word ptr) GetDriverInfo16
+257 pascal16 GetNextDriver(word long) GetNextDriver16
 258 pascal16 MapWindowPoints(word word ptr word) MapWindowPoints16
 259 pascal16 BeginDeferWindowPos(s_word) BeginDeferWindowPos16
 260 pascal16 DeferWindowPos(word word word s_word s_word s_word s_word word)
@@ -283,13 +283,13 @@ file	user.exe
 275 stub RepaintScreen
 276 stub LockMyTask
 277 pascal16 GetDlgCtrlID(word) GetDlgCtrlID16
-278 pascal16 GetDesktopHwnd() GetDesktopHwnd
+278 pascal16 GetDesktopHwnd() GetDesktopHwnd16
 279 pascal16 OldSetDeskPattern() SetDeskPattern
 280 pascal16 SetSystemMenu(word word) SetSystemMenu16
 281 pascal16 GetSysColorBrush(word) GetSysColorBrush16
 282 pascal16 SelectPalette(word word word) SelectPalette16
 283 pascal16 RealizePalette(word) RealizePalette16
-284 pascal16 GetFreeSystemResources(word) GetFreeSystemResources
+284 pascal16 GetFreeSystemResources(word) GetFreeSystemResources16
 285 pascal16 SetDeskWallPaper(ptr) SetDeskWallPaper16
 286 pascal16 GetDesktopWindow() GetDesktopWindow16
 287 pascal16 GetLastActivePopup(word) GetLastActivePopup16
@@ -316,32 +316,32 @@ file	user.exe
 #318 GetWC2
 319 pascal16 ScrollWindowEx(word s_word s_word ptr ptr word ptr word) ScrollWindowEx16
 320 stub SysErrorBox
-321 pascal   SetEventHook(segptr) SetEventHook
+321 pascal   SetEventHook(segptr) SetEventHook16
 322 stub WinOldAppHackOMatic
 323 stub GetMessage2
-324 pascal16 FillWindow(word word word word) FillWindow
-325 pascal16 PaintRect(word word word word ptr) PaintRect
-326 pascal16 GetControlBrush(word word word) GetControlBrush
+324 pascal16 FillWindow(word word word word) FillWindow16
+325 pascal16 PaintRect(word word word word ptr) PaintRect16
+326 pascal16 GetControlBrush(word word word) GetControlBrush16
 #327 KillTimer2
 #328 SetTimer2
 #330 SetGetKbdState
-331 pascal16 EnableHardwareInput(word) EnableHardwareInput
-332 pascal16 UserYield() UserYield
-333 pascal16 IsUserIdle() IsUserIdle
+331 pascal16 EnableHardwareInput(word) EnableHardwareInput16
+332 pascal16 UserYield() UserYield16
+333 pascal16 IsUserIdle() IsUserIdle16
 334 pascal   GetQueueStatus(word) GetQueueStatus16
 335 pascal16 GetInputState() GetInputState16
-336 pascal16 LoadCursorIconHandler(word word word) LoadCursorIconHandler
-337 pascal   GetMouseEventProc() GetMouseEventProc
+336 pascal16 LoadCursorIconHandler(word word word) LoadCursorIconHandler16
+337 pascal   GetMouseEventProc() GetMouseEventProc16
 #340 WinFarFrame
 #341 _FFFE_FARFRAME
 343 stub GetFilePortName
 #354 TabTheTextOutForWimps
 #355 BroadcastMessage
-356 pascal16 LoadDIBCursorHandler(word word word) LoadDIBCursorHandler
-357 pascal16 LoadDIBIconHandler(word word word) LoadDIBIconHandler
+356 pascal16 LoadDIBCursorHandler(word word word) LoadDIBCursorHandler16
+357 pascal16 LoadDIBIconHandler(word word word) LoadDIBIconHandler16
 358 pascal16 IsMenu(word) IsMenu16
 359 pascal16 GetDCEx(word word long) GetDCEx16
-362 pascal16 DCHook(word word long long) DCHook
+362 pascal16 DCHook(word word long long) DCHook16
 364 pascal16 LookupIconIdFromDirectoryEx(ptr word word word word) LookupIconIdFromDirectoryEx16
 368 pascal16 CopyIcon(word word) CopyIcon16
 369 pascal16 CopyCursor(word word) CopyCursor16
@@ -374,8 +374,8 @@ file	user.exe
 406 pascal16 CreateCursor(word word word word word ptr ptr) CreateCursor16
 407 pascal16 CreateIcon(word word word word word ptr ptr) CreateIcon16
 408 pascal16 CreateCursorIconIndirect(word ptr ptr ptr)
-	     CreateCursorIconIndirect
-409 pascal16 InitThreadInput(word word) InitThreadInput
+	     CreateCursorIconIndirect16
+409 pascal16 InitThreadInput(word word) InitThreadInput16
 410 pascal16 InsertMenu(word word word word segptr) InsertMenu16
 411 pascal16 AppendMenu(word word word segptr) AppendMenu16
 412 pascal16 RemoveMenu(word word word) RemoveMenu16
@@ -413,14 +413,14 @@ file	user.exe
 452 pascal16 CreateWindowEx(long str str long s_word s_word s_word s_word
                             word word word segptr) CreateWindowEx16
 454 pascal16 AdjustWindowRectEx(ptr long word long) AdjustWindowRectEx16
-455 pascal16 GetIconID(word long) GetIconID
-456 pascal16 LoadIconHandler(word word) LoadIconHandler
+455 pascal16 GetIconID(word long) GetIconID16
+456 pascal16 LoadIconHandler(word word) LoadIconHandler16
 457 pascal16 DestroyIcon(word) DestroyIcon16
 458 pascal16 DestroyCursor(word) DestroyCursor16
-459 pascal   DumpIcon(segptr ptr ptr ptr) DumpIcon
+459 pascal   DumpIcon(segptr ptr ptr ptr) DumpIcon16
 460 pascal16 GetInternalWindowPos(word ptr ptr) GetInternalWindowPos16
 461 pascal16 SetInternalWindowPos(word word ptr ptr) SetInternalWindowPos16
-462 pascal16 CalcChildScroll(word word) CalcChildScroll
+462 pascal16 CalcChildScroll(word word) CalcChildScroll16
 463 pascal16 ScrollChildren(word word word long) ScrollChildren16
 464 pascal   DragObject(word word word word word word) DragObject16
 465 pascal16 DragDetect(word long) DragDetect16
@@ -444,40 +444,40 @@ file	user.exe
 490 pascal16 USER_490() stub_USER_490
 492 pascal16 USER_492() stub_USER_492
 496 pascal16 USER_496() stub_USER_496
-499 pascal16 WNetErrorText(word ptr word) WNetErrorText
+499 pascal16 WNetErrorText(word ptr word) WNetErrorText16
 500 stub FARCALLNETDRIVER 			# Undocumented Windows
-501 pascal16 WNetOpenJob(ptr ptr word ptr)  WNetOpenJob
-502 pascal16 WNetCloseJob(word ptr ptr) WNetCloseJob
-503 pascal16 WNetAbortJob(ptr word) WNetAbortJob
-504 pascal16 WNetHoldJob(ptr word) WNetHoldJob
-505 pascal16 WNetReleaseJob(ptr word) WNetReleaseJob
-506 pascal16 WNetCancelJob(ptr word) WNetCancelJob
-507 pascal16 WNetSetJobCopies(ptr word word) WNetSetJobCopies
-508 pascal16 WNetWatchQueue(word ptr ptr word) WNetWatchQueue
-509 pascal16 WNetUnwatchQueue(word ptr ptr word) WNetUnwatchQueue
-510 pascal16 WNetLockQueueData(ptr ptr ptr) WNetLockQueueData
-511 pascal16 WNetUnlockQueueData(ptr) WNetUnlockQueueData
+501 pascal16 WNetOpenJob(ptr ptr word ptr)  WNetOpenJob16
+502 pascal16 WNetCloseJob(word ptr ptr) WNetCloseJob16
+503 pascal16 WNetAbortJob(ptr word) WNetAbortJob16
+504 pascal16 WNetHoldJob(ptr word) WNetHoldJob16
+505 pascal16 WNetReleaseJob(ptr word) WNetReleaseJob16
+506 pascal16 WNetCancelJob(ptr word) WNetCancelJob16
+507 pascal16 WNetSetJobCopies(ptr word word) WNetSetJobCopies16
+508 pascal16 WNetWatchQueue(word ptr ptr word) WNetWatchQueue16
+509 pascal16 WNetUnwatchQueue(word ptr ptr word) WNetUnwatchQueue16
+510 pascal16 WNetLockQueueData(ptr ptr ptr) WNetLockQueueData16
+511 pascal16 WNetUnlockQueueData(ptr) WNetUnlockQueueData16
 512 pascal16 WNetGetConnection(ptr ptr ptr) WNetGetConnection16
-513 pascal16 WNetGetCaps(word) WNetGetCaps
-514 pascal16 WNetDeviceMode(word) WNetDeviceMode
-515 pascal16 WNetBrowseDialog(word word ptr) WNetBrowseDialog
-516 pascal16 WNetGetUser(ptr ptr ptr) WNetGetUser
+513 pascal16 WNetGetCaps(word) WNetGetCaps16
+514 pascal16 WNetDeviceMode(word) WNetDeviceMode16
+515 pascal16 WNetBrowseDialog(word word ptr) WNetBrowseDialog16
+516 pascal16 WNetGetUser(ptr ptr ptr) WNetGetUser16
 517 pascal16 WNetAddConnection(str str str) WNetAddConnection16
-518 pascal16 WNetCancelConnection(str word) WNetCancelConnection
-519 pascal16 WNetGetError(ptr) WNetGetError
-520 pascal16 WNetGetErrorText(word ptr ptr) WNetGetErrorText
+518 pascal16 WNetCancelConnection(str word) WNetCancelConnection16
+519 pascal16 WNetGetError(ptr) WNetGetError16
+520 pascal16 WNetGetErrorText(word ptr ptr) WNetGetErrorText16
 521 stub WNetEnable
 522 stub WNetDisable
-523 pascal16 WNetRestoreConnection(word ptr) WNetRestoreConnection
-524 pascal16 WNetWriteJob(word ptr ptr) WNetWriteJob
+523 pascal16 WNetRestoreConnection(word ptr) WNetRestoreConnection16
+524 pascal16 WNetWriteJob(word ptr ptr) WNetWriteJob16
 525 pascal16 WnetConnectDialog(word word) WNetConnectDialog
-526 pascal16 WNetDisconnectDialog(word word) WNetDisconnectDialog
-527 pascal16 WNetConnectionDialog(word word) WNetConnectionDialog
-528 pascal16 WNetViewQueueDialog(word ptr) WNetViewQueueDialog
-529 pascal16 WNetPropertyDialog(word word ptr word) WNetPropertyDialog
+526 pascal16 WNetDisconnectDialog(word word) WNetDisconnectDialog16
+527 pascal16 WNetConnectionDialog(word word) WNetConnectionDialog16
+528 pascal16 WNetViewQueueDialog(word ptr) WNetViewQueueDialog16
+529 pascal16 WNetPropertyDialog(word word ptr word) WNetPropertyDialog16
 530 pascal16 WNetGetDirectoryType(ptr ptr) WNetGetDirectoryType16
-531 pascal16 WNetDirectoryNotify(word ptr word) WNetDirectoryNotify
-532 pascal16 WNetGetPropertyText(word word str str word word) WNetGetPropertyText
+531 pascal16 WNetDirectoryNotify(word ptr word) WNetDirectoryNotify16
+532 pascal16 WNetGetPropertyText(word word str str word word) WNetGetPropertyText16
 533 stub WNetInitialize
 534 stub WNetLogon
 600 pascal16 GetShellWindow() GetShellWindow16
@@ -516,12 +516,12 @@ file	user.exe
 802 stub OPENFILENAME_CALLBACK16
 803 stub PRINTDLG_CALLBACK16
 804 stub CHOOSECOLOR_CALLBACK16
-819 pascal16 PeekMessage32(ptr word word word word word) WIN16_PeekMessage32
-820 pascal GetMessage32(segptr word word word word) WIN16_GetMessage32
-821 pascal16 TranslateMessage32(ptr word) WIN16_TranslateMessage32 
+819 pascal16 PeekMessage32(ptr word word word word word) PeekMessage32_16
+820 pascal GetMessage32(segptr word word word word) GetMessage32_16
+821 pascal16 TranslateMessage32(ptr word) TranslateMessage32_16 
 #821 stub IsDialogMessage32		# FIXME: two ordinal 821???
-822 pascal DispatchMessage32(ptr word) WIN16_DispatchMessage32
-823 pascal16 CallMsgFilter32(segptr word word) WIN16_CallMsgFilter32
+822 pascal DispatchMessage32(ptr word) DispatchMessage32_16
+823 pascal16 CallMsgFilter32(segptr word word) CallMsgFilter32_16
 825 stub PostMessage32
 826 stub PostThreadMessage32
 827 pascal16 MessageBoxIndirect(ptr) MessageBoxIndirect16

@@ -24,31 +24,31 @@
  */
 typedef DWORD (* WINAPI GetClassPtr)(REFCLSID,REFIID,LPVOID);
 
-static GetClassPtr SH_find_moduleproc(LPSTR dllname,HMODULE32 *xhmod,LPSTR name)
-{	HMODULE32 hmod;
-	FARPROC32 dllunload,nameproc;
+static GetClassPtr SH_find_moduleproc(LPSTR dllname,HMODULE *xhmod,LPSTR name)
+{	HMODULE hmod;
+	FARPROC dllunload,nameproc;
 
 	TRACE(shell,"dll=%s, hmodule=%p, name=%s\n",dllname, xhmod, name);
 	if (xhmod)
 	{ *xhmod = 0;
 	}
-	if (!strcasecmp(PathFindFilename32A(dllname),"shell32.dll"))
+	if (!strcasecmp(PathFindFilenameA(dllname),"shell32.dll"))
 	{ return (GetClassPtr)SHELL32_DllGetClassObject;
 	}
 
-	hmod = LoadLibraryEx32A(dllname,0,LOAD_WITH_ALTERED_SEARCH_PATH);
+	hmod = LoadLibraryExA(dllname,0,LOAD_WITH_ALTERED_SEARCH_PATH);
 	if (!hmod)
 	{ return NULL;
 	}
-	dllunload = GetProcAddress32(hmod,"DllCanUnloadNow");
+	dllunload = GetProcAddress(hmod,"DllCanUnloadNow");
 	if (!dllunload)
 	{ if (xhmod)
 	  { *xhmod = hmod;
 	  }
 	}
-	nameproc = GetProcAddress32(hmod,name);
+	nameproc = GetProcAddress(hmod,name);
 	if (!nameproc)
-	{ FreeLibrary32(hmod);
+	{ FreeLibrary(hmod);
 	  return NULL;
 	}
 	/* register unloadable dll with unloadproc ... */
@@ -111,12 +111,12 @@ LRESULT WINAPI SHCoCreateInstance(LPSTR aclsid,CLSID *clsid,LPUNKNOWN unknownout
 
 	sprintf(buffer,"CLSID\\%s\\InProcServer32",xclsid);
 
-	if (RegOpenKeyEx32A(HKEY_CLASSES_ROOT,buffer,0,0x02000000,&inprockey))
+	if (RegOpenKeyExA(HKEY_CLASSES_ROOT,buffer,0,0x02000000,&inprockey))
 	{ return SH_get_instance(clsid,"shell32.dll",unknownouter,refiid,inst);
 	}
 	pathlen=sizeof(path);
 
-	if (RegQueryValue32A(inprockey,NULL,path,&pathlen))
+	if (RegQueryValueA(inprockey,NULL,path,&pathlen))
 	{ RegCloseKey(inprockey);
 	  return SH_get_instance(clsid,"shell32.dll",unknownouter,refiid,inst);
 	}
@@ -124,7 +124,7 @@ LRESULT WINAPI SHCoCreateInstance(LPSTR aclsid,CLSID *clsid,LPUNKNOWN unknownout
 	TRACE(shell, "Server dll is %s\n",path);
 	tmodellen=sizeof(tmodel);
 	type=REG_SZ;
-	if (RegQueryValueEx32A(inprockey,"ThreadingModel",NULL,&type,tmodel,&tmodellen))
+	if (RegQueryValueExA(inprockey,"ThreadingModel",NULL,&type,tmodel,&tmodellen))
 	{ RegCloseKey(inprockey);
 	  return SH_get_instance(clsid,"shell32.dll",unknownouter,refiid,inst);
 	}
@@ -203,9 +203,9 @@ DWORD WINAPI SHELL32_DllGetClassObject(REFCLSID rclsid,REFIID iid,LPVOID *ppv)
  * What we are currently doing is not very wrong, since we always use the same
  * heap (ProcessHeap).
  */
-DWORD WINAPI SHGetMalloc(LPMALLOC32 *lpmal) 
+DWORD WINAPI SHGetMalloc(LPMALLOC *lpmal) 
 {	TRACE(shell,"(%p)\n", lpmal);
-	return CoGetMalloc32(0,lpmal);
+	return CoGetMalloc(0,lpmal);
 }
 
 /**************************************************************************
@@ -345,7 +345,7 @@ static HRESULT WINAPI IClassFactory_fnCreateInstance(
 /******************************************************************************
  * IClassFactory_LockServer
  */
-static HRESULT WINAPI IClassFactory_fnLockServer(LPCLASSFACTORY iface, BOOL32 fLock)
+static HRESULT WINAPI IClassFactory_fnLockServer(LPCLASSFACTORY iface, BOOL fLock)
 {
 	ICOM_THIS(IClassFactoryImpl,iface);
 	TRACE(shell,"%p->(0x%x), not implemented\n",This, fLock);

@@ -80,7 +80,7 @@ static LOADED_PRINTER_DRIVER *FindPrinterDriverFromName(const char *pszDriver)
 	{
 	    TRACE(win16drv, "Comparing %s,%s\n",ptmpLPD->szDriver,pszDriver);
 	    /* Found driver store info, exit loop */
-	    if (lstrcmpi32A(ptmpLPD->szDriver, pszDriver) == 0)
+	    if (lstrcmpiA(ptmpLPD->szDriver, pszDriver) == 0)
 	      pLPD = ptmpLPD;
 	}
     }
@@ -112,7 +112,7 @@ LOADED_PRINTER_DRIVER *LoadPrinterDriver(const char *pszDriver)
     HINSTANCE16	hInst;	
     LOADED_PRINTER_DRIVER *pLPD = NULL;
     int		nDriverSlot = 0;
-    BOOL32	bSlotFound = FALSE;
+    BOOL	bSlotFound = FALSE;
 
     /* First look to see if driver is loaded */
     pLPD = FindPrinterDriverFromName(pszDriver);
@@ -356,7 +356,7 @@ WORD PRTDRV_Output(LPPDEVICE 	 lpDestDev,
                    LPLOGPEN16 	 lpPen,
                    LPLOGBRUSH16	 lpBrush,
                    SEGPTR	 lpDrawMode,
-                   HRGN32 	 hClipRgn)
+                   HRGN 	 hClipRgn)
 {
     WORD wRet = 0;
     LOADED_PRINTER_DRIVER *pLPD = NULL;
@@ -391,14 +391,14 @@ WORD PRTDRV_Output(LPPDEVICE 	 lpDestDev,
 	    DWORD size;
 	    RGNDATA *clip;
 
-	    size = GetRegionData32( hClipRgn, 0, NULL );
+	    size = GetRegionData( hClipRgn, 0, NULL );
 	    clip = HeapAlloc( SystemHeap, 0, size );
 	    if(!clip) 
 	    {
 	        WARN(win16drv, "Can't alloc clip array in PRTDRV_Output\n");
 		return FALSE;
 	    }
-	    GetRegionData32( hClipRgn, size, clip );
+	    GetRegionData( hClipRgn, size, clip );
 	    if( clip->rdh.nCount == 0 )
 	    {
 		wRet = Callbacks->CallDrvOutputProc(pLPD->fn[FUNC_OUTPUT], 
@@ -407,11 +407,11 @@ WORD PRTDRV_Output(LPPDEVICE 	 lpDestDev,
 	    }
 	    else
 	    {
-	        RECT32 *pRect;
+	        RECT *pRect;
 	        lP8 = SEGPTR_NEW(RECT16);
 	    
-		for(pRect = (RECT32 *)clip->Buffer; 
-		    pRect < (RECT32 *)clip->Buffer + clip->rdh.nCount; pRect++)
+		for(pRect = (RECT *)clip->Buffer; 
+		    pRect < (RECT *)clip->Buffer + clip->rdh.nCount; pRect++)
 	        {
 		    CONV_RECT32TO16( pRect, lP8 );
 
@@ -661,16 +661,16 @@ DWORD PRTDRV_ExtTextOut(LPPDEVICE lpDestDev, WORD wDestXOrg, WORD wDestYOrg,
     return dwRet;
 }
 
-int WINAPI dmEnumDFonts(LPPDEVICE lpDestDev, LPSTR lpFaceName, FARPROC16 lpCallbackFunc, LPVOID lpClientData)
+int WINAPI dmEnumDFonts16(LPPDEVICE lpDestDev, LPSTR lpFaceName, FARPROC16 lpCallbackFunc, LPVOID lpClientData)
 {
         /* Windows 3.1 just returns 1 */
         return 1;
 }
 
-int WINAPI dmRealizeObject(LPPDEVICE lpDestDev, INT16 wStyle, LPSTR lpInObj, LPSTR lpOutObj, SEGPTR lpTextXForm)
+int WINAPI dmRealizeObject16(LPPDEVICE lpDestDev, INT16 wStyle, LPSTR lpInObj, LPSTR lpOutObj, SEGPTR lpTextXForm)
 {
     FIXME(win16drv, "(lpDestDev=%08x,wStyle=%04x,lpInObj=%08x,lpOutObj=%08x,lpTextXForm=%08x): stub\n",
-        (UINT32)lpDestDev, wStyle, (UINT32)lpInObj, (UINT32)lpOutObj, (UINT32)lpTextXForm);
+        (UINT)lpDestDev, wStyle, (UINT)lpInObj, (UINT)lpOutObj, (UINT)lpTextXForm);
     if (wStyle < 0) { /* Free extra memory of given object's structure */
 	switch ( -wStyle ) {
             case DRVOBJ_PEN:    {
@@ -747,7 +747,7 @@ int WINAPI dmRealizeObject(LPPDEVICE lpDestDev, INT16 wStyle, LPSTR lpInObj, LPS
 }
 
 
-WORD PRTDRV_GetCharWidth(LPPDEVICE lpDestDev, LPINT32 lpBuffer, 
+WORD PRTDRV_GetCharWidth(LPPDEVICE lpDestDev, LPINT lpBuffer, 
 		      WORD wFirstChar, WORD wLastChar, LPFONTINFO16 lpFontInfo,
 		      SEGPTR lpDrawMode, SEGPTR lpTextXForm )
 {
@@ -782,7 +782,7 @@ WORD PRTDRV_GetCharWidth(LPPDEVICE lpDestDev, LPINT32 lpBuffer,
                                                  wP4, lP5, lP6, lP7 );
 
 	for(i = 0; i <= wLastChar - wFirstChar; i++)
-	    lpBuffer[i] = (INT32) lP2[i];
+	    lpBuffer[i] = (INT) lP2[i];
 
 	SEGPTR_FREE(lP2);
     }

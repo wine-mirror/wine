@@ -26,7 +26,7 @@ typedef struct
 {
     BYTE       popl_eax;             /* popl  %eax (return address) */
     BYTE       pushl_func;           /* pushl $proc */
-    WNDPROC32  proc WINE_PACKED;
+    WNDPROC  proc WINE_PACKED;
     BYTE       pushl_eax;            /* pushl %eax */
     WORD       pushw_bp WINE_PACKED; /* pushw %bp */
     BYTE       pushl_thunk;          /* pushl $thunkfrom16 */
@@ -53,7 +53,7 @@ typedef struct
 typedef struct
 {
     BYTE       jmp;                  /* jmp  proc (relative jump) */
-    WNDPROC32  proc WINE_PACKED;
+    WNDPROC  proc WINE_PACKED;
 } WINPROC_JUMP;
 
 typedef union
@@ -67,7 +67,7 @@ typedef struct tagWINDOWPROC
     WINPROC_THUNK         thunk;    /* Thunk */
     WINPROC_JUMP          jmp;      /* Jump */
     struct tagWINDOWPROC *next;     /* Next window proc */
-    UINT32                magic;    /* Magic number */
+    UINT                magic;    /* Magic number */
     WINDOWPROCTYPE        type;     /* Function type */
     WINDOWPROCUSER        user;     /* Function user */
 } WINDOWPROC;
@@ -79,26 +79,26 @@ typedef struct tagWINDOWPROC
           (WNDPROC16)((pproc)->thunk.t_from32.proc) : \
           (WNDPROC16)((pproc)->thunk.t_from16.proc))
 
-static LRESULT WINAPI WINPROC_CallProc32ATo16( WNDPROC16 func, HWND32 hwnd,
-                                               UINT32 msg, WPARAM32 wParam,
+static LRESULT WINAPI WINPROC_CallProc32ATo16( WNDPROC16 func, HWND hwnd,
+                                               UINT msg, WPARAM wParam,
                                                LPARAM lParam );
-static LRESULT WINAPI WINPROC_CallProc32WTo16( WNDPROC16 func, HWND32 hwnd,
-                                               UINT32 msg, WPARAM32 wParam,
+static LRESULT WINAPI WINPROC_CallProc32WTo16( WNDPROC16 func, HWND hwnd,
+                                               UINT msg, WPARAM wParam,
                                                LPARAM lParam );
 static LRESULT WINPROC_CallProc16To32A( HWND16 hwnd, UINT16 msg,
 					WPARAM16 wParam, LPARAM lParam,
-					WNDPROC32 func );
+					WNDPROC func );
 static LRESULT WINPROC_CallProc16To32W( HWND16 hwnd, UINT16 msg,
 					WPARAM16 wParam, LPARAM lParam,
-					WNDPROC32 func );
+					WNDPROC func );
 
-static HANDLE32 WinProcHeap;
+static HANDLE WinProcHeap;
 
 
 /**********************************************************************
  *	     WINPROC_Init
  */
-BOOL32 WINPROC_Init(void)
+BOOL WINPROC_Init(void)
 {
     WinProcHeap = HeapCreate( HEAP_WINE_SEGPTR | HEAP_WINE_CODESEG, 0, 0 );
     if (!WinProcHeap)
@@ -115,8 +115,8 @@ BOOL32 WINPROC_Init(void)
  *
  * Call a 32-bit WndProc.
  */
-static LRESULT WINPROC_CallWndProc32( WNDPROC32 proc, HWND32 hwnd, UINT32 msg,
-                                      WPARAM32 wParam, LPARAM lParam )
+static LRESULT WINPROC_CallWndProc( WNDPROC proc, HWND hwnd, UINT msg,
+                                      WPARAM wParam, LPARAM lParam )
 {
     TRACE(relay, "(wndproc=%p,hwnd=%08x,msg=%s,wp=%08x,lp=%08lx)\n",
                    proc, hwnd, SPY_GetMsgName(msg), wParam, lParam );
@@ -204,7 +204,7 @@ static WINDOWPROC *WINPROC_AllocWinProc( WNDPROC16 func, WINDOWPROCTYPE type,
         case WIN_PROC_32W:
             proc->thunk.t_from16.popl_eax    = 0x58;   /* popl  %eax */
             proc->thunk.t_from16.pushl_func  = 0x68;   /* pushl $proc */
-            proc->thunk.t_from16.proc        = (FARPROC32)func;
+            proc->thunk.t_from16.proc        = (FARPROC)func;
             proc->thunk.t_from16.pushl_eax   = 0x50;   /* pushl %eax */
             proc->thunk.t_from16.pushw_bp    = 0x5566; /* pushw %bp */
             proc->thunk.t_from16.pushl_thunk = 0x68;   /* pushl $thunkfrom16 */
@@ -216,7 +216,7 @@ static WINDOWPROC *WINPROC_AllocWinProc( WNDPROC16 func, WINDOWPROCTYPE type,
             GET_CS(proc->thunk.t_from16.cs);
             proc->jmp.jmp  = 0xe9;
             /* Fixup relative jump */
-            proc->jmp.proc = (WNDPROC32)((DWORD)func -
+            proc->jmp.proc = (WNDPROC)((DWORD)func -
                                                  (DWORD)(&proc->jmp.proc + 1));
             break;
         default:
@@ -229,7 +229,7 @@ static WINDOWPROC *WINPROC_AllocWinProc( WNDPROC16 func, WINDOWPROCTYPE type,
     }
     proc->next  = NULL;
     TRACE(win, "(%08x,%d): returning %08x\n",
-                 (UINT32)func, type, (UINT32)proc );
+                 (UINT)func, type, (UINT)proc );
     return proc;
 }
 
@@ -285,10 +285,10 @@ WNDPROC16 WINPROC_GetProc( HWINDOWPROC proc, WINDOWPROCTYPE type )
  * window is destroyed.
  *
  */
-BOOL32 WINPROC_SetProc( HWINDOWPROC *pFirst, WNDPROC16 func,
+BOOL WINPROC_SetProc( HWINDOWPROC *pFirst, WNDPROC16 func,
                         WINDOWPROCTYPE type, WINDOWPROCUSER user )
 {
-    BOOL32 bRecycle = FALSE;
+    BOOL bRecycle = FALSE;
     WINDOWPROC *proc, **ppPrev;
 
     /* Check if function is already in the list */
@@ -348,7 +348,7 @@ BOOL32 WINPROC_SetProc( HWINDOWPROC *pFirst, WNDPROC16 func,
     /* Add the win proc at the head of the list */
 
     TRACE(win, "(%08x,%08x,%d): res=%08x\n",
-                 (UINT32)*pFirst, (UINT32)func, type, (UINT32)proc );
+                 (UINT)*pFirst, (UINT)func, type, (UINT)proc );
     proc->next  = *(WINDOWPROC **)pFirst;
     *(WINDOWPROC **)pFirst = proc;
     return TRUE;
@@ -366,7 +366,7 @@ void WINPROC_FreeProc( HWINDOWPROC proc, WINDOWPROCUSER user )
     {
         WINDOWPROC *next = ((WINDOWPROC *)proc)->next;
         if (((WINDOWPROC *)proc)->user != user) break;
-        TRACE(win, "freeing %08x\n", (UINT32)proc);
+        TRACE(win, "freeing %08x\n", (UINT)proc);
         HeapFree( WinProcHeap, 0, proc );
         proc = next;
     }
@@ -390,7 +390,7 @@ WINDOWPROCTYPE WINPROC_GetProcType( HWINDOWPROC proc )
  *
  * Return TRUE if the lparam is a string
  */
-BOOL32 WINPROC_TestCBForStr ( HWND32 hwnd )
+BOOL WINPROC_TestCBForStr ( HWND hwnd )
 {	WND * wnd = WIN_FindWndPtr(hwnd); 
 	return ( !(LOWORD(wnd->dwStyle) & (CBS_OWNERDRAWFIXED | CBS_OWNERDRAWVARIABLE)) ||
 	      (LOWORD(wnd->dwStyle) & CBS_HASSTRINGS) );
@@ -400,7 +400,7 @@ BOOL32 WINPROC_TestCBForStr ( HWND32 hwnd )
  *
  * Return TRUE if the lparam is a string
  */
-BOOL32 WINPROC_TestLBForStr ( HWND32 hwnd )
+BOOL WINPROC_TestLBForStr ( HWND hwnd )
 {	WND * wnd = WIN_FindWndPtr(hwnd); 
 	return ( !(LOWORD(wnd->dwStyle) & (LBS_OWNERDRAWFIXED | LBS_OWNERDRAWVARIABLE)) || 
 	    (LOWORD(wnd->dwStyle) & LBS_HASSTRINGS) );
@@ -419,7 +419,7 @@ BOOL32 WINPROC_TestLBForStr ( HWND32 hwnd )
  *  the first four bytes are the handle of the icon 
  *  when the WM_SETTEXT message has been used to set the icon
  */
-INT32 WINPROC_MapMsg32ATo32W( HWND32 hwnd, UINT32 msg, WPARAM32 wParam, LPARAM *plparam )
+INT WINPROC_MapMsg32ATo32W( HWND hwnd, UINT msg, WPARAM wParam, LPARAM *plparam )
 {
     switch(msg)
     {
@@ -434,25 +434,25 @@ INT32 WINPROC_MapMsg32ATo32W( HWND32 hwnd, UINT32 msg, WPARAM32 wParam, LPARAM *
         return 1;
 
     case WM_SETTEXT:
-    case CB_DIR32:
-    case CB_FINDSTRING32:
-    case CB_FINDSTRINGEXACT32:
-    case CB_SELECTSTRING32:
-    case LB_DIR32:
-    case LB_ADDFILE32:
-    case LB_FINDSTRING32:
-    case LB_SELECTSTRING32:
-    case EM_REPLACESEL32:
+    case CB_DIR:
+    case CB_FINDSTRING:
+    case CB_FINDSTRINGEXACT:
+    case CB_SELECTSTRING:
+    case LB_DIR:
+    case LB_ADDFILE:
+    case LB_FINDSTRING:
+    case LB_SELECTSTRING:
+    case EM_REPLACESEL:
         *plparam = (LPARAM)HEAP_strdupAtoW( SystemHeap, 0, (LPCSTR)*plparam );
         return (*plparam ? 1 : -1);
 
     case WM_NCCREATE:
     case WM_CREATE:
         {
-            CREATESTRUCT32W *cs = (CREATESTRUCT32W *)HeapAlloc( SystemHeap, 0,
+            CREATESTRUCTW *cs = (CREATESTRUCTW *)HeapAlloc( SystemHeap, 0,
                                                                 sizeof(*cs) );
             if (!cs) return -1;
-            *cs = *(CREATESTRUCT32W *)*plparam;
+            *cs = *(CREATESTRUCTW *)*plparam;
             if (HIWORD(cs->lpszName))
                 cs->lpszName = HEAP_strdupAtoW( SystemHeap, 0,
                                                 (LPCSTR)cs->lpszName );
@@ -464,10 +464,10 @@ INT32 WINPROC_MapMsg32ATo32W( HWND32 hwnd, UINT32 msg, WPARAM32 wParam, LPARAM *
         return 1;
     case WM_MDICREATE:
         {
-            MDICREATESTRUCT32W *cs =
-                (MDICREATESTRUCT32W *)HeapAlloc( SystemHeap, 0, sizeof(*cs) );
+            MDICREATESTRUCTW *cs =
+                (MDICREATESTRUCTW *)HeapAlloc( SystemHeap, 0, sizeof(*cs) );
             if (!cs) return -1;
-            *cs = *(MDICREATESTRUCT32W *)*plparam;
+            *cs = *(MDICREATESTRUCTW *)*plparam;
             if (HIWORD(cs->szClass))
                 cs->szClass = HEAP_strdupAtoW( SystemHeap, 0,
                                                (LPCSTR)cs->szClass );
@@ -479,13 +479,13 @@ INT32 WINPROC_MapMsg32ATo32W( HWND32 hwnd, UINT32 msg, WPARAM32 wParam, LPARAM *
         return 1;
 
 /* Listbox */
-    case LB_ADDSTRING32:
-    case LB_INSERTSTRING32:
+    case LB_ADDSTRING:
+    case LB_INSERTSTRING:
 	if ( WINPROC_TestLBForStr( hwnd ))
           *plparam = (LPARAM)HEAP_strdupAtoW( SystemHeap, 0, (LPCSTR)*plparam );
         return (*plparam ? 1 : -1);
 
-    case LB_GETTEXT32:		    /* fixme: fixed sized buffer */
+    case LB_GETTEXT:		    /* fixme: fixed sized buffer */
         { if ( WINPROC_TestLBForStr( hwnd ))
 	  { LPARAM *ptr = (LPARAM *)HeapAlloc( SystemHeap, 0, 256 * sizeof(WCHAR) + sizeof(LPARAM) );
             if (!ptr) return -1;
@@ -496,13 +496,13 @@ INT32 WINPROC_MapMsg32ATo32W( HWND32 hwnd, UINT32 msg, WPARAM32 wParam, LPARAM *
         return 1;
 
 /* Combobox */
-    case CB_ADDSTRING32:
-    case CB_INSERTSTRING32:
+    case CB_ADDSTRING:
+    case CB_INSERTSTRING:
 	if ( WINPROC_TestCBForStr( hwnd ))
           *plparam = (LPARAM)HEAP_strdupAtoW( SystemHeap, 0, (LPCSTR)*plparam );
         return (*plparam ? 1 : -1);
 
-    case CB_GETLBTEXT32:    /* fixme: fixed sized buffer */
+    case CB_GETLBTEXT:    /* fixme: fixed sized buffer */
         { if ( WINPROC_TestCBForStr( hwnd ))
           { LPARAM *ptr = (LPARAM *)HeapAlloc( SystemHeap, 0, 256 * sizeof(WCHAR) + sizeof(LPARAM) );
             if (!ptr) return -1;
@@ -513,7 +513,7 @@ INT32 WINPROC_MapMsg32ATo32W( HWND32 hwnd, UINT32 msg, WPARAM32 wParam, LPARAM *
         return 1;
 
 /* Multiline edit */
-    case EM_GETLINE32:
+    case EM_GETLINE:
         { WORD len = (WORD)*plparam;
 	  LPARAM *ptr = (LPARAM *) HEAP_xalloc( SystemHeap, 0, sizeof(LPARAM) + sizeof (WORD) + len*sizeof(WCHAR) );
           if (!ptr) return -1;
@@ -528,7 +528,7 @@ INT32 WINPROC_MapMsg32ATo32W( HWND32 hwnd, UINT32 msg, WPARAM32 wParam, LPARAM *
     case WM_PAINTCLIPBOARD:
     case WM_SIZECLIPBOARD:
     case WM_WININICHANGE:
-    case EM_SETPASSWORDCHAR32:
+    case EM_SETPASSWORDCHAR:
         FIXME(msg, "message %s (0x%x) needs translation, please report\n", SPY_GetMsgName(msg), msg );
         return -1;
     default:  /* No translation needed */
@@ -542,7 +542,7 @@ INT32 WINPROC_MapMsg32ATo32W( HWND32 hwnd, UINT32 msg, WPARAM32 wParam, LPARAM *
  *
  * Unmap a message that was mapped from Ansi to Unicode.
  */
-void WINPROC_UnmapMsg32ATo32W( HWND32 hwnd, UINT32 msg, WPARAM32 wParam, LPARAM lParam )
+void WINPROC_UnmapMsg32ATo32W( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
 {
     switch(msg)
     {
@@ -557,7 +557,7 @@ void WINPROC_UnmapMsg32ATo32W( HWND32 hwnd, UINT32 msg, WPARAM32 wParam, LPARAM 
     case WM_NCCREATE:
     case WM_CREATE:
         {
-            CREATESTRUCT32W *cs = (CREATESTRUCT32W *)lParam;
+            CREATESTRUCTW *cs = (CREATESTRUCTW *)lParam;
             if (HIWORD(cs->lpszName))
                 HeapFree( SystemHeap, 0, (LPVOID)cs->lpszName );
             if (HIWORD(cs->lpszClass))
@@ -568,7 +568,7 @@ void WINPROC_UnmapMsg32ATo32W( HWND32 hwnd, UINT32 msg, WPARAM32 wParam, LPARAM 
 
     case WM_MDICREATE:
         {
-            MDICREATESTRUCT32W *cs = (MDICREATESTRUCT32W *)lParam;
+            MDICREATESTRUCTW *cs = (MDICREATESTRUCTW *)lParam;
             if (HIWORD(cs->szTitle))
                 HeapFree( SystemHeap, 0, (LPVOID)cs->szTitle );
             if (HIWORD(cs->szClass))
@@ -578,26 +578,26 @@ void WINPROC_UnmapMsg32ATo32W( HWND32 hwnd, UINT32 msg, WPARAM32 wParam, LPARAM 
         break;
 
     case WM_SETTEXT:
-    case CB_DIR32:
-    case CB_FINDSTRING32:
-    case CB_FINDSTRINGEXACT32:
-    case CB_SELECTSTRING32:
-    case LB_DIR32:
-    case LB_ADDFILE32:
-    case LB_FINDSTRING32:
-    case LB_SELECTSTRING32:
-    case EM_REPLACESEL32:
+    case CB_DIR:
+    case CB_FINDSTRING:
+    case CB_FINDSTRINGEXACT:
+    case CB_SELECTSTRING:
+    case LB_DIR:
+    case LB_ADDFILE:
+    case LB_FINDSTRING:
+    case LB_SELECTSTRING:
+    case EM_REPLACESEL:
         HeapFree( SystemHeap, 0, (void *)lParam );
         break;
 
 /* Listbox */
-    case LB_ADDSTRING32:
-    case LB_INSERTSTRING32:
+    case LB_ADDSTRING:
+    case LB_INSERTSTRING:
 	if ( WINPROC_TestLBForStr( hwnd ))
           HeapFree( SystemHeap, 0, (void *)lParam );
         break;
 
-    case LB_GETTEXT32:
+    case LB_GETTEXT:
         { if ( WINPROC_TestLBForStr( hwnd ))
           { LPARAM *ptr = (LPARAM *)lParam - 1;
 	    lstrcpyWtoA( (LPSTR)*ptr, (LPWSTR)(lParam) );
@@ -607,13 +607,13 @@ void WINPROC_UnmapMsg32ATo32W( HWND32 hwnd, UINT32 msg, WPARAM32 wParam, LPARAM 
         break;
 
 /* Combobox */
-    case CB_ADDSTRING32:
-    case CB_INSERTSTRING32:
+    case CB_ADDSTRING:
+    case CB_INSERTSTRING:
 	if ( WINPROC_TestCBForStr( hwnd ))
           HeapFree( SystemHeap, 0, (void *)lParam );
         break;
 
-    case CB_GETLBTEXT32:
+    case CB_GETLBTEXT:
         { if ( WINPROC_TestCBForStr( hwnd ))
 	  { LPARAM *ptr = (LPARAM *)lParam - 1;
             lstrcpyWtoA( (LPSTR)*ptr, (LPWSTR)(lParam) );
@@ -623,7 +623,7 @@ void WINPROC_UnmapMsg32ATo32W( HWND32 hwnd, UINT32 msg, WPARAM32 wParam, LPARAM 
         break;
 
 /* Multiline edit */
-    case EM_GETLINE32:
+    case EM_GETLINE:
         { LPARAM * ptr = (LPARAM *)lParam - 1;  /* get the old lParam */
 	  WORD len = *(WORD *) lParam;
           lstrcpynWtoA( (LPSTR)*ptr , (LPWSTR)lParam, len );
@@ -640,7 +640,7 @@ void WINPROC_UnmapMsg32ATo32W( HWND32 hwnd, UINT32 msg, WPARAM32 wParam, LPARAM 
  * Map a message from Unicode to Ansi.
  * Return value is -1 on error, 0 if OK, 1 if an UnmapMsg call is needed.
  */
-INT32 WINPROC_MapMsg32WTo32A( HWND32 hwnd, UINT32 msg, WPARAM32 wParam, LPARAM *plparam )
+INT WINPROC_MapMsg32WTo32A( HWND hwnd, UINT msg, WPARAM wParam, LPARAM *plparam )
 {   switch(msg)
     {
     case WM_GETTEXT:
@@ -654,25 +654,25 @@ INT32 WINPROC_MapMsg32WTo32A( HWND32 hwnd, UINT32 msg, WPARAM32 wParam, LPARAM *
         return 1;
 
     case WM_SETTEXT:
-    case CB_DIR32:
-    case CB_FINDSTRING32:
-    case CB_FINDSTRINGEXACT32:
-    case CB_SELECTSTRING32:
-    case LB_DIR32:
-    case LB_ADDFILE32:
-    case LB_FINDSTRING32:
-    case LB_SELECTSTRING32:
-    case EM_REPLACESEL32:
+    case CB_DIR:
+    case CB_FINDSTRING:
+    case CB_FINDSTRINGEXACT:
+    case CB_SELECTSTRING:
+    case LB_DIR:
+    case LB_ADDFILE:
+    case LB_FINDSTRING:
+    case LB_SELECTSTRING:
+    case EM_REPLACESEL:
         *plparam = (LPARAM)HEAP_strdupWtoA( SystemHeap, 0, (LPCWSTR)*plparam );
         return (*plparam ? 1 : -1);
 
     case WM_NCCREATE:
     case WM_CREATE:
         {
-            CREATESTRUCT32A *cs = (CREATESTRUCT32A *)HeapAlloc( SystemHeap, 0,
+            CREATESTRUCTA *cs = (CREATESTRUCTA *)HeapAlloc( SystemHeap, 0,
                                                                 sizeof(*cs) );
             if (!cs) return -1;
-            *cs = *(CREATESTRUCT32A *)*plparam;
+            *cs = *(CREATESTRUCTA *)*plparam;
             if (HIWORD(cs->lpszName))
                 cs->lpszName  = HEAP_strdupWtoA( SystemHeap, 0,
                                                  (LPCWSTR)cs->lpszName );
@@ -684,10 +684,10 @@ INT32 WINPROC_MapMsg32WTo32A( HWND32 hwnd, UINT32 msg, WPARAM32 wParam, LPARAM *
         return 1;
     case WM_MDICREATE:
         {
-            MDICREATESTRUCT32A *cs =
-                (MDICREATESTRUCT32A *)HeapAlloc( SystemHeap, 0, sizeof(*cs) );
+            MDICREATESTRUCTA *cs =
+                (MDICREATESTRUCTA *)HeapAlloc( SystemHeap, 0, sizeof(*cs) );
             if (!cs) return -1;
-            *cs = *(MDICREATESTRUCT32A *)*plparam;
+            *cs = *(MDICREATESTRUCTA *)*plparam;
             if (HIWORD(cs->szTitle))
                 cs->szTitle = HEAP_strdupWtoA( SystemHeap, 0,
                                                (LPCWSTR)cs->szTitle );
@@ -699,13 +699,13 @@ INT32 WINPROC_MapMsg32WTo32A( HWND32 hwnd, UINT32 msg, WPARAM32 wParam, LPARAM *
         return 1;
 
 /* Listbox */
-    case LB_ADDSTRING32:
-    case LB_INSERTSTRING32:
+    case LB_ADDSTRING:
+    case LB_INSERTSTRING:
 	if ( WINPROC_TestLBForStr( hwnd ))
           *plparam = (LPARAM)HEAP_strdupWtoA( SystemHeap, 0, (LPCWSTR)*plparam );
         return (*plparam ? 1 : -1);
 
-    case LB_GETTEXT32:			/* fixme: fixed sized buffer */
+    case LB_GETTEXT:			/* fixme: fixed sized buffer */
         { if ( WINPROC_TestLBForStr( hwnd ))
 	  { LPARAM *ptr = (LPARAM *)HeapAlloc( SystemHeap, 0, 256 + sizeof(LPARAM) );
             if (!ptr) return -1;
@@ -716,13 +716,13 @@ INT32 WINPROC_MapMsg32WTo32A( HWND32 hwnd, UINT32 msg, WPARAM32 wParam, LPARAM *
         return 1;
 
 /* Combobox */
-    case CB_ADDSTRING32:
-    case CB_INSERTSTRING32:
+    case CB_ADDSTRING:
+    case CB_INSERTSTRING:
 	if ( WINPROC_TestCBForStr( hwnd ))
           *plparam = (LPARAM)HEAP_strdupWtoA( SystemHeap, 0, (LPCWSTR)*plparam );
         return (*plparam ? 1 : -1);
 
-    case CB_GETLBTEXT32:		/* fixme: fixed sized buffer */
+    case CB_GETLBTEXT:		/* fixme: fixed sized buffer */
         { if ( WINPROC_TestCBForStr( hwnd ))
 	  { LPARAM *ptr = (LPARAM *)HeapAlloc( SystemHeap, 0, 256 + sizeof(LPARAM) );
             if (!ptr) return -1;
@@ -733,7 +733,7 @@ INT32 WINPROC_MapMsg32WTo32A( HWND32 hwnd, UINT32 msg, WPARAM32 wParam, LPARAM *
         return 1;
 
 /* Multiline edit */
-    case EM_GETLINE32:
+    case EM_GETLINE:
         { WORD len = (WORD)*plparam;
 	  LPARAM *ptr = (LPARAM *) HEAP_xalloc( SystemHeap, 0, sizeof(LPARAM) + sizeof (WORD) + len*sizeof(CHAR) );
           if (!ptr) return -1;
@@ -748,7 +748,7 @@ INT32 WINPROC_MapMsg32WTo32A( HWND32 hwnd, UINT32 msg, WPARAM32 wParam, LPARAM *
     case WM_PAINTCLIPBOARD:
     case WM_SIZECLIPBOARD:
     case WM_WININICHANGE:
-    case EM_SETPASSWORDCHAR32:
+    case EM_SETPASSWORDCHAR:
         FIXME(msg, "message %s (%04x) needs translation, please report\n",SPY_GetMsgName(msg),msg );
         return -1;
     default:  /* No translation needed */
@@ -762,7 +762,7 @@ INT32 WINPROC_MapMsg32WTo32A( HWND32 hwnd, UINT32 msg, WPARAM32 wParam, LPARAM *
  *
  * Unmap a message that was mapped from Unicode to Ansi.
  */
-void WINPROC_UnmapMsg32WTo32A( HWND32 hwnd, UINT32 msg, WPARAM32 wParam, LPARAM lParam )
+void WINPROC_UnmapMsg32WTo32A( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
 {
     switch(msg)
     {
@@ -775,22 +775,22 @@ void WINPROC_UnmapMsg32WTo32A( HWND32 hwnd, UINT32 msg, WPARAM32 wParam, LPARAM 
         break;
 
     case WM_SETTEXT:
-    case CB_DIR32:
-    case CB_FINDSTRING32:
-    case CB_FINDSTRINGEXACT32:
-    case CB_SELECTSTRING32:
-    case LB_DIR32:
-    case LB_ADDFILE32:
-    case LB_FINDSTRING32:
-    case LB_SELECTSTRING32:
-    case EM_REPLACESEL32:
+    case CB_DIR:
+    case CB_FINDSTRING:
+    case CB_FINDSTRINGEXACT:
+    case CB_SELECTSTRING:
+    case LB_DIR:
+    case LB_ADDFILE:
+    case LB_FINDSTRING:
+    case LB_SELECTSTRING:
+    case EM_REPLACESEL:
         HeapFree( SystemHeap, 0, (void *)lParam );
         break;
 
     case WM_NCCREATE:
     case WM_CREATE:
         {
-            CREATESTRUCT32A *cs = (CREATESTRUCT32A *)lParam;
+            CREATESTRUCTA *cs = (CREATESTRUCTA *)lParam;
             if (HIWORD(cs->lpszName))
                 HeapFree( SystemHeap, 0, (LPVOID)cs->lpszName );
             if (HIWORD(cs->lpszClass))
@@ -801,7 +801,7 @@ void WINPROC_UnmapMsg32WTo32A( HWND32 hwnd, UINT32 msg, WPARAM32 wParam, LPARAM 
 
     case WM_MDICREATE:
         {
-            MDICREATESTRUCT32A *cs = (MDICREATESTRUCT32A *)lParam;
+            MDICREATESTRUCTA *cs = (MDICREATESTRUCTA *)lParam;
             if (HIWORD(cs->szTitle))
                 HeapFree( SystemHeap, 0, (LPVOID)cs->szTitle );
             if (HIWORD(cs->szClass))
@@ -811,13 +811,13 @@ void WINPROC_UnmapMsg32WTo32A( HWND32 hwnd, UINT32 msg, WPARAM32 wParam, LPARAM 
         break;
 
 /* Listbox */
-    case LB_ADDSTRING32:
-    case LB_INSERTSTRING32:
+    case LB_ADDSTRING:
+    case LB_INSERTSTRING:
 	if ( WINPROC_TestLBForStr( hwnd ))
           HeapFree( SystemHeap, 0, (void *)lParam );
         break;
 
-    case LB_GETTEXT32:
+    case LB_GETTEXT:
         { if ( WINPROC_TestLBForStr( hwnd ))
           { LPARAM *ptr = (LPARAM *)lParam - 1;
             lstrcpyAtoW( (LPWSTR)*ptr, (LPSTR)(lParam) );
@@ -827,13 +827,13 @@ void WINPROC_UnmapMsg32WTo32A( HWND32 hwnd, UINT32 msg, WPARAM32 wParam, LPARAM 
         break;
 
 /* Combobox */
-    case CB_ADDSTRING32:
-    case CB_INSERTSTRING32:
+    case CB_ADDSTRING:
+    case CB_INSERTSTRING:
 	if ( WINPROC_TestCBForStr( hwnd ))
           HeapFree( SystemHeap, 0, (void *)lParam );
         break;
 
-    case CB_GETLBTEXT32:
+    case CB_GETLBTEXT:
         { if ( WINPROC_TestCBForStr( hwnd ))
           { LPARAM *ptr = (LPARAM *)lParam - 1;
             lstrcpyAtoW( (LPWSTR)*ptr, (LPSTR)(lParam) );
@@ -843,7 +843,7 @@ void WINPROC_UnmapMsg32WTo32A( HWND32 hwnd, UINT32 msg, WPARAM32 wParam, LPARAM 
         break;
 
 /* Multiline edit */
-    case EM_GETLINE32:
+    case EM_GETLINE:
         { LPARAM * ptr = (LPARAM *)lParam - 1;  /* get the old lparam */
 	  WORD len = *(WORD *)ptr;
           lstrcpynAtoW( (LPWSTR) *ptr, (LPSTR)lParam, len );
@@ -860,11 +860,11 @@ void WINPROC_UnmapMsg32WTo32A( HWND32 hwnd, UINT32 msg, WPARAM32 wParam, LPARAM 
  * Map a message from 16- to 32-bit Ansi.
  * Return value is -1 on error, 0 if OK, 1 if an UnmapMsg call is needed.
  */
-INT32 WINPROC_MapMsg16To32A( UINT16 msg16, WPARAM16 wParam16, UINT32 *pmsg32,
-                             WPARAM32 *pwparam32, LPARAM *plparam )
+INT WINPROC_MapMsg16To32A( UINT16 msg16, WPARAM16 wParam16, UINT *pmsg32,
+                             WPARAM *pwparam32, LPARAM *plparam )
 {
-    *pmsg32 = (UINT32)msg16;
-    *pwparam32 = (WPARAM32)wParam16;
+    *pmsg32 = (UINT)msg16;
+    *pwparam32 = (WPARAM)wParam16;
     switch(msg16)
     {
     case WM_ACTIVATE:
@@ -872,23 +872,23 @@ INT32 WINPROC_MapMsg16To32A( UINT16 msg16, WPARAM16 wParam16, UINT32 *pmsg32,
     case WM_COMMAND:
     case WM_VKEYTOITEM:
         *pwparam32 = MAKEWPARAM( wParam16, HIWORD(*plparam) );
-        *plparam   = (LPARAM)(HWND32)LOWORD(*plparam);
+        *plparam   = (LPARAM)(HWND)LOWORD(*plparam);
         return 0;
     case WM_HSCROLL:
     case WM_VSCROLL:
         *pwparam32 = MAKEWPARAM( wParam16, LOWORD(*plparam) );
-        *plparam   = (LPARAM)(HWND32)HIWORD(*plparam);
+        *plparam   = (LPARAM)(HWND)HIWORD(*plparam);
         return 0;
     case WM_CTLCOLOR:
     	if ( HIWORD(*plparam) > CTLCOLOR_STATIC ) return -1;
         *pmsg32    = WM_CTLCOLORMSGBOX + HIWORD(*plparam);
-        *pwparam32 = (WPARAM32)(HDC32)wParam16;
-        *plparam   = (LPARAM)(HWND32)LOWORD(*plparam);
+        *pwparam32 = (WPARAM)(HDC)wParam16;
+        *plparam   = (LPARAM)(HWND)LOWORD(*plparam);
         return 0;
     case WM_COMPAREITEM:
         {
             COMPAREITEMSTRUCT16* cis16 = (COMPAREITEMSTRUCT16 *)PTR_SEG_TO_LIN(*plparam);
-            COMPAREITEMSTRUCT32 *cis = (COMPAREITEMSTRUCT32 *)
+            COMPAREITEMSTRUCT *cis = (COMPAREITEMSTRUCT *)
                                         HeapAlloc(SystemHeap, 0, sizeof(*cis));
             if (!cis) return -1;
             cis->CtlType    = cis16->CtlType;
@@ -905,7 +905,7 @@ INT32 WINPROC_MapMsg16To32A( UINT16 msg16, WPARAM16 wParam16, UINT32 *pmsg32,
     case WM_DELETEITEM:
         {
             DELETEITEMSTRUCT16* dis16 = (DELETEITEMSTRUCT16 *)PTR_SEG_TO_LIN(*plparam);
-            DELETEITEMSTRUCT32 *dis = (DELETEITEMSTRUCT32 *)
+            DELETEITEMSTRUCT *dis = (DELETEITEMSTRUCT *)
                                         HeapAlloc(SystemHeap, 0, sizeof(*dis));
             if (!dis) return -1;
             dis->CtlType  = dis16->CtlType;
@@ -918,7 +918,7 @@ INT32 WINPROC_MapMsg16To32A( UINT16 msg16, WPARAM16 wParam16, UINT32 *pmsg32,
     case WM_MEASUREITEM:
         {
             MEASUREITEMSTRUCT16* mis16 = (MEASUREITEMSTRUCT16 *)PTR_SEG_TO_LIN(*plparam);
-            MEASUREITEMSTRUCT32 *mis = (MEASUREITEMSTRUCT32 *)
+            MEASUREITEMSTRUCT *mis = (MEASUREITEMSTRUCT *)
                                         HeapAlloc(SystemHeap, 0,
                                                 sizeof(*mis) + sizeof(LPARAM));
             if (!mis) return -1;
@@ -935,7 +935,7 @@ INT32 WINPROC_MapMsg16To32A( UINT16 msg16, WPARAM16 wParam16, UINT32 *pmsg32,
     case WM_DRAWITEM:
         {
             DRAWITEMSTRUCT16* dis16 = (DRAWITEMSTRUCT16 *)PTR_SEG_TO_LIN(*plparam);
-            DRAWITEMSTRUCT32 *dis = (DRAWITEMSTRUCT32*)HeapAlloc(SystemHeap, 0,
+            DRAWITEMSTRUCT *dis = (DRAWITEMSTRUCT*)HeapAlloc(SystemHeap, 0,
                                                                  sizeof(*dis));
             if (!dis) return -1;
             dis->CtlType    = dis16->CtlType;
@@ -952,7 +952,7 @@ INT32 WINPROC_MapMsg16To32A( UINT16 msg16, WPARAM16 wParam16, UINT32 *pmsg32,
         return 1;
     case WM_GETMINMAXINFO:
         {
-            MINMAXINFO32 *mmi = (MINMAXINFO32 *)HeapAlloc( SystemHeap, 0,
+            MINMAXINFO *mmi = (MINMAXINFO *)HeapAlloc( SystemHeap, 0,
                                                 sizeof(*mmi) + sizeof(LPARAM));
             if (!mmi) return -1;
             STRUCT32_MINMAXINFO16to32( (MINMAXINFO16*)PTR_SEG_TO_LIN(*plparam),
@@ -969,8 +969,8 @@ INT32 WINPROC_MapMsg16To32A( UINT16 msg16, WPARAM16 wParam16, UINT32 *pmsg32,
         {
             MDICREATESTRUCT16 *cs16 =
                 (MDICREATESTRUCT16 *)PTR_SEG_TO_LIN(*plparam);
-            MDICREATESTRUCT32A *cs =
-                (MDICREATESTRUCT32A *)HeapAlloc( SystemHeap, 0,
+            MDICREATESTRUCTA *cs =
+                (MDICREATESTRUCTA *)HeapAlloc( SystemHeap, 0,
                                                 sizeof(*cs) + sizeof(LPARAM) );
             if (!cs) return -1;
             STRUCT32_MDICREATESTRUCT16to32A( cs16, cs );
@@ -981,25 +981,25 @@ INT32 WINPROC_MapMsg16To32A( UINT16 msg16, WPARAM16 wParam16, UINT32 *pmsg32,
         }
         return 1;
     case WM_MDIGETACTIVE:
-        *plparam = (LPARAM)HeapAlloc( SystemHeap, 0, sizeof(BOOL32) );
-        *(BOOL32*)(*plparam) = 0;
+        *plparam = (LPARAM)HeapAlloc( SystemHeap, 0, sizeof(BOOL) );
+        *(BOOL*)(*plparam) = 0;
         return 1;
     case WM_MDISETMENU:
         if(wParam16==TRUE)
            *pmsg32=WM_MDIREFRESHMENU;
-        *pwparam32 = (WPARAM32)(HMENU32)LOWORD(*plparam);
-        *plparam   = (LPARAM)(HMENU32)HIWORD(*plparam);
+        *pwparam32 = (WPARAM)(HMENU)LOWORD(*plparam);
+        *plparam   = (LPARAM)(HMENU)HIWORD(*plparam);
         return 0;
     case WM_MENUCHAR:
     case WM_MENUSELECT:
         *pwparam32 = MAKEWPARAM( wParam16, LOWORD(*plparam) );
-        *plparam   = (LPARAM)(HMENU32)HIWORD(*plparam);
+        *plparam   = (LPARAM)(HMENU)HIWORD(*plparam);
         return 0;
     case WM_MDIACTIVATE:
 	if( *plparam )
 	{
-	    *pwparam32 = (WPARAM32)(HWND32)HIWORD(*plparam);
-	    *plparam   = (LPARAM)(HWND32)LOWORD(*plparam);
+	    *pwparam32 = (WPARAM)(HWND)HIWORD(*plparam);
+	    *plparam   = (LPARAM)(HWND)LOWORD(*plparam);
 	}
 	else /* message sent to MDI client */
 	    *pwparam32 = wParam16;
@@ -1007,16 +1007,16 @@ INT32 WINPROC_MapMsg16To32A( UINT16 msg16, WPARAM16 wParam16, UINT32 *pmsg32,
     case WM_NCCALCSIZE:
         {
             NCCALCSIZE_PARAMS16 *nc16;
-            NCCALCSIZE_PARAMS32 *nc;
+            NCCALCSIZE_PARAMS *nc;
 
-            nc = (NCCALCSIZE_PARAMS32 *)HeapAlloc( SystemHeap, 0,
+            nc = (NCCALCSIZE_PARAMS *)HeapAlloc( SystemHeap, 0,
                                                 sizeof(*nc) + sizeof(LPARAM) );
             if (!nc) return -1;
             nc16 = (NCCALCSIZE_PARAMS16 *)PTR_SEG_TO_LIN(*plparam);
             CONV_RECT16TO32( &nc16->rgrc[0], &nc->rgrc[0] );
             if (wParam16)
             {
-                nc->lppos = (WINDOWPOS32 *)HeapAlloc( SystemHeap, 0,
+                nc->lppos = (WINDOWPOS *)HeapAlloc( SystemHeap, 0,
                                                       sizeof(*nc->lppos) );
                 CONV_RECT16TO32( &nc16->rgrc[1], &nc->rgrc[1] );
                 CONV_RECT16TO32( &nc16->rgrc[2], &nc->rgrc[2] );
@@ -1030,7 +1030,7 @@ INT32 WINPROC_MapMsg16To32A( UINT16 msg16, WPARAM16 wParam16, UINT32 *pmsg32,
     case WM_CREATE:
         {
             CREATESTRUCT16 *cs16 = (CREATESTRUCT16 *)PTR_SEG_TO_LIN(*plparam);
-            CREATESTRUCT32A *cs = (CREATESTRUCT32A *)HeapAlloc( SystemHeap, 0,
+            CREATESTRUCTA *cs = (CREATESTRUCTA *)HeapAlloc( SystemHeap, 0,
                                                 sizeof(*cs) + sizeof(LPARAM) );
             if (!cs) return -1;
             STRUCT32_CREATESTRUCT16to32A( cs16, cs );
@@ -1044,13 +1044,13 @@ INT32 WINPROC_MapMsg16To32A( UINT16 msg16, WPARAM16 wParam16, UINT32 *pmsg32,
         if ((wParam16 == WM_CREATE) || (wParam16 == WM_DESTROY))
         {
             *pwparam32 = MAKEWPARAM( wParam16, HIWORD(*plparam) );
-            *plparam   = (LPARAM)(HWND32)LOWORD(*plparam);
+            *plparam   = (LPARAM)(HWND)LOWORD(*plparam);
         }
         return 0;
     case WM_WINDOWPOSCHANGING:
     case WM_WINDOWPOSCHANGED:
         {
-            WINDOWPOS32 *wp = (WINDOWPOS32 *)HeapAlloc( SystemHeap, 0,
+            WINDOWPOS *wp = (WINDOWPOS *)HeapAlloc( SystemHeap, 0,
                                                 sizeof(*wp) + sizeof(LPARAM) );
             if (!wp) return -1;
             STRUCT32_WINDOWPOS16to32( (WINDOWPOS16 *)PTR_SEG_TO_LIN(*plparam),
@@ -1063,7 +1063,7 @@ INT32 WINPROC_MapMsg16To32A( UINT16 msg16, WPARAM16 wParam16, UINT32 *pmsg32,
         if (*plparam)
         {
             LPMSG16 msg16 = (LPMSG16)PTR_SEG_TO_LIN(*plparam);
-            LPMSG32 msg32 = (LPMSG32)HeapAlloc( SystemHeap, 0, sizeof(MSG32) );
+            LPMSG msg32 = (LPMSG)HeapAlloc( SystemHeap, 0, sizeof(MSG) );
 
             if (!msg32) return -1;
             msg32->hwnd = msg16->hwnd;
@@ -1114,7 +1114,7 @@ INT32 WINPROC_MapMsg16To32A( UINT16 msg16, WPARAM16 wParam16, UINT32 *pmsg32,
  *
  * Unmap a message that was mapped from 16- to 32-bit Ansi.
  */
-LRESULT WINPROC_UnmapMsg16To32A( HWND16 hwnd, UINT32 msg, WPARAM32 wParam, LPARAM lParam,
+LRESULT WINPROC_UnmapMsg16To32A( HWND16 hwnd, UINT msg, WPARAM wParam, LPARAM lParam,
                                  LRESULT result )
 {
     switch(msg)
@@ -1127,7 +1127,7 @@ LRESULT WINPROC_UnmapMsg16To32A( HWND16 hwnd, UINT32 msg, WPARAM32 wParam, LPARA
     case WM_MEASUREITEM:
         {
             MEASUREITEMSTRUCT16 *mis16;
-            MEASUREITEMSTRUCT32 *mis = (MEASUREITEMSTRUCT32 *)lParam;
+            MEASUREITEMSTRUCT *mis = (MEASUREITEMSTRUCT *)lParam;
             lParam = *(LPARAM *)(mis + 1);
             mis16 = (MEASUREITEMSTRUCT16 *)PTR_SEG_TO_LIN(lParam);
             mis16->itemWidth  = (UINT16)mis->itemWidth;
@@ -1137,7 +1137,7 @@ LRESULT WINPROC_UnmapMsg16To32A( HWND16 hwnd, UINT32 msg, WPARAM32 wParam, LPARA
         break;
     case WM_GETMINMAXINFO:
         {
-            MINMAXINFO32 *mmi = (MINMAXINFO32 *)lParam;
+            MINMAXINFO *mmi = (MINMAXINFO *)lParam;
             lParam = *(LPARAM *)(mmi + 1);
             STRUCT32_MINMAXINFO32to16( mmi,
                                        (MINMAXINFO16 *)PTR_SEG_TO_LIN(lParam));
@@ -1146,7 +1146,7 @@ LRESULT WINPROC_UnmapMsg16To32A( HWND16 hwnd, UINT32 msg, WPARAM32 wParam, LPARA
         break;
     case WM_MDICREATE:
         {
-            MDICREATESTRUCT32A *cs = (MDICREATESTRUCT32A *)lParam;
+            MDICREATESTRUCTA *cs = (MDICREATESTRUCTA *)lParam;
             lParam = *(LPARAM *)(cs + 1);
             STRUCT32_MDICREATESTRUCT32Ato16( cs,
                                  (MDICREATESTRUCT16 *)PTR_SEG_TO_LIN(lParam) );
@@ -1154,13 +1154,13 @@ LRESULT WINPROC_UnmapMsg16To32A( HWND16 hwnd, UINT32 msg, WPARAM32 wParam, LPARA
         }
         break;
     case WM_MDIGETACTIVE:
-        result = MAKELONG( LOWORD(result), (BOOL16)(*(BOOL32 *)lParam) );
-        HeapFree( SystemHeap, 0, (BOOL32 *)lParam );
+        result = MAKELONG( LOWORD(result), (BOOL16)(*(BOOL *)lParam) );
+        HeapFree( SystemHeap, 0, (BOOL *)lParam );
         break;
     case WM_NCCALCSIZE:
         {
             NCCALCSIZE_PARAMS16 *nc16;
-            NCCALCSIZE_PARAMS32 *nc = (NCCALCSIZE_PARAMS32 *)lParam;
+            NCCALCSIZE_PARAMS *nc = (NCCALCSIZE_PARAMS *)lParam;
             lParam = *(LPARAM *)(nc + 1);
             nc16 = (NCCALCSIZE_PARAMS16 *)PTR_SEG_TO_LIN(lParam);
             CONV_RECT32TO16( &nc->rgrc[0], &nc16->rgrc[0] );
@@ -1181,7 +1181,7 @@ LRESULT WINPROC_UnmapMsg16To32A( HWND16 hwnd, UINT32 msg, WPARAM32 wParam, LPARA
     case WM_NCCREATE:
     case WM_CREATE:
         {
-            CREATESTRUCT32A *cs = (CREATESTRUCT32A *)lParam;
+            CREATESTRUCTA *cs = (CREATESTRUCTA *)lParam;
             lParam = *(LPARAM *)(cs + 1);
             STRUCT32_CREATESTRUCT32Ato16( cs,
                                     (CREATESTRUCT16 *)PTR_SEG_TO_LIN(lParam) );
@@ -1191,7 +1191,7 @@ LRESULT WINPROC_UnmapMsg16To32A( HWND16 hwnd, UINT32 msg, WPARAM32 wParam, LPARA
     case WM_WINDOWPOSCHANGING:
     case WM_WINDOWPOSCHANGED:
         {
-            WINDOWPOS32 *wp = (WINDOWPOS32 *)lParam;
+            WINDOWPOS *wp = (WINDOWPOS *)lParam;
             lParam = *(LPARAM *)(wp + 1);
             STRUCT32_WINDOWPOS32to16(wp,(WINDOWPOS16 *)PTR_SEG_TO_LIN(lParam));
             HeapFree( SystemHeap, 0, wp );
@@ -1200,7 +1200,7 @@ LRESULT WINPROC_UnmapMsg16To32A( HWND16 hwnd, UINT32 msg, WPARAM32 wParam, LPARA
     case WM_GETDLGCODE:
         if (lParam)
         {
-            LPMSG32 msg32 = (LPMSG32)lParam;
+            LPMSG msg32 = (LPMSG)lParam;
 
             WINPROC_UnmapMsg16To32A( hwnd, msg32->message, msg32->wParam, msg32->lParam,
                                      result);
@@ -1218,8 +1218,8 @@ LRESULT WINPROC_UnmapMsg16To32A( HWND16 hwnd, UINT32 msg, WPARAM32 wParam, LPARA
  * Map a message from 16- to 32-bit Unicode.
  * Return value is -1 on error, 0 if OK, 1 if an UnmapMsg call is needed.
  */
-INT32 WINPROC_MapMsg16To32W( HWND16 hwnd, UINT16 msg16, WPARAM16 wParam16, UINT32 *pmsg32,
-                             WPARAM32 *pwparam32, LPARAM *plparam )
+INT WINPROC_MapMsg16To32W( HWND16 hwnd, UINT16 msg16, WPARAM16 wParam16, UINT *pmsg32,
+                             WPARAM *pwparam32, LPARAM *plparam )
 {
     switch(msg16)
     {
@@ -1231,10 +1231,10 @@ INT32 WINPROC_MapMsg16To32W( HWND16 hwnd, UINT16 msg16, WPARAM16 wParam16, UINT3
     case WM_CREATE:
         {
             CREATESTRUCT16 *cs16 = (CREATESTRUCT16 *)PTR_SEG_TO_LIN(*plparam);
-            CREATESTRUCT32W *cs = (CREATESTRUCT32W *)HeapAlloc( SystemHeap, 0,
+            CREATESTRUCTW *cs = (CREATESTRUCTW *)HeapAlloc( SystemHeap, 0,
                                                 sizeof(*cs) + sizeof(LPARAM) );
             if (!cs) return -1;
-            STRUCT32_CREATESTRUCT16to32A( cs16, (CREATESTRUCT32A *)cs );
+            STRUCT32_CREATESTRUCT16to32A( cs16, (CREATESTRUCTA *)cs );
             cs->lpszName  = (LPCWSTR)PTR_SEG_TO_LIN(cs16->lpszName);
             cs->lpszClass = (LPCWSTR)PTR_SEG_TO_LIN(cs16->lpszClass);
             if (HIWORD(cs->lpszName))
@@ -1251,11 +1251,11 @@ INT32 WINPROC_MapMsg16To32W( HWND16 hwnd, UINT16 msg16, WPARAM16 wParam16, UINT3
         {
             MDICREATESTRUCT16 *cs16 =
                 (MDICREATESTRUCT16 *)PTR_SEG_TO_LIN(*plparam);
-            MDICREATESTRUCT32W *cs =
-                (MDICREATESTRUCT32W *)HeapAlloc( SystemHeap, 0,
+            MDICREATESTRUCTW *cs =
+                (MDICREATESTRUCTW *)HeapAlloc( SystemHeap, 0,
                                                 sizeof(*cs) + sizeof(LPARAM) );
             if (!cs) return -1;
-            STRUCT32_MDICREATESTRUCT16to32A( cs16, (MDICREATESTRUCT32A *)cs );
+            STRUCT32_MDICREATESTRUCT16to32A( cs16, (MDICREATESTRUCTA *)cs );
             cs->szTitle = (LPCWSTR)PTR_SEG_TO_LIN(cs16->szTitle);
             cs->szClass = (LPCWSTR)PTR_SEG_TO_LIN(cs16->szClass);
             if (HIWORD(cs->szTitle))
@@ -1272,7 +1272,7 @@ INT32 WINPROC_MapMsg16To32W( HWND16 hwnd, UINT16 msg16, WPARAM16 wParam16, UINT3
         if (*plparam)
         {
             LPMSG16 msg16 = (LPMSG16)PTR_SEG_TO_LIN(*plparam);
-            LPMSG32 msg32 = (LPMSG32)HeapAlloc( SystemHeap, 0, sizeof(MSG32) );
+            LPMSG msg32 = (LPMSG)HeapAlloc( SystemHeap, 0, sizeof(MSG) );
 
             if (!msg32) return -1;
             msg32->hwnd = msg16->hwnd;
@@ -1302,7 +1302,7 @@ INT32 WINPROC_MapMsg16To32W( HWND16 hwnd, UINT16 msg16, WPARAM16 wParam16, UINT3
  *
  * Unmap a message that was mapped from 16- to 32-bit Unicode.
  */
-LRESULT WINPROC_UnmapMsg16To32W( HWND16 hwnd, UINT32 msg, WPARAM32 wParam, LPARAM lParam,
+LRESULT WINPROC_UnmapMsg16To32W( HWND16 hwnd, UINT msg, WPARAM wParam, LPARAM lParam,
                                  LRESULT result )
 {
     switch(msg)
@@ -1314,9 +1314,9 @@ LRESULT WINPROC_UnmapMsg16To32W( HWND16 hwnd, UINT32 msg, WPARAM32 wParam, LPARA
     case WM_NCCREATE:
     case WM_CREATE:
         {
-            CREATESTRUCT32W *cs = (CREATESTRUCT32W *)lParam;
+            CREATESTRUCTW *cs = (CREATESTRUCTW *)lParam;
             lParam = *(LPARAM *)(cs + 1);
-            STRUCT32_CREATESTRUCT32Ato16( (CREATESTRUCT32A *)cs,
+            STRUCT32_CREATESTRUCT32Ato16( (CREATESTRUCTA *)cs,
                                     (CREATESTRUCT16 *)PTR_SEG_TO_LIN(lParam) );
             if (HIWORD(cs->lpszName))
                 HeapFree( SystemHeap, 0, (LPVOID)cs->lpszName );
@@ -1327,9 +1327,9 @@ LRESULT WINPROC_UnmapMsg16To32W( HWND16 hwnd, UINT32 msg, WPARAM32 wParam, LPARA
         break;
     case WM_MDICREATE:
         {
-            MDICREATESTRUCT32W *cs = (MDICREATESTRUCT32W *)lParam;
+            MDICREATESTRUCTW *cs = (MDICREATESTRUCTW *)lParam;
             lParam = *(LPARAM *)(cs + 1);
-            STRUCT32_MDICREATESTRUCT32Ato16( (MDICREATESTRUCT32A *)cs,
+            STRUCT32_MDICREATESTRUCT32Ato16( (MDICREATESTRUCTA *)cs,
                                  (MDICREATESTRUCT16 *)PTR_SEG_TO_LIN(lParam) );
             if (HIWORD(cs->szTitle))
                 HeapFree( SystemHeap, 0, (LPVOID)cs->szTitle );
@@ -1341,7 +1341,7 @@ LRESULT WINPROC_UnmapMsg16To32W( HWND16 hwnd, UINT32 msg, WPARAM32 wParam, LPARA
     case WM_GETDLGCODE:
         if (lParam)
         {
-            LPMSG32 msg32 = (LPMSG32)lParam;
+            LPMSG msg32 = (LPMSG)lParam;
 
             WINPROC_UnmapMsg16To32W( hwnd, msg32->message, msg32->wParam, msg32->lParam,
                                      result);
@@ -1361,7 +1361,7 @@ LRESULT WINPROC_UnmapMsg16To32W( HWND16 hwnd, UINT32 msg, WPARAM32 wParam, LPARA
  * Map a message from 32-bit Ansi to 16-bit.
  * Return value is -1 on error, 0 if OK, 1 if an UnmapMsg call is needed.
  */
-INT32 WINPROC_MapMsg32ATo16( HWND32 hwnd, UINT32 msg32, WPARAM32 wParam32,
+INT WINPROC_MapMsg32ATo16( HWND hwnd, UINT msg32, WPARAM wParam32,
                              UINT16 *pmsg16, WPARAM16 *pwparam16,
                              LPARAM *plparam )
 {
@@ -1369,126 +1369,126 @@ INT32 WINPROC_MapMsg32ATo16( HWND32 hwnd, UINT32 msg32, WPARAM32 wParam32,
     *pwparam16 = (WPARAM16)LOWORD(wParam32);
     switch(msg32)
     {
-    case BM_GETCHECK32:
-    case BM_SETCHECK32:
-    case BM_GETSTATE32:
-    case BM_SETSTATE32:
-    case BM_SETSTYLE32:
-        *pmsg16 = (UINT16)msg32 + (BM_GETCHECK16 - BM_GETCHECK32);
+    case BM_GETCHECK:
+    case BM_SETCHECK:
+    case BM_GETSTATE:
+    case BM_SETSTATE:
+    case BM_SETSTYLE:
+        *pmsg16 = (UINT16)msg32 + (BM_GETCHECK16 - BM_GETCHECK);
         return 0;
 
-    case EM_GETSEL32:
-    case EM_GETRECT32:
-    case EM_SETRECT32:
-    case EM_SETRECTNP32:
-    case EM_SCROLL32:
-    case EM_LINESCROLL32:
-    case EM_SCROLLCARET32:
-    case EM_GETMODIFY32:
-    case EM_SETMODIFY32:
-    case EM_GETLINECOUNT32:
-    case EM_LINEINDEX32:
-    case EM_SETHANDLE32:
-    case EM_GETHANDLE32:
-    case EM_GETTHUMB32:
-    case EM_LINELENGTH32:
-    case EM_REPLACESEL32:
-    case EM_GETLINE32:
-    case EM_LIMITTEXT32:
-    case EM_CANUNDO32:
-    case EM_UNDO32:
-    case EM_FMTLINES32:
-    case EM_LINEFROMCHAR32:
-    case EM_SETTABSTOPS32:
-    case EM_SETPASSWORDCHAR32:
-    case EM_EMPTYUNDOBUFFER32:
-    case EM_GETFIRSTVISIBLELINE32:
-    case EM_SETREADONLY32:
-    case EM_SETWORDBREAKPROC32:
-    case EM_GETWORDBREAKPROC32:
-    case EM_GETPASSWORDCHAR32:
-        *pmsg16 = (UINT16)msg32 + (EM_GETSEL16 - EM_GETSEL32);
+    case EM_GETSEL:
+    case EM_GETRECT:
+    case EM_SETRECT:
+    case EM_SETRECTNP:
+    case EM_SCROLL:
+    case EM_LINESCROLL:
+    case EM_SCROLLCARET:
+    case EM_GETMODIFY:
+    case EM_SETMODIFY:
+    case EM_GETLINECOUNT:
+    case EM_LINEINDEX:
+    case EM_SETHANDLE:
+    case EM_GETHANDLE:
+    case EM_GETTHUMB:
+    case EM_LINELENGTH:
+    case EM_REPLACESEL:
+    case EM_GETLINE:
+    case EM_LIMITTEXT:
+    case EM_CANUNDO:
+    case EM_UNDO:
+    case EM_FMTLINES:
+    case EM_LINEFROMCHAR:
+    case EM_SETTABSTOPS:
+    case EM_SETPASSWORDCHAR:
+    case EM_EMPTYUNDOBUFFER:
+    case EM_GETFIRSTVISIBLELINE:
+    case EM_SETREADONLY:
+    case EM_SETWORDBREAKPROC:
+    case EM_GETWORDBREAKPROC:
+    case EM_GETPASSWORDCHAR:
+        *pmsg16 = (UINT16)msg32 + (EM_GETSEL16 - EM_GETSEL);
         return 0;
 
-    case LB_CARETOFF32:
-    case LB_CARETON32:
-    case LB_DELETESTRING32:
-    case LB_GETANCHORINDEX32:
-    case LB_GETCARETINDEX32:
-    case LB_GETCOUNT32:
-    case LB_GETCURSEL32:
-    case LB_GETHORIZONTALEXTENT32:
-    case LB_GETITEMDATA32:
-    case LB_GETITEMHEIGHT32:
-    case LB_GETSEL32:
-    case LB_GETSELCOUNT32:
-    case LB_GETTEXTLEN32:
-    case LB_GETTOPINDEX32:
-    case LB_RESETCONTENT32:
-    case LB_SELITEMRANGE32:
-    case LB_SELITEMRANGEEX32:
-    case LB_SETANCHORINDEX32:
-    case LB_SETCARETINDEX32:
-    case LB_SETCOLUMNWIDTH32:
-    case LB_SETCURSEL32:
-    case LB_SETHORIZONTALEXTENT32:
-    case LB_SETITEMDATA32:
-    case LB_SETITEMHEIGHT32:
-    case LB_SETSEL32:
-    case LB_SETTOPINDEX32:
-        *pmsg16 = (UINT16)msg32 + (LB_ADDSTRING16 - LB_ADDSTRING32);
+    case LB_CARETOFF:
+    case LB_CARETON:
+    case LB_DELETESTRING:
+    case LB_GETANCHORINDEX:
+    case LB_GETCARETINDEX:
+    case LB_GETCOUNT:
+    case LB_GETCURSEL:
+    case LB_GETHORIZONTALEXTENT:
+    case LB_GETITEMDATA:
+    case LB_GETITEMHEIGHT:
+    case LB_GETSEL:
+    case LB_GETSELCOUNT:
+    case LB_GETTEXTLEN:
+    case LB_GETTOPINDEX:
+    case LB_RESETCONTENT:
+    case LB_SELITEMRANGE:
+    case LB_SELITEMRANGEEX:
+    case LB_SETANCHORINDEX:
+    case LB_SETCARETINDEX:
+    case LB_SETCOLUMNWIDTH:
+    case LB_SETCURSEL:
+    case LB_SETHORIZONTALEXTENT:
+    case LB_SETITEMDATA:
+    case LB_SETITEMHEIGHT:
+    case LB_SETSEL:
+    case LB_SETTOPINDEX:
+        *pmsg16 = (UINT16)msg32 + (LB_ADDSTRING16 - LB_ADDSTRING);
         return 0;
-    case CB_DELETESTRING32:
-    case CB_GETCOUNT32:
-    case CB_GETLBTEXTLEN32:
-    case CB_LIMITTEXT32:
-    case CB_RESETCONTENT32:
-    case CB_SETEDITSEL32:
-    case CB_GETCURSEL32:
-    case CB_SETCURSEL32:
-    case CB_SHOWDROPDOWN32:
-    case CB_SETITEMDATA32:
-    case CB_SETITEMHEIGHT32:
-    case CB_GETITEMHEIGHT32:
-    case CB_SETEXTENDEDUI32:
-    case CB_GETEXTENDEDUI32:
-    case CB_GETDROPPEDSTATE32:
-	*pmsg16 = (UINT16)msg32 + (CB_GETEDITSEL16 - CB_GETEDITSEL32);
+    case CB_DELETESTRING:
+    case CB_GETCOUNT:
+    case CB_GETLBTEXTLEN:
+    case CB_LIMITTEXT:
+    case CB_RESETCONTENT:
+    case CB_SETEDITSEL:
+    case CB_GETCURSEL:
+    case CB_SETCURSEL:
+    case CB_SHOWDROPDOWN:
+    case CB_SETITEMDATA:
+    case CB_SETITEMHEIGHT:
+    case CB_GETITEMHEIGHT:
+    case CB_SETEXTENDEDUI:
+    case CB_GETEXTENDEDUI:
+    case CB_GETDROPPEDSTATE:
+	*pmsg16 = (UINT16)msg32 + (CB_GETEDITSEL16 - CB_GETEDITSEL);
 	return 0;
-    case CB_GETEDITSEL32:
+    case CB_GETEDITSEL:
 	*pmsg16 = CB_GETEDITSEL16;
 	return 1;
 
-    case LB_ADDSTRING32:
-    case LB_FINDSTRING32:
-    case LB_FINDSTRINGEXACT32:
-    case LB_INSERTSTRING32:
-    case LB_SELECTSTRING32:
-    case LB_DIR32:
-    case LB_ADDFILE32:
+    case LB_ADDSTRING:
+    case LB_FINDSTRING:
+    case LB_FINDSTRINGEXACT:
+    case LB_INSERTSTRING:
+    case LB_SELECTSTRING:
+    case LB_DIR:
+    case LB_ADDFILE:
         {
             LPSTR str = SEGPTR_STRDUP( (LPSTR)*plparam );
             if (!str) return -1;
             *plparam = (LPARAM)SEGPTR_GET(str);
         }
-        *pmsg16 = (UINT16)msg32 + (LB_ADDSTRING16 - LB_ADDSTRING32);
+        *pmsg16 = (UINT16)msg32 + (LB_ADDSTRING16 - LB_ADDSTRING);
         return 1;
 
-    case CB_ADDSTRING32:
-    case CB_FINDSTRING32:
-    case CB_FINDSTRINGEXACT32:
-    case CB_INSERTSTRING32:
-    case CB_SELECTSTRING32:
-    case CB_DIR32:
+    case CB_ADDSTRING:
+    case CB_FINDSTRING:
+    case CB_FINDSTRINGEXACT:
+    case CB_INSERTSTRING:
+    case CB_SELECTSTRING:
+    case CB_DIR:
 	{
 	    LPSTR str = SEGPTR_STRDUP( (LPSTR)*plparam );
 	    if (!str) return -1;
 	    *plparam = (LPARAM)SEGPTR_GET(str);
 	}
-	*pmsg16 = (UINT16)msg32 + (CB_GETEDITSEL16 - CB_GETEDITSEL32);
+	*pmsg16 = (UINT16)msg32 + (CB_GETEDITSEL16 - CB_GETEDITSEL);
 	return 1;
 
-    case LB_GETITEMRECT32:
+    case LB_GETITEMRECT:
         {
             RECT16 *rect;
             rect = (RECT16 *)SEGPTR_ALLOC( sizeof(RECT16) + sizeof(LPARAM) );
@@ -1498,7 +1498,7 @@ INT32 WINPROC_MapMsg32ATo16( HWND32 hwnd, UINT32 msg32, WPARAM32 wParam32,
         }
 	*pmsg16 = LB_GETITEMRECT16;
         return 1;
-    case LB_GETSELITEMS32:
+    case LB_GETSELITEMS:
         {
             LPINT16 items;
             *pwparam16 = (WPARAM16)MIN( wParam32, 0x7f80 ); /* Must be < 64K */
@@ -1509,22 +1509,22 @@ INT32 WINPROC_MapMsg32ATo16( HWND32 hwnd, UINT32 msg32, WPARAM32 wParam32,
         }
 	*pmsg16 = LB_GETSELITEMS16;
         return 1;
-    case LB_SETTABSTOPS32:
+    case LB_SETTABSTOPS:
         if (wParam32)
         {
-            INT32 i;
+            INT i;
             LPINT16 stops;
             *pwparam16 = (WPARAM16)MIN( wParam32, 0x7f80 ); /* Must be < 64K */
             if (!(stops = SEGPTR_ALLOC( *pwparam16 * sizeof(INT16)
                                         + sizeof(LPARAM)))) return -1;
-            for (i = 0; i < *pwparam16; i++) stops[i] = *((LPINT32)*plparam+i);
+            for (i = 0; i < *pwparam16; i++) stops[i] = *((LPINT)*plparam+i);
             *plparam = (LPARAM)SEGPTR_GET(stops);
             return 1;
         }
         *pmsg16 = LB_SETTABSTOPS16;
         return 0;
 
-    case CB_GETDROPPEDCONTROLRECT32:
+    case CB_GETDROPPEDCONTROLRECT:
         {
 	    RECT16 *rect;
 	    rect = (RECT16 *)SEGPTR_ALLOC( sizeof(RECT16) + sizeof(LPARAM) );
@@ -1535,19 +1535,19 @@ INT32 WINPROC_MapMsg32ATo16( HWND32 hwnd, UINT32 msg32, WPARAM32 wParam32,
 	*pmsg16 = CB_GETDROPPEDCONTROLRECT16;
         return 1;
 
-    case LB_GETTEXT32:
+    case LB_GETTEXT:
 	*plparam = (LPARAM)MapLS( (LPVOID)(*plparam) );
 	*pmsg16 = LB_GETTEXT16;
 	return 1;
 
-    case CB_GETLBTEXT32:
+    case CB_GETLBTEXT:
 	*plparam = (LPARAM)MapLS( (LPVOID)(*plparam) );
 	*pmsg16 = CB_GETLBTEXT16;
 	return 1;
 
-    case EM_SETSEL32:
+    case EM_SETSEL:
 	*pwparam16 = 0;
-	*plparam = MAKELONG( (INT16)(INT32)wParam32, (INT16)*plparam );
+	*plparam = MAKELONG( (INT16)(INT)wParam32, (INT16)*plparam );
 	*pmsg16 = EM_SETSEL16;
 	return 0;
 
@@ -1574,7 +1574,7 @@ INT32 WINPROC_MapMsg32ATo16( HWND32 hwnd, UINT32 msg32, WPARAM32 wParam32,
         return 0;
     case WM_COMPAREITEM:
         {
-            COMPAREITEMSTRUCT32 *cis32 = (COMPAREITEMSTRUCT32 *)*plparam;
+            COMPAREITEMSTRUCT *cis32 = (COMPAREITEMSTRUCT *)*plparam;
             COMPAREITEMSTRUCT16 *cis = SEGPTR_NEW(COMPAREITEMSTRUCT16);
             if (!cis) return -1;
             cis->CtlType    = (UINT16)cis32->CtlType;
@@ -1589,7 +1589,7 @@ INT32 WINPROC_MapMsg32ATo16( HWND32 hwnd, UINT32 msg32, WPARAM32 wParam32,
         return 1;
     case WM_DELETEITEM:
         {
-            DELETEITEMSTRUCT32 *dis32 = (DELETEITEMSTRUCT32 *)*plparam;
+            DELETEITEMSTRUCT *dis32 = (DELETEITEMSTRUCT *)*plparam;
             DELETEITEMSTRUCT16 *dis = SEGPTR_NEW(DELETEITEMSTRUCT16);
             if (!dis) return -1;
             dis->CtlType  = (UINT16)dis32->CtlType;
@@ -1602,7 +1602,7 @@ INT32 WINPROC_MapMsg32ATo16( HWND32 hwnd, UINT32 msg32, WPARAM32 wParam32,
         return 1;
     case WM_DRAWITEM:
         {
-            DRAWITEMSTRUCT32 *dis32 = (DRAWITEMSTRUCT32 *)*plparam;
+            DRAWITEMSTRUCT *dis32 = (DRAWITEMSTRUCT *)*plparam;
             DRAWITEMSTRUCT16 *dis = SEGPTR_NEW(DRAWITEMSTRUCT16);
             if (!dis) return -1;
             dis->CtlType    = (UINT16)dis32->CtlType;
@@ -1619,7 +1619,7 @@ INT32 WINPROC_MapMsg32ATo16( HWND32 hwnd, UINT32 msg32, WPARAM32 wParam32,
         return 1;
     case WM_MEASUREITEM:
         {
-            MEASUREITEMSTRUCT32 *mis32 = (MEASUREITEMSTRUCT32 *)*plparam;
+            MEASUREITEMSTRUCT *mis32 = (MEASUREITEMSTRUCT *)*plparam;
             MEASUREITEMSTRUCT16 *mis = (MEASUREITEMSTRUCT16 *)
                                      SEGPTR_ALLOC(sizeof(*mis)+sizeof(LPARAM));
             if (!mis) return -1;
@@ -1638,7 +1638,7 @@ INT32 WINPROC_MapMsg32ATo16( HWND32 hwnd, UINT32 msg32, WPARAM32 wParam32,
             MINMAXINFO16 *mmi = (MINMAXINFO16 *)SEGPTR_ALLOC( sizeof(*mmi) +
                                                               sizeof(LPARAM) );
             if (!mmi) return -1;
-            STRUCT32_MINMAXINFO32to16( (MINMAXINFO32 *)*plparam, mmi );
+            STRUCT32_MINMAXINFO32to16( (MINMAXINFO *)*plparam, mmi );
             *(LPARAM *)(mmi + 1) = *plparam;  /* Store the previous lParam */
             *plparam = (LPARAM)SEGPTR_GET(mmi);
         }
@@ -1655,7 +1655,7 @@ INT32 WINPROC_MapMsg32ATo16( HWND32 hwnd, UINT32 msg32, WPARAM32 wParam32,
     case WM_MDICREATE:
         {
             MDICREATESTRUCT16 *cs;
-            MDICREATESTRUCT32A *cs32 = (MDICREATESTRUCT32A *)*plparam;
+            MDICREATESTRUCTA *cs32 = (MDICREATESTRUCTA *)*plparam;
             LPSTR name, cls;
 
             if (!(cs = SEGPTR_NEW(MDICREATESTRUCT16))) return -1;
@@ -1679,21 +1679,21 @@ INT32 WINPROC_MapMsg32ATo16( HWND32 hwnd, UINT32 msg32, WPARAM32 wParam32,
         *plparam = MAKELPARAM( HIWORD(wParam32), (HMENU16)*plparam );
         return 0;
     case WM_MDIACTIVATE:
-	if( WIDGETS_IsControl32(WIN_FindWndPtr(hwnd), BIC32_MDICLIENT) )
+	if( WIDGETS_IsControl(WIN_FindWndPtr(hwnd), BIC32_MDICLIENT) )
 	{
-	    *pwparam16 = (HWND32)wParam32;
+	    *pwparam16 = (HWND)wParam32;
 	    *plparam = 0;
 	}
 	else
 	{
-	    *pwparam16 = ((HWND32)*plparam == hwnd);
+	    *pwparam16 = ((HWND)*plparam == hwnd);
 	    *plparam = MAKELPARAM( (HWND16)LOWORD(*plparam),
 				   (HWND16)LOWORD(wParam32) );
 	}
         return 0;
     case WM_NCCALCSIZE:
         {
-            NCCALCSIZE_PARAMS32 *nc32 = (NCCALCSIZE_PARAMS32 *)*plparam;
+            NCCALCSIZE_PARAMS *nc32 = (NCCALCSIZE_PARAMS *)*plparam;
             NCCALCSIZE_PARAMS16 *nc = (NCCALCSIZE_PARAMS16 *)SEGPTR_ALLOC( sizeof(*nc) + sizeof(LPARAM) );
             if (!nc) return -1;
 
@@ -1719,7 +1719,7 @@ INT32 WINPROC_MapMsg32ATo16( HWND32 hwnd, UINT32 msg32, WPARAM32 wParam32,
     case WM_CREATE:
         {
             CREATESTRUCT16 *cs;
-            CREATESTRUCT32A *cs32 = (CREATESTRUCT32A *)*plparam;
+            CREATESTRUCTA *cs32 = (CREATESTRUCTA *)*plparam;
             LPSTR name, cls;
 
             if (!(cs = SEGPTR_NEW(CREATESTRUCT16))) return -1;
@@ -1752,14 +1752,14 @@ INT32 WINPROC_MapMsg32ATo16( HWND32 hwnd, UINT32 msg32, WPARAM32 wParam32,
             WINDOWPOS16 *wp = (WINDOWPOS16 *)SEGPTR_ALLOC( sizeof(*wp) +
                                                            sizeof(LPARAM) );
             if (!wp) return -1;
-            STRUCT32_WINDOWPOS32to16( (WINDOWPOS32 *)*plparam, wp );
+            STRUCT32_WINDOWPOS32to16( (WINDOWPOS *)*plparam, wp );
             *(LPARAM *)(wp + 1) = *plparam;  /* Store the previous lParam */
             *plparam = (LPARAM)SEGPTR_GET(wp);
         }
         return 1;
     case WM_GETDLGCODE:
          if (*plparam) {
-            LPMSG32 msg32 = (LPMSG32) *plparam;
+            LPMSG msg32 = (LPMSG) *plparam;
             LPMSG16 msg16 = (LPMSG16) SEGPTR_NEW( MSG16 );
 
             if (!msg16) return -1;
@@ -1801,25 +1801,25 @@ INT32 WINPROC_MapMsg32ATo16( HWND32 hwnd, UINT32 msg32, WPARAM32 wParam32,
  *
  * Unmap a message that was mapped from 32-bit Ansi to 16-bit.
  */
-void WINPROC_UnmapMsg32ATo16( HWND32 hwnd, UINT32 msg, WPARAM32 wParam, LPARAM lParam,
+void WINPROC_UnmapMsg32ATo16( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam,
                               MSGPARAM16* p16 ) 
 {
     switch(msg)
     {
-    case LB_ADDFILE32:
-    case LB_ADDSTRING32:
-    case LB_DIR32:
-    case LB_FINDSTRING32:
-    case LB_FINDSTRINGEXACT32:
-    case LB_INSERTSTRING32:
-    case LB_SELECTSTRING32:
-    case LB_SETTABSTOPS32:
-    case CB_ADDSTRING32:
-    case CB_FINDSTRING32:
-    case CB_FINDSTRINGEXACT32:
-    case CB_INSERTSTRING32:
-    case CB_SELECTSTRING32:
-    case CB_DIR32:
+    case LB_ADDFILE:
+    case LB_ADDSTRING:
+    case LB_DIR:
+    case LB_FINDSTRING:
+    case LB_FINDSTRINGEXACT:
+    case LB_INSERTSTRING:
+    case LB_SELECTSTRING:
+    case LB_SETTABSTOPS:
+    case CB_ADDSTRING:
+    case CB_FINDSTRING:
+    case CB_FINDSTRINGEXACT:
+    case CB_INSERTSTRING:
+    case CB_SELECTSTRING:
+    case CB_DIR:
     case WM_COMPAREITEM:
     case WM_DELETEITEM:
     case WM_DRAWITEM:
@@ -1827,41 +1827,41 @@ void WINPROC_UnmapMsg32ATo16( HWND32 hwnd, UINT32 msg, WPARAM32 wParam, LPARAM l
         SEGPTR_FREE( PTR_SEG_TO_LIN(p16->lParam) );
         break;
 
-    case CB_GETDROPPEDCONTROLRECT32:
-    case LB_GETITEMRECT32:
+    case CB_GETDROPPEDCONTROLRECT:
+    case LB_GETITEMRECT:
         {
             RECT16 *rect = (RECT16 *)PTR_SEG_TO_LIN(p16->lParam);
             p16->lParam = *(LPARAM *)(rect + 1);
-            CONV_RECT16TO32( rect, (RECT32 *)(p16->lParam));
+            CONV_RECT16TO32( rect, (RECT *)(p16->lParam));
             SEGPTR_FREE( rect );
         }
         break;
-    case LB_GETSELITEMS32:
+    case LB_GETSELITEMS:
         {
-            INT32 i;
+            INT i;
             LPINT16 items = (LPINT16)PTR_SEG_TO_LIN(lParam);
             p16->lParam = *((LPARAM *)items - 1);
-            for (i = 0; i < p16->wParam; i++) *((LPINT32)(p16->lParam) + i) = items[i];
+            for (i = 0; i < p16->wParam; i++) *((LPINT)(p16->lParam) + i) = items[i];
             SEGPTR_FREE( (LPARAM *)items - 1 );
         }
         break;
 
-    case CB_GETEDITSEL32:
+    case CB_GETEDITSEL:
 	if( wParam )
-	    *((LPUINT32)(wParam)) = LOWORD(p16->lResult);
+	    *((LPUINT)(wParam)) = LOWORD(p16->lResult);
 	if( lParam )
-	    *((LPUINT32)(lParam)) = HIWORD(p16->lResult);	/* FIXME: substract 1? */
+	    *((LPUINT)(lParam)) = HIWORD(p16->lResult);	/* FIXME: substract 1? */
 	break;
 
-    case LB_GETTEXT32:
-    case CB_GETLBTEXT32:
+    case LB_GETTEXT:
+    case CB_GETLBTEXT:
 	UnMapLS( (SEGPTR)(p16->lParam) );
 	break;
 
     case WM_MEASUREITEM:
         {
             MEASUREITEMSTRUCT16 *mis = (MEASUREITEMSTRUCT16 *)PTR_SEG_TO_LIN(p16->lParam);
-            MEASUREITEMSTRUCT32 *mis32 = *(MEASUREITEMSTRUCT32 **)(mis + 1);
+            MEASUREITEMSTRUCT *mis32 = *(MEASUREITEMSTRUCT **)(mis + 1);
             mis32->itemWidth  = mis->itemWidth;
             mis32->itemHeight = mis->itemHeight;
             SEGPTR_FREE(mis);
@@ -1871,7 +1871,7 @@ void WINPROC_UnmapMsg32ATo16( HWND32 hwnd, UINT32 msg, WPARAM32 wParam, LPARAM l
         {
             MINMAXINFO16 *mmi = (MINMAXINFO16 *)PTR_SEG_TO_LIN(p16->lParam);
             p16->lParam = *(LPARAM *)(mmi + 1);
-            STRUCT32_MINMAXINFO16to32( mmi, (MINMAXINFO32 *)(p16->lParam) );
+            STRUCT32_MINMAXINFO16to32( mmi, (MINMAXINFO *)(p16->lParam) );
             SEGPTR_FREE(mmi);
         }
         break;
@@ -1879,7 +1879,7 @@ void WINPROC_UnmapMsg32ATo16( HWND32 hwnd, UINT32 msg, WPARAM32 wParam, LPARAM l
         {
             LPSTR str = (LPSTR)PTR_SEG_TO_LIN(p16->lParam);
             p16->lParam = *((LPARAM *)str - 1);
-            lstrcpyn32A( (LPSTR)(p16->lParam), str, p16->wParam );
+            lstrcpynA( (LPSTR)(p16->lParam), str, p16->wParam );
             SEGPTR_FREE( (LPARAM *)str - 1 );
         }
         break;
@@ -1892,15 +1892,15 @@ void WINPROC_UnmapMsg32ATo16( HWND32 hwnd, UINT32 msg, WPARAM32 wParam, LPARAM l
         }
         break;
     case WM_MDIGETACTIVE:
-        if (lParam) *(BOOL32 *)lParam = (BOOL16)HIWORD(p16->lResult);
-        p16->lResult = (HWND32)LOWORD(p16->lResult);
+        if (lParam) *(BOOL *)lParam = (BOOL16)HIWORD(p16->lResult);
+        p16->lResult = (HWND)LOWORD(p16->lResult);
         break;
     case WM_NCCALCSIZE:
         {
-            NCCALCSIZE_PARAMS32 *nc32;
+            NCCALCSIZE_PARAMS *nc32;
             NCCALCSIZE_PARAMS16 *nc = (NCCALCSIZE_PARAMS16 *)PTR_SEG_TO_LIN(p16->lParam);
             p16->lParam = *(LPARAM *)(nc + 1);
-            nc32 = (NCCALCSIZE_PARAMS32 *)(p16->lParam);
+            nc32 = (NCCALCSIZE_PARAMS *)(p16->lParam);
             CONV_RECT16TO32( &nc->rgrc[0], &nc32->rgrc[0] );
             if (p16->wParam)
             {
@@ -1927,7 +1927,7 @@ void WINPROC_UnmapMsg32ATo16( HWND32 hwnd, UINT32 msg, WPARAM32 wParam, LPARAM l
         {
             WINDOWPOS16 *wp = (WINDOWPOS16 *)PTR_SEG_TO_LIN(p16->lParam);
             p16->lParam = *(LPARAM *)(wp + 1);
-            STRUCT32_WINDOWPOS16to32( wp, (WINDOWPOS32 *)p16->lParam );
+            STRUCT32_WINDOWPOS16to32( wp, (WINDOWPOS *)p16->lParam );
             SEGPTR_FREE(wp);
         }
         break;
@@ -1941,8 +1941,8 @@ void WINPROC_UnmapMsg32ATo16( HWND32 hwnd, UINT32 msg, WPARAM32 wParam, LPARAM l
             MSGPARAM16 msgp16;
             msgp16.wParam=msg16->wParam;
             msgp16.lParam=msg16->lParam;
-            WINPROC_UnmapMsg32ATo16(((LPMSG32)lParam)->hwnd, ((LPMSG32)lParam)->message,
-                    ((LPMSG32)lParam)->wParam, ((LPMSG32)lParam)->lParam,
+            WINPROC_UnmapMsg32ATo16(((LPMSG)lParam)->hwnd, ((LPMSG)lParam)->message,
+                    ((LPMSG)lParam)->wParam, ((LPMSG)lParam)->lParam,
                     &msgp16 );
             SEGPTR_FREE(msg16);
         }
@@ -1957,52 +1957,52 @@ void WINPROC_UnmapMsg32ATo16( HWND32 hwnd, UINT32 msg, WPARAM32 wParam, LPARAM l
  * Map a message from 32-bit Unicode to 16-bit.
  * Return value is -1 on error, 0 if OK, 1 if an UnmapMsg call is needed.
  */
-INT32 WINPROC_MapMsg32WTo16( HWND32 hwnd, UINT32 msg32, WPARAM32 wParam32,
+INT WINPROC_MapMsg32WTo16( HWND hwnd, UINT msg32, WPARAM wParam32,
                              UINT16 *pmsg16, WPARAM16 *pwparam16,
                              LPARAM *plparam )
 {
     switch(msg32)
     {
-    case LB_ADDSTRING32:
-    case LB_FINDSTRING32:
-    case LB_FINDSTRINGEXACT32:
-    case LB_INSERTSTRING32:
-    case LB_SELECTSTRING32:
-    case LB_DIR32:
-    case LB_ADDFILE32:
+    case LB_ADDSTRING:
+    case LB_FINDSTRING:
+    case LB_FINDSTRINGEXACT:
+    case LB_INSERTSTRING:
+    case LB_SELECTSTRING:
+    case LB_DIR:
+    case LB_ADDFILE:
         {
             LPSTR str = SEGPTR_STRDUP_WtoA( (LPWSTR)*plparam );
             if (!str) return -1;
             *pwparam16 = (WPARAM16)LOWORD(wParam32);
             *plparam   = (LPARAM)SEGPTR_GET(str);
         }
-	*pmsg16 = (UINT16)msg32 + (LB_ADDSTRING16 - LB_ADDSTRING32);
+	*pmsg16 = (UINT16)msg32 + (LB_ADDSTRING16 - LB_ADDSTRING);
         return 1;
 
-    case CB_ADDSTRING32:
-    case CB_FINDSTRING32:
-    case CB_FINDSTRINGEXACT32:
-    case CB_INSERTSTRING32:
-    case CB_SELECTSTRING32:
-    case CB_DIR32:
+    case CB_ADDSTRING:
+    case CB_FINDSTRING:
+    case CB_FINDSTRINGEXACT:
+    case CB_INSERTSTRING:
+    case CB_SELECTSTRING:
+    case CB_DIR:
         {
             LPSTR str = SEGPTR_STRDUP_WtoA( (LPWSTR)*plparam );
             if (!str) return -1;
             *pwparam16 = (WPARAM16)LOWORD(wParam32);
             *plparam   = (LPARAM)SEGPTR_GET(str);
         }
-	*pmsg16 = (UINT16)msg32 + (CB_ADDSTRING16 - CB_ADDSTRING32);
+	*pmsg16 = (UINT16)msg32 + (CB_ADDSTRING16 - CB_ADDSTRING);
         return 1;
 
     case WM_NCCREATE:
     case WM_CREATE:
         {
             CREATESTRUCT16 *cs;
-            CREATESTRUCT32W *cs32 = (CREATESTRUCT32W *)*plparam;
+            CREATESTRUCTW *cs32 = (CREATESTRUCTW *)*plparam;
             LPSTR name, cls;
 
             if (!(cs = SEGPTR_NEW(CREATESTRUCT16))) return -1;
-            STRUCT32_CREATESTRUCT32Ato16( (CREATESTRUCT32A *)cs32, cs );
+            STRUCT32_CREATESTRUCT32Ato16( (CREATESTRUCTA *)cs32, cs );
             name = SEGPTR_STRDUP_WtoA( cs32->lpszName );
             cls  = SEGPTR_STRDUP_WtoA( cs32->lpszClass );
             cs->lpszName  = SEGPTR_GET(name);
@@ -2015,11 +2015,11 @@ INT32 WINPROC_MapMsg32WTo16( HWND32 hwnd, UINT32 msg32, WPARAM32 wParam32,
     case WM_MDICREATE:
         {
             MDICREATESTRUCT16 *cs;
-            MDICREATESTRUCT32W *cs32 = (MDICREATESTRUCT32W *)*plparam;
+            MDICREATESTRUCTW *cs32 = (MDICREATESTRUCTW *)*plparam;
             LPSTR name, cls;
 
             if (!(cs = SEGPTR_NEW(MDICREATESTRUCT16))) return -1;
-            STRUCT32_MDICREATESTRUCT32Ato16( (MDICREATESTRUCT32A *)cs32, cs );
+            STRUCT32_MDICREATESTRUCT32Ato16( (MDICREATESTRUCTA *)cs32, cs );
             name = SEGPTR_STRDUP_WtoA( cs32->szTitle );
             cls  = SEGPTR_STRDUP_WtoA( cs32->szClass );
             cs->szTitle = SEGPTR_GET(name);
@@ -2050,7 +2050,7 @@ INT32 WINPROC_MapMsg32WTo16( HWND32 hwnd, UINT32 msg32, WPARAM32 wParam32,
  *
  * Unmap a message that was mapped from 32-bit Unicode to 16-bit.
  */
-void WINPROC_UnmapMsg32WTo16( HWND32 hwnd, UINT32 msg, WPARAM32 wParam, LPARAM lParam,
+void WINPROC_UnmapMsg32WTo16( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam,
                               MSGPARAM16* p16 )
 {
     switch(msg)
@@ -2075,14 +2075,14 @@ void WINPROC_UnmapMsg32WTo16( HWND32 hwnd, UINT32 msg, WPARAM32 wParam, LPARAM l
  *
  * Call a window procedure, translating args from Ansi to Unicode.
  */
-static LRESULT WINPROC_CallProc32ATo32W( WNDPROC32 func, HWND32 hwnd,
-                                         UINT32 msg, WPARAM32 wParam,
+static LRESULT WINPROC_CallProc32ATo32W( WNDPROC func, HWND hwnd,
+                                         UINT msg, WPARAM wParam,
                                          LPARAM lParam )
 {
     LRESULT result;
 
     if (WINPROC_MapMsg32ATo32W( hwnd, msg, wParam, &lParam ) == -1) return 0;
-    result = WINPROC_CallWndProc32( func, hwnd, msg, wParam, lParam );
+    result = WINPROC_CallWndProc( func, hwnd, msg, wParam, lParam );
     WINPROC_UnmapMsg32ATo32W( hwnd, msg, wParam, lParam );
     return result;
 }
@@ -2093,14 +2093,14 @@ static LRESULT WINPROC_CallProc32ATo32W( WNDPROC32 func, HWND32 hwnd,
  *
  * Call a window procedure, translating args from Unicode to Ansi.
  */
-static LRESULT WINPROC_CallProc32WTo32A( WNDPROC32 func, HWND32 hwnd,
-                                         UINT32 msg, WPARAM32 wParam,
+static LRESULT WINPROC_CallProc32WTo32A( WNDPROC func, HWND hwnd,
+                                         UINT msg, WPARAM wParam,
                                          LPARAM lParam )
 {
     LRESULT result;
 
     if (WINPROC_MapMsg32WTo32A( hwnd, msg, wParam, &lParam ) == -1) return 0;
-    result = WINPROC_CallWndProc32( func, hwnd, msg, wParam, lParam );
+    result = WINPROC_CallWndProc( func, hwnd, msg, wParam, lParam );
     WINPROC_UnmapMsg32WTo32A( hwnd, msg, wParam, lParam );
     return result;
 }
@@ -2113,15 +2113,15 @@ static LRESULT WINPROC_CallProc32WTo32A( WNDPROC32 func, HWND32 hwnd,
  */
 LRESULT WINPROC_CallProc16To32A( HWND16 hwnd, UINT16 msg,
                                  WPARAM16 wParam, LPARAM lParam,
-                                 WNDPROC32 func )
+                                 WNDPROC func )
 {
     LRESULT result;
-    UINT32 msg32;
-    WPARAM32 wParam32;
+    UINT msg32;
+    WPARAM wParam32;
 
     if (WINPROC_MapMsg16To32A( msg, wParam, &msg32, &wParam32, &lParam ) == -1)
         return 0;
-    result = WINPROC_CallWndProc32( func, hwnd, msg32, wParam32, lParam );
+    result = WINPROC_CallWndProc( func, hwnd, msg32, wParam32, lParam );
     return WINPROC_UnmapMsg16To32A( hwnd, msg32, wParam32, lParam, result );
 }
 
@@ -2133,15 +2133,15 @@ LRESULT WINPROC_CallProc16To32A( HWND16 hwnd, UINT16 msg,
  */
 LRESULT WINPROC_CallProc16To32W( HWND16 hwnd, UINT16 msg,
                                  WPARAM16 wParam, LPARAM lParam,
-                                 WNDPROC32 func )
+                                 WNDPROC func )
 {
     LRESULT result;
-    UINT32 msg32;
-    WPARAM32 wParam32;
+    UINT msg32;
+    WPARAM wParam32;
 
     if (WINPROC_MapMsg16To32W( hwnd, msg, wParam, &msg32, &wParam32, &lParam ) == -1)
         return 0;
-    result = WINPROC_CallWndProc32( func, hwnd, msg32, wParam32, lParam );
+    result = WINPROC_CallWndProc( func, hwnd, msg32, wParam32, lParam );
     return WINPROC_UnmapMsg16To32W( hwnd, msg32, wParam32, lParam, result );
 }
 
@@ -2151,8 +2151,8 @@ LRESULT WINPROC_CallProc16To32W( HWND16 hwnd, UINT16 msg,
  *
  * Call a 16-bit window procedure, translating the 32-bit args.
  */
-static LRESULT WINAPI WINPROC_CallProc32ATo16( WNDPROC16 func, HWND32 hwnd,
-                                               UINT32 msg, WPARAM32 wParam,
+static LRESULT WINAPI WINPROC_CallProc32ATo16( WNDPROC16 func, HWND hwnd,
+                                               UINT msg, WPARAM wParam,
                                                LPARAM lParam )
 {
     UINT16 msg16;
@@ -2174,8 +2174,8 @@ static LRESULT WINAPI WINPROC_CallProc32ATo16( WNDPROC16 func, HWND32 hwnd,
  *
  * Call a 16-bit window procedure, translating the 32-bit args.
  */
-static LRESULT WINAPI WINPROC_CallProc32WTo16( WNDPROC16 func, HWND32 hwnd,
-                                               UINT32 msg, WPARAM32 wParam,
+static LRESULT WINAPI WINPROC_CallProc32WTo16( WNDPROC16 func, HWND hwnd,
+                                               UINT msg, WPARAM wParam,
                                                LPARAM lParam )
 {
     UINT16 msg16;
@@ -2253,20 +2253,20 @@ LRESULT WINAPI CallWindowProc16( WNDPROC16 func, HWND16 hwnd, UINT16 msg,
  *
  *   ECMA-234, Win32 
  */
-LRESULT WINAPI CallWindowProc32A( 
-    WNDPROC32 func, /* window procedure */
-    HWND32 hwnd, /* target window */
-    UINT32 msg,  /* message */
-    WPARAM32 wParam, /* message dependent parameter */
+LRESULT WINAPI CallWindowProcA( 
+    WNDPROC func, /* window procedure */
+    HWND hwnd, /* target window */
+    UINT msg,  /* message */
+    WPARAM wParam, /* message dependent parameter */
     LPARAM lParam    /* message dependent parameter */
 ) {
     WINDOWPROC *proc = WINPROC_GetPtr( (WNDPROC16)func );
 
-    if (!proc) return WINPROC_CallWndProc32( func, hwnd, msg, wParam, lParam );
+    if (!proc) return WINPROC_CallWndProc( func, hwnd, msg, wParam, lParam );
 
 #if testing
     func = WINPROC_GetProc( (HWINDOWPROC)proc, WIN_PROC_32A );
-    return WINPROC_CallWndProc32( func, hwnd, msg, wParam, lParam );
+    return WINPROC_CallWndProc( func, hwnd, msg, wParam, lParam );
 #endif
 
     switch(proc->type)
@@ -2277,7 +2277,7 @@ LRESULT WINAPI CallWindowProc32A(
                                         hwnd, msg, wParam, lParam );
     case WIN_PROC_32A:
         if (!proc->thunk.t_from16.proc) return 0;
-        return WINPROC_CallWndProc32( proc->thunk.t_from16.proc,
+        return WINPROC_CallWndProc( proc->thunk.t_from16.proc,
                                       hwnd, msg, wParam, lParam );
     case WIN_PROC_32W:
         if (!proc->thunk.t_from16.proc) return 0;
@@ -2293,16 +2293,16 @@ LRESULT WINAPI CallWindowProc32A(
 /**********************************************************************
  *	     CallWindowProc32W    (USER32.19)
  */
-LRESULT WINAPI CallWindowProc32W( WNDPROC32 func, HWND32 hwnd, UINT32 msg,
-                                  WPARAM32 wParam, LPARAM lParam )
+LRESULT WINAPI CallWindowProcW( WNDPROC func, HWND hwnd, UINT msg,
+                                  WPARAM wParam, LPARAM lParam )
 {
     WINDOWPROC *proc = WINPROC_GetPtr( (WNDPROC16)func );
 
-    if (!proc) return WINPROC_CallWndProc32( func, hwnd, msg, wParam, lParam );
+    if (!proc) return WINPROC_CallWndProc( func, hwnd, msg, wParam, lParam );
 
 #if testing
     func = WINPROC_GetProc( (HWINDOWPROC)proc, WIN_PROC_32W );
-    return WINPROC_CallWndProc32( func, hwnd, msg, wParam, lParam );
+    return WINPROC_CallWndProc( func, hwnd, msg, wParam, lParam );
 #endif
 
     switch(proc->type)
@@ -2317,7 +2317,7 @@ LRESULT WINAPI CallWindowProc32W( WNDPROC32 func, HWND32 hwnd, UINT32 msg,
                                          hwnd, msg, wParam, lParam );
     case WIN_PROC_32W:
         if (!proc->thunk.t_from16.proc) return 0;
-        return WINPROC_CallWndProc32( proc->thunk.t_from16.proc,
+        return WINPROC_CallWndProc( proc->thunk.t_from16.proc,
                                       hwnd, msg, wParam, lParam );
     default:
         WARN( relay, "Invalid proc %p\n", proc );

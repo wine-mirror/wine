@@ -25,15 +25,15 @@ type win32
 0022 stdcall MPR_22(long) _MPR_22
 0023 stub MPR_23
 0024 stub MPR_24
-0025 stdcall MultinetGetConnectionPerformanceA(ptr ptr) MultinetGetConnectionPerformance32A
+0025 stdcall MultinetGetConnectionPerformanceA(ptr ptr) MultinetGetConnectionPerformanceA
 0026 stub MultinetGetConnectionPerformanceW
-0027 stdcall MultinetGetErrorTextA(long ptr long)MultinetGetErrorText32A
-0028 stdcall MultinetGetErrorTextW(long ptr long)MultinetGetErrorText32W
+0027 stdcall MultinetGetErrorTextA(long ptr long)MultinetGetErrorTextA
+0028 stdcall MultinetGetErrorTextW(long ptr long)MultinetGetErrorTextW
 0029 stub NPSAuthenticationDialogA
 0030 stub NPSCopyStringA
 0031 stub NPSDeviceGetNumberA
 0032 stub NPSDeviceGetStringA
-0033 stdcall NPSGetProviderHandleA(long) NPSGetProviderHandle32A
+0033 stdcall NPSGetProviderHandleA(long) NPSGetProviderHandleA
 0034 stub NPSGetProviderNameA
 0035 stub NPSGetSectionNameA
 0036 stub NPSNotifyGetContextA
@@ -46,32 +46,32 @@ type win32
 0043 stub PwdGetPasswordStatusW
 0044 stub PwdSetPasswordStatusA
 0045 stub PwdSetPasswordStatusW
-0046 stdcall WNetAddConnection2A(ptr str str long) WNetAddConnection2_32A
-0047 stdcall WNetAddConnection2W(ptr wstr wstr long) WNetAddConnection2_32W
-0048 stdcall WNetAddConnection3A(long ptr str str long) WNetAddConnection3_32A
-0049 stdcall WNetAddConnection3W(long ptr wstr wstr long) WNetAddConnection3_32W
-0050 stdcall WNetAddConnectionA(str str str) WNetAddConnection32A
-0051 stdcall WNetAddConnectionW(wstr wstr wstr) WNetAddConnection32W
+0046 stdcall WNetAddConnection2A(ptr str str long) WNetAddConnection2A
+0047 stdcall WNetAddConnection2W(ptr wstr wstr long) WNetAddConnection2W
+0048 stdcall WNetAddConnection3A(long ptr str str long) WNetAddConnection3A
+0049 stdcall WNetAddConnection3W(long ptr wstr wstr long) WNetAddConnection3W
+0050 stdcall WNetAddConnectionA(str str str) WNetAddConnectionA
+0051 stdcall WNetAddConnectionW(wstr wstr wstr) WNetAddConnectionW
 0052 stdcall WNetCachePassword(str long str long long) WNetCachePassword
-0053 stdcall WNetCancelConnection2A(str long long) WNetCancelConnection232A
-0054 stdcall WNetCancelConnection2W(wstr long long) WNetCancelConnection232W
-0055 stdcall WNetCancelConnectionA(str long) WNetCancelConnection32A
-0056 stdcall WNetCancelConnectionW(wstr long) WNetCancelConnection32W
+0053 stdcall WNetCancelConnection2A(str long long) WNetCancelConnection2A
+0054 stdcall WNetCancelConnection2W(wstr long long) WNetCancelConnection2W
+0055 stdcall WNetCancelConnectionA(str long) WNetCancelConnectionA
+0056 stdcall WNetCancelConnectionW(wstr long) WNetCancelConnectionW
 0057 stub WNetCloseEnum
-0058 stdcall WNetConnectionDialog1A(ptr) WNetConnectionDialog1_32A
-0059 stdcall WNetConnectionDialog1W(ptr) WNetConnectionDialog1_32W
-0060 stdcall WNetConnectionDialog(long long) WNetConnectionDialog_32
+0058 stdcall WNetConnectionDialog1A(ptr) WNetConnectionDialog1A
+0059 stdcall WNetConnectionDialog1W(ptr) WNetConnectionDialog1W
+0060 stdcall WNetConnectionDialog(long long) WNetConnectionDialog
 0061 stub WNetDisconnectDialog1A
 0062 stub WNetDisconnectDialog1W
 0063 stub WNetDisconnectDialog
-0064 stdcall WNetEnumCachedPasswords(str long long ptr) WNetEnumCachedPasswords32
+0064 stdcall WNetEnumCachedPasswords(str long long ptr) WNetEnumCachedPasswords
 0065 stub WNetEnumResourceA
 0066 stub WNetEnumResourceW
 0067 stub WNetFormatNetworkNameA
 0068 stub WNetFormatNetworkNameW
 0069 stdcall WNetGetCachedPassword(ptr long ptr ptr long) WNetGetCachedPassword
-0070 stdcall WNetGetConnectionA(str ptr ptr) WNetGetConnection32A
-0071 stdcall WNetGetConnectionW(wstr ptr ptr) WNetGetConnection32W
+0070 stdcall WNetGetConnectionA(str ptr ptr) WNetGetConnectionA
+0071 stdcall WNetGetConnectionW(wstr ptr ptr) WNetGetConnectionW
 0072 stub WNetGetHomeDirectoryA
 0073 stub WNetGetHomeDirectoryW
 0074 stub WNetGetLastErrorA
@@ -80,20 +80,20 @@ type win32
 0077 stub WNetGetNetworkInformationW
 0078 stub WNetGetProviderNameA
 0079 stub WNetGetProviderNameW
-0080 stdcall WNetGetResourceInformationA(ptr ptr ptr ptr) WNetGetResourceInformation32A
+0080 stdcall WNetGetResourceInformationA(ptr ptr ptr ptr) WNetGetResourceInformationA
 0081 stub WNetGetResourceInformationW
 0082 stub WNetGetResourceParentA
 0083 stub WNetGetResourceParentW
 0084 stub WNetGetUniversalNameA
 0085 stub WNetGetUniversalNameW
-0086 stdcall WNetGetUserA(str ptr ptr) WNetGetUser32A
-0087 stdcall WNetGetUserW(wstr wstr ptr) WNetGetUser32W
+0086 stdcall WNetGetUserA(str ptr ptr) WNetGetUserA
+0087 stdcall WNetGetUserW(wstr wstr ptr) WNetGetUserW
 0088 stub WNetLogoffA
 0089 stub WNetLogoffW
 0090 stub WNetLogonA
 0091 stub WNetLogonW
-0092 stdcall WNetOpenEnumA(long long long ptr ptr) WNetOpenEnum32A
-0093 stdcall WNetOpenEnumW(long long long ptr ptr) WNetOpenEnum32W
+0092 stdcall WNetOpenEnumA(long long long ptr ptr) WNetOpenEnumA
+0093 stdcall WNetOpenEnumW(long long long ptr ptr) WNetOpenEnumW
 0094 stub WNetRemoveCachedPassword
 0095 stub WNetRestoreConnectionA
 0096 stub WNetRestoreConnectionW

@@ -18,25 +18,25 @@
 #include "wine/obj_base.h"
 
 /* Localy used methods */
-static INT32  
+static INT  
 endOfDim(LONG *coor, SAFEARRAYBOUND *mat, LONG dim, LONG realDim);
 
 static ULONG   
 calcDisplacement(LONG *coor, SAFEARRAYBOUND *mat, LONG dim);
 
-static BOOL32  
+static BOOL  
 isPointer(USHORT feature);
 
-static INT32   
+static INT   
 getFeatures(VARTYPE vt);
 
-static BOOL32  
+static BOOL  
 validCoordinate(LONG *coor, SAFEARRAY *psa);
 
-static BOOL32  
+static BOOL  
 resizeSafeArray(SAFEARRAY *psa, LONG lDelta);
 
-static BOOL32  
+static BOOL  
 validArg(SAFEARRAY *psa);
 
 static ULONG   
@@ -100,8 +100,8 @@ VARTYPE_NOT_SUPPORTED 	/* VT_BYREF    [V]          void* for local use	*/
 /*************************************************************************
  * Allocate the appropriate amount of memory for the SafeArray descriptor
  */
-HRESULT WINAPI SafeArrayAllocDescriptor32( 
-  UINT32    cDims, 
+HRESULT WINAPI SafeArrayAllocDescriptor( 
+  UINT    cDims, 
   SAFEARRAY **ppsaOut) 
 {
   SAFEARRAYBOUND *sab;
@@ -124,7 +124,7 @@ HRESULT WINAPI SafeArrayAllocDescriptor32(
 /*************************************************************************
  * Allocate the appropriate amount of data for the SafeArray data
  */
-HRESULT WINAPI SafeArrayAllocData32(
+HRESULT WINAPI SafeArrayAllocData(
   SAFEARRAY *psa) 
 {
   ULONG  ulWholeArraySize;   /* to store the size of the whole thing */
@@ -148,9 +148,9 @@ HRESULT WINAPI SafeArrayAllocData32(
 /*************************************************************************
  * Create a SafeArray object by encapsulating AllocDescriptor and AllocData 
  */
-SAFEARRAY* WINAPI SafeArrayCreate32(
+SAFEARRAY* WINAPI SafeArrayCreate(
   VARTYPE        vt, 
-  UINT32         cDims, 
+  UINT         cDims, 
   SAFEARRAYBOUND *rgsabound)
 {
   SAFEARRAY *psa;
@@ -162,7 +162,7 @@ SAFEARRAY* WINAPI SafeArrayCreate32(
     return NULL;
 
   /* Allocate memory for the array descriptor */
-  if( FAILED( hRes = SafeArrayAllocDescriptor32(cDims, &psa)))
+  if( FAILED( hRes = SafeArrayAllocDescriptor(cDims, &psa)))
     return NULL;
 
   /* setup data members... */ 
@@ -179,8 +179,8 @@ SAFEARRAY* WINAPI SafeArrayCreate32(
   }
 
   /* allocate memory for the data... */ 
-  if( FAILED( hRes = SafeArrayAllocData32(psa))) {
-    SafeArrayDestroyDescriptor32(psa); 
+  if( FAILED( hRes = SafeArrayAllocData(psa))) {
+    SafeArrayDestroyDescriptor(psa); 
     return NULL;
   }
 
@@ -190,7 +190,7 @@ SAFEARRAY* WINAPI SafeArrayCreate32(
 /*************************************************************************
  * Frees the memory associated with the descriptor.
  */
-HRESULT WINAPI SafeArrayDestroyDescriptor32(
+HRESULT WINAPI SafeArrayDestroyDescriptor(
   SAFEARRAY *psa)
 {
   /* Check for lockness before to free... */
@@ -212,7 +212,7 @@ HRESULT WINAPI SafeArrayDestroyDescriptor32(
  * only when psa->cLocks is > 0... I don't get it since pvData is allocated 
  * before the array is locked, therefore  
  */
-HRESULT WINAPI SafeArrayLock32(
+HRESULT WINAPI SafeArrayLock(
   SAFEARRAY *psa)
 {
   if(! validArg(psa))     
@@ -226,7 +226,7 @@ HRESULT WINAPI SafeArrayLock32(
 /*************************************************************************
  * Decrement the lock counter
  */
-HRESULT WINAPI SafeArrayUnlock32(
+HRESULT WINAPI SafeArrayUnlock(
   SAFEARRAY *psa)
 {
   if(! validArg(psa)) 
@@ -242,7 +242,7 @@ HRESULT WINAPI SafeArrayUnlock32(
 /*************************************************************************
  * Set the data at the given coordinate
  */
-HRESULT WINAPI SafeArrayPutElement32(
+HRESULT WINAPI SafeArrayPutElement(
   SAFEARRAY *psa, 
   LONG      *rgIndices, 
   void      *pv)
@@ -250,7 +250,7 @@ HRESULT WINAPI SafeArrayPutElement32(
   ULONG stepCountInSAData     = 0;    /* Number of array item to skip to get to 
                                          the desired one... */
   PVOID elementStorageAddress = NULL; /* Adress to store the data */
-  BSTR32  pbstrReAllocStr     = NULL; /* BSTR reallocated */
+  BSTR  pbstrReAllocStr     = NULL; /* BSTR reallocated */
 
   /* Validate the index given */
   if(! validCoordinate(rgIndices, psa)) 
@@ -258,7 +258,7 @@ HRESULT WINAPI SafeArrayPutElement32(
   if(! validArg(psa))
     return E_INVALIDARG;
 
-  if( SafeArrayLock32(psa) == S_OK) {
+  if( SafeArrayLock(psa) == S_OK) {
 
     /* Figure out the number of items to skip */
     stepCountInSAData = calcDisplacement(rgIndices, psa->rgsabound, psa->cDims);
@@ -275,14 +275,14 @@ HRESULT WINAPI SafeArrayPutElement32(
 
       if(psa->fFeatures == FADF_BSTR) { /* Create a new object */
 
-        if((pbstrReAllocStr = SysAllocString32( (OLECHAR32*)pv )) == NULL) {
-          SafeArrayUnlock32(psa);  
+        if((pbstrReAllocStr = SysAllocString( (OLECHAR*)pv )) == NULL) {
+          SafeArrayUnlock(psa);  
           return E_OUTOFMEMORY;
         } else 
-          *((BSTR32*)elementStorageAddress) = pbstrReAllocStr;
+          *((BSTR*)elementStorageAddress) = pbstrReAllocStr;
 
       } else /* dupplicate the memory */
-        memcpy(elementStorageAddress, pv, SafeArrayGetElemsize32(psa) );
+        memcpy(elementStorageAddress, pv, SafeArrayGetElemsize(psa) );
     }
 
   } else {
@@ -291,14 +291,14 @@ HRESULT WINAPI SafeArrayPutElement32(
   }
 
   TRACE(ole,"SafeArray: item put at adress %p.\n",elementStorageAddress);
-  return SafeArrayUnlock32(psa);  
+  return SafeArrayUnlock(psa);  
 }
 
 
 /*************************************************************************
  * Return the data element corresponding the the given coordinate
  */
-HRESULT WINAPI SafeArrayGetElement32(
+HRESULT WINAPI SafeArrayGetElement(
   SAFEARRAY *psa, 
   LONG      *rgIndices, 
   void      *pv)
@@ -306,7 +306,7 @@ HRESULT WINAPI SafeArrayGetElement32(
   ULONG stepCountInSAData     = 0;    /* Number of array item to skip to get to 
                                          the desired one... */
   PVOID elementStorageAddress = NULL; /* Adress to store the data */
-  BSTR32  pbstrReturnedStr    = NULL; /* BSTR reallocated */
+  BSTR  pbstrReturnedStr    = NULL; /* BSTR reallocated */
 
   if(! validArg(psa)) 
     return E_INVALIDARG;
@@ -314,7 +314,7 @@ HRESULT WINAPI SafeArrayGetElement32(
   if(! validCoordinate(rgIndices, psa)) /* Validate the index given */
     return(DISP_E_BADINDEX);
 
-  if( SafeArrayLock32(psa) == S_OK) {
+  if( SafeArrayLock(psa) == S_OK) {
 
     /* Figure out the number of items to skip */
     stepCountInSAData = calcDisplacement(rgIndices, psa->rgsabound, psa->cDims);
@@ -324,31 +324,31 @@ HRESULT WINAPI SafeArrayGetElement32(
   
     if( psa->fFeatures == FADF_BSTR) {           /* reallocate the obj */
       if( (pbstrReturnedStr = 
-          SysAllocString32( *(OLECHAR32**)elementStorageAddress )) == NULL) {
-        SafeArrayUnlock32(psa);
+          SysAllocString( *(OLECHAR**)elementStorageAddress )) == NULL) {
+        SafeArrayUnlock(psa);
         return E_OUTOFMEMORY;
       } else 
-        *((BSTR32*)pv) = pbstrReturnedStr; 
+        *((BSTR*)pv) = pbstrReturnedStr; 
         
     } else if( isPointer(psa->fFeatures) )       /* simply copy the pointer */
        pv = *((PVOID*)elementStorageAddress); 
     else                                         /* copy the bytes */
-      memcpy(pv, elementStorageAddress, SafeArrayGetElemsize32(psa) );
+      memcpy(pv, elementStorageAddress, SafeArrayGetElemsize(psa) );
 
   } else {
     ERR(ole, "SafeArray: Cannot lock array....\n");
     return E_UNEXPECTED; /* UNDOC error condition */
   }
 
-  return( SafeArrayUnlock32(psa) );  
+  return( SafeArrayUnlock(psa) );  
 }
 
 /*************************************************************************
  * return the UP bound for a given array dimension
  */
-HRESULT WINAPI SafeArrayGetUBound32(
+HRESULT WINAPI SafeArrayGetUBound(
   SAFEARRAY *psa, 
-  UINT32    nDim,
+  UINT    nDim,
   LONG      *plUbound)
 {
   if(! validArg(psa))   
@@ -366,9 +366,9 @@ HRESULT WINAPI SafeArrayGetUBound32(
 /*************************************************************************
  * Return the LO bound for a given array dimension 
  */
-HRESULT WINAPI SafeArrayGetLBound32(
+HRESULT WINAPI SafeArrayGetLBound(
   SAFEARRAY *psa,
-  UINT32    nDim, 
+  UINT    nDim, 
   LONG      *plLbound)
 {
   if(! validArg(psa))   
@@ -384,7 +384,7 @@ HRESULT WINAPI SafeArrayGetLBound32(
 /*************************************************************************
  * returns the number of dimension in the array
  */
-UINT32 WINAPI SafeArrayGetDim32(
+UINT WINAPI SafeArrayGetDim(
   SAFEARRAY * psa)
 { 
   return psa->cDims;
@@ -393,7 +393,7 @@ UINT32 WINAPI SafeArrayGetDim32(
 /*************************************************************************
  * Return the size of the element in the array
  */
-UINT32 WINAPI SafeArrayGetElemsize32(
+UINT WINAPI SafeArrayGetElemsize(
   SAFEARRAY * psa)
 { 
   return psa->cbElements;
@@ -402,7 +402,7 @@ UINT32 WINAPI SafeArrayGetElemsize32(
 /*************************************************************************
  * increment the access count and return the data 
  */
-HRESULT WINAPI SafeArrayAccessData32(
+HRESULT WINAPI SafeArrayAccessData(
   SAFEARRAY *psa, 
   void      **ppvData)
 { 
@@ -411,7 +411,7 @@ HRESULT WINAPI SafeArrayAccessData32(
   if(! validArg(psa)) 
     return E_INVALIDARG;
 
-  hRes = SafeArrayLock32(psa);
+  hRes = SafeArrayLock(psa);
 
   switch (hRes) {
     case S_OK: 
@@ -429,19 +429,19 @@ HRESULT WINAPI SafeArrayAccessData32(
 /*************************************************************************
  * Decrement the access count
  */
-HRESULT WINAPI SafeArrayUnaccessData32(
+HRESULT WINAPI SafeArrayUnaccessData(
   SAFEARRAY * psa)
 { 
   if(! validArg(psa)) 
     return E_INVALIDARG;
 
-  return(SafeArrayUnlock32(psa));
+  return(SafeArrayUnlock(psa));
 }
 
 /************************************************************************ 
  * Return a pointer to the element at rgIndices
  */
-HRESULT WINAPI SafeArrayPtrOfIndex32(
+HRESULT WINAPI SafeArrayPtrOfIndex(
   SAFEARRAY *psa, 
   LONG      *rgIndices, 
   void      **ppvData)
@@ -466,14 +466,14 @@ HRESULT WINAPI SafeArrayPtrOfIndex32(
 /************************************************************************ 
  * Frees the memory data bloc
  */
-HRESULT WINAPI SafeArrayDestroyData32(
+HRESULT WINAPI SafeArrayDestroyData(
   SAFEARRAY *psa)
 { 
   HRESULT  hRes;
   ULONG    ulWholeArraySize; /* count spot in array  */
   ULONG    ulDataIter;       /* to iterate the data space */
   IUnknown *punk;
-  BSTR32   bstr;
+  BSTR   bstr;
 
   if(! validArg(psa)) 
     return E_INVALIDARG;
@@ -495,10 +495,10 @@ HRESULT WINAPI SafeArrayDestroyData32(
   } else if(psa->fFeatures & FADF_BSTR) {  /* deallocate the obj */
 
     for(ulDataIter=0; ulDataIter < ulWholeArraySize; ulDataIter++) {
-      bstr = *(BSTR32*)(psa->pvData+(ulDataIter*(psa->cbElements)));
+      bstr = *(BSTR*)(psa->pvData+(ulDataIter*(psa->cbElements)));
 
       if( bstr != NULL) 
-        SysFreeString32( bstr );
+        SysFreeString( bstr );
     }
   }
       
@@ -521,7 +521,7 @@ HRESULT WINAPI SafeArrayDestroyData32(
  * Copy the psaSource's data block into psaTarget if dimension and size
  * permits it.
  */
-HRESULT WINAPI SafeArrayCopyData32(
+HRESULT WINAPI SafeArrayCopyData(
   SAFEARRAY *psaSource,
   SAFEARRAY **psaTarget)
 { 
@@ -529,12 +529,12 @@ HRESULT WINAPI SafeArrayCopyData32(
   LONG     lDelta;           /* looper */
   IUnknown *punk;   
   ULONG    ulWholeArraySize; /* Number of item in SA */
-  BSTR32   bstr;
+  BSTR   bstr;
 
   if(! (validArg(psaSource) && validArg(*psaTarget)) ) 
     return E_INVALIDARG;
 
-  if(SafeArrayGetDim32(psaSource) != SafeArrayGetDim32(*psaTarget))
+  if(SafeArrayGetDim(psaSource) != SafeArrayGetDim(*psaTarget))
     return E_INVALIDARG;
 
   ulWholeArraySize = getArraySize(psaSource); 
@@ -559,10 +559,10 @@ HRESULT WINAPI SafeArrayCopyData32(
                                                         that must be freed */ 
     for(lDelta=0;lDelta < ulWholeArraySize; lDelta++) {
       bstr = 
-        *(BSTR32*)((*psaTarget)->pvData + (lDelta * (*psaTarget)->cbElements));
+        *(BSTR*)((*psaTarget)->pvData + (lDelta * (*psaTarget)->cbElements));
 
       if( bstr != NULL) 
-        SysFreeString32( bstr );
+        SysFreeString( bstr );
     }
   }
 
@@ -572,7 +572,7 @@ HRESULT WINAPI SafeArrayCopyData32(
 /************************************************************************ 
  * Deallocates all memory reserved for the SafeArray
  */
-HRESULT WINAPI SafeArrayDestroy32(
+HRESULT WINAPI SafeArrayDestroy(
   SAFEARRAY * psa)
 { 
   HRESULT hRes;
@@ -583,8 +583,8 @@ HRESULT WINAPI SafeArrayDestroy32(
   if(psa->cLocks > 0) 
     return DISP_E_ARRAYISLOCKED;
 
-  if((hRes = SafeArrayDestroyData32( psa )) == S_OK)
-    if((hRes = SafeArrayDestroyDescriptor32( psa )) == S_OK)
+  if((hRes = SafeArrayDestroyData( psa )) == S_OK)
+    if((hRes = SafeArrayDestroyDescriptor( psa )) == S_OK)
       return S_OK;
 
   return E_UNEXPECTED; /* UNDOC error condition */
@@ -593,7 +593,7 @@ HRESULT WINAPI SafeArrayDestroy32(
 /************************************************************************ 
  * Make a dupplicate of a SafeArray
  */
-HRESULT WINAPI SafeArrayCopy32(
+HRESULT WINAPI SafeArrayCopy(
   SAFEARRAY *psa, 
   SAFEARRAY **ppsaOut)
 { 
@@ -603,7 +603,7 @@ HRESULT WINAPI SafeArrayCopy32(
   if(! validArg(psa)) 
     return E_INVALIDARG;
 
-  if((hRes=SafeArrayAllocDescriptor32(psa->cDims, ppsaOut)) == S_OK){
+  if((hRes=SafeArrayAllocDescriptor(psa->cDims, ppsaOut)) == S_OK){
 
     /* Duplicate the SAFEARRAY struc */
     memcpy(*ppsaOut, psa, 
@@ -621,12 +621,12 @@ HRESULT WINAPI SafeArrayCopy32(
       if( (hRes=duplicateData(psa, ppsaOut)) != S_OK) { /* E_OUTOFMEMORY */
         HeapFree(GetProcessHeap(), 0, (*ppsaOut)->pvData);
         (*ppsaOut)->pvData = NULL;
-        SafeArrayDestroyDescriptor32(*ppsaOut);
+        SafeArrayDestroyDescriptor(*ppsaOut);
         return hRes;
       }
         
     } else { /* failed to allocate or dupplicate... */
-      SafeArrayDestroyDescriptor32(*ppsaOut);
+      SafeArrayDestroyDescriptor(*ppsaOut);
       return E_UNEXPECTED; /* UNDOC error condition */
     }
   } else { /* failed to allocate mem for descriptor */
@@ -640,7 +640,7 @@ HRESULT WINAPI SafeArrayCopy32(
  * Creates a one dimension safearray where the data is next to the 
  * SAFEARRAY structure.
  */
-SAFEARRAY* WINAPI SafeArrayCreateVector32(
+SAFEARRAY* WINAPI SafeArrayCreateVector(
   VARTYPE vt, 
   LONG    lLbound, 
   ULONG   cElements) 
@@ -674,7 +674,7 @@ SAFEARRAY* WINAPI SafeArrayCreateVector32(
 /************************************************************************ 
  * Changes the caracteristics of the last dimension of the SafeArray
  */
-HRESULT WINAPI SafeArrayRedim32(
+HRESULT WINAPI SafeArrayRedim(
   SAFEARRAY      *psa, 
   SAFEARRAYBOUND *psaboundNew)
 { 
@@ -690,7 +690,7 @@ HRESULT WINAPI SafeArrayRedim32(
   if( psa->fFeatures & FADF_FIXEDSIZE )    
     return E_INVALIDARG;
 
-  if( SafeArrayLock32(psa)==E_UNEXPECTED ) 
+  if( SafeArrayLock(psa)==E_UNEXPECTED ) 
     return E_UNEXPECTED;/* UNDOC error condition */
 
   /* find the delta in number of array spot to apply to the new array */
@@ -710,7 +710,7 @@ HRESULT WINAPI SafeArrayRedim32(
   psa->rgsabound[0].cElements = psaboundNew->cElements;
   psa->rgsabound[0].lLbound   = psaboundNew->lLbound;
 
-  return SafeArrayUnlock32(psa);
+  return SafeArrayUnlock(psa);
 }
 
 /************************************************************************
@@ -720,7 +720,7 @@ HRESULT WINAPI SafeArrayRedim32(
 /************************************************************************ 
  * Used to validate the SAFEARRAY type of arg
  */
-static BOOL32 validArg(
+static BOOL validArg(
   SAFEARRAY *psa) 
 {
   SAFEARRAYBOUND *sab;
@@ -745,14 +745,14 @@ static BOOL32 validArg(
 /************************************************************************ 
  * Used to reallocate memory
  */
-static BOOL32 resizeSafeArray(
+static BOOL resizeSafeArray(
   SAFEARRAY *psa, 
   LONG lDelta)
 {
   ULONG    ulWholeArraySize;  /* use as multiplicator */
   PVOID    pvNewBlock = NULL;  
   IUnknown *punk;
-  BSTR32   bstr;
+  BSTR   bstr;
 
   ulWholeArraySize = getArraySize(psa);
 
@@ -768,11 +768,11 @@ static BOOL32 resizeSafeArray(
 
     else if(psa->fFeatures & FADF_BSTR)  /* BSTR that need to be freed */
 	    for(;lDelta < 0; lDelta++) {
-        bstr = *(BSTR32*)
+        bstr = *(BSTR*)
           (psa->pvData+((ulWholeArraySize+lDelta)*psa->cbElements));
 
         if( bstr != NULL )
-          SysFreeString32( bstr );
+          SysFreeString( bstr );
       }
   }
 
@@ -797,7 +797,7 @@ static BOOL32 resizeSafeArray(
 /************************************************************************ 
  * Used to set the fFeatures data member of the SAFEARRAY structure. 
  */
-static INT32 getFeatures(
+static INT getFeatures(
   VARTYPE vt) 
 {
   switch(vt) {
@@ -812,7 +812,7 @@ static INT32 getFeatures(
  * Used to figure out if the fFeatures data member of the SAFEARRAY 
  * structure contain any information about the type of data stored... 
  */
-static BOOL32 isPointer(
+static BOOL isPointer(
   USHORT feature) 
 {
   switch(feature) {
@@ -853,7 +853,7 @@ static ULONG calcDisplacement(
  * Recursivity agent for calcDisplacement method.  Used within Put and 
  * Get methods.
  */
-static INT32 endOfDim(
+static INT endOfDim(
   LONG           *coor, 
   SAFEARRAYBOUND *mat, 
   LONG           dim, 
@@ -870,19 +870,19 @@ static INT32 endOfDim(
  * Method used to validate the coordinate received in Put and Get 
  * methods.
  */
-static BOOL32 validCoordinate(
+static BOOL validCoordinate(
   LONG      *coor, 
   SAFEARRAY *psa) 
 {
-  INT32   iter=0;
+  INT   iter=0;
   LONG    lUBound;
   LONG    lLBound;
   HRESULT hRes;
 
   for(; iter<psa->cDims; iter++) {
-    if((hRes = SafeArrayGetLBound32(psa, iter, &lLBound)) != S_OK)
+    if((hRes = SafeArrayGetLBound(psa, iter, &lLBound)) != S_OK)
       return FALSE;
-    if((hRes = SafeArrayGetUBound32(psa, iter, &lUBound)) != S_OK)
+    if((hRes = SafeArrayGetUBound(psa, iter, &lUBound)) != S_OK)
       return FALSE;
  
     if(lLBound == lUBound) 
@@ -922,11 +922,11 @@ static HRESULT duplicateData(
   ULONG    ulWholeArraySize; /* size of the thing */
   LONG     lDelta;
   IUnknown *punk;
-  BSTR32   pbstrReAllocStr = NULL; /* BSTR reallocated */
+  BSTR   pbstrReAllocStr = NULL; /* BSTR reallocated */
 
   ulWholeArraySize = getArraySize(psa); /* Number of item in SA */
   
-  SafeArrayLock32(*ppsaOut);
+  SafeArrayLock(*ppsaOut);
 
   if( isPointer(psa->fFeatures) ) {  /* If datatype is object increment 
                                         object's reference count */
@@ -946,14 +946,14 @@ static HRESULT duplicateData(
                                                the BSTR in the new array */
 
     for(lDelta=0; lDelta < ulWholeArraySize; lDelta++) {
-      if(( pbstrReAllocStr = SysAllocString32(
-            *(BSTR32*)(psa->pvData+(lDelta * psa->cbElements)))) == NULL) {
+      if(( pbstrReAllocStr = SysAllocString(
+            *(BSTR*)(psa->pvData+(lDelta * psa->cbElements)))) == NULL) {
 
-        SafeArrayUnlock32(*ppsaOut);
+        SafeArrayUnlock(*ppsaOut);
         return E_OUTOFMEMORY;
       }
 
-      *((BSTR32*)((*ppsaOut)->pvData+(lDelta * psa->cbElements))) = 
+      *((BSTR*)((*ppsaOut)->pvData+(lDelta * psa->cbElements))) = 
         pbstrReAllocStr;
     }
 
@@ -963,7 +963,7 @@ static HRESULT duplicateData(
       ulWholeArraySize*psa->cbElements);
   }
 
-  SafeArrayUnlock32(*ppsaOut);
+  SafeArrayUnlock(*ppsaOut);
 
   return S_OK;
 }

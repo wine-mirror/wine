@@ -23,7 +23,7 @@ DWORD WINAPI GetFileResourceSize16( LPCSTR lpszFileName,
     LPCSTR lpszResId = HIWORD( spszResId )? PTR_SEG_TO_LIN( spszResId )
                                           : (LPCSTR)spszResId;
 
-    return GetFileResourceSize32( lpszFileName, 
+    return GetFileResourceSize( lpszFileName, 
                                   lpszResType, lpszResId, lpdwFileOffset );
 }
 
@@ -40,7 +40,7 @@ DWORD WINAPI GetFileResource16( LPCSTR lpszFileName,
     LPCSTR lpszResId = HIWORD( spszResId )? PTR_SEG_TO_LIN( spszResId )
                                           : (LPCSTR)spszResId;
 
-    return GetFileResource32( lpszFileName, lpszResType, lpszResId,
+    return GetFileResource( lpszFileName, lpszResType, lpszResId,
                               dwFileOffset, dwResLen, lpvData );
 }
 
@@ -50,7 +50,7 @@ DWORD WINAPI GetFileResource16( LPCSTR lpszFileName,
 DWORD WINAPI GetFileVersionInfoSize16( LPCSTR lpszFileName, LPDWORD lpdwHandle )
 {
     TRACE( ver, "(%s, %p)\n", debugstr_a(lpszFileName), lpdwHandle );
-    return GetFileVersionInfoSize32A( lpszFileName, lpdwHandle );
+    return GetFileVersionInfoSizeA( lpszFileName, lpdwHandle );
 }
 
 /*************************************************************************
@@ -62,7 +62,7 @@ DWORD WINAPI GetFileVersionInfo16( LPCSTR lpszFileName, DWORD handle,
     TRACE( ver, "(%s, %08lx, %ld, %p)\n", 
                 debugstr_a(lpszFileName), handle, cbBuf, lpvData );
 
-    return GetFileVersionInfo32A( lpszFileName, handle, cbBuf, lpvData );
+    return GetFileVersionInfoA( lpszFileName, handle, cbBuf, lpvData );
 }
 
 /*************************************************************************
@@ -73,8 +73,8 @@ DWORD WINAPI VerFindFile16( UINT16 flags, LPCSTR lpszFilename,
                             LPSTR lpszCurDir, UINT16 *lpuCurDirLen,
                             LPSTR lpszDestDir, UINT16 *lpuDestDirLen )
 {
-    UINT32 curDirLen, destDirLen;
-    DWORD retv = VerFindFile32A( flags, lpszFilename, lpszWinDir, lpszAppDir,
+    UINT curDirLen, destDirLen;
+    DWORD retv = VerFindFileA( flags, lpszFilename, lpszWinDir, lpszAppDir,
                                  lpszCurDir, &curDirLen, lpszDestDir, &destDirLen );
 
     *lpuCurDirLen = (UINT16)curDirLen;
@@ -90,8 +90,8 @@ DWORD WINAPI VerInstallFile16( UINT16 flags,
                                LPCSTR lpszSrcDir, LPCSTR lpszDestDir, LPCSTR lpszCurDir,
                                LPSTR lpszTmpFile, UINT16 *lpwTmpFileLen )
 {
-    UINT32 filelen;
-    DWORD retv = VerInstallFile32A( flags, lpszSrcFilename, lpszDestFilename, 
+    UINT filelen;
+    DWORD retv = VerInstallFileA( flags, lpszSrcFilename, lpszDestFilename, 
                                     lpszSrcDir, lpszDestDir, lpszCurDir, 
                                     lpszTmpFile, &filelen);
 
@@ -104,7 +104,7 @@ DWORD WINAPI VerInstallFile16( UINT16 flags,
  */
 DWORD WINAPI VerLanguageName16( UINT16 uLang, LPSTR lpszLang, UINT16 cbLang )
 {
-    return VerLanguageName32A( uLang, lpszLang, cbLang );
+    return VerLanguageNameA( uLang, lpszLang, cbLang );
 }
 
 /*************************************************************************
@@ -115,13 +115,13 @@ DWORD WINAPI VerQueryValue16( SEGPTR spvBlock, LPCSTR lpszSubBlock,
 {
     LPVOID lpvBlock = PTR_SEG_TO_LIN( spvBlock );
     LPVOID buffer = lpvBlock;
-    UINT32 buflen;
+    UINT buflen;
     DWORD retv;
 
     TRACE( ver, "(%p, %s, %p, %p)\n", 
                 lpvBlock, debugstr_a(lpszSubBlock), lpspBuffer, lpcb );
 
-    retv = VerQueryValue32A( lpvBlock, lpszSubBlock, &buffer, &buflen );
+    retv = VerQueryValueA( lpvBlock, lpszSubBlock, &buffer, &buflen );
     if ( !retv ) return FALSE;
 
     if ( OFFSETOF( spvBlock ) + (buffer - lpvBlock) >= 0x10000 )

@@ -19,7 +19,7 @@
 BOOL16 WINAPI WinHelp16( HWND16 hWnd, LPCSTR lpHelpFile, UINT16 wCommand,
                          DWORD dwData )
 {
-    return WinHelp32A( hWnd, lpHelpFile, wCommand,
+    return WinHelpA( hWnd, lpHelpFile, wCommand,
                        (DWORD)PTR_SEG_TO_LIN(dwData) );
 }
 
@@ -27,17 +27,17 @@ BOOL16 WINAPI WinHelp16( HWND16 hWnd, LPCSTR lpHelpFile, UINT16 wCommand,
 /**********************************************************************
  *             WinHelp32A   (USER32.579)
  */
-BOOL32 WINAPI WinHelp32A( HWND32 hWnd, LPCSTR lpHelpFile, UINT32 wCommand,
+BOOL WINAPI WinHelpA( HWND hWnd, LPCSTR lpHelpFile, UINT wCommand,
                           DWORD dwData )
 {
 	static WORD WM_WINHELP = 0;
-	HWND32 hDest;
+	HWND hDest;
 	LPWINHELP lpwh;
 	HGLOBAL16 hwh;
 	int size,dsize,nlen;
         if (wCommand != HELP_QUIT)  /* FIXME */
 	{
-            if (WinExec32("winhelp.exe -x",SW_SHOWNORMAL) <= 32)
+            if (WinExec("winhelp.exe -x",SW_SHOWNORMAL) <= 32)
 		return FALSE;
 
 	    /* NOTE: Probably, this should be directed yield, 
@@ -47,12 +47,12 @@ BOOL32 WINAPI WinHelp32A( HWND32 hWnd, LPCSTR lpHelpFile, UINT32 wCommand,
 
 	if(!WM_WINHELP) 
 	{
-		WM_WINHELP=RegisterWindowMessage32A("WM_WINHELP");
+		WM_WINHELP=RegisterWindowMessageA("WM_WINHELP");
 		if(!WM_WINHELP)
 			return FALSE;
 	}
 
-	hDest = FindWindow32A( "MS_WINHELP", NULL );
+	hDest = FindWindowA( "MS_WINHELP", NULL );
 	if(!hDest)
         {
 		if(wCommand == HELP_QUIT)
@@ -115,11 +115,11 @@ BOOL32 WINAPI WinHelp32A( HWND32 hWnd, LPCSTR lpHelpFile, UINT32 wCommand,
 /**********************************************************************
  *             WinHelp32W   (USER32.580)
  */
-BOOL32 WINAPI WinHelp32W( HWND32 hWnd, LPCWSTR helpFile, UINT32 command,
+BOOL WINAPI WinHelpW( HWND hWnd, LPCWSTR helpFile, UINT command,
                           DWORD dwData )
 {
     LPSTR file = HEAP_strdupWtoA( GetProcessHeap(), 0, helpFile );
-    BOOL32 ret = WinHelp32A( hWnd, file, command, dwData );
+    BOOL ret = WinHelpA( hWnd, file, command, dwData );
     HeapFree( GetProcessHeap(), 0, file );
     return ret;
 }

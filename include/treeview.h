@@ -17,10 +17,10 @@
 /* internal structures */
 
 typedef struct {
-    UINT32 mask;
+    UINT mask;
     HTREEITEM hItem;
-    UINT32 state;
-    UINT32 stateMask;
+    UINT state;
+    UINT stateMask;
     LPSTR pszText;
     int cchTextMax;
     int iImage;
@@ -36,30 +36,30 @@ typedef struct {
 	HTREEITEM sibling;        /* handle to next item in list, 0 if last */
 	HTREEITEM upsibling;      /* handle to previous item in list, 0 if first */
 	int visible;
-    RECT32 rect;
-	RECT32 text;
+    RECT rect;
+	RECT text;
 } TREEVIEW_ITEM;
 
 
 
 typedef struct tagTREEVIEW_INFO
 {
-    UINT32	uInternalStatus;		
-	UINT32  bAutoSize;			/* merge with uInternalStatus */
-	INT32	Timer;
-    UINT32  uNumItems;	/* number of valid TREEVIEW_ITEMs */
-    UINT32	uNumPtrsAlloced; 
+    UINT	uInternalStatus;		
+	UINT  bAutoSize;			/* merge with uInternalStatus */
+	INT	Timer;
+    UINT  uNumItems;	/* number of valid TREEVIEW_ITEMs */
+    UINT	uNumPtrsAlloced; 
     HTREEITEM	uMaxHandle;	/* needed for delete_item */
     HTREEITEM 	TopRootItem;	/* handle to first item in treeview */
-	INT32	cdmode;		/* last custom draw setting */
+	INT	cdmode;		/* last custom draw setting */
 
-	UINT32	uItemHeight;		/* item height, -1 for default item height */
-	UINT32 	uRealItemHeight;	/* current item height in pixels */
-	UINT32	uVisibleHeight;	    /* visible height of treeview in pixels */
-    UINT32	uTotalHeight;		/* total height of treeview in pixels */
-	UINT32	uVisibleWidth;	    
-    UINT32	uTotalWidth;	
-    UINT32	uIndent;			/* indentation in pixels */
+	UINT	uItemHeight;		/* item height, -1 for default item height */
+	UINT 	uRealItemHeight;	/* current item height in pixels */
+	UINT	uVisibleHeight;	    /* visible height of treeview in pixels */
+    UINT	uTotalHeight;		/* total height of treeview in pixels */
+	UINT	uVisibleWidth;	    
+    UINT	uTotalWidth;	
+    UINT	uIndent;			/* indentation in pixels */
     HTREEITEM	selectedItem;   /* handle to selected item or 0 if none */
 	HTREEITEM	focusItem;		/* handle to item that has focus, 0 if none */
 	HTREEITEM	hotItem;		/* handle currently under cursor, 0 if none */
@@ -67,19 +67,19 @@ typedef struct tagTREEVIEW_INFO
     HTREEITEM   firstVisible;	/* handle to first visible item */
     HTREEITEM   dropItem;	/* handle to item selected by drag cursor */
 	HIMAGELIST  dragList;	/* Bitmap of dragged item */
-    INT32		cx,cy;		/* current x/y place in list */
+    INT		cx,cy;		/* current x/y place in list */
     COLORREF	clrBk;		
     COLORREF	clrText;
-    HFONT32 	hFont;
-    HFONT32 	hBoldFont;
-	HWND32		hwndToolTip;
-	HWND32		hwndEdit;
-	WNDPROC32   wpEditOrig;     /* needed for subclassing edit control */
+    HFONT 	hFont;
+    HFONT 	hBoldFont;
+	HWND		hwndToolTip;
+	HWND		hwndEdit;
+	WNDPROC   wpEditOrig;     /* needed for subclassing edit control */
 
     HIMAGELIST	himlNormal;	
     HIMAGELIST	himlState;
     TREEVIEW_ITEM *items;	/* itemlist */
-    INT32		*freeList;	/* bitmap indicating which elements are valid */
+    INT		*freeList;	/* bitmap indicating which elements are valid */
 				/* 1=valid, 0=free; 	*/
 				/* size of list= uNumPtrsAlloced/32 */
 

@@ -97,28 +97,28 @@ static const char LTRBInnerFlat[] = {
  *
  * See also comments with UITOOLS_DrawRectEdge()
  */
-static BOOL32 UITOOLS95_DrawDiagEdge(HDC32 hdc, LPRECT32 rc, 
-				     UINT32 uType, UINT32 uFlags)
+static BOOL UITOOLS95_DrawDiagEdge(HDC hdc, LPRECT rc, 
+				     UINT uType, UINT uFlags)
 {
-    POINT32 Points[4];
+    POINT Points[4];
     char InnerI, OuterI;
-    HPEN32 InnerPen, OuterPen;
-    POINT32 SavePoint;
-    HPEN32 SavePen;
+    HPEN InnerPen, OuterPen;
+    POINT SavePoint;
+    HPEN SavePen;
     int spx, spy;
     int epx, epy;
     int Width = rc->right - rc->left;
     int Height= rc->bottom - rc->top;
     int SmallDiam = Width > Height ? Height : Width;
-    BOOL32 retval = !(   ((uType & BDR_INNER) == BDR_INNER
+    BOOL retval = !(   ((uType & BDR_INNER) == BDR_INNER
                        || (uType & BDR_OUTER) == BDR_OUTER)
                       && !(uFlags & (BF_FLAT|BF_MONO)) );
     int add = (LTRBInnerMono[uType & (BDR_INNER|BDR_OUTER)] != -1 ? 1 : 0)
             + (LTRBOuterMono[uType & (BDR_INNER|BDR_OUTER)] != -1 ? 1 : 0);
 
     /* Init some vars */
-    OuterPen = InnerPen = (HPEN32)GetStockObject32(NULL_PEN);
-    SavePen = (HPEN32)SelectObject32(hdc, InnerPen);
+    OuterPen = InnerPen = (HPEN)GetStockObject(NULL_PEN);
+    SavePen = (HPEN)SelectObject(hdc, InnerPen);
     spx = spy = epx = epy = 0; /* Satisfy the compiler... */
     
     /* Determine the colors of the edges */
@@ -159,10 +159,10 @@ static BOOL32 UITOOLS95_DrawDiagEdge(HDC32 hdc, LPRECT32 rc,
         }
     }
 
-    if(InnerI != -1) InnerPen = GetSysColorPen32(InnerI);
-    if(OuterI != -1) OuterPen = GetSysColorPen32(OuterI);
+    if(InnerI != -1) InnerPen = GetSysColorPen(InnerI);
+    if(OuterI != -1) OuterPen = GetSysColorPen(OuterI);
 
-    MoveToEx32(hdc, 0, 0, &SavePoint);
+    MoveToEx(hdc, 0, 0, &SavePoint);
 
     /* Don't ask me why, but this is what is visible... */
     /* This must be possible to do much simpler, but I fail to */
@@ -210,11 +210,11 @@ static BOOL32 UITOOLS95_DrawDiagEdge(HDC32 hdc, LPRECT32 rc,
         break;
     }
 
-    MoveToEx32(hdc, spx, spy, NULL);
-    SelectObject32(hdc, OuterPen);
-    LineTo32(hdc, epx, epy);
+    MoveToEx(hdc, spx, spy, NULL);
+    SelectObject(hdc, OuterPen);
+    LineTo(hdc, epx, epy);
 
-    SelectObject32(hdc, InnerPen);
+    SelectObject(hdc, InnerPen);
 
     switch(uFlags & (BF_RECT|BF_DIAGONAL))
     {
@@ -222,8 +222,8 @@ static BOOL32 UITOOLS95_DrawDiagEdge(HDC32 hdc, LPRECT32 rc,
     case (BF_DIAGONAL|BF_BOTTOM):
     case BF_DIAGONAL:
     case (BF_DIAGONAL|BF_LEFT):
-        MoveToEx32(hdc, spx-1, spy, NULL);
-        LineTo32(hdc, epx, epy-1);
+        MoveToEx(hdc, spx-1, spy, NULL);
+        LineTo(hdc, epx, epy-1);
         Points[0].x = spx-add;
         Points[0].y = spy;
         Points[1].x = rc->left;
@@ -234,8 +234,8 @@ static BOOL32 UITOOLS95_DrawDiagEdge(HDC32 hdc, LPRECT32 rc,
         break;
 
     case BF_DIAGONAL_ENDBOTTOMRIGHT:
-        MoveToEx32(hdc, spx-1, spy, NULL);
-        LineTo32(hdc, epx, epy+1);
+        MoveToEx(hdc, spx-1, spy, NULL);
+        LineTo(hdc, epx, epy+1);
         Points[0].x = spx-add;
         Points[0].y = spy;
         Points[1].x = rc->left;
@@ -249,8 +249,8 @@ static BOOL32 UITOOLS95_DrawDiagEdge(HDC32 hdc, LPRECT32 rc,
     case (BF_DIAGONAL|BF_BOTTOM|BF_RIGHT|BF_TOP|BF_LEFT):
     case BF_DIAGONAL_ENDTOPRIGHT:
     case (BF_DIAGONAL|BF_RIGHT|BF_TOP|BF_LEFT):
-        MoveToEx32(hdc, spx+1, spy, NULL);
-        LineTo32(hdc, epx, epy+1);
+        MoveToEx(hdc, spx+1, spy, NULL);
+        LineTo(hdc, epx, epy+1);
         Points[0].x = epx-1;
         Points[0].y = epy+1+add;
         Points[1].x = rc->right-1;
@@ -262,8 +262,8 @@ static BOOL32 UITOOLS95_DrawDiagEdge(HDC32 hdc, LPRECT32 rc,
         break;
 
     case BF_DIAGONAL_ENDTOPLEFT:
-        MoveToEx32(hdc, spx, spy-1, NULL);
-        LineTo32(hdc, epx+1, epy);
+        MoveToEx(hdc, spx, spy-1, NULL);
+        LineTo(hdc, epx+1, epy);
         Points[0].x = epx+1+add;
         Points[0].y = epy+1;
         Points[1].x = rc->right-1;
@@ -277,8 +277,8 @@ static BOOL32 UITOOLS95_DrawDiagEdge(HDC32 hdc, LPRECT32 rc,
     case (BF_DIAGONAL|BF_TOP):
     case (BF_DIAGONAL|BF_BOTTOM|BF_TOP):
     case (BF_DIAGONAL|BF_BOTTOM|BF_TOP|BF_LEFT):
-        MoveToEx32(hdc, spx+1, spy-1, NULL);
-        LineTo32(hdc, epx, epy);
+        MoveToEx(hdc, spx+1, spy-1, NULL);
+        LineTo(hdc, epx, epy);
         Points[0].x = epx-1;
         Points[0].y = epy+1;
         Points[1].x = rc->right-1;
@@ -292,8 +292,8 @@ static BOOL32 UITOOLS95_DrawDiagEdge(HDC32 hdc, LPRECT32 rc,
     case (BF_DIAGONAL|BF_RIGHT):
     case (BF_DIAGONAL|BF_RIGHT|BF_LEFT):
     case (BF_DIAGONAL|BF_RIGHT|BF_LEFT|BF_BOTTOM):
-        MoveToEx32(hdc, spx, spy, NULL);
-        LineTo32(hdc, epx-1, epy+1);
+        MoveToEx(hdc, spx, spy, NULL);
+        LineTo(hdc, epx-1, epy+1);
         Points[0].x = spx;
         Points[0].y = spy;
         Points[1].x = rc->left;
@@ -307,17 +307,17 @@ static BOOL32 UITOOLS95_DrawDiagEdge(HDC32 hdc, LPRECT32 rc,
     /* Fill the interior if asked */
     if((uFlags & BF_MIDDLE) && retval)
     {
-        HBRUSH32 hbsave;
-        HBRUSH32 hb = GetSysColorBrush32(uFlags & BF_MONO ? COLOR_WINDOW
+        HBRUSH hbsave;
+        HBRUSH hb = GetSysColorBrush(uFlags & BF_MONO ? COLOR_WINDOW
 					 :COLOR_BTNFACE);
-        HPEN32 hpsave;
-        HPEN32 hp = GetSysColorPen32(uFlags & BF_MONO ? COLOR_WINDOW
+        HPEN hpsave;
+        HPEN hp = GetSysColorPen(uFlags & BF_MONO ? COLOR_WINDOW
 				     : COLOR_BTNFACE);
-        hbsave = (HBRUSH32)SelectObject32(hdc, hb);
-        hpsave = (HPEN32)SelectObject32(hdc, hp);
-        Polygon32(hdc, Points, 4);
-        SelectObject32(hdc, hbsave);
-        SelectObject32(hdc, hpsave);
+        hbsave = (HBRUSH)SelectObject(hdc, hb);
+        hpsave = (HPEN)SelectObject(hdc, hp);
+        Polygon(hdc, Points, 4);
+        SelectObject(hdc, hbsave);
+        SelectObject(hdc, hpsave);
     }
 
     /* Adjust rectangle if asked */
@@ -330,8 +330,8 @@ static BOOL32 UITOOLS95_DrawDiagEdge(HDC32 hdc, LPRECT32 rc,
     }
 
     /* Cleanup */
-    SelectObject32(hdc, SavePen);
-    MoveToEx32(hdc, SavePoint.x, SavePoint.y, NULL);
+    SelectObject(hdc, SavePen);
+    MoveToEx(hdc, SavePoint.x, SavePoint.y, NULL);
 
     return retval;
 }
@@ -410,27 +410,27 @@ static BOOL32 UITOOLS95_DrawDiagEdge(HDC32 hdc, LPRECT32 rc,
  */
 
 
-static BOOL32 UITOOLS95_DrawRectEdge(HDC32 hdc, LPRECT32 rc, 
-				     UINT32 uType, UINT32 uFlags)
+static BOOL UITOOLS95_DrawRectEdge(HDC hdc, LPRECT rc, 
+				     UINT uType, UINT uFlags)
 {
     char LTInnerI, LTOuterI;
     char RBInnerI, RBOuterI;
-    HPEN32 LTInnerPen, LTOuterPen;
-    HPEN32 RBInnerPen, RBOuterPen;
-    RECT32 InnerRect = *rc;
-    POINT32 SavePoint;
-    HPEN32 SavePen;
+    HPEN LTInnerPen, LTOuterPen;
+    HPEN RBInnerPen, RBOuterPen;
+    RECT InnerRect = *rc;
+    POINT SavePoint;
+    HPEN SavePen;
     int LBpenplus = 0;
     int LTpenplus = 0;
     int RTpenplus = 0;
     int RBpenplus = 0;
-    BOOL32 retval = !(   ((uType & BDR_INNER) == BDR_INNER
+    BOOL retval = !(   ((uType & BDR_INNER) == BDR_INNER
                        || (uType & BDR_OUTER) == BDR_OUTER)
                       && !(uFlags & (BF_FLAT|BF_MONO)) );
         
     /* Init some vars */
-    LTInnerPen = LTOuterPen = RBInnerPen = RBOuterPen = (HPEN32)GetStockObject32(NULL_PEN);
-    SavePen = (HPEN32)SelectObject32(hdc, LTInnerPen);
+    LTInnerPen = LTOuterPen = RBInnerPen = RBOuterPen = (HPEN)GetStockObject(NULL_PEN);
+    SavePen = (HPEN)SelectObject(hdc, LTInnerPen);
 
     /* Determine the colors of the edges */
     if(uFlags & BF_MONO)
@@ -463,65 +463,65 @@ static BOOL32 UITOOLS95_DrawRectEdge(HDC32 hdc, LPRECT32 rc,
     if((uFlags & BF_BOTTOMRIGHT) == BF_BOTTOMRIGHT) RBpenplus = 1;
     if((uFlags & BF_TOPLEFT) == BF_TOPLEFT)         LTpenplus = 1;
 
-    if(LTInnerI != -1) LTInnerPen = GetSysColorPen32(LTInnerI);
-    if(LTOuterI != -1) LTOuterPen = GetSysColorPen32(LTOuterI);
-    if(RBInnerI != -1) RBInnerPen = GetSysColorPen32(RBInnerI);
-    if(RBOuterI != -1) RBOuterPen = GetSysColorPen32(RBOuterI);
+    if(LTInnerI != -1) LTInnerPen = GetSysColorPen(LTInnerI);
+    if(LTOuterI != -1) LTOuterPen = GetSysColorPen(LTOuterI);
+    if(RBInnerI != -1) RBInnerPen = GetSysColorPen(RBInnerI);
+    if(RBOuterI != -1) RBOuterPen = GetSysColorPen(RBOuterI);
 
     if((uFlags & BF_MIDDLE) && retval)
     {
-        FillRect32(hdc, &InnerRect, GetSysColorBrush32(uFlags & BF_MONO ? 
+        FillRect(hdc, &InnerRect, GetSysColorBrush(uFlags & BF_MONO ? 
 					    COLOR_WINDOW : COLOR_BTNFACE));
     }
 
-    MoveToEx32(hdc, 0, 0, &SavePoint);
+    MoveToEx(hdc, 0, 0, &SavePoint);
 
     /* Draw the outer edge */
-    SelectObject32(hdc, LTOuterPen);
+    SelectObject(hdc, LTOuterPen);
     if(uFlags & BF_TOP)
     {
-        MoveToEx32(hdc, InnerRect.left, InnerRect.top, NULL);
-        LineTo32(hdc, InnerRect.right, InnerRect.top);
+        MoveToEx(hdc, InnerRect.left, InnerRect.top, NULL);
+        LineTo(hdc, InnerRect.right, InnerRect.top);
     }
     if(uFlags & BF_LEFT)
     {
-        MoveToEx32(hdc, InnerRect.left, InnerRect.top, NULL);
-        LineTo32(hdc, InnerRect.left, InnerRect.bottom);
+        MoveToEx(hdc, InnerRect.left, InnerRect.top, NULL);
+        LineTo(hdc, InnerRect.left, InnerRect.bottom);
     }
-    SelectObject32(hdc, RBOuterPen);
+    SelectObject(hdc, RBOuterPen);
     if(uFlags & BF_BOTTOM)
     {
-        MoveToEx32(hdc, InnerRect.right-1, InnerRect.bottom-1, NULL);
-        LineTo32(hdc, InnerRect.left-1, InnerRect.bottom-1);
+        MoveToEx(hdc, InnerRect.right-1, InnerRect.bottom-1, NULL);
+        LineTo(hdc, InnerRect.left-1, InnerRect.bottom-1);
     }
     if(uFlags & BF_RIGHT)
     {
-        MoveToEx32(hdc, InnerRect.right-1, InnerRect.bottom-1, NULL);
-        LineTo32(hdc, InnerRect.right-1, InnerRect.top-1);
+        MoveToEx(hdc, InnerRect.right-1, InnerRect.bottom-1, NULL);
+        LineTo(hdc, InnerRect.right-1, InnerRect.top-1);
     }
 
     /* Draw the inner edge */
-    SelectObject32(hdc, LTInnerPen);
+    SelectObject(hdc, LTInnerPen);
     if(uFlags & BF_TOP)
     {
-        MoveToEx32(hdc, InnerRect.left+LTpenplus, InnerRect.top+1, NULL);
-        LineTo32(hdc, InnerRect.right-RTpenplus, InnerRect.top+1);
+        MoveToEx(hdc, InnerRect.left+LTpenplus, InnerRect.top+1, NULL);
+        LineTo(hdc, InnerRect.right-RTpenplus, InnerRect.top+1);
     }
     if(uFlags & BF_LEFT)
     {
-        MoveToEx32(hdc, InnerRect.left+1, InnerRect.top+LTpenplus, NULL);
-        LineTo32(hdc, InnerRect.left+1, InnerRect.bottom-LBpenplus);
+        MoveToEx(hdc, InnerRect.left+1, InnerRect.top+LTpenplus, NULL);
+        LineTo(hdc, InnerRect.left+1, InnerRect.bottom-LBpenplus);
     }
-    SelectObject32(hdc, RBInnerPen);
+    SelectObject(hdc, RBInnerPen);
     if(uFlags & BF_BOTTOM)
     {
-        MoveToEx32(hdc, InnerRect.right-1-RBpenplus, InnerRect.bottom-2, NULL);
-        LineTo32(hdc, InnerRect.left-1+LBpenplus, InnerRect.bottom-2);
+        MoveToEx(hdc, InnerRect.right-1-RBpenplus, InnerRect.bottom-2, NULL);
+        LineTo(hdc, InnerRect.left-1+LBpenplus, InnerRect.bottom-2);
     }
     if(uFlags & BF_RIGHT)
     {
-        MoveToEx32(hdc, InnerRect.right-2, InnerRect.bottom-1-RBpenplus, NULL);
-        LineTo32(hdc, InnerRect.right-2, InnerRect.top-1+RTpenplus);
+        MoveToEx(hdc, InnerRect.right-2, InnerRect.bottom-1-RBpenplus, NULL);
+        LineTo(hdc, InnerRect.right-2, InnerRect.top-1+RTpenplus);
     }
 
     /* Adjust rectangle if asked */
@@ -536,8 +536,8 @@ static BOOL32 UITOOLS95_DrawRectEdge(HDC32 hdc, LPRECT32 rc,
     }
 
     /* Cleanup */
-    SelectObject32(hdc, SavePen);
-    MoveToEx32(hdc, SavePoint.x, SavePoint.y, NULL);
+    SelectObject(hdc, SavePen);
+    MoveToEx(hdc, SavePoint.x, SavePoint.y, NULL);
     return retval;
 }
 
@@ -547,11 +547,11 @@ static BOOL32 UITOOLS95_DrawRectEdge(HDC32 hdc, LPRECT32 rc,
  */
 BOOL16 WINAPI DrawEdge16( HDC16 hdc, LPRECT16 rc, UINT16 edge, UINT16 flags )
 {
-    RECT32 rect32;
-    BOOL32 ret;
+    RECT rect32;
+    BOOL ret;
 
     CONV_RECT16TO32( rc, &rect32 );
-    ret = DrawEdge32( hdc, &rect32, edge, flags );
+    ret = DrawEdge( hdc, &rect32, edge, flags );
     CONV_RECT32TO16( &rect32, rc );
     return ret;
 }
@@ -559,7 +559,7 @@ BOOL16 WINAPI DrawEdge16( HDC16 hdc, LPRECT16 rc, UINT16 edge, UINT16 flags )
 /**********************************************************************
  *          DrawEdge32   (USER32.155)
  */
-BOOL32 WINAPI DrawEdge32( HDC32 hdc, LPRECT32 rc, UINT32 edge, UINT32 flags )
+BOOL WINAPI DrawEdge( HDC hdc, LPRECT rc, UINT edge, UINT flags )
 {
     TRACE(graphics, "%04x %d,%d-%d,%d %04x %04x\n",
 	  hdc, rc->left, rc->top, rc->right, rc->bottom, edge, flags );
@@ -576,7 +576,7 @@ BOOL32 WINAPI DrawEdge32( HDC32 hdc, LPRECT32 rc, UINT32 edge, UINT32 flags )
  *
  * Utility to create a square rectangle and returning the width
  */
-static int UITOOLS_MakeSquareRect(LPRECT32 src, LPRECT32 dst)
+static int UITOOLS_MakeSquareRect(LPRECT src, LPRECT dst)
 {
     int Width  = src->right - src->left;
     int Height = src->bottom - src->top;
@@ -609,10 +609,10 @@ static int UITOOLS_MakeSquareRect(LPRECT32 src, LPRECT32 dst)
  * however there because MS uses a TrueType font (Marlett) to draw
  * the buttons.
  */
-static BOOL32 UITOOLS95_DFC_ButtonPush(HDC32 dc, LPRECT32 r, UINT32 uFlags)
+static BOOL UITOOLS95_DFC_ButtonPush(HDC dc, LPRECT r, UINT uFlags)
 {
-    UINT32 edge;
-    RECT32 myr = *r;
+    UINT edge;
+    RECT myr = *r;
 
     if(uFlags & (DFCS_PUSHED | DFCS_CHECKED | DFCS_FLAT))
         edge = EDGE_SUNKEN;
@@ -626,22 +626,22 @@ static BOOL32 UITOOLS95_DFC_ButtonPush(HDC32 dc, LPRECT32 r, UINT32 uFlags)
         else
             UITOOLS95_DrawRectEdge(dc, &myr, edge, (uFlags&DFCS_FLAT)|BF_RECT|BF_SOFT|BF_ADJUST);
 
-        if(GetSysColor32(COLOR_BTNHIGHLIGHT) == RGB(255, 255, 255))
+        if(GetSysColor(COLOR_BTNHIGHLIGHT) == RGB(255, 255, 255))
         {
-            HBITMAP32 hbm = CreateBitmap32(8, 8, 1, 1, wPattern_AA55);
-            HBRUSH32 hbsave;
-            HBRUSH32 hb = CreatePatternBrush32(hbm);
+            HBITMAP hbm = CreateBitmap(8, 8, 1, 1, wPattern_AA55);
+            HBRUSH hbsave;
+            HBRUSH hb = CreatePatternBrush(hbm);
 
-            FillRect32(dc, &myr, GetSysColorBrush32(COLOR_BTNFACE));
-            hbsave = (HBRUSH32)SelectObject32(dc, hb);
-            PatBlt32(dc, myr.left, myr.top, myr.right-myr.left, myr.bottom-myr.top, 0x00FA0089);
-            SelectObject32(dc, hbsave);
-            DeleteObject32(hb);
-            DeleteObject32(hbm);
+            FillRect(dc, &myr, GetSysColorBrush(COLOR_BTNFACE));
+            hbsave = (HBRUSH)SelectObject(dc, hb);
+            PatBlt(dc, myr.left, myr.top, myr.right-myr.left, myr.bottom-myr.top, 0x00FA0089);
+            SelectObject(dc, hbsave);
+            DeleteObject(hb);
+            DeleteObject(hbm);
         }
         else
         {
-            FillRect32(dc, &myr, GetSysColorBrush32(COLOR_BTNHIGHLIGHT));
+            FillRect(dc, &myr, GetSysColorBrush(COLOR_BTNHIGHLIGHT));
         }
     }
     else
@@ -649,7 +649,7 @@ static BOOL32 UITOOLS95_DFC_ButtonPush(HDC32 dc, LPRECT32 r, UINT32 uFlags)
         if(uFlags & DFCS_MONO)
         {
             UITOOLS95_DrawRectEdge(dc, &myr, edge, BF_MONO|BF_RECT|BF_ADJUST);
-            FillRect32(dc, &myr, GetSysColorBrush32(COLOR_BTNFACE));
+            FillRect(dc, &myr, GetSysColorBrush(COLOR_BTNFACE));
         }
         else
         {
@@ -681,9 +681,9 @@ static BOOL32 UITOOLS95_DFC_ButtonPush(HDC32 dc, LPRECT32 r, UINT32 uFlags)
  */
 #define DFC_CHECKPOINTSMAX      6
 
-static BOOL32 UITOOLS95_DFC_ButtonCheck(HDC32 dc, LPRECT32 r, UINT32 uFlags)
+static BOOL UITOOLS95_DFC_ButtonCheck(HDC dc, LPRECT r, UINT uFlags)
 {
-    RECT32 myr;
+    RECT myr;
     int SmallDiam = UITOOLS_MakeSquareRect(r, &myr);
     int BorderShrink = SmallDiam / 16;
 
@@ -694,7 +694,7 @@ static BOOL32 UITOOLS95_DFC_ButtonCheck(HDC32 dc, LPRECT32 r, UINT32 uFlags)
     /* 100% equivalent. */
     if(uFlags & (DFCS_FLAT|DFCS_MONO))
     {
-        FillRect32(dc, &myr, GetSysColorBrush32(COLOR_WINDOWFRAME));
+        FillRect(dc, &myr, GetSysColorBrush(COLOR_WINDOWFRAME));
         myr.left   += 2 * BorderShrink;
         myr.right  -= 2 * BorderShrink;
         myr.top    += 2 * BorderShrink;
@@ -702,55 +702,55 @@ static BOOL32 UITOOLS95_DFC_ButtonCheck(HDC32 dc, LPRECT32 r, UINT32 uFlags)
     }
     else
     {
-        FillRect32(dc, &myr, GetSysColorBrush32(COLOR_BTNHIGHLIGHT));
+        FillRect(dc, &myr, GetSysColorBrush(COLOR_BTNHIGHLIGHT));
         myr.right  -= BorderShrink;
         myr.bottom -= BorderShrink;
-        FillRect32(dc, &myr, GetSysColorBrush32(COLOR_BTNSHADOW));
+        FillRect(dc, &myr, GetSysColorBrush(COLOR_BTNSHADOW));
         myr.left   += BorderShrink;
         myr.top    += BorderShrink;
-        FillRect32(dc, &myr, GetSysColorBrush32(COLOR_3DLIGHT));
+        FillRect(dc, &myr, GetSysColorBrush(COLOR_3DLIGHT));
         myr.right  -= BorderShrink;
         myr.bottom -= BorderShrink;
-        FillRect32(dc, &myr, GetSysColorBrush32(COLOR_3DDKSHADOW));
+        FillRect(dc, &myr, GetSysColorBrush(COLOR_3DDKSHADOW));
         myr.left   += BorderShrink;
         myr.top    += BorderShrink;
     }
 
     if(uFlags & (DFCS_INACTIVE|DFCS_PUSHED))
     {
-        FillRect32(dc, &myr, GetSysColorBrush32(COLOR_BTNFACE));
+        FillRect(dc, &myr, GetSysColorBrush(COLOR_BTNFACE));
     }
     else if(uFlags & DFCS_CHECKED)
     {
-        if(GetSysColor32(COLOR_BTNHIGHLIGHT) == RGB(255, 255, 255))
+        if(GetSysColor(COLOR_BTNHIGHLIGHT) == RGB(255, 255, 255))
         {
-            HBITMAP32 hbm = CreateBitmap32(8, 8, 1, 1, wPattern_AA55);
-            HBRUSH32 hbsave;
-            HBRUSH32 hb = CreatePatternBrush32(hbm);
+            HBITMAP hbm = CreateBitmap(8, 8, 1, 1, wPattern_AA55);
+            HBRUSH hbsave;
+            HBRUSH hb = CreatePatternBrush(hbm);
 
-            FillRect32(dc, &myr, GetSysColorBrush32(COLOR_BTNFACE));
-            hbsave = (HBRUSH32)SelectObject32(dc, hb);
-            PatBlt32(dc, myr.left, myr.top, myr.right-myr.left, myr.bottom-myr.top, 0x00FA0089);
-            SelectObject32(dc, hbsave);
-            DeleteObject32(hb);
-            DeleteObject32(hbm);
+            FillRect(dc, &myr, GetSysColorBrush(COLOR_BTNFACE));
+            hbsave = (HBRUSH)SelectObject(dc, hb);
+            PatBlt(dc, myr.left, myr.top, myr.right-myr.left, myr.bottom-myr.top, 0x00FA0089);
+            SelectObject(dc, hbsave);
+            DeleteObject(hb);
+            DeleteObject(hbm);
         }
         else
         {
-            FillRect32(dc, &myr, GetSysColorBrush32(COLOR_BTNHIGHLIGHT));
+            FillRect(dc, &myr, GetSysColorBrush(COLOR_BTNHIGHLIGHT));
         }
     }
     else
     {
-        FillRect32(dc, &myr, GetSysColorBrush32(COLOR_WINDOW));
+        FillRect(dc, &myr, GetSysColorBrush(COLOR_WINDOW));
     }
 
     if(uFlags & DFCS_CHECKED)
     {
-        POINT32 CheckPoints[DFC_CHECKPOINTSMAX];
+        POINT CheckPoints[DFC_CHECKPOINTSMAX];
         int i;
-        HBRUSH32 hbsave;
-        HPEN32 hpsave;
+        HBRUSH hbsave;
+        HPEN hpsave;
 
         /* FIXME: This comes very close to M$'s checkmark, but not */
         /* exactly... When small or large there is a few pixels */
@@ -770,11 +770,11 @@ static BOOL32 UITOOLS95_DFC_ButtonCheck(HDC32 dc, LPRECT32 r, UINT32 uFlags)
         CheckPoints[5].y = CheckPoints[0].y + 3*SmallDiam/16;
 
         i = (uFlags & DFCS_INACTIVE) || (uFlags & 0xff) == DFCS_BUTTON3STATE ? COLOR_BTNSHADOW : COLOR_WINDOWTEXT;
-        hbsave = (HBRUSH32)SelectObject32(dc, GetSysColorBrush32(i));
-        hpsave = (HPEN32)SelectObject32(dc, GetSysColorPen32(i));
-        Polygon32(dc, CheckPoints, DFC_CHECKPOINTSMAX);
-        SelectObject32(dc, hpsave);
-        SelectObject32(dc, hbsave);
+        hbsave = (HBRUSH)SelectObject(dc, GetSysColorBrush(i));
+        hpsave = (HPEN)SelectObject(dc, GetSysColorPen(i));
+        Polygon(dc, CheckPoints, DFC_CHECKPOINTSMAX);
+        SelectObject(dc, hpsave);
+        SelectObject(dc, hbsave);
     }
     return TRUE;
 }
@@ -789,14 +789,14 @@ static BOOL32 UITOOLS95_DFC_ButtonCheck(HDC32 dc, LPRECT32 r, UINT32 uFlags)
  * however there because MS uses a TrueType font (Marlett) to draw
  * the buttons.
  */
-static BOOL32 UITOOLS95_DFC_ButtonRadio(HDC32 dc, LPRECT32 r, UINT32 uFlags)
+static BOOL UITOOLS95_DFC_ButtonRadio(HDC dc, LPRECT r, UINT uFlags)
 {
-    RECT32 myr;
+    RECT myr;
     int i;
     int SmallDiam = UITOOLS_MakeSquareRect(r, &myr);
     int BorderShrink = SmallDiam / 16;
-    HPEN32 hpsave;
-    HBRUSH32 hbsave;
+    HPEN hpsave;
+    HBRUSH hbsave;
     int xe, ye;
     int xc, yc;
 
@@ -804,7 +804,7 @@ static BOOL32 UITOOLS95_DFC_ButtonRadio(HDC32 dc, LPRECT32 r, UINT32 uFlags)
 
     if((uFlags & 0xff) == DFCS_BUTTONRADIOIMAGE)
     {
-        FillRect32(dc, r, (HBRUSH32)GetStockObject32(BLACK_BRUSH));
+        FillRect(dc, r, (HBRUSH)GetStockObject(BLACK_BRUSH));
     }
 
     xe = myr.left;
@@ -822,44 +822,44 @@ static BOOL32 UITOOLS95_DFC_ButtonRadio(HDC32 dc, LPRECT32 r, UINT32 uFlags)
 
     if((uFlags & 0xff) == DFCS_BUTTONRADIOMASK)
     {
-        hbsave = (HBRUSH32)SelectObject32(dc, GetStockObject32(BLACK_BRUSH));
-        Pie32(dc, myr.left, myr.top, myr.right, myr.bottom, xe, ye, xe, ye);
-        SelectObject32(dc, hbsave);
+        hbsave = (HBRUSH)SelectObject(dc, GetStockObject(BLACK_BRUSH));
+        Pie(dc, myr.left, myr.top, myr.right, myr.bottom, xe, ye, xe, ye);
+        SelectObject(dc, hbsave);
     }
     else
     {
         if(uFlags & (DFCS_FLAT|DFCS_MONO))
         {
-            hpsave = (HPEN32)SelectObject32(dc, GetSysColorPen32(COLOR_WINDOWFRAME));
-            hbsave = (HBRUSH32)SelectObject32(dc, GetSysColorBrush32(COLOR_WINDOWFRAME));
-            Pie32(dc, myr.left, myr.top, myr.right, myr.bottom, xe, ye, xe, ye);
-            SelectObject32(dc, hbsave);
-            SelectObject32(dc, hpsave);
+            hpsave = (HPEN)SelectObject(dc, GetSysColorPen(COLOR_WINDOWFRAME));
+            hbsave = (HBRUSH)SelectObject(dc, GetSysColorBrush(COLOR_WINDOWFRAME));
+            Pie(dc, myr.left, myr.top, myr.right, myr.bottom, xe, ye, xe, ye);
+            SelectObject(dc, hbsave);
+            SelectObject(dc, hpsave);
         }
         else
         {
-            hpsave = (HPEN32)SelectObject32(dc, GetSysColorPen32(COLOR_BTNHIGHLIGHT));
-            hbsave = (HBRUSH32)SelectObject32(dc, GetSysColorBrush32(COLOR_BTNHIGHLIGHT));
-            Pie32(dc, myr.left, myr.top, myr.right, myr.bottom, myr.left-1, myr.bottom, myr.right-1, myr.top);
+            hpsave = (HPEN)SelectObject(dc, GetSysColorPen(COLOR_BTNHIGHLIGHT));
+            hbsave = (HBRUSH)SelectObject(dc, GetSysColorBrush(COLOR_BTNHIGHLIGHT));
+            Pie(dc, myr.left, myr.top, myr.right, myr.bottom, myr.left-1, myr.bottom, myr.right-1, myr.top);
 
-            SelectObject32(dc, GetSysColorPen32(COLOR_BTNSHADOW));
-            SelectObject32(dc, GetSysColorBrush32(COLOR_BTNSHADOW));
-            Pie32(dc, myr.left, myr.top, myr.right, myr.bottom, myr.right+1, myr.top, myr.left+1, myr.bottom);
+            SelectObject(dc, GetSysColorPen(COLOR_BTNSHADOW));
+            SelectObject(dc, GetSysColorBrush(COLOR_BTNSHADOW));
+            Pie(dc, myr.left, myr.top, myr.right, myr.bottom, myr.right+1, myr.top, myr.left+1, myr.bottom);
 
             myr.left   += BorderShrink;
             myr.right  -= BorderShrink;
             myr.top    += BorderShrink;
             myr.bottom -= BorderShrink;
 
-            SelectObject32(dc, GetSysColorPen32(COLOR_3DLIGHT));
-            SelectObject32(dc, GetSysColorBrush32(COLOR_3DLIGHT));
-            Pie32(dc, myr.left, myr.top, myr.right, myr.bottom, myr.left-1, myr.bottom, myr.right-1, myr.top);
+            SelectObject(dc, GetSysColorPen(COLOR_3DLIGHT));
+            SelectObject(dc, GetSysColorBrush(COLOR_3DLIGHT));
+            Pie(dc, myr.left, myr.top, myr.right, myr.bottom, myr.left-1, myr.bottom, myr.right-1, myr.top);
 
-            SelectObject32(dc, GetSysColorPen32(COLOR_3DDKSHADOW));
-            SelectObject32(dc, GetSysColorBrush32(COLOR_3DDKSHADOW));
-            Pie32(dc, myr.left, myr.top, myr.right, myr.bottom, myr.right+1, myr.top, myr.left+1, myr.bottom);
-            SelectObject32(dc, hbsave);
-            SelectObject32(dc, hpsave);
+            SelectObject(dc, GetSysColorPen(COLOR_3DDKSHADOW));
+            SelectObject(dc, GetSysColorBrush(COLOR_3DDKSHADOW));
+            Pie(dc, myr.left, myr.top, myr.right, myr.bottom, myr.right+1, myr.top, myr.left+1, myr.bottom);
+            SelectObject(dc, hbsave);
+            SelectObject(dc, hpsave);
         }
 
         i = 10*SmallDiam/16;
@@ -868,11 +868,11 @@ static BOOL32 UITOOLS95_DFC_ButtonRadio(HDC32 dc, LPRECT32 r, UINT32 uFlags)
         myr.top    = yc - i+i/2;
         myr.bottom = yc + i/2;
         i= !(uFlags & (DFCS_INACTIVE|DFCS_PUSHED)) ? COLOR_WINDOW : COLOR_BTNFACE;
-        hpsave = (HPEN32)SelectObject32(dc, GetSysColorPen32(i));
-        hbsave = (HBRUSH32)SelectObject32(dc, GetSysColorBrush32(i));
-        Pie32(dc, myr.left, myr.top, myr.right, myr.bottom, xe, ye, xe, ye);
-        SelectObject32(dc, hbsave);
-        SelectObject32(dc, hpsave);
+        hpsave = (HPEN)SelectObject(dc, GetSysColorPen(i));
+        hbsave = (HBRUSH)SelectObject(dc, GetSysColorBrush(i));
+        Pie(dc, myr.left, myr.top, myr.right, myr.bottom, xe, ye, xe, ye);
+        SelectObject(dc, hbsave);
+        SelectObject(dc, hpsave);
     }
 
     if(uFlags & DFCS_CHECKED)
@@ -885,11 +885,11 @@ static BOOL32 UITOOLS95_DFC_ButtonRadio(HDC32 dc, LPRECT32 r, UINT32 uFlags)
         myr.bottom = yc + i/2;
 
         i = uFlags & DFCS_INACTIVE ? COLOR_BTNSHADOW : COLOR_WINDOWTEXT;
-        hbsave = (HBRUSH32)SelectObject32(dc, GetSysColorBrush32(i));
-        hpsave = (HPEN32)SelectObject32(dc, GetSysColorPen32(i));
-        Pie32(dc, myr.left, myr.top, myr.right, myr.bottom, xe, ye, xe, ye);
-        SelectObject32(dc, hpsave);
-        SelectObject32(dc, hbsave);
+        hbsave = (HBRUSH)SelectObject(dc, GetSysColorBrush(i));
+        hpsave = (HPEN)SelectObject(dc, GetSysColorPen(i));
+        Pie(dc, myr.left, myr.top, myr.right, myr.bottom, xe, ye, xe, ye);
+        SelectObject(dc, hpsave);
+        SelectObject(dc, hbsave);
     }
 
     /* FIXME: M$ has a polygon in the center at relative points: */
@@ -910,7 +910,7 @@ static BOOL32 UITOOLS95_DFC_ButtonRadio(HDC32 dc, LPRECT32 r, UINT32 uFlags)
 /***********************************************************************
  *           UITOOLS_DrawFrameButton
  */
-static BOOL32 UITOOLS95_DrawFrameButton(HDC32 hdc, LPRECT32 rc, UINT32 uState)
+static BOOL UITOOLS95_DrawFrameButton(HDC hdc, LPRECT rc, UINT uState)
 {
     switch(uState & 0xff)
     {
@@ -939,26 +939,26 @@ static BOOL32 UITOOLS95_DrawFrameButton(HDC32 hdc, LPRECT32 rc, UINT32 uState)
  * Draw caption buttons (win95), coming from DrawFrameControl()
  */
 
-static BOOL32 UITOOLS95_DrawFrameCaption(HDC32 dc, LPRECT32 r, UINT32 uFlags)
+static BOOL UITOOLS95_DrawFrameCaption(HDC dc, LPRECT r, UINT uFlags)
 {
-    POINT32 Line1[10];
-    POINT32 Line2[10];
+    POINT Line1[10];
+    POINT Line2[10];
     int Line1N;
     int Line2N;
-    RECT32 myr;
+    RECT myr;
     int SmallDiam = UITOOLS_MakeSquareRect(r, &myr)-2;
     int i;
-    HBRUSH32 hbsave;
-    HPEN32 hpsave;
-    HFONT32 hfsave, hf;
+    HBRUSH hbsave;
+    HPEN hpsave;
+    HFONT hfsave, hf;
     int xc = (myr.left+myr.right)/2;
     int yc = (myr.top+myr.bottom)/2;
     int edge, move;
     char str[2] = "?";
-    UINT32 alignsave;
+    UINT alignsave;
     int bksave;
     COLORREF clrsave;
-    SIZE32 size;
+    SIZE size;
 
     UITOOLS95_DFC_ButtonPush(dc, r, uFlags & 0xff00);
 
@@ -983,28 +983,28 @@ static BOOL32 UITOOLS95_DrawFrameCaption(HDC32 dc, LPRECT32 r, UINT32 uFlags)
         /* This one breaks the flow */
         /* FIXME: We need the Marlett font in order to get this right. */
 
-        hf = CreateFont32A(-SmallDiam, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE,
+        hf = CreateFontA(-SmallDiam, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE,
                         ANSI_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS,
                         DEFAULT_QUALITY, FIXED_PITCH|FF_DONTCARE, "System");
-        alignsave = SetTextAlign32(dc, TA_TOP|TA_LEFT);
-        bksave = SetBkMode32(dc, TRANSPARENT);
-        clrsave = GetTextColor32(dc);
-        hfsave = (HFONT32)SelectObject32(dc, hf);
+        alignsave = SetTextAlign(dc, TA_TOP|TA_LEFT);
+        bksave = SetBkMode(dc, TRANSPARENT);
+        clrsave = GetTextColor(dc);
+        hfsave = (HFONT)SelectObject(dc, hf);
         GetTextExtentPoint32A(dc, str, 1, &size);
 
         if(uFlags & DFCS_INACTIVE)
         {
-            SetTextColor32(dc, GetSysColor32(COLOR_BTNHIGHLIGHT));
-            TextOut32A(dc, xc-size.cx/2+1, yc-size.cy/2+1, str, 1);
+            SetTextColor(dc, GetSysColor(COLOR_BTNHIGHLIGHT));
+            TextOutA(dc, xc-size.cx/2+1, yc-size.cy/2+1, str, 1);
         }
-        SetTextColor32(dc, GetSysColor32(uFlags & DFCS_INACTIVE ? COLOR_BTNSHADOW : COLOR_BTNTEXT));
-        TextOut32A(dc, xc-size.cx/2, yc-size.cy/2, str, 1);
+        SetTextColor(dc, GetSysColor(uFlags & DFCS_INACTIVE ? COLOR_BTNSHADOW : COLOR_BTNTEXT));
+        TextOutA(dc, xc-size.cx/2, yc-size.cy/2, str, 1);
 
-        SelectObject32(dc, hfsave);
-        SetTextColor32(dc, clrsave);
-        SetBkMode32(dc, bksave);
-        SetTextAlign32(dc, alignsave);
-        DeleteObject32(hf);
+        SelectObject(dc, hfsave);
+        SetTextColor(dc, clrsave);
+        SetBkMode(dc, bksave);
+        SetTextAlign(dc, alignsave);
+        DeleteObject(hf);
         return TRUE;
 
     case DFCS_CAPTIONMIN:
@@ -1071,13 +1071,13 @@ static BOOL32 UITOOLS95_DrawFrameCaption(HDC32 dc, LPRECT32 r, UINT32 uFlags)
     if(uFlags & DFCS_INACTIVE)
     {
         /* If we have an inactive button, then you see a shadow */
-        hbsave = (HBRUSH32)SelectObject32(dc, GetSysColorBrush32(COLOR_BTNHIGHLIGHT));
-        hpsave = (HPEN32)SelectObject32(dc, GetSysColorPen32(COLOR_BTNHIGHLIGHT));
-        Polygon32(dc, Line1, Line1N);
+        hbsave = (HBRUSH)SelectObject(dc, GetSysColorBrush(COLOR_BTNHIGHLIGHT));
+        hpsave = (HPEN)SelectObject(dc, GetSysColorPen(COLOR_BTNHIGHLIGHT));
+        Polygon(dc, Line1, Line1N);
         if(Line2N > 0)
-            Polygon32(dc, Line2, Line2N);
-        SelectObject32(dc, hpsave);
-        SelectObject32(dc, hbsave);
+            Polygon(dc, Line2, Line2N);
+        SelectObject(dc, hpsave);
+        SelectObject(dc, hbsave);
     }
 
     /* Correct for the shadow shift */
@@ -1094,14 +1094,14 @@ static BOOL32 UITOOLS95_DrawFrameCaption(HDC32 dc, LPRECT32 r, UINT32 uFlags)
 
     /* Make the final picture */
     i = uFlags & DFCS_INACTIVE ? COLOR_BTNSHADOW : COLOR_BTNTEXT;
-    hbsave = (HBRUSH32)SelectObject32(dc, GetSysColorBrush32(i));
-    hpsave = (HPEN32)SelectObject32(dc, GetSysColorPen32(i));
+    hbsave = (HBRUSH)SelectObject(dc, GetSysColorBrush(i));
+    hpsave = (HPEN)SelectObject(dc, GetSysColorPen(i));
 
-    Polygon32(dc, Line1, Line1N);
+    Polygon(dc, Line1, Line1N);
     if(Line2N > 0)
-        Polygon32(dc, Line2, Line2N);
-    SelectObject32(dc, hpsave);
-    SelectObject32(dc, hbsave);
+        Polygon(dc, Line2, Line2N);
+    SelectObject(dc, hpsave);
+    SelectObject(dc, hbsave);
 
     return TRUE;
 }
@@ -1112,14 +1112,14 @@ static BOOL32 UITOOLS95_DrawFrameCaption(HDC32 dc, LPRECT32 r, UINT32 uFlags)
  *
  * Draw a scroll-bar control coming from DrawFrameControl()
  */
-static BOOL32 UITOOLS95_DrawFrameScroll(HDC32 dc, LPRECT32 r, UINT32 uFlags)
+static BOOL UITOOLS95_DrawFrameScroll(HDC dc, LPRECT r, UINT uFlags)
 {
-    POINT32 Line[4];
-    RECT32 myr;
+    POINT Line[4];
+    RECT myr;
     int SmallDiam = UITOOLS_MakeSquareRect(r, &myr) - 2;
     int i;
-    HBRUSH32 hbsave, hb, hb2;
-    HPEN32 hpsave, hp, hp2;
+    HBRUSH hbsave, hb, hb2;
+    HPEN hpsave, hp, hp2;
     int tri = 310*SmallDiam/1000;
     int d46, d93;
 
@@ -1161,19 +1161,19 @@ static BOOL32 UITOOLS95_DrawFrameScroll(HDC32 dc, LPRECT32 r, UINT32 uFlags)
     case DFCS_SCROLLSIZEGRIP:
         /* This one breaks the flow... */
         UITOOLS95_DrawRectEdge(dc, r, EDGE_BUMP, BF_MIDDLE | ((uFlags&(DFCS_MONO|DFCS_FLAT)) ? BF_MONO : 0));
-        hpsave = (HPEN32)SelectObject32(dc, GetStockObject32(NULL_PEN));
-        hbsave = (HBRUSH32)SelectObject32(dc, GetStockObject32(NULL_BRUSH));
+        hpsave = (HPEN)SelectObject(dc, GetStockObject(NULL_PEN));
+        hbsave = (HBRUSH)SelectObject(dc, GetStockObject(NULL_BRUSH));
         if(uFlags & (DFCS_MONO|DFCS_FLAT))
         {
-            hp = hp2 = GetSysColorPen32(COLOR_WINDOWFRAME);
-            hb = hb2 = GetSysColorBrush32(COLOR_WINDOWFRAME);
+            hp = hp2 = GetSysColorPen(COLOR_WINDOWFRAME);
+            hb = hb2 = GetSysColorBrush(COLOR_WINDOWFRAME);
         }
         else
         {
-            hp  = GetSysColorPen32(COLOR_BTNHIGHLIGHT);
-            hp2 = GetSysColorPen32(COLOR_BTNSHADOW);
-            hb  = GetSysColorBrush32(COLOR_BTNHIGHLIGHT);
-            hb2 = GetSysColorBrush32(COLOR_BTNSHADOW);
+            hp  = GetSysColorPen(COLOR_BTNHIGHLIGHT);
+            hp2 = GetSysColorPen(COLOR_BTNSHADOW);
+            hb  = GetSysColorBrush(COLOR_BTNHIGHLIGHT);
+            hb2 = GetSysColorBrush(COLOR_BTNSHADOW);
         }
         Line[0].x = Line[1].x = r->right-1;
         Line[2].y = Line[3].y = r->bottom-1;
@@ -1185,51 +1185,51 @@ static BOOL32 UITOOLS95_DrawFrameScroll(HDC32 dc, LPRECT32 r, UINT32 uFlags)
         Line[3].x = r->right - i - 1;
         Line[1].y = Line[0].y + d46;
         Line[2].x = Line[3].x + d46;
-        SelectObject32(dc, hb);
-        SelectObject32(dc, hp);
-        Polygon32(dc, Line, 4);
+        SelectObject(dc, hb);
+        SelectObject(dc, hp);
+        Polygon(dc, Line, 4);
 
         Line[1].y++; Line[2].x++;
         Line[0].y = Line[1].y + d93;
         Line[3].x = Line[2].x + d93;
-        SelectObject32(dc, hb2);
-        SelectObject32(dc, hp2);
-        Polygon32(dc, Line, 4);
+        SelectObject(dc, hb2);
+        SelectObject(dc, hp2);
+        Polygon(dc, Line, 4);
 
         i = 398*SmallDiam/750;
         Line[0].y = r->bottom - i - 1;
         Line[3].x = r->right - i - 1;
         Line[1].y = Line[0].y + d46;
         Line[2].x = Line[3].x + d46;
-        SelectObject32(dc, hb);
-        SelectObject32(dc, hp);
-        Polygon32(dc, Line, 4);
+        SelectObject(dc, hb);
+        SelectObject(dc, hp);
+        Polygon(dc, Line, 4);
 
         Line[1].y++; Line[2].x++;
         Line[0].y = Line[1].y + d93;
         Line[3].x = Line[2].x + d93;
-        SelectObject32(dc, hb2);
-        SelectObject32(dc, hp2);
-        Polygon32(dc, Line, 4);
+        SelectObject(dc, hb2);
+        SelectObject(dc, hp2);
+        Polygon(dc, Line, 4);
 
         i = 210*SmallDiam/750;
         Line[0].y = r->bottom - i - 1;
         Line[3].x = r->right - i - 1;
         Line[1].y = Line[0].y + d46;
         Line[2].x = Line[3].x + d46;
-        SelectObject32(dc, hb);
-        SelectObject32(dc, hp);
-        Polygon32(dc, Line, 4);
+        SelectObject(dc, hb);
+        SelectObject(dc, hp);
+        Polygon(dc, Line, 4);
 
         Line[1].y++; Line[2].x++;
         Line[0].y = Line[1].y + d93;
         Line[3].x = Line[2].x + d93;
-        SelectObject32(dc, hb2);
-        SelectObject32(dc, hp2);
-        Polygon32(dc, Line, 4);
+        SelectObject(dc, hb2);
+        SelectObject(dc, hp2);
+        Polygon(dc, Line, 4);
 
-        SelectObject32(dc, hpsave);
-        SelectObject32(dc, hbsave);
+        SelectObject(dc, hpsave);
+        SelectObject(dc, hbsave);
         return TRUE;
 
     default:
@@ -1242,11 +1242,11 @@ static BOOL32 UITOOLS95_DrawFrameScroll(HDC32 dc, LPRECT32 r, UINT32 uFlags)
 
     if(uFlags & DFCS_INACTIVE)
     {
-        hbsave = (HBRUSH32)SelectObject32(dc, GetSysColorBrush32(COLOR_BTNHIGHLIGHT));
-        hpsave = (HPEN32)SelectObject32(dc, GetSysColorPen32(COLOR_BTNHIGHLIGHT));
-        Polygon32(dc, Line, 3);
-        SelectObject32(dc, hpsave);
-        SelectObject32(dc, hbsave);
+        hbsave = (HBRUSH)SelectObject(dc, GetSysColorBrush(COLOR_BTNHIGHLIGHT));
+        hpsave = (HPEN)SelectObject(dc, GetSysColorPen(COLOR_BTNHIGHLIGHT));
+        Polygon(dc, Line, 3);
+        SelectObject(dc, hpsave);
+        SelectObject(dc, hbsave);
     }
 
     for(i = 0; i < 3; i++)
@@ -1256,11 +1256,11 @@ static BOOL32 UITOOLS95_DrawFrameScroll(HDC32 dc, LPRECT32 r, UINT32 uFlags)
     }
 
     i = uFlags & DFCS_INACTIVE ? COLOR_BTNSHADOW : COLOR_BTNTEXT;
-    hbsave = (HBRUSH32)SelectObject32(dc, GetSysColorBrush32(i));
-    hpsave = (HPEN32)SelectObject32(dc, GetSysColorPen32(i));
-    Polygon32(dc, Line, 3);
-    SelectObject32(dc, hpsave);
-    SelectObject32(dc, hbsave);
+    hbsave = (HBRUSH)SelectObject(dc, GetSysColorBrush(i));
+    hpsave = (HPEN)SelectObject(dc, GetSysColorPen(i));
+    Polygon(dc, Line, 3);
+    SelectObject(dc, hpsave);
+    SelectObject(dc, hbsave);
 
     return TRUE;
 }
@@ -1270,27 +1270,27 @@ static BOOL32 UITOOLS95_DrawFrameScroll(HDC32 dc, LPRECT32 r, UINT32 uFlags)
  *
  * Draw a menu control coming from DrawFrameControl()
  */
-static BOOL32 UITOOLS95_DrawFrameMenu(HDC32 dc, LPRECT32 r, UINT32 uFlags)
+static BOOL UITOOLS95_DrawFrameMenu(HDC dc, LPRECT r, UINT uFlags)
 {
-    POINT32 Points[6];
-    RECT32 myr;
+    POINT Points[6];
+    RECT myr;
     int SmallDiam = UITOOLS_MakeSquareRect(r, &myr);
     int i;
-    HBRUSH32 hbsave;
-    HPEN32 hpsave;
+    HBRUSH hbsave;
+    HPEN hpsave;
     int xe, ye;
     int xc, yc;
-    BOOL32 retval = TRUE;
+    BOOL retval = TRUE;
 
     /* Using black and white seems to be utterly wrong, but win95 doesn't */
     /* use anything else. I think I tried all sys-colors to change things */
     /* without luck. It seems as if this behavior is inherited from the */
     /* win31 DFC() implementation... (you remember, B/W menus). */
 
-    FillRect32(dc, r, (HBRUSH32)GetStockObject32(WHITE_BRUSH));
+    FillRect(dc, r, (HBRUSH)GetStockObject(WHITE_BRUSH));
 
-    hbsave = (HBRUSH32)SelectObject32(dc, GetStockObject32(BLACK_BRUSH));
-    hpsave = (HPEN32)SelectObject32(dc, GetStockObject32(BLACK_PEN));
+    hbsave = (HBRUSH)SelectObject(dc, GetStockObject(BLACK_BRUSH));
+    hpsave = (HPEN)SelectObject(dc, GetStockObject(BLACK_PEN));
 
     switch(uFlags & 0xff)
     {
@@ -1301,7 +1301,7 @@ static BOOL32 UITOOLS95_DrawFrameMenu(HDC32 dc, LPRECT32 r, UINT32 uFlags)
         Points[0].y = Points[2].y - i;
         Points[1].y = Points[2].y + i;
         Points[0].x = Points[1].x = Points[2].x - i;
-        Polygon32(dc, Points, 3);
+        Polygon(dc, Points, 3);
         break;
 
     case DFCS_MENUBULLET:
@@ -1315,7 +1315,7 @@ static BOOL32 UITOOLS95_DrawFrameMenu(HDC32 dc, LPRECT32 r, UINT32 uFlags)
         myr.right  = xc + i/2;
         myr.top    = yc - i+i/2;
         myr.bottom = yc + i/2;
-        Pie32(dc, myr.left, myr.top, myr.right, myr.bottom, xe, ye, xe, ye);
+        Pie(dc, myr.left, myr.top, myr.right, myr.bottom, xe, ye, xe, ye);
         break;
 
     case DFCS_MENUCHECK:
@@ -1331,7 +1331,7 @@ static BOOL32 UITOOLS95_DrawFrameMenu(HDC32 dc, LPRECT32 r, UINT32 uFlags)
         Points[4].y = Points[1].y + 3*SmallDiam/16;
         Points[5].x = Points[0].x;
         Points[5].y = Points[0].y + 3*SmallDiam/16;
-        Polygon32(dc, Points, 6);
+        Polygon(dc, Points, 6);
         break;
 
     default:
@@ -1340,8 +1340,8 @@ static BOOL32 UITOOLS95_DrawFrameMenu(HDC32 dc, LPRECT32 r, UINT32 uFlags)
         break;
     }
 
-    SelectObject32(dc, hpsave);
-    SelectObject32(dc, hbsave);
+    SelectObject(dc, hpsave);
+    SelectObject(dc, hbsave);
     return retval;
 }
 
@@ -1352,11 +1352,11 @@ static BOOL32 UITOOLS95_DrawFrameMenu(HDC32 dc, LPRECT32 r, UINT32 uFlags)
 BOOL16 WINAPI DrawFrameControl16( HDC16 hdc, LPRECT16 rc, UINT16 uType,
                                   UINT16 uState )
 {
-    RECT32 rect32;
-    BOOL32 ret;
+    RECT rect32;
+    BOOL ret;
 
     CONV_RECT16TO32( rc, &rect32 );
-    ret = DrawFrameControl32( hdc, &rect32, uType, uState );
+    ret = DrawFrameControl( hdc, &rect32, uType, uState );
     CONV_RECT32TO16( &rect32, rc );
     return ret;
 }
@@ -1365,11 +1365,11 @@ BOOL16 WINAPI DrawFrameControl16( HDC16 hdc, LPRECT16 rc, UINT16 uType,
 /**********************************************************************
  *          DrawFrameControl32  (USER32.158)
  */
-BOOL32 WINAPI DrawFrameControl32( HDC32 hdc, LPRECT32 rc, UINT32 uType,
-                                  UINT32 uState )
+BOOL WINAPI DrawFrameControl( HDC hdc, LPRECT rc, UINT uType,
+                                  UINT uState )
 {
     /* Win95 doesn't support drawing in other mapping modes */
-    if(GetMapMode32(hdc) != MM_TEXT)
+    if(GetMapMode(hdc) != MM_TEXT)
         return FALSE;
         
     switch(uType)

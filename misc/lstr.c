@@ -118,7 +118,7 @@ SEGPTR WINAPI AnsiUpper16( SEGPTR strOrChar )
  */
 UINT16 WINAPI AnsiUpperBuff16( LPSTR str, UINT16 len )
 {
-    UINT32 count = len ? len : 65536;
+    UINT count = len ? len : 65536;
     for (; count; count--, str++) *str = toupper(*str);
     return len;
 }
@@ -147,7 +147,7 @@ SEGPTR WINAPI AnsiLower16( SEGPTR strOrChar )
  */
 UINT16 WINAPI AnsiLowerBuff16( LPSTR str, UINT16 len )
 {
-    UINT32 count = len ? len : 65536;
+    UINT count = len ? len : 65536;
     for (; count; count--, str++) *str = tolower(*str);
     return len;
 }
@@ -177,7 +177,7 @@ SEGPTR WINAPI AnsiPrev16( SEGPTR start, SEGPTR current )
 void WINAPI OutputDebugString16( LPCSTR str )
 {
     char module[10];
-    if (!GetModuleName( GetCurrentTask(), module, sizeof(module) ))
+    if (!GetModuleName16( GetCurrentTask(), module, sizeof(module) ))
         strcpy( module, "???" );
 
     DUMP( "%s says %s\n", module, debugstr_a(str) );
@@ -187,7 +187,7 @@ void WINAPI OutputDebugString16( LPCSTR str )
 /***********************************************************************
  *           OutputDebugString32A   (KERNEL32
  */
-void WINAPI OutputDebugString32A( LPCSTR str )
+void WINAPI OutputDebugStringA( LPCSTR str )
 {
     OutputDebugString16( str );
 }
@@ -197,10 +197,10 @@ void WINAPI OutputDebugString32A( LPCSTR str )
 /***********************************************************************
  *           OutputDebugString32W   (KERNEL32
  */
-void WINAPI OutputDebugString32W( LPCWSTR str )
+void WINAPI OutputDebugStringW( LPCWSTR str )
 {
     LPSTR p = HEAP_strdupWtoA( GetProcessHeap(), 0, str );
-    OutputDebugString32A( p );
+    OutputDebugStringA( p );
     HeapFree( GetProcessHeap(), 0, p );
 }
 
@@ -209,10 +209,10 @@ void WINAPI OutputDebugString32W( LPCWSTR str )
 /***********************************************************************
  *           CharNext32A   (USER32.29)
  */
-LPSTR WINAPI CharNext32A( LPCSTR ptr )
+LPSTR WINAPI CharNextA( LPCSTR ptr )
 {
     if (!*ptr) return (LPSTR)ptr;
-    if (IsDBCSLeadByte32( *ptr )) return (LPSTR)(ptr + 2);
+    if (IsDBCSLeadByte( *ptr )) return (LPSTR)(ptr + 2);
     return (LPSTR)(ptr + 1);
 }
 
@@ -220,7 +220,7 @@ LPSTR WINAPI CharNext32A( LPCSTR ptr )
 /***********************************************************************
  *           CharNextEx32A   (USER32.30)
  */
-LPSTR WINAPI CharNextEx32A( WORD codepage, LPCSTR ptr, DWORD flags )
+LPSTR WINAPI CharNextExA( WORD codepage, LPCSTR ptr, DWORD flags )
 {
     if (!*ptr) return (LPSTR)ptr;
     if (IsDBCSLeadByteEx( codepage, *ptr )) return (LPSTR)(ptr + 2);
@@ -231,7 +231,7 @@ LPSTR WINAPI CharNextEx32A( WORD codepage, LPCSTR ptr, DWORD flags )
 /***********************************************************************
  *           CharNextExW   (USER32.31)
  */
-LPWSTR WINAPI CharNextEx32W(WORD codepage,LPCWSTR x,DWORD flags)
+LPWSTR WINAPI CharNextExW(WORD codepage,LPCWSTR x,DWORD flags)
 {
     /* FIXME: add DBCS / codepage stuff */
     if (*x) return (LPWSTR)(x+1);
@@ -241,7 +241,7 @@ LPWSTR WINAPI CharNextEx32W(WORD codepage,LPCWSTR x,DWORD flags)
 /***********************************************************************
  *           CharNextW   (USER32.32)
  */
-LPWSTR WINAPI CharNext32W(LPCWSTR x)
+LPWSTR WINAPI CharNextW(LPCWSTR x)
 {
     if (*x) return (LPWSTR)(x+1);
     else return (LPWSTR)x;
@@ -250,11 +250,11 @@ LPWSTR WINAPI CharNext32W(LPCWSTR x)
 /***********************************************************************
  *           CharPrev32A   (USER32.33)
  */
-LPSTR WINAPI CharPrev32A( LPCSTR start, LPCSTR ptr )
+LPSTR WINAPI CharPrevA( LPCSTR start, LPCSTR ptr )
 {
     while (*start && (start < ptr))
     {
-        LPCSTR next = CharNext32A( start );
+        LPCSTR next = CharNextA( start );
         if (next >= ptr) break;
         start = next;
     }
@@ -265,11 +265,11 @@ LPSTR WINAPI CharPrev32A( LPCSTR start, LPCSTR ptr )
 /***********************************************************************
  *           CharPrevEx32A   (USER32.34)
  */
-LPSTR WINAPI CharPrevEx32A( WORD codepage, LPCSTR start, LPCSTR ptr, DWORD flags )
+LPSTR WINAPI CharPrevExA( WORD codepage, LPCSTR start, LPCSTR ptr, DWORD flags )
 {
     while (*start && (start < ptr))
     {
-        LPCSTR next = CharNextEx32A( codepage, start, flags );
+        LPCSTR next = CharNextExA( codepage, start, flags );
         if (next > ptr) break;
         start = next;
     }
@@ -280,7 +280,7 @@ LPSTR WINAPI CharPrevEx32A( WORD codepage, LPCSTR start, LPCSTR ptr, DWORD flags
 /***********************************************************************
  *           CharPrevExW   (USER32.35)
  */
-LPWSTR WINAPI CharPrevEx32W(WORD codepage,LPCWSTR start,LPCWSTR x,DWORD flags)
+LPWSTR WINAPI CharPrevExW(WORD codepage,LPCWSTR start,LPCWSTR x,DWORD flags)
 {
     /* FIXME: add DBCS / codepage stuff */
     if (x>start) return (LPWSTR)(x-1);
@@ -290,7 +290,7 @@ LPWSTR WINAPI CharPrevEx32W(WORD codepage,LPCWSTR start,LPCWSTR x,DWORD flags)
 /***********************************************************************
  *           CharPrevW   (USER32.36)
  */
-LPWSTR WINAPI CharPrev32W(LPCWSTR start,LPCWSTR x)
+LPWSTR WINAPI CharPrevW(LPCWSTR start,LPCWSTR x)
 {
     if (x>start) return (LPWSTR)(x-1);
     else return (LPWSTR)x;
@@ -300,7 +300,7 @@ LPWSTR WINAPI CharPrev32W(LPCWSTR start,LPCWSTR x)
  *           CharLowerA   (USER32.25)
  * FIXME: handle current locale
  */
-LPSTR WINAPI CharLower32A(LPSTR x)
+LPSTR WINAPI CharLowerA(LPSTR x)
 {
     LPSTR	s;
 
@@ -321,7 +321,7 @@ LPSTR WINAPI CharLower32A(LPSTR x)
  *           CharLowerBuffA   (USER32.26)
  * FIXME: handle current locale
  */
-DWORD WINAPI CharLowerBuff32A(LPSTR x,DWORD buflen)
+DWORD WINAPI CharLowerBuffA(LPSTR x,DWORD buflen)
 {
     DWORD done=0;
 
@@ -339,7 +339,7 @@ DWORD WINAPI CharLowerBuff32A(LPSTR x,DWORD buflen)
  *           CharLowerBuffW   (USER32.27)
  * FIXME: handle current locale
  */
-DWORD WINAPI CharLowerBuff32W(LPWSTR x,DWORD buflen)
+DWORD WINAPI CharLowerBuffW(LPWSTR x,DWORD buflen)
 {
     DWORD done=0;
 
@@ -357,7 +357,7 @@ DWORD WINAPI CharLowerBuff32W(LPWSTR x,DWORD buflen)
  *           CharLowerW   (USER32.28)
  * FIXME: handle current locale
  */
-LPWSTR WINAPI CharLower32W(LPWSTR x)
+LPWSTR WINAPI CharLowerW(LPWSTR x)
 {
     if (HIWORD(x))
     {
@@ -369,14 +369,14 @@ LPWSTR WINAPI CharLower32W(LPWSTR x)
         }
         return x;
     }
-    else return (LPWSTR)((UINT32)towlower(LOWORD(x)));
+    else return (LPWSTR)((UINT)towlower(LOWORD(x)));
 }
 
 /***********************************************************************
  *           CharUpper32A   (USER32.41)
  * FIXME: handle current locale
  */
-LPSTR WINAPI CharUpper32A(LPSTR x)
+LPSTR WINAPI CharUpperA(LPSTR x)
 {
     if (HIWORD(x))
     {
@@ -395,7 +395,7 @@ LPSTR WINAPI CharUpper32A(LPSTR x)
  *           CharUpperBuffA   (USER32.42)
  * FIXME: handle current locale
  */
-DWORD WINAPI CharUpperBuff32A(LPSTR x,DWORD buflen)
+DWORD WINAPI CharUpperBuffA(LPSTR x,DWORD buflen)
 {
     DWORD done=0;
 
@@ -413,7 +413,7 @@ DWORD WINAPI CharUpperBuff32A(LPSTR x,DWORD buflen)
  *           CharUpperBuffW   (USER32.43)
  * FIXME: handle current locale
  */
-DWORD WINAPI CharUpperBuff32W(LPWSTR x,DWORD buflen)
+DWORD WINAPI CharUpperBuffW(LPWSTR x,DWORD buflen)
 {
     DWORD done=0;
 
@@ -431,7 +431,7 @@ DWORD WINAPI CharUpperBuff32W(LPWSTR x,DWORD buflen)
  *           CharUpperW   (USER32.44)
  * FIXME: handle current locale
  */
-LPWSTR WINAPI CharUpper32W(LPWSTR x)
+LPWSTR WINAPI CharUpperW(LPWSTR x)
 {
     if (HIWORD(x))
     {
@@ -443,14 +443,14 @@ LPWSTR WINAPI CharUpper32W(LPWSTR x)
         }
         return x;
     }
-    else return (LPWSTR)((UINT32)towupper(LOWORD(x)));
+    else return (LPWSTR)((UINT)towupper(LOWORD(x)));
 }
 
 /***********************************************************************
  *           IsCharAlphaA   (USER32.331)
  * FIXME: handle current locale
  */
-BOOL32 WINAPI IsCharAlpha32A(CHAR x)
+BOOL WINAPI IsCharAlphaA(CHAR x)
 {
     return (OLE2NLS_CT_CType3_LUT[(unsigned char)x] & C3_ALPHA);
 }
@@ -459,16 +459,16 @@ BOOL32 WINAPI IsCharAlpha32A(CHAR x)
  *           IsCharAlphaNumericA   (USER32.332)
  * FIXME: handle current locale
  */
-BOOL32 WINAPI IsCharAlphaNumeric32A(CHAR x)
+BOOL WINAPI IsCharAlphaNumericA(CHAR x)
 {
-    return IsCharAlpha32A(x) || isdigit(x) ;
+    return IsCharAlphaA(x) || isdigit(x) ;
 }
 
 /***********************************************************************
  *           IsCharAlphaNumericW   (USER32.333)
  * FIXME: handle current locale
  */
-BOOL32 WINAPI IsCharAlphaNumeric32W(WCHAR x)
+BOOL WINAPI IsCharAlphaNumericW(WCHAR x)
 {
     return iswalnum(x);
 }
@@ -477,7 +477,7 @@ BOOL32 WINAPI IsCharAlphaNumeric32W(WCHAR x)
  *           IsCharAlphaW   (USER32.334)
  * FIXME: handle current locale
  */
-BOOL32 WINAPI IsCharAlpha32W(WCHAR x)
+BOOL WINAPI IsCharAlphaW(WCHAR x)
 {
     return iswalpha(x);
 }
@@ -486,7 +486,7 @@ BOOL32 WINAPI IsCharAlpha32W(WCHAR x)
  *           IsCharLower32A   (USER32.335)
  * FIXME: handle current locale
  */
-BOOL32 WINAPI IsCharLower32A(CHAR x)
+BOOL WINAPI IsCharLowerA(CHAR x)
 {
     return islower(x);
 }
@@ -495,7 +495,7 @@ BOOL32 WINAPI IsCharLower32A(CHAR x)
  *           IsCharLower32W   (USER32.336)
  * FIXME: handle current locale
  */
-BOOL32 WINAPI IsCharLower32W(WCHAR x)
+BOOL WINAPI IsCharLowerW(WCHAR x)
 {
     return iswlower(x);
 }
@@ -504,7 +504,7 @@ BOOL32 WINAPI IsCharLower32W(WCHAR x)
  *           IsCharUpper32A   (USER32.337)
  * FIXME: handle current locale
  */
-BOOL32 WINAPI IsCharUpper32A(CHAR x)
+BOOL WINAPI IsCharUpperA(CHAR x)
 {
     return isupper(x);
 }
@@ -513,7 +513,7 @@ BOOL32 WINAPI IsCharUpper32A(CHAR x)
  *           IsCharUpper32W   (USER32.338)
  * FIXME: handle current locale
  */
-BOOL32 WINAPI IsCharUpper32W(WCHAR x)
+BOOL WINAPI IsCharUpperW(WCHAR x)
 {
     return iswupper(x);
 }
@@ -530,14 +530,14 @@ DWORD WINAPI FormatMessage16(
     WORD   nSize,
     LPDWORD args /* va_list *args */
 ) {
-    return FormatMessage32A(dwFlags, lpSource, (DWORD)dwMessageId, (DWORD)dwLanguageId, lpBuffer, (DWORD)nSize, args);
+    return FormatMessageA(dwFlags, lpSource, (DWORD)dwMessageId, (DWORD)dwLanguageId, lpBuffer, (DWORD)nSize, args);
 }
 
 /***********************************************************************
  *           FormatMessage32A   (KERNEL32.138)
  * FIXME: missing wrap,FROM_SYSTEM message-loading,
  */
-DWORD WINAPI FormatMessage32A(
+DWORD WINAPI FormatMessageA(
 	DWORD	dwFlags,
 	LPCVOID	lpSource,
 	DWORD	dwMessageId,
@@ -566,13 +566,13 @@ DWORD WINAPI FormatMessage32A(
 		sprintf(from,"Systemmessage, messageid = 0x%08lx\n",dwMessageId);
 	}
 	if (dwFlags & FORMAT_MESSAGE_FROM_HMODULE) {
-		INT32	bufsize;
+		INT	bufsize;
 
 		dwMessageId &= 0xFFFF;
-		bufsize=LoadMessage32A((HMODULE32)lpSource,dwMessageId,dwLanguageId,NULL,100);
+		bufsize=LoadMessageA((HMODULE)lpSource,dwMessageId,dwLanguageId,NULL,100);
 		if (bufsize) {
 			from = HeapAlloc( GetProcessHeap(), 0, bufsize + 1 );
-			LoadMessage32A((HMODULE32)lpSource,dwMessageId,dwLanguageId,from,bufsize+1);
+			LoadMessageA((HMODULE)lpSource,dwMessageId,dwLanguageId,from,bufsize+1);
 		}
 	}
 	target	= HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, 100);
@@ -647,7 +647,7 @@ DWORD WINAPI FormatMessage32A(
 							sprintfbuf=HeapAlloc(GetProcessHeap(),0,100);
 
 						/* CMF - This makes a BIG assumption about va_list */
-						wvsprintf32A(sprintfbuf, fmtstr, (va_list) argliststart);
+						wvsprintfA(sprintfbuf, fmtstr, (va_list) argliststart);
 						x=sprintfbuf;
 						while (*x) {
 							ADD_TO_T(*x++);
@@ -694,7 +694,7 @@ DWORD WINAPI FormatMessage32A(
     TRACE(resource,"-- %s\n",debugstr_a(target));
 	if (dwFlags & FORMAT_MESSAGE_ALLOCATE_BUFFER) {
 		/* nSize is the MINIMUM size */
-		*((LPVOID*)lpBuffer) = (LPVOID)LocalAlloc32(GMEM_ZEROINIT,talloced);
+		*((LPVOID*)lpBuffer) = (LPVOID)LocalAlloc(GMEM_ZEROINIT,talloced);
 		memcpy(*(LPSTR*)lpBuffer,target,talloced);
 	} else
 		strncpy(lpBuffer,target,nSize);
@@ -713,7 +713,7 @@ DWORD WINAPI FormatMessage32A(
 /***********************************************************************
  *           FormatMessage32W   (KERNEL32.138)
  */
-DWORD WINAPI FormatMessage32W(
+DWORD WINAPI FormatMessageW(
 	DWORD	dwFlags,
 	LPCVOID	lpSource,
 	DWORD	dwMessageId,
@@ -743,14 +743,14 @@ DWORD WINAPI FormatMessage32W(
 		sprintf(from,"Systemmessage, messageid = 0x%08lx\n",dwMessageId);
 	}
 	if (dwFlags & FORMAT_MESSAGE_FROM_HMODULE) {
-		INT32	bufsize;
+		INT	bufsize;
 
 		dwMessageId &= 0xFFFF;
-		bufsize=LoadMessage32A((HMODULE32)lpSource,dwMessageId,dwLanguageId,NULL,100);
+		bufsize=LoadMessageA((HMODULE)lpSource,dwMessageId,dwLanguageId,NULL,100);
 		if (bufsize)
                 {
                     from = HeapAlloc( GetProcessHeap(), 0, bufsize + 1 );
-                    LoadMessage32A((HMODULE32)lpSource,dwMessageId,dwLanguageId,from,bufsize+1);
+                    LoadMessageA((HMODULE)lpSource,dwMessageId,dwLanguageId,from,bufsize+1);
 		}
 	}
 	target	= HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, 100 );
@@ -825,7 +825,7 @@ DWORD WINAPI FormatMessage32W(
 						/* possible invalid pointers */
 						xarr[1]=*(argliststart+1);
 						xarr[2]=*(argliststart+2);
-						sprintfbuf=HeapAlloc(GetProcessHeap(),0,lstrlen32W((LPWSTR)argliststart[0])*2+1);
+						sprintfbuf=HeapAlloc(GetProcessHeap(),0,lstrlenW((LPWSTR)argliststart[0])*2+1);
 
 						/* CMF - This makes a BIG assumption about va_list */
 						vsprintf(sprintfbuf, fmtstr, (va_list) xarr);
@@ -833,7 +833,7 @@ DWORD WINAPI FormatMessage32W(
 						sprintfbuf=HeapAlloc(GetProcessHeap(),0,100);
 
 						/* CMF - This makes a BIG assumption about va_list */
-						wvsprintf32A(sprintfbuf, fmtstr, (va_list) argliststart);
+						wvsprintfA(sprintfbuf, fmtstr, (va_list) argliststart);
 					}
 					x=sprintfbuf;
 					while (*x) {
@@ -871,15 +871,15 @@ DWORD WINAPI FormatMessage32W(
 		target = (char*)HeapReAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,target,nSize);
 	if (dwFlags & FORMAT_MESSAGE_ALLOCATE_BUFFER) {
 		/* nSize is the MINIMUM size */
-		*((LPVOID*)lpBuffer) = (LPVOID)LocalAlloc32(GMEM_ZEROINIT,talloced*2+2);
+		*((LPVOID*)lpBuffer) = (LPVOID)LocalAlloc(GMEM_ZEROINIT,talloced*2+2);
 		lstrcpynAtoW(*(LPWSTR*)lpBuffer,target,talloced);
 	} else
 		lstrcpynAtoW(lpBuffer,target,nSize);
 	HeapFree(GetProcessHeap(),0,target);
 	if (from) HeapFree(GetProcessHeap(),0,from);
 	return (dwFlags & FORMAT_MESSAGE_ALLOCATE_BUFFER) ? 
-			lstrlen32W(*(LPWSTR*)lpBuffer):
-			lstrlen32W(lpBuffer);
+			lstrlenW(*(LPWSTR*)lpBuffer):
+			lstrlenW(lpBuffer);
 #else
 	return 0;
 #endif /* __i386__ */

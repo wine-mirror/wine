@@ -88,20 +88,20 @@ void SYSMETRICS_Init(void)
 
     sysMetrics[SM_CXSIZE] = sysMetrics[SM_CYCAPTION] - 2;
     sysMetrics[SM_CYSIZE] = sysMetrics[SM_CXSIZE];
-    sysMetrics[SM_CXFRAME] = GetProfileInt32A("Windows", "BorderWidth", 4);
+    sysMetrics[SM_CXFRAME] = GetProfileIntA("Windows", "BorderWidth", 4);
     sysMetrics[SM_CYFRAME] = sysMetrics[SM_CXFRAME];
     sysMetrics[SM_CXMINTRACK] = sysMetrics[SM_CXMIN];
     sysMetrics[SM_CYMINTRACK] = sysMetrics[SM_CYMIN];
     sysMetrics[SM_CXDOUBLECLK] =
-	(GetProfileInt32A("Windows", "DoubleClickWidth", 4) + 1) & ~1;
+	(GetProfileIntA("Windows", "DoubleClickWidth", 4) + 1) & ~1;
     sysMetrics[SM_CYDOUBLECLK] =
-	(GetProfileInt32A("Windows","DoubleClickHeight", 4) + 1) & ~1;
+	(GetProfileIntA("Windows","DoubleClickHeight", 4) + 1) & ~1;
     sysMetrics[SM_CXICONSPACING] =
-	GetProfileInt32A("Desktop","IconSpacing", 75);
+	GetProfileIntA("Desktop","IconSpacing", 75);
     sysMetrics[SM_CYICONSPACING] =
-	GetProfileInt32A("Desktop", "IconVerticalSpacing", 75);
+	GetProfileIntA("Desktop", "IconVerticalSpacing", 75);
     sysMetrics[SM_MENUDROPALIGNMENT] =
-	GetProfileInt32A("Windows", "MenuDropAlignment", 0);
+	GetProfileIntA("Windows", "MenuDropAlignment", 0);
     sysMetrics[SM_PENWINDOWS] = 0;
     sysMetrics[SM_DBCSENABLED] = 0;
 
@@ -170,14 +170,14 @@ void SYSMETRICS_Init(void)
  */
 INT16 WINAPI GetSystemMetrics16( INT16 index )
 {
-    return (INT16)GetSystemMetrics32(index);
+    return (INT16)GetSystemMetrics(index);
 }
 
 
 /***********************************************************************
  *           GetSystemMetrics32    (USER32.292)
  */
-INT32 WINAPI GetSystemMetrics32( INT32 index )
+INT WINAPI GetSystemMetrics( INT index )
 {
     if ((index < 0) || (index > SM_CMETRICS)) return 0;
     else return sysMetrics[index];    

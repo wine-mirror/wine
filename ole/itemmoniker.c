@@ -28,14 +28,14 @@ static ULONG   WINAPI ItemMonikerImpl_AddRef(IMoniker* iface);
 static ULONG   WINAPI ItemMonikerImpl_Release(IMoniker* iface);
 static HRESULT WINAPI ItemMonikerImpl_GetClassID(const IMoniker* iface, CLSID *pClassID);
 static HRESULT WINAPI ItemMonikerImpl_IsDirty(IMoniker* iface);
-static HRESULT WINAPI ItemMonikerImpl_Load(IMoniker* iface, IStream32* pStm);
-static HRESULT WINAPI ItemMonikerImpl_Save(IMoniker* iface, IStream32* pStm, BOOL32 fClearDirty);
+static HRESULT WINAPI ItemMonikerImpl_Load(IMoniker* iface, IStream* pStm);
+static HRESULT WINAPI ItemMonikerImpl_Save(IMoniker* iface, IStream* pStm, BOOL fClearDirty);
 static HRESULT WINAPI ItemMonikerImpl_GetSizeMax(IMoniker* iface, ULARGE_INTEGER* pcbSize);
 static HRESULT WINAPI ItemMonikerImpl_BindToObject(IMoniker* iface,IBindCtx* pbc, IMoniker* pmkToLeft, REFIID riid, VOID** ppvResult);
 static HRESULT WINAPI ItemMonikerImpl_BindToStorage(IMoniker* iface,IBindCtx* pbc, IMoniker* pmkToLeft, REFIID riid, VOID** ppvResult);
 static HRESULT WINAPI ItemMonikerImpl_Reduce(IMoniker* iface,IBindCtx* pbc, DWORD dwReduceHowFar,IMoniker** ppmkToLeft, IMoniker** ppmkReduced);
-static HRESULT WINAPI ItemMonikerImpl_ComposeWith(IMoniker* iface,IMoniker* pmkRight,BOOL32 fOnlyIfNotGeneric, IMoniker** ppmkComposite);
-static HRESULT WINAPI ItemMonikerImpl_Enum(IMoniker* iface,BOOL32 fForward, IEnumMoniker** ppenumMoniker);
+static HRESULT WINAPI ItemMonikerImpl_ComposeWith(IMoniker* iface,IMoniker* pmkRight,BOOL fOnlyIfNotGeneric, IMoniker** ppmkComposite);
+static HRESULT WINAPI ItemMonikerImpl_Enum(IMoniker* iface,BOOL fForward, IEnumMoniker** ppenumMoniker);
 static HRESULT WINAPI ItemMonikerImpl_IsEqual(IMoniker* iface,IMoniker* pmkOtherMoniker);
 static HRESULT WINAPI ItemMonikerImpl_Hash(IMoniker* iface,DWORD* pdwHash);
 static HRESULT WINAPI ItemMonikerImpl_IsRunning(IMoniker* iface,IBindCtx* pbc, IMoniker* pmkToLeft, IMoniker* pmkNewlyRunning);
@@ -43,11 +43,11 @@ static HRESULT WINAPI ItemMonikerImpl_GetTimeOfLastChange(IMoniker* iface, IBind
 static HRESULT WINAPI ItemMonikerImpl_Inverse(IMoniker* iface,IMoniker** ppmk);
 static HRESULT WINAPI ItemMonikerImpl_CommonPrefixWith(IMoniker* iface,IMoniker* pmkOther, IMoniker** ppmkPrefix);
 static HRESULT WINAPI ItemMonikerImpl_RelativePathTo(IMoniker* iface,IMoniker* pmOther, IMoniker** ppmkRelPath);
-static HRESULT WINAPI ItemMonikerImpl_GetDisplayName(IMoniker* iface,IBindCtx* pbc, IMoniker* pmkToLeft, LPOLESTR32 *ppszDisplayName);
-static HRESULT WINAPI ItemMonikerImpl_ParseDisplayName(IMoniker* iface,IBindCtx* pbc, IMoniker* pmkToLeft, LPOLESTR32 pszDisplayName, ULONG* pchEaten, IMoniker** ppmkOut);
+static HRESULT WINAPI ItemMonikerImpl_GetDisplayName(IMoniker* iface,IBindCtx* pbc, IMoniker* pmkToLeft, LPOLESTR *ppszDisplayName);
+static HRESULT WINAPI ItemMonikerImpl_ParseDisplayName(IMoniker* iface,IBindCtx* pbc, IMoniker* pmkToLeft, LPOLESTR pszDisplayName, ULONG* pchEaten, IMoniker** ppmkOut);
 static HRESULT WINAPI ItemMonikerImpl_IsSystemMoniker(IMoniker* iface,DWORD* pwdMksys);
 
-static HRESULT WINAPI ItemMonikerImpl_Construct(ItemMonikerImpl* iface, LPCOLESTR32 lpszDelim,LPCOLESTR32 lpszItem);
+static HRESULT WINAPI ItemMonikerImpl_Construct(ItemMonikerImpl* iface, LPCOLESTR lpszDelim,LPCOLESTR lpszItem);
 static HRESULT WINAPI ItemMonikerImpl_Destroy(ItemMonikerImpl* iface);
 
 // Virtual function table for the ItemMonikerImpl class.
@@ -171,7 +171,7 @@ HRESULT WINAPI ItemMonikerImpl_IsDirty(IMoniker* iface)
  ******************************************************************************/
 HRESULT WINAPI ItemMonikerImpl_Load(
           IMoniker* iface,
-          IStream32* pStm)
+          IStream* pStm)
 {
     ItemMonikerImpl* This=(ItemMonikerImpl*)iface;
 
@@ -184,8 +184,8 @@ HRESULT WINAPI ItemMonikerImpl_Load(
  ******************************************************************************/
 HRESULT WINAPI ItemMonikerImpl_Save(
           IMoniker* iface,
-          IStream32* pStm,
-          BOOL32 fClearDirty)
+          IStream* pStm,
+          BOOL fClearDirty)
 {
     ItemMonikerImpl* This=(ItemMonikerImpl*)iface;
 
@@ -209,7 +209,7 @@ HRESULT WINAPI ItemMonikerImpl_GetSizeMax(
 /******************************************************************************
  *         ItemMoniker_Construct
  *******************************************************************************/
-HRESULT WINAPI ItemMonikerImpl_Construct(ItemMonikerImpl* This, LPCOLESTR32 lpszDelim,LPCOLESTR32 lpszItem){
+HRESULT WINAPI ItemMonikerImpl_Construct(ItemMonikerImpl* This, LPCOLESTR lpszDelim,LPCOLESTR lpszItem){
 
     FIXME(ole,"(%p,%p,%p),stub!\n",This,lpszDelim,lpszItem);
 
@@ -270,7 +270,7 @@ HRESULT WINAPI ItemMonikerImpl_Reduce(IMoniker* iface,IBindCtx* pbc, DWORD dwRed
 /******************************************************************************
  *        ItemMoniker_ComposeWith
  ******************************************************************************/
-HRESULT WINAPI ItemMonikerImpl_ComposeWith(IMoniker* iface,IMoniker* pmkRight,BOOL32 fOnlyIfNotGeneric,
+HRESULT WINAPI ItemMonikerImpl_ComposeWith(IMoniker* iface,IMoniker* pmkRight,BOOL fOnlyIfNotGeneric,
                                            IMoniker** ppmkComposite)
 {
     ItemMonikerImpl* This=(ItemMonikerImpl*)iface;
@@ -282,7 +282,7 @@ HRESULT WINAPI ItemMonikerImpl_ComposeWith(IMoniker* iface,IMoniker* pmkRight,BO
 /******************************************************************************
  *        ItemMoniker_Enum
  ******************************************************************************/
-HRESULT WINAPI ItemMonikerImpl_Enum(IMoniker* iface,BOOL32 fForward, IEnumMoniker** ppenumMoniker)
+HRESULT WINAPI ItemMonikerImpl_Enum(IMoniker* iface,BOOL fForward, IEnumMoniker** ppenumMoniker)
 {
     ItemMonikerImpl* This=(ItemMonikerImpl*)iface;
 
@@ -375,7 +375,7 @@ HRESULT WINAPI ItemMonikerImpl_RelativePathTo(IMoniker* iface,IMoniker* pmOther,
  *        ItemMoniker_GetDisplayName
  ******************************************************************************/
 HRESULT WINAPI ItemMonikerImpl_GetDisplayName(IMoniker* iface,IBindCtx* pbc, IMoniker* pmkToLeft,
-                                              LPOLESTR32 *ppszDisplayName)
+                                              LPOLESTR *ppszDisplayName)
 {
     ItemMonikerImpl* This=(ItemMonikerImpl*)iface;
 
@@ -387,7 +387,7 @@ HRESULT WINAPI ItemMonikerImpl_GetDisplayName(IMoniker* iface,IBindCtx* pbc, IMo
  *        ItemMoniker_ParseDisplayName
  ******************************************************************************/
 HRESULT WINAPI ItemMonikerImpl_ParseDisplayName(IMoniker* iface,IBindCtx* pbc, IMoniker* pmkToLeft,
-                                                LPOLESTR32 pszDisplayName, ULONG* pchEaten, IMoniker** ppmkOut)
+                                                LPOLESTR pszDisplayName, ULONG* pchEaten, IMoniker** ppmkOut)
 {
     ItemMonikerImpl* This=(ItemMonikerImpl*)iface;
 
@@ -409,7 +409,7 @@ HRESULT WINAPI ItemMonikerImpl_IsSystemMoniker(IMoniker* iface,DWORD* pwdMksys)
 /******************************************************************************
  *        CreateItemMoniker16	[OLE2.28]
  ******************************************************************************/
-HRESULT WINAPI CreateItemMoniker16(LPCOLESTR16 lpszDelim,LPCOLESTR32  lpszItem,LPMONIKER* ppmk){// [in] pathname [out] new moniker object
+HRESULT WINAPI CreateItemMoniker16(LPCOLESTR16 lpszDelim,LPCOLESTR  lpszItem,LPMONIKER* ppmk){// [in] pathname [out] new moniker object
 
     FIXME(ole,"(%s,%p),stub!\n",lpszDelim,ppmk);
     *ppmk = NULL;
@@ -419,7 +419,7 @@ HRESULT WINAPI CreateItemMoniker16(LPCOLESTR16 lpszDelim,LPCOLESTR32  lpszItem,L
 /******************************************************************************
  *        CreateItemMoniker32	[OLE32.55]
  ******************************************************************************/
-HRESULT WINAPI CreateItemMoniker32(LPCOLESTR32 lpszDelim,LPCOLESTR32  lpszItem, LPMONIKER * ppmk)
+HRESULT WINAPI CreateItemMoniker(LPCOLESTR lpszDelim,LPCOLESTR  lpszItem, LPMONIKER * ppmk)
 {
 
     ItemMonikerImpl* newItemMoniker = 0;

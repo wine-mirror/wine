@@ -18,9 +18,9 @@ type	win16
  33 pascal16 AboutDlgProc(word word word long) AboutDlgProc16
  34 pascal16 ExtractIcon(word str s_word) ExtractIcon16
  36 pascal16 ExtractAssociatedIcon(word ptr ptr) ExtractAssociatedIcon16
- 37 pascal   DoEnvironmentSubst(ptr word) DoEnvironmentSubst
- 38 pascal   FindEnvironmentString(ptr) FindEnvironmentString
- 39 pascal16 InternalExtractIcon(word ptr s_word word) InternalExtractIcon
+ 37 pascal   DoEnvironmentSubst(ptr word) DoEnvironmentSubst16
+ 38 pascal   FindEnvironmentString(ptr) FindEnvironmentString16
+ 39 pascal16 InternalExtractIcon(word ptr s_word word) InternalExtractIcon16
  40 pascal16 ExtractIconEx(str word ptr ptr word) ExtractIconEx16
 # 98 stub SHL3216_THUNKDATA16
 # 99 stub SHL1632_THUNKDATA16
@@ -29,8 +29,8 @@ type	win16
 #101   8  010e  FINDEXEDLGPROC exported, shared data
 #101 DLLENTRYPOINT #win95 SHELL.DLL
 
-102 pascal16 RegisterShellHook(word word) RegisterShellHook
-103 pascal   ShellHookProc(word word long) ShellHookProc
+102 pascal16 RegisterShellHook(word word) RegisterShellHook16
+103 pascal   ShellHookProc(word word long) ShellHookProc16
 
 157 stub RESTARTDIALOG
 #  166 PICKICONDLG

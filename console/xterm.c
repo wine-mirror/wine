@@ -22,7 +22,7 @@
 
 char console_xterm_prog[80];
 
-static BOOL32 wine_create_console(FILE **master, FILE **slave, int *pid);
+static BOOL wine_create_console(FILE **master, FILE **slave, int *pid);
 FILE *wine_openpty(int *master, int *slave, char *name,
                         struct termios *term, struct winsize *winsize);
 
@@ -106,7 +106,7 @@ void XTERM_ResizeScreen(int x, int y)
 }
 
 
-static BOOL32 wine_create_console(FILE **master, FILE **slave, int *pid)
+static BOOL wine_create_console(FILE **master, FILE **slave, int *pid)
 {
         /* There is definately a bug in this routine that causes a lot
            of garbage to be written to the screen, but I can't find it...

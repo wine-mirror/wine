@@ -18,10 +18,10 @@
  *           MSACM_BuiltinDrivers
  */
 LONG WINAPI MSACM_DummyDriverProc(
-   DWORD dwDriverId, HDRVR32 hdrvr, UINT32 msg,
+   DWORD dwDriverId, HDRVR hdrvr, UINT msg,
    LONG lParam1, LONG lParam2); 
 
-WINE_ACMBUILTINDRIVER32 MSACM_BuiltinDrivers32[] = {
+WINE_ACMBUILTINDRIVER MSACM_BuiltinDrivers[] = {
   { "MSACM.dummy", &MSACM_DummyDriverProc },
   { NULL, NULL }
 };
@@ -30,7 +30,7 @@ WINE_ACMBUILTINDRIVER32 MSACM_BuiltinDrivers32[] = {
  *           MSACM_DummyDriverProc
  */
 LONG WINAPI MSACM_DummyDriverProc(
-   DWORD dwDriverId, HDRVR32 hdrvr, UINT32 msg,
+   DWORD dwDriverId, HDRVR hdrvr, UINT msg,
    LONG lParam1, LONG lParam2)
 {
   switch(msg)
@@ -68,7 +68,7 @@ LONG WINAPI MSACM_DummyDriverProc(
     default:
       /* FIXME: DefDriverProc not implemented  */
 #if 0
-      DefDriverProc32(dwDriverId, hdrvr, msg, lParam1, lParam2);
+      DefDriverProc(dwDriverId, hdrvr, msg, lParam1, lParam2);
 #endif
       break;
     }

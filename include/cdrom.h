@@ -58,8 +58,8 @@ int	CDAUDIO_Stop(WINE_CDAUDIO* wcda);
 int	CDAUDIO_Pause(WINE_CDAUDIO* wcda, int pauseOn);
 int	CDAUDIO_SetDoor(WINE_CDAUDIO* wcda, int open);
 UINT16 	CDAUDIO_GetNumberOfTracks(WINE_CDAUDIO* wcda);
-BOOL32 	CDAUDIO_GetTracksInfo(WINE_CDAUDIO* wcda);
-BOOL32	CDAUDIO_GetCDStatus(WINE_CDAUDIO* wcda);
+BOOL 	CDAUDIO_GetTracksInfo(WINE_CDAUDIO* wcda);
+BOOL	CDAUDIO_GetCDStatus(WINE_CDAUDIO* wcda);
 
 #define CDFRAMES_PERSEC 		75
 #define CDFRAMES_PERMIN 		4500

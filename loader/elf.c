@@ -31,7 +31,7 @@ WINE_MODREF *ELF_CreateDummyModule( LPCSTR libname, LPCSTR modname )
 	PIMAGE_NT_HEADERS	nth;
 	PIMAGE_SECTION_HEADER	sh;
 	WINE_MODREF *wm;
-	HMODULE32 hmod;
+	HMODULE hmod;
 
 	wm=(WINE_MODREF*)HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*wm) );
 	wm->type = MODULE32_ELF;
@@ -43,7 +43,7 @@ WINE_MODREF *ELF_CreateDummyModule( LPCSTR libname, LPCSTR modname )
 	wm->modname = HEAP_strdupA( GetProcessHeap(), 0, modname );
 	wm->longname = HEAP_strdupA( GetProcessHeap(), 0, libname );
 
-	hmod = (HMODULE32)HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, 
+	hmod = (HMODULE)HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, 
                                      sizeof(IMAGE_DOS_HEADER) + 
                                      sizeof(IMAGE_NT_HEADERS) +
                                      sizeof(IMAGE_SECTION_HEADER) + 100 );
@@ -96,7 +96,7 @@ WINE_MODREF *ELF_CreateDummyModule( LPCSTR libname, LPCSTR modname )
 
 #include <dlfcn.h>
 
-HMODULE32 ELF_LoadLibraryEx32A( LPCSTR libname, HANDLE32 hf, DWORD flags )
+HMODULE ELF_LoadLibraryExA( LPCSTR libname, HANDLE hf, DWORD flags )
 {
 	WINE_MODREF	*wm;
 	char		*modname,*s,*t,*x;
@@ -144,7 +144,7 @@ HMODULE32 ELF_LoadLibraryEx32A( LPCSTR libname, HANDLE32 hf, DWORD flags )
 	return wm->module;
 }
 
-FARPROC32 ELF_FindExportedFunction( WINE_MODREF *wm, LPCSTR funcName) 
+FARPROC ELF_FindExportedFunction( WINE_MODREF *wm, LPCSTR funcName) 
 {
 	LPVOID			fun;
 	int			i,nrofargs = 0;
@@ -153,7 +153,7 @@ FARPROC32 ELF_FindExportedFunction( WINE_MODREF *wm, LPCSTR funcName)
 	assert(wm->type == MODULE32_ELF);
 	if (!HIWORD(funcName)) {
 		ERR(win32,"Can't import from UNIX dynamic libs by ordinal, sorry.\n");
-		return (FARPROC32)0;
+		return (FARPROC)0;
 	}
 	fun = dlsym(wm->binfmt.elf.dlhandle,funcName);
 	/* we sometimes have an excess '_' at the beginning of the name */
@@ -234,24 +234,24 @@ FARPROC32 ELF_FindExportedFunction( WINE_MODREF *wm, LPCSTR funcName)
 			/* filled out by entrycode */
 		stub->oldret	  = 0xdeadbeef;
 		stub->ret2	  = 0xc3;
-		fun=(FARPROC32)stub;
+		fun=(FARPROC)stub;
 	}
 	if (!fun) {
 		FIXME(win32,"function %s not found: %s\n",funcName,dlerror());
 		return fun;
 	}
-	fun = SNOOP_GetProcAddress32(wm->module,funcName,stub-wm->binfmt.elf.stubs,fun);
-	return (FARPROC32)fun;
+	fun = SNOOP_GetProcAddress(wm->module,funcName,stub-wm->binfmt.elf.stubs,fun);
+	return (FARPROC)fun;
 }
 #else
 
-HMODULE32 ELF_LoadLibraryEx32A( LPCSTR libname, HANDLE32 hf, DWORD flags)
+HMODULE ELF_LoadLibraryExA( LPCSTR libname, HANDLE hf, DWORD flags)
 {
 	return 0;
 }
-FARPROC32 ELF_FindExportedFunction( WINE_MODREF *wm, LPCSTR funcName) 
+FARPROC ELF_FindExportedFunction( WINE_MODREF *wm, LPCSTR funcName) 
 {
-	return (FARPROC32)0;
+	return (FARPROC)0;
 }
 
 #endif

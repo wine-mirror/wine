@@ -35,7 +35,7 @@ VOID
     LPOVERLAPPED lpOverlapped
     );
 
-BOOL32 WINAPI ReadFileEx(HFILE32 hFile, LPVOID lpBuffer, DWORD numtoread,
+BOOL WINAPI ReadFileEx(HFILE hFile, LPVOID lpBuffer, DWORD numtoread,
 			 LPOVERLAPPED lpOverlapped, 
 			 LPOVERLAPPED_COMPLETION_ROUTINE lpCompletionRoutine)
 {
@@ -51,14 +51,14 @@ BOOL32 WINAPI ReadFileEx(HFILE32 hFile, LPVOID lpBuffer, DWORD numtoread,
  */
 BOOL16 WINAPI SetFileAttributes16( LPCSTR lpFileName, DWORD attributes )
 {
-    return SetFileAttributes32A( lpFileName, attributes );
+    return SetFileAttributesA( lpFileName, attributes );
 }
 
 
 /**************************************************************************
  *              SetFileAttributes32A	(KERNEL32.490)
  */
-BOOL32 WINAPI SetFileAttributes32A(LPCSTR lpFileName, DWORD attributes)
+BOOL WINAPI SetFileAttributesA(LPCSTR lpFileName, DWORD attributes)
 {
     struct stat buf;
     DOS_FULL_NAME full_name;
@@ -105,10 +105,10 @@ BOOL32 WINAPI SetFileAttributes32A(LPCSTR lpFileName, DWORD attributes)
 /**************************************************************************
  *              SetFileAttributes32W	(KERNEL32.491)
  */
-BOOL32 WINAPI SetFileAttributes32W(LPCWSTR lpFileName, DWORD attributes)
+BOOL WINAPI SetFileAttributesW(LPCWSTR lpFileName, DWORD attributes)
 {
     LPSTR afn = HEAP_strdupWtoA( GetProcessHeap(), 0, lpFileName );
-    BOOL32 res = SetFileAttributes32A( afn, attributes );
+    BOOL res = SetFileAttributesA( afn, attributes );
     HeapFree( GetProcessHeap(), 0, afn );
     return res;
 }
@@ -139,7 +139,7 @@ VOID WINAPI SetFileApisToANSI(void)
  *    TRUE:  Set of file functions is using ANSI code page
  *    FALSE: Set of file functions is using OEM code page
  */
-BOOL32 WINAPI AreFileApisANSI(void)
+BOOL WINAPI AreFileApisANSI(void)
 {
     FIXME(file,"(void): stub\n");
     return TRUE;

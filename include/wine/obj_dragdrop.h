@@ -33,7 +33,7 @@ typedef struct IDropTarget IDropTarget,*LPDROPTARGET;
  */
 #define ICOM_INTERFACE IDropSource
 #define IDropSource_METHODS \
-    ICOM_METHOD2(HRESULT, QueryContinueDrag, BOOL32, fEscapePressed, DWORD, grfKeyState); \
+    ICOM_METHOD2(HRESULT, QueryContinueDrag, BOOL, fEscapePressed, DWORD, grfKeyState); \
     ICOM_METHOD1(HRESULT, GiveFeedback, DWORD, dwEffect);
 #define IDropSource_IMETHODS \
   ICOM_INHERITS(IDropSource,IUnknown)

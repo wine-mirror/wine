@@ -12,18 +12,12 @@
  * Predeclare the structures
  */
 typedef struct DVTARGETDEVICE16 DVTARGETDEVICE16, *LPDVTARGETDEVICE16;
-typedef struct DVTARGETDEVICE32 DVTARGETDEVICE32, *LPDVTARGETDEVICE32;
-DECL_WINELIB_TYPE(DVTARGETDEVICE)
-DECL_WINELIB_TYPE(LPDVTARGETDEVICE)
+typedef struct DVTARGETDEVICE DVTARGETDEVICE, *LPDVTARGETDEVICE;
 
 typedef struct FORMATETC16 FORMATETC16, *LPFORMATETC16;
-typedef struct FORMATETC32 FORMATETC32, *LPFORMATETC32;
-DECL_WINELIB_TYPE(FORMATETC)
-DECL_WINELIB_TYPE(LPFORMATETC)
+typedef struct FORMATETC FORMATETC, *LPFORMATETC;
 
-typedef struct STGMEDIUM32 STGMEDIUM32, *LPSTGMEDIUM32;
-DECL_WINELIB_TYPE(STGMEDIUM)
-DECL_WINELIB_TYPE(LPSTGMEDIUM)
+typedef struct STGMEDIUM STGMEDIUM, *LPSTGMEDIUM;
 
 
 /*****************************************************************************
@@ -51,7 +45,7 @@ typedef struct IEnumSTATDATA IEnumSTATDATA,*LPENUMSTATDATA;
 /*****************************************************************************
  * DVTARGETDEVICE structure
  */
-struct DVTARGETDEVICE32
+struct DVTARGETDEVICE
 {
     DWORD tdSize;
     WORD tdDriverNameOffset;
@@ -66,10 +60,10 @@ struct DVTARGETDEVICE32
  * FORMATETC structure
  */
 /* wished data format */
-struct FORMATETC32
+struct FORMATETC
 {
-    CLIPFORMAT32 cfFormat;
-    DVTARGETDEVICE32* ptd;
+    CLIPFORMAT cfFormat;
+    DVTARGETDEVICE* ptd;
     DWORD dwAspect;
     LONG lindex;
     DWORD tymed;
@@ -92,17 +86,17 @@ typedef enum tagTYMED
 } TYMED;
   
 /* dataobject as answer to a request */
-struct STGMEDIUM32
+struct STGMEDIUM
 {
     DWORD tymed;
     union {
-        HBITMAP32 hBitmap;
-        HMETAFILEPICT32 hMetaFilePict;
-        HENHMETAFILE32 hEnhMetaFile;
-        HGLOBAL32 hGlobal;
-        LPOLESTR32 lpszFileName;
-        IStream32 *pstm;
-        IStorage32 *pstg;
+        HBITMAP hBitmap;
+        HMETAFILEPICT hMetaFilePict;
+        HENHMETAFILE hEnhMetaFile;
+        HGLOBAL hGlobal;
+        LPOLESTR lpszFileName;
+        IStream *pstm;
+        IStorage *pstg;
     } u;
     IUnknown *pUnkForRelease;
 };   
@@ -113,7 +107,7 @@ struct STGMEDIUM32
  */
 #define ICOM_INTERFACE IAdviseSink
 #define IAdviseSink_METHODS \
-    ICOM_VMETHOD2(OnDataChange, FORMATETC32*,pFormatetc, STGMEDIUM32*,pStgmed) \
+    ICOM_VMETHOD2(OnDataChange, FORMATETC*,pFormatetc, STGMEDIUM*,pStgmed) \
     ICOM_VMETHOD2(OnViewChange, DWORD,dwAspect, LONG,lindex) \
     ICOM_VMETHOD1(OnRename,     IMoniker*,pmk) \
     ICOM_VMETHOD (OnSave) \
@@ -171,7 +165,7 @@ ICOM_DEFINE(IAdviseSink2,IAdviseSink)
  */
 #define ICOM_INTERFACE IDataAdviseHolder
 #define IDataAdviseHolder_METHODS \
-    ICOM_METHOD5(HRESULT,Advise,           IDataObject*,pDataObject, FORMATETC32*,pFetc, DWORD,advf, IAdviseSink*,pAdvise, DWORD*,pdwConnection) \
+    ICOM_METHOD5(HRESULT,Advise,           IDataObject*,pDataObject, FORMATETC*,pFetc, DWORD,advf, IAdviseSink*,pAdvise, DWORD*,pdwConnection) \
     ICOM_METHOD1(HRESULT,Unadvise,         DWORD,dwConnection) \
     ICOM_METHOD1(HRESULT,EnumAdvise,       IEnumSTATDATA**,ppenumAdvise) \
     ICOM_METHOD3(HRESULT,SendOnDataChange, IDataObject*,pDataObject, DWORD,dwReserved, DWORD,advf)
@@ -202,13 +196,13 @@ HRESULT WINAPI CreateDataAdviseHolder(LPDATAADVISEHOLDER* ppDAHolder);
  */
 #define ICOM_INTERFACE IDataObject
 #define IDataObject_METHODS \
-    ICOM_METHOD2(HRESULT,GetData,               LPFORMATETC32,pformatetcIn, STGMEDIUM32*,pmedium) \
-    ICOM_METHOD2(HRESULT,GetDataHere,           LPFORMATETC32,pformatetc, STGMEDIUM32*,pmedium) \
-    ICOM_METHOD1(HRESULT,QueryGetData,          LPFORMATETC32,pformatetc) \
-    ICOM_METHOD2(HRESULT,GetCanonicalFormatEtc, LPFORMATETC32,pformatectIn, LPFORMATETC32,pformatetcOut) \
-    ICOM_METHOD3(HRESULT,SetData,               LPFORMATETC32,pformatetc, STGMEDIUM32*,pmedium, BOOL32,fRelease) \
+    ICOM_METHOD2(HRESULT,GetData,               LPFORMATETC,pformatetcIn, STGMEDIUM*,pmedium) \
+    ICOM_METHOD2(HRESULT,GetDataHere,           LPFORMATETC,pformatetc, STGMEDIUM*,pmedium) \
+    ICOM_METHOD1(HRESULT,QueryGetData,          LPFORMATETC,pformatetc) \
+    ICOM_METHOD2(HRESULT,GetCanonicalFormatEtc, LPFORMATETC,pformatectIn, LPFORMATETC,pformatetcOut) \
+    ICOM_METHOD3(HRESULT,SetData,               LPFORMATETC,pformatetc, STGMEDIUM*,pmedium, BOOL,fRelease) \
     ICOM_METHOD2(HRESULT,EnumFormatEtc,         DWORD,dwDirection, IEnumFORMATETC**,ppenumFormatEtc) \
-    ICOM_METHOD4(HRESULT,DAdvise,               LPFORMATETC32*,pformatetc, DWORD,advf, IAdviseSink*,pAdvSink, DWORD*,pdwConnection) \
+    ICOM_METHOD4(HRESULT,DAdvise,               LPFORMATETC*,pformatetc, DWORD,advf, IAdviseSink*,pAdvSink, DWORD*,pdwConnection) \
     ICOM_METHOD1(HRESULT,DUnadvise,             DWORD,dwConnection) \
     ICOM_METHOD1(HRESULT,EnumDAdvise,           IEnumSTATDATA**,ppenumAdvise)
 #define IDataObject_IMETHODS \
@@ -240,7 +234,7 @@ ICOM_DEFINE(IDataObject,IUnknown)
  */
 #define ICOM_INTERFACE IEnumFORMATETC
 #define IEnumFORMATETC_METHODS \
-    ICOM_METHOD3(HRESULT,Next,  ULONG,celt, FORMATETC32*,rgelt, ULONG*,pceltFethed) \
+    ICOM_METHOD3(HRESULT,Next,  ULONG,celt, FORMATETC*,rgelt, ULONG*,pceltFethed) \
     ICOM_METHOD1(HRESULT,Skip,  ULONG,celt) \
     ICOM_METHOD (HRESULT,Reset) \
     ICOM_METHOD1(HRESULT,Clone, IEnumFORMATETC**,ppenum)
@@ -268,7 +262,7 @@ ICOM_DEFINE(IEnumFORMATETC,IUnknown)
  */
 typedef struct tagSTATDATA
 {
-    FORMATETC32 formatetc;
+    FORMATETC formatetc;
     DWORD advf;
     IAdviseSink* pAdvSink;
     DWORD dwConnection;

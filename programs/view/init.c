@@ -24,7 +24,7 @@ BOOL InitApplication(HINSTANCE hInstance)
 
   /* Load small icon image */
   wc.hIconSm = LoadImage(hInstance,		
-			 MAKEINTRESOURCE32A(IDI_APPICON),
+			 MAKEINTRESOURCEA(IDI_APPICON),
 			 IMAGE_ICON,
 			 16, 16,
 			 0);

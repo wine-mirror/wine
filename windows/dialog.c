@@ -34,7 +34,7 @@ typedef struct
     INT16      y;
     INT16      cx;
     INT16      cy;
-    UINT32     id;
+    UINT     id;
     LPCSTR     className;
     LPCSTR     windowName;
     LPVOID     data;
@@ -56,9 +56,9 @@ typedef struct
     LPCSTR     caption;
     WORD       pointSize;
     WORD       weight;
-    BOOL32     italic;
+    BOOL     italic;
     LPCSTR     faceName;
-    BOOL32     dialogEx;
+    BOOL     dialogEx;
 } DLG_TEMPLATE;
 
   /* Dialog base units */
@@ -70,7 +70,7 @@ static WORD xBaseUnit = 0, yBaseUnit = 0;
  *
  * Initialisation of the dialog manager.
  */
-BOOL32 DIALOG_Init(void)
+BOOL DIALOG_Init(void)
 {
     TEXTMETRIC16 tm;
     HDC16 hdc;
@@ -79,7 +79,7 @@ BOOL32 DIALOG_Init(void)
 
     if (!(hdc = CreateDC16( "DISPLAY", NULL, NULL, NULL ))) return FALSE;
     GetTextMetrics16( hdc, &tm );
-    DeleteDC32( hdc );
+    DeleteDC( hdc );
     xBaseUnit = tm.tmAveCharWidth;
     yBaseUnit = tm.tmHeight;
 
@@ -138,7 +138,7 @@ static LPCSTR DIALOG_GetControl16( LPCSTR p, DLG_CONTROL_INFO *info )
     if (int_id)
     {
 	  /* Integer id, not documented (?). Only works for SS_ICON controls */
-	info->windowName = (LPCSTR)(UINT32)GET_WORD(p+1);
+	info->windowName = (LPCSTR)(UINT)GET_WORD(p+1);
 	p += 3;
     }
     else
@@ -172,7 +172,7 @@ static LPCSTR DIALOG_GetControl16( LPCSTR p, DLG_CONTROL_INFO *info )
  * fill the header structure and return a pointer to the next control.
  */
 static const WORD *DIALOG_GetControl32( const WORD *p, DLG_CONTROL_INFO *info,
-                                        BOOL32 dialogEx )
+                                        BOOL dialogEx )
 {
     if (dialogEx)
     {
@@ -227,18 +227,18 @@ static const WORD *DIALOG_GetControl32( const WORD *p, DLG_CONTROL_INFO *info,
     else
     {
         info->className = (LPCSTR)p;
-        p += lstrlen32W( (LPCWSTR)p ) + 1;
+        p += lstrlenW( (LPCWSTR)p ) + 1;
     }
 
     if (GET_WORD(p) == 0xffff)  /* Is it an integer id? */
     {
-	info->windowName = (LPCSTR)(UINT32)GET_WORD(p + 1);
+	info->windowName = (LPCSTR)(UINT)GET_WORD(p + 1);
 	p += 2;
     }
     else
     {
 	info->windowName = (LPCSTR)p;
-        p += lstrlen32W( (LPCWSTR)p ) + 1;
+        p += lstrlenW( (LPCWSTR)p ) + 1;
     }
 
     TRACE(dialog,"    %s %s %d, %d, %d, %d, %d, %08lx, %08lx, %08lx\n", 
@@ -274,14 +274,14 @@ static const WORD *DIALOG_GetControl32( const WORD *p, DLG_CONTROL_INFO *info,
  *
  * Create the control windows for a dialog.
  */
-static BOOL32 DIALOG_CreateControls( WND *pWnd, LPCSTR template,
+static BOOL DIALOG_CreateControls( WND *pWnd, LPCSTR template,
                                      const DLG_TEMPLATE *dlgTemplate,
-                                     HINSTANCE32 hInst, BOOL32 win32 )
+                                     HINSTANCE hInst, BOOL win32 )
 {
     DIALOGINFO *dlgInfo = (DIALOGINFO *)pWnd->wExtra;
     DLG_CONTROL_INFO info;
-    HWND32 hwndCtrl, hwndDefButton = 0;
-    INT32 items = dlgTemplate->nbItems;
+    HWND hwndCtrl, hwndDefButton = 0;
+    INT items = dlgTemplate->nbItems;
 
     TRACE(dialog, " BEGIN\n" );
     while (items--)
@@ -301,7 +301,7 @@ static BOOL32 DIALOG_CreateControls( WND *pWnd, LPCSTR template,
                         ERR(dialog, "Insufficient memory to create heap for edit control\n" );
                         continue;
                     }
-                    LocalInit(dlgInfo->hDialogHeap, 0, 0xffff);
+                    LocalInit16(dlgInfo->hDialogHeap, 0, 0xffff);
                 }
                 instance = dlgInfo->hDialogHeap;
             }
@@ -321,7 +321,7 @@ static BOOL32 DIALOG_CreateControls( WND *pWnd, LPCSTR template,
         {
             template = (LPCSTR)DIALOG_GetControl32( (WORD *)template, &info,
                                                     dlgTemplate->dialogEx );
-            hwndCtrl = CreateWindowEx32W( info.exStyle | WS_EX_NOPARENTNOTIFY,
+            hwndCtrl = CreateWindowExW( info.exStyle | WS_EX_NOPARENTNOTIFY,
                                           (LPCWSTR)info.className,
                                           (LPCWSTR)info.windowName,
                                           info.style | WS_CHILD,
@@ -329,23 +329,23 @@ static BOOL32 DIALOG_CreateControls( WND *pWnd, LPCSTR template,
                                           info.y * dlgInfo->yBaseUnit / 8,
                                           info.cx * dlgInfo->xBaseUnit / 4,
                                           info.cy * dlgInfo->yBaseUnit / 8,
-                                          pWnd->hwndSelf, (HMENU32)info.id,
+                                          pWnd->hwndSelf, (HMENU)info.id,
                                           hInst, info.data );
         }
         if (!hwndCtrl) return FALSE;
 
             /* Send initialisation messages to the control */
-        if (dlgInfo->hUserFont) SendMessage32A( hwndCtrl, WM_SETFONT,
-                                             (WPARAM32)dlgInfo->hUserFont, 0 );
-        if (SendMessage32A(hwndCtrl, WM_GETDLGCODE, 0, 0) & DLGC_DEFPUSHBUTTON)
+        if (dlgInfo->hUserFont) SendMessageA( hwndCtrl, WM_SETFONT,
+                                             (WPARAM)dlgInfo->hUserFont, 0 );
+        if (SendMessageA(hwndCtrl, WM_GETDLGCODE, 0, 0) & DLGC_DEFPUSHBUTTON)
         {
               /* If there's already a default push-button, set it back */
               /* to normal and use this one instead. */
             if (hwndDefButton)
-                SendMessage32A( hwndDefButton, BM_SETSTYLE32,
+                SendMessageA( hwndDefButton, BM_SETSTYLE,
                                 BS_PUSHBUTTON,FALSE );
             hwndDefButton = hwndCtrl;
-            dlgInfo->idResult = GetWindowWord32( hwndCtrl, GWW_ID );
+            dlgInfo->idResult = GetWindowWord( hwndCtrl, GWW_ID );
         }
     }    
     TRACE(dialog, " END\n" );
@@ -381,7 +381,7 @@ static LPCSTR DIALOG_ParseTemplate16( LPCSTR p, DLG_TEMPLATE * result )
         p++;
         break;
     case 0xff:
-        result->menuName = (LPCSTR)(UINT32)GET_WORD( p + 1 );
+        result->menuName = (LPCSTR)(UINT)GET_WORD( p + 1 );
         p += 3;
 	TRACE(dialog, " MENU %04x\n", LOWORD(result->menuName) );
         break;
@@ -467,14 +467,14 @@ static LPCSTR DIALOG_ParseTemplate32( LPCSTR template, DLG_TEMPLATE * result )
         p++;
         break;
     case 0xffff:
-        result->menuName = (LPCSTR)(UINT32)GET_WORD( p + 1 );
+        result->menuName = (LPCSTR)(UINT)GET_WORD( p + 1 );
         p += 2;
 	TRACE(dialog, " MENU %04x\n", LOWORD(result->menuName) );
         break;
     default:
         result->menuName = (LPCSTR)p;
         TRACE(dialog, " MENU %s\n", debugstr_w( (LPCWSTR)p ));
-        p += lstrlen32W( (LPCWSTR)p ) + 1;
+        p += lstrlenW( (LPCWSTR)p ) + 1;
         break;
     }
 
@@ -487,21 +487,21 @@ static LPCSTR DIALOG_ParseTemplate32( LPCSTR template, DLG_TEMPLATE * result )
         p++;
         break;
     case 0xffff:
-        result->className = (LPCSTR)(UINT32)GET_WORD( p + 1 );
+        result->className = (LPCSTR)(UINT)GET_WORD( p + 1 );
         p += 2;
 	TRACE(dialog, " CLASS %04x\n", LOWORD(result->className) );
         break;
     default:
         result->className = (LPCSTR)p;
         TRACE(dialog, " CLASS %s\n", debugstr_w( (LPCWSTR)p ));
-        p += lstrlen32W( (LPCWSTR)p ) + 1;
+        p += lstrlenW( (LPCWSTR)p ) + 1;
         break;
     }
 
     /* Get the window caption */
 
     result->caption = (LPCSTR)p;
-    p += lstrlen32W( (LPCWSTR)p ) + 1;
+    p += lstrlenW( (LPCWSTR)p ) + 1;
     TRACE(dialog, " CAPTION %s\n", debugstr_w( (LPCWSTR)result->caption ) );
 
     /* Get the font name */
@@ -521,7 +521,7 @@ static LPCSTR DIALOG_ParseTemplate32( LPCSTR template, DLG_TEMPLATE * result )
             result->italic = FALSE;
         }
 	result->faceName = (LPCSTR)p;
-        p += lstrlen32W( (LPCWSTR)p ) + 1;
+        p += lstrlenW( (LPCWSTR)p ) + 1;
 	TRACE(dialog, " FONT %d, %s, %d, %s\n",
               result->pointSize, debugstr_w( (LPCWSTR)result->faceName ),
               result->weight, result->italic ? "TRUE" : "FALSE" );
@@ -535,15 +535,15 @@ static LPCSTR DIALOG_ParseTemplate32( LPCSTR template, DLG_TEMPLATE * result )
 /***********************************************************************
  *           DIALOG_CreateIndirect
  */
-HWND32 DIALOG_CreateIndirect( HINSTANCE32 hInst, LPCSTR dlgTemplate,
-                              BOOL32 win32Template, HWND32 owner,
+HWND DIALOG_CreateIndirect( HINSTANCE hInst, LPCSTR dlgTemplate,
+                              BOOL win32Template, HWND owner,
                               DLGPROC16 dlgProc, LPARAM param,
                               WINDOWPROCTYPE procType )
 {
     HMENU16 hMenu = 0;
     HFONT16 hFont = 0;
-    HWND32 hwnd;
-    RECT32 rect;
+    HWND hwnd;
+    RECT rect;
     WND * wndPtr;
     DLG_TEMPLATE template;
     DIALOGINFO * dlgInfo;
@@ -568,7 +568,7 @@ HWND32 DIALOG_CreateIndirect( HINSTANCE32 hInst, LPCSTR dlgTemplate,
 	    hMenu = LoadMenu16( hInst, SEGPTR_GET(str) );
             SEGPTR_FREE( str );
 	}
-        else hMenu = LoadMenu32W( hInst, (LPCWSTR)template.menuName );
+        else hMenu = LoadMenuW( hInst, (LPCWSTR)template.menuName );
     }
 
       /* Create custom font if needed */
@@ -579,7 +579,7 @@ HWND32 DIALOG_CreateIndirect( HINSTANCE32 hInst, LPCSTR dlgTemplate,
           /* (see CreateFont() documentation in the Windows SDK).   */
 
 	if (win32Template)
-	    hFont = CreateFont32W( -template.pointSize, 0, 0, 0,
+	    hFont = CreateFontW( -template.pointSize, 0, 0, 0,
                                    template.weight, template.italic, FALSE,
                                    FALSE, DEFAULT_CHARSET, 0, 0, PROOF_QUALITY,
                                    FF_DONTCARE, (LPCWSTR)template.faceName );
@@ -593,11 +593,11 @@ HWND32 DIALOG_CreateIndirect( HINSTANCE32 hInst, LPCSTR dlgTemplate,
 	    TEXTMETRIC16 tm;
 	    HFONT16 oldFont;
 
-	    HDC32 hdc = GetDC32(0);
-	    oldFont = SelectObject32( hdc, hFont );
+	    HDC hdc = GetDC(0);
+	    oldFont = SelectObject( hdc, hFont );
 	    GetTextMetrics16( hdc, &tm );
-	    SelectObject32( hdc, oldFont );
-	    ReleaseDC32( 0, hdc );
+	    SelectObject( hdc, oldFont );
+	    ReleaseDC( 0, hdc );
 	    xUnit = tm.tmAveCharWidth;
 	    yUnit = tm.tmHeight;
             if (!(tm.tmPitchAndFamily & TMPF_FIXED_PITCH))
@@ -612,7 +612,7 @@ HWND32 DIALOG_CreateIndirect( HINSTANCE32 hInst, LPCSTR dlgTemplate,
     rect.bottom = template.cy * yUnit / 8;
     if (template.style & DS_MODALFRAME)
         template.exStyle |= WS_EX_DLGMODALFRAME;
-    AdjustWindowRectEx32( &rect, template.style, 
+    AdjustWindowRectEx( &rect, template.style, 
                           hMenu ? TRUE : FALSE , template.exStyle );
     rect.right -= rect.left;
     rect.bottom -= rect.top;
@@ -620,7 +620,7 @@ HWND32 DIALOG_CreateIndirect( HINSTANCE32 hInst, LPCSTR dlgTemplate,
     if ((INT16)template.x == CW_USEDEFAULT16)
     {
         rect.left = rect.top = (procType == WIN_PROC_16) ? CW_USEDEFAULT16
-                                                         : CW_USEDEFAULT32;
+                                                         : CW_USEDEFAULT;
     }
     else
     {
@@ -639,7 +639,7 @@ HWND32 DIALOG_CreateIndirect( HINSTANCE32 hInst, LPCSTR dlgTemplate,
             INT16 dX, dY;
 
             if( !(template.style & DS_ABSALIGN) )
-                ClientToScreen32( owner, (POINT32 *)&rect );
+                ClientToScreen( owner, (POINT *)&rect );
 	    
             /* try to fit it into the desktop */
 
@@ -658,7 +658,7 @@ HWND32 DIALOG_CreateIndirect( HINSTANCE32 hInst, LPCSTR dlgTemplate,
                                 rect.left, rect.top, rect.right, rect.bottom,
                                 owner, hMenu, hInst, NULL );
     else
-        hwnd = CreateWindowEx32W(template.exStyle, (LPCWSTR)template.className,
+        hwnd = CreateWindowExW(template.exStyle, (LPCWSTR)template.className,
                                  (LPCWSTR)template.caption,
                                  template.style & ~WS_VISIBLE,
                                  rect.left, rect.top, rect.right, rect.bottom,
@@ -666,8 +666,8 @@ HWND32 DIALOG_CreateIndirect( HINSTANCE32 hInst, LPCSTR dlgTemplate,
 	
     if (!hwnd)
     {
-	if (hFont) DeleteObject32( hFont );
-	if (hMenu) DestroyMenu32( hMenu );
+	if (hFont) DeleteObject( hFont );
+	if (hMenu) DestroyMenu( hMenu );
 	return 0;
     }
     wndPtr = WIN_FindWndPtr( hwnd );
@@ -688,7 +688,7 @@ HWND32 DIALOG_CreateIndirect( HINSTANCE32 hInst, LPCSTR dlgTemplate,
     dlgInfo->hDialogHeap = 0;
 
     if (dlgInfo->hUserFont)
-        SendMessage32A( hwnd, WM_SETFONT, (WPARAM32)dlgInfo->hUserFont, 0 );
+        SendMessageA( hwnd, WM_SETFONT, (WPARAM)dlgInfo->hUserFont, 0 );
 
     /* Create controls */
 
@@ -697,20 +697,20 @@ HWND32 DIALOG_CreateIndirect( HINSTANCE32 hInst, LPCSTR dlgTemplate,
     {
        /* Send initialisation messages and set focus */
 
-	dlgInfo->hwndFocus = GetNextDlgTabItem32( hwnd, 0, FALSE );
+	dlgInfo->hwndFocus = GetNextDlgTabItem( hwnd, 0, FALSE );
 
-	if (SendMessage32A( hwnd, WM_INITDIALOG, (WPARAM32)dlgInfo->hwndFocus, param ))
-            SetFocus32( dlgInfo->hwndFocus );
+	if (SendMessageA( hwnd, WM_INITDIALOG, (WPARAM)dlgInfo->hwndFocus, param ))
+            SetFocus( dlgInfo->hwndFocus );
 
 	if (template.style & WS_VISIBLE && !(wndPtr->dwStyle & WS_VISIBLE)) 
 	{
-	   ShowWindow32( hwnd, SW_SHOWNORMAL );	/* SW_SHOW doesn't always work */
-	   UpdateWindow32( hwnd );
+	   ShowWindow( hwnd, SW_SHOWNORMAL );	/* SW_SHOW doesn't always work */
+	   UpdateWindow( hwnd );
 	}
 	return hwnd;
     }
 
-    if( IsWindow32(hwnd) ) DestroyWindow32( hwnd );
+    if( IsWindow(hwnd) ) DestroyWindow( hwnd );
     return 0;
 }
 
@@ -752,32 +752,32 @@ HWND16 WINAPI CreateDialogParam16( HINSTANCE16 hInst, SEGPTR dlgTemplate,
 /***********************************************************************
  *           CreateDialogParam32A   (USER32.73)
  */
-HWND32 WINAPI CreateDialogParam32A( HINSTANCE32 hInst, LPCSTR name,
-                                    HWND32 owner, DLGPROC32 dlgProc,
+HWND WINAPI CreateDialogParamA( HINSTANCE hInst, LPCSTR name,
+                                    HWND owner, DLGPROC dlgProc,
                                     LPARAM param )
 {
     if (HIWORD(name))
     {
         LPWSTR str = HEAP_strdupAtoW( GetProcessHeap(), 0, name );
-        HWND32 hwnd = CreateDialogParam32W( hInst, str, owner, dlgProc, param);
+        HWND hwnd = CreateDialogParamW( hInst, str, owner, dlgProc, param);
         HeapFree( GetProcessHeap(), 0, str );
         return hwnd;
     }
-    return CreateDialogParam32W( hInst, (LPCWSTR)name, owner, dlgProc, param );
+    return CreateDialogParamW( hInst, (LPCWSTR)name, owner, dlgProc, param );
 }
 
 
 /***********************************************************************
  *           CreateDialogParam32W   (USER32.74)
  */
-HWND32 WINAPI CreateDialogParam32W( HINSTANCE32 hInst, LPCWSTR name,
-                                    HWND32 owner, DLGPROC32 dlgProc,
+HWND WINAPI CreateDialogParamW( HINSTANCE hInst, LPCWSTR name,
+                                    HWND owner, DLGPROC dlgProc,
                                     LPARAM param )
 {
-    HANDLE32 hrsrc = FindResource32W( hInst, name, RT_DIALOG32W );
+    HANDLE hrsrc = FindResourceW( hInst, name, RT_DIALOGW );
     if (!hrsrc) return 0;
-    return CreateDialogIndirectParam32W( hInst,
-                                         (LPVOID)LoadResource32(hInst, hrsrc),
+    return CreateDialogIndirectParamW( hInst,
+                                         (LPVOID)LoadResource(hInst, hrsrc),
                                          owner, dlgProc, param );
 }
 
@@ -808,9 +808,9 @@ HWND16 WINAPI CreateDialogIndirectParam16( HINSTANCE16 hInst,
 /***********************************************************************
  *           CreateDialogIndirectParam32A   (USER32.69)
  */
-HWND32 WINAPI CreateDialogIndirectParam32A( HINSTANCE32 hInst,
+HWND WINAPI CreateDialogIndirectParamA( HINSTANCE hInst,
                                             LPCVOID dlgTemplate,
-                                            HWND32 owner, DLGPROC32 dlgProc,
+                                            HWND owner, DLGPROC dlgProc,
                                             LPARAM param )
 {
     return DIALOG_CreateIndirect( hInst, dlgTemplate, TRUE, owner,
@@ -820,9 +820,9 @@ HWND32 WINAPI CreateDialogIndirectParam32A( HINSTANCE32 hInst,
 /***********************************************************************
  *           CreateDialogIndirectParam32AorW   (USER32.71)
  */
-HWND32 WINAPI CreateDialogIndirectParam32AorW( HINSTANCE32 hInst,
+HWND WINAPI CreateDialogIndirectParamAorW( HINSTANCE hInst,
                                             LPCVOID dlgTemplate,
-                                            HWND32 owner, DLGPROC32 dlgProc,
+                                            HWND owner, DLGPROC dlgProc,
                                             LPARAM param )
 {   FIXME(dialog,"assume WIN_PROC_32W\n");
     return DIALOG_CreateIndirect( hInst, dlgTemplate, TRUE, owner,
@@ -832,9 +832,9 @@ HWND32 WINAPI CreateDialogIndirectParam32AorW( HINSTANCE32 hInst,
 /***********************************************************************
  *           CreateDialogIndirectParam32W   (USER32.72)
  */
-HWND32 WINAPI CreateDialogIndirectParam32W( HINSTANCE32 hInst,
+HWND WINAPI CreateDialogIndirectParamW( HINSTANCE hInst,
                                             LPCVOID dlgTemplate,
-                                            HWND32 owner, DLGPROC32 dlgProc,
+                                            HWND owner, DLGPROC dlgProc,
                                             LPARAM param )
 {
     return DIALOG_CreateIndirect( hInst, dlgTemplate, TRUE, owner,
@@ -845,12 +845,12 @@ HWND32 WINAPI CreateDialogIndirectParam32W( HINSTANCE32 hInst,
 /***********************************************************************
  *           DIALOG_DoDialogBox
  */
-INT32 DIALOG_DoDialogBox( HWND32 hwnd, HWND32 owner )
+INT DIALOG_DoDialogBox( HWND hwnd, HWND owner )
 {
     WND * wndPtr;
     DIALOGINFO * dlgInfo;
-    MSG32 msg;
-    INT32 retval;
+    MSG msg;
+    INT retval;
 
       /* Owner must be a top-level window */
     owner = WIN_GetTopParent( owner );
@@ -859,22 +859,22 @@ INT32 DIALOG_DoDialogBox( HWND32 hwnd, HWND32 owner )
 
     if (!dlgInfo->flags & DF_END) /* was EndDialog called in WM_INITDIALOG ? */
     {
-        EnableWindow32( owner, FALSE );
-        ShowWindow32( hwnd, SW_SHOW );
+        EnableWindow( owner, FALSE );
+        ShowWindow( hwnd, SW_SHOW );
         while (MSG_InternalGetMessage(&msg, hwnd, owner, MSGF_DIALOGBOX, 
                                       PM_REMOVE, !(wndPtr->dwStyle & DS_NOIDLEMSG) ))
         {
-            if (!IsDialogMessage32A( hwnd, &msg))
+            if (!IsDialogMessageA( hwnd, &msg))
             {
-                TranslateMessage32( &msg );
-                DispatchMessage32A( &msg );
+                TranslateMessage( &msg );
+                DispatchMessageA( &msg );
             }
             if (dlgInfo->flags & DF_END) break;
         }
-        EnableWindow32( owner, TRUE );
+        EnableWindow( owner, TRUE );
     }
     retval = dlgInfo->idResult; 
-    DestroyWindow32( hwnd );
+    DestroyWindow( hwnd );
     return retval;
 }
 
@@ -904,10 +904,10 @@ INT16 WINAPI DialogBoxParam16( HINSTANCE16 hInst, SEGPTR template,
 /***********************************************************************
  *           DialogBoxParam32A   (USER32.139)
  */
-INT32 WINAPI DialogBoxParam32A( HINSTANCE32 hInst, LPCSTR name,
-                                HWND32 owner, DLGPROC32 dlgProc, LPARAM param )
+INT WINAPI DialogBoxParamA( HINSTANCE hInst, LPCSTR name,
+                                HWND owner, DLGPROC dlgProc, LPARAM param )
 {
-    HWND32 hwnd = CreateDialogParam32A( hInst, name, owner, dlgProc, param );
+    HWND hwnd = CreateDialogParamA( hInst, name, owner, dlgProc, param );
     if (hwnd) return DIALOG_DoDialogBox( hwnd, owner );
     return -1;
 }
@@ -916,10 +916,10 @@ INT32 WINAPI DialogBoxParam32A( HINSTANCE32 hInst, LPCSTR name,
 /***********************************************************************
  *           DialogBoxParam32W   (USER32.140)
  */
-INT32 WINAPI DialogBoxParam32W( HINSTANCE32 hInst, LPCWSTR name,
-                                HWND32 owner, DLGPROC32 dlgProc, LPARAM param )
+INT WINAPI DialogBoxParamW( HINSTANCE hInst, LPCWSTR name,
+                                HWND owner, DLGPROC dlgProc, LPARAM param )
 {
-    HWND32 hwnd = CreateDialogParam32W( hInst, name, owner, dlgProc, param );
+    HWND hwnd = CreateDialogParamW( hInst, name, owner, dlgProc, param );
     if (hwnd) return DIALOG_DoDialogBox( hwnd, owner );
     return -1;
 }
@@ -956,11 +956,11 @@ INT16 WINAPI DialogBoxIndirectParam16( HINSTANCE16 hInst, HANDLE16 dlgTemplate,
 /***********************************************************************
  *           DialogBoxIndirectParam32A   (USER32.136)
  */
-INT32 WINAPI DialogBoxIndirectParam32A(HINSTANCE32 hInstance, LPCVOID template,
-                                       HWND32 owner, DLGPROC32 dlgProc,
+INT WINAPI DialogBoxIndirectParamA(HINSTANCE hInstance, LPCVOID template,
+                                       HWND owner, DLGPROC dlgProc,
                                        LPARAM param )
 {
-    HWND32 hwnd = CreateDialogIndirectParam32A( hInstance, template,
+    HWND hwnd = CreateDialogIndirectParamA( hInstance, template,
                                                 owner, dlgProc, param );
     if (hwnd) return DIALOG_DoDialogBox( hwnd, owner );
     return -1;
@@ -970,11 +970,11 @@ INT32 WINAPI DialogBoxIndirectParam32A(HINSTANCE32 hInstance, LPCVOID template,
 /***********************************************************************
  *           DialogBoxIndirectParam32W   (USER32.138)
  */
-INT32 WINAPI DialogBoxIndirectParam32W(HINSTANCE32 hInstance, LPCVOID template,
-                                       HWND32 owner, DLGPROC32 dlgProc,
+INT WINAPI DialogBoxIndirectParamW(HINSTANCE hInstance, LPCVOID template,
+                                       HWND owner, DLGPROC dlgProc,
                                        LPARAM param )
 {
-    HWND32 hwnd = CreateDialogIndirectParam32W( hInstance, template,
+    HWND hwnd = CreateDialogIndirectParamW( hInstance, template,
                                                 owner, dlgProc, param );
     if (hwnd) return DIALOG_DoDialogBox( hwnd, owner );
     return -1;
@@ -986,14 +986,14 @@ INT32 WINAPI DialogBoxIndirectParam32W(HINSTANCE32 hInstance, LPCVOID template,
  */
 BOOL16 WINAPI EndDialog16( HWND16 hwnd, INT16 retval )
 {
-    return EndDialog32( hwnd, retval );
+    return EndDialog( hwnd, retval );
 }
 
 
 /***********************************************************************
  *           EndDialog32   (USER.88)
  */
-BOOL32 WINAPI EndDialog32( HWND32 hwnd, INT32 retval )
+BOOL WINAPI EndDialog( HWND hwnd, INT retval )
 {
     WND * wndPtr = WIN_FindWndPtr( hwnd );
     DIALOGINFO * dlgInfo = (DIALOGINFO *)wndPtr->wExtra;
@@ -1012,21 +1012,21 @@ BOOL32 WINAPI EndDialog32( HWND32 hwnd, INT32 retval )
 /***********************************************************************
  *           DIALOG_IsAccelerator
  */
-static BOOL32 DIALOG_IsAccelerator( HWND32 hwnd, HWND32 hwndDlg, WPARAM32 vKey )
+static BOOL DIALOG_IsAccelerator( HWND hwnd, HWND hwndDlg, WPARAM vKey )
 {
-    HWND32 hwndControl = hwnd;
-    HWND32 hwndNext;
+    HWND hwndControl = hwnd;
+    HWND hwndNext;
     WND *wndPtr;
-    BOOL32 RetVal = FALSE;
-    INT32 dlgCode;
+    BOOL RetVal = FALSE;
+    INT dlgCode;
 
     if (vKey == VK_SPACE)
     {
-        dlgCode = SendMessage32A( hwndControl, WM_GETDLGCODE, 0, 0 );
+        dlgCode = SendMessageA( hwndControl, WM_GETDLGCODE, 0, 0 );
         if (dlgCode & DLGC_BUTTON)
         {
-            SendMessage32A( hwndControl, WM_LBUTTONDOWN, 0, 0);
-            SendMessage32A( hwndControl, WM_LBUTTONUP, 0, 0);
+            SendMessageA( hwndControl, WM_LBUTTONDOWN, 0, 0);
+            SendMessageA( hwndControl, WM_LBUTTONUP, 0, 0);
             RetVal = TRUE;
         }
     }
@@ -1038,7 +1038,7 @@ static BOOL32 DIALOG_IsAccelerator( HWND32 hwnd, HWND32 hwndDlg, WPARAM32 vKey )
             if (wndPtr != NULL && wndPtr->text != NULL && 
                     (wndPtr->dwStyle & (WS_VISIBLE | WS_DISABLED)) == WS_VISIBLE)
             {
-                dlgCode = SendMessage32A( hwndControl, WM_GETDLGCODE, 0, 0 );
+                dlgCode = SendMessageA( hwndControl, WM_GETDLGCODE, 0, 0 );
                 if (dlgCode & (DLGC_BUTTON | DLGC_STATIC))
                 {
                     /* find the accelerator key */
@@ -1056,16 +1056,16 @@ static BOOL32 DIALOG_IsAccelerator( HWND32 hwnd, HWND32 hwndDlg, WPARAM32 vKey )
                             (wndPtr->dwStyle & 0x0f) == BS_GROUPBOX )
                         {
                             /* set focus to the control */
-                            SendMessage32A( hwndDlg, WM_NEXTDLGCTL,
+                            SendMessageA( hwndDlg, WM_NEXTDLGCTL,
                                     hwndControl, 1);
                             /* and bump it on to next */
-                            SendMessage32A( hwndDlg, WM_NEXTDLGCTL, 0, 0);
+                            SendMessageA( hwndDlg, WM_NEXTDLGCTL, 0, 0);
                         }
                         else if (dlgCode & 
 			    (DLGC_DEFPUSHBUTTON | DLGC_UNDEFPUSHBUTTON))
                         {
                             /* send command message as from the control */
-                            SendMessage32A( hwndDlg, WM_COMMAND, 
+                            SendMessageA( hwndDlg, WM_COMMAND, 
                                 MAKEWPARAM( LOWORD(wndPtr->wIDmenu), 
                                     BN_CLICKED ),
                                 (LPARAM)hwndControl );
@@ -1073,29 +1073,29 @@ static BOOL32 DIALOG_IsAccelerator( HWND32 hwnd, HWND32 hwndDlg, WPARAM32 vKey )
                         else
                         {
                             /* click the control */
-                            SendMessage32A( hwndControl, WM_LBUTTONDOWN, 0, 0);
-                            SendMessage32A( hwndControl, WM_LBUTTONUP, 0, 0);
+                            SendMessageA( hwndControl, WM_LBUTTONDOWN, 0, 0);
+                            SendMessageA( hwndControl, WM_LBUTTONUP, 0, 0);
                         }
                         RetVal = TRUE;
                         break;
                     }
                 }
             }
-	    hwndNext = GetWindow32( hwndControl, GW_CHILD );
+	    hwndNext = GetWindow( hwndControl, GW_CHILD );
 	    if (!hwndNext)
 	    {
-	        hwndNext = GetWindow32( hwndControl, GW_HWNDNEXT );
+	        hwndNext = GetWindow( hwndControl, GW_HWNDNEXT );
 	    }
 	    while (!hwndNext)
 	    {
-		hwndControl = GetParent32( hwndControl );
+		hwndControl = GetParent( hwndControl );
 		if (hwndControl == hwndDlg)
 		{
-		    hwndNext = GetWindow32( hwndDlg, GW_CHILD );
+		    hwndNext = GetWindow( hwndDlg, GW_CHILD );
 		}
 		else
 		{
-		    hwndNext = GetWindow32( hwndControl, GW_HWNDNEXT );
+		    hwndNext = GetWindow( hwndControl, GW_HWNDNEXT );
 		}
 	    }
             hwndControl = hwndNext;
@@ -1109,10 +1109,10 @@ static BOOL32 DIALOG_IsAccelerator( HWND32 hwnd, HWND32 hwndDlg, WPARAM32 vKey )
 /***********************************************************************
  *           DIALOG_IsDialogMessage
  */
-static BOOL32 DIALOG_IsDialogMessage( HWND32 hwnd, HWND32 hwndDlg,
-                                      UINT32 message, WPARAM32 wParam,
-                                      LPARAM lParam, BOOL32 *translate,
-                                      BOOL32 *dispatch, INT32 dlgCode )
+static BOOL DIALOG_IsDialogMessage( HWND hwnd, HWND hwndDlg,
+                                      UINT message, WPARAM wParam,
+                                      LPARAM lParam, BOOL *translate,
+                                      BOOL *dispatch, INT dlgCode )
 {
     *translate = *dispatch = FALSE;
 
@@ -1143,8 +1143,8 @@ static BOOL32 DIALOG_IsDialogMessage( HWND32 hwnd, HWND32 hwndDlg,
         case VK_TAB:
             if (!(dlgCode & DLGC_WANTTAB))
             {
-                SendMessage32A( hwndDlg, WM_NEXTDLGCTL,
-                                (GetKeyState32(VK_SHIFT) & 0x8000), 0 );
+                SendMessageA( hwndDlg, WM_NEXTDLGCTL,
+                                (GetKeyState(VK_SHIFT) & 0x8000), 0 );
                 return TRUE;
             }
             break;
@@ -1155,17 +1155,17 @@ static BOOL32 DIALOG_IsDialogMessage( HWND32 hwnd, HWND32 hwndDlg,
         case VK_UP:
             if (!(dlgCode & DLGC_WANTARROWS))
             {
-                BOOL32 fPrevious = (wParam == VK_LEFT || wParam == VK_UP);
-                HWND32 hwndNext = 
-                    GetNextDlgGroupItem32 (hwndDlg, GetFocus32(), fPrevious );
-                SendMessage32A( hwndDlg, WM_NEXTDLGCTL, hwndNext, 1 );
+                BOOL fPrevious = (wParam == VK_LEFT || wParam == VK_UP);
+                HWND hwndNext = 
+                    GetNextDlgGroupItem (hwndDlg, GetFocus(), fPrevious );
+                SendMessageA( hwndDlg, WM_NEXTDLGCTL, hwndNext, 1 );
                 return TRUE;
             }
             break;
 
         case VK_ESCAPE:
-            SendMessage32A( hwndDlg, WM_COMMAND, IDCANCEL,
-                            (LPARAM)GetDlgItem32( hwndDlg, IDCANCEL ) );
+            SendMessageA( hwndDlg, WM_COMMAND, IDCANCEL,
+                            (LPARAM)GetDlgItem( hwndDlg, IDCANCEL ) );
             return TRUE;
 
         case VK_RETURN:
@@ -1173,14 +1173,14 @@ static BOOL32 DIALOG_IsDialogMessage( HWND32 hwnd, HWND32 hwndDlg,
                 DWORD dw = SendMessage16( hwndDlg, DM_GETDEFID, 0, 0 );
                 if (HIWORD(dw) == DC_HASDEFID)
                 {
-                    SendMessage32A( hwndDlg, WM_COMMAND, 
+                    SendMessageA( hwndDlg, WM_COMMAND, 
                                     MAKEWPARAM( LOWORD(dw), BN_CLICKED ),
-                                    (LPARAM)GetDlgItem32(hwndDlg, LOWORD(dw)));
+                                    (LPARAM)GetDlgItem(hwndDlg, LOWORD(dw)));
                 }
                 else
                 {
-                    SendMessage32A( hwndDlg, WM_COMMAND, IDOK,
-                                    (LPARAM)GetDlgItem32( hwndDlg, IDOK ) );
+                    SendMessageA( hwndDlg, WM_COMMAND, IDOK,
+                                    (LPARAM)GetDlgItem( hwndDlg, IDOK ) );
     
                 }
             }
@@ -1215,8 +1215,8 @@ static BOOL32 DIALOG_IsDialogMessage( HWND32 hwnd, HWND32 hwndDlg,
 BOOL16 WINAPI WIN16_IsDialogMessage16( HWND16 hwndDlg, SEGPTR msg16 )
 {
     LPMSG16 msg = PTR_SEG_TO_LIN(msg16);
-    BOOL32 ret, translate, dispatch;
-    INT32 dlgCode;
+    BOOL ret, translate, dispatch;
+    INT dlgCode;
 
     if ((hwndDlg != msg->hwnd) && !IsChild16( hwndDlg, msg->hwnd ))
         return FALSE;
@@ -1234,7 +1234,7 @@ BOOL16 WINAPI WIN16_IsDialogMessage16( HWND16 hwndDlg, SEGPTR msg16 )
 BOOL16 WINAPI IsDialogMessage16( HWND16 hwndDlg, LPMSG16 msg )
 {
     LPMSG16 msg16 = SEGPTR_NEW(MSG16);
-    BOOL32 ret;
+    BOOL ret;
 
     *msg16 = *msg;
     ret = WIN16_IsDialogMessage16( hwndDlg, SEGPTR_GET(msg16) );
@@ -1245,20 +1245,20 @@ BOOL16 WINAPI IsDialogMessage16( HWND16 hwndDlg, LPMSG16 msg )
 /***********************************************************************
  *           IsDialogMessage32A   (USER32.342)
  */
-BOOL32 WINAPI IsDialogMessage32A( HWND32 hwndDlg, LPMSG32 msg )
+BOOL WINAPI IsDialogMessageA( HWND hwndDlg, LPMSG msg )
 {
-    BOOL32 ret, translate, dispatch;
-    INT32 dlgCode;
+    BOOL ret, translate, dispatch;
+    INT dlgCode;
 
-    if ((hwndDlg != msg->hwnd) && !IsChild32( hwndDlg, msg->hwnd ))
+    if ((hwndDlg != msg->hwnd) && !IsChild( hwndDlg, msg->hwnd ))
         return FALSE;
 
-    dlgCode = SendMessage32A( msg->hwnd, WM_GETDLGCODE, 0, (LPARAM)msg);
+    dlgCode = SendMessageA( msg->hwnd, WM_GETDLGCODE, 0, (LPARAM)msg);
     ret = DIALOG_IsDialogMessage( msg->hwnd, hwndDlg, msg->message,
                                   msg->wParam, msg->lParam,
                                   &translate, &dispatch, dlgCode );
-    if (translate) TranslateMessage32( msg );
-    if (dispatch) DispatchMessage32A( msg );
+    if (translate) TranslateMessage( msg );
+    if (dispatch) DispatchMessageA( msg );
     return ret;
 }
 
@@ -1266,20 +1266,20 @@ BOOL32 WINAPI IsDialogMessage32A( HWND32 hwndDlg, LPMSG32 msg )
 /***********************************************************************
  *           IsDialogMessage32W   (USER32.343)
  */
-BOOL32 WINAPI IsDialogMessage32W( HWND32 hwndDlg, LPMSG32 msg )
+BOOL WINAPI IsDialogMessageW( HWND hwndDlg, LPMSG msg )
 {
-    BOOL32 ret, translate, dispatch;
-    INT32 dlgCode;
+    BOOL ret, translate, dispatch;
+    INT dlgCode;
 
-    if ((hwndDlg != msg->hwnd) && !IsChild32( hwndDlg, msg->hwnd ))
+    if ((hwndDlg != msg->hwnd) && !IsChild( hwndDlg, msg->hwnd ))
         return FALSE;
 
-    dlgCode = SendMessage32W( msg->hwnd, WM_GETDLGCODE, 0, (LPARAM)msg);
+    dlgCode = SendMessageW( msg->hwnd, WM_GETDLGCODE, 0, (LPARAM)msg);
     ret = DIALOG_IsDialogMessage( msg->hwnd, hwndDlg, msg->message,
                                   msg->wParam, msg->lParam,
                                   &translate, &dispatch, dlgCode );
-    if (translate) TranslateMessage32( msg );
-    if (dispatch) DispatchMessage32W( msg );
+    if (translate) TranslateMessage( msg );
+    if (dispatch) DispatchMessageW( msg );
     return ret;
 }
 
@@ -1298,7 +1298,7 @@ INT16 WINAPI GetDlgCtrlID16( HWND16 hwnd )
 /****************************************************************
  *         GetDlgCtrlID32   (USER32.234)
  */
-INT32 WINAPI GetDlgCtrlID32( HWND32 hwnd )
+INT WINAPI GetDlgCtrlID( HWND hwnd )
 {
     WND *wndPtr = WIN_FindWndPtr(hwnd);
     if (wndPtr) return wndPtr->wIDmenu;
@@ -1323,7 +1323,7 @@ HWND16 WINAPI GetDlgItem16( HWND16 hwndDlg, INT16 id )
 /***********************************************************************
  *           GetDlgItem32   (USER32.235)
  */
-HWND32 WINAPI GetDlgItem32( HWND32 hwndDlg, INT32 id )
+HWND WINAPI GetDlgItem( HWND hwndDlg, INT id )
 {
     WND *pWnd;
 
@@ -1349,11 +1349,11 @@ LRESULT WINAPI SendDlgItemMessage16( HWND16 hwnd, INT16 id, UINT16 msg,
 /*******************************************************************
  *           SendDlgItemMessage32A   (USER32.452)
  */
-LRESULT WINAPI SendDlgItemMessage32A( HWND32 hwnd, INT32 id, UINT32 msg,
-                                      WPARAM32 wParam, LPARAM lParam )
+LRESULT WINAPI SendDlgItemMessageA( HWND hwnd, INT id, UINT msg,
+                                      WPARAM wParam, LPARAM lParam )
 {
-    HWND32 hwndCtrl = GetDlgItem32( hwnd, id );
-    if (hwndCtrl) return SendMessage32A( hwndCtrl, msg, wParam, lParam );
+    HWND hwndCtrl = GetDlgItem( hwnd, id );
+    if (hwndCtrl) return SendMessageA( hwndCtrl, msg, wParam, lParam );
     else return 0;
 }
 
@@ -1361,11 +1361,11 @@ LRESULT WINAPI SendDlgItemMessage32A( HWND32 hwnd, INT32 id, UINT32 msg,
 /*******************************************************************
  *           SendDlgItemMessage32W   (USER32.453)
  */
-LRESULT WINAPI SendDlgItemMessage32W( HWND32 hwnd, INT32 id, UINT32 msg,
-                                      WPARAM32 wParam, LPARAM lParam )
+LRESULT WINAPI SendDlgItemMessageW( HWND hwnd, INT id, UINT msg,
+                                      WPARAM wParam, LPARAM lParam )
 {
-    HWND32 hwndCtrl = GetDlgItem32( hwnd, id );
-    if (hwndCtrl) return SendMessage32W( hwndCtrl, msg, wParam, lParam );
+    HWND hwndCtrl = GetDlgItem( hwnd, id );
+    if (hwndCtrl) return SendMessageW( hwndCtrl, msg, wParam, lParam );
     else return 0;
 }
 
@@ -1382,18 +1382,18 @@ void WINAPI SetDlgItemText16( HWND16 hwnd, INT16 id, SEGPTR lpString )
 /*******************************************************************
  *           SetDlgItemText32A   (USER32.478)
  */
-BOOL32 WINAPI SetDlgItemText32A( HWND32 hwnd, INT32 id, LPCSTR lpString )
+BOOL WINAPI SetDlgItemTextA( HWND hwnd, INT id, LPCSTR lpString )
 {
-    return SendDlgItemMessage32A( hwnd, id, WM_SETTEXT, 0, (LPARAM)lpString );
+    return SendDlgItemMessageA( hwnd, id, WM_SETTEXT, 0, (LPARAM)lpString );
 }
 
 
 /*******************************************************************
  *           SetDlgItemText32W   (USER32.479)
  */
-BOOL32 WINAPI SetDlgItemText32W( HWND32 hwnd, INT32 id, LPCWSTR lpString )
+BOOL WINAPI SetDlgItemTextW( HWND hwnd, INT id, LPCWSTR lpString )
 {
-    return SendDlgItemMessage32W( hwnd, id, WM_SETTEXT, 0, (LPARAM)lpString );
+    return SendDlgItemMessageW( hwnd, id, WM_SETTEXT, 0, (LPARAM)lpString );
 }
 
 
@@ -1410,9 +1410,9 @@ INT16 WINAPI GetDlgItemText16( HWND16 hwnd, INT16 id, SEGPTR str, UINT16 len )
 /***********************************************************************
  *           GetDlgItemText32A   (USER32.237)
  */
-INT32 WINAPI GetDlgItemText32A( HWND32 hwnd, INT32 id, LPSTR str, UINT32 len )
+INT WINAPI GetDlgItemTextA( HWND hwnd, INT id, LPSTR str, UINT len )
 {
-    return (INT32)SendDlgItemMessage32A( hwnd, id, WM_GETTEXT,
+    return (INT)SendDlgItemMessageA( hwnd, id, WM_GETTEXT,
                                          len, (LPARAM)str );
 }
 
@@ -1420,9 +1420,9 @@ INT32 WINAPI GetDlgItemText32A( HWND32 hwnd, INT32 id, LPSTR str, UINT32 len )
 /***********************************************************************
  *           GetDlgItemText32W   (USER32.238)
  */
-INT32 WINAPI GetDlgItemText32W( HWND32 hwnd, INT32 id, LPWSTR str, UINT32 len )
+INT WINAPI GetDlgItemTextW( HWND hwnd, INT id, LPWSTR str, UINT len )
 {
-    return (INT32)SendDlgItemMessage32W( hwnd, id, WM_GETTEXT,
+    return (INT)SendDlgItemMessageW( hwnd, id, WM_GETTEXT,
                                          len, (LPARAM)str );
 }
 
@@ -1432,21 +1432,21 @@ INT32 WINAPI GetDlgItemText32W( HWND32 hwnd, INT32 id, LPWSTR str, UINT32 len )
  */
 void WINAPI SetDlgItemInt16( HWND16 hwnd, INT16 id, UINT16 value, BOOL16 fSigned )
 {
-    SetDlgItemInt32( hwnd, (UINT32)(UINT16)id, value, fSigned );
+    SetDlgItemInt( hwnd, (UINT)(UINT16)id, value, fSigned );
 }
 
 
 /*******************************************************************
  *           SetDlgItemInt32   (USER32.477)
  */
-BOOL32 WINAPI SetDlgItemInt32( HWND32 hwnd, INT32 id, UINT32 value,
-                             BOOL32 fSigned )
+BOOL WINAPI SetDlgItemInt( HWND hwnd, INT id, UINT value,
+                             BOOL fSigned )
 {
     char str[20];
 
-    if (fSigned) sprintf( str, "%d", (INT32)value );
+    if (fSigned) sprintf( str, "%d", (INT)value );
     else sprintf( str, "%u", value );
-    SendDlgItemMessage32A( hwnd, id, WM_SETTEXT, 0, (LPARAM)str );
+    SendDlgItemMessageA( hwnd, id, WM_SETTEXT, 0, (LPARAM)str );
     return TRUE;
 }
 
@@ -1457,15 +1457,15 @@ BOOL32 WINAPI SetDlgItemInt32( HWND32 hwnd, INT32 id, UINT32 value,
 UINT16 WINAPI GetDlgItemInt16( HWND16 hwnd, INT16 id, BOOL16 *translated,
                                BOOL16 fSigned )
 {
-    UINT32 result;
-    BOOL32 ok;
+    UINT result;
+    BOOL ok;
 
     if (translated) *translated = FALSE;
-    result = GetDlgItemInt32( hwnd, (UINT32)(UINT16)id, &ok, fSigned );
+    result = GetDlgItemInt( hwnd, (UINT)(UINT16)id, &ok, fSigned );
     if (!ok) return 0;
     if (fSigned)
     {
-        if (((INT32)result < -32767) || ((INT32)result > 32767)) return 0;
+        if (((INT)result < -32767) || ((INT)result > 32767)) return 0;
     }
     else
     {
@@ -1479,15 +1479,15 @@ UINT16 WINAPI GetDlgItemInt16( HWND16 hwnd, INT16 id, BOOL16 *translated,
 /***********************************************************************
  *           GetDlgItemInt32   (USER32.236)
  */
-UINT32 WINAPI GetDlgItemInt32( HWND32 hwnd, INT32 id, BOOL32 *translated,
-                               BOOL32 fSigned )
+UINT WINAPI GetDlgItemInt( HWND hwnd, INT id, BOOL *translated,
+                               BOOL fSigned )
 {
     char str[30];
     char * endptr;
     long result = 0;
     
     if (translated) *translated = FALSE;
-    if (!SendDlgItemMessage32A(hwnd, id, WM_GETTEXT, sizeof(str), (LPARAM)str))
+    if (!SendDlgItemMessageA(hwnd, id, WM_GETTEXT, sizeof(str), (LPARAM)str))
         return 0;
     if (fSigned)
     {
@@ -1505,7 +1505,7 @@ UINT32 WINAPI GetDlgItemInt32( HWND32 hwnd, INT32 id, BOOL32 *translated,
         if ((result == ULONG_MAX) && (errno == ERANGE)) return 0;
     }
     if (translated) *translated = TRUE;
-    return (UINT32)result;
+    return (UINT)result;
 }
 
 
@@ -1514,7 +1514,7 @@ UINT32 WINAPI GetDlgItemInt32( HWND32 hwnd, INT32 id, BOOL32 *translated,
  */
 BOOL16 WINAPI CheckDlgButton16( HWND16 hwnd, INT16 id, UINT16 check )
 {
-    SendDlgItemMessage32A( hwnd, id, BM_SETCHECK32, check, 0 );
+    SendDlgItemMessageA( hwnd, id, BM_SETCHECK, check, 0 );
     return TRUE;
 }
 
@@ -1522,9 +1522,9 @@ BOOL16 WINAPI CheckDlgButton16( HWND16 hwnd, INT16 id, UINT16 check )
 /***********************************************************************
  *           CheckDlgButton32   (USER32.45)
  */
-BOOL32 WINAPI CheckDlgButton32( HWND32 hwnd, INT32 id, UINT32 check )
+BOOL WINAPI CheckDlgButton( HWND hwnd, INT id, UINT check )
 {
-    SendDlgItemMessage32A( hwnd, id, BM_SETCHECK32, check, 0 );
+    SendDlgItemMessageA( hwnd, id, BM_SETCHECK, check, 0 );
     return TRUE;
 }
 
@@ -1534,16 +1534,16 @@ BOOL32 WINAPI CheckDlgButton32( HWND32 hwnd, INT32 id, UINT32 check )
  */
 UINT16 WINAPI IsDlgButtonChecked16( HWND16 hwnd, UINT16 id )
 {
-    return (UINT16)SendDlgItemMessage32A( hwnd, id, BM_GETCHECK32, 0, 0 );
+    return (UINT16)SendDlgItemMessageA( hwnd, id, BM_GETCHECK, 0, 0 );
 }
 
 
 /***********************************************************************
  *           IsDlgButtonChecked32   (USER32.344)
  */
-UINT32 WINAPI IsDlgButtonChecked32( HWND32 hwnd, UINT32 id )
+UINT WINAPI IsDlgButtonChecked( HWND hwnd, UINT id )
 {
-    return (UINT32)SendDlgItemMessage32A( hwnd, id, BM_GETCHECK32, 0, 0 );
+    return (UINT)SendDlgItemMessageA( hwnd, id, BM_GETCHECK, 0, 0 );
 }
 
 
@@ -1553,15 +1553,15 @@ UINT32 WINAPI IsDlgButtonChecked32( HWND32 hwnd, UINT32 id )
 BOOL16 WINAPI CheckRadioButton16( HWND16 hwndDlg, UINT16 firstID,
                                   UINT16 lastID, UINT16 checkID )
 {
-    return CheckRadioButton32( hwndDlg, firstID, lastID, checkID );
+    return CheckRadioButton( hwndDlg, firstID, lastID, checkID );
 }
 
 
 /***********************************************************************
  *           CheckRadioButton32   (USER32.48)
  */
-BOOL32 WINAPI CheckRadioButton32( HWND32 hwndDlg, UINT32 firstID,
-                                  UINT32 lastID, UINT32 checkID )
+BOOL WINAPI CheckRadioButton( HWND hwndDlg, UINT firstID,
+                                  UINT lastID, UINT checkID )
 {
     WND *pWnd = WIN_FindWndPtr( hwndDlg );
     if (!pWnd) return FALSE;
@@ -1574,7 +1574,7 @@ BOOL32 WINAPI CheckRadioButton32( HWND32 hwndDlg, UINT32 firstID,
         lastID = firstID;  /* Buttons are in reverse order */
     while (pWnd)
     {
-	SendMessage32A( pWnd->hwndSelf, BM_SETCHECK32,
+	SendMessageA( pWnd->hwndSelf, BM_SETCHECK,
                         (pWnd->wIDmenu == checkID), 0 );
         if (pWnd->wIDmenu == lastID) break;
 	pWnd = pWnd->next;
@@ -1611,7 +1611,7 @@ void WINAPI MapDialogRect16( HWND16 hwnd, LPRECT16 rect )
 /***********************************************************************
  *           MapDialogRect32   (USER32.382)
  */
-BOOL32 WINAPI MapDialogRect32( HWND32 hwnd, LPRECT32 rect )
+BOOL WINAPI MapDialogRect( HWND hwnd, LPRECT rect )
 {
     DIALOGINFO * dlgInfo;
     WND * wndPtr = WIN_FindWndPtr( hwnd );
@@ -1631,15 +1631,15 @@ BOOL32 WINAPI MapDialogRect32( HWND32 hwnd, LPRECT32 rect )
 HWND16 WINAPI GetNextDlgGroupItem16( HWND16 hwndDlg, HWND16 hwndCtrl,
                                      BOOL16 fPrevious )
 {
-    return (HWND16)GetNextDlgGroupItem32( hwndDlg, hwndCtrl, fPrevious );
+    return (HWND16)GetNextDlgGroupItem( hwndDlg, hwndCtrl, fPrevious );
 }
 
 
 /***********************************************************************
  *           GetNextDlgGroupItem32   (USER32.275)
  */
-HWND32 WINAPI GetNextDlgGroupItem32( HWND32 hwndDlg, HWND32 hwndCtrl,
-                                     BOOL32 fPrevious )
+HWND WINAPI GetNextDlgGroupItem( HWND hwndDlg, HWND hwndCtrl,
+                                     BOOL fPrevious )
 {
     WND *pWnd, *pWndLast, *pWndCtrl, *pWndDlg;
 
@@ -1692,15 +1692,15 @@ HWND32 WINAPI GetNextDlgGroupItem32( HWND32 hwndDlg, HWND32 hwndCtrl,
 HWND16 WINAPI GetNextDlgTabItem16( HWND16 hwndDlg, HWND16 hwndCtrl,
                                    BOOL16 fPrevious )
 {
-    return (HWND16)GetNextDlgTabItem32( hwndDlg, hwndCtrl, fPrevious );
+    return (HWND16)GetNextDlgTabItem( hwndDlg, hwndCtrl, fPrevious );
 }
 
 
 /***********************************************************************
  *           GetNextDlgTabItem32   (USER32.276)
  */
-HWND32 WINAPI GetNextDlgTabItem32( HWND32 hwndDlg, HWND32 hwndCtrl,
-                                   BOOL32 fPrevious )
+HWND WINAPI GetNextDlgTabItem( HWND hwndDlg, HWND hwndCtrl,
+                                   BOOL fPrevious )
 {
     WND *pWnd, *pWndLast, *pWndCtrl, *pWndDlg;
 
@@ -1743,32 +1743,32 @@ HWND32 WINAPI GetNextDlgTabItem32( HWND32 hwndDlg, HWND32 hwndCtrl,
  *
  * Helper function for DlgDirSelect*
  */
-static BOOL32 DIALOG_DlgDirSelect( HWND32 hwnd, LPSTR str, INT32 len,
-                                   INT32 id, BOOL32 win32, BOOL32 unicode,
-                                   BOOL32 combo )
+static BOOL DIALOG_DlgDirSelect( HWND hwnd, LPSTR str, INT len,
+                                   INT id, BOOL win32, BOOL unicode,
+                                   BOOL combo )
 {
     char *buffer, *ptr;
-    INT32 item, size;
-    BOOL32 ret;
-    HWND32 listbox = GetDlgItem32( hwnd, id );
+    INT item, size;
+    BOOL ret;
+    HWND listbox = GetDlgItem( hwnd, id );
 
     TRACE(dialog, "%04x '%s' %d\n", hwnd, str, id );
     if (!listbox) return FALSE;
     if (win32)
     {
-        item = SendMessage32A(listbox, combo ? CB_GETCURSEL32
-                                             : LB_GETCURSEL32, 0, 0 );
+        item = SendMessageA(listbox, combo ? CB_GETCURSEL
+                                             : LB_GETCURSEL, 0, 0 );
         if (item == LB_ERR) return FALSE;
-        size = SendMessage32A(listbox, combo ? CB_GETLBTEXTLEN32
-                                             : LB_GETTEXTLEN32, 0, 0 );
+        size = SendMessageA(listbox, combo ? CB_GETLBTEXTLEN
+                                             : LB_GETTEXTLEN, 0, 0 );
         if (size == LB_ERR) return FALSE;
     }
     else
     {
-        item = SendMessage32A(listbox, combo ? CB_GETCURSEL16
+        item = SendMessageA(listbox, combo ? CB_GETCURSEL16
                                              : LB_GETCURSEL16, 0, 0 );
         if (item == LB_ERR) return FALSE;
-        size = SendMessage32A(listbox, combo ? CB_GETLBTEXTLEN16
+        size = SendMessageA(listbox, combo ? CB_GETLBTEXTLEN16
                                              : LB_GETTEXTLEN16, 0, 0 );
         if (size == LB_ERR) return FALSE;
     }
@@ -1776,7 +1776,7 @@ static BOOL32 DIALOG_DlgDirSelect( HWND32 hwnd, LPSTR str, INT32 len,
     if (!(buffer = SEGPTR_ALLOC( size+1 ))) return FALSE;
 
     if (win32)
-        SendMessage32A( listbox, combo ? CB_GETLBTEXT32 : LB_GETTEXT32,
+        SendMessageA( listbox, combo ? CB_GETLBTEXT : LB_GETTEXT,
                         item, (LPARAM)buffer );
     else
         SendMessage16( listbox, combo ? CB_GETLBTEXT16 : LB_GETTEXT16,
@@ -1799,7 +1799,7 @@ static BOOL32 DIALOG_DlgDirSelect( HWND32 hwnd, LPSTR str, INT32 len,
     else ptr = buffer;
 
     if (unicode) lstrcpynAtoW( (LPWSTR)str, ptr, len );
-    else lstrcpyn32A( str, ptr, len );
+    else lstrcpynA( str, ptr, len );
     SEGPTR_FREE( buffer );
     TRACE(dialog, "Returning %d '%s'\n", ret, str );
     return ret;
@@ -1811,16 +1811,16 @@ static BOOL32 DIALOG_DlgDirSelect( HWND32 hwnd, LPSTR str, INT32 len,
  *
  * Helper function for DlgDirList*
  */
-static INT32 DIALOG_DlgDirList( HWND32 hDlg, LPSTR spec, INT32 idLBox,
-                                INT32 idStatic, UINT32 attrib, BOOL32 combo )
+static INT DIALOG_DlgDirList( HWND hDlg, LPSTR spec, INT idLBox,
+                                INT idStatic, UINT attrib, BOOL combo )
 {
     int drive;
-    HWND32 hwnd;
+    HWND hwnd;
     LPSTR orig_spec = spec;
 
 #define SENDMSG(msg,wparam,lparam) \
-    ((attrib & DDL_POSTMSGS) ? PostMessage32A( hwnd, msg, wparam, lparam ) \
-                             : SendMessage32A( hwnd, msg, wparam, lparam ))
+    ((attrib & DDL_POSTMSGS) ? PostMessageA( hwnd, msg, wparam, lparam ) \
+                             : SendMessageA( hwnd, msg, wparam, lparam ))
 
     TRACE(dialog, "%04x '%s' %d %d %04x\n",
                     hDlg, spec ? spec : "NULL", idLBox, idStatic, attrib );
@@ -1857,41 +1857,41 @@ static INT32 DIALOG_DlgDirList( HWND32 hDlg, LPSTR spec, INT32 idLBox,
     TRACE(dialog, "path=%c:\\%s mask=%s\n",
                     'A' + drive, DRIVE_GetDosCwd(drive), spec );
 
-    if (idLBox && ((hwnd = GetDlgItem32( hDlg, idLBox )) != 0))
+    if (idLBox && ((hwnd = GetDlgItem( hDlg, idLBox )) != 0))
     {
-        SENDMSG( combo ? CB_RESETCONTENT32 : LB_RESETCONTENT32, 0, 0 );
+        SENDMSG( combo ? CB_RESETCONTENT : LB_RESETCONTENT, 0, 0 );
         if (attrib & DDL_DIRECTORY)
         {
             if (!(attrib & DDL_EXCLUSIVE))
             {
-                if (SENDMSG( combo ? CB_DIR32 : LB_DIR32,
+                if (SENDMSG( combo ? CB_DIR : LB_DIR,
                              attrib & ~(DDL_DIRECTORY | DDL_DRIVES),
                              (LPARAM)spec ) == LB_ERR)
                     return FALSE;
             }
-            if (SENDMSG( combo ? CB_DIR32 : LB_DIR32,
+            if (SENDMSG( combo ? CB_DIR : LB_DIR,
                        (attrib & (DDL_DIRECTORY | DDL_DRIVES)) | DDL_EXCLUSIVE,
                          (LPARAM)"*.*" ) == LB_ERR)
                 return FALSE;
         }
         else
         {
-            if (SENDMSG( combo ? CB_DIR32 : LB_DIR32, attrib,
+            if (SENDMSG( combo ? CB_DIR : LB_DIR, attrib,
                          (LPARAM)spec ) == LB_ERR)
                 return FALSE;
         }
     }
 
-    if (idStatic && ((hwnd = GetDlgItem32( hDlg, idStatic )) != 0))
+    if (idStatic && ((hwnd = GetDlgItem( hDlg, idStatic )) != 0))
     {
         char temp[512];
         int drive = DRIVE_GetCurrentDrive();
         strcpy( temp, "A:\\" );
         temp[0] += drive;
-        lstrcpyn32A( temp + 3, DRIVE_GetDosCwd(drive), sizeof(temp)-3 );
-        CharLower32A( temp );
+        lstrcpynA( temp + 3, DRIVE_GetDosCwd(drive), sizeof(temp)-3 );
+        CharLowerA( temp );
         /* Can't use PostMessage() here, because the string is on the stack */
-        SetDlgItemText32A( hDlg, idStatic, temp );
+        SetDlgItemTextA( hDlg, idStatic, temp );
     }
 
     if (orig_spec && (spec != orig_spec))
@@ -1911,13 +1911,13 @@ static INT32 DIALOG_DlgDirList( HWND32 hDlg, LPSTR spec, INT32 idLBox,
  *
  * Helper function for DlgDirList*32W
  */
-static INT32 DIALOG_DlgDirListW( HWND32 hDlg, LPWSTR spec, INT32 idLBox,
-                                 INT32 idStatic, UINT32 attrib, BOOL32 combo )
+static INT DIALOG_DlgDirListW( HWND hDlg, LPWSTR spec, INT idLBox,
+                                 INT idStatic, UINT attrib, BOOL combo )
 {
     if (spec)
     {
         LPSTR specA = HEAP_strdupWtoA( GetProcessHeap(), 0, spec );
-        INT32 ret = DIALOG_DlgDirList( hDlg, specA, idLBox, idStatic,
+        INT ret = DIALOG_DlgDirList( hDlg, specA, idLBox, idStatic,
                                        attrib, combo );
         lstrcpyAtoW( spec, specA );
         HeapFree( GetProcessHeap(), 0, specA );
@@ -1930,7 +1930,7 @@ static INT32 DIALOG_DlgDirListW( HWND32 hDlg, LPWSTR spec, INT32 idLBox,
 /**********************************************************************
  *	    DlgDirSelect    (USER.99)
  */
-BOOL16 WINAPI DlgDirSelect( HWND16 hwnd, LPSTR str, INT16 id )
+BOOL16 WINAPI DlgDirSelect16( HWND16 hwnd, LPSTR str, INT16 id )
 {
     return DlgDirSelectEx16( hwnd, str, 128, id );
 }
@@ -1939,7 +1939,7 @@ BOOL16 WINAPI DlgDirSelect( HWND16 hwnd, LPSTR str, INT16 id )
 /**********************************************************************
  *	    DlgDirSelectComboBox    (USER.194)
  */
-BOOL16 WINAPI DlgDirSelectComboBox( HWND16 hwnd, LPSTR str, INT16 id )
+BOOL16 WINAPI DlgDirSelectComboBox16( HWND16 hwnd, LPSTR str, INT16 id )
 {
     return DlgDirSelectComboBoxEx16( hwnd, str, 128, id );
 }
@@ -1957,7 +1957,7 @@ BOOL16 WINAPI DlgDirSelectEx16( HWND16 hwnd, LPSTR str, INT16 len, INT16 id )
 /**********************************************************************
  *           DlgDirSelectEx32A    (USER32.149)
  */
-BOOL32 WINAPI DlgDirSelectEx32A( HWND32 hwnd, LPSTR str, INT32 len, INT32 id )
+BOOL WINAPI DlgDirSelectExA( HWND hwnd, LPSTR str, INT len, INT id )
 {
     return DIALOG_DlgDirSelect( hwnd, str, len, id, TRUE, FALSE, FALSE );
 }
@@ -1966,7 +1966,7 @@ BOOL32 WINAPI DlgDirSelectEx32A( HWND32 hwnd, LPSTR str, INT32 len, INT32 id )
 /**********************************************************************
  *           DlgDirSelectEx32W    (USER32.150)
  */
-BOOL32 WINAPI DlgDirSelectEx32W( HWND32 hwnd, LPWSTR str, INT32 len, INT32 id )
+BOOL WINAPI DlgDirSelectExW( HWND hwnd, LPWSTR str, INT len, INT id )
 {
     return DIALOG_DlgDirSelect( hwnd, (LPSTR)str, len, id, TRUE, TRUE, FALSE );
 }
@@ -1985,8 +1985,8 @@ BOOL16 WINAPI DlgDirSelectComboBoxEx16( HWND16 hwnd, LPSTR str, INT16 len,
 /**********************************************************************
  *           DlgDirSelectComboBoxEx32A    (USER32.147)
  */
-BOOL32 WINAPI DlgDirSelectComboBoxEx32A( HWND32 hwnd, LPSTR str, INT32 len,
-                                         INT32 id )
+BOOL WINAPI DlgDirSelectComboBoxExA( HWND hwnd, LPSTR str, INT len,
+                                         INT id )
 {
     return DIALOG_DlgDirSelect( hwnd, str, len, id, TRUE, FALSE, TRUE );
 }
@@ -1995,8 +1995,8 @@ BOOL32 WINAPI DlgDirSelectComboBoxEx32A( HWND32 hwnd, LPSTR str, INT32 len,
 /**********************************************************************
  *           DlgDirSelectComboBoxEx32W    (USER32.148)
  */
-BOOL32 WINAPI DlgDirSelectComboBoxEx32W( HWND32 hwnd, LPWSTR str, INT32 len,
-                                         INT32 id)
+BOOL WINAPI DlgDirSelectComboBoxExW( HWND hwnd, LPWSTR str, INT len,
+                                         INT id)
 {
     return DIALOG_DlgDirSelect( hwnd, (LPSTR)str, len, id, TRUE, TRUE, TRUE );
 }
@@ -2015,8 +2015,8 @@ INT16 WINAPI DlgDirList16( HWND16 hDlg, LPSTR spec, INT16 idLBox,
 /**********************************************************************
  *	    DlgDirList32A    (USER32.143)
  */
-INT32 WINAPI DlgDirList32A( HWND32 hDlg, LPSTR spec, INT32 idLBox,
-                            INT32 idStatic, UINT32 attrib )
+INT WINAPI DlgDirListA( HWND hDlg, LPSTR spec, INT idLBox,
+                            INT idStatic, UINT attrib )
 {
     return DIALOG_DlgDirList( hDlg, spec, idLBox, idStatic, attrib, FALSE );
 }
@@ -2025,8 +2025,8 @@ INT32 WINAPI DlgDirList32A( HWND32 hDlg, LPSTR spec, INT32 idLBox,
 /**********************************************************************
  *	    DlgDirList32W    (USER32.146)
  */
-INT32 WINAPI DlgDirList32W( HWND32 hDlg, LPWSTR spec, INT32 idLBox,
-                            INT32 idStatic, UINT32 attrib )
+INT WINAPI DlgDirListW( HWND hDlg, LPWSTR spec, INT idLBox,
+                            INT idStatic, UINT attrib )
 {
     return DIALOG_DlgDirListW( hDlg, spec, idLBox, idStatic, attrib, FALSE );
 }
@@ -2045,8 +2045,8 @@ INT16 WINAPI DlgDirListComboBox16( HWND16 hDlg, LPSTR spec, INT16 idCBox,
 /**********************************************************************
  *	    DlgDirListComboBox32A    (USER32.144)
  */
-INT32 WINAPI DlgDirListComboBox32A( HWND32 hDlg, LPSTR spec, INT32 idCBox,
-                                    INT32 idStatic, UINT32 attrib )
+INT WINAPI DlgDirListComboBoxA( HWND hDlg, LPSTR spec, INT idCBox,
+                                    INT idStatic, UINT attrib )
 {
     return DIALOG_DlgDirList( hDlg, spec, idCBox, idStatic, attrib, TRUE );
 }
@@ -2055,8 +2055,8 @@ INT32 WINAPI DlgDirListComboBox32A( HWND32 hDlg, LPSTR spec, INT32 idCBox,
 /**********************************************************************
  *	    DlgDirListComboBox32W    (USER32.145)
  */
-INT32 WINAPI DlgDirListComboBox32W( HWND32 hDlg, LPWSTR spec, INT32 idCBox,
-                                    INT32 idStatic, UINT32 attrib )
+INT WINAPI DlgDirListComboBoxW( HWND hDlg, LPWSTR spec, INT idCBox,
+                                    INT idStatic, UINT attrib )
 {
     return DIALOG_DlgDirListW( hDlg, spec, idCBox, idStatic, attrib, TRUE );
 }

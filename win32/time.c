@@ -62,7 +62,7 @@ VOID WINAPI GetSystemTime(LPSYSTEMTIME systime)
 /***********************************************************************
  *              SetSystemTime            (KERNEL32.507)
  */
-BOOL32 WINAPI SetSystemTime(const SYSTEMTIME *systime)
+BOOL WINAPI SetSystemTime(const SYSTEMTIME *systime)
 {
     struct timeval tv;
     struct timezone tz;
@@ -117,7 +117,7 @@ DWORD WINAPI GetTimeZoneInformation(LPTIME_ZONE_INFORMATION tzinfo)
 /***********************************************************************
  *              SetTimeZoneInformation  (KERNEL32.515)
  */
-BOOL32 WINAPI SetTimeZoneInformation(const LPTIME_ZONE_INFORMATION tzinfo)
+BOOL WINAPI SetTimeZoneInformation(const LPTIME_ZONE_INFORMATION tzinfo)
 {
     struct timezone tz;
 
@@ -141,7 +141,7 @@ VOID WINAPI GetSystemTimeAsFileTime(LPFILETIME systemtimeAsfiletime) {
 /***********************************************************************
  *              SystemTimeToTzSpecificLocalTime32  (KERNEL32.683)
  */
-BOOL32 WINAPI SystemTimeToTzSpecificLocalTime32(
+BOOL WINAPI SystemTimeToTzSpecificLocalTime(
   LPTIME_ZONE_INFORMATION lpTimeZoneInformation,
   LPSYSTEMTIME lpUniversalTime,
   LPSYSTEMTIME lpLocalTime) {

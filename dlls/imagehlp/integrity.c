@@ -14,8 +14,8 @@
  *           ImageAddCertificate32 (IMAGEHLP.10)
  */
 
-BOOL32 WINAPI ImageAddCertificate32(
-  HANDLE32 FileHandle, PWIN_CERTIFICATE32 Certificate, PDWORD Index)
+BOOL WINAPI ImageAddCertificate(
+  HANDLE FileHandle, PWIN_CERTIFICATE Certificate, PDWORD Index)
 {
   FIXME(imagehlp, "(0x%08x, %p, %p): stub\n",
     FileHandle, Certificate, Index
@@ -27,8 +27,8 @@ BOOL32 WINAPI ImageAddCertificate32(
 /***********************************************************************
  *           ImageEnumerateCertificates32 (IMAGEHLP.12)
  */
-BOOL32 WINAPI ImageEnumerateCertificates32(
-  HANDLE32 FileHandle, WORD TypeFilter, PDWORD CertificateCount,
+BOOL WINAPI ImageEnumerateCertificates(
+  HANDLE FileHandle, WORD TypeFilter, PDWORD CertificateCount,
   PDWORD Indices, DWORD IndexCount)
 {
   FIXME(imagehlp, "(0x%08x, %hd, %p, %p, %ld): stub\n",
@@ -41,9 +41,9 @@ BOOL32 WINAPI ImageEnumerateCertificates32(
 /***********************************************************************
  *           ImageGetCertificateData32 (IMAGEHLP.13)
  */
-BOOL32 WINAPI ImageGetCertificateData32(
-  HANDLE32 FileHandle, DWORD CertificateIndex,
-  PWIN_CERTIFICATE32 Certificate, PDWORD RequiredLength)
+BOOL WINAPI ImageGetCertificateData(
+  HANDLE FileHandle, DWORD CertificateIndex,
+  PWIN_CERTIFICATE Certificate, PDWORD RequiredLength)
 {
   FIXME(imagehlp, "(0x%08x, %ld, %p, %p): stub\n",
     FileHandle, CertificateIndex, Certificate, RequiredLength
@@ -55,9 +55,9 @@ BOOL32 WINAPI ImageGetCertificateData32(
 /***********************************************************************
  *           ImageGetCertificateHeader32 (IMAGEHLP.14)
  */
-BOOL32 WINAPI ImageGetCertificateHeader32(
-  HANDLE32 FileHandle, DWORD CertificateIndex,
-  PWIN_CERTIFICATE32 Certificateheader)
+BOOL WINAPI ImageGetCertificateHeader(
+  HANDLE FileHandle, DWORD CertificateIndex,
+  PWIN_CERTIFICATE Certificateheader)
 {
   FIXME(imagehlp, "(0x%08x, %ld, %p): stub\n",
     FileHandle, CertificateIndex, Certificateheader
@@ -69,9 +69,9 @@ BOOL32 WINAPI ImageGetCertificateHeader32(
 /***********************************************************************
  *           ImageGetDigestStream32 (IMAGEHLP.15)
  */
-BOOL32 WINAPI ImageGetDigestStream32(
-  HANDLE32 FileHandle, DWORD DigestLevel,
-  DIGEST_FUNCTION32 DigestFunction, DIGEST_HANDLE32 DigestHandle)
+BOOL WINAPI ImageGetDigestStream(
+  HANDLE FileHandle, DWORD DigestLevel,
+  DIGEST_FUNCTION DigestFunction, DIGEST_HANDLE DigestHandle)
 {
   FIXME(imagehlp, "(%0x08x, %ld, %p, %p): stub\n",
     FileHandle, DigestLevel, DigestFunction, DigestHandle
@@ -83,7 +83,7 @@ BOOL32 WINAPI ImageGetDigestStream32(
 /***********************************************************************
  *           ImageRemoveCertificate32 (IMAGEHLP.18)
  */
-BOOL32 WINAPI ImageRemoveCertificate32(HANDLE32 FileHandle, DWORD Index)
+BOOL WINAPI ImageRemoveCertificate(HANDLE FileHandle, DWORD Index)
 {
   FIXME(imagehlp, "(0x%08x, %ld): stub\n", FileHandle, Index);
   SetLastError(ERROR_CALL_NOT_IMPLEMENTED);

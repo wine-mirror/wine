@@ -12,8 +12,8 @@
    #include "assert.h"
    #include "shellapi.h"
 
-   #define HANDLE32 HANDLE
-   #define INVALID_HANDLE_VALUE32 INVALID_HANDLE_VALUE
+   #define HANDLE HANDLE
+   #define INVALID_HANDLE_VALUE INVALID_HANDLE_VALUE
 
    #define WINE_RELEASE_INFO "Compiled using LCC"
    #define OIC_WINEICON 0

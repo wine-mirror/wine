@@ -22,7 +22,7 @@ typedef struct _PIPE
 /***********************************************************************
  *	CreatePipe    (KERNEL32.170)
  */
-BOOL32 WINAPI CreatePipe( PHANDLE hReadPipe, PHANDLE hWritePipe,
+BOOL WINAPI CreatePipe( PHANDLE hReadPipe, PHANDLE hWritePipe,
                           LPSECURITY_ATTRIBUTES sa, DWORD size )
 {
     struct create_pipe_request req;
@@ -53,7 +53,7 @@ BOOL32 WINAPI CreatePipe( PHANDLE hReadPipe, PHANDLE hWritePipe,
                                               sa, hWritePipe )))
     {
         CloseHandle( *hReadPipe );
-        *hReadPipe = INVALID_HANDLE_VALUE32;
+        *hReadPipe = INVALID_HANDLE_VALUE;
         SYSTEM_UNLOCK();
         return FALSE;
     }

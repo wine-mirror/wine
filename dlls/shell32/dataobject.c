@@ -17,9 +17,9 @@
 #include "winerror.h"
 #include "shell32_main.h"
 
-UINT32 cfShellIDList=0;
-UINT32 cfFileGroupDesc=0;
-UINT32 cfFileContents=0;
+UINT cfShellIDList=0;
+UINT cfFileGroupDesc=0;
+UINT cfFileContents=0;
 
 /***********************************************************************
 *   IEnumFORMATETC implementation
@@ -30,15 +30,15 @@ typedef struct
     ICOM_VTABLE(IEnumFORMATETC)* lpvtbl;
     DWORD                        ref;
     /* IEnumFORMATETC fields */
-    UINT32        posFmt;
-    UINT32        countFmt;
-    LPFORMATETC32 pFmt;
+    UINT        posFmt;
+    UINT        countFmt;
+    LPFORMATETC pFmt;
 } IEnumFORMATETCImpl;
 
 static HRESULT WINAPI IEnumFORMATETC_fnQueryInterface(LPENUMFORMATETC iface, REFIID riid, LPVOID* ppvObj);
 static ULONG WINAPI IEnumFORMATETC_fnAddRef(LPENUMFORMATETC iface);
 static ULONG WINAPI IEnumFORMATETC_fnRelease(LPENUMFORMATETC iface);
-static HRESULT WINAPI IEnumFORMATETC_fnNext(LPENUMFORMATETC iface, ULONG celt, FORMATETC32* rgelt, ULONG* pceltFethed);
+static HRESULT WINAPI IEnumFORMATETC_fnNext(LPENUMFORMATETC iface, ULONG celt, FORMATETC* rgelt, ULONG* pceltFethed);
 static HRESULT WINAPI IEnumFORMATETC_fnSkip(LPENUMFORMATETC iface, ULONG celt);
 static HRESULT WINAPI IEnumFORMATETC_fnReset(LPENUMFORMATETC iface);
 static HRESULT WINAPI IEnumFORMATETC_fnClone(LPENUMFORMATETC iface, LPENUMFORMATETC* ppenum);
@@ -54,10 +54,10 @@ static struct ICOM_VTABLE(IEnumFORMATETC) efvt =
     IEnumFORMATETC_fnClone
 };
 
-LPENUMFORMATETC IEnumFORMATETC_Constructor(UINT32 cfmt, const FORMATETC32 afmt[])
+LPENUMFORMATETC IEnumFORMATETC_Constructor(UINT cfmt, const FORMATETC afmt[])
 {
 	IEnumFORMATETCImpl* ef;
-	DWORD size=cfmt * sizeof(FORMATETC32);
+	DWORD size=cfmt * sizeof(FORMATETC);
 	
 	ef=(IEnumFORMATETCImpl*)HeapAlloc(GetProcessHeap(),0,sizeof(IEnumFORMATETCImpl));
 	ef->ref=1;
@@ -124,10 +124,10 @@ static ULONG WINAPI IEnumFORMATETC_fnRelease(LPENUMFORMATETC iface)
 	}
 	return This->ref;
 }
-static HRESULT WINAPI IEnumFORMATETC_fnNext(LPENUMFORMATETC iface, ULONG celt, FORMATETC32 *rgelt, ULONG *pceltFethed)
+static HRESULT WINAPI IEnumFORMATETC_fnNext(LPENUMFORMATETC iface, ULONG celt, FORMATETC *rgelt, ULONG *pceltFethed)
 {
 	ICOM_THIS(IEnumFORMATETCImpl,iface);
-	UINT32 cfetch;
+	UINT cfetch;
 	HRESULT hres = S_FALSE;
 
 	TRACE (shell, "(%p)->()\n", This);
@@ -138,7 +138,7 @@ static HRESULT WINAPI IEnumFORMATETC_fnNext(LPENUMFORMATETC iface, ULONG celt, F
 	  { cfetch = celt;
 	    hres = S_OK;
 	  }
-	  memcpy(rgelt, &This->pFmt[This->posFmt], cfetch * sizeof(FORMATETC32));
+	  memcpy(rgelt, &This->pFmt[This->posFmt], cfetch * sizeof(FORMATETC));
 	  This->posFmt += cfetch;
 	}
 	else
@@ -195,13 +195,13 @@ typedef struct
 static HRESULT WINAPI IDataObject_fnQueryInterface(LPDATAOBJECT iface, REFIID riid, LPVOID* ppvObj);
 static ULONG WINAPI IDataObject_fnAddRef(LPDATAOBJECT iface);
 static ULONG WINAPI IDataObject_fnRelease(LPDATAOBJECT iface);
-static HRESULT WINAPI IDataObject_fnGetData(LPDATAOBJECT iface, LPFORMATETC32 pformatetcIn, STGMEDIUM32* pmedium);
-static HRESULT WINAPI IDataObject_fnGetDataHere(LPDATAOBJECT iface, LPFORMATETC32 pformatetc, STGMEDIUM32* pmedium);
-static HRESULT WINAPI IDataObject_fnQueryGetData(LPDATAOBJECT iface, LPFORMATETC32 pformatetc);
-static HRESULT WINAPI IDataObject_fnGetCanonicalFormatEtc(LPDATAOBJECT iface, LPFORMATETC32 pformatectIn, LPFORMATETC32 pformatetcOut);
-static HRESULT WINAPI IDataObject_fnSetData(LPDATAOBJECT iface, LPFORMATETC32 pformatetc, STGMEDIUM32* pmedium, BOOL32 fRelease);
+static HRESULT WINAPI IDataObject_fnGetData(LPDATAOBJECT iface, LPFORMATETC pformatetcIn, STGMEDIUM* pmedium);
+static HRESULT WINAPI IDataObject_fnGetDataHere(LPDATAOBJECT iface, LPFORMATETC pformatetc, STGMEDIUM* pmedium);
+static HRESULT WINAPI IDataObject_fnQueryGetData(LPDATAOBJECT iface, LPFORMATETC pformatetc);
+static HRESULT WINAPI IDataObject_fnGetCanonicalFormatEtc(LPDATAOBJECT iface, LPFORMATETC pformatectIn, LPFORMATETC pformatetcOut);
+static HRESULT WINAPI IDataObject_fnSetData(LPDATAOBJECT iface, LPFORMATETC pformatetc, STGMEDIUM* pmedium, BOOL fRelease);
 static HRESULT WINAPI IDataObject_fnEnumFormatEtc(LPDATAOBJECT iface, DWORD dwDirection, IEnumFORMATETC** ppenumFormatEtc);
-static HRESULT WINAPI IDataObject_fnDAdvise(LPDATAOBJECT iface, LPFORMATETC32* pformatetc, DWORD advf, IAdviseSink* pAdvSink, DWORD* pdwConnection);
+static HRESULT WINAPI IDataObject_fnDAdvise(LPDATAOBJECT iface, LPFORMATETC* pformatetc, DWORD advf, IAdviseSink* pAdvSink, DWORD* pdwConnection);
 static HRESULT WINAPI IDataObject_fnDUnadvise(LPDATAOBJECT iface, DWORD dwConnection);
 static HRESULT WINAPI IDataObject_fnEnumDAdvise(LPDATAOBJECT iface, IEnumSTATDATA **ppenumAdvise);
 
@@ -224,7 +224,7 @@ static struct ICOM_VTABLE(IDataObject) dtovt =
 /**************************************************************************
 *  IDataObject_Constructor
 */
-LPDATAOBJECT IDataObject_Constructor(HWND32 hwndOwner, LPSHELLFOLDER psf, LPITEMIDLIST * apidl, UINT32 cidl)
+LPDATAOBJECT IDataObject_Constructor(HWND hwndOwner, LPSHELLFOLDER psf, LPITEMIDLIST * apidl, UINT cidl)
 {
 	IDataObjectImpl* dto;
 	if (!(dto = (IDataObjectImpl*)HeapAlloc(GetProcessHeap(),0,sizeof(IDataObjectImpl))))
@@ -309,12 +309,12 @@ static ULONG WINAPI IDataObject_fnRelease(LPDATAOBJECT iface)
 * NOTES
 *  get or register the "Shell IDList Array" clipformat
 */
-static BOOL32 DATAOBJECT_InitShellIDList(void)
+static BOOL DATAOBJECT_InitShellIDList(void)
 {	if (cfShellIDList)
         { return(TRUE);
         }
 
-        cfShellIDList = RegisterClipboardFormat32A(CFSTR_SHELLIDLIST);
+        cfShellIDList = RegisterClipboardFormatA(CFSTR_SHELLIDLIST);
         return(cfShellIDList != 0);
 }
 
@@ -354,17 +354,17 @@ static BOOL32 DATAOBJECT_InitFileContents(void)
 /**************************************************************************
 * interface implementation
 */
-static HRESULT WINAPI IDataObject_fnGetData(LPDATAOBJECT iface, LPFORMATETC32 pformatetcIn, STGMEDIUM32 *pmedium)
+static HRESULT WINAPI IDataObject_fnGetData(LPDATAOBJECT iface, LPFORMATETC pformatetcIn, STGMEDIUM *pmedium)
 {
 	ICOM_THIS(IDataObjectImpl,iface);
 	char	temp[256];
-	UINT32	cItems;
+	UINT	cItems;
 	DWORD	size, size1, size2;
 	LPITEMIDLIST pidl;
 	LPCIDA pcida;
-	HGLOBAL32 hmem;
+	HGLOBAL hmem;
 	
-	GetClipboardFormatName32A (pformatetcIn->cfFormat, temp, 256);
+	GetClipboardFormatNameA (pformatetcIn->cfFormat, temp, 256);
 	WARN (shell, "(%p)->(%p %p format=%s)semi-stub\n", This, pformatetcIn, pmedium, temp);
 
 	if (!DATAOBJECT_InitShellIDList())	/* is the clipformat registred? */
@@ -387,11 +387,11 @@ static HRESULT WINAPI IDataObject_fnGetData(LPDATAOBJECT iface, LPFORMATETC32 pf
 	    
 	    /*hack consider only the first item*/
 	    cItems = 2;
-	    size = sizeof(CIDA) + sizeof (UINT32)*(cItems-1);
+	    size = sizeof(CIDA) + sizeof (UINT)*(cItems-1);
 	    size1 = ILGetSize (This->pidl);
 	    size2 = ILGetSize (pidl);
-	    hmem = GlobalAlloc32(GMEM_FIXED, size+size1+size2);
-	    pcida = GlobalLock32 (hmem);
+	    hmem = GlobalAlloc(GMEM_FIXED, size+size1+size2);
+	    pcida = GlobalLock (hmem);
 	    if (!pcida)
 	    { return(E_OUTOFMEMORY);
 	    }
@@ -408,10 +408,10 @@ static HRESULT WINAPI IDataObject_fnGetData(LPDATAOBJECT iface, LPFORMATETC32 pf
 	    memcpy ((LPBYTE)pcida+size+size1, pidl, size2);
 	    TRACE(shell,"-- after copy\n");
 
-	    GlobalUnlock32(hmem);
+	    GlobalUnlock(hmem);
 	    
 	    pmedium->tymed = TYMED_HGLOBAL;
-	    pmedium->u.hGlobal = (HGLOBAL32)pcida;
+	    pmedium->u.hGlobal = (HGLOBAL)pcida;
 	    pmedium->pUnkForRelease = NULL;
 	    TRACE(shell,"-- ready\n");
 	    return(NOERROR);
@@ -420,25 +420,25 @@ static HRESULT WINAPI IDataObject_fnGetData(LPDATAOBJECT iface, LPFORMATETC32 pf
 	FIXME (shell, "-- clipformat not implemented\n");
 	return (E_INVALIDARG);
 }
-static HRESULT WINAPI IDataObject_fnGetDataHere(LPDATAOBJECT iface, LPFORMATETC32 pformatetc, STGMEDIUM32 *pmedium)
+static HRESULT WINAPI IDataObject_fnGetDataHere(LPDATAOBJECT iface, LPFORMATETC pformatetc, STGMEDIUM *pmedium)
 {
 	ICOM_THIS(IDataObjectImpl,iface);
 	FIXME (shell, "(%p)->()\n", This);
 	return E_NOTIMPL;
 }
-static HRESULT WINAPI IDataObject_fnQueryGetData(LPDATAOBJECT iface, LPFORMATETC32 pformatetc)
+static HRESULT WINAPI IDataObject_fnQueryGetData(LPDATAOBJECT iface, LPFORMATETC pformatetc)
 {
 	ICOM_THIS(IDataObjectImpl,iface);
 	FIXME (shell, "(%p)->()\n", This);
 	return E_NOTIMPL;
 }
-static HRESULT WINAPI IDataObject_fnGetCanonicalFormatEtc(LPDATAOBJECT iface, LPFORMATETC32 pformatectIn, LPFORMATETC32 pformatetcOut)
+static HRESULT WINAPI IDataObject_fnGetCanonicalFormatEtc(LPDATAOBJECT iface, LPFORMATETC pformatectIn, LPFORMATETC pformatetcOut)
 {
 	ICOM_THIS(IDataObjectImpl,iface);
 	FIXME (shell, "(%p)->()\n", This);
 	return E_NOTIMPL;
 }
-static HRESULT WINAPI IDataObject_fnSetData(LPDATAOBJECT iface, LPFORMATETC32 pformatetc, STGMEDIUM32 *pmedium, BOOL32 fRelease)
+static HRESULT WINAPI IDataObject_fnSetData(LPDATAOBJECT iface, LPFORMATETC pformatetc, STGMEDIUM *pmedium, BOOL fRelease)
 {
 	ICOM_THIS(IDataObjectImpl,iface);
 	FIXME (shell, "(%p)->()\n", This);
@@ -450,7 +450,7 @@ static HRESULT WINAPI IDataObject_fnEnumFormatEtc(LPDATAOBJECT iface, DWORD dwDi
 	FIXME (shell, "(%p)->()\n", This);
 	return E_NOTIMPL;
 }
-static HRESULT WINAPI IDataObject_fnDAdvise(LPDATAOBJECT iface, LPFORMATETC32 *pformatetc, DWORD advf, IAdviseSink *pAdvSink, DWORD *pdwConnection)
+static HRESULT WINAPI IDataObject_fnDAdvise(LPDATAOBJECT iface, LPFORMATETC *pformatetc, DWORD advf, IAdviseSink *pAdvSink, DWORD *pdwConnection)
 {
 	ICOM_THIS(IDataObjectImpl,iface);
 	FIXME (shell, "(%p)->()\n", This);

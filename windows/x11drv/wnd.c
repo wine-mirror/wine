@@ -142,7 +142,7 @@ void X11DRV_WND_Finalize(WND *wndPtr)
 /**********************************************************************
  *		X11DRV_WND_CreateDesktopWindow
  */
-BOOL32 X11DRV_WND_CreateDesktopWindow(WND *wndPtr, CLASS *classPtr, BOOL32 bUnicode)
+BOOL X11DRV_WND_CreateDesktopWindow(WND *wndPtr, CLASS *classPtr, BOOL bUnicode)
 {
     if (wmProtocols == None)
         wmProtocols = TSXInternAtom( display, "WM_PROTOCOLS", True );
@@ -163,7 +163,7 @@ BOOL32 X11DRV_WND_CreateDesktopWindow(WND *wndPtr, CLASS *classPtr, BOOL32 bUnic
 /**********************************************************************
  *		X11DRV_WND_CreateWindow
  */
-BOOL32 X11DRV_WND_CreateWindow(WND *wndPtr, CLASS *classPtr, CREATESTRUCT32A *cs, BOOL32 bUnicode)
+BOOL X11DRV_WND_CreateWindow(WND *wndPtr, CLASS *classPtr, CREATESTRUCTA *cs, BOOL bUnicode)
 {
   /* Create the X window (only for top-level windows, and then only */
   /* when there's no desktop window) */
@@ -245,7 +245,7 @@ BOOL32 X11DRV_WND_CreateWindow(WND *wndPtr, CLASS *classPtr, CREATESTRUCT32A *cs
 /***********************************************************************
  *		X11DRV_WND_DestroyWindow
  */
-BOOL32 X11DRV_WND_DestroyWindow(WND *wndPtr)
+BOOL X11DRV_WND_DestroyWindow(WND *wndPtr)
 {
    if (X11DRV_WND_GetXWindow(wndPtr))
      {
@@ -290,7 +290,7 @@ WND *X11DRV_WND_SetParent(WND *wndPtr, WND *pWndParent)
                 wndPtr->wIDmenu = 0;
                 if( X11DRV_WND_GetXRootWindow(wndPtr) == DefaultRootWindow(display) )
                 {
-                    CREATESTRUCT32A cs;
+                    CREATESTRUCTA cs;
                     cs.lpCreateParams = NULL;
                     cs.hInstance = 0; /* not used if following call */
                     cs.hMenu = 0; /* not used in following call */
@@ -314,7 +314,7 @@ WND *X11DRV_WND_SetParent(WND *wndPtr, WND *pWndParent)
                     wndPtr->dwStyle |= WS_CHILD;
                     if( wndPtr->wIDmenu != 0)
                     {
-                        DestroyMenu32( (HMENU32) wndPtr->wIDmenu );
+                        DestroyMenu( (HMENU) wndPtr->wIDmenu );
                         wndPtr->wIDmenu = 0;
                     }
                 }
@@ -389,7 +389,7 @@ static Window X11DRV_WND_FindDesktopXWindow( WND *wndPtr )
  *
  * SetWindowPos() for an X window. Used by the real SetWindowPos().
  */
-void X11DRV_WND_SetWindowPos(WND *wndPtr, const WINDOWPOS32 *winpos, BOOL32 bSMC_SETXPOS)
+void X11DRV_WND_SetWindowPos(WND *wndPtr, const WINDOWPOS *winpos, BOOL bSMC_SETXPOS)
 {
   XWindowChanges winChanges;
   int changeMask = 0;
@@ -490,7 +490,7 @@ void X11DRV_WND_SetText(WND *wndPtr, LPCSTR text)
  */
 void X11DRV_WND_SetFocus(WND *wndPtr)
 {
-  HWND32 hwnd =  wndPtr->hwndSelf;
+  HWND hwnd =  wndPtr->hwndSelf;
   XWindowAttributes win_attr;
   Window win;
   
@@ -544,11 +544,11 @@ void X11DRV_WND_PostSizeMove(WND *wndPtr)
  *		 X11DRV_WND_ScrollWindow
  */
 void X11DRV_WND_ScrollWindow(
-  WND *wndPtr, DC *dcPtr, INT32 dx, INT32 dy, 
-  const RECT32 *rect, BOOL32 bUpdate)
+  WND *wndPtr, DC *dcPtr, INT dx, INT dy, 
+  const RECT *rect, BOOL bUpdate)
 {
   X11DRV_PDEVICE *physDev = (X11DRV_PDEVICE *)dcPtr->physDev;
-  POINT32 dst, src;
+  POINT dst, src;
   
   dst.x = (src.x = dcPtr->w.DCOrgX + rect->left) + dx;
   dst.y = (src.y = dcPtr->w.DCOrgY + rect->top) + dy;
@@ -574,7 +574,7 @@ void X11DRV_WND_ScrollWindow(
  * Set the drawable, origin and dimensions for the DC associated to
  * a given window.
  */
-void X11DRV_WND_SetDrawable(WND *wndPtr, DC *dc, WORD flags, BOOL32 bSetClipOrigin)
+void X11DRV_WND_SetDrawable(WND *wndPtr, DC *dc, WORD flags, BOOL bSetClipOrigin)
 {
     X11DRV_PDEVICE *physDev = (X11DRV_PDEVICE *)dc->physDev;
 
@@ -622,7 +622,7 @@ void X11DRV_WND_SetDrawable(WND *wndPtr, DC *dc, WORD flags, BOOL32 bSetClipOrig
 /***********************************************************************
  *		X11DRV_WND_IsSelfClipping
  */
-BOOL32 X11DRV_WND_IsSelfClipping(WND *wndPtr)
+BOOL X11DRV_WND_IsSelfClipping(WND *wndPtr)
 {
   if( X11DRV_WND_GetXWindow(wndPtr) ) 
       return TRUE; /* X itself will do the clipping */

@@ -21,12 +21,12 @@
 
 Cursor X11DRV_MOUSE_XCursor = None;    /* Current X cursor */
 
-BOOL32 X11DRV_MOUSE_DisableWarpPointer = FALSE;  /* hack; see DISPLAY_MoveCursor */
+BOOL X11DRV_MOUSE_DisableWarpPointer = FALSE;  /* hack; see DISPLAY_MoveCursor */
 
 /***********************************************************************
  *		X11DRV_MOUSE_DoSetCursor
  */
-static BOOL32 X11DRV_MOUSE_DoSetCursor( CURSORICONINFO *ptr )
+static BOOL X11DRV_MOUSE_DoSetCursor( CURSORICONINFO *ptr )
 {
     Pixmap pixmapBits, pixmapMask, pixmapAll;
     XColor fg, bg;
@@ -151,13 +151,13 @@ static BOOL32 X11DRV_MOUSE_DoSetCursor( CURSORICONINFO *ptr )
         /* FIXME: this won't work correctly with native USER !*/
 
         /* Set the same cursor for all top-level windows */
-        HWND32 hwnd = GetWindow32( GetDesktopWindow32(), GW_CHILD );
+        HWND hwnd = GetWindow( GetDesktopWindow(), GW_CHILD );
         while(hwnd)
         {
             Window win = X11DRV_WND_FindXWindow( WIN_FindWndPtr( hwnd ) );
             if (win && win!=DefaultRootWindow(display))
                 XDefineCursor( display, win, cursor );
-            hwnd = GetWindow32( hwnd, GW_HWNDNEXT );
+            hwnd = GetWindow( hwnd, GW_HWNDNEXT );
         }
     }
     return TRUE;

@@ -2,8 +2,8 @@ name	ole32
 type	win32
 
   1 stub BindMoniker                # stdcall (ptr long ptr ptr) return 0,ERR_NOTIMPLEMENTED
-  2 stdcall CLSIDFromProgID(wstr ptr) CLSIDFromProgID32
-  3 stdcall CLSIDFromString(wstr ptr) CLSIDFromString32
+  2 stdcall CLSIDFromProgID(wstr ptr) CLSIDFromProgID
+  3 stdcall CLSIDFromString(wstr ptr) CLSIDFromString
   4 stdcall CoBuildVersion() CoBuildVersion
   5 stub CoCreateFreeThreadedMarshaler # stdcall (ptr ptr) return 0,ERR_NOTIMPLEMENTED
   6 stdcall CoCreateGuid(ptr) CoCreateGuid
@@ -20,52 +20,52 @@ type	win32
  17 stub CoGetCurrentLogicalThreadId
  18 stdcall CoGetCurrentProcess() CoGetCurrentProcess
  19 stub CoGetInterfaceAndReleaseStream # stdcall (ptr ptr ptr) return 0,ERR_NOTIMPLEMENTED
- 20 stdcall CoGetMalloc(long ptr) CoGetMalloc32
+ 20 stdcall CoGetMalloc(long ptr) CoGetMalloc
  21 stub CoGetMarshalSizeMax        # stdcall (ptr ptr ptr long ptr long) return 0,ERR_NOTIMPLEMENTED
  22 stub CoGetPSClsid               # stdcall (ptr ptr) return 0,ERR_NOTIMPLEMENTED
  23 stub CoGetStandardMarshal       # stdcall (ptr ptr long ptr long ptr) return 0,ERR_NOTIMPLEMENTED
  24 stub CoGetState
  25 stub CoGetTreatAsClass          # stdcall (ptr ptr) return 0,ERR_NOTIMPLEMENTED
- 26 stdcall CoInitialize(ptr) CoInitialize32
+ 26 stdcall CoInitialize(ptr) CoInitialize
  27 stdcall CoInitializeWOW(long long) CoInitializeWOW
  28 stub CoIsHandlerConnected       # stdcall (ptr) return 0,ERR_NOTIMPLEMENTED
  29 stub CoIsOle1Class              # stdcall (ptr) return 0,ERR_NOTIMPLEMENTED
  30 stdcall CoLoadLibrary(wstr long) CoLoadLibrary
- 31 stdcall CoLockObjectExternal(ptr long long) CoLockObjectExternal32
+ 31 stdcall CoLockObjectExternal(ptr long long) CoLockObjectExternal
  32 stub CoMarshalHresult           # stdcall (ptr ptr) return 0,ERR_NOTIMPLEMENTED
  33 stub CoMarshalInterThreadInterfaceInStream # stdcall (ptr ptr ptr) return 0,ERR_NOTIMPLEMENTED
  34 stub CoMarshalInterface         # stdcall (ptr ptr ptr long ptr long) return 0,ERR_NOTIMPLEMENTED
  35 stub CoQueryReleaseObject
- 36 stdcall CoRegisterClassObject(ptr ptr long long ptr) CoRegisterClassObject32
+ 36 stdcall CoRegisterClassObject(ptr ptr long long ptr) CoRegisterClassObject
  37 stub CoRegisterMallocSpy        # stdcall (ptr) return 0,ERR_NOTIMPLEMENTED
- 38 stdcall CoRegisterMessageFilter(ptr ptr) CoRegisterMessageFilter32
+ 38 stdcall CoRegisterMessageFilter(ptr ptr) CoRegisterMessageFilter
  39 stub CoReleaseMarshalData       # stdcall (ptr) return 0,ERR_NOTIMPLEMENTED
- 40 stdcall CoRevokeClassObject(long) CoRevokeClassObject32
+ 40 stdcall CoRevokeClassObject(long) CoRevokeClassObject
  41 stub CoRevokeMallocSpy          # stdcall () return 0,ERR_NOTIMPLEMENTED
- 42 stdcall CoSetState(ptr) CoSetState32
+ 42 stdcall CoSetState(ptr) CoSetState
  43 stdcall CoTaskMemAlloc(long) CoTaskMemAlloc
  44 stdcall CoTaskMemFree(ptr) CoTaskMemFree
  45 stub CoTaskMemRealloc           # stdcall (ptr long) return 0,ERR_NOTIMPLEMENTED
  46 stub CoTreatAsClass             # stdcall (ptr ptr) return 0,ERR_NOTIMPLEMENTED
- 47 stdcall CoUninitialize() CoUninitialize32
+ 47 stdcall CoUninitialize() CoUninitialize
  48 stub CoUnloadingWOW
  49 stub CoUnmarshalHresult         # stdcall (ptr ptr) return 0,ERR_NOTIMPLEMENTED
  50 stub CoUnmarshalInterface       # stdcall (ptr ptr ptr) return 0,ERR_NOTIMPLEMENTED
  51 stub CreateAntiMoniker          # stdcall (ptr) return 0,ERR_NOTIMPLEMENTED
- 52 stdcall CreateBindCtx(long ptr) CreateBindCtx32
+ 52 stdcall CreateBindCtx(long ptr) CreateBindCtx
  53 stub CreateDataAdviseHolder     # stdcall (ptr) return 0,ERR_NOTIMPLEMENTED
  54 stub CreateDataCache            # stdcall (ptr ptr ptr ptr) return 0,ERR_NOTIMPLEMENTED
- 55 stdcall CreateFileMoniker(wstr ptr) CreateFileMoniker32
+ 55 stdcall CreateFileMoniker(wstr ptr) CreateFileMoniker
  56 stub CreateGenericComposite     # stdcall (ptr ptr ptr) return 0,ERR_NOTIMPLEMENTED
  57 stub CreateILockBytesOnHGlobal  # stdcall (ptr long ptr) return 0,ERR_NOTIMPLEMENTED
- 58 stdcall CreateItemMoniker(wstr wstr ptr) CreateItemMoniker32
- 59 stdcall CreateOleAdviseHolder(ptr) CreateOleAdviseHolder32
+ 58 stdcall CreateItemMoniker(wstr wstr ptr) CreateItemMoniker
+ 59 stdcall CreateOleAdviseHolder(ptr) CreateOleAdviseHolder
  60 stub CreatePointerMoniker       # stdcall (ptr ptr) return 0,ERR_NOTIMPLEMENTED
  61 stub CreateStreamOnHGlobal      # stdcall (ptr long ptr) return 0,ERR_NOTIMPLEMENTED
  62 stub DllDebugObjectRPCHook
  63 stub DllGetClassObject
  64 stub DllGetClassObjectWOW
- 65 stdcall DoDragDrop(ptr ptr long ptr) DoDragDrop32
+ 65 stdcall DoDragDrop(ptr ptr long ptr) DoDragDrop
  66 stub EnableHookObject
  67 stub GetClassFile
  68 stub GetConvertStg
@@ -73,12 +73,12 @@ type	win32
  70 stub GetHGlobalFromILockBytes
  71 stub GetHGlobalFromStream
  72 stub GetHookInterface
- 73 stdcall GetRunningObjectTable(long ptr) GetRunningObjectTable32
+ 73 stdcall GetRunningObjectTable(long ptr) GetRunningObjectTable
  74 stub IIDFromString
  75 stub IsAccelerator
  76 stdcall IsEqualGUID(ptr ptr) IsEqualGUID32
  77 stub IsValidIid
- 78 stdcall IsValidInterface(ptr) IsValidInterface32
+ 78 stdcall IsValidInterface(ptr) IsValidInterface
  79 stub IsValidPtrIn
  80 stub IsValidPtrOut
  81 stub MkParseDisplayName
@@ -110,7 +110,7 @@ type	win32
 107 stub OleGetIconOfFile
 108 stdcall OleInitialize(ptr) OleInitialize
 109 stdcall OleInitializeWOW(long) OleInitializeWOW
-110 stdcall OleIsCurrentClipboard(ptr) OleIsCurrentClipboard32
+110 stdcall OleIsCurrentClipboard(ptr) OleIsCurrentClipboard
 111 stub OleIsRunning
 112 stub OleLoad
 113 stub OleLoadFromStream
@@ -122,7 +122,7 @@ type	win32
 119 stub OleRegEnumFormatEtc
 120 stub OleRegEnumVerbs
 121 stdcall OleRegGetMiscStatus(ptr long ptr) OleRegGetMiscStatus32
-122 stdcall OleRegGetUserType(long long ptr) OleRegGetUserType32
+122 stdcall OleRegGetUserType(long long ptr) OleRegGetUserType
 123 stub OleRun
 124 stub OleSave
 125 stub OleSaveToStream
@@ -139,31 +139,31 @@ type	win32
 136 stub ReadFmtUserTypeStg
 137 stub ReadOleStg
 138 stub ReadStringStream
-139 stdcall RegisterDragDrop(long ptr) RegisterDragDrop32
+139 stdcall RegisterDragDrop(long ptr) RegisterDragDrop
 140 stub ReleaseStgMedium
-141 stdcall RevokeDragDrop(long) RevokeDragDrop32
+141 stdcall RevokeDragDrop(long) RevokeDragDrop
 142 stub SetConvertStg
 143 stub SetDocumentBitStg
-144 stdcall StgCreateDocfile(wstr long long ptr) StgCreateDocfile32
+144 stdcall StgCreateDocfile(wstr long long ptr) StgCreateDocfile
 145 stub StgCreateDocfileOnILockBytes
-146 stdcall StgIsStorageFile(wstr) StgIsStorageFile32
+146 stdcall StgIsStorageFile(wstr) StgIsStorageFile
 147 stub StgIsStorageILockBytes
-148 stdcall StgOpenStorage(wstr ptr long ptr long ptr) StgOpenStorage32
+148 stdcall StgOpenStorage(wstr ptr long ptr long ptr) StgOpenStorage
 149 stub StgOpenStorageOnILockBytes
 150 stub StgSetTimes
-151 stdcall StringFromCLSID(ptr ptr) StringFromCLSID32
+151 stdcall StringFromCLSID(ptr ptr) StringFromCLSID
 152 stdcall StringFromGUID2(ptr ptr long) StringFromGUID2
-153 stdcall StringFromIID(ptr ptr) StringFromCLSID32
+153 stdcall StringFromIID(ptr ptr) StringFromCLSID
 154 stub UtConvertDvtd16toDvtd32
 155 stub UtConvertDvtd32toDvtd16
 156 stub UtGetDvtd16Info
 157 stub UtGetDvtd32Info
-158 stdcall WriteClassStg(ptr ptr) WriteClassStg32
+158 stdcall WriteClassStg(ptr ptr) WriteClassStg
 159 stub WriteClassStm
 160 stub WriteFmtUserTypeStg
 161 stub WriteOleStg
 162 stub WriteStringStream
-163 stdcall CoInitializeEx(ptr long) CoInitializeEx32
+163 stdcall CoInitializeEx(ptr long) CoInitializeEx
 164 stub CoInitializeSecurity       # stdcall (ptr long ptr ptr long long ptr long ptr) return 0,ERR_NOTIMPLEMENTED
 165 stub CoCreateInstanceEx         # stdcall (ptr ptr long ptr long ptr) return 0,ERR_NOTIMPLEMENTED
 166 stub PropVariantClear

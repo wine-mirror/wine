@@ -66,7 +66,7 @@ typedef struct
  *
  * Convert OF_* mode into flags for CreateFile.
  */
-static void FILE_ConvertOFMode( INT32 mode, DWORD *access, DWORD *sharing )
+static void FILE_ConvertOFMode( INT mode, DWORD *access, DWORD *sharing )
 {
     switch(mode & 0x03)
     {
@@ -141,7 +141,7 @@ Legend: Y = open succeeds, N = open fails with error code 05h
 	For all	other cases we barf,set the DOS_ERROR and return TRUE
 
  */
-static BOOL32 FILE_ShareDeny( int mode, int oldmode)
+static BOOL FILE_ShareDeny( int mode, int oldmode)
 {
   int oldsharemode = oldmode & 0x70;
   int sharemode    =    mode & 0x70;
@@ -307,7 +307,7 @@ void FILE_SetDosError(void)
  *
  * Duplicate a Unix handle into a task handle.
  */
-HFILE32 FILE_DupUnixHandle( int fd, DWORD access )
+HFILE FILE_DupUnixHandle( int fd, DWORD access )
 {
     FILE_OBJECT *file;
     int unix_handle;
@@ -317,7 +317,7 @@ HFILE32 FILE_DupUnixHandle( int fd, DWORD access )
     if ((unix_handle = dup(fd)) == -1)
     {
         FILE_SetDosError();
-        return INVALID_HANDLE_VALUE32;
+        return INVALID_HANDLE_VALUE;
     }
     req.access  = access;
     req.inherit = 1;
@@ -328,13 +328,13 @@ HFILE32 FILE_DupUnixHandle( int fd, DWORD access )
     CLIENT_SendRequest( REQ_CREATE_FILE, unix_handle, 1,
                         &req, sizeof(req) );
     CLIENT_WaitSimpleReply( &reply, sizeof(reply), NULL );
-    if (reply.handle == -1) return INVALID_HANDLE_VALUE32;
+    if (reply.handle == -1) return INVALID_HANDLE_VALUE;
 
     if (!(file = HeapAlloc( SystemHeap, 0, sizeof(FILE_OBJECT) )))
     {
         CLIENT_CloseHandle( reply.handle );
         SetLastError( ERROR_TOO_MANY_OPEN_FILES );
-        return (HFILE32)NULL;
+        return (HFILE)NULL;
     }
     file->header.type = K32OBJ_FILE;
     file->header.refcount = 0;
@@ -348,9 +348,9 @@ HFILE32 FILE_DupUnixHandle( int fd, DWORD access )
  *
  * Implementation of CreateFile. Takes a Unix path name.
  */
-HFILE32 FILE_CreateFile( LPCSTR filename, DWORD access, DWORD sharing,
+HFILE FILE_CreateFile( LPCSTR filename, DWORD access, DWORD sharing,
                          LPSECURITY_ATTRIBUTES sa, DWORD creation,
-                         DWORD attributes, HANDLE32 template )
+                         DWORD attributes, HANDLE template )
 {
     FILE_OBJECT *file;
     struct create_file_request req;
@@ -382,7 +382,7 @@ HFILE32 FILE_CreateFile( LPCSTR filename, DWORD access, DWORD sharing,
 	    CLIENT_WaitSimpleReply( &reply, sizeof(reply), NULL );
 	}
     }
-    if (reply.handle == -1) return INVALID_HANDLE_VALUE32;
+    if (reply.handle == -1) return INVALID_HANDLE_VALUE;
 
     /* Now build the FILE_OBJECT */
 
@@ -390,7 +390,7 @@ HFILE32 FILE_CreateFile( LPCSTR filename, DWORD access, DWORD sharing,
     {
         SetLastError( ERROR_OUTOFMEMORY );
         CLIENT_CloseHandle( reply.handle );
-        return (HFILE32)INVALID_HANDLE_VALUE32;
+        return (HFILE)INVALID_HANDLE_VALUE;
     }
     file->header.type = K32OBJ_FILE;
     file->header.refcount = 0;
@@ -404,7 +404,7 @@ HFILE32 FILE_CreateFile( LPCSTR filename, DWORD access, DWORD sharing,
  *
  * Same as FILE_CreateFile but for a device
  */
-HFILE32 FILE_CreateDevice( int client_id, DWORD access, LPSECURITY_ATTRIBUTES sa )
+HFILE FILE_CreateDevice( int client_id, DWORD access, LPSECURITY_ATTRIBUTES sa )
 {
     FILE_OBJECT *file;
     struct create_device_request req;
@@ -415,7 +415,7 @@ HFILE32 FILE_CreateDevice( int client_id, DWORD access, LPSECURITY_ATTRIBUTES sa
     req.id      = client_id;
     CLIENT_SendRequest( REQ_CREATE_DEVICE, -1, 1, &req, sizeof(req) );
     CLIENT_WaitSimpleReply( &reply, sizeof(reply), NULL );
-    if (reply.handle == -1) return INVALID_HANDLE_VALUE32;
+    if (reply.handle == -1) return INVALID_HANDLE_VALUE;
 
     /* Now build the FILE_OBJECT */
 
@@ -423,7 +423,7 @@ HFILE32 FILE_CreateDevice( int client_id, DWORD access, LPSECURITY_ATTRIBUTES sa
     {
         SetLastError( ERROR_OUTOFMEMORY );
         CLIENT_CloseHandle( reply.handle );
-        return (HFILE32)INVALID_HANDLE_VALUE32;
+        return (HFILE)INVALID_HANDLE_VALUE;
     }
     file->header.type = K32OBJ_FILE;
     file->header.refcount = 0;
@@ -460,16 +460,16 @@ HFILE32 FILE_CreateDevice( int client_id, DWORD access, LPSECURITY_ATTRIBUTES sa
  * Doesn't support character devices, pipes, template files, or a
  * lot of the 'attributes' flags yet.
  */
-HFILE32 WINAPI CreateFile32A( LPCSTR filename, DWORD access, DWORD sharing,
+HFILE WINAPI CreateFileA( LPCSTR filename, DWORD access, DWORD sharing,
                               LPSECURITY_ATTRIBUTES sa, DWORD creation,
-                              DWORD attributes, HANDLE32 template )
+                              DWORD attributes, HANDLE template )
 {
     DOS_FULL_NAME full_name;
 
     if (!filename)
     {
         SetLastError( ERROR_INVALID_PARAMETER );
-        return HFILE_ERROR32;
+        return HFILE_ERROR;
     }
 
     /* If the name starts with '\\?\', ignore the first 4 chars. */
@@ -480,7 +480,7 @@ HFILE32 WINAPI CreateFile32A( LPCSTR filename, DWORD access, DWORD sharing,
 	{
             FIXME( file, "UNC name (%s) not supported.\n", filename );
             SetLastError( ERROR_PATH_NOT_FOUND );
-            return HFILE_ERROR32;
+            return HFILE_ERROR;
 	}
     }
 
@@ -492,32 +492,32 @@ HFILE32 WINAPI CreateFile32A( LPCSTR filename, DWORD access, DWORD sharing,
     {
         FIXME( file, "UNC name (%s) not supported.\n", filename );
         SetLastError( ERROR_PATH_NOT_FOUND );
-        return HFILE_ERROR32;
+        return HFILE_ERROR;
     }
 
     /* Open a console for CONIN$ or CONOUT$ */
-    if (!lstrcmpi32A(filename, "CONIN$")) return CONSOLE_OpenHandle( FALSE, access, sa );
-    if (!lstrcmpi32A(filename, "CONOUT$")) return CONSOLE_OpenHandle( TRUE, access, sa );
+    if (!lstrcmpiA(filename, "CONIN$")) return CONSOLE_OpenHandle( FALSE, access, sa );
+    if (!lstrcmpiA(filename, "CONOUT$")) return CONSOLE_OpenHandle( TRUE, access, sa );
 
     if (DOSFS_GetDevice( filename ))
     {
-    	HFILE32	ret;
+    	HFILE	ret;
 
         TRACE(file, "opening device '%s'\n", filename );
 
-	if (HFILE_ERROR32!=(ret=DOSFS_OpenDevice( filename, access )))
+	if (HFILE_ERROR!=(ret=DOSFS_OpenDevice( filename, access )))
 		return ret;
 
 	/* Do not silence this please. It is a critical error. -MM */
         ERR(file, "Couldn't open device '%s'!\n",filename);
         SetLastError( ERROR_FILE_NOT_FOUND );
-        return HFILE_ERROR32;
+        return HFILE_ERROR;
     }
 
     /* check for filename, don't check for last entry if creating */
     if (!DOSFS_GetFullName( filename,
                (creation == OPEN_EXISTING) || (creation == TRUNCATE_EXISTING), &full_name ))
-        return HFILE_ERROR32;
+        return HFILE_ERROR;
 
     return FILE_CreateFile( full_name.long_name, access, sharing,
                             sa, creation, attributes, template );
@@ -528,12 +528,12 @@ HFILE32 WINAPI CreateFile32A( LPCSTR filename, DWORD access, DWORD sharing,
 /*************************************************************************
  *              CreateFile32W              (KERNEL32.48)
  */
-HFILE32 WINAPI CreateFile32W( LPCWSTR filename, DWORD access, DWORD sharing,
+HFILE WINAPI CreateFileW( LPCWSTR filename, DWORD access, DWORD sharing,
                               LPSECURITY_ATTRIBUTES sa, DWORD creation,
-                              DWORD attributes, HANDLE32 template)
+                              DWORD attributes, HANDLE template)
 {
     LPSTR afn = HEAP_strdupWtoA( GetProcessHeap(), 0, filename );
-    HFILE32 res = CreateFile32A( afn, access, sharing, sa, creation, attributes, template );
+    HFILE res = CreateFileA( afn, access, sharing, sa, creation, attributes, template );
     HeapFree( GetProcessHeap(), 0, afn );
     return res;
 }
@@ -571,7 +571,7 @@ static void FILE_FillInfo( struct stat *st, BY_HANDLE_FILE_INFORMATION *info )
  *
  * Stat a Unix path name. Return TRUE if OK.
  */
-BOOL32 FILE_Stat( LPCSTR unixName, BY_HANDLE_FILE_INFORMATION *info )
+BOOL FILE_Stat( LPCSTR unixName, BY_HANDLE_FILE_INFORMATION *info )
 {
     struct stat st;
 
@@ -590,7 +590,7 @@ BOOL32 FILE_Stat( LPCSTR unixName, BY_HANDLE_FILE_INFORMATION *info )
 /***********************************************************************
  *             GetFileInformationByHandle   (KERNEL32.219)
  */
-DWORD WINAPI GetFileInformationByHandle( HFILE32 hFile,
+DWORD WINAPI GetFileInformationByHandle( HFILE hFile,
                                          BY_HANDLE_FILE_INFORMATION *info )
 {
     struct get_file_info_request req;
@@ -622,14 +622,14 @@ DWORD WINAPI GetFileInformationByHandle( HFILE32 hFile,
  */
 DWORD WINAPI GetFileAttributes16( LPCSTR name )
 {
-    return GetFileAttributes32A( name );
+    return GetFileAttributesA( name );
 }
 
 
 /**************************************************************************
  *           GetFileAttributes32A   (KERNEL32.217)
  */
-DWORD WINAPI GetFileAttributes32A( LPCSTR name )
+DWORD WINAPI GetFileAttributesA( LPCSTR name )
 {
     DOS_FULL_NAME full_name;
     BY_HANDLE_FILE_INFORMATION info;
@@ -645,10 +645,10 @@ DWORD WINAPI GetFileAttributes32A( LPCSTR name )
 /**************************************************************************
  *           GetFileAttributes32W   (KERNEL32.218)
  */
-DWORD WINAPI GetFileAttributes32W( LPCWSTR name )
+DWORD WINAPI GetFileAttributesW( LPCWSTR name )
 {
     LPSTR nameA = HEAP_strdupWtoA( GetProcessHeap(), 0, name );
-    DWORD res = GetFileAttributes32A( nameA );
+    DWORD res = GetFileAttributesA( nameA );
     HeapFree( GetProcessHeap(), 0, nameA );
     return res;
 }
@@ -657,7 +657,7 @@ DWORD WINAPI GetFileAttributes32W( LPCWSTR name )
 /***********************************************************************
  *           GetFileSize   (KERNEL32.220)
  */
-DWORD WINAPI GetFileSize( HFILE32 hFile, LPDWORD filesizehigh )
+DWORD WINAPI GetFileSize( HFILE hFile, LPDWORD filesizehigh )
 {
     BY_HANDLE_FILE_INFORMATION info;
     if (!GetFileInformationByHandle( hFile, &info )) return 0;
@@ -669,7 +669,7 @@ DWORD WINAPI GetFileSize( HFILE32 hFile, LPDWORD filesizehigh )
 /***********************************************************************
  *           GetFileTime   (KERNEL32.221)
  */
-BOOL32 WINAPI GetFileTime( HFILE32 hFile, FILETIME *lpCreationTime,
+BOOL WINAPI GetFileTime( HFILE hFile, FILETIME *lpCreationTime,
                            FILETIME *lpLastAccessTime,
                            FILETIME *lpLastWriteTime )
 {
@@ -684,7 +684,7 @@ BOOL32 WINAPI GetFileTime( HFILE32 hFile, FILETIME *lpCreationTime,
 /***********************************************************************
  *           CompareFileTime   (KERNEL32.28)
  */
-INT32 WINAPI CompareFileTime( LPFILETIME x, LPFILETIME y )
+INT WINAPI CompareFileTime( LPFILETIME x, LPFILETIME y )
 {
         if (!x || !y) return -1;
 
@@ -721,22 +721,22 @@ UINT16 WINAPI GetTempFileName16( BYTE drive, LPCSTR prefix, UINT16 unique,
     if (drive & TF_FORCEDRIVE)
         sprintf(temppath,"%c:", drive & ~TF_FORCEDRIVE );
     else
-        GetTempPath32A( 132, temppath );
-    return (UINT16)GetTempFileName32A( temppath, prefix, unique, buffer );
+        GetTempPathA( 132, temppath );
+    return (UINT16)GetTempFileNameA( temppath, prefix, unique, buffer );
 }
 
 
 /***********************************************************************
  *           GetTempFileName32A   (KERNEL32.290)
  */
-UINT32 WINAPI GetTempFileName32A( LPCSTR path, LPCSTR prefix, UINT32 unique,
+UINT WINAPI GetTempFileNameA( LPCSTR path, LPCSTR prefix, UINT unique,
                                   LPSTR buffer)
 {
-    static UINT32 unique_temp;
+    static UINT unique_temp;
     DOS_FULL_NAME full_name;
     int i;
     LPSTR p;
-    UINT32 num;
+    UINT num;
 
     if ( !path || !prefix || !buffer ) return 0;
 
@@ -760,9 +760,9 @@ UINT32 WINAPI GetTempFileName32A( LPCSTR path, LPCSTR prefix, UINT32 unique,
     {
         do
         {
-            HFILE32 handle = CreateFile32A( buffer, GENERIC_WRITE, 0, NULL,
+            HFILE handle = CreateFileA( buffer, GENERIC_WRITE, 0, NULL,
                                             CREATE_NEW, FILE_ATTRIBUTE_NORMAL, -1 );
-            if (handle != INVALID_HANDLE_VALUE32)
+            if (handle != INVALID_HANDLE_VALUE)
             {  /* We created it */
                 TRACE(file, "created %s\n",
 			      buffer);
@@ -794,17 +794,17 @@ UINT32 WINAPI GetTempFileName32A( LPCSTR path, LPCSTR prefix, UINT32 unique,
 /***********************************************************************
  *           GetTempFileName32W   (KERNEL32.291)
  */
-UINT32 WINAPI GetTempFileName32W( LPCWSTR path, LPCWSTR prefix, UINT32 unique,
+UINT WINAPI GetTempFileNameW( LPCWSTR path, LPCWSTR prefix, UINT unique,
                                   LPWSTR buffer )
 {
     LPSTR   patha,prefixa;
     char    buffera[144];
-    UINT32  ret;
+    UINT  ret;
 
     if (!path) return 0;
     patha   = HEAP_strdupWtoA( GetProcessHeap(), 0, path );
     prefixa = HEAP_strdupWtoA( GetProcessHeap(), 0, prefix );
-    ret     = GetTempFileName32A( patha, prefixa, unique, buffera );
+    ret     = GetTempFileNameA( patha, prefixa, unique, buffera );
     lstrcpyAtoW( buffer, buffera );
     HeapFree( GetProcessHeap(), 0, patha );
     HeapFree( GetProcessHeap(), 0, prefixa );
@@ -817,17 +817,17 @@ UINT32 WINAPI GetTempFileName32W( LPCWSTR path, LPCWSTR prefix, UINT32 unique,
  *
  * Implementation of OpenFile16() and OpenFile32().
  */
-static HFILE32 FILE_DoOpenFile( LPCSTR name, OFSTRUCT *ofs, UINT32 mode,
-                                BOOL32 win32 )
+static HFILE FILE_DoOpenFile( LPCSTR name, OFSTRUCT *ofs, UINT mode,
+                                BOOL win32 )
 {
-    HFILE32 hFileRet;
+    HFILE hFileRet;
     FILETIME filetime;
     WORD filedatetime[2];
     DOS_FULL_NAME full_name;
     DWORD access, sharing;
     char *p;
 
-    if (!ofs) return HFILE_ERROR32;
+    if (!ofs) return HFILE_ERROR;
 
     ofs->cBytes = sizeof(OFSTRUCT);
     ofs->nErrCode = 0;
@@ -835,7 +835,7 @@ static HFILE32 FILE_DoOpenFile( LPCSTR name, OFSTRUCT *ofs, UINT32 mode,
 
     if (!name) {
 	ERR(file, "called with `name' set to NULL ! Please debug.\n");
-	return HFILE_ERROR32;
+	return HFILE_ERROR;
     }
 
     TRACE(file, "%s %04x\n", name, mode );
@@ -843,7 +843,7 @@ static HFILE32 FILE_DoOpenFile( LPCSTR name, OFSTRUCT *ofs, UINT32 mode,
     /* the watcom 10.6 IDE relies on a valid path returned in ofs->szPathName
        Are there any cases where getting the path here is wrong? 
        Uwe Bonnes 1997 Apr 2 */
-    if (!GetFullPathName32A( name, sizeof(ofs->szPathName),
+    if (!GetFullPathNameA( name, sizeof(ofs->szPathName),
 			     ofs->szPathName, NULL )) goto error;
     FILE_ConvertOFMode( mode, &access, &sharing );
 
@@ -863,9 +863,9 @@ static HFILE32 FILE_DoOpenFile( LPCSTR name, OFSTRUCT *ofs, UINT32 mode,
 
     if (mode & OF_CREATE)
     {
-        if ((hFileRet = CreateFile32A( name, GENERIC_READ | GENERIC_WRITE,
+        if ((hFileRet = CreateFileA( name, GENERIC_READ | GENERIC_WRITE,
                                        sharing, NULL, CREATE_ALWAYS,
-                                       FILE_ATTRIBUTE_NORMAL, -1 ))== INVALID_HANDLE_VALUE32)
+                                       FILE_ATTRIBUTE_NORMAL, -1 ))== INVALID_HANDLE_VALUE)
             goto error;
         goto success;
     }
@@ -890,7 +890,7 @@ static HFILE32 FILE_DoOpenFile( LPCSTR name, OFSTRUCT *ofs, UINT32 mode,
 found:
     TRACE(file, "found %s = %s\n",
                   full_name.long_name, full_name.short_name );
-    lstrcpyn32A( ofs->szPathName, full_name.short_name,
+    lstrcpynA( ofs->szPathName, full_name.short_name,
                  sizeof(ofs->szPathName) );
 
     if (mode & OF_SHARE_EXCLUSIVE)
@@ -911,7 +911,7 @@ found:
 	if (GetModuleHandle16(last+1))
 	  {
 	    TRACE(file,"Denying shared open for %s\n",full_name.long_name);
-	    return HFILE_ERROR32;
+	    return HFILE_ERROR;
 	  }
       }
 
@@ -924,7 +924,7 @@ found:
 
     hFileRet = FILE_CreateFile( full_name.long_name, access, sharing,
                                 NULL, OPEN_EXISTING, 0, -1 );
-    if (hFileRet == HFILE_ERROR32) goto not_found;
+    if (hFileRet == HFILE_ERROR) goto not_found;
 
     GetFileTime( hFileRet, NULL, NULL, &filetime );
     FileTimeToDosDateTime( &filetime, &filedatetime[0], &filedatetime[1] );
@@ -966,7 +966,7 @@ error:  /* We get here if there was an error opening the file */
     ofs->nErrCode = GetLastError();
     WARN(file, "(%s): return = HFILE_ERROR error= %d\n", 
 		  name,ofs->nErrCode );
-    return HFILE_ERROR32;
+    return HFILE_ERROR;
 }
 
 
@@ -982,7 +982,7 @@ HFILE16 WINAPI OpenFile16( LPCSTR name, OFSTRUCT *ofs, UINT16 mode )
 /***********************************************************************
  *           OpenFile32   (KERNEL32.396)
  */
-HFILE32 WINAPI OpenFile32( LPCSTR name, OFSTRUCT *ofs, UINT32 mode )
+HFILE WINAPI OpenFile( LPCSTR name, OFSTRUCT *ofs, UINT mode )
 {
     return FILE_DoOpenFile( name, ofs, mode, TRUE );
 }
@@ -994,8 +994,8 @@ HFILE32 WINAPI OpenFile32( LPCSTR name, OFSTRUCT *ofs, UINT32 mode )
  * Allocates the default DOS handles for a process. Called either by
  * AllocDosHandle below or by the DOSVM stuff.
  */
-BOOL32 FILE_InitProcessDosHandles( void ) {
-	HANDLE32 *ptr;
+BOOL FILE_InitProcessDosHandles( void ) {
+	HANDLE *ptr;
 
         if (!(ptr = HeapAlloc( SystemHeap, HEAP_ZERO_MEMORY,
                                sizeof(*ptr) * DOS_TABLE_SIZE )))
@@ -1015,12 +1015,12 @@ BOOL32 FILE_InitProcessDosHandles( void ) {
  * Allocate a DOS handle for a Win32 handle. The Win32 handle is no
  * longer valid after this function (even on failure).
  */
-HFILE16 FILE_AllocDosHandle( HANDLE32 handle )
+HFILE16 FILE_AllocDosHandle( HANDLE handle )
 {
     int i;
-    HANDLE32 *ptr = PROCESS_Current()->dos_handles;
+    HANDLE *ptr = PROCESS_Current()->dos_handles;
 
-    if (!handle || (handle == INVALID_HANDLE_VALUE32))
+    if (!handle || (handle == INVALID_HANDLE_VALUE))
         return INVALID_HANDLE_VALUE16;
 
     if (!ptr) {
@@ -1048,13 +1048,13 @@ error:
  *
  * Return the Win32 handle for a DOS handle.
  */
-HANDLE32 FILE_GetHandle32( HFILE16 hfile )
+HANDLE FILE_GetHandle( HFILE16 hfile )
 {
-    HANDLE32 *table = PROCESS_Current()->dos_handles;
+    HANDLE *table = PROCESS_Current()->dos_handles;
     if ((hfile >= DOS_TABLE_SIZE) || !table || !table[hfile])
     {
         SetLastError( ERROR_INVALID_HANDLE );
-        return INVALID_HANDLE_VALUE32;
+        return INVALID_HANDLE_VALUE;
     }
     return table[hfile];
 }
@@ -1067,8 +1067,8 @@ HANDLE32 FILE_GetHandle32( HFILE16 hfile )
  */
 HFILE16 FILE_Dup2( HFILE16 hFile1, HFILE16 hFile2 )
 {
-    HANDLE32 *table = PROCESS_Current()->dos_handles;
-    HANDLE32 new_handle;
+    HANDLE *table = PROCESS_Current()->dos_handles;
+    HANDLE new_handle;
 
     if ((hFile1 >= DOS_TABLE_SIZE) || (hFile2 >= DOS_TABLE_SIZE) ||
         !table || !table[hFile1])
@@ -1097,7 +1097,7 @@ HFILE16 FILE_Dup2( HFILE16 hFile1, HFILE16 hFile2 )
  */
 HFILE16 WINAPI _lclose16( HFILE16 hFile )
 {
-    HANDLE32 *table = PROCESS_Current()->dos_handles;
+    HANDLE *table = PROCESS_Current()->dos_handles;
 
     if (hFile < 5)
     {
@@ -1120,17 +1120,17 @@ HFILE16 WINAPI _lclose16( HFILE16 hFile )
 /***********************************************************************
  *           _lclose32   (KERNEL32.592)
  */
-HFILE32 WINAPI _lclose32( HFILE32 hFile )
+HFILE WINAPI _lclose( HFILE hFile )
 {
     TRACE(file, "handle %d\n", hFile );
-    return CloseHandle( hFile ) ? 0 : HFILE_ERROR32;
+    return CloseHandle( hFile ) ? 0 : HFILE_ERROR;
 }
 
 
 /***********************************************************************
  *              ReadFile                (KERNEL32.428)
  */
-BOOL32 WINAPI ReadFile( HANDLE32 hFile, LPVOID buffer, DWORD bytesToRead,
+BOOL WINAPI ReadFile( HANDLE hFile, LPVOID buffer, DWORD bytesToRead,
                         LPDWORD bytesRead, LPOVERLAPPED overlapped )
 {
     struct get_read_fd_request req;
@@ -1164,7 +1164,7 @@ BOOL32 WINAPI ReadFile( HANDLE32 hFile, LPVOID buffer, DWORD bytesToRead,
 /***********************************************************************
  *             WriteFile               (KERNEL32.578)
  */
-BOOL32 WINAPI WriteFile( HANDLE32 hFile, LPCVOID buffer, DWORD bytesToWrite,
+BOOL WINAPI WriteFile( HANDLE hFile, LPCVOID buffer, DWORD bytesToWrite,
                          LPDWORD bytesWritten, LPOVERLAPPED overlapped )
 {
     struct get_write_fd_request req;
@@ -1206,9 +1206,9 @@ LONG WINAPI WIN16_hread( HFILE16 hFile, SEGPTR buffer, LONG count )
                   hFile, (DWORD)buffer, count );
 
     /* Some programs pass a count larger than the allocated buffer */
-    maxlen = GetSelectorLimit( SELECTOROF(buffer) ) - OFFSETOF(buffer) + 1;
+    maxlen = GetSelectorLimit16( SELECTOROF(buffer) ) - OFFSETOF(buffer) + 1;
     if (count > maxlen) count = maxlen;
-    return _lread32(FILE_GetHandle32(hFile), PTR_SEG_TO_LIN(buffer), count );
+    return _lread(FILE_GetHandle(hFile), PTR_SEG_TO_LIN(buffer), count );
 }
 
 
@@ -1224,7 +1224,7 @@ UINT16 WINAPI WIN16_lread( HFILE16 hFile, SEGPTR buffer, UINT16 count )
 /***********************************************************************
  *           _lread32   (KERNEL32.596)
  */
-UINT32 WINAPI _lread32( HFILE32 handle, LPVOID buffer, UINT32 count )
+UINT WINAPI _lread( HFILE handle, LPVOID buffer, UINT count )
 {
     DWORD result;
     if (!ReadFile( handle, buffer, count, &result, NULL )) return -1;
@@ -1237,7 +1237,7 @@ UINT32 WINAPI _lread32( HFILE32 handle, LPVOID buffer, UINT32 count )
  */
 UINT16 WINAPI _lread16( HFILE16 hFile, LPVOID buffer, UINT16 count )
 {
-    return (UINT16)_lread32(FILE_GetHandle32(hFile), buffer, (LONG)count );
+    return (UINT16)_lread(FILE_GetHandle(hFile), buffer, (LONG)count );
 }
 
 
@@ -1247,17 +1247,17 @@ UINT16 WINAPI _lread16( HFILE16 hFile, LPVOID buffer, UINT16 count )
 HFILE16 WINAPI _lcreat16( LPCSTR path, INT16 attr )
 {
     TRACE(file, "%s %02x\n", path, attr );
-    return FILE_AllocDosHandle( _lcreat32( path, attr ) );
+    return FILE_AllocDosHandle( _lcreat( path, attr ) );
 }
 
 
 /***********************************************************************
  *           _lcreat32   (KERNEL32.593)
  */
-HFILE32 WINAPI _lcreat32( LPCSTR path, INT32 attr )
+HFILE WINAPI _lcreat( LPCSTR path, INT attr )
 {
     TRACE(file, "%s %02x\n", path, attr );
-    return CreateFile32A( path, GENERIC_READ | GENERIC_WRITE,
+    return CreateFileA( path, GENERIC_READ | GENERIC_WRITE,
                           FILE_SHARE_READ | FILE_SHARE_WRITE, NULL,
                           CREATE_ALWAYS, attr, -1 );
 }
@@ -1266,10 +1266,10 @@ HFILE32 WINAPI _lcreat32( LPCSTR path, INT32 attr )
 /***********************************************************************
  *           _lcreat16_uniq   (Not a Windows API)
  */
-HFILE16 _lcreat16_uniq( LPCSTR path, INT32 attr )
+HFILE16 _lcreat16_uniq( LPCSTR path, INT attr )
 {
     TRACE(file, "%s %02x\n", path, attr );
-    return FILE_AllocDosHandle( CreateFile32A( path, GENERIC_READ | GENERIC_WRITE,
+    return FILE_AllocDosHandle( CreateFileA( path, GENERIC_READ | GENERIC_WRITE,
                                                FILE_SHARE_READ | FILE_SHARE_WRITE, NULL,
                                                CREATE_NEW, attr, -1 ));
 }
@@ -1278,7 +1278,7 @@ HFILE16 _lcreat16_uniq( LPCSTR path, INT32 attr )
 /***********************************************************************
  *           SetFilePointer   (KERNEL32.492)
  */
-DWORD WINAPI SetFilePointer( HFILE32 hFile, LONG distance, LONG *highword,
+DWORD WINAPI SetFilePointer( HFILE hFile, LONG distance, LONG *highword,
                              DWORD method )
 {
     struct set_file_pointer_request req;
@@ -1318,14 +1318,14 @@ DWORD WINAPI SetFilePointer( HFILE32 hFile, LONG distance, LONG *highword,
  */
 LONG WINAPI _llseek16( HFILE16 hFile, LONG lOffset, INT16 nOrigin )
 {
-    return SetFilePointer( FILE_GetHandle32(hFile), lOffset, NULL, nOrigin );
+    return SetFilePointer( FILE_GetHandle(hFile), lOffset, NULL, nOrigin );
 }
 
 
 /***********************************************************************
  *           _llseek32   (KERNEL32.594)
  */
-LONG WINAPI _llseek32( HFILE32 hFile, LONG lOffset, INT32 nOrigin )
+LONG WINAPI _llseek( HFILE hFile, LONG lOffset, INT nOrigin )
 {
     return SetFilePointer( hFile, lOffset, NULL, nOrigin );
 }
@@ -1336,20 +1336,20 @@ LONG WINAPI _llseek32( HFILE32 hFile, LONG lOffset, INT32 nOrigin )
  */
 HFILE16 WINAPI _lopen16( LPCSTR path, INT16 mode )
 {
-    return FILE_AllocDosHandle( _lopen32( path, mode ) );
+    return FILE_AllocDosHandle( _lopen( path, mode ) );
 }
 
 
 /***********************************************************************
  *           _lopen32   (KERNEL32.595)
  */
-HFILE32 WINAPI _lopen32( LPCSTR path, INT32 mode )
+HFILE WINAPI _lopen( LPCSTR path, INT mode )
 {
     DWORD access, sharing;
 
     TRACE(file, "('%s',%04x)\n", path, mode );
     FILE_ConvertOFMode( mode, &access, &sharing );
-    return CreateFile32A( path, access, sharing, NULL, OPEN_EXISTING, 0, -1 );
+    return CreateFileA( path, access, sharing, NULL, OPEN_EXISTING, 0, -1 );
 }
 
 
@@ -1358,15 +1358,15 @@ HFILE32 WINAPI _lopen32( LPCSTR path, INT32 mode )
  */
 UINT16 WINAPI _lwrite16( HFILE16 hFile, LPCSTR buffer, UINT16 count )
 {
-    return (UINT16)_hwrite32( FILE_GetHandle32(hFile), buffer, (LONG)count );
+    return (UINT16)_hwrite( FILE_GetHandle(hFile), buffer, (LONG)count );
 }
 
 /***********************************************************************
  *           _lwrite32   (KERNEL32.761)
  */
-UINT32 WINAPI _lwrite32( HFILE32 hFile, LPCSTR buffer, UINT32 count )
+UINT WINAPI _lwrite( HFILE hFile, LPCSTR buffer, UINT count )
 {
-    return (UINT32)_hwrite32( hFile, buffer, (LONG)count );
+    return (UINT)_hwrite( hFile, buffer, (LONG)count );
 }
 
 
@@ -1375,16 +1375,16 @@ UINT32 WINAPI _lwrite32( HFILE32 hFile, LPCSTR buffer, UINT32 count )
  */
 LONG WINAPI _hread16( HFILE16 hFile, LPVOID buffer, LONG count)
 {
-    return _lread32( FILE_GetHandle32(hFile), buffer, count );
+    return _lread( FILE_GetHandle(hFile), buffer, count );
 }
 
 
 /***********************************************************************
  *           _hread32   (KERNEL32.590)
  */
-LONG WINAPI _hread32( HFILE32 hFile, LPVOID buffer, LONG count)
+LONG WINAPI _hread( HFILE hFile, LPVOID buffer, LONG count)
 {
-    return _lread32( hFile, buffer, count );
+    return _lread( hFile, buffer, count );
 }
 
 
@@ -1393,7 +1393,7 @@ LONG WINAPI _hread32( HFILE32 hFile, LPVOID buffer, LONG count)
  */
 LONG WINAPI _hwrite16( HFILE16 hFile, LPCSTR buffer, LONG count )
 {
-    return _hwrite32( FILE_GetHandle32(hFile), buffer, count );
+    return _hwrite( FILE_GetHandle(hFile), buffer, count );
 }
 
 
@@ -1407,7 +1407,7 @@ LONG WINAPI _hwrite16( HFILE16 hFile, LPCSTR buffer, LONG count )
  *		o works with console handles
  *		
  */
-LONG WINAPI _hwrite32( HFILE32 handle, LPCSTR buffer, LONG count )
+LONG WINAPI _hwrite( HFILE handle, LPCSTR buffer, LONG count )
 {
     DWORD result;
 
@@ -1416,11 +1416,11 @@ LONG WINAPI _hwrite32( HFILE32 handle, LPCSTR buffer, LONG count )
     if (!count)
     {
         /* Expand or truncate at current position */
-        if (!SetEndOfFile( handle )) return HFILE_ERROR32;
+        if (!SetEndOfFile( handle )) return HFILE_ERROR;
         return 0;
     }
     if (!WriteFile( handle, buffer, count, &result, NULL ))
-        return HFILE_ERROR32;
+        return HFILE_ERROR;
     return result;
 }
 
@@ -1430,8 +1430,8 @@ LONG WINAPI _hwrite32( HFILE32 handle, LPCSTR buffer, LONG count )
  */
 UINT16 WINAPI SetHandleCount16( UINT16 count )
 {
-    HGLOBAL16 hPDB = GetCurrentPDB();
-    PDB *pdb = (PDB *)GlobalLock16( hPDB );
+    HGLOBAL16 hPDB = GetCurrentPDB16();
+    PDB16 *pdb = (PDB16 *)GlobalLock16( hPDB );
     BYTE *files = PTR_SEG_TO_LIN( pdb->fileHandlesPtr );
 
     TRACE(file, "(%d)\n", count );
@@ -1446,7 +1446,7 @@ UINT16 WINAPI SetHandleCount16( UINT16 count )
             memcpy( pdb->fileHandles, files, 20 );
             GlobalFree16( pdb->hFileHandles );
             pdb->fileHandlesPtr = (SEGPTR)MAKELONG( 0x18,
-                                                   GlobalHandleToSel( hPDB ) );
+                                                   GlobalHandleToSel16( hPDB ) );
             pdb->hFileHandles = 0;
             pdb->nbFiles = 20;
         }
@@ -1480,7 +1480,7 @@ UINT16 WINAPI SetHandleCount16( UINT16 count )
 /*************************************************************************
  *           SetHandleCount32   (KERNEL32.494)
  */
-UINT32 WINAPI SetHandleCount32( UINT32 count )
+UINT WINAPI SetHandleCount( UINT count )
 {
     return MIN( 256, count );
 }
@@ -1489,7 +1489,7 @@ UINT32 WINAPI SetHandleCount32( UINT32 count )
 /***********************************************************************
  *           FlushFileBuffers   (KERNEL32.133)
  */
-BOOL32 WINAPI FlushFileBuffers( HFILE32 hFile )
+BOOL WINAPI FlushFileBuffers( HFILE hFile )
 {
     struct flush_file_request req;
 
@@ -1504,7 +1504,7 @@ BOOL32 WINAPI FlushFileBuffers( HFILE32 hFile )
 /**************************************************************************
  *           SetEndOfFile   (KERNEL32.483)
  */
-BOOL32 WINAPI SetEndOfFile( HFILE32 hFile )
+BOOL WINAPI SetEndOfFile( HFILE hFile )
 {
     struct truncate_file_request req;
 
@@ -1521,14 +1521,14 @@ BOOL32 WINAPI SetEndOfFile( HFILE32 hFile )
  */
 BOOL16 WINAPI DeleteFile16( LPCSTR path )
 {
-    return DeleteFile32A( path );
+    return DeleteFileA( path );
 }
 
 
 /***********************************************************************
  *           DeleteFile32A   (KERNEL32.71)
  */
-BOOL32 WINAPI DeleteFile32A( LPCSTR path )
+BOOL WINAPI DeleteFileA( LPCSTR path )
 {
     DOS_FULL_NAME full_name;
 
@@ -1559,10 +1559,10 @@ BOOL32 WINAPI DeleteFile32A( LPCSTR path )
 /***********************************************************************
  *           DeleteFile32W   (KERNEL32.72)
  */
-BOOL32 WINAPI DeleteFile32W( LPCWSTR path )
+BOOL WINAPI DeleteFileW( LPCWSTR path )
 {
     LPSTR xpath = HEAP_strdupWtoA( GetProcessHeap(), 0, path );
-    BOOL32 ret = DeleteFile32A( xpath );
+    BOOL ret = DeleteFileA( xpath );
     HeapFree( GetProcessHeap(), 0, xpath );
     return ret;
 }
@@ -1662,7 +1662,7 @@ int FILE_munmap( LPVOID start, DWORD size_high, DWORD size_low )
 /***********************************************************************
  *           GetFileType   (KERNEL32.222)
  */
-DWORD WINAPI GetFileType( HFILE32 hFile )
+DWORD WINAPI GetFileType( HFILE hFile )
 {
     struct get_file_info_request req;
     struct get_file_info_reply reply;
@@ -1680,7 +1680,7 @@ DWORD WINAPI GetFileType( HFILE32 hFile )
 /**************************************************************************
  *           MoveFileEx32A   (KERNEL32.???)
  */
-BOOL32 WINAPI MoveFileEx32A( LPCSTR fn1, LPCSTR fn2, DWORD flag )
+BOOL WINAPI MoveFileExA( LPCSTR fn1, LPCSTR fn2, DWORD flag )
 {
     DOS_FULL_NAME full_name1, full_name2;
     int mode=0; /* mode == 1: use copy */
@@ -1750,18 +1750,18 @@ BOOL32 WINAPI MoveFileEx32A( LPCSTR fn1, LPCSTR fn2, DWORD flag )
 	}
       else return TRUE;
     else /* copy File */
-      return CopyFile32A(fn1, fn2, (!(flag & MOVEFILE_REPLACE_EXISTING))); 
+      return CopyFileA(fn1, fn2, (!(flag & MOVEFILE_REPLACE_EXISTING))); 
     
 }
 
 /**************************************************************************
  *           MoveFileEx32W   (KERNEL32.???)
  */
-BOOL32 WINAPI MoveFileEx32W( LPCWSTR fn1, LPCWSTR fn2, DWORD flag )
+BOOL WINAPI MoveFileExW( LPCWSTR fn1, LPCWSTR fn2, DWORD flag )
 {
     LPSTR afn1 = HEAP_strdupWtoA( GetProcessHeap(), 0, fn1 );
     LPSTR afn2 = HEAP_strdupWtoA( GetProcessHeap(), 0, fn2 );
-    BOOL32 res = MoveFileEx32A( afn1, afn2, flag );
+    BOOL res = MoveFileExA( afn1, afn2, flag );
     HeapFree( GetProcessHeap(), 0, afn1 );
     HeapFree( GetProcessHeap(), 0, afn2 );
     return res;
@@ -1773,7 +1773,7 @@ BOOL32 WINAPI MoveFileEx32W( LPCWSTR fn1, LPCWSTR fn2, DWORD flag )
  *
  *  Move file or directory
  */
-BOOL32 WINAPI MoveFile32A( LPCSTR fn1, LPCSTR fn2 )
+BOOL WINAPI MoveFileA( LPCSTR fn1, LPCSTR fn2 )
 {
     DOS_FULL_NAME full_name1, full_name2;
     struct stat fstat;
@@ -1808,7 +1808,7 @@ BOOL32 WINAPI MoveFile32A( LPCSTR fn1, LPCSTR fn2 )
 	return FALSE;
       }
       else
-	return CopyFile32A(fn1, fn2, TRUE); /*fail, if exist */ 
+	return CopyFileA(fn1, fn2, TRUE); /*fail, if exist */ 
     }
 }
 
@@ -1816,11 +1816,11 @@ BOOL32 WINAPI MoveFile32A( LPCSTR fn1, LPCSTR fn2 )
 /**************************************************************************
  *           MoveFile32W   (KERNEL32.390)
  */
-BOOL32 WINAPI MoveFile32W( LPCWSTR fn1, LPCWSTR fn2 )
+BOOL WINAPI MoveFileW( LPCWSTR fn1, LPCWSTR fn2 )
 {
     LPSTR afn1 = HEAP_strdupWtoA( GetProcessHeap(), 0, fn1 );
     LPSTR afn2 = HEAP_strdupWtoA( GetProcessHeap(), 0, fn2 );
-    BOOL32 res = MoveFile32A( afn1, afn2 );
+    BOOL res = MoveFileA( afn1, afn2 );
     HeapFree( GetProcessHeap(), 0, afn1 );
     HeapFree( GetProcessHeap(), 0, afn2 );
     return res;
@@ -1830,35 +1830,35 @@ BOOL32 WINAPI MoveFile32W( LPCWSTR fn1, LPCWSTR fn2 )
 /**************************************************************************
  *           CopyFile32A   (KERNEL32.36)
  */
-BOOL32 WINAPI CopyFile32A( LPCSTR source, LPCSTR dest, BOOL32 fail_if_exists )
+BOOL WINAPI CopyFileA( LPCSTR source, LPCSTR dest, BOOL fail_if_exists )
 {
-    HFILE32 h1, h2;
+    HFILE h1, h2;
     BY_HANDLE_FILE_INFORMATION info;
-    UINT32 count;
-    BOOL32 ret = FALSE;
+    UINT count;
+    BOOL ret = FALSE;
     int mode;
     char buffer[2048];
 
-    if ((h1 = _lopen32( source, OF_READ )) == HFILE_ERROR32) return FALSE;
+    if ((h1 = _lopen( source, OF_READ )) == HFILE_ERROR) return FALSE;
     if (!GetFileInformationByHandle( h1, &info ))
     {
         CloseHandle( h1 );
         return FALSE;
     }
     mode = (info.dwFileAttributes & FILE_ATTRIBUTE_READONLY) ? 0444 : 0666;
-    if ((h2 = CreateFile32A( dest, GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL,
+    if ((h2 = CreateFileA( dest, GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL,
                              fail_if_exists ? CREATE_NEW : CREATE_ALWAYS,
-                             info.dwFileAttributes, h1 )) == HFILE_ERROR32)
+                             info.dwFileAttributes, h1 )) == HFILE_ERROR)
     {
         CloseHandle( h1 );
         return FALSE;
     }
-    while ((count = _lread32( h1, buffer, sizeof(buffer) )) > 0)
+    while ((count = _lread( h1, buffer, sizeof(buffer) )) > 0)
     {
         char *p = buffer;
         while (count > 0)
         {
-            INT32 res = _lwrite32( h2, p, count );
+            INT res = _lwrite( h2, p, count );
             if (res <= 0) goto done;
             p += res;
             count -= res;
@@ -1875,11 +1875,11 @@ done:
 /**************************************************************************
  *           CopyFile32W   (KERNEL32.37)
  */
-BOOL32 WINAPI CopyFile32W( LPCWSTR source, LPCWSTR dest, BOOL32 fail_if_exists)
+BOOL WINAPI CopyFileW( LPCWSTR source, LPCWSTR dest, BOOL fail_if_exists)
 {
     LPSTR sourceA = HEAP_strdupWtoA( GetProcessHeap(), 0, source );
     LPSTR destA   = HEAP_strdupWtoA( GetProcessHeap(), 0, dest );
-    BOOL32 ret = CopyFile32A( sourceA, destA, fail_if_exists );
+    BOOL ret = CopyFileA( sourceA, destA, fail_if_exists );
     HeapFree( GetProcessHeap(), 0, sourceA );
     HeapFree( GetProcessHeap(), 0, destA );
     return ret;
@@ -1893,14 +1893,14 @@ BOOL32 WINAPI CopyFile32W( LPCWSTR source, LPCWSTR dest, BOOL32 fail_if_exists)
  * the "ex" version of the method and calls the CopyFile method.
  * It will have to be fixed eventually.
  */
-BOOL32 WINAPI CopyFileEx32A(LPCSTR             sourceFilename,
+BOOL WINAPI CopyFileExA(LPCSTR             sourceFilename,
                            LPCSTR             destFilename,
                            LPPROGRESS_ROUTINE progressRoutine,
                            LPVOID             appData,
-                           LPBOOL32           cancelFlagPointer,
+                           LPBOOL           cancelFlagPointer,
                            DWORD              copyFlags)
 {
-  BOOL32 failIfExists = FALSE;
+  BOOL failIfExists = FALSE;
 
   /*
    * Interpret the only flag that CopyFile can interpret.
@@ -1910,23 +1910,23 @@ BOOL32 WINAPI CopyFileEx32A(LPCSTR             sourceFilename,
     failIfExists = TRUE;
   }
 
-  return CopyFile32A(sourceFilename, destFilename, failIfExists);
+  return CopyFileA(sourceFilename, destFilename, failIfExists);
 }
 
 /**************************************************************************
  *           CopyFileEx32W   (KERNEL32.859)
  */
-BOOL32 WINAPI CopyFileEx32W(LPCWSTR            sourceFilename,
+BOOL WINAPI CopyFileExW(LPCWSTR            sourceFilename,
                            LPCWSTR            destFilename,
                            LPPROGRESS_ROUTINE progressRoutine,
                            LPVOID             appData,
-                           LPBOOL32           cancelFlagPointer,
+                           LPBOOL           cancelFlagPointer,
                            DWORD              copyFlags)
 {
     LPSTR sourceA = HEAP_strdupWtoA( GetProcessHeap(), 0, sourceFilename );
     LPSTR destA   = HEAP_strdupWtoA( GetProcessHeap(), 0, destFilename );
 
-    BOOL32 ret = CopyFileEx32A(sourceA,
+    BOOL ret = CopyFileExA(sourceA,
                               destA,
                               progressRoutine,
                               appData,
@@ -1943,7 +1943,7 @@ BOOL32 WINAPI CopyFileEx32W(LPCWSTR            sourceFilename,
 /***********************************************************************
  *              SetFileTime   (KERNEL32.650)
  */
-BOOL32 WINAPI SetFileTime( HFILE32 hFile,
+BOOL WINAPI SetFileTime( HFILE hFile,
                            const FILETIME *lpCreationTime,
                            const FILETIME *lpLastAccessTime,
                            const FILETIME *lpLastWriteTime )
@@ -1970,7 +1970,7 @@ BOOL32 WINAPI SetFileTime( HFILE32 hFile,
 /**************************************************************************
  *           LockFile   (KERNEL32.511)
  */
-BOOL32 WINAPI LockFile( HFILE32 hFile, DWORD dwFileOffsetLow, DWORD dwFileOffsetHigh,
+BOOL WINAPI LockFile( HFILE hFile, DWORD dwFileOffsetLow, DWORD dwFileOffsetHigh,
                         DWORD nNumberOfBytesToLockLow, DWORD nNumberOfBytesToLockHigh )
 {
     struct lock_file_request req;
@@ -1990,7 +1990,7 @@ BOOL32 WINAPI LockFile( HFILE32 hFile, DWORD dwFileOffsetLow, DWORD dwFileOffset
 /**************************************************************************
  *           UnlockFile   (KERNEL32.703)
  */
-BOOL32 WINAPI UnlockFile( HFILE32 hFile, DWORD dwFileOffsetLow, DWORD dwFileOffsetHigh,
+BOOL WINAPI UnlockFile( HFILE hFile, DWORD dwFileOffsetLow, DWORD dwFileOffsetHigh,
                           DWORD nNumberOfBytesToUnlockLow, DWORD nNumberOfBytesToUnlockHigh )
 {
     struct unlock_file_request req;
@@ -2031,7 +2031,7 @@ static void DOS_RemoveFileLocks(FILE_OBJECT *file);
  * how critical that is at this point (FIXME).
  */
 
-static BOOL32 DOS_AddLock(FILE_OBJECT *file, struct flock *f)
+static BOOL DOS_AddLock(FILE_OBJECT *file, struct flock *f)
 {
   DOS_FILE_LOCK *curr;
   DWORD		processId;
@@ -2084,7 +2084,7 @@ static void DOS_RemoveFileLocks(FILE_OBJECT *file)
   }
 }
 
-static BOOL32 DOS_RemoveLock(FILE_OBJECT *file, struct flock *f)
+static BOOL DOS_RemoveLock(FILE_OBJECT *file, struct flock *f)
 {
   DWORD		processId;
   DOS_FILE_LOCK **curr;
@@ -2112,8 +2112,8 @@ static BOOL32 DOS_RemoveLock(FILE_OBJECT *file, struct flock *f)
 /**************************************************************************
  *           LockFile   (KERNEL32.511)
  */
-BOOL32 WINAPI LockFile(
-	HFILE32 hFile,DWORD dwFileOffsetLow,DWORD dwFileOffsetHigh,
+BOOL WINAPI LockFile(
+	HFILE hFile,DWORD dwFileOffsetLow,DWORD dwFileOffsetHigh,
 	DWORD nNumberOfBytesToLockLow,DWORD nNumberOfBytesToLockHigh )
 {
   struct flock f;
@@ -2163,8 +2163,8 @@ BOOL32 WINAPI LockFile(
 /**************************************************************************
  *           UnlockFile   (KERNEL32.703)
  */
-BOOL32 WINAPI UnlockFile(
-	HFILE32 hFile,DWORD dwFileOffsetLow,DWORD dwFileOffsetHigh,
+BOOL WINAPI UnlockFile(
+	HFILE hFile,DWORD dwFileOffsetLow,DWORD dwFileOffsetHigh,
 	DWORD nNumberOfBytesToUnlockLow,DWORD nNumberOfBytesToUnlockHigh )
 {
   FILE_OBJECT *file;
@@ -2203,7 +2203,7 @@ BOOL32 WINAPI UnlockFile(
 /**************************************************************************
  * GetFileAttributesEx32A [KERNEL32.874]
  */
-BOOL32 WINAPI GetFileAttributesEx32A(
+BOOL WINAPI GetFileAttributesExA(
 	LPCSTR lpFileName, GET_FILEEX_INFO_LEVELS fInfoLevelId,
 	LPVOID lpFileInformation)
 {
@@ -2238,13 +2238,13 @@ BOOL32 WINAPI GetFileAttributesEx32A(
 /**************************************************************************
  * GetFileAttributesEx32W [KERNEL32.875]
  */
-BOOL32 WINAPI GetFileAttributesEx32W(
+BOOL WINAPI GetFileAttributesExW(
 	LPCWSTR lpFileName, GET_FILEEX_INFO_LEVELS fInfoLevelId,
 	LPVOID lpFileInformation)
 {
     LPSTR nameA = HEAP_strdupWtoA( GetProcessHeap(), 0, lpFileName );
-    BOOL32 res = 
-	GetFileAttributesEx32A( nameA, fInfoLevelId, lpFileInformation);
+    BOOL res = 
+	GetFileAttributesExA( nameA, fInfoLevelId, lpFileInformation);
     HeapFree( GetProcessHeap(), 0, nameA );
     return res;
 }

@@ -9,7 +9,7 @@
 #include "winspool.h"
 
 
-INT32 PSDRV_Escape( DC *dc, INT32 nEscape, INT32 cbInput, 
+INT PSDRV_Escape( DC *dc, INT nEscape, INT cbInput, 
                               SEGPTR lpInData, SEGPTR lpOutData )
 {
     PSDRV_PDEVICE *physDev = (PSDRV_PDEVICE *)dc->physDev;
@@ -51,7 +51,7 @@ INT32 PSDRV_Escape( DC *dc, INT32 nEscape, INT32 cbInput,
 	    return 0;
 	}
 
-	physDev->job.hJob = OpenJob(physDev->job.output,
+	physDev->job.hJob = OpenJob16(physDev->job.output,
 				    PTR_SEG_TO_LIN(lpInData), dc->hSelf);
 	if(!physDev->job.hJob) {
 	    WARN(psdrv, "OpenJob failed\n");
@@ -121,7 +121,7 @@ INT32 PSDRV_Escape( DC *dc, INT32 nEscape, INT32 cbInput,
 	if(!PSDRV_WriteFooter( dc ))
 	    return 0;
 
-        if( CloseJob( physDev->job.hJob ) == SP_ERROR ) {
+        if( CloseJob16( physDev->job.hJob ) == SP_ERROR ) {
 	    WARN(psdrv, "CloseJob error\n");
 	    return 0;
 	}

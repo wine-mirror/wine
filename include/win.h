@@ -61,10 +61,10 @@ typedef struct tagWND
     struct tagCLASS *class;       /* Window class */
     HWINDOWPROC    winproc;       /* Window procedure */
     DWORD          dwMagic;       /* Magic number (must be WND_MAGIC) */
-    HWND32         hwndSelf;      /* Handle of this window */
-    HINSTANCE32    hInstance;     /* Window hInstance (from CreateWindow) */
-    RECT32         rectClient;    /* Client area rel. to parent client area */
-    RECT32         rectWindow;    /* Whole window rel. to parent client area */
+    HWND         hwndSelf;      /* Handle of this window */
+    HINSTANCE    hInstance;     /* Window hInstance (from CreateWindow) */
+    RECT         rectClient;    /* Client area rel. to parent client area */
+    RECT         rectWindow;    /* Whole window rel. to parent client area */
     LPSTR          text;          /* Window text */
     void          *pVScroll;      /* Vertical scroll-bar info */
     void          *pHScroll;      /* Horizontal scroll-bar info */
@@ -72,10 +72,10 @@ typedef struct tagWND
     struct tagDCE *dce;           /* Window DCE (if CS_OWNDC or CS_CLASSDC) */
     HGLOBAL16      hmemTaskQ;     /* Task queue global memory handle */
     HRGN16         hrgnUpdate;    /* Update region */
-    HWND32         hwndLastActive;/* Last active popup hwnd */
+    HWND         hwndLastActive;/* Last active popup hwnd */
     DWORD          dwStyle;       /* Window style (from CreateWindow) */
     DWORD          dwExStyle;     /* Extended style (from CreateWindowEx) */
-    UINT32         wIDmenu;       /* ID or hmenu (from CreateWindow) */
+    UINT         wIDmenu;       /* ID or hmenu (from CreateWindow) */
     DWORD          helpContext;   /* Help context ID */
     WORD           flags;         /* Misc. flags (see below) */
     HMENU16        hSysMenu;      /* window's copy of System Menu */
@@ -90,19 +90,19 @@ typedef struct _WND_DRIVER
 {
     void   (*pInitialize)(WND *);
     void   (*pFinalize)(WND *);
-    BOOL32 (*pCreateDesktopWindow)(WND *, struct tagCLASS *, BOOL32);
-    BOOL32 (*pCreateWindow)(WND *, struct tagCLASS *, CREATESTRUCT32A *, BOOL32);
-    BOOL32 (*pDestroyWindow)(WND *);
+    BOOL (*pCreateDesktopWindow)(WND *, struct tagCLASS *, BOOL);
+    BOOL (*pCreateWindow)(WND *, struct tagCLASS *, CREATESTRUCTA *, BOOL);
+    BOOL (*pDestroyWindow)(WND *);
     WND*   (*pSetParent)(WND *, WND *);
     void   (*pForceWindowRaise)(WND *);
-    void   (*pSetWindowPos)(WND *, const WINDOWPOS32 *, BOOL32);
+    void   (*pSetWindowPos)(WND *, const WINDOWPOS *, BOOL);
     void   (*pSetText)(WND *, LPCSTR);
     void   (*pSetFocus)(WND *);
     void   (*pPreSizeMove)(WND *);
     void   (*pPostSizeMove)(WND *);
-    void   (*pScrollWindow)(WND *, struct tagDC *, INT32, INT32, const RECT32 *, BOOL32);
-    void   (*pSetDrawable)(WND *, struct tagDC *, WORD, BOOL32);
-    BOOL32 (*pIsSelfClipping)(WND *);
+    void   (*pScrollWindow)(WND *, struct tagDC *, INT, INT, const RECT *, BOOL);
+    void   (*pSetDrawable)(WND *, struct tagDC *, WORD, BOOL);
+    BOOL (*pIsSelfClipping)(WND *);
 } WND_DRIVER;
 
 typedef struct
@@ -138,44 +138,44 @@ extern void   WIN_LockWnds();
 extern void   WIN_UnlockWnds();
 extern int    WIN_SuspendWndsLock();
 extern void   WIN_RestoreWndsLock(int ipreviousLock);
-extern WND*   WIN_FindWndPtr( HWND32 hwnd );
+extern WND*   WIN_FindWndPtr( HWND hwnd );
 extern void   WIN_ReleaseWndPtr(WND *wndPtr);
 extern WND*   WIN_GetDesktop(void);
-extern void   WIN_DumpWindow( HWND32 hwnd );
-extern void   WIN_WalkWindows( HWND32 hwnd, int indent );
-extern BOOL32 WIN_UnlinkWindow( HWND32 hwnd );
-extern BOOL32 WIN_LinkWindow( HWND32 hwnd, HWND32 hwndInsertAfter );
-extern HWND32 WIN_FindWinToRepaint( HWND32 hwnd, HQUEUE16 hQueue );
-extern BOOL32 WIN_ResetQueueWindows( WND* wnd, HQUEUE16 hQueue, HQUEUE16 hNew);
-extern BOOL32 WIN_CreateDesktopWindow(void);
-extern HWND32 WIN_GetTopParent( HWND32 hwnd );
+extern void   WIN_DumpWindow( HWND hwnd );
+extern void   WIN_WalkWindows( HWND hwnd, int indent );
+extern BOOL WIN_UnlinkWindow( HWND hwnd );
+extern BOOL WIN_LinkWindow( HWND hwnd, HWND hwndInsertAfter );
+extern HWND WIN_FindWinToRepaint( HWND hwnd, HQUEUE16 hQueue );
+extern BOOL WIN_ResetQueueWindows( WND* wnd, HQUEUE16 hQueue, HQUEUE16 hNew);
+extern BOOL WIN_CreateDesktopWindow(void);
+extern HWND WIN_GetTopParent( HWND hwnd );
 extern WND*   WIN_GetTopParentPtr( WND* pWnd );
-extern BOOL32 WIN_IsWindowDrawable(WND*, BOOL32 );
-extern HINSTANCE32 WIN_GetWindowInstance( HWND32 hwnd );
-extern WND**  WIN_BuildWinArray( WND *wndPtr, UINT32 bwa, UINT32* pnum );
+extern BOOL WIN_IsWindowDrawable(WND*, BOOL );
+extern HINSTANCE WIN_GetWindowInstance( HWND hwnd );
+extern WND**  WIN_BuildWinArray( WND *wndPtr, UINT bwa, UINT* pnum );
 
-extern HWND32 CARET_GetHwnd(void);
-extern void CARET_GetRect(LPRECT32 lprc);  /* windows/caret.c */
+extern HWND CARET_GetHwnd(void);
+extern void CARET_GetRect(LPRECT lprc);  /* windows/caret.c */
 
-extern BOOL16 DRAG_QueryUpdate( HWND32, SEGPTR, BOOL32 );
+extern BOOL16 DRAG_QueryUpdate( HWND, SEGPTR, BOOL );
 extern void DEFWND_SetText( WND *wndPtr, LPCSTR text );
-extern HBRUSH32 DEFWND_ControlColor( HDC32 hDC, UINT16 ctlType );     /* windows/defwnd.c */
+extern HBRUSH DEFWND_ControlColor( HDC hDC, UINT16 ctlType );     /* windows/defwnd.c */
 
 extern void PROPERTY_RemoveWindowProps( WND *pWnd );  		      /* windows/property.c */
 
-extern BOOL32 PAINT_RedrawWindow( HWND32 hwnd, const RECT32 *rectUpdate,
-                                  HRGN32 hrgnUpdate, UINT32 flags,
-                                  UINT32 control );		      /* windows/painting.c */
+extern BOOL PAINT_RedrawWindow( HWND hwnd, const RECT *rectUpdate,
+                                  HRGN hrgnUpdate, UINT flags,
+                                  UINT control );		      /* windows/painting.c */
 
 /* controls/widgets.c */
-extern BOOL32 WIDGETS_Init( void );
-extern BOOL32 WIDGETS_IsControl32( WND* pWnd, BUILTIN_CLASS32 cls );  
+extern BOOL WIDGETS_Init( void );
+extern BOOL WIDGETS_IsControl( WND* pWnd, BUILTIN_CLASS32 cls );  
 
 /* controls/icontitle.c */
-extern HWND32 ICONTITLE_Create( WND* );
-extern BOOL32 ICONTITLE_Init( void );
+extern HWND ICONTITLE_Create( WND* );
+extern BOOL ICONTITLE_Init( void );
 
 /* windows/focus.c */
-extern void FOCUS_SwitchFocus( MESSAGEQUEUE *pMsgQ, HWND32 , HWND32 );
+extern void FOCUS_SwitchFocus( MESSAGEQUEUE *pMsgQ, HWND , HWND );
 
 #endif  /* __WINE_WIN_H */

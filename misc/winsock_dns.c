@@ -267,7 +267,7 @@ static int aop_control(ws_async_op* p_aop, int flag )
                      return AOP_CONTROL_REMOVE;
             }
 	}
-        else lLength =  ((UINT32)LOWORD(lLength)) | ((unsigned)WSAENOBUFS << 16);
+        else lLength =  ((UINT)LOWORD(lLength)) | ((unsigned)WSAENOBUFS << 16);
     } /* failure */
 
      /* was a __WS_ASYNC_DEBUG statement */
@@ -277,14 +277,14 @@ static int aop_control(ws_async_op* p_aop, int flag )
 
     /* FIXME: update num_async_rq */
     EVENT_DeleteIO( p_aop->fd[0], EVENT_IO_READ );
-    PostMessage32A( p_aop->hWnd, p_aop->uMsg, __ws_gethandle(p_aop), (LPARAM)lLength );
+    PostMessageA( p_aop->hWnd, p_aop->uMsg, __ws_gethandle(p_aop), (LPARAM)lLength );
     
     return AOP_CONTROL_REMOVE;  /* one-shot request */
 }
 
 
-HANDLE16 __WSAsyncDBQuery(LPWSINFO pwsi, HWND32 hWnd, UINT32 uMsg, INT32 type, 
-    LPCSTR init, INT32 len, LPCSTR proto, void* sbuf, INT32 buflen, UINT32 flag)
+HANDLE16 __WSAsyncDBQuery(LPWSINFO pwsi, HWND hWnd, UINT uMsg, INT type, 
+    LPCSTR init, INT len, LPCSTR proto, void* sbuf, INT buflen, UINT flag)
 {
     /* queue 'flag' request and fork off its handler */
 
@@ -332,7 +332,7 @@ HANDLE16 __WSAsyncDBQuery(LPWSINFO pwsi, HWND32 hWnd, UINT32 uMsg, INT32 type,
 	    }
 	    else
 	    {
-	    	extern BOOL32 THREAD_InitDone;
+	    	extern BOOL THREAD_InitDone;
 
 	        THREAD_InitDone = FALSE;
 		/* child process */

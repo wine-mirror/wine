@@ -15,7 +15,7 @@
 
 /**********************************************************************/
 
-extern BOOL32 X11DRV_MOUSE_DisableWarpPointer;
+extern BOOL X11DRV_MOUSE_DisableWarpPointer;
 
 static LPMOUSE_EVENT_PROC DefMouseEventProc = NULL;
 
@@ -57,7 +57,7 @@ VOID WINAPI MOUSE_Disable(VOID)
  *           MOUSE_SendEvent
  */
 void MOUSE_SendEvent( DWORD mouseStatus, DWORD posX, DWORD posY, 
-                      DWORD keyState, DWORD time, HWND32 hWnd )
+                      DWORD keyState, DWORD time, HWND hWnd )
 {
     int width  = MONITOR_GetWidth (&MONITOR_PrimaryMonitor);
     int height = MONITOR_GetHeight(&MONITOR_PrimaryMonitor);

@@ -88,9 +88,9 @@ static const BYTE STORAGE_oldmagic[8] ={0xd0,0xcf,0x11,0xe0,0x0e,0x11,0xfc,0x0d}
  * Forward declarations of all the structures used by the storage
  * module.
  */
-typedef struct Storage32BaseImpl     Storage32BaseImpl;
-typedef struct Storage32Impl         Storage32Impl;
-typedef struct Storage32InternalImpl Storage32InternalImpl;
+typedef struct StorageBaseImpl     StorageBaseImpl;
+typedef struct StorageImpl         StorageImpl;
+typedef struct StorageInternalImpl StorageInternalImpl;
 typedef struct BlockChainStream      BlockChainStream;
 typedef struct SmallBlockChainStream SmallBlockChainStream;
 typedef struct IEnumSTATSTGImpl      IEnumSTATSTGImpl;
@@ -137,8 +137,8 @@ struct BigBlockFile
 {
   ULARGE_INTEGER filesize;
   ULONG blocksize;
-  HANDLE32 hfile;
-  HANDLE32 hfilemap;
+  HANDLE hfile;
+  HANDLE hfilemap;
   DWORD flProtect;
   MappedPage *headmap_ro;
   MappedPage *headmap_w;
@@ -149,7 +149,7 @@ struct BigBlockFile
  * Declaration of the functions used to manipulate the BigBlockFile
  * data structure.
  */
-BigBlockFile*  BIGBLOCKFILE_Construct(HANDLE32 hFile,
+BigBlockFile*  BIGBLOCKFILE_Construct(HANDLE hFile,
                                       DWORD openFlags,
                                       ULONG blocksize);
 void           BIGBLOCKFILE_Destructor(LPBIGBLOCKFILE This);
@@ -168,9 +168,9 @@ ULARGE_INTEGER BIGBLOCKFILE_GetSize(LPBIGBLOCKFILE This);
  * In OOP terms, this is the base class for all the IStorage32 implementations
  * contained in this file.
  */
-struct Storage32BaseImpl
+struct StorageBaseImpl
 {
-  ICOM_VTABLE(IStorage32)*  lpvtbl;   /* Needs to be the first item in the stuct
+  ICOM_VTABLE(IStorage)*  lpvtbl;   /* Needs to be the first item in the stuct
 				       * since we want to cast this in a Storage32 pointer */
 
   /*
@@ -181,7 +181,7 @@ struct Storage32BaseImpl
   /* 
    * Ancestor storage (top level) 
    */
-  Storage32Impl* ancestorStorage;		 
+  StorageImpl* ancestorStorage;		 
   
   /*
    * Index of the property for the root of
@@ -192,68 +192,68 @@ struct Storage32BaseImpl
   /* 
    * virtual Destructor method.
    */
-  void (*v_destructor)(Storage32BaseImpl*);
+  void (*v_destructor)(StorageBaseImpl*);
 };
 
 
 /*
  * Prototypes for the methods of the Storage32BaseImpl class.
  */
-HRESULT WINAPI Storage32BaseImpl_QueryInterface(
-            IStorage32*        iface,
+HRESULT WINAPI StorageBaseImpl_QueryInterface(
+            IStorage*        iface,
             REFIID             riid,
             void**             ppvObject);
         
-ULONG WINAPI Storage32BaseImpl_AddRef( 
-            IStorage32*        iface);
+ULONG WINAPI StorageBaseImpl_AddRef( 
+            IStorage*        iface);
         
-ULONG WINAPI Storage32BaseImpl_Release( 
-            IStorage32*        iface);
+ULONG WINAPI StorageBaseImpl_Release( 
+            IStorage*        iface);
         
-HRESULT WINAPI Storage32BaseImpl_OpenStream( 
-            IStorage32*        iface,
-            const OLECHAR32*   pwcsName,  /* [string][in] */
+HRESULT WINAPI StorageBaseImpl_OpenStream( 
+            IStorage*        iface,
+            const OLECHAR*   pwcsName,  /* [string][in] */
             void*              reserved1, /* [unique][in] */
             DWORD              grfMode,   /* [in] */        
             DWORD              reserved2, /* [in] */        
-            IStream32**        ppstm);    /* [out] */   
+            IStream**        ppstm);    /* [out] */   
     
-HRESULT WINAPI Storage32BaseImpl_OpenStorage( 
-            IStorage32*        iface,
-            const OLECHAR32*   pwcsName,      /* [string][unique][in] */ 
-            IStorage32*        pstgPriority,  /* [unique][in] */         
+HRESULT WINAPI StorageBaseImpl_OpenStorage( 
+            IStorage*        iface,
+            const OLECHAR*   pwcsName,      /* [string][unique][in] */ 
+            IStorage*        pstgPriority,  /* [unique][in] */         
             DWORD              grfMode,       /* [in] */                 
-            SNB32              snbExclude,    /* [unique][in] */         
+            SNB              snbExclude,    /* [unique][in] */         
             DWORD              reserved,      /* [in] */                 
-            IStorage32**       ppstg);        /* [out] */                
+            IStorage**       ppstg);        /* [out] */                
           
-HRESULT WINAPI Storage32BaseImpl_EnumElements( 
-            IStorage32*        iface,
+HRESULT WINAPI StorageBaseImpl_EnumElements( 
+            IStorage*        iface,
             DWORD              reserved1, /* [in] */                  
             void*              reserved2, /* [size_is][unique][in] */ 
             DWORD              reserved3, /* [in] */                  
             IEnumSTATSTG**     ppenum);   /* [out] */   
 
-HRESULT WINAPI Storage32BaseImpl_Stat( 
-            IStorage32*        iface,
+HRESULT WINAPI StorageBaseImpl_Stat( 
+            IStorage*        iface,
             STATSTG*           pstatstg,     /* [out] */ 
             DWORD              grfStatFlag); /* [in] */  
 
-HRESULT WINAPI Storage32BaseImpl_RenameElement(
-            IStorage32*        iface,
-            const OLECHAR32*   pwcsOldName,  /* [string][in] */
-            const OLECHAR32*   pwcsNewName); /* [string][in] */
+HRESULT WINAPI StorageBaseImpl_RenameElement(
+            IStorage*        iface,
+            const OLECHAR*   pwcsOldName,  /* [string][in] */
+            const OLECHAR*   pwcsNewName); /* [string][in] */
 
-HRESULT WINAPI Storage32BaseImpl_CreateStream(
-            IStorage32*        iface,
-            const OLECHAR32*   pwcsName,  /* [string][in] */
+HRESULT WINAPI StorageBaseImpl_CreateStream(
+            IStorage*        iface,
+            const OLECHAR*   pwcsName,  /* [string][in] */
             DWORD              grfMode,   /* [in] */
             DWORD              reserved1, /* [in] */
             DWORD              reserved2, /* [in] */
-            IStream32**        ppstm);    /* [out] */
+            IStream**        ppstm);    /* [out] */
 
-HRESULT WINAPI Storage32BaseImpl_SetClass(
-            IStorage32*        iface,
+HRESULT WINAPI StorageBaseImpl_SetClass(
+            IStorage*        iface,
             REFCLSID           clsid);  /* [in] */
 
 /****************************************************************************
@@ -262,9 +262,9 @@ HRESULT WINAPI Storage32BaseImpl_SetClass(
  * This implementation of the IStorage32 interface represents a root
  * storage. Basically, a document file.
  */
-struct Storage32Impl
+struct StorageImpl
 {
-  ICOM_VTABLE(IStorage32) *lpvtbl;   /* Needs to be the first item in the stuct
+  ICOM_VTABLE(IStorage) *lpvtbl;   /* Needs to be the first item in the stuct
 				      * since we want to cast this in a Storage32 pointer */
 
   /*
@@ -272,15 +272,15 @@ struct Storage32Impl
    * casting as a Storage32BaseImpl
    */
   ULONG		        ref;
-  struct Storage32Impl* ancestorStorage;		 
+  struct StorageImpl* ancestorStorage;		 
   ULONG                 rootPropertySetIndex;
-  void (*v_destructor)(struct Storage32Impl*);
+  void (*v_destructor)(struct StorageImpl*);
   
   /*
    * The following data members are specific to the Storage32Impl
    * class
    */
-  HANDLE32           hFile;      /* Physical support for the Docfile */
+  HANDLE           hFile;      /* Physical support for the Docfile */
   
   /*
    * File header
@@ -316,129 +316,129 @@ struct Storage32Impl
  * Method declaration for the Storage32Impl class
  */        
 
-HRESULT WINAPI Storage32Impl_CreateStorage( 
-            IStorage32*      iface,
-            const OLECHAR32* pwcsName,  /* [string][in] */ 
+HRESULT WINAPI StorageImpl_CreateStorage( 
+            IStorage*      iface,
+            const OLECHAR* pwcsName,  /* [string][in] */ 
             DWORD            grfMode,   /* [in] */ 
             DWORD            dwStgFmt,  /* [in] */ 
             DWORD            reserved2, /* [in] */ 
-            IStorage32**     ppstg);    /* [out] */ 
+            IStorage**     ppstg);    /* [out] */ 
         
-HRESULT WINAPI Storage32Impl_CopyTo( 
-            IStorage32*      iface,
+HRESULT WINAPI StorageImpl_CopyTo( 
+            IStorage*      iface,
             DWORD          ciidExclude,  /* [in] */ 
             const IID*     rgiidExclude, /* [size_is][unique][in] */ 
-            SNB32            snbExclude, /* [unique][in] */ 
-            IStorage32*    pstgDest);    /* [unique][in] */ 
+            SNB            snbExclude, /* [unique][in] */ 
+            IStorage*    pstgDest);    /* [unique][in] */ 
         
-HRESULT WINAPI Storage32Impl_MoveElementTo( 
-            IStorage32*      iface,
-            const OLECHAR32* pwcsName,    /* [string][in] */ 
-            IStorage32*      pstgDest,    /* [unique][in] */ 
-            const OLECHAR32* pwcsNewName, /* [string][in] */ 
+HRESULT WINAPI StorageImpl_MoveElementTo( 
+            IStorage*      iface,
+            const OLECHAR* pwcsName,    /* [string][in] */ 
+            IStorage*      pstgDest,    /* [unique][in] */ 
+            const OLECHAR* pwcsNewName, /* [string][in] */ 
             DWORD            grfFlags);   /* [in] */ 
         
-HRESULT WINAPI Storage32Impl_Commit( 
-            IStorage32*      iface,
+HRESULT WINAPI StorageImpl_Commit( 
+            IStorage*      iface,
             DWORD          grfCommitFlags); /* [in] */ 
         
-HRESULT WINAPI Storage32Impl_Revert( 
-            IStorage32*      iface);
+HRESULT WINAPI StorageImpl_Revert( 
+            IStorage*      iface);
         
-HRESULT WINAPI Storage32Impl_DestroyElement( 
-            IStorage32*      iface,
-            const OLECHAR32* pwcsName); /* [string][in] */ 
+HRESULT WINAPI StorageImpl_DestroyElement( 
+            IStorage*      iface,
+            const OLECHAR* pwcsName); /* [string][in] */ 
         
-HRESULT WINAPI Storage32Impl_SetElementTimes( 
-            IStorage32*      iface,
-            const OLECHAR32* pwcsName, /* [string][in] */ 
+HRESULT WINAPI StorageImpl_SetElementTimes( 
+            IStorage*      iface,
+            const OLECHAR* pwcsName, /* [string][in] */ 
             const FILETIME*  pctime,   /* [in] */ 
             const FILETIME*  patime,   /* [in] */ 
             const FILETIME*  pmtime);  /* [in] */ 
 
-HRESULT WINAPI Storage32Impl_SetStateBits( 
-            IStorage32*      iface,
+HRESULT WINAPI StorageImpl_SetStateBits( 
+            IStorage*      iface,
             DWORD          grfStateBits, /* [in] */ 
             DWORD          grfMask);     /* [in] */ 
         
-void Storage32Impl_Destroy(
-	    Storage32Impl* This);
+void StorageImpl_Destroy(
+	    StorageImpl* This);
 
-HRESULT Storage32Impl_Construct(
-	    Storage32Impl* This,
-	    HANDLE32       hFile,
+HRESULT StorageImpl_Construct(
+	    StorageImpl* This,
+	    HANDLE       hFile,
 	    DWORD          openFlags);
 
-BOOL32 Storage32Impl_ReadBigBlock(
-            Storage32Impl* This,
+BOOL StorageImpl_ReadBigBlock(
+            StorageImpl* This,
 	    ULONG          blockIndex,
 	    void*          buffer);
 
-BOOL32 Storage32Impl_WriteBigBlock(
-            Storage32Impl* This,
+BOOL StorageImpl_WriteBigBlock(
+            StorageImpl* This,
 	    ULONG          blockIndex,
 	    void*          buffer);
 
-void* Storage32Impl_GetROBigBlock(
-            Storage32Impl* This,
+void* StorageImpl_GetROBigBlock(
+            StorageImpl* This,
 	    ULONG          blockIndex);
 
-void* Storage32Impl_GetBigBlock(
-	    Storage32Impl* This,
+void* StorageImpl_GetBigBlock(
+	    StorageImpl* This,
 	    ULONG          blockIndex);
 
-void Storage32Impl_ReleaseBigBlock(
-            Storage32Impl* This,
+void StorageImpl_ReleaseBigBlock(
+            StorageImpl* This,
             void*          pBigBlock);
 
-ULONG Storage32Impl_GetNextFreeBigBlock(
-            Storage32Impl* This);
+ULONG StorageImpl_GetNextFreeBigBlock(
+            StorageImpl* This);
 
-void Storage32Impl_FreeBigBlock(
-            Storage32Impl* This,
+void StorageImpl_FreeBigBlock(
+            StorageImpl* This,
 	    ULONG blockIndex);
 
-ULONG Storage32Impl_GetNextBlockInChain(
-            Storage32Impl* This,
+ULONG StorageImpl_GetNextBlockInChain(
+            StorageImpl* This,
 	    ULONG blockIndex);
 
-void Storage32Impl_SetNextBlockInChain(
-            Storage32Impl* This,
+void StorageImpl_SetNextBlockInChain(
+            StorageImpl* This,
 	    ULONG blockIndex,
       ULONG nextBlock);
 
-HRESULT Storage32Impl_LoadFileHeader(
-	    Storage32Impl* This);
+HRESULT StorageImpl_LoadFileHeader(
+	    StorageImpl* This);
 
-void Storage32Impl_SaveFileHeader(
-            Storage32Impl* This);
+void StorageImpl_SaveFileHeader(
+            StorageImpl* This);
 
-BOOL32 Storage32Impl_ReadProperty(
-            Storage32Impl* This,
+BOOL StorageImpl_ReadProperty(
+            StorageImpl* This,
 	    ULONG          index,
 	    StgProperty*    buffer);
 
-BOOL32 Storage32Impl_WriteProperty(
-            Storage32Impl* This,
+BOOL StorageImpl_WriteProperty(
+            StorageImpl* This,
 	    ULONG          index,
 	    StgProperty*   buffer);
 
 BlockChainStream* Storage32Impl_SmallBlocksToBigBlocks(
-                      Storage32Impl* This,
+                      StorageImpl* This,
                       SmallBlockChainStream** ppsbChain);
 
-ULONG Storage32Impl_GetNextExtendedBlock(Storage32Impl* This,
+ULONG Storage32Impl_GetNextExtendedBlock(StorageImpl* This,
                                          ULONG blockIndex);
 
-void Storage32Impl_AddBlockDepot(Storage32Impl* This,
+void Storage32Impl_AddBlockDepot(StorageImpl* This,
                                  ULONG blockIndex);
 
-ULONG Storage32Impl_AddExtBlockDepot(Storage32Impl* This);
+ULONG Storage32Impl_AddExtBlockDepot(StorageImpl* This);
 
-ULONG Storage32Impl_GetExtDepotBlock(Storage32Impl* This,
+ULONG Storage32Impl_GetExtDepotBlock(StorageImpl* This,
                                      ULONG depotIndex);
 
-void Storage32Impl_SetExtDepotBlock(Storage32Impl* This,
+void Storage32Impl_SetExtDepotBlock(StorageImpl* This,
                                     ULONG depotIndex,
                                     ULONG blockIndex);
 /****************************************************************************
@@ -448,9 +448,9 @@ void Storage32Impl_SetExtDepotBlock(Storage32Impl* This,
  * This one implements the IStorage32 interface for storage that are
  * inside another storage.
  */
-struct Storage32InternalImpl
+struct StorageInternalImpl
 {
-  ICOM_VTABLE(IStorage32) *lpvtbl;	/* Needs to be the first item in the stuct
+  ICOM_VTABLE(IStorage) *lpvtbl;	/* Needs to be the first item in the stuct
 					 * since we want to cast this in a Storage32 pointer */
 
   /*
@@ -458,9 +458,9 @@ struct Storage32InternalImpl
    * casting as a Storage32BaseImpl
    */
   ULONG		             ref;
-  struct Storage32Impl* ancestorStorage;		 
+  struct StorageImpl* ancestorStorage;		 
   ULONG                    rootPropertySetIndex;
-  void (*v_destructor)(struct Storage32InternalImpl*);
+  void (*v_destructor)(struct StorageInternalImpl*);
 
   /*
    * There is no specific data for this class.
@@ -470,19 +470,19 @@ struct Storage32InternalImpl
 /*
  * Method definitions for the Storage32InternalImpl class.
  */
-Storage32InternalImpl* Storage32InternalImpl_Construct(
-	    Storage32Impl* ancestorStorage,	
+StorageInternalImpl* StorageInternalImpl_Construct(
+	    StorageImpl* ancestorStorage,	
 	    ULONG          rootTropertyIndex);
 
-void Storage32InternalImpl_Destroy(
-       	    Storage32InternalImpl* This);
+void StorageInternalImpl_Destroy(
+       	    StorageInternalImpl* This);
 
-HRESULT WINAPI Storage32InternalImpl_Commit( 
-	    IStorage32*            iface,
+HRESULT WINAPI StorageInternalImpl_Commit( 
+	    IStorage*            iface,
 	    DWORD                  grfCommitFlags); /* [in] */ 
 
-HRESULT WINAPI Storage32InternalImpl_Revert( 
-     	    IStorage32*            iface);
+HRESULT WINAPI StorageInternalImpl_Revert( 
+     	    IStorage*            iface);
 
 
 /****************************************************************************
@@ -498,7 +498,7 @@ struct IEnumSTATSTGImpl
 					 * since we want to cast this in a IEnumSTATSTG pointer */
   
   ULONG		 ref;		        /* Reference count */
-  Storage32Impl* parentStorage;         /* Reference to the parent storage */
+  StorageImpl* parentStorage;         /* Reference to the parent storage */
   ULONG          firstPropertyNode;     /* Index of the root of the storage to enumerate */
 
   /*
@@ -545,7 +545,7 @@ HRESULT WINAPI IEnumSTATSTGImpl_Clone(
 	    IEnumSTATSTG**    ppenum);
 
 IEnumSTATSTGImpl* IEnumSTATSTGImpl_Construct(
-            Storage32Impl* This,
+            StorageImpl* This,
 	    ULONG          firstPropertyNode);
 
 void IEnumSTATSTGImpl_Destroy(
@@ -557,14 +557,14 @@ void IEnumSTATSTGImpl_PushSearchNode(
 
 ULONG IEnumSTATSTGImpl_PopSearchNode(
             IEnumSTATSTGImpl* This,
-	    BOOL32            remove);
+	    BOOL            remove);
 
 ULONG IEnumSTATSTGImpl_FindProperty(
             IEnumSTATSTGImpl* This,
-	    const OLECHAR32*  lpszPropName,
+	    const OLECHAR*  lpszPropName,
 	    StgProperty*      buffer);
 
-INT32 IEnumSTATSTGImpl_FindParentProperty(
+INT IEnumSTATSTGImpl_FindParentProperty(
   IEnumSTATSTGImpl *This,
   ULONG             childProperty,
   StgProperty      *currentProperty,
@@ -579,7 +579,7 @@ INT32 IEnumSTATSTGImpl_FindParentProperty(
  */
 struct StgStreamImpl
 {
-  ICOM_VTABLE(IStream32) *lpvtbl;  /* Needs to be the first item in the stuct
+  ICOM_VTABLE(IStream) *lpvtbl;  /* Needs to be the first item in the stuct
 				    * since we want to cast this in a IStream pointer */
   
   /*
@@ -590,7 +590,7 @@ struct StgStreamImpl
   /*
    * Storage that is the parent(owner) of the stream
    */
-  Storage32BaseImpl* parentStorage;
+  StorageBaseImpl* parentStorage;
 
   /*
    * Index of the property that owns (points to) this stream.
@@ -621,7 +621,7 @@ struct StgStreamImpl
  * Method definition for the StgStreamImpl class.
  */
 StgStreamImpl* StgStreamImpl_Construct(
-		Storage32BaseImpl* parentStorage,
+		StorageBaseImpl* parentStorage,
 		ULONG              ownerProperty);
 
 void StgStreamImpl_Destroy(
@@ -631,72 +631,72 @@ void StgStreamImpl_OpenBlockChain(
                 StgStreamImpl* This);
 
 HRESULT WINAPI StgStreamImpl_QueryInterface(
-		IStream32*      iface,
+		IStream*      iface,
 		REFIID         riid,		/* [in] */          
 		void**         ppvObject);  /* [iid_is][out] */ 
         
 ULONG WINAPI StgStreamImpl_AddRef(
-		IStream32*      iface);
+		IStream*      iface);
         
 ULONG WINAPI StgStreamImpl_Release(
-		IStream32*      iface);
+		IStream*      iface);
         
 HRESULT WINAPI StgStreamImpl_Read( 
-	        IStream32*      iface,
+	        IStream*      iface,
 		void*          pv,        /* [length_is][size_is][out] */
 		ULONG          cb,        /* [in] */                     
 		ULONG*         pcbRead);  /* [out] */                    
         
 HRESULT WINAPI StgStreamImpl_Write(
-		IStream32*      iface,
+		IStream*      iface,
 		const void*    pv,          /* [size_is][in] */ 
 		ULONG          cb,          /* [in] */          
 		ULONG*         pcbWritten); /* [out] */         
         
 HRESULT WINAPI StgStreamImpl_Seek( 
-		IStream32*      iface,
+		IStream*      iface,
 		LARGE_INTEGER   dlibMove,         /* [in] */ 
 		DWORD           dwOrigin,         /* [in] */ 
 		ULARGE_INTEGER* plibNewPosition); /* [out] */
         
 HRESULT WINAPI StgStreamImpl_SetSize( 
-	        IStream32*      iface,
+	        IStream*      iface,
 		ULARGE_INTEGER  libNewSize);  /* [in] */ 
         
 HRESULT WINAPI StgStreamImpl_CopyTo( 
-		IStream32*      iface,
-		IStream32*      pstm,         /* [unique][in] */ 
+		IStream*      iface,
+		IStream*      pstm,         /* [unique][in] */ 
 		ULARGE_INTEGER  cb,           /* [in] */         
 		ULARGE_INTEGER* pcbRead,      /* [out] */        
 		ULARGE_INTEGER* pcbWritten);  /* [out] */        
 
 HRESULT WINAPI StgStreamImpl_Commit( 
-	    	IStream32*      iface,
+	    	IStream*      iface,
 		DWORD           grfCommitFlags); /* [in] */ 
         
 HRESULT WINAPI StgStreamImpl_Revert( 
-		IStream32*  iface);
+		IStream*  iface);
         
 HRESULT WINAPI StgStreamImpl_LockRegion( 
-		IStream32*     iface,
+		IStream*     iface,
 		ULARGE_INTEGER libOffset,   /* [in] */ 
 		ULARGE_INTEGER cb,          /* [in] */ 
 		DWORD          dwLockType); /* [in] */ 
         
 HRESULT WINAPI StgStreamImpl_UnlockRegion( 
-		IStream32*     iface,
+		IStream*     iface,
 		ULARGE_INTEGER libOffset,   /* [in] */ 
 	        ULARGE_INTEGER cb,          /* [in] */ 
 		DWORD          dwLockType); /* [in] */ 
         
 HRESULT WINAPI StgStreamImpl_Stat( 
-		IStream32*     iface,
+		IStream*     iface,
 	        STATSTG*       pstatstg,     /* [out] */
 	        DWORD          grfStatFlag); /* [in] */ 
         
 HRESULT WINAPI StgStreamImpl_Clone( 
-		IStream32*     iface,
-		IStream32**    ppstm);       /* [out] */ 
+		IStream*     iface,
+		IStream**    ppstm);       /* [out] */ 
 
 
 /********************************************************************************
@@ -722,7 +722,7 @@ void StorageUtl_CopyPropertyToSTATSTG(STATSTG*     destination,
  */
 struct BlockChainStream
 {
-  Storage32Impl* parentStorage;
+  StorageImpl* parentStorage;
   ULONG*         headOfStreamPlaceHolder;
   ULONG          ownerPropertyIndex;
 };
@@ -731,7 +731,7 @@ struct BlockChainStream
  * Methods for the BlockChainStream class.
  */
 BlockChainStream* BlockChainStream_Construct(
-		Storage32Impl* parentStorage,	
+		StorageImpl* parentStorage,	
 		ULONG*         headOfStreamPlaceHolder,
 		ULONG          propertyIndex);
 
@@ -741,21 +741,21 @@ void BlockChainStream_Destroy(
 ULONG BlockChainStream_GetHeadOfChain(
 		BlockChainStream* This);
 
-BOOL32 BlockChainStream_ReadAt(
+BOOL BlockChainStream_ReadAt(
 		BlockChainStream* This,
 		ULARGE_INTEGER offset,
 		ULONG          size,
 		void*          buffer,
 		ULONG*         bytesRead);
 
-BOOL32 BlockChainStream_WriteAt(
+BOOL BlockChainStream_WriteAt(
 		BlockChainStream* This,
 		ULARGE_INTEGER offset,
 		ULONG          size,
 		const void*    buffer,
 		ULONG*         bytesWritten);
 
-BOOL32 BlockChainStream_SetSize(
+BOOL BlockChainStream_SetSize(
 		BlockChainStream* This,
 		ULARGE_INTEGER    newSize);
 
@@ -773,7 +773,7 @@ ULONG BlockChainStream_GetCount(
  */
 struct SmallBlockChainStream
 {
-  Storage32Impl* parentStorage;
+  StorageImpl* parentStorage;
   ULONG          ownerPropertyIndex;
 };
 
@@ -781,7 +781,7 @@ struct SmallBlockChainStream
  * Methods of the SmallBlockChainStream class.
  */
 SmallBlockChainStream* SmallBlockChainStream_Construct(
-	       Storage32Impl* parentStorage,	
+	       StorageImpl* parentStorage,	
 	       ULONG          propertyIndex);
 
 void SmallBlockChainStream_Destroy(
@@ -806,21 +806,21 @@ void SmallBlockChainStream_FreeBlock(
 ULONG SmallBlockChainStream_GetNextFreeBlock(
          SmallBlockChainStream* This);
 
-BOOL32 SmallBlockChainStream_ReadAt(
+BOOL SmallBlockChainStream_ReadAt(
 	       SmallBlockChainStream* This,
 	       ULARGE_INTEGER offset,
 	       ULONG          size,
 	       void*          buffer,
 	       ULONG*         bytesRead);
 
-BOOL32 SmallBlockChainStream_WriteAt(
+BOOL SmallBlockChainStream_WriteAt(
 	       SmallBlockChainStream* This,
 	       ULARGE_INTEGER offset,
 	       ULONG          size,
 	       const void*    buffer,
 	       ULONG*         bytesWritten);
 
-BOOL32 SmallBlockChainStream_SetSize(
+BOOL SmallBlockChainStream_SetSize(
 	       SmallBlockChainStream* This,
 	       ULARGE_INTEGER          newSize);
 

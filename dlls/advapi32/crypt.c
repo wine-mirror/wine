@@ -20,7 +20,7 @@
  * RETURNS TRUE on success, FALSE on failure.
  */
 
-BOOL32 WINAPI
+BOOL WINAPI
 CryptAcquireContextA( HCRYPTPROV *phProv, LPCSTR pszContainer,
 		      LPCSTR pszProvider, DWORD dwProvType, DWORD dwFlags)
 {

@@ -297,7 +297,7 @@ void DEBUG_InfoRegisters(void)
  * Make sure all registers have a correct value for returning from
  * the signal handler.
  */
-BOOL32 DEBUG_ValidateRegisters(void)
+BOOL DEBUG_ValidateRegisters(void)
 {
     WORD cs, ds;
 

@@ -33,8 +33,8 @@ typedef struct {
     BOOL16			fShareable;	/* TRUE if first open was shareable */
     WORD			wNotifyDeviceID;/* MCI device ID with a pending notification */
     HANDLE16			hCallback;	/* Callback handle for pending notification */
-    HMMIO32			hFile;		/* mmio file handle open as Element */
-    MCI_WAVE_OPEN_PARMS32A 	openParms;
+    HMMIO			hFile;		/* mmio file handle open as Element */
+    MCI_WAVE_OPEN_PARMSA 	openParms;
     WAVEOPENDESC 		waveDesc;
     PCMWAVEFORMAT		WaveFormat;
     WAVEHDR			WaveHdr;
@@ -115,7 +115,7 @@ static	DWORD WAVE_mciReadFmt(WINE_MCIWAVE* wmw, MMCKINFO* pckMainRIFF)
 	return MCIERR_INVALID_FILE;
     TRACE(mciwave, "Chunk Found ckid=%.4s fccType=%.4s cksize=%08lX \n",
 	  (LPSTR)&mmckInfo.ckid, (LPSTR)&mmckInfo.fccType, mmckInfo.cksize);
-    if (mmioRead32(wmw->hFile, (HPSTR)&wmw->WaveFormat,
+    if (mmioRead(wmw->hFile, (HPSTR)&wmw->WaveFormat,
 		   (long)sizeof(PCMWAVEFORMAT)) != (long)sizeof(PCMWAVEFORMAT))
 	return MCIERR_INVALID_FILE;
 
@@ -133,14 +133,14 @@ static	DWORD WAVE_mciReadFmt(WINE_MCIWAVE* wmw, MMCKINFO* pckMainRIFF)
     TRACE(mciwave, "nChannels=%d nSamplesPerSec=%ld\n",
 	  wmw->WaveFormat.wf.nChannels, wmw->WaveFormat.wf.nSamplesPerSec);
     wmw->dwLength = mmckInfo.cksize;
-    wmw->dwFileOffset = mmioSeek32(wmw->hFile, 0, SEEK_CUR); /* >= 0 */
+    wmw->dwFileOffset = mmioSeek(wmw->hFile, 0, SEEK_CUR); /* >= 0 */
     return 0;
 }
 
 /**************************************************************************
  * 			WAVE_mciOpen	                        [internal]
  */
-static DWORD WAVE_mciOpen(UINT16 wDevID, DWORD dwFlags, LPMCI_WAVE_OPEN_PARMS32A lpOpenParms)
+static DWORD WAVE_mciOpen(UINT16 wDevID, DWORD dwFlags, LPMCI_WAVE_OPEN_PARMSA lpOpenParms)
 {
     DWORD		dwRet = 0;
     DWORD		dwDeviceID;
@@ -184,7 +184,7 @@ static DWORD WAVE_mciOpen(UINT16 wDevID, DWORD dwFlags, LPMCI_WAVE_OPEN_PARMS32A
 	    /*FIXME : what should be done id wmw->hFile is already != 0, or the driver is playin' */
 	    TRACE(mciwave,"MCI_OPEN_ELEMENT '%s' !\n", lpstrElementName);
 	    if (lpstrElementName && (strlen(lpstrElementName) > 0)) {
-		wmw->hFile = mmioOpen32A((LPSTR)lpstrElementName, NULL, 
+		wmw->hFile = mmioOpenA((LPSTR)lpstrElementName, NULL, 
 					 MMIO_ALLOCBUF | MMIO_READWRITE | MMIO_EXCLUSIVE);
 		if (wmw->hFile == 0) {
 		    WARN(mciwave, "can't find file='%s' !\n", lpstrElementName);
@@ -197,7 +197,7 @@ static DWORD WAVE_mciOpen(UINT16 wDevID, DWORD dwFlags, LPMCI_WAVE_OPEN_PARMS32A
     }
     TRACE(mciwave,"hFile=%u\n", wmw->hFile);
 
-    memcpy(&wmw->openParms, lpOpenParms, sizeof(MCI_WAVE_OPEN_PARMS32A));
+    memcpy(&wmw->openParms, lpOpenParms, sizeof(MCI_WAVE_OPEN_PARMSA));
     wmw->wNotifyDeviceID = dwDeviceID;
     wmw->dwStatus = MCI_MODE_NOT_READY;	/* while loading file contents */
     
@@ -235,7 +235,7 @@ static DWORD WAVE_mciOpen(UINT16 wDevID, DWORD dwFlags, LPMCI_WAVE_OPEN_PARMS32A
     } else {
 	wmw->nUseCount--;
 	if (wmw->hFile != 0)
-	    mmioClose32(wmw->hFile, 0);
+	    mmioClose(wmw->hFile, 0);
 	wmw->hFile = 0;
     }
     return 0;
@@ -266,7 +266,7 @@ static DWORD WAVE_mciCue(UINT16 wDevID, DWORD dwParam, LPMCI_GENERIC_PARMS lpPar
 
     /* always close elements ? */    
     if (wmw->hFile != 0) {
-	mmioClose32(wmw->hFile, 0);
+	mmioClose(wmw->hFile, 0);
 	wmw->hFile = 0;
     }
     
@@ -340,7 +340,7 @@ static DWORD WAVE_mciClose(UINT16 wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lpP
     if (wmw->nUseCount == 0) {
 	DWORD	mmRet;
 	if (wmw->hFile != 0) {
-	    mmioClose32(wmw->hFile, 0);
+	    mmioClose(wmw->hFile, 0);
 	    wmw->hFile = 0;
 	}
 	mmRet = (wmw->fInput) ? widMessage(wDevID, WIDM_CLOSE, 0, 0L, 0L) :
@@ -385,7 +385,7 @@ static DWORD WAVE_mciPlay(UINT16 wDevID, DWORD dwFlags, LPMCI_PLAY_PARMS lpParms
     }
 
     if (!(dwFlags & MCI_WAIT)) {
-	return MCI_SendCommandAsync32(wmw->wNotifyDeviceID, MCI_PLAY, dwFlags, 
+	return MCI_SendCommandAsync(wmw->wNotifyDeviceID, MCI_PLAY, dwFlags, 
 				      (DWORD)lpParms, sizeof(MCI_PLAY_PARMS));
     }
 
@@ -400,7 +400,7 @@ static DWORD WAVE_mciPlay(UINT16 wDevID, DWORD dwFlags, LPMCI_PLAY_PARMS lpParms
     TRACE(mciwave, "Playing from byte=%lu to byte=%lu\n", wmw->dwPosition, end);
 
     /* go back to begining of chunk */
-    mmioSeek32(wmw->hFile, wmw->dwFileOffset, SEEK_SET); /* >= 0 */
+    mmioSeek(wmw->hFile, wmw->dwFileOffset, SEEK_SET); /* >= 0 */
 
     /* at 22050 bytes per sec => 30 ms by block */
     bufsize = 10240;
@@ -415,7 +415,7 @@ static DWORD WAVE_mciPlay(UINT16 wDevID, DWORD dwFlags, LPMCI_PLAY_PARMS lpParms
 	wmw->WaveHdr.dwFlags = 0L;
 	wmw->WaveHdr.dwLoops = 0L;
 	dwRet = wodMessage(wDevID, WODM_PREPARE, 0, (DWORD)&wmw->WaveHdr, sizeof(WAVEHDR));
-	count = mmioRead32(wmw->hFile, wmw->WaveHdr.lpData, bufsize);
+	count = mmioRead(wmw->hFile, wmw->WaveHdr.lpData, bufsize);
 	TRACE(mciwave,"mmioRead bufsize=%ld count=%ld\n", bufsize, count);
 	if (count < 1) break;
 	wmw->WaveHdr.dwBufferLength = count;
@@ -883,7 +883,7 @@ static DWORD WAVE_mciInfo(UINT16 wDevID, DWORD dwFlags, LPMCI_INFO_PARMS16 lpPar
 	if (strlen(str) + 1 > lpParms->dwRetSize) {
 	    ret = MCIERR_PARAM_OVERFLOW;
 	} else {
-	    lstrcpyn32A(lpParms->lpstrReturn, str, lpParms->dwRetSize);
+	    lstrcpynA(lpParms->lpstrReturn, str, lpParms->dwRetSize);
 	}
     } else {
 	lpParms->lpstrReturn[0] = 0;
@@ -895,7 +895,7 @@ static DWORD WAVE_mciInfo(UINT16 wDevID, DWORD dwFlags, LPMCI_INFO_PARMS16 lpPar
 /**************************************************************************
  * 				WAVE_DriverProc32		[sample driver]
  */
-LONG MCIWAVE_DriverProc32(DWORD dwDevID, HDRVR16 hDriv, DWORD wMsg, 
+LONG MCIWAVE_DriverProc(DWORD dwDevID, HDRVR16 hDriv, DWORD wMsg, 
 			  DWORD dwParam1, DWORD dwParam2)
 {
     TRACE(mciwave,"(%08lX, %04X, %08lX, %08lX, %08lX)\n", 
@@ -909,10 +909,10 @@ LONG MCIWAVE_DriverProc32(DWORD dwDevID, HDRVR16 hDriv, DWORD wMsg,
     case DRV_ENABLE:		return 1;
     case DRV_DISABLE:		return 1;
     case DRV_QUERYCONFIGURE:	return 1;
-    case DRV_CONFIGURE:		MessageBox32A(0, "Sample MultiMedia Linux Driver !", "MMLinux Driver", MB_OK);	return 1;
+    case DRV_CONFIGURE:		MessageBoxA(0, "Sample MultiMedia Linux Driver !", "MMLinux Driver", MB_OK);	return 1;
     case DRV_INSTALL:		return DRVCNF_RESTART;
     case DRV_REMOVE:		return DRVCNF_RESTART;
-    case MCI_OPEN_DRIVER:	return WAVE_mciOpen      (dwDevID, dwParam1, (LPMCI_WAVE_OPEN_PARMS32A)dwParam2);
+    case MCI_OPEN_DRIVER:	return WAVE_mciOpen      (dwDevID, dwParam1, (LPMCI_WAVE_OPEN_PARMSA)dwParam2);
     case MCI_CLOSE_DRIVER:	return WAVE_mciClose     (dwDevID, dwParam1, (LPMCI_GENERIC_PARMS)     dwParam2);
     case MCI_CUE:		return WAVE_mciCue       (dwDevID, dwParam1, (LPMCI_GENERIC_PARMS)     dwParam2);
     case MCI_PLAY:		return WAVE_mciPlay      (dwDevID, dwParam1, (LPMCI_PLAY_PARMS)        dwParam2);
@@ -949,7 +949,7 @@ LONG MCIWAVE_DriverProc32(DWORD dwDevID, HDRVR16 hDriv, DWORD wMsg,
 	break;
     default:
 	FIXME(mciwave, "is probably wrong msg=%s\n", MCI_CommandToString(wMsg));
-	return DefDriverProc32(dwDevID, hDriv, wMsg, dwParam1, dwParam2);
+	return DefDriverProc(dwDevID, hDriv, wMsg, dwParam1, dwParam2);
     }
     return MCIERR_UNRECOGNIZED_COMMAND;
 }

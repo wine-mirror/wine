@@ -12,24 +12,24 @@
 
 /**********************************************************************/
 
-HANDLE32 IMAGEHLP_hHeap32 = (HANDLE32) NULL;
+HANDLE IMAGEHLP_hHeap = (HANDLE) NULL;
 
-static API_VERSION32 IMAGEHLP_ApiVersion = { 4, 0, 0, 5 };
+static API_VERSION IMAGEHLP_ApiVersion = { 4, 0, 0, 5 };
 
 /***********************************************************************
  *           IMAGEHLP_LibMain (IMAGEHLP.init)
  */
-BOOL32 WINAPI IMAGEHLP_LibMain(
-  HINSTANCE32 hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
+BOOL WINAPI IMAGEHLP_LibMain(
+  HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 {
   switch(fdwReason)
     {
     case DLL_PROCESS_ATTACH:
-      IMAGEHLP_hHeap32 = HeapCreate(0, 0x10000, 0);
+      IMAGEHLP_hHeap = HeapCreate(0, 0x10000, 0);
       break;
     case DLL_PROCESS_DETACH:
-      HeapDestroy(IMAGEHLP_hHeap32);
-      IMAGEHLP_hHeap32 = (HANDLE32) NULL;
+      HeapDestroy(IMAGEHLP_hHeap);
+      IMAGEHLP_hHeap = (HANDLE) NULL;
       break;
     case DLL_THREAD_ATTACH:
       break;
@@ -44,7 +44,7 @@ BOOL32 WINAPI IMAGEHLP_LibMain(
 /***********************************************************************
  *           ImagehlpApiVersion32 (IMAGEHLP.22)
  */
-PAPI_VERSION32 WINAPI ImagehlpApiVersion32()
+PAPI_VERSION WINAPI ImagehlpApiVersion()
 {
   return &IMAGEHLP_ApiVersion;
 }
@@ -52,7 +52,7 @@ PAPI_VERSION32 WINAPI ImagehlpApiVersion32()
 /***********************************************************************
  *           ImagehlpApiVersionEx32 (IMAGEHLP.23)
  */
-PAPI_VERSION32 WINAPI ImagehlpApiVersionEx32(PAPI_VERSION32 AppVersion)
+PAPI_VERSION WINAPI ImagehlpApiVersionEx(PAPI_VERSION AppVersion)
 {
   if(!AppVersion)
     return NULL;
@@ -68,7 +68,7 @@ PAPI_VERSION32 WINAPI ImagehlpApiVersionEx32(PAPI_VERSION32 AppVersion)
 /***********************************************************************
  *           MakeSureDirectoryPathExists32 (IMAGEHLP.24)
  */
-BOOL32 WINAPI MakeSureDirectoryPathExists32(LPCSTR DirPath)
+BOOL WINAPI MakeSureDirectoryPathExists(LPCSTR DirPath)
 {
   FIXME(imagehlp, "(%s): stub\n", debugstr_a(DirPath));
   SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
@@ -84,7 +84,7 @@ BOOL32 WINAPI MakeSureDirectoryPathExists32(LPCSTR DirPath)
 /***********************************************************************
  *           SearchTreeForFile32 (IMAGEHLP.33)
  */
-BOOL32 WINAPI SearchTreeForFile32(
+BOOL WINAPI SearchTreeForFile(
   LPSTR RootPath, LPSTR InputPathName, LPSTR OutputPathBuffer)
 {
   FIXME(imagehlp, "(%s, %s, %s): stub\n",
@@ -98,8 +98,8 @@ BOOL32 WINAPI SearchTreeForFile32(
 /***********************************************************************
  *           TouchFileTimes32 (IMAGEHLP.56)
  */
-BOOL32 WINAPI TouchFileTimes32(
-  HANDLE32 FileHandle, LPSYSTEMTIME lpSystemTime)
+BOOL WINAPI TouchFileTimes(
+  HANDLE FileHandle, LPSYSTEMTIME lpSystemTime)
 {
   FIXME(imagehlp, "(0x%08x, %p): stub\n",
     FileHandle, lpSystemTime

@@ -26,7 +26,7 @@ void TTYDRV_WND_Finalize(WND *wndPtr)
 /**********************************************************************
  *		TTYDRV_WND_CreateDesktopWindow
  */
-BOOL32 TTYDRV_WND_CreateDesktopWindow(WND *wndPtr, CLASS *classPtr, BOOL32 bUnicode)
+BOOL TTYDRV_WND_CreateDesktopWindow(WND *wndPtr, CLASS *classPtr, BOOL bUnicode)
 {
   return FALSE;
 }
@@ -34,7 +34,7 @@ BOOL32 TTYDRV_WND_CreateDesktopWindow(WND *wndPtr, CLASS *classPtr, BOOL32 bUnic
 /**********************************************************************
  *		TTYDRV_WND_CreateWindow
  */
-BOOL32 TTYDRV_WND_CreateWindow(WND *wndPtr, CLASS *classPtr, CREATESTRUCT32A *cs, BOOL32 bUnicode)
+BOOL TTYDRV_WND_CreateWindow(WND *wndPtr, CLASS *classPtr, CREATESTRUCTA *cs, BOOL bUnicode)
 {
   return FALSE;
 }
@@ -42,7 +42,7 @@ BOOL32 TTYDRV_WND_CreateWindow(WND *wndPtr, CLASS *classPtr, CREATESTRUCT32A *cs
 /***********************************************************************
  *		TTYDRV_WND_DestroyWindow
  */
-BOOL32 TTYDRV_WND_DestroyWindow(WND *wndPtr)
+BOOL TTYDRV_WND_DestroyWindow(WND *wndPtr)
 {
   return FALSE;
 }
@@ -67,7 +67,7 @@ void TTYDRV_WND_ForceWindowRaise(WND *wndPtr)
  *
  * SetWindowPos() for an X window. Used by the real SetWindowPos().
  */
-void TTYDRV_WND_SetWindowPos(WND *wndPtr, const WINDOWPOS32 *winpos, BOOL32 bSMC_SETXPOS)
+void TTYDRV_WND_SetWindowPos(WND *wndPtr, const WINDOWPOS *winpos, BOOL bSMC_SETXPOS)
 {
 }
 
@@ -104,22 +104,22 @@ void TTYDRV_WND_PostSizeMove(WND *wndPtr)
  *		 TTYDRV_WND_ScrollWindow
  */
 void TTYDRV_WND_ScrollWindow(
-  WND *wndPtr, DC *dcPtr, INT32 dx, INT32 dy, 
-  const RECT32 *clipRect, BOOL32 bUpdate)
+  WND *wndPtr, DC *dcPtr, INT dx, INT dy, 
+  const RECT *clipRect, BOOL bUpdate)
 {
 }
 
 /***********************************************************************
  *		TTYDRV_WND_SetDrawable
  */
-void TTYDRV_WND_SetDrawable(WND *wndPtr, DC *dc, WORD flags, BOOL32 bSetClipOrigin)
+void TTYDRV_WND_SetDrawable(WND *wndPtr, DC *dc, WORD flags, BOOL bSetClipOrigin)
 {
 }
 
 /***********************************************************************
  *		TTYDRV_WND_IsSelfClipping
  */
-BOOL32 TTYDRV_WND_IsSelfClipping(WND *wndPtr)
+BOOL TTYDRV_WND_IsSelfClipping(WND *wndPtr)
 {
   return FALSE;
 }

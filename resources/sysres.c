@@ -73,7 +73,7 @@ HGLOBAL16 SYSRES_LoadResource( SYSTEM_RESOURCE id )
 
     resPtr = SYSRES_Resources[Options.language][id];
     return GLOBAL_CreateBlock( GMEM_FIXED, resPtr->data, resPtr->datasize,
-			       GetCurrentPDB(), FALSE, FALSE, TRUE, NULL );
+			       GetCurrentPDB16(), FALSE, FALSE, TRUE, NULL );
 }
 
 

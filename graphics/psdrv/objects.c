@@ -26,10 +26,10 @@ static HBITMAP16 PSDRV_BITMAP_SelectObject( DC * dc, HBITMAP16 hbitmap,
 /***********************************************************************
  *           PSDRV_SelectObject
  */
-HGDIOBJ32 PSDRV_SelectObject( DC *dc, HGDIOBJ32 handle )
+HGDIOBJ PSDRV_SelectObject( DC *dc, HGDIOBJ handle )
 {
     GDIOBJHDR * ptr = GDI_GetObjPtr( handle, MAGIC_DONTCARE );
-    HGDIOBJ32 ret = 0;
+    HGDIOBJ ret = 0;
 
     if (!ptr) return 0;
     TRACE(psdrv, "hdc=%04x %04x\n", dc->hSelf, handle );

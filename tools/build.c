@@ -2205,7 +2205,7 @@ static void BuildRet16Func( FILE *outfile )
  * (ebp+4)   ret addr
  * (ebp)     ebp
  */
-static void BuildCallTo32CBClient( FILE *outfile, BOOL32 isEx )
+static void BuildCallTo32CBClient( FILE *outfile, BOOL isEx )
 {
     char *name = isEx? "CBClientEx" : "CBClient";
     int size = isEx? 24 : 16;

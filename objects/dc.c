@@ -112,7 +112,7 @@ DC *DC_AllocDC( const DC_FUNCTIONS *funcs )
 /***********************************************************************
  *           DC_GetDCPtr
  */
-DC *DC_GetDCPtr( HDC32 hdc )
+DC *DC_GetDCPtr( HDC hdc )
 {
     GDIOBJHDR *ptr = (GDIOBJHDR *)GDI_HEAP_LOCK( hdc );
     if (!ptr) return NULL;
@@ -130,12 +130,12 @@ DC *DC_GetDCPtr( HDC32 hdc )
  */
 void DC_InitDC( DC* dc )
 {
-    RealizeDefaultPalette( dc->hSelf );
-    SetTextColor32( dc->hSelf, dc->w.textColor );
-    SetBkColor32( dc->hSelf, dc->w.backgroundColor );
-    SelectObject32( dc->hSelf, dc->w.hPen );
-    SelectObject32( dc->hSelf, dc->w.hBrush );
-    SelectObject32( dc->hSelf, dc->w.hFont );
+    RealizeDefaultPalette16( dc->hSelf );
+    SetTextColor( dc->hSelf, dc->w.textColor );
+    SetBkColor( dc->hSelf, dc->w.backgroundColor );
+    SelectObject( dc->hSelf, dc->w.hPen );
+    SelectObject( dc->hSelf, dc->w.hBrush );
+    SelectObject( dc->hSelf, dc->w.hFont );
     CLIPPING_UpdateGCRegion( dc );
 }
 
@@ -147,7 +147,7 @@ void DC_InitDC( DC* dc )
  * xformDest. Returns TRUE if successful or FALSE if the xformSrc matrix
  * is singular.
  */
-static BOOL32 DC_InvertXform( const XFORM *xformSrc, XFORM *xformDest )
+static BOOL DC_InvertXform( const XFORM *xformSrc, XFORM *xformDest )
 {
     FLOAT determinant;
     
@@ -209,7 +209,7 @@ void DC_UpdateXforms( DC *dc )
 /***********************************************************************
  *           GetDCState    (GDI.179)
  */
-HDC16 WINAPI GetDCState( HDC16 hdc )
+HDC16 WINAPI GetDCState16( HDC16 hdc )
 {
     DC * newdc, * dc;
     HGDIOBJ16 handle;
@@ -273,7 +273,7 @@ HDC16 WINAPI GetDCState( HDC16 hdc )
     newdc->vportExtX          = dc->vportExtX;
     newdc->vportExtY          = dc->vportExtY;
 
-    newdc->hSelf = (HDC32)handle;
+    newdc->hSelf = (HDC)handle;
     newdc->saveLevel = 0;
 
     PATH_InitGdiPath( &newdc->w.path );
@@ -283,8 +283,8 @@ HDC16 WINAPI GetDCState( HDC16 hdc )
     newdc->w.hGCClipRgn = newdc->w.hVisRgn = 0;
     if (dc->w.hClipRgn)
     {
-	newdc->w.hClipRgn = CreateRectRgn32( 0, 0, 0, 0 );
-	CombineRgn32( newdc->w.hClipRgn, dc->w.hClipRgn, 0, RGN_COPY );
+	newdc->w.hClipRgn = CreateRectRgn( 0, 0, 0, 0 );
+	CombineRgn( newdc->w.hClipRgn, dc->w.hClipRgn, 0, RGN_COPY );
     }
     else
 	newdc->w.hClipRgn = 0;
@@ -297,7 +297,7 @@ HDC16 WINAPI GetDCState( HDC16 hdc )
 /***********************************************************************
  *           SetDCState    (GDI.180)
  */
-void WINAPI SetDCState( HDC16 hdc, HDC16 hdcs )
+void WINAPI SetDCState16( HDC16 hdc, HDC16 hdcs )
 {
     DC *dc, *dcs;
     
@@ -363,8 +363,8 @@ void WINAPI SetDCState( HDC16 hdc, HDC16 hdcs )
 
     if (dcs->w.hClipRgn)
     {
-        if (!dc->w.hClipRgn) dc->w.hClipRgn = CreateRectRgn32( 0, 0, 0, 0 );
-        CombineRgn32( dc->w.hClipRgn, dcs->w.hClipRgn, 0, RGN_COPY );
+        if (!dc->w.hClipRgn) dc->w.hClipRgn = CreateRectRgn( 0, 0, 0, 0 );
+        CombineRgn( dc->w.hClipRgn, dcs->w.hClipRgn, 0, RGN_COPY );
     }
     else
     {
@@ -373,13 +373,13 @@ void WINAPI SetDCState( HDC16 hdc, HDC16 hdcs )
     }
     CLIPPING_UpdateGCRegion( dc );
 
-    SelectObject32( hdc, dcs->w.hBitmap );
-    SelectObject32( hdc, dcs->w.hBrush );
-    SelectObject32( hdc, dcs->w.hFont );
-    SelectObject32( hdc, dcs->w.hPen );
-    SetBkColor32( hdc, dcs->w.backgroundColor);
-    SetTextColor32( hdc, dcs->w.textColor);
-    GDISelectPalette( hdc, dcs->w.hPalette, FALSE );
+    SelectObject( hdc, dcs->w.hBitmap );
+    SelectObject( hdc, dcs->w.hBrush );
+    SelectObject( hdc, dcs->w.hFont );
+    SelectObject( hdc, dcs->w.hPen );
+    SetBkColor( hdc, dcs->w.backgroundColor);
+    SetTextColor( hdc, dcs->w.textColor);
+    GDISelectPalette16( hdc, dcs->w.hPalette, FALSE );
     GDI_HEAP_UNLOCK( hdc );
     GDI_HEAP_UNLOCK( hdcs );
 }
@@ -390,18 +390,18 @@ void WINAPI SetDCState( HDC16 hdc, HDC16 hdcs )
  */
 INT16 WINAPI SaveDC16( HDC16 hdc )
 {
-    return (INT16)SaveDC32( hdc );
+    return (INT16)SaveDC( hdc );
 }
 
 
 /***********************************************************************
  *           SaveDC32    (GDI32.292)
  */
-INT32 WINAPI SaveDC32( HDC32 hdc )
+INT WINAPI SaveDC( HDC hdc )
 {
-    HDC32 hdcs;
+    HDC hdcs;
     DC * dc, * dcs;
-    INT32 ret;
+    INT ret;
 
     dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
     if (!dc) 
@@ -412,7 +412,7 @@ INT32 WINAPI SaveDC32( HDC32 hdc )
 	GDI_HEAP_UNLOCK( hdc );
 	return 1;  /* ?? */
     }
-    if (!(hdcs = GetDCState( hdc )))
+    if (!(hdcs = GetDCState16( hdc )))
     {
       GDI_HEAP_UNLOCK( hdc );
       return 0;
@@ -429,7 +429,7 @@ INT32 WINAPI SaveDC32( HDC32 hdc )
     {
         GDI_HEAP_UNLOCK( hdc );
 	GDI_HEAP_UNLOCK( hdcs );
-	DeleteDC32( hdcs );
+	DeleteDC( hdcs );
 	return 0;
     }
     
@@ -448,17 +448,17 @@ INT32 WINAPI SaveDC32( HDC32 hdc )
  */
 BOOL16 WINAPI RestoreDC16( HDC16 hdc, INT16 level )
 {
-    return RestoreDC32( hdc, level );
+    return RestoreDC( hdc, level );
 }
 
 
 /***********************************************************************
  *           RestoreDC32    (GDI32.290)
  */
-BOOL32 WINAPI RestoreDC32( HDC32 hdc, INT32 level )
+BOOL WINAPI RestoreDC( HDC hdc, INT level )
 {
     DC * dc, * dcs;
-    BOOL32 success;
+    BOOL success;
 
     TRACE(dc, "%04x %d\n", hdc, level );
     dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
@@ -494,13 +494,13 @@ BOOL32 WINAPI RestoreDC32( HDC32 hdc, INT32 level )
 	dc->header.hNext = dcs->header.hNext;
 	if (--dc->saveLevel < level)
 	{
-	    SetDCState( hdc, hdcs );
+	    SetDCState16( hdc, hdcs );
             if (!PATH_AssignGdiPath( &dc->w.path, &dcs->w.path ))
 		/* FIXME: This might not be quite right, since we're
 		 * returning FALSE but still destroying the saved DC state */
 	        success=FALSE;
 	}
-	DeleteDC32( hdcs );
+	DeleteDC( hdcs );
     }
     GDI_HEAP_UNLOCK( hdc );
     return success;
@@ -540,8 +540,8 @@ HDC16 WINAPI CreateDC16( LPCSTR driver, LPCSTR device, LPCSTR output,
 /***********************************************************************
  *           CreateDC32A    (GDI32.)
  */
-HDC32 WINAPI CreateDC32A( LPCSTR driver, LPCSTR device, LPCSTR output,
-                          const DEVMODE32A *initData )
+HDC WINAPI CreateDCA( LPCSTR driver, LPCSTR device, LPCSTR output,
+                          const DEVMODEA *initData )
 {
     return CreateDC16( driver, device, output, (const DEVMODE16 *)initData );
 }
@@ -550,13 +550,13 @@ HDC32 WINAPI CreateDC32A( LPCSTR driver, LPCSTR device, LPCSTR output,
 /***********************************************************************
  *           CreateDC32W    (GDI32.)
  */
-HDC32 WINAPI CreateDC32W( LPCWSTR driver, LPCWSTR device, LPCWSTR output,
-                          const DEVMODE32W *initData )
+HDC WINAPI CreateDCW( LPCWSTR driver, LPCWSTR device, LPCWSTR output,
+                          const DEVMODEW *initData )
 { 
     LPSTR driverA = HEAP_strdupWtoA( GetProcessHeap(), 0, driver );
     LPSTR deviceA = HEAP_strdupWtoA( GetProcessHeap(), 0, device );
     LPSTR outputA = HEAP_strdupWtoA( GetProcessHeap(), 0, output );
-    HDC32 res = CreateDC16( driverA, deviceA, outputA,
+    HDC res = CreateDC16( driverA, deviceA, outputA,
                             (const DEVMODE16 *)initData /*FIXME*/ );
     HeapFree( GetProcessHeap(), 0, driverA );
     HeapFree( GetProcessHeap(), 0, deviceA );
@@ -579,22 +579,22 @@ HDC16 WINAPI CreateIC16( LPCSTR driver, LPCSTR device, LPCSTR output,
 /***********************************************************************
  *           CreateIC32A    (GDI32.49)
  */
-HDC32 WINAPI CreateIC32A( LPCSTR driver, LPCSTR device, LPCSTR output,
-                          const DEVMODE32A* initData )
+HDC WINAPI CreateICA( LPCSTR driver, LPCSTR device, LPCSTR output,
+                          const DEVMODEA* initData )
 {
       /* Nothing special yet for ICs */
-    return CreateDC32A( driver, device, output, initData );
+    return CreateDCA( driver, device, output, initData );
 }
 
 
 /***********************************************************************
  *           CreateIC32W    (GDI32.50)
  */
-HDC32 WINAPI CreateIC32W( LPCWSTR driver, LPCWSTR device, LPCWSTR output,
-                          const DEVMODE32W* initData )
+HDC WINAPI CreateICW( LPCWSTR driver, LPCWSTR device, LPCWSTR output,
+                          const DEVMODEW* initData )
 {
       /* Nothing special yet for ICs */
-    return CreateDC32W( driver, device, output, initData );
+    return CreateDCW( driver, device, output, initData );
 }
 
 
@@ -603,17 +603,17 @@ HDC32 WINAPI CreateIC32W( LPCWSTR driver, LPCWSTR device, LPCWSTR output,
  */
 HDC16 WINAPI CreateCompatibleDC16( HDC16 hdc )
 {
-    return (HDC16)CreateCompatibleDC32( hdc );
+    return (HDC16)CreateCompatibleDC( hdc );
 }
 
 
 /***********************************************************************
  *           CreateCompatibleDC32   (GDI32.31)
  */
-HDC32 WINAPI CreateCompatibleDC32( HDC32 hdc )
+HDC WINAPI CreateCompatibleDC( HDC hdc )
 {
     DC *dc, *origDC;
-    HBITMAP32 hbitmap;
+    HBITMAP hbitmap;
     const DC_FUNCTIONS *funcs;
 
     if ((origDC = (DC *)GDI_GetObjPtr( hdc, DC_MAGIC ))) funcs = origDC->funcs;
@@ -626,7 +626,7 @@ HDC32 WINAPI CreateCompatibleDC32( HDC32 hdc )
                hdc, dc->hSelf );
 
       /* Create default bitmap */
-    if (!(hbitmap = CreateBitmap32( 1, 1, 1, 1, NULL )))
+    if (!(hbitmap = CreateBitmap( 1, 1, 1, 1, NULL )))
     {
 	GDI_HEAP_FREE( dc->hSelf );
 	return 0;
@@ -640,7 +640,7 @@ HDC32 WINAPI CreateCompatibleDC32( HDC32 hdc )
         !dc->funcs->pCreateDC( dc, NULL, NULL, NULL, NULL ))
     {
         WARN(dc, "creation aborted by device\n");
-        DeleteObject32( hbitmap );
+        DeleteObject( hbitmap );
         GDI_HEAP_FREE( dc->hSelf );
         return 0;
     }
@@ -656,14 +656,14 @@ HDC32 WINAPI CreateCompatibleDC32( HDC32 hdc )
  */
 BOOL16 WINAPI DeleteDC16( HDC16 hdc )
 {
-    return DeleteDC32( hdc );
+    return DeleteDC( hdc );
 }
 
 
 /***********************************************************************
  *           DeleteDC32    (GDI32.67)
  */
-BOOL32 WINAPI DeleteDC32( HDC32 hdc )
+BOOL WINAPI DeleteDC( HDC hdc )
 {
     DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
     if (!dc) return FALSE;
@@ -677,21 +677,21 @@ BOOL32 WINAPI DeleteDC32( HDC32 hdc )
 	if (!(dcs = (DC *) GDI_GetObjPtr( hdcs, DC_MAGIC ))) break;
 	dc->header.hNext = dcs->header.hNext;
 	dc->saveLevel--;
-	DeleteDC32( hdcs );
+	DeleteDC( hdcs );
     }
     
     if (!(dc->w.flags & DC_SAVED))
     {
-	SelectObject32( hdc, STOCK_BLACK_PEN );
-	SelectObject32( hdc, STOCK_WHITE_BRUSH );
-	SelectObject32( hdc, STOCK_SYSTEM_FONT );
-        if (dc->w.flags & DC_MEMORY) DeleteObject32( dc->w.hFirstBitmap );
+	SelectObject( hdc, STOCK_BLACK_PEN );
+	SelectObject( hdc, STOCK_WHITE_BRUSH );
+	SelectObject( hdc, STOCK_SYSTEM_FONT );
+        if (dc->w.flags & DC_MEMORY) DeleteObject( dc->w.hFirstBitmap );
         if (dc->funcs->pDeleteDC) dc->funcs->pDeleteDC(dc);
     }
 
-    if (dc->w.hClipRgn) DeleteObject32( dc->w.hClipRgn );
-    if (dc->w.hVisRgn) DeleteObject32( dc->w.hVisRgn );
-    if (dc->w.hGCClipRgn) DeleteObject32( dc->w.hGCClipRgn );
+    if (dc->w.hClipRgn) DeleteObject( dc->w.hClipRgn );
+    if (dc->w.hVisRgn) DeleteObject( dc->w.hVisRgn );
+    if (dc->w.hGCClipRgn) DeleteObject( dc->w.hGCClipRgn );
     
     PATH_DestroyGdiPath(&dc->w.path);
     
@@ -712,7 +712,7 @@ HDC16 WINAPI ResetDC16( HDC16 hdc, const DEVMODE16 *devmode )
 /***********************************************************************
  *           ResetDC32A    (GDI32.287)
  */
-HDC32 WINAPI ResetDC32A( HDC32 hdc, const DEVMODE32A *devmode )
+HDC WINAPI ResetDCA( HDC hdc, const DEVMODEA *devmode )
 {
     FIXME(dc, "stub\n" );
     return hdc;
@@ -722,7 +722,7 @@ HDC32 WINAPI ResetDC32A( HDC32 hdc, const DEVMODE32A *devmode )
 /***********************************************************************
  *           ResetDC32W    (GDI32.288)
  */
-HDC32 WINAPI ResetDC32W( HDC32 hdc, const DEVMODE32W *devmode )
+HDC WINAPI ResetDCW( HDC hdc, const DEVMODEW *devmode )
 {
     FIXME(dc, "stub\n" );
     return hdc;
@@ -734,17 +734,17 @@ HDC32 WINAPI ResetDC32W( HDC32 hdc, const DEVMODE32W *devmode )
  */
 INT16 WINAPI GetDeviceCaps16( HDC16 hdc, INT16 cap )
 {
-    return GetDeviceCaps32( hdc, cap );
+    return GetDeviceCaps( hdc, cap );
 }
 
 
 /***********************************************************************
  *           GetDeviceCaps32    (GDI32.171)
  */
-INT32 WINAPI GetDeviceCaps32( HDC32 hdc, INT32 cap )
+INT WINAPI GetDeviceCaps( HDC hdc, INT cap )
 {
     DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
-    INT32 ret;
+    INT ret;
 
     if (!dc) return 0;
 
@@ -767,14 +767,14 @@ INT32 WINAPI GetDeviceCaps32( HDC32 hdc, INT32 cap )
  */
 COLORREF WINAPI SetBkColor16( HDC16 hdc, COLORREF color )
 {
-    return SetBkColor32( hdc, color );
+    return SetBkColor( hdc, color );
 }
 
 
 /***********************************************************************
  *           SetBkColor32    (GDI32.305)
  */
-COLORREF WINAPI SetBkColor32( HDC32 hdc, COLORREF color )
+COLORREF WINAPI SetBkColor( HDC hdc, COLORREF color )
 {
     COLORREF oldColor;
     DC * dc = DC_GetDCPtr( hdc );
@@ -796,14 +796,14 @@ COLORREF WINAPI SetBkColor32( HDC32 hdc, COLORREF color )
  */
 COLORREF WINAPI SetTextColor16( HDC16 hdc, COLORREF color )
 {
-    return SetTextColor32( hdc, color );
+    return SetTextColor( hdc, color );
 }
 
 
 /***********************************************************************
  *           SetTextColor32    (GDI32.338)
  */
-COLORREF WINAPI SetTextColor32( HDC32 hdc, COLORREF color )
+COLORREF WINAPI SetTextColor( HDC hdc, COLORREF color )
 {
     COLORREF oldColor;
     DC * dc = DC_GetDCPtr( hdc );
@@ -825,16 +825,16 @@ COLORREF WINAPI SetTextColor32( HDC32 hdc, COLORREF color )
  */
 UINT16 WINAPI SetTextAlign16( HDC16 hdc, UINT16 textAlign )
 {
-    return SetTextAlign32( hdc, textAlign );
+    return SetTextAlign( hdc, textAlign );
 }
 
 
 /***********************************************************************
  *           SetTextAlign32    (GDI32.336)
  */
-UINT32 WINAPI SetTextAlign32( HDC32 hdc, UINT32 textAlign )
+UINT WINAPI SetTextAlign( HDC hdc, UINT textAlign )
 {
-    UINT32 prevAlign;
+    UINT prevAlign;
     DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
     if (!dc)
     {
@@ -853,7 +853,7 @@ UINT32 WINAPI SetTextAlign32( HDC32 hdc, UINT32 textAlign )
 /***********************************************************************
  *           GetDCOrgEx  (GDI32.168)
  */
-BOOL32 WINAPI GetDCOrgEx( HDC32 hDC, LPPOINT32 lpp )
+BOOL WINAPI GetDCOrgEx( HDC hDC, LPPOINT lpp )
 {
     DC * dc;
     X11DRV_PDEVICE *physDev;
@@ -880,9 +880,9 @@ BOOL32 WINAPI GetDCOrgEx( HDC32 hDC, LPPOINT32 lpp )
 /***********************************************************************
  *           GetDCOrg    (GDI.79)
  */
-DWORD WINAPI GetDCOrg( HDC16 hdc )
+DWORD WINAPI GetDCOrg16( HDC16 hdc )
 {
-    POINT32	pt;
+    POINT	pt;
     if( GetDCOrgEx( hdc, &pt) )
   	return MAKELONG( (WORD)pt.x, (WORD)pt.y );    
     return 0;
@@ -892,7 +892,7 @@ DWORD WINAPI GetDCOrg( HDC16 hdc )
 /***********************************************************************
  *           SetDCOrg    (GDI.117)
  */
-DWORD WINAPI SetDCOrg( HDC16 hdc, INT16 x, INT16 y )
+DWORD WINAPI SetDCOrg16( HDC16 hdc, INT16 x, INT16 y )
 {
     DWORD prevOrg;
     DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
@@ -908,7 +908,7 @@ DWORD WINAPI SetDCOrg( HDC16 hdc, INT16 x, INT16 y )
 /***********************************************************************
  *           GetGraphicsMode    (GDI32.188)
  */
-INT32 WINAPI GetGraphicsMode( HDC32 hdc )
+INT WINAPI GetGraphicsMode( HDC hdc )
 {
     DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
     if (!dc) return 0;
@@ -919,9 +919,9 @@ INT32 WINAPI GetGraphicsMode( HDC32 hdc )
 /***********************************************************************
  *           SetGraphicsMode    (GDI32.317)
  */
-INT32 WINAPI SetGraphicsMode( HDC32 hdc, INT32 mode )
+INT WINAPI SetGraphicsMode( HDC hdc, INT mode )
 {
-    INT32 ret;
+    INT ret;
     DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
 
     /* One would think that setting the graphics mode to GM_COMPATIBLE
@@ -943,14 +943,14 @@ INT32 WINAPI SetGraphicsMode( HDC32 hdc, INT32 mode )
  */
 INT16 WINAPI GetArcDirection16( HDC16 hdc )
 {
-    return GetArcDirection32( (HDC32)hdc );
+    return GetArcDirection( (HDC)hdc );
 }
 
 
 /***********************************************************************
  *           GetArcDirection32    (GDI32.141)
  */
-INT32 WINAPI GetArcDirection32( HDC32 hdc )
+INT WINAPI GetArcDirection( HDC hdc )
 {
     DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
     
@@ -966,17 +966,17 @@ INT32 WINAPI GetArcDirection32( HDC32 hdc )
  */
 INT16 WINAPI SetArcDirection16( HDC16 hdc, INT16 nDirection )
 {
-    return SetArcDirection32( (HDC32)hdc, (INT32)nDirection );
+    return SetArcDirection( (HDC)hdc, (INT)nDirection );
 }
 
 
 /***********************************************************************
  *           SetArcDirection32    (GDI32.302)
  */
-INT32 WINAPI SetArcDirection32( HDC32 hdc, INT32 nDirection )
+INT WINAPI SetArcDirection( HDC hdc, INT nDirection )
 {
     DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
-    INT32 nOldDirection;
+    INT nOldDirection;
     
     if (!dc)
         return 0;
@@ -997,7 +997,7 @@ INT32 WINAPI SetArcDirection32( HDC32 hdc, INT32 nDirection )
 /***********************************************************************
  *           GetWorldTransform    (GDI32.244)
  */
-BOOL32 WINAPI GetWorldTransform( HDC32 hdc, LPXFORM xform )
+BOOL WINAPI GetWorldTransform( HDC hdc, LPXFORM xform )
 {
     DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
     
@@ -1015,7 +1015,7 @@ BOOL32 WINAPI GetWorldTransform( HDC32 hdc, LPXFORM xform )
 /***********************************************************************
  *           SetWorldTransform    (GDI32.346)
  */
-BOOL32 WINAPI SetWorldTransform( HDC32 hdc, const XFORM *xform )
+BOOL WINAPI SetWorldTransform( HDC hdc, const XFORM *xform )
 {
     DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
     
@@ -1062,7 +1062,7 @@ BOOL32 WINAPI SetWorldTransform( HDC32 hdc, const XFORM *xform )
  *
  * RETURNS STD
  */
-BOOL32 WINAPI ModifyWorldTransform( HDC32 hdc, const XFORM *xform,
+BOOL WINAPI ModifyWorldTransform( HDC hdc, const XFORM *xform,
     DWORD iMode )
 {
     DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
@@ -1122,7 +1122,7 @@ BOOL32 WINAPI ModifyWorldTransform( HDC32 hdc, const XFORM *xform,
  *
  * RETURNS STD
  */
-BOOL32 WINAPI CombineTransform( LPXFORM xformResult, const XFORM *xform1,
+BOOL WINAPI CombineTransform( LPXFORM xformResult, const XFORM *xform1,
     const XFORM *xform2 )
 {
     XFORM xformTemp;
@@ -1163,7 +1163,7 @@ BOOL16 WINAPI SetDCHook( HDC16 hdc, FARPROC16 hookProc, DWORD dwHookData )
     DC *dc = (DC *)GDI_GetObjPtr( hdc, DC_MAGIC );
 
     TRACE(dc, "hookProc %08x, default is %08x\n",
-                (UINT32)hookProc, (UINT32)DCHook );
+                (UINT)hookProc, (UINT)DCHook16 );
 
     if (!dc) return FALSE;
     dc->hookProc = hookProc;
@@ -1189,7 +1189,7 @@ DWORD WINAPI GetDCHook( HDC16 hdc, FARPROC16 *phookProc )
 /***********************************************************************
  *           SetHookFlags       (GDI.192)
  */
-WORD WINAPI SetHookFlags(HDC16 hDC, WORD flags)
+WORD WINAPI SetHookFlags16(HDC16 hDC, WORD flags)
 {
     DC* dc = (DC*)GDI_GetObjPtr( hDC, DC_MAGIC );
 
@@ -1215,7 +1215,7 @@ WORD WINAPI SetHookFlags(HDC16 hDC, WORD flags)
 /***********************************************************************
  *           SetICMMode    (GDI32.318)
  */
-INT32 WINAPI SetICMMode(HDC32 hdc, INT32 iEnableICM)
+INT WINAPI SetICMMode(HDC hdc, INT iEnableICM)
 {
 /*FIXME  Asuming that ICM is always off, and cannot be turned on */
     if (iEnableICM == ICM_OFF) return ICM_OFF;
@@ -1228,7 +1228,7 @@ INT32 WINAPI SetICMMode(HDC32 hdc, INT32 iEnableICM)
 /***********************************************************************
  *           GetColorSpace    (GDI32.165)
  */
-HCOLORSPACE32 WINAPI GetColorSpace(HDC32 hdc)
+HCOLORSPACE WINAPI GetColorSpace(HDC hdc)
 {
 /*FIXME    Need to to whatever GetColorSpace actually does */
     return 0;
@@ -1245,7 +1245,7 @@ UINT16 WINAPI GetBoundsRect16(HDC16 hdc, LPRECT16 rect, UINT16 flags)
 /***********************************************************************
  *           GetBoundsRect32    (GDI32.147)
  */
-UINT32 WINAPI GetBoundsRect32(HDC32 hdc, LPRECT32 rect, UINT32 flags)
+UINT WINAPI GetBoundsRect(HDC hdc, LPRECT rect, UINT flags)
 {
     FIXME(dc, "(): stub\n");
     return DCB_RESET;   /* bounding rectangle always empty */
@@ -1265,7 +1265,7 @@ UINT16 WINAPI SetBoundsRect16(HDC16 hdc, const RECT16* rect, UINT16 flags)
 /***********************************************************************
  *           SetBoundsRect32    (GDI32.307)
  */
-UINT32 WINAPI SetBoundsRect32(HDC32 hdc, const RECT32* rect, UINT32 flags)
+UINT WINAPI SetBoundsRect(HDC hdc, const RECT* rect, UINT flags)
 {
     FIXME(dc, "(): stub\n");
     return DCB_DISABLE;   /* bounding rectangle always empty */
@@ -1278,7 +1278,7 @@ UINT32 WINAPI SetBoundsRect32(HDC32 hdc, const RECT32* rect, UINT32 flags)
  * We don't have to do anything here,
  * just let console support handle everything
  */
-void WINAPI Death(HDC16 hDC)
+void WINAPI Death16(HDC16 hDC)
 {
     MSG("Death(%04x) called. Application enters text mode...\n", hDC);
 }
@@ -1288,7 +1288,7 @@ void WINAPI Death(HDC16 hDC)
  *
  * Restores GDI functionality
  */
-void WINAPI Resurrection(HDC16 hDC,
+void WINAPI Resurrection16(HDC16 hDC,
                            WORD w1, WORD w2, WORD w3, WORD w4, WORD w5, WORD w6)
 {
     MSG("Resurrection(%04x, %04x, %04x, %04x, %04x, %04x, %04x) called. Application left text mode.\n", hDC, w1, w2, w3, w4, w5, w6);

@@ -20,11 +20,11 @@
 #include "ldt.h"
 #include "monitor.h"
 
-static BOOL32 X11DRV_CreateDC( DC *dc, LPCSTR driver, LPCSTR device,
+static BOOL X11DRV_CreateDC( DC *dc, LPCSTR driver, LPCSTR device,
                                LPCSTR output, const DEVMODE16* initData );
-static BOOL32 X11DRV_DeleteDC( DC *dc );
+static BOOL X11DRV_DeleteDC( DC *dc );
 
-static INT32 X11DRV_Escape( DC *dc, INT32 nEscape, INT32 cbInput,
+static INT X11DRV_Escape( DC *dc, INT nEscape, INT cbInput,
                             SEGPTR lpInData, SEGPTR lpOutData );
 
 static const DC_FUNCTIONS X11DRV_Funcs =
@@ -122,7 +122,7 @@ static DeviceCaps X11DRV_DevCaps = {
 /**********************************************************************
  *	     X11DRV_Init
  */
-BOOL32 X11DRV_Init(void)
+BOOL X11DRV_Init(void)
 {
     /* FIXME: colormap management should be merged with the X11DRV */
 
@@ -178,7 +178,7 @@ BOOL32 X11DRV_Init(void)
 /**********************************************************************
  *	     X11DRV_CreateDC
  */
-static BOOL32 X11DRV_CreateDC( DC *dc, LPCSTR driver, LPCSTR device,
+static BOOL X11DRV_CreateDC( DC *dc, LPCSTR driver, LPCSTR device,
                                LPCSTR output, const DEVMODE16* initData )
 {
     X11DRV_PDEVICE *physDev;
@@ -206,7 +206,7 @@ static BOOL32 X11DRV_CreateDC( DC *dc, LPCSTR driver, LPCSTR device,
         dc->w.totalExtent.top    = 0;
         dc->w.totalExtent.right  = bmp->bitmap.bmWidth;
         dc->w.totalExtent.bottom = bmp->bitmap.bmHeight;
-        dc->w.hVisRgn            = CreateRectRgnIndirect32( &dc->w.totalExtent );
+        dc->w.hVisRgn            = CreateRectRgnIndirect( &dc->w.totalExtent );
 
 	GDI_HEAP_UNLOCK( dc->w.hBitmap );
     }
@@ -220,7 +220,7 @@ static BOOL32 X11DRV_CreateDC( DC *dc, LPCSTR driver, LPCSTR device,
         dc->w.totalExtent.top    = 0;
         dc->w.totalExtent.right  = MONITOR_GetWidth(&MONITOR_PrimaryMonitor);
         dc->w.totalExtent.bottom = MONITOR_GetHeight(&MONITOR_PrimaryMonitor);
-        dc->w.hVisRgn            = CreateRectRgnIndirect32( &dc->w.totalExtent );
+        dc->w.hVisRgn            = CreateRectRgnIndirect( &dc->w.totalExtent );
     }
 
     if (!dc->w.hVisRgn)
@@ -239,7 +239,7 @@ static BOOL32 X11DRV_CreateDC( DC *dc, LPCSTR driver, LPCSTR device,
 /**********************************************************************
  *	     X11DRV_DeleteDC
  */
-static BOOL32 X11DRV_DeleteDC( DC *dc )
+static BOOL X11DRV_DeleteDC( DC *dc )
 {
     X11DRV_PDEVICE *physDev = (X11DRV_PDEVICE *)dc->physDev;
     TSXFreeGC( display, physDev->gc );
@@ -251,7 +251,7 @@ static BOOL32 X11DRV_DeleteDC( DC *dc )
 /**********************************************************************
  *           X11DRV_Escape
  */
-static INT32 X11DRV_Escape( DC *dc, INT32 nEscape, INT32 cbInput,
+static INT X11DRV_Escape( DC *dc, INT nEscape, INT cbInput,
                             SEGPTR lpInData, SEGPTR lpOutData )
 {
     switch( nEscape )

@@ -24,22 +24,22 @@
 
 typedef struct wrc_resource16
 {
-	INT32	resid;		/* The resource id if resname == NULL */
+	INT	resid;		/* The resource id if resname == NULL */
 	LPSTR	resname;
-	INT32	restype;	/* The resource type-id if typename == NULL */
+	INT	restype;	/* The resource type-id if typename == NULL */
 	LPSTR	restypename;
 	LPBYTE	data;		/* Actual resource data */
-	UINT32	datasize;	/* The size of the resource */
+	UINT	datasize;	/* The size of the resource */
 } wrc_resource16_t;
 
 typedef struct wrc_resource32
 {
-	INT32	resid;		/* The resource id if resname == NULL */
+	INT	resid;		/* The resource id if resname == NULL */
 	LPWSTR	resname;
-	INT32	restype;	/* The resource type-id if typename == NULL */
+	INT	restype;	/* The resource type-id if typename == NULL */
 	LPWSTR	restypename;
 	LPBYTE	data;		/* Actual resource data */
-	UINT32	datasize;	/* The size of the resource */
+	UINT	datasize;	/* The size of the resource */
 } wrc_resource32_t;
 
 #endif

@@ -32,7 +32,7 @@ EVENT_DRIVER *EVENT_GetDriver(void)
  *
  * Initialize network IO.
  */
-BOOL32 EVENT_Init(void)
+BOOL EVENT_Init(void)
 {
   return EVENT_GetDriver()->pInit();
 }
@@ -60,7 +60,7 @@ void EVENT_DeleteIO(int fd, unsigned io_type)
  * Return TRUE if an event is pending, FALSE on timeout or error
  * (for instance lost connection with the server).
  */
-BOOL32 EVENT_WaitNetEvent(BOOL32 sleep, BOOL32 peek)
+BOOL EVENT_WaitNetEvent(BOOL sleep, BOOL peek)
 {
   return EVENT_GetDriver()->pWaitNetEvent(sleep, peek);
 }
@@ -78,7 +78,7 @@ void EVENT_Synchronize(void)
 /**********************************************************************
  *		EVENT_CheckFocus
  */
-BOOL32 EVENT_CheckFocus(void)
+BOOL EVENT_CheckFocus(void)
 {
   return EVENT_GetDriver()->pCheckFocus();
 }
@@ -86,7 +86,7 @@ BOOL32 EVENT_CheckFocus(void)
 /***********************************************************************
  *		EVENT_QueryPointer
  */
-BOOL32 EVENT_QueryPointer(DWORD *posX, DWORD *posY, DWORD *state)
+BOOL EVENT_QueryPointer(DWORD *posX, DWORD *posY, DWORD *state)
 {
   return EVENT_GetDriver()->pQueryPointer(posX, posY, state);
 }
@@ -105,7 +105,7 @@ void EVENT_DummyMotionNotify(void)
 /**********************************************************************
  *		X11DRV_EVENT_Pending
  */
-BOOL32 EVENT_Pending()
+BOOL EVENT_Pending()
 {
   return EVENT_GetDriver()->pPending();
 }
@@ -115,7 +115,7 @@ BOOL32 EVENT_Pending()
  *
  * Check if we have pending X events.
  */
-BOOL16 WINAPI IsUserIdle(void)
+BOOL16 WINAPI IsUserIdle16(void)
 {
   return EVENT_GetDriver()->pIsUserIdle();
 }

@@ -54,8 +54,8 @@ static const BYTE STRING_Ansi2Oem[256] =
 #define ANSI_TO_OEM(ch) (STRING_Ansi2Oem[(unsigned char)(ch)])
 
 /* Internaly used by strchr family functions */
-static BOOL32 ChrCmpA( WORD word1, WORD word2);
-static BOOL32 ChrCmpW( WORD word1, WORD word2);
+static BOOL ChrCmpA( WORD word1, WORD word2);
+static BOOL ChrCmpW( WORD word1, WORD word2);
 
 extern LPWSTR __cdecl CRTDLL_wcschr(LPCWSTR str,WCHAR xchar);
 
@@ -63,7 +63,7 @@ extern LPWSTR __cdecl CRTDLL_wcschr(LPCWSTR str,WCHAR xchar);
 /***********************************************************************
  *           hmemcpy   (KERNEL.348)
  */
-void WINAPI hmemcpy( LPVOID dst, LPCVOID src, LONG count )
+void WINAPI hmemcpy16( LPVOID dst, LPCVOID src, LONG count )
 {
     memcpy( dst, src, count );
 }
@@ -74,7 +74,7 @@ void WINAPI hmemcpy( LPVOID dst, LPCVOID src, LONG count )
  */
 SEGPTR WINAPI lstrcat16( SEGPTR dst, LPCSTR src )
 {
-    lstrcat32A( (LPSTR)PTR_SEG_TO_LIN(dst), src );
+    lstrcatA( (LPSTR)PTR_SEG_TO_LIN(dst), src );
     return dst;
 }
 
@@ -82,7 +82,7 @@ SEGPTR WINAPI lstrcat16( SEGPTR dst, LPCSTR src )
 /***********************************************************************
  *           lstrcat32A   (KERNEL32.599)
  */
-LPSTR WINAPI lstrcat32A( LPSTR dst, LPCSTR src )
+LPSTR WINAPI lstrcatA( LPSTR dst, LPCSTR src )
 {
     TRACE(string,"Append %s to %s\n",
 		   debugstr_a (src), debugstr_a (dst));
@@ -95,7 +95,7 @@ LPSTR WINAPI lstrcat32A( LPSTR dst, LPCSTR src )
 /***********************************************************************
  *           lstrcat32W   (KERNEL32.600)
  */
-LPWSTR WINAPI lstrcat32W( LPWSTR dst, LPCWSTR src )
+LPWSTR WINAPI lstrcatW( LPWSTR dst, LPCWSTR src )
 {
     register LPWSTR p = dst;
     TRACE(string,"Append L%s to L%s\n",
@@ -112,7 +112,7 @@ LPWSTR WINAPI lstrcat32W( LPWSTR dst, LPCWSTR src )
  */
 SEGPTR WINAPI lstrcatn16( SEGPTR dst, LPCSTR src, INT16 n )
 {
-    lstrcatn32A( (LPSTR)PTR_SEG_TO_LIN(dst), src, n );
+    lstrcatnA( (LPSTR)PTR_SEG_TO_LIN(dst), src, n );
     return dst;
 }
 
@@ -120,14 +120,14 @@ SEGPTR WINAPI lstrcatn16( SEGPTR dst, LPCSTR src, INT16 n )
 /***********************************************************************
  *           lstrcatn32A   (Not a Windows API)
  */
-LPSTR WINAPI lstrcatn32A( LPSTR dst, LPCSTR src, INT32 n )
+LPSTR WINAPI lstrcatnA( LPSTR dst, LPCSTR src, INT n )
 {
     register LPSTR p = dst;
     TRACE(string,"strcatn add %d chars from %s to %s\n",
 		   n, debugstr_an (src, n), debugstr_a (dst));
     while (*p) p++;
-    if ((n -= (INT32)(p - dst)) <= 0) return dst;
-    lstrcpyn32A( p, src, n );
+    if ((n -= (INT)(p - dst)) <= 0) return dst;
+    lstrcpynA( p, src, n );
     return dst;
 }
 
@@ -135,14 +135,14 @@ LPSTR WINAPI lstrcatn32A( LPSTR dst, LPCSTR src, INT32 n )
 /***********************************************************************
  *           lstrcatn32W   (Not a Windows API)
  */
-LPWSTR WINAPI lstrcatn32W( LPWSTR dst, LPCWSTR src, INT32 n )
+LPWSTR WINAPI lstrcatnW( LPWSTR dst, LPCWSTR src, INT n )
 {
     register LPWSTR p = dst;
     TRACE(string,"strcatn add %d chars from L%s to L%s\n",
 		   n, debugstr_wn (src, n), debugstr_w (dst));
     while (*p) p++;
-    if ((n -= (INT32)(p - dst)) <= 0) return dst;
-    lstrcpyn32W( p, src, n );
+    if ((n -= (INT)(p - dst)) <= 0) return dst;
+    lstrcpynW( p, src, n );
     return dst;
 }
 
@@ -159,9 +159,9 @@ INT16 WINAPI lstrcmp16( LPCSTR str1, LPCSTR str2 )
 /***********************************************************************
  *           lstrcmp32A   (KERNEL.602)
  */
-INT32 WINAPI lstrcmp32A( LPCSTR str1, LPCSTR str2 )
+INT WINAPI lstrcmpA( LPCSTR str1, LPCSTR str2 )
 {
-    return CompareString32A(LOCALE_SYSTEM_DEFAULT,0,str1,-1,str2,-1) - 2 ;
+    return CompareStringA(LOCALE_SYSTEM_DEFAULT,0,str1,-1,str2,-1) - 2 ;
 }
 
 
@@ -170,7 +170,7 @@ INT32 WINAPI lstrcmp32A( LPCSTR str1, LPCSTR str2 )
  * FIXME : should call CompareString32W, when it is implemented.
  *    This implementation is not "word sort", as it should.
  */
-INT32 WINAPI lstrcmp32W( LPCWSTR str1, LPCWSTR str2 )
+INT WINAPI lstrcmpW( LPCWSTR str1, LPCWSTR str2 )
 {
     TRACE(string,"L%s and L%s\n",
 		   debugstr_w (str1), debugstr_w (str2));
@@ -179,7 +179,7 @@ INT32 WINAPI lstrcmp32W( LPCWSTR str1, LPCWSTR str2 )
 	return 0;
     }
     while (*str1 && (*str1 == *str2)) { str1++; str2++; }
-    return (INT32)(*str1 - *str2);
+    return (INT)(*str1 - *str2);
 }
 
 
@@ -188,26 +188,26 @@ INT32 WINAPI lstrcmp32W( LPCWSTR str1, LPCWSTR str2 )
  */
 INT16 WINAPI lstrcmpi16( LPCSTR str1, LPCSTR str2 )
 {
-    return (INT16)lstrcmpi32A( str1, str2 );
+    return (INT16)lstrcmpiA( str1, str2 );
 }
 
 
 /***********************************************************************
  *           lstrcmpi32A   (KERNEL32.605)
  */
-INT32 WINAPI lstrcmpi32A( LPCSTR str1, LPCSTR str2 )
+INT WINAPI lstrcmpiA( LPCSTR str1, LPCSTR str2 )
 {    TRACE(string,"strcmpi %s and %s\n",
 		   debugstr_a (str1), debugstr_a (str2));
-    return CompareString32A(LOCALE_SYSTEM_DEFAULT,NORM_IGNORECASE,str1,-1,str2,-1)-2;
+    return CompareStringA(LOCALE_SYSTEM_DEFAULT,NORM_IGNORECASE,str1,-1,str2,-1)-2;
 }
 
 
 /***********************************************************************
  *           lstrcmpi32W   (KERNEL32.606)
  */
-INT32 WINAPI lstrcmpi32W( LPCWSTR str1, LPCWSTR str2 )
+INT WINAPI lstrcmpiW( LPCWSTR str1, LPCWSTR str2 )
 {
-    INT32 res;
+    INT res;
 
 #if 0
     /* Too much!  (From registry loading.)  */
@@ -237,7 +237,7 @@ INT32 WINAPI lstrcmpi32W( LPCWSTR str1, LPCWSTR str2 )
  */
 SEGPTR WINAPI lstrcpy16( SEGPTR dst, LPCSTR src )
 {
-    lstrcpy32A( (LPSTR)PTR_SEG_TO_LIN(dst), src );
+    lstrcpyA( (LPSTR)PTR_SEG_TO_LIN(dst), src );
     return dst;
 }
 
@@ -245,7 +245,7 @@ SEGPTR WINAPI lstrcpy16( SEGPTR dst, LPCSTR src )
 /***********************************************************************
  *           lstrcpy32A   (KERNEL32.608)
  */
-LPSTR WINAPI lstrcpy32A( LPSTR dst, LPCSTR src )
+LPSTR WINAPI lstrcpyA( LPSTR dst, LPCSTR src )
 {
     TRACE(string,"strcpy %s\n", debugstr_a (src));
     /* In real windows the whole function is protected by an exception handler
@@ -264,7 +264,7 @@ LPSTR WINAPI lstrcpy32A( LPSTR dst, LPCSTR src )
 /***********************************************************************
  *           lstrcpy32W   (KERNEL32.609)
  */
-LPWSTR WINAPI lstrcpy32W( LPWSTR dst, LPCWSTR src )
+LPWSTR WINAPI lstrcpyW( LPWSTR dst, LPCWSTR src )
 {
     register LPWSTR p = dst;
     TRACE(string,"strcpy L%s\n", debugstr_w (src));
@@ -286,7 +286,7 @@ LPWSTR WINAPI lstrcpy32W( LPWSTR dst, LPCWSTR src )
  */
 SEGPTR WINAPI lstrcpyn16( SEGPTR dst, LPCSTR src, INT16 n )
 {
-    lstrcpyn32A( (LPSTR)PTR_SEG_TO_LIN(dst), src, n );
+    lstrcpynA( (LPSTR)PTR_SEG_TO_LIN(dst), src, n );
     return dst;
 }
 
@@ -296,7 +296,7 @@ SEGPTR WINAPI lstrcpyn16( SEGPTR dst, LPCSTR src, INT16 n )
  * Note: this function differs from the UNIX strncpy, it _always_ writes
  * a terminating \0
  */
-LPSTR WINAPI lstrcpyn32A( LPSTR dst, LPCSTR src, INT32 n )
+LPSTR WINAPI lstrcpynA( LPSTR dst, LPCSTR src, INT n )
 {
     LPSTR p = dst;
     TRACE(string,"strcpyn %s for %d chars\n",
@@ -320,7 +320,7 @@ LPSTR WINAPI lstrcpyn32A( LPSTR dst, LPCSTR src, INT32 n )
  * Note: this function differs from the UNIX strncpy, it _always_ writes
  * a terminating \0
  */
-LPWSTR WINAPI lstrcpyn32W( LPWSTR dst, LPCWSTR src, INT32 n )
+LPWSTR WINAPI lstrcpynW( LPWSTR dst, LPCWSTR src, INT n )
 {
     LPWSTR p = dst;
     TRACE(string,"strcpyn L%s for %d chars\n",
@@ -344,14 +344,14 @@ LPWSTR WINAPI lstrcpyn32W( LPWSTR dst, LPCWSTR src, INT32 n )
  */
 INT16 WINAPI lstrlen16( LPCSTR str )
 {
-    return (INT16)lstrlen32A( str );
+    return (INT16)lstrlenA( str );
 }
 
 
 /***********************************************************************
  *           lstrlen32A   (KERNEL32.614)
  */
-INT32 WINAPI lstrlen32A( LPCSTR str )
+INT WINAPI lstrlenA( LPCSTR str )
 {
     /* looks weird, but win3.1 KERNEL got a GeneralProtection handler
      * in lstrlen() ... we check only for NULL pointer reference.
@@ -359,16 +359,16 @@ INT32 WINAPI lstrlen32A( LPCSTR str )
      */
     TRACE(string,"strlen %s\n", debugstr_a (str));
     if (!str) return 0;
-    return (INT32)strlen(str);
+    return (INT)strlen(str);
 }
 
 
 /***********************************************************************
  *           lstrlen32W   (KERNEL32.615)
  */
-INT32 WINAPI lstrlen32W( LPCWSTR str )
+INT WINAPI lstrlenW( LPCWSTR str )
 {
-    INT32 len = 0;
+    INT len = 0;
     TRACE(string,"strlen L%s\n", debugstr_w (str));
     if (!str) return 0;
     while (*str++) len++;
@@ -379,33 +379,33 @@ INT32 WINAPI lstrlen32W( LPCWSTR str )
 /***********************************************************************
  *           lstrncmp32A   (Not a Windows API)
  */
-INT32 WINAPI lstrncmp32A( LPCSTR str1, LPCSTR str2, INT32 n )
+INT WINAPI lstrncmpA( LPCSTR str1, LPCSTR str2, INT n )
 {
     TRACE(string,"strncmp %s and %s for %d chars\n",
 		   debugstr_an (str1, n), debugstr_an (str2, n), n);
-    return (INT32)strncmp( str1, str2, n );
+    return (INT)strncmp( str1, str2, n );
 }
 
 
 /***********************************************************************
  *           lstrncmp32W   (Not a Windows API)
  */
-INT32 WINAPI lstrncmp32W( LPCWSTR str1, LPCWSTR str2, INT32 n )
+INT WINAPI lstrncmpW( LPCWSTR str1, LPCWSTR str2, INT n )
 {
     TRACE(string,"strncmp L%s and L%s for %d chars\n",
 		   debugstr_wn (str1, n), debugstr_wn (str2, n), n);
     if (!n) return 0;
     while ((--n > 0) && *str1 && (*str1 == *str2)) { str1++; str2++; }
-    return (INT32)(*str1 - *str2);
+    return (INT)(*str1 - *str2);
 }
 
 
 /***********************************************************************
  *           lstrncmpi32A   (Not a Windows API)
  */
-INT32 WINAPI lstrncmpi32A( LPCSTR str1, LPCSTR str2, INT32 n )
+INT WINAPI lstrncmpiA( LPCSTR str1, LPCSTR str2, INT n )
 {
-    INT32 res;
+    INT res;
 
     TRACE(string,"strncmpi %s and %s for %d chars\n",
 		   debugstr_an (str1, n), debugstr_an (str2, n), n);
@@ -420,9 +420,9 @@ INT32 WINAPI lstrncmpi32A( LPCSTR str1, LPCSTR str2, INT32 n )
 /***********************************************************************
  *           lstrncmpi32W   (Not a Windows API)
  */
-INT32 WINAPI lstrncmpi32W( LPCWSTR str1, LPCWSTR str2, INT32 n )
+INT WINAPI lstrncmpiW( LPCWSTR str1, LPCWSTR str2, INT n )
 {
-    INT32 res;
+    INT res;
 
     TRACE(string,"strncmpi L%s and L%s for %d chars\n",
 		   debugstr_wn (str1, n), debugstr_wn (str2, n), n);
@@ -470,7 +470,7 @@ LPSTR WINAPI lstrcpyWtoA( LPSTR dst, LPCWSTR src )
  * Note: this function differs from the UNIX strncpy, it _always_ writes
  * a terminating \0
  */
-LPWSTR WINAPI lstrcpynAtoW( LPWSTR dst, LPCSTR src, INT32 n )
+LPWSTR WINAPI lstrcpynAtoW( LPWSTR dst, LPCSTR src, INT n )
 {
     LPWSTR p = dst;
 
@@ -487,7 +487,7 @@ LPWSTR WINAPI lstrcpynAtoW( LPWSTR dst, LPCSTR src, INT32 n )
  * Note: this function differs from the UNIX strncpy, it _always_ writes
  * a terminating \0
  */
-LPSTR WINAPI lstrcpynWtoA( LPSTR dst, LPCWSTR src, INT32 n )
+LPSTR WINAPI lstrcpynWtoA( LPSTR dst, LPCWSTR src, INT n )
 {
     LPSTR p = dst;
 
@@ -501,21 +501,21 @@ LPSTR WINAPI lstrcpynWtoA( LPSTR dst, LPCWSTR src, INT32 n )
 /***********************************************************************
  *           UnicodeToAnsi   (KERNEL.434)
  */
-INT16 WINAPI UnicodeToAnsi( LPCWSTR src, LPSTR dst, INT16 codepage )
+INT16 WINAPI UnicodeToAnsi16( LPCWSTR src, LPSTR dst, INT16 codepage )
 {
     if ( codepage != -1 )
         FIXME( string, "codepage %d not supported\n", codepage );
 
     lstrcpyWtoA( dst, src );
 
-    return (INT16)lstrlen32A( dst );
+    return (INT16)lstrlenA( dst );
 }
 
 
 /***********************************************************************
  *           Copy   (GDI.250)
  */
-void WINAPI Copy( LPVOID src, LPVOID dst, WORD size )
+void WINAPI Copy16( LPVOID src, LPVOID dst, WORD size )
 {
     memcpy( dst, src, size );
 }
@@ -524,7 +524,7 @@ void WINAPI Copy( LPVOID src, LPVOID dst, WORD size )
 /***********************************************************************
  *           RtlFillMemory   (KERNEL32.441)
  */
-VOID WINAPI RtlFillMemory( LPVOID ptr, UINT32 len, UINT32 fill )
+VOID WINAPI RtlFillMemory( LPVOID ptr, UINT len, UINT fill )
 {
     memset( ptr, fill, len );
 }
@@ -533,7 +533,7 @@ VOID WINAPI RtlFillMemory( LPVOID ptr, UINT32 len, UINT32 fill )
 /***********************************************************************
  *           RtlMoveMemory   (KERNEL32.442)
  */
-VOID WINAPI RtlMoveMemory( LPVOID dst, LPCVOID src, UINT32 len )
+VOID WINAPI RtlMoveMemory( LPVOID dst, LPCVOID src, UINT len )
 {
     memmove( dst, src, len );
 }
@@ -542,7 +542,7 @@ VOID WINAPI RtlMoveMemory( LPVOID dst, LPCVOID src, UINT32 len )
 /***********************************************************************
  *           RtlZeroMemory   (KERNEL32.444)
  */
-VOID WINAPI RtlZeroMemory( LPVOID ptr, UINT32 len )
+VOID WINAPI RtlZeroMemory( LPVOID ptr, UINT len )
 {
     memset( ptr, 0, len );
 }
@@ -553,7 +553,7 @@ VOID WINAPI RtlZeroMemory( LPVOID ptr, UINT32 len )
  */
 INT16 WINAPI AnsiToOem16( LPCSTR s, LPSTR d )
 {
-    CharToOem32A( s, d );
+    CharToOemA( s, d );
     return -1;
 }
 
@@ -563,7 +563,7 @@ INT16 WINAPI AnsiToOem16( LPCSTR s, LPSTR d )
  */
 INT16 WINAPI OemToAnsi16( LPCSTR s, LPSTR d )
 {
-    OemToChar32A( s, d );
+    OemToCharA( s, d );
     return -1;
 }
 
@@ -573,7 +573,7 @@ INT16 WINAPI OemToAnsi16( LPCSTR s, LPSTR d )
  */
 void WINAPI AnsiToOemBuff16( LPCSTR s, LPSTR d, UINT16 len )
 {
-    CharToOemBuff32A( s, d, len ? len : 65536 );
+    CharToOemBuffA( s, d, len ? len : 65536 );
 }
 
 
@@ -582,14 +582,14 @@ void WINAPI AnsiToOemBuff16( LPCSTR s, LPSTR d, UINT16 len )
  */
 void WINAPI OemToAnsiBuff16( LPCSTR s, LPSTR d, UINT16 len )
 {
-    OemToCharBuff32A( s, d, len ? len : 65536 );
+    OemToCharBuffA( s, d, len ? len : 65536 );
 }
 
 
 /***********************************************************************
  *           CharToOem32A   (USER32.37)
  */
-BOOL32 WINAPI CharToOem32A( LPCSTR s, LPSTR d )
+BOOL WINAPI CharToOemA( LPCSTR s, LPSTR d )
 {
     LPSTR oldd = d;
     if (!s || !d) return TRUE;
@@ -603,7 +603,7 @@ BOOL32 WINAPI CharToOem32A( LPCSTR s, LPSTR d )
 /***********************************************************************
  *           CharToOemBuff32A   (USER32.38)
  */
-BOOL32 WINAPI CharToOemBuff32A( LPCSTR s, LPSTR d, DWORD len )
+BOOL WINAPI CharToOemBuffA( LPCSTR s, LPSTR d, DWORD len )
 {
     while (len--) *d++ = ANSI_TO_OEM(*s++);
     return TRUE;
@@ -613,7 +613,7 @@ BOOL32 WINAPI CharToOemBuff32A( LPCSTR s, LPSTR d, DWORD len )
 /***********************************************************************
  *           CharToOemBuff32W   (USER32.39)
  */
-BOOL32 WINAPI CharToOemBuff32W( LPCWSTR s, LPSTR d, DWORD len )
+BOOL WINAPI CharToOemBuffW( LPCWSTR s, LPSTR d, DWORD len )
 {
     while (len--) *d++ = ANSI_TO_OEM(*s++);
     return TRUE;
@@ -623,7 +623,7 @@ BOOL32 WINAPI CharToOemBuff32W( LPCWSTR s, LPSTR d, DWORD len )
 /***********************************************************************
  *           CharToOem32W   (USER32.40)
  */
-BOOL32 WINAPI CharToOem32W( LPCWSTR s, LPSTR d )
+BOOL WINAPI CharToOemW( LPCWSTR s, LPSTR d )
 {
     LPSTR oldd = d;
     if (!s || !d) return TRUE;
@@ -637,7 +637,7 @@ BOOL32 WINAPI CharToOem32W( LPCWSTR s, LPSTR d )
 /***********************************************************************
  *           OemToChar32A   (USER32.402)
  */
-BOOL32 WINAPI OemToChar32A( LPCSTR s, LPSTR d )
+BOOL WINAPI OemToCharA( LPCSTR s, LPSTR d )
 {
     LPSTR oldd = d;
     TRACE(string,"OemToChar %s\n", debugstr_a (s));
@@ -650,7 +650,7 @@ BOOL32 WINAPI OemToChar32A( LPCSTR s, LPSTR d )
 /***********************************************************************
  *           OemToCharBuff32A   (USER32.403)
  */
-BOOL32 WINAPI OemToCharBuff32A( LPCSTR s, LPSTR d, DWORD len )
+BOOL WINAPI OemToCharBuffA( LPCSTR s, LPSTR d, DWORD len )
 {
     TRACE(string,"OemToCharBuff %s\n", debugstr_an (s, len));
     while (len--) *d++ = OEM_TO_ANSI(*s++);
@@ -661,7 +661,7 @@ BOOL32 WINAPI OemToCharBuff32A( LPCSTR s, LPSTR d, DWORD len )
 /***********************************************************************
  *           OemToCharBuff32W   (USER32.404)
  */
-BOOL32 WINAPI OemToCharBuff32W( LPCSTR s, LPWSTR d, DWORD len )
+BOOL WINAPI OemToCharBuffW( LPCSTR s, LPWSTR d, DWORD len )
 {
     TRACE(string,"OemToCharBuff %s\n", debugstr_an (s, len));
     while (len--) *d++ = (WCHAR)OEM_TO_ANSI(*s++);
@@ -672,7 +672,7 @@ BOOL32 WINAPI OemToCharBuff32W( LPCSTR s, LPWSTR d, DWORD len )
 /***********************************************************************
  *           OemToChar32W   (USER32.405)
  */
-BOOL32 WINAPI OemToChar32W( LPCSTR s, LPWSTR d )
+BOOL WINAPI OemToCharW( LPCSTR s, LPWSTR d )
 {
     while ((*d++ = (WCHAR)OEM_TO_ANSI(*s++)));
     return TRUE;
@@ -686,10 +686,10 @@ BOOL32 WINAPI OemToChar32W( LPCSTR s, LPWSTR d )
  *    strlen of the destination string
  */
  
-INT32 WINAPI WideCharToLocal32(
+INT WINAPI WideCharToLocal(
     LPSTR pLocal, 
 		LPWSTR pWide, 
-		INT32 dwChars)
+		INT dwChars)
 { *pLocal = 0;
   TRACE(string,"(%p, %s, %i)\n",	pLocal, debugstr_w(pWide),dwChars);
   WideCharToMultiByte(CP_ACP,0,pWide,-1,pLocal,dwChars,NULL,NULL);
@@ -702,14 +702,14 @@ INT32 WINAPI WideCharToLocal32(
  *  RETURNS
  *    strlen of the destination string
  */
-INT32 WINAPI LocalToWideChar32(
+INT WINAPI LocalToWideChar(
     LPWSTR pWide, 
 		LPSTR pLocal, 
-		INT32 dwChars)
+		INT dwChars)
 { *pWide = 0;
   TRACE(string,"(%p, %s, %i)\n",pWide,	pLocal, dwChars);
 	MultiByteToWideChar(CP_ACP,0,pLocal,-1,pWide,dwChars); 
-  return lstrlen32W(pWide);
+  return lstrlenW(pWide);
 }
 
 
@@ -730,7 +730,7 @@ LPSTR WINAPI lstrrchr( LPCSTR lpStart, LPCSTR lpEnd, WORD wMatch )
 
   if (!lpEnd) lpEnd = lpStart + strlen(lpStart);
 
-  for(; lpStart < lpEnd; lpStart = CharNext32A(lpStart)) 
+  for(; lpStart < lpEnd; lpStart = CharNextA(lpStart)) 
     if (!ChrCmpA( GET_WORD(lpStart), wMatch)) 
       lpGotIt = lpStart;
     
@@ -751,9 +751,9 @@ LPWSTR WINAPI lstrrchrw( LPCWSTR lpStart, LPCWSTR lpEnd, WORD wMatch )
   LPCWSTR lpGotIt = NULL;
 
   TRACE(string,"(%p, %p, %c)\n", lpStart,      lpEnd, wMatch);
-  if (!lpEnd) lpEnd = lpStart + lstrlen32W(lpStart);
+  if (!lpEnd) lpEnd = lpStart + lstrlenW(lpStart);
 
-  for(; lpStart < lpEnd; lpStart = CharNext32W(lpStart)) 
+  for(; lpStart < lpEnd; lpStart = CharNextW(lpStart)) 
     if (!ChrCmpW( GET_WORD(lpStart), wMatch)) 
       lpGotIt = lpStart;
     
@@ -768,14 +768,14 @@ LPWSTR WINAPI lstrrchrw( LPCWSTR lpStart, LPCWSTR lpEnd, WORD wMatch )
  *
  */
 LPWSTR WINAPI strstrw( LPCWSTR lpFirst, LPCWSTR lpSrch) {
-  UINT32 uSrchLen  = (UINT32)lstrlen32W(lpSrch);
+  UINT uSrchLen  = (UINT)lstrlenW(lpSrch);
   WORD wMatchBeg   = *(WORD*)lpSrch;
 
   TRACE(string,"(%p, %p)\n", lpFirst,  lpSrch);
 
   for(; 
     ((lpFirst=CRTDLL_wcschr(lpFirst, wMatchBeg))!=0) && 
-      lstrncmp32W(lpFirst, lpSrch, uSrchLen); 
+      lstrncmpW(lpFirst, lpSrch, uSrchLen); 
     lpFirst++) {
       continue;
   }
@@ -787,9 +787,9 @@ LPWSTR WINAPI strstrw( LPCWSTR lpFirst, LPCWSTR lpSrch) {
  *           ChrCmpA   
  * This fuction returns FALSE if both words match, TRUE otherwise...
  */
-static BOOL32 ChrCmpA( WORD word1, WORD word2) {
+static BOOL ChrCmpA( WORD word1, WORD word2) {
   if (LOBYTE(word1) == LOBYTE(word2)) {
-    if (IsDBCSLeadByte32(LOBYTE(word1))) {
+    if (IsDBCSLeadByte(LOBYTE(word1))) {
       return (word1 != word2);
     }
     return FALSE;
@@ -801,7 +801,7 @@ static BOOL32 ChrCmpA( WORD word1, WORD word2) {
  *           ChrCmpW   
  * This fuction returns FALSE if both words match, TRUE otherwise...
  */
-static BOOL32 ChrCmpW( WORD word1, WORD word2) {
+static BOOL ChrCmpW( WORD word1, WORD word2) {
   return (word1 != word2);
 }
 

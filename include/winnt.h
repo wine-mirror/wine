@@ -37,7 +37,7 @@
 #define ANYSIZE_ARRAY 1
 
 #define FIELD_OFFSET(type, field) \
-  ((LONG)(INT32)&(((type *)0)->field))
+  ((LONG)(INT)&(((type *)0)->field))
 
 #define CONTAINING_RECORD(address, type, field) \
   ((type *)((PCHAR)(address) - (PCHAR)(&((type *)0)->field)))
@@ -47,14 +47,14 @@
 typedef BYTE     BOOLEAN;
 typedef BOOLEAN *PBOOLEAN;
 
-typedef struct _LIST_ENTRY32 {
-  struct _LIST_ENTRY32 *Flink;
-  struct _LIST_ENTRY32 *Blink;
-} LIST_ENTRY32, *PLIST_ENTRY32;
+typedef struct _LIST_ENTRY {
+  struct _LIST_ENTRY *Flink;
+  struct _LIST_ENTRY *Blink;
+} LIST_ENTRY, *PLIST_ENTRY;
 
-typedef struct _SINGLE_LIST_ENTRY32 {
-  struct _SINGLE_LIST_ENTRY32 *Next;
-} SINGLE_LIST_ENTRY32, *PSINGLE_LIST_ENTRY32;
+typedef struct _SINGLE_LIST_ENTRY {
+  struct _SINGLE_LIST_ENTRY *Next;
+} SINGLE_LIST_ENTRY, *PSINGLE_LIST_ENTRY;
 
 /* Heap flags */
 
@@ -145,7 +145,7 @@ typedef struct
     DWORD   SegSs;
 } CONTEXT, *PCONTEXT;
 
-typedef HANDLE32 *PHANDLE;
+typedef HANDLE *PHANDLE;
 
 #ifdef __WINE__
 

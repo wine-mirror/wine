@@ -108,7 +108,7 @@ static DeviceCaps TTYDRV_GDI_DevCaps = {
 /**********************************************************************
  *	     TTYDRV_GDI_Initialize
  */
-BOOL32 TTYDRV_GDI_Initialize(void)
+BOOL TTYDRV_GDI_Initialize(void)
 {
 
   TTYDRV_GDI_DevCaps.version = 0x300;
@@ -139,7 +139,7 @@ void TTDRV_GDI_Finalize()
 /**********************************************************************
  *	     TTYDRV_GDI_CreateDC
  */
-BOOL32 TTYDRV_GDI_CreateDC(DC *dc, LPCSTR driver, LPCSTR device,
+BOOL TTYDRV_GDI_CreateDC(DC *dc, LPCSTR driver, LPCSTR device,
 			   LPCSTR output, const DEVMODE16 *initData)
 {
   FIXME(ttydrv, "(%p, %s, %s, %s, %p): semistub\n",
@@ -164,7 +164,7 @@ BOOL32 TTYDRV_GDI_CreateDC(DC *dc, LPCSTR driver, LPCSTR device,
 /**********************************************************************
  *	     TTYDRV_GDI_DeleteDC
  */
-BOOL32 TTYDRV_GDI_DeleteDC(DC *dc)
+BOOL TTYDRV_GDI_DeleteDC(DC *dc)
 {
   FIXME(ttydrv, "(%p): semistub\n", dc);
 
@@ -177,7 +177,7 @@ BOOL32 TTYDRV_GDI_DeleteDC(DC *dc)
 /**********************************************************************
  *           TTYDRV_GDI_Escape
  */
-INT32 TTYDRV_GDI_Escape(DC *dc, INT32 nEscape, INT32 cbInput,
+INT TTYDRV_GDI_Escape(DC *dc, INT nEscape, INT cbInput,
 			SEGPTR lpInData, SEGPTR lpOutData)
 {
     return 0;

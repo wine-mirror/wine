@@ -37,7 +37,7 @@ void SYSLEVEL_Init(void)
 /************************************************************************
  *           GetpWin16Lock32    (KERNEL32.93)
  */
-VOID WINAPI GetpWin16Lock32(CRITICAL_SECTION **lock)
+VOID WINAPI GetpWin16Lock(CRITICAL_SECTION **lock)
 {
     *lock = &Win16Mutex;
 }

@@ -223,7 +223,7 @@ IMalloc16_Constructor() {
 	This->ref = 1;
 	/* FIXME: implement multiple heaps */
 	This->heap = GlobalAlloc16(GMEM_MOVEABLE,64000);
-	LocalInit(This->heap,0,64000);
+	LocalInit16(This->heap,0,64000);
 	return (LPMALLOC16)SEGPTR_GET(This);
 }
 
@@ -233,14 +233,14 @@ IMalloc16_Constructor() {
 typedef struct
 {
         /* IUnknown fields */
-        ICOM_VTABLE(IMalloc32)* lpvtbl;
+        ICOM_VTABLE(IMalloc)* lpvtbl;
         DWORD                   ref;
 } IMalloc32Impl;
 
 /******************************************************************************
  *		IMalloc32_QueryInterface	[VTABLE]
  */
-static HRESULT WINAPI IMalloc32_fnQueryInterface(LPMALLOC32 iface,REFIID refiid,LPVOID *obj) {
+static HRESULT WINAPI IMalloc_fnQueryInterface(LPMALLOC iface,REFIID refiid,LPVOID *obj) {
 	ICOM_THIS(IMalloc32Impl,iface);
 	char	xrefiid[50];
 
@@ -258,7 +258,7 @@ static HRESULT WINAPI IMalloc32_fnQueryInterface(LPMALLOC32 iface,REFIID refiid,
 /******************************************************************************
  *		IMalloc32_AddRef	[VTABLE]
  */
-static ULONG WINAPI IMalloc32_fnAddRef(LPMALLOC32 iface) {
+static ULONG WINAPI IMalloc_fnAddRef(LPMALLOC iface) {
 	ICOM_THIS(IMalloc32Impl,iface);
 	TRACE(relay,"(%p)->AddRef()\n",This);
 	return 1; /* cannot be freed */
@@ -267,7 +267,7 @@ static ULONG WINAPI IMalloc32_fnAddRef(LPMALLOC32 iface) {
 /******************************************************************************
  *		IMalloc32_Release	[VTABLE]
  */
-static ULONG WINAPI IMalloc32_fnRelease(LPMALLOC32 iface) {
+static ULONG WINAPI IMalloc_fnRelease(LPMALLOC iface) {
 	ICOM_THIS(IMalloc32Impl,iface);
 	TRACE(relay,"(%p)->Release()\n",This);
 	return 1; /* cannot be freed */
@@ -276,7 +276,7 @@ static ULONG WINAPI IMalloc32_fnRelease(LPMALLOC32 iface) {
 /******************************************************************************
  * IMalloc32_Alloc [VTABLE]
  */
-static LPVOID WINAPI IMalloc32_fnAlloc(LPMALLOC32 iface,DWORD cb) {
+static LPVOID WINAPI IMalloc_fnAlloc(LPMALLOC iface,DWORD cb) {
 	ICOM_THIS(IMalloc32Impl,iface);
 	TRACE(relay,"(%p)->Alloc(%ld)\n",This,cb);
 	return HeapAlloc(GetProcessHeap(),0,cb);
@@ -285,7 +285,7 @@ static LPVOID WINAPI IMalloc32_fnAlloc(LPMALLOC32 iface,DWORD cb) {
 /******************************************************************************
  * IMalloc32_Realloc [VTABLE]
  */
-static LPVOID WINAPI IMalloc32_fnRealloc(LPMALLOC32 iface,LPVOID pv,DWORD cb) {
+static LPVOID WINAPI IMalloc_fnRealloc(LPMALLOC iface,LPVOID pv,DWORD cb) {
 	ICOM_THIS(IMalloc32Impl,iface);
 	TRACE(relay,"(%p)->Realloc(%p,%ld)\n",This,pv,cb);
 	return HeapReAlloc(GetProcessHeap(),0,pv,cb);
@@ -294,7 +294,7 @@ static LPVOID WINAPI IMalloc32_fnRealloc(LPMALLOC32 iface,LPVOID pv,DWORD cb) {
 /******************************************************************************
  * IMalloc32_Free [VTABLE]
  */
-static VOID WINAPI IMalloc32_fnFree(LPMALLOC32 iface,LPVOID pv) {
+static VOID WINAPI IMalloc_fnFree(LPMALLOC iface,LPVOID pv) {
 	ICOM_THIS(IMalloc32Impl,iface);
 	TRACE(relay,"(%p)->Free(%p)\n",This,pv);
 	HeapFree(GetProcessHeap(),0,pv);
@@ -303,8 +303,8 @@ static VOID WINAPI IMalloc32_fnFree(LPMALLOC32 iface,LPVOID pv) {
 /******************************************************************************
  * IMalloc32_GetSize [VTABLE]
  */
-static DWORD WINAPI IMalloc32_fnGetSize(const IMalloc32* iface,LPVOID pv) {
-	ICOM_CTHIS(IMalloc32,iface);
+static DWORD WINAPI IMalloc_fnGetSize(const IMalloc* iface,LPVOID pv) {
+	ICOM_CTHIS(IMalloc,iface);
 	TRACE(relay,"(%p)->GetSize(%p)\n",This,pv);
 	return HeapSize(GetProcessHeap(),0,pv);
 }
@@ -312,7 +312,7 @@ static DWORD WINAPI IMalloc32_fnGetSize(const IMalloc32* iface,LPVOID pv) {
 /******************************************************************************
  * IMalloc32_DidAlloc [VTABLE]
  */
-static INT32 WINAPI IMalloc32_fnDidAlloc(const IMalloc32* iface,LPVOID pv) {
+static INT WINAPI IMalloc_fnDidAlloc(const IMalloc* iface,LPVOID pv) {
 	ICOM_CTHIS(IMalloc32Impl,iface);
 	TRACE(relay,"(%p)->DidAlloc(%p)\n",This,pv);
 	return -1;
@@ -321,35 +321,35 @@ static INT32 WINAPI IMalloc32_fnDidAlloc(const IMalloc32* iface,LPVOID pv) {
 /******************************************************************************
  * IMalloc32_HeapMinimize [VTABLE]
  */
-static LPVOID WINAPI IMalloc32_fnHeapMinimize(LPMALLOC32 iface) {
+static LPVOID WINAPI IMalloc_fnHeapMinimize(LPMALLOC iface) {
 	ICOM_THIS(IMalloc32Impl,iface);
 	TRACE(relay,"(%p)->HeapMinimize()\n",This);
 	return NULL;
 }
 
-static ICOM_VTABLE(IMalloc32) VT_IMalloc32 = {
-    IMalloc32_fnQueryInterface,
-    IMalloc32_fnAddRef,
-  IMalloc32_fnRelease,
-  IMalloc32_fnAlloc,
-  IMalloc32_fnRealloc,
-  IMalloc32_fnFree,
-  IMalloc32_fnGetSize,
-  IMalloc32_fnDidAlloc,
-  IMalloc32_fnHeapMinimize
+static ICOM_VTABLE(IMalloc) VT_IMalloc32 = {
+    IMalloc_fnQueryInterface,
+    IMalloc_fnAddRef,
+  IMalloc_fnRelease,
+  IMalloc_fnAlloc,
+  IMalloc_fnRealloc,
+  IMalloc_fnFree,
+  IMalloc_fnGetSize,
+  IMalloc_fnDidAlloc,
+  IMalloc_fnHeapMinimize
 };
 
 /******************************************************************************
  * IMalloc32_Constructor [VTABLE]
  */
-LPMALLOC32
-IMalloc32_Constructor() {
+LPMALLOC
+IMalloc_Constructor() {
 	IMalloc32Impl* This;
 
 	This = (IMalloc32Impl*)HeapAlloc(GetProcessHeap(),0,sizeof(IMalloc32Impl));
 	This->lpvtbl = &VT_IMalloc32;
 	This->ref = 1;
-	return (LPMALLOC32)This;
+	return (LPMALLOC)This;
 }
 
 /****************************************************************************
@@ -362,13 +362,13 @@ IMalloc32_Constructor() {
  * RETURNS
  *  True, if the passed pointer is a valid interface
  */
-BOOL32 WINAPI IsValidInterface32(
+BOOL WINAPI IsValidInterface(
 	LPUNKNOWN punk	/* [in] interface to be tested */
 ) {
 	return !(
-		IsBadReadPtr32(punk,4)					||
-		IsBadReadPtr32(punk->lpvtbl,4)				||
-		IsBadReadPtr32(punk->lpvtbl->fnQueryInterface,9)	||
-		IsBadCodePtr32(punk->lpvtbl->fnQueryInterface)
+		IsBadReadPtr(punk,4)					||
+		IsBadReadPtr(punk->lpvtbl,4)				||
+		IsBadReadPtr(punk->lpvtbl->fnQueryInterface,9)	||
+		IsBadCodePtr(punk->lpvtbl->fnQueryInterface)
 	);
 }

@@ -21,12 +21,12 @@ INT16 WINAPI Escape16( HDC16 hdc, INT16 nEscape, INT16 cbInput,
     return dc->funcs->pEscape( dc, nEscape, cbInput, lpszInData, lpvOutData );
 }
 
-INT32 WINAPI Escape32( HDC32 hdc, INT32 nEscape, INT32 cbInput,
+INT WINAPI Escape( HDC hdc, INT nEscape, INT cbInput,
                        LPCSTR lpszInData, LPVOID lpvOutData )
 {
     DC		*dc = DC_GetDCPtr( hdc );
     SEGPTR	segin,segout;
-    INT32	ret;
+    INT	ret;
 
     if (!dc || !dc->funcs->pEscape) return 0;
     segin	= (SEGPTR)lpszInData;
@@ -35,7 +35,7 @@ INT32 WINAPI Escape32( HDC32 hdc, INT32 nEscape, INT32 cbInput,
     	/* Escape(hdc,QUERYESCSUPPORT,LPINT32,NULL) */
     case QUERYESCSUPPORT: {
     	LPINT16 x = (LPINT16)SEGPTR_NEW(INT16);
-	*x = *(INT32*)lpszInData;
+	*x = *(INT*)lpszInData;
 	segin = SEGPTR_GET(x);
 	break;
     }
@@ -64,7 +64,7 @@ INT32 WINAPI Escape32( HDC32 hdc, INT32 nEscape, INT32 cbInput,
         LPINT16 enab = SEGPTR_NEW(INT16);
         segout = SEGPTR_GET(SEGPTR_NEW(INT16));
         segin = SEGPTR_GET(enab);
-        *enab = *(INT32*)lpszInData;
+        *enab = *(INT*)lpszInData;
         break;
     }
 
@@ -103,27 +103,27 @@ INT32 WINAPI Escape32( HDC32 hdc, INT32 nEscape, INT32 cbInput,
     case GETPRINTINGOFFSET:
     case GETPHYSPAGESIZE: {
     	LPPOINT16 x = (LPPOINT16)PTR_SEG_TO_LIN(segout);
-	CONV_POINT16TO32(x,(LPPOINT32)lpvOutData);
+	CONV_POINT16TO32(x,(LPPOINT)lpvOutData);
 	SEGPTR_FREE(x);
 	break;
     }
     case GETTECHNOLOGY: {
         LPSTR x=PTR_SEG_TO_LIN(segout);
-        lstrcpy32A(lpvOutData,x);
+        lstrcpyA(lpvOutData,x);
         SEGPTR_FREE(x);
 	break;
     }
     case ENABLEPAIRKERNING: {
         LPINT16 enab = (LPINT16)PTR_SEG_TO_LIN(segout);
 
-        *(LPINT32)lpvOutData = *enab;
+        *(LPINT)lpvOutData = *enab;
         SEGPTR_FREE(enab);
         SEGPTR_FREE(PTR_SEG_TO_LIN(segin));
 	break;
     }
     case GETFACENAME: {
         LPSTR x = (LPSTR)PTR_SEG_TO_LIN(segout);
-        lstrcpy32A(lpvOutData,x);
+        lstrcpyA(lpvOutData,x);
         SEGPTR_FREE(x);
         break;
     }
@@ -153,8 +153,8 @@ INT32 WINAPI Escape32( HDC32 hdc, INT32 nEscape, INT32 cbInput,
  *    Not implemented: 0
  *    Failure: <0
  */
-INT32 WINAPI ExtEscape( HDC32 hdc, INT32 nEscape, INT32 cbInput, 
-                        LPCSTR lpszInData, INT32 cbOutput, LPSTR lpszOutData )
+INT WINAPI ExtEscape( HDC hdc, INT nEscape, INT cbInput, 
+                        LPCSTR lpszInData, INT cbOutput, LPSTR lpszOutData )
 {
     FIXME(driver,"(0x%04x,0x%x,%d,%s,%d,%p):stub\n",
           hdc,nEscape,cbInput,debugstr_a(lpszInData),cbOutput,lpszOutData);
@@ -166,7 +166,7 @@ INT32 WINAPI ExtEscape( HDC32 hdc, INT32 nEscape, INT32 cbInput,
  *
  *
  */
-INT32 WINAPI DrawEscape(HDC32 hdc, INT32 nEscape, INT32 cbInput, LPCSTR lpszInData)
+INT WINAPI DrawEscape(HDC hdc, INT nEscape, INT cbInput, LPCSTR lpszInData)
 {
     FIXME(gdi, "DrawEscape, stub\n");
     return 0;

@@ -63,7 +63,7 @@
 
 #define AdjustPtr(ptr,delta) ((char *)(ptr) + (delta))
 
-void dump_exports( HMODULE32 hModule )
+void dump_exports( HMODULE hModule )
 { 
   char		*Module;
   int		i, j;
@@ -115,10 +115,10 @@ void dump_exports( HMODULE32 hModule )
  * If it is a ordinal:
  *	- use ordinal-pe_export->Base as offset into the functionlist
  */
-FARPROC32 PE_FindExportedFunction( 
+FARPROC PE_FindExportedFunction( 
 	WINE_MODREF *wm,	/* [in] WINE modreference */
 	LPCSTR funcName,	/* [in] function name */
-        BOOL32 snoop )
+        BOOL snoop )
 {
 	u_short				* ordinal;
 	u_long				* function;
@@ -159,8 +159,8 @@ FARPROC32 PE_FindExportedFunction(
                             addr = function[*ordinal];
                             if (!addr) return NULL;
                             if ((addr < rva_start) || (addr >= rva_end))
-				return snoop? SNOOP_GetProcAddress32(wm->module,ename,*ordinal,(FARPROC32)RVA(addr))
-                                            : (FARPROC32)RVA(addr);
+				return snoop? SNOOP_GetProcAddress(wm->module,ename,*ordinal,(FARPROC)RVA(addr))
+                                            : (FARPROC)RVA(addr);
                             forward = (char *)RVA(addr);
                             break;
 			}
@@ -189,13 +189,13 @@ FARPROC32 PE_FindExportedFunction(
 		    	ename = "";
 		}
 		if ((addr < rva_start) || (addr >= rva_end))
-			return snoop? SNOOP_GetProcAddress32(wm->module,ename,(DWORD)funcName-exports->Base,(FARPROC32)RVA(addr))
-                                    : (FARPROC32)RVA(addr);
+			return snoop? SNOOP_GetProcAddress(wm->module,ename,(DWORD)funcName-exports->Base,(FARPROC)RVA(addr))
+                                    : (FARPROC)RVA(addr);
 		forward = (char *)RVA(addr);
 	}
 	if (forward)
         {
-                HMODULE32 hMod;
+                HMODULE hMod;
 		char module[256];
 		char *end = strchr(forward, '.');
 
@@ -203,9 +203,9 @@ FARPROC32 PE_FindExportedFunction(
 		assert(end-forward<256);
 		strncpy(module, forward, (end - forward));
 		module[end-forward] = 0;
-                hMod = MODULE_FindModule32( module );
+                hMod = MODULE_FindModule( module );
 		assert(hMod);
-		return MODULE_GetProcAddress32( hMod, end + 1, snoop );
+		return MODULE_GetProcAddress( hMod, end + 1, snoop );
 	}
 	return NULL;
 }
@@ -255,7 +255,7 @@ DWORD fixup_imports( WINE_MODREF *wm )
      */
  
     for (i = 0, pe_imp = pem->pe_import; pe_imp->Name ; pe_imp++) {
-    	HMODULE32		hImpModule;
+    	HMODULE		hImpModule;
 	IMAGE_IMPORT_BY_NAME	*pe_name;
 	PIMAGE_THUNK_DATA	import_list,thunk_list;
  	char			*name = (char *) RVA(pe_imp->Name);
@@ -264,7 +264,7 @@ DWORD fixup_imports( WINE_MODREF *wm )
 		break;
 
 	/* don't use MODULE_Load, Win32 creates new task differently */
-	hImpModule = MODULE_LoadLibraryEx32A( name, 0, 0 );
+	hImpModule = MODULE_LoadLibraryExA( name, 0, 0 );
 	if (!hImpModule) {
 	    char *p,buffer[2000];
 	    
@@ -273,7 +273,7 @@ DWORD fixup_imports( WINE_MODREF *wm )
 	    if (!(p = strrchr (buffer, '\\')))
 		p = buffer;
 	    strcpy (p + 1, name);
-	    hImpModule = MODULE_LoadLibraryEx32A( buffer, 0, 0 );
+	    hImpModule = MODULE_LoadLibraryExA( buffer, 0, 0 );
 	}
 	if (!hImpModule) {
 	    ERR (module, "Module %s not found\n", name);
@@ -295,24 +295,24 @@ DWORD fixup_imports( WINE_MODREF *wm )
 		    int ordinal = IMAGE_ORDINAL(import_list->u1.Ordinal);
 
 		    TRACE(win32, "--- Ordinal %s,%d\n", name, ordinal);
-		    thunk_list->u1.Function=MODULE_GetProcAddress32(
+		    thunk_list->u1.Function=MODULE_GetProcAddress(
                         hImpModule, (LPCSTR)ordinal, TRUE
 		    );
 		    if (!thunk_list->u1.Function) {
 			ERR(win32,"No implementation for %s.%d, setting to 0xdeadbeef\n",
 				name, ordinal);
-                        thunk_list->u1.Function = (FARPROC32)0xdeadbeef;
+                        thunk_list->u1.Function = (FARPROC)0xdeadbeef;
 		    }
 		} else {		/* import by name */
 		    pe_name = (PIMAGE_IMPORT_BY_NAME)RVA(import_list->u1.AddressOfData);
 		    TRACE(win32, "--- %s %s.%d\n", pe_name->Name, name, pe_name->Hint);
-		    thunk_list->u1.Function=MODULE_GetProcAddress32(
+		    thunk_list->u1.Function=MODULE_GetProcAddress(
                         hImpModule, pe_name->Name, TRUE
 		    );
 		    if (!thunk_list->u1.Function) {
 			ERR(win32,"No implementation for %s.%d(%s), setting to 0xdeadbeef\n",
 				name,pe_name->Hint,pe_name->Name);
-                        thunk_list->u1.Function = (FARPROC32)0xdeadbeef;
+                        thunk_list->u1.Function = (FARPROC)0xdeadbeef;
 		    }
 		}
 		import_list++;
@@ -327,25 +327,25 @@ DWORD fixup_imports( WINE_MODREF *wm )
 		    int ordinal = IMAGE_ORDINAL(thunk_list->u1.Ordinal);
 
 		    TRACE(win32,"--- Ordinal %s.%d\n",name,ordinal);
-		    thunk_list->u1.Function=MODULE_GetProcAddress32(
+		    thunk_list->u1.Function=MODULE_GetProcAddress(
                         hImpModule, (LPCSTR) ordinal, TRUE
 		    );
 		    if (!thunk_list->u1.Function) {
 			ERR(win32, "No implementation for %s.%d, setting to 0xdeadbeef\n",
 				name,ordinal);
-                        thunk_list->u1.Function = (FARPROC32)0xdeadbeef;
+                        thunk_list->u1.Function = (FARPROC)0xdeadbeef;
 		    }
 		} else {
 		    pe_name=(PIMAGE_IMPORT_BY_NAME) RVA(thunk_list->u1.AddressOfData);
 		    TRACE(win32,"--- %s %s.%d\n",
 		   		  pe_name->Name,name,pe_name->Hint);
-		    thunk_list->u1.Function=MODULE_GetProcAddress32(
+		    thunk_list->u1.Function=MODULE_GetProcAddress(
                         hImpModule, pe_name->Name, TRUE
 		    );
 		    if (!thunk_list->u1.Function) {
 		    	ERR(win32, "No implementation for %s.%d, setting to 0xdeadbeef\n",
 				name, pe_name->Hint);
-                        thunk_list->u1.Function = (FARPROC32)0xdeadbeef;
+                        thunk_list->u1.Function = (FARPROC)0xdeadbeef;
 		    }
 		}
 		thunk_list++;
@@ -355,7 +355,7 @@ DWORD fixup_imports( WINE_MODREF *wm )
     return 0;
 }
 
-static int calc_vma_size( HMODULE32 hModule )
+static int calc_vma_size( HMODULE hModule )
 {
     int i,vma_size = 0;
     IMAGE_SECTION_HEADER *pe_seg = PE_SECTIONS(hModule);
@@ -452,11 +452,11 @@ static void do_relocations( unsigned int load_addr, IMAGE_BASE_RELOCATION *r )
  * BUT we have to map the whole image anyway, for Win32 programs sometimes
  * want to access them. (HMODULE32 point to the start of it)
  */
-HMODULE32 PE_LoadImage( LPCSTR name, OFSTRUCT *ofs, LPCSTR *modName )
+HMODULE PE_LoadImage( LPCSTR name, OFSTRUCT *ofs, LPCSTR *modName )
 {
-    HMODULE32	hModule;
-    HFILE32	hFile;
-    HANDLE32	mapping;
+    HMODULE	hModule;
+    HFILE	hFile;
+    HANDLE	mapping;
 
     IMAGE_NT_HEADERS *nt;
     IMAGE_SECTION_HEADER *pe_sec;
@@ -472,8 +472,8 @@ HMODULE32 PE_LoadImage( LPCSTR name, OFSTRUCT *ofs, LPCSTR *modName )
     if (!strchr( p, '.' )) strcat( dllname, ".DLL" ); 
 
     /* Open PE file */
-    hFile = OpenFile32( dllname, ofs, OF_READ | OF_SHARE_DENY_WRITE );
-    if ( hFile == HFILE_ERROR32 )
+    hFile = OpenFile( dllname, ofs, OF_READ | OF_SHARE_DENY_WRITE );
+    if ( hFile == HFILE_ERROR )
     {
         WARN( win32, "OpenFile error %ld\n", GetLastError() );
         return 2;
@@ -484,7 +484,7 @@ HMODULE32 PE_LoadImage( LPCSTR name, OFSTRUCT *ofs, LPCSTR *modName )
     	file_size = bhfi.nFileSizeLow; /* FIXME: 64 bit */
 
     /* Map the PE file somewhere */
-    mapping = CreateFileMapping32A( hFile, NULL, PAGE_READONLY | SEC_COMMIT,
+    mapping = CreateFileMappingA( hFile, NULL, PAGE_READONLY | SEC_COMMIT,
                                     0, 0, NULL );
     CloseHandle( hFile );
     if (!mapping)
@@ -492,7 +492,7 @@ HMODULE32 PE_LoadImage( LPCSTR name, OFSTRUCT *ofs, LPCSTR *modName )
         WARN( win32, "CreateFileMapping error %ld\n", GetLastError() );
         return 0;
     }
-    hModule = (HMODULE32)MapViewOfFile( mapping, FILE_MAP_READ, 0, 0, 0 );
+    hModule = (HMODULE)MapViewOfFile( mapping, FILE_MAP_READ, 0, 0, 0 );
     CloseHandle( mapping );
     if (!hModule)
     {
@@ -638,7 +638,7 @@ HMODULE32 PE_LoadImage( LPCSTR name, OFSTRUCT *ofs, LPCSTR *modName )
 
     /* We don't need the orignal mapping any more */
     UnmapViewOfFile( (LPVOID)hModule );
-    return (HMODULE32)load_addr;
+    return (HMODULE)load_addr;
 
 error:
     UnmapViewOfFile( (LPVOID)hModule );
@@ -658,8 +658,8 @@ error:
  * Note: This routine must always be called in the context of the
  *       process that is to own the module to be created.
  */
-WINE_MODREF *PE_CreateModule( HMODULE32 hModule, 
-                              OFSTRUCT *ofs, DWORD flags, BOOL32 builtin )
+WINE_MODREF *PE_CreateModule( HMODULE hModule, 
+                              OFSTRUCT *ofs, DWORD flags, BOOL builtin )
 {
     DWORD load_addr = (DWORD)hModule;  /* for RVA */
     IMAGE_NT_HEADERS *nt = PE_HEADER(hModule);
@@ -749,9 +749,9 @@ WINE_MODREF *PE_CreateModule( HMODULE32 hModule,
     }
     wm->modname = HEAP_strdupA( GetProcessHeap(), 0, modname );
 
-    result = GetLongPathName32A( ofs->szPathName, NULL, 0 );
+    result = GetLongPathNameA( ofs->szPathName, NULL, 0 );
     wm->longname = (char *)HeapAlloc( GetProcessHeap(), 0, result+1 );
-    GetLongPathName32A( ofs->szPathName, wm->longname, result+1 );
+    GetLongPathNameA( ofs->szPathName, wm->longname, result+1 );
 
     wm->shortname = HEAP_strdupA( GetProcessHeap(), 0, ofs->szPathName );
 
@@ -801,19 +801,19 @@ WINE_MODREF *PE_CreateModule( HMODULE32 hModule,
  * The PE Library Loader frontend. 
  * FIXME: handle the flags.
  */
-HMODULE32 PE_LoadLibraryEx32A (LPCSTR name, 
-                               HFILE32 hFile, DWORD flags)
+HMODULE PE_LoadLibraryExA (LPCSTR name, 
+                               HFILE hFile, DWORD flags)
 {
     LPCSTR	modName = NULL;
     OFSTRUCT	ofs;
-    HMODULE32	hModule32;
+    HMODULE	hModule32;
     HMODULE16	hModule16;
     NE_MODULE	*pModule;
     WINE_MODREF	*wm;
-    BOOL32	builtin;
+    BOOL	builtin;
 
     /* Check for already loaded module */
-    if ((hModule32 = MODULE_FindModule32( name ))) 
+    if ((hModule32 = MODULE_FindModule( name ))) 
         return hModule32;
 
     /* try to load builtin, enabled modules first */
@@ -858,16 +858,16 @@ HMODULE32 PE_LoadLibraryEx32A (LPCSTR name,
  * due to the PROCESS_Create stuff.
  */
 HINSTANCE16 PE_CreateProcess( LPCSTR name, LPCSTR cmd_line,
-                              LPCSTR env, BOOL32 inherit, LPSTARTUPINFO32A startup,
+                              LPCSTR env, BOOL inherit, LPSTARTUPINFOA startup,
                               LPPROCESS_INFORMATION info )
 {
     LPCSTR modName = NULL;
     HMODULE16 hModule16;
-    HMODULE32 hModule32;
+    HMODULE hModule32;
     HINSTANCE16 hInstance;
     NE_MODULE *pModule;
     OFSTRUCT ofs;
-    PDB32 *process;
+    PDB *process;
 
     /* Load file */
     if ((hModule32 = PE_LoadImage( name, &ofs, &modName )) < 32)
@@ -897,7 +897,7 @@ HINSTANCE16 PE_CreateProcess( LPCSTR name, LPCSTR cmd_line,
 /*********************************************************************
  * PE_UnloadImage [internal]
  */
-int PE_UnloadImage( HMODULE32 hModule )
+int PE_UnloadImage( HMODULE hModule )
 {
 	FIXME(win32,"stub.\n");
 	/* free resources, image, unmap */
@@ -934,7 +934,7 @@ void PE_InitDLL(WINE_MODREF *wm, DWORD type, LPVOID lpReserved)
     if ((PE_HEADER(wm->module)->FileHeader.Characteristics & IMAGE_FILE_DLL) &&
         (PE_HEADER(wm->module)->OptionalHeader.AddressOfEntryPoint)
     ) {
-        DLLENTRYPROC32 entry = (void*)RVA_PTR( wm->module,OptionalHeader.AddressOfEntryPoint );
+        DLLENTRYPROC entry = (void*)RVA_PTR( wm->module,OptionalHeader.AddressOfEntryPoint );
         TRACE(relay, "CallTo32(entryproc=%p,module=%08x,type=%ld,res=%p)\n",
                        entry, wm->module, type, lpReserved );
 
@@ -957,7 +957,7 @@ void PE_InitTls(THDB *thdb)
 	DWORD			size,datasize;
 	LPVOID			mem;
 	PIMAGE_TLS_DIRECTORY	pdir;
-	PDB32			*pdb = thdb->process;
+	PDB			*pdb = thdb->process;
         int delta;
 	
 	for (wm = pdb->modref_list;wm;wm=wm->next) {
@@ -997,7 +997,7 @@ void PE_InitTls(THDB *thdb)
  *		DisableThreadLibraryCalls (KERNEL32.74)
  * Don't call DllEntryPoint for DLL_THREAD_{ATTACH,DETACH} if set.
  */
-BOOL32 WINAPI DisableThreadLibraryCalls(HMODULE32 hModule)
+BOOL WINAPI DisableThreadLibraryCalls(HMODULE hModule)
 {
 	WINE_MODREF	*wm;
 

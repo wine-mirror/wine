@@ -38,22 +38,18 @@ extern "C" {
 /* Note that Winelib is purely Win32.                             */
 
 #ifdef __WINE__
-# define WINELIB_NAME(func)      this_is_a_syntax_error this_is_a_syntax_error
 # define WINELIB_NAME_AW(func)   this_is_a_syntax_error this_is_a_syntax_error
 #else  /* __WINE__ */
-# define WINELIB_NAME(func)     func##32
 # ifdef UNICODE
-#  define WINELIB_NAME_AW(func) func##32W
+#  define WINELIB_NAME_AW(func) func##W
 # else
-#  define WINELIB_NAME_AW(func) func##32A
+#  define WINELIB_NAME_AW(func) func##A
 # endif  /* UNICODE */
 #endif  /* __WINE__ */
 
 #ifdef __WINE__
-# define DECL_WINELIB_TYPE(type)     /* nothing */
 # define DECL_WINELIB_TYPE_AW(type)  /* nothing */
 #else   /* __WINE__ */
-# define DECL_WINELIB_TYPE(type)     typedef WINELIB_NAME(type) type;
 # define DECL_WINELIB_TYPE_AW(type)  typedef WINELIB_NAME_AW(type) type;
 #endif  /* __WINE__ */
 
@@ -90,8 +86,8 @@ extern "C" {
 typedef void            VOID;
 typedef short           INT16;
 typedef unsigned short  UINT16;
-typedef int             INT32;
-typedef unsigned int    UINT32;
+typedef int             INT;
+typedef unsigned int    UINT;
 typedef unsigned short  WORD;
 typedef unsigned long   DWORD;
 typedef unsigned long   ULONG;
@@ -104,7 +100,7 @@ typedef unsigned char   UCHAR;
 /* Some systems might have wchar_t, but we really need 16 bit characters */
 typedef unsigned short  WCHAR;
 typedef unsigned short  BOOL16;
-typedef int             BOOL32;
+typedef int             BOOL;
 typedef double          DATE;
 typedef long            LONG_PTR;
 typedef unsigned long   ULONG_PTR;
@@ -115,11 +111,11 @@ typedef double          ULONGLONG;
 /* Integer types. These are the same for emulator and library. */
 
 typedef UINT16          HANDLE16;
-typedef UINT32          HANDLE32;
+typedef UINT            HANDLE;
 typedef UINT16         *LPHANDLE16;
-typedef UINT32         *LPHANDLE32;
+typedef UINT           *LPHANDLE;
 typedef UINT16          WPARAM16;
-typedef UINT32          WPARAM32;
+typedef UINT            WPARAM;
 typedef LONG            LPARAM;
 typedef LONG            HRESULT;
 typedef LONG            LRESULT;
@@ -128,9 +124,9 @@ typedef WORD            CATCHBUF[9];
 typedef WORD           *LPCATCHBUF;
 typedef DWORD           ACCESS_MASK;
 typedef ACCESS_MASK     REGSAM;
-typedef HANDLE32        HHOOK;
-typedef HANDLE32        HKEY;
-typedef HANDLE32        HMONITOR;
+typedef HANDLE          HHOOK;
+typedef HANDLE          HKEY;
+typedef HANDLE          HMONITOR;
 typedef DWORD           LCID;
 typedef WORD            LANGID;
 typedef DWORD           LCTYPE;
@@ -164,16 +160,16 @@ typedef VOID           *LPVOID;
 typedef const VOID     *LPCVOID;
 typedef INT16          *LPINT16;
 typedef UINT16         *LPUINT16;
-typedef INT32          *PINT32;
-typedef INT32          *LPINT32;
-typedef UINT32         *PUINT32;
-typedef UINT32         *LPUINT32;
+typedef INT            *PINT;
+typedef INT            *LPINT;
+typedef UINT           *PUINT;
+typedef UINT           *LPUINT;
 typedef HKEY           *LPHKEY;
 typedef HKEY           *PHKEY;
 typedef FLOAT          *PFLOAT;
 typedef FLOAT          *LPFLOAT;
-typedef BOOL32         *PBOOL32;
-typedef BOOL32         *LPBOOL32;
+typedef BOOL           *PBOOL;
+typedef BOOL           *LPBOOL;
 
 /* Special case: a segmented pointer is just a pointer in the user's code. */
 
@@ -185,7 +181,7 @@ typedef void* SEGPTR;
 
 /* Handle types that exist both in Win16 and Win32. */
 
-#define DECLARE_HANDLE(a)  typedef HANDLE16 a##16; typedef HANDLE32 a##32
+#define DECLARE_HANDLE(a)  typedef HANDLE16 a##16; typedef HANDLE a
 DECLARE_HANDLE(HACCEL);
 DECLARE_HANDLE(HBITMAP);
 DECLARE_HANDLE(HBRUSH);
@@ -232,56 +228,45 @@ DECLARE_HANDLE(HRASCONN);
 
 /* Callback function pointers types */
 
-typedef BOOL32 (CALLBACK* DATEFMT_ENUMPROC32A)(LPSTR);
-typedef BOOL32 (CALLBACK* DATEFMT_ENUMPROC32W)(LPWSTR);
+typedef BOOL    (CALLBACK* DATEFMT_ENUMPROCA)(LPSTR);
+typedef BOOL    (CALLBACK* DATEFMT_ENUMPROCW)(LPWSTR);
 DECL_WINELIB_TYPE_AW(DATEFMT_ENUMPROC)
-typedef BOOL16 (CALLBACK *DLGPROC16)(HWND16,UINT16,WPARAM16,LPARAM);
-typedef BOOL32 (CALLBACK *DLGPROC32)(HWND32,UINT32,WPARAM32,LPARAM);
-DECL_WINELIB_TYPE(DLGPROC)
+typedef BOOL16  (CALLBACK *DLGPROC16)(HWND16,UINT16,WPARAM16,LPARAM);
+typedef BOOL    (CALLBACK *DLGPROC)(HWND,UINT,WPARAM,LPARAM);
 typedef LRESULT (CALLBACK *DRIVERPROC16)(DWORD,HDRVR16,UINT16,LPARAM,LPARAM);
-typedef LRESULT (CALLBACK *DRIVERPROC32)(DWORD,HDRVR32,UINT32,LPARAM,LPARAM);
-DECL_WINELIB_TYPE(DRIVERPROC)
+typedef LRESULT (CALLBACK *DRIVERPROC)(DWORD,HDRVR,UINT,LPARAM,LPARAM);
 typedef INT16   (CALLBACK *EDITWORDBREAKPROC16)(LPSTR,INT16,INT16,INT16);
-typedef INT32   (CALLBACK *EDITWORDBREAKPROC32A)(LPSTR,INT32,INT32,INT32);
-typedef INT32   (CALLBACK *EDITWORDBREAKPROC32W)(LPWSTR,INT32,INT32,INT32);
+typedef INT     (CALLBACK *EDITWORDBREAKPROCA)(LPSTR,INT,INT,INT);
+typedef INT     (CALLBACK *EDITWORDBREAKPROCW)(LPWSTR,INT,INT,INT);
 DECL_WINELIB_TYPE_AW(EDITWORDBREAKPROC)
 typedef LRESULT (CALLBACK *FARPROC16)();
-typedef LRESULT (CALLBACK *FARPROC32)();
-DECL_WINELIB_TYPE(FARPROC)
+typedef LRESULT (CALLBACK *FARPROC)();
 typedef INT16   (CALLBACK *PROC16)();
-typedef INT32   (CALLBACK *PROC32)();
-DECL_WINELIB_TYPE(PROC)
+typedef INT     (CALLBACK *PROC)();
 typedef INT16   (CALLBACK *GOBJENUMPROC16)(SEGPTR,LPARAM);
-typedef INT32   (CALLBACK *GOBJENUMPROC32)(LPVOID,LPARAM);
-DECL_WINELIB_TYPE(GOBJENUMPROC)
+typedef INT     (CALLBACK *GOBJENUMPROC)(LPVOID,LPARAM);
 typedef BOOL16  (CALLBACK *GRAYSTRINGPROC16)(HDC16,LPARAM,INT16);
-typedef BOOL32  (CALLBACK *GRAYSTRINGPROC32)(HDC32,LPARAM,INT32);
-DECL_WINELIB_TYPE(GRAYSTRINGPROC)
+typedef BOOL    (CALLBACK *GRAYSTRINGPROC)(HDC,LPARAM,INT);
 typedef LRESULT (CALLBACK *HOOKPROC16)(INT16,WPARAM16,LPARAM);
-typedef LRESULT (CALLBACK *HOOKPROC32)(INT32,WPARAM32,LPARAM);
-DECL_WINELIB_TYPE(HOOKPROC)
+typedef LRESULT (CALLBACK *HOOKPROC)(INT,WPARAM,LPARAM);
 typedef VOID    (CALLBACK *LINEDDAPROC16)(INT16,INT16,LPARAM);
-typedef VOID    (CALLBACK *LINEDDAPROC32)(INT32,INT32,LPARAM);
-DECL_WINELIB_TYPE(LINEDDAPROC)
+typedef VOID    (CALLBACK *LINEDDAPROC)(INT,INT,LPARAM);
 typedef BOOL16  (CALLBACK *PROPENUMPROC16)(HWND16,SEGPTR,HANDLE16);
-typedef BOOL32  (CALLBACK *PROPENUMPROC32A)(HWND32,LPCSTR,HANDLE32);
-typedef BOOL32  (CALLBACK *PROPENUMPROC32W)(HWND32,LPCWSTR,HANDLE32);
+typedef BOOL    (CALLBACK *PROPENUMPROCA)(HWND,LPCSTR,HANDLE);
+typedef BOOL    (CALLBACK *PROPENUMPROCW)(HWND,LPCWSTR,HANDLE);
 DECL_WINELIB_TYPE_AW(PROPENUMPROC)
-typedef BOOL32  (CALLBACK *PROPENUMPROCEX32A)(HWND32,LPCSTR,HANDLE32,LPARAM);
-typedef BOOL32  (CALLBACK *PROPENUMPROCEX32W)(HWND32,LPCWSTR,HANDLE32,LPARAM);
+typedef BOOL    (CALLBACK *PROPENUMPROCEXA)(HWND,LPCSTR,HANDLE,LPARAM);
+typedef BOOL    (CALLBACK *PROPENUMPROCEXW)(HWND,LPCWSTR,HANDLE,LPARAM);
 DECL_WINELIB_TYPE_AW(PROPENUMPROCEX)
-typedef BOOL32 (CALLBACK* TIMEFMT_ENUMPROC32A)(LPSTR);
-typedef BOOL32 (CALLBACK* TIMEFMT_ENUMPROC32W)(LPWSTR);
+typedef BOOL    (CALLBACK* TIMEFMT_ENUMPROCA)(LPSTR);
+typedef BOOL    (CALLBACK* TIMEFMT_ENUMPROCW)(LPWSTR);
 DECL_WINELIB_TYPE_AW(TIMEFMT_ENUMPROC)
 typedef VOID    (CALLBACK *TIMERPROC16)(HWND16,UINT16,UINT16,DWORD);
-typedef VOID    (CALLBACK *TIMERPROC32)(HWND32,UINT32,UINT32,DWORD);
-DECL_WINELIB_TYPE(TIMERPROC)
+typedef VOID    (CALLBACK *TIMERPROC)(HWND,UINT,UINT,DWORD);
 typedef LRESULT (CALLBACK *WNDENUMPROC16)(HWND16,LPARAM);
-typedef LRESULT (CALLBACK *WNDENUMPROC32)(HWND32,LPARAM);
-DECL_WINELIB_TYPE(WNDENUMPROC)
+typedef LRESULT (CALLBACK *WNDENUMPROC)(HWND,LPARAM);
 typedef LRESULT (CALLBACK *WNDPROC16)(HWND16,UINT16,WPARAM16,LPARAM);
-typedef LRESULT (CALLBACK *WNDPROC32)(HWND32,UINT32,WPARAM32,LPARAM);
-DECL_WINELIB_TYPE(WNDPROC)
+typedef LRESULT (CALLBACK *WNDPROC)(HWND,UINT,WPARAM,LPARAM);
 
 /* TCHAR data types definitions for Winelib. */
 /* These types are _not_ defined for the emulator, because they */
@@ -304,52 +289,7 @@ typedef LPCSTR LPCTSTR;
 
 /* Data types specific to the library. These do _not_ exist in the emulator. */
 
-DECL_WINELIB_TYPE(INT)
-DECL_WINELIB_TYPE(LPINT)
-DECL_WINELIB_TYPE(PUINT)
-DECL_WINELIB_TYPE(LPUINT)
-DECL_WINELIB_TYPE(UINT)
-DECL_WINELIB_TYPE(BOOL)
-DECL_WINELIB_TYPE(LPBOOL)
-DECL_WINELIB_TYPE(WPARAM)
 
-DECL_WINELIB_TYPE(HACCEL)
-DECL_WINELIB_TYPE(HANDLE)
-DECL_WINELIB_TYPE(LPHANDLE)
-DECL_WINELIB_TYPE(HBITMAP)
-DECL_WINELIB_TYPE(HBRUSH)
-DECL_WINELIB_TYPE(HCOLORSPACE)
-DECL_WINELIB_TYPE(HCURSOR)
-DECL_WINELIB_TYPE(HDC)
-DECL_WINELIB_TYPE(HDROP)
-DECL_WINELIB_TYPE(HDRVR)
-DECL_WINELIB_TYPE(HDWP)
-DECL_WINELIB_TYPE(HENHMETAFILE)
-DECL_WINELIB_TYPE(HFILE)
-DECL_WINELIB_TYPE(HFONT)
-DECL_WINELIB_TYPE(HGDIOBJ)
-DECL_WINELIB_TYPE(HGLOBAL)
-DECL_WINELIB_TYPE(HIC)
-DECL_WINELIB_TYPE(HICON)
-DECL_WINELIB_TYPE(HINSTANCE)
-DECL_WINELIB_TYPE(HLOCAL)
-DECL_WINELIB_TYPE(HMENU)
-DECL_WINELIB_TYPE(HMETAFILE)
-DECL_WINELIB_TYPE(HMIDI)
-DECL_WINELIB_TYPE(HMIDIIN)
-DECL_WINELIB_TYPE(HMIDIOUT)
-DECL_WINELIB_TYPE(HMMIO)
-DECL_WINELIB_TYPE(HMODULE)
-DECL_WINELIB_TYPE(HPALETTE)
-DECL_WINELIB_TYPE(HPEN)
-DECL_WINELIB_TYPE(HQUEUE)
-DECL_WINELIB_TYPE(HRGN)
-DECL_WINELIB_TYPE(HRSRC)
-DECL_WINELIB_TYPE(HTASK)
-DECL_WINELIB_TYPE(HWAVE)
-DECL_WINELIB_TYPE(HWAVEIN)
-DECL_WINELIB_TYPE(HWAVEOUT)
-DECL_WINELIB_TYPE(HWND)
 
 /* Define some empty macros for compatibility with Windows code. */
 
@@ -387,7 +327,7 @@ DECL_WINELIB_TYPE(HWND)
 #define MAKEWORD(low,high)     ((WORD)(((BYTE)(low)) | ((WORD)((BYTE)(high))) << 8))
 #define MAKELONG(low,high)     ((LONG)(((WORD)(low)) | (((DWORD)((WORD)(high))) << 16)))
 #define MAKELPARAM(low,high)   ((LPARAM)MAKELONG(low,high))
-#define MAKEWPARAM(low,high)   ((WPARAM32)MAKELONG(low,high))
+#define MAKEWPARAM(low,high)   ((WPARAM)MAKELONG(low,high))
 #define MAKELRESULT(low,high)  ((LRESULT)MAKELONG(low,high))
 #define MAKEINTATOM(atom)      ((LPCSTR)MAKELONG((atom),0))
 
@@ -461,18 +401,15 @@ typedef struct
 
 typedef struct tagSIZE
 {
-    INT32  cx;
-    INT32  cy;
-} SIZE32, *PSIZE32, *LPSIZE32;
+    INT  cx;
+    INT  cy;
+} SIZE, *PSIZE, *LPSIZE;
 
-DECL_WINELIB_TYPE(SIZE)
-DECL_WINELIB_TYPE(PSIZE)
-DECL_WINELIB_TYPE(LPSIZE)
 
-typedef SIZE32 SIZEL, *PSIZEL, *LPSIZEL;
+typedef SIZE SIZEL, *PSIZEL, *LPSIZEL;
 
 #define CONV_SIZE16TO32(s16,s32) \
-            ((s32)->cx = (INT32)(s16)->cx, (s32)->cy = (INT32)(s16)->cy)
+            ((s32)->cx = (INT)(s16)->cx, (s32)->cy = (INT)(s16)->cy)
 #define CONV_SIZE32TO16(s32,s16) \
             ((s16)->cx = (INT16)(s32)->cx, (s16)->cy = (INT16)(s32)->cy)
 
@@ -488,19 +425,15 @@ typedef struct tagPOINT
 {
     LONG  x;
     LONG  y;
-} POINT32, *PPOINT32, *LPPOINT32;
+} POINT, *PPOINT, *LPPOINT;
 
-DECL_WINELIB_TYPE(POINT)
-DECL_WINELIB_TYPE(PPOINT)
-DECL_WINELIB_TYPE(LPPOINT)
 
 #define CONV_POINT16TO32(p16,p32) \
-            ((p32)->x = (INT32)(p16)->x, (p32)->y = (INT32)(p16)->y)
+            ((p32)->x = (INT)(p16)->x, (p32)->y = (INT)(p16)->y)
 #define CONV_POINT32TO16(p32,p16) \
             ((p16)->x = (INT16)(p32)->x, (p16)->y = (INT16)(p32)->y)
 
 #define MAKEPOINT16(l) (*((POINT16 *)&(l)))
-#define MAKEPOINT WINELIB_NAME(MAKEPOINT)
 
 /* The POINTS structure */
 
@@ -508,11 +441,8 @@ typedef struct tagPOINTS
 {
 	SHORT x;
 	SHORT y;
-} POINTS32, *PPOINTS32, *LPPOINTS32;
+} POINTS, *PPOINTS, *LPPOINTS;
 
-DECL_WINELIB_TYPE(POINTS)
-DECL_WINELIB_TYPE(PPOINTS)
-DECL_WINELIB_TYPE(LPPOINTS)
 
 #define MAKEPOINTS(l)  (*((POINTS *)&(l)))
 
@@ -529,17 +459,13 @@ typedef struct
 
 typedef struct tagRECT
 {
-    INT32  left;
-    INT32  top;
-    INT32  right;
-    INT32  bottom;
-} RECT32, *PRECT32, *LPRECT32;
-typedef const RECT32 *LPCRECT32;
+    INT  left;
+    INT  top;
+    INT  right;
+    INT  bottom;
+} RECT, *PRECT, *LPRECT;
+typedef const RECT *LPCRECT32;
 
-DECL_WINELIB_TYPE(RECT)
-DECL_WINELIB_TYPE(PRECT)
-DECL_WINELIB_TYPE(LPRECT)
-DECL_WINELIB_TYPE(LPCRECT)
 
 typedef struct tagRECTL
 {
@@ -552,8 +478,8 @@ typedef struct tagRECTL
 typedef const RECTL *LPCRECTL;
 
 #define CONV_RECT16TO32(r16,r32) \
-    ((r32)->left  = (INT32)(r16)->left,  (r32)->top    = (INT32)(r16)->top, \
-     (r32)->right = (INT32)(r16)->right, (r32)->bottom = (INT32)(r16)->bottom)
+    ((r32)->left  = (INT)(r16)->left,  (r32)->top    = (INT)(r16)->top, \
+     (r32)->right = (INT)(r16)->right, (r32)->bottom = (INT)(r16)->bottom)
 #define CONV_RECT32TO16(r32,r16) \
     ((r16)->left  = (INT16)(r32)->left,  (r16)->top    = (INT16)(r32)->top, \
      (r16)->right = (INT16)(r32)->right, (r16)->bottom = (INT16)(r32)->bottom)

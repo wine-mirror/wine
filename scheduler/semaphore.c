@@ -22,13 +22,13 @@ typedef struct
 /***********************************************************************
  *           CreateSemaphore32A   (KERNEL32.174)
  */
-HANDLE32 WINAPI CreateSemaphore32A( SECURITY_ATTRIBUTES *sa, LONG initial,
+HANDLE WINAPI CreateSemaphoreA( SECURITY_ATTRIBUTES *sa, LONG initial,
                                     LONG max, LPCSTR name )
 {
     struct create_semaphore_request req;
     struct create_semaphore_reply reply;
     int len = name ? strlen(name) + 1 : 0;
-    HANDLE32 handle;
+    HANDLE handle;
     SEMAPHORE *sem;
 
     /* Check parameters */
@@ -53,7 +53,7 @@ HANDLE32 WINAPI CreateSemaphore32A( SECURITY_ATTRIBUTES *sa, LONG initial,
                                       sa, &handle);
     if (sem) K32OBJ_DecCount( &sem->header );
     SYSTEM_UNLOCK();
-    if (handle == INVALID_HANDLE_VALUE32) handle = 0;
+    if (handle == INVALID_HANDLE_VALUE) handle = 0;
     return handle;
 }
 
@@ -61,11 +61,11 @@ HANDLE32 WINAPI CreateSemaphore32A( SECURITY_ATTRIBUTES *sa, LONG initial,
 /***********************************************************************
  *           CreateSemaphore32W   (KERNEL32.175)
  */
-HANDLE32 WINAPI CreateSemaphore32W( SECURITY_ATTRIBUTES *sa, LONG initial,
+HANDLE WINAPI CreateSemaphoreW( SECURITY_ATTRIBUTES *sa, LONG initial,
                                     LONG max, LPCWSTR name )
 {
     LPSTR nameA = HEAP_strdupWtoA( GetProcessHeap(), 0, name );
-    HANDLE32 ret = CreateSemaphore32A( sa, initial, max, nameA );
+    HANDLE ret = CreateSemaphoreA( sa, initial, max, nameA );
     if (nameA) HeapFree( GetProcessHeap(), 0, nameA );
     return ret;
 }
@@ -74,9 +74,9 @@ HANDLE32 WINAPI CreateSemaphore32W( SECURITY_ATTRIBUTES *sa, LONG initial,
 /***********************************************************************
  *           OpenSemaphore32A   (KERNEL32.545)
  */
-HANDLE32 WINAPI OpenSemaphore32A( DWORD access, BOOL32 inherit, LPCSTR name )
+HANDLE WINAPI OpenSemaphoreA( DWORD access, BOOL inherit, LPCSTR name )
 {
-    HANDLE32 handle = 0;
+    HANDLE handle = 0;
     K32OBJ *obj;
     struct open_named_obj_request req;
     struct open_named_obj_reply reply;
@@ -94,7 +94,7 @@ HANDLE32 WINAPI OpenSemaphore32A( DWORD access, BOOL32 inherit, LPCSTR name )
         {
             handle = HANDLE_Alloc( PROCESS_Current(), obj, access, inherit, reply.handle );
             K32OBJ_DecCount( obj );
-            if (handle == INVALID_HANDLE_VALUE32)
+            if (handle == INVALID_HANDLE_VALUE)
                 handle = 0; /* must return 0 on failure, not -1 */
         }
         else CLIENT_CloseHandle( reply.handle );
@@ -107,10 +107,10 @@ HANDLE32 WINAPI OpenSemaphore32A( DWORD access, BOOL32 inherit, LPCSTR name )
 /***********************************************************************
  *           OpenSemaphore32W   (KERNEL32.546)
  */
-HANDLE32 WINAPI OpenSemaphore32W( DWORD access, BOOL32 inherit, LPCWSTR name )
+HANDLE WINAPI OpenSemaphoreW( DWORD access, BOOL inherit, LPCWSTR name )
 {
     LPSTR nameA = HEAP_strdupWtoA( GetProcessHeap(), 0, name );
-    HANDLE32 ret = OpenSemaphore32A( access, inherit, nameA );
+    HANDLE ret = OpenSemaphoreA( access, inherit, nameA );
     if (nameA) HeapFree( GetProcessHeap(), 0, nameA );
     return ret;
 }
@@ -119,7 +119,7 @@ HANDLE32 WINAPI OpenSemaphore32W( DWORD access, BOOL32 inherit, LPCWSTR name )
 /***********************************************************************
  *           ReleaseSemaphore   (KERNEL32.583)
  */
-BOOL32 WINAPI ReleaseSemaphore( HANDLE32 handle, LONG count, LONG *previous )
+BOOL WINAPI ReleaseSemaphore( HANDLE handle, LONG count, LONG *previous )
 {
     struct release_semaphore_request req;
     struct release_semaphore_reply reply;

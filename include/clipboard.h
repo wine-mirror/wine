@@ -4,30 +4,30 @@
 #include "win.h"
 #include "wintypes.h"
 
-typedef struct tagCLIPFORMAT {
+typedef struct tagWINE_CLIPFORMAT {
     WORD	wFormatID;
     WORD	wRefCount;
     WORD	wDataPresent;
     LPSTR	Name;
-    HANDLE32	hData32;
+    HANDLE	hData32;
     DWORD	BufSize;
-    struct tagCLIPFORMAT *PrevFormat;
-    struct tagCLIPFORMAT *NextFormat;
+    struct tagWINE_CLIPFORMAT *PrevFormat;
+    struct tagWINE_CLIPFORMAT *NextFormat;
     HANDLE16    hData16;
-} CLIPFORMAT, *LPCLIPFORMAT;
+} WINE_CLIPFORMAT, *LPWINE_CLIPFORMAT;
 
 typedef struct _CLIPBOARD_DRIVER
 {
     void (*pEmptyClipboard)(void);
-    void (*pSetClipboardData)(UINT32);
-    BOOL32 (*pRequestSelection)(void);
-    void (*pResetOwner)(WND *, BOOL32);
+    void (*pSetClipboardData)(UINT);
+    BOOL (*pRequestSelection)(void);
+    void (*pResetOwner)(WND *, BOOL);
 } CLIPBOARD_DRIVER;
 
 CLIPBOARD_DRIVER *CLIPBOARD_GetDriver(void);
 
 extern void CLIPBOARD_ResetLock(HQUEUE16 hqRef, HQUEUE16 hqNew);
-extern void CLIPBOARD_DeleteRecord(LPCLIPFORMAT lpFormat, BOOL32 bChange);
-extern BOOL32 CLIPBOARD_IsPresent(WORD wFormat);
+extern void CLIPBOARD_DeleteRecord(LPWINE_CLIPFORMAT lpFormat, BOOL bChange);
+extern BOOL CLIPBOARD_IsPresent(WORD wFormat);
 
 #endif /* __WINE_CLIPBOARD_H */

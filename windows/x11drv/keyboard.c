@@ -96,7 +96,7 @@ static WORD EVENT_event_to_vkey( XKeyEvent *e)
     return keyc2vkey[e->keycode];
 }
 
-static BOOL32 NumState=FALSE, CapsState=FALSE;
+static BOOL NumState=FALSE, CapsState=FALSE;
 
 /**********************************************************************
  *		KEYBOARD_GenerateMsg
@@ -106,10 +106,10 @@ static BOOL32 NumState=FALSE, CapsState=FALSE;
  * Convention : called with vkey only VK_NUMLOCK or VK_CAPITAL
  *
  */
-void KEYBOARD_GenerateMsg( WORD vkey, int Evtype, INT32 event_x, INT32 event_y,
+void KEYBOARD_GenerateMsg( WORD vkey, int Evtype, INT event_x, INT event_y,
                            DWORD event_time )
 {
-  BOOL32 * State = (vkey==VK_NUMLOCK? &NumState : &CapsState);
+  BOOL * State = (vkey==VK_NUMLOCK? &NumState : &CapsState);
 
   if (*State) {
     /* The INTERMEDIARY state means : just after a 'press' event, if a 'release' event comes,
@@ -211,12 +211,12 @@ void X11DRV_KEYBOARD_HandleEvent( WND *pWnd, XKeyEvent *event )
     KeySym keysym;
     WORD vkey = 0, bScan;
     DWORD dwFlags;
-    static BOOL32 force_extended = FALSE; /* hack for AltGr translation */
+    static BOOL force_extended = FALSE; /* hack for AltGr translation */
     
     int ascii_chars;
 
-    INT32 event_x = (pWnd? pWnd->rectWindow.left : 0) + event->x;
-    INT32 event_y = (pWnd? pWnd->rectWindow.top  : 0) + event->y;
+    INT event_x = (pWnd? pWnd->rectWindow.left : 0) + event->x;
+    INT event_y = (pWnd? pWnd->rectWindow.top  : 0) + event->y;
     DWORD event_time = event->time - MSG_WineStartTicks;
 
     /* this allows support for dead keys */
@@ -618,7 +618,7 @@ INT16 X11DRV_KEYBOARD_GetKeyNameText(LONG lParam, LPSTR lpBuffer, INT16 nSize)
   
   for (i = 0 ; i != KeyTableSize ; i++) 
     if (KeyTable[i].scancode == lParam)  {
-      lstrcpyn32A( lpBuffer, KeyTable[i].name, nSize );
+      lstrcpynA( lpBuffer, KeyTable[i].name, nSize );
       return strlen(lpBuffer);
     }
 #endif
@@ -652,7 +652,7 @@ INT16 X11DRV_KEYBOARD_ToAscii(
     XKeyEvent e;
     KeySym keysym;
     static XComposeStatus cs;
-    INT32 ret;
+    INT ret;
     int keyc;
 
     if (scanCode==0) {
