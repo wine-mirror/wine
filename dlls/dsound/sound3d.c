@@ -821,6 +821,13 @@ static HRESULT WINAPI IDirectSound3DListenerImpl_QueryInterface(
 
 	TRACE("(%p,%s,%p)\n",This,debugstr_guid(riid),ppobj);
 
+	if (ppobj == NULL) {
+		WARN("invalid parameter\n");
+		return E_INVALIDARG;
+	}
+
+	*ppobj = NULL;  /* assume failure */
+
 	if ( IsEqualGUID(riid, &IID_IUnknown) ||
 	     IsEqualGUID(riid, &IID_IDirectSound3DListener ) ) {
                 IDirectSound3DListener_AddRef((LPDIRECTSOUND3DLISTENER)This);
@@ -835,7 +842,6 @@ static HRESULT WINAPI IDirectSound3DListenerImpl_QueryInterface(
 	}
 
         FIXME( "Unknown IID %s\n", debugstr_guid( riid ) );
-	*ppobj = NULL;
 	return E_NOINTERFACE;
 }
 

@@ -909,6 +909,11 @@ static HRESULT WINAPI PrimaryBufferImpl_QueryInterface(
 	ICOM_THIS(PrimaryBufferImpl,iface);
 	TRACE("(%p,%s,%p)\n",This,debugstr_guid(riid),ppobj);
 
+	if (ppobj == NULL) {
+		WARN("invalid parameter\n");
+		return E_INVALIDARG;
+	}
+
 	*ppobj = NULL;	/* assume failure */
 
 	if ( IsEqualGUID(riid, &IID_IUnknown) || 

@@ -58,6 +58,11 @@ static HRESULT WINAPI IDirectSoundNotifyImpl_QueryInterface(
 	ICOM_THIS(IDirectSoundNotifyImpl,iface);
 	TRACE("(%p,%s,%p)\n",This,debugstr_guid(riid),ppobj);
 
+	if (ppobj == NULL) {
+		WARN("invalid parameter\n");
+		return E_INVALIDARG;
+	}
+
 	*ppobj = NULL;	/* assume error */
 
 	if ( IsEqualGUID(riid, &IID_IUnknown) || 
@@ -904,6 +909,11 @@ static HRESULT WINAPI IDirectSoundBufferImpl_QueryInterface(
 	ICOM_THIS(IDirectSoundBufferImpl,iface);
 
 	TRACE("(%p,%s,%p)\n",This,debugstr_guid(riid),ppobj);
+
+	if (ppobj == NULL) {
+		WARN("invalid parameter\n");
+		return E_INVALIDARG;
+	}
 
 	*ppobj = NULL;	/* assume failure */
 

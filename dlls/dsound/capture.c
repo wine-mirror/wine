@@ -353,6 +353,13 @@ IDirectSoundCaptureImpl_QueryInterface(
     ICOM_THIS(IDirectSoundCaptureImpl,iface);
     TRACE( "(%p,%s,%p)\n", This, debugstr_guid(riid), ppobj );
 
+    if (ppobj == NULL) {
+	WARN("invalid parameter\n");
+	return E_INVALIDARG;
+    }
+
+    *ppobj = NULL;
+
     if (This->driver) {
 	HRESULT	hres; 
         hres = IDsCaptureDriver_QueryInterface(This->driver, riid, ppobj);
@@ -766,6 +773,13 @@ IDirectSoundCaptureBufferImpl_QueryInterface(
 {
     ICOM_THIS(IDirectSoundCaptureBufferImpl,iface);
     TRACE( "(%p,%s,%p)\n", This, debugstr_guid(riid), ppobj );
+
+    if (ppobj == NULL) {
+	WARN("invalid parameter\n");
+	return E_INVALIDARG;
+    }
+
+    *ppobj = NULL;
 
     if ( IsEqualGUID( &IID_IDirectSoundNotify, riid ) ||
          IsEqualGUID( &IID_IDirectSoundNotify8, riid ) ) {
@@ -1422,6 +1436,79 @@ static ICOM_VTABLE(IDirectSoundCaptureBuffer8) dscbvt =
     IDirectSoundCaptureBufferImpl_GetFXStatus
 };
 
+/*******************************************************************************
+ * DirectSoundCapture ClassFactory
+ */
+
+static HRESULT WINAPI
+DSCCF_QueryInterface(LPCLASSFACTORY iface,REFIID riid,LPVOID *ppobj) 
+{
+    ICOM_THIS(IClassFactoryImpl,iface);
+
+    FIXME("(%p)->(%s,%p),stub!\n",This,debugstr_guid(riid),ppobj);
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI
+DSCCF_AddRef(LPCLASSFACTORY iface)
+{
+    ICOM_THIS(IClassFactoryImpl,iface);
+    TRACE("(%p) ref was %ld\n", This, This->ref);
+    return ++(This->ref);
+}
+
+static ULONG WINAPI 
+DSCCF_Release(LPCLASSFACTORY iface)
+{
+    ICOM_THIS(IClassFactoryImpl,iface);
+    /* static class, won't be  freed */
+    TRACE("(%p) ref was %ld\n", This, This->ref);
+    return --(This->ref);
+}
+
+static HRESULT WINAPI 
+DSCCF_CreateInstance(
+	LPCLASSFACTORY iface,LPUNKNOWN pOuter,REFIID riid,LPVOID *ppobj )
+{
+    ICOM_THIS(IClassFactoryImpl,iface);
+    TRACE("(%p)->(%p,%s,%p)\n",This,pOuter,debugstr_guid(riid),ppobj);
+
+    if (ppobj == NULL) {
+	WARN("invalid parameter\n");
+	return E_INVALIDARG;
+    }
+
+    *ppobj = NULL;
+
+    if ( IsEqualGUID( &IID_IDirectSoundCapture, riid ) ||
+	 IsEqualGUID( &IID_IDirectSoundCapture8, riid ) ) {
+	return DirectSoundCaptureCreate8(0,(LPDIRECTSOUNDCAPTURE8*)ppobj,pOuter);
+    }
+
+    WARN("(%p,%p,%s,%p) Interface not found!\n",This,pOuter,debugstr_guid(riid),ppobj);	
+    return E_NOINTERFACE;
+}
+
+static HRESULT WINAPI 
+DSCCF_LockServer(LPCLASSFACTORY iface,BOOL dolock)
+{
+    ICOM_THIS(IClassFactoryImpl,iface);
+    FIXME("(%p)->(%d),stub!\n",This,dolock);
+    return S_OK;
+}
+
+static ICOM_VTABLE(IClassFactory) DSCCF_Vtbl =
+{
+    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
+    DSCCF_QueryInterface,
+    DSCCF_AddRef,
+    DSCCF_Release,
+    DSCCF_CreateInstance,
+    DSCCF_LockServer
+};
+
+IClassFactoryImpl DSOUND_CAPTURE_CF = { &DSCCF_Vtbl, 1 };
+
 /***************************************************************************
  * DirectSoundFullDuplexCreate8 [DSOUND.10]
  *
@@ -1503,7 +1590,13 @@ IDirectSoundFullDuplexImpl_QueryInterface(
     ICOM_THIS(IDirectSoundFullDuplexImpl,iface);
     TRACE( "(%p,%s,%p)\n", This, debugstr_guid(riid), ppobj );
 
-    return E_FAIL;
+    if (ppobj == NULL) {
+	WARN("invalid parameter\n");
+	return E_INVALIDARG;
+    }
+
+    *ppobj = NULL;
+    return E_NOINTERFACE;
 }
 
 static ULONG WINAPI
@@ -1578,3 +1671,78 @@ static ICOM_VTABLE(IDirectSoundFullDuplex) dsfdvt =
     /* IDirectSoundFullDuplex methods */
     IDirectSoundFullDuplexImpl_Initialize
 };
+
+/*******************************************************************************
+ * DirectSoundFullDuplex ClassFactory
+ */
+
+static HRESULT WINAPI
+DSFDCF_QueryInterface(LPCLASSFACTORY iface,REFIID riid,LPVOID *ppobj)
+{
+    ICOM_THIS(IClassFactoryImpl,iface);
+
+    FIXME("(%p)->(%s,%p),stub!\n",This,debugstr_guid(riid),ppobj);
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI
+DSFDCF_AddRef(LPCLASSFACTORY iface)
+{
+    ICOM_THIS(IClassFactoryImpl,iface);
+    TRACE("(%p) ref was %ld\n", This, This->ref);
+    return ++(This->ref);
+}
+
+static ULONG WINAPI 
+DSFDCF_Release(LPCLASSFACTORY iface) 
+{
+    ICOM_THIS(IClassFactoryImpl,iface);
+    /* static class, won't be  freed */
+    TRACE("(%p) ref was %ld\n", This, This->ref);
+    return --(This->ref);
+}
+
+static HRESULT WINAPI 
+DSFDCF_CreateInstance(
+    LPCLASSFACTORY iface,LPUNKNOWN pOuter,REFIID riid,LPVOID *ppobj )
+{
+    ICOM_THIS(IClassFactoryImpl,iface);
+
+    TRACE("(%p)->(%p,%s,%p)\n",This,pOuter,debugstr_guid(riid),ppobj);
+
+    if (ppobj == NULL) {
+	WARN("invalid parameter\n");
+	return E_INVALIDARG;
+    }
+
+    *ppobj = NULL;
+
+    if ( IsEqualGUID( &IID_IDirectSoundFullDuplex, riid ) ) {
+	/* FIXME: how do we do this one ? */
+	FIXME("not implemented\n");
+	return E_NOINTERFACE;
+    }
+
+    WARN("(%p,%p,%s,%p) Interface not found!\n",This,pOuter,debugstr_guid(riid),ppobj);	
+    return E_NOINTERFACE;
+}
+
+static HRESULT WINAPI 
+DSFDCF_LockServer(LPCLASSFACTORY iface,BOOL dolock)
+{
+    ICOM_THIS(IClassFactoryImpl,iface);
+    FIXME("(%p)->(%d),stub!\n",This,dolock);
+    return S_OK;
+}
+
+static ICOM_VTABLE(IClassFactory) DSFDCF_Vtbl =
+{
+    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
+    DSFDCF_QueryInterface,
+    DSFDCF_AddRef,
+    DSFDCF_Release,
+    DSFDCF_CreateInstance,
+    DSFDCF_LockServer
+};
+
+IClassFactoryImpl DSOUND_FULLDUPLEX_CF = { &DSFDCF_Vtbl, 1 };

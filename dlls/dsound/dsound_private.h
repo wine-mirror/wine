@@ -54,6 +54,7 @@ typedef struct IDirectSound3DListenerImpl IDirectSound3DListenerImpl;
 typedef struct IDirectSound3DBufferImpl IDirectSound3DBufferImpl;
 typedef struct IKsPropertySetImpl IKsPropertySetImpl;
 typedef struct PrimaryBufferImpl PrimaryBufferImpl;
+typedef struct IClassFactoryImpl IClassFactoryImpl;
 
 /*****************************************************************************
  * IDirectSound implementation structure
@@ -286,6 +287,19 @@ struct IDirectSound3DBufferImpl
 HRESULT WINAPI IDirectSound3DBufferImpl_Create(
 	IDirectSoundBufferImpl *This,
 	IDirectSound3DBufferImpl **pds3db);
+
+/*******************************************************************************
+ * DirectSound ClassFactory implementation structure
+ */
+struct IClassFactoryImpl
+{
+    /* IUnknown fields */
+    ICOM_VFIELD(IClassFactory);
+    DWORD                       ref;
+};
+
+extern IClassFactoryImpl DSOUND_CAPTURE_CF;
+extern IClassFactoryImpl DSOUND_FULLDUPLEX_CF;
 
 void DSOUND_RecalcVolPan(PDSVOLUMEPAN volpan);
 void DSOUND_RecalcFormat(IDirectSoundBufferImpl *dsb);
