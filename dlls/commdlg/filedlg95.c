@@ -846,6 +846,10 @@ HRESULT WINAPI FileOpenDlgProc95(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPa
       {
          FileOpenDlgInfos * fodInfos = (FileOpenDlgInfos *)lParam;
 
+         /* Hide caption since some program may leave it */
+         DWORD Style = GetWindowLongA(hwnd, GWL_STYLE);
+         if (Style & WS_CAPTION) SetWindowLongA(hwnd, GWL_STYLE, Style & (~WS_CAPTION));
+
 	 /* Adds the FileOpenDlgInfos in the property list of the dialog 
             so it will be easily accessible through a GetPropA(...) */
       	 SetPropA(hwnd, FileOpenDlgInfosStr, (HANDLE) fodInfos);
@@ -1113,13 +1117,12 @@ static LRESULT FILEDLG95_OnWMCommand(HWND hwnd, WPARAM wParam, LPARAM lParam)
   {
     /* OK button */
   case IDOK:
-      if(FILEDLG95_OnOpen(hwnd))
-        SendCustomDlgNotificationMessage(hwnd,CDN_FILEOK);
+    FILEDLG95_OnOpen(hwnd);
     break;
     /* Cancel button */
   case IDCANCEL:
-      FILEDLG95_Clean(hwnd);
-      EndDialog(hwnd, FALSE);
+    FILEDLG95_Clean(hwnd);
+    EndDialog(hwnd, FALSE);
     break;
     /* Filetype combo box */
   case IDC_FILETYPE:
@@ -1572,15 +1575,17 @@ BOOL FILEDLG95_OnOpen(HWND hwnd)
           /* ask the hook if we can close */
           if(IsHooked(fodInfos))
 	  {
-	    /* FIXME we are sending ASCII-structures. Does not work with NT */
-	    /* first old style */
 	    TRACE("---\n");
+            /* First send CDN_FILEOK as MSDN doc says */
+            SendCustomDlgNotificationMessage(hwnd,CDN_FILEOK);
+
+	    /* FIXME we are sending ASCII-structures. Does not work with NT */
             CallWindowProcA((WNDPROC)fodInfos->ofnInfos->lpfnHook,
                             fodInfos->DlgInfos.hwndCustomDlg,
                             fodInfos->HookMsg.fileokstring, 0, (LPARAM)fodInfos->ofnInfos);
-	    if (GetWindowLongA(hwnd, DWL_MSGRESULT))
+            if (GetWindowLongA(fodInfos->DlgInfos.hwndCustomDlg, DWL_MSGRESULT))
 	    {
-	      TRACE("cancled\n");
+	      TRACE("canceled\n");
 	      ret = FALSE;
 	      goto ret;
 	    }
