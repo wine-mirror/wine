@@ -102,7 +102,7 @@ typedef struct tagTREEVIEW_INFO
   UINT          uNumItems;      /* number of valid TREEVIEW_ITEMs */
   INT           cdmode;         /* last custom draw setting */
   UINT          uScrollTime;	/* max. time for scrolling in milliseconds */
-  BOOL		bRedraw;	/* if FALSE we validate but don't redraw in TREEVIEW_Paint() */
+  BOOL          bRedraw;        /* if FALSE we validate but don't redraw in TREEVIEW_Paint() */
 
   UINT          uItemHeight;    /* item height */
   BOOL          bHeightSet;
@@ -1077,7 +1077,7 @@ TREEVIEW_DoSetItemT(TREEVIEW_INFO *infoPtr, TREEVIEW_ITEM *wineItem,
                 len = lstrlenW(tvItem->pszText) + 1;
             else
                 len = MultiByteToWideChar(CP_ACP, 0, (LPSTR)tvItem->pszText, -1, NULL, 0);
-            
+
             newText  = ReAlloc(wineItem->pszText, len * sizeof(WCHAR));
 
             if (newText == NULL) return FALSE;
@@ -1642,6 +1642,35 @@ TREEVIEW_GetImageList(TREEVIEW_INFO *infoPtr, WPARAM wParam)
     }
 }
 
+#define TVHEIGHT_MIN         16
+#define TVHEIGHT_FONT_ADJUST 3 /* 2 for focus border + 1 for margin some apps assume */
+
+/* Compute the natural height for items. */
+static UINT
+TREEVIEW_NaturalHeight(TREEVIEW_INFO *infoPtr)
+{
+    TEXTMETRICW tm;
+    HDC hdc = GetDC(0);
+    HFONT hOldFont = SelectObject(hdc, infoPtr->hFont);
+    UINT height;
+
+    /* Height is the maximum of:
+     * 16 (a hack because our fonts are tiny), and
+     * The text height + border & margin, and
+     * The size of the normal image list
+     */
+    GetTextMetricsW(hdc, &tm);
+    SelectObject(hdc, hOldFont);
+    ReleaseDC(0, hdc);
+
+    height = TVHEIGHT_MIN;
+    if (height < tm.tmHeight + tm.tmExternalLeading + TVHEIGHT_FONT_ADJUST)
+        height = tm.tmHeight + tm.tmExternalLeading + TVHEIGHT_FONT_ADJUST;
+    if (height < infoPtr->normalImageHeight)
+        height = infoPtr->normalImageHeight;
+    return height;
+}
+
 static LRESULT
 TREEVIEW_SetImageList(TREEVIEW_INFO *infoPtr, WPARAM wParam, HIMAGELIST himlNew)
 {
@@ -1688,6 +1717,25 @@ TREEVIEW_SetImageList(TREEVIEW_INFO *infoPtr, WPARAM wParam, HIMAGELIST himlNew)
     if (oldWidth != infoPtr->normalImageWidth ||
         oldHeight != infoPtr->normalImageHeight)
     {
+        BOOL bRecalcVisable = FALSE;
+
+        if (oldHeight != infoPtr->normalImageHeight &&
+            !infoPtr->bHeightSet)
+        {
+            infoPtr->uItemHeight = TREEVIEW_NaturalHeight(infoPtr);
+            bRecalcVisable = TRUE;
+        }
+
+        if (infoPtr->normalImageWidth > MINIMUM_INDENT &&
+            infoPtr->normalImageWidth != infoPtr->uIndent)
+        {
+            infoPtr->uIndent = infoPtr->normalImageWidth;
+            bRecalcVisable = TRUE;
+        }
+
+        if (bRecalcVisable)
+            TREEVIEW_RecalculateVisibleOrder(infoPtr, NULL);
+
        TREEVIEW_UpdateSubTree(infoPtr, infoPtr->root);
        TREEVIEW_UpdateScrollBars(infoPtr);
     }
@@ -1695,24 +1743,6 @@ TREEVIEW_SetImageList(TREEVIEW_INFO *infoPtr, WPARAM wParam, HIMAGELIST himlNew)
     TREEVIEW_Invalidate(infoPtr, NULL);
 
     return (LRESULT)himlOld;
-}
-
-/* Compute the natural height (based on the font size) for items. */
-static UINT
-TREEVIEW_NaturalHeight(TREEVIEW_INFO *infoPtr)
-{
-    TEXTMETRICW tm;
-    HDC hdc = GetDC(0);
-    HFONT hOldFont = SelectObject(hdc, infoPtr->hFont);
-
-    GetTextMetricsW(hdc, &tm);
-
-    SelectObject(hdc, hOldFont);
-    ReleaseDC(0, hdc);
-
-    /* The 16 is a hack because our fonts are tiny. */
-    /* add 2 for the focus border and 1 more for margin some apps assume */
-    return max(16, tm.tmHeight + tm.tmExternalLeading + 3);
 }
 
 static LRESULT
@@ -2044,7 +2074,7 @@ TREEVIEW_SetItemT(TREEVIEW_INFO *infoPtr, LPTVITEMEXW tvItem, BOOL isW)
 
     if (!TREEVIEW_ValidItem(infoPtr, wineItem))
 	return FALSE;
-    
+
     /* store the orignal item values */
     originalItem = *wineItem;
 
@@ -2289,6 +2319,18 @@ TREEVIEW_DrawItemLines(TREEVIEW_INFO *infoPtr, HDC hdc, TREEVIEW_ITEM *item)
 	    HBRUSH hbr    = CreateSolidBrush(infoPtr->clrBk);
 	    HBRUSH hbrOld = SelectObject(hdc, hbr);
 
+           /* FIXME: Native actually draws:
+            *
+            *    xxx
+            *    X x
+            *  xxx xxx      xxxxxxx
+            *  x     x  or  x     x
+            *  xxx xxx      xxxxxxx
+            *    x x
+            *    xxx
+            *
+            * This looks a lot better when the icon size is increased.
+            */
            Rectangle(hdc, centerx - rectsize - 1, centery - rectsize - 1,
                      centerx + rectsize + 2, centery + rectsize + 2);
 
@@ -4319,7 +4361,7 @@ TREEVIEW_EnsureVisible(TREEVIEW_INFO *infoPtr, HTREEITEM item, BOOL bHScroll)
 
     viscount = TREEVIEW_GetVisibleCount(infoPtr);
 
-    TRACE("%p (%s) %ld - %ld viscount(%d)\n", item, TREEVIEW_ItemName(item), item->visibleOrder, 
+    TRACE("%p (%s) %ld - %ld viscount(%d)\n", item, TREEVIEW_ItemName(item), item->visibleOrder,
         hasFirstVisible ? infoPtr->firstVisible->visibleOrder : -1, viscount);
 
     if (hasFirstVisible)
@@ -4667,7 +4709,7 @@ TREEVIEW_Create(HWND hwnd, const CREATESTRUCTW *lpcs)
     infoPtr->treeWidth = 0;
     infoPtr->treeHeight = 0;
 
-    infoPtr->uIndent = 19;
+    infoPtr->uIndent = MINIMUM_INDENT;
     infoPtr->selectedItem = 0;
     infoPtr->focusedItem = 0;
     /* hotItem? */
@@ -4985,21 +5027,21 @@ TREEVIEW_Notify(TREEVIEW_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
 static INT TREEVIEW_NotifyFormat (TREEVIEW_INFO *infoPtr, HWND hwndFrom, UINT nCommand)
 {
     INT format;
-    
+
     TRACE("(hwndFrom=%p, nCommand=%d)\n", hwndFrom, nCommand);
 
     if (nCommand != NF_REQUERY) return 0;
-    
+
     format = SendMessageW(hwndFrom, WM_NOTIFYFORMAT, (WPARAM)infoPtr->hwnd, NF_QUERY);
     TRACE("format=%d\n", format);
 
     if (format != NFR_ANSI && format != NFR_UNICODE) return 0;
-    
+
     infoPtr->bNtfUnicode = (format == NFR_UNICODE);
-    
+
     return format;
 }
-    
+
 static LRESULT
 TREEVIEW_Size(TREEVIEW_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
 {
