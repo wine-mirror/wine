@@ -434,39 +434,25 @@ INT WINAPI GetClipRgn( HDC hdc, HRGN hRgn )
  */
 HRGN16 WINAPI SaveVisRgn16( HDC16 hdc16 )
 {
-    HRGN copy;
-    GDIOBJHDR *obj, *copyObj;
+    struct saved_visrgn *saved;
     HDC hdc = HDC_32( hdc16 );
     DC *dc = DC_GetDCUpdate( hdc );
 
     if (!dc) return 0;
     TRACE("%p\n", hdc );
 
-    if (!(obj = GDI_GetObjPtr( dc->hVisRgn, REGION_MAGIC )))
-    {
-        GDI_ReleaseObj( hdc );
-	return 0;
-    }
-    if (!(copy = CreateRectRgn( 0, 0, 0, 0 )))
-    {
-        GDI_ReleaseObj( dc->hVisRgn );
-        GDI_ReleaseObj( hdc );
-        return 0;
-    }
-    CombineRgn( copy, dc->hVisRgn, 0, RGN_COPY );
-    if (!(copyObj = GDI_GetObjPtr( copy, REGION_MAGIC )))
-    {
-        DeleteObject( copy );
-        GDI_ReleaseObj( dc->hVisRgn );
-        GDI_ReleaseObj( hdc );
-	return 0;
-    }
-    copyObj->hNext = obj->hNext;
-    obj->hNext = HRGN_16(copy);
-    GDI_ReleaseObj( copy );
-    GDI_ReleaseObj( dc->hVisRgn );
+    if (!(saved = HeapAlloc( GetProcessHeap(), 0, sizeof(*saved) ))) goto error;
+    if (!(saved->hrgn = CreateRectRgn( 0, 0, 0, 0 ))) goto error;
+    CombineRgn( saved->hrgn, dc->hVisRgn, 0, RGN_COPY );
+    saved->next = dc->saved_visrgn;
+    dc->saved_visrgn = saved;
     GDI_ReleaseObj( hdc );
-    return HRGN_16(copy);
+    return HRGN_16(saved->hrgn);
+
+error:
+    GDI_ReleaseObj( hdc );
+    HeapFree( GetProcessHeap(), 0, saved );
+    return 0;
 }
 
 
@@ -475,8 +461,7 @@ HRGN16 WINAPI SaveVisRgn16( HDC16 hdc16 )
  */
 INT16 WINAPI RestoreVisRgn16( HDC16 hdc16 )
 {
-    HRGN saved;
-    GDIOBJHDR *obj, *savedObj;
+    struct saved_visrgn *saved;
     HDC hdc = HDC_32( hdc16 );
     DC *dc = DC_GetDCPtr( hdc );
     INT16 ret = ERROR;
@@ -485,19 +470,14 @@ INT16 WINAPI RestoreVisRgn16( HDC16 hdc16 )
 
     TRACE("%p\n", hdc );
 
-    if (!(obj = GDI_GetObjPtr( dc->hVisRgn, REGION_MAGIC ))) goto done;
-    saved = HRGN_32(obj->hNext);
+    if (!(saved = dc->saved_visrgn)) goto done;
 
-    if ((savedObj = GDI_GetObjPtr( saved, REGION_MAGIC )))
-    {
-        ret = CombineRgn( dc->hVisRgn, saved, 0, RGN_COPY );
-        obj->hNext = savedObj->hNext;
-        GDI_ReleaseObj( saved );
-        DeleteObject( saved );
-        dc->flags &= ~DC_DIRTY;
-        CLIPPING_UpdateGCRegion( dc );
-    }
-    GDI_ReleaseObj( dc->hVisRgn );
+    ret = CombineRgn( dc->hVisRgn, saved->hrgn, 0, RGN_COPY );
+    dc->saved_visrgn = saved->next;
+    DeleteObject( saved->hrgn );
+    HeapFree( GetProcessHeap(), 0, saved );
+    dc->flags &= ~DC_DIRTY;
+    CLIPPING_UpdateGCRegion( dc );
  done:
     GDI_ReleaseObj( hdc );
     return ret;

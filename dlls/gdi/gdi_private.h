@@ -196,6 +196,12 @@ typedef struct tagGdiPath
 
 typedef struct tagGdiFont *GdiFont;
 
+struct saved_visrgn
+{
+    struct saved_visrgn *next;
+    HRGN                 hrgn;
+};
+
 typedef struct tagDC
 {
     GDIOBJHDR    header;
@@ -259,6 +265,8 @@ typedef struct tagDC
     XFORM         xformVport2World;  /* Inverse of the above transformation */
     BOOL          vport2WorldValid;  /* Is xformVport2World valid? */
     RECT          BoundsRect;        /* Current bounding rect */
+
+    struct saved_visrgn *saved_visrgn;
 } DC;
 
   /* DC flags */

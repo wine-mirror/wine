@@ -121,6 +121,7 @@ DC *DC_AllocDC( const DC_FUNCTIONS *funcs, WORD magic )
     dc->BoundsRect.top      = 0;
     dc->BoundsRect.right    = 0;
     dc->BoundsRect.bottom   = 0;
+    dc->saved_visrgn        = NULL;
     PATH_InitGdiPath(&dc->path);
     return dc;
 }
@@ -340,6 +341,7 @@ HDC WINAPI GetDCState( HDC hdc )
     newdc->pAbortProc = NULL;
     newdc->hookThunk  = NULL;
     newdc->hookProc   = 0;
+    newdc->saved_visrgn = NULL;
 
     /* Get/SetDCState() don't change hVisRgn field ("Undoc. Windows" p.559). */
 
@@ -788,6 +790,13 @@ BOOL WINAPI DeleteDC( HDC hdc )
         dc->physDev = NULL;
     }
 
+    while (dc->saved_visrgn)
+    {
+        struct saved_visrgn *next = dc->saved_visrgn->next;
+        DeleteObject( dc->saved_visrgn->hrgn );
+        HeapFree( GetProcessHeap(), 0, dc->saved_visrgn );
+        dc->saved_visrgn = next;
+    }
     if (dc->hClipRgn) DeleteObject( dc->hClipRgn );
     if (dc->hVisRgn) DeleteObject( dc->hVisRgn );
     PATH_DestroyGdiPath(&dc->path);
