@@ -2480,20 +2480,29 @@ static SLTG_TypeInfoTail *SLTG_ProcessInterface(char *pBlk, ITypeInfoImpl *pTI,
 
 	for(param = 0; param < (*ppFuncDesc)->funcdesc.cParams; param++) {
 	    char *paramName = pNameTable + *pArg;
-	    /* right, if the arg type follows then paramName points to the 2nd
-	       letter of the name (or there is no name), else if the next
-	       WORD is an offset to the arg type then paramName points to the
-	       first letter. So let's take one char off paramName and if we're
-	       pointing at an alpha-numeric char.  Got that? */
+	    BOOL HaveOffs;
+	    /* If arg type follows then paramName points to the 2nd
+	       letter of the name, else the next WORD is an offset to
+	       the arg type and paramName points to the first letter.
+	       So let's take one char off paramName and see if we're
+	       pointing at an alpha-numeric char.  However if *pArg is
+	       0xffff or 0xfffe then the param has no name, the former
+	       meaning that the next WORD is the type, the latter
+	       meaning the the next WORD is an offset to the type. */
 
-	    if(*pArg == 0xffff) /* If we don't have a name the type seems to
-				   always follow.  FIXME is this correct? */
-	      paramName = NULL;
+	    HaveOffs = FALSE;
+	    if(*pArg == 0xffff)
+	        paramName = NULL;
+	    else if(*pArg == 0xfffe) {
+	        paramName = NULL;
+		HaveOffs = TRUE;
+	    }
+	    else if(!isalnum(*(paramName-1)))
+	        HaveOffs = TRUE;
 
 	    pArg++;
 
-	    if(paramName && !isalnum(*(paramName-1))) { /* the next word is an
-							   offset to type */
+	    if(HaveOffs) { /* the next word is an offset to type */
 	        pType = (WORD*)(pFirstItem + *pArg);
 		SLTG_DoType(pType, pFirstItem,
 			    &(*ppFuncDesc)->funcdesc.lprgelemdescParam[param]);
