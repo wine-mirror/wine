@@ -155,6 +155,8 @@ void MemFree(void *mem);
 BOOL WINAPI GetOpenFileName95(FileOpenDlgInfos *fodInfos);
 BOOL WINAPI GetSaveFileName95(FileOpenDlgInfos *fodInfos);
 HRESULT WINAPI FileOpenDlgProc95(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
+HRESULT SendCustomDlgNotificationMessage(HWND hwndParentDlg, UINT uCode);
+HRESULT FILEDLG95_HandleCustomDialogMessages(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
 /***********************************************************************
  *      GetOpenFileName95
@@ -338,6 +340,7 @@ BOOL  WINAPI GetFileDialog95A(LPOPENFILENAMEA ofn,UINT iDlgType)
 
   /* Initialise the dialog property */
   fodInfos->DlgInfos.dwDlgProp = 0;
+  fodInfos->DlgInfos.hwndCustomDlg = (HWND)NULL;
   
   switch(iDlgType)
   {
@@ -743,6 +746,91 @@ return (HWND)NULL;
 }
 
 /***********************************************************************
+*          SendCustomDlgNotificationMessage
+*
+* Send CustomDialogNotification (CDN_FIRST -- CDN_LAST) message to the custom template dialog
+*/
+
+HRESULT SendCustomDlgNotificationMessage(HWND hwndParentDlg, UINT uCode)
+{
+    FileOpenDlgInfos *fodInfos = (FileOpenDlgInfos *) GetPropA(hwndParentDlg,FileOpenDlgInfosStr);
+    if(!fodInfos)
+        return 0;
+    if(fodInfos->DlgInfos.hwndCustomDlg)
+    {
+        OFNOTIFYA ofnNotify;
+        ofnNotify.hdr.hwndFrom=hwndParentDlg;
+        ofnNotify.hdr.idFrom=0;
+        ofnNotify.hdr.code = uCode;
+        ofnNotify.lpOFN = &fodInfos->ofnInfos;
+        return SendMessageA(fodInfos->DlgInfos.hwndCustomDlg,WM_NOTIFY,0,(LPARAM)&ofnNotify);
+    }
+    return TRUE;
+}
+
+/***********************************************************************
+*         FILEDLG95_HandleCustomDialogMessages
+*
+* Handle Custom Dialog Messages (CDM_FIRST -- CDM_LAST) messages
+*/
+HRESULT FILEDLG95_HandleCustomDialogMessages(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+{
+    LPSTR lpstrFileSpec;
+    char lpstrCurrentDir[MAX_PATH]="";
+    FileOpenDlgInfos *fodInfos = (FileOpenDlgInfos *) GetPropA(hwnd,FileOpenDlgInfosStr);
+    if(!fodInfos)
+        return TRUE;
+    switch(uMsg)
+    {
+        case CDM_GETFILEPATH:
+        { 
+            char lpstrPathSpec[MAX_PATH]="";
+            GetDlgItemTextA(hwnd,IDC_FILENAME,(LPSTR)lParam, (int)wParam);
+            lpstrFileSpec = (LPSTR)COMDLG32_PathFindFilenameA((LPSTR)lParam);
+            strcpy(lpstrPathSpec,(LPSTR)lParam);
+            COMDLG32_PathRemoveFileSpecA(lpstrPathSpec);
+            if(!lpstrPathSpec[0])
+                COMDLG32_SHGetPathFromIDListA(fodInfos->ShellInfos.pidlAbsCurrent,
+                lpstrPathSpec);
+            strcat(lpstrPathSpec,"\\");
+            strcat(lpstrPathSpec,(LPSTR)lParam);
+            strcpy((LPSTR)lParam,(LPSTR)lpstrPathSpec);
+        }
+            return TRUE;
+        case CDM_GETFOLDERPATH:
+            if(lParam)
+            {
+                if(fodInfos)
+                {
+                    COMDLG32_SHGetPathFromIDListA(fodInfos->ShellInfos.pidlAbsCurrent,
+                    lpstrCurrentDir);
+                    strncpy((LPSTR)lParam,lpstrCurrentDir,(int)wParam);
+                }
+                else
+                *((LPSTR)lParam)=0;
+            }
+            return TRUE;
+    case CDM_GETSPEC:
+            if(lParam)
+            {
+                GetDlgItemTextA(hwnd,IDC_FILENAME,(LPSTR)lParam, (int)wParam);
+                lpstrFileSpec = (LPSTR)COMDLG32_PathFindFilenameA((LPSTR)lParam);
+                if(lpstrFileSpec)
+                   strcpy((LPSTR)lParam, lpstrFileSpec);
+                else
+                    *((LPSTR)lParam)=0;
+            }
+            return TRUE;
+        case CDM_HIDECONTROL:
+        case CDM_SETCONTROLTEXT:
+        case CDM_SETDEFEXT:
+        FIXME("CDM_HIDECONTROL,CDM_SETCONTROLTEXT,CDM_SETDEFEXT not implemented\n");
+        return TRUE;
+    }
+    return TRUE;
+}
+ 
+/***********************************************************************
  *          FileOpenDlgProc95
  *
  * File open dialog procedure
@@ -753,8 +841,11 @@ HRESULT WINAPI FileOpenDlgProc95(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPa
   switch(uMsg)
   {
     case WM_INITDIALOG :
+      	 ((FileOpenDlgInfos *)lParam)->DlgInfos.hwndCustomDlg = 
      	CreateTemplateDialog((FileOpenDlgInfos *)lParam,hwnd);
-      return FILEDLG95_OnWMInitDialog(hwnd, wParam, lParam);
+      	 FILEDLG95_OnWMInitDialog(hwnd, wParam, lParam);
+         SendCustomDlgNotificationMessage(hwnd,CDN_INITDONE);
+         return 0;
     case WM_COMMAND:
       return FILEDLG95_OnWMCommand(hwnd, wParam, lParam);
     case WM_DRAWITEM:
@@ -775,6 +866,8 @@ HRESULT WINAPI FileOpenDlgProc95(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPa
       RemovePropA(hwnd, FileOpenDlgInfosStr);
 
     default :
+      if(uMsg >= CDM_FIRST && uMsg <= CDM_LAST)
+        return FILEDLG95_HandleCustomDialogMessages(hwnd, uMsg, wParam, lParam);
       return FALSE;
   }
 }
@@ -856,7 +949,8 @@ static LRESULT FILEDLG95_OnWMCommand(HWND hwnd, WPARAM wParam, LPARAM lParam)
   {
     /* OK button */
   case IDOK:
-      FILEDLG95_OnOpen(hwnd);
+      if(FILEDLG95_OnOpen(hwnd))
+        SendCustomDlgNotificationMessage(hwnd,CDN_FILEOK);
     break;
     /* Cancel button */
   case IDCANCEL:
@@ -866,6 +960,7 @@ static LRESULT FILEDLG95_OnWMCommand(HWND hwnd, WPARAM wParam, LPARAM lParam)
     /* Filetype combo box */
   case IDC_FILETYPE:
     FILEDLG95_FILETYPE_OnCommand(hwnd,wNotifyCode);
+    SendCustomDlgNotificationMessage(hwnd,CDN_TYPECHANGE);
     break;
     /* LookIn combo box */
   case IDC_LOOKIN:

@@ -93,6 +93,7 @@ extern BOOL    FILEDLG95_SHELL_FillIncludedItemList(HWND hwnd,
 
 extern int     FILEDLG95_LOOKIN_SelectItem(HWND hwnd,LPITEMIDLIST pidl);
 extern BOOL    FILEDLG95_OnOpen(HWND hwnd);
+extern HRESULT SendCustomDlgNotificationMessage(HWND hwndParentDlg, UINT uCode);
 
 
 /**************************************************************************
@@ -759,6 +760,7 @@ HRESULT IShellBrowserImpl_ICommDlgBrowser_OnSelChange(ICommDlgBrowser *iface, IS
 	fodInfos->DlgInfos.dwDlgProp |= FODPROP_USEVIEW;
 
         COMDLG32_SHFree((LPVOID)pidl);
+        SendCustomDlgNotificationMessage(This->hwndOwner, CDN_SELCHANGE);
         return hRes;
     }
     if(fodInfos->DlgInfos.dwDlgProp & FODPROP_SAVEDLG)

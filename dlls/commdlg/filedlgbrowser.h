@@ -61,6 +61,7 @@ typedef struct
         HWND hwndFileTypeCB;
         HWND hwndLookInCB;
         HWND hwndFileName;
+        HWND hwndCustomDlg;
 	DWORD dwDlgProp;
     } DlgInfos;
 
