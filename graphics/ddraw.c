@@ -1,8 +1,9 @@
-/*		DirectDraw using DGA or Xlib
+/*		DirectDraw using DGA or Xlib(XSHM)
  *
  * Copyright 1997,1998 Marcus Meissner
  */
-/* When DirectVideo mode is enabled you can no longer use 'normal' X 
+/* XF86DGA:
+ * When DirectVideo mode is enabled you can no longer use 'normal' X 
  * applications nor can you switch to a virtual console. Also, enabling
  * only works, if you have switched to the screen where the application
  * is running.
@@ -10,7 +11,6 @@
  * - A terminal connected to the serial port. Can be bought used for cheap.
  *   (This is the method I am using.)
  * - Another machine connected over some kind of network.
- *
  */
 
 #include "config.h"
@@ -49,7 +49,7 @@
 /* define this if you want to play Diablo using XF86DGA. (bug workaround) */
 #undef DIABLO_HACK
 
-/* restore signal handlers overwritten by XF86DGA 
+/* Restore signal handlers overwritten by XF86DGA 
  * this is a define, for it will only work in emulator mode
  */
 #undef RESTORE_SIGNALS
@@ -350,7 +350,7 @@ static HRESULT WINAPI Xlib_IDirectDrawSurface3_Unlock(
 		return DD_OK;
 
   /* Only redraw the screen when unlocking the buffer that is on screen */
-  if ((this->t.xlib.image != NULL) && (this->t.xlib.on_screen))
+  if ((this->t.xlib.image != NULL) && (this->t.xlib.on_screen)) {
 #ifdef HAVE_LIBXXSHM
     if (this->s.ddraw->e.xlib.xshm_active)
       TSXShmPutImage(display,
@@ -370,6 +370,7 @@ static HRESULT WINAPI Xlib_IDirectDrawSurface3_Unlock(
 				0, 0, 0, 0,
 				this->t.xlib.image->width,
 		  this->t.xlib.image->height);
+  }
   
 	if (this->s.palette && this->s.palette->cm)
 		TSXSetWindowColormap(display,this->s.ddraw->e.xlib.drawable,this->s.palette->cm);
@@ -428,7 +429,7 @@ static HRESULT WINAPI Xlib_IDirectDrawSurface3_Flip(
 	}
   
 #ifdef HAVE_LIBXXSHM
-	if (this->s.ddraw->e.xlib.xshm_active)
+	if (this->s.ddraw->e.xlib.xshm_active) {
 	  TSXShmPutImage(display,
 			 this->s.ddraw->e.xlib.drawable,
 			 DefaultGCOfScreen(screen),
@@ -437,7 +438,7 @@ static HRESULT WINAPI Xlib_IDirectDrawSurface3_Flip(
 			 flipto->t.xlib.image->width,
 			 flipto->t.xlib.image->height,
 			 False);
-	else
+	} else
 #endif
 	TSXPutImage(display,
 				this->s.ddraw->e.xlib.drawable,
@@ -460,7 +461,6 @@ static HRESULT WINAPI Xlib_IDirectDrawSurface3_Flip(
 		this->s.surface = flipto->s.surface;
 		flipto->s.surface = surf;
 	}
-
 	return 0;
 }
 
@@ -562,11 +562,15 @@ static HRESULT WINAPI IDirectDrawSurface3_Blt(
 
 	if (rsrc) {
 		memcpy(&xsrc,rsrc,sizeof(xsrc));
-	} else if (src) {
+	} else {
+		if (src) {
 		xsrc.top	= 0;
 		xsrc.bottom	= src->s.height;
 		xsrc.left	= 0;
 		xsrc.right	= src->s.width;
+		} else {
+		    memset(&xsrc,0,sizeof(xsrc));
+		}
 	}
 
 	dwFlags &= ~(DDBLT_WAIT|DDBLT_ASYNC);/* FIXME: can't handle right now */
@@ -590,7 +594,15 @@ static HRESULT WINAPI IDirectDrawSurface3_Blt(
 			xline += this->s.lpitch;
 		}
 		dwFlags &= ~(DDBLT_COLORFILL);
-	} else { 	  /* Once we have done colorfill, we do not do anything else... */
+	}
+
+	if (!src) {
+	    if (dwFlags) {
+	      TRACE(ddraw,"\t(src=NULL):Unsupported flags: ");_dump_DDBLT(dwFlags);fprintf(stderr,"\n");
+	    }
+	    return 0;
+	}
+
 	if (	(xsrc.top ==0) && (xsrc.bottom ==this->s.height) &&
 		(xsrc.left==0) && (xsrc.right  ==this->s.width) &&
 		(xdst.top ==0) && (xdst.bottom ==this->s.height) &&
@@ -598,11 +610,7 @@ static HRESULT WINAPI IDirectDrawSurface3_Blt(
 		!dwFlags
 	) {
 		memcpy(this->s.surface,src->s.surface,this->s.height*this->s.lpitch);
-		return 0;
 	} else {
-	  /* Non full screen Blit. In this case, we need to copy line per line.
-	     WARNING : if the program behaves badly (ie sizes of structures are different
-	               or buffer not big enough) this may crash Wine... */
 	  int bpp = this->s.ddraw->d.depth / 8;
 	  int height = xsrc.bottom - xsrc.top;
 	  int width = (xsrc.right - xsrc.left) * bpp;
@@ -614,12 +622,10 @@ static HRESULT WINAPI IDirectDrawSurface3_Blt(
 		   width);
 	  }
 	}
-	}
 	
-	if (dwFlags) {
-	  TRACE(ddraw,"\tUnsupported flags: ");_dump_DDBLT(dwFlags);fprintf(stderr,"\n");
+	if (dwFlags && FIXME_ON(ddraw)) {
+	  FIXME(ddraw,"\tUnsupported flags: ");_dump_DDBLT(dwFlags);
 	}
-	
 	return 0;
 }
 
@@ -635,7 +641,7 @@ static HRESULT WINAPI Xlib_IDirectDrawSurface3_Blt(
   if (!this->s.ddraw->e.xlib.paintable)
     return ret;
 
-  if ((this->t.xlib.image != NULL) && (this->t.xlib.on_screen))
+  if ((this->t.xlib.image != NULL) && (this->t.xlib.on_screen)) {
 #ifdef HAVE_LIBXXSHM
     if (this->s.ddraw->e.xlib.xshm_active)
       TSXShmPutImage(display,
@@ -655,6 +661,7 @@ static HRESULT WINAPI Xlib_IDirectDrawSurface3_Blt(
 		  0, 0, 0, 0,
 		  this->t.xlib.image->width,
 		  this->t.xlib.image->height);
+  }
   if (this->s.palette && this->s.palette->cm)
     TSXSetWindowColormap(display,this->s.ddraw->e.xlib.drawable,this->s.palette->cm);
 
@@ -754,9 +761,8 @@ static ULONG WINAPI Xlib_IDirectDrawSurface3_Release(LPDIRECTDRAWSURFACE3 this) 
 	if (!--(this->ref)) {
 		this->s.ddraw->lpvtbl->fnRelease(this->s.ddraw);
 
-    if( this->s.backbuffer ) {
+		if( this->s.backbuffer )
 		  this->s.backbuffer->lpvtbl->fnRelease(this->s.backbuffer);
- 		}
 
     if (this->t.xlib.image != NULL) {
 		this->t.xlib.image->data = NULL;
@@ -809,9 +815,7 @@ static HRESULT WINAPI IDirectDrawSurface3_GetAttachedSurface(
 	*lpdsf = this->s.backbuffer;
  
         if( this->s.backbuffer )
-        {
           this->s.backbuffer->lpvtbl->fnAddRef( this->s.backbuffer );
-        }
 
 	return 0;
 }
@@ -1738,6 +1742,10 @@ static HRESULT WINAPI IDirectDraw2_DuplicateSurface(
 	return 0;
 }
 
+/* 
+ * The Xlib Implementation tries to use the passed hwnd as drawing window,
+ * even when the approbiate bitmasks are not specified.
+ */
 static HRESULT WINAPI IDirectDraw2_SetCooperativeLevel(
 	LPDIRECTDRAW2 this,HWND32 hwnd,DWORD cooplevel
 ) {
@@ -1769,13 +1777,54 @@ static HRESULT WINAPI IDirectDraw2_SetCooperativeLevel(
 	return 0;
 }
 
+/* Small helper to either use the cooperative window or create a new 
+ * one (for mouse and keyboard input) and drawing in the Xlib implementation.
+ */
+static void _common_IDirectDraw_SetDisplayMode(LPDIRECTDRAW this) {
+	RECT32	rect;
+
+	/* Do not destroy the application supplied cooperative window */
+	if (this->d.window && this->d.window != this->d.mainWindow) {
+		DestroyWindow32(this->d.window);
+		this->d.window = 0;
+	}
+	/* Sanity check cooperative window before assigning it to drawing. */
+	if (	IsWindow32(this->d.mainWindow) &&
+		IsWindowVisible32(this->d.mainWindow)
+	) {
+		GetWindowRect32(this->d.mainWindow,&rect);
+		if (((rect.right-rect.left) >= this->d.width)	&&
+		    ((rect.bottom-rect.top) >= this->d.height)
+		)
+			this->d.window = this->d.mainWindow;
+	}
+	/* ... failed, create new one. */
+	if (!this->d.window) {
+	    this->d.window = CreateWindowEx32A(
+		    0,
+		    "WINE_DirectDraw",
+		    "WINE_DirectDraw",
+		    WS_VISIBLE|WS_SYSMENU|WS_THICKFRAME,
+		    0,0,
+		    this->d.width,
+		    this->d.height,
+		    0,
+		    0,
+		    0,
+		    NULL
+	    );
+	    /*Store THIS with the window. We'll use it in the window procedure*/
+	    SetWindowLong32A(this->d.window,ddrawXlibThisOffset,(LONG)this);
+	    ShowWindow32(this->d.window,TRUE);
+	    UpdateWindow32(this->d.window);
+	}
+}
 
 static HRESULT WINAPI DGA_IDirectDraw_SetDisplayMode(
 	LPDIRECTDRAW this,DWORD width,DWORD height,DWORD depth
 ) {
 #ifdef HAVE_LIBXXF86DGA
 	int	i,*depths,depcount;
-	HWND32 window;
 
 	TRACE(ddraw, "(%p)->(%ld,%ld,%ld)\n", this, width, height, depth);
 
@@ -1794,31 +1843,13 @@ static HRESULT WINAPI DGA_IDirectDraw_SetDisplayMode(
 	}
 	this->d.width	= width;
 	this->d.height	= height;
+	this->d.depth	= depth;
+
 	/* adjust fb_height, so we don't overlap */
 	if (this->e.dga.fb_height < height)
 		this->e.dga.fb_height = height;
-	this->d.depth	= depth;
+	_common_IDirectDraw_SetDisplayMode(this);
 
-	/* First, create a window for this mode. Apparently, some games
-	   (such as Monkey Island III) do not do this properly for themselves. */
-	window = CreateWindowEx32A(
-		0,
-		"WINE_DirectDraw",
-		"WINE_DirectDraw",
-		WS_VISIBLE|WS_SYSMENU|WS_THICKFRAME,
-		0,0,
-		width,
-		height,
-		0,
-		0,
-		0,
-		NULL
-	);
-	SetWindowLong32A(window,ddrawXlibThisOffset,(LONG)this);
-	ShowWindow32(window,TRUE);
-	UpdateWindow32(window);
-	assert(window);
-	
 	/* FIXME: this function OVERWRITES several signal handlers. 
 	 * can we save them? and restore them later? In a way that
 	 * it works for the library too?
@@ -1856,44 +1887,17 @@ static HRESULT WINAPI Xlib_IDirectDraw_SetDisplayMode(
 		MessageBox32A(0,buf,"WINE DirectDraw",MB_OK|MB_ICONSTOP);
 		return DDERR_UNSUPPORTEDMODE;
 	}
-	
-	if (this->d.window)
-		DestroyWindow32(this->d.window);
-	this->d.window = CreateWindowEx32A(
-		0,
-		"WINE_DirectDraw",
-		"WINE_DirectDraw",
-		WS_VISIBLE|WS_SYSMENU|WS_THICKFRAME,
-		0,0,
-		width,
-		height,
-		0,
-		0,
-		0,
-		NULL
-	);
-
-        /* Store this with the window. We'll use it for the window procedure */
-	SetWindowLong32A(this->d.window,ddrawXlibThisOffset,(LONG)this);
-
-	this->e.xlib.paintable = 1;
-
-	ShowWindow32(this->d.window,TRUE);
-	UpdateWindow32(this->d.window);
-
-	assert(this->d.window);
-
-        this->e.xlib.drawable  = WIN_FindWndPtr(this->d.window)->window;  
-
-        /* We don't have a context for this window. Host off the desktop */
-        if( !this->e.xlib.drawable )
-        {
-           this->e.xlib.drawable = WIN_GetDesktop()->window;
-        }
-
 	this->d.width	= width;
 	this->d.height	= height;
 	this->d.depth	= depth;
+
+	_common_IDirectDraw_SetDisplayMode(this);
+
+	this->e.xlib.paintable = 1;
+        this->e.xlib.drawable  = WIN_FindWndPtr(this->d.window)->window;  
+        /* We don't have a context for this window. Host off the desktop */
+        if( !this->e.xlib.drawable )
+           this->e.xlib.drawable = WIN_GetDesktop()->window;
 	return 0;
 }
 
@@ -1922,11 +1926,11 @@ static HRESULT WINAPI Xlib_IDirectDraw2_GetCaps(
 	TRACE(ddraw,"(%p)->GetCaps(%p,%p)\n",this,caps1,caps2);
 	/* FIXME: Xlib */
 	caps1->dwVidMemTotal = 2048*1024;
-	caps1->dwCaps = 0xffffffff&~(DDCAPS_BANKSWITCHED);		/* we can do anything */
+	caps1->dwCaps = 0xffffffff&~(DDCAPS_BANKSWITCHED|DDCAPS_GDI);
 	caps1->ddsCaps.dwCaps = 0xffffffff;	/* we can do anything */
 	if (caps2) {
 		caps2->dwVidMemTotal = 2048*1024;
-		caps2->dwCaps = 0xffffffff&~(DDCAPS_BANKSWITCHED);		/* we can do anything */
+		caps2->dwCaps = 0xffffffff&~(DDCAPS_BANKSWITCHED|DDCAPS_GDI);
 		caps2->ddsCaps.dwCaps = 0xffffffff;	/* we can do anything */
 	}
 	/* END FIXME: Xlib */
@@ -2528,15 +2532,11 @@ LRESULT WINAPI Xlib_DDWndProc(HWND32 hwnd,UINT32 msg,WPARAM32 wParam,LPARAM lPar
 	  }
         }
         
-      }
-      else
-      {
+      } else {
         ret = DefWindowProc32A(hwnd, msg, wParam, lParam );
       } 
 
-    }
-    else
-    {
+    } else {
 	ret = DefWindowProc32A(hwnd,msg,wParam,lParam);
     }
 

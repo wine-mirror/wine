@@ -148,7 +148,7 @@ HBITMAP16 WINAPI WinGCreateBitmap16(HDC16 winDC, BITMAPINFO *header,
 		    WORD	sel = 0;
 
 		    TSXShmAttach(display, &p->si);
-		    bmpObjPtr->pixmap = XShmCreatePixmap(display, rootWindow, 
+		    bmpObjPtr->pixmap = TSXShmCreatePixmap(display, rootWindow, 
 				  p->si.shmaddr, &p->si, bmpObjPtr->bitmap.bmWidth, 
 				  bmpObjPtr->bitmap.bmHeight, bmpi->biBitCount );
 		    if( bmpObjPtr->pixmap )
