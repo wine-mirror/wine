@@ -2468,6 +2468,41 @@ static BOOL MENU_SuspendPopup( MTRACKER* pmt, UINT16 uMsg )
 }
 
 /***********************************************************************
+ *           MENU_KeyEscape
+ *
+ * Handle a VK_ESCAPE key event in a menu. 
+ */
+static BOOL MENU_KeyEscape(MTRACKER* pmt, UINT wFlags)
+{
+    BOOL bEndMenu = TRUE;
+
+    if (pmt->hCurrentMenu != pmt->hTopMenu)
+    {
+        POPUPMENU *menu = MENU_GetMenu(pmt->hCurrentMenu);
+
+        if (menu->wFlags & MF_POPUP)
+        {
+            HMENU hmenutmp, hmenuprev;
+
+            hmenuprev = hmenutmp = pmt->hTopMenu;
+
+            /* close topmost popup */
+            while (hmenutmp != pmt->hCurrentMenu)
+            {
+                hmenuprev = hmenutmp;
+                hmenutmp = MENU_GetSubPopup( hmenuprev );
+            }
+
+            MENU_HideSubPopups( pmt->hOwnerWnd, hmenuprev, TRUE );
+            pmt->hCurrentMenu = hmenuprev;
+            bEndMenu = FALSE;
+        }
+    }
+
+    return bEndMenu;
+}
+
+/***********************************************************************
  *           MENU_KeyLeft
  *
  * Handle a VK_LEFT key event in a menu. 
@@ -2747,7 +2782,7 @@ static INT MENU_TrackMenu( HMENU hmenu, UINT wFlags, INT x, INT y,
 		    break;
 		    
 		case VK_ESCAPE:
-		    fEndMenu = TRUE;
+                    fEndMenu = MENU_KeyEscape(&mt, wFlags);
 		    break;
 
 		case VK_F1:
