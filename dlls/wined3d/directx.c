@@ -31,6 +31,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3d);
 WINE_DECLARE_DEBUG_CHANNEL(d3d_caps);
+#define GLINFO_LOCATION This->gl_info
 
 /**********************************************************
  * Utility functions follow
@@ -1335,8 +1336,8 @@ HRESULT  WINAPI  IWineD3DImpl_CreateDevice(IWineD3D *iface, UINT Adapter, D3DDEV
     /* Set up initial COM information */
     object->lpVtbl  = &IWineD3DDevice_Vtbl;
     object->ref     = 1;
-    object->WineD3D = iface;
-    IWineD3D_AddRef(object->WineD3D);
+    object->wineD3D = iface;
+    IWineD3D_AddRef(object->wineD3D);
     object->parent  = parent;
     
     TRACE("(%p)->(Adptr:%d, DevType: %x, FocusHwnd: %p, BehFlags: %lx, PresParms: %p, RetDevInt: %p)\n", This, Adapter, DeviceType,

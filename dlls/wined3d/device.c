@@ -25,11 +25,16 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3d);
 WINE_DECLARE_DEBUG_CHANNEL(d3d_caps);
+#define GLINFO_LOCATION ((IWineD3DImpl *)(This->wineD3D))->gl_info
+
+/**********************************************************
+ * Global variable / Constants follow
+ **********************************************************/
+const float identity[16] = {1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1};  /* When needed for comparisons */
 
 /**********************************************************
  * Utility functions follow
  **********************************************************/
-
 
 /**********************************************************
  * IWineD3DDevice implementation follows
@@ -188,6 +193,144 @@ HRESULT WINAPI IWineD3DDeviceImpl_GetStreamSource(IWineD3DDevice *iface, UINT St
     return D3D_OK;
 }
 
+/*****
+ * Get / Set Transform
+ *****/
+HRESULT  WINAPI  IWineD3DDeviceImpl_SetTransform(IWineD3DDevice *iface, D3DTRANSFORMSTATETYPE d3dts, CONST D3DMATRIX* lpmatrix) {
+    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
+
+    /* Most of this routine, comments included copied from ddraw tree initially: */
+    TRACE("(%p) : Transform State=%d\n", This, d3dts);
+
+    /* Handle recording of state blocks */
+    if (This->isRecordingState) {
+        TRACE("Recording... not performing anything\n");
+        This->updateStateBlock->changed.transform[d3dts] = TRUE;
+        This->updateStateBlock->set.transform[d3dts]     = TRUE;
+        memcpy(&This->updateStateBlock->transforms[d3dts], lpmatrix, sizeof(D3DMATRIX));
+        return D3D_OK;
+    }
+
+    /*
+     * If the new matrix is the same as the current one,
+     * we cut off any further processing. this seems to be a reasonable
+     * optimization because as was noticed, some apps (warcraft3 for example)
+     * tend towards setting the same matrix repeatedly for some reason.
+     *
+     * From here on we assume that the new matrix is different, wherever it matters.
+     */
+    if (!memcmp(&This->stateBlock->transforms[d3dts].u.m[0][0], lpmatrix, sizeof(D3DMATRIX))) {
+        TRACE("The app is setting the same matrix over again\n");
+        return D3D_OK;
+    } else {
+        conv_mat(lpmatrix, &This->stateBlock->transforms[d3dts].u.m[0][0]);
+    }
+
+    /*
+       ScreenCoord = ProjectionMat * ViewMat * WorldMat * ObjectCoord
+       where ViewMat = Camera space, WorldMat = world space.
+
+       In OpenGL, camera and world space is combined into GL_MODELVIEW
+       matrix.  The Projection matrix stay projection matrix. 
+     */
+
+    /* Capture the times we can just ignore the change for now */
+    if (d3dts == D3DTS_WORLDMATRIX(0)) {
+        This->modelview_valid = FALSE;
+        return D3D_OK;
+
+    } else if (d3dts == D3DTS_PROJECTION) {
+        This->proj_valid = FALSE;
+        return D3D_OK;
+
+    } else if (d3dts >= D3DTS_WORLDMATRIX(1) && d3dts <= D3DTS_WORLDMATRIX(255)) { 
+        /* Indexed Vertex Blending Matrices 256 -> 511  */
+        /* Use arb_vertex_blend or NV_VERTEX_WEIGHTING? */
+        FIXME("D3DTS_WORLDMATRIX(1..255) not handled\n");
+        return D3D_OK;
+    } 
+    
+    /* Now we really are going to have to change a matrix */
+    ENTER_GL();
+
+    if (d3dts >= D3DTS_TEXTURE0 && d3dts <= D3DTS_TEXTURE7) { /* handle texture matrices */
+        if (d3dts < GL_LIMITS(textures)) {
+            int tex = d3dts - D3DTS_TEXTURE0;
+            GL_ACTIVETEXTURE(tex);
+#if 0 /* TODO: */
+            set_texture_matrix((float *)lpmatrix, 
+                               This->updateStateBlock->texture_state[tex][D3DTSS_TEXTURETRANSFORMFLAGS]);
+#endif
+        }
+
+    } else if (d3dts == D3DTS_VIEW) { /* handle the VIEW matrice */
+
+#if 0 /* TODO: */
+        unsigned int k;
+#endif
+
+        /* If we are changing the View matrix, reset the light and clipping planes to the new view   
+         * NOTE: We have to reset the positions even if the light/plane is not currently
+         *       enabled, since the call to enable it will not reset the position.                 
+         * NOTE2: Apparently texture transforms do NOT need reapplying
+         */
+        
+        This->modelview_valid = FALSE;
+        This->view_ident = !memcmp(lpmatrix, identity, 16*sizeof(float));
+#if 0 /* TODO: */
+        PLIGHTINFOEL *lightChain = NULL;
+#endif
+        glMatrixMode(GL_MODELVIEW);
+        checkGLcall("glMatrixMode(GL_MODELVIEW)");
+        glPushMatrix();
+        glLoadMatrixf((float *)lpmatrix);
+        checkGLcall("glLoadMatrixf(...)");
+
+#if 0 /* TODO: */
+        /* Reset lights */
+        lightChain = This->StateBlock->lights;
+        while (lightChain && lightChain->glIndex != -1) {
+            glLightfv(GL_LIGHT0 + lightChain->glIndex, GL_POSITION, lightChain->lightPosn);
+            checkGLcall("glLightfv posn");
+            glLightfv(GL_LIGHT0 + lightChain->glIndex, GL_SPOT_DIRECTION, lightChain->lightDirn);
+            checkGLcall("glLightfv dirn");
+            lightChain = lightChain->next;
+        }
+        /* Reset Clipping Planes if clipping is enabled */
+        for (k = 0; k < GL_LIMITS(clipplanes); k++) {
+            glClipPlane(GL_CLIP_PLANE0 + k, This->StateBlock->clipplane[k]);
+            checkGLcall("glClipPlane");
+        }
+#endif
+        glPopMatrix();
+
+    } else { /* What was requested!?? */
+        WARN("invalid matrix specified: %i\n", d3dts);
+    }
+
+    /* Release lock, all done */
+    LEAVE_GL();
+    return D3D_OK;
+
+}
+HRESULT WINAPI IWineD3DDeviceImpl_GetTransform(IWineD3DDevice *iface, D3DTRANSFORMSTATETYPE State, D3DMATRIX* pMatrix) {
+    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
+    TRACE("(%p) : for Transform State %d\n", This, State);
+    memcpy(pMatrix, &This->stateBlock->transforms[State], sizeof(D3DMATRIX));
+    return D3D_OK;
+}
+
+/*****
+ * Scene related functions
+ *****/
+HRESULT WINAPI IWineD3DDeviceImpl_BeginScene(IWineD3DDevice *iface) {
+    /* At the moment we have no need for any functionality at the beginning
+       of a scene                                                          */
+    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
+    TRACE("(%p) : stub\n", This);
+    return D3D_OK;
+}
+
 /**********************************************************
  * IUnknown parts follows
  **********************************************************/
@@ -210,7 +353,7 @@ ULONG WINAPI IWineD3DDeviceImpl_Release(IWineD3DDevice *iface) {
     ref = InterlockedDecrement(&This->ref);
     if (ref == 0) {
         IWineD3DStateBlock_Release((IWineD3DStateBlock *)This->stateBlock);
-        IWineD3D_Release(This->WineD3D);
+        IWineD3D_Release(This->wineD3D);
         HeapFree(GetProcessHeap(), 0, This);
     }
     return ref;
@@ -232,5 +375,8 @@ IWineD3DDeviceVtbl IWineD3DDevice_Vtbl =
     IWineD3DDeviceImpl_SetFVF,
     IWineD3DDeviceImpl_GetFVF,
     IWineD3DDeviceImpl_SetStreamSource,
-    IWineD3DDeviceImpl_GetStreamSource
+    IWineD3DDeviceImpl_GetStreamSource,
+    IWineD3DDeviceImpl_SetTransform,
+    IWineD3DDeviceImpl_GetTransform,
+    IWineD3DDeviceImpl_BeginScene
 };

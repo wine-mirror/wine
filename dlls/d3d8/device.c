@@ -1287,8 +1287,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_GetDepthStencilSurface(LPDIRECT3DDEVICE8 i
 
 HRESULT  WINAPI  IDirect3DDevice8Impl_BeginScene(LPDIRECT3DDEVICE8 iface) {
     IDirect3DDevice8Impl *This = (IDirect3DDevice8Impl *)iface;
-    TRACE("(%p) : stub\n", This);
-    return D3D_OK;
+    return IWineD3DDevice_BeginScene(This->WineD3DDevice);
 }
 
 HRESULT  WINAPI  IDirect3DDevice8Impl_EndScene(LPDIRECT3DDEVICE8 iface) {

@@ -68,12 +68,13 @@ extern int num_lock;
 /*****************************************************************************
  * Defines
  */
-#define GL_SUPPORT(ExtName)           (This->gl_info.supported[ExtName] != 0)
-
+#define GL_SUPPORT(ExtName)           (GLINFO_LOCATION.supported[ExtName] != 0)
+#define GL_LIMITS(ExtName)            (GLINFO_LOCATION.max_##ExtName)
 
 #define MAX_STREAMS  16  /* Maximum possible streams - used for fixed size arrays
                             See MaxStreams in MSDN under GetDeviceCaps */
-
+#define HIGHEST_TRANSFORMSTATE 512 
+                         /* Highest value in D3DTRANSFORMSTATETYPE */
 #define WINED3D_VSHADER_MAX_CONSTANTS  96   
                          /* Maximum number of constants provided to the shaders */
 
@@ -87,7 +88,29 @@ extern int num_lock;
     } \
 }
 
+#define conv_mat(mat,gl_mat)                                                                \
+do {                                                                                        \
+    TRACE("%f %f %f %f\n", (mat)->u.s._11, (mat)->u.s._12, (mat)->u.s._13, (mat)->u.s._14); \
+    TRACE("%f %f %f %f\n", (mat)->u.s._21, (mat)->u.s._22, (mat)->u.s._23, (mat)->u.s._24); \
+    TRACE("%f %f %f %f\n", (mat)->u.s._31, (mat)->u.s._32, (mat)->u.s._33, (mat)->u.s._34); \
+    TRACE("%f %f %f %f\n", (mat)->u.s._41, (mat)->u.s._42, (mat)->u.s._43, (mat)->u.s._44); \
+    memcpy(gl_mat, (mat), 16 * sizeof(float));                                              \
+} while (0)
+
+/* The following is purely to keep the source code as clear from #ifdefs as possible */
+#if defined(GL_VERSION_1_3)
+#define GL_ACTIVETEXTURE(textureNo)                          \
+            glActiveTexture(GL_TEXTURE0 + textureNo);        \
+            checkGLcall("glActiveTexture");      
+#else 
+#define GL_ACTIVETEXTURE(textureNo)                          \
+            glActiveTextureARB(GL_TEXTURE0_ARB + textureNo); \
+            checkGLcall("glActiveTextureARB");
+#endif
+
 typedef struct IWineD3DStateBlockImpl IWineD3DStateBlockImpl;
+
+extern const float identity[16];
 
 /*****************************************************************************
  * IWineD3D implementation structure
@@ -120,7 +143,7 @@ typedef struct IWineD3DDeviceImpl
 
     /* WineD3D Information  */
     IUnknown               *parent;  /* TODO - to be a new interface eventually */
-    IWineD3D               *WineD3D;
+    IWineD3D               *wineD3D;
 
     /* X and GL Information */
     HWND                    win_handle;
@@ -163,8 +186,8 @@ typedef struct IWineD3DResourceClass
 
     /* WineD3DResource Information */
     IUnknown               *parent;
-    IWineD3DDevice         *wineD3DDevice;
     D3DRESOURCETYPE         resourceType;
+    IWineD3DDevice         *wineD3DDevice;
 
 } IWineD3DResourceClass;
 
@@ -173,7 +196,6 @@ typedef struct IWineD3DResourceImpl
     /* IUnknown & WineD3DResource Information     */
     IWineD3DResourceVtbl   *lpVtbl;
     IWineD3DResourceClass   resource;
-
 } IWineD3DResourceImpl;
 
 extern IWineD3DResourceVtbl IWineD3DResource_Vtbl;
@@ -222,6 +244,7 @@ extern IWineD3DIndexBufferVtbl IWineD3DIndexBuffer_Vtbl;
 typedef struct SAVEDSTATES {
         BOOL                      fvf;
         BOOL                      stream_source[MAX_STREAMS];
+        BOOL                      transform[HIGHEST_TRANSFORMSTATE];
 } SAVEDSTATES;
 
 struct IWineD3DStateBlockImpl
@@ -246,6 +269,10 @@ struct IWineD3DStateBlockImpl
     UINT                      stream_stride[MAX_STREAMS];
     UINT                      stream_offset[MAX_STREAMS];
     IWineD3DVertexBuffer     *stream_source[MAX_STREAMS];
+
+    /* Transform */
+    D3DMATRIX                 transforms[HIGHEST_TRANSFORMSTATE];
+
 };
 
 extern IWineD3DStateBlockVtbl IWineD3DStateBlock_Vtbl;
