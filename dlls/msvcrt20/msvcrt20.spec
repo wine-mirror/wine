@@ -525,7 +525,6 @@
 @ cdecl _amsg_exit(long) msvcrt._amsg_exit
 @ cdecl _assert(str str long) msvcrt._assert
 @ cdecl _atodbl(ptr str) msvcrt._atodbl
-@ cdecl -ret64 _atoi64(str) msvcrt._atoi64
 @ cdecl _atoldbl(ptr str) msvcrt._atoldbl
 @ cdecl _beep(long long) msvcrt._beep
 @ cdecl _beginthread(ptr long ptr) msvcrt._beginthread
@@ -623,8 +622,6 @@
 @ cdecl _heapused(ptr ptr) msvcrt._heapused
 @ cdecl _heapwalk(ptr) msvcrt._heapwalk
 @ cdecl _hypot(double double) msvcrt._hypot
-@ cdecl _i64toa(long long ptr long) msvcrt._i64toa
-@ cdecl _i64tow(long long ptr long) msvcrt._i64tow
 @ cdecl _initterm(ptr ptr) msvcrt._initterm
 @ extern _iob msvcrt._iob
 @ cdecl _isatty(long) msvcrt._isatty
@@ -767,7 +764,7 @@
 @ cdecl _safe_fprem1() msvcrt._safe_fprem1
 @ cdecl _scalb( double long) msvcrt._scalb
 @ cdecl _searchenv(str str ptr) msvcrt._searchenv
-@ stdcall -i386 __seh_longjmp_unwind(ptr) msvcrt._seh_longjmp_unwind
+@ stdcall -i386 __seh_longjmp_unwind@4(ptr) msvcrt._seh_longjmp_unwind
 @ cdecl _seterrormode(long) msvcrt._seterrormode
 @ cdecl -i386 _setjmp(ptr) msvcrt._setjmp
 @ cdecl -i386 _setjmp3(ptr long) msvcrt._setjmp3
@@ -847,8 +844,6 @@
 @ cdecl _toupper(long) msvcrt._toupper
 @ extern _tzname msvcrt._tzname
 @ cdecl _tzset() msvcrt._tzset
-@ cdecl _ui64toa(long long ptr long) msvcrt._ui64toa
-@ cdecl _ui64tow(long long ptr long) msvcrt._ui64tow
 @ cdecl _ultoa(long ptr long) msvcrt._ultoa
 @ cdecl _ultow(long ptr long) msvcrt._ultow
 @ cdecl _umask(long) msvcrt._umask
@@ -929,7 +924,6 @@
 @ cdecl _wtempnam(wstr wstr) msvcrt._wtempnam
 @ cdecl _wtmpnam(ptr) msvcrt._wtmpnam
 @ cdecl _wtoi(wstr) msvcrt._wtoi
-@ cdecl _wtoi64(wstr) msvcrt._wtoi64
 @ cdecl _wtol(wstr) msvcrt._wtol
 @ cdecl _wunlink(wstr) msvcrt._wunlink
 @ cdecl _wutime(wstr ptr) msvcrt._wutime
