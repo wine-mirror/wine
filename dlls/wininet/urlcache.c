@@ -545,62 +545,6 @@ static inline void URLCache_Allocation_BlockAllocate(BYTE * AllocationTable, DWO
 }
 
 /***********************************************************************
- *           URLCache_FindEntry (Internal)
- *
- *  Finds an entry without using the hash tables
- *
- * RETURNS
- *    TRUE if it found the specified entry
- *    FALSE otherwise
- *
- */
-static BOOL URLCache_FindEntry(LPCURLCACHE_HEADER pHeader, LPCSTR szUrl, CACHEFILE_ENTRY ** ppEntry)
-{
-    CACHEFILE_ENTRY * pCurrentEntry;
-    DWORD dwBlockNumber;
-
-    BYTE * AllocationTable = (LPBYTE)pHeader + ALLOCATION_TABLE_OFFSET;
-
-    for (pCurrentEntry = (CACHEFILE_ENTRY *)((LPBYTE)pHeader + ENTRY_START_OFFSET);
-         (DWORD)((LPBYTE)pCurrentEntry - (LPBYTE)pHeader) < pHeader->dwFileSize;
-         pCurrentEntry = (CACHEFILE_ENTRY *)((LPBYTE)pCurrentEntry + pCurrentEntry->dwBlocksUsed * BLOCKSIZE))
-    {
-        dwBlockNumber = (DWORD)((LPBYTE)pCurrentEntry - (LPBYTE)pHeader - ENTRY_START_OFFSET) / BLOCKSIZE;
-        while (URLCache_Allocation_BlockIsFree(AllocationTable, dwBlockNumber))
-        {
-            if (dwBlockNumber >= pHeader->dwIndexCapacityInBlocks)
-                return FALSE;
-
-            pCurrentEntry = (CACHEFILE_ENTRY *)((LPBYTE)pCurrentEntry + BLOCKSIZE);
-            dwBlockNumber = (DWORD)((LPBYTE)pCurrentEntry - (LPBYTE)pHeader - ENTRY_START_OFFSET) / BLOCKSIZE;
-        }
-
-        switch (pCurrentEntry->dwSignature)
-        {
-        case URL_SIGNATURE: /* "URL " */
-        case LEAK_SIGNATURE: /* "LEAK" */
-            {
-                URL_CACHEFILE_ENTRY * pUrlEntry = (URL_CACHEFILE_ENTRY *)pCurrentEntry;
-                if (!strcmp(szUrl, pUrlEntry->szSourceUrlName))
-                {
-                    *ppEntry = pCurrentEntry;
-                    /* FIXME: should we update the LastAccessTime here? */
-                    return TRUE;
-                }
-            }
-            break;
-        case HASH_SIGNATURE: /* HASH entries parsed in FindEntryInHash */
-        case 0xDEADBEEF: /* this is always at offset 0x4000 in URL cache for some reason */
-            break;
-        default:
-            FIXME("Unknown entry %.4s ignored\n", (LPCSTR)&pCurrentEntry->dwSignature);
-        }
-
-    }
-    return FALSE;
-}
-
-/***********************************************************************
  *           URLCache_FindFirstFreeEntry (Internal)
  *
  *  Finds and allocates the first block of free space big enough and
