@@ -10668,8 +10668,9 @@ fi
 
 if test "x${GCC}" = "xyes"
 then
-  CFLAGS="$CFLAGS -Wall -Wpointer-arith"
-  echo "$as_me:$LINENO: checking for gcc strength-reduce bug" >&5
+  CFLAGS="$CFLAGS -Wall"
+
+    echo "$as_me:$LINENO: checking for gcc strength-reduce bug" >&5
 echo $ECHO_N "checking for gcc strength-reduce bug... $ECHO_C" >&6
 if test "${ac_cv_c_gcc_strength_bug+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
@@ -10829,6 +10830,58 @@ echo "${ECHO_T}$ac_cv_c_gcc_gstabs" >&6
   if test "$ac_cv_c_gcc_gstabs" = "yes"
   then
     CFLAGS="$CFLAGS -gstabs+"
+  fi
+
+    saved_CFLAGS=$CFLAGS
+  CFLAGS="$CFLAGS -Wpointer-arith -Werror"
+  echo "$as_me:$LINENO: checking for broken string.h that generates warnings" >&5
+echo $ECHO_N "checking for broken string.h that generates warnings... $ECHO_C" >&6
+if test "${ac_cv_c_string_h_warnings+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  cat >conftest.$ac_ext <<_ACEOF
+#line $LINENO "configure"
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+#include <string.h>
+int
+main ()
+{
+
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext
+if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
+  (eval $ac_compile) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+         { ac_try='test -s conftest.$ac_objext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ac_cv_c_string_h_warnings=no
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+ac_cv_c_string_h_warnings=yes
+fi
+rm -f conftest.$ac_objext conftest.$ac_ext
+fi
+echo "$as_me:$LINENO: result: $ac_cv_c_string_h_warnings" >&5
+echo "${ECHO_T}$ac_cv_c_string_h_warnings" >&6
+  CFLAGS=$saved_CFLAGS
+  if test "$ac_cv_c_string_h_warnings" = "no"
+  then
+    CFLAGS="$CFLAGS -Wpointer-arith"
   fi
 fi
 

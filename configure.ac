@@ -634,11 +634,13 @@ then
     AC_DEFINE(_FILE_OFFSET_BITS, 64, [Set this to 64 to enable 64-bit file support on Linux])
 fi
 
-dnl **** Check for gcc strength-reduce bug ****
+dnl **** Check for gcc specific options ****
 
 if test "x${GCC}" = "xyes"
 then
-  CFLAGS="$CFLAGS -Wall -Wpointer-arith"
+  CFLAGS="$CFLAGS -Wall"
+
+  dnl Check for strength-reduce bug
   AC_CACHE_CHECK( [for gcc strength-reduce bug], ac_cv_c_gcc_strength_bug,
                   AC_TRY_RUN([
 int	L[[4]] = {0,1,2,3};
@@ -675,6 +677,18 @@ int main(void) {
   if test "$ac_cv_c_gcc_gstabs" = "yes"
   then
     CFLAGS="$CFLAGS -gstabs+"
+  fi
+
+  dnl Check for noisy string.h
+  saved_CFLAGS=$CFLAGS
+  CFLAGS="$CFLAGS -Wpointer-arith -Werror"
+  AC_CACHE_CHECK([for broken string.h that generates warnings], ac_cv_c_string_h_warnings,
+      AC_TRY_COMPILE([#include <string.h>],[],
+                     [ac_cv_c_string_h_warnings=no],[ac_cv_c_string_h_warnings=yes]))
+  CFLAGS=$saved_CFLAGS
+  if test "$ac_cv_c_string_h_warnings" = "no"
+  then
+    CFLAGS="$CFLAGS -Wpointer-arith"
   fi
 fi
 
