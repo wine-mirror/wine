@@ -41,33 +41,24 @@ extern void FILE_SetDosError(void);
 extern BOOL FILE_Stat( LPCSTR unixName, BY_HANDLE_FILE_INFORMATION *info, BOOL *is_symlink );
 extern HANDLE FILE_CreateFile( LPCSTR filename, DWORD access, DWORD sharing,
                                LPSECURITY_ATTRIBUTES sa, DWORD creation,
-                               DWORD attributes, HANDLE template, BOOL fail_read_only,
-                               UINT drive_type );
+                               DWORD attributes, HANDLE template, UINT drive_type );
 
 /* files/directory.c */
 extern int DIR_Init(void);
 
 /* files/dos_fs.c */
-extern BOOL DOSFS_FindUnixName( const DOS_FULL_NAME *path, LPCWSTR name, char *long_buf,
-                                INT long_len, LPWSTR short_buf );
-extern BOOL DOSFS_GetFullName( LPCWSTR name, BOOL check_last,
-                                 DOS_FULL_NAME *full );
+extern BOOL DOSFS_GetFullName( LPCWSTR name, BOOL check_last, DOS_FULL_NAME *full );
 
 /* drive.c */
-
-#define DRIVE_FAIL_READ_ONLY  0x0001  /* Fail opening read-only files for writing */
-
 extern int DRIVE_Init(void);
 extern int DRIVE_IsValid( int drive );
 extern int DRIVE_GetCurrentDrive(void);
-extern int DRIVE_SetCurrentDrive( int drive );
 extern int DRIVE_FindDriveRoot( const char **path );
 extern int DRIVE_FindDriveRootW( LPCWSTR *path );
 extern const char * DRIVE_GetRoot( int drive );
 extern LPCWSTR DRIVE_GetDosCwd( int drive );
 extern const char * DRIVE_GetUnixCwd( int drive );
 extern const char * DRIVE_GetDevice( int drive );
-extern UINT DRIVE_GetFlags( int drive );
 extern int DRIVE_Chdir( int drive, LPCWSTR path );
 extern WCHAR *DRIVE_BuildEnv(void);
 

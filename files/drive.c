@@ -71,7 +71,6 @@ typedef struct
     char     *unix_cwd;  /* cwd in Unix format without leading or trailing / */
     char     *device;    /* raw device path */
     UINT      type;      /* drive type */
-    UINT      flags;     /* drive flags */
     dev_t     dev;       /* unix device number */
     ino_t     ino;       /* unix inode number */
 } DOSDRIVE;
@@ -103,8 +102,6 @@ inline static char *heap_strdup( const char *str )
     if (p) memcpy( p, str, len );
     return p;
 }
-
-#define IS_OPTION_TRUE(ch) ((ch) == 'y' || (ch) == 'Y' || (ch) == 't' || (ch) == 'T' || (ch) == '1')
 
 extern void CDROM_InitRegistry(int dev);
 
@@ -150,7 +147,6 @@ int DRIVE_Init(void)
     static const WCHAR PathW[] = {'P','a','t','h',0};
     static const WCHAR TypeW[] = {'T','y','p','e',0};
     static const WCHAR DeviceW[] = {'D','e','v','i','c','e',0};
-    static const WCHAR FailReadOnlyW[] = {'F','a','i','l','R','e','a','d','O','n','l','y',0};
 
     attr.Length = sizeof(attr);
     attr.RootDirectory = 0;
@@ -187,7 +183,6 @@ int DRIVE_Init(void)
         drive->dos_cwd  = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(drive->dos_cwd[0]));
         drive->unix_cwd = heap_strdup( "" );
         drive->device   = NULL;
-        drive->flags    = 0;
         drive->dev      = drive_stat_buffer.st_dev;
         drive->ino      = drive_stat_buffer.st_ino;
         drive->type     = DRIVE_FIXED;
@@ -254,7 +249,6 @@ int DRIVE_Init(void)
                 drive->dos_cwd  = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(drive->dos_cwd[0]));
                 drive->unix_cwd = heap_strdup( "" );
                 drive->device   = NULL;
-                drive->flags    = 0;
                 drive->dev      = drive_stat_buffer.st_dev;
                 drive->ino      = drive_stat_buffer.st_ino;
                 drive->type     = DRIVE_FIXED;
@@ -291,22 +285,14 @@ int DRIVE_Init(void)
                 }
             }
 
-            /* Get the FailReadOnly flag */
-            RtlInitUnicodeString( &nameW, FailReadOnlyW );
-            if (!NtQueryValueKey( hkey, &nameW, KeyValuePartialInformation, tmp, sizeof(tmp), &dummy ))
-            {
-                WCHAR *data = (WCHAR *)((KEY_VALUE_PARTIAL_INFORMATION *)tmp)->Data;
-                if (IS_OPTION_TRUE(data[0])) drive->flags |= DRIVE_FAIL_READ_ONLY;
-            }
-
             /* Make the first hard disk the current drive */
             if ((DRIVE_CurDrive == -1) && (drive->type == DRIVE_FIXED))
                 DRIVE_CurDrive = i;
 
             count++;
-            TRACE("Drive %c: path=%s type=%s flags=%08x dev=%x ino=%x\n",
+            TRACE("Drive %c: path=%s type=%s dev=%x ino=%x\n",
                   'A' + i, drive->root, debugstr_w(DRIVE_Types[drive->type]),
-                  drive->flags, (int)drive->dev, (int)drive->ino );
+                  (int)drive->dev, (int)drive->ino );
         }
 
     next:
@@ -322,7 +308,6 @@ int DRIVE_Init(void)
         DOSDrives[2].unix_cwd = heap_strdup( "" );
         DOSDrives[2].type     = DRIVE_FIXED;
         DOSDrives[2].device   = NULL;
-        DOSDrives[2].flags    = 0;
         DRIVE_CurDrive = 2;
     }
 
@@ -375,7 +360,7 @@ int DRIVE_GetCurrentDrive(void)
 /***********************************************************************
  *           DRIVE_SetCurrentDrive
  */
-int DRIVE_SetCurrentDrive( int drive )
+static int DRIVE_SetCurrentDrive( int drive )
 {
     TDB *pTask = GlobalLock16(GetCurrentTask());
     if (!DRIVE_IsValid( drive ))
@@ -601,15 +586,6 @@ static UINT DRIVE_GetType( int drive )
     return DOSDrives[drive].type;
 }
 
-
-/***********************************************************************
- *           DRIVE_GetFlags
- */
-UINT DRIVE_GetFlags( int drive )
-{
-    if ((drive < 0) || (drive >= MAX_DOS_DRIVES)) return 0;
-    return DOSDrives[drive].flags;
-}
 
 /***********************************************************************
  *           DRIVE_Chdir

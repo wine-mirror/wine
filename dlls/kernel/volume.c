@@ -312,7 +312,7 @@ HANDLE VOLUME_OpenDevice( LPCWSTR name, DWORD access, DWORD sharing,
     {
         TRACE("trying %s\n", buffer );
 
-        ret = FILE_CreateFile( buffer, access, sharing, sa, OPEN_EXISTING, 0, 0, TRUE, DRIVE_FIXED );
+        ret = FILE_CreateFile( buffer, access, sharing, sa, OPEN_EXISTING, 0, 0, DRIVE_FIXED );
         if (ret || GetLastError() != ERROR_FILE_NOT_FOUND) break;
         if (!dev) break;
 

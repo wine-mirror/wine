@@ -1201,7 +1201,7 @@ static void load_wine_registry(HKEY hkey,LPCSTR fn)
 {
     HANDLE file;
     if ((file = FILE_CreateFile( fn, GENERIC_READ, 0, NULL, OPEN_EXISTING,
-                                 FILE_ATTRIBUTE_NORMAL, 0, TRUE, DRIVE_UNKNOWN )))
+                                 FILE_ATTRIBUTE_NORMAL, 0, DRIVE_FIXED )))
     {
         SERVER_START_REQ( load_registry )
         {

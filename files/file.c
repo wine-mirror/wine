@@ -183,8 +183,7 @@ void FILE_SetDosError(void)
  */
 HANDLE FILE_CreateFile( LPCSTR filename, DWORD access, DWORD sharing,
                         LPSECURITY_ATTRIBUTES sa, DWORD creation,
-                        DWORD attributes, HANDLE template, BOOL fail_read_only,
-                        UINT drive_type )
+                        DWORD attributes, HANDLE template, UINT drive_type )
 {
     unsigned int err;
     UINT disp, options;
@@ -213,53 +212,37 @@ HANDLE FILE_CreateFile( LPCSTR filename, DWORD access, DWORD sharing,
         options |= FILE_RANDOM_ACCESS;
     attributes &= FILE_ATTRIBUTE_VALID_FLAGS;
 
-    for (;;)
+    SERVER_START_REQ( create_file )
     {
-        SERVER_START_REQ( create_file )
-        {
-            req->access     = access;
-            req->inherit    = (sa && (sa->nLength>=sizeof(*sa)) && sa->bInheritHandle);
-            req->sharing    = sharing;
-            req->create     = disp;
-            req->options    = options;
-            req->attrs      = attributes;
-            req->removable  = (drive_type == DRIVE_REMOVABLE || drive_type == DRIVE_CDROM);
-            wine_server_add_data( req, filename, strlen(filename) );
-            SetLastError(0);
-            err = wine_server_call( req );
-            ret = reply->handle;
-        }
-        SERVER_END_REQ;
-
-        /* If write access failed, retry without GENERIC_WRITE */
-
-        if (!ret && !fail_read_only && (access & GENERIC_WRITE))
-        {
-            if ((err == STATUS_MEDIA_WRITE_PROTECTED) || (err == STATUS_ACCESS_DENIED))
-            {
-                TRACE("Write access failed for file '%s', trying without "
-                      "write access\n", filename);
-                access &= ~GENERIC_WRITE;
-                continue;
-            }
-        }
-
-        if (err)
-        {
-            /* In the case file creation was rejected due to CREATE_NEW flag
-             * was specified and file with that name already exists, correct
-             * last error is ERROR_FILE_EXISTS and not ERROR_ALREADY_EXISTS.
-             * Note: RtlNtStatusToDosError is not the subject to blame here.
-             */
-            if (err == STATUS_OBJECT_NAME_COLLISION)
-                SetLastError( ERROR_FILE_EXISTS );
-            else
-                SetLastError( RtlNtStatusToDosError(err) );
-        }
-
-        if (!ret) WARN("Unable to create file '%s' (GLE %ld)\n", filename, GetLastError());
-        return ret;
+        req->access     = access;
+        req->inherit    = (sa && (sa->nLength>=sizeof(*sa)) && sa->bInheritHandle);
+        req->sharing    = sharing;
+        req->create     = disp;
+        req->options    = options;
+        req->attrs      = attributes;
+        req->removable  = (drive_type == DRIVE_REMOVABLE || drive_type == DRIVE_CDROM);
+        wine_server_add_data( req, filename, strlen(filename) );
+        SetLastError(0);
+        err = wine_server_call( req );
+        ret = reply->handle;
     }
+    SERVER_END_REQ;
+
+    if (err)
+    {
+        /* In the case file creation was rejected due to CREATE_NEW flag
+         * was specified and file with that name already exists, correct
+         * last error is ERROR_FILE_EXISTS and not ERROR_ALREADY_EXISTS.
+         * Note: RtlNtStatusToDosError is not the subject to blame here.
+         */
+        if (err == STATUS_OBJECT_NAME_COLLISION)
+            SetLastError( ERROR_FILE_EXISTS );
+        else
+            SetLastError( RtlNtStatusToDosError(err) );
+    }
+
+    if (!ret) WARN("Unable to create file '%s' (GLE %ld)\n", filename, GetLastError());
+    return ret;
 }
 
 
@@ -381,7 +364,7 @@ HANDLE WINAPI CreateFileW( LPCWSTR filename, DWORD access, DWORD sharing,
             if (device)
             {
                 ret = FILE_CreateFile( device, access, sharing, sa, creation,
-                                       attributes, template, TRUE, DRIVE_FIXED );
+                                       attributes, template, DRIVE_FIXED );
             }
             else
             {
@@ -459,7 +442,6 @@ HANDLE WINAPI CreateFileW( LPCWSTR filename, DWORD access, DWORD sharing,
 
     ret = FILE_CreateFile( full_name.long_name, access, sharing,
                            sa, creation, attributes, template,
-                           DRIVE_GetFlags(full_name.drive) & DRIVE_FAIL_READ_ONLY,
                            GetDriveTypeW( full_name.short_name ) );
  done:
     if (!ret) ret = INVALID_HANDLE_VALUE;
@@ -1238,7 +1220,7 @@ BOOL WINAPI DeleteFileW( LPCWSTR path )
 
     /* check if we are allowed to delete the source */
     hFile = FILE_CreateFile( full_name.long_name, GENERIC_READ|GENERIC_WRITE, 0,
-                             NULL, OPEN_EXISTING, 0, 0, TRUE,
+                             NULL, OPEN_EXISTING, 0, 0,
                              GetDriveTypeW( full_name.short_name ) );
     if (!hFile) return FALSE;
 
@@ -1521,7 +1503,7 @@ BOOL WINAPI MoveFileExW( LPCWSTR fn1, LPCWSTR fn2, DWORD flag )
 
         /* check if we are allowed to rename the source */
         hFile = FILE_CreateFile( full_name1.long_name, 0, 0,
-                                 NULL, OPEN_EXISTING, 0, 0, TRUE,
+                                 NULL, OPEN_EXISTING, 0, 0,
                                  GetDriveTypeW( full_name1.short_name ) );
         if (!hFile)
         {
@@ -1534,7 +1516,7 @@ BOOL WINAPI MoveFileExW( LPCWSTR fn1, LPCWSTR fn2, DWORD flag )
         /* check, if we are allowed to delete the destination,
         **     (but the file not being there is fine) */
         hFile = FILE_CreateFile( full_name2.long_name, GENERIC_READ|GENERIC_WRITE, 0,
-                                 NULL, OPEN_EXISTING, 0, 0, TRUE,
+                                 NULL, OPEN_EXISTING, 0, 0,
                                  GetDriveTypeW( full_name2.short_name ) );
         if(!hFile && GetLastError() != ERROR_FILE_NOT_FOUND) return FALSE;
         CloseHandle(hFile);
