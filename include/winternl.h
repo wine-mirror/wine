@@ -442,9 +442,36 @@ typedef enum SYSTEM_INFORMATION_CLASS {
     SystemCacheInformation,
     Unknown22,
     SystemInterruptInformation = 23,
+    SystemDpcBehaviourInformation = 24,
+    SystemFullMemoryInformation = 25,
+    SystemNotImplemented6 = 25,
+    SystemLoadImage = 26,
+    SystemUnloadImage = 27,
+    SystemTimeAdjustmentInformation = 28,
+    SystemTimeAdjustment = 28,
+    SystemSummaryMemoryInformation = 29,
+    SystemNotImplemented7 = 29,
+    SystemNextEventIdInformation = 30,
+    SystemNotImplemented8 = 30,
+    SystemEventIdsInformation = 31,
+    SystemCrashDumpInformation = 32,
     SystemExceptionInformation = 33,
+    SystemCrashDumpStateInformation = 34,
+    SystemKernelDebuggerInformation = 35,
+    SystemContextSwitchInformation = 36,
     SystemRegistryQuotaInformation = 37,
-    SystemLookasideInformation = 45
+    SystemCurrentTimeZoneInformation = 44,
+    SystemTimeZoneInformation = 44,
+    SystemLookasideInformation = 45,
+    SystemSetTimeSlipEvent = 46,
+    SystemCreateSession = 47,
+    SystemDeleteSession = 48,
+    SystemInvalidInfoClass4 = 49,
+    SystemRangeStartInformation = 50,
+    SystemVerifierInformation = 51,
+    SystemAddVerifier = 52,
+    SystemSessionProcessesInformation	= 53,
+    SystemInformationClassMax
 } SYSTEM_INFORMATION_CLASS, *PSYSTEM_INFORMATION_CLASS;
 
 typedef enum _TIMER_TYPE {
@@ -804,6 +831,11 @@ typedef struct _SYSTEM_LOOKASIDE_INFORMATION {
 typedef struct _SYSTEM_INTERRUPT_INFORMATION {
     BYTE Reserved1[24];
 } SYSTEM_INTERRUPT_INFORMATION, *PSYSTEM_INTERRUPT_INFORMATION;
+
+typedef struct _SYSTEM_KERNEL_DEBUGGER_INFORMATION {
+	BOOLEAN  DebuggerEnabled;
+	BOOLEAN  DebuggerNotPresent;
+} SYSTEM_KERNEL_DEBUGGER_INFORMATION, *PSYSTEM_KERNEL_DEBUGGER_INFORMATION;
 
 /* System Information Class 0x10 */
 typedef struct {
