@@ -1721,7 +1721,7 @@ BOOL WINAPI EnableWindow( HWND hwnd, BOOL enable )
 	if( wndPtr->flags & WIN_NATIVE )
             wndPtr->pDriver->pSetHostAttr( wndPtr, HAK_ACCEPTFOCUS, FALSE );
 
-	if ((hwnd == GetFocus()) || IsChild( hwnd, GetFocus() ))
+	if (hwnd == GetFocus())
         {
 	    SetFocus( 0 );  /* A disabled window can't have the focus */
         }
