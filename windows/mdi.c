@@ -782,12 +782,13 @@ static BOOL32 MDI_AugmentFrameMenu( MDICLIENTINFO* ci, WND *frame,
 	return 0; 
     }
 
-    if( !AppendMenu32A(frame->wIDmenu,MF_HELP | MF_BITMAP,
-                    SC_RESTORE, (LPSTR)(DWORD)hBmpRestore ))
-    {
-	RemoveMenu32(frame->wIDmenu,0,MF_BYPOSITION);
-	return 0;
-    }
+    // Using the magic menu id's to insert system buttons in the menu bar
+    AppendMenu32A(frame->wIDmenu,MF_HELP | MF_BITMAP,
+                   SC_MINIMIZE, (LPSTR)(DWORD)3 ) ;
+    AppendMenu32A(frame->wIDmenu,MF_HELP | MF_BITMAP,
+                   SC_RESTORE, (LPSTR)(DWORD)2 );
+    AppendMenu32A(frame->wIDmenu,MF_HELP | MF_BITMAP,
+                    SC_CLOSE, (LPSTR)(DWORD)5 );
 
     EnableMenuItem32(hSysPopup, SC_SIZE, MF_BYCOMMAND | MF_GRAYED);
     EnableMenuItem32(hSysPopup, SC_MOVE, MF_BYCOMMAND | MF_GRAYED);
@@ -808,11 +809,16 @@ static BOOL32 MDI_RestoreFrameMenu( WND *frameWnd, HWND32 hChild )
 
     TRACE(mdi,"for child %04x\n",hChild);
 
-    if( GetMenuItemID32(frameWnd->wIDmenu,nItems) != SC_RESTORE )
+    if( GetMenuItemID32(frameWnd->wIDmenu,nItems) != SC_CLOSE )
 	return 0; 
 
     RemoveMenu32(frameWnd->wIDmenu,0,MF_BYPOSITION);
-    DeleteMenu32(frameWnd->wIDmenu,nItems-1,MF_BYPOSITION);
+
+    DeleteMenu32(frameWnd->wIDmenu,GetMenuItemCount32(frameWnd->wIDmenu) - 1,MF_BYPOSITION);
+    DeleteMenu32(frameWnd->wIDmenu,GetMenuItemCount32(frameWnd->wIDmenu) - 1,MF_BYPOSITION);
+    DeleteMenu32(frameWnd->wIDmenu,GetMenuItemCount32(frameWnd->wIDmenu) - 1,MF_BYPOSITION);
+
+
 
     DrawMenuBar32(frameWnd->hwndSelf);
 
