@@ -18,7 +18,6 @@
  * a good way to do so.
  */
 #define MAX_MIDIOUTDRV 	(16)
-#define MAX_MCIMIDIDRV 	(1)
 
 #if defined(HAVE_SYS_SOUNDCARD_H)
 # include <sys/soundcard.h>
@@ -80,6 +79,8 @@ LONG MCIMIDI_DriverProc32(DWORD dwDevID, HDRVR16 hDriv, DWORD wMsg,
 LONG MCICDAUDIO_DriverProc32(DWORD dwDevID, HDRVR16 hDriv, DWORD wMsg, 
 			     DWORD dwParam1, DWORD dwParam2);
 LONG MCIANIM_DriverProc32(DWORD dwDevID, HDRVR16 hDriv, DWORD wMsg, 
+			  DWORD dwParam1, DWORD dwParam2);
+LONG MCIAVI_DriverProc32(DWORD dwDevID, HDRVR16 hDriv, DWORD wMsg, 
 			  DWORD dwParam1, DWORD dwParam2);
 
 #endif /* __WINE_MULTIMEDIA_H */

@@ -12,6 +12,7 @@ C_SRCS = \
 	init.c \
 	joystick.c \
 	mcianim.c \
+	mciavi.c \
 	mcicda.c \
 	mcimidi.c \
 	mcistring.c \

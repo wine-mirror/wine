@@ -4,9 +4,11 @@
 #include "debugtools.h"
 #endif
 
-#define DEBUG_CHANNEL_COUNT 150
+#define DEBUG_CHANNEL_COUNT 152
 #ifdef DEBUG_RUNTIME
 short debug_msg_enabled[][DEBUG_CLASS_COUNT] = {
+{1, 1, 0, 0},
+{1, 1, 0, 0},
 {1, 1, 0, 0},
 {1, 1, 0, 0},
 {1, 1, 0, 0},
@@ -227,6 +229,7 @@ const char* debug_ch_name[] = {
 "local",
 "mci",
 "mcianim",
+"mciavi",
 "mcimidi",
 "mciwave",
 "mdi",
@@ -296,6 +299,7 @@ const char* debug_ch_name[] = {
 "ttydrv",
 "tweak",
 "uitools",
+"unknown",
 "updown",
 "ver",
 "virtual",

@@ -136,7 +136,7 @@ type win32
 133 stdcall mmioWrite(long ptr long) mmioWrite32
 134 stdcall mmsystemGetVersion() mmsystemGetVersion32
 135 stdcall sndPlaySoundA(ptr long) sndPlaySound
-136 stub sndPlaySoundW
+136 stdcall sndPlaySoundW(ptr long) sndPlaySound32W
 137 stdcall timeBeginPeriod(long) timeBeginPeriod32
 138 stdcall timeEndPeriod(long) timeEndPeriod32
 139 stdcall timeGetDevCaps(ptr long) timeGetDevCaps32

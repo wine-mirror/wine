@@ -597,7 +597,7 @@ LONG MCIANIM_DriverProc32(DWORD dwDevID, HDRVR16 hDriv, DWORD wMsg,
     case DRV_ENABLE:		return 1;
     case DRV_DISABLE:		return 1;
     case DRV_QUERYCONFIGURE:	return 1;
-    case DRV_CONFIGURE:		MessageBox16(0, "Sample MultiMedia Linux Driver !", "MMLinux Driver", MB_OK); return 1;
+    case DRV_CONFIGURE:		MessageBox32A(0, "Sample MultiMedia Linux Driver !", "MMLinux Driver", MB_OK); return 1;
     case DRV_INSTALL:		return DRVCNF_RESTART;
     case DRV_REMOVE:		return DRVCNF_RESTART;
 
