@@ -944,6 +944,53 @@ struct IShellLink {
 
 #undef THIS
 
+#define THIS LPSHELLLINKW this
+
+typedef struct IShellLinkW IShellLinkW,*LPSHELLLINKW;
+typedef struct IShellLinkW_VTable
+{
+    /* *** IUnknown methods *** */
+    STDMETHOD(QueryInterface) (THIS_ REFIID riid, LPVOID * ppvObj) PURE;
+    STDMETHOD_(ULONG,AddRef) (THIS)  PURE;
+    STDMETHOD_(ULONG,Release) (THIS) PURE;
+
+    STDMETHOD(GetPath)(THIS_ LPWSTR pszFile,INT32 cchMaxPath, WIN32_FIND_DATA32A *pfd, DWORD fFlags) PURE;
+
+    STDMETHOD(GetIDList)(THIS_ LPITEMIDLIST * ppidl) PURE;
+    STDMETHOD(SetIDList)(THIS_ LPCITEMIDLIST pidl) PURE;
+
+    STDMETHOD(GetDescription)(THIS_ LPWSTR pszName,INT32 cchMaxName) PURE;
+    STDMETHOD(SetDescription)(THIS_ LPCWSTR pszName) PURE;
+
+    STDMETHOD(GetWorkingDirectory)(THIS_ LPWSTR pszDir,INT32 cchMaxPath) PURE;
+    STDMETHOD(SetWorkingDirectory)(THIS_ LPCWSTR pszDir) PURE;
+
+    STDMETHOD(GetArguments)(THIS_ LPWSTR pszArgs,INT32 cchMaxPath) PURE;
+    STDMETHOD(SetArguments)(THIS_ LPCWSTR pszArgs) PURE;
+
+    STDMETHOD(GetHotkey)(THIS_ WORD *pwHotkey) PURE;
+    STDMETHOD(SetHotkey)(THIS_ WORD wHotkey) PURE;
+
+    STDMETHOD(GetShowCmd)(THIS_ INT32 *piShowCmd) PURE;
+    STDMETHOD(SetShowCmd)(THIS_ INT32 iShowCmd) PURE;
+
+    STDMETHOD(GetIconLocation)(THIS_ LPWSTR pszIconPath,INT32 cchIconPath,INT32 *piIcon) PURE;
+    STDMETHOD(SetIconLocation)(THIS_ LPCWSTR pszIconPath,INT32 iIcon) PURE;
+
+    STDMETHOD(SetRelativePath)(THIS_ LPCWSTR pszPathRel, DWORD dwReserved) PURE;
+
+    STDMETHOD(Resolve)(THIS_ HWND32 hwnd, DWORD fFlags) PURE;
+
+    STDMETHOD(SetPath)(THIS_ LPCWSTR pszFile) PURE;
+} IShellLinkW_VTable,*LPSHELLLINKW_VTABLE;
+
+struct IShellLinkW {
+	LPSHELLLINKW_VTABLE	lpvtbl;
+	DWORD			ref;
+};
+
+#undef THIS
+
 /****************************************************************************
  * IExtractIconinterface
  *
@@ -1067,6 +1114,7 @@ extern LPCONTEXTMENU	IContextMenu_Constructor(LPSHELLFOLDER, LPCITEMIDLIST *, UI
 extern LPSHELLFOLDER	IShellFolder_Constructor(LPSHELLFOLDER,LPITEMIDLIST);
 extern LPSHELLVIEW	IShellView_Constructor(LPSHELLFOLDER, LPCITEMIDLIST);
 extern LPSHELLLINK	IShellLink_Constructor(void);
+extern LPSHELLLINKW	IShellLinkW_Constructor(void);
 extern LPENUMIDLIST	IEnumIDList_Constructor(LPCSTR,DWORD);
 extern LPEXTRACTICON	IExtractIcon_Constructor(LPITEMIDLIST);
 #endif
