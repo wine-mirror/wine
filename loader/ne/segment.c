@@ -57,7 +57,8 @@ BOOL32 NE_LoadSegment( NE_MODULE *pModule, WORD segnum )
     WORD count, i, offset, next_offset;
     HMODULE16 module;
     FARPROC16 address = 0;
-    int fd;
+    HFILE32 hf;
+    DWORD res;
     struct relocation_entry_s *rep, *reloc_entries;
     BYTE *func_name;
     int size;
@@ -77,10 +78,10 @@ BOOL32 NE_LoadSegment( NE_MODULE *pModule, WORD segnum )
 	
     pModuleTable = NE_MODULE_TABLE( pModule );
 
-    fd = NE_OpenFile( pModule );
+    hf = NE_OpenFile( pModule );
     TRACE(module, "Loading segment %d, hSeg=%04x, flags=%04x\n",
                     segnum, pSeg->hSeg, pSeg->flags );
-    lseek( fd, pSeg->filepos << pModule->alignment, SEEK_SET );
+    SetFilePointer( hf, pSeg->filepos << pModule->alignment, NULL, SEEK_SET );
     if (pSeg->size) size = pSeg->size;
     else size = pSeg->minsize ? pSeg->minsize : 0x10000;
     mem = GlobalLock16(pSeg->hSeg);
@@ -92,7 +93,6 @@ BOOL32 NE_LoadSegment( NE_MODULE *pModule, WORD segnum )
         DWORD oldstack;
  	WORD old_hSeg, new_hSeg;
         THDB *thdb = THREAD_Current();
-        HFILE32 hf = FILE_DupUnixHandle( fd );
 
  	selfloadheader = (SELFLOADHEADER *)
  		PTR_SEG_OFF_TO_LIN(SEL(pSegTable->hSeg),0);
@@ -138,7 +138,7 @@ BOOL32 NE_LoadSegment( NE_MODULE *pModule, WORD segnum )
  	thdb->cur_stack = oldstack;
     }
     else if (!(pSeg->flags & NE_SEGFLAGS_ITERATED))
-      read(fd, mem, size);
+        ReadFile(hf, mem, size, &res, NULL);
     else {
       /*
 	 The following bit of code for "iterated segments" was written without
@@ -148,7 +148,7 @@ BOOL32 NE_LoadSegment( NE_MODULE *pModule, WORD segnum )
       */
       char* buff = xmalloc(size);
       char* curr = buff;
-      read(fd, buff, size);
+      ReadFile(hf, mem, size, &res, NULL);
       while(curr < buff + size) {
 	unsigned int rept = *((short*) curr)++;
 	unsigned int len = *((short*) curr)++;
@@ -167,7 +167,7 @@ BOOL32 NE_LoadSegment( NE_MODULE *pModule, WORD segnum )
     if (!(pSeg->flags & NE_SEGFLAGS_RELOC_DATA))
         return TRUE;  /* No relocation data, we are done */
 
-    read( fd, &count, sizeof(count) );
+    ReadFile(hf, &count, sizeof(count), &res, NULL);
     if (!count) return TRUE;
 
     TRACE(fixup, "Fixups for %.*s, segment %d, hSeg %04x\n",
@@ -180,8 +180,8 @@ BOOL32 NE_LoadSegment( NE_MODULE *pModule, WORD segnum )
                    segnum, pSeg->hSeg );
 
     reloc_entries = (struct relocation_entry_s *)xmalloc(count * sizeof(struct relocation_entry_s));
-    if (read( fd, reloc_entries, count * sizeof(struct relocation_entry_s)) !=
-            count * sizeof(struct relocation_entry_s))
+    if (!ReadFile( hf, reloc_entries, count * sizeof(struct relocation_entry_s), &res, NULL) ||
+        (res != count * sizeof(struct relocation_entry_s)))
     {
         WARN(fixup, "Unable to read relocation information\n" );
         return FALSE;
@@ -422,7 +422,7 @@ BOOL32 NE_LoadAllSegments( NE_MODULE *pModule )
         stack16Top->ip = 0;
         stack16Top->cs = 0;
 
-        hf = FILE_DupUnixHandle( NE_OpenFile( pModule ) );
+        hf = NE_OpenFile( pModule );
         TRACE(dll,"CallBootAppProc(hModule=0x%04x,hf=0x%04x)\n",pModule->self,
               HFILE32_TO_HFILE16(hf));
         Callbacks->CallBootAppProc(selfloadheader->BootApp, pModule->self,

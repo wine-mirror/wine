@@ -182,7 +182,7 @@ static HRSRC16 NE_FindResourceFromType( NE_MODULE *pModule,
 HGLOBAL16 WINAPI NE_DefResourceHandler( HGLOBAL16 hMemObj, HMODULE16 hModule,
                                         HRSRC16 hRsrc )
 {
-    int  fd;
+    HANDLE32 fd;
     NE_MODULE* pModule = NE_GetPtr( hModule );
     if (pModule && (fd = NE_OpenFile( pModule )) >= 0)
     {
@@ -200,8 +200,10 @@ HGLOBAL16 WINAPI NE_DefResourceHandler( HGLOBAL16 hMemObj, HMODULE16 hModule,
 
 	if( handle )
 	{
-            lseek( fd, (int)pNameInfo->offset << sizeShift, SEEK_SET );
-            read( fd, GlobalLock16( handle ), (int)pNameInfo->length << sizeShift );
+            DWORD res;
+            SetFilePointer( fd, (int)pNameInfo->offset << sizeShift, NULL, SEEK_SET );
+            ReadFile( fd, GlobalLock16( handle ), (int)pNameInfo->length << sizeShift,
+                      &res, NULL );
 	}
 	return handle;
     }

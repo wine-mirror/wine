@@ -395,22 +395,25 @@ BOOL16 NE_SetEntryPoint( HMODULE16 hModule, WORD ordinal, WORD offset )
 /***********************************************************************
  *           NE_OpenFile
  */
-int NE_OpenFile( NE_MODULE *pModule )
+HANDLE32 NE_OpenFile( NE_MODULE *pModule )
 {
     DOS_FULL_NAME full_name;
     char *name;
 
-    static int cachedfd = -1;
+    static HANDLE32 cachedfd = -1;
 
     TRACE( module, "(%p) cache: mod=%p fd=%d\n",
            pModule, pCachedModule, cachedfd );
     if (pCachedModule == pModule) return cachedfd;
-    close( cachedfd );
+    CloseHandle( cachedfd );
     pCachedModule = pModule;
     name = NE_MODULE_NAME( pModule );
     if (!DOSFS_GetFullName( name, TRUE, &full_name ) ||
-        (cachedfd = open( full_name.long_name, O_RDONLY )) == -1)
+        (cachedfd = FILE_OpenUnixFile( full_name.long_name, O_RDONLY )) == -1)
         MSG( "Can't open file '%s' for module %04x\n", name, pModule->self );
+    else
+        /* FIXME: should not be necessary */
+        cachedfd = ConvertToGlobalHandle(cachedfd);
     TRACE(module, "opened '%s' -> %d\n",
                     name, cachedfd );
     return cachedfd;
