@@ -205,6 +205,10 @@ sub new {
 	}
     }
 
+    if($self->help) {
+	return $self;
+    }
+
     my $c_paths;
     if($#$c_files == -1 || ($#$c_files == 0 && $$c_files[0] eq $wine_dir)) {
 	$c_paths = ".";

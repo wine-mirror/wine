@@ -197,7 +197,7 @@ sub read_all_spec_files {
     my $win32api = shift;
 
     my @files = map {
-	s/^.\/(.*)$/$1/;
+	s/^$wine_dir\/(.*)$/$1/;
 	if(&$file_type($_) eq "library") {
 	    $_;
 	} else {
@@ -264,7 +264,7 @@ sub parse_spec_file {
 		$$function_module{$internal_name} .= " & $module";
 	    }
 
-	    if($$options->spec_mismatch) {
+	    if(0 && $$options->spec_mismatch) {
 		if($external_name eq "@") {
 		    if($internal_name !~ /^\U$module\E_$ordinal$/) {
 			$$output->write("$file: $external_name: the internal name ($internal_name) mismatch\n");
@@ -529,6 +529,23 @@ sub all_functions {
     my $function_calling_convention = \%{$self->{FUNCTION_CALLING_CONVENTION}};
 
     return sort(keys(%$function_calling_convention));
+}
+
+sub all_functions_in_module {
+    my $self = shift;
+    my $function_calling_convention = \%{$self->{FUNCTION_CALLING_CONVENTION}};
+    my $function_module = \%{$self->{FUNCTION_MODULE}};
+
+    my $module = shift;
+
+    my @names;
+    foreach my $name (keys(%$function_calling_convention)) {
+	if($$function_module{$name} eq $module) {
+	    push @names, $name;
+	}
+    }
+
+    return sort(@names);
 }
 
 sub all_functions_stub {

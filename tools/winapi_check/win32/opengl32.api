@@ -1,0 +1,50 @@
+%long
+
+BOOL
+DWORD
+FLOAT
+GLbitfield
+GLboolean
+GLbyte
+GLclampd
+GLclampf
+GLdouble
+GLenum
+GLfloat
+GLint
+GLshort
+GLsizei
+GLubyte
+GLuint
+GLushort
+HDC
+HGLRC
+UINT
+int
+
+%ptr
+
+COLORREF *
+GLbyte *
+GLboolean *
+GLclampf *
+GLdouble *
+GLfloat *
+GLint *
+GLshort *
+GLuint *
+GLubyte *
+GLushort *
+GLvoid *
+LPGLYPHMETRICSFLOAT
+LPLAYERPLANEDESCRIPTOR
+void *
+void **
+
+%str
+
+LPCSTR
+
+%void
+
+void

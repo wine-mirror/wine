@@ -76,7 +76,7 @@ sub file_type {
     
     $file_dir =~ s/^$wine_dir\///;
 
-    if($file_dir =~ /^(libtest|program|rc|tools)/ || 
+    if($file_dir =~ /^(libtest|program|rc|tests|tools)/ || 
        $file =~ /dbgmain\.c$/ ||
        $file =~ /wineclipsrv\.c$/) # FIXME: Kludge
     {
@@ -405,6 +405,7 @@ foreach my $file ($options->c_files) {
 		    $name2 = s/^(.*?)16_fn(.*?)$/$116_$2/;
 		} elsif(!defined($module16) && defined($module32)) {
 		    my @uc_modules32 = split(/\s*\&\s*/, uc($module32));
+		    push @uc_modules32, "wine";
 
 		    $name1 = $internal_name;
 		    foreach my $uc_module32 (@uc_modules32) {

@@ -77,12 +77,16 @@ sub parse_c_file {
 	    last;
 	}
       
-	# remove comments
-	if(s/^(.*?)(\/\*.*?\*\/)(.*)$/$1 $3/s) { push @comments, $2; $again = 1; next };
+	# remove C comments
+	if(s/^(.*?)(\/\*.*?\*\/)(.*)$/$1 $3/s) { push @comments, $2; $again = 1; next }
 	if(/^(.*?)\/\*/s) {
 	    $lookahead = 1;
 	    next;
 	}
+
+	# remove C++ comments
+	while(s/^(.*?)\/\/.*?$/$1\n/s) { $again = 1 }
+	if($again) { next; }
 
 	# remove empty rows
 	if(/^\s*$/) { next; }

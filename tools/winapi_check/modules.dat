@@ -193,6 +193,10 @@ dlls/olesvr
 
 dlls/olesvr
 
+% dlls/opengl32/opengl32.spec
+
+dlls/opengl32
+
 % dlls/psapi/psapi.spec
 
 dlls/psapi
