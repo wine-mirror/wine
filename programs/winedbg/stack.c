@@ -100,7 +100,7 @@ int stack_get_frame(SYMBOL_INFO* symbol, IMAGEHLP_STACK_FRAME* ihsf)
 void stack_backtrace(DWORD tid, BOOL noisy)
 {
     STACKFRAME                  sf;
-    CONTEXT                     ctx;
+    CONTEXT                     saved_dbg_context;
     struct dbg_thread*          thread;
     unsigned                    nf;
 
@@ -109,24 +109,28 @@ void stack_backtrace(DWORD tid, BOOL noisy)
         THREADENTRY32 entry;
         HANDLE snapshot = CreateToolhelp32Snapshot(TH32CS_SNAPTHREAD, 0);
         
-        if (snapshot == INVALID_HANDLE_VALUE) {
+        if (snapshot == INVALID_HANDLE_VALUE)
+        {
             dbg_printf("unable to create toolhelp snapshot\n");
             return;
         }
         
         entry.dwSize = sizeof(entry);
         
-        if (!Thread32First(snapshot, &entry)) {
+        if (!Thread32First(snapshot, &entry))
+        {
             CloseHandle(snapshot);
             return;
         }
         
-        do {
+        do
+        {
             if (entry.th32OwnerProcessID == GetCurrentProcessId()) continue;
             if (dbg_curr_process) dbg_detach_debuggee();
 
             dbg_printf("\n");
-            if (!dbg_attach_debuggee(entry.th32OwnerProcessID, FALSE, TRUE)) {
+            if (!dbg_attach_debuggee(entry.th32OwnerProcessID, FALSE, TRUE))
+            {
                 dbg_printf("\nwarning: could not attach to 0x%lx\n", entry.th32OwnerProcessID);
                 continue;
             }
@@ -134,21 +138,23 @@ void stack_backtrace(DWORD tid, BOOL noisy)
             dbg_printf("Backtracing for thread 0x%lx in process 0x%lx (%s):\n", entry.th32ThreadID, dbg_curr_pid, dbg_curr_process->imageName);
             
             stack_backtrace(entry.th32ThreadID, TRUE);
-        } while (Thread32Next(snapshot, &entry));
+        }
+        while (Thread32Next(snapshot, &entry));
 
         if (dbg_curr_process) dbg_detach_debuggee();
         CloseHandle(snapshot);
         return;
     }
 
-    if (!dbg_curr_process) {
+    if (!dbg_curr_process) 
+    {
         dbg_printf("You must be attached to a process to run this command.\n");
         return;
     }
     
+    saved_dbg_context = dbg_context; /* as we may modify dbg_context... */
     if (tid == dbg_curr_tid)
     {
-        ctx = dbg_context; /* as StackWalk may modify it... */
         thread = dbg_curr_thread;
         if (frames) HeapFree(GetProcessHeap(), 0, frames);
         frames = NULL;
@@ -161,16 +167,21 @@ void stack_backtrace(DWORD tid, BOOL noisy)
               dbg_printf("Unknown thread id (0x%08lx) in current process\n", tid);
               return;
          }
-         memset(&ctx, 0, sizeof(ctx));
-         ctx.ContextFlags = CONTEXT_CONTROL;
-#ifdef CONTEXT_SEGMENTS
-         ctx.ContextFlags |= CONTEXT_SEGMENTS;
-#endif
-         if (SuspendThread(thread->handle) == -1 || 
-             !GetThreadContext(thread->handle, &ctx))
+         memset(&dbg_context, 0, sizeof(dbg_context));
+         dbg_context.ContextFlags = CONTEXT_FULL;
+         if (SuspendThread(thread->handle) != -1)
          {
-             dbg_printf("Can't get context for thread 0x%lx in current process\n",
-                        tid);
+             if (!GetThreadContext(thread->handle, &dbg_context))
+             {
+                 dbg_printf("Can't get context for thread 0x%lx in current process\n",
+                            tid);
+                 ResumeThread(thread->handle);
+                 return;
+             }
+         }
+         else
+         {
+             dbg_printf("Can't suspend thread 0x%lx in current process\n", tid);
              return;
          }
     }
@@ -182,7 +193,7 @@ void stack_backtrace(DWORD tid, BOOL noisy)
 
     if (noisy) dbg_printf("Backtrace:\n");
     while (StackWalk(IMAGE_FILE_MACHINE_I386, dbg_curr_process->handle, 
-                     thread->handle, &sf, &ctx, NULL, SymFunctionTableAccess,
+                     thread->handle, &sf, &dbg_context, NULL, SymFunctionTableAccess,
                      SymGetModuleBase, NULL))
     {
         if (tid == dbg_curr_tid)
@@ -206,6 +217,7 @@ void stack_backtrace(DWORD tid, BOOL noisy)
         nf++;
     }
 
+    dbg_context = saved_dbg_context;
     if (tid == dbg_curr_tid)
     {
         nframe = nf;
