@@ -31,7 +31,9 @@ BOOL EVENT_Init(void)
  */
 void EVENT_Synchronize( void )
 {
+    int iWndsLocks = WIN_SuspendWndsLock();
     EVENT_Driver->pSynchronize();
+    WIN_RestoreWndsLock(iWndsLocks);
 }
 
 /**********************************************************************
