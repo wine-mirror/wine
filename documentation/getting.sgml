@@ -12,9 +12,9 @@
       </para>
       <para>
         If you are running a distribution of Linux that uses packages
-        to keep track of installed software, you may be in luck: A
-        prepackaged version of Wine may already exist for your system.
-        The first three sections will tell you how to find the latest
+        to keep track of installed software, you should be in luck: A
+        prepackaged version of Wine should already exist for your system.
+        The following sections will tell you how to find the latest
         Wine packages and get them installed.  You should be careful,
         though, about mixing packages between different distributions,
         and even from different versions of the same distribution.
@@ -27,30 +27,14 @@
       <para>
         If you're not lucky enough to have a package available for
         your operating system, or if you'd prefer a newer version of
-        Wine than already exists as a package, you may have to
+        Wine than already exists as a package, you will have to
         download the Wine source code and compile it yourself on your
         own machine.  Don't worry, it's not too hard to do this,
         especially with the many helpful tools that come with Wine.
         You don't need any programming experience to compile and
         install Wine, although it might be nice to have some minor
-        UNIX administrative skills.  We'll cover how to retrieve and
-        compile the official source releases from the <link
-        linkend="getting-source-ftp">FTP archives</link>, and also how
-        to get the cutting edge up-to-the-minute fresh Wine source
-        code from <link linkend="getting-source-cvs">CVS (Concurrent
-        Versions System)</link>.  Both processes of source code
-        installation are similar, and once you master one, you should
-        have no trouble dealing with the other one.
-      </para>
-      <para>
-        Finally, you may someday need to know how to apply a source
-        code patch to your version of Wine.  Perhaps you've uncovered
-        a bug in Wine, reported it to the <ulink
-        url="mailto:wine-devel@winehq.com">Wine mailing list</ulink>,
-        and received a patch from a developer to hopefully fix the
-        bug.  The last section in this chapter will show you how to
-        <link linkend="getting-upgrading">safely apply the
-        patch</link> and revert it if the patch doesn't work.
+        UNIX administrative skills.  Working from the source is
+        covered in the Wine Developer's Guide.
       </para>
     </sect1>
 
@@ -165,204 +149,6 @@ Password:
 
       <!-- *** Add other distributions, e.g., SUSE, Slackware *** -->
 
-    </sect1>
-
-    <sect1 id="getting-source-ftp">
-      <title>Getting Wine Source Code from the FTP Archive</title>
-
-      <para>
-        If the version of Wine you want does not exist in package form,
-        you can download the source code yourself and compile it on your
-        machine.  Although this might seem a little intimidating at
-        first if you've never done it, you'll find that it'll often go
-        quite smoothly, especially on the newer Linux distributions.
-      </para>
-
-      <para>
-        The safest way to grab the source is from one of the official
-        FTP archives.  An up to date listing is in the <ulink
-        url="http://www.winehq.com/source/ANNOUNCE">ANNOUNCE</ulink>
-        file in the Wine distribution (which you would have if you
-        already downloaded it).  Here is a list
-        of FTP servers carrying Wine:
-      </para>
-      <itemizedlist>
-        <listitem>
-          <para>
-            <ulink url="ftp://ftp.ibiblio.org/pub/Linux/ALPHA/wine/development/">
-              ftp://ftp.ibiblio.org/pub/Linux/ALPHA/wine/development/
-            </ulink>
-          </para>
-        </listitem>
-        <listitem>
-          <para>
-            <ulink url="ftp://ftp.infomagic.com/pub/mirrors/linux/sunsite/ALPHA/wine/development/">
-              ftp://ftp.infomagic.com/pub/mirrors/linux/sunsite/ALPHA/wine/development/
-            </ulink>
-          </para>
-        </listitem>
-        <listitem>
-          <para>
-            <ulink url="ftp://ftp.fu-berlin.de/unix/linux/mirrors/sunsite.unc.edu/ALPHA/wine/development/">
-              ftp://ftp.fu-berlin.de/unix/linux/mirrors/sunsite.unc.edu/ALPHA/wine/development/
-            </ulink>
-          </para>
-        </listitem>
-        <listitem>
-          <para>
-            <ulink url="ftp://orcus.progsoc.uts.edu.au/pub/Wine/development/">
-              ftp://orcus.progsoc.uts.edu.au/pub/Wine/development/
-            </ulink>
-          </para>
-        </listitem>
-      </itemizedlist>
-      <para>
-        The official releases are tagged by date with the format
-        "Wine-<replaceable>YYYYMMDD</>.tar.gz".  Your best bet is to grab
-        the latest one.
-      </para>
-      <para>
-        Once you have downloaded this, you must first compile wine, and then
-        install it.  This is not very hard to do.  First switch to the
-        directory containing the file you just downloaded.  Then extract the
-        source with (e.g.):
-<screen>
-<prompt># </><userinput>tar xzvf wine-<replaceable>20021031</>.tar.gz</>
-</screen>
-      </para>
-      <para>
-        Then, switch to the directory that was created and compile it by typing (e.g.):
-<screen>
-<prompt># </><userinput>./tools/wineinstall</>
-</screen>
-      </para>
-      <para>
-        NOTE: You must make sure that you are not the superuser (root) when doing this,
-        and that you have write permission to the directory that was created by the tar
-        command as well as all of its subdirectories and files..
-      </para>
-    </sect1>
-
-    <sect1 id="getting-source-cvs">
-      <title>Getting Wine Source Code from CVS</title>
-
-      <para>
-        The official web page for Wine CVS is
-        <ulink url="http://www.winehq.com/development/">
-          http://www.winehq.com/development/</>.
-      </para>
-      <para>
-        First, you need to get a copy of the latest Wine sources
-        using CVS. You can tell it where to find the source tree by
-        setting the <envar>CVSROOT</envar> environment variable. You
-        also have to log in anonymously to the wine CVS server.  In
-        <command>bash</>, it might look something like this:
-<screen>
-<prompt>$ </><userinput>export CVSROOT=:pserver:cvs@cvs.winehq.com:/home/wine</>
-<prompt>$ </><userinput>cvs login</>
-Password:
-<prompt>$ </><userinput>cvs checkout wine</>
-</screen>
-      </para>
-      <para>
-        That'll pull down the entire Wine source tree from
-        winehq.com and place it in the current directory (actually
-        in the 'wine' subdirectory).  CVS has a million command line
-        parameters, so there are many ways to pull down files, from
-        anywhere in the revision history.  Later, you can grab just
-        the updates:
-<screen>
-<prompt>$ </><userinput>cvs -PAd update</>
-</screen>
-      </para>
-      <para>
-        <command>cvs update</> works from inside the source tree.
-        You don't need the <envar>CVSROOT</> environment variable
-        to run it either.  You just have to be inside the source tree.
-        The <parameter>-P</>, <parameter>-A</> and <parameter>-d</>
-        options make sure your local Wine tree directory structure stays
-        in sync with the remote repository.
-      </para>
-      <para>
-        After you've made changes, you can create a patch with
-        <command>cvs diff -u</>, which sends output to stdout
-        (the <parameter>-u</> controls the format of the
-        patch). So, to create an <filename>my_patch.diff</>
-        file, you would do this:
-<screen>
-<prompt>$ </><userinput>cvs diff -u &gt;<replaceable>my_patch.diff</></>
-</screen>
-      </para>
-      <para>
-        You can call <command>cvs diff</command> from anywhere in the
-        tree (just like <command>cvs update</command>), and it will
-        always grab recursively from that point.  You can also specify
-        single files or subdirectories:
-<screen>
-<prompt>$ </><userinput>cvs diff -u dlls/winaspi &gt;<replaceable>my_aspi_patch.diff</></>
-</screen>
-      </para>
-      <para>
-        Experiment around a little.  It's fairly intuitive.
-      </para>
-    </sect1>
-
-    <sect1 id="getting-upgrading">
-      <title>Upgrading Wine with a Patch</title>
-      <para>
-        If you have the Wine source code, as opposed to a binary
-        distribution, you have the option of applying patches to the
-        source tree to fix bugs and add experimental features.
-        Perhaps you've found a bug, reported it to the <ulink
-        url="mailto:wine-devel@winehq.com">Wine mailing list</>,
-        and received a patch file to fix the bug.  You can apply the
-        patch with the <command>patch</> command, which takes a
-        streamed patch from <filename>stdin</>:
-<screen>
-<prompt>$ </><userinput>cd wine</>
-<prompt>$ </><userinput>patch -p0 &lt;<replaceable>../patch_to_apply.diff</></>
-</screen>
-      </para>
-      <para>
-        To remove the patch, use the <parameter>-R</> option:
-<screen>
-<prompt>$ </><userinput>patch -p0 -R &lt;<replaceable>../patch_to_apply.diff</></>
-</screen>
-      </para>
-      <para>
-        If you want to do a test run to see if the patch will apply
-        successfully (e.g., if the patch was created from an older or
-        newer version of the tree), you can use the
-        <parameter>--dry-run</> parameter to run the patch
-        without writing to any files:
-<screen>
-<prompt>$ </><userinput>patch -p0 --dry-run &lt;<replaceable>../patch_to_apply.diff</></>
-</screen>
-      </para>
-      <para>
-        <command>patch</> is pretty smart about extracting
-        patches from the middle of a file, so if you save an email with
-        an inlined patch to a file on your hard drive, you can invoke
-        patch on it without stripping out the email headers and other
-        text.  <command>patch</> ignores everything that doesn't
-        look like a patch.
-      </para>
-      <para>
-        The <parameter>-p0</> option to <command>patch</>
-	tells it to keep the full file name from the patch file. For example,
-	if the file name in the patch file was
-	 <filename>wine/programs/clock/main.c</>.
-	Setting the <parameter>-p0</> option would apply the patch
-	to the file of the same name i.e.
-	<filename>wine/programs/clock/main.c </>.
-	Setting the <parameter>-p1</> option would strip off the
-	first part of the file name and apply
-	the patch instead to <filename>programs/clock/main.c </>.
-	The <parameter>-p1</> option would be useful if you named
-	your top level wine directory differently to the person who sent you
-	the patch. For the <parameter>-p1</> option
-	<command>patch</> should be run from the top level wine directory.
-      </para>
     </sect1>
 
   </chapter>
