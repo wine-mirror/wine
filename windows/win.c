@@ -79,8 +79,8 @@ void WIN_LockWnds()
  *  Unlocks access to all WND structures
  */
 void WIN_UnlockWnds()
-    {
-        LeaveCriticalSection(&WIN_CritSection);
+{
+    LeaveCriticalSection(&WIN_CritSection);
 }
 /***********************************************************************
  *           WIN_SuspendWndsLock
@@ -103,7 +103,7 @@ int WIN_SuspendWndsLock()
     isuspendedLocks = WIN_CritSection.RecursionCount;
     /* set the recursion count of the critical section to 1
      so the owning thread will be able to leave it */
-    WIN_CritSection.RecursionCount = 1;
+    while (WIN_CritSection.RecursionCount > 1) WIN_UnlockWnds();
     /* leave critical section*/
     WIN_UnlockWnds();
 
@@ -125,8 +125,7 @@ void WIN_RestoreWndsLock(int ipreviousLocks)
     WIN_LockWnds();
     /* set the recursion count of the critical section to the
      value of suspended locks (given by WIN_SuspendWndsLock())*/
-    WIN_CritSection.RecursionCount = ipreviousLocks;
-
+    while (WIN_CritSection.RecursionCount < ipreviousLocks) WIN_LockWnds();
 }
 
 /***********************************************************************
