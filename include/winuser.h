@@ -2983,6 +2983,10 @@ typedef struct {
 #define SW_PARENTOPENING    3
 #define SW_OTHERRESTORED    4
 
+/* SetLayeredWindowAttributes() flags */
+#define LWA_COLORKEY        0x00000001
+#define LWA_ALPHA           0x00000002
+
   /* ShowWindow() codes */
 #define SW_HIDE             0
 #define SW_SHOWNORMAL       1
