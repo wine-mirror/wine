@@ -345,6 +345,30 @@ typedef struct _USER_INFO_1053 {
     LPWSTR  usri1053_home_dir_drive;
 } USER_INFO_1053, *PUSER_INFO_1053, *LPUSER_INFO_1053;
 
+typedef struct _USER_MODALS_INFO_0 {
+    DWORD usrmod0_min_passwd_len;
+    DWORD usrmod0_max_passwd_age;
+    DWORD usrmod0_min_passwd_age;
+    DWORD usrmod0_force_logoff;
+    DWORD usrmod0_password_hist_len;
+} USER_MODALS_INFO_0, *PUSER_MODALS_INFO_0, *LPUSER_MODALS_INFO_0;
+
+typedef struct _USER_MODALS_INFO_1 {
+    DWORD usrmod1_role;
+    LPWSTR usrmod1_primary;
+} USER_MODALS_INFO_1, *PUSER_MODALS_INFO_1, *LPUSER_MODALS_INFO_1;
+
+typedef struct _USER_MODALS_INFO_2 {
+    LPWSTR usrmod2_domain_name;
+    PSID usrmod2_domain_id;
+} USER_MODALS_INFO_2, *PUSER_MODALS_INFO_2, *LPUSER_MODALS_INFO_2;
+
+typedef struct _USER_MODALS_INFO_3 {
+    DWORD usrmod3_lockout_duration;
+    DWORD usrmod3_lockout_observation_window;
+    DWORD usrmod3_lockout_threshold;
+} USER_MODALS_INFO_3, *PUSER_MODALS_INFO_3, *LPUSER_MODALS_INFO_3;
+
 typedef struct _NET_DISPLAY_USER {
     LPWSTR usri1_name;
     LPWSTR usri1_comment;
