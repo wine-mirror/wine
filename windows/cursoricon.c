@@ -24,7 +24,7 @@
 /*
  * Theory:
  *
- * http://www.microsoft.com/win32dev/ui/icons.htm
+ * http://msdn.microsoft.com/library/default.asp?url=/library/en-us/dnwui/html/msdn_icons.asp
  *
  * Cursors and icons are stored in a global heap block, with the
  * following layout:
@@ -309,30 +309,30 @@ static CURSORICONDIRENTRY *CURSORICON_FindBestIcon( CURSORICONDIR *dir, int widt
     iTotalDiff = 0xFFFFFFFF;
     iColorDiff = 0xFFFFFFFF;
     for (i = 0, entry = &dir->idEntries[0]; i < dir->idCount; i++,entry++)
-        {
-	iTempXDiff = abs(width - entry->ResInfo.icon.bWidth);
-	iTempYDiff = abs(height - entry->ResInfo.icon.bHeight);
+    {
+        iTempXDiff = abs(width - entry->ResInfo.icon.bWidth);
+        iTempYDiff = abs(height - entry->ResInfo.icon.bHeight);
 
         if(iTotalDiff > (iTempXDiff + iTempYDiff))
         {
             iXDiff = iTempXDiff;
             iYDiff = iTempYDiff;
-	    iTotalDiff = iXDiff + iYDiff;
+            iTotalDiff = iXDiff + iYDiff;
         }
-        }
+    }
 
     /* Find Best Colors for Best Fit */
     for (i = 0, entry = &dir->idEntries[0]; i < dir->idCount; i++,entry++)
-        {
+    {
         if(abs(width - entry->ResInfo.icon.bWidth) == iXDiff &&
-            abs(height - entry->ResInfo.icon.bHeight) == iYDiff)
+           abs(height - entry->ResInfo.icon.bHeight) == iYDiff)
         {
-            iTempColorDiff = abs(colors - entry->ResInfo.icon.bColorCount);
+            iTempColorDiff = abs(colors - (1<<entry->wBitCount));
             if(iColorDiff > iTempColorDiff)
-        {
-            bestEntry = entry;
+            {
+                bestEntry = entry;
                 iColorDiff = iTempColorDiff;
-        }
+            }
         }
     }
 
