@@ -57,6 +57,8 @@ typedef struct _ACEFLAG
    DWORD value;
 } ACEFLAG, *LPACEFLAG;
 
+static SID const sidWorld = { SID_REVISION, 1, { SECURITY_WORLD_SID_AUTHORITY} , { SECURITY_WORLD_RID } };
+
 /*
  * ACE access rights
  */
@@ -109,6 +111,25 @@ static void dumpLsaAttributes( PLSA_OBJECT_ATTRIBUTES oa )
 		oa->ObjectName?debugstr_w(oa->ObjectName->Buffer):"null",
      		oa->Attributes, oa->SecurityDescriptor, oa->SecurityQualityOfService);
 	}
+}
+
+#define	WINE_SIZE_OF_WORLD_ACCESS_ACL	(sizeof(ACL) + sizeof(ACCESS_ALLOWED_ACE) + sizeof(sidWorld) - sizeof(DWORD))
+
+static void GetWorldAccessACL(PACL pACL)
+{
+    PACCESS_ALLOWED_ACE pACE = (PACCESS_ALLOWED_ACE) (pACL + 1);
+
+    pACL->AclRevision = ACL_REVISION;
+    pACL->Sbz1 = 0;
+    pACL->AclSize = WINE_SIZE_OF_WORLD_ACCESS_ACL;
+    pACL->AceCount = 1;
+    pACL->Sbz2 = 0;
+
+    pACE->Header.AceType = ACCESS_ALLOWED_ACE_TYPE;
+    pACE->Header.AceFlags = CONTAINER_INHERIT_ACE;
+    pACE->Header.AceSize = sizeof(ACCESS_ALLOWED_ACE) + sizeof(sidWorld) - sizeof(DWORD);
+    pACE->Mask = 0xf3ffffff; /* Everything except reserved bits */
+    memcpy(&pACE->SidStart, &sidWorld, sizeof(sidWorld));
 }
 
 /************************************************************
@@ -1297,8 +1318,61 @@ GetFileSecurityW( LPCWSTR lpFileName,
                     PSECURITY_DESCRIPTOR pSecurityDescriptor,
                     DWORD nLength, LPDWORD lpnLengthNeeded )
 {
-  FIXME("(%s) : stub\n", debugstr_w(lpFileName) );
-  return TRUE;
+    DWORD		nNeeded;
+    LPBYTE	pBuffer;
+    DWORD		iLocNow;
+    SECURITY_DESCRIPTOR_RELATIVE *pSDRelative;
+
+    FIXME("(%s) : returns fake SECURITY_DESCRIPTOR\n", debugstr_w(lpFileName) );
+
+    nNeeded = sizeof(SECURITY_DESCRIPTOR_RELATIVE);
+    if (RequestedInformation & OWNER_SECURITY_INFORMATION)
+	nNeeded += sizeof(sidWorld);
+    if (RequestedInformation & GROUP_SECURITY_INFORMATION)
+	nNeeded += sizeof(sidWorld);
+    if (RequestedInformation & DACL_SECURITY_INFORMATION)
+	nNeeded += WINE_SIZE_OF_WORLD_ACCESS_ACL;
+    if (RequestedInformation & SACL_SECURITY_INFORMATION)
+	nNeeded += WINE_SIZE_OF_WORLD_ACCESS_ACL;
+
+    *lpnLengthNeeded = nNeeded;
+
+    if (nNeeded > nLength)
+	    return TRUE;
+
+    if (!InitializeSecurityDescriptor(pSecurityDescriptor, SECURITY_DESCRIPTOR_REVISION))
+	return FALSE;
+
+    pSDRelative = (PISECURITY_DESCRIPTOR_RELATIVE) pSecurityDescriptor;
+    pSDRelative->Control |= SE_SELF_RELATIVE;
+    pBuffer = (LPBYTE) pSDRelative;
+    iLocNow = sizeof(SECURITY_DESCRIPTOR_RELATIVE);
+
+    if (RequestedInformation & OWNER_SECURITY_INFORMATION)
+    {
+	memcpy(pBuffer + iLocNow, &sidWorld, sizeof(sidWorld));
+	pSDRelative->Owner = iLocNow;
+	iLocNow += sizeof(sidWorld);
+    }
+    if (RequestedInformation & GROUP_SECURITY_INFORMATION)
+    {
+	memcpy(pBuffer + iLocNow, &sidWorld, sizeof(sidWorld));
+	pSDRelative->Group = iLocNow;
+	iLocNow += sizeof(sidWorld);
+    }
+    if (RequestedInformation & DACL_SECURITY_INFORMATION)
+    {
+	GetWorldAccessACL((PACL) (pBuffer + iLocNow));
+	pSDRelative->Dacl = iLocNow;
+	iLocNow += WINE_SIZE_OF_WORLD_ACCESS_ACL;
+    }
+    if (RequestedInformation & SACL_SECURITY_INFORMATION)
+    {
+	GetWorldAccessACL((PACL) (pBuffer + iLocNow));
+	pSDRelative->Sacl = iLocNow;
+	/* iLocNow += WINE_SIZE_OF_WORLD_ACCESS_ACL; */
+    }
+    return TRUE;
 }
 
 
