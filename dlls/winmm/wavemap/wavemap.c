@@ -121,6 +121,7 @@ static	DWORD	wodOpenHelper(WAVEMAPDATA* wom, UINT idx,
 			      DWORD dwFlags)
 {
     DWORD	ret;
+    TRACE("(%p, %04x, %p, %p, %08lx)\n", wom, idx, lpDesc, lpwfx, dwFlags);
 
     /* destination is always PCM, so the formulas below apply */
     lpwfx->nBlockAlign = (lpwfx->nChannels * lpwfx->wBitsPerSample) / 8;
@@ -138,6 +139,7 @@ static	DWORD	wodOpenHelper(WAVEMAPDATA* wom, UINT idx,
 	    wom->hAcmStream = 0;
 	}
     }
+    WARN("ret = %08lx\n", ret);
     return ret;
 }
 
@@ -146,6 +148,7 @@ static	DWORD	wodOpen(LPDWORD lpdwUser, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
     UINT 		ndlo, ndhi;
     UINT		i;
     WAVEMAPDATA*	wom = HeapAlloc(GetProcessHeap(), 0, sizeof(WAVEMAPDATA));
+    DWORD               res;
 
     TRACE("(%p %p %08lx)\n", lpdwUser, lpDesc, dwFlags);
 
@@ -187,7 +190,7 @@ static	DWORD	wodOpen(LPDWORD lpdwUser, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
         /* try some ACM stuff */
 
 #define	TRY(sps,bps)    wfx.nSamplesPerSec = (sps); wfx.wBitsPerSample = (bps); \
-                        switch (wodOpenHelper(wom, i, lpDesc, &wfx, dwFlags | WAVE_FORMAT_DIRECT)) { \
+                        switch (res=wodOpenHelper(wom, i, lpDesc, &wfx, dwFlags | WAVE_FORMAT_DIRECT)) { \
                             case MMSYSERR_NOERROR: wom->avgSpeedInner = wfx.nAvgBytesPerSec; goto found; \
                             case WAVERR_BADFORMAT: break; \
                             default: goto error; \
@@ -255,6 +258,11 @@ found:
     return MMSYSERR_NOERROR;
 error:
     HeapFree(GetProcessHeap(), 0, wom);
+    if (res==ACMERR_NOTPOSSIBLE) {
+        WARN("ret = WAVERR_BADFORMAT\n");
+        return WAVERR_BADFORMAT;
+    }
+    WARN("ret = MMSYSERR_ERROR\n");
     return MMSYSERR_ERROR;
 }
 
@@ -594,6 +602,7 @@ static	DWORD	widOpen(LPDWORD lpdwUser, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
     UINT 		ndlo, ndhi;
     UINT		i;
     WAVEMAPDATA*	wim = HeapAlloc(GetProcessHeap(), 0, sizeof(WAVEMAPDATA));
+    DWORD               res;
 
     TRACE("(%p %p %08lx)\n", lpdwUser, lpDesc, dwFlags);
 
@@ -635,7 +644,7 @@ static	DWORD	widOpen(LPDWORD lpdwUser, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
         /* try some ACM stuff */
         
 #define	TRY(sps,bps)    wfx.nSamplesPerSec = (sps); wfx.wBitsPerSample = (bps); \
-                        switch (widOpenHelper(wim, i, lpDesc, &wfx, dwFlags | WAVE_FORMAT_DIRECT)) { \
+                        switch (res=widOpenHelper(wim, i, lpDesc, &wfx, dwFlags | WAVE_FORMAT_DIRECT)) { \
                         case MMSYSERR_NOERROR: wim->avgSpeedInner = wfx.nAvgBytesPerSec; goto found; \
                         case WAVERR_BADFORMAT: break; \
                         default: goto error; \
@@ -702,6 +711,11 @@ found:
     return MMSYSERR_NOERROR;
 error:
     HeapFree(GetProcessHeap(), 0, wim);
+    if (res==ACMERR_NOTPOSSIBLE) {
+        WARN("ret = WAVERR_BADFORMAT\n");
+        return WAVERR_BADFORMAT;
+    }
+    WARN("ret = MMSYSERR_ERROR\n");
     return MMSYSERR_ERROR;
 }
 
