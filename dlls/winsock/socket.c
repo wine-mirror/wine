@@ -341,7 +341,7 @@ static void WINSOCK_DeleteIData(void)
 	if( iData->buffer ) SEGPTR_FREE(iData->buffer);
 	if( iData->dbuffer ) SEGPTR_FREE(iData->dbuffer);
 
-	HeapFree(GetProcessHeap(), 0, iData);
+        wsinfo.num_startup = 0;
 }
 
 /***********************************************************************
@@ -676,7 +676,7 @@ INT WINAPI WSAStartup(UINT wVersionRequested, LPWSADATA lpWSAData)
 INT WINAPI WSACleanup(void)
 {
     LPWSINFO pwsi = WINSOCK_GetIData();
-    if( pwsi ) {
+    if( pwsi->num_startup ) {
 	if( --pwsi->num_startup > 0 ) return 0;
 
 	WINSOCK_DeleteIData();
