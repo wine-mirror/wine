@@ -396,6 +396,9 @@ HANDLE NE_OpenFile( NE_MODULE *pModule )
 
 /***********************************************************************
  *           NE_LoadExeHeader
+ *
+ * We always have to close hFile upon exit.
+ * Otherwise we get file sharing trouble !
  */
 static HMODULE16 NE_LoadExeHeader( LPCSTR filename )
 {
@@ -439,13 +442,20 @@ static HMODULE16 NE_LoadExeHeader( LPCSTR filename )
         return (HMODULE16)11;  /* invalid exe */
     }
 
-    if (ne_header.ne_magic == IMAGE_NT_SIGNATURE) return (HMODULE16)21;  /* win32 exe */
-    if (ne_header.ne_magic != IMAGE_OS2_SIGNATURE) return (HMODULE16)11;  /* invalid exe */
-
+    if (ne_header.ne_magic == IMAGE_NT_SIGNATURE)
+    {
+        _lclose16( hFile );
+        return (HMODULE16)21;  /* win32 exe */
+    }
     if (ne_header.ne_magic == IMAGE_OS2_SIGNATURE_LX) {
-      MESSAGE("Sorry, this is an OS/2 linear executable (LX) file !\n");
-      _lclose16( hFile );
-      return (HMODULE16)12;
+        MESSAGE("Sorry, this is an OS/2 linear executable (LX) file !\n");
+        _lclose16( hFile );
+        return (HMODULE16)12;
+    }
+    if (ne_header.ne_magic != IMAGE_OS2_SIGNATURE)
+    {
+        _lclose16( hFile );
+        return (HMODULE16)11;  /* invalid exe */
     }
 
     /* We now have a valid NE header */
