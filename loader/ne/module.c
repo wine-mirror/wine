@@ -1313,32 +1313,64 @@ BOOL16 WINAPI ModuleFindHandle16( MODULEENTRY *lpme, HMODULE16 hModule )
  */
 static HMODULE16 GetModuleFromPath(LPCSTR name)
 {
-    MODULEENTRY lookforit;
-    NE_MODULE *pModule;
-    DOS_FULL_NAME nametoload, nametocompare;
-    LPCSTR modulepath;
+	MODULEENTRY lookforit;
+	NE_MODULE *pModule;
+	DOS_FULL_NAME nametoload, nametocompare;
+	LPCSTR modulepath;
+	HMODULE16 hmod = 0;
 
-    if (!name)
-      return 0;
-    if (!DOSFS_GetFullName(name,TRUE,&nametoload))
-      /* we don't have a full qualified path */
-      return GetModuleHandle16( name );
-    lookforit.dwSize=sizeof(MODULEENTRY);
-    for (ModuleFirst16(&lookforit);
-	 ModuleNext16(&lookforit);)
-      {
-	pModule = NE_GetPtr( lookforit.hModule );
-        if (!pModule) 
-	  break;
-        modulepath = NE_MODULE_NAME(pModule);
-	if (!modulepath)
-	  break;
-	/* Only comparing the Unix path will give valid results*/
-	if (DOSFS_GetFullName(modulepath,TRUE,&nametocompare))
-	    if (!strcmp(nametoload.long_name,nametocompare.long_name))
-	      return lookforit.hModule;
-      }
-    return 0;
+	if(!name)
+		return 0;
+
+	if(!DOSFS_GetFullName(name, TRUE, &nametoload))
+	{
+		OFSTRUCT ofs;
+		/* We don't have a fully qualified path, but we might have an
+		 * extension. This must be checked because not all modulenames
+		 * are equal to the filename (notably thunk files).
+		 */
+		ofs.cBytes = sizeof(OFSTRUCT);
+		if(OpenFile16(name, &ofs, OF_EXIST) != HFILE_ERROR16)
+		{
+			/* We had an extension in the name and it was in the path.
+			 * Look in the ofstruct of the modules for a match after
+			 * we get the unixname.
+			 */
+			if(DOSFS_GetFullName(ofs.szPathName, TRUE, &nametoload))
+				goto check_path;
+		}
+
+		/* Pfff, last resort, check if the name is a 'real' modulename */
+		hmod = GetModuleHandle16(name);
+	}
+	else
+	{
+check_path:
+		lookforit.dwSize=sizeof(MODULEENTRY);
+		for(ModuleFirst16(&lookforit); ModuleNext16(&lookforit); )
+		{
+			pModule = NE_GetPtr(lookforit.hModule);
+			if(!pModule) 
+				break;
+			modulepath = NE_MODULE_NAME(pModule);
+			if(!modulepath)
+				break;
+			/* Only comparing the Unix path will give valid results */
+			if(DOSFS_GetFullName(modulepath, TRUE, &nametocompare))
+			{
+				if(!strcmp(nametoload.long_name, nametocompare.long_name))
+				{
+					hmod = lookforit.hModule;
+					break;
+				}
+			}
+		}
+	}
+
+	if(TRACE_ON(module) && hmod)
+		TRACE(module, "Module '%s' already loaded 0x%04x\n", name, hmod);
+
+	return hmod;
 }
 
 
