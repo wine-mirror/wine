@@ -382,11 +382,7 @@ static int CDROM_GetInterfaceInfo(int fd, int* port, int* iface, int* device,int
 {
 #if defined(linux)
     struct stat st;
-    if ( fstat(fd, &st) == -1 || ! S_ISBLK(st.st_mode))
-    {
-        FIXME("cdrom not a block device!!!\n");
-        return 0;
-    }
+    if ( fstat(fd, &st) == -1 || ! S_ISBLK(st.st_mode)) return 0;
     *port = 0;
     *iface = 0;
     *device = 0;
@@ -501,23 +497,7 @@ static NTSTATUS CDROM_Open(int fd, int* dev)
 static NTSTATUS CDROM_GetStatusCode(int io)
 {
     if (io == 0) return STATUS_SUCCESS;
-    switch (errno)
-    {
-    case EIO:
-#ifdef ENOMEDIUM
-    case ENOMEDIUM:
-#endif
-        return STATUS_NO_MEDIA_IN_DEVICE;
-    case EPERM:
-        return STATUS_ACCESS_DENIED;
-    case EINVAL:
-        return STATUS_INVALID_PARAMETER;
-    /* case EBADF: Bad file descriptor */
-    case EOPNOTSUPP:
-        return STATUS_NOT_SUPPORTED;
-    }
-    FIXME("Unmapped error code %d: %s\n", errno, strerror(errno));
-    return STATUS_IO_DEVICE_ERROR;
+    return FILE_GetNtStatus();
 }
 
 /******************************************************************

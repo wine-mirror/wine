@@ -284,6 +284,11 @@ NTSTATUS FILE_GetNtStatus(void)
     case ENOTEMPTY: return STATUS_DIRECTORY_NOT_EMPTY;
     case EPIPE:     return STATUS_PIPE_BROKEN;
     case EIO:       return STATUS_DEVICE_NOT_READY;
+#ifdef ENOMEDIUM
+    case ENOMEDIUM: return STATUS_NO_MEDIA_IN_DEVICE;
+#endif
+    case ENOTTY:
+    case EOPNOTSUPP:return STATUS_NOT_SUPPORTED;
     case ENOEXEC:   /* ?? */
     case ESPIPE:    /* ?? */
     case EEXIST:    /* ?? */

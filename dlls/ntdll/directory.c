@@ -27,9 +27,13 @@
 #include <dirent.h>
 #include <errno.h>
 #include <fcntl.h>
+#ifdef HAVE_MNTENT_H
+#include <mntent.h>
+#endif
 #include <stdarg.h>
 #include <string.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include <sys/stat.h>
 #ifdef HAVE_SYS_IOCTL_H
 #include <sys/ioctl.h>
@@ -101,14 +105,14 @@ static int show_dot_files;
 /* at some point we may want to allow Winelib apps to set this */
 static const int is_case_sensitive = FALSE;
 
-static CRITICAL_SECTION chdir_section;
+static CRITICAL_SECTION dir_section;
 static CRITICAL_SECTION_DEBUG critsect_debug =
 {
-    0, 0, &chdir_section,
+    0, 0, &dir_section,
     { &critsect_debug.ProcessLocksList, &critsect_debug.ProcessLocksList },
-      0, 0, { 0, (DWORD)(__FILE__ ": chdir_section") }
+      0, 0, { 0, (DWORD)(__FILE__ ": dir_section") }
 };
-static CRITICAL_SECTION chdir_section = { &critsect_debug, -1, 0, 0, 0, 0 };
+static CRITICAL_SECTION dir_section = { &critsect_debug, -1, 0, 0, 0, 0 };
 
 
 /***********************************************************************
@@ -183,6 +187,90 @@ static char *get_default_lpt_device( int num )
     }
 #else
     FIXME( "no known default for device lpt%d\n", num );
+#endif
+    return ret;
+}
+
+
+/***********************************************************************
+ *           parse_mount_entries
+ *
+ * Parse mount entries looking for a given device. Helper for get_default_drive_device.
+ */
+#ifdef linux
+static char *parse_mount_entries( FILE *f, dev_t dev, ino_t ino )
+{
+    struct mntent *entry;
+    struct stat st;
+    char *device;
+
+    while ((entry = getmntent( f )))
+    {
+        if (stat( entry->mnt_dir, &st ) == -1) continue;
+        if (st.st_dev != dev || st.st_ino != ino) continue;
+        if (!strcmp( entry->mnt_type, "supermount" ))
+        {
+            if ((device = strstr( entry->mnt_opts, "dev=" )))
+            {
+                char *p = strchr( device + 4, ',' );
+                if (p) *p = 0;
+                return device + 4;
+            }
+        }
+        else
+            return entry->mnt_fsname;
+    }
+    return NULL;
+}
+#endif
+
+/***********************************************************************
+ *           get_default_drive_device
+ *
+ * Return the default device to use for a given drive mount point.
+ */
+static char *get_default_drive_device( const char *root )
+{
+    char *ret = NULL;
+
+#ifdef linux
+    FILE *f;
+    char *device = NULL;
+    int fd, res = -1;
+    struct stat st;
+
+    /* try to open it first to force it to get mounted */
+    if ((fd = open( root, O_RDONLY | O_DIRECTORY )) != -1)
+    {
+        res = fstat( fd, &st );
+        close( fd );
+    }
+    /* now try normal stat just in case */
+    if (res == -1) res = stat( root, &st );
+    if (res == -1) return NULL;
+
+    RtlEnterCriticalSection( &dir_section );
+
+    if ((f = fopen( "/etc/mtab", "r" )))
+    {
+        device = parse_mount_entries( f, st.st_dev, st.st_ino );
+        endmntent( f );
+    }
+    /* look through fstab too in case it's not mounted (for instance if it's an audio CD) */
+    if (!device && (f = fopen( "/etc/fstab", "r" )))
+    {
+        device = parse_mount_entries( f, st.st_dev, st.st_ino );
+        endmntent( f );
+    }
+    if (device)
+    {
+        ret = RtlAllocateHeap( GetProcessHeap(), 0, strlen(device) + 1 );
+        if (ret) strcpy( ret, device );
+    }
+    RtlLeaveCriticalSection( &dir_section );
+#else
+    static int warned;
+    if (!warned++) FIXME( "auto detection of DOS devices not supported on this platform\n" );
 #endif
     return ret;
 }
@@ -548,7 +636,7 @@ NTSTATUS WINAPI NtQueryDirectoryFile( HANDLE handle, HANDLE event,
 
     io->Information = 0;
 
-    RtlEnterCriticalSection( &chdir_section );
+    RtlEnterCriticalSection( &dir_section );
 
     if (show_dir_symlinks == -1) init_options();
 
@@ -681,7 +769,7 @@ NTSTATUS WINAPI NtQueryDirectoryFile( HANDLE handle, HANDLE event,
     }
     else io->u.Status = FILE_GetNtStatus();
 
-    RtlLeaveCriticalSection( &chdir_section );
+    RtlLeaveCriticalSection( &dir_section );
 
     wine_server_release_fd( handle, fd );
     if (cwd != -1) close( cwd );
@@ -833,7 +921,7 @@ static NTSTATUS get_dos_device( const WCHAR *name, UINT name_len, ANSI_STRING *u
 {
     const char *config_dir = wine_get_config_dir();
     struct stat st;
-    char *unix_name, *dev;
+    char *unix_name, *new_name, *dev;
     int i, unix_len;
 
     /* make sure the device name is ASCII */
@@ -888,31 +976,22 @@ static NTSTATUS get_dos_device( const WCHAR *name, UINT name_len, ANSI_STRING *u
             dev = NULL; /* last try */
             continue;
         }
-        if (!strncmp( dev, "com", 3 ))
+
+        new_name = NULL;
+        if (dev[1] == ':' && dev[2] == ':')  /* drive device */
         {
-            char *name = get_default_com_device( dev[3] - '0' );
-            if (name)
-            {
-                RtlFreeHeap( GetProcessHeap(), 0, unix_name );
-                unix_name = name;
-                unix_len = strlen(name) + 1;
-                dev = NULL; /* last try */
-                continue;
-            }
+            dev[2] = 0;  /* remove last ':' to get the drive mount point symlink */
+            new_name = get_default_drive_device( unix_name );
         }
-        if (!strncmp( dev, "lpt", 3 ))
-        {
-            char *name = get_default_lpt_device( dev[3] - '0' );
-            if (name)
-            {
-                RtlFreeHeap( GetProcessHeap(), 0, unix_name );
-                unix_name = name;
-                unix_len = strlen(name) + 1;
-                dev = NULL; /* last try */
-                continue;
-            }
-        }
-        break;
+        else if (!strncmp( dev, "com", 3 )) new_name = get_default_com_device( dev[3] - '0' );
+        else if (!strncmp( dev, "lpt", 3 )) new_name = get_default_lpt_device( dev[3] - '0' );
+
+        if (!new_name) break;
+
+        RtlFreeHeap( GetProcessHeap(), 0, unix_name );
+        unix_name = new_name;
+        unix_len = strlen(unix_name) + 1;
+        dev = NULL; /* last try */
     }
     RtlFreeHeap( GetProcessHeap(), 0, unix_name );
     return STATUS_OBJECT_NAME_NOT_FOUND;

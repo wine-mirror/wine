@@ -362,6 +362,9 @@
 /* Define to 1 if you have the `mmap' function. */
 #undef HAVE_MMAP
 
+/* Define to 1 if you have the <mntent.h> header file. */
+#undef HAVE_MNTENT_H
+
 /* Define to 1 if the system has the type `mode_t'. */
 #undef HAVE_MODE_T
 

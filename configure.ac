@@ -1100,6 +1100,7 @@ AC_CHECK_HEADERS(\
 	linux/serial.h \
 	linux/ucdrom.h \
 	machine/cpu.h \
+	mntent.h \
 	netdb.h \
 	netinet/in.h \
 	netinet/in_systm.h \
