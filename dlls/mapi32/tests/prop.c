@@ -812,7 +812,7 @@ static void test_ScCopyRelocProps(void)
        pvProp.ulPropTag, buffer + sizeof(SPropValue) + sizeof(char*),
        szTestA, sizeof(SPropValue) + sizeof(char*) + 5, sc, 
        lpResProp->Value.MVszA.cValues, lpResProp->ulPropTag,
-       lpResProp->Value.MVszA.lppszA[0], lpResProp->Value.MVszA.lppszA[0], ulCount);
+       lpResProp->Value.MVszA.lppszA[0], sc==S_OK?lpResProp->Value.MVszA.lppszA[0]:NULL, ulCount);
 
     memcpy(buffer2, buffer, sizeof(buffer));
     
@@ -838,7 +838,7 @@ static void test_ScCopyRelocProps(void)
        pvProp.ulPropTag, buffer2 + sizeof(SPropValue) + sizeof(char*),
        szTestA, sizeof(SPropValue) + sizeof(char*) + 5, sc, 
        lpResProp->Value.MVszA.cValues, lpResProp->ulPropTag,
-       lpResProp->Value.MVszA.lppszA[0], lpResProp->Value.MVszA.lppszA[0], ulCount);
+       lpResProp->Value.MVszA.lppszA[0], sc==S_OK?lpResProp->Value.MVszA.lppszA[0]:NULL, ulCount);
 
     /* Native crashes with lpNew or lpOld set to NULL so skip testing this */   
 }
