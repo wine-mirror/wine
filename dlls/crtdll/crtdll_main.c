@@ -121,17 +121,21 @@ BOOL WINAPI CRTDLL_Init(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 /*********************************************************************
  *                  _GetMainArgs  (CRTDLL.022)
  */
-DWORD __cdecl CRTDLL__GetMainArgs(LPDWORD argc,LPSTR **argv,
+LPSTR * __cdecl CRTDLL__GetMainArgs(LPDWORD argc,LPSTR **argv,
                                 LPSTR *environ,DWORD flag)
 {
         char *cmdline;
         char  **xargv;
-	int	xargc,i,afterlastspace;
+	int	xargc,end,last_arg,afterlastspace;
 	DWORD	version;
 
 	TRACE("(%p,%p,%p,%ld).\n",
 		argc,argv,environ,flag
 	);
+
+	if (CRTDLL_acmdln_dll != NULL)
+		HeapFree(GetProcessHeap(), 0, CRTDLL_acmdln_dll);
+
 	CRTDLL_acmdln_dll = cmdline = HEAP_strdupA( GetProcessHeap(), 0,
                                                     GetCommandLineA() );
  	TRACE("got '%s'\n", cmdline);
@@ -150,27 +154,40 @@ DWORD __cdecl CRTDLL__GetMainArgs(LPDWORD argc,LPSTR **argv,
 
 	/* missing threading init */
 
-	i=0;xargv=NULL;xargc=0;afterlastspace=0;
-	while (cmdline[i]) {
-		if (cmdline[i]==' ') {
+	end=0;last_arg=0;xargv=NULL;xargc=0;afterlastspace=0;
+	while (1)
+	{
+	    if ((cmdline[end]==' ') || (cmdline[end]=='\0'))
+	    {
+		if (cmdline[end]=='\0')
+		    last_arg=1;
+		else
+		    cmdline[end]='\0';
+		/* alloc xargc + NULL entry */
 			xargv=(char**)HeapReAlloc( GetProcessHeap(), 0, xargv,
-                                                   sizeof(char*)*(++xargc));
-			cmdline[i]='\0';
-			xargv[xargc-1] = HEAP_strdupA( GetProcessHeap(), 0,
+		                             sizeof(char*)*(xargc+1));
+		if (strlen(cmdline+afterlastspace))
+		{
+		    xargv[xargc] = HEAP_strdupA( GetProcessHeap(), 0,
                                                        cmdline+afterlastspace);
-			i++;
-			while (cmdline[i]==' ')
-				i++;
-			if (cmdline[i])
-				afterlastspace=i;
-		} else
-			i++;
+		    xargc++;
+                    if (!last_arg) /* need to seek to the next arg ? */
+		    {
+			end++;
+			while (cmdline[end]==' ')
+			    end++;
 	}
-	xargv=(char**)HeapReAlloc( GetProcessHeap(), 0, xargv,
-                                   sizeof(char*)*(++xargc));
-	cmdline[i]='\0';
-	xargv[xargc-1] = HEAP_strdupA( GetProcessHeap(), 0,
-                                       cmdline+afterlastspace);
+		    afterlastspace=end;
+		}
+		else
+		{
+		    xargv[xargc] = NULL; /* the last entry is NULL */
+		    break;
+		}
+	    }
+	    else
+		end++;
+	}
 	CRTDLL_argc_dll	= xargc;
 	*argc		= xargc;
 	CRTDLL_argv_dll	= xargv;
@@ -179,7 +196,7 @@ DWORD __cdecl CRTDLL__GetMainArgs(LPDWORD argc,LPSTR **argv,
 	TRACE("found %d arguments\n",
 		CRTDLL_argc_dll);
 	CRTDLL_environ_dll = *environ = GetEnvironmentStringsA();
-	return 0;
+	return environ;
 }
 
 

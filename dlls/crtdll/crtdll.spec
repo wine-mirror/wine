@@ -351,7 +351,7 @@ init    CRTDLL_Init
 @ cdecl atof(str) atof
 @ cdecl atoi(str) atoi
 @ cdecl atol(str) atol
-@ stub bsearch
+@ cdecl bsearch(ptr ptr long long ptr) bsearch
 @ cdecl calloc(long long) CRTDLL_calloc
 @ cdecl ceil(double) ceil
 @ stub clearerr
