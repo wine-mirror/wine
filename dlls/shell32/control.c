@@ -317,6 +317,7 @@ static	void	Control_DoLaunch(CPanel* panel, HWND hWnd, LPCSTR cmd)
     char	ch;
     unsigned 	sp = 0;
     char*	extraPmts = NULL;
+    int        quoted = 0;
 
     buffer = HeapAlloc(GetProcessHeap(), 0, strlen(cmd) + 1);
     if (!buffer) return;
@@ -325,7 +326,8 @@ static	void	Control_DoLaunch(CPanel* panel, HWND hWnd, LPCSTR cmd)
 
     for (;;) {
 	ch = *end;
-	if (ch == ' ' || ch == ',' || ch == '\0') {
+        if (ch == '"') quoted = !quoted;
+	if (!quoted && (ch == ' ' || ch == ',' || ch == '\0')) {
 	    *end = '\0';
 	    if (beg) {
 	        if (*beg == '@') {
@@ -342,6 +344,9 @@ static	void	Control_DoLaunch(CPanel* panel, HWND hWnd, LPCSTR cmd)
 	}
 	end++;
     }
+
+    TRACE("cmd %s, extra %s, sp %d\n", buffer, debugstr_a(extraPmts), sp);
+
     Control_LoadApplet(hWnd, buffer, panel);
 
     if (panel->first) {
