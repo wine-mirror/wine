@@ -491,33 +491,34 @@ static BOOL OSS_WaveOutInit(OSS_DEVICE* ossdev)
 {
     int rc,arg;
     int f,c,r;
-    int mixer;
     TRACE("(%p) %s\n", ossdev, ossdev->dev_name);
 
     if (OSS_OpenDevice(ossdev, O_WRONLY, NULL, 0,-1,-1,-1) != 0) return FALSE;
     ioctl(ossdev->fd, SNDCTL_DSP_RESET, 0);
 
 #ifdef SOUND_MIXER_INFO
-    if ((mixer = open(ossdev->mixer_name, O_RDONLY|O_NDELAY)) >= 0) {
-	mixer_info info;
-	if (ioctl(mixer, SOUND_MIXER_INFO, &info) >= 0) {
-	    close(mixer);
-	    strncpy(ossdev->ds_desc.szDesc, info.name, sizeof(info.name));
-	    strcpy(ossdev->ds_desc.szDrvName, "wineoss.drv");
-	    strncpy(ossdev->out_caps.szPname, info.name, sizeof(info.name));
-	    TRACE("%s\n", ossdev->ds_desc.szDesc);
-	} else {
-	    ERR("%s: can't read info!\n", ossdev->mixer_name);
-	    OSS_CloseDevice(ossdev);
-	    close(mixer);
-	    return FALSE;
-	}
-    } else {
-	ERR("%s: not found!\n", ossdev->mixer_name);
-	OSS_CloseDevice(ossdev);
-	return FALSE;
+    {
+        int mixer;
+        if ((mixer = open(ossdev->mixer_name, O_RDONLY|O_NDELAY)) >= 0) {
+            mixer_info info;
+            if (ioctl(mixer, SOUND_MIXER_INFO, &info) >= 0) {
+                close(mixer);
+                strncpy(ossdev->ds_desc.szDesc, info.name, sizeof(info.name));
+                strcpy(ossdev->ds_desc.szDrvName, "wineoss.drv");
+                strncpy(ossdev->out_caps.szPname, info.name, sizeof(info.name));
+                TRACE("%s\n", ossdev->ds_desc.szDesc);
+            } else {
+                ERR("%s: can't read info!\n", ossdev->mixer_name);
+                OSS_CloseDevice(ossdev);
+                close(mixer);
+                return FALSE;
+            }
+        } else {
+            ERR("%s: not found!\n", ossdev->mixer_name);
+            OSS_CloseDevice(ossdev);
+            return FALSE;
+        }
     }
-    close(mixer);
 #endif /* SOUND_MIXER_INFO */
 
     /* FIXME: some programs compare this string against the content of the
@@ -626,31 +627,32 @@ static BOOL OSS_WaveInInit(OSS_DEVICE* ossdev)
 {
     int rc,arg;
     int f,c,r;
-    int mixer;
     TRACE("(%p) %s\n", ossdev, ossdev->dev_name);
 
     if (OSS_OpenDevice(ossdev, O_RDONLY, NULL, 0,-1,-1,-1) != 0) return FALSE;
     ioctl(ossdev->fd, SNDCTL_DSP_RESET, 0);
 
 #ifdef SOUND_MIXER_INFO
-    if ((mixer = open(ossdev->mixer_name, O_RDONLY|O_NDELAY)) >= 0) {
-	mixer_info info;
-	if (ioctl(mixer, SOUND_MIXER_INFO, &info) >= 0) {
-	    close(mixer);
-	    strncpy(ossdev->in_caps.szPname, info.name, sizeof(info.name));
-	    TRACE("%s\n", ossdev->ds_desc.szDesc);
-	} else {
-	    ERR("%s: can't read info!\n", ossdev->mixer_name);
-	    OSS_CloseDevice(ossdev);
-	    close(mixer);
-	    return FALSE;
-	}
-    } else {
-	ERR("%s: not found!\n", ossdev->mixer_name);
-	OSS_CloseDevice(ossdev);
-	return FALSE;
+    {
+        int mixer;
+        if ((mixer = open(ossdev->mixer_name, O_RDONLY|O_NDELAY)) >= 0) {
+            mixer_info info;
+            if (ioctl(mixer, SOUND_MIXER_INFO, &info) >= 0) {
+                close(mixer);
+                strncpy(ossdev->in_caps.szPname, info.name, sizeof(info.name));
+                TRACE("%s\n", ossdev->ds_desc.szDesc);
+            } else {
+                ERR("%s: can't read info!\n", ossdev->mixer_name);
+                OSS_CloseDevice(ossdev);
+                close(mixer);
+                return FALSE;
+            }
+        } else {
+            ERR("%s: not found!\n", ossdev->mixer_name);
+            OSS_CloseDevice(ossdev);
+            return FALSE;
+        }
     }
-    close(mixer);
 #endif /* SOUND_MIXER_INFO */
 
     /* See comment in OSS_WaveOutInit */
