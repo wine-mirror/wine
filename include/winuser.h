@@ -44,7 +44,7 @@ typedef struct
     UINT  paramH;
     DWORD   time;
     HWND  hwnd;
-} EVENTMSG, *LPEVENTMSG;
+} EVENTMSG, *PEVENTMSG, *LPEVENTMSG;
 
 
     /* Mouse hook structure */
@@ -66,7 +66,7 @@ typedef struct
     UINT    wMessage;
     WPARAM  wParam;
     LPARAM    lParam;
-} HARDWAREHOOKSTRUCT, *LPHARDWAREHOOKSTRUCT;
+} HARDWAREHOOKSTRUCT, *PHARDWAREHOOKSTRUCT, *LPHARDWAREHOOKSTRUCT;
 
 
   /* Debug hook structure */
@@ -78,7 +78,7 @@ typedef struct
     LPARAM      lParam;
     WPARAM    wParam;
     INT       code;
-} DEBUGHOOKINFO, *LPDEBUGHOOKINFO;
+} DEBUGHOOKINFO, *PDEBUGHOOKINFO, *LPDEBUGHOOKINFO;
 
 #define HKL_PREV   0
 #define HKL_NEXT   1
@@ -142,7 +142,7 @@ typedef struct
   WPARAM      wParam;
   UINT        message;
   HWND        hwnd;
-} CWPSTRUCT, *LPCWPSTRUCT;
+} CWPSTRUCT, *PCWPSTRUCT, *LPCWPSTRUCT;
 
 typedef struct
 {
@@ -151,7 +151,7 @@ typedef struct
   WPARAM      wParam;
   DWORD         message;
   HWND        hwnd;
-} CWPRETSTRUCT, *LPCWPRETSTRUCT;
+} CWPRETSTRUCT, *PCWPRETSTRUCT, *LPCWPRETSTRUCT;
 
 typedef struct
 {
@@ -161,7 +161,7 @@ typedef struct
     POINT  ptMinPosition WINE_PACKED;
     POINT  ptMaxPosition WINE_PACKED;
     RECT   rcNormalPosition WINE_PACKED;
-} WINDOWPLACEMENT, *LPWINDOWPLACEMENT;
+} WINDOWPLACEMENT, *PWINDOWPLACEMENT, *LPWINDOWPLACEMENT;
 
 
   /* WINDOWPLACEMENT flags */
@@ -1233,7 +1233,7 @@ typedef struct
     HBRUSH    hbrBackground;
     LPCSTR      lpszMenuName;
     LPCSTR      lpszClassName;
-} WNDCLASSA, *LPWNDCLASSA, *PWNDCLASSA;
+} WNDCLASSA, *PWNDCLASSA, *LPWNDCLASSA;
 
 typedef struct
 {
@@ -1247,17 +1247,17 @@ typedef struct
     HBRUSH    hbrBackground;
     LPCWSTR     lpszMenuName;
     LPCWSTR     lpszClassName;
-} WNDCLASSW, *LPWNDCLASSW, *PWNDCLASSW;
+} WNDCLASSW, *PWNDCLASSW, *LPWNDCLASSW;
 
 DECL_WINELIB_TYPE_AW(WNDCLASS)
-DECL_WINELIB_TYPE_AW(LPWNDCLASS)
 DECL_WINELIB_TYPE_AW(PWNDCLASS)
+DECL_WINELIB_TYPE_AW(LPWNDCLASS)
 
 typedef struct {
     DWORD dwData;
     DWORD cbData;
     LPVOID lpData;
-} COPYDATASTRUCT, *PCOPYDATASTRUCT, *LPCOPYDATASTRUCT;
+} COPYDATASTRUCT, *PCOPYDATASTRUCT;
 
 typedef struct {
     HMENU hmenuIn;
@@ -1265,22 +1265,23 @@ typedef struct {
     HWND  hwndNext;
 } MDINEXTMENU, *PMDINEXTMENU, *LPMDINEXTMENU;
 
-/* WinHelp internal structure */
-typedef struct {
-	WORD size;
-	WORD command;
-	LONG data;
-	LONG reserved;
-	WORD ofsFilename;
-	WORD ofsData;
-} WINHELP,*LPWINHELP;
+typedef struct
+{
+    WORD    mkSize;
+    CHAR    mkKeyList;
+    CHAR    szKeyphrase[1];
+} MULTIKEYHELPA, *PMULTIKEYHELPA, *LPMULTIKEYHELPA;
 
 typedef struct
 {
     WORD    mkSize;
-    BYTE    mkKeyList;
-    BYTE    szKeyphrase[1];
-} MULTIKEYHELP, *LPMULTIKEYHELP;
+    WCHAR   mkKeyList;
+    WCHAR   szKeyphrase[1];
+} MULTIKEYHELPW, *PMULTIKEYHELPW, *LPMULTIKEYHELPW;
+
+DECL_WINELIB_TYPE_AW(MULTIKEYHELP)
+DECL_WINELIB_TYPE_AW(PMULTIKEYHELP)
+DECL_WINELIB_TYPE_AW(LPMULTIKEYHELP)
 
 typedef struct {
 	WORD wStructSize;
@@ -1289,8 +1290,22 @@ typedef struct {
 	WORD dx;
 	WORD dy;
 	WORD wMax;
-	char rgchMember[2];
-} HELPWININFO, *LPHELPWININFO;
+	CHAR rgchMember[2];
+} HELPWININFOA, *PHELPWININFOA, *LPHELPWININFOA;
+
+typedef struct {
+	WORD wStructSize;
+	WORD x;
+	WORD y;
+	WORD dx;
+	WORD dy;
+	WORD wMax;
+	WCHAR rgchMember[2];
+} HELPWININFOW, *PHELPWININFOW, *LPHELPWININFOW;
+
+DECL_WINELIB_TYPE_AW(HELPWININFO)
+DECL_WINELIB_TYPE_AW(PHELPWININFO)
+DECL_WINELIB_TYPE_AW(LPHELPWININFO)
 
 #define HELP_CONTEXT        0x0001
 #define HELP_QUIT           0x0002
@@ -1350,7 +1365,7 @@ typedef struct
     LPCSTR      lpszMenuName;
     LPCSTR      lpszClassName;
     HICON     hIconSm;
-} WNDCLASSEXA, *LPWNDCLASSEXA;
+} WNDCLASSEXA, *PWNDCLASSEXA, *LPWNDCLASSEXA;
 
 typedef struct
 {
@@ -1366,9 +1381,10 @@ typedef struct
     LPCWSTR     lpszMenuName;
     LPCWSTR     lpszClassName;
     HICON     hIconSm;
-} WNDCLASSEXW, *LPWNDCLASSEXW;
+} WNDCLASSEXW, *PWNDCLASSEXW, *LPWNDCLASSEXW;
 
 DECL_WINELIB_TYPE_AW(WNDCLASSEX)
+DECL_WINELIB_TYPE_AW(PWNDCLASSEX)
 DECL_WINELIB_TYPE_AW(LPWNDCLASSEX)
 
 typedef struct tagMSG
@@ -1396,7 +1412,7 @@ typedef struct {
 	DWORD		yHotspot;
 	HBITMAP	hbmMask;
 	HBITMAP	hbmColor;
-} ICONINFO,*LPICONINFO;
+} ICONINFO, *PICONINFO;
 
 
 /* this is the 6 byte accel struct used in Win32 when presented to the user */
@@ -1407,16 +1423,6 @@ typedef struct
     WORD   key;
     WORD   cmd;
 } ACCEL, *LPACCEL;
-
-/* this is the 8 byte accel struct used in Win32 resources (internal only) */
-typedef struct
-{
-    BYTE   fVirt;
-    BYTE   pad0;
-    WORD   key;
-    WORD   cmd;
-    WORD   pad1;
-} PE_ACCEL, *LPPE_ACCEL;
 
 
 /* Flags for TrackPopupMenu */
@@ -1464,14 +1470,17 @@ typedef struct {
   HMENU   hSubMenu;
   HBITMAP hbmpChecked;
   HBITMAP hbmpUnchecked;
-  DWORD     dwItemData;
-  LPWSTR    dwTypeData;
+  DWORD   dwItemData;
+  LPWSTR  dwTypeData;
   UINT    cch;
   HBITMAP hbmpItem;
 } MENUITEMINFOW, *LPMENUITEMINFOW;
 
 DECL_WINELIB_TYPE_AW(MENUITEMINFO)
 DECL_WINELIB_TYPE_AW(LPMENUITEMINFO)
+typedef const MENUITEMINFOA *LPCMENUITEMINFOA;
+typedef const MENUITEMINFOW *LPCMENUITEMINFOW;
+DECL_WINELIB_TYPE_AW(LPCMENUITEMINFO)
 
 typedef struct {
   DWORD   cbSize;
@@ -1483,7 +1492,7 @@ typedef struct {
   DWORD   dwMenuData;
 } MENUINFO, *LPMENUINFO;
 
-typedef MENUINFO const * LPCMENUINFO;
+typedef const MENUINFO *LPCMENUINFO;
 
 #define MIM_MAXHEIGHT		0x00000001
 #define MIM_BACKGROUND		0x00000002
@@ -1667,7 +1676,9 @@ typedef struct
     INT     nPos;
     INT     nTrackPos;
 } SCROLLINFO, *LPSCROLLINFO;
- 
+
+typedef const SCROLLINFO *LPCSCROLLINFO;
+
 /* GetScrollInfo() flags */ 
 #define SIF_RANGE           0x0001
 #define SIF_PAGE            0x0002
@@ -1870,7 +1881,7 @@ typedef struct
 #define	HELPINFO_MENUITEM	0x0002
 
 /* Structure pointed to by lParam of WM_HELP */
-typedef struct			
+typedef struct
 {
     UINT	cbSize;		/* Size in bytes of this struct  */
     INT	iContextType;	/* Either HELPINFO_WINDOW or HELPINFO_MENUITEM */
@@ -1894,7 +1905,7 @@ typedef struct
     DWORD	dwContextHelpId;
     MSGBOXCALLBACK	lpfnMsgBoxCallback;
     DWORD	dwLanguageId;
-} MSGBOXPARAMSA,*LPMSGBOXPARAMSA;
+} MSGBOXPARAMSA, *PMSGBOXPARAMSA, *LPMSGBOXPARAMSA;
 
 typedef struct
 {
@@ -1908,52 +1919,11 @@ typedef struct
     DWORD	dwContextHelpId;
     MSGBOXCALLBACK	lpfnMsgBoxCallback;
     DWORD	dwLanguageId;
-} MSGBOXPARAMSW,*LPMSGBOXPARAMSW;
+} MSGBOXPARAMSW, *PMSGBOXPARAMSW, *LPMSGBOXPARAMSW;
 
 DECL_WINELIB_TYPE_AW(MSGBOXPARAMS)
+DECL_WINELIB_TYPE_AW(PMSGBOXPARAMS)
 DECL_WINELIB_TYPE_AW(LPMSGBOXPARAMS)
-
-typedef struct _numberfmt32a {
-    UINT NumDigits;
-    UINT LeadingZero;
-    UINT Grouping;
-    LPCSTR lpDecimalSep;
-    LPCSTR lpThousandSep;
-    UINT NegativeOrder;
-} NUMBERFMTA;
-
-typedef struct _numberfmt32w {
-    UINT NumDigits;
-    UINT LeadingZero;
-    UINT Grouping;
-    LPCWSTR lpDecimalSep;
-    LPCWSTR lpThousandSep;
-    UINT NegativeOrder;
-} NUMBERFMTW;
-
-typedef struct _currencyfmt32a
-{   
-	UINT      NumDigits;   
-	UINT      LeadingZero; 
-	UINT      Grouping;   
-	LPCSTR    lpDecimalSep;   
-	LPCSTR    lpThousandSep; 
-	UINT      NegativeOrder;   
-	UINT      PositiveOrder; 
-	LPCSTR    lpCurrencySymbol;
-} CURRENCYFMTA; 
-
-typedef struct _currencyfmt32w
-{   
-	UINT      NumDigits;   
-	UINT      LeadingZero; 
-	UINT      Grouping;   
-	LPCWSTR   lpDecimalSep;   
-	LPCWSTR   lpThousandSep; 
-	UINT      NegativeOrder;   
-	UINT      PositiveOrder; 
-	LPCWSTR   lpCurrencySymbol;
-} CURRENCYFMTW; 
 
 #define MONITOR_DEFAULTTONULL       0x00000000
 #define MONITOR_DEFAULTTOPRIMARY    0x00000001
@@ -2001,10 +1971,10 @@ typedef struct tagDLGTEMPLATE
 
 typedef DLGTEMPLATE *LPDLGTEMPLATEA;
 typedef DLGTEMPLATE *LPDLGTEMPLATEW;
-#define LPDLGTEMPLATE WINELIB_NAME_AW(LPDLGTEMPLATE)
+DECL_WINELIB_TYPE_AW(LPDLGTEMPLATE)
 typedef const DLGTEMPLATE *LPCDLGTEMPLATEA;
 typedef const DLGTEMPLATE *LPCDLGTEMPLATEW;
-#define LPCDLGTEMPLATE WINELIB_NAME_AW(LPCDLGTEMPLATE)
+DECL_WINELIB_TYPE_AW(LPCDLGTEMPLATE)
 
 typedef struct tagDLGITEMTEMPLATE
 {
@@ -2017,12 +1987,12 @@ typedef struct tagDLGITEMTEMPLATE
     WORD id;
 } DLGITEMTEMPLATE;
 
+typedef DLGITEMTEMPLATE *PDLGITEMTEMPLATEA;
+typedef DLGITEMTEMPLATE *PDLGITEMTEMPLATEW;
+DECL_WINELIB_TYPE_AW(PDLGITEMTEMPLATE)
 typedef DLGITEMTEMPLATE *LPDLGITEMTEMPLATEA;
 typedef DLGITEMTEMPLATE *LPDLGITEMTEMPLATEW;
-#define LPDLGITEMTEMPLATE WINELIB_NAME_AW(LPDLGITEMTEMPLATE)
-typedef const DLGITEMTEMPLATE *LPCDLGITEMTEMPLATEA;
-typedef const DLGITEMTEMPLATE *LPCDLGITEMTEMPLATEW;
-#define LPCDLGITEMTEMPLATE WINELIB_NAME_AW(LPCDLGITEMTEMPLATE)
+DECL_WINELIB_TYPE_AW(LPDLGITEMTEMPLATE)
 
 
   /* CBT hook values */
@@ -2347,7 +2317,7 @@ typedef struct {
 	LOGFONTA	lfMenuFont;
 	LOGFONTA	lfStatusFont;
 	LOGFONTA	lfMessageFont;
-} NONCLIENTMETRICSA,*LPNONCLIENTMETRICSA;
+} NONCLIENTMETRICSA, *PNONCLIENTMETRICSA, *LPNONCLIENTMETRICSA;
 
 typedef struct {
 	UINT		cbSize;
@@ -2365,10 +2335,33 @@ typedef struct {
 	LOGFONTW	lfMenuFont;
 	LOGFONTW	lfStatusFont;
 	LOGFONTW	lfMessageFont;
-} NONCLIENTMETRICSW,*LPNONCLIENTMETRICSW;
+} NONCLIENTMETRICSW, *PNONCLIENTMETRICSW, *LPNONCLIENTMETRICSW;
 
 DECL_WINELIB_TYPE_AW(NONCLIENTMETRICS)
+DECL_WINELIB_TYPE_AW(PNONCLIENTMETRICS)
 DECL_WINELIB_TYPE_AW(LPNONCLIENTMETRICS)
+
+#define ARW_BOTTOMLEFT              0x0000L
+#define ARW_BOTTOMRIGHT             0x0001L
+#define ARW_TOPLEFT                 0x0002L
+#define ARW_TOPRIGHT                0x0003L
+#define ARW_STARTMASK               0x0003L
+#define ARW_STARTRIGHT              0x0001L
+#define ARW_STARTTOP                0x0002L
+
+#define ARW_LEFT                    0x0000L
+#define ARW_RIGHT                   0x0000L
+#define ARW_UP                      0x0004L
+#define ARW_DOWN                    0x0004L
+#define ARW_HIDE                    0x0008L
+
+typedef struct tagMINIMIZEDMETRICS {
+    UINT cbSize;
+    int iWidth;
+    int iHorzGap;
+    int iVertGap;
+    int iArrange;
+} MINIMIZEDMETRICS, *PMINIMIZEDMETRICS, *LPMINIMIZEDMETRICS;
 
 typedef struct tagICONMETRICSA {
     UINT cbSize;
@@ -2376,7 +2369,7 @@ typedef struct tagICONMETRICSA {
     int iVertSpacing;
     int iTitleWrap;
     LOGFONTA lfFont;
-} ICONMETRICSA, *LPICONMETRICSA;
+} ICONMETRICSA, *PICONMETRICSA, *LPICONMETRICSA;
 
 typedef struct tagICONMETRICSW {
     UINT cbSize;
@@ -2384,9 +2377,10 @@ typedef struct tagICONMETRICSW {
     int iVertSpacing;
     int iTitleWrap;
     LOGFONTW lfFont;
-} ICONMETRICSW, *LPICONMETRICSW;
+} ICONMETRICSW, *PICONMETRICSW, *LPICONMETRICSW;
 
 DECL_WINELIB_TYPE_AW(ICONMETRICS)
+DECL_WINELIB_TYPE_AW(PICONMETRICS)
 DECL_WINELIB_TYPE_AW(LPICONMETRICS)
 
 /* Window Styles */
@@ -2743,7 +2737,7 @@ typedef struct
     UINT     itemID;
     HWND     hwndItem;
     DWORD      itemData;
-} DELETEITEMSTRUCT, *LPDELETEITEMSTRUCT;
+} DELETEITEMSTRUCT, *PDELETEITEMSTRUCT, *LPDELETEITEMSTRUCT;
 
 
 typedef struct
@@ -3070,7 +3064,7 @@ INT       WINAPI CopyAcceleratorTableW(HACCEL,LPACCEL,INT);
 HACCEL      WINAPI CreateAcceleratorTableA(LPACCEL,INT);
 HACCEL      WINAPI CreateAcceleratorTableW(LPACCEL,INT);
 #define     CreateAcceleratorTable WINELIB_NAME_AW(CreateAcceleratorTable)
-HICON     WINAPI CreateIconIndirect(LPICONINFO);
+HICON     WINAPI CreateIconIndirect(PICONINFO);
 BOOL      WINAPI DestroyAcceleratorTable(HACCEL);
 BOOL      WINAPI EnumDisplayMonitors(HDC,LPRECT,MONITORENUMPROC,LPARAM);
 BOOL        WINAPI EnumDisplayDevicesA(LPVOID,DWORD,LPDISPLAY_DEVICEA,DWORD);
@@ -3084,7 +3078,7 @@ INT       WINAPI EnumPropsExW(HWND,PROPENUMPROCEXW,LPARAM);
 #define     EnumPropsEx WINELIB_NAME_AW(EnumPropsEx)
 BOOL      WINAPI EnumThreadWindows(DWORD,WNDENUMPROC,LPARAM);
 BOOL      WINAPI ExitWindowsEx(UINT,DWORD);
-BOOL      WINAPI GetIconInfo(HICON,LPICONINFO);
+BOOL      WINAPI GetIconInfo(HICON,PICONINFO);
 HKL       WINAPI GetKeyboardLayout(DWORD);
 INT       WINAPI GetKeyboardLayoutList(INT,HKL *);
 DWORD     WINAPI GetMenuContextHelpId(HMENU);
@@ -3096,9 +3090,6 @@ BOOL      WINAPI GetMenuItemInfoW(HMENU,UINT,BOOL,MENUITEMINFOW*);
 BOOL      WINAPI GetMonitorInfoA(HMONITOR,LPMONITORINFO);
 BOOL      WINAPI GetMonitorInfoW(HMONITOR,LPMONITORINFO);
 #define     GetMonitorInfo WINELIB_NAME_AW(GetMonitorInfo)
-INT       WINAPI GetNumberFormatA(LCID,DWORD,LPCSTR,const NUMBERFMTA*,LPSTR,int);
-INT       WINAPI GetNumberFormatW(LCID,DWORD,LPCWSTR,const NUMBERFMTW*,LPWSTR,int);
-#define     GetNumberFormat WINELIB_NAME_AW(GetNumberFormat)
 DWORD       WINAPI GetWindowContextHelpId(HWND);
 DWORD       WINAPI GetWindowThreadProcessId(HWND,LPDWORD);
 BOOL      WINAPI IsWindowUnicode(HWND);

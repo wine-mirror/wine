@@ -19,6 +19,16 @@
 DEFAULT_DEBUG_CHANNEL(resource);
 DECLARE_DEBUG_CHANNEL(accel);
 
+/* this is the 8 byte accel struct used in Win32 resources (internal only) */
+typedef struct
+{
+    BYTE   fVirt;
+    BYTE   pad0;
+    WORD   key;
+    WORD   cmd;
+    WORD   pad1;
+} PE_ACCEL, *LPPE_ACCEL;
+
 /**********************************************************************
  *			LoadAccelerators16	[USER.177]
  */

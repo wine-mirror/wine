@@ -1772,7 +1772,7 @@ BOOL16 WINAPI GetIconInfo16(HICON16 hIcon,LPICONINFO16 iconinfo)
 /**********************************************************************
  *          GetIconInfo		(USER32.242)
  */
-BOOL WINAPI GetIconInfo(HICON hIcon,LPICONINFO iconinfo) {
+BOOL WINAPI GetIconInfo(HICON hIcon,PICONINFO iconinfo) {
     CURSORICONINFO	*ciconinfo;
 
     ciconinfo = GlobalLock16(hIcon);
@@ -1809,7 +1809,7 @@ BOOL WINAPI GetIconInfo(HICON hIcon,LPICONINFO iconinfo) {
 /**********************************************************************
  *          CreateIconIndirect		(USER32.78)
  */
-HICON WINAPI CreateIconIndirect(LPICONINFO iconinfo)
+HICON WINAPI CreateIconIndirect(PICONINFO iconinfo)
 {
     BITMAP bmpXor,bmpAnd;
     HICON hObj;

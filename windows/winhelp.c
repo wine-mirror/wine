@@ -18,6 +18,17 @@
 DEFAULT_DEBUG_CHANNEL(win);
 
 
+/* WinHelp internal structure */
+typedef struct
+{
+    WORD size;
+    WORD command;
+    LONG data;
+    LONG reserved;
+    WORD ofsFilename;
+    WORD ofsData;
+} WINHELP,*LPWINHELP;
+
 /**********************************************************************
  *             WinHelp16   (USER.171)
  */
@@ -89,10 +100,10 @@ BOOL WINAPI WinHelpA( HWND hWnd, LPCSTR lpHelpFile, UINT wCommand,
 			dsize = dwData ? strlen( (LPSTR)dwData )+1: 0;
 			break;
 		case HELP_MULTIKEY:
-			dsize = ((LPMULTIKEYHELP)dwData)->mkSize;
+			dsize = ((LPMULTIKEYHELPA)dwData)->mkSize;
 			break;
 		case HELP_SETWINPOS:
-			dsize = ((LPHELPWININFO)dwData)->wStructSize;
+			dsize = ((LPHELPWININFOA)dwData)->wStructSize;
 			break;
 		default:
 			WARN("Unknown help command %d\n",wCommand);
