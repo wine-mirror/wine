@@ -52,7 +52,7 @@ type xmessage >/dev/null 2>/dev/null
 if [ $? -ne 0 ] ; then
     echo "
 Warning:
-   The CodeWeavers Wine launcher is unable to find xmessage.
+   The Wine launcher is unable to find xmessage.
 
    This launcher script relies heavily on finding this tool,
    and without it, it will behave poorly.
@@ -305,7 +305,7 @@ fi
 #------------------------------------------------------------------------------
 #  Here's a little function to clean up after that dialog...
 #------------------------------------------------------------------------------
-function clean_up_info_message ()
+clean_up_info_message ()
 {
     if [ $use_info_message -ne 0 ] ; then
 
