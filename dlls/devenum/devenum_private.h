@@ -42,23 +42,28 @@
 /**********************************************************************
  * Dll lifetime tracking declaration for devenum.dll
  */
-extern DWORD dll_ref;
+extern LONG dll_refs;
+static inline void DEVENUM_LockModule(void) { InterlockedIncrement(&dll_refs); }
+static inline void DEVENUM_UnlockModule(void) { InterlockedDecrement(&dll_refs); }
+
 
 /**********************************************************************
  * ClassFactory declaration for devenum.dll
  */
 typedef struct
 {
-    /* IUnknown fields */
     IClassFactoryVtbl *lpVtbl;
-    DWORD ref;
 } ClassFactoryImpl;
 
 typedef struct
 {
     ICreateDevEnumVtbl *lpVtbl;
-    DWORD ref;
 } CreateDevEnumImpl;
+
+typedef struct
+{
+    IParseDisplayNameVtbl *lpVtbl;
+} ParseDisplayNameImpl;
 
 typedef struct
 {
@@ -72,24 +77,12 @@ typedef struct
 {
     IMonikerVtbl *lpVtbl;
 
-    DWORD ref;
+    ULONG ref;
     HKEY hkey;
 } MediaCatMoniker;
 
-typedef struct
-{
-    IPropertyBagVtbl *lpVtbl;
-    DWORD ref;
-    HKEY hkey;
-} RegPropBagImpl;
-
-typedef struct
-{
-    IParseDisplayNameVtbl *lpVtbl;
-    DWORD ref;
-} ParseDisplayNameImpl;
-
 MediaCatMoniker * DEVENUM_IMediaCatMoniker_Construct();
+HRESULT DEVENUM_IEnumMoniker_Construct(HKEY hkey, IEnumMoniker ** ppEnumMoniker);
 HRESULT WINAPI DEVENUM_ICreateDevEnum_CreateClassEnumerator(
     ICreateDevEnum * iface,
     REFCLSID clsidDeviceClass,

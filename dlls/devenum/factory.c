@@ -33,10 +33,9 @@ static HRESULT WINAPI DEVENUM_IClassFactory_QueryInterface(
     REFIID riid,
     LPVOID *ppvObj)
 {
-    ClassFactoryImpl *This = (ClassFactoryImpl *)iface;
     TRACE("\n\tIID:\t%s\n",debugstr_guid(riid));
 
-    if (This == NULL || ppvObj == NULL) return E_POINTER;
+    if (ppvObj == NULL) return E_POINTER;
 
     if (IsEqualGUID(riid, &IID_IUnknown) ||
 	IsEqualGUID(riid, &IID_IClassFactory))
@@ -59,17 +58,11 @@ static HRESULT WINAPI DEVENUM_IClassFactory_QueryInterface(
  */
 static ULONG WINAPI DEVENUM_IClassFactory_AddRef(LPCLASSFACTORY iface)
 {
-    ClassFactoryImpl *This = (ClassFactoryImpl *)iface;
     TRACE("\n");
 
-    if (This == NULL) return E_POINTER;
+    DEVENUM_LockModule();
 
-    This->ref++;
-
-    if (InterlockedIncrement(&This->ref) == 1) {
-	InterlockedIncrement(&dll_ref);
-    }
-    return This->ref;
+    return 2; /* non-heap based object */
 }
 
 /**********************************************************************
@@ -77,15 +70,11 @@ static ULONG WINAPI DEVENUM_IClassFactory_AddRef(LPCLASSFACTORY iface)
  */
 static ULONG WINAPI DEVENUM_IClassFactory_Release(LPCLASSFACTORY iface)
 {
-    ClassFactoryImpl *This = (ClassFactoryImpl *)iface;
     TRACE("\n");
 
-    if (This == NULL) return E_POINTER;
+    DEVENUM_UnlockModule();
 
-    if (InterlockedDecrement(&This->ref) == 0) {
-	InterlockedDecrement(&dll_ref);
-    }
-    return This->ref;
+    return 1; /* non-heap based object */
 }
 
 /**********************************************************************
@@ -97,10 +86,9 @@ static HRESULT WINAPI DEVENUM_IClassFactory_CreateInstance(
     REFIID riid,
     LPVOID *ppvObj)
 {
-    ClassFactoryImpl *This = (ClassFactoryImpl *)iface;
     TRACE("\n\tIID:\t%s\n",debugstr_guid(riid));
 
-    if (This == NULL || ppvObj == NULL) return E_POINTER;
+    if (ppvObj == NULL) return E_POINTER;
 
     /* Don't support aggregation (Windows doesn't) */
     if (pUnkOuter != NULL) return CLASS_E_NOAGGREGATION;
@@ -128,11 +116,10 @@ static HRESULT WINAPI DEVENUM_IClassFactory_LockServer(
 {
     TRACE("\n");
 
-    if (fLock != FALSE) {
-	IClassFactory_AddRef(iface);
-    } else {
-	IClassFactory_Release(iface);
-    }
+    if (fLock)
+        DEVENUM_LockModule();
+    else
+        DEVENUM_UnlockModule();
     return S_OK;
 }
 
@@ -151,4 +138,4 @@ static IClassFactoryVtbl IClassFactory_Vtbl =
 /**********************************************************************
  * static ClassFactory instance
  */
-ClassFactoryImpl DEVENUM_ClassFactory = { &IClassFactory_Vtbl, 0 };
+ClassFactoryImpl DEVENUM_ClassFactory = { &IClassFactory_Vtbl };

@@ -34,9 +34,16 @@
 WINE_DEFAULT_DEBUG_CHANNEL(devenum);
 
 static ULONG WINAPI DEVENUM_IEnumMoniker_AddRef(LPENUMMONIKER iface);
-static HRESULT WINAPI DEVENUM_IMediaCatMoniker_Hash(LPMONIKER iface, DWORD* pdwHash);
 static ULONG WINAPI DEVENUM_IMediaCatMoniker_AddRef(LPMONIKER iface);
 static ULONG WINAPI DEVENUM_IPropertyBag_AddRef(LPPROPERTYBAG iface);
+
+typedef struct
+{
+    IPropertyBagVtbl *lpVtbl;
+    DWORD ref;
+    HKEY hkey;
+} RegPropBagImpl;
+
 
 static HRESULT WINAPI DEVENUM_IPropertyBag_QueryInterface(
     LPPROPERTYBAG iface,
@@ -83,6 +90,7 @@ static ULONG WINAPI DEVENUM_IPropertyBag_Release(LPPROPERTYBAG iface)
     if (InterlockedDecrement(&This->ref) == 0) {
         RegCloseKey(This->hkey);
         CoTaskMemFree(This);
+        DEVENUM_UnlockModule();
         return 0;
     }
     return This->ref;
@@ -262,6 +270,17 @@ static IPropertyBagVtbl IPropertyBag_Vtbl =
     DEVENUM_IPropertyBag_Write
 };
 
+static HRESULT DEVENUM_IPropertyBag_Construct(HANDLE hkey, IPropertyBag **ppBag)
+{
+    RegPropBagImpl * rpb = CoTaskMemAlloc(sizeof(RegPropBagImpl));
+    if (!rpb)
+        return E_OUTOFMEMORY;
+    rpb->lpVtbl = &IPropertyBag_Vtbl;
+    rpb->ref = 1;
+    *ppBag = (IPropertyBag*)rpb;
+    DEVENUM_LockModule();
+    return S_OK;
+}
 
 
 static HRESULT WINAPI DEVENUM_IMediaCatMoniker_QueryInterface(
@@ -298,9 +317,7 @@ static ULONG WINAPI DEVENUM_IMediaCatMoniker_AddRef(LPMONIKER iface)
     MediaCatMoniker *This = (MediaCatMoniker *)iface;
     TRACE("\n");
 
-    if (This == NULL) return E_POINTER;
-
-    return ++This->ref;
+    return InterlockedIncrement(&This->ref);
 }
 
 /**********************************************************************
@@ -312,12 +329,11 @@ static ULONG WINAPI DEVENUM_IMediaCatMoniker_Release(LPMONIKER iface)
     ULONG ref;
     TRACE("\n");
 
-    if (This == NULL) return E_POINTER;
-
-    ref = --This->ref;
+    ref = InterlockedDecrement(&This->ref);
     if (ref == 0) {
         RegCloseKey(This->hkey);
         CoTaskMemFree(This);
+        DEVENUM_UnlockModule();
     }
     return ref;
 }
@@ -444,14 +460,9 @@ static HRESULT WINAPI DEVENUM_IMediaCatMoniker_BindToStorage(
 
     if (IsEqualGUID(riid, &IID_IPropertyBag))
     {
-        RegPropBagImpl * rpb = CoTaskMemAlloc(sizeof(RegPropBagImpl));
-        if (!rpb)
-            return E_OUTOFMEMORY;
-        rpb->lpVtbl = &IPropertyBag_Vtbl;
-        DuplicateHandle(GetCurrentProcess(), This->hkey, GetCurrentProcess(), (LPHANDLE)&(rpb->hkey), 0, 0, DUPLICATE_SAME_ACCESS);
-        rpb->ref = 1;
-        *ppvObj = (LPVOID)rpb;
-        return S_OK;
+        HANDLE hkey;
+        DuplicateHandle(GetCurrentProcess(), This->hkey, GetCurrentProcess(), &hkey, 0, 0, DUPLICATE_SAME_ACCESS);
+        return DEVENUM_IPropertyBag_Construct(hkey, (IPropertyBag**)ppvObj);
     }
 
     return MK_E_NOSTORAGE;
@@ -670,6 +681,8 @@ MediaCatMoniker * DEVENUM_IMediaCatMoniker_Construct()
 
     DEVENUM_IMediaCatMoniker_AddRef((LPMONIKER)pMoniker);
 
+    DEVENUM_LockModule();
+
     return pMoniker;
 }
 
@@ -707,8 +720,6 @@ static ULONG WINAPI DEVENUM_IEnumMoniker_AddRef(LPENUMMONIKER iface)
 
     TRACE("\n");
 
-    if (This == NULL) return E_POINTER;
-
     return InterlockedIncrement(&This->ref);
 }
 
@@ -725,6 +736,7 @@ static ULONG WINAPI DEVENUM_IEnumMoniker_Release(LPENUMMONIKER iface)
     {
         RegCloseKey(This->hkey);
         CoTaskMemFree(This);
+        DEVENUM_UnlockModule();
         return 0;
     }
     return This->ref;
@@ -805,7 +817,7 @@ static HRESULT WINAPI DEVENUM_IEnumMoniker_Clone(LPENUMMONIKER iface, IEnumMonik
 /**********************************************************************
  * IEnumMoniker_Vtbl
  */
-IEnumMonikerVtbl IEnumMoniker_Vtbl =
+static IEnumMonikerVtbl IEnumMoniker_Vtbl =
 {
     DEVENUM_IEnumMoniker_QueryInterface,
     DEVENUM_IEnumMoniker_AddRef,
@@ -815,3 +827,21 @@ IEnumMonikerVtbl IEnumMoniker_Vtbl =
     DEVENUM_IEnumMoniker_Reset,
     DEVENUM_IEnumMoniker_Clone
 };
+
+HRESULT DEVENUM_IEnumMoniker_Construct(HKEY hkey, IEnumMoniker ** ppEnumMoniker)
+{
+    EnumMonikerImpl * pEnumMoniker = CoTaskMemAlloc(sizeof(EnumMonikerImpl));
+    if (!pEnumMoniker)
+        return E_OUTOFMEMORY;
+
+    pEnumMoniker->lpVtbl = &IEnumMoniker_Vtbl;
+    pEnumMoniker->ref = 1;
+    pEnumMoniker->index = 0;
+    pEnumMoniker->hkey = hkey;
+
+    *ppEnumMoniker = (IEnumMoniker *)pEnumMoniker;
+
+    DEVENUM_LockModule();
+
+    return S_OK;
+}

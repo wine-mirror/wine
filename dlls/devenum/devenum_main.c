@@ -25,7 +25,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(devenum);
 
-DWORD dll_ref = 0;
+LONG dll_refs;
 HINSTANCE DEVENUM_hInstance;
 
 typedef struct
@@ -42,7 +42,6 @@ static void DEVENUM_RegisterQuartz(void);
  *		Global string constant definitions
  */
 const WCHAR clsid_keyname[6] = { 'C', 'L', 'S', 'I', 'D', 0 };
-
 
 /***********************************************************************
  *		DllEntryPoint
@@ -77,7 +76,8 @@ HRESULT WINAPI DEVENUM_DllGetClassObject(REFCLSID rclsid, REFIID iid, LPVOID *pp
      * Oh well - works just fine as it is */
     if (IsEqualGUID(rclsid, &CLSID_SystemDeviceEnum) ||
         IsEqualGUID(rclsid, &CLSID_CDeviceMoniker))
-	return IClassFactory_QueryInterface((LPCLASSFACTORY)(char*)&DEVENUM_ClassFactory, iid, ppv);
+        return IClassFactory_QueryInterface((IClassFactory*)&DEVENUM_ClassFactory, iid, ppv);
+
     FIXME("\n\tCLSID:\t%s,\n\tIID:\t%s\n",debugstr_guid(rclsid),debugstr_guid(iid));
     return CLASS_E_CLASSNOTAVAILABLE;
 }
@@ -87,7 +87,7 @@ HRESULT WINAPI DEVENUM_DllGetClassObject(REFCLSID rclsid, REFIID iid, LPVOID *pp
  */
 HRESULT WINAPI DEVENUM_DllCanUnloadNow(void)
 {
-    return dll_ref != 0 ? S_FALSE : S_OK;
+    return dll_refs != 0 ? S_FALSE : S_OK;
 }
 
 /***********************************************************************

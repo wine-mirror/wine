@@ -33,8 +33,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(devenum);
 
-extern IEnumMonikerVtbl IEnumMoniker_Vtbl;
-
 extern HINSTANCE DEVENUM_hInstance;
 
 const WCHAR wszInstanceKeyName[] ={'I','n','s','t','a','n','c','e',0};
@@ -56,10 +54,9 @@ static HRESULT WINAPI DEVENUM_ICreateDevEnum_QueryInterface(
     REFIID riid,
     LPVOID *ppvObj)
 {
-    CreateDevEnumImpl *This = (CreateDevEnumImpl *)iface;
     TRACE("\n\tIID:\t%s\n",debugstr_guid(riid));
 
-    if (This == NULL || ppvObj == NULL) return E_POINTER;
+    if (ppvObj == NULL) return E_POINTER;
 
     if (IsEqualGUID(riid, &IID_IUnknown) ||
 	IsEqualGUID(riid, &IID_ICreateDevEnum))
@@ -78,15 +75,11 @@ static HRESULT WINAPI DEVENUM_ICreateDevEnum_QueryInterface(
  */
 static ULONG WINAPI DEVENUM_ICreateDevEnum_AddRef(ICreateDevEnum * iface)
 {
-    CreateDevEnumImpl *This = (CreateDevEnumImpl *)iface;
     TRACE("\n");
 
-    if (This == NULL) return E_POINTER;
+    DEVENUM_LockModule();
 
-    if (InterlockedIncrement(&This->ref) == 1) {
-	InterlockedIncrement(&dll_ref);
-    }
-    return This->ref;
+    return 2; /* non-heap based object */
 }
 
 /**********************************************************************
@@ -94,15 +87,11 @@ static ULONG WINAPI DEVENUM_ICreateDevEnum_AddRef(ICreateDevEnum * iface)
  */
 static ULONG WINAPI DEVENUM_ICreateDevEnum_Release(ICreateDevEnum * iface)
 {
-    CreateDevEnumImpl *This = (CreateDevEnumImpl *)iface;
     TRACE("\n");
 
-    if (This == NULL) return E_POINTER;
+    DEVENUM_UnlockModule();
 
-    if (InterlockedDecrement(&This->ref) == 0) {
-	InterlockedDecrement(&dll_ref);
-    }
-    return This->ref;
+    return 1; /* non-heap based object */
 }
 
 /**********************************************************************
@@ -115,7 +104,6 @@ HRESULT WINAPI DEVENUM_ICreateDevEnum_CreateClassEnumerator(
     DWORD dwFlags)
 {
     WCHAR wszRegKey[MAX_PATH];
-    EnumMonikerImpl * pEnumMoniker;
     HKEY hkey;
     HKEY hbasekey;
     CreateDevEnumImpl *This = (CreateDevEnumImpl *)iface;
@@ -173,18 +161,7 @@ HRESULT WINAPI DEVENUM_ICreateDevEnum_CreateClassEnumerator(
         }
     }
 
-    pEnumMoniker = (EnumMonikerImpl *)CoTaskMemAlloc(sizeof(EnumMonikerImpl));
-    if (!pEnumMoniker)
-        return E_OUTOFMEMORY;
-
-    pEnumMoniker->lpVtbl = &IEnumMoniker_Vtbl;
-    pEnumMoniker->ref = 1;
-    pEnumMoniker->index = 0;
-    pEnumMoniker->hkey = hkey;
-
-    *ppEnumMoniker = (IEnumMoniker *)pEnumMoniker;
-
-    return S_OK;
+    return DEVENUM_IEnumMoniker_Construct(hkey, ppEnumMoniker);
 }
 
 /**********************************************************************
@@ -201,7 +178,7 @@ static ICreateDevEnumVtbl ICreateDevEnum_Vtbl =
 /**********************************************************************
  * static CreateDevEnum instance
  */
-CreateDevEnumImpl DEVENUM_CreateDevEnum = { &ICreateDevEnum_Vtbl, 0 };
+CreateDevEnumImpl DEVENUM_CreateDevEnum = { &ICreateDevEnum_Vtbl };
 
 /**********************************************************************
  * DEVENUM_CreateAMCategoryKey (INTERNAL)

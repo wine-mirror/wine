@@ -32,10 +32,9 @@ static HRESULT WINAPI DEVENUM_IParseDisplayName_QueryInterface(
     REFIID riid,
     LPVOID *ppvObj)
 {
-    ParseDisplayNameImpl *This = (ParseDisplayNameImpl *)iface;
     TRACE("\n\tIID:\t%s\n",debugstr_guid(riid));
 
-    if (This == NULL || ppvObj == NULL) return E_POINTER;
+    if (ppvObj == NULL) return E_POINTER;
 
     if (IsEqualGUID(riid, &IID_IUnknown) ||
         IsEqualGUID(riid, &IID_IParseDisplayName))
@@ -54,16 +53,11 @@ static HRESULT WINAPI DEVENUM_IParseDisplayName_QueryInterface(
  */
 static ULONG WINAPI DEVENUM_IParseDisplayName_AddRef(LPPARSEDISPLAYNAME iface)
 {
-    ParseDisplayNameImpl *This = (ParseDisplayNameImpl *)iface;
     TRACE("\n");
 
-    if (This == NULL) return E_POINTER;
+    DEVENUM_LockModule();
 
-    if (InterlockedIncrement(&This->ref) == 1) {
-	InterlockedIncrement(&dll_ref);
-    }
-
-    return ++This->ref;
+    return 2; /* non-heap based object */
 }
 
 /**********************************************************************
@@ -71,17 +65,11 @@ static ULONG WINAPI DEVENUM_IParseDisplayName_AddRef(LPPARSEDISPLAYNAME iface)
  */
 static ULONG WINAPI DEVENUM_IParseDisplayName_Release(LPPARSEDISPLAYNAME iface)
 {
-    ParseDisplayNameImpl *This = (ParseDisplayNameImpl *)iface;
-    ULONG ref;
     TRACE("\n");
 
-    if (This == NULL) return E_POINTER;
+    DEVENUM_UnlockModule();
 
-    ref = --This->ref;
-    if (InterlockedDecrement(&This->ref) == 0) {
-	InterlockedDecrement(&dll_ref);
-    }
-    return ref;
+    return 1; /* non-heap based object */
 }
 
 /**********************************************************************
@@ -176,4 +164,4 @@ static IParseDisplayNameVtbl IParseDisplayName_Vtbl =
 };
 
 /* The one instance of this class */
-ParseDisplayNameImpl DEVENUM_ParseDisplayName = { &IParseDisplayName_Vtbl, 0 };
+ParseDisplayNameImpl DEVENUM_ParseDisplayName = { &IParseDisplayName_Vtbl };
