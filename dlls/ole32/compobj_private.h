@@ -183,8 +183,8 @@ ULONG stub_manager_ext_addref(struct stub_manager *m, ULONG refs);
 ULONG stub_manager_ext_release(struct stub_manager *m, ULONG refs);
 IRpcStubBuffer *stub_manager_ipid_to_stubbuffer(struct stub_manager *m, const IPID *iid);
 struct ifstub *stub_manager_new_ifstub(struct stub_manager *m, IRpcStubBuffer *sb, IUnknown *iptr, REFIID iid, BOOL tablemarshal);
-struct stub_manager *get_stub_manager(OXID oxid, OID oid);
-struct stub_manager *get_stub_manager_from_object(OXID oxid, void *object);
+struct stub_manager *get_stub_manager(APARTMENT *apt, OID oid);
+struct stub_manager *get_stub_manager_from_object(APARTMENT *apt, void *object);
 
 IRpcStubBuffer *mid_to_stubbuffer(wine_marshal_id *mid);
 

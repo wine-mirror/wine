@@ -107,19 +107,13 @@ static void stub_manager_delete(struct stub_manager *m)
     HeapFree(GetProcessHeap(), 0, m);
 }
 
-/* gets the stub manager associated with an object - caller must call
- * release on the stub manager when it is no longer needed */
-struct stub_manager *get_stub_manager_from_object(OXID oxid, void *object)
+/* gets the stub manager associated with an object - caller must have
+ * a reference to the apartment while a reference to the stub manager is held.
+ * it must also call release on the stub manager when it is no longer needed */
+struct stub_manager *get_stub_manager_from_object(APARTMENT *apt, void *object)
 {
     struct stub_manager *result = NULL;
     struct list         *cursor;
-    APARTMENT           *apt;
-
-    if (!(apt = COM_ApartmentFromOXID(oxid, TRUE)))
-    {
-        WARN("Could not map OXID %s to apartment object\n", wine_dbgstr_longlong(oxid));
-        return NULL;
-    }
 
     EnterCriticalSection(&apt->cs);
     LIST_FOR_EACH( cursor, &apt->stubmgrs )
@@ -135,11 +129,42 @@ struct stub_manager *get_stub_manager_from_object(OXID oxid, void *object)
     }
     LeaveCriticalSection(&apt->cs);
 
-    COM_ApartmentRelease(apt);
-    
-    TRACE("found %p from object %p\n", result, object);
+    if (result)
+        TRACE("found %p for object %p\n", result, object);
+    else
+        TRACE("not found for object %p\n", object);
 
     return result;    
+}
+
+/* gets the stub manager associated with an object id - caller must have
+ * a reference to the apartment while a reference to the stub manager is held.
+ * it must also call release on the stub manager when it is no longer needed */
+struct stub_manager *get_stub_manager(APARTMENT *apt, OID oid)
+{
+    struct stub_manager *result = NULL;
+    struct list         *cursor;
+
+    EnterCriticalSection(&apt->cs);
+    LIST_FOR_EACH( cursor, &apt->stubmgrs )
+    {
+        struct stub_manager *m = LIST_ENTRY( cursor, struct stub_manager, entry );
+
+        if (m->oid == oid)
+        {
+            result = m;
+            stub_manager_int_addref(result);
+            break;
+        }
+    }
+    LeaveCriticalSection(&apt->cs);
+
+    if (result)
+        TRACE("found %p for oid %s\n", result, wine_dbgstr_longlong(oid));
+    else
+        TRACE("not found for oid %s\n", wine_dbgstr_longlong(oid));
+
+    return result;
 }
 
 /* increments the internal refcount */
@@ -172,41 +197,6 @@ ULONG stub_manager_int_release(struct stub_manager *This)
     LeaveCriticalSection(&apt->cs);
 
     return refs;
-}
-
-/* gets the stub manager associated with an object id - caller must call
- * release on the stub manager when it is no longer needed */
-struct stub_manager *get_stub_manager(OXID oxid, OID oid)
-{
-    struct stub_manager *result = NULL;
-    struct list         *cursor;
-    APARTMENT           *apt;
-
-    if (!(apt = COM_ApartmentFromOXID(oxid, TRUE)))
-    {
-        WARN("Could not map OXID %s to apartment object\n", wine_dbgstr_longlong(oxid));
-        return NULL;
-    }
-    
-    EnterCriticalSection(&apt->cs);
-    LIST_FOR_EACH( cursor, &apt->stubmgrs )
-    {
-        struct stub_manager *m = LIST_ENTRY( cursor, struct stub_manager, entry );
-
-        if (m->oid == oid)
-        {
-            result = m;
-            stub_manager_int_addref(result);
-            break;
-        }
-    }
-    LeaveCriticalSection(&apt->cs);
-
-    COM_ApartmentRelease(apt);
-
-    TRACE("found %p from oid %s\n", result, wine_dbgstr_longlong(oid));
-
-    return result;
 }
 
 /* add some external references (ie from a client that unmarshaled an ifptr) */

@@ -79,9 +79,16 @@ get_facbuf_for_iid(REFIID riid,IPSFactoryBuffer **facbuf) {
 IRpcStubBuffer *mid_to_stubbuffer(wine_marshal_id *mid)
 {
     IRpcStubBuffer *ret;
+    APARTMENT *apt;
     struct stub_manager *m;
 
-    if (!(m = get_stub_manager(mid->oxid, mid->oid)))
+    if (!(apt = COM_ApartmentFromOXID(mid->oxid, TRUE)))
+    {
+        WARN("Could not map OXID %s to apartment object\n", wine_dbgstr_longlong(mid->oxid));
+        return NULL;
+    }
+
+    if (!(m = get_stub_manager(apt, mid->oid)))
     {
         WARN("unknown OID %s\n", wine_dbgstr_longlong(mid->oid));
         return NULL;
@@ -90,6 +97,9 @@ IRpcStubBuffer *mid_to_stubbuffer(wine_marshal_id *mid)
     ret = stub_manager_ipid_to_stubbuffer(m, &mid->ipid);
 
     stub_manager_int_release(m);
+
+    COM_ApartmentRelease(apt);
+
     return ret;
 }
 
@@ -98,23 +108,30 @@ static HRESULT register_ifstub(wine_marshal_id *mid, REFIID riid, IUnknown *obj,
 {
     struct stub_manager *manager = NULL;
     struct ifstub       *ifstub;
+    APARTMENT           *apt;
+
+    if (!(apt = COM_ApartmentFromOXID(mid->oxid, TRUE)))
+    {
+        ERR("Could not map OXID %s to apartment object\n", wine_dbgstr_longlong(mid->oxid));
+        return E_UNEXPECTED;
+    }
 
     /* mid->oid of zero means create a new stub manager */
-    
-    if (mid->oid && (manager = get_stub_manager(mid->oxid, mid->oid)))
+
+    if (mid->oid && (manager = get_stub_manager(apt, mid->oid)))
     {
         TRACE("registering new ifstub on pre-existing manager\n");
     }
     else
     {
-        struct apartment *apt;
-        
         TRACE("constructing new stub manager\n");
 
-        apt = COM_ApartmentFromOXID(mid->oxid, TRUE);
         manager = new_stub_manager(apt, obj);
-        COM_ApartmentRelease(apt);
-        if (!manager) return E_OUTOFMEMORY;
+        if (!manager)
+        {
+            COM_ApartmentRelease(apt);
+            return E_OUTOFMEMORY;
+        }
 
         mid->oid = manager->oid;
     }
@@ -125,6 +142,7 @@ static HRESULT register_ifstub(wine_marshal_id *mid, REFIID riid, IUnknown *obj,
         stub_manager_int_release(manager);
         /* FIXME: should we do another release to completely destroy the
          * stub manager? */
+        COM_ApartmentRelease(apt);
         return E_OUTOFMEMORY;
     }
 
@@ -133,6 +151,7 @@ static HRESULT register_ifstub(wine_marshal_id *mid, REFIID riid, IUnknown *obj,
     mid->ipid = ifstub->ipid;
 
     stub_manager_int_release(manager);
+    COM_ApartmentRelease(apt);
     return S_OK;
 }
 
@@ -489,8 +508,15 @@ StdMarshalImpl_MarshalInterface(
   IPSFactoryBuffer     *psfacbuf;
   BOOL                  tablemarshal;
   struct stub_manager  *manager;
+  APARTMENT            *apt = COM_CurrentApt();
     
   TRACE("(...,%s,...)\n",debugstr_guid(riid));
+
+  if (!apt)
+  {
+      ERR("Apartment not initialized\n");
+      return CO_E_NOTINITIALIZED;
+  }
 
   start_apartment_listener_thread(); /* just to be sure we have one running. */
 
@@ -508,11 +534,11 @@ StdMarshalImpl_MarshalInterface(
   if (tablemarshal) FIXME("table marshalling unimplemented\n");
 
   /* now fill out the MID */
-  mid.oxid = COM_CurrentApt()->oxid;
+  mid.oxid = apt->oxid;
  
   IUnknown_QueryInterface((LPUNKNOWN)pv, riid, (LPVOID*)&pUnk);
  
-  if ((manager = get_stub_manager_from_object(mid.oxid, pUnk)))
+  if ((manager = get_stub_manager_from_object(apt, pUnk)))
   {
       mid.oid = manager->oid;
       stub_manager_int_release(manager);
@@ -551,14 +577,17 @@ StdMarshalImpl_UnmarshalInterface(LPMARSHAL iface, IStream *pStm, REFIID riid, v
 
   TRACE("(...,%s,....)\n",debugstr_guid(riid));
 
-  if (!apt) return CO_E_NOTINITIALIZED;
+  if (!apt)
+  {
+      ERR("Apartment not initialized\n");
+      return CO_E_NOTINITIALIZED;
+  }
 
   hres = IStream_Read(pStm,&mid,sizeof(mid),&res);
   if (hres) return hres;
   
   /* check if we're marshalling back to ourselves */
-  /* FIXME: commented out until we can get the tests passing with it uncommented. */
-  if (/*(apt->oxid == mid.oxid) &&*/ (stubmgr = get_stub_manager(mid.oxid, mid.oid)))
+  if ((apt->oxid == mid.oxid) && (stubmgr = get_stub_manager(apt, mid.oid)))
   {
       TRACE("Unmarshalling object marshalled in same apartment for iid %s, returning original object %p\n", debugstr_guid(riid), stubmgr->object);
     
@@ -600,13 +629,20 @@ StdMarshalImpl_ReleaseMarshalData(LPMARSHAL iface, IStream *pStm) {
     ULONG                res;
     HRESULT              hres;
     struct stub_manager *stubmgr;
+    APARTMENT           *apt;
 
     TRACE("iface=%p, pStm=%p\n", iface, pStm);
     
     hres = IStream_Read(pStm,&mid,sizeof(mid),&res);
     if (hres) return hres;
 
-    if (!(stubmgr = get_stub_manager(mid.oxid, mid.oid)))
+    if (!(apt = COM_ApartmentFromOXID(mid.oxid, TRUE)))
+    {
+        WARN("Could not map OXID %s to apartment object\n", wine_dbgstr_longlong(mid.oxid));
+        return RPC_E_INVALID_OBJREF;
+    }
+
+    if (!(stubmgr = get_stub_manager(apt, mid.oid)))
     {
         ERR("could not map MID to stub manager, oxid=%s, oid=%s\n",
             wine_dbgstr_longlong(mid.oxid), wine_dbgstr_longlong(mid.oid));
@@ -616,6 +652,7 @@ StdMarshalImpl_ReleaseMarshalData(LPMARSHAL iface, IStream *pStm) {
     stub_manager_ext_release(stubmgr, 1);
 
     stub_manager_int_release(stubmgr);
+    COM_ApartmentRelease(apt);
 
     return S_OK;
 }

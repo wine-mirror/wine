@@ -789,6 +789,7 @@ COM_RpcReceive(wine_pipe *xpipe) {
         wine_rpc_disconnect_header header;
         struct stub_manager *stubmgr;
         DWORD magic = 0xcafebabe;
+        APARTMENT *apt;
 
         hres = read_pipe(xhPipe, &header, sizeof(header));
         if (hres) {
@@ -798,15 +799,23 @@ COM_RpcReceive(wine_pipe *xpipe) {
 
         TRACE("read disconnect header\n");
 
-        if (!(stubmgr = get_stub_manager(header.mid.oxid, header.mid.oid)))
+        if (!(apt = COM_ApartmentFromOXID(header.mid.oxid, TRUE)))
+        {
+            ERR("Could not map OXID %s to apartment object in disconnect\n", wine_dbgstr_longlong(header.mid.oxid));
+            goto disconnect_end;
+        }
+
+        if (!(stubmgr = get_stub_manager(apt, header.mid.oid)))
         {
             ERR("could not locate stub to disconnect, mid.oid=%s\n", wine_dbgstr_longlong(header.mid.oid));
+            COM_ApartmentRelease(apt);
             goto disconnect_end;
         }
 
         stub_manager_ext_release(stubmgr, 1);
 
         stub_manager_int_release(stubmgr);
+        COM_ApartmentRelease(apt);
 
 disconnect_end:
         write_pipe(xhPipe, &magic, sizeof(magic));

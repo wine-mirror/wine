@@ -317,7 +317,7 @@ static void test_marshal_stub_apartment_shutdown()
 
     end_host_object(tid, thread);
 
-    todo_wine { ok_no_locks(); }
+    ok_no_locks();
 
     IUnknown_Release(pProxy);
 
