@@ -1917,3 +1917,31 @@ LONG WINAPI RegNotifyChangeKeyValue( HKEY hkey, BOOL fWatchSubTree,
 
     return ret;
 }
+
+/******************************************************************************
+ * RegOpenUserClassesRoot [ADVAPI32.@]
+ * Opens the HKEY_CLASSES_ROOT key for the user represented by the token
+ *
+ * PARAMS
+ *    hToken     [I] Handle of token representing user
+ *    dwOptions  [I] Reserved
+ *    samDesired [I] Desired access rights
+ *    phkResult  [O] Address of buffer for opened handle
+ *
+ * NOTES:
+ * On Windows 2000 and upwards the HKEY_CLASSES_ROOT key is a view of the
+ * HKEY_LOCAL_MACHINE\Software\Classes and the
+ * HKEY_CURRENT_USER\Software\Classes keys merged together.
+ */
+LONG WINAPI RegOpenUserClassesRoot(
+    HANDLE hToken,
+    DWORD dwOptions,
+    REGSAM samDesired,
+    PHKEY phkResult
+)
+{
+    FIXME("(%p, 0x%lx, 0x%lx, %p) semi-stub\n", hToken, dwOptions, samDesired, phkResult);
+
+    *phkResult = HKEY_CLASSES_ROOT;
+    return ERROR_SUCCESS;
+}

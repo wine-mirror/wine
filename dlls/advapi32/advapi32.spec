@@ -218,7 +218,7 @@
 @ stdcall RegOpenKeyExA(long str long long ptr)
 @ stdcall RegOpenKeyExW(long wstr long long ptr)
 @ stdcall RegOpenKeyW(long wstr ptr)
-@ stub RegOpenUserClassesRoot
+@ stdcall RegOpenUserClassesRoot(ptr long long ptr)
 @ stdcall RegQueryInfoKeyA(long ptr ptr ptr ptr ptr ptr ptr ptr ptr ptr ptr)
 @ stdcall RegQueryInfoKeyW(long ptr ptr ptr ptr ptr ptr ptr ptr ptr ptr ptr)
 @ stdcall RegQueryMultipleValuesA(long ptr long ptr ptr)
