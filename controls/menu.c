@@ -719,26 +719,26 @@ static void MENU_GetBitmapItemSize( UINT id, DWORD data, SIZE *size )
     {
         switch(LOWORD(id))
         {
-        case HBMMENU_SYSTEM:
+        case (INT_PTR)HBMMENU_SYSTEM:
             if (data)
             {
                 bmp = (HBITMAP)data;
                 break;
             }
             /* fall through */
-        case HBMMENU_MBAR_RESTORE:
-        case HBMMENU_MBAR_MINIMIZE:
-        case HBMMENU_MBAR_MINIMIZE_D:
-        case HBMMENU_MBAR_CLOSE:
-        case HBMMENU_MBAR_CLOSE_D:
+        case (INT_PTR)HBMMENU_MBAR_RESTORE:
+        case (INT_PTR)HBMMENU_MBAR_MINIMIZE:
+        case (INT_PTR)HBMMENU_MBAR_MINIMIZE_D:
+        case (INT_PTR)HBMMENU_MBAR_CLOSE:
+        case (INT_PTR)HBMMENU_MBAR_CLOSE_D:
             size->cx = GetSystemMetrics( SM_CXSIZE );
             size->cy = GetSystemMetrics( SM_CYSIZE );
             return;
-        case HBMMENU_CALLBACK:
-        case HBMMENU_POPUP_CLOSE:
-        case HBMMENU_POPUP_RESTORE:
-        case HBMMENU_POPUP_MAXIMIZE:
-        case HBMMENU_POPUP_MINIMIZE:
+        case (INT_PTR)HBMMENU_CALLBACK:
+        case (INT_PTR)HBMMENU_POPUP_CLOSE:
+        case (INT_PTR)HBMMENU_POPUP_RESTORE:
+        case (INT_PTR)HBMMENU_POPUP_MAXIMIZE:
+        case (INT_PTR)HBMMENU_POPUP_MINIMIZE:
         default:
             FIXME("Magic 0x%08x not implemented\n", id);
             return;
@@ -775,7 +775,7 @@ static void MENU_DrawBitmapItem( HDC hdc, MENUITEM *lpitem, const RECT *rect, BO
 
         switch(LOWORD(lpitem->text))
         {
-        case HBMMENU_SYSTEM:
+        case (INT_PTR)HBMMENU_SYSTEM:
             if (lpitem->dwItemData)
             {
                 bmp = (HBITMAP)lpitem->dwItemData;
@@ -790,26 +790,26 @@ static void MENU_DrawBitmapItem( HDC hdc, MENUITEM *lpitem, const RECT *rect, BO
                 bm.bmWidth -= bmp_xoffset;
             }
             goto got_bitmap;
-        case HBMMENU_MBAR_RESTORE:
+        case (INT_PTR)HBMMENU_MBAR_RESTORE:
             flags = DFCS_CAPTIONRESTORE;
             break;
-        case HBMMENU_MBAR_MINIMIZE:
+        case (INT_PTR)HBMMENU_MBAR_MINIMIZE:
             flags = DFCS_CAPTIONMIN;
             break;
-        case HBMMENU_MBAR_MINIMIZE_D:
+        case (INT_PTR)HBMMENU_MBAR_MINIMIZE_D:
             flags = DFCS_CAPTIONMIN | DFCS_INACTIVE;
             break;
-        case HBMMENU_MBAR_CLOSE:
+        case (INT_PTR)HBMMENU_MBAR_CLOSE:
             flags = DFCS_CAPTIONCLOSE;
             break;
-        case HBMMENU_MBAR_CLOSE_D:
+        case (INT_PTR)HBMMENU_MBAR_CLOSE_D:
             flags = DFCS_CAPTIONCLOSE | DFCS_INACTIVE;
             break;
-        case HBMMENU_CALLBACK:
-        case HBMMENU_POPUP_CLOSE:
-        case HBMMENU_POPUP_RESTORE:
-        case HBMMENU_POPUP_MAXIMIZE:
-        case HBMMENU_POPUP_MINIMIZE:
+        case (INT_PTR)HBMMENU_CALLBACK:
+        case (INT_PTR)HBMMENU_POPUP_CLOSE:
+        case (INT_PTR)HBMMENU_POPUP_RESTORE:
+        case (INT_PTR)HBMMENU_POPUP_MAXIMIZE:
+        case (INT_PTR)HBMMENU_POPUP_MINIMIZE:
         default:
             FIXME("Magic 0x%08x not implemented\n", LOWORD(lpitem->text));
             return;
