@@ -2,8 +2,6 @@
 
 <!entity introduction SYSTEM "introduction.sgml">
 <!entity getting SYSTEM "getting.sgml">
-<!entity compiling SYSTEM "compiling.sgml">
-<!entity installing SYSTEM "installing.sgml">
 <!entity configuring SYSTEM "configuring.sgml">
 <!entity registry SYSTEM "registry.sgml">
 <!entity fonts SYSTEM "fonts.sgml">
@@ -19,6 +17,14 @@
     <!-- Until we learn how to format this thing nicely, 
 	 we can't really incude it -->
     <!--authorgroup>
+      <author>
+        <firstname>Scott</firstname>
+        <surname>Ritchie</surname>
+      </author>
+      <author>
+        <firstname>Brian</firstname>
+        <surname>Vincent</surname>
+      </author>
       <author>
 	<firstname>Huw</firstname>
 	<surname>Davies</surname>
@@ -76,8 +82,6 @@
 
   &introduction;
   &getting;
-  &compiling;
-  &installing;
   &configuring;
   &running;
   &bugs;

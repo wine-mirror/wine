@@ -12,12 +12,10 @@ EXTRASUBDIRS = samples
 
 WINE_USER_SRCS = \
 	bugs.sgml \
-	compiling.sgml \
 	configuring.sgml \
 	fonts.sgml \
 	getting.sgml \
 	glossary.sgml \
-	installing.sgml \
 	introduction.sgml \
 	printing.sgml \
 	registry.sgml \

@@ -42,9 +42,7 @@
           date Wine install.  The first step, <link
           linkend="getting-wine">Getting Wine</link>, illustrates the
           various methods of getting Wine's files onto your computer.
-          The second step, <link linkend="installing">Installing
-          Wine</link>, details the various install processes available to
-          you.  The third step, <link linkend="config-wine-main">Configuring
+          The second step, <link linkend="config-wine-main">Configuring
           Wine</link>, shows how to customize a Wine installation depending
           on your individual needs.  The final step, <link
           linkend="running">Running Wine</link>, covers the specific

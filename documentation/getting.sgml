@@ -1,591 +1,190 @@
   <chapter id="getting-wine">
     <title>Getting Wine</title>
-    <para>
-      If you decided that you can use and want to use Wine (e.g. after
-      having read the <link linkend="introduction">introductory
-      chapter</link>), then as a first step you need to find a good
-      compatible Wine version that you like and that works on your
-      system, and after you found one, the next step is to transfer its
-      files to your system somehow.
-      This chapter is here to tell you what you need to take care of
-      in order to successfully accomplish these two steps.
-    </para>
-
-    <sect1 id="getting-download">
-      <title>How to download Wine?</title>
+    <sect1 id="installation-methods">
+      <title>Wine Installation Methods</title>
       <para>
-        There are three different methods of how the files
-	belonging to Wine may be brought (downloaded) to your system:
-        <itemizedlist>
-          <listitem>
-	  <para>
-	    Getting a single Wine <glossterm>package</glossterm> file
-	    (specifically adapted to your particular system), which
-	    contains various <glossterm>binary</glossterm> files of Wine
-	  </para>
-	  </listitem>
-	  <listitem>
-	  <para>
-	    Getting a single compressed archive file (usually .tar.gz), which contains
-	    all <glossterm>source code</glossterm> files of a standard Wine
-	    release version
-	  </para>
-	  </listitem>
-	  <listitem>
-	  <para>
-	    Downloading from a <glossterm>CVS</glossterm> server,
-	    which contains the very latest development source code files
-	    of Wine
-	  </para>
-	  </listitem>
-	</itemizedlist>
+        Once you've decided that Wine is right for your needs, the next step is 
+        to decide how you want to install it.  There are three methods for 
+        installing Wine from Winehq, each with their own advantages and 
+        disadvantages.
       </para>
 
-      <sect2 id="getting-which-wine">
-        <title>Which Wine form should I pick?</title>
-
+      <sect2 id="installation-methods-package">
+        <title>Installation from a package</title>
         <para>
-	 Now that we told you about the different Wine distribution
-	 methods available, let's discuss the advantages and
-	 disadvantages of the various methods.
-        </para>
-
-	<variablelist>
-	  <title>Wine distribution methods</title>
-	  <varlistentry>
-	    <term><emphasis>Wine package file</emphasis></term>
-
-	    <listitem>
-	      <para>
-	        Intended user level: Beginner to Advanced
-	      </para>
-
-	      <para>
-	        Using Wine package files is easy for three
-	        reasons:
-	        They install everything else that's needed for their
-	        operation, they usually preconfigure a lot, and you
-	        don't need to worry about compiling anything or so.
-	        You can get the official wine packages from
-		<ulink url="http://sourceforge.net/project/showfiles.php?group_id=6241">
-          the sourceforge.net Wine download page</ulink>
-
-	      </para>
-	    </listitem>
-	  </varlistentry>
-	  <varlistentry>
-	    <term><emphasis>Wine source code via archive file</emphasis></term>
-
-	    <listitem>
-
-	      <para>
-	        Intended user level: Advanced to Expert
-	      </para>
-
-	      <para>
-	        A Wine source code archive file can be used
-	        if you want to compile your own standard Wine release.
-	        By using differential patch files to newer Wine versions,
-	        you can easily upgrade your outdated Wine directory.
-	        However, as you need to manually download patch files
-	        and you're only able to download the most current
-	        standard Wine release, this is not necessarily the
-	        best method to use.
-		The only advantage a Wine source archive has is that it
-		is a standard Wine release with less development
-		"quirks" than current CVS code.  Except for that, CVS
-		source code is much preferred and almost as easy.
-	      </para>
-	    </listitem>
-	  </varlistentry>
-	  <varlistentry>
-	    <term><emphasis>Wine source code via CVS checkout</emphasis></term>
-	    <listitem>
-	      <para>
-	        Intended user level: Advanced to Expert/Developer
-	      </para>
-
-	      <para>
-	        The Wine CVS checkout offers the best way to take
-	        part in bleeding edge Wine capabilities and
-	        development, since you'll be able to download every
-	        single CVS commit even <emphasis>beyond</emphasis> the
-	        last official Wine release.
-	        As upgrading a Wine CVS checkout tree to the latest
-	        version is very easy, this is a recommended method
-	        of installing Wine.
-	        Plus, by carefully following the instructions in this
-	        Guide, you'll be able to gain the very best Wine
-	        environment compatibility.
-	      </para>
-	    </listitem>
-	  </varlistentry>
-	</variablelist>
-	
-	<para>
-          If you are running a distribution of Linux or some other
-	  system that uses packages to keep track of installed software,
-	  you should be in luck: A prepackaged version of Wine
-	  should already exist for your system.
-          The following sections will tell you how to find the latest
-          Wine packages and get them installed.  You should be careful,
-          though, about mixing system packages between different distributions,
-          and even from different versions of the same distribution.
-          Often a package will only work on the distribution which it
-	  has been compiled for.  We'll cover
-          <link linkend="getting-dist-debian">Debian Linux</link>,
-          <link linkend="getting-dist-linux">Red Hat, Mandrake, SUSE and Slackware Linux</link>,
-          <link linkend="getting-freebsd">FreeBSD</link>, and
-          <link linkend="getting-other">other</link> distributions.
+          By far the easiest method for installing Wine is to use a prepackaged 
+          version of Wine.  These packages contain ready-to-run Wine binary 
+          files specifically compiled for your distribution, and they are 
+          tested regularly by the packagers for both functionality and 
+          completeness.
         </para>
         <para>
-          If you're not lucky enough to have a package available for
-          your operating system, or if you'd prefer a newer version of
-          Wine than already exists as a package, you will need to
-          download the Wine source code and compile it yourself on your
-          own machine.  Don't worry, it's not too hard to do this,
-          especially with the many helpful tools that come with Wine.
-          You don't need any programming experience to compile and
-          install Wine, although it might be nice to have some minor
-          UNIX administrative skills.  Working from the source is
-          covered in the Wine Developer's Guide.
+          Packages are the recommended method for installing Wine.  We make 
+          them easily available at the 
+          <ulink url="http://www.winehq.org/site/download">WineHQ downloads page
+          </ulink>, and these are always the latest packages available.  Being 
+          popular, Wine packages can also be found elsewhere in official 
+          distribution repositories.  These can, however, sometimes be out of 
+          date, depending on the distribution.  Packages are easily upgradable 
+          as well, and many distributions can upgrade Wine seamlessly with a 
+          few clicks.  Building your own installable binary package from a 
+          source package is also possible, although it is beyond the scope of 
+          this guide.
+      </sect2>
+
+      <sect2 id="installation-methods-source">
+        <title>Installation from a source archive</title>
+        <para>
+          Sometimes the Wine packages don't fit your needs exactly.  Perhaps 
+          they're not available for your architecture or distribution, or 
+          perhaps you want to build wine using your own compiler optimizations 
+          or with some options disabled, or perhaps you need to modify a 
+          specific part of the source code before compilation.  Being an open 
+          source project, you are free to do all of these things with Wine's 
+          source code, which is provided with every Wine release. This method 
+          of installation can be done by downloading a Wine source archive and 
+          compiling from the command line.  If you are comfortable with such 
+          things and have special needs, this option may be for you.
+        </para>
+        <para>
+          Getting Wine source archives is simple.  Every release, we put a 
+          source package in compressed tar.gz format at the 
+          <ulink url="http://www.winehq.org/site/download">WineHQ downloads 
+          page</ulink>.  Compiling and installing Wine from source is slightly 
+          more difficult than using a package, however we will cover it in 
+          depth and attempt to hold your hand along the way.
         </para>
       </sect2>
 
+      <sect2 id="installation-methods-cvs">
+        <title>Installation from a cvs snapshot</title>
+        <para>
+          If you wish to try out the bleeding edge of Wine development, or 
+          would even like to help develop Wine yourself, you can download the 
+          very latest source code from our CVS server.  Instructions for 
+          downloading from the Wine cvs repository are available at <ulink 
+          url="http://www.winehq.org/site/cvs">http://www.winehq.org/site/cvs
+          </ulink>.
+        </para>
+        <para>
+          Please take note that the usual warnings for using a developmental 
+          version still apply.  The source code on the CVS server is largely 
+          untested and may not even compile properly.  It is, however, the 
+          best way to test out how Wine will work in the next version, and if 
+          you're modifying source code it's best to get the latest copy.  The 
+          CVS repository is also useful for application maintainers interested 
+          in testing if an application will still work right for the next 
+          release, or if a recent patch actually improves things.  If you're 
+          interested in helping us to get an application working in Wine, see 
+          the <ulink url="http://www.winehq.org/site/helping-applications">
+          guide to helping applications work</ulink>.
+        </para>
+      </sect2>
     </sect1>
 
-    <sect1 id="getting-wine-package">
-      <title>Getting a Wine package</title>
-      <sect2 id="getting-dist-debian">
-        <title>Debian Linux</title>
-
+    <sect1 id="installing-wine-package">
+      <title>Installing Wine from a package</title>
+      <sect2>
+        <title>Installing a fresh package</title>
         <para>
-          In most cases on a Debian system (or any other distribution that
-  	uses packages that use the file name ending .deb, for that
-  	matter), you can download and install Wine with a
-          single command, as <glossterm>root</glossterm>:
-        </para>
-  <screen>
-  <prompt># </><userinput>apt-get install wine</>
-  </screen>
-        <para>
-	  <command>apt-get</command> will connect to a Debian archive
-	  across the Internet (thus, you must be online), then download
-	  the Wine package and install it on your system. End of story.
-	  You might first need to properly update your package setup,
-	  though, by using an <glossterm>editor</glossterm> as
-	  <glossterm>root</glossterm> to add an entry to
-	  <filename>/etc/apt/sources.list</filename> to point to an active
-	  package server and then running <command>apt-get
-	  update</command>.
-	</para>
-	<para>
-	  Once you're done with that step, you may skip the Wine
-	  installation chapter, since apt-get has not only downloaded,
-	  but also installed the Wine files already.
-	  Thus you can now go directly to the <link
-	  linkend="config-wine-main">Configuration section</link>.
-        </para>
-
-        <para>
-	  However, if you don't want to or cannot use the automatic
-	  download method for .deb packages that
-	  <command>apt-get</command> provides, then please read on.
-	</para>
-        <para>
-	  Of course, Debian's pre-packaged version of Wine may not be
-	  the most recent release.  If you are running the stable
-	  version of Debian, you may be able to get a slightly newer
-	  version of Wine by grabbing the package from the so-called
-	  "unstable" Debian distribution, although this may be a little
-	  risky, depending on how far the unstable distribution has
-	  diverged from the stable one.  You can find a list of Wine
-	  binary packages for the various Debian releases using the
-	  package search engine at <ulink
-	  url="http://www.debian.org">www.debian.org</ulink>.
-        </para>
-
-        <para>
-	  If you downloaded a separate .deb package file (e.g. a newer
-	  Wine release as stated above) that's not part of your
-	  distribution and thus cannot be installed via
-	  <command>apt-get</command>, you must use <command>dpkg</command> instead.
-	  For instructions on how to do this, please proceed to the
-	  <link linkend="installing">Installation section</link>.
-	</para>
+          Installing a package on a fresh system is remarkably straightforward. 
+          Simply download and install the package using whatever utility your 
+          distribution provides.  There is usually no need to explicitly 
+          remove old packages before installing, as modern Linux distributions 
+          should upgrade and replace them automatically.  If you installed 
+          Wine from source code, however, you should remove it before 
+          installing a Wine package.  See the section on <link 
+          linkend="uninstalling-wine-source">uninstalling Wine from source
+          </link> for proper instructions.
       </sect2>
-
-      <sect2 id="getting-dist-linux">
-        <title>Linux Red Hat, Mandrake, SUSE, and Slackware</title>
-
+      <sect2>
+        <title>Different Distributions</title>
         <para>
-          Red Hat, Mandrake, SUSE and Slackware users can download
-	  a wine binary from the
-          <ulink url="http://sourceforge.net/project/showfiles.php?group_id=6241">
-          sourceforge.net Wine download page</ulink>
+          Wine works on a huge amount of different Linux distributions, as well 
+          other Unix-like systems such as Solaris and FreeBSD, each with their 
+          own specific way of installing and managing packages.  Fortunately, 
+          however, the same general ideas apply to all of them, and installing 
+          Wine should be no more difficult than installing any other software, 
+          no matter what distribution you use.  Uninstalling Wine packages is 
+          simple as well, and in modern Linux distributions is usually done 
+          through the same easy interface as package installation.
+        </para>
+        <para>
+          We won't cover the specifics of installing or uninstalling Wine 
+          packages among the various systems' methods of packaging and package 
+          management in this guide, however, up to date installation notes for 
+          particular distributions can be found at the WineHQ website in the 
+          howto, at <ulink url=""></ulink>.  If you need further help figuring 
+          out how to simply install a Wine package, we suggest consulting your 
+          distribution's documentation, support forums, or IRC channels.
         </para>
       </sect2>
-
-      <sect2 id="getting-freebsd">
-        <title>FreeBSD</title>
-
-        <para>
-        In order to use Wine you need to build and install a new kernel
-        with options USER_LDT, SYSVSHM, SYSVSEM, and SYSVMSG.
-        </para>
-
-        <para>
-        If you want to install Wine using the FreeBSD port system, run
-	in a <glossterm>terminal</glossterm>:
-        </para>
-  <screen>
-  <prompt>$ </><userinput>su -</>
-  <prompt># </><userinput>cd /usr/ports/emulators/wine/</>
-  <prompt># </><userinput>make</>
-  <prompt># </><userinput>make install</>
-  <prompt># </><userinput>make clean</>
-  </screen>
-        <para>
-          This process will get wine source from the Internet,
-          then download the Wine package and install it on your system.
-        </para>
-
-        <para>
-        If you want to install Wine from the FreeBSD CD-ROM, run in a
-	<glossterm>terminal</glossterm>:
-        </para>
-  <screen>
-  <prompt>$ </><userinput>su -</>
-  <prompt># </><userinput>mount /cdrom</>
-  <prompt># </><userinput>cd /cdrom/packages/All</>
-  <prompt># </><userinput>pkg_add wine_.X.X.X.tgz</>
-  </screen>
-         <para>
-	 </para>
-         <para>
-	   These FreeBSD install instructions completely install the
-	   Wine files on your system; you may then proceed to the <link
-	   linkend="config-wine-main">Configuration section</link>.
-	 </para>
-	 <para>
-	 You can also download a FreeBSD package of wine from the
-	 <ulink url="http://sourceforge.net/project/showfiles.php?group_id=6241">
-          sourceforge.net Wine download page</ulink>
-	  </para>
-      </sect2>
-
-      <sect2 id="getting-other">
-        <title>Other systems</title>
-
-        <para>
-          The first place you should look if your system isn't
-          specifically mentioned above is the <ulink
-          url="http://www.winehq.org/download/">WineHQ Download
-          Page</ulink>.  This page lists many assorted archives of
-          binary (precompiled) Wine files.
-        </para>
-
-        <para>
-	  You could also try to use
-          <ulink url="http://www.google.com/search?q=wine+package+download">
-            Google</ulink> to track down miscellaneous distribution packages.
-        </para>
-
-      </sect2>
-      <!-- *** Add other distributions, e.g., Lindows, Lycoris, Xandros *** -->
-
     </sect1>
 
-    <sect1 id="getting-wine-source">
-      <title>Getting Wine source code</title>
-
+    <sect1 id="installing-wine-source">
+      <title>Installing Wine from source</title>
       <para>
-	If you are going to compile Wine (instead of installing binary
-	Wine files), either to use the most recent code possible or to
-	improve it, then the first thing to do is to obtain a copy of
-	the source code. We'll cover how to retrieve and compile the
-	source releases from the <link
-	linkend="getting-source">official archives</link>, and also how
-	to get the cutting edge up-to-the-minute fresh Wine source code
-	from <link linkend="getting-source-cvs">CVS (Concurrent Versions
-	System)</link>.
+          Before installing Wine from source, make sure you uninstall any Wine 
+          binary packages you may have on your system.  Installing from source 
+          requires use of the terminal window as well as a full copy of the 
+          Wine source code.  Once having downloaded the source from CVS or 
+          extracted it from an archive, navigate to it using the terminal and 
+          then follow the remaining steps.
       </para>
-
-      <para>
-	Once you have downloaded Wine source code according to the
-	instructions below, there are two ways to proceed: If you want
-	to manually install and configure Wine, then go to the <link
-	linkend="compiling">Compiling</link> section. If instead you
-	want automatic installation, then go straight to the <link
-	linkend="config-wine-main">Configuration section</link> to make
-	use of <command>wineinstall</command> to automatically install
-	and configure Wine.
-      </para>
-
-      <para>
-        You may also need to know how to apply a source code patch to
-        your version of Wine.  Perhaps you've uncovered
-        a bug in Wine, reported it to the
-        <ulink url="http://bugs.winehq.org">Wine Bugzilla</ulink>
-        or the
-        <ulink url="mailto:wine-devel@winehq.org">Wine mailing list</ulink>,
-        and received a patch from a developer to hopefully fix the
-        bug.  We will show you how to
-        <link linkend="getting-upgrading-patch">safely apply the
-        patch</link> and revert it if it doesn't work.
-      </para>
-
-      <sect2 id="getting-source">
-        <title>Getting Wine Source Code from the official archives</title>
-
+      <sect2>
+        <title>Getting the Build Dependencies</title>
         <para>
-          The safest way to grab the source is from one of the official
-          archives.  An up to date listing is in the <ulink
-          url="http://www.winehq.org/source/ANNOUNCE">ANNOUNCE</ulink>
-          file in the Wine distribution (which you would have if you
-          already downloaded it).  Here is a list
-          of servers carrying Wine:
+          Wine makes use of many open source libraries during its operation.  
+          While Wine is not strictly dependent on these libraries and will 
+          compile without most of them, much of Wine's functionality is 
+          improved by having them available at compile time.  In the past, 
+          many user problems were caused by people not having the necessary 
+          development libraries when they built Wine from source; because of 
+          this reason and others, we highly recommend installing via binary 
+          packages or by building source packages which can automatically 
+          satisfy their build dependencies.
         </para>
-        <itemizedlist>
-          <listitem>
-            <para>
-              <ulink url="ftp://ftp.ibiblio.org/pub/Linux/ALPHA/wine/development/">
-                ftp://ftp.ibiblio.org/pub/Linux/ALPHA/wine/development/
-              </ulink>
-            </para>
-          </listitem>
-          <listitem>
-            <para>
-              <ulink url="http://sourceforge.net/project/showfiles.php?group_id=6241&amp;package_id=77449">
-                sourceforge.net download page
-              </ulink>
-            </para>
-          </listitem>
-        </itemizedlist>
         <para>
-          The official releases are tagged by date with the format
-          "Wine-<replaceable>YYYYMMDD</>.tar.gz".  Your best bet is to grab
-          the latest one.
+          If you wish to install build dependencies by hand, there are several 
+          ways to see if you're missing some useful development libraries.  
+          The most straightforward approach is to watch the configure program's 
+          output before you compile Wine and see if anything important is 
+          missing; if it is, simply install what's missing and rerun configure 
+          before compiling.  You can also check the file configure generates, 
+          (include/config.h.in) and see if what files configure is looking for 
+          but not finding.
         </para>
-	<para>
-	  I'd recommend placing the Wine archive file that you chose
-	  into the directory where you intend to extract Wine. In this
-	  case, let's just assume that it is your home directory.
-	</para>
-        <para>
-	  Once you have downloaded a Wine archive file, we need to
-	  extract the archive file. This is not very hard to do. First
-	  switch to the directory containing the file you just
-	  downloaded. Then extract the source in a
-	  <glossterm>terminal</glossterm> with (e.g.):
-  <screen>
-  <prompt>$ </><userinput>tar xvzf wine-<replaceable>20030115</>.tar.gz</>
-  </screen>
-        </para>
-	<para>
-	  Just in case you happen to get a Wine archive that uses
-	  <filename>.tar.bz2</filename> extension instead of
-	  <filename>.tar.gz</filename>:
-	  Simply use <command>tar xvjf</command> in that case instead.
-	</para>
-	<para>
-	  Since you now have a fully working Wine source tree by
-	  having followed the steps above, you're now well-prepared to
-	  go to the Wine installation and configuration steps that follow.
-	</para>
       </sect2>
-
-      <sect2 id="getting-source-cvs">
-        <title>Getting Wine Source Code from CVS</title>
-
+      <sect2 id="compiling-wine">
+        <title>Compiling Wine</title>
         <para>
-	  This part is intended to be quick and easy, showing the bare minimum
-	  of what is needed to download Wine source code via CVS.
-	  If you're interested in a very verbose explanation of CVS or
-	  advanced CVS topics (configuration settings, CVS mirror servers,
-	  other CVS modules on WineHQ, CVSWeb, ...), then please read
-	  the full CVS chapter in the Wine Developer's Guide.
+          Once you've installed the build dependencies you need, you're ready 
+          to compile the package.  In the terminal window, after having 
+          navigated to the Wine source tree, run the following commands:
+            <screen>
+            <prompt>$ </><userinput>./configure</>
+            <prompt># </><userinput>make depend</>
+            <prompt># </><userinput>make</>
+            <prompt># </><userinput>make install</>
+            </screen>
+          The last command requires root privileges.  Although you should 
+          never run Wine as root, you will need to install it this way.
         </para>
-
-        <sect3>
-          <title>CVS installation check</title>
-          <para>
-            First you need to make sure that you have <command>cvs</command>
-            installed.
-            To check whether this is the case, please run in a
-	    <glossterm>terminal</glossterm>:
-          </para>
-  <screen>
-  <prompt>$ </><userinput>cvs</>
-  </screen>
-          <para>
-            If this was successful, then you should have gotten a nice CVS
-            "Usage" help output.  Otherwise (e.g. an error "cvs: command
-            not found") you still need to install a CVS package for your
-            particular operating system, similar to the instructions given
-            in the chapters for getting and installing a Wine package on
-            various systems.
-          </para>
-        </sect3>
-
-        <sect3>
-	  <title>Downloading the Wine CVS tree</title>
-
-	  <para>
-	    Once CVS is installed, you can now do a login on our CVS
-	    server and checkout (download) the Wine source code.
-	    First, let's do the server login, to connect to the US server:
-	  </para>
-	  <screen>
-  <prompt>$ </><userinput> export CVSROOT=:pserver:cvs@cvs.winehq.org:/home/wine</>
-  <prompt>$ </><userinput> cvs login</>
-  </screen>
-  <para>
-  To connect to the EU server:
-  </para>
-  <screen>
-  <prompt>$ </><userinput>export CVSROOT=:pserver:cvs@rhlx01.fht-esslingen.de:/home/wine</>
-  <prompt>$ </><userinput>cvs login</>
-  </screen>
-	  <para>
-	    If <command>cvs</command> successfully connects to the CVS server,
-	    then you will get a "CVS password:" prompt.
-	    Simply enter "cvs" as the password (the password is
-	    <emphasis>case sensitive</emphasis>: no capital letters!).
-          </para>
-
-	  <para>
-	    After login, we are able to download the Wine source code tree.
-	    Please make sure that you are in the directory that you want
-	    to have the Wine source code in (the Wine source code will
-	    use the subdirectory <filename>wine/</filename> in this
-	    directory, since the subdirectory is named after the CVS module
-	    that we want to check out). We assume that your current directory
-	    might be your user's home directory.
-	    To download the Wine tree into the subdirectory <filename>wine/</filename>, run:
-	  </para>
-  <screen>
-  <prompt>$ </><userinput> cvs -z3 checkout wine</>
-  </screen>
-	  <para>
-	    Downloading the CVS tree might take a while (some minutes
-	    to few hours), depending on your connection speed.
-	    Once the download is finished, you should keep a note of
-	    which directory the newly downloaded
-	    <filename>wine/</filename> directory is in, by running
-	    <command>pwd</command> (Print Working Directory):
-	  </para>
-  <screen>
-  <prompt>$ </><userinput>pwd</>
-  </screen>
-	  <para>
-	    Later, you will be able to change to this directory by
-	    running:
-	  </para>
-  <screen>
-  <prompt>$ </><userinput>cd <replaceable>&lt;some_dir&gt;</></>
-  </screen>
-	  <para>
-	    where &lt;some_dir&gt; is the directory that
-	    <command>pwd</command> gave you.
-	    By running
-	  </para>
-  <screen>
-  <prompt>$ </><userinput>cd wine</>
-  </screen>
-	  <para>
-	    you can now change to the directory of the Wine CVS tree
-	    you just downloaded. Since you now have a fully working Wine
-	    source tree by having followed the steps above, you're now
-	    well-prepared to go to the Wine installation and configuration
-	    steps that follow.
-	  </para>
-	</sect3>
       </sect2>
-
-      <sect2 id="getting-updating-cvs">
-        <title>Updating the Wine CVS tree</title>
-
-	<para>
-	  After a while, you might want to update your Wine CVS tree to
-	  the current version.
-	  Before updating the Wine tree, it might also be a good idea
-	  to run <command>make uninstall</command> as root in order to
-	  uninstall the installation of the previous Wine version.
-	</para>
-	<para>
-	  To proceed with updating Wine, simply <command>cd</command>
-	  to the Wine CVS tree directory, then run, if you're using the US server:
-	</para>
-  <screen>
-  <prompt>$ </><userinput>make distclean</>
-  <prompt>$ </><userinput>cvs update -PAd</>
-  </screen>
-	<para>
-	  The <command>make distclean</command> part is optional, but
-	  it's a good idea to remove old build and compile configuration
-	  files before updating to a newer Wine version.  Once the CVS
-	  update is finished, you can proceed with installing Wine again
-	  as usual.
-	</para>
-      </sect2>
-
-      <sect2 id="getting-upgrading-patch">
-        <title>Updating Wine with a Patch</title>
+      <sect2 id="uninstalling-wine-source">
+        <title>Uninstalling Wine from Source</title>
         <para>
-	  If you got Wine source code (e.g. via a tar archive file), you
-	  have the option of applying patches to the source tree to
-	  update to a newer Wine release or to fix bugs and add
-	  experimental features.  Perhaps you've found a bug, reported
-	  it to the <ulink url="mailto:wine-devel@winehq.org">Wine
-	  mailing list</>, and received a patch file to fix the bug.
-	  You can apply the patch with the <command>patch</> command,
-	  which takes a streamed patch from <filename>stdin</>:
-  <screen>
-  <prompt>$ </><userinput>cd wine</>
-  <prompt>$ </><userinput>patch -p0 &lt;<replaceable>../patch_to_apply.diff</></>
-  </screen>
-        </para>
-        <para>
-          To remove the patch, use the <parameter>-R</> option:
-  <screen>
-  <prompt>$ </><userinput>patch -p0 -R &lt;<replaceable>../patch_to_apply.diff</></>
-  </screen>
-        </para>
-        <para>
-          If you want to do a test run to see if the patch will apply
-          successfully (e.g., if the patch was created from an older or
-          newer version of the tree), you can use the
-          <parameter>--dry-run</> parameter to run the patch
-          without writing to any files:
-  <screen>
-  <prompt>$ </><userinput>patch -p0 --dry-run &lt;<replaceable>../patch_to_apply.diff</></>
-  </screen>
-        </para>
-        <para>
-          <command>patch</> is pretty smart about extracting
-          patches from the middle of a file, so if you save an email with
-          an inlined patch to a file on your hard drive, you can invoke
-          patch on it without stripping out the email headers and other
-          text.  <command>patch</> ignores everything that doesn't
-          look like a patch.
-        </para>
-        <para>
-          The <parameter>-p0</> option to <command>patch</>
-          tells it to keep the full file name from the patch file. For example,
-          if the file name in the patch file was
-           <filename>wine/programs/clock/main.c</>.
-          Setting the <parameter>-p0</> option would apply the patch
-          to the file of the same name i.e.
-          <filename>wine/programs/clock/main.c </>.
-          Setting the <parameter>-p1</> option would strip off the
-          first part of the file name and apply
-          the patch to <filename>programs/clock/main.c</>.
-	  The <parameter>-p1</> option would be useful if you named your
-	  top level wine directory differently than the person who sent
-	  you the patch. For the <parameter>-p1</> option
-	  <command>patch</> should be run from the top level wine
-	  directory.
+          To uninstall Wine from source, once again navigate to the same 
+          source folder that you used to install Wine using the terminal.  
+          Then, run the following command:
+            <screen>
+            <prompt># </><userinput>make uninstall</>
+            </screen>
+          This command will require root privileges, and should remove all of 
+          the Wine binary files from your system.  It will not, however, 
+          remove your Wine configuration and applications located in your 
+          user's home directory, so you are free to install another version of 
+          Wine or delete that configuration by hand.
         </para>
       </sect2>
     </sect1>
