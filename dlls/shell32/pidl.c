@@ -912,11 +912,8 @@ HRESULT WINAPI SHGetDataFromIDListW(LPSHELLFOLDER psf, LPCITEMIDLIST pidl, int n
  *	NULL returns FALSE
  *	desktop pidl gives path to desktopdirectory back
  *	special pidls returning FALSE
- *
- * FIXME
- *  fnGetDisplayNameOf can return different types of OLEString
  */
-BOOL WINAPI SHGetPathFromIDListA (LPCITEMIDLIST pidl, LPSTR pszPath)
+BOOL WINAPI SHGetPathFromIDListA(LPCITEMIDLIST pidl, LPSTR pszPath)
 {
 	HRESULT hr;
 	STRRET str;
@@ -942,17 +939,28 @@ BOOL WINAPI SHGetPathFromIDListA (LPCITEMIDLIST pidl, LPSTR pszPath)
 /*************************************************************************
  * SHGetPathFromIDListW 			[SHELL32.@]
  */
-BOOL WINAPI SHGetPathFromIDListW (LPCITEMIDLIST pidl,LPWSTR pszPath)
-{	char sTemp[MAX_PATH];
+BOOL WINAPI SHGetPathFromIDListW(LPCITEMIDLIST pidl, LPWSTR pszPath)
+{
+	HRESULT hr;
+	STRRET str;
+	LPSHELLFOLDER shellfolder;
 
-	TRACE_(shell)("(pidl=%p)\n", pidl);
+	TRACE_(shell)("(pidl=%p,%p)\n", pidl, debugstr_w(pszPath));
+	pdump(pidl);
 
-	SHGetPathFromIDListA (pidl, sTemp);
-        MultiByteToWideChar( CP_ACP, 0, sTemp, -1, pszPath, MAX_PATH );
+	if (!pidl) return FALSE;
 
-	TRACE_(shell)("-- (%s)\n",debugstr_w(pszPath));
+	hr = SHGetDesktopFolder(&shellfolder);
+	if (SUCCEEDED(hr)) {
+	    hr = IShellFolder_GetDisplayNameOf(shellfolder, pidl, SHGDN_FORPARSING, &str);
+	    if (SUCCEEDED(hr)) {
+	        StrRetToStrNW(pszPath, MAX_PATH, &str, pidl);
+	    }
+	    IShellFolder_Release(shellfolder);
+	}
 
-	return TRUE;
+	TRACE_(shell)("-- %s, 0x%08lx\n",debugstr_w(pszPath), hr);
+	return SUCCEEDED(hr);
 }
 
 /*************************************************************************
@@ -1745,11 +1753,11 @@ DWORD _ILGetFileAttributes(LPCITEMIDLIST pidl, LPSTR pOut, UINT uOutSize)
 */
 void _ILFreeaPidl(LPITEMIDLIST * apidl, UINT cidl)
 {
-	int   i;
+	UINT   i;
 
-	if(apidl)
+	if (apidl)
 	{
-	  for(i = 0; i < cidl; i++) SHFree(apidl[i]);
+	  for (i = 0; i < cidl; i++) SHFree(apidl[i]);
 	  SHFree(apidl);
 	}
 }
@@ -1761,11 +1769,11 @@ void _ILFreeaPidl(LPITEMIDLIST * apidl, UINT cidl)
 */
 LPITEMIDLIST *  _ILCopyaPidl(LPITEMIDLIST * apidlsrc, UINT cidl)
 {
-	int i;
+	UINT i;
 	LPITEMIDLIST * apidldest = (LPITEMIDLIST*)SHAlloc(cidl * sizeof(LPITEMIDLIST));
 	if(!apidlsrc) return NULL;
 
-	for(i = 0; i < cidl; i++)
+	for (i = 0; i < cidl; i++)
 	  apidldest[i] = ILClone(apidlsrc[i]);
 
 	return apidldest;
@@ -1778,7 +1786,7 @@ LPITEMIDLIST *  _ILCopyaPidl(LPITEMIDLIST * apidlsrc, UINT cidl)
 */
 LPITEMIDLIST * _ILCopyCidaToaPidl(LPITEMIDLIST* pidl, LPIDA cida)
 {
-	int i;
+	UINT i;
 	LPITEMIDLIST * dst = (LPITEMIDLIST*)SHAlloc(cida->cidl * sizeof(LPITEMIDLIST));
 
 	if(!dst) return NULL;
@@ -1786,7 +1794,7 @@ LPITEMIDLIST * _ILCopyCidaToaPidl(LPITEMIDLIST* pidl, LPIDA cida)
 	if (pidl)
 	  *pidl = ILClone((LPITEMIDLIST)(&((LPBYTE)cida)[cida->aoffset[0]]));
 
-	for(i = 0; i < cida->cidl; i++)
+	for (i = 0; i < cida->cidl; i++)
 	  dst[i] = ILClone((LPITEMIDLIST)(&((LPBYTE)cida)[cida->aoffset[i + 1]]));
 
 	return dst;
