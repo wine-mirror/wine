@@ -2,10 +2,6 @@
     <title>Documenting Wine</title>
 
     <para>
-      Written by &name-jon-griffiths; <email>&email-jon-griffiths;</email>
-    </para>
-
-    <para>
       This chapter describes how you can help improve Wines documentation.
     </para>
 
@@ -90,10 +86,6 @@
 
     <sect1 id="api-docs">
       <title>Writing Wine API Documentation</title>
-
-      <para>
-        Written by &name-jon-griffiths; <email>&email-jon-griffiths;</email>
-      </para>
 
       <sect2 id="api-docs-intro">
       <title>Introduction to API Documentation</title>
@@ -611,13 +603,6 @@ BOOL WINAPI PathRelativePathToA(
     <sect1 id="wine-docbook">
       <title>The Wine DocBook System</title>
 
-      <para>
-        Written by &name-john-sheets; <email>&email-john-sheets;</email>
-      </para>
-      <para>
-        Modified by &name-tony-lambregts; <email>&email-tony-lambregts;</email> Nov. 2002
-      </para>
-
       <sect2 id="writing-docbook">
         <title>Writing Documentation with DocBook</title>
 
@@ -684,11 +669,11 @@ BOOL WINAPI PathRelativePathToA(
           </para></listitem>
 
           <listItem><para>
-          run <command>./make_winehq</command>
+          run <command>make html</command>
           </para></listitem>
 
           <listItem><para>
-          View <filename>wine-doc/index.html</filename> in your favorite browser
+          View <filename>wine-user.html</filename>, <filename>wine-devel.html</filename>, etc in your favorite browser
           </para></listitem>
 
           </orderedlist>
@@ -823,15 +808,6 @@ BOOL WINAPI PathRelativePathToA(
           </para>
         </sect4>
 
-        <sect4>
-          <title>SGML on Other Distributions</title>
-          <note>
-	  <title>Fix me</title>
-          <para>
-            List package names and install locations...
-          </para>
-          </note>
-        </sect4>
         </sect3>
         <sect3>
           <title>Terminology</title>
@@ -1118,12 +1094,11 @@ BOOL WINAPI PathRelativePathToA(
             There are often many correct ways to mark up a given piece
             of text, and you may have to make guesses about which tag
             to use.  Sometimes you'll have to make compromises.
-            However, remember that it is possible to further <link
-            linkend="docbook-tweaking">customize the output</link> of
-            the SGML processors.  If you don't like the way a certain
-            tag looks in HTML, that doesn't mean you should choose a
-            different tag based on its output formatting.  The
-            processing stylesheets can be altered to fix the
+            However, remember that it is possible to further customize 
+	    the output of  the SGML processors.  If you don't like the 
+	    way a certain tag looks in HTML, that doesn't mean you
+	    should choose a different tag based on its output formatting.
+            The processing stylesheets can be altered to fix the
             formatting of that same tag everywhere in the document
             (not just in the place you're working on).  For example,
             if you're frustrated that the <sgmltag
@@ -1335,16 +1310,16 @@ BOOL WINAPI PathRelativePathToA(
 <programlisting>
 <![CDATA[
 <note>
-  <title>FIXME</title>
-  <para>This section needs more info about...</para>
+  <title>EXAMPLE</title>
+  <para>This is an example note...</para>
 </note>
 ]]></programlisting>
                 <para>
                   The results will look something like this:
                 </para>
                   <note>
-                    <title>FIXME</title>
-                    <para>This section needs more info about...</para>
+                    <title>EXAMPLE</title>
+                    <para>This is an example note...</para>
                   </note>
               </listitem>
             </varlistentry>
@@ -1700,12 +1675,12 @@ BOOL WINAPI PathRelativePathToA(
           </variablelist>
         </sect3>
 
-        <sect3>
+        <!--sect3>
           <title>Multiple SGML files</title>
           <para>
             How to split an SGML document into multiple files...
           </para>
-        </sect3>
+        </sect3-->
       </sect2>
 
       <sect2 id="sgml-environment">
@@ -1723,19 +1698,19 @@ BOOL WINAPI PathRelativePathToA(
           popular Linux distributions.
         </para>
 
-        <sect3>
+        <!--sect3>
           <title>DSSSL Environment</title>
           <para>
             Explain tools and methodologies..
           </para>
-        </sect3>
+        </sect3-->
 
-        <sect3>
+        <!--sect3>
           <title>XSLT Environment</title>
           <para>
             Explain tools and methodologies...
           </para>
-        </sect3>
+        </sect3-->
 
       </sect2>
 
@@ -1749,13 +1724,13 @@ BOOL WINAPI PathRelativePathToA(
           editors exist for it; however, until recently open source
           SGML editors have been scarce.
         </para>
-        <note>
+        <!--note>
           <title>FIXME</title>
           <para>
             List the available commercial and open source SGML
             editors.
           </para>
-        </note>
+        </note-->
         <para>
           The most commonly used open source SGML editor is Emacs,
           with the PSGML <firstterm>mode</firstterm>, or extension.
@@ -1778,7 +1753,7 @@ BOOL WINAPI PathRelativePathToA(
         </para>
       </sect2>
 
-      <sect2 id="docbook-build">
+      <!--sect2 id="docbook-build">
         <title>The DocBook Build System</title>
 
         <sect3 id="docbook-infrastructure">
@@ -1803,7 +1778,7 @@ BOOL WINAPI PathRelativePathToA(
             FIXME: Explain make, rsync, etc.
           </para>
         </sect3>
-      </sect2>
+      </sect2-->
     </sect1>
   </chapter>
 
