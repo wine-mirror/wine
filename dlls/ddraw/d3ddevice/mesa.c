@@ -43,7 +43,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(ddraw);
 WINE_DECLARE_DEBUG_CHANNEL(ddraw_geom);
-WINE_DECLARE_DEBUG_CHANNEL(ddraw_fps);
 
 /* x11drv GDI escapes */
 #define X11DRV_ESCAPE 6789
@@ -243,17 +242,6 @@ inline static Drawable get_drawable( HDC hdc )
     return drawable;
 }
 
-/* This is unnecessarely complicated :-) */
-#define MEASUREMENT_WINDOW 5
-#define NUMBER_OF_WINDOWS 10
-
-static LONGLONG perf_freq;
-static LONGLONG perf_storage[NUMBER_OF_WINDOWS];
-static LONGLONG prev_time = 0;
-static unsigned int current_window;
-static unsigned int measurements_in_window;
-static unsigned int valid_windows;
-
 static BOOL opengl_flip( LPVOID dev, LPVOID drawable)
 {
     IDirect3DDeviceImpl *d3d_dev = (IDirect3DDeviceImpl *) dev;
@@ -268,57 +256,6 @@ static BOOL opengl_flip( LPVOID dev, LPVOID drawable)
     gl_d3d_dev->state[WINE_GL_BUFFER_FRONT] = SURFACE_GL;
     glXSwapBuffers(gl_d3d_dev->display, (Drawable)drawable);
     LEAVE_GL();
-
-    if (TRACE_ON(ddraw_fps)) {
-	LONGLONG current_time;
-	LONGLONG frame_duration;
-	QueryPerformanceCounter((LARGE_INTEGER *) &current_time);
-
-	if (prev_time != 0) {
-	    LONGLONG total_time = 0;
-	    int tot_meas;
-	    
-	    frame_duration = current_time - prev_time;
-	    prev_time = current_time;
-	    
-	    perf_storage[current_window] += frame_duration;
-	    measurements_in_window++;
-	    
-	    if (measurements_in_window >= MEASUREMENT_WINDOW) {
-		current_window++;
-		valid_windows++;
-
-		if (valid_windows < NUMBER_OF_WINDOWS) {
-		    int i;
-		    tot_meas = valid_windows * MEASUREMENT_WINDOW;
-		    for (i = 0; i < valid_windows; i++) {
-			total_time += perf_storage[i];
-		    }
-		} else {
-		    int i;
-		    tot_meas = NUMBER_OF_WINDOWS * MEASUREMENT_WINDOW;
-		    for (i = 0; i < NUMBER_OF_WINDOWS; i++) {
-			total_time += perf_storage[i];
-		    }
-		}
-
-		TRACE_(ddraw_fps)(" %9.5f\n", (double) (perf_freq * tot_meas) / (double) total_time);
-		
-		if (current_window >= NUMBER_OF_WINDOWS) {
-		    current_window = 0;
-		}
-		perf_storage[current_window] = 0;
-		measurements_in_window = 0;
-	    }
-	} else {
-	    prev_time = current_time;
-	    memset(perf_storage, 0, sizeof(perf_storage));
-	    current_window = 0;
-	    valid_windows = 0;
-	    measurements_in_window = 0;
-	    QueryPerformanceFrequency((LARGE_INTEGER *) &perf_freq);
-	}
-    }
     
     return TRUE;
 }
