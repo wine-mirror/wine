@@ -40,6 +40,8 @@ WINE REGISTRY Version 2
 "mciavi.drv"   = "native, builtin"
 "mcianim.drv"  = "native, builtin"
 "msi"          = "native, builtin"
+"d3drm"        = "native, builtin"
+"dpnhpast"     = "native, builtin"
 ; you can specify applications too
 ; this one will apply for all notepad.exe
 ;"*notepad.exe" = "native, builtin"

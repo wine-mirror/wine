@@ -1,7 +1,5 @@
 /*
- * Qcap implementation
- *
- * Copyright (C) 2003 Dominik Strasser
+ * Copyright 2004 Tom Wickline
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -18,26 +16,13 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#include "wine/debug.h"
-#include "winerror.h"
+#define WINE_OLESELFREGISTER
+#define WINE_FILEDESCRIPTION_STR "Wine DirectPlay"
+#define WINE_FILENAME_STR "dplay.dll"
+#define WINE_FILEVERSION 5,3,0,900
+#define WINE_FILEVERSION_STR "5.3.0.900"
+#define WINE_PRODUCTVERSION 5,3,0,900
+#define WINE_PRODUCTVERSION_STR "5.3"
+#define WINE_PRODUCTNAME_STR "DirectX"
 
-
-WINE_DEFAULT_DEBUG_CHANNEL(qcap);
-
-/***********************************************************************
- *      DllRegisterServer (QCAP.@)
- */
-HRESULT WINAPI QCAP_DllRegisterServer()
-{
-	FIXME("(): stub\n");
-	return 0;
-}
-
-/***********************************************************************
- *		DllGetClassObject (QCAP.@)
- */
-HRESULT WINAPI QCAP_DllGetClassObject(REFCLSID rclsid, REFIID iid, LPVOID *ppv)
-{
-    FIXME("\n\tCLSID:\t%s,\n\tIID:\t%s\n",debugstr_guid(rclsid),debugstr_guid(iid));
-    return CLASS_E_CLASSNOTAVAILABLE;
-}
+#include "wine/wine_common_ver.rc"
