@@ -152,9 +152,9 @@ typedef struct {
 } OSS_MSG_RING;
 
 typedef struct tagOSS_DEVICE {
-    char                        dev_name[32];
-    char                        mixer_name[32];
-    char                        interface_name[64];
+    char*                       dev_name;
+    char*                       mixer_name;
+    char*                       interface_name;
     unsigned                    open_count;
     WAVEOUTCAPSA                out_caps;
     WAVEOUTCAPSA                duplex_out_caps;
@@ -1161,6 +1161,16 @@ static void OSS_WaveFullDuplexInit(OSS_DEVICE* ossdev)
           ossdev->duplex_out_caps.dwFormats, ossdev->duplex_out_caps.dwSupport);
 }
 
+static char* StrDup(const char* str, const char* def)
+{
+    char* dst;
+    if (str==NULL)
+        str=def;
+    dst=HeapAlloc(GetProcessHeap(),0,strlen(str)+1);
+    strcpy(dst, str);
+    return dst;
+}
+
 /******************************************************************
  *		OSS_WaveInit
  *
@@ -1168,26 +1178,45 @@ static void OSS_WaveFullDuplexInit(OSS_DEVICE* ossdev)
  */
 LONG OSS_WaveInit(void)
 {
-    int 	i;
+    char* str;
+    int i;
+
     TRACE("()\n");
+
+    str=getenv("AUDIODEV");
+    if (str!=NULL)
+    {
+        OSS_Devices[0].dev_name=StrDup(str,"");
+        OSS_Devices[0].mixer_name=StrDup(getenv("MIXERDEV"),"/dev/mixer");
+        for (i = 1; i < MAX_WAVEDRV; ++i)
+        {
+            OSS_Devices[i].dev_name=StrDup("",NULL);
+            OSS_Devices[i].mixer_name=StrDup("",NULL);
+        }
+    }
+    else
+    {
+        OSS_Devices[0].dev_name=StrDup("/dev/dsp",NULL);
+        OSS_Devices[0].mixer_name=StrDup("/dev/mixer",NULL);
+        for (i = 1; i < MAX_WAVEDRV; ++i)
+        {
+            OSS_Devices[i].dev_name=HeapAlloc(GetProcessHeap(),0,11);
+            sprintf(OSS_Devices[i].dev_name, "/dev/dsp%d", i);
+            OSS_Devices[i].mixer_name=HeapAlloc(GetProcessHeap(),0,13);
+            sprintf(OSS_Devices[i].mixer_name, "/dev/mixer%d", i);
+        }
+    }
 
     for (i = 0; i < MAX_WAVEDRV; ++i)
     {
-	if (i == 0) {
-	    sprintf((char *)OSS_Devices[i].dev_name, "/dev/dsp");
-	    sprintf((char *)OSS_Devices[i].mixer_name, "/dev/mixer");
-	} else {
-	    sprintf((char *)OSS_Devices[i].dev_name, "/dev/dsp%d", i);
-	    sprintf((char *)OSS_Devices[i].mixer_name, "/dev/mixer%d", i);
-	}
-
+        OSS_Devices[i].interface_name=HeapAlloc(GetProcessHeap(),0,9+strlen(OSS_Devices[i].dev_name)+1);
         sprintf(OSS_Devices[i].interface_name, "wineoss: %s", OSS_Devices[i].dev_name);
     }
 
     /* start with output devices */
     for (i = 0; i < MAX_WAVEDRV; ++i)
     {
-        if (OSS_WaveOutInit(&OSS_Devices[i]))
+        if (*OSS_Devices[i].dev_name=='\0' || OSS_WaveOutInit(&OSS_Devices[i]))
         {
             WOutDev[numOutDev].state = WINE_WS_CLOSED;
             WOutDev[numOutDev].ossdev = &OSS_Devices[i];
@@ -1199,7 +1228,7 @@ LONG OSS_WaveInit(void)
     /* then do input devices */
     for (i = 0; i < MAX_WAVEDRV; ++i)
     {
-        if (OSS_WaveInInit(&OSS_Devices[i]))
+        if (*OSS_Devices[i].dev_name=='\0' || OSS_WaveInInit(&OSS_Devices[i]))
         {
             WInDev[numInDev].state = WINE_WS_CLOSED;
             WInDev[numInDev].ossdev = &OSS_Devices[i];
@@ -1209,7 +1238,8 @@ LONG OSS_WaveInit(void)
 
     /* finish with the full duplex bits */
     for (i = 0; i < MAX_WAVEDRV; i++)
-        OSS_WaveFullDuplexInit(&OSS_Devices[i]);
+        if (*OSS_Devices[i].dev_name!='\0')
+            OSS_WaveFullDuplexInit(&OSS_Devices[i]);
 
     return 0;
 }
