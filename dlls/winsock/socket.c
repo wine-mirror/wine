@@ -659,6 +659,9 @@ INT WINAPI WSAStartup(UINT wVersionRequested, LPWSADATA lpWSAData)
     /* return winsock information */
     memcpy(lpWSAData, &WINSOCK_data, sizeof(WINSOCK_data));
 
+    /* that's the whole of the negotiation for now */
+    lpWSAData->wVersion = wVersionRequested;
+
     TRACE("succeeded\n");
     return 0;
 }
