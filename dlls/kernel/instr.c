@@ -54,7 +54,7 @@ inline static void add_stack( CONTEXT86 *context, int offset )
 inline static void *make_ptr( CONTEXT86 *context, DWORD seg, DWORD off, int long_addr )
 {
     if (ISV86(context)) return (void *)((seg << 4) + LOWORD(off));
-    if (IS_SELECTOR_SYSTEM(seg)) return (void *)off;
+    if (wine_ldt_is_system(seg)) return (void *)off;
     if (!long_addr) off = LOWORD(off);
     return (char *) MapSL( MAKESEGPTR( seg, 0 ) ) + off;
 }
@@ -268,7 +268,7 @@ static BYTE *INSTR_GetOperandAddr( CONTEXT86 *context, BYTE *instr,
     if (segprefix != -1) seg = segprefix;
 
     /* Make sure the segment and offset are valid */
-    if (IS_SELECTOR_SYSTEM(seg)) return (BYTE *)(base + (index << ss));
+    if (wine_ldt_is_system(seg)) return (BYTE *)(base + (index << ss));
     if ((seg & 7) != 7) return NULL;
     wine_ldt_get_entry( seg, &entry );
     if (wine_ldt_is_empty( &entry )) return NULL;
@@ -716,7 +716,7 @@ DWORD INSTR_EmulateInstruction( EXCEPTION_RECORD *rec, CONTEXT86 *context )
             break;  /* Unable to emulate it */
 
         case 0xcd: /* int <XX> */
-            if (IS_SELECTOR_SYSTEM(context->SegCs)) break;  /* don't emulate it in 32-bit code */
+            if (wine_ldt_is_system(context->SegCs)) break;  /* don't emulate it in 32-bit code */
             if (!DOS_EmulateInterruptPM) init_winedos();
             if (DOS_EmulateInterruptPM)
             {
@@ -727,7 +727,7 @@ DWORD INSTR_EmulateInstruction( EXCEPTION_RECORD *rec, CONTEXT86 *context )
             break;  /* Unable to emulate it */
 
         case 0xcf: /* iret */
-            if (IS_SELECTOR_SYSTEM(context->SegCs)) break;  /* don't emulate it in 32-bit code */
+            if (wine_ldt_is_system(context->SegCs)) break;  /* don't emulate it in 32-bit code */
             if (long_op)
             {
                 DWORD *stack = get_stack( context );

@@ -35,6 +35,7 @@
 #include "file.h"
 #include "task.h"
 #include "miscemu.h"
+#include "selectors.h"
 #include "stackframe.h"
 #include "kernel_private.h"
 #include "wine/exception.h"
@@ -182,7 +183,7 @@ static DWORD call16_handler( EXCEPTION_RECORD *record, EXCEPTION_REGISTRATION_RE
     else if (record->ExceptionCode == EXCEPTION_ACCESS_VIOLATION ||
              record->ExceptionCode == EXCEPTION_PRIV_INSTRUCTION)
     {
-        if (IS_SELECTOR_SYSTEM(context->SegCs))
+        if (wine_ldt_is_system(context->SegCs))
         {
             if (fix_selector( context )) return ExceptionContinueExecution;
         }
@@ -248,7 +249,7 @@ static LONG CALLBACK vectored_handler( EXCEPTION_POINTERS *ptrs )
     EXCEPTION_RECORD *record = ptrs->ExceptionRecord;
     CONTEXT *context = ptrs->ContextRecord;
 
-    if (IS_SELECTOR_SYSTEM(context->SegCs) &&
+    if (wine_ldt_is_system(context->SegCs) &&
         (record->ExceptionCode == EXCEPTION_ACCESS_VIOLATION ||
          record->ExceptionCode == EXCEPTION_PRIV_INSTRUCTION))
     {

@@ -51,6 +51,7 @@ EXPORTS
     wine_ldt_get_ptr
     wine_ldt_init_fs
     wine_ldt_init_locking
+    wine_ldt_is_system
     wine_ldt_realloc_entries
     wine_ldt_set_entry
     wine_set_fs

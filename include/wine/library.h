@@ -75,6 +75,7 @@ extern void *wine_anon_mmap( void *start, size_t size, int prot, int flags );
 extern void wine_ldt_init_locking( void (*lock_func)(void), void (*unlock_func)(void) );
 extern void wine_ldt_get_entry( unsigned short sel, LDT_ENTRY *entry );
 extern int wine_ldt_set_entry( unsigned short sel, const LDT_ENTRY *entry );
+extern int wine_ldt_is_system( unsigned short sel );
 extern void *wine_ldt_get_ptr( unsigned short sel, unsigned int offset );
 extern unsigned short wine_ldt_alloc_entries( int count );
 extern unsigned short wine_ldt_realloc_entries( unsigned short sel, int oldcount, int newcount );
@@ -114,8 +115,6 @@ WINE_LDT_EXTERN struct __wine_ldt_copy
 #define WINE_LDT_FLAGS_TYPE_MASK 0x1f  /* Mask for segment type */
 #define WINE_LDT_FLAGS_32BIT     0x40  /* Segment is 32-bit (code or stack) */
 #define WINE_LDT_FLAGS_ALLOCATED 0x80  /* Segment is allocated (no longer free) */
-
-#define WINE_LDT_FIRST_ENTRY     512
 
 /* helper functions to manipulate the LDT_ENTRY structure */
 inline static void wine_ldt_set_base( LDT_ENTRY *ent, const void *base )

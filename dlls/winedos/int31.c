@@ -29,6 +29,7 @@
 #include "wownt32.h"
 #include "task.h"
 #include "dosexe.h"
+#include "selectors.h"
 
 #include "excpt.h"
 #include "wine/debug.h"
@@ -339,7 +340,7 @@ static void DPMI_CallRMCBProc( CONTEXT86 *context, RMCB *rmcb, WORD flag )
     /* Disable virtual interrupts. */
     NtCurrentTeb()->dpmi_vif = 0;
 
-    if (IS_SELECTOR_SYSTEM( rmcb->proc_sel )) {
+    if (wine_ldt_is_system( rmcb->proc_sel )) {
         /* Wine-internal RMCB, call directly */
         ((RMCBPROC)rmcb->proc_ofs)(context);
     } else __TRY {

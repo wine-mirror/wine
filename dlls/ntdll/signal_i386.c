@@ -57,7 +57,6 @@
 #include "winternl.h"
 #include "wine/library.h"
 #include "ntdll_misc.h"
-#include "selectors.h"
 
 /***********************************************************************
  * signal context platform-specific definitions
@@ -616,8 +615,8 @@ static void *init_handler( const SIGCONTEXT *sigcontext )
     wine_set_fs( teb->teb_sel );
 
     /* now restore a proper %gs for the fault handler */
-    if (!IS_SELECTOR_SYSTEM(CS_sig(sigcontext)) ||
-        !IS_SELECTOR_SYSTEM(SS_sig(sigcontext)))  /* 16-bit mode */
+    if (!wine_ldt_is_system(CS_sig(sigcontext)) ||
+        !wine_ldt_is_system(SS_sig(sigcontext)))  /* 16-bit mode */
     {
         /*
          * Win16 or DOS protected mode. Note that during switch
@@ -927,8 +926,8 @@ static void WINAPI raise_vm86_sti_exception( EXCEPTION_RECORD *rec, CONTEXT *con
         merge_vm86_pending_flags( rec );
     }
     else if (NtCurrentTeb()->dpmi_vif &&
-             !IS_SELECTOR_SYSTEM(context->SegCs) &&
-             !IS_SELECTOR_SYSTEM(context->SegSs))
+             !wine_ldt_is_system(context->SegCs) &&
+             !wine_ldt_is_system(context->SegSs))
     {
         /* Executing DPMI code and virtual interrupts are enabled. */
         NtCurrentTeb()->vm86_pending = 0;

@@ -124,6 +124,7 @@ struct __wine_ldt_copy wine_ldt_copy;
 
 static const LDT_ENTRY null_entry;  /* all-zeros, used to clear LDT entries */
 
+#define LDT_FIRST_ENTRY 512
 #define LDT_SIZE 8192
 
 /* empty function for default locks */
@@ -182,7 +183,7 @@ static int internal_set_entry( unsigned short sel, const LDT_ENTRY *entry )
 {
     int ret = 0, index = sel >> 3;
 
-    if (index < WINE_LDT_FIRST_ENTRY) return 0;  /* cannot modify reserved entries */
+    if (index < LDT_FIRST_ENTRY) return 0;  /* cannot modify reserved entries */
 
 #ifdef __i386__
 
@@ -257,6 +258,17 @@ int wine_ldt_set_entry( unsigned short sel, const LDT_ENTRY *entry )
 
 
 /***********************************************************************
+ *           wine_ldt_is_system
+ *
+ * Check if the selector is a system selector (i.e. not managed by Wine).
+ */
+int wine_ldt_is_system( unsigned short sel )
+{
+    return is_gdt_sel(sel) || ((sel >> 3) < LDT_FIRST_ENTRY);
+}
+
+
+/***********************************************************************
  *           wine_ldt_get_ptr
  *
  * Convert a segment:offset pair to a linear pointer.
@@ -268,7 +280,7 @@ void *wine_ldt_get_ptr( unsigned short sel, unsigned int offset )
 
     if (is_gdt_sel(sel))  /* GDT selector */
         return (void *)offset;
-    if ((index = (sel >> 3)) < WINE_LDT_FIRST_ENTRY)  /* system selector */
+    if ((index = (sel >> 3)) < LDT_FIRST_ENTRY)  /* system selector */
         return (void *)offset;
     if (!(wine_ldt_copy.flags[index] & WINE_LDT_FLAGS_32BIT)) offset &= 0xffff;
     return (char *)wine_ldt_copy.base[index] + offset;
@@ -287,7 +299,7 @@ unsigned short wine_ldt_alloc_entries( int count )
 
     if (count <= 0) return 0;
     lock_ldt();
-    for (i = WINE_LDT_FIRST_ENTRY; i < LDT_SIZE; i++)
+    for (i = LDT_FIRST_ENTRY; i < LDT_SIZE; i++)
     {
         if (wine_ldt_copy.flags[i] & WINE_LDT_FLAGS_ALLOCATED) size = 0;
         else if (++size >= count)  /* found a large enough block */
