@@ -2582,7 +2582,10 @@ BOOL WINAPI SetWindowPos( HWND hwnd, HWND hwndInsertAfter,
                  WIN_ReleaseWndPtr(wnd);
                  goto END;
              }
-	   if( wnd->next == wndPtr ) flags |= SWP_NOZORDER;
+            /* don't need to change the Zorder of hwnd if it's already inserted
+             * after hwndInsertAfter or when inserting hwnd after itself.
+             */
+             if(( wnd->next == wndPtr ) || (hwnd == hwndInsertAfter)) flags |= SWP_NOZORDER;
 	 }
          WIN_ReleaseWndPtr(wnd);
     }
