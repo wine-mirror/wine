@@ -140,7 +140,7 @@
 140 stdcall VarTokenizeFormatString (ptr ptr long long long long ptr) VarTokenizeFormatString
 141 stdcall VarAdd(ptr ptr ptr) VarAdd
 142 stdcall VarAnd(ptr ptr ptr) VarAnd
-143 stub VarDiv # stdcall (ptr ptr ptr)
+143 stdcall VarDiv(ptr ptr ptr) VarDiv
 144 stub OACreateTypeLib2
 146 stdcall DispCallFunc(ptr long long long long ptr ptr ptr) DispCallFunc
 147 stdcall VariantChangeTypeEx(ptr ptr long long long) VariantChangeTypeEx
@@ -151,10 +151,10 @@
 153 stub VarIdiv # stdcall (ptr ptr ptr)
 154 stub VarImp # stdcall (ptr ptr ptr)
 155 stub VarMod # stdcall (ptr ptr ptr)
-156 stub VarMul # stdcall (ptr ptr ptr)
+156 stdcall VarMul(ptr ptr ptr) VarMul
 157 stdcall VarOr(ptr ptr ptr) VarOr
 158 stub VarPow # stdcall (ptr ptr ptr)
-159 stub VarSub # stdcall (ptr ptr ptr)
+159 stdcall VarSub(ptr ptr ptr) VarSub
 160 stdcall CreateTypeLib(long wstr ptr) CreateTypeLib
 161 stdcall LoadTypeLib (wstr ptr) LoadTypeLib
 162 stdcall LoadRegTypeLib (ptr long long long ptr) LoadRegTypeLib

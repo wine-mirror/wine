@@ -5110,10 +5110,17 @@ HRESULT WINAPI VarCmp(LPVARIANT left, LPVARIANT right, LCID lcid, DWORD flags)
 {
 
 
-    BOOL         lOk        = TRUE;
-    BOOL         rOk        = TRUE;
-    LONGLONG     lVal = -1;
-    LONGLONG     rVal = -1;
+    BOOL	lOk        = TRUE;
+    BOOL	rOk        = TRUE;
+    LONGLONG	lVal = -1;
+    LONGLONG	rVal = -1;
+    VARIANT	rv,lv;
+    DWORD	xmask;
+    HRESULT	rc;
+
+    VariantInit(&lv);VariantInit(&rv);
+    V_VT(right) &= ~0x8000; /* hack since we sometime get this flag.  */
+    V_VT(left) &= ~0x8000; /* hack since we sometime get this flag. */
 
     TRACE("Left Var:\n");
     dump_Variant(left);
@@ -5129,6 +5136,30 @@ HRESULT WINAPI VarCmp(LPVARIANT left, LPVARIANT right, LCID lcid, DWORD flags)
     if ((V_VT(left)&VT_TYPEMASK) == VT_BSTR &&
         (V_VT(right)&VT_TYPEMASK) == VT_BSTR) {
         return VarBstrCmp(V_BSTR(left), V_BSTR(right), lcid, flags);
+    }
+
+    xmask = (1<<(V_VT(left)&VT_TYPEMASK))|(1<<(V_VT(right)&VT_TYPEMASK));
+    if (xmask & (1<<VT_R8)) {
+	rc = VariantChangeType(&lv,left,0,VT_R8);
+	if (FAILED(rc)) return rc;
+	rc = VariantChangeType(&rv,right,0,VT_R8);
+	if (FAILED(rc)) return rc;
+	
+	if (V_R8(&lv) == V_R8(&rv)) return VARCMP_EQ;
+	if (V_R8(&lv) < V_R8(&rv)) return VARCMP_LT;
+	if (V_R8(&lv) > V_R8(&rv)) return VARCMP_GT;
+	return E_FAIL; /* can't get here */
+    }
+    if (xmask & (1<<VT_R4)) {
+	rc = VariantChangeType(&lv,left,0,VT_R4);
+	if (FAILED(rc)) return rc;
+	rc = VariantChangeType(&rv,right,0,VT_R4);
+	if (FAILED(rc)) return rc;
+	
+	if (V_R4(&lv) == V_R4(&rv)) return VARCMP_EQ;
+	if (V_R4(&lv) < V_R4(&rv)) return VARCMP_LT;
+	if (V_R4(&lv) > V_R4(&rv)) return VARCMP_GT;
+	return E_FAIL; /* can't get here */
     }
 
     /* Integers - Ideally like to use VarDecCmp, but no Dec support yet
@@ -5204,8 +5235,6 @@ HRESULT WINAPI VarCmp(LPVARIANT left, LPVARIANT right, LCID lcid, DWORD flags)
             return VARCMP_GT;
         }
     }
-
-
     FIXME("VarCmp partial implementation, doesnt support vt 0x%x / 0x%x\n",V_VT(left), V_VT(right));
     return E_FAIL;
 }
@@ -5371,6 +5400,177 @@ HRESULT WINAPI VarAdd(LPVARIANT left, LPVARIANT right, LPVARIANT result)
         }
     }
 
+    TRACE("rc=%d, Result:\n", (int) rc);
+    dump_Variant(result);
+    return rc;
+}
+
+/**********************************************************************
+ *              VarMul [OLEAUT32.156]
+ *
+ */
+HRESULT WINAPI VarMul(LPVARIANT left, LPVARIANT right, LPVARIANT result)
+{
+    HRESULT rc = E_FAIL;
+    VARTYPE lvt,rvt,resvt;
+    VARIANT lv,rv;
+    BOOL found;
+
+    TRACE("left: ");dump_Variant(left);
+    TRACE("right: ");dump_Variant(right);
+
+    VariantInit(&lv);VariantInit(&rv);
+    lvt = V_VT(left)&VT_TYPEMASK;
+    rvt = V_VT(right)&VT_TYPEMASK;
+    found = FALSE;resvt=VT_VOID;
+    if (((1<<lvt) | (1<<rvt)) & ((1<<VT_R4)|(1<<VT_R8))) {
+	found = TRUE;
+	resvt = VT_R8;
+    }
+    if (!found && (((1<<lvt) | (1<<rvt)) & ((1<<VT_I1)|(1<<VT_I2)|(1<<VT_UI1)|(1<<VT_UI2)|(1<<VT_I4)|(1<<VT_UI4)|(1<<VT_INT)|(1<<VT_UINT)))) {
+	found = TRUE;
+	resvt = VT_I4;
+    }
+    if (!found) {
+	FIXME("can't expand vt %d vs %d to a target type.\n",lvt,rvt);
+	return E_FAIL;
+    }
+    rc = VariantChangeType(&lv, left, 0, resvt);
+    if (FAILED(rc)) {
+	FIXME("Could not convert 0x%x to %d?\n",V_VT(left),resvt);
+	return rc;
+    }
+    rc = VariantChangeType(&rv, right, 0, resvt);
+    if (FAILED(rc)) {
+	FIXME("Could not convert 0x%x to %d?\n",V_VT(right),resvt);
+	return rc;
+    }
+    switch (resvt) {
+    case VT_R8:
+	V_VT(result) = resvt;
+	V_R8(result) = V_R8(&lv) * V_R8(&rv);
+	rc = S_OK;
+	break;
+    case VT_I4:
+	V_VT(result) = resvt;
+	V_I4(result) = V_I4(&lv) * V_I4(&rv);
+	rc = S_OK;
+	break;
+    }
+    TRACE("rc=%d, Result:\n", (int) rc);
+    dump_Variant(result);
+    return rc;
+}
+
+/**********************************************************************
+ *              VarDiv [OLEAUT32.143]
+ *
+ */
+HRESULT WINAPI VarDiv(LPVARIANT left, LPVARIANT right, LPVARIANT result)
+{
+    HRESULT rc = E_FAIL;
+    VARTYPE lvt,rvt,resvt;
+    VARIANT lv,rv;
+    BOOL found;
+
+    TRACE("left: ");dump_Variant(left);
+    TRACE("right: ");dump_Variant(right);
+
+    VariantInit(&lv);VariantInit(&rv);
+    lvt = V_VT(left)&VT_TYPEMASK;
+    rvt = V_VT(right)&VT_TYPEMASK;
+    found = FALSE;resvt = VT_VOID;
+    if (((1<<lvt) | (1<<rvt)) & ((1<<VT_R4)|(1<<VT_R8))) {
+	found = TRUE;
+	resvt = VT_R8;
+    }
+    if (!found && (((1<<lvt) | (1<<rvt)) & ((1<<VT_I1)|(1<<VT_I2)|(1<<VT_UI1)|(1<<VT_UI2)|(1<<VT_I4)|(1<<VT_UI4)|(1<<VT_INT)|(1<<VT_UINT)))) {
+	found = TRUE;
+	resvt = VT_I4;
+    }
+    if (!found) {
+	FIXME("can't expand vt %d vs %d to a target type.\n",lvt,rvt);
+	return E_FAIL;
+    }
+    rc = VariantChangeType(&lv, left, 0, resvt);
+    if (FAILED(rc)) {
+	FIXME("Could not convert 0x%x to %d?\n",V_VT(left),resvt);
+	return rc;
+    }
+    rc = VariantChangeType(&rv, right, 0, resvt);
+    if (FAILED(rc)) {
+	FIXME("Could not convert 0x%x to %d?\n",V_VT(right),resvt);
+	return rc;
+    }
+    switch (resvt) {
+    case VT_R8:
+	V_VT(result) = resvt;
+	V_R8(result) = V_R8(&lv) / V_R8(&rv);
+	rc = S_OK;
+	break;
+    case VT_I4:
+	V_VT(result) = resvt;
+	V_I4(result) = V_I4(&lv) / V_I4(&rv);
+	rc = S_OK;
+	break;
+    }
+    TRACE("rc=%d, Result:\n", (int) rc);
+    dump_Variant(result);
+    return rc;
+}
+
+/**********************************************************************
+ *              VarSub [OLEAUT32.159]
+ *
+ */
+HRESULT WINAPI VarSub(LPVARIANT left, LPVARIANT right, LPVARIANT result)
+{
+    HRESULT rc = E_FAIL;
+    VARTYPE lvt,rvt,resvt;
+    VARIANT lv,rv;
+    BOOL found;
+
+    TRACE("left: ");dump_Variant(left);
+    TRACE("right: ");dump_Variant(right);
+
+    VariantInit(&lv);VariantInit(&rv);
+    lvt = V_VT(left)&VT_TYPEMASK;
+    rvt = V_VT(right)&VT_TYPEMASK;
+    found = FALSE;resvt = VT_VOID;
+    if (((1<<lvt) | (1<<rvt)) & ((1<<VT_R4)|(1<<VT_R8))) {
+	found = TRUE;
+	resvt = VT_R8;
+    }
+    if (!found && (((1<<lvt) | (1<<rvt)) & ((1<<VT_I1)|(1<<VT_I2)|(1<<VT_UI1)|(1<<VT_UI2)|(1<<VT_I4)|(1<<VT_UI4)|(1<<VT_INT)|(1<<VT_UINT)))) {
+	found = TRUE;
+	resvt = VT_I4;
+    }
+    if (!found) {
+	FIXME("can't expand vt %d vs %d to a target type.\n",lvt,rvt);
+	return E_FAIL;
+    }
+    rc = VariantChangeType(&lv, left, 0, resvt);
+    if (FAILED(rc)) {
+	FIXME("Could not convert 0x%x to %d?\n",V_VT(left),resvt);
+	return rc;
+    }
+    rc = VariantChangeType(&rv, right, 0, resvt);
+    if (FAILED(rc)) {
+	FIXME("Could not convert 0x%x to %d?\n",V_VT(right),resvt);
+	return rc;
+    }
+    switch (resvt) {
+    case VT_R8:
+	V_VT(result) = resvt;
+	V_R8(result) = V_R8(&lv) - V_R8(&rv);
+	rc = S_OK;
+	break;
+    case VT_I4:
+	V_VT(result) = resvt;
+	V_I4(result) = V_I4(&lv) - V_I4(&rv);
+	rc = S_OK;
+	break;
+    }
     TRACE("rc=%d, Result:\n", (int) rc);
     dump_Variant(result);
     return rc;
@@ -5895,9 +6095,14 @@ HRESULT WINAPI VarFormat(LPVARIANT varIn, LPOLESTR format,
         } else {
             sprintf(pBuffer, "%f", V_UNION(varIn,dblVal));
         }
-
         *pbstrOut = StringDupAtoBstr( pBuffer );
-
+    } else if ((V_VT(varIn)&VT_TYPEMASK) == VT_I2) {
+        if (V_VT(varIn)&VT_BYREF) {
+            sprintf(pBuffer, "%d", *V_UNION(varIn,piVal));
+        } else {
+            sprintf(pBuffer, "%d", V_UNION(varIn,iVal));
+        }
+        *pbstrOut = StringDupAtoBstr( pBuffer );
     } else if ((V_VT(varIn)&VT_TYPEMASK) == VT_BSTR) {
         if (V_VT(varIn)&VT_BYREF)
             *pbstrOut = SysAllocString( *V_UNION(varIn,pbstrVal) );
