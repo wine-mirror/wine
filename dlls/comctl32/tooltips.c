@@ -670,7 +670,7 @@ TOOLTIPS_AddToolA (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
     if (lpToolInfo == NULL)
 	return FALSE;
-    if (lpToolInfo->cbSize < TTTOOLINFO_V1_SIZEA)
+    if (lpToolInfo->cbSize < TTTOOLINFOA_V1_SIZE)
 	return FALSE;
 
     TRACE("add tool (%p) %p %d%s!\n",
@@ -748,7 +748,7 @@ TOOLTIPS_AddToolW (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
     if (lpToolInfo == NULL)
 	return FALSE;
-    if (lpToolInfo->cbSize < TTTOOLINFO_V1_SIZEW)
+    if (lpToolInfo->cbSize < TTTOOLINFOW_V1_SIZE)
 	return FALSE;
 
     TRACE("add tool (%p) %p %d%s!\n",
@@ -826,7 +826,7 @@ TOOLTIPS_DelToolA (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
     if (lpToolInfo == NULL)
 	return 0;
-    if (lpToolInfo->cbSize < TTTOOLINFO_V1_SIZEA)
+    if (lpToolInfo->cbSize < TTTOOLINFOA_V1_SIZE)
 	return 0;
     if (infoPtr->uNumTools == 0)
 	return 0;
@@ -901,7 +901,7 @@ TOOLTIPS_DelToolW (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
     if (lpToolInfo == NULL)
 	return 0;
-    if (lpToolInfo->cbSize < TTTOOLINFO_V1_SIZEW)
+    if (lpToolInfo->cbSize < TTTOOLINFOW_V1_SIZE)
 	return 0;
     if (infoPtr->uNumTools == 0)
 	return 0;
@@ -976,7 +976,7 @@ TOOLTIPS_EnumToolsA (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
     if (lpToolInfo == NULL)
 	return FALSE;
-    if (lpToolInfo->cbSize < TTTOOLINFO_V1_SIZEA)
+    if (lpToolInfo->cbSize < TTTOOLINFOA_V1_SIZE)
 	return FALSE;
     if (uIndex >= infoPtr->uNumTools)
 	return FALSE;
@@ -1011,7 +1011,7 @@ TOOLTIPS_EnumToolsW (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
     if (lpToolInfo == NULL)
 	return FALSE;
-    if (lpToolInfo->cbSize < TTTOOLINFO_V1_SIZEW)
+    if (lpToolInfo->cbSize < TTTOOLINFOW_V1_SIZE)
 	return FALSE;
     if (uIndex >= infoPtr->uNumTools)
 	return FALSE;
@@ -1045,7 +1045,7 @@ TOOLTIPS_GetBubbleSize (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
     if (lpToolInfo == NULL)
 	return FALSE;
-    if (lpToolInfo->cbSize < TTTOOLINFO_V1_SIZEW)
+    if (lpToolInfo->cbSize < TTTOOLINFOW_V1_SIZE)
 	return FALSE;
 
     nTool = TOOLTIPS_GetToolFromInfoW (infoPtr, lpToolInfo);
@@ -1068,7 +1068,7 @@ TOOLTIPS_GetCurrentToolA (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
     if (lpToolInfo == NULL)
 	return FALSE;
-    if (lpToolInfo->cbSize < TTTOOLINFO_V1_SIZEA)
+    if (lpToolInfo->cbSize < TTTOOLINFOA_V1_SIZE)
 	return FALSE;
 
     if (lpToolInfo) {
@@ -1106,7 +1106,7 @@ TOOLTIPS_GetCurrentToolW (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
     if (lpToolInfo == NULL)
 	return FALSE;
-    if (lpToolInfo->cbSize < TTTOOLINFO_V1_SIZEW)
+    if (lpToolInfo->cbSize < TTTOOLINFOW_V1_SIZE)
 	return FALSE;
 
     if (lpToolInfo) {
@@ -1193,7 +1193,7 @@ TOOLTIPS_GetTextA (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
     if (lpToolInfo == NULL)
 	return 0;
-    if (lpToolInfo->cbSize < TTTOOLINFO_V1_SIZEA)
+    if (lpToolInfo->cbSize < TTTOOLINFOA_V1_SIZE)
 	return 0;
 
     nTool = TOOLTIPS_GetToolFromInfoA (infoPtr, lpToolInfo);
@@ -1219,7 +1219,7 @@ TOOLTIPS_GetTextW (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
     if (lpToolInfo == NULL)
 	return 0;
-    if (lpToolInfo->cbSize < TTTOOLINFO_V1_SIZEW)
+    if (lpToolInfo->cbSize < TTTOOLINFOW_V1_SIZE)
 	return 0;
 
     nTool = TOOLTIPS_GetToolFromInfoW (infoPtr, lpToolInfo);
@@ -1265,7 +1265,7 @@ TOOLTIPS_GetToolInfoA (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
     if (lpToolInfo == NULL)
 	return FALSE;
-    if (lpToolInfo->cbSize < TTTOOLINFO_V1_SIZEA)
+    if (lpToolInfo->cbSize < TTTOOLINFOA_V1_SIZE)
 	return FALSE;
     if (infoPtr->uNumTools == 0)
 	return FALSE;
@@ -1302,7 +1302,7 @@ TOOLTIPS_GetToolInfoW (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
     if (lpToolInfo == NULL)
 	return FALSE;
-    if (lpToolInfo->cbSize < TTTOOLINFO_V1_SIZEW)
+    if (lpToolInfo->cbSize < TTTOOLINFOW_V1_SIZE)
 	return FALSE;
     if (infoPtr->uNumTools == 0)
 	return FALSE;
@@ -1408,7 +1408,7 @@ TOOLTIPS_NewToolRectA (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
     if (lpti == NULL)
 	return 0;
-    if (lpti->cbSize < TTTOOLINFO_V1_SIZEA)
+    if (lpti->cbSize < TTTOOLINFOA_V1_SIZE)
 	return FALSE;
 
     nTool = TOOLTIPS_GetToolFromInfoA (infoPtr, lpti);
@@ -1429,7 +1429,7 @@ TOOLTIPS_NewToolRectW (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
     if (lpti == NULL)
 	return 0;
-    if (lpti->cbSize < TTTOOLINFO_V1_SIZEW)
+    if (lpti->cbSize < TTTOOLINFOW_V1_SIZE)
 	return FALSE;
 
     nTool = TOOLTIPS_GetToolFromInfoW (infoPtr, lpti);
@@ -1614,7 +1614,7 @@ TOOLTIPS_SetToolInfoA (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
     if (lpToolInfo == NULL)
 	return 0;
-    if (lpToolInfo->cbSize < TTTOOLINFO_V1_SIZEA)
+    if (lpToolInfo->cbSize < TTTOOLINFOA_V1_SIZE)
 	return 0;
 
     nTool = TOOLTIPS_GetToolFromInfoA (infoPtr, lpToolInfo);
@@ -1671,7 +1671,7 @@ TOOLTIPS_SetToolInfoW (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
     if (lpToolInfo == NULL)
 	return 0;
-    if (lpToolInfo->cbSize < TTTOOLINFO_V1_SIZEW)
+    if (lpToolInfo->cbSize < TTTOOLINFOW_V1_SIZE)
 	return 0;
 
     nTool = TOOLTIPS_GetToolFromInfoW (infoPtr, lpToolInfo);
@@ -1724,7 +1724,7 @@ TOOLTIPS_TrackActivate (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
     if (lpToolInfo == NULL)
 	return 0;
-    if (lpToolInfo->cbSize < TTTOOLINFO_V1_SIZEA)
+    if (lpToolInfo->cbSize < TTTOOLINFOA_V1_SIZE)
 	return FALSE;
 
     if ((BOOL)wParam) {
@@ -1791,7 +1791,7 @@ TOOLTIPS_UpdateTipTextA (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
     if (lpToolInfo == NULL)
 	return 0;
-    if (lpToolInfo->cbSize < TTTOOLINFO_V1_SIZEA)
+    if (lpToolInfo->cbSize < TTTOOLINFOA_V1_SIZE)
 	return FALSE;
 
     nTool = TOOLTIPS_GetToolFromInfoA (infoPtr, lpToolInfo);
@@ -1847,7 +1847,7 @@ TOOLTIPS_UpdateTipTextW (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
     if (lpToolInfo == NULL)
 	return 0;
-    if (lpToolInfo->cbSize < TTTOOLINFO_V1_SIZEW)
+    if (lpToolInfo->cbSize < TTTOOLINFOW_V1_SIZE)
 	return FALSE;
 
     nTool = TOOLTIPS_GetToolFromInfoW (infoPtr, lpToolInfo);

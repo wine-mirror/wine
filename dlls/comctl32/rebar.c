@@ -2628,7 +2628,7 @@ REBAR_GetBandInfoA (REBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
 
     if (lprbbi == NULL)
 	return FALSE;
-    if (lprbbi->cbSize < REBARBANDINFO_V3_SIZEA)
+    if (lprbbi->cbSize < REBARBANDINFOA_V3_SIZE)
 	return FALSE;
     if ((UINT)wParam >= infoPtr->uNumBands)
 	return FALSE;
@@ -2714,7 +2714,7 @@ REBAR_GetBandInfoW (REBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
 
     if (lprbbi == NULL)
 	return FALSE;
-    if (lprbbi->cbSize < REBARBANDINFO_V3_SIZEW)
+    if (lprbbi->cbSize < REBARBANDINFOW_V3_SIZE)
 	return FALSE;
     if ((UINT)wParam >= infoPtr->uNumBands)
 	return FALSE;
@@ -2988,7 +2988,7 @@ REBAR_InsertBandA (REBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
 	return FALSE;
     if (lprbbi == NULL)
 	return FALSE;
-    if (lprbbi->cbSize < REBARBANDINFO_V3_SIZEA)
+    if (lprbbi->cbSize < REBARBANDINFOA_V3_SIZE)
 	return FALSE;
 
     /* trace the index as signed to see the -1 */
@@ -3069,7 +3069,7 @@ REBAR_InsertBandW (REBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
 	return FALSE;
     if (lprbbi == NULL)
 	return FALSE;
-    if (lprbbi->cbSize < REBARBANDINFO_V3_SIZEW)
+    if (lprbbi->cbSize < REBARBANDINFOW_V3_SIZE)
 	return FALSE;
 
     /* trace the index as signed to see the -1 */
@@ -3382,7 +3382,7 @@ REBAR_SetBandInfoA (REBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
 
     if (lprbbi == NULL)
 	return FALSE;
-    if (lprbbi->cbSize < REBARBANDINFO_V3_SIZEA)
+    if (lprbbi->cbSize < REBARBANDINFOA_V3_SIZE)
 	return FALSE;
     if ((UINT)wParam >= infoPtr->uNumBands)
 	return FALSE;
@@ -3427,7 +3427,7 @@ REBAR_SetBandInfoW (REBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
 
     if (lprbbi == NULL)
 	return FALSE;
-    if (lprbbi->cbSize < REBARBANDINFO_V3_SIZEW)
+    if (lprbbi->cbSize < REBARBANDINFOW_V3_SIZE)
 	return FALSE;
     if ((UINT)wParam >= infoPtr->uNumBands)
 	return FALSE;
