@@ -25,14 +25,88 @@
 <!entity consoles SYSTEM "consoles.sgml">
 <!entity cvs-regression SYSTEM "cvs-regression.sgml">
 
-<!--
-<!entity status SYSTEM "status.sgml">
--->
 ]>
 
 <book id="index">
   <bookinfo>
     <title>Wine Developer's Guide</title>
+
+    <!-- Until we learn how to format this thing nicely, 
+	 we can't really incude it -->
+    <!--authorgroup>
+      <author>
+	<firstname>Uwe</firstname>
+	<surname>Bonnes</surname>
+      </author>
+      <author>
+	<firstname>Jonathan</firstname>
+	<surname>Buzzard</surname>
+      </author>
+      <author>
+	<firstname>Zoran</firstname>
+	<surname>Dzelajlija</surname>
+      </author>
+      <author>
+	<firstname>Klaas</firstname>
+	<surname>van Gend</surname>
+      </author>
+      <author>
+	<firstname>Francois</firstname>
+	<surname>Gouget</surname>
+      </author>
+      <author>
+	<firstname>Jon</firstname>
+	<surname>Griffiths</surname>
+      </author>
+      <author>
+	<firstname>Albert</firstname>
+	<surname>den Haan</surname>
+      </author>
+      <author>
+	<firstname>Ove</firstname>
+	<surname>Kaaven</surname>
+      </author>
+      <author>
+	<firstname>Tony</firstname>
+	<surname>Lambregts</surname>
+      </author>
+      <author>
+	<firstname>Marcus</firstname>
+	<surname>Meissner</surname>
+      </author>
+      <author>
+	<firstname>Gerard</firstname>
+	<surname>Patel</surname>
+      </author>
+      <author>
+	<firstname>Dimitrie</firstname>
+	<surname>Paun</surname>
+      </author>
+      <author>
+	<firstname>Michele</firstname>
+	<surname>Petrovski</surname>
+      </author>
+      <author>
+	<firstname>Eric</firstname>
+	<surname>Pouech</surname>
+      </author>
+      <author>
+	<firstname>John</firstname>
+	<surname>Sheets</surname>
+      </author>
+      <author>
+	<firstname>Lionel</firstname>
+	<surname>Ulmer</surname>
+      </author>
+      <author>
+	<firstname>Ulrich</firstname>
+	<surname>Weigand</surname>
+      </author>
+      <author>
+	<firstname>Morten</firstname>
+	<surname>Welinder</surname>
+      </author>
+    </authorgroup-->
   </bookinfo>
 
   <part id="part-one">
