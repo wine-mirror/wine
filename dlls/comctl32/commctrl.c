@@ -10,7 +10,6 @@
 #include <stdlib.h>
 
 #include "winbase.h"
-#include "heap.h"
 #include "commctrl.h"
 #include "winerror.h"
 #include "winreg.h"
@@ -378,8 +377,7 @@ GetEffectiveClientRect (HWND hwnd, LPRECT lpRect, LPINT lpInfo)
 
 
 /***********************************************************************
- * DrawStatusText  [COMCTL32.27]
- * DrawStatusTextA [COMCTL32.5]
+ * DrawStatusTextW [COMCTL32.28]
  *
  * Draws text with borders, like in a status bar.
  *
@@ -398,7 +396,7 @@ GetEffectiveClientRect (HWND hwnd, LPRECT lpRect, LPINT lpInfo)
  */
 
 VOID WINAPI
-DrawStatusTextA (HDC hdc, LPRECT lprc, LPCSTR text, UINT style)
+DrawStatusTextW (HDC hdc, LPRECT lprc, LPCWSTR text, UINT style)
 {
     RECT r = *lprc;
     UINT border = BDR_SUNKENOUTER;
@@ -414,7 +412,7 @@ DrawStatusTextA (HDC hdc, LPRECT lprc, LPCSTR text, UINT style)
     if (text) {
       int oldbkmode = SetBkMode (hdc, TRANSPARENT);
       r.left += 3;
-      DrawTextA (hdc, text, lstrlenA(text),
+      DrawTextW (hdc, text, lstrlenW(text),
 		   &r, DT_LEFT|DT_VCENTER|DT_SINGLELINE);  
       if (oldbkmode != TRANSPARENT)
 	SetBkMode(hdc, oldbkmode);
@@ -423,7 +421,8 @@ DrawStatusTextA (HDC hdc, LPRECT lprc, LPCSTR text, UINT style)
 
 
 /***********************************************************************
- * DrawStatusTextW [COMCTL32.28]
+ * DrawStatusText  [COMCTL32.27]
+ * DrawStatusTextA [COMCTL32.5]
  *
  * Draws text with borders, like in a status bar.
  *
@@ -438,11 +437,19 @@ DrawStatusTextA (HDC hdc, LPRECT lprc, LPCSTR text, UINT style)
  */
 
 VOID WINAPI
-DrawStatusTextW (HDC hdc, LPRECT lprc, LPCWSTR text, UINT style)
+DrawStatusTextA (HDC hdc, LPRECT lprc, LPCSTR text, UINT style)
 {
-    LPSTR p = HEAP_strdupWtoA (GetProcessHeap (), 0, text);
-    DrawStatusTextA (hdc, lprc, p, style);
-    HeapFree (GetProcessHeap (), 0, p );
+    INT len;
+    LPWSTR textW = NULL;
+
+    if ( text ) {
+	if ( (len = MultiByteToWideChar( CP_ACP, 0, text, -1, NULL, 0 )) ) {
+	    if ( (textW = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) )) )
+		MultiByteToWideChar( CP_ACP, 0, text, -1, textW, len );
+	}
+    }
+    DrawStatusTextW( hdc, lprc, textW, style );
+    HeapFree( GetProcessHeap(), 0, textW );
 }
 
 
