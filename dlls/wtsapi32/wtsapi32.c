@@ -47,6 +47,83 @@ BOOL WINAPI DllMain (HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
     return TRUE;
 }
 
+/************************************************************
+ *                WTSCloseServer  (WTSAPI32.@)
+ */
+void WINAPI WTSCloseServer(HANDLE hServer)
+{
+    FIXME("Stub %p\n", hServer);
+}
+
+/************************************************************
+ *                WTSDisconnectSession  (WTSAPI32.@)
+ */
+BOOL WINAPI WTSDisconnectSession(HANDLE hServer, DWORD SessionId, BOOL bWait)
+{
+    FIXME("Stub %p 0x%08lx %d\n", hServer, SessionId, bWait);
+    return FALSE;
+}
+
+/************************************************************
+ *                WTSEnumerateProcessesA  (WTSAPI32.@)
+ */
+BOOL WINAPI WTSEnumerateProcessesA(HANDLE hServer, DWORD Reserved, DWORD Version,
+    PWTS_PROCESS_INFOA* ppProcessInfo, DWORD* pCount)
+{
+    FIXME("Stub %p 0x%08lx 0x%08lx %p %p\n", hServer, Reserved, Version,
+          ppProcessInfo, pCount);
+    return FALSE;
+}
+
+/************************************************************
+ *                WTSEnumerateProcessesW  (WTSAPI32.@)
+ */
+BOOL WINAPI WTSEnumerateProcessesW(HANDLE hServer, DWORD Reserved, DWORD Version,
+    PWTS_PROCESS_INFOW* ppProcessInfo, DWORD* pCount)
+{
+    FIXME("Stub %p 0x%08lx 0x%08lx %p %p\n", hServer, Reserved, Version,
+          ppProcessInfo, pCount);
+    return FALSE;
+}
+
+/************************************************************
+ *                WTSEnumerateEnumerateSessionsA  (WTSAPI32.@)
+ */
+BOOL WTSEnumerateSessionsA(HANDLE hServer, DWORD Reserved, DWORD Version,
+    PWTS_SESSION_INFOA* ppSessionInfo, DWORD* pCount)
+{
+    FIXME("Stub %p 0x%08lx 0x%08lx %p %p\n", hServer, Reserved, Version,
+          ppSessionInfo, pCount);
+    return FALSE;
+}
+
+/************************************************************
+ *                WTSEnumerateEnumerateSessionsW  (WTSAPI32.@)
+ */
+BOOL WTSEnumerateSessionsW(HANDLE hServer, DWORD Reserved, DWORD Version,
+    PWTS_SESSION_INFOW* ppSessionInfo, DWORD* pCount)
+{
+    FIXME("Stub %p 0x%08lx 0x%08lx %p %p\n", hServer, Reserved, Version,
+          ppSessionInfo, pCount);
+    return FALSE;
+}
+
+/************************************************************
+ *                WTSQuerySessionInformationA  (WTSAPI32.@)
+ */
+BOOL WINAPI WTSQuerySessionInformationA(
+    HANDLE hServer,
+    DWORD SessionId,
+    WTS_INFO_CLASS WTSInfoClass,
+    LPSTR* Buffer,
+    DWORD* BytesReturned)
+{
+    /* FIXME: Forward request to winsta.dll::WinStationQueryInformationA */
+    FIXME("Stub %p 0x%08lx %d %p %p\n", hServer, SessionId, WTSInfoClass,
+        Buffer, BytesReturned);
+
+    return FALSE;
+}
 
 /************************************************************
  *                WTSQuerySessionInformationW  (WTSAPI32.@)
@@ -64,7 +141,6 @@ BOOL WINAPI WTSQuerySessionInformationW(
 
     return FALSE;
 }
-
 
 /************************************************************
  *                WTSWaitSystemEvent (WTSAPI32.@)

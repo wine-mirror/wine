@@ -1,16 +1,16 @@
-@ stub WTSCloseServer
-@ stub WTSDisconnectSession
-@ stub WTSEnumerateProcessA
-@ stub WTSEnumerateProcessW
+@ stdcall WTSCloseServer(long)
+@ stdcall WTSDisconnectSession(long long long)
+@ stdcall WTSEnumerateProcessesA(long long long ptr ptr)
+@ stdcall WTSEnumerateProcessesW(long long long ptr ptr)
 @ stub WTSEnumerateServersA
 @ stub WTSEnumerateServersW
-@ stub WTSEnumerateSessionsA
-@ stub WTSEnumerateSessionsW
+@ stdcall WTSEnumerateSessionsA(long long long ptr ptr)
+@ stdcall WTSEnumerateSessionsW(long long long ptr ptr)
 @ stub WTSFreeMemory
 @ stub WTSLogoffSession
 @ stub WTSOpenServerA
 @ stub WTSOpenServerW
-@ stub WTSQuerySessionInformationA
+@ stdcall WTSQuerySessionInformationA(long long long ptr ptr)
 @ stdcall WTSQuerySessionInformationW(long long long ptr ptr)
 @ stub WTSQueryUserConfigA
 @ stub WTSQueryUserConfigW
