@@ -5,6 +5,10 @@
 #error Wine should not include windows.h internally
 #endif
 
+#if defined(RC_INVOKED) && !defined(NOWINRES)
+#include "winresrc.h"
+#else /* RC_INVOKED && !NOWINRES */
+
 /* All the basic includes */
 /* #include "excpt.h" */
 #include "windef.h"
@@ -82,4 +86,5 @@ WORD        WINAPI WOWHandle16(HANDLE,WOW_HANDLE_TYPE);
 
 #endif /* 0 */
 
+#endif  /* RC_INVOKED && !NOWINRES */
 #endif  /* __WINE_WINDOWS_H */

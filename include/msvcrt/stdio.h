@@ -8,7 +8,9 @@
 #ifndef __WINE_STDIO_H
 #define __WINE_STDIO_H
 
+#ifndef RC_INVOKED
 #include <stdarg.h>
+#endif
 #include "msvcrt/wctype.h"         /* For wint_t */
 
 
