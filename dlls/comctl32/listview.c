@@ -92,20 +92,10 @@ DEFAULT_DEBUG_CHANNEL(listview)
 /* retrieve the number of items in the listview */
 #define GETITEMCOUNT(infoPtr) ((infoPtr)->hdpaItems->nItemCount)
 
-/* Some definitions for inline edit control */    
-typedef BOOL (*EditlblCallback)(HWND, LPSTR, DWORD);
-
 HWND CreateEditLabel(LPCSTR text, DWORD style, INT x, INT y, 
 	INT width, INT height, HWND parent, HINSTANCE hinst, 
 	EditlblCallback EditLblCb, DWORD param);
  
-typedef struct tagEDITLABEL_ITEM
-{
-    WNDPROC EditWndProc;
-    DWORD param;
-    EditlblCallback EditLblCb;
-} EDITLABEL_ITEM;
-
 /* 
  * forward declarations 
  */
@@ -1859,7 +1849,7 @@ static VOID LISTVIEW_DrawItem(HWND hwnd, HDC hdc, INT nItem, RECT rcItem)
   }
 
   /* Don't bother painting item being edited */
-  if (infoPtr->lpeditItem && lvItem.state & LVIS_FOCUSED)
+  if (infoPtr->hwndEdit && lvItem.state & LVIS_FOCUSED)
       return;
 
   if ((lvItem.state & LVIS_SELECTED) && (infoPtr->bFocus != FALSE))
@@ -2688,6 +2678,16 @@ static LRESULT LISTVIEW_DeleteItem(HWND hwnd, INT nItem)
       }
     }
 
+    /* If this item had focus change focus to next or previous item */
+    if (GETITEMCOUNT(infoPtr) > 0)
+    {
+       int sItem = nItem < GETITEMCOUNT(infoPtr) ? nItem : nItem - 1;
+       if (infoPtr->nFocusedItem == nItem)
+	   LISTVIEW_SetItemFocus(hwnd, sItem);
+    }
+    else
+	  infoPtr->nFocusedItem = -1;
+
     LISTVIEW_UpdateScroll(hwnd);
 
     /* refresh client area */
@@ -2760,7 +2760,6 @@ static BOOL LISTVIEW_EndEditLabel(HWND hwnd, LPSTR pszText, DWORD nItem)
 
   ListView_Notify(GetParent(hwnd), nCtrlId, &dispInfo);
   infoPtr->hwndEdit = 0;
-  infoPtr->lpeditItem = NULL;
 
   return TRUE;
 }
@@ -2791,6 +2790,9 @@ static HWND LISTVIEW_EditLabelA(HWND hwnd, INT nItem)
  
   if (~GetWindowLongA(hwnd, GWL_STYLE) & LVS_EDITLABELS)
       return FALSE;
+
+  LISTVIEW_SetSelection(hwnd, nItem);
+  LISTVIEW_SetItemFocus(hwnd, nItem);
 
   ZeroMemory(&dispInfo, sizeof(NMLVDISPINFOA));
   if (NULL == (hdpaSubItems = (HDPA)DPA_GetPtr(infoPtr->hdpaItems, nItem)))
@@ -2825,7 +2827,6 @@ static HWND LISTVIEW_EditLabelA(HWND hwnd, INT nItem)
 	 return 0;
 
   infoPtr->hwndEdit = hedit;
-  infoPtr->lpeditItem = lpItem;
   SetFocus(hedit); 
   SendMessageA(hedit, EM_SETSEL, 0, -1);
 
@@ -5737,7 +5738,7 @@ static LRESULT LISTVIEW_Create(HWND hwnd, WPARAM wParam, LPARAM lParam)
   infoPtr->iconSpacing.cy = GetSystemMetrics(SM_CYICONSPACING);
   ZeroMemory(&infoPtr->rcList, sizeof(RECT));
   infoPtr->hwndEdit = 0;
-  infoPtr->lpeditItem = NULL;
+  infoPtr->pedititem = NULL;
 
   /* get default font (icon title) */
   SystemParametersInfoA(SPI_GETICONTITLELOGFONT, 0, &logFont, 0);
@@ -7378,13 +7379,25 @@ LRESULT CALLBACK EditLblWndProc(HWND hwnd, UINT uMsg,
 	WPARAM wParam, LPARAM lParam)
 {
     BOOL cancel = TRUE;
-    EDITLABEL_ITEM *einfo = 
-    (EDITLABEL_ITEM *) GetWindowLongA(hwnd, GWL_USERDATA);
+    LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongA(GetParent(hwnd), 0);
+    EDITLABEL_ITEM *einfo = infoPtr->pedititem;
 
     switch (uMsg)
     {
+	case WM_GETDLGCODE:
+	  return DLGC_WANTARROWS | DLGC_WANTALLKEYS;
+			
 	case WM_KILLFOCUS:
 	    break;
+
+	case WM_DESTROY:
+	    {
+		WNDPROC editProc = einfo->EditWndProc;
+		SetWindowLongA(hwnd, GWL_WNDPROC, (LONG)editProc);
+		COMCTL32_Free(einfo);
+		infoPtr->pedititem = NULL;
+		return CallWindowProcA(editProc, hwnd, uMsg, wParam, lParam);
+	    }
 
 	case WM_CHAR:
 	    if (VK_RETURN == (INT)wParam)
@@ -7400,7 +7413,6 @@ LRESULT CALLBACK EditLblWndProc(HWND hwnd, UINT uMsg,
 			uMsg, wParam, lParam);
     }
 
-    SetWindowLongA(hwnd, GWL_WNDPROC, (LONG)einfo->EditWndProc);
     if (einfo->EditLblCb)
     {
 	char *buffer  = NULL;
@@ -7422,10 +7434,11 @@ LRESULT CALLBACK EditLblWndProc(HWND hwnd, UINT uMsg,
 
 	if (buffer)
 	    COMCTL32_Free(buffer);
+
+	einfo->EditLblCb = NULL;
     }
 
-    COMCTL32_Free(einfo);
-    PostMessageA(hwnd, WM_CLOSE, 0, 0);
+    SendMessageA(hwnd, WM_CLOSE, 0, 0);
     return TRUE;
 }
 
@@ -7443,25 +7456,22 @@ HWND CreateEditLabel(LPCSTR text, DWORD style, INT x, INT y,
 	EditlblCallback EditLblCb, DWORD param)
 {
     HWND hedit;
-    EDITLABEL_ITEM *einfo;
- 
-    if (NULL == (einfo = COMCTL32_Alloc(sizeof(EDITLABEL_ITEM))))
+    LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongA(parent, 0);
+    if (NULL == (infoPtr->pedititem = COMCTL32_Alloc(sizeof(EDITLABEL_ITEM))))
 	return 0;
 
     style |= WS_CHILDWINDOW|WS_CLIPSIBLINGS|ES_LEFT|WS_BORDER;
     if (!(hedit = CreateWindowA("Edit", text, style, x, y, width, height, 
 		    parent, 0, hinst, 0)))
     {
-	COMCTL32_Free(einfo);
+	COMCTL32_Free(infoPtr->pedititem);
 	return 0;
     }
 
-    einfo->param = param;
-    einfo->EditLblCb = EditLblCb;
-    einfo->EditWndProc = (WNDPROC)SetWindowLongA(hedit, 
+    infoPtr->pedititem->param = param;
+    infoPtr->pedititem->EditLblCb = EditLblCb;
+    infoPtr->pedititem->EditWndProc = (WNDPROC)SetWindowLongA(hedit, 
 	  GWL_WNDPROC, (LONG) EditLblWndProc);
-
-    SetWindowLongA(hedit, GWL_USERDATA, (LONG)einfo);
 
     return hedit;
 }

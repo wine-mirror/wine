@@ -11,6 +11,16 @@
 #include "windef.h"
 #include "wingdi.h"
 
+/* Some definitions for inline edit control */    
+typedef BOOL (*EditlblCallback)(HWND, LPSTR, DWORD);
+
+typedef struct tagEDITLABEL_ITEM
+{
+    WNDPROC EditWndProc;
+    DWORD param;
+    EditlblCallback EditLblCb;
+} EDITLABEL_ITEM;
+
 typedef struct tagLISTVIEW_SUBITEM
 {
     LPSTR pszText;
@@ -61,7 +71,7 @@ typedef struct tagLISTVIEW_INFO
     PFNLVCOMPARE pfnCompare;
     LPARAM lParamSort;
     HWND hwndEdit;
-    LISTVIEW_ITEM *lpeditItem;
+    EDITLABEL_ITEM *pedititem;
     
 } LISTVIEW_INFO;
 
