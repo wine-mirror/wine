@@ -40,11 +40,13 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3d);
 WINE_DECLARE_DEBUG_CHANNEL(d3d_shader);
+WINE_DECLARE_DEBUG_CHANNEL(fps);
 
 IDirect3DVertexShaderImpl*            VertexShaders[64];
 IDirect3DVertexShaderDeclarationImpl* VertexShaderDeclarations[64];
 IDirect3DPixelShaderImpl*             PixelShaders[64];
 
+/* Debugging aids: */
 #ifdef FRAME_DEBUGGING
 BOOL isOn             = FALSE;
 BOOL isDumpingFrames  = FALSE;
@@ -107,6 +109,47 @@ void setupTextureStates(LPDIRECT3DDEVICE8 iface, DWORD Stage) {
     checkGLcall("glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, color);");
 
     TRACE("-----------------------> Updated the texture at stage %ld to have new texture state information\n", Stage);
+}
+
+/* Setup this textures matrix */
+static void set_texture_matrix(float *smat, DWORD flags)
+{
+    float mat[16];
+
+    glMatrixMode(GL_TEXTURE);
+
+    if (flags == D3DTTFF_DISABLE) {
+        glLoadIdentity();
+        checkGLcall("glLoadIdentity()");
+        return;
+    }
+
+    if (flags == (D3DTTFF_COUNT1|D3DTTFF_PROJECTED)) {
+        ERR("Invalid texture transform flags: D3DTTFF_COUNT1|D3DTTFF_PROJECTED\n");
+        checkGLcall("glLoadIdentity()");
+        return;
+    }
+
+    memcpy(mat, smat, 16*sizeof(float));
+
+    switch (flags & ~D3DTTFF_PROJECTED) {
+    case D3DTTFF_COUNT1: mat[1] = mat[5] = mat[9] = mat[13] = 0;
+    case D3DTTFF_COUNT2: mat[2] = mat[6] = mat[10] = mat[14] = 0;
+    default: mat[3] = mat[7] = mat[11] = 0, mat[15] = 1;
+    }
+    
+    if (flags & D3DTTFF_PROJECTED) switch (flags & ~D3DTTFF_PROJECTED) {
+    case D3DTTFF_COUNT2:
+        mat[3] = mat[1], mat[7] = mat[5], mat[11] = mat[9], mat[15] = mat[13];
+        mat[1] = mat[5] = mat[9] = mat[13] = 0;
+        break;
+    case D3DTTFF_COUNT3:
+        mat[3] = mat[2], mat[7] = mat[6], mat[11] = mat[10], mat[15] = mat[14];
+        mat[2] = mat[6] = mat[10] = mat[14] = 0;
+        break;
+    }
+    glLoadMatrixf(mat);
+    checkGLcall("glLoadMatrixf(mat)");
 }
 
 /* IDirect3D IUnknown parts follow: */
@@ -321,6 +364,21 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_Present(LPDIRECT3DDEVICE8 iface, CONST REC
     glXSwapBuffers(This->display, This->drawable);
     /* Dont call checkGLcall, as glGetError is not applicable here */
     TRACE("glXSwapBuffers called, Starting new frame\n");
+
+    /* FPS support */
+    if (TRACE_ON(fps))
+    {
+        static long prev_time, frames;
+
+        DWORD time = GetTickCount();
+        frames++;
+        /* every 1.5 seconds */
+        if (time - prev_time > 1500) {
+            TRACE_(fps)("@@@ %.2ffps\n", 1000.0*frames/(time - prev_time));
+            prev_time = time;
+            frames = 0;
+        }
+    }
 
 #if defined(FRAME_DEBUGGING)
 {
@@ -1244,268 +1302,110 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_Clear(LPDIRECT3DDEVICE8 iface, DWORD Count
 }
 HRESULT  WINAPI  IDirect3DDevice8Impl_SetTransform(LPDIRECT3DDEVICE8 iface, D3DTRANSFORMSTATETYPE d3dts, CONST D3DMATRIX* lpmatrix) {
     ICOM_THIS(IDirect3DDevice8Impl,iface);
-    D3DMATRIX m;
     int k;
-    float f;
-    BOOL viewChanged = TRUE;
-    int  Stage;
 
     /* Most of this routine, comments included copied from ddraw tree initially: */
     TRACE("(%p) : State=%d\n", This, d3dts);
 
-    This->UpdateStateBlock->Changed.transform[d3dts] = TRUE;
-    This->UpdateStateBlock->Set.transform[d3dts] = TRUE;
-    memcpy(&This->UpdateStateBlock->transforms[d3dts], lpmatrix, sizeof(D3DMATRIX));
-
     /* Handle recording of state blocks */
     if (This->isRecordingState) {
         TRACE("Recording... not performing anything\n");
+        This->UpdateStateBlock->Changed.transform[d3dts] = TRUE;
+        This->UpdateStateBlock->Set.transform[d3dts] = TRUE;
+        memcpy(&This->UpdateStateBlock->transforms[d3dts], lpmatrix, sizeof(D3DMATRIX));
         return D3D_OK;
     }
 
     /*
-       ScreenCoord = ProjectionMat * ViewMat * WorldMat * ObjectCoord
-
-       where ViewMat = Camera space, WorldMat = world space.
-
-       In OpenGL, camera and world space is combined into GL_MODELVIEW
-       matrix.  The Projection matrix stay projection matrix. */
-
-    /* After reading through both OpenGL and Direct3D documentations, I
-       thought that D3D matrices were written in 'line major mode' transposed
-       from OpenGL's 'column major mode'. But I found out that a simple memcpy
-       works fine to transfer one matrix format to the other (it did not work
-       when transposing)....
-
-       So :
-        1) are the documentations wrong
-        2) does the matrix work even if they are not read correctly
-        3) is Mesa's implementation of OpenGL not compliant regarding Matrix
-           loading using glLoadMatrix ?
-
-       Anyway, I always use 'conv_mat' to transfer the matrices from one format
-       to the other so that if I ever find out that I need to transpose them, I
-       will able to do it quickly, only by changing the macro conv_mat. */
-
-    if (d3dts < 256) { 
-      switch (d3dts) {
-      case D3DTS_VIEW:
-        conv_mat(lpmatrix, &This->StateBlock->transforms[D3DTS_VIEW]);
-        break;
-
-      case D3DTS_PROJECTION:
-        conv_mat(lpmatrix, &This->StateBlock->transforms[D3DTS_PROJECTION]);
-        break;
-
-      case D3DTS_TEXTURE0:
-      case D3DTS_TEXTURE1:
-      case D3DTS_TEXTURE2:
-      case D3DTS_TEXTURE3:
-      case D3DTS_TEXTURE4:
-      case D3DTS_TEXTURE5:
-      case D3DTS_TEXTURE6:
-      case D3DTS_TEXTURE7:
-        conv_mat(lpmatrix, &This->StateBlock->transforms[d3dts]);
-        break;
-
-      default:
-        FIXME("Unhandled transform state!!\n");
-        break;
-      }
+     * if the new matrix is the same as the current one,
+     * we cut off any further processing. this seems to be a reasonable
+     * optimization because as was noticed, some apps (warcraft3 for example)
+     * tend towards setting the same matrix repeatedly for some dumb reason.
+     *
+     * From here on we assume that the new matrix is different, wherever it matters
+     * but note
+     */
+    if (!memcmp(&This->StateBlock->transforms[d3dts].u.m[0][0], lpmatrix, sizeof(D3DMATRIX))) {
+        TRACE("The app is setting the same matrix over again\n");
+        return D3D_OK;
     } else {
-      /** 
-       * Indexed Vertex Blending Matrices 256 -> 511 
-       *  where WORLDMATRIX(0) == 256!
-       */
-      /** store it */
-      conv_mat(lpmatrix, &This->StateBlock->transforms[d3dts]);
-#if 0
-      if (GL_SUPPORT(ARB_VERTEX_BLEND)) {
-          FIXME("TODO\n");
-      } else if (GL_SUPPORT(EXT_VERTEX_WEIGHTING)) {
-          FIXME("TODO\n");
-      }
-#endif
+        conv_mat(lpmatrix, &This->StateBlock->transforms[d3dts].u.m[0][0]);
     }
 
     /*
-     * Move the GL operation to outside of switch to make it work
-     * regardless of transform set order.
+       ScreenCoord = ProjectionMat * ViewMat * WorldMat * ObjectCoord
+       where ViewMat = Camera space, WorldMat = world space.
+
+       In OpenGL, camera and world space is combined into GL_MODELVIEW
+       matrix.  The Projection matrix stay projection matrix. 
      */
+
+    /* Capture the times we can just ignore the change */
+    if (d3dts == D3DTS_WORLDMATRIX(0)) {
+        This->modelview_valid = FALSE;
+        return D3D_OK;
+
+    } else if (d3dts == D3DTS_PROJECTION) {
+        This->proj_valid = FALSE;
+        return D3D_OK;
+
+    } else if (d3dts >= D3DTS_WORLDMATRIX(1) && d3dts <= D3DTS_WORLDMATRIX(255)) { /* Indexed Vertex Blending Matrices 256 -> 511  */
+        /* Use arb_vertex_blend or NV_VERTEX_WEIGHTING? */
+        FIXME("D3DTS_WORLDMATRIX(1..255) not handled\n");
+        return D3D_OK;
+    } 
+    
+    /* Chances are we really are going to have to change a matrix */
     ENTER_GL();
-    if (memcmp(&This->lastProj, &This->StateBlock->transforms[D3DTS_PROJECTION].u.m[0][0], sizeof(D3DMATRIX))) {
-        glMatrixMode(GL_PROJECTION);
-        checkGLcall("glMatrixMode");
-        glLoadMatrixf((float *) &This->StateBlock->transforms[D3DTS_PROJECTION].u.m[0][0]);
-        checkGLcall("glLoadMatrixf");
-        memcpy(&This->lastProj, &This->StateBlock->transforms[D3DTS_PROJECTION].u.m[0][0], sizeof(D3DMATRIX));
-    } else {
-        TRACE("Skipping as projection already correct\n");
-    }
 
-    glMatrixMode(GL_MODELVIEW);
-    checkGLcall("glMatrixMode");
-    viewChanged = FALSE;
-    if (memcmp(&This->lastView, &This->StateBlock->transforms[D3DTS_VIEW].u.m[0][0], sizeof(D3DMATRIX))) {
-       glLoadMatrixf((float *) &This->StateBlock->transforms[D3DTS_VIEW].u.m[0][0]);
-       checkGLcall("glLoadMatrixf");
-       memcpy(&This->lastView, &This->StateBlock->transforms[D3DTS_VIEW].u.m[0][0], sizeof(D3DMATRIX));
-       viewChanged = TRUE;
-
-       /* If we are changing the View matrix, reset the light and clipping planes to the new view */
-       if (d3dts == D3DTS_VIEW) {
-
-           /* NOTE: We have to reset the positions even if the light/plane is not currently
-              enabled, since the call to enable it will not reset the position.             */
-
-           /* Reset lights */
-           for (k = 0; k < GL_LIMITS(lights); k++) {
-               glLightfv(GL_LIGHT0 + k, GL_POSITION,       &This->lightPosn[k][0]);
-               checkGLcall("glLightfv posn");
-               glLightfv(GL_LIGHT0 + k, GL_SPOT_DIRECTION, &This->lightDirn[k][0]);
-               checkGLcall("glLightfv dirn");
-           }
-
-           /* Reset Clipping Planes if clipping is enabled */
-           for (k = 0; k < GL_LIMITS(clipplanes); k++) {
-               glClipPlane(GL_CLIP_PLANE0 + k, This->StateBlock->clipplane[k]);
-               checkGLcall("glClipPlane");
-           }
-
-           /* Reapply texture transforms as based off modelview when applied */
-           for (Stage = 0; Stage < GL_LIMITS(textures); Stage++) {
-
-               /* Only applicable if the transforms are not disabled */
-               if (This->UpdateStateBlock->texture_state[Stage][D3DTSS_TEXTURETRANSFORMFLAGS] != D3DTTFF_DISABLE) 
-               {
-                   /* Now apply texture transforms if not applying to the dummy textures */
+    if (d3dts >= D3DTS_TEXTURE0 && d3dts <= D3DTS_TEXTURE7) { /* handle texture matrices */
+        if (d3dts < GL_LIMITS(textures)) {
+            int tex = d3dts - D3DTS_TEXTURE0;
 #if defined(GL_VERSION_1_3)
-                  glActiveTexture(GL_TEXTURE0 + Stage);
+            glActiveTexture(GL_TEXTURE0 + tex);
 #else 
-                  glActiveTextureARB(GL_TEXTURE0_ARB + Stage);
+            glActiveTextureARB(GL_TEXTURE0_ARB + tex);
 #endif
-                  checkGLcall("glActiveTexture(GL_TEXTURE0 + Stage);");
-
-                  glMatrixMode(GL_TEXTURE);
-                  if (This->StateBlock->textureDimensions[Stage] == GL_TEXTURE_1D) {
-                     glLoadIdentity();
-                  } else {
-                     D3DMATRIX fred;
-                     conv_mat(&This->StateBlock->transforms[D3DTS_TEXTURE0+Stage], &fred);
-                     glLoadMatrixf((float *) &This->StateBlock->transforms[D3DTS_TEXTURE0+Stage].u.m[0][0]);
-                  }
-               }
-               checkGLcall("Load matrix for texture");
-           }
-           glMatrixMode(GL_MODELVIEW);  /* Always leave in model view */
-       }
-    } else if ((d3dts >= D3DTS_TEXTURE0 && d3dts <= D3DTS_TEXTURE7) &&
-              (This->UpdateStateBlock->texture_state[d3dts - D3DTS_TEXTURE0][D3DTSS_TEXTURETRANSFORMFLAGS] != D3DTTFF_DISABLE)) {
-        /* Now apply texture transforms if not applying to the dummy textures */
-        Stage = d3dts - D3DTS_TEXTURE0;
-
-        if (memcmp(&This->lastTexTrans[Stage], &This->StateBlock->transforms[D3DTS_TEXTURE0 + Stage].u.m[0][0], sizeof(D3DMATRIX))) {
-	   memcpy(&This->lastTexTrans[Stage], &This->StateBlock->transforms[D3DTS_TEXTURE0 + Stage].u.m[0][0], sizeof(D3DMATRIX));
-
-#if defined(GL_VERSION_1_3)
-           glActiveTexture(GL_TEXTURE0 + Stage);
-#else
-           glActiveTextureARB(GL_TEXTURE0_ARB + Stage);
-#endif
-           checkGLcall("glActiveTexture(GL_TEXTURE0 + Stage)");
-
-           glMatrixMode(GL_TEXTURE);
-           if (This->StateBlock->textureDimensions[Stage] == GL_TEXTURE_1D) {
-              glLoadIdentity();
-           } else {
-              D3DMATRIX fred;
-              conv_mat(&This->StateBlock->transforms[D3DTS_TEXTURE0+Stage], &fred);
-              glLoadMatrixf((float *) &This->StateBlock->transforms[D3DTS_TEXTURE0+Stage].u.m[0][0]);
-           }
-           checkGLcall("Load matrix for texture");
-           glMatrixMode(GL_MODELVIEW);  /* Always leave in model view */
-        } else {
-            TRACE("Skipping texture transform as already correct\n");
+            set_texture_matrix((float *)lpmatrix, This->UpdateStateBlock->texture_state[tex][D3DTSS_TEXTURETRANSFORMFLAGS]);
         }
 
-    } else {
-        TRACE("Skipping view setup as view already correct\n");
+    } else if (d3dts == D3DTS_VIEW) { /* handle the VIEW matrice */
+        float identity[16] = {1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1};
+        This->modelview_valid = FALSE;
+        This->view_ident = !memcmp(lpmatrix, identity, 16*sizeof(float));
+        glMatrixMode(GL_MODELVIEW);
+        checkGLcall("glMatrixMode(GL_MODELVIEW)");
+        glPushMatrix();
+        glLoadMatrixf((float *)lpmatrix);
+        checkGLcall("glLoadMatrixf(...)");
+
+        /* If we are changing the View matrix, reset the light and clipping planes to the new view   
+         * NOTE: We have to reset the positions even if the light/plane is not currently
+         *       enabled, since the call to enable it will not reset the position.                 
+         * NOTE2: Apparently texture transforms do NOT need reapplying
+         */
+
+        /* Reset lights */
+        for (k = 0; k < GL_LIMITS(lights); k++) {
+            glLightfv(GL_LIGHT0 + k, GL_POSITION, This->lightPosn[k]);
+            checkGLcall("glLightfv posn");
+            glLightfv(GL_LIGHT0 + k, GL_SPOT_DIRECTION, This->lightDirn[k]);
+            checkGLcall("glLightfv dirn");
+        }
+        /* Reset Clipping Planes if clipping is enabled */
+        for (k = 0; k < GL_LIMITS(clipplanes); k++) {
+            glClipPlane(GL_CLIP_PLANE0 + k, This->StateBlock->clipplane[k]);
+            checkGLcall("glClipPlane");
+        }
+        glPopMatrix();
+
+    } else { /* What was requested!?? */
+        WARN("invalid matrix specified: %i\n", d3dts);
+
     }
 
-    /**
-     * Vertex Blending as described
-     *  http://msdn.microsoft.com/library/default.asp?url=/library/en-us/directx9_c/directx/graphics/reference/d3d/enums/d3dvertexblendflags.asp
-     */
-    switch (This->UpdateStateBlock->vertex_blend) {
-    case D3DVBF_DISABLE:
-      {
-          if (viewChanged == TRUE || 
-              (memcmp(&This->lastWorld0, &This->StateBlock->transforms[D3DTS_WORLDMATRIX(0)].u.m[0][0], sizeof(D3DMATRIX)))) {
-               memcpy(&This->lastWorld0, &This->StateBlock->transforms[D3DTS_WORLDMATRIX(0)].u.m[0][0], sizeof(D3DMATRIX));
-              if (viewChanged == FALSE) {
-                 glLoadMatrixf((float *) &This->StateBlock->transforms[D3DTS_VIEW].u.m[0][0]);
-                 checkGLcall("glLoadMatrixf");
-              }
-              glMultMatrixf((float *) &This->StateBlock->transforms[D3DTS_WORLDMATRIX(0)].u.m[0][0]);
-              checkGLcall("glMultMatrixf");
-          } else {
-              TRACE("Skipping as world already correct\n");
-          }
-      }
-      break;
-    case D3DVBF_1WEIGHTS:
-    case D3DVBF_2WEIGHTS:
-    case D3DVBF_3WEIGHTS:
-      {
-          FIXME("valid/correct D3DVBF_[1..3]WEIGHTS\n");
-          /*
-           * doc seems to say that the weight values must be in vertex data (specified in FVF by D3DFVF_XYZB*)
-           * so waiting for the values before matrix work
-          for (k = 0; k < This->UpdateStateBlock->vertex_blend; ++k) {
-            glMultMatrixf((float *) &This->StateBlock->transforms[D3DTS_WORLDMATRIX(k)].u.m[0][0]);
-            checkGLcall("glMultMatrixf");
-          }
-          */
-      }
-      break;
-    case D3DVBF_TWEENING:
-      {
-          FIXME("valid/correct D3DVBF_TWEENING\n");
-          f = This->UpdateStateBlock->tween_factor;
-          m.u.s._11 = f; m.u.s._12 = f; m.u.s._13 = f; m.u.s._14 = f;
-          m.u.s._21 = f; m.u.s._22 = f; m.u.s._23 = f; m.u.s._24 = f;
-          m.u.s._31 = f; m.u.s._32 = f; m.u.s._33 = f; m.u.s._34 = f;
-          m.u.s._41 = f; m.u.s._42 = f; m.u.s._43 = f; m.u.s._44 = f;
-          if (viewChanged == FALSE) {
-              glLoadMatrixf((float *) &This->StateBlock->transforms[D3DTS_VIEW].u.m[0][0]);
-              checkGLcall("glLoadMatrixf");
-          }
-          glMultMatrixf((float *) &m.u.m[0][0]);
-          checkGLcall("glMultMatrixf");
-      }
-      break;
-    case D3DVBF_0WEIGHTS:
-      {
-          FIXME("valid/correct D3DVBF_0WEIGHTS\n");
-          /* single matrix of weight 1.0f */
-          m.u.s._11 = 1.0f; m.u.s._12 = 1.0f; m.u.s._13 = 1.0f; m.u.s._14 = 1.0f;
-          m.u.s._21 = 1.0f; m.u.s._22 = 1.0f; m.u.s._23 = 1.0f; m.u.s._24 = 1.0f;
-          m.u.s._31 = 1.0f; m.u.s._32 = 1.0f; m.u.s._33 = 1.0f; m.u.s._34 = 1.0f;
-          m.u.s._41 = 1.0f; m.u.s._42 = 1.0f; m.u.s._43 = 1.0f; m.u.s._44 = 1.0f;
-          if (viewChanged == FALSE) {
-              glLoadMatrixf((float *) &This->StateBlock->transforms[D3DTS_VIEW].u.m[0][0]);
-              checkGLcall("glLoadMatrixf");
-          }
-          glMultMatrixf((float *) &m.u.m[0][0]);
-          checkGLcall("glMultMatrixf");
-      }
-      break;
-    default:
-      break; /* stupid compilator */
-    }
-
+    /* Release lock, all done */
     LEAVE_GL();
-
     return D3D_OK;
 
 }
@@ -1887,9 +1787,9 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetClipPlane(LPDIRECT3DDEVICE8 iface, DWOR
           This->UpdateStateBlock->clipplane[Index][2], 
 	  This->UpdateStateBlock->clipplane[Index][3]);
     glClipPlane(GL_CLIP_PLANE0 + Index, This->UpdateStateBlock->clipplane[Index]);
+    checkGLcall("glClipPlane");
 
     glPopMatrix();
-    checkGLcall("glClipPlane");
 
     LEAVE_GL();
 
@@ -3278,30 +3178,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetTextureStageState(LPDIRECT3DDEVICE8 ifa
         break;
 
     case D3DTSS_TEXTURETRANSFORMFLAGS :
-        {
-           switch (Value & ~D3DTTFF_PROJECTED)
-           {
-           case D3DTTFF_DISABLE: /* Disable transform matrix for this texture by setting up the identity matrix */
-               glMatrixMode(GL_TEXTURE);
-               glLoadIdentity();
-               checkGLcall("Load identity matrix for texture");
-               glMatrixMode(GL_MODELVIEW);  /* Always leave in model view */
-               break;
-
-           default: /* Enable it */
-               IDirect3DDevice8Impl_SetTransform(iface, D3DTS_TEXTURE0+Stage, &This->UpdateStateBlock->transforms[D3DTS_TEXTURE0+Stage]);
-               break;
-           }
-
-           /* From web: <quote source="opengl12.pdf" section="Apendix C, Version 1.1/Other changes"
-                2. Texture coordinates s, t, and r are divided by q during the rasterization
-                of points, pixel rectangles, and bitmaps. This division was documented
-                only for lines and polygons in the 1.0 version. </quote>                            
-              I interpret this as we can implement projected transforms in slow vertex mode
-                by moving the last coord to the 'q' coord and using one less dimension. The only
-                way to do it in TexCoordPtr would be to massage the data stream to insert extra
-                coords                                                                              */
-        }
+        set_texture_matrix((float *)&This->StateBlock->transforms[D3DTS_TEXTURE0 + Stage].u.m[0][0], Value);
         break; 
 
     case D3DTSS_MIPMAPLODBIAS         :

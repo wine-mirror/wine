@@ -172,67 +172,90 @@ BOOL primitiveInitState(LPDIRECT3DDEVICE8 iface, BOOL vtx_transformed, BOOL vtx_
         isLightingOn = glIsEnabled(GL_LIGHTING);
         glDisable(GL_LIGHTING);
         checkGLcall("glDisable(GL_LIGHTING);");
-        TRACE("Enabled lighting as no normals supplied, old state = %d\n", isLightingOn);
+        TRACE("Disabled lighting as no normals supplied, old state = %d\n", isLightingOn);
     }
 
     if (vtx_transformed) {
-        double X, Y, height, width, minZ, maxZ;
 
-        /* Transformed already into viewport coordinates, so we do not need transform
-           matrices. Reset all matrices to identity and leave the default matrix in world 
-           mode.                                                                         */
-        glMatrixMode(GL_MODELVIEW);
-        checkGLcall("glMatrixMode");
-        glLoadIdentity();
-        checkGLcall("glLoadIdentity");
+        /* If the last draw was transformed as well, no need to reapply all the matrixes */
+        if (!This->last_was_rhw) {
 
-        glMatrixMode(GL_PROJECTION);
-        checkGLcall("glMatrixMode");
-        glLoadIdentity();
-        checkGLcall("glLoadIdentity");
+            double X, Y, height, width, minZ, maxZ;
+            This->last_was_rhw = TRUE;
 
-        /* Set up the viewport to be full viewport */
-        X      = This->StateBlock->viewport.X;
-        Y      = This->StateBlock->viewport.Y;
-        height = This->StateBlock->viewport.Height;
-        width  = This->StateBlock->viewport.Width;
-        minZ   = This->StateBlock->viewport.MinZ;
-        maxZ   = This->StateBlock->viewport.MaxZ;
-        TRACE("Calling glOrtho with %f, %f, %f, %f\n", width, height, -minZ, -maxZ);
-        glOrtho(X, X + width, Y + height, Y, -minZ, -maxZ);
-        checkGLcall("glOrtho");
+            /* Transformed already into viewport coordinates, so we do not need transform
+               matrices. Reset all matrices to identity and leave the default matrix in world 
+               mode.                                                                         */
+            glMatrixMode(GL_MODELVIEW);
+            checkGLcall("glMatrixMode");
+            glLoadIdentity();
+            checkGLcall("glLoadIdentity");
 
-        /* Window Coord 0 is the middle of the first pixel, so translate by half
-           a pixel (See comment above glTranslate below)                         */
-        glTranslatef(0.5, 0.5, 0);
-        checkGLcall("glTranslatef(0.5, 0.5, 0)");
+            glMatrixMode(GL_PROJECTION);
+            checkGLcall("glMatrixMode");
+            glLoadIdentity();
+            checkGLcall("glLoadIdentity");
+
+            /* Set up the viewport to be full viewport */
+            X      = This->StateBlock->viewport.X;
+            Y      = This->StateBlock->viewport.Y;
+            height = This->StateBlock->viewport.Height;
+            width  = This->StateBlock->viewport.Width;
+            minZ   = This->StateBlock->viewport.MinZ;
+            maxZ   = This->StateBlock->viewport.MaxZ;
+            TRACE("Calling glOrtho with %f, %f, %f, %f\n", width, height, -minZ, -maxZ);
+            glOrtho(X, X + width, Y + height, Y, -minZ, -maxZ);
+            checkGLcall("glOrtho");
+
+            /* Window Coord 0 is the middle of the first pixel, so translate by half
+               a pixel (See comment above glTranslate below)                         */
+            glTranslatef(0.5, 0.5, 0);
+            checkGLcall("glTranslatef(0.5, 0.5, 0)");
+        }
 
     } else {
 
         /* Untransformed, so relies on the view and projection matrices */
-        glMatrixMode(GL_MODELVIEW);
-        checkGLcall("glMatrixMode");
-        glLoadMatrixf((float *) &This->StateBlock->transforms[D3DTS_VIEW].u.m[0][0]);
-        checkGLcall("glLoadMatrixf");
-        glMultMatrixf((float *) &This->StateBlock->transforms[D3DTS_WORLDMATRIX(0)].u.m[0][0]);
-        checkGLcall("glMultMatrixf");
 
-        glMatrixMode(GL_PROJECTION);
-        checkGLcall("glMatrixMode");
+        if (This->last_was_rhw || !This->modelview_valid) {
+            /* Only reapply when have to */
+            This->modelview_valid = TRUE;
+            glMatrixMode(GL_MODELVIEW);
+            checkGLcall("glMatrixMode");
 
-        /* The rule is that the window coordinate 0 does not correspond to the
-           beginning of the first pixel, but the center of the first pixel.
-           As a consequence if you want to correctly draw one line exactly from
-           the left to the right end of the viewport (with all matrices set to
-           be identity), the x coords of both ends of the line would be not
-           -1 and 1 respectively but (-1-1/viewport_widh) and (1-1/viewport_width)
-           instead.                                                               */
-        glLoadIdentity();
-        glTranslatef(1.0/This->StateBlock->viewport.Width, -1.0/This->StateBlock->viewport.Height, 0);
-        checkGLcall("glTranslatef (1.0/width, -1.0/height, 0)");
-        glMultMatrixf((float *) &This->StateBlock->transforms[D3DTS_PROJECTION].u.m[0][0]);
-        checkGLcall("glLoadMatrixf");
+            /* In the general case, the view matrix is the identity matrix */
+            if (This->view_ident) {
+                glLoadMatrixf((float *) &This->StateBlock->transforms[D3DTS_WORLDMATRIX(0)].u.m[0][0]);
+                checkGLcall("glLoadMatrixf");
+            } else {
+                glLoadMatrixf((float *) &This->StateBlock->transforms[D3DTS_VIEW].u.m[0][0]);
+                checkGLcall("glLoadMatrixf");
+                glMultMatrixf((float *) &This->StateBlock->transforms[D3DTS_WORLDMATRIX(0)].u.m[0][0]);
+                checkGLcall("glMultMatrixf");
+            }
+        }
 
+        if (This->last_was_rhw || !This->proj_valid) {
+            /* Only reapply when have to */
+            This->proj_valid = TRUE;
+            glMatrixMode(GL_PROJECTION);
+            checkGLcall("glMatrixMode");
+
+            /* The rule is that the window coordinate 0 does not correspond to the
+               beginning of the first pixel, but the center of the first pixel.
+               As a consequence if you want to correctly draw one line exactly from
+               the left to the right end of the viewport (with all matrices set to
+               be identity), the x coords of both ends of the line would be not
+               -1 and 1 respectively but (-1-1/viewport_widh) and (1-1/viewport_width)
+               instead.                                                               */
+            glLoadIdentity();
+            glTranslatef(1.0/This->StateBlock->viewport.Width, -1.0/This->StateBlock->viewport.Height, 0);
+            checkGLcall("glTranslatef (1.0/width, -1.0/height, 0)");
+            glMultMatrixf((float *) &This->StateBlock->transforms[D3DTS_PROJECTION].u.m[0][0]);
+            checkGLcall("glLoadMatrixf");
+        }
+
+        This->last_was_rhw = FALSE;
     }
     return isLightingOn;
 }

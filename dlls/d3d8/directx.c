@@ -1083,6 +1083,12 @@ HRESULT  WINAPI  IDirect3D8Impl_CreateDevice               (LPDIRECT3D8 iface,
        IDirect3DDevice8Impl_SetViewport((LPDIRECT3DDEVICE8) object, &vp);
     }
 
+    /* Initialize the current view state */
+    object->modelview_valid = 1;
+    object->proj_valid = 0;
+    object->view_ident = 1;
+    object->last_was_rhw = 0;
+
     TRACE("(%p,%d) All defaults now set up, leaving CreateDevice\n", This, Adapter);
     return D3D_OK;
 }

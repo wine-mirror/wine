@@ -326,10 +326,11 @@ struct IDirect3DDevice8Impl
     UINT                          currentPalette;
 
     /* Optimization */
-    D3DMATRIX                     lastProj;
-    D3DMATRIX                     lastView;
-    D3DMATRIX                     lastWorld0;
-    D3DMATRIX                     lastTexTrans[8];
+    BOOL                          modelview_valid;
+    BOOL                          proj_valid;
+    BOOL                          view_ident;        /* true iff view matrix is identity                */
+    BOOL                          last_was_rhw;      /* true iff last draw_primitive was in xyzrhw mode */
+
 
     /* OpenGL related */
     GLXContext                    glCtx;
