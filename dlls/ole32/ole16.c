@@ -384,37 +384,6 @@ HRESULT WINAPI ProgIDFromCLSID16(
   return ret;
 }
 
-/******************************************************************************
- *		CLSIDFromProgID	[COMPOBJ.61]
- * Converts a program id into the respective GUID. (By using a registry lookup)
- * RETURNS
- *	riid associated with the progid
- */
-HRESULT WINAPI CLSIDFromProgID16(
-	LPCOLESTR16 progid,	/* [in] program id as found in registry */
-	LPCLSID riid		/* [out] associated CLSID */
-) {
-	char	*buf,buf2[80];
-	DWORD	buf2len;
-	HRESULT	err;
-	HKEY	xhkey;
-
-	buf = HeapAlloc(GetProcessHeap(),0,strlen(progid)+8);
-	sprintf(buf,"%s\\CLSID",progid);
-	if ((err=RegOpenKeyA(HKEY_CLASSES_ROOT,buf,&xhkey))) {
-		HeapFree(GetProcessHeap(),0,buf);
-                return CO_E_CLASSSTRING;
-	}
-	HeapFree(GetProcessHeap(),0,buf);
-	buf2len = sizeof(buf2);
-	if ((err=RegQueryValueA(xhkey,NULL,buf2,&buf2len))) {
-		RegCloseKey(xhkey);
-                return CO_E_CLASSSTRING;
-	}
-	RegCloseKey(xhkey);
-	return __CLSIDFromStringA(buf2,riid);
-}
-
 /***********************************************************************
  *           LookupETask (COMPOBJ.94)
  */

@@ -31,7 +31,6 @@ C_SRCS = \
 	marshal.c \
 	memlockbytes.c \
 	moniker.c \
-	ole16.c \
 	ole2.c \
 	ole2stubs.c \
 	ole2impl.c \
@@ -42,12 +41,14 @@ C_SRCS = \
 	rpc.c \
 	stg_bigblockfile.c \
 	stg_stream.c \
-	storage.c \
 	storage32.c
 
 C_SRCS16 = \
 	memlockbytes16.c \
-	ole2nls.c
+	ole16.c \
+	ole2_16.c \
+	ole2nls.c \
+	storage.c
 
 RC_SRCS = ole32res.rc version.rc
 

@@ -319,17 +319,6 @@ HRESULT WINAPI OleInitializeWOW(DWORD x) {
 }
 
 /***********************************************************************
- *           RegisterDragDrop (OLE2.35)
- */
-HRESULT WINAPI RegisterDragDrop16(
-	HWND16 hwnd,
-	LPDROPTARGET pDropTarget
-) {
-	FIXME("(0x%04x,%p),stub!\n",hwnd,pDropTarget);
-	return S_OK;
-}
-
-/***********************************************************************
  *           RegisterDragDrop (OLE32.139)
  */
 HRESULT WINAPI RegisterDragDrop(
@@ -369,16 +358,6 @@ HRESULT WINAPI RegisterDragDrop(
 
   OLEDD_InsertDropTarget(dropTargetInfo);
 
-	return S_OK;
-}
-
-/***********************************************************************
- *           RevokeDragDrop (OLE2.36)
- */
-HRESULT WINAPI RevokeDragDrop16(
-	HWND16 hwnd
-) {
-	FIXME("(0x%04x),stub!\n",hwnd);
 	return S_OK;
 }
 
@@ -2212,50 +2191,6 @@ static void OLEUTL_ReadRegistryDWORDValue(
 	break;
     }
   }
-}
-
-/******************************************************************************
- * OleMetaFilePictFromIconAndLabel (OLE2.56)
- *
- * Returns a global memory handle to a metafile which contains the icon and
- * label given.
- * I guess the result of that should look somehow like desktop icons.
- * If no hIcon is given, we load the icon via lpszSourceFile and iIconIndex.
- * This code might be wrong at some places.
- */
-HGLOBAL16 WINAPI OleMetaFilePictFromIconAndLabel16(
-	HICON16 hIcon,
-	LPCOLESTR16 lpszLabel,
-	LPCOLESTR16 lpszSourceFile,
-	UINT16 iIconIndex
-) {
-    METAFILEPICT16 *mf;
-    HGLOBAL16 hmf;
-    HDC hdc;
-
-    FIXME("(%04x, '%s', '%s', %d): incorrect metrics, please try to correct them !\n\n\n", hIcon, lpszLabel, lpszSourceFile, iIconIndex);
-
-    if (!hIcon) {
-        if (lpszSourceFile) {
-	    HINSTANCE16 hInstance = LoadLibrary16(lpszSourceFile);
-
-	    /* load the icon at index from lpszSourceFile */
-	    hIcon = HICON_16(LoadIconA(HINSTANCE_32(hInstance), (LPCSTR)(DWORD)iIconIndex));
-	    FreeLibrary16(hInstance);
-	} else
-	    return 0;
-    }
-
-    hdc = CreateMetaFileA(NULL);
-    DrawIcon(hdc, 0, 0, HICON_32(hIcon)); /* FIXME */
-    TextOutA(hdc, 0, 0, lpszLabel, 1); /* FIXME */
-    hmf = GlobalAlloc16(0, sizeof(METAFILEPICT16));
-    mf = (METAFILEPICT16 *)GlobalLock16(hmf);
-    mf->mm = MM_ANISOTROPIC;
-    mf->xExt = 20; /* FIXME: bogus */
-    mf->yExt = 20; /* dito */
-    mf->hMF = CloseMetaFile16(HDC_16(hdc));
-    return hmf;
 }
 
 /******************************************************************************
