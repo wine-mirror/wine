@@ -6,7 +6,9 @@
 ##hunt you down and kill you like the savage animal I am.
 ##Released under the WINE licence
 ##Changelog: 
-##January 1, 1999 - Initial Release
+##January 26, 1999 - Fixed various bugs...
+##                 - Made newbie mode easier
+##January 25, 1999 - Initial Release
 ## -------------------------------------------
 ##| IRCNET/UNDERNET: jazzfan AOL: Jazzrock12  |
 ##| E-MAIL: magicbox@bestweb.net ICQ: 19617831|
@@ -14,7 +16,7 @@
 ##|  Wine Builds @ http://www.gojazz.net/wine |
 ## -------------------------------------------
 open STDERR, ">&SAVEERR"; open STDERR, ">&STDOUT"; 
-system("export SHELL=/bin/bash");
+$ENV{'SHELL'}="/bin/bash";
 print <<EOM;
 Enter your level of WINE expertise: 1-newbie 2-intermediate 3-advanced
 
@@ -39,7 +41,7 @@ print <<EOM;
 This program will make a debug report for WINE developers. It does this
 in two files. The first one has everything asked for by the bugreports
 guide. The second has *all* of the debug output (This can go to
-thousands of lines). To (hopefully) get the bug fixed, attatch the first
+thousands of lines). To (hopefully) get the bug fixed, attach the first
 file to a messsage sent to the comp.emulators.ms-windows.wine newsgroup.
 The developers might ask you for "the last XX number of lines from the
 report". If so, post the second file (It will be compressed with gzip 
@@ -79,8 +81,8 @@ else {
 print "Found wine: $wineloc\n"
 }
 }
-if ($wineloc > 1) {
-if ($wineloc =~ 2) {
+if ($debuglevel > 1) {
+if ($debuglevel =~ 2) {
 print <<EOM;
 Enter the full path to wine. The path should look like
 /path/to/wine/wine. Get it? It's the directories leading up to the
@@ -157,8 +159,7 @@ print <<EOM;
 Enter any extra debug options. Default is +relay - If you don't
 know what options to use, just hit enter, and I'll use those (Example, the
 developer tells you to re-run with -debugmsg +dosfs,+module you would type
-in +dosfs,+module). In other words, hit enter if you're not sure what to
-do:
+in +dosfs,+module). Hit enter if you're not sure what to do:
 EOM
 }
 elsif ($debuglevel =~ 3) {
@@ -177,7 +178,7 @@ $debugopts = "+relay"; }
 if ($debuglevel > 1) {
 if ($debuglevel =~ 2) {
 print <<EOM;
-How many lines of debugging info do you want to include in the report
+How many trailing lines of debugging info do you want to include in the report
 you're going to submit (First file)? If a developer asks you to include
 the last 200 lines, enter 200 here. Default is 100, which is reached by
 pressing enter. (If you're not sure, just hit enter):
@@ -185,7 +186,7 @@ EOM
 }
 elsif ($debuglevel =~ 3) {
 print <<EOM;
-Enter how many lines of debugging output you want in your nice
+Enter how many lines of trailing debugging output you want in your nice
 formatted report. Default is 100:
 EOM
 }
@@ -194,12 +195,17 @@ chomp $lastnlines;
 if ($lastnlines=~/^\s*$/) { $lastnlines=100; } }
 elsif ($debuglevel =~ 1) {
 $lastnlines=100; }
+if ($debuglevel > 1) {
 print <<EOM; 
 Enter any extra options you want to pass to WINE. Strongly recommended you
 include -managed:
 EOM
 $extraops=<STDIN>;
 chomp $extraops;
+}
+elsif ($debuglevel =~ 1) {
+$extraops="-managed";
+}
 print "Enter your distribution name (Example: Redhat 5.0):\n";
 $dist=<STDIN>;
 chomp $dist;
@@ -225,11 +231,11 @@ $configopts="None"; }
 if ($debuglevel > 1) {
 if ($debuglevel =~ 2) {
 print <<EOM;
-Is your wine version CVS or from a tarball? As in... did you download it
+Is your wine version CVS or from a .tar.gz file? As in... did you download it
 off a website/ftpsite or did you/have you run cvs on it to update it?
 For CVS: YYMMDD, where YY is the year (99), MM is the month (01), and DD
 is the day (14), that you last updated it (Example: 990114). 
-For tarball: Just hit enter and I'll figure out the version for you:
+For tar.gz: Just hit enter and I'll figure out the version for you:
 EOM
 }
 elsif ($debuglevel =~ 3) {
@@ -240,7 +246,7 @@ EOM
 }
 $winever=<STDIN>;
 chomp $winever;
-$winever=~s/ //;
+$winever=~s/ //g;
 if ($winever=~/[0-9]+/) {  
 $winever .= " CVS";
 }
@@ -316,4 +322,3 @@ Note that it is $dbgoutfile.gz, since I compressed it with gzip for you.
 C Ya!
 Adam the Jazz Guy
 EOM
-
