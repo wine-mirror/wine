@@ -646,12 +646,12 @@ SERVICE_STATUS_HANDLE WINAPI
 RegisterServiceCtrlHandlerA( LPCSTR lpServiceName,
                              LPHANDLER_FUNCTION lpfHandler )
 {
-    UNICODE_STRING lpServiceNameW;
+    LPWSTR lpServiceNameW;
     SERVICE_STATUS_HANDLE ret;
 
-    RtlCreateUnicodeStringFromAsciiz (&lpServiceNameW,lpServiceName);
-    ret = RegisterServiceCtrlHandlerW( lpServiceNameW.Buffer, lpfHandler );
-    RtlFreeUnicodeString(&lpServiceNameW);
+    lpServiceNameW = SERV_dup(lpServiceName);
+    ret = RegisterServiceCtrlHandlerW( lpServiceNameW, lpfHandler );
+    SERV_free(lpServiceNameW);
     return ret;
 }
 
@@ -721,15 +721,14 @@ SetServiceStatus( SERVICE_STATUS_HANDLE hService, LPSERVICE_STATUS lpStatus )
 SC_HANDLE WINAPI OpenSCManagerA( LPCSTR lpMachineName, LPCSTR lpDatabaseName,
                                  DWORD dwDesiredAccess )
 {
-    UNICODE_STRING lpMachineNameW;
-    UNICODE_STRING lpDatabaseNameW;
+    LPWSTR lpMachineNameW, lpDatabaseNameW;
     SC_HANDLE ret;
 
-    RtlCreateUnicodeStringFromAsciiz (&lpMachineNameW,lpMachineName);
-    RtlCreateUnicodeStringFromAsciiz (&lpDatabaseNameW,lpDatabaseName);
-    ret = OpenSCManagerW(lpMachineNameW.Buffer,lpDatabaseNameW.Buffer, dwDesiredAccess);
-    RtlFreeUnicodeString(&lpDatabaseNameW);
-    RtlFreeUnicodeString(&lpMachineNameW);
+    lpMachineNameW = SERV_dup(lpMachineName);
+    lpDatabaseNameW = SERV_dup(lpDatabaseName);
+    ret = OpenSCManagerW(lpMachineNameW, lpDatabaseNameW, dwDesiredAccess);
+    SERV_free(lpDatabaseNameW);
+    SERV_free(lpMachineNameW);
     return ret;
 }
 
@@ -932,15 +931,14 @@ CloseServiceHandle( SC_HANDLE hSCObject )
 SC_HANDLE WINAPI OpenServiceA( SC_HANDLE hSCManager, LPCSTR lpServiceName,
                                DWORD dwDesiredAccess )
 {
-    UNICODE_STRING lpServiceNameW;
+    LPWSTR lpServiceNameW;
     SC_HANDLE ret;
-    RtlCreateUnicodeStringFromAsciiz (&lpServiceNameW,lpServiceName);
-    if(lpServiceName)
-        TRACE("Request for service %s\n",lpServiceName);
-    else
-        return FALSE;
-    ret = OpenServiceW( hSCManager, lpServiceNameW.Buffer, dwDesiredAccess);
-    RtlFreeUnicodeString(&lpServiceNameW);
+
+    TRACE("%p %s %ld\n",hSCManager, debugstr_a(lpServiceName), dwDesiredAccess);
+
+    lpServiceNameW = SERV_dup(lpServiceName);
+    ret = OpenServiceW( hSCManager, lpServiceNameW, dwDesiredAccess);
+    SERV_free(lpServiceNameW);
     return ret;
 }
 
@@ -958,8 +956,13 @@ SC_HANDLE WINAPI OpenServiceW( SC_HANDLE hSCManager, LPCWSTR lpServiceName,
     HKEY hKey;
     long r;
 
-    TRACE("(%p,%p,%ld)\n",hSCManager, lpServiceName,
-          dwDesiredAccess);
+    TRACE("%p %s %ld\n",hSCManager, debugstr_w(lpServiceName), dwDesiredAccess);
+
+    if (!lpServiceName)
+    {
+        SetLastError(ERROR_INVALID_ADDRESS);
+        return NULL;
+    }
 
     retval = alloc_sc_handle( SC_HTYPE_SERVICE );
     if( NULL == retval )
@@ -1208,29 +1211,23 @@ StartServiceA( SC_HANDLE hService, DWORD dwNumServiceArgs,
                  LPCSTR *lpServiceArgVectors )
 {
     LPWSTR *lpwstr=NULL;
-    UNICODE_STRING usBuffer;
     unsigned int i;
 
     TRACE("(%p,%ld,%p)\n",hService,dwNumServiceArgs,lpServiceArgVectors);
 
     if(dwNumServiceArgs)
-        lpwstr = (LPWSTR*) HeapAlloc( GetProcessHeap(), 0,
+        lpwstr = HeapAlloc( GetProcessHeap(), 0,
                                    dwNumServiceArgs*sizeof(LPWSTR) );
-    else
-        lpwstr = NULL;
 
     for(i=0; i<dwNumServiceArgs; i++)
-    {
-        RtlCreateUnicodeStringFromAsciiz (&usBuffer,lpServiceArgVectors[i]);
-        lpwstr[i]=usBuffer.Buffer;
-    }
+        lpwstr[i]=SERV_dup(lpServiceArgVectors[i]);
 
     StartServiceW(hService, dwNumServiceArgs, (LPCWSTR *)lpwstr);
 
     if(dwNumServiceArgs)
     {
         for(i=0; i<dwNumServiceArgs; i++)
-            HeapFree(GetProcessHeap(), 0, lpwstr[i]);
+            SERV_free(lpwstr[i]);
         HeapFree(GetProcessHeap(), 0, lpwstr);
     }
 
