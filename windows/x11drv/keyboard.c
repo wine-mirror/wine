@@ -120,6 +120,16 @@ static const char main_key_DE[MAIN_LEN][4] =
  "<>"
 };
 
+/*** German keyboard layout without dead keys */
+static const char main_key_DE_nodead[MAIN_LEN][4] =
+{
+ "^°","1!","2\"","3§","4$","5%","6&","7/{","8([","9)]","0=}","ß?\\","´",
+ "qQ","wW","eE","rR","tT","zZ","uU","iI","oO","pP","üÜ","+*~",
+ "aA","sS","dD","fF","gG","hH","jJ","kK","lL","öÖ","äÄ","#'",
+ "yY","xX","cC","vV","bB","nN","mM",",;",".:","-_",
+ "<>"
+};
+
 /*** Swiss German keyboard layout (contributed by Jonathan Naylor) */
 static const char main_key_SG[MAIN_LEN][4] =
 {
@@ -246,6 +256,7 @@ static struct {
  {MAKELANGID(LANG_ENGLISH,SUBLANG_ENGLISH_US),     1252, 437, &main_key_US},
  {MAKELANGID(LANG_ENGLISH,SUBLANG_ENGLISH_UK),     1252, 850, &main_key_UK},
  {MAKELANGID(LANG_GERMAN,SUBLANG_DEFAULT),         1252, 850, &main_key_DE},
+ {MAKELANGID(LANG_GERMAN,SUBLANG_DEFAULT),         1252, 850, &main_key_DE_nodead},
  {MAKELANGID(LANG_GERMAN,SUBLANG_GERMAN_SWISS),    1252, 850, &main_key_SG},
  {MAKELANGID(LANG_SWEDISH,SUBLANG_SWEDISH),        1252, 850, &main_key_SE},
  {MAKELANGID(LANG_NORWEGIAN,SUBLANG_DEFAULT),      1252, 865, &main_key_NO},
