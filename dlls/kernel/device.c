@@ -287,6 +287,7 @@ HANDLE DEVICE_Open( LPCWSTR filenameW, DWORD access, LPSECURITY_ATTRIBUTES sa )
 
     FIXME( "Unknown/unsupported VxD %s. Try setting Windows version to 'nt40' or 'win31'.\n",
            filename);
+
     SetLastError( ERROR_FILE_NOT_FOUND );
     return 0;
 }
@@ -609,7 +610,8 @@ static void DIOCRegs_2_CONTEXT( DIOC_REGISTERS *pIn, CONTEXT86 *pCxt )
     pCxt->Edi = pIn->reg_EDI;
 
     /* FIXME: Only partial CONTEXT86_CONTROL */
-    pCxt->EFlags = pIn->reg_Flags;
+
+    pCxt->EFlags = pIn->reg_Flags & ~0x00020000; /* clear vm86 mode */
 }
 
 static void CONTEXT_2_DIOCRegs( CONTEXT86 *pCxt, DIOC_REGISTERS *pOut )
