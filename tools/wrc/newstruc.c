@@ -34,6 +34,17 @@
 
 #include "wingdi.h"	/* for BITMAPINFOHEADER */
 
+#include <pshpack2.h>
+typedef struct
+{
+    DWORD biSize;
+    WORD  biWidth;
+    WORD  biHeight;
+    WORD  biPlanes;
+    WORD  biBitCount;
+} BITMAPOS2HEADER;
+#include <poppack.h>
+
 /* Generate new_* functions that have no parameters (NOTE: no ';') */
 __NEW_STRUCT_FUNC(dialog)
 __NEW_STRUCT_FUNC(dialogex)
@@ -220,25 +231,40 @@ static void convert_bitmap_swap_v4(BITMAPV4HEADER *b4h)
 	b4h->bV4GammaBlue	= BYTESWAP_DWORD(b4h->bV4GammaBlue);
 }
 
+static void convert_bitmap_swap_os2(BITMAPOS2HEADER *boh)
+{
+	boh->biSize		= BYTESWAP_DWORD(boh->biSize);
+	boh->biWidth		= BYTESWAP_WORD(boh->biWidth);
+	boh->biHeight		= BYTESWAP_WORD(boh->biHeight);
+	boh->biPlanes		= BYTESWAP_WORD(boh->biPlanes);
+	boh->biBitCount		= BYTESWAP_WORD(boh->biBitCount);
+}
+
 #define FL_SIGBE	0x01
 #define FL_SIZEBE	0x02
 #define FL_V4		0x04
+#define FL_OS2		0x08
 static int convert_bitmap(char *data, int size)
 {
 	BITMAPINFOHEADER *bih = (BITMAPINFOHEADER *)data;
 	BITMAPV4HEADER *b4h = (BITMAPV4HEADER *)data;
+	BITMAPOS2HEADER *boh = (BITMAPOS2HEADER *)data;
 	int type = 0;
-    int returnSize = 0;           /* size to be returned */
+	int returnSize = 0;           /* size to be returned */
 #ifdef WORDS_BIGENDIAN
 	DWORD bisizel = BYTESWAP_DWORD(sizeof(BITMAPINFOHEADER));
 	DWORD b4sizel = BYTESWAP_DWORD(sizeof(BITMAPV4HEADER));
+	DWORD bosizel = BYTESWAP_DWORD(sizeof(BITMAPOS2HEADER));
 	DWORD bisizeb = sizeof(BITMAPINFOHEADER);
 	DWORD b4sizeb = sizeof(BITMAPV4HEADER);
+	DWORD bosizeb = sizeof(BITMAPOS2HEADER);
 #else
 	DWORD bisizel = sizeof(BITMAPINFOHEADER);
 	DWORD b4sizel = sizeof(BITMAPV4HEADER);
+	DWORD bosizel = sizeof(BITMAPOS2HEADER);
 	DWORD bisizeb = BYTESWAP_DWORD(sizeof(BITMAPINFOHEADER));
 	DWORD b4sizeb = BYTESWAP_DWORD(sizeof(BITMAPV4HEADER));
+	DWORD bosizeb = BYTESWAP_DWORD(sizeof(BITMAPOS2HEADER));
 #endif
 
 
@@ -265,20 +291,28 @@ static int convert_bitmap(char *data, int size)
 	{
 		/* Little endian */
 	}
-	else if(bih->biSize == b4sizel)
-	{
-		type |= FL_V4;
-	}
 	else if(bih->biSize == bisizeb)
 	{
 		type |= FL_SIZEBE;
+	}
+	else if(bih->biSize == b4sizel)
+	{
+		type |= FL_V4;
 	}
 	else if(bih->biSize == b4sizeb)
 	{
 		type |= FL_SIZEBE | FL_V4;
 	}
+	else if(!bih->biSize || bih->biSize == bosizel)
+	{
+		type |= FL_OS2;
+	}
+	else if(bih->biSize == bosizeb)
+	{
+		type |= FL_SIZEBE | FL_OS2;
+	}
 	else
-		type = -1;
+		yyerror("Invalid bitmap format, bih->biSize = %ld", bih->biSize);
 
 	switch(type)
 	{
@@ -286,14 +320,13 @@ static int convert_bitmap(char *data, int size)
 		break;
 	case FL_SIZEBE:
 	case FL_SIZEBE | FL_V4:
+	case FL_SIZEBE | FL_OS2:
 		yywarning("Bitmap v%c signature little-endian, but size big-endian", type & FL_V4 ? '4' : '3');
 		break;
 	case FL_SIGBE:
 	case FL_SIGBE | FL_V4:
+	case FL_SIGBE | FL_OS2:
 		yywarning("Bitmap v%c signature big-endian, but size little-endian", type & FL_V4 ? '4' : '3');
-		break;
-	case -1:
-		yyerror("Invalid bitmap format");
 		break;
 	}
 
@@ -307,6 +340,10 @@ static int convert_bitmap(char *data, int size)
 		{
 			if(type & FL_V4)
 				convert_bitmap_swap_v4(b4h);
+			else if(type & FL_OS2)
+			{
+				convert_bitmap_swap_os2(boh);
+			}
 			else
 				convert_bitmap_swap_v3(bih);
 		}
@@ -319,6 +356,10 @@ static int convert_bitmap(char *data, int size)
 		{
 			if(type & FL_V4)
 				convert_bitmap_swap_v4(b4h);
+			else if(type & FL_OS2)
+			{
+				convert_bitmap_swap_os2(boh);
+			}
 			else
 				convert_bitmap_swap_v3(bih);
 		}
