@@ -226,9 +226,6 @@ TOOLBAR_DrawString (TOOLBAR_INFO *infoPtr, TBUTTON_INFO *btnPtr,
 		    rcText.top += infoPtr->nBitmapHeight;
 		}
 	}
-	else {
-	    rcText.top += infoPtr->nBitmapHeight;
-	}
 
 	if (nState & (TBSTATE_PRESSED | TBSTATE_CHECKED))
 	    OffsetRect (&rcText, 1, 1);
@@ -505,6 +502,10 @@ TOOLBAR_Refresh (HWND hwnd, HDC hdc, PAINTSTRUCT* ps)
     INT i;
     RECT rcTemp;
 
+    /* if imagelist belongs to the app, it can be changed
+       by the app after setting it */
+    if (infoPtr->himlDef != infoPtr->himlInt)
+        infoPtr->nNumBitmaps = ImageList_GetImageCount(infoPtr->himlDef);
     /* redraw necessary buttons */
     btnPtr = infoPtr->buttons;
     for (i = 0; i < infoPtr->nNumButtons; i++, btnPtr++)
