@@ -280,8 +280,28 @@ $pseudo_to_opengl{"IglooParameterSGIX"} = "GLint";
 #     [ "GLubyte *", "bitmap"] ] ];
 #
 %norm_functions = ();
+
+#
+# This stores various extensions NOT part of the GL extension registry but still
+# implemented by most OpenGL libraries out there...
+#
 %ext_functions  =
-    ( "glMTexCoord2fSGIS" => [ "glMTexCoord2fSGIS", "void", [ [ "GLenum", "target" ],
+    ( "glDeleteBufferRegion" => [ "glDeleteBufferRegion", "void", [ [ "GLenum", "region" ] ], "glDeleteBufferRegion" ],
+      "glReadBufferRegion" => [ "glReadBufferRegion", "void", [ [ "GLenum", "region" ],
+								[ "GLint", "x" ],
+								[ "GLint", "y" ],
+								[ "GLsizei", "width" ],
+								[ "GLsizei", "height" ] ], "glReadBufferRegion" ],
+      "glDrawBufferRegion" => [ "glDrawBufferRegion", "void", [ [ "GLenum", "region" ],
+								[ "GLint", "x" ],
+								[ "GLint", "y" ],
+								[ "GLsizei", "width" ],
+								[ "GLsizei", "height" ],
+								[ "GLint", "xDest" ],
+								[ "GLint", "yDest" ] ], "glDrawBufferRegion" ],
+      "glBufferRegionEnabled" => [ "glBufferRegionEnabled", "GLuint", [ ], "glBufferRegionEnabled" ],
+      "glNewBufferRegion" => [ "glNewBufferRegion", "GLuint", [ [ "GLenum", "type" ] ], "glNewBufferRegion" ],
+      "glMTexCoord2fSGIS" => [ "glMTexCoord2fSGIS", "void", [ [ "GLenum", "target" ],
 							      [ "GLfloat", "s" ],
 							      [ "GLfloat", "t" ] ], "glMTexCoord2fSGIS" ],
       "glMTexCoord2fvSGIS" => [ "glMTexCoord2fvSGIS", "void", [ [ "GLenum", "target" ],
@@ -490,9 +510,7 @@ close(REGISTRY);
 #
 open(SPEC, ">" . $spec_file);
 
-print SPEC "init OpenGL32_Init
-
-@  stdcall wglCreateContext(long) wglCreateContext
+print SPEC "@  stdcall wglCreateContext(long) wglCreateContext
 @  stdcall wglCreateLayerContext(long long) wglCreateLayerContext
 @  stdcall wglCopyContext(long long long) wglCopyContext
 @  stdcall wglDeleteContext(long) wglDeleteContext

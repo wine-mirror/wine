@@ -9,6 +9,7 @@ typedef const GLubyte * GLstring;
 
 WINE_DEFAULT_DEBUG_CHANNEL(opengl);
 
+void (*func_glActiveStencilFaceEXT)( GLenum ) = (void *) 0xdeadbeef;
 void (*func_glActiveTexture)( GLenum ) = (void *) 0xdeadbeef;
 void (*func_glAlphaFragmentOp1ATI)( GLenum, GLuint, GLuint, GLuint, GLuint, GLuint ) = (void *) 0xdeadbeef;
 void (*func_glAlphaFragmentOp2ATI)( GLenum, GLuint, GLuint, GLuint, GLuint, GLuint, GLuint, GLuint, GLuint ) = (void *) 0xdeadbeef;
@@ -26,6 +27,7 @@ void (*func_glBindFragmentShaderATI)( GLuint ) = (void *) 0xdeadbeef;
 GLuint (*func_glBindLightParameterEXT)( GLenum, GLenum ) = (void *) 0xdeadbeef;
 GLuint (*func_glBindMaterialParameterEXT)( GLenum, GLenum ) = (void *) 0xdeadbeef;
 GLuint (*func_glBindParameterEXT)( GLenum ) = (void *) 0xdeadbeef;
+void (*func_glBindProgramARB)( GLenum, GLuint ) = (void *) 0xdeadbeef;
 void (*func_glBindProgramNV)( GLenum, GLuint ) = (void *) 0xdeadbeef;
 GLuint (*func_glBindTexGenParameterEXT)( GLenum, GLenum, GLenum ) = (void *) 0xdeadbeef;
 void (*func_glBindTextureEXT)( GLenum, GLuint ) = (void *) 0xdeadbeef;
@@ -44,8 +46,10 @@ void (*func_glBinormal3svEXT)( GLshort* ) = (void *) 0xdeadbeef;
 void (*func_glBinormalPointerEXT)( GLenum, GLsizei, GLvoid* ) = (void *) 0xdeadbeef;
 void (*func_glBlendColorEXT)( GLclampf, GLclampf, GLclampf, GLclampf ) = (void *) 0xdeadbeef;
 void (*func_glBlendEquationEXT)( GLenum ) = (void *) 0xdeadbeef;
+void (*func_glBlendFuncSeparate)( GLenum, GLenum, GLenum, GLenum ) = (void *) 0xdeadbeef;
 void (*func_glBlendFuncSeparateEXT)( GLenum, GLenum, GLenum, GLenum ) = (void *) 0xdeadbeef;
 void (*func_glBlendFuncSeparateINGR)( GLenum, GLenum, GLenum, GLenum ) = (void *) 0xdeadbeef;
+GLuint (*func_glBufferRegionEnabled)( ) = (void *) 0xdeadbeef;
 void (*func_glClientActiveTexture)( GLenum ) = (void *) 0xdeadbeef;
 void (*func_glClientActiveVertexStreamATI)( GLenum ) = (void *) 0xdeadbeef;
 void (*func_glColor3fVertex3fSUN)( GLfloat, GLfloat, GLfloat, GLfloat, GLfloat, GLfloat ) = (void *) 0xdeadbeef;
@@ -108,16 +112,20 @@ void (*func_glDeformSGIX)( GLint ) = (void *) 0xdeadbeef;
 void (*func_glDeformationMap3dSGIX)( GLint, GLdouble, GLdouble, GLint, GLint, GLdouble, GLdouble, GLint, GLint, GLdouble, GLdouble, GLint, GLint, GLdouble* ) = (void *) 0xdeadbeef;
 void (*func_glDeformationMap3fSGIX)( GLint, GLfloat, GLfloat, GLint, GLint, GLfloat, GLfloat, GLint, GLint, GLfloat, GLfloat, GLint, GLint, GLfloat* ) = (void *) 0xdeadbeef;
 void (*func_glDeleteAsyncMarkersSGIX)( GLuint, GLsizei ) = (void *) 0xdeadbeef;
+void (*func_glDeleteBufferRegion)( GLenum ) = (void *) 0xdeadbeef;
 void (*func_glDeleteFencesNV)( GLsizei, GLuint* ) = (void *) 0xdeadbeef;
 void (*func_glDeleteFragmentShaderATI)( GLuint ) = (void *) 0xdeadbeef;
 void (*func_glDeleteObjectBufferATI)( GLuint ) = (void *) 0xdeadbeef;
 void (*func_glDeleteOcclusionQueriesNV)( GLsizei, GLuint* ) = (void *) 0xdeadbeef;
+void (*func_glDeleteProgramsARB)( GLsizei, GLuint* ) = (void *) 0xdeadbeef;
 void (*func_glDeleteProgramsNV)( GLsizei, GLuint* ) = (void *) 0xdeadbeef;
 void (*func_glDeleteTexturesEXT)( GLsizei, GLuint* ) = (void *) 0xdeadbeef;
 void (*func_glDeleteVertexShaderEXT)( GLuint ) = (void *) 0xdeadbeef;
 void (*func_glDetailTexFuncSGIS)( GLenum, GLsizei, GLfloat* ) = (void *) 0xdeadbeef;
 void (*func_glDisableVariantClientStateEXT)( GLuint ) = (void *) 0xdeadbeef;
+void (*func_glDisableVertexAttribArrayARB)( GLuint ) = (void *) 0xdeadbeef;
 void (*func_glDrawArraysEXT)( GLenum, GLint, GLsizei ) = (void *) 0xdeadbeef;
+void (*func_glDrawBufferRegion)( GLenum, GLint, GLint, GLsizei, GLsizei, GLint, GLint ) = (void *) 0xdeadbeef;
 void (*func_glDrawElementArrayATI)( GLenum, GLsizei ) = (void *) 0xdeadbeef;
 void (*func_glDrawMeshArraysSUN)( GLenum, GLint, GLsizei, GLsizei ) = (void *) 0xdeadbeef;
 void (*func_glDrawRangeElementArrayATI)( GLenum, GLuint, GLuint, GLsizei ) = (void *) 0xdeadbeef;
@@ -126,6 +134,7 @@ void (*func_glEdgeFlagPointerEXT)( GLsizei, GLsizei, GLboolean* ) = (void *) 0xd
 void (*func_glEdgeFlagPointerListIBM)( GLint, GLboolean**, GLint ) = (void *) 0xdeadbeef;
 void (*func_glElementPointerATI)( GLenum, GLvoid* ) = (void *) 0xdeadbeef;
 void (*func_glEnableVariantClientStateEXT)( GLuint ) = (void *) 0xdeadbeef;
+void (*func_glEnableVertexAttribArrayARB)( GLuint ) = (void *) 0xdeadbeef;
 void (*func_glEndFragmentShaderATI)( ) = (void *) 0xdeadbeef;
 void (*func_glEndOcclusionQueryNV)( ) = (void *) 0xdeadbeef;
 void (*func_glEndVertexShaderEXT)( ) = (void *) 0xdeadbeef;
@@ -138,11 +147,16 @@ void (*func_glFinishFenceNV)( GLuint ) = (void *) 0xdeadbeef;
 void (*func_glFinishTextureSUNX)( ) = (void *) 0xdeadbeef;
 void (*func_glFlushRasterSGIX)( ) = (void *) 0xdeadbeef;
 void (*func_glFlushVertexArrayRangeNV)( ) = (void *) 0xdeadbeef;
+void (*func_glFogCoordPointer)( GLenum, GLsizei, GLvoid* ) = (void *) 0xdeadbeef;
 void (*func_glFogCoordPointerEXT)( GLenum, GLsizei, GLvoid* ) = (void *) 0xdeadbeef;
 void (*func_glFogCoordPointerListIBM)( GLenum, GLint, GLvoid**, GLint ) = (void *) 0xdeadbeef;
+void (*func_glFogCoordd)( GLdouble ) = (void *) 0xdeadbeef;
 void (*func_glFogCoorddEXT)( GLdouble ) = (void *) 0xdeadbeef;
+void (*func_glFogCoorddv)( GLdouble* ) = (void *) 0xdeadbeef;
 void (*func_glFogCoorddvEXT)( GLdouble* ) = (void *) 0xdeadbeef;
+void (*func_glFogCoordf)( GLfloat ) = (void *) 0xdeadbeef;
 void (*func_glFogCoordfEXT)( GLfloat ) = (void *) 0xdeadbeef;
+void (*func_glFogCoordfv)( GLfloat* ) = (void *) 0xdeadbeef;
 void (*func_glFogCoordfvEXT)( GLfloat* ) = (void *) 0xdeadbeef;
 void (*func_glFogFuncSGIS)( GLsizei, GLfloat* ) = (void *) 0xdeadbeef;
 void (*func_glFragmentColorMaterialSGIX)( GLenum, GLenum ) = (void *) 0xdeadbeef;
@@ -163,6 +177,7 @@ GLuint (*func_glGenAsyncMarkersSGIX)( GLsizei ) = (void *) 0xdeadbeef;
 void (*func_glGenFencesNV)( GLsizei, GLuint* ) = (void *) 0xdeadbeef;
 GLuint (*func_glGenFragmentShadersATI)( GLuint ) = (void *) 0xdeadbeef;
 void (*func_glGenOcclusionQueriesNV)( GLsizei, GLuint* ) = (void *) 0xdeadbeef;
+void (*func_glGenProgramsARB)( GLsizei, GLuint* ) = (void *) 0xdeadbeef;
 void (*func_glGenProgramsNV)( GLsizei, GLuint* ) = (void *) 0xdeadbeef;
 GLuint (*func_glGenSymbolsEXT)( GLenum, GLenum, GLenum, GLuint ) = (void *) 0xdeadbeef;
 void (*func_glGenTexturesEXT)( GLsizei, GLuint* ) = (void *) 0xdeadbeef;
@@ -223,9 +238,15 @@ void (*func_glGetOcclusionQueryuivNV)( GLuint, GLenum, GLuint* ) = (void *) 0xde
 void (*func_glGetPixelTexGenParameterfvSGIS)( GLenum, GLfloat* ) = (void *) 0xdeadbeef;
 void (*func_glGetPixelTexGenParameterivSGIS)( GLenum, GLint* ) = (void *) 0xdeadbeef;
 void (*func_glGetPointervEXT)( GLenum, GLvoid** ) = (void *) 0xdeadbeef;
+void (*func_glGetProgramEnvParameterdvARB)( GLenum, GLuint, GLdouble* ) = (void *) 0xdeadbeef;
+void (*func_glGetProgramEnvParameterfvARB)( GLenum, GLuint, GLfloat* ) = (void *) 0xdeadbeef;
+void (*func_glGetProgramLocalParameterdvARB)( GLenum, GLuint, GLdouble* ) = (void *) 0xdeadbeef;
+void (*func_glGetProgramLocalParameterfvARB)( GLenum, GLuint, GLfloat* ) = (void *) 0xdeadbeef;
 void (*func_glGetProgramParameterdvNV)( GLenum, GLuint, GLenum, GLdouble* ) = (void *) 0xdeadbeef;
 void (*func_glGetProgramParameterfvNV)( GLenum, GLuint, GLenum, GLfloat* ) = (void *) 0xdeadbeef;
+void (*func_glGetProgramStringARB)( GLenum, GLenum, GLvoid* ) = (void *) 0xdeadbeef;
 void (*func_glGetProgramStringNV)( GLuint, GLenum, GLubyte* ) = (void *) 0xdeadbeef;
+void (*func_glGetProgramivARB)( GLenum, GLenum, GLint* ) = (void *) 0xdeadbeef;
 void (*func_glGetProgramivNV)( GLuint, GLenum, GLint* ) = (void *) 0xdeadbeef;
 void (*func_glGetSeparableFilterEXT)( GLenum, GLenum, GLenum, GLvoid*, GLvoid*, GLvoid* ) = (void *) 0xdeadbeef;
 void (*func_glGetSharpenTexFuncSGIS)( GLenum, GLfloat* ) = (void *) 0xdeadbeef;
@@ -239,9 +260,13 @@ void (*func_glGetVariantBooleanvEXT)( GLuint, GLenum, GLboolean* ) = (void *) 0x
 void (*func_glGetVariantFloatvEXT)( GLuint, GLenum, GLfloat* ) = (void *) 0xdeadbeef;
 void (*func_glGetVariantIntegervEXT)( GLuint, GLenum, GLint* ) = (void *) 0xdeadbeef;
 void (*func_glGetVariantPointervEXT)( GLuint, GLenum, GLvoid** ) = (void *) 0xdeadbeef;
+void (*func_glGetVertexAttribPointervARB)( GLuint, GLenum, GLvoid** ) = (void *) 0xdeadbeef;
 void (*func_glGetVertexAttribPointervNV)( GLuint, GLenum, GLvoid** ) = (void *) 0xdeadbeef;
+void (*func_glGetVertexAttribdvARB)( GLuint, GLenum, GLdouble* ) = (void *) 0xdeadbeef;
 void (*func_glGetVertexAttribdvNV)( GLuint, GLenum, GLdouble* ) = (void *) 0xdeadbeef;
+void (*func_glGetVertexAttribfvARB)( GLuint, GLenum, GLfloat* ) = (void *) 0xdeadbeef;
 void (*func_glGetVertexAttribfvNV)( GLuint, GLenum, GLfloat* ) = (void *) 0xdeadbeef;
+void (*func_glGetVertexAttribivARB)( GLuint, GLenum, GLint* ) = (void *) 0xdeadbeef;
 void (*func_glGetVertexAttribivNV)( GLuint, GLenum, GLint* ) = (void *) 0xdeadbeef;
 void (*func_glGlobalAlphaFactorbSUN)( GLbyte ) = (void *) 0xdeadbeef;
 void (*func_glGlobalAlphaFactordSUN)( GLdouble ) = (void *) 0xdeadbeef;
@@ -268,6 +293,7 @@ GLboolean (*func_glIsAsyncMarkerSGIX)( GLuint ) = (void *) 0xdeadbeef;
 GLboolean (*func_glIsFenceNV)( GLuint ) = (void *) 0xdeadbeef;
 GLboolean (*func_glIsObjectBufferATI)( GLuint ) = (void *) 0xdeadbeef;
 GLboolean (*func_glIsOcclusionQueryNV)( GLuint ) = (void *) 0xdeadbeef;
+GLboolean (*func_glIsProgramARB)( GLuint ) = (void *) 0xdeadbeef;
 GLboolean (*func_glIsProgramNV)( GLuint ) = (void *) 0xdeadbeef;
 GLboolean (*func_glIsTextureEXT)( GLuint ) = (void *) 0xdeadbeef;
 GLboolean (*func_glIsVariantEnabledEXT)( GLuint, GLenum ) = (void *) 0xdeadbeef;
@@ -297,7 +323,9 @@ void (*func_glMultTransposeMatrixd)( GLdouble* ) = (void *) 0xdeadbeef;
 void (*func_glMultTransposeMatrixdARB)( GLdouble* ) = (void *) 0xdeadbeef;
 void (*func_glMultTransposeMatrixf)( GLfloat* ) = (void *) 0xdeadbeef;
 void (*func_glMultTransposeMatrixfARB)( GLfloat* ) = (void *) 0xdeadbeef;
+void (*func_glMultiDrawArrays)( GLenum, GLint*, GLsizei*, GLsizei ) = (void *) 0xdeadbeef;
 void (*func_glMultiDrawArraysEXT)( GLenum, GLint*, GLsizei*, GLsizei ) = (void *) 0xdeadbeef;
+void (*func_glMultiDrawElements)( GLenum, GLsizei*, GLenum, GLvoid**, GLsizei ) = (void *) 0xdeadbeef;
 void (*func_glMultiDrawElementsEXT)( GLenum, GLsizei*, GLenum, GLvoid**, GLsizei ) = (void *) 0xdeadbeef;
 void (*func_glMultiModeDrawArraysIBM)( GLenum, GLint*, GLsizei*, GLsizei, GLint ) = (void *) 0xdeadbeef;
 void (*func_glMultiModeDrawElementsIBM)( GLenum*, GLsizei*, GLenum, GLvoid**, GLsizei, GLint ) = (void *) 0xdeadbeef;
@@ -366,6 +394,7 @@ void (*func_glMultiTexCoord4sSGIS)( GLenum, GLshort, GLshort, GLshort, GLshort )
 void (*func_glMultiTexCoord4sv)( GLenum, GLshort* ) = (void *) 0xdeadbeef;
 void (*func_glMultiTexCoord4svSGIS)( GLenum, GLshort * ) = (void *) 0xdeadbeef;
 void (*func_glMultiTexCoordPointerSGIS)( GLenum, GLint, GLenum, GLsizei, GLvoid * ) = (void *) 0xdeadbeef;
+GLuint (*func_glNewBufferRegion)( GLenum ) = (void *) 0xdeadbeef;
 GLuint (*func_glNewObjectBufferATI)( GLsizei, GLvoid*, GLenum ) = (void *) 0xdeadbeef;
 void (*func_glNormal3fVertex3fSUN)( GLfloat, GLfloat, GLfloat, GLfloat, GLfloat, GLfloat ) = (void *) 0xdeadbeef;
 void (*func_glNormal3fVertex3fvSUN)( GLfloat*, GLfloat* ) = (void *) 0xdeadbeef;
@@ -394,24 +423,38 @@ void (*func_glPixelTransformParameterfEXT)( GLenum, GLenum, GLfloat ) = (void *)
 void (*func_glPixelTransformParameterfvEXT)( GLenum, GLenum, GLfloat* ) = (void *) 0xdeadbeef;
 void (*func_glPixelTransformParameteriEXT)( GLenum, GLenum, GLint ) = (void *) 0xdeadbeef;
 void (*func_glPixelTransformParameterivEXT)( GLenum, GLenum, GLint* ) = (void *) 0xdeadbeef;
+void (*func_glPointParameterf)( GLenum, GLfloat ) = (void *) 0xdeadbeef;
 void (*func_glPointParameterfARB)( GLenum, GLfloat ) = (void *) 0xdeadbeef;
 void (*func_glPointParameterfEXT)( GLenum, GLfloat ) = (void *) 0xdeadbeef;
 void (*func_glPointParameterfSGIS)( GLenum, GLfloat ) = (void *) 0xdeadbeef;
+void (*func_glPointParameterfv)( GLenum, GLfloat* ) = (void *) 0xdeadbeef;
 void (*func_glPointParameterfvARB)( GLenum, GLfloat* ) = (void *) 0xdeadbeef;
 void (*func_glPointParameterfvEXT)( GLenum, GLfloat* ) = (void *) 0xdeadbeef;
 void (*func_glPointParameterfvSGIS)( GLenum, GLfloat* ) = (void *) 0xdeadbeef;
+void (*func_glPointParameteri)( GLenum, GLint ) = (void *) 0xdeadbeef;
 void (*func_glPointParameteriNV)( GLenum, GLint ) = (void *) 0xdeadbeef;
+void (*func_glPointParameteriv)( GLenum, GLint* ) = (void *) 0xdeadbeef;
 void (*func_glPointParameterivNV)( GLenum, GLint* ) = (void *) 0xdeadbeef;
 GLint (*func_glPollAsyncSGIX)( GLuint* ) = (void *) 0xdeadbeef;
 GLint (*func_glPollInstrumentsSGIX)( GLint* ) = (void *) 0xdeadbeef;
 void (*func_glPolygonOffsetEXT)( GLfloat, GLfloat ) = (void *) 0xdeadbeef;
 void (*func_glPrioritizeTexturesEXT)( GLsizei, GLuint*, GLclampf* ) = (void *) 0xdeadbeef;
+void (*func_glProgramEnvParameter4dARB)( GLenum, GLuint, GLdouble, GLdouble, GLdouble, GLdouble ) = (void *) 0xdeadbeef;
+void (*func_glProgramEnvParameter4dvARB)( GLenum, GLuint, GLdouble* ) = (void *) 0xdeadbeef;
+void (*func_glProgramEnvParameter4fARB)( GLenum, GLuint, GLfloat, GLfloat, GLfloat, GLfloat ) = (void *) 0xdeadbeef;
+void (*func_glProgramEnvParameter4fvARB)( GLenum, GLuint, GLfloat* ) = (void *) 0xdeadbeef;
+void (*func_glProgramLocalParameter4dARB)( GLenum, GLuint, GLdouble, GLdouble, GLdouble, GLdouble ) = (void *) 0xdeadbeef;
+void (*func_glProgramLocalParameter4dvARB)( GLenum, GLuint, GLdouble* ) = (void *) 0xdeadbeef;
+void (*func_glProgramLocalParameter4fARB)( GLenum, GLuint, GLfloat, GLfloat, GLfloat, GLfloat ) = (void *) 0xdeadbeef;
+void (*func_glProgramLocalParameter4fvARB)( GLenum, GLuint, GLfloat* ) = (void *) 0xdeadbeef;
 void (*func_glProgramParameter4dNV)( GLenum, GLuint, GLdouble, GLdouble, GLdouble, GLdouble ) = (void *) 0xdeadbeef;
 void (*func_glProgramParameter4dvNV)( GLenum, GLuint, GLdouble* ) = (void *) 0xdeadbeef;
 void (*func_glProgramParameter4fNV)( GLenum, GLuint, GLfloat, GLfloat, GLfloat, GLfloat ) = (void *) 0xdeadbeef;
 void (*func_glProgramParameter4fvNV)( GLenum, GLuint, GLfloat* ) = (void *) 0xdeadbeef;
 void (*func_glProgramParameters4dvNV)( GLenum, GLuint, GLuint, GLdouble* ) = (void *) 0xdeadbeef;
 void (*func_glProgramParameters4fvNV)( GLenum, GLuint, GLuint, GLfloat* ) = (void *) 0xdeadbeef;
+void (*func_glProgramStringARB)( GLenum, GLenum, GLsizei, GLvoid* ) = (void *) 0xdeadbeef;
+void (*func_glReadBufferRegion)( GLenum, GLint, GLint, GLsizei, GLsizei ) = (void *) 0xdeadbeef;
 void (*func_glReadInstrumentsSGIX)( GLint ) = (void *) 0xdeadbeef;
 void (*func_glReferencePlaneSGIX)( GLdouble* ) = (void *) 0xdeadbeef;
 void (*func_glReplacementCodePointerSUN)( GLenum, GLsizei, GLvoid** ) = (void *) 0xdeadbeef;
@@ -448,22 +491,39 @@ void (*func_glSampleMaskEXT)( GLclampf, GLboolean ) = (void *) 0xdeadbeef;
 void (*func_glSampleMaskSGIS)( GLclampf, GLboolean ) = (void *) 0xdeadbeef;
 void (*func_glSamplePatternEXT)( GLenum ) = (void *) 0xdeadbeef;
 void (*func_glSamplePatternSGIS)( GLenum ) = (void *) 0xdeadbeef;
+void (*func_glSecondaryColor3b)( GLbyte, GLbyte, GLbyte ) = (void *) 0xdeadbeef;
 void (*func_glSecondaryColor3bEXT)( GLbyte, GLbyte, GLbyte ) = (void *) 0xdeadbeef;
+void (*func_glSecondaryColor3bv)( GLbyte* ) = (void *) 0xdeadbeef;
 void (*func_glSecondaryColor3bvEXT)( GLbyte* ) = (void *) 0xdeadbeef;
+void (*func_glSecondaryColor3d)( GLdouble, GLdouble, GLdouble ) = (void *) 0xdeadbeef;
 void (*func_glSecondaryColor3dEXT)( GLdouble, GLdouble, GLdouble ) = (void *) 0xdeadbeef;
+void (*func_glSecondaryColor3dv)( GLdouble* ) = (void *) 0xdeadbeef;
 void (*func_glSecondaryColor3dvEXT)( GLdouble* ) = (void *) 0xdeadbeef;
+void (*func_glSecondaryColor3f)( GLfloat, GLfloat, GLfloat ) = (void *) 0xdeadbeef;
 void (*func_glSecondaryColor3fEXT)( GLfloat, GLfloat, GLfloat ) = (void *) 0xdeadbeef;
+void (*func_glSecondaryColor3fv)( GLfloat* ) = (void *) 0xdeadbeef;
 void (*func_glSecondaryColor3fvEXT)( GLfloat* ) = (void *) 0xdeadbeef;
+void (*func_glSecondaryColor3i)( GLint, GLint, GLint ) = (void *) 0xdeadbeef;
 void (*func_glSecondaryColor3iEXT)( GLint, GLint, GLint ) = (void *) 0xdeadbeef;
+void (*func_glSecondaryColor3iv)( GLint* ) = (void *) 0xdeadbeef;
 void (*func_glSecondaryColor3ivEXT)( GLint* ) = (void *) 0xdeadbeef;
+void (*func_glSecondaryColor3s)( GLshort, GLshort, GLshort ) = (void *) 0xdeadbeef;
 void (*func_glSecondaryColor3sEXT)( GLshort, GLshort, GLshort ) = (void *) 0xdeadbeef;
+void (*func_glSecondaryColor3sv)( GLshort* ) = (void *) 0xdeadbeef;
 void (*func_glSecondaryColor3svEXT)( GLshort* ) = (void *) 0xdeadbeef;
+void (*func_glSecondaryColor3ub)( GLubyte, GLubyte, GLubyte ) = (void *) 0xdeadbeef;
 void (*func_glSecondaryColor3ubEXT)( GLubyte, GLubyte, GLubyte ) = (void *) 0xdeadbeef;
+void (*func_glSecondaryColor3ubv)( GLubyte* ) = (void *) 0xdeadbeef;
 void (*func_glSecondaryColor3ubvEXT)( GLubyte* ) = (void *) 0xdeadbeef;
+void (*func_glSecondaryColor3ui)( GLuint, GLuint, GLuint ) = (void *) 0xdeadbeef;
 void (*func_glSecondaryColor3uiEXT)( GLuint, GLuint, GLuint ) = (void *) 0xdeadbeef;
+void (*func_glSecondaryColor3uiv)( GLuint* ) = (void *) 0xdeadbeef;
 void (*func_glSecondaryColor3uivEXT)( GLuint* ) = (void *) 0xdeadbeef;
+void (*func_glSecondaryColor3us)( GLushort, GLushort, GLushort ) = (void *) 0xdeadbeef;
 void (*func_glSecondaryColor3usEXT)( GLushort, GLushort, GLushort ) = (void *) 0xdeadbeef;
+void (*func_glSecondaryColor3usv)( GLushort* ) = (void *) 0xdeadbeef;
 void (*func_glSecondaryColor3usvEXT)( GLushort* ) = (void *) 0xdeadbeef;
+void (*func_glSecondaryColorPointer)( GLint, GLenum, GLsizei, GLvoid* ) = (void *) 0xdeadbeef;
 void (*func_glSecondaryColorPointerEXT)( GLint, GLenum, GLsizei, GLvoid* ) = (void *) 0xdeadbeef;
 void (*func_glSecondaryColorPointerListIBM)( GLint, GLenum, GLint, GLvoid**, GLint ) = (void *) 0xdeadbeef;
 void (*func_glSelectTextureCoordSetSGIS)( GLenum ) = (void *) 0xdeadbeef;
@@ -542,32 +602,69 @@ void (*func_glVariantubvEXT)( GLuint, GLubyte* ) = (void *) 0xdeadbeef;
 void (*func_glVariantuivEXT)( GLuint, GLuint* ) = (void *) 0xdeadbeef;
 void (*func_glVariantusvEXT)( GLuint, GLushort* ) = (void *) 0xdeadbeef;
 void (*func_glVertexArrayRangeNV)( GLsizei, GLvoid* ) = (void *) 0xdeadbeef;
+void (*func_glVertexAttrib1dARB)( GLuint, GLdouble ) = (void *) 0xdeadbeef;
 void (*func_glVertexAttrib1dNV)( GLuint, GLdouble ) = (void *) 0xdeadbeef;
+void (*func_glVertexAttrib1dvARB)( GLuint, GLdouble* ) = (void *) 0xdeadbeef;
 void (*func_glVertexAttrib1dvNV)( GLuint, GLdouble* ) = (void *) 0xdeadbeef;
+void (*func_glVertexAttrib1fARB)( GLuint, GLfloat ) = (void *) 0xdeadbeef;
 void (*func_glVertexAttrib1fNV)( GLuint, GLfloat ) = (void *) 0xdeadbeef;
+void (*func_glVertexAttrib1fvARB)( GLuint, GLfloat* ) = (void *) 0xdeadbeef;
 void (*func_glVertexAttrib1fvNV)( GLuint, GLfloat* ) = (void *) 0xdeadbeef;
+void (*func_glVertexAttrib1sARB)( GLuint, GLshort ) = (void *) 0xdeadbeef;
 void (*func_glVertexAttrib1sNV)( GLuint, GLshort ) = (void *) 0xdeadbeef;
+void (*func_glVertexAttrib1svARB)( GLuint, GLshort* ) = (void *) 0xdeadbeef;
 void (*func_glVertexAttrib1svNV)( GLuint, GLshort* ) = (void *) 0xdeadbeef;
+void (*func_glVertexAttrib2dARB)( GLuint, GLdouble, GLdouble ) = (void *) 0xdeadbeef;
 void (*func_glVertexAttrib2dNV)( GLuint, GLdouble, GLdouble ) = (void *) 0xdeadbeef;
+void (*func_glVertexAttrib2dvARB)( GLuint, GLdouble* ) = (void *) 0xdeadbeef;
 void (*func_glVertexAttrib2dvNV)( GLuint, GLdouble* ) = (void *) 0xdeadbeef;
+void (*func_glVertexAttrib2fARB)( GLuint, GLfloat, GLfloat ) = (void *) 0xdeadbeef;
 void (*func_glVertexAttrib2fNV)( GLuint, GLfloat, GLfloat ) = (void *) 0xdeadbeef;
+void (*func_glVertexAttrib2fvARB)( GLuint, GLfloat* ) = (void *) 0xdeadbeef;
 void (*func_glVertexAttrib2fvNV)( GLuint, GLfloat* ) = (void *) 0xdeadbeef;
+void (*func_glVertexAttrib2sARB)( GLuint, GLshort, GLshort ) = (void *) 0xdeadbeef;
 void (*func_glVertexAttrib2sNV)( GLuint, GLshort, GLshort ) = (void *) 0xdeadbeef;
+void (*func_glVertexAttrib2svARB)( GLuint, GLshort* ) = (void *) 0xdeadbeef;
 void (*func_glVertexAttrib2svNV)( GLuint, GLshort* ) = (void *) 0xdeadbeef;
+void (*func_glVertexAttrib3dARB)( GLuint, GLdouble, GLdouble, GLdouble ) = (void *) 0xdeadbeef;
 void (*func_glVertexAttrib3dNV)( GLuint, GLdouble, GLdouble, GLdouble ) = (void *) 0xdeadbeef;
+void (*func_glVertexAttrib3dvARB)( GLuint, GLdouble* ) = (void *) 0xdeadbeef;
 void (*func_glVertexAttrib3dvNV)( GLuint, GLdouble* ) = (void *) 0xdeadbeef;
+void (*func_glVertexAttrib3fARB)( GLuint, GLfloat, GLfloat, GLfloat ) = (void *) 0xdeadbeef;
 void (*func_glVertexAttrib3fNV)( GLuint, GLfloat, GLfloat, GLfloat ) = (void *) 0xdeadbeef;
+void (*func_glVertexAttrib3fvARB)( GLuint, GLfloat* ) = (void *) 0xdeadbeef;
 void (*func_glVertexAttrib3fvNV)( GLuint, GLfloat* ) = (void *) 0xdeadbeef;
+void (*func_glVertexAttrib3sARB)( GLuint, GLshort, GLshort, GLshort ) = (void *) 0xdeadbeef;
 void (*func_glVertexAttrib3sNV)( GLuint, GLshort, GLshort, GLshort ) = (void *) 0xdeadbeef;
+void (*func_glVertexAttrib3svARB)( GLuint, GLshort* ) = (void *) 0xdeadbeef;
 void (*func_glVertexAttrib3svNV)( GLuint, GLshort* ) = (void *) 0xdeadbeef;
+void (*func_glVertexAttrib4NbvARB)( GLuint, GLbyte* ) = (void *) 0xdeadbeef;
+void (*func_glVertexAttrib4NivARB)( GLuint, GLint* ) = (void *) 0xdeadbeef;
+void (*func_glVertexAttrib4NsvARB)( GLuint, GLshort* ) = (void *) 0xdeadbeef;
+void (*func_glVertexAttrib4NubARB)( GLuint, GLubyte, GLubyte, GLubyte, GLubyte ) = (void *) 0xdeadbeef;
+void (*func_glVertexAttrib4NubvARB)( GLuint, GLubyte* ) = (void *) 0xdeadbeef;
+void (*func_glVertexAttrib4NuivARB)( GLuint, GLuint* ) = (void *) 0xdeadbeef;
+void (*func_glVertexAttrib4NusvARB)( GLuint, GLushort* ) = (void *) 0xdeadbeef;
+void (*func_glVertexAttrib4bvARB)( GLuint, GLbyte* ) = (void *) 0xdeadbeef;
+void (*func_glVertexAttrib4dARB)( GLuint, GLdouble, GLdouble, GLdouble, GLdouble ) = (void *) 0xdeadbeef;
 void (*func_glVertexAttrib4dNV)( GLuint, GLdouble, GLdouble, GLdouble, GLdouble ) = (void *) 0xdeadbeef;
+void (*func_glVertexAttrib4dvARB)( GLuint, GLdouble* ) = (void *) 0xdeadbeef;
 void (*func_glVertexAttrib4dvNV)( GLuint, GLdouble* ) = (void *) 0xdeadbeef;
+void (*func_glVertexAttrib4fARB)( GLuint, GLfloat, GLfloat, GLfloat, GLfloat ) = (void *) 0xdeadbeef;
 void (*func_glVertexAttrib4fNV)( GLuint, GLfloat, GLfloat, GLfloat, GLfloat ) = (void *) 0xdeadbeef;
+void (*func_glVertexAttrib4fvARB)( GLuint, GLfloat* ) = (void *) 0xdeadbeef;
 void (*func_glVertexAttrib4fvNV)( GLuint, GLfloat* ) = (void *) 0xdeadbeef;
+void (*func_glVertexAttrib4ivARB)( GLuint, GLint* ) = (void *) 0xdeadbeef;
+void (*func_glVertexAttrib4sARB)( GLuint, GLshort, GLshort, GLshort, GLshort ) = (void *) 0xdeadbeef;
 void (*func_glVertexAttrib4sNV)( GLuint, GLshort, GLshort, GLshort, GLshort ) = (void *) 0xdeadbeef;
+void (*func_glVertexAttrib4svARB)( GLuint, GLshort* ) = (void *) 0xdeadbeef;
 void (*func_glVertexAttrib4svNV)( GLuint, GLshort* ) = (void *) 0xdeadbeef;
 void (*func_glVertexAttrib4ubNV)( GLuint, GLubyte, GLubyte, GLubyte, GLubyte ) = (void *) 0xdeadbeef;
+void (*func_glVertexAttrib4ubvARB)( GLuint, GLubyte* ) = (void *) 0xdeadbeef;
 void (*func_glVertexAttrib4ubvNV)( GLuint, GLubyte* ) = (void *) 0xdeadbeef;
+void (*func_glVertexAttrib4uivARB)( GLuint, GLuint* ) = (void *) 0xdeadbeef;
+void (*func_glVertexAttrib4usvARB)( GLuint, GLushort* ) = (void *) 0xdeadbeef;
+void (*func_glVertexAttribPointerARB)( GLuint, GLint, GLenum, GLboolean, GLsizei, GLvoid* ) = (void *) 0xdeadbeef;
 void (*func_glVertexAttribPointerNV)( GLuint, GLint, GLenum, GLsizei, GLvoid* ) = (void *) 0xdeadbeef;
 void (*func_glVertexAttribs1dvNV)( GLuint, GLsizei, GLdouble* ) = (void *) 0xdeadbeef;
 void (*func_glVertexAttribs1fvNV)( GLuint, GLsizei, GLfloat* ) = (void *) 0xdeadbeef;
@@ -632,36 +729,52 @@ void (*func_glWeightsvARB)( GLint, GLshort* ) = (void *) 0xdeadbeef;
 void (*func_glWeightubvARB)( GLint, GLubyte* ) = (void *) 0xdeadbeef;
 void (*func_glWeightuivARB)( GLint, GLuint* ) = (void *) 0xdeadbeef;
 void (*func_glWeightusvARB)( GLint, GLushort* ) = (void *) 0xdeadbeef;
+void (*func_glWindowPos2d)( GLdouble, GLdouble ) = (void *) 0xdeadbeef;
 void (*func_glWindowPos2dARB)( GLdouble, GLdouble ) = (void *) 0xdeadbeef;
 void (*func_glWindowPos2dMESA)( GLdouble, GLdouble ) = (void *) 0xdeadbeef;
+void (*func_glWindowPos2dv)( GLdouble* ) = (void *) 0xdeadbeef;
 void (*func_glWindowPos2dvARB)( GLdouble* ) = (void *) 0xdeadbeef;
 void (*func_glWindowPos2dvMESA)( GLdouble* ) = (void *) 0xdeadbeef;
+void (*func_glWindowPos2f)( GLfloat, GLfloat ) = (void *) 0xdeadbeef;
 void (*func_glWindowPos2fARB)( GLfloat, GLfloat ) = (void *) 0xdeadbeef;
 void (*func_glWindowPos2fMESA)( GLfloat, GLfloat ) = (void *) 0xdeadbeef;
+void (*func_glWindowPos2fv)( GLfloat* ) = (void *) 0xdeadbeef;
 void (*func_glWindowPos2fvARB)( GLfloat* ) = (void *) 0xdeadbeef;
 void (*func_glWindowPos2fvMESA)( GLfloat* ) = (void *) 0xdeadbeef;
+void (*func_glWindowPos2i)( GLint, GLint ) = (void *) 0xdeadbeef;
 void (*func_glWindowPos2iARB)( GLint, GLint ) = (void *) 0xdeadbeef;
 void (*func_glWindowPos2iMESA)( GLint, GLint ) = (void *) 0xdeadbeef;
+void (*func_glWindowPos2iv)( GLint* ) = (void *) 0xdeadbeef;
 void (*func_glWindowPos2ivARB)( GLint* ) = (void *) 0xdeadbeef;
 void (*func_glWindowPos2ivMESA)( GLint* ) = (void *) 0xdeadbeef;
+void (*func_glWindowPos2s)( GLshort, GLshort ) = (void *) 0xdeadbeef;
 void (*func_glWindowPos2sARB)( GLshort, GLshort ) = (void *) 0xdeadbeef;
 void (*func_glWindowPos2sMESA)( GLshort, GLshort ) = (void *) 0xdeadbeef;
+void (*func_glWindowPos2sv)( GLshort* ) = (void *) 0xdeadbeef;
 void (*func_glWindowPos2svARB)( GLshort* ) = (void *) 0xdeadbeef;
 void (*func_glWindowPos2svMESA)( GLshort* ) = (void *) 0xdeadbeef;
+void (*func_glWindowPos3d)( GLdouble, GLdouble, GLdouble ) = (void *) 0xdeadbeef;
 void (*func_glWindowPos3dARB)( GLdouble, GLdouble, GLdouble ) = (void *) 0xdeadbeef;
 void (*func_glWindowPos3dMESA)( GLdouble, GLdouble, GLdouble ) = (void *) 0xdeadbeef;
+void (*func_glWindowPos3dv)( GLdouble* ) = (void *) 0xdeadbeef;
 void (*func_glWindowPos3dvARB)( GLdouble* ) = (void *) 0xdeadbeef;
 void (*func_glWindowPos3dvMESA)( GLdouble* ) = (void *) 0xdeadbeef;
+void (*func_glWindowPos3f)( GLfloat, GLfloat, GLfloat ) = (void *) 0xdeadbeef;
 void (*func_glWindowPos3fARB)( GLfloat, GLfloat, GLfloat ) = (void *) 0xdeadbeef;
 void (*func_glWindowPos3fMESA)( GLfloat, GLfloat, GLfloat ) = (void *) 0xdeadbeef;
+void (*func_glWindowPos3fv)( GLfloat* ) = (void *) 0xdeadbeef;
 void (*func_glWindowPos3fvARB)( GLfloat* ) = (void *) 0xdeadbeef;
 void (*func_glWindowPos3fvMESA)( GLfloat* ) = (void *) 0xdeadbeef;
+void (*func_glWindowPos3i)( GLint, GLint, GLint ) = (void *) 0xdeadbeef;
 void (*func_glWindowPos3iARB)( GLint, GLint, GLint ) = (void *) 0xdeadbeef;
 void (*func_glWindowPos3iMESA)( GLint, GLint, GLint ) = (void *) 0xdeadbeef;
+void (*func_glWindowPos3iv)( GLint* ) = (void *) 0xdeadbeef;
 void (*func_glWindowPos3ivARB)( GLint* ) = (void *) 0xdeadbeef;
 void (*func_glWindowPos3ivMESA)( GLint* ) = (void *) 0xdeadbeef;
+void (*func_glWindowPos3s)( GLshort, GLshort, GLshort ) = (void *) 0xdeadbeef;
 void (*func_glWindowPos3sARB)( GLshort, GLshort, GLshort ) = (void *) 0xdeadbeef;
 void (*func_glWindowPos3sMESA)( GLshort, GLshort, GLshort ) = (void *) 0xdeadbeef;
+void (*func_glWindowPos3sv)( GLshort* ) = (void *) 0xdeadbeef;
 void (*func_glWindowPos3svARB)( GLshort* ) = (void *) 0xdeadbeef;
 void (*func_glWindowPos3svMESA)( GLshort* ) = (void *) 0xdeadbeef;
 void (*func_glWindowPos4dMESA)( GLdouble, GLdouble, GLdouble, GLdouble ) = (void *) 0xdeadbeef;
@@ -678,6 +791,7 @@ void (*func_wglFreeMemoryNV)( GLvoid * ) = (void *) 0xdeadbeef;
 
 
 /* The function prototypes */
+void WINAPI wine_glActiveStencilFaceEXT( GLenum );
 void WINAPI wine_glActiveTexture( GLenum );
 void WINAPI wine_glAlphaFragmentOp1ATI( GLenum, GLuint, GLuint, GLuint, GLuint, GLuint );
 void WINAPI wine_glAlphaFragmentOp2ATI( GLenum, GLuint, GLuint, GLuint, GLuint, GLuint, GLuint, GLuint, GLuint );
@@ -695,6 +809,7 @@ void WINAPI wine_glBindFragmentShaderATI( GLuint );
 GLuint WINAPI wine_glBindLightParameterEXT( GLenum, GLenum );
 GLuint WINAPI wine_glBindMaterialParameterEXT( GLenum, GLenum );
 GLuint WINAPI wine_glBindParameterEXT( GLenum );
+void WINAPI wine_glBindProgramARB( GLenum, GLuint );
 void WINAPI wine_glBindProgramNV( GLenum, GLuint );
 GLuint WINAPI wine_glBindTexGenParameterEXT( GLenum, GLenum, GLenum );
 void WINAPI wine_glBindTextureEXT( GLenum, GLuint );
@@ -713,8 +828,10 @@ void WINAPI wine_glBinormal3svEXT( GLshort* );
 void WINAPI wine_glBinormalPointerEXT( GLenum, GLsizei, GLvoid* );
 void WINAPI wine_glBlendColorEXT( GLclampf, GLclampf, GLclampf, GLclampf );
 void WINAPI wine_glBlendEquationEXT( GLenum );
+void WINAPI wine_glBlendFuncSeparate( GLenum, GLenum, GLenum, GLenum );
 void WINAPI wine_glBlendFuncSeparateEXT( GLenum, GLenum, GLenum, GLenum );
 void WINAPI wine_glBlendFuncSeparateINGR( GLenum, GLenum, GLenum, GLenum );
+GLuint WINAPI wine_glBufferRegionEnabled( );
 void WINAPI wine_glClientActiveTexture( GLenum );
 void WINAPI wine_glClientActiveVertexStreamATI( GLenum );
 void WINAPI wine_glColor3fVertex3fSUN( GLfloat, GLfloat, GLfloat, GLfloat, GLfloat, GLfloat );
@@ -777,16 +894,20 @@ void WINAPI wine_glDeformSGIX( GLint );
 void WINAPI wine_glDeformationMap3dSGIX( GLint, GLdouble, GLdouble, GLint, GLint, GLdouble, GLdouble, GLint, GLint, GLdouble, GLdouble, GLint, GLint, GLdouble* );
 void WINAPI wine_glDeformationMap3fSGIX( GLint, GLfloat, GLfloat, GLint, GLint, GLfloat, GLfloat, GLint, GLint, GLfloat, GLfloat, GLint, GLint, GLfloat* );
 void WINAPI wine_glDeleteAsyncMarkersSGIX( GLuint, GLsizei );
+void WINAPI wine_glDeleteBufferRegion( GLenum );
 void WINAPI wine_glDeleteFencesNV( GLsizei, GLuint* );
 void WINAPI wine_glDeleteFragmentShaderATI( GLuint );
 void WINAPI wine_glDeleteObjectBufferATI( GLuint );
 void WINAPI wine_glDeleteOcclusionQueriesNV( GLsizei, GLuint* );
+void WINAPI wine_glDeleteProgramsARB( GLsizei, GLuint* );
 void WINAPI wine_glDeleteProgramsNV( GLsizei, GLuint* );
 void WINAPI wine_glDeleteTexturesEXT( GLsizei, GLuint* );
 void WINAPI wine_glDeleteVertexShaderEXT( GLuint );
 void WINAPI wine_glDetailTexFuncSGIS( GLenum, GLsizei, GLfloat* );
 void WINAPI wine_glDisableVariantClientStateEXT( GLuint );
+void WINAPI wine_glDisableVertexAttribArrayARB( GLuint );
 void WINAPI wine_glDrawArraysEXT( GLenum, GLint, GLsizei );
+void WINAPI wine_glDrawBufferRegion( GLenum, GLint, GLint, GLsizei, GLsizei, GLint, GLint );
 void WINAPI wine_glDrawElementArrayATI( GLenum, GLsizei );
 void WINAPI wine_glDrawMeshArraysSUN( GLenum, GLint, GLsizei, GLsizei );
 void WINAPI wine_glDrawRangeElementArrayATI( GLenum, GLuint, GLuint, GLsizei );
@@ -795,6 +916,7 @@ void WINAPI wine_glEdgeFlagPointerEXT( GLsizei, GLsizei, GLboolean* );
 void WINAPI wine_glEdgeFlagPointerListIBM( GLint, GLboolean**, GLint );
 void WINAPI wine_glElementPointerATI( GLenum, GLvoid* );
 void WINAPI wine_glEnableVariantClientStateEXT( GLuint );
+void WINAPI wine_glEnableVertexAttribArrayARB( GLuint );
 void WINAPI wine_glEndFragmentShaderATI( );
 void WINAPI wine_glEndOcclusionQueryNV( );
 void WINAPI wine_glEndVertexShaderEXT( );
@@ -807,11 +929,16 @@ void WINAPI wine_glFinishFenceNV( GLuint );
 void WINAPI wine_glFinishTextureSUNX( );
 void WINAPI wine_glFlushRasterSGIX( );
 void WINAPI wine_glFlushVertexArrayRangeNV( );
+void WINAPI wine_glFogCoordPointer( GLenum, GLsizei, GLvoid* );
 void WINAPI wine_glFogCoordPointerEXT( GLenum, GLsizei, GLvoid* );
 void WINAPI wine_glFogCoordPointerListIBM( GLenum, GLint, GLvoid**, GLint );
+void WINAPI wine_glFogCoordd( GLdouble );
 void WINAPI wine_glFogCoorddEXT( GLdouble );
+void WINAPI wine_glFogCoorddv( GLdouble* );
 void WINAPI wine_glFogCoorddvEXT( GLdouble* );
+void WINAPI wine_glFogCoordf( GLfloat );
 void WINAPI wine_glFogCoordfEXT( GLfloat );
+void WINAPI wine_glFogCoordfv( GLfloat* );
 void WINAPI wine_glFogCoordfvEXT( GLfloat* );
 void WINAPI wine_glFogFuncSGIS( GLsizei, GLfloat* );
 void WINAPI wine_glFragmentColorMaterialSGIX( GLenum, GLenum );
@@ -832,6 +959,7 @@ GLuint WINAPI wine_glGenAsyncMarkersSGIX( GLsizei );
 void WINAPI wine_glGenFencesNV( GLsizei, GLuint* );
 GLuint WINAPI wine_glGenFragmentShadersATI( GLuint );
 void WINAPI wine_glGenOcclusionQueriesNV( GLsizei, GLuint* );
+void WINAPI wine_glGenProgramsARB( GLsizei, GLuint* );
 void WINAPI wine_glGenProgramsNV( GLsizei, GLuint* );
 GLuint WINAPI wine_glGenSymbolsEXT( GLenum, GLenum, GLenum, GLuint );
 void WINAPI wine_glGenTexturesEXT( GLsizei, GLuint* );
@@ -892,9 +1020,15 @@ void WINAPI wine_glGetOcclusionQueryuivNV( GLuint, GLenum, GLuint* );
 void WINAPI wine_glGetPixelTexGenParameterfvSGIS( GLenum, GLfloat* );
 void WINAPI wine_glGetPixelTexGenParameterivSGIS( GLenum, GLint* );
 void WINAPI wine_glGetPointervEXT( GLenum, GLvoid** );
+void WINAPI wine_glGetProgramEnvParameterdvARB( GLenum, GLuint, GLdouble* );
+void WINAPI wine_glGetProgramEnvParameterfvARB( GLenum, GLuint, GLfloat* );
+void WINAPI wine_glGetProgramLocalParameterdvARB( GLenum, GLuint, GLdouble* );
+void WINAPI wine_glGetProgramLocalParameterfvARB( GLenum, GLuint, GLfloat* );
 void WINAPI wine_glGetProgramParameterdvNV( GLenum, GLuint, GLenum, GLdouble* );
 void WINAPI wine_glGetProgramParameterfvNV( GLenum, GLuint, GLenum, GLfloat* );
+void WINAPI wine_glGetProgramStringARB( GLenum, GLenum, GLvoid* );
 void WINAPI wine_glGetProgramStringNV( GLuint, GLenum, GLubyte* );
+void WINAPI wine_glGetProgramivARB( GLenum, GLenum, GLint* );
 void WINAPI wine_glGetProgramivNV( GLuint, GLenum, GLint* );
 void WINAPI wine_glGetSeparableFilterEXT( GLenum, GLenum, GLenum, GLvoid*, GLvoid*, GLvoid* );
 void WINAPI wine_glGetSharpenTexFuncSGIS( GLenum, GLfloat* );
@@ -908,9 +1042,13 @@ void WINAPI wine_glGetVariantBooleanvEXT( GLuint, GLenum, GLboolean* );
 void WINAPI wine_glGetVariantFloatvEXT( GLuint, GLenum, GLfloat* );
 void WINAPI wine_glGetVariantIntegervEXT( GLuint, GLenum, GLint* );
 void WINAPI wine_glGetVariantPointervEXT( GLuint, GLenum, GLvoid** );
+void WINAPI wine_glGetVertexAttribPointervARB( GLuint, GLenum, GLvoid** );
 void WINAPI wine_glGetVertexAttribPointervNV( GLuint, GLenum, GLvoid** );
+void WINAPI wine_glGetVertexAttribdvARB( GLuint, GLenum, GLdouble* );
 void WINAPI wine_glGetVertexAttribdvNV( GLuint, GLenum, GLdouble* );
+void WINAPI wine_glGetVertexAttribfvARB( GLuint, GLenum, GLfloat* );
 void WINAPI wine_glGetVertexAttribfvNV( GLuint, GLenum, GLfloat* );
+void WINAPI wine_glGetVertexAttribivARB( GLuint, GLenum, GLint* );
 void WINAPI wine_glGetVertexAttribivNV( GLuint, GLenum, GLint* );
 void WINAPI wine_glGlobalAlphaFactorbSUN( GLbyte );
 void WINAPI wine_glGlobalAlphaFactordSUN( GLdouble );
@@ -937,6 +1075,7 @@ GLboolean WINAPI wine_glIsAsyncMarkerSGIX( GLuint );
 GLboolean WINAPI wine_glIsFenceNV( GLuint );
 GLboolean WINAPI wine_glIsObjectBufferATI( GLuint );
 GLboolean WINAPI wine_glIsOcclusionQueryNV( GLuint );
+GLboolean WINAPI wine_glIsProgramARB( GLuint );
 GLboolean WINAPI wine_glIsProgramNV( GLuint );
 GLboolean WINAPI wine_glIsTextureEXT( GLuint );
 GLboolean WINAPI wine_glIsVariantEnabledEXT( GLuint, GLenum );
@@ -966,7 +1105,9 @@ void WINAPI wine_glMultTransposeMatrixd( GLdouble* );
 void WINAPI wine_glMultTransposeMatrixdARB( GLdouble* );
 void WINAPI wine_glMultTransposeMatrixf( GLfloat* );
 void WINAPI wine_glMultTransposeMatrixfARB( GLfloat* );
+void WINAPI wine_glMultiDrawArrays( GLenum, GLint*, GLsizei*, GLsizei );
 void WINAPI wine_glMultiDrawArraysEXT( GLenum, GLint*, GLsizei*, GLsizei );
+void WINAPI wine_glMultiDrawElements( GLenum, GLsizei*, GLenum, GLvoid**, GLsizei );
 void WINAPI wine_glMultiDrawElementsEXT( GLenum, GLsizei*, GLenum, GLvoid**, GLsizei );
 void WINAPI wine_glMultiModeDrawArraysIBM( GLenum, GLint*, GLsizei*, GLsizei, GLint );
 void WINAPI wine_glMultiModeDrawElementsIBM( GLenum*, GLsizei*, GLenum, GLvoid**, GLsizei, GLint );
@@ -1035,6 +1176,7 @@ void WINAPI wine_glMultiTexCoord4sSGIS( GLenum, GLshort, GLshort, GLshort, GLsho
 void WINAPI wine_glMultiTexCoord4sv( GLenum, GLshort* );
 void WINAPI wine_glMultiTexCoord4svSGIS( GLenum, GLshort * );
 void WINAPI wine_glMultiTexCoordPointerSGIS( GLenum, GLint, GLenum, GLsizei, GLvoid * );
+GLuint WINAPI wine_glNewBufferRegion( GLenum );
 GLuint WINAPI wine_glNewObjectBufferATI( GLsizei, GLvoid*, GLenum );
 void WINAPI wine_glNormal3fVertex3fSUN( GLfloat, GLfloat, GLfloat, GLfloat, GLfloat, GLfloat );
 void WINAPI wine_glNormal3fVertex3fvSUN( GLfloat*, GLfloat* );
@@ -1063,24 +1205,38 @@ void WINAPI wine_glPixelTransformParameterfEXT( GLenum, GLenum, GLfloat );
 void WINAPI wine_glPixelTransformParameterfvEXT( GLenum, GLenum, GLfloat* );
 void WINAPI wine_glPixelTransformParameteriEXT( GLenum, GLenum, GLint );
 void WINAPI wine_glPixelTransformParameterivEXT( GLenum, GLenum, GLint* );
+void WINAPI wine_glPointParameterf( GLenum, GLfloat );
 void WINAPI wine_glPointParameterfARB( GLenum, GLfloat );
 void WINAPI wine_glPointParameterfEXT( GLenum, GLfloat );
 void WINAPI wine_glPointParameterfSGIS( GLenum, GLfloat );
+void WINAPI wine_glPointParameterfv( GLenum, GLfloat* );
 void WINAPI wine_glPointParameterfvARB( GLenum, GLfloat* );
 void WINAPI wine_glPointParameterfvEXT( GLenum, GLfloat* );
 void WINAPI wine_glPointParameterfvSGIS( GLenum, GLfloat* );
+void WINAPI wine_glPointParameteri( GLenum, GLint );
 void WINAPI wine_glPointParameteriNV( GLenum, GLint );
+void WINAPI wine_glPointParameteriv( GLenum, GLint* );
 void WINAPI wine_glPointParameterivNV( GLenum, GLint* );
 GLint WINAPI wine_glPollAsyncSGIX( GLuint* );
 GLint WINAPI wine_glPollInstrumentsSGIX( GLint* );
 void WINAPI wine_glPolygonOffsetEXT( GLfloat, GLfloat );
 void WINAPI wine_glPrioritizeTexturesEXT( GLsizei, GLuint*, GLclampf* );
+void WINAPI wine_glProgramEnvParameter4dARB( GLenum, GLuint, GLdouble, GLdouble, GLdouble, GLdouble );
+void WINAPI wine_glProgramEnvParameter4dvARB( GLenum, GLuint, GLdouble* );
+void WINAPI wine_glProgramEnvParameter4fARB( GLenum, GLuint, GLfloat, GLfloat, GLfloat, GLfloat );
+void WINAPI wine_glProgramEnvParameter4fvARB( GLenum, GLuint, GLfloat* );
+void WINAPI wine_glProgramLocalParameter4dARB( GLenum, GLuint, GLdouble, GLdouble, GLdouble, GLdouble );
+void WINAPI wine_glProgramLocalParameter4dvARB( GLenum, GLuint, GLdouble* );
+void WINAPI wine_glProgramLocalParameter4fARB( GLenum, GLuint, GLfloat, GLfloat, GLfloat, GLfloat );
+void WINAPI wine_glProgramLocalParameter4fvARB( GLenum, GLuint, GLfloat* );
 void WINAPI wine_glProgramParameter4dNV( GLenum, GLuint, GLdouble, GLdouble, GLdouble, GLdouble );
 void WINAPI wine_glProgramParameter4dvNV( GLenum, GLuint, GLdouble* );
 void WINAPI wine_glProgramParameter4fNV( GLenum, GLuint, GLfloat, GLfloat, GLfloat, GLfloat );
 void WINAPI wine_glProgramParameter4fvNV( GLenum, GLuint, GLfloat* );
 void WINAPI wine_glProgramParameters4dvNV( GLenum, GLuint, GLuint, GLdouble* );
 void WINAPI wine_glProgramParameters4fvNV( GLenum, GLuint, GLuint, GLfloat* );
+void WINAPI wine_glProgramStringARB( GLenum, GLenum, GLsizei, GLvoid* );
+void WINAPI wine_glReadBufferRegion( GLenum, GLint, GLint, GLsizei, GLsizei );
 void WINAPI wine_glReadInstrumentsSGIX( GLint );
 void WINAPI wine_glReferencePlaneSGIX( GLdouble* );
 void WINAPI wine_glReplacementCodePointerSUN( GLenum, GLsizei, GLvoid** );
@@ -1117,22 +1273,39 @@ void WINAPI wine_glSampleMaskEXT( GLclampf, GLboolean );
 void WINAPI wine_glSampleMaskSGIS( GLclampf, GLboolean );
 void WINAPI wine_glSamplePatternEXT( GLenum );
 void WINAPI wine_glSamplePatternSGIS( GLenum );
+void WINAPI wine_glSecondaryColor3b( GLbyte, GLbyte, GLbyte );
 void WINAPI wine_glSecondaryColor3bEXT( GLbyte, GLbyte, GLbyte );
+void WINAPI wine_glSecondaryColor3bv( GLbyte* );
 void WINAPI wine_glSecondaryColor3bvEXT( GLbyte* );
+void WINAPI wine_glSecondaryColor3d( GLdouble, GLdouble, GLdouble );
 void WINAPI wine_glSecondaryColor3dEXT( GLdouble, GLdouble, GLdouble );
+void WINAPI wine_glSecondaryColor3dv( GLdouble* );
 void WINAPI wine_glSecondaryColor3dvEXT( GLdouble* );
+void WINAPI wine_glSecondaryColor3f( GLfloat, GLfloat, GLfloat );
 void WINAPI wine_glSecondaryColor3fEXT( GLfloat, GLfloat, GLfloat );
+void WINAPI wine_glSecondaryColor3fv( GLfloat* );
 void WINAPI wine_glSecondaryColor3fvEXT( GLfloat* );
+void WINAPI wine_glSecondaryColor3i( GLint, GLint, GLint );
 void WINAPI wine_glSecondaryColor3iEXT( GLint, GLint, GLint );
+void WINAPI wine_glSecondaryColor3iv( GLint* );
 void WINAPI wine_glSecondaryColor3ivEXT( GLint* );
+void WINAPI wine_glSecondaryColor3s( GLshort, GLshort, GLshort );
 void WINAPI wine_glSecondaryColor3sEXT( GLshort, GLshort, GLshort );
+void WINAPI wine_glSecondaryColor3sv( GLshort* );
 void WINAPI wine_glSecondaryColor3svEXT( GLshort* );
+void WINAPI wine_glSecondaryColor3ub( GLubyte, GLubyte, GLubyte );
 void WINAPI wine_glSecondaryColor3ubEXT( GLubyte, GLubyte, GLubyte );
+void WINAPI wine_glSecondaryColor3ubv( GLubyte* );
 void WINAPI wine_glSecondaryColor3ubvEXT( GLubyte* );
+void WINAPI wine_glSecondaryColor3ui( GLuint, GLuint, GLuint );
 void WINAPI wine_glSecondaryColor3uiEXT( GLuint, GLuint, GLuint );
+void WINAPI wine_glSecondaryColor3uiv( GLuint* );
 void WINAPI wine_glSecondaryColor3uivEXT( GLuint* );
+void WINAPI wine_glSecondaryColor3us( GLushort, GLushort, GLushort );
 void WINAPI wine_glSecondaryColor3usEXT( GLushort, GLushort, GLushort );
+void WINAPI wine_glSecondaryColor3usv( GLushort* );
 void WINAPI wine_glSecondaryColor3usvEXT( GLushort* );
+void WINAPI wine_glSecondaryColorPointer( GLint, GLenum, GLsizei, GLvoid* );
 void WINAPI wine_glSecondaryColorPointerEXT( GLint, GLenum, GLsizei, GLvoid* );
 void WINAPI wine_glSecondaryColorPointerListIBM( GLint, GLenum, GLint, GLvoid**, GLint );
 void WINAPI wine_glSelectTextureCoordSetSGIS( GLenum );
@@ -1211,32 +1384,69 @@ void WINAPI wine_glVariantubvEXT( GLuint, GLubyte* );
 void WINAPI wine_glVariantuivEXT( GLuint, GLuint* );
 void WINAPI wine_glVariantusvEXT( GLuint, GLushort* );
 void WINAPI wine_glVertexArrayRangeNV( GLsizei, GLvoid* );
+void WINAPI wine_glVertexAttrib1dARB( GLuint, GLdouble );
 void WINAPI wine_glVertexAttrib1dNV( GLuint, GLdouble );
+void WINAPI wine_glVertexAttrib1dvARB( GLuint, GLdouble* );
 void WINAPI wine_glVertexAttrib1dvNV( GLuint, GLdouble* );
+void WINAPI wine_glVertexAttrib1fARB( GLuint, GLfloat );
 void WINAPI wine_glVertexAttrib1fNV( GLuint, GLfloat );
+void WINAPI wine_glVertexAttrib1fvARB( GLuint, GLfloat* );
 void WINAPI wine_glVertexAttrib1fvNV( GLuint, GLfloat* );
+void WINAPI wine_glVertexAttrib1sARB( GLuint, GLshort );
 void WINAPI wine_glVertexAttrib1sNV( GLuint, GLshort );
+void WINAPI wine_glVertexAttrib1svARB( GLuint, GLshort* );
 void WINAPI wine_glVertexAttrib1svNV( GLuint, GLshort* );
+void WINAPI wine_glVertexAttrib2dARB( GLuint, GLdouble, GLdouble );
 void WINAPI wine_glVertexAttrib2dNV( GLuint, GLdouble, GLdouble );
+void WINAPI wine_glVertexAttrib2dvARB( GLuint, GLdouble* );
 void WINAPI wine_glVertexAttrib2dvNV( GLuint, GLdouble* );
+void WINAPI wine_glVertexAttrib2fARB( GLuint, GLfloat, GLfloat );
 void WINAPI wine_glVertexAttrib2fNV( GLuint, GLfloat, GLfloat );
+void WINAPI wine_glVertexAttrib2fvARB( GLuint, GLfloat* );
 void WINAPI wine_glVertexAttrib2fvNV( GLuint, GLfloat* );
+void WINAPI wine_glVertexAttrib2sARB( GLuint, GLshort, GLshort );
 void WINAPI wine_glVertexAttrib2sNV( GLuint, GLshort, GLshort );
+void WINAPI wine_glVertexAttrib2svARB( GLuint, GLshort* );
 void WINAPI wine_glVertexAttrib2svNV( GLuint, GLshort* );
+void WINAPI wine_glVertexAttrib3dARB( GLuint, GLdouble, GLdouble, GLdouble );
 void WINAPI wine_glVertexAttrib3dNV( GLuint, GLdouble, GLdouble, GLdouble );
+void WINAPI wine_glVertexAttrib3dvARB( GLuint, GLdouble* );
 void WINAPI wine_glVertexAttrib3dvNV( GLuint, GLdouble* );
+void WINAPI wine_glVertexAttrib3fARB( GLuint, GLfloat, GLfloat, GLfloat );
 void WINAPI wine_glVertexAttrib3fNV( GLuint, GLfloat, GLfloat, GLfloat );
+void WINAPI wine_glVertexAttrib3fvARB( GLuint, GLfloat* );
 void WINAPI wine_glVertexAttrib3fvNV( GLuint, GLfloat* );
+void WINAPI wine_glVertexAttrib3sARB( GLuint, GLshort, GLshort, GLshort );
 void WINAPI wine_glVertexAttrib3sNV( GLuint, GLshort, GLshort, GLshort );
+void WINAPI wine_glVertexAttrib3svARB( GLuint, GLshort* );
 void WINAPI wine_glVertexAttrib3svNV( GLuint, GLshort* );
+void WINAPI wine_glVertexAttrib4NbvARB( GLuint, GLbyte* );
+void WINAPI wine_glVertexAttrib4NivARB( GLuint, GLint* );
+void WINAPI wine_glVertexAttrib4NsvARB( GLuint, GLshort* );
+void WINAPI wine_glVertexAttrib4NubARB( GLuint, GLubyte, GLubyte, GLubyte, GLubyte );
+void WINAPI wine_glVertexAttrib4NubvARB( GLuint, GLubyte* );
+void WINAPI wine_glVertexAttrib4NuivARB( GLuint, GLuint* );
+void WINAPI wine_glVertexAttrib4NusvARB( GLuint, GLushort* );
+void WINAPI wine_glVertexAttrib4bvARB( GLuint, GLbyte* );
+void WINAPI wine_glVertexAttrib4dARB( GLuint, GLdouble, GLdouble, GLdouble, GLdouble );
 void WINAPI wine_glVertexAttrib4dNV( GLuint, GLdouble, GLdouble, GLdouble, GLdouble );
+void WINAPI wine_glVertexAttrib4dvARB( GLuint, GLdouble* );
 void WINAPI wine_glVertexAttrib4dvNV( GLuint, GLdouble* );
+void WINAPI wine_glVertexAttrib4fARB( GLuint, GLfloat, GLfloat, GLfloat, GLfloat );
 void WINAPI wine_glVertexAttrib4fNV( GLuint, GLfloat, GLfloat, GLfloat, GLfloat );
+void WINAPI wine_glVertexAttrib4fvARB( GLuint, GLfloat* );
 void WINAPI wine_glVertexAttrib4fvNV( GLuint, GLfloat* );
+void WINAPI wine_glVertexAttrib4ivARB( GLuint, GLint* );
+void WINAPI wine_glVertexAttrib4sARB( GLuint, GLshort, GLshort, GLshort, GLshort );
 void WINAPI wine_glVertexAttrib4sNV( GLuint, GLshort, GLshort, GLshort, GLshort );
+void WINAPI wine_glVertexAttrib4svARB( GLuint, GLshort* );
 void WINAPI wine_glVertexAttrib4svNV( GLuint, GLshort* );
 void WINAPI wine_glVertexAttrib4ubNV( GLuint, GLubyte, GLubyte, GLubyte, GLubyte );
+void WINAPI wine_glVertexAttrib4ubvARB( GLuint, GLubyte* );
 void WINAPI wine_glVertexAttrib4ubvNV( GLuint, GLubyte* );
+void WINAPI wine_glVertexAttrib4uivARB( GLuint, GLuint* );
+void WINAPI wine_glVertexAttrib4usvARB( GLuint, GLushort* );
+void WINAPI wine_glVertexAttribPointerARB( GLuint, GLint, GLenum, GLboolean, GLsizei, GLvoid* );
 void WINAPI wine_glVertexAttribPointerNV( GLuint, GLint, GLenum, GLsizei, GLvoid* );
 void WINAPI wine_glVertexAttribs1dvNV( GLuint, GLsizei, GLdouble* );
 void WINAPI wine_glVertexAttribs1fvNV( GLuint, GLsizei, GLfloat* );
@@ -1301,36 +1511,52 @@ void WINAPI wine_glWeightsvARB( GLint, GLshort* );
 void WINAPI wine_glWeightubvARB( GLint, GLubyte* );
 void WINAPI wine_glWeightuivARB( GLint, GLuint* );
 void WINAPI wine_glWeightusvARB( GLint, GLushort* );
+void WINAPI wine_glWindowPos2d( GLdouble, GLdouble );
 void WINAPI wine_glWindowPos2dARB( GLdouble, GLdouble );
 void WINAPI wine_glWindowPos2dMESA( GLdouble, GLdouble );
+void WINAPI wine_glWindowPos2dv( GLdouble* );
 void WINAPI wine_glWindowPos2dvARB( GLdouble* );
 void WINAPI wine_glWindowPos2dvMESA( GLdouble* );
+void WINAPI wine_glWindowPos2f( GLfloat, GLfloat );
 void WINAPI wine_glWindowPos2fARB( GLfloat, GLfloat );
 void WINAPI wine_glWindowPos2fMESA( GLfloat, GLfloat );
+void WINAPI wine_glWindowPos2fv( GLfloat* );
 void WINAPI wine_glWindowPos2fvARB( GLfloat* );
 void WINAPI wine_glWindowPos2fvMESA( GLfloat* );
+void WINAPI wine_glWindowPos2i( GLint, GLint );
 void WINAPI wine_glWindowPos2iARB( GLint, GLint );
 void WINAPI wine_glWindowPos2iMESA( GLint, GLint );
+void WINAPI wine_glWindowPos2iv( GLint* );
 void WINAPI wine_glWindowPos2ivARB( GLint* );
 void WINAPI wine_glWindowPos2ivMESA( GLint* );
+void WINAPI wine_glWindowPos2s( GLshort, GLshort );
 void WINAPI wine_glWindowPos2sARB( GLshort, GLshort );
 void WINAPI wine_glWindowPos2sMESA( GLshort, GLshort );
+void WINAPI wine_glWindowPos2sv( GLshort* );
 void WINAPI wine_glWindowPos2svARB( GLshort* );
 void WINAPI wine_glWindowPos2svMESA( GLshort* );
+void WINAPI wine_glWindowPos3d( GLdouble, GLdouble, GLdouble );
 void WINAPI wine_glWindowPos3dARB( GLdouble, GLdouble, GLdouble );
 void WINAPI wine_glWindowPos3dMESA( GLdouble, GLdouble, GLdouble );
+void WINAPI wine_glWindowPos3dv( GLdouble* );
 void WINAPI wine_glWindowPos3dvARB( GLdouble* );
 void WINAPI wine_glWindowPos3dvMESA( GLdouble* );
+void WINAPI wine_glWindowPos3f( GLfloat, GLfloat, GLfloat );
 void WINAPI wine_glWindowPos3fARB( GLfloat, GLfloat, GLfloat );
 void WINAPI wine_glWindowPos3fMESA( GLfloat, GLfloat, GLfloat );
+void WINAPI wine_glWindowPos3fv( GLfloat* );
 void WINAPI wine_glWindowPos3fvARB( GLfloat* );
 void WINAPI wine_glWindowPos3fvMESA( GLfloat* );
+void WINAPI wine_glWindowPos3i( GLint, GLint, GLint );
 void WINAPI wine_glWindowPos3iARB( GLint, GLint, GLint );
 void WINAPI wine_glWindowPos3iMESA( GLint, GLint, GLint );
+void WINAPI wine_glWindowPos3iv( GLint* );
 void WINAPI wine_glWindowPos3ivARB( GLint* );
 void WINAPI wine_glWindowPos3ivMESA( GLint* );
+void WINAPI wine_glWindowPos3s( GLshort, GLshort, GLshort );
 void WINAPI wine_glWindowPos3sARB( GLshort, GLshort, GLshort );
 void WINAPI wine_glWindowPos3sMESA( GLshort, GLshort, GLshort );
+void WINAPI wine_glWindowPos3sv( GLshort* );
 void WINAPI wine_glWindowPos3svARB( GLshort* );
 void WINAPI wine_glWindowPos3svMESA( GLshort* );
 void WINAPI wine_glWindowPos4dMESA( GLdouble, GLdouble, GLdouble, GLdouble );
@@ -1347,8 +1573,9 @@ void WINAPI wine_wglFreeMemoryNV( GLvoid * );
 
 
 /* The table giving the correspondance between names and functions */
-int extension_registry_size = 666;
-OpenGL_extension extension_registry[666] = {
+int extension_registry_size = 779;
+OpenGL_extension extension_registry[779] = {
+  { "glActiveStencilFaceEXT", "glActiveStencilFaceEXT", (void *) wine_glActiveStencilFaceEXT, (void **) (&func_glActiveStencilFaceEXT) },
   { "glActiveTexture", "glActiveTexture", (void *) wine_glActiveTexture, (void **) (&func_glActiveTexture) },
   { "glAlphaFragmentOp1ATI", "glAlphaFragmentOp1ATI", (void *) wine_glAlphaFragmentOp1ATI, (void **) (&func_glAlphaFragmentOp1ATI) },
   { "glAlphaFragmentOp2ATI", "glAlphaFragmentOp2ATI", (void *) wine_glAlphaFragmentOp2ATI, (void **) (&func_glAlphaFragmentOp2ATI) },
@@ -1366,6 +1593,7 @@ OpenGL_extension extension_registry[666] = {
   { "glBindLightParameterEXT", "glBindLightParameterEXT", (void *) wine_glBindLightParameterEXT, (void **) (&func_glBindLightParameterEXT) },
   { "glBindMaterialParameterEXT", "glBindMaterialParameterEXT", (void *) wine_glBindMaterialParameterEXT, (void **) (&func_glBindMaterialParameterEXT) },
   { "glBindParameterEXT", "glBindParameterEXT", (void *) wine_glBindParameterEXT, (void **) (&func_glBindParameterEXT) },
+  { "glBindProgramARB", "glBindProgramARB", (void *) wine_glBindProgramARB, (void **) (&func_glBindProgramARB) },
   { "glBindProgramNV", "glBindProgramNV", (void *) wine_glBindProgramNV, (void **) (&func_glBindProgramNV) },
   { "glBindTexGenParameterEXT", "glBindTexGenParameterEXT", (void *) wine_glBindTexGenParameterEXT, (void **) (&func_glBindTexGenParameterEXT) },
   { "glBindTextureEXT", "glBindTextureEXT", (void *) wine_glBindTextureEXT, (void **) (&func_glBindTextureEXT) },
@@ -1384,8 +1612,10 @@ OpenGL_extension extension_registry[666] = {
   { "glBinormalPointerEXT", "glBinormalPointerEXT", (void *) wine_glBinormalPointerEXT, (void **) (&func_glBinormalPointerEXT) },
   { "glBlendColorEXT", "glBlendColorEXT", (void *) wine_glBlendColorEXT, (void **) (&func_glBlendColorEXT) },
   { "glBlendEquationEXT", "glBlendEquationEXT", (void *) wine_glBlendEquationEXT, (void **) (&func_glBlendEquationEXT) },
+  { "glBlendFuncSeparate", "glBlendFuncSeparate", (void *) wine_glBlendFuncSeparate, (void **) (&func_glBlendFuncSeparate) },
   { "glBlendFuncSeparateEXT", "glBlendFuncSeparateEXT", (void *) wine_glBlendFuncSeparateEXT, (void **) (&func_glBlendFuncSeparateEXT) },
   { "glBlendFuncSeparateINGR", "glBlendFuncSeparateINGR", (void *) wine_glBlendFuncSeparateINGR, (void **) (&func_glBlendFuncSeparateINGR) },
+  { "glBufferRegionEnabled", "glBufferRegionEnabled", (void *) wine_glBufferRegionEnabled, (void **) (&func_glBufferRegionEnabled) },
   { "glClientActiveTexture", "glClientActiveTexture", (void *) wine_glClientActiveTexture, (void **) (&func_glClientActiveTexture) },
   { "glClientActiveVertexStreamATI", "glClientActiveVertexStreamATI", (void *) wine_glClientActiveVertexStreamATI, (void **) (&func_glClientActiveVertexStreamATI) },
   { "glColor3fVertex3fSUN", "glColor3fVertex3fSUN", (void *) wine_glColor3fVertex3fSUN, (void **) (&func_glColor3fVertex3fSUN) },
@@ -1448,16 +1678,20 @@ OpenGL_extension extension_registry[666] = {
   { "glDeformationMap3dSGIX", "glDeformationMap3dSGIX", (void *) wine_glDeformationMap3dSGIX, (void **) (&func_glDeformationMap3dSGIX) },
   { "glDeformationMap3fSGIX", "glDeformationMap3fSGIX", (void *) wine_glDeformationMap3fSGIX, (void **) (&func_glDeformationMap3fSGIX) },
   { "glDeleteAsyncMarkersSGIX", "glDeleteAsyncMarkersSGIX", (void *) wine_glDeleteAsyncMarkersSGIX, (void **) (&func_glDeleteAsyncMarkersSGIX) },
+  { "glDeleteBufferRegion", "glDeleteBufferRegion", (void *) wine_glDeleteBufferRegion, (void **) (&func_glDeleteBufferRegion) },
   { "glDeleteFencesNV", "glDeleteFencesNV", (void *) wine_glDeleteFencesNV, (void **) (&func_glDeleteFencesNV) },
   { "glDeleteFragmentShaderATI", "glDeleteFragmentShaderATI", (void *) wine_glDeleteFragmentShaderATI, (void **) (&func_glDeleteFragmentShaderATI) },
   { "glDeleteObjectBufferATI", "glDeleteObjectBufferATI", (void *) wine_glDeleteObjectBufferATI, (void **) (&func_glDeleteObjectBufferATI) },
   { "glDeleteOcclusionQueriesNV", "glDeleteOcclusionQueriesNV", (void *) wine_glDeleteOcclusionQueriesNV, (void **) (&func_glDeleteOcclusionQueriesNV) },
+  { "glDeleteProgramsARB", "glDeleteProgramsARB", (void *) wine_glDeleteProgramsARB, (void **) (&func_glDeleteProgramsARB) },
   { "glDeleteProgramsNV", "glDeleteProgramsNV", (void *) wine_glDeleteProgramsNV, (void **) (&func_glDeleteProgramsNV) },
   { "glDeleteTexturesEXT", "glDeleteTexturesEXT", (void *) wine_glDeleteTexturesEXT, (void **) (&func_glDeleteTexturesEXT) },
   { "glDeleteVertexShaderEXT", "glDeleteVertexShaderEXT", (void *) wine_glDeleteVertexShaderEXT, (void **) (&func_glDeleteVertexShaderEXT) },
   { "glDetailTexFuncSGIS", "glDetailTexFuncSGIS", (void *) wine_glDetailTexFuncSGIS, (void **) (&func_glDetailTexFuncSGIS) },
   { "glDisableVariantClientStateEXT", "glDisableVariantClientStateEXT", (void *) wine_glDisableVariantClientStateEXT, (void **) (&func_glDisableVariantClientStateEXT) },
+  { "glDisableVertexAttribArrayARB", "glDisableVertexAttribArrayARB", (void *) wine_glDisableVertexAttribArrayARB, (void **) (&func_glDisableVertexAttribArrayARB) },
   { "glDrawArraysEXT", "glDrawArraysEXT", (void *) wine_glDrawArraysEXT, (void **) (&func_glDrawArraysEXT) },
+  { "glDrawBufferRegion", "glDrawBufferRegion", (void *) wine_glDrawBufferRegion, (void **) (&func_glDrawBufferRegion) },
   { "glDrawElementArrayATI", "glDrawElementArrayATI", (void *) wine_glDrawElementArrayATI, (void **) (&func_glDrawElementArrayATI) },
   { "glDrawMeshArraysSUN", "glDrawMeshArraysSUN", (void *) wine_glDrawMeshArraysSUN, (void **) (&func_glDrawMeshArraysSUN) },
   { "glDrawRangeElementArrayATI", "glDrawRangeElementArrayATI", (void *) wine_glDrawRangeElementArrayATI, (void **) (&func_glDrawRangeElementArrayATI) },
@@ -1466,6 +1700,7 @@ OpenGL_extension extension_registry[666] = {
   { "glEdgeFlagPointerListIBM", "glEdgeFlagPointerListIBM", (void *) wine_glEdgeFlagPointerListIBM, (void **) (&func_glEdgeFlagPointerListIBM) },
   { "glElementPointerATI", "glElementPointerATI", (void *) wine_glElementPointerATI, (void **) (&func_glElementPointerATI) },
   { "glEnableVariantClientStateEXT", "glEnableVariantClientStateEXT", (void *) wine_glEnableVariantClientStateEXT, (void **) (&func_glEnableVariantClientStateEXT) },
+  { "glEnableVertexAttribArrayARB", "glEnableVertexAttribArrayARB", (void *) wine_glEnableVertexAttribArrayARB, (void **) (&func_glEnableVertexAttribArrayARB) },
   { "glEndFragmentShaderATI", "glEndFragmentShaderATI", (void *) wine_glEndFragmentShaderATI, (void **) (&func_glEndFragmentShaderATI) },
   { "glEndOcclusionQueryNV", "glEndOcclusionQueryNV", (void *) wine_glEndOcclusionQueryNV, (void **) (&func_glEndOcclusionQueryNV) },
   { "glEndVertexShaderEXT", "glEndVertexShaderEXT", (void *) wine_glEndVertexShaderEXT, (void **) (&func_glEndVertexShaderEXT) },
@@ -1478,11 +1713,16 @@ OpenGL_extension extension_registry[666] = {
   { "glFinishTextureSUNX", "glFinishTextureSUNX", (void *) wine_glFinishTextureSUNX, (void **) (&func_glFinishTextureSUNX) },
   { "glFlushRasterSGIX", "glFlushRasterSGIX", (void *) wine_glFlushRasterSGIX, (void **) (&func_glFlushRasterSGIX) },
   { "glFlushVertexArrayRangeNV", "glFlushVertexArrayRangeNV", (void *) wine_glFlushVertexArrayRangeNV, (void **) (&func_glFlushVertexArrayRangeNV) },
+  { "glFogCoordPointer", "glFogCoordPointer", (void *) wine_glFogCoordPointer, (void **) (&func_glFogCoordPointer) },
   { "glFogCoordPointerEXT", "glFogCoordPointerEXT", (void *) wine_glFogCoordPointerEXT, (void **) (&func_glFogCoordPointerEXT) },
   { "glFogCoordPointerListIBM", "glFogCoordPointerListIBM", (void *) wine_glFogCoordPointerListIBM, (void **) (&func_glFogCoordPointerListIBM) },
+  { "glFogCoordd", "glFogCoordd", (void *) wine_glFogCoordd, (void **) (&func_glFogCoordd) },
   { "glFogCoorddEXT", "glFogCoorddEXT", (void *) wine_glFogCoorddEXT, (void **) (&func_glFogCoorddEXT) },
+  { "glFogCoorddv", "glFogCoorddv", (void *) wine_glFogCoorddv, (void **) (&func_glFogCoorddv) },
   { "glFogCoorddvEXT", "glFogCoorddvEXT", (void *) wine_glFogCoorddvEXT, (void **) (&func_glFogCoorddvEXT) },
+  { "glFogCoordf", "glFogCoordf", (void *) wine_glFogCoordf, (void **) (&func_glFogCoordf) },
   { "glFogCoordfEXT", "glFogCoordfEXT", (void *) wine_glFogCoordfEXT, (void **) (&func_glFogCoordfEXT) },
+  { "glFogCoordfv", "glFogCoordfv", (void *) wine_glFogCoordfv, (void **) (&func_glFogCoordfv) },
   { "glFogCoordfvEXT", "glFogCoordfvEXT", (void *) wine_glFogCoordfvEXT, (void **) (&func_glFogCoordfvEXT) },
   { "glFogFuncSGIS", "glFogFuncSGIS", (void *) wine_glFogFuncSGIS, (void **) (&func_glFogFuncSGIS) },
   { "glFragmentColorMaterialSGIX", "glFragmentColorMaterialSGIX", (void *) wine_glFragmentColorMaterialSGIX, (void **) (&func_glFragmentColorMaterialSGIX) },
@@ -1503,6 +1743,7 @@ OpenGL_extension extension_registry[666] = {
   { "glGenFencesNV", "glGenFencesNV", (void *) wine_glGenFencesNV, (void **) (&func_glGenFencesNV) },
   { "glGenFragmentShadersATI", "glGenFragmentShadersATI", (void *) wine_glGenFragmentShadersATI, (void **) (&func_glGenFragmentShadersATI) },
   { "glGenOcclusionQueriesNV", "glGenOcclusionQueriesNV", (void *) wine_glGenOcclusionQueriesNV, (void **) (&func_glGenOcclusionQueriesNV) },
+  { "glGenProgramsARB", "glGenProgramsARB", (void *) wine_glGenProgramsARB, (void **) (&func_glGenProgramsARB) },
   { "glGenProgramsNV", "glGenProgramsNV", (void *) wine_glGenProgramsNV, (void **) (&func_glGenProgramsNV) },
   { "glGenSymbolsEXT", "glGenSymbolsEXT", (void *) wine_glGenSymbolsEXT, (void **) (&func_glGenSymbolsEXT) },
   { "glGenTexturesEXT", "glGenTexturesEXT", (void *) wine_glGenTexturesEXT, (void **) (&func_glGenTexturesEXT) },
@@ -1563,9 +1804,15 @@ OpenGL_extension extension_registry[666] = {
   { "glGetPixelTexGenParameterfvSGIS", "glGetPixelTexGenParameterfvSGIS", (void *) wine_glGetPixelTexGenParameterfvSGIS, (void **) (&func_glGetPixelTexGenParameterfvSGIS) },
   { "glGetPixelTexGenParameterivSGIS", "glGetPixelTexGenParameterivSGIS", (void *) wine_glGetPixelTexGenParameterivSGIS, (void **) (&func_glGetPixelTexGenParameterivSGIS) },
   { "glGetPointervEXT", "glGetPointervEXT", (void *) wine_glGetPointervEXT, (void **) (&func_glGetPointervEXT) },
+  { "glGetProgramEnvParameterdvARB", "glGetProgramEnvParameterdvARB", (void *) wine_glGetProgramEnvParameterdvARB, (void **) (&func_glGetProgramEnvParameterdvARB) },
+  { "glGetProgramEnvParameterfvARB", "glGetProgramEnvParameterfvARB", (void *) wine_glGetProgramEnvParameterfvARB, (void **) (&func_glGetProgramEnvParameterfvARB) },
+  { "glGetProgramLocalParameterdvARB", "glGetProgramLocalParameterdvARB", (void *) wine_glGetProgramLocalParameterdvARB, (void **) (&func_glGetProgramLocalParameterdvARB) },
+  { "glGetProgramLocalParameterfvARB", "glGetProgramLocalParameterfvARB", (void *) wine_glGetProgramLocalParameterfvARB, (void **) (&func_glGetProgramLocalParameterfvARB) },
   { "glGetProgramParameterdvNV", "glGetProgramParameterdvNV", (void *) wine_glGetProgramParameterdvNV, (void **) (&func_glGetProgramParameterdvNV) },
   { "glGetProgramParameterfvNV", "glGetProgramParameterfvNV", (void *) wine_glGetProgramParameterfvNV, (void **) (&func_glGetProgramParameterfvNV) },
+  { "glGetProgramStringARB", "glGetProgramStringARB", (void *) wine_glGetProgramStringARB, (void **) (&func_glGetProgramStringARB) },
   { "glGetProgramStringNV", "glGetProgramStringNV", (void *) wine_glGetProgramStringNV, (void **) (&func_glGetProgramStringNV) },
+  { "glGetProgramivARB", "glGetProgramivARB", (void *) wine_glGetProgramivARB, (void **) (&func_glGetProgramivARB) },
   { "glGetProgramivNV", "glGetProgramivNV", (void *) wine_glGetProgramivNV, (void **) (&func_glGetProgramivNV) },
   { "glGetSeparableFilterEXT", "glGetSeparableFilterEXT", (void *) wine_glGetSeparableFilterEXT, (void **) (&func_glGetSeparableFilterEXT) },
   { "glGetSharpenTexFuncSGIS", "glGetSharpenTexFuncSGIS", (void *) wine_glGetSharpenTexFuncSGIS, (void **) (&func_glGetSharpenTexFuncSGIS) },
@@ -1579,9 +1826,13 @@ OpenGL_extension extension_registry[666] = {
   { "glGetVariantFloatvEXT", "glGetVariantFloatvEXT", (void *) wine_glGetVariantFloatvEXT, (void **) (&func_glGetVariantFloatvEXT) },
   { "glGetVariantIntegervEXT", "glGetVariantIntegervEXT", (void *) wine_glGetVariantIntegervEXT, (void **) (&func_glGetVariantIntegervEXT) },
   { "glGetVariantPointervEXT", "glGetVariantPointervEXT", (void *) wine_glGetVariantPointervEXT, (void **) (&func_glGetVariantPointervEXT) },
+  { "glGetVertexAttribPointervARB", "glGetVertexAttribPointervARB", (void *) wine_glGetVertexAttribPointervARB, (void **) (&func_glGetVertexAttribPointervARB) },
   { "glGetVertexAttribPointervNV", "glGetVertexAttribPointervNV", (void *) wine_glGetVertexAttribPointervNV, (void **) (&func_glGetVertexAttribPointervNV) },
+  { "glGetVertexAttribdvARB", "glGetVertexAttribdvARB", (void *) wine_glGetVertexAttribdvARB, (void **) (&func_glGetVertexAttribdvARB) },
   { "glGetVertexAttribdvNV", "glGetVertexAttribdvNV", (void *) wine_glGetVertexAttribdvNV, (void **) (&func_glGetVertexAttribdvNV) },
+  { "glGetVertexAttribfvARB", "glGetVertexAttribfvARB", (void *) wine_glGetVertexAttribfvARB, (void **) (&func_glGetVertexAttribfvARB) },
   { "glGetVertexAttribfvNV", "glGetVertexAttribfvNV", (void *) wine_glGetVertexAttribfvNV, (void **) (&func_glGetVertexAttribfvNV) },
+  { "glGetVertexAttribivARB", "glGetVertexAttribivARB", (void *) wine_glGetVertexAttribivARB, (void **) (&func_glGetVertexAttribivARB) },
   { "glGetVertexAttribivNV", "glGetVertexAttribivNV", (void *) wine_glGetVertexAttribivNV, (void **) (&func_glGetVertexAttribivNV) },
   { "glGlobalAlphaFactorbSUN", "glGlobalAlphaFactorbSUN", (void *) wine_glGlobalAlphaFactorbSUN, (void **) (&func_glGlobalAlphaFactorbSUN) },
   { "glGlobalAlphaFactordSUN", "glGlobalAlphaFactordSUN", (void *) wine_glGlobalAlphaFactordSUN, (void **) (&func_glGlobalAlphaFactordSUN) },
@@ -1608,6 +1859,7 @@ OpenGL_extension extension_registry[666] = {
   { "glIsFenceNV", "glIsFenceNV", (void *) wine_glIsFenceNV, (void **) (&func_glIsFenceNV) },
   { "glIsObjectBufferATI", "glIsObjectBufferATI", (void *) wine_glIsObjectBufferATI, (void **) (&func_glIsObjectBufferATI) },
   { "glIsOcclusionQueryNV", "glIsOcclusionQueryNV", (void *) wine_glIsOcclusionQueryNV, (void **) (&func_glIsOcclusionQueryNV) },
+  { "glIsProgramARB", "glIsProgramARB", (void *) wine_glIsProgramARB, (void **) (&func_glIsProgramARB) },
   { "glIsProgramNV", "glIsProgramNV", (void *) wine_glIsProgramNV, (void **) (&func_glIsProgramNV) },
   { "glIsTextureEXT", "glIsTextureEXT", (void *) wine_glIsTextureEXT, (void **) (&func_glIsTextureEXT) },
   { "glIsVariantEnabledEXT", "glIsVariantEnabledEXT", (void *) wine_glIsVariantEnabledEXT, (void **) (&func_glIsVariantEnabledEXT) },
@@ -1637,7 +1889,9 @@ OpenGL_extension extension_registry[666] = {
   { "glMultTransposeMatrixdARB", "glMultTransposeMatrixdARB", (void *) wine_glMultTransposeMatrixdARB, (void **) (&func_glMultTransposeMatrixdARB) },
   { "glMultTransposeMatrixf", "glMultTransposeMatrixf", (void *) wine_glMultTransposeMatrixf, (void **) (&func_glMultTransposeMatrixf) },
   { "glMultTransposeMatrixfARB", "glMultTransposeMatrixfARB", (void *) wine_glMultTransposeMatrixfARB, (void **) (&func_glMultTransposeMatrixfARB) },
+  { "glMultiDrawArrays", "glMultiDrawArrays", (void *) wine_glMultiDrawArrays, (void **) (&func_glMultiDrawArrays) },
   { "glMultiDrawArraysEXT", "glMultiDrawArraysEXT", (void *) wine_glMultiDrawArraysEXT, (void **) (&func_glMultiDrawArraysEXT) },
+  { "glMultiDrawElements", "glMultiDrawElements", (void *) wine_glMultiDrawElements, (void **) (&func_glMultiDrawElements) },
   { "glMultiDrawElementsEXT", "glMultiDrawElementsEXT", (void *) wine_glMultiDrawElementsEXT, (void **) (&func_glMultiDrawElementsEXT) },
   { "glMultiModeDrawArraysIBM", "glMultiModeDrawArraysIBM", (void *) wine_glMultiModeDrawArraysIBM, (void **) (&func_glMultiModeDrawArraysIBM) },
   { "glMultiModeDrawElementsIBM", "glMultiModeDrawElementsIBM", (void *) wine_glMultiModeDrawElementsIBM, (void **) (&func_glMultiModeDrawElementsIBM) },
@@ -1706,6 +1960,7 @@ OpenGL_extension extension_registry[666] = {
   { "glMultiTexCoord4sv", "glMultiTexCoord4sv", (void *) wine_glMultiTexCoord4sv, (void **) (&func_glMultiTexCoord4sv) },
   { "glMultiTexCoord4svSGIS", "glMultiTexCoord4svSGIS", (void *) wine_glMultiTexCoord4svSGIS, (void **) (&func_glMultiTexCoord4svSGIS) },
   { "glMultiTexCoordPointerSGIS", "glMultiTexCoordPointerSGIS", (void *) wine_glMultiTexCoordPointerSGIS, (void **) (&func_glMultiTexCoordPointerSGIS) },
+  { "glNewBufferRegion", "glNewBufferRegion", (void *) wine_glNewBufferRegion, (void **) (&func_glNewBufferRegion) },
   { "glNewObjectBufferATI", "glNewObjectBufferATI", (void *) wine_glNewObjectBufferATI, (void **) (&func_glNewObjectBufferATI) },
   { "glNormal3fVertex3fSUN", "glNormal3fVertex3fSUN", (void *) wine_glNormal3fVertex3fSUN, (void **) (&func_glNormal3fVertex3fSUN) },
   { "glNormal3fVertex3fvSUN", "glNormal3fVertex3fvSUN", (void *) wine_glNormal3fVertex3fvSUN, (void **) (&func_glNormal3fVertex3fvSUN) },
@@ -1734,24 +1989,38 @@ OpenGL_extension extension_registry[666] = {
   { "glPixelTransformParameterfvEXT", "glPixelTransformParameterfvEXT", (void *) wine_glPixelTransformParameterfvEXT, (void **) (&func_glPixelTransformParameterfvEXT) },
   { "glPixelTransformParameteriEXT", "glPixelTransformParameteriEXT", (void *) wine_glPixelTransformParameteriEXT, (void **) (&func_glPixelTransformParameteriEXT) },
   { "glPixelTransformParameterivEXT", "glPixelTransformParameterivEXT", (void *) wine_glPixelTransformParameterivEXT, (void **) (&func_glPixelTransformParameterivEXT) },
+  { "glPointParameterf", "glPointParameterf", (void *) wine_glPointParameterf, (void **) (&func_glPointParameterf) },
   { "glPointParameterfARB", "glPointParameterfARB", (void *) wine_glPointParameterfARB, (void **) (&func_glPointParameterfARB) },
   { "glPointParameterfEXT", "glPointParameterfEXT", (void *) wine_glPointParameterfEXT, (void **) (&func_glPointParameterfEXT) },
   { "glPointParameterfSGIS", "glPointParameterfSGIS", (void *) wine_glPointParameterfSGIS, (void **) (&func_glPointParameterfSGIS) },
+  { "glPointParameterfv", "glPointParameterfv", (void *) wine_glPointParameterfv, (void **) (&func_glPointParameterfv) },
   { "glPointParameterfvARB", "glPointParameterfvARB", (void *) wine_glPointParameterfvARB, (void **) (&func_glPointParameterfvARB) },
   { "glPointParameterfvEXT", "glPointParameterfvEXT", (void *) wine_glPointParameterfvEXT, (void **) (&func_glPointParameterfvEXT) },
   { "glPointParameterfvSGIS", "glPointParameterfvSGIS", (void *) wine_glPointParameterfvSGIS, (void **) (&func_glPointParameterfvSGIS) },
+  { "glPointParameteri", "glPointParameteri", (void *) wine_glPointParameteri, (void **) (&func_glPointParameteri) },
   { "glPointParameteriNV", "glPointParameteriNV", (void *) wine_glPointParameteriNV, (void **) (&func_glPointParameteriNV) },
+  { "glPointParameteriv", "glPointParameteriv", (void *) wine_glPointParameteriv, (void **) (&func_glPointParameteriv) },
   { "glPointParameterivNV", "glPointParameterivNV", (void *) wine_glPointParameterivNV, (void **) (&func_glPointParameterivNV) },
   { "glPollAsyncSGIX", "glPollAsyncSGIX", (void *) wine_glPollAsyncSGIX, (void **) (&func_glPollAsyncSGIX) },
   { "glPollInstrumentsSGIX", "glPollInstrumentsSGIX", (void *) wine_glPollInstrumentsSGIX, (void **) (&func_glPollInstrumentsSGIX) },
   { "glPolygonOffsetEXT", "glPolygonOffsetEXT", (void *) wine_glPolygonOffsetEXT, (void **) (&func_glPolygonOffsetEXT) },
   { "glPrioritizeTexturesEXT", "glPrioritizeTexturesEXT", (void *) wine_glPrioritizeTexturesEXT, (void **) (&func_glPrioritizeTexturesEXT) },
+  { "glProgramEnvParameter4dARB", "glProgramEnvParameter4dARB", (void *) wine_glProgramEnvParameter4dARB, (void **) (&func_glProgramEnvParameter4dARB) },
+  { "glProgramEnvParameter4dvARB", "glProgramEnvParameter4dvARB", (void *) wine_glProgramEnvParameter4dvARB, (void **) (&func_glProgramEnvParameter4dvARB) },
+  { "glProgramEnvParameter4fARB", "glProgramEnvParameter4fARB", (void *) wine_glProgramEnvParameter4fARB, (void **) (&func_glProgramEnvParameter4fARB) },
+  { "glProgramEnvParameter4fvARB", "glProgramEnvParameter4fvARB", (void *) wine_glProgramEnvParameter4fvARB, (void **) (&func_glProgramEnvParameter4fvARB) },
+  { "glProgramLocalParameter4dARB", "glProgramLocalParameter4dARB", (void *) wine_glProgramLocalParameter4dARB, (void **) (&func_glProgramLocalParameter4dARB) },
+  { "glProgramLocalParameter4dvARB", "glProgramLocalParameter4dvARB", (void *) wine_glProgramLocalParameter4dvARB, (void **) (&func_glProgramLocalParameter4dvARB) },
+  { "glProgramLocalParameter4fARB", "glProgramLocalParameter4fARB", (void *) wine_glProgramLocalParameter4fARB, (void **) (&func_glProgramLocalParameter4fARB) },
+  { "glProgramLocalParameter4fvARB", "glProgramLocalParameter4fvARB", (void *) wine_glProgramLocalParameter4fvARB, (void **) (&func_glProgramLocalParameter4fvARB) },
   { "glProgramParameter4dNV", "glProgramParameter4dNV", (void *) wine_glProgramParameter4dNV, (void **) (&func_glProgramParameter4dNV) },
   { "glProgramParameter4dvNV", "glProgramParameter4dvNV", (void *) wine_glProgramParameter4dvNV, (void **) (&func_glProgramParameter4dvNV) },
   { "glProgramParameter4fNV", "glProgramParameter4fNV", (void *) wine_glProgramParameter4fNV, (void **) (&func_glProgramParameter4fNV) },
   { "glProgramParameter4fvNV", "glProgramParameter4fvNV", (void *) wine_glProgramParameter4fvNV, (void **) (&func_glProgramParameter4fvNV) },
   { "glProgramParameters4dvNV", "glProgramParameters4dvNV", (void *) wine_glProgramParameters4dvNV, (void **) (&func_glProgramParameters4dvNV) },
   { "glProgramParameters4fvNV", "glProgramParameters4fvNV", (void *) wine_glProgramParameters4fvNV, (void **) (&func_glProgramParameters4fvNV) },
+  { "glProgramStringARB", "glProgramStringARB", (void *) wine_glProgramStringARB, (void **) (&func_glProgramStringARB) },
+  { "glReadBufferRegion", "glReadBufferRegion", (void *) wine_glReadBufferRegion, (void **) (&func_glReadBufferRegion) },
   { "glReadInstrumentsSGIX", "glReadInstrumentsSGIX", (void *) wine_glReadInstrumentsSGIX, (void **) (&func_glReadInstrumentsSGIX) },
   { "glReferencePlaneSGIX", "glReferencePlaneSGIX", (void *) wine_glReferencePlaneSGIX, (void **) (&func_glReferencePlaneSGIX) },
   { "glReplacementCodePointerSUN", "glReplacementCodePointerSUN", (void *) wine_glReplacementCodePointerSUN, (void **) (&func_glReplacementCodePointerSUN) },
@@ -1788,22 +2057,39 @@ OpenGL_extension extension_registry[666] = {
   { "glSampleMaskSGIS", "glSampleMaskSGIS", (void *) wine_glSampleMaskSGIS, (void **) (&func_glSampleMaskSGIS) },
   { "glSamplePatternEXT", "glSamplePatternEXT", (void *) wine_glSamplePatternEXT, (void **) (&func_glSamplePatternEXT) },
   { "glSamplePatternSGIS", "glSamplePatternSGIS", (void *) wine_glSamplePatternSGIS, (void **) (&func_glSamplePatternSGIS) },
+  { "glSecondaryColor3b", "glSecondaryColor3b", (void *) wine_glSecondaryColor3b, (void **) (&func_glSecondaryColor3b) },
   { "glSecondaryColor3bEXT", "glSecondaryColor3bEXT", (void *) wine_glSecondaryColor3bEXT, (void **) (&func_glSecondaryColor3bEXT) },
+  { "glSecondaryColor3bv", "glSecondaryColor3bv", (void *) wine_glSecondaryColor3bv, (void **) (&func_glSecondaryColor3bv) },
   { "glSecondaryColor3bvEXT", "glSecondaryColor3bvEXT", (void *) wine_glSecondaryColor3bvEXT, (void **) (&func_glSecondaryColor3bvEXT) },
+  { "glSecondaryColor3d", "glSecondaryColor3d", (void *) wine_glSecondaryColor3d, (void **) (&func_glSecondaryColor3d) },
   { "glSecondaryColor3dEXT", "glSecondaryColor3dEXT", (void *) wine_glSecondaryColor3dEXT, (void **) (&func_glSecondaryColor3dEXT) },
+  { "glSecondaryColor3dv", "glSecondaryColor3dv", (void *) wine_glSecondaryColor3dv, (void **) (&func_glSecondaryColor3dv) },
   { "glSecondaryColor3dvEXT", "glSecondaryColor3dvEXT", (void *) wine_glSecondaryColor3dvEXT, (void **) (&func_glSecondaryColor3dvEXT) },
+  { "glSecondaryColor3f", "glSecondaryColor3f", (void *) wine_glSecondaryColor3f, (void **) (&func_glSecondaryColor3f) },
   { "glSecondaryColor3fEXT", "glSecondaryColor3fEXT", (void *) wine_glSecondaryColor3fEXT, (void **) (&func_glSecondaryColor3fEXT) },
+  { "glSecondaryColor3fv", "glSecondaryColor3fv", (void *) wine_glSecondaryColor3fv, (void **) (&func_glSecondaryColor3fv) },
   { "glSecondaryColor3fvEXT", "glSecondaryColor3fvEXT", (void *) wine_glSecondaryColor3fvEXT, (void **) (&func_glSecondaryColor3fvEXT) },
+  { "glSecondaryColor3i", "glSecondaryColor3i", (void *) wine_glSecondaryColor3i, (void **) (&func_glSecondaryColor3i) },
   { "glSecondaryColor3iEXT", "glSecondaryColor3iEXT", (void *) wine_glSecondaryColor3iEXT, (void **) (&func_glSecondaryColor3iEXT) },
+  { "glSecondaryColor3iv", "glSecondaryColor3iv", (void *) wine_glSecondaryColor3iv, (void **) (&func_glSecondaryColor3iv) },
   { "glSecondaryColor3ivEXT", "glSecondaryColor3ivEXT", (void *) wine_glSecondaryColor3ivEXT, (void **) (&func_glSecondaryColor3ivEXT) },
+  { "glSecondaryColor3s", "glSecondaryColor3s", (void *) wine_glSecondaryColor3s, (void **) (&func_glSecondaryColor3s) },
   { "glSecondaryColor3sEXT", "glSecondaryColor3sEXT", (void *) wine_glSecondaryColor3sEXT, (void **) (&func_glSecondaryColor3sEXT) },
+  { "glSecondaryColor3sv", "glSecondaryColor3sv", (void *) wine_glSecondaryColor3sv, (void **) (&func_glSecondaryColor3sv) },
   { "glSecondaryColor3svEXT", "glSecondaryColor3svEXT", (void *) wine_glSecondaryColor3svEXT, (void **) (&func_glSecondaryColor3svEXT) },
+  { "glSecondaryColor3ub", "glSecondaryColor3ub", (void *) wine_glSecondaryColor3ub, (void **) (&func_glSecondaryColor3ub) },
   { "glSecondaryColor3ubEXT", "glSecondaryColor3ubEXT", (void *) wine_glSecondaryColor3ubEXT, (void **) (&func_glSecondaryColor3ubEXT) },
+  { "glSecondaryColor3ubv", "glSecondaryColor3ubv", (void *) wine_glSecondaryColor3ubv, (void **) (&func_glSecondaryColor3ubv) },
   { "glSecondaryColor3ubvEXT", "glSecondaryColor3ubvEXT", (void *) wine_glSecondaryColor3ubvEXT, (void **) (&func_glSecondaryColor3ubvEXT) },
+  { "glSecondaryColor3ui", "glSecondaryColor3ui", (void *) wine_glSecondaryColor3ui, (void **) (&func_glSecondaryColor3ui) },
   { "glSecondaryColor3uiEXT", "glSecondaryColor3uiEXT", (void *) wine_glSecondaryColor3uiEXT, (void **) (&func_glSecondaryColor3uiEXT) },
+  { "glSecondaryColor3uiv", "glSecondaryColor3uiv", (void *) wine_glSecondaryColor3uiv, (void **) (&func_glSecondaryColor3uiv) },
   { "glSecondaryColor3uivEXT", "glSecondaryColor3uivEXT", (void *) wine_glSecondaryColor3uivEXT, (void **) (&func_glSecondaryColor3uivEXT) },
+  { "glSecondaryColor3us", "glSecondaryColor3us", (void *) wine_glSecondaryColor3us, (void **) (&func_glSecondaryColor3us) },
   { "glSecondaryColor3usEXT", "glSecondaryColor3usEXT", (void *) wine_glSecondaryColor3usEXT, (void **) (&func_glSecondaryColor3usEXT) },
+  { "glSecondaryColor3usv", "glSecondaryColor3usv", (void *) wine_glSecondaryColor3usv, (void **) (&func_glSecondaryColor3usv) },
   { "glSecondaryColor3usvEXT", "glSecondaryColor3usvEXT", (void *) wine_glSecondaryColor3usvEXT, (void **) (&func_glSecondaryColor3usvEXT) },
+  { "glSecondaryColorPointer", "glSecondaryColorPointer", (void *) wine_glSecondaryColorPointer, (void **) (&func_glSecondaryColorPointer) },
   { "glSecondaryColorPointerEXT", "glSecondaryColorPointerEXT", (void *) wine_glSecondaryColorPointerEXT, (void **) (&func_glSecondaryColorPointerEXT) },
   { "glSecondaryColorPointerListIBM", "glSecondaryColorPointerListIBM", (void *) wine_glSecondaryColorPointerListIBM, (void **) (&func_glSecondaryColorPointerListIBM) },
   { "glSelectTextureCoordSetSGIS", "glSelectTextureCoordSetSGIS", (void *) wine_glSelectTextureCoordSetSGIS, (void **) (&func_glSelectTextureCoordSetSGIS) },
@@ -1882,32 +2168,69 @@ OpenGL_extension extension_registry[666] = {
   { "glVariantuivEXT", "glVariantuivEXT", (void *) wine_glVariantuivEXT, (void **) (&func_glVariantuivEXT) },
   { "glVariantusvEXT", "glVariantusvEXT", (void *) wine_glVariantusvEXT, (void **) (&func_glVariantusvEXT) },
   { "glVertexArrayRangeNV", "glVertexArrayRangeNV", (void *) wine_glVertexArrayRangeNV, (void **) (&func_glVertexArrayRangeNV) },
+  { "glVertexAttrib1dARB", "glVertexAttrib1dARB", (void *) wine_glVertexAttrib1dARB, (void **) (&func_glVertexAttrib1dARB) },
   { "glVertexAttrib1dNV", "glVertexAttrib1dNV", (void *) wine_glVertexAttrib1dNV, (void **) (&func_glVertexAttrib1dNV) },
+  { "glVertexAttrib1dvARB", "glVertexAttrib1dvARB", (void *) wine_glVertexAttrib1dvARB, (void **) (&func_glVertexAttrib1dvARB) },
   { "glVertexAttrib1dvNV", "glVertexAttrib1dvNV", (void *) wine_glVertexAttrib1dvNV, (void **) (&func_glVertexAttrib1dvNV) },
+  { "glVertexAttrib1fARB", "glVertexAttrib1fARB", (void *) wine_glVertexAttrib1fARB, (void **) (&func_glVertexAttrib1fARB) },
   { "glVertexAttrib1fNV", "glVertexAttrib1fNV", (void *) wine_glVertexAttrib1fNV, (void **) (&func_glVertexAttrib1fNV) },
+  { "glVertexAttrib1fvARB", "glVertexAttrib1fvARB", (void *) wine_glVertexAttrib1fvARB, (void **) (&func_glVertexAttrib1fvARB) },
   { "glVertexAttrib1fvNV", "glVertexAttrib1fvNV", (void *) wine_glVertexAttrib1fvNV, (void **) (&func_glVertexAttrib1fvNV) },
+  { "glVertexAttrib1sARB", "glVertexAttrib1sARB", (void *) wine_glVertexAttrib1sARB, (void **) (&func_glVertexAttrib1sARB) },
   { "glVertexAttrib1sNV", "glVertexAttrib1sNV", (void *) wine_glVertexAttrib1sNV, (void **) (&func_glVertexAttrib1sNV) },
+  { "glVertexAttrib1svARB", "glVertexAttrib1svARB", (void *) wine_glVertexAttrib1svARB, (void **) (&func_glVertexAttrib1svARB) },
   { "glVertexAttrib1svNV", "glVertexAttrib1svNV", (void *) wine_glVertexAttrib1svNV, (void **) (&func_glVertexAttrib1svNV) },
+  { "glVertexAttrib2dARB", "glVertexAttrib2dARB", (void *) wine_glVertexAttrib2dARB, (void **) (&func_glVertexAttrib2dARB) },
   { "glVertexAttrib2dNV", "glVertexAttrib2dNV", (void *) wine_glVertexAttrib2dNV, (void **) (&func_glVertexAttrib2dNV) },
+  { "glVertexAttrib2dvARB", "glVertexAttrib2dvARB", (void *) wine_glVertexAttrib2dvARB, (void **) (&func_glVertexAttrib2dvARB) },
   { "glVertexAttrib2dvNV", "glVertexAttrib2dvNV", (void *) wine_glVertexAttrib2dvNV, (void **) (&func_glVertexAttrib2dvNV) },
+  { "glVertexAttrib2fARB", "glVertexAttrib2fARB", (void *) wine_glVertexAttrib2fARB, (void **) (&func_glVertexAttrib2fARB) },
   { "glVertexAttrib2fNV", "glVertexAttrib2fNV", (void *) wine_glVertexAttrib2fNV, (void **) (&func_glVertexAttrib2fNV) },
+  { "glVertexAttrib2fvARB", "glVertexAttrib2fvARB", (void *) wine_glVertexAttrib2fvARB, (void **) (&func_glVertexAttrib2fvARB) },
   { "glVertexAttrib2fvNV", "glVertexAttrib2fvNV", (void *) wine_glVertexAttrib2fvNV, (void **) (&func_glVertexAttrib2fvNV) },
+  { "glVertexAttrib2sARB", "glVertexAttrib2sARB", (void *) wine_glVertexAttrib2sARB, (void **) (&func_glVertexAttrib2sARB) },
   { "glVertexAttrib2sNV", "glVertexAttrib2sNV", (void *) wine_glVertexAttrib2sNV, (void **) (&func_glVertexAttrib2sNV) },
+  { "glVertexAttrib2svARB", "glVertexAttrib2svARB", (void *) wine_glVertexAttrib2svARB, (void **) (&func_glVertexAttrib2svARB) },
   { "glVertexAttrib2svNV", "glVertexAttrib2svNV", (void *) wine_glVertexAttrib2svNV, (void **) (&func_glVertexAttrib2svNV) },
+  { "glVertexAttrib3dARB", "glVertexAttrib3dARB", (void *) wine_glVertexAttrib3dARB, (void **) (&func_glVertexAttrib3dARB) },
   { "glVertexAttrib3dNV", "glVertexAttrib3dNV", (void *) wine_glVertexAttrib3dNV, (void **) (&func_glVertexAttrib3dNV) },
+  { "glVertexAttrib3dvARB", "glVertexAttrib3dvARB", (void *) wine_glVertexAttrib3dvARB, (void **) (&func_glVertexAttrib3dvARB) },
   { "glVertexAttrib3dvNV", "glVertexAttrib3dvNV", (void *) wine_glVertexAttrib3dvNV, (void **) (&func_glVertexAttrib3dvNV) },
+  { "glVertexAttrib3fARB", "glVertexAttrib3fARB", (void *) wine_glVertexAttrib3fARB, (void **) (&func_glVertexAttrib3fARB) },
   { "glVertexAttrib3fNV", "glVertexAttrib3fNV", (void *) wine_glVertexAttrib3fNV, (void **) (&func_glVertexAttrib3fNV) },
+  { "glVertexAttrib3fvARB", "glVertexAttrib3fvARB", (void *) wine_glVertexAttrib3fvARB, (void **) (&func_glVertexAttrib3fvARB) },
   { "glVertexAttrib3fvNV", "glVertexAttrib3fvNV", (void *) wine_glVertexAttrib3fvNV, (void **) (&func_glVertexAttrib3fvNV) },
+  { "glVertexAttrib3sARB", "glVertexAttrib3sARB", (void *) wine_glVertexAttrib3sARB, (void **) (&func_glVertexAttrib3sARB) },
   { "glVertexAttrib3sNV", "glVertexAttrib3sNV", (void *) wine_glVertexAttrib3sNV, (void **) (&func_glVertexAttrib3sNV) },
+  { "glVertexAttrib3svARB", "glVertexAttrib3svARB", (void *) wine_glVertexAttrib3svARB, (void **) (&func_glVertexAttrib3svARB) },
   { "glVertexAttrib3svNV", "glVertexAttrib3svNV", (void *) wine_glVertexAttrib3svNV, (void **) (&func_glVertexAttrib3svNV) },
+  { "glVertexAttrib4NbvARB", "glVertexAttrib4NbvARB", (void *) wine_glVertexAttrib4NbvARB, (void **) (&func_glVertexAttrib4NbvARB) },
+  { "glVertexAttrib4NivARB", "glVertexAttrib4NivARB", (void *) wine_glVertexAttrib4NivARB, (void **) (&func_glVertexAttrib4NivARB) },
+  { "glVertexAttrib4NsvARB", "glVertexAttrib4NsvARB", (void *) wine_glVertexAttrib4NsvARB, (void **) (&func_glVertexAttrib4NsvARB) },
+  { "glVertexAttrib4NubARB", "glVertexAttrib4NubARB", (void *) wine_glVertexAttrib4NubARB, (void **) (&func_glVertexAttrib4NubARB) },
+  { "glVertexAttrib4NubvARB", "glVertexAttrib4NubvARB", (void *) wine_glVertexAttrib4NubvARB, (void **) (&func_glVertexAttrib4NubvARB) },
+  { "glVertexAttrib4NuivARB", "glVertexAttrib4NuivARB", (void *) wine_glVertexAttrib4NuivARB, (void **) (&func_glVertexAttrib4NuivARB) },
+  { "glVertexAttrib4NusvARB", "glVertexAttrib4NusvARB", (void *) wine_glVertexAttrib4NusvARB, (void **) (&func_glVertexAttrib4NusvARB) },
+  { "glVertexAttrib4bvARB", "glVertexAttrib4bvARB", (void *) wine_glVertexAttrib4bvARB, (void **) (&func_glVertexAttrib4bvARB) },
+  { "glVertexAttrib4dARB", "glVertexAttrib4dARB", (void *) wine_glVertexAttrib4dARB, (void **) (&func_glVertexAttrib4dARB) },
   { "glVertexAttrib4dNV", "glVertexAttrib4dNV", (void *) wine_glVertexAttrib4dNV, (void **) (&func_glVertexAttrib4dNV) },
+  { "glVertexAttrib4dvARB", "glVertexAttrib4dvARB", (void *) wine_glVertexAttrib4dvARB, (void **) (&func_glVertexAttrib4dvARB) },
   { "glVertexAttrib4dvNV", "glVertexAttrib4dvNV", (void *) wine_glVertexAttrib4dvNV, (void **) (&func_glVertexAttrib4dvNV) },
+  { "glVertexAttrib4fARB", "glVertexAttrib4fARB", (void *) wine_glVertexAttrib4fARB, (void **) (&func_glVertexAttrib4fARB) },
   { "glVertexAttrib4fNV", "glVertexAttrib4fNV", (void *) wine_glVertexAttrib4fNV, (void **) (&func_glVertexAttrib4fNV) },
+  { "glVertexAttrib4fvARB", "glVertexAttrib4fvARB", (void *) wine_glVertexAttrib4fvARB, (void **) (&func_glVertexAttrib4fvARB) },
   { "glVertexAttrib4fvNV", "glVertexAttrib4fvNV", (void *) wine_glVertexAttrib4fvNV, (void **) (&func_glVertexAttrib4fvNV) },
+  { "glVertexAttrib4ivARB", "glVertexAttrib4ivARB", (void *) wine_glVertexAttrib4ivARB, (void **) (&func_glVertexAttrib4ivARB) },
+  { "glVertexAttrib4sARB", "glVertexAttrib4sARB", (void *) wine_glVertexAttrib4sARB, (void **) (&func_glVertexAttrib4sARB) },
   { "glVertexAttrib4sNV", "glVertexAttrib4sNV", (void *) wine_glVertexAttrib4sNV, (void **) (&func_glVertexAttrib4sNV) },
+  { "glVertexAttrib4svARB", "glVertexAttrib4svARB", (void *) wine_glVertexAttrib4svARB, (void **) (&func_glVertexAttrib4svARB) },
   { "glVertexAttrib4svNV", "glVertexAttrib4svNV", (void *) wine_glVertexAttrib4svNV, (void **) (&func_glVertexAttrib4svNV) },
   { "glVertexAttrib4ubNV", "glVertexAttrib4ubNV", (void *) wine_glVertexAttrib4ubNV, (void **) (&func_glVertexAttrib4ubNV) },
+  { "glVertexAttrib4ubvARB", "glVertexAttrib4ubvARB", (void *) wine_glVertexAttrib4ubvARB, (void **) (&func_glVertexAttrib4ubvARB) },
   { "glVertexAttrib4ubvNV", "glVertexAttrib4ubvNV", (void *) wine_glVertexAttrib4ubvNV, (void **) (&func_glVertexAttrib4ubvNV) },
+  { "glVertexAttrib4uivARB", "glVertexAttrib4uivARB", (void *) wine_glVertexAttrib4uivARB, (void **) (&func_glVertexAttrib4uivARB) },
+  { "glVertexAttrib4usvARB", "glVertexAttrib4usvARB", (void *) wine_glVertexAttrib4usvARB, (void **) (&func_glVertexAttrib4usvARB) },
+  { "glVertexAttribPointerARB", "glVertexAttribPointerARB", (void *) wine_glVertexAttribPointerARB, (void **) (&func_glVertexAttribPointerARB) },
   { "glVertexAttribPointerNV", "glVertexAttribPointerNV", (void *) wine_glVertexAttribPointerNV, (void **) (&func_glVertexAttribPointerNV) },
   { "glVertexAttribs1dvNV", "glVertexAttribs1dvNV", (void *) wine_glVertexAttribs1dvNV, (void **) (&func_glVertexAttribs1dvNV) },
   { "glVertexAttribs1fvNV", "glVertexAttribs1fvNV", (void *) wine_glVertexAttribs1fvNV, (void **) (&func_glVertexAttribs1fvNV) },
@@ -1972,36 +2295,52 @@ OpenGL_extension extension_registry[666] = {
   { "glWeightubvARB", "glWeightubvARB", (void *) wine_glWeightubvARB, (void **) (&func_glWeightubvARB) },
   { "glWeightuivARB", "glWeightuivARB", (void *) wine_glWeightuivARB, (void **) (&func_glWeightuivARB) },
   { "glWeightusvARB", "glWeightusvARB", (void *) wine_glWeightusvARB, (void **) (&func_glWeightusvARB) },
+  { "glWindowPos2d", "glWindowPos2d", (void *) wine_glWindowPos2d, (void **) (&func_glWindowPos2d) },
   { "glWindowPos2dARB", "glWindowPos2dARB", (void *) wine_glWindowPos2dARB, (void **) (&func_glWindowPos2dARB) },
   { "glWindowPos2dMESA", "glWindowPos2dMESA", (void *) wine_glWindowPos2dMESA, (void **) (&func_glWindowPos2dMESA) },
+  { "glWindowPos2dv", "glWindowPos2dv", (void *) wine_glWindowPos2dv, (void **) (&func_glWindowPos2dv) },
   { "glWindowPos2dvARB", "glWindowPos2dvARB", (void *) wine_glWindowPos2dvARB, (void **) (&func_glWindowPos2dvARB) },
   { "glWindowPos2dvMESA", "glWindowPos2dvMESA", (void *) wine_glWindowPos2dvMESA, (void **) (&func_glWindowPos2dvMESA) },
+  { "glWindowPos2f", "glWindowPos2f", (void *) wine_glWindowPos2f, (void **) (&func_glWindowPos2f) },
   { "glWindowPos2fARB", "glWindowPos2fARB", (void *) wine_glWindowPos2fARB, (void **) (&func_glWindowPos2fARB) },
   { "glWindowPos2fMESA", "glWindowPos2fMESA", (void *) wine_glWindowPos2fMESA, (void **) (&func_glWindowPos2fMESA) },
+  { "glWindowPos2fv", "glWindowPos2fv", (void *) wine_glWindowPos2fv, (void **) (&func_glWindowPos2fv) },
   { "glWindowPos2fvARB", "glWindowPos2fvARB", (void *) wine_glWindowPos2fvARB, (void **) (&func_glWindowPos2fvARB) },
   { "glWindowPos2fvMESA", "glWindowPos2fvMESA", (void *) wine_glWindowPos2fvMESA, (void **) (&func_glWindowPos2fvMESA) },
+  { "glWindowPos2i", "glWindowPos2i", (void *) wine_glWindowPos2i, (void **) (&func_glWindowPos2i) },
   { "glWindowPos2iARB", "glWindowPos2iARB", (void *) wine_glWindowPos2iARB, (void **) (&func_glWindowPos2iARB) },
   { "glWindowPos2iMESA", "glWindowPos2iMESA", (void *) wine_glWindowPos2iMESA, (void **) (&func_glWindowPos2iMESA) },
+  { "glWindowPos2iv", "glWindowPos2iv", (void *) wine_glWindowPos2iv, (void **) (&func_glWindowPos2iv) },
   { "glWindowPos2ivARB", "glWindowPos2ivARB", (void *) wine_glWindowPos2ivARB, (void **) (&func_glWindowPos2ivARB) },
   { "glWindowPos2ivMESA", "glWindowPos2ivMESA", (void *) wine_glWindowPos2ivMESA, (void **) (&func_glWindowPos2ivMESA) },
+  { "glWindowPos2s", "glWindowPos2s", (void *) wine_glWindowPos2s, (void **) (&func_glWindowPos2s) },
   { "glWindowPos2sARB", "glWindowPos2sARB", (void *) wine_glWindowPos2sARB, (void **) (&func_glWindowPos2sARB) },
   { "glWindowPos2sMESA", "glWindowPos2sMESA", (void *) wine_glWindowPos2sMESA, (void **) (&func_glWindowPos2sMESA) },
+  { "glWindowPos2sv", "glWindowPos2sv", (void *) wine_glWindowPos2sv, (void **) (&func_glWindowPos2sv) },
   { "glWindowPos2svARB", "glWindowPos2svARB", (void *) wine_glWindowPos2svARB, (void **) (&func_glWindowPos2svARB) },
   { "glWindowPos2svMESA", "glWindowPos2svMESA", (void *) wine_glWindowPos2svMESA, (void **) (&func_glWindowPos2svMESA) },
+  { "glWindowPos3d", "glWindowPos3d", (void *) wine_glWindowPos3d, (void **) (&func_glWindowPos3d) },
   { "glWindowPos3dARB", "glWindowPos3dARB", (void *) wine_glWindowPos3dARB, (void **) (&func_glWindowPos3dARB) },
   { "glWindowPos3dMESA", "glWindowPos3dMESA", (void *) wine_glWindowPos3dMESA, (void **) (&func_glWindowPos3dMESA) },
+  { "glWindowPos3dv", "glWindowPos3dv", (void *) wine_glWindowPos3dv, (void **) (&func_glWindowPos3dv) },
   { "glWindowPos3dvARB", "glWindowPos3dvARB", (void *) wine_glWindowPos3dvARB, (void **) (&func_glWindowPos3dvARB) },
   { "glWindowPos3dvMESA", "glWindowPos3dvMESA", (void *) wine_glWindowPos3dvMESA, (void **) (&func_glWindowPos3dvMESA) },
+  { "glWindowPos3f", "glWindowPos3f", (void *) wine_glWindowPos3f, (void **) (&func_glWindowPos3f) },
   { "glWindowPos3fARB", "glWindowPos3fARB", (void *) wine_glWindowPos3fARB, (void **) (&func_glWindowPos3fARB) },
   { "glWindowPos3fMESA", "glWindowPos3fMESA", (void *) wine_glWindowPos3fMESA, (void **) (&func_glWindowPos3fMESA) },
+  { "glWindowPos3fv", "glWindowPos3fv", (void *) wine_glWindowPos3fv, (void **) (&func_glWindowPos3fv) },
   { "glWindowPos3fvARB", "glWindowPos3fvARB", (void *) wine_glWindowPos3fvARB, (void **) (&func_glWindowPos3fvARB) },
   { "glWindowPos3fvMESA", "glWindowPos3fvMESA", (void *) wine_glWindowPos3fvMESA, (void **) (&func_glWindowPos3fvMESA) },
+  { "glWindowPos3i", "glWindowPos3i", (void *) wine_glWindowPos3i, (void **) (&func_glWindowPos3i) },
   { "glWindowPos3iARB", "glWindowPos3iARB", (void *) wine_glWindowPos3iARB, (void **) (&func_glWindowPos3iARB) },
   { "glWindowPos3iMESA", "glWindowPos3iMESA", (void *) wine_glWindowPos3iMESA, (void **) (&func_glWindowPos3iMESA) },
+  { "glWindowPos3iv", "glWindowPos3iv", (void *) wine_glWindowPos3iv, (void **) (&func_glWindowPos3iv) },
   { "glWindowPos3ivARB", "glWindowPos3ivARB", (void *) wine_glWindowPos3ivARB, (void **) (&func_glWindowPos3ivARB) },
   { "glWindowPos3ivMESA", "glWindowPos3ivMESA", (void *) wine_glWindowPos3ivMESA, (void **) (&func_glWindowPos3ivMESA) },
+  { "glWindowPos3s", "glWindowPos3s", (void *) wine_glWindowPos3s, (void **) (&func_glWindowPos3s) },
   { "glWindowPos3sARB", "glWindowPos3sARB", (void *) wine_glWindowPos3sARB, (void **) (&func_glWindowPos3sARB) },
   { "glWindowPos3sMESA", "glWindowPos3sMESA", (void *) wine_glWindowPos3sMESA, (void **) (&func_glWindowPos3sMESA) },
+  { "glWindowPos3sv", "glWindowPos3sv", (void *) wine_glWindowPos3sv, (void **) (&func_glWindowPos3sv) },
   { "glWindowPos3svARB", "glWindowPos3svARB", (void *) wine_glWindowPos3svARB, (void **) (&func_glWindowPos3svARB) },
   { "glWindowPos3svMESA", "glWindowPos3svMESA", (void *) wine_glWindowPos3svMESA, (void **) (&func_glWindowPos3svMESA) },
   { "glWindowPos4dMESA", "glWindowPos4dMESA", (void *) wine_glWindowPos4dMESA, (void **) (&func_glWindowPos4dMESA) },
@@ -2018,6 +2357,13 @@ OpenGL_extension extension_registry[666] = {
 };
 
 /* The thunks themselves....*/
+void WINAPI wine_glActiveStencilFaceEXT( GLenum face ) {
+  TRACE("(%d)\n", face );
+  ENTER_GL();
+  func_glActiveStencilFaceEXT( face );
+  LEAVE_GL();
+}
+
 void WINAPI wine_glActiveTexture( GLenum texture ) {
   TRACE("(%d)\n", texture );
   ENTER_GL();
@@ -2145,6 +2491,13 @@ GLuint WINAPI wine_glBindParameterEXT( GLenum value ) {
   ret_value = func_glBindParameterEXT( value );
   LEAVE_GL();
   return ret_value;
+}
+
+void WINAPI wine_glBindProgramARB( GLenum target, GLuint program ) {
+  TRACE("(%d, %d)\n", target, program );
+  ENTER_GL();
+  func_glBindProgramARB( target, program );
+  LEAVE_GL();
 }
 
 void WINAPI wine_glBindProgramNV( GLenum target, GLuint id ) {
@@ -2277,6 +2630,13 @@ void WINAPI wine_glBlendEquationEXT( GLenum mode ) {
   LEAVE_GL();
 }
 
+void WINAPI wine_glBlendFuncSeparate( GLenum sfactorRGB, GLenum dfactorRGB, GLenum sfactorAlpha, GLenum dfactorAlpha ) {
+  TRACE("(%d, %d, %d, %d)\n", sfactorRGB, dfactorRGB, sfactorAlpha, dfactorAlpha );
+  ENTER_GL();
+  func_glBlendFuncSeparate( sfactorRGB, dfactorRGB, sfactorAlpha, dfactorAlpha );
+  LEAVE_GL();
+}
+
 void WINAPI wine_glBlendFuncSeparateEXT( GLenum sfactorRGB, GLenum dfactorRGB, GLenum sfactorAlpha, GLenum dfactorAlpha ) {
   TRACE("(%d, %d, %d, %d)\n", sfactorRGB, dfactorRGB, sfactorAlpha, dfactorAlpha );
   ENTER_GL();
@@ -2289,6 +2649,15 @@ void WINAPI wine_glBlendFuncSeparateINGR( GLenum sfactorRGB, GLenum dfactorRGB, 
   ENTER_GL();
   func_glBlendFuncSeparateINGR( sfactorRGB, dfactorRGB, sfactorAlpha, dfactorAlpha );
   LEAVE_GL();
+}
+
+GLuint WINAPI wine_glBufferRegionEnabled( ) {
+  GLuint ret_value;
+  TRACE("()\n");
+  ENTER_GL();
+  ret_value = func_glBufferRegionEnabled( );
+  LEAVE_GL();
+  return ret_value;
 }
 
 void WINAPI wine_glClientActiveTexture( GLenum texture ) {
@@ -2725,6 +3094,13 @@ void WINAPI wine_glDeleteAsyncMarkersSGIX( GLuint marker, GLsizei range ) {
   LEAVE_GL();
 }
 
+void WINAPI wine_glDeleteBufferRegion( GLenum region ) {
+  TRACE("(%d)\n", region );
+  ENTER_GL();
+  func_glDeleteBufferRegion( region );
+  LEAVE_GL();
+}
+
 void WINAPI wine_glDeleteFencesNV( GLsizei n, GLuint* fences ) {
   TRACE("(%d, %p)\n", n, fences );
   ENTER_GL();
@@ -2750,6 +3126,13 @@ void WINAPI wine_glDeleteOcclusionQueriesNV( GLsizei n, GLuint* ids ) {
   TRACE("(%d, %p)\n", n, ids );
   ENTER_GL();
   func_glDeleteOcclusionQueriesNV( n, ids );
+  LEAVE_GL();
+}
+
+void WINAPI wine_glDeleteProgramsARB( GLsizei n, GLuint* programs ) {
+  TRACE("(%d, %p)\n", n, programs );
+  ENTER_GL();
+  func_glDeleteProgramsARB( n, programs );
   LEAVE_GL();
 }
 
@@ -2788,10 +3171,24 @@ void WINAPI wine_glDisableVariantClientStateEXT( GLuint id ) {
   LEAVE_GL();
 }
 
+void WINAPI wine_glDisableVertexAttribArrayARB( GLuint index ) {
+  TRACE("(%d)\n", index );
+  ENTER_GL();
+  func_glDisableVertexAttribArrayARB( index );
+  LEAVE_GL();
+}
+
 void WINAPI wine_glDrawArraysEXT( GLenum mode, GLint first, GLsizei count ) {
   TRACE("(%d, %d, %d)\n", mode, first, count );
   ENTER_GL();
   func_glDrawArraysEXT( mode, first, count );
+  LEAVE_GL();
+}
+
+void WINAPI wine_glDrawBufferRegion( GLenum region, GLint x, GLint y, GLsizei width, GLsizei height, GLint xDest, GLint yDest ) {
+  TRACE("(%d, %d, %d, %d, %d, %d, %d)\n", region, x, y, width, height, xDest, yDest );
+  ENTER_GL();
+  func_glDrawBufferRegion( region, x, y, width, height, xDest, yDest );
   LEAVE_GL();
 }
 
@@ -2848,6 +3245,13 @@ void WINAPI wine_glEnableVariantClientStateEXT( GLuint id ) {
   TRACE("(%d)\n", id );
   ENTER_GL();
   func_glEnableVariantClientStateEXT( id );
+  LEAVE_GL();
+}
+
+void WINAPI wine_glEnableVertexAttribArrayARB( GLuint index ) {
+  TRACE("(%d)\n", index );
+  ENTER_GL();
+  func_glEnableVertexAttribArrayARB( index );
   LEAVE_GL();
 }
 
@@ -2937,6 +3341,13 @@ void WINAPI wine_glFlushVertexArrayRangeNV( ) {
   LEAVE_GL();
 }
 
+void WINAPI wine_glFogCoordPointer( GLenum type, GLsizei stride, GLvoid* pointer ) {
+  TRACE("(%d, %d, %p)\n", type, stride, pointer );
+  ENTER_GL();
+  func_glFogCoordPointer( type, stride, pointer );
+  LEAVE_GL();
+}
+
 void WINAPI wine_glFogCoordPointerEXT( GLenum type, GLsizei stride, GLvoid* pointer ) {
   TRACE("(%d, %d, %p)\n", type, stride, pointer );
   ENTER_GL();
@@ -2951,10 +3362,24 @@ void WINAPI wine_glFogCoordPointerListIBM( GLenum type, GLint stride, GLvoid** p
   LEAVE_GL();
 }
 
+void WINAPI wine_glFogCoordd( GLdouble coord ) {
+  TRACE("(%f)\n", coord );
+  ENTER_GL();
+  func_glFogCoordd( coord );
+  LEAVE_GL();
+}
+
 void WINAPI wine_glFogCoorddEXT( GLdouble coord ) {
   TRACE("(%f)\n", coord );
   ENTER_GL();
   func_glFogCoorddEXT( coord );
+  LEAVE_GL();
+}
+
+void WINAPI wine_glFogCoorddv( GLdouble* coord ) {
+  TRACE("(%p)\n", coord );
+  ENTER_GL();
+  func_glFogCoorddv( coord );
   LEAVE_GL();
 }
 
@@ -2965,10 +3390,24 @@ void WINAPI wine_glFogCoorddvEXT( GLdouble* coord ) {
   LEAVE_GL();
 }
 
+void WINAPI wine_glFogCoordf( GLfloat coord ) {
+  TRACE("(%f)\n", coord );
+  ENTER_GL();
+  func_glFogCoordf( coord );
+  LEAVE_GL();
+}
+
 void WINAPI wine_glFogCoordfEXT( GLfloat coord ) {
   TRACE("(%f)\n", coord );
   ENTER_GL();
   func_glFogCoordfEXT( coord );
+  LEAVE_GL();
+}
+
+void WINAPI wine_glFogCoordfv( GLfloat* coord ) {
+  TRACE("(%p)\n", coord );
+  ENTER_GL();
+  func_glFogCoordfv( coord );
   LEAVE_GL();
 }
 
@@ -3113,6 +3552,13 @@ void WINAPI wine_glGenOcclusionQueriesNV( GLsizei n, GLuint* ids ) {
   TRACE("(%d, %p)\n", n, ids );
   ENTER_GL();
   func_glGenOcclusionQueriesNV( n, ids );
+  LEAVE_GL();
+}
+
+void WINAPI wine_glGenProgramsARB( GLsizei n, GLuint* programs ) {
+  TRACE("(%d, %p)\n", n, programs );
+  ENTER_GL();
+  func_glGenProgramsARB( n, programs );
   LEAVE_GL();
 }
 
@@ -3542,6 +3988,34 @@ void WINAPI wine_glGetPointervEXT( GLenum pname, GLvoid** params ) {
   LEAVE_GL();
 }
 
+void WINAPI wine_glGetProgramEnvParameterdvARB( GLenum target, GLuint index, GLdouble* params ) {
+  TRACE("(%d, %d, %p)\n", target, index, params );
+  ENTER_GL();
+  func_glGetProgramEnvParameterdvARB( target, index, params );
+  LEAVE_GL();
+}
+
+void WINAPI wine_glGetProgramEnvParameterfvARB( GLenum target, GLuint index, GLfloat* params ) {
+  TRACE("(%d, %d, %p)\n", target, index, params );
+  ENTER_GL();
+  func_glGetProgramEnvParameterfvARB( target, index, params );
+  LEAVE_GL();
+}
+
+void WINAPI wine_glGetProgramLocalParameterdvARB( GLenum target, GLuint index, GLdouble* params ) {
+  TRACE("(%d, %d, %p)\n", target, index, params );
+  ENTER_GL();
+  func_glGetProgramLocalParameterdvARB( target, index, params );
+  LEAVE_GL();
+}
+
+void WINAPI wine_glGetProgramLocalParameterfvARB( GLenum target, GLuint index, GLfloat* params ) {
+  TRACE("(%d, %d, %p)\n", target, index, params );
+  ENTER_GL();
+  func_glGetProgramLocalParameterfvARB( target, index, params );
+  LEAVE_GL();
+}
+
 void WINAPI wine_glGetProgramParameterdvNV( GLenum target, GLuint index, GLenum pname, GLdouble* params ) {
   TRACE("(%d, %d, %d, %p)\n", target, index, pname, params );
   ENTER_GL();
@@ -3556,10 +4030,24 @@ void WINAPI wine_glGetProgramParameterfvNV( GLenum target, GLuint index, GLenum 
   LEAVE_GL();
 }
 
+void WINAPI wine_glGetProgramStringARB( GLenum target, GLenum pname, GLvoid* string ) {
+  TRACE("(%d, %d, %p)\n", target, pname, string );
+  ENTER_GL();
+  func_glGetProgramStringARB( target, pname, string );
+  LEAVE_GL();
+}
+
 void WINAPI wine_glGetProgramStringNV( GLuint id, GLenum pname, GLubyte* program ) {
   TRACE("(%d, %d, %p)\n", id, pname, program );
   ENTER_GL();
   func_glGetProgramStringNV( id, pname, program );
+  LEAVE_GL();
+}
+
+void WINAPI wine_glGetProgramivARB( GLenum target, GLenum pname, GLint* params ) {
+  TRACE("(%d, %d, %p)\n", target, pname, params );
+  ENTER_GL();
+  func_glGetProgramivARB( target, pname, params );
   LEAVE_GL();
 }
 
@@ -3654,10 +4142,24 @@ void WINAPI wine_glGetVariantPointervEXT( GLuint id, GLenum value, GLvoid** data
   LEAVE_GL();
 }
 
+void WINAPI wine_glGetVertexAttribPointervARB( GLuint index, GLenum pname, GLvoid** pointer ) {
+  TRACE("(%d, %d, %p)\n", index, pname, pointer );
+  ENTER_GL();
+  func_glGetVertexAttribPointervARB( index, pname, pointer );
+  LEAVE_GL();
+}
+
 void WINAPI wine_glGetVertexAttribPointervNV( GLuint index, GLenum pname, GLvoid** pointer ) {
   TRACE("(%d, %d, %p)\n", index, pname, pointer );
   ENTER_GL();
   func_glGetVertexAttribPointervNV( index, pname, pointer );
+  LEAVE_GL();
+}
+
+void WINAPI wine_glGetVertexAttribdvARB( GLuint index, GLenum pname, GLdouble* params ) {
+  TRACE("(%d, %d, %p)\n", index, pname, params );
+  ENTER_GL();
+  func_glGetVertexAttribdvARB( index, pname, params );
   LEAVE_GL();
 }
 
@@ -3668,10 +4170,24 @@ void WINAPI wine_glGetVertexAttribdvNV( GLuint index, GLenum pname, GLdouble* pa
   LEAVE_GL();
 }
 
+void WINAPI wine_glGetVertexAttribfvARB( GLuint index, GLenum pname, GLfloat* params ) {
+  TRACE("(%d, %d, %p)\n", index, pname, params );
+  ENTER_GL();
+  func_glGetVertexAttribfvARB( index, pname, params );
+  LEAVE_GL();
+}
+
 void WINAPI wine_glGetVertexAttribfvNV( GLuint index, GLenum pname, GLfloat* params ) {
   TRACE("(%d, %d, %p)\n", index, pname, params );
   ENTER_GL();
   func_glGetVertexAttribfvNV( index, pname, params );
+  LEAVE_GL();
+}
+
+void WINAPI wine_glGetVertexAttribivARB( GLuint index, GLenum pname, GLint* params ) {
+  TRACE("(%d, %d, %p)\n", index, pname, params );
+  ENTER_GL();
+  func_glGetVertexAttribivARB( index, pname, params );
   LEAVE_GL();
 }
 
@@ -3861,6 +4377,15 @@ GLboolean WINAPI wine_glIsOcclusionQueryNV( GLuint id ) {
   TRACE("(%d)\n", id );
   ENTER_GL();
   ret_value = func_glIsOcclusionQueryNV( id );
+  LEAVE_GL();
+  return ret_value;
+}
+
+GLboolean WINAPI wine_glIsProgramARB( GLuint program ) {
+  GLboolean ret_value;
+  TRACE("(%d)\n", program );
+  ENTER_GL();
+  ret_value = func_glIsProgramARB( program );
   LEAVE_GL();
   return ret_value;
 }
@@ -4074,10 +4599,24 @@ void WINAPI wine_glMultTransposeMatrixfARB( GLfloat* m ) {
   LEAVE_GL();
 }
 
+void WINAPI wine_glMultiDrawArrays( GLenum mode, GLint* first, GLsizei* count, GLsizei primcount ) {
+  TRACE("(%d, %p, %p, %d)\n", mode, first, count, primcount );
+  ENTER_GL();
+  func_glMultiDrawArrays( mode, first, count, primcount );
+  LEAVE_GL();
+}
+
 void WINAPI wine_glMultiDrawArraysEXT( GLenum mode, GLint* first, GLsizei* count, GLsizei primcount ) {
   TRACE("(%d, %p, %p, %d)\n", mode, first, count, primcount );
   ENTER_GL();
   func_glMultiDrawArraysEXT( mode, first, count, primcount );
+  LEAVE_GL();
+}
+
+void WINAPI wine_glMultiDrawElements( GLenum mode, GLsizei* count, GLenum type, GLvoid** indices, GLsizei primcount ) {
+  TRACE("(%d, %p, %d, %p, %d)\n", mode, count, type, indices, primcount );
+  ENTER_GL();
+  func_glMultiDrawElements( mode, count, type, indices, primcount );
   LEAVE_GL();
 }
 
@@ -4557,6 +5096,15 @@ void WINAPI wine_glMultiTexCoordPointerSGIS( GLenum target, GLint size, GLenum t
   LEAVE_GL();
 }
 
+GLuint WINAPI wine_glNewBufferRegion( GLenum type ) {
+  GLuint ret_value;
+  TRACE("(%d)\n", type );
+  ENTER_GL();
+  ret_value = func_glNewBufferRegion( type );
+  LEAVE_GL();
+  return ret_value;
+}
+
 GLuint WINAPI wine_glNewObjectBufferATI( GLsizei size, GLvoid* pointer, GLenum usage ) {
   GLuint ret_value;
   TRACE("(%d, %p, %d)\n", size, pointer, usage );
@@ -4755,6 +5303,13 @@ void WINAPI wine_glPixelTransformParameterivEXT( GLenum target, GLenum pname, GL
   LEAVE_GL();
 }
 
+void WINAPI wine_glPointParameterf( GLenum pname, GLfloat param ) {
+  TRACE("(%d, %f)\n", pname, param );
+  ENTER_GL();
+  func_glPointParameterf( pname, param );
+  LEAVE_GL();
+}
+
 void WINAPI wine_glPointParameterfARB( GLenum pname, GLfloat param ) {
   TRACE("(%d, %f)\n", pname, param );
   ENTER_GL();
@@ -4773,6 +5328,13 @@ void WINAPI wine_glPointParameterfSGIS( GLenum pname, GLfloat param ) {
   TRACE("(%d, %f)\n", pname, param );
   ENTER_GL();
   func_glPointParameterfSGIS( pname, param );
+  LEAVE_GL();
+}
+
+void WINAPI wine_glPointParameterfv( GLenum pname, GLfloat* params ) {
+  TRACE("(%d, %p)\n", pname, params );
+  ENTER_GL();
+  func_glPointParameterfv( pname, params );
   LEAVE_GL();
 }
 
@@ -4797,10 +5359,24 @@ void WINAPI wine_glPointParameterfvSGIS( GLenum pname, GLfloat* params ) {
   LEAVE_GL();
 }
 
+void WINAPI wine_glPointParameteri( GLenum pname, GLint param ) {
+  TRACE("(%d, %d)\n", pname, param );
+  ENTER_GL();
+  func_glPointParameteri( pname, param );
+  LEAVE_GL();
+}
+
 void WINAPI wine_glPointParameteriNV( GLenum pname, GLint param ) {
   TRACE("(%d, %d)\n", pname, param );
   ENTER_GL();
   func_glPointParameteriNV( pname, param );
+  LEAVE_GL();
+}
+
+void WINAPI wine_glPointParameteriv( GLenum pname, GLint* params ) {
+  TRACE("(%d, %p)\n", pname, params );
+  ENTER_GL();
+  func_glPointParameteriv( pname, params );
   LEAVE_GL();
 }
 
@@ -4843,6 +5419,62 @@ void WINAPI wine_glPrioritizeTexturesEXT( GLsizei n, GLuint* textures, GLclampf*
   LEAVE_GL();
 }
 
+void WINAPI wine_glProgramEnvParameter4dARB( GLenum target, GLuint index, GLdouble x, GLdouble y, GLdouble z, GLdouble w ) {
+  TRACE("(%d, %d, %f, %f, %f, %f)\n", target, index, x, y, z, w );
+  ENTER_GL();
+  func_glProgramEnvParameter4dARB( target, index, x, y, z, w );
+  LEAVE_GL();
+}
+
+void WINAPI wine_glProgramEnvParameter4dvARB( GLenum target, GLuint index, GLdouble* params ) {
+  TRACE("(%d, %d, %p)\n", target, index, params );
+  ENTER_GL();
+  func_glProgramEnvParameter4dvARB( target, index, params );
+  LEAVE_GL();
+}
+
+void WINAPI wine_glProgramEnvParameter4fARB( GLenum target, GLuint index, GLfloat x, GLfloat y, GLfloat z, GLfloat w ) {
+  TRACE("(%d, %d, %f, %f, %f, %f)\n", target, index, x, y, z, w );
+  ENTER_GL();
+  func_glProgramEnvParameter4fARB( target, index, x, y, z, w );
+  LEAVE_GL();
+}
+
+void WINAPI wine_glProgramEnvParameter4fvARB( GLenum target, GLuint index, GLfloat* params ) {
+  TRACE("(%d, %d, %p)\n", target, index, params );
+  ENTER_GL();
+  func_glProgramEnvParameter4fvARB( target, index, params );
+  LEAVE_GL();
+}
+
+void WINAPI wine_glProgramLocalParameter4dARB( GLenum target, GLuint index, GLdouble x, GLdouble y, GLdouble z, GLdouble w ) {
+  TRACE("(%d, %d, %f, %f, %f, %f)\n", target, index, x, y, z, w );
+  ENTER_GL();
+  func_glProgramLocalParameter4dARB( target, index, x, y, z, w );
+  LEAVE_GL();
+}
+
+void WINAPI wine_glProgramLocalParameter4dvARB( GLenum target, GLuint index, GLdouble* params ) {
+  TRACE("(%d, %d, %p)\n", target, index, params );
+  ENTER_GL();
+  func_glProgramLocalParameter4dvARB( target, index, params );
+  LEAVE_GL();
+}
+
+void WINAPI wine_glProgramLocalParameter4fARB( GLenum target, GLuint index, GLfloat x, GLfloat y, GLfloat z, GLfloat w ) {
+  TRACE("(%d, %d, %f, %f, %f, %f)\n", target, index, x, y, z, w );
+  ENTER_GL();
+  func_glProgramLocalParameter4fARB( target, index, x, y, z, w );
+  LEAVE_GL();
+}
+
+void WINAPI wine_glProgramLocalParameter4fvARB( GLenum target, GLuint index, GLfloat* params ) {
+  TRACE("(%d, %d, %p)\n", target, index, params );
+  ENTER_GL();
+  func_glProgramLocalParameter4fvARB( target, index, params );
+  LEAVE_GL();
+}
+
 void WINAPI wine_glProgramParameter4dNV( GLenum target, GLuint index, GLdouble x, GLdouble y, GLdouble z, GLdouble w ) {
   TRACE("(%d, %d, %f, %f, %f, %f)\n", target, index, x, y, z, w );
   ENTER_GL();
@@ -4882,6 +5514,20 @@ void WINAPI wine_glProgramParameters4fvNV( GLenum target, GLuint index, GLuint c
   TRACE("(%d, %d, %d, %p)\n", target, index, count, v );
   ENTER_GL();
   func_glProgramParameters4fvNV( target, index, count, v );
+  LEAVE_GL();
+}
+
+void WINAPI wine_glProgramStringARB( GLenum target, GLenum format, GLsizei len, GLvoid* string ) {
+  TRACE("(%d, %d, %d, %p)\n", target, format, len, string );
+  ENTER_GL();
+  func_glProgramStringARB( target, format, len, string );
+  LEAVE_GL();
+}
+
+void WINAPI wine_glReadBufferRegion( GLenum region, GLint x, GLint y, GLsizei width, GLsizei height ) {
+  TRACE("(%d, %d, %d, %d, %d)\n", region, x, y, width, height );
+  ENTER_GL();
+  func_glReadBufferRegion( region, x, y, width, height );
   LEAVE_GL();
 }
 
@@ -5137,10 +5783,24 @@ void WINAPI wine_glSamplePatternSGIS( GLenum pattern ) {
   LEAVE_GL();
 }
 
+void WINAPI wine_glSecondaryColor3b( GLbyte red, GLbyte green, GLbyte blue ) {
+  TRACE("(%d, %d, %d)\n", red, green, blue );
+  ENTER_GL();
+  func_glSecondaryColor3b( red, green, blue );
+  LEAVE_GL();
+}
+
 void WINAPI wine_glSecondaryColor3bEXT( GLbyte red, GLbyte green, GLbyte blue ) {
   TRACE("(%d, %d, %d)\n", red, green, blue );
   ENTER_GL();
   func_glSecondaryColor3bEXT( red, green, blue );
+  LEAVE_GL();
+}
+
+void WINAPI wine_glSecondaryColor3bv( GLbyte* v ) {
+  TRACE("(%p)\n", v );
+  ENTER_GL();
+  func_glSecondaryColor3bv( v );
   LEAVE_GL();
 }
 
@@ -5151,10 +5811,24 @@ void WINAPI wine_glSecondaryColor3bvEXT( GLbyte* v ) {
   LEAVE_GL();
 }
 
+void WINAPI wine_glSecondaryColor3d( GLdouble red, GLdouble green, GLdouble blue ) {
+  TRACE("(%f, %f, %f)\n", red, green, blue );
+  ENTER_GL();
+  func_glSecondaryColor3d( red, green, blue );
+  LEAVE_GL();
+}
+
 void WINAPI wine_glSecondaryColor3dEXT( GLdouble red, GLdouble green, GLdouble blue ) {
   TRACE("(%f, %f, %f)\n", red, green, blue );
   ENTER_GL();
   func_glSecondaryColor3dEXT( red, green, blue );
+  LEAVE_GL();
+}
+
+void WINAPI wine_glSecondaryColor3dv( GLdouble* v ) {
+  TRACE("(%p)\n", v );
+  ENTER_GL();
+  func_glSecondaryColor3dv( v );
   LEAVE_GL();
 }
 
@@ -5165,10 +5839,24 @@ void WINAPI wine_glSecondaryColor3dvEXT( GLdouble* v ) {
   LEAVE_GL();
 }
 
+void WINAPI wine_glSecondaryColor3f( GLfloat red, GLfloat green, GLfloat blue ) {
+  TRACE("(%f, %f, %f)\n", red, green, blue );
+  ENTER_GL();
+  func_glSecondaryColor3f( red, green, blue );
+  LEAVE_GL();
+}
+
 void WINAPI wine_glSecondaryColor3fEXT( GLfloat red, GLfloat green, GLfloat blue ) {
   TRACE("(%f, %f, %f)\n", red, green, blue );
   ENTER_GL();
   func_glSecondaryColor3fEXT( red, green, blue );
+  LEAVE_GL();
+}
+
+void WINAPI wine_glSecondaryColor3fv( GLfloat* v ) {
+  TRACE("(%p)\n", v );
+  ENTER_GL();
+  func_glSecondaryColor3fv( v );
   LEAVE_GL();
 }
 
@@ -5179,10 +5867,24 @@ void WINAPI wine_glSecondaryColor3fvEXT( GLfloat* v ) {
   LEAVE_GL();
 }
 
+void WINAPI wine_glSecondaryColor3i( GLint red, GLint green, GLint blue ) {
+  TRACE("(%d, %d, %d)\n", red, green, blue );
+  ENTER_GL();
+  func_glSecondaryColor3i( red, green, blue );
+  LEAVE_GL();
+}
+
 void WINAPI wine_glSecondaryColor3iEXT( GLint red, GLint green, GLint blue ) {
   TRACE("(%d, %d, %d)\n", red, green, blue );
   ENTER_GL();
   func_glSecondaryColor3iEXT( red, green, blue );
+  LEAVE_GL();
+}
+
+void WINAPI wine_glSecondaryColor3iv( GLint* v ) {
+  TRACE("(%p)\n", v );
+  ENTER_GL();
+  func_glSecondaryColor3iv( v );
   LEAVE_GL();
 }
 
@@ -5193,10 +5895,24 @@ void WINAPI wine_glSecondaryColor3ivEXT( GLint* v ) {
   LEAVE_GL();
 }
 
+void WINAPI wine_glSecondaryColor3s( GLshort red, GLshort green, GLshort blue ) {
+  TRACE("(%d, %d, %d)\n", red, green, blue );
+  ENTER_GL();
+  func_glSecondaryColor3s( red, green, blue );
+  LEAVE_GL();
+}
+
 void WINAPI wine_glSecondaryColor3sEXT( GLshort red, GLshort green, GLshort blue ) {
   TRACE("(%d, %d, %d)\n", red, green, blue );
   ENTER_GL();
   func_glSecondaryColor3sEXT( red, green, blue );
+  LEAVE_GL();
+}
+
+void WINAPI wine_glSecondaryColor3sv( GLshort* v ) {
+  TRACE("(%p)\n", v );
+  ENTER_GL();
+  func_glSecondaryColor3sv( v );
   LEAVE_GL();
 }
 
@@ -5207,10 +5923,24 @@ void WINAPI wine_glSecondaryColor3svEXT( GLshort* v ) {
   LEAVE_GL();
 }
 
+void WINAPI wine_glSecondaryColor3ub( GLubyte red, GLubyte green, GLubyte blue ) {
+  TRACE("(%d, %d, %d)\n", red, green, blue );
+  ENTER_GL();
+  func_glSecondaryColor3ub( red, green, blue );
+  LEAVE_GL();
+}
+
 void WINAPI wine_glSecondaryColor3ubEXT( GLubyte red, GLubyte green, GLubyte blue ) {
   TRACE("(%d, %d, %d)\n", red, green, blue );
   ENTER_GL();
   func_glSecondaryColor3ubEXT( red, green, blue );
+  LEAVE_GL();
+}
+
+void WINAPI wine_glSecondaryColor3ubv( GLubyte* v ) {
+  TRACE("(%p)\n", v );
+  ENTER_GL();
+  func_glSecondaryColor3ubv( v );
   LEAVE_GL();
 }
 
@@ -5221,10 +5951,24 @@ void WINAPI wine_glSecondaryColor3ubvEXT( GLubyte* v ) {
   LEAVE_GL();
 }
 
+void WINAPI wine_glSecondaryColor3ui( GLuint red, GLuint green, GLuint blue ) {
+  TRACE("(%d, %d, %d)\n", red, green, blue );
+  ENTER_GL();
+  func_glSecondaryColor3ui( red, green, blue );
+  LEAVE_GL();
+}
+
 void WINAPI wine_glSecondaryColor3uiEXT( GLuint red, GLuint green, GLuint blue ) {
   TRACE("(%d, %d, %d)\n", red, green, blue );
   ENTER_GL();
   func_glSecondaryColor3uiEXT( red, green, blue );
+  LEAVE_GL();
+}
+
+void WINAPI wine_glSecondaryColor3uiv( GLuint* v ) {
+  TRACE("(%p)\n", v );
+  ENTER_GL();
+  func_glSecondaryColor3uiv( v );
   LEAVE_GL();
 }
 
@@ -5235,6 +5979,13 @@ void WINAPI wine_glSecondaryColor3uivEXT( GLuint* v ) {
   LEAVE_GL();
 }
 
+void WINAPI wine_glSecondaryColor3us( GLushort red, GLushort green, GLushort blue ) {
+  TRACE("(%d, %d, %d)\n", red, green, blue );
+  ENTER_GL();
+  func_glSecondaryColor3us( red, green, blue );
+  LEAVE_GL();
+}
+
 void WINAPI wine_glSecondaryColor3usEXT( GLushort red, GLushort green, GLushort blue ) {
   TRACE("(%d, %d, %d)\n", red, green, blue );
   ENTER_GL();
@@ -5242,10 +5993,24 @@ void WINAPI wine_glSecondaryColor3usEXT( GLushort red, GLushort green, GLushort 
   LEAVE_GL();
 }
 
+void WINAPI wine_glSecondaryColor3usv( GLushort* v ) {
+  TRACE("(%p)\n", v );
+  ENTER_GL();
+  func_glSecondaryColor3usv( v );
+  LEAVE_GL();
+}
+
 void WINAPI wine_glSecondaryColor3usvEXT( GLushort* v ) {
   TRACE("(%p)\n", v );
   ENTER_GL();
   func_glSecondaryColor3usvEXT( v );
+  LEAVE_GL();
+}
+
+void WINAPI wine_glSecondaryColorPointer( GLint size, GLenum type, GLsizei stride, GLvoid* pointer ) {
+  TRACE("(%d, %d, %d, %p)\n", size, type, stride, pointer );
+  ENTER_GL();
+  func_glSecondaryColorPointer( size, type, stride, pointer );
   LEAVE_GL();
 }
 
@@ -5797,10 +6562,24 @@ void WINAPI wine_glVertexArrayRangeNV( GLsizei length, GLvoid* pointer ) {
   LEAVE_GL();
 }
 
+void WINAPI wine_glVertexAttrib1dARB( GLuint index, GLdouble x ) {
+  TRACE("(%d, %f)\n", index, x );
+  ENTER_GL();
+  func_glVertexAttrib1dARB( index, x );
+  LEAVE_GL();
+}
+
 void WINAPI wine_glVertexAttrib1dNV( GLuint index, GLdouble x ) {
   TRACE("(%d, %f)\n", index, x );
   ENTER_GL();
   func_glVertexAttrib1dNV( index, x );
+  LEAVE_GL();
+}
+
+void WINAPI wine_glVertexAttrib1dvARB( GLuint index, GLdouble* v ) {
+  TRACE("(%d, %p)\n", index, v );
+  ENTER_GL();
+  func_glVertexAttrib1dvARB( index, v );
   LEAVE_GL();
 }
 
@@ -5811,10 +6590,24 @@ void WINAPI wine_glVertexAttrib1dvNV( GLuint index, GLdouble* v ) {
   LEAVE_GL();
 }
 
+void WINAPI wine_glVertexAttrib1fARB( GLuint index, GLfloat x ) {
+  TRACE("(%d, %f)\n", index, x );
+  ENTER_GL();
+  func_glVertexAttrib1fARB( index, x );
+  LEAVE_GL();
+}
+
 void WINAPI wine_glVertexAttrib1fNV( GLuint index, GLfloat x ) {
   TRACE("(%d, %f)\n", index, x );
   ENTER_GL();
   func_glVertexAttrib1fNV( index, x );
+  LEAVE_GL();
+}
+
+void WINAPI wine_glVertexAttrib1fvARB( GLuint index, GLfloat* v ) {
+  TRACE("(%d, %p)\n", index, v );
+  ENTER_GL();
+  func_glVertexAttrib1fvARB( index, v );
   LEAVE_GL();
 }
 
@@ -5825,10 +6618,24 @@ void WINAPI wine_glVertexAttrib1fvNV( GLuint index, GLfloat* v ) {
   LEAVE_GL();
 }
 
+void WINAPI wine_glVertexAttrib1sARB( GLuint index, GLshort x ) {
+  TRACE("(%d, %d)\n", index, x );
+  ENTER_GL();
+  func_glVertexAttrib1sARB( index, x );
+  LEAVE_GL();
+}
+
 void WINAPI wine_glVertexAttrib1sNV( GLuint index, GLshort x ) {
   TRACE("(%d, %d)\n", index, x );
   ENTER_GL();
   func_glVertexAttrib1sNV( index, x );
+  LEAVE_GL();
+}
+
+void WINAPI wine_glVertexAttrib1svARB( GLuint index, GLshort* v ) {
+  TRACE("(%d, %p)\n", index, v );
+  ENTER_GL();
+  func_glVertexAttrib1svARB( index, v );
   LEAVE_GL();
 }
 
@@ -5839,10 +6646,24 @@ void WINAPI wine_glVertexAttrib1svNV( GLuint index, GLshort* v ) {
   LEAVE_GL();
 }
 
+void WINAPI wine_glVertexAttrib2dARB( GLuint index, GLdouble x, GLdouble y ) {
+  TRACE("(%d, %f, %f)\n", index, x, y );
+  ENTER_GL();
+  func_glVertexAttrib2dARB( index, x, y );
+  LEAVE_GL();
+}
+
 void WINAPI wine_glVertexAttrib2dNV( GLuint index, GLdouble x, GLdouble y ) {
   TRACE("(%d, %f, %f)\n", index, x, y );
   ENTER_GL();
   func_glVertexAttrib2dNV( index, x, y );
+  LEAVE_GL();
+}
+
+void WINAPI wine_glVertexAttrib2dvARB( GLuint index, GLdouble* v ) {
+  TRACE("(%d, %p)\n", index, v );
+  ENTER_GL();
+  func_glVertexAttrib2dvARB( index, v );
   LEAVE_GL();
 }
 
@@ -5853,10 +6674,24 @@ void WINAPI wine_glVertexAttrib2dvNV( GLuint index, GLdouble* v ) {
   LEAVE_GL();
 }
 
+void WINAPI wine_glVertexAttrib2fARB( GLuint index, GLfloat x, GLfloat y ) {
+  TRACE("(%d, %f, %f)\n", index, x, y );
+  ENTER_GL();
+  func_glVertexAttrib2fARB( index, x, y );
+  LEAVE_GL();
+}
+
 void WINAPI wine_glVertexAttrib2fNV( GLuint index, GLfloat x, GLfloat y ) {
   TRACE("(%d, %f, %f)\n", index, x, y );
   ENTER_GL();
   func_glVertexAttrib2fNV( index, x, y );
+  LEAVE_GL();
+}
+
+void WINAPI wine_glVertexAttrib2fvARB( GLuint index, GLfloat* v ) {
+  TRACE("(%d, %p)\n", index, v );
+  ENTER_GL();
+  func_glVertexAttrib2fvARB( index, v );
   LEAVE_GL();
 }
 
@@ -5867,10 +6702,24 @@ void WINAPI wine_glVertexAttrib2fvNV( GLuint index, GLfloat* v ) {
   LEAVE_GL();
 }
 
+void WINAPI wine_glVertexAttrib2sARB( GLuint index, GLshort x, GLshort y ) {
+  TRACE("(%d, %d, %d)\n", index, x, y );
+  ENTER_GL();
+  func_glVertexAttrib2sARB( index, x, y );
+  LEAVE_GL();
+}
+
 void WINAPI wine_glVertexAttrib2sNV( GLuint index, GLshort x, GLshort y ) {
   TRACE("(%d, %d, %d)\n", index, x, y );
   ENTER_GL();
   func_glVertexAttrib2sNV( index, x, y );
+  LEAVE_GL();
+}
+
+void WINAPI wine_glVertexAttrib2svARB( GLuint index, GLshort* v ) {
+  TRACE("(%d, %p)\n", index, v );
+  ENTER_GL();
+  func_glVertexAttrib2svARB( index, v );
   LEAVE_GL();
 }
 
@@ -5881,10 +6730,24 @@ void WINAPI wine_glVertexAttrib2svNV( GLuint index, GLshort* v ) {
   LEAVE_GL();
 }
 
+void WINAPI wine_glVertexAttrib3dARB( GLuint index, GLdouble x, GLdouble y, GLdouble z ) {
+  TRACE("(%d, %f, %f, %f)\n", index, x, y, z );
+  ENTER_GL();
+  func_glVertexAttrib3dARB( index, x, y, z );
+  LEAVE_GL();
+}
+
 void WINAPI wine_glVertexAttrib3dNV( GLuint index, GLdouble x, GLdouble y, GLdouble z ) {
   TRACE("(%d, %f, %f, %f)\n", index, x, y, z );
   ENTER_GL();
   func_glVertexAttrib3dNV( index, x, y, z );
+  LEAVE_GL();
+}
+
+void WINAPI wine_glVertexAttrib3dvARB( GLuint index, GLdouble* v ) {
+  TRACE("(%d, %p)\n", index, v );
+  ENTER_GL();
+  func_glVertexAttrib3dvARB( index, v );
   LEAVE_GL();
 }
 
@@ -5895,10 +6758,24 @@ void WINAPI wine_glVertexAttrib3dvNV( GLuint index, GLdouble* v ) {
   LEAVE_GL();
 }
 
+void WINAPI wine_glVertexAttrib3fARB( GLuint index, GLfloat x, GLfloat y, GLfloat z ) {
+  TRACE("(%d, %f, %f, %f)\n", index, x, y, z );
+  ENTER_GL();
+  func_glVertexAttrib3fARB( index, x, y, z );
+  LEAVE_GL();
+}
+
 void WINAPI wine_glVertexAttrib3fNV( GLuint index, GLfloat x, GLfloat y, GLfloat z ) {
   TRACE("(%d, %f, %f, %f)\n", index, x, y, z );
   ENTER_GL();
   func_glVertexAttrib3fNV( index, x, y, z );
+  LEAVE_GL();
+}
+
+void WINAPI wine_glVertexAttrib3fvARB( GLuint index, GLfloat* v ) {
+  TRACE("(%d, %p)\n", index, v );
+  ENTER_GL();
+  func_glVertexAttrib3fvARB( index, v );
   LEAVE_GL();
 }
 
@@ -5909,10 +6786,24 @@ void WINAPI wine_glVertexAttrib3fvNV( GLuint index, GLfloat* v ) {
   LEAVE_GL();
 }
 
+void WINAPI wine_glVertexAttrib3sARB( GLuint index, GLshort x, GLshort y, GLshort z ) {
+  TRACE("(%d, %d, %d, %d)\n", index, x, y, z );
+  ENTER_GL();
+  func_glVertexAttrib3sARB( index, x, y, z );
+  LEAVE_GL();
+}
+
 void WINAPI wine_glVertexAttrib3sNV( GLuint index, GLshort x, GLshort y, GLshort z ) {
   TRACE("(%d, %d, %d, %d)\n", index, x, y, z );
   ENTER_GL();
   func_glVertexAttrib3sNV( index, x, y, z );
+  LEAVE_GL();
+}
+
+void WINAPI wine_glVertexAttrib3svARB( GLuint index, GLshort* v ) {
+  TRACE("(%d, %p)\n", index, v );
+  ENTER_GL();
+  func_glVertexAttrib3svARB( index, v );
   LEAVE_GL();
 }
 
@@ -5923,10 +6814,80 @@ void WINAPI wine_glVertexAttrib3svNV( GLuint index, GLshort* v ) {
   LEAVE_GL();
 }
 
+void WINAPI wine_glVertexAttrib4NbvARB( GLuint index, GLbyte* v ) {
+  TRACE("(%d, %p)\n", index, v );
+  ENTER_GL();
+  func_glVertexAttrib4NbvARB( index, v );
+  LEAVE_GL();
+}
+
+void WINAPI wine_glVertexAttrib4NivARB( GLuint index, GLint* v ) {
+  TRACE("(%d, %p)\n", index, v );
+  ENTER_GL();
+  func_glVertexAttrib4NivARB( index, v );
+  LEAVE_GL();
+}
+
+void WINAPI wine_glVertexAttrib4NsvARB( GLuint index, GLshort* v ) {
+  TRACE("(%d, %p)\n", index, v );
+  ENTER_GL();
+  func_glVertexAttrib4NsvARB( index, v );
+  LEAVE_GL();
+}
+
+void WINAPI wine_glVertexAttrib4NubARB( GLuint index, GLubyte x, GLubyte y, GLubyte z, GLubyte w ) {
+  TRACE("(%d, %d, %d, %d, %d)\n", index, x, y, z, w );
+  ENTER_GL();
+  func_glVertexAttrib4NubARB( index, x, y, z, w );
+  LEAVE_GL();
+}
+
+void WINAPI wine_glVertexAttrib4NubvARB( GLuint index, GLubyte* v ) {
+  TRACE("(%d, %p)\n", index, v );
+  ENTER_GL();
+  func_glVertexAttrib4NubvARB( index, v );
+  LEAVE_GL();
+}
+
+void WINAPI wine_glVertexAttrib4NuivARB( GLuint index, GLuint* v ) {
+  TRACE("(%d, %p)\n", index, v );
+  ENTER_GL();
+  func_glVertexAttrib4NuivARB( index, v );
+  LEAVE_GL();
+}
+
+void WINAPI wine_glVertexAttrib4NusvARB( GLuint index, GLushort* v ) {
+  TRACE("(%d, %p)\n", index, v );
+  ENTER_GL();
+  func_glVertexAttrib4NusvARB( index, v );
+  LEAVE_GL();
+}
+
+void WINAPI wine_glVertexAttrib4bvARB( GLuint index, GLbyte* v ) {
+  TRACE("(%d, %p)\n", index, v );
+  ENTER_GL();
+  func_glVertexAttrib4bvARB( index, v );
+  LEAVE_GL();
+}
+
+void WINAPI wine_glVertexAttrib4dARB( GLuint index, GLdouble x, GLdouble y, GLdouble z, GLdouble w ) {
+  TRACE("(%d, %f, %f, %f, %f)\n", index, x, y, z, w );
+  ENTER_GL();
+  func_glVertexAttrib4dARB( index, x, y, z, w );
+  LEAVE_GL();
+}
+
 void WINAPI wine_glVertexAttrib4dNV( GLuint index, GLdouble x, GLdouble y, GLdouble z, GLdouble w ) {
   TRACE("(%d, %f, %f, %f, %f)\n", index, x, y, z, w );
   ENTER_GL();
   func_glVertexAttrib4dNV( index, x, y, z, w );
+  LEAVE_GL();
+}
+
+void WINAPI wine_glVertexAttrib4dvARB( GLuint index, GLdouble* v ) {
+  TRACE("(%d, %p)\n", index, v );
+  ENTER_GL();
+  func_glVertexAttrib4dvARB( index, v );
   LEAVE_GL();
 }
 
@@ -5937,10 +6898,24 @@ void WINAPI wine_glVertexAttrib4dvNV( GLuint index, GLdouble* v ) {
   LEAVE_GL();
 }
 
+void WINAPI wine_glVertexAttrib4fARB( GLuint index, GLfloat x, GLfloat y, GLfloat z, GLfloat w ) {
+  TRACE("(%d, %f, %f, %f, %f)\n", index, x, y, z, w );
+  ENTER_GL();
+  func_glVertexAttrib4fARB( index, x, y, z, w );
+  LEAVE_GL();
+}
+
 void WINAPI wine_glVertexAttrib4fNV( GLuint index, GLfloat x, GLfloat y, GLfloat z, GLfloat w ) {
   TRACE("(%d, %f, %f, %f, %f)\n", index, x, y, z, w );
   ENTER_GL();
   func_glVertexAttrib4fNV( index, x, y, z, w );
+  LEAVE_GL();
+}
+
+void WINAPI wine_glVertexAttrib4fvARB( GLuint index, GLfloat* v ) {
+  TRACE("(%d, %p)\n", index, v );
+  ENTER_GL();
+  func_glVertexAttrib4fvARB( index, v );
   LEAVE_GL();
 }
 
@@ -5951,10 +6926,31 @@ void WINAPI wine_glVertexAttrib4fvNV( GLuint index, GLfloat* v ) {
   LEAVE_GL();
 }
 
+void WINAPI wine_glVertexAttrib4ivARB( GLuint index, GLint* v ) {
+  TRACE("(%d, %p)\n", index, v );
+  ENTER_GL();
+  func_glVertexAttrib4ivARB( index, v );
+  LEAVE_GL();
+}
+
+void WINAPI wine_glVertexAttrib4sARB( GLuint index, GLshort x, GLshort y, GLshort z, GLshort w ) {
+  TRACE("(%d, %d, %d, %d, %d)\n", index, x, y, z, w );
+  ENTER_GL();
+  func_glVertexAttrib4sARB( index, x, y, z, w );
+  LEAVE_GL();
+}
+
 void WINAPI wine_glVertexAttrib4sNV( GLuint index, GLshort x, GLshort y, GLshort z, GLshort w ) {
   TRACE("(%d, %d, %d, %d, %d)\n", index, x, y, z, w );
   ENTER_GL();
   func_glVertexAttrib4sNV( index, x, y, z, w );
+  LEAVE_GL();
+}
+
+void WINAPI wine_glVertexAttrib4svARB( GLuint index, GLshort* v ) {
+  TRACE("(%d, %p)\n", index, v );
+  ENTER_GL();
+  func_glVertexAttrib4svARB( index, v );
   LEAVE_GL();
 }
 
@@ -5972,10 +6968,38 @@ void WINAPI wine_glVertexAttrib4ubNV( GLuint index, GLubyte x, GLubyte y, GLubyt
   LEAVE_GL();
 }
 
+void WINAPI wine_glVertexAttrib4ubvARB( GLuint index, GLubyte* v ) {
+  TRACE("(%d, %p)\n", index, v );
+  ENTER_GL();
+  func_glVertexAttrib4ubvARB( index, v );
+  LEAVE_GL();
+}
+
 void WINAPI wine_glVertexAttrib4ubvNV( GLuint index, GLubyte* v ) {
   TRACE("(%d, %p)\n", index, v );
   ENTER_GL();
   func_glVertexAttrib4ubvNV( index, v );
+  LEAVE_GL();
+}
+
+void WINAPI wine_glVertexAttrib4uivARB( GLuint index, GLuint* v ) {
+  TRACE("(%d, %p)\n", index, v );
+  ENTER_GL();
+  func_glVertexAttrib4uivARB( index, v );
+  LEAVE_GL();
+}
+
+void WINAPI wine_glVertexAttrib4usvARB( GLuint index, GLushort* v ) {
+  TRACE("(%d, %p)\n", index, v );
+  ENTER_GL();
+  func_glVertexAttrib4usvARB( index, v );
+  LEAVE_GL();
+}
+
+void WINAPI wine_glVertexAttribPointerARB( GLuint index, GLint size, GLenum type, GLboolean normalized, GLsizei stride, GLvoid* pointer ) {
+  TRACE("(%d, %d, %d, %d, %d, %p)\n", index, size, type, normalized, stride, pointer );
+  ENTER_GL();
+  func_glVertexAttribPointerARB( index, size, type, normalized, stride, pointer );
   LEAVE_GL();
 }
 
@@ -6427,6 +7451,13 @@ void WINAPI wine_glWeightusvARB( GLint size, GLushort* weights ) {
   LEAVE_GL();
 }
 
+void WINAPI wine_glWindowPos2d( GLdouble x, GLdouble y ) {
+  TRACE("(%f, %f)\n", x, y );
+  ENTER_GL();
+  func_glWindowPos2d( x, y );
+  LEAVE_GL();
+}
+
 void WINAPI wine_glWindowPos2dARB( GLdouble x, GLdouble y ) {
   TRACE("(%f, %f)\n", x, y );
   ENTER_GL();
@@ -6438,6 +7469,13 @@ void WINAPI wine_glWindowPos2dMESA( GLdouble x, GLdouble y ) {
   TRACE("(%f, %f)\n", x, y );
   ENTER_GL();
   func_glWindowPos2dMESA( x, y );
+  LEAVE_GL();
+}
+
+void WINAPI wine_glWindowPos2dv( GLdouble* v ) {
+  TRACE("(%p)\n", v );
+  ENTER_GL();
+  func_glWindowPos2dv( v );
   LEAVE_GL();
 }
 
@@ -6455,6 +7493,13 @@ void WINAPI wine_glWindowPos2dvMESA( GLdouble* v ) {
   LEAVE_GL();
 }
 
+void WINAPI wine_glWindowPos2f( GLfloat x, GLfloat y ) {
+  TRACE("(%f, %f)\n", x, y );
+  ENTER_GL();
+  func_glWindowPos2f( x, y );
+  LEAVE_GL();
+}
+
 void WINAPI wine_glWindowPos2fARB( GLfloat x, GLfloat y ) {
   TRACE("(%f, %f)\n", x, y );
   ENTER_GL();
@@ -6466,6 +7511,13 @@ void WINAPI wine_glWindowPos2fMESA( GLfloat x, GLfloat y ) {
   TRACE("(%f, %f)\n", x, y );
   ENTER_GL();
   func_glWindowPos2fMESA( x, y );
+  LEAVE_GL();
+}
+
+void WINAPI wine_glWindowPos2fv( GLfloat* v ) {
+  TRACE("(%p)\n", v );
+  ENTER_GL();
+  func_glWindowPos2fv( v );
   LEAVE_GL();
 }
 
@@ -6483,6 +7535,13 @@ void WINAPI wine_glWindowPos2fvMESA( GLfloat* v ) {
   LEAVE_GL();
 }
 
+void WINAPI wine_glWindowPos2i( GLint x, GLint y ) {
+  TRACE("(%d, %d)\n", x, y );
+  ENTER_GL();
+  func_glWindowPos2i( x, y );
+  LEAVE_GL();
+}
+
 void WINAPI wine_glWindowPos2iARB( GLint x, GLint y ) {
   TRACE("(%d, %d)\n", x, y );
   ENTER_GL();
@@ -6494,6 +7553,13 @@ void WINAPI wine_glWindowPos2iMESA( GLint x, GLint y ) {
   TRACE("(%d, %d)\n", x, y );
   ENTER_GL();
   func_glWindowPos2iMESA( x, y );
+  LEAVE_GL();
+}
+
+void WINAPI wine_glWindowPos2iv( GLint* v ) {
+  TRACE("(%p)\n", v );
+  ENTER_GL();
+  func_glWindowPos2iv( v );
   LEAVE_GL();
 }
 
@@ -6511,6 +7577,13 @@ void WINAPI wine_glWindowPos2ivMESA( GLint* v ) {
   LEAVE_GL();
 }
 
+void WINAPI wine_glWindowPos2s( GLshort x, GLshort y ) {
+  TRACE("(%d, %d)\n", x, y );
+  ENTER_GL();
+  func_glWindowPos2s( x, y );
+  LEAVE_GL();
+}
+
 void WINAPI wine_glWindowPos2sARB( GLshort x, GLshort y ) {
   TRACE("(%d, %d)\n", x, y );
   ENTER_GL();
@@ -6522,6 +7595,13 @@ void WINAPI wine_glWindowPos2sMESA( GLshort x, GLshort y ) {
   TRACE("(%d, %d)\n", x, y );
   ENTER_GL();
   func_glWindowPos2sMESA( x, y );
+  LEAVE_GL();
+}
+
+void WINAPI wine_glWindowPos2sv( GLshort* v ) {
+  TRACE("(%p)\n", v );
+  ENTER_GL();
+  func_glWindowPos2sv( v );
   LEAVE_GL();
 }
 
@@ -6539,6 +7619,13 @@ void WINAPI wine_glWindowPos2svMESA( GLshort* v ) {
   LEAVE_GL();
 }
 
+void WINAPI wine_glWindowPos3d( GLdouble x, GLdouble y, GLdouble z ) {
+  TRACE("(%f, %f, %f)\n", x, y, z );
+  ENTER_GL();
+  func_glWindowPos3d( x, y, z );
+  LEAVE_GL();
+}
+
 void WINAPI wine_glWindowPos3dARB( GLdouble x, GLdouble y, GLdouble z ) {
   TRACE("(%f, %f, %f)\n", x, y, z );
   ENTER_GL();
@@ -6550,6 +7637,13 @@ void WINAPI wine_glWindowPos3dMESA( GLdouble x, GLdouble y, GLdouble z ) {
   TRACE("(%f, %f, %f)\n", x, y, z );
   ENTER_GL();
   func_glWindowPos3dMESA( x, y, z );
+  LEAVE_GL();
+}
+
+void WINAPI wine_glWindowPos3dv( GLdouble* v ) {
+  TRACE("(%p)\n", v );
+  ENTER_GL();
+  func_glWindowPos3dv( v );
   LEAVE_GL();
 }
 
@@ -6567,6 +7661,13 @@ void WINAPI wine_glWindowPos3dvMESA( GLdouble* v ) {
   LEAVE_GL();
 }
 
+void WINAPI wine_glWindowPos3f( GLfloat x, GLfloat y, GLfloat z ) {
+  TRACE("(%f, %f, %f)\n", x, y, z );
+  ENTER_GL();
+  func_glWindowPos3f( x, y, z );
+  LEAVE_GL();
+}
+
 void WINAPI wine_glWindowPos3fARB( GLfloat x, GLfloat y, GLfloat z ) {
   TRACE("(%f, %f, %f)\n", x, y, z );
   ENTER_GL();
@@ -6578,6 +7679,13 @@ void WINAPI wine_glWindowPos3fMESA( GLfloat x, GLfloat y, GLfloat z ) {
   TRACE("(%f, %f, %f)\n", x, y, z );
   ENTER_GL();
   func_glWindowPos3fMESA( x, y, z );
+  LEAVE_GL();
+}
+
+void WINAPI wine_glWindowPos3fv( GLfloat* v ) {
+  TRACE("(%p)\n", v );
+  ENTER_GL();
+  func_glWindowPos3fv( v );
   LEAVE_GL();
 }
 
@@ -6595,6 +7703,13 @@ void WINAPI wine_glWindowPos3fvMESA( GLfloat* v ) {
   LEAVE_GL();
 }
 
+void WINAPI wine_glWindowPos3i( GLint x, GLint y, GLint z ) {
+  TRACE("(%d, %d, %d)\n", x, y, z );
+  ENTER_GL();
+  func_glWindowPos3i( x, y, z );
+  LEAVE_GL();
+}
+
 void WINAPI wine_glWindowPos3iARB( GLint x, GLint y, GLint z ) {
   TRACE("(%d, %d, %d)\n", x, y, z );
   ENTER_GL();
@@ -6606,6 +7721,13 @@ void WINAPI wine_glWindowPos3iMESA( GLint x, GLint y, GLint z ) {
   TRACE("(%d, %d, %d)\n", x, y, z );
   ENTER_GL();
   func_glWindowPos3iMESA( x, y, z );
+  LEAVE_GL();
+}
+
+void WINAPI wine_glWindowPos3iv( GLint* v ) {
+  TRACE("(%p)\n", v );
+  ENTER_GL();
+  func_glWindowPos3iv( v );
   LEAVE_GL();
 }
 
@@ -6623,6 +7745,13 @@ void WINAPI wine_glWindowPos3ivMESA( GLint* v ) {
   LEAVE_GL();
 }
 
+void WINAPI wine_glWindowPos3s( GLshort x, GLshort y, GLshort z ) {
+  TRACE("(%d, %d, %d)\n", x, y, z );
+  ENTER_GL();
+  func_glWindowPos3s( x, y, z );
+  LEAVE_GL();
+}
+
 void WINAPI wine_glWindowPos3sARB( GLshort x, GLshort y, GLshort z ) {
   TRACE("(%d, %d, %d)\n", x, y, z );
   ENTER_GL();
@@ -6634,6 +7763,13 @@ void WINAPI wine_glWindowPos3sMESA( GLshort x, GLshort y, GLshort z ) {
   TRACE("(%d, %d, %d)\n", x, y, z );
   ENTER_GL();
   func_glWindowPos3sMESA( x, y, z );
+  LEAVE_GL();
+}
+
+void WINAPI wine_glWindowPos3sv( GLshort* v ) {
+  TRACE("(%p)\n", v );
+  ENTER_GL();
+  func_glWindowPos3sv( v );
   LEAVE_GL();
 }
 
