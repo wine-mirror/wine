@@ -360,6 +360,7 @@ static const struct message WmCreateVisibleChildSeq[] = {
     { EVENT_OBJECT_SHOW, winevent_hook|wparam|lparam, 0, 0 },
     { WM_ERASEBKGND, sent|parent|optional },
     { WM_WINDOWPOSCHANGED, sent|wparam, SWP_SHOWWINDOW|SWP_NOSIZE|SWP_NOMOVE|SWP_NOACTIVATE|SWP_NOZORDER|SWP_NOCLIENTSIZE|SWP_NOCLIENTMOVE },
+    { WM_NCCALCSIZE, sent|wparam|optional, 1 }, /* WinXP */
     { 0 }
 };
 /* ShowWindow(SW_SHOW) for a not visible child window */
@@ -771,6 +772,28 @@ static const struct message WmModalDialogSeq[] = {
     { WM_PAINT, sent|optional },
     { WM_CTLCOLORBTN, sent },
     { WM_ENTERIDLE, sent|parent|optional },
+    { WM_ENTERIDLE, sent|parent|optional },
+    { WM_ENTERIDLE, sent|parent|optional },
+    { WM_ENTERIDLE, sent|parent|optional },
+    { WM_ENTERIDLE, sent|parent|optional },
+    { WM_ENTERIDLE, sent|parent|optional },
+    { WM_ENTERIDLE, sent|parent|optional },
+    { WM_ENTERIDLE, sent|parent|optional },
+    { WM_ENTERIDLE, sent|parent|optional },
+    { WM_ENTERIDLE, sent|parent|optional },
+    { WM_ENTERIDLE, sent|parent|optional },
+    { WM_ENTERIDLE, sent|parent|optional },
+    { WM_ENTERIDLE, sent|parent|optional },
+    { WM_ENTERIDLE, sent|parent|optional },
+    { WM_ENTERIDLE, sent|parent|optional },
+    { WM_ENTERIDLE, sent|parent|optional },
+    { WM_ENTERIDLE, sent|parent|optional },
+    { WM_ENTERIDLE, sent|parent|optional },
+    { WM_ENTERIDLE, sent|parent|optional },
+    { WM_ENTERIDLE, sent|parent|optional },
+    { WM_GETICON, sent|parent|optional },
+    { WM_GETICON, sent|parent|optional },
+    { WM_GETICON, sent|parent|optional },
     { WM_TIMER, sent },
     { EVENT_OBJECT_STATECHANGE, winevent_hook|wparam|lparam, 0, 0 },
     { WM_ENABLE, sent|parent|wparam, 1 },
@@ -1019,9 +1042,15 @@ static const struct message WmSHOWNATopInvisible[] = {
     { WM_SHOWWINDOW, sent|wparam, 1 },
     { WM_WINDOWPOSCHANGING, sent|wparam, SWP_SHOWWINDOW|SWP_NOACTIVATE|SWP_NOSIZE|SWP_NOMOVE },
     { WM_NCPAINT, sent|wparam, 1 },
+    { WM_GETICON, sent|optional },
+    { WM_GETICON, sent|optional },
+    { WM_GETICON, sent|optional },
     { WM_GETTEXT, sent|defwinproc|optional },
     { WM_ERASEBKGND, sent|optional },
     { WM_WINDOWPOSCHANGED, sent|wparam, SWP_SHOWWINDOW|SWP_NOACTIVATE|SWP_NOSIZE|SWP_NOMOVE|SWP_NOCLIENTSIZE|SWP_NOCLIENTMOVE },
+    { WM_NCCALCSIZE, sent|wparam|optional, 1 },
+    { WM_NCPAINT, sent|wparam|optional, 1 },
+    { WM_ERASEBKGND, sent|optional },
     { WM_SIZE, sent },
     { WM_MOVE, sent },
     { 0 }
@@ -1195,6 +1224,9 @@ static const struct message WmCreateMDIframeSeq[] = {
     { WM_WINDOWPOSCHANGED, sent|wparam|optional, SWP_NOSIZE|SWP_NOMOVE|SWP_NOCLIENTSIZE|SWP_NOCLIENTMOVE }, /* Win9x */
     { WM_ACTIVATEAPP, sent|wparam, 1 },
     { WM_NCACTIVATE, sent|wparam, 1 },
+    { WM_GETTEXT, sent|defwinproc|optional },
+    { WM_GETICON, sent|defwinproc|optional },
+    { WM_GETICON, sent|defwinproc|optional },
     { WM_ACTIVATE, sent|wparam, 1 },
     { HCBT_SETFOCUS, hook },
     { WM_IME_SETCONTEXT, sent|wparam|defwinproc|optional, 1 },
@@ -3112,7 +3144,9 @@ static void test_messages(void)
     /* PeekMessage(NULL) fails, but still removes the message */
     SetLastError(0xdeadbeef);
     ok( !PeekMessageW( NULL, 0, 0, 0, PM_REMOVE ), "PeekMessage(NULL) should fail\n" );
-    ok( GetLastError() == ERROR_NOACCESS, "last error is %ld\n", GetLastError() );
+    ok( GetLastError() == ERROR_NOACCESS || /* Win2k */
+        GetLastError() == 0xdeadbeef, /* NT4 */
+        "last error is %ld\n", GetLastError() );
     ok( PeekMessageW( &msg, 0, 0, 0, PM_REMOVE ), "PeekMessage should succeed\n" );
     ok( msg.message == WM_USER+1, "got %x instead of WM_USER+1\n", msg.message );
 
@@ -4600,10 +4634,22 @@ static DWORD cbt_hook_thread_id;
 
 static LRESULT CALLBACK cbt_hook_proc(int nCode, WPARAM wParam, LPARAM lParam) 
 { 
+    static const char *CBT_code_name[10] = {
+	"HCBT_MOVESIZE",
+	"HCBT_MINMAX",
+	"HCBT_QS",
+	"HCBT_CREATEWND",
+	"HCBT_DESTROYWND",
+	"HCBT_ACTIVATE",
+	"HCBT_CLICKSKIPPED",
+	"HCBT_KEYSKIPPED",
+	"HCBT_SYSCOMMAND",
+	"HCBT_SETFOCUS" };
+    const char *code_name = (nCode >= 0 && nCode <= HCBT_SETFOCUS) ? CBT_code_name[nCode] : "Unknown";
     HWND hwnd;
     char buf[256];
 
-    trace("CBT: %d, %08x, %08lx\n", nCode, wParam, lParam);
+    trace("CBT: %d (%s), %08x, %08lx\n", nCode, code_name, wParam, lParam);
 
     ok(cbt_hook_thread_id == GetCurrentThreadId(), "we didn't ask for events from other threads\n");
 
@@ -4779,35 +4825,35 @@ static void test_message_conversion(void)
 
     SetLastError(0);
     lRes = PostMessageA(hwnd, CB_FINDSTRINGEXACT, 0, (LPARAM)wszUnicode);
-    ok(lRes == 0 && GetLastError() == ERROR_MESSAGE_SYNC_ONLY,
+    ok(lRes == 0 && (GetLastError() == ERROR_MESSAGE_SYNC_ONLY || GetLastError() == ERROR_INVALID_PARAMETER),
         "PostMessage on sync only message returned %ld, last error %ld\n", lRes, GetLastError());
     SetLastError(0);
     lRes = PostMessageW(hwnd, CB_FINDSTRINGEXACT, 0, (LPARAM)wszUnicode);
-    ok(lRes == 0 && GetLastError() == ERROR_MESSAGE_SYNC_ONLY,
+    ok(lRes == 0 && (GetLastError() == ERROR_MESSAGE_SYNC_ONLY || GetLastError() == ERROR_INVALID_PARAMETER),
         "PostMessage on sync only message returned %ld, last error %ld\n", lRes, GetLastError());
     SetLastError(0);
     lRes = PostThreadMessageA(GetCurrentThreadId(), CB_FINDSTRINGEXACT, 0, (LPARAM)wszUnicode);
-    ok(lRes == 0 && GetLastError() == ERROR_MESSAGE_SYNC_ONLY,
+    ok(lRes == 0 && (GetLastError() == ERROR_MESSAGE_SYNC_ONLY || GetLastError() == ERROR_INVALID_PARAMETER),
         "PosThreadtMessage on sync only message returned %ld, last error %ld\n", lRes, GetLastError());
     SetLastError(0);
     lRes = PostThreadMessageW(GetCurrentThreadId(), CB_FINDSTRINGEXACT, 0, (LPARAM)wszUnicode);
-    ok(lRes == 0 && GetLastError() == ERROR_MESSAGE_SYNC_ONLY,
+    ok(lRes == 0 && (GetLastError() == ERROR_MESSAGE_SYNC_ONLY || GetLastError() == ERROR_INVALID_PARAMETER),
         "PosThreadtMessage on sync only message returned %ld, last error %ld\n", lRes, GetLastError());
     SetLastError(0);
     lRes = SendNotifyMessageA(hwnd, CB_FINDSTRINGEXACT, 0, (LPARAM)wszUnicode);
-    ok(lRes == 0 && GetLastError() == ERROR_MESSAGE_SYNC_ONLY,
+    ok(lRes == 0 && (GetLastError() == ERROR_MESSAGE_SYNC_ONLY || GetLastError() == ERROR_INVALID_PARAMETER),
         "SendNotifyMessage on sync only message returned %ld, last error %ld\n", lRes, GetLastError());
     SetLastError(0);
     lRes = SendNotifyMessageW(hwnd, CB_FINDSTRINGEXACT, 0, (LPARAM)wszUnicode);
-    ok(lRes == 0 && GetLastError() == ERROR_MESSAGE_SYNC_ONLY,
+    ok(lRes == 0 && (GetLastError() == ERROR_MESSAGE_SYNC_ONLY || GetLastError() == ERROR_INVALID_PARAMETER),
         "SendNotifyMessage on sync only message returned %ld, last error %ld\n", lRes, GetLastError());
     SetLastError(0);
     lRes = SendMessageCallbackA(hwnd, CB_FINDSTRINGEXACT, 0, (LPARAM)wszUnicode, NULL, 0);
-    ok(lRes == 0 && GetLastError() == ERROR_MESSAGE_SYNC_ONLY,
+    ok(lRes == 0 && (GetLastError() == ERROR_MESSAGE_SYNC_ONLY || GetLastError() == ERROR_INVALID_PARAMETER),
         "SendMessageCallback on sync only message returned %ld, last error %ld\n", lRes, GetLastError());
     SetLastError(0);
     lRes = SendMessageCallbackW(hwnd, CB_FINDSTRINGEXACT, 0, (LPARAM)wszUnicode, NULL, 0);
-    ok(lRes == 0 && GetLastError() == ERROR_MESSAGE_SYNC_ONLY,
+    ok(lRes == 0 && (GetLastError() == ERROR_MESSAGE_SYNC_ONLY || GetLastError() == ERROR_INVALID_PARAMETER),
         "SendMessageCallback on sync only message returned %ld, last error %ld\n", lRes, GetLastError());
 }
 

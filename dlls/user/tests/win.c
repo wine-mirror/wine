@@ -619,10 +619,12 @@ static void verify_window_info(HWND hwnd, const WINDOWINFO *info, BOOL test_bord
     MapWindowPoints(hwnd, 0, (LPPOINT)&rcClient, 2);
     ok(EqualRect(&rcClient, &info->rcClient), "wrong rcClient\n");
 
-    ok(info->dwStyle == (DWORD)GetWindowLongA(hwnd, GWL_STYLE), "wrong dwStyle\n");
-    ok(info->dwExStyle == (DWORD)GetWindowLongA(hwnd, GWL_EXSTYLE), "wrong dwExStyle\n");
+    ok(info->dwStyle == (DWORD)GetWindowLongA(hwnd, GWL_STYLE),
+       "wrong dwStyle: %08lx != %08lx\n", info->dwStyle, GetWindowLongA(hwnd, GWL_STYLE));
+    ok(info->dwExStyle == (DWORD)GetWindowLongA(hwnd, GWL_EXSTYLE),
+       "wrong dwExStyle: %08lx != %08lx\n", info->dwStyle, GetWindowLongA(hwnd, GWL_EXSTYLE));
     status = (GetActiveWindow() == hwnd) ? WS_ACTIVECAPTION : 0;
-    ok(info->dwWindowStatus == status, "wrong dwWindowStatus %04lx/%04lx\n",
+    ok(info->dwWindowStatus == status, "wrong dwWindowStatus: %04lx != %04lx\n",
        info->dwWindowStatus, status);
 
     if (test_borders && !IsRectEmpty(&rcWindow))
@@ -711,7 +713,7 @@ static LRESULT CALLBACK cbt_hook_proc(int nCode, WPARAM wParam, LPARAM lParam)
     trace("CBT: %d (%s), %08x, %08lx\n", nCode, code_name, wParam, lParam);
 
     /* on HCBT_DESTROYWND window state is undefined */
-    if (nCode != HCBT_DESTROYWND && wParam)
+    if (nCode != HCBT_DESTROYWND && IsWindow((HWND)wParam))
     {
 	BOOL is_win9x = GetWindowLongPtrW((HWND)wParam, GWLP_WNDPROC) == 0;
 	if (is_win9x && nCode == HCBT_CREATEWND)
