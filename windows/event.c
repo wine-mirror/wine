@@ -56,6 +56,9 @@
 
 #define DndEND          8
 
+#define DndURL          128   /* KDE drag&drop */
+
+
   /* X context to associate a hwnd to an X window */
 static XContext winContext = 0;
 
@@ -150,12 +153,24 @@ void EVENT_ProcessEvent( XEvent *event )
 {
     WND *pWnd;
     
-    if (TSXFindContext( display, event->xany.window, winContext,
-                      (char **)&pWnd ) != 0)
-        return;  /* Not for a registered window */
+    if ( TSXFindContext( display, event->xany.window, winContext,
+			 (char **)&pWnd ) != 0) {
+      if ( event->type == ClientMessage) {
+	/* query window (drag&drop event contains only drag window) */
+	Window   	root, child;
+	int      	root_x, root_y, child_x, child_y;
+	unsigned	u;
+	TSXQueryPointer( display, rootWindow, &root, &child,
+			 &root_x, &root_y, &child_x, &child_y, &u);
+	if (TSXFindContext( display, child, winContext, (char **)&pWnd ) != 0)
+	  return;
+      } else {
+	return;  /* Not for a registered window */
+      }
+    }
 
     TRACE(event, "Got event %s for hwnd %04x\n",
-                   event_names[event->type], pWnd->hwndSelf );
+	  event_names[event->type], pWnd->hwndSelf );
 
     switch(event->type)
     {
@@ -412,9 +427,6 @@ BOOL32 EVENT_WaitNetEvent( BOOL32 sleep, BOOL32 peek )
 	  WND*		pWnd;
 	  MESSAGEQUEUE* pQ;
 
-          if (TSXFindContext( display, ((XAnyEvent *)&event)->window, winContext,
-                            (char **)&pWnd ) || (event.type == NoExpose))
-              continue;
 
 	  /* Check only for those events which can be processed
 	   * internally. */
@@ -422,11 +434,16 @@ BOOL32 EVENT_WaitNetEvent( BOOL32 sleep, BOOL32 peek )
 	  if( event.type == MotionNotify ||
 	      event.type == ButtonPress || event.type == ButtonRelease ||
 	      event.type == KeyPress || event.type == KeyRelease ||
-	      event.type == SelectionRequest || event.type == SelectionClear )
+	      event.type == SelectionRequest || event.type == SelectionClear ||
+	      event.type == ClientMessage )
 	  {
 	       EVENT_ProcessEvent( &event );
                continue;
 	  }
+
+          if (TSXFindContext( display, ((XAnyEvent *)&event)->window, winContext,
+                            (char **)&pWnd ) || (event.type == NoExpose))
+              continue;
 
 	  if( pWnd )
           {
@@ -1003,124 +1020,299 @@ static void EVENT_SelectionClear( WND *pWnd, XSelectionClearEvent *event )
 
 
 /**********************************************************************
+ *           EVENT_DropFromOffix
+ *
+ * don't know if it still works (last Changlog is from 96/11/04)
+ */
+static void EVENT_DropFromOffiX( WND *pWnd, XClientMessageEvent *event )
+{
+  unsigned long		data_length;
+  unsigned long		aux_long;
+  unsigned char*	p_data = NULL;
+  union {
+    Atom		atom_aux;
+    POINT32	pt_aux;
+    int		i;
+  }		u;
+  int			x, y;
+  BOOL16	        bAccept;
+  HGLOBAL16		hDragInfo = GlobalAlloc16( GMEM_SHARE | GMEM_ZEROINIT, sizeof(DRAGINFO));
+  LPDRAGINFO            lpDragInfo = (LPDRAGINFO) GlobalLock16(hDragInfo);
+  SEGPTR		spDragInfo = (SEGPTR) WIN16_GlobalLock16(hDragInfo);
+  Window		w_aux_root, w_aux_child;
+  WND*			pDropWnd;
+  
+  if( !lpDragInfo || !spDragInfo ) return;
+  
+  TSXQueryPointer( display, pWnd->window, &w_aux_root, &w_aux_child, 
+		   &x, &y, &u.pt_aux.x, &u.pt_aux.y, (unsigned int*)&aux_long);
+  
+  lpDragInfo->hScope = pWnd->hwndSelf;
+  lpDragInfo->pt.x = (INT16)x; lpDragInfo->pt.y = (INT16)y;
+  
+  /* find out drop point and drop window */
+  if( x < 0 || y < 0 ||
+      x > (pWnd->rectWindow.right - pWnd->rectWindow.left) ||
+      y > (pWnd->rectWindow.bottom - pWnd->rectWindow.top) )
+    {   bAccept = pWnd->dwExStyle & WS_EX_ACCEPTFILES; x = y = 0; }
+  else
+    {
+      bAccept = DRAG_QueryUpdate( pWnd->hwndSelf, spDragInfo, TRUE );
+      x = lpDragInfo->pt.x; y = lpDragInfo->pt.y;
+    }
+  pDropWnd = WIN_FindWndPtr( lpDragInfo->hScope );
+  GlobalFree16( hDragInfo );
+  
+  if( bAccept )
+    {
+      TSXGetWindowProperty( display, DefaultRootWindow(display),
+			    dndSelection, 0, 65535, FALSE,
+			    AnyPropertyType, &u.atom_aux, &u.pt_aux.y,
+			    &data_length, &aux_long, &p_data);
+      
+      if( !aux_long && p_data)	/* don't bother if > 64K */
+	{
+	  char *p = (char*) p_data;
+	  char *p_drop;
+	  
+	  aux_long = 0; 
+	  while( *p )	/* calculate buffer size */
+	    {
+	      p_drop = p;
+	      if((u.i = *p) != -1 ) 
+		u.i = DRIVE_FindDriveRoot( (const char **)&p_drop );
+	      if( u.i == -1 ) *p = -1;	/* mark as "bad" */
+	      else
+		{
+		  INT32 len = GetShortPathName32A( p, NULL, 0 );
+		  if (len) aux_long += len + 1;
+		  else *p = -1;
+		}
+	      p += strlen(p) + 1;
+	    }
+	  if( aux_long && aux_long < 65535 )
+	    {
+	      HDROP16                 hDrop;
+	      LPDROPFILESTRUCT16        lpDrop;
+	      
+	      aux_long += sizeof(DROPFILESTRUCT16) + 1; 
+	      hDrop = (HDROP16)GlobalAlloc16( GMEM_SHARE, aux_long );
+	      lpDrop = (LPDROPFILESTRUCT16) GlobalLock16( hDrop );
+	      
+	      if( lpDrop )
+		{
+		  lpDrop->wSize = sizeof(DROPFILESTRUCT16);
+		  lpDrop->ptMousePos.x = (INT16)x;
+		  lpDrop->ptMousePos.y = (INT16)y;
+		  lpDrop->fInNonClientArea = (BOOL16) 
+		    ( x < (pDropWnd->rectClient.left - pDropWnd->rectWindow.left)  ||
+		      y < (pDropWnd->rectClient.top - pDropWnd->rectWindow.top)    ||
+		      x > (pDropWnd->rectClient.right - pDropWnd->rectWindow.left) ||
+		      y > (pDropWnd->rectClient.bottom - pDropWnd->rectWindow.top) );
+		  p_drop = ((char*)lpDrop) + sizeof(DROPFILESTRUCT16);
+		  p = p_data;
+		  while(*p)
+		    {
+		      if( *p != -1 )	/* use only "good" entries */
+			{
+                          GetShortPathName32A( p, p_drop, 65535 );
+                          p_drop += strlen( p_drop ) + 1;
+			}
+		      p += strlen(p) + 1;
+		    }
+		  *p_drop = '\0';
+		  PostMessage16( pWnd->hwndSelf, WM_DROPFILES,
+				 (WPARAM16)hDrop, 0L );
+		}
+	    }
+	}
+      if( p_data ) TSXFree(p_data);  
+      
+    } /* WS_EX_ACCEPTFILES */
+}
+
+/**********************************************************************
+ *           EVENT_DropURLs
+ *
+ * drop items are separated by \n 
+ * each item is prefixed by its mime type
+ *
+ * event->data.l[3], event->data.l[4] contains drop x,y position
+ */
+static void EVENT_DropURLs( WND *pWnd, XClientMessageEvent *event )
+{
+  WND           *pDropWnd;
+  unsigned long	data_length;
+  unsigned long	aux_long, drop_len = 0;
+  unsigned char	*p_data = NULL; /* property data */
+  char		*p_drop = NULL;
+  char          *p, *next;
+  int		x, y, drop32 = FALSE ;
+  union {
+    Atom	atom_aux;
+    POINT32	pt_aux;
+    int         i;
+    Window      w_aux;
+  }		u; /* unused */
+  union {
+    HDROP16     h16;
+    HDROP32     h32;
+  } hDrop;
+
+  drop32 = pWnd->flags & WIN_ISWIN32;
+
+  if (!(pWnd->dwExStyle & WS_EX_ACCEPTFILES))
+    return;
+
+  TSXGetWindowProperty( display, DefaultRootWindow(display),
+			dndSelection, 0, 65535, FALSE,
+			AnyPropertyType, &u.atom_aux, &u.i,
+			&data_length, &aux_long, &p_data);
+  if (aux_long)
+    WARN(event,"property too large, truncated!\n");
+  TRACE(event,"urls=%s\n", p_data);
+
+  if( !aux_long && p_data) {	/* don't bother if > 64K */
+    /* calculate length */
+    p = p_data;
+    next = strchr(p, '\n');
+    while (p) {
+      if (next) *next=0;
+      if (strncmp(p,"file:",5) == 0 ) {
+	INT32 len = GetShortPathName32A( p+5, NULL, 0 );
+	if (len) drop_len += len + 1;
+      }
+      if (next) { 
+	*next = '\n'; 
+	p = next + 1;
+	next = strchr(p, '\n');
+      } else {
+	p = NULL;
+      }
+    }
+    
+    if( drop_len && drop_len < 65535 ) {
+      TSXQueryPointer( display, rootWindow, &u.w_aux, &u.w_aux, 
+		       &x, &y, &u.i, &u.i, &u.i);
+      pDropWnd = WIN_FindWndPtr( pWnd->hwndSelf );
+      
+      if (drop32) {
+	LPDROPFILESTRUCT32        lpDrop;
+	drop_len += sizeof(DROPFILESTRUCT32) + 1; 
+	hDrop.h32 = (HDROP32)GlobalAlloc32( GMEM_SHARE, drop_len );
+	lpDrop = (LPDROPFILESTRUCT32) GlobalLock32( hDrop.h32 );
+	
+	if( lpDrop ) {
+	  lpDrop->lSize = sizeof(DROPFILESTRUCT32);
+	  lpDrop->ptMousePos.x = (INT32)x;
+	  lpDrop->ptMousePos.y = (INT32)y;
+	  lpDrop->fInNonClientArea = (BOOL32) 
+	    ( x < (pDropWnd->rectClient.left - pDropWnd->rectWindow.left)  ||
+	      y < (pDropWnd->rectClient.top - pDropWnd->rectWindow.top)    ||
+	      x > (pDropWnd->rectClient.right - pDropWnd->rectWindow.left) ||
+	      y > (pDropWnd->rectClient.bottom - pDropWnd->rectWindow.top) );
+	  lpDrop->fWideChar = FALSE;
+	  p_drop = ((char*)lpDrop) + sizeof(DROPFILESTRUCT32);
+	}
+      } else {
+	LPDROPFILESTRUCT16        lpDrop;
+	drop_len += sizeof(DROPFILESTRUCT16) + 1; 
+	hDrop.h16 = (HDROP16)GlobalAlloc16( GMEM_SHARE, drop_len );
+	lpDrop = (LPDROPFILESTRUCT16) GlobalLock16( hDrop.h16 );
+	
+	if( lpDrop ) {
+	  lpDrop->wSize = sizeof(DROPFILESTRUCT16);
+	  lpDrop->ptMousePos.x = (INT16)x;
+	  lpDrop->ptMousePos.y = (INT16)y;
+	  lpDrop->fInNonClientArea = (BOOL16) 
+	    ( x < (pDropWnd->rectClient.left - pDropWnd->rectWindow.left)  ||
+	      y < (pDropWnd->rectClient.top - pDropWnd->rectWindow.top)    ||
+	      x > (pDropWnd->rectClient.right - pDropWnd->rectWindow.left) ||
+	      y > (pDropWnd->rectClient.bottom - pDropWnd->rectWindow.top) );
+	  p_drop = ((char*)lpDrop) + sizeof(DROPFILESTRUCT16);
+	}
+      }
+      
+      /* create message content */
+      if (p_drop) {
+	p = p_data;
+	next = strchr(p, '\n');
+	while (p) {
+	  if (next) *next=0;
+	  if (strncmp(p,"file:",5) == 0 ) {
+	    INT32 len = GetShortPathName32A( p+5, p_drop, 65535 );
+	    if (len) {
+	      TRACE(event, "drop file %s as %s\n", p+5, p_drop);
+	      p_drop += len+1;
+	    } else {
+	      WARN(event, "can't convert file %s to dos name \n", p+5);
+	    }
+	  } else {
+	    WARN(event, "unknown mime type %s\n", p);
+	  }
+	  if (next) { 
+	    *next = '\n'; 
+	    p = next + 1;
+	    next = strchr(p, '\n');
+	  } else {
+	    p = NULL;
+	  }
+	  *p_drop = '\0';
+	}
+
+	if (drop32) {
+	  /* can not use PostMessage32A because it is currently based on 
+	   * PostMessage16 and WPARAM32 would be truncated to WPARAM16
+	   */
+	  GlobalUnlock32(hDrop.h32);
+	  SendMessage32A( pWnd->hwndSelf, WM_DROPFILES,
+			  (WPARAM32)hDrop.h32, 0L );
+	} else {
+	  GlobalUnlock16(hDrop.h16);
+	  PostMessage16( pWnd->hwndSelf, WM_DROPFILES,
+			 (WPARAM16)hDrop.h16, 0L );
+	}
+      }
+    }
+    if( p_data ) TSXFree(p_data);  
+  }
+}
+
+/**********************************************************************
  *           EVENT_ClientMessage
  */
 static void EVENT_ClientMessage( WND *pWnd, XClientMessageEvent *event )
 {
-    if (event->message_type != None && event->format == 32)
-    {
-       if ((event->message_type == wmProtocols) && 
-           (((Atom) event->data.l[0]) == wmDeleteWindow))
-	  SendMessage16( pWnd->hwndSelf, WM_SYSCOMMAND, SC_CLOSE, 0 );
-       else if ( event->message_type == dndProtocol &&
+    if (event->message_type != None && event->format == 32) {
+      if ((event->message_type == wmProtocols) && 
+	  (((Atom) event->data.l[0]) == wmDeleteWindow))
+	SendMessage16( pWnd->hwndSelf, WM_SYSCOMMAND, SC_CLOSE, 0 );
+      else if ( event->message_type == dndProtocol &&
 		(event->data.l[0] == DndFile || event->data.l[0] == DndFiles) )
-       {
-	  unsigned long		data_length;
-	  unsigned long		aux_long;
-	  unsigned char*	p_data = NULL;
-	  union {
-		   Atom		atom_aux;
-		   POINT32	pt_aux;
-		   int		i;
-		}		u;
-	  int			x, y;
-          BOOL16	        bAccept;
-	  HGLOBAL16		hDragInfo = GlobalAlloc16( GMEM_SHARE | GMEM_ZEROINIT, sizeof(DRAGINFO));
-	  LPDRAGINFO            lpDragInfo = (LPDRAGINFO) GlobalLock16(hDragInfo);
-	  SEGPTR		spDragInfo = (SEGPTR) WIN16_GlobalLock16(hDragInfo);
-	  Window		w_aux_root, w_aux_child;
-	  WND*			pDropWnd;
-	  
-          if( !lpDragInfo || !spDragInfo ) return;
-
-	  TSXQueryPointer( display, pWnd->window, &w_aux_root, &w_aux_child, 
-		 &x, &y, &u.pt_aux.x, &u.pt_aux.y, (unsigned int*)&aux_long);
-
-          lpDragInfo->hScope = pWnd->hwndSelf;
-          lpDragInfo->pt.x = (INT16)x; lpDragInfo->pt.y = (INT16)y;
-
-	  /* find out drop point and drop window */
-	  if( x < 0 || y < 0 ||
-	      x > (pWnd->rectWindow.right - pWnd->rectWindow.left) ||
-	      y > (pWnd->rectWindow.bottom - pWnd->rectWindow.top) )
-	  {   bAccept = pWnd->dwExStyle & WS_EX_ACCEPTFILES; x = y = 0; }
-	  else
-	  {
-	      bAccept = DRAG_QueryUpdate( pWnd->hwndSelf, spDragInfo, TRUE );
-	      x = lpDragInfo->pt.x; y = lpDragInfo->pt.y;
-	  }
-	  pDropWnd = WIN_FindWndPtr( lpDragInfo->hScope );
-	  GlobalFree16( hDragInfo );
-
-	  if( bAccept )
-	  {
-	      TSXGetWindowProperty( display, DefaultRootWindow(display),
+	EVENT_DropFromOffiX(pWnd, event);
+      else if ( event->message_type == dndProtocol &&
+		event->data.l[0] == DndURL )
+	EVENT_DropURLs(pWnd, event);
+      else {
+#if 0
+	/* enable this if you want to see the message */
+	unsigned char* p_data = NULL;
+	union {
+	  unsigned long	l;
+	  int            	i;
+	  Atom		atom;
+	} u; /* unused */
+	TSXGetWindowProperty( display, DefaultRootWindow(display),
 			      dndSelection, 0, 65535, FALSE,
-                              AnyPropertyType, &u.atom_aux, &u.pt_aux.y,
-		             &data_length, &aux_long, &p_data);
-
-	      if( !aux_long && p_data)	/* don't bother if > 64K */
-	      {
-		char *p = (char*) p_data;
-		char *p_drop;
-
-		aux_long = 0; 
-		while( *p )	/* calculate buffer size */
-		{
-		  p_drop = p;
-		  if((u.i = *p) != -1 ) 
-		      u.i = DRIVE_FindDriveRoot( (const char **)&p_drop );
-		  if( u.i == -1 ) *p = -1;	/* mark as "bad" */
-		  else
-		  {
-                      INT32 len = GetShortPathName32A( p, NULL, 0 );
-                      if (len) aux_long += len + 1;
-		      else *p = -1;
-		  }
-		  p += strlen(p) + 1;
-		}
-		if( aux_long && aux_long < 65535 )
-		{
-		  HDROP16                 hDrop;
-		  LPDROPFILESTRUCT        lpDrop;
-
-		  aux_long += sizeof(DROPFILESTRUCT) + 1; 
-		  hDrop = (HDROP16)GlobalAlloc16( GMEM_SHARE, aux_long );
-		  lpDrop = (LPDROPFILESTRUCT) GlobalLock16( hDrop );
-
-		  if( lpDrop )
-		  {
-		    lpDrop->wSize = sizeof(DROPFILESTRUCT);
-		    lpDrop->ptMousePos.x = (INT16)x;
-		    lpDrop->ptMousePos.y = (INT16)y;
-		    lpDrop->fInNonClientArea = (BOOL16) 
-			( x < (pDropWnd->rectClient.left - pDropWnd->rectWindow.left)  ||
-			  y < (pDropWnd->rectClient.top - pDropWnd->rectWindow.top)    ||
-			  x > (pDropWnd->rectClient.right - pDropWnd->rectWindow.left) ||
-			  y > (pDropWnd->rectClient.bottom - pDropWnd->rectWindow.top) );
-		    p_drop = ((char*)lpDrop) + sizeof(DROPFILESTRUCT);
-		    p = p_data;
-		    while(*p)
-		    {
-		      if( *p != -1 )	/* use only "good" entries */
-		      {
-                          GetShortPathName32A( p, p_drop, 65535 );
-                          p_drop += strlen( p_drop ) + 1;
-		      }
-		      p += strlen(p) + 1;
-		    }
-		    *p_drop = '\0';
-		    PostMessage16( pWnd->hwndSelf, WM_DROPFILES,
-                                   (WPARAM16)hDrop, 0L );
-		  }
-	        }
-	      }
-	      if( p_data ) TSXFree(p_data);  
-
-	  } /* WS_EX_ACCEPTFILES */
-       } /* dndProtocol */
-       else
-	  TRACE(event, "unrecognized ClientMessage\n" );
+			      AnyPropertyType, &u.atom, &u.i,
+			      &u.l, &u.l, &p_data);
+	TRACE(event, "message_type=%ld, data=%ld,%ld,%ld,%ld,%ld, msg=%s\n",
+	      event->message_type, event->data.l[0], event->data.l[1], 
+	      event->data.l[2], event->data.l[3], event->data.l[4],
+	      p_data);
+#endif
+	TRACE(event, "unrecognized ClientMessage\n" );
+      }
     }
 }
 
