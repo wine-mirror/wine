@@ -48,7 +48,7 @@
 #endif
 
 #ifndef DECLSPEC_NORETURN
-# if (_MSC_VER >= 1200) && !defined(MIDL_PASS)
+# if defined(_MSC_VER) && (_MSC_VER >= 1200) && !defined(MIDL_PASS)
 #  define DECLSPEC_NORETURN __declspec(noreturn)
 # elif defined(__GNUC__)
 #  define DECLSPEC_NORETURN __attribute__((noreturn))
@@ -58,7 +58,7 @@
 #endif
 
 #ifndef DECLSPEC_ALIGN
-# if (_MSC_VER >= 1300) && !defined(MIDL_PASS)
+# if defined(_MSC_VER) && (_MSC_VER >= 1300) && !defined(MIDL_PASS)
 #  define DECLSPEC_ALIGN(x) __declspec(align(x))
 # elif defined(__GNUC__)
 #  define DECLSPEC_ALIGN(x) __attribute__((aligned(x)))
@@ -72,7 +72,7 @@
 #endif
 
 #ifndef DECLSPEC_UUID
-# if (_MSC_VER >= 1100) && defined (__cplusplus)
+# if defined(_MSC_VER) && (_MSC_VER >= 1100) && defined (__cplusplus)
 #  define DECLSPEC_UUID(x) __declspec(uuid(x))
 # else
 #  define DECLSPEC_UUID(x)
@@ -80,7 +80,7 @@
 #endif
 
 #ifndef DECLSPEC_NOVTABLE
-# if (_MSC_VER >= 1100) && defined(__cplusplus)
+# if defined(_MSC_VER) && (_MSC_VER >= 1100) && defined(__cplusplus)
 #  define DECLSPEC_NOVTABLE __declspec(novtable)
 # else
 #  define DECLSPEC_NOVTABLE
@@ -88,7 +88,7 @@
 #endif
 
 #ifndef DECLSPEC_SELECTANY
-#if (_MSC_VER >= 1100)
+#if defined(_MSC_VER) && (_MSC_VER >= 1100)
 #define DECLSPEC_SELECTANY __declspec(selectany)
 #else
 #define DECLSPEC_SELECTANY
@@ -96,7 +96,7 @@
 #endif
 
 #ifndef NOP_FUNCTION
-# if (_MSC_VER >= 1210)
+# if defined(_MSC_VER) && (_MSC_VER >= 1210)
 #  define NOP_FUNCTION __noop
 # else
 #  define NOP_FUNCTION (void)0
@@ -104,7 +104,7 @@
 #endif
 
 #ifndef DECLSPEC_ADDRSAFE
-# if (_MSC_VER >= 1200) && (defined(_M_ALPHA) || defined(_M_AXP64))
+# if defined(_MSC_VER) && (_MSC_VER >= 1200) && (defined(_M_ALPHA) || defined(_M_AXP64))
 #  define DECLSPEC_ADDRSAFE __declspec(address_safe)
 # else
 #  define DECLSPEC_ADDRSAFE
@@ -112,7 +112,7 @@
 #endif
 
 #ifndef FORCEINLINE
-# if (_MSC_VER >= 1200)
+# if defined(_MSC_VER) && (_MSC_VER >= 1200)
 #  define FORCEINLINE __forceinline
 # elif defined(__GNUC__) && ((__GNUC__ > 3) || ((__GNUC__ == 3) && (__GNUC_MINOR__ >= 2)))
 #  define FORCEINLINE __attribute__((always_inline))
@@ -122,7 +122,7 @@
 #endif
 
 #ifndef DECLSPEC_DEPRECATED
-# if (_MSC_VER >= 1300) && !defined(MIDL_PASS)
+# if defined(_MSC_VER) && (_MSC_VER >= 1300) && !defined(MIDL_PASS)
 #  define DECLSPEC_DEPRECATED __declspec(deprecated)
 #  define DEPRECATE_SUPPORTED
 # elif defined(__GNUC__) && ((__GNUC__ > 3) || ((__GNUC__ == 3) && (__GNUC_MINOR__ >= 2)))
@@ -234,7 +234,7 @@
 #define MEMORY_ALLOCATION_ALIGNMENT 8
 #endif
 
-#if (_MSC_VER >= 1300) && defined(__cplusplus)
+#if defined(_MSC_VER) && (_MSC_VER >= 1300) && defined(__cplusplus)
 # define TYPE_ALIGNMENT(t) __alignof(t)
 #elif defined(__GNUC__)
 # define TYPE_ALIGNMENT(t) __alignof__(t)

@@ -400,7 +400,7 @@ static DWORD WINAPI _async_queryfun(LPVOID arg) {
 	case AQ_GETHOST: {
 			struct hostent *he;
 			char *copy_hostent = targetptr;
-#if HAVE_LINUX_GETHOSTBYNAME_R_6
+#ifdef HAVE_LINUX_GETHOSTBYNAME_R_6
                         char *extrabuf;
                         int ebufsize=1024;
                         struct hostent hostentry;
@@ -442,7 +442,7 @@ static DWORD WINAPI _async_queryfun(LPVOID arg) {
 					size = -size;
 				}
 			}
-#if HAVE_LINUX_GETHOSTBYNAME_R_6
+#ifdef HAVE_LINUX_GETHOSTBYNAME_R_6
                         HeapFree(GetProcessHeap(),0,extrabuf);
 #else
                         LeaveCriticalSection( &csWSgetXXXbyYYY );

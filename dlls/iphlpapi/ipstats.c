@@ -34,16 +34,16 @@
 #ifdef HAVE_ARPA_INET_H
 #include <arpa/inet.h>
 #endif
-#if HAVE_NET_IF_H
+#ifdef HAVE_NET_IF_H
 #include <net/if.h>
 #endif
-#if HAVE_NET_IF_ARP_H
+#ifdef HAVE_NET_IF_ARP_H
 #include <net/if_arp.h>
 #endif
-#if HAVE_NETINET_TCP_H
+#ifdef HAVE_NETINET_TCP_H
 #include <netinet/tcp.h>
 #endif
-#if HAVE_NETINET_TCP_FSM_H
+#ifdef HAVE_NETINET_TCP_FSM_H
 #include <netinet/tcp_fsm.h>
 #endif
 

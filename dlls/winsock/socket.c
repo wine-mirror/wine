@@ -2838,7 +2838,7 @@ static WIN_hostent* __ws_gethostbyaddr(const char *addr, int len, int type, int 
     WIN_hostent *retval = NULL;
 
     struct hostent* host;
-#if HAVE_LINUX_GETHOSTBYNAME_R_6
+#ifdef HAVE_LINUX_GETHOSTBYNAME_R_6
     char *extrabuf;
     int ebufsize=1024;
     struct hostent hostentry;

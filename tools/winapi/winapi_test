@@ -483,7 +483,7 @@ sub output_header {
     print OUT " * Windows API extension\n";
     print OUT " */\n";
     print OUT "\n";
-    print OUT "#if (_MSC_VER >= 1300) && defined(__cplusplus)\n";
+    print OUT "#if defined(_MSC_VER) && (_MSC_VER >= 1300) && defined(__cplusplus)\n";
     print OUT "# define FIELD_ALIGNMENT(type, field) __alignof(((type*)0)->field)\n";
     print OUT "#elif defined(__GNUC__)\n";
     print OUT "# define FIELD_ALIGNMENT(type, field) __alignof__(((type*)0)->field)\n";
@@ -491,7 +491,7 @@ sub output_header {
     print OUT "/* FIXME: Not sure if is possible to do without compiler extension */\n";
     print OUT "#endif\n";
     print OUT "\n";
-    print OUT "#if (_MSC_VER >= 1300) && defined(__cplusplus)\n";
+    print OUT "#if defined(_MSC_VER) && (_MSC_VER >= 1300) && defined(__cplusplus)\n";
     print OUT "# define _TYPE_ALIGNMENT(type) __alignof(type)\n";
     print OUT "#elif defined(__GNUC__)\n";
     print OUT "# define _TYPE_ALIGNMENT(type) __alignof__(type)\n";

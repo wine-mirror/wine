@@ -153,10 +153,10 @@ static char* msvcrt_valisttos(const char* arg0, va_list alist, char delim)
   char* p;
   char *ret;
 
-#if HAVE_VA_COPY
+#ifdef HAVE_VA_COPY
   va_copy(alist2,alist);
 #else
-# if HAVE___VA_COPY
+# ifdef HAVE___VA_COPY
   __va_copy(alist2,alist);
 # else
   alist2 = alist;

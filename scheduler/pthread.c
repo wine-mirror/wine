@@ -39,7 +39,7 @@ struct _pthread_cleanup_buffer;
 #endif
 #include <string.h>
 #include <sys/types.h>
-#if HAVE_SYS_SOCKET_H
+#ifdef HAVE_SYS_SOCKET_H
 # include <sys/socket.h>
 #endif
 #ifdef HAVE_SYS_MMAN_H

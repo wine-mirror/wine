@@ -34,7 +34,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(bidi);
 
-#if HAVE_ICU
+#ifdef HAVE_ICU
 BOOL BidiAvail = TRUE;
 #else
 BOOL BidiAvail = FALSE;
