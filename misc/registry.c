@@ -1199,9 +1199,27 @@ static int _get_reg_type(const WCHAR* windir)
 /* load the registry file in wine format [Internal] */
 static void load_wine_registry(HKEY hkey,LPCSTR fn)
 {
+    WCHAR *buffer;
     HANDLE file;
-    if ((file = FILE_CreateFile( fn, GENERIC_READ, 0, NULL, OPEN_EXISTING,
-                                 FILE_ATTRIBUTE_NORMAL, 0 )))
+    DWORD len;
+    UNICODE_STRING name;
+    OBJECT_ATTRIBUTES attr;
+    IO_STATUS_BLOCK io;
+
+    len = MultiByteToWideChar( CP_UNIXCP, 0, fn, -1, NULL, 0 );
+    if (!(buffer = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) ))) return;
+    MultiByteToWideChar( CP_UNIXCP, 0, fn, -1, buffer, len );
+    RtlInitUnicodeString( &name, buffer );
+
+    attr.Length = sizeof(attr);
+    attr.RootDirectory = 0;
+    attr.Attributes = OBJ_CASE_INSENSITIVE;
+    attr.ObjectName = &name;
+    attr.SecurityDescriptor = NULL;
+    attr.SecurityQualityOfService = NULL;
+
+    if (!NtOpenFile( &file, GENERIC_READ, &attr, &io, FILE_SHARE_READ | FILE_SHARE_WRITE,
+                     FILE_NON_DIRECTORY_FILE | FILE_SYNCHRONOUS_IO_NONALERT ))
     {
         SERVER_START_REQ( load_registry )
         {
@@ -1212,6 +1230,7 @@ static void load_wine_registry(HKEY hkey,LPCSTR fn)
         SERVER_END_REQ;
         CloseHandle( file );
     }
+    HeapFree( GetProcessHeap(), 0, buffer );
 }
 
 /* generate and return the name of the tmp file and associated stream [Internal] */
