@@ -3,6 +3,7 @@
  *
  * Copyright 1998,1999 Eric Kohl
  * Copyright 2000 Eric Kohl for CodeWeavers
+ * Copyright 2004 Robert Shearman
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -37,7 +38,10 @@
  * If you discover missing features or bugs please note them below.
  * 
  * TODO:
- *   - Button wrapping (under construction).
+ *   - Styles:
+ *     - TBSTYLE_ALTDRAG
+ *     - TBSTYLE_REGISTERDROP
+ *     - TBSTYLE_EX_DOUBLEBUFFER
  *   - Messages:
  *     - TB_GETINSERTMARK
  *     - TB_GETINSERTMARKCOLOR
@@ -59,6 +63,7 @@
  *     - TBN_RESTORE
  *     - TBN_SAVE
  *     - TBN_TOOLBARCHANGE
+ *   - Button wrapping (under construction).
  *   - Fix TB_SETROWS.
  *   - Fix TOOLBAR_SetButtonInfo32A/W.
  *   - iListGap custom draw support.
@@ -647,7 +652,9 @@ TOOLBAR_DrawPattern (LPRECT lpRect, NMTBCUSTOMDRAW *tbcd)
 static void TOOLBAR_DrawMasked(TOOLBAR_INFO *infoPtr, TBUTTON_INFO *btnPtr,
                                HDC hdc, INT x, INT y)
 {
-    HIMAGELIST himl = GETDEFIMAGELIST(infoPtr, 0);
+    int index;
+    HIMAGELIST himl = 
+        TOOLBAR_GetImageListForDrawing(infoPtr, btnPtr, IMAGE_LIST_DEFAULT, &index);
 
     if (himl)
     {
@@ -662,7 +669,7 @@ static void TOOLBAR_DrawMasked(TOOLBAR_INFO *infoPtr, TBUTTON_INFO *btnPtr,
         hbmImage = CreateBitmap(cx, cy, GetDeviceCaps(hdc,PLANES),
                                 GetDeviceCaps(hdc,BITSPIXEL), NULL);
         SelectObject(hdcImage, hbmImage);
-        ImageList_DrawEx(himl, btnPtr->iBitmap, hdcImage, 0, 0, cx, cy,
+        ImageList_DrawEx(himl, index, hdcImage, 0, 0, cx, cy,
                          RGB(0xff, 0xff, 0xff), RGB(0,0,0), ILD_NORMAL);
 
         /* Create Mask */
@@ -679,6 +686,7 @@ static void TOOLBAR_DrawMasked(TOOLBAR_INFO *infoPtr, TBUTTON_INFO *btnPtr,
         /* draw the new mask 'etched' to hdc */
         SetBkColor(hdc, RGB(255, 255, 255));
         SelectObject(hdc, GetSysColorBrush(COLOR_3DHILIGHT));
+        /* E20746 op code is (Dst ^ (Src & (Pat ^ Dst))) */
         BitBlt(hdc, x + 1, y + 1, cx, cy, hdcMask, 0, 0, 0xE20746);
         SelectObject(hdc, GetSysColorBrush(COLOR_3DSHADOW));
         BitBlt(hdc, x, y, cx, cy, hdcMask, 0, 0, 0xE20746);
@@ -703,8 +711,7 @@ TOOLBAR_TranslateState(TBUTTON_INFO *btnPtr)
     retstate |= (btnPtr->fsState & TBSTATE_MARKED ) ? CDIS_MARKED   : 0;
     retstate |= (btnPtr->bHot                     ) ? CDIS_HOT      : 0;
     retstate |= (btnPtr->fsState & TBSTATE_INDETERMINATE) ? CDIS_INDETERMINATE : 0;
-    /* FIXME: don't set CDIS_GRAYED, CDIS_FOCUS, CDIS_DEFAULT       */
-    /*        don't test TBSTATE_HIDDEN                             */
+    /* NOTE: we don't set CDIS_GRAYED, CDIS_FOCUS, CDIS_DEFAULT */
     return retstate;
 }
 
@@ -4439,33 +4446,69 @@ TOOLBAR_SetHotImageList (HWND hwnd, WPARAM wParam, LPARAM lParam)
 }
 
 
+/* Makes previous hot button no longer hot, makes the specified
+ * button hot and sends appropriate notifications. dwReason is one or
+ * more HICF_ flags. Specify nHit < 0 to make no buttons hot.
+ * NOTE 1: this function does not validate nHit
+ * NOTE 2: the name of this function is completely made up and
+ * not based on any documentation from Microsoft. */
+static void
+TOOLBAR_SetHotItemEx (TOOLBAR_INFO *infoPtr, INT nHit, DWORD dwReason)
+{
+    if (infoPtr->nHotItem != nHit)
+    {
+        NMTBHOTITEM nmhotitem;
+        TBUTTON_INFO *btnPtr = NULL, *oldBtnPtr = NULL;
+        LRESULT no_highlight;
+	
+        /* Remove the effect of an old hot button if the button was
+           drawn with the hot button effect */
+        if(infoPtr->nHotItem >= 0)
+        {
+            oldBtnPtr = &infoPtr->buttons[infoPtr->nHotItem];
+            oldBtnPtr->bHot = FALSE;
+        }
+
+        infoPtr->nHotItem = nHit;
+
+        /* It's not a separator or in nowhere. It's a hot button. */
+        if (nHit >= 0)
+            btnPtr = &infoPtr->buttons[nHit];
+
+	nmhotitem.dwFlags = dwReason;
+	if (oldBtnPtr)
+	    nmhotitem.idOld = oldBtnPtr->idCommand;
+	else
+	    nmhotitem.dwFlags |= HICF_ENTERING;
+	if (btnPtr)
+	    nmhotitem.idNew = btnPtr->idCommand;
+	else
+	    nmhotitem.dwFlags |= HICF_LEAVING;
+
+	no_highlight = TOOLBAR_SendNotify((NMHDR*)&nmhotitem, infoPtr, TBN_HOTITEMCHANGE);
+
+	/* now invalidate the old and new buttons so they will be painted */
+	if (oldBtnPtr)
+	    InvalidateRect(infoPtr->hwndSelf, &oldBtnPtr->rect, TRUE);
+	if (btnPtr && !no_highlight)
+	{
+            btnPtr->bHot = TRUE;
+	    InvalidateRect(infoPtr->hwndSelf, &btnPtr->rect, TRUE);
+        }
+    }
+}
+
 static LRESULT
 TOOLBAR_SetHotItem (HWND hwnd, WPARAM wParam)
 {
     TOOLBAR_INFO *infoPtr = TOOLBAR_GetInfoPtr(hwnd);
     INT nOldHotItem = infoPtr->nHotItem;
-    TBUTTON_INFO *btnPtr;
 
     if ((INT) wParam < 0 || (INT)wParam > infoPtr->nNumButtons)
         wParam = -2;
 
-    if (GetWindowLongA (hwnd, GWL_STYLE) & TBSTYLE_FLAT)
-    {
-
-    	infoPtr->nHotItem = (INT)wParam;
-        if ((INT)wParam >=0)
-        {
-            btnPtr = &infoPtr->buttons[(INT)wParam];
-            btnPtr->bHot = TRUE;
-	        InvalidateRect (hwnd, &btnPtr->rect, TRUE);
-        }
-        if (nOldHotItem>=0)
-        {
-            btnPtr = &infoPtr->buttons[nOldHotItem];
-            btnPtr->bHot = FALSE;
-	        InvalidateRect (hwnd, &btnPtr->rect, TRUE);
-        }
-    }
+    if (GetWindowLongW(hwnd, GWL_STYLE) & TBSTYLE_FLAT)
+        TOOLBAR_SetHotItemEx(infoPtr, wParam, HICF_OTHER);
 
     if (nOldHotItem < 0)
 	return -1;
@@ -4808,54 +4851,28 @@ static LRESULT TOOLBAR_Unkwn45D(HWND hwnd, WPARAM wParam, LPARAM lParam)
     return 0;
 }
 
-/*********************************************************************/
-/*                                                                   */
-/* This is undocumented and appears to be a "Super" TB_SETHOTITEM    */
-/* without the restriction of TBSTYLE_FLAT. This implementation is   */
-/* based on relay traces of the native control and IE 5.5            */
-/*                                                                   */
-/*********************************************************************/
+
+/* UNDOCUMENTED MESSAGE: This is an extended version of the
+ * TB_SETHOTITEM message. It allows the caller to specify a reason why the
+ * hot item changed (rather than just the HICF_OTHER that TB_SETHOTITEM
+ * sends). */
 static LRESULT
 TOOLBAR_Unkwn45E (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
     TOOLBAR_INFO *infoPtr = TOOLBAR_GetInfoPtr(hwnd);
     INT nOldHotItem = infoPtr->nHotItem;
-    TBUTTON_INFO *btnPtr;
-    INT no_hi = 0;
-    NMTBHOTITEM nmhotitem;
+
+    TRACE("old item=%d, new item=%d, flags=%08lx\n",
+	  nOldHotItem, infoPtr->nHotItem, (DWORD)lParam);
 
     if ((INT) wParam < 0 || (INT)wParam > infoPtr->nNumButtons)
-        wParam = -2;
+        wParam = -1;
 
-    infoPtr->nHotItem = (INT)wParam;
-    if (nOldHotItem != infoPtr->nHotItem) {
-	nmhotitem.dwFlags = (DWORD)lParam;
-	if ( !(nmhotitem.dwFlags & HICF_ENTERING) )
-	    nmhotitem.idOld = (nOldHotItem >= 0) ?
-		infoPtr->buttons[nOldHotItem].idCommand : 0;
-	if ( !(nmhotitem.dwFlags & HICF_LEAVING) )
-	    nmhotitem.idNew = (infoPtr->nHotItem >= 0) ?
-		infoPtr->buttons[infoPtr->nHotItem].idCommand : 0;
-	no_hi = TOOLBAR_SendNotify((NMHDR*)&nmhotitem, infoPtr, TBN_HOTITEMCHANGE);
-    }
-    if ((INT)wParam >=0) {
-	btnPtr = &infoPtr->buttons[(INT)wParam];
-	btnPtr->bHot = (no_hi) ? FALSE : TRUE;
-	InvalidateRect (hwnd, &btnPtr->rect, TRUE);
-    }
-    if (nOldHotItem>=0) {
-	btnPtr = &infoPtr->buttons[nOldHotItem];
-	btnPtr->bHot = FALSE;
-	InvalidateRect (hwnd, &btnPtr->rect, TRUE);
-    }
+    TOOLBAR_SetHotItemEx(infoPtr, wParam, lParam);
+
     GetFocus();
-    TRACE("old item=%d, new item=%d, flags=%08lx, notify=%d\n",
-	  nOldHotItem, infoPtr->nHotItem, (DWORD)lParam, no_hi);
 
-    if (nOldHotItem < 0)
-	return -1;
-
-    return (LRESULT)nOldHotItem;
+    return (nOldHotItem < 0) ? -1 : (LRESULT)nOldHotItem;
 }
 
 /* UNDOCUMENTED MESSAGE: This sets the toolbar global iListGap parameter
@@ -4978,7 +4995,7 @@ TOOLBAR_Create (HWND hwnd, WPARAM wParam, LPARAM lParam)
     infoPtr->bUnicode = IsWindowUnicode (hwnd);
     infoPtr->nButtonDown = -1;
     infoPtr->nOldHit = -1;
-    infoPtr->nHotItem = -2; /* It has to be initially different from nOldHit */
+    infoPtr->nHotItem = -1;
     infoPtr->hwndNotify = ((LPCREATESTRUCTW)lParam)->hwndParent;
     infoPtr->bTransparent = (dwStyle & TBSTYLE_TRANSPARENT);
     infoPtr->bBtnTranspnt = (dwStyle & (TBSTYLE_FLAT | TBSTYLE_LIST));
@@ -5201,9 +5218,10 @@ TOOLBAR_LButtonDown (HWND hwnd, WPARAM wParam, LPARAM lParam)
     pt.y = (INT)HIWORD(lParam);
     nHit = TOOLBAR_InternalHitTest (hwnd, &pt);
 
+    btnPtr = &infoPtr->buttons[nHit];
+
     if (nHit >= 0) {
 	RECT arrowRect;
-	btnPtr = &infoPtr->buttons[nHit];
 	infoPtr->nOldHit = nHit;
 
 	CopyRect(&arrowRect, &btnPtr->rect);
@@ -5217,10 +5235,9 @@ TOOLBAR_LButtonDown (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	       (!TOOLBAR_HasDropDownArrows(infoPtr->dwExStyle))))))
 	{
 	    LRESULT res;
-	    /*
-	     * this time we must force a Redraw, so the btn is
-	     * painted down before CaptureChanged repaints it up
-	     */
+
+	    /* draw in pressed state */
+	    btnPtr->fsState |= TBSTATE_PRESSED;
 	    RedrawWindow(hwnd,&btnPtr->rect,0,
 			RDW_ERASE|RDW_INVALIDATE|RDW_UPDATENOW);
 
@@ -5231,17 +5248,38 @@ TOOLBAR_LButtonDown (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	    CopyRect(&nmtb.rcButton, &btnPtr->rect);
 	    res = TOOLBAR_SendNotify ((NMHDR *) &nmtb, infoPtr,
 				  TBN_DROPDOWN);
-	    if (res != TBDDRET_TREATPRESSED)
-		/* ??? guess  (GA)  */
+	    TRACE("TBN_DROPDOWN responded with %ld\n", res);
+
+            if (res != TBDDRET_TREATPRESSED)
+            {
+                MSG msg;
+
+                /* redraw button in unpressed state */
+       	        btnPtr->fsState &= ~TBSTATE_PRESSED;
+       	        InvalidateRect(hwnd, &btnPtr->rect, TRUE);
+
+                /* find and set hot item
+                 * NOTE: native doesn't do this, but that is a bug */
+                GetCursorPos(&pt);
+                ScreenToClient(hwnd, &pt);
+                nHit = TOOLBAR_InternalHitTest(hwnd, &pt);
+                TOOLBAR_SetHotItemEx(infoPtr, nHit, HICF_MOUSE | HICF_LMOUSE);
+                
+                /* remove any left mouse button down messages so that we can
+                 * get a toggle effect on the button */
+                while (PeekMessageW(&msg, hwnd, WM_LBUTTONDOWN, WM_LBUTTONDOWN, PM_REMOVE))
+                    ;
+
 		return 0;
+            }
 	    /* otherwise drop through and process as pushed */
        	}
-	/* SetCapture (hwnd); */
 	infoPtr->bCaptured = TRUE;
 	infoPtr->nButtonDown = nHit;
 
 	btnPtr->fsState |= TBSTATE_PRESSED;
-	btnPtr->bHot = FALSE;
+
+        TOOLBAR_SetHotItemEx(infoPtr, nHit, HICF_MOUSE | HICF_LMOUSE);
 
         if (btnPtr->fsState & TBSTATE_ENABLED)
 	    InvalidateRect(hwnd, &btnPtr->rect, TRUE);
@@ -5286,10 +5324,7 @@ TOOLBAR_LButtonUp (HWND hwnd, WPARAM wParam, LPARAM lParam)
     pt.y = (INT)HIWORD(lParam);
     nHit = TOOLBAR_InternalHitTest (hwnd, &pt);
 
-    /* restore hot effect to hot button disabled by TOOLBAR_LButtonDown() */
-    /* if the cursor is still inside of the toolbar */
-    if((infoPtr->nHotItem >= 0) && (nHit != -1))
-        infoPtr->buttons[infoPtr->nHotItem].bHot = TRUE;
+    TOOLBAR_SetHotItemEx(infoPtr, nHit, HICF_MOUSE | HICF_LMOUSE);
 
     if (0 <= infoPtr->nButtonDown) {
 	btnPtr = &infoPtr->buttons[infoPtr->nButtonDown];
@@ -5390,20 +5425,12 @@ TOOLBAR_MouseLeave (HWND hwnd, WPARAM wParam, LPARAM lParam)
     TBUTTON_INFO *hotBtnPtr, *btnPtr;
     RECT rc1;
 
+    TOOLBAR_SetHotItemEx(infoPtr, -1, HICF_MOUSE);
+
     if (infoPtr->nOldHit < 0)
       return TRUE;
 
     hotBtnPtr = &infoPtr->buttons[infoPtr->nOldHit];
-
-    /* Redraw the button if the last button we were over is the hot button and it
-       is enabled */
-    if((infoPtr->nOldHit == infoPtr->nHotItem) && (hotBtnPtr->fsState & TBSTATE_ENABLED))
-    {
-	hotBtnPtr->bHot = FALSE;
-	rc1 = hotBtnPtr->rect;
-	InflateRect (&rc1, 1, 1);
-        InvalidateRect (hwnd, &rc1, TRUE);
-    }
 
     /* If the last button we were over is depressed then make it not */
     /* depressed and redraw it */
@@ -5419,7 +5446,6 @@ TOOLBAR_MouseLeave (HWND hwnd, WPARAM wParam, LPARAM lParam)
     }
 
     infoPtr->nOldHit = -1; /* reset the old hit index as we've left the toolbar */
-    infoPtr->nHotItem = -2; /* It has to be initially different from nOldHit */
 
     return TRUE;
 }
@@ -5427,12 +5453,11 @@ TOOLBAR_MouseLeave (HWND hwnd, WPARAM wParam, LPARAM lParam)
 static LRESULT
 TOOLBAR_MouseMove (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
-    TBUTTON_INFO *btnPtr = NULL, *oldBtnPtr = NULL;
     TOOLBAR_INFO *infoPtr = TOOLBAR_GetInfoPtr (hwnd);
     POINT pt;
-    INT   nHit;
     TRACKMOUSEEVENT trackinfo;
-    NMTBHOTITEM nmhotitem;
+    INT   nHit;
+    TBUTTON_INFO *btnPtr;
 
     /* fill in the TRACKMOUSEEVENT struct */
     trackinfo.cbSize = sizeof(TRACKMOUSEEVENT);
@@ -5461,56 +5486,25 @@ TOOLBAR_MouseMove (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
     nHit = TOOLBAR_InternalHitTest (hwnd, &pt);
 
+    TOOLBAR_SetHotItemEx(infoPtr, nHit, HICF_MOUSE);
+
     if (infoPtr->nOldHit != nHit)
     {
-	/* Remove the effect of an old hot button if the button was
-	   drawn with the hot button effect */
-	if(infoPtr->nOldHit >= 0 && infoPtr->nOldHit == infoPtr->nHotItem)
-	{
-	    oldBtnPtr = &infoPtr->buttons[infoPtr->nOldHit];
-	    oldBtnPtr->bHot = FALSE;
-      	}
-
-	/* It's not a separator or in nowhere. It's a hot button. */
-	if (nHit >= 0)
-	{
-	    btnPtr = &infoPtr->buttons[nHit];
-
-	    infoPtr->nHotItem = nHit;
-
-            btnPtr->bHot = TRUE;
-	}
-
-	nmhotitem.dwFlags = HICF_MOUSE;
-	if (oldBtnPtr)
-	    nmhotitem.idOld = oldBtnPtr->idCommand;
-	else
-	    nmhotitem.dwFlags |= HICF_ENTERING;
-	if (btnPtr)
-	    nmhotitem.idNew = btnPtr->idCommand;
-	else
-	    nmhotitem.dwFlags |= HICF_LEAVING;
-	TOOLBAR_SendNotify((NMHDR*)&nmhotitem, infoPtr, TBN_HOTITEMCHANGE);
-
-	/* now invalidate the old and new buttons so they will be painted */
-	if (oldBtnPtr)
-	    InvalidateRect (hwnd, &oldBtnPtr->rect, TRUE);
-	if (btnPtr)
-	    InvalidateRect(hwnd, &btnPtr->rect, TRUE);
-
-	if (infoPtr->bCaptured) {
-	    btnPtr = &infoPtr->buttons[infoPtr->nButtonDown];
-	    if (infoPtr->nOldHit == infoPtr->nButtonDown) {
-		btnPtr->fsState &= ~TBSTATE_PRESSED;
+        if (infoPtr->bCaptured)
+        {
+            btnPtr = &infoPtr->buttons[infoPtr->nButtonDown];
+            if (infoPtr->nOldHit == infoPtr->nButtonDown) {
+                btnPtr->fsState &= ~TBSTATE_PRESSED;
                 InvalidateRect(hwnd, &btnPtr->rect, TRUE);
-	    }
-	    else if (nHit == infoPtr->nButtonDown) {
-		btnPtr->fsState |= TBSTATE_PRESSED;
+            }
+            else if (nHit == infoPtr->nButtonDown) {
+                btnPtr->fsState |= TBSTATE_PRESSED;
                 InvalidateRect(hwnd, &btnPtr->rect, TRUE);
-	    }
-	}
-	infoPtr->nOldHit = nHit;
+            }
+            infoPtr->nOldHit = nHit;
+        }
     }
+
     return 0;
 }
 
