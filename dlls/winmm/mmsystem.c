@@ -259,11 +259,9 @@ static BOOL WINAPI proc_PlaySound(LPCSTR lpszSoundName, UINT uFlags)
     MMCKINFO        	mmckInfo;
     LPWAVEFORMATEX      lpWaveFormat = NULL;
     HWAVE		hWave = 0;
-    WAVEHDR		waveHdr;
-    INT			count, bufsize, left;
+    LPWAVEHDR		waveHdr = NULL;
+    INT			count, bufsize, left, index;
     
-    waveHdr.lpData = NULL;
-
     TRACE("SoundName='%s' uFlags=%04X !\n", lpszSoundName, uFlags);
     if (lpszSoundName == NULL) {
 	TRACE("Stop !\n");
@@ -345,42 +343,55 @@ static BOOL WINAPI proc_PlaySound(LPCSTR lpszSoundName, UINT uFlags)
     /* make it so that 3 buffers per second are needed */
     bufsize = (((lpWaveFormat->nAvgBytesPerSec / 3) - 1) / lpWaveFormat->nBlockAlign + 1) *
 	lpWaveFormat->nBlockAlign;
-    waveHdr.lpData = HeapAlloc(GetProcessHeap(), 0, bufsize);
+    waveHdr = HeapAlloc(GetProcessHeap(), 0, 2 * sizeof(WAVEHDR) + 2 * bufsize);
+    waveHdr[0].lpData = (char*)waveHdr + 2 * sizeof(WAVEHDR);
+    waveHdr[1].lpData = (char*)waveHdr + 2 * sizeof(WAVEHDR) + bufsize;
+    waveHdr[0].dwUser = waveHdr[1].dwUser = 0L;
 
     do {
-	waveHdr.dwUser = 0L;
-	waveHdr.dwFlags = 0L;
-	waveHdr.dwLoops = 0L;
+	index = 0;
 	
 	left = mmckInfo.cksize;
 	mmioSeek(hmmio, mmckInfo.dwDataOffset, SEEK_SET);
 	while (left) {
-	    waveHdr.dwBufferLength = bufsize;
-	    if (waveOutPrepareHeader(hWave, &waveHdr, sizeof(WAVEHDR)) == MMSYSERR_NOERROR) {
-		if (PlaySound_Stop) {
-		    PlaySound_Stop = FALSE;
-		    PlaySound_Loop = FALSE;
-		    break;
-		}
-		if (bufsize > left) bufsize = left;
-		count = mmioRead(hmmio, waveHdr.lpData, bufsize);
+	    if (PlaySound_Stop) {
+		PlaySound_Stop = PlaySound_Loop = FALSE;
+		break;
+	    }
+	    waveHdr[index].dwBufferLength = bufsize;
+	    waveHdr[index].dwFlags = 0L;
+	    waveHdr[index].dwLoops = 0L;
+	    if (waveOutPrepareHeader(hWave, &waveHdr[index], sizeof(WAVEHDR)) == MMSYSERR_NOERROR) {
+		count = mmioRead(hmmio, waveHdr[index].lpData, MIN(bufsize, left));
 		if (count < 1) break;
 		left -= count;
-		waveHdr.dwBufferLength = count;
-		/* waveHdr.dwBytesRecorded = count; */
+		waveHdr[index].dwBufferLength = count;
 		/* FIXME: doesn't expect async ops */ 
-		waveOutWrite(hWave, &waveHdr, sizeof(WAVEHDR));
-		while (!(waveHdr.dwFlags & WHDR_DONE))
-		    Sleep(10);
-		waveOutUnprepareHeader(hWave, &waveHdr, sizeof(WAVEHDR));
-		bRet = TRUE;
-	    } else 
+		waveOutWrite(hWave, &waveHdr[index], sizeof(WAVEHDR));
+		index ^= 1;
+	    } else {
 		WARN("can't prepare WaveOut device !\n");
+	    }
+	    if (waveHdr[index].dwFlags & WHDR_PREPARED) {
+		/* test if waveHdr[index] has been prepared, if so it has been queued for playing */
+		while (!(waveHdr[index].dwFlags & WHDR_DONE))
+		    Sleep(10);
+		waveOutUnprepareHeader(hWave, &waveHdr[index], sizeof(WAVEHDR));
+		bRet = TRUE;
+	    }
 	}
     } while (PlaySound_Loop);
+    index ^= 1;
+    if (waveHdr[index].dwFlags & WHDR_PREPARED) {
+	/* test if waveHdr[index] has been prepared, if so it has been queued for playing */
+	while (!(waveHdr[index].dwFlags & WHDR_DONE))
+	    Sleep(10);
+	waveOutUnprepareHeader(hWave, &waveHdr[index], sizeof(WAVEHDR));
+	bRet = TRUE;
+    }
 
 errCleanUp:
-    HeapFree(GetProcessHeap(), 0, waveHdr.lpData);
+    HeapFree(GetProcessHeap(), 0, waveHdr);
     HeapFree(GetProcessHeap(), 0, lpWaveFormat);
     if (hWave)		while (waveOutClose(hWave) == WAVERR_STILLPLAYING) Sleep(100);
     if (hmmio) 		mmioClose(hmmio, 0);
@@ -2754,7 +2765,7 @@ UINT WINAPI midiInStart(HMIDIIN hMidiIn)
 {
     LPWINE_MLD		wmld;
 
-    TRACE("(%04X\n", hMidiIn);
+    TRACE("(%04X)\n", hMidiIn);
 
     if ((wmld = MMDRV_Get(hMidiIn, MMDRV_MIDIIN, FALSE)) == NULL) 
 	return MMSYSERR_INVALHANDLE;
@@ -2777,7 +2788,7 @@ UINT WINAPI midiInStop(HMIDIIN hMidiIn)
 {
     LPWINE_MLD		wmld;
 
-    TRACE("(%04X\n", hMidiIn);
+    TRACE("(%04X)\n", hMidiIn);
 
     if ((wmld = MMDRV_Get(hMidiIn, MMDRV_MIDIIN, FALSE)) == NULL) 
 	return MMSYSERR_INVALHANDLE;
@@ -2800,7 +2811,7 @@ UINT WINAPI midiInReset(HMIDIIN hMidiIn)
 {
     LPWINE_MLD		wmld;
 
-    TRACE("(%04X\n", hMidiIn);
+    TRACE("(%04X)\n", hMidiIn);
 
     if ((wmld = MMDRV_Get(hMidiIn, MMDRV_MIDIIN, FALSE)) == NULL) 
 	return MMSYSERR_INVALHANDLE;
