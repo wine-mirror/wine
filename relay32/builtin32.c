@@ -77,6 +77,7 @@ extern const BUILTIN32_DESCRIPTOR MSACMMAP_Descriptor;
 extern const BUILTIN32_DESCRIPTOR MSNET32_Descriptor;
 extern const BUILTIN32_DESCRIPTOR MSVFW32_Descriptor;
 extern const BUILTIN32_DESCRIPTOR NTDLL_Descriptor;
+extern const BUILTIN32_DESCRIPTOR ODBC32_Descriptor;
 extern const BUILTIN32_DESCRIPTOR OLE32_Descriptor;
 extern const BUILTIN32_DESCRIPTOR OLEAUT32_Descriptor;
 extern const BUILTIN32_DESCRIPTOR OLECLI32_Descriptor;
@@ -134,6 +135,7 @@ static BUILTIN32_DLL BuiltinDLLs[] =
     { &MSNET32_Descriptor,  0, 0, NULL },
     { &MSVFW32_Descriptor,  0, 0, NULL },
     { &NTDLL_Descriptor,    0, 0, NULL },
+    { &ODBC32_Descriptor,   0, 0, NULL },
     { &OLE32_Descriptor,    0, 0, NULL },
     { &OLEAUT32_Descriptor, 0, 0, NULL },
     { &OLECLI32_Descriptor, 0, 0, NULL },

@@ -50,6 +50,7 @@ LIBSUBDIRS = \
 	dlls/msnet32 \
 	dlls/msvideo \
 	dlls/ntdll \
+	dlls/odbc32 \
 	dlls/ole32 \
 	dlls/oleaut32 \
 	dlls/olecli \
@@ -163,6 +164,7 @@ LIBOBJS = \
 	dlls/msnet32/msnet32.o \
 	dlls/msvideo/msvideo.o \
 	dlls/ntdll/ntdll.o \
+	dlls/odbc32/odbc32.o \
 	dlls/ole32/ole32.o \
 	dlls/oleaut32/oleaut32.o \
 	dlls/olecli/olecli.o \

@@ -102,75 +102,77 @@ const int dbch_msvideo = 90;
 const int dbch_nativefont = 91;
 const int dbch_nonclient = 92;
 const int dbch_ntdll = 93;
-const int dbch_ole = 94;
-const int dbch_pager = 95;
-const int dbch_palette = 96;
-const int dbch_pidl = 97;
-const int dbch_print = 98;
-const int dbch_process = 99;
-const int dbch_profile = 100;
-const int dbch_progress = 101;
-const int dbch_prop = 102;
-const int dbch_propsheet = 103;
-const int dbch_psapi = 104;
-const int dbch_psdrv = 105;
-const int dbch_ras = 106;
-const int dbch_rebar = 107;
-const int dbch_reg = 108;
-const int dbch_region = 109;
-const int dbch_relay = 110;
-const int dbch_resource = 111;
-const int dbch_scroll = 112;
-const int dbch_security = 113;
-const int dbch_segment = 114;
-const int dbch_seh = 115;
-const int dbch_selector = 116;
-const int dbch_sendmsg = 117;
-const int dbch_server = 118;
-const int dbch_shell = 119;
-const int dbch_snoop = 120;
-const int dbch_sound = 121;
-const int dbch_static = 122;
-const int dbch_statusbar = 123;
-const int dbch_storage = 124;
-const int dbch_stress = 125;
-const int dbch_string = 126;
-const int dbch_syscolor = 127;
-const int dbch_system = 128;
-const int dbch_tab = 129;
-const int dbch_tape = 130;
-const int dbch_tapi = 131;
-const int dbch_task = 132;
-const int dbch_text = 133;
-const int dbch_thread = 134;
-const int dbch_thunk = 135;
-const int dbch_timer = 136;
-const int dbch_toolbar = 137;
-const int dbch_toolhelp = 138;
-const int dbch_tooltips = 139;
-const int dbch_trackbar = 140;
-const int dbch_treeview = 141;
-const int dbch_ttydrv = 142;
-const int dbch_tweak = 143;
-const int dbch_typelib = 144;
-const int dbch_updown = 145;
-const int dbch_ver = 146;
-const int dbch_virtual = 147;
-const int dbch_vxd = 148;
-const int dbch_wave = 149;
-const int dbch_win = 150;
-const int dbch_win16drv = 151;
-const int dbch_win32 = 152;
-const int dbch_wing = 153;
-const int dbch_winsock = 154;
-const int dbch_winspool = 155;
-const int dbch_wnet = 156;
-const int dbch_x11 = 157;
-const int dbch_x11drv = 158;
+const int dbch_odbc = 94;
+const int dbch_ole = 95;
+const int dbch_pager = 96;
+const int dbch_palette = 97;
+const int dbch_pidl = 98;
+const int dbch_print = 99;
+const int dbch_process = 100;
+const int dbch_profile = 101;
+const int dbch_progress = 102;
+const int dbch_prop = 103;
+const int dbch_propsheet = 104;
+const int dbch_psapi = 105;
+const int dbch_psdrv = 106;
+const int dbch_ras = 107;
+const int dbch_rebar = 108;
+const int dbch_reg = 109;
+const int dbch_region = 110;
+const int dbch_relay = 111;
+const int dbch_resource = 112;
+const int dbch_scroll = 113;
+const int dbch_security = 114;
+const int dbch_segment = 115;
+const int dbch_seh = 116;
+const int dbch_selector = 117;
+const int dbch_sendmsg = 118;
+const int dbch_server = 119;
+const int dbch_shell = 120;
+const int dbch_snoop = 121;
+const int dbch_sound = 122;
+const int dbch_static = 123;
+const int dbch_statusbar = 124;
+const int dbch_storage = 125;
+const int dbch_stress = 126;
+const int dbch_string = 127;
+const int dbch_syscolor = 128;
+const int dbch_system = 129;
+const int dbch_tab = 130;
+const int dbch_tape = 131;
+const int dbch_tapi = 132;
+const int dbch_task = 133;
+const int dbch_text = 134;
+const int dbch_thread = 135;
+const int dbch_thunk = 136;
+const int dbch_timer = 137;
+const int dbch_toolbar = 138;
+const int dbch_toolhelp = 139;
+const int dbch_tooltips = 140;
+const int dbch_trackbar = 141;
+const int dbch_treeview = 142;
+const int dbch_ttydrv = 143;
+const int dbch_tweak = 144;
+const int dbch_typelib = 145;
+const int dbch_updown = 146;
+const int dbch_ver = 147;
+const int dbch_virtual = 148;
+const int dbch_vxd = 149;
+const int dbch_wave = 150;
+const int dbch_win = 151;
+const int dbch_win16drv = 152;
+const int dbch_win32 = 153;
+const int dbch_wing = 154;
+const int dbch_winsock = 155;
+const int dbch_winspool = 156;
+const int dbch_wnet = 157;
+const int dbch_x11 = 158;
+const int dbch_x11drv = 159;
 
-#define DEBUG_CHANNEL_COUNT 159
+#define DEBUG_CHANNEL_COUNT 160
 
 char __debug_msg_enabled[DEBUG_CHANNEL_COUNT][DEBUG_CLASS_COUNT] = {
+{1, 1, 0, 0},
 {1, 1, 0, 0},
 {1, 1, 0, 0},
 {1, 1, 0, 0},
@@ -427,6 +429,7 @@ const char * const debug_ch_name[DEBUG_CHANNEL_COUNT] = {
 "nativefont",
 "nonclient",
 "ntdll",
+"odbc",
 "ole",
 "pager",
 "palette",

@@ -1,0 +1,18 @@
+DEFS      = @DLLFLAGS@ -D__WINE__
+TOPSRCDIR = @top_srcdir@
+TOPOBJDIR = ../..
+SRCDIR    = @srcdir@
+VPATH     = @srcdir@
+MODULE    = odbc32
+
+SPEC_SRCS = odbc32.spec
+
+C_SRCS = \
+	proxyodbc.c 
+
+all: $(MODULE).o
+
+@MAKE_RULES@
+
+### Dependencies:
+
