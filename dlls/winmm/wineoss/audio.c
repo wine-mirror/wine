@@ -34,7 +34,8 @@
 
 /* an exact wodGetPosition is usually not worth the extra context switches,
  * as we're going to have near fragment accuracy anyway */
-/* #define EXACT_WODPOSITION */
+#define EXACT_WODPOSITION
+#define EXACT_WIDPOSITION
 
 #include "config.h"
 #include "wine/port.h"
@@ -211,6 +212,7 @@ typedef struct {
     PCMWAVEFORMAT		format;
     LPWAVEHDR			lpQueuePtr;
     DWORD			dwTotalRecorded;
+    DWORD			dwTotalRead;
 
     /* synchronization stuff */
     HANDLE			hThread;
@@ -1873,11 +1875,15 @@ static DWORD wodGetPosition(WORD wDevID, LPMMTIME lpTime, DWORD uSize)
 	return MMSYSERR_BADDEVICEID;
     }
 
-    if (lpTime == NULL)	return MMSYSERR_INVALPARAM;
+    if (lpTime == NULL) {
+	WARN("invalid parameter: lpTime == NULL\n");
+	return MMSYSERR_INVALPARAM;
+    }
 
     wwo = &WOutDev[wDevID];
 #ifdef EXACT_WODPOSITION
-    OSS_AddRingMessage(&wwo->msgRing, WINE_WM_UPDATE, 0, TRUE);
+    if (wwo->ossdev->out_caps.dwSupport & WAVECAPS_SAMPLEACCURATE)
+	OSS_AddRingMessage(&wwo->msgRing, WINE_WM_UPDATE, 0, TRUE);
 #endif
     val = wwo->dwPlayedTotal;
 
@@ -3068,6 +3074,7 @@ static	DWORD	CALLBACK	widRecorder(LPVOID pmt)
 
     wwi->state = WINE_WS_STOPPED;
     wwi->dwTotalRecorded = 0;
+    wwi->dwTotalRead = 0;
     wwi->lpQueuePtr = NULL;
 
     SetEvent(wwi->hStartUpEvent);
@@ -3117,7 +3124,8 @@ static	DWORD	CALLBACK	widRecorder(LPVOID pmt)
 		    {
 			/* update number of bytes recorded in current buffer and by this device */
                         lpWaveHdr->dwBytesRecorded += bytesRead;
-			wwi->dwTotalRecorded       += bytesRead;
+			wwi->dwTotalRead           += bytesRead;
+			wwi->dwTotalRecorded = wwi->dwTotalRead;
 
 			/* buffer is full. notify client */
 			if (lpWaveHdr->dwBytesRecorded == lpWaveHdr->dwBufferLength)
@@ -3155,7 +3163,8 @@ static	DWORD	CALLBACK	widRecorder(LPVOID pmt)
 
                         /* update number of bytes recorded in current buffer and by this device */
                         lpWaveHdr->dwBytesRecorded += dwToCopy;
-                        wwi->dwTotalRecorded += dwToCopy;
+                        wwi->dwTotalRead           += dwToCopy;
+			wwi->dwTotalRecorded = wwi->dwTotalRead;
                         bytesRead -= dwToCopy;
                         pOffset   += dwToCopy;
 
@@ -3305,6 +3314,7 @@ static	DWORD	CALLBACK	widRecorder(LPVOID pmt)
 		}
 		wwi->state = WINE_WS_STOPPED;
     		wwi->dwTotalRecorded = 0;
+		wwi->dwTotalRead = 0;
 
 		/* read any headers in queue */
 		widRecorder_ReadHeaders(wwi);
@@ -3319,6 +3329,16 @@ static	DWORD	CALLBACK	widRecorder(LPVOID pmt)
 		}
 
 		wwi->lpQueuePtr = NULL;
+		SetEvent(ev);
+		break;
+	    case WINE_WM_UPDATE:
+		if (wwi->state == WINE_WS_PLAYING) {
+		    audio_buf_info tmp_info;
+		    if (ioctl(wwi->ossdev->fd, SNDCTL_DSP_GETISPACE, &tmp_info) < 0)
+			ERR("ioctl(%s, SNDCTL_DSP_GETISPACE) failed (%s)\n", wwi->ossdev->dev_name, strerror(errno));
+		    else
+			wwi->dwTotalRecorded = wwi->dwTotalRead + tmp_info.bytes;
+		}
 		SetEvent(ev);
 		break;
 	    case WINE_WM_CLOSING:
@@ -3431,6 +3451,7 @@ static DWORD widOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
 	wwi->lpQueuePtr = NULL;
     }
     wwi->dwTotalRecorded = 0;
+    wwi->dwTotalRead = 0;
     wwi->wFlags = HIWORD(dwFlags & CALLBACK_TYPEMASK);
 
     memcpy(&wwi->waveDesc, lpDesc,           sizeof(WAVEOPENDESC));
@@ -3623,9 +3644,17 @@ static DWORD widGetPosition(WORD wDevID, LPMMTIME lpTime, DWORD uSize)
 	WARN("can't get pos !\n");
 	return MMSYSERR_INVALHANDLE;
     }
-    if (lpTime == NULL)	return MMSYSERR_INVALPARAM;
+
+    if (lpTime == NULL) {
+	WARN("invalid parameter: lpTime == NULL\n");
+	return MMSYSERR_INVALPARAM;
+    }
 
     wwi = &WInDev[wDevID];
+#ifdef EXACT_WIDPOSITION
+    if (wwi->ossdev->in_caps_support & WAVECAPS_SAMPLEACCURATE)
+	OSS_AddRingMessage(&(wwi->msgRing), WINE_WM_UPDATE, 0, TRUE);
+#endif
 
     TRACE("wType=%04X !\n", lpTime->wType);
     TRACE("wBitsPerSample=%u\n", wwi->format.wBitsPerSample);
