@@ -5,6 +5,8 @@
  * Copyright 2000 Alexandre Julliard
  */
 
+#include "config.h"
+
 #include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>

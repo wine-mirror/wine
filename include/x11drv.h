@@ -175,7 +175,6 @@ extern BOOL X11DRV_OBM_Init(void);
 struct tagBITMAPOBJ;
 extern XImage *X11DRV_BITMAP_GetXImage( const struct tagBITMAPOBJ *bmp );
 extern int X11DRV_DIB_GetXImageWidthBytes( int width, int depth );
-extern BOOL X11DRV_DIB_Init(void);
 extern HBITMAP X11DRV_BITMAP_CreateBitmapHeaderFromPixmap(Pixmap pixmap);
 extern HGLOBAL X11DRV_DIB_CreateDIBFromPixmap(Pixmap pixmap, HDC hdc, BOOL bDeletePixmap);
 extern HBITMAP X11DRV_BITMAP_CreateBitmapFromPixmap(Pixmap pixmap, BOOL bDeletePixmap);

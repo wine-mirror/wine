@@ -1241,12 +1241,12 @@ static int get_prefix_len( struct key *key, const char *name, struct file_load_i
     WCHAR *p;
     int res;
     int len = strlen(name) * sizeof(WCHAR);
-    if (!get_file_tmp_space( info, len )) return NULL;
+    if (!get_file_tmp_space( info, len )) return 0;
 
     if ((res = parse_strW( (WCHAR *)info->tmp, &len, name, ']' )) == -1)
     {
         file_read_error( "Malformed key", info );
-        return NULL;
+        return 0;
     }
     for (p = (WCHAR *)info->tmp; *p; p++) if (*p == '\\') break;
     *p = 0;

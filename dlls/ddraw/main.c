@@ -324,7 +324,9 @@ HRESULT WINAPI DirectDrawCreate(
     return ret;
 }
 
-
+/***********************************************************************
+ *		DirectDrawCreateEx
+ */
 HRESULT WINAPI DirectDrawCreateEx(
 	LPGUID lpGUID, LPVOID* lplpDD, REFIID iid, LPUNKNOWN pUnkOuter
 ) {

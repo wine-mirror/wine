@@ -334,7 +334,7 @@ BOOL WINAPI wglSwapLayerBuffers(HDC hdc,
 }
 
 /***********************************************************************
- *		wglUseFontBitmaps
+ *		wglUseFontBitmapsA
  */
 BOOL WINAPI wglUseFontBitmapsA(HDC hdc,
 			       DWORD first,
@@ -356,7 +356,7 @@ BOOL WINAPI wglUseFontBitmapsA(HDC hdc,
 }
  
 /***********************************************************************
- *		wglUseFontOutlines
+ *		wglUseFontOutlinesA
  */
 BOOL WINAPI wglUseFontOutlinesA(HDC hdc,
 				DWORD first,
