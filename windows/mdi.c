@@ -117,7 +117,6 @@ typedef struct
 } MDICLIENTINFO;
 
 static HBITMAP hBmpClose   = 0;
-static HBITMAP hBmpRestore = 0;
 
 /* ----------------- declarations ----------------- */
 static void MDI_UpdateFrameText( HWND, HWND, BOOL, LPCWSTR);
@@ -816,7 +815,7 @@ static HBITMAP CreateMDIMenuBitmap(void)
 {
  HDC 		hDCSrc  = CreateCompatibleDC(0);
  HDC		hDCDest	= CreateCompatibleDC(hDCSrc);
- HBITMAP	hbClose = LoadBitmapW(0, MAKEINTRESOURCEW(OBM_CLOSE) );
+ HBITMAP	hbClose = LoadBitmapW(0, MAKEINTRESOURCEW(OBM_OLD_CLOSE) );
  HBITMAP	hbCopy;
  HBITMAP	hobjSrc, hobjDest;
 
@@ -1243,11 +1242,7 @@ static LRESULT MDIClientWndProc_common( HWND hwnd, UINT message,
 	ci->mdiFlags		= 0;
         SetWindowLongW( hwnd, GWL_STYLE, GetWindowLongW(hwnd,GWL_STYLE) | WS_CLIPCHILDREN );
 
-	if (!hBmpClose)
-        {
-            hBmpClose = CreateMDIMenuBitmap();
-            hBmpRestore = LoadBitmapW( 0, MAKEINTRESOURCEW(OBM_RESTORE) );
-        }
+	if (!hBmpClose) hBmpClose = CreateMDIMenuBitmap();
 
 	if (ci->hWindowMenu != 0)
 	    AppendMenuW( ci->hWindowMenu, MF_SEPARATOR, 0, NULL );

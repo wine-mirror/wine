@@ -27,12 +27,6 @@ DECLARE_DEBUG_CHANNEL(shell);
 BOOL NC_DrawGrayButton(HDC hdc, int x, int y);
 
 static HBITMAP hbitmapClose;
-static HBITMAP hbitmapMinimize;
-static HBITMAP hbitmapMinimizeD;
-static HBITMAP hbitmapMaximize;
-static HBITMAP hbitmapMaximizeD;
-static HBITMAP hbitmapRestore;
-static HBITMAP hbitmapRestoreD;
 
 static const BYTE lpGrayMask[] = { 0xAA, 0xA0,
 		      0x55, 0x50,  
@@ -871,18 +865,15 @@ void NC_DrawSysButton( HWND hwnd, HDC hdc, BOOL down )
 static void NC_DrawMaxButton( HWND hwnd, HDC16 hdc, BOOL down )
 {
     RECT rect;
-    HDC hdcMem;
+    UINT flags = IsZoomed(hwnd) ? DFCS_CAPTIONRESTORE : DFCS_CAPTIONMAX;
 
     NC_GetInsideRect( hwnd, &rect );
-    hdcMem = CreateCompatibleDC( hdc );
-    SelectObject( hdcMem,  (IsZoomed(hwnd)
-                            ? (down ? hbitmapRestoreD : hbitmapRestore)
-                            : (down ? hbitmapMaximizeD : hbitmapMaximize)) );
-    BitBlt( hdc, rect.right - GetSystemMetrics(SM_CXSIZE) - 1, rect.top,
-            GetSystemMetrics(SM_CXSIZE) + 1, GetSystemMetrics(SM_CYSIZE), hdcMem, 0, 0,
-            SRCCOPY );
-    DeleteDC( hdcMem );
-
+    rect.left = rect.right - GetSystemMetrics(SM_CXSIZE) + 1;
+    rect.bottom = rect.top + GetSystemMetrics(SM_CYSIZE) - 1;
+    rect.top += 1;
+    rect.right -= 1;
+    if (down) flags |= DFCS_PUSHED;
+    DrawFrameControl( hdc, &rect, DFC_CAPTION, flags );
 }
 
 
@@ -892,17 +883,18 @@ static void NC_DrawMaxButton( HWND hwnd, HDC16 hdc, BOOL down )
 static void NC_DrawMinButton( HWND hwnd, HDC16 hdc, BOOL down )
 {
     RECT rect;
-    HDC hdcMem;
+    UINT flags = DFCS_CAPTIONMIN;
+    DWORD style = GetWindowLongA( hwnd, GWL_STYLE );
 
     NC_GetInsideRect( hwnd, &rect );
-    hdcMem = CreateCompatibleDC( hdc );
-    SelectObject( hdcMem, (down ? hbitmapMinimizeD : hbitmapMinimize) );
-    if (GetWindowLongA(hwnd,GWL_STYLE) & WS_MAXIMIZEBOX)
-        rect.right -= GetSystemMetrics(SM_CXSIZE)+1;
-    BitBlt( hdc, rect.right - GetSystemMetrics(SM_CXSIZE) - 1, rect.top,
-            GetSystemMetrics(SM_CXSIZE) + 1, GetSystemMetrics(SM_CYSIZE), hdcMem, 0, 0,
-            SRCCOPY );
-    DeleteDC( hdcMem );
+    if (style & (WS_MAXIMIZEBOX|WS_MINIMIZEBOX))
+        rect.right -= GetSystemMetrics(SM_CXSIZE) - 2;
+    rect.left = rect.right - GetSystemMetrics(SM_CXSIZE) + 1;
+    rect.bottom = rect.top + GetSystemMetrics(SM_CYSIZE) - 1;
+    rect.top += 1;
+    rect.right -= 1;
+    if (down) flags |= DFCS_PUSHED;
+    DrawFrameControl( hdc, &rect, DFC_CAPTION, flags );
 }
 
 
@@ -1226,13 +1218,7 @@ static void NC_DrawCaption( HDC hdc, RECT *rect, HWND hwnd,
 
     if (!hbitmapClose)
     {
-	if (!(hbitmapClose = LoadBitmapA( 0, MAKEINTRESOURCEA(OBM_CLOSE) ))) return;
-	hbitmapMinimize  = LoadBitmapA( 0, MAKEINTRESOURCEA(OBM_REDUCE) );
-	hbitmapMinimizeD = LoadBitmapA( 0, MAKEINTRESOURCEA(OBM_REDUCED) );
-	hbitmapMaximize  = LoadBitmapA( 0, MAKEINTRESOURCEA(OBM_ZOOM) );
-	hbitmapMaximizeD = LoadBitmapA( 0, MAKEINTRESOURCEA(OBM_ZOOMD) );
-	hbitmapRestore   = LoadBitmapA( 0, MAKEINTRESOURCEA(OBM_RESTORE) );
-	hbitmapRestoreD  = LoadBitmapA( 0, MAKEINTRESOURCEA(OBM_RESTORED) );
+	if (!(hbitmapClose = LoadBitmapA( 0, MAKEINTRESOURCEA(OBM_OLD_CLOSE) ))) return;
     }
     
     if (GetWindowLongA( hwnd, GWL_EXSTYLE) & WS_EX_DLGMODALFRAME)
@@ -1255,6 +1241,7 @@ static void NC_DrawCaption( HDC hdc, RECT *rect, HWND hwnd,
 	MoveToEx( hdc, r.left - 1, r.top, NULL );
 	LineTo( hdc, r.left - 1, r.bottom );
     }
+    FillRect( hdc, &r, GetSysColorBrush(active ? COLOR_ACTIVECAPTION : COLOR_INACTIVECAPTION) );
     if (style & WS_MAXIMIZEBOX)
     {
 	NC_DrawMaxButton( hwnd, hdc, FALSE );
@@ -1265,9 +1252,6 @@ static void NC_DrawCaption( HDC hdc, RECT *rect, HWND hwnd,
 	NC_DrawMinButton( hwnd, hdc, FALSE );
 	r.right -= GetSystemMetrics(SM_CXSIZE) + 1;
     }
-
-    FillRect( hdc, &r, GetSysColorBrush(active ? COLOR_ACTIVECAPTION :
-					    COLOR_INACTIVECAPTION) );
 
     if (GetWindowTextA( hwnd, buffer, sizeof(buffer) ))
     {

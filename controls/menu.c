@@ -146,15 +146,7 @@ typedef struct
 static WORD arrow_bitmap_width = 0, arrow_bitmap_height = 0;
 
 static HBITMAP hStdMnArrow = 0;
-
-/* Minimze/restore/close buttons to be inserted in menubar */
-static HBITMAP hBmpMinimize = 0;
-static HBITMAP hBmpMinimizeD = 0;
-static HBITMAP hBmpMaximize = 0;
-static HBITMAP hBmpMaximizeD = 0;
-static HBITMAP hBmpClose = 0;
-static HBITMAP hBmpCloseD = 0;
-
+static HBITMAP hBmpSysMenu = 0;
 
 static HBRUSH	hShadeBrush = 0;
 static HFONT	hMenuFont = 0;
@@ -397,12 +389,7 @@ BOOL MENU_Init()
     /* Load menu bitmaps */
     hStdMnArrow = LoadBitmapA(0, MAKEINTRESOURCEA(OBM_MNARROW));
     /* Load system buttons bitmaps */
-    hBmpMinimize = LoadBitmapA(0,MAKEINTRESOURCEA(OBM_REDUCE));
-    hBmpMinimizeD = LoadBitmapA(0,MAKEINTRESOURCEA(OBM_REDUCED));
-    hBmpMaximize = LoadBitmapA(0,MAKEINTRESOURCEA(OBM_RESTORE));
-    hBmpMaximizeD = LoadBitmapA(0,MAKEINTRESOURCEA(OBM_RESTORED));
-    hBmpClose = LoadBitmapA(0,MAKEINTRESOURCEA(OBM_CLOSE));
-    hBmpCloseD = LoadBitmapA(0,MAKEINTRESOURCEA(OBM_CLOSED));
+    hBmpSysMenu = LoadBitmapA(0, MAKEINTRESOURCEA(OBM_CLOSE));
 
     if (hStdMnArrow)
     {
@@ -696,46 +683,149 @@ static UINT MENU_FindItemByKey( HWND hwndOwner, HMENU hmenu,
     }
     return (UINT)(-1);
 }
+
+
 /***********************************************************************
- *           MENU_LoadMagicItem
+ *           MENU_GetBitmapItemSize
  *
- * Load the bitmap associated with the magic menu item and its style
+ * Get the size of a bitmap item.
  */
-
-static HBITMAP MENU_LoadMagicItem(UINT id, BOOL hilite, DWORD dwItemData)
+static void MENU_GetBitmapItemSize( UINT id, DWORD data, SIZE *size )
 {
-    /*
-     * Magic menu item id's section
-     * These magic id's are used by windows to insert "standard" mdi
-     * buttons (minimize,restore,close) on menu. Under windows,
-     * these magic id's make sure the right things appear when those
-     * bitmap buttons are pressed/selected/released.
-     */
+    BITMAP bm;
+    HBITMAP bmp = (HBITMAP)id;
 
-    switch(id & 0xffff)
-    {   case HBMMENU_SYSTEM:
-	    return (dwItemData) ?
-		(HBITMAP)dwItemData :
-		(hilite ? hBmpMinimizeD : hBmpMinimize);
-	case HBMMENU_MBAR_RESTORE:
-	    return (hilite ? hBmpMaximizeD: hBmpMaximize);
-	case HBMMENU_MBAR_MINIMIZE:
-	    return (hilite ? hBmpMinimizeD : hBmpMinimize);
-	case HBMMENU_MBAR_CLOSE:
-	    return (hilite ? hBmpCloseD : hBmpClose);
-	case HBMMENU_CALLBACK:
-	case HBMMENU_MBAR_CLOSE_D:
-	case HBMMENU_MBAR_MINIMIZE_D:
-	case HBMMENU_POPUP_CLOSE:
-	case HBMMENU_POPUP_RESTORE:
-	case HBMMENU_POPUP_MAXIMIZE:
-	case HBMMENU_POPUP_MINIMIZE:
-	default:
-	    FIXME("Magic 0x%08x not implemented\n", id);
-	    return 0;
+    size->cx = size->cy = 0;
+
+    /* check if there is a magic menu item associated with this item */
+    if (id && IS_MAGIC_ITEM( id ))
+    {
+        switch(LOWORD(id))
+        {
+        case HBMMENU_SYSTEM:
+            if (data)
+            {
+                bmp = (HBITMAP)data;
+                break;
+            }
+            /* fall through */
+        case HBMMENU_MBAR_RESTORE:
+        case HBMMENU_MBAR_MINIMIZE:
+        case HBMMENU_MBAR_MINIMIZE_D:
+        case HBMMENU_MBAR_CLOSE:
+        case HBMMENU_MBAR_CLOSE_D:
+            size->cx = GetSystemMetrics( SM_CXSIZE );
+            size->cy = GetSystemMetrics( SM_CYSIZE );
+            return;
+        case HBMMENU_CALLBACK:
+        case HBMMENU_POPUP_CLOSE:
+        case HBMMENU_POPUP_RESTORE:
+        case HBMMENU_POPUP_MAXIMIZE:
+        case HBMMENU_POPUP_MINIMIZE:
+        default:
+            FIXME("Magic 0x%08x not implemented\n", id);
+            return;
+        }
+    }
+    if (GetObjectA(bmp, sizeof(bm), &bm ))
+    {
+        size->cx = bm.bmWidth;
+        size->cy = bm.bmHeight;
+    }
+}
+
+/***********************************************************************
+ *           MENU_DrawBitmapItem
+ *
+ * Draw a bitmap item.
+ */
+static void MENU_DrawBitmapItem( HDC hdc, MENUITEM *lpitem, const RECT *rect, BOOL menuBar )
+{
+    BITMAP bm;
+    DWORD rop;
+    HDC hdcMem;
+    HBITMAP bmp = (HBITMAP)lpitem->text;
+    int w = rect->right - rect->left;
+    int h = rect->bottom - rect->top;
+    int bmp_xoffset = 0;
+    int left, top;
+
+    /* Check if there is a magic menu item associated with this item */
+    if (lpitem->text && IS_MAGIC_ITEM(lpitem->text))
+    {
+        UINT flags = 0;
+        RECT r;
+
+        switch(LOWORD(lpitem->text))
+        {
+        case HBMMENU_SYSTEM:
+            if (lpitem->dwItemData)
+            {
+                bmp = (HBITMAP)lpitem->dwItemData;
+                if (!GetObjectA( bmp, sizeof(bm), &bm )) return;
+            }
+            else
+            {
+                bmp = hBmpSysMenu;
+                if (!GetObjectA( bmp, sizeof(bm), &bm )) return;
+                /* only use right half of the bitmap */
+                bmp_xoffset = bm.bmWidth / 2;
+                bm.bmWidth -= bmp_xoffset;
+            }
+            goto got_bitmap;
+        case HBMMENU_MBAR_RESTORE:
+            flags = DFCS_CAPTIONRESTORE;
+            break;
+        case HBMMENU_MBAR_MINIMIZE:
+            flags = DFCS_CAPTIONMIN;
+            break;
+        case HBMMENU_MBAR_MINIMIZE_D:
+            flags = DFCS_CAPTIONMIN | DFCS_INACTIVE;
+            break;
+        case HBMMENU_MBAR_CLOSE:
+            flags = DFCS_CAPTIONCLOSE;
+            break;
+        case HBMMENU_MBAR_CLOSE_D:
+            flags = DFCS_CAPTIONCLOSE | DFCS_INACTIVE;
+            break;
+        case HBMMENU_CALLBACK:
+        case HBMMENU_POPUP_CLOSE:
+        case HBMMENU_POPUP_RESTORE:
+        case HBMMENU_POPUP_MAXIMIZE:
+        case HBMMENU_POPUP_MINIMIZE:
+        default:
+            FIXME("Magic 0x%08x not implemented\n", LOWORD(lpitem->text));
+            return;
+        }
+        r = *rect;
+        InflateRect( &r, -1, -1 );
+        if (lpitem->fState & MF_HILITE) flags |= DFCS_PUSHED;
+        DrawFrameControl( hdc, &r, DFC_CAPTION, flags );
+        return;
     }
 
+    if (!bmp || !GetObjectA( bmp, sizeof(bm), &bm )) return;
+
+ got_bitmap:
+    hdcMem = CreateCompatibleDC( hdc );
+    SelectObject( hdcMem, bmp );
+
+    /* handle fontsize > bitmap_height */
+    top = (h>bm.bmHeight) ? rect->top+(h-bm.bmHeight)/2 : rect->top;
+    left=rect->left;
+    if (TWEAK_WineLook == WIN95_LOOK) {
+        rop=((lpitem->fState & MF_HILITE) && !IS_MAGIC_ITEM(lpitem->text)) ? NOTSRCCOPY : SRCCOPY;
+        if ((lpitem->fState & MF_HILITE) && IS_BITMAP_ITEM(lpitem->fType))
+            SetBkColor(hdc, GetSysColor(COLOR_HIGHLIGHT));
+    } else {
+        left++;
+        w-=2;
+        rop=((lpitem->fState & MF_HILITE) && !IS_MAGIC_ITEM(lpitem->text) && (!menuBar)) ? MERGEPAINT : SRCCOPY;
+    }
+    BitBlt( hdc, left, top, w, h, hdcMem, bmp_xoffset, 0, rop );
+    DeleteDC( hdcMem );
 }
+
 
 /***********************************************************************
  *           MENU_CalcItemSize
@@ -812,28 +902,16 @@ static void MENU_CalcItemSize( HDC hdc, MENUITEM *lpitem, HWND hwndOwner,
 
     if (IS_BITMAP_ITEM(lpitem->fType))
     {
-	BITMAP bm;
-	HBITMAP resBmp = 0;
+        SIZE size;
 
-	/* Check if there is a magic menu item associated with this item */
-	if (IS_MAGIC_ITEM(lpitem->text))
-	{
-	    resBmp = MENU_LoadMagicItem((int)lpitem->text, (lpitem->fType & MF_HILITE),
-					lpitem->dwItemData);
-        }
-        else
-            resBmp = (HBITMAP)lpitem->text;
-
-        if (GetObjectA(resBmp, sizeof(bm), &bm ))
+        MENU_GetBitmapItemSize( (int)lpitem->text, lpitem->dwItemData, &size );
+        lpitem->rect.right  += size.cx;
+        lpitem->rect.bottom += size.cy;
+        if (TWEAK_WineLook == WIN98_LOOK)
         {
-            lpitem->rect.right  += bm.bmWidth;
-            lpitem->rect.bottom += bm.bmHeight;
-            if (TWEAK_WineLook == WIN98_LOOK) {
-                /* Leave space for the sunken border */
-                lpitem->rect.right  += 2;
-                lpitem->rect.bottom += 2;
-            }
-
+            /* Leave space for the sunken border */
+            lpitem->rect.right  += 2;
+            lpitem->rect.bottom += 2;
         }
     }
     
@@ -1259,53 +1337,7 @@ static void MENU_DrawMenuItem( HWND hwnd, HMENU hmenu, HWND hwndOwner, HDC hdc, 
     /* Draw the item text or bitmap */
     if (IS_BITMAP_ITEM(lpitem->fType))
     {
-        int left,top,w,h;
-        DWORD rop;
-
-        HBITMAP resBmp = 0;
-
-        HDC hdcMem = CreateCompatibleDC( hdc );
-
-        /*
-         * Check if there is a magic menu item associated with this item
-         * and load the appropriate bitmap
-         */
-	if (IS_MAGIC_ITEM(lpitem->text))
-	{
-	    resBmp = MENU_LoadMagicItem((int)lpitem->text, (lpitem->fState & MF_HILITE),
-					lpitem->dwItemData);
-        }
-        else
-            resBmp = (HBITMAP)lpitem->text;
-
-	if (resBmp)
-	{
-	    BITMAP bm;
-	    GetObjectA( resBmp, sizeof(bm), &bm );
-	
-	    SelectObject(hdcMem,resBmp );
-	
-	    /* handle fontsize > bitmap_height */
-            h=rect.bottom - rect.top;
-	    top = (h>bm.bmHeight) ? 
-		rect.top+(h-bm.bmHeight)/2 : rect.top;
-            w=rect.right - rect.left;
-            left=rect.left;
-            if (TWEAK_WineLook == WIN95_LOOK) {
-                rop=((lpitem->fState & MF_HILITE) && !IS_MAGIC_ITEM(lpitem->text)) ? NOTSRCCOPY : SRCCOPY;
-                if ((lpitem->fState & MF_HILITE) && IS_BITMAP_ITEM(lpitem->fType))
-                    SetBkColor(hdc, GetSysColor(COLOR_HIGHLIGHT));
-            } else {
-                left++;
-                w-=2;
-                rop=((lpitem->fState & MF_HILITE) && !IS_MAGIC_ITEM(lpitem->text) && (!menuBar)) ? MERGEPAINT : SRCCOPY;
-            }
-	    BitBlt( hdc, left, top, w,
-		  h, hdcMem, 0, 0,
-		   rop);
-	}
-	DeleteDC( hdcMem );
-
+        MENU_DrawBitmapItem( hdc, lpitem, &rect, menuBar );
 	return;
 
     }

@@ -2115,7 +2115,6 @@ static HBITMAP BITMAP_Load( HINSTANCE instance,LPCWSTR name, UINT loadflags )
       {
           /* OEM bitmap: try to load the resource from user32.dll */
           if (HIWORD(name)) return 0;
-          if ((hbitmap = USER_Driver.pLoadOEMResource( LOWORD(name), OEM_BITMAP ))) return hbitmap;
           if (!(instance = GetModuleHandleA("user32.dll"))) return 0;
       }
       if (!(hRsrc = FindResourceW( instance, name, RT_BITMAPW ))) return 0;
