@@ -4,7 +4,7 @@ SRCDIR    = @srcdir@
 VPATH	  = @srcdir@
 MODULE	  = none
 
-INSTALLED_INCLUDES = \
+WINDOWS_INCLUDES = \
 	audevcod.h \
 	basetsd.h \
 	cderr.h \
@@ -65,36 +65,6 @@ INSTALLED_INCLUDES = \
 	msacm.h \
 	msacmdlg.h \
 	mssip.h \
-	msvcrt/conio.h \
-	msvcrt/crtdbg.h \
-	msvcrt/ctype.h \
-	msvcrt/direct.h \
-	msvcrt/dos.h \
-	msvcrt/eh.h \
-	msvcrt/errno.h \
-	msvcrt/excpt.h \
-	msvcrt/fcntl.h \
-	msvcrt/io.h \
-	msvcrt/locale.h \
-	msvcrt/malloc.h \
-	msvcrt/mbctype.h \
-	msvcrt/mbstring.h \
-	msvcrt/process.h \
-	msvcrt/search.h \
-	msvcrt/setjmp.h \
-	msvcrt/share.h \
-	msvcrt/stddef.h \
-	msvcrt/stdio.h \
-	msvcrt/stdlib.h \
-	msvcrt/string.h \
-	msvcrt/sys/locking.h \
-	msvcrt/sys/stat.h \
-	msvcrt/sys/timeb.h \
-	msvcrt/sys/types.h \
-	msvcrt/sys/utime.h \
-	msvcrt/time.h \
-	msvcrt/wchar.h \
-	msvcrt/wctype.h \
 	mswsock.h \
 	nb30.h \
 	nspapi.h \
@@ -153,49 +123,6 @@ INSTALLED_INCLUDES = \
 	windef.h \
 	windows.h \
 	windowsx.h \
-	wine/debug.h \
-	wine/exception.h \
-	wine/icmpapi.h \
-	wine/ipexport.h \
-	wine/library.h \
-	wine/obj_base.h \
-	wine/obj_cache.h \
-	wine/obj_channel.h \
-	wine/obj_clientserver.h \
-	wine/obj_comcat.h \
-	wine/obj_commdlgbrowser.h \
-	wine/obj_connection.h \
-	wine/obj_contextmenu.h \
-	wine/obj_control.h \
-	wine/obj_dataobject.h \
-	wine/obj_dockingwindowframe.h \
-	wine/obj_dragdrop.h \
-	wine/obj_dragdrophelper.h \
-	wine/obj_enumguid.h \
-	wine/obj_enumidlist.h \
-	wine/obj_errorinfo.h \
-	wine/obj_extracticon.h \
-	wine/obj_inplace.h \
-	wine/obj_marshal.h \
-	wine/obj_misc.h \
-	wine/obj_moniker.h \
-	wine/obj_oleaut.h \
-	wine/obj_olefont.h \
-	wine/obj_oleobj.h \
-	wine/obj_oleundo.h \
-	wine/obj_oleview.h \
-	wine/obj_picture.h \
-	wine/obj_property.h \
-	wine/obj_propertystorage.h \
-	wine/obj_serviceprovider.h \
-	wine/obj_shellbrowser.h \
-	wine/obj_shellextinit.h \
-	wine/obj_shellfolder.h \
-	wine/obj_shelllink.h \
-	wine/obj_shellview.h \
-	wine/obj_storage.h \
-	wine/obj_webbrowser.h \
-	wine/unicode.h \
 	winerror.h \
 	wingdi.h \
 	wininet.h \
@@ -222,18 +149,98 @@ INSTALLED_INCLUDES = \
 	wtypes.h \
 	zmouse.h
 
+MSVCRT_INCLUDES = \
+	msvcrt/conio.h \
+	msvcrt/crtdbg.h \
+	msvcrt/ctype.h \
+	msvcrt/direct.h \
+	msvcrt/dos.h \
+	msvcrt/eh.h \
+	msvcrt/errno.h \
+	msvcrt/excpt.h \
+	msvcrt/fcntl.h \
+	msvcrt/io.h \
+	msvcrt/locale.h \
+	msvcrt/malloc.h \
+	msvcrt/mbctype.h \
+	msvcrt/mbstring.h \
+	msvcrt/process.h \
+	msvcrt/search.h \
+	msvcrt/setjmp.h \
+	msvcrt/share.h \
+	msvcrt/stddef.h \
+	msvcrt/stdio.h \
+	msvcrt/stdlib.h \
+	msvcrt/string.h \
+	msvcrt/sys/locking.h \
+	msvcrt/sys/stat.h \
+	msvcrt/sys/timeb.h \
+	msvcrt/sys/types.h \
+	msvcrt/sys/utime.h \
+	msvcrt/time.h \
+	msvcrt/wchar.h \
+	msvcrt/wctype.h
+
+WINE_INCLUDES = \
+	debug.h \
+	exception.h \
+	icmpapi.h \
+	ipexport.h \
+	library.h \
+	obj_base.h \
+	obj_cache.h \
+	obj_channel.h \
+	obj_clientserver.h \
+	obj_comcat.h \
+	obj_commdlgbrowser.h \
+	obj_connection.h \
+	obj_contextmenu.h \
+	obj_control.h \
+	obj_dataobject.h \
+	obj_dockingwindowframe.h \
+	obj_dragdrop.h \
+	obj_dragdrophelper.h \
+	obj_enumguid.h \
+	obj_enumidlist.h \
+	obj_errorinfo.h \
+	obj_extracticon.h \
+	obj_inplace.h \
+	obj_marshal.h \
+	obj_misc.h \
+	obj_moniker.h \
+	obj_oleaut.h \
+	obj_olefont.h \
+	obj_oleobj.h \
+	obj_oleundo.h \
+	obj_oleview.h \
+	obj_picture.h \
+	obj_property.h \
+	obj_propertystorage.h \
+	obj_serviceprovider.h \
+	obj_shellbrowser.h \
+	obj_shellextinit.h \
+	obj_shellfolder.h \
+	obj_shelllink.h \
+	obj_shellview.h \
+	obj_storage.h \
+	obj_webbrowser.h \
+	unicode.h
+
 EXTRASUBDIRS = bitmaps msvcrt msvcrt/sys wine
 
 @MAKE_RULES@
 
 install::
-	$(MKINSTALLDIRS) $(includedir) $(includedir)/wine $(includedir)/msvcrt $(includedir)/msvcrt/sys
-	for f in $(INSTALLED_INCLUDES); do $(INSTALL_DATA) $(SRCDIR)/$$f $(includedir)/$$f; done
+	$(MKINSTALLDIRS) $(includedir) $(includedir)/windows $(includedir)/msvcrt $(includedir)/msvcrt/sys
+	for f in $(WINDOWS_INCLUDES); do $(INSTALL_DATA) $(SRCDIR)/$$f $(includedir)/windows/$$f; done
+	for f in $(MSVCRT_INCLUDES); do $(INSTALL_DATA) $(SRCDIR)/$$f $(includedir)/$$f; done
+	for f in $(WINE_INCLUDES); do $(INSTALL_DATA) $(SRCDIR)/wine/$$f $(includedir)/$$f; done
 
 # Don't just do a rm -rf on $(includedir) -- don't want to wipe out
 # anything extra the user may have put there.
 uninstall::
-	[ -d $(includedir) ] && cd $(includedir) && $(RM) $(INSTALLED_INCLUDES) || true
-	-rmdir $(includedir)/msvcrt/sys $(includedir)/msvcrt $(includedir)/wine $(includedir)
+	[ -d $(includedir)/windows ] && cd $(includedir)/windows && $(RM) $(WINDOWS_INCLUDES) || true
+	[ -d $(includedir) ] && cd $(includedir) && $(RM) $(MSVCRT_INCLUDES) $(WINE_INCLUDES) || true
+	-rmdir $(includedir)/msvcrt/sys $(includedir)/msvcrt $(includedir)/windows $(includedir)
 
 ### Dependencies:
