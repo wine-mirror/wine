@@ -174,12 +174,12 @@
 @ stdcall MakeAbsoluteSD(ptr ptr ptr ptr ptr ptr ptr ptr ptr ptr ptr)
 @ stdcall MakeSelfRelativeSD(ptr ptr ptr)
 @ stub MapGenericMask
-@ stub MD4Final
-@ stub MD4Init
-@ stub MD4Update
-@ stub MD5Final
-@ stub MD5Init
-@ stub MD5Update
+@ stdcall MD4Final(ptr ptr)
+@ stdcall MD4Init(ptr)
+@ stdcall MD4Update(ptr ptr long)
+@ stdcall MD5Final(ptr ptr)
+@ stdcall MD5Init(ptr)
+@ stdcall MD5Update(ptr ptr long)
 @ stdcall NotifyBootConfigStatus(long)
 @ stdcall NotifyChangeEventLog (long long)
 @ stub ObjectCloseAuditAlarmA

@@ -8,6 +8,8 @@ IMPORTS   = advapi32 kernel32
 CTESTS = \
 	crypt.c \
 	crypt_lmhash.c \
+	crypt_md4.c \
+	crypt_md5.c \
 	crypt_sha.c \
 	registry.c \
 	security.c
