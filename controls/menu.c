@@ -795,9 +795,25 @@ static void MENU_CalcItemSize( HDC hdc, MENUITEM *lpitem, HWND hwndOwner,
         mis.itemHeight = 0;
         mis.itemWidth  = 0;
         SendMessageA( hwndOwner, WM_MEASUREITEM, 0, (LPARAM)&mis );
-        lpitem->rect.bottom += mis.itemHeight;
         lpitem->rect.right  += mis.itemWidth;
-        TRACE("id=%04x size=%dx%d\n",
+
+ 	if (menuBar)
+	{
+	     lpitem->rect.right += MENU_BAR_ITEMS_SPACE;
+	
+
+             /* under at least win95 you seem to be given a standard
+                height for the menu and the height value is ignored */
+
+	     if (TWEAK_WineLook == WIN31_LOOK)
+	    	lpitem->rect.bottom += GetSystemMetrics(SM_CYMENU);
+	     else
+	    	lpitem->rect.bottom += GetSystemMetrics(SM_CYMENU)-1;
+        }
+        else
+            lpitem->rect.bottom += mis.itemHeight;
+	
+	TRACE("id=%04x size=%dx%d\n",
                      lpitem->wID, mis.itemWidth, mis.itemHeight);
         /* Fall through to get check/arrow width calculation. */
     } 
@@ -1481,7 +1497,7 @@ UINT MENU_DrawMenuBar( HDC hDC, LPRECT lprect, HWND hwnd,
 
     for (i = 0; i < lppop->nItems; i++)
     {
-	MENU_DrawMenuItem( hwnd, (HMENU)wndPtr->wIDmenu, GetWindow(hwnd,GW_OWNER),
+	MENU_DrawMenuItem( hwnd, (HMENU)wndPtr->wIDmenu, hwnd,
 			 hDC, &lppop->items[i], lppop->Height, TRUE, ODA_DRAWENTIRE );
     }
     retvalue = lppop->Height;
