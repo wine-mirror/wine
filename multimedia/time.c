@@ -101,7 +101,7 @@ static	void	TIME_TriggerCallBack(LPTIMERENTRY lpTimer, DWORD dwCurrent)
 /**************************************************************************
  *           TIME_MMSysTimeCallback
  */
-static VOID TIME_MMSysTimeCallback( HWND32 hwnd, UINT32 msg,
+static VOID WINAPI TIME_MMSysTimeCallback( HWND32 hwnd, UINT32 msg,
                                     UINT32 id, DWORD dwTime )
 {
     LPTIMERENTRY lpTimer;

@@ -295,7 +295,7 @@ ckid=%.4s fccType=%.4s cksize=%08lX \n", (LPSTR)&mmckInfo.ckid, (LPSTR)&mmckInfo
     return bRet;
 }
 
-static DWORD PlaySound_Thread(LPVOID arg) 
+static DWORD WINAPI PlaySound_Thread(LPVOID arg) 
 {
     DWORD     res;
     
@@ -1957,7 +1957,7 @@ struct SCA32 {
 
 DWORD WINAPI mciSendCommand32A(UINT32 wDevID, UINT32 wMsg, DWORD dwParam1, DWORD dwParam2);
 
-static DWORD mciSCAStarter32(LPVOID arg)
+static DWORD WINAPI mciSCAStarter32(LPVOID arg)
 {
     struct SCA32*	sca = (struct SCA32*)arg;
     DWORD		ret;

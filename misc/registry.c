@@ -1244,7 +1244,7 @@ static LPKEYSTRUCT _w95_processKey ( LPKEYSTRUCT lpkey,
 	}
 
 	while (curdata < next) {
-	  struct	dkh *xdkh = curdata;
+	  struct	dkh *xdkh = (struct dkh*)curdata;
 
 	  bytesread += sizeof(dkh); /* FIXME... nextkeyoff? */
 	  if (xdkh->nrLS == nrLS) {
@@ -2471,11 +2471,12 @@ DWORD WINAPI RegSetValueEx32W( HKEY hkey, LPWSTR lpszValueName,
 		lpkey->nrofvalues++;
 		memset(lpkey->values+i,'\0',sizeof(KEYVALUE));
 	}
-	if (lpkey->values[i].name==NULL)
+	if (lpkey->values[i].name==NULL) {
 		if (lpszValueName)
 			lpkey->values[i].name = strdupW(lpszValueName);
 		else
 			lpkey->values[i].name = NULL;
+	}
 	lpkey->values[i].len	= cbData;
 	lpkey->values[i].type	= dwType;
 	if (lpkey->values[i].data !=NULL)

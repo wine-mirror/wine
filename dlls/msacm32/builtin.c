@@ -17,7 +17,7 @@
 /***********************************************************************
  *           MSACM_BuiltinDrivers
  */
-LONG MSACM_DummyDriverProc(
+LONG WINAPI MSACM_DummyDriverProc(
    DWORD dwDriverId, HDRVR32 hdrvr, UINT32 msg,
    LONG lParam1, LONG lParam2); 
 
@@ -29,7 +29,7 @@ WINE_ACMBUILTINDRIVER32 MSACM_BuiltinDrivers32[] = {
 /***********************************************************************
  *           MSACM_DummyDriverProc
  */
-LONG MSACM_DummyDriverProc(
+LONG WINAPI MSACM_DummyDriverProc(
    DWORD dwDriverId, HDRVR32 hdrvr, UINT32 msg,
    LONG lParam1, LONG lParam2)
 {

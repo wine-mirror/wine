@@ -427,7 +427,7 @@ static ULONG WINAPI IDirectPlayLobbyA_Release
   /* Deallocate if this is the last reference to the object */
   if( !(this->ref) )
   {
-    deleteDPConnection( this->lpSession );
+    deleteDPConnection( &(this->lpSession) );
     HeapFree( GetProcessHeap(), 0, this );
     return S_OK;
   }

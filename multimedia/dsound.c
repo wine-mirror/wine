@@ -903,7 +903,7 @@ DSOUND_MixInBuffer(IDirectSoundBuffer *dsb) {
 	}
 }
 
-static DWORD
+static DWORD WINAPI
 DSOUND_thread(LPVOID arg) {
 	int	res,i,curleft,playing,haveprimary = 0;
 

@@ -75,7 +75,7 @@ static void CARET_DisplayCaret( DISPLAY_CARET status )
 /*****************************************************************
  *               CARET_Callback
  */
-static VOID CARET_Callback( HWND32 hwnd, UINT32 msg, UINT32 id, DWORD ctime)
+static VOID CALLBACK CARET_Callback( HWND32 hwnd, UINT32 msg, UINT32 id, DWORD ctime)
 {
     TRACE(caret,"hwnd=%04x, timerid=%d, caret=%d\n",
                   hwnd, id, Caret.on);
