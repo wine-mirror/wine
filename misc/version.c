@@ -460,24 +460,22 @@ static DWORD VERSION_GetLinkedDllVersion(void)
         {
             if (LdrQueryProcessModuleInformation(smi, required, NULL) == STATUS_SUCCESS)
             {
-                int k;
+                int i, k;
                 for (k = 0; k < smi->ModulesCount; k++)
                 {
                     nt = RtlImageNtHeader(smi->Modules[k].ImageBaseAddress);
                     ophd = &nt->OptionalHeader;
-                    
+
                     TRACE("%s: %02x.%02x/%02x.%02x/%02x.%02x/%02x.%02x\n",
                           &smi->Modules[k].Name[smi->Modules[k].NameOffset],
                           ophd->MajorLinkerVersion, ophd->MinorLinkerVersion,
                           ophd->MajorOperatingSystemVersion, ophd->MinorOperatingSystemVersion,
                           ophd->MajorImageVersion, ophd->MinorImageVersion,
                           ophd->MajorSubsystemVersion, ophd->MinorSubsystemVersion);
-                }
 
-                /* test if it is an external (native) dll */
-                if (!(smi->Modules[k].Flags & LDR_WINE_INTERNAL))
-                {
-                    int i;
+                    /* test if it is an external (native) dll */
+                    if (smi->Modules[k].Flags & LDR_WINE_INTERNAL) continue;
+
                     for (i = 0; special_dlls[i]; i++)
                     {
                         /* test if it is a special dll */
