@@ -1347,9 +1347,13 @@ void default_fd_remove_queue( struct object *obj, struct wait_queue_entry *entry
 /* default signaled() routine for objects that poll() on an fd */
 int default_fd_signaled( struct object *obj, struct thread *thread )
 {
+    int events, ret;
     struct fd *fd = get_obj_fd( obj );
-    int events = fd->fd_ops->get_poll_events( fd );
-    int ret = check_fd_events( fd, events ) != 0;
+
+    if (fd->inode) return 1;  /* regular files are always signaled */
+
+    events = fd->fd_ops->get_poll_events( fd );
+    ret = check_fd_events( fd, events ) != 0;
 
     if (ret)
         set_fd_events( fd, 0 ); /* stop waiting on select() if we are signaled */
