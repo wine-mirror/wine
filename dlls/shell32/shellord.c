@@ -91,8 +91,8 @@ DWORD WINAPI ParseField(LPCSTR src,DWORD field,LPSTR dst,DWORD len)
  * PickIconDlg [SHELL32.62]
  * 
  */
-DWORD WINAPI PickIconDlg(DWORD x,DWORD y,DWORD z,DWORD a) {
-	FIXME(shell,"(%08lx,%08lx,%08lx,%08lx):stub.\n",x,y,z,a);
+DWORD WINAPI PickIconDlg(DWORD x,DWORD y,DWORD z,DWORD a) 
+{	FIXME(shell,"(%08lx,%08lx,%08lx,%08lx):stub.\n",x,y,z,a);
 	return 0xffffffff;
 }
 
@@ -100,13 +100,12 @@ DWORD WINAPI PickIconDlg(DWORD x,DWORD y,DWORD z,DWORD a) {
  * GetFileNameFromBrowse [SHELL32.63]
  * 
  */
-DWORD WINAPI GetFileNameFromBrowse(HWND32 howner, LPSTR targetbuf, DWORD len, DWORD x, LPCSTR suffix, LPCSTR y, LPCSTR cmd) {
-    FIXME(shell,"(%04x,%p,%ld,%08lx,%s,%s,%s):stub.\n",
-	    howner,targetbuf,len,x,suffix,y,cmd
-    );
+DWORD WINAPI GetFileNameFromBrowse(HWND32 howner, LPSTR targetbuf, DWORD len, DWORD x, LPCSTR suffix, LPCSTR y, LPCSTR cmd) 
+{	FIXME(shell,"(%04x,%p,%ld,%08lx,%s,%s,%s):stub.\n",
+	    howner,targetbuf,len,x,suffix,y,cmd);
     /* puts up a Open Dialog and requests input into targetbuf */
     /* OFN_HIDEREADONLY|OFN_NOCHANGEDIR|OFN_FILEMUSTEXIST|OFN_unknown */
-    lstrcpy32A(targetbuf,"x:\\s3.exe");
+    lstrcpy32A(targetbuf,"x:\\dummy.exe");
     return 1;
 }
 
@@ -114,10 +113,8 @@ DWORD WINAPI GetFileNameFromBrowse(HWND32 howner, LPSTR targetbuf, DWORD len, DW
  * SHGetSettings [SHELL32.68]
  * 
  */
-DWORD WINAPI SHGetSettings(DWORD x,DWORD y,DWORD z) {
-	FIXME(shell,"(0x%08lx,0x%08lx,0x%08lx):stub.\n",
-		x,y,z
-	);
+DWORD WINAPI SHGetSettings(DWORD x,DWORD y,DWORD z) 
+{	FIXME(shell,"(0x%08lx,0x%08lx,0x%08lx):stub.\n",x,y,z);
 	return 0;
 }
 
@@ -606,22 +603,75 @@ BOOL32 WINAPI ShellExecuteEx32 (LPVOID sei)
  *
  */
 BOOL32 WINAPI ShellExecuteEx32A (LPSHELLEXECUTEINFO32A sei)
-{ 	CHAR szTemp[MAX_PATH];
+{ 	CHAR szApplicationName[MAX_PATH],szCommandline[MAX_PATH],szPidl[20];
+	LPSTR pos;
+	int gap, len;
+	STARTUPINFO32A  startupinfo;
+	PROCESS_INFORMATION processinformation;
+			
+  	FIXME(shell,"mask=0x%08lx hwnd=0x%04x verb=%s file=%s parm=%s dir=%s show=0x%08x class=%sstub\n",
+		sei->fMask, sei->hwnd, sei->lpVerb, sei->lpFile,
+		sei->lpParameters, sei->lpDirectory, sei->nShow, sei->lpClass);
 
-  	FIXME(shell,"(%p): stub\n",sei);
-
-	if (sei->fMask & SEE_MASK_IDLIST)
-	{ SHGetPathFromIDList32A (sei->lpIDList,szTemp);
-	  TRACE (shell,"-- idlist=%p (%s)\n", sei->lpIDList, szTemp);
+	ZeroMemory(szApplicationName,MAX_PATH);
+	if (sei->lpFile)
+	  strcpy(szApplicationName, sei->lpFile);
+	
+	ZeroMemory(szCommandline,MAX_PATH);
+	if (sei->lpParameters)
+	  strcpy(szCommandline, sei->lpParameters);
+			
+	if (sei->fMask & (SEE_MASK_CLASSKEY | SEE_MASK_INVOKEIDLIST | SEE_MASK_ICON | SEE_MASK_HOTKEY |
+			  SEE_MASK_NOCLOSEPROCESS | SEE_MASK_CONNECTNETDRV | SEE_MASK_FLAG_DDEWAIT |
+			  SEE_MASK_DOENVSUBST | SEE_MASK_FLAG_NO_UI | SEE_MASK_UNICODE | 
+			  SEE_MASK_NO_CONSOLE | SEE_MASK_ASYNCOK | SEE_MASK_HMONITOR ))
+	{ FIXME (shell,"flags ignored: 0x%08lx\n", sei->fMask);
 	}
 
 	if (sei->fMask & SEE_MASK_CLASSNAME)
-	{ TRACE (shell,"-- classname= %s\n", sei->lpClass);
+	{ HCR_GetExecuteCommand(sei->lpClass, (sei->lpVerb) ? sei->lpVerb : "open", szCommandline, 256);	    
 	}
-    
-	if (sei->lpVerb)
-	{ TRACE (shell,"-- action=%s\n", sei->lpVerb);
+
+	/* process the IDList */
+	if ( (sei->fMask & SEE_MASK_INVOKEIDLIST) == SEE_MASK_INVOKEIDLIST) /*0x0c*/
+	{ SHGetPathFromIDList32A (sei->lpIDList,szApplicationName);
+	  FIXME(shell,"-- idlist=%p (%s)\n", sei->lpIDList, szApplicationName);
 	}
+	else
+	{ if (sei->fMask & SEE_MASK_IDLIST )
+	  { /* %I is the adress of a global item ID*/
+	    pos = strstr(szCommandline, "%I");
+	    if (pos)
+	    { HGLOBAL32 hmem = SHAllocShared ( sei->lpIDList, ILGetSize(sei->lpIDList), 0);
+	      sprintf(szPidl,":%li",(DWORD)SHLockShared(hmem,0) );
+	      SHUnlockShared(hmem);
+	    
+	      gap = strlen(szPidl);
+	      len = strlen(pos)-2;
+	      memmove(pos+gap,pos+2,len);
+	      memcpy(pos,szPidl,gap);
+
+	    }
+	  }
+	}
+
+	pos = strstr(szCommandline, ",%L");	/* dunno what it means: kill it*/
+	if (pos)
+	{ len = strlen(pos)-2;
+	  *pos=0x0;
+	  memmove(pos,pos+3,len);
+	}
+
+	FIXME(shell,"-- %s\n",szCommandline);
+
+	ZeroMemory(&startupinfo,sizeof(STARTUPINFO32A));
+	startupinfo.cb = sizeof(STARTUPINFO32A);
+
+	CreateProcess32A(szApplicationName[0] ? szApplicationName:NULL,
+			 szCommandline[0] ? szCommandline : NULL,
+			 NULL, NULL, FALSE, 0, 
+			 NULL, NULL, &startupinfo, &processinformation);
+	  
 	
 	return 0;
 }

@@ -18,6 +18,7 @@ BOOL32 WINAPI HCR_MapTypeToValue ( LPSTR szExtension, LPSTR szFileType, DWORD le
 {	HKEY	hkey;
 
 	TRACE(shell, "%s %p\n",szExtension, szFileType );
+
 	if (RegOpenKeyEx32A(HKEY_CLASSES_ROOT,szExtension,0,0x02000000,&hkey))
 	{ return FALSE;
 	}
@@ -32,5 +33,28 @@ BOOL32 WINAPI HCR_MapTypeToValue ( LPSTR szExtension, LPSTR szFileType, DWORD le
 	TRACE(shell, "-- %s\n", szFileType );
 
 	return TRUE;
+}
+BOOL32 WINAPI HCR_GetExecuteCommand ( LPCSTR szClass, LPCSTR szVerb, LPSTR szDest, DWORD len )
+{	HKEY	hkey;
+	char	sTemp[256];
+	
+	TRACE(shell, "%s %s\n",szClass, szVerb );
+
+	sprintf(sTemp, "%s\\shell\\%s\\command",szClass, szVerb);
+
+	if (RegOpenKeyEx32A(HKEY_CLASSES_ROOT,sTemp,0,0x02000000,&hkey))
+	{ return FALSE;
+	}
+
+	if (RegQueryValue32A(hkey,NULL,szDest,&len))
+	{ RegCloseKey(hkey);
+	  return FALSE;
+	}	
+	RegCloseKey(hkey);
+
+	TRACE(shell, "-- %s\n", szDest );
+
+	return TRUE;
+
 }
 
