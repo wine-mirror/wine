@@ -60,6 +60,7 @@ typedef struct tagMONTHCAL_INFO
     SYSTEMTIME	maxDate;
 		
     RECT rcClient;	/* rect for whole client area */
+    RECT rcDraw;	/* rect for drawable portion of client area */
     RECT title;		/* rect for the header above the calendar */
     RECT titlebtnnext;	/* the `next month' button in the header */
     RECT titlebtnprev;  /* the `prev month' button in the header */	
