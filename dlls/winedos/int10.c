@@ -30,32 +30,34 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(int);
 
-static void scroll_window(int direction, char lines, char row1,
-   char col1, char row2, char col2, char attribute);
 
-#define SCROLL_UP 1
-#define SCROLL_DOWN 2
-
-static void BIOS_GetCursorPos(BIOSDATA*data,unsigned page,unsigned*X,unsigned*Y)
+/**********************************************************************
+ *         INT10_GetCursorPos
+ */
+static void INT10_GetCursorPos(BIOSDATA*data,unsigned page,unsigned*X,unsigned*Y)
 {
-  *X = data->VideoCursorPos[page*2];   /* column */
-  *Y = data->VideoCursorPos[page*2+1]; /* row */
-}
-
-static void BIOS_SetCursorPos(BIOSDATA*data,unsigned page,unsigned X,unsigned Y)
-{
-  data->VideoCursorPos[page*2] = X;
-  data->VideoCursorPos[page*2+1] = Y;
+    *X = data->VideoCursorPos[page*2];   /* column */
+    *Y = data->VideoCursorPos[page*2+1]; /* row */
 }
 
 
 /**********************************************************************
- *         DOSVM_InitializeVideoMode
+ *         INT10_SetCursorPos
+ */
+static void INT10_SetCursorPos(BIOSDATA*data,unsigned page,unsigned X,unsigned Y)
+{
+    data->VideoCursorPos[page*2] = X;
+    data->VideoCursorPos[page*2+1] = Y;
+}
+
+
+/**********************************************************************
+ *         INT10_InitializeVideoMode
  *
  * The first time this function is called VGA emulation is set to the
  * default text mode.
  */
-static void DOSVM_InitializeVideoMode( BIOSDATA *data )
+static void INT10_InitializeVideoMode( BIOSDATA *data )
 {
   static BOOL already_initialized = FALSE;
   unsigned    width;
@@ -84,41 +86,11 @@ static void DOSVM_InitializeVideoMode( BIOSDATA *data )
 
 
 /**********************************************************************
- *	    DOSVM_Int10Handler (WPROCS.116)
- *	    DOSVM_Int10Handler (WINEDOS16.116)
+ *          INT10_HandleVESA
  *
- * Handler for int 10h (video).
- *
- * NOTE:
- *    Most INT 10 functions for text-mode, CGA, EGA, and VGA cards
- *    are present in this list. (SVGA and XGA are not) That is not
- *    to say that all these functions should be supported, but if
- *    anyone is brain-damaged enough to want to emulate one of these
- *    beasts then this should get you started.
- *
- * NOTE:
- *    Several common graphical extensions used by Microsoft hook
- *    off of here. I have *not* added them to this list (yet). They
- *    include:
- *
- *    MSHERC.COM - More functionality for Hercules cards.
- *    EGA.SYS (also MOUSE.COM) - More for EGA cards.
- *
- *    Yes, MS also added this support into their mouse driver. Don't
- *    ask me, I don't work for them.
- *
- * Joseph Pranevich - 9/98
- *
- *  Jess Haas 2/99
- *	Added support for Vesa. It is not complete but is a start.
- *	NOTE: Im not sure if i did all this right or if eny of it works.
- *	Currently i dont have a program that uses Vesa that actually gets far
- *	enough without crashing to do vesa stuff.
- *
- *      Added additional vga graphic support - 3/99
+ * Handler for VESA functions (int10 function 0x4f).
  */
-
-static void DOSVM_Int10Handler_VESA( CONTEXT86 *context )
+static void INT10_HandleVESA( CONTEXT86 *context )
 {
     BIOSDATA *data = BIOS_DATA;
 
@@ -369,13 +341,45 @@ static void DOSVM_Int10Handler_VESA( CONTEXT86 *context )
     }
 }
 
-/**********************************************************************/
 
+/**********************************************************************
+ *	    DOSVM_Int10Handler
+ *
+ * Handler for int 10h (video).
+ *
+ * NOTE:
+ *    Most INT 10 functions for text-mode, CGA, EGA, and VGA cards
+ *    are present in this list. (SVGA and XGA are not) That is not
+ *    to say that all these functions should be supported, but if
+ *    anyone is brain-damaged enough to want to emulate one of these
+ *    beasts then this should get you started.
+ *
+ * NOTE:
+ *    Several common graphical extensions used by Microsoft hook
+ *    off of here. I have *not* added them to this list (yet). They
+ *    include:
+ *
+ *    MSHERC.COM - More functionality for Hercules cards.
+ *    EGA.SYS (also MOUSE.COM) - More for EGA cards.
+ *
+ *    Yes, MS also added this support into their mouse driver. Don't
+ *    ask me, I don't work for them.
+ *
+ * Joseph Pranevich - 9/98
+ *
+ *  Jess Haas 2/99
+ *	Added support for Vesa. It is not complete but is a start.
+ *	NOTE: Im not sure if i did all this right or if eny of it works.
+ *	Currently i dont have a program that uses Vesa that actually gets far
+ *	enough without crashing to do vesa stuff.
+ *
+ *      Added additional vga graphic support - 3/99
+ */
 void WINAPI DOSVM_Int10Handler( CONTEXT86 *context )
 {
     BIOSDATA *data = BIOS_DATA;
 
-    DOSVM_InitializeVideoMode( data );
+    INT10_InitializeVideoMode( data );
 
     switch(AH_reg(context)) {
 
@@ -455,7 +459,7 @@ void WINAPI DOSVM_Int10Handler( CONTEXT86 *context )
         /* BH = Page Number */ /* Not supported */
         /* DH = Row */ /* 0 is left */
         /* DL = Column */ /* 0 is top */
-        BIOS_SetCursorPos(data,BH_reg(context),DL_reg(context),DH_reg(context));
+        INT10_SetCursorPos(data,BH_reg(context),DL_reg(context),DH_reg(context));
         if (BH_reg(context))
         {
            FIXME("Set Cursor Position: Cannot set to page %d\n",
@@ -475,7 +479,7 @@ void WINAPI DOSVM_Int10Handler( CONTEXT86 *context )
 
           TRACE("Get cursor position and size (page %d)\n", BH_reg(context));
           SET_CX( context, data->VideoCursorType );
-          BIOS_GetCursorPos(data,BH_reg(context),&col,&row);
+          INT10_GetCursorPos(data,BH_reg(context),&col,&row);
           SET_DH( context, row );
           SET_DL( context, col );
           TRACE("Cursor Position: %d/%d\n", DL_reg(context), DH_reg(context));
@@ -497,10 +501,16 @@ void WINAPI DOSVM_Int10Handler( CONTEXT86 *context )
         /* BH = Attribute */
         /* CH,CL = row, col upper-left */
         /* DH,DL = row, col lower-right */
-        scroll_window(SCROLL_UP, AL_reg(context), CH_reg(context),
-           CL_reg(context), DH_reg(context), DL_reg(context),
-           BH_reg(context));
         TRACE("Scroll Up Window %d\n", AL_reg(context));
+
+        if (AL_reg(context) == 0)
+            VGA_ClearText( CH_reg(context), CL_reg(context),
+                           DH_reg(context), DL_reg(context),
+                           BH_reg(context) );
+        else
+            VGA_ScrollUpText( CH_reg(context), CL_reg(context),
+                              DH_reg(context), DL_reg(context),
+                              AL_reg(context), BH_reg(context) );
         break;
 
     case 0x07: /* SCROLL DOWN WINDOW */
@@ -508,10 +518,16 @@ void WINAPI DOSVM_Int10Handler( CONTEXT86 *context )
         /* BH = Attribute */
         /* CH,CL = row, col upper-left */
         /* DH,DL = row, col lower-right */
-        scroll_window(SCROLL_DOWN, AL_reg(context), CH_reg(context),
-           CL_reg(context), DH_reg(context), DL_reg(context),
-           BH_reg(context));
         TRACE("Scroll Down Window %d\n", AL_reg(context));
+
+        if (AL_reg(context) == 0)
+            VGA_ClearText( CH_reg(context), CL_reg(context),
+                           DH_reg(context), DL_reg(context),
+                           BH_reg(context) );
+        else
+            VGA_ScrollDownText( CH_reg(context), CL_reg(context),
+                                DH_reg(context), DL_reg(context),
+                                AL_reg(context), BH_reg(context) );
         break;
 
     case 0x08: /* READ CHARACTER AND ATTRIBUTE AT CURSOR POSITION */
@@ -544,7 +560,7 @@ void WINAPI DOSVM_Int10Handler( CONTEXT86 *context )
        {
            unsigned row, col;
 
-           BIOS_GetCursorPos(data,BH_reg(context),&col,&row);
+           INT10_GetCursorPos(data,BH_reg(context),&col,&row);
            VGA_WriteChars(col, row,
                           AL_reg(context),
                           (AH_reg(context) == 0x09) ? BL_reg(context) : -1,
@@ -842,7 +858,7 @@ void WINAPI DOSVM_Int10Handler( CONTEXT86 *context )
                 break;
 
     case 0x4f: /* VESA */
-        DOSVM_Int10Handler_VESA(context);
+        INT10_HandleVESA(context);
         break;
 
     default:
@@ -851,22 +867,6 @@ void WINAPI DOSVM_Int10Handler( CONTEXT86 *context )
     }
 }
 
-static void scroll_window(int direction, char lines, char row1,
-   char col1, char row2, char col2, char attribute)
-{
-   if (!lines) /* Actually, clear the window */
-   {
-       VGA_ClearText(row1, col1, row2, col2, attribute);
-   }
-   else if (direction == SCROLL_UP)
-   {
-       VGA_ScrollUpText(row1, col1, row2, col2, lines, attribute);
-   }
-   else
-   {
-       VGA_ScrollDownText(row1, col1, row2, col2, lines, attribute);
-   }
-}
 
 /**********************************************************************
  *         DOSVM_PutChar
@@ -881,9 +881,9 @@ void WINAPI DOSVM_PutChar( BYTE ascii )
 
   TRACE("char: 0x%02x(%c)\n", ascii, ascii);
 
-  DOSVM_InitializeVideoMode( data );
+  INT10_InitializeVideoMode( data );
 
   VGA_PutChar( ascii );
   VGA_GetCursorPos( &xpos, &ypos );
-  BIOS_SetCursorPos( data, 0, xpos, ypos );
+  INT10_SetCursorPos( data, 0, xpos, ypos );
 }
