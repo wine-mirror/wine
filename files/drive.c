@@ -580,9 +580,11 @@ int DRIVE_OpenDevice( int drive, int flags )
 /***********************************************************************
  *           DRIVE_GetFreeSpace
  */
-static int DRIVE_GetFreeSpace( int drive, DWORD *size, DWORD *available )
+static int DRIVE_GetFreeSpace( int drive, LPULARGE_INTEGER size, 
+			       LPULARGE_INTEGER available )
 {
     struct statfs info;
+    unsigned long long  bigsize,bigavail=0;
 
     if (!DRIVE_IsValid(drive))
     {
@@ -602,16 +604,23 @@ static int DRIVE_GetFreeSpace( int drive, DWORD *size, DWORD *available )
         return 0;
     }
 
-    *size = info.f_bsize * info.f_blocks;
+    bigsize = (unsigned long long)info.f_bsize 
+      * (unsigned long long)info.f_blocks;
 #ifdef STATFS_HAS_BAVAIL
-    *available = info.f_bavail * info.f_bsize;
+    bigavail = (unsigned long long)info.f_bavail 
+      * (unsigned long long)info.f_bsize;
 #else
 # ifdef STATFS_HAS_BFREE
-    *available = info.f_bfree * info.f_bsize;
+    bigavail = (unsigned long long)info.f_bfree 
+      * (unsigned long long)info.f_bsize;
 # else
 #  error "statfs has no bfree/bavail member!"
 # endif
 #endif
+    size->LowPart = (DWORD)bigsize;
+    size->HighPart = (DWORD)(bigsize>>32);
+    available->LowPart = (DWORD)bigavail;
+    available->HighPart = (DWORD)(bigavail>>32);
     return 1;
 }
 
@@ -660,7 +669,7 @@ BOOL32 WINAPI GetDiskFreeSpace32A( LPCSTR root, LPDWORD cluster_sectors,
                                    LPDWORD total_clusters )
 {
     int	drive;
-    DWORD size,available;
+    ULARGE_INTEGER size,available;
     LPCSTR path;
     DWORD cluster_sec;
 
@@ -685,30 +694,37 @@ BOOL32 WINAPI GetDiskFreeSpace32A( LPCSTR root, LPDWORD cluster_sectors,
     if (!DRIVE_GetFreeSpace(drive, &size, &available)) return FALSE;
 
     /* Cap the size and available at 2GB as per specs.  */
-    if (size > 0x7fffffff) size = 0x7fffffff;
-    if (available > 0x7fffffff) available = 0x7fffffff;
-
+    if ((size.HighPart) ||(size.LowPart > 0x7fffffff))
+	{
+	  size.HighPart = 0;
+	  size.LowPart = 0x7fffffff;
+	}
+    if ((available.HighPart) ||(available.LowPart > 0x7fffffff))
+      {
+	available.HighPart =0;
+	available.LowPart = 0x7fffffff;
+      }
     if (DRIVE_GetType(drive)==TYPE_CDROM) {
 	if (sector_bytes)
 	*sector_bytes    = 2048;
-	size            /= 2048;
-	available       /= 2048;
+	size.LowPart            /= 2048;
+	available.LowPart       /= 2048;
     } else {
 	if (sector_bytes)
 	*sector_bytes    = 512;
-	size            /= 512;
-	available       /= 512;
+	size.LowPart            /= 512;
+	available.LowPart       /= 512;
     }
     /* fixme: probably have to adjust those variables too for CDFS */
     cluster_sec = 1;
-    while (cluster_sec * 65536 < size) cluster_sec *= 2;
+    while (cluster_sec * 65536 < size.LowPart) cluster_sec *= 2;
 
     if (cluster_sectors)
 	*cluster_sectors = cluster_sec;
     if (free_clusters)
-	*free_clusters   = available / cluster_sec;
+	*free_clusters   = available.LowPart / cluster_sec;
     if (total_clusters)
-	*total_clusters  = size / cluster_sec;
+	*total_clusters  = size.LowPart / cluster_sec;
     return TRUE;
 }
 
@@ -740,7 +756,7 @@ BOOL32 WINAPI GetDiskFreeSpaceEx32A( LPCSTR root,
 				     LPULARGE_INTEGER totalfree)
 {
     int	drive;
-    DWORD size,available;
+    ULARGE_INTEGER size,available;
 
     if (!root) drive = DRIVE_GetCurrentDrive();
     else
@@ -754,14 +770,10 @@ BOOL32 WINAPI GetDiskFreeSpaceEx32A( LPCSTR root,
     }
     if (!DRIVE_GetFreeSpace(drive, &size, &available)) return FALSE;
     /*FIXME: Do we have the number of bytes available to the user? */
-    avail->HighPart = total->HighPart = 0;
-    avail->LowPart = available;
-    total->LowPart = size;
-    if(totalfree)
-      {
-	totalfree->HighPart =0;
-	totalfree->LowPart=  available;
-      }
+    avail->HighPart = available.HighPart;
+    totalfree->HighPart = size.HighPart;
+    avail->LowPart = available.LowPart ;
+    totalfree->LowPart = size.LowPart ;
     return TRUE;
 }
 
