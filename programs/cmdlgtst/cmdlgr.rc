@@ -46,6 +46,7 @@ TestCommdlgMenu MENU
 
  POPUP "&Help"
  {
+  MENUITEM "&Usage", CM_H_USAGE
   MENUITEM "&About", CM_H_ABOUT
  }
 
@@ -178,7 +179,7 @@ CAPTION "About"
 FONT 8, "MS Sans Serif"
 {
  DEFPUSHBUTTON "OK", IDOK, 72, 96, 50, 14
- LTEXT "Common Dialog Test Jig Exerciser, version 1.00", -1, 13, 36, 168, 12
+ LTEXT "Common Dialog Test Jig Exerciser, version 1.10", -1, 13, 36, 168, 12
  LTEXT "(c) 1999, Eric Williams.  Rights are as granted under the WINE license.  Don't hoard code...share it!", -1, 18, 60, 157, 24
  ICON "AboutIcon", -1, 84, 12, 18, 20
 }
@@ -234,6 +235,23 @@ AboutIcon ICON
  '00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00'
  '00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00'
  '00 00 00 00 00 00 00 00 00 00 00 00 00 00'
+}
+
+UsageDialog DIALOG 6, 15, 194, 169
+STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
+CAPTION "Usage"
+FONT 8, "MS Sans Serif"
+{
+ DEFPUSHBUTTON "OK", IDOK, 72, 146, 50, 14
+ LTEXT "Common Dialog Test Jig Exerciser, version 1.10", -1, 13, 36, 168, 12
+ LTEXT "The Commdlg menu allows for testing of the COMMDLG.", -1, 13, 48, 168, 12
+ LTEXT "The Flags menu allows for setting flags of the COMMDLG.", -1, 13, 60, 168, 12
+ LTEXT "Color dialog changes background color.", -1, 13, 72, 168, 12
+ LTEXT "Font dialog changes all fonts.", -1, 13, 72, 168, 12
+ LTEXT "Upper left hand corner contains the current contents of.", -1, 13, 84, 168, 12
+ LTEXT "the last successful OPEN or SAVE.", -1, 13, 92, 168, 12
+ LTEXT "(c) 1999, Eric Williams.  Rights are as granted under the WINE license.  Don't hoard code...share it!", -1, 18, 110, 157, 24
+ ICON "AboutIcon", -1, 84, 12, 18, 20
 }
 
 File_Flags_Dialog DIALOG 6, 15, 207, 227

@@ -69,8 +69,16 @@ static OPENFILENAME ofn;
 static HWND findDialogBox = 0;
 static UINT findMessageId = 0;
 
+static int findDialogBoxInit = 0;
+static int findDialogStructInit = 0;
 static FINDREPLACE frS;
 static char fromstring[1024], tostring[1024];
+
+// Stuff for the drawing of the window(s).  I put them here for convenience.
+
+static COLORREF fgColor = RGB(0, 0, 0); // not settable
+static COLORREF bgColor = RGB(255, 255, 255);
+static COLORREF txtColor = RGB(0, 0, 0); 
 
 // Utility routines.  Currently there is only one, and it's a nasty
 // reminder that I'm not done yet.
@@ -210,16 +218,47 @@ void paintMainWindow(HWND hWnd, UINT iMessage, WPARAM wParam, LPARAM lParam)
 {
 	PAINTSTRUCT ps;
 	RECT rect;
+	HPEN pen;
+	HFONT font;
+	HBRUSH brush;
 
-	// This is the Windows equivalent of one of my widgets,
-	// which basically just draws a large 'X'.
+	// Commence painting!
 
 	BeginPaint(hWnd, &ps);
 	GetClientRect(hWnd, (LPRECT) &rect);
+
+	pen = (HPEN) SelectObject(ps.hdc, CreatePen(0, 0, fgColor));
+	brush = (HBRUSH) SelectObject(ps.hdc, CreateSolidBrush(bgColor));
+	font = (HFONT) SelectObject(ps.hdc, CreateFontIndirect(&cf_lf));
+
+	// only need to draw the exposed bit.
+	Rectangle(ps.hdc, ps.rcPaint.left, ps.rcPaint.top, ps.rcPaint.right, ps.rcPaint.bottom);
+
+	// now draw a couple of lines, just for giggles.
+
 	MoveToEx(ps.hdc, rect.left, rect.top, (POINT FAR *) 0);
 	LineTo(ps.hdc, rect.right, rect.bottom);
 	MoveToEx(ps.hdc, rect.left, rect.bottom, (POINT FAR *) 0);
 	LineTo(ps.hdc, rect.right, rect.top);
+
+	// draw some text
+
+	SetTextAlign(ps.hdc, TA_CENTER|TA_BASELINE);
+	SetTextColor(ps.hdc, txtColor);
+	TextOut(ps.hdc, (rect.left+rect.right)/2, (rect.top+rect.bottom)/2, "Common Dialog Test Page", 23);
+
+	SetTextAlign(ps.hdc, TA_LEFT|TA_TOP);
+	TextOut(ps.hdc, rect.left, rect.top, ofn_result, strlen(ofn_result));
+
+	// set the HDC back to the old pen and brush,
+	// and delete the newly created objects.
+
+	pen = (HPEN) SelectObject(ps.hdc, pen);
+	DeleteObject(pen);
+	brush = (HBRUSH) SelectObject(ps.hdc, brush);
+	DeleteObject(brush);
+	font = (HFONT) SelectObject(ps.hdc, font);
+	DeleteObject(font);
 
 	EndPaint(hWnd, &ps);
 }
@@ -229,7 +268,7 @@ void paintMainWindow(HWND hWnd, UINT iMessage, WPARAM wParam, LPARAM lParam)
 // the CDERR_xxx return values into something resembling usable text;
 // consult cderr.h to see what was returned.
 
-void mw_checkError(HWND hWnd)
+void mw_checkError(HWND hWnd, BOOL explicitcancel)
 {
 	DWORD errval = CommDlgExtendedError();
 	if(errval) {
@@ -239,7 +278,7 @@ void mw_checkError(HWND hWnd)
 		MessageBox(hWnd, errbuf, "Error", MB_ICONEXCLAMATION | MB_OK);
 	}
 	else {
-		MessageBox(hWnd, "Nope, user canceled it.", "No", MB_OK);
+		if(explicitcancel) MessageBox(hWnd, "Nope, user canceled it.", "No", MB_OK);
 	}
 }
 
@@ -251,24 +290,31 @@ void mw_checkError(HWND hWnd)
 void mw_ColorSetup(HWND hWnd)
 {
 	if(ChooseColor(&cc)) {
-		MessageBox(hWnd, "Success.", "Yes", MB_OK);
+		RECT rect;
+
+		GetClientRect(hWnd, (LPRECT) &rect);
+		InvalidateRect(hWnd, (LPRECT) &rect, FALSE);
+		bgColor = cc.rgbResult;
 	}
-	else mw_checkError(hWnd);
+	else mw_checkError(hWnd, FALSE);
 }
 
 void mw_FontSetup(HWND hWnd)
 {
 	if(ChooseFont(&cf)) {
-		MessageBox(hWnd, "Success.", "Yes", MB_OK);
+		RECT rect;
+		GetClientRect(hWnd, (LPRECT) &rect);
+		InvalidateRect(hWnd, (LPRECT) &rect, FALSE);
+		txtColor = cf.rgbColors;
 	}
-	else mw_checkError(hWnd);
+	else mw_checkError(hWnd, FALSE);
 }
 
 void mw_FindSetup(HWND hWnd)
 {
 	if(findDialogBox == 0) {
 		findDialogBox = FindText(&frS);
-		if(findDialogBox==0) mw_checkError(hWnd);
+		if(findDialogBox==0) mw_checkError(hWnd,TRUE);
 	}
 }
 
@@ -276,24 +322,28 @@ void mw_ReplaceSetup(HWND hWnd)
 {
 	if(findDialogBox == 0) {
 		findDialogBox = ReplaceText(&frS);
-		if(findDialogBox==0) mw_checkError(hWnd);
+		if(findDialogBox==0) mw_checkError(hWnd,TRUE);
 	}
 }
 
 void mw_OpenSetup(HWND hWnd)
 {
 	if(GetOpenFileName(&ofn)) {
-		MessageBox(hWnd, "Success.", "Yes", MB_OK);
+		RECT rect;
+		GetClientRect(hWnd, (LPRECT) &rect);
+		InvalidateRect(hWnd, (LPRECT) &rect, FALSE);
 	}
-	else mw_checkError(hWnd);
+	else mw_checkError(hWnd,FALSE);
 }
 
 void mw_SaveSetup(HWND hWnd)
 {
 	if(GetSaveFileName(&ofn)) {
-		MessageBox(hWnd, "Success.", "Yes", MB_OK);
+		RECT rect;
+		GetClientRect(hWnd, (LPRECT) &rect);
+		InvalidateRect(hWnd, (LPRECT) &rect, FALSE);
 	}
-	else mw_checkError(hWnd);
+	else mw_checkError(hWnd,FALSE);
 }
 
 // Can't find documentation in Borland for this one.  Does it
@@ -321,9 +371,9 @@ void mw_PrintSetup(HWND hWnd)
 		// Escape(tmp.hDC, NEWFRAME, 0, NULL, NULL);
 		// Escape(tmp.hDC, ENDDOC, 0, NULL, NULL);
 	 //	DeleteDC(tmp.hDC);
-		 if (pd.hDevMode)
+		 if (pd.hDevMode != NULL)
 			 GlobalFree(pd.hDevMode);
-		 if (pd.hDevNames)
+		 if (pd.hDevNames != NULL)
 			 GlobalFree(pd.hDevNames);
 
 		 pd.hDevMode = 0;
@@ -331,7 +381,7 @@ void mw_PrintSetup(HWND hWnd)
 
 		 MessageBox(hWnd, "Success.", "Yes", MB_OK);
 	}
-	else mw_checkError(hWnd);
+	else mw_checkError(hWnd,TRUE);
 }
 
 // Some support functions for the custom dialog box handlers.
@@ -685,6 +735,8 @@ LRESULT CALLBACK EXPORT mainWindowDispatcher(
 
 		case CM_H_ABOUT:
 			DialogBox(g_hInstance, "AboutDialog", hWnd, (DLGPROC) mwcd_About);
+		case CM_H_USAGE:
+			DialogBox(g_hInstance, "UsageDialog", hWnd, (DLGPROC) mwcd_About);
          	// return value?  *What* return value?
 			return 1;
 
@@ -777,6 +829,8 @@ int PASCAL WinMain(
 )
 {
 	HWND hWnd;
+
+	strcpy(ofn_result, "--- not yet set ---");
 
 	if(hPrevInstance==0) {
 		if(!registerMainWindowClass(hInstance))
