@@ -96,6 +96,7 @@
 #define GL_MODELVIEW30_ARB                0x873E
 #define GL_MODELVIEW31_ARB                0x873F
 #endif
+typedef void (APIENTRY * PGLFNGLWEIGHTPOINTERARB) (GLint size, GLenum type, GLsizei stride, GLvoid* pointer);
 /* GL_EXT_secondary_color */
 #ifndef GL_EXT_secondary_color
 #define GL_EXT_secondary_color 1
@@ -384,6 +385,51 @@ typedef GLboolean (APIENTRY * PGLFNISPROGRAMARBPROC) (GLuint program);
 #define GL_MAX_TEXTURE_IMAGE_UNITS_ARB    0x8872
 /* All ARB_fragment_program entry points are shared with ARB_vertex_program. */
 #endif
+/* GL_ARB_vertex_buffer_object */
+#ifndef GL_ARB_vertex_buffer_object
+#define GL_BUFFER_SIZE_ARB                0x8764
+#define GL_BUFFER_USAGE_ARB               0x8765
+#define GL_ARRAY_BUFFER_ARB               0x8892
+#define GL_ELEMENT_ARRAY_BUFFER_ARB       0x8893
+#define GL_ARRAY_BUFFER_BINDING_ARB       0x8894
+#define GL_ELEMENT_ARRAY_BUFFER_BINDING_ARB 0x8895
+#define GL_VERTEX_ARRAY_BUFFER_BINDING_ARB  0x8896
+#define GL_NORMAL_ARRAY_BUFFER_BINDING_ARB  0x8897
+#define GL_COLOR_ARRAY_BUFFER_BINDING_ARB   0x8898
+#define GL_INDEX_ARRAY_BUFFER_BINDING_ARB   0x8899
+#define GL_TEXTURE_COORD_ARRAY_BUFFER_BINDING_ARB   0x889A
+#define GL_EDGE_FLAG_ARRAY_BUFFER_BINDING_ARB       0x889B
+#define GL_SECONDARY_COLOR_ARRAY_BUFFER_BINDING_ARB 0x889C
+#define GL_FOG_COORDINATE_ARRAY_BUFFER_BINDING_ARB  0x889D
+#define GL_WEIGHT_ARRAY_BUFFER_BINDING_ARB          0x889E
+#define GL_VERTEX_ATTRIB_ARRAY_BUFFER_BINDING_ARB   0x889F
+#define GL_READ_ONLY_ARB                  0x88B8
+#define GL_WRITE_ONLY_ARB                 0x88B9
+#define GL_READ_WRITE_ARB                 0x88BA
+#define GL_BUFFER_ACCESS_ARB              0x88BB
+#define GL_BUFFER_MAPPED_ARB              0x88BC
+#define GL_BUFFER_MAP_POINTER_ARB         0x88BD
+#define GL_STREAM_DRAW_ARB                0x88E0
+#define GL_STREAM_READ_ARB                0x88E1
+#define GL_STREAM_COPY_ARB                0x88E2
+#define GL_STATIC_DRAW_ARB                0x88E4
+#define GL_STATIC_READ_ARB                0x88E5
+#define GL_STATIC_COPY_ARB                0x88E6
+#define GL_DYNAMIC_DRAW_ARB               0x88E8
+#define GL_DYNAMIC_READ_ARB               0x88E9
+#define GL_DYNAMIC_COPY_ARB               0x88EA
+#endif
+typedef void (APIENTRY * PGLFNBINDBUFFERARBPROC) (GLenum target, GLuint buffer);
+typedef void (APIENTRY * PGLFNDELETEBUFFERSARBPROC) (GLsizei n, const GLuint *buffers);
+typedef void (APIENTRY * PGLFNGENBUFFERSARBPROC) (GLsizei n, GLuint *buffers);
+typedef GLboolean (APIENTRY * PGLFNISBUFFERARBPROC) (GLuint buffer);
+typedef void (APIENTRY * PGLFNBUFFERDATAARBPROC) (GLenum target, ptrdiff_t size, const GLvoid *data, GLenum usage);
+typedef void (APIENTRY * PGLFNBUFFERSUBDATAARBPROC) (GLenum target, ptrdiff_t offset, ptrdiff_t size, const GLvoid *data);
+typedef void (APIENTRY * PGLFNGETBUFFERSUBDATAARBPROC) (GLenum target, ptrdiff_t offset, ptrdiff_t size, GLvoid *data);
+typedef GLvoid* (APIENTRY * PGLFNMAPBUFFERARBPROC) (GLenum target, GLenum access);
+typedef GLboolean (APIENTRY * PGLFNUNMAPBUFFERARBPROC) (GLenum target);
+typedef void (APIENTRY * PGLFNGETBUFFERPARAMETERIVARBPROC) (GLenum target, GLenum pname, GLint *params);
+typedef void (APIENTRY * PGLFNGETBUFFERPOINTERVARBPROC) (GLenum target, GLenum pname, GLvoid* *params);
 /* GL_EXT_texture_compression_s3tc */
 #ifndef GL_EXT_texture_compression_s3tc
 #define GL_EXT_texture_compression_s3tc 1
@@ -717,9 +763,11 @@ typedef enum _GL_SupportedExt {
   ARB_TEXTURE_MIRRORED_REPEAT,
   ARB_VERTEX_PROGRAM,
   ARB_VERTEX_BLEND,
+  ARB_VERTEX_BUFFER_OBJECT,
   /* EXT */
   EXT_FOG_COORD,
   EXT_PALETTED_TEXTURE,
+  EXT_PIXEL_BUFFER_OBJECT,
   EXT_POINT_PARAMETERS,
   EXT_SECONDARY_COLOR,
   EXT_STENCIL_WRAP,
@@ -761,6 +809,20 @@ typedef enum _GL_SupportedExt {
     USE_GL_FUNC(PGLFNCOMPRESSEDTEXIMAGE3DPROC,       glCompressedTexImage3DARB); \
     USE_GL_FUNC(PGLFNCOMPRESSEDTEXSUBIMAGE2DPROC,    glCompressedTexSubImage2DARB); \
     USE_GL_FUNC(PGLFNCOMPRESSEDTEXSUBIMAGE3DPROC,    glCompressedTexSubImage3DARB); \
+    /* GL_ARB_vertex_blend */ \
+    USE_GL_FUNC(PGLFNGLWEIGHTPOINTERARB,             glWeightPointerARB); \
+    /* GL_ARB_vertex_buffer_object */ \
+    USE_GL_FUNC(PGLFNBINDBUFFERARBPROC,              glBindBufferARB); \
+    USE_GL_FUNC(PGLFNDELETEBUFFERSARBPROC,           glDeleteBuffersARB); \
+    USE_GL_FUNC(PGLFNGENBUFFERSARBPROC,              glGenBuffersARB); \
+    USE_GL_FUNC(PGLFNISBUFFERARBPROC,                glIsBufferARB); \
+    USE_GL_FUNC(PGLFNBUFFERDATAARBPROC,              glBufferDataARB); \
+    USE_GL_FUNC(PGLFNBUFFERSUBDATAARBPROC,           glBufferSubDataARB); \
+    USE_GL_FUNC(PGLFNGETBUFFERSUBDATAARBPROC,        glGetBufferSubDataARB); \
+    USE_GL_FUNC(PGLFNMAPBUFFERARBPROC,               glMapBufferARB); \
+    USE_GL_FUNC(PGLFNUNMAPBUFFERARBPROC,             glUnmapBufferARB); \
+    USE_GL_FUNC(PGLFNGETBUFFERPARAMETERIVARBPROC,    glGetBufferParameterivARB); \
+    USE_GL_FUNC(PGLFNGETBUFFERPOINTERVARBPROC,       glGetBufferPointervARB); \
     /** EXT Extensions **/ \
     /* GL_EXT_fog_coord */ \
     /* GL_EXT_paletted_texture */ \

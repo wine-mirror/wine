@@ -363,6 +363,12 @@ static BOOL IWineD3DImpl_FillGLCaps(WineD3D_GL_Info *gl_info, Display* display) 
                 gl_info->vs_arb_version = VS_VERSION_11;
                 TRACE_(d3d_caps)(" FOUND: ARB Vertex Shader support - version=%02x\n", gl_info->vs_arb_version);
                 gl_info->supported[ARB_VERTEX_PROGRAM] = TRUE;
+	    } else if (strcmp(ThisExtn, "GL_ARB_vertex_blend") == 0) {
+	        TRACE_(d3d_caps)(" FOUND: ARB Vertex Blend support\n");
+		gl_info->supported[ARB_VERTEX_BLEND] = TRUE;
+	    } else if (strcmp(ThisExtn, "GL_ARB_vertex_buffer_object") == 0) {
+	        TRACE_(d3d_caps)(" FOUND: ARB Vertex Buffer support\n");
+		gl_info->supported[ARB_VERTEX_BUFFER_OBJECT] = TRUE;
 
             /**
              * EXT

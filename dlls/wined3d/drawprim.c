@@ -685,12 +685,23 @@ void drawStridedFast(IWineD3DDevice *iface, Direct3DVertexStridedData *sd,
     /* Blend Data ----------------------------------------------*/
     if ((sd->u.s.blendWeights.lpData != NULL) || 
         (sd->u.s.blendMatrixIndices.lpData != NULL)) {
-        /* FIXME: Won't get here as will drop to slow method        */
-        FIXME("Blending not supported in fast draw routine\n");
-
-#if 0 /* Vertex blend support needs to be added */
-        if (GL_SUPPORT(ARB_VERTEX_BLEND)) {
-            /*FIXME("TODO\n");*/
+#if 1 /* Vertex blend support needs to be added */
+        if (GL_SUPPORT(ARB_VERTEX_BLEND)) {   
+	  DWORD fvf = (sd->u.s.blendWeights.dwType - D3DDECLTYPE_FLOAT1) + 1;
+	  int numBlends = ((fvf & D3DFVF_POSITION_MASK) >> 1) - 2 + ((FALSE == (fvf & D3DFVF_LASTBETA_UBYTE4)) ? 0 : -1);
+     
+	  /*FIXME("TODO\n");*/
+	  /* Note dwType == float3 or float4 == 2 or 3 */
+	  VTRACE(("glWeightPointerARB(%ld, GL_FLOAT, %ld, %p)\n", 
+		  numBlends, 
+	          sd->u.s.blendWeights.dwStride, 
+		  sd->u.s.blendWeights.lpData));
+	  GL_EXTCALL(glWeightPointerARB)(numBlends, GL_FLOAT,
+					 sd->u.s.blendWeights.dwStride, 
+					 sd->u.s.blendWeights.lpData);
+	  checkGLcall("glWeightPointerARB(...)");
+	  glEnableClientState(GL_WEIGHT_ARRAY_ARB);
+	  checkGLcall("glEnableClientState(GL_VERTEX_ARRAY)");
         } else if (GL_SUPPORT(EXT_VERTEX_WEIGHTING)) {
             /*FIXME("TODO\n");*/
             /*
@@ -712,6 +723,9 @@ void drawStridedFast(IWineD3DDevice *iface, Direct3DVertexStridedData *sd,
             checkGLcall("glDisableClientState(GL_VERTEX_WEIGHT_ARRAY_EXT)");
             */
         }
+#else
+        /* FIXME: Won't get here as will drop to slow method        */
+        FIXME("Blending not supported in fast draw routine\n");
 #endif
     }
 
@@ -1551,9 +1565,9 @@ void drawPrimitive(IWineD3DDevice *iface,
 #endif
         }
 
-    } else if ((dataLocations.u.s.pSize.lpData        != NULL) || 
-               (dataLocations.u.s.diffuse.lpData      != NULL) || 
-               (dataLocations.u.s.blendWeights.lpData != NULL)) {
+    } else if ((dataLocations.u.s.pSize.lpData           != NULL) 
+               || (dataLocations.u.s.diffuse.lpData      != NULL) 
+	       /*|| (dataLocations.u.s.blendWeights.lpData != NULL)*/) {
 
         /* Fixme, Ideally, only use the per-vertex code for software HAL 
            but until opengl supports all the functions returned to setup 
