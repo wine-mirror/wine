@@ -1522,8 +1522,9 @@ BOOL FILEDLG95_OnOpen(HWND hwnd)
 	    /* FIXME we are sending ASCII-structures. Does not work with NT */
 	    /* first old style */
 	    TRACE("---\n");
-	    CallWindowProcA((WNDPROC)fodInfos->ofnInfos->lpfnHook, hwnd,
-	    		 fodInfos->HookMsg.fileokstring, 0, (LPARAM)fodInfos->ofnInfos);
+            CallWindowProcA((WNDPROC)fodInfos->ofnInfos->lpfnHook,
+                            fodInfos->DlgInfos.hwndCustomDlg,
+                            fodInfos->HookMsg.fileokstring, 0, (LPARAM)fodInfos->ofnInfos);
 	    if (GetWindowLongA(hwnd, DWL_MSGRESULT))
 	    {
 	      TRACE("cancled\n");
