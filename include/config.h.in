@@ -30,6 +30,9 @@
 /* Define if you have the Xxf86dga library (-lXxf86dga).  */
 #undef HAVE_LIBXXF86DGA
 
+/* Define if you have the X Shm extension */
+#undef HAVE_LIBXXSHM
+
 /* Define if you have the Open Sound system.  */
 #undef HAVE_OSS
 
@@ -68,6 +71,9 @@
 
 /* Define if you have the clone function.  */
 #undef HAVE_CLONE
+
+/* Define if you have the gethostbyname function.  */
+#undef HAVE_GETHOSTBYNAME
 
 /* Define if you have the getpagesize function.  */
 #undef HAVE_GETPAGESIZE
@@ -164,6 +170,9 @@
 
 /* Define if you have the i386 library (-li386).  */
 #undef HAVE_LIBI386
+
+/* Define if you have the nsl library (-lnsl).  */
+#undef HAVE_LIBNSL
 
 /* Define if you have the socket library (-lsocket).  */
 #undef HAVE_LIBSOCKET

@@ -5,7 +5,7 @@ VPATH     = @srcdir@
 MODULE    = none
 RCFLAGS   = -w32 -h
 PROGRAMS  = expand hello hello2 hello3 hello4 hello5 new rolex volinfo
-ALL_LIBS  = $(WINELIB) $(X_LIBS) $(XPM_LIB) $(XLIB) $(LIBS)
+ALL_LIBS  = $(WINELIB) $(X_LIBS) $(XLIB) $(LIBS)
 
 C_SRCS = \
 	expand.c \

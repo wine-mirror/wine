@@ -5,7 +5,7 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = none
 PROGRAMS  = notepad
-ALL_LIBS  = $(WINELIB) $(X_LIBS) $(XPM_LIB) $(XLIB) $(LIBS)
+ALL_LIBS  = $(WINELIB) $(X_LIBS) $(XLIB) $(LIBS)
 RCFLAGS   = -w32 -h
 WRCEXTRA  = -A -p $*
 

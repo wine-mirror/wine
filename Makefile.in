@@ -39,7 +39,6 @@ LIBSUBDIRS = \
 	files \
 	graphics \
 	graphics/metafiledrv \
-	graphics/x11drv \
 	ipc \
 	library \
 	loader \
@@ -55,9 +54,13 @@ LIBSUBDIRS = \
 	resources \
 	scheduler \
 	server \
-	tsx11 \
 	win32 \
 	windows
+
+X11SUBDIRS = \
+	graphics/x11drv \
+	tsx11 \
+	windows/x11drv
 
 EMUSUBDIRS = \
 	debugger \
@@ -73,12 +76,13 @@ DOCSUBDIRS = documentation
 # All sub-directories
 ALLSUBDIRS = \
 	$(LIBSUBDIRS) \
+	$(X11SUBDIRS) \
 	$(EMUSUBDIRS) \
 	$(PROGSUBDIRS) \
 	$(DOCSUBDIRS)
 
 # Sub-directories to run make depend into
-DEPENDSUBDIRS = $(LIBSUBDIRS) $(EMUSUBDIRS) $(DOCSUBDIRS)
+DEPENDSUBDIRS = $(LIBSUBDIRS) $(X11SUBDIRS) $(EMUSUBDIRS) $(DOCSUBDIRS)
 
 # Sub-directories to run make install into
 INSTALLSUBDIRS = $(DOCSUBDIRS)
@@ -97,7 +101,6 @@ LIBOBJS = \
 	files/files.o \
 	graphics/graphics.o \
 	graphics/metafiledrv/metafiledrv.o \
-	graphics/x11drv/x11drv.o \
 	ipc/ipc.o \
 	loader/loader.o \
 	loader/ne/ne.o \
@@ -112,9 +115,13 @@ LIBOBJS = \
 	resources/resources.o \
 	scheduler/scheduler.o \
 	server/server.o \
-	tsx11/tsx11.o \
 	win32/win32.o \
 	windows/windows.o
+
+X11OBJS = \
+	graphics/x11drv/x11drv.o \
+	tsx11/tsx11.o \
+	windows/x11drv/x11drv.o
 
 EMUOBJS = \
 	debugger/debugger.o \
@@ -137,21 +144,21 @@ uninstall:: uninstall_$(MAIN_TARGET)
 
 emu: wine
 
-lib: $(LIBSUBDIRS) $(LIB_TARGET)
+lib: $(LIBSUBDIRS) $(X11SUBDIRS) $(LIB_TARGET)
 
-wine wine.sym: $(LIBSUBDIRS) $(LIB_TARGET) $(EMUSUBDIRS) dummy
-	$(CC) -o wine $(EMUOBJS) $(LIB_TARGET) $(ALT_LINK) $(LDOPTIONS) $(X_LIBS) $(XPM_LIB) $(XLIB) $(LIBS)
+wine wine.sym: $(LIBSUBDIRS) $(X11SUBDIRS) $(LIB_TARGET) $(EMUSUBDIRS) dummy
+	$(CC) -o wine $(EMUOBJS) $(LIB_TARGET) $(ALT_LINK) $(LDOPTIONS) $(X_LIBS) $(XLIB) $(LIBS)
 	@echo "Please ignore the 'gets' warning message, it only applies to Windows programs which use 'gets'"
 	nm -n wine | grep -v _compiled >wine.sym
 	@echo "Wine build complete."
 
-libwine.a: $(LIBOBJS)
+libwine.a: $(LIBOBJS) $(X11OBJS)
 	$(RM) $@
-	$(AR) $@ $(LIBOBJS)
+	$(AR) $@ $(LIBOBJS) $(X11OBJS)
 	$(RANLIB) $@
 
-libwine.so.1.0: $(LIBOBJS)
-	$(CC) -shared -Wl,-soname,libwine.so -o$@ $(LIBOBJS) $(LDOPTIONS) $(X_LIBS) $(XPM_LIB) $(XLIB) $(LIBS)
+libwine.so.1.0: $(LIBOBJS) $(X11OBJS)
+	$(CC) -shared -Wl,-soname,libwine.so -o$@ $(LIBOBJS) $(X11OBJS) $(LDOPTIONS) $(X_LIBS) $(XLIB) $(LIBS)
 
 install_emu: install_lib
 	[ -d $(bindir) ] || $(MKDIR) $(bindir)

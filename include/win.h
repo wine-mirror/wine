@@ -51,6 +51,7 @@ typedef enum
 #define RDW_C_DELETEHRGN	0x0002
 
 struct tagDCE;
+struct _WND_DRIVER;
 
 typedef struct tagWND
 {
@@ -81,8 +82,19 @@ typedef struct tagWND
     Window         window;        /* X window (only for top-level windows) */
     HMENU16        hSysMenu;      /* window's copy of System Menu */
     DWORD          userdata;      /* User private data */
+    struct _WND_DRIVER *pDriver;  /* Window driver */
     DWORD          wExtra[1];     /* Window extra bytes */
 } WND;
+
+typedef struct _WND_DRIVER
+{
+    BOOL32 (*pCreateWindow)(WND *, CLASS *, CREATESTRUCT32A *, BOOL32);
+    WND*   (*pSetParent)(WND *, WND *);
+} WND_DRIVER;
+
+/* X11 windows driver */
+/* FIXME: does not belong here */
+extern WND_DRIVER X11DRV_WND_Driver;
 
 typedef struct
 {

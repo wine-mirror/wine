@@ -18,6 +18,9 @@
 /* Define if you have the Xxf86dga library (-lXxf86dga).  */
 #undef HAVE_LIBXXF86DGA
 
+/* Define if you have the X Shm extension */
+#undef HAVE_LIBXXSHM
+
 /* Define if you have the Open Sound system.  */
 #undef HAVE_OSS
 

@@ -6,8 +6,6 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include <X11/Xatom.h>
-
 #include "options.h"
 #include "class.h"
 #include "win.h"
@@ -439,6 +437,7 @@ BOOL32 WIN_CreateDesktopWindow(void)
     pWndDesktop->window            = rootWindow;
     pWndDesktop->hSysMenu          = 0;
     pWndDesktop->userdata          = 0;
+    pWndDesktop->pDriver           = &X11DRV_WND_Driver;
 
     pWndDesktop->winproc = (WNDPROC16)class->winproc;
 
@@ -555,6 +554,7 @@ static HWND32 WIN_CreateWindowEx( CREATESTRUCT32A *cs, ATOM classAtom,
             wndPtr->owner = WIN_GetTopParentPtr(WIN_FindWndPtr(cs->hwndParent));
     }
 
+    wndPtr->pDriver        = &X11DRV_WND_Driver;
     wndPtr->window         = 0;
     wndPtr->class          = classPtr;
     wndPtr->winproc        = classPtr->winproc;
@@ -647,65 +647,7 @@ static HWND32 WIN_CreateWindowEx( CREATESTRUCT32A *cs, ATOM classAtom,
     wndPtr->rectWindow.bottom = cs->y + cs->cy;
     wndPtr->rectClient        = wndPtr->rectWindow;
 
-    /* Create the X window (only for top-level windows, and then only */
-    /* when there's no desktop window) */
-
-    if (!(cs->style & WS_CHILD) && (rootWindow == DefaultRootWindow(display)))
-    {
-        XSetWindowAttributes win_attr;
-
-	if (Options.managed && ((cs->style & (WS_DLGFRAME | WS_THICKFRAME)) ||
-            (cs->dwExStyle & WS_EX_DLGMODALFRAME)))
-        {
-	    win_attr.event_mask = ExposureMask | KeyPressMask |
-	                          KeyReleaseMask | PointerMotionMask |
-	                          ButtonPressMask | ButtonReleaseMask |
-	                          FocusChangeMask | StructureNotifyMask;
-	    win_attr.override_redirect = FALSE;
-            wndPtr->flags |= WIN_MANAGED;
-	}
-	else
-        {
-	    win_attr.event_mask = ExposureMask | KeyPressMask |
-	                          KeyReleaseMask | PointerMotionMask |
-	                          ButtonPressMask | ButtonReleaseMask |
-	                          FocusChangeMask;
-            win_attr.override_redirect = TRUE;
-	}
-        win_attr.colormap      = COLOR_GetColormap();
-        win_attr.backing_store = Options.backingstore ? WhenMapped : NotUseful;
-        win_attr.save_under    = ((classPtr->style & CS_SAVEBITS) != 0);
-        win_attr.cursor        = CURSORICON_XCursor;
-        wndPtr->window = TSXCreateWindow( display, rootWindow, cs->x, cs->y,
-                                        cs->cx, cs->cy, 0, CopyFromParent,
-                                        InputOutput, CopyFromParent,
-                                        CWEventMask | CWOverrideRedirect |
-                                        CWColormap | CWCursor | CWSaveUnder |
-                                        CWBackingStore, &win_attr );
-
-        if ((wndPtr->flags & WIN_MANAGED) &&
-            (cs->dwExStyle & WS_EX_DLGMODALFRAME))
-        {
-            XSizeHints* size_hints = TSXAllocSizeHints();
-
-            if (size_hints)
-            {
-                size_hints->min_width = size_hints->max_width = cs->cx;
-                size_hints->min_height = size_hints->max_height = cs->cy;
-                size_hints->flags = (PSize | PMinSize | PMaxSize);
-                TSXSetWMSizeHints( display, wndPtr->window, size_hints,
-                                 XA_WM_NORMAL_HINTS );
-                TSXFree(size_hints);
-            }
-        }
-
-	if (cs->hwndParent)  /* Get window owner */
-	{
-            Window win = WIN_GetXWindow( cs->hwndParent );
-            if (win) TSXSetTransientForHint( display, wndPtr->window, win );
-	}
-        EVENT_RegisterWindow( wndPtr );
-    }
+    (*wndPtr->pDriver->pCreateWindow)(wndPtr, classPtr, cs, unicode);
 
     /* Set the window menu */
 
@@ -1070,10 +1012,12 @@ BOOL32 WINAPI DestroyWindow32( HWND32 hwnd )
         while (siblingPtr)
         {
             if (siblingPtr->owner == wndPtr)
+	    {
                if (siblingPtr->hmemTaskQ == wndPtr->hmemTaskQ)
                    break;
                else 
                    siblingPtr->owner = NULL;
+	    }
             siblingPtr = siblingPtr->next;
         }
         if (siblingPtr) DestroyWindow32( siblingPtr->hwndSelf );
@@ -1956,48 +1900,14 @@ HWND16 WINAPI SetParent16( HWND16 hwndChild, HWND16 hwndNewParent )
  */
 HWND32 WINAPI SetParent32( HWND32 hwndChild, HWND32 hwndNewParent )
 {
-    WND *wndPtr = WIN_FindWndPtr( hwndChild );
-    WND *pWndParent = (hwndNewParent) ? WIN_FindWndPtr( hwndNewParent )
-				      : pWndDesktop;
+  WND *wndPtr = WIN_FindWndPtr( hwndChild );
+  WND *pWndNewParent = 
+    (hwndNewParent) ? WIN_FindWndPtr( hwndNewParent ) : pWndDesktop;
+  WND *pWndOldParent =
+    (*wndPtr->pDriver->pSetParent)(wndPtr, pWndNewParent);
 
-    if( wndPtr && pWndParent && (wndPtr != pWndDesktop) )
-    {
-	WND* pWndPrev = wndPtr->parent;
-
-	if( pWndParent != pWndPrev )
-	{
-	    BOOL32 bFixupDCE = IsWindowVisible32(hwndChild);
-
-	    if ( wndPtr->window )
-	    {
-		/* Toplevel window needs to be reparented.  Used by Tk 8.0 */
-
-		TSXDestroyWindow( display, wndPtr->window );
-		wndPtr->window = None;
-	    }
-	    else if( bFixupDCE )
-		DCE_InvalidateDCE( wndPtr, &wndPtr->rectWindow );
-
-	    WIN_UnlinkWindow(hwndChild);
-	    wndPtr->parent = pWndParent;
-
-	    /* FIXME: Create an X counterpart for reparented top-level windows
-	     * when not in the desktop mode. */
-     
-	    if ( pWndParent != pWndDesktop ) wndPtr->dwStyle |= WS_CHILD;
-	    WIN_LinkWindow(hwndChild, HWND_BOTTOM);
-
-	    if( bFixupDCE )
-	    {
-	        DCE_InvalidateDCE( wndPtr, &wndPtr->rectWindow );
-		UpdateWindow32(hwndChild);
-	    }
-	}
-	return pWndPrev->hwndSelf;
-    } /* failure */
-    return 0;
+  return pWndOldParent?pWndOldParent->hwndSelf:0;
 }
-
 
 /*******************************************************************
  *         IsChild16    (USER.48)
