@@ -22,6 +22,7 @@
 
 #include "windef.h"
 #include "winerror.h"
+#include "rpcnterr.h"
 #include "heap.h"
 #include "ntddk.h"
 #include "ntsecapi.h"
@@ -917,6 +918,19 @@ LsaClose(IN LSA_HANDLE ObjectHandle)
 	FIXME("(%p):stub\n",ObjectHandle);
 	return 0xc0000000;
 }
+
+/******************************************************************************
+ * LsaNtStatusToWinError [ADVAPI32.@]
+ *
+ * PARAMS
+ *   Status [I]
+ */
+ULONG WINAPI
+LsaNtStatusToWinError(NTSTATUS Status)
+{
+    return RtlNtStatusToDosError(Status);
+}
+
 /******************************************************************************
  * NotifyBootConfigStatus [ADVAPI32.@]
  *

@@ -250,7 +250,7 @@
 @ stdcall LsaOpenPolicy(long long long long) LsaOpenPolicy
 @ stdcall LsaLookupSids(ptr long ptr ptr ptr) LsaLookupSids
 @ stdcall LsaFreeMemory(ptr)LsaFreeMemory
-@ stdcall LsaQueryInformationPolicy(ptr long ptr)LsaQueryInformationPolicy
+@ stdcall LsaQueryInformationPolicy(ptr long ptr) LsaQueryInformationPolicy
 @ stdcall LsaClose(ptr)LsaClose
 @ stub LsaSetInformationPolicy
 @ stub LsaLookupNames
@@ -301,6 +301,7 @@
 @ stub LsaGetSystemAccessAccount
 @ stub LsaSetInformationTrustedDomain
 @ stub LsaEnumerateTrustedDomains
+@ stdcall LsaNtStatusToWinError(long) LsaNtStatusToWinError
 @ stub LsaOpenAccount
 @ stub LsaEnumeratePrivileges
 @ stub LsaLookupPrivilegeDisplayName

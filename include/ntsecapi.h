@@ -69,6 +69,8 @@ NTSTATUS WINAPI LsaQueryInformationPolicy(LSA_HANDLE,POLICY_INFORMATION_CLASS,PV
 
 NTSTATUS WINAPI LsaFreeMemory(PVOID);
 NTSTATUS WINAPI LsaClose(IN LSA_HANDLE ObjectHandle);
+ULONG WINAPI LsaNtStatusToWinError(NTSTATUS Status);
+
 
 #ifdef __cplusplus
 } /* extern "C" */
