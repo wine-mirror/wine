@@ -71,18 +71,18 @@ static const dataTypeMap typeMap[] =
   {"hex(7):",         REG_MULTI_SZ},
   {"hex(8):",         REG_RESOURCE_LIST},
   {"hex(9):",         REG_FULL_RESOURCE_DESCRIPTOR},
-  {"hex(80000000):",  REG_NONE},
-  {"hex(80000001):",  REG_SZ},
-  {"hex(80000002):",  REG_EXPAND_SZ},
-  {"hex(80000003):",  REG_BINARY},
-  {"hex(80000004):",  REG_DWORD},
-  {"hex(80000005):",  REG_DWORD_BIG_ENDIAN},
-  {"hex(80000006):",  REG_LINK},
-  {"hex(80000007):",  REG_MULTI_SZ},
-  {"hex(80000008):",  REG_RESOURCE_LIST},
-  {"hex(80000009):",  REG_FULL_RESOURCE_DESCRIPTOR},
-  {"hex(8000000a):",  REG_BINARY}, /* REG_RESOURCE_REQUIREMENTS_LIST}, !Exist */
-  {"hex(8000000A):",  REG_BINARY}, /* REG_RESOURCE_REQUIREMENTS_LIST}, !Exist */
+  {"hex(10):",        REG_RESOURCE_REQUIREMENTS_LIST},
+  {"hex(80000000):",  0x80000000},
+  {"hex(80000001):",  0x80000001},
+  {"hex(80000002):",  0x80000002},
+  {"hex(80000003):",  0x80000003},
+  {"hex(80000004):",  0x80000004},
+  {"hex(80000005):",  0x80000005},
+  {"hex(80000006):",  0x80000006},
+  {"hex(80000007):",  0x80000007},
+  {"hex(80000008):",  0x80000008},
+  {"hex(80000009):",  0x80000000},
+  {"hex(8000000a):",  0x8000000A}
 };
 const static int LAST_TYPE_MAP = sizeof(typeMap)/sizeof(dataTypeMap);
 
@@ -229,7 +229,7 @@ HKEY getDataType(LPSTR *lpValue)
   for (; counter < LAST_TYPE_MAP; counter++)
   {
     LONG len = strlen(typeMap[counter].mask);
-    if ( strncmp( *lpValue, typeMap[counter].mask, len) == IDENTICAL)
+    if ( strncmpi( *lpValue, typeMap[counter].mask, len) == IDENTICAL)
     {
       /*
        * We found it, modify the value's pointer in order to skip the data 
@@ -480,7 +480,7 @@ static HRESULT setValue(LPSTR *argv)
   DWORD   dwType          = NULL;
   DWORD   dwDataType;
 
-  CHAR    lpsCurrentValue[KEY_MAX_LEN];
+  LPSTR   lpsCurrentValue;
 
   LPSTR   keyValue = argv[0];
   LPSTR   keyData  = argv[1];
@@ -489,6 +489,7 @@ static HRESULT setValue(LPSTR *argv)
   if ( (keyValue == NULL) || (keyData == NULL) )
     return ERROR_INVALID_PARAMETER;
 
+  lpsCurrentValue=HeapAlloc(GetProcessHeap(), 0,KEY_MAX_LEN);
   /*
    * Default registry values are encoded in the input stream as '@' but as 
    * blank in the wine registry.
@@ -507,6 +508,12 @@ static HRESULT setValue(LPSTR *argv)
           &dwType, 
           (LPBYTE)lpsCurrentValue, 
           &dwSize);
+
+  while(hRes==ERROR_MORE_DATA){
+      dwSize+=KEY_MAX_LEN;
+      lpsCurrentValue=HeapReAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,lpsCurrentValue,dwSize);
+      hRes = RegQueryValueExA(currentKeyHandle,keyValue,NULL,&dwType,(LPBYTE)lpsCurrentValue,&dwSize);
+  }
 
   if( ( strlen(lpsCurrentValue) == 0 ) ||  /* The value is not existing */
       ( bForce ))         /* -force option */ 
@@ -690,7 +697,7 @@ static void processQueryValue(LPSTR cmdline)
   if( (keyValue[0] == '@') && (strlen(keyValue) == 1) ) 
   {
     LONG  lLen  = KEY_MAX_LEN;
-    CHAR  lpsData[KEY_MAX_LEN];
+    CHAR*  lpsData=HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,KEY_MAX_LEN);
     /* 
      * We need to query the key default value
      */
@@ -699,6 +706,12 @@ static void processQueryValue(LPSTR cmdline)
              currentKeyName, 
              (LPBYTE)lpsData,
              &lLen);
+
+    while(hRes==ERROR_MORE_DATA){
+        lLen+=KEY_MAX_LEN;
+        lpsData=HeapReAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,lpsData,lLen);
+        hRes = RegQueryValue(currentKeyHandle,currentKeyName,(LPBYTE)lpsData,&lLen);
+    }
 
     if (hRes == ERROR_SUCCESS)
     {
@@ -709,7 +722,7 @@ static void processQueryValue(LPSTR cmdline)
   else 
   {
     DWORD  dwLen  = KEY_MAX_LEN;
-    BYTE   lpbData[KEY_MAX_LEN];
+    BYTE*  lpbData=HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,KEY_MAX_LEN);
     DWORD  dwType;
     /* 
      * We need to query a specific value for the key
@@ -722,6 +735,12 @@ static void processQueryValue(LPSTR cmdline)
              (LPBYTE)lpbData, 
              &dwLen);
 
+    while(hRes==ERROR_MORE_DATA){
+        dwLen+=KEY_MAX_LEN;
+        lpbData=HeapReAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,lpbData,dwLen);
+        hRes = RegQueryValueEx(currentKeyHandle,keyValue,NULL,&dwType,(LPBYTE)lpbData,&dwLen);
+    }
+
     if (hRes == ERROR_SUCCESS)
     {
       /* 
@@ -730,6 +749,7 @@ static void processQueryValue(LPSTR cmdline)
       switch ( dwType )
       {
         case REG_SZ:
+        case REG_EXPAND_SZ:
         {
           lpsRes = HeapAlloc( GetProcessHeap(), 0, dwLen);
           strncpy(lpsRes, lpbData, dwLen);
@@ -747,6 +767,8 @@ static void processQueryValue(LPSTR cmdline)
         }
       } 
     }
+
+    HeapFree(GetProcessHeap(), 0, lpbData);
   }
  
  
@@ -904,9 +926,13 @@ int PASCAL WinMain (HANDLE inst, HANDLE prev, LPSTR cmdline, int show)
   LPSTR  token          = NULL;  /* current token analized */
   LPSTR  stdInput       = NULL;  /* line read from stdin */
   INT    cmdIndex       = -1;    /* index of the command in array */
+  LPSTR nextLine        = NULL;
+  ULONG  currentSize    = STDIN_MAX_LEN;
 
   stdInput = HeapAlloc(GetProcessHeap(), 0, STDIN_MAX_LEN); 
-  if (stdInput == NULL)
+  nextLine = HeapAlloc(GetProcessHeap(), 0, STDIN_MAX_LEN);
+
+  if (stdInput == NULL || nextLine== NULL)
     return NOT_ENOUGH_MEMORY;
 
   /*
@@ -946,8 +972,13 @@ int PASCAL WinMain (HANDLE inst, HANDLE prev, LPSTR cmdline, int show)
     /* 
      * read a line
      */
-    stdInput = fgets(stdInput, STDIN_MAX_LEN, stdin);
+      ULONG curSize=STDIN_MAX_LEN;
+      char* s=NULL;
    
+      while((NULL!=(stdInput=fgets(stdInput,curSize,stdin))) && (NULL==(s=strchr(stdInput,'\n'))) ){
+          fseek(stdin,-curSize,SEEK_CUR+1);
+          stdInput=HeapReAlloc(GetProcessHeap(), 0,stdInput,curSize+=STDIN_MAX_LEN);
+      }
     /* 
      * Make some handy generic stuff here... 
      */
@@ -957,6 +988,24 @@ int PASCAL WinMain (HANDLE inst, HANDLE prev, LPSTR cmdline, int show)
 
       if( stdInput[0] == '#' )              /* this is a comment, skip */
         continue;
+
+      while( stdInput[strlen(stdInput) -1] == '\\' ){ /* a '\' char in the end of the current line means  */
+                                                      /* that this line is not complete and we have to get */
+          stdInput[strlen(stdInput) -1]= NULL;        /* the rest in the next lines */
+
+          nextLine = fgets(nextLine, STDIN_MAX_LEN, stdin);
+
+          nextLine[strlen(nextLine)-1] = NULL;
+
+          if ( (strlen(stdInput)+strlen(nextLine)) > currentSize){
+
+              stdInput=HeapReAlloc(GetProcessHeap(),0,stdInput,strlen(stdInput)+STDIN_MAX_LEN);
+
+              currentSize+=STDIN_MAX_LEN;
+    }
+
+          strcat(stdInput,nextLine+2);
+      }
     }
 
     /* 
@@ -975,7 +1024,10 @@ int PASCAL WinMain (HANDLE inst, HANDLE prev, LPSTR cmdline, int show)
   if ( commandSaveRegistry[cmdIndex] != FALSE )
     SHELL_SaveRegistry();
 
+  HeapFree(GetProcessHeap(), 0, nextLine);
+
   HeapFree(GetProcessHeap(), 0, stdInput);
+
   return SUCCESS;
 }
 

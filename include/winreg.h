@@ -31,18 +31,7 @@
 #define REG_MULTI_SZ		7	/* multiple strings, delimited by \0, terminated by \0\0 (ASCII) */
 #define REG_RESOURCE_LIST	8	/* resource list? huh? */
 #define REG_FULL_RESOURCE_DESCRIPTOR	9	/* full resource descriptor? huh? */
-
-#define HEX_REG_NONE                     0x80000000  
-#define HEX_REG_SZ                       0x80000001  
-#define HEX_REG_EXPAND_SZ                0x80000002  
-#define HEX_REG_BINARY                   0x80000003  
-#define HEX_REG_DWORD                    0x80000004  
-#define HEX_REG_DWORD_LITTLE_ENDIAN      0x80000004  
-#define HEX_REG_DWORD_BIG_ENDIAN         0x80000005  
-#define HEX_REG_LINK                     0x80000006  
-#define HEX_REG_MULTI_SZ                 0x80000007  
-#define HEX_REG_RESOURCE_LIST            0x80000008  
-#define HEX_REG_FULL_RESOURCE_DESCRIPTOR 0x80000009  
+#define REG_RESOURCE_REQUIREMENTS_LIST  10
 
 #define HKEY_CLASSES_ROOT       ((HKEY) 0x80000000)
 #define HKEY_CURRENT_USER       ((HKEY) 0x80000001)

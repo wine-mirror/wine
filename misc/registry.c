@@ -183,22 +183,19 @@ static void debug_print_value (LPBYTE lpbData, LPKEYVALUE key)
   { 
     switch(key->type)
     { 
-      case HEX_REG_EXPAND_SZ:
-      case HEX_REG_SZ:
+      case REG_EXPAND_SZ:
       case REG_SZ:
         TRACE_(reg)(" Value %s, Data(sz)=%s\n", 
           debugstr_w(key->name), 
           debugstr_w((LPCWSTR)lpbData));
         break;
 
-      case HEX_REG_DWORD:
       case REG_DWORD:
         TRACE_(reg)(" Value %s, Data(dword)=0x%08lx\n",
           debugstr_w(key->name), 
           (DWORD)*lpbData);
         break;
     
-      case HEX_REG_MULTI_SZ:
       case REG_MULTI_SZ:
       { 
         int i;
@@ -215,16 +212,7 @@ static void debug_print_value (LPBYTE lpbData, LPKEYVALUE key)
       }
       break;
 
-      case HEX_REG_NONE:
-      case HEX_REG_BINARY:
-      case HEX_REG_LINK:
-      case HEX_REG_RESOURCE_LIST:
-      case HEX_REG_FULL_RESOURCE_DESCRIPTOR:
-      case REG_NONE:
-      case REG_LINK:
-      case REG_RESOURCE_LIST:
-      case REG_FULL_RESOURCE_DESCRIPTOR:
-      case REG_BINARY:
+      default:
       { 
         char szTemp[100];      /* 3*32 + 3 + 1 */
         int i;
@@ -241,12 +229,6 @@ static void debug_print_value (LPBYTE lpbData, LPKEYVALUE key)
           debugstr_w(key->name), 
           szTemp);                  
       }
-      break;
-    
-      default:
-        FIXME_(reg)(" Value %s, Unknown data type %ld\n", 
-          debugstr_w(key->name), 
-          key->type);
     } /* switch */
   } /* if */
 }
