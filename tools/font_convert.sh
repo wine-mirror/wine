@@ -70,8 +70,8 @@ $Q echo "done."
 
 if [ -z "$FONTS" ]; then $Q echo "Can't find any fonts in $WIND"; exit 1; fi; 
 
-mkdir $TMPDIR;
-cd $TMPDIR; 
+mkdir "$TMPDIR"
+cd "$TMPDIR"
 
 for i in "${FONTS[@]}"; do 
     FNT=`basename "$i"`; FNT=${FNT%.???};
@@ -89,7 +89,7 @@ for i in *.bdf; do
     $Q echo "installing ${i%.???}.pcf";
     mv "${i%.???}.pcf" $TARGET 2>/dev/null
     if [ $? -ne 0 ]; then 
-	$Q echo "Can't install fonts to $TARGET. Are your root?"; cd $OLDPWD; rm -rf $TMPDIR; exit 1; fi;
+	$Q echo "Can't install fonts to $TARGET. Are your root?"; cd "$OLDPWD"; rm -rf "$TMPDIR"; exit 1; fi;
     rm "$i";
 done;
 
@@ -100,7 +100,7 @@ if [ "$Q" ]; then
 else
     mkfontdir
 fi;
-rmdir $TMPDIR;
+rmdir "$TMPDIR"
 
 if [ "$DISPLAY" ]; then $Q echo "adjusting X font database"; xset fp rehash; fi;
 

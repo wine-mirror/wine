@@ -90,20 +90,20 @@ echo "working on ${EXTRA_PATH}$1"
 
 if [ $# -eq 1 ]
 then
-  if [ -d ${output}.junk ]
+  if [ -d "${output}.junk" ]
   then
-    /bin/rm -rf ${output}.junk
+    /bin/rm -rf "${output}.junk"
   fi
-  if [ -d ${output} ]
+  if [ -d "${output}" ]
   then
-    mv $output ${output}.junk
+    mv "$output" "${output}.junk"
   fi
   echo "about to rename temporary directory to $output"
-  mv ${TMPDIR} $output
+  mv "${TMPDIR}" "$output"
 else
-  cat $TMPDIR/*
+  cat "$TMPDIR"/*
 fi
 
-rm -rf $TMPDIR
+rm -rf "$TMPDIR"
 
 exit 0
