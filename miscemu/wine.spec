@@ -1,1 +1,0 @@
-init	wine_initial_task

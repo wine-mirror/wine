@@ -1,5 +1,3 @@
-init	UserClientDllInitialize
-
 @ stdcall ActivateKeyboardLayout(long long) ActivateKeyboardLayout
 @ stdcall AdjustWindowRect(ptr long long) AdjustWindowRect
 @ stdcall AdjustWindowRectEx(ptr long long long) AdjustWindowRectEx

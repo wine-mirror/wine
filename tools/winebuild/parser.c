@@ -504,13 +504,7 @@ SPEC_TYPE ParseTopLevel( FILE *file, int def_only )
 
     while ((token = GetToken(1)) != NULL)
     {
-        if (strcmp(token, "init") == 0)
-        {
-            if (SpecType == SPEC_WIN16)
-                fatal_error( "init cannot be used for Win16 spec files\n" );
-            init_func = xstrdup( GetToken(0) );
-        }
-        else if (strcmp(token, "rsrc") == 0)
+        if (strcmp(token, "rsrc") == 0)
         {
             if (!def_only)
             {

@@ -7,6 +7,7 @@ MODULE    = user32.dll
 IMPORTS   = gdi32 advapi32 kernel32
 ALTNAMES  = user.exe keyboard.dll ddeml.dll display.dll mouse.dll
 EXTRALIBS = $(LIBUNICODE)
+DLLMAIN   = UserClientDllInitialize
 
 LDDLLFLAGS = @LDDLLFLAGS@
 SYMBOLFILE = $(MODULE).tmp.o
@@ -104,7 +105,7 @@ EXTRASUBDIRS = \
 # Special rules for 16-bit resource and spec files
 
 user.exe.spec.c: user.exe.spec resources/version16.res
-	$(LDPATH) $(WINEBUILD) $(DEFS) -H 65520 -o $@ -M $(MODULE) -spec $(SRCDIR)/user.exe.spec
+	$(LDPATH) $(WINEBUILD) $(DEFS) -H 65520 -o $@ -M $(MODULE) --spec $(SRCDIR)/user.exe.spec
 
 resources/display.res: resources/display.rc
 	$(LDPATH) $(WRC) $(DIVINCL) -o $@ -w16 -m -r $(SRCDIR)/resources/display.rc

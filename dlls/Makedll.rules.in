@@ -25,7 +25,7 @@ all: $(MODULE)$(DLLEXT)
 # Rules for .so files
 
 $(MAINSPEC).c: $(MAINSPEC) $(RC_SRCS:.rc=.res) $(SYMBOLFILE) $(WINEBUILD)
-	$(LDPATH) $(WINEBUILD) $(DEFS) -o $@ -spec $(SRCDIR)/$(MAINSPEC) $(RC_SRCS:%.rc=-res %.res) $(SYMBOLFILE) -L$(DLLDIR) $(DELAYIMPORTS:%=-dl%) $(IMPORTS:%=-l%)
+	$(LDPATH) $(WINEBUILD) $(DEFS) -o $@ --spec $(SRCDIR)/$(MAINSPEC) $(RC_SRCS:%.rc=-r %.res) $(SYMBOLFILE) $(DLLMAIN:%=-e %) -L$(DLLDIR) $(DELAYIMPORTS:%=-d%) $(IMPORTS:%=-l%)
 
 $(MODULE).so: $(MAINSPEC).o $(ALL_OBJS) Makefile.in
 	$(LDSHARED) $(LDDLLFLAGS) $(MAINSPEC).o $(ALL_OBJS) -o $@ -L$(DLLDIR) $(LDIMPORTS:%=-l%) $(ALL_LIBS)
@@ -37,12 +37,12 @@ $(MODULE).tmp.o: $(ALL_OBJS) Makefile.in
 # Rule for 16-bit glue
 
 $(MODULE).glue.c: $(C_SRCS) $(C_SRCS16) $(WINEBUILD)
-	$(LDPATH) $(WINEBUILD) $(DEFS) -o $@ -glue -C$(SRCDIR) $(C_SRCS) $(C_SRCS16)
+	$(LDPATH) $(WINEBUILD) $(DEFS) -o $@ --glue -C$(SRCDIR) $(C_SRCS) $(C_SRCS16)
 
 # Rules for .dll files
 
 $(MODULE): $(RCOBJS) $(OBJS) $(MODULE).dbg.o $(SPEC_DEF) Makefile.in
-	$(DLLWRAP) $(DLLWRAPFLAGS) --def $(SPEC_DEF) --implib lib$(MODULE:.dll=.a) -o $@ $(RCOBJS) $(OBJS) $(MODULE).dbg.o -L$(DLLDIR) $(DELAYIMPORTS:%=-l%) $(IMPORTS:%=-l%) $(ALL_LIBS)
+	$(DLLWRAP) $(DLLWRAPFLAGS) --def $(SPEC_DEF) --implib lib$(MODULE:.dll=.a) -o $@ $(RCOBJS) $(OBJS) $(MODULE).dbg.o $(DLLMAIN:%=--entry %) -L$(DLLDIR) $(DELAYIMPORTS:%=-l%) $(IMPORTS:%=-l%) $(ALL_LIBS)
 
 $(SPEC_DEF): $(WINEBUILD)
 

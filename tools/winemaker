@@ -1626,11 +1626,6 @@ sub generate_spec_file($$$)
     return;
   }
 
-  if (defined @$target[$T_INIT] and ((@$target[$T_FLAGS] & $TF_WRAP) == 0)) {
-    print FILEO "init    @$target[$T_INIT]\n";
-  }
-  print FILEO "\n";
-
   # Don't forget to export the 'Main' function for wrapped executables,
   # except for MFC ones!
   if ((@$target[$T_FLAGS]&($TF_WRAP|$TF_WRAPPER|$TF_MFC)) == $TF_WRAP) {
@@ -1902,9 +1897,9 @@ sub generate_project_files($)
 
       $canon =~ s/_so$//;
       if (@$target[$T_TYPE] == $TT_GUIEXE) {
-	  $mode = "-m gui -exe @$target[$T_NAME]";
+	  $mode = "-m gui --exe @$target[$T_NAME]";
       } elsif (@$target[$T_TYPE] == $TT_CUIEXE) {
-	  $mode = "-m cui -exe @$target[$T_NAME]";
+	  $mode = "-m cui --exe @$target[$T_NAME]";
       } else {
 	  $mode = "";
       }
@@ -1918,7 +1913,7 @@ sub generate_project_files($)
       }
 
       print FILEO "@$target[$T_NAME].spec.c: \$(${canon}_SPEC_SRCS) \$(${canon}_RC_SRCS:.rc=.res) \$(${canon}_OBJS)\n";
-      print FILEO "\t\$(LD_PATH) \$(WINEBUILD) -fPIC -o \$\@ \$(${canon}_SPEC_SRCS:%=-spec %) \$(${canon}_RC_SRCS:%.rc=-res %.res) \$(${canon}_DLL_PATH) \$(WINE_DLL_PATH) \$(GLOBAL_DLL_PATH) $all_dlls $mode \$(${canon}_OBJS)\n";
+      print FILEO "\t\$(LD_PATH) \$(WINEBUILD) -fPIC -o \$\@ \$(${canon}_SPEC_SRCS:%=--spec %) \$(${canon}_RC_SRCS:%.rc=-r %.res) \$(${canon}_DLL_PATH) \$(WINE_DLL_PATH) \$(GLOBAL_DLL_PATH) $all_dlls $mode \$(${canon}_OBJS)\n";
       print FILEO "\n";
       print FILEO "@$target[$T_NAME].so: @$target[$T_NAME].spec.o \$(${canon}_OBJS) \$(${canon}_DEPENDS) \n";
       if (@{@$target[$T_SOURCES_CXX]} > 0 or @{@$project_settings[$T_SOURCES_CXX]} > 0) {

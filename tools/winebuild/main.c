@@ -125,6 +125,7 @@ static void do_exe_mode( const char *arg );
 static void do_module( const char *arg );
 static void do_heap( const char *arg );
 static void do_name( const char *arg );
+static void do_entry( const char *arg );
 static void do_spec( const char *arg );
 static void do_def( const char *arg );
 static void do_exe( const char *arg );
@@ -132,7 +133,6 @@ static void do_glue(void);
 static void do_relay16(void);
 static void do_relay32(void);
 static void do_debug(void);
-static void do_sym(void);
 static void do_chdir( const char *arg );
 static void do_lib( const char *arg );
 static void do_import( const char *arg );
@@ -141,30 +141,31 @@ static void do_rsrc( const char *arg );
 
 static const struct option_descr option_table[] =
 {
-    { "-h",       0, do_usage,   "-h               Display this help message" },
-    { "-w",       0, do_warnings,"-w               Turn on warnings" },
-    { "-C",       1, do_chdir,   "-C dir           Change directory to <dir> before opening source files" },
-    { "-f",       1, do_f_flags, "-f flags         Compiler flags (only -fPIC is supported)" },
-    { "-D",       1, do_define,  "-D sym           Ignored for C flags compatibility" },
-    { "-I",       1, do_include, "-I dir           Ignored for C flags compatibility" },
-    { "-K",       1, do_k_flags, "-K flags         Compiler flags (only -KPIC is supported)" },
-    { "-m",       1, do_exe_mode,"-m mode          Set the executable mode (cui|gui|cuiw|guiw)" },
-    { "-M",       1, do_module,  "-M module        Set the name of the main (Win32) module for a Win16 dll" },
-    { "-L",       1, do_lib,     "-L directory     Look for imports libraries in 'directory'" },
-    { "-l",       1, do_import,  "-l lib.dll       Import the specified library" },
-    { "-dl",      1, do_dimport, "-dl lib.dll      Delay-import the specified library" },
-    { "-H",       1, do_heap,    "-H size          Set the heap size for a Win16 dll" },
-    { "-N",       1, do_name,    "-N dllname       Set the DLL name (default: set from input file name)" },
-    { "-res",     1, do_rsrc,    "-res rsrc.res    Load resources from rsrc.res" },
-    { "-o",       1, do_output,  "-o name          Set the output file name (default: stdout)\n" },
-    { "-sym",     0, do_sym,     NULL },  /* ignored for backwards compatibility */
-    { "-spec",    1, do_spec,    "-spec file.spec  Build a .c file from a spec file" },
-    { "-def",     1, do_def,     "-def file.spec   Build a .def file from a spec file" },
-    { "-exe",     1, do_exe,     "-exe name        Build a .c file for the named executable" },
-    { "-debug",   0, do_debug,   "-debug [files]   Build a .c file containing debug channels declarations" },
-    { "-glue",    0, do_glue,    "-glue [files]    Build the 16-bit glue for the source files" },
-    { "-relay16", 0, do_relay16, "-relay16         Build the 16-bit relay assembly routines" },
-    { "-relay32", 0, do_relay32, "-relay32         Build the 32-bit relay assembly routines" },
+    { "-h",        0, do_usage,   "-h               Display this help message" },
+    { "-w",        0, do_warnings,"-w               Turn on warnings" },
+    { "-C",        1, do_chdir,   "-C dir           Change directory to <dir> before opening source files" },
+    { "-f",        1, do_f_flags, "-f flags         Compiler flags (only -fPIC is supported)" },
+    { "-D",        1, do_define,  "-D sym           Ignored for C flags compatibility" },
+    { "-I",        1, do_include, "-I dir           Ignored for C flags compatibility" },
+    { "-K",        1, do_k_flags, "-K flags         Compiler flags (only -KPIC is supported)" },
+    { "-m",        1, do_exe_mode,"-m mode          Set the executable mode (cui|gui|cuiw|guiw)" },
+    { "-M",        1, do_module,  "-M module        Set the name of the main (Win32) module for a Win16 dll" },
+    { "-L",        1, do_lib,     "-L directory     Look for imports libraries in 'directory'" },
+    { "-l",        1, do_import,  "-l lib.dll       Import the specified library" },
+    { "-d",        1, do_dimport, "-d lib.dll       Delay-import the specified library" },
+    { "-H",        1, do_heap,    "-H size          Set the heap size for a Win16 dll" },
+    { "-N",        1, do_name,    "-N dllname       Set the DLL name (default: set from input file name)" },
+    { "-e",        1, do_entry,   "-e function      Set the DLL entry point function (default: DllMain)" },
+    { "-r",        1, do_rsrc,    "-r rsrc.res      Load resources from rsrc.res" },
+    { "-res",      1, do_rsrc,    NULL },  /* for backwards compatibility, will disappear */
+    { "-o",        1, do_output,  "-o name          Set the output file name (default: stdout)\n" },
+    { "--spec",    1, do_spec,    "--spec file.spec Build a .c file from a spec file" },
+    { "--def",     1, do_def,     "--def file.spec  Build a .def file from a spec file" },
+    { "--exe",     1, do_exe,     "--exe name       Build a .c file for the named executable" },
+    { "--debug",   0, do_debug,   "--debug [files]  Build a .c file containing debug channels declarations" },
+    { "--glue",    0, do_glue,    "--glue [files]   Build the 16-bit glue for the source files" },
+    { "--relay16", 0, do_relay16, "--relay16        Build the 16-bit relay assembly routines" },
+    { "--relay32", 0, do_relay32, "--relay32        Build the 32-bit relay assembly routines" },
     { NULL,       0, NULL,      NULL }
 };
 
@@ -192,7 +193,7 @@ static void do_usage(void)
     for (opt = option_table; opt->name; opt++)
         if (opt->usage) fprintf( stderr, "   %s\n", opt->usage );
 
-    fprintf( stderr, "\nExactly one of -spec, -def, -exe, -debug, -glue, -relay16 or -relay32 must be specified.\n\n" );
+    fprintf( stderr, "\nExactly one of --spec, --def, --exe, --debug, --glue, --relay16 or --relay32 must be specified.\n\n" );
     exit(1);
 }
 
@@ -236,6 +237,11 @@ static void do_name( const char *arg )
 {
     strncpy( DLLName, arg, sizeof(DLLName) );
     DLLName[sizeof(DLLName) - 1] = 0;
+}
+
+static void do_entry( const char *arg )
+{
+    init_func = xstrdup( arg );
 }
 
 static void do_spec( const char *arg )
@@ -310,11 +316,6 @@ static void do_relay32(void)
     exec_mode = MODE_RELAY32;
 }
 
-static void do_sym(void)
-{
-    /* nothing */
-}
-
 static void do_lib( const char *arg )
 {
     lib_path = xrealloc( lib_path, (nb_lib_paths+1) * sizeof(*lib_path) );
@@ -345,22 +346,29 @@ static void parse_options( char *argv[] )
 
     for (ptr = last = argv + 1; *ptr; ptr++)
     {
+        /* first check the exact option name */
         for (opt = option_table; opt->name; opt++)
         {
-            if (opt->has_arg && !strncmp( *ptr, opt->name, strlen(opt->name) ))
+            if (!strcmp( *ptr, opt->name ) ||
+                /* for long option check without the first dash too */
+                (opt->name[1] == '-' && !strcmp( *ptr, opt->name+1 )))
             {
-                arg=*ptr+strlen(opt->name);
-                if (*arg=='\0')
-                {
-                    ptr++;
-                    arg=*ptr;
-                }
+                if (opt->has_arg) arg = *(++ptr);
+                else arg = NULL;
                 break;
             }
-            if (!strcmp( *ptr, opt->name ))
+        }
+
+        /* now check for option name concatenated with argument */
+        if (!opt->name)
+        {
+            for (opt = option_table; opt->name; opt++)
             {
-                arg=NULL;
-                break;
+                if (opt->has_arg && !strncmp( *ptr, opt->name, strlen(opt->name) ))
+                {
+                    arg = *ptr + strlen(opt->name);
+                    break;
+                }
             }
         }
 

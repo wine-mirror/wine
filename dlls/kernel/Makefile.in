@@ -7,6 +7,7 @@ MODULE    = kernel32.dll
 IMPORTS   = ntdll
 ALTNAMES  = krnl386.exe comm.dll stress.dll system.dll toolhelp.dll windebug.dll win87em.dll wprocs.dll
 LDIMPORTS = ntdll.dll
+DLLMAIN   = MAIN_KernelInit
 
 C_SRCS = \
 	$(TOPOBJDIR)/ole/ole2nls.c \
@@ -51,7 +52,7 @@ kernel.res: $(MC_SRCS:.mc=.mc.rc)
 # Special rules for 16-bit resource and spec files
 
 krnl386.exe.spec.c: krnl386.exe.spec version16.res $(WINEBUILD)
-	$(LDPATH) $(WINEBUILD) $(DEFS) -N kernel -o $@ -M $(MODULE) -spec $(SRCDIR)/krnl386.exe.spec
+	$(LDPATH) $(WINEBUILD) $(DEFS) -N kernel -o $@ -M $(MODULE) --spec $(SRCDIR)/krnl386.exe.spec
 
 version16.res: version16.rc
 	$(LDPATH) $(WRC) $(DIVINCL) -o $@ -w16 -m -r $(SRCDIR)/version16.rc
