@@ -456,7 +456,7 @@ static LRESULT WINAPI main_window_procA(HWND hwnd, UINT msg, WPARAM wparam, LPAR
 	}
 	case WM_WINDOWPOSCHANGING:
 	{
-	    BOOL is_win9x = GetWindowLongW(hwnd, GWL_WNDPROC) == 0;
+	    BOOL is_win9x = GetWindowLongPtrW(hwnd, GWLP_WNDPROC) == 0;
 	    WINDOWPOS *winpos = (WINDOWPOS *)lparam;
 	    trace("main: WM_WINDOWPOSCHANGING\n");
 	    trace("%p after %p, x %d, y %d, cx %d, cy %d flags %08x\n",
@@ -617,7 +617,8 @@ static void verify_window_info(HWND hwnd, const WINDOWINFO *info, BOOL test_bord
     ok(info->dwStyle == (DWORD)GetWindowLongA(hwnd, GWL_STYLE), "wrong dwStyle\n");
     ok(info->dwExStyle == (DWORD)GetWindowLongA(hwnd, GWL_EXSTYLE), "wrong dwExStyle\n");
     status = (GetActiveWindow() == hwnd) ? WS_ACTIVECAPTION : 0;
-    ok(info->dwWindowStatus == status, "wrong dwWindowStatus\n");
+    ok(info->dwWindowStatus == status, "wrong dwWindowStatus %04lx/%04lx\n",
+       info->dwWindowStatus, status);
 
     if (test_borders && !IsRectEmpty(&rcWindow))
     {
@@ -707,7 +708,7 @@ static LRESULT CALLBACK cbt_hook_proc(int nCode, WPARAM wParam, LPARAM lParam)
     /* on HCBT_DESTROYWND window state is undefined */
     if (nCode != HCBT_DESTROYWND && wParam)
     {
-	BOOL is_win9x = GetWindowLongW((HWND)wParam, GWL_WNDPROC) == 0;
+	BOOL is_win9x = GetWindowLongPtrW((HWND)wParam, GWLP_WNDPROC) == 0;
 	if (is_win9x && nCode == HCBT_CREATEWND)
 	    /* Win9x doesn't like WM_NCCALCSIZE with synthetic data and crashes */;
 	else
@@ -1682,7 +1683,17 @@ static void test_SetWindowPos(HWND hwnd)
 {
     RECT orig_win_rc, rect;
     LONG_PTR old_proc;
-    BOOL is_win9x = GetWindowLongW(hwnd, GWL_WNDPROC) == 0;
+    BOOL is_win9x = GetWindowLongPtrW(hwnd, GWLP_WNDPROC) == 0;
+
+    SetRect(&rect, 111, 222, 333, 444);
+    ok(!GetWindowRect(0, &rect), "GetWindowRect succeeded\n");
+    ok(rect.left == 111 && rect.top == 222 && rect.right == 333 && rect.bottom == 444,
+       "wrong window rect %ld,%ld-%ld,%ld\n", rect.left, rect.top, rect.right, rect.bottom );
+
+    SetRect(&rect, 111, 222, 333, 444);
+    ok(!GetClientRect(0, &rect), "GetClientRect succeeded\n");
+    ok(rect.left == 111 && rect.top == 222 && rect.right == 333 && rect.bottom == 444,
+       "wrong window rect %ld,%ld-%ld,%ld\n", rect.left, rect.top, rect.right, rect.bottom );
 
     GetWindowRect(hwnd, &orig_win_rc);
 
@@ -1727,7 +1738,7 @@ static void test_SetMenu(HWND parent)
 {
     HWND child;
     HMENU hMenu, ret;
-    BOOL is_win9x = GetWindowLongW(parent, GWL_WNDPROC) == 0;
+    BOOL is_win9x = GetWindowLongPtrW(parent, GWLP_WNDPROC) == 0;
     BOOL retok;
 
     hMenu = CreateMenu();
