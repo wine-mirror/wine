@@ -573,6 +573,7 @@ HRESULT  WINAPI  IDirect3D8Impl_CreateDevice               (LPDIRECT3D8 iface,
 
     /* Initialize openGL extension related variables */
     object->isMultiTexture = FALSE;
+    object->isDot3         = FALSE;
     object->TextureUnits   = 1;
 
     /* Retrieve opengl defaults */
@@ -607,6 +608,9 @@ HRESULT  WINAPI  IDirect3D8Impl_CreateDevice               (LPDIRECT3D8 iface,
             object->isMultiTexture = TRUE;
             object->TextureUnits   = min(8, gl_max);
             TRACE("FOUND: Multitexture support - GL_MAX_TEXTURE_UNITS_ARB=%d\n", gl_max);
+        } else if (strcmp(ThisExtn, "GL_EXT_texture_env_dot3") == 0) {
+            object->isDot3 = TRUE;
+            TRACE("FOUND: Dot3 support\n");
         }
 
         if (*GL_Extensions == ' ') GL_Extensions++;

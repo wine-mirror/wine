@@ -3409,9 +3409,13 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetTextureStageState(LPDIRECT3DDEVICE8 ifa
                     break;
 
                 case D3DTOP_DOTPRODUCT3               :
-                    /*glTexEnvi(GL_TEXTURE_ENV, Parm, GL_DOT3_RGBA);
-                    checkGLcall("glTexEnvi(GL_TEXTURE_ENV, comb_target, GL_DOT3_RGBA);");
-                    break;*/
+                    if (This->isDot3) {
+                        glTexEnvi(GL_TEXTURE_ENV, Parm, GL_DOT3_RGBA);
+                        checkGLcall("glTexEnvi(GL_TEXTURE_ENV, comb_target, GL_DOT3_RGBA);");
+                    } else {
+                        FIXME("DotProduct3 extension requested but not supported via this version of opengl\n");
+                    }
+                    break;
 
                 case D3DTOP_SUBTRACT                  :
                     /* glTexEnvi(GL_TEXTURE_ENV, Parm, GL_SUBTRACT); Missing? */
