@@ -2043,24 +2043,20 @@ static HRESULT WINAPI IDirect3DImpl_QueryInterface(
 
         WINE_StringFromCLSID((LPCLSID)refiid,xrefiid);
         TRACE(ddraw,"(%p)->(%s,%p)\n",This,xrefiid,obj);
-        if (!memcmp(&IID_IUnknown,refiid,sizeof(IID_IUnknown))) {
-                *obj = This;
+        if ((!memcmp(&IID_IDirectDraw,refiid,sizeof(IID_IDirectDraw))) ||
+	    (!memcmp(&IID_IDirectDraw2,refiid,sizeof(IID_IDirectDraw2))) ||
+	    (!memcmp(&IID_IDirectDraw4,refiid,sizeof(IID_IDirectDraw4)))) {
+                *obj = This->ddraw;
                 IDirect3D_AddRef(iface);
 
-		TRACE(ddraw, "  Creating IUnknown interface (%p)\n", *obj);
+		TRACE(ddraw, "  Creating IDirectDrawX interface (%p)\n", *obj);
 		
                 return S_OK;
         }
-        if (!memcmp(&IID_IDirect3D,refiid,sizeof(IID_IDirect3D))) {
-                IDirect3DImpl*   d3d;
-
-                d3d = HeapAlloc(GetProcessHeap(),0,sizeof(*d3d));
-                d3d->ref = 1;
-		/* FIXME: isn't this a bit weird ??? */
-                d3d->ddraw = (IDirectDrawImpl*)This;
+        if ((!memcmp(&IID_IDirect3D,refiid,sizeof(IID_IDirect3D))) ||
+	    (!memcmp(&IID_IUnknown,refiid,sizeof(IID_IUnknown)))) {
+                *obj = This;
                 IDirect3D_AddRef(iface);
-                d3d->lpvtbl = &d3dvt;
-                *obj = d3d;
 
 		TRACE(ddraw, "  Creating IDirect3D interface (%p)\n", *obj);
 
@@ -2071,8 +2067,7 @@ static HRESULT WINAPI IDirect3DImpl_QueryInterface(
 
                 d3d = HeapAlloc(GetProcessHeap(),0,sizeof(*d3d));
                 d3d->ref = 1;
-		/* FIXME: isn't this a bit weird ??? */
-                d3d->ddraw = (IDirectDrawImpl*)This;
+                d3d->ddraw = This->ddraw;
                 IDirect3D_AddRef(iface);
                 d3d->lpvtbl = &d3d2vt;
                 *obj = d3d;
@@ -2196,12 +2191,49 @@ static ICOM_VTABLE(IDirect3D) d3dvt = {
  *				IDirect3D2
  */
 static HRESULT WINAPI IDirect3D2Impl_QueryInterface(
-        LPDIRECT3D2 iface,REFIID refiid,LPVOID *obj) {
-  ICOM_THIS(IDirect3D2Impl,iface);
-  /* For the moment, we use the same function as in IDirect3D */
-  TRACE(ddraw, "Calling IDirect3D enumerating function.\n");
-  
-  return IDirect3DImpl_QueryInterface((LPDIRECT3D) This, refiid, obj);
+        LPDIRECT3D2 iface,REFIID refiid,LPVOID *obj) {  
+	ICOM_THIS(IDirect3D2Impl,iface);
+
+	/* FIXME: Not sure if this is correct */
+        char    xrefiid[50];
+
+        WINE_StringFromCLSID((LPCLSID)refiid,xrefiid);
+        TRACE(ddraw,"(%p)->(%s,%p)\n",This,xrefiid,obj);
+        if ((!memcmp(&IID_IDirectDraw,refiid,sizeof(IID_IDirectDraw))) ||
+	    (!memcmp(&IID_IDirectDraw2,refiid,sizeof(IID_IDirectDraw2))) ||
+	    (!memcmp(&IID_IDirectDraw4,refiid,sizeof(IID_IDirectDraw4)))) {
+                *obj = This->ddraw;
+                IDirect3D2_AddRef(iface);
+
+		TRACE(ddraw, "  Creating IDirectDrawX interface (%p)\n", *obj);
+		
+                return S_OK;
+        }
+        if ((!memcmp(&IID_IDirect3D2,refiid,sizeof(IID_IDirect3D2))) ||
+	    (!memcmp(&IID_IUnknown,refiid,sizeof(IID_IUnknown)))) {
+                *obj = This;
+                IDirect3D2_AddRef(iface);
+
+		TRACE(ddraw, "  Creating IDirect3D2 interface (%p)\n", *obj);
+
+                return S_OK;
+        }
+        if (!memcmp(&IID_IDirect3D,refiid,sizeof(IID_IDirect3D))) {
+                IDirect3DImpl*  d3d;
+
+                d3d = HeapAlloc(GetProcessHeap(),0,sizeof(*d3d));
+                d3d->ref = 1;
+                d3d->ddraw = This->ddraw;
+                IDirect3D2_AddRef(iface);
+                d3d->lpvtbl = &d3dvt;
+                *obj = d3d;
+
+		TRACE(ddraw, "  Creating IDirect3D interface (%p)\n", *obj);
+
+                return S_OK;
+        }
+        FIXME(ddraw,"(%p):interface for IID %s NOT found!\n",This,xrefiid);
+        return OLE_E_ENUM_NOMORE;
 }
 
 static ULONG WINAPI IDirect3D2Impl_AddRef(LPDIRECT3D2 iface) {
