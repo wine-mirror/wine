@@ -750,15 +750,22 @@ BOOL QUEUE_AddSMSG( MESSAGEQUEUE *queue, int list, SMSG *smsg )
             break;
             
         case SM_PENDING_LIST:
+        {
             /* make it thread safe, could be accessed by the sender and
              receiver thread */
+            SMSG **prev;
 
             EnterCriticalSection( &queue->cSection );
-            smsg->nextPending = queue->smPending;
-            queue->smPending = smsg;
-            QUEUE_SetWakeBit( queue, QS_SENDMESSAGE );
+            smsg->nextPending = NULL;
+            prev = &queue->smPending;
+            while ( *prev )
+                prev = &(*prev)->nextPending;
+            *prev = smsg;
             LeaveCriticalSection( &queue->cSection );
+
+            QUEUE_SetWakeBit( queue, QS_SENDMESSAGE );
             break;
+        }
 
         default:
             WARN(sendmsg, "Invalid list: %d", list);

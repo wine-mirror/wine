@@ -670,14 +670,27 @@ static LRESULT MSG_SendMessageInterThread( HQUEUE16 hDestQueue,
     if (QUEUE_AddSMSG(destQ, SM_PENDING_LIST, smsg) == FALSE)
         return 0;
 
-    /* perform task switch and wait for the result */
-    while( (smsg->flags & SMSG_HAVE_RESULT) == 0 )
-    {
-        /* force destination task to run next, if 16 bit threads */
-        if (THREAD_IsWin16(THREAD_Current()) && THREAD_IsWin16(destQ->thdb) )
-            DirectedYield16( destQ->thdb->teb.htask16 );
+    /* force destination task to run next, if 16 bit threads */
+    if ( THREAD_IsWin16(THREAD_Current()) && THREAD_IsWin16(destQ->thdb) )
+        DirectedYield16( destQ->thdb->teb.htask16 );
 
-        if (QUEUE_WaitBits( QS_SMRESULT, timeout ) == 0)
+    /* wait for the result */
+    while ( !(smsg->flags & SMSG_HAVE_RESULT) )
+    {
+        /*
+         * The sequence is crucial to avoid deadlock situations:
+         * - first, we clear the QS_SMRESULT bit
+         * - then, we check the SMSG_HAVE_RESULT bit
+         * - only if this isn't set, we enter the wait state.
+         *
+         * As the receiver first sets the SMSG_HAVE_RESULT and then wakes us,
+         * we are guaranteed that -should we now clear the QS_SMRESULT that
+         * was signalled already by the receiver- we will not start waiting.
+         */
+        QUEUE_ClearWakeBit( queue, QS_SMRESULT );
+
+        if (   !(smsg->flags & SMSG_HAVE_RESULT)
+             && QUEUE_WaitBits( QS_SMRESULT, timeout ) == 0 )
         {
             /* return with timeout */
             SetLastError( 0 );
@@ -685,43 +698,12 @@ static LRESULT MSG_SendMessageInterThread( HQUEUE16 hDestQueue,
             break;
         }
 
-        if (! (smsg->flags & SMSG_HAVE_RESULT) )
-        {
-            /* not supposed to happen */
-            ERR(sendmsg, "SMSG_HAVE_RESULT not set: smsg->flags=%x\n", smsg->flags);
-            QUEUE_ClearWakeBit( queue, QS_SMRESULT );
-      }
-        else
+        if ( smsg->flags & SMSG_HAVE_RESULT )
         {
             *pRes = smsg->lResult;
             TRACE(sendmsg,"smResult = %08x\n", (unsigned)*pRes );
         }
     }
-
-    /*
-     * Warning: This one looks like a hack but it has a very good reason
-     * for existing. It will become obsolete once an input task/thread is
-     * implemented
-     *
-     * Normally, once a send message operation is complete, you want to 
-     * clear the wake bit QS_SMRESULT for this queue. However, because of
-     * the way the 16 bit threads are scheduled, the EVENT_WaitNetEvent
-     * method might be sending messages using the same message queue as the
-     * one used for this send message. Since the recipient of that other
-     * send message is in another thread, it is totally possible that a
-     * send message operation that occured in time before this one
-     * has completed it's work before this one does.
-     * If we clear the wake bit without checking and that operation has 
-     * completed, the send message operation waiting in the call stack 
-     * of the current thread will wait forever.
-     */
-    EnterCriticalSection(&queue->cSection);
-
-    if ( (smsg->nextProcessing==0) ||
-	 (( smsg->nextProcessing->flags & SMSG_HAVE_RESULT) == 0 ) )
-      QUEUE_ClearWakeBit( queue, QS_SMRESULT );
-
-    LeaveCriticalSection(&queue->cSection);
 
     /* remove the smsg from the processingg list of the source queue */
     QUEUE_RemoveSMSG( queue, SM_PROCESSING_LIST, smsg );
@@ -774,57 +756,40 @@ BOOL WINAPI ReplyMessage( LRESULT result )
 
     TRACE(sendmsg,"ReplyMessage, queue %04x\n", queue->self);
 
-    while ((smsg = queue->smWaiting) != 0)
-    {
-        senderQ = (MESSAGEQUEUE*)QUEUE_Lock( smsg->hSrcQueue );
-        if ( !senderQ )
-            goto ReplyMessageEnd;
-        
-        /* if message has already been reply, continue the loop of receving
-         message */
-        if ( smsg->flags & SMSG_ALREADY_REPLIED )
-            goto ReplyMessageDone;
-
-        /* if send message pending, processed it */
-      if( queue->wakeBits & QS_SENDMESSAGE )
-      {
-            /* Note: QUEUE_ReceiveMessage() and ReplyMessage call each other */
-	QUEUE_ReceiveMessage( queue );
-        QUEUE_Unlock( senderQ );
-	continue; /* ReceiveMessage() already called us */
-      }
-        break;   /* message to reply is in smsg */
-    }
-
-    if ( !smsg )
+    if (    !(smsg = queue->smWaiting)
+         || !(senderQ = QUEUE_Lock( smsg->hSrcQueue )) )
         goto ReplyMessageEnd;
-      
-    smsg->lResult = result;
-    smsg->flags |= SMSG_ALREADY_REPLIED;
 
-    /* check if it's an early reply (called by the application) or
-       a regular reply (called by ReceiveMessage) */
-    if ( !(smsg->flags & SMSG_SENDING_REPLY) )
-        smsg->flags |= SMSG_EARLY_REPLY;
+    if ( !(smsg->flags & SMSG_ALREADY_REPLIED) )
+    {
+        /* This is the first reply, so pass result to sender */
 
-    TRACE( sendmsg,"\trpm: smResult = %08lx\n", (long) result );
+        TRACE( sendmsg,"\trpm: smResult = %08lx\n", (long) result );
 
-    EnterCriticalSection(&senderQ->cSection);
+        EnterCriticalSection(&senderQ->cSection);
+        
+        smsg->lResult = result;
+        smsg->flags |= SMSG_ALREADY_REPLIED;
 
-    smsg->flags |= SMSG_HAVE_RESULT;
+        /* check if it's an early reply (called by the application) or
+           a regular reply (called by ReceiveMessage) */
+        if ( !(smsg->flags & SMSG_SENDING_REPLY) )
+            smsg->flags |= SMSG_EARLY_REPLY;
 
-    /* tell the sending task that its reply is ready */
-    QUEUE_SetWakeBit( senderQ, QS_SMRESULT );
+        smsg->flags |= SMSG_HAVE_RESULT;
 
-    LeaveCriticalSection(&senderQ->cSection);
+        LeaveCriticalSection(&senderQ->cSection);
 
-    /* switch directly to sending task (16 bit thread only) */
-    if ( THREAD_IsWin16( THREAD_Current() ) && THREAD_IsWin16( senderQ->thdb ) )
-        DirectedYield16( senderQ->thdb->teb.htask16 );
+        /* tell the sending task that its reply is ready */
+        QUEUE_SetWakeBit( senderQ, QS_SMRESULT );
 
-    ret = TRUE;
+        /* switch directly to sending task (16 bit thread only) */
+        if ( THREAD_IsWin16( THREAD_Current() ) && THREAD_IsWin16( senderQ->thdb ) )
+            DirectedYield16( senderQ->thdb->teb.htask16 );
+
+        ret = TRUE;
+    }
     
-ReplyMessageDone:
     if (smsg->flags & SMSG_SENDING_REPLY)
     {
         /* remove msg from the waiting list, since this  is the last
