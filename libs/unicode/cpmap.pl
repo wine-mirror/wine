@@ -26,6 +26,9 @@ $MAPPREFIX = $BASEDIR . "MAPPINGS/";
 # UnicodeData file
 $UNICODEDATA = $BASEDIR . "UNIDATA/UnicodeData.txt";
 
+# Sort keys file
+$SORTKEYS = "www.unicode.org/reports/tr10/allkeys.txt";
+
 # Defaults mapping
 $DEFAULTS = "./defaults";
 
@@ -181,7 +184,9 @@ $DEF_CHAR = ord '?';
 # main routine
 
 READ_DEFAULTS();
+my @sortkeys = READ_SORTKEYS_FILE();
 DUMP_CASE_MAPPINGS();
+DUMP_SORTKEYS(@sortkeys);
 DUMP_COMPOSE_TABLES();
 DUMP_CTYPE_TABLES();
 
@@ -464,6 +469,146 @@ sub READ_JIS0208_FILE
         }
         die "$name: Unrecognized line $_\n";
     }
+}
+
+
+################################################################
+# build the sort keys table
+sub READ_SORTKEYS_FILE
+{
+    my @sortkeys = ();
+    for (my $i = 0; $i < 65536; $i++) { $sortkeys[$i] = [ -1, 0, 0, 0, 0 ] };
+
+    open INPUT, "$SORTKEYS" or die "Cannot open $SORTKEYS";
+    print "Loading $SORTKEYS\n";
+    while (<INPUT>)
+    {
+        next if /^\#/;  # skip comments
+        next if /^$/;  # skip empty lines
+        next if /\x1a/;  # skip ^Z
+        next if /^\@version/;  # skip @version header
+        if (/^([0-9a-fA-F]+)\s+;\s+\[([*.])([0-9a-fA-F]{4})\.([0-9a-fA-F]{4})\.([0-9a-fA-F]{4})\.([0-9a-fA-F]+)\]/)
+        {
+            my ($uni,$variable) = (hex $1, $2);
+            next if $uni > 65535;
+            $sortkeys[$uni] = [ $uni, hex $3, hex $4, hex $5, hex $6 ];
+            next;
+        }
+        if (/^([0-9a-fA-F]+\s+)+;\s+\[[*.]([0-9a-fA-F]{4})\.([0-9a-fA-F]{4})\.([0-9a-fA-F]{4})\.([0-9a-fA-F]+)\]/)
+        {
+            # multiple character sequence, ignored for now
+            next;
+        }
+        die "$SORTKEYS: Unrecognized line $_\n";
+    }
+    close INPUT;
+
+    # compress the keys to 32 bit:
+    # key 1 to 16 bits, key 2 to 8 bits, key 3 to 4 bits, key 4 to 1 bit
+
+    @sortkeys = sort { ${$a}[1] <=> ${$b}[1] or 
+                       ${$a}[2] <=> ${$b}[2] or
+                       ${$a}[3] <=> ${$b}[3] or
+                       ${$a}[4] <=> ${$b}[4] or
+                       $a cmp $b; } @sortkeys;
+
+    my ($n2, $n3) = (1, 1);
+    my @keys = (-1, -1, -1, -1, -1 );
+    my @flatkeys = ();
+
+    for (my $i = 0; $i < 65536; $i++)
+    {
+        my @current = @{$sortkeys[$i]};
+        next if $current[0] == -1;
+        if ($current[1] == $keys[1])
+        {
+            if ($current[2] == $keys[2])
+            {
+                if ($current[3] == $keys[3])
+                {
+                    # nothing
+                }
+                else
+                {
+                    $keys[3] = $current[3];
+                    $n3++;
+                    die if ($n3 >= 16);
+                }
+            }
+            else
+            {
+                $keys[2] = $current[2];
+                $keys[3] = $current[3];
+                $n2++;
+                $n3 = 1;
+                die if ($n2 >= 256);
+            }
+        }
+        else
+        {
+            $keys[1] = $current[1];
+            $keys[2] = $current[2];
+            $keys[3] = $current[3];
+            $n2 = 1;
+            $n3 = 1;
+        }
+
+        if ($current[2]) { $current[2] = $n2; }
+        if ($current[3]) { $current[3] = $n3; }
+        if ($current[4]) { $current[4] = 1; }
+
+        $flatkeys[$current[0]] = ($current[1] << 16) | ($current[2] << 8) | ($current[3] << 4) | $current[4];
+    }
+    return @flatkeys;
+}
+
+
+################################################################
+# build the sort keys table
+sub DUMP_SORTKEYS
+{
+    my @keys = @_;
+
+    # count the number of 256-key ranges that contain something
+
+    my @offsets = ();
+    my $ranges = 2;
+    for (my $i = 0; $i < 256; $i++) { $offsets[$i] = 256; }
+    for (my $i = 0; $i < 65536; $i++)
+    {
+        next unless defined $keys[$i];
+        $offsets[$i >> 8] = $ranges * 256;
+        $ranges++;
+        $i |= 255;
+    }
+
+    # output the range offsets
+
+    open OUTPUT,">collation.c" or die "Cannot create collation.c";
+    printf "Building collation.c\n";
+    printf OUTPUT "/* Unicode collation element table */\n";
+    printf OUTPUT "/* generated from %s */\n", $SORTKEYS;
+    printf OUTPUT "/* DO NOT EDIT!! */\n\n";
+
+    printf OUTPUT "const unsigned int collation_table[%d] =\n{\n", $ranges*256;
+    printf OUTPUT "    /* index */\n";
+    printf OUTPUT "%s,\n", DUMP_ARRAY( "0x%08x", 0, @offsets );
+
+    # output the default values
+
+    printf OUTPUT "    /* defaults */\n";
+    printf OUTPUT "%s", DUMP_ARRAY( "0x%08x", 0, (-1) x 256 );
+
+    # output all the key ranges
+
+    for (my $i = 0; $i < 256; $i++)
+    {
+        next if $offsets[$i] == 256;
+        printf OUTPUT ",\n    /* 0x%02x00 .. 0x%02xff */\n", $i, $i;
+        printf OUTPUT "%s", DUMP_ARRAY( "0x%08x", -1, @keys[($i<<8) .. ($i<<8)+255] );
+    }
+    printf OUTPUT "\n};\n";
+    close OUTPUT;
 }
 
 
