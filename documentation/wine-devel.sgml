@@ -22,6 +22,7 @@
 <!entity tools SYSTEM "tools.sgml">
 <!entity dlls SYSTEM "dlls.sgml">
 <!entity cvs-regression SYSTEM "cvs-regression.sgml">
+<!entity multimedia SYSTEM "multimedia.sgml">
 
 <!--
 <!entity status SYSTEM "status.sgml">
@@ -54,6 +55,7 @@
     &opengl;
     &build;
     &dlls;
+    &multimedia;
   </part>
 
   <part id="part-three">
