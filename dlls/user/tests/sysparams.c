@@ -692,6 +692,7 @@ static void test_SPI_SETICONTITLEWRAP( void )          /*     26 */
 
     trace("testing SPI_{GET,SET}ICONTITLEWRAP\n");
     rc=SystemParametersInfoA( SPI_GETICONTITLEWRAP, 0, &old_b, 0 );
+    trace("rc=%d err=%ld\n",rc,GetLastError());
     if (rc==0 && (GetLastError()==0 || GetLastError()==ERROR_CALL_NOT_IMPLEMENTED))
     {
         /* SPI_{GET,SET}ICONTITLEWRAP is not implemented on a standard Win98 SE */
