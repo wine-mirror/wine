@@ -72,6 +72,27 @@ static const INTPROC DOSVM_VectorsBuiltin[] =
 
 
 /**********************************************************************
+ *         DOSVM_GetRMVector
+ *
+ * Return pointer to real mode interrupt vector. These are not at fixed 
+ * location because those Win16 programs that do not use any real mode 
+ * code have protected NULL pointer catching block at low linear memory 
+ * and interrupt vectors have been moved to another location.
+ */
+static FARPROC16* DOSVM_GetRMVector( BYTE intnum )
+{
+    LDT_ENTRY entry;
+    FARPROC16 proc;
+
+    proc = GetProcAddress16( GetModuleHandle16( "KERNEL" ), 
+                             (LPCSTR)(ULONG_PTR)183 );
+    wine_ldt_get_entry( LOWORD(proc), &entry );
+
+    return (FARPROC16*)wine_ldt_get_base( &entry ) + intnum;
+}
+
+
+/**********************************************************************
  *         DOSVM_IsIRQ
  *
  * Return TRUE if interrupt is an IRQ.
@@ -517,7 +538,7 @@ void DOSVM_HardwareInterruptRM( CONTEXT86 *context, BYTE intnum )
  */
 FARPROC16 DOSVM_GetRMHandler( BYTE intnum )
 {
-  return ((FARPROC16*)0)[intnum];
+  return *DOSVM_GetRMVector( intnum );
 }
 
 
@@ -530,7 +551,7 @@ void DOSVM_SetRMHandler( BYTE intnum, FARPROC16 handler )
 {
   TRACE("Set real mode interrupt vector %02x <- %04x:%04x\n",
        intnum, HIWORD(handler), LOWORD(handler) );
-  ((FARPROC16*)0)[intnum] = handler;
+  *DOSVM_GetRMVector( intnum ) = handler;
 }
 
 
