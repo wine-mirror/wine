@@ -58,7 +58,6 @@ my %options;        # command line options
 my @modified_files; # optional list of files that were modified
 my @added_files;    # added files as an array
 my $added_file;     # added file being considered
-my $patches_dir;    # location of the patch file
 my $cvs_line;       # line of output from CVS
 my $mod_files_str;  # string that describes the modified files
 
@@ -67,19 +66,21 @@ my $mod_files_str;  # string that describes the modified files
 $options{n} = strftime "%Y%m%d%H%M", gmtime;
 $gen_date = strftime "%Y/%m/%d %H:%M:%S UTC", gmtime;
 
-unless(getopts("vn:f:c:m:a:", \%options))
+unless(getopts("vn:f:c:m:a:p:", \%options))
 {
     print STDERR "Usage: $0 [-v] [-n patch_name] [-f patch_file] " .
-        "[-c change_log] [-m modified_files] [-a added_files]\n";
+        "[-c change_log] [-m modified_files] [-a added_files] [-p path_to_patches]\n";
     exit 1;
 }
 
-$options{f} = "patches/$options{n}.diff" unless(exists $options{f});
-$patches_dir = dirname $options{f};
+$options{p} = "patches" unless(exists $options{p});
+$options{f} = "$options{p}/$options{n}.diff" unless(exists $options{f});
+$options{p} = dirname $options{f};
 @added_files = split ' ', $options{a};
 @modified_files = split ' ', $options{m};
+$options{c} =~ s/\\n/\n\t/g;
 
-if(-d $patches_dir)
+if(-d $options{p})
 {
     if(-e $options{f})
     {
@@ -89,8 +90,8 @@ if(-d $patches_dir)
 }
 else
 {
-    mkdir $patches_dir, (0777 & ~umask) or
-        die "Unable to mkdir $patches_dir: $!";
+    mkdir $options{p}, (0777 & ~umask) or
+        die "Unable to mkdir $options{p}: $!";
 }
 
 $mod_files_str = exists($options{m}) ? $options{m} : "<see cvs diff>";
