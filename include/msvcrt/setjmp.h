@@ -16,9 +16,6 @@
 
 #ifdef __i386__
 
-#define _JBLEN                     16
-#define _JBTYPE                    int
-
 typedef struct __JUMP_BUFFER
 {
     unsigned long Ebp;
@@ -37,15 +34,23 @@ typedef struct __JUMP_BUFFER
 
 #endif /* __i386__ */
 
-typedef _JBTYPE MSVCRT(jmp_buf)[_JBLEN];
+#ifndef USE_MSVCRT_PREFIX
+#define _JBLEN                     16
+#define _JBTYPE                    int
+typedef _JBTYPE                    jmp_buf[_JBLEN];
+#else
+#define MSVCRT__JBLEN              16
+#define MSVCRT__JBTYPE             int
+typedef MSVCRT__JBTYPE             MSVCRT_jmp_buf[MSVCRT__JBLEN];
+#endif
 
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-int         MSVCRT(_setjmp)( MSVCRT(jmp_buf));
-int         MSVCRT(longjmp)( MSVCRT(jmp_buf),int);
+int         MSVCRT(_setjmp)(MSVCRT(jmp_buf));
+int         MSVCRT(longjmp)(MSVCRT(jmp_buf),int);
 
 #ifdef __cplusplus
 }
