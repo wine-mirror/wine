@@ -99,7 +99,7 @@ static const struct object_ops screen_buffer_ops =
 };
 
 
-int create_console( int fd, struct object *obj[2] )
+static int create_console( int fd, struct object *obj[2] )
 {
     struct console_input *console_input;
     struct screen_buffer *screen_buffer;
@@ -153,6 +153,30 @@ int create_console( int fd, struct object *obj[2] )
     CLEAR_ERROR();
     obj[0] = &console_input->obj;
     obj[1] = &screen_buffer->obj;
+    return 1;
+}
+
+/* allocate a console for this process */
+int alloc_console( struct process *process )
+{
+    struct object *obj[2];
+    if (process->console_in || process->console_out)
+    {
+        SET_ERROR( ERROR_ACCESS_DENIED );
+        return 0;
+    }
+    if (!create_console( -1, obj )) return 0;
+    process->console_in  = obj[0];
+    process->console_out = obj[1];
+    return 1;
+}
+
+/* free the console for this process */
+int free_console( struct process *process )
+{
+    if (process->console_in) release_object( process->console_in );
+    if (process->console_out) release_object( process->console_out );
+    process->console_in = process->console_out = NULL;
     return 1;
 }
 
@@ -324,12 +348,14 @@ static int write_console_input( int handle, int count, INPUT_RECORD *records )
 static int read_console_input( int handle, int count, int flush )
 {
     struct console_input *console;
+    struct read_console_input_reply reply;
 
     if (!(console = (struct console_input *)get_handle_obj( current->process, handle,
                                                             GENERIC_READ, &console_input_ops )))
         return -1;
     if ((count < 0) || (count > console->recnum)) count = console->recnum;
-    send_reply( current, -1, 1, console->records, count * sizeof(INPUT_RECORD) );
+    send_reply( current, -1, 2, &reply, sizeof(reply),
+                console->records, count * sizeof(INPUT_RECORD) );
     if (flush)
     {
         int i;
@@ -491,8 +517,23 @@ static void screen_buffer_destroy( struct object *obj )
 /* allocate a console for the current process */
 DECL_HANDLER(alloc_console)
 {
-    alloc_console( current->process );
-    send_reply( current, -1, 0 );
+    struct alloc_console_reply reply = { -1, -1 };
+
+    if (!alloc_console( current->process )) goto done;
+
+    if ((reply.handle_in = alloc_handle( current->process, current->process->console_in,
+                                         req->access, req->inherit )) != -1)
+    {
+        if ((reply.handle_out = alloc_handle( current->process, current->process->console_out,
+                                              req->access, req->inherit )) != -1)
+            goto done;  /* everything is fine */
+        close_handle( current->process, reply.handle_in );
+        reply.handle_in = -1;
+    }
+    free_console( current->process );
+
+ done:
+    send_reply( current, -1, 1, &reply, sizeof(reply) );
 }
 
 /* free the console of the current process */
@@ -505,13 +546,10 @@ DECL_HANDLER(free_console)
 /* open a handle to the process console */
 DECL_HANDLER(open_console)
 {
-    struct object *obj;
     struct open_console_reply reply = { -1 };
-    if ((obj = get_console( current->process, req->output )))
-    {
-        reply.handle = alloc_handle( current->process, obj, req->access, req->inherit );
-        release_object( obj );
-    }
+    struct object *obj= req->output ? current->process->console_out : current->process->console_in;
+
+    if (obj) reply.handle = alloc_handle( current->process, obj, req->access, req->inherit );
     send_reply( current, -1, 1, &reply, sizeof(reply) );
 }
 

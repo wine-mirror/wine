@@ -308,39 +308,6 @@ static void set_process_info( struct process *process,
     }
 }
 
-/* allocate a console for this process */
-int alloc_console( struct process *process )
-{
-    struct object *obj[2];
-    if (process->console_in || process->console_out)
-    {
-        SET_ERROR( ERROR_ACCESS_DENIED );
-        return 0;
-    }
-    if (!create_console( -1, obj )) return 0;
-    process->console_in  = obj[0];
-    process->console_out = obj[1];
-    return 1;
-}
-
-/* free the console for this process */
-int free_console( struct process *process )
-{
-    if (process->console_in) release_object( process->console_in );
-    if (process->console_out) release_object( process->console_out );
-    process->console_in = process->console_out = NULL;
-    return 1;
-}
-
-/* get the process console */
-struct object *get_console( struct process *process, int output )
-{
-    struct object *obj;
-    if (!(obj = output ? process->console_out : process->console_in))
-        return NULL;
-    return grab_object( obj );
-}
-
 /* take a snapshot of currently running processes */
 struct process_snapshot *process_snap( int *count )
 {

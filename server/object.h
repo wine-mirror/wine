@@ -161,7 +161,8 @@ extern void file_set_error(void);
 
 /* console functions */
 
-extern int create_console( int fd, struct object *obj[2] );
+extern int alloc_console( struct process *process );
+extern int free_console( struct process *process );
 
 /* debugger functions */
 

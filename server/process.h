@@ -58,9 +58,6 @@ extern void remove_process_thread( struct process *process,
 extern void suspend_process( struct process *process );
 extern void resume_process( struct process *process );
 extern void kill_process( struct process *process, int exit_code );
-extern int alloc_console( struct process *process );
-extern int free_console( struct process *process );
-extern struct object *get_console( struct process *process, int output );
 extern struct process_snapshot *process_snap( int *count );
 
 #endif  /* __WINE_SERVER_PROCESS_H */

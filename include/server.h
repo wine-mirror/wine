@@ -532,7 +532,13 @@ struct create_pipe_reply
 /* Allocate a console for the current process */
 struct alloc_console_request
 {
-    int dummy;
+    unsigned int access;        /* wanted access rights */
+    int          inherit;       /* inherit flag */
+};
+struct alloc_console_reply
+{
+    int          handle_in;     /* handle to console input */
+    int          handle_out;    /* handle to console output */
 };
 
 
@@ -605,7 +611,7 @@ struct get_console_info_reply
     int          cursor_size;   /* size of cursor (percentage filled) */
     int          cursor_visible;/* cursor visibility flag */
     int          pid;           /* pid of xterm (hack) */
-/*  char         title[0]; */   /* console title */
+    char         title[0];      /* console title */
 };
 
 

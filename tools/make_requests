@@ -140,14 +140,14 @@ void trace_kill( int exit_code )
 void trace_reply( struct thread *thread, int type, int pass_fd,
                   struct iovec *vec, int veclen )
 {
-    static char buffer[MAX_MSG_LENGTH];
+    static unsigned char buffer[MAX_MSG_LENGTH];
 
     if (!thread) return;
     fprintf( stderr, "%08x: %s() = %d",
              (unsigned int)thread, req_names[thread->last_req], type );
     if (veclen)
     {
-        char *p = buffer;
+        unsigned char *p = buffer;
         int len;
         for (; veclen; veclen--, vec++)
         {

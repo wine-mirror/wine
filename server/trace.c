@@ -521,7 +521,15 @@ static int dump_create_pipe_reply( struct create_pipe_reply *req, int len )
 
 static int dump_alloc_console_request( struct alloc_console_request *req, int len )
 {
-    fprintf( stderr, " dummy=%d", req->dummy );
+    fprintf( stderr, " access=%08x,", req->access );
+    fprintf( stderr, " inherit=%d", req->inherit );
+    return (int)sizeof(*req);
+}
+
+static int dump_alloc_console_reply( struct alloc_console_reply *req, int len )
+{
+    fprintf( stderr, " handle_in=%d,", req->handle_in );
+    fprintf( stderr, " handle_out=%d", req->handle_out );
     return (int)sizeof(*req);
 }
 
@@ -591,8 +599,9 @@ static int dump_get_console_info_reply( struct get_console_info_reply *req, int 
 {
     fprintf( stderr, " cursor_size=%d,", req->cursor_size );
     fprintf( stderr, " cursor_visible=%d,", req->cursor_visible );
-    fprintf( stderr, " pid=%d", req->pid );
-    return (int)sizeof(*req);
+    fprintf( stderr, " pid=%d,", req->pid );
+    fprintf( stderr, " title=" );
+    return dump_chars( req+1, len - (int)sizeof(*req) ) + sizeof(*req);
 }
 
 static int dump_write_console_input_request( struct write_console_input_request *req, int len )
@@ -870,7 +879,7 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)0,
     (dump_func)0,
     (dump_func)dump_create_pipe_reply,
-    (dump_func)0,
+    (dump_func)dump_alloc_console_reply,
     (dump_func)0,
     (dump_func)dump_open_console_reply,
     (dump_func)0,
@@ -988,14 +997,14 @@ void trace_kill( int exit_code )
 void trace_reply( struct thread *thread, int type, int pass_fd,
                   struct iovec *vec, int veclen )
 {
-    static char buffer[MAX_MSG_LENGTH];
+    static unsigned char buffer[MAX_MSG_LENGTH];
 
     if (!thread) return;
     fprintf( stderr, "%08x: %s() = %d",
              (unsigned int)thread, req_names[thread->last_req], type );
     if (veclen)
     {
-        char *p = buffer;
+        unsigned char *p = buffer;
         int len;
         for (; veclen; veclen--, vec++)
         {
