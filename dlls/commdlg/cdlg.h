@@ -36,5 +36,16 @@ typedef struct {
         } user_fr;
 } COMDLG32_FR_Data;
 
+#include "commctrl.h"
+extern HDPA	(WINAPI* COMDLG32_DPA_Create) (INT);  
+extern LPVOID	(WINAPI* COMDLG32_DPA_GetPtr) (const HDPA, INT);   
+extern LPVOID	(WINAPI* COMDLG32_DPA_DeleteAllPtrs) (const HDPA hdpa);
+extern LPVOID	(WINAPI* COMDLG32_DPA_DeletePtr) (const HDPA hdpa, INT i);
+extern INT	(WINAPI* COMDLG32_DPA_InsertPtr) (const HDPA, INT, LPVOID); 
+extern BOOL	(WINAPI* COMDLG32_DPA_Destroy) (const HDPA); 
+
+extern HICON	(WINAPI* COMDLG32_ImageList_GetIcon) (HIMAGELIST, INT, UINT);
+extern HIMAGELIST (WINAPI *COMDLG32_ImageList_LoadImageA) (HINSTANCE, LPCSTR, INT, INT, COLORREF, UINT, UINT);
+extern BOOL	(WINAPI* COMDLG32_ImageList_Draw) (HIMAGELIST himl, int i, HDC hdcDest, int x, int y, UINT fStyle);
 #endif
 

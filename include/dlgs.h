@@ -183,4 +183,34 @@
 #define FORMATDLGORD31   1543
 #define FORMATDLGORD30   1544
 
+
+#define IDD_OPENDIALOG                  101
+#define IDD_SAVEDIALOG                  201
+#define IDS_ABOUTBOX                    101
+#define IDS_DOCUMENTFOLDERS             102
+#define IDS_PERSONAL                    103
+#define IDS_FAVORITES                   104
+#define IDS_PATH                        105
+#define IDS_DESKTOP                     106
+#define IDB_TOOLBAR                     107
+#define IDS_FONTS                       108
+#define IDS_MYCOMPUTER                  110
+#define IDS_SYSTEMFOLDERS               112
+#define IDS_LOCALHARDRIVES              113
+#define IDS_FILENOTFOUND                114
+#define IDS_VERIFYFILE                  115
+#define IDS_CREATEFILE                  116
+#define IDC_OPENREADONLY                410
+#define IDC_FILETYPESTATIC              441
+#define IDC_FILENAMESTATIC              442
+#define IDC_LOOKINSTATIC                443
+#define IDC_SHELLSTATIC                 461
+#define IDC_FILETYPE                    470
+#define IDC_LOOKIN                      471
+#define IDC_FILENAME                    480
+#define IDC_UPFOLDER                    1009
+#define IDC_NEWFOLDER                   1010
+#define IDC_LIST                        1011
+#define IDC_DETAILS                     1014
+
 #endif  /* #ifdef __WINE_DLGS_H */

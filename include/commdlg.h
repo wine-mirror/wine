@@ -44,6 +44,9 @@ extern "C" {
 #define OFN_SHARENOWARN          1
 #define OFN_SHAREWARN            0
 
+#define SAVE_DIALOG  1
+#define OPEN_DIALOG  2
+    
 typedef UINT16 (CALLBACK *LPOFNHOOKPROC16)(HWND16,UINT16,WPARAM16,LPARAM);
 typedef UINT (CALLBACK *LPOFNHOOKPROC)(HWND,UINT,WPARAM,LPARAM);
 
@@ -591,7 +594,6 @@ BOOL  WINAPI ChooseColorA(LPCHOOSECOLORA lpChCol);
 BOOL  WINAPI ChooseColorW(LPCHOOSECOLORW lpChCol);
 #define ChooseColor WINELIB_NAME_AW(ChooseColor)
 DWORD   WINAPI CommDlgExtendedError(void);
-DWORD   WINAPI CommDlgExtendedError16(void);
 HWND16  WINAPI FindText16( SEGPTR find);
 HWND  WINAPI FindTextA(LPFINDREPLACEA lpFind);
 HWND  WINAPI FindTextW(LPFINDREPLACEW lpFind);
@@ -603,6 +605,8 @@ INT16   WINAPI GetFileTitleW(LPCWSTR lpFile, LPWSTR lpTitle, UINT cbBuf);
 BOOL16  WINAPI GetOpenFileName16(SEGPTR ofn);
 BOOL  WINAPI GetOpenFileNameA(LPOPENFILENAMEA ofn);
 BOOL  WINAPI GetOpenFileNameW(LPOPENFILENAMEW ofn);
+BOOL  WINAPI GetFileDialog95A(LPOPENFILENAMEA ofn,UINT iDlgType);
+BOOL  WINAPI GetFileDialog95W(LPOPENFILENAMEW ofn,UINT iDlgType);
 #define GetOpenFileName WINELIB_NAME_AW(GetOpenFileName)
 BOOL16  WINAPI GetSaveFileName16(SEGPTR ofn);
 BOOL  WINAPI GetSaveFileNameA(LPOPENFILENAMEA ofn);
@@ -636,11 +640,9 @@ LRESULT WINAPI FormatCharDlgProc16(HWND16,UINT16,WPARAM16,LPARAM);
 LRESULT WINAPI FormatCharDlgProcA(HWND,UINT,WPARAM,LPARAM);
 LRESULT WINAPI FormatCharDlgProcW(HWND,UINT,WPARAM,LPARAM);
 #define FormatCharDlgProc WINELIB_NAME_AW(FormatCharDlgProc)
-INT16 WINAPI FontFamilyEnumProc16( SEGPTR logfont, SEGPTR metrics, UINT16 nFontType, LPARAM lParam);
-INT16 WINAPI FontStyleEnumProc16( SEGPTR logfont, SEGPTR metrics, UINT16 nFontType, LPARAM lParam);
 
-BOOL WINAPI COMMDLG_DllEntryPoint(DWORD Reason, HINSTANCE16 hInst, WORD ds, WORD HeapSize, DWORD res1, WORD res2);
-BOOL WINAPI COMDLG32_DllEntryPoint(HINSTANCE hInstance, DWORD Reason, LPVOID Reserved);
+void COMDLG32_SetCommDlgExtendedError(DWORD err); 
+
 
 #include "poppack.h"
 

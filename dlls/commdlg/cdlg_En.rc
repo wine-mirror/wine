@@ -195,7 +195,6 @@ FONT 8, "Helv"
 }
 
 
-
 PRINT32 DIALOG LOADONCALL MOVEABLE DISCARDABLE  32, 32, 288, 186
 STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU |
       DS_CONTEXTHELP | DS_3DLOOK
@@ -235,4 +234,125 @@ FONT 8, "Helv"
     RTEXT           "&from:",         stc2,  52,124,  20,8
     RTEXT           "&to:",           stc3, 100,124,  16,8
 }
+
+
+IDD_OPENDIALOG DIALOG LOADONCALL MOVEABLE DISCARDABLE 0, 0, 280, 159
+STYLE DS_MODALFRAME | DS_CONTEXTHELP | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Open"
+FONT 8, "helv"
+{
+    DEFPUSHBUTTON   "&Open",		 IDOK,219,111,50,14
+    PUSHBUTTON      "Cancel",		 IDCANCEL,219,128,50,14
+
+    CONTROL         "Open as &read-only",IDC_OPENREADONLY,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,54,145,109,9
+    COMBOBOX        IDC_FILETYPE,54,128,157,102,CBS_DROPDOWN | WS_VSCROLL | WS_TABSTOP
+    EDITTEXT        IDC_FILENAME,54,110,158,15,ES_AUTOHSCROLL
+    LTEXT           "File &name:",IDC_FILENAMESTATIC,3,111,36,10
+    LTEXT           "Files of &type",IDC_FILETYPESTATIC,3,128,41,10
+    LTEXT           "", IDC_SHELLSTATIC,3,21,273,84,SS_SUNKEN | NOT WS_VISIBLE | NOT WS_GROUP |WS_EX_TRANSPARENT
+    LTEXT           "Look &in",IDC_LOOKINSTATIC,3,5,29,10
+    COMBOBOX        IDC_LOOKIN,50,1,137,93,CBS_DROPDOWNLIST | CBS_OWNERDRAWFIXED | CBS_HASSTRINGS | WS_VSCROLL | WS_TABSTOP
+    PUSHBUTTON      "Up",IDC_UPFOLDER,194,1,15,15,BS_ICON | BS_CENTER | BS_VCENTER
+    PUSHBUTTON      "New",IDC_NEWFOLDER,213,1,15,15,BS_ICON | BS_CENTER | BS_VCENTER
+    CONTROL         "I",IDC_LIST,"Button",BS_AUTORADIOBUTTON | BS_ICON | BS_CENTER | BS_VCENTER | BS_PUSHLIKE,233,1,15,15
+    CONTROL         "L",IDC_DETAILS,"Button",BS_AUTORADIOBUTTON | BS_ICON | BS_CENTER | BS_VCENTER | BS_PUSHLIKE,249,1,15,15
+
+}
+
+IDD_SAVEDIALOG DIALOG LOADONCALL MOVEABLE DISCARDABLE 0, 0, 280, 159
+STYLE DS_MODALFRAME | DS_CONTEXTHELP | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Save As"
+FONT 8, "helv"
+{
+    DEFPUSHBUTTON   "&Save",		 IDOK,219,111,50,14
+    PUSHBUTTON      "Cancel",		 IDCANCEL,219,128,50,14
+
+    CONTROL         "Open as &read-only",IDC_OPENREADONLY,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,54,145,109,9
+    COMBOBOX        IDC_FILETYPE,54,128,157,102,CBS_DROPDOWN | WS_VSCROLL | WS_TABSTOP
+    EDITTEXT        IDC_FILENAME,54,110,158,15,ES_AUTOHSCROLL
+    LTEXT           "File &name:",IDC_FILENAMESTATIC,3,111,36,10
+    LTEXT           "Save as &type",IDC_FILETYPESTATIC,3,128,41,10
+    LTEXT           "", IDC_SHELLSTATIC,3,21,273,84,SS_SUNKEN | NOT WS_VISIBLE | NOT WS_GROUP |WS_EX_TRANSPARENT
+    LTEXT           "Save &in",IDC_LOOKINSTATIC,3,5,29,10
+    COMBOBOX        IDC_LOOKIN,50,1,137,93,CBS_DROPDOWNLIST | CBS_OWNERDRAWFIXED | CBS_HASSTRINGS | WS_VSCROLL | WS_TABSTOP
+    PUSHBUTTON      "Up",IDC_UPFOLDER,194,1,15,15,BS_ICON | BS_CENTER | BS_VCENTER
+    PUSHBUTTON      "New",IDC_NEWFOLDER,213,1,15,15,BS_ICON | BS_CENTER | BS_VCENTER
+    CONTROL         "I",IDC_LIST,"Button",BS_AUTORADIOBUTTON | BS_ICON | BS_CENTER | BS_VCENTER | BS_PUSHLIKE,233,1,15,15
+    CONTROL         "L",IDC_DETAILS,"Button",BS_AUTORADIOBUTTON | BS_ICON | BS_CENTER | BS_VCENTER | BS_PUSHLIKE,249,1,15,15
+
+}
+STRINGTABLE DISCARDABLE 
+{
+    IDS_ABOUTBOX            "&About FolderPicker Test"
+    IDS_DOCUMENTFOLDERS     "Document Folders"
+    IDS_PERSONAL            "My Documents"
+    IDS_FAVORITES           "My Favorites"
+    IDS_PATH                "System Path"
+    IDS_DESKTOP             "Desktop"
+    IDS_FONTS               "Fonts"
+    IDS_MYCOMPUTER          "My Computer"
+}
+
+STRINGTABLE DISCARDABLE 
+{
+    IDS_SYSTEMFOLDERS       "System Folders"
+    IDS_LOCALHARDRIVES      "Local Hard Drives"
+    IDS_FILENOTFOUND        "File not found"
+    IDS_VERIFYFILE          "Please verify if the correct file name was given"
+    IDS_CREATEFILE          "File does not exist\nDo you want to create file"
+}
+
+
+/******************
+ * Bitmap
+ */
+
+IDB_TOOLBAR 	BITMAP DISCARDABLE
+{'
+42 4d b6 02 00 00 00 00 00 00 76 00 00 00 28 00
+00 00 41 00 00 00 10 00 00 00 01 00 04 00 00 00
+00 00 40 02 00 00 00 00 00 00 00 00 00 00 00 00
+00 00 00 00 00 00 00 00 00 00 00 00 80 00 00 80
+00 00 00 80 80 00 80 00 00 00 80 00 80 00 80 80
+00 00 c0 c0 c0 00 80 80 80 00 00 00 ff 00 00 ff
+00 00 00 ff ff 00 ff 00 00 00 ff 00 ff 00 ff ff
+00 00 ff ff ff 00 aa aa aa aa aa aa aa aa aa aa
+aa aa aa aa aa aa aa aa aa aa aa aa aa aa aa aa
+aa aa aa aa aa aa a3 00 b6 01 aa aa aa 88 88 8a
+aa aa 00 00 00 00 00 0a aa aa 44 4a aa aa aa aa
+aa aa 88 80 00 0f 00 0f 00 0f ab 00 db 02 aa aa
+a0 00 00 8a aa aa 0b bb bb bb bb 0a aa aa 4f 4a
+00 0a aa aa aa aa f7 8f ff ff ff ff ff ff a9 02
+2a 02 aa aa a0 77 70 8a aa aa 0b bb bb bb bb 9a
+aa aa 44 aa aa aa aa aa aa aa f7 80 00 0f 00 0f
+00 0f a2 00 02 00 aa aa a0 77 70 8a aa aa 0b bb
+bb bb bb 9a aa aa aa aa aa aa aa aa aa aa f7 8f
+ff ff ff ff ff ff a4 f8 15 00 aa aa a0 77 70 8a
+aa aa 0b bb bb b9 bb 9a a9 aa aa aa aa aa aa aa
+aa aa f7 80 00 0f 00 0f 00 0f a2 00 02 00 aa aa
+a0 77 70 8a aa aa 0b bb bb bb 9b 9a 9a aa 44 4a
+aa aa 44 4a aa aa f7 8f ff ff ff ff ff ff a0 00
+ad 00 aa aa a0 77 70 8a aa aa 0b bb bb bb b9 99
+aa aa 4f 4a 00 0a 4f 4a 00 0a f7 80 00 0f 00 0f
+00 0f a1 00 b5 00 aa aa a0 77 70 88 8a aa 00 00
+00 99 99 99 99 9a 44 aa aa aa 44 aa aa aa f7 8f
+ff ff ff ff ff ff ad 01 0b 02 aa 00 00 77 70 00
+0a aa a0 bb bb 0a a9 99 aa aa aa aa aa aa aa aa
+aa aa f7 80 00 0f 00 0f 00 0f a9 01 5d 01 aa a0
+f7 77 77 70 aa aa aa 00 00 aa 9a 9a 9a aa aa aa
+aa aa aa aa aa aa f7 8f ff ff ff ff ff ff a0 01
+63 01 aa aa 0f 77 77 0a aa aa aa aa aa a9 aa 9a
+a9 aa 44 4a aa aa 44 4a aa aa 88 88 88 88 88 88
+88 88 ab 01 0f 01 aa aa a0 f7 70 aa aa aa aa aa
+aa aa aa 9a aa aa 4f 4a 00 0a 4f 4a 00 0a f7 8f
+77 78 f7 78 f7 78 a8 01 7d 01 aa aa aa 0f 0a aa
+aa aa aa aa aa aa aa 9a aa aa 44 aa aa aa 44 aa
+aa aa f7 8f 77 78 f7 78 f7 78 ae 01 62 02 aa aa
+aa a0 aa aa aa aa aa aa aa aa aa 9a aa aa aa aa
+aa aa aa aa aa aa ff ff ff ff ff ff ff f7 a2 01
+b9 01 aa aa aa aa aa aa aa aa aa aa aa aa aa aa
+aa aa aa aa aa aa aa aa aa aa aa aa aa aa aa aa
+aa aa a2 00 43 02'}
+
+
 

@@ -4,7 +4,6 @@
  * Copyright 1994 Martin Ayotte
  * Copyright 1996 Albrecht Kleine
  */
-
 #include <ctype.h>
 #include <stdlib.h>
 #include <string.h>
@@ -22,6 +21,7 @@
 #include "debugtools.h"
 #include "winproc.h"
 #include "cderr.h"
+#include "tweak.h"
 
 DEFAULT_DEBUG_CHANNEL(commdlg)
 
@@ -38,6 +38,11 @@ static int fldrWidth = 0;
 
 static const char defaultfilter[]=" \0\0";
 
+/***********************************************************************
+ *
+ * Windows 3.1 OpenFileName/SaveFileName dialog
+ *
+ */
 /***********************************************************************
  * 				FileDlg_Init			[internal]
  */
@@ -1033,9 +1038,8 @@ static LRESULT FILEDLG_WMCommand(HWND16 hWnd, WPARAM16 wParam, LPARAM lParam)
   return FALSE;
 }
 
-
 /***********************************************************************
- *           FileOpenDlgProc   (COMMDLG.6)
+ *           FileOpenDlgProc16   (COMMDLG.6)
  */
 LRESULT WINAPI FileOpenDlgProc16(HWND16 hWnd, UINT16 wMsg, WPARAM16 wParam,
                                LPARAM lParam)
@@ -1077,9 +1081,8 @@ LRESULT WINAPI FileOpenDlgProc16(HWND16 hWnd, UINT16 wMsg, WPARAM16 wParam,
   return FALSE;
 }
 
-
 /***********************************************************************
- *           FileSaveDlgProc   (COMMDLG.7)
+ *           FileSaveDlgProc16   (COMMDLG.7)
  */
 LRESULT WINAPI FileSaveDlgProc16(HWND16 hWnd, UINT16 wMsg, WPARAM16 wParam,
                                LPARAM lParam)
@@ -1124,8 +1127,6 @@ LRESULT WINAPI FileSaveDlgProc16(HWND16 hWnd, UINT16 wMsg, WPARAM16 wParam,
    */
   return FALSE;
 }
-
-
 
 static BOOL Commdlg_GetFileNameA( BOOL16 (CALLBACK *dofunction)(SEGPTR x),
                                       LPOPENFILENAMEA ofn )
@@ -1352,7 +1353,6 @@ static BOOL Commdlg_GetFileNameW( BOOL16 (CALLBACK *dofunction)(SEGPTR x),
 	SEGPTR_FREE(ofn16);
 	return ret;
 }
-
 /***********************************************************************
  *            GetOpenFileNameA  (COMDLG32.10)
  *
@@ -1369,8 +1369,15 @@ BOOL WINAPI GetOpenFileNameA(
                              LPOPENFILENAMEA ofn /* address of init structure */
                              )
 {
+    if(TWEAK_WineLook > WIN31_LOOK)
+    {
+        return GetFileDialog95A(ofn, OPEN_DIALOG);
+    }
+    else
+    {
    BOOL16 (CALLBACK * dofunction)(SEGPTR ofn16) = GetOpenFileName16;
    return Commdlg_GetFileNameA(dofunction,ofn);
+}
 }
 
 /***********************************************************************
@@ -1389,8 +1396,15 @@ BOOL WINAPI GetOpenFileNameW(
                              LPOPENFILENAMEW ofn /* address of init structure */
                              )
 {
+    if(TWEAK_WineLook > WIN31_LOOK)
+    {
+        return GetFileDialog95W(ofn, OPEN_DIALOG);
+    }
+    else
+    {
    BOOL16 (CALLBACK * dofunction)(SEGPTR ofn16) = GetOpenFileName16;
    return Commdlg_GetFileNameW(dofunction,ofn);
+}
 }
 
 /***********************************************************************
@@ -1409,8 +1423,16 @@ BOOL WINAPI GetSaveFileNameA(
                              LPOPENFILENAMEA ofn /* address of init structure */
                              )
 {
+    if(TWEAK_WineLook > WIN31_LOOK)
+    {
+        return GetFileDialog95A(ofn, SAVE_DIALOG);
+    }
+    else
+    {
    BOOL16 (CALLBACK * dofunction)(SEGPTR ofn16) = GetSaveFileName16;
    return Commdlg_GetFileNameA(dofunction,ofn);
+}
+
 }
 
 /***********************************************************************
@@ -1429,7 +1451,14 @@ BOOL WINAPI GetSaveFileNameW(
                              LPOPENFILENAMEW ofn /* address of init structure */
                              )
 {
+    if(TWEAK_WineLook > WIN31_LOOK)
+    {
+        return GetFileDialog95W(ofn, SAVE_DIALOG);
+    }
+    else
+    {
    BOOL16 (CALLBACK * dofunction)(SEGPTR ofn16) = GetSaveFileName16;
    return Commdlg_GetFileNameW(dofunction,ofn);
 }
 
+}

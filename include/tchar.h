@@ -47,16 +47,16 @@ extern "C" {
 /* FIXME: stricoll is not implemented but strcasecmp is probably close enough in most cases */
 #define _stricoll strcasecmp
 #define stricoll _stricoll
-#define strlwr _strlwr
-char *_strlwr(char *string);
+#define strlwr CRTDLL__strlwr
+char *CRTDLL__strlwr(char *string);
 #define strnset _strnset
 /* FIXME: _strnset is not implemented */
-#define strrev _strrev
-char *_strrev(char *string);
+#define strrev CRTDLL__strrev
+char *CRTDLL__strrev(char *string);
 #define strset _strset
 /* FIXME: _strset is not implemented */
-#define strupr _strupr
-char *_strupr(char *string);
+#define strupr CRTDLL__strupr
+char *CRTDLL__strupr(char *string);
 #define ultoa _ultoa
 /* FIXME: _ultoa is not implemented */
 

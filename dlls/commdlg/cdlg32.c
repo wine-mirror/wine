@@ -21,6 +21,18 @@ HINSTANCE16	COMDLG32_hInstance16 = 0;
 static DWORD	COMDLG32_TlsIndex;
 static int	COMDLG32_Attach = 0;
 
+HINSTANCE	COMCTL32_hInstance = 0;
+HDPA	(WINAPI* COMDLG32_DPA_Create) (INT);  
+LPVOID	(WINAPI* COMDLG32_DPA_GetPtr) (const HDPA, INT);   
+LPVOID	(WINAPI* COMDLG32_DPA_DeletePtr) (const HDPA hdpa, INT i);
+LPVOID	(WINAPI* COMDLG32_DPA_DeleteAllPtrs) (const HDPA hdpa);
+INT	(WINAPI* COMDLG32_DPA_InsertPtr) (const HDPA, INT, LPVOID); 
+BOOL	(WINAPI* COMDLG32_DPA_Destroy) (const HDPA); 
+
+HICON	(WINAPI* COMDLG32_ImageList_GetIcon) (HIMAGELIST, INT, UINT);
+HIMAGELIST (WINAPI *COMDLG32_ImageList_LoadImageA) (HINSTANCE, LPCSTR, INT, INT, COLORREF, UINT, UINT);
+BOOL	(WINAPI* COMDLG32_ImageList_Draw) (HIMAGELIST himl, int i, HDC hdcDest, int x, int y, UINT fStyle);
+
 /***********************************************************************
  *	COMDLG32_DllEntryPoint			(COMDLG32.entry)
  *
@@ -66,6 +78,19 @@ BOOL WINAPI COMDLG32_DllEntryPoint(HINSTANCE hInstance, DWORD Reason, LPVOID Res
 			ERR("No space for COMDLG32 TLS\n");
 			return FALSE;
 		}
+
+		COMCTL32_hInstance = LoadLibraryA("COMCTL32.DLL");	
+
+		COMDLG32_DPA_Create=(void*)GetProcAddress(COMCTL32_hInstance, (LPCSTR)328L);
+		COMDLG32_DPA_Destroy=(void*)GetProcAddress(COMCTL32_hInstance, (LPCSTR)329L);
+		COMDLG32_DPA_GetPtr=(void*)GetProcAddress(COMCTL32_hInstance, (LPCSTR)332L);
+		COMDLG32_DPA_InsertPtr=(void*)GetProcAddress(COMCTL32_hInstance, (LPCSTR)334L);
+		COMDLG32_DPA_DeletePtr=(void*)GetProcAddress(COMCTL32_hInstance, (LPCSTR)336L);
+		COMDLG32_DPA_DeleteAllPtrs=(void*)GetProcAddress(COMCTL32_hInstance, (LPCSTR)337L);
+
+		COMDLG32_ImageList_GetIcon=(void*)GetProcAddress(COMCTL32_hInstance,"ImageList_GetIcon");
+		COMDLG32_ImageList_LoadImageA=(void*)GetProcAddress(COMCTL32_hInstance,"ImageList_LoadImageA");
+		COMDLG32_ImageList_Draw=(void*)GetProcAddress(COMCTL32_hInstance,"ImageList_Draw");
 		break;
 
 	case DLL_PROCESS_DETACH:
@@ -75,6 +100,8 @@ BOOL WINAPI COMDLG32_DllEntryPoint(HINSTANCE hInstance, DWORD Reason, LPVOID Res
 			COMDLG32_hInstance = 0;
 			if(COMDLG32_hInstance16)
 				FreeLibrary16(COMDLG32_hInstance16);
+
+			FreeLibrary(COMCTL32_hInstance);
 		}
 		break;
 	}
