@@ -673,7 +673,7 @@ HGLOBAL16 WINAPI InternalExtractIcon16(HINSTANCE16 hInstance,
 	LPBYTE		pData;
 	OFSTRUCT	ofs;
 	DWORD		sig;
-	HFILE		hFile = OpenFile( lpszExeFileName, &ofs, OF_READ );
+	HFILE		hFile;
 	UINT16		iconDirCount = 0,iconCount = 0;
 	LPBYTE		peimage;
 	HANDLE	fmapping;
@@ -681,13 +681,33 @@ HGLOBAL16 WINAPI InternalExtractIcon16(HINSTANCE16 hInstance,
 	TRACE("(%04x,file %s,start %d,extract %d\n", 
 		       hInstance, lpszExeFileName, nIconIndex, n);
 
-	if( hFile == HFILE_ERROR || !n )
+	if( !n )
 	  return 0;
+
+	hFile = OpenFile( lpszExeFileName, &ofs, OF_READ );
 
 	hRet = GlobalAlloc16( GMEM_FIXED | GMEM_ZEROINIT, sizeof(HICON16)*n);
 	RetPtr = (HICON16*)GlobalLock16(hRet);
 
-	*RetPtr = (n == 0xFFFF)? 0: 1;	/* error return values */
+	if (hFile == HFILE_ERROR)
+	{ /* not found - load from builtin module if available */
+	  HINSTANCE hInst = (HINSTANCE)LoadLibrary16(lpszExeFileName);
+
+	  if (hInst < 32) /* hmm, no Win16 module - try Win32 :-) */
+	    hInst = LoadLibraryA(lpszExeFileName);
+	  if (hInst)
+	  {
+	    int i;
+	    for (i=nIconIndex; i < nIconIndex + n; i++)
+	      RetPtr[i-nIconIndex] =
+		      (HICON16)LoadIconA(hInst, (LPCSTR)(DWORD)i);
+	    FreeLibrary(hInst);
+	    return hRet;
+	  }
+	  return 0;
+	}
+
+	*RetPtr = (n == 0xFFFF)? 0 : 1;	/* error return values */
 
 	sig = SHELL_GetResourceTable(hFile,&pData);
 
@@ -910,7 +930,7 @@ HGLOBAL16 WINAPI InternalExtractIcon16(HINSTANCE16 hInstance,
 	    }
 	    RetPtr[i] = CreateIconFromResourceEx(idata,idataent->Size,TRUE,0x00030000,GetSystemMetrics(SM_CXICON),GetSystemMetrics(SM_CYICON),0);
 	  }
-	  goto end_3;	/* sucess */
+	  goto end_3;	/* success */
 	}
 	goto end_1;	/* return array with icon handles */
 
