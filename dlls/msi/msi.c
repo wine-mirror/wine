@@ -1441,7 +1441,10 @@ INSTALLSTATE WINAPI MsiQueryFeatureStateA(LPCSTR szProduct, LPCSTR szFeature)
 INSTALLSTATE WINAPI MsiQueryFeatureStateW(LPCWSTR szProduct, LPCWSTR szFeature)
 {
     FIXME("%s %s\n", debugstr_w(szProduct), debugstr_w(szFeature));
-    return INSTALLSTATE_UNKNOWN;
+    /*
+     * Iterates all the features components and the features parents components
+     */
+    return INSTALLSTATE_LOCAL;
 }
 
 UINT WINAPI MsiGetFileVersionA(LPCSTR szFilePath, LPSTR lpVersionBuf,
@@ -1707,11 +1710,42 @@ UINT WINAPI MsiGetFeatureUsageA(LPCSTR szProduct, LPCSTR szFeature,
     return ERROR_CALL_NOT_IMPLEMENTED;
 }
 
-UINT WINAPI MsiUseFeatureExW(LPCWSTR szProduct, LPCWSTR szFeature, 
+INSTALLSTATE WINAPI MsiUseFeatureExW(LPCWSTR szProduct, LPCWSTR szFeature, 
                              DWORD dwInstallMode, DWORD dwReserved)
 {
     FIXME("%s %s %li %li\n", debugstr_w(szProduct), debugstr_w(szFeature),
           dwInstallMode, dwReserved);
+
+    /*
+     * Polls all the components of the feature to find install state and then
+     *  writes:
+     *    Software\\Microsoft\\Windows\\CurrentVersion\\
+     *    Installer\\Products\\<squishguid>\\<feature>
+     *      "Usage"=dword:........
+     */  
+ 
+    return INSTALLSTATE_LOCAL; 
+}
+
+INSTALLSTATE WINAPI MsiUseFeatureExA(LPCSTR szProduct, LPCSTR szFeature, 
+                             DWORD dwInstallMode, DWORD dwReserved)
+{
+    FIXME("%s %s %li %li\n", debugstr_a(szProduct), debugstr_a(szFeature),
+          dwInstallMode, dwReserved);
+   
+    return INSTALLSTATE_LOCAL; 
+}
+
+INSTALLSTATE WINAPI MsiUseFeatureW(LPCWSTR szProduct, LPCWSTR szFeature)
+{
+    FIXME("%s %s\n", debugstr_w(szProduct), debugstr_w(szFeature));
+   
+    return INSTALLSTATE_LOCAL; 
+}
+
+INSTALLSTATE WINAPI MsiUseFeatureA(LPCSTR szProduct, LPCSTR szFeature)
+{
+    FIXME("%s %s\n", debugstr_a(szProduct), debugstr_a(szFeature));
    
     return INSTALLSTATE_LOCAL; 
 }
@@ -1769,17 +1803,33 @@ UINT WINAPI MsiCreateAndVerifyInstallerDirectory(void)
 }
 
 UINT WINAPI MsiGetShortcutTargetA( LPCSTR szShortcutTarget,
-                                  LPSTR szProductCode, LPSTR szFeatureId,
-                                  LPSTR szComponentCode)
+                                   LPSTR szProductCode, LPSTR szFeatureId,
+                                   LPSTR szComponentCode )
 {
     FIXME("\n");
     return ERROR_CALL_NOT_IMPLEMENTED;
 }
 
 UINT WINAPI MsiGetShortcutTargetW( LPCWSTR szShortcutTarget,
-                                  LPWSTR szProductCode, LPWSTR szFeatureId,
-                                  LPWSTR szComponentCode)
+                                   LPWSTR szProductCode, LPWSTR szFeatureId,
+                                   LPWSTR szComponentCode )
 {
     FIXME("\n");
     return ERROR_CALL_NOT_IMPLEMENTED;
+}
+
+UINT WINAPI MsiReinstallFeatureW( LPCWSTR szProduct, LPCWSTR szFeature, 
+                                  DWORD dwReinstallMode )
+{
+    FIXME("%s %s %li\n", debugstr_w(szProduct), debugstr_w(szFeature),
+                           dwReinstallMode);
+    return ERROR_SUCCESS;
+}
+
+UINT WINAPI MsiReinstallFeatureA( LPCSTR szProduct, LPCSTR szFeature, 
+                                  DWORD dwReinstallMode )
+{
+    FIXME("%s %s %li\n", debugstr_a(szProduct), debugstr_a(szFeature),
+                           dwReinstallMode);
+    return ERROR_SUCCESS;
 }
