@@ -89,8 +89,8 @@
 @ stub FindFirstPrinterChangeNotification
 @ stub FindNextPrinterChangeNotification
 @ stub FreePrinterNotifyInfo
-@ stdcall GetDefaultPrinterA(str ptr)
-@ stdcall GetDefaultPrinterW(wstr ptr)
+@ stdcall GetDefaultPrinterA(ptr ptr)
+@ stdcall GetDefaultPrinterW(ptr ptr)
 @ stdcall GetFormA(long str long ptr long ptr)
 @ stdcall GetFormW(long wstr long ptr long ptr)
 @ stub GetJobA
