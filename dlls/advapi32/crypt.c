@@ -1126,7 +1126,7 @@ BOOL WINAPI CryptEnumProviderTypesW (DWORD dwIndex, DWORD *pdwReserved,
 	TRACE("(%ld, %p, %08ld, %p, %p, %p)\n", dwIndex, pdwReserved, dwFlags,
 			pdwProvType, pszTypeName, pcbTypeName);
 	strlen = *pcbTypeName / sizeof(WCHAR);
-	if ( pszTypeName && (str = CRYPT_Alloc(strlen)) )
+	if ( pszTypeName && !(str = CRYPT_Alloc(strlen)) )
 		CRYPT_ReturnLastError(ERROR_NOT_ENOUGH_MEMORY);
 	ret = CryptEnumProviderTypesA(dwIndex, pdwReserved, dwFlags, pdwProvType, str, &strlen);
 	if (str)
