@@ -265,7 +265,7 @@ WINE REGISTRY Version 2
 
 [dsound]
 ;; HEL only: Number of waveOut fragments ahead to mix in new buffers.
-;"HELmargin" = "48"
+;"HELmargin" = "5"
 ;; HEL only: Number of waveOut fragments ahead to queue to driver.
 ;"HELqueue" = "5"
 ;; Max number of fragments to prebuffer
