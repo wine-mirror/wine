@@ -427,8 +427,10 @@ DWORD WINAPI IcmpSendEcho(
                     } else if ((rep_icmp_header->icmp_type!=ICMP_ECHO) ||
                         (rep_icmp_header->icmp_code!=0) ||
                         (rep_icmp_header->icmp_id!=id) ||
-                        (rep_icmp_header->icmp_seq!=seq) ||
-                        (rep_icmp_header->icmp_cksum!=cksum)) {
+                        /* windows doesn't check this checksum, else tracert */
+                        /* behind a Linux 2.2 masquerading firewall would fail*/
+                        /* (rep_icmp_header->icmp_cksum!=cksum) || */
+                        (rep_icmp_header->icmp_seq!=seq)) {
                         /* This was not a reply to one of our packets after all */
                         TRACE("skipping type,code=%d,%d id,seq=%d,%d cksum=%d\n",
                             rep_icmp_header->icmp_type,rep_icmp_header->icmp_code,
