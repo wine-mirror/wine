@@ -4,7 +4,7 @@
  * File stabs.c - read stabs information from the wine executable itself.
  *
  * Copyright (C) 1996, Eric Youngdale.
- *		 1999, 2000 Eric Pouech
+ *		 1999-2003 Eric Pouech
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -43,6 +43,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <stdio.h>
 #ifndef PATH_MAX
 #define PATH_MAX MAX_PATH
 #endif
@@ -280,23 +281,46 @@ DEBUG_ReadTypeEnum(char **x) {
     return DEBUG_FileSubNr2StabEnum(filenr,subnr);
 }
 
-struct ParseTypedefData {
+/*#define PTS_DEBUG*/
+struct ParseTypedefData
+{
     char*		ptr;
     char		buf[1024];
     int			idx;
+#ifdef PTS_DEBUG
+    struct PTS_Error 
+    {
+        char*               ptr;
+        unsigned            line;
+    } errors[16];
+    int                 err_idx;
+#endif
 };
+
+#ifdef PTS_DEBUG
+static void PTS_Push(struct ParseTypedefData* ptd, unsigned line)
+{
+    assert(ptd->err_idx < sizeof(ptd->errors) / sizeof(ptd->errors[0]));
+    ptd->errors[ptd->err_idx].line = line;
+    ptd->errors[ptd->err_idx].ptr = ptd->ptr;
+    ptd->err_idx++;
+}
+#define PTS_ABORTIF(ptd, t) do { if (t) { PTS_Push((ptd), __LINE__); return -1;} } while (0)
+#else
+#define PTS_ABORTIF(ptd, t) do { if (t) return -1; } while (0)
+#endif
 
 static int DEBUG_PTS_ReadTypedef(struct ParseTypedefData* ptd, const char* typename,
 				 struct datatype** dt);
 
 static int DEBUG_PTS_ReadID(struct ParseTypedefData* ptd)
 {
-    char*	first = ptd->ptr;
+    char*	        first = ptd->ptr;
     unsigned int	len;
 
-    if ((ptd->ptr = strchr(ptd->ptr, ':')) == NULL) return -1;
+    PTS_ABORTIF(ptd, (ptd->ptr = strchr(ptd->ptr, ':')) == NULL);
     len = ptd->ptr - first;
-    if (len >= sizeof(ptd->buf) - ptd->idx) return -1;
+    PTS_ABORTIF(ptd, len >= sizeof(ptd->buf) - ptd->idx);
     memcpy(ptd->buf + ptd->idx, first, len);
     ptd->buf[ptd->idx + len] = '\0';
     ptd->idx += len + 1;
@@ -309,7 +333,7 @@ static int DEBUG_PTS_ReadNum(struct ParseTypedefData* ptd, int* v)
     char*	last;
 
     *v = strtol(ptd->ptr, &last, 10);
-    if (last == ptd->ptr) return -1;
+    PTS_ABORTIF(ptd, last == ptd->ptr);
     ptd->ptr = last;
     return 0;
 }
@@ -320,13 +344,13 @@ static int DEBUG_PTS_ReadTypeReference(struct ParseTypedefData* ptd,
     if (*ptd->ptr == '(') {
 	/* '(' <int> ',' <int> ')' */
 	ptd->ptr++;
-	if (DEBUG_PTS_ReadNum(ptd, filenr) == -1) return -1;
-	if (*ptd->ptr++ != ',') return -1;
-	if (DEBUG_PTS_ReadNum(ptd, subnr) == -1) return -1;
-	if (*ptd->ptr++ != ')') return -1;
+	PTS_ABORTIF(ptd, DEBUG_PTS_ReadNum(ptd, filenr) == -1);
+	PTS_ABORTIF(ptd, *ptd->ptr++ != ',');
+	PTS_ABORTIF(ptd, DEBUG_PTS_ReadNum(ptd, subnr) == -1);
+	PTS_ABORTIF(ptd, *ptd->ptr++ != ')');
     } else {
     	*filenr = 0;
-	if (DEBUG_PTS_ReadNum(ptd, subnr) == -1) return -1;
+	PTS_ABORTIF(ptd, DEBUG_PTS_ReadNum(ptd, subnr) == -1);
     }
     return 0;
 }
@@ -335,50 +359,51 @@ static int DEBUG_PTS_ReadRange(struct ParseTypedefData* ptd, struct datatype** d
 			       int* lo, int* hi)
 {
     /* type ';' <int> ';' <int> ';' */
-    if (DEBUG_PTS_ReadTypedef(ptd, NULL, dt) == -1) return -1;
-    if (*ptd->ptr++ != ';') return -1;	/* ';' */
-    if (DEBUG_PTS_ReadNum(ptd, lo) == -1) return -1;
-    if (*ptd->ptr++ != ';') return -1;	/* ';' */
-    if (DEBUG_PTS_ReadNum(ptd, hi) == -1) return -1;
-    if (*ptd->ptr++ != ';') return -1;	/* ';' */
+    PTS_ABORTIF(ptd, DEBUG_PTS_ReadTypedef(ptd, NULL, dt) == -1);
+    PTS_ABORTIF(ptd, *ptd->ptr++ != ';');	/* ';' */
+    PTS_ABORTIF(ptd, DEBUG_PTS_ReadNum(ptd, lo) == -1);
+    PTS_ABORTIF(ptd, *ptd->ptr++ != ';');	/* ';' */
+    PTS_ABORTIF(ptd, DEBUG_PTS_ReadNum(ptd, hi) == -1);
+    PTS_ABORTIF(ptd, *ptd->ptr++ != ';');	/* ';' */
     return 0;
 }
 
-static inline int DEBUG_PTS_ReadMethodInfo(struct ParseTypedefData* ptd,
-                                           struct datatype* dt)
+static inline int DEBUG_PTS_ReadMethodInfo(struct ParseTypedefData* ptd)
 {
+    struct datatype* dt;
     char*   tmp;
+    char    mthd;
 
-    if (*ptd->ptr++ == ':')
+    do
     {
-        if (!(tmp = strchr(ptd->ptr, ';'))) return -1;
-        ptd->ptr = tmp + 1;
+        /* get type of return value */
+        PTS_ABORTIF(ptd, DEBUG_PTS_ReadTypedef(ptd, NULL, &dt) == -1);
+        if (*ptd->ptr == ';') ptd->ptr++;
 
-    }
-    if (!(*ptd->ptr >= '0' && *ptd->ptr <= '9')) return -1;
-    ptd->ptr++;
-    if (!(ptd->ptr[0] >= 'A' && *ptd->ptr <= 'D')) return -1;
-    ptd->ptr++;
-    if (*ptd->ptr++ != '.') return -1;
-    if (*ptd->ptr != ';')
-    {
-        while (*ptd->ptr)
+        /* get types of parameters */
+        if (*ptd->ptr == ':')
         {
-            /* some GCC versions (2.96 for example) really spit out wrongly defined 
-             * stabs... in some cases, the methods are not correctly handled
-             * so just swallow the garbage until either .; (end of method) 
-             * or ;; (end of struct) are found
-             */
-            if (ptd->ptr[0] == '.' && ptd->ptr[1] == ';')
-            {
-                ptd->ptr++;
-                break;
-            }
-            if (ptd->ptr[0] == ';' && ptd->ptr[1] == ';')
-                break;
-            ptd->ptr++;
+            PTS_ABORTIF(ptd, !(tmp = strchr(ptd->ptr + 1, ';')));
+            ptd->ptr = tmp + 1;
         }
-    }
+        PTS_ABORTIF(ptd, !(*ptd->ptr >= '0' && *ptd->ptr <= '9'));
+        ptd->ptr++;
+        PTS_ABORTIF(ptd, !(ptd->ptr[0] >= 'A' && *ptd->ptr <= 'D'));
+        mthd = *++ptd->ptr;
+        PTS_ABORTIF(ptd, mthd != '.' && mthd != '?' && mthd != '*');
+        ptd->ptr++;
+        if (mthd == '*')
+        {
+            int              ofs;
+            struct datatype* dt;
+
+            PTS_ABORTIF(ptd, DEBUG_PTS_ReadNum(ptd, &ofs) == -1);
+            PTS_ABORTIF(ptd, *ptd->ptr++ != ';');
+            PTS_ABORTIF(ptd, DEBUG_PTS_ReadTypedef(ptd, NULL, &dt) == -1);
+            PTS_ABORTIF(ptd, *ptd->ptr++ != ';');
+        }
+    } while (*ptd->ptr != ';');
+    ptd->ptr++;
 
     return 0;
 }
@@ -387,77 +412,132 @@ static inline int DEBUG_PTS_ReadAggregate(struct ParseTypedefData* ptd,
                                           struct datatype* sdt)
 {
     int			sz, ofs;
-    char*		last;
     struct datatype*	adt;
+    struct datatype*	dt = NULL;
     int			idx;
     int			doadd;
-    BOOL                inMethod;
 
-    sz = strtol(ptd->ptr, &last, 10);
-    if (last == ptd->ptr) return -1;
-    ptd->ptr = last;
+    PTS_ABORTIF(ptd, DEBUG_PTS_ReadNum(ptd, &sz) == -1);
 
     doadd = DEBUG_SetStructSize(sdt, sz);
+    if (*ptd->ptr == '!') /* C++ inheritence */
+    {
+        int     num_classes;
+        char    tmp[256];
+
+        ptd->ptr++;
+        PTS_ABORTIF(ptd, DEBUG_PTS_ReadNum(ptd, &num_classes) == -1);
+        PTS_ABORTIF(ptd, *ptd->ptr++ != ',');
+        while (--num_classes >= 0)
+        {
+            ptd->ptr += 2; /* skip visibility and inheritence */
+            PTS_ABORTIF(ptd, DEBUG_PTS_ReadNum(ptd, &ofs) == -1);
+            PTS_ABORTIF(ptd, *ptd->ptr++ != ',');
+
+            PTS_ABORTIF(ptd, DEBUG_PTS_ReadTypedef(ptd, NULL, &adt) == -1);
+
+            snprintf(tmp, sizeof(tmp), "__inherited_class_%s", DEBUG_GetName(adt));
+            /* FIXME: DEBUG_GetObjectSize will not always work, especially when adt
+             * has just been seen as a forward definition and not the real stuff yet.
+             * As we don't use much the size of members in structs, this may not
+             * be much of a problem
+             */
+            if (doadd) DEBUG_AddStructElement(sdt, tmp, adt, ofs, DEBUG_GetObjectSize(adt) * 8); 
+            PTS_ABORTIF(ptd, *ptd->ptr++ != ';');
+        }
+        
+    }
     /* if the structure has already been filled, just redo the parsing
      * but don't store results into the struct
      * FIXME: there's a quite ugly memory leak in there...
      */
 
     /* Now parse the individual elements of the structure/union. */
-    while (*ptd->ptr != ';') {
+    while (*ptd->ptr != ';') 
+    {
 	/* agg_name : type ',' <int:offset> ',' <int:size> */
 	idx = ptd->idx;
 
-	if (DEBUG_PTS_ReadID(ptd) == -1) return -1;
+        if (ptd->ptr[0] == '$' && ptd->ptr[1] == 'v')
+        {
+            int                 x;
+
+            if (ptd->ptr[2] == 'f')
+            {
+                /* C++ virtual method table */
+                ptd->ptr += 3;
+                DEBUG_ReadTypeEnum(&ptd->ptr);
+                PTS_ABORTIF(ptd, *ptd->ptr++ != ':');
+                PTS_ABORTIF(ptd, DEBUG_PTS_ReadTypedef(ptd, NULL, &dt) == -1);
+                PTS_ABORTIF(ptd, *ptd->ptr++ != ',');
+                PTS_ABORTIF(ptd, DEBUG_PTS_ReadNum(ptd, &x) == -1);
+                PTS_ABORTIF(ptd, *ptd->ptr++ != ';');
+                ptd->idx = idx;
+                continue;
+            }
+            else if (ptd->ptr[2] == 'b')
+            {
+                ptd->ptr += 3;
+                PTS_ABORTIF(ptd, DEBUG_PTS_ReadTypedef(ptd, NULL, &dt) == -1);
+                PTS_ABORTIF(ptd, *ptd->ptr++ != ':');
+                PTS_ABORTIF(ptd, DEBUG_PTS_ReadTypedef(ptd, NULL, &dt) == -1);
+                PTS_ABORTIF(ptd, *ptd->ptr++ != ',');
+                PTS_ABORTIF(ptd, DEBUG_PTS_ReadNum(ptd, &x) == -1);
+                PTS_ABORTIF(ptd, *ptd->ptr++ != ';');
+                ptd->idx = idx;
+                continue;
+            }
+        }
+
+	PTS_ABORTIF(ptd, DEBUG_PTS_ReadID(ptd) == -1);
         /* Ref. TSDF R2.130 Section 7.4.  When the field name is a method name
          * it is followed by two colons rather than one.
          */
         if (*ptd->ptr == ':')
         {
             ptd->ptr++; 
-            {
-                char* psemic = strchr(ptd->ptr, ';');
-                char* psharp = strchr(ptd->ptr, '#');
-
-                if (!psharp || psharp > psemic)
-                {
-                    struct datatype*	dt = NULL;
-                    /* FIXME: hack... this shall be a ctor */
-                    if (DEBUG_PTS_ReadTypedef(ptd, NULL, &dt) == -1) return -1;
-                    if (DEBUG_PTS_ReadMethodInfo(ptd, dt) == -1) return -1;
-                    if (*ptd->ptr++ != ';') return -1;
-                    ptd->idx = idx;
-                    continue;
-                }
-            }
-            inMethod = TRUE;
+            DEBUG_PTS_ReadMethodInfo(ptd);
+            ptd->idx = idx;
+            continue;
         }
         else
         {
-            inMethod = FALSE;
+            /* skip C++ member protection /0 /1 or /2 */
+            if (*ptd->ptr == '/') ptd->ptr += 2;
         }
-        
-	if (DEBUG_PTS_ReadTypedef(ptd, NULL, &adt) == -1) return -1;
-	if (!adt) return -1;
+	PTS_ABORTIF(ptd, DEBUG_PTS_ReadTypedef(ptd, NULL, &adt) == -1);
 
-	if (*ptd->ptr != ',')
+        switch (*ptd->ptr++)
         {
-            if (!inMethod) return -1;
-            ptd->ptr++;
-        }
-        else
-        {
-            ptd->ptr++;
-            if (DEBUG_PTS_ReadNum(ptd, &ofs) == -1) return -1;
-            if (*ptd->ptr++ != ',') return -1;
-            if (DEBUG_PTS_ReadNum(ptd, &sz) == -1) return -1;
-            if (*ptd->ptr++ != ';') return -1;
+        case ',':
+            PTS_ABORTIF(ptd, DEBUG_PTS_ReadNum(ptd, &ofs) == -1);
+            PTS_ABORTIF(ptd, *ptd->ptr++ != ',');
+            PTS_ABORTIF(ptd, DEBUG_PTS_ReadNum(ptd, &sz) == -1);
+            PTS_ABORTIF(ptd, *ptd->ptr++ != ';');
 
             if (doadd) DEBUG_AddStructElement(sdt, ptd->buf + idx, adt, ofs, sz);
+            break;
+        case ':':
+            {
+                char* tmp;
+                /* method parameters... terminated by ';' */
+                PTS_ABORTIF(ptd, !(tmp = strchr(ptd->ptr, ';')));
+                ptd->ptr = tmp + 1;
+            }
+            break;
+        default:
+            PTS_ABORTIF(ptd, TRUE);
         }
 	ptd->idx = idx;
     }
-    ptd->ptr++; /* ';' */
+    PTS_ABORTIF(ptd, *ptd->ptr++ != ';');
+    if (*ptd->ptr == '~')
+    {
+        ptd->ptr++;
+        PTS_ABORTIF(ptd, *ptd->ptr++ != '%');
+        PTS_ABORTIF(ptd, DEBUG_PTS_ReadTypedef(ptd, NULL, &dt) == -1);
+        PTS_ABORTIF(ptd, *ptd->ptr++ != ';');
+    }
     return 0;
 }
 
@@ -469,9 +549,9 @@ static inline int DEBUG_PTS_ReadEnum(struct ParseTypedefData* ptd,
 
     while (*ptd->ptr != ';') {
 	idx = ptd->idx;
-	if (DEBUG_PTS_ReadID(ptd) == -1) return -1;
-	if (DEBUG_PTS_ReadNum(ptd, &ofs) == -1) return -1;
-	if (*ptd->ptr++ != ',') return -1;
+	PTS_ABORTIF(ptd, DEBUG_PTS_ReadID(ptd) == -1);
+	PTS_ABORTIF(ptd, DEBUG_PTS_ReadNum(ptd, &ofs) == -1);
+	PTS_ABORTIF(ptd, *ptd->ptr++ != ',');
 	DEBUG_AddStructElement(edt, ptd->buf + idx, NULL, ofs, 0);
 	ptd->idx = idx;
     }
@@ -487,10 +567,10 @@ static inline int DEBUG_PTS_ReadArray(struct ParseTypedefData* ptd,
 
     /* ar<typeinfo_nodef>;<int>;<int>;<typeinfo> */
 
-    if (*ptd->ptr++ != 'r') return -1;
+    PTS_ABORTIF(ptd, *ptd->ptr++ != 'r');
     /* FIXME: range type is lost, always assume int */
-    if (DEBUG_PTS_ReadRange(ptd, &rdt, &lo, &hi) == -1) return -1;
-    if (DEBUG_PTS_ReadTypedef(ptd, NULL, &rdt) == -1) return -1;
+    PTS_ABORTIF(ptd, DEBUG_PTS_ReadRange(ptd, &rdt, &lo, &hi) == -1);
+    PTS_ABORTIF(ptd, DEBUG_PTS_ReadTypedef(ptd, NULL, &rdt) == -1);
 
     DEBUG_SetArrayParams(adt, lo, hi, rdt);
     return 0;
@@ -505,7 +585,6 @@ static int DEBUG_PTS_ReadTypedef(struct ParseTypedefData* ptd, const char* typen
     struct datatype* 	dt1;		/* intermediate data type (scope is limited) */
     struct datatype* 	dt2;		/* intermediate data type: t1=t2=new_dt */
     int			filenr1, subnr1;
-    int			filenr2 = 0, subnr2 = 0;
 
     /* things are a bit complicated because of the way the typedefs are stored inside
      * the file (we cannot keep the struct datatype** around, because address can
@@ -513,14 +592,12 @@ static int DEBUG_PTS_ReadTypedef(struct ParseTypedefData* ptd, const char* typen
      * DEBUG_FileSubNr2StabEnum to keep the correct values around
      * (however, keeping struct datatype* is valid))
      */
-    if (DEBUG_PTS_ReadTypeReference(ptd, &filenr1, &subnr1) == -1) return -1;
+    PTS_ABORTIF(ptd, DEBUG_PTS_ReadTypeReference(ptd, &filenr1, &subnr1) == -1);
 
     while (*ptd->ptr == '=') {
 	ptd->ptr++;
-	if (new_dt) {
-	    DEBUG_Printf(DBG_CHN_MESG, "Bad recursion (1) in typedef\n");
-	    return -1;
-	}
+	PTS_ABORTIF(ptd, new_dt != NULL);
+
 	/* first handle attribute if any */
 	switch (*ptd->ptr) {
 	case '@':
@@ -531,7 +608,7 @@ static int DEBUG_PTS_ReadTypedef(struct ParseTypedefData* ptd, const char* typen
 		    ptd->ptr -= 2;
 		    return -1;
 		}
-		if (*ptd->ptr++ != ';') return -1;
+		PTS_ABORTIF(ptd, *ptd->ptr++ != ';');
 	    }
 	    break;
 	}
@@ -540,56 +617,37 @@ static int DEBUG_PTS_ReadTypedef(struct ParseTypedefData* ptd, const char* typen
 	case '*':
         case '&':
 	    new_dt = DEBUG_NewDataType(DT_POINTER, NULL);
-	    if (DEBUG_PTS_ReadTypedef(ptd, NULL, &ref_dt) == -1) return -1;
+	    PTS_ABORTIF(ptd, DEBUG_PTS_ReadTypedef(ptd, NULL, &ref_dt) == -1);
 	    DEBUG_SetPointerType(new_dt, ref_dt);
            break;
         case 'k': /* 'const' modifier */
         case 'B': /* 'volatile' modifier */
             /* just kinda ignore the modifier, I guess -gmt */
-            if (DEBUG_PTS_ReadTypedef(ptd, NULL, &new_dt) == -1) return -1;
+            PTS_ABORTIF(ptd, DEBUG_PTS_ReadTypedef(ptd, typename, &new_dt) == -1);
 	    break;
 	case '(':
 	    ptd->ptr--;
-	    /* doit a two level by hand, otherwise we'd need a stack */
-	    if (filenr2 || subnr2) {
-		DEBUG_Printf(DBG_CHN_MESG, "Bad recursion (2) in typedef\n");
-		return -1;
-	    }
-	    if (DEBUG_PTS_ReadTypeReference(ptd, &filenr2, &subnr2) == -1) return -1;
-
-	    dt1 = *DEBUG_FileSubNr2StabEnum(filenr1, subnr1);
-	    dt2 = *DEBUG_FileSubNr2StabEnum(filenr2, subnr2);
-
-	    if (!dt1 && dt2) {
-		new_dt = dt2;
-		filenr2 = subnr2 = 0;
-	    } else if (!dt1 && !dt2)  {
-		new_dt = NULL;
-	    } else {
-		DEBUG_Printf(DBG_CHN_MESG, "Unknown condition %08lx %08lx (%s)\n",
-			     (unsigned long)dt1, (unsigned long)dt2, ptd->ptr);
-		return -1;
-	    }
+            PTS_ABORTIF(ptd, DEBUG_PTS_ReadTypedef(ptd, typename, &new_dt) == -1);
 	    break;
 	case 'a':
 	    new_dt = DEBUG_NewDataType(DT_ARRAY, NULL);
-	    if (DEBUG_PTS_ReadArray(ptd, new_dt) == -1) return -1;
+	    PTS_ABORTIF(ptd, DEBUG_PTS_ReadArray(ptd, new_dt) == -1);
 	    break;
 	case 'r':
 	    new_dt = DEBUG_NewDataType(DT_BASIC, typename);
 	    assert(!*DEBUG_FileSubNr2StabEnum(filenr1, subnr1));
 	    *DEBUG_FileSubNr2StabEnum(filenr1, subnr1) = new_dt;
-	    if (DEBUG_PTS_ReadRange(ptd, &ref_dt, &lo, &hi) == -1) return -1;
+	    PTS_ABORTIF(ptd, DEBUG_PTS_ReadRange(ptd, &ref_dt, &lo, &hi) == -1);
 	    /* should perhaps do more here... */
 	    break;
 	case 'f':
 	    new_dt = DEBUG_NewDataType(DT_FUNC, NULL);
-	    if (DEBUG_PTS_ReadTypedef(ptd, NULL, &ref_dt) == -1) return -1;
+	    PTS_ABORTIF(ptd, DEBUG_PTS_ReadTypedef(ptd, NULL, &ref_dt) == -1);
 	    DEBUG_SetPointerType(new_dt, ref_dt);
 	    break;
 	case 'e':
 	    new_dt = DEBUG_NewDataType(DT_ENUM, NULL);
-	    if (DEBUG_PTS_ReadEnum(ptd, new_dt) == -1) return -1;
+	    PTS_ABORTIF(ptd, DEBUG_PTS_ReadEnum(ptd, new_dt) == -1);
 	    break;
 	case 's':
 	case 'u':
@@ -612,7 +670,7 @@ static int DEBUG_PTS_ReadTypedef(struct ParseTypedefData* ptd, const char* typen
 		/* should check typename is the same too */
 		new_dt = dt1;
 	    }
-	    if (DEBUG_PTS_ReadAggregate(ptd, new_dt) == -1) return -1;
+	    PTS_ABORTIF(ptd, DEBUG_PTS_ReadAggregate(ptd, new_dt) == -1);
 	    break;
 	case 'x':
 	    switch (*ptd->ptr++) {
@@ -622,16 +680,16 @@ static int DEBUG_PTS_ReadTypedef(struct ParseTypedefData* ptd, const char* typen
 	    }
 
 	    idx = ptd->idx;
-	    if (DEBUG_PTS_ReadID(ptd) == -1) return -1;
+	    PTS_ABORTIF(ptd, DEBUG_PTS_ReadID(ptd) == -1);
 	    new_dt = DEBUG_NewDataType(lo, ptd->buf + idx);
 	    ptd->idx = idx;
 	    break;
 	case '-':
-	    if (DEBUG_PTS_ReadNum(ptd, &lo) == -1) {
-		DEBUG_Printf(DBG_CHN_MESG, "Should be a number (%s)...\n", ptd->ptr);
-		return -1;
-	    } else {
+            {
                 enum debug_type_basic basic = DT_BASIC_LAST;
+
+                PTS_ABORTIF(ptd, DEBUG_PTS_ReadNum(ptd, &lo) == -1);
+
                 switch (lo)
                 {
                 case  1: basic = DT_BASIC_INT; break;
@@ -664,15 +722,10 @@ static int DEBUG_PTS_ReadTypedef(struct ParseTypedefData* ptd, const char* typen
                 case 31: basic = DT_BASIC_LONGLONGINT; break;
                 case 32: basic = DT_BASIC_ULONGLONGINT; break;
                 default:
-                    DEBUG_Printf(DBG_CHN_MESG, 
-                                 "Unsupported integral type (%d/%d)\n", lo, sz);
-                    return -1;
+                    PTS_ABORTIF(ptd, 1);
                 }
-                if (!(new_dt = DEBUG_GetBasicType(basic))) {
-                    DEBUG_Printf(DBG_CHN_MESG, "Basic type %d not found\n", basic);
-                    return -1;
-                }
-                if (*ptd->ptr++ != ';') return -1;
+                PTS_ABORTIF(ptd, !(new_dt = DEBUG_GetBasicType(basic)));
+                PTS_ABORTIF(ptd, *ptd->ptr++ != ';');
             }
 	    break;
         case '#':
@@ -680,27 +733,24 @@ static int DEBUG_PTS_ReadTypedef(struct ParseTypedefData* ptd, const char* typen
             if (*ptd->ptr == '#')
             {
                 ptd->ptr++;
-                if (DEBUG_PTS_ReadTypedef(ptd, NULL, &ref_dt) == -1) return -1;
+                PTS_ABORTIF(ptd, DEBUG_PTS_ReadTypedef(ptd, NULL, &ref_dt) == -1);
                 DEBUG_SetPointerType(new_dt, ref_dt);
-                if (*ptd->ptr++ != ';') return -1;
-                
             }
             else
             {
                 struct datatype* cls_dt;
                 struct datatype* pmt_dt;
 
-                if (DEBUG_PTS_ReadTypedef(ptd, NULL, &cls_dt) == -1) return -1;
-                if (*ptd->ptr++ != ',') return -1;
-                if (DEBUG_PTS_ReadTypedef(ptd, NULL, &ref_dt) == -1) return -1;
+                PTS_ABORTIF(ptd, DEBUG_PTS_ReadTypedef(ptd, NULL, &cls_dt) == -1);
+                PTS_ABORTIF(ptd, *ptd->ptr++ != ',');
+                PTS_ABORTIF(ptd, DEBUG_PTS_ReadTypedef(ptd, NULL, &ref_dt) == -1);
                 DEBUG_SetPointerType(new_dt, ref_dt);
-                while (*ptd->ptr++ == ',')
+                while (*ptd->ptr == ',')
                 {
-                    if (DEBUG_PTS_ReadTypedef(ptd, NULL, &pmt_dt) == -1) return -1;
+                    ptd->ptr++;
+                    PTS_ABORTIF(ptd, DEBUG_PTS_ReadTypedef(ptd, NULL, &pmt_dt) == -1);
                 }
             }
-            if (DEBUG_PTS_ReadMethodInfo(ptd, new_dt) == -1) return -1;
-            
             break;
 	default:
 	    DEBUG_Printf(DBG_CHN_MESG, "Unknown type '%c'\n", ptd->ptr[-1]);
@@ -708,23 +758,14 @@ static int DEBUG_PTS_ReadTypedef(struct ParseTypedefData* ptd, const char* typen
 	}
     }
 
-    if ((filenr2 || subnr2) && !*DEBUG_FileSubNr2StabEnum(filenr2, subnr2)) {
-	if (!new_dt) {
-	    /* this should be a basic type, define it, or even void */
+    if (!new_dt)
+    {
+        /* is it a forward declaration that has been filled ? */
+	new_dt = *DEBUG_FileSubNr2StabEnum(filenr1, subnr1);
+        /* if not, this should then be a basic type: define it, or even void */
+        if (!new_dt)
 	    new_dt = DEBUG_NewDataType(DT_BASIC, typename);
-	}
-	*DEBUG_FileSubNr2StabEnum(filenr2, subnr2) = new_dt;
-    }
-
-    if (!new_dt) {
-	dt1 = *DEBUG_FileSubNr2StabEnum(filenr1, subnr1);
-	if (!dt1) {
-	    DEBUG_Printf(DBG_CHN_MESG, "Nothing has been defined <%s>\n", ptd->ptr);
-	    return -1;
-	}
-	*ret_dt = dt1;
-	return 0;
-    }
+    }            
 
     *DEBUG_FileSubNr2StabEnum(filenr1, subnr1) = *ret_dt = new_dt;
 
@@ -748,8 +789,17 @@ static int DEBUG_ParseTypedefStab(char* ptr, const char* typename)
     /* check for already existing definition */
 
     ptd.idx = 0;
-    if ((ptd.ptr = strchr(ptr, ':'))) {
-	ptd.ptr++;
+#ifdef PTS_DEBUG
+    ptd.err_idx = 0;
+#endif
+    for (ptd.ptr = ptr - 1; ;)
+    {
+        ptd.ptr = strchr(ptd.ptr + 1, ':');
+        if (ptd.ptr == NULL || *++ptd.ptr != ':') break;
+    }
+
+    if (ptd.ptr)
+    {
 	if (*ptd.ptr != '(') ptd.ptr++;
         /* most of type definitions take one char, except Tt */
 	if (*ptd.ptr != '(') ptd.ptr++;
@@ -757,7 +807,23 @@ static int DEBUG_ParseTypedefStab(char* ptr, const char* typename)
     }
 
     if (ret == -1 || *ptd.ptr) {
+#ifdef PTS_DEBUG
+        int     i;
+	DEBUG_Printf(DBG_CHN_MESG, "Failure on %s\n", ptr);
+        if (ret == -1)
+        {
+            for (i = 0; i < ptd.err_idx; i++)
+            {
+                DEBUG_Printf(DBG_CHN_MESG, "[%d]: line %d => %s\n", 
+                             i, ptd.errors[i].line, ptd.errors[i].ptr);
+            }
+        }
+        else
+            DEBUG_Printf(DBG_CHN_MESG, "[0]: => %s\n", ptd.ptr);
+            
+#else
 	DEBUG_Printf(DBG_CHN_MESG, "Failure on %s at %s\n", ptr, ptd.ptr);
+#endif
 	return FALSE;
     }
 
@@ -767,34 +833,33 @@ static int DEBUG_ParseTypedefStab(char* ptr, const char* typename)
 static struct datatype *
 DEBUG_ParseStabType(const char * stab)
 {
-  char * c;
+    const char* c = stab - 1;
 
-  /*
-   * Look through the stab definition, and figure out what datatype
-   * this represents.  If we have something we know about, assign the
-   * type.
-   * According to "The \"stabs\" debug format" (Rev 2.130) the name may be
-   * a C++ name and contain double colons e.g. foo::bar::baz:t5=*6.  Not
-   * yet implemented.
-   */
-  c = strchr(stab, ':');
-  if( c == NULL )
-      return NULL;
+    /*
+     * Look through the stab definition, and figure out what datatype
+     * this represents.  If we have something we know about, assign the
+     * type.
+     * According to "The \"stabs\" debug format" (Rev 2.130) the name may be
+     * a C++ name and contain double colons e.g. foo::bar::baz:t5=*6.
+     */
+    do
+    {
+        if ((c = strchr(c + 1, ':')) == NULL) return NULL;
+    } while (*++c == ':');
 
-  c++;
-  /*
-   * The next characters say more about the type (i.e. data, function, etc)
-   * of symbol.  Skip them.  (C++ for example may have Tt).
-   * Actually this is a very weak description; I think Tt is the only
-   * multiple combination we should see.
-   */
-  while (*c && *c != '(' && !isdigit(*c))
-    c++;
-  /*
-   * The next is either an integer or a (integer,integer).
-   * The DEBUG_ReadTypeEnum takes care that stab_types is large enough.
-   */
-  return *DEBUG_ReadTypeEnum(&c);
+    /*
+     * The next characters say more about the type (i.e. data, function, etc)
+     * of symbol.  Skip them.  (C++ for example may have Tt).
+     * Actually this is a very weak description; I think Tt is the only
+     * multiple combination we should see.
+     */
+    while (*c && *c != '(' && !isdigit(*c))
+        c++;
+    /*
+     * The next is either an integer or a (integer,integer).
+     * The DEBUG_ReadTypeEnum takes care that stab_types is large enough.
+     */
+    return *DEBUG_ReadTypeEnum((char**)&c);
 }
 
 enum DbgInfoLoad DEBUG_ParseStabs(char * addr, unsigned int load_offset,
@@ -1175,19 +1240,8 @@ static int DEBUG_ProcessElfSymtab(DBG_MODULE* module, char* addr,
 	  continue;
 	}
 
-      /*
-       * See if we already have something for this symbol.
-       * If so, ignore this entry, because it would have come from the
-       * stabs or from a previous symbol.  If the value is different,
-       * we will have to keep the darned thing, because there can be
-       * multiple local symbols by the same name.
-       */
-      if(    (DEBUG_GetSymbolValue(symname, -1, &new_value, FALSE ) == gsv_found)
-	  && (new_value.addr.off == (load_addr + symp->st_value)) )
-	  continue;
-
-      new_value.addr.seg = 0;
       new_value.type = NULL;
+      new_value.addr.seg = 0;
       new_value.addr.off = load_addr + symp->st_value;
       new_value.cookie = DV_TARGET;
       flags = SYM_WINE | ((ELF32_ST_TYPE(symp->st_info) == STT_FUNC)
