@@ -1966,7 +1966,7 @@ HPROPSHEETPAGE WINAPI CreatePropertySheetPageA(
 {
   PROPSHEETPAGEA* ppsp = COMCTL32_Alloc(sizeof(PROPSHEETPAGEA));
 
-  *ppsp = *lpPropSheetPage;
+  memcpy(ppsp,lpPropSheetPage,min(lpPropSheetPage->dwSize,sizeof(PROPSHEETPAGEA)));
 
   if ( !(ppsp->dwFlags & PSP_DLGINDIRECT) && HIWORD( ppsp->u.pszTemplate ) )
     ppsp->u.pszTemplate = HEAP_strdupA( GetProcessHeap(), 0, lpPropSheetPage->u.pszTemplate );
