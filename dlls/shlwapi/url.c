@@ -1640,13 +1640,19 @@ BOOL WINAPI UrlIsA(LPCSTR pszUrl, URLIS Urlis)
 	base.cbSize = sizeof(base);
 	res1 = ParseURLA(pszUrl, &base);
 	if (res1) return FALSE;  /* invalid scheme */
-	if ((*base.pszSuffix == '/') && (*(base.pszSuffix+1) == '/'))
-	    /* has scheme followed by 2 '/' */
-	    return FALSE;
-	return TRUE;
+	switch (base.nScheme)
+	{
+	case URL_SCHEME_MAILTO:
+	case URL_SCHEME_SHELL:
+	case URL_SCHEME_JAVASCRIPT:
+	case URL_SCHEME_VBSCRIPT:
+	case URL_SCHEME_ABOUT:
+	    return TRUE;
+	}
+	return FALSE;
 
     case URLIS_FILEURL:
-        return !StrCmpNA("file://", pszUrl, 7);
+        return !StrCmpNA("file:", pszUrl, 5);
 
     case URLIS_DIRECTORY:
         last = pszUrl + strlen(pszUrl) - 1;
@@ -1671,7 +1677,7 @@ BOOL WINAPI UrlIsA(LPCSTR pszUrl, URLIS Urlis)
  */
 BOOL WINAPI UrlIsW(LPCWSTR pszUrl, URLIS Urlis)
 {
-    static const WCHAR stemp[] = { 'f','i','l','e',':','/','/',0 };
+    static const WCHAR stemp[] = { 'f','i','l','e',':',0 };
     PARSEDURLW base;
     DWORD res1;
     LPCWSTR last;
@@ -1684,13 +1690,19 @@ BOOL WINAPI UrlIsW(LPCWSTR pszUrl, URLIS Urlis)
 	base.cbSize = sizeof(base);
 	res1 = ParseURLW(pszUrl, &base);
 	if (res1) return FALSE;  /* invalid scheme */
-	if ((*base.pszSuffix == '/') && (*(base.pszSuffix+1) == '/'))
-	    /* has scheme followed by 2 '/' */
-	    return FALSE;
-	return TRUE;
+	switch (base.nScheme)
+	{
+	case URL_SCHEME_MAILTO:
+	case URL_SCHEME_SHELL:
+	case URL_SCHEME_JAVASCRIPT:
+	case URL_SCHEME_VBSCRIPT:
+	case URL_SCHEME_ABOUT:
+	    return TRUE;
+	}
+	return FALSE;
 
     case URLIS_FILEURL:
-        return !strncmpW(stemp, pszUrl, 7);
+        return !strncmpW(stemp, pszUrl, 5);
 
     case URLIS_DIRECTORY:
         last = pszUrl + strlenW(pszUrl) - 1;

@@ -244,8 +244,43 @@ struct {
     {"c:\\foo\\bar", FALSE},
     {"foo://foo/bar", TRUE},
     {"foo\\bar", FALSE},
-    {"foo.bar", FALSE}
+    {"foo.bar", FALSE},
+    {"bogusscheme:", TRUE},
+    {"http:partial", TRUE}
 };
+
+struct {
+    char *url;
+    BOOL expectOpaque;
+    BOOL expectFile;
+} TEST_URLIS_ATTRIBS[] = {
+    {	"ftp:",						FALSE,	FALSE	},
+    {	"http:",					FALSE,	FALSE	},
+    {	"gopher:",					FALSE,	FALSE	},
+    {	"mailto:",					TRUE,	FALSE	},
+    {	"news:",					FALSE,	FALSE	},
+    {	"nntp:",					FALSE,	FALSE	},
+    {	"telnet:",					FALSE,	FALSE	},
+    {	"wais:",					FALSE,	FALSE	},
+    {	"file:",					FALSE,	TRUE	},
+    {	"mk:",						FALSE,	FALSE	},
+    {	"https:",					FALSE,	FALSE	},
+    {	"shell:",					TRUE,	FALSE	},
+    {	"https:",					FALSE,	FALSE	},
+    {   "snews:",					FALSE,	FALSE	},
+    {   "local:",					FALSE,	FALSE	},
+    {	"javascript:",					TRUE,	FALSE	},
+    {	"vbscript:",					TRUE,	FALSE	},
+    {	"about:",					TRUE,	FALSE	},
+    {   "res:",						FALSE,	FALSE	},
+    {	"bogusscheme:",					FALSE,	FALSE	},
+    {	"file:\\\\e:\\b\\c",				FALSE,	TRUE	},
+    {	"file://e:/b/c",				FALSE,	TRUE	},
+    {	"http:partial",					FALSE,	FALSE	},
+    {	"mailto://www.winehq.org/test.html",		TRUE,	FALSE	},
+    {	"file:partial",					FALSE,	TRUE	}
+};
+
 
 static LPWSTR GetWideString(const char* szString)
 {
@@ -486,12 +521,41 @@ static void test_UrlIs(void)
 {
     BOOL ret;
     size_t i;
+    WCHAR wurl[80];
 
     for(i = 0; i < sizeof(TEST_PATH_IS_URL) / sizeof(TEST_PATH_IS_URL[0]); i++) {
+	MultiByteToWideChar(CP_ACP, 0, TEST_PATH_IS_URL[i].path, -1, wurl, 80);
+
         ret = UrlIsA( TEST_PATH_IS_URL[i].path, URLIS_URL );
         ok( ret == TEST_PATH_IS_URL[i].expect,
             "returned %d from path %s, expected %d\n", ret, TEST_PATH_IS_URL[i].path,
             TEST_PATH_IS_URL[i].expect );
+
+        ret = UrlIsW( wurl, URLIS_URL );
+        ok( ret == TEST_PATH_IS_URL[i].expect,
+            "returned %d from path (UrlIsW) %s, expected %d\n", ret, TEST_PATH_IS_URL[i].path,
+            TEST_PATH_IS_URL[i].expect );
+    }
+    for(i = 0; i < sizeof(TEST_URLIS_ATTRIBS) / sizeof(TEST_URLIS_ATTRIBS[0]); i++) {
+	MultiByteToWideChar(CP_ACP, 0, TEST_URLIS_ATTRIBS[i].url, -1, wurl, 80);
+
+        ret = UrlIsA( TEST_URLIS_ATTRIBS[i].url, URLIS_OPAQUE);
+	ok( ret == TEST_URLIS_ATTRIBS[i].expectOpaque,
+	    "returned %d for URLIS_OPAQUE, url \"%s\", expected %d\n", ret, TEST_URLIS_ATTRIBS[i].url,
+	    TEST_URLIS_ATTRIBS[i].expectOpaque );
+        ret = UrlIsA( TEST_URLIS_ATTRIBS[i].url, URLIS_FILEURL);
+	ok( ret == TEST_URLIS_ATTRIBS[i].expectFile,
+	    "returned %d for URLIS_FILEURL, url \"%s\", expected %d\n", ret, TEST_URLIS_ATTRIBS[i].url,
+	    TEST_URLIS_ATTRIBS[i].expectFile );
+
+        ret = UrlIsW( wurl, URLIS_OPAQUE);
+	ok( ret == TEST_URLIS_ATTRIBS[i].expectOpaque,
+	    "returned %d for URLIS_OPAQUE (UrlIsW), url \"%s\", expected %d\n", ret, TEST_URLIS_ATTRIBS[i].url,
+	    TEST_URLIS_ATTRIBS[i].expectOpaque );
+        ret = UrlIsW( wurl, URLIS_FILEURL);
+	ok( ret == TEST_URLIS_ATTRIBS[i].expectFile,
+	    "returned %d for URLIS_FILEURL (UrlIsW), url \"%s\", expected %d\n", ret, TEST_URLIS_ATTRIBS[i].url,
+	    TEST_URLIS_ATTRIBS[i].expectFile );
     }
 }
 
