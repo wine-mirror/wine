@@ -532,6 +532,8 @@ static int set_console_input_info( const struct set_console_input_info_request *
             new_title[len / sizeof(WCHAR)] = 0;
             if (console->title) free( console->title );
             console->title = new_title;
+	    evt.event = CONSOLE_RENDERER_TITLE_EVENT;
+	    console_input_events_append( console->evt, &evt );
         }
     }
     if (req->mask & SET_CONSOLE_INPUT_INFO_HISTORY_MODE)
