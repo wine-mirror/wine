@@ -10,6 +10,8 @@ dlls/avifil32
 
 % dlls/avifil32/avifile.spec
 
+dlls/avifil32
+
 % dlls/comctl32/comctl32.spec
 
 dlls/comctl32
@@ -27,6 +29,8 @@ dlls/commdlg
 dlls/crtdll
 
 % dlls/dciman32/dciman32.spec
+
+dlls/dciman32
 
 % dlls/ddraw/ddraw.spec
 

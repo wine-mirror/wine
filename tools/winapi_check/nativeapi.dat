@@ -127,6 +127,7 @@ listen
 localtime
 log
 log10
+logb
 longjmp
 lseek
 malloc
@@ -144,6 +145,7 @@ modf
 mprotect
 msync
 munmap
+nextafter
 ntohl
 ntohs
 open

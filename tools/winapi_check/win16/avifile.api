@@ -1,0 +1,23 @@
+%long
+
+DWORD
+LONG
+HRESULT
+UINT
+ULONG
+
+%ptr
+
+IAVIFile *
+LPCLSID
+PAVIFILE
+PAVIFILE *
+PAVISTREAM *
+
+%str
+
+LPCSTR
+
+%void
+
+void
