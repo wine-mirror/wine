@@ -931,6 +931,37 @@ static void test_FindNextFileA()
     ok ( err == ERROR_NO_MORE_FILES, "GetLastError should return ERROR_NO_MORE_FILES");
 }
 
+static void test_MapFile()
+{
+    HANDLE handle, hmap;
+
+    /* be sure to remove stale files */
+    SetFileAttributesA(filename,FILE_ATTRIBUTE_NORMAL);
+    DeleteFile(filename);
+    handle = CreateFile( filename, GENERIC_READ|GENERIC_WRITE, 0, 0,
+                         CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL );
+    ok( handle != INVALID_HANDLE_VALUE, "couldn't create test file\n");
+
+    hmap = CreateFileMapping( handle, NULL, PAGE_READWRITE, 0, 0, NULL );
+    ok( hmap == NULL, "mapped zero size file\n");
+    ok( GetLastError() == ERROR_FILE_INVALID, "not ERROR_FILE_INVALID\n");
+
+    hmap = CreateFileMapping( handle, NULL, PAGE_READWRITE, 0x1000, 0, NULL );
+    ok( hmap == NULL, "mapping should fail\n");
+    /* GetLastError() varies between win9x and WinNT */
+
+    hmap = CreateFileMapping( handle, NULL, PAGE_READWRITE, 0x1000, 0x10000, NULL );
+    ok( hmap == NULL, "mapping should fail\n");
+    /* GetLastError() varies between win9x and WinNT */
+
+    hmap = CreateFileMapping( handle, NULL, PAGE_READWRITE, 0, 0x1000, NULL );
+    ok( hmap != NULL, "mapping should succeed\n");
+
+    ok( CloseHandle( hmap ), "can't close mapping handle\n");
+    ok( CloseHandle( handle ), "can't close file handle\n");
+    ok( DeleteFileA( filename ), "DeleteFile failed after map" );
+}
+
 START_TEST(file)
 {
     test__hread(  );
@@ -953,4 +984,5 @@ START_TEST(file)
     test_FindNextFileA();
     test_LockFile();
     test_offset_in_overlapped_structure();
+    test_MapFile();
 }
