@@ -13,6 +13,8 @@ C_SRCS = \
 	async.c \
 	socket.c
 
+C_SRCS16 = socket16.c
+
 RC_SRCS = version.rc
 
 SUBDIRS = tests

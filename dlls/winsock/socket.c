@@ -113,7 +113,6 @@
 
 #define NONAMELESSUNION
 #define NONAMELESSSTRUCT
-#include "wine/winbase16.h"
 #include "windef.h"
 #include "winbase.h"
 #include "wingdi.h"
@@ -122,9 +121,7 @@
 #include "winsock2.h"
 #include "ws2tcpip.h"
 #include "wsipx.h"
-#include "wine/winsock16.h"
 #include "winnt.h"
-#include "wownt32.h"
 #include "iphlpapi.h"
 #include "thread.h"
 #include "wine/server.h"
@@ -140,12 +137,14 @@ WINE_DEFAULT_DEBUG_CHANNEL(winsock);
 /* critical section to protect some non-rentrant net function */
 extern CRITICAL_SECTION csWSgetXXXbyYYY;
 
-#define DEBUG_SOCKADDR 0
-#define dump_sockaddr(a) \
-        DPRINTF("sockaddr_in: family %d, address %s, port %d\n", \
-                        ((struct sockaddr_in *)a)->sin_family, \
-                        inet_ntoa(((struct sockaddr_in *)a)->sin_addr), \
-                        ntohs(((struct sockaddr_in *)a)->sin_port))
+inline static const char *debugstr_sockaddr( const struct WS_sockaddr *a )
+{
+    if (!a) return "(nil)";
+    return wine_dbg_sprintf("{ family %d, address %s, port %d }",
+                            ((struct sockaddr_in *)a)->sin_family,
+                            inet_ntoa(((struct sockaddr_in *)a)->sin_addr),
+                            ntohs(((struct sockaddr_in *)a)->sin_port));
+}
 
 /* HANDLE<->SOCKET conversion (SOCKET is UINT_PTR). */
 #define SOCKET2HANDLE(s) ((HANDLE)(s))
@@ -195,9 +194,6 @@ typedef struct ws2_async
 
 /* ws_... struct conversion flags */
 
-#define WS_DUP_LINEAR           0x0001
-#define WS_DUP_SEGPTR           0x0002          /* internal pointers are SEGPTRs */
-                                                /* by default, internal pointers are linear */
 typedef struct          /* WSAAsyncSelect() control struct */
 {
   HANDLE      service, event, sock;
@@ -210,38 +206,22 @@ typedef struct          /* WSAAsyncSelect() control struct */
 #define WS_MAX_UDP_DATAGRAM             1024
 static INT WINAPI WSA_DefaultBlockingHook( FARPROC x );
 
-static void *he_buffer;          /* typecast for Win16/32 ws_hostent */
-static SEGPTR he_buffer_seg;
-static void *se_buffer;          /* typecast for Win16/32 ws_servent */
-static SEGPTR se_buffer_seg;
-static void *pe_buffer;          /* typecast for Win16/32 ws_protoent */
-static SEGPTR pe_buffer_seg;
-static char* local_buffer;
-static SEGPTR dbuffer_seg;
+static struct WS_hostent *he_buffer;          /* typecast for Win32 ws_hostent */
+static struct WS_servent *se_buffer;          /* typecast for Win32 ws_servent */
+static struct WS_protoent *pe_buffer;          /* typecast for Win32 ws_protoent */
 static INT num_startup;          /* reference counter */
 static FARPROC blocking_hook = WSA_DefaultBlockingHook;
 
 /* function prototypes */
-static int WS_dup_he(struct hostent* p_he, int flag);
-static int WS_dup_pe(struct protoent* p_pe, int flag);
-static int WS_dup_se(struct servent* p_se, int flag);
-
-typedef void	WIN_hostent;
-typedef void	WIN_protoent;
-typedef void	WIN_servent;
+static struct WS_hostent *WS_dup_he(const struct hostent* p_he);
+static struct WS_protoent *WS_dup_pe(const struct protoent* p_pe);
+static struct WS_servent *WS_dup_se(const struct servent* p_se);
 
 int WSAIOCTL_GetInterfaceCount(void);
 int WSAIOCTL_GetInterfaceName(int intNumber, char *intName);
 
-UINT16 wsaErrno(void);
-UINT16 wsaHerrno(int errnr);
-
-static HANDLE 	_WSHeap = 0;
-
-#define WS_ALLOC(size) \
-	HeapAlloc(_WSHeap, HEAP_ZERO_MEMORY, (size) )
-#define WS_FREE(ptr) \
-	HeapFree(_WSHeap, 0, (ptr) )
+UINT wsaErrno(void);
+UINT wsaHerrno(int errnr);
 
 #define MAP_OPTION(opt) { WS_##opt, opt }
 
@@ -330,8 +310,6 @@ inline static unsigned int set_error( unsigned int err )
     }
     return err;
 }
-
-static char* check_buffer(int size);
 
 inline static int _get_sock_fd(SOCKET s)
 {
@@ -427,22 +405,12 @@ static void WINSOCK_DeleteIData(void)
 {
     /* delete scratch buffers */
 
-    UnMapLS( he_buffer_seg );
-    UnMapLS( se_buffer_seg );
-    UnMapLS( pe_buffer_seg );
-    UnMapLS( dbuffer_seg );
     if (he_buffer) HeapFree( GetProcessHeap(), 0, he_buffer );
     if (se_buffer) HeapFree( GetProcessHeap(), 0, se_buffer );
     if (pe_buffer) HeapFree( GetProcessHeap(), 0, pe_buffer );
-    if (local_buffer) HeapFree( GetProcessHeap(), 0, local_buffer );
     he_buffer = NULL;
     se_buffer = NULL;
     pe_buffer = NULL;
-    local_buffer = NULL;
-    he_buffer_seg = 0;
-    se_buffer_seg = 0;
-    pe_buffer_seg = 0;
-    dbuffer_seg = 0;
     num_startup = 0;
 }
 
@@ -519,52 +487,41 @@ static int convert_sockopt(INT *level, INT *optname)
 
 /* ----------------------------------- Per-thread info (or per-process?) */
 
-static int wsi_strtolo(const char* name, const char* opt)
+static char *strdup_lower(const char *str)
 {
-    /* Stuff a lowercase copy of the string into the local buffer */
+    int i;
+    char *ret = HeapAlloc( GetProcessHeap(), 0, strlen(str) + 1 );
 
-    int i = strlen(name) + 2;
-    char* p = check_buffer(i + ((opt)?strlen(opt):0));
-
-    if( p )
+    if (ret)
     {
-	do *p++ = tolower(*name); while(*name++);
-	i = (p - local_buffer);
-	if( opt ) do *p++ = tolower(*opt); while(*opt++);
-	return i;
+        for (i = 0; str[i]; i++) ret[i] = tolower(str[i]);
+        ret[i] = 0;
     }
-    return 0;
+    else SetLastError(WSAENOBUFS);
+    return ret;
 }
 
-static fd_set* fd_set_import( fd_set* fds, void* wsfds, int* highfd, int lfd[], BOOL b32 )
+static fd_set* fd_set_import( fd_set* fds, WS_fd_set* wsfds, int* highfd, int lfd[] )
 {
     /* translate Winsock fd set into local fd set */
-
     if( wsfds )
     {
-#define wsfds16	((ws_fd_set16*)wsfds)
-#define wsfds32 ((WS_fd_set*)wsfds)
-	int i, count;
+        int i;
 
-	FD_ZERO(fds);
-	count = b32 ? wsfds32->fd_count : wsfds16->fd_count;
-
-	for( i = 0; i < count; i++ )
-	{
-	     int s = (b32) ? wsfds32->fd_array[i]
-			   : wsfds16->fd_array[i];
-             int fd = _get_sock_fd(s);
-	     if (fd != -1)
-             {
-                    lfd[ i ] = fd;
-		    if( fd > *highfd ) *highfd = fd;
-		    FD_SET(fd, fds);
-	     }
-	     else lfd[ i ] = -1;
-	}
-#undef wsfds32
-#undef wsfds16
-	return fds;
+        FD_ZERO(fds);
+        for( i = 0; i < wsfds->fd_count; i++ )
+        {
+            int s = wsfds->fd_array[i];
+            int fd = _get_sock_fd(s);
+            if (fd != -1)
+            {
+                lfd[ i ] = fd;
+                if( fd > *highfd ) *highfd = fd;
+                FD_SET(fd, fds);
+            }
+            else lfd[ i ] = -1;
+        }
+        return fds;
     }
     return NULL;
 }
@@ -579,7 +536,7 @@ inline static int sock_error_p(int s)
     return optval != 0;
 }
 
-static int fd_set_export( fd_set* fds, fd_set* exceptfds, void* wsfds, int lfd[], BOOL b32 )
+static int fd_set_export( fd_set* fds, fd_set* exceptfds, WS_fd_set* wsfds, int lfd[] )
 {
     int num_err = 0;
 
@@ -588,9 +545,7 @@ static int fd_set_export( fd_set* fds, fd_set* exceptfds, void* wsfds, int lfd[]
 
     if( wsfds )
     {
-#define wsfds16 ((ws_fd_set16*)wsfds)
-#define wsfds32 ((WS_fd_set*)wsfds)
-	int i, j, count = (b32) ? wsfds32->fd_count : wsfds16->fd_count;
+	int i, j, count = wsfds->fd_count;
 
 	for( i = 0, j = 0; i < count; i++ )
 	{
@@ -604,41 +559,26 @@ static int fd_set_export( fd_set* fds, fd_set* exceptfds, void* wsfds, int lfd[]
 			FD_SET(fd, exceptfds);
 			num_err++;
 		    }
-		    else if( b32 )
-			     wsfds32->fd_array[j++] = wsfds32->fd_array[i];
-			 else
-			     wsfds16->fd_array[j++] = wsfds16->fd_array[i];
+                    else wsfds->fd_array[j++] = wsfds->fd_array[i];
 		}
 		close(fd);
 		lfd[i] = -1;
 	    }
 	}
-
-	if( b32 ) wsfds32->fd_count = j;
-	else wsfds16->fd_count = j;
-
-	TRACE("\n");
-#undef wsfds32
-#undef wsfds16
+	wsfds->fd_count = j;
     }
     return num_err;
 }
 
-static void fd_set_unimport( void* wsfds, int lfd[], BOOL b32 )
+static void fd_set_unimport( WS_fd_set* wsfds, int lfd[] )
 {
     if ( wsfds )
     {
-#define wsfds16 ((ws_fd_set16*)wsfds)
-#define wsfds32 ((WS_fd_set*)wsfds)
-	int i, count = (b32) ? wsfds32->fd_count : wsfds16->fd_count;
+	int i;
 
-	for( i = 0; i < count; i++ )
+	for( i = 0; i < wsfds->fd_count; i++ )
 	    if ( lfd[i] >= 0 )
 		close(lfd[i]);
-
-	TRACE("\n");
-#undef wsfds32
-#undef wsfds16
     }
 }
 
@@ -653,81 +593,11 @@ static inline int do_block( int fd, int events )
   return pfd.revents;
 }
 
-void* __ws_memalloc( int size )
-{
-    return WS_ALLOC(size);
-}
-
-void __ws_memfree(void* ptr)
-{
-    WS_FREE(ptr);
-}
-
 
 /* ----------------------------------- API -----
  *
  * Init / cleanup / error checking.
  */
-
-/***********************************************************************
- *      WSAStartup			(WINSOCK.115)
- *
- * Create socket control struct, attach it to the global list and
- * update a pointer in the task struct.
- */
-INT16 WINAPI WSAStartup16(UINT16 wVersionRequested, LPWSADATA16 lpWSAData)
-{
-    static const WSADATA16 data =
-    {
-        0x0101, 0x0101,
-        "WINE Sockets 1.1",
-#ifdef linux
-        "Linux/i386",
-#elif defined(__NetBSD__)
-        "NetBSD/i386",
-#elif defined(sunos)
-        "SunOS",
-#elif defined(__FreeBSD__)
-        "FreeBSD",
-#elif defined(__OpenBSD__)
-        "OpenBSD/i386",
-#else
-        "Unknown",
-#endif
-        WS_MAX_SOCKETS_PER_PROCESS,
-        WS_MAX_UDP_DATAGRAM,
-        0
-    };
-
-    TRACE("verReq=%x\n", wVersionRequested);
-
-    if (LOBYTE(wVersionRequested) < 1 || (LOBYTE(wVersionRequested) == 1 &&
-        HIBYTE(wVersionRequested) < 1)) return WSAVERNOTSUPPORTED;
-
-    if (!lpWSAData) return WSAEINVAL;
-
-    /* initialize socket heap */
-
-    if( !_WSHeap )
-    {
-	_WSHeap = HeapCreate(HEAP_ZERO_MEMORY, 8120, 32768);
-	if( !_WSHeap )
-	{
-	    ERR("Fatal: failed to create WinSock heap\n");
-	    return 0;
-	}
-    }
-    if( _WSHeap == 0 ) return WSASYSNOTREADY;
-
-    num_startup++;
-
-    /* return winsock information */
-
-    memcpy(lpWSAData, &data, sizeof(data));
-
-    TRACE("succeeded\n");
-    return 0;
-}
 
 /***********************************************************************
  *      WSAStartup		(WS2_32.115)
@@ -740,19 +610,6 @@ int WINAPI WSAStartup(WORD wVersionRequested, LPWSADATA lpWSAData)
         return WSAVERNOTSUPPORTED;
 
     if (!lpWSAData) return WSAEINVAL;
-
-    /* initialize socket heap */
-
-    if( !_WSHeap )
-    {
-	_WSHeap = HeapCreate(HEAP_ZERO_MEMORY, 8120, 32768);
-	if( !_WSHeap )
-	{
-	    ERR("Fatal: failed to create WinSock heap\n");
-	    return 0;
-	}
-    }
-    if( _WSHeap == 0 ) return WSASYSNOTREADY;
 
     num_startup++;
 
@@ -773,7 +630,6 @@ int WINAPI WSAStartup(WORD wVersionRequested, LPWSADATA lpWSAData)
 
 
 /***********************************************************************
- *      WSACleanup			(WINSOCK.116)
  *      WSACleanup			(WS2_32.116)
  */
 INT WINAPI WSACleanup(void)
@@ -805,66 +661,42 @@ void WINAPI WSASetLastError(INT iError) {
     SetLastError(iError);
 }
 
-/***********************************************************************
- *      WSASetLastError		(WINSOCK.112)
- */
-void WINAPI WSASetLastError16(INT16 iError)
-{
-    WSASetLastError(iError);
-}
-
-static char* check_buffer(int size)
-{
-    static int local_buflen;
-
-    if (local_buffer)
-    {
-        if (local_buflen >= size ) return local_buffer;
-        HeapFree( GetProcessHeap(), 0, local_buffer );
-    }
-    local_buffer = HeapAlloc( GetProcessHeap(), 0, (local_buflen = size) );
-    return local_buffer;
-}
-
-static struct ws_hostent* check_buffer_he(int size)
+static struct WS_hostent *check_buffer_he(int size)
 {
     static int he_len;
     if (he_buffer)
     {
         if (he_len >= size ) return he_buffer;
-        UnMapLS( he_buffer_seg );
         HeapFree( GetProcessHeap(), 0, he_buffer );
     }
     he_buffer = HeapAlloc( GetProcessHeap(), 0, (he_len = size) );
-    he_buffer_seg = MapLS( he_buffer );
+    if (!he_buffer) SetLastError(WSAENOBUFS);
     return he_buffer;
 }
 
-static void* check_buffer_se(int size)
+static struct WS_servent *check_buffer_se(int size)
 {
     static int se_len;
     if (se_buffer)
     {
         if (se_len >= size ) return se_buffer;
-        UnMapLS( se_buffer_seg );
         HeapFree( GetProcessHeap(), 0, se_buffer );
     }
     se_buffer = HeapAlloc( GetProcessHeap(), 0, (se_len = size) );
-    se_buffer_seg = MapLS( se_buffer );
+    if (!se_buffer) SetLastError(WSAENOBUFS);
     return se_buffer;
 }
 
-static struct ws_protoent* check_buffer_pe(int size)
+static struct WS_protoent *check_buffer_pe(int size)
 {
     static int pe_len;
     if (pe_buffer)
     {
         if (pe_len >= size ) return pe_buffer;
-        UnMapLS( pe_buffer_seg );
         HeapFree( GetProcessHeap(), 0, pe_buffer );
     }
     pe_buffer = HeapAlloc( GetProcessHeap(), 0, (pe_len = size) );
-    pe_buffer_seg = MapLS( he_buffer );
+    if (!pe_buffer) SetLastError(WSAENOBUFS);
     return pe_buffer;
 }
 
@@ -1140,17 +972,13 @@ static int WS2_recv ( int fd, struct iovec* iov, int count,
 {
     struct msghdr hdr;
     int n;
-    TRACE ( "fd %d, iovec %p, count %d addr %p, len %p, flags %lx\n",
-            fd, iov, count, lpFrom, lpFromlen, *lpFlags);
+    TRACE ( "fd %d, iovec %p, count %d addr %s, len %p, flags %lx\n",
+            fd, iov, count, debugstr_sockaddr(lpFrom), lpFromlen, *lpFlags);
 
     hdr.msg_name = NULL;
 
     if ( lpFrom )
     {
-#if DEBUG_SOCKADDR
-        dump_sockaddr (lpFrom);
-#endif
-
         hdr.msg_namelen = *lpFromlen;
         hdr.msg_name = ws_sockaddr_alloc ( lpFrom, lpFromlen, &hdr.msg_namelen );
         if ( !hdr.msg_name )
@@ -1252,16 +1080,13 @@ static int WS2_send ( int fd, struct iovec* iov, int count,
 {
     struct msghdr hdr;
     int n = -1;
-    TRACE ( "fd %d, iovec %p, count %d addr %p, len %d, flags %lx\n",
-            fd, iov, count, to, tolen, dwFlags);
+    TRACE ( "fd %d, iovec %p, count %d addr %s, len %d, flags %lx\n",
+            fd, iov, count, debugstr_sockaddr(to), tolen, dwFlags);
 
     hdr.msg_name = NULL;
 
     if ( to )
     {
-#if DEBUG_SOCKADDR
-        dump_sockaddr (to);
-#endif
         hdr.msg_name = (struct sockaddr*) ws_sockaddr_ws2u ( to, tolen, &hdr.msg_namelen );
         if ( !hdr.msg_name )
         {
@@ -1419,7 +1244,7 @@ SOCKET WINAPI WS_accept(SOCKET s, struct WS_sockaddr *addr,
 {
     int fd = _get_sock_fd(s);
 
-    TRACE("socket %04x\n", (UINT16)s );
+    TRACE("socket %04x\n", s );
     if (fd != -1)
     {
         SOCKET as;
@@ -1457,18 +1282,6 @@ SOCKET WINAPI WS_accept(SOCKET s, struct WS_sockaddr *addr,
 }
 
 /***********************************************************************
- *              accept		(WINSOCK.1)
- */
-SOCKET16 WINAPI WINSOCK_accept16(SOCKET16 s, struct WS_sockaddr* addr,
-                                 INT16* addrlen16 )
-{
-    INT addrlen32 = addrlen16 ? *addrlen16 : 0;
-    SOCKET retSocket = WS_accept( s, addr, &addrlen32 );
-    if( addrlen16 ) *addrlen16 = (INT16)addrlen32;
-    return (SOCKET16)retSocket;
-}
-
-/***********************************************************************
  *		bind			(WS2_32.2)
  */
 int WINAPI WS_bind(SOCKET s, const struct WS_sockaddr* name, int namelen)
@@ -1476,10 +1289,7 @@ int WINAPI WS_bind(SOCKET s, const struct WS_sockaddr* name, int namelen)
     int fd = _get_sock_fd(s);
     int res;
 
-    TRACE("socket %04x, ptr %p, length %d\n", s, name, namelen);
-#if DEBUG_SOCKADDR
-    dump_sockaddr(name);
-#endif
+    TRACE("socket %04x, ptr %p %s, length %d\n", s, name, debugstr_sockaddr(name), namelen);
 
     res=SOCKET_ERROR;
     if (fd != -1)
@@ -1541,14 +1351,6 @@ int WINAPI WS_bind(SOCKET s, const struct WS_sockaddr* name, int namelen)
 }
 
 /***********************************************************************
- *              bind			(WINSOCK.2)
- */
-INT16 WINAPI WINSOCK_bind16(SOCKET16 s, struct WS_sockaddr *name, INT16 namelen)
-{
-  return (INT16)WS_bind( s, name, namelen );
-}
-
-/***********************************************************************
  *		closesocket		(WS2_32.3)
  */
 int WINAPI WS_closesocket(SOCKET s)
@@ -1559,24 +1361,13 @@ int WINAPI WS_closesocket(SOCKET s)
 }
 
 /***********************************************************************
- *              closesocket           (WINSOCK.3)
- */
-INT16 WINAPI WINSOCK_closesocket16(SOCKET16 s)
-{
-    return (INT16)WS_closesocket(s);
-}
-
-/***********************************************************************
  *		connect		(WS2_32.4)
  */
 int WINAPI WS_connect(SOCKET s, const struct WS_sockaddr* name, int namelen)
 {
     int fd = _get_sock_fd(s);
 
-    TRACE("socket %04x, ptr %p, length %d\n", s, name, namelen);
-#if DEBUG_SOCKADDR
-    dump_sockaddr(name);
-#endif
+    TRACE("socket %04x, ptr %p %s, length %d\n", s, name, debugstr_sockaddr(name), namelen);
 
     if (fd != -1)
     {
@@ -1645,14 +1436,6 @@ connect_success:
 }
 
 /***********************************************************************
- *              connect               (WINSOCK.4)
- */
-INT16 WINAPI WINSOCK_connect16(SOCKET16 s, struct WS_sockaddr *name, INT16 namelen)
-{
-  return (INT16)WS_connect( s, name, namelen );
-}
-
-/***********************************************************************
  *              WSAConnect             (WS2_32.30)
  */
 int WINAPI WSAConnect ( SOCKET s, const struct WS_sockaddr* name, int namelen,
@@ -1715,23 +1498,6 @@ int WINAPI WS_getpeername(SOCKET s, struct WS_sockaddr *name, int *namelen)
 }
 
 /***********************************************************************
- *              getpeername		(WINSOCK.5)
- */
-INT16 WINAPI WINSOCK_getpeername16(SOCKET16 s, struct WS_sockaddr *name,
-                                   INT16 *namelen16)
-{
-    INT namelen32 = *namelen16;
-    INT retVal = WS_getpeername( s, name, &namelen32 );
-
-#if DEBUG_SOCKADDR
-    dump_sockaddr(name);
-#endif
-
-   *namelen16 = namelen32;
-    return (INT16)retVal;
-}
-
-/***********************************************************************
  *		getsockname		(WS2_32.6)
  */
 int WINAPI WS_getsockname(SOCKET s, struct WS_sockaddr *name, int *namelen)
@@ -1780,30 +1546,6 @@ int WINAPI WS_getsockname(SOCKET s, struct WS_sockaddr *name, int *namelen)
 }
 
 /***********************************************************************
- *              getsockname		(WINSOCK.6)
- */
-INT16 WINAPI WINSOCK_getsockname16(SOCKET16 s, struct WS_sockaddr *name,
-                                   INT16 *namelen16)
-{
-    INT retVal;
-
-    if( namelen16 )
-    {
-        INT namelen32 = *namelen16;
-        retVal = WS_getsockname( s, name, &namelen32 );
-       *namelen16 = namelen32;
-
-#if DEBUG_SOCKADDR
-    dump_sockaddr(name);
-#endif
-
-    }
-    else retVal = SOCKET_ERROR;
-    return (INT16)retVal;
-}
-
-
-/***********************************************************************
  *		getsockopt		(WS2_32.7)
  */
 INT WINAPI WS_getsockopt(SOCKET s, INT level,
@@ -1843,22 +1585,6 @@ INT WINAPI WS_getsockopt(SOCKET s, INT level,
 	close(fd);
     }
     return SOCKET_ERROR;
-}
-
-
-/***********************************************************************
- *              getsockopt		(WINSOCK.7)
- */
-INT16 WINAPI WINSOCK_getsockopt16(SOCKET16 s, INT16 level,
-                                  INT16 optname, char *optval, INT16 *optlen)
-{
-    INT optlen32;
-    INT *p = &optlen32;
-    INT retVal;
-    if( optlen ) optlen32 = *optlen; else p = NULL;
-    retVal = WS_getsockopt( s, (UINT16)level, optname, optval, p );
-    if( optlen ) *optlen = optlen32;
-    return (INT16)retVal;
 }
 
 
@@ -1932,18 +1658,6 @@ char* WINAPI WS_inet_ntoa(struct WS_in_addr in)
     SetLastError(wsaErrno());
     return NULL;
 }
-
-/***********************************************************************
- *		inet_ntoa		(WINSOCK.11)
- */
-SEGPTR WINAPI WINSOCK_inet_ntoa16(struct in_addr in)
-{
-    char* retVal;
-    if (!(retVal = WS_inet_ntoa(*((struct WS_in_addr*)&in)))) return 0;
-    if (!dbuffer_seg) dbuffer_seg = MapLS( retVal );
-    return dbuffer_seg;
-}
-
 
 /**********************************************************************
  *              WSAIoctl                (WS2_32.50)
@@ -2183,15 +1897,6 @@ int WINAPI WS_ioctlsocket(SOCKET s, long cmd, u_long *argp)
 }
 
 /***********************************************************************
- *              ioctlsocket           (WINSOCK.12)
- */
-INT16 WINAPI WINSOCK_ioctlsocket16(SOCKET16 s, LONG cmd, ULONG *argp)
-{
-    return (INT16)WS_ioctlsocket( s, cmd, argp );
-}
-
-
-/***********************************************************************
  *		listen		(WS2_32.13)
  */
 int WINAPI WS_listen(SOCKET s, int backlog)
@@ -2216,15 +1921,6 @@ int WINAPI WS_listen(SOCKET s, int backlog)
 }
 
 /***********************************************************************
- *              listen		(WINSOCK.13)
- */
-INT16 WINAPI WINSOCK_listen16(SOCKET16 s, INT16 backlog)
-{
-    return (INT16)WS_listen( s, backlog );
-}
-
-
-/***********************************************************************
  *		recv			(WS2_32.16)
  */
 int WINAPI WS_recv(SOCKET s, char *buf, int len, int flags)
@@ -2240,15 +1936,6 @@ int WINAPI WS_recv(SOCKET s, char *buf, int len, int flags)
     else
         return n;
 }
-
-/***********************************************************************
- *              recv			(WINSOCK.16)
- */
-INT16 WINAPI WINSOCK_recv16(SOCKET16 s, char *buf, INT16 len, INT16 flags)
-{
-    return (INT16)WS_recv( s, buf, len, flags );
-}
-
 
 /***********************************************************************
  *		recvfrom		(WS2_32.17)
@@ -2269,27 +1956,11 @@ int WINAPI WS_recvfrom(SOCKET s, char *buf, INT len, int flags,
 }
 
 /***********************************************************************
- *              recvfrom		(WINSOCK.17)
+ *		select			(WS2_32.18)
  */
-INT16 WINAPI WINSOCK_recvfrom16(SOCKET16 s, char *buf, INT16 len, INT16 flags,
-                                struct WS_sockaddr *from, INT16 *fromlen16)
-{
-    INT fromlen32;
-    INT *p = &fromlen32;
-    INT retVal;
-
-    if( fromlen16 ) fromlen32 = *fromlen16; else p = NULL;
-    retVal = WS_recvfrom( s, buf, len, flags, from, p );
-    if( fromlen16 ) *fromlen16 = fromlen32;
-    return (INT16)retVal;
-}
-
-/***********************************************************************
- *		__ws_select
- */
-static int __ws_select(BOOL b32,
-                       void *ws_readfds, void *ws_writefds, void *ws_exceptfds,
-                       const struct WS_timeval *ws_timeout)
+int WINAPI WS_select(int nfds, WS_fd_set *ws_readfds,
+                     WS_fd_set *ws_writefds, WS_fd_set *ws_exceptfds,
+                     const struct WS_timeval* ws_timeout)
 {
     int         highfd = 0;
     fd_set      readfds, writefds, exceptfds;
@@ -2300,9 +1971,9 @@ static int __ws_select(BOOL b32,
     TRACE("read %p, write %p, excp %p timeout %p\n",
           ws_readfds, ws_writefds, ws_exceptfds, ws_timeout);
 
-    p_read = fd_set_import(&readfds, ws_readfds, &highfd, readfd, b32);
-    p_write = fd_set_import(&writefds, ws_writefds, &highfd, writefd, b32);
-    p_except = fd_set_import(&exceptfds, ws_exceptfds, &highfd, exceptfd, b32);
+    p_read = fd_set_import(&readfds, ws_readfds, &highfd, readfd);
+    p_write = fd_set_import(&writefds, ws_writefds, &highfd, writefd);
+    p_except = fd_set_import(&exceptfds, ws_exceptfds, &highfd, exceptfd);
     if (ws_timeout)
     {
         timeoutaddr = &timeout;
@@ -2312,68 +1983,36 @@ static int __ws_select(BOOL b32,
 
     if( (highfd = select(highfd + 1, p_read, p_write, p_except, timeoutaddr)) > 0 )
     {
-        fd_set_export(&readfds, p_except, ws_readfds, readfd, b32);
-        fd_set_export(&writefds, p_except, ws_writefds, writefd, b32);
+        fd_set_export(&readfds, p_except, ws_readfds, readfd);
+        fd_set_export(&writefds, p_except, ws_writefds, writefd);
 
         if (p_except && ws_exceptfds)
         {
-#define wsfds16 ((ws_fd_set16*)ws_exceptfds)
-#define wsfds32 ((WS_fd_set*)ws_exceptfds)
-            int i, j, count = (b32) ? wsfds32->fd_count : wsfds16->fd_count;
+            int i, j;
 
-            for (i = j = 0; i < count; i++)
+            for (i = j = 0; i < ws_exceptfds->fd_count; i++)
             {
                 int fd = exceptfd[i];
-                if( fd >= 0 && FD_ISSET(fd, &exceptfds) )
+                if( fd >= 0)
                 {
-                    if( b32 )
-                        wsfds32->fd_array[j++] = wsfds32->fd_array[i];
-                    else
-                        wsfds16->fd_array[j++] = wsfds16->fd_array[i];
+                    if (FD_ISSET(fd, &exceptfds)) ws_exceptfds->fd_array[j++] = ws_exceptfds->fd_array[i];
+                    close(fd);
                 }
-                if( fd >= 0 ) close(fd);
-                exceptfd[i] = -1;
             }
-            if( b32 )
-                wsfds32->fd_count = j;
-            else
-                wsfds16->fd_count = j;
-#undef wsfds32
-#undef wsfds16
+            ws_exceptfds->fd_count = j;
         }
         return highfd;
     }
-    fd_set_unimport(ws_readfds, readfd, b32);
-    fd_set_unimport(ws_writefds, writefd, b32);
-    fd_set_unimport(ws_exceptfds, exceptfd, b32);
-    if( ws_readfds ) ((WS_fd_set*)ws_readfds)->fd_count = 0;
-    if( ws_writefds ) ((WS_fd_set*)ws_writefds)->fd_count = 0;
-    if( ws_exceptfds ) ((WS_fd_set*)ws_exceptfds)->fd_count = 0;
+    fd_set_unimport(ws_readfds, readfd);
+    fd_set_unimport(ws_writefds, writefd);
+    fd_set_unimport(ws_exceptfds, exceptfd);
+    if( ws_readfds ) ws_readfds->fd_count = 0;
+    if( ws_writefds ) ws_writefds->fd_count = 0;
+    if( ws_exceptfds ) ws_exceptfds->fd_count = 0;
 
     if( highfd == 0 ) return 0;
     SetLastError(wsaErrno());
     return SOCKET_ERROR;
-}
-
-/***********************************************************************
- *		select			(WINSOCK.18)
- */
-INT16 WINAPI WINSOCK_select16(INT16 nfds, ws_fd_set16 *ws_readfds,
-                              ws_fd_set16 *ws_writefds, ws_fd_set16 *ws_exceptfds,
-                              struct WS_timeval* timeout)
-{
-    return (INT16)__ws_select( FALSE, ws_readfds, ws_writefds, ws_exceptfds, timeout );
-}
-
-/***********************************************************************
- *		select			(WS2_32.18)
- */
-int WINAPI WS_select(int nfds, WS_fd_set *ws_readfds,
-                     WS_fd_set *ws_writefds, WS_fd_set *ws_exceptfds,
-                     const struct WS_timeval* timeout)
-{
-    /* struct timeval is the same for both 32- and 16-bit code */
-    return (INT)__ws_select( TRUE, ws_readfds, ws_writefds, ws_exceptfds, timeout );
 }
 
 
@@ -2533,14 +2172,6 @@ error:
 }
 
 /***********************************************************************
- *              send			(WINSOCK.19)
- */
-INT16 WINAPI WINSOCK_send16(SOCKET16 s, char *buf, INT16 len, INT16 flags)
-{
-    return WS_send( s, buf, len, flags );
-}
-
-/***********************************************************************
  *		sendto		(WS2_32.20)
  */
 int WINAPI WS_sendto(SOCKET s, const char *buf, int len, int flags,
@@ -2556,15 +2187,6 @@ int WINAPI WS_sendto(SOCKET s, const char *buf, int len, int flags,
         return SOCKET_ERROR;
     else
         return n;
-}
-
-/***********************************************************************
- *              sendto		(WINSOCK.20)
- */
-INT16 WINAPI WINSOCK_sendto16(SOCKET16 s, char *buf, INT16 len, INT16 flags,
-                              struct WS_sockaddr *to, INT16 tolen)
-{
-    return (INT16)WS_sendto( s, buf, len, flags, to, tolen );
 }
 
 /***********************************************************************
@@ -2701,17 +2323,6 @@ int WINAPI WS_setsockopt(SOCKET s, int level, int optname,
 }
 
 /***********************************************************************
- *              setsockopt		(WINSOCK.21)
- */
-INT16 WINAPI WINSOCK_setsockopt16(SOCKET16 s, INT16 level, INT16 optname,
-                                  char *optval, INT16 optlen)
-{
-    if( !optval ) return SOCKET_ERROR;
-    return (INT16)WS_setsockopt( s, (UINT16)level, optname, optval, optlen );
-}
-
-
-/***********************************************************************
  *		shutdown		(WS2_32.22)
  */
 int WINAPI WS_shutdown(SOCKET s, int how)
@@ -2797,15 +2408,6 @@ error:
 }
 
 /***********************************************************************
- *              shutdown		(WINSOCK.22)
- */
-INT16 WINAPI WINSOCK_shutdown16(SOCKET16 s, INT16 how)
-{
-    return (INT16)WS_shutdown( s, how );
-}
-
-
-/***********************************************************************
  *		socket		(WS2_32.23)
  */
 SOCKET WINAPI WS_socket(int af, int type, int protocol)
@@ -2816,32 +2418,15 @@ SOCKET WINAPI WS_socket(int af, int type, int protocol)
                         (TlsGetValue(opentype_tls_index) ? 0 : WSA_FLAG_OVERLAPPED) );
 }
 
-/***********************************************************************
- *              socket		(WINSOCK.23)
- */
-SOCKET16 WINAPI WINSOCK_socket16(INT16 af, INT16 type, INT16 protocol)
-{
-    return (SOCKET16)WS_socket( af, type, protocol );
-}
-
-
-/* ----------------------------------- DNS services
- *
- * IMPORTANT: 16-bit API structures have SEGPTR pointers inside them.
- * Also, we have to use wsock32 stubs to convert structures and
- * error codes from Unix to WSA, hence there is no direct mapping in
- * the relay32/wsock32.spec.
- */
-
 
 /***********************************************************************
- *		__ws_gethostbyaddr
+ *		gethostbyaddr		(WS2_32.51)
  */
-static WIN_hostent* __ws_gethostbyaddr(const char *addr, int len, int type, int dup_flag)
+struct WS_hostent* WINAPI WS_gethostbyaddr(const char *addr, int len, int type)
 {
-    WIN_hostent *retval = NULL;
-
+    struct WS_hostent *retval = NULL;
     struct hostent* host;
+
 #ifdef HAVE_LINUX_GETHOSTBYNAME_R_6
     char *extrabuf;
     int ebufsize=1024;
@@ -2862,48 +2447,22 @@ static WIN_hostent* __ws_gethostbyaddr(const char *addr, int len, int type, int 
     host = gethostbyaddr(addr, len, type);
     if (!host) SetLastError((h_errno < 0) ? wsaErrno() : wsaHerrno(h_errno));
 #endif
-    if( host != NULL )
-    {
-        if( WS_dup_he(host, dup_flag) )
-            retval = he_buffer;
-        else
-            SetLastError(WSAENOBUFS);
-    }
+    if( host != NULL ) retval = WS_dup_he(host);
 #ifdef  HAVE_LINUX_GETHOSTBYNAME_R_6
     HeapFree(GetProcessHeap(),0,extrabuf);
 #else
     LeaveCriticalSection( &csWSgetXXXbyYYY );
 #endif
+    TRACE("ptr %p, len %d, type %d ret %p\n", addr, len, type, retval);
     return retval;
 }
 
 /***********************************************************************
- *		gethostbyaddr		(WINSOCK.51)
+ *		gethostbyname		(WS2_32.52)
  */
-SEGPTR WINAPI WINSOCK_gethostbyaddr16(const char *addr, INT16 len, INT16 type)
+struct WS_hostent* WINAPI WS_gethostbyname(const char* name)
 {
-    TRACE("ptr %p, len %d, type %d\n", addr, len, type);
-    if (!__ws_gethostbyaddr( addr, len, type, WS_DUP_SEGPTR )) return 0;
-    return he_buffer_seg;
-}
-
-/***********************************************************************
- *		gethostbyaddr		(WS2_32.51)
- */
-struct WS_hostent* WINAPI WS_gethostbyaddr(const char *addr, int len,
-                                                int type)
-{
-    TRACE("ptr %08x, len %d, type %d\n",
-                             (unsigned) addr, len, type);
-    return __ws_gethostbyaddr(addr, len, type, WS_DUP_LINEAR);
-}
-
-/***********************************************************************
- *		__ws_gethostbyname
- */
-static WIN_hostent * __ws_gethostbyname(const char *name, int dup_flag)
-{
-    WIN_hostent *retval = NULL;
+    struct WS_hostent *retval = NULL;
     struct hostent*     host;
 #ifdef  HAVE_LINUX_GETHOSTBYNAME_R_6
     char *extrabuf;
@@ -2934,54 +2493,29 @@ static WIN_hostent * __ws_gethostbyname(const char *name, int dup_flag)
     host = gethostbyname(name);
     if (!host) SetLastError((h_errno < 0) ? wsaErrno() : wsaHerrno(h_errno));
 #endif
-    if( host  != NULL )
-    {
-        if( WS_dup_he(host, dup_flag) )
-            retval = he_buffer;
-        else SetLastError(WSAENOBUFS);
-    }
+    if (host) retval = WS_dup_he(host);
 #ifdef  HAVE_LINUX_GETHOSTBYNAME_R_6
     HeapFree(GetProcessHeap(),0,extrabuf);
 #else
     LeaveCriticalSection( &csWSgetXXXbyYYY );
 #endif
+    TRACE( "%s ret %p\n", debugstr_a(name), retval );
     return retval;
 }
 
-/***********************************************************************
- *		gethostbyname		(WINSOCK.52)
- */
-SEGPTR WINAPI WINSOCK_gethostbyname16(const char *name)
-{
-    TRACE( "%s\n", debugstr_a(name) );
-    if (!__ws_gethostbyname( name, WS_DUP_SEGPTR )) return 0;
-    return he_buffer_seg;
-}
 
 /***********************************************************************
- *		gethostbyname		(WS2_32.52)
+ *		getprotobyname		(WS2_32.53)
  */
-struct WS_hostent* WINAPI WS_gethostbyname(const char* name)
+struct WS_protoent* WINAPI WS_getprotobyname(const char* name)
 {
-    TRACE( "%s\n", debugstr_a(name) );
-    return __ws_gethostbyname( name, WS_DUP_LINEAR );
-}
-
-
-/***********************************************************************
- *		__ws_getprotobyname
- */
-static WIN_protoent* __ws_getprotobyname(const char *name, int dup_flag)
-{
-    WIN_protoent* retval = NULL;
+    struct WS_protoent* retval = NULL;
 #ifdef HAVE_GETPROTOBYNAME
     struct protoent*     proto;
     EnterCriticalSection( &csWSgetXXXbyYYY );
     if( (proto = getprotobyname(name)) != NULL )
     {
-        if( WS_dup_pe(proto, dup_flag) )
-            retval = pe_buffer;
-        else SetLastError(WSAENOBUFS);
+        retval = WS_dup_pe(proto);
     }
     else {
         MESSAGE("protocol %s not found; You might want to add "
@@ -2990,43 +2524,23 @@ static WIN_protoent* __ws_getprotobyname(const char *name, int dup_flag)
     }
     LeaveCriticalSection( &csWSgetXXXbyYYY );
 #endif
+    TRACE( "%s ret %p\n", debugstr_a(name), retval );
     return retval;
 }
 
-/***********************************************************************
- *		getprotobyname		(WINSOCK.53)
- */
-SEGPTR WINAPI WINSOCK_getprotobyname16(const char *name)
-{
-    TRACE( "%s\n", debugstr_a(name) );
-    if (!__ws_getprotobyname(name, WS_DUP_SEGPTR)) return 0;
-    return pe_buffer_seg;
-}
 
 /***********************************************************************
- *		getprotobyname		(WS2_32.53)
+ *		getprotobynumber	(WS2_32.54)
  */
-struct WS_protoent* WINAPI WS_getprotobyname(const char* name)
+struct WS_protoent* WINAPI WS_getprotobynumber(int number)
 {
-    TRACE( "%s\n", debugstr_a(name) );
-    return __ws_getprotobyname(name, WS_DUP_LINEAR);
-}
-
-
-/***********************************************************************
- *		__ws_getprotobynumber
- */
-static WIN_protoent* __ws_getprotobynumber(int number, int dup_flag)
-{
-    WIN_protoent* retval = NULL;
+    struct WS_protoent* retval = NULL;
 #ifdef HAVE_GETPROTOBYNUMBER
     struct protoent*     proto;
     EnterCriticalSection( &csWSgetXXXbyYYY );
     if( (proto = getprotobynumber(number)) != NULL )
     {
-        if( WS_dup_pe(proto, dup_flag) )
-            retval = pe_buffer;
-        else SetLastError(WSAENOBUFS);
+        retval = WS_dup_pe(proto);
     }
     else {
         MESSAGE("protocol number %d not found; You might want to add "
@@ -3035,126 +2549,81 @@ static WIN_protoent* __ws_getprotobynumber(int number, int dup_flag)
     }
     LeaveCriticalSection( &csWSgetXXXbyYYY );
 #endif
+    TRACE("%i ret %p\n", number, retval);
     return retval;
 }
 
-/***********************************************************************
- *		getprotobynumber	(WINSOCK.54)
- */
-SEGPTR WINAPI WINSOCK_getprotobynumber16(INT16 number)
-{
-    TRACE("%i\n", number);
-    if (!__ws_getprotobynumber(number, WS_DUP_SEGPTR)) return 0;
-    return pe_buffer_seg;
-}
-
-/***********************************************************************
- *		getprotobynumber	(WS2_32.54)
- */
-struct WS_protoent* WINAPI WS_getprotobynumber(int number)
-{
-    TRACE("%i\n", number);
-    return __ws_getprotobynumber(number, WS_DUP_LINEAR);
-}
-
-
-/***********************************************************************
- *		__ws_getservbyname
- */
-static WIN_servent* __ws_getservbyname(const char *name, const char *proto, int dup_flag)
-{
-    WIN_servent* retval = NULL;
-    struct servent*     serv;
-    int i = wsi_strtolo( name, proto );
-
-    if( i ) {
-        EnterCriticalSection( &csWSgetXXXbyYYY );
-        serv = getservbyname(local_buffer,
-                             proto && *proto ? (local_buffer + i) : NULL);
-        if( serv != NULL )
-        {
-            if( WS_dup_se(serv, dup_flag) )
-                retval = se_buffer;
-            else SetLastError(WSAENOBUFS);
-        }
-        else {
-            MESSAGE("service %s protocol %s not found; You might want to add "
-                    "this to /etc/services\n", debugstr_a(local_buffer),
-                    proto ? debugstr_a(local_buffer+i):"*");
-            SetLastError(WSANO_DATA);
-        }
-        LeaveCriticalSection( &csWSgetXXXbyYYY );
-    }
-    else SetLastError(WSAENOBUFS);
-    return retval;
-}
-
-/***********************************************************************
- *		getservbyname		(WINSOCK.55)
- */
-SEGPTR WINAPI WINSOCK_getservbyname16(const char *name, const char *proto)
-{
-    TRACE( "%s, %s\n", debugstr_a(name), debugstr_a(proto) );
-    if (!__ws_getservbyname(name, proto, WS_DUP_SEGPTR)) return 0;
-    return se_buffer_seg;
-}
 
 /***********************************************************************
  *		getservbyname		(WS2_32.55)
  */
 struct WS_servent* WINAPI WS_getservbyname(const char *name, const char *proto)
 {
-    TRACE( "%s, %s\n", debugstr_a(name), debugstr_a(proto) );
-    return __ws_getservbyname(name, proto, WS_DUP_LINEAR);
-}
-
-
-/***********************************************************************
- *		__ws_getservbyport
- */
-static WIN_servent* __ws_getservbyport(int port, const char* proto, int dup_flag)
-{
-    WIN_servent* retval = NULL;
-#ifdef HAVE_GETSERVBYPORT
+    struct WS_servent* retval = NULL;
     struct servent*     serv;
-    if (!proto || wsi_strtolo( proto, NULL )) {
-        EnterCriticalSection( &csWSgetXXXbyYYY );
-        if( (serv = getservbyport(port, proto && *proto ? local_buffer :
-                                                          NULL)) != NULL ) {
-            if( WS_dup_se(serv, dup_flag) )
-                retval = se_buffer;
-            else SetLastError(WSAENOBUFS);
+    char *name_str;
+    char *proto_str = NULL;
+
+    if (!(name_str = strdup_lower(name))) return NULL;
+
+    if (proto && *proto)
+    {
+        if (!(proto_str = strdup_lower(proto)))
+        {
+            HeapFree( GetProcessHeap(), 0, name_str );
+            return NULL;
         }
-        else {
-            MESSAGE("service on port %lu protocol %s not found; You might want to add "
-                    "this to /etc/services\n", (unsigned long)ntohl(port),
-                    proto ? debugstr_a(local_buffer) : "*");
-            SetLastError(WSANO_DATA);
-        }
-        LeaveCriticalSection( &csWSgetXXXbyYYY );
     }
-    else SetLastError(WSAENOBUFS);
-#endif
+
+    EnterCriticalSection( &csWSgetXXXbyYYY );
+    serv = getservbyname(name_str, proto_str);
+    if( serv != NULL )
+    {
+        retval = WS_dup_se(serv);
+    }
+    else {
+        MESSAGE("service %s protocol %s not found; You might want to add "
+                "this to /etc/services\n", debugstr_a(name_str),
+                proto_str ? debugstr_a(proto_str):"*");
+        SetLastError(WSANO_DATA);
+    }
+    LeaveCriticalSection( &csWSgetXXXbyYYY );
+    if (proto_str) HeapFree( GetProcessHeap(), 0, proto_str );
+    HeapFree( GetProcessHeap(), 0, name_str );
+    TRACE( "%s, %s ret %p\n", debugstr_a(name), debugstr_a(proto), retval );
     return retval;
 }
 
-/***********************************************************************
- *		getservbyport		(WINSOCK.56)
- */
-SEGPTR WINAPI WINSOCK_getservbyport16(INT16 port, const char *proto)
-{
-    TRACE("%d (i.e. port %d), %s\n", (int)port, (int)ntohl(port), debugstr_a(proto));
-    if (!__ws_getservbyport(port, proto, WS_DUP_SEGPTR)) return 0;
-    return se_buffer_seg;
-}
 
 /***********************************************************************
  *		getservbyport		(WS2_32.56)
  */
 struct WS_servent* WINAPI WS_getservbyport(int port, const char *proto)
 {
-    TRACE("%d (i.e. port %d), %s\n", (int)port, (int)ntohl(port), debugstr_a(proto));
-    return __ws_getservbyport(port, proto, WS_DUP_LINEAR);
+    struct WS_servent* retval = NULL;
+#ifdef HAVE_GETSERVBYPORT
+    struct servent*     serv;
+    char *proto_str = NULL;
+
+    if (proto && *proto)
+    {
+        if (!(proto_str = strdup_lower(proto))) return NULL;
+    }
+    EnterCriticalSection( &csWSgetXXXbyYYY );
+    if( (serv = getservbyport(port, proto_str)) != NULL ) {
+        retval = WS_dup_se(serv);
+    }
+    else {
+        MESSAGE("service on port %lu protocol %s not found; You might want to add "
+                "this to /etc/services\n", (unsigned long)ntohl(port),
+                proto_str ? debugstr_a(proto_str) : "*");
+        SetLastError(WSANO_DATA);
+    }
+    LeaveCriticalSection( &csWSgetXXXbyYYY );
+    if (proto_str) HeapFree( GetProcessHeap(), 0, proto_str );
+#endif
+    TRACE("%d (i.e. port %d), %s ret %p\n", port, (int)ntohl(port), debugstr_a(proto), retval);
+    return retval;
 }
 
 
@@ -3173,14 +2642,6 @@ int WINAPI WS_gethostname(char *name, int namelen)
     SetLastError((errno == EINVAL) ? WSAEFAULT : wsaErrno());
     TRACE("<- ERROR !\n");
     return SOCKET_ERROR;
-}
-
-/***********************************************************************
- *              gethostname           (WINSOCK.57)
- */
-INT16 WINAPI WINSOCK_gethostname16(char *name, INT16 namelen)
-{
-    return (INT16)WS_gethostname(name, namelen);
 }
 
 
@@ -3314,27 +2775,6 @@ INT WINAPI WSAAsyncSelect(SOCKET s, HWND hWnd, UINT uMsg, LONG lEvent)
 }
 
 /***********************************************************************
- *      WSAAsyncSelect		(WINSOCK.101)
- */
-INT16 WINAPI WSAAsyncSelect16(SOCKET16 s, HWND16 hWnd, UINT16 wMsg, LONG lEvent)
-{
-    return (INT16)WSAAsyncSelect( s, HWND_32(hWnd), wMsg, lEvent );
-}
-
-/***********************************************************************
- *              WSARecvEx			(WINSOCK.1107)
- *
- * See description for WSARecvEx()
- */
-INT16     WINAPI WSARecvEx16(SOCKET16 s, char *buf, INT16 len, INT16 *flags)
-{
-  FIXME("(WSARecvEx16) partial packet return value not set \n");
-
-  return WINSOCK_recv16(s, buf, len, *flags);
-}
-
-
-/***********************************************************************
  *      WSACreateEvent          (WS2_32.31)
  *
  */
@@ -3463,20 +2903,6 @@ SOCKET WINAPI WSASocketA(int af, int type, int protocol,
 
 
 /***********************************************************************
- *	__WSAFDIsSet			(WINSOCK.151)
- */
-INT16 WINAPI __WSAFDIsSet16(SOCKET16 s, ws_fd_set16 *set)
-{
-  int i = set->fd_count;
-
-  TRACE("(%d,%8lx(%i))\n", s,(unsigned long)set, i);
-
-  while (i--)
-      if (set->fd_array[i] == s) return 1;
-  return 0;
-}
-
-/***********************************************************************
  *      __WSAFDIsSet			(WS2_32.151)
  */
 int WINAPI __WSAFDIsSet(SOCKET s, WS_fd_set *set)
@@ -3526,18 +2952,6 @@ static INT WINAPI WSA_DefaultBlockingHook( FARPROC x )
 
 
 /***********************************************************************
- *      WSASetBlockingHook		(WINSOCK.109)
- */
-FARPROC16 WINAPI WSASetBlockingHook16(FARPROC16 lpBlockFunc)
-{
-  FARPROC16 prev = (FARPROC16)blocking_hook;
-  blocking_hook = (FARPROC)lpBlockFunc;
-  TRACE("hook %p\n", lpBlockFunc);
-  return prev;
-}
-
-
-/***********************************************************************
  *      WSASetBlockingHook (WS2_32.109)
  */
 FARPROC WINAPI WSASetBlockingHook(FARPROC lpBlockFunc)
@@ -3546,16 +2960,6 @@ FARPROC WINAPI WSASetBlockingHook(FARPROC lpBlockFunc)
   blocking_hook = lpBlockFunc;
   TRACE("hook %p\n", lpBlockFunc);
   return prev;
-}
-
-
-/***********************************************************************
- *      WSAUnhookBlockingHook	(WINSOCK.110)
- */
-INT16 WINAPI WSAUnhookBlockingHook16(void)
-{
-    blocking_hook = WSA_DefaultBlockingHook;
-    return 0;
 }
 
 
@@ -3588,208 +2992,113 @@ static int list_size(char** l, int item_size)
   return j;
 }
 
-static int list_dup(char** l_src, char* ref, char* base, int item_size)
+static int list_dup(char** l_src, char** l_to, int item_size)
 {
-   /* base is either either equal to ref or 0 or SEGPTR */
+   char *p;
+   int i;
 
-   char*		p = ref;
-   char**		l_to = (char**)ref;
-   int			i,j,k;
-
-   for(j=0;l_src[j];j++) ;
-   p += (j + 1) * sizeof(char*);
-   for(i=0;i<j;i++)
-   { l_to[i] = base + (p - ref);
-     k = ( item_size ) ? item_size : strlen(l_src[i]) + 1;
-     memcpy(p, l_src[i], k); p += k; }
+   for (i = 0; l_src[i]; i++) ;
+   p = (char *)(l_to + i + 1);
+   for (i = 0; l_src[i]; i++)
+   {
+       int count = ( item_size ) ? item_size : strlen(l_src[i]) + 1;
+       memcpy(p, l_src[i], count);
+       l_to[i] = p;
+       p += count;
+   }
    l_to[i] = NULL;
-   return (p - ref);
+   return (p - (char *)l_to);
 }
 
 /* ----- hostent */
-
-static int hostent_size(struct hostent* p_he)
-{
-  int size = 0;
-  if( p_he )
-  { size  = sizeof(struct hostent);
-    size += strlen(p_he->h_name) + 1;
-    size += list_size(p_he->h_aliases, 0);
-    size += list_size(p_he->h_addr_list, p_he->h_length ); }
-  return size;
-}
 
 /* duplicate hostent entry
  * and handle all Win16/Win32 dependent things (struct size, ...) *correctly*.
  * Dito for protoent and servent.
  */
-static int WS_dup_he(struct hostent* p_he, int flag)
+static struct WS_hostent *WS_dup_he(const struct hostent* p_he)
 {
-    /* Convert hostent structure into ws_hostent so that the data fits
-     * into local_buffer. Internal pointers can be linear, SEGPTR, or
-     * relative to local_buffer depending on "flag" value. Returns size
-     * of the data copied.
-     */
+    char *p;
+    struct WS_hostent *p_to;
 
-    int size = hostent_size(p_he);
-    if( size )
-    {
-	char *p_name,*p_aliases,*p_addr,*p_base,*p;
-	char *p_to;
-	struct ws_hostent16 *p_to16;
-	struct WS_hostent *p_to32;
+    int size = (sizeof(*p_he) +
+                strlen(p_he->h_name) + 1 +
+                list_size(p_he->h_aliases, 0) +
+                list_size(p_he->h_addr_list, p_he->h_length));
 
-	check_buffer_he(size);
-	p_to = he_buffer;
-	p_to16 = he_buffer;
-	p_to32 = he_buffer;
+    if (!(p_to = check_buffer_he(size))) return NULL;
+    p_to->h_addrtype = p_he->h_addrtype;
+    p_to->h_length = p_he->h_length;
 
-	p = p_to;
-	p_base = (flag & WS_DUP_SEGPTR) ? (char*)he_buffer_seg : he_buffer;
-	p += (flag & WS_DUP_SEGPTR) ?
-	    sizeof(struct ws_hostent16) : sizeof(struct WS_hostent);
-	p_name = p;
-	strcpy(p, p_he->h_name); p += strlen(p) + 1;
-	p_aliases = p;
-	p += list_dup(p_he->h_aliases, p, p_base + (p - p_to), 0);
-	p_addr = p;
-	list_dup(p_he->h_addr_list, p, p_base + (p - p_to), p_he->h_length);
+    p = (char *)(p_to + 1);
+    p_to->h_name = p;
+    strcpy(p, p_he->h_name);
+    p += strlen(p) + 1;
 
-	if (flag & WS_DUP_SEGPTR) /* Win16 */
-	{
-	    p_to16->h_addrtype = (INT16)p_he->h_addrtype;
-	    p_to16->h_length = (INT16)p_he->h_length;
-	    p_to16->h_name = (SEGPTR)(p_base + (p_name - p_to));
-	    p_to16->h_aliases = (SEGPTR)(p_base + (p_aliases - p_to));
-	    p_to16->h_addr_list = (SEGPTR)(p_base + (p_addr - p_to));
-	    size += (sizeof(struct ws_hostent16) - sizeof(struct hostent));
-	}
-	else /* Win32 */
-	{
-	    p_to32->h_addrtype = p_he->h_addrtype;
-	    p_to32->h_length = p_he->h_length;
-	    p_to32->h_name = (p_base + (p_name - p_to));
-	    p_to32->h_aliases = (char **)(p_base + (p_aliases - p_to));
-	    p_to32->h_addr_list = (char **)(p_base + (p_addr - p_to));
-	    size += (sizeof(struct WS_hostent) - sizeof(struct hostent));
-	}
-    }
-    return size;
+    p_to->h_aliases = (char **)p;
+    p += list_dup(p_he->h_aliases, p_to->h_aliases, 0);
+
+    p_to->h_addr_list = (char **)p;
+    list_dup(p_he->h_addr_list, p_to->h_addr_list, p_he->h_length);
+    return p_to;
 }
 
 /* ----- protoent */
 
-static int protoent_size(struct protoent* p_pe)
+static struct WS_protoent *WS_dup_pe(const struct protoent* p_pe)
 {
-  int size = 0;
-  if( p_pe )
-  { size  = sizeof(struct protoent);
-    size += strlen(p_pe->p_name) + 1;
-    size += list_size(p_pe->p_aliases, 0); }
-  return size;
-}
+    char *p;
+    struct WS_protoent *p_to;
 
-static int WS_dup_pe(struct protoent* p_pe, int flag)
-{
-    int size = protoent_size(p_pe);
-    if( size )
-    {
-	char *p_to;
-	struct ws_protoent16 *p_to16;
-	struct WS_protoent *p_to32;
-	char *p_name,*p_aliases,*p_base,*p;
+    int size = (sizeof(*p_pe) +
+                strlen(p_pe->p_name) + 1 +
+                list_size(p_pe->p_aliases, 0));
 
-	check_buffer_pe(size);
-	p_to = pe_buffer;
-	p_to16 = pe_buffer;
-	p_to32 = pe_buffer;
-	p = p_to;
-	p_base = (flag & WS_DUP_SEGPTR) ? (char*)pe_buffer_seg : pe_buffer;
-	p += (flag & WS_DUP_SEGPTR) ?
-	    sizeof(struct ws_protoent16) : sizeof(struct WS_protoent);
-	p_name = p;
-	strcpy(p, p_pe->p_name); p += strlen(p) + 1;
-	p_aliases = p;
-	list_dup(p_pe->p_aliases, p, p_base + (p - p_to), 0);
+    if (!(p_to = check_buffer_pe(size))) return NULL;
+    p_to->p_proto = p_pe->p_proto;
 
-	if (flag & WS_DUP_SEGPTR) /* Win16 */
-	{
-	    p_to16->p_proto = (INT16)p_pe->p_proto;
-	    p_to16->p_name = (SEGPTR)(p_base) + (p_name - p_to);
-	    p_to16->p_aliases = (SEGPTR)((p_base) + (p_aliases - p_to));
-	    size += (sizeof(struct ws_protoent16) - sizeof(struct protoent));
-	}
-	else /* Win32 */
-	{
-	    p_to32->p_proto = p_pe->p_proto;
-	    p_to32->p_name = (p_base) + (p_name - p_to);
-	    p_to32->p_aliases = (char **)((p_base) + (p_aliases - p_to));
-	    size += (sizeof(struct WS_protoent) - sizeof(struct protoent));
-	}
-    }
-    return size;
+    p = (char *)(p_to + 1);
+    p_to->p_name = p;
+    strcpy(p, p_pe->p_name);
+    p += strlen(p) + 1;
+
+    p_to->p_aliases = (char **)p;
+    list_dup(p_pe->p_aliases, p_to->p_aliases, 0);
+    return p_to;
 }
 
 /* ----- servent */
 
-static int servent_size(struct servent* p_se)
+static struct WS_servent *WS_dup_se(const struct servent* p_se)
 {
-  int size = 0;
-  if( p_se )
-  { size += sizeof(struct servent);
-    size += strlen(p_se->s_proto) + strlen(p_se->s_name) + 2;
-    size += list_size(p_se->s_aliases, 0); }
-  return size;
-}
+    char *p;
+    struct WS_servent *p_to;
 
-static int WS_dup_se(struct servent* p_se, int flag)
-{
-    int size = servent_size(p_se);
-    if( size )
-    {
-	char *p_name,*p_aliases,*p_proto,*p_base,*p;
-	char *p_to;
-	struct ws_servent16 *p_to16;
-	struct WS_servent *p_to32;
+    int size = (sizeof(*p_se) +
+                strlen(p_se->s_proto) + 1 +
+                strlen(p_se->s_name) + 1 +
+                list_size(p_se->s_aliases, 0));
 
-	check_buffer_se(size);
-	p_to = se_buffer;
-	p_to16 = se_buffer;
-	p_to32 = se_buffer;
-	p = p_to;
-	p_base = (flag & WS_DUP_SEGPTR) ? (char*)se_buffer_seg : se_buffer;
-	p += (flag & WS_DUP_SEGPTR) ?
-	    sizeof(struct ws_servent16) : sizeof(struct WS_servent);
-	p_name = p;
-	strcpy(p, p_se->s_name); p += strlen(p) + 1;
-	p_proto = p;
-	strcpy(p, p_se->s_proto); p += strlen(p) + 1;
-	p_aliases = p;
-	list_dup(p_se->s_aliases, p, p_base + (p - p_to), 0);
+    if (!(p_to = check_buffer_se(size))) return NULL;
+    p_to->s_port = p_se->s_port;
 
-	if (flag & WS_DUP_SEGPTR) /* Win16 */
-	{
-	    p_to16->s_port = (INT16)p_se->s_port;
-	    p_to16->s_name = (SEGPTR)(p_base + (p_name - p_to));
-	    p_to16->s_proto = (SEGPTR)(p_base + (p_proto - p_to));
-	    p_to16->s_aliases = (SEGPTR)(p_base + (p_aliases - p_to));
-	    size += (sizeof(struct ws_servent16) - sizeof(struct servent));
-	}
-	else /* Win32 */
-	{
-	    p_to32->s_port = p_se->s_port;
-	    p_to32->s_name = (p_base + (p_name - p_to));
-	    p_to32->s_proto = (p_base + (p_proto - p_to));
-	    p_to32->s_aliases = (char **)(p_base + (p_aliases - p_to));
-	    size += (sizeof(struct WS_servent) - sizeof(struct servent));
-	}
-    }
-    return size;
+    p = (char *)(p_to + 1);
+    p_to->s_name = p;
+    strcpy(p, p_se->s_name);
+    p += strlen(p) + 1;
+
+    p_to->s_proto = p;
+    strcpy(p, p_se->s_proto);
+    p += strlen(p) + 1;
+
+    p_to->s_aliases = (char **)p;
+    list_dup(p_se->s_aliases, p_to->s_aliases, 0);
+    return p_to;
 }
 
 /* ----------------------------------- error handling */
 
-UINT16 wsaErrno(void)
+UINT wsaErrno(void)
 {
     int	loc_errno = errno;
     WARN("errno %d, (%s).\n", loc_errno, strerror(loc_errno));
@@ -3860,7 +3169,7 @@ UINT16 wsaErrno(void)
     }
 }
 
-UINT16 wsaHerrno(int loc_errno)
+UINT wsaHerrno(int loc_errno)
 {
 
     WARN("h_errno %d.\n", loc_errno);
