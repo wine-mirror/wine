@@ -781,8 +781,8 @@ MMRESULT WINAPI acmFormatTagEnumW(HACMDRIVER had, PACMFORMATTAGDETAILSW paftd,
 			bPcmDone = TRUE;
 		    }
 		    if (!(fnCallback)((HACMDRIVERID)padid, paftd, dwInstance, padid->fdwSupport)) {
-			padid = NULL; /* to exist the two nested for loops */
-			break;
+                        acmDriverClose(had, 0);
+                        return MMSYSERR_NOERROR;
 		    }
 		}
 	    }
