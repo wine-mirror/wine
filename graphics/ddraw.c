@@ -1,6 +1,6 @@
 /*		DirectDraw using DGA or Xlib(XSHM)
  *
- * Copyright 1997,1998 Marcus Meissner
+ * Copyright 1997-1999 Marcus Meissner
  * Copyright 1998 Lionel Ulmer (most of Direct3D stuff)
  */
 /* XF86DGA:
@@ -682,21 +682,20 @@ static void Xlib_copy_surface_on_screen(IDirectDrawSurface4Impl* This) {
 static HRESULT WINAPI Xlib_IDirectDrawSurface4Impl_Unlock(
 	LPDIRECTDRAWSURFACE4 iface,LPVOID surface)
 {
-        ICOM_THIS(IDirectDrawSurface4Impl,iface);
-	TRACE("(%p)->Unlock(%p)\n",This,surface);
-  
-	if (!This->s.ddraw->d.paintable)
-		return DD_OK;
+    ICOM_THIS(IDirectDrawSurface4Impl,iface);
+    TRACE("(%p)->Unlock(%p)\n",This,surface);
 
-  /* Only redraw the screen when unlocking the buffer that is on screen */
-	if (This->t.xlib.image && (SDDSCAPS(This) & DDSCAPS_VISIBLE)) {
-	  Xlib_copy_surface_on_screen(This);
-	  
-	if (This->s.palette && This->s.palette->cm)
-		TSXSetWindowColormap(display,This->s.ddraw->d.drawable,This->s.palette->cm);
-	}
-
+    if (!This->s.ddraw->d.paintable)
 	return DD_OK;
+
+    /* Only redraw the screen when unlocking the buffer that is on screen */
+    if (This->t.xlib.image && (SDDSCAPS(This) & DDSCAPS_VISIBLE)) {
+	Xlib_copy_surface_on_screen(This);
+
+	if (This->s.palette && This->s.palette->cm)
+	    TSXSetWindowColormap(display,This->s.ddraw->d.drawable,This->s.palette->cm);
+    }
+    return DD_OK;
 }
 
 static IDirectDrawSurface4Impl* _common_find_flipto(
@@ -740,24 +739,7 @@ static IDirectDrawSurface4Impl* _common_find_flipto(
 	    if (!flipto)
 		flipto = This;
 	}
-    }
-    /* clear all front and backbuffers */
-    for (i=0;i<chain->nrofsurfaces;i++)
-    	SDDSCAPS(chain->surfaces[i])&=~(DDSCAPS_FRONTBUFFER|DDSCAPS_BACKBUFFER);
-    /* set current backbuffer to frontbuffer */
-    SDDSCAPS(flipto) |= DDSCAPS_FRONTBUFFER;
-    SDDSCAPS(flipto) &= ~DDSCAPS_BACKBUFFER;
-
-    /* find next backbuffer starting from current frontbuffer */
-    for (i=0;i<chain->nrofsurfaces;i++)
-    	if (chain->surfaces[i]==flipto)
-	    break;
-    for (j=i+1;j<i+chain->nrofsurfaces+1;j++) {
-    	int k = j%chain->nrofsurfaces;
-    	if (SDDSCAPS(chain->surfaces[k]) & DDSCAPS_FLIP) {
-	    SDDSCAPS(chain->surfaces[k])|= DDSCAPS_BACKBUFFER;
-	    break;
-	}
+	TRACE("flipping to %p\n",flipto);
     }
     return flipto;
 }
@@ -768,6 +750,8 @@ static HRESULT WINAPI DGA_IDirectDrawSurface4Impl_Flip(
 ) {
     ICOM_THIS(IDirectDrawSurface4Impl,iface);
     IDirectDrawSurface4Impl* iflipto=(IDirectDrawSurface4Impl*)flipto;
+    DWORD	xheight;
+    LPBYTE	surf;
 
     TRACE("(%p)->Flip(%p,%08lx)\n",This,iflipto,dwFlags);
     iflipto = _common_find_flipto(This,iflipto);
@@ -779,6 +763,18 @@ static HRESULT WINAPI DGA_IDirectDrawSurface4Impl_Flip(
     while (!TSXF86DGAViewPortChanged(display,DefaultScreen(display),2)) {
 
     }
+    /* We need to switch the lowlevel surfaces, for DGA this is: */
+
+    /* The height within the framebuffer */
+    xheight			= This->t.dga.fb_height;
+    This->t.dga.fb_height	= iflipto->t.dga.fb_height;
+    iflipto->t.dga.fb_height	= xheight;
+
+    /* And the assciated surface pointer */
+    surf				= This->s.surface_desc.y.lpSurface;
+    This->s.surface_desc.y.lpSurface	= iflipto->s.surface_desc.y.lpSurface;
+    iflipto->s.surface_desc.y.lpSurface	= surf;
+
     return DD_OK;
 }
 #endif /* defined(HAVE_LIBXXF86DGA) */
@@ -787,12 +783,14 @@ static HRESULT WINAPI Xlib_IDirectDrawSurface4Impl_Flip(
 	LPDIRECTDRAWSURFACE4 iface,LPDIRECTDRAWSURFACE4 flipto,DWORD dwFlags
 ) {
     ICOM_THIS(IDirectDrawSurface4Impl,iface);
+    XImage	*image;
+    LPBYTE	surf;
     IDirectDrawSurface4Impl* iflipto=(IDirectDrawSurface4Impl*)flipto;
-    TRACE("(%p)->Flip(%p,%08lx)\n",This,iflipto,dwFlags);
 
+    TRACE("(%p)->Flip(%p,%08lx)\n",This,iflipto,dwFlags);
     iflipto = _common_find_flipto(This,iflipto);
 
-#ifdef HAVE_MESAGL
+#if defined(HAVE_MESAGL) && 0 /* does not work */
 	if (This->s.d3d_device || (iflipto && iflipto->s.d3d_device)) {
 	  TRACE(" - OpenGL flip\n");
 	  ENTER_GL();
@@ -807,6 +805,17 @@ static HRESULT WINAPI Xlib_IDirectDrawSurface4Impl_Flip(
 	    return DD_OK;
 
     Xlib_copy_surface_on_screen(iflipto);
+
+    /* We need to switch the lowlevel surfaces, for xlib this is: */
+    /* The surface pointer */
+    surf				= This->s.surface_desc.y.lpSurface;
+    This->s.surface_desc.y.lpSurface	= iflipto->s.surface_desc.y.lpSurface;
+    iflipto->s.surface_desc.y.lpSurface	= surf;
+    /* the associated ximage */
+    image				= This->t.xlib.image;
+    This->t.xlib.image			= iflipto->t.xlib.image;
+    iflipto->t.xlib.image		= image;
+
     if (iflipto->s.palette && iflipto->s.palette->cm)
 	TSXSetWindowColormap(display,This->s.ddraw->d.drawable,iflipto->s.palette->cm);
     return DD_OK;
