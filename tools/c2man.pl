@@ -183,7 +183,7 @@ sub parse_source
     }
     elsif ($state == 3) {
         #extract the wine API name and DLLNAME.XXX string
-        if ( / *([A-Za-z_0-9]+) *\(([A-Za-z0-9_]+\.[0-9]+)\) *$/ ) {
+        if ( / *([A-Za-z_0-9]+) *\(([A-Za-z0-9_]+\.(([0-9]+)|@))\) *$/ ) {
             $apiname = $1;
             $apientry = $2;
             $state = 1;
@@ -254,7 +254,7 @@ sub parse_spec
         if( /^rsrc/ ) { next; }
         if( /^import/ ) { next; }
         if( /^\s*$/ ) { next; }
-        if( /^\s*([0-9]+)/ ) {
+        if( /^\s*(([0-9]+)|@)/ ) {
             s/\(.*\)//; #remove all the args
             ($ord,$type,$name,$func) = split( /\s+/ );
             if(( $type eq "stub" ) || ($type eq "forward")) {next;}
