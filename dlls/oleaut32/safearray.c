@@ -4,6 +4,7 @@
  * This file contains the implementation of the SafeArray functions.
  *
  * Copyright 1999 Sylvain St-Germain
+ * Copyright 2002-2003 Marcus Meissner
  * Copyright 2003 Jon Griffiths
  *
  * This library is free software; you can redistribute it and/or
@@ -84,9 +85,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(ole);
 /* Undocumented hidden space before the start of a SafeArray descriptor */
 #define SAFEARRAY_HIDDEN_SIZE sizeof(GUID)
 
-/* Value returned by SAFEARRAY_GetCellCount if a dimension is invalid */
-#define SAFEARRAY_INVALID_CELLS ~0UL
-
 /* Allocate memory */
 static inline LPVOID SAFEARRAY_Malloc(ULONG ulSize)
 {
@@ -162,11 +160,9 @@ static ULONG SAFEARRAY_GetCellCount(const SAFEARRAY *psa)
 
   while (cCount--)
   {
+    /* This is a valid bordercase. See testcases. -Marcus */
     if (!psab->cElements)
-    {
-      ERR("Dimension has size=0! Please report.\n");
-      return SAFEARRAY_INVALID_CELLS;
-    }
+      return 0;
     ulNumCells *= psab->cElements;
     psab++;
   }
@@ -263,7 +259,7 @@ static SAFEARRAY* SAFEARRAY_CreateVector(VARTYPE vt, LONG lLbound, ULONG cElemen
 {
   SAFEARRAY *psa = NULL;
 
-  if (cElements && (vt == VT_RECORD || ulSize))
+  if (ulSize || (vt == VT_RECORD))
   {
     /* Allocate the header and data together */
     if (SUCCEEDED(SAFEARRAY_AllocDescriptor(sizeof(SAFEARRAY) + ulSize * cElements, &psa)))
@@ -286,10 +282,6 @@ static SAFEARRAY* SAFEARRAY_CreateVector(VARTYPE vt, LONG lLbound, ULONG cElemen
       }
     }
   }
-  else if (!cElements)
-  {
-    ERR("Creating vector of size 0! Please report.\n");
-  }
   return psa;
 }
 
@@ -300,8 +292,10 @@ static HRESULT SAFEARRAY_DestroyData(SAFEARRAY *psa, ULONG ulStartCell)
   {
     ULONG ulCellCount = SAFEARRAY_GetCellCount(psa);
 
-    if (ulCellCount == SAFEARRAY_INVALID_CELLS || ulStartCell > ulCellCount)
+    if (ulStartCell > ulCellCount) {
+      FIXME("unexpted ulcellcount %ld, start %ld\n",ulCellCount,ulStartCell);
       return E_UNEXPECTED;
+    }
 
     ulCellCount -= ulStartCell;
 
@@ -364,9 +358,6 @@ static HRESULT SAFEARRAY_CopyData(SAFEARRAY *psa, SAFEARRAY *dest)
   else
   {
     ULONG ulCellCount = SAFEARRAY_GetCellCount(psa);
-
-    if (ulCellCount == SAFEARRAY_INVALID_CELLS)
-      return E_UNEXPECTED;
 
     dest->fFeatures = (dest->fFeatures & FADF_CREATEVECTOR) |
                       (psa->fFeatures & ~(FADF_CREATEVECTOR|FADF_DATADELETED));
@@ -554,7 +545,7 @@ HRESULT WINAPI SafeArrayAllocData(SAFEARRAY *psa)
 
     hRet = E_OUTOFMEMORY;
 
-    if (ulSize != SAFEARRAY_INVALID_CELLS && psa->cbElements)
+    if (psa->cbElements)
     {
       psa->pvData = SAFEARRAY_Malloc(ulSize * psa->cbElements);
 
@@ -888,15 +879,15 @@ HRESULT WINAPI SafeArrayPutElement(SAFEARRAY *psa, LONG *rgIndices, void *pvData
       }
       else if (psa->fFeatures & FADF_BSTR)
       {
-        BSTR* lpBstr = (BSTR*)pvData;
+        BSTR  lpBstr = (BSTR)pvData;
         BSTR* lpDest = (BSTR*)lpvDest;
 
         if (*lpDest)
          SysFreeString(*lpDest);
 
-        if (*lpBstr)
+        if (lpBstr)
         {
-          *lpDest = SysAllocStringLen(*lpBstr, SysStringLen(*lpBstr));
+          *lpDest = SysAllocStringLen(lpBstr, SysStringLen(lpBstr));
           if (!*lpDest)
             hRet = E_OUTOFMEMORY;
         }
@@ -907,16 +898,18 @@ HRESULT WINAPI SafeArrayPutElement(SAFEARRAY *psa, LONG *rgIndices, void *pvData
       {
         if (psa->fFeatures & (FADF_UNKNOWN|FADF_DISPATCH))
         {
-          LPUNKNOWN *lpUnknown = (LPUNKNOWN *)pvData;
+          LPUNKNOWN  lpUnknown = (LPUNKNOWN)pvData;
           LPUNKNOWN *lpDest = (LPUNKNOWN *)lpvDest;
 
-          if (*lpUnknown)
-            IUnknown_AddRef(*lpUnknown);
+          if (lpUnknown)
+            IUnknown_AddRef(lpUnknown);
           if (*lpDest)
             IUnknown_Release(*lpDest);
-        }
-        /* Copy the data over */
-        memcpy(lpvDest, pvData, psa->cbElements);
+	  *lpDest = lpUnknown;
+        } else {
+          /* Copy the data over */
+          memcpy(lpvDest, pvData, psa->cbElements);
+	}
       }
     }
     SafeArrayUnlock(psa);
@@ -1024,7 +1017,7 @@ HRESULT WINAPI SafeArrayGetUBound(SAFEARRAY *psa, UINT nDim, LONG *plUbound)
   if (!psa || !plUbound)
     return E_INVALIDARG;
 
-  if(!nDim || nDim > psa->cDims || !psa->rgsabound[nDim - 1].cElements)
+  if(!nDim || nDim > psa->cDims)
     return DISP_E_BADINDEX;
 
   *plUbound = psa->rgsabound[nDim - 1].lLbound +
@@ -1057,7 +1050,7 @@ HRESULT WINAPI SafeArrayGetLBound(SAFEARRAY *psa, UINT nDim, LONG *plLbound)
   if (!psa || !plLbound)
     return E_INVALIDARG;
 
-  if(!nDim || nDim > psa->cDims || !psa->rgsabound[nDim - 1].cElements)
+  if(!nDim || nDim > psa->cDims)
     return DISP_E_BADINDEX;
 
   *plLbound = psa->rgsabound[nDim - 1].lLbound;
@@ -1436,7 +1429,7 @@ HRESULT WINAPI SafeArrayRedim(SAFEARRAY *psa, SAFEARRAYBOUND *psabound)
 
   TRACE("(%p,%p)\n", psa, psabound);
   
-  if (!psa || psa->fFeatures & FADF_FIXEDSIZE || !psabound || !psabound->cElements)
+  if (!psa || psa->fFeatures & FADF_FIXEDSIZE || !psabound)
     return E_INVALIDARG;
 
   if (psa->cLocks > 0)
@@ -1465,10 +1458,16 @@ HRESULT WINAPI SafeArrayRedim(SAFEARRAY *psa, SAFEARRAYBOUND *psabound)
       PVOID pvNewData;
 
       ulOldSize = SAFEARRAY_GetCellCount(psa);
-      ulNewSize = (ulOldSize / oldBounds->cElements) * psabound->cElements;
+      if (ulOldSize)
+        ulNewSize = (ulOldSize / oldBounds->cElements) * psabound->cElements;
+      else {
+	int oldelems = oldBounds->cElements;
+	oldBounds->cElements = psabound->cElements;
+        ulNewSize = SAFEARRAY_GetCellCount(psa);
+	oldBounds->cElements = oldelems;
+      }
 
-      if (ulOldSize == SAFEARRAY_INVALID_CELLS ||
-          !(pvNewData = SAFEARRAY_Malloc(ulNewSize)))
+      if (!(pvNewData = SAFEARRAY_Malloc(ulNewSize)))
       {
         SafeArrayUnlock(psa);
         return E_UNEXPECTED;

@@ -251,6 +251,34 @@ static void test_safearray(void)
 	a = SafeArrayCreate(-1, 1, &bound);
 	ok(NULL == a,"SAC(-1,1,[1,0]) not failed?\n");
 
+	bound.cElements	= 0;
+	bound.lLbound	= 42;
+	a = SafeArrayCreate(VT_I4, 1, &bound);
+	ok(NULL != a,"SAC(VT_I4,1,[0,0]) failed.\n");
+
+        hres = SafeArrayGetLBound(a, 1, &l);
+	ok(hres == S_OK, "SAGLB of 0 size dimensioned array failed with %lx\n",hres);
+	ok(l == 42, "SAGLB of 0 size dimensioned array failed to return 42, but returned %ld\n",l);
+        hres = SafeArrayGetUBound(a, 1, &l);
+	ok(hres == S_OK, "SAGUB of 0 size dimensioned array failed with %lx\n",hres);
+	ok(l == 41, "SAGUB of 0 size dimensioned array failed to return 41, but returned %ld\n",l);
+	bound.cElements = 2;
+        hres = SafeArrayRedim(a, &bound);
+	ok(hres == S_OK,"SAR of a 0 elements dimension failed with hres %lx\n", hres);
+	bound.cElements = 0;
+        hres = SafeArrayRedim(a, &bound);
+	ok(hres == S_OK,"SAR to a 0 elements dimension failed with hres %lx\n", hres);
+	hres = SafeArrayDestroy(a);
+	ok(hres == S_OK,"SAD of 0 dim array faild with hres %lx\n", hres);
+
+	bounds[0].cElements = 0;	bounds[0].lLbound =  1;
+	bounds[1].cElements =  2;	bounds[1].lLbound = 23;
+    	a = SafeArrayCreate(VT_I4,2,bounds);
+    	ok(a != NULL,"SAC(VT_INT32,2,...) with 0 element dim failed.\n");
+	bounds[0].cElements = 1;	bounds[0].lLbound =  1;
+	bounds[1].cElements = 0;	bounds[1].lLbound = 23;
+    	a = SafeArrayCreate(VT_I4,2,bounds);
+    	ok(a != NULL,"SAC(VT_INT32,2,...) with 0 element dim failed.\n");
 
 	bounds[0].cElements = 42;	bounds[0].lLbound =  1;
 	bounds[1].cElements =  2;	bounds[1].lLbound = 23;
@@ -689,14 +717,8 @@ static void test_VectorCreateLockDestroy(void)
   VARTYPE vt;
   int element;
 
-#if 0
-  /* Native allows you to to create 0 sized vectors. Its an ERR in Wine, lets
-   * see if anyone reports it before supporting this brain damage. Actually
-   * using the returned array just crashes in native anyway.
-   */
   sa = SafeArrayCreateVector(VT_UI1, 0, 0);
-  ok(sa == NULL, "0 elements didn't fail\n");
-#endif
+  ok(sa != NULL, "SACV with 0 elements failed.\n");
 
   /* Test all VARTYPES in different lengths */
   for (element = 1; element <= 101; element += 10)
@@ -920,6 +942,101 @@ static void test_SafeArrayGetPutElement(void)
     }
   }
   SafeArrayDestroy(sa);
+}
+
+static void test_SafeArrayGetPutElement_BSTR(void)
+{
+  SAFEARRAYBOUND sab;
+  LONG indices[1];
+  SAFEARRAY *sa;
+  HRESULT hres;
+  BSTR value = 0, gotvalue;
+  const OLECHAR szTest[5] = { 'T','e','s','t','\0' };
+
+  sab.lLbound = 1;
+  sab.cElements = 1;
+
+  sa = SafeArrayCreate(VT_BSTR, 1, &sab);
+  ok(sa != NULL, "BSTR test couldn't create array\n");
+  if (!sa)
+    return;
+
+  ok(sa->cbElements == sizeof(BSTR), "BSTR size mismatch\n");
+  if (sa->cbElements != sizeof(BSTR))
+    return;
+
+  indices[0] = sab.lLbound;
+  value = SysAllocString(szTest);
+  ok (value != NULL, "Expected non-NULL\n");
+  hres = SafeArrayPutElement(sa, indices, value);
+  ok(hres == S_OK, "Failed to put bstr element hres 0x%lx\n", hres);
+  gotvalue = NULL;
+  hres = SafeArrayGetElement(sa, indices, &gotvalue);
+  ok(hres == S_OK, "Failed to get bstr element at hres 0x%lx\n", hres);
+  if (hres == S_OK)
+    ok(SysStringLen(value) == SysStringLen(gotvalue), "Got len %d instead of %d\n", SysStringLen(gotvalue), SysStringLen(value));
+  SafeArrayDestroy(sa);
+}
+
+static int tunk_xref = 0;
+static HRESULT WINAPI tunk_QueryInterface(LPUNKNOWN punk,REFIID riid, LPVOID *x) {
+	return E_FAIL;
+}
+static ULONG WINAPI tunk_AddRef(LPUNKNOWN punk) {
+	return ++tunk_xref;
+}
+
+static ULONG WINAPI tunk_Release(LPUNKNOWN punk) {
+	return --tunk_xref;
+}
+
+static ICOM_VTABLE(IUnknown) xtunk_vtbl = {
+	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
+	tunk_QueryInterface,
+	tunk_AddRef,
+	tunk_Release
+};
+
+static struct xtunk_iface {
+	ICOM_VTABLE(IUnknown)	*lpvtbl;
+} xtunk_iface;
+
+
+static void test_SafeArrayGetPutElement_IUnknown(void)
+{
+  SAFEARRAYBOUND sab;
+  LONG indices[1];
+  SAFEARRAY *sa;
+  HRESULT hres;
+  LPUNKNOWN value = 0, gotvalue;
+
+  sab.lLbound = 1;
+  sab.cElements = 1;
+  sa = SafeArrayCreate(VT_UNKNOWN, 1, &sab);
+  ok(sa != NULL, "UNKNOWN test couldn't create array\n");
+  if (!sa)
+    return;
+
+  ok(sa->cbElements == sizeof(LPUNKNOWN), "LPUNKNOWN size mismatch\n");
+  if (sa->cbElements != sizeof(LPUNKNOWN))
+    return;
+
+  indices[0] = sab.lLbound;
+  xtunk_iface.lpvtbl = &xtunk_vtbl;
+  value = (LPUNKNOWN)&xtunk_iface;
+  tunk_xref = 1;
+  ok (value != NULL, "Expected non-NULL\n");
+  hres = SafeArrayPutElement(sa, indices, value);
+  ok(hres == S_OK, "Failed to put bstr element hres 0x%lx\n", hres);
+  ok(tunk_xref == 2,"Failed to increment refcount of iface.\n");
+  gotvalue = NULL;
+  hres = SafeArrayGetElement(sa, indices, &gotvalue);
+  ok(tunk_xref == 3,"Failed to increment refcount of iface.\n");
+  ok(hres == S_OK, "Failed to get bstr element at hres 0x%lx\n", hres);
+  if (hres == S_OK)
+    ok(value == gotvalue, "Got %p instead of %p\n", gotvalue, value);
+  SafeArrayDestroy(sa);
+  ok(tunk_xref == 2,"Failed to decrement refcount of iface.\n");
 }
 
 static void test_SafeArrayCopyData(void)
@@ -1346,4 +1463,6 @@ START_TEST(safearray)
     test_SafeArrayCreateEx();
     test_SafeArrayCopyData();
     test_SafeArrayGetPutElement();
+    test_SafeArrayGetPutElement_BSTR();
+    test_SafeArrayGetPutElement_IUnknown();
 }
