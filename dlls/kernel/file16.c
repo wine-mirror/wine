@@ -123,7 +123,7 @@ HFILE16 WINAPI OpenFile16( LPCSTR name, OFSTRUCT *ofs, UINT16 mode )
     HANDLE handle;
     FILETIME filetime;
     WORD filedatetime[2];
-    char *p, *filename;
+    const char *p, *filename;
 
     if (!ofs) return HFILE_ERROR;
 
@@ -183,7 +183,7 @@ HFILE16 WINAPI OpenFile16( LPCSTR name, OFSTRUCT *ofs, UINT16 mode )
     {
         /* If OF_SEARCH is set, ignore the given path */
 
-        filename = ofs->szPathName;
+        filename = name;
         if ((mode & OF_SEARCH) && !(mode & OF_REOPEN))
         {
             /* First try the file name as is */
@@ -476,6 +476,7 @@ UINT16 WINAPI GetDriveType16( UINT16 drive ) /* [in] number (NOT letter) of driv
     root[2] = 0;
     type = GetDriveTypeW( root );
     if (type == DRIVE_CDROM) type = DRIVE_REMOTE;
+    else if (type == DRIVE_NO_ROOT_DIR) type = DRIVE_UNKNOWN;
     return type;
 }
 
