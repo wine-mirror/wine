@@ -1074,7 +1074,6 @@
 
 # signal handling
 @ cdecl __wine_set_signal_handler(long ptr)
-@ cdecl -norelay -i386 __wine_set_signal_fs(long)
 
 ################################################################
 # Wine dll separation hacks, these will go away, don't use them

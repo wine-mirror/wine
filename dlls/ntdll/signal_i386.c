@@ -150,14 +150,14 @@ __ASM_GLOBAL_FUNC(vm86_enter,
                   "pushl %ebx\n\t"
                   "movl $1,%ebx\n\t"    /*VM86_ENTER*/
                   "pushl %ecx\n\t"      /* put vm86plus_struct ptr somewhere we can find it */
-                  "pushl %gs\n\t"
                   "pushl %fs\n\t"
+                  "pushl %gs\n\t"
                   "int $0x80\n"
                   ".globl " __ASM_NAME("vm86_return") "\n\t"
                   __ASM_FUNC("vm86_return") "\n"
                   __ASM_NAME("vm86_return") ":\n\t"
-                  "popl %fs\n\t"
                   "popl %gs\n\t"
+                  "popl %fs\n\t"
                   "popl %ecx\n\t"
                   "popl %ebx\n\t"
                   "popl %ebp\n\t"
@@ -418,8 +418,6 @@ static wine_signal_handler handlers[256];
 extern void WINAPI EXC_RtlRaiseException( PEXCEPTION_RECORD, PCONTEXT );
 extern void DECLSPEC_NORETURN __wine_call_from_32_restore_regs( CONTEXT context );
 
-/* Global variable to save the thread %fs register while in 16-bit code (FIXME) */
-static unsigned int signal_fs;
 
 /***********************************************************************
  *           dispatch_signal
@@ -467,6 +465,19 @@ static inline int get_error_code( const SIGCONTEXT *sigcontext )
 static inline void *get_signal_stack(void)
 {
     return (char *)NtCurrentTeb() + 4096;
+}
+
+
+/***********************************************************************
+ *           get_current_teb
+ *
+ * Get the current teb based on the stack pointer.
+ */
+static inline TEB *get_current_teb(void)
+{
+    unsigned long esp;
+    __asm__("movl %%esp,%0" : "=g" (esp) );
+    return (TEB *)((esp & ~4095) - 4096);
 }
 
 
@@ -526,171 +537,6 @@ static void restore_vm86_context( const CONTEXT *context, struct vm86plus_struct
 
 typedef void (WINAPI *raise_func)( EXCEPTION_RECORD *rec, CONTEXT *context );
 
-/***********************************************************************
- *           save_context
- *
- * Set the register values from a sigcontext.
- */
-static void save_context( CONTEXT *context, const SIGCONTEXT *sigcontext )
-{
-    /* get %fs and %gs at time of the fault */
-#ifdef FS_sig
-    context->SegFs = LOWORD(FS_sig(sigcontext));
-#else
-    context->SegFs = wine_get_fs();
-#endif
-#ifdef GS_sig
-    context->SegGs = LOWORD(GS_sig(sigcontext));
-#else
-    context->SegGs = wine_get_gs();
-#endif
-
-    /* now restore a proper %fs for the fault handler */
-    if (!IS_SELECTOR_SYSTEM(CS_sig(sigcontext)) ||
-        !IS_SELECTOR_SYSTEM(SS_sig(sigcontext)))  /* 16-bit mode */
-    {
-        /*
-         * Win16 or DOS protected mode. Note that during switch 
-         * from 16-bit mode to linear mode, CS may be set to system 
-         * segment before FS is restored. Fortunately, in this case 
-         * SS is still non-system segment. This is why both CS and SS
-         * are checked.
-         */
-        wine_set_fs( signal_fs );
-        wine_set_gs( NtCurrentTeb()->gs_sel );
-    }
-#ifdef __HAVE_VM86
-    else if ((void *)EIP_sig(sigcontext) == vm86_return)  /* vm86 mode */
-    {
-        unsigned int *stack = (unsigned int *)ESP_sig(sigcontext);
-
-        /* fetch the saved %fs on the stack */
-        wine_set_fs( stack[0] );
-        wine_set_gs( stack[1] );
-        if (EAX_sig(sigcontext) == VM86_EAX) {
-            /* retrieve pointer to vm86plus struct that was stored in vm86_enter
-             * (but we could also get if from teb->vm86_ptr) */
-            struct vm86plus_struct *vm86 = (struct vm86plus_struct *)stack[2];
-            /* get context from vm86 struct */
-            save_vm86_context( context, vm86 );
-            return;
-        }
-    }
-#endif  /* __HAVE_VM86 */
-    else  /* 32-bit mode */
-    {
-#ifdef FS_sig
-        wine_set_fs( FS_sig(sigcontext) );
-#endif
-#ifdef GS_sig
-        wine_set_gs( GS_sig(sigcontext) );
-#endif
-    }
-
-    context->Eax    = EAX_sig(sigcontext);
-    context->Ebx    = EBX_sig(sigcontext);
-    context->Ecx    = ECX_sig(sigcontext);
-    context->Edx    = EDX_sig(sigcontext);
-    context->Esi    = ESI_sig(sigcontext);
-    context->Edi    = EDI_sig(sigcontext);
-    context->Ebp    = EBP_sig(sigcontext);
-    context->EFlags = EFL_sig(sigcontext);
-    context->Eip    = EIP_sig(sigcontext);
-    context->Esp    = ESP_sig(sigcontext);
-    context->SegCs  = LOWORD(CS_sig(sigcontext));
-    context->SegDs  = LOWORD(DS_sig(sigcontext));
-    context->SegEs  = LOWORD(ES_sig(sigcontext));
-    context->SegSs  = LOWORD(SS_sig(sigcontext));
-}
-
-
-/***********************************************************************
- *           restore_context
- *
- * Build a sigcontext from the register values.
- */
-static void restore_context( CONTEXT *context, SIGCONTEXT *sigcontext )
-{
-#ifdef __HAVE_VM86
-    BOOL check_pending = TRUE;
-
-    /* check if exception occurred in vm86 mode */
-    if ((void *)EIP_sig(sigcontext) == vm86_return &&
-        IS_SELECTOR_SYSTEM(CS_sig(sigcontext)) &&
-        EAX_sig(sigcontext) == VM86_EAX)
-    {
-        unsigned int *stack = (unsigned int *)ESP_sig(sigcontext);
-        /* retrieve pointer to vm86plus struct that was stored in vm86_enter
-         * (but we could also get it from teb->vm86_ptr) */
-        struct vm86plus_struct *vm86 = (struct vm86plus_struct *)stack[2];
-        restore_vm86_context( context, vm86 );
-        return;
-    }
-
-    while (NtCurrentTeb()->dpmi_vif &&
-           !IS_SELECTOR_SYSTEM(context->SegCs) &&
-           !IS_SELECTOR_SYSTEM(context->SegSs) &&
-           check_pending)
-    {
-        /*
-         * Executing DPMI code and virtual interrupts are enabled. 
-         * We must block signals so that we can be safely check
-         * for pending asynchronous events. Return from signal handler
-         * will unblock signals again so it is is safe to do so.
-         */
-        SIGNAL_Block();
-        check_pending = FALSE;
-
-        if (NtCurrentTeb()->vm86_pending)
-        {
-            EXCEPTION_RECORD rec;
-
-            rec.ExceptionAddress        = (LPVOID)context->Eip;
-            rec.ExceptionCode           = EXCEPTION_VM86_STI;
-            rec.ExceptionFlags          = EXCEPTION_CONTINUABLE;
-            rec.ExceptionRecord         = NULL;
-            rec.NumberParameters        = 1;
-            rec.ExceptionInformation[0] = 0;
-
-            NtCurrentTeb()->vm86_pending = 0;
-            EXC_RtlRaiseException( &rec, context );
-
-            /* 
-             * EXC_RtlRaiseException has unblocked all signals
-             * and we must retry check for pending asynchronous 
-             * events in order to prevent races.
-             */
-            check_pending = TRUE;
-        }
-    }
-#endif /* __HAVE_VM86 */
-
-    EAX_sig(sigcontext) = context->Eax;
-    EBX_sig(sigcontext) = context->Ebx;
-    ECX_sig(sigcontext) = context->Ecx;
-    EDX_sig(sigcontext) = context->Edx;
-    ESI_sig(sigcontext) = context->Esi;
-    EDI_sig(sigcontext) = context->Edi;
-    EBP_sig(sigcontext) = context->Ebp;
-    EFL_sig(sigcontext) = context->EFlags;
-    EIP_sig(sigcontext) = context->Eip;
-    ESP_sig(sigcontext) = context->Esp;
-    CS_sig(sigcontext)  = context->SegCs;
-    DS_sig(sigcontext)  = context->SegDs;
-    ES_sig(sigcontext)  = context->SegEs;
-    SS_sig(sigcontext)  = context->SegSs;
-#ifdef FS_sig
-    FS_sig(sigcontext)  = context->SegFs;
-#else
-    wine_set_fs( context->SegFs );
-#endif
-#ifdef GS_sig
-    GS_sig(sigcontext)  = context->SegGs;
-#else
-    wine_set_gs( context->SegGs );
-#endif
-}
-
 
 /***********************************************************************
  *           init_handler
@@ -700,8 +546,11 @@ static void restore_context( CONTEXT *context, SIGCONTEXT *sigcontext )
 static void *init_handler( const SIGCONTEXT *sigcontext )
 {
     void *stack = (void *)ESP_sig(sigcontext);
+    TEB *teb = get_current_teb();
 
-    /* now restore a proper %fs for the fault handler */
+    wine_set_fs( teb->teb_sel );
+
+    /* now restore a proper %gs for the fault handler */
     if (!IS_SELECTOR_SYSTEM(CS_sig(sigcontext)) ||
         !IS_SELECTOR_SYSTEM(SS_sig(sigcontext)))  /* 16-bit mode */
     {
@@ -712,33 +561,19 @@ static void *init_handler( const SIGCONTEXT *sigcontext )
          * SS is still non-system segment. This is why both CS and SS
          * are checked.
          */
-        wine_set_fs( signal_fs );
-        wine_set_gs( NtCurrentTeb()->gs_sel );
-        stack = (void *)NtCurrentTeb()->cur_stack;
+        wine_set_gs( teb->gs_sel );
+        stack = (void *)teb->cur_stack;
     }
 #ifdef __HAVE_VM86
     else if ((void *)EIP_sig(sigcontext) == vm86_return)  /* vm86 mode */
     {
         unsigned int *int_stack = stack;
-        /* fetch the saved %fs and %gs from the stack */
-        wine_set_fs( int_stack[0] );
-        wine_set_gs( int_stack[1] );
-    }
-    else if ((char *)EIP_sig(sigcontext) == (char *)vm86_return + 2 /* popl %fs */)
-    {
-        unsigned int *int_stack = stack;
-        /* %fs has been popped already but %gs is still on the stack */
-#ifdef FS_sig
-        wine_set_fs( FS_sig(sigcontext) );
-#endif
+        /* fetch the saved %gs from the stack */
         wine_set_gs( int_stack[0] );
     }
 #endif
     else  /* 32-bit mode */
     {
-#ifdef FS_sig
-        wine_set_fs( FS_sig(sigcontext) );
-#endif
 #ifdef GS_sig
         wine_set_gs( GS_sig(sigcontext) );
 #endif
@@ -1009,48 +844,20 @@ static void WINAPI raise_fpu_exception( EXCEPTION_RECORD *rec, CONTEXT *context 
 
 #ifdef __HAVE_VM86
 /**********************************************************************
- *		set_vm86_pend
+ *		raise_vm86_sti_exception
  *
- * Handler for SIGUSR2, which we use to set the vm86 pending flag.
+ * FIXME: this is most likely broken.
  */
-static void set_vm86_pend( CONTEXT *context )
+static void WINAPI raise_vm86_sti_exception( EXCEPTION_RECORD *rec, CONTEXT *context )
 {
-    EXCEPTION_RECORD rec;
-    TEB *teb = NtCurrentTeb();
-    struct vm86plus_struct *vm86 = (struct vm86plus_struct*)(teb->vm86_ptr);
-
-    rec.ExceptionCode           = EXCEPTION_VM86_STI;
-    rec.ExceptionFlags          = EXCEPTION_CONTINUABLE;
-    rec.ExceptionRecord         = NULL;
-    rec.NumberParameters        = 1;
-    rec.ExceptionInformation[0] = 0;
+    struct vm86plus_struct *vm86;
 
     /* __wine_enter_vm86() merges the vm86_pending flag in safely */
-    teb->vm86_pending |= VIP_MASK;
-    /* see if we were in VM86 mode */
-    if (context->EFlags & 0x00020000)
+    NtCurrentTeb()->vm86_pending |= VIP_MASK;
+
+    vm86 = (struct vm86plus_struct*)(NtCurrentTeb()->vm86_ptr);
+    if (vm86)
     {
-        /* seems so, also set flag in signal context */
-        if (context->EFlags & VIP_MASK) return;
-        context->EFlags |= VIP_MASK;
-        vm86->regs.eflags |= VIP_MASK; /* no exception recursion */
-        if (context->EFlags & VIF_MASK) {
-            /* VIF is set, throw exception */
-            teb->vm86_pending = 0;
-            teb->vm86_ptr = NULL;
-            rec.ExceptionAddress = (LPVOID)context->Eip;
-            EXC_RtlRaiseException( &rec, context );
-            /*
-             * FIXME: EXC_RtlRaiseException has unblocked all signals. 
-             *        If we receive nested SIGUSR2 here, VM86 event 
-             *        handling may lock up!
-             */
-            teb->vm86_ptr = vm86;
-        }
-    }
-    else if (vm86)
-    {
-        /* not in VM86, but possibly setting up for it */
         if (vm86->regs.eflags & VIP_MASK) return;
         vm86->regs.eflags |= VIP_MASK;
         if (((char*)context->Eip >= (char*)vm86_return) &&
@@ -1062,19 +869,22 @@ static void set_vm86_pend( CONTEXT *context )
         if (vm86->regs.eflags & VIF_MASK) {
             /* VIF is set, throw exception */
             CONTEXT vcontext;
-            teb->vm86_pending = 0;
-            teb->vm86_ptr = NULL;
+            NtCurrentTeb()->vm86_pending = 0;
+            NtCurrentTeb()->vm86_ptr = NULL;
             save_vm86_context( &vcontext, vm86 );
-            rec.ExceptionAddress = (LPVOID)vcontext.Eip;
-            EXC_RtlRaiseException( &rec, &vcontext );
-            /*
-             * FIXME: EXC_RtlRaiseException has unblocked all signals. 
-             *        If we receive nested SIGUSR2 here, VM86 event 
-             *        handling may lock up!
-             */
-            teb->vm86_ptr = vm86;
+            rec->ExceptionAddress = (LPVOID)vcontext.Eip;
+            EXC_RtlRaiseException( rec, &vcontext );
             restore_vm86_context( &vcontext, vm86 );
+            NtCurrentTeb()->vm86_ptr = vm86;
         }
+    }
+    else if (NtCurrentTeb()->dpmi_vif &&
+             !IS_SELECTOR_SYSTEM(context->SegCs) &&
+             !IS_SELECTOR_SYSTEM(context->SegSs))
+    {
+        /* Executing DPMI code and virtual interrupts are enabled. */
+        NtCurrentTeb()->vm86_pending = 0;
+        EXC_RtlRaiseException( rec, context );
     }
 }
 
@@ -1089,12 +899,8 @@ static void set_vm86_pend( CONTEXT *context )
  */
 static HANDLER_DEF(usr2_handler)
 {
-    CONTEXT context;
-
-    /* FIXME: should use setup_exception here */
-    save_context( &context, HANDLER_CONTEXT );
-    set_vm86_pend( &context );
-    restore_context( &context, HANDLER_CONTEXT );
+    EXCEPTION_RECORD *rec = setup_exception( HANDLER_CONTEXT, raise_vm86_sti_exception );
+    rec->ExceptionCode = EXCEPTION_VM86_STI;
 }
 #endif /* __HAVE_VM86 */
 
@@ -1322,15 +1128,6 @@ int __wine_set_signal_handler(unsigned int sig, wine_signal_handler wsh)
     if (handlers[sig] != NULL) return -2;
     handlers[sig] = wsh;
     return 0;
-}
-
-
-/***********************************************************************
- *           __wine_set_signal_fs  (NTDLL.@)
- */
-void __wine_set_signal_fs( unsigned int fs )
-{
-    signal_fs = fs;
 }
 
 

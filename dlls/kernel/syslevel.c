@@ -48,7 +48,6 @@ static SYSLEVEL Win16Mutex = { { &critsect_debug, -1, 0, 0, 0, 0 }, 1 };
 
 #ifdef __i386__
 extern unsigned int CallTo16_TebSelector;
-extern void __wine_set_signal_fs( unsigned int fs );
 #endif
 
 
@@ -116,11 +115,7 @@ VOID WINAPI _EnterSysLevel(SYSLEVEL *lock)
           lock, lock->level, GetCurrentThreadId(), teb->sys_count[lock->level] );
 
 #ifdef __i386__
-    if (lock == &Win16Mutex)
-    {
-        __wine_set_signal_fs( wine_get_fs() );
-        CallTo16_TebSelector = wine_get_fs();
-    }
+    if (lock == &Win16Mutex) CallTo16_TebSelector = wine_get_fs();
 #endif
 }
 
