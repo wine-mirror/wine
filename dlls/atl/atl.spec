@@ -1,7 +1,7 @@
 1 stub DllCanUnloadNow
 2 stub DllGetClassObject
-3 stub DllRegisterServer
-4 stub DllUnregisterServer
+3 stdcall -private DllRegisterServer() ATL_DllRegisterServer
+4 stdcall -private DllUnregisterServer() ATL_DllUnregisterServer
 10 stub AtlAdvise
 11 stub AtlUnadvise
 12 stub AtlFreeMarshalStream
