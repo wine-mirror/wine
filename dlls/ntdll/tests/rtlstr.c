@@ -30,12 +30,13 @@
 #include "winnls.h"
 #include "winternl.h"
 
-static UNICODE_STRING uni;
-static STRING str;
-
 /* Function ptrs for ntdll calls */
 static HMODULE hntdll = 0;
+static NTSTATUS (WINAPI *pRtlAppendAsciizToString)(STRING *, LPCSTR);
+static NTSTATUS (WINAPI *pRtlAppendStringToString)(STRING *, const STRING *);
+static NTSTATUS (WINAPI *pRtlAppendUnicodeToString)(UNICODE_STRING *, LPCWSTR);
 static NTSTATUS (WINAPI *pRtlAppendUnicodeStringToString)(UNICODE_STRING *, const UNICODE_STRING *);
+static NTSTATUS (WINAPI *pRtlFindCharInUnicodeString)(UNICODE_STRING *, WCHAR, UNICODE_STRING **, long);
 static NTSTATUS (WINAPI *pRtlCharToInteger)(char *, ULONG, int *);
 static VOID     (WINAPI *pRtlCopyString)(STRING *, const STRING *);
 static BOOLEAN  (WINAPI *pRtlCreateUnicodeString)(PUNICODE_STRING, LPCWSTR);
@@ -93,7 +94,11 @@ static void InitFunctionPtrs(void)
     hntdll = LoadLibraryA("ntdll.dll");
     ok(hntdll != 0, "LoadLibrary failed");
     if (hntdll) {
+	pRtlAppendAsciizToString = (void *)GetProcAddress(hntdll, "RtlAppendAsciizToString");
+	pRtlAppendStringToString = (void *)GetProcAddress(hntdll, "RtlAppendStringToString");
+	pRtlAppendUnicodeToString = (void *)GetProcAddress(hntdll, "RtlAppendUnicodeToString");
 	pRtlAppendUnicodeStringToString = (void *)GetProcAddress(hntdll, "RtlAppendUnicodeStringToString");
+	pRtlFindCharInUnicodeString = (void *)GetProcAddress(hntdll, "RtlFindCharInUnicodeString");
 	pRtlCharToInteger = (void *)GetProcAddress(hntdll, "RtlCharToInteger");
 	pRtlCopyString = (void *)GetProcAddress(hntdll, "RtlCopyString");
 	pRtlCreateUnicodeString = (void *)GetProcAddress(hntdll, "RtlCreateUnicodeString");
@@ -117,20 +122,22 @@ static void InitFunctionPtrs(void)
 
 static void test_RtlInitString(void)
 {
-	static const char teststring[] = "Some Wild String";
-	str.Length = 0;
-	str.MaximumLength = 0;
-	str.Buffer = (void *)0xdeadbeef;
-	pRtlInitString(&str, teststring);
-	ok(str.Length == sizeof(teststring) - sizeof(char), "Length uninitialized");
-	ok(str.MaximumLength == sizeof(teststring), "MaximumLength uninitialized");
-	ok(str.Buffer == teststring, "Buffer not equal to teststring");
-	ok(strcmp(str.Buffer, "Some Wild String") == 0, "Buffer written to");
-	pRtlInitString(&str, NULL);
-	ok(str.Length == 0, "Length uninitialized");
-	ok(str.MaximumLength == 0, "MaximumLength uninitialized");
-	ok(str.Buffer == NULL, "Buffer not equal to NULL");
-/*	pRtlInitString(NULL, teststring); */
+    static const char teststring[] = "Some Wild String";
+    STRING str;
+
+    str.Length = 0;
+    str.MaximumLength = 0;
+    str.Buffer = (void *)0xdeadbeef;
+    pRtlInitString(&str, teststring);
+    ok(str.Length == sizeof(teststring) - sizeof(char), "Length uninitialized");
+    ok(str.MaximumLength == sizeof(teststring), "MaximumLength uninitialized");
+    ok(str.Buffer == teststring, "Buffer not equal to teststring");
+    ok(strcmp(str.Buffer, "Some Wild String") == 0, "Buffer written to");
+    pRtlInitString(&str, NULL);
+    ok(str.Length == 0, "Length uninitialized");
+    ok(str.MaximumLength == 0, "MaximumLength uninitialized");
+    ok(str.Buffer == NULL, "Buffer not equal to NULL");
+/*  pRtlInitString(NULL, teststring); */
 }
 
 
@@ -138,33 +145,37 @@ static void test_RtlInitUnicodeString(void)
 {
 #define STRINGW {'S','o','m','e',' ','W','i','l','d',' ','S','t','r','i','n','g',0}
     static const WCHAR teststring[] = STRINGW;
-	static const WCHAR originalstring[] = STRINGW;
+    static const WCHAR originalstring[] = STRINGW;
 #undef STRINGW
-	uni.Length = 0;
-	uni.MaximumLength = 0;
-	uni.Buffer = (void *)0xdeadbeef;
-	pRtlInitUnicodeString(&uni, teststring);
-	ok(uni.Length == sizeof(teststring) - sizeof(WCHAR), "Length uninitialized");
-	ok(uni.MaximumLength == sizeof(teststring), "MaximumLength uninitialized");
-	ok(uni.Buffer == teststring, "Buffer not equal to teststring");
-	ok(lstrcmpW(uni.Buffer, originalstring) == 0, "Buffer written to");
-	pRtlInitUnicodeString(&uni, NULL);
-	ok(uni.Length == 0, "Length uninitialized");
-	ok(uni.MaximumLength == 0, "MaximumLength uninitialized");
-	ok(uni.Buffer == NULL, "Buffer not equal to NULL");
-/*	pRtlInitUnicodeString(NULL, teststring); */
+    UNICODE_STRING uni;
+
+    uni.Length = 0;
+    uni.MaximumLength = 0;
+    uni.Buffer = (void *)0xdeadbeef;
+    pRtlInitUnicodeString(&uni, teststring);
+    ok(uni.Length == sizeof(teststring) - sizeof(WCHAR), "Length uninitialized");
+    ok(uni.MaximumLength == sizeof(teststring), "MaximumLength uninitialized");
+    ok(uni.Buffer == teststring, "Buffer not equal to teststring");
+    ok(lstrcmpW(uni.Buffer, originalstring) == 0, "Buffer written to");
+    pRtlInitUnicodeString(&uni, NULL);
+    ok(uni.Length == 0, "Length uninitialized");
+    ok(uni.MaximumLength == 0, "MaximumLength uninitialized");
+    ok(uni.Buffer == NULL, "Buffer not equal to NULL");
+/*  pRtlInitUnicodeString(NULL, teststring); */
 }
 
 
 static void test_RtlCopyString(void)
 {
-	static const char teststring[] = "Some Wild String";
-	static char deststring[] = "                    ";
-	STRING deststr;
-	pRtlInitString(&str, teststring);
-	pRtlInitString(&deststr, deststring);
-	pRtlCopyString(&deststr, &str);
-	ok(strncmp(str.Buffer, deststring, str.Length) == 0, "String not copied");
+    static const char teststring[] = "Some Wild String";
+    static char deststring[] = "                    ";
+    STRING str;
+    STRING deststr;
+
+    pRtlInitString(&str, teststring);
+    pRtlInitString(&deststr, deststring);
+    pRtlCopyString(&deststr, &str);
+    ok(strncmp(str.Buffer, deststring, str.Length) == 0, "String not copied");
 }
 
 
@@ -394,102 +405,388 @@ static void test_RtlDowncaseUnicodeString(void)
 }
 
 
-static void test_RtlAppendUnicodeStringToString(void)
+typedef struct {
+    int ansi_Length;
+    int ansi_MaximumLength;
+    int ansi_buf_size;
+    char *ansi_buf;
+    int uni_Length;
+    int uni_MaximumLength;
+    int uni_buf_size;
+    char *uni_buf;
+    BOOLEAN doalloc;
+    int res_Length;
+    int res_MaximumLength;
+    int res_buf_size;
+    char *res_buf;
+    NTSTATUS result;
+} ustr2astr_t;
+
+static const ustr2astr_t ustr2astr[] = {
+    { 10, 12, 12, "------------",  0,  0,  0, "",       TRUE,  0, 1, 1, "",       STATUS_SUCCESS},
+    { 10, 12, 12, "------------", 12, 12, 12, "abcdef", TRUE,  6, 7, 7, "abcdef", STATUS_SUCCESS},
+    {  0,  2, 12, "------------", 12, 12, 12, "abcdef", TRUE,  6, 7, 7, "abcdef", STATUS_SUCCESS},
+    { 10, 12, 12, NULL,           12, 12, 12, "abcdef", TRUE,  6, 7, 7, "abcdef", STATUS_SUCCESS},
+    {  0,  0, 12, "------------", 12, 12, 12, "abcdef", FALSE, 6, 0, 0, "",       STATUS_BUFFER_OVERFLOW},
+    {  0,  1, 12, "------------", 12, 12, 12, "abcdef", FALSE, 0, 1, 1, "",       STATUS_BUFFER_OVERFLOW},
+    {  0,  2, 12, "------------", 12, 12, 12, "abcdef", FALSE, 1, 2, 2, "a",      STATUS_BUFFER_OVERFLOW},
+    {  0,  3, 12, "------------", 12, 12, 12, "abcdef", FALSE, 2, 3, 3, "ab",     STATUS_BUFFER_OVERFLOW},
+    {  0,  5, 12, "------------", 12, 12, 12, "abcdef", FALSE, 4, 5, 5, "abcd",   STATUS_BUFFER_OVERFLOW},
+    {  8,  5, 12, "------------", 12, 12, 12, "abcdef", FALSE, 4, 5, 5, "abcd",   STATUS_BUFFER_OVERFLOW},
+    {  8,  6, 12, "------------", 12, 12, 12, "abcdef", FALSE, 5, 6, 6, "abcde",  STATUS_BUFFER_OVERFLOW},
+    {  8,  7, 12, "------------", 12, 12, 12, "abcdef", FALSE, 6, 7, 7, "abcdef", STATUS_SUCCESS},
+    {  8,  7, 12, "------------",  0, 12, 12,  NULL,    FALSE, 0, 7, 0, "",       STATUS_SUCCESS},
+    {  0,  0, 12, NULL,           10, 10, 12,  NULL,    FALSE, 5, 0, 0, NULL,     STATUS_BUFFER_OVERFLOW},
+};
+#define NB_USTR2ASTR (sizeof(ustr2astr)/sizeof(*ustr2astr))
+
+static void test_RtlUnicodeStringToAnsiString(void)
+{
+    int pos;
+    CHAR ansi_buf[257];
+    WCHAR uni_buf[257];
+    STRING ansi_str;
+    UNICODE_STRING uni_str;
+    NTSTATUS result;
+    int test_num;
+
+    for (test_num = 0; test_num < NB_USTR2ASTR; test_num++) {
+	ansi_str.Length        = ustr2astr[test_num].ansi_Length;
+	ansi_str.MaximumLength = ustr2astr[test_num].ansi_MaximumLength;
+	if (ustr2astr[test_num].ansi_buf != NULL) {
+	    memcpy(ansi_buf, ustr2astr[test_num].ansi_buf, ustr2astr[test_num].ansi_buf_size);
+	    ansi_buf[ustr2astr[test_num].ansi_buf_size] = '\0';
+	    ansi_str.Buffer = ansi_buf;
+	} else {
+	    ansi_str.Buffer = NULL;
+	} /* if */
+	uni_str.Length        = ustr2astr[test_num].uni_Length;
+	uni_str.MaximumLength = ustr2astr[test_num].uni_MaximumLength;
+	if (ustr2astr[test_num].uni_buf != NULL) {
+/*          memcpy(uni_buf, ustr2astr[test_num].uni_buf, ustr2astr[test_num].uni_buf_size); */
+	    for (pos = 0; pos < ustr2astr[test_num].uni_buf_size/sizeof(WCHAR); pos++) {
+		uni_buf[pos] = ustr2astr[test_num].uni_buf[pos];
+	    } /* for */
+/*	    uni_buf[ustr2astr[test_num].uni_buf_size/sizeof(WCHAR)] = '\0'; */
+	    uni_str.Buffer = uni_buf;
+	} else {
+	    uni_str.Buffer = NULL;
+	} /* if */
+	result = pRtlUnicodeStringToAnsiString(&ansi_str, &uni_str, ustr2astr[test_num].doalloc);
+	ok(result == ustr2astr[test_num].result,
+	   "(test %d): RtlUnicodeStringToAnsiString(ansi, uni, %d) has result %lx, expected %lx",
+	   test_num, ustr2astr[test_num].doalloc, result, ustr2astr[test_num].result);
+	ok(ansi_str.Length == ustr2astr[test_num].res_Length,
+	   "(test %d): RtlUnicodeStringToAnsiString(ansi, uni, %d) ansi has Length %d, expected %d",
+	   test_num, ustr2astr[test_num].doalloc, ansi_str.Length, ustr2astr[test_num].res_Length);
+	ok(ansi_str.MaximumLength == ustr2astr[test_num].res_MaximumLength,
+	   "(test %d): RtlUnicodeStringToAnsiString(ansi, uni, %d) ansi has MaximumLength %d, expected %d",
+	   test_num, ustr2astr[test_num].doalloc, ansi_str.MaximumLength, ustr2astr[test_num].res_MaximumLength);
+	ok(memcmp(ansi_str.Buffer, ustr2astr[test_num].res_buf, ustr2astr[test_num].res_buf_size) == 0,
+	   "(test %d): RtlUnicodeStringToAnsiString(ansi, uni, %d) has ansi \"%s\" expected \"%s\"",
+	   test_num, ustr2astr[test_num].doalloc, ansi_str.Buffer, ustr2astr[test_num].res_buf);
+    } /* for */
+}
+
+
+typedef struct {
+    int dest_Length;
+    int dest_MaximumLength;
+    int dest_buf_size;
+    char *dest_buf;
+    char *src;
+    int res_Length;
+    int res_MaximumLength;
+    int res_buf_size;
+    char *res_buf;
+    NTSTATUS result;
+} app_asc2str_t;
+
+static const app_asc2str_t app_asc2str[] = {
+    { 5, 12, 15,  "TestS01234abcde", "tring", 10, 12, 15,  "TestStringabcde", STATUS_SUCCESS},
+    { 5, 11, 15,  "TestS01234abcde", "tring", 10, 11, 15,  "TestStringabcde", STATUS_SUCCESS},
+    { 5, 10, 15,  "TestS01234abcde", "tring", 10, 10, 15,  "TestStringabcde", STATUS_SUCCESS},
+    { 5,  9, 15,  "TestS01234abcde", "tring",  5,  9, 15,  "TestS01234abcde", STATUS_BUFFER_TOO_SMALL},
+    { 5,  0, 15,  "TestS01234abcde", "tring",  5,  0, 15,  "TestS01234abcde", STATUS_BUFFER_TOO_SMALL},
+    { 5, 14, 15,  "TestS01234abcde", "tring", 10, 14, 15,  "TestStringabcde", STATUS_SUCCESS},
+    { 5, 14, 15,  "TestS01234abcde",    NULL,  5, 14, 15,  "TestS01234abcde", STATUS_SUCCESS},
+    { 5, 14, 15,               NULL,    NULL,  5, 14, 15,               NULL, STATUS_SUCCESS},
+    { 5, 12, 15, "Tst\0S01234abcde", "tr\0i",  7, 12, 15, "Tst\0Str234abcde", STATUS_SUCCESS},
+};
+#define NB_APP_ASC2STR (sizeof(app_asc2str)/sizeof(*app_asc2str))
+
+static void test_RtlAppendAsciizToString(void)
+{
+    CHAR dest_buf[257];
+    STRING dest_str;
+    NTSTATUS result;
+    int test_num;
+
+    for (test_num = 0; test_num < NB_APP_ASC2STR; test_num++) {
+	dest_str.Length        = app_asc2str[test_num].dest_Length;
+	dest_str.MaximumLength = app_asc2str[test_num].dest_MaximumLength;
+	if (app_asc2str[test_num].dest_buf != NULL) {
+	    memcpy(dest_buf, app_asc2str[test_num].dest_buf, app_asc2str[test_num].dest_buf_size);
+	    dest_buf[app_asc2str[test_num].dest_buf_size] = '\0';
+	    dest_str.Buffer = dest_buf;
+	} else {
+	    dest_str.Buffer = NULL;
+	} /* if */
+	result = pRtlAppendAsciizToString(&dest_str, app_asc2str[test_num].src);
+	ok(result == app_asc2str[test_num].result,
+	   "(test %d): RtlAppendAsciizToString(dest, src) has result %lx, expected %lx",
+	   test_num, result, app_asc2str[test_num].result);
+	ok(dest_str.Length == app_asc2str[test_num].res_Length,
+	   "(test %d): RtlAppendAsciizToString(dest, src) dest has Length %d, expected %d",
+	   test_num, dest_str.Length, app_asc2str[test_num].res_Length);
+	ok(dest_str.MaximumLength == app_asc2str[test_num].res_MaximumLength,
+	   "(test %d): RtlAppendAsciizToString(dest, src) dest has MaximumLength %d, expected %d",
+	   test_num, dest_str.MaximumLength, app_asc2str[test_num].res_MaximumLength);
+	if (dest_str.Buffer == dest_buf) {
+	    ok(memcmp(dest_buf, app_asc2str[test_num].res_buf, app_asc2str[test_num].res_buf_size) == 0,
+	       "(test %d): RtlAppendAsciizToString(dest, src) has dest \"%s\" expected \"%s\"",
+	       test_num, dest_buf, app_asc2str[test_num].res_buf);
+	} else {
+	    ok(dest_str.Buffer == app_asc2str[test_num].res_buf,
+	       "(test %d): RtlAppendAsciizToString(dest, src) dest has Buffer %p expected %p",
+	       test_num, dest_str.Buffer, app_asc2str[test_num].res_buf);
+	} /* if */
+    } /* for */
+}
+
+
+typedef struct {
+    int dest_Length;
+    int dest_MaximumLength;
+    int dest_buf_size;
+    char *dest_buf;
+    int src_Length;
+    int src_MaximumLength;
+    int src_buf_size;
+    char *src_buf;
+    int res_Length;
+    int res_MaximumLength;
+    int res_buf_size;
+    char *res_buf;
+    NTSTATUS result;
+} app_str2str_t;
+
+static const app_str2str_t app_str2str[] = {
+    { 5, 12, 15,  "TestS01234abcde", 5, 5, 7, "tringZY", 10, 12, 15,   "TestStringabcde", STATUS_SUCCESS},
+    { 5, 11, 15,  "TestS01234abcde", 5, 5, 7, "tringZY", 10, 11, 15,   "TestStringabcde", STATUS_SUCCESS},
+    { 5, 10, 15,  "TestS01234abcde", 5, 5, 7, "tringZY", 10, 10, 15,   "TestStringabcde", STATUS_SUCCESS},
+    { 5,  9, 15,  "TestS01234abcde", 5, 5, 7, "tringZY",  5,  9, 15,   "TestS01234abcde", STATUS_BUFFER_TOO_SMALL},
+    { 5,  0, 15,  "TestS01234abcde", 0, 0, 7, "tringZY",  5,  0, 15,   "TestS01234abcde", STATUS_SUCCESS},
+    { 5, 14, 15,  "TestS01234abcde", 0, 0, 7, "tringZY",  5, 14, 15,   "TestS01234abcde", STATUS_SUCCESS},
+    { 5, 14, 15,  "TestS01234abcde", 0, 0, 7,      NULL,  5, 14, 15,   "TestS01234abcde", STATUS_SUCCESS},
+    { 5, 14, 15,               NULL, 0, 0, 7,      NULL,  5, 14, 15,                NULL, STATUS_SUCCESS},
+    { 5, 12, 15, "Tst\0S01234abcde", 4, 4, 7, "tr\0iZY",  9, 12, 15, "Tst\0Str\0i4abcde", STATUS_SUCCESS},
+};
+#define NB_APP_STR2STR (sizeof(app_str2str)/sizeof(*app_str2str))
+
+static void test_RtlAppendStringToString(void)
 {
     CHAR dest_buf[257];
     CHAR src_buf[257];
+    STRING dest_str;
+    STRING src_str;
+    NTSTATUS result;
+    int test_num;
+
+    for (test_num = 0; test_num < NB_APP_STR2STR; test_num++) {
+	dest_str.Length        = app_str2str[test_num].dest_Length;
+	dest_str.MaximumLength = app_str2str[test_num].dest_MaximumLength;
+	if (app_str2str[test_num].dest_buf != NULL) {
+	    memcpy(dest_buf, app_str2str[test_num].dest_buf, app_str2str[test_num].dest_buf_size);
+	    dest_buf[app_str2str[test_num].dest_buf_size] = '\0';
+	    dest_str.Buffer = dest_buf;
+	} else {
+	    dest_str.Buffer = NULL;
+	} /* if */
+	src_str.Length         = app_str2str[test_num].src_Length;
+	src_str.MaximumLength  = app_str2str[test_num].src_MaximumLength;
+	if (app_str2str[test_num].src_buf != NULL) {
+	    memcpy(src_buf, app_str2str[test_num].src_buf, app_str2str[test_num].src_buf_size);
+	    src_buf[app_str2str[test_num].src_buf_size] = '\0';
+	    src_str.Buffer = src_buf;
+	} else {
+	    src_str.Buffer = NULL;
+	} /* if */
+	result = pRtlAppendStringToString(&dest_str, &src_str);
+	ok(result == app_str2str[test_num].result,
+	   "(test %d): RtlAppendStringToString(dest, src) has result %lx, expected %lx",
+	   test_num, result, app_str2str[test_num].result);
+	ok(dest_str.Length == app_str2str[test_num].res_Length,
+	   "(test %d): RtlAppendStringToString(dest, src) dest has Length %d, expected %d",
+	   test_num, dest_str.Length, app_str2str[test_num].res_Length);
+	ok(dest_str.MaximumLength == app_str2str[test_num].res_MaximumLength,
+	   "(test %d): RtlAppendStringToString(dest, src) dest has MaximumLength %d, expected %d",
+	   test_num, dest_str.MaximumLength, app_str2str[test_num].res_MaximumLength);
+	if (dest_str.Buffer == dest_buf) {
+	    ok(memcmp(dest_buf, app_str2str[test_num].res_buf, app_str2str[test_num].res_buf_size) == 0,
+	       "(test %d): RtlAppendStringToString(dest, src) has dest \"%s\" expected \"%s\"",
+	       test_num, dest_buf, app_str2str[test_num].res_buf);
+	} else {
+	    ok(dest_str.Buffer == app_str2str[test_num].res_buf,
+	       "(test %d): RtlAppendStringToString(dest, src) dest has Buffer %p expected %p",
+	       test_num, dest_str.Buffer, app_str2str[test_num].res_buf);
+	} /* if */
+    } /* for */
+}
+
+
+typedef struct {
+    int dest_Length;
+    int dest_MaximumLength;
+    int dest_buf_size;
+    char *dest_buf;
+    char *src;
+    int res_Length;
+    int res_MaximumLength;
+    int res_buf_size;
+    char *res_buf;
+    NTSTATUS result;
+} app_uni2str_t;
+
+static const app_uni2str_t app_uni2str[] = {
+    { 4, 12, 14,     "Fake0123abcdef",    "Ustr\0",  8, 12, 14,  "FakeUstr\0\0cdef", STATUS_SUCCESS},
+    { 4, 11, 14,     "Fake0123abcdef",    "Ustr\0",  8, 11, 14,  "FakeUstr\0\0cdef", STATUS_SUCCESS},
+    { 4, 10, 14,     "Fake0123abcdef",    "Ustr\0",  8, 10, 14,  "FakeUstr\0\0cdef", STATUS_SUCCESS},
+/* In the following test the native function writes beyond MaximumLength 
+ *  { 4,  9, 14,     "Fake0123abcdef",    "Ustr\0",  8,  9, 14,    "FakeUstrabcdef", STATUS_SUCCESS},
+ */
+    { 4,  8, 14,     "Fake0123abcdef",    "Ustr\0",  8,  8, 14,    "FakeUstrabcdef", STATUS_SUCCESS},
+    { 4,  7, 14,     "Fake0123abcdef",    "Ustr\0",  4,  7, 14,    "Fake0123abcdef", STATUS_BUFFER_TOO_SMALL},
+    { 4,  0, 14,     "Fake0123abcdef",    "Ustr\0",  4,  0, 14,    "Fake0123abcdef", STATUS_BUFFER_TOO_SMALL},
+    { 4, 14, 14,     "Fake0123abcdef",    "Ustr\0",  8, 14, 14,  "FakeUstr\0\0cdef", STATUS_SUCCESS},
+    { 4, 14, 14,     "Fake0123abcdef",        NULL,  4, 14, 14,    "Fake0123abcdef", STATUS_SUCCESS},
+    { 4, 14, 14,                 NULL,        NULL,  4, 14, 14,                NULL, STATUS_SUCCESS},
+    { 4, 14, 14,     "Fake0123abcdef", "U\0stri\0", 10, 14, 14, "FakeU\0stri\0\0ef", STATUS_SUCCESS},
+    { 6, 14, 16, "Te\0\0stabcdefghij",  "St\0\0ri",  8, 14, 16, "Te\0\0stSt\0\0efghij", STATUS_SUCCESS},
+};
+#define NB_APP_UNI2STR (sizeof(app_uni2str)/sizeof(*app_uni2str))
+
+static void test_RtlAppendUnicodeToString(void)
+{
+    WCHAR dest_buf[257];
+    UNICODE_STRING dest_str;
+    NTSTATUS result;
+    int test_num;
+
+    for (test_num = 0; test_num < NB_APP_UNI2STR; test_num++) {
+	dest_str.Length        = app_uni2str[test_num].dest_Length;
+	dest_str.MaximumLength = app_uni2str[test_num].dest_MaximumLength;
+	if (app_uni2str[test_num].dest_buf != NULL) {
+	    memcpy(dest_buf, app_uni2str[test_num].dest_buf, app_uni2str[test_num].dest_buf_size);
+	    dest_buf[app_uni2str[test_num].dest_buf_size/sizeof(WCHAR)] = '\0';
+	    dest_str.Buffer = dest_buf;
+	} else {
+	    dest_str.Buffer = NULL;
+	} /* if */
+	result = pRtlAppendUnicodeToString(&dest_str, (LPCWSTR) app_uni2str[test_num].src);
+	ok(result == app_uni2str[test_num].result,
+	   "(test %d): RtlAppendUnicodeToString(dest, src) has result %lx, expected %lx",
+	   test_num, result, app_uni2str[test_num].result);
+	ok(dest_str.Length == app_uni2str[test_num].res_Length,
+	   "(test %d): RtlAppendUnicodeToString(dest, src) dest has Length %d, expected %d",
+	   test_num, dest_str.Length, app_uni2str[test_num].res_Length);
+	ok(dest_str.MaximumLength == app_uni2str[test_num].res_MaximumLength,
+	   "(test %d): RtlAppendUnicodeToString(dest, src) dest has MaximumLength %d, expected %d",
+	   test_num, dest_str.MaximumLength, app_uni2str[test_num].res_MaximumLength);
+	if (dest_str.Buffer == dest_buf) {
+	    ok(memcmp(dest_buf, app_uni2str[test_num].res_buf, app_uni2str[test_num].res_buf_size) == 0,
+	       "(test %d): RtlAppendUnicodeToString(dest, src) has dest \"%s\" expected \"%s\"",
+	       test_num, (char *) dest_buf, app_uni2str[test_num].res_buf);
+	} else {
+	    ok(dest_str.Buffer == (WCHAR *) app_uni2str[test_num].res_buf,
+	       "(test %d): RtlAppendUnicodeToString(dest, src) dest has Buffer %p expected %p",
+	       test_num, dest_str.Buffer, app_uni2str[test_num].res_buf);
+	} /* if */
+    } /* for */
+}
+
+
+typedef struct {
+    int dest_Length;
+    int dest_MaximumLength;
+    int dest_buf_size;
+    char *dest_buf;
+    int src_Length;
+    int src_MaximumLength;
+    int src_buf_size;
+    char *src_buf;
+    int res_Length;
+    int res_MaximumLength;
+    int res_buf_size;
+    char *res_buf;
+    NTSTATUS result;
+} app_ustr2str_t;
+
+static const app_ustr2str_t app_ustr2str[] = {
+    { 4, 12, 14,     "Fake0123abcdef", 4, 6, 8,   "UstrZYXW",  8, 12, 14,   "FakeUstr\0\0cdef", STATUS_SUCCESS},
+    { 4, 11, 14,     "Fake0123abcdef", 4, 6, 8,   "UstrZYXW",  8, 11, 14,   "FakeUstr\0\0cdef", STATUS_SUCCESS},
+    { 4, 10, 14,     "Fake0123abcdef", 4, 6, 8,   "UstrZYXW",  8, 10, 14,   "FakeUstr\0\0cdef", STATUS_SUCCESS},
+/* In the following test the native function writes beyond MaximumLength 
+ *  { 4,  9, 14,     "Fake0123abcdef", 4, 6, 8,   "UstrZYXW",  8,  9, 14,     "FakeUstrabcdef", STATUS_SUCCESS},
+ */
+    { 4,  8, 14,     "Fake0123abcdef", 4, 6, 8,   "UstrZYXW",  8,  8, 14,     "FakeUstrabcdef", STATUS_SUCCESS},
+    { 4,  7, 14,     "Fake0123abcdef", 4, 6, 8,   "UstrZYXW",  4,  7, 14,     "Fake0123abcdef", STATUS_BUFFER_TOO_SMALL},
+    { 4,  0, 14,     "Fake0123abcdef", 0, 0, 8,   "UstrZYXW",  4,  0, 14,     "Fake0123abcdef", STATUS_SUCCESS},
+    { 4, 14, 14,     "Fake0123abcdef", 0, 0, 8,   "UstrZYXW",  4, 14, 14,     "Fake0123abcdef", STATUS_SUCCESS},
+    { 4, 14, 14,     "Fake0123abcdef", 0, 0, 8,         NULL,  4, 14, 14,     "Fake0123abcdef", STATUS_SUCCESS},
+    { 4, 14, 14,                 NULL, 0, 0, 8,         NULL,  4, 14, 14,                 NULL, STATUS_SUCCESS},
+    { 6, 14, 16, "Te\0\0stabcdefghij", 6, 8, 8, "St\0\0riZY", 12, 14, 16, "Te\0\0stSt\0\0ri\0\0ij", STATUS_SUCCESS},
+};
+#define NB_APP_USTR2STR (sizeof(app_ustr2str)/sizeof(*app_ustr2str))
+
+static void test_RtlAppendUnicodeStringToString(void)
+{
+    WCHAR dest_buf[257];
+    WCHAR src_buf[257];
     UNICODE_STRING dest_str;
     UNICODE_STRING src_str;
     NTSTATUS result;
+    int test_num;
 
-    strcpy(dest_buf, "ThisisafakeU0123456789abcdefghij");
-    strcpy(src_buf, "nicodeStringZYXWVUTS");
-    dest_str.Length = 12;
-    dest_str.MaximumLength = 26;
-    dest_str.Buffer = (WCHAR *) dest_buf;
-    src_str.Length = 12;
-    src_str.MaximumLength = 12;
-    src_str.Buffer = (WCHAR *) src_buf;
-    result = pRtlAppendUnicodeStringToString(&dest_str, &src_str);
-    ok(result == STATUS_SUCCESS,
-       "call failed: RtlAppendUnicodeStringToString(dest, src) has result %lx",
-       result);
-    ok(memcmp(dest_buf, "ThisisafakeUnicodeString\0\0efghij", 32) == 0,
-       "call failed: RtlAppendUnicodeStringToString(dest, src) has dest \"%s\"",
-       dest_buf);
-
-    strcpy(dest_buf, "ThisisafakeU0123456789abcdefghij");
-    dest_str.Length = 12;
-    dest_str.MaximumLength = 25;
-    result = pRtlAppendUnicodeStringToString(&dest_str, &src_str);
-    ok(result == STATUS_SUCCESS,
-       "call failed: RtlAppendUnicodeStringToString(dest, src) has result %lx",
-       result);
-    ok(memcmp(dest_buf, "ThisisafakeUnicodeString\0\0efghij", 32) == 0,
-       "call failed: RtlAppendUnicodeStringToString(dest, src) has dest \"%s\"",
-       dest_buf);
-
-    strcpy(dest_buf, "ThisisafakeU0123456789abcdefghij");
-    dest_str.Length = 12;
-    dest_str.MaximumLength = 24;
-    result = pRtlAppendUnicodeStringToString(&dest_str, &src_str);
-    ok(result == STATUS_SUCCESS,
-       "call failed: RtlAppendUnicodeStringToString(dest, src) has result %lx",
-       result);
-    ok(memcmp(dest_buf, "ThisisafakeUnicodeStringcdefghij", 32) == 0,
-       "call failed: RtlAppendUnicodeStringToString(dest, src) has dest \"%s\"",
-       dest_buf);
-
-    strcpy(dest_buf, "ThisisafakeU0123456789abcdefghij");
-    dest_str.Length = 12;
-    dest_str.MaximumLength = 23;
-    result = pRtlAppendUnicodeStringToString(&dest_str, &src_str);
-    ok(result == STATUS_BUFFER_TOO_SMALL,
-       "call failed: RtlAppendUnicodeStringToString(dest, src) has result %lx",
-       result);
-    ok(memcmp(dest_buf, "ThisisafakeU0123456789abcdefghij", 32) == 0,
-       "call failed: RtlAppendUnicodeStringToString(dest, src) has dest \"%s\"",
-       dest_buf);
-
-    strcpy(dest_buf, "ThisisafakeU0123456789abcdefghij");
-    dest_str.Length = 12;
-    dest_str.MaximumLength = 0;
-    src_str.Length = 0;
-    src_str.MaximumLength = 0;
-    result = pRtlAppendUnicodeStringToString(&dest_str, &src_str);
-    ok(result == STATUS_SUCCESS,
-       "call failed: RtlAppendUnicodeStringToString(dest, src) has result %lx",
-       result);
-    ok(memcmp(dest_buf, "ThisisafakeU0123456789abcdefghij", 32) == 0,
-       "call failed: RtlAppendUnicodeStringToString(dest, src) has dest \"%s\"",
-       dest_buf);
-
-    strcpy(dest_buf, "ThisisafakeU0123456789abcdefghij");
-    dest_str.Length = 12;
-    dest_str.MaximumLength = 22;
-    src_str.Length = 0;
-    src_str.MaximumLength = 0;
-    result = pRtlAppendUnicodeStringToString(&dest_str, &src_str);
-    ok(result == STATUS_SUCCESS,
-       "call failed: RtlAppendUnicodeStringToString(dest, src) has result %lx",
-       result);
-    ok(memcmp(dest_buf, "ThisisafakeU0123456789abcdefghij", 32) == 0,
-       "call failed: RtlAppendUnicodeStringToString(dest, src) has dest \"%s\"",
-       dest_buf);
-
-    strcpy(dest_buf, "ThisisafakeU0123456789abcdefghij");
-    dest_str.Length = 12;
-    dest_str.MaximumLength = 22;
-    src_str.Length = 0;
-    src_str.MaximumLength = 0;
-    src_str.Buffer = NULL;
-    result = pRtlAppendUnicodeStringToString(&dest_str, &src_str);
-    ok(result == STATUS_SUCCESS,
-       "call failed: RtlAppendUnicodeStringToString(dest, src) has result %lx",
-       result);
-    ok(memcmp(dest_buf, "ThisisafakeU0123456789abcdefghij", 32) == 0,
-       "call failed: RtlAppendUnicodeStringToString(dest, src) has dest \"%s\"",
-       dest_buf);
+    for (test_num = 0; test_num < NB_APP_USTR2STR; test_num++) {
+	dest_str.Length        = app_ustr2str[test_num].dest_Length;
+	dest_str.MaximumLength = app_ustr2str[test_num].dest_MaximumLength;
+	if (app_ustr2str[test_num].dest_buf != NULL) {
+	    memcpy(dest_buf, app_ustr2str[test_num].dest_buf, app_ustr2str[test_num].dest_buf_size);
+	    dest_buf[app_ustr2str[test_num].dest_buf_size/sizeof(WCHAR)] = '\0';
+	    dest_str.Buffer = dest_buf;
+	} else {
+	    dest_str.Buffer = NULL;
+	} /* if */
+	src_str.Length         = app_ustr2str[test_num].src_Length;
+	src_str.MaximumLength  = app_ustr2str[test_num].src_MaximumLength;
+	if (app_ustr2str[test_num].src_buf != NULL) {
+	    memcpy(src_buf, app_ustr2str[test_num].src_buf, app_ustr2str[test_num].src_buf_size);
+	    src_buf[app_ustr2str[test_num].src_buf_size/sizeof(WCHAR)] = '\0';
+	    src_str.Buffer = src_buf;
+	} else {
+	    src_str.Buffer = NULL;
+	} /* if */
+	result = pRtlAppendUnicodeStringToString(&dest_str, &src_str);
+	ok(result == app_ustr2str[test_num].result,
+	   "(test %d): RtlAppendStringToString(dest, src) has result %lx, expected %lx",
+	   test_num, result, app_ustr2str[test_num].result);
+	ok(dest_str.Length == app_ustr2str[test_num].res_Length,
+	   "(test %d): RtlAppendStringToString(dest, src) dest has Length %d, expected %d",
+	   test_num, dest_str.Length, app_ustr2str[test_num].res_Length);
+	ok(dest_str.MaximumLength == app_ustr2str[test_num].res_MaximumLength,
+	   "(test %d): RtlAppendStringToString(dest, src) dest has MaximumLength %d, expected %d",
+	   test_num, dest_str.MaximumLength, app_ustr2str[test_num].res_MaximumLength);
+	if (dest_str.Buffer == dest_buf) {
+	    ok(memcmp(dest_buf, app_ustr2str[test_num].res_buf, app_ustr2str[test_num].res_buf_size) == 0,
+	       "(test %d): RtlAppendStringToString(dest, src) has dest \"%s\" expected \"%s\"",
+	       test_num, (char *) dest_buf, app_ustr2str[test_num].res_buf);
+	} else {
+	    ok(dest_str.Buffer == (WCHAR *) app_ustr2str[test_num].res_buf,
+	       "(test %d): RtlAppendStringToString(dest, src) dest has Buffer %p expected %p",
+	       test_num, dest_str.Buffer, app_ustr2str[test_num].res_buf);
+	} /* if */
+    } /* for */
 }
 
 
@@ -623,6 +920,7 @@ static void test_RtlUnicodeStringToInteger(void)
     int value;
     NTSTATUS result;
     WCHAR *wstr;
+    UNICODE_STRING uni;
 
     for (test_num = 0; test_num < NB_STR2INT; test_num++) {
 	wstr = AtoW(str2int[test_num].str);
@@ -968,6 +1266,10 @@ START_TEST(rtlstr)
 	test_RtlIntegerToChar();
 	test_RtlUpperChar();
 	test_RtlUpperString();
+	test_RtlUnicodeStringToAnsiString();
+	test_RtlAppendAsciizToString();
+	test_RtlAppendStringToString();
+	test_RtlAppendUnicodeToString();
 	test_RtlAppendUnicodeStringToString();
     } /* if */
 	/*
