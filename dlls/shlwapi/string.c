@@ -23,20 +23,14 @@
 #include "config.h"
 #include "wine/port.h"
 
-#include <ctype.h>
 #include <math.h>
-#include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 
 #define NONAMELESSUNION
 #define NONAMELESSSTRUCT
-#include "winerror.h"
-#include "windef.h"
 #include "winbase.h"
-#include "wingdi.h"
-#include "winuser.h"
-#include "winreg.h"
+#define NO_SHLWAPI_REG
 #define NO_SHLWAPI_STREAM
 #include "shlwapi.h"
 #include "shlobj.h"
@@ -45,8 +39,8 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(shell);
 
-static HRESULT WINAPI _SHStrDupAA(LPCSTR src, LPSTR * dest);
-static HRESULT WINAPI _SHStrDupAW(LPCWSTR src, LPSTR * dest);
+static HRESULT WINAPI _SHStrDupAA(LPCSTR,LPSTR*);
+static HRESULT WINAPI _SHStrDupAW(LPCWSTR,LPSTR*);
 
 /*************************************************************************
  * SHLWAPI_ChrCmpHelperA
@@ -1280,7 +1274,7 @@ LPWSTR WINAPI StrRChrIW(LPCWSTR lpszStr, LPCWSTR lpszEnd, WORD ch)
  *  lpszStr.
  *
  * NOTES
- *  cchMax dtermines the number of characters in the final length of the
+ *  cchMax determines the number of characters in the final length of the
  *  string, not the number appended to lpszStr from lpszCat.
  */
 LPSTR WINAPI StrCatBuffA(LPSTR lpszStr, LPCSTR lpszCat, INT cchMax)
@@ -1442,59 +1436,72 @@ HRESULT WINAPI StrRetToBufW (LPSTRRET src, const ITEMIDLIST *pidl, LPWSTR dest, 
 /*************************************************************************
  * StrRetToStrA					[SHLWAPI.@]
  *
- * converts a STRRET to a normal string
+ * Converts a STRRET to a normal string.
+ *
+ * PARAMS
+ *  lpStrRet [O] STRRET to convert
+ *  pidl     [I] ITEMIDLIST for lpStrRet->uType = STRRET_OFFSETA
+ *  ppszName [O] Destination for converted string
+ *
+ * RETURNS
+ *  Success: S_OK. ppszName contains the new string, allocated with CoTaskMemAlloc().
+ *  Failure: E_FAIL, if any parameters are invalid.
  */
-HRESULT WINAPI StrRetToStrA(LPSTRRET pstr, const ITEMIDLIST * pidl, LPSTR* ppszName)
+HRESULT WINAPI StrRetToStrA(LPSTRRET lpStrRet, const ITEMIDLIST *pidl, LPSTR *ppszName)
 {
-	HRESULT ret = E_FAIL;
+  HRESULT hRet = E_FAIL;
 
-	switch (pstr->uType) {
-	    case STRRET_WSTR:
-	        ret = _SHStrDupAW(pstr->u.pOleStr, ppszName);
-	        CoTaskMemFree(pstr->u.pOleStr);
-	        break;
+  switch (lpStrRet->uType)
+  {
+  case STRRET_WSTR:
+    hRet = _SHStrDupAW(lpStrRet->u.pOleStr, ppszName);
+    CoTaskMemFree(lpStrRet->u.pOleStr);
+    break;
 
-	    case STRRET_CSTR:
-	        ret = _SHStrDupAA(pstr->u.cStr, ppszName);
-	        break;
+  case STRRET_CSTR:
+    hRet = _SHStrDupAA(lpStrRet->u.cStr, ppszName);
+    break;
 
-	    case STRRET_OFFSET:
-	        ret = _SHStrDupAA(((LPCSTR)&pidl->mkid)+pstr->u.uOffset, ppszName);
-	        break;
+  case STRRET_OFFSET:
+    hRet = _SHStrDupAA(((LPCSTR)&pidl->mkid) + lpStrRet->u.uOffset, ppszName);
+    break;
 
-	    default:
-	        *ppszName = NULL;
-	}
-	return ret;
+  default:
+    *ppszName = NULL;
+  }
+
+  return hRet;
 }
 
 /*************************************************************************
  * StrRetToStrW					[SHLWAPI.@]
  *
- * converts a STRRET to a normal string
+ * See StrRetToStrA.
  */
-HRESULT WINAPI StrRetToStrW(LPSTRRET pstr, const ITEMIDLIST * pidl, LPWSTR* ppszName)
+HRESULT WINAPI StrRetToStrW(LPSTRRET lpStrRet, const ITEMIDLIST *pidl, LPWSTR *ppszName)
 {
-	HRESULT ret = E_FAIL;
+  HRESULT hRet = E_FAIL;
 
-	switch (pstr->uType) {
-	    case STRRET_WSTR:
-	        ret = SHStrDupW(pstr->u.pOleStr, ppszName);
-	        CoTaskMemFree(pstr->u.pOleStr);
-	        break;
+  switch (lpStrRet->uType)
+  {
+  case STRRET_WSTR:
+    hRet = SHStrDupW(lpStrRet->u.pOleStr, ppszName);
+    CoTaskMemFree(lpStrRet->u.pOleStr);
+    break;
 
-	    case STRRET_CSTR:
-	        ret = SHStrDupA(pstr->u.cStr, ppszName);
-		break;
+  case STRRET_CSTR:
+    hRet = SHStrDupA(lpStrRet->u.cStr, ppszName);
+    break;
 
-	    case STRRET_OFFSET:
-	        ret = SHStrDupA(((LPCSTR)&pidl->mkid)+pstr->u.uOffset, ppszName);
-	        break;
+  case STRRET_OFFSET:
+    hRet = SHStrDupA(((LPCSTR)&pidl->mkid) + lpStrRet->u.uOffset, ppszName);
+    break;
 
-	    default:
-	        *ppszName = NULL;
-	}
-	return ret;
+  default:
+    *ppszName = NULL;
+  }
+
+  return hRet;
 }
 
 /*************************************************************************
@@ -1540,7 +1547,7 @@ LPSTR WINAPI StrFormatKBSizeA(LONGLONG llBytes, LPSTR lpszDest, UINT cchMax)
  */
 LPWSTR WINAPI StrFormatKBSizeW(LONGLONG llBytes, LPWSTR lpszDest, UINT cchMax)
 {
-  WCHAR szBuff[256], *szOut = szBuff + sizeof(szBuff) - 1;
+  WCHAR szBuff[256], *szOut = szBuff + sizeof(szBuff)/sizeof(WCHAR) - 1;
   LONGLONG ulKB = (llBytes + 1023) >> 10;
 
   TRACE("(%lld,%p,%d)\n", llBytes, lpszDest, cchMax);
@@ -1575,7 +1582,7 @@ LPWSTR WINAPI StrFormatKBSizeW(LONGLONG llBytes, LPWSTR lpszDest, UINT cchMax)
  *  lpszStr.
  *
  * NOTES
- *  cchMax dtermines the number of characters that are appended to lpszStr,
+ *  cchMax determines the number of characters that are appended to lpszStr,
  *  not the total length of the string.
  */
 LPSTR WINAPI StrNCatA(LPSTR lpszStr, LPCSTR lpszCat, INT cchMax)
@@ -1706,7 +1713,7 @@ BOOL WINAPI StrTrimW(LPWSTR lpszStr, LPCWSTR lpszTrim)
 }
 
 /*************************************************************************
- *      _SHStrDupA	[INTERNAL]
+ *      _SHStrDupAA	[INTERNAL]
  *
  * Duplicates a ASCII string to ASCII. The destination buffer is allocated.
  */
@@ -1747,27 +1754,29 @@ static HRESULT WINAPI _SHStrDupAA(LPCSTR src, LPSTR * dest)
  *  Failure: E_OUTOFMEMORY, If any arguments are invalid or memory allocation
  *           fails.
  */
-HRESULT WINAPI SHStrDupA(LPCSTR src, LPWSTR * dest)
+HRESULT WINAPI SHStrDupA(LPCSTR lpszStr, LPWSTR * lppszDest)
 {
-	HRESULT hr;
-	int len = 0;
+  HRESULT hRet;
+  int len = 0;
 
-	if (src) {
-	    len = MultiByteToWideChar(0,0,src,-1,0,0)* sizeof(WCHAR);
-	    *dest = CoTaskMemAlloc(len);
-	} else {
-	    *dest = NULL;
-	}
+  if (lpszStr)
+  {
+    len = MultiByteToWideChar(0, 0, lpszStr, -1, 0, 0) * sizeof(WCHAR);
+    *lppszDest = CoTaskMemAlloc(len);
+  }
+  else
+    *lppszDest = NULL;
 
-	if (*dest) {
-	    MultiByteToWideChar(0,0,src,-1,*dest,len);
-	    hr = S_OK;
-	} else {
-	    hr = E_OUTOFMEMORY;
-	}
+  if (*lppszDest)
+  {
+    MultiByteToWideChar(0, 0, lpszStr, -1, *lppszDest, len);
+    hRet = S_OK;
+  }
+  else
+    hRet = E_OUTOFMEMORY;
 
-	TRACE("%s->(%p)\n", debugstr_a(src), *dest);
-	return hr;
+  TRACE("%s->(%p)\n", debugstr_a(lpszStr), *lppszDest);
+  return hRet;
 }
 
 /*************************************************************************
@@ -1872,8 +1881,8 @@ inline static int SHLWAPI_FormatSignificant(LPWSTR lpszNum, int dwDigits)
  *
  * Internal helper for StrFromTimeIntervalW.
  */
-static int SHLWAPI_WriteTimeClass(LPWSTR lpszOut, DWORD dwValue,
-                                  LPCWSTR lpszClass, int iDigits)
+static int WINAPI SHLWAPI_WriteTimeClass(LPWSTR lpszOut, DWORD dwValue,
+                                         LPCWSTR lpszClass, int iDigits)
 {
   WCHAR szBuff[64], *szOut = szBuff + 32;
 
@@ -2303,4 +2312,45 @@ LPSTR WINAPI StrFormatByteSizeA(DWORD dwBytes, LPSTR lpszDest, UINT cchMax)
   TRACE("(%ld,%p,%d)\n", dwBytes, lpszDest, cchMax);
 
   return StrFormatByteSize64A(dwBytes, lpszDest, cchMax);
+}
+
+/*************************************************************************
+ *      SHLWAPI_203	[SHLWAPI.203]
+ *
+ * Remove a single non-trailing ampersand ('&') from a string.
+ *
+ * PARAMS
+ *  lpszStr [I/O] String to remove ampersand from.
+ *
+ * RETURNS
+ *  The character after the first ampersand in lpszStr, or the first character
+ *  in lpszStr if there is no ampersand in the string.
+ */
+char WINAPI SHLWAPI_203(LPCSTR lpszStr)
+{
+  LPSTR lpszIter, lpszTmp;
+  char ch;
+
+  TRACE("(%s)\n", debugstr_a(lpszStr));
+
+  ch = *lpszStr;
+
+  if ((lpszIter = StrChrA(lpszStr, '&')))
+  {
+    lpszTmp = CharNextA(lpszIter);
+    if (lpszTmp && *lpszTmp)
+    {
+      if (*lpszTmp != '&')
+        ch =  *lpszTmp;
+
+      while (lpszIter && *lpszIter)
+      {
+        lpszTmp = CharNextA(lpszIter);
+        *lpszIter = *lpszTmp;
+        lpszIter = lpszTmp;
+      }
+    }
+  }
+
+  return ch;
 }

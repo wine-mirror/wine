@@ -1555,15 +1555,6 @@ HRESULT WINAPI SHLWAPI_202(REFGUID pguidCmdGroup,ULONG cCmds, OLECMD *prgCmds)
 }
 
 /*************************************************************************
- *      @	[SHLWAPI.203]
- *
- */
-VOID WINAPI SHLWAPI_203(LPCSTR lpszStr)
-{
-  FIXME("(%s) - stub!\n", debugstr_a(lpszStr));
-}
-
-/*************************************************************************
  * @	[SHLWAPI.204]
  *
  * Determine if a window is not a child of another window.
