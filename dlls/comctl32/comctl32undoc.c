@@ -1336,10 +1336,14 @@ DPA_GetPtr (const HDPA hdpa, INT i)
 
     if (!hdpa)
 	return NULL;
-    if (!hdpa->ptrs)
+    if (!hdpa->ptrs) {
+	WARN("no pointer array.\n");
 	return NULL;
-    if ((i < 0) || (i >= hdpa->nItemCount))
+    }
+    if ((i < 0) || (i >= hdpa->nItemCount)) {
+	WARN("not enough pointers in array (%d vs %d).\n",i,hdpa->nItemCount);
 	return NULL;
+    }
 
     TRACE("-- %p\n", hdpa->ptrs[i]);
 
@@ -1480,7 +1484,7 @@ DPA_SetPtr (const HDPA hdpa, INT i, LPVOID p)
 	/* within the old array */
 	if (hdpa->nMaxCount > i) {
 	    /* within the allocated space, set a new boundary */
-	    hdpa->nItemCount = i;
+	    hdpa->nItemCount = i+1;
 	}
 	else {
 	    /* resize the block of memory */
