@@ -538,7 +538,7 @@ WINE_MODREF *MODULE_FindModule(
  * SCS_WOW_BINARY: A Win16 based application
  * SCS_PIF_BINARY: A PIF file that executes an MS-Dos based app
  * SCS_POSIX_BINARY: A POSIX based application ( Not implemented )
- * SCS_OS216_BINARY: A 16bit OS/2 based application ( Not implemented )
+ * SCS_OS216_BINARY: A 16bit OS/2 based application
  *
  * Returns TRUE if the file is an executable in which case
  * the value pointed by lpBinaryType is set.
@@ -614,12 +614,25 @@ static BOOL MODULE_GetBinaryType( HFILE hfile, OFSTRUCT *ofs,
                 {
                     /* The IMAGE_OS2_SIGNATURE indicates that the
                      * "extended header is a Windows executable (NE)
-                     * header.      This is a bit misleading, but it is
-                     * documented in the SDK. ( for more details see
-                     * the neexe.h file )
+                     * header."  This can mean either a 16-bit OS/2
+                     * or a 16-bit Windows or even a DOS program 
+                     * (running under a DOS extender).  To decide
+                     * which, we'll have to read the NE header.
                      */
-                     *lpBinaryType = SCS_WOW_BINARY;
-                     return TRUE;
+
+                     IMAGE_OS2_HEADER ne;
+                     if ( _llseek( hfile, mz_header.e_lfanew, SEEK_SET ) >= 0 &&
+                          _lread( hfile, &ne, sizeof(ne) ) == sizeof(ne) )
+                     {
+                         switch ( ne.operating_system )
+                         {
+                         case 2:  *lpBinaryType = SCS_WOW_BINARY;   return TRUE;
+                         case 5:  *lpBinaryType = SCS_DOS_BINARY;   return TRUE;
+                         default: *lpBinaryType = SCS_OS216_BINARY; return TRUE;
+                         }
+                     }
+                     /* Couldn't read header, so abort. */
+                     return FALSE;
                 }
                 else
                 {
