@@ -66,13 +66,6 @@ const GUID IID_D3DDEVICE7_OpenGL = {
   { 0x82,0x2d,0xa8,0xd5,0x31,0x87,0xca,0xfd }
 };
 
-const GUID IID_D3DDEVICE_Default = {
-  0x00000000,
-  0x0000,
-  0x0000,
-  { 0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00 }
-};
-
 /* Define this variable if you have an unpatched Mesa 3.0 (patches are available
    on Mesa's home page) or version 3.1b.
 
@@ -201,9 +194,9 @@ static void fill_opengl_caps(D3DDEVICEDESC *d1)
     d1->dwMaxStippleHeight = 32;
 }
 
+#if 0 /* TODO : fix this... */
 static void fill_device_capabilities(IDirectDrawImpl* ddraw)
 {
-#if 0 /* TODO : fix this... */
     x11_dd_private *private = (x11_dd_private *) ddraw->d->private;
     const char *ext_string;
     Mesa_DeviceCapabilities *devcap;
@@ -221,12 +214,12 @@ static void fill_device_capabilities(IDirectDrawImpl* ddraw)
         TRACE("Color table extension not found.\n");
     }
     LEAVE_GL();
-#endif
 }
+#endif
 
 
 
-HRESULT d3device_enumerate(LPD3DENUMDEVICESCALLBACK cb, LPVOID context, DWORD interface_version)
+HRESULT d3ddevice_enumerate(LPD3DENUMDEVICESCALLBACK cb, LPVOID context, DWORD interface_version)
 {
     D3DDEVICEDESC d1, d2;
     char buf[256];
@@ -290,7 +283,7 @@ GL_IDirect3DDeviceImpl_3_2T_1T_GetCaps(LPDIRECT3DDEVICE3 iface,
     memset(lpD3DHELDevDesc, 0, dwSize);
     memcpy(lpD3DHELDevDesc, &desc, (dwSize <= desc.dwSize ? dwSize : desc.dwSize));
 
-    TRACE(" returning caps : TODO\n");
+    TRACE(" returning caps : (no dump function yet)\n");
 
     return DD_OK;
 }
@@ -396,6 +389,52 @@ static HRESULT enum_texture_format_OpenGL(LPD3DENUMTEXTUREFORMATSCALLBACK cb_1,
 
     TRACE("End of enumeration\n");
     return DD_OK;
+}
+
+
+HRESULT
+d3ddevice_find(IDirect3DImpl *d3d,
+	       LPD3DFINDDEVICESEARCH lpD3DDFS,
+	       LPD3DFINDDEVICERESULT lplpD3DDevice,
+	       DWORD interface_version)
+{
+    DWORD dwSize;
+    D3DDEVICEDESC desc;
+  
+    if ((lpD3DDFS->dwFlags & D3DFDS_COLORMODEL) &&
+	(lpD3DDFS->dcmColorModel != D3DCOLOR_RGB)) {
+        TRACE(" trying to request a non-RGB D3D color model. Not supported.\n");
+	return DDERR_INVALIDPARAMS; /* No real idea what to return here :-) */
+    }
+    if (lpD3DDFS->dwFlags & D3DFDS_GUID) {
+        TRACE(" trying to match guid %s.\n", debugstr_guid(&(lpD3DDFS->guid)));
+	if ((IsEqualGUID( &IID_D3DDEVICE_OpenGL, &(lpD3DDFS->guid)) == 0) &&
+	    (IsEqualGUID( &IID_D3DDEVICE2_OpenGL, &(lpD3DDFS->guid)) == 0) &&
+	    (IsEqualGUID( &IID_D3DDEVICE3_OpenGL, &(lpD3DDFS->guid)) == 0) &&
+	    (IsEqualGUID( &IID_D3DDEVICE7_OpenGL, &(lpD3DDFS->guid)) == 0) &&
+	    (IsEqualGUID(&IID_IDirect3DHALDevice, &(lpD3DDFS->guid)) == 0)) {
+	    TRACE(" no match for this GUID.\n");
+	    return DDERR_INVALIDPARAMS;
+	}
+    }
+
+    /* Now return our own GUIDs according to Direct3D version */
+    if (interface_version == 1) {
+        lplpD3DDevice->guid = IID_D3DDEVICE_OpenGL;
+    } else if (interface_version == 2) {
+        lplpD3DDevice->guid = IID_D3DDEVICE2_OpenGL;
+    } else if (interface_version == 3) {
+        lplpD3DDevice->guid = IID_D3DDEVICE3_OpenGL;
+    }
+    fill_opengl_caps(&desc);
+    dwSize = lplpD3DDevice->ddHwDesc.dwSize;
+    memset(&(lplpD3DDevice->ddHwDesc), 0, dwSize);
+    memcpy(&(lplpD3DDevice->ddHwDesc), &desc, (dwSize <= desc.dwSize ? dwSize : desc.dwSize));
+    dwSize = lplpD3DDevice->ddSwDesc.dwSize;
+    memset(&(lplpD3DDevice->ddSwDesc), 0, dwSize);
+    memcpy(&(lplpD3DDevice->ddSwDesc), &desc, (dwSize <= desc.dwSize ? dwSize : desc.dwSize));
+    
+    return D3D_OK;
 }
 
 HRESULT WINAPI

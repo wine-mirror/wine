@@ -78,9 +78,14 @@ Main_IDirect3DImpl_3_2T_1T_CreateViewport(LPDIRECT3D3 iface,
 					  IUnknown* pUnkOuter);
 
 HRESULT WINAPI
-Main_IDirect3DImpl_3_2T_FindDevice(LPDIRECT3D3 iface,
-                                   LPD3DFINDDEVICESEARCH lpD3DDFS,
-                                   LPD3DFINDDEVICERESULT lpD3DFDR);
+Main_IDirect3DImpl_3_FindDevice(LPDIRECT3D3 iface,
+				LPD3DFINDDEVICESEARCH lpD3DDFS,
+				LPD3DFINDDEVICERESULT lpD3DFDR);
+
+HRESULT WINAPI
+Main_IDirect3DImpl_2_FindDevice(LPDIRECT3D2 iface,
+				LPD3DFINDDEVICESEARCH lpD3DDFS,
+				LPD3DFINDDEVICERESULT lpD3DFDR);
 
 HRESULT WINAPI
 Main_IDirect3DImpl_3_CreateDevice(LPDIRECT3D3 iface,
@@ -192,8 +197,3 @@ HRESULT WINAPI
 Thunk_IDirect3DImpl_1_CreateLight(LPDIRECT3D iface,
                                   LPDIRECT3DLIGHT* lplpDirect3DLight,
                                   IUnknown* pUnkOuter);
-
-HRESULT WINAPI
-Thunk_IDirect3DImpl_2_FindDevice(LPDIRECT3D2 iface,
-                                 LPD3DFINDDEVICESEARCH lpD3DDFS,
-                                 LPD3DFINDDEVICERESULT lpD3DFDR);

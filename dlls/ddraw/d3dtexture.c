@@ -203,19 +203,19 @@ Main_IDirect3DTextureImpl_2_1T_QueryInterface(LPDIRECT3DTEXTURE2 iface,
     *obp = NULL;
 
     if ( IsEqualGUID( &IID_IUnknown,  riid ) ) {
-        IDirect3DTexture_AddRef(ICOM_INTERFACE(This, IDirect3DTexture));
+        IDirect3DTexture2_AddRef(ICOM_INTERFACE(This, IDirect3DTexture2));
 	*obp = iface;
 	TRACE("  Creating IUnknown interface at %p.\n", *obp);
 	return S_OK;
     }
     if ( IsEqualGUID( &IID_IDirect3DTexture, riid ) ) {
-        IDirect3DTexture_AddRef(ICOM_INTERFACE(This, IDirect3DTexture));
+        IDirect3DTexture2_AddRef(ICOM_INTERFACE(This, IDirect3DTexture2));
         *obp = ICOM_INTERFACE(This, IDirect3DTexture);
 	TRACE("  Creating IDirect3DTexture interface %p\n", *obp);
 	return S_OK;
     }
     if ( IsEqualGUID( &IID_IDirect3DTexture2, riid ) ) {
-        IDirect3DTexture_AddRef(ICOM_INTERFACE(This, IDirect3DTexture));
+        IDirect3DTexture2_AddRef(ICOM_INTERFACE(This, IDirect3DTexture2));
         *obp = ICOM_INTERFACE(This, IDirect3DTexture2);
 	TRACE("  Creating IDirect3DTexture2 interface %p\n", *obp);
 	return S_OK;
@@ -350,8 +350,8 @@ GL_IDirect3DTextureImpl_2_1T_GetHandle(LPDIRECT3DTEXTURE2 iface,
     /* Associate the texture with the device and perform the appropriate AddRef/Release */
     /* FIXME: Is there only one or several textures associated with the device ? */
     if (lpDeviceImpl->current_texture != NULL)
-        IDirect3DTexture_Release(ICOM_INTERFACE(lpDeviceImpl->current_texture, IDirect3DTexture));           
-    IDirect3DTexture_AddRef(ICOM_INTERFACE(This, IDirect3DTexture));
+        IDirect3DTexture2_Release(ICOM_INTERFACE(lpDeviceImpl->current_texture, IDirect3DTexture2));           
+    IDirect3DTexture2_AddRef(ICOM_INTERFACE(This, IDirect3DTexture2));
     lpDeviceImpl->current_texture = This;
 
     TRACE("OpenGL texture handle is : %d\n", glThis->tex_name);
@@ -375,7 +375,7 @@ GL_IDirect3DTextureImpl_2_1T_Load(LPDIRECT3DTEXTURE2 iface,
     static BOOL color_table_queried = FALSE;
 #endif
     
-    TRACE("(%p/%p)->(%p): stub!\n", This, iface, lpD3DTexture2);
+    TRACE("(%p/%p)->(%p)\n", This, iface, lpD3DTexture2);
     TRACE("Copied surface %p to surface %p\n", lpD3DTextureImpl->surface, This->surface);
 
     if ( This->surface->surface_desc.ddsCaps.dwCaps & DDSCAPS_ALLOCONLOAD )
