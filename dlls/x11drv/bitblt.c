@@ -31,7 +31,6 @@
 #include "wingdi.h"
 #include "winreg.h"
 #include "winuser.h"
-#include "gdi.h"
 #include "x11drv.h"
 #include "wine/debug.h"
 
@@ -1142,7 +1141,7 @@ static BOOL BITBLT_GetVisRectangles( X11DRV_PDEVICE *physDevDst, INT xDst, INT y
     rect.bottom = yDst + heightDst;
     if (widthDst < 0) SWAP_INT32( &rect.left, &rect.right );
     if (heightDst < 0) SWAP_INT32( &rect.top, &rect.bottom );
-    GetRgnBox( physDevDst->dc->hGCClipRgn, &clipRect );
+    GetRgnBox( physDevDst->region, &clipRect );
     if (!IntersectRect( visRectDst, &rect, &clipRect )) return FALSE;
 
       /* Get the source visible rectangle */

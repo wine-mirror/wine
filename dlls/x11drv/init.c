@@ -95,10 +95,8 @@ BOOL X11DRV_CreateDC( DC *dc, X11DRV_PDEVICE **pdev, LPCWSTR driver, LPCWSTR dev
     if (!X11DRV_DC_Funcs) X11DRV_DC_Funcs = dc->funcs;  /* hack */
 
     physDev = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*physDev) );
-    if(!physDev) {
-        ERR("Can't allocate physDev\n");
-	return FALSE;
-    }
+    if (!physDev) return FALSE;
+
     *pdev = physDev;
     physDev->hdc = dc->hSelf;
     physDev->dc  = dc;  /* FIXME */
@@ -113,11 +111,7 @@ BOOL X11DRV_CreateDC( DC *dc, X11DRV_PDEVICE **pdev, LPCWSTR driver, LPCWSTR dev
         physDev->drawable  = root_window;
         physDev->depth     = screen_depth;
     }
-    physDev->org.x = physDev->org.y = 0;
-    physDev->drawable_org.x = physDev->drawable_org.y = 0;
-
-    physDev->current_pf   = 0;
-    physDev->used_visuals = 0;
+    physDev->region = CreateRectRgn( 0, 0, 0, 0 );
 
     wine_tsx11_lock();
     physDev->gc = XCreateGC( gdi_display, physDev->drawable, 0, NULL );
@@ -136,6 +130,7 @@ BOOL X11DRV_DeleteDC( X11DRV_PDEVICE *physDev )
 {
     if(physDev->xrender)
       X11DRV_XRender_DeleteDC( physDev );
+    DeleteObject( physDev->region );
     wine_tsx11_lock();
     XFreeGC( gdi_display, physDev->gc );
     while (physDev->used_visuals-- > 0)

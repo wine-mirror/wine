@@ -109,11 +109,13 @@ RGNDATA *X11DRV_GetRegionData( HRGN hrgn, HDC hdc_lptodp )
 /***********************************************************************
  *           X11DRV_SetDeviceClipping
  */
-void X11DRV_SetDeviceClipping( X11DRV_PDEVICE *physDev, HRGN hrgn )
+void X11DRV_SetDeviceClipping( X11DRV_PDEVICE *physDev, HRGN vis_rgn, HRGN clip_rgn )
 {
     RGNDATA *data;
 
-    if (!(data = X11DRV_GetRegionData( hrgn, 0 ))) return;
+    CombineRgn( physDev->region, vis_rgn, clip_rgn, clip_rgn ? RGN_AND : RGN_COPY );
+    if (!(data = X11DRV_GetRegionData( physDev->region, 0 ))) return;
+
     wine_tsx11_lock();
     XSetClipRectangles( gdi_display, physDev->gc, physDev->org.x, physDev->org.y,
                         (XRectangle *)data->Buffer, data->rdh.nCount, YXBanded );

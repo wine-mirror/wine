@@ -78,7 +78,6 @@ DC *DC_AllocDC( const DC_FUNCTIONS *funcs, WORD magic )
     dc->flags               = 0;
     dc->hClipRgn            = 0;
     dc->hVisRgn             = 0;
-    dc->hGCClipRgn          = 0;
     dc->hPen                = GetStockObject( BLACK_PEN );
     dc->hBrush              = GetStockObject( WHITE_BRUSH );
     dc->hFont               = GetStockObject( SYSTEM_FONT );
@@ -335,7 +334,7 @@ HDC WINAPI GetDCState( HDC hdc )
 
     /* Get/SetDCState() don't change hVisRgn field ("Undoc. Windows" p.559). */
 
-    newdc->hGCClipRgn = newdc->hVisRgn = 0;
+    newdc->hVisRgn = 0;
     if (dc->hClipRgn)
     {
 	newdc->hClipRgn = CreateRectRgn( 0, 0, 0, 0 );
@@ -764,7 +763,6 @@ BOOL WINAPI DeleteDC( HDC hdc )
 	dc->saveLevel--;
         if (dcs->hClipRgn) DeleteObject( dcs->hClipRgn );
         if (dcs->hVisRgn) DeleteObject( dcs->hVisRgn );
-        if (dcs->hGCClipRgn) DeleteObject( dcs->hGCClipRgn );
         PATH_DestroyGdiPath(&dcs->path);
         GDI_FreeObject( hdcs, dcs );
     }
@@ -782,7 +780,6 @@ BOOL WINAPI DeleteDC( HDC hdc )
 
     if (dc->hClipRgn) DeleteObject( dc->hClipRgn );
     if (dc->hVisRgn) DeleteObject( dc->hVisRgn );
-    if (dc->hGCClipRgn) DeleteObject( dc->hGCClipRgn );
     PATH_DestroyGdiPath(&dc->path);
 
     GDI_FreeObject( hdc, dc );

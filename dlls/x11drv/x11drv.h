@@ -91,6 +91,7 @@ typedef struct
     Drawable      drawable;
     POINT         org;          /* DC origin relative to drawable */
     POINT         drawable_org; /* Origin of drawable relative to screen */
+    HRGN          region;       /* Device region (visible region & clip region) */
     X_PHYSFONT    font;
     X_PHYSPEN     pen;
     X_PHYSBRUSH   brush;
@@ -170,6 +171,7 @@ extern BOOL X11DRV_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y,
 				 UINT flags, const RECT *lprect,
 				 LPCWSTR str, UINT count, const INT *lpDx );
 extern LONG X11DRV_SetBitmapBits( HBITMAP hbitmap, const void *bits, LONG count );
+extern void X11DRV_SetDeviceClipping( X11DRV_PDEVICE *physDev, HRGN vis_rgn, HRGN clip_rgn );
 extern INT X11DRV_SetDIBitsToDevice( X11DRV_PDEVICE *physDev, INT xDest,
 				       INT yDest, DWORD cx, DWORD cy,
 				       INT xSrc, INT ySrc,

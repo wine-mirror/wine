@@ -56,6 +56,7 @@ X11DRV_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flags,
     XChar2b		*str2b = NULL;
     BOOL		dibUpdateFlag = FALSE;
     BOOL                result = TRUE;
+    HRGN                saved_region = 0;
     POINT               pt;
     DC *dc = physDev->dc;
     UINT align = GetTextAlign( physDev->hdc );
@@ -218,8 +219,12 @@ X11DRV_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flags,
 
     if (flags & ETO_CLIPPED)
     {
-        SaveVisRgn16( HDC_16(physDev->hdc) );
-        IntersectVisRect16( HDC_16(physDev->hdc), lprect->left, lprect->top, lprect->right, lprect->bottom );
+        HRGN clip_region = CreateRectRgn( lprect->left, lprect->top, lprect->right, lprect->bottom );
+        /* make a copy of the current device region */
+        saved_region = CreateRectRgn( 0, 0, 0, 0 );
+        CombineRgn( saved_region, physDev->region, 0, RGN_COPY );
+        X11DRV_SetDeviceClipping( physDev, saved_region, clip_region );
+        DeleteObject( clip_region );
     }
 
       /* Draw the text background if necessary */
@@ -411,7 +416,12 @@ X11DRV_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flags,
     }
     wine_tsx11_unlock();
 
-    if (flags & ETO_CLIPPED) RestoreVisRgn16( HDC_16(physDev->hdc) );
+    if (flags & ETO_CLIPPED)
+    {
+        /* restore the device region */
+        X11DRV_SetDeviceClipping( physDev, saved_region, 0 );
+        DeleteObject( saved_region );
+    }
     goto END;
 
 FAIL:

@@ -952,6 +952,7 @@ BOOL X11DRV_XRender_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flag
     int textPixel, backgroundPixel;
     INT *deltas = NULL;
     INT char_extra;
+    HRGN saved_region = 0;
     UINT align = GetTextAlign( hdc );
     COLORREF textColor = GetTextColor( hdc );
 
@@ -1127,8 +1128,12 @@ BOOL X11DRV_XRender_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flag
 
     if (flags & ETO_CLIPPED)
     {
-        SaveVisRgn16( HDC_16(hdc) );
-        IntersectVisRect16( HDC_16(hdc), lprect->left, lprect->top, lprect->right, lprect->bottom );
+        HRGN clip_region = CreateRectRgn( lprect->left, lprect->top, lprect->right, lprect->bottom );
+        /* make a copy of the current device region */
+        saved_region = CreateRectRgn( 0, 0, 0, 0 );
+        CombineRgn( saved_region, physDev->region, 0, RGN_COPY );
+        X11DRV_SetDeviceClipping( physDev, saved_region, clip_region );
+        DeleteObject( clip_region );
     }
 
     if(X11DRV_XRender_Installed) {
@@ -1151,7 +1156,7 @@ BOOL X11DRV_XRender_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flag
                   physDev->xrender->pict, hdc, physDev->drawable);
 	}
 
-	if ((data = X11DRV_GetRegionData( physDev->dc->hGCClipRgn, 0 )))
+	if ((data = X11DRV_GetRegionData( physDev->region, 0 )))
 	{
 	    wine_tsx11_lock();
 	    pXRenderSetPictureClipRectangles( gdi_display, physDev->xrender->pict,
@@ -1465,7 +1470,11 @@ BOOL X11DRV_XRender_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flag
         HeapFree(GetProcessHeap(), 0, deltas);
 
     if (flags & ETO_CLIPPED)
-        RestoreVisRgn16( HDC_16(hdc) );
+    {
+        /* restore the device region */
+        X11DRV_SetDeviceClipping( physDev, saved_region, 0 );
+        DeleteObject( saved_region );
+    }
 
     retv = TRUE;
 

@@ -115,7 +115,6 @@ typedef struct tagDC
     int           flags;
     HRGN          hClipRgn;     /* Clip region (may be 0) */
     HRGN          hVisRgn;      /* Visible region (must never be 0) */
-    HRGN          hGCClipRgn;   /* GC clip region (ClipRgn AND VisRgn) */
     HPEN          hPen;
     HBRUSH        hBrush;
     HFONT         hFont;

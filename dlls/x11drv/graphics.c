@@ -1284,12 +1284,15 @@ X11DRV_ExtFloodFill( X11DRV_PDEVICE *physDev, INT x, INT y, COLORREF color,
 {
     XImage *image;
     RECT rect;
+    POINT pt;
 
     TRACE("X11DRV_ExtFloodFill %d,%d %06lx %d\n", x, y, color, fillType );
 
-    if (!PtVisible( physDev->hdc, x, y )) return FALSE;
-    if (GetClipBox( physDev->hdc, &rect ) == ERROR) return FALSE;
-    LPtoDP( physDev->hdc, (LPPOINT)&rect, 2 );
+    pt.x = x;
+    pt.y = y;
+    LPtoDP( physDev->hdc, &pt, 1 );
+    if (!PtInRegion( physDev->region, pt.x, pt.y )) return FALSE;
+    GetRgnBox( physDev->region, &rect );
 
     wine_tsx11_lock();
     image = XGetImage( gdi_display, physDev->drawable,
@@ -1301,10 +1304,6 @@ X11DRV_ExtFloodFill( X11DRV_PDEVICE *physDev, INT x, INT y, COLORREF color,
 
     if (X11DRV_SetupGCForBrush( physDev ))
     {
-        POINT pt;
-	pt.x = x;
-	pt.y = y;
-	LPtoDP(physDev->hdc, &pt, 1);
 	/* Update the pixmap from the DIB section */
 	X11DRV_LockDIBSection(physDev, DIB_Status_GdiMod, FALSE);
 
