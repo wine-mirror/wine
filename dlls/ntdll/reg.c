@@ -49,7 +49,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(reg);
  * NtCreateKey [NTDLL.@]
  * ZwCreateKey [NTDLL.@]
  */
-NTSTATUS WINAPI NtCreateKey( PHANDLE retkey, ACCESS_MASK access, const OBJECT_ATTRIBUTES *attr,
+NTSTATUS WINAPI NtCreateKey( PHKEY retkey, ACCESS_MASK access, const OBJECT_ATTRIBUTES *attr,
                              ULONG TitleIndex, const UNICODE_STRING *class, ULONG options,
                              PULONG dispos )
 {
@@ -86,11 +86,11 @@ NTSTATUS WINAPI NtCreateKey( PHANDLE retkey, ACCESS_MASK access, const OBJECT_AT
  * NtOpenKey [NTDLL.@]
  * ZwOpenKey [NTDLL.@]
  *
- *   OUT	PHANDLE			retkey (returns 0 when failure)
+ *   OUT	PHKEY			retkey (returns 0 when failure)
  *   IN		ACCESS_MASK		access
  *   IN		POBJECT_ATTRIBUTES 	attr
  */
-NTSTATUS WINAPI NtOpenKey( PHANDLE retkey, ACCESS_MASK access, const OBJECT_ATTRIBUTES *attr )
+NTSTATUS WINAPI NtOpenKey( PHKEY retkey, ACCESS_MASK access, const OBJECT_ATTRIBUTES *attr )
 {
     NTSTATUS ret;
     DWORD len = attr->ObjectName->Length;
@@ -119,7 +119,7 @@ NTSTATUS WINAPI NtOpenKey( PHANDLE retkey, ACCESS_MASK access, const OBJECT_ATTR
  * NtDeleteKey [NTDLL.@]
  * ZwDeleteKey [NTDLL.@]
  */
-NTSTATUS WINAPI NtDeleteKey( HANDLE hkey )
+NTSTATUS WINAPI NtDeleteKey( HKEY hkey )
 {
     NTSTATUS ret;
 
@@ -139,7 +139,7 @@ NTSTATUS WINAPI NtDeleteKey( HANDLE hkey )
  * NtDeleteValueKey [NTDLL.@]
  * ZwDeleteValueKey [NTDLL.@]
  */
-NTSTATUS WINAPI NtDeleteValueKey( HANDLE hkey, const UNICODE_STRING *name )
+NTSTATUS WINAPI NtDeleteValueKey( HKEY hkey, const UNICODE_STRING *name )
 {
     NTSTATUS ret;
 
@@ -162,7 +162,7 @@ NTSTATUS WINAPI NtDeleteValueKey( HANDLE hkey, const UNICODE_STRING *name )
  *
  * Implementation of NtQueryKey and NtEnumerateKey
  */
-static NTSTATUS enumerate_key( HANDLE handle, int index, KEY_INFORMATION_CLASS info_class,
+static NTSTATUS enumerate_key( HKEY handle, int index, KEY_INFORMATION_CLASS info_class,
                                void *info, DWORD length, DWORD *result_len )
 
 {
@@ -252,7 +252,7 @@ static NTSTATUS enumerate_key( HANDLE handle, int index, KEY_INFORMATION_CLASS i
  * NOTES
  *  the name copied into the buffer is NOT 0-terminated
  */
-NTSTATUS WINAPI NtEnumerateKey( HANDLE handle, ULONG index, KEY_INFORMATION_CLASS info_class,
+NTSTATUS WINAPI NtEnumerateKey( HKEY handle, ULONG index, KEY_INFORMATION_CLASS info_class,
                                 void *info, DWORD length, DWORD *result_len )
 {
     /* -1 means query key, so avoid it here */
@@ -265,7 +265,7 @@ NTSTATUS WINAPI NtEnumerateKey( HANDLE handle, ULONG index, KEY_INFORMATION_CLAS
  * NtQueryKey [NTDLL.@]
  * ZwQueryKey [NTDLL.@]
  */
-NTSTATUS WINAPI NtQueryKey( HANDLE handle, KEY_INFORMATION_CLASS info_class,
+NTSTATUS WINAPI NtQueryKey( HKEY handle, KEY_INFORMATION_CLASS info_class,
                             void *info, DWORD length, DWORD *result_len )
 {
     return enumerate_key( handle, -1, info_class, info, length, result_len );
@@ -320,7 +320,7 @@ static void copy_key_value_info( KEY_VALUE_INFORMATION_CLASS info_class, void *i
  *  NtEnumerateValueKey	[NTDLL.@]
  *  ZwEnumerateValueKey [NTDLL.@]
  */
-NTSTATUS WINAPI NtEnumerateValueKey( HANDLE handle, ULONG index,
+NTSTATUS WINAPI NtEnumerateValueKey( HKEY handle, ULONG index,
                                      KEY_VALUE_INFORMATION_CLASS info_class,
                                      void *info, DWORD length, DWORD *result_len )
 {
@@ -368,7 +368,7 @@ NTSTATUS WINAPI NtEnumerateValueKey( HANDLE handle, ULONG index,
  * NOTES
  *  the name in the KeyValueInformation is never set
  */
-NTSTATUS WINAPI NtQueryValueKey( HANDLE handle, const UNICODE_STRING *name,
+NTSTATUS WINAPI NtQueryValueKey( HKEY handle, const UNICODE_STRING *name,
                                  KEY_VALUE_INFORMATION_CLASS info_class,
                                  void *info, DWORD length, DWORD *result_len )
 {
@@ -422,7 +422,7 @@ NTSTATUS WINAPI NtQueryValueKey( HANDLE handle, const UNICODE_STRING *name,
  *  NtFlushKey	[NTDLL.@]
  *  ZwFlushKey  [NTDLL.@]
  */
-NTSTATUS WINAPI NtFlushKey(HANDLE KeyHandle)
+NTSTATUS WINAPI NtFlushKey(HKEY KeyHandle)
 {
 	FIXME("(0x%08x) stub!\n",
 	KeyHandle);
@@ -446,7 +446,7 @@ NTSTATUS WINAPI NtLoadKey( const OBJECT_ATTRIBUTES *attr, const OBJECT_ATTRIBUTE
  *  ZwNotifyChangeKey   [NTDLL.@]
  */
 NTSTATUS WINAPI NtNotifyChangeKey(
-	IN HANDLE KeyHandle,
+	IN HKEY KeyHandle,
 	IN HANDLE Event,
 	IN PIO_APC_ROUTINE ApcRoutine OPTIONAL,
 	IN PVOID ApcContext OPTIONAL,
@@ -469,7 +469,7 @@ NTSTATUS WINAPI NtNotifyChangeKey(
  */
 
 NTSTATUS WINAPI NtQueryMultipleValueKey(
-	HANDLE KeyHandle,
+	HKEY KeyHandle,
 	PVALENTW ListOfValuesToQuery,
 	ULONG NumberOfItems,
 	PVOID MultipleValueInformation,
@@ -488,7 +488,7 @@ NTSTATUS WINAPI NtQueryMultipleValueKey(
  */
 NTSTATUS WINAPI NtReplaceKey(
 	IN POBJECT_ATTRIBUTES ObjectAttributes,
-	IN HANDLE Key,
+	IN HKEY Key,
 	IN POBJECT_ATTRIBUTES ReplacedObjectAttributes)
 {
 	FIXME("(0x%08x),stub!\n", Key);
@@ -501,7 +501,7 @@ NTSTATUS WINAPI NtReplaceKey(
  * ZwRestoreKey [NTDLL.@]
  */
 NTSTATUS WINAPI NtRestoreKey(
-	HANDLE KeyHandle,
+	HKEY KeyHandle,
 	HANDLE FileHandle,
 	ULONG RestoreFlags)
 {
@@ -514,7 +514,7 @@ NTSTATUS WINAPI NtRestoreKey(
  * ZwSaveKey [NTDLL.@]
  */
 NTSTATUS WINAPI NtSaveKey(
-	IN HANDLE KeyHandle,
+	IN HKEY KeyHandle,
 	IN HANDLE FileHandle)
 {
 	FIXME("(0x%08x,0x%08x) stub\n",
@@ -526,7 +526,7 @@ NTSTATUS WINAPI NtSaveKey(
  * ZwSetInformationKey [NTDLL.@]
  */
 NTSTATUS WINAPI NtSetInformationKey(
-	IN HANDLE KeyHandle,
+	IN HKEY KeyHandle,
 	IN const int KeyInformationClass,
 	IN PVOID KeyInformation,
 	IN ULONG KeyInformationLength)
@@ -545,7 +545,7 @@ NTSTATUS WINAPI NtSetInformationKey(
  *   win95 does not care about count for REG_SZ and finds out the len by itself (js)
  *   NT does definitely care (aj)
  */
-NTSTATUS WINAPI NtSetValueKey( HANDLE hkey, const UNICODE_STRING *name, ULONG TitleIndex,
+NTSTATUS WINAPI NtSetValueKey( HKEY hkey, const UNICODE_STRING *name, ULONG TitleIndex,
                                ULONG type, const void *data, ULONG count )
 {
     NTSTATUS ret;
@@ -572,7 +572,7 @@ NTSTATUS WINAPI NtSetValueKey( HANDLE hkey, const UNICODE_STRING *name, ULONG Ti
  * ZwUnloadKey [NTDLL.@]
  */
 NTSTATUS WINAPI NtUnloadKey(
-	IN HANDLE KeyHandle)
+	IN HKEY KeyHandle)
 {
 	FIXME("(0x%08x) stub\n",
 	KeyHandle);
@@ -611,7 +611,7 @@ NTSTATUS WINAPI RtlFormatCurrentUserKeyPath( IN OUT PUNICODE_STRING KeyPath)
  */
 DWORD WINAPI RtlOpenCurrentUser(
 	IN ACCESS_MASK DesiredAccess, /* [in] */
-	OUT PHANDLE KeyHandle)	      /* [out] handle of HKEY_CURRENT_USER */
+	OUT PHKEY KeyHandle)	      /* [out] handle of HKEY_CURRENT_USER */
 {
 	OBJECT_ATTRIBUTES ObjectAttributes;
 	UNICODE_STRING ObjectName;
