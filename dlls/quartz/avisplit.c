@@ -264,7 +264,6 @@ static HRESULT WINAPI AVISplitter_Stop(IBaseFilter * iface)
     EnterCriticalSection(&This->csFilter);
     {
         hr = PullPin_StopProcessing(This->pInputPin);
-
         This->state = State_Stopped;
     }
     LeaveCriticalSection(&This->csFilter);
@@ -300,9 +299,10 @@ static HRESULT WINAPI AVISplitter_Pause(IBaseFilter * iface)
         {
             for (i = 1; i < This->cStreams + 1; i++)
             {
-                OutputPin_DeliverNewSegment((OutputPin *)This->ppPins[i], 0, (LONGLONG)ceil(10000000.0 * (float)((AVISplitter_OutputPin *)This->ppPins[i])->dwLength / ((AVISplitter_OutputPin *)This->ppPins[i])->fSamplesPerSec), 1.0);
-                ((AVISplitter_OutputPin *)This->ppPins[i])->mediaSeeking.llDuration = (LONGLONG)ceil(10000000.0 * (float)((AVISplitter_OutputPin *)This->ppPins[i])->dwLength / ((AVISplitter_OutputPin *)This->ppPins[i])->fSamplesPerSec);
-                ((AVISplitter_OutputPin *)This->ppPins[i])->mediaSeeking.llStop = (LONGLONG)ceil(10000000.0 * (float)((AVISplitter_OutputPin *)This->ppPins[i])->dwLength / ((AVISplitter_OutputPin *)This->ppPins[i])->fSamplesPerSec);
+                AVISplitter_OutputPin* StreamPin = (AVISplitter_OutputPin *)This->ppPins[i];
+                OutputPin_DeliverNewSegment((OutputPin *)This->ppPins[i], 0, (LONGLONG)ceil(10000000.0 * (float)StreamPin->dwLength / StreamPin->fSamplesPerSec), 1.0);
+                StreamPin->mediaSeeking.llDuration = (LONGLONG)ceil(10000000.0 * (float)StreamPin->dwLength / StreamPin->fSamplesPerSec);
+                StreamPin->mediaSeeking.llStop = (LONGLONG)ceil(10000000.0 * (float)StreamPin->dwLength / StreamPin->fSamplesPerSec);
                 OutputPin_CommitAllocator((OutputPin *)This->ppPins[i]);
             }
 
@@ -328,7 +328,6 @@ static HRESULT WINAPI AVISplitter_Run(IBaseFilter * iface, REFERENCE_TIME tStart
     EnterCriticalSection(&This->csFilter);
     {
         This->rtStreamStart = tStart;
-
         This->state = State_Running;
     }
     LeaveCriticalSection(&This->csFilter);
@@ -552,11 +551,27 @@ static HRESULT AVISplitter_Sample(LPVOID iface, IMediaSample * pSample)
         switch (This->CurrentChunk.fcc)
         {
         case ckidJUNK:
+        case aviFCC('i','d','x','1'): /* Index is not handled */
             /* silently ignore */
             if (S_FALSE == AVISplitter_NextChunk(&This->CurrentChunkOffset, &This->CurrentChunk, &tStart, &tStop, pbSrcStream))
                 bMoreData = FALSE;
             continue;
+        case ckidLIST:
+	    /* We only handle the 'rec ' list which contains the stream data */
+	    if ((*(DWORD*)(pbSrcStream + BYTES_FROM_MEDIATIME(This->CurrentChunkOffset-tStart) + sizeof(RIFFCHUNK))) == aviFCC('r','e','c',' '))
+	    {
+		/* FIXME: We only advanced to the first chunk inside the list without keeping track that we are in it.
+		 *        This is not clean and the parser should be improved for that but it is enough for most AVI files. */
+		This->CurrentChunkOffset = MEDIATIME_FROM_BYTES(BYTES_FROM_MEDIATIME(This->CurrentChunkOffset) + sizeof(RIFFLIST));
+		This->CurrentChunk = *(RIFFCHUNK*) (pbSrcStream + BYTES_FROM_MEDIATIME(This->CurrentChunkOffset-tStart));
+	        break;
+	    }
+	    else if (S_FALSE == AVISplitter_NextChunk(&This->CurrentChunkOffset, &This->CurrentChunk, &tStart, &tStop, pbSrcStream))
+                bMoreData = FALSE;
+            continue;
         default:
+            break;
+#if 0 /* According to the AVI specs, a stream data chunk should be ABXX where AB is the stream number and X means don't care */
             switch (TWOCCFromFOURCC(This->CurrentChunk.fcc))
             {
             case cktypeDIBcompressed:
@@ -577,6 +592,7 @@ static HRESULT AVISplitter_Sample(LPVOID iface, IMediaSample * pSample)
                     bMoreData = FALSE;
                 continue;
             }
+#endif
         }
 
         streamId = StreamFromFOURCC(This->CurrentChunk.fcc);
@@ -657,13 +673,13 @@ static HRESULT AVISplitter_Sample(LPVOID iface, IMediaSample * pSample)
 
                 IMediaSample_SetTime(This->pCurrentSample, &tAviStart, &tAviStop);
 
-
                 hr = OutputPin_SendSample(&pOutputPin->pin, This->pCurrentSample);
                 if (hr != S_OK && hr != VFW_E_NOT_CONNECTED)
                     ERR("Error sending sample (%lx)\n", hr);
             }
 
-            if (This->pCurrentSample)
+            /* If we have a sample that has not been delivered, release it */
+            if (FAILED(hr) && This->pCurrentSample)
                 IMediaSample_Release(This->pCurrentSample);
             
             This->pCurrentSample = NULL;
