@@ -360,12 +360,41 @@ static	int	start_debugger_atomic(PEXCEPTION_POINTERS epointers)
 
 
 /*******************************************************************
+ *         check_resource_write
+ *
+ * Check if the exception is a write attempt to the resource data.
+ * If yes, we unprotect the resources to let broken apps continue
+ * (Windows does this too).
+ */
+inline static BOOL check_resource_write( const EXCEPTION_RECORD *rec )
+{
+    void *addr, *rsrc;
+    DWORD size;
+    MEMORY_BASIC_INFORMATION info;
+
+    if (rec->ExceptionCode != EXCEPTION_ACCESS_VIOLATION) return FALSE;
+    if (!rec->ExceptionInformation[0]) return FALSE;  /* not a write access */
+    addr = (void *)rec->ExceptionInformation[1];
+    if (!VirtualQuery( addr, &info, sizeof(info) )) return FALSE;
+    if (!(rsrc = RtlImageDirectoryEntryToData( (HMODULE)info.AllocationBase, TRUE,
+                                              IMAGE_DIRECTORY_ENTRY_RESOURCE, &size )))
+        return FALSE;
+    if (addr < rsrc || (char *)addr >= (char *)rsrc + size) return FALSE;
+    FIXME( "Broken app is writing to the resource data, enabling work-around\n" );
+    VirtualProtect( rsrc, size, PAGE_WRITECOPY, NULL );
+    return TRUE;
+}
+
+
+/*******************************************************************
  *         UnhandledExceptionFilter   (KERNEL32.@)
  */
 DWORD WINAPI UnhandledExceptionFilter(PEXCEPTION_POINTERS epointers)
 {
     int 		status;
     int			loop = 0;
+
+    if (check_resource_write( epointers->ExceptionRecord )) return EXCEPTION_CONTINUE_EXECUTION;
 
     for (loop = 0; loop <= 1; loop++)
     {
