@@ -31,7 +31,7 @@ my %comment_width;
 my %comment_indent;
 my %comment_spacing;
 
-sub check_documentation {
+sub check_documentation($) {
     local $_;
 
     my $function = shift;
@@ -137,7 +137,7 @@ sub check_documentation {
 		} elsif ($ordinal eq "init") {
 		    $ordinal = 0;
 		} else {
-		    $output->write("documentation: $external_name (\U$module\E.$ordinal) wrong\n");
+		    $output->write("documentation: $external_name (\U$module\E.$ordinal) wrong1\n");
 		    next;
 		}
 
@@ -165,7 +165,7 @@ sub check_documentation {
 		}
 
 		if (!$found && $external_name ne "DllMain" && $ordinal !~ /^0$/) {
-		    $output->write("documentation: $external_name (\U$module\E.$ordinal) wrong\n");
+		    $output->write("documentation: $external_name (\U$module\E.$ordinal) wrong2\n");
 		}
 	    }
 	}
@@ -220,7 +220,7 @@ sub check_documentation {
     }
 }
 
-sub report_documentation {
+sub report_documentation() {
     if($options->documentation_comment_indent) {
 	foreach my $indent (sort(keys(%comment_indent))) {
 	    my $count = $comment_indent{$indent};

@@ -30,18 +30,18 @@ require Exporter;
 use vars qw($modules);
 
 use config qw(
-    &file_type &files_skip
-    &file_directory
-    &get_c_files &get_spec_files
+    file_type files_skip
+    file_directory
+    get_c_files get_spec_files
     $current_dir $wine_dir
     $winapi_check_dir
 );
 use options qw($options);
 use output qw($output);
 
-sub import {
+sub import(@) {
     $Exporter::ExportLevel++;
-    &Exporter::import(@_);
+    Exporter::import(@_);
     $Exporter::ExportLevel--;
 
     if (defined($modules)) {
@@ -51,7 +51,7 @@ sub import {
     $modules = 'modules'->new;
 }
 
-sub get_spec_file_type {
+sub get_spec_file_type($) {
     my $file = shift;
 
     my $module;
@@ -89,19 +89,7 @@ sub get_spec_file_type {
     return ($type, $module);
 }
 
-sub new {
-    my $proto = shift;
-    my $class = ref($proto) || $proto;
-    my $self  = {};
-    bless ($self, $class);
-
-    my $spec_file_found = $self->find_spec_files();
-    $self->read_spec_files($spec_file_found);
-
-    return $self;
-}
-
-sub find_spec_files {
+sub find_spec_files($) {
     my $self = shift;
 
     my $dir2spec_file = \%{$self->{DIR2SPEC_FILE}};
@@ -128,9 +116,9 @@ sub find_spec_files {
     return $spec_file_found;
 }
 
-sub read_spec_files {
+sub read_spec_files($$) {
     my $self = shift;
-    
+
     my $spec_file_found = shift;
 
     my $dir2spec_file = \%{$self->{DIR2SPEC_FILE}};
@@ -178,7 +166,19 @@ sub read_spec_files {
     }
 }
 
-sub all_modules {
+sub new($) {
+    my $proto = shift;
+    my $class = ref($proto) || $proto;
+    my $self  = {};
+    bless ($self, $class);
+
+    my $spec_file_found = $self->find_spec_files();
+    $self->read_spec_files($spec_file_found);
+
+    return $self;
+}
+
+sub all_modules($) {
     my $self = shift;
 
     my $module2spec_file = \%{$self->{MODULE2SPEC_FILE}};
@@ -186,7 +186,7 @@ sub all_modules {
     return sort(keys(%$module2spec_file));
 }
 
-sub complete_modules {
+sub complete_modules($$) {
     my $self = shift;
 
     my $c_files = shift;
@@ -224,7 +224,7 @@ sub complete_modules {
     return @complete_modules;
 }
 
-sub is_allowed_module {
+sub is_allowed_module($$) {
     my $self = shift;
 
     my $module2spec_file = \%{$self->{MODULE2SPEC_FILE}};
@@ -234,7 +234,7 @@ sub is_allowed_module {
     return defined($$module2spec_file{$module});
 }
 
-sub is_allowed_module_in_file {
+sub is_allowed_module_in_file($$$) {
     my $self = shift;
 
     my $dir2spec_file = \%{$self->{DIR2SPEC_FILE}};
@@ -260,7 +260,7 @@ sub is_allowed_module_in_file {
     return 0;
 }
 
-sub allowed_modules_in_file {
+sub allowed_modules_in_file($$) {
     my $self = shift;
 
     my $dir2spec_file = \%{$self->{DIR2SPEC_FILE}};
@@ -283,7 +283,7 @@ sub allowed_modules_in_file {
     return $module;
 }
 
-sub allowed_dirs_for_module {
+sub allowed_dirs_for_module($$) {
    my $self = shift;
 
    my $module2spec_file = \%{$self->{MODULE2SPEC_FILE}};
@@ -296,7 +296,7 @@ sub allowed_dirs_for_module {
    return sort(keys(%{$$spec_file2dir{$spec_file}}));
 }
 
-sub allowed_spec_files16 {
+sub allowed_spec_files16($) {
     my $self = shift;
 
     my $spec_files16 = \@{$self->{SPEC_FILES16}};
@@ -304,7 +304,7 @@ sub allowed_spec_files16 {
     return @$spec_files16;
 }
 
-sub allowed_spec_files32 {
+sub allowed_spec_files32($) {
     my $self = shift;
 
     my $spec_files32 = \@{$self->{SPEC_FILES32}};
@@ -312,7 +312,7 @@ sub allowed_spec_files32 {
     return @$spec_files32;
 }
 
-sub found_module_in_dir {
+sub found_module_in_dir($$$) {
     my $self = shift;
 
     my $module = shift;
@@ -326,7 +326,7 @@ sub found_module_in_dir {
     $$used_module_dirs{$module}{$dir}++;
 }
 
-sub global_report {
+sub global_report($) {
     my $self = shift;
 
     my $dir2spec_file = \%{$self->{DIR2SPEC_FILE}};

@@ -35,8 +35,8 @@ BEGIN {
 }
 
 use config qw(
-    &files_filter &files_skip
-    &get_h_files
+    files_filter files_skip
+    get_h_files
     $current_dir $wine_dir
 );
 use output qw($output);
@@ -56,7 +56,7 @@ use winapi qw($win16api $win32api @winapis);
 
 use preprocessor;
 use type;
-use util qw(&is_subset);
+use util qw(is_subset);
 use winapi_documentation;
 use winapi_function;
 use winapi_local;
@@ -242,7 +242,7 @@ if($options->headers) {
 	    my $argument = shift;
 	};
 
-	&winapi_parser::parse_c_file($file, {
+	winapi_parser::parse_c_file($file, {
 	    c_comment_found => $found_c_comment,
 	    cplusplus_comment_found => $found_cplusplus_comment,
 	    function_create => $create_function,
@@ -377,18 +377,18 @@ foreach my $file (@c_files) {
 	}
 
 	if($options->local && $options->argument && defined($statements)) {
-	    &winapi_local::check_function($function);
+	    winapi_local::check_function($function);
 	}
 
 	if($options->local && $options->statements && defined($statements)) {
-	    &winapi_local::check_statements(\%functions, $function);
+	    winapi_local::check_statements(\%functions, $function);
 	}
 
 	if($options->local && $options->documentation &&
 	   (defined($module16) || defined($module32)) &&
 	   $linkage eq "" && defined($statements))
 	{
-	    &winapi_documentation::check_documentation($function);
+	    winapi_documentation::check_documentation($function);
 	}
 
 	if(1) {
@@ -657,7 +657,7 @@ foreach my $file (@c_files) {
 	}
     };
 
-    &winapi_parser::parse_c_file($file, {
+    winapi_parser::parse_c_file($file, {
 	c_comment_found => $found_c_comment,
 	cplusplus_comment_found => $found_cplusplus_comment,
 	function_create => $create_function,
@@ -673,13 +673,13 @@ foreach my $file (@c_files) {
 	}
     }
 
-    &winapi_local::check_file($file, \%functions);
+    winapi_local::check_file($file, \%functions);
 }
 
 if($options->global) {
-    &winapi_global::check_modules(\%complete_module, \%module2functions);
+    winapi_global::check_modules(\%complete_module, \%module2functions);
 
     if($all_modules) {
-	&winapi_global::check_all_modules(\%include2info);
+	winapi_global::check_all_modules(\%include2info);
     }
 }

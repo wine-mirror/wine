@@ -26,7 +26,7 @@ use options qw($options);
 use output qw($output);
 use winapi qw(@winapis);
 
-sub check_modules {
+sub check_modules($$) {
     my $complete_module = shift;
     my $module2functions = shift;
 
@@ -67,11 +67,11 @@ sub check_modules {
     }
 }
 
-sub check_all_modules {
+sub check_all_modules($) {
     my $include2info = shift;
 
-    &winapi_documentation::report_documentation;
-    
+    winapi_documentation::report_documentation();
+
     if($options->headers_unused && $options->include) {
 	foreach my $name (sort(keys(%$include2info))) {
 	    if(!$$include2info{$name}{used}) {

@@ -25,7 +25,7 @@ use options qw($options);
 use output qw($output);
 use winapi qw($win16api $win32api @winapis);
 
-sub check_function {
+sub check_function($) {
     my $function = shift;
 
     my $return_type = $function->return_type;
@@ -58,7 +58,7 @@ sub check_function {
     }
 }
 
-sub _check_function {
+sub _check_function($$$$$$) {
     my $return_type = shift;
     my $calling_convention = shift;
     my $external_name = shift;
@@ -289,7 +289,7 @@ sub _check_function {
     }
 }
 
-sub check_statements {
+sub check_statements($$) {
     my $functions = shift;
     my $function = shift;
 
@@ -305,7 +305,7 @@ sub check_statements {
     }
 }
 
-sub _check_statements {
+sub _check_statements($$$) {
     my $winapi = shift;
     my $functions = shift;
     my $function = shift;
@@ -384,7 +384,7 @@ sub _check_statements {
     }
 }
 
-sub check_file {
+sub check_file($$) {
     my $file = shift;
     my $functions = shift;
 

@@ -39,7 +39,7 @@ use winapi_parser;
 ########################################################################
 # new
 #
-sub new {
+sub new($$) {
     my $proto = shift;
     my $class = ref($proto) || $proto;
     my $self  = {};
@@ -78,7 +78,7 @@ sub new {
 ########################################################################
 # set_found_comment_callback
 #
-sub set_found_comment_callback {
+sub set_found_comment_callback($$) {
     my $self = shift;
 
     my $found_comment = \${$self->{FOUND_COMMENT}};
@@ -89,7 +89,7 @@ sub set_found_comment_callback {
 ########################################################################
 # set_found_declaration_callback
 #
-sub set_found_declaration_callback {
+sub set_found_declaration_callback($$) {
     my $self = shift;
 
     my $found_declaration = \${$self->{FOUND_DECLARATION}};
@@ -100,7 +100,7 @@ sub set_found_declaration_callback {
 ########################################################################
 # set_found_function_callback
 #
-sub set_found_function_callback {
+sub set_found_function_callback($$) {
     my $self = shift;
 
     my $found_function = \${$self->{FOUND_FUNCTION}};
@@ -111,7 +111,7 @@ sub set_found_function_callback {
 ########################################################################
 # set_found_function_call_callback
 #
-sub set_found_function_call_callback {
+sub set_found_function_call_callback($$) {
     my $self = shift;
 
     my $found_function_call = \${$self->{FOUND_FUNCTION_CALL}};
@@ -122,7 +122,7 @@ sub set_found_function_call_callback {
 ########################################################################
 # set_found_line_callback
 #
-sub set_found_line_callback {
+sub set_found_line_callback($$) {
     my $self = shift;
 
     my $found_line = \${$self->{FOUND_LINE}};
@@ -133,7 +133,7 @@ sub set_found_line_callback {
 ########################################################################
 # set_found_preprocessor_callback
 #
-sub set_found_preprocessor_callback {
+sub set_found_preprocessor_callback($$) {
     my $self = shift;
 
     my $found_preprocessor = \${$self->{FOUND_PREPROCESSOR}};
@@ -144,7 +144,7 @@ sub set_found_preprocessor_callback {
 ########################################################################
 # set_found_statement_callback
 #
-sub set_found_statement_callback {
+sub set_found_statement_callback($$) {
     my $self = shift;
 
     my $found_statement = \${$self->{FOUND_STATEMENT}};
@@ -155,7 +155,7 @@ sub set_found_statement_callback {
 ########################################################################
 # set_found_type_callback
 #
-sub set_found_type_callback {
+sub set_found_type_callback($$) {
     my $self = shift;
 
     my $found_type = \${$self->{FOUND_TYPE}};
@@ -166,7 +166,7 @@ sub set_found_type_callback {
 ########################################################################
 # set_found_variable_callback
 #
-sub set_found_variable_callback {
+sub set_found_variable_callback($$) {
     my $self = shift;
 
     my $found_variable = \${$self->{FOUND_VARIABLE}};
@@ -177,7 +177,7 @@ sub set_found_variable_callback {
 ########################################################################
 # parse_c_file
 
-sub parse_c_file {
+sub parse_c_file($$$$) {
     my $self = shift;
 
     my $file = \${$self->{FILE}};
@@ -250,7 +250,7 @@ sub parse_c_file {
 	my $type = shift;
     };
 
-    &winapi_parser::parse_c_file($$file, {
+    winapi_parser::parse_c_file($$file, {
 	# c_comment_found => $found_c_comment,
 	# cplusplus_comment_found => $found_cplusplus_comment,
 	function_create => $_create_function,

@@ -22,7 +22,7 @@ use base qw(function);
 use strict;
 
 use config qw($current_dir $wine_dir);
-use util qw(&normalize_set);
+use util qw(normalize_set);
 
 my $import = 0;
 use vars qw($modules $win16api $win32api @winapis);
@@ -31,7 +31,7 @@ use vars qw($modules $win16api $win32api @winapis);
 # constructor
 #
 
-sub new {
+sub new($) {
     my $proto = shift;
     my $class = ref($proto) || $proto;
     my $self  = {};
@@ -53,14 +53,14 @@ sub new {
 # is_win
 #
 
-sub is_win16 { my $self = shift; return defined($self->_module($win16api, @_)); }
-sub is_win32 { my $self = shift; return defined($self->_module($win32api, @_)); }
+sub is_win16($) { my $self = shift; return defined($self->_module($win16api, @_)); }
+sub is_win32($) { my $self = shift; return defined($self->_module($win32api, @_)); }
 
 ########################################################################
 # external_name
 #
 
-sub _external_name {
+sub _external_name($$) {
     my $self = shift;
     my $winapi = shift;
 
@@ -89,7 +89,7 @@ sub _external_name {
     return join(" & ", @external_names2);
 }
 
-sub _external_names {
+sub _external_names($$) {
     my $self = shift;
     my $winapi = shift;
 
@@ -102,7 +102,7 @@ sub _external_names {
     }
 }
 
-sub external_name {
+sub external_name($) {
     my $self = shift;
 
     foreach my $winapi (@winapis) {
@@ -116,19 +116,19 @@ sub external_name {
     return undef;
 }
 
-sub external_name16 { my $self = shift; return $self->_external_name($win16api, @_); }
-sub external_name32 { my $self = shift; return $self->_external_name($win32api, @_); }
+sub external_name16($) { my $self = shift; return $self->_external_name($win16api, @_); }
+sub external_name32($) { my $self = shift; return $self->_external_name($win32api, @_); }
 
-sub external_names16 { my $self = shift; return $self->_external_names($win16api, @_); }
-sub external_names32 { my $self = shift; return $self->_external_names($win32api, @_); }
+sub external_names16($) { my $self = shift; return $self->_external_names($win16api, @_); }
+sub external_names32($) { my $self = shift; return $self->_external_names($win32api, @_); }
 
-sub external_names { my $self = shift; return ($self->external_names16, $self->external_names32); }
+sub external_names($) { my $self = shift; return ($self->external_names16, $self->external_names32); }
 
 ########################################################################
 # module
 #
 
-sub _module {
+sub _module($$) {
     my $self = shift;
     my $winapi = shift;
 
@@ -154,7 +154,7 @@ sub _module {
     return join(" & ", @modules);
 }
 
-sub _modules {
+sub _modules($$) {
     my $self = shift;
     my $winapi = shift;
 
@@ -167,21 +167,21 @@ sub _modules {
     }
 }
 
-sub module16 { my $self = shift; return $self->_module($win16api, @_); }
-sub module32 { my $self = shift; return $self->_module($win32api, @_); }
+sub module16($) { my $self = shift; return $self->_module($win16api, @_); }
+sub module32($) { my $self = shift; return $self->_module($win32api, @_); }
 
-sub module { my $self = shift; return join (" & ", $self->modules); }
+sub module($) { my $self = shift; return join (" & ", $self->modules); }
 
-sub modules16 { my $self = shift; return $self->_modules($win16api, @_); }
-sub modules32 { my $self = shift; return $self->_modules($win32api, @_); }
+sub modules16($) { my $self = shift; return $self->_modules($win16api, @_); }
+sub modules32($) { my $self = shift; return $self->_modules($win32api, @_); }
 
-sub modules { my $self = shift; return ($self->modules16, $self->modules32); }
+sub modules($) { my $self = shift; return ($self->modules16, $self->modules32); }
 
 ########################################################################
 # ordinal
 #
 
-sub _ordinal {
+sub _ordinal($$) {
     my $self = shift;
     my $winapi = shift;
 
@@ -210,7 +210,7 @@ sub _ordinal {
     return join(" & ", @ordinals2);
 }
 
-sub _ordinals {
+sub _ordinals($$) {
     my $self = shift;
     my $winapi = shift;
 
@@ -223,21 +223,21 @@ sub _ordinals {
     }
 }
 
-sub ordinal16 { my $self = shift; return $self->_ordinal($win16api, @_); }
-sub ordinal32 { my $self = shift; return $self->_ordinal($win32api, @_); }
+sub ordinal16($) { my $self = shift; return $self->_ordinal($win16api, @_); }
+sub ordinal32($) { my $self = shift; return $self->_ordinal($win32api, @_); }
 
-sub ordinal { my $self = shift; return join (" & ", $self->ordinals); }
+sub ordinal($) { my $self = shift; return join (" & ", $self->ordinals); }
 
-sub ordinals16 { my $self = shift; return $self->_ordinals($win16api, @_); }
-sub ordinals32 { my $self = shift; return $self->_ordinals($win32api, @_); }
+sub ordinals16($) { my $self = shift; return $self->_ordinals($win16api, @_); }
+sub ordinals32($) { my $self = shift; return $self->_ordinals($win32api, @_); }
 
-sub ordinals { my $self = shift; return ($self->ordinals16, $self->ordinals32); }
+sub ordinals($) { my $self = shift; return ($self->ordinals16, $self->ordinals32); }
 
 ########################################################################
 # prefix
 #
 
-sub prefix {
+sub prefix($) {
     my $self = shift;
     my $module16 = $self->module16;
     my $module32 = $self->module32;
@@ -288,7 +288,7 @@ sub prefix {
 # calling_convention
 #
 
-sub calling_convention16 {
+sub calling_convention16($) {
     my $self = shift;
     my $return_kind16 = $self->return_kind16;
 
@@ -319,7 +319,7 @@ sub calling_convention16 {
     }
 }
 
-sub calling_convention32 {
+sub calling_convention32($) {
     my $self = shift;
 
     local $_ = $self->calling_convention;
@@ -336,28 +336,28 @@ sub calling_convention32 {
     }
 }
 
-sub get_all_module_ordinal16 {
+sub get_all_module_ordinal16($) {
     my $self = shift;
     my $internal_name = $self->internal_name;
 
     return winapi::get_all_module_internal_ordinal16($internal_name);
 }
 
-sub get_all_module_ordinal32 {
+sub get_all_module_ordinal32($) {
     my $self = shift;
     my $internal_name = $self->internal_name;
 
     return winapi::get_all_module_internal_ordinal32($internal_name);
 }
 
-sub get_all_module_ordinal {
+sub get_all_module_ordinal($) {
     my $self = shift;
     my $internal_name = $self->internal_name;
 
     return winapi::get_all_module_internal_ordinal($internal_name);
 }
 
-sub _return_kind {
+sub _return_kind($$) {
     my $self = shift;
     my $winapi = shift;
     my $return_type = $self->return_type;
@@ -365,15 +365,15 @@ sub _return_kind {
     return $winapi->translate_argument($return_type);
 }
 
-sub return_kind16 {
+sub return_kind16($) {
     my $self = shift; return $self->_return_kind($win16api, @_);
 }
 
-sub return_kind32 {
+sub return_kind32($) {
     my $self = shift; return $self->_return_kind($win32api, @_);
 }
 
-sub _argument_kinds {
+sub _argument_kinds($$) {
     my $self = shift;
     my $winapi = shift;
     my $refargument_types = $self->argument_types;
@@ -396,11 +396,11 @@ sub _argument_kinds {
     return [@argument_kinds];
 }
 
-sub argument_kinds16 {
+sub argument_kinds16($) {
     my $self = shift; return $self->_argument_kinds($win16api, @_);
 }
 
-sub argument_kinds32 {
+sub argument_kinds32($) {
     my $self = shift; return $self->_argument_kinds($win32api, @_);
 }
 
@@ -408,7 +408,7 @@ sub argument_kinds32 {
 # Accounting
 #
 
-sub function_called {
+sub function_called($$) {
     my $self = shift;
     my $called_function_names = \%{$self->{CALLED_FUNCTION_NAMES}};
 
@@ -417,7 +417,7 @@ sub function_called {
     $$called_function_names{$name}++;
 }
 
-sub function_called_by {
+sub function_called_by($$) {
    my $self = shift;
    my $called_by_function_names = \%{$self->{CALLED_BY_FUNCTION_NAMES}};
 
@@ -426,14 +426,14 @@ sub function_called_by {
    $$called_by_function_names{$name}++;
 }
 
-sub called_function_names {
+sub called_function_names($) {
     my $self = shift;
     my $called_function_names = \%{$self->{CALLED_FUNCTION_NAMES}};
 
     return sort(keys(%$called_function_names));
 }
 
-sub called_by_function_names {
+sub called_by_function_names($) {
     my $self = shift;
     my $called_by_function_names = \%{$self->{CALLED_BY_FUNCTION_NAMES}};
 

@@ -29,13 +29,13 @@ require Exporter;
 
 use vars qw($nativeapi);
 
-use config qw(&file_type $current_dir $wine_dir $winapi_check_dir);
+use config qw(file_type $current_dir $wine_dir $winapi_check_dir);
 use options qw($options);
 use output qw($output);
 
 $nativeapi = 'nativeapi'->new;
 
-sub new {
+sub new($) {
     my $proto = shift;
     my $class = ref($proto) || $proto;
     my $self  = {};
@@ -153,7 +153,7 @@ sub new {
     return $self;
 }
 
-sub is_function {
+sub is_function($$) {
     my $self = shift;
     my $functions = \%{$self->{FUNCTIONS}};
 
@@ -162,7 +162,7 @@ sub is_function {
     return ($$functions{$name} || 0);
 }
 
-sub is_conditional {
+sub is_conditional($$) {
     my $self = shift;
     my $conditionals = \%{$self->{CONDITIONALS}};
 
@@ -171,7 +171,7 @@ sub is_conditional {
     return ($$conditionals{$name} || 0);
 }
 
-sub found_conditional {
+sub found_conditional($$) {
     my $self = shift;
     my $conditional_found = \%{$self->{CONDITIONAL_FOUND}};
 
@@ -180,7 +180,7 @@ sub found_conditional {
     $$conditional_found{$name}++;
 }
 
-sub is_conditional_header {
+sub is_conditional_header($$) {
     my $self = shift;
     my $conditional_headers = \%{$self->{CONDITIONAL_HEADERS}};
 
@@ -189,7 +189,7 @@ sub is_conditional_header {
     return ($$conditional_headers{$name} || 0);
 }
 
-sub is_conditional_function {
+sub is_conditional_function($$) {
     my $self = shift;
     my $conditional_functions = \%{$self->{CONDITIONAL_FUNCTIONS}};
 
@@ -198,7 +198,7 @@ sub is_conditional_function {
     return ($$conditional_functions{$name} || 0);
 }
 
-sub global_report {
+sub global_report($) {
     my $self = shift;
 
     my $output = \${$self->{OUTPUT}};

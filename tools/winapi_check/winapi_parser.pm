@@ -23,7 +23,7 @@ use strict;
 use output qw($output);
 use options qw($options);
 
-sub parse_c_file {
+sub parse_c_file($$) {
     my $file = shift;
     my $callbacks = shift;
 

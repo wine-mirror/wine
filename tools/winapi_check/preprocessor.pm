@@ -20,7 +20,7 @@ package preprocessor;
 
 use strict;
 
-sub new {
+sub new($) {
     my $proto = shift;
     my $class = ref($proto) || $proto;
     my $self  = {};
@@ -37,7 +37,7 @@ sub new {
     return $self;
 }
 
-sub include {
+sub include($$) {
     my $self = shift;
     my $include_found = \${$self->{INCLUDE_FOUND}};
 
@@ -46,7 +46,7 @@ sub include {
     &$$include_found($argument);
 }
 
-sub define {
+sub define($$) {
     my $self = shift;
     my $state = \%{$self->{STATE}};
     my $conditional_found = \${$self->{CONDITIONAL_FOUND}};
@@ -58,7 +58,7 @@ sub define {
     &$$conditional_found($name);
 }
 
-sub undefine {
+sub undefine($$) {
     my $self = shift;
     my $state = \%{$self->{STATE}};
     my $conditional_found = \${$self->{CONDITIONAL_FOUND}};
@@ -70,7 +70,7 @@ sub undefine {
     &$$conditional_found($name);
 }
 
-sub begin_if {
+sub begin_if($$$) {
     my $self = shift;
     my $state = \%{$self->{STATE}};
     my $stack = \@{$self->{STACK}};
@@ -122,7 +122,7 @@ sub begin_if {
     }
 }
 
-sub else_if {
+sub else_if($$) {
     my $self = shift;
     my $state = \%{$self->{STATE}};
     my $stack = \@{$self->{STACK}};
@@ -136,7 +136,7 @@ sub else_if {
     }
 }
 
-sub end_if {
+sub end_if($) {
     my $self = shift;
     my $state = \%{$self->{STATE}};
     my $stack = \@{$self->{STACK}};
@@ -145,7 +145,7 @@ sub end_if {
     delete $$state{$macro} if defined($macro);
 }
 
-sub directive {
+sub directive($$$) {
     my $self = shift;
     my $state = \%{$self->{STATE}};
     my $stack = \@{$self->{STACK}};
@@ -172,7 +172,7 @@ sub directive {
     }
 }
 
-sub is_def {
+sub is_def($$) {
     my $self = shift;
     my $state = \%{$self->{STATE}};
 
@@ -183,7 +183,7 @@ sub is_def {
     return defined($status) && $status eq "def";
 }
 
-sub is_undef {
+sub is_undef($$) {
     my $self = shift;
     my $state = \%{$self->{STATE}};
 
@@ -194,7 +194,7 @@ sub is_undef {
     return defined($status) && $status eq "undef";
 }
 
-sub is_unknown {
+sub is_unknown($$) {
     my $self = shift;
     my $state = \%{$self->{STATE}};
 
