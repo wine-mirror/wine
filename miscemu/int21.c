@@ -1246,7 +1246,9 @@ int do_int21(struct sigcontext_struct * context)
 		EBX = DOSVERSION;
 		EDX = 0x00;
 		break;
+
 	      default:
+		Barf(context);
 		break;			
 	    }
 	    break;	
@@ -1505,6 +1507,10 @@ int do_int21(struct sigcontext_struct * context)
 	    }
 	    break;
 
+	  case 0x67: /* SET HANDLE COUNT */			
+	    ResetCflag;
+	    break;
+
 	  case 0x68: /* "FFLUSH" - COMMIT FILE */
 	    ResetCflag;
 	    break;		
@@ -1525,9 +1531,6 @@ int do_int21(struct sigcontext_struct * context)
 	    ResetCflag;
 	    break;		
 
-	  case 0x67: /* SET HANDLE COUNT */			
-	    ResetCflag;
-	    break;
 
 	  default:
             Barf(context);

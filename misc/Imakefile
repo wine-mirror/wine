@@ -15,7 +15,9 @@ SRCS = \
 	main.c \
 	message.c \
 	profile.c \
+	property.c \
 	rect.c \
+	shell.c \
 	sound.c \
 	spy.c \
 	stress.c \

@@ -79,7 +79,9 @@ struct sockproto {
  * Maximum queue length specifiable by listen.
  */
 #define SOMAXCONN       5
+
 #define MSG_DONTROUTE   0x4             /* send without using routing tables */
+
 #define MSG_MAXIOVLEN   16
 
 /*
@@ -188,51 +190,6 @@ struct sockproto {
 /* no address, look for MX record */
 #define WSANO_ADDRESS           WSANO_DATA
 
-/*
- * Windows Sockets errors redefined as regular Berkeley error constants
-
-	* AAARGH! *
-
-#define EWOULDBLOCK             WSAEWOULDBLOCK
-#define EINPROGRESS             WSAEINPROGRESS
-#define EALREADY                WSAEALREADY
-#define ENOTSOCK                WSAENOTSOCK
-#define EDESTADDRREQ            WSAEDESTADDRREQ
-#define EMSGSIZE                WSAEMSGSIZE
-#define EPROTOTYPE              WSAEPROTOTYPE
-#define ENOPROTOOPT             WSAENOPROTOOPT
-#define EPROTONOSUPPORT         WSAEPROTONOSUPPORT
-#define ESOCKTNOSUPPORT         WSAESOCKTNOSUPPORT
-#define EOPNOTSUPP              WSAEOPNOTSUPP
-#define EPFNOSUPPORT            WSAEPFNOSUPPORT
-#define EAFNOSUPPORT            WSAEAFNOSUPPORT
-#define EADDRINUSE              WSAEADDRINUSE
-#define EADDRNOTAVAIL           WSAEADDRNOTAVAIL
-#define ENETDOWN                WSAENETDOWN
-#define ENETUNREACH             WSAENETUNREACH
-#define ENETRESET               WSAENETRESET
-#define ECONNABORTED            WSAECONNABORTED
-#define ECONNRESET              WSAECONNRESET
-#define ENOBUFS                 WSAENOBUFS
-#define EISCONN                 WSAEISCONN
-#define ENOTCONN                WSAENOTCONN
-#define ESHUTDOWN               WSAESHUTDOWN
-#define ETOOMANYREFS            WSAETOOMANYREFS
-#define ETIMEDOUT               WSAETIMEDOUT
-#define ECONNREFUSED            WSAECONNREFUSED
-#define ELOOP                   WSAELOOP
-#define ENAMETOOLONG            WSAENAMETOOLONG
-#define EHOSTDOWN               WSAEHOSTDOWN
-#define EHOSTUNREACH            WSAEHOSTUNREACH
-#define ENOTEMPTY               WSAENOTEMPTY
-#define EPROCLIM                WSAEPROCLIM
-#define EUSERS                  WSAEUSERS
-#define EDQUOT                  WSAEDQUOT
-#define ESTALE                  WSAESTALE
-#define EREMOTE                 WSAEREMOTE
-
-*/
-
 /* Socket function prototypes */
 
 #ifdef __cplusplus
@@ -241,51 +198,50 @@ extern "C" {
 
 /* Microsoft Windows Extension function prototypes */
 
-int PASCAL FAR WSAStartup(WORD wVersionRequired, LPWSADATA lpWSAData);
+INT PASCAL FAR WSAStartup(WORD wVersionRequired, LPWSADATA lpWSAData);
 
-int PASCAL FAR WSACleanup(void);
+INT PASCAL FAR WSACleanup(void);
 
-void PASCAL FAR WSASetLastError(int iError);
+void PASCAL FAR WSASetLastError(INT iError);
 
-int PASCAL FAR WSAGetLastError(void);
+INT PASCAL FAR WSAGetLastError(void);
 
 BOOL PASCAL FAR WSAIsBlocking(void);
 
-int PASCAL FAR WSAUnhookBlockingHook(void);
+INT PASCAL FAR WSAUnhookBlockingHook(void);
 
 FARPROC PASCAL FAR WSASetBlockingHook(FARPROC lpBlockFunc);
 
-int PASCAL FAR WSACancelBlockingCall(void);
+INT PASCAL FAR WSACancelBlockingCall(void);
 
 HANDLE PASCAL FAR WSAAsyncGetServByName(HWND hWnd, u_int wMsg,
-                                        const char FAR * name, 
-                                        const char FAR * proto,
-                                        char FAR * buf, int buflen);
+                                        const char FAR *name, 
+                                        const char FAR *proto,
+                                        char FAR *buf, INT buflen);
 
-HANDLE PASCAL FAR WSAAsyncGetServByPort(HWND hWnd, u_int wMsg, int port,
-                                        const char FAR * proto, char FAR * buf,
-                                        int buflen);
+HANDLE PASCAL FAR WSAAsyncGetServByPort(HWND hWnd, u_int wMsg, INT port,
+                                        const char FAR *proto, char FAR *buf,
+                                        INT buflen);
 
 HANDLE PASCAL FAR WSAAsyncGetProtoByName(HWND hWnd, u_int wMsg,
-                                         const char FAR * name, char FAR * buf,
-                                         int buflen);
+                                         const char FAR *name, char FAR *buf,
+                                         INT buflen);
 
 HANDLE PASCAL FAR WSAAsyncGetProtoByNumber(HWND hWnd, u_int wMsg,
-                                           int number, char FAR * buf,
-                                           int buflen);
+                                           INT number, char FAR *buf,
+                                           INT buflen);
 
 HANDLE PASCAL FAR WSAAsyncGetHostByName(HWND hWnd, u_int wMsg,
-                                        const char FAR * name, char FAR * buf,
-                                        int buflen);
+                                        const char FAR *name, char FAR *buf,
+                                        INT buflen);
 
 HANDLE PASCAL FAR WSAAsyncGetHostByAddr(HWND hWnd, u_int wMsg,
-                                        const char FAR * addr, int len, int type,
-                                        const char FAR * buf, int buflen);
+                                        const char FAR *addr, INT len, INT type,
+                                        char FAR *buf, INT buflen);
 
-int PASCAL FAR WSACancelAsyncRequest(HANDLE hAsyncTaskHandle);
+INT PASCAL FAR WSACancelAsyncRequest(HANDLE hAsyncTaskHandle);
 
-int PASCAL FAR WSAAsyncSelect(SOCKET s, HWND hWnd, u_int wMsg,
-                               long lEvent);
+INT PASCAL FAR WSAAsyncSelect(SOCKET s, HWND hWnd, u_int wMsg, long lEvent);
 
 #ifdef __cplusplus
 }

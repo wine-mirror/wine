@@ -149,7 +149,7 @@ void DestroyCaret()
 /*    if (!Caret.hwnd) return;
 */
 #ifdef DEBUG_CARET
-    printf("DestroyCaret: timerid\n", Caret.timerid);
+    printf("DestroyCaret: timerid=%d\n", Caret.timerid);
 #endif
 
     KillSystemTimer(NULL, Caret.timerid);

@@ -28,6 +28,7 @@ extern LONG MDIClientWndProc(HWND hwnd, WORD message,
 
 
 static HWND hwndDesktop = 0;
+static HWND hWndSysModal = 0;
 
 /***********************************************************************
  *           WIN_FindWndPtr
@@ -197,7 +198,6 @@ BOOL WIN_CreateDesktopWindow()
     wndPtr->dwStyle           = WS_VISIBLE | WS_CLIPCHILDREN | WS_CLIPSIBLINGS;
     wndPtr->dwExStyle         = 0;
     wndPtr->hdce              = 0;
-    wndPtr->hmenuSystem       = 0;
     wndPtr->VScroll           = NULL;
     wndPtr->HScroll           = NULL;
     wndPtr->wIDmenu           = 0;
@@ -205,6 +205,8 @@ BOOL WIN_CreateDesktopWindow()
     wndPtr->flags             = 0;
     wndPtr->window            = rootWindow;
     wndPtr->hSysMenu          = 0;
+    wndPtr->hProp	          = 0;
+    wndPtr->hTask	          = 0;
 
       /* Send dummy WM_NCCREATE message */
     SendMessage( hwndDesktop, WM_NCCREATE, 0, 0 );
@@ -303,28 +305,34 @@ HWND CreateWindowEx( DWORD exStyle, LPSTR className, LPSTR windowName,
     wndPtr->ptMaxPos.y        = -1;
     wndPtr->hmemTaskQ         = GetTaskQueue(0);
     wndPtr->hrgnUpdate        = 0;
+    wndPtr->hwndPrevActive    = 0;
     wndPtr->hwndLastActive    = 0;
     wndPtr->lpfnWndProc       = classPtr->wc.lpfnWndProc;
     wndPtr->dwStyle           = style;
     wndPtr->dwExStyle         = exStyle;
-    wndPtr->hmenuSystem       = 0;
 #ifdef DEBUG_MENU
     printf("CreateWindowEx // menu=%04X instance=%04X classmenu=%08X !\n", 
     	menu, instance, classPtr->wc.lpszMenuName); 
 #endif
-    if (menu != 0)
-	wndPtr->wIDmenu       = menu;
-    else {
-	if (classPtr->wc.lpszMenuName != NULL)
-	    wndPtr->wIDmenu   = LoadMenu(instance, classPtr->wc.lpszMenuName);
+	if ((style & WS_CAPTION) && (style & WS_CHILD) == 0) {
+		if (menu != 0)
+			SetMenu(hwnd, menu);
+		else {
+			if (classPtr->wc.lpszMenuName != NULL)
+				SetMenu(hwnd, LoadMenu(instance, classPtr->wc.lpszMenuName));
+			else
+				wndPtr->wIDmenu   = 0;
+			}
+		}
 	else
-	    wndPtr->wIDmenu   = 0;
-	}
+		wndPtr->wIDmenu   = menu;
     wndPtr->hText             = 0;
     wndPtr->flags             = 0;
     wndPtr->VScroll           = NULL;
     wndPtr->HScroll           = NULL;
     wndPtr->hSysMenu          = 0;
+    wndPtr->hProp	          = 0;
+    wndPtr->hTask	          = 0;
 
     if (classPtr->wc.cbWndExtra)
 	memset( wndPtr->wExtra, 0, classPtr->wc.cbWndExtra );
@@ -449,8 +457,14 @@ BOOL DestroyWindow( HWND hwnd )
     if (hwnd == hwndDesktop) return FALSE;  /* Can't destroy desktop */
     if (!(wndPtr = WIN_FindWndPtr( hwnd ))) return FALSE;
     if (!(classPtr = CLASS_FindClassPtr( wndPtr->hClass ))) return FALSE;
-    if (hwnd == GetActiveWindow()) WINPOS_ChangeActiveWindow( 0, FALSE );
-    if (hwnd == GetFocus()) SetFocus( 0 );
+
+      /* Hide the window */
+
+    if (wndPtr->dwStyle & WS_VISIBLE)
+	SetWindowPos( hwnd, 0, 0, 0, 0, 0, SWP_HIDEWINDOW | SWP_NOACTIVATE |
+		      SWP_NOZORDER | SWP_NOMOVE | SWP_NOSIZE );
+    if ((hwnd == GetCapture()) || IsChild( hwnd, GetCapture() ))
+	ReleaseCapture();
     WIN_SendParentNotify( hwnd, WM_DESTROY, MAKELONG(hwnd, wndPtr->wIDmenu) );
 
       /* Send destroy messages and destroy children */
@@ -471,9 +485,6 @@ BOOL DestroyWindow( HWND hwnd )
     if (wndPtr->flags & WIN_OWN_DC) DCE_FreeDCE( wndPtr->hdce );
     classPtr->cWindows--;
     USER_HEAP_FREE( hwnd );
-/*
-    printf("End of DestroyWindow // hwnd=%04X !\n", hwnd);
-*/
     return TRUE;
 }
 
@@ -943,4 +954,16 @@ BOOL EnumChildWindows(HWND hwnd, FARPROC wndenumprc, LPARAM lParam)
     hwnd = wndPtr->hwndChild;
     return WIN_EnumChildWin(hwnd, wndenumprc, lParam);         
 }
+
+/*******************************************************************
+ *			SetSysModalWindow		[USER.188]
+ */
+HWND SetSysModalWindow(HWND hWnd)
+{
+	HWND 	hWndOldModal = hWndSysModal;
+	hWndSysModal = hWnd;
+	printf("EMPTY STUB !! SetSysModalWindow(%04X) !\n", hWnd);
+	return hWndOldModal;
+}
+
 

@@ -104,8 +104,17 @@ const char *MessageTypeNames[SPY_MAX_MSGNUM + 1] =
     NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
 
     /* 0x00A0 */
-    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+    "WM_NCMOUSEMOVE",		/* 0x00A0 */
+    "WM_NCLBUTTONDOWN",		/* 0x00A1 */
+    "WM_NCLBUTTONUP",		/* 0x00A2 */
+    "WM_NCLBUTTONDBLCLK",	/* 0x00A3 */
+    "WM_NCRBUTTONDOWN",		/* 0x00A4 */
+    "WM_NCRBUTTONUP",		/* 0x00A5 */
+    "WM_NCRBUTTONDBLCLK",	/* 0x00A6 */
+    "WM_NCMBUTTONDOWN",		/* 0x00A7 */
+    "WM_NCMBUTTONUP",		/* 0x00A8 */
+    "WM_NCMBUTTONDBLCLK",	/* 0x00A9 */
+    NULL, NULL, NULL, NULL, NULL, NULL,
 
     /* 0x00B0 */
     NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
@@ -248,7 +257,7 @@ void SpyMessage(HWND hwnd, WORD msg, WORD wParam, LONG lParam)
 	return;
     
     if (msg > SPY_MAX_MSGNUM || MessageTypeNames[msg] == NULL)
-	msg_name[0] = '\0';
+	sprintf(msg_name, "%04x", msg);
     else
 	strcpy(msg_name, MessageTypeNames[msg]);
     

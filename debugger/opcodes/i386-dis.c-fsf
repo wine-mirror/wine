@@ -1,5 +1,5 @@
 /* Print i386 instructions for GDB, the GNU debugger.
-   Copyright (C) 1988, 1989, 1991 Free Software Foundation, Inc.
+   Copyright (C) 1988, 1989, 1991, 1993, 1994 Free Software Foundation, Inc.
 
 This file is part of GDB.
 
@@ -20,6 +20,7 @@ Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.  */
 /*
  * 80386 instruction printer by Pace Willisson (pace@prep.ai.mit.edu)
  * July 1988
+ *  modified by John Hassey (hassey@dg-rtp.dg.com)
  */
 
 /*
@@ -31,12 +32,51 @@ Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.  */
  * the Intel manual for details.
  */
 
-#include "defs.h"
+#include "dis-asm.h"
+#include "sysdep.h"
 
-#include <ctype.h>
+#define MAXLEN 20
 
-/* For the GDB interface at the bottom of the file... */
-#include "gdbcore.h"
+#include <setjmp.h>
+
+struct dis_private
+{
+  /* Points to first byte not fetched.  */
+  bfd_byte *max_fetched;
+  bfd_byte the_buffer[MAXLEN];
+  bfd_vma insn_start;
+  jmp_buf bailout;
+};
+
+/* Make sure that bytes from INFO->PRIVATE_DATA->BUFFER (inclusive)
+   to ADDR (exclusive) are valid.  Returns 1 for success, longjmps
+   on error.  */
+#define FETCH_DATA(info, addr) \
+  ((addr) <= ((struct dis_private *)(info->private_data))->max_fetched \
+   ? 1 : fetch_data ((info), (addr)))
+
+static int
+fetch_data (info, addr)
+     struct disassemble_info *info;
+     bfd_byte *addr;
+{
+  int status;
+  struct dis_private *priv = (struct dis_private *)info->private_data;
+  bfd_vma start = priv->insn_start + (priv->max_fetched - priv->the_buffer);
+
+  status = (*info->read_memory_func) (start,
+				      priv->max_fetched,
+				      addr - priv->max_fetched,
+				      info);
+  if (status != 0)
+    {
+      (*info->memory_error_func) (status, start, info);
+      longjmp (priv->bailout, 1);
+    }
+  else
+    priv->max_fetched = addr;
+  return 1;
+}
 
 #define Eb OP_E, b_mode
 #define indirEb OP_indirE, b_mode
@@ -376,8 +416,8 @@ struct dis386 dis386[] = {
   { "stosS",	Yv, eAX },
   { "lodsb",	AL, Xb },
   { "lodsS",	eAX, Xv },
-  { "scasb",	AL, Xb },
-  { "scasS",	eAX, Xv },
+  { "scasb",	AL, Yb },
+  { "scasS",	eAX, Yv },
   /* b0 */
   { "movb",	AL, Ib },
   { "movb",	CL, Ib },
@@ -481,7 +521,9 @@ struct dis386 dis386_twobyte[] = {
   { "clts" },
   { "(bad)" },  
   /* 08 */
-  { "(bad)" },  { "(bad)" },  { "(bad)" },  { "(bad)" },  
+  { "invd" },
+  { "wbinvd" },
+  { "(bad)" },  { "(bad)" },  
   { "(bad)" },  { "(bad)" },  { "(bad)" },  { "(bad)" },  
   /* 10 */
   { "(bad)" },  { "(bad)" },  { "(bad)" },  { "(bad)" },  
@@ -587,8 +629,8 @@ struct dis386 dis386_twobyte[] = {
   { "(bad)" },
   { "imulS", Gv, Ev },  
   /* b0 */
-  { "(bad)" },
-  { "(bad)" },
+  { "cmpxchgb", Eb, Gb },
+  { "cmpxchgS", Ev, Gv },
   { "lssS", Gv, Mp },	/* 386 lists only Mp */
   { "btrS", Ev, Gv },  
   { "lfsS", Gv, Mp },	/* 386 lists only Mp */
@@ -605,11 +647,19 @@ struct dis386 dis386_twobyte[] = {
   { "movsbS", Gv, Eb },
   { "movswS", Gv, Ew },  
   /* c0 */
-  { "(bad)" },  { "(bad)" },  { "(bad)" },  { "(bad)" },  
+  { "xaddb", Eb, Gb },
+  { "xaddS", Ev, Gv },
+  { "(bad)" },  { "(bad)" },  
   { "(bad)" },  { "(bad)" },  { "(bad)" },  { "(bad)" },  
   /* c8 */
-  { "(bad)" },  { "(bad)" },  { "(bad)" },  { "(bad)" },  
-  { "(bad)" },  { "(bad)" },  { "(bad)" },  { "(bad)" },  
+  { "bswap", eAX },
+  { "bswap", eCX },
+  { "bswap", eDX },
+  { "bswap", eBX },
+  { "bswap", eSP },
+  { "bswap", eBP },
+  { "bswap", eSI },
+  { "bswap", eDI },
   /* d0 */
   { "(bad)" },  { "(bad)" },  { "(bad)" },  { "(bad)" },  
   { "(bad)" },  { "(bad)" },  { "(bad)" },  { "(bad)" },  
@@ -635,6 +685,7 @@ static char *obufp;
 static char scratchbuf[100];
 static unsigned char *start_codep;
 static unsigned char *codep;
+static disassemble_info *the_info;
 static int mod;
 static int rm;
 static int reg;
@@ -817,7 +868,7 @@ struct dis386 grps[][8] = {
     { "smsw", Ew },
     { "(bad)" },
     { "lmsw", Ew },
-    { "(bad)" },
+    { "invlpg", Ew },
   },
   /* GRP8 */
   {
@@ -853,6 +904,7 @@ ckprefix ()
   prefixes = 0;
   while (1)
     {
+      FETCH_DATA (the_info, codep + 1);
       switch (*codep)
 	{
 	case 0xf3:
@@ -904,27 +956,21 @@ static int aflag;
 static char op1out[100], op2out[100], op3out[100];
 static int op_address[3], op_ad, op_index[3];
 static int start_pc;
-extern void fputs_filtered ();
 
+
 /*
- * disassemble the first instruction in 'inbuf'.  You have to make
- *   sure all of the bytes of the instruction are filled in.
  *   On the 386's of 1988, the maximum length of an instruction is 15 bytes.
  *   (see topic "Redundant prefixes" in the "Differences from 8086"
  *   section of the "Virtual 8086 Mode" chapter.)
  * 'pc' should be the address of this instruction, it will
  *   be used to print the target address if this is a relative jump or call
- * 'outbuf' gets filled in with the disassembled instruction.  it should
- *   be long enough to hold the longest disassembled instruction.
- *   100 bytes is certainly enough, unless symbol printing is added later
  * The function returns the length of this instruction in bytes.
  */
 
 int
-i386dis (pc, inbuf, stream)
-     int pc;
-     unsigned char *inbuf;
-     FILE *stream;
+print_insn_i386 (pc, info)
+     bfd_vma pc;
+     disassemble_info *info;
 {
   struct dis386 *dp;
   int i;
@@ -932,19 +978,31 @@ i386dis (pc, inbuf, stream)
   char *first, *second, *third;
   int needcomma;
   
+  struct dis_private priv;
+  bfd_byte *inbuf = priv.the_buffer;
+
+  info->private_data = (PTR) &priv;
+  priv.max_fetched = priv.the_buffer;
+  priv.insn_start = pc;
+  if (setjmp (priv.bailout) != 0)
+    /* Error return.  */
+    return -1;
+
   obuf[0] = 0;
   op1out[0] = 0;
   op2out[0] = 0;
   op3out[0] = 0;
 
   op_index[0] = op_index[1] = op_index[2] = -1;
-  
+
+  the_info = info;
   start_pc = pc;
   start_codep = inbuf;
   codep = inbuf;
   
   ckprefix ();
-  
+
+  FETCH_DATA (info, codep + 1);
   if (*codep == 0xc8)
     enter_instruction = 1;
   else
@@ -963,12 +1021,14 @@ i386dis (pc, inbuf, stream)
       && ((*codep < 0xd8) || (*codep > 0xdf)))
     {
       /* fwait not followed by floating point instruction */
-      fputs_filtered ("fwait", stream);
+      (*info->fprintf_func) (info->stream, "fwait");
       return (1);
     }
   
   /* these would be initialized to 0 if disassembling for 8086 or 286 */
-
+  dflag = 1;
+  aflag = 1;
+  
   if (prefixes & PREFIX_DATA)
     dflag ^= 1;
   
@@ -979,14 +1039,24 @@ i386dis (pc, inbuf, stream)
     }
   
   if (*codep == 0x0f)
-    dp = &dis386_twobyte[*++codep];
+    {
+      FETCH_DATA (info, codep + 2);
+      dp = &dis386_twobyte[*++codep];
+    }
   else
     dp = &dis386[*codep];
   codep++;
+
+  /* Fetch the mod/reg/rm byte.  FIXME: We should be only fetching
+     this if we need it.  As it is, this code loses if there is a
+     one-byte instruction (without a mod/reg/rm byte) at the end of
+     the address space.  */
+
+  FETCH_DATA (info, codep + 1);
   mod = (*codep >> 6) & 3;
   reg = (*codep >> 3) & 7;
   rm = *codep & 7;
-  
+
   if (dp->name == NULL && dp->bytemode1 == FLOATCODE)
     {
       dofloat ();
@@ -1018,7 +1088,7 @@ i386dis (pc, inbuf, stream)
   for (i = strlen (obuf); i < 6; i++)
     oappend (" ");
   oappend (" ");
-  fputs_filtered (obuf, stream);
+  (*info->fprintf_func) (info->stream, "%s", obuf);
   
   /* enter instruction is printed with operands in the
    * same order as the intel book; everything else
@@ -1043,29 +1113,29 @@ i386dis (pc, inbuf, stream)
   if (*first)
     {
       if (op_index[0] != -1)
-	print_address (op_address[op_index[0]], stream);
+	(*info->print_address_func) (op_address[op_index[0]], info);
       else
-	fputs_filtered (first, stream);
+	(*info->fprintf_func) (info->stream, "%s", first);
       needcomma = 1;
     }
   if (*second)
     {
       if (needcomma)
-	fputs_filtered (",", stream);
+	(*info->fprintf_func) (info->stream, ",");
       if (op_index[1] != -1)
-	print_address (op_address[op_index[1]], stream);
+	(*info->print_address_func) (op_address[op_index[1]], info);
       else
-	fputs_filtered (second, stream);
+	(*info->fprintf_func) (info->stream, "%s", second);
       needcomma = 1;
     }
   if (*third)
     {
       if (needcomma)
-	fputs_filtered (",", stream);
+	(*info->fprintf_func) (info->stream, ",");
       if (op_index[2] != -1)
-	print_address (op_address[op_index[2]], stream);
+	(*info->print_address_func) (op_address[op_index[2]], info);
       else
-	fputs_filtered (third, stream);
+	(*info->fprintf_func) (info->stream, "%s", third);
     }
   return (codep - inbuf);
 }
@@ -1321,7 +1391,9 @@ dofloat ()
     {
       putop (fgrps[dp->bytemode1][rm]);
       /* instruction fnstsw is only one with strange arg */
-      if (floatop == 0xdf && *codep == 0xe0)
+      if (floatop == 0xdf
+	  && FETCH_DATA (the_info, codep + 1)
+	  && *codep == 0xe0)
 	strcpy (op1out, "%eax");
     }
   else
@@ -1467,61 +1539,11 @@ OP_E (bytemode)
     }
   
   append_prefix ();
-
-  if (bytemode == w_mode || (bytemode == v_mode && !dflag))
-  {
-      if (mod == 0 && rm == 6)
-      {
-	  sprintf(scratchbuf, "%04.4x", get16());
-	  oappend(scratchbuf);
-	  return 0;
-      }
-      
-      disp = 0;
-      if (mod == 1)
-	  disp = *(char *)codep++;
-      else if (mod == 2)
-	  disp = get16();
-      if (disp != 0)
-      {
-	  sprintf(scratchbuf, "0x%x", disp);
-	  oappend(scratchbuf);
-      }
-
-      switch (rm)
-      {
-	case 0:
-	  oappend("(%bx,%si)");
-	  break;
-	case 1:
-	  oappend("(%bx,%di)");
-	  break;
-	case 2:
-	  oappend("(%bp,%si)");
-	  break;
-	case 3:
-	  oappend("(%bp,%di)");
-	  break;
-	case 4:
-	  oappend("(%si)");
-	  break;
-	case 5:
-	  oappend("(%di)");
-	  break;
-	case 6:
-	  oappend("(%bp)");
-	  break;
-	case 7:
-	  oappend("(%bx)");
-	  break;
-      }	  
-      return 0;
-  }
-  
   if (rm == 4)
     {
       havesib = 1;
       havebase = 1;
+      FETCH_DATA (the_info, codep + 1);
       scale = (*codep >> 6) & 3;
       index = (*codep >> 3) & 7;
       base = *codep & 7;
@@ -1550,6 +1572,7 @@ OP_E (bytemode)
 	}
       break;
     case 1:
+      FETCH_DATA (the_info, codep + 1);
       disp = *(char *)codep++;
       if (rm != 4)
 	{
@@ -1625,7 +1648,8 @@ static int
 get32 ()
 {
   int x = 0;
-  
+
+  FETCH_DATA (the_info, codep + 4);
   x = *codep++ & 0xff;
   x |= (*codep++ & 0xff) << 8;
   x |= (*codep++ & 0xff) << 16;
@@ -1637,7 +1661,8 @@ static int
 get16 ()
 {
   int x = 0;
-  
+
+  FETCH_DATA (the_info, codep + 2);
   x = *codep++ & 0xff;
   x |= (*codep++ & 0xff) << 8;
   return (x);
@@ -1696,6 +1721,7 @@ OP_I (bytemode)
   switch (bytemode) 
     {
     case b_mode:
+      FETCH_DATA (the_info, codep + 1);
       op = *codep++ & 0xff;
       break;
     case v_mode:
@@ -1725,6 +1751,7 @@ OP_sI (bytemode)
   switch (bytemode) 
     {
     case b_mode:
+      FETCH_DATA (the_info, codep + 1);
       op = *(char *)codep++;
       break;
     case v_mode:
@@ -1755,6 +1782,7 @@ OP_J (bytemode)
   switch (bytemode) 
     {
     case b_mode:
+      FETCH_DATA (the_info, codep + 1);
       disp = *(char *)codep++;
       break;
     case v_mode:
@@ -1929,28 +1957,3 @@ OP_rm (bytemode)
     }
   return (0);
 }
-	
-#define MAXLEN 20
-
-int
-print_insn (realmemaddr, memaddr, stream, addrlen)
-     CORE_ADDR memaddr, realmemaddr;
-     FILE *stream;
-     int addrlen;
-{
-  unsigned char buffer[MAXLEN];
-  
-  if(addrlen == 32){
-	  dflag = 1;
-	  aflag = 1;
-  } else {
-	  dflag = 0;
-	  aflag = 0;
-  };  
-
-
-  read_memory (memaddr, (char *) buffer, MAXLEN);
-  
-  return (i386dis ((int)realmemaddr, buffer, stream));
-}
-

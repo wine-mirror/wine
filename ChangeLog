@@ -1,3 +1,144 @@
+Wed Apr 20 14:53:35 1994  Bob Amstadt  (bob@pooh)
+
+	* [tools/build.c] [if1632/call.S] [if1632/Imakefile]
+	Fixed bug for non-Linux systems.
+
+Apr 18, 94 martin2@trgcorp.solucorp.qc.ca (Martin Ayotte)
+
+	* [windows/win.c]
+	Bug fixed in CreateWindowEx() : Now use SetMenu() for menubar setup.
+	New empty stub for function SetSysModalWindow().
+
+	* [misc/exec.c]
+	New empty stub for function ExitWindows().
+
+	* [objects/font.c]
+	New empty stub for function EnumFonts().
+
+	* New file [misc/property.c]
+	New functions RemoveProp(), GetProp(), SetProp() & EnumProps().
+
+	* New file [misc/shell.c]
+	New empty stubs for function RegisterShellProc(), 
+			ShellExecute() & ShellProc().
+
+	* New files [loader/task.c] & [include/task.h]
+	Move functions GetWindowTask(), GetNumTask(), EnumTaskWindows()
+		from 'loader/library.c'.
+
+	* [loader/library.c]
+
+	* [if1632/user.c] [if1632/kernel.c]
+	Put Atoms functions entries.
+
+	* [controls/combo.c]
+	New functions DirDlgSelectComboBox() & DirDlgListComboBox().
+
+	* [controls/listbox.c]
+	New functions DirDlgSelect() & DirDlgList().
+
+Sun Apr 17 20:57:59 1994  Erik Bos (erik@trashcan.hacktic.nl)
+
+	* [objects/test.c]
+	GrayString() added.
+
+	* [if1632/callback.c]
+	CallGrayStringProc() added.
+
+	* [if1632/relay.c] [if1632/mmsystem.spec]
+	Added.
+
+	* [if1632/kernel.spec] [if1632/user.spec]
+	Added forgotten specs for atom functions.
+
+----------------------------------------------------------------------
+Tue Apr 12 00:05:31 1994  Bob Amstadt  (bob@pooh)
+
+	* misc/spy.c (SpyInit): Added more message types
+
+	* [windows/mdi.c] [include/mdi.h]
+	Maximizing and restoring child windows.
+	Tiling of child windows.
+
+Mon Apr 11 20:48:28 1994  Alexandre Julliard  (julliard@lamisun.epfl.ch)
+
+	* [windows/winpos.c]
+	Revert focus and activation to previous window when hiding a window.
+
+	* [windows/syscolor.c]
+	Implemented system color objects (brushes and pens created at
+	SetSysColor() time for better performance).
+
+	* [windows/graphics.c] [windows/nonclient.c] [controls/button.c]
+	Changed painting code to use system color objects.
+
+	* [windows/message.c]
+	New function MSG_InternalGetMessage() for internal messages
+	loops (e.g. for dialogs or menus).
+
+	* [windows/hook.c] [include/hook.h]  (New files)
+	Beginning of the window hooks implementation.
+
+	* [windows/dialog.c]
+	Use new function MSG_InternalGetMessage() in DialogBox().
+
+	* [if1632/callback.c]
+	Added function CallHookProc().
+
+Apr 11, 94 martin2@trgcorp.solucorp.qc.ca (Martin Ayotte)
+
+	* [windows/event.c]
+	Bug fix : WM_CHARs are sent to focused window like WM_KEY???.
+
+	* [misc/exec.c]
+	Nothing much more than a stub for LoadModule(), I saw there a lot
+		to be done in that corner, I will come back later ...
+
+	* [loader/library.c]
+	New functions GetWindowTask(), GetNumTask(), EnumTaskWindows() 
+			and associated modules & tasks linked-lists.
+	(it's only an 'emerging bud', more to come next weeks).
+
+	* [loader/wine.c]
+	Use LoadLibrary() instead of LoadImage() for 'sysres.dll'.
+
+	* [control/menu.c]
+	You can now click outside menu region without problem.
+	Keyboard navig more smootly, even if a child has the focus.
+	Bug fix in InsertItem(), (bad linklist when insert point not found).
+	change Realloc for Free & Alloc in ModifyItem().
+	MF_STRING now set BLACK_PEN to fix bug of bad color of the underscores 
+		done by DrawText(), (maybe it should done in DrawText() itself ?).
+
+Sun Apr 10 14:06:08 1994  Erik Bos (erik@trashcan.hacktic.nl)
+
+	* [misc/profile.c]
+	.INI files will now be stored in / loaded from the windows dir
+	if no path is supplied.
+
+	* [if1632/kernel.spec]
+	Fixed GetDriveType's prototype.
+
+	* [if1632/winsock.spec] [include/winsock.h] [misc/winsocket.c]
+	Fixed prototypes: winsock uses a word as socket handle not an int.
+
+	* [misc/winsocket.c]
+	Added heap allocation for returned structures.
+	Added non-blocking WSAAsyncGetXbyY() functions as blocking ones.
+
+	* [loader/wine.c]
+	Added IsDLLLoaded(), used in LoadImage() to prevent loading
+	a dll multiple times.
+	Directory is added to wine's path when a fullpath is supplied when
+	starting wine.
+	LoadImage(): DLL filename used instead DLL's own internal name,
+	fixes 'Bad DLL name' errors.
+
+Sat Apr  9 08:26:03 1994  David Metcalfe <david@prism.demon.co.uk>
+
+	* [controls/edit.c] [controls/widgets.c]
+	First release of edit control.
+
 ----------------------------------------------------------------------
 Tue Apr  5 14:36:59 1994  Bob Amstadt  (bob@pooh)
 

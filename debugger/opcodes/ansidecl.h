@@ -1,5 +1,5 @@
 /* ANSI and traditional C compatability macros
-   Copyright 1991 Free Software Foundation, Inc.
+   Copyright 1991, 1992 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
 This program is free software; you can redistribute it and/or modify
@@ -24,12 +24,14 @@ Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.  */
    -----	---- - ----------	----------- - ----------
    PTR		`void *'		`char *'
    LONG_DOUBLE	`long double'		`double'
-   CONST	`const'			`'
    VOLATILE	`volatile'		`'
    SIGNED	`signed'		`'
    PTRCONST	`void *const'		`char *'
+   ANSI_PROTOTYPES  1			not defined
 
-   DEFUN(name, arglist, args)
+   CONST is also defined, but is obsolete.  Just use const.
+
+   DEFUN (name, arglist, args)
 
 	Defines function NAME.
 
@@ -41,19 +43,38 @@ Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.  */
 	be separated with `AND'.  For functions with a variable number of
 	arguments, the last thing listed should be `DOTS'.
 
-   DEFUN_VOID(name)
+   DEFUN_VOID (name)
 
 	Defines a function NAME, which takes no arguments.
 
-   EXFUN(name, prototype)
+   obsolete --     EXFUN (name, (prototype))	-- obsolete.
 
-	Is used in an external function declaration.
-	In ANSI C it is `NAMEPROTOTYPE' (so PROTOTYPE should be enclosed in
+	Replaced by PARAMS.  Do not use; will disappear someday soon.
+	Was used in external function declarations.
+	In ANSI C it is `NAME PROTOTYPE' (so PROTOTYPE should be enclosed in
 	parentheses).  In traditional C it is `NAME()'.
-	For a function that takes no arguments, PROTOTYPE should be `(NOARGS)'.
+	For a function that takes no arguments, PROTOTYPE should be `(void)'.
+
+    PARAMS ((args))
+
+	We could use the EXFUN macro to handle prototype declarations, but
+	the name is misleading and the result is ugly.  So we just define a
+	simple macro to handle the parameter lists, as in:
+
+	      static int foo PARAMS ((int, char));
+
+	This produces:  `static int foo();' or `static int foo (int, char);'
+
+	EXFUN would have done it like this:
+
+	      static int EXFUN (foo, (int, char));
+
+	but the function is not external...and it's hard to visually parse
+	the function name out of the mess.   EXFUN should be considered
+	obsolete; new code should be written to use PARAMS.
 
     For example:
-	extern int EXFUN(printf, (CONST char *format DOTS));
+	extern int printf PARAMS ((CONST char *format DOTS));
 	int DEFUN(fprintf, (stream, format),
 		  FILE *stream AND CONST char *format DOTS) { ... }
 	void DEFUN_VOID(abort) { ... }
@@ -69,7 +90,10 @@ Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.  */
 /* LINTLIBRARY */
 
 
-#ifdef	__STDC__
+#if defined (__STDC__) || defined (_AIX) || (defined (__mips) && defined (_SYSTYPE_SVR4))
+/* All known AIX compilers implement these things (but don't always
+   define __STDC__).  The RISC/OS MIPS compiler defines these things
+   in SVR4 mode, but does not define __STDC__.  */
 
 #define	PTR		void *
 #define	PTRCONST	void *CONST
@@ -84,24 +108,11 @@ Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.  */
 
 #define	EXFUN(name, proto)		name proto
 #define	DEFUN(name, arglist, args)	name(args)
-#define	DEFUN_VOID(name)		name(NOARGS)
+#define	DEFUN_VOID(name)		name(void)
 
-#define PROTO(type, name, arglist) type name arglist
-
-/* We could use the EXFUN macro to handle prototypes, but
-   the name is misleading and the result is ugly.  So just define a
-   simple macro to handle the parameter lists, as in:
-
-	static int foo PARAMS ((int, char));
-
-   EXFUN would do it like this:
-
-	static int EXFUN (foo, (int, char));
-
-   but the function is not external...  EXFUN should be considered
-   obsolete, and new code written to use PARAMS.  */
-
-#define PARAMS(paramlist) paramlist
+#define PROTO(type, name, arglist)	type name arglist
+#define PARAMS(paramlist)		paramlist
+#define ANSI_PROTOTYPES			1
 
 #else	/* Not ANSI C.  */
 
@@ -112,6 +123,9 @@ Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.  */
 #define	AND		;
 #define	NOARGS
 #define	CONST
+#ifndef const /* some systems define it in header files for non-ansi mode */
+#define	const
+#endif
 #define	VOLATILE
 #define	SIGNED
 #define	DOTS

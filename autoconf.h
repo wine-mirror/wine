@@ -1,2 +1,6 @@
 /* autoconf.h generated automatically.  Run Configure. */
-#error You must run Configure before you can build the makefiles.
+
+
+
+#define WINE_INI_GLOBAL "/home/alex/wine/wine.conf"
+#define AutoDefines  

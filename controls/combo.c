@@ -61,13 +61,12 @@ LONG ComboBoxWndProc( HWND hwnd, WORD message, WORD wParam, LONG lParam )
 		width = rect.right - rect.left;
 		height = rect.bottom - rect.top;
 		SetWindowPos(hwnd, 0, 0, 0, width + bm.bmHeight, bm.bmHeight, 
-		SWP_NOMOVE | SWP_NOZORDER); 
+										SWP_NOMOVE | SWP_NOZORDER); 
 		CreateComboStruct(hwnd);
 		lphc = ComboGetStorageHeader(hwnd);
 		if (lphc == NULL) return 0;
 		if (wndPtr->dwStyle & CBS_SIMPLE)
-/*			lphc->hWndEdit = CreateWindow("EDIT", "", */
-			lphc->hWndEdit = CreateWindow("STATIC", "", 
+			lphc->hWndEdit = CreateWindow("EDIT", "", 
 				WS_CHILD | WS_CLIPCHILDREN | WS_VISIBLE | SS_LEFT,
 				0, 0, width - bm.bmHeight, bm.bmHeight, 
 				hwnd, 1, wndPtr->hInstance, 0L);
@@ -366,6 +365,33 @@ int CreateComboStruct(HWND hwnd)
     *((LPHEADCOMBO *)&wndPtr->wExtra[1]) = lphc;
     lphc->dwState = 0;
     return TRUE;
+}
+
+
+
+/************************************************************************
+ * 					DlgDirSelectComboBox	[USER.194]
+ */
+BOOL DlgDirSelectComboBox(HWND hDlg, LPSTR lpStr, int nIDLBox)
+{
+	printf("DlgDirSelectComboBox(%04X, '%s', %d) \n",	hDlg, lpStr, nIDLBox);
+}
+
+
+/************************************************************************
+ * 					DlgDirListComboBox		[USER.195]
+ */
+int DlgDirListComboBox(HWND hDlg, LPSTR lpPathSpec, 
+	int nIDLBox, int nIDStat, WORD wType)
+{
+	HWND		hWnd;
+    LPHEADCOMBO lphc;
+	printf("DlgDirListComboBox(%04X, '%s', %d, %d, %04X) \n",
+			hDlg, lpPathSpec, nIDLBox, nIDStat, wType);
+	hWnd = GetDlgItem(hDlg, nIDLBox);
+	lphc = ComboGetStorageHeader(hWnd);
+	SendMessage(lphc->hWndLBox, LB_RESETCONTENT, 0, 0L);
+	return SendMessage(lphc->hWndLBox, LB_DIR, wType, (DWORD)lpPathSpec);
 }
 
 

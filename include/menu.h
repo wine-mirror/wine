@@ -65,7 +65,8 @@ typedef struct
     char	item_text[1];		/* Text for menu item		  */
 } MENUITEMTEMPLATE;
 
-void StdDrawMenuBar(HDC hDC, LPRECT lprect, LPPOPUPMENU lppop);
+void StdDrawMenuBar(HDC hDC, LPRECT lprect, LPPOPUPMENU lppop, 
+		    BOOL suppress_draw);
 BOOL MenuButtonDown(HWND hWnd, LPPOPUPMENU lppop, int x, int y);
 void MenuButtonUp(HWND hWnd, LPPOPUPMENU lppop, int x, int y);
 void MenuMouseMove(HWND hWnd, LPPOPUPMENU lppop, WORD wParam, int x, int y);

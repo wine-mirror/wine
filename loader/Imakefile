@@ -10,6 +10,7 @@ SRCS = \
 	signal.c \
 	library.c \
 	resource.c \
+	task.c \
 	wine.c
 
 OBJS = $(SRCS:.c=.o)

@@ -425,6 +425,9 @@ HWND WINPOS_ChangeActiveWindow( HWND hwnd, BOOL mouseMsg )
     hwndActive = hwnd;
     if (hwndActive)
     {
+	WND *wndPtr = WIN_FindWndPtr( hwndActive );
+	wndPtr->hwndPrevActive = prevActive;
+
 	/* Send WM_ACTIVATEAPP here */
 	SendMessage( hwnd, WM_NCACTIVATE, TRUE, 0 );
 	SendMessage( hwnd, WM_ACTIVATE, mouseMsg ? WA_CLICKACTIVE : WA_ACTIVE,
@@ -436,8 +439,6 @@ HWND WINPOS_ChangeActiveWindow( HWND hwnd, BOOL mouseMsg )
 
 /***********************************************************************
  *           SetWindowPos   (USER.232)
- */
-/* Unimplemented flags: SWP_NOREDRAW
  */
 /* Note: all this code should be in the DeferWindowPos() routines,
  * and SetWindowPos() should simply call them.  This will be implemented
@@ -599,16 +600,26 @@ BOOL SetWindowPos( HWND hwnd, HWND hwndInsertAfter, short x, short y,
 	wndPtr->dwStyle |= WS_VISIBLE;
 	XMapWindow( display, wndPtr->window );
 	MSG_Synchronize();
-	if (!(winPos->flags & SWP_NOREDRAW))
-	    RedrawWindow( hwnd, NULL, 0, RDW_INVALIDATE | RDW_ERASE |
-			  RDW_ERASENOW | RDW_FRAME );
-	else RedrawWindow( hwnd, NULL, 0, RDW_VALIDATE );
-	
+	if (winPos->flags & SWP_NOREDRAW)
+	    RedrawWindow( hwnd, NULL, 0, RDW_VALIDATE );
     }
     else if (winPos->flags & SWP_HIDEWINDOW)
     {
 	wndPtr->dwStyle &= ~WS_VISIBLE;
 	XUnmapWindow( display, wndPtr->window );
+	if ((hwnd == GetFocus()) || IsChild( hwnd, GetFocus() ))
+	    SetFocus( GetParent(hwnd) );  /* Revert focus to parent (if any) */
+	if (hwnd == hwndActive)
+	{
+	      /* Activate previously active window if possible */
+	    HWND newActive = wndPtr->hwndPrevActive;
+	    if (!IsWindow(newActive) || (newActive == hwnd))
+	    {
+		newActive = GetTopWindow(GetDesktopWindow());
+		if (newActive == hwnd) newActive = wndPtr->hwndNext;
+	    }	    
+	    WINPOS_ChangeActiveWindow( newActive, FALSE );
+	}
     }
 
     if (!(winPos->flags & SWP_NOACTIVATE))

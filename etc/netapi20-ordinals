@@ -1,0 +1,146 @@
+  1   3  0000  NETACCESSADD exported, shared data
+  2   3  0128  NETACCESSDEL exported, shared data
+  3   3  01ea  NETACCESSENUM exported, shared data
+  4   3  0318  NETACCESSGETINFO exported, shared data
+  5   3  042a  NETACCESSSETINFO exported, shared data
+  6   4  0030  NETALERTRAISE exported, shared data
+  7   4  0000  NETALERTSTART exported, shared data
+  8   4  0018  NETALERTSTOP exported, shared data
+  9  10  00f4  NETAUDITCLEAR exported, shared data
+ 10  10  024a  NETAUDITOPEN exported, shared data
+ 11  10  0000  NETAUDITWRITE exported, shared data
+ 12   3  0110  NETACCESSCHECK exported, shared data
+ 13  12  0000  NETBIOSCLOSE exported, shared data
+ 14  12  0018  NETBIOSENUM exported, shared data
+ 15  12  0030  NETBIOSGETINFO exported, shared data
+ 16  12  0048  NETBIOSOPEN exported, shared data
+ 17  12  0060  NETBIOSSUBMIT exported, shared data
+ 18   7  0000  NETCHARDEVCONTROL exported, shared data
+ 19   7  0056  NETCHARDEVENUM exported, shared data
+ 20   7  00f2  NETCHARDEVGETINFO exported, shared data
+ 21   7  016e  NETCHARDEVQENUM exported, shared data
+ 22   7  043c  NETCHARDEVQGETINFO exported, shared data
+ 23   7  04b2  NETCHARDEVQPURGE exported, shared data
+ 24   7  0562  NETCHARDEVQSETINFO exported, shared data
+ 25   6  0330  NETCONFIGGET exported, shared data
+ 26   6  0150  NETCONFIGGETALL exported, shared data
+ 27  18  0000  NETCONNECTIONENUM exported, shared data
+ 28   1  00a8  WEP exported, shared data
+ 29  10  0030  NETERRORLOGCLEAR exported, shared data
+ 30  10  01c0  NETERRORLOGOPEN exported, shared data
+ 31  10  0018  NETERRORLOGWRITE exported, shared data
+ 32  18  0256  NETFILECLOSE exported, shared data
+ 33  18  044a  NETFILEENUM exported, shared data
+ 34  18  0516  NETFILEGETINFO exported, shared data
+ 35   3  05f8  NETGROUPADD exported, shared data
+ 36   3  067e  NETGROUPADDUSER exported, shared data
+ 37   3  06dc  NETGROUPDEL exported, shared data
+ 38   3  073a  NETGROUPDELUSER exported, shared data
+ 39   3  0798  NETGROUPENUM exported, shared data
+ 40   3  0894  NETGROUPGETUSERS exported, shared data
+ 43  11  01cc  NETMESSAGELOGFILEGET exported, shared data
+ 44  11  0338  NETMESSAGELOGFILESET exported, shared data
+ 45  11  0718  NETMESSAGENAMEADD exported, shared data
+ 46  11  0844  NETMESSAGENAMEDEL exported, shared data
+ 47  11  096c  NETMESSAGENAMEENUM exported, shared data
+ 48  11  0d2a  NETMESSAGENAMEFWD exported, shared data
+ 49  11  0b00  NETMESSAGENAMEGETINFO exported, shared data
+ 50  11  0d7a  NETMESSAGENAMEUNFWD exported, shared data
+ 51  13  0000  NETPROFILELOAD exported, shared data
+ 52  13  037e  NETPROFILESAVE exported, shared data
+ 53  18  0b98  NETSERVERADMINCOMMAND exported, shared data
+ 54  18  00b8  NETSERVERDISKENUM exported, shared data
+ 55  18  0c62  NETSERVERGETINFO exported, shared data
+ 56  18  0cf2  NETSERVERSETINFO exported, shared data
+ 57  19  0134  NETSERVICECONTROL exported, shared data
+ 58  19  02f0  NETSERVICEENUM exported, shared data
+ 59  19  044a  NETSERVICEINSTALL exported, shared data
+ 60  19  011c  NETSERVICESTATUS exported, shared data
+ 61  18  0676  NETSESSIONDEL exported, shared data
+ 62  18  05c4  NETSESSIONENUM exported, shared data
+ 63  18  06dc  NETSESSIONGETINFO exported, shared data
+ 64  18  0798  NETSHAREADD exported, shared data
+ 65  18  0968  NETSHARECHECK exported, shared data
+ 66  18  082a  NETSHAREDEL exported, shared data
+ 67  18  09d6  NETSHAREENUM exported, shared data
+ 68  18  0ab6  NETSHAREGETINFO exported, shared data
+ 69  18  08a2  NETSHARESETINFO exported, shared data
+ 70  18  0d88  NETSTATISTICSCLEAR exported, shared data
+ 71  18  0de0  NETSTATISTICSGET exported, shared data
+ 72  16  06f2  NETREMOTETOD exported, shared data
+ 73  21  0000  NETUSEADD exported, shared data
+ 74  21  032a  NETUSEDEL exported, shared data
+ 75  21  0502  NETUSEENUM exported, shared data
+ 76  21  0664  NETUSEGETINFO exported, shared data
+ 77   3  0ab8  NETUSERADD exported, shared data
+ 78   3  0c26  NETUSERDEL exported, shared data
+ 79   3  0c84  NETUSERENUM exported, shared data
+ 80   3  0f9a  NETUSERGETGROUPS exported, shared data
+ 81   3  0ef4  NETUSERGETINFO exported, shared data
+ 82   3  1132  NETUSERPASSWORDSET exported, shared data
+ 83   3  0d2c  NETUSERSETINFO exported, shared data
+ 84   9  0858  NETWKSTAGETINFO exported, shared data
+ 85   9  0a22  NETWKSTASETINFO exported, shared data
+ 86   9  0000  NETWKSTASETUID exported, shared data
+ 91  16  0380  NETREMOTEMOVE exported, shared data
+ 92  16  0000  NETREMOTECOPY exported, shared data
+ 93  16  0368  NETREMOTEEXEC exported, shared data
+105   3  1570  NETUSERVALIDATE exported, shared data
+116  19  0000  NETSERVICEGETINFO exported, shared data
+117   7  050a  NETCHARDEVQPURGESELF exported, shared data
+172   3  0506  NETACCESSGETUSERPERMS exported, shared data
+174   7  0226  NETHANDLEGETINFO exported, shared data
+175   7  0326  NETHANDLESETINFO exported, shared data
+176   3  0974  NETGROUPSETUSERS exported, shared data
+177   3  0816  NETGROUPGETINFO exported, shared data
+178   3  08fe  NETGROUPSETINFO exported, shared data
+179   3  1404  NETUSERSETGROUPS exported, shared data
+182   3  1588  NETUSERVALIDATE2 exported, shared data
+184   3  1004  NETUSERMODALSGET exported, shared data
+185   3  10a2  NETUSERMODALSSET exported, shared data
+186   3  0d14  NETUSERINIT exported, shared data
+189  26  0000  NETGETDCNAME exported, shared data
+196   6  01e0  NETCONFIGGET2 exported, shared data
+197   6  0000  NETCONFIGGETALL2 exported, shared data
+198  18  0e5e  NETSTATISTICSGET2 exported, shared data
+199  10  02f4  NETERRORLOGREAD exported, shared data
+200  10  04b2  NETAUDITREAD exported, shared data
+201  18  02ae  NETFILEENUM2 exported, shared data
+259  17  0000  NETUSERRESTRICT exported, shared data
+266  26  06dc  NETLOGONENUM exported, shared data
+277   9  027c  NETWKSTASETUID2 exported, shared data
+280  18  0f9e  NETFILEGETINFO2 exported, shared data
+282  18  0f40  NETFILECLOSE2 exported, shared data
+299  25  0b34  I_NETPATHTYPE exported, shared data
+300  25  0000  I_NETPATHCANONICALIZE exported, shared data
+301  25  0932  I_NETPATHCOMPARE exported, shared data
+302  25  1afe  I_NETNAMEVALIDATE exported, shared data
+303  25  173e  I_NETNAMECANONICALIZE exported, shared data
+304  25  196e  I_NETNAMECOMPARE exported, shared data
+305  25  1cee  I_NETLISTCANONICALIZE exported, shared data
+306  25  22c2  I_NETLISTTRAVERSE exported, shared data
+501   8  0000  DOSDELETEMAILSLOT exported, shared data
+502   8  0072  DOSMAILSLOTINFO exported, shared data
+503   8  00ec  DOSMAKEMAILSLOT exported, shared data
+504   8  0320  DOSPEEKMAILSLOT exported, shared data
+523   8  0454  DOSREADMAILSLOT exported, shared data
+524   8  058a  DOSWRITEMAILSLOT exported, shared data
+525  11  0000  NETMESSAGEBUFFERSEND exported, shared data
+526  11  0e1e  NETMESSAGEFILESEND exported, shared data
+527   5  0000  NETSERVERENUM exported, shared data
+528   5  013a  NETSERVERENUM2 exported, shared data
+529  20  0000  NETSPECIALSMB exported, shared data
+530   2  0010  DOSMAKENMPIPE exported, shared data
+531   2  004c  DOSCONNECTNMPIPE exported, shared data
+532   2  002e  DOSDISCONNECTNMPIPE exported, shared data
+533   2  006a  DOSSETNMPHANDSTATE exported, shared data
+534   2  010a  DOSWAITNMPIPE exported, shared data
+535   2  01d2  DOSTRANSACTNMPIPE exported, shared data
+536   2  02e5  DOSQNMPHANDSTATE exported, shared data
+537   2  0388  DOSQNMPIPEINFO exported, shared data
+538   2  044d  DOSPEEKNMPIPE exported, shared data
+539   2  057d  DOSCALLNMPIPE exported, shared data
+540   2  06cf  DOSRAWREADNMPIPE exported, shared data
+541   2  07b6  DOSRAWWRITENMPIPE exported, shared data
+542   2  0b4f  DOSREADASYNCNMPIPE exported, shared data
+543   2  0d73  DOSWRITEASYNCNMPIPE exported, shared data

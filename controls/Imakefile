@@ -9,6 +9,7 @@ SRCS = \
 	menu.c \
 	scroll.c \
 	static.c \
+	edit.o \
 	desktop.c \
 	widgets.c
 

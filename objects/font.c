@@ -348,6 +348,16 @@ BOOL GetTextMetrics( HDC hdc, LPTEXTMETRIC metrics )
 }
 
 
+/***********************************************************************
+ *           SetMapperFlags    (GDI.349)
+ */
+DWORD SetMapperFlags(HDC hDC, DWORD dwFlag)
+{
+    printf("SetmapperFlags(%04X, %08X) // Empty Stub !\n", hDC, dwFlag); 
+    return 0L;
+}
+
+ 
 /***********************************************************************/
 
 #define CI_NONEXISTCHAR(cs) (((cs)->width == 0) && \
@@ -379,16 +389,6 @@ BOOL GetTextMetrics( HDC hdc, LPTEXTMETRIC metrics )
 
 
 /***********************************************************************
- *           SetMapperFlags    (GDI.349)
- */
-DWORD SetMapperFlags(HDC hDC, DWORD dwFlag)
-{
-    printf("SetmapperFlags(%04X, %08X) // Empty Stub !\n", hDC, dwFlag); 
-    return 0L;
-}
-
- 
-/***********************************************************************
  *           GetCharWidth    (GDI.350)
  */
 BOOL GetCharWidth(HDC hdc, WORD wFirstChar, WORD wLastChar, LPINT lpBuffer)
@@ -415,6 +415,22 @@ BOOL GetCharWidth(HDC hdc, WORD wFirstChar, WORD wLastChar, LPINT lpBuffer)
     {
 	CI_GET_CHAR_INFO(xfont, i, def, cs);
 	*(lpBuffer + j) = cs->width;
+	if (*(lpBuffer + j) < 0)
+	    *(lpBuffer + j) = 0;
     }
     return TRUE;
 }
+
+
+/*************************************************************************
+ *				EnumFonts			[GDI.70]
+ */
+int EnumFonts(HDC hDC, LPSTR lpFaceName, FARPROC lpFontFunc, LPSTR lpData)
+{
+	printf("EMPTY STUB !!! EnumFonts(%04X, %08X, %08X, %08X)\n", 
+						hDC, lpFaceName, lpFontFunc, lpData);
+	return -1;
+}
+
+
+

@@ -46,9 +46,13 @@ WineRelocatableTarget($(TOP)/$(MODULE),,$(OBJS))
 DependTarget()
 CleanTarget()
 
+pop.h: $(TOP)/tools/build
+	$(TOP)/tools/build -p
+
 includes::
 
 install::
 
 clean::
-	$(RM) dll* dtb*
+	$(RM) dll* dtb* pop.h
+	touch pop.h

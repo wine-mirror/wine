@@ -5,6 +5,7 @@ static char Copyright[] = "Copyright  Robert J. Amstadt, 1993";
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+#include "wine.h"
 
 #ifdef linux
 #define UTEXTSEL 0x23
@@ -27,6 +28,46 @@ static char Copyright[] = "Copyright  Robert J. Amstadt, 1993";
 #define TYPE_RETURN	20
 
 #define MAX_ORDINALS	1024
+
+#define PUSH_0		"\tpushl\t$0\n"
+#define PUSH_SS		"\tpushw\t$0\n\tpushw\t%%ss\n"
+#define PUSH_ESP	"\tpushl\t%%esp\n"
+#define PUSH_EFL	"\tpushfl\n"
+#define PUSH_CS		"\tpushw\t$0\n\tpushw\t%%cs\n"
+#define PUSH_EIP	"\tpushl\t$0\n"
+#define PUSH_DS		"\tpushw\t$0\n\tpushw\t%%ds\n"
+#define PUSH_ES		"\tpushw\t$0\n\tpushw\t%%es\n"
+#define PUSH_FS		"\tpushw\t$0\n\tpushw\t%%fs\n"
+#define PUSH_GS		"\tpushw\t$0\n\tpushw\t%%gs\n"
+#define PUSH_EAX	"\tpushl\t%%eax\n"
+#define PUSH_ECX	"\tpushl\t%%ecx\n"
+#define PUSH_EDX	"\tpushl\t%%edx\n"
+#define PUSH_EBX	"\tpushl\t%%ebx\n"
+#define PUSH_EBP	"\tpushl\t%%ebp\n"
+#define PUSH_ESI	"\tpushl\t%%esi\n"
+#define PUSH_EDI	"\tpushl\t%%edi\n"
+
+#define POP_0		"\tadd\t$4,%%esp\n"
+#define POP_SS		"\tpopw\t%%ss\n\tadd\t$2,%%esp\n"
+#define POP_ESP		"\tpopl\t%%esp\n"
+#define POP_EFL		"\tpopfl\n"
+#define POP_CS		"\tpopw\t%%cs\n\tadd\t$2,%%esp\n"
+#define POP_EIP		"\tpopl\t$0\n"
+#define POP_DS		"\tpopw\t%%ds\n\tadd\t$2,%%esp\n"
+#define POP_ES		"\tpopw\t%%es\n\tadd\t$2,%%esp\n"
+#define POP_FS		"\tpopw\t%%fs\n\tadd\t$2,%%esp\n"
+#define POP_GS		"\tpopw\t%%gs\n\tadd\t$2,%%esp\n"
+#define POP_EAX		"\tpopl\t%%eax\n"
+#define POP_ECX		"\tpopl\t%%ecx\n"
+#define POP_EDX		"\tpopl\t%%edx\n"
+#define POP_EBX		"\tpopl\t%%ebx\n"
+#define POP_EBP		"\tpopl\t%%ebp\n"
+#define POP_ESI		"\tpopl\t%%esi\n"
+#define POP_EDI		"\tpopl\t%%edi\n"
+
+char **context_strings;
+char **pop_strings;
+int    n_context_strings;
 
 typedef struct ordinal_definition_s
 {
@@ -551,6 +592,74 @@ ParseTopLevel(void)
     return 0;
 }
 
+InitContext()
+{
+    struct sigcontext_struct context;
+    int i;
+    int j;
+    
+    n_context_strings = sizeof(context) / 4;
+    context_strings   = (char **) malloc(n_context_strings * sizeof(char **));
+    pop_strings       = (char **) malloc(n_context_strings * sizeof(char **));
+    for (i = 0; i < n_context_strings; i++)
+    {
+	context_strings[i] = PUSH_0;
+	pop_strings[i]     = POP_0;
+    }
+
+    i = n_context_strings - 1 + ((int) &context - (int) &context.sc_esp) / 4;
+    context_strings[i] = PUSH_ESP;
+
+    i = n_context_strings - 1 + ((int) &context - (int) &context.sc_ebp) / 4;
+    context_strings[i] = PUSH_EBP;
+    pop_strings[n_context_strings - 1 - i] = POP_EBP;
+
+    i = n_context_strings - 1 + ((int) &context - (int) &context.sc_eip) / 4;
+    context_strings[i] = PUSH_EIP;
+
+    i = n_context_strings - 1 + ((int) &context - (int) &context.sc_efl) / 4;
+    context_strings[i] = PUSH_EFL;
+    pop_strings[n_context_strings - 1 - i] = POP_EFL;
+
+    i = n_context_strings - 1 + ((int) &context - (int) &context.sc_es) / 4;
+    context_strings[i] = PUSH_ES;
+    pop_strings[n_context_strings - 1 - i] = POP_ES;
+
+    i = n_context_strings - 1 + ((int) &context - (int) &context.sc_ds) / 4;
+    context_strings[i] = PUSH_DS;
+    pop_strings[n_context_strings - 1 - i] = POP_DS;
+
+    i = n_context_strings - 1 + ((int) &context - (int) &context.sc_cs) / 4;
+    context_strings[i] = PUSH_CS;
+
+    i = n_context_strings - 1 + ((int) &context - (int) &context.sc_ss) / 4;
+    context_strings[i] = PUSH_SS;
+
+    i = n_context_strings - 1 + ((int) &context - (int) &context.sc_edi) / 4;
+    context_strings[i] = PUSH_EDI;
+    pop_strings[n_context_strings - 1 - i] = POP_EDI;
+
+    i = n_context_strings - 1 + ((int) &context - (int) &context.sc_esi) / 4;
+    context_strings[i] = PUSH_ESI;
+    pop_strings[n_context_strings - 1 - i] = POP_ESI;
+
+    i = n_context_strings - 1 + ((int) &context - (int) &context.sc_ebx) / 4;
+    context_strings[i] = PUSH_EBX;
+    pop_strings[n_context_strings - 1 - i] = POP_EBX;
+
+    i = n_context_strings - 1 + ((int) &context - (int) &context.sc_edx) / 4;
+    context_strings[i] = PUSH_EDX;
+    pop_strings[n_context_strings - 1 - i] = POP_EDX;
+
+    i = n_context_strings - 1 + ((int) &context - (int) &context.sc_ecx) / 4;
+    context_strings[i] = PUSH_ECX;
+    pop_strings[n_context_strings - 1 - i] = POP_ECX;
+
+    i = n_context_strings - 1 + ((int) &context - (int) &context.sc_eax) / 4;
+    context_strings[i] = PUSH_EAX;
+    pop_strings[n_context_strings - 1 - i] = POP_EAX;
+}
+
 void
 OutputVariableCode(FILE *fp, char *storage, ORDDEF *odp)
 {
@@ -584,12 +693,44 @@ main(int argc, char **argv)
     char filename[80];
     char buffer[80];
     char *p;
-    int i;
+    int i, ci;
+    int add_count;
     
     if (argc < 2)
     {
-	fprintf(stderr, "usage: build SPECNAME\n");
+	fprintf(stderr, "usage: build SPECNAME\n       build -p\n");
 	exit(1);
+    }
+
+    InitContext();
+
+    if (strcmp("-p", argv[1]) == 0)
+    {
+	fp = fopen("pop.h", "w");
+	add_count = 0;
+	for (i = 0; i < n_context_strings; i++)
+	{
+	    if (strncmp(pop_strings[i], "\tadd\t", 5) == 0)
+	    {
+		add_count += atoi(pop_strings[i] + 6);
+	    }
+	    else
+	    {
+		if (add_count > 0)
+		{
+		    fprintf(fp, "\tadd\t$%d,%%esp\n", add_count);
+		    add_count = 0;
+		}
+		
+		fprintf(fp, pop_strings[i]);
+	    }
+	}
+    
+	if (add_count > 0)
+	    fprintf(fp, "\tadd\t$%d,%%esp\n", add_count);
+		
+	fclose(fp);
+	exit(0);
     }
 
     SpecFp = fopen(argv[1], "r");
@@ -619,10 +760,6 @@ main(int argc, char **argv)
 	if (!odp->valid)
 	{
 	    fprintf(fp, "_%s_Ordinal_%d:\n", UpperDLLName, i);
-#ifdef BOB_SAYS_NO
-	    fprintf(fp, "\tandl\t$0x0000ffff,%%esp\n");
-	    fprintf(fp, "\tandl\t$0x0000ffff,%%ebp\n");
-#endif
 	    fprintf(fp, "\tmovl\t$%d,%%eax\n", i);
 	    fprintf(fp, "\tpushw\t$0\n");
 	    fprintf(fp, "\tjmp\t_%s_Dispatch\n\n", UpperDLLName);
@@ -667,61 +804,23 @@ main(int argc, char **argv)
 		fprintf(fp, "_%s_Ordinal_%d:\n", UpperDLLName, i);
 		fprintf(fp, "\tandl\t$0x0000ffff,%%esp\n");
 		fprintf(fp, "\tandl\t$0x0000ffff,%%ebp\n");
-		fprintf(fp, "\tpushl\t$0\n");			/* cr2     */
-		fprintf(fp, "\tpushl\t$0\n");			/* oldmask */
-		fprintf(fp, "\tpushl\t$0\n");			/* i387    */
-		fprintf(fp, "\tpushw\t$0\n");			/* __ssh   */
-		fprintf(fp, "\tpushw\t%%ss\n");			/* ss      */
-		fprintf(fp, "\tpushl\t%%esp\n");		/* esp     */
-		fprintf(fp, "\tpushfl\n");			/* eflags  */
-		fprintf(fp, "\tpushw\t$0\n");			/* __csh   */
-		fprintf(fp, "\tpushw\t%%cs\n");			/* cs      */
-		fprintf(fp, "\tpushl\t$0\n");			/* eip     */
-		fprintf(fp, "\tpushl\t$0\n");			/* err     */
-		fprintf(fp, "\tpushl\t$0\n");			/* trapno  */
-		fprintf(fp, "\tpushal\n");			/* AX, ... */
-		fprintf(fp, "\tpushw\t$0\n");			/* __dsh   */
-		fprintf(fp, "\tpushw\t%%ds\n");			/* ds      */
-		fprintf(fp, "\tpushw\t$0\n");			/* __esh   */
-		fprintf(fp, "\tpushw\t%%es\n");			/* es      */
-		fprintf(fp, "\tpushw\t$0\n");			/* __fsh   */
-		fprintf(fp, "\tpushw\t%%fs\n");			/* fs      */
-		fprintf(fp, "\tpushw\t$0\n");			/* __gsh   */
-		fprintf(fp, "\tpushw\t%%gs\n");			/* gs      */
+
+		for (ci = 0; ci < n_context_strings; ci++)
+		    fprintf(fp, context_strings[ci]);
+
 		fprintf(fp, "\tmovl\t%%ebp,%%eax\n");
 		fprintf(fp, "\tmovw\t%%esp,%%ebp\n");
-		fprintf(fp, "\tpushl\t88(%%ebp)\n");
+		fprintf(fp, "\tpushl\t%d(%%ebp)\n",
+			sizeof(struct sigcontext_struct));
 		fprintf(fp, "\tmovl\t%%eax,%%ebp\n");
 		fprintf(fp, "\tmovl\t$%d,%%eax\n", i);
-		fprintf(fp, "\tpushw\t$92\n");
+		fprintf(fp, "\tpushw\t$%d\n", 
+			sizeof(struct sigcontext_struct) + 4);
 		fprintf(fp, "\tjmp\t_%s_Dispatch\n\n", UpperDLLName);
-#if 0
-		fprintf(fp, "\tpushw\t%%ax\n");
-		fprintf(fp, "\tpushw\t%%cx\n");
-		fprintf(fp, "\tpushw\t%%dx\n");
-		fprintf(fp, "\tpushw\t%%bx\n");
-		fprintf(fp, "\tpushw\t%%sp\n");
-		fprintf(fp, "\tpushw\t%%bp\n");
-		fprintf(fp, "\tpushw\t%%si\n");
-		fprintf(fp, "\tpushw\t%%di\n");
-		fprintf(fp, "\tpushw\t%%ds\n");
-		fprintf(fp, "\tpushw\t%%es\n");
-		fprintf(fp, "\tmovl\t%%ebp,%%eax\n");
-		fprintf(fp, "\tmovw\t%%esp,%%ebp\n");
-		fprintf(fp, "\tpushl\t20(%%ebp)\n");
-		fprintf(fp, "\tmovl\t%%eax,%%ebp\n");
-		fprintf(fp, "\tmovl\t$%d,%%eax\n", i);
-		fprintf(fp, "\tpushw\t$24\n");
-		fprintf(fp, "\tjmp\t_%s_Dispatch\n\n", UpperDLLName);
-#endif
 		break;
 
 	      case FUNCTYPE_PASCAL:
 		fprintf(fp, "_%s_Ordinal_%d:\n", UpperDLLName, i);
-#ifdef BOB_SAYS_NO
-		fprintf(fp, "\tandl\t$0x0000ffff,%%esp\n");
-		fprintf(fp, "\tandl\t$0x0000ffff,%%ebp\n");
-#endif
 		fprintf(fp, "\tmovl\t$%d,%%eax\n", i);
 		fprintf(fp, "\tpushw\t$%d\n", fdp->arg_16_size);
 		fprintf(fp, "\tjmp\t_%s_Dispatch\n\n", UpperDLLName);
@@ -730,10 +829,6 @@ main(int argc, char **argv)
 	      case FUNCTYPE_C:
 	      default:
 		fprintf(fp, "_%s_Ordinal_%d:\n", UpperDLLName, i);
-#ifdef BOB_SAYS_NO
-		fprintf(fp, "\tandl\t$0x0000ffff,%%esp\n");
-		fprintf(fp, "\tandl\t$0x0000ffff,%%ebp\n");
-#endif
 		fprintf(fp, "\tmovl\t$%d,%%eax\n", i);
 		fprintf(fp, "\tpushw\t$0\n");
 		fprintf(fp, "\tjmp\t_%s_Dispatch\n\n", UpperDLLName);

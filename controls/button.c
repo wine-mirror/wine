@@ -10,11 +10,9 @@ static char Copyright2[] = "Copyright David Metcalfe, 1993";
 #include <windows.h>
 #include "win.h"
 #include "user.h"
+#include "syscolor.h"
 
 LONG ButtonWndProc(HWND hWnd, WORD uMsg, WORD wParam, LONG lParam);
-
-static COLORREF color_windowtext, color_windowframe, color_btnface, 
-                color_btnshadow, color_btntext, color_btnhighlight;
 
 static BOOL pressed;
 
@@ -203,14 +201,6 @@ LONG ButtonWndProc(HWND hWnd, WORD uMsg, WORD wParam, LONG lParam)
 		    lResult = -1L;
 		else
 		{
-		    /* initialise colours used for button rendering: */
-		    color_windowtext   = GetSysColor(COLOR_WINDOWTEXT);
-		    color_windowframe  = GetSysColor(COLOR_WINDOWFRAME);
-		    color_btnface      = GetSysColor(COLOR_BTNFACE);
-		    color_btnshadow    = GetSysColor(COLOR_BTNSHADOW);
-		    color_btntext      = GetSysColor(COLOR_BTNTEXT);
-		    color_btnhighlight = GetSysColor(COLOR_BTNHIGHLIGHT);
-
 		    (WORD)(*(wndPtr->wExtra)) = 0;
 		    pressed = FALSE;
 		    lResult = 0L;
@@ -246,12 +236,6 @@ LONG ButtonWndProc(HWND hWnd, WORD uMsg, WORD wParam, LONG lParam)
 		break;
 
 	case WM_SYSCOLORCHANGE:
-		color_windowtext   = GetSysColor(COLOR_WINDOWTEXT);
-		color_windowframe  = GetSysColor(COLOR_WINDOWFRAME);
-		color_btnface      = GetSysColor(COLOR_BTNFACE);
-		color_btnshadow    = GetSysColor(COLOR_BTNSHADOW);
-		color_btntext      = GetSysColor(COLOR_BTNTEXT);
-		color_btnhighlight = GetSysColor(COLOR_BTNHIGHLIGHT);
 		InvalidateRect(hWnd, NULL, TRUE);
 		break;
 
@@ -296,7 +280,7 @@ static LONG PB_Paint(HWND hWnd)
 
 static LONG PB_LButtonDown(HWND hWnd, WORD wParam, LONG lParam)
 {
-/*    SetFocus(hWnd); */
+    SetFocus(hWnd);
     SetCapture(hWnd);
     pressed = TRUE;
     InvalidateRect(hWnd, NULL, FALSE);
@@ -334,8 +318,8 @@ static LONG PB_KillFocus(HWND hWnd)
 
 static void DrawRaisedPushButton(HDC hDC, HWND hButton, RECT rc)
 {
-	HPEN hOldPen, hFramePen;
-	HBRUSH hOldBrush, hShadowBrush, hHighlightBrush, hBackgrndBrush;
+	HPEN hOldPen;
+	HBRUSH hOldBrush;
 	HRGN rgn1, rgn2, rgn;
 	int len;
 	static char text[50+1];
@@ -343,13 +327,9 @@ static void DrawRaisedPushButton(HDC hDC, HWND hButton, RECT rc)
 	DWORD dwTextSize;
 	int delta;
 	TEXTMETRIC tm;
-	int i;
 
-	hFramePen = CreatePen(PS_SOLID, 1, color_windowframe);
-	hBackgrndBrush = CreateSolidBrush(color_btnface);
-
-	hOldPen = (HPEN)SelectObject(hDC, (HANDLE)hFramePen);
-	hOldBrush = (HBRUSH)SelectObject(hDC, (HANDLE)hBackgrndBrush);
+	hOldPen = (HPEN)SelectObject(hDC, sysColorObjects.hpenWindowFrame);
+	hOldBrush = (HBRUSH)SelectObject(hDC, sysColorObjects.hbrushBtnFace);
 	SetBkMode(hDC, TRANSPARENT);
 
 	rgn = CreateRectRgn(0, 0,  0,  0);
@@ -380,10 +360,9 @@ static void DrawRaisedPushButton(HDC hDC, HWND hButton, RECT rc)
 	points[4].y = rc.top+1;
 	points[5].x = rc.left+2;
 	points[5].y = rc.top+1;
-	hHighlightBrush = CreateSolidBrush(color_btnhighlight);
 	rgn2 = CreatePolygonRgn(points, DIM(points), ALTERNATE);
 	CombineRgn(rgn, rgn1, rgn2, RGN_AND);
-	FillRgn(hDC, rgn2, hHighlightBrush);
+	FillRgn(hDC, rgn2, sysColorObjects.hbrushBtnHighlight);
 
 	/* draw button shadow: */
 	points[0].x = rc.left+2;
@@ -398,10 +377,9 @@ static void DrawRaisedPushButton(HDC hDC, HWND hButton, RECT rc)
 	points[4].y = rc.top;
 	points[5].x = rc.right-1;
 	points[5].y = rc.bottom;
-	hShadowBrush = CreateSolidBrush(color_btnshadow);
 	rgn2 = CreatePolygonRgn(points, DIM(points), ALTERNATE);
 	CombineRgn(rgn, rgn1, rgn2, RGN_AND);
-	FillRgn(hDC, rgn2, hShadowBrush);
+	FillRgn(hDC, rgn2, sysColorObjects.hbrushBtnShadow);
 
 	/* do we have the focus? */
 	if (len >= 1 && GetFocus() == hButton) {
@@ -416,9 +394,6 @@ static void DrawRaisedPushButton(HDC hDC, HWND hButton, RECT rc)
 
 	SelectObject(hDC, (HANDLE)hOldPen);
 	SelectObject(hDC, (HANDLE)hOldBrush);
-	DeleteObject((HANDLE)hFramePen);
-	DeleteObject((HANDLE)hShadowBrush);
-	DeleteObject((HANDLE)hBackgrndBrush);
 	DeleteObject((HANDLE)rgn1);
 	DeleteObject((HANDLE)rgn2);
 	DeleteObject((HANDLE)rgn);
@@ -427,20 +402,16 @@ static void DrawRaisedPushButton(HDC hDC, HWND hButton, RECT rc)
 
 static void DrawPressedPushButton(HDC hDC, HWND hButton, RECT rc)
 {
-	HPEN hOldPen, hShadowPen, hFramePen;
-	HBRUSH hOldBrush, hBackgrndBrush;
-	HRGN rgn1, rgn2, rgn;
+	HPEN hOldPen;
+	HBRUSH hOldBrush;
 	int len;
 	static char text[50+1];
 	DWORD dwTextSize;
 	int delta;
 	TEXTMETRIC tm;
 
-	hFramePen = CreatePen(PS_SOLID, 1, color_windowframe);
-	hBackgrndBrush = CreateSolidBrush(color_btnface);
-
-	hOldBrush = (HBRUSH)SelectObject(hDC, (HANDLE)hBackgrndBrush);
-	hOldPen = (HPEN)SelectObject(hDC, (HANDLE)hFramePen);
+	hOldBrush = (HBRUSH)SelectObject(hDC, sysColorObjects.hbrushBtnFace);
+	hOldPen = (HPEN)SelectObject(hDC, sysColorObjects.hpenWindowFrame);
 	SetBkMode(hDC, TRANSPARENT);
 
 	/* give parent a chance to alter parameters: */
@@ -449,11 +420,9 @@ static void DrawPressedPushButton(HDC hDC, HWND hButton, RECT rc)
 	Rectangle(hDC, rc.left, rc.top, rc.right, rc.bottom);
 
 	/* draw button shadow: */
-	hShadowPen = CreatePen(PS_SOLID, 1, color_btnshadow);
-	SelectObject(hDC, (HANDLE)hShadowPen);
-	MoveTo(hDC, rc.left+1, rc.bottom-1);
-	LineTo(hDC, rc.left+1, rc.top+1);
-	LineTo(hDC, rc.right-1, rc.top+1);
+	SelectObject(hDC, sysColorObjects.hbrushBtnShadow );
+	PatBlt(hDC, rc.left+1, rc.top+1, 1, rc.bottom-rc.top-2, PATCOPY );
+	PatBlt(hDC, rc.left+1, rc.top+1, rc.right-rc.left-2, 1, PATCOPY );
 
 	/* draw button label, if any: */
 	len = GetWindowText(hButton, text, sizeof text);
@@ -476,9 +445,6 @@ static void DrawPressedPushButton(HDC hDC, HWND hButton, RECT rc)
 
 	SelectObject(hDC, (HANDLE)hOldPen);
 	SelectObject(hDC, (HANDLE)hOldBrush);
-	DeleteObject((HANDLE)hBackgrndBrush);
-	DeleteObject(SelectObject(hDC, (HANDLE)hFramePen));
-	DeleteObject(SelectObject(hDC, (HANDLE)hShadowPen));
 }
 
 
@@ -491,7 +457,7 @@ static LONG CB_Paint(HWND hWnd)
     PAINTSTRUCT ps;
     RECT rc, rc3;
     HDC hDC;
-    HPEN hPen, hOldPen;
+    HPEN hOldPen;
     HBRUSH hBrush, hGrayBrush;
     int textlen, delta;
     char *text;
@@ -503,8 +469,7 @@ static LONG CB_Paint(HWND hWnd)
     hDC = BeginPaint(hWnd, &ps);
     GetClientRect(hWnd, &rc);
 
-    hPen = CreatePen(PS_SOLID, 1, color_windowtext);
-    hOldPen = (HPEN)SelectObject(hDC, (HANDLE)hPen);
+    hOldPen = (HPEN)SelectObject(hDC, sysColorObjects.hpenWindowText);
     hGrayBrush = (HBRUSH)GetStockObject(LTGRAY_BRUSH);
 
     hBrush = SendMessage(GetParent(hWnd), WM_CTLCOLOR, (WORD)hDC,
@@ -555,6 +520,7 @@ static LONG CB_Paint(HWND hWnd)
 	DrawFocusRect(hDC, &rc);
     }
 
+    SelectObject(hDC, hOldPen);
     USER_HEAP_FREE(hText);
     GlobalUnlock(hWnd);
     EndPaint(hWnd, &ps);
@@ -577,7 +543,7 @@ static LONG CB_LButtonDown(HWND hWnd, WORD wParam, LONG lParam)
     rc.right = tm.tmHeight;
     if (PtInRect(&rc, MAKEPOINT(lParam)))
     {
-/*	SetFocus(hWnd); */
+	SetFocus(hWnd);
 	SetCapture(hWnd);
 	pressed = TRUE;
 	InvalidateRect(hWnd, NULL, FALSE);
@@ -704,7 +670,7 @@ static LONG RB_Paint(HWND hWnd)
     PAINTSTRUCT ps;
     RECT rc;
     HDC hDC;
-    HPEN hPen, hOldPen;
+    HPEN hOldPen;
     HBRUSH hBrush, hOldBrush;
     int textlen, delta;
     char *text;
@@ -716,8 +682,7 @@ static LONG RB_Paint(HWND hWnd)
     hDC = BeginPaint(hWnd, &ps);
     GetClientRect(hWnd, &rc);
 
-    hPen = CreatePen(PS_SOLID, 1, color_windowtext);
-    hOldPen = (HPEN)SelectObject(hDC, (HANDLE)hPen);
+    hOldPen = (HPEN)SelectObject(hDC, sysColorObjects.hpenWindowText);
 
     hBrush = SendMessage(GetParent(hWnd), WM_CTLCOLOR, (WORD)hDC,
 			 MAKELPARAM(hWnd, CTLCOLOR_BTN));
@@ -737,7 +702,7 @@ static LONG RB_Paint(HWND hWnd)
 
     if ((WORD)(*(wndPtr->wExtra)) == 1)
     {
-	hBrush = CreateSolidBrush(color_windowtext);
+	hBrush = CreateSolidBrush( GetNearestColor(hDC, GetSysColor(COLOR_WINDOWTEXT)));
 	hOldBrush = (HBRUSH)SelectObject(hDC, (HANDLE)hBrush);
 	Ellipse(hDC, 3, rc.top + delta + 3, tm.tmHeight - 3,
 		                            tm.tmHeight + delta -3); 
@@ -759,6 +724,7 @@ static LONG RB_Paint(HWND hWnd)
 	DrawFocusRect(hDC, &rc);
     }
 
+    SelectObject(hDC, hOldPen );
     USER_HEAP_FREE(hText);
     GlobalUnlock(hWnd);
     EndPaint(hWnd, &ps);
@@ -781,7 +747,7 @@ static LONG RB_LButtonDown(HWND hWnd, WORD wParam, LONG lParam)
     rc.right = tm.tmHeight;
     if (PtInRect(&rc, MAKEPOINT(lParam)))
     {
-/*	SetFocus(hWnd); */
+	SetFocus(hWnd);
 	SetCapture(hWnd);
 	pressed = TRUE;
 	InvalidateRect(hWnd, NULL, FALSE);
@@ -880,7 +846,7 @@ static LONG GB_Paint(HWND hWnd)
     PAINTSTRUCT ps;
     RECT rc;
     HDC hDC;
-    HPEN hPen, hOldPen;
+    HPEN hOldPen;
     HBRUSH hBrush;
     int textlen;
     char *text;
@@ -890,8 +856,7 @@ static LONG GB_Paint(HWND hWnd)
     hDC = BeginPaint(hWnd, &ps);
     GetClientRect(hWnd, &rc);
 
-    hPen = CreatePen(PS_SOLID, 1, color_windowtext);
-    hOldPen = (HPEN)SelectObject(hDC, (HANDLE)hPen);
+    hOldPen = (HPEN)SelectObject(hDC, sysColorObjects.hpenWindowText);
 
     hBrush = SendMessage(GetParent(hWnd), WM_CTLCOLOR, (WORD)hDC,
 			 MAKELPARAM(hWnd, CTLCOLOR_BTN));
@@ -911,6 +876,7 @@ static LONG GB_Paint(HWND hWnd)
     rc.bottom = size.cy;
     DrawText(hDC, text, textlen, &rc, DT_SINGLELINE);
 
+    SelectObject(hDC, hOldPen );
     USER_HEAP_FREE(hText);
     EndPaint(hWnd, &ps);
 }
@@ -947,7 +913,7 @@ static LONG UB_LButtonDown(HWND hWnd, WORD wParam, LONG lParam)
 {
     RECT rc;
 
-/*    SetFocus(hWnd); */
+    SetFocus(hWnd);
     SetCapture(hWnd);
     GetClientRect(hWnd, &rc);
     if (PtInRect(&rc, MAKEPOINT(lParam)))
@@ -1013,7 +979,7 @@ static LONG OB_LButtonDown(HWND hWnd, WORD wParam, LONG lParam)
     HANDLE	hDis;
     LPDRAWITEMSTRUCT lpdis;
     WND *wndPtr = WIN_FindWndPtr(hWnd);
-/*    SetFocus(hWnd); */
+    SetFocus(hWnd);
     SetCapture(hWnd);
     hDC = GetDC(hWnd);
     GetClientRect(hWnd, &rc);

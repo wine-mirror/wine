@@ -572,8 +572,6 @@ fprintf(stderr,"FindFile: looking for %s\n", filename);
 			strncat(buffer, "/", buflen - strlen(buffer));
 			strncat(buffer, f->d_name, buflen - strlen(buffer));
 
-			fprintf(stderr,"$$%s$$\n", buffer);
-
 			stat(buffer, &filestat);
 			if (S_ISREG(filestat.st_mode)) {
 				closedir(d);

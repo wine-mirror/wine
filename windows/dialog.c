@@ -315,11 +315,10 @@ HWND CreateDialogIndirectParam( HINSTANCE hInst, LPCSTR dlgTemplate,
 
       /* Send initialisation messages and set focus */
 
-    if (dlgInfo->hUserFont) 
-	SendMessage( hwnd, WM_SETFONT, dlgInfo->hUserFont, 0);
-    SendMessage( hwnd, WM_INITDIALOG, dlgInfo->hwndFocus, param );
-/*    if (SendMessage( hwnd, WM_INITDIALOG, dlgInfo->hwndFocus, param ))
-	SetFocus( dlgInfo->hwndFocus ); */
+    if (dlgInfo->hUserFont)
+	SendMessage( hwnd, WM_SETFONT, dlgInfo->hUserFont, 0 );
+    if (SendMessage( hwnd, WM_INITDIALOG, dlgInfo->hwndFocus, param ))
+	SetFocus( dlgInfo->hwndFocus );
 
     return hwnd;
 }
@@ -332,24 +331,28 @@ static int DIALOG_DoDialogBox( HWND hwnd )
 {
     WND * wndPtr;
     DIALOGINFO * dlgInfo;
-    MSG msg;
+    HANDLE msgHandle;
+    MSG* lpmsg;
     int retval;
 
     if (!(wndPtr = WIN_FindWndPtr( hwnd ))) return -1;
+    if (!(msgHandle = USER_HEAP_ALLOC( GMEM_MOVEABLE, sizeof(MSG)))) return -1;
+    lpmsg = (MSG *) USER_HEAP_ADDR( msgHandle );
     dlgInfo = (DIALOGINFO *)wndPtr->wExtra;
     ShowWindow( hwnd, SW_SHOW );
 
-    while (GetMessage (&msg, 0, 0, 0))
+    while (MSG_InternalGetMessage( lpmsg, hwnd, MSGF_DIALOGBOX, TRUE ))
     {
-	if (!IsDialogMessage( hwnd, &msg))
+	if (!IsDialogMessage( hwnd, lpmsg))
 	{
-	    TranslateMessage(&msg);
-	    DispatchMessage(&msg);
+	    TranslateMessage( lpmsg );
+	    DispatchMessage( lpmsg );
 	}
 	if (dlgInfo->fEnd) break;
     }
     retval = dlgInfo->msgResult;
     DestroyWindow( hwnd );
+    USER_HEAP_FREE( msgHandle );
     return retval;
 }
 

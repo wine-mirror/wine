@@ -5,7 +5,6 @@ id	1
 length	415
 
 3   pascal GetVersion() GetVersion()
-#return GetVersion 0 0x301
 4   pascal LocalInit(word word word) WIN16_LocalInit(1 2 3)
 5   pascal LocalAlloc(word word) WIN16_LocalAlloc(1 2)
 6   pascal LocalReAlloc(word word word) WIN16_LocalReAlloc(1 2 3)
@@ -28,10 +27,12 @@ length	415
 23  pascal LockSegment(s_word) KERNEL_LockSegment(1)
 24  pascal UnlockSegment(s_word) KERNEL_UnlockSegment(1)
 25  pascal GlobalCompact(long) GlobalCompact(1)
+#29  pascal Yield() Yield()
 30  pascal WaitEvent(word) KERNEL_WaitEvent(1)
 34  pascal SetTaskQueue(word word) SetTaskQueue(1 2)
 35  pascal GetTaskQueue(word) GetTaskQueue(1)
 36  pascal GetCurrentTask() GetCurrentTask()
+45  pascal LoadModule(ptr ptr) LoadModule(1 2)
 47  pascal GetModuleHandle(ptr) GetModuleHandle(1)
 48  pascal GetModuleUsage(word) GetModuleUsage(1)
 49  pascal GetModuleFileName(word ptr s_word) GetModuleFileName(1 2 3)
@@ -46,6 +47,12 @@ length	415
 62  pascal LockResource(word) LockResource(1)
 63  pascal FreeResource(word) FreeResource(1)
 64  pascal AccessResource(word word) AccessResource(1 2)
+68  pascal InitAtomTable(word) InitAtomTable(1)
+69  pascal FindAtom(ptr) FindAtom(1)
+70  pascal AddAtom(ptr) AddAtom(1)
+71  pascal DeleteAtom(word) DeleteAtom(1)
+72  pascal GetAtomName(word ptr word) GetAtomName(1 2 3)
+73  pascal GetAtomHandle(word) GetAtomHandle(1)
 74  pascal OpenFile(ptr ptr word) OpenFile(1 2 3)
 81  pascal _lclose(word) _lclose(1)
 82  pascal _lread(word ptr word) _lread(1 2 3)
@@ -82,9 +89,9 @@ length	415
 #132 return GetWinFlags 0 0x413
 134 pascal GetWindowsDirectory(ptr word) GetWindowsDirectory(1 2)
 135 pascal GetSystemDirectory(ptr word) GetSystemDirectory(1 2)
-136 pascal GetDriveType(byte) GetWindowsDirectory(1)
+136 pascal GetDriveType(byte) GetDriveType(1)
 137 pascal FatalAppExit(word ptr) FatalAppExit(1 2)
-152 return GetNumTasks 0 1
+152 pascal GetNumTasks() GetNumTasks()
 154 return GlobalNotify 4 0
 163 pascal GlobalLRUOldest(word) ReturnArg(1)
 164 pascal GlobalLRUNewest(word) ReturnArg(1)
@@ -105,4 +112,11 @@ length	415
 57  pascal GetProfileInt(ptr ptr word) GetProfileInt(1 2 3)
 58  pascal GetProfileString(ptr ptr ptr ptr word) GetProfileString(1 2 3 4 5)
 199 pascal SetHandleCount(word) SetHandleCount(1)
+68  pascal InitAtomTable(word) InitAtomTable(1)
+69  pascal FindAtom(ptr) FindAtom(1)
+70  pascal AddAtom(ptr) AddAtom(1)
+71  pascal DeleteAtom(word) DeleteAtom(1)
+72  pascal GetAtomName(word ptr s_word) GetAtomName(1 2 3)
+73  pascal GetAtomHandle(word) GetAtomHandle(1)
 353 pascal lstrcpyn(ptr ptr word) lstrcpyn(1 2 3)
+

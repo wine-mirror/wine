@@ -17,7 +17,7 @@
  *
  ************************************************************************/
 
-#define DEBUG_FILE
+/* #define DEBUG_FILE */
 
 #include <stdio.h>
 #include <fcntl.h>
@@ -34,7 +34,7 @@ char WindowsDirectory[256], SystemDirectory[256], TempDirectory[256];
 
  Emulate the _lopen windows call
  ***************************************************************************/
-int _lopen (LPSTR lpPathName, int iReadWrite)
+INT _lopen (LPSTR lpPathName, INT iReadWrite)
 {
   int  handle;
   char *UnixFileName;
@@ -61,7 +61,7 @@ int _lopen (LPSTR lpPathName, int iReadWrite)
 /***************************************************************************
  _lread
  ***************************************************************************/
-WORD _lread (int hFile, LPSTR lpBuffer, int wBytes)
+WORD _lread (INT hFile, LPSTR lpBuffer, INT wBytes)
 {
   int result;
 
@@ -81,7 +81,7 @@ WORD _lread (int hFile, LPSTR lpBuffer, int wBytes)
 /****************************************************************************
  _lwrite
 ****************************************************************************/
-WORD _lwrite (int hFile, LPSTR lpBuffer, int wBytes)
+WORD _lwrite (INT hFile, LPSTR lpBuffer, INT wBytes)
 {
 	int result;
 
@@ -100,7 +100,7 @@ WORD _lwrite (int hFile, LPSTR lpBuffer, int wBytes)
 /***************************************************************************
  _lclose
  ***************************************************************************/
-int _lclose (int hFile)
+INT _lclose (INT hFile)
 {
 #ifdef DEBUG_FILE
 	fprintf(stderr, "_lclose: handle %d\n", hFile);
@@ -117,7 +117,7 @@ int _lclose (int hFile)
  Warning:  This is nearly totally untested.  It compiles, that's it...
                                             -SL 9/13/93
  **************************************************************************/
-int OpenFile (LPSTR lpFileName, LPOFSTRUCT ofs, WORD wStyle)
+INT OpenFile (LPSTR lpFileName, LPOFSTRUCT ofs, WORD wStyle)
 {
   int base,flags;
 
@@ -168,7 +168,7 @@ WORD SetHandleCount (WORD wNumber)
 /***************************************************************************
  _llseek
  ***************************************************************************/
-LONG _llseek (int hFile, LONG lOffset, int nOrigin)
+LONG _llseek (INT hFile, LONG lOffset, INT nOrigin)
 {
 	int origin;
 	
@@ -191,7 +191,7 @@ LONG _llseek (int hFile, LONG lOffset, int nOrigin)
 /***************************************************************************
  _lcreate
  ***************************************************************************/
-LONG _lcreate (LPSTR lpszFilename, int fnAttribute)
+INT _lcreate (LPSTR lpszFilename, INT fnAttribute)
 {
 	int handle;
 	char *UnixFileName;
@@ -215,7 +215,7 @@ LONG _lcreate (LPSTR lpszFilename, int fnAttribute)
 /***************************************************************************
  GetDriveType
  ***************************************************************************/
-UINT GetDriveType(int drive)
+UINT GetDriveType(INT drive)
 {
 
 #ifdef DEBUG_FILE
@@ -228,7 +228,7 @@ UINT GetDriveType(int drive)
 	if (drive == 0 || drive == 1)
 		return DRIVE_REMOVABLE;
 		 
-	return DRIVE_REMOVABLE;
+	return DRIVE_FIXED;
 }
 
 /***************************************************************************
@@ -279,7 +279,7 @@ UINT GetSystemDirectory(LPSTR lpszSysPath, UINT cbSysPath)
 /***************************************************************************
  GetTempFileName
  ***************************************************************************/
-int GetTempFileName(BYTE bDriveLetter, LPCSTR lpszPrefixString, UINT uUnique, LPSTR lpszTempFileName)
+INT GetTempFileName(BYTE bDriveLetter, LPCSTR lpszPrefixString, UINT uUnique, LPSTR lpszTempFileName)
 {
 	int unique;
 	char tempname[256];
@@ -292,7 +292,7 @@ int GetTempFileName(BYTE bDriveLetter, LPCSTR lpszPrefixString, UINT uUnique, LP
 	strcpy(tempname,lpszPrefixString);
 	tempname[3]='\0';
 
-	sprintf(lpszTempFileName,"%s\\%s%d.tmp",WindowsDirectory, tempname, 
+	sprintf(lpszTempFileName,"%s\\%s%d.tmp", TempDirectory, tempname, 
 		unique);
 
 	ToDos(lpszTempFileName);
@@ -318,46 +318,12 @@ WORD SetErrorMode(WORD x)
  ***************************************************************************/
 long _hread(int hf, void FAR *hpvBuffer, long cbBuffer)
 {
-	long dataread = 0;
-	size_t status, size;
-	
-	while (cbBuffer) 
-	{
-		size = cbBuffer < 30000 ? cbBuffer : 30000;
-		
-		status = read(hf, hpvBuffer, size);
-		if (status == -1)
-			return HFILE_ERROR;
-		if (status == 0)
-			return dataread;
-
-		dataread += status;
-		hpvBuffer += status;
-		cbBuffer -= status;
-	}		
-	return dataread;
+	return read(hf, hpvBuffer, cbBuffer);
 }
 /***************************************************************************
  _hwrite
  ***************************************************************************/
 long _hwrite(int hf, const void FAR *hpvBuffer, long cbBuffer)
 {
-	long datawritten = 0;
-	size_t status, size;
-	
-	while (cbBuffer) 
-	{
-		size = cbBuffer < 30000 ? cbBuffer : 30000;
-		
-		status = write(hf, hpvBuffer, size);
-		if (status == -1)
-			return HFILE_ERROR;
-		if (status == 0)
-			return datawritten;
-
-		datawritten += status;
-		hpvBuffer += status;
-		cbBuffer -= status;
-	}		
-	return datawritten;
+	return write(hf, hpvBuffer, cbBuffer);
 }

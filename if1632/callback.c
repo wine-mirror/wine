@@ -142,6 +142,8 @@ void FreeProcInstance(FARPROC func)
 LONG CallWindowProc( FARPROC func, HWND hwnd, WORD message,
 		     WORD wParam, LONG lParam )
 {
+    SpyMessage(hwnd, message, wParam, lParam);
+    
     if (Is16bitAddress(func))
     {	
 	PushOn16( CALLBACK_SIZE_WORD, hwnd );
@@ -173,6 +175,44 @@ void CallLineDDAProc(FARPROC func, short xPos, short yPos, long lParam)
     else
     {
 	(*func)(xPos, yPos, lParam);
+    }
+}
+
+/**********************************************************************
+ *					CallHookProc
+ */
+DWORD CallHookProc( HOOKPROC func, short code, WPARAM wParam, LPARAM lParam )
+{
+    if (Is16bitAddress(func))
+    {
+	PushOn16( CALLBACK_SIZE_WORD, code );
+	PushOn16( CALLBACK_SIZE_WORD, wParam );
+	PushOn16( CALLBACK_SIZE_LONG, lParam );
+	return CallTo16((unsigned int) func, 
+			FindDataSegmentForCode((unsigned long) func));   
+    }
+    else
+    {
+	return (*func)( code, wParam, lParam );
+    }
+}
+
+/**********************************************************************
+ *					CallGrayStringProc
+ */
+BOOL CallGrayStringProc(FARPROC func, HDC hdc, LPARAM lParam, INT cch )
+{
+    if (Is16bitAddress(func))
+    {
+	PushOn16( CALLBACK_SIZE_WORD, hdc );
+	PushOn16( CALLBACK_SIZE_LONG, lParam );
+	PushOn16( CALLBACK_SIZE_WORD, cch );
+	return CallTo16((unsigned int) func, 
+			FindDataSegmentForCode((unsigned long) func));   
+    }
+    else
+    {
+	return (*func)( hdc, lParam, cch );
     }
 }
 

@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include "msdos.h"
 #include "wine.h"
 
@@ -15,15 +16,12 @@ int do_int25(struct sigcontext_struct *context)
 
 		dataptr = (BYTE *) getdword(&dataptr[6]);
 			
-		fprintf(stderr, "int25: abs diskread, drive %d, sector %d, "
-	"count %d, buffer %d\n", EAX & 0xff, begin, length, (int) dataptr);
+	} else {
+		begin = EDX & 0xffff;
+		length = ECX & 0xffff;
 	}
-
-	begin = EDX & 0xffff;
-	length = ECX & 0xffff;
-	
-	fprintf(stderr,"int25: abs diskread-2, drive %d, sector %d, count %d,"
-		" buffer %d\n", EAX & 0xff, begin, length, (int) dataptr);
+	fprintf(stderr, "int25: abs diskread, drive %d, sector %d, "
+	"count %d, buffer %d\n", EAX & 0xff, begin, length, (int) dataptr);
 
 	ResetCflag;
 	return 1;

@@ -1,0 +1,29 @@
+#include "../../Wine.tmpl"
+
+MODULE = opcodes
+
+#ifdef i386
+#define xi386 1
+#undef i386
+#endif
+
+SRCS = \
+	dis-buf.c \
+	i386-dis.c
+
+OBJS = \
+	dis-buf.o \
+	i386-dis.o
+
+#ifdef xi386
+#define i386 1
+#undef xi386
+#endif
+
+WineRelocatableTarget($(TOP)/$(MODULE),,$(OBJS))
+DependTarget()
+CleanTarget()
+
+includes::
+
+install::

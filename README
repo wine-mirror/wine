@@ -115,6 +115,9 @@ For example: to run Windows' solitaire:
 
 	wine /usr/windows/sol.exe  (using a unixfilename)
 
+note: the path of the file will also be added to the path when
+      a full name is supplied on the commandline.
+
 Have a nice game of solitaire, but be careful.  Emulation isn't perfect.
 So, occassionally it will crash.
 
@@ -167,6 +170,20 @@ bob@amscons.com
 
 
 7. WHAT'S NEW
+
+WHAT'S NEW with Wine-940420: (see ChangeLog for details)
+	- new property functions
+	- new listbox and combo box functions
+	- GrayString() and CallGrayStringProc()
+	- and many many bug fixes!
+
+WHAT'S NEW with Wine-940412: (see ChangeLog for details)
+	- menuing improvements
+	- drawing performance improvements
+	- beginnings of hooks
+	- MDI maximizing and tiling
+	- improvements in winsock implementation
+	- and many many bug fixes!
 
 WHAT'S NEW with Wine-940405: (see ChangeLog for details)
 	- Mouse activation of menus working again

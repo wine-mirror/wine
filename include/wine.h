@@ -32,7 +32,8 @@ struct w_files
 
 extern struct  w_files * wine_files;
 
-#define MAX_DOS_DRIVES	26
+extern char *WineIniFileName(void);
+extern char *WinIniFileName(void);
 
 #define WINE_INI WineIniFileName()
 #define WIN_INI WinIniFileName()

@@ -80,6 +80,7 @@ length	490
 67  pascal DPtoLP(word ptr s_word) DPtoLP(1 2 3)
 68  pascal DeleteDC(word) DeleteDC(1)
 69  pascal DeleteObject(word) DeleteObject(1)
+70  pascal EnumFonts(word ptr ptr ptr) EnumFonts(1 2 3 4)
 72  pascal EqualRgn(word word) EqualRgn(1 2)
 73  pascal ExcludeVisRect(word s_word s_word s_word s_word)
 	   ExcludeVisRect(1 2 3 4 5)

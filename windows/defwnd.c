@@ -12,6 +12,7 @@ static char Copyright[] = "Copyright  Alexandre Julliard, 1993";
 #include "win.h"
 #include "class.h"
 #include "user.h"
+#include "syscolor.h"
 
 extern LONG NC_HandleNCPaint( HWND hwnd, HRGN hrgn );
 extern LONG NC_HandleNCActivate( HWND hwnd, WORD wParam );
@@ -22,7 +23,7 @@ extern LONG NC_HandleNCLButtonDblClk( HWND hwnd, WORD wParam, LONG lParam );
 extern LONG NC_HandleSysCommand( HWND hwnd, WORD wParam, POINT pt );
 extern LONG NC_HandleSetCursor( HWND hwnd, WORD wParam, LONG lParam );
 extern void NC_TrackSysMenu( HWND hwnd ); /* menu.c */
-extern BOOL ActivateMenuFocus(HWND hWnd); /* menu.c */
+extern BOOL ActivateMenuBarFocus(HWND hWnd); /* menu.c */
 
 
 
@@ -155,16 +156,14 @@ LONG DefWindowProc( HWND hwnd, WORD msg, WORD wParam, LONG lParam )
 	    {
 		SetBkColor( (HDC)wParam, RGB(255, 255, 255) );
 		SetTextColor( (HDC)wParam, RGB(0, 0, 0) );
-/*	        hbr = sysClrObjects.hbrScrollbar;
-		UnrealizeObject(hbr); */
-		return GetStockObject(LTGRAY_BRUSH);
+		UnrealizeObject( sysColorObjects.hbrushScrollbar );
+		return sysColorObjects.hbrushScrollbar;
 	    }
 	    else
 	    {
 		SetBkColor( (HDC)wParam, GetSysColor(COLOR_WINDOW) );
 		SetTextColor( (HDC)wParam, GetSysColor(COLOR_WINDOWTEXT) );
-/*	        hbr = sysClrObjects.hbrWindow; */
-		return GetStockObject(WHITE_BRUSH);
+		return sysColorObjects.hbrushWindow;
 	    }
 	}
 	
@@ -211,7 +210,7 @@ LONG DefWindowProc( HWND hwnd, WORD msg, WORD wParam, LONG lParam )
 	return NC_HandleSysCommand( hwnd, wParam, MAKEPOINT(lParam) );
 
     case WM_SYSKEYDOWN:
-		if (wParam == VK_MENU) ActivateMenuFocus(hwnd);
+		if (wParam == VK_MENU) ActivateMenuBarFocus(hwnd);
 		break;    	
     case WM_SYSKEYUP:
 		break;    	

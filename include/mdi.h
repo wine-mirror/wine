@@ -28,6 +28,8 @@ typedef struct
     HWND	  hwndHitTest;
     BOOL          flagMenuAltered;
     BOOL          flagChildMaximized;
+    RECT          rectMaximize;
+    RECT          rectRestore;
 } MDICLIENTINFO;
 
 #endif /* MDI_H */

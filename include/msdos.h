@@ -15,6 +15,7 @@ struct dosdirent {
 };
 
 #define DOSVERSION 0x0330;
+#define MAX_DOS_DRIVES	26
 
 #define EAX context->sc_eax
 #define EBX context->sc_ebx

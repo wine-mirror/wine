@@ -50,17 +50,22 @@ int MessageBox(HWND hWnd, LPSTR str, LPSTR title, WORD type)
 	WND	    	*wndPtr;
 	WNDCLASS  	wndClass;
 	MSG	    	msg;
-	MSGBOX	mb;
-	DWORD	dwStyle;
+	MSGBOX		mb;
+	DWORD		dwStyle;
 	HINSTANCE	hInst;
 	wndPtr = WIN_FindWndPtr(hWnd);
+	if (wndPtr == NULL) {
+		hInst = hSysRes;
 #ifdef DEBUG_MSGBOX
-	printf( "MessageBox: '%s'\n", str );
+		printf("MessageBox(NULL, '%s', '%s', %04X)\n", str, title, type);
 #endif
-	if (wndPtr == NULL)
-	hInst = hSysRes;
-	else
-	hInst = wndPtr->hInstance;
+		}
+	else {
+		hInst = wndPtr->hInstance;
+#ifdef DEBUG_MSGBOX
+		printf("MessageBox(%04X, '%s', '%s', %04X)\n", hWnd, str, title, type);
+#endif
+		}
 	wndClass.style           = CS_HREDRAW | CS_VREDRAW ;
 	wndClass.lpfnWndProc     = (WNDPROC)SystemMessageBoxProc;
 	wndClass.cbClsExtra      = 0;
@@ -71,7 +76,10 @@ int MessageBox(HWND hWnd, LPSTR str, LPSTR title, WORD type)
 	wndClass.hbrBackground   = GetStockObject(WHITE_BRUSH);
 	wndClass.lpszMenuName    = NULL;
 	wndClass.lpszClassName   = "MESSAGEBOX";
-	if (!RegisterClass(&wndClass)) return 0;
+	if (!RegisterClass(&wndClass)) {
+		printf("Unable to Register class 'MESSAGEBOX' !\n");
+		return 0;
+		}
 	memset(&mb, 0, sizeof(MSGBOX));
 	mb.Title = title;
 	mb.Str = str;
@@ -82,11 +90,28 @@ int MessageBox(HWND hWnd, LPSTR str, LPSTR title, WORD type)
 	hWndOld = GetFocus();
 	hDlg = CreateWindow("MESSAGEBOX", title, dwStyle, 100, 150, 400, 120,
 				(HWND)NULL, (HMENU)NULL, hInst, (LPSTR)&mb);
-	if (hDlg == 0) return 0;
+	if (hDlg == 0) {
+		printf("Unable to create 'MESSAGEBOX' window !\n");
+		return 0;
+		}
+#ifdef DEBUG_MSGBOX
+	printf( "MessageBox // before Msg Loop !\n");
+#endif
 	while(TRUE) {
 		if (!mb.ActiveFlg) break;
 		if (!GetMessage(&msg, (HWND)NULL, 0, 0)) break;
 		TranslateMessage(&msg);
+		if ((type & (MB_SYSTEMMODAL | MB_TASKMODAL)) != 0 &&
+			msg.hwnd != hDlg) {
+			switch(msg.message) {
+				case WM_KEYDOWN:
+				case WM_LBUTTONDOWN:
+				case WM_MBUTTONDOWN:
+				case WM_RBUTTONDOWN:
+					MessageBeep(0);
+					break;
+				}
+			}
 		DispatchMessage(&msg);
 		}
 	SetFocus(hWndOld);
@@ -96,6 +121,7 @@ int MessageBox(HWND hWnd, LPSTR str, LPSTR title, WORD type)
 #endif
 	return(mb.wRetVal);
 }
+
 
 LPMSGBOX MsgBoxGetStorageHeader(HWND hwnd)
 {
@@ -119,6 +145,7 @@ LONG SystemMessageBoxProc(HWND hWnd, WORD message, WORD wParam, LONG lParam)
 	CREATESTRUCT *createStruct;
 	PAINTSTRUCT	ps;
 	HDC			hDC;
+	DWORD		OldTextColor;
 	RECT		rect;
 	LPMSGBOX	lpmb;
 	LPMSGBOX	lpmbInit;
@@ -225,21 +252,26 @@ LONG SystemMessageBoxProc(HWND hWnd, WORD message, WORD wParam, LONG lParam)
 	    break;
 	case WM_PAINT:
 #ifdef DEBUG_MSGBOX
-	    printf("MessageBox WM_PAINT !\n");
+		printf("MessageBox WM_PAINT !\n");
 #endif
-	    lpmb = MsgBoxGetStorageHeader(hWnd);
-	    CopyRect(&rect, &lpmb->rectStr);
-	    hDC = BeginPaint(hWnd, &ps);
-	    if (lpmb->hIcon) 
-		DrawIcon(hDC, lpmb->rectIcon.left,
-		    lpmb->rectIcon.top, lpmb->hIcon);
-	    DrawText(hDC, lpmb->Str, -1, &rect, 
-		DT_CALCRECT | DT_CENTER | DT_WORDBREAK);
-	    rect.top = lpmb->rectStr.bottom / 2 - rect.bottom / 2;
-	    rect.bottom = lpmb->rectStr.bottom / 2 + rect.bottom / 2;
-	    DrawText(hDC, lpmb->Str, -1, &rect, DT_CENTER | DT_WORDBREAK);
-	    EndPaint(hWnd, &ps);
-	    break;
+		lpmb = MsgBoxGetStorageHeader(hWnd);
+		CopyRect(&rect, &lpmb->rectStr);
+		hDC = BeginPaint(hWnd, &ps);
+		OldTextColor = SetTextColor(hDC, 0x00000000);
+		if (lpmb->hIcon) 
+			DrawIcon(hDC, lpmb->rectIcon.left,
+				lpmb->rectIcon.top, lpmb->hIcon);
+		DrawText(hDC, lpmb->Str, -1, &rect, 
+			DT_CALCRECT | DT_CENTER | DT_WORDBREAK);
+		rect.top = lpmb->rectStr.bottom / 2 - rect.bottom / 2;
+		rect.bottom = lpmb->rectStr.bottom / 2 + rect.bottom / 2;
+		DrawText(hDC, lpmb->Str, -1, &rect, DT_CENTER | DT_WORDBREAK);
+		SetTextColor(hDC, OldTextColor);
+		EndPaint(hWnd, &ps);
+#ifdef DEBUG_MSGBOX
+		printf("MessageBox End of WM_PAINT !\n");
+#endif
+		break;
 	case WM_DESTROY:
 #ifdef DEBUG_MSGBOX
 	    printf("MessageBox WM_DESTROY !\n");

@@ -1,0 +1,178 @@
+  1   1  0000  WEP exported, shared data
+  2   3  004e  OLEDELETE exported, shared data
+  3   3  00c6  OLESAVETOSTREAM exported, shared data
+  4   3  0122  OLELOADFROMSTREAM exported, shared data
+  6   3  0400  OLECLONE exported, shared data
+  7   3  04ec  OLECOPYFROMLINK exported, shared data
+  8   3  0606  OLEEQUAL exported, shared data
+  9   3  0674  OLEQUERYLINKFROMCLIP exported, shared data
+ 10   3  06a0  OLEQUERYCREATEFROMCLIP exported, shared data
+ 11   3  06cc  OLECREATELINKFROMCLIP exported, shared data
+ 12   3  08a2  OLECREATEFROMCLIP exported, shared data
+ 13   3  0b52  OLECOPYTOCLIPBOARD exported, shared data
+ 14   3  1d48  OLEQUERYTYPE exported, shared data
+ 15   3  0b8e  OLESETHOSTNAMES exported, shared data
+ 16   3  0c04  OLESETTARGETDEVICE exported, shared data
+ 17   3  0c84  OLESETBOUNDS exported, shared data
+ 18   3  0ce0  OLEQUERYBOUNDS exported, shared data
+ 19   3  0da0  OLEDRAW exported, shared data
+ 20   3  0e24  OLEQUERYOPEN exported, shared data
+ 21   3  0e60  OLEACTIVATE exported, shared data
+ 22   3  0eea  OLEUPDATE exported, shared data
+ 23   3  0f26  OLERECONNECT exported, shared data
+ 24   3  0f62  OLEGETLINKUPDATEOPTIONS exported, shared data
+ 25   3  0fbe  OLESETLINKUPDATEOPTIONS exported, shared data
+ 26   3  0ffc  OLEENUMFORMATS exported, shared data
+ 27   3  0eae  OLECLOSE exported, shared data
+ 28   3  107e  OLEGETDATA exported, shared data
+ 29   3  10dc  OLESETDATA exported, shared data
+ 30   3  0010  OLEQUERYPROTOCOL exported, shared data
+ 31   3  111e  OLEQUERYOUTOFDATE exported, shared data
+ 32   3  115a  OLEOBJECTCONVERT exported, shared data
+ 33   3  121a  OLECREATEFROMTEMPLATE exported, shared data
+ 34   3  13b4  OLECREATE exported, shared data
+ 35   3  1ba6  OLEQUERYRELEASESTATUS exported, shared data
+ 36   3  1c04  OLEQUERYRELEASEERROR exported, shared data
+ 37   3  1c40  OLEQUERYRELEASEMETHOD exported, shared data
+ 38   3  16fa  OLECREATEFROMFILE exported, shared data
+ 39   3  190a  OLECREATELINKFROMFILE exported, shared data
+ 40   3  008a  OLERELEASE exported, shared data
+ 41   2  093e  OLEREGISTERCLIENTDOC exported, shared data
+ 42   2  0a9e  OLEREVOKECLIENTDOC exported, shared data
+ 43   2  0bb6  OLERENAMECLIENTDOC exported, shared data
+ 44   2  0c8e  OLEREVERTCLIENTDOC exported, shared data
+ 45   2  0cc8  OLESAVEDCLIENTDOC exported, shared data
+ 46   3  1c7c  OLERENAME exported, shared data
+ 47   2  0cf6  OLEENUMOBJECTS exported, shared data
+ 48   3  1d00  OLEQUERYNAME exported, shared data
+ 49   3  0c42  OLESETCOLORSCHEME exported, shared data
+ 50   3  1034  OLEREQUESTDATA exported, shared data
+ 54   4  0000  OLELOCKSERVER exported, shared data
+ 55   4  025a  OLEUNLOCKSERVER exported, shared data
+ 56   3  0d3c  OLEQUERYSIZE exported, shared data
+ 57   3  1cbe  OLEEXECUTE exported, shared data
+ 58   3  152e  OLECREATEINVISIBLE exported, shared data
+ 59   3  1da4  OLEQUERYCLIENTVERSION exported, shared data
+ 60   3  46d4  OLEISDCMETA exported, shared data
+100   4  0c28  DOCWNDPROC exported, shared data
+101   4  0d2c  SRVRWNDPROC exported, shared data
+102  14  0838  MFCALLBACKFUNC exported, shared data
+110   5  0000  DEFLOADFROMSTREAM exported, shared data
+111   5  00fe  DEFCREATEFROMCLIP exported, shared data
+112   5  0180  DEFCREATELINKFROMCLIP exported, shared data
+113   5  01be  DEFCREATEFROMTEMPLATE exported, shared data
+114   5  01fe  DEFCREATE exported, shared data
+115   5  023e  DEFCREATEFROMFILE exported, shared data
+116   5  028e  DEFCREATELINKFROMFILE exported, shared data
+117   5  02e0  DEFCREATEINVISIBLE exported, shared data
+200   4  04e0  LERELEASE exported, shared data
+201   4  1e52  LESHOW exported, shared data
+202   3  2508  LEGETDATA exported, shared data
+203   4  3a54  LESETDATA exported, shared data
+204   4  37ee  LESETHOSTNAMES exported, shared data
+205   4  386e  LESETTARGETDEVICE exported, shared data
+206   4  3922  LESETBOUNDS exported, shared data
+207   3  27be  LESAVETOSTREAM exported, shared data
+208   3  1fde  LECLONE exported, shared data
+209   4  052a  LECOPYFROMLINK exported, shared data
+210   6  0134  LEEQUAL exported, shared data
+211   3  227a  LECOPY exported, shared data
+212   3  2e00  LEQUERYTYPE exported, shared data
+213   3  2370  LEQUERYBOUNDS exported, shared data
+214   3  23fc  LEDRAW exported, shared data
+215   4  2108  LEQUERYOPEN exported, shared data
+216   4  219a  LEACTIVATE exported, shared data
+218   4  2200  LEUPDATE exported, shared data
+219   4  2cb4  LERECONNECT exported, shared data
+220   3  2454  LEENUMFORMAT exported, shared data
+221   6  00c8  LEQUERYPROTOCOL exported, shared data
+222   3  2638  LEQUERYOUTOFDATE exported, shared data
+223   6  01c2  LEOBJECTCONVERT exported, shared data
+224   4  07fa  LECHANGEDATA exported, shared data
+225   4  2c16  LECLOSE exported, shared data
+226   3  2e72  LEGETUPDATEOPTIONS exported, shared data
+227   4  337a  LESETUPDATEOPTIONS exported, shared data
+228   4  4a44  LEEXECUTE exported, shared data
+229   6  0000  LEOBJECTLONG exported, shared data
+230   4  322c  LECREATEINVISIBLE exported, shared data
+300   9  0000  MFRELEASE exported, shared data
+301   9  0258  MFGETDATA exported, shared data
+302   3  42f2  MFSAVETOSTREAM exported, shared data
+303   9  0082  MFCLONE exported, shared data
+304   9  0174  MFEQUAL exported, shared data
+305   9  01f0  MFCOPY exported, shared data
+307   3  446a  MFQUERYBOUNDS exported, shared data
+308  14  05cc  MFDRAW exported, shared data
+309   9  0234  MFENUMFORMAT exported, shared data
+310   9  0302  MFCHANGEDATA exported, shared data
+400  11  0000  BMRELEASE exported, shared data
+401  11  0254  BMGETDATA exported, shared data
+402   3  4b92  BMSAVETOSTREAM exported, shared data
+403  11  006e  BMCLONE exported, shared data
+404  11  00e4  BMEQUAL exported, shared data
+405   3  4c8c  BMCOPY exported, shared data
+407   3  4ce0  BMQUERYBOUNDS exported, shared data
+408  14  0000  BMDRAW exported, shared data
+409  11  0230  BMENUMFORMAT exported, shared data
+410   3  5004  BMCHANGEDATA exported, shared data
+500  12  0000  DIBRELEASE exported, shared data
+501  12  01ea  DIBGETDATA exported, shared data
+502   3  536c  DIBSAVETOSTREAM exported, shared data
+503  12  006e  DIBCLONE exported, shared data
+504  12  00e4  DIBEQUAL exported, shared data
+505  12  011c  DIBCOPY exported, shared data
+507  12  016c  DIBQUERYBOUNDS exported, shared data
+508  14  02f2  DIBDRAW exported, shared data
+509  12  01c6  DIBENUMFORMAT exported, shared data
+510  12  028a  DIBCHANGEDATA exported, shared data
+600  10  0000  GENRELEASE exported, shared data
+601  10  049e  GENGETDATA exported, shared data
+602  10  0438  GENSETDATA exported, shared data
+603   3  4750  GENSAVETOSTREAM exported, shared data
+604  10  0082  GENCLONE exported, shared data
+605  10  012e  GENEQUAL exported, shared data
+606  10  0164  GENCOPY exported, shared data
+608   3  4b60  GENQUERYBOUNDS exported, shared data
+609  14  05b2  GENDRAW exported, shared data
+610  10  04e0  GENENUMFORMAT exported, shared data
+611  10  0222  GENCHANGEDATA exported, shared data
+701  13  0034  ERRSHOW exported, shared data
+702  13  0186  ERRSETDATA exported, shared data
+703  13  0082  ERRSETHOSTNAMES exported, shared data
+704  13  009c  ERRSETTARGETDEVICE exported, shared data
+705  13  00d0  ERRSETBOUNDS exported, shared data
+706  13  0068  ERRCOPYFROMLINK exported, shared data
+707  13  00ea  ERRQUERYOPEN exported, shared data
+708  13  0104  ERRACTIVATE exported, shared data
+709  13  0138  ERRCLOSE exported, shared data
+710  13  0152  ERRUPDATE exported, shared data
+711  13  016c  ERRRECONNECT exported, shared data
+712  13  0222  ERRQUERYPROTOCOL exported, shared data
+713  13  01ba  ERRQUERYOUTOFDATE exported, shared data
+714  13  01d4  ERROBJECTCONVERT exported, shared data
+715  13  01ee  ERRGETUPDATEOPTIONS exported, shared data
+716  13  0208  ERRSETUPDATEOPTIONS exported, shared data
+717  13  0256  ERREXECUTE exported, shared data
+718  13  0270  ERROBJECTLONG exported, shared data
+800   7  0000  PBLOADFROMSTREAM exported, shared data
+801   7  00ac  PBCREATEFROMCLIP exported, shared data
+802   7  017a  PBCREATELINKFROMCLIP exported, shared data
+803   7  0212  PBCREATEFROMTEMPLATE exported, shared data
+804   7  02a8  PBCREATE exported, shared data
+805   7  06f4  PBDRAW exported, shared data
+806   7  0626  PBQUERYBOUNDS exported, shared data
+807   7  0818  PBCOPYTOCLIPBOARD exported, shared data
+808   7  033e  PBCREATEFROMFILE exported, shared data
+809   7  03e0  PBCREATELINKFROMFILE exported, shared data
+810   7  0768  PBENUMFORMATS exported, shared data
+811   7  07a8  PBGETDATA exported, shared data
+812   7  0492  PBCREATEINVISIBLE exported, shared data
+910   3  3e50  OBJQUERYNAME exported, shared data
+911   3  3f06  OBJRENAME exported, shared data
+912   3  410e  OBJQUERYTYPE exported, shared data
+913   3  4154  OBJQUERYSIZE exported, shared data
+950   8  0456  CONNECTDLGPROC exported, shared data
+951   8  0000  SETNETNAME exported, shared data
+952   8  011a  CHECKNETDRIVE exported, shared data
+953   8  025c  SETNEXTNETDRIVE exported, shared data
+954   8  0696  GETTASKVISIBLEWINDOW exported, shared data

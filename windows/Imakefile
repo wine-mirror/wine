@@ -13,6 +13,7 @@ SRCS = \
 	event.c \
 	focus.c \
 	graphics.c \
+	hook.c \
 	keyboard.c \
 	mapping.c \
 	mdi.c \

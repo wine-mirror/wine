@@ -290,8 +290,9 @@ typedef struct tagDC
 extern MDESC *GDI_Heap;
 
 #define GDI_HEAP_ALLOC(f,size) ((int)HEAP_Alloc(&GDI_Heap,f,size) & 0xffff)
-#define GDI_HEAP_ADDR(handle) ((void *)((handle)|((int)GDI_Heap & 0xffff0000)))
 #define GDI_HEAP_FREE(handle) (HEAP_Free(&GDI_Heap,GDI_HEAP_ADDR(handle)))
+#define GDI_HEAP_ADDR(handle) \
+    ((void *)((handle) ? ((handle) | ((int)GDI_Heap & 0xffff0000)) : 0))
 
 #endif
 

@@ -23,13 +23,13 @@ LPSTR lstrcat(LPSTR target,LPCSTR source)
 }
 
 /* USER.430 */
-int lstrcmp(LPCSTR str1,LPCSTR str2)
+INT lstrcmp(LPCSTR str1,LPCSTR str2)
 {
   return strcmp(str1,str2);
 }
 
 /* USER.471 */
-int lstrcmpi(LPCSTR str1,LPCSTR str2)
+INT lstrcmpi(LPCSTR str1,LPCSTR str2)
 {
   int i;
   i=0;
@@ -51,7 +51,7 @@ LPSTR lstrcpyn(LPSTR target,LPCSTR source,int n)
 }
 
 /* KERNEL.90 */
-int lstrlen(LPCSTR str)
+INT lstrlen(LPCSTR str)
 {
   return strlen(str);
 }
@@ -148,7 +148,7 @@ BOOL IsCharLower(char ch)
 static char Oem2Ansi[256];
 static char Ansi2Oem[256];
 
-void InitOemAnsiTranslations()
+void InitOemAnsiTranslations(void)
 {
   static int inited=0; /* should called called in some init function*/
   int transfile,i;
@@ -173,7 +173,7 @@ void InitOemAnsiTranslations()
 }
 
 /* AnsiToOem Keyboard.5 */
-int AnsiToOem(LPSTR lpAnsiStr, LPSTR lpOemStr)   /* why is this int ??? */
+INT AnsiToOem(LPSTR lpAnsiStr, LPSTR lpOemStr)   /* why is this int ??? */
 {
   InitOemAnsiTranslations(); /* should called called in some init function*/
   while(*lpAnsiStr){
@@ -193,7 +193,7 @@ BOOL OemToAnsi(LPSTR lpOemStr, LPSTR lpAnsiStr)   /* why is this BOOL ???? */
 }
 
 /* AnsiToOemBuff Keyboard.134 */
-void AnsiToOemBuff(LPSTR lpAnsiStr, LPSTR lpOemStr, int nLength)
+void AnsiToOemBuff(LPSTR lpAnsiStr, LPSTR lpOemStr, INT nLength)
 {
   int i;
   InitOemAnsiTranslations(); /* should called called in some init function*/
@@ -202,7 +202,7 @@ void AnsiToOemBuff(LPSTR lpAnsiStr, LPSTR lpOemStr, int nLength)
 }
 
 /* OemToAnsi Keyboard.135 */
-void OemToAnsiBuff(LPSTR lpOemStr, LPSTR lpAnsiStr, int nLength)
+void OemToAnsiBuff(LPSTR lpOemStr, LPSTR lpAnsiStr, INT nLength)
 {
   int i;
   InitOemAnsiTranslations(); /* should called called in some init function*/

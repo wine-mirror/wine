@@ -36,19 +36,21 @@ typedef struct tagWND
     POINT        ptMaxPos;       /* Maximized window position */
     HANDLE       hmemTaskQ;      /* Task queue global memory handle */
     HRGN         hrgnUpdate;     /* Update region */
+    HWND         hwndPrevActive; /* Previous active top-level window */
     HWND         hwndLastActive; /* Last active popup hwnd */
     FARPROC      lpfnWndProc;    /* Window procedure */
     DWORD        dwStyle;        /* Window style (from CreateWindow) */
     DWORD        dwExStyle;      /* Extended style (from CreateWindowEx) */
     HANDLE       hdce;           /* Window DCE (if CS_OWNDC or CS_CLASSDC) */
-    HMENU        hmenuSystem;    /* System menu */
-    void	 *VScroll;	 /* Vertical ScrollBar Struct Pointer */
-    void	 *HScroll;	 /* Horizontal ScrollBar Struct Pointer */
+    void		 *VScroll;		 /* Vertical ScrollBar Struct Pointer */
+    void		 *HScroll;		 /* Horizontal ScrollBar Struct Pointer */
     WORD         wIDmenu;        /* ID or hmenu (from CreateWindow) */
     HANDLE       hText;          /* Handle of window text */
     WORD         flags;          /* Misc. flags (see below) */
     Window       window;         /* X window */
-    HMENU	 hSysMenu;	 /* window's copy of System Menu */
+    HMENU		 hSysMenu;		 /* window's copy of System Menu */
+    HANDLE       hProp;          /* Handle of Properties List */
+    HTASK 		 hTask;          /* Task Handle of the owner */
     WORD         wExtra[1];      /* Window extra bytes */
 } WND;
 

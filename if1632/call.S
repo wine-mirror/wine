@@ -361,18 +361,7 @@ _ReturnFromRegisterFunc:
 	 * address again.
 	 */
 	add	$6,%esp		/* argument count, return address */
-	popw	%gs
-	add	$2,%esp
-	popw	%fs
-	add	$2,%esp
-	popw	%es
-	add	$2,%esp
-	popw	%ds
-	add	$2,%esp
-	popal
-	add	$16,%esp	/* trapno, err, eip, cs */
-	popfl
-	add	$20,%esp	/* esp, ss, i387, oldmask, cr2 */
+#include "pop.h"		/* restore context                */
 
 	/*
 	 * Return to original caller.

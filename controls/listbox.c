@@ -1260,3 +1260,28 @@ int ListBoxFindNextMatch(HWND hwnd, WORD wChar)
 }
 
 
+/************************************************************************
+ * 					DlgDirSelect			[USER.99]
+ */
+BOOL DlgDirSelect(HWND hDlg, LPSTR lpStr, int nIDLBox)
+{
+	printf("DlgDirSelect(%04X, '%s', %d) \n",	hDlg, lpStr, nIDLBox);
+}
+
+
+/************************************************************************
+ * 					DlgDirList				[USER.100]
+ */
+int DlgDirList(HWND hDlg, LPSTR lpPathSpec, 
+	int nIDLBox, int nIDStat, WORD wType)
+{
+	HWND	hWnd;
+	printf("DlgDirList(%04X, '%s', %d, %d, %04X) \n",
+			hDlg, lpPathSpec, nIDLBox, nIDStat, wType);
+	hWnd = GetDlgItem(hDlg, nIDLBox);
+	ListBoxResetContent(hWnd);
+	return ListBoxDirectory(hWnd, wType, lpPathSpec);
+}
+
+
+

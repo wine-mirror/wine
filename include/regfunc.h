@@ -4,19 +4,21 @@
 #ifndef REGFUNC_H
 #define REGFUNC_H
 
+#include "wine.h"
+
 extern unsigned short *Stack16Frame;
 
-#define _CONTEXT &Stack16Frame[12]
-#define _AX	Stack16Frame[34]
-#define _BX	Stack16Frame[28]
-#define _CX	Stack16Frame[32]
-#define _DX	Stack16Frame[30]
-#define _SP	Stack16Frame[26]
-#define _BP	Stack16Frame[24]
-#define _SI	Stack16Frame[22]
-#define _DI	Stack16Frame[20]
-#define _DS	Stack16Frame[18]
-#define _ES	Stack16Frame[16]
+#define _CONTEXT ((struct sigcontext_struct *) &Stack16Frame[12])
+#define _AX	(_CONTEXT->sc_eax)
+#define _BX	(_CONTEXT->sc_ebx)
+#define _CX	(_CONTEXT->sc_ecx)
+#define _DX	(_CONTEXT->sc_edx)
+#define _SP	(_CONTEXT->sc_esp)
+#define _BP	(_CONTEXT->sc_ebp)
+#define _SI	(_CONTEXT->sc_esi)
+#define _DI	(_CONTEXT->sc_edi)
+#define _DS	(_CONTEXT->sc_ds)
+#define _ES	(_CONTEXT->sc_es)
 
 extern void ReturnFromRegisterFunc(void);
 

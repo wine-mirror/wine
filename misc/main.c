@@ -494,17 +494,7 @@ BOOL SystemParametersInfo (UINT uAction, UINT uParam, void FAR *lpvParam, UINT f
 */
 void hmemcpy(void FAR *hpvDest, const void FAR *hpvSource, long cbCopy)
 {
-	size_t copysize;
-	
-	while (cbCopy) 
-	{
-		copysize = cbCopy < 30000 ? cbCopy : 30000;
-		
-		memcpy(hpvDest,	hpvSource, copysize);
-		hpvDest += copysize;
-		hpvSource += copysize;
-		cbCopy -= copysize;
-	}		
+	memcpy(hpvDest,	hpvSource, cbCopy);
 }
 
 /***********************************************************************

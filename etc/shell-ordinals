@@ -1,0 +1,26 @@
+  1   2  15cc  REGOPENKEY exported, shared data
+  2   2  15fa  REGCREATEKEY exported, shared data
+  3   2  1670  REGCLOSEKEY exported, shared data
+  4   2  1628  REGDELETEKEY exported, shared data
+  5   2  16f4  REGSETVALUE exported, shared data
+  6   2  168e  REGQUERYVALUE exported, shared data
+  7   2  14dc  REGENUMKEY exported, shared data
+  8   7  0000  WEP exported, shared data
+  9   6  0052  DRAGACCEPTFILES exported, shared data
+ 11   6  0094  DRAGQUERYFILE exported, shared data
+ 12   6  0142  DRAGFINISH exported, shared data
+ 13   6  0000  DRAGQUERYPOINT exported, shared data
+ 20   4  110a  SHELLEXECUTE exported, shared data
+ 21   4  1154  FINDEXECUTABLE exported, shared data
+ 22   9  0000  SHELLABOUT exported, shared data
+ 32   9  0829  WCI exported, shared data
+ 33   9  0136  ABOUTDLGPROC exported, shared data
+ 34  10  021a  EXTRACTICON exported, shared data
+ 36  10  08dc  EXTRACTASSOCIATEDICON exported, shared data
+ 37   5  00ae  DOENVIRONMENTSUBST exported, shared data
+ 38   5  0000  FINDENVIRONMENTSTRING exported, shared data
+ 39  10  026e  INTERNALEXTRACTICON exported, shared data
+100   4  0550  HERETHARBETYGARS exported, shared data
+101   8  010e  FINDEXEDLGPROC exported, shared data
+102   4  128c  REGISTERSHELLHOOK exported, shared data
+103   4  11ca  SHELLHOOKPROC exported, shared data

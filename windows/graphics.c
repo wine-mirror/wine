@@ -16,6 +16,7 @@ static char Copyright[] = "Copyright  Alexandre Julliard, 1993";
 #endif
 
 #include "gdi.h"
+#include "syscolor.h"
 
 extern int COLOR_ToPhysical( DC *dc, COLORREF color );
 
@@ -458,7 +459,7 @@ BOOL FillRgn( HDC hdc, HRGN hrgn, HBRUSH hbrush )
  */
 void DrawFocusRect( HDC hdc, LPRECT rc )
 {
-    HPEN hPen, hOldPen;
+    HPEN hOldPen;
     int oldDrawMode, oldBkMode;
     int left, top, right, bottom;
     DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
@@ -469,8 +470,7 @@ void DrawFocusRect( HDC hdc, LPRECT rc )
     right  = XLPTODP( dc, rc->right );
     bottom = YLPTODP( dc, rc->bottom );
     
-    hPen = CreatePen(PS_DOT, 1, GetSysColor(COLOR_WINDOWTEXT)); 
-    hOldPen = (HPEN)SelectObject(hdc, (HANDLE)hPen);
+    hOldPen = (HPEN)SelectObject(hdc, sysColorObjects.hpenWindowText );
     oldDrawMode = SetROP2(hdc, R2_XORPEN);
     oldBkMode = SetBkMode(hdc, TRANSPARENT);
 
@@ -482,7 +482,6 @@ void DrawFocusRect( HDC hdc, LPRECT rc )
     SetBkMode(hdc, oldBkMode);
     SetROP2(hdc, oldDrawMode);
     SelectObject(hdc, (HANDLE)hOldPen);
-    DeleteObject((HANDLE)hPen);
 }
 
 
@@ -491,15 +490,11 @@ void DrawFocusRect( HDC hdc, LPRECT rc )
  */
 void DrawReliefRect( HDC hdc, RECT rect, int thickness, BOOL pressed )
 {
-    HBRUSH hbrushOld, hbrushShadow, hbrushHighlight;
+    HBRUSH hbrushOld;
     int i;
 
-    hbrushShadow = CreateSolidBrush( GetSysColor(COLOR_BTNSHADOW) );
-    hbrushHighlight = CreateSolidBrush( GetSysColor(COLOR_BTNHIGHLIGHT) );
-
-    if (pressed) hbrushOld = SelectObject( hdc, hbrushShadow );
-    else hbrushOld = SelectObject( hdc, hbrushHighlight );
-
+    hbrushOld = SelectObject( hdc, pressed ? sysColorObjects.hbrushBtnShadow :
+			                  sysColorObjects.hbrushBtnHighlight );
     for (i = 0; i < thickness; i++)
     {
 	PatBlt( hdc, rect.left + i, rect.top,
@@ -508,9 +503,8 @@ void DrawReliefRect( HDC hdc, RECT rect, int thickness, BOOL pressed )
 	        rect.right - rect.left - i, 1, PATCOPY );
     }
 
-    if (pressed) hbrushOld = SelectObject( hdc, hbrushHighlight );
-    else hbrushOld = SelectObject( hdc, hbrushShadow );
-
+    SelectObject( hdc, pressed ? sysColorObjects.hbrushBtnHighlight :
+		                 sysColorObjects.hbrushBtnShadow );
     for (i = 0; i < thickness; i++)
     {
 	PatBlt( hdc, rect.right - i - 1, rect.top + i,
@@ -520,8 +514,6 @@ void DrawReliefRect( HDC hdc, RECT rect, int thickness, BOOL pressed )
     }
 
     SelectObject( hdc, hbrushOld );
-    DeleteObject( hbrushShadow );
-    DeleteObject( hbrushHighlight );
 }
 
 

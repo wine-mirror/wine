@@ -9,15 +9,24 @@ typedef short	INT;
 typedef unsigned short UINT;
 typedef unsigned short WORD;
 typedef unsigned long DWORD;
-#ifndef _WINMAIN
 typedef unsigned short BOOL;
 typedef unsigned char BYTE;
-#endif
+typedef char *LPSTR;
+typedef const char *LPCSTR;
+typedef char *NPSTR;
+typedef INT *LPINT;
+typedef void *LPVOID;
+typedef long (*FARPROC)();
+typedef FARPROC DLGPROC;
+typedef int CATCHBUF[9];
+typedef int *LPCATCHBUF;
+typedef FARPROC HOOKPROC;
 typedef long LONG;
 typedef UINT WPARAM;
 typedef LONG LPARAM;
 typedef LONG LRESULT;
 typedef WORD HANDLE;
+typedef DWORD HHOOK;
 #define DECLARE_HANDLE(a) typedef HANDLE a;
 
 DECLARE_HANDLE(HTASK);
@@ -37,19 +46,10 @@ DECLARE_HANDLE(HBITMAP);
 DECLARE_HANDLE(HBRUSH);
 DECLARE_HANDLE(LOCALHANDLE);
 
-typedef char *LPSTR;
-typedef const char *LPCSTR;
-typedef char *NPSTR;
-typedef short *LPINT;
-typedef void *LPVOID;
-typedef long (*FARPROC)();
-typedef FARPROC DLGPROC;
-typedef int CATCHBUF[9];
-typedef int *LPCATCHBUF;
 
 #define TRUE 1
 #define FALSE 0
-#define CW_USEDEFAULT ((short)0x8000)
+#define CW_USEDEFAULT ((INT)0x8000)
 #define FAR
 #define NEAR
 #define PASCAL
@@ -113,15 +113,15 @@ typedef int *LPCATCHBUF;
 #endif
 */
 
-typedef struct { short x, y; } POINT;
+typedef struct { INT x, y; } POINT;
 typedef POINT *PPOINT;
 typedef POINT *NPPOINT;
 typedef POINT *LPPOINT;
 
 typedef struct 
 {
-    short cx;
-    short cy;
+    INT cx;
+    INT cy;
 } SIZE, *LPSIZE;
 
 #define MAKEPOINT(l) (*((POINT *)&(l)))
@@ -129,7 +129,7 @@ typedef struct
 #define MAKELPARAM(low, high) ((LONG)(((WORD)(low)) | \
 			      (((DWORD)((WORD)(high))) << 16)))
 
-typedef struct { short left, top, right, bottom; } RECT;
+typedef struct { INT left, top, right, bottom; } RECT;
 typedef RECT *LPRECT;
 typedef RECT *NPRECT;
 typedef RECT *PRECT;
@@ -167,7 +167,7 @@ typedef struct {
 #else
 	LONG	(*lpfnWndProc)() WINE_PACKED;
 #endif
-	short	cbClsExtra, cbWndExtra;
+	INT	cbClsExtra, cbWndExtra;
 	HANDLE	hInstance;
 	HICON	hIcon;
 	HCURSOR	hCursor;
@@ -209,10 +209,10 @@ typedef struct {
     HINSTANCE hInstance;
     HMENU     hMenu;
     HWND      hwndParent;
-    short     cy;
-    short     cx;
-    short     y;
-    short     x;
+    INT	      cy;
+    INT       cx;
+    INT       y;
+    INT       x;
     LONG      style WINE_PACKED;
     char *    lpszName WINE_PACKED;
     char *    lpszClass WINE_PACKED;
@@ -230,10 +230,10 @@ typedef struct
     LPSTR     szClass;
     LPSTR     szTitle;
     HANDLE    hOwner;
-    short     x;
-    short     y;
-    short     cx;
-    short     cy;
+    INT       x;
+    INT       y;
+    INT       cx;
+    INT	      cy;
     LONG      style WINE_PACKED;
     LONG      lParam WINE_PACKED;
 } MDICREATESTRUCT, *LPMDICREATESTRUCT;
@@ -380,7 +380,118 @@ typedef struct
 #define SC_SCREENSAVE   0xf140
 #define SC_HOTKEY       0xf150
 
-  /* Dialogs */
+/***** Window hooks *****/
+
+  /* Hook values */
+#define WH_JOURNALRECORD    0
+#define WH_JOURNALPLAYBACK  1
+#define WH_KEYBOARD	    2
+#define WH_GETMESSAGE	    3
+#define WH_CALLWNDPROC	    4
+#define WH_CBT		    5
+#define WH_SYSMSGFILTER	    6
+#define WH_MOUSE	    7
+#define WH_HARDWARE	    8
+#define WH_DEBUG	    9
+#define WH_SHELL           10
+#define WH_MSGFILTER	    (-1)
+
+  /* Hook action codes */
+#define HC_ACTION           0
+#define HC_GETNEXT          1
+#define HC_SKIP             2
+#define HC_NOREMOVE         3
+#define HC_NOREM            HC_NOREMOVE
+#define HC_SYSMODALON       4
+#define HC_SYSMODALOFF      5
+
+  /* CallMsgFilter() values */
+#define MSGF_DIALOGBOX      0
+#define MSGF_MENU           2
+#define MSGF_MOVE           3
+#define MSGF_SIZE           4
+#define MSGF_SCROLLBAR      5
+#define MSGF_NEXTWINDOW     6
+#define MSGF_MAINLOOP       8
+#define MSGF_USER        4096
+
+  /* Journalling hook values */
+#define HC_GETNEXT	    1
+#define HC_SKIP 	    2
+#define HC_NOREMOVE	    3
+#define HC_NOREM	    HC_NOREMOVE
+#define HC_SYSMODALON       4
+#define HC_SYSMODALOFF	    5
+
+  /* Journalling hook structure */
+typedef struct tagEVENTMSG
+{
+    UINT    message;
+    UINT    paramL;
+    UINT    paramH;
+    DWORD   time WINE_PACKED;
+} EVENTMSG, *LPEVENTMSG;
+
+  /* Mouse hook structure */
+typedef struct tagMOUSEHOOKSTRUCT
+{
+    POINT   pt;
+    HWND    hwnd;
+    WORD    wHitTestCode;
+    DWORD   dwExtraInfo;
+} MOUSEHOOKSTRUCT, *LPMOUSEHOOKSTRUCT;
+
+  /* Hardware hook structure */
+typedef struct tagHARDWAREHOOKSTRUCT
+{
+    HWND    hWnd;
+    UINT    wMessage;
+    WPARAM  wParam;
+    LPARAM  lParam WINE_PACKED;
+} HARDWAREHOOKSTRUCT;
+
+  /* CBT hook values */
+#define HCBT_MOVESIZE	    0
+#define HCBT_MINMAX	    1
+#define HCBT_QS 	    2
+#define HCBT_CREATEWND	    3
+#define HCBT_DESTROYWND	    4
+#define HCBT_ACTIVATE	    5
+#define HCBT_CLICKSKIPPED   6
+#define HCBT_KEYSKIPPED     7
+#define HCBT_SYSCOMMAND	    8
+#define HCBT_SETFOCUS	    9
+
+  /* CBT hook structures */
+typedef struct tagCBT_CREATEWND
+{
+    CREATESTRUCT *lpcs;
+    HWND          hwndInsertAfter;
+} CBT_CREATEWND, *LPCBT_CREATEWND;
+
+typedef struct tagCBTACTIVATESTRUCT
+{
+    BOOL    fMouse;
+    HWND    hWndActive;
+} CBTACTIVATESTRUCT;
+
+  /* Shell hook values */
+#define HSHELL_WINDOWCREATED       1
+#define HSHELL_WINDOWDESTROYED     2
+#define HSHELL_ACTIVATESHELLWINDOW 3
+
+  /* Debug hook structure */
+typedef struct tagDEBUGHOOKINFO
+{
+    HANDLE	hModuleHook;
+    LPARAM	reserved WINE_PACKED;
+    LPARAM	lParam WINE_PACKED;
+    WPARAM	wParam;
+    short       code;
+} DEBUGHOOKINFO, *LPDEBUGHOOKINFO;
+
+
+/***** Dialogs *****/
 
   /* cbWndExtra bytes for dialog class */
 #define DLGWINDOWEXTRA      30
@@ -529,10 +640,10 @@ typedef DWORD COLORREF;
 
 typedef struct tagBITMAP
 {
-    short  bmType;
-    short  bmWidth;
-    short  bmHeight;
-    short  bmWidthBytes;
+    INT  bmType;
+    INT  bmWidth;
+    INT  bmHeight;
+    INT  bmWidthBytes;
     BYTE   bmPlanes;
     BYTE   bmBitsPixel;
     void * bmBits WINE_PACKED;
@@ -548,7 +659,7 @@ typedef struct tagLOGBRUSH
 { 
     WORD       lbStyle; 
     COLORREF   lbColor WINE_PACKED;
-    short      lbHatch; 
+    INT      lbHatch; 
 } LOGBRUSH, *PLOGBRUSH, *NPLOGBRUSH, *LPLOGBRUSH;
 
   /* Brush styles */
@@ -573,7 +684,7 @@ typedef struct tagLOGBRUSH
 #define LF_FACESIZE 32
 typedef struct tagLOGFONT
 {
-    short lfHeight, lfWidth, lfEscapement, lfOrientation, lfWeight;
+    INT lfHeight, lfWidth, lfEscapement, lfOrientation, lfWeight;
     BYTE lfItalic, lfUnderline, lfStrikeOut, lfCharSet;
     BYTE lfOutPrecision, lfClipPrecision, lfQuality, lfPitchAndFamily;
     BYTE lfFaceName[LF_FACESIZE] WINE_PACKED;
@@ -640,14 +751,14 @@ typedef struct tagLOGFONT
 
 typedef struct tagTEXTMETRIC
 {
-    short     tmHeight;
-    short     tmAscent;
-    short     tmDescent;
-    short     tmInternalLeading;
-    short     tmExternalLeading;
-    short     tmAveCharWidth;
-    short     tmMaxCharWidth;
-    short     tmWeight;
+    INT     tmHeight;
+    INT     tmAscent;
+    INT     tmDescent;
+    INT     tmInternalLeading;
+    INT     tmExternalLeading;
+    INT     tmAveCharWidth;
+    INT     tmMaxCharWidth;
+    INT     tmWeight;
     BYTE      tmItalic;
     BYTE      tmUnderlined;
     BYTE      tmStruckOut;
@@ -657,9 +768,9 @@ typedef struct tagTEXTMETRIC
     BYTE      tmBreakChar;
     BYTE      tmPitchAndFamily;
     BYTE      tmCharSet;
-    short     tmOverhang;
-    short     tmDigitizedAspectX;
-    short     tmDigitizedAspectY;
+    INT     tmOverhang;
+    INT     tmDigitizedAspectX;
+    INT     tmDigitizedAspectY;
 } TEXTMETRIC, *PTEXTMETRIC, *NPTEXTMETRIC, *LPTEXTMETRIC;
 
   /* tmPitchAndFamily values */
@@ -966,10 +1077,10 @@ typedef BITMAPINFO *PBITMAPINFO;
 typedef struct tagBITMAPCOREHEADER
 {
     unsigned long bcSize;
-    unsigned short bcWidth;
-    unsigned short bcHeight;
-    unsigned short bcPlanes;
-    unsigned short bcBitCount;
+    UINT bcWidth;
+    UINT bcHeight;
+    UINT bcPlanes;
+    UINT bcBitCount;
 } BITMAPCOREHEADER;
 
 #define DIB_RGB_COLORS   0
@@ -2214,9 +2325,9 @@ Fa(ATOM,RegisterClass,LPWNDCLASS,a)
 Fa(BOOL,TranslateMessage,LPMSG,a)
 Fa(void,PostQuitMessage,int,a)
 Fa(BOOL,SetMessageQueue,int,a)
-Fa(int,_lclose,int,a)
-Fb(int,_lopen,LPSTR,a,int,b)
-Fa(int,lstrlen,LPCSTR,a)
+Fa(INT,_lclose,INT,a)
+Fb(INT,_lopen,LPSTR,a,INT,b)
+Fa(INT,lstrlen,LPCSTR,a)
 Fa(LONG,DispatchMessage,LPMSG,msg)
 Fa(void,UpdateWindow,HWND,a)
 Fa(ATOM,AddAtom,LPCSTR,a)
@@ -2257,6 +2368,7 @@ Fa(BOOL,RemoveFontResource,LPSTR,a)
 Fa(BOOL,SetDeskWallPaper,LPSTR,a)
 Fa(BOOL,SetErrorMode,WORD,a)
 Fa(BOOL,SwapMouseButton,BOOL,a)
+Fa(BOOL,UnhookWindowsHookEx,HHOOK,a)
 Fa(BOOL,UnrealizeObject,HBRUSH,a)
 Fa(BYTE,GetTempDrive,BYTE,a)
 Fa(DWORD,GetAspectRatioFilter,HDC,a)
@@ -2351,7 +2463,7 @@ Fa(WORD,AllocSelector,WORD,a)
 Fa(WORD,ArrangeIconicWindows,HWND,a)
 Fa(WORD,EnumClipboardFormats,WORD,a)
 Fa(WORD,FreeSelector,WORD,a)
-Fa(WORD,GetDriveType,int,a)
+Fa(WORD,GetDriveType,INT,a)
 Fa(WORD,GetMenuItemCount,HMENU,a)
 Fa(WORD,GetTaskQueue,HANDLE,a)
 Fa(WORD,GetTextAlign,HDC,a)
@@ -2423,14 +2535,14 @@ Fb(BOOL,ShowWindow,HWND,a,int,b)
 Fb(HDC,BeginPaint,HWND,a,LPPAINTSTRUCT,b) 
 Fb(LPSTR,lstrcat,LPSTR,a,LPCSTR,b )
 Fb(LPSTR,lstrcpy,LPSTR,a,LPCSTR,b )
-Fb(int,_lcreat,LPSTR,a,int,b)
-Fb(int,lstrcmp,LPCSTR,a,LPCSTR,b )
-Fb(int,lstrcmpi,LPCSTR,a,LPCSTR,b )
+Fb(INT,_lcreat,LPSTR,a,INT,b)
+Fb(INT,lstrcmp,LPCSTR,a,LPCSTR,b )
+Fb(INT,lstrcmpi,LPCSTR,a,LPCSTR,b )
 Fb(void,EndPaint,HWND,a,LPPAINTSTRUCT,b)
 Fb(void,GetClientRect,HWND,a,LPRECT,b)
 Fb(void,SetDCState,HDC,a,HDC,b)
 Fb(BOOL,UnregisterClass,LPSTR,a,HANDLE,b)
-Fb(BOOL,CallMsgFilter,LPMSG,a,int,b)
+Fb(BOOL,CallMsgFilter,LPMSG,a,short,b)
 Fb(BOOL,ChangeClipboardChain,HWND,a,HWND,b)
 Fb(BOOL,EnableWindow,HWND,a,BOOL,b)
 Fb(BOOL,EnumWindows,FARPROC,a,LONG,b)
@@ -2454,14 +2566,14 @@ Fb(BOOL,RestoreDC,HDC,a,short,b)
 Fb(BOOL,SetConvertParams,int,a,int,b)
 Fb(BOOL,SetMenu,HWND,a,HMENU,b)
 Fb(BOOL,TranslateMDISysAccel,HWND,a,LPMSG,b)
-Fb(BOOL,UnhookWindowsHook,int,a,FARPROC,b)
+Fb(BOOL,UnhookWindowsHook,short,a,HHOOK,b)
 Fb(DWORD,GetNearestColor,HDC,a,DWORD,b)
 Fb(DWORD,SetBkColor,HDC,a,COLORREF,b)
 Fb(DWORD,SetMapperFlags,HDC,a,DWORD,b)
 Fb(DWORD,SetTextColor,HDC,a,DWORD,b)
 Fb(FARPROC,GetProcAddress,HANDLE,a,LPSTR,b)
 Fb(FARPROC,MakeProcInstance,FARPROC,a,HANDLE,b)
-Fb(FARPROC,SetWindowsHook,int,a,FARPROC,b)
+Fb(HHOOK,SetWindowsHook,short,a,HOOKPROC,b)
 Fb(HANDLE,CopyMetaFile,HANDLE,a,LPSTR,b)
 Fb(HANDLE,GetProp,HWND,a,LPSTR,b)
 #ifndef GLOBAL_SOURCE
@@ -2524,7 +2636,7 @@ Fb(WORD,SetTextAlign,HDC,a,WORD,b)
 Fb(WORD,SizeofResource,HANDLE,a,HANDLE,b)
 Fb(WORD,WinExec,LPSTR,a,WORD,b)
 Fb(int,AccessResource,HANDLE,a,HANDLE,b)
-Fb(int,AnsiToOem,LPSTR,a,LPSTR,b)
+Fb(INT,AnsiToOem,LPSTR,a,LPSTR,b)
 Fb(int,BuildCommDCB,LPSTR,a,DCB*,b)
 Fb(int,ConvertRequest,HWND,a,LPKANJISTRUCT,b)
 Fb(void,CopyRect,LPRECT,a,LPRECT,b)
@@ -2567,9 +2679,9 @@ Fb(void,ValidateRect,HWND,a,LPRECT,b)
 Fb(void,ValidateRgn,HWND,a,HRGN,b)
 Fc(BOOL,LineTo,HDC,a,short,b,short,c)
 Fc(WORD,GetInternalWindowPos,HWND,a,LPRECT,b,LPPOINT,c)
-Fc(LONG,_llseek,int,a,long,b,int,c)
-Fc(WORD,_lread,int,a,LPSTR,b,int,c)
-Fc(WORD,_lwrite,int,a,LPSTR,b,int,c)
+Fc(LONG,_llseek,INT,a,LONG,b,INT,c)
+Fc(WORD,_lread,INT,a,LPSTR,b,INT,c)
+Fc(WORD,_lwrite,INT,a,LPSTR,b,INT,c)
 Fc(int,FillRect,HDC,a,LPRECT,b,HBRUSH,c)
 Fc(DWORD,MoveTo,HDC,a,short,b,short,c)
 Fc(BOOL,CheckMenuItem,HMENU,a,WORD,b,WORD,c)
@@ -2645,7 +2757,7 @@ Fc(int,MulDiv,int,a,int,b,int,c)
 Fc(int,OffsetClipRgn,HDC,a,short,b,short,c)
 Fc(int,OffsetRgn,HRGN,a,short,b,short,c)
 Fc(int,OpenComm,LPSTR,a,WORD,b,WORD,c)
-Fc(int,OpenFile,LPSTR,a,LPOFSTRUCT,b,WORD,c)
+Fc(INT,OpenFile,LPSTR,a,LPOFSTRUCT,b,WORD,c)
 Fc(int,ReadComm,int,a,LPSTR,b,int,c)
 Fc(int,SetEnvironment,LPSTR,a,LPSTR,b,WORD,c)
 Fc(int,SetVoiceEnvelope,int,a,int,b,int,c)
@@ -2655,12 +2767,12 @@ Fc(int,WriteComm,int,a,LPSTR,b,int,c)
 Fc(int,wvsprintf,LPSTR,a,LPSTR,b,LPSTR,c)
 Fc(short,SetTextJustification,HDC,a,short,b,short,c)
 Fc(void,AdjustWindowRect,LPRECT,a,DWORD,b,BOOL,c)
-Fc(void,AnsiToOemBuff,LPSTR,a,LPSTR,b,int,c)
+Fc(void,AnsiToOemBuff,LPSTR,a,LPSTR,b,INT,c)
 Fc(void,CheckDlgButton,HWND,a,WORD,b,WORD,c)
 Fc(void,InflateRect,LPRECT,a,short,b,short,c)
 Fc(void,InvalidateRect,HWND,a,LPRECT,b,BOOL,c)
 Fc(void,InvalidateRgn,HWND,a,HRGN,b,BOOL,c)
-Fc(void,OemToAnsiBuff,LPSTR,a,LPSTR,b,int,c)
+Fc(void,OemToAnsiBuff,LPSTR,a,LPSTR,b,INT,c)
 Fc(void,OffsetRect,LPRECT,a,short,b,short,c)
 Fc(void,SetDlgItemText,HWND,a,WORD,b,LPSTR,c)
 Fc(void,SetSysColors,int,a,LPINT,b,COLORREF*,c)
@@ -2683,10 +2795,12 @@ Fd(BOOL,RedrawWindow,HWND,a,LPRECT,b,HRGN,c,UINT,d)
 Fd(BOOL,SetBitmapDimensionEx,HBITMAP,a,short,b,short,c,LPSIZE,d)
 Fd(BOOL,WinHelp,HWND,hwndMain,LPSTR,lpszHelp,WORD,usCommand,DWORD,ulData)
 Fd(BOOL,WritePrivateProfileString,LPSTR,a,LPSTR,b,LPSTR,c,LPSTR,d)
-Fd(DWORD,DefHookProc,int,a,WORD,b,DWORD,c,FARPROC FAR*,d)
+Fd(DWORD,DefHookProc,short,a,WORD,b,DWORD,c,HHOOK FAR*,d)
+Fd(DWORD,CallNextHookEx,HHOOK,a,short,b,WPARAM,c,LPARAM,d)
 Fd(COLORREF,SetPixel,HDC,a,short,b,short,c,COLORREF,d)
 Fd(HDC,CreateDC,LPSTR,a,LPSTR,b,LPSTR,c,LPSTR,d)
 Fd(HDC,CreateIC,LPSTR,a,LPSTR,b,LPSTR,c,LPSTR,d)
+Fd(HHOOK,SetWindowsHookEx,short,a,HOOKPROC,b,HINSTANCE,c,HTASK,d)
 Fd(HRGN,CreateEllipticRgn,short,a,short,b,short,c,short,d)
 Fd(HRGN,CreatePolyPolygonRgn,LPPOINT,a,LPINT,b,short,c,short,d)
 Fd(HRGN,CreateRectRgn,short,a,short,b,short,c,short,d)
@@ -2713,7 +2827,7 @@ Fd(int,DialogBoxIndirect,HANDLE,a,HANDLE,b,HWND,c,FARPROC,d)
 Fd(int,EnumFonts,HDC,a,LPSTR,b,FARPROC,c,LPSTR,d)
 Fd(int,EnumObjects,HDC,a,int,b,FARPROC,c,LPSTR,d)
 Fd(int,GetDlgItemText,HWND,a,WORD,b,LPSTR,c,WORD,d)
-Fd(int,GetTempFileName,BYTE,a,LPCSTR,b,UINT,c,LPSTR,d)
+Fd(INT,GetTempFileName,BYTE,a,LPCSTR,b,UINT,c,LPSTR,d)
 Fd(int,LoadString,HANDLE,a,WORD,b,LPSTR,c,int,d)
 Fd(int,MessageBox,HWND,a,LPSTR,b,LPSTR,c,WORD,d)
 Fd(int,SetScrollPos,HWND,a,int,b,int,c,BOOL,d)
@@ -2789,7 +2903,7 @@ Fh(int,ScrollWindowEx,HWND,a,short,b,short,c,LPRECT,d,LPRECT,e,HRGN,f,LPRECT,g,W
 Fi(BOOL,Arc,HDC,a,int,xLeft,int,yTop,int,xRight,int,yBottom,int,xStart,int,yStart,int,xEnd,int,yEnd)
 Fi(BOOL,Chord,HDC,a,int,xLeft,int,yTop,int,xRight,int,yBottom,int,xStart,int,yStart,int,xEnd,int,yEnd)
 Fi(BOOL,BitBlt,HDC,a,short,b,short,c,short,d,short,e,HDC,f,short,g,short,h,DWORD,i)
-Fi(BOOL,GrayString,HDC,a,HBRUSH,b,FARPROC,c,DWORD,d,int,e,int,f,int,g,int,h,int,i)
+Fi(BOOL,GrayString,HDC,a,HBRUSH,b,FARPROC,gsprc,LPARAM,lParam,INT,cch,INT,x,INT,y,INT,cx,INT,cy)
 Fi(BOOL,Pie,HDC,a,int,xLeft,int,yTop,int,xRight,int,yBottom,int,xStart,int,yStart,int,xEnd,int,yEnd)
 Fk(HWND,CreateWindow,LPSTR,szAppName,LPSTR,Label,DWORD,ol,short,x,short,y,short,w,short,h,HWND,d,HMENU,e,,HANDLE i,LPSTR,g)
 Fk(BOOL,StretchBlt,HDC,a,short,b,short,c,short,d,short,e,HDC,f,short,g,short,h,short,i,short,j,DWORD,k)

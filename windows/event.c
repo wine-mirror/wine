@@ -332,7 +332,7 @@ static void EVENT_key( HWND hwnd, XKeyEvent *event )
 #ifdef DEBUG_KEY
 	    printf("WM_CHAR :   wParam=%X\n", (WORD)Str[0] );
 #endif
-	    PostMessage( hwnd, WM_CHAR, (WORD)Str[0], keylp.lp2 );
+	    PostMessage( GetFocus(), WM_CHAR, (WORD)Str[0], keylp.lp2 );
 	}
     }
     else
