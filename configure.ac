@@ -947,6 +947,11 @@ AC_CHECK_FUNCS(\
 	pclose \
 	popen \
 	pread \
+	pthread_getspecific \
+	pthread_key_create \
+	pthread_mutex_lock \
+	pthread_mutex_unlock \
+	pthread_setspecific \
 	pwrite \
 	rfork \
 	select \

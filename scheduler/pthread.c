@@ -44,7 +44,12 @@
  * If they are not available, the libc defaults to
  * non-threadsafe operation (not good). */
 
-#if defined(__GLIBC__)
+#if defined(__GLIBC__) || defined(__FreeBSD__)
+
+#ifndef __USE_UNIX98
+#define __USE_UNIX98
+#endif
+
 #include <pthread.h>
 #include <signal.h>
 
@@ -368,7 +373,7 @@ strong_alias(__pthread_mutexattr_setkind_np, pthread_mutexattr_setkind_np);
 
 int __pthread_mutexattr_getkind_np(pthread_mutexattr_t *attr, int *kind)
 {
-  *kind = PTHREAD_MUTEX_RECURSIVE_NP;
+  *kind = PTHREAD_MUTEX_RECURSIVE;
   return 0;
 }
 strong_alias(__pthread_mutexattr_getkind_np, pthread_mutexattr_getkind_np);
@@ -381,7 +386,7 @@ strong_alias(__pthread_mutexattr_settype, pthread_mutexattr_settype);
 
 int __pthread_mutexattr_gettype(pthread_mutexattr_t *attr, int *kind)
 {
-  *kind = PTHREAD_MUTEX_RECURSIVE_NP;
+  *kind = PTHREAD_MUTEX_RECURSIVE;
   return 0;
 }
 strong_alias(__pthread_mutexattr_gettype, pthread_mutexattr_gettype);

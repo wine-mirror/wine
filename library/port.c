@@ -680,6 +680,30 @@ void *wine_memcpy_unaligned( void *dst, const void *src, size_t size )
 
 
 /***********************************************************************
+ *		pthread functions
+ */
+
+#ifndef HAVE_PTHREAD_GETSPECIFIC
+void pthread_getspecific() { assert(0); }
+#endif
+
+#ifndef HAVE_PTHREAD_KEY_CREATE
+void pthread_key_create() { assert(0); }
+#endif
+
+#ifndef HAVE_PTHREAD_MUTEX_LOCK
+void pthread_mutex_lock() { assert(0); }
+#endif
+
+#ifndef HAVE_PTHREAD_MUTEX_UNLOCK
+void pthread_mutex_unlock() { assert(0); }
+#endif
+
+#ifndef HAVE_PTHREAD_SETSPECIFIC
+void pthread_setspecific() { assert(0); }
+#endif
+
+/***********************************************************************
  *		interlocked functions
  */
 #ifdef __i386__

@@ -11549,6 +11549,11 @@ fi
 
 
 
+
+
+
+
+
 for ac_func in \
 	_lwp_create \
 	_pclose \
@@ -11580,6 +11585,11 @@ for ac_func in \
 	pclose \
 	popen \
 	pread \
+	pthread_getspecific \
+	pthread_key_create \
+	pthread_mutex_lock \
+	pthread_mutex_unlock \
+	pthread_setspecific \
 	pwrite \
 	rfork \
 	select \
