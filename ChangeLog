@@ -18,6 +18,25 @@ Sun Sep 27 13:41:22 1998  Alexandre Julliard  <julliard@lrc.epfl.ch>
 	  [server/semaphore.c]
 	Implemented server-side synchronisation objects.
 
+Sun Sep 27 10:05:20 1998  Andreas Mohr <100.30936@germany.net>
+
+	* [debugger/break.c] [if1632/builtin.c] [include/module.h]
+	  [loader/ne/module.c] [loader/ne/segment.c] [loader/task.c]
+	  [memory/local.c] [tools/build.c]
+	Fixed the last problem with BLINKER programs.
+	SEGTABLEENTRY.selector can be both selector _or_ handle,
+	depending on whether the segment is fixed or not.
+
+	* [dlls/Makefile.in] [dlls/winaspi/Makefile.in]
+	  [dlls/winaspi/winaspi16.c] [dlls/wnaspi32/Makefile.in]
+	  [dlls/wnaspi32/winaspi32.c] [if1632/winaspi.spec] [include/aspi.h]
+	  [include/winaspi.h] [include/wnaspi32.h] [misc/aspi.c]
+	  [relay32/wnaspi32.spec]
+	Added ASPI32 support, general ASPI changes.
+
+	* [if1632/avifile.spec] [if1632/builtin.c] [if1632/Makefile.in]
+	Added built-in AVIFILE.
+
 Sun Sep 27 01:13:35 1998  Alex Priem <alexp@sci.kun.nl>
 
 	* [dlls/comctl32/treeview.c] [include/treeview.h] [include/comctl.h]
