@@ -1144,30 +1144,3 @@ BOOL32 WINAPI PolyBezierTo32( HDC32 hdc, const POINT32* lppt, DWORD cPoints )
     return ret;
 }
 
-INT32 WINAPI EndDoc32(HDC32 a)
-{
-FIXME(gdi,"stub\n");
-SetLastError(ERROR_CALL_NOT_IMPLEMENTED); 
-return 0; /* failure*/
-}
-
-INT32       WINAPI StartDoc32A(HDC32 hdc ,const DOCINFO32A* doc)
-{
-FIXME(gdi,"stub\n");
-SetLastError(ERROR_CALL_NOT_IMPLEMENTED); 
-return 0; /* failure*/
-}
-
-INT32       WINAPI StartPage32(HDC32 hdc)
-{
-FIXME(gdi,"stub\n");
-SetLastError(ERROR_CALL_NOT_IMPLEMENTED); 
-return 0; /* failure*/
-}
-
-INT32       WINAPI EndPage32(HDC32 hdc)
-{
-FIXME(gdi,"stub\n");
-SetLastError(ERROR_CALL_NOT_IMPLEMENTED); 
-return 0; /* failure*/
-}

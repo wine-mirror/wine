@@ -18,6 +18,7 @@
 #include "gdi.h"
 #include "options.h"
 #include "windows.h"
+#include "winerror.h"
 #include "xmalloc.h"
 
 /**********************************************************************
@@ -39,19 +40,25 @@ BOOL16 WINAPI QueryAbort(HDC16 hdc, INT16 reserved)
 }
 
 /**********************************************************************
- *           SetAbortProc   (GDI.381)
+ *           SetAbortProc16   (GDI.381)
  *
  */
-INT16 WINAPI SetAbortProc(HDC16 hdc, FARPROC16 abrtprc)
+INT16 WINAPI SetAbortProc16(HDC16 hdc, SEGPTR abrtprc)
 {
-    DC *dc = DC_GetDCPtr( hdc );
-
-    if (dc) {
-	dc->w.lpfnPrint = abrtprc;
-	return 1;
-    }
-    return -1;
+    return Escape16(hdc, SETABORTPROC, 0, abrtprc, (SEGPTR)0);
 } 
+
+/**********************************************************************
+ *           SetAbortProc32   (GDI32.301)
+ *
+ */
+INT32 WINAPI SetAbortProc32(HDC32 hdc, FARPROC32 abrtprc)
+{
+    FIXME(print, "stub\n");
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return SP_ERROR;
+}
+
 
 /****************** misc. printer related functions */
 

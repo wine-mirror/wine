@@ -9092,6 +9092,9 @@ LRESULT     WINAPI SendMessageTimeout32A(HWND32,UINT32,WPARAM32,LPARAM,UINT32,
 LRESULT     WINAPI SendMessageTimeout32W(HWND32,UINT32,WPARAM32,LPARAM,UINT32,
 					 UINT32,LPDWORD);
 #define     SendMessageTimeout WINELIB_NAME_AW(SendMessageTimeout)
+INT16       WINAPI SetAbortProc16(HDC16,SEGPTR);
+INT32       WINAPI SetAbortProc32(HDC32,FARPROC32);
+#define     SetAbortProc WINELIB_NAME(SetAbortProc)
 HWND16      WINAPI SetActiveWindow16(HWND16);
 HWND32      WINAPI SetActiveWindow32(HWND32);
 #define     SetActiveWindow WINELIB_NAME(SetActiveWindow)

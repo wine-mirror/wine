@@ -20,6 +20,10 @@ static char DefaultDevMode[]	= "Default DevMode";
 static char PrinterDriverData[] = "PrinterDriverData";
 static char Printers[]		= "System\\CurrentControlSet\\Control\\Print\\Printers\\";
 
+/******************************************************************
+ *                  StartDoc16  [GDI.377]
+ *
+ */
 INT16 WINAPI StartDoc16( HDC16 hdc, const DOCINFO16 *lpdoc )
 {
   INT16 retVal;
@@ -36,12 +40,66 @@ INT16 WINAPI StartDoc16( HDC16 hdc, const DOCINFO16 *lpdoc )
   return retVal;
 }
 
+/******************************************************************
+ *                  StartDoc32A  [GDI32.347]
+ *
+ */
+INT32 WINAPI StartDoc32A(HDC32 hdc ,const DOCINFO32A* doc)
+{
+  FIXME(gdi,"stub\n");
+  SetLastError(ERROR_CALL_NOT_IMPLEMENTED); 
+  return 0; /* failure*/
+}
+
+/******************************************************************
+ *                  StartPage32  [GDI32.349]
+ *
+ */
+INT32 WINAPI StartPage32(HDC32 hdc)
+{
+  FIXME(gdi,"stub\n");
+  SetLastError(ERROR_CALL_NOT_IMPLEMENTED); 
+  return 0; /* failure*/
+}
+
+/******************************************************************
+ *                  EndPage32  [GDI32.77]
+ *
+ */
+INT32 WINAPI EndPage32(HDC32 hdc)
+{
+  FIXME(gdi,"stub\n");
+  SetLastError(ERROR_CALL_NOT_IMPLEMENTED); 
+  return 0; /* failure*/
+}
+
+/******************************************************************
+ *                  EndDoc16  [GDI.378]
+ *
+ */
 INT16 WINAPI EndDoc16(HDC16 hdc)
 {
   return  Escape16(hdc, ENDDOC, 0, 0, 0);
 }
 
-DWORD DrvGetPrinterDataInternal(LPSTR RegStr_Printer, LPBYTE lpPrinterData, int cbData)
+/******************************************************************
+ *                  EndDoc32  [GDI32.76]
+ *
+ */
+INT32 WINAPI EndDoc32(HDC32 hdc)
+{
+  FIXME(gdi,"stub\n");
+  SetLastError(ERROR_CALL_NOT_IMPLEMENTED); 
+  return 0; /* failure*/
+}
+
+/******************************************************************
+ *                  DrvGetPrinterDataInternal
+ *
+ * Helper for DrvGetPrinterData
+ */
+static DWORD DrvGetPrinterDataInternal(LPSTR RegStr_Printer,
+LPBYTE lpPrinterData, int cbData)
 {
     DWORD res = -1;
     HKEY hkey;
@@ -70,7 +128,10 @@ DWORD DrvGetPrinterDataInternal(LPSTR RegStr_Printer, LPBYTE lpPrinterData, int 
     return res;
 }
 
-
+/******************************************************************
+ *                DrvGetPrinterData     [GDI.282]
+ *
+ */
 DWORD WINAPI DrvGetPrinterData(LPSTR lpPrinter, LPSTR lpProfile,
                                LPDWORD lpType, LPBYTE lpPrinterData,
                                int cbData, LPDWORD lpNeeded)
@@ -159,7 +220,10 @@ failed:
 }
 
 
-
+/******************************************************************
+ *                 DrvSetPrinterData     [GDI.281]
+ *
+ */
 DWORD WINAPI DrvSetPrinterData(LPSTR lpPrinter, LPSTR lpProfile,
                                DWORD lpType, LPBYTE lpPrinterData,
                                DWORD dwSize)
@@ -217,6 +281,10 @@ DWORD WINAPI DrvSetPrinterData(LPSTR lpPrinter, LPSTR lpProfile,
 }
 
 
+/******************************************************************
+ *              DeviceCapabilities32A    [WINSPOOL.151]
+ *
+ */
 INT32 WINAPI DeviceCapabilities32A(LPCSTR printer,LPCSTR target,WORD z,
                                    LPSTR a,LPDEVMODE32A b)
 {
@@ -224,6 +292,11 @@ INT32 WINAPI DeviceCapabilities32A(LPCSTR printer,LPCSTR target,WORD z,
     return 1;   	
 }
 
+
+/******************************************************************
+ *              DocumentProperties32A   [WINSPOOL.155]
+ *
+ */
 LONG WINAPI DocumentProperties32A(HWND32 hWnd,HANDLE32 hPrinter,
                                 LPSTR pDeviceName, LPDEVMODE32A pDevModeOutput,
                                   LPDEVMODE32A pDevModeInput,DWORD fMode )
@@ -234,6 +307,11 @@ LONG WINAPI DocumentProperties32A(HWND32 hWnd,HANDLE32 hPrinter,
     return 1;
 }
 
+
+/******************************************************************
+ *              OpenPrinter32A        [WINSPOOL.196]
+ *
+ */
 BOOL32 WINAPI OpenPrinter32A(LPSTR lpPrinterName,HANDLE32 *phPrinter,
 			     LPPRINTER_DEFAULTS32A pDefault)
 {
@@ -243,6 +321,10 @@ BOOL32 WINAPI OpenPrinter32A(LPSTR lpPrinterName,HANDLE32 *phPrinter,
     return FALSE;
 }
 
+/******************************************************************
+ *              OpenPrinter32W        [WINSPOOL.197]
+ *
+ */
 BOOL32 WINAPI OpenPrinter32W(LPWSTR lpPrinterName,HANDLE32 *phPrinter,
 			     LPPRINTER_DEFAULTS32W pDefault)
 {
@@ -252,6 +334,10 @@ BOOL32 WINAPI OpenPrinter32W(LPWSTR lpPrinterName,HANDLE32 *phPrinter,
     return FALSE;
 }
 
+/******************************************************************
+ *              EnumPrinters32A        [WINSPOOL.174]
+ *
+ */
 BOOL32  WINAPI EnumPrinters32A(DWORD dwType, LPSTR lpszName,
 			       DWORD dwLevel, LPBYTE lpbPrinters,
 			       DWORD cbBuf, LPDWORD lpdwNeeded,
@@ -262,6 +348,10 @@ BOOL32  WINAPI EnumPrinters32A(DWORD dwType, LPSTR lpszName,
     return TRUE;
 }
 
+/******************************************************************
+ *              EnumPrinters32W        [WINSPOOL.175]
+ *
+ */
 BOOL32  WINAPI EnumPrinters32W(DWORD dwType, LPWSTR lpszName,
 			       DWORD dwLevel, LPBYTE lpbPrinters,
 			       DWORD cbBuf, LPDWORD lpdwNeeded,
@@ -272,7 +362,10 @@ BOOL32  WINAPI EnumPrinters32W(DWORD dwType, LPWSTR lpszName,
     return TRUE;
 }
 
-
+/******************************************************************
+ *              AddMonitor32A        [WINSPOOL.107]
+ *
+ */
 BOOL32 WINAPI AddMonitor32A(LPCSTR pName, DWORD Level, LPBYTE pMonitors)
 {
     FIXME(print, "(%s,%lx,%p):stub!\n", pName, Level, pMonitors);
@@ -280,7 +373,10 @@ BOOL32 WINAPI AddMonitor32A(LPCSTR pName, DWORD Level, LPBYTE pMonitors)
     return FALSE;
 }
 
-
+/******************************************************************
+ *              DeletePrinterDriver32A        [WINSPOOL.146]
+ *
+ */
 BOOL32 WINAPI
 DeletePrinterDriver32A (LPSTR pName, LPSTR pEnvironment, LPSTR pDriverName)
 {
@@ -291,6 +387,10 @@ DeletePrinterDriver32A (LPSTR pName, LPSTR pEnvironment, LPSTR pDriverName)
 }
 
 
+/******************************************************************
+ *              DeleteMonitor32A        [WINSPOOL.135]
+ *
+ */
 BOOL32 WINAPI
 DeleteMonitor32A (LPSTR pName, LPSTR pEnvironment, LPSTR pMonitorName)
 {
@@ -301,6 +401,10 @@ DeleteMonitor32A (LPSTR pName, LPSTR pEnvironment, LPSTR pMonitorName)
 }
 
 
+/******************************************************************
+ *              DeletePort32A        [WINSPOOL.137]
+ *
+ */
 BOOL32 WINAPI
 DeletePort32A (LPSTR pName, HWND32 hWnd, LPSTR pPortName)
 {

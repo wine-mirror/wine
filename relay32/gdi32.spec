@@ -303,7 +303,7 @@ init	MAIN_GdiInit
 298 stub SelectFontLocal
 299 stdcall SelectObject(long long) SelectObject32
 300 stdcall SelectPalette(long long long) SelectPalette32
-301 stub SetAbortProc
+301 stdcall SetAbortProc(long ptr) SetAbortProc32
 302 stdcall SetArcDirection(long long) SetArcDirection32
 303 stdcall SetBitmapBits(long long ptr) SetBitmapBits32
 304 stdcall SetBitmapDimensionEx(long long long ptr) SetBitmapDimensionEx32
