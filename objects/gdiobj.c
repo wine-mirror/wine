@@ -38,6 +38,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(gdi);
 
+#define HGDIOBJ_32(h16)   ((HGDIOBJ)(ULONG_PTR)(h16))
 
 /***********************************************************************
  *          GDI stock objects
@@ -724,11 +725,12 @@ void *GDI_ReallocObject( WORD size, HGDIOBJ handle, void *object )
 
     if ((UINT_PTR)handle & 2)  /* GDI heap handle */
     {
-        LOCAL_Unlock( GDI_HeapSel, handle );
-        if ((new_handle = LOCAL_ReAlloc( GDI_HeapSel, handle, size, LMEM_MOVEABLE )))
+        HLOCAL16 h = LOWORD(handle);
+        LOCAL_Unlock( GDI_HeapSel, h );
+        if ((new_handle = (HGDIOBJ)(ULONG_PTR)LOCAL_ReAlloc( GDI_HeapSel, h, size, LMEM_MOVEABLE )))
         {
             assert( new_handle == handle );  /* moveable handle cannot change */
-            return LOCAL_Lock( GDI_HeapSel, handle );
+            return LOCAL_Lock( GDI_HeapSel, h );
         }
     }
     else
@@ -762,8 +764,9 @@ BOOL GDI_FreeObject( HGDIOBJ handle, void *ptr )
     object->funcs  = NULL;
     if ((UINT_PTR)handle & 2)  /* GDI heap handle */
     {
-        LOCAL_Unlock( GDI_HeapSel, handle );
-        LOCAL_Free( GDI_HeapSel, handle );
+        HLOCAL16 h = LOWORD(handle);
+        LOCAL_Unlock( GDI_HeapSel, h );
+        LOCAL_Free( GDI_HeapSel, h );
     }
     else  /* large heap handle */
     {
@@ -796,14 +799,15 @@ void *GDI_GetObjPtr( HGDIOBJ handle, WORD magic )
 
     if ((UINT_PTR)handle & 2)  /* GDI heap handle */
     {
-        ptr = (GDIOBJHDR *)LOCAL_Lock( GDI_HeapSel, handle );
+        HLOCAL16 h = LOWORD(handle);
+        ptr = (GDIOBJHDR *)LOCAL_Lock( GDI_HeapSel, h );
         if (ptr)
         {
             if (((magic != MAGIC_DONTCARE) && (GDIMAGIC(ptr->wMagic) != magic)) ||
                 (GDIMAGIC(ptr->wMagic) < FIRST_MAGIC) ||
                 (GDIMAGIC(ptr->wMagic) > LAST_MAGIC))
             {
-                LOCAL_Unlock( GDI_HeapSel, handle );
+                LOCAL_Unlock( GDI_HeapSel, h );
                 ptr = NULL;
             }
         }
@@ -836,7 +840,7 @@ void *GDI_GetObjPtr( HGDIOBJ handle, WORD magic )
  */
 void GDI_ReleaseObj( HGDIOBJ handle )
 {
-    if ((UINT_PTR)handle & 2) LOCAL_Unlock( GDI_HeapSel, handle );
+    if ((UINT_PTR)handle & 2) LOCAL_Unlock( GDI_HeapSel, LOWORD(handle) );
     TRACE_SEC( handle, "leave" );
     _LeaveSysLevel( &GDI_level );
 }
@@ -907,10 +911,12 @@ HGDIOBJ WINAPI GetStockObject( INT obj )
 /***********************************************************************
  *           GetObject    (GDI.82)
  */
-INT16 WINAPI GetObject16( HANDLE16 handle, INT16 count, LPVOID buffer )
+INT16 WINAPI GetObject16( HANDLE16 handle16, INT16 count, LPVOID buffer )
 {
     GDIOBJHDR * ptr;
+    HGDIOBJ handle = HGDIOBJ_32( handle16 );
     INT16 result = 0;
+
     TRACE("%04x %d %p\n", handle, count, buffer );
     if (!count) return 0;
 
@@ -1182,9 +1188,10 @@ INT WINAPI EnumObjects( HDC hdc, INT nObjType,
  *
  * returns type of object if valid (W95 system programming secrets p. 264-5)
  */
-BOOL16 WINAPI IsGDIObject16( HGDIOBJ16 handle )
+BOOL16 WINAPI IsGDIObject16( HGDIOBJ16 handle16 )
 {
     UINT16 magic = 0;
+    HGDIOBJ handle = HGDIOBJ_32( handle16 );
 
     GDIOBJHDR *object = GDI_GetObjPtr( handle, MAGIC_DONTCARE );
     if (object)
@@ -1215,8 +1222,9 @@ void WINAPI SetObjectOwner( HGDIOBJ handle, HANDLE owner )
  * with 0x2000 (OBJECT_PRIVATE), so we just do it.
  * But Wine doesn't react on that yet.
  */
-void WINAPI MakeObjectPrivate16( HGDIOBJ16 handle, BOOL16 private )
+void WINAPI MakeObjectPrivate16( HGDIOBJ16 handle16, BOOL16 private )
 {
+    HGDIOBJ handle = HGDIOBJ_32( handle16 );
     GDIOBJHDR *ptr = GDI_GetObjPtr( handle, MAGIC_DONTCARE );
     if (!ptr)
     {

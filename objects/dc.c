@@ -22,14 +22,15 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include "gdi.h"
-#include "heap.h"
-#include "wine/debug.h"
-#include "font.h"
-#include "winerror.h"
 #include "windef.h"
 #include "wingdi.h"
+#include "winerror.h"
+#include "wownt32.h"
 #include "wine/winuser16.h"
+#include "gdi.h"
+#include "heap.h"
+#include "font.h"
+#include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(dc);
 
@@ -57,7 +58,7 @@ DC *DC_AllocDC( const DC_FUNCTIONS *funcs )
     HDC hdc;
     DC *dc;
 
-    if (!(dc = GDI_AllocObject( sizeof(*dc), DC_MAGIC, &hdc, &dc_funcs ))) return NULL;
+    if (!(dc = GDI_AllocObject( sizeof(*dc), DC_MAGIC, (HGDIOBJ*)&hdc, &dc_funcs ))) return NULL;
 
     dc->hSelf               = hdc;
     dc->funcs               = funcs;
@@ -163,7 +164,7 @@ DC *DC_GetDCUpdate( HDC hdc )
             {
                 DWORD data = dc->dwHookData;
                 GDI_ReleaseObj( hdc );
-                proc( hdc, DCHC_INVALIDVISRGN, data, 0 );
+                proc( HDC_16(hdc), DCHC_INVALIDVISRGN, data, 0 );
                 if (!(dc = DC_GetDCPtr( hdc ))) break;
                 /* otherwise restart the loop in case it became dirty again in the meantime */
             }
@@ -190,7 +191,7 @@ static BOOL DC_DeleteObject( HGDIOBJ handle, void *obj )
  */
 void DC_InitDC( DC* dc )
 {
-    RealizeDefaultPalette16( dc->hSelf );
+    if (dc->funcs->pRealizeDefaultPalette) dc->funcs->pRealizeDefaultPalette( dc->physDev );
     SetTextColor( dc->hSelf, dc->textColor );
     SetBkColor( dc->hSelf, dc->backgroundColor );
     SelectObject( dc->hSelf, dc->hPen );
@@ -267,9 +268,9 @@ void DC_UpdateXforms( DC *dc )
 
 
 /***********************************************************************
- *           GetDCState   (GDI.179)
+ *           GetDCState   (Not a Windows API)
  */
-HDC16 WINAPI GetDCState16( HDC16 hdc )
+HDC WINAPI GetDCState( HDC hdc )
 {
     DC * newdc, * dc;
     HGDIOBJ handle;
@@ -356,9 +357,9 @@ HDC16 WINAPI GetDCState16( HDC16 hdc )
 
 
 /***********************************************************************
- *           SetDCState   (GDI.180)
+ *           SetDCState   (Not a Windows API)
  */
-void WINAPI SetDCState16( HDC16 hdc, HDC16 hdcs )
+void WINAPI SetDCState( HDC hdc, HDC hdcs )
 {
     DC *dc, *dcs;
 
@@ -440,6 +441,24 @@ void WINAPI SetDCState16( HDC16 hdc, HDC16 hdcs )
 
 
 /***********************************************************************
+ *           GetDCState   (GDI.179)
+ */
+HDC16 WINAPI GetDCState16( HDC16 hdc )
+{
+    return HDC_16( GetDCState( HDC_32(hdc) ));
+}
+
+
+/***********************************************************************
+ *           SetDCState   (GDI.180)
+ */
+void WINAPI SetDCState16( HDC16 hdc, HDC16 hdcs )
+{
+    SetDCState( HDC_32(hdc), HDC_32(hdcs) );
+}
+
+
+/***********************************************************************
  *           SaveDC    (GDI32.@)
  */
 INT WINAPI SaveDC( HDC hdc )
@@ -458,7 +477,7 @@ INT WINAPI SaveDC( HDC hdc )
         return ret;
     }
 
-    if (!(hdcs = GetDCState16( hdc )))
+    if (!(hdcs = GetDCState( hdc )))
     {
       GDI_ReleaseObj( hdc );
       return 0;
@@ -480,7 +499,7 @@ INT WINAPI SaveDC( HDC hdc )
     }
 
     dcs->header.hNext = dc->header.hNext;
-    dc->header.hNext = hdcs;
+    dc->header.hNext = HDC_16(hdcs);
     TRACE("(%04x): returning %d\n", hdc, dc->saveLevel+1 );
     ret = ++dc->saveLevel;
     GDI_ReleaseObj( hdcs );
@@ -523,7 +542,7 @@ BOOL WINAPI RestoreDC( HDC hdc, INT level )
     success=TRUE;
     while (dc->saveLevel >= level)
     {
-	HDC16 hdcs = dc->header.hNext;
+	HDC hdcs = HDC_32(dc->header.hNext);
 	if (!(dcs = DC_GetDCPtr( hdcs )))
 	{
 	  GDI_ReleaseObj( hdc );
@@ -532,7 +551,7 @@ BOOL WINAPI RestoreDC( HDC hdc, INT level )
 	dc->header.hNext = dcs->header.hNext;
 	if (--dc->saveLevel < level)
 	{
-	    SetDCState16( hdc, hdcs );
+	    SetDCState( hdc, hdcs );
             if (!PATH_AssignGdiPath( &dc->path, &dcs->path ))
 		/* FIXME: This might not be quite right, since we're
 		 * returning FALSE but still destroying the saved DC state */
@@ -728,7 +747,7 @@ BOOL WINAPI DeleteDC( HDC hdc )
         {
             DWORD data = dc->dwHookData;
             GDI_ReleaseObj( hdc );
-            if (!proc( hdc, DCHC_DELETEDC, data, 0 )) return FALSE;
+            if (!proc( HDC_16(hdc), DCHC_DELETEDC, data, 0 )) return FALSE;
             if (!(dc = DC_GetDCPtr( hdc ))) return TRUE;  /* deleted by the hook */
         }
     }
@@ -736,7 +755,7 @@ BOOL WINAPI DeleteDC( HDC hdc )
     while (dc->saveLevel)
     {
 	DC * dcs;
-	HDC16 hdcs = dc->header.hNext;
+	HDC hdcs = HDC_32(dc->header.hNext);
 	if (!(dcs = DC_GetDCPtr( hdcs ))) break;
 	dc->header.hNext = dcs->header.hNext;
 	dc->saveLevel--;
@@ -900,9 +919,10 @@ BOOL WINAPI GetDCOrgEx( HDC hDC, LPPOINT lpp )
 /***********************************************************************
  *           SetDCOrg   (GDI.117)
  */
-DWORD WINAPI SetDCOrg16( HDC16 hdc, INT16 x, INT16 y )
+DWORD WINAPI SetDCOrg16( HDC16 hdc16, INT16 x, INT16 y )
 {
     DWORD prevOrg = 0;
+    HDC hdc = HDC_32( hdc16 );
     DC *dc = DC_GetDCPtr( hdc );
     if (!dc) return 0;
     if (dc->funcs->pSetDCOrg) prevOrg = dc->funcs->pSetDCOrg( dc->physDev, x, y );
@@ -1126,22 +1146,24 @@ BOOL WINAPI SetDCHook( HDC hdc, DCHOOKPROC hookProc, DWORD dwHookData )
 
 
 /* relay function to call the 16-bit DC hook proc */
-static BOOL16 WINAPI call_dc_hook16( HDC16 hdc, WORD code, DWORD data, LPARAM lParam )
+static BOOL16 WINAPI call_dc_hook16( HDC16 hdc16, WORD code, DWORD data, LPARAM lParam )
 {
     FARPROC16 proc = NULL;
+    HDC hdc = HDC_32( hdc16 );
     DC *dc = DC_GetDCPtr( hdc );
     if (!dc) return FALSE;
     proc = dc->hookProc;
     GDI_ReleaseObj( hdc );
     if (!proc) return FALSE;
-    return GDI_CallTo16_word_wwll( proc, hdc, code, data, lParam );
+    return GDI_CallTo16_word_wwll( proc, hdc16, code, data, lParam );
 }
 
 /***********************************************************************
  *           SetDCHook   (GDI.190)
  */
-BOOL16 WINAPI SetDCHook16( HDC16 hdc, FARPROC16 hookProc, DWORD dwHookData )
+BOOL16 WINAPI SetDCHook16( HDC16 hdc16, FARPROC16 hookProc, DWORD dwHookData )
 {
+    HDC hdc = HDC_32( hdc16 );
     DC *dc = DC_GetDCPtr( hdc );
     if (!dc) return FALSE;
 
@@ -1154,22 +1176,27 @@ BOOL16 WINAPI SetDCHook16( HDC16 hdc, FARPROC16 hookProc, DWORD dwHookData )
 /***********************************************************************
  *           GetDCHook   (GDI.191)
  */
-DWORD WINAPI GetDCHook16( HDC16 hdc, FARPROC16 *phookProc )
+DWORD WINAPI GetDCHook16( HDC16 hdc16, FARPROC16 *phookProc )
 {
+    HDC hdc = HDC_32( hdc16 );
     DC *dc = DC_GetDCPtr( hdc );
+    DWORD ret;
+
     if (!dc) return 0;
     *phookProc = dc->hookProc;
+    ret = dc->dwHookData;
     GDI_ReleaseObj( hdc );
-    return dc->dwHookData;
+    return ret;
 }
 
 
 /***********************************************************************
  *           SetHookFlags   (GDI.192)
  */
-WORD WINAPI SetHookFlags16(HDC16 hDC, WORD flags)
+WORD WINAPI SetHookFlags16(HDC16 hdc16, WORD flags)
 {
-    DC *dc = DC_GetDCPtr( hDC );
+    HDC hdc = HDC_32( hdc16 );
+    DC *dc = DC_GetDCPtr( hdc );
 
     if( dc )
     {
@@ -1178,13 +1205,13 @@ WORD WINAPI SetHookFlags16(HDC16 hDC, WORD flags)
         /* "Undocumented Windows" info is slightly confusing.
          */
 
-        TRACE("hDC %04x, flags %04x\n",hDC,flags);
+        TRACE("hDC %04x, flags %04x\n",hdc,flags);
 
         if( flags & DCHF_INVALIDATEVISRGN )
             dc->flags |= DC_DIRTY;
         else if( flags & DCHF_VALIDATEVISRGN || !flags )
             dc->flags &= ~DC_DIRTY;
-	GDI_ReleaseObj( hDC );
+        GDI_ReleaseObj( hdc );
         return wRet;
     }
     return 0;

@@ -120,9 +120,10 @@ INT WINAPI ExtSelectClipRgn( HDC hdc, HRGN hrgn, INT fnMode )
 /***********************************************************************
  *           SelectVisRgn   (GDI.105)
  */
-INT16 WINAPI SelectVisRgn16( HDC16 hdc, HRGN16 hrgn )
+INT16 WINAPI SelectVisRgn16( HDC16 hdc16, HRGN16 hrgn )
 {
     int retval;
+    HDC hdc = HDC_32( hdc16 );
     DC * dc;
 
     if (!hrgn) return ERROR;
@@ -164,9 +165,10 @@ INT WINAPI OffsetClipRgn( HDC hdc, INT x, INT y )
 /***********************************************************************
  *           OffsetVisRgn    (GDI.102)
  */
-INT16 WINAPI OffsetVisRgn16( HDC16 hdc, INT16 x, INT16 y )
+INT16 WINAPI OffsetVisRgn16( HDC16 hdc16, INT16 x, INT16 y )
 {
     INT16 retval;
+    HDC hdc = HDC_32( hdc16 );
     DC * dc = DC_GetDCUpdate( hdc );
     if (!dc) return ERROR;
     TRACE("%04x %d,%d\n", hdc, x, y );
@@ -269,12 +271,12 @@ INT WINAPI IntersectClipRect( HDC hdc, INT left, INT top, INT right, INT bottom 
 /***********************************************************************
  *           ExcludeVisRect   (GDI.73)
  */
-INT16 WINAPI ExcludeVisRect16( HDC16 hdc, INT16 left, INT16 top,
-                             INT16 right, INT16 bottom )
+INT16 WINAPI ExcludeVisRect16( HDC16 hdc16, INT16 left, INT16 top, INT16 right, INT16 bottom )
 {
     HRGN tempRgn;
     INT16 ret;
     POINT pt[2];
+    HDC hdc = HDC_32( hdc16 );
     DC * dc = DC_GetDCUpdate( hdc );
     if (!dc) return ERROR;
 
@@ -302,12 +304,12 @@ INT16 WINAPI ExcludeVisRect16( HDC16 hdc, INT16 left, INT16 top,
 /***********************************************************************
  *           IntersectVisRect   (GDI.98)
  */
-INT16 WINAPI IntersectVisRect16( HDC16 hdc, INT16 left, INT16 top,
-                               INT16 right, INT16 bottom )
+INT16 WINAPI IntersectVisRect16( HDC16 hdc16, INT16 left, INT16 top, INT16 right, INT16 bottom )
 {
     HRGN tempRgn;
     INT16 ret;
     POINT pt[2];
+    HDC hdc = HDC_32( hdc16 );
     DC * dc = DC_GetDCUpdate( hdc );
     if (!dc) return ERROR;
 
@@ -425,10 +427,11 @@ INT WINAPI GetClipRgn( HDC hdc, HRGN hRgn )
 /***********************************************************************
  *           SaveVisRgn   (GDI.129)
  */
-HRGN16 WINAPI SaveVisRgn16( HDC16 hdc )
+HRGN16 WINAPI SaveVisRgn16( HDC16 hdc16 )
 {
     HRGN copy;
     GDIOBJHDR *obj, *copyObj;
+    HDC hdc = HDC_32( hdc16 );
     DC *dc = DC_GetDCUpdate( hdc );
 
     if (!dc) return 0;
@@ -454,21 +457,22 @@ HRGN16 WINAPI SaveVisRgn16( HDC16 hdc )
 	return 0;
     }
     copyObj->hNext = obj->hNext;
-    obj->hNext = copy;
+    obj->hNext = HRGN_16(copy);
     GDI_ReleaseObj( copy );
     GDI_ReleaseObj( dc->hVisRgn );
     GDI_ReleaseObj( hdc );
-    return copy;
+    return HRGN_16(copy);
 }
 
 
 /***********************************************************************
  *           RestoreVisRgn   (GDI.130)
  */
-INT16 WINAPI RestoreVisRgn16( HDC16 hdc )
+INT16 WINAPI RestoreVisRgn16( HDC16 hdc16 )
 {
     HRGN saved;
     GDIOBJHDR *obj, *savedObj;
+    HDC hdc = HDC_32( hdc16 );
     DC *dc = DC_GetDCPtr( hdc );
     INT16 ret = ERROR;
 
@@ -477,7 +481,7 @@ INT16 WINAPI RestoreVisRgn16( HDC16 hdc )
     TRACE("%04x\n", hdc );
 
     if (!(obj = GDI_GetObjPtr( dc->hVisRgn, REGION_MAGIC ))) goto done;
-    saved = obj->hNext;
+    saved = HRGN_32(obj->hNext);
 
     if ((savedObj = GDI_GetObjPtr( saved, REGION_MAGIC )))
     {

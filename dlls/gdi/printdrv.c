@@ -43,6 +43,7 @@
 #include "winspool.h"
 #include "winerror.h"
 #include "winreg.h"
+#include "wownt32.h"
 #include "wine/debug.h"
 #include "gdi.h"
 #include "heap.h"
@@ -153,13 +154,15 @@ INT WINAPI StartPage(HDC hdc)
  */
 INT WINAPI EndPage(HDC hdc)
 {
+    ABORTPROC abort_proc;
     INT ret = 0;
     DC *dc = DC_GetDCPtr( hdc );
     if(!dc) return SP_ERROR;
 
     if (dc->funcs->pEndPage) ret = dc->funcs->pEndPage( dc->physDev );
+    abort_proc = dc->pAbortProc;
     GDI_ReleaseObj( hdc );
-    if (!QueryAbort16( hdc, 0 ))
+    if (abort_proc && !abort_proc( hdc, 0 ))
     {
         EndDoc( hdc );
         ret = 0;
@@ -191,9 +194,10 @@ INT WINAPI AbortDoc(HDC hdc)
  * TRUE if no AbortProc avail or AbortProc wants to continue printing.
  * FALSE if AbortProc wants to abort printing.
  */
-BOOL16 WINAPI QueryAbort16(HDC16 hdc, INT16 reserved)
+BOOL16 WINAPI QueryAbort16(HDC16 hdc16, INT16 reserved)
 {
     BOOL ret = TRUE;
+    HDC hdc = HDC_32( hdc16 );
     DC *dc = DC_GetDCPtr( hdc );
     ABORTPROC abproc;
 
@@ -225,7 +229,7 @@ static BOOL CALLBACK call_abort_proc16( HDC hdc, INT code )
     if (!dc) return FALSE;
     proc16 = dc->pAbortProc16;
     GDI_ReleaseObj( hdc );
-    if (proc16) return PRTDRV_CallTo16_word_ww( (FARPROC16)proc16, hdc, code );
+    if (proc16) return PRTDRV_CallTo16_word_ww( (FARPROC16)proc16, HDC_16(hdc), code );
     return TRUE;
 }
 
@@ -233,8 +237,9 @@ static BOOL CALLBACK call_abort_proc16( HDC hdc, INT code )
 /**********************************************************************
  *           SetAbortProc   (GDI.381)
  */
-INT16 WINAPI SetAbortProc16(HDC16 hdc, ABORTPROC16 abrtprc)
+INT16 WINAPI SetAbortProc16(HDC16 hdc16, ABORTPROC16 abrtprc)
 {
+    HDC hdc = HDC_32( hdc16 );
     DC *dc = DC_GetDCPtr( hdc );
 
     if (!dc) return FALSE;

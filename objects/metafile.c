@@ -688,7 +688,7 @@ BOOL16 WINAPI EnumMetaFile16( HDC16 hdc16, HMETAFILE16 hmf,
     /* free objects in handle table */
     for(i = 0; i < mh->mtNoObjects; i++)
       if(*(ht->objectHandle + i) != 0)
-        DeleteObject(*(ht->objectHandle + i));
+        DeleteObject( (HGDIOBJ)(ULONG_PTR)(*(ht->objectHandle + i) ));
 
     /* free handle table */
     GlobalFree16(hHT);
