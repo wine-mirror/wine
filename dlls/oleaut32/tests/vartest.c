@@ -2431,8 +2431,8 @@ START_TEST(vartest)
 	ok(S_OK == VarBstrFromBool( 0xFF, 0, 0, &bstr ), XOK);
 	ok(!strcmp(WtoA(bstr),"\"True\""),"should be 'True'");
 
+	ok(S_OK == VarBstrFromDate( 0.0, 0, 0, &bstr ), XOK);
 	todo_wine {
-	    ok(S_OK == VarBstrFromDate( 0.0, 0, 0, &bstr ), XOK);
 	    sprintf(msg,"should be '12:00:00 AM', but is %s\n",WtoA(bstr));
 	    ok(!strcmp(WtoA(bstr),"\"12:00:00 AM\""),msg);
 	}
