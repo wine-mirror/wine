@@ -497,43 +497,6 @@ then
     AC_DEFINE(HAVE___VA_COPY, 1, [Define if we have __va_copy])
 fi
 
-dnl **** Check for IPX (currently Linux only) ****
-AC_CACHE_CHECK([for GNU style IPX support], ac_cv_c_ipx_gnu,
- AC_TRY_COMPILE(
-   [#include <sys/types.h>
-    #ifdef HAVE_SYS_SOCKET_H
-    # include <sys/socket.h>
-    #endif
-    #include <netipx/ipx.h>],
-   [((struct sockaddr_ipx *)0)->sipx_family == AF_IPX],
-   [ac_cv_c_ipx_gnu="yes"],
-   [ac_cv_c_ipx_gnu="no"])
- )
-if test "$ac_cv_c_ipx_gnu" = "yes"
-then
-    AC_DEFINE(HAVE_IPX_GNU, 1, [Define if IPX should use netipx/ipx.h from libc])
-fi
-
-if test "$ac_cv_c_ipx_gnu" = "no"
-then
- AC_CACHE_CHECK([for linux style IPX support], ac_cv_c_ipx_linux,
-  AC_TRY_COMPILE(
-    [#include <sys/types.h>
-     #ifdef HAVE_SYS_SOCKET_H
-     # include <sys/socket.h>
-     #endif
-     #include <asm/types.h>
-     #include <linux/ipx.h>],
-    [((struct sockaddr_ipx *)0)->sipx_family == AF_IPX],
-    [ac_cv_c_ipx_linux="yes"],
-    [ac_cv_c_ipx_linux="no"])
-  )
-  if test "$ac_cv_c_ipx_linux" = "yes"
-  then
-      AC_DEFINE(HAVE_IPX_LINUX, 1, [Define if IPX includes are taken from Linux kernel])
-  fi
-fi
-
 dnl **** Check for Open Sound System ****
 AC_CHECK_HEADERS(sys/soundcard.h machine/soundcard.h soundcard.h, break)
 
@@ -1095,6 +1058,44 @@ AC_CHECK_HEADERS(resolv.h,,,
      #endif])
 
 AC_CHECK_HEADERS(ucontext.h,,,[#include <signal.h>])
+
+dnl **** Check for IPX headers (currently Linux only) ****
+
+AC_CACHE_CHECK([for GNU style IPX support], ac_cv_c_ipx_gnu,
+ AC_TRY_COMPILE(
+   [#include <sys/types.h>
+    #ifdef HAVE_SYS_SOCKET_H
+    # include <sys/socket.h>
+    #endif
+    #include <netipx/ipx.h>],
+   [((struct sockaddr_ipx *)0)->sipx_family == AF_IPX],
+   [ac_cv_c_ipx_gnu="yes"],
+   [ac_cv_c_ipx_gnu="no"])
+ )
+if test "$ac_cv_c_ipx_gnu" = "yes"
+then
+    AC_DEFINE(HAVE_IPX_GNU, 1, [Define if IPX should use netipx/ipx.h from libc])
+fi
+
+if test "$ac_cv_c_ipx_gnu" = "no"
+then
+ AC_CACHE_CHECK([for linux style IPX support], ac_cv_c_ipx_linux,
+  AC_TRY_COMPILE(
+    [#include <sys/types.h>
+     #ifdef HAVE_SYS_SOCKET_H
+     # include <sys/socket.h>
+     #endif
+     #include <asm/types.h>
+     #include <linux/ipx.h>],
+    [((struct sockaddr_ipx *)0)->sipx_family == AF_IPX],
+    [ac_cv_c_ipx_linux="yes"],
+    [ac_cv_c_ipx_linux="no"])
+  )
+  if test "$ac_cv_c_ipx_linux" = "yes"
+  then
+      AC_DEFINE(HAVE_IPX_LINUX, 1, [Define if IPX includes are taken from Linux kernel])
+  fi
+fi
 
 dnl **** Check for types ****
 

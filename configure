@@ -9771,126 +9771,6 @@ _ACEOF
 
 fi
 
-echo "$as_me:$LINENO: checking for GNU style IPX support" >&5
-echo $ECHO_N "checking for GNU style IPX support... $ECHO_C" >&6
-if test "${ac_cv_c_ipx_gnu+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  cat >conftest.$ac_ext <<_ACEOF
-#line $LINENO "configure"
-/* confdefs.h.  */
-_ACEOF
-cat confdefs.h >>conftest.$ac_ext
-cat >>conftest.$ac_ext <<_ACEOF
-/* end confdefs.h.  */
-#include <sys/types.h>
-    #ifdef HAVE_SYS_SOCKET_H
-    # include <sys/socket.h>
-    #endif
-    #include <netipx/ipx.h>
-int
-main ()
-{
-((struct sockaddr_ipx *)0)->sipx_family == AF_IPX
-  ;
-  return 0;
-}
-_ACEOF
-rm -f conftest.$ac_objext
-if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
-  (eval $ac_compile) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); } &&
-         { ac_try='test -s conftest.$ac_objext'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; }; then
-  ac_cv_c_ipx_gnu="yes"
-else
-  echo "$as_me: failed program was:" >&5
-sed 's/^/| /' conftest.$ac_ext >&5
-
-ac_cv_c_ipx_gnu="no"
-fi
-rm -f conftest.$ac_objext conftest.$ac_ext
-
-fi
-echo "$as_me:$LINENO: result: $ac_cv_c_ipx_gnu" >&5
-echo "${ECHO_T}$ac_cv_c_ipx_gnu" >&6
-if test "$ac_cv_c_ipx_gnu" = "yes"
-then
-
-cat >>confdefs.h <<\_ACEOF
-#define HAVE_IPX_GNU 1
-_ACEOF
-
-fi
-
-if test "$ac_cv_c_ipx_gnu" = "no"
-then
- echo "$as_me:$LINENO: checking for linux style IPX support" >&5
-echo $ECHO_N "checking for linux style IPX support... $ECHO_C" >&6
-if test "${ac_cv_c_ipx_linux+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  cat >conftest.$ac_ext <<_ACEOF
-#line $LINENO "configure"
-/* confdefs.h.  */
-_ACEOF
-cat confdefs.h >>conftest.$ac_ext
-cat >>conftest.$ac_ext <<_ACEOF
-/* end confdefs.h.  */
-#include <sys/types.h>
-     #ifdef HAVE_SYS_SOCKET_H
-     # include <sys/socket.h>
-     #endif
-     #include <asm/types.h>
-     #include <linux/ipx.h>
-int
-main ()
-{
-((struct sockaddr_ipx *)0)->sipx_family == AF_IPX
-  ;
-  return 0;
-}
-_ACEOF
-rm -f conftest.$ac_objext
-if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
-  (eval $ac_compile) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); } &&
-         { ac_try='test -s conftest.$ac_objext'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; }; then
-  ac_cv_c_ipx_linux="yes"
-else
-  echo "$as_me: failed program was:" >&5
-sed 's/^/| /' conftest.$ac_ext >&5
-
-ac_cv_c_ipx_linux="no"
-fi
-rm -f conftest.$ac_objext conftest.$ac_ext
-
-fi
-echo "$as_me:$LINENO: result: $ac_cv_c_ipx_linux" >&5
-echo "${ECHO_T}$ac_cv_c_ipx_linux" >&6
-  if test "$ac_cv_c_ipx_linux" = "yes"
-  then
-
-cat >>confdefs.h <<\_ACEOF
-#define HAVE_IPX_LINUX 1
-_ACEOF
-
-  fi
-fi
-
 
 
 
@@ -13916,6 +13796,127 @@ fi
 
 done
 
+
+
+echo "$as_me:$LINENO: checking for GNU style IPX support" >&5
+echo $ECHO_N "checking for GNU style IPX support... $ECHO_C" >&6
+if test "${ac_cv_c_ipx_gnu+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  cat >conftest.$ac_ext <<_ACEOF
+#line $LINENO "configure"
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+#include <sys/types.h>
+    #ifdef HAVE_SYS_SOCKET_H
+    # include <sys/socket.h>
+    #endif
+    #include <netipx/ipx.h>
+int
+main ()
+{
+((struct sockaddr_ipx *)0)->sipx_family == AF_IPX
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext
+if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
+  (eval $ac_compile) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+         { ac_try='test -s conftest.$ac_objext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ac_cv_c_ipx_gnu="yes"
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+ac_cv_c_ipx_gnu="no"
+fi
+rm -f conftest.$ac_objext conftest.$ac_ext
+
+fi
+echo "$as_me:$LINENO: result: $ac_cv_c_ipx_gnu" >&5
+echo "${ECHO_T}$ac_cv_c_ipx_gnu" >&6
+if test "$ac_cv_c_ipx_gnu" = "yes"
+then
+
+cat >>confdefs.h <<\_ACEOF
+#define HAVE_IPX_GNU 1
+_ACEOF
+
+fi
+
+if test "$ac_cv_c_ipx_gnu" = "no"
+then
+ echo "$as_me:$LINENO: checking for linux style IPX support" >&5
+echo $ECHO_N "checking for linux style IPX support... $ECHO_C" >&6
+if test "${ac_cv_c_ipx_linux+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  cat >conftest.$ac_ext <<_ACEOF
+#line $LINENO "configure"
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+#include <sys/types.h>
+     #ifdef HAVE_SYS_SOCKET_H
+     # include <sys/socket.h>
+     #endif
+     #include <asm/types.h>
+     #include <linux/ipx.h>
+int
+main ()
+{
+((struct sockaddr_ipx *)0)->sipx_family == AF_IPX
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext
+if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
+  (eval $ac_compile) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+         { ac_try='test -s conftest.$ac_objext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ac_cv_c_ipx_linux="yes"
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+ac_cv_c_ipx_linux="no"
+fi
+rm -f conftest.$ac_objext conftest.$ac_ext
+
+fi
+echo "$as_me:$LINENO: result: $ac_cv_c_ipx_linux" >&5
+echo "${ECHO_T}$ac_cv_c_ipx_linux" >&6
+  if test "$ac_cv_c_ipx_linux" = "yes"
+  then
+
+cat >>confdefs.h <<\_ACEOF
+#define HAVE_IPX_LINUX 1
+_ACEOF
+
+  fi
+fi
 
 
 echo "$as_me:$LINENO: checking for an ANSI C-conforming const" >&5
