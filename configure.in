@@ -438,12 +438,16 @@ then
   CFLAGS="$CFLAGS -Wall"
   AC_CACHE_CHECK( "for gcc strength-reduce bug", ac_cv_c_gcc_strength_bug,
                   AC_TRY_RUN([
+int	L[[4]] = {0,1,2,3};
 int main(void) {
   static int Array[[3]];
   unsigned int B = 3;
   int i;
   for(i=0; i<B; i++) Array[[i]] = i - 3;
-  exit( Array[[1]] != -2 );
+  for(i=0; i<4 - 1; i++) L[[i]] = L[[i + 1]];
+  L[[i]] = 4;
+  
+  exit( Array[[1]] != -2 || L[[2]] != 3);
 }],
     ac_cv_c_gcc_strength_bug="no",
     ac_cv_c_gcc_strength_bug="yes",
