@@ -185,7 +185,7 @@ extern BOOL X11DRV_SwapBuffers(DC *dc) ;
 /* X11 driver internal functions */
 
 extern BOOL X11DRV_BITMAP_Init(void);
-extern int X11DRV_FONT_Init( int *log_pixels_x, int *log_pixels_y );
+extern void X11DRV_FONT_Init( int *log_pixels_x, int *log_pixels_y );
 extern BOOL X11DRV_BITMAP_DeleteObject( HBITMAP hbitmap );
 
 struct tagBITMAPOBJ;
@@ -348,6 +348,7 @@ extern Window root_window;
 extern unsigned int screen_width;
 extern unsigned int screen_height;
 extern unsigned int screen_depth;
+extern unsigned int text_caps;
 
 extern Atom wmProtocols;
 extern Atom wmDeleteWindow;

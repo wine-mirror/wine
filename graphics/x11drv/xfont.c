@@ -77,11 +77,6 @@ typedef struct __fontAlias
 
 static fontAlias *aliasTable = NULL;
 
-static UINT XTextCaps = (TC_OP_CHARACTER | TC_OP_STROKE | TC_CP_STROKE | TC_CR_ANY |
-                         TC_SA_DOUBLE | TC_SA_INTEGER | TC_SA_CONTIN |
-                         TC_UA_ABLE | TC_SO_ABLE | TC_RA_ABLE);
-                         /* X11R6 adds TC_SF_X_YINDEP, maybe more... */
-
 static const char*	INIFontMetrics = "cachedmetrics.";
 static const char*	INIFontSection = "Software\\Wine\\Wine\\Config\\fonts";
 static const char*	INIAliasSection = "Alias";
@@ -952,7 +947,7 @@ static BOOL LFD_ComposeLFD( const fontObject* fo,
        aLFD.resolution_x = resx_string;
 
        strcpy(resy_string, resx_string);
-       if( uRelax == 0  && XTextCaps & TC_SF_X_YINDEP ) 
+       if( uRelax == 0  && text_caps & TC_SF_X_YINDEP ) 
        {
 	   if( fo->lf.lfWidth && !(fo->fo_flags & FO_SYNTH_WIDTH))
 	   {
@@ -2428,7 +2423,7 @@ static UINT XFONT_Match( fontMatch* pfm )
    fontInfo*    pfi = pfm->pfi;         /* device font to match */
    LPLOGFONT16  plf = pfm->plf;         /* wanted logical font */
    UINT       penalty = 0;
-   BOOL       bR6 = pfm->flags & FO_MATCH_XYINDEP;    /* from TextCaps */
+   BOOL       bR6 = pfm->flags & FO_MATCH_XYINDEP;    /* from text_caps */
    BOOL       bScale = pfi->fi_flags & FI_SCALABLE;
    int d = 0, height;
 
@@ -2834,24 +2829,22 @@ static int XFONT_ReleaseCacheEntry(const fontObject* pfo)
 }
 
 /***********************************************************************
- *           X11DRV_FONT_Init
+ *           X11DRV_FONT_InitX11Metrics
  *
  * Initialize font resource list and allocate font cache.
  */
-int X11DRV_FONT_Init( int *log_pixels_x, int *log_pixels_y )
+void X11DRV_FONT_InitX11Metrics( void )
 {
   char**    x_pattern;
   unsigned  x_checksum;
-  int       i,res, x_count, fd, buf_size;
+  int       i, x_count, fd, buf_size;
   char      *buffer;
   HKEY hkey;
 
-  res = XFONT_GetPointResolution( log_pixels_x, log_pixels_y );
-      
+
   x_pattern = TSXListFonts(gdi_display, "*", MAX_FONTS, &x_count );
 
-  TRACE("Font Mapper: initializing %i fonts [logical dpi=%i, default dpi=%i]\n", 
-				    x_count, res, DefResolution);
+  TRACE("Font Mapper: initializing %i x11 fonts\n", x_count);
   if (x_count == MAX_FONTS)      
       MESSAGE("There may be more fonts available - try increasing the value of MAX_FONTS\n");
 
@@ -2917,7 +2910,7 @@ int X11DRV_FONT_Init( int *log_pixels_x, int *log_pixels_y )
       strcpy(buffer, "-*-*-*-*-normal-*-[12 0 0 12]-*-72-*-*-*-iso8859-1");
       if( (x_fs = TSXLoadQueryFont(gdi_display, buffer)) )
       {
-	  XTextCaps |= TC_SF_X_YINDEP;
+	  text_caps |= TC_SF_X_YINDEP;
 	  TSXFreeFont(gdi_display, x_fs);
       }
   }
@@ -2939,11 +2932,20 @@ int X11DRV_FONT_Init( int *log_pixels_x, int *log_pixels_y )
 
   RAW_ASCENT  = TSXInternAtom(gdi_display, "RAW_ASCENT", TRUE);
   RAW_DESCENT = TSXInternAtom(gdi_display, "RAW_DESCENT", TRUE);
+  return;
+}
+
+/***********************************************************************
+ *           X11DRV_FONT_Init
+ */
+void X11DRV_FONT_Init( int *log_pixels_x, int *log_pixels_y )
+{
+  XFONT_GetPointResolution( log_pixels_x, log_pixels_y );
 
   if(X11DRV_XRender_Installed)
-    XTextCaps |= TC_VA_ABLE;
+    text_caps |= TC_VA_ABLE;
 
-  return XTextCaps;
+  return;
 }
 
 /**********************************************************************
@@ -3016,7 +3018,7 @@ static X_PHYSFONT XFONT_RealizeFont( const LPLOGFONT16 plf,
 	fm.plf = plf;
 	fm.internal_charset = internal_charset;
 
-	if( XTextCaps & TC_SF_X_YINDEP ) fm.flags = FO_MATCH_XYINDEP;
+	if( text_caps & TC_SF_X_YINDEP ) fm.flags = FO_MATCH_XYINDEP;
 
 	/* allocate new font cache entry */
 
@@ -3203,6 +3205,8 @@ HFONT X11DRV_SelectFont( X11DRV_PDEVICE *physDev, HFONT hfont )
 
     EnterCriticalSection( &crtsc_fonts_X11 );
 
+    if(fontList == NULL) X11DRV_FONT_InitX11Metrics();
+
     if( CHECK_PFONT(physDev->font) ) 
         XFONT_ReleaseCacheEntry( __PFONT(physDev->font) );
 
@@ -3279,9 +3283,17 @@ BOOL X11DRV_EnumDeviceFonts( HDC hdc, LPLOGFONTW plf,
     ENUMLOGFONTEXW	lf;
     NEWTEXTMETRICEXW	tm;
     fontResource*	pfr = fontList;
-    BOOL	  	b, bRet = 0;
+    BOOL	  	b, bRet = 0, using_gdi = 0;
     LOGFONT16           lf16;
+    DC *dc;
 
+    dc = DC_GetDCPtr(hdc);
+    if(!dc) return FALSE;
+    if(dc->gdiFont) using_gdi = TRUE;
+    GDI_ReleaseObj(hdc);
+
+    /* don't enumerate x11 fonts if we're using client side fonts */
+    if(using_gdi) return FALSE;
 
     FONT_LogFontWTo16(plf, &lf16);
 
