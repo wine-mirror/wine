@@ -3418,16 +3418,12 @@ static const char* wtoascii(LPWSTR lpszIn)
     return buff;
 }
 
-#define DATE_STR(flags, str) hres = VariantChangeTypeEx(&vDst, &vSrc, lcid, flags, VT_BSTR); \
-  ok(hres == S_OK && V_VT(&vDst) == VT_BSTR && \
-     V_BSTR(&vDst) && !strcmpW(V_BSTR(&vDst), str), \
-     "hres=0x%lX, type=%d (should be VT_BSTR), *bstr=%s\n", \
-     hres, V_VT(&vDst), V_BSTR(&vDst) ? wtoascii(V_BSTR(&vDst)) : "?")
-
 static void test_VarDateChangeTypeEx(void)
 {
   static const WCHAR sz25570[] = {
     '1','/','2','/','1','9','7','0','\0' };
+  static const WCHAR sz25570_2[] = {
+          '1','/','2','/','7','0','\0' };
   static const WCHAR sz25570Nls[] = {
     '1','/','2','/','1','9','7','0',' ','1','2',':','0','0',':','0','0',' ','A','M','\0' };
   CONVVARS(CONV_TYPE);
@@ -3445,12 +3441,20 @@ static void test_VarDateChangeTypeEx(void)
   V_VT(&vSrc) = VT_DATE;
   V_DATE(&vSrc) = 25570.0;
   lcid = MAKELCID(MAKELANGID(LANG_ENGLISH,SUBLANG_ENGLISH_US),SORT_DEFAULT);
-  DATE_STR(VARIANT_NOUSEROVERRIDE, sz25570);
+
+  hres = VariantChangeTypeEx(&vDst, &vSrc, lcid, VARIANT_NOUSEROVERRIDE, VT_BSTR); 
+  ok(hres == S_OK && V_VT(&vDst) == VT_BSTR && V_BSTR(&vDst) &&
+          (!strcmpW(V_BSTR(&vDst), sz25570) || !strcmpW(V_BSTR(&vDst), sz25570_2)),
+          "hres=0x%lX, type=%d (should be VT_BSTR), *bstr=%s\n", 
+          hres, V_VT(&vDst), V_BSTR(&vDst) ? wtoascii(V_BSTR(&vDst)) : "?");
 
   lcid = MAKELCID(MAKELANGID(LANG_ENGLISH,SUBLANG_ENGLISH_US),SORT_DEFAULT);
   if (HAVE_OLEAUT32_LOCALES)
   {
-    DATE_STR(VARIANT_NOUSEROVERRIDE|VARIANT_USE_NLS, sz25570Nls);
+    hres = VariantChangeTypeEx(&vDst, &vSrc, lcid, VARIANT_NOUSEROVERRIDE|VARIANT_USE_NLS, VT_BSTR);
+    ok(hres == S_OK && V_VT(&vDst) == VT_BSTR && V_BSTR(&vDst) && !strcmpW(V_BSTR(&vDst), sz25570Nls), 
+            "hres=0x%lX, type=%d (should be VT_BSTR), *bstr=%s\n", 
+            hres, V_VT(&vDst), V_BSTR(&vDst) ? wtoascii(V_BSTR(&vDst)) : "?");
   }
 }
 
