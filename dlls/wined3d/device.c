@@ -74,7 +74,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_CreateStateBlock(IWineD3DDevice* iface, D3DSTA
     /* Special case - Used during initialization to produce a placeholder stateblock
           so other functions called can update a state block                         */
     if (Type == (D3DSTATEBLOCKTYPE) 0) {
-        /* Dont bother increasing the reference count otherwise a device will never
+        /* Don't bother increasing the reference count otherwise a device will never
            be freed due to circular dependencies                                   */
         return D3D_OK;
     }

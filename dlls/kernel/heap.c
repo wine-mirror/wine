@@ -965,7 +965,7 @@ BOOL WINAPI LocalUnlock(
 /**********************************************************************
  * 		AllocMappedBuffer	(KERNEL32.38)
  *
- * This is a undocumented KERNEL32 function that
+ * This is an undocumented KERNEL32 function that
  * SMapLS's a GlobalAlloc'ed buffer.
  *
  * Input:   EDI register: size of buffer to allocate

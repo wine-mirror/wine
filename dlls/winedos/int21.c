@@ -50,8 +50,8 @@
  * Note:
  * - Most of the file related functions are wrong. NT's kernel32
  *   doesn't maintain a per drive current directory, while DOS does. 
- *   We should in fact keep track in here of those per driver
- *   directories, and use this infro while dealing with partial paths
+ *   We should in fact keep track in here of those per drive
+ *   directories, and use this info while dealing with partial paths
  *   (drive defined, but only relative paths). This could even be
  *   created as an array of CDS (there should be an entry for that in
  *   the LOL)

@@ -197,7 +197,7 @@ typedef struct tagDPMSG_FORWARDADDPLAYER
   DPID  dpidAppServer3; /* Remote application server id again !? */
 
   DWORD unknown4[12]; /* ??? - Is this a clump of 5 and then 8? */
-                      /* NOTE: 1 byte infront of the two 0x??090002 entries changes!
+                      /* NOTE: 1 byte in front of the two 0x??090002 entries changes!
                       *       Is it a timestamp of some sort? 1st always smaller than
                       *       other...
                       */

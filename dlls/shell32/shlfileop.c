@@ -591,11 +591,11 @@ int WINAPI SHCreateDirectoryExW(HWND hWnd, LPCWSTR path, LPSECURITY_ATTRIBUTES s
 
 	      if (*pSlash)
 	      {
-	        *pSlash = 0;    /* terminate path at seperator */
+	        *pSlash = 0;    /* terminate path at separator */
 
 	        ret = SHNotifyCreateDirectoryW(szTemp, pSlash + 1 == pEnd ? sec : NULL);
 	      }
-	      *pSlash++ = '\\'; /* put the seperator back */
+	      *pSlash++ = '\\'; /* put the separator back */
 	    }
 	  }
 

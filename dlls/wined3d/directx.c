@@ -1283,7 +1283,7 @@ HRESULT WINAPI IWineD3DImpl_GetDeviceCaps(IWineD3D *iface, UINT Adapter, D3DDEVT
        The following fields apply to d3d9 only
        ------------------------------------------------ */
     if (This->dxVersion > 8) {
-        FIXME("Caps support for directx9 is non-existant at the moment!\n");
+        FIXME("Caps support for directx9 is non-existent at the moment!\n");
         pCaps->DevCaps2 = 0;
         pCaps->MaxNpatchTessellationLevel = 0;
         pCaps->MasterAdapterOrdinal = 0;
@@ -1465,7 +1465,7 @@ HRESULT  WINAPI  IWineD3DImpl_CreateDevice(IWineD3D *iface, UINT Adapter, D3DDEV
     object->presentParms.FullScreen_RefreshRateInHz     = *(pPresentationParameters->FullScreen_RefreshRateInHz); 
     object->presentParms.PresentationInterval           = *(pPresentationParameters->PresentationInterval);       
 
-    /* Creating the startup stateBlock - Note Special Case: 0 => Dont fill in yet! */
+    /* Creating the startup stateBlock - Note Special Case: 0 => Don't fill in yet! */
     IWineD3DDevice_CreateStateBlock((IWineD3DDevice *)object, 
                                     (D3DSTATEBLOCKTYPE) 0, 
                                     (IWineD3DStateBlock **)&object->stateBlock); 

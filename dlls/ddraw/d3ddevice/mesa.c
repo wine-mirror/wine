@@ -3837,7 +3837,7 @@ static void d3ddevice_unlock_update(IDirectDrawSurfaceImpl* This, LPCRECT pRect)
         if (buffer_type == WINE_GL_BUFFER_FRONT) {
 	    GLenum prev_draw;
 
-	    TRACE(" flushing front buffer immediatly on screen.\n");
+	    TRACE(" flushing front buffer immediately on screen.\n");
 	    
 	    ENTER_GL();
 	    glGetIntegerv(GL_DRAW_BUFFER, &prev_draw);

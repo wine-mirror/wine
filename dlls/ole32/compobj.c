@@ -516,7 +516,7 @@ void WINAPI CoUninitialize(void)
 
     /* disconnect proxies to release the corresponding stubs.
      * It is confirmed in "Essential COM" in the sub-chapter on
-     * "Lifecycle Management and Marshaling" that the native version also
+     * "Lifecycle Management and Marshalling" that the native version also
      * does some kind of proxy cleanup in this function.
      * FIXME: does it just disconnect or completely destroy the proxies?
      * FIXME: should this be in the apartment destructor? */

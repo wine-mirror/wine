@@ -159,7 +159,7 @@ HRESULT FindChunkAndKeepExtras(LPEXTRACHUNKS extra,HMMIO hmmio,MMCKINFO *lpck,
   TRACE("({%p,%lu},%p,%p,%p,0x%X)\n", extra->lp, extra->cb, hmmio, lpck,
 	lpckParent, flags);
 
-  /* what chunk id and form/list type shoiuld we search? */
+  /* what chunk id and form/list type should we search? */
   if (flags & MMIO_FINDCHUNK) {
     ckid    = lpck->ckid;
     fccType = 0;
@@ -177,7 +177,7 @@ HRESULT FindChunkAndKeepExtras(LPEXTRACHUNKS extra,HMMIO hmmio,MMCKINFO *lpck,
   for (;;) {
     hr = mmioDescend(hmmio, lpck, lpckParent, 0);
     if (hr != S_OK) {
-      /* No extra chunks infront of desired chunk? */
+      /* No extra chunks in front of desired chunk? */
       if (flags == 0 && hr == MMIOERR_CHUNKNOTFOUND)
 	hr = AVIERR_OK;
       return hr;

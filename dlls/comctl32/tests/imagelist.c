@@ -430,7 +430,7 @@ static BOOL DoTest3(void)
     imldp.himl = himl;
     if (!pImageList_DrawIndirect(&imldp))
     {
-      /* Earlier versions of native commctl32 use a smaller structure */
+      /* Earlier versions of native comctl32 use a smaller structure */
       imldp.cbSize -= 3 * sizeof(DWORD);
       ok(pImageList_DrawIndirect(&imldp),"DrawIndirect should succeed\n");
     }
@@ -501,7 +501,7 @@ static void testMerge()
     check_bits(hwnd, hmerge, 0, 32, empty_bits, "merge himl1,0");
     if (hmerge) ImageList_Destroy(hmerge);
 
-    /* Same happend if himl2 is empty */
+    /* Same happens if himl2 is empty */
     ImageList_Destroy(himl2);
     himl2 = ImageList_Create(32,32,0,0,3);
     ok(himl2 != NULL,"failed to recreate himl2\n");
