@@ -8,7 +8,6 @@
 #include <string.h>
 #include "winerror.h"
 #include "heap.h"
-#include "server/request.h"
 #include "server.h"
 
 
@@ -19,11 +18,11 @@ HANDLE WINAPI CreateMutexA( SECURITY_ATTRIBUTES *sa, BOOL owner, LPCSTR name )
 {
     struct create_mutex_request req;
     struct create_mutex_reply reply;
-    int len = name ? strlen(name) + 1 : 0;
 
+    if (!name) name = "";
     req.owned   = owner;
     req.inherit = (sa && (sa->nLength>=sizeof(*sa)) && sa->bInheritHandle);
-    CLIENT_SendRequest( REQ_CREATE_MUTEX, -1, 2, &req, sizeof(req), name, len );
+    CLIENT_SendRequest( REQ_CREATE_MUTEX, -1, 2, &req, sizeof(req), name, strlen(name)+1 );
     SetLastError(0);
     CLIENT_WaitSimpleReply( &reply, sizeof(reply), NULL );
     if (reply.handle == -1) return 0;

@@ -13,6 +13,7 @@
 
 #include "handle.h"
 #include "thread.h"
+#include "request.h"
 
 struct semaphore
 {
@@ -24,10 +25,10 @@ struct semaphore
 static void semaphore_dump( struct object *obj, int verbose );
 static int semaphore_signaled( struct object *obj, struct thread *thread );
 static int semaphore_satisfied( struct object *obj, struct thread *thread );
-static void semaphore_destroy( struct object *obj );
 
 static const struct object_ops semaphore_ops =
 {
+    sizeof(struct semaphore),
     semaphore_dump,
     add_queue,
     remove_queue,
@@ -37,45 +38,46 @@ static const struct object_ops semaphore_ops =
     no_write_fd,
     no_flush,
     no_get_file_info,
-    semaphore_destroy
+    no_destroy
 };
 
 
-static struct object *create_semaphore( const char *name, unsigned int initial, unsigned int max )
+static struct semaphore *create_semaphore( const char *name, size_t len,
+                                           unsigned int initial, unsigned int max )
 {
     struct semaphore *sem;
 
     if (!max || (initial > max))
     {
-        SET_ERROR( ERROR_INVALID_PARAMETER );
+        set_error( ERROR_INVALID_PARAMETER );
         return NULL;
     }
-    if (!(sem = (struct semaphore *)create_named_object( name, &semaphore_ops, sizeof(*sem) )))
-        return NULL;
-    if (GET_ERROR() != ERROR_ALREADY_EXISTS)
+    if ((sem = create_named_object( &semaphore_ops, name, len )))
     {
-        /* initialize it if it didn't already exist */
-        sem->count = initial;
-        sem->max   = max;
+        if (get_error() != ERROR_ALREADY_EXISTS)
+        {
+            /* initialize it if it didn't already exist */
+            sem->count = initial;
+            sem->max   = max;
+        }
     }
-    return &sem->obj;
+    return sem;
 }
 
-static int release_semaphore( int handle, unsigned int count, unsigned int *prev_count )
+static void release_semaphore( int handle, unsigned int count, unsigned int *prev_count )
 {
     struct semaphore *sem;
 
     if (!(sem = (struct semaphore *)get_handle_obj( current->process, handle,
                                                     SEMAPHORE_MODIFY_STATE, &semaphore_ops )))
-        return 0;
+        return;
 
     *prev_count = sem->count;
     if (sem->count + count < sem->count || sem->count + count > sem->max)
     {
-        SET_ERROR( ERROR_TOO_MANY_POSTS );
-        return 0;
+        set_error( ERROR_TOO_MANY_POSTS );
     }
-    if (sem->count)
+    else if (sem->count)
     {
         /* there cannot be any thread waiting if the count is != 0 */
         assert( !sem->obj.head );
@@ -87,7 +89,6 @@ static int release_semaphore( int handle, unsigned int count, unsigned int *prev
         wake_up( &sem->obj, count );
     }
     release_object( sem );
-    return 1;
 }
 
 static void semaphore_dump( struct object *obj, int verbose )
@@ -114,47 +115,33 @@ static int semaphore_satisfied( struct object *obj, struct thread *thread )
     return 0;  /* not abandoned */
 }
 
-static void semaphore_destroy( struct object *obj )
-{
-    struct semaphore *sem = (struct semaphore *)obj;
-    assert( obj->ops == &semaphore_ops );
-    free( sem );
-}
-
 /* create a semaphore */
 DECL_HANDLER(create_semaphore)
 {
-    struct create_semaphore_reply reply = { -1 };
-    struct object *obj;
-    char *name = (char *)data;
-    if (!len) name = NULL;
-    else CHECK_STRING( "create_semaphore", name, len );
+    size_t len = get_req_strlen();
+    struct create_semaphore_reply *reply = push_reply_data( current, sizeof(*reply) );
+    struct semaphore *sem;
 
-    obj = create_semaphore( name, req->initial, req->max );
-    if (obj)
+    if ((sem = create_semaphore( get_req_data( len + 1 ), len, req->initial, req->max )))
     {
-        reply.handle = alloc_handle( current->process, obj, SEMAPHORE_ALL_ACCESS, req->inherit );
-        release_object( obj );
+        reply->handle = alloc_handle( current->process, sem, SEMAPHORE_ALL_ACCESS, req->inherit );
+        release_object( sem );
     }
-    send_reply( current, -1, 1, &reply, sizeof(reply) );
+    else reply->handle = -1;
 }
 
 /* open a handle to a semaphore */
 DECL_HANDLER(open_semaphore)
 {
-    struct open_semaphore_reply reply;
-    char *name = (char *)data;
-    if (!len) name = NULL;
-    else CHECK_STRING( "open_semaphore", name, len );
-
-    reply.handle = open_object( name, &semaphore_ops, req->access, req->inherit );
-    send_reply( current, -1, 1, &reply, sizeof(reply) );
+    size_t len = get_req_strlen();
+    struct open_semaphore_reply *reply = push_reply_data( current, sizeof(*reply) );
+    reply->handle = open_object( get_req_data( len + 1 ), len, &semaphore_ops,
+                                 req->access, req->inherit );
 }
 
 /* release a semaphore */
 DECL_HANDLER(release_semaphore)
 {
-    struct release_semaphore_reply reply;
-    if (release_semaphore( req->handle, req->count, &reply.prev_count )) CLEAR_ERROR();
-    send_reply( current, -1, 1, &reply, sizeof(reply) );
+    struct release_semaphore_reply *reply = push_reply_data( current, sizeof(*reply) );
+    release_semaphore( req->handle, req->count, &reply->prev_count );
 }

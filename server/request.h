@@ -1,76 +1,80 @@
-/* File generated automatically by tools/make_requests; DO NOT EDIT!! */
+/*
+ * Wine server requests
+ *
+ * Copyright (C) 1999 Alexandre Julliard
+ */
 
 #ifndef __WINE_SERVER_REQUEST_H
 #define __WINE_SERVER_REQUEST_H
 
-enum request
-{
-    REQ_NEW_PROCESS,
-    REQ_NEW_THREAD,
-    REQ_SET_DEBUG,
-    REQ_INIT_PROCESS,
-    REQ_INIT_THREAD,
-    REQ_TERMINATE_PROCESS,
-    REQ_TERMINATE_THREAD,
-    REQ_GET_PROCESS_INFO,
-    REQ_SET_PROCESS_INFO,
-    REQ_GET_THREAD_INFO,
-    REQ_SET_THREAD_INFO,
-    REQ_SUSPEND_THREAD,
-    REQ_RESUME_THREAD,
-    REQ_DEBUGGER,
-    REQ_QUEUE_APC,
-    REQ_CLOSE_HANDLE,
-    REQ_GET_HANDLE_INFO,
-    REQ_SET_HANDLE_INFO,
-    REQ_DUP_HANDLE,
-    REQ_OPEN_PROCESS,
-    REQ_SELECT,
-    REQ_CREATE_EVENT,
-    REQ_EVENT_OP,
-    REQ_OPEN_EVENT,
-    REQ_CREATE_MUTEX,
-    REQ_RELEASE_MUTEX,
-    REQ_OPEN_MUTEX,
-    REQ_CREATE_SEMAPHORE,
-    REQ_RELEASE_SEMAPHORE,
-    REQ_OPEN_SEMAPHORE,
-    REQ_CREATE_FILE,
-    REQ_GET_READ_FD,
-    REQ_GET_WRITE_FD,
-    REQ_SET_FILE_POINTER,
-    REQ_TRUNCATE_FILE,
-    REQ_SET_FILE_TIME,
-    REQ_FLUSH_FILE,
-    REQ_GET_FILE_INFO,
-    REQ_LOCK_FILE,
-    REQ_UNLOCK_FILE,
-    REQ_CREATE_PIPE,
-    REQ_ALLOC_CONSOLE,
-    REQ_FREE_CONSOLE,
-    REQ_OPEN_CONSOLE,
-    REQ_SET_CONSOLE_FD,
-    REQ_GET_CONSOLE_MODE,
-    REQ_SET_CONSOLE_MODE,
-    REQ_SET_CONSOLE_INFO,
-    REQ_GET_CONSOLE_INFO,
-    REQ_WRITE_CONSOLE_INPUT,
-    REQ_READ_CONSOLE_INPUT,
-    REQ_CREATE_CHANGE_NOTIFICATION,
-    REQ_CREATE_MAPPING,
-    REQ_OPEN_MAPPING,
-    REQ_GET_MAPPING_INFO,
-    REQ_CREATE_DEVICE,
-    REQ_CREATE_SNAPSHOT,
-    REQ_NEXT_PROCESS,
-    REQ_WAIT_DEBUG_EVENT,
-    REQ_SEND_DEBUG_EVENT,
-    REQ_CONTINUE_DEBUG_EVENT,
-    REQ_DEBUG_PROCESS,
-    REQ_NB_REQUESTS
-};
+#ifndef __WINE_SERVER__
+#error This file can only be used in the Wine server
+#endif
 
-#ifdef WANT_REQUEST_HANDLERS
+#include "thread.h"
+
+/* request handler definition */
+
+#define DECL_HANDLER(name) void req_##name( struct name##_request *req, int fd )
+
+/* request functions */
+
+extern void fatal_protocol_error( const char *err );
+extern void call_req_handler( struct thread *thread, int fd );
+extern void call_timeout_handler( void *thread );
+extern void call_kill_handler( struct thread *thread, int exit_code );
+extern void set_reply_fd( struct thread *thread, int pass_fd );
+extern void send_reply( struct thread *thread );
+
+extern void trace_request( enum request req, int fd );
+extern void trace_timeout(void);
+extern void trace_kill( int exit_code );
+extern void trace_reply( struct thread *thread, int pass_fd );
+
+
+/* Warning: the buffer is shared between request and reply,
+ * so make sure you are finished using the request before starting
+ * to add data for the reply.
+ */
+
+/* remove some data from the current request */
+static inline void *get_req_data( size_t len )
+{
+    void *old = current->req_pos;
+    current->req_pos = (char *)old + len;
+    return old;
+}
+
+/* check that there is enough data available in the current request */
+static inline int check_req_data( size_t len )
+{
+    return (char *)current->req_pos + len <= (char *)current->req_end;
+}
+
+/* get the length of a request string, without going past the end of the request */
+static inline size_t get_req_strlen(void)
+{
+    char *p = current->req_pos;
+    while (*p && (p < (char *)current->req_end - 1)) p++;
+    return p - (char *)current->req_pos;
+}
+
+/* make space for some data in the current reply */
+static inline void *push_reply_data( struct thread *thread, size_t len )
+{
+    void *old = thread->reply_pos;
+    thread->reply_pos = (char *)old + len;
+    return old;
+}
+
+/* add some data to the current reply */
+static inline void add_reply_data( struct thread *thread, const void *data, size_t len )
+{
+    memcpy( push_reply_data( thread, len ), data, len );
+}
+
+/* Everything below this line is generated automatically by tools/make_requests */
+/* ### make_requests begin ### */
 
 DECL_HANDLER(new_process);
 DECL_HANDLER(new_thread);
@@ -135,8 +139,10 @@ DECL_HANDLER(send_debug_event);
 DECL_HANDLER(continue_debug_event);
 DECL_HANDLER(debug_process);
 
+#ifdef WANT_REQUEST_HANDLERS
+
 static const struct handler {
-    void       (*handler)();
+    void       (*handler)( void *req, int fd );
     unsigned int min_size;
 } req_handlers[REQ_NB_REQUESTS] = {
     { (void(*)())req_new_process, sizeof(struct new_process_request) },
@@ -203,5 +209,8 @@ static const struct handler {
     { (void(*)())req_debug_process, sizeof(struct debug_process_request) },
 };
 #endif  /* WANT_REQUEST_HANDLERS */
+
+/* ### make_requests end ### */
+/* Everything above this line is generated automatically by tools/make_requests */
 
 #endif  /* __WINE_SERVER_REQUEST_H */

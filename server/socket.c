@@ -18,32 +18,19 @@
 #include <unistd.h>
 
 #include "config.h"
-#include "server.h"
 #include "object.h"
+#include "request.h"
 
 /* Some versions of glibc don't define this */
 #ifndef SCM_RIGHTS
 #define SCM_RIGHTS 1
 #endif
 
-/* client state */
-enum state
-{
-    RUNNING,   /* running normally */
-    SENDING,   /* sending us a request */
-    WAITING,   /* waiting for us to reply */
-    READING    /* reading our reply */
-};
-
 /* client structure */
 struct client
 {
-    enum state           state;      /* client state */
     struct select_user   select;     /* select user */
     unsigned int         seq;        /* current sequence number */
-    struct header        head;       /* current msg header */
-    char                *data;       /* current msg data */
-    int                  count;      /* bytes sent/received so far */
     int                  pass_fd;    /* fd to pass to and from the client */
     struct thread       *self;       /* client thread (opaque pointer) */
     struct timeout_user *timeout;    /* current timeout (opaque pointer) */
@@ -62,110 +49,81 @@ static void protocol_error( struct client *client, const char *err, ... )
     va_list args;
 
     va_start( args, err );
-    fprintf( stderr, "Protocol error:%d: ", client->select.fd );
+    fprintf( stderr, "Protocol error:%p: ", client->self );
     vfprintf( stderr, err, args );
     va_end( args );
+    remove_client( client, PROTOCOL_ERROR );
 }
 
 /* send a message to a client that is ready to receive something */
-static void do_write( struct client *client, int client_fd )
+static void do_write( struct client *client )
 {
-    struct iovec vec[2];
-#ifndef HAVE_MSGHDR_ACCRIGHTS
-    struct cmsg_fd cmsg;
-#endif
-    struct msghdr msghdr;
     int ret;
 
-    /* make sure we have something to send */
-    assert( client->count < client->head.len );
-    /* make sure the client is listening */
-    assert( client->state == READING );
-
-    msghdr.msg_name = NULL;
-    msghdr.msg_namelen = 0;
-    msghdr.msg_iov = vec;
-
-    if (client->count < sizeof(client->head))
+    if (client->pass_fd == -1)
     {
-        vec[0].iov_base = (char *)&client->head + client->count;
-        vec[0].iov_len  = sizeof(client->head) - client->count;
-        vec[1].iov_base = client->data;
-        vec[1].iov_len  = client->head.len - sizeof(client->head);
-        msghdr.msg_iovlen = 2;
+        ret = write( client->select.fd, &client->seq, sizeof(client->seq) );
     }
-    else
+    else  /* we have an fd to send */
     {
-        vec[0].iov_base = client->data + client->count - sizeof(client->head);
-        vec[0].iov_len  = client->head.len - client->count;
-        msghdr.msg_iovlen = 1;
-    }
+        struct iovec vec;
+        struct msghdr msghdr;
 
 #ifdef HAVE_MSGHDR_ACCRIGHTS
-    if (client->pass_fd != -1)  /* we have an fd to send */
-    {
         msghdr.msg_accrights = (void *)&client->pass_fd;
         msghdr.msg_accrightslen = sizeof(client->pass_fd);
-    }
-    else
-    {
-        msghdr.msg_accrights = NULL;
-        msghdr.msg_accrightslen = 0;
-    }
 #else  /* HAVE_MSGHDR_ACCRIGHTS */
-    if (client->pass_fd != -1)  /* we have an fd to send */
-    {
-        cmsg.len = sizeof(cmsg);
+        struct cmsg_fd cmsg;
+
+        cmsg.len   = sizeof(cmsg);
         cmsg.level = SOL_SOCKET;
-        cmsg.type = SCM_RIGHTS;
-        cmsg.fd = client->pass_fd;
-        msghdr.msg_control = &cmsg;
+        cmsg.type  = SCM_RIGHTS;
+        cmsg.fd    = client->pass_fd;
+        msghdr.msg_control    = &cmsg;
         msghdr.msg_controllen = sizeof(cmsg);
-    }
-    else
-    {
-        msghdr.msg_control = NULL;
-        msghdr.msg_controllen = 0;
-    }
-    msghdr.msg_flags = 0;
+        msghdr.msg_flags      = 0;
 #endif  /* HAVE_MSGHDR_ACCRIGHTS */
 
-    ret = sendmsg( client_fd, &msghdr, 0 );
+        msghdr.msg_name    = NULL;
+        msghdr.msg_namelen = 0;
+        msghdr.msg_iov     = &vec;
+        msghdr.msg_iovlen  = 1;
+        vec.iov_base = (char *)&client->seq;
+        vec.iov_len  = sizeof(client->seq);
+
+        ret = sendmsg( client->select.fd, &msghdr, 0 );
+        close( client->pass_fd );
+        client->pass_fd = -1;
+    }
+    if (ret == sizeof(client->seq))
+    {
+        /* everything OK */
+        client->seq++;
+        set_select_events( &client->select, READ_EVENT );
+        return;
+    }
     if (ret == -1)
     {
         if (errno != EPIPE) perror("sendmsg");
         remove_client( client, BROKEN_PIPE );
         return;
     }
-    if (client->pass_fd != -1)  /* We sent the fd, now we can close it */
-    {
-        close( client->pass_fd );
-        client->pass_fd = -1;
-    }
-    if ((client->count += ret) < client->head.len) return;
-
-    /* we have finished with this message */
-    if (client->data) free( client->data );
-    client->data  = NULL;
-    client->count = 0;
-    client->state = RUNNING;
-    client->seq++;
-    set_select_events( &client->select, READ_EVENT );
+    fprintf( stderr, "Partial sequence sent (%d)\n", ret );
+    remove_client( client, BROKEN_PIPE );
 }
 
 
 /* read a message from a client that has something to say */
-static void do_read( struct client *client, int client_fd )
+static void do_read( struct client *client )
 {
     struct iovec vec;
-    int pass_fd = -1;
-    int ret;
+    int ret, seq;
 
 #ifdef HAVE_MSGHDR_ACCRIGHTS
     struct msghdr msghdr;
 
-    msghdr.msg_accrights    = (void *)&pass_fd;
-    msghdr.msg_accrightslen = sizeof(int);
+    msghdr.msg_accrights    = (void *)&client->pass_fd;
+    msghdr.msg_accrightslen = sizeof(client->pass_fd);
 #else  /* HAVE_MSGHDR_ACCRIGHTS */
     struct msghdr msghdr;
     struct cmsg_fd cmsg;
@@ -179,108 +137,56 @@ static void do_read( struct client *client, int client_fd )
     msghdr.msg_flags      = 0;
 #endif  /* HAVE_MSGHDR_ACCRIGHTS */
 
+    assert( client->pass_fd == -1 );
+
     msghdr.msg_name    = NULL;
     msghdr.msg_namelen = 0;
     msghdr.msg_iov     = &vec;
     msghdr.msg_iovlen  = 1;
 
-    if (client->count < sizeof(client->head))
+    vec.iov_base = &seq;
+    vec.iov_len  = sizeof(seq);
+
+    ret = recvmsg( client->select.fd, &msghdr, 0 );
+#ifndef HAVE_MSGHDR_ACCRIGHTS
+    client->pass_fd = cmsg.fd;
+#endif
+
+    if (ret == sizeof(seq))
     {
-        vec.iov_base = (char *)&client->head + client->count;
-        vec.iov_len  = sizeof(client->head) - client->count;
-    }
-    else
-    {
-        if (!client->data &&
-            !(client->data = malloc(client->head.len-sizeof(client->head))))
+        int pass_fd = client->pass_fd;
+        if (seq != client->seq++)
         {
-            remove_client( client, OUT_OF_MEMORY );
+            protocol_error( client, "bad sequence %08x instead of %08x\n",
+                            seq, client->seq - 1 );
             return;
         }
-        vec.iov_base = client->data + client->count - sizeof(client->head);
-        vec.iov_len  = client->head.len - client->count;
+        client->pass_fd = -1;
+        call_req_handler( client->self, pass_fd );
+        if (pass_fd != -1) close( pass_fd );
+        return;
     }
-
-    ret = recvmsg( client_fd, &msghdr, 0 );
     if (ret == -1)
     {
         perror("recvmsg");
         remove_client( client, BROKEN_PIPE );
         return;
     }
-#ifndef HAVE_MSGHDR_ACCRIGHTS
-    pass_fd = cmsg.fd;
-#endif
-    if (pass_fd != -1)
-    {
-        /* can only receive one fd per message */
-        if (client->pass_fd != -1) close( client->pass_fd );
-        client->pass_fd = pass_fd;
-    }
-    else if (!ret)  /* closed pipe */
+    if (!ret)  /* closed pipe */
     {
         remove_client( client, BROKEN_PIPE );
         return;
     }
-
-    if (client->state == RUNNING) client->state = SENDING;
-    assert( client->state == SENDING );
-
-    client->count += ret;
-
-    /* received the complete header yet? */
-    if (client->count < sizeof(client->head)) return;
-
-    /* sanity checks */
-    if (client->head.seq != client->seq)
-    {
-        protocol_error( client, "bad sequence %08x instead of %08x\n",
-                        client->head.seq, client->seq );
-        remove_client( client, PROTOCOL_ERROR );
-        return;
-    }
-    if ((client->head.len < sizeof(client->head)) ||
-        (client->head.len > MAX_MSG_LENGTH + sizeof(client->head)))
-    {
-        protocol_error( client, "bad header length %08x\n",
-                        client->head.len );
-        remove_client( client, PROTOCOL_ERROR );
-        return;
-    }
-
-    /* received the whole message? */
-    if (client->count == client->head.len)
-    {
-        /* done reading the data, call the callback function */
-
-        int len = client->head.len - sizeof(client->head);
-        char *data = client->data;
-        int passed_fd = client->pass_fd;
-        enum request type = client->head.type;
-
-        /* clear the info now, as the client may be deleted by the callback */
-        client->head.len  = 0;
-        client->head.type = 0;
-        client->count     = 0;
-        client->data      = NULL;
-        client->pass_fd   = -1;
-        client->state     = WAITING;
-        client->seq++;
-
-        call_req_handler( client->self, type, data, len, passed_fd );
-        if (passed_fd != -1) close( passed_fd );
-        if (data) free( data );
-    }
+    protocol_error( client, "partial sequence received %d/%d\n", ret, sizeof(seq) );
 }
 
 /* handle a client event */
 static void client_event( int event, void *private )
 {
     struct client *client = (struct client *)private;
-    if (event & WRITE_EVENT) do_write( client, client->select.fd );
-    if (event & READ_EVENT) do_read( client, client->select.fd );
+    if (event & WRITE_EVENT) do_write( client );
+    if (event & READ_EVENT) do_read( client );
 }
-
 
 /*******************************************************************/
 /* server-side exported functions                                  */
@@ -295,15 +201,10 @@ struct client *add_client( int fd, struct thread *self )
     flags = fcntl( fd, F_GETFL, 0 );
     fcntl( fd, F_SETFL, flags | O_NONBLOCK );
 
-    client->state                = RUNNING;
     client->select.fd            = fd;
     client->select.func          = client_event;
     client->select.private       = client;
     client->seq                  = 0;
-    client->head.len             = 0;
-    client->head.type            = 0;
-    client->count                = 0;
-    client->data                 = NULL;
     client->self                 = self;
     client->timeout              = NULL;
     client->pass_fd              = -1;
@@ -324,42 +225,20 @@ void remove_client( struct client *client, int exit_code )
     close( client->select.fd );
 
     /* Purge messages */
-    if (client->data) free( client->data );
     if (client->pass_fd != -1) close( client->pass_fd );
     free( client );
 }
 
-/* send a reply to a client */
-int send_reply_v( struct client *client, int type, int pass_fd,
-                  struct iovec *vec, int veclen )
+/* set the fd to pass to the client */
+void client_pass_fd( struct client *client, int pass_fd )
 {
-    int i;
-    unsigned int len;
-    char *p;
+    assert( client->pass_fd == -1 );
+    client->pass_fd = pass_fd;
+}
 
-    assert( client );
-    assert( client->state == WAITING );
-    assert( !client->data );
-
-    if (debug_level) trace_reply( client->self, type, pass_fd, vec, veclen );
-
-    for (i = len = 0; i < veclen; i++) len += vec[i].iov_len;
-    assert( len < MAX_MSG_LENGTH );
-
-    if (len && !(client->data = malloc( len ))) return -1;
-    client->count     = 0;
-    client->head.len  = len + sizeof(client->head);
-    client->head.type = type;
-    client->head.seq  = client->seq;
-    client->pass_fd   = pass_fd;
-
-    for (i = 0, p = client->data; i < veclen; i++)
-    {
-        memcpy( p, vec[i].iov_base, vec[i].iov_len );
-        p += vec[i].iov_len;
-    }
-
-    client->state = READING;
+/* send a reply to a client */
+void client_reply( struct client *client )
+{
+    if (debug_level) trace_reply( client->self, client->pass_fd );
     set_select_events( &client->select, WRITE_EVENT );
-    return 0;
 }

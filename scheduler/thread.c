@@ -154,8 +154,7 @@ void CALLBACK THREAD_FreeTEB( ULONG_PTR arg )
     if (teb->stack_sel) SELECTOR_FreeBlock( teb->stack_sel, 1 );
     SELECTOR_FreeBlock( teb->teb_sel, 1 );
     close( teb->socket );
-    if (teb->buffer)
-        munmap( teb->buffer, (char *)teb->buffer_end - (char *)teb->buffer );
+    if (teb->buffer) munmap( teb->buffer, teb->buffer_size );
     VirtualFree( teb->stack_base, 0, MEM_RELEASE );
     HeapFree( SystemHeap, 0, teb );
 }

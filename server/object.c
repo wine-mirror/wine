@@ -19,8 +19,9 @@ int debug_level = 0;
 struct object_name
 {
     struct object_name *next;
+    struct object_name *prev;
     struct object      *obj;
-    int                 len;
+    size_t              len;
     char                name[1];
 };
 
@@ -45,96 +46,115 @@ void dump_objects(void)
 
 /*****************************************************************/
 
+/* malloc replacement */
 void *mem_alloc( size_t size )
 {
     void *ptr = malloc( size );
     if (ptr) memset( ptr, 0x55, size );
-    else if (current) SET_ERROR( ERROR_OUTOFMEMORY );
+    else if (current) set_error( ERROR_OUTOFMEMORY );
     return ptr;
 }
 
 /*****************************************************************/
 
-static int get_name_hash( const char *name )
+static int get_name_hash( const char *name, size_t len )
 {
-    int hash = 0;
-    while (*name) hash ^= *name++;
+    char hash = 0;
+    while (len--) hash ^= *name++;
     return hash % NAME_HASH_SIZE;
 }
 
-static struct object_name *add_name( struct object *obj, const char *name )
+/* allocate a name for an object */
+static struct object_name *alloc_name( const char *name, size_t len )
 {
     struct object_name *ptr;
-    int hash = get_name_hash( name );
-    int len = strlen( name );
 
-    if (!(ptr = (struct object_name *)mem_alloc( sizeof(*ptr) + len )))
-        return NULL;
-    ptr->next = names[hash];
-    ptr->obj  = obj;
-    ptr->len  = len;
-    strcpy( ptr->name, name );
-    names[hash] = ptr;
+    if ((ptr = mem_alloc( sizeof(*ptr) + len )))
+    {
+        ptr->len = len;
+        memcpy( ptr->name, name, len );
+        ptr->name[len] = 0;
+    }
     return ptr;
 }
 
+/* free the name of an object */
 static void free_name( struct object *obj )
 {
-    int hash = get_name_hash( obj->name->name );
-    struct object_name **pptr = &names[hash];
-    while (*pptr && *pptr != obj->name) pptr = &(*pptr)->next;
-    assert( *pptr );
-    *pptr = (*pptr)->next;
-    free( obj->name );
+    struct object_name *ptr = obj->name;
+    if (ptr->next) ptr->next->prev = ptr->prev;
+    if (ptr->prev) ptr->prev->next = ptr->next;
+    else
+    {
+        int hash;
+        for (hash = 0; hash < NAME_HASH_SIZE; hash++)
+            if (names[hash] == ptr)
+            {
+                names[hash] = ptr->next;
+                break;
+            }
+    }
+    free( ptr );
 }
 
-/* initialize an already allocated object */
-/* return 1 if OK, 0 on error */
-int init_object( struct object *obj, const struct object_ops *ops,
-                 const char *name )
+/* set the name of an existing object */
+static void set_object_name( struct object *obj, struct object_name *ptr )
 {
-    obj->refcount = 1;
-    obj->ops      = ops;
-    obj->head     = NULL;
-    obj->tail     = NULL;
-    if (!name) obj->name = NULL;
-    else if (!(obj->name = add_name( obj, name ))) return 0;
-#ifdef DEBUG_OBJECTS
-    obj->prev = NULL;
-    if ((obj->next = first) != NULL) obj->next->prev = obj;
-    first = obj;
-#endif
-    return 1;
+    int hash = get_name_hash( ptr->name, ptr->len );
+
+    if ((ptr->next = names[hash]) != NULL) ptr->next->prev = ptr;
+    ptr->obj = obj;
+    ptr->prev = NULL;
+    names[hash] = ptr;
+    assert( !obj->name );
+    obj->name = ptr;
 }
 
 /* allocate and initialize an object */
-void *alloc_object( size_t size, const struct object_ops *ops, const char *name )
+void *alloc_object( const struct object_ops *ops )
 {
-    struct object *obj = mem_alloc( size );
-    if (obj) init_object( obj, ops, name );
+    struct object *obj = mem_alloc( ops->size );
+    if (obj)
+    {
+        obj->refcount = 1;
+        obj->ops      = ops;
+        obj->head     = NULL;
+        obj->tail     = NULL;
+        obj->name     = NULL;
+#ifdef DEBUG_OBJECTS
+        obj->prev = NULL;
+        if ((obj->next = first) != NULL) obj->next->prev = obj;
+        first = obj;
+#endif
+    }
     return obj;
 }
 
-struct object *create_named_object( const char *name, const struct object_ops *ops, size_t size )
+void *create_named_object( const struct object_ops *ops, const char *name, size_t len )
 {
     struct object *obj;
-    if ((obj = find_object( name )))
+    struct object_name *name_ptr;
+
+    if (!name || !len) return alloc_object( ops );
+    if (!(name_ptr = alloc_name( name, len ))) return NULL;
+
+    if ((obj = find_object( name_ptr->name, name_ptr->len )))
     {
+        free( name_ptr );  /* we no longer need it */
         if (obj->ops == ops)
         {
-            SET_ERROR( ERROR_ALREADY_EXISTS );
+            set_error( ERROR_ALREADY_EXISTS );
             return obj;
         }
-        SET_ERROR( ERROR_INVALID_HANDLE );
+        set_error( ERROR_INVALID_HANDLE );
         return NULL;
     }
-    if (!(obj = mem_alloc( size ))) return NULL;
-    if (!init_object( obj, ops, name ))
+    if ((obj = alloc_object( ops )))
     {
-        free( obj );
-        return NULL;
+        set_object_name( obj, name_ptr );
+        clear_error();
     }
-    CLEAR_ERROR();
+    else free( name_ptr );
     return obj;
 }
 
@@ -171,25 +191,29 @@ void release_object( void *ptr )
         else first = obj->next;
 #endif
         obj->ops->destroy( obj );
+        memset( obj, 0xaa, obj->ops->size );
+        free( obj );
     }
 }
 
 /* find an object by its name; the refcount is incremented */
-struct object *find_object( const char *name )
+struct object *find_object( const char *name, size_t len )
 {
     struct object_name *ptr;
-    if (!name) return NULL;
-    ptr = names[ get_name_hash( name ) ];
-    while (ptr && strcmp( ptr->name, name )) ptr = ptr->next;
-    if (!ptr) return NULL;
-    return grab_object( ptr->obj );
+    if (!name || !len) return NULL;
+    for (ptr = names[ get_name_hash( name, len ) ]; ptr; ptr = ptr->next)
+    {
+        if (ptr->len != len) continue;
+        if (!memcmp( ptr->name, name, len )) return grab_object( ptr->obj );
+    }
+    return NULL;
 }
 
 /* functions for unimplemented object operations */
 
 int no_add_queue( struct object *obj, struct wait_queue_entry *entry )
 {
-    SET_ERROR( ERROR_INVALID_HANDLE );
+    set_error( ERROR_INVALID_HANDLE );
     return 0;
 }
 
@@ -200,26 +224,30 @@ int no_satisfied( struct object *obj, struct thread *thread )
 
 int no_read_fd( struct object *obj )
 {
-    SET_ERROR( ERROR_INVALID_HANDLE );
+    set_error( ERROR_INVALID_HANDLE );
     return -1;
 }
 
 int no_write_fd( struct object *obj )
 {
-    SET_ERROR( ERROR_INVALID_HANDLE );
+    set_error( ERROR_INVALID_HANDLE );
     return -1;
 }
 
 int no_flush( struct object *obj )
 {
-    SET_ERROR( ERROR_INVALID_HANDLE );
+    set_error( ERROR_INVALID_HANDLE );
     return 0;
 }
 
 int no_get_file_info( struct object *obj, struct get_file_info_reply *info )
 {
-    SET_ERROR( ERROR_INVALID_HANDLE );
+    set_error( ERROR_INVALID_HANDLE );
     return 0;
+}
+
+void no_destroy( struct object *obj )
+{
 }
 
 void default_select_event( int event, void *private )

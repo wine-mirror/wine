@@ -10,6 +10,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/mman.h>
 #include <sys/types.h>
 #include <sys/uio.h>
 #include <unistd.h>
@@ -20,9 +21,9 @@
 #include "winerror.h"
 
 #include "handle.h"
-#include "server.h"
 #include "process.h"
 #include "thread.h"
+#include "request.h"
 
 
 /* thread queues */
@@ -62,6 +63,7 @@ static void destroy_thread( struct object *obj );
 
 static const struct object_ops thread_ops =
 {
+    sizeof(struct thread),
     dump_thread,
     add_queue,
     remove_queue,
@@ -76,10 +78,32 @@ static const struct object_ops thread_ops =
 
 static struct thread *first_thread;
 
-/* initialization of a thread structure */
-static void init_thread( struct thread *thread, int fd )
+/* allocate the buffer for the communication with the client */
+static int alloc_client_buffer( struct thread *thread )
 {
-    init_object( &thread->obj, &thread_ops, NULL );
+    int fd;
+
+    if ((fd = create_anonymous_file()) == -1) return -1;
+    if (ftruncate( fd, MAX_MSG_LENGTH ) == -1) goto error;
+    if ((thread->buffer = mmap( 0, MAX_MSG_LENGTH, PROT_READ | PROT_WRITE,
+                                MAP_SHARED, fd, 0 )) == (void*)-1) goto error;
+    thread->req_pos = thread->reply_pos = thread->buffer;
+    return fd;
+
+ error:
+    file_set_error();
+    if (fd != -1) close( fd );
+    return -1;
+}
+
+/* create a new thread */
+static struct thread *create_thread( int fd, struct process *process, int suspend )
+{
+    struct thread *thread;
+    int buf_fd;
+
+    if (!(thread = alloc_object( &thread_ops ))) return NULL;
+
     thread->client      = NULL;
     thread->unix_pid    = 0;  /* not known yet */
     thread->teb         = NULL;
@@ -97,59 +121,44 @@ static void init_thread( struct thread *thread, int fd )
     thread->prev        = NULL;
     thread->priority    = THREAD_PRIORITY_NORMAL;
     thread->affinity    = 1;
-    thread->suspend     = 0;
-}
+    thread->suspend     = (suspend != 0);
+    thread->buffer      = (void *)-1;
+    thread->last_req    = 0;
 
-/* create the initial thread and start the main server loop */
-void create_initial_thread( int fd )
-{
-    first_thread = mem_alloc( sizeof(*first_thread) );
-    assert( first_thread );
-
-    current = first_thread;
-    init_thread( first_thread, fd );
-    first_thread->process = create_initial_process(); 
-    add_process_thread( first_thread->process, first_thread );
-    first_thread->client = add_client( fd, first_thread );
-    select_loop();
-}
-
-/* create a new thread */
-static struct thread *create_thread( int fd, void *pid, int suspend, int inherit, int *handle )
-{
-    struct thread *thread;
-    struct process *process;
-
-    if (!(thread = mem_alloc( sizeof(*thread) ))) return NULL;
-
-    if (!(process = get_process_from_id( pid )))
+    if (!first_thread)  /* creating the first thread */
     {
-        free( thread );
-        return NULL;
+        current = thread;
+        thread->process = process = create_initial_process(); 
+        assert( process );
     }
-    init_thread( thread, fd );
-    thread->process = process;
-
-    if (suspend) thread->suspend++;
+    else thread->process = (struct process *)grab_object( process );
 
     if ((thread->next = first_thread) != NULL) thread->next->prev = thread;
     first_thread = thread;
     add_process_thread( process, thread );
 
-    if ((*handle = alloc_handle( current->process, thread,
-                                 THREAD_ALL_ACCESS, inherit )) == -1) goto error;
+    if ((buf_fd = alloc_client_buffer( thread )) == -1) goto error;
     if (!(thread->client = add_client( fd, thread )))
     {
-        SET_ERROR( ERROR_TOO_MANY_OPEN_FILES );
+        close( buf_fd );
         goto error;
     }
+    push_reply_data( thread, sizeof(struct header) );
+    set_reply_fd( thread, buf_fd );  /* send the fd to the client */
+    send_reply( thread );
     return thread;
 
  error:
-    close_handle( current->process, *handle );
     remove_process_thread( process, thread );
     release_object( thread );
     return NULL;
+}
+
+/* create the initial thread and start the main server loop */
+void create_initial_thread( int fd )
+{
+    create_thread( fd, NULL, 0 );
+    select_loop();
 }
 
 /* destroy a thread when its refcount is 0 */
@@ -164,8 +173,7 @@ static void destroy_thread( struct object *obj )
     if (thread->prev) thread->prev->next = thread->next;
     else first_thread = thread->next;
     if (thread->apc) free( thread->apc );
-    if (debug_level) memset( thread, 0xaa, sizeof(thread) );  /* catch errors */
-    free( thread );
+    if (thread->buffer != (void *)-1) munmap( thread->buffer, MAX_MSG_LENGTH );
 }
 
 /* dump a thread on stdout for debugging purposes */
@@ -208,7 +216,7 @@ static void set_thread_info( struct thread *thread,
         thread->priority = req->priority;
     if (req->mask & SET_THREAD_INFO_AFFINITY)
     {
-        if (req->affinity != 1) SET_ERROR( ERROR_INVALID_PARAMETER );
+        if (req->affinity != 1) set_error( ERROR_INVALID_PARAMETER );
         else thread->affinity = req->affinity;
     }
 }
@@ -257,25 +265,6 @@ void resume_all_threads( void )
     for ( thread = first_thread; thread; thread = thread->next )
         if ( thread != current )
             resume_thread( thread );
-}
-
-/* send a reply to a thread */
-int send_reply( struct thread *thread, int pass_fd, int n,
-                ... /* arg_1, len_1, ..., arg_n, len_n */ )
-{
-    struct iovec vec[16];
-    va_list args;
-    int i;
-
-    assert( n < 16 );
-    va_start( args, n );
-    for (i = 0; i < n; i++)
-    {
-        vec[i].iov_base = va_arg( args, void * );
-        vec[i].iov_len  = va_arg( args, int );
-    }
-    va_end( args );
-    return send_reply_v( thread->client, thread->error, pass_fd, vec, n );
 }
 
 /* add a thread to an object wait queue; return 1 if OK, 0 on error */
@@ -327,7 +316,7 @@ static int wait_on( struct thread *thread, int count,
 
     if ((count < 0) || (count > MAXIMUM_WAIT_OBJECTS))
     {
-        SET_ERROR( ERROR_INVALID_PARAMETER );
+        set_error( ERROR_INVALID_PARAMETER );
         return 0;
     }
     if (!(wait = mem_alloc( sizeof(*wait) + (count-1) * sizeof(*entry) ))) return 0;
@@ -415,22 +404,18 @@ static int check_wait( struct thread *thread, int *signaled )
     return 0;
 }
 
-/* send the select reply to wake up the client */
-static void send_select_reply( struct thread *thread, int signaled )
+/* build a select reply to wake up the client */
+static void build_select_reply( struct thread *thread, int signaled )
 {
-    struct select_reply reply;
-    reply.signaled = signaled;
+    struct select_reply *reply = push_reply_data( thread, sizeof(*reply) );
+    reply->signaled = signaled;
     if ((signaled == STATUS_USER_APC) && thread->apc)
     {
-        struct thread_apc *apc = thread->apc;
-        int len = thread->apc_count * sizeof(*apc);
+        add_reply_data( thread, thread->apc, thread->apc_count * sizeof(*thread->apc) );
+        free( thread->apc );
         thread->apc = NULL;
         thread->apc_count = 0;
-        send_reply( thread, -1, 2, &reply, sizeof(reply),
-                    apc, len );
-        free( apc );
     }
-    else send_reply( thread, -1, 1, &reply, sizeof(reply) );
 }
 
 /* attempt to wake up a thread */
@@ -441,7 +426,7 @@ static int wake_thread( struct thread *thread )
 
     if (!check_wait( thread, &signaled )) return 0;
     end_wait( thread );
-    send_select_reply( thread, signaled );
+    build_select_reply( thread, signaled );
     return 1;
 }
 
@@ -451,8 +436,7 @@ static void sleep_on( struct thread *thread, int count, int *handles, int flags,
     assert( !thread->wait );
     if (!wait_on( thread, count, handles, flags, timeout ))
     {
-        /* return an error */
-        send_select_reply( thread, -1 );
+        build_select_reply( thread, -1 );
         return;
     }
     if (wake_thread( thread )) return;
@@ -462,9 +446,11 @@ static void sleep_on( struct thread *thread, int count, int *handles, int flags,
         if (!(thread->wait->user = add_timeout_user( &thread->wait->timeout,
                                                      call_timeout_handler, thread )))
         {
-            send_select_reply( thread, -1 );
+            build_select_reply( thread, -1 );
+            return;
         }
     }
+    thread->state = SLEEPING;
 }
 
 /* timeout for the current thread */
@@ -473,7 +459,8 @@ void thread_timeout(void)
     assert( current->wait );
     current->wait->user = NULL;
     end_wait( current );
-    send_select_reply( current, STATUS_TIMEOUT );
+    build_select_reply( current, STATUS_TIMEOUT );
+    send_reply( current );
 }
 
 /* attempt to wake threads sleeping on the object wait queue */
@@ -483,12 +470,13 @@ void wake_up( struct object *obj, int max )
 
     while (entry)
     {
-        struct wait_queue_entry *next = entry->next;
-        if (wake_thread( entry->thread ))
+        struct thread *thread = entry->thread;
+        entry = entry->next;
+        if (wake_thread( thread ))
         {
+            send_reply( thread );
             if (max && !--max) break;
         }
-        entry = next;
     }
 }
 
@@ -506,7 +494,10 @@ static int thread_queue_apc( struct thread *thread, void *func, void *param )
     thread->apc[thread->apc_count].func  = func;
     thread->apc[thread->apc_count].param = param;
     thread->apc_count++;
-    if (thread->wait) wake_thread( thread );
+    if (thread->wait)
+    {
+        if (wake_thread( thread )) send_reply( thread );
+    }
     return 1;
 }
 
@@ -535,24 +526,34 @@ void thread_killed( struct thread *thread, int exit_code )
 DECL_HANDLER(new_thread)
 {
     struct new_thread_reply reply;
+    struct thread *thread;
+    struct process *process;
     int new_fd;
 
-    if ((new_fd = dup(fd)) != -1)
+    if ((process = get_process_from_id( req->pid )))
     {
-        reply.tid = create_thread( new_fd, req->pid, req->suspend,
-                                   req->inherit, &reply.handle );
-        if (!reply.tid) close( new_fd );
+        if ((new_fd = dup(fd)) != -1)
+        {
+            if ((thread = create_thread( new_fd, process, req->suspend )))
+            {
+                reply.tid = thread;
+                reply.handle = alloc_handle( current->process, thread,
+                                             THREAD_ALL_ACCESS, req->inherit );
+                if (reply.handle == -1) release_object( thread );
+                /* else will be released when the thread gets killed */
+            }
+            else close( new_fd );
+        }
+        else set_error( ERROR_TOO_MANY_OPEN_FILES );
+        release_object( process );
     }
-    else
-        SET_ERROR( ERROR_TOO_MANY_OPEN_FILES );
-
-    send_reply( current, -1, 1, &reply, sizeof(reply) );
+    add_reply_data( current, &reply, sizeof(reply) );
 }
 
 /* initialize a new thread */
 DECL_HANDLER(init_thread)
 {
-    struct init_thread_reply reply;
+    struct init_thread_reply *reply = push_reply_data( current, sizeof(*reply) );
 
     if (current->state != STARTING)
     {
@@ -564,9 +565,8 @@ DECL_HANDLER(init_thread)
     current->teb      = req->teb;
     if (current->suspend + current->process->suspend > 0)
         kill( current->unix_pid, SIGSTOP );
-    reply.pid = current->process;
-    reply.tid = current;
-    send_reply( current, -1, 1, &reply, sizeof(reply) );
+    reply->pid = current->process;
+    reply->tid = current;
 }
 
 /* terminate a thread */
@@ -579,23 +579,21 @@ DECL_HANDLER(terminate_thread)
         kill_thread( thread, req->exit_code );
         release_object( thread );
     }
-    if (current) send_reply( current, -1, 0 );
 }
 
 /* fetch information about a thread */
 DECL_HANDLER(get_thread_info)
 {
     struct thread *thread;
-    struct get_thread_info_reply reply = { 0, 0, 0 };
+    struct get_thread_info_reply *reply = push_reply_data( current, sizeof(*reply) );
 
     if ((thread = get_thread_from_handle( req->handle, THREAD_QUERY_INFORMATION )))
     {
-        reply.tid       = thread;
-        reply.exit_code = thread->exit_code;
-        reply.priority  = thread->priority;
+        reply->tid       = thread;
+        reply->exit_code = thread->exit_code;
+        reply->priority  = thread->priority;
         release_object( thread );
     }
-    send_reply( current, -1, 1, &reply, sizeof(reply) );
 }
 
 /* set information about a thread */
@@ -608,44 +606,41 @@ DECL_HANDLER(set_thread_info)
         set_thread_info( thread, req );
         release_object( thread );
     }
-    send_reply( current, -1, 0 );
 }
 
 /* suspend a thread */
 DECL_HANDLER(suspend_thread)
 {
     struct thread *thread;
-    struct suspend_thread_reply reply = { -1 };
+    struct suspend_thread_reply *reply = push_reply_data( current, sizeof(*reply) );
     if ((thread = get_thread_from_handle( req->handle, THREAD_SUSPEND_RESUME )))
     {
-        reply.count = suspend_thread( thread );
+        reply->count = suspend_thread( thread );
         release_object( thread );
     }
-    send_reply( current, -1, 1, &reply, sizeof(reply) );
-    
 }
 
 /* resume a thread */
 DECL_HANDLER(resume_thread)
 {
     struct thread *thread;
-    struct resume_thread_reply reply = { -1 };
+    struct resume_thread_reply *reply = push_reply_data( current, sizeof(*reply) );
     if ((thread = get_thread_from_handle( req->handle, THREAD_SUSPEND_RESUME )))
     {
-        reply.count = resume_thread( thread );
+        reply->count = resume_thread( thread );
         release_object( thread );
     }
-    send_reply( current, -1, 1, &reply, sizeof(reply) );
-    
 }
 
 /* select on a handle list */
 DECL_HANDLER(select)
 {
-    if (len != req->count * sizeof(int))
-        fatal_protocol_error( "select: bad length %d for %d handles\n",
-                              len, req->count );
-    sleep_on( current, req->count, (int *)data, req->flags, req->timeout );
+    if (check_req_data( req->count * sizeof(int) ))
+    {
+        sleep_on( current, req->count, get_req_data( req->count * sizeof(int) ),
+                  req->flags, req->timeout );
+    }
+    else fatal_protocol_error( "select: bad length" );
 }
 
 /* queue an APC for a thread */
@@ -657,5 +652,4 @@ DECL_HANDLER(queue_apc)
         thread_queue_apc( thread, req->func, req->param );
         release_object( thread );
     }
-    send_reply( current, -1, 0 );
 }

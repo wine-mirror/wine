@@ -22,7 +22,7 @@ struct mutex;
 struct debug_ctx;
 struct debug_event;
 
-enum run_state { STARTING, RUNNING, TERMINATED };
+enum run_state { STARTING, RUNNING, SLEEPING, TERMINATED };
 
 struct thread
 {
@@ -48,6 +48,10 @@ struct thread
     int                 priority;  /* priority level */
     int                 affinity;  /* affinity mask */
     int                 suspend;   /* suspend count */
+    void               *buffer;    /* buffer for communication with the client */
+    void               *req_pos;   /* current request position in buffer */
+    void               *req_end;   /* ptr to end of current request */
+    void               *reply_pos; /* current reply position in buffer */
     enum request        last_req;  /* last request received (for debugging) */
 };
 
@@ -60,8 +64,6 @@ extern struct thread *get_thread_from_id( void *id );
 extern struct thread *get_thread_from_handle( int handle, unsigned int access );
 extern void suspend_all_threads( void );
 extern void resume_all_threads( void );
-extern int send_reply( struct thread *thread, int pass_fd,
-                       int n, ... /* arg_1, len_1, ..., arg_n, len_n */ );
 extern int add_queue( struct object *obj, struct wait_queue_entry *entry );
 extern void remove_queue( struct object *obj, struct wait_queue_entry *entry );
 extern void kill_thread( struct thread *thread, int exit_code );
@@ -69,8 +71,8 @@ extern void thread_killed( struct thread *thread, int exit_code );
 extern void thread_timeout(void);
 extern void wake_up( struct object *obj, int max );
 
-#define GET_ERROR()     (current->error)
-#define SET_ERROR(err)  (current->error = (err))
-#define CLEAR_ERROR()   (current->error = 0)
+static inline int get_error(void)       { return current->error; }
+static inline void set_error( int err ) { current->error = err; }
+static inline void clear_error(void)    { set_error(0); }
 
 #endif  /* __WINE_SERVER_THREAD_H */

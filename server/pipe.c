@@ -21,6 +21,7 @@
 
 #include "handle.h"
 #include "thread.h"
+#include "request.h"
 
 enum side { READ_SIDE, WRITE_SIDE };
 
@@ -43,6 +44,7 @@ static void pipe_destroy( struct object *obj );
 
 static const struct object_ops pipe_ops =
 {
+    sizeof(struct pipe),
     pipe_dump,
     pipe_add_queue,
     pipe_remove_queue,
@@ -56,9 +58,26 @@ static const struct object_ops pipe_ops =
 };
 
 
+static struct pipe *create_pipe_side( int fd, int side )
+{
+    struct pipe *pipe;
+
+    if ((pipe = alloc_object( &pipe_ops )))
+    {
+        pipe->select.fd      = fd;
+        pipe->select.func    = default_select_event;
+        pipe->select.private = pipe;
+        pipe->other          = NULL;
+        pipe->side           = side;
+        register_select_user( &pipe->select );
+    }
+    return pipe;
+}
+
 static int create_pipe( struct object *obj[2] )
 {
-    struct pipe *newpipe[2];
+    struct pipe *read_pipe;
+    struct pipe *write_pipe;
     int fd[2];
 
     if (pipe( fd ) == -1)
@@ -66,37 +85,21 @@ static int create_pipe( struct object *obj[2] )
         file_set_error();
         return 0;
     }
-    if (!(newpipe[0] = mem_alloc( sizeof(struct pipe) )))
+    if ((read_pipe = create_pipe_side( fd[0], READ_SIDE )))
     {
-        close( fd[0] );
-        close( fd[1] );
-        return 0;
+        if ((write_pipe = create_pipe_side( fd[1], WRITE_SIDE )))
+        {
+            write_pipe->other = read_pipe;
+            read_pipe->other  = write_pipe;
+            obj[0] = &read_pipe->obj;
+            obj[1] = &write_pipe->obj;
+            return 1;
+        }
+        release_object( read_pipe );
     }
-    if (!(newpipe[1] = mem_alloc( sizeof(struct pipe) )))
-    {
-        close( fd[0] );
-        close( fd[1] );
-        free( newpipe[0] );
-        return 0;
-    }
-    init_object( &newpipe[0]->obj, &pipe_ops, NULL );
-    init_object( &newpipe[1]->obj, &pipe_ops, NULL );
-    newpipe[0]->select.fd      = fd[0];
-    newpipe[0]->select.func    = default_select_event;
-    newpipe[0]->select.private = newpipe[0];
-    newpipe[0]->other          = newpipe[1];
-    newpipe[0]->side           = READ_SIDE;
-    newpipe[1]->select.fd      = fd[1];
-    newpipe[1]->select.func    = default_select_event;
-    newpipe[1]->select.private = newpipe[1];
-    newpipe[1]->other          = newpipe[0];
-    newpipe[1]->side           = WRITE_SIDE;
-    obj[0] = &newpipe[0]->obj;
-    obj[1] = &newpipe[1]->obj;
-    register_select_user( &newpipe[0]->select );
-    register_select_user( &newpipe[1]->select );
-    CLEAR_ERROR();
-    return 1;
+    close( fd[0] );
+    close( fd[1] );
+    return 0;
 }
 
 static void pipe_dump( struct object *obj, int verbose )
@@ -157,12 +160,12 @@ static int pipe_get_read_fd( struct object *obj )
 
     if (!pipe->other)
     {
-        SET_ERROR( ERROR_BROKEN_PIPE );
+        set_error( ERROR_BROKEN_PIPE );
         return -1;
     }
     if (pipe->side != READ_SIDE)  /* FIXME: should not be necessary */
     {
-        SET_ERROR( ERROR_ACCESS_DENIED );
+        set_error( ERROR_ACCESS_DENIED );
         return -1;
     }
     return dup( pipe->select.fd );
@@ -175,12 +178,12 @@ static int pipe_get_write_fd( struct object *obj )
 
     if (!pipe->other)
     {
-        SET_ERROR( ERROR_BROKEN_PIPE );
+        set_error( ERROR_BROKEN_PIPE );
         return -1;
     }
     if (pipe->side != WRITE_SIDE)  /* FIXME: should not be necessary */
     {
-        SET_ERROR( ERROR_ACCESS_DENIED );
+        set_error( ERROR_ACCESS_DENIED );
         return -1;
     }
     return dup( pipe->select.fd );
@@ -201,7 +204,6 @@ static void pipe_destroy( struct object *obj )
     if (pipe->other) pipe->other->other = NULL;
     unregister_select_user( &pipe->select );
     close( pipe->select.fd );
-    free( pipe );
 }
 
 /* create an anonymous pipe */
@@ -225,5 +227,5 @@ DECL_HANDLER(create_pipe)
         release_object( obj[0] );
         release_object( obj[1] );
     }
-    send_reply( current, -1, 1, &reply, sizeof(reply) );
+    add_reply_data( current, &reply, sizeof(reply) );
 }

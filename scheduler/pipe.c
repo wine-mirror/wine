@@ -7,7 +7,6 @@
 #include <assert.h>
 #include "winerror.h"
 #include "winbase.h"
-#include "server/request.h"
 #include "server.h"
 
 

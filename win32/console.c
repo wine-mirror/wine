@@ -43,10 +43,8 @@
 #include "winerror.h"
 #include "wincon.h"
 #include "heap.h"
-#include "debugtools.h"
-
-#include "server/request.h"
 #include "server.h"
+#include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(console)
 
@@ -65,7 +63,7 @@ static BOOL CONSOLE_GetInfo( HANDLE handle, struct get_console_info_reply *reply
 
     req.handle = handle;
     CLIENT_SendRequest( REQ_GET_CONSOLE_INFO, -1, 1, &req, sizeof(req) );
-    return !CLIENT_WaitSimpleReply( reply, sizeof(*reply), NULL );
+    return !CLIENT_WaitReply( NULL, NULL, 1, reply, sizeof(*reply) );
 }
 
 /****************************************************************************
@@ -451,8 +449,8 @@ HANDLE CONSOLE_OpenHandle( BOOL output, DWORD access, LPSECURITY_ATTRIBUTES sa )
     req.inherit = (sa && (sa->nLength>=sizeof(*sa)) && sa->bInheritHandle);
     CLIENT_SendRequest( REQ_OPEN_CONSOLE, -1, 1, &req, sizeof(req) );
     SetLastError(0);
-    CLIENT_WaitSimpleReply( &reply, sizeof(reply), NULL );
-    return reply.handle;
+    if (!CLIENT_WaitSimpleReply( &reply, sizeof(reply), NULL )) return reply.handle;
+    return -1;
 }
 
 

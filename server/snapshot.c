@@ -17,6 +17,7 @@
 #include "handle.h"
 #include "process.h"
 #include "thread.h"
+#include "request.h"
 
 
 struct snapshot
@@ -32,6 +33,7 @@ static void snapshot_destroy( struct object *obj );
 
 static const struct object_ops snapshot_ops =
 {
+    sizeof(struct snapshot),
     snapshot_dump,
     no_add_queue,
     NULL,  /* should never get called */
@@ -46,18 +48,19 @@ static const struct object_ops snapshot_ops =
 
 
 /* create a new snapshot */
-static struct object *create_snapshot( int flags )
+static struct snapshot *create_snapshot( int flags )
 {
     struct snapshot *snapshot;
-    if (!(snapshot = mem_alloc( sizeof(*snapshot) ))) return NULL;
-    init_object( &snapshot->obj, &snapshot_ops, NULL );
-    if (flags & TH32CS_SNAPPROCESS)
-        snapshot->process = process_snap( &snapshot->process_count );
-    else
-        snapshot->process_count = 0;
 
-    snapshot->process_pos = 0;
-    return &snapshot->obj;
+    if ((snapshot = alloc_object( &snapshot_ops )))
+    {
+        if (flags & TH32CS_SNAPPROCESS)
+            snapshot->process = process_snap( &snapshot->process_count );
+        else
+            snapshot->process_count = 0;
+        snapshot->process_pos = 0;
+    }
+    return snapshot;
 }
 
 /* get the next process in the snapshot */
@@ -70,14 +73,14 @@ static int snapshot_next_process( int handle, int reset, struct next_process_rep
         return 0;
     if (!snapshot->process_count)
     {
-        SET_ERROR( ERROR_INVALID_PARAMETER );  /* FIXME */
+        set_error( ERROR_INVALID_PARAMETER );  /* FIXME */
         release_object( snapshot );
         return 0;
     }
     if (reset) snapshot->process_pos = 0;
     else if (snapshot->process_pos >= snapshot->process_count)
     {
-        SET_ERROR( ERROR_NO_MORE_FILES );
+        set_error( ERROR_NO_MORE_FILES );
         release_object( snapshot );
         return 0;
     }
@@ -108,27 +111,25 @@ static void snapshot_destroy( struct object *obj )
             release_object( snapshot->process[i].process );
         free( snapshot->process );
     }
-    free( snapshot );
 }
 
 /* create a snapshot */
 DECL_HANDLER(create_snapshot)
 {
-    struct object *obj;
-    struct create_snapshot_reply reply = { -1 };
+    struct snapshot *snapshot;
+    struct create_snapshot_reply *reply = push_reply_data( current, sizeof(*reply) );
 
-    if ((obj = create_snapshot( req->flags )))
+    if ((snapshot = create_snapshot( req->flags )))
     {
-        reply.handle = alloc_handle( current->process, obj, 0, req->inherit );
-        release_object( obj );
+        reply->handle = alloc_handle( current->process, snapshot, 0, req->inherit );
+        release_object( snapshot );
     }
-    send_reply( current, -1, 1, &reply, sizeof(reply) );
+    else reply->handle = -1;
 }
 
 /* get the next process from a snapshot */
 DECL_HANDLER(next_process)
 {
-    struct next_process_reply reply;
-    snapshot_next_process( req->handle, req->reset, &reply );
-    send_reply( current, -1, 1, &reply, sizeof(reply) );
+    struct next_process_reply *reply = push_reply_data( current, sizeof(*reply) );
+    snapshot_next_process( req->handle, req->reset, reply );
 }

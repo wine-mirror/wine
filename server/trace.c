@@ -1,10 +1,13 @@
-/* File generated automatically by tools/make_requests; DO NOT EDIT!! */
+/*
+ * Server request tracing
+ *
+ * Copyright (C) 1999 Alexandre Julliard
+ */
 
 #include <stdio.h>
 #include <sys/types.h>
 #include <sys/uio.h>
-#include "server.h"
-#include "thread.h"
+#include "request.h"
 
 static int dump_chars( void *ptr, int len )
 {
@@ -39,6 +42,11 @@ static int dump_ptrs( void *ptr, int len )
     fprintf( stderr, "}" );
     return len * sizeof(void*);
 }
+
+typedef int (*dump_func)( const void *req, int len );
+
+/* Everything below this line is generated automatically by tools/make_requests */
+/* ### make_requests begin ### */
 
 static int dump_new_process_request( struct new_process_request *req, int len )
 {
@@ -770,7 +778,6 @@ static int dump_debug_process_request( struct debug_process_request *req, int le
     fprintf( stderr, " pid=%p", req->pid );
     return (int)sizeof(*req);
 }
-typedef int (*dump_func)( void *req, int len );
 
 static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_new_process_request,
@@ -902,8 +909,7 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)0,
 };
 
-static const char * const req_names[REQ_NB_REQUESTS] =
-{
+static const char * const req_names[REQ_NB_REQUESTS] = {
     "new_process",
     "new_thread",
     "set_debug",
@@ -968,15 +974,19 @@ static const char * const req_names[REQ_NB_REQUESTS] =
     "debug_process",
 };
 
-void trace_request( enum request req, void *data, int len, int fd )
+/* ### make_requests end ### */
+/* Everything above this line is generated automatically by tools/make_requests */
+
+void trace_request( enum request req, int fd )
 {
-    int size;
+    int size, len;
     current->last_req = req;
     fprintf( stderr, "%08x: %s(", (unsigned int)current, req_names[req] );
-    size = req_dumpers[req]( data, len );
+    len = (char *)current->req_end - (char *)current->req_pos;
+    size = req_dumpers[req]( current->req_pos, len );
     if ((len -= size) > 0)
     {
-        unsigned char *ptr = (unsigned char *)data + size;
+        unsigned char *ptr = (unsigned char *)current->req_pos + size;
         while (len--) fprintf( stderr, ", %02x", *ptr++ );
     }
     if (fd != -1) fprintf( stderr, " ) fd=%d\n", fd );
@@ -994,29 +1004,22 @@ void trace_kill( int exit_code )
              (unsigned int)current, exit_code );
 }
 
-void trace_reply( struct thread *thread, int type, int pass_fd,
-                  struct iovec *vec, int veclen )
+void trace_reply( struct thread *thread, int pass_fd )
 {
-    static unsigned char buffer[MAX_MSG_LENGTH];
-
-    if (!thread) return;
+    struct header *head = thread->buffer;
+    int len = head->len - sizeof(*head);
     fprintf( stderr, "%08x: %s() = %d",
-             (unsigned int)thread, req_names[thread->last_req], type );
-    if (veclen)
+             (unsigned int)thread, req_names[thread->last_req], head->type );
+    if (len)
     {
-        unsigned char *p = buffer;
-        int len;
-        for (; veclen; veclen--, vec++)
-        {
-            memcpy( p, vec->iov_base, vec->iov_len );
-            p += vec->iov_len;
-        }
+        const unsigned char *data = (unsigned char *)(head + 1);
+        int res = 0;
 	fprintf( stderr, " {" );
-        len = p - buffer;
 	if (reply_dumpers[thread->last_req])
-	    len -= reply_dumpers[thread->last_req]( buffer, len );
-        p -= len;
-        while (len--) fprintf( stderr, ", %02x", *p++ );
+	    res = reply_dumpers[thread->last_req]( data, len );
+        len -= res;
+        data += res;
+        while (len--) fprintf( stderr, ", %02x", *data++ );
 	fprintf( stderr, " }" );
     }
     if (pass_fd != -1) fprintf( stderr, " fd=%d\n", pass_fd );

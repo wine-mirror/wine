@@ -13,6 +13,7 @@
 
 #include "handle.h"
 #include "thread.h"
+#include "request.h"
 
 struct event
 {
@@ -24,10 +25,10 @@ struct event
 static void event_dump( struct object *obj, int verbose );
 static int event_signaled( struct object *obj, struct thread *thread );
 static int event_satisfied( struct object *obj, struct thread *thread );
-static void event_destroy( struct object *obj );
 
 static const struct object_ops event_ops =
 {
+    sizeof(struct event),
     event_dump,
     add_queue,
     remove_queue,
@@ -37,23 +38,25 @@ static const struct object_ops event_ops =
     no_write_fd,
     no_flush,
     no_get_file_info,
-    event_destroy
+    no_destroy
 };
 
 
-static struct object *create_event( const char *name, int manual_reset, int initial_state )
+static struct event *create_event( const char *name, size_t len,
+                                   int manual_reset, int initial_state )
 {
     struct event *event;
 
-    if (!(event = (struct event *)create_named_object( name, &event_ops, sizeof(*event) )))
-        return NULL;
-    if (GET_ERROR() != ERROR_ALREADY_EXISTS)
+    if ((event = create_named_object( &event_ops, name, len )))
     {
-        /* initialize it if it didn't already exist */
-        event->manual_reset = manual_reset;
-        event->signaled     = initial_state;
+        if (get_error() != ERROR_ALREADY_EXISTS)
+        {
+            /* initialize it if it didn't already exist */
+            event->manual_reset = manual_reset;
+            event->signaled     = initial_state;
+        }
     }
-    return &event->obj;
+    return event;
 }
 
 static int pulse_event( int handle )
@@ -122,41 +125,28 @@ static int event_satisfied( struct object *obj, struct thread *thread )
     return 0;  /* Not abandoned */
 }
 
-static void event_destroy( struct object *obj )
-{
-    struct event *event = (struct event *)obj;
-    assert( obj->ops == &event_ops );
-    free( event );
-}
-
 /* create an event */
 DECL_HANDLER(create_event)
 {
-    struct create_event_reply reply = { -1 };
-    struct object *obj;
-    char *name = (char *)data;
-    if (!len) name = NULL;
-    else CHECK_STRING( "create_event", name, len );
+    size_t len = get_req_strlen();
+    struct create_event_reply *reply = push_reply_data( current, sizeof(*reply) );
+    struct event *event;
 
-    obj = create_event( name, req->manual_reset, req->initial_state );
-    if (obj)
+    if ((event = create_event( get_req_data(len+1), len, req->manual_reset, req->initial_state )))
     {
-        reply.handle = alloc_handle( current->process, obj, EVENT_ALL_ACCESS, req->inherit );
-        release_object( obj );
+        reply->handle = alloc_handle( current->process, event, EVENT_ALL_ACCESS, req->inherit );
+        release_object( event );
     }
-    send_reply( current, -1, 1, &reply, sizeof(reply) );
+    else reply->handle = -1;
 }
 
 /* open a handle to an event */
 DECL_HANDLER(open_event)
 {
-    struct open_event_reply reply;
-    char *name = (char *)data;
-    if (!len) name = NULL;
-    else CHECK_STRING( "open_event", name, len );
-
-    reply.handle = open_object( name, &event_ops, req->access, req->inherit );
-    send_reply( current, -1, 1, &reply, sizeof(reply) );
+    size_t len = get_req_strlen();
+    struct open_event_reply *reply = push_reply_data( current, sizeof(*reply) );
+    reply->handle = open_object( get_req_data( len + 1 ), len, &event_ops,
+                                 req->access, req->inherit );
 }
 
 /* do an event operation */
@@ -174,7 +164,6 @@ DECL_HANDLER(event_op)
         reset_event( req->handle );
         break;
     default:
-        fatal_protocol_error( "event_op: invalid operation %d\n", req->op );
+        fatal_protocol_error( "event_op: invalid operation" );
     }
-    send_reply( current, -1, 0 );
 }

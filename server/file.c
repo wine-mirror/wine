@@ -23,6 +23,7 @@
 
 #include "handle.h"
 #include "thread.h"
+#include "request.h"
 
 struct file
 {
@@ -51,6 +52,7 @@ static void file_destroy( struct object *obj );
 
 static const struct object_ops file_ops =
 {
+    sizeof(struct file),
     file_dump,
     file_add_queue,
     file_remove_queue,
@@ -86,123 +88,99 @@ static int check_sharing( const char *name, int hash, unsigned int access,
         existing_sharing &= file->sharing;
         existing_access |= file->access;
     }
-    if ((access & GENERIC_READ) && !(existing_sharing & FILE_SHARE_READ)) return 0;
-    if ((access & GENERIC_WRITE) && !(existing_sharing & FILE_SHARE_WRITE)) return 0;
-    if ((existing_access & GENERIC_READ) && !(sharing & FILE_SHARE_READ)) return 0;
-    if ((existing_access & GENERIC_WRITE) && !(sharing & FILE_SHARE_WRITE)) return 0;
+    if ((access & GENERIC_READ) && !(existing_sharing & FILE_SHARE_READ)) goto error;
+    if ((access & GENERIC_WRITE) && !(existing_sharing & FILE_SHARE_WRITE)) goto error;
+    if ((existing_access & GENERIC_READ) && !(sharing & FILE_SHARE_READ)) goto error;
+    if ((existing_access & GENERIC_WRITE) && !(sharing & FILE_SHARE_WRITE)) goto error;
     return 1;
+ error:
+    set_error( ERROR_SHARING_VIOLATION );
+    return 0;
 }
 
-static struct object *create_file( int fd, const char *name, unsigned int access,
-                                   unsigned int sharing, int create, unsigned int attrs )
+static struct file *create_file_for_fd( int fd, unsigned int access, unsigned int sharing,
+                                        unsigned int attrs )
 {
     struct file *file;
-    int hash = 0;
-
-    if (fd == -1)
+    if ((file = alloc_object( &file_ops )))
     {
-        int flags;
-        struct stat st;
-
-        if (!name)
-        {
-            SET_ERROR( ERROR_INVALID_PARAMETER );
-            return NULL;
-        }
-
-        /* check sharing mode */
-        hash = get_name_hash( name );
-        if (!check_sharing( name, hash, access, sharing ))
-        {
-            SET_ERROR( ERROR_SHARING_VIOLATION );
-            return NULL;
-        }
-
-        switch(create)
-        {
-        case CREATE_NEW:        flags = O_CREAT | O_EXCL; break;
-        case CREATE_ALWAYS:     flags = O_CREAT | O_TRUNC; break;
-        case OPEN_ALWAYS:       flags = O_CREAT; break;
-        case TRUNCATE_EXISTING: flags = O_TRUNC; break;
-        case OPEN_EXISTING:     flags = 0; break;
-        default:                SET_ERROR( ERROR_INVALID_PARAMETER ); return NULL;
-        }
-        switch(access & (GENERIC_READ | GENERIC_WRITE))
-        {
-        case 0: break;
-        case GENERIC_READ:  flags |= O_RDONLY; break;
-        case GENERIC_WRITE: flags |= O_WRONLY; break;
-        case GENERIC_READ|GENERIC_WRITE: flags |= O_RDWR; break;
-        }
-
-        /* FIXME: should set error to ERROR_ALREADY_EXISTS if file existed before */
-        if ((fd = open( name, flags | O_NONBLOCK,
-                        (attrs & FILE_ATTRIBUTE_READONLY) ? 0444 : 0666 )) == -1)
-        {
-            file_set_error();
-            return NULL;
-        }
-        /* Refuse to open a directory */
-        if (fstat( fd, &st ) == -1)
-        {
-            file_set_error();
-            close( fd );
-            return NULL;
-        }
-        if (S_ISDIR(st.st_mode))
-        {
-            SET_ERROR( ERROR_ACCESS_DENIED );
-            close( fd );
-            return NULL;
-        }            
+        file->name           = NULL;
+        file->next           = NULL;
+        file->select.fd      = fd;
+        file->select.func    = default_select_event;
+        file->select.private = file;
+        file->access         = access;
+        file->flags          = attrs;
+        file->sharing        = sharing;
+        register_select_user( &file->select );
     }
-    else
-    {
-        if ((fd = dup(fd)) == -1)
-        {
-            file_set_error();
-            return NULL;
-        }
-    }
-
-    if (!(file = mem_alloc( sizeof(*file) )))
-    {
-        close( fd );
-        return NULL;
-    }
-    if (name)
-    {
-        if (!(file->name = mem_alloc( strlen(name) + 1 )))
-        {
-            close( fd );
-            free( file );
-            return NULL;
-        }
-        strcpy( file->name, name );
-        file->next = file_hash[hash];
-        file_hash[hash] = file;
-    }
-    else
-    {
-        file->name = NULL;
-        file->next = NULL;
-    }
-    init_object( &file->obj, &file_ops, NULL );
-    file->select.fd      = fd;
-    file->select.func    = default_select_event;
-    file->select.private = file;
-    file->access         = access;
-    file->flags          = attrs;
-    file->sharing        = sharing;
-    register_select_user( &file->select );
-    CLEAR_ERROR();
-    return &file->obj;
+    return file;
 }
 
-/* Create a temp file for anonymous mappings */
-struct file *create_temp_file( int access )
+
+static struct file *create_file( const char *nameptr, size_t len, unsigned int access,
+                                 unsigned int sharing, int create, unsigned int attrs )
 {
     struct file *file;
+    int hash, flags;
+    struct stat st;
+    char *name;
+    int fd = -1;
+
+    if (!(name = mem_alloc( len + 1 ))) return NULL;
+    memcpy( name, nameptr, len );
+    name[len] = 0;
+
+    /* check sharing mode */
+    hash = get_name_hash( name );
+    if (!check_sharing( name, hash, access, sharing )) goto error;
+
+    switch(create)
+    {
+    case CREATE_NEW:        flags = O_CREAT | O_EXCL; break;
+    case CREATE_ALWAYS:     flags = O_CREAT | O_TRUNC; break;
+    case OPEN_ALWAYS:       flags = O_CREAT; break;
+    case TRUNCATE_EXISTING: flags = O_TRUNC; break;
+    case OPEN_EXISTING:     flags = 0; break;
+    default:                set_error( ERROR_INVALID_PARAMETER ); goto error;
+    }
+    switch(access & (GENERIC_READ | GENERIC_WRITE))
+    {
+    case 0: break;
+    case GENERIC_READ:  flags |= O_RDONLY; break;
+    case GENERIC_WRITE: flags |= O_WRONLY; break;
+    case GENERIC_READ|GENERIC_WRITE: flags |= O_RDWR; break;
+    }
+
+    /* FIXME: should set error to ERROR_ALREADY_EXISTS if file existed before */
+    if ((fd = open( name, flags | O_NONBLOCK,
+                    (attrs & FILE_ATTRIBUTE_READONLY) ? 0444 : 0666 )) == -1)
+        goto file_error;
+    /* refuse to open a directory */
+    if (fstat( fd, &st ) == -1) goto file_error;
+    if (S_ISDIR(st.st_mode))
+    {
+        set_error( ERROR_ACCESS_DENIED );
+        goto error;
+    }            
+
+    if (!(file = create_file_for_fd( fd, access, sharing, attrs ))) goto error;
+    file->name = name;
+    file->next = file_hash[hash];
+    file_hash[hash] = file;
+    return file;
+
+ file_error:
+    file_set_error();
+ error:
+    if (fd != -1) close( fd );
+    free( name );
+    return NULL;
+}
+
+/* Create an anonymous Unix file */
+int create_anonymous_file(void)
+{
     char *name;
     int fd;
 
@@ -210,34 +188,28 @@ struct file *create_temp_file( int access )
     {
         if (!(name = tmpnam(NULL)))
         {
-            SET_ERROR( ERROR_TOO_MANY_OPEN_FILES );
-            return NULL;
+            set_error( ERROR_TOO_MANY_OPEN_FILES );
+            return -1;
         }
         fd = open( name, O_CREAT | O_EXCL | O_RDWR, 0600 );
     } while ((fd == -1) && (errno == EEXIST));
     if (fd == -1)
     {
         file_set_error();
-        return NULL;
+        return -1;
     }
     unlink( name );
+    return fd;
+}
 
-    if (!(file = mem_alloc( sizeof(*file) )))
-    {
-        close( fd );
-        return NULL;
-    }
-    init_object( &file->obj, &file_ops, NULL );
-    file->name           = NULL;
-    file->next           = NULL;
-    file->select.fd      = fd;
-    file->select.func    = default_select_event;
-    file->select.private = file;
-    file->access         = access;
-    file->flags          = 0;
-    file->sharing        = 0;
-    register_select_user( &file->select );
-    CLEAR_ERROR();
+/* Create a temp file for anonymous mappings */
+struct file *create_temp_file( int access )
+{
+    struct file *file;
+    int fd;
+
+    if ((fd = create_anonymous_file()) != -1) return NULL;
+    if (!(file = create_file_for_fd( fd, access, 0, 0 ))) close( fd );
     return file;
 }
 
@@ -245,8 +217,8 @@ static void file_dump( struct object *obj, int verbose )
 {
     struct file *file = (struct file *)obj;
     assert( obj->ops == &file_ops );
-    printf( "File fd=%d flags=%08x name='%s'\n",
-            file->select.fd, file->flags, file->name );
+    fprintf( stderr, "File fd=%d flags=%08x name='%s'\n",
+             file->select.fd, file->flags, file->name );
 }
 
 static int file_add_queue( struct object *obj, struct wait_queue_entry *entry )
@@ -368,7 +340,6 @@ static void file_destroy( struct object *obj )
     }
     unregister_select_user( &file->select );
     close( file->select.fd );
-    free( file );
 }
 
 /* set the last error depending on errno */
@@ -376,22 +347,22 @@ void file_set_error(void)
 {
     switch (errno)
     {
-    case EAGAIN:    SET_ERROR( ERROR_SHARING_VIOLATION ); break;
-    case EBADF:     SET_ERROR( ERROR_INVALID_HANDLE ); break;
-    case ENOSPC:    SET_ERROR( ERROR_HANDLE_DISK_FULL ); break;
+    case EAGAIN:    set_error( ERROR_SHARING_VIOLATION ); break;
+    case EBADF:     set_error( ERROR_INVALID_HANDLE ); break;
+    case ENOSPC:    set_error( ERROR_HANDLE_DISK_FULL ); break;
     case EACCES:
-    case EPERM:     SET_ERROR( ERROR_ACCESS_DENIED ); break;
-    case EROFS:     SET_ERROR( ERROR_WRITE_PROTECT ); break;
-    case EBUSY:     SET_ERROR( ERROR_LOCK_VIOLATION ); break;
-    case ENOENT:    SET_ERROR( ERROR_FILE_NOT_FOUND ); break;
-    case EISDIR:    SET_ERROR( ERROR_CANNOT_MAKE ); break;
+    case EPERM:     set_error( ERROR_ACCESS_DENIED ); break;
+    case EROFS:     set_error( ERROR_WRITE_PROTECT ); break;
+    case EBUSY:     set_error( ERROR_LOCK_VIOLATION ); break;
+    case ENOENT:    set_error( ERROR_FILE_NOT_FOUND ); break;
+    case EISDIR:    set_error( ERROR_CANNOT_MAKE ); break;
     case ENFILE:
-    case EMFILE:    SET_ERROR( ERROR_NO_MORE_FILES ); break;
-    case EEXIST:    SET_ERROR( ERROR_FILE_EXISTS ); break;
-    case EINVAL:    SET_ERROR( ERROR_INVALID_PARAMETER ); break;
-    case ESPIPE:    SET_ERROR( ERROR_SEEK ); break;
-    case ENOTEMPTY: SET_ERROR( ERROR_DIR_NOT_EMPTY ); break;
-    default:        perror("file_set_error"); SET_ERROR( ERROR_UNKNOWN ); break;
+    case EMFILE:    set_error( ERROR_NO_MORE_FILES ); break;
+    case EEXIST:    set_error( ERROR_FILE_EXISTS ); break;
+    case EINVAL:    set_error( ERROR_INVALID_PARAMETER ); break;
+    case ESPIPE:    set_error( ERROR_SEEK ); break;
+    case ENOTEMPTY: set_error( ERROR_DIR_NOT_EMPTY ); break;
+    default:        perror("file_set_error"); set_error( ERROR_UNKNOWN ); break;
     }
 }
 
@@ -415,7 +386,7 @@ static int set_file_pointer( int handle, int *low, int *high, int whence )
     if (*high)
     {
         fprintf( stderr, "set_file_pointer: offset > 4Gb not supported yet\n" );
-        SET_ERROR( ERROR_INVALID_PARAMETER );
+        set_error( ERROR_INVALID_PARAMETER );
         return 0;
     }
 
@@ -425,7 +396,7 @@ static int set_file_pointer( int handle, int *low, int *high, int whence )
     {
         /* Check for seek before start of file */
         if ((errno == EINVAL) && (whence != SEEK_SET) && (*low < 0))
-            SET_ERROR( ERROR_NEGATIVE_SEEK );
+            set_error( ERROR_NEGATIVE_SEEK );
         else
             file_set_error();
         release_object( file );
@@ -462,7 +433,7 @@ int grow_file( struct file *file, int size_high, int size_low )
 
     if (size_high)
     {
-        SET_ERROR( ERROR_INVALID_PARAMETER );
+        set_error( ERROR_INVALID_PARAMETER );
         return 0;
     }
     if (fstat( file->select.fd, &st ) == -1)
@@ -517,19 +488,28 @@ static int file_unlock( struct file *file, int offset_high, int offset_low,
 /* create a file */
 DECL_HANDLER(create_file)
 {
-    struct create_file_reply reply = { -1 };
-    struct object *obj;
-    char *name = (char *)data;
-    if (!len) name = NULL;
-    else CHECK_STRING( "create_file", name, len );
+    struct create_file_reply *reply = push_reply_data( current, sizeof(*reply) );
+    struct file *file = NULL;
 
-    if ((obj = create_file( fd, name, req->access,
-                            req->sharing, req->create, req->attrs )) != NULL)
+    if (fd == -1)
     {
-        reply.handle = alloc_handle( current->process, obj, req->access, req->inherit );
-        release_object( obj );
+        size_t len = get_req_strlen();
+        file = create_file( get_req_data( len + 1), len, req->access,
+                            req->sharing, req->create, req->attrs );
     }
-    send_reply( current, -1, 1, &reply, sizeof(reply) );
+    else
+    {
+        if ((fd = dup(fd)) == -1)
+            file_set_error();
+        else
+            file = create_file_for_fd( fd, req->access, req->sharing, req->attrs );
+    }
+    if (file)
+    {
+        reply->handle = alloc_handle( current->process, file, req->access, req->inherit );
+        release_object( file );
+    }
+    else reply->handle = -1;
 }
 
 /* get a Unix fd to read from a file */
@@ -544,7 +524,7 @@ DECL_HANDLER(get_read_fd)
         release_object( obj );
     }
     else read_fd = -1;
-    send_reply( current, read_fd, 0 );
+    set_reply_fd( current, read_fd );
 }
 
 /* get a Unix fd to write to a file */
@@ -559,7 +539,7 @@ DECL_HANDLER(get_write_fd)
         release_object( obj );
     }
     else write_fd = -1;
-    send_reply( current, write_fd, 0 );
+    set_reply_fd( current, write_fd );
 }
 
 /* set a file current position */
@@ -569,14 +549,13 @@ DECL_HANDLER(set_file_pointer)
     reply.low = req->low;
     reply.high = req->high;
     set_file_pointer( req->handle, &reply.low, &reply.high, req->whence );
-    send_reply( current, -1, 1, &reply, sizeof(reply) );
+    add_reply_data( current, &reply, sizeof(reply) );
 }
 
 /* truncate (or extend) a file */
 DECL_HANDLER(truncate_file)
 {
     truncate_file( req->handle );
-    send_reply( current, -1, 0 );
 }
 
 /* flush a file buffers */
@@ -589,28 +568,25 @@ DECL_HANDLER(flush_file)
         obj->ops->flush( obj );
         release_object( obj );
     }
-    send_reply( current, -1, 0 );
 }
 
 /* set a file access and modification times */
 DECL_HANDLER(set_file_time)
 {
     set_file_time( req->handle, req->access_time, req->write_time );
-    send_reply( current, -1, 0 );
 }
 
 /* get a file information */
 DECL_HANDLER(get_file_info)
 {
     struct object *obj;
-    struct get_file_info_reply reply;
+    struct get_file_info_reply *reply = push_reply_data( current, sizeof(*reply) );
 
     if ((obj = get_handle_obj( current->process, req->handle, 0, NULL )))
     {
-        obj->ops->get_file_info( obj, &reply );
+        obj->ops->get_file_info( obj, reply );
         release_object( obj );
     }
-    send_reply( current, -1, 1, &reply, sizeof(reply) );
 }
 
 /* lock a region of a file */
@@ -624,7 +600,6 @@ DECL_HANDLER(lock_file)
                    req->count_high, req->count_low );
         release_object( file );
     }
-    send_reply( current, -1, 0 );
 }
 
 /* unlock a region of a file */
@@ -638,5 +613,4 @@ DECL_HANDLER(unlock_file)
                      req->count_high, req->count_low );
         release_object( file );
     }
-    send_reply( current, -1, 0 );
 }

@@ -11,6 +11,8 @@
 #error This file can only be used in the Wine server
 #endif
 
+#include <stdlib.h>
+
 struct process;
 struct object_ops;
 
@@ -25,7 +27,7 @@ extern struct object *get_handle_obj( struct process *process, int handle,
                                       unsigned int access, const struct object_ops *ops );
 extern int duplicate_handle( struct process *src, int src_handle, struct process *dst,
                              unsigned int access, int inherit, int options );
-extern int open_object( const char *name, const struct object_ops *ops,
+extern int open_object( const char *name, size_t len, const struct object_ops *ops,
                         unsigned int access, int inherit );
 extern struct object *alloc_handle_table( struct process *process, int count );
 extern struct object *copy_handle_table( struct process *process, struct process *parent );

@@ -16,6 +16,7 @@
 
 #include "handle.h"
 #include "thread.h"
+#include "request.h"
 
 struct mapping
 {
@@ -31,6 +32,7 @@ static void mapping_destroy( struct object *obj );
 
 static const struct object_ops mapping_ops =
 {
+    sizeof(struct mapping),
     mapping_dump,
     no_add_queue,
     NULL,  /* should never get called */
@@ -82,17 +84,16 @@ static void init_page_size(void)
 
 
 static struct object *create_mapping( int size_high, int size_low, int protect,
-                                      int handle, const char *name )
+                                      int handle, const char *name, size_t len )
 {
     struct mapping *mapping;
     int access = 0;
 
     if (!page_mask) init_page_size();
 
-    if (!(mapping = (struct mapping *)create_named_object( name, &mapping_ops,
-                                                           sizeof(*mapping) )))
+    if (!(mapping = create_named_object( &mapping_ops, name, len )))
         return NULL;
-    if (GET_ERROR() == ERROR_ALREADY_EXISTS)
+    if (get_error() == ERROR_ALREADY_EXISTS)
         return &mapping->obj;  /* Nothing else to do */
 
     if (protect & VPROT_READ) access |= GENERIC_READ;
@@ -115,7 +116,7 @@ static struct object *create_mapping( int size_high, int size_low, int protect,
     {
         if (!size_high && !size_low)
         {
-            SET_ERROR( ERROR_INVALID_PARAMETER );
+            set_error( ERROR_INVALID_PARAMETER );
             mapping->file = NULL;
             goto error;
         }
@@ -163,45 +164,39 @@ static void mapping_destroy( struct object *obj )
     struct mapping *mapping = (struct mapping *)obj;
     assert( obj->ops == &mapping_ops );
     if (mapping->file) release_object( mapping->file );
-    free( mapping );
 }
 
 /* create a file mapping */
 DECL_HANDLER(create_mapping)
 {
+    size_t len = get_req_strlen();
+    struct create_mapping_reply *reply = push_reply_data( current, sizeof(*reply) );
     struct object *obj;
-    struct create_mapping_reply reply = { -1 };
-    char *name = (char *)data;
-    if (!len) name = NULL;
-    else CHECK_STRING( "create_mapping", name, len );
 
     if ((obj = create_mapping( req->size_high, req->size_low,
-                               req->protect, req->handle, name )))
+                               req->protect, req->handle, get_req_data( len + 1 ), len )))
     {
         int access = FILE_MAP_ALL_ACCESS;
         if (!(req->protect & VPROT_WRITE)) access &= ~FILE_MAP_WRITE;
-        reply.handle = alloc_handle( current->process, obj, access, req->inherit );
+        reply->handle = alloc_handle( current->process, obj, access, req->inherit );
         release_object( obj );
     }
-    send_reply( current, -1, 1, &reply, sizeof(reply) );
+    else reply->handle = -1;
 }
 
 /* open a handle to a mapping */
 DECL_HANDLER(open_mapping)
 {
-    struct open_mapping_reply reply;
-    char *name = (char *)data;
-    if (!len) name = NULL;
-    else CHECK_STRING( "open_mapping", name, len );
-
-    reply.handle = open_object( name, &mapping_ops, req->access, req->inherit );
-    send_reply( current, -1, 1, &reply, sizeof(reply) );
+    size_t len = get_req_strlen();
+    struct open_mapping_reply *reply = push_reply_data( current, sizeof(*reply) );
+    reply->handle = open_object( get_req_data( len + 1 ), len, &mapping_ops,
+                                 req->access, req->inherit );
 }
 
 /* get a mapping information */
 DECL_HANDLER(get_mapping_info)
 {
-    struct get_mapping_info_reply reply;
-    int map_fd = get_mapping_info( req->handle, &reply );
-    send_reply( current, map_fd, 1, &reply, sizeof(reply) );
+    struct get_mapping_info_reply *reply = push_reply_data( current, sizeof(*reply) );
+    int map_fd = get_mapping_info( req->handle, reply );
+    set_reply_fd( current, map_fd );
 }

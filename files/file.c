@@ -43,7 +43,6 @@
 #include "wincon.h"
 #include "debug.h"
 
-#include "server/request.h"
 #include "server.h"
 
 DEFAULT_DEBUG_CHANNEL(file)

@@ -8,19 +8,16 @@
 #include <string.h>
 #include "winerror.h"
 #include "heap.h"
-#include "server/request.h"
 #include "server.h"
 
 
 /***********************************************************************
  *           CreateSemaphore32A   (KERNEL32.174)
  */
-HANDLE WINAPI CreateSemaphoreA( SECURITY_ATTRIBUTES *sa, LONG initial,
-                                    LONG max, LPCSTR name )
+HANDLE WINAPI CreateSemaphoreA( SECURITY_ATTRIBUTES *sa, LONG initial, LONG max, LPCSTR name )
 {
     struct create_semaphore_request req;
     struct create_semaphore_reply reply;
-    int len = name ? strlen(name) + 1 : 0;
 
     /* Check parameters */
 
@@ -30,11 +27,12 @@ HANDLE WINAPI CreateSemaphoreA( SECURITY_ATTRIBUTES *sa, LONG initial,
         return 0;
     }
 
+    if (!name) name = "";
     req.initial = (unsigned int)initial;
     req.max     = (unsigned int)max;
     req.inherit = (sa && (sa->nLength>=sizeof(*sa)) && sa->bInheritHandle);
 
-    CLIENT_SendRequest( REQ_CREATE_SEMAPHORE, -1, 2, &req, sizeof(req), name, len );
+    CLIENT_SendRequest( REQ_CREATE_SEMAPHORE, -1, 2, &req, sizeof(req), name, strlen(name)+1 );
     SetLastError(0);
     CLIENT_WaitSimpleReply( &reply, sizeof(reply), NULL );
     if (reply.handle == -1) return 0;

@@ -34,13 +34,13 @@ typedef struct _TEB
     WORD         pad1;           /*  2a */
     LPVOID      *tls_ptr;        /*  2c Pointer to TLS array */
     struct _PDB *process;        /*  30 owning process (used by NT3.51 applets)*/
-    void        *buffer;         /*  34 Buffer shared with server */
+    int          socket;         /*  34 Socket for server communication */
     DWORD        exit_code;      /*  38 Termination status */
     WORD         teb_sel;        /*  3c Selector to TEB */
     WORD         emu_sel;        /*  3e 80387 emulator selector */
-    void        *buffer_args;    /*  40 Current position of arguments in server buffer */
-    void        *buffer_res;     /*  44 Current position of result in server buffer */
-    void        *buffer_end;     /*  48 End of server buffer */
+    void        *buffer;         /*  40 Buffer shared with server */
+    void        *buffer_args;    /*  44 Current position of arguments in server buffer */
+    int          buffer_size;    /*  48 Size of server buffer */
     int          thread_errno;   /*  4c Per-thread errno (was: ring0_thread) */
     int          thread_h_errno; /*  50 Per-thread h_errno (was: ptr to tdbx structure) */
     void        *stack_base;     /*  54 Base of the stack */
@@ -69,7 +69,6 @@ typedef struct _TEB
     SYSLEVEL    *sys_mutex[4];   /* 1d8 Syslevel mutex pointers */
     DWORD        unknown6[2];    /* 1e8 Unknown */
     /* The following are Wine-specific fields */
-    int          socket;         /* Socket for server communication */
     unsigned int seq;            /* Server sequence number */
     void       (*startup)(void); /* Thread startup routine */
     struct _TEB *next;           /* Global thread list */

@@ -27,6 +27,7 @@
 #include "handle.h"
 #include "process.h"
 #include "thread.h"
+#include "request.h"
 
 struct screen_buffer;
 
@@ -72,6 +73,7 @@ static int console_get_info( struct object *obj, struct get_file_info_reply *rep
 
 static const struct object_ops console_input_ops =
 {
+    sizeof(struct console_input),
     console_input_dump,
     console_input_add_queue,
     console_input_remove_queue,
@@ -86,6 +88,7 @@ static const struct object_ops console_input_ops =
 
 static const struct object_ops screen_buffer_ops =
 {
+    sizeof(struct screen_buffer),
     screen_buffer_dump,
     screen_buffer_add_queue,
     screen_buffer_remove_queue,
@@ -99,76 +102,76 @@ static const struct object_ops screen_buffer_ops =
 };
 
 
-static int create_console( int fd, struct object *obj[2] )
+static struct object *create_console_input( int fd )
 {
     struct console_input *console_input;
-    struct screen_buffer *screen_buffer;
-    int read_fd, write_fd;
 
-    if ((read_fd = (fd != -1) ? dup(fd) : dup(0)) == -1)
+    if ((fd = (fd != -1) ? dup(fd) : dup(0)) == -1)
     {
         file_set_error();
-        return 0;
+        return NULL;
     }
-    if ((write_fd = (fd != -1) ? dup(fd) : dup(1)) == -1)
+    if ((console_input = alloc_object( &console_input_ops )))
+    {
+        console_input->select.fd      = fd;
+        console_input->select.func    = default_select_event;
+        console_input->select.private = console_input;
+        console_input->mode           = ENABLE_PROCESSED_INPUT | ENABLE_LINE_INPUT |
+                                        ENABLE_ECHO_INPUT | ENABLE_MOUSE_INPUT;
+        console_input->output         = NULL;
+        console_input->recnum         = 0;
+        console_input->records        = NULL;
+        register_select_user( &console_input->select );
+        return &console_input->obj;
+    }
+    close( fd );
+    return NULL;
+}
+
+static struct object *create_console_output( int fd, struct object *input )
+{
+    struct console_input *console_input = (struct console_input *)input;
+    struct screen_buffer *screen_buffer;
+
+    if ((fd = (fd != -1) ? dup(fd) : dup(1)) == -1)
     {
         file_set_error();
-        close( read_fd );
-        return 0;
+        return NULL;
     }
-    if (!(console_input = mem_alloc( sizeof(struct console_input) )))
+    if ((screen_buffer = alloc_object( &screen_buffer_ops )))
     {
-        close( read_fd );
-        close( write_fd );
-        return 0;
+        screen_buffer->select.fd      = fd;
+        screen_buffer->select.func    = default_select_event;
+        screen_buffer->select.private = screen_buffer;
+        screen_buffer->mode           = ENABLE_PROCESSED_OUTPUT | ENABLE_WRAP_AT_EOL_OUTPUT;
+        screen_buffer->input          = console_input;
+        screen_buffer->cursor_size    = 100;
+        screen_buffer->cursor_visible = 1;
+        screen_buffer->pid            = 0;
+        screen_buffer->title          = strdup( "Wine console" );
+        register_select_user( &screen_buffer->select );
+        console_input->output = screen_buffer;
+        return &screen_buffer->obj;
     }
-    if (!(screen_buffer = mem_alloc( sizeof(struct screen_buffer) )))
-    {
-        close( read_fd );
-        close( write_fd );
-        free( console_input );
-        return 0;
-    }
-    init_object( &console_input->obj, &console_input_ops, NULL );
-    init_object( &screen_buffer->obj, &screen_buffer_ops, NULL );
-    console_input->select.fd      = read_fd;
-    console_input->select.func    = default_select_event;
-    console_input->select.private = console_input;
-    console_input->mode           = ENABLE_PROCESSED_INPUT | ENABLE_LINE_INPUT |
-                                    ENABLE_ECHO_INPUT | ENABLE_MOUSE_INPUT;
-    console_input->output         = screen_buffer;
-    console_input->recnum         = 0;
-    console_input->records        = NULL;
-    screen_buffer->select.fd      = write_fd;
-    screen_buffer->select.func    = default_select_event;
-    screen_buffer->select.private = screen_buffer;
-    screen_buffer->mode           = ENABLE_PROCESSED_OUTPUT | ENABLE_WRAP_AT_EOL_OUTPUT;
-    screen_buffer->input          = console_input;
-    screen_buffer->cursor_size    = 100;
-    screen_buffer->cursor_visible = 1;
-    screen_buffer->pid            = 0;
-    screen_buffer->title          = strdup( "Wine console" );
-    register_select_user( &console_input->select );
-    register_select_user( &screen_buffer->select );
-    CLEAR_ERROR();
-    obj[0] = &console_input->obj;
-    obj[1] = &screen_buffer->obj;
-    return 1;
+    close( fd );
+    return NULL;
 }
 
 /* allocate a console for this process */
 int alloc_console( struct process *process )
 {
-    struct object *obj[2];
     if (process->console_in || process->console_out)
     {
-        SET_ERROR( ERROR_ACCESS_DENIED );
+        set_error( ERROR_ACCESS_DENIED );
         return 0;
     }
-    if (!create_console( -1, obj )) return 0;
-    process->console_in  = obj[0];
-    process->console_out = obj[1];
-    return 1;
+    if ((process->console_in = create_console_input( -1 )))
+    {
+        if ((process->console_out = create_console_output( -1, process->console_in )))
+            return 1;
+        release_object( process->console_in );
+    }
+    return 0;
 }
 
 /* free the console for this process */
@@ -203,7 +206,7 @@ static int set_console_fd( int handle, int fd, int pid )
     }
     else
     {
-        SET_ERROR( ERROR_INVALID_HANDLE );
+        set_error( ERROR_INVALID_HANDLE );
         release_object( obj );
         return 0;
     }
@@ -258,7 +261,7 @@ static int get_console_mode( int handle, int *mode )
         *mode = ((struct screen_buffer *)obj)->mode;
         ret = 1;
     }
-    else SET_ERROR( ERROR_INVALID_HANDLE );
+    else set_error( ERROR_INVALID_HANDLE );
     release_object( obj );
     return ret;
 }
@@ -280,13 +283,14 @@ static int set_console_mode( int handle, int mode )
         ((struct screen_buffer *)obj)->mode = mode;
         ret = 1;
     }
-    else SET_ERROR( ERROR_INVALID_HANDLE );
+    else set_error( ERROR_INVALID_HANDLE );
     release_object( obj );
     return ret;
 }
 
 /* set misc console information (output handle only) */
-static int set_console_info( int handle, struct set_console_info_request *req, const char *title )
+static int set_console_info( int handle, struct set_console_info_request *req,
+                             const char *title, size_t len )
 {
     struct screen_buffer *console;
     if (!(console = (struct screen_buffer *)get_handle_obj( current->process, handle,
@@ -299,8 +303,14 @@ static int set_console_info( int handle, struct set_console_info_request *req, c
     }
     if (req->mask & SET_CONSOLE_INFO_TITLE)
     {
-        if (console->title) free( console->title );
-        console->title = strdup( title );
+        char *new_title = mem_alloc( len + 1 );
+        if (new_title)
+        {
+            memcpy( new_title, title, len );
+            new_title[len] = 0;
+            if (console->title) free( console->title );
+            console->title = new_title;
+        }
     }
     release_object( console );
     return 1;
@@ -333,7 +343,7 @@ static int write_console_input( int handle, int count, INPUT_RECORD *records )
     if (!(new_rec = realloc( console->records,
                              (console->recnum + count) * sizeof(INPUT_RECORD) )))
     {
-        SET_ERROR( ERROR_NOT_ENOUGH_MEMORY );
+        set_error( ERROR_NOT_ENOUGH_MEMORY );
         release_object( console );
         return -1;
     }
@@ -348,14 +358,13 @@ static int write_console_input( int handle, int count, INPUT_RECORD *records )
 static int read_console_input( int handle, int count, int flush )
 {
     struct console_input *console;
-    struct read_console_input_reply reply;
+    struct read_console_input_reply *reply = push_reply_data( current, sizeof(*reply) );
 
     if (!(console = (struct console_input *)get_handle_obj( current->process, handle,
                                                             GENERIC_READ, &console_input_ops )))
         return -1;
     if ((count < 0) || (count > console->recnum)) count = console->recnum;
-    send_reply( current, -1, 2, &reply, sizeof(reply),
-                console->records, count * sizeof(INPUT_RECORD) );
+    add_reply_data( current, console->records, count * sizeof(INPUT_RECORD) );
     if (flush)
     {
         int i;
@@ -445,7 +454,6 @@ static void console_input_destroy( struct object *obj )
     unregister_select_user( &console->select );
     close( console->select.fd );
     if (console->output) console->output->input = NULL;
-    free( console );
 }
 
 static void screen_buffer_dump( struct object *obj, int verbose )
@@ -511,101 +519,94 @@ static void screen_buffer_destroy( struct object *obj )
     if (console->input) console->input->output = NULL;
     if (console->pid) kill( console->pid, SIGTERM );
     if (console->title) free( console->title );
-    free( console );
 }
 
 /* allocate a console for the current process */
 DECL_HANDLER(alloc_console)
 {
-    struct alloc_console_reply reply = { -1, -1 };
+    struct alloc_console_reply *reply = push_reply_data( current, sizeof(*reply) );
+    int in = -1, out = -1;
 
     if (!alloc_console( current->process )) goto done;
 
-    if ((reply.handle_in = alloc_handle( current->process, current->process->console_in,
-                                         req->access, req->inherit )) != -1)
+    if ((in = alloc_handle( current->process, current->process->console_in,
+                            req->access, req->inherit )) != -1)
     {
-        if ((reply.handle_out = alloc_handle( current->process, current->process->console_out,
-                                              req->access, req->inherit )) != -1)
+        if ((out = alloc_handle( current->process, current->process->console_out,
+                                 req->access, req->inherit )) != -1)
             goto done;  /* everything is fine */
-        close_handle( current->process, reply.handle_in );
-        reply.handle_in = -1;
+        close_handle( current->process, in );
+        in = -1;
     }
     free_console( current->process );
 
  done:
-    send_reply( current, -1, 1, &reply, sizeof(reply) );
+    reply->handle_in  = in;
+    reply->handle_out = out;
 }
 
 /* free the console of the current process */
 DECL_HANDLER(free_console)
 {
     free_console( current->process );
-    send_reply( current, -1, 0 );
 }
 
 /* open a handle to the process console */
 DECL_HANDLER(open_console)
 {
-    struct open_console_reply reply = { -1 };
+    struct open_console_reply *reply = push_reply_data( current, sizeof(*reply) );
     struct object *obj= req->output ? current->process->console_out : current->process->console_in;
 
-    if (obj) reply.handle = alloc_handle( current->process, obj, req->access, req->inherit );
-    send_reply( current, -1, 1, &reply, sizeof(reply) );
+    if (obj) reply->handle = alloc_handle( current->process, obj, req->access, req->inherit );
+    else set_error( ERROR_ACCESS_DENIED );
 }
 
 /* set info about a console (output only) */
 DECL_HANDLER(set_console_info)
 {
-    char *name = (char *)data;
-    if (!len) name = NULL;
-    else CHECK_STRING( "set_console_info", name, len );
-    set_console_info( req->handle, req, name );
-    send_reply( current, -1, 0 );
+    size_t len = get_req_strlen();
+    set_console_info( req->handle, req, get_req_data( len + 1 ), len );
 }
 
 /* get info about a console (output only) */
 DECL_HANDLER(get_console_info)
 {
-    struct get_console_info_reply reply;
+    struct get_console_info_reply *reply = push_reply_data( current, sizeof(*reply) );
     const char *title;
-    get_console_info( req->handle, &reply, &title );
-    send_reply( current, -1, 2, &reply, sizeof(reply),
-                title, title ? strlen(title)+1 : 0 );
+    get_console_info( req->handle, reply, &title );
+    if (title) add_reply_data( current, title, strlen(title) + 1 );
 }
 
 /* set a console fd */
 DECL_HANDLER(set_console_fd)
 {
     set_console_fd( req->handle, fd, req->pid );
-    send_reply( current, -1, 0 );
 }
 
 /* get a console mode (input or output) */
 DECL_HANDLER(get_console_mode)
 {
-    struct get_console_mode_reply reply;
-    get_console_mode( req->handle, &reply.mode );
-    send_reply( current, -1, 1, &reply, sizeof(reply) );
+    struct get_console_mode_reply *reply = push_reply_data( current, sizeof(*reply) );
+    get_console_mode( req->handle, &reply->mode );
 }
 
 /* set a console mode (input or output) */
 DECL_HANDLER(set_console_mode)
 {
     set_console_mode( req->handle, req->mode );
-    send_reply( current, -1, 0 );
 }
 
 /* add input records to a console input queue */
 DECL_HANDLER(write_console_input)
 {
-    struct write_console_input_reply reply;
-    INPUT_RECORD *records = (INPUT_RECORD *)data;
+    struct write_console_input_reply *reply = push_reply_data( current, sizeof(*reply) );
 
-    if (len != req->count * sizeof(INPUT_RECORD))
-        fatal_protocol_error( "write_console_input: bad length %d for %d records\n",
-                              len, req->count );
-    reply.written = write_console_input( req->handle, req->count, records );
-    send_reply( current, -1, 1, &reply, sizeof(reply) );
+    if (check_req_data( req->count * sizeof(INPUT_RECORD)))
+    {
+        INPUT_RECORD *records = get_req_data( req->count * sizeof(INPUT_RECORD) );
+        reply->written = write_console_input( req->handle, req->count, records );
+    }
+    else fatal_protocol_error( "write_console_input: bad length" );
 }
 
 /* fetch input records from a console input queue */

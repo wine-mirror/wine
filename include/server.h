@@ -15,11 +15,10 @@ struct header
 {
     unsigned int  len;     /* total msg length (including this header) */
     unsigned int  type;    /* msg type */
-    unsigned int  seq;     /* sequence number */
 };
 
-/* max msg length (not including the header) */
-#define MAX_MSG_LENGTH (16384 - sizeof(struct header))
+/* max msg length (including the header) */
+#define MAX_MSG_LENGTH  16384
 
 /* data structure used to pass an fd with sendmsg/recvmsg */
 struct cmsg_fd
@@ -29,10 +28,6 @@ struct cmsg_fd
     int type;  /* SCM_RIGHTS */
     int fd;    /* fd to pass */
 };
-
-/* request handler definition */
-#define DECL_HANDLER(name) \
-    void req_##name( struct name##_request *req, void *data, int len, int fd )
 
 /* Request structures */
 
@@ -855,12 +850,103 @@ struct debug_process_request
 };
 
 
-/* requests definitions */
-#include "server/request.h"
+/* Everything below this line is generated automatically by tools/make_requests */
+/* ### make_requests begin ### */
+
+enum request
+{
+    REQ_NEW_PROCESS,
+    REQ_NEW_THREAD,
+    REQ_SET_DEBUG,
+    REQ_INIT_PROCESS,
+    REQ_INIT_THREAD,
+    REQ_TERMINATE_PROCESS,
+    REQ_TERMINATE_THREAD,
+    REQ_GET_PROCESS_INFO,
+    REQ_SET_PROCESS_INFO,
+    REQ_GET_THREAD_INFO,
+    REQ_SET_THREAD_INFO,
+    REQ_SUSPEND_THREAD,
+    REQ_RESUME_THREAD,
+    REQ_DEBUGGER,
+    REQ_QUEUE_APC,
+    REQ_CLOSE_HANDLE,
+    REQ_GET_HANDLE_INFO,
+    REQ_SET_HANDLE_INFO,
+    REQ_DUP_HANDLE,
+    REQ_OPEN_PROCESS,
+    REQ_SELECT,
+    REQ_CREATE_EVENT,
+    REQ_EVENT_OP,
+    REQ_OPEN_EVENT,
+    REQ_CREATE_MUTEX,
+    REQ_RELEASE_MUTEX,
+    REQ_OPEN_MUTEX,
+    REQ_CREATE_SEMAPHORE,
+    REQ_RELEASE_SEMAPHORE,
+    REQ_OPEN_SEMAPHORE,
+    REQ_CREATE_FILE,
+    REQ_GET_READ_FD,
+    REQ_GET_WRITE_FD,
+    REQ_SET_FILE_POINTER,
+    REQ_TRUNCATE_FILE,
+    REQ_SET_FILE_TIME,
+    REQ_FLUSH_FILE,
+    REQ_GET_FILE_INFO,
+    REQ_LOCK_FILE,
+    REQ_UNLOCK_FILE,
+    REQ_CREATE_PIPE,
+    REQ_ALLOC_CONSOLE,
+    REQ_FREE_CONSOLE,
+    REQ_OPEN_CONSOLE,
+    REQ_SET_CONSOLE_FD,
+    REQ_GET_CONSOLE_MODE,
+    REQ_SET_CONSOLE_MODE,
+    REQ_SET_CONSOLE_INFO,
+    REQ_GET_CONSOLE_INFO,
+    REQ_WRITE_CONSOLE_INPUT,
+    REQ_READ_CONSOLE_INPUT,
+    REQ_CREATE_CHANGE_NOTIFICATION,
+    REQ_CREATE_MAPPING,
+    REQ_OPEN_MAPPING,
+    REQ_GET_MAPPING_INFO,
+    REQ_CREATE_DEVICE,
+    REQ_CREATE_SNAPSHOT,
+    REQ_NEXT_PROCESS,
+    REQ_WAIT_DEBUG_EVENT,
+    REQ_SEND_DEBUG_EVENT,
+    REQ_CONTINUE_DEBUG_EVENT,
+    REQ_DEBUG_PROCESS,
+    REQ_NB_REQUESTS
+};
+
+/* ### make_requests end ### */
+/* Everything above this line is generated automatically by tools/make_requests */
+
 
 /* client-side functions */
 
 #ifndef __WINE_SERVER__
+
+#include "thread.h"
+
+/* make space for some data in the server arguments buffer */
+static inline void *server_add_data( int len )
+{
+    void *old = NtCurrentTeb()->buffer_args;
+    NtCurrentTeb()->buffer_args = (char *)old + len;
+    return old;
+}
+
+/* maximum remaining size in the server arguments buffer */
+static inline int server_remaining(void)
+{
+    TEB *teb = NtCurrentTeb();
+    return (char *)teb->buffer + teb->buffer_size - (char *)teb->buffer_args;
+}
+
+extern unsigned int server_call( enum request req );
+extern unsigned int server_call_fd( enum request req, int *fd );
 
 /* client communication functions */
 extern void CLIENT_ProtocolError( const char *err, ... );

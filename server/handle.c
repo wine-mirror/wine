@@ -16,6 +16,7 @@
 #include "handle.h"
 #include "process.h"
 #include "thread.h"
+#include "request.h"
 
 struct handle_entry
 {
@@ -55,6 +56,7 @@ static void handle_table_destroy( struct object *obj );
 
 static const struct object_ops handle_table_ops =
 {
+    sizeof(struct handle_table),
     handle_table_dump,
     no_add_queue,
     NULL,  /* should never get called */
@@ -104,7 +106,6 @@ static void handle_table_destroy( struct object *obj )
         if (obj) release_object( obj );
     }
     free( table->entries );
-    free( table );
 }
 
 /* allocate a new handle table */
@@ -113,7 +114,7 @@ struct object *alloc_handle_table( struct process *process, int count )
     struct handle_table *table;
 
     if (count < MIN_HANDLE_ENTRIES) count = MIN_HANDLE_ENTRIES;
-    if (!(table = alloc_object( sizeof(*table), &handle_table_ops, NULL )))
+    if (!(table = alloc_object( &handle_table_ops )))
         return NULL;
     table->process = process;
     table->count   = count;
@@ -134,7 +135,7 @@ static int grow_handle_table( struct handle_table *table )
     count *= 2;
     if (!(new_entries = realloc( table->entries, count * sizeof(struct handle_entry) )))
     {
-        SET_ERROR( ERROR_OUTOFMEMORY );
+        set_error( ERROR_OUTOFMEMORY );
         return 0;
     }
     table->entries = new_entries;
@@ -216,7 +217,7 @@ static struct handle_entry *get_handle( struct process *process, int handle )
     return entry;
 
  error:
-    SET_ERROR( ERROR_INVALID_HANDLE );
+    set_error( ERROR_INVALID_HANDLE );
     return NULL;
 }
 
@@ -319,7 +320,7 @@ struct object *get_handle_obj( struct process *process, int handle,
         if (!(entry = get_handle( process, handle ))) return NULL;
         if ((entry->access & access) != access)
         {
-            SET_ERROR( ERROR_ACCESS_DENIED );
+            set_error( ERROR_ACCESS_DENIED );
             return NULL;
         }
         obj = entry->ptr;
@@ -327,7 +328,7 @@ struct object *get_handle_obj( struct process *process, int handle,
     }
     if (ops && (obj->ops != ops))
     {
-        SET_ERROR( ERROR_INVALID_HANDLE );  /* not the right type */
+        set_error( ERROR_INVALID_HANDLE );  /* not the right type */
         return NULL;
     }
     return grab_object( obj );
@@ -362,7 +363,7 @@ int duplicate_handle( struct process *src, int src_handle, struct process *dst,
         else  /* pseudo-handle, give it full access */
         {
             access = STANDARD_RIGHTS_ALL | SPECIFIC_RIGHTS_ALL;
-            CLEAR_ERROR();
+            clear_error();
         }
     }
     access &= ~RESERVED_ALL;
@@ -375,19 +376,19 @@ int duplicate_handle( struct process *src, int src_handle, struct process *dst,
 }
 
 /* open a new handle to an existing object */
-int open_object( const char *name, const struct object_ops *ops,
+int open_object( const char *name, size_t len, const struct object_ops *ops,
                  unsigned int access, int inherit )
 {
-    struct object *obj = find_object( name );
+    struct object *obj = find_object( name, len );
     if (!obj) 
     {
-        SET_ERROR( ERROR_FILE_NOT_FOUND );
+        set_error( ERROR_FILE_NOT_FOUND );
         return -1;
     }
     if (ops && obj->ops != ops)
     {
         release_object( obj );
-        SET_ERROR( ERROR_INVALID_HANDLE );  /* FIXME: not the right type */ 
+        set_error( ERROR_INVALID_HANDLE );  /* FIXME: not the right type */ 
         return -1;
     }
     return alloc_handle( current->process, obj, access, inherit );
@@ -397,22 +398,19 @@ int open_object( const char *name, const struct object_ops *ops,
 DECL_HANDLER(close_handle)
 {
     close_handle( current->process, req->handle );
-    send_reply( current, -1, 0 );
 }
 
 /* get information about a handle */
 DECL_HANDLER(get_handle_info)
 {
-    struct get_handle_info_reply reply;
-    reply.flags = set_handle_info( current->process, req->handle, 0, 0 );
-    send_reply( current, -1, 1, &reply, sizeof(reply) );
+    struct get_handle_info_reply *reply = push_reply_data( current, sizeof(*reply) );
+    reply->flags = set_handle_info( current->process, req->handle, 0, 0 );
 }
 
 /* set a handle information */
 DECL_HANDLER(set_handle_info)
 {
     set_handle_info( current->process, req->handle, req->mask, req->flags );
-    send_reply( current, -1, 0 );
 }
 
 /* duplicate a handle */
@@ -439,5 +437,5 @@ DECL_HANDLER(dup_handle)
             close_handle( src, req->src_handle );
         release_object( src );
     }
-    send_reply( current, -1, 1, &reply, sizeof(reply) );
+    add_reply_data( current, &reply, sizeof(reply) );
 }

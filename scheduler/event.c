@@ -9,7 +9,6 @@
 #include "winerror.h"
 #include "heap.h"
 #include "syslevel.h"
-#include "server/request.h"
 #include "server.h"
 
 
@@ -21,12 +20,12 @@ HANDLE WINAPI CreateEventA( SECURITY_ATTRIBUTES *sa, BOOL manual_reset,
 {
     struct create_event_request req;
     struct create_event_reply reply;
-    int len = name ? strlen(name) + 1 : 0;
 
+    if (!name) name = "";
     req.manual_reset = manual_reset;
     req.initial_state = initial_state;
     req.inherit = (sa && (sa->nLength>=sizeof(*sa)) && sa->bInheritHandle);
-    CLIENT_SendRequest( REQ_CREATE_EVENT, -1, 2, &req, sizeof(req), name, len );
+    CLIENT_SendRequest( REQ_CREATE_EVENT, -1, 2, &req, sizeof(req), name, strlen(name)+1 );
     SetLastError(0);
     CLIENT_WaitSimpleReply( &reply, sizeof(reply), NULL );
     if (reply.handle == -1) return 0;

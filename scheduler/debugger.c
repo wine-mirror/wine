@@ -6,7 +6,6 @@
 
 #include "process.h"
 #include "thread.h"
-#include "server/request.h"
 #include "server.h"
 #include "debugtools.h"
 

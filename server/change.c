@@ -13,6 +13,7 @@
 
 #include "handle.h"
 #include "thread.h"
+#include "request.h"
 
 struct change
 {
@@ -23,10 +24,10 @@ struct change
 
 static void change_dump( struct object *obj, int verbose );
 static int change_signaled( struct object *obj, struct thread *thread );
-static void change_destroy( struct object *obj );
 
 static const struct object_ops change_ops =
 {
+    sizeof(struct change),
     change_dump,
     add_queue,
     remove_queue,
@@ -36,15 +37,14 @@ static const struct object_ops change_ops =
     no_write_fd,
     no_flush,
     no_get_file_info,
-    change_destroy
+    no_destroy
 };
 
 
 static struct object *create_change_notification( int subtree, int filter )
 {
     struct change *change;
-    if (!(change = mem_alloc( sizeof(*change) ))) return NULL;
-    init_object( &change->obj, &change_ops, NULL );
+    if (!(change = alloc_object( &change_ops ))) return NULL;
     change->subtree = subtree;
     change->filter  = filter;
     return &change->obj;
@@ -65,24 +65,16 @@ static int change_signaled( struct object *obj, struct thread *thread )
     return 0;  /* never signaled for now */
 }
 
-static void change_destroy( struct object *obj )
-{
-    struct change *change = (struct change *)obj;
-    assert( obj->ops == &change_ops );
-    free( change );
-}
-
 /* create a change notification */
 DECL_HANDLER(create_change_notification)
 {
     struct object *obj;
-    struct create_change_notification_reply reply = { -1 };
+    struct create_change_notification_reply *reply = push_reply_data( current, sizeof(*reply) );
 
     if ((obj = create_change_notification( req->subtree, req->filter )))
     {
-        reply.handle = alloc_handle( current->process, obj,
-                                     STANDARD_RIGHTS_REQUIRED|SYNCHRONIZE, 0 );
+        reply->handle = alloc_handle( current->process, obj,
+                                      STANDARD_RIGHTS_REQUIRED|SYNCHRONIZE, 0 );
         release_object( obj );
     }
-    send_reply( current, -1, 1, &reply, sizeof(reply) );
 }

@@ -10,7 +10,6 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-#include "server.h"
 #include "object.h"
 #include "thread.h"
 

@@ -21,6 +21,7 @@
 
 #include "handle.h"
 #include "thread.h"
+#include "request.h"
 
 struct device
 {
@@ -30,10 +31,10 @@ struct device
 
 static void device_dump( struct object *obj, int verbose );
 static int device_get_info( struct object *obj, struct get_file_info_reply *reply );
-static void device_destroy( struct object *obj );
 
 static const struct object_ops device_ops =
 {
+    sizeof(struct device),
     device_dump,
     no_add_queue,
     NULL,  /* should never get called */
@@ -43,17 +44,17 @@ static const struct object_ops device_ops =
     no_write_fd,
     no_flush,
     device_get_info,
-    device_destroy
+    no_destroy
 };
 
-static struct object *create_device( int id )
+static struct device *create_device( int id )
 {
     struct device *dev;
-
-    if (!(dev = mem_alloc(sizeof(*dev)))) return NULL;
-    init_object( &dev->obj, &device_ops, NULL );
-    dev->id = id;
-    return &dev->obj;
+    if ((dev = alloc_object( &device_ops )))
+    {
+        dev->id = id;
+    }
+    return dev;
 }
 
 static void device_dump( struct object *obj, int verbose )
@@ -73,24 +74,16 @@ static int device_get_info( struct object *obj, struct get_file_info_reply *repl
     return 1;
 }
 
-static void device_destroy( struct object *obj )
-{
-    struct device *dev = (struct device *)obj;
-    assert( obj->ops == &device_ops );
-    free( dev );
-}
-
 /* create a device */
 DECL_HANDLER(create_device)
 {
-    struct object *obj;
-    struct create_device_reply reply = { -1 };
+    struct device *dev;
+    struct create_device_reply *reply = push_reply_data( current, sizeof(*reply) );
 
-    if ((obj = create_device( req->id )))
+    if ((dev = create_device( req->id )))
     {
-        reply.handle = alloc_handle( current->process, obj,
-                                     req->access, req->inherit );
-        release_object( obj );
+        reply->handle = alloc_handle( current->process, dev, req->access, req->inherit );
+        release_object( dev );
     }
-    send_reply( current, -1, 1, &reply, sizeof(reply) );
+    else reply->handle = -1;
 }

@@ -1,6 +1,6 @@
 #! /usr/bin/perl -w
 #
-# Build the server/trace.c and include/server/request.h files
+# Build the server/trace.c and server/request.h files
 # from the contents of include/server.h.
 #
 # Copyright (C) 1998 Alexandre Julliard
@@ -23,56 +23,10 @@ my @requests = ();
 my %replies = ();
 
 open(SERVER,"include/server.h") or die "Can't open include/server.h";
-open(TRACE,">server/trace.c") or die "Can't create server/trace.c";
-open(REQUESTS,">include/server/request.h") or die "Can't create include/server/request.h";
-
-### Generate the header
-
-print TRACE <<EOF;
-/* File generated automatically by $0; DO NOT EDIT!! */
-
-#include <stdio.h>
-#include <sys/types.h>
-#include <sys/uio.h>
-#include "server.h"
-#include "thread.h"
-
-static int dump_chars( void *ptr, int len )
-{
-    fprintf( stderr, "\\\"%.*s\\\"", len, (char *)ptr );
-    return len;
-}
-
-static int dump_ints( void *ptr, int len )
-{
-    int i;
-    if (!(len /= sizeof(int)))
-    {
-        fprintf( stderr, "{}" );
-        return 0;
-    }
-    for (i = 0; i < len; i++)
-        fprintf( stderr, "%c%d", i ? ',' : '{', *((int *)ptr + i) );
-    fprintf( stderr, "}" );
-    return len * sizeof(int);
-}
-
-static int dump_ptrs( void *ptr, int len )
-{
-    int i;
-    if (!(len /= sizeof(void*)))
-    {
-        fprintf( stderr, "{}" );
-        return 0;
-    }
-    for (i = 0; i < len; i++)
-        fprintf( stderr, "%c%p", i ? ',' : '{', *((void **)ptr + i) );
-    fprintf( stderr, "}" );
-    return len * sizeof(void*);
-}
-EOF
 
 ### Parse server.h to find request/reply structure definitions
+
+my @trace_lines = ();
 
 while (<SERVER>)
 {
@@ -82,137 +36,56 @@ while (<SERVER>)
 
 ### Output the dumping function tables
 
-print TRACE "typedef int (*dump_func)( void *req, int len );\n\n";
-print TRACE "static const dump_func req_dumpers[REQ_NB_REQUESTS] = {\n";
+push @trace_lines, "static const dump_func req_dumpers[REQ_NB_REQUESTS] = {\n";
 foreach $req (@requests)
 {
-    print TRACE "    (dump_func)dump_${req}_request,\n";
+    push @trace_lines, "    (dump_func)dump_${req}_request,\n";
 }
-print TRACE "};\n\n";
+push @trace_lines, "};\n\n";
 
-print TRACE "static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {\n";
+push @trace_lines, "static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {\n";
 foreach $req (@requests)
 {
-    print TRACE "    (dump_func)", $replies{$req} ? "dump_${req}_reply,\n" : "0,\n";
+    push @trace_lines, "    (dump_func)", $replies{$req} ? "dump_${req}_reply,\n" : "0,\n";
 }
-print TRACE "};\n\n";
+push @trace_lines, "};\n\n";
 
-print TRACE <<EOF;
-static const char * const req_names[REQ_NB_REQUESTS] =
-{
-EOF
+push @trace_lines, "static const char * const req_names[REQ_NB_REQUESTS] = {\n";
 foreach $req (@requests)
 {
-    print TRACE "    \"$req\",\n";
+    push @trace_lines, "    \"$req\",\n";
 }
+push @trace_lines, "};\n";
 
-### Output the tracing functions
+REPLACE_IN_FILE( "server/trace.c", @trace_lines );
 
-print TRACE <<EOF;
-};
+### Replace the request list in server.h by the new values
 
-void trace_request( enum request req, void *data, int len, int fd )
-{
-    int size;
-    current->last_req = req;
-    fprintf( stderr, "%08x: %s(", (unsigned int)current, req_names[req] );
-    size = req_dumpers[req]( data, len );
-    if ((len -= size) > 0)
-    {
-        unsigned char *ptr = (unsigned char *)data + size;
-        while (len--) fprintf( stderr, ", %02x", *ptr++ );
-    }
-    if (fd != -1) fprintf( stderr, " ) fd=%d\\n", fd );
-    else fprintf( stderr, " )\\n" );
-}
+my @server_lines = ();
 
-void trace_timeout(void)
-{
-    fprintf( stderr, "%08x: *timeout*\\n", (unsigned int)current );
-}
+push @server_lines, "enum request\n{\n";
+foreach $req (@requests) { push @server_lines, "    REQ_\U$req,\n"; }
+push @server_lines, "    REQ_NB_REQUESTS\n};\n";
 
-void trace_kill( int exit_code )
-{
-    fprintf( stderr,"%08x: *killed* exit_code=%d\\n",
-             (unsigned int)current, exit_code );
-}
+REPLACE_IN_FILE( "include/server.h", @server_lines );
 
-void trace_reply( struct thread *thread, int type, int pass_fd,
-                  struct iovec *vec, int veclen )
-{
-    static unsigned char buffer[MAX_MSG_LENGTH];
+### Output the request handlers list
 
-    if (!thread) return;
-    fprintf( stderr, "%08x: %s() = %d",
-             (unsigned int)thread, req_names[thread->last_req], type );
-    if (veclen)
-    {
-        unsigned char *p = buffer;
-        int len;
-        for (; veclen; veclen--, vec++)
-        {
-            memcpy( p, vec->iov_base, vec->iov_len );
-            p += vec->iov_len;
-        }
-	fprintf( stderr, " {" );
-        len = p - buffer;
-	if (reply_dumpers[thread->last_req])
-	    len -= reply_dumpers[thread->last_req]( buffer, len );
-        p -= len;
-        while (len--) fprintf( stderr, ", %02x", *p++ );
-	fprintf( stderr, " }" );
-    }
-    if (pass_fd != -1) fprintf( stderr, " fd=%d\\n", pass_fd );
-    else fprintf( stderr, "\\n" );
-}
-EOF
+my @request_lines = ();
 
-### Output the requests list
-
-print REQUESTS <<EOF;
-/* File generated automatically by $0; DO NOT EDIT!! */
-
-#ifndef __WINE_SERVER_REQUEST_H
-#define __WINE_SERVER_REQUEST_H
-
-enum request
-{
-EOF
-
+foreach $req (@requests) { push @request_lines, "DECL_HANDLER($req);\n"; }
+push @request_lines, "\n#ifdef WANT_REQUEST_HANDLERS\n\n";
+push @request_lines, "static const struct handler {\n";
+push @request_lines, "    void       (*handler)( void *req, int fd );\n";
+push @request_lines, "    unsigned int min_size;\n";
+push @request_lines, "} req_handlers[REQ_NB_REQUESTS] = {\n";
 foreach $req (@requests)
 {
-    print REQUESTS "    REQ_\U$req,\n";
+    push @request_lines, "    { (void(*)())req_$req, sizeof(struct ${req}_request) },\n";
 }
+push @request_lines, "};\n#endif  /* WANT_REQUEST_HANDLERS */\n";
 
-print REQUESTS <<EOF;
-    REQ_NB_REQUESTS
-};
-
-#ifdef WANT_REQUEST_HANDLERS
-
-EOF
-
-foreach $req (@requests) { print REQUESTS "DECL_HANDLER($req);\n"; }
-
-print REQUESTS <<EOF;
-
-static const struct handler {
-    void       (*handler)();
-    unsigned int min_size;
-} req_handlers[REQ_NB_REQUESTS] = {
-EOF
-
-foreach $req (@requests)
-{
-    print REQUESTS "    { (void(*)())req_$req, sizeof(struct ${req}_request) },\n";
-}
-
-print REQUESTS <<EOF;
-};
-#endif  /* WANT_REQUEST_HANDLERS */
-
-#endif  /* __WINE_SERVER_REQUEST_H */
-EOF
+REPLACE_IN_FILE( "server/request.h", @request_lines );
 
 ### Handle a request structure definition
 
@@ -264,7 +137,7 @@ sub DO_DUMP_FUNC
 {
     my $vararg = 0;
     my $name = shift;
-    print TRACE "\nstatic int dump_$name( struct $name *req, int len )\n{\n";
+    push @trace_lines, "static int dump_$name( struct $name *req, int len )\n{\n";
     while ($#_ >= 0)
     {
 	my $type = shift;
@@ -272,17 +145,41 @@ sub DO_DUMP_FUNC
 	if ($type =~ /\[0\]$/)  # vararg type?
 	{
 	    $vararg = 1;
-	    print TRACE "    fprintf( stderr, \" $var=\" );\n";
-	    print TRACE "    return $formats{$type}( req+1, len - (int)sizeof(*req) ) + sizeof(*req);\n";
+	    push @trace_lines, "    fprintf( stderr, \" $var=\" );\n";
+	    push @trace_lines, "    return $formats{$type}( req+1, len - (int)sizeof(*req) ) + sizeof(*req);\n";
 	}
 	else
 	{
-	    print TRACE "    fprintf( stderr, \" $var=$formats{$type}";
-	    print TRACE "," if ($#_ > 0);
-	    print TRACE "\", ";
-	    print TRACE "req->$var );\n";
+	    push @trace_lines, "    fprintf( stderr, \" $var=$formats{$type}";
+	    push @trace_lines, "," if ($#_ > 0);
+	    push @trace_lines, "\", ";
+	    push @trace_lines, "req->$var );\n";
         }
     }
-    print TRACE "    return (int)sizeof(*req);\n" unless $vararg;
-    print TRACE "}\n";
+    push @trace_lines, "    return (int)sizeof(*req);\n" unless $vararg;
+    push @trace_lines, "}\n\n";
+}
+
+### Replace the contents of a file between ### make_requests ### marks
+
+sub REPLACE_IN_FILE
+{
+    my $name = shift;
+    my @data = @_;
+    my @lines = ();
+    open(FILE,$name) or die "Can't open $name";
+    while (<FILE>)
+    {
+	push @lines, $_;
+	last if /\#\#\# make_requests begin \#\#\#/;
+    }
+    push @lines, "\n", @data;
+    while (<FILE>)
+    {
+	if (/\#\#\# make_requests end \#\#\#/) { push @lines, "\n", $_; last; }
+    }
+    push @lines, <FILE>;
+    open(FILE,">$name") or die "Can't modify $name";
+    print FILE @lines;
+    close(FILE);
 }
