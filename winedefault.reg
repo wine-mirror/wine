@@ -1,0 +1,55 @@
+# These entries must apparently exist in any win95-compatible registry.
+
+# Shell Folders. The purpose of these are pretty self-evident.
+# Primarily used by installation programs and the Explorer.
+
+[HKEY_USERS\.Default\Software\Microsoft\Windows\CurrentVersion\Explorer\Shell Folders]
+"Favorites"="C:\WINDOWS\Favorites"
+"StartUp"="C:\WINDOWS\Start Menu\Programs\Startup"
+"Desktop"="C:\WINDOWS\Desktop"
+"Programs"="C:\WINDOWS\Start Menu\Programs"
+"Fonts"="C:\WINDOWS\Fonts"
+"SendTo"="C:\WINDOWS\SendTo"
+"Start Menu"="C:\WINDOWS\Start Menu"
+"Templates"="C:\WINDOWS\ShellNew"
+"Recent"="C:\WINDOWS\Recent"
+"NetHood"="C:\WINDOWS\NetHood"
+"Personal"="C:\My Documents"
+
+[HKEY_USERS\.Default\Software\Microsoft\Windows\CurrentVersion\Explorer\User Shell Folders]
+"Personal"="C:\My Documents"
+"Favorites"="C:\WINDOWS\Favorites"
+
+# Same as above, but for HKEY_CURRENT_USER, not HKEY_USERS\.Default
+# (only HKEY_CURRENT_USER will actually be saved yet, so the above has really no effect)
+
+[HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer\Shell Folders]
+"Favorites"="C:\WINDOWS\Favorites"
+"StartUp"="C:\WINDOWS\Start Menu\Programs\Startup"
+"Desktop"="C:\WINDOWS\Desktop"
+"Programs"="C:\WINDOWS\Start Menu\Programs"
+"Fonts"="C:\WINDOWS\Fonts"
+"SendTo"="C:\WINDOWS\SendTo"
+"Start Menu"="C:\WINDOWS\Start Menu"
+"Templates"="C:\WINDOWS\ShellNew"
+"Recent"="C:\WINDOWS\Recent"
+"NetHood"="C:\WINDOWS\NetHood"
+"Personal"="C:\My Documents"
+
+[HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer\User Shell Folders]
+"Personal"="C:\My Documents"
+"Favorites"="C:\WINDOWS\Favorites"
+
+# The classfactory(?) entry for shortcuts (aka *.lnk files), used on the desktop and in the Start Menu.
+# Used by installation programs to create shortcuts.
+
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{00021401-0000-0000-C000-000000000046}]
+@="Shortcut"
+
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{00021401-0000-0000-C000-000000000046}\InProcServer32]
+@="shell32.dll"
+"ThreadingModel"="Apartment"
+
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{00021401-0000-0000-C000-000000000046}\shellex\MayChangeDefaultMenu]
+@=""
+
