@@ -216,6 +216,26 @@ static void test_file_write_read( void )
   unlink(tempf);
 }
 
+static void test_tmpnam( void )
+{
+  char name[MAX_PATH] = "abc";
+  char *res;
+
+  res = tmpnam(NULL);
+  ok(res != NULL, "tmpnam returned NULL");
+  ok(res[0] == '\\', "first character is not a backslash");
+  ok(strchr(res+1, '\\') == 0, "file not in the root directory");
+  ok(res[strlen(res)-1] == '.', "first call - last character is not a dot");
+
+  res = tmpnam(name);
+  ok(res != NULL, "tmpnam returned NULL");
+  ok(res == name, "supplied buffer was not used");
+  ok(res[0] == '\\', "first character is not a backslash");
+  ok(strchr(res+1, '\\') == 0, "file not in the root directory");
+  ok(res[strlen(res)-1] != '.', "second call - last character is not a dot");
+}
+
+
 
 START_TEST(file)
 {
@@ -224,4 +244,5 @@ START_TEST(file)
     test_fgetwc();
     test_file_put_get();
     test_file_write_read();
+    test_tmpnam();
 }
