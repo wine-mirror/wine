@@ -99,6 +99,23 @@ static new_handler_type new_handler;
 #define POP_FPU(x) DO_FPU("fstpl",x)
 #endif
 
+CRTDLL_FILE * __cdecl CRTDLL__fdopen(INT handle, LPCSTR mode);
+
+/*********************************************************************
+ *                  CRTDLL_MainInit  (CRTDLL.init)
+ */
+BOOL WINAPI CRTDLL_Init(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
+{
+	TRACE(crtdll,"(0x%08lx,%ld,%p)\n",hinstDLL,fdwReason,lpvReserved);
+
+	if (fdwReason == DLL_PROCESS_ATTACH) {
+		CRTDLL__fdopen(0,"r");
+		CRTDLL__fdopen(1,"w");
+		CRTDLL__fdopen(2,"w");
+	}
+	return TRUE;
+}
+
 /*********************************************************************
  *                  _GetMainArgs  (CRTDLL.022)
  */
@@ -460,8 +477,10 @@ DWORD __cdecl CRTDLL_fwrite( LPVOID ptr, INT size, INT nmemb, CRTDLL_FILE *file 
 {
     DWORD ret;
 
-    TRACE(crtdll, "0x%08x items of size %d to file %p from %p\n",
-          nmemb,size,file,ptr);
+    TRACE(crtdll, "0x%08x items of size %d to file %p(%d) from %p\n",
+          nmemb,size,file,file-(CRTDLL_FILE*)CRTDLL_iob,ptr);
+	
+    
     if (!WriteFile( file->handle, ptr, size * nmemb, &ret, NULL ))
         WARN(crtdll, " failed!\n");
     return ret / size;
@@ -523,7 +542,7 @@ void __cdecl CRTDLL_srand(DWORD seed)
  */
 INT __cdecl CRTDLL_vfprintf( CRTDLL_FILE *file, LPSTR format, va_list args )
 {
-    char buffer[1024];  /* FIXME... */
+    char buffer[2048];  /* FIXME... */
 
     vsprintf( buffer, format, args );
     return CRTDLL_fwrite( buffer, 1, strlen(buffer), file );

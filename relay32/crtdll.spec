@@ -1,6 +1,7 @@
 # C RunTime DLL. All functions use cdecl!
 name	crtdll
 type	win32
+init    CRTDLL_Init
 
   1 cdecl ??2@YAPAXI@Z(long) CRTDLL_new
   2 cdecl ??3@YAXPAX@Z(long) CRTDLL_delete
