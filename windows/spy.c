@@ -13,6 +13,7 @@
 #include "winreg.h"
 #include "wine/winuser16.h"
 #include "wine/winbase16.h"
+#include "wine/unicode.h"
 #include "win.h"
 #include "debugtools.h"
 #include "spy.h"
@@ -1239,7 +1240,7 @@ typedef struct
 
 typedef struct
 {
-      CHAR       *classname;  /* class name to match                  */
+const WCHAR      *classname;  /* class name to match                  */
 const USER_MSG   *classmsg;   /* pointer to first USER_MSG for class  */
       USER_MSG   *lastmsg;    /* pointer to last USER_MSG for class   */
 } CONTROL_CLASS;
@@ -1397,9 +1398,9 @@ static const USER_MSG comboex_array[] = {
 #undef USM
 
 static CONTROL_CLASS  cc_array[] = {
-    {WC_COMBOBOXEXA,    comboex_array, 0},
-    {REBARCLASSNAMEA,   rebar_array,   0},
-    {TOOLBARCLASSNAMEA, toolbar_array, 0},
+    {WC_COMBOBOXEXW,    comboex_array, 0},
+    {REBARCLASSNAMEW,   rebar_array,   0},
+    {TOOLBARCLASSNAMEW, toolbar_array, 0},
     {0, 0, 0} };
 
 
@@ -1586,8 +1587,8 @@ typedef struct
     LPARAM     lParam;           /* message parameter                  */
     INT        data_len;         /* length of data to dump             */
     char       msg_name[60];     /* message name (see SPY_GetMsgName)  */
-    CHAR       wnd_class[60];    /* window class name (full)           */
-    CHAR       wnd_name[16];     /* window name for message            */
+    WCHAR      wnd_class[60];    /* window class name (full)           */
+    WCHAR      wnd_name[16];     /* window name for message            */
 } SPY_INSTANCE;
 
 /* This is defined so that the external entry point can return the addr */
@@ -1703,11 +1704,11 @@ static void SPY_GetMsgStuff( SPY_INSTANCE *sp_e )
 	/* TRACE("looking class %s\n", sp_e->wnd_class); */
 
 	while (cc_array[i].classname &&
-	       strcmp(cc_array[i].classname, sp_e->wnd_class) !=0) i++;
+	       strcmpW(cc_array[i].classname, sp_e->wnd_class) !=0) i++;
 
 	if (!cc_array[i].classname) return;
 	/* TRACE("process class %s, first %p, last %p\n", 
-	      cc_array[i].classname, cc_array[i].classmsg, 
+	      debugstr_w(cc_array[i].classname), cc_array[i].classmsg, 
 	      cc_array[i].lastmsg); */
 	p = SPY_Bsearch_Msg (cc_array[i].classmsg, cc_array[i].lastmsg,
 			 sp_e->msgnum);
@@ -1727,52 +1728,25 @@ static void SPY_GetMsgStuff( SPY_INSTANCE *sp_e )
  */
 void SPY_GetWndName( SPY_INSTANCE *sp_e )
 {
-    WND* pWnd = WIN_GetPtr( sp_e->msg_hwnd );
-    if (pWnd && pWnd != WND_OTHER_PROCESS)
+    DWORD save_error;
+    INT len;
+
+    /* save and restore error code over the next call */	
+    save_error = GetLastError();
+    GetClassNameW(sp_e->msg_hwnd, sp_e->wnd_class, sizeof(sp_e->wnd_class)/sizeof(WCHAR));
+    SetLastError(save_error);
+
+    len = InternalGetWindowText(sp_e->msg_hwnd, sp_e->wnd_name, sizeof(sp_e->wnd_name)/sizeof(WCHAR));
+    if(!len) /* get class name */
     {
-	LPSTR p = sp_e->wnd_name;
-	LPSTR s = sp_e->wnd_name;
-        char  postfix;
-	DWORD save_error;
-
-	/* save and restore error code over the next call */	
-	save_error = GetLastError();
-	GetClassNameA( sp_e->msg_hwnd, sp_e->wnd_class, sizeof(sp_e->wnd_class)-1);
-	SetLastError(save_error);
-
-	if( pWnd->text && pWnd->text[0] != '\0' )
-	{
-	    LPWSTR src = pWnd->text;
-	    int n=sizeof(sp_e->wnd_name)-2;
-	    *(p++) = postfix = '\"';
-	    while ((n-- > 0) && *src) *p++ = *src++;
-	}
-	else /* get class name */
-	{
-	    LPSTR src = sp_e->wnd_class;
-	    int n=sizeof(sp_e->wnd_name)-2;
-	    *(p++) = '{';
-	    while ((n-- > 0) && *src) *p++ = *src++;
-	    postfix='}';
-	}
-
-	if( p-s >= sizeof(sp_e->wnd_name)-1 ) {
-	    p = s + sizeof(sp_e->wnd_name)-5;
-	    *(p++) = '.';
-	    *(p++) = '.';
-	    *(p++) = '.';
-	}
-	*(p++) = postfix;
-	*(p++) = '\0';
-        WIN_ReleasePtr(pWnd);
-
+	LPWSTR dst = sp_e->wnd_name;
+	LPWSTR src = sp_e->wnd_class;
+	int n = sizeof(sp_e->wnd_name)/sizeof(WCHAR) - 3;
+	*dst++ = '{';
+	while ((n-- > 0) && *src) *dst++ = *src++;
+	*dst++ = '}';
+	*dst = 0;
     }
-    else
-    {
-        strcpy( sp_e->wnd_name, "\"NULL\"" );
-        sp_e->wnd_class[0] = 0;
-    }
-    return;
 }
 
 /***********************************************************************
@@ -1976,12 +1950,12 @@ void SPY_EnterMessage( INT iFlag, HWND hWnd, UINT msg,
     case SPY_DISPATCHMESSAGE16:
         TRACE("%*s(%04x) %-16s message [%04x] %s dispatched  wp=%04x lp=%08lx\n",
               SPY_IndentLevel, "", WIN_Handle16(hWnd),
-              sp_e.wnd_name, msg, sp_e.msg_name, wParam, lParam);
+              debugstr_w(sp_e.wnd_name), msg, sp_e.msg_name, wParam, lParam);
         break;
 
     case SPY_DISPATCHMESSAGE:
         TRACE("%*s(%08x) %-16s message [%04x] %s dispatched  wp=%08x lp=%08lx\n",
-                        SPY_IndentLevel, "", hWnd, sp_e.wnd_name, msg, 
+                        SPY_IndentLevel, "", hWnd, debugstr_w(sp_e.wnd_name), msg, 
                         sp_e.msg_name, wParam, lParam);
         break;
 
@@ -2001,11 +1975,11 @@ void SPY_EnterMessage( INT iFlag, HWND hWnd, UINT msg,
 
             if (iFlag == SPY_SENDMESSAGE16)
                 TRACE("%*s(%04x) %-16s message [%04x] %s sent from %s wp=%04x lp=%08lx\n",
-                      SPY_IndentLevel, "", WIN_Handle16(hWnd), sp_e.wnd_name, msg,
+                      SPY_IndentLevel, "", WIN_Handle16(hWnd), debugstr_w(sp_e.wnd_name), msg,
                       sp_e.msg_name, taskName, wParam, lParam );
             else
             {   TRACE("%*s(%08x) %-16s message [%04x] %s sent from %s wp=%08x lp=%08lx\n",
-			     SPY_IndentLevel, "", hWnd, sp_e.wnd_name, msg,
+			     SPY_IndentLevel, "", hWnd, debugstr_w(sp_e.wnd_name), msg,
 			     sp_e.msg_name, taskName, wParam, lParam );
 		SPY_DumpStructure(&sp_e, TRUE);
 	    }
@@ -2064,25 +2038,25 @@ void SPY_ExitMessage( INT iFlag, HWND hWnd, UINT msg, LRESULT lReturn,
 
     case SPY_RESULT_OK16:
         TRACE(" %*s(%04x) %-16s message [%04x] %s returned %08lx\n",
-              SPY_IndentLevel, "", WIN_Handle16(hWnd), sp_e.wnd_name, msg,
+              SPY_IndentLevel, "", WIN_Handle16(hWnd), debugstr_w(sp_e.wnd_name), msg,
               sp_e.msg_name, lReturn );
         break;
 
     case SPY_RESULT_OK:
         TRACE(" %*s(%08x) %-16s message [%04x] %s returned %08lx\n",
-                        SPY_IndentLevel, "", hWnd, sp_e.wnd_name, msg,
+                        SPY_IndentLevel, "", hWnd, debugstr_w(sp_e.wnd_name), msg,
                         sp_e.msg_name, lReturn );
 	SPY_DumpStructure(&sp_e, FALSE);
         break; 
 
     case SPY_RESULT_INVALIDHWND16:
         WARN(" %*s(%04x) %-16s message [%04x] %s HAS INVALID HWND\n",
-             SPY_IndentLevel, "", WIN_Handle16(hWnd), sp_e.wnd_name, msg, sp_e.msg_name );
+             SPY_IndentLevel, "", WIN_Handle16(hWnd), debugstr_w(sp_e.wnd_name), msg, sp_e.msg_name );
         break;
 
     case SPY_RESULT_INVALIDHWND:
         WARN(" %*s(%08x) %-16s message [%04x] %s HAS INVALID HWND\n",
-                        SPY_IndentLevel, "", hWnd, sp_e.wnd_name, msg,
+                        SPY_IndentLevel, "", hWnd, debugstr_w(sp_e.wnd_name), msg,
                         sp_e.msg_name );
         break;
    }
@@ -2168,8 +2142,8 @@ int SPY_Init(void)
 	q = cc_array[i].classmsg;
 	while(q->name) {
 	    if (q->value <= j) {
-		ERR("Class message array out of order for class ""%s""\n",
-		    cc_array[i].classname);
+		ERR("Class message array out of order for class %s\n",
+		    debugstr_w(cc_array[i].classname));
 		ERR("  between values [%04x] %s and [%04x] %s\n",
 		    j, (q-1)->name, q->value, q->name);
 		break;

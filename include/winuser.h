@@ -3756,15 +3756,16 @@ DWORD       WINAPI InSendMessageEx(LPVOID);
 BOOL        WINAPI InsertMenuA(HMENU,UINT,UINT,UINT,LPCSTR);
 BOOL        WINAPI InsertMenuW(HMENU,UINT,UINT,UINT,LPCWSTR);
 #define     InsertMenu WINELIB_NAME_AW(InsertMenu)
-BOOL      WINAPI InsertMenuItemA(HMENU,UINT,BOOL,const MENUITEMINFOA*);
-BOOL      WINAPI InsertMenuItemW(HMENU,UINT,BOOL,const MENUITEMINFOW*);
+BOOL        WINAPI InsertMenuItemA(HMENU,UINT,BOOL,const MENUITEMINFOA*);
+BOOL        WINAPI InsertMenuItemW(HMENU,UINT,BOOL,const MENUITEMINFOW*);
 #define     InsertMenuItem WINELIB_NAME_AW(InsertMenuItem)
-BOOL      WINAPI IntersectRect(LPRECT,const RECT*,const RECT*);
-BOOL      WINAPI InvalidateRect(HWND,const RECT*,BOOL);
-BOOL      WINAPI InvalidateRgn(HWND,HRGN,BOOL);
-BOOL      WINAPI InvertRect(HDC,const RECT*);
-BOOL      WINAPI IsCharAlphaA(CHAR);
-BOOL      WINAPI IsCharAlphaW(WCHAR);
+INT         WINAPI InternalGetWindowText(HWND,LPWSTR,INT);
+BOOL        WINAPI IntersectRect(LPRECT,const RECT*,const RECT*);
+BOOL        WINAPI InvalidateRect(HWND,const RECT*,BOOL);
+BOOL        WINAPI InvalidateRgn(HWND,HRGN,BOOL);
+BOOL        WINAPI InvertRect(HDC,const RECT*);
+BOOL        WINAPI IsCharAlphaA(CHAR);
+BOOL        WINAPI IsCharAlphaW(WCHAR);
 #define     IsCharAlpha WINELIB_NAME_AW(IsCharAlpha)
 BOOL      WINAPI IsCharAlphaNumericA(CHAR);
 BOOL      WINAPI IsCharAlphaNumericW(WCHAR);
