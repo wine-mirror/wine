@@ -1718,8 +1718,7 @@ HRESULT GetName(LPSHELLFOLDER lpsf, LPITEMIDLIST pidl,DWORD dwFlags,LPSTR lpstrF
                                                      dwFlags, 
                                                      &str)))
   {
-    StrRetToStrN(lpstrFileName, MAX_PATH, &str, pidl);
-    return NOERROR;
+    return StrRetToStrNA(lpstrFileName, MAX_PATH, &str, pidl);
   }
   return E_FAIL;
 }
@@ -1782,7 +1781,8 @@ LPITEMIDLIST GetPidlFromName(IShellFolder *psf,LPCSTR lpcstrFileName)
   LPITEMIDLIST pidl;
   ULONG ulEaten;
   wchar_t lpwstrDirName[MAX_PATH];
-  
+
+  TRACE("sf=%p file=%s\n", psf, lpcstrFileName);
 
   if(!lpcstrFileName)
     return NULL;

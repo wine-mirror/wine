@@ -8,6 +8,7 @@
 #include "unknwn.h"
 #include "filedlgbrowser.h"
 #include "winuser.h"
+#include "heap.h"
 #include "commctrl.h"
 #include "wine/obj_dataobject.h"
 #include "debugtools.h"
@@ -674,7 +675,7 @@ HRESULT WINAPI IShellBrowserImpl_ICommDlgBrowser_IncludeObject(ICommDlgBrowser *
     FileOpenDlgInfos *fodInfos;
     ULONG ulAttr;
     STRRET str;
-    char szPath[MAX_PATH];
+    WCHAR szPathW[MAX_PATH];
 
     _ICOM_THIS_FromICommDlgBrowser(IShellBrowserImpl,iface);
 
@@ -696,9 +697,16 @@ HRESULT WINAPI IShellBrowserImpl_ICommDlgBrowser_IncludeObject(ICommDlgBrowser *
     if(!fodInfos->ShellInfos.lpstrCurrentFilter ||
        !lstrlenW(fodInfos->ShellInfos.lpstrCurrentFilter))
         return S_OK;
-    IShellFolder_GetDisplayNameOf(fodInfos->Shell.FOIShellFolder, pidl, SHGDN_FORPARSING, &str);
-    StrRetToStrN(szPath, MAX_PATH, &str, pidl);
-    return PathMatchSpecW((LPWSTR)szPath, fodInfos->ShellInfos.lpstrCurrentFilter)? S_OK : S_FALSE;
+
+    if (SUCCEEDED(IShellFolder_GetDisplayNameOf(fodInfos->Shell.FOIShellFolder, pidl, SHGDN_FORPARSING, &str)))
+    { if (SUCCEEDED(StrRetToStrNW(szPathW, MAX_PATH, &str, pidl)))
+      {
+        if (PathMatchSpecW(szPathW, fodInfos->ShellInfos.lpstrCurrentFilter))
+          return S_OK;
+      }
+    }
+    return S_FALSE;
+
 }
 
 /**************************************************************************
@@ -724,7 +732,7 @@ HRESULT IShellBrowserImpl_ICommDlgBrowser_OnSelChange(ICommDlgBrowser *iface, IS
         if (!ulAttr)
         {
             if(SUCCEEDED(hRes = GetName(fodInfos->Shell.FOIShellFolder,pidl,SHGDN_NORMAL,lpstrFileName)))
-                SetWindowTextW(fodInfos->DlgInfos.hwndFileName,(LPWSTR)lpstrFileName);
+                SetWindowTextA(fodInfos->DlgInfos.hwndFileName,lpstrFileName);
         }
 
         SHFree((LPVOID)pidl);
