@@ -690,9 +690,7 @@ static HWND WIN_CreateWindowEx( CREATESTRUCTA *cs, ATOM classAtom,
     /* Find the window class */
     if (!(classPtr = CLASS_FindClassByAtom( classAtom, win32?cs->hInstance:GetExePtr(cs->hInstance) )))
     {
-        char buffer[256];
-        GlobalGetAtomNameA( classAtom, buffer, sizeof(buffer) );
-        WARN("Bad class '%s'\n", buffer );
+        WARN("Bad class '%s'\n", cs->lpszClass );
         return 0;
     }
 
@@ -1040,10 +1038,23 @@ HWND16 WINAPI CreateWindowEx16( DWORD exStyle, LPCSTR className,
 
     /* Find the class atom */
 
-    if (!(classAtom = GlobalFindAtomA( className )))
+    if (HIWORD(className))
     {
-        ERR( "bad class name %s\n", debugres_a(className) );
-        return 0;
+        if (!(classAtom = GlobalFindAtomA( className )))
+        {
+            ERR( "bad class name %s\n", debugres_a(className) );
+            return 0;
+        }
+    }
+    else
+    {
+        classAtom = LOWORD(className);
+        if (!GlobalGetAtomNameA( classAtom, buffer, sizeof(buffer) ))
+        {
+            ERR( "bad atom %x\n", classAtom);
+            return 0;
+        }
+        className = buffer;
     }
 
     /* Fix the coordinates */
@@ -1064,12 +1075,6 @@ HWND16 WINAPI CreateWindowEx16( DWORD exStyle, LPCSTR className,
     cs.lpszClass      = className;
     cs.dwExStyle      = exStyle;
 
-    /* make sure lpszClass is a string */
-    if (!HIWORD(cs.lpszClass))
-    {
-        GlobalGetAtomNameA( classAtom, buffer, sizeof(buffer) );
-        cs.lpszClass = buffer;
-    }
     return WIN_CreateWindowEx( &cs, classAtom, FALSE, FALSE );
 }
 
@@ -1092,12 +1097,26 @@ HWND WINAPI CreateWindowExA( DWORD exStyle, LPCSTR className,
 
     if(exStyle & WS_EX_MDICHILD)
         return MDI_CreateMDIWindowA(className, windowName, style, x, y, width, height, parent, instance, (LPARAM)data);
+
     /* Find the class atom */
 
-    if (!(classAtom = GlobalFindAtomA( className )))
+    if (HIWORD(className))
     {
-        ERR( "bad class name %s\n", debugres_a(className) );
-        return 0;
+        if (!(classAtom = GlobalFindAtomA( className )))
+        {
+            ERR( "bad class name %s\n", debugres_a(className) );
+            return 0;
+        }
+    }
+    else
+    {
+        classAtom = LOWORD(className);
+        if (!GlobalGetAtomNameA( classAtom, buffer, sizeof(buffer) ))
+        {
+            ERR( "bad atom %x\n", classAtom);
+            return 0;
+        }
+        className = buffer;
     }
 
     /* Create the window */
@@ -1115,12 +1134,6 @@ HWND WINAPI CreateWindowExA( DWORD exStyle, LPCSTR className,
     cs.lpszClass      = className;
     cs.dwExStyle      = exStyle;
 
-    /* make sure lpszClass is a string */
-    if (!HIWORD(cs.lpszClass))
-    {
-        GlobalGetAtomNameA( classAtom, buffer, sizeof(buffer) );
-        cs.lpszClass = buffer;
-    }
     return WIN_CreateWindowEx( &cs, classAtom, TRUE, FALSE );
 }
 
@@ -1146,10 +1159,23 @@ HWND WINAPI CreateWindowExW( DWORD exStyle, LPCWSTR className,
 
     /* Find the class atom */
 
-    if (!(classAtom = GlobalFindAtomW( className )))
+    if (HIWORD(className))
     {
-        ERR( "bad class name %s\n", debugres_w(className) );
-        return 0;
+        if (!(classAtom = GlobalFindAtomW( className )))
+        {
+            ERR( "bad class name %s\n", debugres_w(className) );
+            return 0;
+        }
+    }
+    else
+    {
+        classAtom = LOWORD(className);
+        if (!GlobalGetAtomNameW( classAtom, buffer, sizeof(buffer)/sizeof(WCHAR) ))
+        {
+            ERR( "bad atom %x\n", classAtom);
+            return 0;
+        }
+        className = buffer;
     }
 
     /* Create the window */
@@ -1166,13 +1192,6 @@ HWND WINAPI CreateWindowExW( DWORD exStyle, LPCWSTR className,
     cs.lpszName       = windowName;
     cs.lpszClass      = className;
     cs.dwExStyle      = exStyle;
-
-    /* make sure lpszClass is a string */
-    if (!HIWORD(cs.lpszClass))
-    {
-        GlobalGetAtomNameW( classAtom, buffer, sizeof(buffer)/sizeof(WCHAR) );
-        cs.lpszClass = buffer;
-    }
 
     /* Note: we rely on the fact that CREATESTRUCT32A and */
     /* CREATESTRUCT32W have the same layout. */
