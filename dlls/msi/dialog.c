@@ -44,13 +44,13 @@ const static WCHAR szStatic[] = { 'S','t','a','t','i','c',0 };
 
 struct msi_control_tag;
 typedef struct msi_control_tag msi_control;
-typedef UINT (*msi_click_handler)( msi_dialog *, msi_control * );
+typedef UINT (*msi_handler)( msi_dialog *, msi_control *, WPARAM );
 
 struct msi_control_tag
 {
     struct msi_control_tag *next;
     HWND hwnd;
-    msi_click_handler click_handler;
+    msi_handler handler;
     LPWSTR property;
     WCHAR name[1];
 };
@@ -83,9 +83,10 @@ struct control_handler
     msi_dialog_control_func func;
 };
 
-static UINT msi_dialog_checkbox_click( msi_dialog *, msi_control * );
+static UINT msi_dialog_checkbox_handler( msi_dialog *, msi_control *, WPARAM );
 static void msi_dialog_checkbox_sync_state( msi_dialog *, msi_control * );
-static UINT msi_dialog_button_click( msi_dialog *, msi_control * );
+static UINT msi_dialog_button_handler( msi_dialog *, msi_control *, WPARAM );
+static UINT msi_dialog_edit_handler( msi_dialog *, msi_control *, WPARAM );
 
 
 INT msi_dialog_scale_unit( msi_dialog *dialog, INT val )
@@ -216,12 +217,12 @@ static UINT msi_dialog_build_font_list( msi_dialog *dialog )
 static msi_control *msi_dialog_add_control( msi_dialog *dialog,
                 MSIRECORD *rec, LPCWSTR szCls, DWORD style )
 {
-    DWORD x, y, width, height;
+    DWORD x, y, width, height, attributes;
     LPCWSTR text, name;
     LPWSTR font = NULL, title = NULL;
     msi_control *control = NULL;
 
-    style |= WS_CHILD | WS_VISIBLE | WS_GROUP;
+    style |= WS_CHILD | WS_GROUP;
 
     name = MSI_RecordGetString( rec, 2 );
     control = HeapAlloc( GetProcessHeap(), 0,
@@ -229,13 +230,14 @@ static msi_control *msi_dialog_add_control( msi_dialog *dialog,
     strcpyW( control->name, name );
     control->next = dialog->control_list;
     dialog->control_list = control;
-    control->click_handler = NULL;
+    control->handler = NULL;
     control->property = NULL;
 
     x = MSI_RecordGetInteger( rec, 4 );
     y = MSI_RecordGetInteger( rec, 5 );
     width = MSI_RecordGetInteger( rec, 6 );
     height = MSI_RecordGetInteger( rec, 7 );
+    attributes = MSI_RecordGetInteger( rec, 8 );
     text = MSI_RecordGetString( rec, 10 );
 
     TRACE("Dialog %s control %s\n", debugstr_w(dialog->name), debugstr_w(text));
@@ -245,6 +247,10 @@ static msi_control *msi_dialog_add_control( msi_dialog *dialog,
     width = msi_dialog_scale_unit( dialog, width );
     height = msi_dialog_scale_unit( dialog, height );
 
+    if( attributes & 1 )
+        style |= WS_VISIBLE;
+    if( ~attributes & 2 )
+        style |= WS_DISABLED;
     if( text )
     {
         font = msi_dialog_get_style( &text );
@@ -275,7 +281,7 @@ static UINT msi_dialog_button_control( msi_dialog *dialog, MSIRECORD *rec )
     TRACE("%p %p\n", dialog, rec);
 
     control = msi_dialog_add_control( dialog, rec, szButton, 0 );
-    control->click_handler = msi_dialog_button_click;
+    control->handler = msi_dialog_button_handler;
 
     return ERROR_SUCCESS;
 }
@@ -290,7 +296,7 @@ static UINT msi_dialog_checkbox_control( msi_dialog *dialog, MSIRECORD *rec )
 
     control = msi_dialog_add_control( dialog, rec, szButton,
                                       BS_CHECKBOX | BS_MULTILINE );
-    control->click_handler = msi_dialog_checkbox_click;
+    control->handler = msi_dialog_checkbox_handler;
     prop = MSI_RecordGetString( rec, 9 );
     if( prop )
         control->property = dupstrW( prop );
@@ -328,6 +334,33 @@ static UINT msi_dialog_bitmap_control( msi_dialog *dialog, MSIRECORD *rec )
     return ERROR_SUCCESS;
 }
 
+static UINT msi_dialog_combo_control( msi_dialog *dialog, MSIRECORD *rec )
+{
+    static const WCHAR szCombo[] = { 'C','O','M','B','O','B','O','X',0 };
+
+    msi_dialog_add_control( dialog, rec, szCombo,
+                            SS_BITMAP | SS_LEFT | SS_CENTERIMAGE );
+    return ERROR_SUCCESS;
+}
+
+static UINT msi_dialog_edit_control( msi_dialog *dialog, MSIRECORD *rec )
+{
+    const static WCHAR szEdit[] = { 'E','D','I','T',0 };
+    msi_control *control;
+    LPCWSTR prop;
+    LPWSTR val;
+
+    control = msi_dialog_add_control( dialog, rec, szEdit, 0 );
+    control->handler = msi_dialog_edit_handler;
+    prop = MSI_RecordGetString( rec, 9 );
+    if( prop )
+        control->property = dupstrW( prop );
+    val = load_dynamic_property( dialog->package, control->property, NULL );
+    SetWindowTextW( control->hwnd, val );
+    HeapFree( GetProcessHeap(), 0, val );
+    return ERROR_SUCCESS;
+}
+
 static const WCHAR szText[] = { 'T','e','x','t',0 };
 static const WCHAR szButton[] = { 'P','u','s','h','B','u','t','t','o','n',0 };
 static const WCHAR szLine[] = { 'L','i','n','e',0 };
@@ -335,6 +368,9 @@ static const WCHAR szBitmap[] = { 'B','i','t','m','a','p',0 };
 static const WCHAR szCheckBox[] = { 'C','h','e','c','k','B','o','x',0 };
 static const WCHAR szScrollableText[] = {
     'S','c','r','o','l','l','a','b','l','e','T','e','x','t',0 };
+static const WCHAR szComboBox[] = { 'C','o','m','b','o','B','o','x',0 };
+static const WCHAR szEdit[] = { 'E','d','i','t',0 };
+static const WCHAR szMaskedEdit[] = { 'M','a','s','k','e','d','E','d','i','t',0 };
 
 struct control_handler msi_dialog_handler[] =
 {
@@ -344,6 +380,9 @@ struct control_handler msi_dialog_handler[] =
     { szBitmap, msi_dialog_bitmap_control },
     { szCheckBox, msi_dialog_checkbox_control },
     { szScrollableText, msi_dialog_scrolltext_control },
+    { szComboBox, msi_dialog_combo_control },
+    { szEdit, msi_dialog_edit_control },
+    { szMaskedEdit, msi_dialog_edit_control },
 };
 
 #define NUM_CONTROL_TYPES (sizeof msi_dialog_handler/sizeof msi_dialog_handler[0])
@@ -641,7 +680,8 @@ static UINT msi_dialog_control_event( MSIRECORD *rec, LPVOID param )
     return ERROR_SUCCESS;
 }
 
-static UINT msi_dialog_button_click( msi_dialog *dialog, msi_control *control )
+static UINT msi_dialog_button_handler( msi_dialog *dialog,
+                                       msi_control *control, WPARAM param )
 {
     static const WCHAR query[] = {
       'S','E','L','E','C','T',' ','*',' ',
@@ -654,6 +694,9 @@ static UINT msi_dialog_button_click( msi_dialog *dialog, msi_control *control )
     };
     MSIQUERY *view = NULL;
     UINT r;
+
+    if( HIWORD(param) != BN_CLICKED )
+        return ERROR_SUCCESS;
 
     r = MSI_OpenQuery( dialog->package->db, &view, query,
                        dialog->name, control->name );
@@ -699,10 +742,13 @@ static void msi_dialog_checkbox_sync_state( msi_dialog *dialog,
                   state ? BST_CHECKED : BST_UNCHECKED, 0 );
 }
 
-static UINT msi_dialog_checkbox_click( msi_dialog *dialog,
-                msi_control *control )
+static UINT msi_dialog_checkbox_handler( msi_dialog *dialog,
+                msi_control *control, WPARAM param )
 {
     UINT state;
+
+    if( HIWORD(param) != BN_CLICKED )
+        return ERROR_SUCCESS;
 
     TRACE("clicked checkbox %s, set %s\n", debugstr_w(control->name),
           debugstr_w(control->property));
@@ -712,21 +758,51 @@ static UINT msi_dialog_checkbox_click( msi_dialog *dialog,
     msi_dialog_set_checkbox_state( dialog, control, state );
     msi_dialog_checkbox_sync_state( dialog, control );
 
-    return msi_dialog_button_click( dialog, control );
+    return msi_dialog_button_handler( dialog, control, param );
 }
 
-static LRESULT msi_dialog_handle_click( msi_dialog *dialog, HWND hwnd )
+static UINT msi_dialog_edit_handler( msi_dialog *dialog,
+                msi_control *control, WPARAM param )
+{
+    UINT sz, r;
+    LPWSTR buf;
+
+    if( HIWORD(param) != EN_CHANGE )
+        return ERROR_SUCCESS;
+
+    TRACE("edit %s contents changed, set %s\n", debugstr_w(control->name),
+          debugstr_w(control->property));
+
+    sz = 0x20;
+    buf = HeapAlloc( GetProcessHeap(), 0, sz*sizeof(WCHAR) );
+    while( buf )
+    {
+        r = GetWindowTextW( control->hwnd, buf, sz );
+        if( r < (sz-1) )
+            break;
+            sz *= 2;
+        buf = HeapReAlloc( GetProcessHeap(), 0, buf, sz*sizeof(WCHAR) );
+    }
+
+    MSI_SetPropertyW( dialog->package, control->property, buf );
+
+    HeapFree( GetProcessHeap(), 0, buf );
+
+    return ERROR_SUCCESS;
+}
+
+static LRESULT msi_dialog_oncommand( msi_dialog *dialog, WPARAM param, HWND hwnd )
 {
     msi_control *control;
 
-    TRACE("BN_CLICKED %p %p\n", dialog, hwnd);
+    TRACE("%p %p %08x\n", dialog, hwnd, param);
 
     control = msi_dialog_find_control_by_hwnd( dialog, hwnd );
     if( control )
     {
-        if( control->click_handler )
+        if( control->handler )
         {
-            control->click_handler( dialog, control );
+            control->handler( dialog, control, param );
             msi_dialog_evaluate_control_conditions( dialog );
         }
     }
@@ -746,9 +822,7 @@ static LRESULT WINAPI MSIDialog_WndProc( HWND hwnd, UINT msg,
         return msi_dialog_oncreate( hwnd, (LPCREATESTRUCTW)lParam );
 
     case WM_COMMAND:
-        if( HIWORD(wParam) == BN_CLICKED )
-            return msi_dialog_handle_click( dialog, (HWND)lParam );
-        break;
+        return msi_dialog_oncommand( dialog, wParam, (HWND)lParam );
 
     case WM_DESTROY:
         dialog->hwnd = NULL;
