@@ -437,9 +437,9 @@ sub InsertDefaultFile {
 
     if (open(DEFFILE, "$fileName")) {
        while (<DEFFILE>) {
-	  $state = 0 if ($state == 1 && $_ =~ /^[ \t]*\#/o && index($_, "</$tag>") >= 0);
+	  $state = 0 if ($state == 1 && $_ =~ /^[ \t]*\#/o && index($_, "[/$tag]") >= 0);
 	  print $_ if ($state == 1);
-	  $state = 1 if ($state == 0 && $_ =~ /^[ \t]*\#/o && index($_, "<$tag>" ) >= 0);
+	  $state = 1 if ($state == 0 && $_ =~ /^[ \t]*\#/o && index($_, "[$tag]" ) >= 0);
        }
        close(DEFFILE);
     } else {

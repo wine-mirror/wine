@@ -67,7 +67,7 @@ WINE REGISTRY Version 2
 ;"ShowDotFiles" = "1"
 "ShellLinker" = "wineshelllink"
 
-# <wineconf>
+# [wineconf]
 
 [Version]
 ; Windows version to imitate (win95,win98,winme,nt351,nt40,win2k,winxp,win20,win30,win31)
@@ -313,4 +313,4 @@ WINE REGISTRY Version 2
 ;[AppDefaults\\pickygame.exe\\dsound]
 ;"EmulDriver" = "N"
 
-# </wineconf>
+# [/wineconf]
