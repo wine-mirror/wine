@@ -1044,7 +1044,7 @@ HQUEUE16 WINAPI GetThreadQueue16( DWORD thread )
 /***********************************************************************
  *           SetFastQueue  (KERNEL.624)
  */
-VOID WINAPI SetFastQueue16( DWORD thread, HANDLE hQueue )
+VOID WINAPI SetFastQueue16( DWORD thread, HQUEUE16 hQueue )
 {
     TEB *teb = NULL;
     if ( !thread )
@@ -1054,15 +1054,15 @@ VOID WINAPI SetFastQueue16( DWORD thread, HANDLE hQueue )
     else if ( IsTask16( (HTASK16)thread ) )
         teb = (TASK_GetPtr( (HANDLE16)thread ))->teb;
 
-    if ( teb ) teb->queue = (HQUEUE16) hQueue;
+    if ( teb ) teb->queue = hQueue;
 }
 
 /***********************************************************************
  *           GetFastQueue  (KERNEL.625)
  */
-HANDLE WINAPI GetFastQueue16( void )
+HQUEUE16 WINAPI GetFastQueue16( void )
 {
-    HANDLE ret = (HANDLE)NtCurrentTeb()->queue;
+    HQUEUE16 ret = NtCurrentTeb()->queue;
 
     if (!ret) FIXME("(): should initialize thread-local queue, expect failure!\n" );
     return ret;
