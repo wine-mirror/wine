@@ -23,18 +23,17 @@
  *  -  I haven't found any good documentation on the real usage of
  *     the streams created by the data cache. In particular, How to
  *     determine what the XXX stands for in the stream name
- *     "\002OlePresXXX". I have an intuition that this is related to
- *     the cached aspect of the object but I'm not sure it could
- *     just be a counter.
+ *     "\002OlePresXXX". It appears to just be a counter.
  *  -  Also, I don't know the real content of the presentation stream
  *     header. I was able to figure-out where the extent of the object 
- *     was stored but that's about it.
+ *     was stored and the aspect, but that's about it.
  */
 #include <assert.h>
 #include "windef.h"
 #include "winbase.h"
 #include "wingdi.h"
 #include "winerror.h"
+#include "crtdll.h"
 #include "wine/obj_oleview.h"
 #include "wine/obj_cache.h"
 #include "debugtools.h"
@@ -51,14 +50,14 @@ DEFAULT_DEBUG_CHANNEL(ole);
  */
 typedef struct PresentationDataHeader
 {
-  DWORD unknown1;
-  DWORD unknown2;
-  DWORD unknown3;
-  DWORD unknown4;
-  DWORD unknown5;
+  DWORD unknown1;	/* -1 */
+  DWORD unknown2;	/* 3, possibly CF_METAFILEPICT */
+  DWORD unknown3;	/* 4, possibly TYMED_ISTREAM */
+  DVASPECT dvAspect;
+  DWORD unknown5;	/* -1 */
 
   DWORD unknown6;
-  DWORD unknown7;
+  DWORD unknown7;	/* 0 */
   DWORD objectExtentX;
   DWORD objectExtentY;
   DWORD unknown8;
@@ -131,9 +130,9 @@ static void       DataCache_Destroy(DataCache* ptrToDestroy);
 static HRESULT    DataCache_ReadPresentationData(DataCache*              this,
 						 DWORD                   drawAspect,
 						 PresentationDataHeader* header);
-static HRESULT    DataCache_FindPresStreamName(DataCache* this,
-					       DWORD      drawAspect,
-					       OLECHAR*   buffer);
+static HRESULT    DataCache_OpenPresStream(DataCache *this,
+					   DWORD      drawAspect,
+					   IStream  **pStm);
 static HMETAFILE  DataCache_ReadPresMetafile(DataCache* this,
 					     DWORD      drawAspect);
 static void       DataCache_FireOnViewChange(DataCache* this,
@@ -585,34 +584,22 @@ static HRESULT DataCache_ReadPresentationData(
   PresentationDataHeader* header)
 {
   IStream* presStream = NULL;
-  OLECHAR  streamName[20];
   HRESULT  hres;
 
   /*
-   * Get the name for the presentation stream.
+   * Open the presentation stream.
    */
-  hres = DataCache_FindPresStreamName(
+  hres = DataCache_OpenPresStream(
            this,
 	   drawAspect,
-	   streamName);
-
-  if (FAILED(hres))
-    return hres;
-
-  /*
-   * Open the stream and read the header.
-   */
-
-  hres = IStorage_OpenStream(
-           this->presentationStorage,
-	   streamName,
-	   NULL,
-	   STGM_READ | STGM_SHARE_EXCLUSIVE,
-	   0,
 	   &presStream);
 
   if (FAILED(hres))
     return hres;
+
+  /*
+   * Read the header.
+   */
 
   hres = IStream_Read(
            presStream,
@@ -679,34 +666,107 @@ static void DataCache_FireOnViewChange(
   }
 }
 
+/* Helper for DataCache_OpenPresStream */
+static BOOL DataCache_IsPresentationStream(const STATSTG *elem)
+{
+    /* The presentation streams have names of the form "\002OlePresXXX",
+     * where XXX goes from 000 to 999. */
+    static const WCHAR OlePres[] = { 2,'O','l','e','P','r','e','s' };
+
+    LPCWSTR name = elem->pwcsName;
+
+    return (elem->type == STGTY_STREAM)
+	&& (elem->cbSize.s.LowPart >= sizeof(PresentationDataHeader))
+	&& (CRTDLL_wcslen(name) == 11)
+	&& (CRTDLL_wcsncmp(name, OlePres, 8) == 0)
+	&& CRTDLL_iswdigit(name[8])
+	&& CRTDLL_iswdigit(name[9])
+	&& CRTDLL_iswdigit(name[10]);
+}
+
 /************************************************************************
- * DataCache_ReadPresentationData
+ * DataCache_OpenPresStream
  *
- * This method will read information for the requested presentation 
- * into the given structure.
+ * This method will find the stream for the given presentation. It makes
+ * no attempt at fallback.
  *
  * Param:
  *   this       - Pointer to the DataCache object
  *   drawAspect - The aspect of the object that we wish to draw.
- *   header     - The structure containing information about this
- *                aspect of the object.
+ *   pStm       - A returned stream. It points to the beginning of the
+ *              - presentation data, including the header.
  *
- * NOTE:
- *   This method only supports the DVASPECT_CONTENT aspect.
+ * Errors:
+ *   S_OK		The requested stream has been opened.
+ *   OLE_E_BLANK	The requested stream could not be found.
+ *   Quite a few others I'm too lazy to map correctly.
+ *
+ * Notes:
+ *   Algorithm:	Scan the elements of the presentation storage, looking
+ *		for presentation streams. For each presentation stream,
+ *		load the header and check to see if the aspect maches.
+ *
+ *   If a fallback is desired, just opening the first presentation stream
+ *   is a possibility.
  */
-static HRESULT DataCache_FindPresStreamName(
-  DataCache* this,
+static HRESULT DataCache_OpenPresStream(
+  DataCache *this,
   DWORD      drawAspect,
-  OLECHAR*   buffer)
+  IStream  **ppStm)
 {
-  OLECHAR name[]={ 2, 'O', 'l', 'e', 'P', 'r', 'e', 's', '0', '0', '0', 0};
+    STATSTG elem;
+    IEnumSTATSTG *pEnum;
+    HRESULT hr;
 
-  if (drawAspect!=DVASPECT_CONTENT)
-    return E_FAIL;
+    if (!ppStm) return E_POINTER;
 
-  memcpy(buffer, name, sizeof(name));
+    hr = IStorage_EnumElements(this->presentationStorage, 0, NULL, 0, &pEnum);
+    if (FAILED(hr)) return hr;
 
-  return S_OK;
+    while ((hr = IEnumSTATSTG_Next(pEnum, 1, &elem, NULL)) == S_OK)
+    {
+	if (DataCache_IsPresentationStream(&elem))
+	{
+	    IStream *pStm;
+
+	    hr = IStorage_OpenStream(this->presentationStorage, elem.pwcsName,
+				     NULL, STGM_READ | STGM_SHARE_EXCLUSIVE, 0,
+				     &pStm);
+	    if (SUCCEEDED(hr))
+	    {
+		PresentationDataHeader header;
+		ULONG actual_read;
+
+		hr = IStream_Read(pStm, &header, sizeof(header), &actual_read);
+
+		/* can't use SUCCEEDED(hr): S_FALSE counts as an error */
+		if (hr == S_OK && actual_read == sizeof(header)
+		    && header.dvAspect == drawAspect)
+		{
+		    /* Rewind the stream before returning it. */
+		    LARGE_INTEGER offset;
+		    offset.s.LowPart = 0;
+		    offset.s.HighPart = 0;
+		    IStream_Seek(pStm, offset, STREAM_SEEK_SET, NULL);
+
+		    *ppStm = pStm;
+
+		    CoTaskMemFree(elem.pwcsName);
+		    IEnumSTATSTG_Release(pEnum);
+
+		    return S_OK;
+		}
+
+		IStream_Release(pStm);
+	    }
+	}
+
+	CoTaskMemFree(elem.pwcsName);
+    }
+
+    IEnumSTATSTG_Release(pEnum);
+
+    return (hr == S_FALSE ? OLE_E_BLANK : hr);
 }
 
 /************************************************************************
@@ -729,32 +789,17 @@ static HMETAFILE DataCache_ReadPresMetafile(
 {
   LARGE_INTEGER offset;
   IStream*      presStream = NULL;
-  OLECHAR       streamName[20];
   HRESULT       hres;
   void*         metafileBits;
   STATSTG       streamInfo;
   HMETAFILE     newMetafile = 0;
 
   /*
-   * Get the name for the presentation stream.
+   * Open the presentation stream.
    */
-  hres = DataCache_FindPresStreamName(
+  hres = DataCache_OpenPresStream(
            this, 
 	   drawAspect,
-	   streamName);
-
-  if (FAILED(hres))
-    return hres;
-
-  /*
-   * Open the stream and read the header.
-   */
-  hres = IStorage_OpenStream(
-           this->presentationStorage,
-	   streamName,
-	   NULL,
-	   STGM_READ | STGM_SHARE_EXCLUSIVE,
-	   0,
 	   &presStream);
 
   if (FAILED(hres))
@@ -778,6 +823,8 @@ static HMETAFILE DataCache_ReadPresMetafile(
 	   offset,
 	   STREAM_SEEK_SET,
 	   NULL);
+
+  streamInfo.cbSize.s.LowPart -= offset.s.LowPart;
 
   /*
    * Allocate a buffer for the metafile bits.
@@ -1445,6 +1492,9 @@ static HRESULT WINAPI DataCache_Draw(
   /*
    * Then, we can extract the metafile itself from the cached
    * data.
+   *
+   * FIXME Unless it isn't a metafile. I think it could be any CF_XXX type,
+   * particularly CF_DIB.
    */
   presMetafile = DataCache_ReadPresMetafile(this,
 					    dwDrawAspect);
