@@ -37,6 +37,10 @@ WINE_DEFAULT_DEBUG_CHANNEL(advapi);
 static DWORD   start_dwNumServiceArgs;
 static LPWSTR *start_lpServiceArgVectors;
 
+static const WCHAR _ServiceStartDataW[]  = {'A','D','V','A','P','I','_','S',
+                                            'e','r','v','i','c','e','S','t',
+                                            'a','r','t','D','a','t','a',0};
+
 /******************************************************************************
  * EnumServicesStatusA [ADVAPI32.@]
  */
@@ -81,7 +85,7 @@ StartServiceCtrlDispatcherA( LPSERVICE_TABLE_ENTRYA servent )
     int i;
 
     TRACE("(%p)\n", servent);
-    wait = OpenSemaphoreA(SEMAPHORE_ALL_ACCESS, FALSE, "ADVAPI32_ServiceStartData");
+    wait = OpenSemaphoreW(SEMAPHORE_ALL_ACCESS, FALSE, _ServiceStartDataW);
     if(wait == 0)
     {
         ERR("Couldn't find wait semaphore\n");
@@ -135,9 +139,6 @@ StartServiceCtrlDispatcherA( LPSERVICE_TABLE_ENTRYA servent )
 BOOL WINAPI
 StartServiceCtrlDispatcherW( LPSERVICE_TABLE_ENTRYW servent )
 {
-    static const WCHAR  _ServiceStartDataW[]  = {'A','D','V','A','P','I','_','S',
-                                                'e','r','v','i','c','e','S','t',
-                                                'a','r','t','D','a','t','a',0};
     LPSERVICE_MAIN_FUNCTIONW fpMain;
     HANDLE wait;
     DWORD  dwNumServiceArgs ;
@@ -608,10 +609,6 @@ BOOL WINAPI
 StartServiceW( SC_HANDLE hService, DWORD dwNumServiceArgs,
                  LPCWSTR *lpServiceArgVectors )
 {
-    static const WCHAR  _ServiceStartDataW[]  = {'A','D','V','A','P','I','_','S',
-                                                'e','r','v','i','c','e','S','t',
-                                                'a','r','t','D','a','t','a',0};
-                                                
     static const WCHAR  _WaitServiceStartW[]  = {'A','D','V','A','P','I','_','W',
                                                 'a','i','t','S','e','r','v','i',
                                                 'c','e','S','t','a','r','t',0};
@@ -637,21 +634,14 @@ StartServiceW( SC_HANDLE hService, DWORD dwNumServiceArgs,
     data = CreateSemaphoreW(NULL,1,1,_ServiceStartDataW);
     if (!data)
     {
-        data = OpenSemaphoreW(SEMAPHORE_ALL_ACCESS, FALSE, _ServiceStartDataW);
-        if(data == 0)
-        {
-            ERR("Couldn't create data semaphore\n");
-            return FALSE;
-        }
+        ERR("Couldn't create data semaphore\n");
+        return FALSE;
     }
     wait = CreateSemaphoreW(NULL,0,1,_WaitServiceStartW);
+    if (!wait)
     {
-        wait = OpenSemaphoreW(SEMAPHORE_ALL_ACCESS, FALSE, _ServiceStartDataW);
-        if(wait == 0)
-        {
-            ERR("Couldn't create wait semaphore\n");
-            return FALSE;
-        }
+        ERR("Couldn't create wait semaphore\n");
+        return FALSE;
     }
 
     /*
