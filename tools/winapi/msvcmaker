@@ -349,7 +349,8 @@ $wine_test_dsp_files{"wineruntests.dsp"}{imports} = [];
 $wine_test_dsp_files{"winetest.dsp"}{files} = [
   'include/wine/exception.h',
   'include/wine/test.h',
-  'include/wine/unicode.h'
+  'include/wine/unicode.h',
+  'winetest.c'
 ];
 $wine_test_dsp_files{"winetest.dsp"}{imports} = [];
 
@@ -625,10 +626,10 @@ sub _generate_dsp {
 	my @defines;
 	if($debug) {
 	    if($lib || $exe) {
-		print OUT "# ADD BASE CPP /nologo /W3 /Gm /GX /ZI /Od";
+		print OUT "# ADD BASE CPP /nologo /W3 /Gm /GX /Zi /Od";
 		@defines = (qw(WIN32 _DEBUG _MBCS _LIB));
 	    } else {
-		print OUT "# ADD BASE CPP /nologo /MTd /W3 /Gm /GX /ZI /Od";
+		print OUT "# ADD BASE CPP /nologo /MTd /W3 /Gm /GX /Zi /Od";
 		@defines = (qw(WIN32 _DEBUG _WINDOWS _MBCS _USRDLL), ("\U${project}\E_EXPORTS"));
 	    }
 	} else {
@@ -654,10 +655,10 @@ sub _generate_dsp {
 	my @defines2;
 	if($debug) {
 	    if($lib) {
-		print OUT "# ADD CPP /nologo /MTd /W3 /Gm /GX /ZI /Od";
+		print OUT "# ADD CPP /nologo /MTd /W3 /Gm /GX /Zi /Od";
 		@defines2 = qw(WIN32 _DEBUG _WINDOWS _MBCS _LIB);
 	    } else {
-		print OUT "# ADD CPP /nologo /MTd /W3 /Gm /GX /ZI /Od";
+		print OUT "# ADD CPP /nologo /MTd /W3 /Gm /GX /Zi /Od";
 		@defines2 = qw(_DEBUG WIN32 _WINDOWS _MBCS _USRDLL);
 	    }
 	} else {
@@ -675,6 +676,9 @@ sub _generate_dsp {
 	    push @defines2, "_\U${project}\E_";
 	    push @defines2, qw(__WINESRC__) if $project !~ /^(?:wine(?:build|test)|.*?_test)$/;
 	    push @defines2, qw(__WINE_USE_MSVCRT);
+	    if ($msvc_headers) {
+	    	push @defines2, qw(__WINE_USE_NATIVE_HEADERS);
+	    }
 	    my $output_dir2 = $output_dir;
 	    $output_dir =~ s/\\/\\\\/g;
 	    push @defines2, "__WINETEST_OUTPUT_DIR=\\\"$output_dir\\\"";
@@ -1211,6 +1215,18 @@ sub _generate_runtests_c {
     print OUT "}\n";
 }
 
+if ($options->winetest) {
+    replace_file("$wine_dir/winetest.c", \&_generate_winetest_c);
+}
+
+sub _generate_winetest_c {
+    local *OUT = shift;
+
+    print OUT "/* Automatically generated file; DO NOT EDIT!! */\n\n";
+
+    print OUT "/* Force the linker to generate a .lib file */\n";
+    print OUT "void __wine_dummy_lib_function()\n{\n}\n\n";
+}
 
 if ($options->wine) {
     my $config_h = "include/config.h";
