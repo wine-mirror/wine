@@ -488,7 +488,15 @@ UINT WINAPI mixerGetLineControlsA(HMIXEROBJ hmix, LPMIXERLINECONTROLSA lpmlcA,
     mlcW.dwLineID = lpmlcA->dwLineID;
     mlcW.u.dwControlID = lpmlcA->u.dwControlID;
     mlcW.u.dwControlType = lpmlcA->u.dwControlType;
-    mlcW.cControls = lpmlcA->cControls;
+
+    /* Debugging on Windows shows for MIXER_GETLINECONTROLSF_ONEBYTYPE only,
+       the control count is assumed to be 1 - This is relied upon by a game,
+       "Dynomite Deluze"                                                    */
+    if (MIXER_GETLINECONTROLSF_ONEBYTYPE == fdwControls) {
+        mlcW.cControls = 1;
+    } else {
+        mlcW.cControls = lpmlcA->cControls;
+    }
     mlcW.cbmxctrl = sizeof(MIXERCONTROLW);
     mlcW.pamxctrl = HeapAlloc(GetProcessHeap(), 0,
 			      mlcW.cControls * mlcW.cbmxctrl);
