@@ -18,15 +18,14 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#include <windef.h>
+#include "wine/test.h"
+#include <winbase.h>
 #include <winnls.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <fcntl.h>
 #include <sys/stat.h>
 #include <io.h>
-
-#include "wine/test.h"
 
 static void test_fdopen( void )
 {
@@ -66,7 +65,7 @@ static void test_fgetwc( void )
   WCHAR wtextW[LLEN+1];
   WCHAR *mytextW = NULL, *aptr, *wptr;
   BOOL diff_found = FALSE;
-  int i;
+  unsigned int i;
   
   tempf=_tempnam(".","wne");
   tempfh = fopen(tempf,"wt"); /* open in TEXT mode */
@@ -98,7 +97,7 @@ static void test_file_put_get( void )
   WCHAR wtextW[LLEN+1];
   WCHAR *mytextW = NULL, *aptr, *wptr;
   BOOL diff_found = FALSE;
-  int i;
+  unsigned int i;
 
   tempf=_tempnam(".","wne");
   tempfh = fopen(tempf,"wt"); /* open in TEXT mode */
@@ -146,30 +145,30 @@ static void test_file_write_read( void )
 
   tempf=_tempnam(".","wne");
   ok((tempfd = _open(tempf,_O_CREAT|_O_TRUNC|_O_TEXT|_O_RDWR,_S_IREAD | _S_IWRITE)) != -1,"Can't open"); /* open in TEXT mode */
-  ok(_write(tempfd,mytext,strlen(mytext)) == strlen(mytext), "_write _O_TEXT bad return value");
+  ok(_write(tempfd,mytext,strlen(mytext)) == lstrlenA(mytext), "_write _O_TEXT bad return value");
   _close(tempfd);
   tempfd = _open(tempf,_O_RDONLY|_O_BINARY,0); /* open in BINARY mode */
-  ok(_read(tempfd,btext,LLEN) == strlen(dostext), "_read _O_BINARY got bad length");
+  ok(_read(tempfd,btext,LLEN) == lstrlenA(dostext), "_read _O_BINARY got bad length");
   ok( memcmp(dostext,btext,strlen(dostext)) == 0,"problems with _O_TEXT _write and _O_BINARY _write");
   ok( btext[strlen(dostext)-2] == '\r', "CR not written");
   _close(tempfd);
   tempfd = _open(tempf,_O_RDONLY|_O_TEXT); /* open in TEXT mode */
-  ok(_read(tempfd,btext,LLEN) == strlen(mytext), "_read _O_TEXT got bad length");
+  ok(_read(tempfd,btext,LLEN) == lstrlenA(mytext), "_read _O_TEXT got bad length");
   ok( memcmp(mytext,btext,strlen(mytext)) == 0,"problems with _O_TEXT _write / _write");
   _close(tempfd);
   ok(unlink(tempf) !=-1 ,"Can't unlink");
 
   tempf=_tempnam(".","wne");
   ok((tempfd = _open(tempf,_O_CREAT|_O_TRUNC|_O_BINARY|_O_RDWR,0)) != -1,"Can't open %s",tempf); /* open in BINARY mode */
-  ok(_write(tempfd,dostext,strlen(dostext)) == strlen(dostext), "_write _O_TEXT bad return value");
+  ok(_write(tempfd,dostext,strlen(dostext)) == lstrlenA(dostext), "_write _O_TEXT bad return value");
   _close(tempfd);
   tempfd = _open(tempf,_O_RDONLY|_O_BINARY,0); /* open in BINARY mode */
-  ok(_read(tempfd,btext,LLEN) == strlen(dostext), "_read _O_BINARY got bad length");
+  ok(_read(tempfd,btext,LLEN) == lstrlenA(dostext), "_read _O_BINARY got bad length");
   ok( memcmp(dostext,btext,strlen(dostext)) == 0,"problems with _O_TEXT _write and _O_BINARY _write");
   ok( btext[strlen(dostext)-2] == '\r', "CR not written");
   _close(tempfd);
   tempfd = _open(tempf,_O_RDONLY|_O_TEXT); /* open in TEXT mode */
-  ok(_read(tempfd,btext,LLEN) == strlen(mytext), "_read _O_TEXT got bad length");
+  ok(_read(tempfd,btext,LLEN) == lstrlenA(mytext), "_read _O_TEXT got bad length");
   ok( memcmp(mytext,btext,strlen(mytext)) == 0,"problems with _O_TEXT _write / _write");
   _close(tempfd);
 

@@ -22,8 +22,9 @@
 #include <stdio.h>
 
 #include "wine/test.h"
-#include "wine/unicode.h"
 #include "winbase.h"
+#include "wine/unicode.h"
+#include "winreg.h"
 #include "shlwapi.h"
 #include "wininet.h"
 
