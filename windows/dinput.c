@@ -81,6 +81,7 @@ struct SysKeyboardAImpl
         GUID                            guid;
         /* SysKeyboardAImpl */
         BYTE                            keystate[256];
+	KEYBOARD_CONFIG                 initial_config;
 };
 
 #ifdef HAVE_LINUX_22_JOYSTICK_API
@@ -294,7 +295,7 @@ static HRESULT WINAPI IDirectInputAImpl_CreateDevice(
 	char	xbuf[50];
 	
 	WINE_StringFromCLSID(rguid,xbuf);
-	FIXME("(this=%p,%s,%p,%p): stub\n",This,xbuf,pdev,punk);
+	TRACE("(this=%p,%s,%p,%p)\n",This,xbuf,pdev,punk);
 	if ((!memcmp(&GUID_SysKeyboard,rguid,sizeof(GUID_SysKeyboard))) ||          /* Generic Keyboard */
 	    (!memcmp(&DInput_Wine_Keyboard_GUID,rguid,sizeof(GUID_SysKeyboard)))) { /* Wine Keyboard */
                 SysKeyboardAImpl* newDevice;
@@ -431,7 +432,7 @@ static HRESULT WINAPI IDirectInputDevice2AImpl_SetCooperativeLevel(
 	LPDIRECTINPUTDEVICE2A iface,HWND hwnd,DWORD dwflags
 ) {
 	ICOM_THIS(IDirectInputDevice2AImpl,iface);
-	FIXME("(this=%p,0x%08lx,0x%08lx): stub\n",This,(DWORD)hwnd,dwflags);
+	TRACE("(this=%p,0x%08lx,0x%08lx)\n",This,(DWORD)hwnd,dwflags);
 	if (TRACE_ON(dinput))
 	  _dump_cooperativelevel(dwflags);
 	return 0;
@@ -507,7 +508,7 @@ static HRESULT WINAPI SysKeyboardAImpl_GetDeviceData(
 	ret=KEYBOARD_Driver->pGetDIData(
 		This->keystate, dodsize, dod, entries, flags)?DI_OK:E_FAIL;
 	for (i=0;i<*entries;i++) {
-		dod[i].dwTimeStamp = time(NULL);
+		dod[i].dwTimeStamp = GetTickCount();
 		dod[i].dwSequence = evsequence++;
 	}
 	return ret;
@@ -516,15 +517,28 @@ static HRESULT WINAPI SysKeyboardAImpl_GetDeviceData(
 static HRESULT WINAPI SysKeyboardAImpl_Acquire(LPDIRECTINPUTDEVICE2A iface)
 {
 	ICOM_THIS(SysKeyboardAImpl,iface);
-	TRACE("(this=%p): stub\n",This);
-	return 0;
+	KEYBOARD_CONFIG no_auto;
+	
+	TRACE("(this=%p)\n",This);
+	/* Save the original config */
+	KEYBOARD_Driver->pGetKeyboardConfig(&(This->initial_config));
+
+	/* Now, remove auto-repeat */
+	no_auto.auto_repeat = FALSE;
+	KEYBOARD_Driver->pSetKeyboardConfig(&no_auto, WINE_KEYBOARD_CONFIG_AUTO_REPEAT);
+	
+	return DI_OK;
 }
 
 static HRESULT WINAPI SysKeyboardAImpl_Unacquire(LPDIRECTINPUTDEVICE2A iface)
 {
 	ICOM_THIS(SysKeyboardAImpl,iface);
-	TRACE("(this=%p): stub\n",This);
-	return 0;
+	TRACE("(this=%p)\n",This);
+
+	/* Restore the original configuration */
+	KEYBOARD_Driver->pSetKeyboardConfig(&(This->initial_config), 0xFFFFFFFF);
+
+	return DI_OK;
 }
 
 static HRESULT WINAPI IDirectInputDevice2AImpl_QueryInterface(
@@ -760,7 +774,7 @@ static HRESULT WINAPI SysMouseAImpl_SetCooperativeLevel(
 {
   ICOM_THIS(SysMouseAImpl,iface);
 
-  TRACE("(this=%p,0x%08lx,0x%08lx): stub\n",This,(DWORD)hwnd,dwflags);
+  TRACE("(this=%p,0x%08lx,0x%08lx)\n",This,(DWORD)hwnd,dwflags);
 
   if (TRACE_ON(dinput))
     _dump_cooperativelevel(dwflags);

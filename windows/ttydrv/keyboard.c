@@ -93,3 +93,18 @@ BOOL TTYDRV_KEYBOARD_GetDIData(
 {
   return TRUE;
 }
+
+/***********************************************************************
+ *		TTYDRV_KEYBOARD_GetKeyboardConfig
+ */
+void TTYDRV_KEYBOARD_GetKeyboardConfig(KEYBOARD_CONFIG *cfg) {
+
+}
+
+/***********************************************************************
+ *		TTYDRV_KEYBOARD_SetKeyboardConfig
+ */
+extern void TTYDRV_KEYBOARD_SetKeyboardConfig(KEYBOARD_CONFIG *cfg, DWORD mask) {
+
+}
+

@@ -33,6 +33,7 @@
 DECLARE_DEBUG_CHANNEL(key)
 DECLARE_DEBUG_CHANNEL(keyboard)
 DECLARE_DEBUG_CHANNEL(x11drv)
+DECLARE_DEBUG_CHANNEL(dinput)
 
 extern BYTE InputKeyStateTable[256];
 
@@ -1480,11 +1481,38 @@ BOOL X11DRV_KEYBOARD_GetDIData(
       
     }
   
-  if (n) fprintf(stderr,"%d entries\n",n);
+  if (n) TRACE_(dinput)("%d entries\n",n);
   *entries = n;
 
   return TRUE;
 }
+
+/***********************************************************************
+ *		X11DRV_KEYBOARD_GetKeyboardConfig
+ */
+void X11DRV_KEYBOARD_GetKeyboardConfig(KEYBOARD_CONFIG *cfg) {
+  XKeyboardState   xks;
+
+  /* For the moment, only get the auto-repeat mode */
+  TSXGetKeyboardControl(display, &xks);
+  cfg->auto_repeat = xks.global_auto_repeat;
+}
+
+/***********************************************************************
+ *		X11DRV_KEYBOARD_SetKeyboardConfig
+ */
+extern void X11DRV_KEYBOARD_SetKeyboardConfig(KEYBOARD_CONFIG *cfg, DWORD mask) {
+  XKeyboardControl xkc;
+  unsigned long X_mask = 0;
+  
+  if (mask & WINE_KEYBOARD_CONFIG_AUTO_REPEAT) {
+    X_mask |= KBAutoRepeatMode;
+    xkc.auto_repeat_mode = cfg->auto_repeat;
+  }
+  if (X_mask)
+    TSXChangeKeyboardControl(display, X_mask, &xkc);
+}
+
 
 #endif /* !defined(X_DISPLAY_MISSING) */
 

@@ -20,6 +20,8 @@
 #include "wine/winuser16.h"
 #include "wine/wingdi16.h"
 
+#include "keyboard.h"
+
 struct tagBITMAPOBJ;
 struct tagCLASS;
 struct tagDC;
@@ -164,6 +166,8 @@ extern void TTYDRV_KEYBOARD_SetBeepActive(BOOL bActivate);
 extern void TTYDRV_KEYBOARD_Beep(void);
 extern BOOL TTYDRV_KEYBOARD_GetDIState(DWORD len, LPVOID ptr);
 extern BOOL TTYDRV_KEYBOARD_GetDIData(BYTE *keystate, DWORD dodsize, LPDIDEVICEOBJECTDATA dod, LPDWORD entries, DWORD flags);
+extern void TTYDRV_KEYBOARD_GetKeyboardConfig(KEYBOARD_CONFIG *cfg);
+extern void TTYDRV_KEYBOARD_SetKeyboardConfig(KEYBOARD_CONFIG *cfg, DWORD mask);
 
 /* TTY monitor driver */
 

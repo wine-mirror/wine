@@ -30,6 +30,11 @@ VOID WINAPI KEYBOARD_Disable(VOID);
 
 /* Wine internals */
 
+#define WINE_KEYBOARD_CONFIG_AUTO_REPEAT 0x00000001
+typedef struct tagKEYBOARD_CONFIG {
+  BOOL auto_repeat;
+} KEYBOARD_CONFIG;
+
 typedef struct tagKEYBOARD_DRIVER {
   void   (*pInit)(void);
   WORD   (*pVkKeyScan)(CHAR);
@@ -41,6 +46,8 @@ typedef struct tagKEYBOARD_DRIVER {
   void   (*pBeep)(void);
   BOOL   (*pGetDIState)(DWORD, LPVOID);
   BOOL   (*pGetDIData)(BYTE *, DWORD, LPDIDEVICEOBJECTDATA, LPDWORD, DWORD);
+  void   (*pGetKeyboardConfig)(KEYBOARD_CONFIG *);
+  void   (*pSetKeyboardConfig)(KEYBOARD_CONFIG *, DWORD);
 } KEYBOARD_DRIVER;
 
 extern KEYBOARD_DRIVER *KEYBOARD_Driver;

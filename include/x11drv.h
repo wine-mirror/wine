@@ -19,6 +19,8 @@
 #include "winbase.h"
 #include "windef.h"
 
+#include "keyboard.h"
+
 #include <X11/extensions/XShm.h>
 
 struct tagBITMAPOBJ;
@@ -396,6 +398,8 @@ extern void X11DRV_KEYBOARD_SetBeepActive(BOOL bActivate);
 extern void X11DRV_KEYBOARD_Beep(void);
 extern BOOL X11DRV_KEYBOARD_GetDIState(DWORD len, LPVOID ptr);
 extern BOOL X11DRV_KEYBOARD_GetDIData(BYTE *keystate, DWORD dodsize, LPDIDEVICEOBJECTDATA dod, LPDWORD entries, DWORD flags);
+extern void X11DRV_KEYBOARD_GetKeyboardConfig(KEYBOARD_CONFIG *cfg);
+extern void X11DRV_KEYBOARD_SetKeyboardConfig(KEYBOARD_CONFIG *cfg, DWORD mask);
 
 extern void X11DRV_KEYBOARD_HandleEvent(struct tagWND *pWnd, XKeyEvent *event);
 
