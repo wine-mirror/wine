@@ -101,7 +101,7 @@ static char pBuffer[BUFFER_MAX];
  * 400 then it is a leap year.
  */
 
-/* 
+/*
  * Use 365 days/year and a manual calculation for leap year days
  * to keep arithmetic simple
  */
@@ -153,7 +153,7 @@ static const double DAYS_IN_ONE_YEAR = 365.0;
 #define TOK_AMPM   0x2e
 
 typedef struct tagFORMATTOKEN {
-    char  *str;                   
+    char  *str;
     BYTE   tokenSize;
     BYTE   tokenId;
     int    varTypeRequired;
@@ -354,7 +354,7 @@ static BOOL TmToDATE( struct tm* pTm, DATE *pDateOut )
          * Note a leap year is one that is a multiple of 4
          * but not of a 100.  Except if it is a multiple of
          * 400 then it is a leap year.
-         * Copied + reversed functionality into TmToDate 
+         * Copied + reversed functionality into TmToDate
          */
         *pDateOut += ( (pTm->tm_year - 1) / 4 ) - ( 1900 / 4 );
         *pDateOut -= ( (pTm->tm_year - 1) / 100 ) - ( 1900 / 100 );
@@ -502,7 +502,7 @@ BOOL DateToTm( DATE dateIn, DWORD dwFlags, struct tm* pTm )
              * Note a leap year is one that is a multiple of 4
              * but not of a 100.  Except if it is a multiple of
              * 400 then it is a leap year.
-             * Copied + reversed functionality from TmToDate 
+             * Copied + reversed functionality from TmToDate
              */
             nDay -= ( (pTm->tm_year - 1) / 4 ) - ( 1900 / 4 );
             nDay += ( (pTm->tm_year - 1) / 100 ) - ( 1900 / 100 );
@@ -4359,7 +4359,7 @@ HRESULT WINAPI VarCyFromDate(DATE dateIn, CY* pcyOut) {
  * FIXME: Never tested with decimal seperator other than '.'
  */
 HRESULT WINAPI VarCyFromStr(OLECHAR *strIn, LCID lcid, ULONG dwFlags, CY *pcyOut) {
-	
+
 	LPSTR   pNewString      = NULL;
     char   *decSep          = NULL;
     char   *strPtr,*curPtr  = NULL;
@@ -4376,7 +4376,7 @@ HRESULT WINAPI VarCyFromStr(OLECHAR *strIn, LCID lcid, ULONG dwFlags, CY *pcyOut
     rc = GetLocaleInfoA(lcid, LOCALE_SDECIMAL, decSep, size);
     TRACE("Decimal Seperator is '%s'\n", decSep);
 
-    /* Now copy to temporary buffer, skipping any character except 0-9 and 
+    /* Now copy to temporary buffer, skipping any character except 0-9 and
        the decimal seperator */
     curPtr = pBuffer;      /* Current position in string being built       */
     strPtr = pNewString;   /* Current position in supplied currenct string */
@@ -4568,7 +4568,7 @@ HRESULT WINAPI VarNumFromParseNum(NUMPARSE * pnumprs, BYTE * rgbDig,
         VarCyFromInt( (int) xint, &V_UNION(pvar,cyVal) );
         TRACE("Calculated cy is %ld,%lu\n", V_UNION(pvar,cyVal).s.Hi, V_UNION(pvar,cyVal).s.Lo);
         return VarCyFromInt( (int) xint, &V_UNION(pvar,cyVal) );
-    } 
+    }
 
 	FIXME("vtbitmask is unsupported %lx, int=%d\n",dwVtBits, (int) xint);
 	return E_FAIL;
@@ -4916,18 +4916,22 @@ HRESULT WINAPI VarBstrCmp(BSTR left, BSTR right, LCID lcid, DWORD flags)
 HRESULT WINAPI VarBstrCat(BSTR left, BSTR right, BSTR *out)
 {
     BSTR result;
+    int size = 0;
 
     TRACE("( %s %s %p )\n", debugstr_w(left), debugstr_w(right), out);
 
-    if( (!left) || (!right) || (!out) )
-        return 0;
+    /* On Windows, NULL parms are still handled (as empty strings) */
+    if (left)  size=size + lstrlenW(left);
+    if (right) size=size + lstrlenW(right);
 
-    result = SysAllocStringLen(left, lstrlenW(left)+lstrlenW(right));
-    lstrcatW(result,right);
-
-    *out = result;
-
-    return 1;
+    if (out) {
+        result = SysAllocStringLen(NULL, size);
+        *out = result;
+        if (left) lstrcatW(result,left);
+        if (right) lstrcatW(result,right);
+        TRACE("result = %s, [%p]\n", debugstr_w(result), result);
+    }
+    return S_OK;
 }
 
 /**********************************************************************
@@ -4987,7 +4991,7 @@ HRESULT WINAPI VarCmp(LPVARIANT left, LPVARIANT right, LCID lcid, DWORD flags)
         return VarBstrCmp(V_BSTR(left), V_BSTR(right), lcid, flags);
     }
 
-    /* Integers - Ideally like to use VarDecCmp, but no Dec support yet 
+    /* Integers - Ideally like to use VarDecCmp, but no Dec support yet
            Use LONGLONG to maximize ranges                              */
     lOk = TRUE;
     switch (V_VT(left)&VT_TYPEMASK) {
@@ -5137,7 +5141,7 @@ HRESULT WINAPI VarNot(LPVARIANT in, LPVARIANT result)
  * <token> - Insert appropriate token
  *
  */
-HRESULT VarTokenizeFormatString(LPOLESTR  format, LPBYTE rgbTok,  
+HRESULT VarTokenizeFormatString(LPOLESTR  format, LPBYTE rgbTok,
                      int   cbTok, int iFirstDay, int iFirstWeek,
                      LCID  lcid, int *pcbActual) {
 
@@ -5176,7 +5180,7 @@ HRESULT VarTokenizeFormatString(LPOLESTR  format, LPBYTE rgbTok,
         checkStr = 0;
         while (checkStr>=0 && (formatTokens[checkStr].tokenSize != 0x00)) {
             if (formatLeft >= formatTokens[checkStr].tokenSize &&
-                strncmp(formatTokens[checkStr].str, pFormatA, 
+                strncmp(formatTokens[checkStr].str, pFormatA,
                         formatTokens[checkStr].tokenSize) == 0) {
                 TRACE("match on '%s'\n", formatTokens[checkStr].str);
 
@@ -5273,7 +5277,7 @@ HRESULT VarTokenizeFormatString(LPOLESTR  format, LPBYTE rgbTok,
 
     return S_OK;
 }
- 
+
 /**********************************************************************
  *              VarFormatFromTokens [OLEAUT32.472]
  * FIXME: No account of flags or iFirstDay etc
@@ -5290,7 +5294,7 @@ HRESULT VarFormatFromTokens(LPVARIANT varIn, LPOLESTR format,
     int          size, whichToken;
     VARIANTARG   Variant;
     struct tm    TM;
-    
+
 
 
     TRACE("'%s', %p %lx %p only date support\n", pFormatA, pbTokCur, dwFlags, pbstrOut);
@@ -5315,7 +5319,7 @@ HRESULT VarFormatFromTokens(LPVARIANT varIn, LPOLESTR format,
         if (formatTokens[whichToken].tokenSize > 0 &&
             formatTokens[whichToken].varTypeRequired != 0) {
 			VariantInit( &Variant );
-            if (Coerce( &Variant, lcid, dwFlags, varIn, 
+            if (Coerce( &Variant, lcid, dwFlags, varIn,
                         formatTokens[whichToken].varTypeRequired ) != S_OK) {
                 HeapFree( GetProcessHeap(), 0, pFormatA );
                 return DISP_E_TYPEMISMATCH;
@@ -5476,10 +5480,10 @@ HRESULT VarFormatFromTokens(LPVARIANT varIn, LPOLESTR format,
  *              VarFormat [OLEAUT32.469]
  *
  */
-HRESULT WINAPI VarFormat(LPVARIANT varIn, LPOLESTR format, 
+HRESULT WINAPI VarFormat(LPVARIANT varIn, LPOLESTR format,
                          int firstDay, int firstWeek, ULONG dwFlags,
                          BSTR *pbstrOut) {
-	
+
     LPSTR   pNewString = NULL;
     HRESULT rc = S_OK;
 
@@ -5487,13 +5491,13 @@ HRESULT WINAPI VarFormat(LPVARIANT varIn, LPOLESTR format,
           debugstr_w(format), firstDay, firstWeek, dwFlags);
     TRACE("varIn:\n");
     dump_Variant(varIn);
- 
-    /* Get format string */ 
+
+    /* Get format string */
     pNewString = HEAP_strdupWtoA( GetProcessHeap(), 0, format );
- 
+
     /* FIXME: Handle some simple pre-definted format strings : */
     if (((V_VT(varIn)&VT_TYPEMASK) == VT_CY) && (lstrcmpiA(pNewString, "Currency") == 0)) {
- 
+
         /* Can't use VarBstrFromCy as it does not put currency sign on nor decimal places */
         double curVal;
         rc = VarR8FromCy(V_UNION(varIn,cyVal), &curVal);
@@ -5506,28 +5510,26 @@ HRESULT WINAPI VarFormat(LPVARIANT varIn, LPOLESTR format,
                 *pbstrOut = StringDupAtoBstr( pBuffer );
             }
         }
- 
+
     } else if ((V_VT(varIn)&VT_TYPEMASK) == VT_DATE) {
- 
+
         /* Attempt to do proper formatting! */
         int firstToken = -1;
- 
+
         rc = VarTokenizeFormatString(format, pBuffer, sizeof(pBuffer), firstDay,
-                                  firstWeek, GetUserDefaultLCID(), &firstToken); 
+                                  firstWeek, GetUserDefaultLCID(), &firstToken);
         if (rc==S_OK) {
             rc = VarFormatFromTokens(varIn, format, pBuffer, dwFlags, pbstrOut, GetUserDefaultLCID());
         }
- 
- 
+
+
     } else {
         FIXME("Unsupported format!\n");
         *pbstrOut = StringDupAtoBstr( "??" );
     }
- 
+
     /* Free allocated storage */
     HeapFree( GetProcessHeap(), 0, pNewString );
     TRACE("result: '%s'\n", debugstr_w(*pbstrOut));
     return rc;
 }
- 
-
