@@ -662,7 +662,7 @@ const DOS_DEVICE *DOSFS_GetDevice( const char *name )
         if (!FILE_strncasecmp( dev, name, strlen(dev) ))
         {
             p = name + strlen( dev );
-            if (!*p || (*p == '.')) return &DOSFS_Devices[i];
+            if (!*p || (*p == '.') || (*p == ':')) return &DOSFS_Devices[i];
         }
     }
     return NULL;
@@ -747,7 +747,7 @@ HFILE DOSFS_OpenDevice( const char *name, DWORD access )
         if (!FILE_strncasecmp( dev, name, strlen(dev) ))
         {
             p = name + strlen( dev );
-            if (!*p || (*p == '.')) {
+            if (!*p || (*p == '.') || (*p == ':')) {
 	    	/* got it */
 		if (!strcmp(DOSFS_Devices[i].name,"NUL"))
                     return FILE_CreateFile( "/dev/null", access,
@@ -778,7 +778,7 @@ HFILE DOSFS_OpenDevice( const char *name, DWORD access )
                     return FILE_CreateDevice( i, access, NULL );
 		}
 
-                if( (handle=DOSFS_CreateCommPort(name,access)) )
+                if( (handle=DOSFS_CreateCommPort(DOSFS_Devices[i].name,access)) )
                     return handle;
 
 		FIXME("device open %s not supported (yet)\n",DOSFS_Devices[i].name);
