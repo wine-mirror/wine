@@ -854,7 +854,7 @@ static DWORD WINAPI stub_dispatch_thread(LPVOID param)
     TRACE("starting for apartment OXID %08lx%08lx\n", (DWORD)(xpipe->mid.oxid >> 32), (DWORD)(xpipe->mid.oxid));
 
     /* join marshalling apartment. fixme: this stuff is all very wrong, threading needs to work like native */
-    NtCurrentTeb()->ReservedForOle = xpipe->apt;
+    COM_CurrentInfo()->apt = xpipe->apt;
     
     while (!hres) {
 	int i;
@@ -901,7 +901,7 @@ static DWORD WINAPI apartment_listener_thread(LPVOID p)
     HeapFree(GetProcessHeap(), 0, params);
 
     /* we must join the marshalling threads apartment. we already have a ref here */
-    NtCurrentTeb()->ReservedForOle = apt;
+    COM_CurrentInfo()->apt = apt;
 
     sprintf(pipefn,OLESTUBMGR"_%08lx%08lx", (DWORD)(apt->oxid >> 32), (DWORD)(apt->oxid));
     TRACE("Apartment listener thread starting on (%s)\n",pipefn);
