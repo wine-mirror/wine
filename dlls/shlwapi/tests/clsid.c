@@ -28,11 +28,6 @@
 #include "winuser.h"
 #include "shlguid.h"
 #include "shobjidl.h"
-#define NO_SHLWAPI_REG
-#define NO_SHLWAPI_PATH
-#define NO_SHLWAPI_GDI
-#define NO_SHLWAPI_STREAM
-#include "shlwapi.h"
 
 /* Function ptrs for ordinal calls */
 static HMODULE hShlwapi = 0;

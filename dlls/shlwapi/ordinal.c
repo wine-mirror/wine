@@ -42,15 +42,12 @@
 #include "shlguid.h"
 #include "wingdi.h"
 #include "shlobj.h"
-#include "olectl.h"
 #include "shellapi.h"
 #include "commdlg.h"
 #include "wine/unicode.h"
-#include "servprov.h"
 #include "winreg.h"
 #include "wine/debug.h"
 #include "shlwapi.h"
-#include "winnt.h"
 
 
 WINE_DEFAULT_DEBUG_CHANNEL(shell);

@@ -24,7 +24,6 @@
 #include <stdlib.h>
 
 #include "ntdll_test.h"
-#include "winnls.h"
 
 /* Function ptrs for ntdll calls */
 static HMODULE hntdll = 0;

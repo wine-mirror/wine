@@ -31,7 +31,6 @@
 #include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
-#include "ntstatus.h"
 #include "windef.h"
 #include "winbase.h"
 #include "winreg.h"
