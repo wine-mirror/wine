@@ -74,7 +74,7 @@ static HRESULT WINAPI COMCAT_ICatRegister_RegisterCategories(
     ULONG cCategories,
     CATEGORYINFO *rgCategoryInfo)
 {
-    ICOM_THIS_MULTI(ComCatMgrImpl, regVtbl, iface);
+/*     ICOM_THIS_MULTI(ComCatMgrImpl, regVtbl, iface); */
     FIXME("(): stub\n");
 
     return E_NOTIMPL;
@@ -88,7 +88,7 @@ static HRESULT WINAPI COMCAT_ICatRegister_UnRegisterCategories(
     ULONG cCategories,
     CATID *rgcatid)
 {
-    ICOM_THIS_MULTI(ComCatMgrImpl, regVtbl, iface);
+/*     ICOM_THIS_MULTI(ComCatMgrImpl, regVtbl, iface); */
     FIXME("(): stub\n");
 
     return E_NOTIMPL;
@@ -103,7 +103,7 @@ static HRESULT WINAPI COMCAT_ICatRegister_RegisterClassImplCategories(
     ULONG cCategories,
     CATID *rgcatid)
 {
-    ICOM_THIS_MULTI(ComCatMgrImpl, regVtbl, iface);
+/*     ICOM_THIS_MULTI(ComCatMgrImpl, regVtbl, iface); */
     FIXME("(): stub\n");
 
     return E_NOTIMPL;
@@ -118,7 +118,7 @@ static HRESULT WINAPI COMCAT_ICatRegister_UnRegisterClassImplCategories(
     ULONG cCategories,
     CATID *rgcatid)
 {
-    ICOM_THIS_MULTI(ComCatMgrImpl, regVtbl, iface);
+/*     ICOM_THIS_MULTI(ComCatMgrImpl, regVtbl, iface); */
     FIXME("(): stub\n");
 
     return E_NOTIMPL;
@@ -133,7 +133,7 @@ static HRESULT WINAPI COMCAT_ICatRegister_RegisterClassReqCategories(
     ULONG cCategories,
     CATID *rgcatid)
 {
-    ICOM_THIS_MULTI(ComCatMgrImpl, regVtbl, iface);
+/*     ICOM_THIS_MULTI(ComCatMgrImpl, regVtbl, iface); */
     FIXME("(): stub\n");
 
     return E_NOTIMPL;
@@ -148,7 +148,7 @@ static HRESULT WINAPI COMCAT_ICatRegister_UnRegisterClassReqCategories(
     ULONG cCategories,
     CATID *rgcatid)
 {
-    ICOM_THIS_MULTI(ComCatMgrImpl, regVtbl, iface);
+/*     ICOM_THIS_MULTI(ComCatMgrImpl, regVtbl, iface); */
     FIXME("(): stub\n");
 
     return E_NOTIMPL;

@@ -73,7 +73,7 @@ static ULONG WINAPI COMCAT_IUnknown_AddRef(LPUNKNOWN iface)
     if (InterlockedIncrement(&This->ref) == 1) {
 	InterlockedIncrement(&dll_ref);
     }
-    return S_OK;
+    return This->ref;
 }
 
 /**********************************************************************
@@ -89,7 +89,7 @@ static ULONG WINAPI COMCAT_IUnknown_Release(LPUNKNOWN iface)
     if (InterlockedDecrement(&This->ref) == 0) {
 	InterlockedDecrement(&dll_ref);
     }
-    return S_OK;
+    return This->ref;
 }
 
 /**********************************************************************

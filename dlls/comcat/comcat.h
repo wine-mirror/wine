@@ -20,7 +20,9 @@
 
 #include "windef.h"
 #include "winbase.h"
+#include "winreg.h"
 #include "winerror.h"
+#include "ntddk.h"
 
 #include "ole2.h"
 #include "wine/obj_base.h"

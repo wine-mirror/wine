@@ -1749,6 +1749,11 @@ extern int WIN32_LastError;
 #define REGDB_E_IIDNOTREG                                  0x80040155L
 #define REGDB_E_LAST                                       0x8004015FL
 
+#define CAT_E_FIRST                                        0x80040160L
+#define CAT_E_CATIDNOEXIST                                 0x80040160L
+#define CAT_E_NODESCRIPTION                                0x80040161L
+#define CAT_E_LAST                                         0x80040161L
+
 #define CACHE_S_FIRST                                      0x00040170L
 #define CACHE_S_FORMATETC_NOTSUPPORTED                     0x00040170L
 #define CACHE_S_SAMECACHE                                  0x00040171L

@@ -63,7 +63,7 @@ static ULONG WINAPI COMCAT_IClassFactory_AddRef(LPCLASSFACTORY iface)
     if (InterlockedIncrement(&This->ref) == 1) {
 	InterlockedIncrement(&dll_ref);
     }
-    return S_OK;
+    return This->ref;
 }
 
 /**********************************************************************
@@ -79,7 +79,7 @@ static ULONG WINAPI COMCAT_IClassFactory_Release(LPCLASSFACTORY iface)
     if (InterlockedDecrement(&This->ref) == 0) {
 	InterlockedDecrement(&dll_ref);
     }
-    return S_OK;
+    return This->ref;;
 }
 
 /**********************************************************************
