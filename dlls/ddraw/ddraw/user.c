@@ -219,6 +219,9 @@ HRESULT User_DirectDraw_Create(const GUID* pGUID, LPDIRECTDRAW7* pIface,
      * CoCreateInstanced then Initialized. */
     This->private = (User_DirectDrawImpl *)(This+1);
 
+    /* Initialize the DDCAPS structure */
+    This->caps.dwSize = sizeof(This->caps);
+
     hr = User_DirectDraw_Construct(This, ex);
     if (FAILED(hr))
 	HeapFree(GetProcessHeap(), 0, This);
@@ -237,6 +240,9 @@ HRESULT User_DirectDraw_Initialize(IDirectDrawImpl *This, const GUID* guid)
     This->private = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
 			      sizeof(User_DirectDrawImpl));
     if (This->private == NULL) return E_OUTOFMEMORY;
+
+    /* Initialize the DDCAPS structure */
+    This->caps.dwSize = sizeof(This->caps);
 
     hr = User_DirectDraw_Construct(This, TRUE); /* XXX ex? */
     if (FAILED(hr))
