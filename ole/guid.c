@@ -18,6 +18,7 @@
 #include "dinput.h"
 #include "dsound.h"
 #include "dplay.h"
+#include "dplobby.h"
 #include "vfw.h"
 #include "shlguid.h"
 #include "shlobj.h"
