@@ -26,7 +26,6 @@
 #include "debugger.h"
 
 #include "winternl.h"
-#include "thread.h"
 #include "wincon.h"
 #include "winreg.h"
 #include "wingdi.h"

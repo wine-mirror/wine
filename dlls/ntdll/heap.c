@@ -141,8 +141,7 @@ inline static void set_status( NTSTATUS status )
 /* set the process main heap */
 static void set_process_heap( HANDLE heap )
 {
-    HANDLE *pdb = (HANDLE *)NtCurrentTeb()->process;
-    pdb[0x18 / sizeof(HANDLE)] = heap;  /* heap is at offset 0x18 in pdb */
+    NtCurrentTeb()->Peb->ProcessHeap = heap;
     processHeap = heap;
 }
 

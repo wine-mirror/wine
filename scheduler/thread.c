@@ -211,7 +211,7 @@ void THREAD_Init(void)
     {
         THREAD_InitTEB( &initial_teb );
         assert( initial_teb.teb_sel );
-        initial_teb.process = &current_process;
+        initial_teb.Peb = (PEB *)&current_process;  /* FIXME */
         SYSDEPS_SetCurThread( &initial_teb );
         SYSDEPS_InitErrno();
     }
@@ -277,7 +277,7 @@ HANDLE WINAPI CreateThread( SECURITY_ATTRIBUTES *sa, SIZE_T stack,
         return 0;
     }
 
-    teb->process     = NtCurrentTeb()->process;
+    teb->Peb         = NtCurrentTeb()->Peb;
     teb->tid         = tid;
     teb->request_fd  = request_pipe[1];
     teb->entry_point = start;

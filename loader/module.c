@@ -45,11 +45,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(module);
 WINE_DECLARE_DEBUG_CHANNEL(win32);
 WINE_DECLARE_DEBUG_CHANNEL(loaddll);
 
-inline static HMODULE get_exe_module(void)
-{
-    HANDLE *pdb = (HANDLE *)NtCurrentTeb()->process;
-    return pdb[0x08 / sizeof(HANDLE)];  /* get dword at offset 0x08 in pdb */
-}
 
 /***********************************************************************
  *           wait_input_idle
@@ -481,7 +476,7 @@ HMODULE WINAPI GetModuleHandleA(LPCSTR module)
     HMODULE             ret;
     UNICODE_STRING      wstr;
 
-    if (!module) return get_exe_module();
+    if (!module) return NtCurrentTeb()->Peb->ImageBaseAddress;
 
     RtlCreateUnicodeStringFromAsciiz(&wstr, module);
     nts = LdrGetDllHandle(0, 0, &wstr, &ret);
@@ -503,7 +498,7 @@ HMODULE WINAPI GetModuleHandleW(LPCWSTR module)
     HMODULE             ret;
     UNICODE_STRING      wstr;
 
-    if (!module) return get_exe_module();
+    if (!module) return NtCurrentTeb()->Peb->ImageBaseAddress;
 
     RtlInitUnicodeString( &wstr, module );
     nts = LdrGetDllHandle( 0, 0, &wstr, &ret);
@@ -570,7 +565,7 @@ DWORD WINAPI GetModuleFileNameW( HMODULE hModule, LPWSTR lpFileName, DWORD size 
         LDR_MODULE* pldr;
         NTSTATUS    nts;
 
-        if (!hModule) hModule = get_exe_module();
+        if (!hModule) hModule = NtCurrentTeb()->Peb->ImageBaseAddress;
         nts = LdrFindEntryForAddress( hModule, &pldr );
         if (nts == STATUS_SUCCESS) lstrcpynW(lpFileName, pldr->FullDllName.Buffer, size);
         else SetLastError( RtlNtStatusToDosError( nts ) );

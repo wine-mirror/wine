@@ -40,51 +40,9 @@ extern FARPROC SNOOP_GetProcAddress( HMODULE hmod, IMAGE_EXPORT_DIRECTORY *expor
                                      FARPROC origfun, DWORD ordinal );
 extern void RELAY_SetupDLL( const char *module );
 
-typedef struct RTL_DRIVE_LETTER_CURDIR
-{
-    USHORT              Flags;
-    USHORT              Length;
-    ULONG               TimeStamp;
-    UNICODE_STRING      DosPath;
-} RTL_DRIVE_LETTER_CURDIR, *PRTL_DRIVE_LETTER_CURDIR;
-
-typedef struct _RTL_USER_PROCESS_PARAMETERS
-{
-    ULONG               AllocationSize;
-    ULONG               Size;
-    ULONG               Flags;
-    ULONG               DebugFlags;
-    HANDLE              hConsole;
-    ULONG               ProcessGroup;
-    HANDLE              hStdInput;
-    HANDLE              hStdOutput;
-    HANDLE              hStdError;
-    UNICODE_STRING      CurrentDirectoryName;
-    HANDLE              CurrentDirectoryHandle;
-    UNICODE_STRING      DllPath;
-    UNICODE_STRING      ImagePathName;
-    UNICODE_STRING      CommandLine;
-    PWSTR               Environment;
-    ULONG               dwX;
-    ULONG               dwY;
-    ULONG               dwXSize;
-    ULONG               dwYSize;
-    ULONG               dwXCountChars;
-    ULONG               dwYCountChars;
-    ULONG               dwFillAttribute;
-    ULONG               dwFlags;
-    ULONG               wShowWindow;
-    UNICODE_STRING      WindowTitle;
-    UNICODE_STRING      DesktopInfo;
-    UNICODE_STRING      ShellInfo;
-    UNICODE_STRING      RuntimeInfo;
-    RTL_DRIVE_LETTER_CURDIR DLCurrentDirectory[0x20];
-} RTL_USER_PROCESS_PARAMETERS, *PRTL_USER_PROCESS_PARAMETERS;
-
 static inline HANDLE ntdll_get_process_heap(void)
 {
-    HANDLE *pdb = (HANDLE *)NtCurrentTeb()->process;
-    return pdb[0x18 / sizeof(HANDLE)];  /* get dword at offset 0x18 in pdb */
+    return NtCurrentTeb()->Peb->ProcessHeap;
 }
 
 /* FIXME: this should be part of PEB, once it's defined */

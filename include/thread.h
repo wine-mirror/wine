@@ -24,7 +24,6 @@
 #include "winternl.h"
 #include "wine/windef16.h"
 
-struct _PDB;
 struct __EXCEPTION_FRAME;
 struct _SECURITY_ATTRIBUTES;
 struct tagSYSLEVEL;
@@ -64,7 +63,7 @@ typedef struct _TEB
     HQUEUE16     queue;          /* 1!-  28 Message queue (NT: DWORD ActiveRpcHandle)*/
     WORD         pad1;           /* --n  2a */
     LPVOID      *tls_ptr;        /* 1--  2c Pointer to TLS array */
-    struct _PDB *process;        /* 12-  30 owning process (win95: PDB; nt: NTPEB !!) */
+    PEB         *Peb;            /* 12-  30 owning process PEB */
     DWORD	 flags;	         /* 1-n  34 */
     DWORD        exit_code;      /* 1--  38 Termination status */
     WORD         teb_sel;        /* 1--  3c Selector to TEB */

@@ -225,8 +225,7 @@ BOOL WINAPI HeapWalk(
  */
 HANDLE WINAPI GetProcessHeap(void)
 {
-    HANDLE *pdb = (HANDLE *)NtCurrentTeb()->process;
-    return pdb[0x18 / sizeof(HANDLE)];  /* get dword at offset 0x18 in pdb */
+    return NtCurrentTeb()->Peb->ProcessHeap;
 }
 
 

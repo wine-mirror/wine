@@ -29,16 +29,6 @@
 extern "C" {
 #endif /* defined(__cplusplus) */
 
-/***********************************************************************
- * PEB data structure
- */
-typedef struct _PEB {
-  BYTE Reserved1[2];
-  BYTE BeingDebugged;
-  BYTE Reserved2[229];
-  PVOID Reserved3[59];
-  ULONG SessionId;
-} PEB, *PPEB;
 
 /***********************************************************************
  * TEB data structure
@@ -100,6 +90,67 @@ typedef struct _CURDIR
     UNICODE_STRING DosPath;
     PVOID Handle;
 } CURDIR, *PCURDIR;
+
+typedef struct RTL_DRIVE_LETTER_CURDIR
+{
+    USHORT              Flags;
+    USHORT              Length;
+    ULONG               TimeStamp;
+    UNICODE_STRING      DosPath;
+} RTL_DRIVE_LETTER_CURDIR, *PRTL_DRIVE_LETTER_CURDIR;
+
+typedef struct _RTL_USER_PROCESS_PARAMETERS
+{
+    ULONG               AllocationSize;
+    ULONG               Size;
+    ULONG               Flags;
+    ULONG               DebugFlags;
+    HANDLE              hConsole;
+    ULONG               ProcessGroup;
+    HANDLE              hStdInput;
+    HANDLE              hStdOutput;
+    HANDLE              hStdError;
+    UNICODE_STRING      CurrentDirectoryName;
+    HANDLE              CurrentDirectoryHandle;
+    UNICODE_STRING      DllPath;
+    UNICODE_STRING      ImagePathName;
+    UNICODE_STRING      CommandLine;
+    PWSTR               Environment;
+    ULONG               dwX;
+    ULONG               dwY;
+    ULONG               dwXSize;
+    ULONG               dwYSize;
+    ULONG               dwXCountChars;
+    ULONG               dwYCountChars;
+    ULONG               dwFillAttribute;
+    ULONG               dwFlags;
+    ULONG               wShowWindow;
+    UNICODE_STRING      WindowTitle;
+    UNICODE_STRING      DesktopInfo;
+    UNICODE_STRING      ShellInfo;
+    UNICODE_STRING      RuntimeInfo;
+    RTL_DRIVE_LETTER_CURDIR DLCurrentDirectory[0x20];
+} RTL_USER_PROCESS_PARAMETERS, *PRTL_USER_PROCESS_PARAMETERS;
+
+
+/***********************************************************************
+ * PEB data structure
+ */
+typedef struct _PEB
+{
+    BYTE                         Reserved1[2];       /*  00 */
+    BYTE                         BeingDebugged;      /*  02 */
+    BYTE                         Reserved2[5];       /*  03 */
+    HMODULE                      ImageBaseAddress;   /*  08 */
+    PVOID                        __pad_0c;           /*  0c */
+    RTL_USER_PROCESS_PARAMETERS *ProcessParameters;  /*  10 */
+    PVOID                        __pad_14;           /*  14 */
+    HANDLE                       ProcessHeap;        /*  18 */
+    BYTE                         __pad_1c[204];      /*  1c */
+    PVOID                        Reserved3[59];      /*  e8 */
+    ULONG                        SessionId;          /* 1d4 */
+} PEB, *PPEB;
+
 
 /***********************************************************************
  * Enums
