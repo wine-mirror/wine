@@ -737,14 +737,7 @@ static void EVENT_FocusOut( HWND hWnd, XFocusChangeEvent *event )
     if (event->detail != NotifyPointer)
         if (hWnd == GetForegroundWindow())
 	{
-            WND *pWnd = WIN_FindWndPtr(hWnd);
-
-            if( ((pWnd->dwStyle & WS_POPUP) == WS_POPUP) &&
-                ((pWnd->dwStyle & WS_POPUPWINDOW) != WS_POPUPWINDOW) )
-                SendMessageA(hWnd, WM_CLOSE, 0, 0 );
-            else
 	    SendMessageA( hWnd, WM_CANCELMODE, 0, 0 );
-            WIN_ReleaseWndPtr(pWnd);
 
             /* Abey : 6-Oct-99. Check again if the focus out window is the
                Foreground window, because in most cases the messages sent
