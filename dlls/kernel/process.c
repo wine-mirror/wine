@@ -45,7 +45,6 @@
 WINE_DEFAULT_DEBUG_CHANNEL(process);
 WINE_DECLARE_DEBUG_CHANNEL(server);
 WINE_DECLARE_DEBUG_CHANNEL(relay);
-WINE_DECLARE_DEBUG_CHANNEL(snoop);
 
 /* Win32 process database */
 typedef struct _PDB
@@ -125,7 +124,6 @@ static const WCHAR winevdmW[] = {'w','i','n','e','v','d','m','.','e','x','e',0};
 /* dlls/ntdll/env.c */
 extern BOOL build_command_line( char **argv );
 
-extern void RELAY_InitDebugLists(void);
 extern void SHELL_LoadRegistry(void);
 extern void VERSION_Init( const WCHAR *appname );
 extern void MODULE_InitLoadPath(void);
@@ -331,7 +329,7 @@ static BOOL find_exe_file( const WCHAR *name, WCHAR *buffer, int buflen, HANDLE 
  *
  * Load a PE format EXE file.
  */
-static HMODULE load_pe_exe( HANDLE file )
+static HMODULE load_pe_exe( const WCHAR *name, HANDLE file )
 {
     IMAGE_NT_HEADERS *nt;
     HANDLE mapping;
@@ -339,6 +337,7 @@ static HMODULE load_pe_exe( HANDLE file )
     OBJECT_ATTRIBUTES attr;
     LARGE_INTEGER size;
     DWORD len = 0;
+    UINT drive_type;
 
     attr.Length                   = sizeof(attr);
     attr.RootDirectory            = 0;
@@ -364,10 +363,19 @@ static HMODULE load_pe_exe( HANDLE file )
     if (nt->OptionalHeader.AddressOfEntryPoint)
     {
         if (!RtlImageRvaToSection( nt, module, nt->OptionalHeader.AddressOfEntryPoint ))
-            MESSAGE("VIRUS WARNING: PE module has an invalid entrypoint (0x%08lx) "
+            MESSAGE("VIRUS WARNING: PE module %s has an invalid entrypoint (0x%08lx) "
                     "outside all sections (possibly infected by Tchernobyl/SpaceFiller virus)!\n",
-                    nt->OptionalHeader.AddressOfEntryPoint );
+                    debugstr_w(name), nt->OptionalHeader.AddressOfEntryPoint );
     }
+
+    drive_type = GetDriveTypeW( name );
+    /* don't keep the file handle open on removable media */
+    if (drive_type == DRIVE_REMOVABLE || drive_type == DRIVE_CDROM)
+    {
+        CloseHandle( main_exe_file );
+        main_exe_file = 0;
+    }
+
     return module;
 }
 
@@ -610,8 +618,6 @@ static BOOL process_init( char *argv[] )
     }
     SERVER_END_REQ;
 
-    if (TRACE_ON(relay) || TRACE_ON(snoop)) RELAY_InitDebugLists();
-
     return TRUE;
 }
 
@@ -625,65 +631,7 @@ static void start_process( void *arg )
 {
     __TRY
     {
-        LPTHREAD_START_ROUTINE entry;
-        HANDLE main_file = main_exe_file;
-        IMAGE_NT_HEADERS *nt;
-        PEB *peb = NtCurrentTeb()->Peb;
-        UNICODE_STRING *main_exe_name = &peb->ProcessParameters->ImagePathName;
-
-        if (main_file)
-        {
-            UINT drive_type = GetDriveTypeW( main_exe_name->Buffer );
-            /* don't keep the file handle open on removable media */
-            if (drive_type == DRIVE_REMOVABLE || drive_type == DRIVE_CDROM) main_file = 0;
-        }
-
-        /* Retrieve entry point address */
-        nt = RtlImageNtHeader( peb->ImageBaseAddress );
-        entry = (LPTHREAD_START_ROUTINE)((char*)peb->ImageBaseAddress +
-                                         nt->OptionalHeader.AddressOfEntryPoint);
-
-        /* Install signal handlers; this cannot be done before, since we cannot
-         * send exceptions to the debugger before the create process event that
-         * is sent by REQ_INIT_PROCESS_DONE.
-         * We do need the handlers in place by the time the request is over, so
-         * we set them up here. If we segfault between here and the server call
-         * something is very wrong... */
-        if (!SIGNAL_Init()) goto error;
-
-        /* Signal the parent process to continue */
-        SERVER_START_REQ( init_process_done )
-        {
-            req->module      = peb->ImageBaseAddress;
-            req->module_size = nt->OptionalHeader.SizeOfImage;
-            req->entry       = entry;
-            /* API requires a double indirection */
-            req->name        = &main_exe_name->Buffer;
-            req->exe_file    = main_file;
-            req->gui         = (nt->OptionalHeader.Subsystem != IMAGE_SUBSYSTEM_WINDOWS_CUI);
-            wine_server_add_data( req, main_exe_name->Buffer, main_exe_name->Length );
-            wine_server_call( req );
-            peb->BeingDebugged = reply->debugged;
-        }
-        SERVER_END_REQ;
-
-        /* create the main modref and load dependencies */
-        if (main_exe_file) CloseHandle( main_exe_file ); /* we no longer need it */
-        if (MODULE_DllProcessAttach( NULL, (LPVOID)1 ) != STATUS_SUCCESS)
-        {
-            ERR( "Main exe initialization failed\n" );
-            goto error;
-        }
-
-        if (TRACE_ON(relay))
-            DPRINTF( "%04lx:Starting process %s (entryproc=%p)\n",
-                     GetCurrentThreadId(), debugstr_w(main_exe_name->Buffer), entry );
-        if (peb->BeingDebugged) DbgBreakPoint();
-        SetLastError(0);  /* clear error code */
-        ExitThread( entry( NtCurrentTeb()->Peb ) );
-
-    error:
-        ExitProcess( GetLastError() );
+        LdrInitializeThunk( main_exe_file, 0, 0, 0 );
     }
     __EXCEPT(UnhandledExceptionFilter)
     {
@@ -753,7 +701,7 @@ void __wine_process_init( int argc, char *argv[] )
     {
     case BINARY_PE_EXE:
         TRACE( "starting Win32 binary %s\n", debugstr_w(main_exe_name) );
-        if ((current_process.module = load_pe_exe( main_exe_file ))) goto found;
+        if ((current_process.module = load_pe_exe( main_exe_name, main_exe_file ))) goto found;
         MESSAGE( "wine: could not load %s as Win32 binary\n", debugstr_w(main_exe_name) );
         ExitProcess(1);
     case BINARY_PE_DLL:

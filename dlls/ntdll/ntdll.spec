@@ -41,7 +41,7 @@
 @ stdcall LdrFindResource_U(long ptr long ptr)
 @ stdcall LdrGetDllHandle(long long ptr ptr)
 @ stdcall LdrGetProcedureAddress(ptr ptr long ptr)
-@ stub LdrInitializeThunk
+@ stdcall LdrInitializeThunk(long long long long)
 @ stdcall LdrLoadDll(wstr long ptr ptr)
 @ stdcall LdrLockLoaderLock(long ptr ptr)
 @ stub LdrProcessRelocationBlock

@@ -40,6 +40,7 @@ extern NTSTATUS NTDLL_wait_for_multiple_objects( UINT count, const HANDLE *handl
                                                  const LARGE_INTEGER *timeout );
 
 /* module handling */
+extern void RELAY_InitDebugLists(void);
 extern FARPROC RELAY_GetProcAddress( HMODULE module, IMAGE_EXPORT_DIRECTORY *exports,
                                      DWORD exp_size, FARPROC proc, const WCHAR *user );
 extern FARPROC SNOOP_GetProcAddress( HMODULE hmod, IMAGE_EXPORT_DIRECTORY *exports, DWORD exp_size,

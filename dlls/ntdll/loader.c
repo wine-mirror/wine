@@ -66,12 +66,12 @@ static const char * const reason_names[] =
 static const WCHAR dllW[] = {'.','d','l','l',0};
 
 /* internal representation of 32bit modules. per process. */
-struct _wine_modref
+typedef struct _wine_modref
 {
     LDR_MODULE            ldr;
     int                   nDeps;
     struct _wine_modref **deps;
-};
+} WINE_MODREF;
 
 static UINT tls_module_count;      /* number of modules with TLS directory */
 static UINT tls_total_size;        /* total size of TLS storage */
@@ -675,7 +675,7 @@ static BOOL MODULE_InitDLL( WINE_MODREF *wm, UINT reason, LPVOID lpReserved )
 
 
 /*************************************************************************
- *		MODULE_DllProcessAttach
+ *		process_attach
  *
  * Send the process attach notification to all DLLs the given module
  * depends on (recursively). This is somewhat complicated due to the fact that
@@ -702,34 +702,18 @@ static BOOL MODULE_InitDLL( WINE_MODREF *wm, UINT reason, LPVOID lpReserved )
  * list after the attach notification has returned.  This implies that the
  * detach notifications are called in the reverse of the sequence the attach
  * notifications *returned*.
+ *
+ * The loader_section must be locked while calling this function.
  */
-NTSTATUS MODULE_DllProcessAttach( WINE_MODREF *wm, LPVOID lpReserved )
+static NTSTATUS process_attach( WINE_MODREF *wm, LPVOID lpReserved )
 {
     NTSTATUS status = STATUS_SUCCESS;
     int i;
 
-    RtlEnterCriticalSection( &loader_section );
-
-    if (!wm)
-    {
-        /* allocate the modref for the main exe */
-        if (!(wm = alloc_module( NtCurrentTeb()->Peb->ImageBaseAddress,
-                                 NtCurrentTeb()->Peb->ProcessParameters->ImagePathName.Buffer )))
-        {
-            status = STATUS_NO_MEMORY;
-            goto done;
-        }
-        wm->ldr.LoadCount = -1;  /* can't unload main exe */
-        if ((status = fixup_imports( wm )) != STATUS_SUCCESS) goto done;
-        if ((status = alloc_process_tls()) != STATUS_SUCCESS) goto done;
-        if ((status = alloc_thread_tls()) != STATUS_SUCCESS) goto done;
-    }
-    assert( wm );
-
     /* prevent infinite recursion in case of cyclical dependencies */
     if (    ( wm->ldr.Flags & LDR_LOAD_IN_PROGRESS )
          || ( wm->ldr.Flags & LDR_PROCESS_ATTACHED ) )
-        goto done;
+        return status;
 
     TRACE("(%s,%p) - START\n", debugstr_w(wm->ldr.BaseDllName.Buffer), lpReserved );
 
@@ -740,7 +724,7 @@ NTSTATUS MODULE_DllProcessAttach( WINE_MODREF *wm, LPVOID lpReserved )
     for ( i = 0; i < wm->nDeps; i++ )
     {
         if (!wm->deps[i]) continue;
-        if ((status = MODULE_DllProcessAttach( wm->deps[i], lpReserved )) != STATUS_SUCCESS) break;
+        if ((status = process_attach( wm->deps[i], lpReserved )) != STATUS_SUCCESS) break;
     }
 
     /* Call DLL entry point */
@@ -757,25 +741,22 @@ NTSTATUS MODULE_DllProcessAttach( WINE_MODREF *wm, LPVOID lpReserved )
 
     InsertTailList(&NtCurrentTeb()->Peb->LdrData->InInitializationOrderModuleList, 
                    &wm->ldr.InInitializationOrderModuleList);
-        
+
     /* Remove recursion flag */
     wm->ldr.Flags &= ~LDR_LOAD_IN_PROGRESS;
 
     TRACE("(%s,%p) - END\n", debugstr_w(wm->ldr.BaseDllName.Buffer), lpReserved );
-
- done:
-    RtlLeaveCriticalSection( &loader_section );
     return status;
 }
 
 /*************************************************************************
- *		MODULE_DllProcessDetach
+ *		process_detach
  *
  * Send DLL process detach notifications.  See the comment about calling
- * sequence at MODULE_DllProcessAttach.  Unless the bForceDetach flag
+ * sequence at process_attach.  Unless the bForceDetach flag
  * is set, only DLLs with zero refcount are notified.
  */
-static void MODULE_DllProcessDetach( BOOL bForceDetach, LPVOID lpReserved )
+static void process_detach( BOOL bForceDetach, LPVOID lpReserved )
 {
     PLIST_ENTRY mark, entry;
     PLDR_MODULE mod;
@@ -1393,7 +1374,7 @@ NTSTATUS WINAPI LdrLoadDll(LPCWSTR path_name, DWORD flags,
 
     if (nts == STATUS_SUCCESS && !(wm->ldr.Flags & LDR_DONT_RESOLVE_REFS))
     {
-        nts = MODULE_DllProcessAttach( wm, NULL );
+        nts = process_attach( wm, NULL );
         if (nts != STATUS_SUCCESS)
         {
             WARN("Attach failed for module %s\n", debugstr_w(libname->Buffer));
@@ -1466,7 +1447,7 @@ NTSTATUS WINAPI LdrQueryProcessModuleInformation(PSYSTEM_MODULE_INFORMATION smi,
 void WINAPI LdrShutdownProcess(void)
 {
     TRACE("()\n");
-    MODULE_DllProcessDetach( TRUE, (LPVOID)1 );
+    process_detach( TRUE, (LPVOID)1 );
 }
 
 /******************************************************************
@@ -1614,7 +1595,7 @@ NTSTATUS WINAPI LdrUnloadDll( HMODULE hModule )
             /* Call process detach notifications */
             if ( free_lib_count <= 1 )
             {
-                MODULE_DllProcessDetach( FALSE, NULL );
+                process_detach( FALSE, NULL );
                 MODULE_FlushModrefs();
             }
 
@@ -1655,6 +1636,79 @@ PIMAGE_NT_HEADERS WINAPI RtlImageNtHeader(HMODULE hModule)
     }
     __ENDTRY
     return ret;
+}
+
+
+/******************************************************************
+ *		LdrInitializeThunk (NTDLL.@)
+ *
+ * FIXME: the arguments are not correct, main_file is a Wine invention.
+ */
+void WINAPI LdrInitializeThunk( HANDLE main_file, ULONG unknown2, ULONG unknown3, ULONG unknown4 )
+{
+    NTSTATUS status;
+    WINE_MODREF *wm;
+    LPTHREAD_START_ROUTINE entry;
+    PEB *peb = NtCurrentTeb()->Peb;
+    UNICODE_STRING *main_exe_name = &peb->ProcessParameters->ImagePathName;
+    IMAGE_NT_HEADERS *nt = RtlImageNtHeader( peb->ImageBaseAddress );
+
+    /* allocate the modref for the main exe */
+    if (!(wm = alloc_module( peb->ImageBaseAddress, main_exe_name->Buffer )))
+    {
+        status = STATUS_NO_MEMORY;
+        goto error;
+    }
+    wm->ldr.LoadCount = -1;  /* can't unload main exe */
+    entry = wm->ldr.EntryPoint;
+
+    /* Install signal handlers; this cannot be done before, since we cannot
+     * send exceptions to the debugger before the create process event that
+     * is sent by REQ_INIT_PROCESS_DONE.
+     * We do need the handlers in place by the time the request is over, so
+     * we set them up here. If we segfault between here and the server call
+     * something is very wrong... */
+    if (!SIGNAL_Init()) exit(1);
+
+    /* Signal the parent process to continue */
+    SERVER_START_REQ( init_process_done )
+    {
+        req->module      = peb->ImageBaseAddress;
+        req->module_size = wm->ldr.SizeOfImage;
+        req->entry       = entry;
+        /* API requires a double indirection */
+        req->name        = &main_exe_name->Buffer;
+        req->exe_file    = main_file;
+        req->gui         = (nt->OptionalHeader.Subsystem != IMAGE_SUBSYSTEM_WINDOWS_CUI);
+        wine_server_add_data( req, main_exe_name->Buffer, main_exe_name->Length );
+        wine_server_call( req );
+        peb->BeingDebugged = reply->debugged;
+    }
+    SERVER_END_REQ;
+
+    if (main_file) NtClose( main_file ); /* we no longer need it */
+    if (TRACE_ON(relay) || TRACE_ON(snoop)) RELAY_InitDebugLists();
+
+    RtlEnterCriticalSection( &loader_section );
+
+    if ((status = fixup_imports( wm )) != STATUS_SUCCESS) goto error;
+    if ((status = alloc_process_tls()) != STATUS_SUCCESS) goto error;
+    if ((status = alloc_thread_tls()) != STATUS_SUCCESS) goto error;
+    if ((status = process_attach( wm, (LPVOID)1 )) != STATUS_SUCCESS) goto error;
+
+    RtlLeaveCriticalSection( &loader_section );
+
+    if (TRACE_ON(relay))
+        DPRINTF( "%04lx:Starting process %s (entryproc=%p)\n", GetCurrentThreadId(),
+                 debugstr_w(peb->ProcessParameters->ImagePathName.Buffer), entry );
+
+    NtCurrentTeb()->last_error = 0;  /* clear error code */
+    if (peb->BeingDebugged) DbgBreakPoint();
+    NtTerminateProcess( GetCurrentProcess(), entry( peb ) );
+
+error:
+    ERR( "Main exe initialization failed, status %lx\n", status );
+    exit(1);
 }
 
 

@@ -128,9 +128,6 @@ typedef struct
 
 #include <poppack.h>
 
-struct _wine_modref;
-typedef struct _wine_modref WINE_MODREF;
-
 /* Resource types */
 
 #define NE_SEG_TABLE(pModule) \
@@ -165,7 +162,6 @@ enum binary_type
 };
 
 /* module.c */
-extern NTSTATUS MODULE_DllProcessAttach( WINE_MODREF *wm, LPVOID lpReserved );
 extern NTSTATUS MODULE_DllThreadAttach( LPVOID lpReserved );
 extern enum binary_type MODULE_GetBinaryType( HANDLE hfile );
 extern FARPROC16 WINAPI WIN32_GetProcAddress16( HMODULE hmodule, LPCSTR name );
