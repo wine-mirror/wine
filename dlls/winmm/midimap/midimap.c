@@ -243,7 +243,7 @@ static BOOL	MIDIMAP_LoadSettings(MIDIMAPDATA* mom)
 
 	for (i = 0; i < 16; i++)
 	{
-	    TRACE("chnMap[% 2d] => %d\n",
+	    TRACE("chnMap[%2d] => %d\n",
 		  i, mom->ChannelMap[i] ? mom->ChannelMap[i]->uDevID : -1);
 	}
     }
@@ -254,7 +254,7 @@ static	DWORD	modOpen(LPDWORD lpdwUser, LPMIDIOPENDESC lpDesc, DWORD dwFlags)
 {
     MIDIMAPDATA*	mom = HeapAlloc(GetProcessHeap(), 0, sizeof(MIDIMAPDATA));
 
-    TRACE("(%p %p %08lx\n", lpdwUser, lpDesc, dwFlags);
+    TRACE("(%p %p %08lx)\n", lpdwUser, lpDesc, dwFlags);
 
     if (!mom) return MMSYSERR_NOMEM;
 
@@ -499,7 +499,7 @@ static	DWORD	MIDIMAP_drvOpen(LPSTR str)
 	    strcpy(midiOutPorts[dev].name, moc.szPname);
 	    midiOutPorts[dev].loaded = 0;
 	    midiOutPorts[dev].hMidi = 0;
-	    midiOutPorts[dev].uDevID = 0;
+	    midiOutPorts[dev].uDevID = dev;
 	    midiOutPorts[dev].lpbPatch = NULL;
 	    for (i = 0; i < 16; i++)
 		midiOutPorts[dev].aChn[i] = i;
