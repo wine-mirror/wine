@@ -412,17 +412,31 @@ static HRESULT WINAPI DGA_IDirectDrawSurface3_Unlock(
 	return DD_OK;
 }
 
-static HRESULT WINAPI Xlib_IDirectDrawSurface3_Unlock(
-	LPDIRECTDRAWSURFACE3 this,LPVOID surface)
-{
-	TRACE(ddraw,"(%p)->Unlock(%p)\n",this,surface);
+static void Xlib_copy_surface_on_screen(LPDIRECTDRAWSURFACE3 this) {
+  if (this->s.ddraw->d.depth != this->s.ddraw->d.screen_depth) {
+    /* Pixel convertion ! */
+    if ((this->s.ddraw->d.depth == 8) && (this->s.ddraw->d.screen_depth == 16)) {
+      unsigned char  *src = (unsigned char  *) this->s.surface_desc.y.lpSurface;
+      unsigned short *dst = (unsigned short *) this->t.xlib.image->data;
+      unsigned short *pal;
+      int x, y;
 
-	if (!this->s.ddraw->d.paintable)
-		return DD_OK;
+      if (this->s.palette != NULL) {
+	pal = (unsigned short *) this->s.palette->screen_palents;
+	for (y = 0; y < this->s.surface_desc.dwHeight; y++) {
+	  for (x = 0; x < this->s.surface_desc.dwWidth; x++) {
+	    dst[x + y * this->s.surface_desc.lPitch] = pal[src[x + y * this->s.surface_desc.lPitch]];
+	  }
+	}
+      } else {
+	WARN(ddraw, "No palette set...\n");
+	memset(dst, 0, this->s.surface_desc.lPitch * this->s.surface_desc.dwHeight * 2);
+      }
+    } else {
+      ERR(ddraw, "Unsupported pixel convertion...\n");
+    }
+  }
 
-  /* Only redraw the screen when unlocking the buffer that is on screen */
-	if ((this->t.xlib.image != NULL) &&
-	    (this->s.surface_desc.ddsCaps.dwCaps & DDSCAPS_VISIBLE)) {
 #ifdef HAVE_LIBXXSHM
     if (this->s.ddraw->e.xlib.xshm_active)
       TSXShmPutImage(display,
@@ -442,7 +456,21 @@ static HRESULT WINAPI Xlib_IDirectDrawSurface3_Unlock(
 				0, 0, 0, 0,
 				this->t.xlib.image->width,
 		  this->t.xlib.image->height);
+}
+
+static HRESULT WINAPI Xlib_IDirectDrawSurface3_Unlock(
+	LPDIRECTDRAWSURFACE3 this,LPVOID surface)
+{
+	TRACE(ddraw,"(%p)->Unlock(%p)\n",this,surface);
   
+	if (!this->s.ddraw->d.paintable)
+		return DD_OK;
+
+  /* Only redraw the screen when unlocking the buffer that is on screen */
+	if ((this->t.xlib.image != NULL) &&
+	    (this->s.surface_desc.ddsCaps.dwCaps & DDSCAPS_VISIBLE)) {
+	  Xlib_copy_surface_on_screen(this);
+	  
 	if (this->s.palette && this->s.palette->cm)
 		TSXSetWindowColormap(display,this->s.ddraw->d.drawable,this->s.palette->cm);
 	}
@@ -500,25 +528,7 @@ static HRESULT WINAPI Xlib_IDirectDrawSurface3_Flip(
 			flipto = this;
 	}
   
-#ifdef HAVE_LIBXXSHM
-	if (this->s.ddraw->e.xlib.xshm_active) {
-	  TSXShmPutImage(display,
-			 this->s.ddraw->d.drawable,
-			 DefaultGCOfScreen(screen),
-			 flipto->t.xlib.image,
-			 0, 0, 0, 0,
-			 flipto->t.xlib.image->width,
-			 flipto->t.xlib.image->height,
-			 False);
-	} else
-#endif
-	TSXPutImage(display,
-				this->s.ddraw->d.drawable,
-				DefaultGCOfScreen(screen),
-				flipto->t.xlib.image,
-				0, 0, 0, 0,
-				flipto->t.xlib.image->width,
-				flipto->t.xlib.image->height);
+	Xlib_copy_surface_on_screen(this);
 	
 	if (flipto->s.palette && flipto->s.palette->cm) {
 	  TSXSetWindowColormap(display,this->s.ddraw->d.drawable,flipto->s.palette->cm);
@@ -555,7 +565,7 @@ static HRESULT WINAPI Xlib_IDirectDrawSurface3_SetPalette(
 	  return DD_OK;
 	}
 	
-	if( !(pal->cm) && (this->s.ddraw->d.depth<=8)) 
+	if( !(pal->cm) && (this->s.ddraw->d.screen_depth<=8)) 
 	{
 		pal->cm = TSXCreateColormap(display,this->s.ddraw->d.drawable,DefaultVisualOfScreen(screen),AllocAll);
 
@@ -702,6 +712,22 @@ static HRESULT WINAPI IDirectDrawSurface3_Blt(
 		dwFlags &= ~(DDBLT_COLORFILL);
 	}
 
+	if (dwFlags & DDBLT_DEPTHFILL) {
+#ifdef HAVE_MESAGL
+	  GLboolean ztest;
+	  
+	  /* Clears the screen */
+	  TRACE(ddraw, "	Filling depth buffer with %ld\n", lpbltfx->b.dwFillDepth);
+	  glClearDepth(lpbltfx->b.dwFillDepth / 65535.0); /* We suppose a 16 bit Z Buffer */
+	  glGetBooleanv(GL_DEPTH_TEST, &ztest);
+	  glDepthMask(GL_TRUE); /* Enables Z writing to be sure to delete also the Z buffer */
+	  glClear(GL_DEPTH_BUFFER_BIT);
+	  glDepthMask(ztest);
+	  
+	  dwFlags &= ~(DDBLT_DEPTHFILL);
+#endif HAVE_MESAGL
+	}
+	
 	if (!src) {
 	    if (dwFlags) {
 	      TRACE(ddraw,"\t(src=NULL):Unsupported flags: ");_dump_DDBLT(dwFlags);fprintf(stderr,"\n");
@@ -734,7 +760,7 @@ static HRESULT WINAPI IDirectDrawSurface3_Blt(
 	    
 	    /* I think we should do a Blit with 'stretching' here....
 	       Tomb Raider II uses this to display the background during the menu selection
-	       when the screen resolution is != than 40x480 */
+	       when the screen resolution is != than 640x480 */
 	    TRACE(ddraw, "Blt with stretching\n");
 
 	    /* This is a basic stretch implementation. It is painfully slow and quite ugly. */
@@ -891,6 +917,25 @@ static ULONG WINAPI Xlib_IDirectDrawSurface3_Release(LPDIRECTDRAWSURFACE3 this) 
 		  this->s.backbuffer->lpvtbl->fnRelease(this->s.backbuffer);
 
     if (this->t.xlib.image != NULL) {
+      if (this->s.ddraw->d.depth != this->s.ddraw->d.screen_depth) {
+	/* In pixel conversion mode, there are two buffers to release... */
+	HeapFree(GetProcessHeap(),0,this->s.surface_desc.y.lpSurface);
+	
+#ifdef HAVE_LIBXXSHM
+	if (this->s.ddraw->e.xlib.xshm_active) {
+	  TSXShmDetach(display, &(this->t.xlib.shminfo));
+	  TSXDestroyImage(this->t.xlib.image);
+	  shmdt(this->t.xlib.shminfo.shmaddr);
+	} else {
+#endif
+	  HeapFree(GetProcessHeap(),0,this->t.xlib.image->data);
+	  this->t.xlib.image->data = NULL;
+	  TSXDestroyImage(this->t.xlib.image);
+#ifdef HAVE_LIBXXSHM
+	}
+#endif
+	
+      } else {
 		this->t.xlib.image->data = NULL;
       
 #ifdef HAVE_LIBXXSHM
@@ -905,6 +950,7 @@ static ULONG WINAPI Xlib_IDirectDrawSurface3_Release(LPDIRECTDRAWSURFACE3 this) 
 #ifdef HAVE_LIBXXSHM	
       }
 #endif
+      }
       
 		this->t.xlib.image = 0;
     } else {
@@ -1553,6 +1599,28 @@ static HRESULT WINAPI Xlib_IDirectDrawPalette_SetEntries(
 		this->palents[start+i].peGreen = palent[i].peGreen;
                 this->palents[start+i].peFlags = palent[i].peFlags;
 	}
+
+	/* Now, if we are in 'depth conversion mode', update the screen palette */
+	if (this->ddraw->d.depth != this->ddraw->d.screen_depth) {
+	  int i;
+	  
+	  switch (this->ddraw->d.screen_depth) {
+	  case 16: {
+	    unsigned short *screen_palette = (unsigned short *) this->screen_palents;
+	    
+	    for (i = 0; i < count; i++) {
+	      screen_palette[start + i] = (((((unsigned short) palent[i].peRed) & 0xF8) << 8) |
+					   ((((unsigned short) palent[i].peBlue) & 0xF8) >> 3) |
+					   ((((unsigned short) palent[i].peGreen) & 0xFC) << 3));
+	    }
+	  } break;
+	    
+	  default:
+	    ERR(ddraw, "Memory corruption !\n");
+	    break;
+	  }
+	}
+	
 	if (!this->cm) /* should not happen */ {
 	}
 	return DD_OK;
@@ -2089,12 +2157,13 @@ static HRESULT WINAPI DGA_IDirectDraw2_CreateSurface(
 
 static XImage *create_ximage(LPDIRECTDRAW2 this, LPDIRECTDRAWSURFACE3 lpdsf) {
   XImage *img;
+  void *img_data;
 
 #ifdef HAVE_LIBXXSHM
   if (this->e.xlib.xshm_active) {
     img = TSXShmCreateImage(display,
 			    DefaultVisualOfScreen(screen),
-			    this->d.depth,
+			    this->d.screen_depth,
 			    ZPixmap,
 			    NULL,
 			    &(lpdsf->t.xlib.shminfo),
@@ -2124,7 +2193,14 @@ static XImage *create_ximage(LPDIRECTDRAW2 this, LPDIRECTDRAWSURFACE3 lpdsf) {
 
     shmctl(lpdsf->t.xlib.shminfo.shmid, IPC_RMID, 0);
 
+    if (this->d.depth != this->d.screen_depth) {
+      lpdsf->s.surface_desc.y.lpSurface = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,
+						    lpdsf->s.surface_desc.dwWidth *
+						    lpdsf->s.surface_desc.dwHeight *
+						    (this->d.depth / 8));
+    } else {
     lpdsf->s.surface_desc.y.lpSurface = img->data;
+    }
   } else {
 #endif
     /* Allocate surface memory */
@@ -2133,24 +2209,37 @@ static XImage *create_ximage(LPDIRECTDRAW2 this, LPDIRECTDRAWSURFACE3 lpdsf) {
 						  lpdsf->s.surface_desc.dwHeight *
 						  (this->d.depth / 8));
     
+    if (this->d.depth != this->d.screen_depth) {
+      img_data = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,
+			   lpdsf->s.surface_desc.dwWidth *
+			   lpdsf->s.surface_desc.dwHeight *
+			   (this->d.screen_depth / 8));
+    } else {
+      img_data = lpdsf->s.surface_desc.y.lpSurface;
+    }
+      
     /* In this case, create an XImage */
     img =
       TSXCreateImage(display,
 		     DefaultVisualOfScreen(screen),
-		     this->d.depth,
+		     this->d.screen_depth,
 		     ZPixmap,
 		     0,
-		     lpdsf->s.surface_desc.y.lpSurface,
+		     img_data,
 		     lpdsf->s.surface_desc.dwWidth,
 		     lpdsf->s.surface_desc.dwHeight,
 		     32,
-		     lpdsf->s.surface_desc.dwWidth * (this->d.depth / 8)
+		     lpdsf->s.surface_desc.dwWidth * (this->d.screen_depth / 8)
 		     );
     
 #ifdef HAVE_LIBXXSHM
   }
 #endif
+  if (this->d.depth != this->d.screen_depth) {
+    lpdsf->s.surface_desc.lPitch = (this->d.depth / 8) * lpdsf->s.surface_desc.dwWidth;
+  } else {
   lpdsf->s.surface_desc.lPitch = img->bytes_per_line;
+  }
   
   return img;
 }
@@ -2447,16 +2536,30 @@ static HRESULT WINAPI Xlib_IDirectDraw_SetDisplayMode(
 	TRACE(ddraw, "(%p)->SetDisplayMode(%ld,%ld,%ld)\n",
 		      this, width, height, depth);
 
+	/* We hope getting the asked for depth */
+	this->d.screen_depth = depth;
+	
 	depths = TSXListDepths(display,DefaultScreen(display),&depcount);
 	for (i=0;i<depcount;i++)
 		if (depths[i]==depth)
 			break;
-	TSXFree(depths);
 	if (i==depcount) {/* not found */
+	  for (i=0;i<depcount;i++)
+	    if (depths[i]==16)
+	      break;
+
+	  if (i==depcount) {
 		sprintf(buf,"SetDisplayMode(w=%ld,h=%ld,d=%ld), unsupported depth!",width,height,depth);
 		MessageBox32A(0,buf,"WINE DirectDraw",MB_OK|MB_ICONSTOP);
+	    TSXFree(depths);
 		return DDERR_UNSUPPORTEDMODE;
+	  } else {
+	    WARN(ddraw, "Warning : running in depth-convertion mode. Should run using a %ld depth for optimal performances.\n", depth);
+	    this->d.screen_depth = 16;
+	  }
 	}
+	TSXFree(depths);
+
 	this->d.width	= width;
 	this->d.height	= height;
 	this->d.depth	= depth;
@@ -2497,11 +2600,11 @@ static void fill_caps(LPDDCAPS caps) {
     return;
 
   caps->dwSize = sizeof(*caps);
-  caps->dwCaps = DDCAPS_3D | DDCAPS_ALPHA | DDCAPS_BLT | DDCAPS_BLTCOLORFILL | DDCAPS_BLTDEPTHFILL |
-    DDCAPS_CANBLTSYSMEM | DDCAPS_PALETTE | DDCAPS_ZBLTS;
+  caps->dwCaps = DDCAPS_3D | DDCAPS_ALPHA | DDCAPS_BLT | DDCAPS_BLTSTRETCH | DDCAPS_BLTCOLORFILL | DDCAPS_BLTDEPTHFILL |
+    DDCAPS_CANBLTSYSMEM |  DDCAPS_COLORKEY | DDCAPS_PALETTE | DDCAPS_ZBLTS;
   caps->dwCaps2 = DDCAPS2_CERTIFIED | DDCAPS2_NO2DDURING3DSCENE | DDCAPS2_NOPAGELOCKREQUIRED |
     DDCAPS2_WIDESURFACES;
-  caps->dwCKeyCaps = 0;
+  caps->dwCKeyCaps = 0xFFFFFFFF;
   caps->dwFXCaps = 0;
   caps->dwFXAlphaCaps = 0;
   caps->dwPalCaps = DDPCAPS_8BIT | DDPCAPS_ALLOW256;
@@ -2547,16 +2650,14 @@ static HRESULT WINAPI IDirectDraw2_CreateClipper(
 static HRESULT WINAPI common_IDirectDraw2_CreatePalette(
 	LPDIRECTDRAW2 this,DWORD dwFlags,LPPALETTEENTRY palent,LPDIRECTDRAWPALETTE *lpddpal,LPUNKNOWN lpunk,int *psize
 ) {
+	int size = 0;
+	  
 	*lpddpal = (LPDIRECTDRAWPALETTE)HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(IDirectDrawPalette));
 	if (*lpddpal == NULL) return E_OUTOFMEMORY;
 	(*lpddpal)->ref = 1;
 	(*lpddpal)->ddraw = (LPDIRECTDRAW)this;
 	(*lpddpal)->installed = 0;
 
-        if (palent)
-        {
- 	  int size = 0;
-	  
 	  if (dwFlags & DDPCAPS_1BIT)
 	    size = 2;
 	  else if (dwFlags & DDPCAPS_2BIT)
@@ -2567,10 +2668,50 @@ static HRESULT WINAPI common_IDirectDraw2_CreatePalette(
 	    size = 256;
 	  else
 	    ERR(ddraw, "unhandled palette format\n");
+	*psize = size;
+	
+        if (palent)
+        {
+	  /* Now, if we are in 'depth conversion mode', create the screen palette */
+	  if (this->d.depth != this->d.screen_depth) {
+	    int i;
+	  
+	    switch (this->d.screen_depth) {
+	    case 16: {
+	      unsigned short *screen_palette = (unsigned short *) (*lpddpal)->screen_palents;
+	      
+	      for (i = 0; i < size; i++) {
+		screen_palette[i] = (((((unsigned short) palent[i].peRed) & 0xF8) << 8) |
+				     ((((unsigned short) palent[i].peBlue) & 0xF8) >> 3) |
+				     ((((unsigned short) palent[i].peGreen) & 0xFC) << 3));
+	      }
+	    } break;
+
+	    default:
+	      ERR(ddraw, "Memory corruption !\n");
+	      break;
+	    }
+	  }
 	  
 	  memcpy((*lpddpal)->palents, palent, size * sizeof(PALETTEENTRY));
-	  *psize = size;
+        } else if (this->d.depth != this->d.screen_depth) {
+	  int i;
+	  
+	  switch (this->d.screen_depth) {
+	  case 16: {
+	    unsigned short *screen_palette = (unsigned short *) (*lpddpal)->screen_palents;
+	    
+	    for (i = 0; i < size; i++) {
+	      screen_palette[i] = 0xFFFF;
         }
+	  } break;
+	    
+	  default:
+	    ERR(ddraw, "Memory corruption !\n");
+	    break;
+	  }
+	}
+	
 	return DD_OK;
 }
 
@@ -2873,19 +3014,19 @@ static HRESULT WINAPI IDirectDraw2_EnumDisplayModes(
 		  /* FIXME: We should query those from X itself */
 		  switch (depths[i]) {
 		  case 16:
-		    ddsfd.ddpfPixelFormat.y.dwRBitMask = 0x000f;
-		    ddsfd.ddpfPixelFormat.z.dwGBitMask = 0x00f0;
-		    ddsfd.ddpfPixelFormat.xx.dwBBitMask= 0x0f00;
+		    ddsfd.ddpfPixelFormat.y.dwRBitMask = 0xF800;
+		    ddsfd.ddpfPixelFormat.z.dwGBitMask = 0x07E0;
+		    ddsfd.ddpfPixelFormat.xx.dwBBitMask= 0x001F;
 		    break;
 		  case 24:
-		    ddsfd.ddpfPixelFormat.y.dwRBitMask = 0x000000ff;
-		    ddsfd.ddpfPixelFormat.z.dwGBitMask = 0x0000ff00;
-		    ddsfd.ddpfPixelFormat.xx.dwBBitMask= 0x00ff0000;
+		    ddsfd.ddpfPixelFormat.y.dwRBitMask = 0x00FF0000;
+		    ddsfd.ddpfPixelFormat.z.dwGBitMask = 0x0000FF00;
+		    ddsfd.ddpfPixelFormat.xx.dwBBitMask= 0x000000FF;
 		    break;
 		  case 32:
-		    ddsfd.ddpfPixelFormat.y.dwRBitMask = 0x000000ff;
-		    ddsfd.ddpfPixelFormat.z.dwGBitMask = 0x0000ff00;
-		    ddsfd.ddpfPixelFormat.xx.dwBBitMask= 0x00ff0000;
+		    ddsfd.ddpfPixelFormat.y.dwRBitMask = 0x00FF0000;
+		    ddsfd.ddpfPixelFormat.z.dwGBitMask = 0x0000FF00;
+		    ddsfd.ddpfPixelFormat.xx.dwBBitMask= 0x000000FF;
 		    break;
 		  }
 		}
@@ -3289,6 +3430,7 @@ HRESULT WINAPI Xlib_DirectDrawCreate( LPDIRECTDRAW *lplpDD, LPUNKNOWN pUnkOuter)
 	(*lplpDD)->ref = 1;
 	(*lplpDD)->d.drawable = 0; /* in SetDisplayMode */
 
+	(*lplpDD)->d.screen_depth = DefaultDepthOfScreen(screen);
 	(*lplpDD)->d.depth = DefaultDepthOfScreen(screen);
 	(*lplpDD)->d.height = screenHeight;
 	(*lplpDD)->d.width = screenWidth;
@@ -3296,7 +3438,7 @@ HRESULT WINAPI Xlib_DirectDrawCreate( LPDIRECTDRAW *lplpDD, LPUNKNOWN pUnkOuter)
 #ifdef HAVE_LIBXXSHM
 	/* Test if XShm is available.
 	   As XShm is not ready yet for 'prime-time', it is disabled for now */
-	if (((*lplpDD)->e.xlib.xshm_active = 0 /* DDRAW_XSHM_Available() */))
+	if (((*lplpDD)->e.xlib.xshm_active = DDRAW_XSHM_Available()))
 	  TRACE(ddraw, "Using XShm extesion.\n");
 #endif
 	

@@ -837,6 +837,9 @@ struct IDirectDrawPalette {
     Colormap			cm;
     PALETTEENTRY		palents[256];
     int				installed;
+
+    /* This is to store the palette in 'screen format' */
+    int screen_palents[256];
 };
 #undef THIS
 
@@ -893,7 +896,8 @@ FAR * ) PURE;
 } *LPDIRECTDRAW_VTABLE,IDirectDraw_VTable;
 
 struct _common_directdrawdata {
-    DWORD			depth;
+    DWORD			screen_depth;
+    DWORD                       depth;          /* SetDisplayMode */
     DWORD			height,width;	/* SetDisplayMode */
     HWND32                      mainWindow;     /* SetCooperativeLevel */
 
