@@ -723,7 +723,12 @@ static BOOL DIR_SearchSemicolonedPaths(LPCWSTR name, DOS_FULL_NAME *full_name, L
 
 	if (newlen > currlen)
 	{
-            if (!(buffer = HeapReAlloc( GetProcessHeap(), 0, buffer, newlen * sizeof(WCHAR))))
+	    if (buffer) 
+                buffer = HeapReAlloc( GetProcessHeap(), 0, buffer, newlen * sizeof(WCHAR));
+	    else
+                buffer = HeapAlloc( GetProcessHeap(), 0, newlen * sizeof(WCHAR));
+
+	    if(!buffer)
                 goto done;
 	    currlen = newlen;
 	}

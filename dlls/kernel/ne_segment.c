@@ -824,11 +824,17 @@ struct ne_init_list
 
 static void add_to_init_list( struct ne_init_list *list, NE_MODULE *hModule )
 {
+    NE_MODULE **newModule = NULL;
     if ( list->count == list->size )
     {
         int newSize = list->size + 128;
-        NE_MODULE **newModule = HeapReAlloc( GetProcessHeap(), 0,
+
+	if (list->module) 
+            newModule = HeapReAlloc( GetProcessHeap(), 0,
                                              list->module, newSize*sizeof(NE_MODULE *) );
+	else
+            newModule = HeapAlloc( GetProcessHeap(), 0,
+                                             newSize*sizeof(NE_MODULE *) );
         if ( !newModule )
         {
             FIXME_(dll)("Out of memory!");

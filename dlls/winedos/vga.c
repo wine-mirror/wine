@@ -665,9 +665,13 @@ void VGA_PrepareVideoMemCopy(unsigned Xres, unsigned Yres)
     /*
      * Allocate space for char + attr.
      */
-    vga_text_old = HeapReAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, 
-                                vga_text_old, Xres * Yres * 2 );
 
+    if (vga_text_old)
+        vga_text_old = HeapReAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, 
+                                vga_text_old, Xres * Yres * 2 );
+    else
+        vga_text_old = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, 
+                                 Xres * Yres * 2 );
     p = VGA_AlphaBuffer();
     p2 = vga_text_old;
 
