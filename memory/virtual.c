@@ -1239,6 +1239,14 @@ LPVOID WINAPI MapViewOfFileEx(
         goto error;
     }
 
+    /* FIXME: If a mapping is created with SEC_RESERVE and a process,
+     * which has a view of this mapping commits some pages, they will
+     * appear commited in all other processes, which have the same
+     * view created. Since we don`t support this yet, we create the
+     * whole mapping commited.
+     */
+    prot |= VPROT_COMMITTED;
+
     /* Map the file */
 
     TRACE("handle=%x size=%x offset=%lx\n", handle, size, offset_low );
