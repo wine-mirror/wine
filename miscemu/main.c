@@ -14,7 +14,12 @@
 #include "dosexe.h"
 #include "debugtools.h"
 
-extern void PROCESS_InitWine( int argc, char *argv[] ) WINE_NORETURN;
+static char main_exe_name[MAX_PATH];
+static HANDLE main_exe_file;
+
+extern void PROCESS_InitWine( int argc, char *argv[], LPSTR win16_exe_name,
+                              HANDLE *win16_exe_file ) WINE_NORETURN;
+extern HINSTANCE16 NE_StartMain( LPCSTR name, HANDLE file );
 
 /***********************************************************************
  *           Main loop of initial task
@@ -31,12 +36,12 @@ int WINAPI wine_initial_task( HINSTANCE inst, HINSTANCE prev, LPSTR cmdline, INT
     }
     THUNK_InitCallout();
 
-    if ((instance = WinExec16( GetCommandLineA(), show )) < 32)
+    if ((instance = NE_StartMain( main_exe_name, main_exe_file )) < 32)
     {
         if (instance == 11)  /* try DOS format */
         {
             if (DPMI_LoadDosSystem())
-                Dosvm.LoadDosExe( GetCommandLineA() );
+                Dosvm.LoadDosExe( main_exe_name, main_exe_file );
             /* if we get back here it failed */
             instance = GetLastError();
         }
@@ -50,6 +55,7 @@ int WINAPI wine_initial_task( HINSTANCE inst, HINSTANCE prev, LPSTR cmdline, INT
         }
         ExitProcess(instance);
     }
+    CloseHandle( main_exe_file );  /* avoid file sharing problems */
 
     /* Start message loop for desktop window */
 
@@ -68,6 +74,6 @@ int WINAPI wine_initial_task( HINSTANCE inst, HINSTANCE prev, LPSTR cmdline, INT
  */
 int main( int argc, char *argv[] )
 {
-    PROCESS_InitWine( argc, argv );
+    PROCESS_InitWine( argc, argv, main_exe_name, &main_exe_file );
     return 1;  /* not reached */
 }

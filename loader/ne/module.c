@@ -404,11 +404,8 @@ HANDLE NE_OpenFile( NE_MODULE *pModule )
 
 /***********************************************************************
  *           NE_LoadExeHeader
- *
- * We always have to close hFile upon exit.
- * Otherwise we get file sharing trouble !
  */
-static HMODULE16 NE_LoadExeHeader( LPCSTR filename )
+static HMODULE16 NE_LoadExeHeader( HANDLE hFile, LPCSTR path )
 {
     IMAGE_DOS_HEADER mz_header;
     IMAGE_OS2_HEADER ne_header;
@@ -420,51 +417,31 @@ static HMODULE16 NE_LoadExeHeader( LPCSTR filename )
     int fastload_offset = 0, fastload_length = 0;
     ET_ENTRY *entry;
     ET_BUNDLE *bundle, *oldbundle;
-    HFILE16 hFile;
-    OFSTRUCT ofs;
-
-    /* Open file */
-    if ((hFile = OpenFile16( filename, &ofs, OF_READ )) == HFILE_ERROR16)
-        return (HMODULE16)2;  /* File not found */
+    OFSTRUCT *ofs;
 
   /* Read a block from either the file or the fast-load area. */
 #define READ(offset,size,buffer) \
        ((fastload && ((offset) >= fastload_offset) && \
          ((offset)+(size) <= fastload_offset+fastload_length)) ? \
         (memcpy( buffer, fastload+(offset)-fastload_offset, (size) ), TRUE) : \
-        (_llseek16( hFile, (offset), SEEK_SET), \
-         _hread16( hFile, (buffer), (size) ) == (size)))
+        (_llseek( hFile, (offset), SEEK_SET), \
+         _lread( hFile, (buffer), (size) ) == (size)))
 
-    _llseek16( hFile, 0, SEEK_SET );
-    if ((_hread16(hFile,&mz_header,sizeof(mz_header)) != sizeof(mz_header)) ||
+    _llseek( hFile, 0, SEEK_SET );
+    if ((_lread(hFile,&mz_header,sizeof(mz_header)) != sizeof(mz_header)) ||
         (mz_header.e_magic != IMAGE_DOS_SIGNATURE))
-    {
-        _lclose16( hFile );
         return (HMODULE16)11;  /* invalid exe */
-    }
 
-    _llseek16( hFile, mz_header.e_lfanew, SEEK_SET );
-    if (_hread16( hFile, &ne_header, sizeof(ne_header) ) != sizeof(ne_header))
-    {
-        _lclose16( hFile );
+    _llseek( hFile, mz_header.e_lfanew, SEEK_SET );
+    if (_lread( hFile, &ne_header, sizeof(ne_header) ) != sizeof(ne_header))
         return (HMODULE16)11;  /* invalid exe */
-    }
 
-    if (ne_header.ne_magic == IMAGE_NT_SIGNATURE)
-    {
-        _lclose16( hFile );
-        return (HMODULE16)21;  /* win32 exe */
-    }
+    if (ne_header.ne_magic == IMAGE_NT_SIGNATURE) return (HMODULE16)21;  /* win32 exe */
     if (ne_header.ne_magic == IMAGE_OS2_SIGNATURE_LX) {
         MESSAGE("Sorry, this is an OS/2 linear executable (LX) file !\n");
-        _lclose16( hFile );
         return (HMODULE16)12;
     }
-    if (ne_header.ne_magic != IMAGE_OS2_SIGNATURE)
-    {
-        _lclose16( hFile );
-        return (HMODULE16)11;  /* invalid exe */
-    }
+    if (ne_header.ne_magic != IMAGE_OS2_SIGNATURE) return (HMODULE16)11;  /* invalid exe */
 
     /* We now have a valid NE header */
 
@@ -485,14 +462,10 @@ static HMODULE16 NE_LoadExeHeader( LPCSTR filename )
 	   sizeof(ET_BUNDLE) +
 	   2 * (ne_header.ne_cbenttab - ne_header.ne_cmovent*6) +
              /* loaded file info */
-           sizeof(OFSTRUCT)-sizeof(ofs.szPathName)+strlen(ofs.szPathName)+1;
+           sizeof(OFSTRUCT) - sizeof(ofs->szPathName) + strlen(path) + 1;
 
     hModule = GlobalAlloc16( GMEM_FIXED | GMEM_ZEROINIT, size );
-    if (!hModule) 
-    {
-        _lclose16( hFile );
-        return (HMODULE16)11;  /* invalid exe */
-    }
+    if (!hModule) return (HMODULE16)11;  /* invalid exe */
 
     FarSetOwner16( hModule, hModule );
     pModule = (NE_MODULE *)GlobalLock16( hModule );
@@ -521,8 +494,8 @@ static HMODULE16 NE_LoadExeHeader( LPCSTR filename )
                         fastload_offset, fastload_length );
         if ((fastload = HeapAlloc( GetProcessHeap(), 0, fastload_length )) != NULL)
         {
-            _llseek16( hFile, fastload_offset, SEEK_SET);
-            if (_hread16(hFile, fastload, fastload_length) != fastload_length)
+            _llseek( hFile, fastload_offset, SEEK_SET);
+            if (_lread(hFile, fastload, fastload_length) != fastload_length)
             {
                 HeapFree( GetProcessHeap(), 0, fastload );
                 WARN("Error reading fast-load area!\n");
@@ -533,7 +506,7 @@ static HMODULE16 NE_LoadExeHeader( LPCSTR filename )
 
     /* Get the segment table */
 
-    pModule->seg_table = (int)pData - (int)pModule;
+    pModule->seg_table = pData - (BYTE *)pModule;
     buffer = HeapAlloc( GetProcessHeap(), 0, ne_header.ne_cseg *
                                       sizeof(struct ne_segment_table_entry_s));
     if (buffer)
@@ -549,7 +522,6 @@ static HMODULE16 NE_LoadExeHeader( LPCSTR filename )
             if (fastload)
 		HeapFree( GetProcessHeap(), 0, fastload );
             GlobalFree16( hModule );
-            _lclose16( hFile );
             return (HMODULE16)11;  /* invalid exe */
         }
         pSeg = (struct ne_segment_table_entry_s *)buffer;
@@ -565,7 +537,6 @@ static HMODULE16 NE_LoadExeHeader( LPCSTR filename )
         if (fastload)
 	    HeapFree( GetProcessHeap(), 0, fastload );
         GlobalFree16( hModule );
-        _lclose16( hFile );
         return (HMODULE16)11;  /* invalid exe */
     }
 
@@ -573,14 +544,11 @@ static HMODULE16 NE_LoadExeHeader( LPCSTR filename )
 
     if (ne_header.ne_rsrctab < ne_header.ne_restab)
     {
-        pModule->res_table = (int)pData - (int)pModule;
+        pModule->res_table = pData - (BYTE *)pModule;
         if (!READ(mz_header.e_lfanew + ne_header.ne_rsrctab,
                   ne_header.ne_restab - ne_header.ne_rsrctab,
                   pData )) 
-        {
-            _lclose16( hFile );
             return (HMODULE16)11;  /* invalid exe */
-        }
         pData += ne_header.ne_restab - ne_header.ne_rsrctab;
 	NE_InitResourceHandler( hModule );
     }
@@ -588,7 +556,7 @@ static HMODULE16 NE_LoadExeHeader( LPCSTR filename )
 
     /* Get the resident names table */
 
-    pModule->name_table = (int)pData - (int)pModule;
+    pModule->name_table = pData - (BYTE *)pModule;
     if (!READ( mz_header.e_lfanew + ne_header.ne_restab,
                ne_header.ne_modtab - ne_header.ne_restab,
                pData ))
@@ -596,7 +564,6 @@ static HMODULE16 NE_LoadExeHeader( LPCSTR filename )
         if (fastload)
 	    HeapFree( GetProcessHeap(), 0, fastload );
         GlobalFree16( hModule );
-        _lclose16( hFile );
         return (HMODULE16)11;  /* invalid exe */
     }
     pData += ne_header.ne_modtab - ne_header.ne_restab;
@@ -605,7 +572,7 @@ static HMODULE16 NE_LoadExeHeader( LPCSTR filename )
 
     if (ne_header.ne_cmod > 0)
     {
-        pModule->modref_table = (int)pData - (int)pModule;
+        pModule->modref_table = pData - (BYTE *)pModule;
         if (!READ( mz_header.e_lfanew + ne_header.ne_modtab,
                   ne_header.ne_cmod * sizeof(WORD),
                   pData ))
@@ -613,7 +580,6 @@ static HMODULE16 NE_LoadExeHeader( LPCSTR filename )
             if (fastload)
 		HeapFree( GetProcessHeap(), 0, fastload );
             GlobalFree16( hModule );
-            _lclose16( hFile );
             return (HMODULE16)11;  /* invalid exe */
         }
         pData += ne_header.ne_cmod * sizeof(WORD);
@@ -622,7 +588,7 @@ static HMODULE16 NE_LoadExeHeader( LPCSTR filename )
 
     /* Get the imported names table */
 
-    pModule->import_table = (int)pData - (int)pModule;
+    pModule->import_table = pData - (BYTE *)pModule;
     if (!READ( mz_header.e_lfanew + ne_header.ne_imptab, 
                ne_header.ne_enttab - ne_header.ne_imptab,
                pData ))
@@ -630,7 +596,6 @@ static HMODULE16 NE_LoadExeHeader( LPCSTR filename )
         if (fastload)
 	    HeapFree( GetProcessHeap(), 0, fastload );
         GlobalFree16( hModule );
-        _lclose16( hFile );
         return (HMODULE16)11;  /* invalid exe */
     }
     pData += ne_header.ne_enttab - ne_header.ne_imptab;
@@ -642,7 +607,7 @@ static HMODULE16 NE_LoadExeHeader( LPCSTR filename )
         BYTE nr_entries, type, *s;
 
 	TRACE("Converting entry table.\n");
-    pModule->entry_table = (int)pData - (int)pModule;
+    pModule->entry_table = pData - (BYTE *)pModule;
     if (!READ( mz_header.e_lfanew + ne_header.ne_enttab,
                 ne_header.ne_cbenttab, pTempEntryTable ))
     {
@@ -650,7 +615,6 @@ static HMODULE16 NE_LoadExeHeader( LPCSTR filename )
             if (fastload)
 		HeapFree( GetProcessHeap(), 0, fastload );
         GlobalFree16( hModule );
-        _lclose16( hFile );
         return (HMODULE16)11;  /* invalid exe */
     }
 
@@ -716,7 +680,6 @@ static HMODULE16 NE_LoadExeHeader( LPCSTR filename )
         if (fastload)
 	    HeapFree( GetProcessHeap(), 0, fastload );
         GlobalFree16( hModule );
-        _lclose16( hFile );
         return (HMODULE16)11;  /* invalid exe */
     }
 
@@ -728,10 +691,12 @@ static HMODULE16 NE_LoadExeHeader( LPCSTR filename )
 
     /* Store the filename information */
 
-    pModule->fileinfo = (int)pData - (int)pModule;
-    size = sizeof(OFSTRUCT)-sizeof(ofs.szPathName)+strlen(ofs.szPathName)+1;
-    ofs.cBytes = size - 1;
-    memcpy( pData, &ofs, size );
+    pModule->fileinfo = pData - (BYTE *)pModule;
+    size = sizeof(OFSTRUCT) - sizeof(ofs->szPathName) + strlen(path) + 1;
+    ofs = (OFSTRUCT *)pData;
+    ofs->cBytes = size - 1;
+    ofs->fFixedDisk = 1;
+    strcpy( ofs->szPathName, path );
     pData += size;
 
     /* Free the fast-load area */
@@ -749,17 +714,15 @@ static HMODULE16 NE_LoadExeHeader( LPCSTR filename )
         if (!pModule->nrname_handle)
         {
             GlobalFree16( hModule );
-            _lclose16( hFile );
             return (HMODULE16)11;  /* invalid exe */
         }
         buffer = GlobalLock16( pModule->nrname_handle );
-        _llseek16( hFile, ne_header.ne_nrestab, SEEK_SET );
-        if (_hread16( hFile, buffer, ne_header.ne_cbnrestab )
+        _llseek( hFile, ne_header.ne_nrestab, SEEK_SET );
+        if (_lread( hFile, buffer, ne_header.ne_cbnrestab )
               != ne_header.ne_cbnrestab)
         {
             GlobalFree16( pModule->nrname_handle );
             GlobalFree16( hModule );
-            _lclose16( hFile );
             return (HMODULE16)11;  /* invalid exe */
         }
     }
@@ -776,16 +739,13 @@ static HMODULE16 NE_LoadExeHeader( LPCSTR filename )
         {
             if (pModule->nrname_handle) GlobalFree16( pModule->nrname_handle );
             GlobalFree16( hModule );
-            _lclose16( hFile );
             return (HMODULE16)11;  /* invalid exe */
         }
     }
     else pModule->dlls_to_init = 0;
 
     NE_RegisterModule( pModule );
-    SNOOP16_RegisterDLL(pModule,ofs.szPathName);
-
-    _lclose16( hFile );
+    SNOOP16_RegisterDLL(pModule,path);
     return hModule;
 }
 
@@ -896,8 +856,15 @@ static HINSTANCE16 NE_LoadModule( LPCSTR name, BOOL lib_only )
     NE_MODULE *pModule;
     HMODULE16 hModule;
     HINSTANCE16 hInstance;
+    HFILE16 hFile;
+    OFSTRUCT ofs;
 
-    hModule = NE_LoadExeHeader( name );
+    /* Open file */
+    if ((hFile = OpenFile16( name, &ofs, OF_READ )) == HFILE_ERROR16)
+        return (HMODULE16)2;  /* File not found */
+
+    hModule = NE_LoadExeHeader( DosFileHandleToWin32Handle(hFile), ofs.szPathName );
+    _lclose16( hFile );
     if (hModule < 32) return hModule;
 
     pModule = NE_GetPtr( hModule );
@@ -1005,22 +972,84 @@ static HINSTANCE16 MODULE_LoadModule16( LPCSTR libname, BOOL implicit, BOOL lib_
 
 
 /**********************************************************************
+ *          NE_CreateThread
+ *
+ * Create the thread for a 16-bit module.
+ */
+static HINSTANCE16 NE_CreateThread( NE_MODULE *pModule, WORD cmdShow, LPCSTR cmdline )
+{
+    TEB *teb = NULL;
+    HANDLE hThread = 0;
+    int socket = -1;
+    HTASK hTask;
+    TDB *pTask;
+    HINSTANCE16 instance = 0;
+
+    SERVER_START_REQ
+    {
+        struct new_thread_request *req = server_alloc_req( sizeof(*req), 0 );
+        req->suspend = 0;
+        req->inherit = 0;
+        if (!server_call( REQ_NEW_THREAD ))
+        {
+            hThread = req->handle;
+            socket = wine_server_recv_fd( hThread, 0 );
+        }
+    }
+    SERVER_END_REQ;
+    if (!hThread) return 0;
+
+    if (!(teb = THREAD_Create( socket, 0, FALSE ))) goto error;
+    teb->tibflags &= ~TEBF_WIN32;
+    teb->startup = NE_InitProcess;
+
+    /* Create a task for this process */
+
+    if (!TASK_Create( pModule, cmdShow, teb, cmdline + 1, *cmdline )) goto error;
+    hTask = teb->htask16;
+    if (SYSDEPS_SpawnThread( teb ) == -1) goto error;
+
+    /* Post event to start the task */
+    PostEvent16( hTask );
+
+    /* Wait until we get the instance handle */
+    do
+    {
+        DirectedYield16( hTask );
+        if (!IsTask16( hTask ))  /* thread has died */
+        {
+            DWORD exit_code;
+            WaitForSingleObject( hThread, INFINITE );
+            GetExitCodeThread( hThread, &exit_code );
+            CloseHandle( hThread );
+            return exit_code;
+        }
+        if (!(pTask = (TDB *)GlobalLock16( hTask ))) break;
+        instance = pTask->hInstance;
+        GlobalUnlock16( hTask );
+    } while (!instance);
+
+    return instance;
+
+ error:
+    /* FIXME: free TEB and task */
+    close( socket );
+    CloseHandle( hThread );
+    return 0;  /* FIXME */
+}
+
+
+/**********************************************************************
  *          LoadModule16    (KERNEL.45)
  */
 HINSTANCE16 WINAPI LoadModule16( LPCSTR name, LPVOID paramBlock )
 {
-    TEB *teb = NULL;
     BOOL lib_only = !paramBlock || (paramBlock == (LPVOID)-1);
     LOADPARAMS16 *params;
-    HINSTANCE16 instance = 0;
     HMODULE16 hModule;
     NE_MODULE *pModule;
-    HTASK hTask;
-    TDB *pTask;
     LPSTR cmdline;
     WORD cmdShow;
-    HANDLE hThread = 0;
-    int socket = -1;
 
     /* Load module */
 
@@ -1059,65 +1088,40 @@ HINSTANCE16 WINAPI LoadModule16( LPCSTR name, LPVOID paramBlock )
      *  in the meantime), or else to a stub module which contains only header 
      *  information.
      */
-
-    /* Create the main thread */
-
-    SERVER_START_REQ
-    {
-        struct new_thread_request *req = server_alloc_req( sizeof(*req), 0 );
-        req->suspend = 0;
-        req->inherit = 0;
-        if (!server_call( REQ_NEW_THREAD ))
-        {
-            hThread = req->handle;
-            socket = wine_server_recv_fd( hThread, 0 );
-        }
-    }
-    SERVER_END_REQ;
-    if (!hThread) return 0;
-
-    if (!(teb = THREAD_Create( socket, 0, FALSE ))) goto error;
-    teb->tibflags &= ~TEBF_WIN32;
-    teb->startup = NE_InitProcess;
-
-    /* Create a task for this process */
-
     params = (LOADPARAMS16 *)paramBlock;
     cmdShow = ((WORD *)MapSL(params->showCmd))[1];
     cmdline = MapSL( params->cmdLine );
-    if (!TASK_Create( pModule, cmdShow, teb, cmdline + 1, *cmdline )) goto error;
+    return NE_CreateThread( pModule, cmdShow, cmdline );
+}
 
-    hTask = teb->htask16;
 
-    if (SYSDEPS_SpawnThread( teb ) == -1) goto error;
+/**********************************************************************
+ *          NE_StartMain
+ *
+ * Start the main NE task.
+ */
+HINSTANCE16 NE_StartMain( LPCSTR name, HANDLE file )
+{
+    STARTUPINFOA info;
+    HMODULE16 hModule;
+    NE_MODULE *pModule;
+    LPSTR cmdline = GetCommandLineA();
 
-    /* Post event to start the task */
-    PostEvent16( hTask );
+    if ((hModule = NE_LoadExeHeader( file, name )) < 32) return hModule;
 
-    /* Wait until we get the instance handle */
-    do
+    if (!(pModule = NE_GetPtr( hModule ))) return (HINSTANCE16)11;
+    if (pModule->flags & NE_FFLAGS_LIBMODULE)
     {
-        DirectedYield16( hTask );
-        if (!IsTask16( hTask ))  /* thread has died */
-        {
-            DWORD exit_code;
-            WaitForSingleObject( hThread, INFINITE );
-            GetExitCodeThread( hThread, &exit_code );
-            CloseHandle( hThread );
-            return exit_code;
-        }
-        if (!(pTask = (TDB *)GlobalLock16( hTask ))) break;
-        instance = pTask->hInstance;
-        GlobalUnlock16( hTask );
-    } while (!instance);
+        MESSAGE( "%s is not a valid Win16 executable\n", name );
+        ExitProcess( ERROR_BAD_EXE_FORMAT );
+    }
 
-    return instance;
+    while (*cmdline && *cmdline != ' ') cmdline++;
+    if (*cmdline) cmdline++;
+    GetStartupInfoA( &info );
+    if (!(info.dwFlags & STARTF_USESHOWWINDOW)) info.wShowWindow = 1;
 
- error:
-    /* FIXME: free TEB and task */
-    close( socket );
-    CloseHandle( hThread );
-    return 0;  /* FIXME */
+    return NE_CreateThread( pModule, info.wShowWindow, cmdline );
 }
 
 

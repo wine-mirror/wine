@@ -333,33 +333,9 @@ load_error:
   return FALSE;
 }
 
-BOOL WINAPI MZ_LoadImage( LPCSTR cmdline )
+void WINAPI MZ_LoadImage( LPCSTR filename, HANDLE hFile )
 {
-    HFILE hFile;
-    char *name, buffer[MAX_PATH];
-    LPCSTR p = strchr( cmdline, ' ' );
-
-    if (p)
-    {
-        if (!(name = HeapAlloc( GetProcessHeap(), 0, p - cmdline + 1 ))) return FALSE;
-        memcpy( name, cmdline, p - cmdline );
-        name[p - cmdline] = 0;
-    }
-    else name = (char *)cmdline;
-
-    if (!SearchPathA( NULL, name, ".exe", sizeof(buffer), buffer, NULL )) goto error;
-    if ((hFile = CreateFileA( buffer, GENERIC_READ, FILE_SHARE_READ,
-                              NULL, OPEN_EXISTING, 0, 0 )) == INVALID_HANDLE_VALUE)
-        goto error;
-    if (!MZ_DoLoadImage( hFile, buffer, NULL ))
-    {
-        CloseHandle( hFile );
-        goto error;
-    }
-    MZ_Launch();
- error:
-    if (name != cmdline) HeapFree( GetProcessHeap(), 0, name );
-    return FALSE;
+    if (MZ_DoLoadImage( hFile, filename, NULL )) MZ_Launch();
 }
 
 BOOL WINAPI MZ_Exec( CONTEXT86 *context, LPCSTR filename, BYTE func, LPVOID paramblk )
@@ -609,11 +585,10 @@ void WINAPI MZ_Exit( CONTEXT86 *context, BOOL cs_psp, WORD retval )
 
 #else /* !MZ_SUPPORTED */
 
-BOOL WINAPI MZ_LoadImage( LPCSTR cmdline )
+void WINAPI MZ_LoadImage( LPCSTR filename, HANDLE hFile )
 {
   WARN("DOS executables not supported on this platform\n");
   SetLastError(ERROR_BAD_FORMAT);
-  return FALSE;
 }
 
 BOOL WINAPI MZ_Exec( CONTEXT86 *context, LPCSTR filename, BYTE func, LPVOID paramblk )

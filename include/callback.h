@@ -52,7 +52,7 @@ extern CALLOUT_TABLE Callout;
 typedef struct {
     struct _DOSTASK* WINAPI (*Current)( void );
     struct _DOSTASK* WINAPI (*LoadDPMI)( void );
-    BOOL WINAPI             (*LoadDosExe)( LPCSTR cmdline );
+    void WINAPI             (*LoadDosExe)( LPCSTR filename, HANDLE hFile );
     BOOL WINAPI             (*Exec)( CONTEXT86 *context, LPCSTR filename, BYTE func, LPVOID paramblk );
     void WINAPI             (*Exit)( CONTEXT86 *context, BOOL cs_psp, WORD retval );
     int WINAPI              (*Enter)( CONTEXT86 *context );

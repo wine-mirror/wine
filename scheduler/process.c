@@ -437,7 +437,7 @@ void *open_winelib_app( char *argv[] )
  *
  * Wine initialisation: load and start the main exe file.
  */
-void PROCESS_InitWine( int argc, char *argv[] )
+void PROCESS_InitWine( int argc, char *argv[], LPSTR win16_exe_name, HANDLE *win16_exe_file )
 {
     DWORD stack_size = 0;
 
@@ -483,8 +483,9 @@ void PROCESS_InitWine( int argc, char *argv[] )
     /* it must be 16-bit or DOS format */
     NtCurrentTeb()->tibflags &= ~TEBF_WIN32;
     current_process.flags |= PDB32_WIN16_PROC;
+    strcpy( win16_exe_name, main_exe_name );
     main_exe_name[0] = 0;
-    CloseHandle( main_exe_file );
+    *win16_exe_file = main_exe_file;
     main_exe_file = 0;
     _EnterWin16Lock();
 

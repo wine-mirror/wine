@@ -7,7 +7,7 @@ import ntdll.dll
 
 @ stdcall GetCurrent() MZ_Current
 @ stdcall LoadDPMI() MZ_AllocDPMITask
-@ stdcall LoadDosExe(str) MZ_LoadImage
+@ stdcall LoadDosExe(str long) MZ_LoadImage
 @ stdcall Exec(ptr str long ptr) MZ_Exec
 @ stdcall Exit(ptr long long) MZ_Exit
 
