@@ -383,7 +383,7 @@ static HRESULT IDirectMusicSegTriggerTrack_IPersistStream_ParseSegTrackList (LPP
     TRACE_(dmfile)(": %s chunk (size = %ld)", debugstr_fourcc (Chunk.fccID), Chunk.dwSize);
     switch (Chunk.fccID) { 
     case DMUS_FOURCC_SEGTRACK_CHUNK: {
-      FIXME_(dmfile)(": segment trigger track chunk\n");
+      TRACE_(dmfile)(": segment trigger track chunk\n");
       liMove.QuadPart = Chunk.dwSize;
       IStream_Seek (pStm, liMove, STREAM_SEEK_CUR, NULL);
       break;
@@ -429,7 +429,7 @@ HRESULT WINAPI IDirectMusicSegTriggerTrack_IPersistStream_Load (LPPERSISTSTREAM 
   LARGE_INTEGER liMove;
   HRESULT hr;
 
-  FIXME("(%p, %p): Loading not fully implemented yet\n", This, pStm);
+  TRACE("(%p, %p): Loading\n", This, pStm);
   
 #if 1
   IStream_Read (pStm, &Chunk, sizeof(FOURCC)+sizeof(DWORD), NULL);

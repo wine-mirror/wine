@@ -750,7 +750,7 @@ static HRESULT IDirectMusicSegment8Impl_IPersistStream_ParseTrackForm (LPPERSIST
 
     case FOURCC_RIFF: {
       IStream_Read (pStm, &Chunk.fccID, sizeof(FOURCC), NULL);
-      FIXME_(dmfile)(": RIFF chunk of type %s (behavior to check)\n", debugstr_fourcc(Chunk.fccID));
+      TRACE_(dmfile)(": RIFF chunk of type %s\n", debugstr_fourcc(Chunk.fccID));
 
       ListSize[0] = Chunk.dwSize - sizeof(FOURCC);
 
@@ -1018,7 +1018,7 @@ HRESULT WINAPI IDirectMusicSegment8Impl_IPersistStream_Load (LPPERSISTSTREAM ifa
   LARGE_INTEGER liMove; /* used when skipping chunks */
   
   
-  FIXME("(%p, %p): Loading not fully implemented yet\n", This, pStm);
+  TRACE("(%p, %p): Loading\n", This, pStm);
   IStream_Read (pStm, &Chunk, sizeof(FOURCC)+sizeof(DWORD), NULL);
   TRACE_(dmfile)(": %s chunk (size = %ld)", debugstr_fourcc (Chunk.fccID), Chunk.dwSize);
   switch (Chunk.fccID) {	

@@ -234,6 +234,10 @@ extern const char *debugstr_dmreturn (DWORD code);
 extern const char *debugstr_flags (DWORD flags, const flag_info* names, size_t num_names);
 extern const char *debugstr_DMUS_OBJ_FLAGS (DWORD flagmask);
 /* dump whole DMUS_OBJECTDESC struct */
-extern const char *debugstr_DMUS_OBJECTDESC (LPDMUS_OBJECTDESC pDesc);
+extern void debugstr_DMUS_OBJECTDESC (LPDMUS_OBJECTDESC pDesc);
+
+
+extern HRESULT IDirectMusicUtils_IPersistStream_ParseDescGeneric (DMUS_PRIVATE_CHUNK* pChunk, IStream* pStm, LPDMUS_OBJECTDESC pDesc);
+extern HRESULT IDirectMusicUtils_IPersistStream_ParseUNFOGeneric (DMUS_PRIVATE_CHUNK* pChunk, IStream* pStm, LPDMUS_OBJECTDESC pDesc);
 
 #endif	/* __WINE_DMBAND_PRIVATE_H */

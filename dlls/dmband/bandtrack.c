@@ -360,7 +360,7 @@ static HRESULT IDirectMusicBandTrack_IPersistStream_ParseBandsList (LPPERSISTSTR
 	}
 	case FOURCC_RIFF: { 
 	  IStream_Read (pStm, &Chunk.fccID, sizeof(FOURCC), NULL);
-	  FIXME_(dmfile)(": RIFF chunk of type %s (behavior to check)\n", debugstr_fourcc(Chunk.fccID));
+	  TRACE_(dmfile)(": RIFF chunk of type %s\n", debugstr_fourcc(Chunk.fccID));
 	  StreamSize = Chunk.dwSize - sizeof(FOURCC);
 	  switch (Chunk.fccID) {
 	  case DMUS_FOURCC_BAND_FORM: {
@@ -444,6 +444,10 @@ static HRESULT IDirectMusicBandTrack_IPersistStream_ParseBandTrackForm (LPPERSIS
     IStream_Read (pStm, &Chunk, sizeof(FOURCC)+sizeof(DWORD), NULL);
     StreamCount += sizeof(FOURCC) + sizeof(DWORD) + Chunk.dwSize;
     TRACE_(dmfile)(": %s chunk (size = %ld)", debugstr_fourcc (Chunk.fccID), Chunk.dwSize);
+    
+    hr = IDirectMusicUtils_IPersistStream_ParseDescGeneric(&Chunk, pStm, This->pDesc);
+    if (FAILED(hr)) return hr;
+
     switch (Chunk.fccID) {
     case DMUS_FOURCC_BANDTRACK_CHUNK: {
       TRACE_(dmfile)(": BandTrack chunk\n");
@@ -457,6 +461,30 @@ static HRESULT IDirectMusicBandTrack_IPersistStream_ParseBandTrackForm (LPPERSIS
       ListSize[0] = Chunk.dwSize - sizeof(FOURCC);
       ListCount[0] = 0;
       switch (Chunk.fccID) {
+      case DMUS_FOURCC_UNFO_LIST: { 
+	TRACE_(dmfile)(": UNFO list\n");
+	do {
+	  IStream_Read (pStm, &Chunk, sizeof(FOURCC)+sizeof(DWORD), NULL);
+	  ListCount[0] += sizeof(FOURCC) + sizeof(DWORD) + Chunk.dwSize;
+	  TRACE_(dmfile)(": %s chunk (size = %ld)", debugstr_fourcc (Chunk.fccID), Chunk.dwSize);
+	  
+	  hr = IDirectMusicUtils_IPersistStream_ParseUNFOGeneric(&Chunk, pStm, This->pDesc);
+	  if (FAILED(hr)) return hr;
+	  
+	  if (hr == S_FALSE) {
+	    switch (Chunk.fccID) {
+	    default: {
+	      TRACE_(dmfile)(": unknown chunk (irrevelant & skipping)\n");
+	      liMove.QuadPart = Chunk.dwSize;
+	      IStream_Seek (pStm, liMove, STREAM_SEEK_CUR, NULL);
+	      break;				
+	    }
+	    }
+	  }  
+	  TRACE_(dmfile)(": ListCount[0] = %ld < ListSize[0] = %ld\n", ListCount[0], ListSize[0]);
+	} while (ListCount[0] < ListSize[0]);
+	break;
+      }
       case DMUS_FOURCC_BANDS_LIST: {
 	TRACE_(dmfile)(": TRACK list\n");
 	hr = IDirectMusicBandTrack_IPersistStream_ParseBandsList (iface, &Chunk, pStm);
@@ -493,7 +521,7 @@ HRESULT WINAPI IDirectMusicBandTrack_IPersistStream_Load (LPPERSISTSTREAM iface,
   LARGE_INTEGER liMove;
   HRESULT hr;
 
-  FIXME("(%p, %p): loading not fully implemented yet\n", This, pStm);
+  TRACE("(%p, %p): Loading\n", This, pStm);
 
   IStream_Read (pStm, &Chunk, sizeof(FOURCC)+sizeof(DWORD), NULL);
   TRACE_(dmfile)(": %s chunk (size = %ld)", debugstr_fourcc (Chunk.fccID), Chunk.dwSize);

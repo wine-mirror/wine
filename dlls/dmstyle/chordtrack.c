@@ -262,7 +262,7 @@ static HRESULT IDirectMusicChordTrack_IPersistStream_ParseChordTrackList (LPPERS
     TRACE_(dmfile)(": %s chunk (size = %ld)", debugstr_fourcc (Chunk.fccID), Chunk.dwSize);
     switch (Chunk.fccID) { 
     case DMUS_FOURCC_CHORDTRACKHEADER_CHUNK: {
-      FIXME_(dmfile)(": Chord track header chunk\n");
+      TRACE_(dmfile)(": Chord track header chunk\n");
       IStream_Read (pStm, &This->dwScale, sizeof(DWORD), NULL);
       TRACE_(dmfile)(" - dwScale: %ld\n", This->dwScale);
       break;
@@ -274,7 +274,7 @@ static HRESULT IDirectMusicChordTrack_IPersistStream_ParseChordTrackList (LPPERS
       DMUS_IO_CHORD body;
       DMUS_IO_SUBCHORD subchords;
 
-      FIXME_(dmfile)(": Chord track body chunk\n");
+      TRACE_(dmfile)(": Chord track body chunk\n");
 
       IStream_Read (pStm, &sz, sizeof(DWORD), NULL);
       TRACE_(dmfile)(" - sizeof(DMUS_IO_CHORD): %ld\n", sz);
@@ -324,7 +324,7 @@ HRESULT WINAPI IDirectMusicChordTrack_IPersistStream_Load (LPPERSISTSTREAM iface
   LARGE_INTEGER liMove;
   HRESULT hr;
  
-  FIXME("(%p, %p): Loading not fully implemented yet\n", This, pStm);
+  TRACE("(%p, %p): Loading\n", This, pStm);
 
   IStream_Read (pStm, &Chunk, sizeof(FOURCC)+sizeof(DWORD), NULL);
   TRACE_(dmfile)(": %s chunk (size = %ld)", debugstr_fourcc (Chunk.fccID), Chunk.dwSize);
