@@ -225,7 +225,9 @@ DEBUG_AddSymbol( const char * name, const DBG_VALUE *value,
                  * - a second time with the correct address
                  * SYM_INVALID is set for the first pass, and cleared in the second
                  * the code below gets most of information for both passes
-                 * latest GCC version seem to provide correct address in first pass,
+                 *
+                 * some GCC versions may provide the correct address in the first pass
+                 * but it does not seem to be sensible to rely on that.
                  */
                 if (nh->value.addr.seg == 0 && nh->value.addr.off == 0 && c != 0)
                 {

@@ -980,16 +980,17 @@ enum DbgInfoLoad DEBUG_ParseStabs(char * addr, void *load_offset,
            *
            * With a.out or mingw, they actually do make some amount of sense.
            */
-          new_value.addr.seg = 0;
           new_value.type = DEBUG_ParseStabType(ptr);
-          new_value.addr.off = (unsigned long)load_offset + stab_ptr->n_value;
+          new_value.addr.seg = 0;
 	  new_value.cookie = DV_TARGET;
 
           stab_strcpy(symname, sizeof(symname), ptr);
 #ifdef __ELF__
+          new_value.addr.off = 0;
           curr_sym = DEBUG_AddSymbol( symname, &new_value, currpath,
                                       SYM_WINE | SYM_DATA | SYM_INVALID );
 #else
+          new_value.addr.off = (unsigned long)load_offset + stab_ptr->n_value;
           curr_sym = DEBUG_AddSymbol( symname, &new_value, currpath,
                                       SYM_WINE | SYM_DATA );
 #endif
