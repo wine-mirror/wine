@@ -91,10 +91,12 @@ void WINAPI DOSVM_Int33Handler( CONTEXT86 *context )
     SET_AX( context, mouse_info.but );
     break;
   case 0x07:
-    FIXME("Define horizontal mouse cursor range\n");
+    FIXME("Define horizontal mouse cursor range %d..%d\n",
+          CX_reg(context), DX_reg(context));
     break;
   case 0x08:
-    FIXME("Define vertical mouse cursor range\n");
+    FIXME("Define vertical mouse cursor range %d..%d\n",
+          CX_reg(context), DX_reg(context));
     break;
   case 0x09:
     FIXME("Define graphics mouse cursor\n");

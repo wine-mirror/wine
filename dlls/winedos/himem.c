@@ -175,6 +175,7 @@ void DOSVM_InitSegments( void )
         0x5D,                /* popw %bp */
         0x5A,                /* popw %dx */
         0x58,                /* popw %ax */
+        0xfb,                /* sti, enable and check virtual interrupts */
         0xCB                 /* lret */
     };
 

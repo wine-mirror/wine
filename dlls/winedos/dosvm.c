@@ -572,6 +572,9 @@ static WINE_EXCEPTION_FILTER(exception_handler)
 
 int WINAPI DOSVM_Enter( CONTEXT86 *context )
 {
+  /* Some callers forget to turn V86_FLAG on. */
+  context->EFlags |= V86_FLAG;
+
   __TRY
   {
     __wine_enter_vm86( context );

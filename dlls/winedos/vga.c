@@ -381,7 +381,9 @@ static void WINAPI VGA_DoSetMode(ULONG_PTR arg)
             return;
         }
         if (!vga_hwnd) {
-            vga_hwnd = CreateWindowExA(0,"STATIC","WINEDOS VGA",WS_POPUP|WS_VISIBLE,0,0,par->Xres,par->Yres,0,0,0,NULL);
+            vga_hwnd = CreateWindowExA(0,"STATIC","WINEDOS VGA",
+                                       WS_POPUP|WS_VISIBLE|SS_NOTIFY,0,0,
+                                       par->Xres,par->Yres,0,0,0,NULL);
             if (!vga_hwnd) {
                 ERR("Failed to create user window.\n");
                 IDirectDraw_Release(lpddraw);

@@ -583,15 +583,6 @@ static void StartPM( CONTEXT86 *context )
     TRACE("DOS program is now entering %d-bit protected mode\n", 
           DOSVM_IsDos32() ? 32 : 16);
 
-    /*
-     * Enable interrupts. Note that we also make a dummy 
-     * relay call in order to process all pending events. 
-     * This is needed in order to prevent event handling from
-     * getting stuck.
-     */
-    NtCurrentTeb()->dpmi_vif = 1;
-    DOSVM_BuildCallFrame( context, NULL, NULL );
-
     __TRY 
     {
         wine_call_to_16_regs_short(&pm_ctx, 0);
