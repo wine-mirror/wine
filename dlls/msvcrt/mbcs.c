@@ -425,7 +425,6 @@ int _mbsnbcmp(const unsigned char* str, const unsigned char* cmp, MSVCRT_size_t 
       cmp += clen;
     }
     return 0; /* Matched len chars */
-      FIXME("%s %s %d\n",str,cmp,len);
   }
   return strncmp(str,cmp,len);
 }
@@ -499,7 +498,6 @@ int _mbsnbicmp(const unsigned char* str, const unsigned char* cmp, MSVCRT_size_t
       cmp += clen;
     }
     return 0; /* Matched len bytes */
-      FIXME("%s %s %d\n",str,cmp,len);
   }
   return strncmp(str,cmp,len);
 }

@@ -80,8 +80,6 @@ typedef struct _PipeBuf {
     wine_pipe				*pipe;
 } PipeBuf;
 
-static int nrofreaders = 0;
-
 static HRESULT WINAPI
 _xread(HANDLE hf, LPVOID ptr, DWORD size) {
     DWORD res;
@@ -98,9 +96,10 @@ _xread(HANDLE hf, LPVOID ptr, DWORD size) {
 
 static void
 drs(LPCSTR where) {
-    int i, states[10];
+#if 0
+    static int nrofreaders = 0;
 
-    return ;
+    int i, states[10];
 
     memset(states,0,sizeof(states));
     for (i=nrofreqs;i--;)
@@ -116,6 +115,9 @@ drs(LPCSTR where) {
 	    states[REQSTATE_RESP_GOT],
 	    states[REQSTATE_DONE]
     );
+#endif
+
+    return ;
 }
 
 static HRESULT WINAPI
