@@ -2,6 +2,7 @@ Makefile
 avifile.s
 callfrom16.s
 callto16.s
+comm.s
 commdlg.s
 compobj.s
 ddeml.s
