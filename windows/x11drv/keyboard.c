@@ -584,13 +584,16 @@ void X11DRV_KEYBOARD_HandleEvent( WND *pWnd, XKeyEvent *event )
 
     TRACE_(key)("EVENT_key : state = %X\n", event->state);
 
-    /* If the state mask for AltGr hasn't been set yet, it's probably
-       because the X server/client are using XKB extension. With XKB extension
-       AltGr is mapped to a Group index. The group index is set in bits 13-14 
-       of event->state field. 
+    /* If XKB extensions is used, the state mask for AltGr will used the group
+       index instead of the modifier mask. The group index is set in bits
+       13-14 of the state field in the XKeyEvent structure. So if AltGr is
+       pressed, look if the group index is diferent than 0. From XKB
+       extension documentation, the group index should for AltGr should 
+       be 2 (event->state = 0x2000). It's probably better to not assume a
+       predefined group index and find it dynamically
 
        Ref: X Keyboard Extension: Library specification (section 14.1.1 and 17.1.1) */
-    if (AltGrState && (AltGrMask == 0))
+    if ( AltGrState && (event->state & 0x6000) )
         AltGrMask = event->state & 0x6000;
 
     if (keysym == XK_Mode_switch)
