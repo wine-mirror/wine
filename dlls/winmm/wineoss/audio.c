@@ -1827,6 +1827,11 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
 	return MMSYSERR_NOERROR;
     }
 
+    TRACE("OSS_OpenDevice requested this format: %ldx%dx%d\n",
+          lpDesc->lpFormat->nSamplesPerSec,
+          lpDesc->lpFormat->wBitsPerSample,
+          lpDesc->lpFormat->nChannels);
+
     wwo = &WOutDev[wDevID];
 
     if ((dwFlags & WAVE_DIRECTSOUND) &&
@@ -2573,7 +2578,8 @@ static HRESULT DSDB_MapBuffer(IDsDriverBufferImpl *dsdb)
         dsdb->mapping = mmap(NULL, dsdb->maplen, PROT_WRITE, MAP_SHARED,
                              dsdb->fd, 0);
         if (dsdb->mapping == (LPBYTE)-1) {
-            TRACE("Could not map sound device for direct access (%s)\n", strerror(errno));
+            ERR("Could not map sound device for direct access (%s)\n", strerror(errno));
+            ERR("set \"HardwareAcceleration\" = \"Emulated\" in the [dsound] section of your config file\n");
             return DSERR_GENERIC;
         }
         TRACE("The sound device has been mapped for direct access at %p, size=%ld\n", dsdb->mapping, dsdb->maplen);
