@@ -9,17 +9,12 @@ EXTRALIBS = -ldxguid -luuid
 C_SRCS = \
 	device.c \
 	dinput_main.c \
-	joystick/linux.c \
-	joystick/linuxinput.c \
-	keyboard/main.c \
-	mouse/main.c
+	joystick_linux.c \
+	joystick_linuxinput.c \
+	keyboard.c \
+	mouse.c
 
 RC_SRCS = version.rc
-
-EXTRASUBDIRS = \
-	joystick \
-	keyboard \
-	mouse
 
 @MAKE_DLL_RULES@
 

@@ -19076,12 +19076,6 @@ esac
 
           ac_config_commands="$ac_config_commands dlls/ddraw/dsurface"
 
-          ac_config_commands="$ac_config_commands dlls/dinput/joystick"
-
-          ac_config_commands="$ac_config_commands dlls/dinput/keyboard"
-
-          ac_config_commands="$ac_config_commands dlls/dinput/mouse"
-
           ac_config_commands="$ac_config_commands dlls/gdi/enhmfdrv"
 
           ac_config_commands="$ac_config_commands dlls/gdi/mfdrv"
@@ -19865,9 +19859,6 @@ do
   "dlls/ddraw/direct3d" ) CONFIG_COMMANDS="$CONFIG_COMMANDS dlls/ddraw/direct3d" ;;
   "dlls/ddraw/dpalette" ) CONFIG_COMMANDS="$CONFIG_COMMANDS dlls/ddraw/dpalette" ;;
   "dlls/ddraw/dsurface" ) CONFIG_COMMANDS="$CONFIG_COMMANDS dlls/ddraw/dsurface" ;;
-  "dlls/dinput/joystick" ) CONFIG_COMMANDS="$CONFIG_COMMANDS dlls/dinput/joystick" ;;
-  "dlls/dinput/keyboard" ) CONFIG_COMMANDS="$CONFIG_COMMANDS dlls/dinput/keyboard" ;;
-  "dlls/dinput/mouse" ) CONFIG_COMMANDS="$CONFIG_COMMANDS dlls/dinput/mouse" ;;
   "dlls/gdi/enhmfdrv" ) CONFIG_COMMANDS="$CONFIG_COMMANDS dlls/gdi/enhmfdrv" ;;
   "dlls/gdi/mfdrv" ) CONFIG_COMMANDS="$CONFIG_COMMANDS dlls/gdi/mfdrv" ;;
   "dlls/kernel/messages" ) CONFIG_COMMANDS="$CONFIG_COMMANDS dlls/kernel/messages" ;;
@@ -20670,12 +20661,6 @@ echo "$as_me: creating dlls/ddraw/direct3d" >&6;} && mkdir "dlls/ddraw/direct3d"
 echo "$as_me: creating dlls/ddraw/dpalette" >&6;} && mkdir "dlls/ddraw/dpalette") ;;
     dlls/ddraw/dsurface ) test -d "dlls/ddraw/dsurface" || ({ echo "$as_me:$LINENO: creating dlls/ddraw/dsurface" >&5
 echo "$as_me: creating dlls/ddraw/dsurface" >&6;} && mkdir "dlls/ddraw/dsurface") ;;
-    dlls/dinput/joystick ) test -d "dlls/dinput/joystick" || ({ echo "$as_me:$LINENO: creating dlls/dinput/joystick" >&5
-echo "$as_me: creating dlls/dinput/joystick" >&6;} && mkdir "dlls/dinput/joystick") ;;
-    dlls/dinput/keyboard ) test -d "dlls/dinput/keyboard" || ({ echo "$as_me:$LINENO: creating dlls/dinput/keyboard" >&5
-echo "$as_me: creating dlls/dinput/keyboard" >&6;} && mkdir "dlls/dinput/keyboard") ;;
-    dlls/dinput/mouse ) test -d "dlls/dinput/mouse" || ({ echo "$as_me:$LINENO: creating dlls/dinput/mouse" >&5
-echo "$as_me: creating dlls/dinput/mouse" >&6;} && mkdir "dlls/dinput/mouse") ;;
     dlls/gdi/enhmfdrv ) test -d "dlls/gdi/enhmfdrv" || ({ echo "$as_me:$LINENO: creating dlls/gdi/enhmfdrv" >&5
 echo "$as_me: creating dlls/gdi/enhmfdrv" >&6;} && mkdir "dlls/gdi/enhmfdrv") ;;
     dlls/gdi/mfdrv ) test -d "dlls/gdi/mfdrv" || ({ echo "$as_me:$LINENO: creating dlls/gdi/mfdrv" >&5
