@@ -1854,6 +1854,15 @@ done:
 }
 
 /******************************************************************************
+ *              OleDoAutoConvert        [OLE32.100]
+ */
+HRESULT WINAPI OleDoAutoConvert(IStorage *pStg, LPCLSID pClsidNew)
+{
+    FIXME("(%p,%p) : stub\n",pStg,pClsidNew);
+    return E_NOTIMPL;
+}
+
+/******************************************************************************
  *              CoTreatAsClass        [OLE32.46]
  */
 HRESULT WINAPI CoTreatAsClass(REFCLSID clsidOld, REFCLSID clsidNew)
