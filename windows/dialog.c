@@ -37,7 +37,6 @@
 #include "wine/winuser16.h"
 #include "wine/unicode.h"
 #include "controls.h"
-#include "heap.h"
 #include "win.h"
 #include "user.h"
 #include "wine/debug.h"
@@ -1544,37 +1543,36 @@ static BOOL DIALOG_DlgDirSelect( HWND hwnd, LPSTR str, INT len,
 
 
 /**********************************************************************
- *	    DIALOG_DlgDirList
+ *	    DIALOG_DlgDirListW
  *
- * Helper function for DlgDirList*
+ * Helper function for DlgDirList*W
  */
-static INT DIALOG_DlgDirList( HWND hDlg, LPSTR spec, INT idLBox,
-                                INT idStatic, UINT attrib, BOOL combo )
+static INT DIALOG_DlgDirListW( HWND hDlg, LPWSTR spec, INT idLBox,
+                               INT idStatic, UINT attrib, BOOL combo )
 {
     HWND hwnd;
-    LPSTR orig_spec = spec;
-    char any[] = "*.*";
+    LPWSTR orig_spec = spec;
+    WCHAR any[] = {'*','.','*',0};
 
 #define SENDMSG(msg,wparam,lparam) \
-    ((attrib & DDL_POSTMSGS) ? PostMessageA( hwnd, msg, wparam, lparam ) \
-                             : SendMessageA( hwnd, msg, wparam, lparam ))
+    ((attrib & DDL_POSTMSGS) ? PostMessageW( hwnd, msg, wparam, lparam ) \
+                             : SendMessageW( hwnd, msg, wparam, lparam ))
 
-    TRACE("%p '%s' %d %d %04x\n",
-          hDlg, spec ? spec : "NULL", idLBox, idStatic, attrib );
+    TRACE("%p %s %d %d %04x\n", hDlg, debugstr_w(spec), idLBox, idStatic, attrib );
 
     /* If the path exists and is a directory, chdir to it */
-    if (!spec || !spec[0] || SetCurrentDirectoryA( spec )) spec = any;
+    if (!spec || !spec[0] || SetCurrentDirectoryW( spec )) spec = any;
     else
     {
-        char *p, *p2;
+        WCHAR *p, *p2;
         p = spec;
-        if ((p2 = strrchr( p, '\\' ))) p = p2;
-        if ((p2 = strrchr( p, '/' ))) p = p2;
+        if ((p2 = strrchrW( p, '\\' ))) p = p2;
+        if ((p2 = strrchrW( p, '/' ))) p = p2;
         if (p != spec)
         {
-            char sep = *p;
+            WCHAR sep = *p;
             *p = 0;
-            if (!SetCurrentDirectoryA( spec ))
+            if (!SetCurrentDirectoryW( spec ))
             {
                 *p = sep;  /* Restore the original spec */
                 return FALSE;
@@ -1583,7 +1581,7 @@ static INT DIALOG_DlgDirList( HWND hDlg, LPSTR spec, INT idLBox,
         }
     }
 
-    TRACE( "mask=%s\n", spec );
+    TRACE( "mask=%s\n", debugstr_w(spec) );
 
     if (idLBox && ((hwnd = GetDlgItem( hDlg, idLBox )) != 0))
     {
@@ -1599,7 +1597,7 @@ static INT DIALOG_DlgDirList( HWND hDlg, LPSTR spec, INT idLBox,
             }
             if (SENDMSG( combo ? CB_DIR : LB_DIR,
                        (attrib & (DDL_DIRECTORY | DDL_DRIVES)) | DDL_EXCLUSIVE,
-                         (LPARAM)"*.*" ) == LB_ERR)
+                         (LPARAM)any ) == LB_ERR)
                 return FALSE;
         }
         else
@@ -1612,17 +1610,17 @@ static INT DIALOG_DlgDirList( HWND hDlg, LPSTR spec, INT idLBox,
 
     if (idStatic && ((hwnd = GetDlgItem( hDlg, idStatic )) != 0))
     {
-        char temp[MAX_PATH];
-        GetCurrentDirectoryA( sizeof(temp), temp );
-        CharLowerA( temp );
+        WCHAR temp[MAX_PATH];
+        GetCurrentDirectoryW( sizeof(temp)/sizeof(WCHAR), temp );
+        CharLowerW( temp );
         /* Can't use PostMessage() here, because the string is on the stack */
-        SetDlgItemTextA( hDlg, idStatic, temp );
+        SetDlgItemTextW( hDlg, idStatic, temp );
     }
 
     if (orig_spec && (spec != orig_spec))
     {
         /* Update the original file spec */
-        char *p = spec;
+        WCHAR *p = spec;
         while ((*orig_spec++ = *p++));
     }
 
@@ -1632,23 +1630,24 @@ static INT DIALOG_DlgDirList( HWND hDlg, LPSTR spec, INT idLBox,
 
 
 /**********************************************************************
- *	    DIALOG_DlgDirListW
+ *	    DIALOG_DlgDirListA
  *
- * Helper function for DlgDirList*W
+ * Helper function for DlgDirList*A
  */
-static INT DIALOG_DlgDirListW( HWND hDlg, LPWSTR spec, INT idLBox,
-                                 INT idStatic, UINT attrib, BOOL combo )
+static INT DIALOG_DlgDirListA( HWND hDlg, LPSTR spec, INT idLBox,
+                               INT idStatic, UINT attrib, BOOL combo )
 {
     if (spec)
     {
-        LPSTR specA = HEAP_strdupWtoA( GetProcessHeap(), 0, spec );
-        INT ret = DIALOG_DlgDirList( hDlg, specA, idLBox, idStatic,
-                                       attrib, combo );
-        MultiByteToWideChar( CP_ACP, 0, specA, -1, spec, 0x7fffffff );
-        HeapFree( GetProcessHeap(), 0, specA );
+        INT ret, len = MultiByteToWideChar( CP_ACP, 0, spec, -1, NULL, 0 );
+        LPWSTR specW = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) );
+        MultiByteToWideChar( CP_ACP, 0, spec, -1, specW, len );
+        ret = DIALOG_DlgDirListW( hDlg, specW, idLBox, idStatic, attrib, combo );
+        WideCharToMultiByte( CP_ACP, 0, specW, -1, spec, 0x7fffffff, NULL, NULL );
+        HeapFree( GetProcessHeap(), 0, specW );
         return ret;
     }
-    return DIALOG_DlgDirList( hDlg, NULL, idLBox, idStatic, attrib, combo );
+    return DIALOG_DlgDirListW( hDlg, NULL, idLBox, idStatic, attrib, combo );
 }
 
 
@@ -1696,7 +1695,7 @@ BOOL WINAPI DlgDirSelectComboBoxExW( HWND hwnd, LPWSTR str, INT len,
 INT WINAPI DlgDirListA( HWND hDlg, LPSTR spec, INT idLBox,
                             INT idStatic, UINT attrib )
 {
-    return DIALOG_DlgDirList( hDlg, spec, idLBox, idStatic, attrib, FALSE );
+    return DIALOG_DlgDirListA( hDlg, spec, idLBox, idStatic, attrib, FALSE );
 }
 
 
@@ -1716,7 +1715,7 @@ INT WINAPI DlgDirListW( HWND hDlg, LPWSTR spec, INT idLBox,
 INT WINAPI DlgDirListComboBoxA( HWND hDlg, LPSTR spec, INT idCBox,
                                     INT idStatic, UINT attrib )
 {
-    return DIALOG_DlgDirList( hDlg, spec, idCBox, idStatic, attrib, TRUE );
+    return DIALOG_DlgDirListA( hDlg, spec, idCBox, idStatic, attrib, TRUE );
 }
 
 
