@@ -277,14 +277,14 @@ char buffer[2048];
 
   command = WCMD_strtrim_leading_spaces(command);
   if (lstrlen(command) == 0) {
-    LoadString (hinst, 1000, buffer, sizeof(buffer));
+    LoadString (0, 1000, buffer, sizeof(buffer));
     WCMD_output (buffer);
   }
   else {
     for (i=0; i<=WCMD_EXIT; i++) {
       if (CompareString (LOCALE_USER_DEFAULT, NORM_IGNORECASE | SORT_STRINGSORT,
       	  param1, -1, inbuilt[i], -1) == 2) {
-        LoadString (hinst, i, buffer, sizeof(buffer));
+        LoadString (0, i, buffer, sizeof(buffer));
         WCMD_output (buffer);
         return;
       }
