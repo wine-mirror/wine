@@ -1600,6 +1600,12 @@ VOID WINAPI GlobalMemoryStatus(
 
     if(lpmem->dwAvailPageFile==0)
         lpmem->dwAvailPageFile++;
+
+    TRACE("<-- LPMEMORYSTATUS: dwLength %ld, dwMemoryLoad %ld, dwTotalPhys %ld, dwAvailPhys %ld,"
+          " dwTotalPageFile %ld, dwAvailPageFile %ld, dwTotalVirtual %ld, dwAvailVirtual %ld\n",
+          lpmem->dwLength, lpmem->dwMemoryLoad, lpmem->dwTotalPhys, lpmem->dwAvailPhys,
+          lpmem->dwTotalPageFile, lpmem->dwAvailPageFile, lpmem->dwTotalVirtual,
+          lpmem->dwAvailVirtual);
 }
 
 /***********************************************************************

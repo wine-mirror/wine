@@ -237,8 +237,7 @@ VOID WINAPI GetSystemInfo(
 	}
 	memcpy(si,&cachedsi,sizeof(*si));
 #else  /* linux */
-	/* FIXME: how do we do this on other systems? */
-
+	FIXME("not yet supported on this system\n");
 	RegCreateKeyA(hkey,"0",&xhkey);
 	RegSetValueExA(xhkey,"Identifier",0,REG_SZ,"CPU 386",strlen("CPU 386"));
 #endif  /* !linux */
@@ -246,6 +245,12 @@ VOID WINAPI GetSystemInfo(
 		RegCloseKey(xhkey);
 	if (hkey)
 		RegCloseKey(hkey);
+        TRACE("<- CPU arch %d, res'd %d, pagesize %ld, minappaddr %p, maxappaddr %p,"
+              " act.cpumask %08lx, numcpus %ld, CPU type %ld, allocgran. %ld, CPU level %d, CPU rev %d\n",
+              si->u.s.wProcessorArchitecture, si->u.s.wReserved, si->dwPageSize,
+              si->lpMinimumApplicationAddress, si->lpMaximumApplicationAddress,
+              si->dwActiveProcessorMask, si->dwNumberOfProcessors, si->dwProcessorType,
+              si->dwAllocationGranularity, si->wProcessorLevel, si->wProcessorRevision);
 }
 
 
