@@ -371,7 +371,7 @@ static BOOL find_pe_resource( HFILE lzfd, LPCSTR typeid, LPCSTR resid,
 
 
 /*************************************************************************
- * GetFileResourceSize16                     [VER.2]
+ * GetFileResourceSize                     [VER.2]
  */
 DWORD WINAPI GetFileResourceSize16( LPCSTR lpszFileName, LPCSTR lpszResType,
                                     LPCSTR lpszResId, LPDWORD lpdwFileOffset )
@@ -407,7 +407,7 @@ DWORD WINAPI GetFileResourceSize16( LPCSTR lpszFileName, LPCSTR lpszResType,
 
 
 /*************************************************************************
- * GetFileResource16                         [VER.3]
+ * GetFileResource                         [VER.3]
  */
 DWORD WINAPI GetFileResource16( LPCSTR lpszFileName, LPCSTR lpszResType,
                                 LPCSTR lpszResId, DWORD dwFileOffset,

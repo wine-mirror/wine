@@ -369,7 +369,7 @@ void X11DRV_Expose( HWND hwnd, XExposeEvent *event )
 
 
 /***********************************************************************
- *		X11DRV_GetDC (X11DRV.@)
+ *		GetDC (X11DRV.@)
  *
  * Set the drawable, origin and dimensions for the DC associated to
  * a given window.
@@ -1007,7 +1007,7 @@ UINT WINPOS_MinMaximize( HWND hwnd, UINT cmd, LPRECT rect )
 
 
 /***********************************************************************
- *              X11DRV_ShowWindow   (X11DRV.@)
+ *              ShowWindow   (X11DRV.@)
  */
 BOOL X11DRV_ShowWindow( HWND hwnd, INT cmd )
 {
@@ -1647,7 +1647,7 @@ static LONG start_size_move( WND* wndPtr, WPARAM wParam, POINT *capturePoint )
 
 
 /***********************************************************************
- *           X11DRV_SysCommandSizeMove   (X11DRV.@)
+ *           SysCommandSizeMove   (X11DRV.@)
  *
  * Perform SC_MOVE and SC_SIZE commands.
  */
@@ -1942,7 +1942,7 @@ END:
 
 
 /***********************************************************************
- *		X11DRV_ForceWindowRaise   (X11DRV.@)
+ *		ForceWindowRaise   (X11DRV.@)
  *
  * Raise a window on top of the X stacking order, while preserving 
  * the correct Windows Z order.

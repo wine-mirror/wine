@@ -398,7 +398,7 @@ error_exit:
 
 
 /***********************************************************************
- *             GetASPISupportInfo16   (WINASPI.1)
+ *             GetASPISupportInfo   (WINASPI.1)
  */
 
 WORD WINAPI GetASPISupportInfo16(void)
@@ -473,7 +473,7 @@ adapter name */
 
 
 /***********************************************************************
- *             SendASPICommand16   (WINASPI.2)
+ *             SendASPICommand   (WINASPI.2)
  */
 WORD WINAPI SendASPICommand16(SEGPTR segptr_srb)
 {
@@ -486,7 +486,7 @@ WORD WINAPI SendASPICommand16(SEGPTR segptr_srb)
 
 
 /***********************************************************************
- *             InsertInASPIChain16   (WINASPI.3)
+ *             InsertInASPIChain   (WINASPI.3)
  */
 WORD WINAPI InsertInASPIChain16(BOOL16 remove, FARPROC16 pASPIChainFunc)
 {
@@ -514,7 +514,7 @@ WORD WINAPI InsertInASPIChain16(BOOL16 remove, FARPROC16 pASPIChainFunc)
 
 
 /***********************************************************************
- *             GetASPIDLLVersion16   (WINASPI.4)
+ *             GETASPIDLLVERSION   (WINASPI.4)
  */
 
 DWORD WINAPI GetASPIDLLVersion16()

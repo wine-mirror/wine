@@ -379,7 +379,7 @@ MMRESULT WINAPI timeBeginPeriod(UINT wPeriod)
 }
 
 /**************************************************************************
- * 				timeBeginPeriod16	[MMSYSTEM.605]
+ * 				timeBeginPeriod	[MMSYSTEM.605]
  */
 MMRESULT16 WINAPI timeBeginPeriod16(UINT16 wPeriod)
 {
@@ -403,7 +403,7 @@ MMRESULT WINAPI timeEndPeriod(UINT wPeriod)
 }
 
 /**************************************************************************
- * 				timeEndPeriod16		[MMSYSTEM.606]
+ * 				timeEndPeriod		[MMSYSTEM.606]
  */
 MMRESULT16 WINAPI timeEndPeriod16(UINT16 wPeriod)
 {

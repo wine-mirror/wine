@@ -277,7 +277,7 @@ void WINAPI FileMenu_Destroy (HMENU hmenu)
 }
 
 /*************************************************************************
- * FileMenu_AppendItemAW			[SHELL32.115]
+ * FileMenu_AppendItem			[SHELL32.115]
  *
  */
 BOOL WINAPI FileMenu_AppendItemA(
@@ -675,7 +675,7 @@ BOOL WINAPI FileMenu_DeleteAllItems (HMENU hmenu)
 }
 
 /*************************************************************************
- * FileMenu_DeleteItemByCmd 			[SHELL32.]
+ * FileMenu_DeleteItemByCmd 			[SHELL32.117]
  *
  */
 BOOL WINAPI FileMenu_DeleteItemByCmd (HMENU hMenu, UINT uID)

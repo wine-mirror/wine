@@ -28,7 +28,7 @@ DEFAULT_DEBUG_CHANNEL(ole);
 static LPVOID lpNLSInfo = NULL;
 
 /******************************************************************************
- *		GetLocaleInfo16	[OLE2NLS.5]
+ *		GetLocaleInfoA	[OLE2NLS.5]
  * Is the last parameter really WORD for Win16?
  */
 INT16 WINAPI GetLocaleInfo16(LCID lcid,LCTYPE LCType,LPSTR buf,INT16 len)
@@ -37,7 +37,7 @@ INT16 WINAPI GetLocaleInfo16(LCID lcid,LCTYPE LCType,LPSTR buf,INT16 len)
 }
 
 /******************************************************************************
- *		GetStringType16	[OLE2NLS.7]
+ *		GetStringTypeA	[OLE2NLS.7]
  */
 BOOL16 WINAPI GetStringType16(LCID locale,DWORD dwInfoType,LPCSTR src,
                               INT16 cchSrc,LPWORD chartype)
@@ -87,7 +87,7 @@ INT16 LCMapString16(LCID lcid, DWORD mapflags, LPCSTR srcstr, INT16 srclen,
 }
 
 /***********************************************************************
- *           CompareString16       (OLE2NLS.8)
+ *           CompareStringA       (OLE2NLS.8)
  */
 UINT16 WINAPI CompareString16(DWORD lcid,DWORD fdwStyle,
                               LPCSTR s1,DWORD l1,LPCSTR s2,DWORD l2)

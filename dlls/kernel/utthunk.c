@@ -291,7 +291,7 @@ VOID WINAPI UTUnRegister( HMODULE hModule )
 }
 
 /****************************************************************************
- *		UTInit16     (KERNEL.493)
+ *		UTInit     (KERNEL.493)
  */
 WORD WINAPI UTInit16( DWORD x1, DWORD x2, DWORD x3, DWORD x4 )
 {

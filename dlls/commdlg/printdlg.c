@@ -1484,7 +1484,7 @@ BOOL WINAPI PrintDlgA(
 }
 
 /***********************************************************************
- *           PrintDlg16   (COMMDLG.20)
+ *           PrintDlg   (COMMDLG.20)
  * 
  *  Displays the the PRINT dialog box, which enables the user to specify
  *  specific properties of the print job.
@@ -2046,7 +2046,7 @@ BOOL WINAPI PageSetupDlgW(LPPAGESETUPDLGW setupdlg) {
  */
 
 /***********************************************************************
- *           PrintDlgProc16   (COMMDLG.21)
+ *           PrintDlgProc   (COMMDLG.21)
  */
 LRESULT WINAPI PrintDlgProc16(HWND16 hDlg, UINT16 uMsg, WPARAM16 wParam,
                             LPARAM lParam)
@@ -2104,7 +2104,7 @@ LRESULT WINAPI PrintDlgProc16(HWND16 hDlg, UINT16 uMsg, WPARAM16 wParam,
 
 
 /***********************************************************************
- *           PrintSetupDlgProc16   (COMMDLG.22)
+ *           PrintSetupDlgProc   (COMMDLG.22)
  */
 LRESULT WINAPI PrintSetupDlgProc16(HWND16 hWnd, UINT16 wMsg, WPARAM16 wParam,
 				   LPARAM lParam)

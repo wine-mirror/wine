@@ -1284,7 +1284,7 @@ static LRESULT WINAPI ColorDlgProc( HWND hDlg, UINT message,
 }
 
 /***********************************************************************
- *           ColorDlgProc16   (COMMDLG.8)
+ *           ColorDlgProc   (COMMDLG.8)
  */
 LRESULT WINAPI ColorDlgProc16( HWND16 hDlg, UINT16 message,
                             WPARAM16 wParam, LONG lParam )
@@ -1349,7 +1349,7 @@ LRESULT WINAPI ColorDlgProc16( HWND16 hDlg, UINT16 message,
 
 
 /***********************************************************************
- *            ChooseColor16  (COMMDLG.5)
+ *            ChooseColor  (COMMDLG.5)
  */
 BOOL16 WINAPI ChooseColor16( LPCHOOSECOLOR16 lpChCol )
 {

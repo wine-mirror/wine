@@ -12,7 +12,7 @@
 #include "thread.h"
 
 /***********************************************************************
- *		GetWin32sDirectory (W32SKRNL.14)
+ *		_kGetWin32sDirectory@0 (W32SKRNL.14)
  */
 LPSTR WINAPI GetWin32sDirectory(void)
 {

@@ -632,7 +632,8 @@ BOOL WINAPI GetInputState(void)
 }
 
 /***********************************************************************
- *		GetMessagePos (USER.119) (USER32.@)
+ *		GetMessagePos (USER.119)
+ *		GetMessagePos (USER32.@)
  * 
  * The GetMessagePos() function returns a long value representing a
  * cursor position, in screen coordinates, when the last message
@@ -666,7 +667,8 @@ DWORD WINAPI GetMessagePos(void)
 
 
 /***********************************************************************
- *		GetMessageTime (USER.120) (USER32.@)
+ *		GetMessageTime (USER.120)
+ *		GetMessageTime (USER32.@)
  *
  * GetMessageTime() returns the message time for the last message
  * retrieved by the function. The time is measured in milliseconds with
@@ -698,7 +700,8 @@ LONG WINAPI GetMessageTime(void)
 
 
 /***********************************************************************
- *		GetMessageExtraInfo (USER.288) (USER32.@)
+ *		GetMessageExtraInfo (USER.288)
+ *		GetMessageExtraInfo (USER32.@)
  */
 LONG WINAPI GetMessageExtraInfo(void)
 {

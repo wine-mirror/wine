@@ -49,7 +49,7 @@ extern HMODULE SHLWAPI_hmlang;
 */
 
 /*************************************************************************
- *      SHLWAPI_1	[SHLWAPI.1]
+ *      @	[SHLWAPI.1]
  */
 DWORD WINAPI SHLWAPI_1 (
 	LPSTR lpStr,
@@ -60,7 +60,7 @@ DWORD WINAPI SHLWAPI_1 (
 }
 
 /*************************************************************************
- *      SHLWAPI_2	[SHLWAPI.2]
+ *      @	[SHLWAPI.2]
  */
 DWORD WINAPI SHLWAPI_2 (LPCWSTR x,LPVOID y)
 {
@@ -69,7 +69,7 @@ DWORD WINAPI SHLWAPI_2 (LPCWSTR x,LPVOID y)
 }
 
 /*************************************************************************
- *      SHLWAPI_16	[SHLWAPI.16]
+ *      @	[SHLWAPI.16]
  */
 HRESULT WINAPI SHLWAPI_16 (
 	LPVOID w,
@@ -82,7 +82,7 @@ HRESULT WINAPI SHLWAPI_16 (
 }
 
 /*************************************************************************
- *      SHLWAPI_23	[SHLWAPI.23]
+ *      @	[SHLWAPI.23]
  *
  * NOTES
  *	converts a guid to a string
@@ -106,7 +106,7 @@ DWORD WINAPI SHLWAPI_23 (
 }
 
 /*************************************************************************
- *      SHLWAPI_24	[SHLWAPI.24]
+ *      @	[SHLWAPI.24]
  *
  * NOTES
  *	converts a guid to a string
@@ -146,7 +146,7 @@ BOOL WINAPI SHLWAPI_30(LPWSTR lpcChar)
 }
 
 /*************************************************************************
- *      SHLWAPI_32	[SHLWAPI.32]
+ *      @	[SHLWAPI.32]
  */
 BOOL WINAPI SHLWAPI_32(LPCWSTR lpcChar)
 {
@@ -160,7 +160,7 @@ BOOL WINAPI SHLWAPI_32(LPCWSTR lpcChar)
 }
 
 /*************************************************************************
- *      SHLWAPI_40	[SHLWAPI.40]
+ *      @	[SHLWAPI.40]
  *
  * Get pointer to next Unicode character.
  */
@@ -170,7 +170,7 @@ LPCWSTR WINAPI SHLWAPI_40(LPCWSTR str)
 }
 
 /*************************************************************************
- *      SHLWAPI_74	[SHLWAPI.74]
+ *      @	[SHLWAPI.74]
  *
  * Get the text from a given dialog item.
  */
@@ -186,7 +186,7 @@ INT WINAPI SHLWAPI_74(HWND hWnd, INT nItem, LPWSTR lpsDest,INT nDestLen)
 }
 
 /*************************************************************************
- *      SHLWAPI_151	[SHLWAPI.151]
+ *      @	[SHLWAPI.151]
  *
  *      pStr "HTTP/1.1", dw1 0x5
  */
@@ -197,7 +197,7 @@ DWORD WINAPI SHLWAPI_151(LPSTR pStr, LPVOID ptr, DWORD dw1)
 }
 
 /*************************************************************************
- *      SHLWAPI_152	[SHLWAPI.152]
+ *      @	[SHLWAPI.152]
  */
 DWORD WINAPI SHLWAPI_152(LPWSTR str1, LPWSTR str2, INT len)
 {
@@ -213,7 +213,7 @@ DWORD WINAPI SHLWAPI_152(LPWSTR str1, LPWSTR str2, INT len)
 }
 
 /*************************************************************************
- *      SHLWAPI_153	[SHLWAPI.153]
+ *      @	[SHLWAPI.153]
  */
 DWORD WINAPI SHLWAPI_153(LPSTR str1, LPSTR str2, DWORD dw3)
 {
@@ -222,7 +222,7 @@ DWORD WINAPI SHLWAPI_153(LPSTR str1, LPSTR str2, DWORD dw3)
 }
 
 /*************************************************************************
- *      SHLWAPI_156	[SHLWAPI.156]
+ *      @	[SHLWAPI.156]
  *
  *	Case sensitive string compare. Does not SetLastError().
  */
@@ -233,7 +233,7 @@ DWORD WINAPI SHLWAPI_156 ( LPWSTR str1, LPWSTR str2)
 }
 
 /*************************************************************************
- *      SHLWAPI_162	[SHLWAPI.162]
+ *      @	[SHLWAPI.162]
  *
  * Ensure a multibyte character string doesn't end in a hanging lead byte.
  */
@@ -257,7 +257,7 @@ DWORD WINAPI SHLWAPI_162(LPSTR lpStr, DWORD size)
 }
 
 /*************************************************************************
- *      SHLWAPI_165	[SHLWAPI.165]
+ *      @	[SHLWAPI.165]
  *
  * SetWindowLongA with mask.
  */
@@ -272,7 +272,7 @@ LONG WINAPI SHLWAPI_165(HWND hwnd, INT offset, UINT wFlags, UINT wMask)
 }
 
 /*************************************************************************
- *      SHLWAPI_169	[SHLWAPI.169]
+ *      @	[SHLWAPI.169]
  */
 DWORD WINAPI SHLWAPI_169 (IUnknown * lpUnknown)
 {
@@ -285,7 +285,7 @@ DWORD WINAPI SHLWAPI_169 (IUnknown * lpUnknown)
 }
 
 /*************************************************************************
- *      SHLWAPI_170	[SHLWAPI.170]
+ *      @	[SHLWAPI.170]
  *
  * Skip URL '//' sequence.
  */
@@ -297,7 +297,7 @@ LPCSTR WINAPI SHLWAPI_170(LPCSTR lpszSrc)
 }
 
 /*************************************************************************
- *      SHLWAPI_181	[SHLWAPI.181]
+ *      @	[SHLWAPI.181]
  *
  *	Enable or disable a menu item.
  */
@@ -307,7 +307,7 @@ UINT WINAPI SHLWAPI_181(HMENU hMenu, UINT wItemID, BOOL bEnable)
 }
 
 /*************************************************************************
- *      SHLWAPI_183	[SHLWAPI.183]
+ *      @	[SHLWAPI.183]
  *
  * Register a window class if it isn't already.
  */
@@ -320,7 +320,7 @@ DWORD WINAPI SHLWAPI_183(WNDCLASSA *wndclass)
 }
 
 /*************************************************************************
- *      SHLWAPI_193	[SHLWAPI.193]
+ *      @	[SHLWAPI.193]
  */
 DWORD WINAPI SHLWAPI_193 ()
 {
@@ -336,7 +336,7 @@ DWORD WINAPI SHLWAPI_193 ()
 }
 
 /*************************************************************************
- *      SHLWAPI_215	[SHLWAPI.215]
+ *      @	[SHLWAPI.215]
  *
  * NOTES
  *  check me!
@@ -351,7 +351,7 @@ LPWSTR WINAPI SHLWAPI_215 (
 }
 
 /*************************************************************************
- *      SHLWAPI_218	[SHLWAPI.218]
+ *      @	[SHLWAPI.218]
  *
  * WideCharToMultiByte with multi language support.
  */
@@ -441,7 +441,7 @@ INT WINAPI SHLWAPI_218(UINT CodePage, LPCWSTR lpSrcStr, LPSTR lpDstStr,
 }
 
 /*************************************************************************
- *      SHLWAPI_217	[SHLWAPI.217]
+ *      @	[SHLWAPI.217]
  *
  */
 INT WINAPI SHLWAPI_217(LPCWSTR lpSrcStr, LPSTR lpDstStr, LPINT lpnMultiCharCount)
@@ -450,7 +450,7 @@ INT WINAPI SHLWAPI_217(LPCWSTR lpSrcStr, LPSTR lpDstStr, LPINT lpnMultiCharCount
 }
 
 /*************************************************************************
- *      SHLWAPI_219	[SHLWAPI.219]
+ *      @	[SHLWAPI.219]
  *
  * NOTES
  *  error codes: E_POINTER, E_NOINTERFACE
@@ -466,7 +466,7 @@ HRESULT WINAPI SHLWAPI_219 (
 }
 
 /*************************************************************************
- *      SHLWAPI_222	[SHLWAPI.222]
+ *      @	[SHLWAPI.222]
  *
  * NOTES
  *  securityattributes missing
@@ -484,7 +484,7 @@ HANDLE WINAPI SHLWAPI_222 (LPCLSID guid)
 }
 
 /*************************************************************************
- *      SHLWAPI_223	[SHLWAPI.223]
+ *      @	[SHLWAPI.223]
  *
  * NOTES
  *  get the count of the semaphore
@@ -501,7 +501,7 @@ DWORD WINAPI SHLWAPI_223 (HANDLE handle)
 }
 
 /*************************************************************************
- *      SHLWAPI_237	[SHLWAPI.237]
+ *      @	[SHLWAPI.237]
  *
  * Unicode version of SHLWAPI_183.
  */
@@ -517,7 +517,7 @@ DWORD WINAPI SHLWAPI_237 (WNDCLASSW * lpWndClass)
 }
 
 /*************************************************************************
- *      SHLWAPI_240	[SHLWAPI.240]
+ *      @	[SHLWAPI.240]
  *
  *	Calls ASCII or Unicode WindowProc for the given window.
  */
@@ -529,7 +529,7 @@ LRESULT CALLBACK SHLWAPI_240(HWND hWnd, UINT uMessage, WPARAM wParam, LPARAM lPa
 }
 
 /*************************************************************************
- *      SHLWAPI_241	[SHLWAPI.241]
+ *      @	[SHLWAPI.241]
  *
  */
 DWORD WINAPI SHLWAPI_241 ()
@@ -539,7 +539,7 @@ DWORD WINAPI SHLWAPI_241 ()
 }
 
 /*************************************************************************
- *      SHLWAPI_266	[SHLWAPI.266]
+ *      @	[SHLWAPI.266]
  */
 DWORD WINAPI SHLWAPI_266 (
 	LPVOID w,
@@ -552,7 +552,7 @@ DWORD WINAPI SHLWAPI_266 (
 }
 
 /*************************************************************************
- *      SHLWAPI_267	[SHLWAPI.267]
+ *      @	[SHLWAPI.267]
  */
 HRESULT WINAPI SHLWAPI_267 (
 	LPVOID w, /* [???] NOTE: same as 1th parameter of SHLWAPI_219 */
@@ -566,7 +566,7 @@ HRESULT WINAPI SHLWAPI_267 (
 }
 
 /*************************************************************************
- *      SHLWAPI_268	[SHLWAPI.268]
+ *      @	[SHLWAPI.268]
  */
 DWORD WINAPI SHLWAPI_268 (
 	LPVOID w,
@@ -577,7 +577,7 @@ DWORD WINAPI SHLWAPI_268 (
 }
 
 /*************************************************************************
- *      SHLWAPI_276	[SHLWAPI.276]
+ *      @	[SHLWAPI.276]
  *
  */
 DWORD WINAPI SHLWAPI_276 ()
@@ -587,7 +587,7 @@ DWORD WINAPI SHLWAPI_276 ()
 }
 
 /*************************************************************************
- *      SHLWAPI_278	[SHLWAPI.278]
+ *      @	[SHLWAPI.278]
  *
  */
 DWORD WINAPI SHLWAPI_278 (
@@ -628,7 +628,7 @@ DWORD WINAPI SHLWAPI_278 (
 }
 
 /*************************************************************************
- *      SHLWAPI_289	[SHLWAPI.289]
+ *      @	[SHLWAPI.289]
  *
  * Late bound call to winmm.PlaySoundW
  */
@@ -641,7 +641,7 @@ BOOL WINAPI SHLWAPI_289(LPCWSTR pszSound, HMODULE hmod, DWORD fdwSound)
 }
 
 /*************************************************************************
- *      SHLWAPI_294	[SHLWAPI.294]
+ *      @	[SHLWAPI.294]
  */
 BOOL WINAPI SHLWAPI_294(LPSTR str1, LPSTR str2, LPSTR pStr, DWORD some_len,  LPCSTR lpStr2)
 {
@@ -665,7 +665,7 @@ BOOL WINAPI SHLWAPI_294(LPSTR str1, LPSTR str2, LPSTR pStr, DWORD some_len,  LPC
 }
 
 /*************************************************************************
- *      SHLWAPI_313	[SHLWAPI.313]
+ *      @	[SHLWAPI.313]
  *
  * Late bound call to shell32.SHGetFileInfoW
  */
@@ -679,7 +679,7 @@ DWORD WINAPI SHLWAPI_313(LPCWSTR path, DWORD dwFileAttributes,
 }
 
 /*************************************************************************
- *      SHLWAPI_318	[SHLWAPI.318]
+ *      @	[SHLWAPI.318]
  *
  * Late bound call to shell32.DragQueryFileW
  */
@@ -692,7 +692,7 @@ UINT WINAPI SHLWAPI_318(HDROP hDrop, UINT lFile, LPWSTR lpszFile, UINT lLength)
 }
 
 /*************************************************************************
- *      SHLWAPI_333	[SHLWAPI.333]
+ *      @	[SHLWAPI.333]
  *
  * Late bound call to shell32.SHBrowseForFolderW
  */
@@ -705,7 +705,7 @@ LPITEMIDLIST WINAPI SHLWAPI_333(LPBROWSEINFOW lpBi)
 }
 
 /*************************************************************************
- *      SHLWAPI_334	[SHLWAPI.334]
+ *      @	[SHLWAPI.334]
  *
  * Late bound call to shell32.SHGetPathFromIDListW
  */
@@ -718,7 +718,7 @@ BOOL WINAPI SHLWAPI_334(LPCITEMIDLIST pidl,LPWSTR pszPath)
 }
 
 /*************************************************************************
- *      SHLWAPI_335	[SHLWAPI.335]
+ *      @	[SHLWAPI.335]
  *
  * Late bound call to shell32.ShellExecuteExW
  */
@@ -731,7 +731,7 @@ BOOL WINAPI SHLWAPI_335(LPSHELLEXECUTEINFOW lpExecInfo)
 }
 
 /*************************************************************************
- *      SHLWAPI_336	[SHLWAPI.336]
+ *      @	[SHLWAPI.336]
  *
  * Late bound call to shell32.SHFileOperationW.
  */
@@ -744,7 +744,7 @@ DWORD WINAPI SHLWAPI_336(LPSHFILEOPSTRUCTW lpFileOp)
 }
 
 /*************************************************************************
- *      SHLWAPI_337	[SHLWAPI.337]
+ *      @	[SHLWAPI.337]
  *
  * Late bound call to shell32.ExtractIconExW.
  */
@@ -758,7 +758,7 @@ HICON WINAPI SHLWAPI_337(LPCWSTR lpszFile, INT nIconIndex, HICON *phiconLarge,
 }
 
 /*************************************************************************
- *      SHLWAPI_342	[SHLWAPI.342]
+ *      @	[SHLWAPI.342]
  *
  */
 DWORD WINAPI SHLWAPI_342 (
@@ -772,7 +772,7 @@ DWORD WINAPI SHLWAPI_342 (
 }
 
 /*************************************************************************
- *      SHLWAPI_346	[SHLWAPI.346]
+ *      @	[SHLWAPI.346]
  */
 DWORD WINAPI SHLWAPI_346 (
 	LPCWSTR src,
@@ -785,7 +785,7 @@ DWORD WINAPI SHLWAPI_346 (
 }
 
 /*************************************************************************
- *      SHLWAPI_357	[SHLWAPI.357]
+ *      @	[SHLWAPI.357]
  *
  * Late bound call to shell32.SHGetNewLinkInfoW
  */
@@ -799,7 +799,7 @@ BOOL WINAPI SHLWAPI_357(LPCWSTR pszLinkTo, LPCWSTR pszDir, LPWSTR pszName,
 }
 
 /*************************************************************************
- *      SHLWAPI_358	[SHLWAPI.358]
+ *      @	[SHLWAPI.358]
  *
  * Late bound call to shell32.SHDefExtractIconW
  */
@@ -814,7 +814,7 @@ DWORD WINAPI SHLWAPI_358(LPVOID arg1, LPVOID arg2, LPVOID arg3, LPVOID arg4,
 }
 
 /*************************************************************************
- *      SHLWAPI_364	[SHLWAPI.364]
+ *      @	[SHLWAPI.364]
  *
  * Wrapper for lstrcpynA with src and dst swapped.
  */
@@ -825,7 +825,7 @@ DWORD WINAPI SHLWAPI_364(LPCSTR src, LPSTR dst, INT n)
 }
 
 /*************************************************************************
- *      SHLWAPI_370	[SHLWAPI.370]
+ *      @	[SHLWAPI.370]
  *
  * Late bound call to shell32.ExtractIconW
  */
@@ -839,7 +839,7 @@ HICON WINAPI SHLWAPI_370(HINSTANCE hInstance, LPCWSTR lpszExeFileName,
 }
 
 /*************************************************************************
- *      SHLWAPI_376	[SHLWAPI.376]
+ *      @	[SHLWAPI.376]
  */
 DWORD WINAPI SHLWAPI_376 (LONG x)
 {
@@ -851,7 +851,7 @@ DWORD WINAPI SHLWAPI_376 (LONG x)
 }
 
 /*************************************************************************
- *      SHLWAPI_377	[SHLWAPI.377]
+ *      @	[SHLWAPI.377]
  */
 DWORD WINAPI SHLWAPI_377 (LPVOID x, LPVOID y, LPVOID z)
 {
@@ -860,7 +860,7 @@ DWORD WINAPI SHLWAPI_377 (LPVOID x, LPVOID y, LPVOID z)
 }
 
 /*************************************************************************
- *      SHLWAPI_378	[SHLWAPI.378]
+ *      @	[SHLWAPI.378]
  */
 DWORD WINAPI SHLWAPI_378 (
 	LPSTR x,
@@ -872,7 +872,7 @@ DWORD WINAPI SHLWAPI_378 (
 }
 
 /*************************************************************************
- *      SHLWAPI_389	[SHLWAPI.389]
+ *      @	[SHLWAPI.389]
  *
  * Late bound call to comdlg32.GetSaveFileNameW
  */
@@ -885,7 +885,7 @@ BOOL WINAPI SHLWAPI_389(LPOPENFILENAMEW ofn)
 }
 
 /*************************************************************************
- *      SHLWAPI_390	[SHLWAPI.390]
+ *      @	[SHLWAPI.390]
  *
  * Late bound call to mpr.WNetRestoreConnectionW
  */
@@ -899,7 +899,7 @@ DWORD WINAPI SHLWAPI_390(LPVOID arg1, LPVOID arg2)
 }
 
 /*************************************************************************
- *      SHLWAPI_391	[SHLWAPI.391]
+ *      @	[SHLWAPI.391]
  *
  * Late bound call to mpr.WNetGetLastErrorW
  */
@@ -914,7 +914,7 @@ DWORD WINAPI SHLWAPI_391(LPVOID arg1, LPVOID arg2, LPVOID arg3, LPVOID arg4,
 }
 
 /*************************************************************************
- *      SHLWAPI_401	[SHLWAPI.401]
+ *      @	[SHLWAPI.401]
  *
  * Late bound call to comdlg32.PageSetupDlgW
  */
@@ -927,7 +927,7 @@ BOOL WINAPI SHLWAPI_401(LPPAGESETUPDLGW pagedlg)
 }
 
 /*************************************************************************
- *      SHLWAPI_402	[SHLWAPI.402]
+ *      @	[SHLWAPI.402]
  *
  * Late bound call to comdlg32.PrintDlgW
  */
@@ -940,7 +940,7 @@ BOOL WINAPI SHLWAPI_402(LPPRINTDLGW printdlg)
 }
 
 /*************************************************************************
- *      SHLWAPI_403	[SHLWAPI.403]
+ *      @	[SHLWAPI.403]
  *
  * Late bound call to comdlg32.GetOpenFileNameW
  */
@@ -1005,7 +1005,7 @@ COLORREF WINAPI ColorHLSToRGB(WORD wHue, WORD wLuminosity, WORD wSaturation)
 }
 
 /*************************************************************************
- *      SHLWAPI_431	[SHLWAPI.431]
+ *      @	[SHLWAPI.431]
  */
 DWORD WINAPI SHLWAPI_431 (DWORD x)
 {
@@ -1014,7 +1014,7 @@ DWORD WINAPI SHLWAPI_431 (DWORD x)
 }
 
 /*************************************************************************
- *      SHLWAPI_437	[SHLWAPI.437]
+ *      @	[SHLWAPI.437]
  *
  * NOTES
  *  In the real shlwapi, One time initialisation calls GetVersionEx and reads
@@ -1077,7 +1077,7 @@ INT WINAPI GetMenuPosFromID(HMENU hMenu, UINT wID)
 }
 
 /*************************************************************************
- *      _SHGetInstanceExplorer	[SHLWAPI.@]
+ *      _SHGetInstanceExplorer@4	[SHLWAPI.@]
  *
  * Late bound call to shell32.SHGetInstanceExplorer.
  */

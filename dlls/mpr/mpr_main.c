@@ -14,7 +14,7 @@ DEFAULT_DEBUG_CHANNEL(mpr);
   */
 
 /*****************************************************************
- *  MPR_Alloc  [MPR.22]
+ *  @  [MPR.22]
  */
 LPVOID WINAPI MPR_Alloc( DWORD dwSize )
 {
@@ -22,7 +22,7 @@ LPVOID WINAPI MPR_Alloc( DWORD dwSize )
 }
 
 /*****************************************************************
- *  MPR_ReAlloc  [MPR.23]
+ *  @  [MPR.23]
  */
 LPVOID WINAPI MPR_ReAlloc( LPVOID lpSrc, DWORD dwSize )
 {
@@ -33,7 +33,7 @@ LPVOID WINAPI MPR_ReAlloc( LPVOID lpSrc, DWORD dwSize )
 }
 
 /*****************************************************************
- *  MPR_Free  [MPR.24]
+ *  @  [MPR.24]
  */
 BOOL WINAPI MPR_Free( LPVOID lpMem )
 {
@@ -44,7 +44,7 @@ BOOL WINAPI MPR_Free( LPVOID lpMem )
 }
 
 /*****************************************************************
- *  _MPR_25  [MPR.25]
+ *  @  [MPR.25]
  */
 BOOL WINAPI _MPR_25( LPBYTE lpMem, INT len )
 {

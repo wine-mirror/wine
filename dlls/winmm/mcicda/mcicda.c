@@ -792,7 +792,7 @@ static DWORD MCICDA_Set(UINT wDevID, DWORD dwFlags, LPMCI_SET_PARMS lpParms)
 }
 
 /**************************************************************************
- * 			MCICDA_DriverProc			[exported]
+ * 			DriverProc			[exported]
  */
 LONG CALLBACK	MCICDA_DriverProc(DWORD dwDevID, HDRVR hDriv, DWORD wMsg, 
 				      DWORD dwParam1, DWORD dwParam2)

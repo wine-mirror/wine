@@ -29,7 +29,7 @@ static WINE_EXCEPTION_FILTER(page_fault)
 
 
 /***********************************************************************
- *           hmemcpy16   (KERNEL.348)
+ *           hmemcpy   (KERNEL.348)
  */
 void WINAPI hmemcpy16( LPVOID dst, LPCVOID src, LONG count )
 {
@@ -38,7 +38,7 @@ void WINAPI hmemcpy16( LPVOID dst, LPCVOID src, LONG count )
 
 
 /***********************************************************************
- *           lstrcat16   (KERNEL.89)
+ *           lstrcat   (KERNEL.89)
  */
 SEGPTR WINAPI lstrcat16( SEGPTR dst, LPCSTR src )
 {
@@ -87,7 +87,7 @@ LPWSTR WINAPI lstrcatW( LPWSTR dst, LPCWSTR src )
 
 
 /***********************************************************************
- *           lstrcatn16   (KERNEL.352)
+ *           lstrcatn   (KERNEL.352)
  */
 SEGPTR WINAPI lstrcatn16( SEGPTR dst, LPCSTR src, INT16 n )
 {
@@ -152,7 +152,7 @@ INT WINAPI lstrcmpiW( LPCWSTR str1, LPCWSTR str2 )
 
 
 /***********************************************************************
- *           lstrcpy16   (KERNEL.88)
+ *           lstrcpy   (KERNEL.88)
  */
 SEGPTR WINAPI lstrcpy16( SEGPTR dst, LPCSTR src )
 {
@@ -202,7 +202,7 @@ LPWSTR WINAPI lstrcpyW( LPWSTR dst, LPCWSTR src )
 
 
 /***********************************************************************
- *           lstrcpyn16   (KERNEL.353)
+ *           lstrcpyn   (KERNEL.353)
  */
 SEGPTR WINAPI lstrcpyn16( SEGPTR dst, LPCSTR src, INT16 n )
 {
@@ -258,7 +258,7 @@ LPWSTR WINAPI lstrcpynW( LPWSTR dst, LPCWSTR src, INT n )
 
 
 /***********************************************************************
- *           lstrlen16   (KERNEL.90)
+ *           lstrlen   (KERNEL.90)
  */
 INT16 WINAPI lstrlen16( LPCSTR str )
 {

@@ -803,7 +803,7 @@ static	DWORD	WAVEMAP_drvClose(DWORD dwDevID)
 }
 
 /**************************************************************************
- * 				WAVEMAP_DriverProc		[internal]
+ * 				DriverProc		[internal]
  */
 LONG CALLBACK	WAVEMAP_DriverProc(DWORD dwDevID, HDRVR hDriv, DWORD wMsg, 
 				   DWORD dwParam1, DWORD dwParam2)

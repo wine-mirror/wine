@@ -372,7 +372,7 @@ static void comm_waitwrite(struct DosDeviceStruct *ptr)
 }
 
 /**************************************************************************
- *         BuildCommDCB16		(USER.213)
+ *         BuildCommDCB		(USER.213)
  *
  * According to the ECMA-234 (368.3) the function will return FALSE on 
  * success, otherwise it will return -1. 
@@ -503,7 +503,7 @@ INT16 WINAPI BuildCommDCB16(LPCSTR device, LPDCB16 lpdcb)
 }
 
 /*****************************************************************************
- *	OpenComm16		(USER.200)
+ *	OpenComm		(USER.200)
  */
 INT16 WINAPI OpenComm16(LPCSTR device,UINT16 cbInQueue,UINT16 cbOutQueue)
 {
@@ -604,7 +604,7 @@ INT16 WINAPI OpenComm16(LPCSTR device,UINT16 cbInQueue,UINT16 cbOutQueue)
 }
 
 /*****************************************************************************
- *	CloseComm16		(USER.207)
+ *	CloseComm		(USER.207)
  */
 INT16 WINAPI CloseComm16(INT16 cid)
 {
@@ -641,7 +641,7 @@ INT16 WINAPI CloseComm16(INT16 cid)
 }
 
 /*****************************************************************************
- *	SetCommBreak16		(USER.210)
+ *	SetCommBreak		(USER.210)
  */
 INT16 WINAPI SetCommBreak16(INT16 cid)
 {
@@ -659,7 +659,7 @@ INT16 WINAPI SetCommBreak16(INT16 cid)
 }
 
 /*****************************************************************************
- *	ClearCommBreak16	(USER.211)
+ *	ClearCommBreak	(USER.211)
  */
 INT16 WINAPI ClearCommBreak16(INT16 cid)
 {
@@ -676,7 +676,7 @@ INT16 WINAPI ClearCommBreak16(INT16 cid)
 }
 
 /*****************************************************************************
- *	EscapeCommFunction16	(USER.214)
+ *	EscapeCommFunction	(USER.214)
  */
 LONG WINAPI EscapeCommFunction16(UINT16 cid,UINT16 nFunction)
 {
@@ -779,7 +779,7 @@ LONG WINAPI EscapeCommFunction16(UINT16 cid,UINT16 nFunction)
 }
 
 /*****************************************************************************
- *	FlushComm16	(USER.215)
+ *	FlushComm	(USER.215)
  */
 INT16 WINAPI FlushComm16(INT16 cid,INT16 fnQueue)
 {
@@ -815,7 +815,7 @@ INT16 WINAPI FlushComm16(INT16 cid,INT16 fnQueue)
 }  
 
 /********************************************************************
- *	GetCommError16	(USER.203)
+ *	GetCommError	(USER.203)
  */
 INT16 WINAPI GetCommError16(INT16 cid,LPCOMSTAT16 lpStat)
 {
@@ -857,7 +857,7 @@ INT16 WINAPI GetCommError16(INT16 cid,LPCOMSTAT16 lpStat)
 }
 
 /*****************************************************************************
- *	SetCommEventMask16	(USER.208)
+ *	SetCommEventMask	(USER.208)
  */
 SEGPTR WINAPI SetCommEventMask16(INT16 cid,UINT16 fuEvtMask)
 {
@@ -889,7 +889,7 @@ SEGPTR WINAPI SetCommEventMask16(INT16 cid,UINT16 fuEvtMask)
 }
 
 /*****************************************************************************
- *	GetCommEventMask16	(USER.209)
+ *	GetCommEventMask	(USER.209)
  */
 UINT16 WINAPI GetCommEventMask16(INT16 cid,UINT16 fnEvtClear)
 {
@@ -913,7 +913,7 @@ UINT16 WINAPI GetCommEventMask16(INT16 cid,UINT16 fnEvtClear)
 }
 
 /*****************************************************************************
- *	SetCommState16	(USER.201)
+ *	SetCommState	(USER.201)
  */
 INT16 WINAPI SetCommState16(LPDCB16 lpdcb)
 {
@@ -1170,7 +1170,7 @@ INT16 WINAPI SetCommState16(LPDCB16 lpdcb)
 }
 
 /*****************************************************************************
- *	GetCommState16	(USER.202)
+ *	GetCommState	(USER.202)
  */
 INT16 WINAPI GetCommState16(INT16 cid, LPDCB16 lpdcb)
 {
@@ -1328,7 +1328,7 @@ INT16 WINAPI GetCommState16(INT16 cid, LPDCB16 lpdcb)
 }
 
 /*****************************************************************************
- *	TransmitCommChar16	(USER.206)
+ *	TransmitCommChar	(USER.206)
  */
 INT16 WINAPI TransmitCommChar16(INT16 cid,CHAR chTransmit)
 {
@@ -1370,7 +1370,7 @@ INT16 WINAPI TransmitCommChar16(INT16 cid,CHAR chTransmit)
 }
 
 /*****************************************************************************
- *	UngetCommChar16	(USER.212)
+ *	UngetCommChar	(USER.212)
  */
 INT16 WINAPI UngetCommChar16(INT16 cid,CHAR chUnget)
 {
@@ -1401,7 +1401,7 @@ INT16 WINAPI UngetCommChar16(INT16 cid,CHAR chUnget)
 }
 
 /*****************************************************************************
- *	ReadComm16	(USER.204)
+ *	ReadComm	(USER.204)
  */
 INT16 WINAPI ReadComm16(INT16 cid,LPSTR lpvBuf,INT16 cbRead)
 {
@@ -1451,7 +1451,7 @@ INT16 WINAPI ReadComm16(INT16 cid,LPSTR lpvBuf,INT16 cbRead)
 }
 
 /*****************************************************************************
- *	WriteComm16	(USER.205)
+ *	WriteComm	(USER.205)
  */
 INT16 WINAPI WriteComm16(INT16 cid, LPSTR lpvBuf, INT16 cbWrite)
 {

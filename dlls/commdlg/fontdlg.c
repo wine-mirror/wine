@@ -118,7 +118,7 @@ _dump_cf_flags(DWORD cflags) {
 
 
 /***********************************************************************
- *                        ChooseFont16   (COMMDLG.15)     
+ *                        ChooseFont   (COMMDLG.15)     
  */
 BOOL16 WINAPI ChooseFont16(LPCHOOSEFONT16 lpChFont)
 {
@@ -517,7 +517,7 @@ static INT WINAPI FontFamilyEnumProc(const LOGFONTA *lpLogFont,
 }
 
 /***********************************************************************
- *                FontFamilyEnumProc16                     (COMMDLG.19)
+ *                FontFamilyEnumProc                     (COMMDLG.19)
  */
 INT16 WINAPI FontFamilyEnumProc16( SEGPTR logfont, SEGPTR metrics,
                                    UINT16 nFontType, LPARAM lParam )
@@ -648,7 +648,7 @@ static INT AddFontStyle(const LOGFONTA *lplf, UINT nFontType,
 }    
 
 /***********************************************************************
- *                 FontStyleEnumProc16                     (COMMDLG.18)
+ *                 FontStyleEnumProc                     (COMMDLG.18)
  */
 INT16 WINAPI FontStyleEnumProc16( SEGPTR logfont, SEGPTR metrics,
                                   UINT16 nFontType, LPARAM lParam )
@@ -1099,7 +1099,7 @@ static LRESULT CFn_WMDestroy(HWND hwnd, WPARAM wParam, LPARAM lParam)
 
 
 /***********************************************************************
- *           FormatCharDlgProc16   (COMMDLG.16)
+ *           FormatCharDlgProc   (COMMDLG.16)
              FIXME: 1. some strings are "hardcoded", but it's better load from sysres
                     2. some CF_.. flags are not supported
                     3. some TType extensions

@@ -174,7 +174,7 @@ static inline ATOMENTRY *ATOM_MakePtr( HANDLE16 handle /* [in] Handle */ )
 
 
 /***********************************************************************
- *           InitAtomTable16   (KERNEL.68)
+ *           InitAtomTable   (KERNEL.68)
  */
 WORD WINAPI InitAtomTable16( WORD entries )
 {
@@ -220,7 +220,7 @@ HANDLE16 WINAPI GetAtomHandle16( ATOM atom )
 
 
 /***********************************************************************
- *           AddAtom16   (KERNEL.70)
+ *           AddAtom   (KERNEL.70)
  *
  * Windows DWORD aligns the atom entry size.
  * The remaining unused string space created by the alignment
@@ -286,7 +286,7 @@ ATOM WINAPI AddAtom16( LPCSTR str )
 
 
 /***********************************************************************
- *           DeleteAtom16   (KERNEL.71)
+ *           DeleteAtom   (KERNEL.71)
  */
 ATOM WINAPI DeleteAtom16( ATOM atom )
 {
@@ -325,7 +325,7 @@ ATOM WINAPI DeleteAtom16( ATOM atom )
 
 
 /***********************************************************************
- *           FindAtom16   (KERNEL.69)
+ *           FindAtom   (KERNEL.69)
  */
 ATOM WINAPI FindAtom16( LPCSTR str )
 {
@@ -360,7 +360,7 @@ ATOM WINAPI FindAtom16( LPCSTR str )
 
 
 /***********************************************************************
- *           GetAtomName16   (KERNEL.72)
+ *           GetAtomName   (KERNEL.72)
  */
 UINT16 WINAPI GetAtomName16( ATOM atom, LPSTR buffer, INT16 count )
 {

@@ -58,7 +58,7 @@ DEFAULT_DEBUG_CHANNEL(ole);
 DECLARE_DEBUG_CHANNEL(typelib);
 
 /****************************************************************************
- *		QueryPathOfRegTypeLib16	[TYPELIB.14]
+ *		QueryPathOfRegTypeLib	[TYPELIB.14]
  *
  * the path is "Classes\Typelib\<guid>\<major>.<minor>\<lcid>\win16\"
  * RETURNS

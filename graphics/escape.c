@@ -14,7 +14,7 @@
 DEFAULT_DEBUG_CHANNEL(driver);
 
 /***********************************************************************
- *            Escape16  [GDI.38]
+ *            Escape  [GDI.38]
  */
 INT16 WINAPI Escape16( HDC16 hdc, INT16 nEscape, INT16 cbInput,
                        SEGPTR lpszInData, SEGPTR lpvOutData )

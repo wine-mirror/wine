@@ -19,7 +19,7 @@ extern WORD CALLBACK THUNK_CallTo16_word_wwl  (FARPROC16,WORD,WORD,LONG);
 
 
 /***********************************************************************
- *           THUNK_EnumObjects16   (GDI.71)
+ *           EnumObjects   (GDI.71)
  */
 INT16 WINAPI THUNK_EnumObjects16( HDC16 hdc, INT16 nObjType,
                                   GOBJENUMPROC16 func, LPARAM lParam )
@@ -30,7 +30,7 @@ INT16 WINAPI THUNK_EnumObjects16( HDC16 hdc, INT16 nObjType,
 
 
 /*************************************************************************
- *           THUNK_EnumFonts16   (GDI.70)
+ *           EnumFonts   (GDI.70)
  */
 INT16 WINAPI THUNK_EnumFonts16( HDC16 hdc, LPCSTR lpFaceName,
                                 FONTENUMPROC16 func, LPARAM lParam )
@@ -40,7 +40,7 @@ INT16 WINAPI THUNK_EnumFonts16( HDC16 hdc, LPCSTR lpFaceName,
 }
 
 /******************************************************************
- *           THUNK_EnumMetaFile16   (GDI.175)
+ *           EnumMetaFile   (GDI.175)
  */
 BOOL16 WINAPI THUNK_EnumMetaFile16( HDC16 hdc, HMETAFILE16 hmf,
                                     MFENUMPROC16 func, LPARAM lParam )
@@ -51,7 +51,7 @@ BOOL16 WINAPI THUNK_EnumMetaFile16( HDC16 hdc, HMETAFILE16 hmf,
 
 
 /*************************************************************************
- *           THUNK_EnumFontFamilies16   (GDI.330)
+ *           EnumFontFamilies   (GDI.330)
  */
 INT16 WINAPI THUNK_EnumFontFamilies16( HDC16 hdc, LPCSTR lpszFamily,
                                        FONTENUMPROC16 func, LPARAM lParam )
@@ -62,7 +62,7 @@ INT16 WINAPI THUNK_EnumFontFamilies16( HDC16 hdc, LPCSTR lpszFamily,
 
 
 /*************************************************************************
- *           THUNK_EnumFontFamiliesEx16   (GDI.613)
+ *           EnumFontFamiliesEx   (GDI.613)
  */
 INT16 WINAPI THUNK_EnumFontFamiliesEx16( HDC16 hdc, LPLOGFONT16 lpLF,
                                          FONTENUMPROCEX16 func, LPARAM lParam,
@@ -75,7 +75,7 @@ INT16 WINAPI THUNK_EnumFontFamiliesEx16( HDC16 hdc, LPLOGFONT16 lpLF,
 
 
 /**********************************************************************
- *           LineDDA16   (GDI.100)
+ *           LineDDA   (GDI.100)
  */
 void WINAPI LineDDA16( INT16 nXStart, INT16 nYStart, INT16 nXEnd,
                        INT16 nYEnd, LINEDDAPROC16 func, LPARAM lParam )

@@ -49,7 +49,7 @@ static void* BSTR_GetAddr(BSTR16 in)
 }
 
 /******************************************************************************
- *		SysAllocString16	[OLE2DISP.2]
+ *		SysAllocString	[OLE2DISP.2]
  */
 BSTR16 WINAPI SysAllocString16(LPCOLESTR16 in)
 {
@@ -75,7 +75,7 @@ BSTR WINAPI SysAllocString(LPCOLESTR in)
 }
 
 /******************************************************************************
- *		SysReAllocString16	[OLE2DISP.3]
+ *		SysReallocString	[OLE2DISP.3]
  */
 INT16 WINAPI SysReAllocString16(LPBSTR16 old,LPCOLESTR16 in)
 {
@@ -111,7 +111,7 @@ INT WINAPI SysReAllocString(LPBSTR old,LPCOLESTR in)
 }
 
 /******************************************************************************
- *		SysAllocStringLen16	[OLE2DISP.4]
+ *		SysAllocStringLen	[OLE2DISP.4]
  */
 BSTR16 WINAPI SysAllocStringLen16(const char *in, int len)
 {
@@ -201,7 +201,7 @@ BSTR WINAPI SysAllocStringLen(const OLECHAR *in, unsigned int len)
 }
 
 /******************************************************************************
- *		SysReAllocStringLen16	[OLE2DISP.5]
+ *		SysReAllocStringLen	[OLE2DISP.5]
  */
 int WINAPI SysReAllocStringLen16(BSTR16 *old,const char *in,int len)
 {
@@ -238,7 +238,7 @@ int WINAPI SysReAllocStringLen(BSTR* old, const OLECHAR* in, unsigned int len)
 }
 
 /******************************************************************************
- *		SysFreeString16	[OLE2DISP.6]
+ *		SysFreeString	[OLE2DISP.6]
  */
 void WINAPI SysFreeString16(BSTR16 in)
 {
@@ -271,7 +271,7 @@ void WINAPI SysFreeString(BSTR in)
 }
 
 /******************************************************************************
- *		SysStringLen16	[OLE2DISP.7]
+ *		SysStringLen	[OLE2DISP.7]
  */
 int WINAPI SysStringLen16(BSTR16 str)
 {
@@ -327,7 +327,7 @@ int WINAPI SysStringByteLen(BSTR str)
 }
 
 /******************************************************************************
- * CreateDispTypeInfo16 [OLE2DISP.31]
+ * CreateDispTypeInfo [OLE2DISP.31]
  */
 HRESULT WINAPI CreateDispTypeInfo16(
 	INTERFACEDATA *pidata,
@@ -351,7 +351,7 @@ HRESULT WINAPI CreateDispTypeInfo(
 }
 
 /******************************************************************************
- * CreateStdDispatch16 [OLE2DISP.32]
+ * CreateStdDispatch [OLE2DISP.32]
  */
 HRESULT WINAPI CreateStdDispatch16(
         IUnknown* punkOuter,

@@ -120,7 +120,7 @@ VOID WINAPI _LeaveSysLevel(SYSLEVEL *lock)
 }
 
 /************************************************************************
- *		_KERNEL32_86 (KERNEL32.86)
+ *		@ (KERNEL32.86)
  */
 VOID WINAPI _KERNEL32_86(SYSLEVEL *lock)
 {

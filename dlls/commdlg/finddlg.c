@@ -148,7 +148,7 @@ void FINDDLG_FreeResources(LFRPRIVATE lfr)
 }
 
 /***********************************************************************
- *           FindText16   (COMMDLG.11)
+ *           FindText   (COMMDLG.11)
  */
 HWND16 WINAPI FindText16( SEGPTR find )
 {
@@ -174,7 +174,7 @@ HWND16 WINAPI FindText16( SEGPTR find )
 
 
 /***********************************************************************
- *           ReplaceText16   (COMMDLG.12)
+ *           ReplaceText   (COMMDLG.12)
  */
 HWND16 WINAPI ReplaceText16( SEGPTR find )
 {
@@ -295,7 +295,7 @@ static LRESULT FINDDLG_WMCommand(HWND hWnd, WPARAM wParam,
 
 
 /***********************************************************************
- *           FindTextDlgProc16   (COMMDLG.13)
+ *           FindTextDlgProc   (COMMDLG.13)
  */
 LRESULT WINAPI FindTextDlgProc16(HWND16 hWnd, UINT16 wMsg, WPARAM16 wParam,
                                  LPARAM lParam)
@@ -451,7 +451,7 @@ static LRESULT REPLACEDLG_WMCommand(HWND hWnd, WPARAM16 wParam,
 
 
 /***********************************************************************
- *           ReplaceTextDlgProc16   (COMMDLG.14)
+ *           ReplaceTextDlgProc   (COMMDLG.14)
  */
 LRESULT WINAPI ReplaceTextDlgProc16(HWND16 hWnd, UINT16 wMsg, WPARAM16 wParam,
                                     LPARAM lParam)

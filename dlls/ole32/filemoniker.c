@@ -1301,7 +1301,7 @@ HRESULT WINAPI FileMonikerROTDataImpl_GetComparaisonData(IROTData* iface,
 }
 
 /******************************************************************************
- *        CreateFileMoniker16 (OLE2.28)
+ *        CreateFileMoniker (OLE2.28)
  ******************************************************************************/
 HRESULT WINAPI CreateFileMoniker16(LPCOLESTR16 lpszPathName,LPMONIKER* ppmk)
 {

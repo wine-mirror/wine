@@ -13,7 +13,7 @@ DEFAULT_DEBUG_CHANNEL(ver);
 
 
 /*************************************************************************
- * GetFileVersionInfoSize16                  [VER.6]
+ * GetFileVersionInfoSize                  [VER.6]
  */
 DWORD WINAPI GetFileVersionInfoSize16( LPCSTR lpszFileName, LPDWORD lpdwHandle )
 {
@@ -22,7 +22,7 @@ DWORD WINAPI GetFileVersionInfoSize16( LPCSTR lpszFileName, LPDWORD lpdwHandle )
 }
 
 /*************************************************************************
- * GetFileVersionInfo16                      [VER.7]
+ * GetFileVersionInfo                      [VER.7]
  */
 DWORD WINAPI GetFileVersionInfo16( LPCSTR lpszFileName, DWORD handle,
                                    DWORD cbBuf, LPVOID lpvData )
@@ -34,7 +34,7 @@ DWORD WINAPI GetFileVersionInfo16( LPCSTR lpszFileName, DWORD handle,
 }
 
 /*************************************************************************
- * VerFindFile16                             [VER.8]
+ * VerFindFile                             [VER.8]
  */
 DWORD WINAPI VerFindFile16( UINT16 flags, LPCSTR lpszFilename, 
                             LPCSTR lpszWinDir, LPCSTR lpszAppDir,
@@ -51,7 +51,7 @@ DWORD WINAPI VerFindFile16( UINT16 flags, LPCSTR lpszFilename,
 }
 
 /*************************************************************************
- * VerInstallFile16                          [VER.9]
+ * VerInstallFile                          [VER.9]
  */
 DWORD WINAPI VerInstallFile16( UINT16 flags, 
                                LPCSTR lpszSrcFilename, LPCSTR lpszDestFilename, 
@@ -68,7 +68,7 @@ DWORD WINAPI VerInstallFile16( UINT16 flags,
 }
 
 /*************************************************************************
- * VerLanguageName16                        [VER.10]
+ * VerLanguageName                        [VER.10]
  */
 DWORD WINAPI VerLanguageName16( UINT16 uLang, LPSTR lpszLang, UINT16 cbLang )
 {
@@ -76,7 +76,7 @@ DWORD WINAPI VerLanguageName16( UINT16 uLang, LPSTR lpszLang, UINT16 cbLang )
 }
 
 /*************************************************************************
- * VerQueryValue16                          [VER.11]
+ * VerQueryValue                          [VER.11]
  */
 DWORD WINAPI VerQueryValue16( SEGPTR spvBlock, LPCSTR lpszSubBlock, 
                               SEGPTR *lpspBuffer, UINT16 *lpcb )

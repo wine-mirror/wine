@@ -132,7 +132,7 @@ BOOL WINAPI WINMM_LibMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID fImpLoad)
 }
 
 /**************************************************************************
- * 			MMSYSTEM_LibMain			[EntryPoint]
+ * 			DllEntryPoint			[EntryPoint]
  *
  * MMSYSTEM DLL entry point
  *
@@ -472,6 +472,7 @@ static DWORD WINAPI PlaySound_Thread(LPVOID arg)
 }
 
 /**************************************************************************
+ * 				PlaySound 		[MMSYSTEM.3]
  * 				PlaySoundA		[WINMM.@]
  */
 BOOL WINAPI PlaySoundA(LPCSTR pszSound, HMODULE hmod, DWORD fdwSound)
@@ -562,7 +563,7 @@ BOOL WINAPI PlaySoundW(LPCWSTR pszSound, HMODULE hmod, DWORD fdwSound)
 }
 
 /**************************************************************************
- * 				PlaySound16		[MMSYSTEM.3]
+ * 				PlaySound		[MMSYSTEM.3]
  */
 BOOL16 WINAPI PlaySound16(LPCSTR pszSound, HMODULE16 hmod, DWORD fdwSound)
 {
@@ -595,7 +596,7 @@ BOOL WINAPI sndPlaySoundW(LPCWSTR lpszSoundName, UINT uFlags)
 }
 
 /**************************************************************************
- * 				sndPlaySound16		[MMSYSTEM.2]
+ * 				sndPlaySound		[MMSYSTEM.2]
  */
 BOOL16 WINAPI sndPlaySound16(LPCSTR lpszSoundName, UINT16 uFlags)
 {
@@ -4009,7 +4010,7 @@ UINT WINAPI waveOutBreakLoop(HWAVEOUT hWaveOut)
 }
 
 /**************************************************************************
- * 				waveOutBreakLoop16	[MMSYSTEM.419]
+ * 				waveOutBreakLoop	[MMSYSTEM.419]
  */
 UINT16 WINAPI waveOutBreakLoop16(HWAVEOUT16 hWaveOut16)
 {
@@ -4037,7 +4038,7 @@ UINT WINAPI waveOutPause(HWAVEOUT hWaveOut)
 }
 
 /**************************************************************************
- * 				waveOutPause16		[MMSYSTEM.409]
+ * 				waveOutPause		[MMSYSTEM.409]
  */
 UINT16 WINAPI waveOutPause16(HWAVEOUT16 hWaveOut16)
 {
@@ -4065,7 +4066,7 @@ UINT WINAPI waveOutReset(HWAVEOUT hWaveOut)
 }
 
 /**************************************************************************
- * 				waveOutReset16		[MMSYSTEM.411]
+ * 				waveOutReset		[MMSYSTEM.411]
  */
 UINT16 WINAPI waveOutReset16(HWAVEOUT16 hWaveOut16)
 {
@@ -4093,7 +4094,7 @@ UINT WINAPI waveOutRestart(HWAVEOUT hWaveOut)
 }
 
 /**************************************************************************
- * 				waveOutRestart16	[MMSYSTEM.410]
+ * 				waveOutRestart	[MMSYSTEM.410]
  */
 UINT16 WINAPI waveOutRestart16(HWAVEOUT16 hWaveOut16)
 {
@@ -4964,7 +4965,7 @@ HTASK16 WINAPI mmGetCurrentTask16(void)
 }
 
 /**************************************************************************
- * 				mmTaskYield16		[MMSYSTEM.905]
+ * 				mmTaskYield		[MMSYSTEM.905]
  */
 void	WINAPI	mmTaskYield16(void)
 {
@@ -5230,7 +5231,7 @@ extern LONG CALLBACK MMSYSTEM_CallTo16_long_l    (FARPROC16,LONG);
 /* ### stop build ### */
 
 /**************************************************************************
- * 				WINE_mmThreadEntryPoint		[internal]
+ * 				__wine_mmThreadEntryPoint		[internal]
  */
 void WINAPI WINE_mmThreadEntryPoint(DWORD _pmt)
 {

@@ -525,7 +525,8 @@ static void FREE_PRINTER_INFO_2W(HANDLE heap, LPPRINTER_INFO_2W piW)
 }
 
 /******************************************************************
- *              DeviceCapabilitiesA    [WINSPOOL.150 & WINSPOOL.151]
+ *              DeviceCapabilities     [WINSPOOL.@]
+ *              DeviceCapabilitiesA    [WINSPOOL.@]
  *
  */
 INT WINAPI DeviceCapabilitiesA(LPCSTR pDevice,LPCSTR pPort, WORD cap,

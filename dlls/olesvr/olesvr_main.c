@@ -18,7 +18,7 @@ DEFAULT_DEBUG_CHANNEL(ole);
 static LONG OLE_current_handle;
 
 /******************************************************************************
- *		OleRegisterServer16	[OLESVR.2]
+ *		OleRegisterServer	[OLESVR.2]
  */
 OLESTATUS WINAPI OleRegisterServer16( LPCSTR name, LPOLESERVER serverStruct,
                                       LHSERVER *hRet, HINSTANCE16 hServer,
@@ -31,7 +31,7 @@ OLESTATUS WINAPI OleRegisterServer16( LPCSTR name, LPOLESERVER serverStruct,
 }
 
 /******************************************************************************
- *		OleBlockServer16	[OLESVR.4]
+ *		OleBlockServer	[OLESVR.4]
  */
 OLESTATUS WINAPI OleBlockServer16(LHSERVER hServer)
 {
@@ -49,7 +49,7 @@ OLESTATUS WINAPI OleBlockServer(LHSERVER hServer)
 }
 
 /******************************************************************************
- *		OleUnblockServer16	[OLESVR.5]
+ *		OleUnblockServer	[OLESVR.5]
  */
 OLESTATUS WINAPI OleUnblockServer16(LHSERVER hServer, BOOL16 *block)
 {
@@ -71,7 +71,7 @@ OLESTATUS WINAPI OleUnblockServer(LHSERVER hServer, BOOL *block)
 }
 
 /***********************************************************************
- *		OleRegisterServerDoc16	[OLESVR.6]
+ *		OleRegisterServerDoc	[OLESVR.6]
  */
 OLESTATUS WINAPI OleRegisterServerDoc16( LHSERVER hServer, LPCSTR docname,
                                          LPOLESERVERDOC document,
@@ -83,7 +83,7 @@ OLESTATUS WINAPI OleRegisterServerDoc16( LHSERVER hServer, LPCSTR docname,
 }
 
 /******************************************************************************
- *		OleRevokeServerDoc16	[OLESVR.7]
+ *		OleRevokeServerDoc	[OLESVR.7]
  */
 OLESTATUS WINAPI OleRevokeServerDoc16(LHSERVERDOC hServerDoc)
 {

@@ -24,7 +24,7 @@ DEFAULT_DEBUG_CHANNEL(ntdll);
 
 
 /*********************************************************************
- *           NTDLL__wcsicmp    (NTDLL)
+ *           _wcsicmp    (NTDLL.@)
  */
 INT __cdecl NTDLL__wcsicmp( LPCWSTR str1, LPCWSTR str2 )
 {
@@ -33,7 +33,7 @@ INT __cdecl NTDLL__wcsicmp( LPCWSTR str1, LPCWSTR str2 )
 
 
 /*********************************************************************
- *           NTDLL__wcslwr    (NTDLL)
+ *           _wcslwr    (NTDLL.@)
  */
 LPWSTR __cdecl NTDLL__wcslwr( LPWSTR str )
 {
@@ -42,7 +42,7 @@ LPWSTR __cdecl NTDLL__wcslwr( LPWSTR str )
 
 
 /*********************************************************************
- *           NTDLL__wcsnicmp    (NTDLL)
+ *           _wcsnicmp    (NTDLL.@)
  */
 INT __cdecl NTDLL__wcsnicmp( LPCWSTR str1, LPCWSTR str2, INT n )
 {
@@ -51,7 +51,7 @@ INT __cdecl NTDLL__wcsnicmp( LPCWSTR str1, LPCWSTR str2, INT n )
 
 
 /*********************************************************************
- *           NTDLL__wcsupr    (NTDLL)
+ *           _wcsupr    (NTDLL.@)
  */
 LPWSTR __cdecl NTDLL__wcsupr( LPWSTR str )
 {
@@ -60,7 +60,7 @@ LPWSTR __cdecl NTDLL__wcsupr( LPWSTR str )
 
 
 /*********************************************************************
- *           NTDLL_towlower    (NTDLL)
+ *           towlower    (NTDLL.@)
  */
 WCHAR __cdecl NTDLL_towlower( WCHAR ch )
 {
@@ -69,7 +69,7 @@ WCHAR __cdecl NTDLL_towlower( WCHAR ch )
 
 
 /*********************************************************************
- *           NTDLL_towupper    (NTDLL)
+ *           towupper    (NTDLL.@)
  */
 WCHAR __cdecl NTDLL_towupper( WCHAR ch )
 {
@@ -78,7 +78,7 @@ WCHAR __cdecl NTDLL_towupper( WCHAR ch )
 
 
 /***********************************************************************
- *           NTDLL_wcscat    (NTDLL)
+ *           wcscat    (NTDLL.@)
  */
 LPWSTR __cdecl NTDLL_wcscat( LPWSTR dst, LPCWSTR src )
 {
@@ -87,7 +87,7 @@ LPWSTR __cdecl NTDLL_wcscat( LPWSTR dst, LPCWSTR src )
 
 
 /*********************************************************************
- *           NTDLL_wcschr    (NTDLL)
+ *           wcschr    (NTDLL.@)
  */
 LPWSTR __cdecl NTDLL_wcschr( LPCWSTR str, WCHAR ch )
 {
@@ -96,7 +96,7 @@ LPWSTR __cdecl NTDLL_wcschr( LPCWSTR str, WCHAR ch )
 
 
 /*********************************************************************
- *           NTDLL_wcscmp    (NTDLL)
+ *           wcscmp    (NTDLL.@)
  */
 INT __cdecl NTDLL_wcscmp( LPCWSTR str1, LPCWSTR str2 )
 {
@@ -105,7 +105,7 @@ INT __cdecl NTDLL_wcscmp( LPCWSTR str1, LPCWSTR str2 )
 
 
 /***********************************************************************
- *           NTDLL_wcscpy    (NTDLL)
+ *           wcscpy    (NTDLL.@)
  */
 LPWSTR __cdecl NTDLL_wcscpy( LPWSTR dst, LPCWSTR src )
 {
@@ -114,7 +114,7 @@ LPWSTR __cdecl NTDLL_wcscpy( LPWSTR dst, LPCWSTR src )
 
 
 /*********************************************************************
- *           NTDLL_wcscspn    (NTDLL)
+ *           wcscspn    (NTDLL.@)
  */
 INT __cdecl NTDLL_wcscspn( LPCWSTR str, LPCWSTR reject )
 {
@@ -131,7 +131,7 @@ INT __cdecl NTDLL_wcscspn( LPCWSTR str, LPCWSTR reject )
 
 
 /***********************************************************************
- *           NTDLL_wcslen    (NTDLL)
+ *           wcslen    (NTDLL.@)
  */
 INT __cdecl NTDLL_wcslen( LPCWSTR str )
 {
@@ -140,7 +140,7 @@ INT __cdecl NTDLL_wcslen( LPCWSTR str )
 
 
 /*********************************************************************
- *           NTDLL_wcsncat    (NTDLL)
+ *           wcsncat    (NTDLL.@)
  */
 LPWSTR __cdecl NTDLL_wcsncat( LPWSTR s1, LPCWSTR s2, INT n )
 {
@@ -153,7 +153,7 @@ LPWSTR __cdecl NTDLL_wcsncat( LPWSTR s1, LPCWSTR s2, INT n )
 
 
 /*********************************************************************
- *           NTDLL_wcsncmp    (NTDLL)
+ *           wcsncmp    (NTDLL.@)
  */
 INT __cdecl NTDLL_wcsncmp( LPCWSTR str1, LPCWSTR str2, INT n )
 {
@@ -162,7 +162,7 @@ INT __cdecl NTDLL_wcsncmp( LPCWSTR str1, LPCWSTR str2, INT n )
 
 
 /*********************************************************************
- *           NTDLL_wcsncpy    (NTDLL)
+ *           wcsncpy    (NTDLL.@)
  */
 LPWSTR __cdecl NTDLL_wcsncpy( LPWSTR s1, LPCWSTR s2, INT n )
 {
@@ -171,7 +171,7 @@ LPWSTR __cdecl NTDLL_wcsncpy( LPWSTR s1, LPCWSTR s2, INT n )
 
 
 /*********************************************************************
- *           NTDLL_wcspbrk    (NTDLL)
+ *           wcspbrk    (NTDLL.@)
  */
 LPWSTR __cdecl NTDLL_wcspbrk( LPCWSTR str, LPCWSTR accept )
 {
@@ -186,7 +186,7 @@ LPWSTR __cdecl NTDLL_wcspbrk( LPCWSTR str, LPCWSTR accept )
 
 
 /*********************************************************************
- *           NTDLL_wcsrchr    (NTDLL)
+ *           wcsrchr    (NTDLL.@)
  */
 LPWSTR __cdecl NTDLL_wcsrchr( LPWSTR str, WCHAR ch )
 {
@@ -201,7 +201,7 @@ LPWSTR __cdecl NTDLL_wcsrchr( LPWSTR str, WCHAR ch )
 
 
 /*********************************************************************
- *           NTDLL_wcsspn    (NTDLL)
+ *           wcsspn    (NTDLL.@)
  */
 INT __cdecl NTDLL_wcsspn( LPCWSTR str, LPCWSTR accept )
 {
@@ -218,7 +218,7 @@ INT __cdecl NTDLL_wcsspn( LPCWSTR str, LPCWSTR accept )
 
 
 /*********************************************************************
- *           NTDLL_wcsstr    (NTDLL)
+ *           wcsstr    (NTDLL.@)
  */
 LPWSTR __cdecl NTDLL_wcsstr( LPCWSTR str, LPCWSTR sub )
 {
@@ -227,7 +227,7 @@ LPWSTR __cdecl NTDLL_wcsstr( LPCWSTR str, LPCWSTR sub )
 
 
 /*********************************************************************
- *           NTDLL_wcstok    (NTDLL)
+ *           wcstok    (NTDLL.@)
  */
 LPWSTR __cdecl NTDLL_wcstok( LPWSTR str, LPCWSTR delim )
 {
@@ -248,7 +248,7 @@ LPWSTR __cdecl NTDLL_wcstok( LPWSTR str, LPCWSTR delim )
 
 
 /*********************************************************************
- *           NTDLL_wcstombs    (NTDLL)
+ *           wcstombs    (NTDLL.@)
  */
 INT __cdecl NTDLL_wcstombs( LPSTR dst, LPCWSTR src, INT n )
 {
@@ -261,7 +261,7 @@ INT __cdecl NTDLL_wcstombs( LPSTR dst, LPCWSTR src, INT n )
 
 
 /*********************************************************************
- *           NTDLL_mbstowcs    (NTDLL)
+ *           mbstowcs    (NTDLL.@)
  */
 INT __cdecl NTDLL_mbstowcs( LPWSTR dst, LPCSTR src, INT n )
 {
@@ -289,7 +289,7 @@ INT __cdecl NTDLL_wcstol(LPWSTR s,LPWSTR *end,INT base)
 
 
 /*********************************************************************
- *           NTDLL_iswctype    (NTDLL)
+ *           iswctype    (NTDLL.@)
  */
 INT __cdecl NTDLL_iswctype( WCHAR wc, WCHAR wct )
 {
@@ -298,7 +298,7 @@ INT __cdecl NTDLL_iswctype( WCHAR wc, WCHAR wct )
 
 
 /*********************************************************************
- *           NTDLL_iswalpha    (NTDLL)
+ *           iswalpha    (NTDLL.@)
  */
 INT __cdecl NTDLL_iswalpha( WCHAR wc )
 {
@@ -501,7 +501,7 @@ int __cdecl _snwprintf(WCHAR *str, unsigned int len, const WCHAR *format, ...)
 
 
 /***********************************************************************
- *        NTDLL_swprintf (NTDLL)
+ *        swprintf (NTDLL.@)
  */
 int __cdecl NTDLL_swprintf(WCHAR *str, const WCHAR *format, ...)
 {

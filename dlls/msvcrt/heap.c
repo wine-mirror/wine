@@ -26,7 +26,7 @@ static int MSVCRT_new_mode;
 
 
 /*********************************************************************
- *		operator_new (MSVCRT.@)
+ *		??2@YAPAXI@Z (MSVCRT.@)
  */
 void* MSVCRT_operator_new(unsigned long size)
 {
@@ -40,7 +40,7 @@ void* MSVCRT_operator_new(unsigned long size)
 }
 
 /*********************************************************************
- *		operator_delete (MSVCRT.@)
+ *		??3@YAXPAX@Z (MSVCRT.@)
  */
 void MSVCRT_operator_delete(void *mem)
 {

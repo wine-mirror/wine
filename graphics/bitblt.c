@@ -11,7 +11,7 @@ DEFAULT_DEBUG_CHANNEL(bitblt);
 
 
 /***********************************************************************
- *           PatBlt16    (GDI.29)
+ *           PatBlt    (GDI.29)
  */
 BOOL16 WINAPI PatBlt16( HDC16 hdc, INT16 left, INT16 top,
                         INT16 width, INT16 height, DWORD rop)
@@ -42,7 +42,7 @@ BOOL WINAPI PatBlt( HDC hdc, INT left, INT top,
 
 
 /***********************************************************************
- *           BitBlt16    (GDI.34)
+ *           BitBlt    (GDI.34)
  */
 BOOL16 WINAPI BitBlt16( HDC16 hdcDst, INT16 xDst, INT16 yDst, INT16 width,
                         INT16 height, HDC16 hdcSrc, INT16 xSrc, INT16 ySrc,
@@ -80,7 +80,7 @@ BOOL WINAPI BitBlt( HDC hdcDst, INT xDst, INT yDst, INT width,
 
 
 /***********************************************************************
- *           StretchBlt16    (GDI.35)
+ *           StretchBlt    (GDI.35)
  */
 BOOL16 WINAPI StretchBlt16( HDC16 hdcDst, INT16 xDst, INT16 yDst,
                             INT16 widthDst, INT16 heightDst,

@@ -1700,7 +1700,7 @@ typedef struct _LOCAL32HEADER
 #define LOCAL32_MAGIC    ((DWORD)('L' | ('H'<<8) | ('3'<<16) | ('2'<<24)))
 
 /***********************************************************************
- *           Local32Init   (KERNEL.208)
+ *           K208   (KERNEL.208)
  */
 HANDLE WINAPI Local32Init16( WORD segment, DWORD tableSize,
                              DWORD heapSize, DWORD flags )
@@ -1901,7 +1901,7 @@ static VOID Local32_FromHandle( LOCAL32HEADER *header, INT16 type,
 }
 
 /***********************************************************************
- *           Local32Alloc   (KERNEL.209)
+ *           K209   (KERNEL.209)
  */
 DWORD WINAPI Local32Alloc16( HANDLE heap, DWORD size, INT16 type, DWORD flags )
 {
@@ -1979,7 +1979,7 @@ DWORD WINAPI Local32Alloc16( HANDLE heap, DWORD size, INT16 type, DWORD flags )
 }
 
 /***********************************************************************
- *           Local32ReAlloc   (KERNEL.210)
+ *           K210   (KERNEL.210)
  */
 DWORD WINAPI Local32ReAlloc16( HANDLE heap, DWORD addr, INT16 type,
                              DWORD size, DWORD flags )
@@ -2013,7 +2013,7 @@ DWORD WINAPI Local32ReAlloc16( HANDLE heap, DWORD addr, INT16 type,
 }
 
 /***********************************************************************
- *           Local32Free   (KERNEL.211)
+ *           K211   (KERNEL.211)
  */
 BOOL WINAPI Local32Free16( HANDLE heap, DWORD addr, INT16 type )
 {
@@ -2059,7 +2059,7 @@ BOOL WINAPI Local32Free16( HANDLE heap, DWORD addr, INT16 type )
 }
 
 /***********************************************************************
- *           Local32Translate   (KERNEL.213)
+ *           K213   (KERNEL.213)
  */
 DWORD WINAPI Local32Translate16( HANDLE heap, DWORD addr, INT16 type1, INT16 type2 )
 {
@@ -2075,7 +2075,7 @@ DWORD WINAPI Local32Translate16( HANDLE heap, DWORD addr, INT16 type1, INT16 typ
 }
 
 /***********************************************************************
- *           Local32Size   (KERNEL.214)
+ *           K214   (KERNEL.214)
  */
 DWORD WINAPI Local32Size16( HANDLE heap, DWORD addr, INT16 type )
 {
@@ -2090,7 +2090,7 @@ DWORD WINAPI Local32Size16( HANDLE heap, DWORD addr, INT16 type )
 }
 
 /***********************************************************************
- *           Local32ValidHandle   (KERNEL.215)
+ *           K215   (KERNEL.215)
  */
 BOOL WINAPI Local32ValidHandle16( HANDLE heap, WORD addr )
 {
@@ -2103,7 +2103,7 @@ BOOL WINAPI Local32ValidHandle16( HANDLE heap, WORD addr )
 }
 
 /***********************************************************************
- *           Local32GetSegment   (KERNEL.229)
+ *           K229   (KERNEL.229)
  */
 WORD WINAPI Local32GetSegment16( HANDLE heap )
 {

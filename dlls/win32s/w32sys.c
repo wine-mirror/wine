@@ -39,7 +39,7 @@ WORD WINAPI GetWin32sInfo16(
 }
 
 /***********************************************************************
- *            GetW32SysVersion16  (W32SYS.5)
+ *            GetW32SysVersion  (W32SYS.5)
  */
 WORD WINAPI GetW32SysVersion16(void)
 {
@@ -68,7 +68,7 @@ DWORD WINAPI LoadPeResource16(WORD x,SEGPTR y) {
 
 
 /**********************************************************************
- *		IsPeFormat16		(W32SYS.2)
+ *		IsPeFormat		(W32SYS.2)
  * Checks the passed filename if it is a PE format executeable
  * RETURNS
  *  TRUE, if it is.

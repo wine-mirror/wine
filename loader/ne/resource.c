@@ -178,7 +178,7 @@ NE_NAMEINFO *NE_FindResourceFromType( LPBYTE pResTab,
 
 
 /***********************************************************************
- *           NE_DefResourceHandler
+ *           DefResourceHandler (KERNEL.456)
  *
  * This is the default LoadProc() function. 
  */
@@ -403,7 +403,7 @@ HGLOBAL16 WINAPI DirectResAlloc16( HINSTANCE16 hInstance, WORD wType,
 
 
 /**********************************************************************
- *          AccessResource16 (KERNEL.64)
+ *          AccessResource (KERNEL.64)
  */
 INT16 WINAPI AccessResource16( HINSTANCE16 hModule, HRSRC16 hRsrc )
 {

@@ -153,7 +153,8 @@ DWORD WINAPI OleBuildVersion(void)
 }
 
 /***********************************************************************
- *           OleInitialize       (OLE2.2) (OLE32.108)
+ *           OleInitialize       (OLE2.2)
+ *           OleInitialize       (OLE32.108)
  */
 HRESULT WINAPI OleInitialize(LPVOID reserved)
 {
@@ -213,7 +214,8 @@ HRESULT WINAPI OleInitialize(LPVOID reserved)
 }
 
 /******************************************************************************
- *		CoGetCurrentProcess	[COMPOBJ.34] [OLE2.2][OLE32.108]
+ *		CoGetCurrentProcess	[COMPOBJ.34]
+ *		CoGetCurrentProcess	[OLE32.18]
  *
  * NOTES
  *   Is DWORD really the correct return type for this function?
@@ -224,7 +226,8 @@ DWORD WINAPI CoGetCurrentProcess(void)
 }
 
 /******************************************************************************
- *		OleUninitialize	[OLE2.3] [OLE32.131]
+ *		OleUninitialize	[OLE2.3]
+ *		OleUninitialize	[OLE32.131]
  */
 void WINAPI OleUninitialize(void)
 {
@@ -290,7 +293,7 @@ HRESULT WINAPI OleInitializeWOW(DWORD x) {
 }
 
 /***********************************************************************
- *           RegisterDragDrop16 (OLE2.35)
+ *           RegisterDragDrop (OLE2.35)
  */
 HRESULT WINAPI RegisterDragDrop16(
 	HWND16 hwnd,
@@ -344,7 +347,7 @@ HRESULT WINAPI RegisterDragDrop(
 }
 
 /***********************************************************************
- *           RevokeDragDrop16 (OLE2.36)
+ *           RevokeDragDrop (OLE2.36)
  */
 HRESULT WINAPI RevokeDragDrop16(
 	HWND16 hwnd

@@ -758,7 +758,7 @@ INT WINAPI GetDIBits(
 
 /***********************************************************************
  *           CreateDIBitmap    (GDI.442)
- *           CreateDIBitmap16    (DISPLAY.442)
+ *           CreateDIBitmap    (DISPLAY.442)
  */
 HBITMAP16 WINAPI CreateDIBitmap16( HDC16 hdc, const BITMAPINFOHEADER * header,
                             DWORD init, LPCVOID bits, const BITMAPINFO * data,

@@ -340,7 +340,7 @@ DWORD WINAPI SHGetFileInfoW(LPCWSTR path,DWORD dwFileAttributes,
 }
 
 /*************************************************************************
- * SHGetFileInfoAW			[SHELL32.@]
+ * SHGetFileInfo			[SHELL32.@]
  */
 DWORD WINAPI SHGetFileInfoAW(
 	LPCVOID path,

@@ -78,7 +78,7 @@ LRESULT WINAPI SHCoCreateInstance(
 }
 
 /*************************************************************************
- * SHELL32_DllGetClassObject   [SHELL32.128]
+ * DllGetClassObject   [SHELL32.128]
  */
 HRESULT WINAPI SHELL32_DllGetClassObject(REFCLSID rclsid, REFIID iid,LPVOID *ppv)
 {	HRESULT	hres = E_OUTOFMEMORY;
@@ -553,7 +553,8 @@ BOOL WINAPI DragQueryPoint(HDROP hDrop, POINT *p)
 }
 
 /*************************************************************************
- *  DragQueryFileA		[SHELL32.82] [shell32.82]
+ *  DragQueryFile 		[SHELL32.81]
+ *  DragQueryFileA		[SHELL32.82]
  */
 UINT WINAPI DragQueryFileA(
 	HDROP hDrop,

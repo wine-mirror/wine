@@ -70,7 +70,7 @@ DWORD WINAPI ParseFieldW(LPCWSTR src, DWORD nField, LPWSTR dst, DWORD len)
 }
 
 /*************************************************************************
- * ParseFieldAW			[SHELL32.58]
+ * ParseField			[SHELL32.58]
  */
 DWORD WINAPI ParseFieldAW(LPCVOID src, DWORD nField, LPVOID dst, DWORD len) 
 {
@@ -883,7 +883,7 @@ BOOL WINAPI SHWaitForFileToOpen(
 }
 
 /************************************************************************
- *	shell32_654				[SHELL32.654]
+ *	@				[SHELL32.654]
  *
  * NOTES: first parameter seems to be a pointer (same as passed to WriteCabinetState)
  * second one could be a size (0x0c). The size is the same as the structure saved to
@@ -947,7 +947,7 @@ HRESULT WINAPI DoEnvironmentSubstAW(LPVOID x, LPVOID y)
 }
 
 /*************************************************************************
- *      shell32_243                             [SHELL32.243]
+ *      @                             [SHELL32.243]
  * 
  * Win98+ by-ordinal routine.  In Win98 this routine returns zero and
  * does nothing else.  Possibly this does something in NT or SHELL32 5.0?
@@ -960,7 +960,7 @@ BOOL WINAPI shell32_243(DWORD a, DWORD b)
 }
 
 /*************************************************************************
- *      SHELL32_714	[SHELL32]
+ *      @	[SHELL32.714]
  */
 DWORD WINAPI SHELL32_714(LPVOID x)
 {

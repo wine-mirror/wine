@@ -330,7 +330,7 @@ static HBITMAP16 OBM_LoadBitmap( WORD id )
 
 
 /***********************************************************************
- *           X11DRV_LoadOEMResource (X11DRV.@)
+ *           LoadOEMResource (X11DRV.@)
  *
  */
 HANDLE X11DRV_LoadOEMResource(WORD resid, WORD type)

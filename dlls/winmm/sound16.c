@@ -12,7 +12,7 @@
 DEFAULT_DEBUG_CHANNEL(sound);
 
 /***********************************************************************
- *		OpenSound16 (SOUND.1)
+ *		OpenSound (SOUND.1)
  */
 INT16 WINAPI OpenSound16(void)
 {
@@ -21,7 +21,7 @@ INT16 WINAPI OpenSound16(void)
 }
 
 /***********************************************************************
- *		CloseSound16 (SOUND.2)
+ *		CloseSound (SOUND.2)
  */
 void WINAPI CloseSound16(void)
 {
@@ -29,7 +29,7 @@ void WINAPI CloseSound16(void)
 }
 
 /***********************************************************************
- *		SetVoiceQueueSize16 (SOUND.3)
+ *		SetVoiceQueueSize (SOUND.3)
  */
 INT16 WINAPI SetVoiceQueueSize16(INT16 nVoice, INT16 nBytes)
 {
@@ -38,7 +38,7 @@ INT16 WINAPI SetVoiceQueueSize16(INT16 nVoice, INT16 nBytes)
 }
 
 /***********************************************************************
- *		SetVoiceNote16 (SOUND.4)
+ *		SetVoiceNote (SOUND.4)
  */
 INT16 WINAPI SetVoiceNote16(INT16 nVoice, INT16 nValue, INT16 nLength,
                             INT16 nCdots)
@@ -48,7 +48,7 @@ INT16 WINAPI SetVoiceNote16(INT16 nVoice, INT16 nValue, INT16 nLength,
 }
 
 /***********************************************************************
- *		SetVoiceAccent16 (SOUND.5)
+ *		SetVoiceAccent (SOUND.5)
  */
 INT16 WINAPI SetVoiceAccent16(INT16 nVoice, INT16 nTempo, INT16 nVolume,
                               INT16 nMode, INT16 nPitch)
@@ -59,7 +59,7 @@ INT16 WINAPI SetVoiceAccent16(INT16 nVoice, INT16 nTempo, INT16 nVolume,
 }
 
 /***********************************************************************
- *		SetVoiceEnvelope16 (SOUND.6)
+ *		SetVoiceEnvelope (SOUND.6)
  */
 INT16 WINAPI SetVoiceEnvelope16(INT16 nVoice, INT16 nShape, INT16 nRepeat)
 {
@@ -68,7 +68,7 @@ INT16 WINAPI SetVoiceEnvelope16(INT16 nVoice, INT16 nShape, INT16 nRepeat)
 }
 
 /***********************************************************************
- *		SetSoundNoise16 (SOUND.7)
+ *		SetSoundNoise (SOUND.7)
  */
 INT16 WINAPI SetSoundNoise16(INT16 nSource, INT16 nDuration)
 {
@@ -77,7 +77,7 @@ INT16 WINAPI SetSoundNoise16(INT16 nSource, INT16 nDuration)
 }
 
 /***********************************************************************
- *		SetVoiceSound16 (SOUND.8)
+ *		SetVoiceSound (SOUND.8)
  */
 INT16 WINAPI SetVoiceSound16(INT16 nVoice, DWORD lFrequency, INT16 nDuration)
 {
@@ -86,7 +86,7 @@ INT16 WINAPI SetVoiceSound16(INT16 nVoice, DWORD lFrequency, INT16 nDuration)
 }
 
 /***********************************************************************
- *		StartSound16 (SOUND.9)
+ *		StartSound (SOUND.9)
  */
 INT16 WINAPI StartSound16(void)
 {
@@ -94,7 +94,7 @@ INT16 WINAPI StartSound16(void)
 }
 
 /***********************************************************************
- *		StopSound16 (SOUND.10)
+ *		StopSound (SOUND.10)
  */
 INT16 WINAPI StopSound16(void)
 {
@@ -102,7 +102,7 @@ INT16 WINAPI StopSound16(void)
 }
 
 /***********************************************************************
- *		WaitSoundState16 (SOUND.11)
+ *		WaitSoundState (SOUND.11)
  */
 INT16 WINAPI WaitSoundState16(INT16 x)
 {
@@ -111,7 +111,7 @@ INT16 WINAPI WaitSoundState16(INT16 x)
 }
 
 /***********************************************************************
- *		SyncAllVoices16 (SOUND.12)
+ *		SyncAllVoices (SOUND.12)
  */
 INT16 WINAPI SyncAllVoices16(void)
 {
@@ -120,7 +120,7 @@ INT16 WINAPI SyncAllVoices16(void)
 }
 
 /***********************************************************************
- *		CountVoiceNotes16 (SOUND.13)
+ *		CountVoiceNotes (SOUND.13)
  */
 INT16 WINAPI CountVoiceNotes16(INT16 x)
 {
@@ -129,7 +129,7 @@ INT16 WINAPI CountVoiceNotes16(INT16 x)
 }
 
 /***********************************************************************
- *		GetThresholdEvent16 (SOUND.14)
+ *		GetThresholdEvent (SOUND.14)
  */
 LPINT16 WINAPI GetThresholdEvent16(void)
 {
@@ -138,7 +138,7 @@ LPINT16 WINAPI GetThresholdEvent16(void)
 }
 
 /***********************************************************************
- *		GetThresholdStatus16 (SOUND.15)
+ *		GetThresholdStatus (SOUND.15)
  */
 INT16 WINAPI GetThresholdStatus16(void)
 {
@@ -147,7 +147,7 @@ INT16 WINAPI GetThresholdStatus16(void)
 }
 
 /***********************************************************************
- *		SetVoiceThreshold16 (SOUND.16)
+ *		SetVoiceThreshold (SOUND.16)
  */
 INT16 WINAPI SetVoiceThreshold16(INT16 a, INT16 b)
 {
@@ -156,7 +156,7 @@ INT16 WINAPI SetVoiceThreshold16(INT16 a, INT16 b)
 }
 
 /***********************************************************************
- *		DoBeep16 (SOUND.17)
+ *		DoBeep (SOUND.17)
  */
 void WINAPI DoBeep16(void)
 {

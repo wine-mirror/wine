@@ -269,7 +269,7 @@ void WINAPI SHChangeNotifyA (LONG wEventId, UINT  uFlags, LPCVOID dwItem1, LPCVO
 }
 
 /*************************************************************************
- * SHChangeNotifyAW				[SHELL32.@]
+ * SHChangeNotify				[SHELL32.@]
  */
 void WINAPI SHChangeNotifyAW (LONG wEventId, UINT  uFlags, LPCVOID dwItem1, LPCVOID dwItem2)
 {

@@ -251,7 +251,7 @@ UINT WINAPI GetTempDrive( BYTE ignored )
 
 
 /***********************************************************************
- *           GetWindowsDirectory16   (KERNEL.134)
+ *           GetWindowsDirectory   (KERNEL.134)
  */
 UINT16 WINAPI GetWindowsDirectory16( LPSTR path, UINT16 count )
 {
@@ -303,7 +303,7 @@ UINT WINAPI GetSystemWindowsDirectoryW( LPWSTR path, UINT count )
 
 
 /***********************************************************************
- *           GetSystemDirectory16   (KERNEL.135)
+ *           GetSystemDirectory   (KERNEL.135)
  */
 UINT16 WINAPI GetSystemDirectory16( LPSTR path, UINT16 count )
 {
@@ -337,7 +337,7 @@ UINT WINAPI GetSystemDirectoryW( LPWSTR path, UINT count )
 
 
 /***********************************************************************
- *           CreateDirectory16   (KERNEL.144)
+ *           CreateDirectory   (KERNEL.144)
  */
 BOOL16 WINAPI CreateDirectory16( LPCSTR path, LPVOID dummy )
 {
@@ -418,7 +418,7 @@ BOOL WINAPI CreateDirectoryExW( LPCWSTR template, LPCWSTR path,
 
 
 /***********************************************************************
- *           RemoveDirectory16   (KERNEL)
+ *           RemoveDirectory   (KERNEL.145)
  */
 BOOL16 WINAPI RemoveDirectory16( LPCSTR path )
 {

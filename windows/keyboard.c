@@ -153,7 +153,8 @@ VOID WINAPI ScreenSwitchEnable16(WORD unused)
 }
 
 /**********************************************************************
- *		OemKeyScan (KEYBOARD.128) (USER32.@)
+ *		OemKeyScan (KEYBOARD.128)
+ *		OemKeyScan (USER32.@)
  */
 DWORD WINAPI OemKeyScan(WORD wOemChar)
 {

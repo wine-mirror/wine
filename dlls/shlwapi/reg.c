@@ -477,7 +477,7 @@ DWORD WINAPI SHDeleteEmptyKeyW(HKEY hKey, LPCWSTR lpszSubKey)
 }
 
 /*************************************************************************
- * SHLWAPI_205   [SHLWAPI.205]
+ * @   [SHLWAPI.205]
  *
  * Wrapper for SHGetValueA in case machine is in safe mode.
  */
@@ -490,7 +490,7 @@ DWORD WINAPI SHLWAPI_205(HKEY hkey, LPCSTR pSubKey, LPCSTR pValue,
 }
 
 /*************************************************************************
- * SHLWAPI_206   [SHLWAPI.206]
+ * @   [SHLWAPI.206]
  *
  * Unicode version of SHLWAPI_205.
  */
@@ -503,7 +503,7 @@ DWORD WINAPI SHLWAPI_206(HKEY hkey, LPCWSTR pSubKey, LPCWSTR pValue,
 }
 
 /*************************************************************************
- * SHLWAPI_320   [SHLWAPI.320]
+ * @   [SHLWAPI.320]
  *
  */
 BOOL WINAPI SHLWAPI_320(LPCSTR lpszSubKey, LPCSTR lpszValue)
@@ -515,7 +515,7 @@ BOOL WINAPI SHLWAPI_320(LPCSTR lpszSubKey, LPCSTR lpszValue)
 }
 
 /*************************************************************************
- * SHLWAPI_321   [SHLWAPI.321]
+ * @   [SHLWAPI.321]
  *
  * Unicode version of SHLWAPI_320.
  */
@@ -528,7 +528,7 @@ BOOL WINAPI SHLWAPI_321(LPCWSTR lpszSubKey, LPCWSTR lpszValue)
 }
 
 /*************************************************************************
- * SHLWAPI_322   [SHLWAPI.322]
+ * @   [SHLWAPI.322]
  *
  */
 BOOL WINAPI SHLWAPI_322(LPCSTR lpszSubKey)
@@ -538,7 +538,7 @@ BOOL WINAPI SHLWAPI_322(LPCSTR lpszSubKey)
 }
 
 /*************************************************************************
- * SHLWAPI_323   [SHLWAPI.323]
+ * @   [SHLWAPI.323]
  *
  * Unicode version of SHLWAPI_322.
  */

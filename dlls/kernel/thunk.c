@@ -1705,7 +1705,7 @@ SEGPTR WINAPI FindSLThunkletCallback( FARPROC target, DWORD relay )
 
 
 /***********************************************************************
- *     FreeThunklet16            (KERNEL.611)
+ *     FreeThunklet            (KERNEL.611)
  */
 BOOL16 WINAPI FreeThunklet16( DWORD unused1, DWORD unused2 )
 {
@@ -1924,7 +1924,7 @@ void WINAPI HouseCleanLogicallyDeadHandles(void)
 }
 
 /**********************************************************************
- *		_KERNEL32_100 (KERNEL32.100)
+ *		@ (KERNEL32.100)
  */
 BOOL WINAPI _KERNEL32_100(HANDLE threadid,DWORD exitcode,DWORD x)
 {
@@ -1933,7 +1933,7 @@ BOOL WINAPI _KERNEL32_100(HANDLE threadid,DWORD exitcode,DWORD x)
 }
 
 /**********************************************************************
- *		_KERNEL32_99 (KERNEL32.99)
+ *		@ (KERNEL32.99)
  *
  * Checks whether the clock has to be switched from daylight
  * savings time to standard time or vice versa.

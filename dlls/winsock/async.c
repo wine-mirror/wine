@@ -533,7 +533,7 @@ static HANDLE16	__WSAsyncDBQuery(
 
 
 /***********************************************************************
- *       WSAAsyncGetHostByAddr()	(WINSOCK.102)
+ *       WSAAsyncGetHostByAddr	(WINSOCK.102)
  */
 HANDLE16 WINAPI WSAAsyncGetHostByAddr16(HWND16 hWnd, UINT16 uMsg, LPCSTR addr,
                                INT16 len, INT16 type, SEGPTR sbuf, INT16 buflen)
@@ -545,7 +545,7 @@ HANDLE16 WINAPI WSAAsyncGetHostByAddr16(HWND16 hWnd, UINT16 uMsg, LPCSTR addr,
 }
 
 /***********************************************************************
- *       WSAAsyncGetHostByAddr()        (WSOCK32.102)
+ *       WSAAsyncGetHostByAddr        (WS2_32.102)
  */
 HANDLE WINAPI WSAAsyncGetHostByAddr(HWND hWnd, UINT uMsg, LPCSTR addr,
                                INT len, INT type, LPSTR sbuf, INT buflen)
@@ -557,7 +557,7 @@ HANDLE WINAPI WSAAsyncGetHostByAddr(HWND hWnd, UINT uMsg, LPCSTR addr,
 }
 
 /***********************************************************************
- *       WSAAsyncGetHostByName()	(WINSOCK.103)
+ *       WSAAsyncGetHostByName	(WINSOCK.103)
  */
 HANDLE16 WINAPI WSAAsyncGetHostByName16(HWND16 hWnd, UINT16 uMsg, LPCSTR name, 
                                       SEGPTR sbuf, INT16 buflen)
@@ -569,7 +569,7 @@ HANDLE16 WINAPI WSAAsyncGetHostByName16(HWND16 hWnd, UINT16 uMsg, LPCSTR name,
 }                     
 
 /***********************************************************************
- *       WSAAsyncGetHostByName()	(WSOCK32.103)
+ *       WSAAsyncGetHostByName	(WS2_32.103)
  */
 HANDLE WINAPI WSAAsyncGetHostByName(HWND hWnd, UINT uMsg, LPCSTR name, 
 					LPSTR sbuf, INT buflen)
@@ -581,7 +581,7 @@ HANDLE WINAPI WSAAsyncGetHostByName(HWND hWnd, UINT uMsg, LPCSTR name,
 }
 
 /***********************************************************************
- *       WSAAsyncGetProtoByName()	(WINSOCK.105)
+ *       WSAAsyncGetProtoByName	(WINSOCK.105)
  */
 HANDLE16 WINAPI WSAAsyncGetProtoByName16(HWND16 hWnd, UINT16 uMsg, LPCSTR name, 
                                          SEGPTR sbuf, INT16 buflen)
@@ -593,7 +593,7 @@ HANDLE16 WINAPI WSAAsyncGetProtoByName16(HWND16 hWnd, UINT16 uMsg, LPCSTR name,
 }
 
 /***********************************************************************
- *       WSAAsyncGetProtoByName()       (WSOCK32.105)
+ *       WSAAsyncGetProtoByName       (WS2_32.105)
  */
 HANDLE WINAPI WSAAsyncGetProtoByName(HWND hWnd, UINT uMsg, LPCSTR name,
                                          LPSTR sbuf, INT buflen)
@@ -606,7 +606,7 @@ HANDLE WINAPI WSAAsyncGetProtoByName(HWND hWnd, UINT uMsg, LPCSTR name,
 
 
 /***********************************************************************
- *       WSAAsyncGetProtoByNumber()	(WINSOCK.104)
+ *       WSAAsyncGetProtoByNumber	(WINSOCK.104)
  */
 HANDLE16 WINAPI WSAAsyncGetProtoByNumber16(HWND16 hWnd,UINT16 uMsg,INT16 number,
                                            SEGPTR sbuf, INT16 buflen)
@@ -617,7 +617,7 @@ HANDLE16 WINAPI WSAAsyncGetProtoByNumber16(HWND16 hWnd,UINT16 uMsg,INT16 number,
 }
 
 /***********************************************************************
- *       WSAAsyncGetProtoByNumber()     (WSOCK32.104)
+ *       WSAAsyncGetProtoByNumber     (WS2_32.104)
  */
 HANDLE WINAPI WSAAsyncGetProtoByNumber(HWND hWnd, UINT uMsg, INT number,
                                            LPSTR sbuf, INT buflen)
@@ -628,7 +628,7 @@ HANDLE WINAPI WSAAsyncGetProtoByNumber(HWND hWnd, UINT uMsg, INT number,
 }
 
 /***********************************************************************
- *       WSAAsyncGetServByName()	(WINSOCK.107)
+ *       WSAAsyncGetServByName	(WINSOCK.107)
  */
 HANDLE16 WINAPI WSAAsyncGetServByName16(HWND16 hWnd, UINT16 uMsg, LPCSTR name, 
                                         LPCSTR proto, SEGPTR sbuf, INT16 buflen)
@@ -640,7 +640,7 @@ HANDLE16 WINAPI WSAAsyncGetServByName16(HWND16 hWnd, UINT16 uMsg, LPCSTR name,
 }
 
 /***********************************************************************
- *       WSAAsyncGetServByName()        (WSOCK32.107)
+ *       WSAAsyncGetServByName        (WS2_32.107)
  */
 HANDLE WINAPI WSAAsyncGetServByName(HWND hWnd, UINT uMsg, LPCSTR name,
                                         LPCSTR proto, LPSTR sbuf, INT buflen)
@@ -652,7 +652,7 @@ HANDLE WINAPI WSAAsyncGetServByName(HWND hWnd, UINT uMsg, LPCSTR name,
 }
 
 /***********************************************************************
- *       WSAAsyncGetServByPort()	(WINSOCK.106)
+ *       WSAAsyncGetServByPort	(WINSOCK.106)
  */
 HANDLE16 WINAPI WSAAsyncGetServByPort16(HWND16 hWnd, UINT16 uMsg, INT16 port, 
                                         LPCSTR proto, SEGPTR sbuf, INT16 buflen)
@@ -664,7 +664,7 @@ HANDLE16 WINAPI WSAAsyncGetServByPort16(HWND16 hWnd, UINT16 uMsg, INT16 port,
 }
 
 /***********************************************************************
- *       WSAAsyncGetServByPort()        (WSOCK32.106)
+ *       WSAAsyncGetServByPort        (WS2_32.106)
  */
 HANDLE WINAPI WSAAsyncGetServByPort(HWND hWnd, UINT uMsg, INT port,
                                         LPCSTR proto, LPSTR sbuf, INT buflen)
@@ -676,7 +676,7 @@ HANDLE WINAPI WSAAsyncGetServByPort(HWND hWnd, UINT uMsg, INT port,
 }
 
 /***********************************************************************
- *       WSACancelAsyncRequest()	(WINSOCK.108)(WSOCK32.109)
+ *       WSACancelAsyncRequest	(WS2_32.108)
  */
 INT WINAPI WSACancelAsyncRequest(HANDLE hAsyncTaskHandle)
 {
@@ -684,6 +684,9 @@ INT WINAPI WSACancelAsyncRequest(HANDLE hAsyncTaskHandle)
     return 0;
 }
 
+/***********************************************************************
+ *       WSACancelAsyncRequest	(WINSOCK.108)
+ */
 INT16 WINAPI WSACancelAsyncRequest16(HANDLE16 hAsyncTaskHandle)
 {
     return (HANDLE16)WSACancelAsyncRequest((HANDLE)hAsyncTaskHandle);

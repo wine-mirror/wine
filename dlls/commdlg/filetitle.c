@@ -88,7 +88,7 @@ short WINAPI GetFileTitleW(LPCWSTR lpFile, LPWSTR lpTitle, UINT cbBuf)
 
 
 /***********************************************************************
- *	GetFileTitle16		(COMMDLG.27)
+ *	GetFileTitle		(COMMDLG.27)
  */
 short WINAPI GetFileTitle16(LPCSTR lpFile, LPSTR lpTitle, UINT16 cbBuf)
 {

@@ -682,7 +682,7 @@ void WINAPI OldYield16(void)
 }
 
 /***********************************************************************
- *           WIN32_OldYield16  (KERNEL.447)
+ *           WIN32_OldYield  (KERNEL.447)
  */
 void WINAPI WIN32_OldYield16(void)
 {
@@ -714,7 +714,7 @@ void WINAPI DirectedYield16( HTASK16 hTask )
 }
 
 /***********************************************************************
- *           Yield16  (KERNEL.29)
+ *           Yield  (KERNEL.29)
  */
 void WINAPI Yield16(void)
 {
@@ -737,7 +737,7 @@ HTASK16 WINAPI KERNEL_490( HTASK16 someTask )
 }
 
 /***********************************************************************
- *           MakeProcInstance16  (KERNEL.51)
+ *           MakeProcInstance  (KERNEL.51)
  */
 FARPROC16 WINAPI MakeProcInstance16( FARPROC16 func, HANDLE16 hInstance )
 {
@@ -810,7 +810,7 @@ FARPROC16 WINAPI MakeProcInstance16( FARPROC16 func, HANDLE16 hInstance )
 
 
 /***********************************************************************
- *           FreeProcInstance16  (KERNEL.52)
+ *           FreeProcInstance  (KERNEL.52)
  */
 void WINAPI FreeProcInstance16( FARPROC16 func )
 {
@@ -933,7 +933,7 @@ BOOL16 WINAPI GetCodeInfo16( FARPROC16 proc, SEGINFO *segInfo )
 
 
 /**********************************************************************
- *          DefineHandleTable16    (KERNEL.94)
+ *          DefineHandleTable    (KERNEL.94)
  */
 BOOL16 WINAPI DefineHandleTable16( WORD wOffset )
 {
@@ -1139,7 +1139,7 @@ void WINAPI SwitchStackBack16( CONTEXT86 *context )
 
 
 /***********************************************************************
- *           GetTaskQueueDS16  (KERNEL.118)
+ *           GetTaskQueueDS  (KERNEL.118)
  */
 void WINAPI GetTaskQueueDS16(void)
 {
@@ -1148,7 +1148,7 @@ void WINAPI GetTaskQueueDS16(void)
 
 
 /***********************************************************************
- *           GetTaskQueueES16  (KERNEL.119)
+ *           GetTaskQueueES  (KERNEL.119)
  */
 void WINAPI GetTaskQueueES16(void)
 {
@@ -1187,7 +1187,7 @@ DWORD WINAPI GetCurrentPDB16(void)
 
 
 /***********************************************************************
- *           GetCurPID16   (KERNEL.157)
+ *           GetCurPID   (KERNEL.157)
  */
 DWORD WINAPI GetCurPID16( DWORD unused )
 {
@@ -1221,7 +1221,7 @@ WORD WINAPI GetExeVersion16(void)
 
 
 /***********************************************************************
- *           SetErrorMode16   (KERNEL.107)
+ *           SetErrorMode   (KERNEL.107)
  */
 UINT16 WINAPI SetErrorMode16( UINT16 mode )
 {
@@ -1285,7 +1285,7 @@ BOOL16 WINAPI IsTask16( HTASK16 hTask )
 
 
 /***********************************************************************
- *           IsWinOldApTask16   (KERNEL.158)
+ *           IsWinOldApTask   (KERNEL.158)
  */
 BOOL16 WINAPI IsWinOldApTask16( HTASK16 hTask )
 {
@@ -1365,7 +1365,7 @@ VOID WINAPI GlobalNotify16( FARPROC16 proc )
 
 
 /***********************************************************************
- *           GetExePtr   (KERNEL.133)
+ *           GetExePtrHelper
  */
 static inline HMODULE16 GetExePtrHelper( HANDLE16 handle, HTASK16 *hTask )
 {
@@ -1412,8 +1412,9 @@ static inline HMODULE16 GetExePtrHelper( HANDLE16 handle, HTASK16 *hTask )
     return 0;
 }
 
-/**********************************************************************/
-
+/***********************************************************************
+ *           GetExePtr   (KERNEL.133)
+ */
 HMODULE16 WINAPI WIN16_GetExePtr( HANDLE16 handle )
 {
     HTASK16 hTask = 0;
@@ -1424,8 +1425,10 @@ HMODULE16 WINAPI WIN16_GetExePtr( HANDLE16 handle )
     return hModule;
 }
 
-/**********************************************************************/
 
+/***********************************************************************
+ *           K228   (KERNEL.228)
+ */
 HMODULE16 WINAPI GetExePtr( HANDLE16 handle )
 {
     HTASK16 hTask = 0;
@@ -1494,7 +1497,7 @@ BOOL16 WINAPI TaskFindHandle16( TASKENTRY *lpte, HTASK16 hTask )
 typedef INT (WINAPI *MessageBoxA_funcptr)(HWND hWnd, LPCSTR text, LPCSTR title, UINT type);
 
 /**************************************************************************
- *           FatalAppExit16   (KERNEL.137)
+ *           FatalAppExit   (KERNEL.137)
  */
 void WINAPI FatalAppExit16( UINT16 action, LPCSTR str )
 {
@@ -1520,7 +1523,7 @@ void WINAPI FatalAppExit16( UINT16 action, LPCSTR str )
 
 
 /***********************************************************************
- *           TerminateApp16   (TOOLHELP.77)
+ *           TerminateApp   (TOOLHELP.77)
  *
  * See "Undocumented Windows".
  */
@@ -1553,7 +1556,7 @@ void WINAPI TerminateApp16(HTASK16 hTask, WORD wFlags)
 
 
 /***********************************************************************
- *           GetAppCompatFlags16   (KERNEL.354)
+ *           GetAppCompatFlags   (KERNEL.354)
  */
 DWORD WINAPI GetAppCompatFlags16( HTASK16 hTask )
 {

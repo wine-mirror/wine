@@ -1102,7 +1102,7 @@ HRESULT WINAPI SHBindToParent(LPCITEMIDLIST pidl, REFIID riid, LPVOID *ppv, LPCI
 }
 
 /*************************************************************************
- * SHGetPathFromIDListAW		[SHELL32.@][NT 4.0: SHELL32.219]
+ * SHGetPathFromIDList		[SHELL32.@][NT 4.0: SHELL32.219]
  */
 BOOL WINAPI SHGetPathFromIDListAW(LPCITEMIDLIST pidl,LPVOID pszPath)
 {

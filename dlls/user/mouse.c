@@ -38,7 +38,7 @@ typedef struct _MOUSEINFO
 static LPMOUSE_EVENT_PROC DefMouseEventProc = NULL;
 
 /***********************************************************************
- *           MOUSE_Inquire                       (MOUSE.1)
+ *           Inquire                       (MOUSE.1)
  */
 WORD WINAPI MOUSE_Inquire(LPMOUSEINFO mouseInfo)
 {
@@ -56,7 +56,7 @@ WORD WINAPI MOUSE_Inquire(LPMOUSEINFO mouseInfo)
 }
 
 /***********************************************************************
- *           MOUSE_Enable                        (MOUSE.2)
+ *           Enable                        (MOUSE.2)
  */
 VOID WINAPI MOUSE_Enable(LPMOUSE_EVENT_PROC lpMouseEventProc)
 {
@@ -93,7 +93,7 @@ VOID WINAPI WIN16_MOUSE_Enable( FARPROC16 proc )
 }
 
 /***********************************************************************
- *           MOUSE_Disable                       (MOUSE.3)
+ *           Disable                       (MOUSE.3)
  */
 VOID WINAPI MOUSE_Disable(VOID)
 {

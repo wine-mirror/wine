@@ -594,7 +594,7 @@ DWORD WINAPI GetFileInformationByHandle( HANDLE hFile,
 
 
 /**************************************************************************
- *           GetFileAttributes16   (KERNEL.420)
+ *           GetFileAttributes   (KERNEL.420)
  */
 DWORD WINAPI GetFileAttributes16( LPCSTR name )
 {
@@ -775,7 +775,7 @@ UINT WINAPI GetTempFileNameW( LPCWSTR path, LPCWSTR prefix, UINT unique,
 
 
 /***********************************************************************
- *           GetTempFileName16   (KERNEL.97)
+ *           GetTempFileName   (KERNEL.97)
  */
 UINT16 WINAPI GetTempFileName16( BYTE drive, LPCSTR prefix, UINT16 unique,
                                  LPSTR buffer )
@@ -980,7 +980,8 @@ error:  /* We get here if there was an error opening the file */
 
 
 /***********************************************************************
- *           OpenFile16   (KERNEL.360)
+ *           OpenFile   (KERNEL.74)
+ *           OpenFileEx (KERNEL.360)
  */
 HFILE16 WINAPI OpenFile16( LPCSTR name, OFSTRUCT *ofs, UINT16 mode )
 {
@@ -1121,7 +1122,7 @@ HFILE16 FILE_Dup2( HFILE16 hFile1, HFILE16 hFile2 )
 
 
 /***********************************************************************
- *           _lclose16   (KERNEL.81)
+ *           _lclose   (KERNEL.81)
  */
 HFILE16 WINAPI _lclose16( HFILE16 hFile )
 {
@@ -1597,7 +1598,7 @@ BOOL WINAPI WriteFile( HANDLE hFile, LPCVOID buffer, DWORD bytesToWrite,
 
   
 /***********************************************************************
- *           WIN16_hread
+ *           _hread (KERNEL.349)
  */
 LONG WINAPI WIN16_hread( HFILE16 hFile, SEGPTR buffer, LONG count )
 {
@@ -1614,7 +1615,7 @@ LONG WINAPI WIN16_hread( HFILE16 hFile, SEGPTR buffer, LONG count )
 
 
 /***********************************************************************
- *           WIN16_lread
+ *           _lread (KERNEL.82)
  */
 UINT16 WINAPI WIN16_lread( HFILE16 hFile, SEGPTR buffer, UINT16 count )
 {
@@ -1643,7 +1644,7 @@ UINT16 WINAPI _lread16( HFILE16 hFile, LPVOID buffer, UINT16 count )
 
 
 /***********************************************************************
- *           _lcreat16   (KERNEL.83)
+ *           _lcreat   (KERNEL.83)
  */
 HFILE16 WINAPI _lcreat16( LPCSTR path, INT16 attr )
 {
@@ -1696,7 +1697,7 @@ DWORD WINAPI SetFilePointer( HANDLE hFile, LONG distance, LONG *highword,
 
 
 /***********************************************************************
- *           _llseek16   (KERNEL.84)
+ *           _llseek   (KERNEL.84)
  *
  * FIXME:
  *   Seeking before the start of the file should be allowed for _llseek16,
@@ -1719,7 +1720,7 @@ LONG WINAPI _llseek( HFILE hFile, LONG lOffset, INT nOrigin )
 
 
 /***********************************************************************
- *           _lopen16   (KERNEL.85)
+ *           _lopen   (KERNEL.85)
  */
 HFILE16 WINAPI _lopen16( LPCSTR path, INT16 mode )
 {
@@ -1741,7 +1742,7 @@ HFILE WINAPI _lopen( LPCSTR path, INT mode )
 
 
 /***********************************************************************
- *           _lwrite16   (KERNEL.86)
+ *           _lwrite   (KERNEL.86)
  */
 UINT16 WINAPI _lwrite16( HFILE16 hFile, LPCSTR buffer, UINT16 count )
 {
@@ -1776,7 +1777,7 @@ LONG WINAPI _hread( HFILE hFile, LPVOID buffer, LONG count)
 
 
 /***********************************************************************
- *           _hwrite16   (KERNEL.350)
+ *           _hwrite   (KERNEL.350)
  */
 LONG WINAPI _hwrite16( HFILE16 hFile, LPCSTR buffer, LONG count )
 {
@@ -1813,7 +1814,7 @@ LONG WINAPI _hwrite( HFILE handle, LPCSTR buffer, LONG count )
 
 
 /***********************************************************************
- *           SetHandleCount16   (KERNEL.199)
+ *           SetHandleCount   (KERNEL.199)
  */
 UINT16 WINAPI SetHandleCount16( UINT16 count )
 {
@@ -1863,7 +1864,7 @@ BOOL WINAPI SetEndOfFile( HANDLE hFile )
 
 
 /***********************************************************************
- *           DeleteFile16   (KERNEL.146)
+ *           DeleteFile   (KERNEL.146)
  */
 BOOL16 WINAPI DeleteFile16( LPCSTR path )
 {

@@ -84,7 +84,7 @@ HANDLE WINAPI CreateEventW( SECURITY_ATTRIBUTES *sa, BOOL manual_reset,
 
 
 /***********************************************************************
- *           WIN16_CreateEvent    (KERNEL.457)
+ *           CreateW32Event    (KERNEL.457)
  */
 HANDLE WINAPI WIN16_CreateEvent( BOOL manual_reset, BOOL initial_state )
 {
@@ -228,6 +228,7 @@ VOID WINAPI VWin32_EventWait(HANDLE event)
 
 /***********************************************************************
  *       VWin32_EventSet	(KERNEL.451)
+ *       KERNEL_479             (KERNEL.479)
  */
 VOID WINAPI VWin32_EventSet(HANDLE event)
 {

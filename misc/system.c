@@ -191,7 +191,7 @@ void WINAPI DisableSystemTimers16(void)
 
 
 /***********************************************************************
- *           Get80x87SaveSize16   (SYSTEM.7)
+ *           Get80x87SaveSize   (SYSTEM.7)
  */
 WORD WINAPI Get80x87SaveSize16(void)
 {
@@ -200,7 +200,7 @@ WORD WINAPI Get80x87SaveSize16(void)
 
 
 /***********************************************************************
- *           Save80x87State16   (SYSTEM.8)
+ *           Save80x87State   (SYSTEM.8)
  */
 void WINAPI Save80x87State16( char *ptr )
 {
@@ -211,7 +211,7 @@ void WINAPI Save80x87State16( char *ptr )
 
 
 /***********************************************************************
- *           Restore80x87State16   (SYSTEM.9)
+ *           Restore80x87State   (SYSTEM.9)
  */
 void WINAPI Restore80x87State16( const char *ptr )
 {

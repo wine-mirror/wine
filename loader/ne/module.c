@@ -1293,7 +1293,7 @@ static BOOL16 NE_FreeModule( HMODULE16 hModule, BOOL call_wep )
 
 
 /**********************************************************************
- *	    FreeModule16    (KERNEL.46)
+ *	    FreeModule    (KERNEL.46)
  */
 BOOL16 WINAPI FreeModule16( HMODULE16 hModule )
 {
@@ -1663,7 +1663,7 @@ BOOL16 WINAPI ModuleFindHandle16( MODULEENTRY *lpme, HMODULE16 hModule )
 
 
 /***************************************************************************
- *          IsRomModule16    (KERNEL.323)
+ *          IsRomModule    (KERNEL.323)
  */
 BOOL16 WINAPI IsRomModule16( HMODULE16 unused )
 {
@@ -1671,7 +1671,7 @@ BOOL16 WINAPI IsRomModule16( HMODULE16 unused )
 }
 
 /***************************************************************************
- *          IsRomFile16    (KERNEL.326)
+ *          IsRomFile    (KERNEL.326)
  */
 BOOL16 WINAPI IsRomFile16( HFILE16 unused )
 {

@@ -457,7 +457,7 @@ CreateMRUListA (LPCREATEMRULIST lpcml)
 }
 
 /**************************************************************************
- *              FreeMRUListA [COMCTL32.152]
+ *              FreeMRUList [COMCTL32.152]
  *
  * PARAMS
  *     hMRUList [I] Handle to list.
@@ -2340,7 +2340,7 @@ INT WINAPI COMCTL32_StrSpnW( LPWSTR lpStr, LPWSTR lpSet) {
 }
 
 /**************************************************************************
- * COMCTL32_410 [COMCTL32.410]
+ * @ [COMCTL32.410]
  *
  * FIXME: What's this supposed to do?
  *        Parameter 1 is an HWND, you're on your own for the rest.
@@ -2354,7 +2354,7 @@ BOOL WINAPI COMCTL32_410( HWND hw, DWORD b, DWORD c, DWORD d) {
 }
 
 /**************************************************************************
- * COMCTL32_411 [COMCTL32.411]
+ * @ [COMCTL32.411]
  *
  * FIXME: What's this supposed to do?
  *        Parameter 1 is an HWND, you're on your own for the rest.
@@ -2368,7 +2368,7 @@ BOOL WINAPI COMCTL32_411( HWND hw, DWORD b, DWORD c) {
 }
 
 /**************************************************************************
- * COMCTL32_412 [COMCTL32.412]
+ * @ [COMCTL32.412]
  *
  * FIXME: What's this supposed to do?
  *        Parameter 1 is an HWND, you're on your own for the rest.
@@ -2389,7 +2389,7 @@ BOOL WINAPI COMCTL32_412( HWND hwnd, DWORD b, DWORD c)
 }
 
 /**************************************************************************
- * COMCTL32_413 [COMCTL32.413]
+ * @ [COMCTL32.413]
  *
  * FIXME: What's this supposed to do?
  *        Parameter 1 is an HWND, you're on your own for the rest.
@@ -2404,7 +2404,7 @@ BOOL WINAPI COMCTL32_413( HWND hw, DWORD b, DWORD c, DWORD d) {
 
 
 /**************************************************************************
- * COMCTL32_415 [COMCTL32.415]
+ * @ [COMCTL32.415]
  *
  * FIXME: What's this supposed to do?
  *        Parameter 1 is an HWND, you're on your own for the rest.

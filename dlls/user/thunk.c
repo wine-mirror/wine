@@ -17,7 +17,7 @@ extern WORD CALLBACK THUNK_CallTo16_word_wlw  (FARPROC16,WORD,LONG,WORD);
 
 
 /*******************************************************************
- *           EnumWindows16   (USER.54)
+ *           EnumWindows   (USER.54)
  */
 BOOL16 WINAPI EnumWindows16( WNDENUMPROC16 func, LPARAM lParam )
 {
@@ -27,7 +27,7 @@ BOOL16 WINAPI EnumWindows16( WNDENUMPROC16 func, LPARAM lParam )
 
 
 /**********************************************************************
- *           EnumChildWindows16   (USER.55)
+ *           EnumChildWindows   (USER.55)
  */
 BOOL16 WINAPI EnumChildWindows16( HWND16 parent, WNDENUMPROC16 func, LPARAM lParam )
 {
@@ -37,7 +37,7 @@ BOOL16 WINAPI EnumChildWindows16( HWND16 parent, WNDENUMPROC16 func, LPARAM lPar
 
 
 /**********************************************************************
- *           THUNK_EnumTaskWindows16   (USER.225)
+ *           EnumTaskWindows   (USER.225)
  */
 BOOL16 WINAPI THUNK_EnumTaskWindows16( HTASK16 hTask, WNDENUMPROC16 func,
                                        LPARAM lParam )
@@ -48,7 +48,7 @@ BOOL16 WINAPI THUNK_EnumTaskWindows16( HTASK16 hTask, WNDENUMPROC16 func,
 
 
 /***********************************************************************
- *           THUNK_EnumProps16   (USER.27)
+ *           EnumProps   (USER.27)
  */
 INT16 WINAPI THUNK_EnumProps16( HWND16 hwnd, PROPENUMPROC16 func )
 {
@@ -58,7 +58,7 @@ INT16 WINAPI THUNK_EnumProps16( HWND16 hwnd, PROPENUMPROC16 func )
 
 
 /***********************************************************************
- *           THUNK_GrayString16   (USER.185)
+ *           GrayString   (USER.185)
  */
 BOOL16 WINAPI THUNK_GrayString16( HDC16 hdc, HBRUSH16 hbr,
                                   GRAYSTRINGPROC16 func, LPARAM lParam,

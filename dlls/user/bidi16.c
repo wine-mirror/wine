@@ -13,20 +13,20 @@
 DEFAULT_DEBUG_CHANNEL(relay);
 
 /***********************************************************************
- *		ChangeDialogTemplate16   (USER.905)
+ *		ChangeDialogTemplate   (USER.905)
  * FIXME: The prototypes of this function have not been found yet.
  */
 LONG WINAPI ChangeDialogTemplate16(void) { FIXME("stub (no prototype)\n"); return 0; }
 
 /***********************************************************************
- *		BiDiMessageBoxEx16   (USER.910)
+ *		BiDiMessageBoxEx   (USER.910)
  * FIXME: The prototypes of this function have not been found yet.
  */
 LONG WINAPI BiDiMessageBoxEx16(void) { FIXME("stub (no prototype)\n"); return 0; }
 
 
 /******************************************************************************
- *                    ChangeKeyboardCodePage16 [USER.924]
+ *                    ChangeKeyboardCodePage [USER.924]
  * Change the keyboard layouts to a new pair.
  * If the language IDs are set to -1, the language is not to be changed.
  */
@@ -38,7 +38,7 @@ DWORD WINAPI ChangeKeyboardCodePage16( UINT16 iLangLeft, UINT16 iLangRight )
 
 
 /******************************************************************************
- *                    ChangeKeyboardLanguage16 [USER.912]
+ *                    ChangeKeyboardLanguage [USER.912]
  * Change the keyboard layouts to a new pair.
  *
  * RETURNS
@@ -52,7 +52,7 @@ DWORD WINAPI ChangeKeyboardLanguage16( UINT16 iLangLeft, UINT iLangRight )
 
 
 /******************************************************************************
- *                    CreateDialogIndirectParamML16 [USER.916]
+ *                    CreateDialogIndirectParamML [USER.916]
  */
 HWND16 WINAPI CreateDialogIndirectParamML16( HINSTANCE16 hinstWnd,
                                              const void * lpvDlgTmp,
@@ -71,7 +71,7 @@ HWND16 WINAPI CreateDialogIndirectParamML16( HINSTANCE16 hinstWnd,
 
 
 /******************************************************************************
- *                    DialogBoxIndirectParamML16 [USER.918]
+ *                    DialogBoxIndirectParamML [USER.918]
  */
 HWND16 WINAPI DialogBoxIndirectParamML16( HINSTANCE16 hinstWnd,
                                           HGLOBAL16 hglbDlgTemp,
@@ -91,7 +91,7 @@ HWND16 WINAPI DialogBoxIndirectParamML16( HINSTANCE16 hinstWnd,
 
 
 /******************************************************************************
- *                    FindLanguageResource16 [USER.923]
+ *                    FindLanguageResource [USER.923]
  */
 HRSRC16 WINAPI FindLanguageResource16( HINSTANCE16 hinst, LPCSTR lpRes,
                                        LPCSTR lpResType, UINT16 iLang )
@@ -102,7 +102,7 @@ HRSRC16 WINAPI FindLanguageResource16( HINSTANCE16 hinst, LPCSTR lpRes,
 
 
 /******************************************************************************
- *                    GetAppCodePage16 [USER.915]
+ *                    GetAppCodePage [USER.915]
  * Returns the code page and language of the window
  *
  * RETURNS
@@ -116,7 +116,7 @@ DWORD WINAPI GetAppCodePage16( HWND16 hwnd )
 
 
 /******************************************************************************
- *                    GetBaseCodePage16 [USER.922]
+ *                    GetBaseCodePage [USER.922]
  * Returns the base code page and resource language.
  * For example, Hebrew windows will return HebrewCodePage in the low word
  * and English in the high word.
@@ -130,7 +130,7 @@ DWORD WINAPI GetBaseCodePage16( void )
 
 
 /******************************************************************************
- *                    GetCodePageSystemFont16 [USER.913]
+ *                    GetCodePageSystemFont [USER.913]
  * Returns the stock font for the requested code page.
  */
 HFONT16 WINAPI GetCodePageSystemFont16( UINT16 iFont, UINT16 iCodePage )
@@ -142,7 +142,7 @@ HFONT16 WINAPI GetCodePageSystemFont16( UINT16 iFont, UINT16 iCodePage )
 
 
 /******************************************************************************
- *                    GetLanguageName16 [USER.907]
+ *                    GetLanguageName [USER.907]
  * Returns the name of one language in (possibly) a different language.
  * Currently only handles language 0 (english).
  *
@@ -168,7 +168,7 @@ UINT WINAPI GetLanguageName16( UINT16 iLang, UINT16 iName,
 
 
 /******************************************************************************
- *                    GetNumLanguages16 [USER.906]
+ *                    GetNumLanguages [USER.906]
  * Returns the number of languages in the system.
  */
 UINT WINAPI GetNumLanguages16( void )
@@ -180,7 +180,7 @@ UINT WINAPI GetNumLanguages16( void )
 
 
 /******************************************************************************
- *                    GetProcessDefaultLayout16 [USER.1001]
+ *                    GetProcessDefaultLayout [USER.1001]
  *
  * Gets the default layout for parentless windows.
  * Right now, just returns 0 (left-to-right).
@@ -197,7 +197,7 @@ BOOL16 WINAPI GetProcessDefaultLayout16( DWORD *pdwDefaultLayout )
 
 
 /******************************************************************************
- *                   LoadLanguageString16 [USER.919]
+ *                   LoadLanguageString [USER.919]
  * Loads a string for a specific language.
  *
  * RETURNS
@@ -214,7 +214,7 @@ UINT16 WINAPI LoadLanguageString16( HINSTANCE16 hinst, UINT16 id, UINT16 iLang,
 
 
 /******************************************************************************
- *                   LoadSystemLanguageString16 [USER.902]
+ *                   LoadSystemLanguageString [USER.902]
  * Loads a string which is in one of the system language modules.
  *
  * RETURNS
@@ -230,7 +230,7 @@ UINT WINAPI LoadSystemLanguageString16( HINSTANCE16 hinstCaller, UINT16 id,
 
 
 /***********************************************************************
- *           MessageBoxEx16 [USER.930]
+ *           MessageBoxEx [USER.930]
  * The multilingual version of MessageBox.
  */
 INT16 WINAPI MessageBoxEx16( HWND16 hwndParent, LPCSTR lpszText,
@@ -243,7 +243,7 @@ INT16 WINAPI MessageBoxEx16( HWND16 hwndParent, LPCSTR lpszText,
 
 
 /***********************************************************************
- *           QueryCodePage16   [USER.914]
+ *           QueryCodePage   [USER.914]
  * Query code page specific data.
  */
 LRESULT WINAPI QueryCodePage16( UINT16 idxLang, UINT16 msg,
@@ -254,7 +254,7 @@ LRESULT WINAPI QueryCodePage16( UINT16 idxLang, UINT16 msg,
 }
 
 /***********************************************************************
- *           SetAppCodePage16   [USER.920]
+ *           SetAppCodePage   [USER.920]
  * Set the code page and language of the window to new values.
  *
  * RETURNS
@@ -269,7 +269,7 @@ DWORD WINAPI SetAppCodePage16( HWND16 hwnd, UINT16 iCodePage, UINT16 iLang,
 }
 
 /***********************************************************************
- *           SetDlgItemTextEx16   [USER.911]
+ *           SetDlgItemTextEx   [USER.911]
  * Sets the title or text of a control in a dialog box.
  * Currently only works for language 0 (english)
  */
@@ -280,7 +280,7 @@ void WINAPI SetDlgItemTextEx16( HWND16 hwnd, INT16 id,
 }
 
 /******************************************************************************
- *                    SetProcessDefaultLayout16 [USER.1000]
+ *                    SetProcessDefaultLayout [USER.1000]
  *
  * Sets the default layout for parentless windows.
  * Right now, only accepts 0 (left-to-right).
@@ -296,7 +296,7 @@ BOOL16 WINAPI SetProcessDefaultLayout16( DWORD dwDefaultLayout )
 }
 
 /******************************************************************************
- *                    SetWindowTextEx16 [USER.909]
+ *                    SetWindowTextEx [USER.909]
  * Sets the given window's title to the specified text in the specified language.
  */
 void WINAPI SetWindowTextEx16( HWND16 hwnd, LPCSTR lpsz, UINT16 iLang )

@@ -79,7 +79,7 @@ void WIN87_Init( CONTEXT86 *context )
 }
 
 /***********************************************************************
- *		WIN87_fpmath (WIN87EM.1)
+ *		_fpMath (WIN87EM.1)
  */
 void WINAPI WIN87_fpmath( CONTEXT86 *context )
 {
@@ -204,7 +204,7 @@ void WINAPI WIN87_fpmath( CONTEXT86 *context )
 }
 
 /***********************************************************************
- *		WIN87_WinEm87Info (WIN87EM.3)
+ *		__WinEm87Info (WIN87EM.3)
  */
 void WINAPI WIN87_WinEm87Info(struct Win87EmInfoStruct *pWIS,
                               int cbWin87EmInfoStruct)
@@ -213,7 +213,7 @@ void WINAPI WIN87_WinEm87Info(struct Win87EmInfoStruct *pWIS,
 }
 
 /***********************************************************************
- *		WIN87_WinEm87Restore (WIN87EM.4)
+ *		__WinEm87Restore (WIN87EM.4)
  */
 void WINAPI WIN87_WinEm87Restore(void *pWin87EmSaveArea,
                                  int cbWin87EmSaveArea)
@@ -223,7 +223,7 @@ void WINAPI WIN87_WinEm87Restore(void *pWin87EmSaveArea,
 }
 
 /***********************************************************************
- *		WIN87_WinEm87Save (WIN87EM.5)
+ *		__WinEm87Save (WIN87EM.5)
  */
 void WINAPI WIN87_WinEm87Save(void *pWin87EmSaveArea, int cbWin87EmSaveArea)
 {

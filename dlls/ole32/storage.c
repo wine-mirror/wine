@@ -1561,7 +1561,7 @@ static void _create_istorage16(LPSTORAGE16 *stg) {
  */
 
 /******************************************************************************
- *		StgCreateDocFile16	[STORAGE.1]
+ *		StgCreateDocFileA	[STORAGE.1]
  */
 HRESULT WINAPI StgCreateDocFile16(
 	LPCOLESTR16 pwcsName,DWORD grfMode,DWORD reserved,IStorage16 **ppstgOpen
@@ -1606,7 +1606,7 @@ HRESULT WINAPI StgCreateDocFile16(
 }
 
 /******************************************************************************
- * StgIsStorageFile16 [STORAGE.5]
+ * StgIsStorageFile [STORAGE.5]
  */
 HRESULT WINAPI StgIsStorageFile16(LPCOLESTR16 fn) {
 	HFILE		hf;
@@ -1657,7 +1657,7 @@ StgIsStorageFile(LPCOLESTR fn)
 
 
 /******************************************************************************
- * StgOpenStorage16 [STORAGE.3]
+ * StgOpenStorage [STORAGE.3]
  */
 HRESULT WINAPI StgOpenStorage16(
 	LPCOLESTR16 pwcsName,IStorage16 *pstgPriority,DWORD grfMode,

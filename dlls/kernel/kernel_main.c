@@ -106,7 +106,17 @@ BOOL WINAPI MAIN_KernelInit( HINSTANCE hinst, DWORD reason, LPVOID reserved )
 }
 
 /***********************************************************************
- *		KERNEL_nop (KERNEL.361)
+ *		EnableDos (KERNEL.41)
+ *		DisableDos (KERNEL.42)
+ *		GetLastDiskChange (KERNEL.98)
+ *		ValidateCodeSegments (KERNEL.100)
+ *		KbdRst (KERNEL.123)
+ *		EnableKernel (KERNEL.124)
+ *		DisableKernel (KERNEL.125)
+ *		ValidateFreeSpaces (KERNEL.200)
+ *		K237 (KERNEL.237)
+ *		BUNNY_351 (KERNEL.351)
+ *		PIGLET_361 (KERNEL.361)
  *
  * Entry point for kernel functions that do nothing.
  */

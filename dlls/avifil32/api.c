@@ -79,7 +79,7 @@ ULONG WINAPI AVIFileRelease(PAVIFILE pfile)
 }
 
 /***********************************************************************
- *		AVIFileOpenA (AVIFILE.102)
+ *		AVIFileOpen  (AVIFILE.102)
  *		AVIFileOpenA (AVIFIL32.@)
  */
 HRESULT WINAPI AVIFileOpenA(
@@ -158,6 +158,7 @@ HRESULT WINAPI AVIFileInfoW(PAVIFILE pfile,AVIFILEINFOW* pfi,LONG lSize)
 }
 
 /***********************************************************************
+ *		AVIFileInfo  (AVIFIL32.@)
  *		AVIFileInfoA (AVIFIL32.@)
  */
 HRESULT WINAPI AVIFileInfoA(PAVIFILE pfile,AVIFILEINFOA* pfi,LONG lSize)
@@ -264,6 +265,7 @@ HRESULT WINAPI AVIStreamInfoW(PAVISTREAM pas,AVISTREAMINFOW* psi,LONG lSize)
 }
 
 /***********************************************************************
+ *		AVIStreamInfo  (AVIFIL32.@)
  *		AVIStreamInfoA (AVIFIL32.@)
  */
 HRESULT WINAPI AVIStreamInfoA(PAVISTREAM pas,AVISTREAMINFOA* psi,LONG lSize)

@@ -937,7 +937,7 @@ int WSCNTL_GetRouteTable(int numRoutes, wscntl_routeentry *routeTable)
 
 
 /***********************************************************************
- *		WSARecvEx()			(WSOCK32.1107)
+ *		WSARecvEx			(WSOCK32.1107)
  *
  * WSARecvEx is a Microsoft specific extension to winsock that is identical to recv
  * except that has an in/out argument call flags that has the value MSG_PARTIAL ored
@@ -954,7 +954,7 @@ INT WINAPI WSARecvEx(SOCKET s, char *buf, INT len, INT *flags)
 
 
 /***********************************************************************
- *       WS_s_perror         (WSOCK32.1108)
+ *       s_perror         (WSOCK32.1108)
  */
 void WINAPI WS_s_perror(LPCSTR message)
 {

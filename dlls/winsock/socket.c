@@ -315,7 +315,7 @@ static void WINSOCK_DeleteIData(void)
 }
 
 /***********************************************************************
- *		WSOCK32_LibMain (WSOCK32.init)
+ *		WSOCK32_LibMain (WS2_32.init)
  */
 BOOL WINAPI WSOCK32_LibMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID fImpLoad)
 {
@@ -525,7 +525,7 @@ void __ws_memfree(void* ptr)
  */
 
 /***********************************************************************
- *      WSAStartup16()			(WINSOCK.115)
+ *      WSAStartup			(WINSOCK.115)
  *
  * Create socket control struct, attach it to the global list and
  * update a pointer in the task struct.
@@ -581,7 +581,7 @@ INT16 WINAPI WSAStartup16(UINT16 wVersionRequested, LPWSADATA lpWSAData)
 }
 
 /***********************************************************************
- *      WSAStartup()		(WS2_32.115)	
+ *      WSAStartup		(WS2_32.115)
  */
 INT WINAPI WSAStartup(UINT wVersionRequested, LPWSADATA lpWSAData)
 {
@@ -637,7 +637,7 @@ INT WINAPI WSAStartup(UINT wVersionRequested, LPWSADATA lpWSAData)
 
 
 /***********************************************************************
- *      WSACleanup()			(WINSOCK.116)
+ *      WSACleanup			(WINSOCK.116)
  */
 INT WINAPI WSACleanup(void)
 {
@@ -653,7 +653,8 @@ INT WINAPI WSACleanup(void)
 
 
 /***********************************************************************
- *      WSAGetLastError()		(WSOCK32.111)(WINSOCK.111)
+ *      WSAGetLastError		(WINSOCK.111)
+ *      WSAGetLastError		(WS2_32.111)
  */
 INT WINAPI WSAGetLastError(void)
 {
@@ -661,14 +662,14 @@ INT WINAPI WSAGetLastError(void)
 }
 
 /***********************************************************************
- *      WSASetLastError()		(WSOCK32.112)
+ *      WSASetLastError		(WS2_32.112)
  */
 void WINAPI WSASetLastError(INT iError) {
     SetLastError(iError);
 }
 
 /***********************************************************************
- *      WSASetLastError16()		(WINSOCK.112)
+ *      WSASetLastError		(WINSOCK.112)
  */
 void WINAPI WSASetLastError16(INT16 iError)
 {
@@ -727,7 +728,7 @@ static struct ws_protoent* check_buffer_pe(int size)
 /* ----------------------------------- i/o APIs */
 
 /***********************************************************************
- *		accept()		(WSOCK32.1)
+ *		accept		(WS2_32.1)
  */
 static void WSOCK32_async_accept(SOCKET s, SOCKET as)
 {
@@ -808,7 +809,7 @@ SOCKET WINAPI WSOCK32_accept(SOCKET s, struct sockaddr *addr,
 }
 
 /***********************************************************************
- *              accept()		(WINSOCK.1)
+ *              accept		(WINSOCK.1)
  */
 SOCKET16 WINAPI WINSOCK_accept16(SOCKET16 s, struct sockaddr* addr,
                                  INT16* addrlen16 )
@@ -820,7 +821,7 @@ SOCKET16 WINAPI WINSOCK_accept16(SOCKET16 s, struct sockaddr* addr,
 }
 
 /***********************************************************************
- *		bind()			(WSOCK32.2)
+ *		bind			(WS2_32.2)
  */
 INT WINAPI WSOCK32_bind(SOCKET s, struct sockaddr *name, INT namelen)
 {
@@ -893,7 +894,7 @@ INT WINAPI WSOCK32_bind(SOCKET s, struct sockaddr *name, INT namelen)
 }
 
 /***********************************************************************
- *              bind()			(WINSOCK.2)
+ *              bind			(WINSOCK.2)
  */
 INT16 WINAPI WINSOCK_bind16(SOCKET16 s, struct sockaddr *name, INT16 namelen)
 {
@@ -901,7 +902,7 @@ INT16 WINAPI WINSOCK_bind16(SOCKET16 s, struct sockaddr *name, INT16 namelen)
 }
 
 /***********************************************************************
- *		closesocket()		(WSOCK32.3)
+ *		closesocket		(WS2_32.3)
  */
 INT WINAPI WSOCK32_closesocket(SOCKET s)
 {
@@ -911,7 +912,7 @@ INT WINAPI WSOCK32_closesocket(SOCKET s)
 }
 
 /***********************************************************************
- *              closesocket()           (WINSOCK.3)
+ *              closesocket           (WINSOCK.3)
  */
 INT16 WINAPI WINSOCK_closesocket16(SOCKET16 s)
 {
@@ -919,7 +920,7 @@ INT16 WINAPI WINSOCK_closesocket16(SOCKET16 s)
 }
 
 /***********************************************************************
- *		connect()		(WSOCK32.4)
+ *		connect		(WS2_32.4)
  */
 INT WINAPI WSOCK32_connect(SOCKET s, struct sockaddr *name, INT namelen)
 {
@@ -1001,7 +1002,7 @@ connect_success:
 }
 
 /***********************************************************************
- *              connect()               (WINSOCK.4)
+ *              connect               (WINSOCK.4)
  */
 INT16 WINAPI WINSOCK_connect16(SOCKET16 s, struct sockaddr *name, INT16 namelen)
 {
@@ -1009,7 +1010,7 @@ INT16 WINAPI WINSOCK_connect16(SOCKET16 s, struct sockaddr *name, INT16 namelen)
 }
 
 /***********************************************************************
- *		getpeername()		(WSOCK32.5)
+ *		getpeername		(WS2_32.5)
  */
 INT WINAPI WSOCK32_getpeername(SOCKET s, struct sockaddr *name,
                                    INT *namelen)
@@ -1046,7 +1047,7 @@ INT WINAPI WSOCK32_getpeername(SOCKET s, struct sockaddr *name,
 }
 
 /***********************************************************************
- *              getpeername()		(WINSOCK.5)
+ *              getpeername		(WINSOCK.5)
  */
 INT16 WINAPI WINSOCK_getpeername16(SOCKET16 s, struct sockaddr *name,
                                    INT16 *namelen16)
@@ -1063,7 +1064,7 @@ INT16 WINAPI WINSOCK_getpeername16(SOCKET16 s, struct sockaddr *name,
 }
 
 /***********************************************************************
- *		getsockname()		(WSOCK32.6)
+ *		getsockname		(WS2_32.6)
  */
 INT WINAPI WSOCK32_getsockname(SOCKET s, struct sockaddr *name,
                                    INT *namelen)
@@ -1100,7 +1101,7 @@ INT WINAPI WSOCK32_getsockname(SOCKET s, struct sockaddr *name,
 }
 
 /***********************************************************************
- *              getsockname()		(WINSOCK.6)
+ *              getsockname		(WINSOCK.6)
  */
 INT16 WINAPI WINSOCK_getsockname16(SOCKET16 s, struct sockaddr *name,
                                    INT16 *namelen16)
@@ -1124,7 +1125,7 @@ INT16 WINAPI WINSOCK_getsockname16(SOCKET16 s, struct sockaddr *name,
 
 
 /***********************************************************************
- *		getsockopt()		(WSOCK32.7)
+ *		getsockopt		(WS2_32.7)
  */
 INT WINAPI WSOCK32_getsockopt(SOCKET s, INT level, 
                                   INT optname, char *optval, INT *optlen)
@@ -1150,7 +1151,7 @@ INT WINAPI WSOCK32_getsockopt(SOCKET s, INT level,
 }
 
 /***********************************************************************
- *              getsockopt()		(WINSOCK.7)
+ *              getsockopt		(WINSOCK.7)
  */
 INT16 WINAPI WINSOCK_getsockopt16(SOCKET16 s, INT16 level,
                                   INT16 optname, char *optval, INT16 *optlen)
@@ -1165,28 +1166,33 @@ INT16 WINAPI WINSOCK_getsockopt16(SOCKET16 s, INT16 level,
 }
 
 /***********************************************************************
- *		htonl()			(WINSOCK.8)(WSOCK32.8)
+ *		htonl			(WINSOCK.8)
+ *		htonl			(WS2_32.8)
  */
 u_long WINAPI WINSOCK_htonl(u_long hostlong)   { return( htonl(hostlong) ); }
 /***********************************************************************
- *		htons()			(WINSOCK.9)(WSOCK32.9)
+ *		htons			(WINSOCK.9)
+ *		htons			(WS2_32.9)
  */
 u_short WINAPI WINSOCK_htons(u_short hostshort) { return( htons(hostshort) ); }
 /***********************************************************************
- *		inet_addr()		(WINSOCK.10)(WSOCK32.10)
+ *		inet_addr		(WINSOCK.10)
+ *		inet_addr		(WS2_32.11)
  */
 u_long WINAPI WINSOCK_inet_addr(char *cp)      { return( inet_addr(cp) ); }
 /***********************************************************************
- *		ntohl()			(WINSOCK.14)(WSOCK32.14)
+ *		ntohl			(WINSOCK.14)
+ *		ntohl			(WS2_32.14)
  */
 u_long WINAPI WINSOCK_ntohl(u_long netlong)    { return( ntohl(netlong) ); }
 /***********************************************************************
- *		ntohs()			(WINSOCK.15)(WSOCK32.15)
+ *		ntohs			(WINSOCK.15)
+ *		ntohs			(WS2_32.15)
  */
 u_short WINAPI WINSOCK_ntohs(u_short netshort)  { return( ntohs(netshort) ); }
 
 /***********************************************************************
- *		inet_ntoa()		(WINSOCK.11)(WSOCK32.11)
+ *		inet_ntoa		(WS2_32.12)
  */
 char* WINAPI WSOCK32_inet_ntoa(struct in_addr in)
 {
@@ -1212,8 +1218,9 @@ char* WINAPI WSOCK32_inet_ntoa(struct in_addr in)
     return NULL;
 }
 
-/**********************************************************************/
-
+/***********************************************************************
+ *		inet_ntoa		(WINSOCK.11)
+ */
 SEGPTR WINAPI WINSOCK_inet_ntoa16(struct in_addr in)
 {
   char* retVal = WSOCK32_inet_ntoa(in);
@@ -1510,7 +1517,7 @@ int WSAIOCTL_GetInterfaceName(int intNumber, char *intName)
 
 
 /***********************************************************************
- *		ioctlsocket()		(WSOCK32.12)
+ *		ioctlsocket		(WS2_32.10)
  */
 INT WINAPI WSOCK32_ioctlsocket(SOCKET s, LONG cmd, ULONG *argp)
 {
@@ -1580,7 +1587,7 @@ INT WINAPI WSOCK32_ioctlsocket(SOCKET s, LONG cmd, ULONG *argp)
 }
 
 /***********************************************************************
- *              ioctlsocket()           (WINSOCK.12)
+ *              ioctlsocket           (WINSOCK.12)
  */
 INT16 WINAPI WINSOCK_ioctlsocket16(SOCKET16 s, LONG cmd, ULONG *argp)
 {
@@ -1589,7 +1596,7 @@ INT16 WINAPI WINSOCK_ioctlsocket16(SOCKET16 s, LONG cmd, ULONG *argp)
 
 
 /***********************************************************************
- *		listen()		(WSOCK32.13)
+ *		listen		(WS2_32.13)
  */
 INT WINAPI WSOCK32_listen(SOCKET s, INT backlog)
 {
@@ -1613,7 +1620,7 @@ INT WINAPI WSOCK32_listen(SOCKET s, INT backlog)
 }
 
 /***********************************************************************
- *              listen()		(WINSOCK.13)
+ *              listen		(WINSOCK.13)
  */
 INT16 WINAPI WINSOCK_listen16(SOCKET16 s, INT16 backlog)
 {
@@ -1622,7 +1629,7 @@ INT16 WINAPI WINSOCK_listen16(SOCKET16 s, INT16 backlog)
 
 
 /***********************************************************************
- *		recv()			(WSOCK32.16)
+ *		recv			(WS2_32.16)
  */
 INT WINAPI WSOCK32_recv(SOCKET s, char *buf, INT len, INT flags)
 {
@@ -1657,7 +1664,7 @@ INT WINAPI WSOCK32_recv(SOCKET s, char *buf, INT len, INT flags)
 }
 
 /***********************************************************************
- *              recv()			(WINSOCK.16)
+ *              recv			(WINSOCK.16)
  */
 INT16 WINAPI WINSOCK_recv16(SOCKET16 s, char *buf, INT16 len, INT16 flags)
 {
@@ -1666,7 +1673,7 @@ INT16 WINAPI WINSOCK_recv16(SOCKET16 s, char *buf, INT16 len, INT16 flags)
 
 
 /***********************************************************************
- *		recvfrom()		(WSOCK32.17)
+ *		recvfrom		(WS2_32.17)
  */
 INT WINAPI WSOCK32_recvfrom(SOCKET s, char *buf, INT len, INT flags, 
                                 struct sockaddr *from, INT *fromlen32)
@@ -1735,7 +1742,7 @@ INT WINAPI WSOCK32_recvfrom(SOCKET s, char *buf, INT len, INT flags,
 }
 
 /***********************************************************************
- *              recvfrom()		(WINSOCK.17)
+ *              recvfrom		(WINSOCK.17)
  */
 INT16 WINAPI WINSOCK_recvfrom16(SOCKET16 s, char *buf, INT16 len, INT16 flags,
                                 struct sockaddr *from, INT16 *fromlen16)
@@ -1751,7 +1758,7 @@ INT16 WINAPI WINSOCK_recvfrom16(SOCKET16 s, char *buf, INT16 len, INT16 flags,
 }
 
 /***********************************************************************
- *		select()		(WINSOCK.18)(WSOCK32.18)
+ *		__ws_select
  */
 static INT __ws_select( BOOL b32, void *ws_readfds, void *ws_writefds, void *ws_exceptfds,
 			  struct timeval *timeout )
@@ -1812,6 +1819,9 @@ static INT __ws_select( BOOL b32, void *ws_readfds, void *ws_writefds, void *ws_
     return SOCKET_ERROR;
 }
 
+/***********************************************************************
+ *		select			(WINSOCK.18)
+ */
 INT16 WINAPI WINSOCK_select16(INT16 nfds, ws_fd_set16 *ws_readfds,
                               ws_fd_set16 *ws_writefds, ws_fd_set16 *ws_exceptfds,
                               struct timeval *timeout)
@@ -1819,6 +1829,9 @@ INT16 WINAPI WINSOCK_select16(INT16 nfds, ws_fd_set16 *ws_readfds,
     return (INT16)__ws_select( FALSE, ws_readfds, ws_writefds, ws_exceptfds, timeout );
 }
 
+/***********************************************************************
+ *		select			(WINSOCK.18)
+ */
 INT WINAPI WSOCK32_select(INT nfds, ws_fd_set32 *ws_readfds,
                               ws_fd_set32 *ws_writefds, ws_fd_set32 *ws_exceptfds,
                               struct timeval *timeout)
@@ -1829,7 +1842,7 @@ INT WINAPI WSOCK32_select(INT nfds, ws_fd_set32 *ws_readfds,
 
 
 /***********************************************************************
- *		send()			(WSOCK32.19)
+ *		send			(WS2_32.19)
  */
 INT WINAPI WSOCK32_send(SOCKET s, char *buf, INT len, INT flags)
 {
@@ -1864,7 +1877,7 @@ INT WINAPI WSOCK32_send(SOCKET s, char *buf, INT len, INT flags)
 }
 
 /***********************************************************************
- *		WSASend			(WSOCK32.72)
+ *		WSASend			(WS2_32.72)
  */
 INT WINAPI WSASend( SOCKET s, LPWSABUF lpBuffers, DWORD dwBufferCount,
                     LPDWORD lpNumberOfBytesSent, DWORD dwFlags,
@@ -1911,7 +1924,7 @@ INT WINAPI WSASend( SOCKET s, LPWSABUF lpBuffers, DWORD dwBufferCount,
 }
 
 /***********************************************************************
- *              send()			(WINSOCK.19)
+ *              send			(WINSOCK.19)
  */
 INT16 WINAPI WINSOCK_send16(SOCKET16 s, char *buf, INT16 len, INT16 flags)
 {
@@ -1919,7 +1932,7 @@ INT16 WINAPI WINSOCK_send16(SOCKET16 s, char *buf, INT16 len, INT16 flags)
 }
 
 /***********************************************************************
- *		sendto()		(WSOCK32.20)
+ *		sendto		(WS2_32.20)
  */
 INT WINAPI WSOCK32_sendto(SOCKET s, char *buf, INT len, INT flags,
                               struct sockaddr *to, INT tolen)
@@ -1983,7 +1996,7 @@ INT WINAPI WSOCK32_sendto(SOCKET s, char *buf, INT len, INT flags,
 }
 
 /***********************************************************************
- *              sendto()		(WINSOCK.20)
+ *              sendto		(WINSOCK.20)
  */
 INT16 WINAPI WINSOCK_sendto16(SOCKET16 s, char *buf, INT16 len, INT16 flags,
                               struct sockaddr *to, INT16 tolen)
@@ -1992,7 +2005,7 @@ INT16 WINAPI WINSOCK_sendto16(SOCKET16 s, char *buf, INT16 len, INT16 flags,
 }
 
 /***********************************************************************
- *		setsockopt()		(WSOCK32.21)
+ *		setsockopt		(WS2_32.21)
  */
 INT WINAPI WSOCK32_setsockopt(SOCKET16 s, INT level, INT optname, 
                                   char *optval, INT optlen)
@@ -2059,7 +2072,7 @@ INT WINAPI WSOCK32_setsockopt(SOCKET16 s, INT level, INT optname,
 }
 
 /***********************************************************************
- *              setsockopt()		(WINSOCK.21)
+ *              setsockopt		(WINSOCK.21)
  */
 INT16 WINAPI WINSOCK_setsockopt16(SOCKET16 s, INT16 level, INT16 optname,
                                   char *optval, INT16 optlen)
@@ -2070,7 +2083,7 @@ INT16 WINAPI WINSOCK_setsockopt16(SOCKET16 s, INT16 level, INT16 optname,
 
 
 /***********************************************************************
- *		shutdown()		(WSOCK32.22)
+ *		shutdown		(WS2_32.22)
  */
 INT WINAPI WSOCK32_shutdown(SOCKET s, INT how)
 {
@@ -2121,7 +2134,7 @@ INT WINAPI WSOCK32_shutdown(SOCKET s, INT how)
 }
 
 /***********************************************************************
- *              shutdown()		(WINSOCK.22)
+ *              shutdown		(WINSOCK.22)
  */
 INT16 WINAPI WINSOCK_shutdown16(SOCKET16 s, INT16 how)
 {
@@ -2130,7 +2143,7 @@ INT16 WINAPI WINSOCK_shutdown16(SOCKET16 s, INT16 how)
 
 
 /***********************************************************************
- *		socket()		(WSOCK32.23)
+ *		socket		(WS2_32.23)
  */
 SOCKET WINAPI WSOCK32_socket(INT af, INT type, INT protocol)
 {
@@ -2205,7 +2218,7 @@ SOCKET WINAPI WSOCK32_socket(INT af, INT type, INT protocol)
 }
 
 /***********************************************************************
- *              socket()		(WINSOCK.23)
+ *              socket		(WINSOCK.23)
  */
 SOCKET16 WINAPI WINSOCK_socket16(INT16 af, INT16 type, INT16 protocol)
 {
@@ -2224,7 +2237,7 @@ SOCKET16 WINAPI WINSOCK_socket16(INT16 af, INT16 type, INT16 protocol)
 static char*	NULL_STRING = "NULL";
 
 /***********************************************************************
- *		gethostbyaddr()		(WINSOCK.51)(WSOCK32.51)
+ *		__ws_gethostbyaddr
  */
 static WIN_hostent* __ws_gethostbyaddr(const char *addr, int len, int type, int dup_flag)
 {
@@ -2266,6 +2279,9 @@ static WIN_hostent* __ws_gethostbyaddr(const char *addr, int len, int type, int 
     return retval;
 }
 
+/***********************************************************************
+ *		gethostbyaddr		(WINSOCK.51)
+ */
 SEGPTR WINAPI WINSOCK_gethostbyaddr16(const char *addr, INT16 len, INT16 type)
 {
     WIN_hostent* retval;
@@ -2275,6 +2291,9 @@ SEGPTR WINAPI WINSOCK_gethostbyaddr16(const char *addr, INT16 len, INT16 type)
     return SEGPTR_GET(retval);
 }
 
+/***********************************************************************
+ *		gethostbyaddr		(WS2_32.51)
+ */
 WIN_hostent* WINAPI WSOCK32_gethostbyaddr(const char *addr, INT len,
                                                 INT type)
 {
@@ -2284,7 +2303,7 @@ WIN_hostent* WINAPI WSOCK32_gethostbyaddr(const char *addr, INT len,
 }
 
 /***********************************************************************
- *		gethostbyname()		(WINSOCK.52)(WSOCK32.52)
+ *		__ws_gethostbyname
  */
 static WIN_hostent * __ws_gethostbyname(const char *name, int dup_flag)
 {
@@ -2323,6 +2342,9 @@ static WIN_hostent * __ws_gethostbyname(const char *name, int dup_flag)
     return retval;
 }
 
+/***********************************************************************
+ *		gethostbyname		(WINSOCK.52)
+ */
 SEGPTR WINAPI WINSOCK_gethostbyname16(const char *name)
 {
     WIN_hostent* retval;
@@ -2331,6 +2353,9 @@ SEGPTR WINAPI WINSOCK_gethostbyname16(const char *name)
     return SEGPTR_GET(retval);
 }
 
+/***********************************************************************
+ *		gethostbyname		(WS2_32.52)
+ */
 WIN_hostent* WINAPI WSOCK32_gethostbyname(const char* name)
 {
     TRACE("%s\n", (name)?name:NULL_STRING);
@@ -2339,7 +2364,7 @@ WIN_hostent* WINAPI WSOCK32_gethostbyname(const char* name)
 
 
 /***********************************************************************
- *		getprotobyname()	(WINSOCK.53)(WSOCK32.53)
+ *		__ws_getprotobyname
  */
 static WIN_protoent* __ws_getprotobyname(const char *name, int dup_flag)
 {
@@ -2362,6 +2387,9 @@ static WIN_protoent* __ws_getprotobyname(const char *name, int dup_flag)
     return retval;
 }
 
+/***********************************************************************
+ *		getprotobyname		(WINSOCK.53)
+ */
 SEGPTR WINAPI WINSOCK_getprotobyname16(const char *name)
 {
     WIN_protoent* retval;
@@ -2370,6 +2398,9 @@ SEGPTR WINAPI WINSOCK_getprotobyname16(const char *name)
     return SEGPTR_GET(retval);
 }
 
+/***********************************************************************
+ *		getprotobyname		(WS2_32.53)
+ */
 WIN_protoent* WINAPI WSOCK32_getprotobyname(const char* name)
 {
     TRACE("%s\n", (name)?name:NULL_STRING);
@@ -2378,7 +2409,7 @@ WIN_protoent* WINAPI WSOCK32_getprotobyname(const char* name)
 
 
 /***********************************************************************
- *		getprotobynumber()	(WINSOCK.54)(WSOCK32.54)
+ *		__ws_getprotobynumber
  */
 static WIN_protoent* __ws_getprotobynumber(int number, int dup_flag)
 {
@@ -2400,6 +2431,9 @@ static WIN_protoent* __ws_getprotobynumber(int number, int dup_flag)
     return retval;
 }
 
+/***********************************************************************
+ *		getprotobynumber	(WINSOCK.54)
+ */
 SEGPTR WINAPI WINSOCK_getprotobynumber16(INT16 number)
 {
     WIN_protoent* retval;
@@ -2408,6 +2442,9 @@ SEGPTR WINAPI WINSOCK_getprotobynumber16(INT16 number)
     return SEGPTR_GET(retval);
 }
 
+/***********************************************************************
+ *		getprotobynumber	(WS2_32.54)
+ */
 WIN_protoent* WINAPI WSOCK32_getprotobynumber(INT number)
 {
     TRACE("%i\n", number);
@@ -2416,7 +2453,7 @@ WIN_protoent* WINAPI WSOCK32_getprotobynumber(INT number)
 
 
 /***********************************************************************
- *		getservbyname()		(WINSOCK.55)(WSOCK32.55)
+ *		__ws_getservbyname
  */
 static WIN_servent* __ws_getservbyname(const char *name, const char *proto, int dup_flag)
 {
@@ -2446,6 +2483,9 @@ static WIN_servent* __ws_getservbyname(const char *name, const char *proto, int 
     return retval;
 }
 
+/***********************************************************************
+ *		getservbyname		(WINSOCK.55)
+ */
 SEGPTR WINAPI WINSOCK_getservbyname16(const char *name, const char *proto)
 {
     WIN_servent* retval;
@@ -2455,6 +2495,9 @@ SEGPTR WINAPI WINSOCK_getservbyname16(const char *name, const char *proto)
     return SEGPTR_GET(retval);
 }
 
+/***********************************************************************
+ *		getservbyname		(WS2_32.55)
+ */
 WIN_servent* WINAPI WSOCK32_getservbyname(const char *name, const char *proto)
 {
     TRACE("'%s', '%s'\n",
@@ -2464,7 +2507,7 @@ WIN_servent* WINAPI WSOCK32_getservbyname(const char *name, const char *proto)
 
 
 /***********************************************************************
- *		getservbyport()		(WINSOCK.56)(WSOCK32.56)
+ *		__ws_getservbyport
  */
 static WIN_servent* __ws_getservbyport(int port, const char* proto, int dup_flag)
 {
@@ -2489,6 +2532,9 @@ static WIN_servent* __ws_getservbyport(int port, const char* proto, int dup_flag
     return retval;
 }
 
+/***********************************************************************
+ *		getservbyport		(WINSOCK.56)
+ */
 SEGPTR WINAPI WINSOCK_getservbyport16(INT16 port, const char *proto)
 {
     WIN_servent* retval;
@@ -2498,6 +2544,9 @@ SEGPTR WINAPI WINSOCK_getservbyport16(INT16 port, const char *proto)
     return SEGPTR_GET(retval);
 }
 
+/***********************************************************************
+ *		getservbyport		(WS2_32.56)
+ */
 WIN_servent* WINAPI WSOCK32_getservbyport(INT port, const char *proto)
 {
     TRACE("%d (i.e. port %d), '%s'\n",
@@ -2507,7 +2556,7 @@ WIN_servent* WINAPI WSOCK32_getservbyport(INT port, const char *proto)
 
 
 /***********************************************************************
- *              gethostname()           (WSOCK32.57)
+ *              gethostname           (WS2_32.57)
  */
 INT WINAPI WSOCK32_gethostname(char *name, INT namelen)
 {
@@ -2524,7 +2573,7 @@ INT WINAPI WSOCK32_gethostname(char *name, INT namelen)
 }
 
 /***********************************************************************
- *              gethostname()           (WINSOCK.57)
+ *              gethostname           (WINSOCK.57)
  */
 INT16 WINAPI WINSOCK_gethostname16(char *name, INT16 namelen)
 {
@@ -2586,9 +2635,8 @@ int WINAPI WSAEventSelect(SOCKET s, WSAEVENT hEvent, LONG lEvent)
 }
 
 /***********************************************************************
- *      WSAAsyncSelect()		(WINSOCK.101)(WSOCK32.101)
+ *      WINSOCK_DoAsyncSelect
  */
-
 VOID CALLBACK WINSOCK_DoAsyncEvent( ULONG_PTR ptr )
 {
     ws_select_info *info = (ws_select_info*)ptr;
@@ -2647,8 +2695,9 @@ VOID CALLBACK WINSOCK_DoAsyncEvent( ULONG_PTR ptr )
     }
 }
 
-/**********************************************************************/
-
+/***********************************************************************
+ *      WSAAsyncSelect			(WS2_32.101)
+ */
 INT WINAPI WSAAsyncSelect(SOCKET s, HWND hWnd, UINT uMsg, LONG lEvent)
 {
     int fd = _get_sock_fd(s);
@@ -2695,15 +2744,16 @@ INT WINAPI WSAAsyncSelect(SOCKET s, HWND hWnd, UINT uMsg, LONG lEvent)
     return SOCKET_ERROR; 
 }
 
-/**********************************************************************/
-
+/***********************************************************************
+ *      WSAAsyncSelect		(WINSOCK.101)
+ */
 INT16 WINAPI WSAAsyncSelect16(SOCKET16 s, HWND16 hWnd, UINT16 wMsg, LONG lEvent)
 {
     return (INT16)WSAAsyncSelect( s, hWnd, wMsg, lEvent );
 }
 
 /***********************************************************************
- *              WSARecvEx16()			(WINSOCK.1107)
+ *              WSARecvEx			(WINSOCK.1107)
  *
  * See description for WSARecvEx()
  */
@@ -2715,7 +2765,7 @@ INT16     WINAPI WSARecvEx16(SOCKET16 s, char *buf, INT16 len, INT16 *flags) {
 
 
 /***********************************************************************
- *      WSACreateEvent()          (WS2_32.???)
+ *      WSACreateEvent          (WS2_32.31)
  *
  */
 WSAEVENT WINAPI WSACreateEvent(void)
@@ -2727,7 +2777,7 @@ WSAEVENT WINAPI WSACreateEvent(void)
 }
 
 /***********************************************************************
- *      WSACloseEvent()          (WS2_32.???)
+ *      WSACloseEvent          (WS2_32.29)
  *
  */
 BOOL WINAPI WSACloseEvent(WSAEVENT event)
@@ -2738,7 +2788,7 @@ BOOL WINAPI WSACloseEvent(WSAEVENT event)
 }
 
 /***********************************************************************
- *      WSASocketA()          (WS2_32.???)
+ *      WSASocketA          (WS2_32.78)
  *
  */
 SOCKET WINAPI WSASocketA(int af, int type, int protocol,
@@ -2758,7 +2808,7 @@ SOCKET WINAPI WSASocketA(int af, int type, int protocol,
 
 
 /***********************************************************************
- *	__WSAFDIsSet()			(WINSOCK.151)
+ *	__WSAFDIsSet			(WINSOCK.151)
  */
 INT16 WINAPI __WSAFDIsSet16(SOCKET16 s, ws_fd_set16 *set)
 {
@@ -2772,7 +2822,7 @@ INT16 WINAPI __WSAFDIsSet16(SOCKET16 s, ws_fd_set16 *set)
 }                                                            
 
 /***********************************************************************
- *      __WSAFDIsSet()			(WSOCK32.151)
+ *      __WSAFDIsSet			(WS2_32.151)
  */
 INT WINAPI __WSAFDIsSet(SOCKET s, ws_fd_set32 *set)
 {
@@ -2786,7 +2836,8 @@ INT WINAPI __WSAFDIsSet(SOCKET s, ws_fd_set32 *set)
 }
 
 /***********************************************************************
- *      WSAIsBlocking()			(WINSOCK.114)(WSOCK32.114)
+ *      WSAIsBlocking			(WINSOCK.114)
+ *      WSAIsBlocking			(WS2_32.114)
  */
 BOOL WINAPI WSAIsBlocking(void)
 {
@@ -2803,7 +2854,8 @@ BOOL WINAPI WSAIsBlocking(void)
 }
 
 /***********************************************************************
- *      WSACancelBlockingCall()		(WINSOCK.113)(WSOCK32.113)
+ *      WSACancelBlockingCall		(WINSOCK.113)
+ *      WSACancelBlockingCall		(WS2_32.113)
  */
 INT WINAPI WSACancelBlockingCall(void)
 {
@@ -2813,7 +2865,7 @@ INT WINAPI WSACancelBlockingCall(void)
 
 
 /***********************************************************************
- *      WSASetBlockingHook16()		(WINSOCK.109)
+ *      WSASetBlockingHook		(WINSOCK.109)
  */
 FARPROC16 WINAPI WSASetBlockingHook16(FARPROC16 lpBlockFunc)
 {
@@ -2837,7 +2889,7 @@ FARPROC WINAPI WSASetBlockingHook(FARPROC lpBlockFunc)
 
 
 /***********************************************************************
- *      WSAUnhookBlockingHook16()	(WINSOCK.110)
+ *      WSAUnhookBlockingHook	(WINSOCK.110)
  */
 INT16 WINAPI WSAUnhookBlockingHook16(void)
 {

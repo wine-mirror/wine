@@ -21,7 +21,7 @@ DEFAULT_DEBUG_CHANNEL(wnet);
  */
 
 /**************************************************************************
- *              WNetOpenJob16       [USER.501]
+ *              WNetOpenJob       [USER.501]
  */
 WORD WINAPI WNetOpenJob16( LPSTR szQueue, LPSTR szJobTitle, WORD nCopies, LPINT16 pfh )
 {
@@ -31,7 +31,7 @@ WORD WINAPI WNetOpenJob16( LPSTR szQueue, LPSTR szJobTitle, WORD nCopies, LPINT1
 }
 
 /**************************************************************************
- *              WNetCloseJob16      [USER.502]
+ *              WNetCloseJob      [USER.502]
  */
 WORD WINAPI WNetCloseJob16( WORD fh, LPINT16 pidJob, LPSTR szQueue )
 {
@@ -40,7 +40,7 @@ WORD WINAPI WNetCloseJob16( WORD fh, LPINT16 pidJob, LPSTR szQueue )
 }
 
 /**************************************************************************
- *              WNetWriteJob16      [USER.524]
+ *              WNetWriteJob      [USER.524]
  */
 WORD WINAPI WNetWriteJob16( HANDLE16 hJob, LPSTR lpData, LPINT16 lpcbData )
 {
@@ -49,7 +49,7 @@ WORD WINAPI WNetWriteJob16( HANDLE16 hJob, LPSTR lpData, LPINT16 lpcbData )
 }
 
 /**************************************************************************
- *              WNetAbortJob16       [USER.503]
+ *              WNetAbortJob       [USER.503]
  */
 WORD WINAPI WNetAbortJob16( LPSTR szQueue, WORD wJobId )
 {
@@ -58,7 +58,7 @@ WORD WINAPI WNetAbortJob16( LPSTR szQueue, WORD wJobId )
 }
 
 /**************************************************************************
- *              WNetHoldJob16       [USER.504]
+ *              WNetHoldJob       [USER.504]
  */
 WORD WINAPI WNetHoldJob16( LPSTR szQueue, WORD wJobId )
 {
@@ -67,7 +67,7 @@ WORD WINAPI WNetHoldJob16( LPSTR szQueue, WORD wJobId )
 }
 
 /**************************************************************************
- *              WNetReleaseJob16       [USER.505]
+ *              WNetReleaseJob       [USER.505]
  */
 WORD WINAPI WNetReleaseJob16( LPSTR szQueue, WORD wJobId )
 {
@@ -76,7 +76,7 @@ WORD WINAPI WNetReleaseJob16( LPSTR szQueue, WORD wJobId )
 }
 
 /**************************************************************************
- *              WNetCancelJob16       [USER.506]
+ *              WNetCancelJob       [USER.506]
  */
 WORD WINAPI WNetCancelJob16( LPSTR szQueue, WORD wJobId )
 {
@@ -85,7 +85,7 @@ WORD WINAPI WNetCancelJob16( LPSTR szQueue, WORD wJobId )
 }
 
 /**************************************************************************
- *              WNetSetJobCopies16     [USER.507]
+ *              WNetSetJobCopies     [USER.507]
  */
 WORD WINAPI WNetSetJobCopies16( LPSTR szQueue, WORD wJobId, WORD nCopies )
 {
@@ -94,7 +94,7 @@ WORD WINAPI WNetSetJobCopies16( LPSTR szQueue, WORD wJobId, WORD nCopies )
 }
 
 /**************************************************************************
- *              WNetWatchQueue16       [USER.508]
+ *              WNetWatchQueue       [USER.508]
  */
 WORD WINAPI WNetWatchQueue16( HWND16 hWnd, LPSTR szLocal, LPSTR szUser, WORD nQueue )
 {
@@ -104,7 +104,7 @@ WORD WINAPI WNetWatchQueue16( HWND16 hWnd, LPSTR szLocal, LPSTR szUser, WORD nQu
 }
 
 /**************************************************************************
- *              WNetUnwatchQueue16     [USER.509]
+ *              WNetUnwatchQueue     [USER.509]
  */
 WORD WINAPI WNetUnwatchQueue16( LPSTR szQueue )
 {
@@ -113,7 +113,7 @@ WORD WINAPI WNetUnwatchQueue16( LPSTR szQueue )
 }
 
 /**************************************************************************
- *              WNetLockQueueData16       [USER.510]
+ *              WNetLockQueueData       [USER.510]
  */
 WORD WINAPI WNetLockQueueData16( LPSTR szQueue, LPSTR szUser, 
                                  LPQUEUESTRUCT16 *lplpQueueStruct )
@@ -124,7 +124,7 @@ WORD WINAPI WNetLockQueueData16( LPSTR szQueue, LPSTR szUser,
 }
 
 /**************************************************************************
- *              WNetUnlockQueueData16       [USER.511]
+ *              WNetUnlockQueueData       [USER.511]
  */
 WORD WINAPI WNetUnlockQueueData16( LPSTR szQueue )
 {
@@ -138,7 +138,7 @@ WORD WINAPI WNetUnlockQueueData16( LPSTR szQueue )
  */
 
 /********************************************************************
- *  WNetAddConnection16 [USER.517]  Directs a local device to net
+ *  WNetAddConnection [USER.517]  Directs a local device to net
  * 
  * Redirects a local device (either a disk drive or printer port)
  * to a shared device on a remote server.
@@ -152,7 +152,7 @@ WORD WINAPI WNetAddConnection16( LPSTR lpNetPath, LPSTR lpPassWord,
 }
 
 /********************************************************************
- *   WNetCancelConnection16 [USER.518]  undirects a local device
+ *   WNetCancelConnection [USER.518]  undirects a local device
  */
 WORD WINAPI WNetCancelConnection16( LPSTR lpName, BOOL16 bForce )
 {
@@ -161,7 +161,7 @@ WORD WINAPI WNetCancelConnection16( LPSTR lpName, BOOL16 bForce )
 }
 
 /********************************************************************
- * WNetGetConnection16 [USER.512] reverse-resolves a local device
+ * WNetGetConnection [USER.512] reverse-resolves a local device
  */
 WORD WINAPI WNetGetConnection16( LPSTR lpLocalName, 
                                  LPSTR lpRemoteName, UINT16 *cbRemoteName )
@@ -192,7 +192,7 @@ WORD WINAPI WNetGetConnection16( LPSTR lpLocalName,
 }
 
 /**************************************************************************
- *              WNetRestoreConnection16       [USER.523]
+ *              WNetRestoreConnection       [USER.523]
  */
 WORD WINAPI WNetRestoreConnection16( HWND16 hwndOwner, LPSTR lpszDevice )
 {
@@ -206,7 +206,7 @@ WORD WINAPI WNetRestoreConnection16( HWND16 hwndOwner, LPSTR lpszDevice )
  */
 
 /**************************************************************************
- *		WNetGetCaps16		[USER.513]
+ *		WNetGetCaps		[USER.513]
  */
 WORD WINAPI WNetGetCaps16( WORD capability )
 {
@@ -285,7 +285,7 @@ WORD WINAPI WNetGetCaps16( WORD capability )
  */
 
 /**************************************************************************
- *		WNetGetUser16			[USER.516]
+ *		WNetGetUser			[USER.516]
  */
 WORD WINAPI WNetGetUser16( LPCSTR lpName, LPSTR szUser, LPINT16 nBufferSize )
 {
@@ -299,7 +299,7 @@ WORD WINAPI WNetGetUser16( LPCSTR lpName, LPSTR szUser, LPINT16 nBufferSize )
  */
 
 /**************************************************************************
- *              WNetDeviceMode16       [USER.514]
+ *              WNetDeviceMode       [USER.514]
  */
 WORD WINAPI WNetDeviceMode16( HWND16 hWndOwner )
 {
@@ -308,7 +308,7 @@ WORD WINAPI WNetDeviceMode16( HWND16 hWndOwner )
 }
 
 /**************************************************************************
- *              WNetBrowseDialog16       [USER.515]
+ *              WNetBrowseDialog       [USER.515]
  */
 WORD WINAPI WNetBrowseDialog16( HWND16 hParent, WORD nType, LPSTR szPath )
 {
@@ -326,7 +326,7 @@ WORD WINAPI WNetConnectDialog( HWND16 hWndParent, WORD iType )
 }
 
 /**************************************************************************
- *              WNetDisconnectDialog16       [USER.526]
+ *              WNetDisconnectDialog       [USER.526]
  */
 WORD WINAPI WNetDisconnectDialog16( HWND16 hwndOwner, WORD iType )
 {
@@ -335,7 +335,7 @@ WORD WINAPI WNetDisconnectDialog16( HWND16 hwndOwner, WORD iType )
 }
 
 /**************************************************************************
- *              WNetConnectionDialog16     [USER.527]
+ *              WNetConnectionDialog     [USER.527]
  */
 WORD WINAPI WNetConnectionDialog16( HWND16 hWndParent, WORD iType )
 {
@@ -344,7 +344,7 @@ WORD WINAPI WNetConnectionDialog16( HWND16 hWndParent, WORD iType )
 }
 
 /**************************************************************************
- *              WNetViewQueueDialog16       [USER.528]
+ *              WNetViewQueueDialog       [USER.528]
  */
 WORD WINAPI WNetViewQueueDialog16( HWND16 hwndOwner, LPSTR lpszQueue )
 {
@@ -353,7 +353,7 @@ WORD WINAPI WNetViewQueueDialog16( HWND16 hwndOwner, LPSTR lpszQueue )
 }
 
 /**************************************************************************
- *              WNetPropertyDialog16       [USER.529]
+ *              WNetPropertyDialog       [USER.529]
  */
 WORD WINAPI WNetPropertyDialog16( HWND16 hwndParent, WORD iButton,
                                   WORD nPropSel, LPSTR lpszName, WORD nType )
@@ -364,7 +364,7 @@ WORD WINAPI WNetPropertyDialog16( HWND16 hwndParent, WORD iButton,
 }
 
 /**************************************************************************
- *              WNetGetPropertyText16       [USER.532]
+ *              WNetGetPropertyText       [USER.532]
  */
 WORD WINAPI WNetGetPropertyText16( WORD iButton, WORD nPropSel, LPSTR lpszName,
                                    LPSTR lpszButtonName, WORD cbButtonName, WORD nType )
@@ -380,7 +380,7 @@ WORD WINAPI WNetGetPropertyText16( WORD iButton, WORD nPropSel, LPSTR lpszName,
  */
 
 /*********************************************************************
- *  WNetGetDirectoryType16 [USER.530]  Decides whether resource is local
+ *  WNetGetDirectoryType [USER.530]  Decides whether resource is local
  *
  * RETURNS
  *    on success,  puts one of the following in *lpType:
@@ -401,7 +401,7 @@ WORD WINAPI WNetGetDirectoryType16( LPSTR lpName, LPINT16 lpType )
 }
 
 /**************************************************************************
- *              WNetDirectoryNotify16       [USER.531]
+ *              WNetDirectoryNotify       [USER.531]
  */
 WORD WINAPI WNetDirectoryNotify16( HWND16 hwndOwner, LPSTR lpDir, WORD wOper )
 {
@@ -418,7 +418,7 @@ WORD WINAPI WNetDirectoryNotify16( HWND16 hwndOwner, LPSTR lpDir, WORD wOper )
  */
 
 /**************************************************************************
- *              WNetGetError16       [USER.519]
+ *              WNetGetError       [USER.519]
  */
 WORD WINAPI WNetGetError16( LPINT16 nError )
 {
@@ -427,7 +427,7 @@ WORD WINAPI WNetGetError16( LPINT16 nError )
 }
 
 /**************************************************************************
- *              WNetGetErrorText16       [USER.520]
+ *              WNetGetErrorText       [USER.520]
  */
 WORD WINAPI WNetGetErrorText16( WORD nError, LPSTR lpBuffer, LPINT16 nBufferSize )
 {
@@ -436,7 +436,7 @@ WORD WINAPI WNetGetErrorText16( WORD nError, LPSTR lpBuffer, LPINT16 nBufferSize
 }
 
 /**************************************************************************
- *              WNetErrorText16       [USER.499]
+ *              WNetErrorText       [USER.499]
  */
 WORD WINAPI WNetErrorText16( WORD nError, LPSTR lpszText, WORD cbText )
 {

@@ -359,7 +359,7 @@ BOOLEAN WINAPI RtlGetNtProductType(LPDWORD type)
 }
 
 /**************************************************************************
- *                 NTDLL_chkstk				[NTDLL.@]
+ *                 _chkstk				[NTDLL.@]
  *
  * Glorified "enter xxxx".
  */
@@ -369,7 +369,7 @@ void WINAPI NTDLL_chkstk( CONTEXT86 *context )
 }
 
 /**************************************************************************
- *                 NTDLL_alloca_probe		        [NTDLL.@]
+ *                 _alloca_probe		        [NTDLL.@]
  *
  * Glorified "enter xxxx".
  */

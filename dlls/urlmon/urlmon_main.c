@@ -14,7 +14,7 @@
 DEFAULT_DEBUG_CHANNEL(win32);
 
 /***********************************************************************
- *		URLMON_DllInstall (URLMON.@)
+ *		DllInstall (URLMON.@)
  */
 HRESULT WINAPI URLMON_DllInstall(BOOL bInstall, LPCWSTR cmdline)
 {

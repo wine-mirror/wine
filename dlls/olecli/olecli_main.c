@@ -27,7 +27,7 @@ OLESTATUS WINAPI OleSavedClientDoc(LHCLIENTDOC hDoc)
 }
 
 /******************************************************************************
- *		OleSavedClientDoc16	[OLECLI.45]
+ *		OleSavedClientDoc	[OLECLI.45]
  */
 OLESTATUS WINAPI OleSavedClientDoc16(LHCLIENTDOC hDoc)
 {
@@ -36,7 +36,7 @@ OLESTATUS WINAPI OleSavedClientDoc16(LHCLIENTDOC hDoc)
 }
 
 /******************************************************************************
- *		OleRegisterClientDoc16	[OLECLI.41]
+ *		OleRegisterClientDoc	[OLECLI.41]
  */
 OLESTATUS WINAPI OleRegisterClientDoc16(LPCSTR classname, LPCSTR docname,
                                         LONG reserved, LHCLIENTDOC *hRet )
@@ -58,7 +58,7 @@ OLESTATUS WINAPI OleRegisterClientDoc(LPCSTR classname, LPCSTR docname,
 }
 
 /******************************************************************************
- *		OleRenameClientDoc16	[OLECLI.43]
+ *		OleRenameClientDoc	[OLECLI.43]
  */
 OLESTATUS WINAPI OleRenameClientDoc16(LHCLIENTDOC hDoc, LPCSTR newName)
 {
@@ -76,7 +76,7 @@ OLESTATUS WINAPI OleRenameClientDoc(LHCLIENTDOC hDoc, LPCSTR newName)
 }
 
 /******************************************************************************
- *		OleRevokeClientDoc16	[OLECLI.42]
+ *		OleRevokeClientDoc	[OLECLI.42]
  */
 OLESTATUS WINAPI OleRevokeClientDoc16(LHCLIENTDOC hServerDoc)
 {
@@ -94,7 +94,7 @@ OLESTATUS WINAPI OleRevokeClientDoc(LHCLIENTDOC hServerDoc)
 }
 
 /******************************************************************************
- *		OleRevertClientDoc16	[OLECLI.44]
+ *		OleRevertClientDoc	[OLECLI.44]
  */
 OLESTATUS WINAPI OleRevertClientDoc16(LHCLIENTDOC hServerDoc)
 {
@@ -103,7 +103,7 @@ OLESTATUS WINAPI OleRevertClientDoc16(LHCLIENTDOC hServerDoc)
 }
 
 /******************************************************************************
- *		OleEnumObjects16	[OLECLI.47]
+ *		OleEnumObjects	[OLECLI.47]
  */
 OLESTATUS WINAPI OleEnumObjects16(LHCLIENTDOC hServerDoc, SEGPTR data)
 {
@@ -113,7 +113,7 @@ OLESTATUS WINAPI OleEnumObjects16(LHCLIENTDOC hServerDoc, SEGPTR data)
 }
 
 /******************************************************************************
- *	     OleCreateLinkFromClip16	[OLECLI.11]
+ *	     OleCreateLinkFromClip	[OLECLI.11]
  */
 OLESTATUS WINAPI OleCreateLinkFromClip16( LPCSTR name, SEGPTR olecli, LHCLIENTDOC hclientdoc,
                                           LPCSTR xname, SEGPTR lpoleob, UINT16 render,
@@ -138,7 +138,7 @@ OLESTATUS WINAPI OleCreateLinkFromClip(
 }
 
 /******************************************************************************
- *           OleQueryLinkFromClip16	[OLECLI.9]
+ *           OleQueryLinkFromClip	[OLECLI.9]
  */
 OLESTATUS WINAPI OleQueryLinkFromClip16(LPCSTR name, UINT16 render, UINT16 clipformat)
 {
@@ -155,7 +155,7 @@ OLESTATUS WINAPI OleQueryLinkFromClip(LPCSTR name,OLEOPT_RENDER render,OLECLIPFO
 }
 
 /******************************************************************************
- *           OleQueryCreateFromClip16	[OLECLI.10]
+ *           OleQueryCreateFromClip	[OLECLI.10]
  */
 OLESTATUS WINAPI OleQueryCreateFromClip16(LPCSTR name, UINT16 render, UINT16 clipformat)
 {
@@ -182,7 +182,7 @@ BOOL WINAPI OleIsDcMeta(HDC hdc)
 
 
 /******************************************************************************
- *		OleIsDcMeta16	[OLECLI.60]
+ *		OleIsDcMeta	[OLECLI.60]
  */
 BOOL16 WINAPI OleIsDcMeta16(HDC16 hdc)
 {
@@ -199,7 +199,7 @@ OLESTATUS WINAPI OleSetHostNames(LPOLEOBJECT oleob,LPCSTR name1,LPCSTR name2) {
 }
 
 /******************************************************************************
- *		OleQueryType16	[OLECLI.14]
+ *		OleQueryType	[OLECLI.14]
  */
 OLESTATUS WINAPI OleQueryType16(LPOLEOBJECT oleob,  SEGPTR xlong) {
 	FIXME("(%p, %p): stub!\n", oleob, MapSL(xlong));
@@ -219,7 +219,7 @@ OLESTATUS WINAPI OleQueryType(LPOLEOBJECT oleob,LONG*xlong) {
 }
 
 /******************************************************************************
- *		OleCreateFromClip16	[OLECLI.12]
+ *		OleCreateFromClip	[OLECLI.12]
  */
 OLESTATUS WINAPI OleCreateFromClip16( LPCSTR name, SEGPTR olecli, LHCLIENTDOC hclientdoc,
                                       LPCSTR xname, SEGPTR lpoleob,

@@ -238,7 +238,7 @@ void WINAPI DebugBreak(void)
 
 
 /***********************************************************************
- *           DebugBreak16   (KERNEL.203)
+ *           DebugBreak   (KERNEL.203)
  *
  *  Raises an expection in a 16 bit application so that a debugger (if attached)
  *  can take some action.

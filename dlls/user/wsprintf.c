@@ -547,7 +547,7 @@ INT WINAPI wvsnprintfW( LPWSTR buffer, UINT maxlen, LPCWSTR spec, va_list args )
 
 
 /***********************************************************************
- *           wvsprintf16   (USER.421)
+ *           wvsprintf   (USER.421)
  */
 INT16 WINAPI wvsprintf16( LPSTR buffer, LPCSTR spec, LPCVOID args )
 {
@@ -580,7 +580,7 @@ INT WINAPI wvsprintfW( LPWSTR buffer, LPCWSTR spec, va_list args )
 
 
 /***********************************************************************
- *           wsprintf16   (USER.420)
+ *           _wsprintf   (USER.420)
  */
 INT16 WINAPIV wsprintf16(void)
 {

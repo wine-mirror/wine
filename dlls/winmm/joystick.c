@@ -242,7 +242,7 @@ MMRESULT WINAPI joyGetPosEx(UINT wID, LPJOYINFOEX lpInfo)
 }
 
 /**************************************************************************
- *                              joyGetPosEx16           [MMSYSTEM.]
+ *                              joyGetPosEx           [MMSYSTEM.110]
  */
 MMRESULT16 WINAPI joyGetPosEx16(UINT16 wID, LPJOYINFOEX lpInfo)
 {
@@ -268,7 +268,7 @@ MMRESULT WINAPI joyGetPos(UINT wID, LPJOYINFO lpInfo)
 }
 
 /**************************************************************************
- * 				joyGetPos16	       	[MMSYSTEM.103]
+ * 				joyGetPos	       	[MMSYSTEM.103]
  */
 MMRESULT16 WINAPI joyGetPos16(UINT16 wID, LPJOYINFO16 lpInfo)
 {

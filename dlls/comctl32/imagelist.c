@@ -1667,7 +1667,7 @@ ImageList_GetImageRect (HIMAGELIST himl, INT i, LPRECT lpRect)
 
 
 /*************************************************************************
- * ImageList_LoadImageA [COMCTL32.65]
+ * ImageList_LoadImage  [COMCTL32.64]
  * ImageList_LoadImageA [COMCTL32.65]
  *
  * Creates an image list from a bitmap, icon or cursor.

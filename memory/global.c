@@ -389,7 +389,7 @@ HGLOBAL16 WINAPI GlobalFree16(
 
 
 /***********************************************************************
- *           WIN16_GlobalLock16   (KERNEL.18)
+ *           GlobalLock   (KERNEL.18)
  *
  * This is the GlobalLock16() function used by 16-bit code.
  */
@@ -505,7 +505,7 @@ DWORD WINAPI GlobalSize16(
 
 
 /***********************************************************************
- *           GlobalHandle16   (KERNEL.21)
+ *           GlobalHandle   (KERNEL.21)
  * NOTES
  *	Why is GlobalHandleToSel used here with the sel as input?
  *
@@ -566,7 +566,7 @@ UINT16 WINAPI GlobalFlags16(
 
 
 /***********************************************************************
- *           LockSegment16   (KERNEL.23)
+ *           LockSegment   (KERNEL.23)
  */
 HGLOBAL16 WINAPI LockSegment16( HGLOBAL16 handle )
 {
@@ -582,7 +582,7 @@ HGLOBAL16 WINAPI LockSegment16( HGLOBAL16 handle )
 
 
 /***********************************************************************
- *           UnlockSegment16   (KERNEL.24)
+ *           UnlockSegment   (KERNEL.24)
  */
 void WINAPI UnlockSegment16( HGLOBAL16 handle )
 {
@@ -598,7 +598,7 @@ void WINAPI UnlockSegment16( HGLOBAL16 handle )
 
 
 /***********************************************************************
- *           GlobalCompact16   (KERNEL.25)
+ *           GlobalCompact   (KERNEL.25)
  */
 DWORD WINAPI GlobalCompact16( DWORD desired )
 {
@@ -642,7 +642,7 @@ BOOL16 WINAPI GlobalUnWire16( HGLOBAL16 handle )
 
 
 /***********************************************************************
- *           SetSwapAreaSize16   (KERNEL.106)
+ *           SetSwapAreaSize   (KERNEL.106)
  */
 LONG WINAPI SetSwapAreaSize16( WORD size )
 {
@@ -674,7 +674,7 @@ HGLOBAL16 WINAPI GlobalLRUNewest16( HGLOBAL16 handle )
 
 
 /***********************************************************************
- *           GetFreeSpace16   (KERNEL.169)
+ *           GetFreeSpace   (KERNEL.169)
  */
 DWORD WINAPI GetFreeSpace16( UINT16 wFlags )
 {
@@ -1547,7 +1547,7 @@ VOID WINAPI GlobalMemoryStatus(
 }
 
 /***********************************************************************
- *           A20Proc16   (KERNEL.165)
+ *           A20Proc   (KERNEL.165)
  */
 void WINAPI A20Proc16( WORD unused )
 {
@@ -1555,7 +1555,7 @@ void WINAPI A20Proc16( WORD unused )
 }
 
 /***********************************************************************
- *           LimitEMSPages16   (KERNEL.156)
+ *           LimitEMSPages   (KERNEL.156)
  */
 DWORD WINAPI LimitEMSPages16( DWORD unused )
 {

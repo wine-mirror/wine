@@ -78,7 +78,7 @@ HBITMAP16 WINAPI CreateUserDiscardableBitmap16( WORD dummy,
 
 /***********************************************************************
  *           CreateBitmap    (GDI.48)
- *           CreateBitmap16    (DISPLAY.48)
+ *           CreateBitmap    (DISPLAY.48)
  */
 HBITMAP16 WINAPI CreateBitmap16( INT16 width, INT16 height, UINT16 planes,
                                  UINT16 bpp, LPCVOID bits )

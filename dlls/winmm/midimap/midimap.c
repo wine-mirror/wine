@@ -514,7 +514,7 @@ static	DWORD	MIDIMAP_drvClose(DWORD dwDevID)
 }
 
 /**************************************************************************
- * 				MIDIMAP_DriverProc		[internal]
+ * 				DriverProc		[internal]
  */
 LONG CALLBACK	MIDIMAP_DriverProc(DWORD dwDevID, HDRVR hDriv, DWORD wMsg, 
 				   DWORD dwParam1, DWORD dwParam2)

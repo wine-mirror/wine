@@ -56,7 +56,7 @@ typedef struct
 
 
 /******************************************************************************
- *            DdeInitialize16   (DDEML.2)
+ *            DdeInitialize   (DDEML.2)
  */
 UINT16 WINAPI DdeInitialize16(LPDWORD pidInst, PFNCALLBACK16 pfnCallback,
 			      DWORD afCmd, DWORD ulRes)
@@ -66,7 +66,7 @@ UINT16 WINAPI DdeInitialize16(LPDWORD pidInst, PFNCALLBACK16 pfnCallback,
 }
 
 /*****************************************************************
- *            DdeUninitialize16   (DDEML.3)
+ *            DdeUninitialize   (DDEML.3)
  */
 BOOL16 WINAPI DdeUninitialize16(DWORD idInst)
 {
@@ -75,7 +75,7 @@ BOOL16 WINAPI DdeUninitialize16(DWORD idInst)
 }
 
 /*****************************************************************
- * DdeConnectList16 [DDEML.4]
+ * DdeConnectList [DDEML.4]
  */
 
 HCONVLIST WINAPI DdeConnectList16(DWORD idInst, HSZ hszService, HSZ hszTopic,
@@ -86,7 +86,7 @@ HCONVLIST WINAPI DdeConnectList16(DWORD idInst, HSZ hszService, HSZ hszTopic,
 }
 
 /*****************************************************************
- * DdeQueryNextServer16 [DDEML.5]
+ * DdeQueryNextServer [DDEML.5]
  */
 HCONV WINAPI DdeQueryNextServer16(HCONVLIST hConvList, HCONV hConvPrev)
 {
@@ -103,7 +103,7 @@ BOOL16 WINAPI DdeDisconnectList16(HCONVLIST hConvList)
 
 
 /*****************************************************************
- *		DdeQueryString16 (DDEML.23)
+ *		DdeQueryString (DDEML.23)
  */
 DWORD WINAPI DdeQueryString16(DWORD idInst, HSZ hsz, LPSTR lpsz, DWORD cchMax, INT16 codepage)
 {
@@ -113,7 +113,7 @@ DWORD WINAPI DdeQueryString16(DWORD idInst, HSZ hsz, LPSTR lpsz, DWORD cchMax, I
 }
 
 /*****************************************************************
- *            DdeConnect16   (DDEML.7)
+ *            DdeConnect   (DDEML.7)
  */
 HCONV WINAPI DdeConnect16(DWORD idInst, HSZ hszService, HSZ hszTopic,
 			  LPCONVCONTEXT16 pCC16)
@@ -133,7 +133,7 @@ HCONV WINAPI DdeConnect16(DWORD idInst, HSZ hszService, HSZ hszTopic,
 }
 
 /*****************************************************************
- *            DdeDisconnect16   (DDEML.8)
+ *            DdeDisconnect   (DDEML.8)
  */
 BOOL16 WINAPI DdeDisconnect16(HCONV hConv)
 {
@@ -141,7 +141,7 @@ BOOL16 WINAPI DdeDisconnect16(HCONV hConv)
 }
 
 /*****************************************************************
- *            DdeSetUserHandle16 (DDEML.10)
+ *            DdeSetUserHandle (DDEML.10)
  */
 BOOL16 WINAPI DdeSetUserHandle16(HCONV hConv, DWORD id, DWORD hUser)
 {
@@ -150,7 +150,7 @@ BOOL16 WINAPI DdeSetUserHandle16(HCONV hConv, DWORD id, DWORD hUser)
 }
 
 /*****************************************************************
- *            DdeCreateDataHandle16 (DDEML.14)
+ *            DdeCreateDataHandle (DDEML.14)
  */
 HDDEDATA WINAPI DdeCreateDataHandle16(DWORD idInst, LPBYTE pSrc, DWORD cb, 
 				      DWORD cbOff, HSZ hszItem, UINT16 wFmt, 
@@ -160,7 +160,7 @@ HDDEDATA WINAPI DdeCreateDataHandle16(DWORD idInst, LPBYTE pSrc, DWORD cb,
 }
 
 /*****************************************************************
- *            DdeCreateStringHandle16   (DDEML.21)
+ *            DdeCreateStringHandle   (DDEML.21)
  */
 HSZ WINAPI DdeCreateStringHandle16(DWORD idInst, LPCSTR str, INT16 codepage)
 {
@@ -174,7 +174,7 @@ HSZ WINAPI DdeCreateStringHandle16(DWORD idInst, LPCSTR str, INT16 codepage)
 }
 
 /*****************************************************************
- *            DdeFreeStringHandle16   (DDEML.22)
+ *            DdeFreeStringHandle   (DDEML.22)
  */
 BOOL16 WINAPI DdeFreeStringHandle16(DWORD idInst, HSZ hsz)
 {
@@ -183,7 +183,7 @@ BOOL16 WINAPI DdeFreeStringHandle16(DWORD idInst, HSZ hsz)
 }
 
 /*****************************************************************
- *            DdeFreeDataHandle16   (DDEML.19)
+ *            DdeFreeDataHandle   (DDEML.19)
  */
 BOOL16 WINAPI DdeFreeDataHandle16(HDDEDATA hData)
 {
@@ -191,7 +191,7 @@ BOOL16 WINAPI DdeFreeDataHandle16(HDDEDATA hData)
 }
 
 /*****************************************************************
- *            DdeKeepStringHandle16   (DDEML.24)
+ *            DdeKeepStringHandle   (DDEML.24)
  */
 BOOL16 WINAPI DdeKeepStringHandle16(DWORD idInst, HSZ hsz)
 {
@@ -199,7 +199,7 @@ BOOL16 WINAPI DdeKeepStringHandle16(DWORD idInst, HSZ hsz)
 }
 
 /*****************************************************************
- *            DdeClientTransaction16  (DDEML.11)
+ *            DdeClientTransaction  (DDEML.11)
  */
 HDDEDATA WINAPI DdeClientTransaction16(LPVOID pData, DWORD cbData,
 				       HCONV hConv, HSZ hszItem, UINT16 wFmt,
@@ -212,7 +212,7 @@ HDDEDATA WINAPI DdeClientTransaction16(LPVOID pData, DWORD cbData,
 
 /*****************************************************************
  *
- *            DdeAbandonTransaction16 (DDEML.12)
+ *            DdeAbandonTransaction (DDEML.12)
  *
  */
 BOOL16 WINAPI DdeAbandonTransaction16(DWORD idInst, HCONV hConv, 
@@ -223,7 +223,7 @@ BOOL16 WINAPI DdeAbandonTransaction16(DWORD idInst, HCONV hConv,
 }
 
 /*****************************************************************
- * DdePostAdvise16 [DDEML.13]
+ * DdePostAdvise [DDEML.13]
  */
 BOOL16 WINAPI DdePostAdvise16(DWORD idInst, HSZ hszTopic, HSZ hszItem)
 {
@@ -231,7 +231,7 @@ BOOL16 WINAPI DdePostAdvise16(DWORD idInst, HSZ hszTopic, HSZ hszItem)
 }
 
 /*****************************************************************
- *            DdeAddData16 (DDEML.15)
+ *            DdeAddData (DDEML.15)
  */
 HDDEDATA WINAPI DdeAddData16(HDDEDATA hData, LPBYTE pSrc, DWORD cb,
 			     DWORD cbOff)
@@ -240,7 +240,7 @@ HDDEDATA WINAPI DdeAddData16(HDDEDATA hData, LPBYTE pSrc, DWORD cb,
 }
 
 /*****************************************************************
- * DdeGetData16 [DDEML.16]
+ * DdeGetData [DDEML.16]
  */
 DWORD WINAPI DdeGetData16(
      HDDEDATA hData,
@@ -252,7 +252,7 @@ DWORD WINAPI DdeGetData16(
 }
 
 /*****************************************************************
- *            DdeAccessData16 (DDEML.17)
+ *            DdeAccessData (DDEML.17)
  */
 LPBYTE WINAPI DdeAccessData16(HDDEDATA hData, LPDWORD pcbDataSize)
 {
@@ -260,7 +260,7 @@ LPBYTE WINAPI DdeAccessData16(HDDEDATA hData, LPDWORD pcbDataSize)
 }
 
 /*****************************************************************
- *            DdeUnaccessData16 (DDEML.18)
+ *            DdeUnaccessData (DDEML.18)
  */
 BOOL16 WINAPI DdeUnaccessData16(HDDEDATA hData)
 {
@@ -268,7 +268,7 @@ BOOL16 WINAPI DdeUnaccessData16(HDDEDATA hData)
 }
 
 /*****************************************************************
- *            DdeEnableCallback16 (DDEML.26)
+ *            DdeEnableCallback (DDEML.26)
  */
 BOOL16 WINAPI DdeEnableCallback16(DWORD idInst, HCONV hConv, UINT16 wCmd)
 {
@@ -276,7 +276,7 @@ BOOL16 WINAPI DdeEnableCallback16(DWORD idInst, HCONV hConv, UINT16 wCmd)
 }
 
 /*****************************************************************
- *            DdeNameService16  (DDEML.27)
+ *            DdeNameService  (DDEML.27)
  */
 HDDEDATA WINAPI DdeNameService16(DWORD idInst, HSZ hsz1, HSZ hsz2,
 				 UINT16 afCmd)
@@ -285,7 +285,7 @@ HDDEDATA WINAPI DdeNameService16(DWORD idInst, HSZ hsz1, HSZ hsz2,
 }
 
 /*****************************************************************
- *            DdeGetLastError16  (DDEML.20)
+ *            DdeGetLastError  (DDEML.20)
  */
 UINT16 WINAPI DdeGetLastError16(DWORD idInst)
 {
@@ -293,7 +293,7 @@ UINT16 WINAPI DdeGetLastError16(DWORD idInst)
 }
 
 /*****************************************************************
- *            DdeCmpStringHandles16 (DDEML.36)
+ *            DdeCmpStringHandles (DDEML.36)
  */
 INT16 WINAPI DdeCmpStringHandles16(HSZ hsz1, HSZ hsz2)
 {
@@ -301,7 +301,7 @@ INT16 WINAPI DdeCmpStringHandles16(HSZ hsz1, HSZ hsz2)
 }
 
 /******************************************************************
- *		DdeQueryConvInfo16 (DDEML.9)
+ *		DdeQueryConvInfo (DDEML.9)
  *
  */
 UINT16 WINAPI DdeQueryConvInfo16(HCONV hconv, DWORD idTransaction, LPCONVINFO16 lpConvInfo)

@@ -1172,7 +1172,7 @@ UINT WINAPI mmioGetInfo(HMMIO hmmio, MMIOINFO* lpmmioinfo, UINT uFlags)
 }
 
 /**************************************************************************
- * 				mmioSetInfo16  		[MMSYSTEM.1216]
+ * 				mmioSetInfo  		[MMSYSTEM.1216]
  */
 UINT16 WINAPI mmioSetInfo16(HMMIO16 hmmio, const MMIOINFO16* lpmmioinfo, UINT16 uFlags)
 {
@@ -1398,7 +1398,7 @@ FOURCC WINAPI mmioStringToFOURCC16(LPCSTR sz, UINT16 uFlags)
 }
 
 /**************************************************************************
- *              mmioInstallIOProc16    [MMSYSTEM.1221]
+ *              mmioInstallIOProc    [MMSYSTEM.1221]
  */
 LPMMIOPROC16 WINAPI mmioInstallIOProc16(FOURCC fccIOProc, LPMMIOPROC16 pIOProc,
                                         DWORD dwFlags)
@@ -1417,7 +1417,7 @@ LPMMIOPROC WINAPI mmioInstallIOProcA(FOURCC fccIOProc,
 }
 
 /**************************************************************************
- * 				mmioInstallIOProcW	   [WINMM.]
+ * 				mmioInstallIOProcW	   [WINMM.@]
  */
 LPMMIOPROC WINAPI mmioInstallIOProcW(FOURCC fccIOProc, 
 				     LPMMIOPROC pIOProc, DWORD dwFlags)
@@ -1426,7 +1426,7 @@ LPMMIOPROC WINAPI mmioInstallIOProcW(FOURCC fccIOProc,
 }
 
 /**************************************************************************
- * 				mmioSendMessage16	[MMSYSTEM.1222]
+ * 				mmioSendMessage	[MMSYSTEM.1222]
  */
 LRESULT WINAPI mmioSendMessage16(HMMIO16 hmmio, UINT16 uMessage,
 				 LPARAM lParam1, LPARAM lParam2)
@@ -1445,7 +1445,7 @@ LRESULT WINAPI mmioSendMessage16(HMMIO16 hmmio, UINT16 uMessage,
 }
 
 /**************************************************************************
- * 				mmioSendMessage		[WINMM.]
+ * 				mmioSendMessage		[WINMM.@]
  */
 LRESULT WINAPI mmioSendMessage(HMMIO hmmio, UINT uMessage,
 			       LPARAM lParam1, LPARAM lParam2)
@@ -1568,7 +1568,7 @@ UINT WINAPI mmioDescend(HMMIO hmmio, LPMMCKINFO lpck,
 }
 
 /**************************************************************************
- * 				mmioDescend16	       	[MMSYSTEM.1223]
+ * 				mmioDescend	       	[MMSYSTEM.1223]
  */
 UINT16 WINAPI mmioDescend16(HMMIO16 hmmio, LPMMCKINFO lpck,
 			    const MMCKINFO* lpckParent, UINT16 uFlags)

@@ -561,7 +561,8 @@ HWND WINAPI SetCapture( HWND hwnd )
 
 
 /**********************************************************************
- *		ReleaseCapture (USER.19) (USER32.@)
+ *		ReleaseCapture (USER.19)
+ *		ReleaseCapture (USER32.@)
  */
 BOOL WINAPI ReleaseCapture(void)
 {
@@ -627,7 +628,8 @@ SHORT WINAPI GetKeyState(INT vkey)
 }
 
 /**********************************************************************
- *		GetKeyboardState (USER.222) (USER32.@)
+ *		GetKeyboardState (USER.222)
+ *		GetKeyboardState (USER32.@)
  *
  * An application calls the GetKeyboardState function in response to a
  * keyboard-input message.  This function retrieves the state of the keyboard
@@ -647,7 +649,8 @@ BOOL WINAPI GetKeyboardState(LPBYTE lpKeyState)
 }
 
 /**********************************************************************
- *		SetKeyboardState (USER.223) (USER32.@)
+ *		SetKeyboardState (USER.223)
+ *		SetKeyboardState (USER32.@)
  */
 BOOL WINAPI SetKeyboardState(LPBYTE lpKeyState)
 {

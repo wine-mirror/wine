@@ -344,7 +344,7 @@ DWORD WINAPI WaitForMultipleObjectsEx( DWORD count, const HANDLE *handles,
 
 
 /***********************************************************************
- *           WaitForSingleObject16   (KERNEL.460)
+ *           WaitForSingleObject   (KERNEL.460)
  */
 DWORD WINAPI WaitForSingleObject16( HANDLE handle, DWORD timeout )
 {
@@ -357,7 +357,7 @@ DWORD WINAPI WaitForSingleObject16( HANDLE handle, DWORD timeout )
 }
 
 /***********************************************************************
- *           WaitForMultipleObjects16   (KERNEL.461)
+ *           WaitForMultipleObjects   (KERNEL.461)
  */
 DWORD WINAPI WaitForMultipleObjects16( DWORD count, const HANDLE *handles,
                                        BOOL wait_all, DWORD timeout )
@@ -371,7 +371,7 @@ DWORD WINAPI WaitForMultipleObjects16( DWORD count, const HANDLE *handles,
 }
 
 /***********************************************************************
- *           WaitForMultipleObjectsEx16   (KERNEL.495)
+ *           WaitForMultipleObjectsEx   (KERNEL.495)
  */
 DWORD WINAPI WaitForMultipleObjectsEx16( DWORD count, const HANDLE *handles,
                                          BOOL wait_all, DWORD timeout, BOOL alertable )

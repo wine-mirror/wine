@@ -70,7 +70,7 @@ BOOL MAIN_MainInit(void)
 
 
 /***********************************************************************
- *           ExitKernel16 (KERNEL.2)
+ *           ExitKernel (KERNEL.2)
  *
  * Clean-up everything and exit the Wine process.
  *

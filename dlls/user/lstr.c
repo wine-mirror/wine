@@ -36,7 +36,7 @@ static WINE_EXCEPTION_FILTER(page_fault)
 }
 
 /***********************************************************************
- *           AnsiToOem16   (KEYBOARD.5)
+ *           AnsiToOem   (KEYBOARD.5)
  */
 INT16 WINAPI AnsiToOem16( LPCSTR s, LPSTR d )
 {
@@ -46,7 +46,7 @@ INT16 WINAPI AnsiToOem16( LPCSTR s, LPSTR d )
 
 
 /***********************************************************************
- *           OemToAnsi16   (KEYBOARD.6)
+ *           OemToAnsi   (KEYBOARD.6)
  */
 INT16 WINAPI OemToAnsi16( LPCSTR s, LPSTR d )
 {
@@ -56,7 +56,7 @@ INT16 WINAPI OemToAnsi16( LPCSTR s, LPSTR d )
 
 
 /***********************************************************************
- *           AnsiToOemBuff16   (KEYBOARD.134)
+ *           AnsiToOemBuff   (KEYBOARD.134)
  */
 void WINAPI AnsiToOemBuff16( LPCSTR s, LPSTR d, UINT16 len )
 {
@@ -65,7 +65,7 @@ void WINAPI AnsiToOemBuff16( LPCSTR s, LPSTR d, UINT16 len )
 
 
 /***********************************************************************
- *           OemToAnsiBuff16   (KEYBOARD.135)
+ *           OemToAnsiBuff   (KEYBOARD.135)
  */
 void WINAPI OemToAnsiBuff16( LPCSTR s, LPSTR d, UINT16 len )
 {
@@ -74,7 +74,7 @@ void WINAPI OemToAnsiBuff16( LPCSTR s, LPSTR d, UINT16 len )
 
 
 /***********************************************************************
- *           lstrcmp16   (USER.430)
+ *           lstrcmp   (USER.430)
  */
 INT16 WINAPI lstrcmp16( LPCSTR str1, LPCSTR str2 )
 {
@@ -83,7 +83,7 @@ INT16 WINAPI lstrcmp16( LPCSTR str1, LPCSTR str2 )
 
 
 /***********************************************************************
- *           AnsiUpper16   (USER.431)
+ *           AnsiUpper   (USER.431)
  */
 SEGPTR WINAPI AnsiUpper16( SEGPTR strOrChar )
 {
@@ -98,7 +98,7 @@ SEGPTR WINAPI AnsiUpper16( SEGPTR strOrChar )
 
 
 /***********************************************************************
- *           AnsiLower16   (USER.432)
+ *           AnsiLower   (USER.432)
  */
 SEGPTR WINAPI AnsiLower16( SEGPTR strOrChar )
 {
@@ -113,7 +113,7 @@ SEGPTR WINAPI AnsiLower16( SEGPTR strOrChar )
 
 
 /***********************************************************************
- *           AnsiUpperBuff16   (USER.437)
+ *           AnsiUpperBuff   (USER.437)
  */
 UINT16 WINAPI AnsiUpperBuff16( LPSTR str, UINT16 len )
 {
@@ -123,7 +123,7 @@ UINT16 WINAPI AnsiUpperBuff16( LPSTR str, UINT16 len )
 
 
 /***********************************************************************
- *           AnsiLowerBuff16   (USER.438)
+ *           AnsiLowerBuff   (USER.438)
  */
 UINT16 WINAPI AnsiLowerBuff16( LPSTR str, UINT16 len )
 {
@@ -133,7 +133,7 @@ UINT16 WINAPI AnsiLowerBuff16( LPSTR str, UINT16 len )
 
 
 /***********************************************************************
- *           AnsiNext16   (USER.472)
+ *           AnsiNext   (USER.472)
  */
 SEGPTR WINAPI AnsiNext16(SEGPTR current)
 {
@@ -143,7 +143,7 @@ SEGPTR WINAPI AnsiNext16(SEGPTR current)
 
 
 /***********************************************************************
- *           AnsiPrev16   (USER.473)
+ *           AnsiPrev   (USER.473)
  */
 SEGPTR WINAPI AnsiPrev16( LPCSTR start, SEGPTR current )
 {
@@ -526,6 +526,7 @@ BOOL WINAPI IsCharUpperW(WCHAR x)
 
 
 /***********************************************************************
+ *           IsCharAlphaNumeric    (USER.434)
  *           IsCharAlphaNumericA   (USER32.@)
  */
 BOOL WINAPI IsCharAlphaNumericA(CHAR x)
@@ -546,6 +547,7 @@ BOOL WINAPI IsCharAlphaNumericW(WCHAR x)
 
 
 /***********************************************************************
+ *           IsCharAlpha    (USER.433)
  *           IsCharAlphaA   (USER32.@)
  */
 BOOL WINAPI IsCharAlphaA(CHAR x)
@@ -566,7 +568,7 @@ BOOL WINAPI IsCharAlphaW(WCHAR x)
 
 
 /***********************************************************************
- *           FormatMessage16   (USER.606)
+ *           FormatMessage   (USER.606)
  */
 DWORD WINAPI FormatMessage16(
     DWORD   dwFlags,

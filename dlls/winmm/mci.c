@@ -1035,7 +1035,7 @@ DWORD WINAPI mciSendStringW(LPCWSTR lpwstrCommand, LPSTR lpstrRet,
 }
 
 /**************************************************************************
- * 				mciSendString16			[MMSYSTEM.702]
+ * 				mciSendString			[MMSYSTEM.702]
  */
 DWORD WINAPI mciSendString16(LPCSTR lpstrCommand, LPSTR lpstrRet, 
 			     UINT16 uRetLen, HWND16 hwndCallback)

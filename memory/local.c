@@ -1562,7 +1562,7 @@ HLOCAL16 LOCAL_Handle( HANDLE16 ds, WORD addr )
 
 
 /***********************************************************************
- *           LocalAlloc16   (KERNEL.5)
+ *           LocalAlloc   (KERNEL.5)
  */
 HLOCAL16 WINAPI LocalAlloc16( UINT16 flags, WORD size )
 {
@@ -1573,7 +1573,7 @@ HLOCAL16 WINAPI LocalAlloc16( UINT16 flags, WORD size )
 
 
 /***********************************************************************
- *           LocalReAlloc16   (KERNEL.6)
+ *           LocalReAlloc   (KERNEL.6)
  */
 HLOCAL16 WINAPI LocalReAlloc16( HLOCAL16 handle, WORD size, UINT16 flags )
 {
@@ -1582,7 +1582,7 @@ HLOCAL16 WINAPI LocalReAlloc16( HLOCAL16 handle, WORD size, UINT16 flags )
 
 
 /***********************************************************************
- *           LocalFree16   (KERNEL.7)
+ *           LocalFree   (KERNEL.7)
  */
 HLOCAL16 WINAPI LocalFree16( HLOCAL16 handle )
 {
@@ -1591,7 +1591,7 @@ HLOCAL16 WINAPI LocalFree16( HLOCAL16 handle )
 
 
 /***********************************************************************
- *           LocalLock16   (KERNEL.8)
+ *           LocalLock   (KERNEL.8)
  *
  * Note: only the offset part of the pointer is returned by the relay code.
  */
@@ -1604,7 +1604,7 @@ SEGPTR WINAPI LocalLock16( HLOCAL16 handle )
 
 
 /***********************************************************************
- *           LocalUnlock16   (KERNEL.9)
+ *           LocalUnlock   (KERNEL.9)
  */
 BOOL16 WINAPI LocalUnlock16( HLOCAL16 handle )
 {
@@ -1613,7 +1613,7 @@ BOOL16 WINAPI LocalUnlock16( HLOCAL16 handle )
 
 
 /***********************************************************************
- *           LocalSize16   (KERNEL.10)
+ *           LocalSize   (KERNEL.10)
  */
 UINT16 WINAPI LocalSize16( HLOCAL16 handle )
 {
@@ -1622,7 +1622,7 @@ UINT16 WINAPI LocalSize16( HLOCAL16 handle )
 
 
 /***********************************************************************
- *           LocalHandle16   (KERNEL.11)
+ *           LocalHandle   (KERNEL.11)
  */
 HLOCAL16 WINAPI LocalHandle16( WORD addr )
 { 
@@ -1631,7 +1631,7 @@ HLOCAL16 WINAPI LocalHandle16( WORD addr )
 
 
 /***********************************************************************
- *           LocalFlags16   (KERNEL.12)
+ *           LocalFlags   (KERNEL.12)
  */
 UINT16 WINAPI LocalFlags16( HLOCAL16 handle )
 {
@@ -1640,7 +1640,7 @@ UINT16 WINAPI LocalFlags16( HLOCAL16 handle )
 
 
 /***********************************************************************
- *           LocalCompact16   (KERNEL.13)
+ *           LocalCompact   (KERNEL.13)
  */
 UINT16 WINAPI LocalCompact16( UINT16 minfree )
 {
@@ -1688,7 +1688,7 @@ FARPROC16 WINAPI LocalNotify16( FARPROC16 func )
 
 
 /***********************************************************************
- *           LocalShrink16   (KERNEL.121)
+ *           LocalShrink   (KERNEL.121)
  */
 UINT16 WINAPI LocalShrink16( HGLOBAL16 handle, UINT16 newsize )
 {

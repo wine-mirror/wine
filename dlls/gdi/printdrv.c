@@ -37,7 +37,7 @@ static char PrinterDriverData[] = "PrinterDriverData";
 static char Printers[]		= "System\\CurrentControlSet\\Control\\Print\\Printers\\";
 
 /******************************************************************
- *                  StartDoc16  [GDI.377]
+ *                  StartDoc  [GDI.377]
  *
  */
 INT16 WINAPI StartDoc16( HDC16 hdc, const DOCINFO16 *lpdoc )
@@ -119,7 +119,7 @@ INT WINAPI StartDocW(HDC hdc, const DOCINFOW* doc)
 }
 
 /******************************************************************
- *                  EndDoc16  [GDI.378]
+ *                  EndDoc  [GDI.378]
  *
  */
 INT16 WINAPI EndDoc16(HDC16 hdc)
@@ -146,7 +146,7 @@ INT WINAPI EndDoc(HDC hdc)
 }
 
 /******************************************************************
- *                  StartPage16  [GDI.379]
+ *                  StartPage  [GDI.379]
  *
  */
 INT16 WINAPI StartPage16(HDC16 hdc)
@@ -173,7 +173,7 @@ INT WINAPI StartPage(HDC hdc)
 }
 
 /******************************************************************
- *                  EndPage16  [GDI.380]
+ *                  EndPage  [GDI.380]
  *
  */
 INT16 WINAPI EndPage16( HDC16 hdc )
@@ -205,7 +205,7 @@ INT WINAPI EndPage(HDC hdc)
 }
 
 /******************************************************************************
- *                 AbortDoc16  [GDI.382]
+ *                 AbortDoc  [GDI.382]
  */
 INT16 WINAPI AbortDoc16(HDC16 hdc)
 {
@@ -230,7 +230,7 @@ INT WINAPI AbortDoc(HDC hdc)
 }
 
 /**********************************************************************
- *           QueryAbort16   (GDI.155)
+ *           QueryAbort   (GDI.155)
  *
  *  Calls the app's AbortProc function if avail.
  *
@@ -258,7 +258,7 @@ extern WORD CALLBACK PRTDRV_CallTo16_word_ww(FARPROC16,WORD,WORD);
 /* ### stop build ### */
 
 /**********************************************************************
- *           SetAbortProc16   (GDI.381)
+ *           SetAbortProc   (GDI.381)
  *
  */
 INT16 WINAPI SetAbortProc16(HDC16 hdc, SEGPTR abrtprc)

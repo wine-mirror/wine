@@ -371,7 +371,7 @@ static WINDOWS_VERSION VERSION_GetVersion(void)
 
 
 /***********************************************************************
- *         GetVersion16   (KERNEL.3)
+ *         GetVersion   (KERNEL.3)
  */
 LONG WINAPI GetVersion16(void)
 {
@@ -391,7 +391,7 @@ LONG WINAPI GetVersion(void)
 
 
 /***********************************************************************
- *         GetVersionEx16   (KERNEL.149)
+ *         GetVersionEx   (KERNEL.149)
  */
 BOOL16 WINAPI GetVersionEx16(OSVERSIONINFO16 *v)
 {
@@ -509,7 +509,7 @@ BOOL16 WINAPI SetWinDebugInfo16(WINDEBUGINFO *lpwdi)
 
 
 /***********************************************************************
- *           DebugFillBuffer                    (KERNEL.329)
+ *           K329                    (KERNEL.329)
  *
  * TODO:
  * Should fill lpBuffer only if DBO_BUFFERFILL has been set by SetWinDebugInfo()

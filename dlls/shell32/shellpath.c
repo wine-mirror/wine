@@ -24,7 +24,7 @@ DEFAULT_DEBUG_CHANNEL(shell);
 */
 
 /*************************************************************************
- * PathAppendAW		[SHELL32.36]
+ * PathAppend		[SHELL32.36]
  */
 BOOL WINAPI PathAppendAW(
 	LPVOID lpszPath1,
@@ -36,7 +36,7 @@ BOOL WINAPI PathAppendAW(
 }
 
 /*************************************************************************
- * PathCombineAW	 [SHELL32.37]
+ * PathCombine	 [SHELL32.37]
  */
 LPVOID WINAPI PathCombineAW(
 	LPVOID szDest,
@@ -49,7 +49,7 @@ LPVOID WINAPI PathCombineAW(
 }
 
 /*************************************************************************
- * PathAddBackslashAW		[SHELL32.32]
+ * PathAddBackslash		[SHELL32.32]
  */
 LPVOID WINAPI PathAddBackslashAW(LPVOID lpszPath)
 {
@@ -59,7 +59,7 @@ LPVOID WINAPI PathAddBackslashAW(LPVOID lpszPath)
 }
 
 /*************************************************************************
- * PathBuildRootAW		[SHELL32.30]
+ * PathBuildRoot		[SHELL32.30]
  */
 LPVOID WINAPI PathBuildRootAW(LPVOID lpszPath, int drive)
 {
@@ -73,7 +73,7 @@ LPVOID WINAPI PathBuildRootAW(LPVOID lpszPath, int drive)
 */
 
 /*************************************************************************
- * PathFindFileNameAW	[SHELL32.34]
+ * PathFindFileName	[SHELL32.34]
  */
 LPVOID WINAPI PathFindFileNameAW(LPCVOID lpszPath)
 {
@@ -83,7 +83,7 @@ LPVOID WINAPI PathFindFileNameAW(LPCVOID lpszPath)
 }
 
 /*************************************************************************
- * PathFindExtensionAW		[SHELL32.31]
+ * PathFindExtension		[SHELL32.31]
  */
 LPVOID WINAPI PathFindExtensionAW(LPCVOID lpszPath) 
 {
@@ -120,7 +120,7 @@ static LPWSTR PathGetExtensionW(LPCWSTR lpszPath)
 }
 
 /*************************************************************************
- * PathGetExtensionAW		[SHELL32.158]
+ * PathGetExtension		[SHELL32.158]
  */
 LPVOID WINAPI PathGetExtensionAW(LPCVOID lpszPath) 
 {
@@ -130,7 +130,7 @@ LPVOID WINAPI PathGetExtensionAW(LPCVOID lpszPath)
 }
 
 /*************************************************************************
- * PathGetArgsAW	[SHELL32.52]
+ * PathGetArgs	[SHELL32.52]
  */
 LPVOID WINAPI PathGetArgsAW(LPVOID lpszPath) 
 {
@@ -160,7 +160,7 @@ BOOL WINAPI PathRemoveFileSpecAW(LPVOID lpszPath)
 }
 
 /*************************************************************************
- * PathStripPathAW	[SHELL32.38]
+ * PathStripPath	[SHELL32.38]
  */
 void WINAPI PathStripPathAW(LPVOID lpszPath) 
 {
@@ -170,7 +170,7 @@ void WINAPI PathStripPathAW(LPVOID lpszPath)
 }
 
 /*************************************************************************
- * PathStripToRootAW	[SHELL32.50]
+ * PathStripToRoot	[SHELL32.50]
  */
 BOOL WINAPI PathStripToRootAW(LPVOID lpszPath) 
 {
@@ -180,7 +180,7 @@ BOOL WINAPI PathStripToRootAW(LPVOID lpszPath)
 }
 
 /*************************************************************************
- * PathRemoveArgsAW	[SHELL32.251]
+ * PathRemoveArgs	[SHELL32.251]
  */
 void WINAPI PathRemoveArgsAW(LPVOID lpszPath) 
 {
@@ -190,7 +190,7 @@ void WINAPI PathRemoveArgsAW(LPVOID lpszPath)
 }
 
 /*************************************************************************
- * PathRemoveExtensionAW	[SHELL32.250]
+ * PathRemoveExtension	[SHELL32.250]
  */
 void WINAPI PathRemoveExtensionAW(LPVOID lpszPath) 
 {
@@ -223,7 +223,7 @@ LPWSTR WINAPI PathGetShortPathW(LPWSTR lpszPath)
 }
 
 /*************************************************************************
- * PathGetShortPathAW [SHELL32.92]
+ * PathGetShortPath [SHELL32.92]
  */
 LPVOID WINAPI PathGetShortPathAW(LPVOID lpszPath)
 {
@@ -233,7 +233,7 @@ LPVOID WINAPI PathGetShortPathAW(LPVOID lpszPath)
 }
 
 /*************************************************************************
- * PathRemoveBlanksAW [SHELL32.33]
+ * PathRemoveBlanks [SHELL32.33]
  */
 void WINAPI PathRemoveBlanksAW(LPVOID str)
 {
@@ -243,7 +243,7 @@ void WINAPI PathRemoveBlanksAW(LPVOID str)
 }
 
 /*************************************************************************
- * PathQuoteSpacesAW [SHELL32.55]
+ * PathQuoteSpaces [SHELL32.55]
  */
 LPVOID WINAPI PathQuoteSpacesAW (LPVOID lpszPath)
 {
@@ -253,7 +253,7 @@ LPVOID WINAPI PathQuoteSpacesAW (LPVOID lpszPath)
 }
 
 /*************************************************************************
- * PathUnquoteSpacesAW [SHELL32.56]
+ * PathUnquoteSpaces [SHELL32.56]
  */
 VOID WINAPI PathUnquoteSpacesAW(LPVOID str) 
 {
@@ -264,7 +264,7 @@ VOID WINAPI PathUnquoteSpacesAW(LPVOID str)
 }
 
 /*************************************************************************
- * PathParseIconLocationAW	[SHELL32.249]
+ * PathParseIconLocation	[SHELL32.249]
  */
 int WINAPI PathParseIconLocationAW (LPVOID lpszPath)
 {
@@ -277,7 +277,7 @@ int WINAPI PathParseIconLocationAW (LPVOID lpszPath)
 	########## Path Testing ##########
 */
 /*************************************************************************
- * PathIsUNCAW		[SHELL32.39]
+ * PathIsUNC		[SHELL32.39]
  */
 BOOL WINAPI PathIsUNCAW (LPCVOID lpszPath)
 {
@@ -287,7 +287,7 @@ BOOL WINAPI PathIsUNCAW (LPCVOID lpszPath)
 }
 
 /*************************************************************************
- *  PathIsRelativeAW	[SHELL32.40]
+ *  PathIsRelative	[SHELL32.40]
  */
 BOOL WINAPI PathIsRelativeAW (LPCVOID lpszPath)
 {
@@ -297,7 +297,7 @@ BOOL WINAPI PathIsRelativeAW (LPCVOID lpszPath)
 }
 
 /*************************************************************************
- * PathIsRootAW		[SHELL32.29]
+ * PathIsRoot		[SHELL32.29]
  */
 BOOL WINAPI PathIsRootAW(LPCVOID lpszPath) 
 {
@@ -343,7 +343,7 @@ static BOOL PathIsExeW (LPCWSTR lpszPath)
 }
 
 /*************************************************************************
- *  PathIsExeAW		[SHELL32.43]
+ *  PathIsExe		[SHELL32.43]
  */
 BOOL WINAPI PathIsExeAW (LPCVOID path)
 {
@@ -353,7 +353,7 @@ BOOL WINAPI PathIsExeAW (LPCVOID path)
 }
 
 /*************************************************************************
- * PathIsDirectoryAW	[SHELL32.159]
+ * PathIsDirectory	[SHELL32.159]
  */
 BOOL WINAPI PathIsDirectoryAW (LPCVOID lpszPath)
 {
@@ -363,7 +363,7 @@ BOOL WINAPI PathIsDirectoryAW (LPCVOID lpszPath)
 }
 
 /*************************************************************************
- * PathFileExistsAW	[SHELL32.45]
+ * PathFileExists	[SHELL32.45]
  */ 
 BOOL WINAPI PathFileExistsAW (LPCVOID lpszPath)
 {
@@ -373,7 +373,7 @@ BOOL WINAPI PathFileExistsAW (LPCVOID lpszPath)
 }
 
 /*************************************************************************
- * PathMatchSpecAW	[SHELL32.46]
+ * PathMatchSpec	[SHELL32.46]
  */
 BOOL WINAPI PathMatchSpecAW(LPVOID name, LPVOID mask) 
 {
@@ -383,7 +383,7 @@ BOOL WINAPI PathMatchSpecAW(LPVOID name, LPVOID mask)
 }
 
 /*************************************************************************
- * PathIsSameRootAW	[SHELL32.650]
+ * PathIsSameRoot	[SHELL32.650]
  */
 BOOL WINAPI PathIsSameRootAW(LPCVOID lpszPath1, LPCVOID lpszPath2)
 {
@@ -393,7 +393,7 @@ BOOL WINAPI PathIsSameRootAW(LPCVOID lpszPath1, LPCVOID lpszPath2)
 }
 
 /*************************************************************************
- * IsLFNDriveA		[SHELL32.119]
+ * IsLFNDrive		[SHELL32.119]
  * 
  * NOTES
  *     exported by ordinal Name
@@ -443,7 +443,7 @@ BOOL WINAPI PathMakeUniqueNameW(
 }
 
 /*************************************************************************
- * PathMakeUniqueNameAW	[SHELL32.47]
+ * PathMakeUniqueName	[SHELL32.47]
  */
 BOOL WINAPI PathMakeUniqueNameAW(
 	LPVOID lpszBuffer,
@@ -458,7 +458,7 @@ BOOL WINAPI PathMakeUniqueNameAW(
 }
 
 /*************************************************************************
- * PathYetAnotherMakeUniqueNameA [SHELL32.75]
+ * PathYetAnotherMakeUniqueName [SHELL32.75]
  * 
  * NOTES
  *     exported by ordinal
@@ -480,7 +480,7 @@ BOOL WINAPI PathYetAnotherMakeUniqueNameA(
  */
 
 /*************************************************************************
- * PathFindOnPathAW	[SHELL32]
+ * PathFindOnPath	[SHELL32.145]
  */
 BOOL WINAPI PathFindOnPathAW(LPVOID sFile, LPCVOID sOtherDirs)
 {
@@ -490,7 +490,7 @@ BOOL WINAPI PathFindOnPathAW(LPVOID sFile, LPCVOID sOtherDirs)
 }
 
 /*************************************************************************
- * PathCleanupSpecAW	[SHELL32]
+ * PathCleanupSpec	[SHELL32.171]
  */
 DWORD WINAPI PathCleanupSpecAW (LPCVOID x, LPVOID y)
 {
@@ -517,7 +517,7 @@ BOOL WINAPI PathQualifyW(LPCWSTR pszPath)
 }
 
 /*************************************************************************
- * PathQualifyAW	[SHELL32]
+ * PathQualify	[SHELL32.49]
  */
 BOOL WINAPI PathQualifyAW(LPCVOID pszPath) 
 {
@@ -553,7 +553,7 @@ BOOL WINAPI PathResolveW(
 }
 
 /*************************************************************************
- * PathResolveAW [SHELL32]
+ * PathResolve [SHELL32.51]
  */
 BOOL WINAPI PathResolveAW(
 	LPVOID lpszPath,
@@ -596,7 +596,7 @@ HRESULT WINAPI PathProcessCommandW (
 }
 
 /*************************************************************************
-*	PathProcessCommandAW (SHELL32.653)
+*	PathProcessCommand (SHELL32.653)
 */
 HRESULT WINAPI PathProcessCommandAW (
 	LPCVOID lpszPath,
@@ -614,7 +614,7 @@ HRESULT WINAPI PathProcessCommandAW (
 */
 
 /*************************************************************************
- * PathSetDlgItemPathAW (SHELL32.48)
+ * PathSetDlgItemPath (SHELL32.48)
  */
 BOOL WINAPI PathSetDlgItemPathAW(HWND hDlg, int id, LPCVOID pszPath) 
 {	if (SHELL_OsIsUnicode())
@@ -1079,7 +1079,7 @@ BOOL WINAPI SHGetSpecialFolderPathW (
 }
 
 /*************************************************************************
- * SHGetSpecialFolderPathAW (SHELL32.175)
+ * SHGetSpecialFolderPath (SHELL32.175)
  */
 BOOL WINAPI SHGetSpecialFolderPathAW (
 	HWND hwndOwner,

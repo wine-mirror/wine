@@ -203,7 +203,7 @@ static const WCHAR *TEXT_NextLineW( HDC hdc, const WCHAR *str, int *count,
 
 
 /***********************************************************************
- *           DrawText16    (USER.85)
+ *           DrawText    (USER.85)
  */
 INT16 WINAPI DrawText16( HDC16 hdc, LPCSTR str, INT16 count, LPRECT16 rect, UINT16 flags )
 {
@@ -684,7 +684,7 @@ static LONG TEXT_TabbedTextOut( HDC hdc, INT x, INT y, LPCSTR lpstr,
 
 
 /***********************************************************************
- *           TabbedTextOut16    (USER.196)
+ *           TabbedTextOut    (USER.196)
  */
 LONG WINAPI TabbedTextOut16( HDC16 hdc, INT16 x, INT16 y, LPCSTR lpstr,
                              INT16 count, INT16 cTabStops,
@@ -730,7 +730,7 @@ LONG WINAPI TabbedTextOutW( HDC hdc, INT x, INT y, LPCWSTR str, INT count,
 
 
 /***********************************************************************
- *           GetTabbedTextExtent16    (USER.197)
+ *           GetTabbedTextExtent    (USER.197)
  */
 DWORD WINAPI GetTabbedTextExtent16( HDC16 hdc, LPCSTR lpstr, INT16 count,
                                     INT16 cTabStops, const INT16 *lpTabPos )

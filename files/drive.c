@@ -951,7 +951,7 @@ char *DRIVE_BuildEnv(void)
 
 
 /***********************************************************************
- *           GetDiskFreeSpace16   (KERNEL.422)
+ *           GetDiskFreeSpace   (KERNEL.422)
  */
 BOOL16 WINAPI GetDiskFreeSpace16( LPCSTR root, LPDWORD cluster_sectors,
                                   LPDWORD sector_bytes, LPDWORD free_clusters,
@@ -1159,7 +1159,7 @@ BOOL WINAPI GetDiskFreeSpaceExW( LPCWSTR root, PULARGE_INTEGER avail,
 }
 
 /***********************************************************************
- *           GetDriveType16   (KERNEL.136)
+ *           GetDriveType   (KERNEL.136)
  * This function returns the type of a drive in Win16. 
  * Note that it returns DRIVE_REMOTE for CD-ROMs, since MSCDEX uses the
  * remote drive API. The return value DRIVE_REMOTE for CD-ROMs has been
@@ -1228,7 +1228,7 @@ UINT WINAPI GetDriveTypeW( LPCWSTR root )
 
 
 /***********************************************************************
- *           GetCurrentDirectory16   (KERNEL.411)
+ *           GetCurrentDirectory   (KERNEL.411)
  */
 UINT16 WINAPI GetCurrentDirectory16( UINT16 buflen, LPSTR buf )
 {

@@ -1865,7 +1865,8 @@ LRESULT WINAPI SendMessageTimeoutW( HWND hwnd, UINT msg, WPARAM wParam,
 
 
 /***********************************************************************
- *		WaitMessage (USER.112) (USER32.@) Suspend thread pending messages
+ *		WaitMessage (USER.112) Suspend thread pending messages
+ *		WaitMessage (USER32.@) Suspend thread pending messages
  *
  * WaitMessage() suspends a thread until events appear in the thread's
  * queue.

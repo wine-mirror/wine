@@ -21,7 +21,7 @@ typedef struct tagCURSORINFO
 #include "poppack.h"
 
 /***********************************************************************
- *           DISPLAY_Inquire			(DISPLAY.101)
+ *           Inquire			(DISPLAY.101)
  */
 WORD WINAPI DISPLAY_Inquire(LPCURSORINFO lpCursorInfo) 
 {
@@ -32,7 +32,7 @@ WORD WINAPI DISPLAY_Inquire(LPCURSORINFO lpCursorInfo)
 }
 
 /***********************************************************************
- *           DISPLAY_SetCursor			(DISPLAY.102)
+ *           SetCursor			(DISPLAY.102)
  */
 VOID WINAPI DISPLAY_SetCursor( struct tagCURSORICONINFO *lpCursor )
 {
@@ -40,7 +40,7 @@ VOID WINAPI DISPLAY_SetCursor( struct tagCURSORICONINFO *lpCursor )
 }
 
 /***********************************************************************
- *           DISPLAY_MoveCursor			(DISPLAY.103)
+ *           MoveCursor			(DISPLAY.103)
  */
 VOID WINAPI DISPLAY_MoveCursor( WORD wAbsX, WORD wAbsY )
 {
@@ -48,7 +48,7 @@ VOID WINAPI DISPLAY_MoveCursor( WORD wAbsX, WORD wAbsY )
 }
 
 /***********************************************************************
- *           DISPLAY_CheckCursor                  (DISPLAY.104)
+ *           CheckCursor                  (DISPLAY.104)
  */
 VOID WINAPI DISPLAY_CheckCursor( void )
 {
@@ -56,7 +56,7 @@ VOID WINAPI DISPLAY_CheckCursor( void )
 }
 
 /***********************************************************************
- *           DISPLAY_GetDriverResourceID                  (DISPLAY.450)
+ *           GetDriverResourceID                  (DISPLAY.450)
  *
  * Used by USER to check if driver contains better version of a builtin
  * resource than USER (yes, our DISPLAY does !).

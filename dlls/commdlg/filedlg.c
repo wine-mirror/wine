@@ -1326,7 +1326,7 @@ BOOL WINAPI GetFileName31W(
 /* ------------------ Dialog procedures ---------------------- */
 
 /***********************************************************************
- *           FileOpenDlgProc16   (COMMDLG.6)
+ *           FileOpenDlgProc   (COMMDLG.6)
  */
 LRESULT WINAPI FileOpenDlgProc16(HWND16 hWnd, UINT16 wMsg, WPARAM16 wParam,
                                LPARAM lParam)
@@ -1374,7 +1374,7 @@ LRESULT WINAPI FileOpenDlgProc16(HWND16 hWnd, UINT16 wMsg, WPARAM16 wParam,
 }
 
 /***********************************************************************
- *           FileSaveDlgProc16   (COMMDLG.7)
+ *           FileSaveDlgProc   (COMMDLG.7)
  */
 LRESULT WINAPI FileSaveDlgProc16(HWND16 hWnd, UINT16 wMsg, WPARAM16 wParam,
                                LPARAM lParam)
@@ -1474,7 +1474,7 @@ static LRESULT WINAPI FileOpenDlgProc(HWND hWnd, UINT wMsg,
 /* ------------------ APIs ---------------------- */ 
 
 /***********************************************************************
- *           GetOpenFileName16   (COMMDLG.1)
+ *           GetOpenFileName   (COMMDLG.1)
  *
  * Creates a dialog box for the user to select a file to open.
  *
@@ -1512,7 +1512,7 @@ BOOL16 WINAPI GetOpenFileName16(
 }
 
 /***********************************************************************
- *           GetSaveFileName16   (COMMDLG.2)
+ *           GetSaveFileName   (COMMDLG.2)
  *
  * Creates a dialog box for the user to select a file to save.
  *

@@ -464,7 +464,7 @@ BOOL WINAPI X11DRV_Init( HINSTANCE hinst, DWORD reason, LPVOID reserved )
 }
 
 /***********************************************************************
- *              X11DRV_GetScreenSaveActive (X11DRV.@)
+ *              GetScreenSaveActive (X11DRV.@)
  *
  * Returns the active status of the screen saver
  */
@@ -476,7 +476,7 @@ BOOL X11DRV_GetScreenSaveActive(void)
 }
 
 /***********************************************************************
- *              X11DRV_SetScreenSaveActive (X11DRV.@)
+ *              SetScreenSaveActive (X11DRV.@)
  *
  * Activate/Deactivate the screen saver
  */
@@ -489,7 +489,7 @@ void X11DRV_SetScreenSaveActive(BOOL bActivate)
 }
 
 /***********************************************************************
- *              X11DRV_GetScreenSaveTimeout (X11DRV.@)
+ *              GetScreenSaveTimeout (X11DRV.@)
  *
  * Return the screen saver timeout
  */
@@ -501,7 +501,7 @@ int X11DRV_GetScreenSaveTimeout(void)
 }
 
 /***********************************************************************
- *              X11DRV_SetScreenSaveTimeout (X11DRV.@)
+ *              SetScreenSaveTimeout (X11DRV.@)
  *
  * Set the screen saver timeout
  */

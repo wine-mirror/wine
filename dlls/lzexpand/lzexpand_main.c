@@ -126,7 +126,7 @@ static INT read_header(HFILE fd,struct lzfileheader *head)
 }
 
 /***********************************************************************
- *           LZStart16   (LZEXPAND.7)
+ *           LZStart   (LZEXPAND.7)
  */
 INT16 WINAPI LZStart16(void)
 {
@@ -146,7 +146,7 @@ INT WINAPI LZStart(void)
 
 
 /***********************************************************************
- *           LZInit16   (LZEXPAND.3)
+ *           LZInit   (LZEXPAND.3)
  */
 HFILE16 WINAPI LZInit16( HFILE16 hfSrc )
 {
@@ -221,7 +221,7 @@ void WINAPI LZDone(void)
 
 
 /***********************************************************************
- *           GetExpandedName16   (LZEXPAND.10)
+ *           GetExpandedName   (LZEXPAND.10)
  */
 INT16 WINAPI GetExpandedName16( LPCSTR in, LPSTR out )
 {
@@ -326,7 +326,7 @@ INT WINAPI GetExpandedNameW( LPCWSTR in, LPWSTR out )
 
 
 /***********************************************************************
- *           LZRead16   (LZEXPAND.5)
+ *           LZRead   (LZEXPAND.5)
  */
 INT16 WINAPI LZRead16( HFILE16 fd, LPVOID buf, UINT16 toread )
 {
@@ -427,7 +427,7 @@ INT WINAPI LZRead( HFILE fd, LPVOID vbuf, UINT toread )
 
 
 /***********************************************************************
- *           LZSeek16   (LZEXPAND.4)
+ *           LZSeek   (LZEXPAND.4)
  */
 LONG WINAPI LZSeek16( HFILE16 fd, LONG off, INT16 type )
 {
@@ -469,7 +469,7 @@ LONG WINAPI LZSeek( HFILE fd, LONG off, INT type )
 
 
 /***********************************************************************
- *           LZCopy16   (LZEXPAND.1)
+ *           LZCopy   (LZEXPAND.1)
  *
  */
 LONG WINAPI LZCopy16( HFILE16 src, HFILE16 dest )
@@ -566,7 +566,7 @@ static LPSTR LZEXPAND_MangleName( LPCSTR fn )
 
 
 /***********************************************************************
- *           LZOpenFile16   (LZEXPAND.2)
+ *           LZOpenFile   (LZEXPAND.2)
  */
 HFILE16 WINAPI LZOpenFile16( LPCSTR fn, LPOFSTRUCT ofs, UINT16 mode )
 {
@@ -623,7 +623,7 @@ HFILE WINAPI LZOpenFileW( LPCWSTR fn, LPOFSTRUCT ofs, UINT mode )
 
 
 /***********************************************************************
- *           LZClose16   (LZEXPAND.6)
+ *           LZClose   (LZEXPAND.6)
  */
 void WINAPI LZClose16( HFILE16 fd )
 {
@@ -651,7 +651,7 @@ void WINAPI LZClose( HFILE fd )
 }
 
 /***********************************************************************
- *           CopyLZFile16   (LZEXPAND.8)
+ *           CopyLZFile   (LZEXPAND.8)
  */
 LONG WINAPI CopyLZFile16( HFILE16 src, HFILE16 dest )
 {

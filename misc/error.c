@@ -158,7 +158,7 @@ void WINAPI LogParamError16(UINT16 uErr, FARPROC16 lpfn, LPVOID lpvParam)
 }
 
 /***********************************************************************
-*	HandleParamError (KERNEL.327)
+*	K327 (KERNEL.327)
 */
 void WINAPI HandleParamError( CONTEXT86 *context )
 {

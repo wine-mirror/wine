@@ -597,12 +597,18 @@ void WINAPI MZ_Exit( CONTEXT86 *context, BOOL cs_psp, WORD retval )
 
 #else /* !MZ_SUPPORTED */
 
+/***********************************************************************
+ *		LoadDosExe (WINEDOS.@)
+ */
 void WINAPI MZ_LoadImage( LPCSTR filename, HANDLE hFile )
 {
   WARN("DOS executables not supported on this platform\n");
   SetLastError(ERROR_BAD_FORMAT);
 }
 
+/***********************************************************************
+ *		Exec (WINEDOS.@)
+ */
 BOOL WINAPI MZ_Exec( CONTEXT86 *context, LPCSTR filename, BYTE func, LPVOID paramblk )
 {
   /* can't happen */
@@ -610,12 +616,18 @@ BOOL WINAPI MZ_Exec( CONTEXT86 *context, LPCSTR filename, BYTE func, LPVOID para
   return FALSE;
 }
 
+/***********************************************************************
+ *		LoadDPMI (WINEDOS.@)
+ */
 LPDOSTASK WINAPI MZ_AllocDPMITask( void )
 {
     ERR("Actual real-mode calls not supported on this platform!\n");
     return NULL;
 }
 
+/***********************************************************************
+ *		Exit (WINEDOS.@)
+ */
 void WINAPI MZ_Exit( CONTEXT86 *context, BOOL cs_psp, WORD retval )
 {
   ExitThread( retval );

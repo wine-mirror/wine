@@ -426,7 +426,8 @@ HDRVR WINAPI OpenDriverA(LPCSTR lpDriverName, LPCSTR lpSectionName, LPARAM lPara
 }
 
 /**************************************************************************
- *				OpenDriverW		        [WINMM.@]
+ *				OpenDriver 		        [WINMM.@]
+ *				DrvOpen				[WINMM.@]
  */
 HDRVR WINAPI OpenDriverW(LPCWSTR lpDriverName, LPCWSTR lpSectionName, LPARAM lParam)
 {

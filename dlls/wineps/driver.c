@@ -148,7 +148,7 @@ void PSDRV_MergeDevmodes(PSDRV_DEVMODEA *dm1, PSDRV_DEVMODEA *dm2,
 
 /**************************************************************
  *
- *	PSDRV_AdvancedSetupDialog16	[WINEPS.93]
+ *	AdvancedSetupDialog	[WINEPS.93]
  *
  */
 WORD WINAPI PSDRV_AdvancedSetupDialog16(HWND16 hwnd, HANDLE16 hDriver,
@@ -246,7 +246,7 @@ static int WINAPI (*pPropertySheet) (LPCPROPSHEETHEADERA);
 
 /***************************************************************
  *
- *	PSDRV_ExtDeviceMode16	[WINEPS.90]
+ *	ExtDeviceMode	[WINEPS.90]
  *
  * Just returns default devmode at the moment
  */
@@ -331,7 +331,7 @@ INT PSDRV_ExtDeviceMode(LPSTR lpszDriver, HWND hwnd, LPDEVMODEA lpdmOutput,
 
 /***********************************************************************
  *
- *	PSDRV_DeviceCapabilities16	[WINEPS.91]
+ *	DeviceCapabilities	[WINEPS.91]
  *
  */
 DWORD WINAPI PSDRV_DeviceCapabilities16(LPCSTR lpszDevice, LPCSTR lpszPort,
@@ -554,7 +554,7 @@ DWORD PSDRV_DeviceCapabilities(LPSTR lpszDriver, LPCSTR lpszDevice,
 
 /***************************************************************
  *
- *	PSDRV_DeviceMode16	[WINEPS.13]
+ *	DeviceMode	[WINEPS.13]
  *
  */
 void WINAPI PSDRV_DeviceMode16(HWND16 hwnd, HANDLE16 hDriver,

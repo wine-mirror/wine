@@ -973,7 +973,7 @@ static LRESULT PCM_StreamConvert(PACMDRVSTREAMINSTANCE adsi, PACMDRVSTREAMHEADER
 }
 
 /**************************************************************************
- * 			PCM_DriverProc			[exported]
+ * 			DriverProc			[exported]
  */
 LRESULT CALLBACK	PCM_DriverProc(DWORD dwDevID, HDRVR hDriv, UINT wMsg, 
 				       LPARAM dwParam1, LPARAM dwParam2)

@@ -2976,7 +2976,7 @@ HRESULT WINAPI VarR8FromCy(CY cyIn, double* pdblOut) {
 }
 
 /******************************************************************************
- *		VarDateFromUI1		[OLEAUT32.]
+ *		VarDateFromUI1		[OLEAUT32.88]
  */
 HRESULT WINAPI VarDateFromUI1(BYTE bIn, DATE* pdateOut)
 {

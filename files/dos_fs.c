@@ -2276,7 +2276,7 @@ BOOL WINAPI DefineDosDeviceA(DWORD flags,LPCSTR devname,LPCSTR targetpath) {
 */
 
 /*************************************************************************
- *           FindFirstFile16   (KERNEL.413)
+ *           FindFirstFile   (KERNEL.413)
  */
 HANDLE16 WINAPI FindFirstFile16( LPCSTR path, WIN32_FIND_DATAA *data )
 {
@@ -2314,7 +2314,7 @@ HANDLE16 WINAPI FindFirstFile16( LPCSTR path, WIN32_FIND_DATAA *data )
 }
 
 /*************************************************************************
- *           FindNextFile16   (KERNEL.414)
+ *           FindNextFile   (KERNEL.414)
  */
 BOOL16 WINAPI FindNextFile16( HANDLE16 handle, WIN32_FIND_DATAA *data )
 {
@@ -2344,7 +2344,7 @@ BOOL16 WINAPI FindNextFile16( HANDLE16 handle, WIN32_FIND_DATAA *data )
 }
 
 /*************************************************************************
- *           FindClose16   (KERNEL.415)
+ *           FindClose   (KERNEL.415)
  */
 BOOL16 WINAPI FindClose16( HANDLE16 handle )
 {

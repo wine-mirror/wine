@@ -1466,7 +1466,8 @@ HMODULE WINAPI LoadLibraryW(LPCWSTR libnameW)
 }
 
 /***********************************************************************
- *           LoadLibrary32_16   (KERNEL.482)
+ *           LoadLibrary32        (KERNEL.452)
+ *           LoadSystemLibrary32  (KERNEL.482)
  */
 HMODULE WINAPI LoadLibrary32_16( LPCSTR libname )
 {
@@ -1656,7 +1657,7 @@ void WINAPI PrivateFreeLibrary(HINSTANCE16 handle)
 
 
 /***********************************************************************
- *           WIN32_GetProcAddress16   (KERNEL32.37)
+ *           GetProcAddress16   (KERNEL32.37)
  * Get procaddress in 16bit module from win32... (kernel32 undoc. ordinal func)
  */
 FARPROC16 WINAPI WIN32_GetProcAddress16( HMODULE hModule, LPCSTR name )
@@ -1674,7 +1675,7 @@ FARPROC16 WINAPI WIN32_GetProcAddress16( HMODULE hModule, LPCSTR name )
 }
 
 /***********************************************************************
- *           GetProcAddress16   (KERNEL.50)
+ *           GetProcAddress   (KERNEL.50)
  */
 FARPROC16 WINAPI GetProcAddress16( HMODULE16 hModule, LPCSTR name )
 {

@@ -84,8 +84,8 @@ LPVOID WINAPI K32WOWGetVDMPointerFix( DWORD vp, DWORD dwBytes, BOOL fProtectedMo
 }
 
 /**********************************************************************
- *           K32WOWGetVDMPointerUnFix   (WOW32.7)
- *           K32WOWGetVDMPointerUnFix   (KERNEL32.69)
+ *           K32WOWGetVDMPointerUnfix   (WOW32.7)
+ *           K32WOWGetVDMPointerUnfix   (KERNEL32.69)
  */
 VOID WINAPI K32WOWGetVDMPointerUnfix( DWORD vp )
 {
@@ -307,7 +307,7 @@ DWORD WINAPI K32WOWCallback16( DWORD vpfn16, DWORD dwParam )
  */
 
 /**********************************************************************
- *           GetVDMPointer32W16      (KERNEL.516)
+ *           GetVDMPointer32W      (KERNEL.516)
  */
 DWORD WINAPI GetVDMPointer32W16( SEGPTR vp, UINT16 fMode )
 {
@@ -315,7 +315,7 @@ DWORD WINAPI GetVDMPointer32W16( SEGPTR vp, UINT16 fMode )
 }
 
 /***********************************************************************
- *           LoadLibraryEx32W16      (KERNEL.513)
+ *           LoadLibraryEx32W      (KERNEL.513)
  */
 DWORD WINAPI LoadLibraryEx32W16( LPCSTR lpszLibFile, DWORD hFile, DWORD dwFlags )
 {
@@ -337,7 +337,7 @@ DWORD WINAPI LoadLibraryEx32W16( LPCSTR lpszLibFile, DWORD hFile, DWORD dwFlags 
 }
 
 /***********************************************************************
- *           GetProcAddress32W16     (KERNEL.515)
+ *           GetProcAddress32W     (KERNEL.515)
  */
 DWORD WINAPI GetProcAddress32W16( DWORD hModule, LPCSTR lpszProc )
 {
@@ -345,7 +345,7 @@ DWORD WINAPI GetProcAddress32W16( DWORD hModule, LPCSTR lpszProc )
 }
 
 /***********************************************************************
- *           FreeLibrary32W16        (KERNEL.514)
+ *           FreeLibrary32W        (KERNEL.514)
  */
 DWORD WINAPI FreeLibrary32W16( DWORD hLibModule )
 {
@@ -458,7 +458,7 @@ static DWORD WOW_CallProc32W16( BOOL Ex )
 }
 
 /**********************************************************************
- *           CallProc32W16           (KERNEL.517)
+ *           CallProc32W           (KERNEL.517)
  *
  * DWORD PASCAL CallProc32W( DWORD p1, ... , DWORD lpProcAddress,
  *                           DWORD fAddressConvert, DWORD cParams );
@@ -469,7 +469,7 @@ DWORD WINAPI CallProc32W16( void )
 }
 
 /**********************************************************************
- *           CallProcEx32W16         (KERNEL.518)
+ *           _CallProcEx32W         (KERNEL.518)
  *
  * DWORD CallProcEx32W( DWORD cParams, DWORD fAddressConvert, 
  *                      DWORD lpProcAddress, DWORD p1, ... );

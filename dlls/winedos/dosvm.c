@@ -648,16 +648,38 @@ UINT WINAPI DOSVM_GetTimer( void )
 
 #else /* !MZ_SUPPORTED */
 
+/***********************************************************************
+ *		Enter (WINEDOS.@)
+ */
 INT WINAPI DOSVM_Enter( CONTEXT86 *context )
 {
  ERR_(module)("DOS realmode not supported on this architecture!\n");
  return -1;
 }
 
+/***********************************************************************
+ *		Wait (WINEDOS.@)
+ */
 void WINAPI DOSVM_Wait( INT read_pipe, HANDLE hObject) {}
+
+/***********************************************************************
+ *		OutPIC (WINEDOS.@)
+ */
 void WINAPI DOSVM_PIC_ioport_out( WORD port, BYTE val) {}
+
+/***********************************************************************
+ *		SetTimer (WINEDOS.@)
+ */
 void WINAPI DOSVM_SetTimer( UINT ticks ) {}
+
+/***********************************************************************
+ *		GetTimer (WINEDOS.@)
+ */
 UINT WINAPI DOSVM_GetTimer( void ) { return 0; }
+
+/***********************************************************************
+ *		QueueEvent (WINEDOS.@)
+ */
 void WINAPI DOSVM_QueueEvent( INT irq, INT priority, DOSRELAY relay, LPVOID data)
 {
   if (irq<0) {

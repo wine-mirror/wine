@@ -104,7 +104,7 @@ BOOL WINAPI RtlEqualSid( PSID pSid1, PSID pSid2 )
 }
 
 /******************************************************************************
- * RtlEqualPrefixSid	[ntdll.]
+ * RtlEqualPrefixSid	[NTDLL.@]
  */
 BOOL WINAPI RtlEqualPrefixSid (PSID pSid1, PSID pSid2) 
 {

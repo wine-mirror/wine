@@ -819,7 +819,7 @@ BOOL WINAPI UpdateColors(
 
 /**********************************************************************
  *            UpdateColors   (DISPLAY.366)
- *            UpdateColors16   (GDI.366)
+ *            UpdateColors   (GDI.366)
  */
 INT16 WINAPI UpdateColors16( HDC16 hDC )
 {

@@ -576,7 +576,8 @@ void GDI_ReleaseObj( HGDIOBJ handle )
 
 
 /***********************************************************************
- *           DeleteObject    (GDI.605)
+ *           DeleteObject    (GDI.69)
+ *           SysDeleteObject (GDI.605)
  */
 BOOL16 WINAPI DeleteObject16( HGDIOBJ16 obj )
 {
@@ -1212,7 +1213,7 @@ DWORD WINAPI GdiSeeGdiDo16( WORD wReqType, WORD wParam1, WORD wParam2,
 }
 
 /***********************************************************************
- *           GdiSignalProc     (GDI.610)
+ *           GdiSignalProc32     (GDI.610)
  */
 WORD WINAPI GdiSignalProc( UINT uCode, DWORD dwThreadOrProcessID,
                            DWORD dwFlags, HMODULE16 hModule )

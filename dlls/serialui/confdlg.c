@@ -60,7 +60,7 @@ SERIALUI_LibMain (HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 
 
 /***********************************************************************
- * SERIALUI_EnumPropPages (SERIALUI.2)
+ * EnumPropPages (SERIALUI.2)
  *
  * Called by the device manager to add prop sheets in Control Panel ???
  * Pointed to in Win98 registry by 
@@ -384,7 +384,7 @@ BOOL WINAPI SERIALUI_ConfigDialogProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 }
 
 /***********************************************************************
- * SERIALUI_CommConfigDialog (SERIALUI.3)
+ * drvCommConfigDialog (SERIALUI.3)
  *
  * Used by Win9x KERNEL to show a dialog for configuring a COMM port.
  */
@@ -414,7 +414,7 @@ static LPCSTR lpszCommKey = "System\\CurrentControlSet\\Services\\Class\\Ports";
 static LPCSTR lpszDCB     = "DCB";
 
 /***********************************************************************
- * SERIALUI_SetDefaultCommConfig (SERIALUI.4)
+ * drvSetDefaultCommConfig (SERIALUI.4)
  *
  * Used by Win98 KERNEL to set the default config for a COMM port
  * FIXME: uses the wrong registry key... should use a digit, not
@@ -458,7 +458,7 @@ BOOL WINAPI SERIALUI_SetDefaultCommConfig(
 }
 
 /***********************************************************************
- * SERIALUI_GetDefaultCommConfig (SERIALUI.5)
+ * drvGetDefaultCommConfig (SERIALUI.5)
  *
  * Used by Win9x KERNEL to get the default config for a COMM port
  * FIXME: uses the wrong registry key... should use a digit, not

@@ -13,7 +13,7 @@
 DEFAULT_DEBUG_CHANNEL(wininet);
 
 /***********************************************************************
- *		WININET_DllInstall (WININET.@)
+ *		DllInstall (WININET.@)
  */
 HRESULT WINAPI WININET_DllInstall(BOOL bInstall, LPCWSTR cmdline)
 {

@@ -376,7 +376,7 @@ HGLOBAL WINAPI LoadResource( HINSTANCE hModule, HRSRC hRsrc )
 }
 
 /**********************************************************************
- *          LockResource16   (KERNEL.62)
+ *          LockResource   (KERNEL.62)
  */
 SEGPTR WINAPI WIN16_LockResource16( HGLOBAL16 handle )
 {

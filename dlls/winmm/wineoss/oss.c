@@ -47,7 +47,7 @@ static	DWORD	OSS_drvClose(DWORD dwDevID)
 
 
 /**************************************************************************
- * 				OSS_DriverProc			[internal]
+ * 				DriverProc			[internal]
  */
 LONG CALLBACK	OSS_DriverProc(DWORD dwDevID, HDRVR hDriv, DWORD wMsg, 
 			       DWORD dwParam1, DWORD dwParam2)

@@ -14,7 +14,7 @@
 DEFAULT_DEBUG_CHANNEL(dll);
 
 /***********************************************************************
- *		BootTask16 (WIN32S16.2)
+ *		BootTask (WIN32S16.2)
  */
 void WINAPI BootTask16()
 {
@@ -34,7 +34,7 @@ SEGPTR WINAPI StackLinearToSegmented16(WORD w1, WORD w2)
 
 
 /***********************************************************************
- *           UTSelectorOffsetToLinear16       (WIN32S16.48)
+ *           UTSelectorOffsetToLinear       (WIN32S16.48)
  *
  * rough guesswork, but seems to work (I had no "reasonable" docu)
  */
@@ -44,7 +44,7 @@ LPVOID WINAPI UTSelectorOffsetToLinear16(SEGPTR sptr)
 }
 
 /***********************************************************************
- *           UTLinearToSelectorOffset16       (WIN32S16.49)
+ *           UTLinearToSelectorOffset       (WIN32S16.49)
  *
  * FIXME: I don't know if that's the right way to do linear -> segmented
  */

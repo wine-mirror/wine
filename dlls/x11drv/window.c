@@ -1215,7 +1215,7 @@ void X11DRV_SetFocus( HWND hwnd )
 
 
 /**********************************************************************
- *		X11DRV_SetWindowIcon (X11DRV.@)
+ *		SetWindowIcon (X11DRV.@)
  *
  * hIcon or hIconSm has changed (or is being initialised for the
  * first time). Complete the X11 driver-specific initialisation

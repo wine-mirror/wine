@@ -138,7 +138,7 @@ static inline void fix_win16_hkey( HKEY *hkey )
 }
 
 /******************************************************************************
- *           RegOpenKey16   [SHELL.1]
+ *           RegOpenKey   [SHELL.1]
  */
 DWORD WINAPI RegOpenKey16( HKEY hkey, LPCSTR name, LPHKEY retkey )
 {
@@ -147,7 +147,7 @@ DWORD WINAPI RegOpenKey16( HKEY hkey, LPCSTR name, LPHKEY retkey )
 }
 
 /******************************************************************************
- *           RegCreateKey16   [SHELL.2]
+ *           RegCreateKey   [SHELL.2]
  */
 DWORD WINAPI RegCreateKey16( HKEY hkey, LPCSTR name, LPHKEY retkey )
 {
@@ -156,7 +156,7 @@ DWORD WINAPI RegCreateKey16( HKEY hkey, LPCSTR name, LPHKEY retkey )
 }
 
 /******************************************************************************
- *           RegCloseKey16   [SHELL.3]
+ *           RegCloseKey   [SHELL.3]
  */
 DWORD WINAPI RegCloseKey16( HKEY hkey )
 {
@@ -165,7 +165,7 @@ DWORD WINAPI RegCloseKey16( HKEY hkey )
 }
 
 /******************************************************************************
- *           RegDeleteKey16   [SHELL.4]
+ *           RegDeleteKey   [SHELL.4]
  */
 DWORD WINAPI RegDeleteKey16( HKEY hkey, LPCSTR name )
 {
@@ -174,7 +174,7 @@ DWORD WINAPI RegDeleteKey16( HKEY hkey, LPCSTR name )
 }
 
 /******************************************************************************
- *           RegSetValue16   [SHELL.5]
+ *           RegSetValue   [SHELL.5]
  */
 DWORD WINAPI RegSetValue16( HKEY hkey, LPCSTR name, DWORD type, LPCSTR data, DWORD count )
 {
@@ -183,7 +183,7 @@ DWORD WINAPI RegSetValue16( HKEY hkey, LPCSTR name, DWORD type, LPCSTR data, DWO
 }
 
 /******************************************************************************
- *           RegQueryValue16   [SHELL.6]
+ *           RegQueryValue   [SHELL.6]
  *
  * NOTES
  *    Is this HACK still applicable?
@@ -201,7 +201,7 @@ DWORD WINAPI RegQueryValue16( HKEY hkey, LPCSTR name, LPSTR data, LPDWORD count 
 }
 
 /******************************************************************************
- *           RegEnumKey16   [SHELL.7]
+ *           RegEnumKey   [SHELL.7]
  */
 DWORD WINAPI RegEnumKey16( HKEY hkey, DWORD index, LPSTR name, DWORD name_len )
 {

@@ -177,7 +177,7 @@ DWORD WINAPI CoBuildVersion(void)
 }
 
 /******************************************************************************
- *		CoInitialize16	[COMPOBJ.2]
+ *		CoInitialize	[COMPOBJ.2]
  * Set the win16 IMalloc used for memory management
  */
 HRESULT WINAPI CoInitialize16(
@@ -274,7 +274,7 @@ HRESULT WINAPI CoInitializeEx(
 }
 
 /***********************************************************************
- *           CoUninitialize16   [COMPOBJ.3]
+ *           CoUninitialize   [COMPOBJ.3]
  * Don't know what it does. 
  * 3-Nov-98 -- this was originally misspelled, I changed it to what I
  *   believe is the correct spelling
@@ -331,7 +331,7 @@ void WINAPI CoUninitialize(void)
 }
 
 /***********************************************************************
- *           CoGetMalloc16    [COMPOBJ.4]
+ *           CoGetMalloc    [COMPOBJ.4]
  * RETURNS
  *	The current win16 IMalloc
  */
@@ -362,7 +362,7 @@ HRESULT WINAPI CoGetMalloc(
 }
 
 /***********************************************************************
- *           CoCreateStandardMalloc16 [COMPOBJ.71]
+ *           CoCreateStandardMalloc [COMPOBJ.71]
  */
 HRESULT WINAPI CoCreateStandardMalloc16(DWORD dwMemContext,
 					  LPMALLOC16 *lpMalloc)
@@ -383,7 +383,7 @@ HRESULT WINAPI CoDisconnectObject( LPUNKNOWN lpUnk, DWORD reserved )
 }
 
 /***********************************************************************
- *           IsEqualGUID16 [COMPOBJ.18]
+ *           IsEqualGUID [COMPOBJ.18]
  *
  * Compares two Unique Identifiers.
  *
@@ -398,7 +398,7 @@ BOOL16 WINAPI IsEqualGUID16(
 }
 
 /******************************************************************************
- *		CLSIDFromString16	[COMPOBJ.20]
+ *		CLSIDFromString	[COMPOBJ.20]
  * Converts a unique identifier from its string representation into 
  * the GUID struct.
  *
@@ -569,7 +569,7 @@ static HRESULT WINE_StringFromCLSID(
 }
 
 /******************************************************************************
- *		StringFromCLSID16	[COMPOBJ.19]
+ *		StringFromCLSID	[COMPOBJ.19]
  * Converts a GUID into the respective string representation.
  * The target string is allocated using the OLE IMalloc.
  * RETURNS
@@ -638,7 +638,8 @@ HRESULT WINAPI StringFromCLSID(
 }
 
 /******************************************************************************
- *		StringFromGUID2	[COMPOBJ.76] [OLE32.152]
+ *		StringFromGUID2	[COMPOBJ.76]
+ *		StringFromGUID2	[OLE32.152]
  *
  * Converts a global unique identifier into a string of an API-
  * specified fixed format. (The usual {.....} stuff.)
@@ -710,7 +711,7 @@ HRESULT WINAPI ProgIDFromCLSID(
 }
 
 /******************************************************************************
- *		CLSIDFromProgID16	[COMPOBJ.61]
+ *		CLSIDFromProgID	[COMPOBJ.61]
  * Converts a program id into the respective GUID. (By using a registry lookup)
  * RETURNS
  *	riid associated with the progid
@@ -891,7 +892,7 @@ HRESULT WINAPI SetETask16(HTASK16 hTask, LPVOID p) {
 
 /* FIXME: this function is not declared in the WINELIB headers. But where should it go ? */
 /***********************************************************************
- *           CallObjectInWOW (COMPOBJ.201)
+ *           CALLOBJECTINWOW (COMPOBJ.201)
  */
 HRESULT WINAPI CallObjectInWOW(LPVOID p1,LPVOID p2) {
 	FIXME("(%p,%p),stub!\n",p1,p2);
@@ -899,7 +900,7 @@ HRESULT WINAPI CallObjectInWOW(LPVOID p1,LPVOID p2) {
 }
 
 /******************************************************************************
- *		CoRegisterClassObject16	[COMPOBJ.5]
+ *		CoRegisterClassObject	[COMPOBJ.5]
  *
  * Don't know where it registers it ...
  */
@@ -922,7 +923,7 @@ HRESULT WINAPI CoRegisterClassObject16(
 
 
 /******************************************************************************
- *      CoRevokeClassObject16 [COMPOBJ.6]
+ *      CoRevokeClassObject [COMPOBJ.6]
  *
  */
 HRESULT WINAPI CoRevokeClassObject16(DWORD dwRegister) /* [in] token on class obj */
@@ -1365,7 +1366,7 @@ HRESULT WINAPI GetClassFile(LPOLESTR filePathName,CLSID *pclsid)
     return MK_E_INVALIDEXTENSION;
 }
 /******************************************************************************
- *		CoRegisterMessageFilter16	[COMPOBJ.27]
+ *		CoRegisterMessageFilter	[COMPOBJ.27]
  */
 HRESULT WINAPI CoRegisterMessageFilter16(
 	LPMESSAGEFILTER lpMessageFilter,
@@ -1684,7 +1685,7 @@ HRESULT WINAPI CoInitializeWOW(DWORD x,DWORD y) {
 }
 
 /******************************************************************************
- *		CoLockObjectExternal16	[COMPOBJ.63]
+ *		CoLockObjectExternal	[COMPOBJ.63]
  */
 HRESULT WINAPI CoLockObjectExternal16(
     LPUNKNOWN pUnk,		/* [in] object to be locked */
@@ -1725,7 +1726,7 @@ HRESULT WINAPI CoLockObjectExternal(
 }
 
 /***********************************************************************
- *           CoGetState16 [COMPOBJ.115]
+ *           CoGetState [COMPOBJ.115]
  */
 HRESULT WINAPI CoGetState16(LPDWORD state)
 {
@@ -1974,7 +1975,7 @@ static void COM_ExternalLockDelete(
 }
 
 /***********************************************************************
- *      COMPOBJ_DllEntryPoint                   [COMPOBJ.entry]
+ *      DllEntryPoint                   [COMPOBJ.116]
  *
  *    Initialization code for the COMPOBJ DLL
  *

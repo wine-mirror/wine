@@ -376,7 +376,7 @@ WORD WINAPI SelectorAccessRights16( WORD sel, WORD op, WORD val )
 
 
 /***********************************************************************
- *           IsBadCodePtr16   (KERNEL.336)
+ *           IsBadCodePtr   (KERNEL.336)
  */
 BOOL16 WINAPI IsBadCodePtr16( SEGPTR lpfn )
 {
@@ -395,7 +395,7 @@ BOOL16 WINAPI IsBadCodePtr16( SEGPTR lpfn )
 
 
 /***********************************************************************
- *           IsBadStringPtr16   (KERNEL.337)
+ *           IsBadStringPtr   (KERNEL.337)
  */
 BOOL16 WINAPI IsBadStringPtr16( SEGPTR ptr, UINT16 size )
 {
@@ -416,7 +416,7 @@ BOOL16 WINAPI IsBadStringPtr16( SEGPTR ptr, UINT16 size )
 
 
 /***********************************************************************
- *           IsBadHugeReadPtr16   (KERNEL.346)
+ *           IsBadHugeReadPtr   (KERNEL.346)
  */
 BOOL16 WINAPI IsBadHugeReadPtr16( SEGPTR ptr, DWORD size )
 {
@@ -436,7 +436,7 @@ BOOL16 WINAPI IsBadHugeReadPtr16( SEGPTR ptr, DWORD size )
 
 
 /***********************************************************************
- *           IsBadHugeWritePtr16   (KERNEL.347)
+ *           IsBadHugeWritePtr   (KERNEL.347)
  */
 BOOL16 WINAPI IsBadHugeWritePtr16( SEGPTR ptr, DWORD size )
 {
@@ -454,7 +454,7 @@ BOOL16 WINAPI IsBadHugeWritePtr16( SEGPTR ptr, DWORD size )
 }
 
 /***********************************************************************
- *           IsBadReadPtr16   (KERNEL.334)
+ *           IsBadReadPtr   (KERNEL.334)
  */
 BOOL16 WINAPI IsBadReadPtr16( SEGPTR ptr, UINT16 size )
 {
@@ -463,7 +463,7 @@ BOOL16 WINAPI IsBadReadPtr16( SEGPTR ptr, UINT16 size )
 
 
 /***********************************************************************
- *           IsBadWritePtr16   (KERNEL.335)
+ *           IsBadWritePtr   (KERNEL.335)
  */
 BOOL16 WINAPI IsBadWritePtr16( SEGPTR ptr, UINT16 size )
 {
@@ -472,7 +472,7 @@ BOOL16 WINAPI IsBadWritePtr16( SEGPTR ptr, UINT16 size )
 
 
 /***********************************************************************
- *           IsBadFlatReadWritePtr16   (KERNEL.627)
+ *           IsBadFlatReadWritePtr   (KERNEL.627)
  */
 BOOL16 WINAPI IsBadFlatReadWritePtr16( SEGPTR ptr, DWORD size, BOOL16 bWrite )
 {

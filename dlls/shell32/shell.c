@@ -45,7 +45,7 @@ HINSTANCE SHELL_hInstance32;
 static int SHELL_Attach = 0;
 
 /***********************************************************************
- * SHELL_DllEntryPoint [SHELL.entry]
+ * DllEntryPoint [SHELL.101]
  *
  * Initialization code for shell.dll. Automatically loads the
  * 32-bit shell32.dll to allow thunking up to 32-bit code.
@@ -86,7 +86,7 @@ BOOL WINAPI SHELL_DllEntryPoint(DWORD Reason, HINSTANCE16 hInst,
 }
 
 /*************************************************************************
- *				DragAcceptFiles16		[SHELL.9]
+ *				DragAcceptFiles		[SHELL.9]
  */
 void WINAPI DragAcceptFiles16(HWND16 hWnd, BOOL16 b)
 {
@@ -94,7 +94,7 @@ void WINAPI DragAcceptFiles16(HWND16 hWnd, BOOL16 b)
 }
 
 /*************************************************************************
- *				DragQueryFile16		[SHELL.11]
+ *				DragQueryFile		[SHELL.11]
  */
 UINT16 WINAPI DragQueryFile16(
 	HDROP16 hDrop,
@@ -134,7 +134,7 @@ end:
 }
 
 /*************************************************************************
- *				DragFinish16		[SHELL.12]
+ *				DragFinish		[SHELL.12]
  */
 void WINAPI DragFinish16(HDROP16 h)
 {
@@ -144,7 +144,7 @@ void WINAPI DragFinish16(HDROP16 h)
 
 
 /*************************************************************************
- *				DragQueryPoint16		[SHELL.13]
+ *				DragQueryPoint		[SHELL.13]
  */
 BOOL16 WINAPI DragQueryPoint16(HDROP16 hDrop, POINT16 *p)
 {
@@ -328,7 +328,7 @@ HINSTANCE SHELL_FindExecutable( LPCSTR lpFile,
 }
 
 /*************************************************************************
- *				ShellExecute16		[SHELL.20]
+ *				ShellExecute		[SHELL.20]
  */
 HINSTANCE16 WINAPI ShellExecute16( HWND16 hWnd, LPCSTR lpOperation,
                                    LPCSTR lpFile, LPCSTR lpParameters,
@@ -454,7 +454,7 @@ HINSTANCE16 WINAPI ShellExecute16( HWND16 hWnd, LPCSTR lpOperation,
 }
 
 /*************************************************************************
- *             FindExecutable16   (SHELL.21)
+ *             FindExecutable   (SHELL.21)
  */
 HINSTANCE16 WINAPI FindExecutable16( LPCSTR lpFile, LPCSTR lpDirectory,
                                      LPSTR lpResult )
@@ -463,7 +463,7 @@ HINSTANCE16 WINAPI FindExecutable16( LPCSTR lpFile, LPCSTR lpDirectory,
 
 
 /*************************************************************************
- *             AboutDlgProc16   (SHELL.33)
+ *             AboutDlgProc   (SHELL.33)
  */
 BOOL16 WINAPI AboutDlgProc16( HWND16 hWnd, UINT16 msg, WPARAM16 wParam,
                                LPARAM lParam )
@@ -472,7 +472,7 @@ BOOL16 WINAPI AboutDlgProc16( HWND16 hWnd, UINT16 msg, WPARAM16 wParam,
 
 
 /*************************************************************************
- *             ShellAbout16   (SHELL.22)
+ *             ShellAbout   (SHELL.22)
  */
 BOOL16 WINAPI ShellAbout16( HWND16 hWnd, LPCSTR szApp, LPCSTR szOtherStuff,
                             HICON16 hIcon )
@@ -551,7 +551,7 @@ HGLOBAL16 WINAPI InternalExtractIcon16(HINSTANCE16 hInstance,
 }
 
 /*************************************************************************
- *             ExtractIcon16   (SHELL.34)
+ *             ExtractIcon   (SHELL.34)
  */
 HICON16 WINAPI ExtractIcon16( HINSTANCE16 hInstance, LPCSTR lpszExeFileName,
 	UINT16 nIconIndex )
@@ -560,7 +560,7 @@ HICON16 WINAPI ExtractIcon16( HINSTANCE16 hInstance, LPCSTR lpszExeFileName,
 }
 
 /*************************************************************************
- *             ExtractIconEx16   (SHELL.40)
+ *             ExtractIconEx   (SHELL.40)
  */
 HICON16 WINAPI ExtractIconEx16(
 	LPCSTR lpszFile, INT16 nIconIndex, HICON16 *phiconLarge,
@@ -818,7 +818,7 @@ BOOL WINAPI RegisterShellHook16(HWND16 hWnd, UINT16 uAction)
 
 
 /***********************************************************************
- *           DriveType16   (SHELL.262)
+ *           DriveType   (SHELL.262)
  */
 UINT16 WINAPI DriveType16( UINT16 drive )
 {

@@ -29,7 +29,7 @@ typedef struct
 } PE_ACCEL, *LPPE_ACCEL;
 
 /**********************************************************************
- *			LoadAccelerators16	[USER.177]
+ *			LoadAccelerators	[USER.177]
  */
 HACCEL16 WINAPI LoadAccelerators16(HINSTANCE16 instance, LPCSTR lpTableName)
 {
@@ -290,7 +290,7 @@ BOOL WINAPI DestroyAcceleratorTable( HACCEL handle )
 }
   
 /**********************************************************************
- *     LoadString16   (USER.176)
+ *     LoadString   (USER.176)
  */
 INT16 WINAPI LoadString16( HINSTANCE16 instance, UINT16 resource_id,
                            LPSTR buffer, INT16 buflen )

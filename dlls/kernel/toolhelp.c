@@ -38,7 +38,7 @@ static int nrofnotifys = 0;
 static FARPROC16 HookNotify = NULL;
 
 /***********************************************************************
- *		NotifyRegister16 (TOOLHELP.73)
+ *		NotifyRegister (TOOLHELP.73)
  */
 BOOL16 WINAPI NotifyRegister16( HTASK16 htask, FARPROC16 lpfnCallback,
                               WORD wFlags )
@@ -68,7 +68,7 @@ BOOL16 WINAPI NotifyRegister16( HTASK16 htask, FARPROC16 lpfnCallback,
 }
 
 /***********************************************************************
- *		NotifyUnregister16 (TOOLHELP.74)
+ *		NotifyUnregister (TOOLHELP.74)
  */
 BOOL16 WINAPI NotifyUnregister16( HTASK16 htask )
 {
@@ -384,7 +384,7 @@ BOOL WINAPI Module32Next(HANDLE hSnapshot, LPMODULEENTRY32 lpme)
 }
 
 /************************************************************************
- *              GlobalMasterHandle16 (KERNEL.28)
+ *              GlobalMasterHandle (KERNEL.28)
  *
  *
  * Should return selector and handle of the information structure for 

@@ -38,7 +38,7 @@ typedef enum WING_DITHER_TYPE
  */
 
 /***********************************************************************
- *          WinGCreateDC16	(WING.1001)
+ *          WinGCreateDC	(WING.1001)
  */
 HDC16 WINAPI WinGCreateDC16(void)
 {
@@ -47,7 +47,7 @@ HDC16 WINAPI WinGCreateDC16(void)
 }
 
 /***********************************************************************
- *  WinGRecommendDIBFormat16    (WING.1002)
+ *  WinGRecommendDIBFormat    (WING.1002)
  */
 BOOL16 WINAPI WinGRecommendDIBFormat16(BITMAPINFO *bmpi)
 {
@@ -73,7 +73,7 @@ BOOL16 WINAPI WinGRecommendDIBFormat16(BITMAPINFO *bmpi)
 }
 
 /***********************************************************************
- *        WinGCreateBitmap16    (WING.1003)
+ *        WinGCreateBitmap    (WING.1003)
  */
 HBITMAP16 WINAPI WinGCreateBitmap16(HDC16 hdc, BITMAPINFO *bmpi,
                                     SEGPTR *bits)
@@ -117,7 +117,7 @@ UINT16 WINAPI WinGSetDIBColorTable16(HDC16 hdc, UINT16 start, UINT16 num,
 }
 
 /***********************************************************************
- *  WinGGetDIBColorTable16   (WING.1005)
+ *  WinGGetDIBColorTable   (WING.1005)
  */
 UINT16 WINAPI WinGGetDIBColorTable16(HDC16 hdc, UINT16 start, UINT16 num,
 				     RGBQUAD *colors)
@@ -127,7 +127,7 @@ UINT16 WINAPI WinGGetDIBColorTable16(HDC16 hdc, UINT16 start, UINT16 num,
 }
 
 /***********************************************************************
- *  WinGCreateHalfTonePalette16   (WING.1007)
+ *  WinGCreateHalfTonePalette   (WING.1007)
  */
 HPALETTE16 WINAPI WinGCreateHalfTonePalette16(void)
 {
@@ -139,7 +139,7 @@ HPALETTE16 WINAPI WinGCreateHalfTonePalette16(void)
 }
 
 /***********************************************************************
- *  WinGCreateHalfToneBrush16   (WING.1008)
+ *  WinGCreateHalfToneBrush   (WING.1008)
  */
 HBRUSH16 WINAPI WinGCreateHalfToneBrush16(HDC16 winDC, COLORREF col,
                                             WING_DITHER_TYPE type)
@@ -149,7 +149,7 @@ HBRUSH16 WINAPI WinGCreateHalfToneBrush16(HDC16 winDC, COLORREF col,
 }
 
 /***********************************************************************
- *  WinGStretchBlt16   (WING.1009)
+ *  WinGStretchBlt   (WING.1009)
  */
 BOOL16 WINAPI WinGStretchBlt16(HDC16 destDC, INT16 xDest, INT16 yDest,
                                INT16 widDest, INT16 heiDest,
@@ -166,7 +166,7 @@ BOOL16 WINAPI WinGStretchBlt16(HDC16 destDC, INT16 xDest, INT16 yDest,
 }
 
 /***********************************************************************
- *  WinGBitBlt16   (WING.1010)
+ *  WinGBitBlt   (WING.1010)
  */
 BOOL16 WINAPI WinGBitBlt16(HDC16 destDC, INT16 xDest, INT16 yDest,
                            INT16 widDest, INT16 heiDest, HDC16 srcDC,

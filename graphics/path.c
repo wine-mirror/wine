@@ -81,7 +81,7 @@ static BOOL PATH_CheckCorners(DC *dc, POINT corners[], INT x1, INT y1, INT x2, I
 
 
 /***********************************************************************
- *           BeginPath16    (GDI.512)
+ *           BeginPath    (GDI.512)
  */
 BOOL16 WINAPI BeginPath16(HDC16 hdc)
 {
@@ -120,7 +120,7 @@ BOOL WINAPI BeginPath(HDC hdc)
 
 
 /***********************************************************************
- *           EndPath16    (GDI.514)
+ *           EndPath    (GDI.514)
  */
 BOOL16 WINAPI EndPath16(HDC16 hdc)
 {
@@ -157,7 +157,7 @@ BOOL WINAPI EndPath(HDC hdc)
 
 
 /***********************************************************************
- *           AbortPath16    (GDI.511)
+ *           AbortPath    (GDI.511)
  */
 BOOL16 WINAPI AbortPath16(HDC16 hdc)
 {
@@ -194,7 +194,7 @@ BOOL WINAPI AbortPath( HDC hdc )
 
 
 /***********************************************************************
- *           CloseFigure16    (GDI.513)
+ *           CloseFigure    (GDI.513)
  */
 BOOL16 WINAPI CloseFigure16(HDC16 hdc)
 {
@@ -242,7 +242,7 @@ BOOL WINAPI CloseFigure(HDC hdc)
 
 
 /***********************************************************************
- *           GetPath16    (GDI.517)
+ *           GetPath    (GDI.517)
  */
 INT16 WINAPI GetPath16(HDC16 hdc, LPPOINT16 pPoints, LPBYTE pTypes,
    INT16 nSize)
@@ -301,7 +301,7 @@ INT WINAPI GetPath(HDC hdc, LPPOINT pPoints, LPBYTE pTypes,
 }
 
 /***********************************************************************
- *           PathToRegion16    (GDI.518)
+ *           PathToRegion    (GDI.518)
  */
 HRGN16 WINAPI PathToRegion16(HDC16 hdc)
 {
@@ -412,7 +412,7 @@ static BOOL PATH_FillPath(DC *dc, GdiPath *pPath)
 }
 
 /***********************************************************************
- *           FillPath16    (GDI.515)
+ *           FillPath    (GDI.515)
  */
 BOOL16 WINAPI FillPath16(HDC16 hdc)
 {
@@ -449,7 +449,7 @@ BOOL WINAPI FillPath(HDC hdc)
 }
 
 /***********************************************************************
- *           SelectClipPath16    (GDI.519)
+ *           SelectClipPath    (GDI.519)
  */
 BOOL16 WINAPI SelectClipPath16(HDC16 hdc, INT16 iMode)
 {
@@ -1428,7 +1428,7 @@ static void PATH_NormalizePoint(FLOAT_POINT corners[],
 }
 
 /*******************************************************************
- *      FlattenPath16 [GDI.516]
+ *      FlattenPath [GDI.516]
  *
  *
  */
@@ -1513,7 +1513,7 @@ static BOOL PATH_StrokePath(DC *dc, GdiPath *pPath)
 
 
 /*******************************************************************
- *      StrokeAndFillPath16 [GDI.520]
+ *      StrokeAndFillPath [GDI.520]
  *
  *
  */
@@ -1547,7 +1547,7 @@ BOOL WINAPI StrokeAndFillPath(HDC hdc)
 }
 
 /*******************************************************************
- *      StrokePath16 [GDI.521]
+ *      StrokePath [GDI.521]
  *
  *
  */
@@ -1583,7 +1583,7 @@ BOOL WINAPI StrokePath(HDC hdc)
 }
 
 /*******************************************************************
- *      WidenPath16 [GDI.522]
+ *      WidenPath [GDI.522]
  *
  *
  */

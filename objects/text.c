@@ -22,7 +22,7 @@ DEFAULT_DEBUG_CHANNEL(text);
 
 /***********************************************************************
  *           ExtTextOut    (DISPLAY.351)
- *           ExtTextOut16    (GDI.351)
+ *           ExtTextOut    (GDI.351)
  */
 BOOL16 WINAPI ExtTextOut16( HDC16 hdc, INT16 x, INT16 y, UINT16 flags,
                             const RECT16 *lprect, LPCSTR str, UINT16 count,

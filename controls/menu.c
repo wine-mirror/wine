@@ -3726,7 +3726,8 @@ HMENU WINAPI CreatePopupMenu(void)
 
 
 /**********************************************************************
- *         GetMenuCheckMarkDimensions    (USER.417) (USER32.@)
+ *         GetMenuCheckMarkDimensions    (USER.417)
+ *         GetMenuCheckMarkDimensions    (USER32.@)
  */
 DWORD WINAPI GetMenuCheckMarkDimensions(void)
 {
@@ -4085,7 +4086,8 @@ DWORD WINAPI DrawMenuBarTemp(DWORD p1, DWORD p2)
 }
 
 /***********************************************************************
- *           EndMenu   (USER.187) (USER32.@)
+ *           EndMenu   (USER.187)
+ *           EndMenu   (USER32.@)
  */
 void WINAPI EndMenu(void)
 {

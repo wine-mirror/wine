@@ -25,7 +25,7 @@ static void *user32_proc_address(const char *proc_name)
 
 
 /***********************************************************************
- *		KERNEL_lstrcmp16 (KERNEL.87)
+ *		Reserved5 (KERNEL.87)
  */
 INT16 WINAPI KERNEL_lstrcmp16( LPCSTR str1, LPCSTR str2 )
 {
@@ -130,7 +130,7 @@ INT WINAPIV k32wsprintfA(LPSTR buffer, LPCSTR spec, ...)
  */
 
 /***********************************************************************
- *		KERNEL_AnsiNext16 (KERNEL.77)
+ *		Reserved1 (KERNEL.77)
  */
 SEGPTR WINAPI KERNEL_AnsiNext16(SEGPTR current)
 {
@@ -138,7 +138,7 @@ SEGPTR WINAPI KERNEL_AnsiNext16(SEGPTR current)
 }
 
 /***********************************************************************
- *		KERNEL_AnsiPrev16(KERNEL.78)
+ *		Reserved2(KERNEL.78)
  */
 SEGPTR WINAPI KERNEL_AnsiPrev16( SEGPTR start, SEGPTR current )
 {
@@ -146,7 +146,7 @@ SEGPTR WINAPI KERNEL_AnsiPrev16( SEGPTR start, SEGPTR current )
 }
 
 /***********************************************************************
- *		KERNEL_AnsiUpper16 (KERNEL.79)
+ *		Reserved3 (KERNEL.79)
  */
 SEGPTR WINAPI KERNEL_AnsiUpper16( SEGPTR strOrChar )
 {
@@ -165,7 +165,7 @@ SEGPTR WINAPI KERNEL_AnsiUpper16( SEGPTR strOrChar )
 }
 
 /***********************************************************************
- *		KERNEL_AnsiLower16 (KERNEL.80)
+ *		Reserved4 (KERNEL.80)
  */
 SEGPTR WINAPI KERNEL_AnsiLower16( SEGPTR strOrChar )
 {
