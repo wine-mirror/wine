@@ -182,6 +182,10 @@ dlls/gdi
 
 dlls/glu32
 
+% dlls/glut32/glut32.spec
+
+dlls/glut32
+
 % dlls/icmp/icmp.spec
 
 dlls/icmp
@@ -329,6 +333,10 @@ dlls/msvideo
 % dlls/netapi32/netapi32.spec
 
 dlls/netapi32
+
+% dlls/newdev/newdev.spec
+
+dlls/newdev
 
 % dlls/ntdll/ntdll.spec
 
@@ -484,6 +492,10 @@ dlls/ttydrv
 % dlls/twain/twain_32.spec
 
 dlls/twain
+
+% dlls/unicows/unicows.spec
+
+dlls/unicows
 
 % dlls/urlmon/urlmon.spec
 
