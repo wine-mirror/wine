@@ -473,7 +473,7 @@ static void COMPOBJ_DLLList_Add(HANDLE hLibrary)
 static void COMPOBJ_DllList_FreeUnused(int Timeout)
 {
     OpenDll *curr, *next, *prev = NULL;
-    typedef HRESULT(*DllCanUnloadNowFunc)(void);
+    typedef HRESULT (WINAPI *DllCanUnloadNowFunc)(void);
     DllCanUnloadNowFunc DllCanUnloadNow;
 
     TRACE("\n");
