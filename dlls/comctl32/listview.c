@@ -4583,13 +4583,14 @@ static LRESULT LISTVIEW_FindItemW(HWND hwnd, INT nStart,
 static LRESULT LISTVIEW_FindItemA(HWND hwnd, INT nStart, 
                                   LPLVFINDINFOA lpFindInfo)
 {
+  BOOL hasText = lpFindInfo->flags & (LVFI_STRING | LVFI_PARTIAL);
   LVFINDINFOW fiw;
   LRESULT res;
   
   memcpy(&fiw, lpFindInfo, sizeof(fiw));
-  fiw.psz = textdupTtoW((LPCWSTR)lpFindInfo->psz, FALSE);
+  if (hasText) fiw.psz = textdupTtoW((LPCWSTR)lpFindInfo->psz, FALSE);
   res = LISTVIEW_FindItemW(hwnd, nStart, &fiw);
-  textfreeT((LPWSTR)fiw.psz, FALSE);
+  if (hasText) textfreeT((LPWSTR)fiw.psz, FALSE);
   return res;
 }
 
