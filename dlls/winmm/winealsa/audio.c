@@ -1461,13 +1461,13 @@ static DWORD wodGetPosition(WORD wDevID, LPMMTIME lpTime, DWORD uSize)
 	break;
     case TIME_SMPTE:
 	time = val / (wwo->format.wf.nAvgBytesPerSec / 1000);
-	lpTime->u.smpte.hour = time / 108000;
-	time -= lpTime->u.smpte.hour * 108000;
-	lpTime->u.smpte.min = time / 1800;
-	time -= lpTime->u.smpte.min * 1800;
-	lpTime->u.smpte.sec = time / 30;
-	time -= lpTime->u.smpte.sec * 30;
-	lpTime->u.smpte.frame = time;
+	lpTime->u.smpte.hour = time / (60 * 60 * 1000);
+	time -= lpTime->u.smpte.hour * (60 * 60 * 1000);
+	lpTime->u.smpte.min = time / (60 * 1000);
+	time -= lpTime->u.smpte.min * (60 * 1000);
+	lpTime->u.smpte.sec = time / 1000;
+	time -= lpTime->u.smpte.sec * 1000;
+	lpTime->u.smpte.frame = time * 30 / 1000;
 	lpTime->u.smpte.fps = 30;
 	TRACE("TIME_SMPTE=%02u:%02u:%02u:%02u\n",
 	      lpTime->u.smpte.hour, lpTime->u.smpte.min,
@@ -1878,8 +1878,16 @@ static HRESULT WINAPI IDsDriverBufferImpl_SetFrequency(PIDSDRIVERBUFFER iface, D
 
 static HRESULT WINAPI IDsDriverBufferImpl_SetVolumePan(PIDSDRIVERBUFFER iface, PDSVOLUMEPAN pVolPan)
 {
-    /* ICOM_THIS(IDsDriverBufferImpl,iface); */
-    FIXME("(%p,%p): stub!\n",iface,pVolPan);
+    DWORD vol;
+    ICOM_THIS(IDsDriverBufferImpl,iface);
+    TRACE("(%p,%p)\n",iface,pVolPan);
+    vol = pVolPan->dwTotalLeftAmpFactor | (pVolPan->dwTotalRightAmpFactor << 16);
+                                                                                
+    if (wodSetVolume(This->drv->wDevID, vol) != MMSYSERR_NOERROR) {
+	WARN("wodSetVolume failed\n");
+	return DSERR_INVALIDPARAM;
+    }
+
     return DS_OK;
 }
 
