@@ -1,4 +1,4 @@
-DEFS      = -DINCLUDEDIR="\"$(includedir)\""
+DEFS      = -DINCLUDEDIR="\"$(includedir)\"" -DDLLDIR="\"$(dlldir)\""
 TOPSRCDIR = @top_srcdir@
 TOPOBJDIR = ../..
 SRCDIR    = @srcdir@

@@ -31,10 +31,6 @@
 
 #include "utils.h"
 
-#ifndef WINEDLLS
-#define WINEDLLS "/usr/local/lib/wine"
-#endif
-
 static const char *app_loader_script =
     "#!/bin/sh\n"
     "\n"
@@ -439,8 +435,8 @@ int main(int argc, char **argv)
     obj_files = strarray_alloc();
     
     /* include the standard DLL path first */
-    add_lib_path(WINEDLLS);
-	
+    add_lib_path(DLLDIR);
+
     for (i = 1; i < argc; i++)
     {
 	if (!no_opt && argv[i][0] == '-')
