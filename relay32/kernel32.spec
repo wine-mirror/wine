@@ -160,7 +160,7 @@ init	MAIN_KernelInit
 144 stdcall CompareStringW(long long wstr long wstr long) CompareString32W
 145 stub ConnectNamedPipe
 146 stdcall ContinueDebugEvent(long long long) ContinueDebugEvent
-147 stub ConvertDefaultLocale
+147 stdcall ConvertDefaultLocale (long) ConvertDefaultLocale32
 148 stdcall ConvertToGlobalHandle(long) ConvertToGlobalHandle
 149 stdcall CopyFileA(str str long) CopyFile32A
 150 stdcall CopyFileW(wstr wstr long) CopyFile32W

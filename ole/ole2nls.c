@@ -643,7 +643,20 @@ INT16 WINAPI GetLocaleInfo16(LCID lcid,LCTYPE LCType,LPSTR buf,INT16 len)
 {
 	return GetLocaleInfo32A(lcid,LCType,buf,len);
 }
-
+/******************************************************************************
+ * ConvertDefaultLocale32 [KERNEL32.147]
+ */
+LCID WINAPI ConvertDefaultLocale32 (LCID lcid)
+{	switch (lcid)
+	{  case LOCALE_SYSTEM_DEFAULT:
+	     return GetSystemDefaultLCID();
+	   case LOCALE_USER_DEFAULT:
+	     return GetUserDefaultLCID();
+	   case 0:
+	     return MAKELCID (LANG_NEUTRAL, SUBLANG_NEUTRAL);
+	}  
+	return MAKELANGID( PRIMARYLANGID(lcid), SUBLANG_NEUTRAL);
+}
 /******************************************************************************
  * GetLocaleInfo32A [KERNEL32.342]
  *

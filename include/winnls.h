@@ -457,4 +457,6 @@ INT16       WINAPI GetLocaleInfo16(LCID,LCTYPE,LPSTR,INT16);
 BOOL16      WINAPI GetStringType16(LCID,DWORD,LPCSTR,INT16,LPWORD);
 
 
+LCID WINAPI ConvertDefaultLocale(LCID   Locale);
+
 #endif  /* __WINE_WINNLS_H */
