@@ -755,7 +755,7 @@ static BOOL fixup_flags( WINDOWPOS *winpos )
     if ((wndPtr->rectWindow.left == winpos->x) && (wndPtr->rectWindow.top == winpos->y))
         winpos->flags |= SWP_NOMOVE;    /* Already the right position */
 
-    if (winpos->hwnd == GetForegroundWindow())
+    if (winpos->hwnd == GetActiveWindow())
         winpos->flags |= SWP_NOACTIVATE;   /* Already active */
     else if ((wndPtr->dwStyle & (WS_POPUP | WS_CHILD)) != WS_CHILD)
     {
