@@ -73,7 +73,7 @@ typedef struct tagTREEVIEW_INFO
   INT           Timer;
   UINT          uNumItems;      /* number of valid TREEVIEW_ITEMs */
   INT           cdmode;         /* last custom draw setting */
-  UINT          uScrollTime;	/* max. time for scrolling in milliseconds*/
+  UINT          uScrollTime;	/* max. time for scrolling in milliseconds */
   BOOL		bRedraw;	/* if FALSE we validate but don't redraw in TREEVIEW_Paint() */
 
   UINT          uItemHeight;    /* item height */
@@ -726,7 +726,7 @@ TREEVIEW_ComputeItemRect(TREEVIEW_INFO *infoPtr, TREEVIEW_ITEM *item)
 	(item->visibleOrder - infoPtr->firstVisible->visibleOrder);
 
     item->rect.bottom = item->rect.top
-	+ infoPtr->uItemHeight * item->iIntegral;
+	+ infoPtr->uItemHeight * item->iIntegral - 1;
 
     item->rect.left = 0;
     item->rect.right = infoPtr->clientWidth;
@@ -1029,7 +1029,7 @@ TREEVIEW_InsertItemA(TREEVIEW_INFO *infoPtr, LPARAM lParam)
 	}
     }
 
-    TRACE("parent %p position %p: %s\n", parentItem, insertAfter,
+    TRACE("parent %p position %p: '%s'\n", parentItem, insertAfter,
 	  (tvItem->mask & TVIF_TEXT)
 	  ? ((tvItem->pszText == LPSTR_TEXTCALLBACKA) ? "<callback>"
 	     : tvItem->pszText)
@@ -1116,7 +1116,7 @@ TREEVIEW_InsertItemA(TREEVIEW_INFO *infoPtr, LPARAM lParam)
 	    }
 
 	    /* 
-	     * we reach the end of the child list and the item as not
+	     * we reach the end of the child list and the item has not
 	     * yet been inserted, therefore, insert it after the last child.
 	     */
 	    if ((!bItemInserted) && (aChild == NULL))
@@ -1376,7 +1376,7 @@ TREEVIEW_DeleteItem(TREEVIEW_INFO *infoPtr, HTREEITEM wineItem)
     }
 
     /* Validate insertMark dropItem.
-     * hotItem ??? - used for comparision only.
+     * hotItem ??? - used for comparison only.
      */
     if (!TREEVIEW_ValidItem(infoPtr, infoPtr->insertMarkItem))
 	infoPtr->insertMarkItem = 0;
@@ -1570,7 +1570,8 @@ TREEVIEW_NaturalHeight(TREEVIEW_INFO *infoPtr)
     ReleaseDC(0, hdc);
 
     /* The 16 is a hack because our fonts are tiny. */
-    return max(16, tm.tmHeight + tm.tmExternalLeading);
+    /* add 2 for the focus border and 1 more for margin some apps assume */
+    return max(16, tm.tmHeight + tm.tmExternalLeading + 3);
 }
 
 static LRESULT
@@ -2359,8 +2360,7 @@ TREEVIEW_DrawItem(TREEVIEW_INFO *infoPtr, HDC hdc, TREEVIEW_ITEM *wineItem)
 		DeleteObject(hNewPen);
 	    }
 
-	    rcText.left += 2;
-	    rcText.right -= 2;
+	    InflateRect(&rcText, -2, -1); /* allow for the focus rect */
 
 	    /* Draw it */
 	    DrawTextA(hdc,
@@ -3353,11 +3353,11 @@ TREEVIEW_EditLabelA(TREEVIEW_INFO *infoPtr, HTREEITEM hItem)
 	hOldFont = SelectObject(hdc, infoPtr->hFont);
     }
 
-    /*Get String Lenght in pixels */
+    /* Get string length in pixels */
     GetTextExtentPoint32A(hdc, editItem->pszText, strlen(editItem->pszText),
 			  &sz);
 
-    /*Add Extra spacing for the next character */
+    /* Add Extra spacing for the next character */
     GetTextMetricsA(hdc, &textMetric);
     sz.cx += (textMetric.tmMaxCharWidth * 2);
 
@@ -3577,14 +3577,14 @@ TREEVIEW_LButtonDoubleClick(TREEVIEW_INFO *infoPtr, LPARAM lParam)
     wineItem = (TREEVIEW_ITEM *)TREEVIEW_HitTest(infoPtr, &hit);
     if (!wineItem)
 	return 0;
-    TRACE("item %d \n", TREEVIEW_GetItemIndex(infoPtr, wineItem));
+    TRACE("item %d\n", TREEVIEW_GetItemIndex(infoPtr, wineItem));
 
     if (TREEVIEW_SendSimpleNotify(infoPtr, NM_DBLCLK) == FALSE)
     {				/* FIXME! */
 	switch (hit.flags)
 	{
 	case TVHT_ONITEMRIGHT:
-	    /* FIXME: we should not have send NM_DBLCLK in this case. */
+	    /* FIXME: we should not have sent NM_DBLCLK in this case. */
 	    break;
 
 	case TVHT_ONITEMINDENT:
@@ -3646,7 +3646,7 @@ TREEVIEW_LButtonDown(TREEVIEW_INFO *infoPtr, LPARAM lParam)
     ht.pt.y = SHIWORD(lParam);
 
     TREEVIEW_HitTest(infoPtr, &ht);
-    TRACE("item %d \n", TREEVIEW_GetItemIndex(infoPtr, ht.hItem));
+    TRACE("item %d\n", TREEVIEW_GetItemIndex(infoPtr, ht.hItem));
 
     /* update focusedItem and redraw both items */
     if(ht.hItem && (ht.flags & TVHT_ONITEM))
@@ -3679,7 +3679,7 @@ TREEVIEW_LButtonDown(TREEVIEW_INFO *infoPtr, LPARAM lParam)
 					   ht.pt);
 	    infoPtr->dropItem = ht.hItem;
 
-            /* clean up focuedItem as we dragged and won't select this item */
+            /* clean up focusedItem as we dragged and won't select this item */
             if(infoPtr->focusedItem)
             {
                 /* refresh the item that was focused */
@@ -3699,7 +3699,7 @@ TREEVIEW_LButtonDown(TREEVIEW_INFO *infoPtr, LPARAM lParam)
         goto setfocus;
 
     /* 
-     * If the style allow editing and the node is already selected 
+     * If the style allows editing and the node is already selected 
      * and the click occured on the item label...
      */
     if ((infoPtr->dwStyle & TVS_EDITLABELS) &&
@@ -3738,7 +3738,7 @@ TREEVIEW_LButtonDown(TREEVIEW_INFO *infoPtr, LPARAM lParam)
                 BOOL closeit = TRUE;
                 SelItem = ht.hItem;
 
-                /* determine of the hitItem is a child of the currently selected item */
+                /* determine if the hitItem is a child of the currently selected item */
                 while(closeit && SelItem && TREEVIEW_ValidItem(infoPtr, SelItem) && (SelItem != infoPtr->root))
                 {
                     closeit = (SelItem != infoPtr->selectedItem);
@@ -4241,7 +4241,7 @@ TREEVIEW_HScroll(TREEVIEW_INFO *infoPtr, WPARAM wParam)
 	SetFocus(infoPtr->hwnd);
 
     maxWidth = infoPtr->treeWidth - infoPtr->clientWidth;
-    /* shall never occure */
+    /* shall never occur */
     if (maxWidth <= 0)
     {
        scrollX = 0;
