@@ -1,12 +1,17 @@
-#ifndef __guid_h_
-#define __guid_h_
-
 #define INITGUID
 
 /* FIXME: we include all the header files containing GUIDs
  * so that the corresponding variables get defined. But they
  * don't even all belong to the same DLL !!!
+ *
+ * Therefore, as the builtin DLL's get teased apart (e.g. for elf-dlls)
+ * then this file will have to be partitioned into per dll files.
  */
+#include "initguid.h"
+
+#include "shlguid.h"
+#include "docobj.h"
+#include "olectl.h"
 #include "oleidl.h"
 #include "oaidl.h"
 #include "olectl.h"
@@ -24,7 +29,5 @@
 #include "shlobj.h"
 #include "docobj.h"
 
-/* FIXME: don't really know where to put this. */
+/* and now for the one assumed GUID... */
 DEFINE_GUID(GUID_NULL,   0,0,0,0,0,0,0,0,0,0,0);
-
-#endif
