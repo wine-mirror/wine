@@ -96,17 +96,27 @@ typedef struct _WINED3DVOLUME_DESC
     UINT                *Depth;
 } WINED3DVOLUME_DESC;
 
-/* The following have differing names, but actually are the same layout */
+/* The following have differing names, but actually are the same layout. */
+/* Also, D3DCAPS8 is a subset of D3DCAPS9 so can be typecase as long as
+     none of the 9 fields are accessed when the device is d3d8           */
 #if defined( __WINE_D3D8_H )
+ /* Identical: */ 
  #define WINED3DLIGHT           D3DLIGHT8
  #define WINED3DCLIPSTATUS      D3DCLIPSTATUS8
  #define WINED3DMATERIAL        D3DMATERIAL8
  #define WINED3DVIEWPORT        D3DVIEWPORT8
+ 
+ /* Subset: */
+ #define WINED3DCAPS            D3DCAPS8
 #else
+ /* Identical: */ 
  #define WINED3DLIGHT           D3DLIGHT9
  #define WINED3DCLIPSTATUS      D3DCLIPSTATUS9
  #define WINED3DMATERIAL        D3DMATERIAL9
  #define WINED3DVIEWPORT        D3DVIEWPORT9
+ 
+ /* Subsets: */
+ #define WINED3DCAPS            D3DCAPS9
 #endif
 
 typedef struct IWineD3D               IWineD3D;
@@ -178,7 +188,7 @@ DECLARE_INTERFACE_(IWineD3D,IUnknown)
     STDMETHOD(CheckDeviceType)(THIS_ UINT  Adapter, D3DDEVTYPE  CheckType, D3DFORMAT  DisplayFormat, D3DFORMAT  BackBufferFormat, BOOL  Windowed) PURE;
     STDMETHOD(CheckDeviceFormat)(THIS_ UINT  Adapter, D3DDEVTYPE  DeviceType, D3DFORMAT  AdapterFormat, DWORD  Usage, D3DRESOURCETYPE  RType, D3DFORMAT  CheckFormat) PURE;
     STDMETHOD(CheckDeviceFormatConversion)(THIS_ UINT Adapter, D3DDEVTYPE DeviceType, D3DFORMAT SourceFormat, D3DFORMAT TargetFormat) PURE;
-    STDMETHOD(GetDeviceCaps)(THIS_ UINT  Adapter, D3DDEVTYPE  DeviceType, void * pCaps) PURE;
+    STDMETHOD(GetDeviceCaps)(THIS_ UINT  Adapter, D3DDEVTYPE  DeviceType, WINED3DCAPS* pCaps) PURE;
     STDMETHOD(CreateDevice)(THIS_ UINT  Adapter, D3DDEVTYPE  DeviceType,HWND  hFocusWindow, DWORD  BehaviorFlags, WINED3DPRESENT_PARAMETERS * pPresentationParameters, IWineD3DDevice ** ppReturnedDeviceInterface, IUnknown *parent, D3DCB_CREATERENDERTARGETFN pFn) PURE;
 };
 #undef INTERFACE
@@ -255,6 +265,11 @@ DECLARE_INTERFACE_(IWineD3DDevice,IUnknown)
     STDMETHOD(GetRenderState)(THIS_ D3DRENDERSTATETYPE  State,DWORD * pValue) PURE;
     STDMETHOD(SetTextureStageState)(THIS_ DWORD  Stage,D3DTEXTURESTAGESTATETYPE  Type,DWORD  Value) PURE;
     STDMETHOD(GetTextureStageState)(THIS_ DWORD  Stage,D3DTEXTURESTAGESTATETYPE  Type,DWORD * pValue) PURE;
+    STDMETHOD(SetTexture)(THIS_ DWORD Stage, IWineD3DBaseTexture* pTexture) PURE;
+    STDMETHOD(GetTexture)(THIS_ DWORD Stage, IWineD3DBaseTexture** ppTexture) PURE;
+    STDMETHOD(GetBackBuffer)(THIS_ UINT iSwapChain, UINT iBackBuffer, D3DBACKBUFFER_TYPE Type, IWineD3DSurface** ppBackBuffer) PURE;
+    STDMETHOD(GetDeviceCaps)(THIS_ WINED3DCAPS* pCaps) PURE;
+    STDMETHOD(GetDisplayMode)(THIS_ UINT iSwapChain, D3DDISPLAYMODE* pMode) PURE;
     STDMETHOD(BeginScene)(THIS) PURE;
     STDMETHOD(EndScene)(THIS) PURE;
     STDMETHOD(Present)(THIS_ CONST RECT * pSourceRect,CONST RECT * pDestRect,HWND  hDestWindowOverride,CONST RGNDATA * pDirtyRegion) PURE;
@@ -311,6 +326,11 @@ DECLARE_INTERFACE_(IWineD3DDevice,IUnknown)
 #define IWineD3DDevice_GetRenderState(p,a,b)                    (p)->lpVtbl->GetRenderState(p,a,b)
 #define IWineD3DDevice_SetTextureStageState(p,a,b,c)            (p)->lpVtbl->SetTextureStageState(p,a,b,c)
 #define IWineD3DDevice_GetTextureStageState(p,a,b,c)            (p)->lpVtbl->GetTextureStageState(p,a,b,c)
+#define IWineD3DDevice_SetTexture(p,a,b)                        (p)->lpVtbl->SetTexture(p,a,b)
+#define IWineD3DDevice_GetTexture(p,a,b)                        (p)->lpVtbl->GetTexture(p,a,b)
+#define IWineD3DDevice_GetBackBuffer(p,a,b,c,d)                 (p)->lpVtbl->GetBackBuffer(p,a,b,c,d)
+#define IWineD3DDevice_GetDeviceCaps(p,a)                       (p)->lpVtbl->GetDeviceCaps(p,a)
+#define IWineD3DDevice_GetDisplayMode(p,a,b)                    (p)->lpVtbl->GetDisplayMode(p,a,b)
 #define IWineD3DDevice_BeginScene(p)                            (p)->lpVtbl->BeginScene(p)
 #define IWineD3DDevice_EndScene(p)                              (p)->lpVtbl->EndScene(p)
 #define IWineD3DDevice_Present(p,a,b,c,d)                       (p)->lpVtbl->Present(p,a,b,c,d)

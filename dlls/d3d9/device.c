@@ -71,7 +71,7 @@ HRESULT  WINAPI  IDirect3DDevice9Impl_TestCooperativeLevel(LPDIRECT3DDEVICE9 ifa
 
 UINT     WINAPI  IDirect3DDevice9Impl_GetAvailableTextureMem(LPDIRECT3DDEVICE9 iface) {
     IDirect3DDevice9Impl *This = (IDirect3DDevice9Impl *)iface;
-    TRACE("(%p) : stub, emulating 32Mb for now\n", This);
+    FIXME("(%p) : stub, emulating 32Mb for now\n", This);
     /*
      * pretend we have 32MB of any type of memory queried.
      */
@@ -95,27 +95,24 @@ HRESULT  WINAPI  IDirect3DDevice9Impl_GetDirect3D(LPDIRECT3DDEVICE9 iface, IDire
 
 HRESULT  WINAPI  IDirect3DDevice9Impl_GetDeviceCaps(LPDIRECT3DDEVICE9 iface, D3DCAPS9* pCaps) {
     IDirect3DDevice9Impl *This = (IDirect3DDevice9Impl *)iface;
-    FIXME("(%p) : stub, calling idirect3d for now\n", This);
-    IDirect3D9Impl_GetDeviceCaps((LPDIRECT3D9) This->direct3d, This->adapterNo, This->devType, pCaps);
-    return D3D_OK;
+    return IWineD3DDevice_GetDeviceCaps(This->WineD3DDevice, pCaps);
 }
 
 HRESULT  WINAPI  IDirect3DDevice9Impl_GetDisplayMode(LPDIRECT3DDEVICE9 iface, UINT iSwapChain, D3DDISPLAYMODE* pMode) {
     IDirect3DDevice9Impl *This = (IDirect3DDevice9Impl *)iface;
-    FIXME("(%p) : stub\n", This);
-    return D3D_OK;
+    return IWineD3DDevice_GetDisplayMode(This->WineD3DDevice, iSwapChain, pMode);
 }
 
 HRESULT  WINAPI  IDirect3DDevice9Impl_GetCreationParameters(LPDIRECT3DDEVICE9 iface, D3DDEVICE_CREATION_PARAMETERS *pParameters) {
     IDirect3DDevice9Impl *This = (IDirect3DDevice9Impl *)iface;
-    TRACE("(%p) copying to %p\n", This, pParameters);    
+    FIXME("(%p) copying to %p\n", This, pParameters);    
     memcpy(pParameters, &This->CreateParms, sizeof(D3DDEVICE_CREATION_PARAMETERS));
     return D3D_OK;
 }
 
 HRESULT  WINAPI  IDirect3DDevice9Impl_SetCursorProperties(LPDIRECT3DDEVICE9 iface, UINT XHotSpot, UINT YHotSpot, IDirect3DSurface9* pCursorBitmap) {
     IDirect3DDevice9Impl *This = (IDirect3DDevice9Impl *)iface;
-    TRACE("(%p) : Spot Pos(%u,%u)\n", This, XHotSpot, YHotSpot);
+    FIXME("(%p) : Spot Pos(%u,%u)\n", This, XHotSpot, YHotSpot);
 
 /* TODO:
     IDirect3DSurface9Impl* pSur = (IDirect3DSurface9Impl*) pCursorBitmap;
@@ -136,7 +133,7 @@ HRESULT  WINAPI  IDirect3DDevice9Impl_SetCursorProperties(LPDIRECT3DDEVICE9 ifac
 
 void     WINAPI  IDirect3DDevice9Impl_SetCursorPosition(LPDIRECT3DDEVICE9 iface, int XScreenSpace, int YScreenSpace, DWORD Flags) {
     IDirect3DDevice9Impl *This = (IDirect3DDevice9Impl *)iface;
-    TRACE("(%p) : SetPos to (%u,%u)\n", This, XScreenSpace, YScreenSpace);
+    FIXME("(%p) : SetPos to (%u,%u)\n", This, XScreenSpace, YScreenSpace);
     This->xScreenSpace = XScreenSpace;
     This->yScreenSpace = YScreenSpace;
     return;
@@ -144,7 +141,7 @@ void     WINAPI  IDirect3DDevice9Impl_SetCursorPosition(LPDIRECT3DDEVICE9 iface,
 
 BOOL     WINAPI  IDirect3DDevice9Impl_ShowCursor(LPDIRECT3DDEVICE9 iface, BOOL bShow) {
     IDirect3DDevice9Impl *This = (IDirect3DDevice9Impl *)iface;
-    TRACE("(%p) : visible(%d)\n", This, bShow); 
+    FIXME("(%p) : visible(%d)\n", This, bShow); 
     This->bCursorVisible = bShow;
     return D3D_OK;
 }
@@ -162,15 +159,16 @@ HRESULT  WINAPI  IDirect3DDevice9Impl_Present(LPDIRECT3DDEVICE9 iface, CONST REC
 
 HRESULT  WINAPI  IDirect3DDevice9Impl_GetBackBuffer(LPDIRECT3DDEVICE9 iface, UINT iSwapChain, UINT BackBuffer, D3DBACKBUFFER_TYPE Type, IDirect3DSurface9** ppBackBuffer) {
     IDirect3DDevice9Impl *This = (IDirect3DDevice9Impl *)iface;
-    *ppBackBuffer = (LPDIRECT3DSURFACE9) This->backBuffer;
-    TRACE("(%p) : BackBuf %d Type %d returning %p\n", This, BackBuffer, Type, *ppBackBuffer);
-    if (BackBuffer > This->PresentParms.BackBufferCount - 1) {
-        FIXME("Only one backBuffer currently supported\n");
-        return D3DERR_INVALIDCALL;
+    
+    IWineD3DSurface *retSurface = NULL;
+    HRESULT rc = D3D_OK;
+
+    rc = IWineD3DDevice_GetBackBuffer(This->WineD3DDevice, iSwapChain, BackBuffer, Type, (IWineD3DSurface **)&retSurface);
+    if (rc == D3D_OK && NULL != ppBackBuffer) {
+        IWineD3DSurface_GetParent(retSurface, (IUnknown **)ppBackBuffer);
+        IWineD3DSurface_Release(retSurface);
     }
-    /* Note inc ref on returned surface */
-    IDirect3DSurface9Impl_AddRef((LPDIRECT3DSURFACE9) *ppBackBuffer);
-    return D3D_OK;
+    return rc;
 }
 
 HRESULT  WINAPI  IDirect3DDevice9Impl_GetRasterStatus(LPDIRECT3DDEVICE9 iface, UINT iSwapChain, D3DRASTER_STATUS* pRasterStatus) {
@@ -213,16 +211,29 @@ HRESULT  WINAPI  IDirect3DDevice9Impl_CreateRenderTarget(LPDIRECT3DDEVICE9 iface
                                                          IDirect3DSurface9** ppSurface, HANDLE* pSharedHandle) {
     IDirect3DSurface9Impl *object;
     IDirect3DDevice9Impl *This = (IDirect3DDevice9Impl *)iface;
+    HRESULT hrc = D3D_OK;
 
     /* Allocate the storage for the device */
     object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirect3DSurface9Impl));
+    if (NULL == object) {
+        FIXME("Allocation of memory failed\n");
+        *ppSurface = NULL;
+        return D3DERR_OUTOFVIDEOMEMORY;
+    }
+
     object->lpVtbl = &Direct3DSurface9_Vtbl;
     object->ref = 1;
-    IWineD3DDevice_CreateRenderTarget(This->WineD3DDevice, Width, Height, Format, MultiSample, MultisampleQuality, 
-                                      Lockable, &object->wineD3DSurface, pSharedHandle, (IUnknown *)object);
-    *ppSurface = (LPDIRECT3DSURFACE9) object;
-
-    return D3D_OK;
+    hrc = IWineD3DDevice_CreateRenderTarget(This->WineD3DDevice, Width, Height, Format, MultiSample, MultisampleQuality, 
+                                           Lockable, &object->wineD3DSurface, pSharedHandle, (IUnknown *)object);
+    if (hrc != D3D_OK) {
+        /* free up object */ 
+        FIXME("(%p) call to IWineD3DDevice_CreateRenderTarget failed\n", This);
+        HeapFree(GetProcessHeap(), 0, object);
+        *ppSurface = NULL;
+    } else {
+        *ppSurface = (LPDIRECT3DSURFACE9) object;
+    }
+    return hrc;
 }
 
 HRESULT  WINAPI  IDirect3DDevice9Impl_CreateDepthStencilSurface(LPDIRECT3DDEVICE9 iface, UINT Width, UINT Height, D3DFORMAT Format, D3DMULTISAMPLE_TYPE MultiSample, DWORD MultisampleQuality, BOOL Discard, IDirect3DSurface9** ppSurface, HANDLE* pSharedHandle) {
@@ -276,16 +287,29 @@ HRESULT  WINAPI  IDirect3DDevice9Impl_ColorFill(LPDIRECT3DDEVICE9 iface, IDirect
 HRESULT  WINAPI  IDirect3DDevice9Impl_CreateOffscreenPlainSurface(LPDIRECT3DDEVICE9 iface, UINT Width, UINT Height, D3DFORMAT Format, D3DPOOL Pool, IDirect3DSurface9** ppSurface, HANDLE* pSharedHandle) {
     IDirect3DSurface9Impl *object;
     IDirect3DDevice9Impl *This = (IDirect3DDevice9Impl *)iface;
+    HRESULT hrc = D3D_OK;
     
     /* Allocate the storage for the device */
     object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirect3DSurface9Impl));
+    if (NULL == object) {
+        FIXME("Allocation of memory failed\n");
+        *ppSurface = NULL;
+        return D3DERR_OUTOFVIDEOMEMORY;
+    }
+
     object->lpVtbl = &Direct3DSurface9_Vtbl;
     object->ref = 1;
-    IWineD3DDevice_CreateOffscreenPlainSurface(This->WineD3DDevice, Width, Height, Format, Pool, 
+    hrc = IWineD3DDevice_CreateOffscreenPlainSurface(This->WineD3DDevice, Width, Height, Format, Pool, 
                                                &(object->wineD3DSurface), pSharedHandle, (IUnknown *)object);
-
-    *ppSurface = (LPDIRECT3DSURFACE9) object;
-    return D3D_OK;
+    if (hrc != D3D_OK) {
+        /* free up object */ 
+        FIXME("(%p) call to IWineD3DDevice_CreateOffscreenPlainSurface failed\n", This);
+        HeapFree(GetProcessHeap(), 0, object);
+        *ppSurface = NULL;
+    } else {
+        *ppSurface = (LPDIRECT3DSURFACE9) object;
+    }
+    return hrc;
 }
 
 HRESULT  WINAPI  IDirect3DDevice9Impl_SetRenderTarget(LPDIRECT3DDEVICE9 iface, DWORD RenderTargetIndex, IDirect3DSurface9* pRenderTarget) {
@@ -414,16 +438,21 @@ HRESULT  WINAPI  IDirect3DDevice9Impl_GetClipStatus(LPDIRECT3DDEVICE9 iface, D3D
 
 HRESULT  WINAPI  IDirect3DDevice9Impl_GetTexture(LPDIRECT3DDEVICE9 iface, DWORD Stage, IDirect3DBaseTexture9** ppTexture) {
     IDirect3DDevice9Impl *This = (IDirect3DDevice9Impl *)iface;
-    TRACE("(%p) : returning %p for stage %ld\n", This, This->UpdateStateBlock->textures[Stage], Stage);
-    *ppTexture = (LPDIRECT3DBASETEXTURE9) This->UpdateStateBlock->textures[Stage];
-    IDirect3DBaseTexture9Impl_AddRef(*ppTexture);
-    return D3D_OK;
+    IWineD3DBaseTexture *retTexture = NULL;
+    HRESULT rc = D3D_OK;
+
+    rc = IWineD3DDevice_GetTexture(This->WineD3DDevice, Stage, (IWineD3DBaseTexture **)&retTexture);
+    if (rc == D3D_OK && NULL != ppTexture) {
+        IWineD3DBaseTexture_GetParent(retTexture, (IUnknown **)ppTexture);
+        IWineD3DBaseTexture_Release(retTexture);
+    }
+    return rc;
 }
 
 HRESULT  WINAPI  IDirect3DDevice9Impl_SetTexture(LPDIRECT3DDEVICE9 iface, DWORD Stage, IDirect3DBaseTexture9* pTexture) {
     IDirect3DDevice9Impl *This = (IDirect3DDevice9Impl *)iface;
-    FIXME("(%p) : stub\n", This);
-    return D3D_OK;
+    return IWineD3DDevice_SetTexture(This->WineD3DDevice, Stage,
+                                     pTexture==NULL ? NULL:((IDirect3DBaseTexture9Impl *)pTexture)->wineD3DBaseTexture); 
 }
 
 HRESULT  WINAPI  IDirect3DDevice9Impl_GetTextureStageState(LPDIRECT3DDEVICE9 iface, DWORD Stage, D3DTEXTURESTAGESTATETYPE Type, DWORD* pValue) {
@@ -570,7 +599,7 @@ HRESULT  WINAPI  IDirect3DDevice9Impl_GetStreamSource(LPDIRECT3DDEVICE9 iface, U
     HRESULT rc = D3D_OK;
 
     rc = IWineD3DDevice_GetStreamSource(This->WineD3DDevice, StreamNumber, (IWineD3DVertexBuffer **)&retStream, OffsetInBytes, pStride);
-    if (rc == D3D_OK && NULL != *pStream) {
+    if (rc == D3D_OK && NULL != pStream) {
         IWineD3DVertexBuffer_GetParent(retStream, (IUnknown **)pStream);
         IWineD3DVertexBuffer_Release(retStream);
     }
@@ -603,7 +632,7 @@ HRESULT  WINAPI  IDirect3DDevice9Impl_GetIndices(LPDIRECT3DDEVICE9 iface, IDirec
     UINT tmp;
 
     rc = IWineD3DDevice_GetIndices(This->WineD3DDevice, &retIndexData, &tmp);
-    if (rc == D3D_OK && NULL != *ppIndexData) {
+    if (rc == D3D_OK && NULL != ppIndexData) {
         IWineD3DVertexBuffer_GetParent(retIndexData, (IUnknown **)ppIndexData);
         IWineD3DVertexBuffer_Release(retIndexData);
     }

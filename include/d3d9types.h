@@ -1304,7 +1304,6 @@ typedef struct _D3DSURFACE_DESC {
     D3DRESOURCETYPE     Type;
     DWORD               Usage;
     D3DPOOL             Pool;
-    UINT                Size;
     D3DMULTISAMPLE_TYPE MultiSampleType;
     DWORD               MultiSampleQuality;
     UINT                Width;

@@ -141,13 +141,27 @@ HRESULT WINAPI IDirect3DDevice9Impl_CreateVertexBuffer(LPDIRECT3DDEVICE9 iface,
     
     IDirect3DVertexBuffer9Impl *object;
     IDirect3DDevice9Impl *This = (IDirect3DDevice9Impl *)iface;
+    HRESULT hrc = D3D_OK;
 
     /* Allocate the storage for the device */
     object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirect3DVertexBuffer9Impl));
+    if (NULL == object) {
+        FIXME("Allocation of memory failed\n");
+        *ppVertexBuffer = NULL;
+        return D3DERR_OUTOFVIDEOMEMORY;
+    }
+
     object->lpVtbl = &Direct3DVertexBuffer9_Vtbl;
     object->ref = 1;
-    IWineD3DDevice_CreateVertexBuffer(This->WineD3DDevice, Size, Usage, FVF, Pool, &(object->wineD3DVertexBuffer), pSharedHandle, (IUnknown *)object);
-    *ppVertexBuffer = (LPDIRECT3DVERTEXBUFFER9) object;
-
-    return D3D_OK;
+    hrc = IWineD3DDevice_CreateVertexBuffer(This->WineD3DDevice, Size, Usage, FVF, Pool, &(object->wineD3DVertexBuffer), pSharedHandle, (IUnknown *)object);
+    
+    if (hrc != D3D_OK) {
+        /* free up object */ 
+        FIXME("(%p) call to IWineD3DDevice_CreateVertexBuffer failed\n", This);
+        HeapFree(GetProcessHeap(), 0, object);
+        *ppVertexBuffer = NULL;
+    } else {
+        *ppVertexBuffer = (LPDIRECT3DVERTEXBUFFER9) object;
+    }
+    return hrc;
 }

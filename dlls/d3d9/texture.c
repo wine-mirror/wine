@@ -158,7 +158,7 @@ HRESULT WINAPI IDirect3DTexture9Impl_GetSurfaceLevel(LPDIRECT3DTEXTURE9 iface, U
     
     IWineD3DSurface *mySurface = NULL;
     hrc = IWineD3DTexture_GetSurfaceLevel(This->wineD3DTexture, Level, &mySurface);
-    if (hrc == D3D_OK) {
+    if (hrc == D3D_OK && NULL != ppSurfaceLevel) {
        IWineD3DSurface_GetParent(mySurface, (IUnknown **)ppSurfaceLevel);
        IWineD3DSurface_Release(mySurface);
     }
@@ -213,14 +213,28 @@ HRESULT  WINAPI  IDirect3DDevice9Impl_CreateTexture(LPDIRECT3DDEVICE9 iface, UIN
                                                     D3DFORMAT Format, D3DPOOL Pool, IDirect3DTexture9** ppTexture, HANDLE* pSharedHandle) {
     IDirect3DTexture9Impl *object;
     IDirect3DDevice9Impl *This = (IDirect3DDevice9Impl *)iface;
+    HRESULT hrc = D3D_OK;
     
     /* Allocate the storage for the device */
     object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirect3DTexture9Impl));
+    if (NULL == object) {
+        FIXME("Allocation of memory failed\n");
+        *ppTexture = NULL;
+        return D3DERR_OUTOFVIDEOMEMORY;
+    }
+
     object->lpVtbl = &Direct3DTexture9_Vtbl;
     object->ref = 1;
-    IWineD3DDevice_CreateTexture(This->WineD3DDevice, Width, Height, Levels, Usage,
+    hrc = IWineD3DDevice_CreateTexture(This->WineD3DDevice, Width, Height, Levels, Usage,
                                  Format, Pool, &(object->wineD3DTexture), pSharedHandle, (IUnknown *)object, D3D9CB_CreateSurface);
 
-    *ppTexture = (LPDIRECT3DTEXTURE9) object;
-    return D3D_OK;
+    if (hrc != D3D_OK) {
+        /* free up object */ 
+        FIXME("(%p) call to IWineD3DDevice_CreateTexture failed\n", This);
+        HeapFree(GetProcessHeap(), 0, object);
+        *ppTexture = NULL;
+    } else {
+        *ppTexture = (LPDIRECT3DTEXTURE9) object;
+    }
+    return hrc;
 }

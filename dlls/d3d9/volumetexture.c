@@ -156,7 +156,7 @@ HRESULT WINAPI IDirect3DVolumeTexture9Impl_GetVolumeLevel(LPDIRECT3DVOLUMETEXTUR
     
     IWineD3DVolume *myVolume = NULL;
     hrc = IWineD3DVolumeTexture_GetVolumeLevel(This->wineD3DVolumeTexture, Level, &myVolume);
-    if (hrc == D3D_OK) {
+    if (hrc == D3D_OK && NULL != ppVolumeLevel) {
        IWineD3DVolumeTexture_GetParent(myVolume, (IUnknown **)ppVolumeLevel);
        IWineD3DVolumeTexture_Release(myVolume);
     }
@@ -210,19 +210,34 @@ IDirect3DVolumeTexture9Vtbl Direct3DVolumeTexture9_Vtbl =
 HRESULT  WINAPI  IDirect3DDevice9Impl_CreateVolumeTexture(LPDIRECT3DDEVICE9 iface, 
                                                           UINT Width, UINT Height, UINT Depth, UINT Levels, DWORD Usage, 
                                                           D3DFORMAT Format, D3DPOOL Pool, 
-							  IDirect3DVolumeTexture9** ppVolumeTexture, HANDLE* pSharedHandle) {
+                                                          IDirect3DVolumeTexture9** ppVolumeTexture, HANDLE* pSharedHandle) {
 
     IDirect3DVolumeTexture9Impl *object;
     IDirect3DDevice9Impl *This = (IDirect3DDevice9Impl *)iface;
-    
+    HRESULT hrc = D3D_OK;
+
     /* Allocate the storage for the device */
     object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirect3DVolumeTexture9Impl));
+    if (NULL == object) {
+        FIXME("(%p) allocation of memory failed\n", This);
+        *ppVolumeTexture = NULL;
+        return D3DERR_OUTOFVIDEOMEMORY;
+    }
+
     object->lpVtbl = &Direct3DVolumeTexture9_Vtbl;
     object->ref = 1;
-    IWineD3DDevice_CreateVolumeTexture(This->WineD3DDevice, Width, Height, Depth, Levels, Usage,
+    hrc = IWineD3DDevice_CreateVolumeTexture(This->WineD3DDevice, Width, Height, Depth, Levels, Usage,
                                  Format, Pool, &(object->wineD3DVolumeTexture), pSharedHandle, 
                                  (IUnknown *)object, D3D9CB_CreateVolume);
 
-    *ppVolumeTexture = (LPDIRECT3DVOLUMETEXTURE9) object;
-    return D3D_OK;
+
+    if (hrc != D3D_OK) {
+        /* free up object */ 
+        FIXME("(%p) call to IWineD3DDevice_CreateVolumeTexture failed\n", This);
+        HeapFree(GetProcessHeap(), 0, object);
+        *ppVolumeTexture = NULL;
+    } else {
+        *ppVolumeTexture = (LPDIRECT3DVOLUMETEXTURE9) object;
+    }
+    return hrc;
 }

@@ -90,7 +90,7 @@ HRESULT WINAPI IDirect3DVolume9Impl_GetContainer(LPDIRECT3DVOLUME9 iface, REFIID
     res = IWineD3DVolume_GetContainer(This->wineD3DVolume, riid, (void **)&IWineContainer);
 
     /* If this works, the only valid container is a child of resource (volumetexture) */
-    if (res == D3D_OK) {
+    if (res == D3D_OK && NULL != ppContainer) {
         IWineD3DResource_GetParent((IWineD3DResource *)IWineContainer, (IUnknown **)ppContainer);
         IWineD3DResource_Release((IWineD3DResource *)IWineContainer);
     }
@@ -148,11 +148,27 @@ HRESULT WINAPI D3D9CB_CreateVolume(IUnknown  *pDevice, UINT Width, UINT Height, 
                                    HANDLE   * pSharedHandle) {
     IDirect3DVolume9Impl *object;
     IDirect3DDevice9Impl *This = (IDirect3DDevice9Impl *)pDevice;
+    HRESULT hrc = D3D_OK;
     
     /* Allocate the storage for the device */
     object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirect3DVolume9Impl));
+    if (NULL == object) {
+        FIXME("Allocation of memory failed\n");
+        *ppVolume = NULL;
+        return D3DERR_OUTOFVIDEOMEMORY;
+    }
+
     object->lpVtbl = &Direct3DVolume9_Vtbl;
     object->ref = 1;
-    return IWineD3DDevice_CreateVolume(This->WineD3DDevice, Width, Height, Depth, Usage, Format, 
+    hrc = IWineD3DDevice_CreateVolume(This->WineD3DDevice, Width, Height, Depth, Usage, Format, 
                                        Pool, ppVolume, pSharedHandle, (IUnknown *)object);
+    if (hrc != D3D_OK) {
+        /* free up object */ 
+        FIXME("(%p) call to IWineD3DDevice_CreateVolume failed\n", This);
+        HeapFree(GetProcessHeap(), 0, object);
+        *ppVolume = NULL;
+    } else {
+        *ppVolume = (IWineD3DVolume *)object;
+    }
+    return hrc;
 }

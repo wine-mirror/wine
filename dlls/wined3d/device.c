@@ -336,17 +336,17 @@ HRESULT WINAPI IWineD3DDeviceImpl_CreateRenderTarget(IWineD3DDevice *iface, UINT
     object->currentDesc.MultiSampleType = MultiSample;
     object->bytesPerPixel = D3DFmtGetBpp(This, Format);
     if (Format == D3DFMT_DXT1) { 
-        object->currentDesc.Size = (Width * object->bytesPerPixel)/2 * Height;  /* DXT1 is half byte per pixel */
+        object->currentDesc_size = (Width * object->bytesPerPixel)/2 * Height;  /* DXT1 is half byte per pixel */
     } else {
-        object->currentDesc.Size = (Width * object->bytesPerPixel) * Height;
+        object->currentDesc_size = (Width * object->bytesPerPixel) * Height;
     }
-    object->allocatedMemory = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, object->currentDesc.Size);
+    object->allocatedMemory = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, object->currentDesc_size);
     object->lockable = Lockable;
     object->locked = FALSE;
     memset(&object->lockedRect, 0, sizeof(RECT));
     IWineD3DSurface_CleanDirtyRect(*ppSurface);
 
-    TRACE("(%p) : w(%d) h(%d) fmt(%d,%s) lockable(%d) surf@%p, surfmem@%p, %d bytes\n", This, Width, Height, Format, debug_d3dformat(Format), Lockable, *ppSurface, object->allocatedMemory, object->currentDesc.Size);
+    TRACE("(%p) : w(%d) h(%d) fmt(%d,%s) lockable(%d) surf@%p, surfmem@%p, %d bytes\n", This, Width, Height, Format, debug_d3dformat(Format), Lockable, *ppSurface, object->allocatedMemory, object->currentDesc_size);
     return D3D_OK;
 }
 
@@ -389,18 +389,18 @@ HRESULT WINAPI IWineD3DDeviceImpl_CreateOffscreenPlainSurface(IWineD3DDevice *if
        it is based around 4x4 pixel blocks it requires padding, so allocate enough
        space!                                                                      */
     if (Format == D3DFMT_DXT1) { 
-        object->currentDesc.Size = ((max(Width,4) * object->bytesPerPixel) * max(Height,4)) / 2; /* DXT1 is half byte per pixel */
+        object->currentDesc_size = ((max(Width,4) * object->bytesPerPixel) * max(Height,4)) / 2; /* DXT1 is half byte per pixel */
     } else if (Format == D3DFMT_DXT2 || Format == D3DFMT_DXT3 || 
                Format == D3DFMT_DXT4 || Format == D3DFMT_DXT5) { 
-        object->currentDesc.Size = ((max(Width,4) * object->bytesPerPixel) * max(Height,4));
+        object->currentDesc_size = ((max(Width,4) * object->bytesPerPixel) * max(Height,4));
     } else {
-        object->currentDesc.Size = (Width * object->bytesPerPixel) * Height;
+        object->currentDesc_size = (Width * object->bytesPerPixel) * Height;
     }
-    object->allocatedMemory = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, object->currentDesc.Size);
+    object->allocatedMemory = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, object->currentDesc_size);
     object->lockable = TRUE;
     object->locked   = FALSE;
     object->Dirty    = FALSE;
-    TRACE("(%p) : w(%d) h(%d) fmt(%d,%s) surf@%p, surfmem@%p, %d bytes\n", This, Width, Height, Format, debug_d3dformat(Format), *ppSurface, object->allocatedMemory, object->currentDesc.Size);
+    TRACE("(%p) : w(%d) h(%d) fmt(%d,%s) surf@%p, surfmem@%p, %d bytes\n", This, Width, Height, Format, debug_d3dformat(Format), *ppSurface, object->allocatedMemory, object->currentDesc_size);
     
     memset(&object->lockedRect, 0, sizeof(RECT));
     return IWineD3DSurface_CleanDirtyRect(*ppSurface);
@@ -465,13 +465,13 @@ HRESULT WINAPI IWineD3DDeviceImpl_CreateTexture(IWineD3DDevice *iface, UINT Widt
         object->surfaces[i]->currentDesc.Usage = Usage;
         object->surfaces[i]->currentDesc.Pool = Pool;
 
-	    /** 
-	     * As written in msdn in IDirect3DTexture8::LockRect
-	     *  Textures created in D3DPOOL_DEFAULT are not lockable.
-	     */
-	    if (D3DPOOL_DEFAULT == Pool) {
-	      object->surfaces[i]->lockable = FALSE;
-	    }
+        /** 
+         * As written in msdn in IDirect3DTexture8::LockRect
+         *  Textures created in D3DPOOL_DEFAULT are not lockable.
+         */
+        if (D3DPOOL_DEFAULT == Pool) {
+            object->surfaces[i]->lockable = FALSE;
+        }
 
         TRACE("Created surface level %d @ %p, memory at %p\n", i, object->surfaces[i], object->surfaces[i]->allocatedMemory);
         tmpW = max(1, tmpW / 2);
@@ -619,6 +619,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_CreateCubeTexture(IWineD3DDevice *iface, UINT 
 
     object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IWineD3DCubeTextureImpl));
     if (NULL == object) {
+        FIXME("Allocation of memory failed\n");
         *ppCubeTexture = NULL;
         return D3DERR_OUTOFVIDEOMEMORY;
     }
@@ -663,13 +664,13 @@ HRESULT WINAPI IWineD3DDeviceImpl_CreateCubeTexture(IWineD3DDevice *iface, UINT 
             object->surfaces[j][i]->currentDesc.Usage = Usage;
             object->surfaces[j][i]->currentDesc.Pool = Pool;
 
-	        /** 
-	         * As written in msdn in IDirect3DCubeTexture8::LockRect
-	         *  Textures created in D3DPOOL_DEFAULT are not lockable.
-	         */
-	        if (D3DPOOL_DEFAULT == Pool) {
-	          object->surfaces[j][i]->lockable = FALSE;
-	        }
+            /** 
+             * As written in msdn in IDirect3DCubeTexture8::LockRect
+             *  Textures created in D3DPOOL_DEFAULT are not lockable.
+             */
+            if (D3DPOOL_DEFAULT == Pool) {
+              object->surfaces[j][i]->lockable = FALSE;
+            }
 
             TRACE("Created surface level %d @ %p, memory at %p\n", i, object->surfaces[j][i], object->surfaces[j][i]->allocatedMemory);
         }
@@ -2978,6 +2979,219 @@ HRESULT WINAPI IWineD3DDeviceImpl_GetTextureStageState(IWineD3DDevice *iface, DW
 }
 
 /*****
+ * Get / Set Texture 
+ *****/
+HRESULT WINAPI IWineD3DDeviceImpl_SetTexture(IWineD3DDevice *iface, DWORD Stage, IWineD3DBaseTexture* pTexture) {
+
+    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
+    IWineD3DBaseTexture   *oldTexture;
+    BOOL                   reapplyStates = TRUE;
+    DWORD                  reapplyFlags = 0;
+    INT                    oldTextureDimensions = -1;
+    D3DRESOURCETYPE        textureType;
+
+    oldTexture = This->updateStateBlock->textures[Stage];
+    TRACE("(%p) : Stage(%ld), Texture (%p)\n", This, Stage, pTexture);
+
+    /* Reject invalid texture units */
+    if (Stage >= GL_LIMITS(textures)) {
+        TRACE("Attempt to access invalid texture rejected\n");
+        return D3DERR_INVALIDCALL;
+    }
+
+    This->updateStateBlock->set.textures[Stage] = TRUE;
+    This->updateStateBlock->changed.textures[Stage] = TRUE;
+    This->updateStateBlock->textures[Stage] = pTexture;
+
+    /* Handle recording of state blocks */
+    if (This->isRecordingState) {
+        TRACE("Recording... not performing anything\n");
+        return D3D_OK;
+    }
+
+    oldTextureDimensions = This->updateStateBlock->textureDimensions[Stage];
+
+    ENTER_GL();
+
+    /* Make appropriate texture active */
+    if (GL_SUPPORT(ARB_MULTITEXTURE)) {
+        GLACTIVETEXTURE(Stage);
+
+    } else if (Stage>0) {
+        FIXME("Program using multiple concurrent textures which this opengl implementation doesn't support\n");
+    }
+
+    /* Decrement the count of the previous texture */
+    if (NULL != oldTexture) {
+        IWineD3DBaseTexture_Release(oldTexture);
+    }
+
+    if (NULL != pTexture) {
+        IWineD3DBaseTexture_AddRef((IWineD3DBaseTexture *) This->updateStateBlock->textures[Stage]);
+
+        /* Now setup the texture appropraitly */
+        textureType = IWineD3DBaseTexture_GetType(pTexture);
+
+        if (textureType == D3DRTYPE_TEXTURE) {
+
+          if (oldTexture == pTexture && !IWineD3DBaseTexture_GetDirty(pTexture)) {
+            TRACE("Skipping setting texture as old == new\n");
+            reapplyStates = FALSE;
+
+          } else {
+
+            /* Standard 2D texture */
+            TRACE("Standard 2d texture\n");
+            This->updateStateBlock->textureDimensions[Stage] = GL_TEXTURE_2D;
+
+            /* Load up the texture now */
+            IWineD3DTexture_PreLoad((IWineD3DTexture *) pTexture);
+          }
+
+        } else if (textureType == D3DRTYPE_VOLUMETEXTURE) {
+
+          if (oldTexture == pTexture && !IWineD3DBaseTexture_GetDirty(pTexture)) {
+              TRACE("Skipping setting texture as old == new\n");
+              reapplyStates = FALSE;
+
+          } else {
+
+              /* Standard 3D (volume) texture */
+              TRACE("Standard 3d texture\n");
+              This->updateStateBlock->textureDimensions[Stage] = GL_TEXTURE_3D;
+
+              /* Load up the texture now */
+              IWineD3DVolumeTexture_PreLoad((IWineD3DVolumeTexture *) pTexture);
+          }
+
+        } else if (textureType == D3DRTYPE_CUBETEXTURE) {
+
+            if (oldTexture == pTexture && !IWineD3DBaseTexture_GetDirty(pTexture)) {
+                TRACE("Skipping setting texture as old == new\n");
+                reapplyStates = FALSE;
+
+            } else {
+
+                /* Standard Cube texture */
+                TRACE("Standard Cube texture\n");
+                This->updateStateBlock->textureDimensions[Stage] = GL_TEXTURE_CUBE_MAP_ARB;
+
+                /* Load up the texture now */
+                IWineD3DCubeTexture_PreLoad((IWineD3DCubeTexture *) pTexture);
+            }
+
+        } else {
+            FIXME("(%p) : Incorrect type for a texture : (%d,%s)\n", This, textureType, debug_d3dresourcetype(textureType));
+        }
+
+    } else {
+
+        TRACE("Setting to no texture (ie default texture)\n");
+        This->updateStateBlock->textureDimensions[Stage] = GL_TEXTURE_1D;
+        glBindTexture(GL_TEXTURE_1D, This->dummyTextureName[Stage]);
+        checkGLcall("glBindTexture");
+        TRACE("Bound dummy Texture to stage %ld (gl name %d)\n", Stage, This->dummyTextureName[Stage]);
+    }
+
+    /* Disable the old texture binding and enable the new one (unless operations are disabled) */
+    if (oldTextureDimensions != This->updateStateBlock->textureDimensions[Stage]) {
+
+       glDisable(oldTextureDimensions);
+       checkGLcall("Disable oldTextureDimensions");
+
+       if (This->stateBlock->textureState[Stage][D3DTSS_COLOROP] != D3DTOP_DISABLE) {
+          glEnable(This->updateStateBlock->textureDimensions[Stage]);
+          checkGLcall("glEnable new texture dimensions");
+       }
+
+       /* If Alpha arg1 is texture then handle the special case when there changes between a
+          texture and no texture - See comments in set_tex_op                                  */
+       if ((This->stateBlock->textureState[Stage][D3DTSS_ALPHAARG1] == D3DTA_TEXTURE) && 
+           (((oldTexture == NULL) && (pTexture != NULL)) || ((pTexture == NULL) && (oldTexture != NULL))))
+       {
+           reapplyFlags |= REAPPLY_ALPHAOP;
+       }
+    }
+
+
+    /* Even if the texture has been set to null, reapply the stages as a null texture to directx requires
+       a dummy texture in opengl, and we always need to ensure the current view of the TextureStates apply */
+    if (reapplyStates) {
+       IWineD3DDeviceImpl_SetupTextureStates(iface, Stage, reapplyFlags);
+    }
+
+    LEAVE_GL();   
+    TRACE("Texture now fully setup\n");
+
+    return D3D_OK;
+}
+
+HRESULT WINAPI IWineD3DDeviceImpl_GetTexture(IWineD3DDevice *iface, DWORD Stage, IWineD3DBaseTexture** ppTexture) {
+    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
+    TRACE("(%p) : returning %p for stage %ld\n", This, This->updateStateBlock->textures[Stage], Stage);
+    *ppTexture = (IWineD3DBaseTexture *) This->updateStateBlock->textures[Stage];
+    if (*ppTexture)
+        IWineD3DBaseTexture_AddRef(*ppTexture);
+    return D3D_OK;
+}
+
+/*****
+ * Get Back Buffer
+ *****/
+HRESULT WINAPI IWineD3DDeviceImpl_GetBackBuffer(IWineD3DDevice *iface, UINT iSwapChain, UINT BackBuffer, D3DBACKBUFFER_TYPE Type, 
+                                                IWineD3DSurface** ppBackBuffer) {
+    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
+    
+    *ppBackBuffer = (IWineD3DSurface *) This->backBuffer;
+    TRACE("(%p) : BackBuf %d Type %d SwapChain %d returning %p\n", This, BackBuffer, Type, iSwapChain, *ppBackBuffer);
+
+    if (BackBuffer > This->presentParms.BackBufferCount - 1) {
+        FIXME("Only one backBuffer currently supported\n");
+        return D3DERR_INVALIDCALL;
+    }
+
+    /* Note inc ref on returned surface */
+    IWineD3DSurface_AddRef(*ppBackBuffer);
+
+    return D3D_OK;
+}
+
+HRESULT WINAPI IWineD3DDeviceImpl_GetDeviceCaps(IWineD3DDevice *iface, D3DCAPS9* pCaps) {
+    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
+    WARN("(%p) : stub, calling idirect3d for now\n", This);
+    IWineD3D_GetDeviceCaps(This->wineD3D, This->adapterNo, This->devType, pCaps);
+    return D3D_OK;
+}
+
+HRESULT WINAPI IWineD3DDeviceImpl_GetDisplayMode(IWineD3DDevice *iface, UINT iSwapChain, D3DDISPLAYMODE* pMode) {
+    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
+    HDC                 hdc;
+    int                 bpp = 0;
+
+    pMode->Width        = GetSystemMetrics(SM_CXSCREEN);
+    pMode->Height       = GetSystemMetrics(SM_CYSCREEN);
+    pMode->RefreshRate  = 85; /*FIXME: How to identify? */
+
+    hdc = CreateDCA("DISPLAY", NULL, NULL, NULL);
+    bpp = GetDeviceCaps(hdc, BITSPIXEL);
+    DeleteDC(hdc);
+
+    switch (bpp) {
+    case  8: pMode->Format       = D3DFMT_R8G8B8; break;
+    case 16: pMode->Format       = D3DFMT_R5G6B5; break;
+    case 24: /*pMode->Format       = D3DFMT_R8G8B8; break; */
+    case 32: pMode->Format       = D3DFMT_A8R8G8B8; break;
+    default: 
+       FIXME("Unrecognized display mode format\n");
+       pMode->Format       = D3DFMT_UNKNOWN;
+    }
+
+    FIXME("(%p) : returning w(%d) h(%d) rr(%d) fmt(%u,%s)\n", This, pMode->Width, pMode->Height, pMode->RefreshRate, 
+          pMode->Format, debug_d3dformat(pMode->Format));
+    return D3D_OK;
+}
+ 
+/*****
  * Scene related functions
  *****/
 HRESULT WINAPI IWineD3DDeviceImpl_BeginScene(IWineD3DDevice *iface) {
@@ -3397,6 +3611,12 @@ IWineD3DDeviceVtbl IWineD3DDevice_Vtbl =
     IWineD3DDeviceImpl_GetRenderState,
     IWineD3DDeviceImpl_SetTextureStageState,
     IWineD3DDeviceImpl_GetTextureStageState,
+    IWineD3DDeviceImpl_SetTexture,
+    IWineD3DDeviceImpl_GetTexture,
+
+    IWineD3DDeviceImpl_GetBackBuffer,
+    IWineD3DDeviceImpl_GetDeviceCaps,
+    IWineD3DDeviceImpl_GetDisplayMode,
 
     IWineD3DDeviceImpl_BeginScene,
     IWineD3DDeviceImpl_EndScene,

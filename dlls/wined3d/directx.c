@@ -986,7 +986,7 @@ HRESULT  WINAPI  IWineD3DImpl_CheckDeviceFormatConversion(IWineD3D *iface, UINT 
 /* Note: d3d8 passes in a pointer to a D3DCAPS8 structure, which is a true 
       subset of a D3DCAPS9 structure. However, it has to come via a void * 
       as the d3d8 interface cannot import the d3d9 header                  */
-HRESULT WINAPI IWineD3DImpl_GetDeviceCaps(IWineD3D *iface, UINT Adapter, D3DDEVTYPE DeviceType, void* pCapsIn) {
+HRESULT WINAPI IWineD3DImpl_GetDeviceCaps(IWineD3D *iface, UINT Adapter, D3DDEVTYPE DeviceType, WINED3DCAPS* pCapsIn) {
 
     IWineD3DImpl    *This = (IWineD3DImpl *)iface;
     BOOL             gotContext  = FALSE;

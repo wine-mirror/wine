@@ -204,6 +204,8 @@ HRESULT WINAPI D3D9CB_CreateSurface(IUnknown  *pDevice,
                                          Format, Pool, (IDirect3DSurface9 **)&d3dSurface, pSharedHandle);
     if (res == D3D_OK) {
         *ppSurface = d3dSurface->wineD3DSurface;
+    } else {
+        *ppSurface = NULL;
     }
     return res;
 }

@@ -144,7 +144,7 @@ HRESULT  WINAPI  IDirect3D9Impl_CheckDeviceFormatConversion(LPDIRECT3D9 iface, U
 
 HRESULT  WINAPI  IDirect3D9Impl_GetDeviceCaps(LPDIRECT3D9 iface, UINT Adapter, D3DDEVTYPE DeviceType, D3DCAPS9* pCaps) {
     IDirect3D9Impl *This = (IDirect3D9Impl *)iface;
-    return IWineD3D_GetDeviceCaps(This->WineD3D, Adapter, DeviceType, (void *)pCaps);
+    return IWineD3D_GetDeviceCaps(This->WineD3D, Adapter, DeviceType, (WINED3DCAPS *)pCaps);
 }
 
 HMONITOR WINAPI  IDirect3D9Impl_GetAdapterMonitor(LPDIRECT3D9 iface, UINT Adapter) {
@@ -165,6 +165,8 @@ HRESULT WINAPI D3D9CB_CreateRenderTarget(IUnknown *device, UINT Width, UINT Heig
                                          (IDirect3DSurface9 **)&d3dSurface, pSharedHandle);
     if (res == D3D_OK) {
         *ppSurface = d3dSurface->wineD3DSurface;
+    } else {
+        *ppSurface = NULL;
     }
     return res;
 }
@@ -179,14 +181,18 @@ HRESULT  WINAPI  IDirect3D9Impl_CreateDevice(LPDIRECT3D9 iface, UINT Adapter, D3
 
     /* Check the validity range of the adapter parameter */
     if (Adapter >= IDirect3D9Impl_GetAdapterCount(iface)) {
+        *ppReturnedDeviceInterface = NULL;
         return D3DERR_INVALIDCALL;
     }
 
     /* Allocate the storage for the device object */
     object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirect3DDevice9Impl));
     if (NULL == object) {
+        FIXME("Allocation of memory failed\n");
+        *ppReturnedDeviceInterface = NULL;
         return D3DERR_OUTOFVIDEOMEMORY;
     }
+
     object->lpVtbl = &Direct3DDevice9_Vtbl;
     object->ref = 1;
     object->direct3d = This;
@@ -208,10 +214,7 @@ HRESULT  WINAPI  IDirect3D9Impl_CreateDevice(LPDIRECT3D9 iface, UINT Adapter, D3
     localParameters.Flags                          = &pPresentationParameters->Flags;                      
     localParameters.FullScreen_RefreshRateInHz     = &pPresentationParameters->FullScreen_RefreshRateInHz; 
     localParameters.PresentationInterval           = &pPresentationParameters->PresentationInterval;       
-    IWineD3D_CreateDevice(This->WineD3D, Adapter, DeviceType, hFocusWindow, BehaviourFlags, &localParameters, &object->WineD3DDevice, (IUnknown *)object, D3D9CB_CreateRenderTarget);
-
-    FIXME("(%p) : incomplete stub\n", This);
-    return D3D_OK;
+    return IWineD3D_CreateDevice(This->WineD3D, Adapter, DeviceType, hFocusWindow, BehaviourFlags, &localParameters, &object->WineD3DDevice, (IUnknown *)object, D3D9CB_CreateRenderTarget);
 }
 
 IDirect3D9Vtbl Direct3D9_Vtbl =

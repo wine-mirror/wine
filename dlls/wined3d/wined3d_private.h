@@ -583,6 +583,7 @@ struct IWineD3DSurfaceImpl
     /* IWineD3DSurface fields */
     IUnknown                 *container;
     D3DSURFACE_DESC           currentDesc;
+    UINT                      currentDesc_size; 
     BYTE                     *allocatedMemory;
 
     UINT                      textureName;
@@ -709,79 +710,9 @@ GLint  D3DFmt2GLIntFmt(IWineD3DDeviceImpl* This, D3DFORMAT fmt);
 
 /*****************************************************************************
  * To enable calling of inherited functions, requires prototypes 
+ *
+ * Note: Only require classes which are subclassed, ie resource, basetexture, 
  */
-    /*** IUnknown methods ***/
-    extern HRESULT WINAPI IWineD3DImpl_QueryInterface(IWineD3D *iface, REFIID riid, void** ppvObject);
-    extern ULONG WINAPI IWineD3DImpl_AddRef(IWineD3D *iface);
-    extern ULONG WINAPI IWineD3DImpl_Release(IWineD3D *iface);
-    /*** IWineD3D methods ***/
-    extern HRESULT WINAPI IWineD3DImpl_GetParent(IWineD3D *iface, IUnknown **pParent);
-    extern UINT WINAPI IWineD3DImpl_GetAdapterCount(IWineD3D *iface);
-    extern HRESULT WINAPI IWineD3DImpl_RegisterSoftwareDevice(IWineD3D *iface, void * pInitializeFunction);
-    extern HMONITOR WINAPI IWineD3DImpl_GetAdapterMonitor(IWineD3D *iface, UINT Adapter);
-    extern UINT WINAPI IWineD3DImpl_GetAdapterModeCount(IWineD3D *iface, UINT Adapter, D3DFORMAT Format);
-    extern HRESULT WINAPI IWineD3DImpl_EnumAdapterModes(IWineD3D *iface, UINT  Adapter, UINT  Mode, D3DFORMAT Format, D3DDISPLAYMODE * pMode);
-    extern HRESULT WINAPI IWineD3DImpl_GetAdapterDisplayMode(IWineD3D *iface, UINT  Adapter, D3DDISPLAYMODE * pMode);
-    extern HRESULT WINAPI IWineD3DImpl_GetAdapterIdentifier(IWineD3D *iface, UINT Adapter, DWORD Flags, WINED3DADAPTER_IDENTIFIER* pIdentifier);
-    extern HRESULT WINAPI IWineD3DImpl_CheckDeviceMultiSampleType(IWineD3D *iface, UINT  Adapter, D3DDEVTYPE  DeviceType, D3DFORMAT  SurfaceFormat, BOOL  Windowed, D3DMULTISAMPLE_TYPE  MultiSampleType, DWORD *pQuality);
-    extern HRESULT WINAPI IWineD3DImpl_CheckDepthStencilMatch(IWineD3D *iface, UINT  Adapter, D3DDEVTYPE  DeviceType, D3DFORMAT  AdapterFormat, D3DFORMAT  RenderTargetFormat, D3DFORMAT  DepthStencilFormat);
-    extern HRESULT WINAPI IWineD3DImpl_CheckDeviceType(IWineD3D *iface, UINT  Adapter, D3DDEVTYPE  CheckType, D3DFORMAT  DisplayFormat, D3DFORMAT  BackBufferFormat, BOOL  Windowed);
-    extern HRESULT WINAPI IWineD3DImpl_CheckDeviceFormat(IWineD3D *iface, UINT  Adapter, D3DDEVTYPE  DeviceType, D3DFORMAT  AdapterFormat, DWORD  Usage, D3DRESOURCETYPE  RType, D3DFORMAT  CheckFormat);
-    extern HRESULT WINAPI IWineD3DImpl_CheckDeviceFormatConversion(IWineD3D *iface, UINT Adapter, D3DDEVTYPE DeviceType, D3DFORMAT SourceFormat, D3DFORMAT TargetFormat);
-    extern HRESULT WINAPI IWineD3DImpl_GetDeviceCaps(IWineD3D *iface, UINT  Adapter, D3DDEVTYPE  DeviceType, void * pCaps);
-    extern HRESULT WINAPI IWineD3DImpl_CreateDevice(IWineD3D *iface, UINT  Adapter, D3DDEVTYPE  DeviceType,HWND  hFocusWindow, DWORD  BehaviorFlags, WINED3DPRESENT_PARAMETERS * pPresentationParameters, IWineD3DDevice ** ppReturnedDeviceInterface, IUnknown *parent, D3DCB_CREATERENDERTARGETFN pFn);
-
-    /*** IUnknown methods ***/
-    extern HRESULT WINAPI IWineD3DDeviceImpl_QueryInterface(IWineD3DDevice *iface, REFIID riid, void** ppvObject);
-    extern ULONG WINAPI IWineD3DDeviceImpl_AddRef(IWineD3DDevice *iface);
-    extern ULONG WINAPI IWineD3DDeviceImpl_Release(IWineD3DDevice *iface);
-    /*** IWineD3D methods ***/
-    extern HRESULT WINAPI IWineD3DDeviceImpl_GetParent(IWineD3DDevice *iface, IUnknown **pParent);
-    extern HRESULT WINAPI IWineD3DDeviceImpl_CreateVertexBuffer(IWineD3DDevice *iface, UINT  Length,DWORD  Usage,DWORD  FVF,D3DPOOL  Pool,IWineD3DVertexBuffer **ppVertexBuffer, HANDLE *sharedHandle, IUnknown *parent);
-    extern HRESULT WINAPI IWineD3DDeviceImpl_CreateIndexBuffer(IWineD3DDevice *iface, UINT Length, DWORD Usage, D3DFORMAT Format, D3DPOOL Pool, IWineD3DIndexBuffer** ppIndexBuffer, HANDLE* pSharedHandle, IUnknown *parent);
-    extern HRESULT WINAPI IWineD3DDeviceImpl_CreateStateBlock(IWineD3DDevice *iface, D3DSTATEBLOCKTYPE Type, IWineD3DStateBlock **ppStateBlock, IUnknown *parent);
-    extern HRESULT WINAPI IWineD3DDeviceImpl_CreateRenderTarget(IWineD3DDevice *iface, UINT Width, UINT Height, D3DFORMAT Format, D3DMULTISAMPLE_TYPE MultiSample, DWORD MultisampleQuality, BOOL Lockable, IWineD3DSurface** ppSurface, HANDLE* pSharedHandle, IUnknown *parent);
-    extern HRESULT WINAPI IWineD3DDeviceImpl_CreateOffscreenPlainSurface(IWineD3DDevice *iface, UINT Width, UINT Height, D3DFORMAT Format, D3DPOOL Pool, IWineD3DSurface** ppSurface, HANDLE* pSharedHandle, IUnknown *parent);
-    extern HRESULT WINAPI IWineD3DDeviceImpl_CreateTexture(IWineD3DDevice *iface, UINT Width, UINT Height, UINT Levels, DWORD Usage, D3DFORMAT Format, D3DPOOL Pool, IWineD3DTexture** ppTexture, HANDLE* pSharedHandle, IUnknown *parent, D3DCB_CREATESURFACEFN pFn);
-    extern HRESULT WINAPI IWineD3DDeviceImpl_CreateVolumeTexture(IWineD3DDevice *iface, UINT Width, UINT Height, UINT Depth, UINT Levels, DWORD Usage, D3DFORMAT Format, D3DPOOL Pool, IWineD3DVolumeTexture** ppVolumeTexture, HANDLE* pSharedHandle, IUnknown *parent, D3DCB_CREATEVOLUMEFN pFn);
-    extern HRESULT WINAPI IWineD3DDeviceImpl_CreateVolume(IWineD3DDevice *iface, UINT Width, UINT Height, UINT Depth, DWORD Usage, D3DFORMAT Format, D3DPOOL Pool, IWineD3DVolume** ppVolumeTexture, HANDLE* pSharedHandle, IUnknown *parent);
-    extern HRESULT WINAPI IWineD3DDeviceImpl_CreateCubeTexture(IWineD3DDevice *iface, UINT EdgeLength, UINT Levels, DWORD Usage, D3DFORMAT Format, D3DPOOL Pool, IWineD3DCubeTexture** ppCubeTexture, HANDLE* pSharedHandle, IUnknown *parent, D3DCB_CREATESURFACEFN pFn);
-    extern HRESULT WINAPI IWineD3DDeviceImpl_SetFVF(IWineD3DDevice *iface, DWORD  fvf);
-    extern HRESULT WINAPI IWineD3DDeviceImpl_GetFVF(IWineD3DDevice *iface, DWORD * pfvf);
-    extern HRESULT WINAPI IWineD3DDeviceImpl_SetStreamSource(IWineD3DDevice *iface, UINT  StreamNumber,IWineD3DVertexBuffer * pStreamData,UINT Offset,UINT  Stride);
-    extern HRESULT WINAPI IWineD3DDeviceImpl_GetStreamSource(IWineD3DDevice *iface, UINT  StreamNumber,IWineD3DVertexBuffer ** ppStreamData,UINT *pOffset, UINT * pStride);
-    extern HRESULT WINAPI IWineD3DDeviceImpl_SetTransform(IWineD3DDevice *iface, D3DTRANSFORMSTATETYPE  State,CONST D3DMATRIX * pMatrix);
-    extern HRESULT WINAPI IWineD3DDeviceImpl_GetTransform(IWineD3DDevice *iface, D3DTRANSFORMSTATETYPE  State,D3DMATRIX * pMatrix);
-    extern HRESULT WINAPI IWineD3DDeviceImpl_MultiplyTransform(IWineD3DDevice *iface, D3DTRANSFORMSTATETYPE  State, CONST D3DMATRIX * pMatrix);
-    extern HRESULT WINAPI IWineD3DDeviceImpl_SetLight(IWineD3DDevice *iface, DWORD  Index,CONST WINED3DLIGHT * pLight);
-    extern HRESULT WINAPI IWineD3DDeviceImpl_GetLight(IWineD3DDevice *iface, DWORD  Index,WINED3DLIGHT * pLight);
-    extern HRESULT WINAPI IWineD3DDeviceImpl_SetLightEnable(IWineD3DDevice *iface, DWORD  Index,BOOL  Enable);
-    extern HRESULT WINAPI IWineD3DDeviceImpl_GetLightEnable(IWineD3DDevice *iface, DWORD  Index,BOOL * pEnable);
-    extern HRESULT WINAPI IWineD3DDeviceImpl_SetClipPlane(IWineD3DDevice *iface, DWORD  Index,CONST float * pPlane);
-    extern HRESULT WINAPI IWineD3DDeviceImpl_GetClipPlane(IWineD3DDevice *iface, DWORD  Index,float * pPlane);
-    extern HRESULT WINAPI IWineD3DDeviceImpl_SetClipStatus(IWineD3DDevice *iface, CONST WINED3DCLIPSTATUS * pClipStatus);
-    extern HRESULT WINAPI IWineD3DDeviceImpl_GetClipStatus(IWineD3DDevice *iface, WINED3DCLIPSTATUS * pClipStatus);
-    extern HRESULT WINAPI IWineD3DDeviceImpl_SetMaterial(IWineD3DDevice *iface, CONST WINED3DMATERIAL * pMaterial);
-    extern HRESULT WINAPI IWineD3DDeviceImpl_GetMaterial(IWineD3DDevice *iface, WINED3DMATERIAL *pMaterial);
-    extern HRESULT WINAPI IWineD3DDeviceImpl_SetIndices(IWineD3DDevice *iface, IWineD3DIndexBuffer * pIndexData,UINT  BaseVertexIndex);
-    extern HRESULT WINAPI IWineD3DDeviceImpl_GetIndices(IWineD3DDevice *iface, IWineD3DIndexBuffer ** ppIndexData,UINT * pBaseVertexIndex);
-    extern HRESULT WINAPI IWineD3DDeviceImpl_SetViewport(IWineD3DDevice *iface, CONST WINED3DVIEWPORT * pViewport);
-    extern HRESULT WINAPI IWineD3DDeviceImpl_GetViewport(IWineD3DDevice *iface, WINED3DVIEWPORT * pViewport);
-    extern HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, D3DRENDERSTATETYPE  State,DWORD  Value);
-    extern HRESULT WINAPI IWineD3DDeviceImpl_GetRenderState(IWineD3DDevice *iface, D3DRENDERSTATETYPE  State,DWORD * pValue);
-    extern HRESULT WINAPI IWineD3DDeviceImpl_SetTextureStageState(IWineD3DDevice *iface, DWORD  Stage,D3DTEXTURESTAGESTATETYPE  Type,DWORD  Value);
-    extern HRESULT WINAPI IWineD3DDeviceImpl_GetTextureStageState(IWineD3DDevice *iface, DWORD  Stage,D3DTEXTURESTAGESTATETYPE  Type,DWORD * pValue);
-    extern HRESULT WINAPI IWineD3DDeviceImpl_BeginScene(IWineD3DDevice *iface);
-    extern HRESULT WINAPI IWineD3DDeviceImpl_EndScene(IWineD3DDevice *iface);
-    extern HRESULT WINAPI IWineD3DDeviceImpl_Present(IWineD3DDevice *iface, CONST RECT * pSourceRect,CONST RECT * pDestRect,HWND  hDestWindowOverride,CONST RGNDATA * pDirtyRegion);
-    extern HRESULT WINAPI IWineD3DDeviceImpl_Clear(IWineD3DDevice *iface, DWORD  Count,CONST D3DRECT * pRects,DWORD  Flags,D3DCOLOR  Color,float  Z,DWORD  Stencil);
-    extern HRESULT WINAPI IWineD3DDeviceImpl_DrawPrimitive(IWineD3DDevice *iface, D3DPRIMITIVETYPE  PrimitiveType,UINT  StartVertex,UINT  PrimitiveCount);
-    extern HRESULT WINAPI IWineD3DDeviceImpl_DrawIndexedPrimitive(IWineD3DDevice *iface, D3DPRIMITIVETYPE  PrimitiveType,INT baseVIdx, UINT  minIndex,UINT  NumVertices,UINT  startIndex,UINT  primCount);
-    extern HRESULT WINAPI IWineD3DDeviceImpl_DrawPrimitiveUP(IWineD3DDevice *iface, D3DPRIMITIVETYPE  PrimitiveType,UINT  PrimitiveCount,CONST void * pVertexStreamZeroData,UINT  VertexStreamZeroStride);
-    extern HRESULT WINAPI IWineD3DDeviceImpl_DrawIndexedPrimitiveUP(IWineD3DDevice *iface, D3DPRIMITIVETYPE  PrimitiveType,UINT  MinVertexIndex,UINT  NumVertexIndices,UINT  PrimitiveCount,CONST void * pIndexData,D3DFORMAT  IndexDataFormat,CONST void * pVertexStreamZeroData,UINT  VertexStreamZeroStride);
-    /*** Internal use IWineD3D methods ***/
-    extern void WINAPI IWineD3DDeviceImpl_SetupTextureStates(IWineD3DDevice *iface, DWORD Stage, DWORD Flags);
-
     /*** IUnknown methods ***/
     extern HRESULT WINAPI IWineD3DResourceImpl_QueryInterface(IWineD3DResource *iface, REFIID riid, void** ppvObject);
     extern ULONG WINAPI IWineD3DResourceImpl_AddRef(IWineD3DResource *iface);
@@ -797,43 +728,6 @@ GLint  D3DFmt2GLIntFmt(IWineD3DDeviceImpl* This, D3DFORMAT fmt);
     extern void WINAPI IWineD3DResourceImpl_PreLoad(IWineD3DResource *iface);
     extern D3DRESOURCETYPE WINAPI IWineD3DResourceImpl_GetType(IWineD3DResource *iface);
 
-    /*** IUnknown methods ***/
-    extern HRESULT WINAPI IWineD3DVertexBufferImpl_QueryInterface(IWineD3DVertexBuffer *iface, REFIID riid, void** ppvObject);
-    extern ULONG WINAPI IWineD3DVertexBufferImpl_AddRef(IWineD3DVertexBuffer *iface);
-    extern ULONG WINAPI IWineD3DVertexBufferImpl_Release(IWineD3DVertexBuffer *iface);
-    /*** IWineD3DResource methods ***/
-    extern HRESULT WINAPI IWineD3DVertexBufferImpl_GetParent(IWineD3DVertexBuffer *iface, IUnknown **pParent);
-    extern HRESULT WINAPI IWineD3DVertexBufferImpl_GetDevice(IWineD3DVertexBuffer *iface, IWineD3DDevice ** ppDevice);
-    extern HRESULT WINAPI IWineD3DVertexBufferImpl_SetPrivateData(IWineD3DVertexBuffer *iface, REFGUID  refguid, CONST void * pData, DWORD  SizeOfData, DWORD  Flags);
-    extern HRESULT WINAPI IWineD3DVertexBufferImpl_GetPrivateData(IWineD3DVertexBuffer *iface, REFGUID  refguid, void * pData, DWORD * pSizeOfData);
-    extern HRESULT WINAPI IWineD3DVertexBufferImpl_FreePrivateData(IWineD3DVertexBuffer *iface, REFGUID  refguid);
-    extern DWORD WINAPI IWineD3DVertexBufferImpl_SetPriority(IWineD3DVertexBuffer *iface, DWORD  PriorityNew);
-    extern DWORD WINAPI IWineD3DVertexBufferImpl_GetPriority(IWineD3DVertexBuffer *iface);
-    extern void WINAPI IWineD3DVertexBufferImpl_PreLoad(IWineD3DVertexBuffer *iface);
-    extern D3DRESOURCETYPE WINAPI IWineD3DVertexBufferImpl_GetType(IWineD3DVertexBuffer *iface);
-    /*** IWineD3DVertexBuffer methods ***/
-    extern HRESULT WINAPI IWineD3DVertexBufferImpl_Lock(IWineD3DVertexBuffer *iface, UINT  OffsetToLock, UINT  SizeToLock, BYTE ** ppbData, DWORD  Flags);
-    extern HRESULT WINAPI IWineD3DVertexBufferImpl_Unlock(IWineD3DVertexBuffer *iface);
-    extern HRESULT WINAPI IWineD3DVertexBufferImpl_GetDesc(IWineD3DVertexBuffer *iface, D3DVERTEXBUFFER_DESC  * pDesc);
-
-    /*** IUnknown methods ***/
-    extern HRESULT WINAPI IWineD3DIndexBufferImpl_QueryInterface(IWineD3DIndexBuffer *iface, REFIID riid, void** ppvObject);
-    extern ULONG WINAPI IWineD3DIndexBufferImpl_AddRef(IWineD3DIndexBuffer *iface);
-    extern ULONG WINAPI IWineD3DIndexBufferImpl_Release(IWineD3DIndexBuffer *iface);
-    /*** IWineD3DResource methods ***/
-    extern HRESULT WINAPI IWineD3DIndexBufferImpl_GetParent(IWineD3DIndexBuffer *iface, IUnknown **pParent);
-    extern HRESULT WINAPI IWineD3DIndexBufferImpl_GetDevice(IWineD3DIndexBuffer *iface, IWineD3DDevice ** ppDevice);
-    extern HRESULT WINAPI IWineD3DIndexBufferImpl_SetPrivateData(IWineD3DIndexBuffer *iface, REFGUID  refguid, CONST void * pData, DWORD  SizeOfData, DWORD  Flags);
-    extern HRESULT WINAPI IWineD3DIndexBufferImpl_GetPrivateData(IWineD3DIndexBuffer *iface, REFGUID  refguid, void * pData, DWORD * pSizeOfData);
-    extern HRESULT WINAPI IWineD3DIndexBufferImpl_FreePrivateData(IWineD3DIndexBuffer *iface, REFGUID  refguid);
-    extern DWORD WINAPI IWineD3DIndexBufferImpl_SetPriority(IWineD3DIndexBuffer *iface, DWORD  PriorityNew);
-    extern DWORD WINAPI IWineD3DIndexBufferImpl_GetPriority(IWineD3DIndexBuffer *iface);
-    extern void WINAPI IWineD3DIndexBufferImpl_PreLoad(IWineD3DIndexBuffer *iface);
-    extern D3DRESOURCETYPE WINAPI IWineD3DIndexBufferImpl_GetType(IWineD3DIndexBuffer *iface);
-    /*** IWineD3DIndexBuffer methods ***/
-    extern HRESULT WINAPI IWineD3DIndexBufferImpl_Lock(IWineD3DIndexBuffer *iface, UINT  OffsetToLock, UINT  SizeToLock, BYTE ** ppbData, DWORD  Flags);
-    extern HRESULT WINAPI IWineD3DIndexBufferImpl_Unlock(IWineD3DIndexBuffer *iface);
-    extern HRESULT WINAPI IWineD3DIndexBufferImpl_GetDesc(IWineD3DIndexBuffer *iface, D3DINDEXBUFFER_DESC  * pDesc);
 
     /*** IUnknown methods ***/
     extern HRESULT WINAPI IWineD3DBaseTextureImpl_QueryInterface(IWineD3DBaseTexture *iface, REFIID riid, void** ppvObject);
@@ -858,148 +752,6 @@ GLint  D3DFmt2GLIntFmt(IWineD3DDeviceImpl* This, D3DFORMAT fmt);
     extern void WINAPI IWineD3DBaseTextureImpl_GenerateMipSubLevels(IWineD3DBaseTexture *iface);
     extern BOOL WINAPI IWineD3DBaseTextureImpl_SetDirty(IWineD3DBaseTexture *iface, BOOL);
     extern BOOL WINAPI IWineD3DBaseTextureImpl_GetDirty(IWineD3DBaseTexture *iface);
-
-    /*** IUnknown methods ***/
-    extern HRESULT WINAPI IWineD3DTextureImpl_QueryInterface(IWineD3DTexture *iface, REFIID riid, void** ppvObject);
-    extern ULONG WINAPI IWineD3DTextureImpl_AddRef(IWineD3DTexture *iface);
-    extern ULONG WINAPI IWineD3DTextureImpl_Release(IWineD3DTexture *iface);
-    /*** IWineD3DResource methods ***/
-    extern HRESULT WINAPI IWineD3DTextureImpl_GetParent(IWineD3DTexture *iface, IUnknown **pParent);
-    extern HRESULT WINAPI IWineD3DTextureImpl_GetDevice(IWineD3DTexture *iface, IWineD3DDevice ** ppDevice);
-    extern HRESULT WINAPI IWineD3DTextureImpl_SetPrivateData(IWineD3DTexture *iface, REFGUID  refguid, CONST void * pData, DWORD  SizeOfData, DWORD  Flags);
-    extern HRESULT WINAPI IWineD3DTextureImpl_GetPrivateData(IWineD3DTexture *iface, REFGUID  refguid, void * pData, DWORD * pSizeOfData);
-    extern HRESULT WINAPI IWineD3DTextureImpl_FreePrivateData(IWineD3DTexture *iface, REFGUID  refguid);
-    extern DWORD WINAPI IWineD3DTextureImpl_SetPriority(IWineD3DTexture *iface, DWORD  PriorityNew);
-    extern DWORD WINAPI IWineD3DTextureImpl_GetPriority(IWineD3DTexture *iface);
-    extern void WINAPI IWineD3DTextureImpl_PreLoad(IWineD3DTexture *iface);
-    extern D3DRESOURCETYPE WINAPI IWineD3DTextureImpl_GetType(IWineD3DTexture *iface);
-    /*** IWineD3DBaseTexture methods ***/
-    extern DWORD WINAPI IWineD3DTextureImpl_SetLOD(IWineD3DTexture *iface, DWORD LODNew);
-    extern DWORD WINAPI IWineD3DTextureImpl_GetLOD(IWineD3DTexture *iface);
-    extern DWORD WINAPI IWineD3DTextureImpl_GetLevelCount(IWineD3DTexture *iface);
-    extern HRESULT WINAPI IWineD3DTextureImpl_SetAutoGenFilterType(IWineD3DTexture *iface, D3DTEXTUREFILTERTYPE FilterType);
-    extern D3DTEXTUREFILTERTYPE WINAPI IWineD3DTextureImpl_GetAutoGenFilterType(IWineD3DTexture *iface);
-    extern void WINAPI IWineD3DTextureImpl_GenerateMipSubLevels(IWineD3DTexture *iface);
-    extern BOOL WINAPI IWineD3DTextureImpl_SetDirty(IWineD3DTexture *iface, BOOL);
-    extern BOOL WINAPI IWineD3DTextureImpl_GetDirty(IWineD3DTexture *iface);
-    /*** IWineD3DTexture methods ***/
-    extern HRESULT WINAPI IWineD3DTextureImpl_GetLevelDesc(IWineD3DTexture *iface, UINT Level, WINED3DSURFACE_DESC* pDesc);
-    extern HRESULT WINAPI IWineD3DTextureImpl_GetSurfaceLevel(IWineD3DTexture *iface, UINT Level, IWineD3DSurface** ppSurfaceLevel);
-    extern HRESULT WINAPI IWineD3DTextureImpl_LockRect(IWineD3DTexture *iface, UINT Level, D3DLOCKED_RECT* pLockedRect, CONST RECT* pRect, DWORD Flags);
-    extern HRESULT WINAPI IWineD3DTextureImpl_UnlockRect(IWineD3DTexture *iface, UINT Level);
-    extern HRESULT WINAPI IWineD3DTextureImpl_AddDirtyRect(IWineD3DTexture *iface, CONST RECT* pDirtyRect);
-
-    /*** IUnknown methods ***/
-    extern HRESULT WINAPI IWineD3DCubeTextureImpl_QueryInterface(IWineD3DCubeTexture *iface, REFIID riid, void** ppvObject);
-    extern ULONG WINAPI IWineD3DCubeTextureImpl_AddRef(IWineD3DCubeTexture *iface);
-    extern ULONG WINAPI IWineD3DCubeTextureImpl_Release(IWineD3DCubeTexture *iface);
-    /*** IWineD3DResource methods ***/
-    extern HRESULT WINAPI IWineD3DCubeTextureImpl_GetParent(IWineD3DCubeTexture *iface, IUnknown **pParent);
-    extern HRESULT WINAPI IWineD3DCubeTextureImpl_GetDevice(IWineD3DCubeTexture *iface, IWineD3DDevice ** ppDevice);
-    extern HRESULT WINAPI IWineD3DCubeTextureImpl_SetPrivateData(IWineD3DCubeTexture *iface, REFGUID  refguid, CONST void * pData, DWORD  SizeOfData, DWORD  Flags);
-    extern HRESULT WINAPI IWineD3DCubeTextureImpl_GetPrivateData(IWineD3DCubeTexture *iface, REFGUID  refguid, void * pData, DWORD * pSizeOfData);
-    extern HRESULT WINAPI IWineD3DCubeTextureImpl_FreePrivateData(IWineD3DCubeTexture *iface, REFGUID  refguid);
-    extern DWORD WINAPI IWineD3DCubeTextureImpl_SetPriority(IWineD3DCubeTexture *iface, DWORD  PriorityNew);
-    extern DWORD WINAPI IWineD3DCubeTextureImpl_GetPriority(IWineD3DCubeTexture *iface);
-    extern void WINAPI IWineD3DCubeTextureImpl_PreLoad(IWineD3DCubeTexture *iface);
-    extern D3DRESOURCETYPE WINAPI IWineD3DCubeTextureImpl_GetType(IWineD3DCubeTexture *iface);
-    /*** IWineD3DBaseTexture methods ***/
-    extern DWORD WINAPI IWineD3DCubeTextureImpl_SetLOD(IWineD3DCubeTexture *iface, DWORD LODNew);
-    extern DWORD WINAPI IWineD3DCubeTextureImpl_GetLOD(IWineD3DCubeTexture *iface);
-    extern DWORD WINAPI IWineD3DCubeTextureImpl_GetLevelCount(IWineD3DCubeTexture *iface);
-    extern HRESULT WINAPI IWineD3DCubeTextureImpl_SetAutoGenFilterType(IWineD3DCubeTexture *iface, D3DTEXTUREFILTERTYPE FilterType);
-    extern D3DTEXTUREFILTERTYPE WINAPI IWineD3DCubeTextureImpl_GetAutoGenFilterType(IWineD3DCubeTexture *iface);
-    extern void WINAPI IWineD3DCubeTextureImpl_GenerateMipSubLevels(IWineD3DCubeTexture *iface);
-    extern BOOL WINAPI IWineD3DCubeTextureImpl_SetDirty(IWineD3DCubeTexture *iface, BOOL);
-    extern BOOL WINAPI IWineD3DCubeTextureImpl_GetDirty(IWineD3DCubeTexture *iface);
-    /*** IWineD3DCubeTexture methods ***/
-    extern HRESULT WINAPI IWineD3DCubeTextureImpl_GetLevelDesc(IWineD3DCubeTexture *iface, UINT Level,WINED3DSURFACE_DESC* pDesc);
-    extern HRESULT WINAPI IWineD3DCubeTextureImpl_GetCubeMapSurface(IWineD3DCubeTexture *iface, D3DCUBEMAP_FACES FaceType, UINT Level, IWineD3DSurface** ppCubeMapSurface);
-    extern HRESULT WINAPI IWineD3DCubeTextureImpl_LockRect(IWineD3DCubeTexture *iface, D3DCUBEMAP_FACES FaceType, UINT Level, D3DLOCKED_RECT* pLockedRect, CONST RECT* pRect, DWORD Flags);
-    extern HRESULT WINAPI IWineD3DCubeTextureImpl_UnlockRect(IWineD3DCubeTexture *iface, D3DCUBEMAP_FACES FaceType, UINT Level);
-    extern HRESULT WINAPI IWineD3DCubeTextureImpl_AddDirtyRect(IWineD3DCubeTexture *iface, D3DCUBEMAP_FACES FaceType, CONST RECT* pDirtyRect);
-
-    /*** IUnknown methods ***/
-    extern HRESULT WINAPI IWineD3DVolumeTextureImpl_QueryInterface(IWineD3DVolumeTexture *iface, REFIID riid, void** ppvObject);
-    extern ULONG WINAPI IWineD3DVolumeTextureImpl_AddRef(IWineD3DVolumeTexture *iface);
-    extern ULONG WINAPI IWineD3DVolumeTextureImpl_Release(IWineD3DVolumeTexture *iface);
-    /*** IWineD3DResource methods ***/
-    extern HRESULT WINAPI IWineD3DVolumeTextureImpl_GetParent(IWineD3DVolumeTexture *iface, IUnknown **pParent);
-    extern HRESULT WINAPI IWineD3DVolumeTextureImpl_GetDevice(IWineD3DVolumeTexture *iface, IWineD3DDevice ** ppDevice);
-    extern HRESULT WINAPI IWineD3DVolumeTextureImpl_SetPrivateData(IWineD3DVolumeTexture *iface, REFGUID  refguid, CONST void * pData, DWORD  SizeOfData, DWORD  Flags);
-    extern HRESULT WINAPI IWineD3DVolumeTextureImpl_GetPrivateData(IWineD3DVolumeTexture *iface, REFGUID  refguid, void * pData, DWORD * pSizeOfData);
-    extern HRESULT WINAPI IWineD3DVolumeTextureImpl_FreePrivateData(IWineD3DVolumeTexture *iface, REFGUID  refguid);
-    extern DWORD WINAPI IWineD3DVolumeTextureImpl_SetPriority(IWineD3DVolumeTexture *iface, DWORD  PriorityNew);
-    extern DWORD WINAPI IWineD3DVolumeTextureImpl_GetPriority(IWineD3DVolumeTexture *iface);
-    extern void WINAPI IWineD3DVolumeTextureImpl_PreLoad(IWineD3DVolumeTexture *iface);
-    extern D3DRESOURCETYPE WINAPI IWineD3DVolumeTextureImpl_GetType(IWineD3DVolumeTexture *iface);
-    /*** IWineD3DBaseTexture methods ***/
-    extern DWORD WINAPI IWineD3DVolumeTextureImpl_SetLOD(IWineD3DVolumeTexture *iface, DWORD LODNew);
-    extern DWORD WINAPI IWineD3DVolumeTextureImpl_GetLOD(IWineD3DVolumeTexture *iface);
-    extern DWORD WINAPI IWineD3DVolumeTextureImpl_GetLevelCount(IWineD3DVolumeTexture *iface);
-    extern HRESULT WINAPI IWineD3DVolumeTextureImpl_SetAutoGenFilterType(IWineD3DVolumeTexture *iface, D3DTEXTUREFILTERTYPE FilterType);
-    extern D3DTEXTUREFILTERTYPE WINAPI IWineD3DVolumeTextureImpl_GetAutoGenFilterType(IWineD3DVolumeTexture *iface);
-    extern void WINAPI IWineD3DVolumeTextureImpl_GenerateMipSubLevels(IWineD3DVolumeTexture *iface);
-    extern BOOL WINAPI IWineD3DVolumeTextureImpl_SetDirty(IWineD3DVolumeTexture *iface, BOOL);
-    extern BOOL WINAPI IWineD3DVolumeTextureImpl_GetDirty(IWineD3DVolumeTexture *iface);
-    /*** IWineD3DVolumeTexture methods ***/
-    extern HRESULT WINAPI IWineD3DVolumeTextureImpl_GetLevelDesc(IWineD3DVolumeTexture *iface, UINT Level, WINED3DVOLUME_DESC *pDesc);
-    extern HRESULT WINAPI IWineD3DVolumeTextureImpl_GetVolumeLevel(IWineD3DVolumeTexture *iface, UINT Level, IWineD3DVolume** ppVolumeLevel);
-    extern HRESULT WINAPI IWineD3DVolumeTextureImpl_LockBox(IWineD3DVolumeTexture *iface, UINT Level, D3DLOCKED_BOX* pLockedVolume, CONST D3DBOX* pBox, DWORD Flags);
-    extern HRESULT WINAPI IWineD3DVolumeTextureImpl_UnlockBox(IWineD3DVolumeTexture *iface, UINT Level);
-    extern HRESULT WINAPI IWineD3DVolumeTextureImpl_AddDirtyBox(IWineD3DVolumeTexture *iface, CONST D3DBOX* pDirtyBox);
-
-    /*** IUnknown methods ***/
-    extern HRESULT WINAPI IWineD3DSurfaceImpl_QueryInterface(IWineD3DSurface *iface, REFIID riid, void** ppvObject);
-    extern ULONG WINAPI IWineD3DSurfaceImpl_AddRef(IWineD3DSurface *iface);
-    extern ULONG WINAPI IWineD3DSurfaceImpl_Release(IWineD3DSurface *iface);
-    /*** IWineD3DResource methods ***/
-    extern HRESULT WINAPI IWineD3DSurfaceImpl_GetParent(IWineD3DSurface *iface, IUnknown **pParent);
-    extern HRESULT WINAPI IWineD3DSurfaceImpl_GetDevice(IWineD3DSurface *iface, IWineD3DDevice ** ppDevice);
-    extern HRESULT WINAPI IWineD3DSurfaceImpl_SetPrivateData(IWineD3DSurface *iface, REFGUID  refguid, CONST void * pData, DWORD  SizeOfData, DWORD  Flags);
-    extern HRESULT WINAPI IWineD3DSurfaceImpl_GetPrivateData(IWineD3DSurface *iface, REFGUID  refguid, void * pData, DWORD * pSizeOfData);
-    extern HRESULT WINAPI IWineD3DSurfaceImpl_FreePrivateData(IWineD3DSurface *iface, REFGUID  refguid);
-    extern DWORD WINAPI IWineD3DSurfaceImpl_SetPriority(IWineD3DSurface *iface, DWORD  PriorityNew);
-    extern DWORD WINAPI IWineD3DSurfaceImpl_GetPriority(IWineD3DSurface *iface);
-    extern void WINAPI IWineD3DSurfaceImpl_PreLoad(IWineD3DSurface *iface);
-    extern D3DRESOURCETYPE WINAPI IWineD3DSurfaceImpl_GetType(IWineD3DSurface *iface);
-    /*** IWineD3DSurface methods ***/
-    extern HRESULT WINAPI IWineD3DSurfaceImpl_GetContainer(IWineD3DSurface *iface, REFIID  riid, void ** ppContainer);
-    extern HRESULT WINAPI IWineD3DSurfaceImpl_GetDesc(IWineD3DSurface *iface, WINED3DSURFACE_DESC * pDesc);
-    extern HRESULT WINAPI IWineD3DSurfaceImpl_LockRect(IWineD3DSurface *iface, D3DLOCKED_RECT * pLockedRect, CONST RECT * pRect,DWORD  Flags);
-    extern HRESULT WINAPI IWineD3DSurfaceImpl_UnlockRect(IWineD3DSurface *iface);
-    extern HRESULT WINAPI IWineD3DSurfaceImpl_GetDC(IWineD3DSurface *iface, HDC *pHdc);
-    extern HRESULT WINAPI IWineD3DSurfaceImpl_ReleaseDC(IWineD3DSurface *iface, HDC hdc);
-    /* Internally used methods */
-    extern HRESULT WINAPI IWineD3DSurfaceImpl_CleanDirtyRect(IWineD3DSurface *iface);
-    extern HRESULT WINAPI IWineD3DSurfaceImpl_AddDirtyRect(IWineD3DSurface *iface, CONST RECT* pRect);
-    extern HRESULT WINAPI IWineD3DSurfaceImpl_LoadTexture(IWineD3DSurface *iface, UINT gl_target, UINT gl_level);
-    extern HRESULT WINAPI IWineD3DSurfaceImpl_SaveSnapshot(IWineD3DSurface *iface, const char *filename);
-
-    /*** IUnknown methods ***/
-    extern HRESULT WINAPI IWineD3DVolumeImpl_QueryInterface(IWineD3DVolume *iface, REFIID riid, void** ppvObject);
-    extern ULONG WINAPI IWineD3DVolumeImpl_AddRef(IWineD3DVolume *iface);
-    extern ULONG WINAPI IWineD3DVolumeImpl_Release(IWineD3DVolume *iface);
-    /*** IWineD3DVolume methods ***/
-    extern HRESULT WINAPI IWineD3DVolumeImpl_GetParent(IWineD3DVolume *iface, IUnknown **pParent);
-    extern HRESULT WINAPI IWineD3DVolumeImpl_GetDevice(IWineD3DVolume *iface, IWineD3DDevice ** ppDevice);
-    extern HRESULT WINAPI IWineD3DVolumeImpl_SetPrivateData(IWineD3DVolume *iface, REFGUID  refguid, CONST void * pData, DWORD  SizeOfData, DWORD  Flags);
-    extern HRESULT WINAPI IWineD3DVolumeImpl_GetPrivateData(IWineD3DVolume *iface, REFGUID  refguid, void * pData, DWORD * pSizeOfData);
-    extern HRESULT WINAPI IWineD3DVolumeImpl_FreePrivateData(IWineD3DVolume *iface, REFGUID  refguid);
-    extern HRESULT WINAPI IWineD3DVolumeImpl_GetContainer(IWineD3DVolume *iface, REFIID  riid, void ** ppContainer);
-    extern HRESULT WINAPI IWineD3DVolumeImpl_GetDesc(IWineD3DVolume *iface, WINED3DVOLUME_DESC * pDesc);
-    extern HRESULT WINAPI IWineD3DVolumeImpl_LockBox(IWineD3DVolume *iface, D3DLOCKED_BOX* pLockedVolume, CONST D3DBOX* pBox, DWORD Flags);
-    extern HRESULT WINAPI IWineD3DVolumeImpl_UnlockBox(IWineD3DVolume *iface);
-    extern HRESULT WINAPI IWineD3DVolumeImpl_AddDirtyBox(IWineD3DVolume *iface, CONST D3DBOX* pDirtyBox);
-    extern HRESULT WINAPI IWineD3DVolumeImpl_CleanDirtyBox(IWineD3DVolume *iface);
-
-    /*** IUnknown methods ***/
-    extern HRESULT WINAPI IWineD3DStateBlockImpl_QueryInterface(IWineD3DStateBlock *iface, REFIID riid, void** ppvObject);
-    extern ULONG WINAPI IWineD3DStateBlockImpl_AddRef(IWineD3DStateBlock *iface);
-    extern ULONG WINAPI IWineD3DStateBlockImpl_Release(IWineD3DStateBlock *iface);
-    /*** IWineD3DStateBlock methods ***/
-    extern HRESULT WINAPI IWineD3DStateBlockImpl_GetParent(IWineD3DStateBlock *iface, IUnknown **pParent);
-    extern HRESULT WINAPI IWineD3DStateBlockImpl_InitStartupStateBlock(IWineD3DStateBlock *iface);
 
 
 #if 0 /* Needs fixing during rework */
