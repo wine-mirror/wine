@@ -538,6 +538,12 @@ static int set_unix_lock( const struct fd *fd, file_pos_t start, file_pos_t end,
         case EAGAIN:
             set_error( STATUS_FILE_LOCK_CONFLICT );
             return 0;
+        case EBADF:
+            /* this can happen if we try to set a write lock on a read-only file */
+            /* we just ignore that error */
+            if (fl.l_type == F_WRLCK) return 1;
+            set_error( STATUS_ACCESS_DENIED );
+            return 0;
         case EOVERFLOW:
             /* this can happen if off_t is 64-bit but the kernel only supports 32-bit */
             /* in that case we shrink the limit and retry */
