@@ -105,7 +105,8 @@ LRESULT CALLBACK KeyboardCallback( int code, WPARAM wparam, LPARAM lparam )
       }
 
       DInputKeyState[dik_code] = (down ? 0x80 : 0);
-
+      TRACE(" setting %02X to %02X\n", dik_code, DInputKeyState[dik_code]);
+      
       if (current != NULL)
         {
           if (current->hEvent)
@@ -360,6 +361,15 @@ static HRESULT WINAPI SysKeyboardAImpl_GetDeviceState(
 
     MsgWaitForMultipleObjectsEx(0, NULL, 0, 0, 0);
 
+    if (TRACE_ON(dinput)) {
+	int i;
+	for (i = 0; i < 256; i++) {
+	    if (DInputKeyState[i] != 0x00) {
+		TRACE(" - %02X: %02x\n", i, DInputKeyState[i]);
+	    }
+	}
+    }
+    
     memcpy(ptr, DInputKeyState, 256);
     return DI_OK;
 }
