@@ -124,7 +124,7 @@ DWORD WINAPI _ILGetDrive(LPCITEMIDLIST,LPSTR,UINT16);
  * getting special values from simple pidls
  */
 BOOL WINAPI _ILGetFileDate (LPCITEMIDLIST pidl, LPSTR pOut, UINT uOutSize);
-BOOL WINAPI _ILGetFileSize (LPCITEMIDLIST pidl, LPSTR pOut, UINT uOutSize);
+DWORD _ILGetFileSize (LPCITEMIDLIST pidl, LPSTR pOut, UINT uOutSize);
 BOOL WINAPI _ILGetExtension (LPCITEMIDLIST pidl, LPSTR pOut, UINT uOutSize);
 
 
@@ -168,4 +168,12 @@ REFIID WINAPI _ILGetGUIDPointer(LPCITEMIDLIST pidl);
 
 void pdump (LPCITEMIDLIST pidl);
 BOOL pcheck (LPCITEMIDLIST pidl);
+
+/* 
+ * ItemIDList File helper functions
+ */
+void _ILGetFileType(LPCITEMIDLIST pidl, LPSTR pOut, UINT uOutSize);
+BOOL _ILGetFileDateTime(LPCITEMIDLIST pidl, FILETIME *ft);
+BOOL _ILGetAttributeStr(LPCITEMIDLIST pidl, LPSTR pOut, UINT uOutSize);
+
 #endif

@@ -19,6 +19,7 @@
 #include "winnls.h"
 #include "winversion.h"
 #include "shell32_main.h"
+#include "shellapi.h"
 
 #include "pidl.h"
 #include "wine/undocshell.h"
@@ -1512,36 +1513,79 @@ REFIID WINAPI _ILGetGUIDPointer(LPCITEMIDLIST pidl)
 	return NULL;
 }
 
+/*************************************************************************
+ * _ILGetFileDateTime
+ *
+ * Given the ItemIdList, get the FileTime
+ *
+ * PARAMS
+ *      pidl        [I] The ItemIDList
+ *      pFt         [I] the resulted FILETIME of the file
+ *
+ * RETURNS
+ *     True if Successful
+ *
+ * NOTES
+ *     
+ */
+BOOL _ILGetFileDateTime(LPCITEMIDLIST pidl, FILETIME *pFt)
+{
+    LPPIDLDATA pdata =_ILGetDataPointer(pidl);
+
+    switch (pdata->type)
+    { 
+        case PT_FOLDER:
+            DosDateTimeToFileTime(pdata->u.folder.uFileDate, pdata->u.folder.uFileTime, pFt);
+            break;	    
+        case PT_VALUE:
+            DosDateTimeToFileTime(pdata->u.file.uFileDate, pdata->u.file.uFileTime, pFt);
+            break;
+        default:
+            return FALSE;
+    }
+    return TRUE;
+}
+
 BOOL WINAPI _ILGetFileDate (LPCITEMIDLIST pidl, LPSTR pOut, UINT uOutSize)
-{	LPPIDLDATA pdata =_ILGetDataPointer(pidl);
+{	
 	FILETIME ft;
 	SYSTEMTIME time;
 
-	switch (pdata->type)
-	{ case PT_FOLDER:
-	    DosDateTimeToFileTime(pdata->u.folder.uFileDate, pdata->u.folder.uFileTime, &ft);
-	    break;	    
-	  case PT_VALUE:
-	    DosDateTimeToFileTime(pdata->u.file.uFileDate, pdata->u.file.uFileTime, &ft);
-	    break;
-	  default:
-	    return FALSE;
-	}
+	if (! _ILGetFileDateTime( pidl, &ft )) return FALSE;
+	
 	FileTimeToSystemTime (&ft, &time);
 	return GetDateFormatA(LOCALE_USER_DEFAULT,DATE_SHORTDATE,&time, NULL,  pOut, uOutSize);
 }
 
-BOOL WINAPI _ILGetFileSize (LPCITEMIDLIST pidl, LPSTR pOut, UINT uOutSize)
-{	LPPIDLDATA pdata =_ILGetDataPointer(pidl);
+/*************************************************************************
+ * _ILGetFileSize
+ *
+ * Given the ItemIdList, get the FileSize
+ *
+ * PARAMS
+ *      pidl    [I] The ItemIDList
+ *	pOut	[I] The buffer to save the result
+ *      uOutsize [I] The size of the buffer
+ *
+ * RETURNS
+ *     The FileSize
+ *
+ * NOTES
+ *	pOut can be null when no string is needed
+ *     
+ */
+DWORD WINAPI _ILGetFileSize (LPCITEMIDLIST pidl, LPSTR pOut, UINT uOutSize)
+{
+	LPPIDLDATA pdata =_ILGetDataPointer(pidl);
+	DWORD dwSize;
 	
 	switch (pdata->type)
 	{ case PT_VALUE:
-	    break;
-	  default:
-	    return FALSE;
+	    dwSize = pdata->u.file.dwFileSize;
+	    if (pOut) StrFormatByteSizeA(dwSize, pOut, uOutSize);
+	    return dwSize;
 	}
-	StrFormatByteSizeA(pdata->u.file.dwFileSize, pOut, uOutSize);
-	return TRUE;
+	return 0;
 }
 
 BOOL WINAPI _ILGetExtension (LPCITEMIDLIST pidl, LPSTR pOut, UINT uOutSize)
@@ -1568,5 +1612,105 @@ BOOL WINAPI _ILGetExtension (LPCITEMIDLIST pidl, LPSTR pOut, UINT uOutSize)
 	TRACE_(pidl)("%s\n",pOut);
 
 	return TRUE;
+}
+
+/*************************************************************************
+ * _ILGetFileType
+ *
+ * Given the ItemIdList, get the file type description
+ *
+ * PARAMS
+ *      pidl        [I] The ItemIDList (simple)
+ *      pOut        [I] The buffer to save the result
+ *      uOutsize    [I] The size of the buffer
+ *
+ * RETURNS
+ *	nothing
+ *
+ * NOTES
+ *	This function copies as much as possible into the buffer. 
+ */
+void _ILGetFileType(LPCITEMIDLIST pidl, LPSTR pOut, UINT uOutSize)
+{
+	if(_ILIsValue(pidl))
+	{
+	  char sTemp[64];
+	  if (_ILGetExtension (pidl, sTemp, 64))
+	  {
+	    if (!( HCR_MapTypeToValue(sTemp, sTemp, 64, TRUE)
+	        && HCR_MapTypeToValue(sTemp, pOut, uOutSize, FALSE )))
+	    {
+	      lstrcpynA (pOut, sTemp, uOutSize - 6);
+	      strcat (pOut, "-file");
+	    }
+	  }
+	}
+	else
+	{
+	  lstrcpynA(pOut, "Folder", uOutSize);
+	}
+}
+
+/*************************************************************************
+ * _ILGetAttributeStr
+ *
+ * Given the ItemIdList, get the Attrib string format
+ *
+ * PARAMS
+ *      pidl        [I] The ItemIDList
+ *      pOut        [I] The buffer to save the result
+ *      uOutsize    [I] The size of the Buffer
+ *
+ * RETURNS
+ *     True if successful
+ *
+ * NOTES
+ *     
+ */
+BOOL _ILGetAttributeStr(LPCITEMIDLIST pidl, LPSTR pOut, UINT uOutSize)
+{
+    LPPIDLDATA pData =_ILGetDataPointer(pidl);
+    WORD wAttrib;
+    int i;
+
+    /* Need At Least 6 characters to represent the Attrib String */
+    if(uOutSize < 6) 
+    {
+        return FALSE;
+    }
+    switch(pData->type)
+    {
+        case PT_FOLDER:
+            wAttrib = pData->u.folder.uFileAttribs;
+            break;
+        case PT_VALUE:
+            wAttrib = pData->u.file.uFileAttribs;
+            break;
+        default:
+            return FALSE;
+    }
+    i=0;
+    if(wAttrib & FILE_ATTRIBUTE_READONLY)
+    {
+        pOut[i++] = 'R';
+    }
+    if(wAttrib & FILE_ATTRIBUTE_HIDDEN)
+    {
+        pOut[i++] = 'H';
+    }
+    if(wAttrib & FILE_ATTRIBUTE_SYSTEM)
+    {
+        pOut[i++] = 'S';
+    }
+    if(wAttrib & FILE_ATTRIBUTE_ARCHIVE)
+    {
+        pOut[i++] = 'A';
+    }
+    if(wAttrib & FILE_ATTRIBUTE_COMPRESSED)
+    {
+        pOut[i++] = 'C';
+    }
+    pOut[i] = 0x00;
+    return TRUE;
 }
 

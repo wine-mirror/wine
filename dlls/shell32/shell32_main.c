@@ -170,23 +170,7 @@ DWORD WINAPI SHGetFileInfoA(LPCSTR path,DWORD dwFileAttributes,
 	/* get the type name */
 	if (SUCCEEDED(hr) && (flags & SHGFI_TYPENAME))
 	{
-	  if(_ILIsValue(pidlLast))
-	  {
-	    char sTemp[64];
-	    if (_ILGetExtension (pidlLast, sTemp, 64))
-	    {
-	      if (!( HCR_MapTypeToValue(sTemp, sTemp, 64, TRUE) 
-	          && HCR_MapTypeToValue(sTemp, psfi->szTypeName, 80, FALSE )))
-	      {
-	        lstrcpynA (psfi->szTypeName, sTemp, 74);
-	        strcat (psfi->szTypeName, "-file");
-	      }
-	    }
-	  }
-	  else
-	  {
-	    strcpy(psfi->szTypeName, "Folder");
-	  }
+	  _ILGetFileType(pidlLast, psfi->szTypeName, 80);
 	}
 
 	/* ### icons ###*/

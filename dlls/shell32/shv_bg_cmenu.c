@@ -203,6 +203,10 @@ static HRESULT WINAPI ISVBgCm_fnInvokeCommand(
 	    case FCIDM_SHVIEW_REPORTVIEW:
 	      SendMessageA(hWndSV, WM_COMMAND, MAKEWPARAM(FCIDM_SHVIEW_REPORTVIEW,0),0 );
 	      break;
+
+	    default:
+	      SendMessageA(hWndSV, WM_COMMAND, MAKEWPARAM(LOWORD(lpcmi->lpVerb), 0),0 );
+	      break;
 	  }
 	}
 	

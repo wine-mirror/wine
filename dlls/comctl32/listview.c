@@ -6203,6 +6203,25 @@ static LRESULT LISTVIEW_Notify(HWND hwnd, INT nCtrlId, LPNMHDR lpnmh)
       infoPtr->nItemWidth = LISTVIEW_GetItemWidth(hwnd);
       InvalidateRect(hwnd, NULL, TRUE);
     }
+    if(lpnmh->code ==  HDN_ITEMCLICKA)
+    {
+        /* Handle sorting by Header Column */
+        NMLISTVIEW nmlv;
+        LPNMHEADERA pnmHeader = (LPNMHEADERA) lpnmh;
+        LONG lCtrlId = GetWindowLongA(hwnd, GWL_ID);
+
+        ZeroMemory(&nmlv, sizeof(NMLISTVIEW));
+        nmlv.hdr.hwndFrom = hwnd;
+        nmlv.hdr.idFrom = lCtrlId;
+        nmlv.hdr.code = LVN_COLUMNCLICK;
+        nmlv.iItem = -1;
+        nmlv.iSubItem = pnmHeader->iItem;
+        
+        ListView_LVNotify(GetParent(hwnd),lCtrlId, &nmlv);
+        InvalidateRect(hwnd, NULL, TRUE);
+
+    }
+
   }
 
   return 0;

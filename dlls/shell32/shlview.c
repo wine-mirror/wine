@@ -71,6 +71,13 @@ static struct ICOM_VTABLE(IViewObject) vovt;
 #define _IViewObject_Offset ((int)(&(((IShellViewImpl*)0)->lpvtblViewObject))) 
 #define _ICOM_THIS_From_IViewObject(class, name) class* This = (class*)(((char*)name)-_IViewObject_Offset); 
 
+/* ListView Header ID's */
+#define LISTVIEW_COLUMN_NAME 0
+#define LISTVIEW_COLUMN_SIZE 1
+#define LISTVIEW_COLUMN_TYPE 2
+#define LISTVIEW_COLUMN_TIME 3
+#define LISTVIEW_COLUMN_ATTRIB 4
+
 /*menu items */
 #define IDM_VIEW_FILES  (FCIDM_SHVIEWFIRST + 0x500)
 #define IDM_VIEW_IDW    (FCIDM_SHVIEWFIRST + 0x501)
@@ -312,6 +319,96 @@ static INT CALLBACK ShellView_CompareItems(LPVOID lParam1, LPVOID lParam2, LPARA
 	ret =  (SHORT) SCODE_CODE(IShellFolder_CompareIDs((LPSHELLFOLDER)lpData, 0, (LPITEMIDLIST)lParam1, (LPITEMIDLIST)lParam2));  
 	TRACE("ret=%i\n",ret);
 	return ret;
+}
+
+
+/*************************************************************************
+ * ShellView_ListViewCompareItems
+ *
+ * Compare Function for the Listview (FileOpen Dialog)
+ *
+ * PARAMS
+ *     lParam1       [I] the first ItemIdList to compare with
+ *     lParam2       [I] the second ItemIdList to compare with
+ *     lpData        [I] The column ID for the header Ctrl to process
+ *
+ * RETURNS
+ *     A negative value if the first item should precede the second, 
+ *     a positive value if the first item should follow the second, 
+ *     or zero if the two items are equivalent
+ *
+ * NOTES
+ *     
+ */
+static INT CALLBACK ShellView_ListViewCompareItems(LPVOID lParam1, LPVOID lParam2, LPARAM lpData)
+{
+    INT nDiff=0;
+    FILETIME fd1, fd2;
+    char strName1[MAX_PATH], strName2[MAX_PATH];
+    BOOL bIsFolder1, bIsFolder2,bIsBothFolder;
+    LPITEMIDLIST pItemIdList1 = (LPITEMIDLIST) lParam1;
+    LPITEMIDLIST pItemIdList2 = (LPITEMIDLIST) lParam2;
+
+
+    bIsFolder1 = _ILIsFolder(pItemIdList1);
+    bIsFolder2 = _ILIsFolder(pItemIdList2);
+    bIsBothFolder = bIsFolder1 && bIsFolder2;
+
+    /* When sorting between a File and a Folder, the Folder gets sorted first */
+    if( (bIsFolder1 || bIsFolder2) && !bIsBothFolder)
+    {
+        nDiff = bIsFolder1 ? -1 : 1;
+    }
+    else
+    {   
+        /* Sort by Time: Folders or Files can be sorted */
+ 
+        if(lpData == LISTVIEW_COLUMN_TIME)
+        {
+            _ILGetFileDateTime(pItemIdList1, &fd1);
+            _ILGetFileDateTime(pItemIdList2, &fd2);
+            nDiff = CompareFileTime(&fd2, &fd1);
+        }
+        /* Sort by Attribute: Folder or Files can be sorted */
+        else if(lpData == LISTVIEW_COLUMN_ATTRIB)
+        {
+            _ILGetAttributeStr(pItemIdList1, strName1, MAX_PATH);
+            _ILGetAttributeStr(pItemIdList2, strName2, MAX_PATH);
+            nDiff = strcasecmp(strName1, strName2);
+        }
+        /* Sort by FileName: Folder or Files can be sorted */
+        else if(lpData == LISTVIEW_COLUMN_NAME || bIsBothFolder)
+        {
+            /* Sort by Text */
+            _ILSimpleGetText(pItemIdList1, strName1, MAX_PATH);
+            _ILSimpleGetText(pItemIdList2, strName2, MAX_PATH);
+            nDiff = strcasecmp(strName1, strName2);
+        }
+        /* Sort by File Size, Only valid for Files */
+        else if(lpData == LISTVIEW_COLUMN_SIZE)
+        {
+            nDiff = _ILGetFileSize(pItemIdList1, NULL, 0) - _ILGetFileSize(pItemIdList2, NULL, 0);
+        }
+        /* Sort by File Type, Only valid for Files */
+        else if(lpData == LISTVIEW_COLUMN_TYPE)
+        {
+            /* Sort by Type */
+            _ILGetFileType(pItemIdList1, strName1, MAX_PATH);
+            _ILGetFileType(pItemIdList2, strName2, MAX_PATH);
+            nDiff = strcasecmp(strName1, strName2);
+        }
+    }
+    /*  If the Date, FileSize, FileType, Attrib was the same, sort by FileName */
+        
+    if(nDiff == 0)
+    {
+        _ILSimpleGetText(pItemIdList1, strName1, MAX_PATH);
+        _ILSimpleGetText(pItemIdList2, strName2, MAX_PATH);
+        nDiff = strcasecmp(strName1, strName2);
+    }
+
+    return nDiff;
+
 }
 
 /**********************************************************
@@ -812,6 +909,9 @@ static LRESULT ShellView_OnKillFocus(IShellViewImpl * This)
 
 /**********************************************************
 * ShellView_OnCommand()
+*
+* NOTES
+*	the CmdID's are the ones from the context menu
 */   
 static LRESULT ShellView_OnCommand(IShellViewImpl * This,DWORD dwCmdID, DWORD dwCmd, HWND hwndCmd)
 {
@@ -839,6 +939,14 @@ static LRESULT ShellView_OnCommand(IShellViewImpl * This,DWORD dwCmdID, DWORD dw
 	    SetStyle (This, LVS_REPORT, LVS_TYPEMASK);
 	    break;
 
+	  /* the menu-ID's for sorting are 0x30... see shrec.rc */
+	  case 0x30:
+	  case 0x31:
+	  case 0x32:
+	  case 0x33:
+	    ListView_SortItems(This->hWndList, ShellView_ListViewCompareItems, (LPARAM) (dwCmdID - 0x30));
+	    break;
+	    
 	  default:
 	    TRACE("-- COMMAND 0x%04lx unhandled\n", dwCmdID);
 	}
@@ -850,7 +958,7 @@ static LRESULT ShellView_OnCommand(IShellViewImpl * This,DWORD dwCmdID, DWORD dw
 */
    
 static LRESULT ShellView_OnNotify(IShellViewImpl * This, UINT CtlID, LPNMHDR lpnmh)
-{	NM_LISTVIEW *lpnmlv = (NM_LISTVIEW*)lpnmh;
+{	LPNMLISTVIEW lpnmlv = (LPNMLISTVIEW)lpnmh;
 	NMLVDISPINFOA *lpdi = (NMLVDISPINFOA *)lpnmh;
 	LPITEMIDLIST pidl;
 	STRRET   str;  
@@ -887,6 +995,12 @@ static LRESULT ShellView_OnNotify(IShellViewImpl * This, UINT CtlID, LPNMHDR lpn
 	    OnStateChange(This, CDBOSC_SELCHANGE);  /* the browser will get the IDataObject now */
 	    ShellView_DoContextMenu(This, 0, 0, TRUE);
 	    break;
+
+	  case LVN_COLUMNCLICK:
+	  {
+	    ListView_SortItems(lpnmlv->hdr.hwndFrom, ShellView_ListViewCompareItems, (LPARAM) (lpnmlv->iSubItem));
+	    break;
+	  }
 
 	  case LVN_GETDISPINFOA:
 	    TRACE("-- LVN_GETDISPINFOA %p\n",This);
