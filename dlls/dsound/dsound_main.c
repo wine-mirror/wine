@@ -175,6 +175,9 @@ struct IDirectSound3DBufferImpl
 # ifdef HAVE_SYS_SOUNDCARD_H
 #  include <sys/soundcard.h>
 # endif
+# ifdef HAVE_SOUNDCARD_H
+#  include <soundcard.h>
+# endif
 
 /* #define USE_DSOUND3D 1 */
 
