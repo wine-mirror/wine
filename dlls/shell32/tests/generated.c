@@ -1012,12 +1012,6 @@ static void test_pack_SHELLVIEWID(void)
     TEST_TYPE(SHELLVIEWID, 16, 4);
 }
 
-static void test_pack_SHELLVIEWPROC(void)
-{
-    /* SHELLVIEWPROC */
-    TEST_TYPE(SHELLVIEWPROC, 4, 4);
-}
-
 static void test_pack(void)
 {
     test_pack_APPBARDATA();
@@ -1103,7 +1097,6 @@ static void test_pack(void)
     test_pack_SHELLFLAGSTATE();
     test_pack_SHELLSTATE();
     test_pack_SHELLVIEWID();
-    test_pack_SHELLVIEWPROC();
     test_pack_SHFILEINFOA();
     test_pack_SHFILEINFOW();
     test_pack_SHFILEOPSTRUCTA();

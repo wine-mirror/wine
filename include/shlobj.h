@@ -36,13 +36,18 @@ extern "C" {
 
 LPVOID       WINAPI SHAlloc(ULONG);
 HRESULT      WINAPI SHCoCreateInstance(LPCWSTR,const CLSID*,IUnknown*,REFIID,LPVOID*);
+DWORD        WINAPI SHCLSIDFromStringA(LPCSTR,CLSID*);
+DWORD        WINAPI SHCLSIDFromStringW(LPCWSTR,CLSID*);
+#define             SHCLSIDFromString WINELIB_NAME_AW(SHCLSIDFromString)
 HRESULT      WINAPI SHCreateStdEnumFmtEtc(DWORD,const FORMATETC *,IEnumFORMATETC**);
 BOOL         WINAPI SHFindFiles(LPCITEMIDLIST,LPCITEMIDLIST);
 void         WINAPI SHFree(LPVOID);
-BOOL         WINAPI SHGetPathFromIDListA(LPCITEMIDLIST pidl,LPSTR pszPath);
-BOOL         WINAPI SHGetPathFromIDListW(LPCITEMIDLIST pidl,LPWSTR pszPath);
+BOOL         WINAPI GetFileNameFromBrowse(HWND,LPSTR,DWORD,LPCSTR,LPCSTR,LPCSTR,LPCSTR);
+BOOL         WINAPI SHGetPathFromIDListA(LPCITEMIDLIST,LPSTR);
+BOOL         WINAPI SHGetPathFromIDListW(LPCITEMIDLIST,LPWSTR);
 #define             SHGetPathFromIDList WINELIB_NAME_AW(SHGetPathFromIDList)
 HRESULT      WINAPI SHILCreateFromPath(LPCWSTR,LPITEMIDLIST*,DWORD*);
+HRESULT      WINAPI SHLoadOLE(LPARAM);
 LPITEMIDLIST WINAPI SHSimpleIDListFromPath(LPCWSTR);
 int          WINAPI SHMapPIDLToSystemImageListIndex(IShellFolder*,LPCITEMIDLIST,int*);
 
@@ -276,6 +281,162 @@ LPITEMIDLIST WINAPI SHBrowseForFolderW(LPBROWSEINFOW lpbi);
 #define BFFM_SETSELECTION   WINELIB_NAME_AW(BFFM_SETSELECTION)
 #define BFFM_VALIDATEFAILED WINELIB_NAME_AW(BFFM_VALIDATEFAILED)
 
+/**********************************************************************
+ * SHCreateShellFolderViewEx API
+ */
+
+typedef HRESULT (CALLBACK *LPFNVIEWCALLBACK)(
+	IShellView* dwUser,
+	IShellFolder* pshf,
+	HWND hWnd,
+	UINT uMsg,
+	WPARAM wParam,
+	LPARAM lParam);
+
+typedef struct _CSFV
+{
+  UINT             uSize;
+  IShellFolder*    pshf;
+  IShellView*      psvOuter;
+  LPCITEMIDLIST    pidlFolder;
+  LONG             lEvents;
+  LPFNVIEWCALLBACK pfnCallback;
+  FOLDERVIEWMODE   fvm;
+} CSFV, *LPCSFV;
+
+HRESULT WINAPI SHCreateShellFolderViewEx(LPCSFV pshfvi, IShellView **ppshv);
+
+/* SHCreateShellFolderViewEx callback messages */
+#define SFVM_MERGEMENU                 1
+#define SFVM_INVOKECOMMAND             2
+#define SFVM_GETHELPTEXT               3
+#define SFVM_GETTOOLTIPTEXT            4
+#define SFVM_GETBUTTONINFO             5
+#define SFVM_GETBUTTONS                6
+#define SFVM_INITMENUPOPUP             7
+#define SFVM_SELECTIONCHANGED          8 /* undocumented */
+#define SFVM_DRAWMENUITEM              9 /* undocumented */
+#define SFVM_MEASUREMENUITEM          10 /* undocumented */
+#define SFVM_EXITMENULOOP             11 /* undocumented */
+#define SFVM_VIEWRELEASE              12 /* undocumented */
+#define SFVM_GETNAMELENGTH            13 /* undocumented */
+#define SFVM_FSNOTIFY                 14
+#define SFVM_WINDOWCREATED            15
+#define SFVM_WINDOWCLOSING            16 /* undocumented */
+#define SFVM_LISTREFRESHED            17 /* undocumented */
+#define SFVM_WINDOWFOCUSED            18 /* undocumented */
+#define SFVM_REGISTERCOPYHOOK         20 /* undocumented */
+#define SFVM_COPYHOOKCALLBACK         21 /* undocumented */
+#define SFVM_GETDETAILSOF             23
+#define SFVM_COLUMNCLICK              24
+#define SFVM_QUERYFSNOTIFY            25
+#define SFVM_DEFITEMCOUNT             26
+#define SFVM_DEFVIEWMODE              27
+#define SFVM_UNMERGEFROMMENU          28
+#define SFVM_ADDINGOBJECT             29 /* undocumented */
+#define SFVM_REMOVINGOBJECT           30 /* undocumented */
+#define SFVM_UPDATESTATUSBAR          31
+#define SFVM_BACKGROUNDENUM           32
+#define SFVM_GETCOMMANDDIR            33 /* undocumented */
+#define SFVM_GETCOLUMNSTREAM          34 /* undocumented */
+#define SFVM_CANSELECTALL             35 /* undocumented */
+#define SFVM_DIDDRAGDROP              36
+#define SFVM_ISSTRICTREFRESH          37 /* undocumented */
+#define SFVM_ISCHILDOBJECT            38 /* undocumented */
+#define SFVM_SETISFV                  39
+#define SFVM_GETEXTVIEWS              40 /* undocumented */
+#define SFVM_THISIDLIST               41
+#define SFVM_ADDPROPERTYPAGES         47
+#define SFVM_BACKGROUNDENUMDONE       48
+#define SFVM_GETNOTIFY                49
+#define SFVM_GETSORTDEFAULTS          53
+#define SFVM_SIZE                     57
+#define SFVM_GETZONE                  58
+#define SFVM_GETPANE                  59
+#define SFVM_GETHELPTOPIC             63
+#define SFVM_GETANIMATION             68
+#define SFVM_GET_CUSTOMVIEWINFO       77 /* undocumented */
+#define SFVM_ENUMERATEDITEMS          79 /* undocumented */
+#define SFVM_GET_VIEW_DATA            80 /* undocumented */
+#define SFVM_GET_WEBVIEW_LAYOUT       82 /* undocumented */
+#define SFVM_GET_WEBVIEW_CONTENT      83 /* undocumented */
+#define SFVM_GET_WEBVIEW_TASKS        84 /* undocumented */
+#define SFVM_GET_WEBVIEW_THEME        86 /* undocumented */
+#define SFVM_GETDEFERREDVIEWSETTINGS  92 /* undocumented */
+
+/* Types and definitions for the SFM_* parameters */
+
+#define QCMINFO_PLACE_BEFORE          0
+#define QCMINFO_PLACE_AFTER           1
+typedef struct _QCMINFO_IDMAP_PLACEMENT
+{
+    UINT id;
+    UINT fFlags;
+} QCMINFO_IDMAP_PLACEMENT;
+
+typedef struct _QCMINFO_IDMAP
+{
+    UINT nMaxIds;
+    QCMINFO_IDMAP_PLACEMENT pIdList[1];
+} QCMINFO_IDMAP;
+
+typedef struct _QCMINFO
+{
+    HMENU hMenu;
+    UINT indexMenu;
+    UINT idCmdFirst;
+    UINT idCmdLast;
+    QCMINFO_IDMAP const* pIdMap;
+} QCMINFO, *LPQCMINFO;
+
+#define TBIF_DEFAULT           0x00000000
+#define TBIF_APPEND            0x00000000
+#define TBIF_PREPEND           0x00000001
+#define TBIF_REPLACE           0x00000002
+#define TBIF_INTERNETBAR       0x00010000
+#define TBIF_STANDARDTOOLBAR   0x00020000
+#define TBIF_NOTOOLBAR         0x00030000
+
+typedef struct _TBINFO
+{
+    UINT cbuttons;
+    UINT uFlags;
+} TBINFO, *LPTBINFO;
+
+/****************************************************************************
+*	SHShellFolderView_Message API
+*/
+
+LRESULT WINAPI SHShellFolderView_Message(
+	HWND hwndCabinet,
+	UINT uMessage,
+	LPARAM lParam);
+
+/* SHShellFolderView_Message messages */
+#define SFVM_REARRANGE          0x0001
+#define SFVM_GETARRANGECOLUMN   0x0002 /* undocumented */
+#define SFVM_ADDOBJECT          0x0003
+#define SFVM_GETITEMCOUNT       0x0004 /* undocumented */
+#define SFVM_GETITEMPIDL        0x0005 /* undocumented */
+#define SFVM_REMOVEOBJECT       0x0006
+#define SFVM_UPDATEOBJECT       0x0007
+#define SFVM_SETREDRAW          0x0008 /* undocumented */
+#define SFVM_GETSELECTEDOBJECTS 0x0009
+#define SFVM_ISDROPONSOURCE     0x000A /* undocumented */
+#define SFVM_MOVEICONS          0x000B /* undocumented */
+#define SFVM_GETDRAGPOINT       0x000C /* undocumented */
+#define SFVM_GETDROPPOINT       0x000D /* undocumented */
+#define SFVM_SETITEMPOS         0x000E
+#define SFVM_ISDROPONBACKGROUND 0x000F /* undocumented */
+#define SFVM_SETCLIPBOARD       0x0010
+#define SFVM_TOGGLEAUTOARRANGE  0x0011 /* undocumented */
+#define SFVM_LINEUPICONS        0x0012 /* undocumented */
+#define SFVM_GETAUTOARRANGE     0x0013 /* undocumented */
+#define SFVM_GETSELECTEDCOUNT   0x0014 /* undocumented */
+#define SFVM_GETITEMSPACING     0x0015 /* undocumented */
+#define SFVM_REFRESHOBJECT      0x0016 /* undocumented */
+#define SFVM_SETPOINTS          0x0017
+
 /****************************************************************************
 *	SHGetDataFromIDList API
 */
@@ -320,42 +481,6 @@ HRESULT WINAPI SHGetDataFromIDListW(LPSHELLFOLDER psf, LPCITEMIDLIST pidl, int n
 BOOL WINAPI SHGetSpecialFolderPathA (HWND hwndOwner, LPSTR szPath, int nFolder, BOOL bCreate);
 BOOL WINAPI SHGetSpecialFolderPathW (HWND hwndOwner, LPWSTR szPath, int nFolder, BOOL bCreate);
 #define  SHGetSpecialFolderPath WINELIB_NAME_AW(SHGetSpecialFolderPath)
-
-/****************************************************************************
-* shlview structures
-*/
-
-/*
-* IShellFolderViewCallback Callback
-*  This "callback" is called by the shells default IShellView implementation (that
-*  we got using SHCreateShellViewEx()), to notify us of the various things that
-*  are happening to the shellview (and ask for things too).
-*
-*  You don't have to support anything here - anything you don't want to
-*  handle, the shell will do itself if you just return E_NOTIMPL. This parameters
-*  that the shell passes to this function are entirely undocumented.
-*
-*  HOWEVER, as the cabview sample as originally written used this callback, the
-*  writers implemented the callback mechanism on top of their own IShellView.
-*  Look there for some clues on what to do here.
-*/
-
-typedef HRESULT (CALLBACK *SHELLVIEWPROC)(DWORD dwUserParam,LPSHELLFOLDER psf,
-                         HWND hwnd,UINT uMsg,UINT wParam,LPARAM lParam);
-
-/* NF valid values for the "viewmode" item of the SHELLTEMPLATE*/
-#define NF_INHERITVIEW    0x0000
-#define NF_LOCALVIEW        0x0001
-
-typedef struct _SHELLVIEWDATA   /* idl */
-{ DWORD           dwSize;
-  LPSHELLFOLDER   pShellFolder;
-  DWORD           dwUserParam;
-  LPCITEMIDLIST   pidl;
-  DWORD           v3;        /* always 0 */
-  SHELLVIEWPROC   pCallBack;
-  DWORD           viewmode;  /* NF_* enum */
-} SHELLVIEWDATA, * LPSHELLVIEWDATA;
 
 HRESULT WINAPI SHGetMalloc(LPMALLOC *lpmal) ;
 
@@ -1026,7 +1151,10 @@ LPITEMIDLIST WINAPI ILGetNext(LPCITEMIDLIST);
 UINT         WINAPI ILGetSize(LPCITEMIDLIST);
 BOOL         WINAPI ILIsEqual(LPCITEMIDLIST,LPCITEMIDLIST);
 BOOL         WINAPI ILIsParent(LPCITEMIDLIST,LPCITEMIDLIST,BOOL);
+HRESULT      WINAPI ILLoadFromStream(LPSTREAM,LPITEMIDLIST*);
 BOOL         WINAPI ILRemoveLastID(LPITEMIDLIST);
+HRESULT      WINAPI ILSaveToStream(LPSTREAM,LPCITEMIDLIST);
+
 
 #include <poppack.h>
 
