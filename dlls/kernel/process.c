@@ -96,6 +96,20 @@ inline static int contains_path( LPCWSTR name )
 }
 
 
+/***********************************************************************
+ *           is_special_env_var
+ *
+ * Check if an environment variable needs to be handled specially when
+ * passed through the Unix environment (i.e. prefixed with "WINE").
+ */
+inline static int is_special_env_var( const char *var )
+{
+    return (!memcmp( var, "PATH=", sizeof("PATH=")-1 ) ||
+            !memcmp( var, "TEMP=", sizeof("TEMP=")-1 ) ||
+            !memcmp( var, "TMP=", sizeof("TMP=")-1 ));
+}
+
+
 /***************************************************************************
  *	get_builtin_path
  *
@@ -353,7 +367,7 @@ static BOOL build_initial_environment( char **environ )
     /* Compute the total size of the Unix environment */
     for (e = environ; *e; e++)
     {
-        if (!memcmp(*e, "PATH=", 5)) continue;
+        if (is_special_env_var( *e )) continue;
         size += MultiByteToWideChar( CP_UNIXCP, 0, *e, -1, NULL, 0 );
     }
     size *= sizeof(WCHAR);
@@ -370,9 +384,14 @@ static BOOL build_initial_environment( char **environ )
     for (e = environ; *e; e++)
     {
         char *str = *e;
-        /* skip Unix PATH and store WINEPATH as PATH */
-        if (!memcmp(str, "PATH=", 5)) continue;
-        if (!memcmp(str, "WINEPATH=", 9 )) str += 4;
+
+        /* skip Unix special variables and use the Wine variants instead */
+        if (!memcmp( str, "WINE", 4 ))
+        {
+            if (is_special_env_var( str + 4 )) str += 4;
+        }
+        else if (is_special_env_var( str )) continue;  /* skip it */
+
         MultiByteToWideChar( CP_UNIXCP, 0, str, -1, p, endptr - p );
         p += strlenW(p) + 1;
     }
@@ -1068,8 +1087,10 @@ static char **build_envp( const WCHAR *envW, const WCHAR *extra_envW )
 
         /* first the extra strings */
         if (extra_env) for (p = extra_env; *p; p += strlen(p) + 1) *envptr++ = p;
-        /* then put PATH, HOME and WINEPREFIX from the unix env */
+        /* then put PATH, TEMP, TMP, HOME and WINEPREFIX from the unix env */
         if ((p = getenv("PATH"))) *envptr++ = alloc_env_string( "PATH=", p );
+        if ((p = getenv("TEMP"))) *envptr++ = alloc_env_string( "TEMP=", p );
+        if ((p = getenv("TMP")))  *envptr++ = alloc_env_string( "TMP=", p );
         if ((p = getenv("HOME"))) *envptr++ = alloc_env_string( "HOME=", p );
         if ((p = getenv("WINEPREFIX"))) *envptr++ = alloc_env_string( "WINEPREFIX=", p );
         /* now put the Windows environment strings */
@@ -1077,10 +1098,9 @@ static char **build_envp( const WCHAR *envW, const WCHAR *extra_envW )
         {
             if (extra_env && p[0]=='=' && 'A'<=p[1] && p[1]<='Z' && p[2]==':' && p[3]=='=')
                 continue; /* skipped */
-            if (!memcmp( p, "PATH=", 5 ))  /* store PATH as WINEPATH */
-                *envptr++ = alloc_env_string( "WINEPATH=", p + 5 );
+            if (is_special_env_var( p ))  /* prefix it with "WINE" */
+                *envptr++ = alloc_env_string( "WINE", p );
             else if (memcmp( p, "HOME=", 5 ) &&
-                     memcmp( p, "WINEPATH=", 9 ) &&
                      memcmp( p, "WINEPREFIX=", 11 )) *envptr++ = p;
         }
         *envptr = 0;

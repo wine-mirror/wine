@@ -229,8 +229,10 @@ int DIR_Init(void)
         TRACE("Path       = %s\n", debugstr_w(path) );
     }
 
-    SetEnvironmentVariableW( temp_capsW, tmp_dir.short_name );
-    SetEnvironmentVariableW( tmp_capsW, tmp_dir.short_name );
+    if (!GetEnvironmentVariableW( temp_capsW, NULL, 0 ))
+        SetEnvironmentVariableW( temp_capsW, tmp_dir.short_name );
+    if (!GetEnvironmentVariableW( tmp_capsW, NULL, 0 ))
+        SetEnvironmentVariableW( tmp_capsW, tmp_dir.short_name );
     SetEnvironmentVariableW( windirW, DIR_Windows.short_name );
     SetEnvironmentVariableW( winsysdirW, DIR_System.short_name );
 
