@@ -43,7 +43,6 @@ struct device
 };
 
 static void device_dump( struct object *obj, int verbose );
-static int device_get_info( struct object *obj, struct get_file_info_reply *reply, int *flags );
 
 static const struct object_ops device_ops =
 {
@@ -54,7 +53,6 @@ static const struct object_ops device_ops =
     NULL,                     /* signaled */
     NULL,                     /* satisfied */
     no_get_fd,                /* get_fd */
-    device_get_info,          /* get_file_info */
     no_destroy                /* destroy */
 };
 
@@ -75,28 +73,6 @@ static void device_dump( struct object *obj, int verbose )
     fprintf( stderr, "Device id=%08x\n", dev->id );
 }
 
-static int device_get_info( struct object *obj, struct get_file_info_reply *reply, int *flags )
-{
-    struct device *dev = (struct device *)obj;
-    assert( obj->ops == &device_ops );
-
-    if (reply)
-    {
-        reply->type        = FILE_TYPE_UNKNOWN;
-        reply->attr        = dev->id;  /* hack! */
-        reply->access_time = 0;
-        reply->write_time  = 0;
-        reply->size_high   = 0;
-        reply->size_low    = 0;
-        reply->links       = 0;
-        reply->index_high  = 0;
-        reply->index_low   = 0;
-        reply->serial      = 0;
-    }
-    *flags = 0;
-    return FD_TYPE_DEFAULT;
-}
-
 /* create a device */
 DECL_HANDLER(create_device)
 {
@@ -106,6 +82,19 @@ DECL_HANDLER(create_device)
     if ((dev = create_device( req->id )))
     {
         reply->handle = alloc_handle( current->process, dev, req->access, req->inherit );
+        release_object( dev );
+    }
+}
+
+
+/* Retrieve the client private id for a device */
+DECL_HANDLER(get_device_id)
+{
+    struct device *dev;
+
+    if ((dev = (struct device *)get_handle_obj( current->process, req->handle, 0, &device_ops )))
+    {
+        reply->id = dev->id;
         release_object( dev );
     }
 }

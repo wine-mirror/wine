@@ -832,14 +832,14 @@ const DOS_DEVICE *DOSFS_GetDevice( LPCWSTR name )
 const DOS_DEVICE *DOSFS_GetDeviceByHandle( HANDLE hFile )
 {
     const DOS_DEVICE *ret = NULL;
-    SERVER_START_REQ( get_file_info )
+    SERVER_START_REQ( get_device_id )
     {
         req->handle = hFile;
-        if (!wine_server_call( req ) && (reply->type == FILE_TYPE_UNKNOWN))
+        if (!wine_server_call( req ))
         {
-            if ((reply->attr >= 0) &&
-                (reply->attr < sizeof(DOSFS_Devices)/sizeof(DOSFS_Devices[0])))
-                ret = &DOSFS_Devices[reply->attr];
+            if ((reply->id >= 0) &&
+                (reply->id < sizeof(DOSFS_Devices)/sizeof(DOSFS_Devices[0])))
+                ret = &DOSFS_Devices[reply->id];
         }
     }
     SERVER_END_REQ;

@@ -47,7 +47,6 @@ static const struct object_ops change_ops =
     change_signaled,          /* signaled */
     no_satisfied,             /* satisfied */
     no_get_fd,                /* get_fd */
-    no_get_file_info,         /* get_file_info */
     no_destroy                /* destroy */
 };
 

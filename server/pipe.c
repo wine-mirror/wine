@@ -47,10 +47,11 @@ struct pipe
 };
 
 static void pipe_dump( struct object *obj, int verbose );
-static int pipe_get_poll_events( struct object *obj );
 static struct fd *pipe_get_fd( struct object *obj );
-static int pipe_get_info( struct object *obj, struct get_file_info_reply *reply, int *flags );
 static void pipe_destroy( struct object *obj );
+
+static int pipe_get_poll_events( struct fd *fd );
+static int pipe_get_info( struct fd *fd, struct get_file_info_reply *reply, int *flags );
 
 static const struct object_ops pipe_ops =
 {
@@ -61,7 +62,6 @@ static const struct object_ops pipe_ops =
     default_fd_signaled,          /* signaled */
     no_satisfied,                 /* satisfied */
     pipe_get_fd,                  /* get_fd */
-    pipe_get_info,                /* get_file_info */
     pipe_destroy                  /* destroy */
 };
 
@@ -118,14 +118,14 @@ static void pipe_dump( struct object *obj, int verbose )
 {
     struct pipe *pipe = (struct pipe *)obj;
     assert( obj->ops == &pipe_ops );
-    fprintf( stderr, "Pipe %s-side fd=%d\n",
-             (pipe->side == READ_SIDE) ? "read" : "write", pipe->obj.fd );
+    fprintf( stderr, "Pipe %s-side fd=%p\n",
+             (pipe->side == READ_SIDE) ? "read" : "write", pipe->obj.fd_obj );
 }
 
-static int pipe_get_poll_events( struct object *obj )
+static int pipe_get_poll_events( struct fd *fd )
 {
-    struct pipe *pipe = (struct pipe *)obj;
-    assert( obj->ops == &pipe_ops );
+    struct pipe *pipe = get_fd_user( fd );
+    assert( pipe->obj.ops == &pipe_ops );
     return (pipe->side == READ_SIDE) ? POLLIN : POLLOUT;
 }
 
@@ -142,7 +142,7 @@ static struct fd *pipe_get_fd( struct object *obj )
     return (struct fd *)grab_object( pipe->obj.fd_obj );
 }
 
-static int pipe_get_info( struct object *obj, struct get_file_info_reply *reply, int *flags )
+static int pipe_get_info( struct fd *fd, struct get_file_info_reply *reply, int *flags )
 {
     if (reply)
     {

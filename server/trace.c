@@ -1289,6 +1289,16 @@ static void dump_create_device_reply( const struct create_device_reply *req )
     fprintf( stderr, " handle=%p", req->handle );
 }
 
+static void dump_get_device_id_request( const struct get_device_id_request *req )
+{
+    fprintf( stderr, " handle=%p", req->handle );
+}
+
+static void dump_get_device_id_reply( const struct get_device_id_reply *req )
+{
+    fprintf( stderr, " id=%d", req->id );
+}
+
 static void dump_create_snapshot_request( const struct create_snapshot_request *req )
 {
     fprintf( stderr, " inherit=%d,", req->inherit );
@@ -2468,6 +2478,7 @@ static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_open_mapping_request,
     (dump_func)dump_get_mapping_info_request,
     (dump_func)dump_create_device_request,
+    (dump_func)dump_get_device_id_request,
     (dump_func)dump_create_snapshot_request,
     (dump_func)dump_next_process_request,
     (dump_func)dump_next_thread_request,
@@ -2644,6 +2655,7 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_open_mapping_reply,
     (dump_func)dump_get_mapping_info_reply,
     (dump_func)dump_create_device_reply,
+    (dump_func)dump_get_device_id_reply,
     (dump_func)dump_create_snapshot_reply,
     (dump_func)dump_next_process_reply,
     (dump_func)dump_next_thread_reply,
@@ -2820,6 +2832,7 @@ static const char * const req_names[REQ_NB_REQUESTS] = {
     "open_mapping",
     "get_mapping_info",
     "create_device",
+    "get_device_id",
     "create_snapshot",
     "next_process",
     "next_thread",

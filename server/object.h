@@ -60,8 +60,6 @@ struct object_ops
     int  (*satisfied)(struct object *,struct thread *);
     /* return an fd object that can be used to read/write from the object */
     struct fd *(*get_fd)(struct object *);
-    /* get file information */
-    int  (*get_file_info)(struct object *,struct get_file_info_reply *, int *flags);
     /* destroy on refcount == 0 */
     void (*destroy)(struct object *);
 };
@@ -105,9 +103,7 @@ extern int no_add_queue( struct object *obj, struct wait_queue_entry *entry );
 extern int no_satisfied( struct object *obj, struct thread *thread );
 extern struct fd *no_get_fd( struct object *obj );
 extern struct fd *default_get_fd( struct object *obj );
-extern int no_get_file_info( struct object *obj, struct get_file_info_reply *info, int *flags );
 extern void no_destroy( struct object *obj );
-extern void default_poll_event( struct object *obj, int event );
 #ifdef DEBUG_OBJECTS
 extern void dump_objects(void);
 #endif
@@ -118,7 +114,6 @@ extern int add_select_user( struct object *obj );
 extern void remove_select_user( struct object *obj );
 extern void change_select_fd( struct object *obj, int fd, int events );
 extern void set_select_events( struct object *obj, int events );
-extern int check_select_events( int fd, int events );
 extern void select_loop(void);
 
 /* timeout functions */
@@ -152,17 +147,6 @@ extern void reset_event( struct event *event );
 /* mutex functions */
 
 extern void abandon_mutexes( struct thread *thread );
-
-/* file functions */
-
-extern struct file *get_file_obj( struct process *process, obj_handle_t handle,
-                                  unsigned int access );
-extern int is_same_file( struct file *file1, struct file *file2 );
-extern int get_file_drive_type( struct file *file );
-extern int grow_file( struct file *file, int size_high, int size_low );
-extern int create_anonymous_file(void);
-extern struct file *create_temp_file( int access );
-extern void file_set_error(void);
 
 /* serial functions */
 

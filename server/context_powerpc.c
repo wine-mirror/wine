@@ -35,6 +35,7 @@
 
 #include "winbase.h"
 
+#include "file.h"
 #include "thread.h"
 #include "request.h"
 

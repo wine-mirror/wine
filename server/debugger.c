@@ -73,7 +73,6 @@ static const struct object_ops debug_event_ops =
     debug_event_signaled,          /* signaled */
     no_satisfied,                  /* satisfied */
     no_get_fd,                     /* get_fd */
-    no_get_file_info,              /* get_file_info */
     debug_event_destroy            /* destroy */
 };
 
@@ -90,7 +89,6 @@ static const struct object_ops debug_ctx_ops =
     debug_ctx_signaled,            /* signaled */
     no_satisfied,                  /* satisfied */
     no_get_fd,                     /* get_fd */
-    no_get_file_info,              /* get_file_info */
     debug_ctx_destroy              /* destroy */
 };
 

@@ -84,13 +84,15 @@ struct sock
 
 static void sock_dump( struct object *obj, int verbose );
 static int sock_signaled( struct object *obj, struct thread *thread );
-static int sock_get_poll_events( struct object *obj );
-static void sock_poll_event( struct object *obj, int event );
-static int sock_get_info( struct object *obj, struct get_file_info_reply *reply, int *flags );
 static void sock_destroy( struct object *obj );
+
+static int sock_get_poll_events( struct fd *fd );
+static void sock_poll_event( struct fd *fd, int event );
+static int sock_get_info( struct fd *fd, struct get_file_info_reply *reply, int *flags );
+static void sock_queue_async( struct fd *fd, void *ptr, unsigned int status, int type, int count );
+
 static int sock_get_error( int err );
 static void sock_set_error(void);
-static void sock_queue_async(struct object *obj, void *ptr, unsigned int status, int type, int count);
 
 static const struct object_ops sock_ops =
 {
@@ -101,7 +103,6 @@ static const struct object_ops sock_ops =
     sock_signaled,                /* signaled */
     no_satisfied,                 /* satisfied */
     default_get_fd,               /* get_fd */
-    sock_get_info,                /* get_file_info */
     sock_destroy                  /* destroy */
 };
 
@@ -192,10 +193,10 @@ void sock_init(void)
 
 static int sock_reselect( struct sock *sock )
 {
-    int ev = sock_get_poll_events( &sock->obj );
+    int ev = sock_get_poll_events( sock->obj.fd_obj );
 
     if (debug_level)
-        fprintf(stderr,"sock_reselect(%d): new mask %x\n", sock->obj.fd, ev);
+        fprintf(stderr,"sock_reselect(%p): new mask %x\n", sock, ev);
 
     if (sock->obj.select == -1) {
         /* previously unconnected socket, is this reselect supposed to connect it? */
@@ -212,17 +213,11 @@ static int sock_reselect( struct sock *sock )
    This function is used to signal pending events nevertheless */
 static void sock_try_event ( struct sock *sock, int event )
 {
-    struct pollfd pfd;
-
-    pfd.fd = sock->obj.fd;
-    pfd.events = event;
-    pfd.revents = 0;
-    poll (&pfd, 1, 0);
-
-    if ( pfd.revents )
+    event = check_fd_events( sock->obj.fd_obj, event );
+    if (event)
     {
-        if ( debug_level ) fprintf ( stderr, "sock_try_event: %x\n", pfd.revents );
-        sock_poll_event ( &sock->obj, pfd.revents );
+        if ( debug_level ) fprintf ( stderr, "sock_try_event: %x\n", event );
+        sock_poll_event ( sock->obj.fd_obj, event );
     }
 }
 
@@ -275,23 +270,23 @@ static void sock_wake_up( struct sock *sock, int pollev )
     }
 }
 
-inline static int sock_error(int s)
+inline static int sock_error( struct fd *fd )
 {
     unsigned int optval = 0, optlen;
 
     optlen = sizeof(optval);
-    getsockopt(s, SOL_SOCKET, SO_ERROR, (void *) &optval, &optlen);
+    getsockopt( get_unix_fd(fd), SOL_SOCKET, SO_ERROR, (void *) &optval, &optlen);
     return optval ? sock_get_error(optval) : 0;
 }
 
-static void sock_poll_event( struct object *obj, int event )
+static void sock_poll_event( struct fd *fd, int event )
 {
-    struct sock *sock = (struct sock *)obj;
+    struct sock *sock = get_fd_user( fd );
     int hangup_seen = 0;
 
     assert( sock->obj.ops == &sock_ops );
     if (debug_level)
-        fprintf(stderr, "socket %d select event: %x\n", sock->obj.fd, event);
+        fprintf(stderr, "socket %p select event: %x\n", sock, event);
     if (sock->state & FD_CONNECT)
     {
         /* connecting */
@@ -303,16 +298,16 @@ static void sock_poll_event( struct object *obj, int event )
             sock->pmask |= FD_CONNECT;
             sock->errors[FD_CONNECT_BIT] = 0;
             if (debug_level)
-                fprintf(stderr, "socket %d connection success\n", sock->obj.fd);
+                fprintf(stderr, "socket %p connection success\n", sock);
         }
         else if (event & (POLLERR|POLLHUP))
         {
             /* we didn't get connected? */
             sock->state &= ~FD_CONNECT;
             sock->pmask |= FD_CONNECT;
-            sock->errors[FD_CONNECT_BIT] = sock_error( sock->obj.fd );
+            sock->errors[FD_CONNECT_BIT] = sock_error( fd );
             if (debug_level)
-                fprintf(stderr, "socket %d connection failure\n", sock->obj.fd);
+                fprintf(stderr, "socket %p connection failure\n", sock);
         }
     } else
     if (sock->state & FD_WINE_LISTENING)
@@ -329,7 +324,7 @@ static void sock_poll_event( struct object *obj, int event )
         {
             /* failed incoming connection? */
             sock->pmask |= FD_ACCEPT;
-            sock->errors[FD_ACCEPT_BIT] = sock_error( sock->obj.fd );
+            sock->errors[FD_ACCEPT_BIT] = sock_error( fd );
             sock->hmask |= FD_ACCEPT;
         }
     } else
@@ -342,7 +337,7 @@ static void sock_poll_event( struct object *obj, int event )
 
             /* Linux 2.4 doesn't report POLLHUP if only one side of the socket
              * has been closed, so we need to check for it explicitly here */
-            nr  = recv( sock->obj.fd, &dummy, 1, MSG_PEEK );
+            nr  = recv( get_unix_fd( fd ), &dummy, 1, MSG_PEEK );
             if ( nr > 0 )
             {
                 /* incoming data */
@@ -350,7 +345,7 @@ static void sock_poll_event( struct object *obj, int event )
                 sock->hmask |= (FD_READ|FD_CLOSE);
                 sock->errors[FD_READ_BIT] = 0;
                 if (debug_level)
-                    fprintf(stderr, "socket %d is readable\n", sock->obj.fd );
+                    fprintf(stderr, "socket %p is readable\n", sock );
             }
             else if ( nr == 0 )
                 hangup_seen = 1;
@@ -363,7 +358,7 @@ static void sock_poll_event( struct object *obj, int event )
                 else
                 {
                     if ( debug_level )
-                        fprintf ( stderr, "recv error on socket %d: %d\n", sock->obj.fd, errno );
+                        fprintf ( stderr, "recv error on socket %p: %d\n", sock, errno );
                     event = POLLERR;
                 }
             }
@@ -379,7 +374,7 @@ static void sock_poll_event( struct object *obj, int event )
             sock->hmask |= (FD_READ|FD_CLOSE);
             sock->errors[FD_READ_BIT] = 0;
             if (debug_level)
-                fprintf(stderr, "socket %d is readable\n", sock->obj.fd );
+                fprintf(stderr, "socket %p is readable\n", sock );
 
         }
 
@@ -389,7 +384,7 @@ static void sock_poll_event( struct object *obj, int event )
             sock->hmask |= FD_WRITE;
             sock->errors[FD_WRITE_BIT] = 0;
             if (debug_level)
-                fprintf(stderr, "socket %d is writable\n", sock->obj.fd);
+                fprintf(stderr, "socket %p is writable\n", sock);
         }
         if (event & POLLPRI)
         {
@@ -397,27 +392,27 @@ static void sock_poll_event( struct object *obj, int event )
             sock->hmask |= FD_OOB;
             sock->errors[FD_OOB_BIT] = 0;
             if (debug_level)
-                fprintf(stderr, "socket %d got OOB data\n", sock->obj.fd);
+                fprintf(stderr, "socket %p got OOB data\n", sock);
         }
         /* According to WS2 specs, FD_CLOSE is only delivered when there is
            no more data to be read (i.e. hangup_seen = 1) */
         else if ( hangup_seen && (sock->state & (FD_READ|FD_WRITE) ))
         {
-            sock->errors[FD_CLOSE_BIT] = sock_error( sock->obj.fd );
+            sock->errors[FD_CLOSE_BIT] = sock_error( fd );
             if ( (event & POLLERR) || ( sock_shutdown_type == SOCK_SHUTDOWN_EOF && (event & POLLHUP) ))
                 sock->state &= ~FD_WRITE;
             sock->pmask |= FD_CLOSE;
             sock->hmask |= FD_CLOSE;
             if (debug_level)
-                fprintf(stderr, "socket %d aborted by error %d, event: %x - removing from select loop\n",
-                        sock->obj.fd, sock->errors[FD_CLOSE_BIT], event);
+                fprintf(stderr, "socket %p aborted by error %d, event: %x - removing from select loop\n",
+                        sock, sock->errors[FD_CLOSE_BIT], event);
         }
     }
 
     if ( sock->pmask & FD_CLOSE || event & (POLLERR|POLLHUP) )
     {
         if ( debug_level )
-            fprintf ( stderr, "removing socket %d from select loop\n", sock->obj.fd );
+            fprintf ( stderr, "removing socket %p from select loop\n", sock );
         set_select_events( &sock->obj, -1 );
     }
     else
@@ -435,8 +430,8 @@ static void sock_dump( struct object *obj, int verbose )
 {
     struct sock *sock = (struct sock *)obj;
     assert( obj->ops == &sock_ops );
-    printf( "Socket fd=%d, state=%x, mask=%x, pending=%x, held=%x\n",
-            sock->obj.fd, sock->state,
+    printf( "Socket fd=%p, state=%x, mask=%x, pending=%x, held=%x\n",
+            sock->obj.fd_obj, sock->state,
             sock->mask, sock->pmask, sock->hmask );
 }
 
@@ -445,16 +440,16 @@ static int sock_signaled( struct object *obj, struct thread *thread )
     struct sock *sock = (struct sock *)obj;
     assert( obj->ops == &sock_ops );
 
-    return check_select_events( get_unix_fd(obj), sock_get_poll_events( &sock->obj ) );
+    return check_fd_events( sock->obj.fd_obj, sock_get_poll_events( sock->obj.fd_obj ) ) != 0;
 }
 
-static int sock_get_poll_events( struct object *obj )
+static int sock_get_poll_events( struct fd *fd )
 {
-    struct sock *sock = (struct sock *)obj;
+    struct sock *sock = get_fd_user( fd );
     unsigned int mask = sock->mask & sock->state & ~sock->hmask;
     int ev = 0;
 
-    assert( obj->ops == &sock_ops );
+    assert( sock->obj.ops == &sock_ops );
 
     if (sock->state & FD_CONNECT)
         /* connecting, wait for writable */
@@ -474,10 +469,10 @@ static int sock_get_poll_events( struct object *obj )
     return ev;
 }
 
-static int sock_get_info( struct object *obj, struct get_file_info_reply *reply, int *flags )
+static int sock_get_info( struct fd *fd, struct get_file_info_reply *reply, int *flags )
 {
-    struct sock *sock = (struct sock*) obj;
-    assert ( obj->ops == &sock_ops );
+    struct sock *sock = get_fd_user( fd );
+    assert ( sock->obj.ops == &sock_ops );
 
     if (reply)
     {
@@ -502,14 +497,14 @@ static int sock_get_info( struct object *obj, struct get_file_info_reply *reply,
     return FD_TYPE_SOCKET;
 }
 
-static void sock_queue_async(struct object *obj, void *ptr, unsigned int status, int type, int count)
+static void sock_queue_async(struct fd *fd, void *ptr, unsigned int status, int type, int count)
 {
-    struct sock *sock = (struct sock *)obj;
+    struct sock *sock = get_fd_user( fd );
     struct async_queue *q;
     struct async *async;
     int pollev;
 
-    assert( obj->ops == &sock_ops );
+    assert( sock->obj.ops == &sock_ops );
 
     if ( !(sock->flags & WSA_FLAG_OVERLAPPED) )
     {
@@ -544,7 +539,7 @@ static void sock_queue_async(struct object *obj, void *ptr, unsigned int status,
         else
         {
             if ( !async )
-                async = create_async ( obj, current, ptr );
+                async = create_async ( &sock->obj, current, ptr );
             if ( !async )
                 return;
 
@@ -640,7 +635,7 @@ static struct sock *accept_socket( obj_handle_t handle )
          * return.
          */
         slen = sizeof(saddr);
-        acceptfd = accept( get_unix_fd(&sock->obj), &saddr, &slen);
+        acceptfd = accept( get_unix_fd(sock->obj.fd_obj), &saddr, &slen);
         if (acceptfd==-1) {
             sock_set_error();
             release_object( sock );

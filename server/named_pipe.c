@@ -94,13 +94,12 @@ static const struct object_ops named_pipe_ops =
     NULL,                         /* signaled */
     NULL,                         /* satisfied */
     no_get_fd,                    /* get_fd */
-    no_get_file_info,             /* get_file_info */
     named_pipe_destroy            /* destroy */
 };
 
 static void pipe_user_dump( struct object *obj, int verbose );
 static void pipe_user_destroy( struct object *obj);
-static int pipe_user_get_info( struct object *obj, struct get_file_info_reply *reply, int *flags );
+static int pipe_user_get_info( struct fd *fd, struct get_file_info_reply *reply, int *flags );
 
 static const struct object_ops pipe_user_ops =
 {
@@ -111,7 +110,6 @@ static const struct object_ops pipe_user_ops =
     default_fd_signaled,          /* signaled */
     no_satisfied,                 /* satisfied */
     default_get_fd,               /* get_fd */
-    pipe_user_get_info,           /* get_file_info */
     pipe_user_destroy             /* destroy */
 };
 
@@ -169,7 +167,7 @@ static void pipe_user_destroy( struct object *obj)
 
     if(user->other)
     {
-        close_fd( user->other->obj.fd_obj );
+        release_object( user->other->obj.fd_obj );
         user->other->obj.fd_obj = NULL;
         switch(user->other->state)
         {
@@ -195,7 +193,7 @@ static void pipe_user_destroy( struct object *obj)
     release_object(user->pipe);
 }
 
-static int pipe_user_get_info( struct object *obj, struct get_file_info_reply *reply, int *flags )
+static int pipe_user_get_info( struct fd *fd, struct get_file_info_reply *reply, int *flags )
 {
     if (reply)
     {
@@ -443,12 +441,12 @@ DECL_HANDLER(disconnect_named_pipe)
     if( (user->state == ps_connected_server) &&
         (user->other->state == ps_connected_client) )
     {
-        close_fd( user->other->obj.fd_obj );
+        release_object( user->other->obj.fd_obj );
         user->other->obj.fd_obj = NULL;
         user->other->state = ps_disconnected;
         user->other->other = NULL;
 
-        close_fd( user->obj.fd_obj );
+        release_object( user->obj.fd_obj );
         user->obj.fd_obj = NULL;
         user->state = ps_idle_server;
         user->other = NULL;

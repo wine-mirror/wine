@@ -62,7 +62,6 @@ static const struct object_ops snapshot_ops =
     NULL,                         /* signaled */
     NULL,                         /* satisfied */
     no_get_fd,                    /* get_fd */
-    no_get_file_info,             /* get_file_info */
     snapshot_destroy              /* destroy */
 };
 

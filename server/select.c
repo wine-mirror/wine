@@ -138,15 +138,6 @@ void set_select_events( struct object *obj, int events )
     else if (pollfd[user].fd != -1) pollfd[user].events = events;
 }
 
-/* check if events are pending */
-int check_select_events( int fd, int events )
-{
-    struct pollfd pfd;
-    pfd.fd     = fd;
-    pfd.events = events;
-    return poll( &pfd, 1, 0 ) > 0;
-}
-
 /* add a timeout user */
 struct timeout_user *add_timeout_user( struct timeval *when, timeout_callback func, void *private )
 {

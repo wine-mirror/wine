@@ -24,6 +24,7 @@
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <sys/stat.h>
 #include <unistd.h>
 
 #include "winbase.h"
@@ -48,8 +49,6 @@ struct mapping
     struct mapping *shared_prev;     /* prev in shared PE mapping list */
 };
 
-static struct fd *mapping_get_fd( struct object *obj );
-static int mapping_get_info( struct object *obj, struct get_file_info_reply *reply, int *flags );
 static void mapping_dump( struct object *obj, int verbose );
 static void mapping_destroy( struct object *obj );
 
@@ -61,8 +60,7 @@ static const struct object_ops mapping_ops =
     NULL,                        /* remove_queue */
     NULL,                        /* signaled */
     NULL,                        /* satisfied */
-    mapping_get_fd,              /* get_fd */
-    mapping_get_info,            /* get_file_info */
+    default_get_fd,              /* get_fd */
     mapping_destroy              /* destroy */
 };
 
@@ -105,11 +103,6 @@ static void init_page_size(void)
 #define ROUND_SIZE(addr,size) \
    (((int)(size) + ((int)(addr) & page_mask) + page_mask) & ~page_mask)
 
-/* get the fd to use for mmaping a file */
-inline static int get_mmap_fd( struct file *file )
-{
-    return get_unix_fd( (struct object *)file );
-}
 
 /* find the shared PE mapping for a given mapping */
 static struct file *get_shared_file( struct mapping *mapping )
@@ -152,7 +145,7 @@ static int build_shared_mapping( struct mapping *mapping, int fd,
 
     if (!(mapping->shared_file = create_temp_file( GENERIC_READ|GENERIC_WRITE ))) return 0;
     if (!grow_file( mapping->shared_file, 0, total_size )) goto error;
-    if ((shared_fd = get_mmap_fd( mapping->shared_file )) == -1) goto error;
+    if ((shared_fd = get_file_unix_fd( mapping->shared_file )) == -1) goto error;
 
     if (!(buffer = malloc( max_size ))) goto error;
 
@@ -192,30 +185,33 @@ static int get_image_params( struct mapping *mapping )
     IMAGE_DOS_HEADER dos;
     IMAGE_NT_HEADERS nt;
     IMAGE_SECTION_HEADER *sec = NULL;
-    int fd, filepos, size;
+    struct fd *fd;
+    int unix_fd, filepos, size;
 
     /* load the headers */
 
-    if ((fd = get_mmap_fd( mapping->file )) == -1) return 0;
-    filepos = lseek( fd, 0, SEEK_SET );
-    if (read( fd, &dos, sizeof(dos) ) != sizeof(dos)) goto error;
+    if (!(fd = get_obj_fd( (struct object *)mapping->file ))) return 0;
+    mapping->obj.fd_obj = fd;
+    unix_fd = get_unix_fd( fd );
+    filepos = lseek( unix_fd, 0, SEEK_SET );
+    if (read( unix_fd, &dos, sizeof(dos) ) != sizeof(dos)) goto error;
     if (dos.e_magic != IMAGE_DOS_SIGNATURE) goto error;
-    if (lseek( fd, dos.e_lfanew, SEEK_SET ) == -1) goto error;
+    if (lseek( unix_fd, dos.e_lfanew, SEEK_SET ) == -1) goto error;
 
-    if (read( fd, &nt.Signature, sizeof(nt.Signature) ) != sizeof(nt.Signature)) goto error;
+    if (read( unix_fd, &nt.Signature, sizeof(nt.Signature) ) != sizeof(nt.Signature)) goto error;
     if (nt.Signature != IMAGE_NT_SIGNATURE) goto error;
-    if (read( fd, &nt.FileHeader, sizeof(nt.FileHeader) ) != sizeof(nt.FileHeader)) goto error;
+    if (read( unix_fd, &nt.FileHeader, sizeof(nt.FileHeader) ) != sizeof(nt.FileHeader)) goto error;
     /* zero out Optional header in the case it's not present or partial */
     memset(&nt.OptionalHeader, 0, sizeof(nt.OptionalHeader));
-    if (read( fd, &nt.OptionalHeader, nt.FileHeader.SizeOfOptionalHeader) != nt.FileHeader.SizeOfOptionalHeader) goto error;
+    if (read( unix_fd, &nt.OptionalHeader, nt.FileHeader.SizeOfOptionalHeader) != nt.FileHeader.SizeOfOptionalHeader) goto error;
 
     /* load the section headers */
 
     size = sizeof(*sec) * nt.FileHeader.NumberOfSections;
     if (!(sec = malloc( size ))) goto error;
-    if (read( fd, sec, size ) != size) goto error;
+    if (read( unix_fd, sec, size ) != size) goto error;
 
-    if (!build_shared_mapping( mapping, fd, sec, nt.FileHeader.NumberOfSections )) goto error;
+    if (!build_shared_mapping( mapping, unix_fd, sec, nt.FileHeader.NumberOfSections )) goto error;
 
     if (mapping->shared_file)  /* link it in the list */
     {
@@ -233,17 +229,28 @@ static int get_image_params( struct mapping *mapping )
     /* sanity check */
     if (mapping->header_size > mapping->size_low) goto error;
 
-    lseek( fd, filepos, SEEK_SET );
+    lseek( unix_fd, filepos, SEEK_SET );
     free( sec );
     return 1;
 
  error:
-    lseek( fd, filepos, SEEK_SET );
+    lseek( unix_fd, filepos, SEEK_SET );
     if (sec) free( sec );
     set_error( STATUS_INVALID_FILE_FOR_SECTION );
     return 0;
 }
 
+/* get the size of the unix file associated with the mapping */
+inline static int get_file_size( struct mapping *mapping, int *size_high, int *size_low )
+{
+    struct stat st;
+    int unix_fd = get_unix_fd( mapping->obj.fd_obj );
+
+    if (fstat( unix_fd, &st ) == -1) return 0;
+    *size_high = st.st_size >> 32;
+    *size_low  = st.st_size & 0xffffffff;
+    return 1;
+}
 
 static struct object *create_mapping( int size_high, int size_low, int protect,
                                       obj_handle_t handle, const WCHAR *name, size_t len )
@@ -276,14 +283,12 @@ static struct object *create_mapping( int size_high, int size_low, int protect,
         }
         if (!size_high && !size_low)
         {
-            int flags;
-            struct get_file_info_reply reply;
-            struct object *obj = (struct object *)mapping->file;
-            obj->ops->get_file_info( obj, &reply, &flags );
-            size_high = reply.size_high;
-            size_low  = ROUND_SIZE( 0, reply.size_low );
+            if (!get_file_size( mapping, &size_high, &size_low )) goto error;
         }
-        else if (!grow_file( mapping->file, size_high, size_low )) goto error;
+        else
+        {
+            if (!grow_file( mapping->file, size_high, size_low )) goto error;
+        }
     }
     else  /* Anonymous mapping (no associated file) */
     {
@@ -296,6 +301,7 @@ static struct object *create_mapping( int size_high, int size_low, int protect,
         if (!(mapping->file = create_temp_file( access ))) goto error;
         if (!grow_file( mapping->file, size_high, size_low )) goto error;
     }
+    mapping->obj.fd_obj = get_obj_fd( (struct object *)mapping->file );
     mapping->size_high = size_high;
     mapping->size_low  = ROUND_SIZE( 0, size_low );
     mapping->protect   = protect;
@@ -316,24 +322,6 @@ static void mapping_dump( struct object *obj, int verbose )
              mapping->header_size, mapping->base, mapping->shared_file, mapping->shared_size );
     dump_object_name( &mapping->obj );
     fputc( '\n', stderr );
-}
-
-static struct fd *mapping_get_fd( struct object *obj )
-{
-    struct mapping *mapping = (struct mapping *)obj;
-    assert( obj->ops == &mapping_ops );
-
-    return default_get_fd( (struct object *)mapping->file );
-}
-
-static int mapping_get_info( struct object *obj, struct get_file_info_reply *reply, int *flags )
-{
-    struct mapping *mapping = (struct mapping *)obj;
-    struct object *file = (struct object *)mapping->file;
-
-    assert( obj->ops == &mapping_ops );
-    assert( file );
-    return file->ops->get_file_info( file, reply, flags );
 }
 
 static void mapping_destroy( struct object *obj )

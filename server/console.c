@@ -40,9 +40,6 @@ static void console_input_dump( struct object *obj, int verbose );
 static void console_input_destroy( struct object *obj );
 static int console_input_signaled( struct object *obj, struct thread *thread );
 
-/* common routine */
-static int console_get_file_info( struct object *obj, struct get_file_info_reply *reply, int *flags );
-
 static const struct object_ops console_input_ops =
 {
     sizeof(struct console_input),     /* size */
@@ -52,7 +49,6 @@ static const struct object_ops console_input_ops =
     console_input_signaled,           /* signaled */
     no_satisfied,                     /* satisfied */
     no_get_fd,                        /* get_fd */
-    console_get_file_info,            /* get_file_info */
     console_input_destroy             /* destroy */
 };
 
@@ -77,7 +73,6 @@ static const struct object_ops console_input_events_ops =
     console_input_events_signaled,    /* signaled */
     no_satisfied,                     /* satisfied */
     no_get_fd,                        /* get_fd */
-    no_get_file_info,                 /* get_file_info */
     console_input_events_destroy      /* destroy */
 };
 
@@ -114,7 +109,6 @@ static const struct object_ops screen_buffer_ops =
     NULL,                             /* signaled */
     NULL,                             /* satisfied */
     no_get_fd,                        /* get_fd */
-    console_get_file_info,            /* get_file_info */
     screen_buffer_destroy             /* destroy */
 };
 
@@ -372,6 +366,11 @@ void inherit_console(struct thread *parent_thread, struct process *process, obj_
 	process->console = (struct console_input*)grab_object( parent->console );
 	process->console->num_proc++;
     }
+}
+
+int is_console_object( struct object *obj )
+{
+    return (obj->ops == &console_input_ops || obj->ops == &screen_buffer_ops);
 }
 
 static struct console_input* console_input_get( obj_handle_t handle, unsigned access )
@@ -936,25 +935,6 @@ static void console_input_dump( struct object *obj, int verbose )
     assert( obj->ops == &console_input_ops );
     fprintf( stderr, "Console input active=%p evt=%p\n",
 	     console->active, console->evt );
-}
-
-static int console_get_file_info( struct object *obj, struct get_file_info_reply *reply, int *flags )
-{
-    if (reply)
-    {
-        reply->type        = FILE_TYPE_CHAR;
-        reply->attr        = 0;
-        reply->access_time = 0;
-        reply->write_time  = 0;
-        reply->size_high   = 0;
-        reply->size_low    = 0;
-        reply->links       = 0;
-        reply->index_high  = 0;
-        reply->index_low   = 0;
-        reply->serial      = 0;
-    }
-    *flags = 0;
-    return FD_TYPE_CONSOLE;
 }
 
 static void console_input_destroy( struct object *obj )

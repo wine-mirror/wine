@@ -1114,6 +1114,14 @@ enum char_info_mode
 @END
 
 
+/* Retrieve the client private id for a device */
+@REQ(get_device_id)
+    obj_handle_t handle;        /* handle to the device */
+@REPLY
+    int          id;            /* client private id */
+@END
+
+
 #define SNAP_HEAPLIST   0x00000001
 #define SNAP_PROCESS    0x00000002
 #define SNAP_THREAD     0x00000004

@@ -33,9 +33,9 @@
 #endif
 #include <unistd.h>
 
+#include "file.h"
 #include "process.h"
 #include "thread.h"
-
 
 #ifndef PTRACE_CONT
 #define PTRACE_CONT PT_CONTINUE

@@ -75,7 +75,7 @@ struct thread_apc
 
 static void dump_thread( struct object *obj, int verbose );
 static int thread_signaled( struct object *obj, struct thread *thread );
-static void thread_poll_event( struct object *obj, int event );
+static void thread_poll_event( struct fd *fd, int event );
 static void destroy_thread( struct object *obj );
 static struct thread_apc *thread_dequeue_apc( struct thread *thread, int system_only );
 
@@ -88,7 +88,6 @@ static const struct object_ops thread_ops =
     thread_signaled,            /* signaled */
     no_satisfied,               /* satisfied */
     no_get_fd,                  /* get_fd */
-    no_get_file_info,           /* get_file_info */
     destroy_thread              /* destroy */
 };
 
@@ -179,10 +178,10 @@ struct thread *create_thread( int fd, struct process *process )
 }
 
 /* handle a client event */
-static void thread_poll_event( struct object *obj, int event )
+static void thread_poll_event( struct fd *fd, int event )
 {
-    struct thread *thread = (struct thread *)obj;
-    assert( obj->ops == &thread_ops );
+    struct thread *thread = get_fd_user( fd );
+    assert( thread->obj.ops == &thread_ops );
 
     if (event & (POLLERR | POLLHUP)) kill_thread( thread, 0 );
     else if (event & POLLIN) read_request( thread );

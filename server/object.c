@@ -220,7 +220,7 @@ void release_object( void *ptr )
         assert( !obj->head );
         assert( !obj->tail );
         obj->ops->destroy( obj );
-        if (obj->fd_obj) close_fd( obj->fd_obj );
+        if (obj->fd_obj) release_object( obj->fd_obj );
         if (obj->name) free_name( obj );
         if (obj->select != -1) remove_select_user( obj );
         if (obj->fd != -1) close( obj->fd );
@@ -303,21 +303,6 @@ struct fd *default_get_fd( struct object *obj )
     return NULL;
 }
 
-int no_get_file_info( struct object *obj, struct get_file_info_reply *info, int *flags )
-{
-    set_error( STATUS_OBJECT_TYPE_MISMATCH );
-    *flags = 0;
-    return FD_TYPE_INVALID;
-}
-
 void no_destroy( struct object *obj )
 {
-}
-
-/* default handler for poll() events */
-void default_poll_event( struct object *obj, int event )
-{
-    /* an error occurred, stop polling this fd to avoid busy-looping */
-    if (event & (POLLERR | POLLHUP)) set_select_events( obj, -1 );
-    wake_up( obj, 0 );
 }

@@ -52,7 +52,7 @@ static int running_processes;
 
 static void process_dump( struct object *obj, int verbose );
 static int process_signaled( struct object *obj, struct thread *thread );
-static void process_poll_event( struct object *obj, int event );
+static void process_poll_event( struct fd *fd, int event );
 static void process_destroy( struct object *obj );
 
 static const struct object_ops process_ops =
@@ -64,7 +64,6 @@ static const struct object_ops process_ops =
     process_signaled,            /* signaled */
     no_satisfied,                /* satisfied */
     no_get_fd,                   /* get_fd */
-    no_get_file_info,            /* get_file_info */
     process_destroy              /* destroy */
 };
 
@@ -109,7 +108,6 @@ static const struct object_ops startup_info_ops =
     startup_info_signaled,         /* signaled */
     no_satisfied,                  /* satisfied */
     no_get_fd,                     /* get_fd */
-    no_get_file_info,              /* get_file_info */
     startup_info_destroy           /* destroy */
 };
 
@@ -434,12 +432,12 @@ static int process_signaled( struct object *obj, struct thread *thread )
 }
 
 
-static void process_poll_event( struct object *obj, int event )
+static void process_poll_event( struct fd *fd, int event )
 {
-    struct process *process = (struct process *)obj;
-    assert( obj->ops == &process_ops );
+    struct process *process = get_fd_user( fd );
+    assert( process->obj.ops == &process_ops );
 
-    if (event & (POLLERR | POLLHUP)) set_select_events( obj, -1 );
+    if (event & (POLLERR | POLLHUP)) set_select_events( &process->obj, -1 );
     else if (event & POLLIN) receive_fd( process );
 }
 

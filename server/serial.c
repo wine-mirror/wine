@@ -52,12 +52,13 @@
 #include "async.h"
 
 static void serial_dump( struct object *obj, int verbose );
-static int serial_get_info( struct object *obj, struct get_file_info_reply *reply, int *flags );
-static int serial_get_poll_events( struct object *obj );
-static void serial_queue_async(struct object *obj, void *ptr, unsigned int status, int type, int count);
-static void destroy_serial(struct object *obj);
-static void serial_poll_event( struct object *obj, int event );
-static int serial_flush( struct object *obj );
+static void serial_destroy(struct object *obj);
+
+static int serial_get_poll_events( struct fd *fd );
+static void serial_poll_event( struct fd *fd, int event );
+static int serial_get_info( struct fd *fd, struct get_file_info_reply *reply, int *flags );
+static int serial_flush( struct fd *fd );
+static void serial_queue_async(struct fd *fd, void *ptr, unsigned int status, int type, int count);
 
 struct serial
 {
@@ -93,8 +94,7 @@ static const struct object_ops serial_ops =
     default_fd_signaled,          /* signaled */
     no_satisfied,                 /* satisfied */
     default_get_fd,               /* get_fd */
-    serial_get_info,              /* get_file_info */
-    destroy_serial                /* destroy */
+    serial_destroy                /* destroy */
 };
 
 static const struct fd_ops serial_fd_ops =
@@ -166,7 +166,7 @@ static struct serial *create_serial( const char *nameptr, size_t len, unsigned i
     return serial;
 }
 
-static void destroy_serial( struct object *obj)
+static void serial_destroy( struct object *obj)
 {
     struct serial *serial = (struct serial *)obj;
 
@@ -179,7 +179,7 @@ static void serial_dump( struct object *obj, int verbose )
 {
     struct serial *serial = (struct serial *)obj;
     assert( obj->ops == &serial_ops );
-    fprintf( stderr, "Port fd=%d mask=%x\n", serial->obj.fd, serial->eventmask );
+    fprintf( stderr, "Port fd=%p mask=%x\n", serial->obj.fd_obj, serial->eventmask );
 }
 
 struct serial *get_serial_obj( struct process *process, obj_handle_t handle, unsigned int access )
@@ -187,11 +187,11 @@ struct serial *get_serial_obj( struct process *process, obj_handle_t handle, uns
     return (struct serial *)get_handle_obj( process, handle, access, &serial_ops );
 }
 
-static int serial_get_poll_events( struct object *obj )
+static int serial_get_poll_events( struct fd *fd )
 {
-    struct serial *serial = (struct serial *)obj;
+    struct serial *serial = get_fd_user( fd );
     int events = 0;
-    assert( obj->ops == &serial_ops );
+    assert( serial->obj.ops == &serial_ops );
 
     if(IS_READY(serial->read_q))
         events |= POLLIN;
@@ -205,10 +205,10 @@ static int serial_get_poll_events( struct object *obj )
     return events;
 }
 
-static int serial_get_info( struct object *obj, struct get_file_info_reply *reply, int *flags )
+static int serial_get_info( struct fd *fd, struct get_file_info_reply *reply, int *flags )
 {
-    struct serial *serial = (struct serial *) obj;
-    assert( obj->ops == &serial_ops );
+    struct serial *serial = get_fd_user( fd );
+    assert( serial->obj.ops == &serial_ops );
 
     if (reply)
     {
@@ -234,9 +234,9 @@ static int serial_get_info( struct object *obj, struct get_file_info_reply *repl
     return FD_TYPE_DEFAULT;
 }
 
-static void serial_poll_event(struct object *obj, int event)
+static void serial_poll_event(struct fd *fd, int event)
 {
-    struct serial *serial = (struct serial *)obj;
+    struct serial *serial = get_fd_user( fd );
 
     /* fprintf(stderr,"Poll event %02x\n",event); */
 
@@ -249,17 +249,17 @@ static void serial_poll_event(struct object *obj, int event)
     if(IS_READY(serial->wait_q) && (POLLIN & event) )
         async_notify(serial->wait_q.head,STATUS_ALERTED);
 
-    set_select_events( obj, serial_get_poll_events(obj) );
+    set_select_events( &serial->obj, serial_get_poll_events(fd) );
 }
 
-static void serial_queue_async(struct object *obj, void *ptr, unsigned int status, int type, int count)
+static void serial_queue_async(struct fd *fd, void *ptr, unsigned int status, int type, int count)
 {
-    struct serial *serial = (struct serial *)obj;
+    struct serial *serial = get_fd_user( fd );
     struct async_queue *q;
     struct async *async;
     int timeout;
 
-    assert(obj->ops == &serial_ops);
+    assert(serial->obj.ops == &serial_ops);
 
     switch(type)
     {
@@ -284,10 +284,10 @@ static void serial_queue_async(struct object *obj, void *ptr, unsigned int statu
 
     if ( status == STATUS_PENDING )
     {
-        struct pollfd pfd;
+        int events;
 
         if ( !async )
-            async = create_async ( obj, current, ptr );
+            async = create_async ( &serial->obj, current, ptr );
         if ( !async )
             return;
 
@@ -299,30 +299,26 @@ static void serial_queue_async(struct object *obj, void *ptr, unsigned int statu
         }
 
         /* Check if the new pending request can be served immediately */
-        pfd.fd = get_unix_fd( obj );
-        pfd.events = serial_get_poll_events ( obj );
-        pfd.revents = 0;
-        poll ( &pfd, 1, 0 );
-
-        if ( pfd.revents )
+        events = check_fd_events( fd, serial_get_poll_events( fd ) );
+        if (events)
+        {
             /* serial_poll_event() calls set_select_events() */
-            serial_poll_event ( obj, pfd.revents );
-        else
-            set_select_events ( obj, pfd.events );
-        return;
+            serial_poll_event( fd, events );
+            return;
+        }
     }
     else if ( async ) destroy_async ( async );
     else set_error ( STATUS_INVALID_PARAMETER );
 
-    set_select_events ( obj, serial_get_poll_events ( obj ));
+    set_select_events ( &serial->obj, serial_get_poll_events( fd ));
 }
 
-static int serial_flush( struct object *obj )
+static int serial_flush( struct fd *fd )
 {
     /* MSDN says: If hFile is a handle to a communications device,
      * the function only flushes the transmit buffer.
      */
-    int ret = (tcflush( get_unix_fd(obj), TCOFLUSH ) != -1);
+    int ret = (tcflush( get_unix_fd(fd), TCOFLUSH ) != -1);
     if (!ret) file_set_error();
     return ret;
 }

@@ -66,12 +66,13 @@ struct file
 static struct file *file_hash[NAME_HASH_SIZE];
 
 static void file_dump( struct object *obj, int verbose );
-static int file_get_poll_events( struct object *obj );
-static void file_poll_event( struct object *obj, int event );
-static int file_flush( struct object *obj );
-static int file_get_info( struct object *obj, struct get_file_info_reply *reply, int *flags );
 static void file_destroy( struct object *obj );
-static void file_queue_async(struct object *obj, void *ptr, unsigned int status, int type, int count);
+
+static int file_get_poll_events( struct fd *fd );
+static void file_poll_event( struct fd *fd, int event );
+static int file_flush( struct fd *fd );
+static int file_get_info( struct fd *fd, struct get_file_info_reply *reply, int *flags );
+static void file_queue_async( struct fd *fd, void *ptr, unsigned int status, int type, int count );
 
 static const struct object_ops file_ops =
 {
@@ -82,7 +83,6 @@ static const struct object_ops file_ops =
     default_fd_signaled,          /* signaled */
     no_satisfied,                 /* satisfied */
     default_get_fd,               /* get_fd */
-    file_get_info,                /* get_file_info */
     file_destroy                  /* destroy */
 };
 
@@ -264,23 +264,23 @@ static void file_dump( struct object *obj, int verbose )
 {
     struct file *file = (struct file *)obj;
     assert( obj->ops == &file_ops );
-    fprintf( stderr, "File fd=%d flags=%08x name='%s'\n", file->obj.fd, file->flags, file->name );
+    fprintf( stderr, "File fd=%p flags=%08x name='%s'\n", file->obj.fd_obj, file->flags, file->name );
 }
 
-static int file_get_poll_events( struct object *obj )
+static int file_get_poll_events( struct fd *fd )
 {
-    struct file *file = (struct file *)obj;
+    struct file *file = get_fd_user( fd );
     int events = 0;
-    assert( obj->ops == &file_ops );
+    assert( file->obj.ops == &file_ops );
     if (file->access & GENERIC_READ) events |= POLLIN;
     if (file->access & GENERIC_WRITE) events |= POLLOUT;
     return events;
 }
 
-static void file_poll_event( struct object *obj, int event )
+static void file_poll_event( struct fd *fd, int event )
 {
-    struct file *file = (struct file *)obj;
-    assert( obj->ops == &file_ops );
+    struct file *file = get_fd_user( fd );
+    assert( file->obj.ops == &file_ops );
     if ( file->flags & FILE_FLAG_OVERLAPPED )
     {
         if( IS_READY(file->read_q) && (POLLIN & event) )
@@ -294,22 +294,22 @@ static void file_poll_event( struct object *obj, int event )
             return;
         }
     }
-    default_poll_event( obj, event );
+    default_poll_event( fd, event );
 }
 
 
-static int file_flush( struct object *obj )
+static int file_flush( struct fd *fd )
 {
-    int ret = (fsync( get_unix_fd(obj) ) != -1);
+    int ret = (fsync( get_unix_fd(fd) ) != -1);
     if (!ret) file_set_error();
     return ret;
 }
 
-static int file_get_info( struct object *obj, struct get_file_info_reply *reply, int *flags )
+static int file_get_info( struct fd *fd, struct get_file_info_reply *reply, int *flags )
 {
     struct stat st;
-    struct file *file = (struct file *)obj;
-    int unix_fd = get_unix_fd( obj );
+    struct file *file = get_fd_user( fd );
+    int unix_fd = get_unix_fd( fd );
 
     if (reply)
     {
@@ -346,13 +346,13 @@ static int file_get_info( struct object *obj, struct get_file_info_reply *reply,
     return FD_TYPE_DEFAULT;
 }
 
-static void file_queue_async(struct object *obj, void *ptr, unsigned int status, int type, int count)
+static void file_queue_async(struct fd *fd, void *ptr, unsigned int status, int type, int count)
 {
-    struct file *file = (struct file *)obj;
+    struct file *file = get_fd_user( fd );
     struct async *async;
     struct async_queue *q;
 
-    assert( obj->ops == &file_ops );
+    assert( file->obj.ops == &file_ops );
 
     if ( !(file->flags & FILE_FLAG_OVERLAPPED) )
     {
@@ -377,10 +377,10 @@ static void file_queue_async(struct object *obj, void *ptr, unsigned int status,
 
     if ( status == STATUS_PENDING )
     {
-        struct pollfd pfd;
+        int events;
 
         if ( !async )
-            async = create_async ( obj, current, ptr );
+            async = create_async ( &file->obj, current, ptr );
         if ( !async )
             return;
 
@@ -389,18 +389,13 @@ static void file_queue_async(struct object *obj, void *ptr, unsigned int status,
             async_insert( q, async );
 
         /* Check if the new pending request can be served immediately */
-        pfd.fd = get_unix_fd( obj );
-        pfd.events = file_get_poll_events ( obj );
-        pfd.revents = 0;
-        poll ( &pfd, 1, 0 );
-
-        if ( pfd.revents )
-            file_poll_event ( obj, pfd.revents );
+        events = check_fd_events( fd, file_get_poll_events( fd ) );
+        if (events) file_poll_event ( fd, events );
     }
     else if ( async ) destroy_async ( async );
     else set_error ( STATUS_INVALID_PARAMETER );
 
-    set_select_events ( obj, file_get_poll_events ( obj ));
+    set_select_events( &file->obj, file_get_poll_events( fd ));
 }
 
 static void file_destroy( struct object *obj )
@@ -456,6 +451,11 @@ struct file *get_file_obj( struct process *process, obj_handle_t handle, unsigne
     return (struct file *)get_handle_obj( process, handle, access, &file_ops );
 }
 
+int get_file_unix_fd( struct file *file )
+{
+    return get_unix_fd( file->obj.fd_obj );
+}
+
 static int set_file_pointer( obj_handle_t handle, unsigned int *low, int *high, int whence )
 {
     struct file *file;
@@ -464,7 +464,7 @@ static int set_file_pointer( obj_handle_t handle, unsigned int *low, int *high, 
     xto = *low+((off_t)*high<<32);
     if (!(file = get_file_obj( current->process, handle, 0 )))
         return 0;
-    if ((result = lseek( get_unix_fd(&file->obj), xto, whence))==-1)
+    if ((result = lseek( get_file_unix_fd(file), xto, whence))==-1)
     {
         /* Check for seek before start of file */
 
@@ -487,7 +487,7 @@ static int set_file_pointer( obj_handle_t handle, unsigned int *low, int *high, 
 static int extend_file( struct file *file, off_t size )
 {
     static const char zero;
-    int unix_fd = get_unix_fd( &file->obj );
+    int unix_fd = get_file_unix_fd( file );
 
     /* extend the file one byte beyond the requested size and then truncate it */
     /* this should work around ftruncate implementations that can't extend files */
@@ -505,7 +505,7 @@ static int extend_file( struct file *file, off_t size )
 static int truncate_file( struct file *file )
 {
     int ret = 0;
-    int unix_fd = get_unix_fd( &file->obj );
+    int unix_fd = get_file_unix_fd( file );
     off_t pos = lseek( unix_fd, 0, SEEK_CUR );
     off_t eof = lseek( unix_fd, 0, SEEK_END );
 
@@ -524,7 +524,7 @@ int grow_file( struct file *file, int size_high, int size_low )
 {
     int ret = 0;
     struct stat st;
-    int unix_fd = get_unix_fd( &file->obj );
+    int unix_fd = get_file_unix_fd( file );
     off_t old_pos, size = size_low + (((off_t)size_high)<<32);
 
     if (fstat( unix_fd, &st ) == -1)
@@ -618,27 +618,6 @@ DECL_HANDLER(alloc_file_handle)
     }
 }
 
-/* get a Unix fd to access a file */
-DECL_HANDLER(get_handle_fd)
-{
-    struct object *obj;
-
-    reply->fd = -1;
-    reply->type = FD_TYPE_INVALID;
-    if ((obj = get_handle_obj( current->process, req->handle, req->access, NULL )))
-    {
-        int fd = get_handle_fd( current->process, req->handle, req->access );
-        if (fd != -1) reply->fd = fd;
-        else if (!get_error())
-        {
-            int unix_fd = get_unix_fd( obj );
-            if (unix_fd != -1) send_client_fd( current->process, unix_fd, req->handle );
-        }
-        reply->type = obj->ops->get_file_info( obj, NULL, &reply->flags );
-        release_object( obj );
-    }
-}
-
 /* set a file current position */
 DECL_HANDLER(set_file_pointer)
 {
@@ -665,19 +644,6 @@ DECL_HANDLER(truncate_file)
 DECL_HANDLER(set_file_time)
 {
     set_file_time( req->handle, req->access_time, req->write_time );
-}
-
-/* get a file information */
-DECL_HANDLER(get_file_info)
-{
-    struct object *obj;
-
-    if ((obj = get_handle_obj( current->process, req->handle, 0, NULL )))
-    {
-        int flags;
-        obj->ops->get_file_info( obj, reply, &flags );
-        release_object( obj );
-    }
 }
 
 /* lock a region of a file */

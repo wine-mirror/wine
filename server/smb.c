@@ -52,9 +52,10 @@
 #include "request.h"
 
 static void smb_dump( struct object *obj, int verbose );
-static int smb_get_info( struct object *obj, struct get_file_info_reply *reply, int *flags );
-static int smb_get_poll_events( struct object *obj );
-static void destroy_smb(struct object *obj);
+static void smb_destroy(struct object *obj);
+
+static int smb_get_info( struct fd *fd, struct get_file_info_reply *reply, int *flags );
+static int smb_get_poll_events( struct fd *fd );
 
 struct smb
 {
@@ -75,8 +76,7 @@ static const struct object_ops smb_ops =
     default_fd_signaled,       /* signaled */
     no_satisfied,              /* satisfied */
     default_get_fd,            /* get_fd */
-    smb_get_info,              /* get_file_info */
-    destroy_smb                /* destroy */
+    smb_destroy                /* destroy */
 };
 
 static const struct fd_ops smb_fd_ops =
@@ -88,7 +88,7 @@ static const struct fd_ops smb_fd_ops =
     no_queue_async             /* queue_async */
 };
 
-static void destroy_smb( struct object *obj)
+static void smb_destroy( struct object *obj)
 {
     /* struct smb *smb = (struct smb *)obj; */
     assert( obj->ops == &smb_ops );
@@ -98,7 +98,7 @@ static void smb_dump( struct object *obj, int verbose )
 {
     struct smb *smb = (struct smb *)obj;
     assert( obj->ops == &smb_ops );
-    fprintf( stderr, "smb file with socket fd=%d \n", smb->obj.fd );
+    fprintf( stderr, "Smb file fd=%p\n", smb->obj.fd_obj );
 }
 
 struct smb *get_smb_obj( struct process *process, obj_handle_t handle, unsigned int access )
@@ -106,11 +106,11 @@ struct smb *get_smb_obj( struct process *process, obj_handle_t handle, unsigned 
     return (struct smb *)get_handle_obj( process, handle, access, &smb_ops );
 }
 
-static int smb_get_poll_events( struct object *obj )
+static int smb_get_poll_events( struct fd *fd )
 {
-    /* struct smb *smb = (struct smb *)obj; */
+    struct smb *smb = get_fd_user( fd );
     int events = 0;
-    assert( obj->ops == &smb_ops );
+    assert( smb->obj.ops == &smb_ops );
 
     events |= POLLIN;
 
@@ -119,10 +119,10 @@ static int smb_get_poll_events( struct object *obj )
     return events;
 }
 
-static int smb_get_info( struct object *obj, struct get_file_info_reply *reply, int *flags )
+static int smb_get_info( struct fd *fd, struct get_file_info_reply *reply, int *flags )
 {
-    /* struct smb *smb = (struct smb *) obj; */
-    assert( obj->ops == &smb_ops );
+/*    struct smb *smb = get_fd_user( fd ); */
+/*    assert( smb->obj.ops == &smb_ops ); */
 
     if (reply)
     {

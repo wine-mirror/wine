@@ -48,5 +48,6 @@ struct console_input
 
 extern void inherit_console(struct thread *parent_thread, struct process *process, obj_handle_t hconin);
 extern int free_console( struct process *process );
+extern int is_console_object( struct object *obj );
 
 #endif  /* __WINE_SERVER_CONSOLE_H */

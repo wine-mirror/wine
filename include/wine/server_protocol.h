@@ -1512,6 +1512,19 @@ struct create_device_reply
 };
 
 
+
+struct get_device_id_request
+{
+    struct request_header __header;
+    obj_handle_t handle;
+};
+struct get_device_id_reply
+{
+    struct reply_header __header;
+    int          id;
+};
+
+
 #define SNAP_HEAPLIST   0x00000001
 #define SNAP_PROCESS    0x00000002
 #define SNAP_THREAD     0x00000004
@@ -3080,6 +3093,7 @@ enum request
     REQ_open_mapping,
     REQ_get_mapping_info,
     REQ_create_device,
+    REQ_get_device_id,
     REQ_create_snapshot,
     REQ_next_process,
     REQ_next_thread,
@@ -3260,6 +3274,7 @@ union generic_request
     struct open_mapping_request open_mapping_request;
     struct get_mapping_info_request get_mapping_info_request;
     struct create_device_request create_device_request;
+    struct get_device_id_request get_device_id_request;
     struct create_snapshot_request create_snapshot_request;
     struct next_process_request next_process_request;
     struct next_thread_request next_thread_request;
@@ -3438,6 +3453,7 @@ union generic_reply
     struct open_mapping_reply open_mapping_reply;
     struct get_mapping_info_reply get_mapping_info_reply;
     struct create_device_reply create_device_reply;
+    struct get_device_id_reply get_device_id_reply;
     struct create_snapshot_reply create_snapshot_reply;
     struct next_process_reply next_process_reply;
     struct next_thread_reply next_thread_reply;
@@ -3535,6 +3551,6 @@ union generic_reply
     struct get_next_hook_reply get_next_hook_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 96
+#define SERVER_PROTOCOL_VERSION 97
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

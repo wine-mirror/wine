@@ -78,7 +78,7 @@ struct master_socket
 };
 
 static void master_socket_dump( struct object *obj, int verbose );
-static void master_socket_poll_event( struct object *obj, int event );
+static void master_socket_poll_event( struct fd *fd, int event );
 
 static const struct object_ops master_socket_ops =
 {
@@ -89,7 +89,6 @@ static const struct object_ops master_socket_ops =
     NULL,                          /* signaled */
     NULL,                          /* satisfied */
     no_get_fd,                     /* get_fd */
-    no_get_file_info,              /* get_file_info */
     no_destroy                     /* destroy */
 };
 
@@ -446,14 +445,14 @@ static void master_socket_dump( struct object *obj, int verbose )
 {
     struct master_socket *sock = (struct master_socket *)obj;
     assert( obj->ops == &master_socket_ops );
-    fprintf( stderr, "Master socket fd=%d\n", sock->obj.fd );
+    fprintf( stderr, "Master socket fd=%p\n", sock->obj.fd_obj );
 }
 
 /* handle a socket event */
-static void master_socket_poll_event( struct object *obj, int event )
+static void master_socket_poll_event( struct fd *fd, int event )
 {
-    struct master_socket *sock = (struct master_socket *)obj;
-    assert( obj->ops == &master_socket_ops );
+    struct master_socket *sock = get_fd_user( fd );
+    assert( master_socket->obj.ops == &master_socket_ops );
 
     assert( sock == master_socket );  /* there is only one master socket */
 
@@ -461,7 +460,7 @@ static void master_socket_poll_event( struct object *obj, int event )
     {
         /* this is not supposed to happen */
         fprintf( stderr, "wineserver: Error on master socket\n" );
-        release_object( obj );
+        release_object( sock );
     }
     else if (event & POLLIN)
     {
@@ -749,7 +748,7 @@ static void close_socket_timeout( void *arg )
     flush_registry();
 
     /* if a new client is waiting, we keep on running */
-    if (check_select_events( master_socket->obj.fd, POLLIN )) return;
+    if (check_fd_events( master_socket->obj.fd_obj, POLLIN )) return;
 
     if (debug_level) fprintf( stderr, "wineserver: exiting (pid=%ld)\n", (long) getpid() );
 

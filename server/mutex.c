@@ -55,7 +55,6 @@ static const struct object_ops mutex_ops =
     mutex_signaled,            /* signaled */
     mutex_satisfied,           /* satisfied */
     no_get_fd,                 /* get_fd */
-    no_get_file_info,          /* get_file_info */
     mutex_destroy              /* destroy */
 };
 

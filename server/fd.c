@@ -32,6 +32,7 @@
 #include "handle.h"
 #include "process.h"
 #include "request.h"
+#include "console.h"
 
 struct fd
 {
@@ -54,7 +55,6 @@ static const struct object_ops fd_ops =
     NULL,                     /* signaled */
     NULL,                     /* satisfied */
     default_get_fd,           /* get_fd */
-    no_get_file_info,         /* get_file_info */
     fd_destroy                /* destroy */
 };
 
@@ -95,18 +95,17 @@ void *alloc_fd_object( const struct object_ops *ops,
     return user;
 }
 
-/* retrieve the unix fd for an object */
-int get_unix_fd( struct object *obj )
+/* retrieve the object that is using an fd */
+void *get_fd_user( struct fd *fd )
 {
-    struct fd *fd = obj->ops->get_fd( obj );
-    int unix_fd = -1;
+    return fd->user;
+}
 
-    if (fd)
-    {
-        unix_fd = fd->unix_fd;
-        release_object( fd );
-    }
-    return unix_fd;
+/* retrieve the unix fd for an object */
+int get_unix_fd( struct fd *fd )
+{
+    if (fd) return fd->unix_fd;
+    return -1;
 }
 
 /* set the unix fd for an object; can only be done once */
@@ -121,17 +120,22 @@ void set_unix_fd( struct object *obj, int unix_fd )
     obj->fd = unix_fd;
 }
 
-/* close a file descriptor */
-void close_fd( struct fd *fd )
-{
-    release_object( fd );
-}
-
 /* callback for event happening in the main poll() loop */
 void fd_poll_event( struct object *obj, int event )
 {
     struct fd *fd = obj->fd_obj;
-    return fd->fd_ops->poll_event( fd->user, event );
+    return fd->fd_ops->poll_event( fd, event );
+}
+
+/* check if events are pending and if yes return which one(s) */
+int check_fd_events( struct fd *fd, int events )
+{
+    struct pollfd pfd;
+
+    pfd.fd     = fd->unix_fd;
+    pfd.events = events;
+    if (poll( &pfd, 1, 0 ) <= 0) return 0;
+    return pfd.revents;
 }
 
 /* default add_queue() routine for objects that poll() on an fd */
@@ -140,7 +144,7 @@ int default_fd_add_queue( struct object *obj, struct wait_queue_entry *entry )
     struct fd *fd = obj->fd_obj;
 
     if (!obj->head)  /* first on the queue */
-        set_select_events( obj, fd->fd_ops->get_poll_events( fd->user ) );
+        set_select_events( obj, fd->fd_ops->get_poll_events( fd ) );
     add_queue( obj, entry );
     return 1;
 }
@@ -159,9 +163,9 @@ void default_fd_remove_queue( struct object *obj, struct wait_queue_entry *entry
 int default_fd_signaled( struct object *obj, struct thread *thread )
 {
     struct fd *fd = obj->fd_obj;
-    int events = fd->fd_ops->get_poll_events( obj );
+    int events = fd->fd_ops->get_poll_events( fd );
 
-    if (check_select_events( fd->unix_fd, events ))
+    if (check_fd_events( fd, events ))
     {
         /* stop waiting on select() if we are signaled */
         set_select_events( obj, 0 );
@@ -172,15 +176,31 @@ int default_fd_signaled( struct object *obj, struct thread *thread )
     return 0;
 }
 
+/* default handler for poll() events */
+void default_poll_event( struct fd *fd, int event )
+{
+    /* an error occurred, stop polling this fd to avoid busy-looping */
+    if (event & (POLLERR | POLLHUP)) set_select_events( fd->user, -1 );
+    wake_up( fd->user, 0 );
+}
+
 /* default flush() routine */
-int no_flush( struct object *obj )
+int no_flush( struct fd *fd )
 {
     set_error( STATUS_OBJECT_TYPE_MISMATCH );
     return 0;
 }
 
+/* default get_file_info() routine */
+int no_get_file_info( struct fd *fd, struct get_file_info_reply *info, int *flags )
+{
+    set_error( STATUS_OBJECT_TYPE_MISMATCH );
+    *flags = 0;
+    return FD_TYPE_INVALID;
+}
+
 /* default queue_async() routine */
-void no_queue_async( struct object *obj, void* ptr, unsigned int status, int type, int count )
+void no_queue_async( struct fd *fd, void* ptr, unsigned int status, int type, int count )
 {
     set_error( STATUS_OBJECT_TYPE_MISMATCH );
 }
@@ -192,7 +212,7 @@ static struct fd *get_handle_fd_obj( struct process *process, obj_handle_t handl
     struct fd *fd = NULL;
     struct object *obj;
 
-    if ((obj = get_handle_obj( process, handle, 0, NULL )))
+    if ((obj = get_handle_obj( process, handle, access, NULL )))
     {
         if (obj->fd_obj) fd = (struct fd *)grab_object( obj->fd_obj );
         else set_error( STATUS_OBJECT_TYPE_MISMATCH );
@@ -201,7 +221,6 @@ static struct fd *get_handle_fd_obj( struct process *process, obj_handle_t handl
     return fd;
 }
 
-
 /* flush a file buffers */
 DECL_HANDLER(flush_file)
 {
@@ -209,7 +228,52 @@ DECL_HANDLER(flush_file)
 
     if (fd)
     {
-        fd->fd_ops->flush( fd->user );
+        fd->fd_ops->flush( fd );
+        release_object( fd );
+    }
+}
+
+/* get a Unix fd to access a file */
+DECL_HANDLER(get_handle_fd)
+{
+    struct fd *fd;
+
+    reply->fd = -1;
+    reply->type = FD_TYPE_INVALID;
+
+    if ((fd = get_handle_fd_obj( current->process, req->handle, req->access )))
+    {
+        int unix_fd = get_handle_unix_fd( current->process, req->handle, req->access );
+        if (unix_fd != -1) reply->fd = unix_fd;
+        else if (!get_error())
+        {
+            unix_fd = fd->unix_fd;
+            if (unix_fd != -1) send_client_fd( current->process, unix_fd, req->handle );
+        }
+        reply->type = fd->fd_ops->get_file_info( fd, NULL, &reply->flags );
+        release_object( fd );
+    }
+    else  /* check for console handle (FIXME: should be done in the client) */
+    {
+        struct object *obj;
+
+        if ((obj = get_handle_obj( current->process, req->handle, req->access, NULL )))
+        {
+            if (is_console_object( obj )) reply->type = FD_TYPE_CONSOLE;
+            release_object( obj );
+        }
+    }
+}
+
+/* get a file information */
+DECL_HANDLER(get_file_info)
+{
+    struct fd *fd = get_handle_fd_obj( current->process, req->handle, 0 );
+
+    if (fd)
+    {
+        int flags;
+        fd->fd_ops->get_file_info( fd, reply, &flags );
         release_object( fd );
     }
 }
@@ -238,7 +302,7 @@ DECL_HANDLER(register_async)
 
     if (fd)
     {
-        fd->fd_ops->queue_async( fd->user, req->overlapped, req->status, req->type, req->count );
+        fd->fd_ops->queue_async( fd, req->overlapped, req->status, req->type, req->count );
         release_object( fd );
     }
 }

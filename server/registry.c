@@ -169,7 +169,6 @@ static const struct object_ops key_ops =
     NULL,                    /* signaled */
     NULL,                    /* satisfied */
     no_get_fd,               /* get_fd */
-    no_get_file_info,        /* get_file_info */
     key_destroy              /* destroy */
 };
 
@@ -1446,12 +1445,12 @@ static void load_keys( struct key *key, FILE *f )
 /* load a part of the registry from a file */
 static void load_registry( struct key *key, obj_handle_t handle )
 {
-    struct object *obj;
+    struct file *file;
     int fd;
 
-    if (!(obj = get_handle_obj( current->process, handle, GENERIC_READ, NULL ))) return;
-    fd = dup( get_unix_fd( obj ) );
-    release_object( obj );
+    if (!(file = get_file_obj( current->process, handle, GENERIC_READ ))) return;
+    fd = dup( get_file_unix_fd( file ) );
+    release_object( file );
     if (fd != -1)
     {
         FILE *f = fdopen( fd, "r" );
@@ -1536,7 +1535,7 @@ static void save_all_subkeys( struct key *key, FILE *f )
 /* save a registry branch to a file handle */
 static void save_registry( struct key *key, obj_handle_t handle )
 {
-    struct object *obj;
+    struct file *file;
     int fd;
 
     if (key->flags & KEY_DELETED)
@@ -1544,9 +1543,9 @@ static void save_registry( struct key *key, obj_handle_t handle )
         set_error( STATUS_KEY_DELETED );
         return;
     }
-    if (!(obj = get_handle_obj( current->process, handle, GENERIC_WRITE, NULL ))) return;
-    fd = dup( get_unix_fd( obj ) );
-    release_object( obj );
+    if (!(file = get_file_obj( current->process, handle, GENERIC_WRITE ))) return;
+    fd = dup( get_file_unix_fd( file ) );
+    release_object( file );
     if (fd != -1)
     {
         FILE *f = fdopen( fd, "w" );

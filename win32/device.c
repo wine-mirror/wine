@@ -359,11 +359,10 @@ HANDLE DEVICE_Open( LPCWSTR filenameW, DWORD access, LPSECURITY_ATTRIBUTES sa )
 static DWORD DEVICE_GetClientID( HANDLE handle )
 {
     DWORD       ret = 0;
-    SERVER_START_REQ( get_file_info )
+    SERVER_START_REQ( get_device_id )
     {
         req->handle = handle;
-        if (!wine_server_call( req ) && (reply->type == FILE_TYPE_UNKNOWN))
-            ret = reply->attr;
+        if (!wine_server_call( req )) ret = reply->id;
     }
     SERVER_END_REQ;
     return ret;

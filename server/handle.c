@@ -105,7 +105,6 @@ static const struct object_ops handle_table_ops =
     NULL,                            /* signaled */
     NULL,                            /* satisfied */
     no_get_fd,                       /* get_fd */
-    no_get_file_info,                /* get_file_info */
     handle_table_destroy             /* destroy */
 };
 
@@ -385,7 +384,7 @@ struct object *get_handle_obj( struct process *process, obj_handle_t handle,
 }
 
 /* retrieve the cached fd for a given handle */
-int get_handle_fd( struct process *process, obj_handle_t handle, unsigned int access )
+int get_handle_unix_fd( struct process *process, obj_handle_t handle, unsigned int access )
 {
     struct handle_entry *entry;
 

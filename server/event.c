@@ -51,7 +51,6 @@ static const struct object_ops event_ops =
     event_signaled,            /* signaled */
     event_satisfied,           /* satisfied */
     no_get_fd,                 /* get_fd */
-    no_get_file_info,          /* get_file_info */
     no_destroy                 /* destroy */
 };
 
