@@ -181,7 +181,7 @@ SEGPTR WINAPI AnsiPrev16( SEGPTR start, SEGPTR current )
 LPSTR WINAPI CharNextA( LPCSTR ptr )
 {
     if (!*ptr) return (LPSTR)ptr;
-    if (IsDBCSLeadByte( *ptr )) return (LPSTR)(ptr + 2);
+    if (IsDBCSLeadByte( *ptr ) && (*(ptr+1) != 0) ) return (LPSTR)(ptr + 2);
     return (LPSTR)(ptr + 1);
 }
 
@@ -192,7 +192,7 @@ LPSTR WINAPI CharNextA( LPCSTR ptr )
 LPSTR WINAPI CharNextExA( WORD codepage, LPCSTR ptr, DWORD flags )
 {
     if (!*ptr) return (LPSTR)ptr;
-    if (IsDBCSLeadByteEx( codepage, *ptr )) return (LPSTR)(ptr + 2);
+    if (IsDBCSLeadByteEx( codepage, *ptr ) && (*(ptr+1) != 0) ) return (LPSTR)(ptr + 2);
     return (LPSTR)(ptr + 1);
 }
 
