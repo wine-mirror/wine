@@ -28,6 +28,7 @@ void WINAPI INT_Int09Handler( CONTEXT86 *context )
   BYTE ch[2];
   int cnt, c2;
 
+  TRACE("scan=%02x\n",scan);
   if (!(scan & 0x80)) {
     /* as in TranslateMessage, windows/input.c */
     cnt = ToAscii(vkey, scan, QueueKeyStateTable, (LPWORD)ch, 0);
@@ -36,8 +37,9 @@ void WINAPI INT_Int09Handler( CONTEXT86 *context )
         INT_Int16AddChar(ch[c2], scan);
     } else
     if (cnt==0) {
-      /* need to handle things like shift-F-keys etc */
-      FIXME("DOS special key translation not implemented\n");
+      /* FIXME: need to handle things like shift-F-keys,
+       * 0xE0 extended keys, etc */
+      INT_Int16AddChar(0, scan);
     }
   }
   DOSVM_PIC_ioport_out(0x20, 0x20); /* send EOI */

@@ -106,6 +106,13 @@ extern BOOL INSTR_EmulateInstruction( CONTEXT86 *context );
 
 /* msdos/devices.c */
 extern void DOSDEV_InstallDOSDevices(void);
+extern DWORD DOSDEV_Console(void);
+extern DWORD DOSDEV_FindCharDevice(char*name);
+extern int DOSDEV_Peek(DWORD dev, BYTE*data);
+extern int DOSDEV_Read(DWORD dev, DWORD buf, int buflen);
+extern int DOSDEV_Write(DWORD dev, DWORD buf, int buflen, int verify);
+extern int DOSDEV_IoctlRead(DWORD dev, DWORD buf, int buflen);
+extern int DOSDEV_IoctlWrite(DWORD dev, DWORD buf, int buflen);
 
 /* msdos/interrupts.c */
 extern FARPROC16 INT_GetPMHandler( BYTE intnum );
@@ -143,6 +150,7 @@ extern void WINAPI INT_Int15Handler(CONTEXT86*);
 
 /* msdos/int16.c */
 extern void WINAPI INT_Int16Handler(CONTEXT86*);
+extern int WINAPI INT_Int16ReadChar(BYTE*ascii,BYTE*scan,BOOL peek);
 extern int WINAPI INT_Int16AddChar(BYTE ascii,BYTE scan);
 
 /* msdos/int17.c */

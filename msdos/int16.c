@@ -123,12 +123,40 @@ void WINAPI INT_Int16Handler( CONTEXT86 *context )
    }
 }
 
+int WINAPI INT_Int16ReadChar(BYTE*ascii,BYTE*scan,BOOL peek)
+{
+  BIOSDATA *data = DOSMEM_BiosData();
+  WORD CurOfs = data->NextKbdCharPtr;
+
+  /* check if there's data in buffer */
+  if (peek) {
+    if (CurOfs == data->FirstKbdCharPtr)
+      return 0;
+  } else {
+    while (CurOfs == data->FirstKbdCharPtr) {
+      /* no input available yet, so wait... */
+      DOSVM_Wait( -1, 0 );
+    }
+  }
+  /* read from keyboard queue */
+  TRACE("(%p,%p,%d) -> %02x %02x\n",ascii,scan,peek,((BYTE*)data)[CurOfs],((BYTE*)data)[CurOfs+1]);
+  if (ascii) *ascii = ((BYTE*)data)[CurOfs];
+  if (scan) *scan = ((BYTE*)data)[CurOfs+1];
+  if (!peek) {
+    CurOfs += 2;
+    if (CurOfs >= data->KbdBufferEnd) CurOfs = data->KbdBufferStart;
+    data->NextKbdCharPtr = CurOfs;
+  }
+  return 1;
+}
+
 int WINAPI INT_Int16AddChar(BYTE ascii,BYTE scan)
 {
   BIOSDATA *data = DOSMEM_BiosData();
   WORD CurOfs = data->FirstKbdCharPtr;
   WORD NextOfs = CurOfs + 2;
 
+  TRACE("(%02x,%02x)\n",ascii,scan);
   if (NextOfs >= data->KbdBufferEnd) NextOfs = data->KbdBufferStart;
   /* check if buffer is full */
   if (NextOfs == data->NextKbdCharPtr) return 0;
