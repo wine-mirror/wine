@@ -209,17 +209,24 @@ HGLOBAL RenderFILEDESCRIPTOR (LPITEMIDLIST pidlRoot, LPITEMIDLIST * apidl, UINT 
 
 HGLOBAL RenderFILENAMEA (LPITEMIDLIST pidlRoot, LPITEMIDLIST * apidl, UINT cidl)
 {
-	int len, size = 0;
+	int size = 0;
 	char szTemp[MAX_PATH], *szFileName;
+	LPITEMIDLIST pidl;
 	HGLOBAL hGlobal;
+	HRESULT hr;
 
 	TRACE("(%p,%p,%u)\n", pidlRoot, apidl, cidl);
 
-	/* build name of first file */
-	SHGetPathFromIDListA(pidlRoot, szTemp);
-	PathAddBackslashA(szTemp);
-	len = strlen(szTemp);
-	_ILSimpleGetText(apidl[0], szTemp+len, MAX_PATH - len);
+	/* get path of combined pidl */
+	pidl = ILCombine(pidlRoot, apidl[0]);
+	if (!pidl)
+		return 0;
+
+	hr = SHELL_GetPathFromIDListA(pidl, szTemp, MAX_PATH);
+	SHFree(pidl);
+	if (FAILED(hr))
+		return 0;
+
 	size = strlen(szTemp) + 1;
 
 	/* fill the structure */
@@ -228,23 +235,31 @@ HGLOBAL RenderFILENAMEA (LPITEMIDLIST pidlRoot, LPITEMIDLIST * apidl, UINT cidl)
 	szFileName = (char *)GlobalLock(hGlobal);
 	memcpy(szFileName, szTemp, size);
 	GlobalUnlock(hGlobal);
+
 	return hGlobal;
 }
 
 HGLOBAL RenderFILENAMEW (LPITEMIDLIST pidlRoot, LPITEMIDLIST * apidl, UINT cidl)
 {
-	int len, size = 0;
+	int size = 0;
 	WCHAR szTemp[MAX_PATH], *szFileName;
+	LPITEMIDLIST pidl;
 	HGLOBAL hGlobal;
+	HRESULT hr;
 
 	TRACE("(%p,%p,%u)\n", pidlRoot, apidl, cidl);
 
-	/* build name of first file */
-	SHGetPathFromIDListW(pidlRoot, szTemp);
-	PathAddBackslashW(szTemp);
-	len = strlenW(szTemp);
-	_ILSimpleGetTextW(apidl[0], szTemp+len, MAX_PATH - len);
-	size = sizeof(WCHAR) * (strlenW(szTemp)+1);
+	/* get path of combined pidl */
+	pidl = ILCombine(pidlRoot, apidl[0]);
+	if (!pidl)
+		return 0;
+
+	hr = SHELL_GetPathFromIDListW(pidl, szTemp, MAX_PATH);
+	SHFree(pidl);
+	if (FAILED(hr))
+		return 0;
+
+	size = (strlenW(szTemp)+1) * sizeof(WCHAR);
 
 	/* fill the structure */
 	hGlobal = GlobalAlloc(GHND|GMEM_SHARE, size);
@@ -252,6 +267,7 @@ HGLOBAL RenderFILENAMEW (LPITEMIDLIST pidlRoot, LPITEMIDLIST * apidl, UINT cidl)
 	szFileName = (WCHAR *)GlobalLock(hGlobal);
 	memcpy(szFileName, szTemp, size);
 	GlobalUnlock(hGlobal);
+
 	return hGlobal;
 }
 
