@@ -85,6 +85,8 @@ DLLS = \
 	comctl32 \
 	comdlg32 \
 	dciman32 \
+	ddraw \
+	dinput \
 	dplayx \
 	dsound \
 	icmp \

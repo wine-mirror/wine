@@ -23,6 +23,8 @@ static DDSURFACEDESC sdesc;
 static LONG vga_polling,vga_refresh;
 static HANDLE poll_timer;
 
+static HRESULT WINAPI (*pDirectDrawCreate)(LPGUID,LPDIRECTDRAW *,LPUNKNOWN);
+
 static void VGA_DeinstallTimer(void)
 {
     if (poll_timer) {
@@ -51,7 +53,12 @@ int VGA_SetMode(unsigned Xres,unsigned Yres,unsigned Depth)
 {
     if (lpddraw) VGA_Exit();
     if (!lpddraw) {
-        DirectDrawCreate(NULL,&lpddraw,NULL);
+        if (!pDirectDrawCreate)
+        {
+            HMODULE hmod = LoadLibraryA( "ddraw.dll" );
+            if (hmod) pDirectDrawCreate = GetProcAddress( hmod, "DirectDrawCreate" );
+        }
+        if (pDirectDrawCreate) pDirectDrawCreate(NULL,&lpddraw,NULL);
         if (!lpddraw) {
             ERR("DirectDraw is not available\n");
             return 1;

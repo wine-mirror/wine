@@ -6185,6 +6185,8 @@ dlls/comctl32/Makefile
 dlls/commdlg/Makefile
 dlls/crtdll/Makefile
 dlls/dciman32/Makefile
+dlls/ddraw/Makefile
+dlls/dinput/Makefile
 dlls/display/Makefile
 dlls/dplayx/Makefile
 dlls/dsound/Makefile
@@ -6401,6 +6403,8 @@ dlls/comctl32/Makefile
 dlls/commdlg/Makefile
 dlls/crtdll/Makefile
 dlls/dciman32/Makefile
+dlls/ddraw/Makefile
+dlls/dinput/Makefile
 dlls/display/Makefile
 dlls/dplayx/Makefile
 dlls/dsound/Makefile

@@ -53,7 +53,7 @@
 #include "wingdi.h"
 #include "winuser.h"
 
-DEFAULT_DEBUG_CHANNEL(dinput)
+DEFAULT_DEBUG_CHANNEL(dinput);
 
 /* Wine mouse driver object instances */
 #define WINE_MOUSE_X_AXIS_INSTANCE 0x0001

@@ -1,0 +1,16 @@
+TOPSRCDIR = @top_srcdir@
+TOPOBJDIR = ../..
+SRCDIR    = @srcdir@
+VPATH     = @srcdir@
+MODULE    = dinput
+SOVERSION = 1.0
+
+SPEC_SRCS = dinput.spec
+
+C_SRCS = \
+	dinput_main.c
+
+@MAKE_DLL_RULES@
+
+### Dependencies:
+

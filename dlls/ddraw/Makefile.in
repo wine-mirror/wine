@@ -1,0 +1,23 @@
+TOPSRCDIR = @top_srcdir@
+TOPOBJDIR = ../..
+SRCDIR    = @srcdir@
+VPATH     = @srcdir@
+MODULE    = ddraw
+SOVERSION = 1.0
+
+SPEC_SRCS = ddraw.spec
+
+C_SRCS = \
+	d3dcommon.c \
+	d3ddevices.c \
+	d3dexecutebuffer.c \
+	d3dlight.c \
+	d3dmaterial.c \
+	d3dtexture.c \
+	d3dviewport.c \
+	ddraw_main.c
+
+@MAKE_DLL_RULES@
+
+### Dependencies:
+

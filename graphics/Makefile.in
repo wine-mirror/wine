@@ -8,14 +8,6 @@ MODULE    = graphics
 C_SRCS = \
 	bitblt.c \
 	cache.c \
-	d3dcommon.c \
-	d3ddevices.c \
-	d3dexecutebuffer.c \
-	d3dlight.c \
-	d3dmaterial.c \
-	d3dtexture.c \
-	d3dviewport.c \
-	ddraw.c \
 	dispdib.c \
 	driver.c \
 	env.c \

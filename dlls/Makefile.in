@@ -8,6 +8,8 @@ DLLFILES = \
 	comctl32/libcomctl32.@LIBEXT@ \
 	commdlg/libcomdlg32.@LIBEXT@ \
 	dciman32/libdciman32.@LIBEXT@ \
+	ddraw/libddraw.@LIBEXT@ \
+	dinput/libdinput.@LIBEXT@ \
 	dplayx/libdplayx.@LIBEXT@ \
 	dsound/libdsound.@LIBEXT@ \
 	icmp/libicmp.@LIBEXT@ \
@@ -93,6 +95,12 @@ libcomdlg32.@LIBEXT@ libcommdlg.@LIBEXT@: commdlg/libcomdlg32.@LIBEXT@
 
 libdciman32.@LIBEXT@: dciman32/libdciman32.@LIBEXT@
 	$(RM) $@ && $(LN_S) dciman32/libdciman32.@LIBEXT@ $@
+
+libddraw.@LIBEXT@: ddraw/libddraw.@LIBEXT@
+	$(RM) $@ && $(LN_S) ddraw/libddraw.@LIBEXT@ $@
+
+libdinput.@LIBEXT@: dinput/libdinput.@LIBEXT@
+	$(RM) $@ && $(LN_S) dinput/libdinput.@LIBEXT@ $@
 
 libdplayx.@LIBEXT@ libdplay.@LIBEXT@: dplayx/libdplayx.@LIBEXT@
 	$(RM) $@ && $(LN_S) dplayx/libdplayx.@LIBEXT@ $@
