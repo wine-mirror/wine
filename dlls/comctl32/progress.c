@@ -228,7 +228,7 @@ static LRESULT WINAPI ProgressWindowProc(HWND hwnd, UINT message,
 	DWORD dwExStyle = GetWindowLongW (hwnd, GWL_EXSTYLE);
 	dwExStyle &= ~(WS_EX_CLIENTEDGE | WS_EX_WINDOWEDGE);
 	dwExStyle |= WS_EX_STATICEDGE;
-        SetWindowLongW (hwnd, GWL_EXSTYLE, dwExStyle | WS_EX_STATICEDGE);
+        SetWindowLongW (hwnd, GWL_EXSTYLE, dwExStyle);
 	/* Force recalculation of a non-client area */
 	SetWindowPos(hwnd, 0, 0, 0, 0, 0,
 	    SWP_FRAMECHANGED | SWP_NOSIZE | SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE);
