@@ -60,7 +60,7 @@
 #endif
 #include "heap.h"
 #include "options.h"
-
+#include "wine/port.h"
 #include "server.h"
 #include "winerror.h"
 #include "services.h"
@@ -71,7 +71,7 @@
 
 DEFAULT_DEBUG_CHANNEL(comm);
 
-#ifndef TIOCINQ
+#if !defined(TIOCINQ) && defined(FIONREAD)
 #define	TIOCINQ FIONREAD
 #endif
 
@@ -122,10 +122,18 @@ static struct termios m_stat[MAX_PORTS];
 static void COMM_MSRUpdate( UCHAR * pMsr, unsigned int mstat)
 {
     UCHAR tmpmsr=0;
+#ifdef TIOCM_CTS
     if(mstat & TIOCM_CTS) tmpmsr |= MSR_CTS;
+#endif
+#ifdef TIOCM_DSR
     if(mstat & TIOCM_DSR) tmpmsr |= MSR_DSR;
+#endif
+#ifdef TIOCM_RI
     if(mstat & TIOCM_RI)  tmpmsr |= MSR_RI;
+#endif
+#ifdef TIOCM_CAR
     if(mstat & TIOCM_CAR) tmpmsr |= MSR_RLSD;
+#endif
     *pMsr = (*pMsr & ~MSR_MASK) | tmpmsr;
 }
 
@@ -1862,8 +1870,10 @@ BOOL WINAPI ClearCommError(HANDLE handle,LPDWORD errors,LPCOMSTAT lpStat)
 	lpStat->cbOutQue = 0; /* FIXME: find a different way to find out */
 #endif
 
+#ifdef TIOCINQ
 	if(ioctl(fd, TIOCINQ, &lpStat->cbInQue))
 	    WARN("ioctl returned error\n");
+#endif
 
 	TRACE("handle %d cbInQue = %ld cbOutQue = %ld\n",
 	      handle, lpStat->cbInQue, lpStat->cbOutQue);
@@ -2561,15 +2571,23 @@ BOOL WINAPI GetCommModemStatus(HANDLE hFile,LPDWORD lpModemStat )
 	    TRACE("ioctl failed\n");
 	    return FALSE;
 	  }
+#ifdef TIOCM_CTS
 	if (mstat & TIOCM_CTS)
 	    *lpModemStat |= MS_CTS_ON;
+#endif
+#ifdef TIOCM_DSR
 	if (mstat & TIOCM_DSR)
 	  *lpModemStat |= MS_DSR_ON;
+#endif
+#ifdef TIOCM_RNG
 	if (mstat & TIOCM_RNG)
 	  *lpModemStat |= MS_RING_ON;
+#endif
+#ifdef TIOCM_CAR
 	/*FIXME:  Not really sure about RLSD  UB 990810*/
 	if (mstat & TIOCM_CAR)
 	  *lpModemStat |= MS_RLSD_ON;
+#endif
 	TRACE("%s%s%s%s\n",
 	      (*lpModemStat &MS_RLSD_ON)?"MS_RLSD_ON ":"",
 	      (*lpModemStat &MS_RING_ON)?"MS_RING_ON ":"",
