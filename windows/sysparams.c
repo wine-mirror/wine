@@ -1118,18 +1118,18 @@ BOOL WINAPI SystemParametersInfoA( UINT uiAction, UINT uiParam,
 		lpnm->cbSize - sizeof(lpnm->cbSize)
 		);
 
-	    /* FIXME: initialize geometry entries */
-	    /* FIXME: As these values are presumably in device units,
-	     *  we should calculate the defaults based on the screen dpi
-	     */
+	    /* initialize geometry entries */
+	    lpnm->iBorderWidth = -1;      /* FIXME */
+	    lpnm->iScrollWidth = GetSystemMetrics(SM_CXVSCROLL);
+	    lpnm->iScrollHeight = GetSystemMetrics(SM_CYHSCROLL);
 	    /* caption */
-	    lpnm->iCaptionWidth = ((TWEAK_WineLook > WIN31_LOOK)  ? 32 : 20);
+	    lpnm->iCaptionWidth = GetSystemMetrics(SM_CXSIZE);
 	    lpnm->iCaptionHeight = lpnm->iCaptionWidth;
 	    SystemParametersInfoA( SPI_GETICONTITLELOGFONT, 0, (LPVOID)&(lpnm->lfCaptionFont), 0 );
 	    lpnm->lfCaptionFont.lfWeight = FW_BOLD;
 
 	    /* small caption */
-	    lpnm->iSmCaptionWidth = ((TWEAK_WineLook > WIN31_LOOK)  ? 32 : 17);
+	    lpnm->iSmCaptionWidth = GetSystemMetrics(SM_CXSMSIZE);
 	    lpnm->iSmCaptionHeight = lpnm->iSmCaptionWidth;
 	    SystemParametersInfoA( SPI_GETICONTITLELOGFONT, 0, (LPVOID)&(lpnm->lfSmCaptionFont), 0 );
 
