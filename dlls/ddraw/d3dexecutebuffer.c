@@ -125,7 +125,7 @@ static void _dump_D3DEXECUTEBUFFERDESC(LPD3DEXECUTEBUFFERDESC lpDesc) {
               ((col >>  8) & 0xFF) / 255.0,					\
               ((col >>  0) & 0xFF) / 255.0);					\
     glTexCoord2f(vx->u7.tu, vx->u8.tv);						\
-    if (vx->u4.rhw < 0.01)							\
+    if (vx->u4.rhw < 1e-8)							\
         glVertex3f(vx->u1.sx,							\
                    vx->u2.sy,							\
                    vx->u3.sz);							\

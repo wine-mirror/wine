@@ -59,6 +59,9 @@ struct IDirect3DImpl
     /* Used as a callback for Devices to tell to the D3D object it's been created */
     HRESULT (*added_device)(IDirect3DImpl *d3d, IDirect3DDeviceImpl *device);
     HRESULT (*removed_device)(IDirect3DImpl *d3d, IDirect3DDeviceImpl *device);
+
+    /* This is needed for delayed texture creation and Z buffer blits */
+    IDirect3DDeviceImpl *current_device;
 };
 
 /*****************************************************************************

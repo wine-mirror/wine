@@ -924,7 +924,7 @@ inline static void handle_xyz(D3DVALUE *coords) {
     glVertex3fv(coords);
 }
 inline static void handle_xyzrhw(D3DVALUE *coords) {
-    if (coords[3] < 0.00001)
+    if (coords[3] < 1e-8)
         glVertex3fv(coords);
     else {
         GLfloat w = 1.0 / coords[3];
@@ -1977,6 +1977,7 @@ d3ddevice_create(IDirect3DDeviceImpl **obj, IDirect3DImpl *d3d, IDirectDrawSurfa
     object->set_context(object);
     ENTER_GL();
     TRACE(" current context set\n");
+    glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
     glClearColor(0.0, 0.0, 0.0, 0.0);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
     glDrawBuffer(buffer);

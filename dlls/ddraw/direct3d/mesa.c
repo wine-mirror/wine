@@ -379,9 +379,7 @@ ICOM_VTABLE(IDirect3D) VTABLE_IDirect3D =
 
 static HRESULT d3d_add_device(IDirect3DImpl *This, IDirect3DDeviceImpl *device)
 {
-    IDirect3DGLImpl *glThis = (IDirect3DGLImpl *) This;
- 
-    if  (glThis->current_device == NULL) {
+    if  (This->current_device == NULL) {
         /* Create delayed textures now that we have an OpenGL context...
 	   For that, go through all surface attached to our DDraw object and create
 	   OpenGL textures for all textures.. */
@@ -396,16 +394,14 @@ static HRESULT d3d_add_device(IDirect3DImpl *This, IDirect3DDeviceImpl *device)
 	}
     }
     /* For the moment, only one device 'supported'... */
-    glThis->current_device = device;
+    This->current_device = device;
 
     return DD_OK;
 }
 
 static HRESULT d3d_remove_device(IDirect3DImpl *This, IDirect3DDeviceImpl *device)
 {
-    IDirect3DGLImpl *glThis = (IDirect3DGLImpl *) This;
-
-    glThis->current_device = NULL;
+    This->current_device = NULL;
     return DD_OK;
 }
 

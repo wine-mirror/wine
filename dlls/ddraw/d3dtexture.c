@@ -662,14 +662,12 @@ ICOM_VTABLE(IDirect3DTexture) VTABLE_IDirect3DTexture =
 HRESULT d3dtexture_create(IDirect3DImpl *d3d, IDirectDrawSurfaceImpl *surf, BOOLEAN at_creation, 
 			  IDirectDrawSurfaceImpl *main)
 {
-    IDirect3DGLImpl *gl_d3d = (IDirect3DGLImpl *) d3d;
-
     /* First, initialize the texture vtables... */
     ICOM_INIT_INTERFACE(surf, IDirect3DTexture,  VTABLE_IDirect3DTexture);
     ICOM_INIT_INTERFACE(surf, IDirect3DTexture2, VTABLE_IDirect3DTexture2);
 	
     /* Only create all the private stuff if we actually have an OpenGL context.. */
-    if (gl_d3d->current_device != NULL) {
+    if (d3d->current_device != NULL) {
         IDirect3DTextureGLImpl *private;
 
         private = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirect3DTextureGLImpl));

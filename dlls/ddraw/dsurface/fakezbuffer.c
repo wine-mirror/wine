@@ -34,6 +34,7 @@
 
 #include "ddcomimpl.h"
 #include "ddraw_private.h"
+#include "d3d_private.h"
 #include "dsurface/main.h"
 #include "dsurface/fakezbuffer.h"
 
@@ -114,6 +115,33 @@ FakeZBuffer_DirectDrawSurface_Blt(LPDIRECTDRAWSURFACE7 iface, LPRECT rdst,
 				  LPDIRECTDRAWSURFACE7 src, LPRECT rsrc,
 				  DWORD dwFlags, LPDDBLTFX lpbltfx)
 {
+    ICOM_THIS(IDirectDrawSurfaceImpl,iface);
+
+    if (TRACE_ON(ddraw)) {
+        TRACE("(%p)->(%p,%p,%p,%08lx,%p)\n", This,rdst,src,rsrc,dwFlags,lpbltfx);
+	if (rdst) TRACE("\tdestrect :%dx%d-%dx%d\n",rdst->left,rdst->top,rdst->right,rdst->bottom);
+	if (rsrc) TRACE("\tsrcrect  :%dx%d-%dx%d\n",rsrc->left,rsrc->top,rsrc->right,rsrc->bottom);
+	TRACE("\tflags: ");
+	DDRAW_dump_DDBLT(dwFlags);
+	if (dwFlags & DDBLT_DDFX) {
+	    TRACE("\tblitfx: ");
+	    DDRAW_dump_DDBLTFX(lpbltfx->dwDDFX);
+	}
+    }
+
+    /* We only support the BLT with DEPTH_FILL for now */
+    if (This->ddraw_owner->d3d != NULL) {
+        if (This->ddraw_owner->d3d->current_device != NULL) {
+	    This->ddraw_owner->d3d->current_device->clear(This->ddraw_owner->d3d->current_device,
+							  0, NULL, /* Clear the whole screen */
+							  D3DCLEAR_ZBUFFER,
+							  0x00000000,
+							  ((double) lpbltfx->u5.dwFillDepth) / 4294967295.0,
+							  0x00000000);
+	    return DD_OK;
+	}
+    }
+
     return cant_do_that("blt to a");
 }
 
@@ -122,6 +150,21 @@ FakeZBuffer_DirectDrawSurface_BltFast(LPDIRECTDRAWSURFACE7 iface, DWORD dstx,
 				      DWORD dsty, LPDIRECTDRAWSURFACE7 src,
 				      LPRECT rsrc, DWORD trans)
 {
+    ICOM_THIS(IDirectDrawSurfaceImpl,iface);
+
+    if (TRACE_ON(ddraw)) {
+	FIXME("(%p)->(%ld,%ld,%p,%p,%08lx)\n",
+		This,dstx,dsty,src,rsrc,trans
+	);
+	FIXME("\ttrans:");
+	if (FIXME_ON(ddraw))
+	  DDRAW_dump_DDBLTFAST(trans);
+	if (rsrc)
+	  FIXME("\tsrcrect: %dx%d-%dx%d\n",rsrc->left,rsrc->top,rsrc->right,rsrc->bottom);
+	else
+	  FIXME(" srcrect: NULL\n");
+    }
+
     return cant_do_that("bltfast to a");
 }
 

@@ -82,9 +82,6 @@ typedef struct IDirect3DGLImpl
     struct IDirect3DImpl parent;
     int free_lights;
     void (*light_released)(IDirect3DImpl *, GLenum light_num);
-
-    /* This is needed for delayed texture creation */
-    struct IDirect3DDeviceImpl *current_device;
 } IDirect3DGLImpl;
 
 typedef struct IDirect3DLightGLImpl
