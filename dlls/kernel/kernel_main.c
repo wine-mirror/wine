@@ -201,7 +201,7 @@ static BOOL process_attach(void)
 /***********************************************************************
  *           KERNEL initialisation routine
  */
-BOOL WINAPI MAIN_KernelInit( HINSTANCE hinst, DWORD reason, LPVOID reserved )
+BOOL WINAPI DllMain( HINSTANCE hinst, DWORD reason, LPVOID reserved )
 {
     switch(reason)
     {
