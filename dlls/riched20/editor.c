@@ -306,27 +306,88 @@ ME_TextBuffer *ME_MakeText() {
   return buf;
 }
 
-static LRESULT ME_StreamIn(HWND hwnd, DWORD format, EDITSTREAM *stream)
+#define STREAMIN_BUFFER_SIZE 1024
+
+static LRESULT ME_StreamInText(ME_TextEditor *editor, DWORD dwFormat, EDITSTREAM *stream, ME_Style *style)
+{
+  BYTE buffer[STREAMIN_BUFFER_SIZE+1];
+  WCHAR wszText[STREAMIN_BUFFER_SIZE+1];
+  
+  TRACE("%08lx %p\n", dwFormat, stream);
+  stream->dwError = 0;
+  
+  do {
+    long nDataSize = 0, nWideChars = 0;
+    stream->dwError = stream->pfnCallback(stream->dwCookie, 
+      (dwFormat & SF_UNICODE ? (BYTE *)wszText : buffer), 
+      STREAMIN_BUFFER_SIZE, &nDataSize);
+    
+    if (stream->dwError)
+      break;
+    if (!nDataSize)
+      break;
+      
+    if (!(dwFormat & SF_UNICODE))
+    {
+      /* FIXME? this is doomed to fail on true MBCS like UTF-8, luckily they're unlikely to be used as CP_ACP */
+      nWideChars = MultiByteToWideChar(CP_ACP, 0, buffer, nDataSize, wszText, STREAMIN_BUFFER_SIZE);
+    }
+    else
+      nWideChars = nDataSize>>1;
+    ME_InsertTextFromCursor(editor, 0, wszText, nWideChars, style);
+    if (nDataSize<STREAMIN_BUFFER_SIZE)
+      break;
+  } while(1);
+  ME_CommitUndo(editor);    
+  return 0;
+}
+
+static LRESULT ME_StreamIn(ME_TextEditor *editor, DWORD format, EDITSTREAM *stream)
 {
   RTF_Info parser;
+  ME_Style *style;
 
-  TRACE("%p %p\n", stream, hwnd);
+  FIXME("%08lx %p\n", format, stream);
+  TRACE("%p %p\n", stream, editor->hWnd);
+  
+  if (format & SFF_SELECTION) {
+    style = ME_GetSelectionInsertStyle(editor);
+    SendMessageW(editor->hWnd, WM_CLEAR, 0, 0);
+  }
+  else {
+    style = editor->pBuffer->pDefaultStyle;
+    ME_AddRefStyle(style);
+    SendMessageA(editor->hWnd, EM_SETSEL, 0, 0);    
+    SetWindowTextA(editor->hWnd, "");
+    ME_ClearTempStyle(editor);
+  }
 
-  /* setup the RTF parser */
-  memset(&parser, 0, sizeof parser);
-  RTFSetEditStream(&parser, stream);
-  parser.rtfFormat = format&(SF_TEXT|SF_RTF);
-  parser.hwndEdit = hwnd;
-  WriterInit(&parser);
-  RTFInit(&parser);
-  BeginFile(&parser);
-
-  /* do the parsing */
-  RTFRead(&parser);
-  RTFFlushOutputBuffer(&parser);
-
+  if (format & SF_RTF) {
+    /* setup the RTF parser */
+    memset(&parser, 0, sizeof parser);
+    RTFSetEditStream(&parser, stream);
+    parser.rtfFormat = format&(SF_TEXT|SF_RTF);
+    parser.hwndEdit = editor->hWnd;
+    WriterInit(&parser);
+    RTFInit(&parser);
+    BeginFile(&parser);
+  
+    /* do the parsing */
+    RTFRead(&parser);
+    RTFFlushOutputBuffer(&parser);
+  }
+  else if (format & SF_TEXT)
+    ME_StreamInText(editor, format, stream, style);
+  else
+    ERR("EM_STREAMIN without SF_TEXT or SF_RTF\n");
   /* put the cursor at the top */
-  SendMessageA(hwnd, EM_SETSEL, 0, 0);
+  if (!(format & SFF_SELECTION))
+    SendMessageA(editor->hWnd, EM_SETSEL, 0, 0);
+  else
+  {
+    /* FIXME where to put cursor now ? */
+  }
+  ME_ReleaseStyle(style);
 
   return 0;
 }
@@ -464,7 +525,7 @@ LRESULT WINAPI RichEditANSIWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lP
 /* Messages specific to Richedit controls */
   
   case EM_STREAMIN:
-   return ME_StreamIn(hWnd, wParam, (EDITSTREAM*)lParam);
+   return ME_StreamIn(editor, wParam, (EDITSTREAM*)lParam);
   case WM_GETDLGCODE:
   {
     UINT code = DLGC_WANTCHARS|DLGC_WANTARROWS;
@@ -606,20 +667,13 @@ LRESULT WINAPI RichEditANSIWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lP
   case EM_REPLACESEL:
   {
     int from, to;
-    ME_Cursor c;
     ME_Style *style;
     LPWSTR wszText = ME_ToUnicode(hWnd, (void *)lParam);
     size_t len = lstrlenW(wszText);
     TRACE("EM_REPLACESEL - %s\n", debugstr_w(wszText));
     
     ME_GetSelection(editor, &from, &to);
-    ME_CursorFromCharOfs(editor, from, &c);
-    if (from != to) {
-      style = c.pRun->member.run.style;
-      ME_AddRefStyle(style); /* ME_GetInsertStyle has already done that */
-    }
-    else
-      style = ME_GetInsertStyle(editor, 0);
+    style = ME_GetSelectionInsertStyle(editor);
     ME_InternalDeleteText(editor, from, to-from);
     ME_InsertTextFromCursor(editor, 0, wszText, len, style);
     ME_ReleaseStyle(style);

@@ -156,6 +156,7 @@ void ME_SendSelChange(ME_TextEditor *editor);
 void ME_InsertGraphicsFromCursor(ME_TextEditor *editor, int nCursor);
 void ME_InternalDeleteText(ME_TextEditor *editor, int nOfs, int nChars);
 int ME_GetTextLength(ME_TextEditor *editor);
+ME_Style *ME_GetSelectionInsertStyle(ME_TextEditor *editor);
 
 /* wrap.c */
 void ME_PrepareParagraphForWrapping(ME_Context *c, ME_DisplayItem *tp);

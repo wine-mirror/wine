@@ -844,6 +844,23 @@ void ME_DeleteSelection(ME_TextEditor *editor)
   ME_DeleteTextAtCursor(editor, ME_GetSelCursor(editor,-1), to-from);
 }
 
+ME_Style *ME_GetSelectionInsertStyle(ME_TextEditor *editor)
+{
+  ME_Style *style;
+  int from, to;
+  ME_Cursor c;
+  
+  ME_GetSelection(editor, &from, &to);
+  ME_CursorFromCharOfs(editor, from, &c);
+  if (from != to) {
+    style = c.pRun->member.run.style;
+    ME_AddRefStyle(style); /* ME_GetInsertStyle has already done that */
+  }
+  else
+    style = ME_GetInsertStyle(editor, 0);
+  return style;
+}
+
 void ME_SendSelChange(ME_TextEditor *editor)
 {
   SELCHANGE sc;
