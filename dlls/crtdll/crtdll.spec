@@ -496,8 +496,8 @@ debug_channels (crtdll)
 @ forward time msvcrt.time
 @ forward tmpfile msvcrt.tmpfile
 @ forward tmpnam msvcrt.tmpnam
-@ forward tolower msvcrt._tolower
-@ forward toupper msvcrt._toupper
+@ forward tolower msvcrt.tolower
+@ forward toupper msvcrt.toupper
 @ forward towlower msvcrt.towlower
 @ forward towupper msvcrt.towupper
 @ forward ungetc msvcrt.ungetc

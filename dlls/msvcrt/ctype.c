@@ -238,7 +238,7 @@ int __cdecl MSVCRT___iscsymf(int c)
  */
 int __cdecl MSVCRT__toupper(int c)
 {
-  return toupper(c);
+    return c - 0x20;  /* sic */
 }
 
 /*********************************************************************
@@ -246,5 +246,5 @@ int __cdecl MSVCRT__toupper(int c)
  */
 int __cdecl MSVCRT__tolower(int c)
 {
-  return tolower(c);
+    return c + 0x20;  /* sic */
 }

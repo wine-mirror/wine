@@ -731,6 +731,8 @@ debug_channels (msvcrt)
 @ cdecl time(ptr) MSVCRT_time
 @ cdecl tmpfile() MSVCRT_tmpfile
 @ cdecl tmpnam(str) MSVCRT_tmpnam
+@ cdecl tolower(long) tolower
+@ cdecl toupper(long) toupper
 @ forward towlower ntdll.towlower
 @ forward towupper ntdll.towupper
 @ stub ungetc #(long ptr)
