@@ -234,7 +234,7 @@ char *FDI_read_string(HFDI hfdi, INT_PTR hf, long cabsize)
 
     if (!ok) {
       if (len == maxlen) {
-        ERR("WARNING: cabinet is truncated\n");
+        ERR("cabinet is truncated\n");
         break;
       }
       len += 256;
@@ -2216,6 +2216,7 @@ BOOL __cdecl FDICopy(
     if (filehf) {
       cab_UWORD comptype = fol->comp_type;
       int ct1 = comptype & cffoldCOMPTYPE_MASK;
+      int ct2 = CAB(current) ? (CAB(current)->comp_type & cffoldCOMPTYPE_MASK) : 0;
       int err = 0;
 
       TRACE("Extracting file %s as requested by callee.\n", debugstr_a(file->filename));
@@ -2224,11 +2225,35 @@ BOOL __cdecl FDICopy(
       CAB(hfdi) = hfdi;
       CAB(filehf) = filehf;
       CAB(cabhf) = cabhf;
-      CAB(current) = fol;
-      CAB(decomp_cab) = NULL;
 
-      /* set up the appropriate decompressor */
-      switch (ct1) {
+      /* Was there a change of folder?  Compression type?  Did we somehow go backwards? */
+      if ((ct1 != ct2) || (CAB(current) != fol) || (file->offset < CAB(offset))) {
+
+        TRACE("Resetting folder for file %s.\n", debugstr_a(file->filename));
+
+        /* free stuff for the old decompressor */
+        switch (ct2) {
+        case cffoldCOMPTYPE_LZX:
+          if (LZX(window)) {
+            PFDI_FREE(hfdi, LZX(window));
+            LZX(window) = NULL;
+          }
+          break;
+        case cffoldCOMPTYPE_QUANTUM:
+          if (QTM(window)) {
+            PFDI_FREE(hfdi, QTM(window));
+            QTM(window) = NULL;
+          }
+          break;
+        }
+
+        CAB(decomp_cab) = NULL;
+        PFDI_SEEK(CAB(hfdi), CAB(cabhf), fol->offset, SEEK_SET);
+        CAB(offset) = 0;
+        CAB(outlen) = 0;
+
+        /* initialize the new decompressor */
+        switch (ct1) {
         case cffoldCOMPTYPE_NONE:
           CAB(decompress) = NONEfdi_decomp;
           break;
@@ -2245,7 +2270,10 @@ BOOL __cdecl FDICopy(
           break;
         default:
           err = DECR_DATAFORMAT;
+        }
       }
+
+      CAB(current) = fol;
 
       switch (err) {
         case DECR_OK:
@@ -2262,10 +2290,6 @@ BOOL __cdecl FDICopy(
           PFDI_INT(hfdi)->perf->fError = TRUE;
           goto bail_and_fail;
       }
-
-      PFDI_SEEK(CAB(hfdi), CAB(cabhf), fol->offset, SEEK_SET);
-      CAB(offset) = 0;
-      CAB(outlen) = 0;
 
       if (file->offset > CAB(offset)) {
         /* decode bytes and send them to /dev/null */
@@ -2317,24 +2341,6 @@ BOOL __cdecl FDICopy(
           goto bail_and_fail;
       }
 
-      /* free decompression temps */
-      switch (ct1) {
-        case cffoldCOMPTYPE_LZX:
-          if (LZX(window)) {
-            PFDI_FREE(hfdi, LZX(window));
-            LZX(window) = NULL;
-          }
-          break;
-        case cffoldCOMPTYPE_QUANTUM:
-          if (QTM(window)) {
-            PFDI_FREE(hfdi, QTM(window));
-            QTM(window) = NULL;
-          }
-          break;
-        default:
-          break;
-      }
-
       /* fdintCLOSE_FILE_INFO notification */
       ZeroMemory(&fdin, sizeof(FDINOTIFICATION));
       fdin.pv = pvUser;
@@ -2357,6 +2363,16 @@ BOOL __cdecl FDICopy(
         goto bail_and_fail;
       }
     }
+  }
+
+  /* free decompression temps */
+  if (LZX(window)) {
+    PFDI_FREE(hfdi, LZX(window));
+    LZX(window) = NULL;
+  }
+  if (QTM(window)) {
+    PFDI_FREE(hfdi, QTM(window));
+    QTM(window) = NULL;
   }
 
   while (decomp_state) {
@@ -2390,6 +2406,16 @@ BOOL __cdecl FDICopy(
   return TRUE;
 
   bail_and_fail: /* here we free ram before error returns */
+
+  /* free decompression temps */
+  if (LZX(window)) {
+    PFDI_FREE(hfdi, LZX(window));
+    LZX(window) = NULL;
+  }
+  if (QTM(window)) {
+    PFDI_FREE(hfdi, QTM(window));
+    QTM(window) = NULL;
+  }
 
   while (decomp_state) {
     fdi_decomp_state *prev_fds;
