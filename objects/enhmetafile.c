@@ -93,7 +93,7 @@ static void EMF_ReleaseEnhMetaHeader( HENHMETAFILE hmf )
  *         EMF_GetEnhMetaFile
  *
  */
-static HENHMETAFILE EMF_GetEnhMetaFile( HFILE hFile )
+static HENHMETAFILE EMF_GetEnhMetaFile( HANDLE hFile )
 {
     ENHMETAHEADER *emh;
     HANDLE hMapping;
@@ -122,7 +122,7 @@ HENHMETAFILE WINAPI GetEnhMetaFileA(
     )
 {
     HENHMETAFILE hmf;
-    HFILE hFile;
+    HANDLE hFile;
 
     hFile = CreateFileA(lpszMetaFile, GENERIC_READ, FILE_SHARE_READ, 0,
 			OPEN_EXISTING, 0, 0);
@@ -143,7 +143,7 @@ HENHMETAFILE WINAPI GetEnhMetaFileW(
              LPCWSTR lpszMetaFile)  /* [in] filename of enhanced metafile */ 
 {
     HENHMETAFILE hmf;
-    HFILE hFile;
+    HANDLE hFile;
 
     hFile = CreateFileW(lpszMetaFile, GENERIC_READ, FILE_SHARE_READ, 0,
 			OPEN_EXISTING, 0, 0);
@@ -1367,9 +1367,9 @@ HENHMETAFILE WINAPI CopyEnhMetaFileA(
 	memcpy( emrDst, emrSrc, emrSrc->nBytes );
 	hmfDst = EMF_Create_HENHMETAFILE( emrDst, 0, 0 );
     } else {
-        HFILE hFile;
+        HANDLE hFile;
         hFile = CreateFileA( file, GENERIC_WRITE | GENERIC_READ, 0, NULL,
-			     CREATE_ALWAYS, 0, -1);
+			     CREATE_ALWAYS, 0, 0);
 	WriteFile( hFile, emrSrc, emrSrc->nBytes, 0, 0);
 	hmfDst = EMF_GetEnhMetaFile( hFile );
     }

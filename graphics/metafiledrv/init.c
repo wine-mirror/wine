@@ -199,7 +199,7 @@ HDC16 WINAPI CreateMetaFile16(
     {
         physDev->mh->mtType = METAFILE_DISK;
         if ((hFile = CreateFileA(filename, GENERIC_WRITE, 0, NULL,
-				CREATE_ALWAYS, 0, -1)) == HFILE_ERROR) {
+				CREATE_ALWAYS, 0, 0)) == INVALID_HANDLE_VALUE) {
             MFDRV_DeleteDC( dc );
             return 0;
         }

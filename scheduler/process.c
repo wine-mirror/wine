@@ -464,7 +464,7 @@ void PROCESS_InitWine( int argc, char *argv[] )
     if (!main_exe_file)
     {
         if ((main_exe_file = CreateFileA( main_exe_name, GENERIC_READ, FILE_SHARE_READ,
-                                          NULL, OPEN_EXISTING, 0, -1 )) == INVALID_HANDLE_VALUE)
+                                          NULL, OPEN_EXISTING, 0, 0)) == INVALID_HANDLE_VALUE)
         {
             MESSAGE( "%s: cannot open '%s'\n", argv0, main_exe_name );
             goto error;

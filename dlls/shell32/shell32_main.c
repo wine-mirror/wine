@@ -135,7 +135,7 @@ DWORD WINAPI SHGetFileInfoA(LPCSTR path,DWORD dwFileAttributes,
 		|| (BinaryType == SCS_PIF_BINARY)) return 0x4d5a;
 
 	  hfile = CreateFileA( path, GENERIC_READ, FILE_SHARE_READ,
-		NULL, OPEN_EXISTING, 0, -1 );
+		NULL, OPEN_EXISTING, 0, 0 );
 	  if ( hfile == INVALID_HANDLE_VALUE ) return 0;
 
 	/* The next section is adapted from MODULE_GetBinaryType, as we need

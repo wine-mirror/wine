@@ -242,7 +242,7 @@ static HRESULT ICO_ExtractIconExW(
 	
 	TRACE("(file %s,start %d,extract %d\n", debugstr_w(lpszExeFileName), nIconIndex, nIcons);
 
-	hFile = CreateFileW( lpszExeFileName, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, -1 );
+	hFile = CreateFileW( lpszExeFileName, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, 0 );
 	if (hFile == INVALID_HANDLE_VALUE) return hRet;
 	fsizel = GetFileSize(hFile,&fsizeh);
 

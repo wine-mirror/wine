@@ -832,7 +832,7 @@ INT __cdecl CRTDLL__open(LPCSTR path,INT flags)
     TRACE(":unsupported flags 0x%04x\n",flags);
 
   hand = CreateFileA( path, access, FILE_SHARE_READ | FILE_SHARE_WRITE,
-                      NULL, creation, FILE_ATTRIBUTE_NORMAL, -1);
+                      NULL, creation, FILE_ATTRIBUTE_NORMAL, 0 );
 
   if (hand == INVALID_HANDLE_VALUE)
   {

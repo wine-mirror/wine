@@ -320,7 +320,7 @@ HDC WINAPI CreateEnhMetaFileW(
     if (filename)  /* disk based metafile */
     {
         if ((hFile = CreateFileW(filename, GENERIC_WRITE | GENERIC_READ, 0,
-				 NULL, CREATE_ALWAYS, 0, -1)) == HFILE_ERROR) {
+				 NULL, CREATE_ALWAYS, 0, 0)) == INVALID_HANDLE_VALUE) {
             EMFDRV_DeleteDC( dc );
             return 0;
         }

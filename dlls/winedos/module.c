@@ -349,7 +349,7 @@ BOOL WINAPI MZ_LoadImage( LPCSTR cmdline )
 
     if (!SearchPathA( NULL, name, ".exe", sizeof(buffer), buffer, NULL )) goto error;
     if ((hFile = CreateFileA( buffer, GENERIC_READ, FILE_SHARE_READ,
-                              NULL, OPEN_EXISTING, 0, -1 )) == INVALID_HANDLE_VALUE)
+                              NULL, OPEN_EXISTING, 0, 0 )) == INVALID_HANDLE_VALUE)
         goto error;
     if (!MZ_DoLoadImage( hFile, buffer, NULL ))
     {
@@ -370,7 +370,7 @@ BOOL WINAPI MZ_Exec( CONTEXT86 *context, LPCSTR filename, BYTE func, LPVOID para
    * whether it's a NE/PE executable? */
   LPDOSTASK lpDosTask = MZ_Current();
   HFILE hFile = CreateFileA( filename, GENERIC_READ, FILE_SHARE_READ,
-			     NULL, OPEN_EXISTING, 0, -1);
+			     NULL, OPEN_EXISTING, 0, 0);
   BOOL ret = FALSE;
   if (hFile == INVALID_HANDLE_VALUE) return FALSE;
   switch (func) {

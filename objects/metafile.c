@@ -215,7 +215,7 @@ static METAHEADER *MF_ReadMetaFile(HFILE hfile)
 HMETAFILE16 WINAPI GetMetaFile16( LPCSTR lpFilename )
 {
     METAHEADER *mh;
-    HFILE hFile;
+    HANDLE hFile;
  
     TRACE("%s\n", lpFilename);
 
@@ -223,7 +223,7 @@ HMETAFILE16 WINAPI GetMetaFile16( LPCSTR lpFilename )
         return 0;
 
     if((hFile = CreateFileA(lpFilename, GENERIC_READ, FILE_SHARE_READ, NULL,
-			    OPEN_EXISTING, 0, -1)) == HFILE_ERROR)
+			    OPEN_EXISTING, 0, 0)) == INVALID_HANDLE_VALUE)
         return 0;
 
     mh = MF_ReadMetaFile(hFile);
@@ -240,7 +240,7 @@ HMETAFILE16 WINAPI GetMetaFile16( LPCSTR lpFilename )
 HMETAFILE WINAPI GetMetaFileA( LPCSTR lpFilename )
 {
     METAHEADER *mh;
-    HFILE hFile;
+    HANDLE hFile;
  
     TRACE("%s\n", lpFilename);
 
@@ -248,7 +248,7 @@ HMETAFILE WINAPI GetMetaFileA( LPCSTR lpFilename )
         return 0;
 
     if((hFile = CreateFileA(lpFilename, GENERIC_READ, FILE_SHARE_READ, NULL,
-			    OPEN_EXISTING, 0, -1)) == HFILE_ERROR)
+			    OPEN_EXISTING, 0, 0)) == INVALID_HANDLE_VALUE)
         return 0;
 
     mh = MF_ReadMetaFile(hFile);
@@ -265,7 +265,7 @@ HMETAFILE WINAPI GetMetaFileA( LPCSTR lpFilename )
 HMETAFILE WINAPI GetMetaFileW( LPCWSTR lpFilename )
 {
     METAHEADER *mh;
-    HFILE hFile;
+    HANDLE hFile;
  
     TRACE("%s\n", debugstr_w(lpFilename));
 
@@ -273,7 +273,7 @@ HMETAFILE WINAPI GetMetaFileW( LPCWSTR lpFilename )
         return 0;
 
     if((hFile = CreateFileW(lpFilename, GENERIC_READ, FILE_SHARE_READ, NULL,
-			    OPEN_EXISTING, 0, -1)) == HFILE_ERROR)
+			    OPEN_EXISTING, 0, 0)) == INVALID_HANDLE_VALUE)
         return 0;
 
     mh = MF_ReadMetaFile(hFile);
@@ -291,7 +291,7 @@ HMETAFILE WINAPI GetMetaFileW( LPCWSTR lpFilename )
 static METAHEADER *MF_LoadDiskBasedMetaFile(METAHEADER *mh)
 {
     METAHEADERDISK *mhd;
-    HFILE hfile;
+    HANDLE hfile;
     METAHEADER *mh2;
 
     if(mh->mtType != METAFILE_DISK) {
@@ -301,7 +301,7 @@ static METAHEADER *MF_LoadDiskBasedMetaFile(METAHEADER *mh)
     mhd = (METAHEADERDISK *)((char *)mh + sizeof(METAHEADER));
 
     if((hfile = CreateFileA(mhd->filename, GENERIC_READ, FILE_SHARE_READ, NULL,
-			    OPEN_EXISTING, 0, -1)) == HFILE_ERROR) {
+			    OPEN_EXISTING, 0, 0)) == INVALID_HANDLE_VALUE) {
         WARN("Can't open file of disk based metafile\n");
         return NULL;
     }
@@ -337,7 +337,7 @@ HMETAFILE16 WINAPI CopyMetaFile16( HMETAFILE16 hSrcMetaFile, LPCSTR lpFilename)
 {
     METAHEADER *mh = MF_GetMetaHeader16( hSrcMetaFile );
     METAHEADER *mh2 = NULL;
-    HFILE hFile;
+    HANDLE hFile;
 
     TRACE("(%08x,%s)\n", hSrcMetaFile, lpFilename);
     
@@ -353,7 +353,7 @@ HMETAFILE16 WINAPI CopyMetaFile16( HMETAFILE16 hSrcMetaFile, LPCSTR lpFilename)
 
     if(lpFilename) {         /* disk based metafile */
         if((hFile = CreateFileA(lpFilename, GENERIC_WRITE, 0, NULL,
-				CREATE_ALWAYS, 0, -1)) == HFILE_ERROR) {
+				CREATE_ALWAYS, 0, 0)) == INVALID_HANDLE_VALUE) {
 	    HeapFree( GetProcessHeap(), 0, mh2 );
 	    return 0;
 	}
@@ -387,7 +387,7 @@ HMETAFILE WINAPI CopyMetaFileA(
 ) {
     METAHEADER *mh = MF_GetMetaHeader( hSrcMetaFile );
     METAHEADER *mh2 = NULL;
-    HFILE hFile;
+    HANDLE hFile;
 
     TRACE("(%08x,%s)\n", hSrcMetaFile, lpFilename);
     
@@ -403,7 +403,7 @@ HMETAFILE WINAPI CopyMetaFileA(
 
     if(lpFilename) {         /* disk based metafile */
         if((hFile = CreateFileA(lpFilename, GENERIC_WRITE, 0, NULL,
-				CREATE_ALWAYS, 0, -1)) == HFILE_ERROR) {
+				CREATE_ALWAYS, 0, 0)) == INVALID_HANDLE_VALUE) {
 	    HeapFree( GetProcessHeap(), 0, mh2 );
 	    return 0;
 	}

@@ -477,7 +477,7 @@ static HFILE16 _lcreat16_uniq( LPCSTR path, INT attr )
     attr &= FILE_ATTRIBUTE_READONLY | FILE_ATTRIBUTE_HIDDEN | FILE_ATTRIBUTE_SYSTEM;
     return Win32HandleToDosFileHandle( CreateFileA( path, GENERIC_READ | GENERIC_WRITE,
                                              FILE_SHARE_READ | FILE_SHARE_WRITE, NULL,
-                                             CREATE_NEW, attr, -1 ));
+                                             CREATE_NEW, attr, 0 ));
 }
 
 static void OpenExistingFile( CONTEXT86 *context )

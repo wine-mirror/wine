@@ -687,7 +687,7 @@ BOOL WINAPI GetBinaryTypeA( LPCSTR lpApplicationName, LPDWORD lpBinaryType )
     /* Open the file indicated by lpApplicationName for reading.
      */
     hfile = CreateFileA( lpApplicationName, GENERIC_READ, FILE_SHARE_READ,
-                         NULL, OPEN_EXISTING, 0, -1 );
+                         NULL, OPEN_EXISTING, 0, 0 );
     if ( hfile == INVALID_HANDLE_VALUE )
         return FALSE;
 
@@ -1083,7 +1083,7 @@ BOOL WINAPI CreateProcessA( LPCSTR lpApplicationName, LPSTR lpCommandLine,
 
     /* Open file and determine executable type */
 
-    hFile = CreateFileA( name, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, -1 );
+    hFile = CreateFileA( name, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, 0 );
     if (hFile == INVALID_HANDLE_VALUE) goto done;
 
     if ( !MODULE_GetBinaryType( hFile, name, &type ) )
@@ -1254,14 +1254,14 @@ HMODULE WINAPI LoadLibraryExA(LPCSTR libname, HANDLE hfile, DWORD flags)
         if (flags & LOAD_LIBRARY_AS_DATAFILE)
         {
             char filename[256];
-            HFILE hFile;
+            HANDLE hFile;
             HMODULE hmod = 0;
 
             if (!SearchPathA( NULL, libname, ".dll", sizeof(filename), filename, NULL ))
                 return 0;
             /* FIXME: maybe we should use the hfile parameter instead */
             hFile = CreateFileA( filename, GENERIC_READ, FILE_SHARE_READ,
-                                 NULL, OPEN_EXISTING, 0, -1 );
+                                 NULL, OPEN_EXISTING, 0, 0 );
             if (hFile != INVALID_HANDLE_VALUE)
             {
                 hmod = PE_LoadImage( hFile, filename, flags );

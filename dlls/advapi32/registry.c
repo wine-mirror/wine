@@ -1222,7 +1222,7 @@ LONG WINAPI RegLoadKeyW( HKEY hkey, LPCWSTR subkey, LPCWSTR filename )
     if (len > MAX_PATH*sizeof(WCHAR)) return ERROR_INVALID_PARAMETER;
 
     if ((file = CreateFileW( filename, GENERIC_READ, 0, NULL, OPEN_EXISTING,
-                             FILE_ATTRIBUTE_NORMAL, -1 )) == INVALID_HANDLE_VALUE)
+                             FILE_ATTRIBUTE_NORMAL, 0 )) == INVALID_HANDLE_VALUE)
     {
         ret = GetLastError();
         goto done;
@@ -1262,7 +1262,7 @@ LONG WINAPI RegLoadKeyA( HKEY hkey, LPCSTR subkey, LPCSTR filename )
     if (len > MAX_PATH*sizeof(WCHAR)) return ERROR_INVALID_PARAMETER;
 
     if ((file = CreateFileA( filename, GENERIC_READ, 0, NULL, OPEN_EXISTING,
-                             FILE_ATTRIBUTE_NORMAL, -1 )) == INVALID_HANDLE_VALUE)
+                             FILE_ATTRIBUTE_NORMAL, 0 )) == INVALID_HANDLE_VALUE)
     {
         ret = GetLastError();
         goto done;
@@ -1312,7 +1312,7 @@ LONG WINAPI RegSaveKeyA( HKEY hkey, LPCSTR file, LPSECURITY_ATTRIBUTES sa )
     {
         sprintf( name, "reg%04x.tmp", count++ );
         handle = CreateFileA( buffer, GENERIC_WRITE, 0, NULL,
-                            CREATE_NEW, FILE_ATTRIBUTE_NORMAL, -1 );
+                            CREATE_NEW, FILE_ATTRIBUTE_NORMAL, 0 );
         if (handle != INVALID_HANDLE_VALUE) break;
         if ((ret = GetLastError()) != ERROR_ALREADY_EXISTS) goto done;
 

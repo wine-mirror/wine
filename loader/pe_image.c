@@ -697,7 +697,7 @@ WINE_MODREF *PE_LoadLibraryExA (LPCSTR name, DWORD flags)
 	HANDLE		hFile;
        
 	hFile = CreateFileA( name, GENERIC_READ, FILE_SHARE_READ,
-                             NULL, OPEN_EXISTING, 0, -1 );
+                             NULL, OPEN_EXISTING, 0, 0 );
 	if ( hFile == INVALID_HANDLE_VALUE ) return NULL;
 	
 	/* Load PE module */
