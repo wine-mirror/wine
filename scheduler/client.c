@@ -361,6 +361,7 @@ static void start_server( const char *oldcwd )
                     strcpy( p, "/server/wineserver" );
                     execl( path, "wineserver", NULL );
                 }
+		free(path);
             }
 
             /* now try the path */
@@ -369,13 +370,12 @@ static void start_server( const char *oldcwd )
             /* and finally the current dir */
             if (!(path = malloc( strlen(oldcwd) + 20 )))
                 fatal_error( "out of memory\n" );
-            if ((p = strrchr( strcpy( path, oldcwd ), '/' )))
-            {
-                strcpy( p, "/wineserver" );
-                execl( path, "wineserver", NULL );
-                strcpy( p, "/server/wineserver" );
-                execl( path, "wineserver", NULL );
-            }
+            p = strcpy( path, oldcwd ) + strlen( oldcwd );
+            strcpy( p, "/wineserver" );
+            execl( path, "wineserver", NULL );
+            strcpy( p, "/server/wineserver" );
+            execl( path, "wineserver", NULL );
+            free(path);
             fatal_error( "could not exec wineserver\n" );
         }
         started = 1;
