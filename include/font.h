@@ -78,6 +78,7 @@ extern GdiFont WineEngCreateFontInstance(HFONT);
 extern DWORD WineEngDecRefFont(GdiFont);
 extern DWORD WineEngEnumFonts(LPLOGFONTW, DEVICEFONTENUMPROC, LPARAM);
 extern BOOL WineEngGetCharWidth(GdiFont, UINT, UINT, LPINT);
+extern DWORD WineEngGetFontData(GdiFont, DWORD, DWORD, LPVOID, DWORD);
 extern DWORD WineEngGetGlyphOutline(GdiFont, UINT glyph, UINT format,
 				    LPGLYPHMETRICS, DWORD buflen, LPVOID buf,
 				    const MAT2*);

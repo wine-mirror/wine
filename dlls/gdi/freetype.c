@@ -21,6 +21,7 @@
 #include <string.h>
 #include <dirent.h>
 #include <stdio.h>
+#include <assert.h>
 
 DEFAULT_DEBUG_CHANNEL(font);
 
@@ -46,6 +47,9 @@ DEFAULT_DEBUG_CHANNEL(font);
 #endif
 #ifdef HAVE_FREETYPE_FTOUTLN_H
 #include <freetype/ftoutln.h>
+#endif
+#ifdef HAVE_FREETYPE_INTERNAL_SFNT_H
+#include <freetype/internal/sfnt.h>
 #endif
 
 static FT_Library library = 0;
@@ -770,6 +774,43 @@ BOOL WineEngGetTextExtentPoint(GdiFont font, LPCWSTR wstr, INT count,
     return TRUE;
 }
 
+/*************************************************************
+ * WineEngGetFontData
+ *
+ */
+DWORD WineEngGetFontData(GdiFont font, DWORD table, DWORD offset, LPVOID buf,
+			 DWORD cbData)
+{
+    FT_Face ft_face = font->ft_face;
+    TT_Face tt_face;
+    SFNT_Interface *sfnt;
+    DWORD len;
+    FT_Error err;
+
+    if(!FT_IS_SFNT(ft_face))
+        return GDI_ERROR;
+
+    tt_face = (TT_Face) ft_face;
+    sfnt = (SFNT_Interface*)tt_face->sfnt;
+
+    if(!buf || !cbData)
+        len = 0;
+    else
+        len = cbData;
+
+    if(table) { /* MS tags differ in endidness from FT ones */
+        table = table >> 24 | table << 24 |
+	  (table >> 8 & 0xff00) | (table << 8 & 0xff0000);
+    }
+
+    err = sfnt->load_any(tt_face, table, offset, buf, &len);
+    if(err) {
+        ERR("Can't find table %08lx\n", table);
+	return GDI_ERROR;
+    }
+    return len;
+}
+
 #else /* HAVE_FREETYPE */
 
 BOOL WineEngInit(void)
@@ -831,5 +872,11 @@ BOOL WineEngGetTextExtentPoint(GdiFont font, LPCWSTR wstr, INT count,
     return FALSE;
 }
 
+DWORD WineEngGetFontData(GdiFont font, DWORD table, DWORD offset, LPVOID buf,
+			 DWORD cbData)
+{
+    ERR("called but we don't have FreeType\n");
+    return GDI_ERROR;
+}
 #endif /* HAVE_FREETYPE */
 

@@ -1895,16 +1895,20 @@ DWORD WINAPI GetFontLanguageInfo16(HDC16 hdc) {
  *
  * Calls SetLastError()  
  *
- * BUGS
- *
- * Unimplemented
  */
 DWORD WINAPI GetFontData(HDC hdc, DWORD table, DWORD offset, 
     LPVOID buffer, DWORD length)
 {
-    FIXME("(%x,%ld,%ld,%p,%ld): stub\n", hdc, table, offset, buffer, length);
-    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-    return GDI_ERROR;
+    DC *dc = DC_GetDCPtr(hdc);
+    DWORD ret = GDI_ERROR;
+
+    if(!dc) return GDI_ERROR;
+
+    if(dc->gdiFont)
+      ret = WineEngGetFontData(dc->gdiFont, table, offset, buffer, length);
+
+    GDI_ReleaseObj(hdc);
+    return ret;
 }
 
 /*************************************************************************

@@ -1,4 +1,4 @@
-/* include/config.h.in.  Generated automatically from configure.in by autoheader.  */
+/* include/config.h.in.  Generated automatically from configure.in by autoheader 2.13.  */
 
 /* Define if using alloca.c.  */
 #undef C_ALLOCA
@@ -237,6 +237,9 @@
 
 /* Define if you have the <freetype/ftsnames.h> header file.  */
 #undef HAVE_FREETYPE_FTSNAMES_H
+
+/* Define if you have the <freetype/internal/sfnt.h> header file.  */
+#undef HAVE_FREETYPE_INTERNAL_SFNT_H
 
 /* Define if you have the <freetype/ttnameid.h> header file.  */
 #undef HAVE_FREETYPE_TTNAMEID_H
