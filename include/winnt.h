@@ -2332,7 +2332,7 @@ extern inline struct _TEB * WINAPI NtCurrentTeb(void);
 extern inline struct _TEB * WINAPI NtCurrentTeb(void)
 {
     struct _TEB *teb;
-    __asm__("\tmr %0, 13" : "=r" (teb));
+    __asm__("\tmr %0, 2" : "=r" (teb));
     return teb;
 }
 #else
