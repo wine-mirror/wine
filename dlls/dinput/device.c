@@ -341,6 +341,11 @@ HRESULT WINAPI IDirectInputDevice2AImpl_QueryInterface(
 		*ppobj = This;
 		return 0;
 	}
+	if (IsEqualGUID(&IID_IDirectInputDevice2A,riid)) {
+		IDirectInputDevice2_AddRef(iface);
+		*ppobj = This;
+		return 0;
+	}
 	if (IsEqualGUID(&IID_IDirectInputDevice7A,riid)) {
 		IDirectInputDevice7_AddRef(iface);
 		*ppobj = This;
