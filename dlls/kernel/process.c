@@ -125,6 +125,7 @@ extern BOOL build_command_line( char **argv );
 extern void RELAY_InitDebugLists(void);
 extern void SHELL_LoadRegistry(void);
 extern void VERSION_Init( const char *appname );
+extern void MODULE_InitLoadPath(void);
 
 /***********************************************************************
  *           get_basename
@@ -561,6 +562,9 @@ void __wine_process_init( int argc, char *argv[] )
     TRACE( "starting process name=%s file=%p argv[0]=%s\n",
            debugstr_a(main_exe_name), main_exe_file, debugstr_a(argv[0]) );
 
+    MODULE_InitLoadPath();
+    VERSION_Init( main_exe_name );
+
     if (!main_exe_file)  /* no file handle -> Winelib app */
     {
         TRACE( "starting Winelib app %s\n", debugstr_a(main_exe_name) );
@@ -569,7 +573,6 @@ void __wine_process_init( int argc, char *argv[] )
         MESSAGE( "%s: cannot open builtin library for '%s': %s\n", argv0, main_exe_name, error );
         ExitProcess(1);
     }
-    VERSION_Init( main_exe_name );
 
     switch( MODULE_GetBinaryType( main_exe_file ))
     {

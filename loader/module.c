@@ -515,6 +515,125 @@ DWORD WINAPI GetModuleFileNameW( HMODULE hModule, LPWSTR lpFileName, DWORD size 
     return strlenW(lpFileName);
 }
 
+
+/***********************************************************************
+ *           get_dll_system_path
+ */
+static const WCHAR *get_dll_system_path(void)
+{
+    static WCHAR *path;
+
+    if (!path)
+    {
+        WCHAR *p, *exe_name;
+        int len = 3;
+
+        exe_name = NtCurrentTeb()->Peb->ProcessParameters->ImagePathName.Buffer;
+        if (!(p = strrchrW( exe_name, '\\' ))) p = exe_name;
+        /* include trailing backslash only on drive root */
+        if (p == exe_name + 2 && exe_name[1] == ':') p++;
+        len += p - exe_name;
+        len += GetSystemDirectoryW( NULL, 0 );
+        len += GetWindowsDirectoryW( NULL, 0 );
+        path = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) );
+        memcpy( path, exe_name, (p - exe_name) * sizeof(WCHAR) );
+        p = path + (p - exe_name);
+        *p++ = ';';
+        *p++ = '.';
+        *p++ = ';';
+        GetSystemDirectoryW( p, path + len - p);
+        p += strlenW(p);
+        *p++ = ';';
+        GetWindowsDirectoryW( p, path + len - p);
+    }
+    return path;
+}
+
+
+/******************************************************************
+ *		get_dll_load_path
+ *
+ * Compute the load path to use for a given dll.
+ * Returned pointer must be freed by caller.
+ */
+static WCHAR *get_dll_load_path( LPCWSTR module )
+{
+    static const WCHAR pathW[] = {'P','A','T','H',0};
+
+    const WCHAR *system_path = get_dll_system_path();
+    const WCHAR *mod_end = NULL;
+    UNICODE_STRING name, value;
+    WCHAR *p, *ret;
+    int len = 0, path_len = 0;
+
+    /* adjust length for module name */
+
+    if (module)
+    {
+        mod_end = module;
+        if ((p = strrchrW( mod_end, '\\' ))) mod_end = p;
+        if ((p = strrchrW( mod_end, '/' ))) mod_end = p;
+        if (mod_end == module + 2 && module[1] == ':') mod_end++;
+        if (mod_end == module && module[0] && module[1] == ':') mod_end += 2;
+        len += (mod_end - module);
+        system_path = strchrW( system_path, ';' );
+    }
+    len += strlenW( system_path ) + 2;
+
+    /* get the PATH variable */
+
+    RtlInitUnicodeString( &name, pathW );
+    value.Length = 0;
+    value.MaximumLength = 0;
+    value.Buffer = NULL;
+    if (RtlQueryEnvironmentVariable_U( NULL, &name, &value ) == STATUS_BUFFER_TOO_SMALL)
+        path_len = value.Length;
+
+    if (!(ret = HeapAlloc( GetProcessHeap(), 0, path_len + len * sizeof(WCHAR) ))) return NULL;
+    p = ret;
+    if (module)
+    {
+        memcpy( ret, module, (mod_end - module) * sizeof(WCHAR) );
+        p += (mod_end - module);
+    }
+    strcpyW( p, system_path );
+    p += strlenW(p);
+    *p++ = ';';
+    value.Buffer = p;
+    value.MaximumLength = path_len;
+
+    while (RtlQueryEnvironmentVariable_U( NULL, &name, &value ) == STATUS_BUFFER_TOO_SMALL)
+    {
+        WCHAR *new_ptr;
+
+        /* grow the buffer and retry */
+        path_len = value.Length;
+        if (!(new_ptr = HeapReAlloc( GetProcessHeap(), 0, ret, path_len + len * sizeof(WCHAR) )))
+        {
+            HeapFree( GetProcessHeap(), 0, ret );
+            return NULL;
+        }
+        value.Buffer = new_ptr + (value.Buffer - ret);
+        value.MaximumLength = path_len;
+        ret = new_ptr;
+    }
+    value.Buffer[value.Length / sizeof(WCHAR)] = 0;
+    return ret;
+}
+
+
+/******************************************************************
+ *		MODULE_InitLoadPath
+ *
+ * Create the initial dll load path.
+ */
+void MODULE_InitLoadPath(void)
+{
+    WCHAR *path = get_dll_load_path( NULL );
+    RtlInitUnicodeString( &NtCurrentTeb()->Peb->ProcessParameters->DllPath, path );
+}
+
+
 /******************************************************************
  *		load_library_as_datafile
  */
@@ -555,6 +674,40 @@ static BOOL load_library_as_datafile( LPCWSTR name, HMODULE* hmod)
     return TRUE;
 }
 
+
+/******************************************************************
+ *		load_library
+ *
+ * Helper for LoadLibraryExA/W.
+ */
+static HMODULE load_library( const UNICODE_STRING *libname, DWORD flags )
+{
+    NTSTATUS nts;
+    HMODULE hModule;
+    WCHAR *load_path;
+
+    if (flags & LOAD_LIBRARY_AS_DATAFILE)
+    {
+        /* The method in load_library_as_datafile allows searching for the
+         * 'native' libraries only
+         */
+        if (load_library_as_datafile( libname->Buffer, &hModule )) return hModule;
+        flags |= DONT_RESOLVE_DLL_REFERENCES; /* Just in case */
+        /* Fallback to normal behaviour */
+    }
+
+    load_path = get_dll_load_path( flags & LOAD_WITH_ALTERED_SEARCH_PATH ? libname->Buffer : NULL );
+    nts = LdrLoadDll( load_path, flags, libname, &hModule );
+    HeapFree( GetProcessHeap(), 0, load_path );
+    if (nts != STATUS_SUCCESS)
+    {
+        hModule = 0;
+        SetLastError( RtlNtStatusToDosError( nts ) );
+    }
+    return hModule;
+}
+
+
 /******************************************************************
  *		LoadLibraryExA          (KERNEL32.@)
  *
@@ -578,7 +731,6 @@ static BOOL load_library_as_datafile( LPCWSTR name, HMODULE* hmod)
 HMODULE WINAPI LoadLibraryExA(LPCSTR libname, HANDLE hfile, DWORD flags)
 {
     UNICODE_STRING      wstr;
-    NTSTATUS            nts;
     HMODULE             hModule;
 
     if (!libname)
@@ -587,29 +739,8 @@ HMODULE WINAPI LoadLibraryExA(LPCSTR libname, HANDLE hfile, DWORD flags)
         return 0;
     }
     RtlCreateUnicodeStringFromAsciiz( &wstr, libname );
-
-    if (flags & LOAD_LIBRARY_AS_DATAFILE)
-    {
-        /* The method in load_library_as_datafile allows searching for the
-         * 'native' libraries only
-         */
-        if (load_library_as_datafile( wstr.Buffer, &hModule))
-        {
-            RtlFreeUnicodeString( &wstr );
-            return hModule;
-        }
-        flags |= DONT_RESOLVE_DLL_REFERENCES; /* Just in case */
-        /* Fallback to normal behaviour */
-    }
-
-    nts = LdrLoadDll(NULL, flags, &wstr, &hModule);
-    if (nts != STATUS_SUCCESS)
-    {
-        hModule = 0;
-        SetLastError( RtlNtStatusToDosError( nts ) );
-    }
+    hModule = load_library( &wstr, flags );
     RtlFreeUnicodeString( &wstr );
-
     return hModule;
 }
 
@@ -621,33 +752,14 @@ HMODULE WINAPI LoadLibraryExA(LPCSTR libname, HANDLE hfile, DWORD flags)
 HMODULE WINAPI LoadLibraryExW(LPCWSTR libnameW, HANDLE hfile, DWORD flags)
 {
     UNICODE_STRING      wstr;
-    NTSTATUS            nts;
-    HMODULE             hModule;
 
     if (!libnameW)
     {
         SetLastError(ERROR_INVALID_PARAMETER);
         return 0;
     }
-
-    if (flags & LOAD_LIBRARY_AS_DATAFILE)
-    {
-        /* The method in load_library_as_datafile allows searching for the
-         * 'native' libraries only
-         */
-        if (load_library_as_datafile(libnameW, &hModule)) return hModule;
-        flags |= DONT_RESOLVE_DLL_REFERENCES; /* Just in case */
-        /* Fallback to normal behaviour */
-    }
-
     RtlInitUnicodeString( &wstr, libnameW );
-    nts = LdrLoadDll(NULL, flags, &wstr, &hModule);
-    if (nts != STATUS_SUCCESS)
-    {
-        hModule = 0;
-        SetLastError( RtlNtStatusToDosError( nts ) );
-    }
-    return hModule;
+    return load_library( &wstr, flags );
 }
 
 /***********************************************************************

@@ -91,8 +91,6 @@ extern LONG WINAPI WIN16_hread(HFILE16,SEGPTR,LONG);
 extern int DIR_Init(void);
 extern UINT DIR_GetWindowsUnixDir( LPSTR path, UINT count );
 extern UINT DIR_GetSystemUnixDir( LPSTR path, UINT count );
-extern DWORD DIR_SearchAlternatePath( LPCWSTR dll_path, LPCWSTR name, LPCWSTR ext,
-                                      DWORD buflen, LPWSTR buffer);
 extern DWORD DIR_SearchPath( LPCWSTR path, LPCWSTR name, LPCWSTR ext,
                              DOS_FULL_NAME *full_name, BOOL win32 );
 
