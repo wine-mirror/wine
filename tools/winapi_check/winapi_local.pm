@@ -156,7 +156,14 @@ sub _check_function($$$$$$) {
 	$declared_calling_convention = $1;
     }
 
-    if($implemented_calling_convention ne $declared_calling_convention &&
+    if ($declared_register)
+    {
+        if ($implemented_calling_convention eq "stdcall")
+        {
+	    $output->write("-register functions should not be implemented as stdcall\n");
+        }
+    }
+    elsif($implemented_calling_convention ne $declared_calling_convention &&
        $implemented_calling_convention ne "asm" &&
        !($declared_calling_convention =~ /^pascal/ && $forbidden_return_type) &&
        !($implemented_calling_convention =~ /^cdecl|varargs$/ && $declared_calling_convention =~ /^cdecl|varargs$/))
