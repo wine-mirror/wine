@@ -48,106 +48,106 @@ CLOCK_GLOBALS Globals;
 
 int CLOCK_MenuCommand (WPARAM wParam)
 {
-CHAR szApp[MAX_STRING_LEN];
-CHAR szAppRelease[MAX_STRING_LEN];
-   switch (wParam) {
-	/* switch to analog */
-     case 0x100: {
-         Globals.bAnalog = TRUE;
-         LANGUAGE_UpdateMenuCheckmarks();
-	 SendMessage(Globals.hMainWnd, WM_PAINT, 0, 0);
-	 break;
-       }
-	/* switch to digital */
-     case 0x101: {
-         Globals.bAnalog = FALSE;
-         LANGUAGE_UpdateMenuCheckmarks();
-	 SendMessage(Globals.hMainWnd, WM_PAINT, 0, 0);
-	 break;
-       }
-	/* change font */
-     case 0x103: {
-         MAIN_FileChooseFont();
-         break;
-       }
-	/* hide title bar */
-     case 0x105: {
-         Globals.bWithoutTitle = !Globals.bWithoutTitle;
-         LANGUAGE_UpdateWindowCaption();
-         LANGUAGE_UpdateMenuCheckmarks();
-         break;
-       }
-	/* always on top */
-     case 0x10D: {
-         Globals.bAlwaysOnTop = !Globals.bAlwaysOnTop;
-         LANGUAGE_UpdateMenuCheckmarks();
-         break;
-       }
-	/* show or hide seconds */
-     case 0x107: {
-         Globals.bSeconds = !Globals.bSeconds;
-         LANGUAGE_UpdateMenuCheckmarks();
-         SendMessage(Globals.hMainWnd, WM_PAINT, 0, 0);
-         break;
-       }
-	/* show or hide date */
-     case 0x108: {
-         Globals.bDate = !Globals.bDate;
-         LANGUAGE_UpdateMenuCheckmarks();
-         LANGUAGE_UpdateWindowCaption();
-         break;
-       }
-	/* show license */
-     case 0x109: {
-         WineLicense(Globals.hMainWnd);
-         break;
-       }
-	/* show warranties */
-     case 0x10A: {
-         WineWarranty(Globals.hMainWnd);
-         break;
-       }
-	/* show "about" box */
-     case 0x10B: {
-         LoadString(Globals.hInstance, 0x10C, szApp, sizeof(szApp));
-         lstrcpy(szAppRelease,szApp);
-         lstrcat(szAppRelease,"\n" PACKAGE_STRING);
-         ShellAbout(Globals.hMainWnd, szApp, szAppRelease, 0);
-         break;
-       }
-     /* Handle languages */
-/*     default:
-         LANGUAGE_DefaultHandle(wParam);
-*/
-   }
-   return 0;
+    CHAR szApp[MAX_STRING_LEN];
+    CHAR szAppRelease[MAX_STRING_LEN];
+    switch (wParam) {
+        /* switch to analog */
+        case 0x100: {
+            Globals.bAnalog = TRUE;
+            LANGUAGE_UpdateMenuCheckmarks();
+            SendMessage(Globals.hMainWnd, WM_PAINT, 0, 0);
+            break;
+        }
+            /* switch to digital */
+        case 0x101: {
+            Globals.bAnalog = FALSE;
+            LANGUAGE_UpdateMenuCheckmarks();
+            SendMessage(Globals.hMainWnd, WM_PAINT, 0, 0);
+            break;
+        }
+            /* change font */
+        case 0x103: {
+            MAIN_FileChooseFont();
+            break;
+        }
+            /* hide title bar */
+        case 0x105: {
+            Globals.bWithoutTitle = !Globals.bWithoutTitle;
+            LANGUAGE_UpdateWindowCaption();
+            LANGUAGE_UpdateMenuCheckmarks();
+            break;
+        }
+            /* always on top */
+        case 0x10D: {
+            Globals.bAlwaysOnTop = !Globals.bAlwaysOnTop;
+            LANGUAGE_UpdateMenuCheckmarks();
+            break;
+        }
+            /* show or hide seconds */
+        case 0x107: {
+            Globals.bSeconds = !Globals.bSeconds;
+            LANGUAGE_UpdateMenuCheckmarks();
+            SendMessage(Globals.hMainWnd, WM_PAINT, 0, 0);
+            break;
+        }
+            /* show or hide date */
+        case 0x108: {
+            Globals.bDate = !Globals.bDate;
+            LANGUAGE_UpdateMenuCheckmarks();
+            LANGUAGE_UpdateWindowCaption();
+            break;
+        }
+            /* show license */
+        case 0x109: {
+            WineLicense(Globals.hMainWnd);
+            break;
+        }
+            /* show warranties */
+        case 0x10A: {
+            WineWarranty(Globals.hMainWnd);
+            break;
+        }
+            /* show "about" box */
+        case 0x10B: {
+            LoadString(Globals.hInstance, 0x10C, szApp, sizeof(szApp));
+            lstrcpy(szAppRelease,szApp);
+            lstrcat(szAppRelease,"\n" PACKAGE_STRING);
+            ShellAbout(Globals.hMainWnd, szApp, szAppRelease, 0);
+            break;
+        }
+            /* Handle languages */
+            /*
+        default:
+            LANGUAGE_DefaultHandle(wParam);
+            */
+    }
+    return 0;
 }
 
-VOID MAIN_FileChooseFont(VOID) {
-
-  CHOOSEFONT font;
-  LOGFONT	 lf;
-
-        font.lStructSize     = sizeof(font);
-        font.hwndOwner       = Globals.hMainWnd;
-        font.hDC             = NULL;
-        font.lpLogFont       = &lf;
-        font.iPointSize      = 0;
-        font.Flags           = 0;
-        font.rgbColors       = 0;
-        font.lCustData       = 0;
-        font.lpfnHook        = 0;
-        font.lpTemplateName  = 0;
-        font.hInstance       = Globals.hInstance;
-/*        font.lpszStyle       = LF_FACESIZE; */
-        font.nFontType       = 0;
-        font.nSizeMin        = 0;
-        font.nSizeMax        = 144;
-
-        if (ChooseFont(&font)) {
-            /* do nothing yet */
-        }
-
+VOID MAIN_FileChooseFont(VOID)
+{
+    CHOOSEFONT font;
+    LOGFONT      lf;
+    
+    font.lStructSize     = sizeof(font);
+    font.hwndOwner       = Globals.hMainWnd;
+    font.hDC             = NULL;
+    font.lpLogFont       = &lf;
+    font.iPointSize      = 0;
+    font.Flags           = 0;
+    font.rgbColors       = 0;
+    font.lCustData       = 0;
+    font.lpfnHook        = 0;
+    font.lpTemplateName  = 0;
+    font.hInstance       = Globals.hInstance;
+/*    font.lpszStyle       = LF_FACESIZE; */
+    font.nFontType       = 0;
+    font.nSizeMin        = 0;
+    font.nSizeMax        = 144;
+    
+    if (ChooseFont(&font)) {
+        /* do nothing yet */
+    }
 }
 
 /***********************************************************************
@@ -158,9 +158,9 @@ VOID MAIN_FileChooseFont(VOID) {
 LRESULT WINAPI CLOCK_WndProc (HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
     switch (msg) {
-
+      
         case WM_CREATE: {
-   	    break;
+            break;
         }
 
         case WM_RBUTTONUP: {
@@ -171,41 +171,41 @@ LRESULT WINAPI CLOCK_WndProc (HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
             break;
         }
 
-	case WM_PAINT: {
+        case WM_PAINT: {
             PAINTSTRUCT ps;
             HDC context;
-
+            
             context = BeginPaint(hWnd, &ps);
-	    if(Globals.bAnalog) {
-	        DrawFace(context);
-	        Idle(context);
-	    }
-	       else
+            if(Globals.bAnalog) {
+                DrawFace(context);
+                Idle(context);
+            }
+            else
             {
-               /* do nothing */
+                /* do nothing */
             }
             EndPaint(hWnd, &ps);
             break;
         }
 
         case WM_SIZE: {
-	    Globals.MaxX = LOWORD(lParam);
-	    Globals.MaxY = HIWORD(lParam);
+            Globals.MaxX = LOWORD(lParam);
+            Globals.MaxY = HIWORD(lParam);
             OldHour.DontRedraw   = TRUE;
             OldMinute.DontRedraw = TRUE;
             OldSecond.DontRedraw = TRUE;
-	    break;
+            break;
         }
 
         case WM_COMMAND: {
             CLOCK_MenuCommand(wParam);
             break;
         }
-
+            
         case WM_TIMER: {
-	    Idle(0);
-	    break;
-	}
+            Idle(0);
+            break;
+        }
 
         case WM_DESTROY: {
             PostQuitMessage (0);
@@ -213,7 +213,7 @@ LRESULT WINAPI CLOCK_WndProc (HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
         }
 
         default:
-          return DefWindowProc (hWnd, msg, wParam, lParam);
+            return DefWindowProc (hWnd, msg, wParam, lParam);
     }
     return 0;
 }
@@ -229,43 +229,43 @@ int PASCAL WinMain (HINSTANCE hInstance, HINSTANCE prev, LPSTR cmdline, int show
 {
     MSG      msg;
     WNDCLASS class;
-
+    
     char szClassName[] = "CLClass";  /* To make sure className >= 0x10000 */
     char szWinName[]   = "Clock";
-
+    
     /* Setup Globals */
-    Globals.bAnalog	    = TRUE;
+    Globals.bAnalog         = TRUE;
     Globals.bSeconds        = TRUE;
     Globals.lpszIniFile     = "clock.ini";
     Globals.lpszIcoFile     = "clock.ico";
-
+    
     Globals.hInstance       = hInstance;
     Globals.hMainIcon       = ExtractIcon(Globals.hInstance,
                                           Globals.lpszIcoFile, 0);
-
-    if (!Globals.hMainIcon) Globals.hMainIcon =
-                                  LoadIcon(0, MAKEINTRESOURCE(DEFAULTICON));
-
+    
+    if (!Globals.hMainIcon)
+        Globals.hMainIcon = LoadIcon(0, MAKEINTRESOURCE(DEFAULTICON));
+    
     if (!prev){
-	class.style         = CS_HREDRAW | CS_VREDRAW;
-	class.lpfnWndProc   = CLOCK_WndProc;
-	class.cbClsExtra    = 0;
-	class.cbWndExtra    = 0;
-	class.hInstance     = Globals.hInstance;
-	class.hIcon         = LoadIcon (0, IDI_APPLICATION);
-	class.hCursor       = LoadCursor (0, IDC_ARROW);
-	class.hbrBackground = GetStockObject (GRAY_BRUSH);
-	class.lpszMenuName  = 0;
-	class.lpszClassName = szClassName;
+        class.style         = CS_HREDRAW | CS_VREDRAW;
+        class.lpfnWndProc   = CLOCK_WndProc;
+        class.cbClsExtra    = 0;
+        class.cbWndExtra    = 0;
+        class.hInstance     = Globals.hInstance;
+        class.hIcon         = LoadIcon (0, IDI_APPLICATION);
+        class.hCursor       = LoadCursor (0, IDC_ARROW);
+        class.hbrBackground = GetStockObject (GRAY_BRUSH);
+        class.lpszMenuName  = 0;
+        class.lpszClassName = szClassName;
     }
-
+    
     if (!RegisterClass (&class)) return FALSE;
-
+    
     Globals.MaxX = Globals.MaxY = INITIAL_WINDOW_SIZE;
     Globals.hMainWnd = CreateWindow (szClassName, szWinName, WS_OVERLAPPEDWINDOW,
-        CW_USEDEFAULT, CW_USEDEFAULT,
-        Globals.MaxX, Globals.MaxY, 0,
-        0, Globals.hInstance, 0);
+                                     CW_USEDEFAULT, CW_USEDEFAULT,
+                                     Globals.MaxX, Globals.MaxY, 0,
+                                     0, Globals.hInstance, 0);
 
     if (!SetTimer (Globals.hMainWnd, TIMER_ID, TIMER_PERIOD, NULL)) {
         MessageBox(0, "No available timers", szWinName, MB_ICONEXCLAMATION | MB_OK);
@@ -274,12 +274,12 @@ int PASCAL WinMain (HINSTANCE hInstance, HINSTANCE prev, LPSTR cmdline, int show
 
     LANGUAGE_LoadMenus();
     SetMenu(Globals.hMainWnd, Globals.hMainMenu);
-
+    
     LANGUAGE_UpdateMenuCheckmarks();
-
+    
     ShowWindow (Globals.hMainWnd, show);
     UpdateWindow (Globals.hMainWnd);
-
+    
     while (GetMessage(&msg, 0, 0, 0)) {
         TranslateMessage(&msg);
         DispatchMessage(&msg);

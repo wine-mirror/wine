@@ -42,65 +42,67 @@ int nLastSecond = 60;
 
 HandData OldSecond,OldHour,OldMinute;
 
-int MiddleX(void) {
-  int X, diff;
+int MiddleX(void)
+{
+    int X, diff;
 
-  X    = (Globals.MaxX/2);
-  diff = (Globals.MaxX-Globals.MaxY);
-  if (diff>0) { X = (X-(diff/2)); }
-  return X;
+    X    = (Globals.MaxX/2);
+    diff = (Globals.MaxX-Globals.MaxY);
+    if (diff>0) { X = (X-(diff/2)); }
+    return X;
 }
 
-int MiddleY(void) {
-  int Y, diff;
-
-  Y    = (Globals.MaxY/2);
-  diff = (Globals.MaxX-Globals.MaxY);
-  if (diff<0) { Y = Y+(diff/2); }
-  return Y;
+int MiddleY(void)
+{
+    int Y, diff;
+    
+    Y    = (Globals.MaxY/2);
+    diff = (Globals.MaxX-Globals.MaxY);
+    if (diff<0) { Y = Y+(diff/2); }
+    return Y;
 }
 
 void DrawFace(HDC dc)
 {
-  int MidX, MidY, t, DiffX, DiffY;
+    int MidX, MidY, t, DiffX, DiffY;
 
-  MidX = MiddleX();
-  MidY = MiddleY();
-  DiffX = (Globals.MaxX-MidX*2)/2;
-  DiffY = (Globals.MaxY-MidY*2)/2;
+    MidX = MiddleX();
+    MidY = MiddleY();
+    DiffX = (Globals.MaxX-MidX*2)/2;
+    DiffY = (Globals.MaxY-MidY*2)/2;
 
-  SelectObject(dc,CreateSolidBrush(FaceColor));
-  SelectObject(dc,CreatePen(PS_SOLID,1,EtchColor));
-  Ellipse(dc,DiffX,DiffY,2*MidX+DiffX,2*MidY+DiffY);
+    SelectObject(dc,CreateSolidBrush(FaceColor));
+    SelectObject(dc,CreatePen(PS_SOLID,1,EtchColor));
+    Ellipse(dc,DiffX,DiffY,2*MidX+DiffX,2*MidY+DiffY);
 
-  for(t=0; t<12; t++)
-  {
-    MoveToEx(dc,(MidX+DiffX)+sin(t*Pi/6)*0.9*MidX,(MidY+DiffY)-cos(t*Pi/6)*0.9*MidY,NULL);
-    LineTo(dc,(MidY+DiffX)+sin(t*Pi/6)*0.8*MidX,(MidY+DiffY)-cos(t*Pi/6)*0.8*MidY);
-  }
-  if(Globals.MaxX>64 && Globals.MaxY>64)
-    for(t=0; t<60; t++)
-      SetPixel(dc,(MidX+DiffX)+sin(t*Pi/30)*0.9*MidX,(MidY+DiffY)-cos(t*Pi/30)*0.9*MidY
-	       ,EtchColor);
-  DeleteObject(SelectObject(dc,GetStockObject(NULL_BRUSH)));
-  DeleteObject(SelectObject(dc,GetStockObject(NULL_PEN)));
-  memset(&OldSecond,0,sizeof(OldSecond));
-  memset(&OldMinute,0,sizeof(OldMinute));
-  memset(&OldHour,0,sizeof(OldHour));
+    for(t=0; t<12; t++)
+    {
+        MoveToEx(dc,(MidX+DiffX)+sin(t*Pi/6)*0.9*MidX,(MidY+DiffY)-cos(t*Pi/6)*0.9*MidY,NULL);
+        LineTo(dc,(MidY+DiffX)+sin(t*Pi/6)*0.8*MidX,(MidY+DiffY)-cos(t*Pi/6)*0.8*MidY);
+    }
+    if(Globals.MaxX>64 && Globals.MaxY>64)
+        for(t=0; t<60; t++)
+            SetPixel(dc,(MidX+DiffX)+sin(t*Pi/30)*0.9*MidX,(MidY+DiffY)-cos(t*Pi/30)*0.9*MidY
+                     ,EtchColor);
+    DeleteObject(SelectObject(dc,GetStockObject(NULL_BRUSH)));
+    DeleteObject(SelectObject(dc,GetStockObject(NULL_PEN)));
+    memset(&OldSecond,0,sizeof(OldSecond));
+    memset(&OldMinute,0,sizeof(OldMinute));
+    memset(&OldHour,0,sizeof(OldHour));
 }
 
 void DrawHourHand(HDC dc)
 {
-  if (OldHour.DontRedraw) return;
-  MoveToEx(dc, OldHour.StartX, OldHour.StartY, NULL);
-  LineTo(dc, OldHour.EndX, OldHour.EndY);
+    if (OldHour.DontRedraw) return;
+    MoveToEx(dc, OldHour.StartX, OldHour.StartY, NULL);
+    LineTo(dc, OldHour.EndX, OldHour.EndY);
 }
 
 void DrawMinuteHand(HDC dc)
 {
-  if (OldMinute.DontRedraw) return;
-  MoveToEx(dc, OldMinute.StartX, OldMinute.StartY, NULL);
-  LineTo(dc, OldMinute.EndX, OldMinute.EndY);
+    if (OldMinute.DontRedraw) return;
+    MoveToEx(dc, OldMinute.StartX, OldMinute.StartY, NULL);
+    LineTo(dc, OldMinute.EndX, OldMinute.EndY);
 }
 
 void DrawSecondHand(HDC dc)
@@ -112,146 +114,144 @@ void DrawSecondHand(HDC dc)
 
 BOOL UpdateHourHand(HDC dc,int MidX,int MidY,int XExt,int YExt,WORD Pos)
 {
-  int Sx, Sy, Ex, Ey;
-  BOOL rv;
-
-  rv = FALSE;
-  Sx = MidX; Sy = MidY;
-  Ex = MidX+sin(Pos*Pi/6000)*XExt;
-  Ey = MidY-cos(Pos*Pi/6000)*YExt;
-  rv = ( Sx!=OldHour.StartX || Ex!=OldHour.EndX ||
-	 Sy!=OldHour.StartY || Ey!=OldHour.EndY );
-  if (Globals.bAnalog && rv)DrawHourHand(dc);
-  OldHour.StartX = Sx; OldHour.EndX = Ex;
-  OldHour.StartY = Sy; OldHour.EndY = Ey;
-  OldHour.DontRedraw=FALSE;
-  return rv;
+    int Sx, Sy, Ex, Ey;
+    BOOL rv;
+    
+    rv = FALSE;
+    Sx = MidX; Sy = MidY;
+    Ex = MidX+sin(Pos*Pi/6000)*XExt;
+    Ey = MidY-cos(Pos*Pi/6000)*YExt;
+    rv = ( Sx!=OldHour.StartX || Ex!=OldHour.EndX ||
+           Sy!=OldHour.StartY || Ey!=OldHour.EndY );
+    if (Globals.bAnalog && rv)DrawHourHand(dc);
+    OldHour.StartX = Sx; OldHour.EndX = Ex;
+    OldHour.StartY = Sy; OldHour.EndY = Ey;
+    OldHour.DontRedraw=FALSE;
+    return rv;
 }
 
 BOOL UpdateMinuteHand(HDC dc,int MidX,int MidY,int XExt,int YExt,WORD Pos)
 {
-  int Sx, Sy, Ex, Ey;
-  BOOL rv;
-
-  rv = FALSE;
-  Sx = MidX; Sy = MidY;
-  Ex = MidX+sin(Pos*Pi/30000)*XExt;
-  Ey = MidY-cos(Pos*Pi/30000)*YExt;
-  rv = ( Sx!=OldMinute.StartX || Ex!=OldMinute.EndX ||
-	 Sy!=OldMinute.StartY || Ey!=OldMinute.EndY );
-  if (Globals.bAnalog && rv)DrawMinuteHand(dc);
-  OldMinute.StartX = Sx; OldMinute.EndX = Ex;
-  OldMinute.StartY = Sy; OldMinute.EndY = Ey;
-  OldMinute.DontRedraw=FALSE;
-  return rv;
+    int Sx, Sy, Ex, Ey;
+    BOOL rv;
+    
+    rv = FALSE;
+    Sx = MidX; Sy = MidY;
+    Ex = MidX+sin(Pos*Pi/30000)*XExt;
+    Ey = MidY-cos(Pos*Pi/30000)*YExt;
+    rv = ( Sx!=OldMinute.StartX || Ex!=OldMinute.EndX ||
+           Sy!=OldMinute.StartY || Ey!=OldMinute.EndY );
+    if (Globals.bAnalog && rv)DrawMinuteHand(dc);
+    OldMinute.StartX = Sx; OldMinute.EndX = Ex;
+    OldMinute.StartY = Sy; OldMinute.EndY = Ey;
+    OldMinute.DontRedraw=FALSE;
+    return rv;
 }
 
 BOOL UpdateSecondHand(HDC dc,int MidX,int MidY,int XExt,int YExt,WORD Pos)
 {
-  int Sx, Sy, Ex, Ey;
-  BOOL rv;
+    int Sx, Sy, Ex, Ey;
+    BOOL rv;
 
-  rv = FALSE;
+    rv = FALSE;
 
-  if (Globals.bSeconds) {
-    Sx = MidX; Sy = MidY;
-    Ex = MidX+sin(Pos*Pi/3000)*XExt;
-    Ey = MidY-cos(Pos*Pi/3000)*YExt;
-    rv = ( Sx!=OldSecond.StartX || Ex!=OldSecond.EndX ||
-           Sy!=OldSecond.StartY || Ey!=OldSecond.EndY );
-    if (Globals.bAnalog && rv) DrawSecondHand(dc);
-    OldSecond.StartX = Sx; OldSecond.EndX = Ex;
-    OldSecond.StartY = Sy; OldSecond.EndY = Ey;
-    OldSecond.DontRedraw=FALSE;
-  }
+    if (Globals.bSeconds) {
+        Sx = MidX; Sy = MidY;
+        Ex = MidX+sin(Pos*Pi/3000)*XExt;
+        Ey = MidY-cos(Pos*Pi/3000)*YExt;
+        rv = ( Sx!=OldSecond.StartX || Ex!=OldSecond.EndX ||
+               Sy!=OldSecond.StartY || Ey!=OldSecond.EndY );
+        if (Globals.bAnalog && rv) DrawSecondHand(dc);
+        OldSecond.StartX = Sx; OldSecond.EndX = Ex;
+        OldSecond.StartY = Sy; OldSecond.EndY = Ey;
+        OldSecond.DontRedraw=FALSE;
+    }
 
-  return rv;
+    return rv;
 }
 
-void DigitalClock(HDC dc) {
+void DigitalClock(HDC dc)
+{
+    CHAR szTime[MAX_STRING_LEN];
+    LPSTR time = szTime;
+    static short xChar, yChar;
+    TEXTMETRIC tm;
 
-  CHAR szTime[MAX_STRING_LEN];
-  LPSTR time = szTime;
-  static short xChar, yChar;
-  TEXTMETRIC tm;
+    SYSTEMTIME st;
+    LPSYSTEMTIME lpst = &st;
+    
+    GetLocalTime(&st);
+    GetTimeFormat(LOCALE_USER_DEFAULT, LOCALE_STIMEFORMAT, lpst, NULL, time,
+                  MAX_STRING_LEN);
 
-  SYSTEMTIME st;
-  LPSYSTEMTIME lpst = &st;
-
-  GetLocalTime(&st);
-  GetTimeFormat(LOCALE_USER_DEFAULT, LOCALE_STIMEFORMAT, lpst, NULL, time,
-                MAX_STRING_LEN);
-
-  SelectObject(dc,CreatePen(PS_SOLID,1,FaceColor));
-  xChar = tm.tmAveCharWidth;
-  yChar = tm.tmHeight;
-
-  xChar = 100;
-  yChar = 100;
-  TextOut (dc, xChar, yChar, szTime, strlen (szTime));
-  DeleteObject(SelectObject(dc,GetStockObject(NULL_PEN)));
-
+    SelectObject(dc,CreatePen(PS_SOLID,1,FaceColor));
+    xChar = tm.tmAveCharWidth;
+    yChar = tm.tmHeight;
+    
+    xChar = 100;
+    yChar = 100;
+    TextOut (dc, xChar, yChar, szTime, strlen (szTime));
+    DeleteObject(SelectObject(dc,GetStockObject(NULL_PEN)));
 }
 
 
 
-void AnalogClock(HDC dc) {
+void AnalogClock(HDC dc)
+{
+    SYSTEMTIME st;
+    WORD H, M, S, F;
+    int MidX, MidY, DiffX, DiffY;
+    BOOL Redraw;
 
-  SYSTEMTIME st;
-  WORD H, M, S, F;
-  int MidX, MidY, DiffX, DiffY;
-  BOOL Redraw;
+    GetLocalTime(&st);
+    
+    S = st.wSecond;
+    nLastSecond = S;
+    H = st.wHour;
+    M = st.wMinute;
+    F = st.wMilliseconds / 10;
+    F = F + S*100;
+    M = M*1000+F/6;
+    H = H*1000+M/60;
+    MidX = MiddleX();
+    MidY = MiddleY();
+    DiffX = (Globals.MaxX-MidX*2)/2;
+    DiffY = (Globals.MaxY-MidY*2)/2;
 
-  GetLocalTime(&st);
+    SelectObject(dc,CreatePen(PS_SOLID,1,FaceColor));
+    Redraw = FALSE;
+    if(UpdateHourHand(dc,MidX+DiffX,MidY+DiffY,MidX*0.5,MidY*0.5,H)) Redraw = TRUE;
+    if(UpdateMinuteHand(dc,MidX+DiffX,MidY+DiffY,MidX*0.65,MidY*0.65,M)) Redraw = TRUE;
+    if(UpdateSecondHand(dc,MidX+DiffX,MidY+DiffY,MidX*0.79,MidY*0.79,F)) Redraw = TRUE;
 
-  S = st.wSecond;
-  nLastSecond = S;
-  H = st.wHour;
-  M = st.wMinute;
-  F = st.wMilliseconds / 10;
-  F = F + S*100;
-  M = M*1000+F/6;
-  H = H*1000+M/60;
-  MidX = MiddleX();
-  MidY = MiddleY();
-  DiffX = (Globals.MaxX-MidX*2)/2;
-  DiffY = (Globals.MaxY-MidY*2)/2;
-
-  SelectObject(dc,CreatePen(PS_SOLID,1,FaceColor));
-  Redraw = FALSE;
-  if(UpdateHourHand(dc,MidX+DiffX,MidY+DiffY,MidX*0.5,MidY*0.5,H)) Redraw = TRUE;
-  if(UpdateMinuteHand(dc,MidX+DiffX,MidY+DiffY,MidX*0.65,MidY*0.65,M)) Redraw = TRUE;
-  if(UpdateSecondHand(dc,MidX+DiffX,MidY+DiffY,MidX*0.79,MidY*0.79,F)) Redraw = TRUE;
-
-  DeleteObject(SelectObject(dc,CreatePen(PS_SOLID,1,HandColor)));
+    DeleteObject(SelectObject(dc,CreatePen(PS_SOLID,1,HandColor)));
     if(Redraw)
-      {
+    {
         DrawSecondHand(dc);
         DrawMinuteHand(dc);
         DrawHourHand(dc);
-      }
-  DeleteObject(SelectObject(dc,GetStockObject(NULL_PEN)));
-
+    }
+    DeleteObject(SelectObject(dc,GetStockObject(NULL_PEN)));
 }
 
 void Idle(HDC idc)
 {
-  HDC context;
-
-  if(idc)
+    HDC context;
+    
+    if(idc)
         context=idc;
-  else
+    else
         context=GetDC(Globals.hMainWnd);
 
-  if (!context) return;
-
-  if (Globals.bAnalog)
-  {
-    AnalogClock(context);
-  }
-  else
-  {
-    DigitalClock(context);
-  }
-  if(!idc) ReleaseDC(Globals.hMainWnd, context);
+    if (!context) return;
+    
+    if (Globals.bAnalog)
+    {
+        AnalogClock(context);
+    }
+    else
+    {
+        DigitalClock(context);
+    }
+    if(!idc) ReleaseDC(Globals.hMainWnd, context);
 }

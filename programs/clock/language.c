@@ -27,8 +27,8 @@
 
 CHAR STRING_MENU_Xx[]      = "MENU_Xx";
 
-VOID LANGUAGE_UpdateMenuCheckmarks(VOID) {
-
+VOID LANGUAGE_UpdateMenuCheckmarks(VOID)
+{
     if(Globals.bAnalog == TRUE) {
 
         /* analog clock */
@@ -40,9 +40,8 @@ VOID LANGUAGE_UpdateMenuCheckmarks(VOID) {
         EnableMenuItem(Globals.hPropertiesMenu, 0x103,
                        MF_BYCOMMAND | MF_GRAYED);
     }
-        else
+    else
     {
-
         /* digital clock */
 
         CheckMenuItem(Globals.hPropertiesMenu, 0x100,
@@ -51,7 +50,6 @@ VOID LANGUAGE_UpdateMenuCheckmarks(VOID) {
                        MF_BYCOMMAND | MF_CHECKED);
         EnableMenuItem(Globals.hPropertiesMenu, 0x103,
                        MF_BYCOMMAND);
-
     }
 
     CheckMenuItem(Globals.hPropertiesMenu, 0x105, MF_BYCOMMAND |
@@ -64,68 +62,66 @@ VOID LANGUAGE_UpdateMenuCheckmarks(VOID) {
                  (Globals.bDate ? MF_CHECKED : MF_UNCHECKED));
 }
 
-VOID LANGUAGE_UpdateWindowCaption(VOID) {
+VOID LANGUAGE_UpdateWindowCaption(VOID)
+{
+    CHAR szCaption[MAX_STRING_LEN];
+    CHAR szDate[MAX_STRING_LEN];
 
-  CHAR szCaption[MAX_STRING_LEN];
-  CHAR szDate[MAX_STRING_LEN];
+    LPSTR date = szDate;
 
-  LPSTR date = szDate;
+    SYSTEMTIME st;
+    LPSYSTEMTIME lpst = &st;
 
-  SYSTEMTIME st;
-  LPSYSTEMTIME lpst = &st;
+    GetLocalTime(&st);
+    GetDateFormat(LOCALE_USER_DEFAULT, LOCALE_SLONGDATE, lpst, NULL, date,
+                  MAX_STRING_LEN);
 
-  GetLocalTime(&st);
-  GetDateFormat(LOCALE_USER_DEFAULT, LOCALE_SLONGDATE, lpst, NULL, date,
-                MAX_STRING_LEN);
-
-  /* Set frame caption */
-  LoadString(Globals.hInstance, 0x10C, szCaption, sizeof(szCaption));
-  if (Globals.bDate) {
-     lstrcat(szCaption, " - ");
-     lstrcat(szCaption, szDate);
-  }
-  SetWindowText(Globals.hMainWnd, szCaption);
-
+    /* Set frame caption */
+    LoadString(Globals.hInstance, 0x10C, szCaption, sizeof(szCaption));
+    if (Globals.bDate) {
+        lstrcat(szCaption, " - ");
+        lstrcat(szCaption, szDate);
+    }
+    SetWindowText(Globals.hMainWnd, szCaption);
 }
 
 VOID LANGUAGE_LoadMenus(VOID)
 {
+    CHAR   szItem[MAX_STRING_LEN];
+    HMENU  hMainMenu;
 
-  CHAR   szItem[MAX_STRING_LEN];
-  HMENU  hMainMenu;
-
-
-  /* Create menu */
-  hMainMenu = LoadMenu(Globals.hInstance, MAKEINTRESOURCE(MAIN_MENU));
+    /* Create menu */
+    hMainMenu = LoadMenu(Globals.hInstance, MAKEINTRESOURCE(MAIN_MENU));
     Globals.hPropertiesMenu     = GetSubMenu(hMainMenu, 0);
     Globals.hLanguageMenu       = GetSubMenu(hMainMenu, 1);
     Globals.hInfoMenu           = GetSubMenu(hMainMenu, 2);
+    
+    SetMenu(Globals.hMainWnd, hMainMenu);
 
-  SetMenu(Globals.hMainWnd, hMainMenu);
+    /* Destroy old menu */
+    if (Globals.hMainMenu) DestroyMenu(Globals.hMainMenu);
+    Globals.hMainMenu = hMainMenu;
 
-  /* Destroy old menu */
-  if (Globals.hMainMenu) DestroyMenu(Globals.hMainMenu);
-  Globals.hMainMenu = hMainMenu;
+    /* specific for Clock: */
 
-  /* specific for Clock: */
+    LANGUAGE_UpdateMenuCheckmarks();
+    LANGUAGE_UpdateWindowCaption();
 
-  LANGUAGE_UpdateMenuCheckmarks();
-  LANGUAGE_UpdateWindowCaption();
+    Globals.hSystemMenu = GetSystemMenu(Globals.hMainWnd, TRUE);
+    
+    /* FIXME: Append a SEPARATOR to Globals.hSystemMenu here */
 
-  Globals.hSystemMenu = GetSystemMenu(Globals.hMainWnd, TRUE);
-
-  /* FIXME: Append a SEPARATOR to Globals.hSystemMenu here */
-
-  LoadString(Globals.hInstance, 0x10D, szItem, sizeof(szItem));
-  AppendMenu(Globals.hSystemMenu, MF_STRING | MF_BYCOMMAND, 1000, szItem);
+    LoadString(Globals.hInstance, 0x10D, szItem, sizeof(szItem));
+    AppendMenu(Globals.hSystemMenu, MF_STRING | MF_BYCOMMAND, 1000, szItem);
 }
 
 /*
 VOID LANGUAGE_DefaultHandle(WPARAM wParam)
 {
-  if ((wParam >=CL_FIRST_LANGUAGE) && (wParam<=CL_LAST_LANGUAGE))
-          LANGUAGE_SelectByNumber(wParam - CL_FIRST_LANGUAGE);
-     else printf("Unimplemented menu command %i\n", wParam);
+    if ((wParam >=CL_FIRST_LANGUAGE) && (wParam<=CL_LAST_LANGUAGE))
+        LANGUAGE_SelectByNumber(wParam - CL_FIRST_LANGUAGE);
+    else 
+        printf("Unimplemented menu command %i\n", wParam);
 }
 */
 
