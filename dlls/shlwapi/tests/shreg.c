@@ -51,24 +51,22 @@ static unsigned sExpLen2;
 static const char * sEmptyBuffer ="0123456789";
 
 /* delete key and all its subkeys */
-static DWORD delete_key( HKEY hkey )
+static DWORD delete_key( HKEY hkey, LPSTR parent, LPSTR keyname )
 {
-    WCHAR name[MAX_PATH];
+    HKEY parentKey;
     DWORD ret;
 
-    while (!(ret = RegEnumKeyW(hkey, 0, name, sizeof(name))))
-    {
-        HKEY tmp;
-        if (!(ret = RegOpenKeyExW( hkey, name, 0, KEY_ENUMERATE_SUB_KEYS, &tmp )))
-        {
-            ret = delete_key( tmp );
-            RegCloseKey( tmp );
-        }
-        if (ret) break;
-    }
-    if (ret != ERROR_NO_MORE_ITEMS) return ret;
-    RegDeleteKeyA( hkey, NULL );
-    return 0;
+    RegCloseKey(hkey);
+
+    /* open the parent of the key to close */
+    ret = RegOpenKeyEx( HKEY_CURRENT_USER, parent, 0, KEY_ALL_ACCESS, &parentKey);
+    if (ret != ERROR_SUCCESS)
+        return ret;
+
+    ret = SHDeleteKey( parentKey, keyname );
+    RegCloseKey(parentKey);
+
+    return ret;
 }
 
 static HKEY create_test_entries(void)
@@ -321,5 +319,5 @@ START_TEST(shreg)
 	test_SHGetRegPath();
 	test_SHCopyKey();
         test_SHDeleteKey();
-        delete_key( hkey );
+        delete_key( hkey, "Software\\Wine", "Test" );
 }
