@@ -46,7 +46,7 @@ typedef struct tagInputContextData
 } InputContextData; 
 
 static InputContextData *root_context = NULL;
-static HWND hwndDefault = (HWND)NULL;
+static HWND hwndDefault = NULL;
 static HANDLE hImeInst;
 static const WCHAR WC_IMECLASSNAME[] = {'W','i','n','e','I','M','E','C','l','a','s','s',0};
 
@@ -68,7 +68,7 @@ static void IMM_Register(void)
     wndClass.lpfnWndProc = IME_WindowProc;
     wndClass.cbClsExtra = 0;
     wndClass.cbWndExtra = 0;
-    wndClass.hCursor = (HCURSOR)NULL;
+    wndClass.hCursor = NULL;
     wndClass.hbrBackground = (HBRUSH)(COLOR_WINDOW +1);
     wndClass.lpszClassName = WC_IMECLASSNAME;
     RegisterClassW(&wndClass);
@@ -76,7 +76,7 @@ static void IMM_Register(void)
 
 static void IMM_Unregister(void)
 {
-    UnregisterClassW(WC_IMECLASSNAME, (HINSTANCE)NULL);
+    UnregisterClassW(WC_IMECLASSNAME, NULL);
 }
 
 

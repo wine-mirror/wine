@@ -253,7 +253,7 @@ static BOOL ExtractFromEXEDLL(const char *szFileName, int nIndex, const char *sz
     }
     else
     {
-        hResInfo=(HRSRC)NULL;
+        hResInfo=NULL;
         sEnumRes.pResInfo = &hResInfo;
         sEnumRes.nIndex = nIndex;
         EnumResourceNamesA(hModule, RT_GROUP_ICONA, &EnumResNameProc, (LONG) &sEnumRes);
