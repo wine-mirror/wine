@@ -45,6 +45,8 @@
 #define LONG_PTR INT_PTR
 #define ULONG_PTR UINT_PTR
 
+void dump_region(HRGN hrgn);
+
 static HWND (WINAPI *pGetAncestor)(HWND,UINT);
 static BOOL (WINAPI *pGetWindowInfo)(HWND,WINDOWINFO*);
 
@@ -2581,6 +2583,62 @@ static void test_window_styles()
     check_window_style(0, WS_EX_APPWINDOW, WS_CLIPSIBLINGS|WS_CAPTION, WS_EX_APPWINDOW|WS_EX_WINDOWEDGE);
 }
 
+void test_scrollvalidate( HWND parent)
+{
+    HDC hdc;
+    HRGN hrgn=CreateRectRgn(0,0,0,0);
+    HRGN exprgn, tmprgn, clipping;
+    RECT rc, rcu, cliprc;
+    /* create two overlapping child windows. The visual region
+     * of hwnd1 is clipped by the overlapping part of
+     * hwnd2 because of the WS_CLIPSIBLING style */
+    HWND hwnd2 = CreateWindowExA(0, "static", NULL, 
+            WS_CHILD| WS_VISIBLE | WS_CLIPSIBLINGS | WS_BORDER , 
+            75, 30, 100, 100, parent, 0, 0, NULL); 
+    HWND hwnd1 = CreateWindowExA(0, "static", NULL, 
+            WS_CHILD| WS_VISIBLE | WS_CLIPSIBLINGS | WS_BORDER , 
+            25, 50, 100, 100, parent, 0, 0, NULL); 
+    ShowWindow( parent, SW_SHOW);
+    UpdateWindow( parent);
+    GetClientRect( hwnd1, &rc);
+    cliprc=rc; 
+    clipping = CreateRectRgn( 10, 10, 90, 90);
+    hdc = GetDC( hwnd1);
+    /* for a visual touch */
+    TextOut( hdc, 0,10, "0123456789", 10);
+    ScrollDC( hdc, -10, -5, &rc, &cliprc, hrgn, &rcu);
+    if (winetest_debug > 0) dump_region(hrgn);
+    /* create a region with what is expected */
+    exprgn = CreateRectRgn( 39,0,49,74);
+    tmprgn = CreateRectRgn( 88,79,98,93);
+    CombineRgn( exprgn, exprgn, tmprgn, RGN_OR);
+    tmprgn = CreateRectRgn( 0,93,98,98);
+    CombineRgn( exprgn, exprgn, tmprgn, RGN_OR);
+    ok( EqualRgn( exprgn, hrgn), "wrong update region\n");
+    trace("update rect is %ld,%ld - %ld,%ld\n",
+            rcu.left,rcu.top,rcu.right,rcu.bottom);
+    /* now with clipping region */
+    SelectClipRgn( hdc, clipping);
+    ScrollDC( hdc, -10, -5, &rc, &cliprc, hrgn, &rcu);
+    if (winetest_debug > 0) dump_region(hrgn);
+    /* create a region with what is expected */
+    exprgn = CreateRectRgn( 39,10,49,74);
+    tmprgn = CreateRectRgn( 80,79,90,85);
+    CombineRgn( exprgn, exprgn, tmprgn, RGN_OR);
+    tmprgn = CreateRectRgn( 10,85,90,90);
+    CombineRgn( exprgn, exprgn, tmprgn, RGN_OR);
+    ok( EqualRgn( exprgn, hrgn), "wrong update region\n");
+    trace("update rect is %ld,%ld - %ld,%ld\n",
+            rcu.left,rcu.top,rcu.right,rcu.bottom);
+    ReleaseDC( hwnd1, hdc);
+    /* clean up */
+    DeleteObject( hrgn);
+    DeleteObject( exprgn);
+    DeleteObject( tmprgn);
+    DestroyWindow( hwnd1);
+    DestroyWindow( hwnd2);
+}
+
 START_TEST(win)
 {
     pGetAncestor = (void *)GetProcAddress( GetModuleHandleA("user32.dll"), "GetAncestor" );
@@ -2639,6 +2697,7 @@ START_TEST(win)
     test_mouse_input(hwndMain);
     test_validatergn(hwndMain);
     test_nccalcscroll( hwndMain);
+    test_scrollvalidate( hwndMain);
 
     UnhookWindowsHookEx(hhook);
     

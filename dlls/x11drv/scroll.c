@@ -35,96 +35,147 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(scroll);
 
+static void dump_region( char *p, HRGN hrgn)
+{
+    DWORD i, size;
+    RGNDATA *data = NULL;
+    RECT *rect;
+
+    if (!hrgn) {
+        TRACE( "%s null region\n", p );
+        return;
+    }
+    if (!(size = GetRegionData( hrgn, 0, NULL ))) {
+        return;
+    }
+    if (!(data = HeapAlloc( GetProcessHeap(), 0, size ))) return;
+    GetRegionData( hrgn, size, data );
+    TRACE("%s %ld rects:", p, data->rdh.nCount );
+    for (i = 0, rect = (RECT *)data->Buffer; i<20 && i < data->rdh.nCount; i++, rect++)
+        TRACE( " %s", wine_dbgstr_rect( rect));
+    TRACE("\n");
+    HeapFree( GetProcessHeap(), 0, data );
+}
 
 /*************************************************************************
  *		ScrollDC   (X11DRV.@)
  */
 BOOL X11DRV_ScrollDC( HDC hdc, INT dx, INT dy, const RECT *lprcScroll,
                       const RECT *lprcClip, HRGN hrgnUpdate, LPRECT lprcUpdate )
-
 {
-    RECT rSrc, rClipped_src, rClip, rDst, offset;
+    RECT rcSrc, rcClip, offset;
+    INT dxdev, dydev, res;
+    HRGN DstRgn, clipRgn, visrgn;
     INT code = X11DRV_START_EXPOSURES;
 
+    TRACE("dx,dy %d,%d lprcScroll %p lprcClip %p hrgnUpdate %p lprcUpdate %p\n",
+            dx, dy, lprcScroll, lprcClip, hrgnUpdate, lprcUpdate);
+    /* enable X-exposure events */
     if (hrgnUpdate || lprcUpdate)
         ExtEscape( hdc, X11DRV_ESCAPE, sizeof(code), (LPSTR)&code, 0, NULL );
-
-    /* compute device clipping region (in device coordinates) */
-
-    if (lprcScroll) rSrc = *lprcScroll;
-    else GetClipBox( hdc, &rSrc );
-    LPtoDP(hdc, (LPPOINT)&rSrc, 2);
-
-    if (lprcClip) rClip = *lprcClip;
-    else GetClipBox( hdc, &rClip );
-    LPtoDP(hdc, (LPPOINT)&rClip, 2);
-
-    IntersectRect( &rClipped_src, &rSrc, &rClip );
-    TRACE("rSrc %s rClip %s clipped rSrc %s\n", wine_dbgstr_rect(&rSrc),
-          wine_dbgstr_rect(&rClip), wine_dbgstr_rect(&rClipped_src));
-
-    rDst = rClipped_src;
+    /* get the visible region */
+    visrgn=CreateRectRgn( 0, 0, 0, 0);
+    GetRandomRgn( hdc, visrgn, SYSRGN);
+    if( !(GetVersion() & 0x80000000)) {
+        /* Window NT/2k/XP */
+        POINT org;
+        GetDCOrgEx(hdc, &org);
+        OffsetRgn( visrgn, -org.x, -org.y);
+    }
+    /* intersect with the clipping Region if the DC has one */
+    clipRgn = CreateRectRgn( 0, 0, 0, 0);
+    if (GetClipRgn( hdc, clipRgn) != 1) {
+        DeleteObject(clipRgn);
+        clipRgn=NULL;
+    } else
+        CombineRgn( visrgn, visrgn, clipRgn, RGN_AND);
+    /* only those pixels in the scroll rectangle that remain in the clipping
+     * rect are scrolled. So first combine Scroll and Clipping rectangles,
+     * if available */
+    if( lprcScroll)
+        if( lprcClip)
+            IntersectRect( &rcClip, lprcClip, lprcScroll);
+        else
+            rcClip = *lprcScroll;
+    else
+        if( lprcClip)
+            rcClip = *lprcClip;
+        else
+            GetClipBox( hdc, &rcClip);
+    /* Then clip again to get the source rectangle that will remain in the
+     * clipping rect */
+    rcSrc = rcClip;
+    OffsetRect( &rcSrc, -dx, -dy);
+    IntersectRect( &rcSrc, &rcSrc, &rcClip);
+    /* now convert to device coordinates */
+    LPtoDP(hdc, (LPPOINT)&rcSrc, 2);
+    /* also dx and dy */
     SetRect(&offset, 0, 0, dx, dy);
     LPtoDP(hdc, (LPPOINT)&offset, 2);
-    OffsetRect( &rDst, offset.right - offset.left,  offset.bottom - offset.top );
-    TRACE("rDst before clipping %s\n", wine_dbgstr_rect(&rDst));
-    IntersectRect( &rDst, &rDst, &rClip );
-    TRACE("rDst after clipping %s\n", wine_dbgstr_rect(&rDst));
-
-    if (!IsRectEmpty(&rDst))
-    {
-        /* copy bits */
-        RECT rDst_lp = rDst, rSrc_lp = rDst;
-
-        OffsetRect( &rSrc_lp, offset.left - offset.right, offset.top - offset.bottom );
-        DPtoLP(hdc, (LPPOINT)&rDst_lp, 2);
-        DPtoLP(hdc, (LPPOINT)&rSrc_lp, 2);
-
-        if (!BitBlt( hdc, rDst_lp.left, rDst_lp.top,
-                     rDst_lp.right - rDst_lp.left, rDst_lp.bottom - rDst_lp.top,
-                     hdc, rSrc_lp.left, rSrc_lp.top, SRCCOPY))
-            return FALSE;
+    dxdev = offset.right - offset.left;
+    dydev= offset.bottom - offset.top;
+    /* now intersect with the visible region to get the pixels that will
+     * actually scroll */
+    DstRgn = CreateRectRgnIndirect( &rcSrc);
+    res = CombineRgn( DstRgn, DstRgn, visrgn, RGN_AND);
+    /* and translate, giving the destination region */
+    OffsetRgn( DstRgn, dxdev, dydev);
+    if( TRACE_ON( scroll)) dump_region( "Destination scroll region: ", DstRgn);
+    /* if there are any, do it */
+    if( res > NULLREGION) {
+        RECT rect ;
+        /* clip to the destination region, so we can BitBlt with a simple
+         * bounding rectangle */
+        if( clipRgn)
+            ExtSelectClipRgn( hdc, DstRgn, RGN_AND);
+        else
+            SelectClipRgn( hdc, DstRgn);
+        GetRgnBox( DstRgn, &rect);
+        DPtoLP(hdc, (LPPOINT)&rect, 2);
+        BitBlt( hdc, rect.left, rect.top,
+                    rect.right - rect.left, rect.bottom -rect.top,
+                    hdc, rect.left - dx, rect.top - dy, SRCCOPY);
     }
-
-    /* compute update areas.  This is the clipped source or'ed with the unclipped source translated minus the
-     clipped src translated (rDst) all clipped to rClip */
-
+    /* compute the update areas.  This is the combined clip rectangle
+     * minus the scrolled region, and intersected with the visible
+     * region. */
     if (hrgnUpdate || lprcUpdate)
     {
-        HRGN hrgn = hrgnUpdate, hrgn2, hrgn3 = 0;
+        HRGN hrgn = hrgnUpdate;
+        HRGN ExpRgn = 0;
 
+        /* collect all the exposures */
         code = X11DRV_END_EXPOSURES;
-        ExtEscape( hdc, X11DRV_ESCAPE, sizeof(code), (LPSTR)&code, sizeof(hrgn3), (LPSTR)&hrgn3 );
-
-        if (hrgn) SetRectRgn( hrgn, rClipped_src.left, rClipped_src.top, rClipped_src.right, rClipped_src.bottom );
-        else hrgn = CreateRectRgn( rClipped_src.left, rClipped_src.top, rClipped_src.right, rClipped_src.bottom );
-
-        hrgn2 = CreateRectRgnIndirect( &rSrc );
-        OffsetRgn(hrgn2, offset.right - offset.left,  offset.bottom - offset.top );
-        CombineRgn(hrgn, hrgn, hrgn2, RGN_OR);
-
-        SetRectRgn( hrgn2, rDst.left, rDst.top, rDst.right, rDst.bottom );
-        CombineRgn( hrgn, hrgn, hrgn2, RGN_DIFF );
-
-        SetRectRgn( hrgn2, rClip.left, rClip.top, rClip.right, rClip.bottom );
-        CombineRgn( hrgn, hrgn, hrgn2, RGN_AND );
-
-        if (hrgn3)
-        {
-            CombineRgn( hrgn, hrgn, hrgn3, RGN_OR );
-            DeleteObject( hrgn3 );
+        ExtEscape( hdc, X11DRV_ESCAPE, sizeof(code), (LPSTR)&code,
+                sizeof(ExpRgn), (LPSTR)&ExpRgn );
+        /* Covert the combined clip rectangle to device coordinates */
+        LPtoDP(hdc, (LPPOINT)&rcClip, 2);
+        if( hrgn )
+            SetRectRgn( hrgn, rcClip.left, rcClip.top, rcClip.right,
+                    rcClip.bottom);
+        else
+            hrgn = CreateRectRgnIndirect( &rcClip);
+        CombineRgn( hrgn, hrgn, visrgn, RGN_AND);
+        CombineRgn( hrgn, hrgn, DstRgn, RGN_DIFF);
+        /* add the exposures to this */
+        if( ExpRgn) {
+            if( TRACE_ON( scroll)) dump_region( "Expose region: ", ExpRgn);
+            CombineRgn( hrgn, hrgn, ExpRgn, RGN_OR);
+            DeleteObject( ExpRgn);
         }
-
-        if( lprcUpdate )
-        {
+        if( TRACE_ON( scroll)) dump_region( "Update region: ", hrgn);
+        if( lprcUpdate) {
             GetRgnBox( hrgn, lprcUpdate );
-
-            /* Put the lprcUpdate in logical coordinate */
+            /* Put the lprcUpdate in logical coordinates */
             DPtoLP( hdc, (LPPOINT)lprcUpdate, 2 );
             TRACE("returning lprcUpdate %s\n", wine_dbgstr_rect(lprcUpdate));
         }
-        if (!hrgnUpdate) DeleteObject( hrgn );
-        DeleteObject( hrgn2 );
+        if( !hrgnUpdate)
+            DeleteObject( hrgn);
     }
+    SelectClipRgn( hdc, clipRgn);
+    DeleteObject( visrgn);
+    DeleteObject( DstRgn);
+    if( clipRgn) DeleteObject( clipRgn);
     return TRUE;
 }

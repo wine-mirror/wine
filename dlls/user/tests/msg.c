@@ -3348,7 +3348,7 @@ static void test_button_messages(void)
 
 /************* painting message test ********************/
 
-static void dump_region(HRGN hrgn)
+void dump_region(HRGN hrgn)
 {
     DWORD i, size;
     RGNDATA *data = NULL;
