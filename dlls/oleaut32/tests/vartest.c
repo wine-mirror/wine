@@ -1092,8 +1092,9 @@ static const char *szFailOk = "Call failed, hres = %08lx\n";
   ok(V_I4(&vOut) == val, "Expected i4 = %ld, got %ld\n", (LONG)val, V_I4(&vOut)); }
 #define EXPECT_UI4(val) EXPECT_OK { EXPECT_TYPE(VT_UI4); \
   ok(V_UI4(&vOut) == val, "Expected ui4 = %ld, got %ld\n", (ULONG)val, V_UI4(&vOut)); }
-#define EXPECT_I8(val) EXPECT_OK { EXPECT_TYPE(VT_I8); \
-  ok(V_I8(&vOut) == val, "Expected i8 = %lld, got %lld\n", (LONG64)val, V_I8(&vOut)); }
+#define EXPECT_I8(high,low) EXPECT_OK { EXPECT_TYPE(VT_I8); \
+  ok(V_I8(&vOut) == ((((LONG64)(high))<<32)|(low)), "Expected i8 = %lx%08lx, got %lx%08lx\n", \
+     (LONG)(high), (LONG)(low), (LONG)(V_I8(&vOut)>>32), (LONG)V_I8(&vOut) ); }
 #define EXPECT_UI8(val) EXPECT_OK { EXPECT_TYPE(VT_UI8); \
   ok(V_UI8(&vOut) == val, "Expected ui8 = %lld, got %lld\n", (ULONG64)val, V_UI8(&vOut)); }
 #define EXPECT_R4(val) EXPECT_OK { EXPECT_TYPE(VT_R4); \
@@ -1160,6 +1161,67 @@ static void test_VarNumFromParseNum(void)
   CONVERT(5,0,NUMPRS_NEG,5,0,0, INTEGER_VTBITS); EXPECT_I4(-32769);
 
   /* Assume the above pattern holds for remaining negative integers */
+
+  /* Test hexadecimal conversions */
+  SETRGB(0, 1); CONVERT(1,0,0,1,4,0, INTEGER_VTBITS); EXPECT_I1(0x01);
+  /* 0x7f */
+  SETRGB(0, 7); SETRGB(1, 0xf);
+  CONVERT(2,0,0,2,4,0, INTEGER_VTBITS); EXPECT_I1(0x7f);
+  /* 0x7fff */
+  SETRGB(0, 7); SETRGB(1, 0xf); SETRGB(2, 0xf); SETRGB(3, 0xf);
+  CONVERT(4,0,0,4,4,0, INTEGER_VTBITS); EXPECT_I2(0x7fff);
+  /* 0x7fffffff */
+  SETRGB(0, 7); SETRGB(1, 0xf); SETRGB(2, 0xf); SETRGB(3, 0xf);
+  SETRGB(4, 0xf); SETRGB(5, 0xf); SETRGB(6, 0xf); SETRGB(7, 0xf);
+  CONVERT(8,0,0,8,4,0, INTEGER_VTBITS); EXPECT_I4(0x7fffffffL);
+  /* 0x7fffffffffffffff (64 bits) */
+  SETRGB(0, 7); SETRGB(1, 0xf); SETRGB(2, 0xf); SETRGB(3, 0xf);
+  SETRGB(4, 0xf); SETRGB(5, 0xf); SETRGB(6, 0xf); SETRGB(7, 0xf);
+  SETRGB(8, 0xf); SETRGB(9, 0xf); SETRGB(10, 0xf); SETRGB(11, 0xf);
+  SETRGB(12, 0xf); SETRGB(13, 0xf); SETRGB(14, 0xf); SETRGB(15, 0xf);
+  CONVERT(16,0,0,16,4,0, INTEGER_VTBITS); EXPECT_I8(0x7fffffff,0xffffffff);
+
+  /* Assume the above pattern holds for numbers without hi-bit set, test (preservation of) hi-bit */
+  /* 0x82 */
+  SETRGB(0, 8); SETRGB(1, 2);
+  CONVERT(2,0,0,2,4,0, INTEGER_VTBITS);
+  EXPECT_I1((signed char)0x82);
+  /* 0x8002 */
+  SETRGB(0, 8); SETRGB(1, 0); SETRGB(2, 0); SETRGB(3, 2);
+  CONVERT(4,0,0,4,4,0, INTEGER_VTBITS);
+  EXPECT_I2((signed short)0x8002);
+  /* 0x80000002 */
+  SETRGB(0, 8); SETRGB(1, 0); SETRGB(2, 0); SETRGB(3, 0);
+  SETRGB(4, 0); SETRGB(5, 0); SETRGB(6, 0); SETRGB(7, 2);
+  CONVERT(8,0,0,8,4,0, INTEGER_VTBITS); EXPECT_I4(0x80000002L);
+  /* 0x8000000000000002 (64 bits) */
+  SETRGB(0, 8); SETRGB(1, 0); SETRGB(2, 0); SETRGB(3, 0);
+  SETRGB(4, 0); SETRGB(5, 0); SETRGB(6, 0); SETRGB(7, 0);
+  SETRGB(8, 0); SETRGB(9, 0); SETRGB(10, 0); SETRGB(11, 0);
+  SETRGB(12, 0); SETRGB(13, 0); SETRGB(14, 0); SETRGB(15, 2);
+  CONVERT(16,0,0,16,4,0, INTEGER_VTBITS); EXPECT_I8(0x80000000,0x00000002);
+
+  /* Test (preservation of) hi-bit with STRICT type requesting */
+  /* 0x82 */
+  SETRGB(0, 8); SETRGB(1, 2);
+  CONVERT(2,0,0,2,4,0, VTBIT_I1);
+  EXPECT_I1((signed char)0x82);
+  /* 0x8002 */
+  SETRGB(0, 8); SETRGB(1, 0); SETRGB(2, 0); SETRGB(3, 2);
+  CONVERT(4,0,0,4,4,0, VTBIT_I2);
+  EXPECT_I2((signed short)0x8002);
+  /* 0x80000002 */
+  SETRGB(0, 8); SETRGB(1, 0); SETRGB(2, 0); SETRGB(3, 0);
+  SETRGB(4, 0); SETRGB(5, 0); SETRGB(6, 0); SETRGB(7, 2);
+  CONVERT(8,0,0,8,4,0, VTBIT_I4); EXPECT_I4(0x80000002L);
+  /* 0x8000000000000002 (64 bits) */
+  SETRGB(0, 8); SETRGB(1, 0); SETRGB(2, 0); SETRGB(3, 0);
+  SETRGB(4, 0); SETRGB(5, 0); SETRGB(6, 0); SETRGB(7, 0);
+  SETRGB(8, 0); SETRGB(9, 0); SETRGB(10, 0); SETRGB(11, 0);
+  SETRGB(12, 0); SETRGB(13, 0); SETRGB(14, 0); SETRGB(15, 2);
+  CONVERT(16,0,0,16,4,0, VTBIT_I8); EXPECT_I8(0x80000000,0x00000002);
+
+  /* Assume the above pattern holds for numbers with hi-bit set */
 
   /* Negative numbers overflow if we have only unsigned outputs */
   /* -1 */
