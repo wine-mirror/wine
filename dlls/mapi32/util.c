@@ -23,10 +23,10 @@
 #define COBJMACROS
 #define NONAMELESSUNION
 #define NONAMELESSSTRUCT
-
 #include "windef.h"
 #include "winbase.h"
 #include "winreg.h"
+#include "winuser.h"
 #include "winerror.h"
 #include "winternl.h"
 #include "objbase.h"
@@ -37,6 +37,12 @@
 #include "xcmc.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(mapi);
+
+static const BYTE digitsToHex[] = {
+  0,1,2,3,4,5,6,7,8,9,0xff,0xff,0xff,0xff,0xff,0xff,0xff,10,11,12,13,14,15,
+  0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,
+  0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,10,11,12,13,
+  14,15 };
 
 /**************************************************************************
  *  ScInitMapiUtil (MAPI32.33)
@@ -203,6 +209,15 @@ ULONG WINAPI MAPIFreeBuffer(LPVOID lpBuffer)
     return S_OK;
 }
 
+/**************************************************************************
+ *  WrapProgress@20 (MAPI32.41)
+ */
+HRESULT WINAPI WrapProgress(PVOID unk1, PVOID unk2, PVOID unk3, PVOID unk4, PVOID unk5)
+{
+    /* Native does not implement this function */
+    return MAPI_E_NO_SUPPORT;
+}
+
 /*************************************************************************
  * HrThisThreadAdviseSink@8 (MAPI32.42)
  *
@@ -251,11 +266,6 @@ HRESULT WINAPI HrThisThreadAdviseSink(LPMAPIADVISESINK lpSink, LPMAPIADVISESINK*
  */
 BOOL WINAPI FBinFromHex(LPWSTR lpszHex, LPBYTE lpOut)
 {
-    static const BYTE digitsToHex[] = {
-      0,1,2,3,4,5,6,7,8,9,0xff,0xff,0xff,0xff,0xff,0xff,0xff,10,11,12,13,14,15,
-      0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,
-      0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,10,11,12,13,
-      14,15 };
     LPSTR lpStr = (LPSTR)lpszHex;
 
     TRACE("(%p,%p)\n", lpszHex, lpOut);
@@ -458,6 +468,26 @@ BOOL WINAPI FEqualNames(LPMAPINAMEID lpName1, LPMAPINAMEID lpName2)
 }
 
 /**************************************************************************
+ *  IsBadBoundedStringPtr@8 (MAPI32.71)
+ *
+ * Determine if a string pointer is valid.
+ *
+ * PARAMS
+ *  lpszStr [I] String to check
+ *  ulLen   [I] Maximum length of lpszStr
+ *
+ * RETURNS
+ *  TRUE, if lpszStr is invalid or longer than ulLen,
+ *  FALSE, otherwise.
+ */
+BOOL WINAPI IsBadBoundedStringPtr(LPCSTR lpszStr, ULONG ulLen)
+{
+    if (!lpszStr || IsBadStringPtrA(lpszStr, -1) || strlen(lpszStr) >= ulLen)
+        return TRUE;
+    return FALSE;
+}
+
+/**************************************************************************
  *  FtAddFt@16 (MAPI32.121)
  *
  * Add two FILETIME's together.
@@ -545,7 +575,7 @@ LONGLONG WINAPI MAPI32_FtMulDwDw(DWORD dwLeft, DWORD dwRight)
 LONGLONG WINAPI MAPI32_FtNegFt(FILETIME ft)
 {
     LONGLONG *p = (LONGLONG*)&ft;
-    
+
     return - *p;
 }
 
@@ -595,6 +625,39 @@ ULONG WINAPI UlRelease(void *lpUnk)
     if (!lpUnk)
         return 0UL;
     return IUnknown_Release((LPUNKNOWN)lpUnk);
+}
+
+/**************************************************************************
+ *  UFromSz@4 (MAPI32.133)
+ *
+ * Read an integer from a string
+ *
+ * PARAMS
+ *  lpszStr [I] String to read the integer from.
+ *
+ * RETURNS
+ *  Success: The integer read from lpszStr.
+ *  Failure: 0, if the first character in lpszStr is not 0-9.
+ *
+ * NOTES
+ *  This function does not accept whitespace and stops at the first non-digit
+ *  character.
+ */
+UINT WINAPI UFromSz(LPCSTR lpszStr)
+{
+    ULONG ulRet = 0;
+
+    TRACE("(%s)\n", debugstr_a(lpszStr));
+
+    if (lpszStr)
+    {
+        while (*lpszStr >= '0' && *lpszStr <= '9')
+        {
+            ulRet = ulRet * 10 + (*lpszStr - '0');
+            lpszStr = CharNextA(lpszStr);
+        }
+    }
+    return ulRet;
 }
 
 /*************************************************************************
@@ -649,6 +712,62 @@ HRESULT WINAPI OpenStreamOnFile(LPALLOCATEBUFFER lpAlloc, LPFREEBUFFER lpFree,
     return hRet;
 }
 
+/*************************************************************************
+ * UlFromSzHex@4 (MAPI32.155)
+ *
+ * Read an integer from a hexadecimal string.
+ *
+ * PARAMS
+ *  lpSzHex [I] String containing the hexidecimal number to read
+ *
+ * RETURNS
+ * Success: The number represented by lpszHex.
+ * Failure: 0, if lpszHex does not contain a hex string.
+ *
+ * NOTES
+ *  This function does not accept whitespace and stops at the first non-hex
+ *  character.
+ */
+ULONG WINAPI UlFromSzHex(LPCWSTR lpszHex)
+{
+    LPSTR lpStr = (LPSTR)lpszHex;
+    ULONG ulRet = 0;
+
+    TRACE("(%s)\n", debugstr_a(lpStr));
+
+    while (*lpStr)
+    {
+        if (lpStr[0] < '0' || lpStr[0] > 'f' || digitsToHex[lpStr[0] - '0'] == 0xff ||
+            lpStr[1] < '0' || lpStr[1] > 'f' || digitsToHex[lpStr[1] - '0'] == 0xff)
+            break;
+
+        ulRet = ulRet * 16 + ((digitsToHex[lpStr[0] - '0'] << 4) | digitsToHex[lpStr[1] - '0']);
+        lpStr += 2;
+    }
+    return ulRet;
+}
+
+/*************************************************************************
+ * CbOfEncoded@4 (MAPI32.207)
+ *
+ * Return the length of an encoded string.
+ *
+ * PARAMS
+ *  lpSzEnc [I] Encoded string to get the length of.
+ *
+ * RETURNS
+ * The length of the encoded string in bytes.
+ */
+ULONG WINAPI CbOfEncoded(LPCSTR lpszEnc)
+{
+    ULONG ulRet = 0;
+
+    TRACE("(%s)\n", debugstr_a(lpszEnc));
+
+    if (lpszEnc)
+        ulRet = (((strlen(lpszEnc) | 3) >> 2) + 1) * 3;
+    return ulRet;
+}
 
 /*************************************************************************
  * cmc_query_configuration (MAPI32.235)

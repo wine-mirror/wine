@@ -7,6 +7,7 @@ IMPORTS   = mapi32
 EXTRALIBS = -luuid
 
 CTESTS = \
+	imalloc.c \
 	prop.c \
 	util.c
 

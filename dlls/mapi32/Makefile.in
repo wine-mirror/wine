@@ -3,10 +3,11 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = mapi32.dll
-IMPORTS   = shlwapi ole32 kernel32
+IMPORTS   = shlwapi ole32 user32 kernel32
 EXTRALIBS = -luuid $(LIBUNICODE)
 
 C_SRCS = \
+	imalloc.c \
 	mapi32_main.c \
 	prop.c \
 	util.c

@@ -29,6 +29,44 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(mapi);
 
+LONG MAPI_ObjectCount = 0;
+
+/***********************************************************************
+ *              DllMain (MAPI32.init)
+ */
+BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID fImpLoad)
+{
+    TRACE("(%p,0x%lx,%p)\n", hinstDLL, fdwReason, fImpLoad);
+
+    switch (fdwReason)
+    {
+    case DLL_PROCESS_ATTACH:
+        DisableThreadLibraryCalls(hinstDLL);
+        break;
+    case DLL_PROCESS_DETACH:
+	TRACE("DLL_PROCESS_DETACH: %ld objects remaining\n", MAPI_ObjectCount);
+	break;
+    }
+    return TRUE;
+}
+
+/***********************************************************************
+ * DllCanUnloadNow (MAPI32.28)
+ *
+ * Determine if this dll can be unloaded from the callers address space.
+ *
+ * PARAMS
+ *  None.
+ *
+ * RETURNS
+ *  S_OK, if the dll can be unloaded,
+ *  S_FALSE, otherwise.
+ */
+HRESULT WINAPI MAPI32_DllCanUnloadNow(void)
+{
+    return MAPI_ObjectCount == 0 ? S_OK : S_FALSE;
+}
+
 HRESULT WINAPI MAPIInitialize ( LPVOID lpMapiInit )
 {
     ERR("Stub\n");

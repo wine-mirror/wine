@@ -17,7 +17,7 @@
  25 stub LAUNCHWIZARD
  26 stub LaunchWizard@20
  27 stub DllGetClassObject
- 28 stub DllCanUnloadNow
+ 28 stdcall -private DllCanUnloadNow() MAPI32_DllCanUnloadNow
  29 stub MAPIOpenFormMgr
  30 stub MAPIOpenFormMgr@8
  31 stub MAPIOpenLocalFormContainer
@@ -26,7 +26,7 @@
  34 stdcall DeinitMapiUtil@0() DeinitMapiUtil
  35 stub ScGenerateMuid@4
  36 stub HrAllocAdviseSink@12
- 41 stub WrapProgress@20
+ 41 stdcall WrapProgress@20(ptr ptr ptr ptr ptr) WrapProgress
  42 stdcall HrThisThreadAdviseSink@8(ptr ptr) HrThisThreadAdviseSink
  43 stub ScBinFromHexBounded@12
  44 stdcall FBinFromHex@8(ptr ptr) FBinFromHex
@@ -41,7 +41,7 @@
  53 stub EnableIdleRoutine@8
  54 stub DeregisterIdleRoutine@4
  55 stub ChangeIdleRoutine@28
- 59 stub MAPIGetDefaultMalloc@0
+ 59 stdcall MAPIGetDefaultMalloc@0() MAPIGetDefaultMalloc
  60 stub CreateIProp@24
  61 stub CreateTable@36
  62 stdcall MNLS_lstrlenW@4(wstr) MNLS_lstrlenW
@@ -53,7 +53,7 @@
  68 stdcall MNLS_IsBadStringPtrW@8(ptr long) kernel32.IsBadStringPtrW
  72 stdcall FEqualNames@8(ptr ptr) FEqualNames
  73 stub WrapStoreEntryID@24
- 74 stub IsBadBoundedStringPtr@8
+ 74 stdcall IsBadBoundedStringPtr@8(ptr long) IsBadBoundedStringPtr
  75 stub HrQueryAllRows@24
  76 stdcall PropCopyMore@16(ptr ptr ptr ptr) PropCopyMore
  77 stdcall UlPropSize@4(ptr) UlPropSize
@@ -74,7 +74,7 @@
 130 stdcall SzFindCh@8(str long) shlwapi.StrChrA
 131 stdcall SzFindLastCh@8(str str long) shlwapi.StrRChrA
 132 stdcall SzFindSz@8(str str) shlwapi.StrStrA
-133 stub UFromSz@4
+133 stdcall UFromSz@4(str) UFromSz
 135 stdcall HrGetOneProp@12(ptr long ptr) HrGetOneProp
 136 stdcall HrSetOneProp@8(ptr ptr) HrSetOneProp
 137 stdcall FPropExists@8(ptr long) FPropExists
@@ -95,7 +95,7 @@
 152 stub OpenTnefStreamEx
 153 stub GetTnefStreamCodepage@12
 154 stub GetTnefStreamCodepage
-155 stub UlFromSzHex@4
+155 stdcall UlFromSzHex@4(ptr) UlFromSzHex
 156 stub UNKOBJ_ScAllocate@12
 157 stub UNKOBJ_ScAllocateMore@16
 158 stub UNKOBJ_Free@8
@@ -144,7 +144,7 @@
 204 stub EncodeID@12
 205 stub FDecodeID@12
 206 stub CchOfEncoding@4
-207 stub CbOfEncoded@4
+207 stdcall CbOfEncoded@4(ptr) CbOfEncoded
 208 stub MAPISendDocuments
 209 stdcall MAPILogon(long ptr ptr long long ptr)
 210 stub MAPILogoff

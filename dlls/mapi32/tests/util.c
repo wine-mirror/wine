@@ -36,6 +36,10 @@ static void  (WINAPI *pSwapPword)(PUSHORT,ULONG);
 static void  (WINAPI *pSwapPlong)(PULONG,ULONG);
 static void  (WINAPI *pHexFromBin)(LPBYTE,int,LPWSTR);
 static void  (WINAPI *pFBinFromHex)(LPWSTR,LPBYTE);
+static UINT  (WINAPI *pUFromSz)(LPCSTR);
+static ULONG (WINAPI *pUlFromSzHex)(LPCSTR);
+static ULONG (WINAPI *pCbOfEncoded)(LPCSTR);
+static BOOL  (WINAPI *pIsBadBoundedStringPtr)(LPCSTR,ULONG);
 
 static void test_SwapPword(void)
 {
@@ -107,6 +111,63 @@ static void test_HexFromBin(void)
     ok(bOk == TRUE, "FBinFromHex: Result differs\n");
 }
 
+static void test_UFromSz(void)
+{
+    pUFromSz = (void*)GetProcAddress(hMapi32, "UFromSz@4");
+    if (!pUFromSz)
+        return;
+
+    ok(pUFromSz("105679") == 105679u,
+       "UFromSz: expected 105679, got %d\n", pUFromSz("105679"));
+
+    ok(pUFromSz(" 4") == 0, "UFromSz: exected 0. got %d\n",
+       pUFromSz(" 4"));
+}
+
+static void test_UlFromSzHex(void)
+{
+    pUlFromSzHex = (void*)GetProcAddress(hMapi32, "UlFromSzHex@4");
+    if (!pUlFromSzHex)
+        return;
+
+    ok(pUlFromSzHex("fF") == 0xffu,
+       "UlFromSzHex: expected 0xff, got 0x%lx\n", pUlFromSzHex("fF"));
+
+    ok(pUlFromSzHex(" c") == 0, "UlFromSzHex: exected 0x0. got 0x%lx\n",
+       pUlFromSzHex(" c"));
+}
+
+static void test_CbOfEncoded(void)
+{
+    char buff[129];
+    size_t i;
+
+    pCbOfEncoded = (void*)GetProcAddress(hMapi32, "CbOfEncoded@4");
+    if (!pCbOfEncoded)
+        return;
+
+    for (i = 0; i < sizeof(buff) - 1; i++)
+    {
+        ULONG ulRet, ulExpected = (((i | 3) >> 2) + 1) * 3;
+
+        memset(buff, '\0', sizeof(buff));
+        memset(buff, '?', i);
+        ulRet = pCbOfEncoded(buff);
+        ok(ulRet == ulExpected, "CbOfEncoded(length %d): expected %ld, got %ld\n",
+           i, ulExpected, ulRet);
+    }
+}
+
+static void test_IsBadBoundedStringPtr(void)
+{
+    pIsBadBoundedStringPtr = (void*)GetProcAddress(hMapi32, "IsBadBoundedStringPtr@8");
+    if (!pIsBadBoundedStringPtr)
+        return;
+
+    ok(pIsBadBoundedStringPtr(NULL, 0) == TRUE, "IsBadBoundedStringPtr: expected TRUE\n");
+    ok(pIsBadBoundedStringPtr("TEST", 4) == TRUE, "IsBadBoundedStringPtr: expected TRUE\n");
+    ok(pIsBadBoundedStringPtr("TEST", 5) == FALSE, "IsBadBoundedStringPtr: expected FALSE\n");
+}
 
 START_TEST(util)
 {
@@ -120,4 +181,8 @@ START_TEST(util)
     test_SwapPword();
     test_SwapPlong();
     test_HexFromBin();
+    test_UFromSz();
+    test_UlFromSzHex();
+    test_CbOfEncoded();
+    test_IsBadBoundedStringPtr();
 }
