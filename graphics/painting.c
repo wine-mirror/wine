@@ -1065,3 +1065,73 @@ POINT *GDI_Bezier( const POINT *Points, INT count, INT *nPtsOut )
     TRACE("Produced %d points\n", *nPtsOut);
     return out;
 }
+
+/******************************************************************************
+ *           GradientFill   (GDI32.@)
+ */
+BOOL WINAPI GdiGradientFill( HDC hdc, TRIVERTEX *vert_array, ULONG nvert,
+                          void * grad_array, ULONG ngrad, ULONG mode )
+{
+  int i,j,y,x;
+  GRADIENT_RECT *rect;
+  double ired,igreen,iblue;
+  double red, green,blue;
+
+  TRACE("vert_array:0x%08lx nvert:%ld grad_array:0x%08lx ngrad:%ld\n",(long)vert_array,nvert,(long)grad_array,ngrad);
+
+  switch(mode) {
+  case GRADIENT_FILL_RECT_H:
+    for(i=0;i<ngrad;i++) {
+      rect = (GRADIENT_RECT*)((long)grad_array+i*sizeof(GRADIENT_RECT));
+      y = vert_array[rect->UpperLeft].y;
+      /* Precompute some stuffs to speed up a little bit */
+      ired   = (double)(vert_array[rect->LowerRight].Red - vert_array[rect->UpperLeft].Red) / (double)(vert_array[rect->LowerRight].x - vert_array[rect->UpperLeft].x);
+      igreen = (double)(vert_array[rect->LowerRight].Green - vert_array[rect->UpperLeft].Green) / (double)(vert_array[rect->LowerRight].x - vert_array[rect->UpperLeft].x);
+      iblue  = (double)(vert_array[rect->LowerRight].Blue - vert_array[rect->UpperLeft].Blue) / (double)(vert_array[rect->LowerRight].x - vert_array[rect->UpperLeft].x);
+      red = vert_array[rect->UpperLeft].Red;
+      green = vert_array[rect->UpperLeft].Green;
+      blue = vert_array[rect->UpperLeft].Blue;
+      /* Draw the first line */
+      for (j=vert_array[rect->UpperLeft].x; j<=vert_array[rect->LowerRight].x; j++) {	
+	SetPixel(hdc,j,y,RGB(((int)red)>>8,((int)green)>>8,((int)blue)>>8));
+	red   += ired;
+	green += igreen;
+	blue  += iblue;
+      }
+      /* Extends to the correct size */
+      StretchBlt(hdc,vert_array[rect->UpperLeft].x, y+1,(vert_array[rect->LowerRight].x - vert_array[rect->UpperLeft].x), (vert_array[rect->LowerRight].y - y - 1),
+		 hdc,vert_array[rect->UpperLeft].x, y , (vert_array[rect->LowerRight].x - vert_array[rect->UpperLeft].x), 1, SRCCOPY);
+    }
+    break;
+  case GRADIENT_FILL_RECT_V:
+    for(i=0;i<ngrad;i++) {
+      rect = (GRADIENT_RECT*)((long)grad_array+i*sizeof(GRADIENT_RECT));
+      x = vert_array[rect->UpperLeft].x;
+      /* Precompute some stuffs to speed up a little bit */
+      ired   = (double)(vert_array[rect->LowerRight].Red - vert_array[rect->UpperLeft].Red) / (double)(vert_array[rect->LowerRight].y - vert_array[rect->UpperLeft].y);
+      igreen = (double)(vert_array[rect->LowerRight].Green - vert_array[rect->UpperLeft].Green) / (double)(vert_array[rect->LowerRight].y - vert_array[rect->UpperLeft].y);
+      iblue  = (double)(vert_array[rect->LowerRight].Blue - vert_array[rect->UpperLeft].Blue) / (double)(vert_array[rect->LowerRight].y - vert_array[rect->UpperLeft].y);
+      red = vert_array[rect->UpperLeft].Red;
+      green = vert_array[rect->UpperLeft].Green;
+      blue = vert_array[rect->UpperLeft].Blue;
+      /* Draw the first line */
+      for (j=vert_array[rect->UpperLeft].y; j<=vert_array[rect->LowerRight].y; j++) {	
+	SetPixel(hdc,x,j,RGB(((int)red)>>8,((int)green)>>8,((int)blue)>>8));
+	red   += ired;
+	green += igreen;
+	blue  += iblue;
+      }
+      /* Extends to the correct size */
+      StretchBlt(hdc,x+1,vert_array[rect->UpperLeft].y,
+		 (vert_array[rect->LowerRight].x - vert_array[rect->UpperLeft].x) - 1, (vert_array[rect->LowerRight].y - vert_array[rect->UpperLeft].y),
+		 hdc, x, vert_array[rect->UpperLeft].y, 1, (vert_array[rect->LowerRight].y - vert_array[rect->UpperLeft].y), SRCCOPY);
+    }
+    break;
+  case GRADIENT_FILL_TRIANGLE:
+    FIXME("GRADIENT_FILL_TRIANGLE stub\n");
+  default:
+    return FALSE;
+  }
+
+  return TRUE;
+}

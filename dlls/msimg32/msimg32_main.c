@@ -23,19 +23,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(msimg32);
 
-
-/******************************************************************************
- *           GradientFill   (MSIMG32.@)
- */
-BOOL WINAPI GradientFill( HDC hdc, TRIVERTEX *vert_array, ULONG nvert,
-                          void * grad_array, ULONG ngrad, ULONG mode )
-{
-    FIXME("stub: %ld vertices %ld gradients mode %lx\n", nvert, ngrad, mode);
-    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-    return FALSE;
-}
-
-
 /******************************************************************************
  *           AlphaBlend   (MSIMG32.@)
  */

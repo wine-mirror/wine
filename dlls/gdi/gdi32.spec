@@ -157,6 +157,7 @@
 @ stub GdiGetLocalBrush
 @ stub GdiGetLocalDC
 @ stub GdiGetLocalFont
+@ stdcall GdiGradientFill(long ptr long ptr long long) 
 @ stub GdiIsMetaFileDC
 @ stub GdiPlayDCScript
 @ stub GdiPlayJournal
