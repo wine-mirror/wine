@@ -404,6 +404,7 @@ BOOL ME_ArrowLeft(ME_TextEditor *editor, ME_Cursor *p)
     }
     assert(0);
   }
+  return FALSE;
 }
 
 BOOL ME_ArrowRight(ME_TextEditor *editor, ME_Cursor *p)
