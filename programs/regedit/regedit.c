@@ -138,9 +138,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
                     break;
                 }
             } else {
-                printf("%s: Incorrect switch format, switch '%c'\n%s",
-                       getAppName(), chu, usage);
-                exit(1);
+                /* this is a file name, starting from '/' */
+                s--;
                 break;
             }
         }
