@@ -389,10 +389,13 @@ enum get_sym_val DEBUG_GetSymbolValue( const char * name,
    {
       char buffer[512];
 
-      assert(strlen(name) < sizeof(buffer) - 2); /* one for '_', one for '\0' */
-      buffer[0] = '_';
-      strcpy(buffer + 1, name);
-      num = DEBUG_GSV_Helper(buffer, lineno, value, NUMDBGV, bp_flag);
+      if (strlen(name) < sizeof(buffer) - 2) /* one for '_', one for '\0' */
+      {
+          buffer[0] = '_';
+          strcpy(buffer + 1, name);
+          num = DEBUG_GSV_Helper(buffer, lineno, value, NUMDBGV, bp_flag);
+      }
+      else DEBUG_Printf(DBG_CHN_WARN, "Way too long symbol (%s)\n", name);
    }
 
    /* now get the local symbols if any */
