@@ -38,6 +38,7 @@ struct request_max_size
 #define REQUEST_MAX_VAR_SIZE  1024
 
 typedef int handle_t;
+typedef unsigned short atom_t;
 typedef unsigned int user_handle_t;
 
 #define FIRST_USER_HANDLE 0x0020
@@ -1254,7 +1255,7 @@ struct add_atom_request
     struct request_header __header;
     int           local;
     /* VARARG(name,unicode_str); */
-    int           atom;
+    atom_t        atom;
 };
 
 
@@ -1262,7 +1263,7 @@ struct add_atom_request
 struct delete_atom_request
 {
     struct request_header __header;
-    int           atom;
+    atom_t        atom;
     int           local;
 };
 
@@ -1273,7 +1274,7 @@ struct find_atom_request
     struct request_header __header;
     int          local;
     /* VARARG(name,unicode_str); */
-    int          atom;
+    atom_t       atom;
 };
 
 
@@ -1281,7 +1282,7 @@ struct find_atom_request
 struct get_atom_name_request
 {
     struct request_header __header;
-    int          atom;
+    atom_t       atom;
     int          local;
     int          count;
     /* VARARG(name,unicode_str); */
@@ -1571,7 +1572,7 @@ struct create_window_request
     struct request_header __header;
     user_handle_t  parent;
     user_handle_t  owner;
-    unsigned int   atom;
+    atom_t         atom;
     user_handle_t  handle;
 };
 
@@ -1620,7 +1621,7 @@ struct get_window_children_request
 {
     struct request_header __header;
     user_handle_t  parent;
-    unsigned int   atom;
+    atom_t         atom;
     void*          tid;
     int            count;
     /* VARARG(children,user_handles); */
@@ -1912,6 +1913,6 @@ union generic_request
     struct get_window_tree_request get_window_tree;
 };
 
-#define SERVER_PROTOCOL_VERSION 57
+#define SERVER_PROTOCOL_VERSION 58
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

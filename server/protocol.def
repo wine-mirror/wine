@@ -40,6 +40,7 @@ struct request_max_size
 #define REQUEST_MAX_VAR_SIZE  1024
 
 typedef int handle_t;
+typedef unsigned short atom_t;
 typedef unsigned int user_handle_t;
 
 #define FIRST_USER_HANDLE 0x0020  /* first possible value for low word of user handle */
@@ -1125,13 +1126,13 @@ enum event_op { PULSE_EVENT, SET_EVENT, RESET_EVENT };
     int           local;       /* is atom in local process table? */
     VARARG(name,unicode_str);  /* atom name */
 @REPLY
-    int           atom;        /* resulting atom */
+    atom_t        atom;        /* resulting atom */
 @END
 
 
 /* Delete an atom */
 @REQ(delete_atom)
-    int           atom;        /* atom handle */
+    atom_t        atom;        /* atom handle */
     int           local;       /* is atom in local process table? */
 @END
 
@@ -1141,13 +1142,13 @@ enum event_op { PULSE_EVENT, SET_EVENT, RESET_EVENT };
     int          local;        /* is atom in local process table? */
     VARARG(name,unicode_str);  /* atom name */
 @REPLY
-    int          atom;         /* atom handle */
+    atom_t       atom;         /* atom handle */
 @END
 
 
 /* Get an atom name */
 @REQ(get_atom_name)
-    int          atom;         /* atom handle */
+    atom_t       atom;         /* atom handle */
     int          local;        /* is atom in local process table? */
 @REPLY
     int          count;        /* atom lock count */
@@ -1404,7 +1405,7 @@ enum message_type
 @REQ(create_window)
     user_handle_t  parent;      /* parent window */
     user_handle_t  owner;       /* owner window */
-    unsigned int   atom;        /* class atom */
+    atom_t         atom;        /* class atom */
 @REPLY
     user_handle_t  handle;      /* created window */
 @END
@@ -1447,7 +1448,7 @@ enum message_type
 /* Get a list of the window children */
 @REQ(get_window_children)
     user_handle_t  parent;        /* parent window */
-    unsigned int   atom;          /* class atom for the listed children */
+    atom_t         atom;          /* class atom for the listed children */
     void*          tid;           /* thread owning the listed children */
 @REPLY
     int            count;         /* total count of children */

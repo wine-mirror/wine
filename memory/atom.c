@@ -431,7 +431,7 @@ static ATOM ATOM_AddAtomA( LPCSTR str, BOOL local )
         {
             MultiByteToWideChar( CP_ACP, 0, str, strlen(str), server_data_ptr(req), len );
             req->local = local;
-            if (!SERVER_CALL_ERR()) atom = req->atom + MIN_STR_ATOM;
+            if (!SERVER_CALL_ERR()) atom = req->atom;
         }
         SERVER_END_VAR_REQ;
     }
@@ -486,7 +486,7 @@ static ATOM ATOM_AddAtomW( LPCWSTR str, BOOL local )
         {
             memcpy( server_data_ptr(req), str, len * sizeof(WCHAR) );
             req->local = local;
-            if (!SERVER_CALL_ERR()) atom = req->atom + MIN_STR_ATOM;
+            if (!SERVER_CALL_ERR()) atom = req->atom;
         }
         SERVER_END_VAR_REQ;
     }
@@ -521,7 +521,7 @@ static ATOM ATOM_DeleteAtom( ATOM atom,  BOOL local)
     {
         SERVER_START_REQ( delete_atom )
         {
-            req->atom = atom - MIN_STR_ATOM;
+            req->atom = atom;
             req->local = local;
             if (!SERVER_CALL_ERR()) atom = 0;
         }
@@ -576,7 +576,7 @@ static ATOM ATOM_FindAtomA( LPCSTR str, BOOL local )
         {
             MultiByteToWideChar( CP_ACP, 0, str, strlen(str), server_data_ptr(req), len );
             req->local = local;
-            if (!SERVER_CALL_ERR()) atom = req->atom + MIN_STR_ATOM;
+            if (!SERVER_CALL_ERR()) atom = req->atom;
         }
         SERVER_END_VAR_REQ;
     }
@@ -630,7 +630,7 @@ static ATOM ATOM_FindAtomW( LPCWSTR str, BOOL local )
         {
             memcpy( server_data_ptr(req), str, len * sizeof(WCHAR) );
             req->local = local;
-            if (!SERVER_CALL_ERR()) atom = req->atom + MIN_STR_ATOM;
+            if (!SERVER_CALL_ERR()) atom = req->atom;
         }
         SERVER_END_VAR_REQ;
     }
@@ -682,7 +682,7 @@ static UINT ATOM_GetAtomNameA( ATOM atom, LPSTR buffer, INT count, BOOL local )
         len = 0;
         SERVER_START_VAR_REQ( get_atom_name, MAX_ATOM_LEN * sizeof(WCHAR) )
         {
-            req->atom = atom - MIN_STR_ATOM;
+            req->atom = atom;
             req->local = local;
             if (!SERVER_CALL_ERR())
             {
@@ -768,7 +768,7 @@ static UINT ATOM_GetAtomNameW( ATOM atom, LPWSTR buffer, INT count, BOOL local )
         len = 0;
         SERVER_START_VAR_REQ( get_atom_name, MAX_ATOM_LEN * sizeof(WCHAR) )
         {
-            req->atom = atom - MIN_STR_ATOM;
+            req->atom = atom;
             req->local = local;
             if (!SERVER_CALL_ERR())
             {
