@@ -966,6 +966,21 @@ static const CSIDL_DATA CSIDL_Data[] =
 	NULL,
 	NULL
     },
+    { /* unassigned 32 */
+	0, 0,
+	NULL,
+	NULL
+    },
+    { /* unassigned 33 */
+	0, 0,
+	NULL,
+	NULL
+    },
+    { /* unassigned 34 */
+	0, 0,
+	NULL,
+	NULL
+    },
     { /* CSIDL_COMMON_MUSIC */
 	9, HKLM,
 	"CommonMusic",
