@@ -1,3 +1,4 @@
 Makefile
 disp.s
-display.spec.c
+*.spec.c
+*.spec.glue.s

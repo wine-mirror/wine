@@ -1,3 +1,3 @@
 Makefile
-dplay.spec.c
-dplayx.spec.c
+*.spec.c
+*.spec.glue.s

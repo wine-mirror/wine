@@ -1,5 +1,4 @@
 Makefile
-shell.spec.c
-shell32.spec.c
-shlwapi.spec.c
+*.spec.c
+*.spec.glue.s
 shres.s
