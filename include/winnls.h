@@ -9,7 +9,7 @@
 #endif
 #include <wctype.h> /* needed for towupper */
 #endif
-#include "wintypes.h"
+#include "windef.h"
 
 /* flags to GetLocaleInfo */
 #define	LOCALE_NOUSEROVERRIDE	    0x80000000

@@ -7,7 +7,7 @@
 #ifndef __WINE_LDT_H
 #define __WINE_LDT_H
 
-#include "wintypes.h"
+#include "windef.h"
 
 enum seg_type
 {

@@ -1,7 +1,7 @@
 #ifndef __WINE_OLECTL_H
 #define __WINE_OLECTL_H
 
-#include "wintypes.h"
+#include "windef.h"
 
 #define WINOLECTLAPI INT WINAPI
 

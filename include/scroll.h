@@ -8,7 +8,7 @@
 #ifndef __WINE_SCROLL_H
 #define __WINE_SCROLL_H
 
-#include "wintypes.h"
+#include "windef.h"
 
 typedef struct
 {

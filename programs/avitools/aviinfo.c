@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <assert.h>
 #include <strings.h>
-#include "wintypes.h"
+#include "windef.h"
 #include "windows.h"
 #include "mmsystem.h"
 #include "vfw.h"

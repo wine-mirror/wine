@@ -10,7 +10,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
-#include "wintypes.h"
+#include "windef.h"
 #include "wine/winbase16.h"
 #include "heap.h"
 #include "file.h"

@@ -6,7 +6,7 @@
 
 #include "winbase.h"
 #include "winerror.h"
-#include "wintypes.h"
+#include "windef.h"
 #include "debug.h"
 #include "mmsystem.h"
 #include "msacm.h"

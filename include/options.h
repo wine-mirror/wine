@@ -7,7 +7,7 @@
 #ifndef __WINE_OPTIONS_H
 #define __WINE_OPTIONS_H
 
-#include "wintypes.h"
+#include "windef.h"
 
   /* Supported languages */
   /* When adding a new language look at ole/ole2nls.c 

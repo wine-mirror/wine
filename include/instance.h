@@ -7,7 +7,7 @@
 #ifndef __WINE_INSTANCE_H
 #define __WINE_INSTANCE_H
 
-#include "wintypes.h"
+#include "windef.h"
 
   /* This structure is always located at offset 0 of the DGROUP segment */
 

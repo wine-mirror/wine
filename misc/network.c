@@ -12,7 +12,7 @@
 #include <pwd.h>
 #include <unistd.h>
 
-#include "wintypes.h"
+#include "windef.h"
 #include "winnetwk.h"
 #include "winuser.h"
 #include "winerror.h"

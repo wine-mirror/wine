@@ -5,7 +5,7 @@
 #ifndef __WINE_TTYDRV_H
 #define __WINE_TTYDRV_H
 
-#include "wintypes.h"
+#include "windef.h"
 #include "wine/winuser16.h"
 
 struct tagCLASS;

@@ -13,7 +13,7 @@
 #ifdef CONFIG_IPC
 
 #include <sys/shm.h>
-#include "wintypes.h"
+#include "windef.h"
 #define SEGSIZE                 0x10000 /* 64 */ 
 #define SHM_GRANULARITY         SEGSIZE
 #define SHM_MINBLOCK            SHM_GRANULARITY

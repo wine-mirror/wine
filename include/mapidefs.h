@@ -1,7 +1,7 @@
 #ifndef __WINE_MAPIDEFS_H
 #define __WINE_MAPIDEFS_H
 
-#include "wintypes.h"
+#include "windef.h"
 
 #ifndef _tagCY_DEFINED
 #define _tagCY_DEFINED

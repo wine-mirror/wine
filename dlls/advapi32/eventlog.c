@@ -4,7 +4,7 @@
  * Copyright 1995 Sven Verdoolaege, 1998 Juergen Schmied
  */
 
-#include "wintypes.h"
+#include "windef.h"
 #include "winreg.h"
 #include "winerror.h"
 #include "heap.h"

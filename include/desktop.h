@@ -7,7 +7,7 @@
 #ifndef __WINE_DESKTOP_H
 #define __WINE_DESKTOP_H
 
-#include "wintypes.h"
+#include "windef.h"
 
 struct tagMONITOR;
 

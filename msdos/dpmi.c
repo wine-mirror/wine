@@ -6,7 +6,7 @@
 
 #include <unistd.h>
 #include <string.h>
-#include "wintypes.h"
+#include "windef.h"
 #include "wine/winbase16.h"
 #include "ldt.h"
 #include "global.h"

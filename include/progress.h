@@ -7,7 +7,7 @@
 #ifndef __WINE_PROGRESS_H
 #define __WINE_PROGRESS_H
 
-#include "wintypes.h"
+#include "windef.h"
 
 typedef struct
 {

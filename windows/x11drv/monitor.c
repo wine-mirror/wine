@@ -18,7 +18,7 @@
 #include "heap.h"
 #include "monitor.h"
 #include "options.h"
-#include "wintypes.h"
+#include "windef.h"
 #include "x11drv.h"
 
 /**********************************************************************/

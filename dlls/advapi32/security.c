@@ -4,7 +4,7 @@
  */
 #include <string.h>
 
-#include "wintypes.h"
+#include "windef.h"
 #include "winreg.h"
 #include "winerror.h"
 #include "heap.h"

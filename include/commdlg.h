@@ -9,7 +9,7 @@
 extern "C" {
 #endif
 
-#include "wintypes.h"		/* needed for CHOOSEFONT structure */
+#include "windef.h"		/* needed for CHOOSEFONT structure */
 #include "winuser.h"
 
 #define OFN_READONLY                 0x00000001

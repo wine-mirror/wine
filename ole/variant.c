@@ -20,7 +20,7 @@
  *   - The parsing does not accept has many formats has the Windows implementation.
  */
  
-#include "wintypes.h"
+#include "windef.h"
 #include "oleauto.h"
 #include "heap.h"
 #include "debug.h"

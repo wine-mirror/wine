@@ -14,7 +14,7 @@
 #include "debug.h"
 #include "display.h"
 #include "win.h"
-#include "wintypes.h"
+#include "windef.h"
 #include "x11drv.h"
 
 /**********************************************************************/

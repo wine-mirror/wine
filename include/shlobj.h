@@ -1,7 +1,7 @@
 #ifndef __WINE_SHLOBJ_H
 #define __WINE_SHLOBJ_H
 
-#include "wintypes.h"
+#include "windef.h"
 #include "winbase.h"	/* WIN32_FIND_* */
 #include "wine/obj_base.h"
 #include "wine/obj_shelllink.h"

@@ -1,7 +1,7 @@
 #ifndef __WINE_TLHELP32_H
 #define __WINE_TLHELP32_H
 
-#include "wintypes.h"
+#include "windef.h"
 
 #ifdef __cplusplus
 extern "C" {

@@ -7,7 +7,7 @@
 #ifndef __WINE_LZEXPAND_H
 #define __WINE_LZEXPAND_H
 
-#include "wintypes.h"
+#include "windef.h"
 
 #define LZERROR_BADINHANDLE	-1	/* -1 */
 #define LZERROR_BADOUTHANDLE	-2	/* -2 */

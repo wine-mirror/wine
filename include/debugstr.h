@@ -1,7 +1,7 @@
 #ifndef __WINE_DEBUGSTR_H
 #define __WINE_DEBUGSTR_H
 
-#include "wintypes.h"
+#include "windef.h"
 
 /* These function return a printable version of a string, including
    quotes.  The string will be valid for some time, but not indefinitely

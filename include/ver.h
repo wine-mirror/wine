@@ -5,7 +5,7 @@
 #ifndef __WINE_VER_H
 #define __WINE_VER_H
 
-#include "wintypes.h"
+#include "windef.h"
 
 /* resource ids for different version infos */
 /* These are internal resources for win16, but simple numbers in win32 */

@@ -7,7 +7,7 @@
 #ifndef __WINE_WINPROC_H
 #define __WINE_WINPROC_H
 
-#include "wintypes.h"
+#include "windef.h"
 
 typedef enum
 {

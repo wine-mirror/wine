@@ -11,7 +11,7 @@
 #ifndef __WINE_DDE_H
 #define __WINE_DDE_H
 
-#include "wintypes.h"
+#include "windef.h"
 #include "dde_proc.h"
 
 #define WM_DDE_INITIATE   0x3E0

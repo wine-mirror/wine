@@ -7,7 +7,7 @@
 
 #include "heap.h"
 #include "monitor.h"
-#include "wintypes.h"
+#include "windef.h"
 #include "ttydrv.h"
 
 /***********************************************************************

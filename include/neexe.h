@@ -4,7 +4,7 @@
 #ifndef __WINE_NEEXE_H
 #define __WINE_NEEXE_H
 
-#include "wintypes.h"
+#include "windef.h"
 
 /*
  * Old MZ header for DOS programs.

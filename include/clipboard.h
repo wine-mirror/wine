@@ -2,7 +2,7 @@
 #define __WINE_CLIPBOARD_H
 
 #include "win.h"
-#include "wintypes.h"
+#include "windef.h"
 
 typedef struct tagWINE_CLIPFORMAT {
     WORD	wFormatID;

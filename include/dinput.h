@@ -2,7 +2,6 @@
 #define _WINE_DINPUT_H
 
 #include "windef.h" /* for MAX_PATH */
-#include "wintypes.h"
 #include "unknwn.h"
 #include "mouse.h"
 

@@ -5,7 +5,7 @@
  */
 
 #include <sys/types.h>
-#include "wintypes.h"
+#include "windef.h"
 #include "miscemu.h"
 #include "msdos.h"
 #include "debug.h"

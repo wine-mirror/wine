@@ -9,9 +9,7 @@
 #define __WRC_RSC_H
 #define __WINE_WRC_RSC_H
 
-#ifndef __WINE_WINTYPES_H
-#include <wintypes.h>		/* For types in structure */
-#endif
+#include "windef.h"		/* For types in structure */
 
 /*
  * Note on the resource and type names:

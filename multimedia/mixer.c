@@ -9,7 +9,7 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <sys/ioctl.h>
-#include "wintypes.h"
+#include "windef.h"
 #include "user.h"
 #include "driver.h"
 #include "multimedia.h"

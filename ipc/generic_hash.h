@@ -8,7 +8,7 @@
 #ifndef _GENERIC_HASH_H_
 #define _GENERIC_HASH_H_
 
-#include "wintypes.h"
+#include "windef.h"
 #include "shm_block.h"
 #include "win.h"
 /* default hash values */

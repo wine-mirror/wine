@@ -5,7 +5,7 @@
 #ifndef __WINE_COMMCTRL_H
 #define __WINE_COMMCTRL_H
 
-#include "wintypes.h"
+#include "windef.h"
 #include "winuser.h"
 #include "imagelist.h"
 

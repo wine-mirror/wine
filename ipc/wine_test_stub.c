@@ -1,6 +1,6 @@
 #include <stdlib.h>
 #include "dde.h"
-#include <wintypes.h>
+#include "windef.h"
 #include "global.h"
 #include <win.h>
 #define DEBUG_DEFINE_VARIABLES

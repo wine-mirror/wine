@@ -21,7 +21,6 @@
 #include <time.h>
 #include <assert.h>
 #include <strings.h>
-#include "wintypes.h"
 #include "windows.h"
 #include "wingdi.h"
 #include "mmsystem.h"

@@ -12,7 +12,7 @@
 
 #ifdef CONFIG_IPC
 
-#include "wintypes.h"
+#include "windef.h"
 #include "global.h"
 #include "shm_block.h"
 

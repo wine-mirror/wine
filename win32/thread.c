@@ -7,7 +7,7 @@
 
 #include <unistd.h>
 #include <string.h>
-#include "wintypes.h"
+#include "windef.h"
 #include "winerror.h"
 #include "debug.h"
 

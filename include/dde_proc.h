@@ -13,7 +13,7 @@
 #ifdef CONFIG_IPC
 
 #include <setjmp.h>
-#include "wintypes.h"
+#include "windef.h"
 #include "windows.h"
 #define DDE_PROCS 64
 #define DDE_WINDOWS 64

@@ -10,7 +10,7 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include "wintypes.h"
+#include "windef.h"
 #include "options.h"
 #include "gdi.h"
 #include "color.h"

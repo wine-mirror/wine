@@ -1,7 +1,7 @@
 #ifndef __WINE_WINUSER16_H
 #define __WINE_WINUSER16_H
 
-#include "wintypes.h"
+#include "windef.h"
 #include "winbase.h"
 #include "winuser.h"
 

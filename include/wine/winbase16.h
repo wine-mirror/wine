@@ -1,7 +1,7 @@
 #ifndef _INCLUDE_WINE_WINBASE16_H
 #define _INCLUDE_WINE_WINBASE16_H
 
-#include "wintypes.h"
+#include "windef.h"
 #pragma pack(1)
 typedef struct _SEGINFO {
     UINT16    offSegment;

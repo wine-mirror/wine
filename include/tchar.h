@@ -1,7 +1,7 @@
 #ifndef __WINE_TCHAR_H
 #define __WINE_TCHAR_H
 
-#include "wintypes.h"
+#include "windef.h"
 
 #ifdef __cplusplus
 extern "C" {

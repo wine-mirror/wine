@@ -10,7 +10,7 @@
 #ifndef _ACM_WAVEFILTER
 #define _ACM_WAVEFILTER
 
-#include "wintypes.h"
+#include "windef.h"
 
 #define WAVE_FILTER_UNKNOWN     0x0000
 #define WAVE_FILTER_DEVELOPMENT 0xFFFF

@@ -3,7 +3,7 @@
  */
 
 #include <stdlib.h>
-#include "wintypes.h"
+#include "windef.h"
 #include "wine/winesound.h"
 #include "debug.h"
 

@@ -11,7 +11,7 @@
 
 #include <stdlib.h>
 #include <unistd.h>
-#include "wintypes.h"
+#include "windef.h"
 
 #ifdef HAVE_LINUX_CDROM_H
 # include <linux/cdrom.h>

@@ -9,7 +9,7 @@
 
 #include <stdio.h>
 #include <strings.h>
-#include "wintypes.h"
+#include "windef.h"
 #include "winerror.h"
 #include "winbase.h"
 #include "oleauto.h"

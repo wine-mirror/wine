@@ -5,7 +5,7 @@
 #ifndef __WINE_OLE2_H
 #define __WINE_OLE2_H
 
-#include "wintypes.h"
+#include "windef.h"
 #include "winerror.h"
 #include "oleidl.h"
 #include "oleauto.h"

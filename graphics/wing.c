@@ -25,7 +25,7 @@
 #include "heap.h"
 #include "selectors.h"
 #include "monitor.h"
-#include "wintypes.h"
+#include "windef.h"
 #include "xmalloc.h"
 
 typedef enum WING_DITHER_TYPE

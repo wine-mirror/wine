@@ -8,7 +8,7 @@
 #define __WINE_DEBUGGER_H
 
 #include <sys/types.h> /* u_long ... */
-#include "wintypes.h"
+#include "windef.h"
 #include "sig_context.h"
 #include "miscemu.h"
 

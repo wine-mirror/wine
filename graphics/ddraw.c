@@ -4253,7 +4253,7 @@ HRESULT WINAPI DirectDrawCreate( LPGUID lpGUID, LPDIRECTDRAW *lplpDD, LPUNKNOWN 
 
 #else /* !defined(X_DISPLAY_MISSING) */
 
-#include "wintypes.h"
+#include "windef.h"
 
 #define DD_OK 0
 

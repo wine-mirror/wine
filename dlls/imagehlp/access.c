@@ -7,7 +7,7 @@
 #include "winbase.h"
 #include "winnt.h"
 #include "winerror.h"
-#include "wintypes.h"
+#include "windef.h"
 #include "heap.h"
 #include "debug.h"
 #include "imagehlp.h"

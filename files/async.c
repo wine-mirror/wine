@@ -35,7 +35,7 @@
 #endif
 
 #include "xmalloc.h"
-#include "wintypes.h"
+#include "windef.h"
 #include "miscemu.h"
 #include "selectors.h"
 #include "sig_context.h"

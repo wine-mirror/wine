@@ -8,10 +8,7 @@
 #ifndef __WRC_WRCTYPES_H
 #define __WRC_WRCTYPES_H
 
-/* First is MS style, second wine style */
-#ifndef __WINE_WINTYPES_H
-#include "wintypes.h"
-#endif
+#include "windef.h"
 
 #ifndef MAKELANGID
 #include "winnls.h"

@@ -5,7 +5,7 @@
 #ifndef __WINE_SPY_H
 #define __WINE_SPY_H
 
-#include "wintypes.h"
+#include "windef.h"
 
 #define SPY_DISPATCHMESSAGE16     0x0100
 #define SPY_DISPATCHMESSAGE     0x0101

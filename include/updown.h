@@ -7,7 +7,7 @@
 #ifndef __WINE_UPDOWN_H
 #define __WINE_UPDOWN_H
 
-#include "wintypes.h"
+#include "windef.h"
 #include "commctrl.h"
 
 typedef struct

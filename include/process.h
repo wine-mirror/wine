@@ -7,7 +7,7 @@
 #ifndef __WINE_PROCESS_H
 #define __WINE_PROCESS_H
 
-#include "wintypes.h"
+#include "windef.h"
 #include "module.h"
 
 struct _NE_MODULE;

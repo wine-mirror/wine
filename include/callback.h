@@ -7,7 +7,7 @@
 #ifndef __WINE_CALLBACK_H
 #define __WINE_CALLBACK_H
 
-#include "wintypes.h"
+#include "windef.h"
 #include "winnt.h"
 #include "wine/winuser16.h"
 

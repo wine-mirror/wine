@@ -7,7 +7,7 @@
 #ifndef __WINE_GLOBAL_H
 #define __WINE_GLOBAL_H
 
-#include "wintypes.h"
+#include "windef.h"
 
 typedef struct
 {

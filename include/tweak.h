@@ -9,7 +9,7 @@
 #if !defined(__WINE_TWEAK_H)
 #define __WINE_TWEAK_H
 
-#include "wintypes.h"
+#include "windef.h"
 
 typedef enum
 {

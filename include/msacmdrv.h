@@ -5,7 +5,7 @@
 #ifndef __WINE_MSACMDRV_H
 #define __WINE_MSACMDRV_H
 
-#include "wintypes.h"
+#include "windef.h"
 #include "msacm.h"
 
 /***********************************************************************

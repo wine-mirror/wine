@@ -3,7 +3,7 @@
  */
 
 #include "config.h"
-#include "wintypes.h"
+#include "windef.h"
 #include "winnt.h"
 #include "console.h"
 

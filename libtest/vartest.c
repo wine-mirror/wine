@@ -57,7 +57,7 @@
 #if WINDOWS
 #include <wtypes.h>
 #else
-#include <wintypes.h>
+#include <windef.h>
 #endif
 
 

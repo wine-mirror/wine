@@ -8,7 +8,7 @@
 #define __WINE_WINE_OBJ_PICTURE_H
 
 #include "windows.h"
-#include "wintypes.h"
+#include "windef.h"
 
 /*****************************************************************************
  * Predeclare the structures

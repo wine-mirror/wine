@@ -11,7 +11,7 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <sys/ioctl.h>
-#include "wintypes.h"
+#include "windef.h"
 #include "driver.h"
 #include "multimedia.h"
 #include "debug.h"

@@ -4,7 +4,7 @@
  * Copyright 1999 Ulrich Weigand 
  */
 
-#include "wintypes.h"
+#include "windef.h"
 #include "heap.h"
 #include "module.h"
 #include "selectors.h"

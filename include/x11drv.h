@@ -15,7 +15,7 @@
 #endif /* !defined(X_DISPLAY_MISSING) */
 
 #include "gdi.h"
-#include "wintypes.h"
+#include "windef.h"
 #include "wine/winuser16.h"
 
 struct tagCLASS;

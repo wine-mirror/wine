@@ -4,7 +4,7 @@
  *	Copyright 1998	Patrik Stridvall
  */
 
-#include "wintypes.h"
+#include "windef.h"
 #include "winbase.h"
 #include "winerror.h"
 #include "oledlg.h"

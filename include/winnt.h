@@ -7,7 +7,7 @@
 #ifndef __WINE_WINNT_H
 #define __WINE_WINNT_H
 
-#include "wintypes.h"
+#include "windef.h"
 
 #pragma pack(1)
 /* Defines */

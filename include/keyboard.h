@@ -7,7 +7,7 @@
 #ifndef __WINE_KEYBOARD_H
 #define __WINE_KEYBOARD_H
 
-#include "wintypes.h"
+#include "windef.h"
 
 #pragma pack(1)
 typedef struct _KBINFO

@@ -9,7 +9,7 @@
 
 #include "display.h"
 #include "debug.h"
-#include "wintypes.h"
+#include "windef.h"
 
 #ifndef X_DISPLAY_MISSING
 extern MOUSE_DRIVER X11DRV_MOUSE_Driver;

@@ -13,7 +13,7 @@
 #include <stdio.h>
 #include "console.h"
 #include "config.h"
-#include "wintypes.h" /* FALSE */
+#include "windef.h"
 void TTY_Start()
 {
    /* This should be the root driver so we can ignore anything

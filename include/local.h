@@ -7,7 +7,7 @@
 #ifndef __WINE_LOCAL_H
 #define __WINE_LOCAL_H
 
-#include "wintypes.h"
+#include "windef.h"
 
   /* These function are equivalent to the Local* API functions, */
   /* excepted that they need DS as the first parameter. This    */

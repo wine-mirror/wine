@@ -10,7 +10,7 @@ at a later date. */
 #include <string.h>
 #include <sys/time.h>
 #include <unistd.h>
-#include "wintypes.h"
+#include "windef.h"
 #include "winerror.h"
 #include "heap.h"
 #include "debug.h"

@@ -1,7 +1,7 @@
 #ifndef _WINNETWK_H_
 #define _WINNETWK_H_
 
-#include "wintypes.h"
+#include "windef.h"
 
 
 typedef struct {

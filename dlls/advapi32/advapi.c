@@ -7,7 +7,7 @@
 #include <unistd.h>
 #include <string.h>
 
-#include "wintypes.h"
+#include "windef.h"
 #include "winerror.h"
 #include "wine/winestring.h"
 #include "heap.h"

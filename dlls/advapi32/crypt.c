@@ -1,7 +1,7 @@
 /*
  * dlls/advapi32/crypt.c
  */
-#include "wintypes.h"
+#include "windef.h"
 #include "winerror.h"
 #include "wincrypt.h"
 #include "debug.h"

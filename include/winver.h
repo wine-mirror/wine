@@ -1,7 +1,7 @@
 #ifndef __WINE_WINVER_H
 #define __WINE_WINVER_H
 
-#include "wintypes.h"
+#include "windef.h"
 
 DWORD       WINAPI VerFindFile16(UINT16,LPCSTR,LPCSTR,LPCSTR,LPSTR,UINT16*,LPSTR,UINT16*);
 DWORD       WINAPI VerFindFileA(UINT,LPCSTR,LPCSTR,LPCSTR,LPSTR,UINT*,LPSTR,UINT*);

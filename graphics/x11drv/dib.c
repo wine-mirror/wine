@@ -11,7 +11,7 @@
 #include "ts_xlib.h"
 #include "ts_xutil.h"
 
-#include "wintypes.h"
+#include "windef.h"
 #include "bitmap.h"
 #include "x11drv.h"
 #include "debug.h"

@@ -1,7 +1,7 @@
 #ifndef _INCLUDE_WINE_STRINGS_H
 #define _INCLUDE_WINE_STRINGS_H
 
-#include "wintypes.h"
+#include "windef.h"
 
 INT16       WINAPI WideCharToLocal16(LPSTR,LPWSTR,INT16);
 INT       WINAPI WideCharToLocal(LPSTR,LPWSTR,INT);

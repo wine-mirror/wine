@@ -19,7 +19,7 @@
 #include <signal.h>
 #include <errno.h>
 #include <sys/msg.h>
-#include "wintypes.h"
+#include "windef.h"
 #include "win.h"
 #include "shm_semaph.h"
 #include "shm_main_blk.h"

@@ -12,7 +12,7 @@
 
 #ifdef CONFIG_IPC
 
-#include "wintypes.h"
+#include "windef.h"
 
 #define DDE_ATOMS 157		   /* a prime number for hashing */
 

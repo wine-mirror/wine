@@ -1,7 +1,7 @@
 #ifndef __WINE_STRESS_H
 #define __WINE_STRESS_H
 
-#include <wintypes.h>
+#include "windef.h"
 
 #ifdef __cplusplus
 extern "C" {

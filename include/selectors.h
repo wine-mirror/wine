@@ -7,7 +7,7 @@
 #ifndef __WINE_SELECTORS_H
 #define __WINE_SELECTORS_H
 
-#include "wintypes.h"
+#include "windef.h"
 #include "ldt.h"
 
 extern WORD SELECTOR_AllocBlock( const void *base, DWORD size,

@@ -5,7 +5,7 @@
  */
 
 #include "winbase.h"
-#include "wintypes.h"
+#include "windef.h"
 #include "tapi.h"
 #include "debug.h"
 

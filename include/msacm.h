@@ -5,7 +5,7 @@
 #ifndef __WINE_MSACM_H
 #define __WINE_MSACM_H
 
-#include "wintypes.h"
+#include "windef.h"
 #include "driver.h"
 #include "mmsystem.h"
 #include "mmreg.h"
@@ -14,7 +14,7 @@
  * Types
  */
 
-/* FIXME: Move to wintypes.h */
+/* FIXME: Move to windef.h */
 #define DECLARE_HANDLE(a) \
 typedef HANDLE16 a##16; \
 typedef HANDLE a; \
@@ -28,7 +28,7 @@ DECLARE_HANDLE(HACMDRIVER)
 DECLARE_HANDLE(HACMSTREAM)
 DECLARE_HANDLE(HACMOBJ)
 
-/* FIXME: Remove when define moved to wintypes.h */
+/* FIXME: Remove when define moved to windef.h */
 #undef DECLARE_HANDLE
 
 /***********************************************************************

@@ -16,7 +16,7 @@
 #include "debug.h"
 #include "message.h"
 #include "win.h"
-#include "wintypes.h"
+#include "windef.h"
 #include "x11drv.h"
 
 extern HWND hWndClipOwner;

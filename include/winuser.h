@@ -4,7 +4,7 @@
 #ifndef RC_INVOKED
 #include <stdarg.h>
 #endif
-#include "wintypes.h"
+#include "windef.h"
 #include "wingdi.h"
 #include "wine/winestring.h"
 

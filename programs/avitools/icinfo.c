@@ -1,6 +1,5 @@
 #include <stdio.h>
 #include <strings.h>
-#include "wintypes.h"
 #include "windows.h"
 #include "driver.h"
 #include "mmsystem.h"

@@ -7,7 +7,7 @@
 #ifndef __WINE_SYSLEVEL_H
 #define __WINE_SYSLEVEL_H
 
-#include "wintypes.h"
+#include "windef.h"
 #include "winbase.h"
 
 extern WORD SYSLEVEL_Win16CurrentTeb;

@@ -7,7 +7,7 @@
 #ifndef __WINE_TASK_H
 #define __WINE_TASK_H
 
-#include "wintypes.h"
+#include "windef.h"
 
 #pragma pack(1)
 

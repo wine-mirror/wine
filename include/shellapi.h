@@ -1,7 +1,7 @@
 #ifndef _WINE_SHELLAPI_H
 #define _WINE_SHELLAPI_H
 
-#include "wintypes.h"
+#include "windef.h"
 
 HICON16     WINAPI ExtractIcon16(HINSTANCE16,LPCSTR,UINT16);
 HICON     WINAPI ExtractIconA(HINSTANCE,LPCSTR,UINT);

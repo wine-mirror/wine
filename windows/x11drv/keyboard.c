@@ -22,7 +22,7 @@
 #include "debug.h"
 #include "keyboard.h"
 #include "message.h"
-#include "wintypes.h"
+#include "windef.h"
 #include "x11drv.h"
 #include "winnls.h"
 

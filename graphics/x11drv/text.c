@@ -12,7 +12,7 @@
 #include "ts_xlib.h"
 
 #include <stdlib.h>
-#include "wintypes.h"
+#include "windef.h"
 #include <math.h>
 #include "dc.h"
 #include "gdi.h"

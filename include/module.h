@@ -7,7 +7,7 @@
 #ifndef __WINE_MODULE_H
 #define __WINE_MODULE_H
 
-#include "wintypes.h"
+#include "windef.h"
 #include "dosexe.h"
 #include "pe_image.h"
 

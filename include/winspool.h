@@ -8,7 +8,7 @@
 #ifndef __WINE_WINSPOOL_H
 #define __WINE_WINSPOOL_H
 
-#include "wintypes.h"
+#include "windef.h"
 #include "winbase.h"
 #include "wingdi.h"
 

@@ -7,7 +7,7 @@
 #ifndef __WINE_QUEUE_H
 #define __WINE_QUEUE_H
 
-#include "wintypes.h"
+#include "windef.h"
 #include "winuser.h"
 #include "thread.h"
 

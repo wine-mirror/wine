@@ -6,7 +6,7 @@
 
 #include <string.h>
 #include "config.h"
-#include "wintypes.h"
+#include "windef.h"
 #include "winerror.h"
 #include "wine/obj_base.h"
 #include "heap.h"

@@ -2,7 +2,7 @@
 #define __WINE_NTDEF_H
 
 /* fixme: include basestd.h instead */
-#include "wintypes.h"
+#include "windef.h"
 
 #ifdef __cplusplus
 extern "C" {

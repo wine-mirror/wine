@@ -1,7 +1,7 @@
 #ifndef __WINE_PE_IMAGE_H
 #define __WINE_PE_IMAGE_H
 
-#include "wintypes.h"
+#include "windef.h"
 #include "winbase.h"
 #include "peexe.h"
 /* modreference used for attached processes

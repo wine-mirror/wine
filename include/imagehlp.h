@@ -5,7 +5,6 @@
 #ifndef __WINE_IMAGEHLP_H
 #define __WINE_IMAGEHLP_H
 
-#include "wintypes.h"
 #include "windef.h"
 #include "winbase.h"
 

@@ -6,7 +6,7 @@
 #define __WINE_WTYPES_H
 
 
-#include "wintypes.h"
+#include "windef.h"
 
 /* FIXME: this line should be in rpcndr.h */
 typedef unsigned char byte;

@@ -5,7 +5,7 @@
  * Copyright (c) 1996 Anand Kumria
  */
 
-#include "wintypes.h"
+#include "windef.h"
 #include "w32sys.h"
 
 /***********************************************************************

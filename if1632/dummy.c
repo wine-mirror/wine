@@ -2,7 +2,7 @@
  * Dummy function definitions
  */
 
-#include "wintypes.h"
+#include "windef.h"
 #include "debug.h"
 
 long WINAPI stub_GDI_379(HDC16 hdc) { FIXME(relay, "STARTPAGE: stub\n"); return 1; }

@@ -24,7 +24,7 @@
 #include "message.h"
 #include "heap.h"
 #include "win.h"
-#include "wintypes.h"
+#include "windef.h"
 #include "class.h"
 #include "x11drv.h"
 

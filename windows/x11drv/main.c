@@ -25,7 +25,7 @@
 #include "monitor.h"
 #include "options.h"
 #include "win.h"
-#include "wintypes.h"
+#include "windef.h"
 #include "x11drv.h"
 #include "xmalloc.h"
 #include "version.h"

@@ -1,7 +1,7 @@
 #ifndef _WINE_SOUND_H
 #define _WINE_SOUND_H
 
-#include "wintypes.h"
+#include "windef.h"
 
 VOID        WINAPI CloseSound16(VOID);
 INT16       WINAPI CountVoiceNotes16(INT16);

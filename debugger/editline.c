@@ -33,7 +33,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
-#include "wintypes.h"
+#include "windef.h"
 
 /*
 **  Manifest constants.

@@ -1,7 +1,7 @@
 #ifndef __WINE_RAS_H
 #define __WINE_RAS_H
 
-#include "wintypes.h"
+#include "windef.h"
 
 #define RAS_MaxEntryName	256
 

@@ -1,7 +1,7 @@
 #ifndef __WINE_VFW_H
 #define __WINE_VFW_H
 
-#include "wintypes.h"
+#include "windef.h"
 #include "mmsystem.h"
 #include "wingdi.h"
 #include "wine/obj_base.h"

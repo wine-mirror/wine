@@ -10,7 +10,7 @@
 #include <string.h>
 #include <fcntl.h>
 #include <sys/ioctl.h>
-#include "wintypes.h"
+#include "windef.h"
 #include "wine/winuser16.h"
 #include "driver.h"
 #include "mmsystem.h"

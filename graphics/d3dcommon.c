@@ -4,7 +4,7 @@
    This file contains all common miscellaneous code that spans
    different 'objects' */
 
-#include "wintypes.h"
+#include "windef.h"
 #include "wine/obj_base.h"
 #include "ddraw.h"
 #include "d3d.h"

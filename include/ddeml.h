@@ -8,7 +8,7 @@
 #ifndef __WINE__DDEML_H
 #define __WINE__DDEML_H
 
-#include "wintypes.h"
+#include "windef.h"
 
 /* Codepage Constants
  */

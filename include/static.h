@@ -7,7 +7,7 @@
 #ifndef __WINE_STATIC_H
 #define __WINE_STATIC_H
 
-#include "wintypes.h"
+#include "windef.h"
 
   /* Extra info for STATIC windows */
 typedef struct

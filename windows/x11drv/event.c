@@ -33,7 +33,7 @@
 #include "shell.h"
 #include "winpos.h"
 #include "winsock.h"
-#include "wintypes.h"
+#include "windef.h"
 #include "x11drv.h"
   
 /* X context to associate a hwnd to an X window */

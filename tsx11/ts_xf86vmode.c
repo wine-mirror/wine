@@ -8,7 +8,7 @@
 
 #ifndef X_DISPLAY_MISSING
 
-#include "wintypes.h"
+#include "windef.h"
 #ifdef HAVE_LIBXXF86VM
 #define XMD_H
 typedef int INT32;

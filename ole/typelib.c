@@ -7,7 +7,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <assert.h>
-#include "wintypes.h"
+#include "windef.h"
 #include "winerror.h"
 #include "winreg.h"
 #include "oleauto.h"

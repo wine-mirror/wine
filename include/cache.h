@@ -9,7 +9,7 @@
 #ifndef __WINE_CACHE_H
 #define __WINE_CACHE_H
 
-#include "wintypes.h"
+#include "windef.h"
 
 HBRUSH  CACHE_GetPattern55AABrush(void);
 HBITMAP CACHE_GetPattern55AABitmap(void);
