@@ -514,9 +514,11 @@ DIB_DirectDrawSurface_Blt(LPDIRECTDRAWSURFACE7 iface, LPRECT rdst,
 	}
     }
 
-    if (This->locked || ((IDirectDrawSurfaceImpl *)src)->locked) {
-        WARN(" Surface is busy, returning DDERR_SURFACEBUSY\n");
-        return DDERR_SURFACEBUSY;
+    if (src != NULL) {
+        if (This->locked || ((IDirectDrawSurfaceImpl *)src)->locked) {
+            WARN(" Surface is busy, returning DDERR_SURFACEBUSY\n");
+            return DDERR_SURFACEBUSY;
+        }
     }
 
     /* First, check if the possible override function handles this case */
@@ -990,9 +992,11 @@ DIB_DirectDrawSurface_BltFast(LPDIRECTDRAWSURFACE7 iface, DWORD dstx,
 	  TRACE(" srcrect: NULL\n");
     }
 
-    if (This->locked || ((IDirectDrawSurfaceImpl *)src)->locked) {
-        WARN(" Surface is busy, returning DDERR_SURFACEBUSY\n");
-        return DDERR_SURFACEBUSY;
+    if (src != NULL) {
+        if (This->locked || ((IDirectDrawSurfaceImpl *)src)->locked) {
+            WARN(" Surface is busy, returning DDERR_SURFACEBUSY\n");
+            return DDERR_SURFACEBUSY;
+        }
     }
 
     /* First, check if the possible override function handles this case */
