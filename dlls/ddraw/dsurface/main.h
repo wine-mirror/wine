@@ -1,4 +1,4 @@
-/* Copyright 2000 TransGaming Technologies Inc. */
+/* Copyright 2000-2001 TransGaming Technologies Inc. */
 
 #ifndef DDRAW_DSURFACE_MAIN_H_INCLUDED
 #define DDRAW_DSURFACE_MAIN_H_INCLUDED
@@ -25,6 +25,8 @@ typedef struct PrivateData
     DWORD size;
 } PrivateData;
 
+extern ICOM_VTABLE(IDirectDrawGammaControl) DDRAW_IDDGC_VTable;
+
 /* Non-interface functions */
 HRESULT
 Main_DirectDrawSurface_Construct(IDirectDrawSurfaceImpl* This,
@@ -34,6 +36,8 @@ void Main_DirectDrawSurface_ForceDestroy(IDirectDrawSurfaceImpl* This);
 
 void
 Main_DirectDrawSurface_final_release(IDirectDrawSurfaceImpl* This);
+HRESULT
+Main_DirectDrawSurface_late_allocate(IDirectDrawSurfaceImpl* This);
 BOOL
 Main_DirectDrawSurface_attach(IDirectDrawSurfaceImpl *This,
 			      IDirectDrawSurfaceImpl *to);
@@ -56,6 +60,15 @@ Main_DirectDrawSurface_update_palette(IDirectDrawSurfaceImpl* This,
 				      LPPALETTEENTRY palent);
 HWND
 Main_DirectDrawSurface_get_display_window(IDirectDrawSurfaceImpl* This);
+
+HRESULT
+Main_DirectDrawSurface_get_gamma_ramp(IDirectDrawSurfaceImpl* This,
+				      DWORD dwFlags,
+				      LPDDGAMMARAMP lpGammaRamp);
+HRESULT
+Main_DirectDrawSurface_set_gamma_ramp(IDirectDrawSurfaceImpl* This,
+				      DWORD dwFlags,
+				      LPDDGAMMARAMP lpGammaRamp);
 
 BOOL Main_DirectDrawSurface_flip_data(IDirectDrawSurfaceImpl* front,
 				      IDirectDrawSurfaceImpl* back,

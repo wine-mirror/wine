@@ -33,6 +33,7 @@ C_SRCS = \
 	dsurface/dib.c \
 	dsurface/dibtexture.c \
 	dsurface/fakezbuffer.c \
+	dsurface/gamma.c \
 	dsurface/main.c \
 	dsurface/thunks.c \
 	dsurface/user.c \

@@ -2,7 +2,7 @@
  *
  * Copyright 1997-2000 Marcus Meissner
  * Copyright 1998-2000 Lionel Ulmer (most of Direct3D stuff)
- * Copyright 2000 TransGaming Technologies Inc.
+ * Copyright 2000-2001 TransGaming Technologies Inc.
  */
 #include "config.h"
 #include "winerror.h"
@@ -32,7 +32,23 @@ Main_DirectDrawSurface_Construct(IDirectDrawSurfaceImpl *This,
     This->uniqueness_value = 1; /* unchecked */
     This->ref = 1;
 
+    This->local.lpSurfMore = &This->more;
+    This->local.lpGbl = &This->global;
+    This->local.dwProcessId = GetCurrentProcessId();
+    This->local.dwFlags = 0; /* FIXME */
+    This->local.ddsCaps.dwCaps = This->surface_desc.ddsCaps.dwCaps;
+    /* FIXME: more local stuff */
+    This->more.lpDD_lcl = &pDD->local;
+    This->more.ddsCapsEx.dwCaps2 = This->surface_desc.ddsCaps.dwCaps2;
+    This->more.ddsCapsEx.dwCaps3 = This->surface_desc.ddsCaps.dwCaps3;
+    This->more.ddsCapsEx.dwCaps4 = This->surface_desc.ddsCaps.dwCaps4;
+    /* FIXME: more more stuff */
+    This->gmore = &This->global_more;
+    This->global.u3.lpDD = pDD->local.lpGbl;
+    /* FIXME: more global stuff */
+
     This->final_release = Main_DirectDrawSurface_final_release;
+    This->late_allocate = Main_DirectDrawSurface_late_allocate;
     This->attach = Main_DirectDrawSurface_attach;
     This->detach = Main_DirectDrawSurface_detach;
     This->lock_update = Main_DirectDrawSurface_lock_update;
@@ -41,9 +57,13 @@ Main_DirectDrawSurface_Construct(IDirectDrawSurfaceImpl *This,
     This->set_palette    = Main_DirectDrawSurface_set_palette;
     This->update_palette = Main_DirectDrawSurface_update_palette;
     This->get_display_window = Main_DirectDrawSurface_get_display_window;
+    This->get_gamma_ramp = Main_DirectDrawSurface_get_gamma_ramp;
+    This->set_gamma_ramp = Main_DirectDrawSurface_set_gamma_ramp;
 
     ICOM_INIT_INTERFACE(This, IDirectDrawSurface3,
 			DDRAW_IDDS3_Thunk_VTable);
+    ICOM_INIT_INTERFACE(This, IDirectDrawGammaControl,
+			DDRAW_IDDGC_VTable);
     /* There is no generic implementation of IDDS7 */
 
     Main_DirectDraw_AddSurface(pDD, This);
@@ -53,6 +73,11 @@ Main_DirectDrawSurface_Construct(IDirectDrawSurfaceImpl *This,
 void Main_DirectDrawSurface_final_release(IDirectDrawSurfaceImpl* This)
 {
     Main_DirectDraw_RemoveSurface(This->ddraw_owner, This);
+}
+
+HRESULT Main_DirectDrawSurface_late_allocate(IDirectDrawSurfaceImpl* This)
+{
+    return DD_OK;
 }
 
 static void Main_DirectDrawSurface_Destroy(IDirectDrawSurfaceImpl* This)
@@ -113,6 +138,12 @@ Main_DirectDrawSurface_QueryInterface(LPDIRECTDRAWSURFACE7 iface, REFIID riid,
 	*ppObj = ICOM_INTERFACE(This, IDirectDrawSurface3);
 	return S_OK;
     }
+    else if (IsEqualGUID(&IID_IDirectDrawGammaControl, riid))
+    {
+	This->ref++;
+	*ppObj = ICOM_INTERFACE(This, IDirectDrawGammaControl);
+	return S_OK;
+    }
     else
 	return E_NOINTERFACE;
 }
@@ -165,6 +196,34 @@ HWND
 Main_DirectDrawSurface_get_display_window(IDirectDrawSurfaceImpl* This)
 {
     return 0;
+}
+
+HRESULT
+Main_DirectDrawSurface_get_gamma_ramp(IDirectDrawSurfaceImpl* This,
+				      DWORD dwFlags,
+				      LPDDGAMMARAMP lpGammaRamp)
+{
+    HDC hDC;
+    HRESULT hr;
+    hr = This->get_dc(This, &hDC);
+    if (FAILED(hr)) return hr;
+    hr = GetDeviceGammaRamp(hDC, lpGammaRamp) ? DD_OK : DDERR_UNSUPPORTED;
+    This->release_dc(This, hDC);
+    return hr;
+}
+
+HRESULT
+Main_DirectDrawSurface_set_gamma_ramp(IDirectDrawSurfaceImpl* This,
+				      DWORD dwFlags,
+				      LPDDGAMMARAMP lpGammaRamp)
+{
+    HDC hDC;
+    HRESULT hr;
+    hr = This->get_dc(This, &hDC);
+    if (FAILED(hr)) return hr;
+    hr = SetDeviceGammaRamp(hDC, lpGammaRamp) ? DD_OK : DDERR_UNSUPPORTED;
+    This->release_dc(This, hDC);
+    return hr;
 }
 
 
