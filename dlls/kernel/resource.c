@@ -22,6 +22,8 @@
 #include "config.h"
 #include "wine/port.h"
 
+#define NONAMELESSUNION
+#define NONAMELESSSTRUCT
 #include "windef.h"
 #include "winternl.h"
 #include "winbase.h"
