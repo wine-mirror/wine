@@ -450,7 +450,6 @@ HRESULT WINAPI CLSIDFromString16(
 	CLSID *id		/* [out] GUID converted from string */
 ) {
   BYTE *s = (BYTE *) idstr;
-  BYTE *p;
   int	i;
   BYTE table[256];
 
@@ -490,41 +489,20 @@ HRESULT WINAPI CLSIDFromString16(
 
   /* in form {XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX} */
 
-  p = (BYTE *) id;
-
-  s++;	/* skip leading brace  */
-  for (i = 0; i < 4; i++) {
-    p[3 - i] = table[*s]<<4 | table[*(s+1)];
-    s += 2;
-  }
-  p += 4;
-  s++;	/* skip - */
-
-  for (i = 0; i < 2; i++) {
-    p[1-i] = table[*s]<<4 | table[*(s+1)];
-    s += 2;
-  }
-  p += 2;
-  s++;	/* skip - */
-
-  for (i = 0; i < 2; i++) {
-    p[1-i] = table[*s]<<4 | table[*(s+1)];
-    s += 2;
-  }
-  p += 2;
-  s++;	/* skip - */
+  id->Data1 = (table[s[1]] << 28 | table[s[2]] << 24 | table[s[3]] << 20 | table[s[4]] << 16 |
+               table[s[5]] << 12 | table[s[6]] << 8  | table[s[7]] << 4  | table[s[8]]);
+  id->Data2 = table[s[10]] << 12 | table[s[11]] << 8 | table[s[12]] << 4 | table[s[13]];
+  id->Data3 = table[s[15]] << 12 | table[s[16]] << 8 | table[s[17]] << 4 | table[s[18]];
 
   /* these are just sequential bytes */
-  for (i = 0; i < 2; i++) {
-    *p++ = table[*s]<<4 | table[*(s+1)];
-    s += 2;
-  }
-  s++;	/* skip - */
-
-  for (i = 0; i < 6; i++) {
-    *p++ = table[*s]<<4 | table[*(s+1)];
-    s += 2;
-  }
+  id->Data4[0] = table[s[20]] << 4 | table[s[21]];
+  id->Data4[1] = table[s[22]] << 4 | table[s[23]];
+  id->Data4[2] = table[s[25]] << 4 | table[s[26]];
+  id->Data4[3] = table[s[27]] << 4 | table[s[28]];
+  id->Data4[4] = table[s[29]] << 4 | table[s[30]];
+  id->Data4[5] = table[s[31]] << 4 | table[s[32]];
+  id->Data4[6] = table[s[33]] << 4 | table[s[34]];
+  id->Data4[7] = table[s[35]] << 4 | table[s[36]];
 
   return S_OK;
 }
