@@ -152,6 +152,15 @@ copyrgn:
     {
 	SendMessageA( wnd->hwndSelf, WM_NCPAINT, hClip, 0L );
 	if( (hClip > 1)&& (hClip != hRgn) && (hClip != hrgnRet) ) DeleteObject( hClip );
+	/*
+         * Since all Window locks are suspended while processing the WM_NCPAINT
+         * we want to make sure the window still exists before continuing.
+	 */
+        if (!IsWindow(wnd->hwndSelf))
+        {
+	  DeleteObject(hrgnRet);
+	  hrgnRet=0;
+        }
     }
 
     TRACE_(nonclient)("returning %04x (hClip = %04x, hrgnUpdate = %04x)\n", hrgnRet, hClip, wnd->hrgnUpdate );
@@ -176,6 +185,16 @@ HDC16 WINAPI BeginPaint16( HWND16 hwnd, LPPAINTSTRUCT16 lps )
 
     /* send WM_NCPAINT and make sure hrgnUpdate is a valid rgn handle */
     WIN_UpdateNCRgn( wndPtr, 0, UNC_UPDATE );
+
+    /*
+     * Make sure the window is still a window. All window locks are suspended
+     * when the WM_NCPAINT is sent.
+     */
+    if (!IsWindow(wndPtr->hwndSelf))
+    {
+        WIN_ReleaseWndPtr(wndPtr);
+        return 0;
+    }
 
     if( ((hrgnUpdate = wndPtr->hrgnUpdate) != 0) || (wndPtr->flags & WIN_INTERNAL_PAINT))
         QUEUE_DecPaintCount( wndPtr->hmemTaskQ );
@@ -558,7 +577,7 @@ static HRGN RDW_Paint( WND* wndPtr, HRGN hrgn, UINT flags, UINT ex )
     }
     else if ((flags & RDW_ERASENOW) || (ex & RDW_EX_TOPFRAME))
     {
-	UINT dcx = DCX_INTERSECTRGN | DCX_USESTYLE | DCX_KEEPCLIPRGN | DCX_WINDOWPAINT;
+	UINT dcx = DCX_INTERSECTRGN | DCX_USESTYLE | DCX_KEEPCLIPRGN | DCX_WINDOWPAINT | DCX_CACHE;
 	HRGN hrgnRet = WIN_UpdateNCRgn( wndPtr, hrgn, UNC_REGION | UNC_CHECK | 
 			    ((ex & RDW_EX_TOPFRAME) ? UNC_ENTIRE : 0) ); 
         if( hrgnRet )
