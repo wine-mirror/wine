@@ -505,7 +505,8 @@ char filetorun[MAX_PATH];
       WCMD_batch (param1, command, 0);
       return;
     }
-    if (strpbrk( ext, "/\\:" )) ext = NULL;
+
+    if (ext && strpbrk( ext, "/\\:" )) ext = NULL;
     if (!ext)
     {
       strcpy (filetorun, param1);
