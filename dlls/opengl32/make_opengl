@@ -127,10 +127,10 @@ sub GenerateThunk {
     my ($trace_arg) = ("");
 
     # If for opengl_norm.c, generate a nice heading otherwise Patrik won't be happy :-)
-    # Patrik says: Well I would be even happier if a (OPENGL.@) was added as well. Done. :-)
+    # Patrik says: Well I would be even happier if a (OPENGL32.@) was added as well. Done. :-)
     if ($comment eq 1) {
 	$ret = $ret . "/***********************************************************************\n";
-	$ret = $ret . " *              " . $func_ref->[0] . " (OPENGL.@)\n";
+	$ret = $ret . " *              " . $func_ref->[0] . " (OPENGL32.@)\n";
 	$ret = $ret . " */\n";
     }
     $ret = $ret . $func_ref->[1] . " WINAPI wine_" . $func_ref->[0] . "( ";
@@ -264,7 +264,103 @@ $pseudo_to_opengl{"IglooParameterSGIX"} = "GLint";
 #     [ "GLubyte *", "bitmap"] ] ];
 #
 %norm_functions = ();
-%ext_functions  = ();
+%ext_functions  = 
+    ( "MultiTexCoord1dSGIS" => [ "glMultiTexCoord1dSGIS", "void", [ [ "GLenum", "target" ], 
+								    [ "GLdouble", "s" ] ] ],
+      "MultiTexCoord1dvSGIS" => [ "glMultiTexCoord1dvSGIS", "void", [ [ "GLenum", "target" ], 
+								      [ "GLdouble *", "v" ] ] ],
+      "MultiTexCoord1fSGIS" => [ "glMultiTexCoord1fSGIS", "void", [ [ "GLenum", "target" ], 
+								    [ "GLfloat", "s" ] ] ],
+      "MultiTexCoord1fvSGIS" => [ "glMultiTexCoord1fvSGIS", "void", [ [ "GLenum", "target" ], 
+								      [ "const GLfloat *", "v" ] ] ],
+      "MultiTexCoord1iSGIS" => [ "glMultiTexCoord1iSGIS", "void", [ [ "GLenum", "target" ], 
+								    [ "GLint", "s" ] ] ],
+      "MultiTexCoord1ivSGIS" => [ "glMultiTexCoord1ivSGIS", "void", [ [ "GLenum", "target" ], 
+								      [ "GLint *", "v" ] ] ],
+      "MultiTexCoord1sSGIS" => [ "glMultiTexCoord1sSGIS", "void", [ [ "GLenum", "target" ], 
+								    [ "GLshort", "s" ] ] ],
+      "MultiTexCoord1svSGIS" => [ "glMultiTexCoord1svSGIS", "void", [ [ "GLenum", "target" ], 
+								      [ "GLshort *", "v" ] ] ],
+      "MultiTexCoord2dSGIS" => [ "glMultiTexCoord2dSGIS", "void", [ [ "GLenum", "target" ], 
+								    [ "GLdouble", "s"], 
+								    [ "GLdouble", "t" ] ] ],
+      "MultiTexCoord2dvSGIS" => [ "glMultiTexCoord2dvSGIS", "void", [ [ "GLenum", "target" ], 
+								      [ "GLdouble *", "v" ] ] ],
+      "MultiTexCoord2fSGIS" => [ "glMultiTexCoord2fSGIS", "void", [ [ "GLenum", "target" ], 
+								    [ "GLfloat", "s" ], 
+								    [ "GLfloat", "t" ] ] ],
+      "MultiTexCoord2fvSGIS" => [ "glMultiTexCoord2fvSGIS", "void", [ [ "GLenum", "target" ], 
+								      [ "GLfloat *", "v" ] ] ],
+      "MultiTexCoord2iSGIS" => [ "glMultiTexCoord2iSGIS", "void", [ [ "GLenum", "target" ], 
+								    [ "GLint", "s" ], 
+								    [ "GLint", "t" ] ] ],
+      "MultiTexCoord2ivSGIS" => [ "glMultiTexCoord2ivSGIS", "void", [ [ "GLenum", "target" ], 
+								      [ "GLint *", "v" ] ] ],
+      "MultiTexCoord2sSGIS" => [ "glMultiTexCoord2sSGIS", "void", [ [ "GLenum", "target" ], 
+								    [ "GLshort", "s" ], 
+								    [ "GLshort", "t" ] ] ],
+      "MultiTexCoord2svSGIS" => [ "glMultiTexCoord2svSGIS", "void", [ [ "GLenum", "target" ], 
+								      [ "GLshort *", "v" ] ] ],
+      "MultiTexCoord3dSGIS" => [ "glMultiTexCoord3dSGIS", "void", [ [ "GLenum", "target" ], 
+								    [ "GLdouble", "s" ], 
+								    [ "GLdouble", "t" ], 
+								    [ "GLdouble", "r" ] ] ],
+      "MultiTexCoord3dvSGIS" => [ "glMultiTexCoord3dvSGIS", "void", [ [ "GLenum", "target" ],
+								      [ "GLdouble *", "v" ] ] ],
+      "MultiTexCoord3fSGIS" => [ "glMultiTexCoord3fSGIS", "void", [ [ "GLenum", "target" ], 
+								    [ "GLfloat", "s" ], 
+								    [ "GLfloat", "t" ], 
+								    [ "GLfloat", "r" ] ] ],
+      "MultiTexCoord3fvSGIS" => [ "glMultiTexCoord3fvSGIS", "void", [ [ "GLenum", "target" ], 
+								      [ "GLfloat *", "v" ] ] ],
+      "MultiTexCoord3iSGIS" => [ "glMultiTexCoord3iSGIS", "void", [ [ "GLenum", "target" ], 
+								    [ "GLint", "s" ], 
+								    [ "GLint", "t" ], 
+								    [ "GLint", "r" ] ] ],
+      "MultiTexCoord3ivSGIS" => [ "glMultiTexCoord3ivSGIS", "void", [ [ "GLenum", "target" ], 
+								      [ "GLint *", "v" ] ] ],
+      "MultiTexCoord3sSGIS" => [ "glMultiTexCoord3sSGIS", "void", [ [ "GLenum", "target" ], 
+								    [ "GLshort", "s" ], 
+								    [ "GLshort", "t" ], 
+								    [ "GLshort", "r" ] ] ],
+      "MultiTexCoord3svSGIS" => [ "glMultiTexCoord3svSGIS", "void", [ [ "GLenum", "target" ], 
+								      [ "GLshort *", "v" ] ] ],
+      "MultiTexCoord4dSGIS" => [ "glMultiTexCoord4dSGIS", "void", [ [ "GLenum", "target" ], 
+								    [ "GLdouble", "s" ], 
+								    [ "GLdouble", "t" ], 
+								    [ "GLdouble", "r" ], 
+								    [ "GLdouble", "q" ] ] ],
+      "MultiTexCoord4dvSGIS" => [ "glMultiTexCoord4dvSGIS", "void", [ [ "GLenum", "target" ], 
+								      [ "GLdouble *", "v" ] ] ],
+      "MultiTexCoord4fSGIS" => [ "glMultiTexCoord4fSGIS", "void", [ [ "GLenum", "target" ], 
+								    [ "GLfloat", "s" ], 
+								    [ "GLfloat", "t" ], 
+								    [ "GLfloat", "r" ], 
+								    [ "GLfloat", "q" ] ] ],
+      "MultiTexCoord4fvSGIS" => [ "glMultiTexCoord4fvSGIS", "void", [ [ "GLenum", "target" ], 
+								      [ "GLfloat *", "v" ] ] ],
+      "MultiTexCoord4iSGIS" => [ "glMultiTexCoord4iSGIS", "void", [ [ "GLenum", "target" ], 
+								    [ "GLint", "s" ], 
+								    [ "GLint", "t" ], 
+								    [ "GLint", "r" ], 
+								    [ "GLint", "q" ] ] ],
+      "MultiTexCoord4ivSGIS" => [ "glMultiTexCoord4ivSGIS", "void", [ [ "GLenum", "target" ], 
+								      [ "GLint *", "v" ] ] ],
+      "MultiTexCoord4sSGIS" => [ "glMultiTexCoord4sSGIS", "void", [ [ "GLenum", "target" ], 
+								    [ "GLshort", "s" ], 
+								    [ "GLshort", "t" ], 
+								    [ "GLshort", "r" ], 
+								    [ "GLshort", "q" ] ] ],
+      "MultiTexCoord4svSGIS" => [ "glMultiTexCoord4svSGIS", "void", [ [ "GLenum", "target" ], 
+								      [ "GLshort *", "v" ] ] ],
+      "MultiTexCoordPointerSGIS" => [ "glMultiTexCoordPointerSGIS", "void", [ [ "GLenum", "target" ], 
+									      [ "GLint", "size" ], 
+									      [ "GLenum", "type" ],
+									      [ "GLsizei", "stride" ], 
+									      [ "GLvoid *", "pointer" ] ] ],
+      "SelectTextureSGIS" => [ "glSelectTextureSGIS", "void", [ [ "GLenum", "target" ] ] ],
+      "SelectTextureCoordSetSGIS" => [ "glSelectTextureCoordSetSGIS", "void", [ [ "GLenum", "target" ] ] ] );
+
 
 while ($line = <REGISTRY>) {
     if ($line =~ /^\w*\(.*\)/) {
@@ -366,13 +462,14 @@ close(REGISTRY);
 #
 open(SPEC, ">" . $spec_file);
 
-print SPEC "
-name opengl32
+print SPEC "name opengl32
 type win32
-
 init OpenGL32_Init
-import x11drv
-import kernel32
+
+import user32.dll
+import x11drv.dll
+import kernel32.dll
+import ntdll.dll
 
 debug_channels (opengl)
 
