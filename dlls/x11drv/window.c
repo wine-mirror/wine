@@ -151,6 +151,24 @@ inline static BOOL is_client_window_mapped( WND *win )
 
 
 /***********************************************************************
+ *		X11DRV_is_window_rect_mapped
+ *
+ * Check if the X whole window should be mapped based on its rectangle
+ */
+BOOL X11DRV_is_window_rect_mapped( const RECT *rect )
+{
+    /* don't map if rect is empty */
+    if (IsRectEmpty( rect )) return FALSE;
+
+    /* don't map if rect is off-screen */
+    if (rect->left >= screen_width || rect->top >= screen_height) return FALSE;
+    if (rect->right < 0 || rect->bottom < 0) return FALSE;
+
+    return TRUE;
+}
+
+
+/***********************************************************************
  *              get_window_attributes
  *
  * Fill the window attributes structure for an X window.
@@ -516,7 +534,8 @@ void X11DRV_set_iconic_state( WND *win )
         if (iconic)
             XIconifyWindow( display, data->whole_window, DefaultScreen(display) );
         else
-            if (!IsRectEmpty( &win->rectWindow )) XMapWindow( display, data->whole_window );
+            if (X11DRV_is_window_rect_mapped( &win->rectWindow ))
+                XMapWindow( display, data->whole_window );
     }
 
     XFree(wm_hints);

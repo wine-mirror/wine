@@ -517,6 +517,7 @@ typedef struct x11drv_win_data X11DRV_WND_DATA;
 
 extern Window X11DRV_get_client_window( HWND hwnd );
 extern Window X11DRV_get_whole_window( HWND hwnd );
+extern BOOL X11DRV_is_window_rect_mapped( const RECT *rect );
 extern XIC X11DRV_get_ic( HWND hwnd );
 
 inline static Window get_client_window( WND *wnd )

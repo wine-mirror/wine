@@ -817,7 +817,8 @@ static void set_visible_style( HWND hwnd, BOOL set )
     {
         if (win->dwStyle & WS_VISIBLE) goto done;
         WIN_SetStyle( hwnd, win->dwStyle | WS_VISIBLE );
-        if (!IsRectEmpty( &win->rectWindow ) && get_whole_window(win) && is_window_top_level(win))
+        if (X11DRV_is_window_rect_mapped( &win->rectWindow ) &&
+            get_whole_window(win) && is_window_top_level(win))
         {
             Display *display = thread_display();
             X11DRV_sync_window_style( display, win );
@@ -832,7 +833,8 @@ static void set_visible_style( HWND hwnd, BOOL set )
     {
         if (!(win->dwStyle & WS_VISIBLE)) goto done;
         WIN_SetStyle( hwnd, win->dwStyle & ~WS_VISIBLE );
-        if (!IsRectEmpty( &win->rectWindow ) && get_whole_window(win) && is_window_top_level(win))
+        if (X11DRV_is_window_rect_mapped( &win->rectWindow ) &&
+            get_whole_window(win) && is_window_top_level(win))
         {
             TRACE( "unmapping win %p\n", hwnd );
             wine_tsx11_lock();
@@ -864,7 +866,7 @@ void X11DRV_SetWindowStyle( HWND hwnd, LONG oldStyle )
 
     if (changed & WS_VISIBLE)
     {
-        if (!IsRectEmpty( &wndPtr->rectWindow ))
+        if (X11DRV_is_window_rect_mapped( &wndPtr->rectWindow ))
         {
             if (wndPtr->dwStyle & WS_VISIBLE)
             {
@@ -1013,10 +1015,11 @@ BOOL X11DRV_SetWindowPos( WINDOWPOS *winpos )
             set_visible_style( winpos->hwnd, FALSE );
         }
         else if ((wndPtr->dwStyle & WS_VISIBLE) &&
-                 !IsRectEmpty( &oldWindowRect ) && IsRectEmpty( &newWindowRect ))
+                 X11DRV_is_window_rect_mapped( &oldWindowRect ) &&
+                 !X11DRV_is_window_rect_mapped( &newWindowRect ))
         {
-            /* resizing to zero size -> unmap */
-            TRACE( "unmapping zero size win %p\n", winpos->hwnd );
+            /* resizing to zero size or off screen -> unmap */
+            TRACE( "unmapping zero size or off-screen win %p\n", winpos->hwnd );
             wine_tsx11_lock();
             XUnmapWindow( display, get_whole_window(wndPtr) );
             wine_tsx11_unlock();
@@ -1044,10 +1047,11 @@ BOOL X11DRV_SetWindowPos( WINDOWPOS *winpos )
             set_visible_style( winpos->hwnd, TRUE );
         }
         else if ((wndPtr->dwStyle & WS_VISIBLE) &&
-                 IsRectEmpty( &oldWindowRect ) && !IsRectEmpty( &newWindowRect ))
+                 !X11DRV_is_window_rect_mapped( &oldWindowRect ) &&
+                 X11DRV_is_window_rect_mapped( &newWindowRect ))
         {
             /* resizing from zero size to non-zero -> map */
-            TRACE( "mapping non zero size win %p\n", winpos->hwnd );
+            TRACE( "mapping non zero size or off-screen win %p\n", winpos->hwnd );
             XMapWindow( display, get_whole_window(wndPtr) );
         }
         XFlush( display );  /* FIXME: should not be necessary */
@@ -1449,7 +1453,8 @@ void X11DRV_UnmapNotify( HWND hwnd, XUnmapEvent *event )
 
     if (!(win = WIN_GetPtr( hwnd ))) return;
 
-    if ((win->dwStyle & WS_VISIBLE) && (win->dwExStyle & WS_EX_MANAGED))
+    if ((win->dwStyle & WS_VISIBLE) && (win->dwExStyle & WS_EX_MANAGED) &&
+        X11DRV_is_window_rect_mapped( &win->rectWindow ))
     {
         if (win->dwStyle & WS_MAXIMIZE)
             win->flags |= WIN_RESTORE_MAX;
