@@ -368,7 +368,7 @@ static INT16 wvsnprintf16( LPSTR buffer, UINT16 maxlen, LPCSTR spec, VA_LIST16 a
         case WPR_UNSIGNED:
             for (i = len; i < format.precision; i++, maxlen--) *p++ = '0';
             if (len > sign) memcpy( p, number + sign, len - sign );
-            p += len;
+            p += len-sign;
             break;
         case WPR_UNKNOWN:
             continue;
