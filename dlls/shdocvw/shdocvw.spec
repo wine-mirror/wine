@@ -1,6 +1,5 @@
 name	shdocvw
 type	win32
-init	SHDOCVW_DllMain
 
 import	ole32.dll
 import	kernel32.dll

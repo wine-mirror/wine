@@ -352,6 +352,18 @@ int WINAPI SysStringByteLen(BSTR str)
 }
 
 /******************************************************************************
+ * CreateDispTypeInfo [OLEAUT32.31]
+ */
+HRESULT WINAPI CreateDispTypeInfo(
+	INTERFACEDATA *pidata,
+	LCID lcid,
+	ITypeInfo **pptinfo)
+{
+	FIXME("(%p,%ld,%p),stub\n",pidata,lcid,pptinfo);
+	return 0;
+}
+
+/******************************************************************************
  * CreateDispTypeInfo [OLE2DISP.31]
  */
 HRESULT WINAPI CreateDispTypeInfo16(
@@ -367,6 +379,20 @@ HRESULT WINAPI CreateDispTypeInfo16(
  * CreateStdDispatch [OLE2DISP.32]
  */
 HRESULT WINAPI CreateStdDispatch16(
+        IUnknown* punkOuter,
+        void* pvThis,
+	ITypeInfo* ptinfo,
+	IUnknown** ppunkStdDisp)
+{
+	FIXME("(%p,%p,%p,%p),stub\n",punkOuter, pvThis, ptinfo,
+               ppunkStdDisp);
+	return 0;
+}
+
+/******************************************************************************
+ * CreateStdDispatch [OLEAUT32.32]
+ */
+HRESULT WINAPI CreateStdDispatch(
         IUnknown* punkOuter,
         void* pvThis,
 	ITypeInfo* ptinfo,

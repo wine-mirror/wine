@@ -3,14 +3,11 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = urlmon.dll
-EXTRALIBS = $(LIBUUID)
 
 LDDLLFLAGS = @LDDLLFLAGS@
 SYMBOLFILE = $(MODULE).tmp.o
 
 C_SRCS = \
-	comimpl.c \
-	moniker.c \
 	umon.c \
 	urlmon_main.c
 

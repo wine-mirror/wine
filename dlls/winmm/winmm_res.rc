@@ -33,7 +33,6 @@
 #include "winmm_Es.rc"
 #include "winmm_Ru.rc"
 #include "winmm_Sk.rc"
-#include "winmm_Ja.rc"
 
 /* do not add NLS specific stuff below that line */
 

@@ -35,17 +35,30 @@ WINE_DEFAULT_DEBUG_CHANNEL(ole);
  */
 HCURSOR WINAPI OleIconToCursor( HINSTANCE hinstExe, HICON hicon)
 {
-	ICONINFO	ii;
-
-	TRACE("(%x,%x)\n",hinstExe,hicon);
-
-	ZeroMemory( &ii, sizeof(ii) );
-
-	if ( !GetIconInfo( hicon, &ii ) )
-		return (HCURSOR)NULL;
-
-	ii.fIcon = FALSE;
-	return CreateIconIndirect( &ii );
+	FIXME("(%x,%x), not implemented (olepro32.dll)\n",hinstExe,hicon);
+	return S_OK;
 }
 
+/***********************************************************************
+ * OleCreatePropertyFrameIndirect (OLEAUT32.416)
+ */
+HRESULT WINAPI OleCreatePropertyFrameIndirect( LPOCPFIPARAMS lpParams)
+{
+	FIXME("(%p), not implemented (olepro32.dll)\n",lpParams);
+	return S_OK;
+}
+ 
+/***********************************************************************
+ * OleCreatePropertyFrame (OLEAUT32.417)
+ */
+HRESULT WINAPI OleCreatePropertyFrame(
+    HWND hwndOwner, UINT x, UINT y, LPCOLESTR lpszCaption,ULONG cObjects,
+    LPUNKNOWN* ppUnk, ULONG cPages, LPCLSID pPageClsID, LCID lcid, 
+    DWORD dwReserved, LPVOID pvReserved )
+{
+	FIXME("(%x,%d,%d,%s,%ld,%p,%ld,%p,%x,%ld,%p), not implemented (olepro32.dll)\n",
+		hwndOwner,x,y,debugstr_w(lpszCaption),cObjects,ppUnk,cPages,
+		pPageClsID, (int)lcid,dwReserved,pvReserved);
+	return S_OK;
+}
  

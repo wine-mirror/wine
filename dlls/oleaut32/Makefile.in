@@ -12,15 +12,12 @@ SYMBOLFILE = $(MODULE).tmp.o
 C_SRCS = \
 	connpt.c \
 	dispatch.c \
-	dispstd.c \
-	disptype.c \
 	hash.c \
 	ole2disp.c \
 	oleaut.c \
 	olefont.c \
 	olepicture.c \
 	parsedt.c \
-	propertyframe.c \
 	safearray.c \
 	stubs.c \
 	tmarshal.c \

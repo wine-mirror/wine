@@ -48,6 +48,27 @@ HRESULT WINAPI CreateAsyncBindCtxEx(IBindCtx *ibind, DWORD options,
 
 
 /***********************************************************************
+ *           CreateURLMoniker (URLMON.@)
+ *
+ * Create a url moniker
+ *
+ * RETURNS
+ *    S_OK 		success
+ *    E_OUTOFMEMORY	out of memory 
+ *    MK_E_SYNTAX	not a valid url
+ *
+ */
+HRESULT WINAPI CreateURLMoniker(IMoniker *pmkContext, LPCWSTR szURL, IMoniker **ppmk)
+{
+   TRACE("\n");
+
+   if (NULL != pmkContext)
+	FIXME("Non-null pmkContext not implemented\n");
+
+   return CreateFileMoniker(szURL, ppmk);
+}
+
+/***********************************************************************
  *           RegisterBindStatusCallback (URLMON.@)
  *
  * Register a bind status callback
@@ -125,7 +146,7 @@ HRESULT WINAPI RevokeBindStatusCallback(
  */
 HRESULT WINAPI Extract(DWORD Param1, DWORD Param2)
 {
-   FIXME("%lx %lx\n", Param1, Param2);
+   TRACE("%lx %lx\n", Param1, Param2);
 
-   return E_NOTIMPL;
+   return S_OK;
 }

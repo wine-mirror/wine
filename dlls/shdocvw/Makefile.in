@@ -4,17 +4,19 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = shdocvw.dll
-EXTRALIBS = $(LIBUUID)
 
 LDDLLFLAGS = @LDDLLFLAGS@
 SYMBOLFILE = $(MODULE).tmp.o
 
 C_SRCS = \
-	api.c \
-	browser.c \
-	comimpl.c \
-	connect.c \
-	shdocvw.c
+	classinfo.c \
+	events.c \
+	factory.c \
+	misc.c \
+	oleobject.c \
+	persist.c \
+	shdocvw_main.c \
+	webbrowser.c
 
 @MAKE_DLL_RULES@
 

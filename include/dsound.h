@@ -22,7 +22,6 @@
 #include "winbase.h"     /* for CRITICAL_SECTION */
 #include "mmsystem.h"
 #include "d3dtypes.h"
-#include "wine/obj_ksproperty.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -55,6 +54,10 @@ DEFINE_GUID(IID_IDirectSoundCaptureBuffer,0xB0210782,0x89CD,0x11D0,0xAF,0x08,0x0
 typedef struct IDirectSoundCaptureBuffer IDirectSoundCaptureBuffer,*LPDIRECTSOUNDCAPTUREBUFFER;
   
 DEFINE_GUID(DSDEVID_WinePlayback, 0x40316A1D,0x605B,0xD611,0x87,0xC6,0x00,0x80,0xAD,0x00,0x02,0xFE);
+
+DEFINE_GUID(IID_IKsPropertySet,		0x31EFAC30,0x515C,0x11D0,0xA9,0xAA,0x00,0xAA,0x00,0x61,0xBE,0x93);
+typedef struct IKsPropertySet IKsPropertySet,*LPKSPROPERTYSET;
+
 
 #define	_FACDS		0x878
 #define	MAKE_DSHRESULT(code)		MAKE_HRESULT(1,_FACDS,code)
@@ -570,6 +573,29 @@ ICOM_DEFINE(IDirectSound3DBuffer,IUnknown)
 #define IDirectSound3DBuffer_SetPosition(p,a,b,c,d)        ICOM_CALL4(SetPosition,p,a,b,c,d)
 #define IDirectSound3DBuffer_SetVelocity(p,a,b,c,d)        ICOM_CALL4(SetVelocity,p,a,b,c,d)
 
+/*****************************************************************************
+ * IKsPropertySet interface
+ */
+#define KSPROPERTY_SUPPORT_GET	1
+#define KSPROPERTY_SUPPORT_SET	2
+
+#define ICOM_INTERFACE IKsPropertySet
+#define IKsPropertySet_METHODS \
+    ICOM_METHOD7(HRESULT,Get,REFGUID,rgid,ULONG,x1,LPVOID,p1,ULONG,x2,LPVOID,p2,ULONG,x3,ULONG*,px4);\
+    ICOM_METHOD6(HRESULT,Set,REFGUID,rgid,ULONG,x1,LPVOID,p1,ULONG,x2,LPVOID,p2,ULONG,x3);\
+    ICOM_METHOD3(HRESULT,QuerySupport,REFGUID,rgid,ULONG,x1,ULONG*,px2);
+#define IKsPropertySet_IMETHODS \
+        IUnknown_IMETHODS \
+	IKsPropertySet_METHODS
+ICOM_DEFINE(IKsPropertySet,IUnknown)
+#undef ICOM_INTERFACE
+
+#define IKsPropertySet_QueryInterface(p,a,b)	ICOM_CALL2(QueryInterface,p,a,b)
+#define IKsPropertySet_AddRef(p)		ICOM_CALL (AddRef,p)
+#define IKsPropertySet_Release(p)		ICOM_CALL (Release,p)
+#define IKsPropertySet_Get(p,a,b,c,d,e,f,g)	ICOM_CALL7(Get,p,a,b,c,d,e,f,g)
+#define IKsPropertySet_Set(p,a,b,c,d,e,f)	ICOM_CALL6(Set,p,a,b,c,d,e,f)
+#define IKsPropertySet_QuerySupport(p,a,b,c)	ICOM_CALL3(QuerySupport,p,a,b,c)
 
 
 #ifdef __cplusplus
