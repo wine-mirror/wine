@@ -954,18 +954,6 @@ struct fd *open_fd( struct fd *fd, const char *name, int flags, mode_t *mode,
     fstat( fd->unix_fd, &st );
     *mode = st.st_mode;
 
-    /* check directory options */
-    if ((options & FILE_DIRECTORY_FILE) && !S_ISDIR(st.st_mode))
-    {
-        set_error( STATUS_NOT_A_DIRECTORY );
-        goto error;
-    }
-    if ((options & FILE_NON_DIRECTORY_FILE) && S_ISDIR(st.st_mode))
-    {
-        set_error( STATUS_FILE_IS_A_DIRECTORY );
-        goto error;
-    }
-
     /* only bother with an inode for normal files and directories */
     if (S_ISREG(st.st_mode) || S_ISDIR(st.st_mode))
     {
@@ -981,6 +969,20 @@ struct fd *open_fd( struct fd *fd, const char *name, int flags, mode_t *mode,
         fd->inode = inode;
         fd->closed = closed_fd;
         list_add_head( &inode->open, &fd->inode_entry );
+
+        /* check directory options */
+        if ((options & FILE_DIRECTORY_FILE) && !S_ISDIR(st.st_mode))
+        {
+            release_object( fd );
+            set_error( STATUS_NOT_A_DIRECTORY );
+            return NULL;
+        }
+        if ((options & FILE_NON_DIRECTORY_FILE) && S_ISDIR(st.st_mode))
+        {
+            release_object( fd );
+            set_error( STATUS_FILE_IS_A_DIRECTORY );
+            return NULL;
+        }
         if (!check_sharing( fd, access, sharing ))
         {
             release_object( fd );
@@ -990,8 +992,13 @@ struct fd *open_fd( struct fd *fd, const char *name, int flags, mode_t *mode,
         strcpy( closed_fd->unlink, unlink_name );
         if (flags & O_TRUNC) ftruncate( fd->unix_fd, 0 );
     }
-    else
+    else  /* special file */
     {
+        if (options & FILE_DIRECTORY_FILE)
+        {
+            set_error( STATUS_NOT_A_DIRECTORY );
+            goto error;
+        }
         if (unlink_name[0])  /* we can't unlink special files */
         {
             set_error( STATUS_INVALID_PARAMETER );
