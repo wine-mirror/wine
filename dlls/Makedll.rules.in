@@ -2,7 +2,6 @@
 #
 # Each individual makefile should define the following variables:
 # MODULE       : name of the main module being built
-# SOVERSION    : version of the .so file
 # ALTNAMES     : alternate names for this dll (optional)
 # IMPORTS      : dlls to import (optional)
 # EXTRALIBS    : extra libraries to link in (optional)
@@ -15,7 +14,9 @@ LIBEXT     = @LIBEXT@
 SONAME     = lib$(MODULE).so
 IMPORTLIBS = $(IMPORTS:%=$(DLLDIR)/lib%.$(LIBEXT))
 ALLNAMES   = lib$(MODULE).so $(ALTNAMES:%=lib%.so)
-SPEC_SRCS  = $(MODULE).spec $(ALTNAMES:%=%.spec)
+SPEC_SRCS  = $(ALTNAMES:%=%.spec)
+ALL_OBJS   = $(OBJS) $(MODULE).spec.o
+ALL_LIBS   = -L$(TOPOBJDIR) -lwine $(EXTRALIBS) $(LIBS)
 
 all: lib$(MODULE).$(LIBEXT) $(ALTNAMES:%=lib%.$(LIBEXT))
 
@@ -23,26 +24,23 @@ all: lib$(MODULE).$(LIBEXT) $(ALTNAMES:%=lib%.$(LIBEXT))
 
 # Rules for .so files
 
-lib$(MODULE).so.$(SOVERSION): $(OBJS) Makefile.in $(TOPSRCDIR)/Make.rules.in
-	$(LDSHARED) $(OBJS) -o $@ -L$(DLLDIR) $(IMPORTS:%=-l%) -L$(TOPOBJDIR) -lwine $(EXTRALIBS)
+lib$(MODULE).so: $(ALL_OBJS) Makefile.in
+	$(LDSHARED) $(LDDLLFLAGS) $(ALL_OBJS) -o $@ -L$(DLLDIR) $(IMPORTS:%=-l%) $(ALL_LIBS)
 
-$(ALLNAMES): lib$(MODULE).so.$(SOVERSION)
-	$(RM) $@ && $(LN_S) lib$(MODULE).so.$(SOVERSION) $@
+$(ALTNAMES:%=lib%.$(LIBEXT)): lib$(MODULE).$(LIBEXT)
+	$(RM) $@ && $(LN_S) lib$(MODULE).$(LIBEXT) $@
 
 # Rules for .a files
 
-lib$(MODULE).a: $(OBJS) Makefile.in $(TOPSRCDIR)/Make.rules.in
+lib$(MODULE).a: $(ALL_OBJS) Makefile.in
 	$(RM) $@
-	$(AR) $@ $(OBJS)
+	$(AR) $@ $(ALL_OBJS)
 	$(RANLIB) $@
-
-$(ALTNAMES:%=lib%.a): lib$(MODULE).a
-	$(RM) $@ && $(LN_S) lib$(MODULE).a $@
 
 # Rules for checking that no imports are missing
 
 checklink:: lib$(MODULE).$(LIBEXT)
-	$(CC) -o checklink $(TOPSRCDIR)/library/checklink.c -L. -l$(MODULE) -L$(TOPOBJDIR) -lwine $(EXTRALIBS) $(LIBS) && $(RM) checklink
+	$(CC) -o checklink $(TOPSRCDIR)/library/checklink.c -L. -l$(MODULE) $(ALL_LIBS) && $(RM) checklink
 
 # Rules for debug channels
 
@@ -53,19 +51,18 @@ debug_channels: dummy
 
 .PHONY: install_so install_a
 
-install_so: lib$(MODULE).so.$(SOVERSION)
+$(ALTNAMES:%=_install_/lib%.$(LIBEXT)): $(LIBEXT:%=install_%)
+	cd $(libdir) && $(RM) `basename $@` && $(LN_S) lib$(MODULE).$(LIBEXT) `basename $@`
+
+install_so: lib$(MODULE).so
 	[ -d $(libdir) ] || $(MKDIR) $(libdir)
-	$(INSTALL_PROGRAM) lib$(MODULE).so.$(SOVERSION) $(libdir)/lib$(MODULE).so.$(SOVERSION)
-	cd $(libdir) && for i in $(ALLNAMES); do $(RM) $$i && $(LN_S) lib$(MODULE).so.$(SOVERSION) $$i; done
+	$(INSTALL_PROGRAM) lib$(MODULE).so $(libdir)/lib$(MODULE).so
 
 install_a: lib$(MODULE).a
 	[ -d $(libdir) ] || $(MKDIR) $(libdir)
 	$(INSTALL_DATA) lib$(MODULE).a $(libdir)/lib$(MODULE).a
 
-install:: $(LIBEXT:%=install_%)
+install:: $(LIBEXT:%=install_%) $(ALTNAMES:%=_install_/lib%.$(LIBEXT))
 
 uninstall::
-	cd $(libdir) && $(RM) $(ALLNAMES) lib$(MODULE).so.$(SOVERSION) lib$(MODULE).a
-
-clean::
-	$(RM) lib$(MODULE).so.$(SOVERSION)
+	cd $(libdir) && $(RM) lib$(MODULE).$(LIBEXT) $(ALTNAMES:%=lib%.$(LIBEXT))
