@@ -1249,16 +1249,16 @@ not_found:
         free_font( ret );
         return 0;
     }
-	
+
     if (ret->charset == SYMBOL_CHARSET && 
-        !pFT_Select_Charmap(ret->ft_face, MS_MAKE_TAG('s','y','m','b'))) {
+        !pFT_Select_Charmap(ret->ft_face, ft_encoding_symbol)) {
         /* No ops */
     }
-    else if (!pFT_Select_Charmap(ret->ft_face, MS_MAKE_TAG('u','n','i','c'))) {
+    else if (!pFT_Select_Charmap(ret->ft_face, ft_encoding_unicode)) {
         /* No ops */
     }
     else {
-        pFT_Select_Charmap(ret->ft_face, MS_MAKE_TAG('a','r','m','n'));
+        pFT_Select_Charmap(ret->ft_face, ft_encoding_apple_roman);
     }
 
     ret->orientation = lf.lfOrientation;
