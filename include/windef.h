@@ -110,12 +110,25 @@ typedef double          DOUBLE;
 typedef double          LONGLONG;
 typedef double          ULONGLONG;
 
-/* Integer types. These are the same for emulator and library. */
-
+/* FIXME: Wine does not compile with strict on, therefore strict
+ * handles are presently only usable on machines where sizeof(UINT) ==
+ * sizeof(void*).  HANDLEs are supposed to be void* but a large amount
+ * of WINE code operates on HANDLES as if they are UINTs. So to WINE
+ * they exist as UINTs but to the Winelib user who turns on strict,
+ * they exist as void*. If there is a size difference between UINT and
+ * void* then things get ugly.  */
+#ifdef STRICT
+typedef UINT16          HANDLE16;
+typedef VOID*           HANDLE;
+#else
 typedef UINT16          HANDLE16;
 typedef UINT            HANDLE;
-typedef UINT16         *LPHANDLE16;
-typedef UINT           *LPHANDLE;
+#endif
+
+typedef HANDLE16       *LPHANDLE16;
+typedef HANDLE         *LPHANDLE;
+
+/* Integer types. These are the same for emulator and library. */
 typedef UINT16          WPARAM16;
 typedef UINT            WPARAM;
 typedef LONG            LPARAM;
@@ -183,14 +196,26 @@ typedef void* SEGPTR;
 
 /* Handle types that exist both in Win16 and Win32. */
 
+#ifdef STRICT
 #define DECLARE_HANDLE(a) \
 	typedef HANDLE16 a##16; \
-	typedef HANDLE a; \
 	typedef a##16 *P##a##16; \
 	typedef a##16 *NP##a##16; \
 	typedef a##16 *LP##a##16; \
+	typedef struct a##__ { int unused; } *a; \
 	typedef a *P##a; \
 	typedef a *LP##a
+#else /*STRICT*/
+#define DECLARE_HANDLE(a) \
+	typedef HANDLE16 a##16; \
+	typedef a##16 *P##a##16; \
+	typedef a##16 *NP##a##16; \
+	typedef a##16 *LP##a##16; \
+	typedef HANDLE a; \
+	typedef a *P##a; \
+	typedef a *LP##a
+#endif /*STRICT*/
+
 DECLARE_HANDLE(HACMDRIVERID);
 DECLARE_HANDLE(HACMDRIVER);
 DECLARE_HANDLE(HACMOBJ);
@@ -209,11 +234,8 @@ DECLARE_HANDLE(HDWP);
 DECLARE_HANDLE(HENHMETAFILE);
 DECLARE_HANDLE(HFILE);
 DECLARE_HANDLE(HFONT);
-DECLARE_HANDLE(HGDIOBJ);
-DECLARE_HANDLE(HGLOBAL);
 DECLARE_HANDLE(HICON);
 DECLARE_HANDLE(HINSTANCE);
-DECLARE_HANDLE(HLOCAL);
 DECLARE_HANDLE(HMENU);
 DECLARE_HANDLE(HMETAFILE);
 DECLARE_HANDLE(HMIDI);
@@ -223,7 +245,6 @@ DECLARE_HANDLE(HMIDISTRM);
 DECLARE_HANDLE(HMIXER);
 DECLARE_HANDLE(HMIXEROBJ);
 DECLARE_HANDLE(HMMIO);
-DECLARE_HANDLE(HMODULE);
 DECLARE_HANDLE(HPALETTE);
 DECLARE_HANDLE(HPEN);
 DECLARE_HANDLE(HQUEUE);
@@ -240,6 +261,17 @@ DECLARE_HANDLE(HKL);
 DECLARE_HANDLE(HIC);
 DECLARE_HANDLE(HRASCONN);
 #undef DECLARE_HANDLE
+
+/* Handle types that must remain interchangeable even with strict on */
+
+typedef HINSTANCE16 HMODULE16;
+typedef HINSTANCE HMODULE;
+typedef HANDLE16 HGDIOBJ16;
+typedef HANDLE16 HGLOBAL16;
+typedef HANDLE16 HLOCAL16;
+typedef HANDLE HGDIOBJ;
+typedef HANDLE HGLOBAL;
+typedef HANDLE HLOCAL;
 
 /* Callback function pointers types */
 
