@@ -391,7 +391,8 @@ static INT_PTR CALLBACK BrsFolderDlgProc(HWND hWnd, UINT msg, WPARAM wParam,
 	    switch (wParam)
 	    { case IDOK:
 	        pdump ( pidlRet );
-	        SHGetPathFromIDListW(pidlRet, lpBrowseInfo->pszDisplayName);
+		if (lpBrowseInfo->pszDisplayName)
+	            SHGetPathFromIDListW(pidlRet, lpBrowseInfo->pszDisplayName);
 	        EndDialog(hWnd, (DWORD) ILClone(pidlRet));
 	        return TRUE;
 
