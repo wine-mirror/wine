@@ -105,7 +105,7 @@
 @ stub CryptGetMessageCertificates
 @ stub CryptGetMessageSignerCount
 @ stub CryptGetOIDFunctionAddress
-@ stub CryptGetOIDFunctionValue
+@ stdcall CryptGetOIDFunctionValue(long str str wstr ptr ptr ptr) CryptGetOIDFunctionValue
 @ stub CryptHashCertificate
 @ stub CryptHashMessage
 @ stub CryptHashPublicKeyInfo
@@ -133,7 +133,7 @@
 @ stub CryptMsgUpdate
 @ stub CryptMsgVerifyCountersignatureEncoded
 @ stub CryptRegisterDefaultOIDFunction
-@ stub CryptRegisterOIDFunction
+@ stdcall CryptRegisterOIDFunction(long str str wstr str) CryptRegisterOIDFunction
 @ stub CryptRegisterOIDInfo
 @ stdcall CryptSIPAddProvider(ptr) CryptSIPAddProvider
 @ stdcall CryptSIPLoad(ptr long ptr) CryptSIPLoad

@@ -20,6 +20,9 @@
 #include "winbase.h"
 #include "wincrypt.h"
 /* #include "mssip.h" */
+#include "wine/debug.h"
+
+WINE_DEFAULT_DEBUG_CHANNEL(crypt);
 
 typedef struct SIP_DISPATCH_INFO_ SIP_DISPATCH_INFO, *LPSIP_DISPATCH_INFO;
 typedef struct SIP_ADD_NEWPROVIDER_ SIP_ADD_NEWPROVIDER, *PSIP_ADD_NEWPROVIDER;
@@ -27,43 +30,69 @@ typedef struct SIP_ADD_NEWPROVIDER_ SIP_ADD_NEWPROVIDER, *PSIP_ADD_NEWPROVIDER;
 /* this function is called by Internet Explorer when it is about to verify a downloaded component */
 BOOL WINAPI I_CryptCreateLruCache(DWORD x, DWORD y)
 {
+    FIXME("stub!\n");
     return FALSE;
 }
 
 /* these functions all have an unknown number of args */
 BOOL WINAPI I_CryptFindLruEntryData(DWORD x)
 {
+    FIXME("stub!\n");
     return FALSE;
 }
 
 BOOL WINAPI I_CryptFlushLruCache(DWORD x)
 {
+    FIXME("stub!\n");
     return FALSE;
 }
 
 BOOL WINAPI I_CryptFreeLruCache(DWORD x)
 {
+    FIXME("stub!\n");
     return FALSE;
 }
 
 BOOL WINAPI CryptSIPRemoveProvider(GUID *pgProv)
 {
+    FIXME("stub!\n");
     return FALSE;
 }
 
 BOOL WINAPI CryptSIPAddProvider(SIP_ADD_NEWPROVIDER *psNewProv)
 {
+    FIXME("stub!\n");
     return FALSE;
 }
 
 BOOL WINAPI CryptSIPRetrieveSubjectGuid
       (LPCWSTR FileName, OPTIONAL HANDLE hFileIn, GUID *pgSubject)
 {
+    FIXME("stub!\n");
     return FALSE;
 }
 
 BOOL WINAPI CryptSIPLoad
        (const GUID *pgSubject, DWORD dwFlags, SIP_DISPATCH_INFO *pSipDispatch)
 {
+    FIXME("stub!\n");
+    return FALSE;
+}
+
+BOOL WINAPI CryptGetOIDFunctionValue(DWORD dwEncodingType, LPCSTR pszFuncName,
+                                     LPCSTR pszOID, LPCWSTR pwszValueName,
+                                     DWORD *pdwValueType, BYTE *pbValueData,
+                                     DWORD *pcbValueData)
+{
+    FIXME("(%lx,%s,%s,%s,%p,%p,%p) stub!\n", dwEncodingType, pszFuncName, pszOID,
+          debugstr_w(pwszValueName), pdwValueType, pbValueData, pcbValueData);
+    return FALSE;
+}
+
+BOOL WINAPI CryptRegisterOIDFunction(DWORD dwEncodingType, LPCSTR pszFuncName,
+                                     LPCSTR pszOID, LPCWSTR pwszDll, LPCSTR pszOverrideFuncName)
+{
+    FIXME("(%lx,%s,%s,%s,%s) stub!\n", dwEncodingType, pszFuncName, pszOID,
+          debugstr_w(pwszDll), pszOverrideFuncName);
     return FALSE;
 }
