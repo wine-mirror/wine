@@ -69,6 +69,8 @@ void X11DRV_XF86DGA2_Init(void)
   int nmodes, major, minor, i;
   Bool ok;
 
+  TRACE("\n");
+
   if (xf86dga2_modes) return; /* already initialized? */
 
   /* if in desktop mode, don't use DGA */
@@ -91,7 +93,10 @@ void X11DRV_XF86DGA2_Init(void)
 
   /* test that it works */
   wine_tsx11_lock();
-  if ((ok = XDGAOpenFramebuffer(gdi_display, DefaultScreen(gdi_display))))
+  X11DRV_expect_error(gdi_display, DGA2ErrorHandler, NULL);
+  ok = XDGAOpenFramebuffer(gdi_display, DefaultScreen(gdi_display));
+  if (X11DRV_check_error()) ok = FALSE;
+  if (ok)
   {
       XDGACloseFramebuffer(gdi_display, DefaultScreen(gdi_display));
       /* retrieve modes */
