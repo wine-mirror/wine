@@ -64,7 +64,7 @@ static void WCUSER_FillMemDC(const struct inner_data* data, int upd_tp, int upd_
 	for (i = 0; i < data->curcfg.sb_width; i++)
 	{
 	    attr = cell[i].Attributes;
-	    SetBkColor(PRIVATE(data)->hMemDC,WCUSER_ColorMap[(attr>>4)&0x0F]);
+	    SetBkColor(PRIVATE(data)->hMemDC, WCUSER_ColorMap[(attr>>4)&0x0F]);
 	    SetTextColor(PRIVATE(data)->hMemDC, WCUSER_ColorMap[attr&0x0F]);
 	    for (k = i; k < data->curcfg.sb_width && cell[k].Attributes == attr; k++)
 	    {
@@ -90,7 +90,8 @@ static void WCUSER_NewBitmap(struct inner_data* data, BOOL fill)
     HDC         hDC;
     HBITMAP	hnew, hold;
 
-    if (!data->curcfg.sb_width || !data->curcfg.sb_height || !(hDC = GetDC(PRIVATE(data)->hWnd))) 
+    if (!data->curcfg.sb_width || !data->curcfg.sb_height || 
+        !PRIVATE(data)->hFont || !(hDC = GetDC(PRIVATE(data)->hWnd)))
         return;
     hnew = CreateCompatibleBitmap(hDC, 
 				  data->curcfg.sb_width  * data->curcfg.cell_width, 
@@ -328,7 +329,7 @@ BOOL	WCUSER_ValidateFontMetric(const struct inner_data* data, const TEXTMETRIC* 
         ret = (tm->tmMaxCharWidth * data->curcfg.win_width < GetSystemMetrics(SM_CXSCREEN) &&
                tm->tmHeight * data->curcfg.win_height < GetSystemMetrics(SM_CYSCREEN));
     return ret && !tm->tmItalic && !tm->tmUnderlined && !tm->tmStruckOut &&
-        (tm->tmCharSet == DEFAULT_CHARSET /*|| tm->tmCharSet == ANSI_CHARSET*/);
+        (tm->tmCharSet == DEFAULT_CHARSET || tm->tmCharSet == ANSI_CHARSET);
 }
 
 /******************************************************************
@@ -355,19 +356,31 @@ static int CALLBACK get_first_font_enum_2(const LOGFONT* lf, const TEXTMETRIC* t
     struct font_chooser*	fc = (struct font_chooser*)lParam;
 
     WCUSER_DumpTextMetric(tm, FontType);
-
-    if (WCUSER_ValidateFontMetric(fc->data, tm, FontType) && 
-        WCUSER_SetFont(fc->data, lf))
+    if (WCUSER_ValidateFontMetric(fc->data, tm, FontType))
     {
-        fc->done = 1;
-        /* since we've modified the current config with new font information, 
-         * set it as the new default.
-         * Force also its writing back to the registry so that we can get it
-         * the next time
+        LOGFONT mlf = *lf;
+
+        /* Use the default sizes for the font (this is needed, especially for
+         * TrueType fonts, so that we get a decent size, not the max size) 
          */
-        fc->data->defcfg = fc->data->curcfg;
-        WINECON_RegSave(&fc->data->defcfg);
-        return 0;
+        mlf.lfWidth  = fc->data->curcfg.cell_width;
+        mlf.lfHeight = fc->data->curcfg.cell_height;
+        if (WCUSER_SetFont(fc->data, &mlf))
+        {
+            WCUSER_DumpLogFont("InitChoosing: ", &mlf, FontType);
+            fc->done = 1;
+            /* since we've modified the current config with new font information, 
+             * set this information as the new default.
+             */
+            fc->data->defcfg.cell_width = fc->data->curcfg.cell_width;
+            fc->data->defcfg.cell_height = fc->data->curcfg.cell_height;
+            lstrcpyW(fc->data->defcfg.face_name, fc->data->curcfg.face_name);
+            /* Force also its writing back to the registry so that we can get it
+             * the next time.
+             */
+            WINECON_RegSave(&fc->data->defcfg);
+            return 0;
+        }
     }
     return 1;
 }
@@ -377,8 +390,7 @@ static int CALLBACK get_first_font_enum(const LOGFONT* lf, const TEXTMETRIC* tm,
 {
     struct font_chooser*	fc = (struct font_chooser*)lParam;
 
-    WCUSER_DumpLogFont("init", lf, FontType);
-
+    WCUSER_DumpLogFont("InitFamily: ", lf, FontType);
     if (WCUSER_ValidateFont(fc->data, lf))
     {
 	EnumFontFamilies(PRIVATE(fc->data)->hMemDC, lf->lfFaceName, 
@@ -431,7 +443,8 @@ HFONT WCUSER_CopyFont(struct config_data* config, HWND hWnd, const LOGFONT* lf)
         {
             if (buf[j] != w)
             {
-                WINE_WARN("Non uniform cell width: [%d]=%d [%d]=%d\n", 
+                WINE_WARN("Non uniform cell width: [%d]=%d [%d]=%d\n"
+                          "This may be caused by old freetype libraries, >= 2.0.8 is recommended\n", 
                           i + j, buf[j], tm.tmFirstChar, w);
                 goto err;
             }
@@ -515,6 +528,7 @@ static BOOL	WCUSER_InitFont(struct inner_data* data)
 {
     struct font_chooser fc;
 
+    WINE_TRACE_(wc_font)("=> %s\n", wine_dbgstr_wn(data->curcfg.face_name, -1));
     if (data->curcfg.face_name[0] != '\0' &&
         data->curcfg.cell_height != 0 &&
         data->curcfg.font_weight != 0)
@@ -525,7 +539,11 @@ static BOOL	WCUSER_InitFont(struct inner_data* data)
                            data->curcfg.cell_height, data->curcfg.font_weight);
         if (PRIVATE(data)->hFont != 0) WINE_FIXME("Oh strange\n");
 
-        if (WCUSER_SetFont(data, &lf)) return TRUE;
+        if (WCUSER_SetFont(data, &lf)) 
+        {
+            WCUSER_DumpLogFont("InitReuses: ", &lf, 0);
+            return TRUE;
+        }
     }
 
     /* try to find an acceptable font */
@@ -533,6 +551,7 @@ static BOOL	WCUSER_InitFont(struct inner_data* data)
     fc.data = data;
     fc.done = 0;
     EnumFontFamilies(PRIVATE(data)->hMemDC, NULL, get_first_font_enum, (LPARAM)&fc);
+    if (!fc.done) WINE_WARN("Couldn't find a decent font, aborting\n");
     return fc.done;
 }
 
@@ -1308,10 +1327,10 @@ static LRESULT CALLBACK WCUSER_Proc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM 
 void WCUSER_DeleteBackend(struct inner_data* data)
 {
     if (!PRIVATE(data)) return;
+    if (PRIVATE(data)->hMemDC)		DeleteDC(PRIVATE(data)->hMemDC);
     if (PRIVATE(data)->hWnd)		DestroyWindow(PRIVATE(data)->hWnd);
     if (PRIVATE(data)->hFont)		DeleteObject(PRIVATE(data)->hFont);
     if (PRIVATE(data)->cursor_bitmap)	DeleteObject(PRIVATE(data)->cursor_bitmap);
-    if (PRIVATE(data)->hMemDC)		DeleteDC(PRIVATE(data)->hMemDC);
     if (PRIVATE(data)->hBitmap)		DeleteObject(PRIVATE(data)->hBitmap);
     HeapFree(GetProcessHeap(), 0, PRIVATE(data));
 }
@@ -1330,8 +1349,8 @@ static int WCUSER_MainLoop(struct inner_data* data)
 	switch (MsgWaitForMultipleObjects(1, &data->hSynchro, FALSE, INFINITE, QS_ALLINPUT))
 	{
 	case WAIT_OBJECT_0:
-	    if (!WINECON_GrabChanges(data))
-		PostQuitMessage(0);
+	    if (!WINECON_GrabChanges(data) && data->curcfg.exit_on_die)
+                PostQuitMessage(0);
 	    break;
 	case WAIT_OBJECT_0+1:
 	    switch (GetMessage(&msg, 0, 0, 0))

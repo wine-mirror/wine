@@ -409,25 +409,23 @@ static int CALLBACK font_enum(const LOGFONT* lf, const TEXTMETRIC* tm,
 			      DWORD FontType, LPARAM lParam)
 {
     struct dialog_info*	di = (struct dialog_info*)lParam;
-    HDC	hdc;
 
-    WCUSER_DumpLogFont("font", lf, FontType);
-    if (WCUSER_ValidateFont(di->data, lf) && (hdc = GetDC(di->hDlg)))
+    WCUSER_DumpLogFont("DlgFamily: ", lf, FontType);
+    if (WCUSER_ValidateFont(di->data, lf))
     {
         if (FontType & RASTER_FONTTYPE)
         {
             di->nFont = 0;
-            EnumFontFamilies(hdc, lf->lfFaceName, font_enum_size2, (LPARAM)di);
+            EnumFontFamilies(PRIVATE(di->data)->hMemDC, lf->lfFaceName, font_enum_size2, (LPARAM)di);
         }
         else
             di->nFont = 1;
         
         if (di->nFont)
 	{
-	    SendDlgItemMessage(di->hDlg, IDC_FNT_LIST_FONT, LB_ADDSTRING, 
+ 	    SendDlgItemMessage(di->hDlg, IDC_FNT_LIST_FONT, LB_ADDSTRING, 
                                0, (LPARAM)lf->lfFaceName);
         }
-	ReleaseDC(di->hDlg, hdc);
     }
 
     return 1;
@@ -552,24 +550,19 @@ static BOOL  select_font(struct dialog_info* di)
  */
 static BOOL  fill_list_size(struct dialog_info* di, BOOL doInit)
 {
-    HDC 	hdc;
     int		idx;
     WCHAR	lfFaceName[LF_FACESIZE];
 
     idx = SendDlgItemMessage(di->hDlg, IDC_FNT_LIST_FONT, LB_GETCURSEL, 0L, 0L);
     if (idx < 0) return FALSE;
     
-    hdc = GetDC(di->hDlg);
-    if (!hdc) return FALSE;
-
     SendDlgItemMessage(di->hDlg, IDC_FNT_LIST_FONT, LB_GETTEXT, idx, (LPARAM)lfFaceName);
     SendDlgItemMessage(di->hDlg, IDC_FNT_LIST_SIZE, LB_RESETCONTENT, 0L, 0L);
     if (di->font) HeapFree(GetProcessHeap(), 0, di->font);
     di->nFont = 0;
     di->font = NULL;
 
-    EnumFontFamilies(hdc, lfFaceName, font_enum_size, (LPARAM)di);
-    ReleaseDC(di->hDlg, hdc);
+    EnumFontFamilies(PRIVATE(di->data)->hMemDC, lfFaceName, font_enum_size, (LPARAM)di);
 
     if (doInit)
     {
@@ -601,14 +594,8 @@ static BOOL  fill_list_size(struct dialog_info* di, BOOL doInit)
  */
 static BOOL fill_list_font(struct dialog_info* di)
 {
-    HDC hdc;
-
-    hdc = GetDC(di->hDlg);
-    if (!hdc) return FALSE;
-
     SendDlgItemMessage(di->hDlg, IDC_FNT_LIST_FONT, LB_RESETCONTENT, 0L, 0L);
-    EnumFontFamilies(hdc, NULL, font_enum, (LPARAM)di);
-    ReleaseDC(di->hDlg, hdc);
+    EnumFontFamilies(PRIVATE(di->data)->hMemDC, NULL, font_enum, (LPARAM)di);
     if (SendDlgItemMessage(di->hDlg, IDC_FNT_LIST_FONT, LB_SELECTSTRING, 
 			   (WPARAM)-1, (LPARAM)di->config->face_name) == LB_ERR)
 	SendDlgItemMessage(di->hDlg, IDC_FNT_LIST_FONT, LB_SETCURSEL, 0L, 0L);

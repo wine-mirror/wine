@@ -30,6 +30,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(wineconsole);
 static const WCHAR wszConsole[]           = {'C','o','n','s','o','l','e',0};
 static const WCHAR wszCursorSize[]        = {'C','u','r','s','o','r','S','i','z','e',0};
 static const WCHAR wszCursorVisible[]     = {'C','u','r','s','o','r','V','i','s','i','b','l','e',0};
+static const WCHAR wszExitOnDie[]         = {'E','x','i','t','O','n','D','i','e',0};
 static const WCHAR wszFaceName[]          = {'F','a','c','e','N','a','m','e',0};
 static const WCHAR wszFontSize[]          = {'F','o','n','t','S','i','z','e',0};
 static const WCHAR wszFontWeight[]        = {'F','o','n','t','W','e','i','g','h','t',0};
@@ -63,6 +64,11 @@ BOOL WINECON_RegLoad(struct config_data* cfg)
     if (!hConKey || RegQueryValueEx(hConKey, wszCursorVisible, 0, &type, (char*)&val, &count)) 
         val = 1;
     cfg->cursor_visible = val;
+
+    count = sizeof(val);
+    if (!hConKey || RegQueryValueEx(hConKey, wszExitOnDie, 0, &type, (char*)&val, &count)) 
+        val = 1;
+    cfg->exit_on_die = val;
 
     count = sizeof(cfg->face_name); 
     if (!hConKey || RegQueryValueEx(hConKey, wszFaceName, 0, &type, (char*)&cfg->face_name, &count))
@@ -138,6 +144,9 @@ BOOL WINECON_RegSave(const struct config_data* cfg)
 
     val = cfg->cursor_visible;
     RegSetValueEx(hConKey, wszCursorVisible, 0, REG_DWORD, (char*)&val, sizeof(val));
+
+    val = cfg->exit_on_die;
+    RegSetValueEx(hConKey, wszExitOnDie, 0, REG_DWORD, (char*)&val, sizeof(val));
 
     RegSetValueEx(hConKey, wszFaceName, 0, REG_SZ, (char*)&cfg->face_name, sizeof(cfg->face_name));
 

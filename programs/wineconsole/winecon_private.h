@@ -40,6 +40,7 @@ struct config_data {
     unsigned	win_width;	/* size (in cells) of visible part of window (width & height) */
     unsigned	win_height;
     COORD	win_pos;	/* position (in cells) of visible part of screen buffer in window */
+    BOOL        exit_on_die;    /* whether the wineconsole should quit if server destroys the console */
 };
 
 struct inner_data {
