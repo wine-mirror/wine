@@ -72,8 +72,8 @@ void wine_pthread_init_thread( struct wine_pthread_thread_info *info )
 #else
         /* assume that the stack allocation is page aligned */
         char dummy;
-        size_t page_mask = getpagesize() - 1;
-        char *stack_top = (char *)((unsigned long)(&dummy + page_mask) & ~page_mask);
+        size_t page_size = getpagesize();
+        char *stack_top = (char *)((unsigned long)&dummy & ~(page_size - 1)) + page_size;
         info->stack_base = stack_top - info->stack_size;
 #endif
     }
