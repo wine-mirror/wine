@@ -19,6 +19,9 @@ C_SRCS = \
 	lobbysp.c \
 	name_server.c
 
+RC_SRCS = \
+	version.rc
+
 @MAKE_DLL_RULES@
 
 ### Dependencies:

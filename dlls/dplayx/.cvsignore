@@ -1,3 +1,4 @@
 *.spec.c
 *.spec.glue.s
 Makefile
+version.res

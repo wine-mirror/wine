@@ -1,6 +1,7 @@
 name dplayx
 type win32
 init DPLAYX_LibMain
+rsrc version.res
 
 import winmm.dll
 import ole32.dll
