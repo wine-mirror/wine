@@ -137,6 +137,18 @@ WINE REGISTRY Version 2
 ;; "XVideoPort" = "43"
 ; Run in synchronous mode (useful for debugging X11 problems)
 ;;"Synchronous" = "Y"
+;
+; Use the Render extension to render client side fonts (default "Y")
+;;"ClientSideWithRender" = "Y"
+; Fallback on X core requests to render client side fonts (default "Y")
+;;"ClientSideWithCore" = "Y"
+; Set both of the previous two to "N" in order to force X11 server side fonts
+;
+; Anti-alias fonts if using the Render extension (default "Y")
+;;"ClientSideAntiAliasWithRender" = "Y"
+; Anti-alias fonts if using core requests fallback (default "Y")
+;;"ClientSideAntiAliasWithCore" = "Y"
+;
 
 [fonts]
 ;Read the Fonts topic in the Wine User Guide before adding aliases

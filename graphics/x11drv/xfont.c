@@ -3007,7 +3007,7 @@ void X11DRV_FONT_Init( int *log_pixels_x, int *log_pixels_y )
 {
   XFONT_GetPointResolution( log_pixels_x, log_pixels_y );
 
-  if(X11DRV_XRender_Installed)
+  if(using_client_side_fonts)
     text_caps |= TC_VA_ABLE;
 
   return;
@@ -3263,7 +3263,7 @@ HFONT X11DRV_SelectFont( X11DRV_PDEVICE *physDev, HFONT hfont )
 
     TRACE("dc->gdiFont = %p\n", dc->gdiFont);
 
-    if(dc->gdiFont && X11DRV_XRender_Installed) {
+    if(dc->gdiFont && using_client_side_fonts) {
         X11DRV_XRender_SelectFont(physDev, hfont);
 	return FALSE;
     }

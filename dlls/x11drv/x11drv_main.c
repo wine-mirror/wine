@@ -60,6 +60,10 @@ Window root_window;
 int dxgrab, usedga, usexvidmode;
 int use_take_focus = 1;
 int managed_mode = 1;
+int client_side_with_core = 1;
+int client_side_with_render = 1;
+int client_side_antialias_with_core = 1;
+int client_side_antialias_with_render = 1;
 
 unsigned int X11DRV_server_startticks;
 
@@ -252,6 +256,18 @@ static void setup_options(void)
     if (!get_config_key( hkey, appkey, "Synchronous", buffer, sizeof(buffer) ))
         synchronous = IS_OPTION_TRUE( buffer[0] );
 
+    if (!get_config_key( hkey, appkey, "ClientSideWithCore", buffer, sizeof(buffer) ))
+        client_side_with_core = IS_OPTION_TRUE( buffer[0] );
+
+    if (!get_config_key( hkey, appkey, "ClientSideWithRender", buffer, sizeof(buffer) ))
+        client_side_with_render = IS_OPTION_TRUE( buffer[0] );
+
+    if (!get_config_key( hkey, appkey, "ClientSideAntiAliasWithCore", buffer, sizeof(buffer) ))
+        client_side_antialias_with_core = IS_OPTION_TRUE( buffer[0] );
+
+    if (!get_config_key( hkey, appkey, "ClientSideAntiAliasWithRender", buffer, sizeof(buffer) ))
+        client_side_antialias_with_render = IS_OPTION_TRUE( buffer[0] );
+
     if (appkey) RegCloseKey( appkey );
     RegCloseKey( hkey );
 }
@@ -381,6 +397,8 @@ static void process_detach(void)
     /* cleanup XVidMode */
     X11DRV_XF86VM_Cleanup();
 #endif
+    if(using_client_side_fonts)
+        X11DRV_XRender_Finalize();
 
     /* FIXME: should detach all threads */
     thread_detach();

@@ -212,7 +212,11 @@ extern const int X11DRV_XROPfunction[];
 
 extern void _XInitImageFuncPtrs(XImage *);
 
-extern BOOL X11DRV_XRender_Installed;
+extern int client_side_with_core;
+extern int client_side_with_render;
+extern int client_side_antialias_with_core;
+extern int client_side_antialias_with_render;
+extern int using_client_side_fonts;
 extern void X11DRV_XRender_Init(void);
 extern void X11DRV_XRender_Finalize(void);
 extern BOOL X11DRV_XRender_SelectFont(X11DRV_PDEVICE*, HFONT);

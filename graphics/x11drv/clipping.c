@@ -136,12 +136,13 @@ void X11DRV_SetDrawable( HDC hdc, Drawable drawable, int mode, const POINT *org,
     {
         X11DRV_PDEVICE *physDev = (X11DRV_PDEVICE *)dc->physDev;
 
+	if(physDev->xrender)
+	    X11DRV_XRender_UpdateDrawable( physDev );
+
         physDev->org = *org;
         physDev->drawable = drawable;
         physDev->drawable_org = *drawable_org;
         TSXSetSubwindowMode( gdi_display, physDev->gc, mode );
-	if(physDev->xrender)
-	  X11DRV_XRender_UpdateDrawable( physDev );
         GDI_ReleaseObj( hdc );
     }
 }

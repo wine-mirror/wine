@@ -80,6 +80,9 @@ HBITMAP X11DRV_SelectBitmap( X11DRV_PDEVICE *physDev, HBITMAP hbitmap )
 
     if (!(bmp = GDI_GetObjPtr( hbitmap, BITMAP_MAGIC ))) return 0;
 
+    if(physDev->xrender)
+        X11DRV_XRender_UpdateDrawable( physDev );
+
     if (hbitmap == GetStockObject(DEFAULT_BITMAP))
         physDev->drawable = BITMAP_stock_pixmap;
     else
