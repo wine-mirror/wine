@@ -796,10 +796,11 @@
 
 # exported in later versions
 @ stdcall AssocIsDangerous(long)
-@ stdcall StrRetToBufA (ptr ptr ptr long)
-@ stdcall StrRetToBufW (ptr ptr ptr long)
-@ stdcall StrRetToStrA (ptr ptr ptr)
-@ stdcall StrRetToStrW (ptr ptr ptr)
+@ stdcall StrRetToBufA(ptr ptr ptr long)
+@ stdcall StrRetToBufW(ptr ptr ptr long)
+@ stdcall StrRetToBSTR(ptr ptr ptr)
+@ stdcall StrRetToStrA(ptr ptr ptr)
+@ stdcall StrRetToStrW(ptr ptr ptr)
 @ stdcall SHRegGetPathA(long str str ptr long)
 @ stdcall SHRegGetPathW(long wstr wstr ptr long)
 @ stdcall PathIsDirectoryEmptyA(str)
