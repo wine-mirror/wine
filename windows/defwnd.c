@@ -127,6 +127,46 @@ static void DEFWND_SetRedraw( WND* wndPtr, WPARAM wParam )
 }
 
 /***********************************************************************
+ *           DEFWND_Print
+ *
+ * This method handles the default behavior for the WM_PRINT message.
+ */
+static void DEFWND_Print(
+  WND*  wndPtr,
+  HDC   hdc,
+  ULONG uFlags)
+{
+  /*
+   * Visibility flag.
+   */
+  if ( (uFlags & PRF_CHECKVISIBLE) &&
+       !IsWindowVisible(wndPtr->hwndSelf) )
+      return;
+
+  /*
+   * Unimplemented flags.
+   */
+  if ( (uFlags & PRF_CHILDREN) ||
+       (uFlags & PRF_OWNED)    ||
+       (uFlags & PRF_NONCLIENT) )
+  {
+    WARN(win,"WM_PRINT message with unsupported flags\n");
+  }
+
+  /*
+   * Background
+   */
+  if ( uFlags & PRF_ERASEBKGND)
+    SendMessageA(wndPtr->hwndSelf, WM_ERASEBKGND, (WPARAM)hdc, 0);
+
+  /*
+   * Client area
+   */
+  if ( uFlags & PRF_CLIENT)
+    SendMessageA(wndPtr->hwndSelf, WM_PRINTCLIENT, (WPARAM)hdc, PRF_CLIENT);
+}
+
+/***********************************************************************
  *           DEFWND_DefWinProc
  *
  * Default window procedure for messages that are the same in Win16 and Win32.
@@ -183,6 +223,10 @@ static LRESULT DEFWND_DefWinProc( WND *wndPtr, UINT msg, WPARAM wParam,
 	if (wndPtr->pHScroll) HeapFree( SystemHeap, 0, wndPtr->pHScroll );
         wndPtr->pVScroll = wndPtr->pHScroll = NULL;
 	return 0;
+
+    case WM_PRINT:
+        DEFWND_Print(wndPtr, (HDC)wParam, lParam);
+        return 0;
 
     case WM_PAINTICON:
     case WM_PAINT:
