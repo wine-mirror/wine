@@ -14,9 +14,10 @@ all: $(MODULE)
 @MAKE_RULES@
 
 ALL_OBJS = $(MODULE).spec.o $(OBJS)
+LDEXECFLAGS = @LDEXECFLAGS@
 
 $(MODULE): $(ALL_OBJS)
-	$(CC) -o $@ $(ALL_OBJS) -L$(DLLDIR) $(LDIMPORTS:%=-l%) $(LIBWINE) $(LIBUNICODE) $(LIBPORT) $(LIBS) $(LDFLAGS)
+	$(CC) -o $@ $(LDEXECFLAGS) $(ALL_OBJS) -L$(DLLDIR) $(LDIMPORTS:%=-l%) $(LIBWINE) $(LIBUNICODE) $(LIBPORT) $(LIBS) $(LDFLAGS)
 
 $(MODULE).spec.c: $(WINEBUILD)
 	$(LDPATH) $(WINEBUILD) $(DEFS) -o $@ --exe $(MODULE) --exe-mode gui --entry wine_initial_task -L$(DLLDIR) $(IMPORTS:%=-l%)

@@ -680,12 +680,12 @@ int main(void) {
   fi
 
   dnl Check for noisy string.h
-  saved_CFLAGS=$CFLAGS
+  saved_CFLAGS="$CFLAGS"
   CFLAGS="$CFLAGS -Wpointer-arith -Werror"
   AC_CACHE_CHECK([for broken string.h that generates warnings], ac_cv_c_string_h_warnings,
       AC_TRY_COMPILE([#include <string.h>],[],
                      [ac_cv_c_string_h_warnings=no],[ac_cv_c_string_h_warnings=yes]))
-  CFLAGS=$saved_CFLAGS
+  CFLAGS="$saved_CFLAGS"
   if test "$ac_cv_c_string_h_warnings" = "no"
   then
     CFLAGS="$CFLAGS -Wpointer-arith"
@@ -812,6 +812,19 @@ case $host_os in
         if test "$ac_cv_c_dll_zdefs" = "yes"
         then
           LDDLLFLAGS="$LDDLLFLAGS,-z,defs"
+        fi
+        AC_CACHE_CHECK([whether we can relocate the executable to 0x3c000000], ac_cv_ld_reloc_exec,
+          [saved_CFLAGS="$CFLAGS"
+           CFLAGS="$CFLAGS -Wl,--section-start,.interp=0x3c000100"
+           AC_TRY_RUN([#include <unistd.h>
+                       int main() { return (sbrk(32*1024*1024) == (void *)-1); }],
+                      ac_cv_ld_reloc_exec="yes",
+                      ac_cv_ld_reloc_exec="no",
+                      ac_cv_ld_reloc_exec="no")
+           CFLAGS="$saved_CFLAGS"])
+        if test "$ac_cv_ld_reloc_exec" = "yes"
+        then
+          AC_SUBST(LDEXECFLAGS,["-Wl,--section-start,.interp=0x3c000100"])
         fi
       else
         AC_CACHE_CHECK(whether we can build a UnixWare (Solaris) dll, ac_cv_c_dll_unixware,

@@ -308,7 +308,7 @@ ac_includes_default="\
 # include <unistd.h>
 #endif"
 
-ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS OPTIONS WIN16_FILES WIN16_INSTALL build build_cpu build_vendor build_os host host_cpu host_vendor host_os SET_MAKE CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CPP TOOLSDIR X_CFLAGS X_PRE_LIBS X_LIBS X_EXTRA_LIBS YACC LEX LEXLIB LEX_OUTPUT_ROOT XYACC XLEX AS ac_ct_AS LD ac_ct_LD AR ac_ct_AR RANLIB ac_ct_RANLIB STRIP ac_ct_STRIP WINDRES ac_ct_WINDRES LN_S LN C2MAN LDCONFIG INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA LINT LINTFLAGS DB2HTML DB2PDF DB2PS JPEGLIB EGREP GIFLIB XLIB XFILES OPENGLFILES GLU32FILES OPENGL_LIBS NASLIBS CURSESLIBS sane_devel SANELIBS SANEINCL ft_devel ft_devel2 FREETYPEINCL ARTSCCONFIG ARTSLIBS ARTSINCL ALSALIBS AUDIOIOLIBS DLLEXT DLLFLAGS DLLIBS LDDLLFLAGS LDSHARED LIBEXT IMPLIBEXT DLLTOOL ac_ct_DLLTOOL DLLWRAP ac_ct_DLLWRAP CROSSTEST CROSSCC LDPATH CRTLIBS LDD ALLOCA LIBOBJS LTLIBOBJS'
+ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS OPTIONS WIN16_FILES WIN16_INSTALL build build_cpu build_vendor build_os host host_cpu host_vendor host_os SET_MAKE CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CPP TOOLSDIR X_CFLAGS X_PRE_LIBS X_LIBS X_EXTRA_LIBS YACC LEX LEXLIB LEX_OUTPUT_ROOT XYACC XLEX AS ac_ct_AS LD ac_ct_LD AR ac_ct_AR RANLIB ac_ct_RANLIB STRIP ac_ct_STRIP WINDRES ac_ct_WINDRES LN_S LN C2MAN LDCONFIG INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA LINT LINTFLAGS DB2HTML DB2PDF DB2PS JPEGLIB EGREP GIFLIB XLIB XFILES OPENGLFILES GLU32FILES OPENGL_LIBS NASLIBS CURSESLIBS sane_devel SANELIBS SANEINCL ft_devel ft_devel2 FREETYPEINCL ARTSCCONFIG ARTSLIBS ARTSINCL ALSALIBS AUDIOIOLIBS DLLEXT DLLFLAGS DLLIBS LDDLLFLAGS LDSHARED LIBEXT IMPLIBEXT DLLTOOL ac_ct_DLLTOOL DLLWRAP ac_ct_DLLWRAP LDEXECFLAGS CROSSTEST CROSSCC LDPATH CRTLIBS LDD ALLOCA LIBOBJS LTLIBOBJS'
 ac_subst_files='MAKE_RULES MAKE_DLL_RULES MAKE_TEST_RULES MAKE_PROG_RULES'
 
 # Initialize some variables set by options.
@@ -10832,7 +10832,7 @@ echo "${ECHO_T}$ac_cv_c_gcc_gstabs" >&6
     CFLAGS="$CFLAGS -gstabs+"
   fi
 
-    saved_CFLAGS=$CFLAGS
+    saved_CFLAGS="$CFLAGS"
   CFLAGS="$CFLAGS -Wpointer-arith -Werror"
   echo "$as_me:$LINENO: checking for broken string.h that generates warnings" >&5
 echo $ECHO_N "checking for broken string.h that generates warnings... $ECHO_C" >&6
@@ -10878,7 +10878,7 @@ rm -f conftest.$ac_objext conftest.$ac_ext
 fi
 echo "$as_me:$LINENO: result: $ac_cv_c_string_h_warnings" >&5
 echo "${ECHO_T}$ac_cv_c_string_h_warnings" >&6
-  CFLAGS=$saved_CFLAGS
+  CFLAGS="$saved_CFLAGS"
   if test "$ac_cv_c_string_h_warnings" = "no"
   then
     CFLAGS="$CFLAGS -Wpointer-arith"
@@ -11849,6 +11849,57 @@ echo "${ECHO_T}$ac_cv_c_dll_zdefs" >&6
         if test "$ac_cv_c_dll_zdefs" = "yes"
         then
           LDDLLFLAGS="$LDDLLFLAGS,-z,defs"
+        fi
+        echo "$as_me:$LINENO: checking whether we can relocate the executable to 0x3c000000" >&5
+echo $ECHO_N "checking whether we can relocate the executable to 0x3c000000... $ECHO_C" >&6
+if test "${ac_cv_ld_reloc_exec+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  saved_CFLAGS="$CFLAGS"
+           CFLAGS="$CFLAGS -Wl,--section-start,.interp=0x3c000100"
+           if test "$cross_compiling" = yes; then
+  ac_cv_ld_reloc_exec="no"
+else
+  cat >conftest.$ac_ext <<_ACEOF
+#line $LINENO "configure"
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+#include <unistd.h>
+                       int main() { return (sbrk(32*1024*1024) == (void *)-1); }
+_ACEOF
+rm -f conftest$ac_exeext
+if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
+  (eval $ac_link) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } && { ac_try='./conftest$ac_exeext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ac_cv_ld_reloc_exec="yes"
+else
+  echo "$as_me: program exited with status $ac_status" >&5
+echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+( exit $ac_status )
+ac_cv_ld_reloc_exec="no"
+fi
+rm -f core core.* *.core gmon.out bb.out conftest$ac_exeext conftest.$ac_objext conftest.$ac_ext
+fi
+           CFLAGS="$saved_CFLAGS"
+fi
+echo "$as_me:$LINENO: result: $ac_cv_ld_reloc_exec" >&5
+echo "${ECHO_T}$ac_cv_ld_reloc_exec" >&6
+        if test "$ac_cv_ld_reloc_exec" = "yes"
+        then
+          LDEXECFLAGS="-Wl,--section-start,.interp=0x3c000100"
+
         fi
       else
         echo "$as_me:$LINENO: checking whether we can build a UnixWare (Solaris) dll" >&5
@@ -16710,6 +16761,7 @@ s,@DLLTOOL@,$DLLTOOL,;t t
 s,@ac_ct_DLLTOOL@,$ac_ct_DLLTOOL,;t t
 s,@DLLWRAP@,$DLLWRAP,;t t
 s,@ac_ct_DLLWRAP@,$ac_ct_DLLWRAP,;t t
+s,@LDEXECFLAGS@,$LDEXECFLAGS,;t t
 s,@CROSSTEST@,$CROSSTEST,;t t
 s,@CROSSCC@,$CROSSCC,;t t
 s,@LDPATH@,$LDPATH,;t t
