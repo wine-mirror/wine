@@ -150,3 +150,304 @@ This procedure requires:
 
 				Marcus Meissner <marcus@jet.franken.de>
 
+----------------------------------------------------------------
+Sample wine.ini for OpenLinux 2.x:
+
+;;
+;; MS-DOS drives configuration
+;;
+;; Each section has the following format:
+;; [Drive X]
+;; Path=xxx       (Unix path for drive root)
+;; Type=xxx       (supported types are 'floppy', 'hd', 'cdrom' and 'network')
+;; Label=xxx      (drive label, at most 11 characters)
+;; Serial=xxx     (serial number, 8 characters hexadecimal number)
+;; Filesystem=xxx (supported types are 'msdos'/'dos'/'fat', 'win95'/'vfat', 'unix')
+;;   This is the FS Wine is supposed to emulate on a certain
+;;   directory structure.
+;;   Recommended:
+;;   - "win95" for ext2fs, VFAT and FAT32
+;;   - "msdos" for FAT16 (ugly, upgrading to VFAT driver strongly recommended)
+;;   DON'T use "unix" unless you intend to port programs using Winelib !
+;; Device=/dev/xx (only if you want to allow raw device access)
+;;
+
+;
+;
+; Floppy 'A' and 'B'
+;
+; OpenLinux uses an automounter under /auto/, so we use that too.
+;
+[Drive A]
+Path=/auto/floppy/
+Type=floppy
+Label=Floppy
+Serial=87654321
+Device=/dev/fd0
+Filesystem=win95
+
+; 
+; Comment in ONLY if you have a second floppy or the automounter hangs
+; for 5 minutes.
+;
+;[Drive B]
+;Path=/auto/floppy2/
+;Type=floppy
+;Label=Floppy
+;Serial=87654321
+;Device=/dev/fd1
+;Filesystem=win95
+
+
+;
+; Drive 'C' links to the users homedirectory. 
+; 
+; This must point to a writeable directory structure (not your readonly
+; mounted DOS partitions!) since programs want to dump stuff into
+; "Program Files/" "Programme/", "windows/", "windows/system/" etc.
+; 
+; The basic structure is set up using the config script.
+;
+[Drive C]
+Path=${HOME}
+Type=hd
+Label=MS-DOS
+Filesystem=win95
+
+;
+; /tmp/ directory
+; 
+; The temp drive (and directory) points to /tmp/. Windows programs fill it
+; with junk, so it is approbiate.
+;
+[Drive T]
+Path=/tmp
+Type=hd
+Label=Tmp Drive
+Filesystem=win95
+
+;
+; 'U'ser homedirectory
+; 
+; Just in case you want C:\ elsewhere.
+; 
+[Drive U]
+Path=${HOME}
+Type=hd
+Label=Home
+Filesystem=win95
+
+;
+; CD-'R'OM drive (automounted)
+; 
+; The default cdrom drive.
+;
+; If an application (or game) wants a specific CD-ROM you might have to
+; temporary change the Label to the one of the CD itself.
+;
+; How to read them is described in /usr/doc/wine-cvs-xxxxx/cdrom-labels.
+; 
+[Drive R]
+Path=/auto/cdrom
+Type=cdrom
+Label=CD-Rom
+Filesystem=win95
+
+;
+; The drive where the old windows installation resides (it points to the 
+; windows/ subdirectory).
+; 
+; The Path is modified by the winesetup script.
+;
+[Drive W]
+Path=/
+Type=network
+Label=Windows
+Filesystem=win95
+;
+; The UNIX Root directory, so all other programs and directories are reachable.
+;
+; type network is used to tell programs to not write here. 
+;
+[Drive Z]
+Path=/
+Type=network
+Label=ROOT
+Filesystem=win95
+
+;
+; Standard Windows path entries. WINE will not work if they are incorrect.
+;
+[wine]
+; 
+; The windows/ directory. It must be writeable, for programs write into it.
+;
+Windows=c:\windows
+;
+; The windows/system/ directory. It must be writeable, for especially setup
+; programs install dlls in there.
+;
+System=c:\windows\system
+;
+; The temp directory. Should be cleaned regulary, since install programs leave
+; junk without end in there.
+;
+Temp=t:\
+;
+; The dll search path. It should contain at least:
+; - the windows and the windows/system directory of the user.
+; - the global windows and windows/system directory (from a possible readonly
+;   windows installation either on msdos filesystems or somewhere in the UNIX
+;   directory tree)
+; - any other windows style directories you want to add.
+;
+Path=c:\windows;c:\windows\system;c:\windows\system32;t:\;w:\;w:\system;w:\system32
+;
+; Outdated and no longer used. (but needs to be present).
+;
+SymbolTableFile=./wine.sym
+
+# <wineconf>
+
+; 
+; Dll loadorder defaults. No need to modify.
+;
+[DllDefaults]
+EXTRA_LD_LIBRARY_PATH=${HOME}/wine/cvs/lib
+DefaultLoadOrder = native, elfdll, so, builtin
+
+;
+; What 32/16 dlls belong to each other (context wise). No need to modify.
+;
+[DllPairs]
+kernel	= kernel32
+gdi	= gdi32
+user	= user32
+commdlg	= comdlg32
+commctrl= comctl32
+ver	= version
+shell	= shell32
+lzexpand= lz32
+mmsystem= winmm
+msvideo = msvfw32
+winsock	= wsock32
+
+;
+; What type of dll to use in their respective loadorder.
+; 
+[DllOverrides]
+kernel32, gdi32, user32	= builtin
+kernel, gdi, user	= builtin
+toolhelp		= builtin
+comdlg32, commdlg	= elfdll, builtin, native
+version, ver		= elfdll, builtin, native
+shell32, shell		= builtin, native
+lz32, lzexpand		= builtin, native
+commctrl, comctl32	= builtin, native
+wsock32, winsock	= builtin
+advapi32, crtdll, ntdll	= builtin, native
+mpr, winspool		= builtin, native
+ddraw, dinput, dsound	= builtin, native
+winmm, mmsystem         = builtin
+msvideo, msvfw32        = builtin, native
+mcicda.drv, mciseq.drv  = builtin, native
+mciwave.drv		= builtin, native
+mciavi.drv, mcianim.drv = native, builtin
+w32skrnl                = builtin
+wnaspi32, wow32		= builtin
+system, display, wprocs	= builtin
+wineps			= builtin
+
+;
+; Options section. Does not need to be edited.
+;
+[options]
+; allocate how much system colors on startup. No need to modify.
+AllocSystemColors=100
+
+;;
+; Font specification. You usually do not need to edit this section.
+; 
+; Read documentation/fonts before adding aliases
+;
+[fonts]
+; The resolution defines what fonts to use (usually either 75 or 100 dpi fonts,
+; or nearest match).
+Resolution = 96
+; Default font
+Default = -adobe-times-
+
+;
+; serial ports used by "COM1" "COM2" "COM3" "COM4". Useful for applications
+; that try to access serial ports.
+; 
+[serialports]
+Com1=/dev/ttyS0
+Com2=/dev/ttyS1
+Com3=/dev/modem,38400
+Com4=/dev/modem
+
+;
+; parallel port(s) used by "LPT1" etc. Useful for applications that try to 
+; access these ports.
+;
+[parallelports]
+Lpt1=/dev/lp0
+
+;
+; What spooling program to use on printing.
+; Use "|program" or "filename", where the output will be dumped into.
+;
+[spooler]
+LPT1:=|lpr
+LPT2:=|gs -sDEVICE=bj200 -sOutputFile=/tmp/fred -q -
+LPT3:=/dev/lp3
+
+; 
+; Allow port access to WINE started by the root user. Useful for some
+; supported devices, but it can make the system unstable.
+; Read /usr/doc/wine-cvs-xxxxx/ioport-trace-hints.
+;
+[ports]
+;read=0x779,0x379,0x280-0x2a0
+;write=0x779,0x379,0x280-0x2a0
+
+; debugging, not need to be modified.
+[spy]
+Exclude=WM_SIZE;WM_TIMER;
+
+;
+; What names for the registry datafiles, no need to modify.
+;
+[Registry]
+; Paths must be given in /dir/dir/file.reg format.
+; Wine will not understand dos file names here...
+;UserFileName=xxx		; alternate registry file name (user.reg)
+;LocalMachineFileName=xxx	; (system.reg)
+
+;
+; Layout/Look modifications. Here you can switch with a single line between
+; windows 3.1 and windows 95 style.
+; This does not change WINE behaviour or reported versions, just the look!
+;
+[Tweak.Layout]
+;; WineLook=xxx  (supported styles are 'Win31'(default), 'Win95', 'Win98')
+WineLook=Win95
+
+;
+; What programs to start on WINE startup. (you should probably leave it empty)
+;
+[programs]
+Default=
+Startup=
+
+; defunct section.
+[Console]
+;XtermProg=nxterm
+;InitialRows=25
+;InitialColumns=80
+;TerminalType=nxterm
+
+# </wineconf>
+
+
