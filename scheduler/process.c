@@ -517,7 +517,7 @@ PDB *PROCESS_Create( NE_MODULE *pModule, HFILE hFile, LPCSTR cmd_line, LPCSTR en
 
     req->pinherit     = (psa && (psa->nLength >= sizeof(*psa)) && psa->bInheritHandle);
     req->tinherit     = (tsa && (tsa->nLength >= sizeof(*tsa)) && tsa->bInheritHandle);
-    req->inherit_all  = inherit;
+    req->inherit_all  = 2 /*inherit*/;  /* HACK! */
     req->create_flags = flags;
     req->start_flags  = startup->dwFlags;
     req->exe_file     = hFile;

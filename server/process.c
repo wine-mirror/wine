@@ -169,14 +169,13 @@ struct thread *create_process( int fd, struct process *parent,
     /* copy the request structure */
     if (!set_creation_info( process, req, cmd_line, len )) goto error;
 
-    if (process->info->inherit_all)
+    if (process->info->inherit_all == 2)  /* HACK! */
+        process->handles = grab_object( parent->handles );
+    else if (process->info->inherit_all)
         process->handles = copy_handle_table( process, parent );
     else
         process->handles = alloc_handle_table( process, 0 );
     if (!process->handles) goto error;
-
-    /* alloc a handle for the process itself */
-    alloc_handle( process, process, PROCESS_ALL_ACCESS, 0 );
 
     /* retrieve the main exe file */
     if (process->info->exe_file != -1)
