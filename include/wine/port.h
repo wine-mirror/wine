@@ -61,9 +61,6 @@ typedef int pid_t;
 #ifndef HAVE_SIZE_T
 typedef unsigned int size_t;
 #endif
-#ifndef HAVE_SOCKLEN_T
-typedef unsigned int socklen_t;
-#endif
 #ifndef HAVE_SSIZE_T
 typedef int ssize_t;
 #endif

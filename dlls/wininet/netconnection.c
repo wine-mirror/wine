@@ -253,7 +253,7 @@ BOOL NETCON_close(WININET_NETCONNECTION *connection)
  * Basically calls 'connect()' unless we should use SSL
  */
 BOOL NETCON_connect(WININET_NETCONNECTION *connection, const struct sockaddr *serv_addr,
-		    socklen_t addrlen)
+		    unsigned int addrlen)
 {
     if (!NETCON_connected(connection)) return FALSE;
     if (!connection->useSSL)
