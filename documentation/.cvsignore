@@ -1,5 +1,6 @@
 *.aux
 *.dvi
+*.html
 *.junk
 *.log
 *.out
@@ -9,8 +10,7 @@
 DBTOHTML_OUTPUT_DIR*
 Makefile
 wine-devel
-wine-doc
-wine-faq
+wine-faq.txt
 wine-user
 wine.man
 winelib-user

@@ -56,7 +56,6 @@ MAN_TARGETS = wine.man
 
 ALLBOOKS = \
 	wine-devel \
-	wine-faq \
 	wine-user \
 	winelib-user
 
@@ -66,7 +65,7 @@ all: $(MAN_TARGETS)
 
 everything: $(MAN_TARGETS) doc
 doc: html pdf ps
-html: $(ALLBOOKS:%=%/index.html)
+html: $(ALLBOOKS:%=%/index.html) wine-faq.html
 pdf: $(ALLBOOKS:%=%.pdf)
 ps: $(ALLBOOKS:%=%.ps)
 
@@ -84,16 +83,21 @@ ps: $(ALLBOOKS:%=%.ps)
 	$(DB2PS) $< >/dev/null
 
 wine-devel.pdf wine-devel.ps wine-devel/index.html: $(WINE_DEVEL_SRCS)
-wine-faq.pdf wine-faq.ps wine-faq/index.html: $(WINE_FAQ_SRCS)
 wine-user.pdf wine-user.ps wine-user/index.html: $(WINE_USER_SRCS)
 winelib-user.pdf winelib-user.ps winelib-user/index.html: $(WINELIB_USER_SRCS)
+
+wine-faq.html: wine-faq.sgml $(WINE_FAQ_SRCS)
+	$(DB2HTML) -u -d $(SRCDIR)/default.dsl $(SRCDIR)/wine-faq.sgml
+
+wine-faq.txt: wine-faq.html
+	w3m -dump wine-faq.html > $@ || ($(RM) $@ && false)
 
 wine.man: wine.man.in
 	sed -e 's,@bindir\@,$(bindir),g' -e 's,@dlldir\@,$(dlldir),g' -e 's,@PACKAGE_STRING\@,@PACKAGE_STRING@,g' $(SRCDIR)/wine.man.in >$@ || ($(RM) $@ && false)
 
 # Rules for distribution tarballs of formatted docs
 
-dist: wine-doc-ps.tar.gz wine-doc-pdf.tar.gz wine-doc-html.tar.gz wine-doc-txt.tar.gz
+dist: wine-doc-ps.tar.gz wine-doc-pdf.tar.gz wine-doc-html.tar.gz wine-doc-txt.tar.gz wine-faq.txt
 
 wine-doc-ps.tar.gz: $(ALLBOOKS:%=%.ps)
 	tar cf - $(ALLBOOKS:%=%.ps) | gzip -9 > $@ || ($(RM) $@ && false)
@@ -121,7 +125,7 @@ install-api-man::
 	for i in $(SRCDIR)/man$(api_manext)/*; do $(INSTALL_DATA) $$i $(mandir)/man$(api_manext); done
 
 clean::
-	$(RM) *.aux *.dvi *.out *.pdf *.ps *.tex *.log wine-doc-*.tar.gz $(MAN_TARGETS)
+	$(RM) *.aux *.dvi *.out *.pdf *.ps *.tex *.log *.html wine-doc-*.tar.gz wine-faq.txt $(MAN_TARGETS)
 	$(RM) -r $(ALLBOOKS) html api-guide man$(api_manext) *.junk DBTOHTML_OUTPUT_DIR*
 
 ### Dependencies:
