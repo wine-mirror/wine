@@ -24,17 +24,22 @@ extern "C" {
 
 /* Type model indepent typedefs */
 
-typedef char          __int8;
-typedef unsigned char __uint8;
+#ifndef _MSC_VER
+typedef char      __int8;
+typedef short     __int16;
+typedef int       __int32;
+typedef long long __int64;
+#endif /* !defined(_MSC_VER) */
 
-typedef short          __int16;
-typedef unsigned short __uint16;
+typedef unsigned char      __uint8;
+typedef unsigned short     __uint16;
+typedef unsigned int       __uint32;
 
-typedef int          __int32;
-typedef unsigned int __uint32;
-
-typedef long long          __int64;
+#ifndef _MSC_VER
 typedef unsigned long long __uint64;
+#else
+typedef unsigned __int64 __uint64;
+#endif /* !defined(_MSC_VER) */
 
 #if defined(_WIN64)
 
@@ -44,7 +49,9 @@ typedef void    *__ptr64;
 #else /* FIXME: defined(_WIN32) */
 
 typedef void    *__ptr32;
+#ifndef _MSC_VER
 typedef __uint64 __ptr64;
+#endif /* !defined(_MSC_VER) */
 
 #endif
 

@@ -325,7 +325,7 @@ HSHARED WINAPI SHLWAPI_7 (DWORD dwProcId, LPCVOID lpvData, DWORD dwSize)
     /* Write size of data, followed by the data, to the view */
     *((DWORD*)pMapped) = dwSize;
     if (dwSize)
-      memcpy(pMapped + sizeof(dwSize), lpvData, dwSize);
+      memcpy((char *) pMapped + sizeof(dwSize), lpvData, dwSize);
 
     /* Release view. All further views mapped will be opaque */
     UnmapViewOfFile(pMapped);
@@ -369,7 +369,7 @@ PVOID WINAPI SHLWAPI_8 (HSHARED hShared, DWORD dwProcId)
   CloseHandle(hDup);
 
   if (pMapped)
-    return pMapped + sizeof(DWORD); /* Hide size */
+    return (char *) pMapped + sizeof(DWORD); /* Hide size */
   return NULL;
 }
 
@@ -391,7 +391,7 @@ PVOID WINAPI SHLWAPI_8 (HSHARED hShared, DWORD dwProcId)
 BOOL WINAPI SHLWAPI_9 (LPVOID lpView)
 {
   TRACE("(%p)\n", lpView);
-  return UnmapViewOfFile(lpView - sizeof(DWORD)); /* Include size */
+  return UnmapViewOfFile((char *) lpView - sizeof(DWORD)); /* Include size */
 }
 
 /*************************************************************************

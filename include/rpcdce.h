@@ -63,8 +63,7 @@ typedef struct _RPC_IF_ID
 
 
 typedef RPC_STATUS RPC_ENTRY RPC_IF_CALLBACK_FN( RPC_IF_HANDLE InterfaceUuid, LPVOID Context );
-typedef void __RPC_USER (* RPC_AUTH_KEY_RETRIEVAL_FN)( LPVOID Arg, LPWSTR ServerPrincName,
-                                                       ULONG KeyVer, LPVOID* Key, RPC_STATUS* status );
+typedef void (__RPC_USER *RPC_AUTH_KEY_RETRIEVAL_FN)();
 
 typedef struct _RPC_POLICY 
 {

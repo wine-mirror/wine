@@ -22,9 +22,9 @@ typedef struct
 #define NDRSContextValue(hContext) (&(hContext)->userContext)
 #define cbNDRContext 20
 
-typedef void __RPC_USER (*NDR_RUNDOWN)(void *context);
-typedef void __RPC_USER (*NDR_NOTIFY_ROUTINE)(void);
-typedef void __RPC_USER (*NDR_NOTIFY2_ROUTINE)(_wine_boolean flag);
+typedef void (__RPC_USER *NDR_RUNDOWN)(void *context);
+typedef void (__RPC_USER *NDR_NOTIFY_ROUTINE)(void);
+typedef void (__RPC_USER *NDR_NOTIFY2_ROUTINE)(_wine_boolean flag);
 
 #define DECLSPEC_UUID(x)
 #define MIDL_INTERFACE(x)   struct
@@ -33,7 +33,7 @@ struct _MIDL_STUB_MESSAGE;
 struct _MIDL_STUB_DESC;
 struct _FULL_PTR_XLAT_TABLES;
 
-typedef void __RPC_USER (*EXPR_EVAL)(struct _MIDL_STUB_MESSAGE *);
+typedef void (__RPC_USER *EXPR_EVAL)(struct _MIDL_STUB_MESSAGE *);
 typedef const unsigned char *PFORMAT_STRING;
 
 typedef struct
@@ -73,8 +73,8 @@ typedef struct _MIDL_STUB_MESSAGE
   ULONG_PTR MaxCount;
   unsigned long Offset;
   unsigned long ActualCount;
-  void * __RPC_API (*pfnAllocate)(size_t);
-  void __RPC_API (*pfnFree)(void *);
+  void * (__RPC_API *pfnAllocate)(size_t);
+  void (__RPC_API *pfnFree)(void *);
   unsigned char *StackTop;
   unsigned char *pPresentedType;
   unsigned char *pTransmitType;
@@ -125,8 +125,8 @@ typedef struct _COMM_FAULT_OFFSETS COMM_FAULT_OFFSETS;
 typedef struct _MIDL_STUB_DESC
 {
   void *RpcInterfaceInformation;
-  void * __RPC_API (*pfnAllocate)(size_t);
-  void __RPC_API (*pfnFree)(void *);
+  void * (__RPC_API *pfnAllocate)(size_t);
+  void (__RPC_API *pfnFree)(void *);
   union {
     handle_t *pAutoHandle;
     handle_t *pPrimitiveHandle;
@@ -161,9 +161,9 @@ typedef struct _MIDL_FORMAT_STRING
 #endif
 } MIDL_FORMAT_STRING;
 
-typedef void __RPC_API (*STUB_THUNK)( PMIDL_STUB_MESSAGE );
+typedef void (__RPC_API *STUB_THUNK)( PMIDL_STUB_MESSAGE );
 
-typedef long __RPC_API (*SERVER_ROUTINE)();
+typedef long (__RPC_API *SERVER_ROUTINE)();
 
 typedef struct _MIDL_SERVER_INFO_
 {

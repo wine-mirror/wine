@@ -20,7 +20,11 @@
 #    include "poppack.h"
 #  endif
 
-#  if defined(__GNUC__) || defined(__SUNPRO_C) || defined(__SUNPRO_CC)
+#  if _MSC_VER >= 800
+#   pragma warning(disable:4103)
+#  endif
+
+#  if defined(__GNUC__) || defined(__SUNPRO_C) || defined(__SUNPRO_CC) || defined(_MSC_VER)
 #    pragma pack(8)
 #    warning "8 as alignment is not supported"
 #  elif !defined(RC_INVOKED)

@@ -4,7 +4,7 @@
 #  endif
 /* Depth == 3 */
 
-#  if defined(__GNUC__) || defined(__SUNPRO_C) || defined(__SUNPRO_CC)
+#  if defined(__GNUC__) || defined(__SUNPRO_C) || defined(__SUNPRO_CC) || defined(_MSC_VER)
 #    if __WINE_PSHPACK_H2 == 1
 #      pragma pack(1)
 #    elif __WINE_PSHPACK_H2 == 2
@@ -24,7 +24,7 @@
 #  endif
 /* Depth == 2 */
 
-#  if defined(__GNUC__) || defined(__SUNPRO_C) || defined(__SUNPRO_CC)
+#  if defined(__GNUC__) || defined(__SUNPRO_C) || defined(__SUNPRO_CC) || defined(_MSC_VER)
 #    if __WINE_PSHPACK_H == 1
 #      pragma pack(1)
 #    elif __WINE_PSHPACK_H == 2
@@ -44,7 +44,7 @@
 #  endif
 /* Depth == 1 */
 
-#  if defined(__GNUC__) || defined(__SUNPRO_C)
+#  if defined(__GNUC__) || defined(__SUNPRO_C) || defined(_MSC_VER)
 #    pragma pack()
 #  elif defined(__SUNPRO_CC)
 #    warning "Assuming a default alignment of 4"
