@@ -383,7 +383,7 @@ static const dupl_ustr_t dupl_ustr[] = {
 
 static void test_RtlDuplicateUnicodeString(void)
 {
-    int pos;
+    size_t pos;
     WCHAR source_buf[257];
     WCHAR dest_buf[257];
     WCHAR res_buf[257];
@@ -393,7 +393,7 @@ static void test_RtlDuplicateUnicodeString(void)
     CHAR dest_ansi_buf[257];
     STRING dest_ansi_str;
     NTSTATUS result;
-    int test_num;
+    size_t test_num;
 
     for (test_num = 0; test_num < NB_DUPL_USTR; test_num++) {
 	source_str.Length        = dupl_ustr[test_num].source_Length;
@@ -744,13 +744,13 @@ static const ustr2astr_t ustr2astr[] = {
 
 static void test_RtlUnicodeStringToAnsiString(void)
 {
-    int pos;
+    size_t pos;
     CHAR ansi_buf[257];
     WCHAR uni_buf[257];
     STRING ansi_str;
     UNICODE_STRING uni_str;
     NTSTATUS result;
-    int test_num;
+    size_t test_num;
 
     for (test_num = 0; test_num < NB_USTR2ASTR; test_num++) {
 	ansi_str.Length        = ustr2astr[test_num].ansi_Length;
@@ -821,7 +821,7 @@ static void test_RtlAppendAsciizToString(void)
     CHAR dest_buf[257];
     STRING dest_str;
     NTSTATUS result;
-    int test_num;
+    size_t test_num;
 
     for (test_num = 0; test_num < NB_APP_ASC2STR; test_num++) {
 	dest_str.Length        = app_asc2str[test_num].dest_Length;
@@ -893,7 +893,7 @@ static void test_RtlAppendStringToString(void)
     STRING dest_str;
     STRING src_str;
     NTSTATUS result;
-    int test_num;
+    size_t test_num;
 
     for (test_num = 0; test_num < NB_APP_STR2STR; test_num++) {
 	dest_str.Length        = app_str2str[test_num].dest_Length;
@@ -954,7 +954,7 @@ static const app_uni2str_t app_uni2str[] = {
     { 4, 12, 14,     "Fake0123abcdef",    "Ustr\0",  8, 12, 14,  "FakeUstr\0\0cdef", STATUS_SUCCESS},
     { 4, 11, 14,     "Fake0123abcdef",    "Ustr\0",  8, 11, 14,  "FakeUstr\0\0cdef", STATUS_SUCCESS},
     { 4, 10, 14,     "Fake0123abcdef",    "Ustr\0",  8, 10, 14,  "FakeUstr\0\0cdef", STATUS_SUCCESS},
-/* In the following test the native function writes beyond MaximumLength 
+/* In the following test the native function writes beyond MaximumLength
  *  { 4,  9, 14,     "Fake0123abcdef",    "Ustr\0",  8,  9, 14,    "FakeUstrabcdef", STATUS_SUCCESS},
  */
     { 4,  8, 14,     "Fake0123abcdef",    "Ustr\0",  8,  8, 14,    "FakeUstrabcdef", STATUS_SUCCESS},
@@ -974,7 +974,7 @@ static void test_RtlAppendUnicodeToString(void)
     WCHAR dest_buf[257];
     UNICODE_STRING dest_str;
     NTSTATUS result;
-    int test_num;
+    size_t test_num;
 
     for (test_num = 0; test_num < NB_APP_UNI2STR; test_num++) {
 	dest_str.Length        = app_uni2str[test_num].dest_Length;
@@ -1050,7 +1050,7 @@ static void test_RtlAppendUnicodeStringToString(void)
     UNICODE_STRING dest_str;
     UNICODE_STRING src_str;
     NTSTATUS result;
-    int test_num;
+    size_t test_num;
 
     for (test_num = 0; test_num < NB_APP_USTR2STR; test_num++) {
 	dest_str.Length        = app_ustr2str[test_num].dest_Length;
@@ -1161,8 +1161,8 @@ static void test_RtlFindCharInUnicodeString(void)
     UNICODE_STRING search_chars;
     USHORT pos;
     NTSTATUS result;
-    int idx;
-    int test_num;
+    size_t idx;
+    size_t test_num;
 
     for (test_num = 0; test_num < NB_FIND_CH_IN_USTR; test_num++) {
 	if (find_ch_in_ustr[test_num].main_str != NULL) {
@@ -1331,7 +1331,7 @@ static const str2int_t str2int[] = {
 
 static void test_RtlUnicodeStringToInteger(void)
 {
-    int test_num;
+    size_t test_num;
     int value;
     NTSTATUS result;
     WCHAR *wstr;
@@ -1395,7 +1395,7 @@ static void test_RtlUnicodeStringToInteger(void)
 
 static void test_RtlCharToInteger(void)
 {
-    int test_num;
+    size_t test_num;
     int value;
     NTSTATUS result;
 
@@ -1612,11 +1612,10 @@ static void one_RtlIntegerToUnicodeString_test(int test_num, const int2str_t *in
 
 static void test_RtlIntegerToUnicodeString(void)
 {
-    int test_num;
+    size_t test_num;
 
-    for (test_num = 0; test_num < NB_INT2STR; test_num++) {
-	one_RtlIntegerToUnicodeString_test(test_num, &int2str[test_num]);
-    } /* for */
+    for (test_num = 0; test_num < NB_INT2STR; test_num++)
+        one_RtlIntegerToUnicodeString_test(test_num, &int2str[test_num]);
 }
 
 
@@ -1640,11 +1639,10 @@ static void one_RtlIntegerToChar_test(int test_num, const int2str_t *int2str)
 static void test_RtlIntegerToChar(void)
 {
     NTSTATUS result;
-    int test_num;
+    size_t test_num;
 
-    for (test_num = 0; test_num < NB_INT2STR; test_num++) {
-	one_RtlIntegerToChar_test(test_num, &int2str[test_num]);
-    } /* for */
+    for (test_num = 0; test_num < NB_INT2STR; test_num++)
+      one_RtlIntegerToChar_test(test_num, &int2str[test_num]);
 
     result = pRtlIntegerToChar(int2str[0].value, 20, int2str[0].MaximumLength, NULL);
     ok(result == STATUS_INVALID_PARAMETER,
