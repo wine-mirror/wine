@@ -22,7 +22,6 @@
  * TODO:   (in rough order of priority)
  *   - A mind bogglingly vast amount of stuff
  *
- *   - Complete X11DRV page, so all controls are hooked up
  *   - Implement autodetect for drive configuration
  *   - Figure out whether we need the virtual vs real drive selection stuff at the top of the property page
  *   - Implement explicit mode vs instant-apply mode
@@ -35,6 +34,10 @@
  *
  *   Minor things that should be done someday:
  *   - Make the desktop size UI a combo box, with a Custom option, so it's more obvious what you might want to choose here
+ *
+ * BUGS:
+ *   - WineLook default fallback doesn't work
+ *   - x11drv page triggers key writes on entry
  *
  */
 
@@ -94,7 +97,7 @@ char *getConfigValue (char *subkey, char *valueName, char *defaultResult)
         }
         goto end;
     }
-    
+
     res = RegQueryValueExA( hSubKey, valueName, NULL, NULL, NULL, &dataLength);
     if( res == ERROR_FILE_NOT_FOUND ) {
         WINE_TRACE("Value not present - using default\n");

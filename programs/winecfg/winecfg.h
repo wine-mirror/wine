@@ -37,10 +37,10 @@
 #define IS_OPTION_FALSE(ch) \
     ((ch) == 'n' || (ch) == 'N' || (ch) == 'f' || (ch) == 'F' || (ch) == '0')
 
-#define return_if_fail(try, ret) \
+#define return_if_fail(try) \
     if (!(try)) { \
-	WINE_ERR("assertion (##try) failed, returning\n"); \
-	return ret; \
+        WINE_ERR("check (" #try ") at %s:%d failed, returning\n", __FILE__,  __LINE__ - 1); \
+	return; \
     }
 
 #define WRITEME(owner) MessageBox(owner, "Write me!", "", MB_OK | MB_ICONEXCLAMATION);
@@ -63,6 +63,13 @@ extern struct transaction *tqhead, *tqtail;
 
 extern int instantApply; /* non-zero means apply all changes instantly */
 
+#define EDITING_GLOBAL 0
+#define EDITING_APP    1
+extern int appSettings;  /* non-zero means we are editing appdefault settings */
+
+/* returns a string of the form AppDefaults\\appname.exe\\section */
+/* no explicit free is needed of the string returned by this function */
+char *getSectionForApp(char *section); 
 
 /* Commits a transaction to the registry */
 void processTransaction(struct transaction *trans);
@@ -101,10 +108,14 @@ void saveDriveSettings (HWND hDlg);
 
 INT_PTR CALLBACK DriveDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam);
 INT_PTR CALLBACK DriveEditDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam);
+INT_PTR CALLBACK AppDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
 /* some basic utilities to make win32 suck less */
 char *getDialogItemText(HWND hDlg, WORD controlID);
+#define disable(id) EnableWindow(GetDlgItem(dialog, id), 0);
+#define enable(id) EnableWindow(GetDlgItem(dialog, id), 1);
 
-#define WINE_KEY_ROOT "Software\\Wine\\WineCfg\\Config"
+
+#define WINE_KEY_ROOT "Software\\Wine\\Wine\\Config"
 
 #endif

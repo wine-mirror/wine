@@ -45,7 +45,6 @@
 #define IDC_SYSCOLORS                   1017
 #define IDC_PRIVATEMAP                  1018
 #define IDC_PERFECTGRAPH                1019
-#define IDC_LIST_APPS                   1021
 #define IDC_MANAGED                     1022
 #define IDC_DESKTOP_WIDTH               1023
 #define IDC_DESKTOP_HEIGHT              1024
@@ -67,6 +66,8 @@
 #define IDC_EDIT_REAL                   1039
 #define IDC_BUTTON_REAL                 1040
 #define IDC_BUTTON_FOLDERS              1041
+
+/* drive editing */
 #define IDC_LIST_DRIVES                 1042
 #define IDC_BUTTON_ADD                  1043
 #define IDC_BUTTON_REMOVE               1044
@@ -102,8 +103,17 @@
 #define IDC_STATIC_LABEL                1073
 #define IDC_ENABLE_DESKTOP              1074
 #define IDS_DRIVE_NO_C                  1075
+
+/* x11drv */
 #define IDC_ENABLE_MANAGED              1076
 #define IDC_SCREEN_DEPTH                1077
 #define IDC_DX_MOUSE_GRAB               1078
 #define IDC_USE_TAKE_FOCUS              1079
 #define IDC_DOUBLE_BUFFER               1080
+
+/* applications tab */
+#define IDC_LIST_APPS                   1021
+#define IDC_EDITING_GLOBAL              1081
+#define IDC_EDITING_APP                 1082
+#define IDC_ADD_APPDEFAULT              1083
+#define IDC_REMOVE_APPDEFAULT           1084

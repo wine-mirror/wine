@@ -162,20 +162,6 @@ DllDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 }
 
 
-INT_PTR CALLBACK
-AppDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
-{
-    switch (uMsg)
-    {
-    case WM_COMMAND:
-	break;
-
-    default:
-	break;
-    }
-    return FALSE;
-}
-
 #define NUM_PROPERTY_PAGES 5
 INT_PTR
 doPropertySheet (HINSTANCE hInstance, HWND hOwner)
@@ -197,31 +183,31 @@ doPropertySheet (HINSTANCE hInstance, HWND hOwner)
     psp[0].lParam = 0;
 
     /*
-     * Fill out the (Libraries) PROPSHEETPAGE data structure 
+     * Fill out the (Applications) PROPSHEETPAGE data structure 
      * for the property sheet
      */
     psp[1].dwSize = sizeof (PROPSHEETPAGE);
     psp[1].dwFlags = PSP_USETITLE;
     psp[1].hInstance = hInstance;
-    psp[1].u.pszTemplate = MAKEINTRESOURCE (IDD_DLLCFG);
+    psp[1].u.pszTemplate = MAKEINTRESOURCE (IDD_APPCFG);
     psp[1].u2.pszIcon = NULL;
-    psp[1].pfnDlgProc = DllDlgProc;
-    psp[1].pszTitle = "Libraries";
+    psp[1].pfnDlgProc = AppDlgProc;
+    psp[1].pszTitle = "Applications";
     psp[1].lParam = 0;
 
     /*
-     * Fill out the (Applications) PROPSHEETPAGE data structure 
+     * Fill out the (Libraries) PROPSHEETPAGE data structure 
      * for the property sheet
      */
     psp[2].dwSize = sizeof (PROPSHEETPAGE);
     psp[2].dwFlags = PSP_USETITLE;
     psp[2].hInstance = hInstance;
-    psp[2].u.pszTemplate = MAKEINTRESOURCE (IDD_APPCFG);
+    psp[2].u.pszTemplate = MAKEINTRESOURCE (IDD_DLLCFG);
     psp[2].u2.pszIcon = NULL;
-    psp[2].pfnDlgProc = AppDlgProc;
-    psp[2].pszTitle = "Applications";
+    psp[2].pfnDlgProc = DllDlgProc;
+    psp[2].pszTitle = "Libraries";
     psp[2].lParam = 0;
-
+    
     /*
      * Fill out the (X11Drv) PROPSHEETPAGE data structure 
      * for the property sheet
@@ -256,6 +242,7 @@ doPropertySheet (HINSTANCE hInstance, HWND hOwner)
     psh.nPages = NUM_PROPERTY_PAGES;
     psh.u3.ppsp = (LPCPROPSHEETPAGE) & psp;
     psh.pfnCallback = (PFNPROPSHEETCALLBACK) PropSheetCallback;
+    psh.u2.nStartPage = 0;
 
     /*
      * Display the modal property sheet
@@ -293,8 +280,9 @@ WinMain (HINSTANCE hInstance, HINSTANCE hPrev, LPSTR szCmdLine, int nShow)
     InitCommonControls ();
     if (doPropertySheet (hInstance, NULL) > 0) {
 	WINE_TRACE("OK\n");
-    } else
+    } else {
 	WINE_TRACE("Cancel\n");
+    }
     
     ExitProcess (0);
 

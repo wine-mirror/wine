@@ -285,52 +285,52 @@ void fill_drive_droplist(long mask, char currentLetter, HWND hDlg)
 #define BOX_MODE_CD_AUTODETECT 2
 #define BOX_MODE_NONE 3
 #define BOX_MODE_NORMAL 4
-void enable_labelserial_box(HWND hDlg, int mode)
+void enable_labelserial_box(HWND dialog, int mode)
 {
   WINE_TRACE("mode=%d\n", mode);
   switch (mode) {
       case BOX_MODE_CD_ASSIGN:
-	EnableWindow( GetDlgItem( hDlg, IDC_RADIO_AUTODETECT ), 1 );
-	EnableWindow( GetDlgItem( hDlg, IDC_RADIO_ASSIGN ), 1 );
-	EnableWindow( GetDlgItem( hDlg, IDC_EDIT_DEVICE ), 0 );
-	EnableWindow( GetDlgItem( hDlg, IDC_BUTTON_BROWSE_DEVICE ), 0 );
-	EnableWindow( GetDlgItem( hDlg, IDC_EDIT_SERIAL ), 1 );
-	EnableWindow( GetDlgItem( hDlg, IDC_EDIT_LABEL ), 1 );
-	EnableWindow( GetDlgItem( hDlg, IDC_STATIC_SERIAL ), 1);
-	EnableWindow( GetDlgItem( hDlg, IDC_STATIC_LABEL ), 1);
+	enable(IDC_RADIO_AUTODETECT);
+	enable(IDC_RADIO_ASSIGN);
+	disable(IDC_EDIT_DEVICE);
+	disable(IDC_BUTTON_BROWSE_DEVICE);
+	enable(IDC_EDIT_SERIAL);
+	enable(IDC_EDIT_LABEL);
+	enable(IDC_STATIC_SERIAL);
+	enable(IDC_STATIC_LABEL);
 	break;
 	
       case BOX_MODE_CD_AUTODETECT:
-	EnableWindow( GetDlgItem( hDlg, IDC_RADIO_AUTODETECT ), 1 );
-	EnableWindow( GetDlgItem( hDlg, IDC_RADIO_ASSIGN ), 1 );
-	EnableWindow( GetDlgItem( hDlg, IDC_EDIT_DEVICE ), 1 );
-	EnableWindow( GetDlgItem( hDlg, IDC_BUTTON_BROWSE_DEVICE ), 1 );
-	EnableWindow( GetDlgItem( hDlg, IDC_EDIT_SERIAL ), 0 );
-	EnableWindow( GetDlgItem( hDlg, IDC_EDIT_LABEL ), 0 );
-	EnableWindow( GetDlgItem( hDlg, IDC_STATIC_SERIAL ), 0);
-	EnableWindow( GetDlgItem( hDlg, IDC_STATIC_LABEL ), 0);
+	enable(IDC_RADIO_AUTODETECT);
+	enable(IDC_RADIO_ASSIGN);
+	enable(IDC_EDIT_DEVICE);
+	enable(IDC_BUTTON_BROWSE_DEVICE);
+	disable(IDC_EDIT_SERIAL);
+	disable(IDC_EDIT_LABEL);
+	disable(IDC_STATIC_SERIAL);
+	disable(IDC_STATIC_LABEL);
 	break;
 
       case BOX_MODE_NONE:
-	EnableWindow( GetDlgItem( hDlg, IDC_RADIO_AUTODETECT ), 0 );
-	EnableWindow( GetDlgItem( hDlg, IDC_RADIO_ASSIGN ), 0 );
-	EnableWindow( GetDlgItem( hDlg, IDC_EDIT_DEVICE ), 0 );
-	EnableWindow( GetDlgItem( hDlg, IDC_BUTTON_BROWSE_DEVICE ), 0 );
-	EnableWindow( GetDlgItem( hDlg, IDC_EDIT_SERIAL ), 0 );
-	EnableWindow( GetDlgItem( hDlg, IDC_EDIT_LABEL ), 0 );
-	EnableWindow( GetDlgItem( hDlg, IDC_STATIC_SERIAL ), 0);
-	EnableWindow( GetDlgItem( hDlg, IDC_STATIC_LABEL ), 0);	
+	disable(IDC_RADIO_AUTODETECT);
+	disable(IDC_RADIO_ASSIGN);
+	disable(IDC_EDIT_DEVICE);
+	disable(IDC_BUTTON_BROWSE_DEVICE);
+	disable(IDC_EDIT_SERIAL);
+	disable(IDC_EDIT_LABEL);
+	disable(IDC_STATIC_SERIAL);
+	disable(IDC_STATIC_LABEL);
 	break;
 
       case BOX_MODE_NORMAL:
-	EnableWindow( GetDlgItem( hDlg, IDC_RADIO_AUTODETECT ), 0 );
-	EnableWindow( GetDlgItem( hDlg, IDC_RADIO_ASSIGN ), 1 );
-	EnableWindow( GetDlgItem( hDlg, IDC_EDIT_DEVICE ), 0 );
-	EnableWindow( GetDlgItem( hDlg, IDC_BUTTON_BROWSE_DEVICE ), 0 );
-	EnableWindow( GetDlgItem( hDlg, IDC_EDIT_SERIAL ), 1 );
-	EnableWindow( GetDlgItem( hDlg, IDC_EDIT_LABEL ), 1 );
-	EnableWindow( GetDlgItem( hDlg, IDC_STATIC_SERIAL ), 1);
-	EnableWindow( GetDlgItem( hDlg, IDC_STATIC_LABEL ), 1);
+	disable(IDC_RADIO_AUTODETECT);
+	enable(IDC_RADIO_ASSIGN);
+	disable(IDC_EDIT_DEVICE);
+	disable(IDC_BUTTON_BROWSE_DEVICE);
+	enable(IDC_EDIT_SERIAL);
+	enable(IDC_EDIT_LABEL);
+	enable(IDC_STATIC_SERIAL);
+	enable(IDC_STATIC_LABEL);
 	break;	
   }
 }

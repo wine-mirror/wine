@@ -51,11 +51,23 @@ IDD_APPCFG DIALOG DISCARDABLE  0, 0, 260, 250
 STYLE WS_CHILD | WS_DISABLED
 FONT 8, "MS Sans Serif"
 BEGIN
-    CONTROL         "List2",IDC_LIST_APPS,"SysListView32",LVS_LIST | 
+/*  CONTROL         "List2",IDC_LIST_APPS,"SysListView32",LVS_LIST | 
                     LVS_NOLABELWRAP | WS_BORDER | WS_TABSTOP,16,39,226,108
-    GROUPBOX        "Application Specific Setting",IDC_STATIC,8,4,244,151
-    LTEXT           "These settings allow you to overwrite Wine default settings (as specified in other configuration tabs) on a per-application basis.",
-                    IDC_STATIC,15,17,228,20
+ */
+    CONTROL         "Configuring global settings",IDC_EDITING_GLOBAL,
+                    "Button",BS_AUTORADIOBUTTON,8,8,244,10 
+    CONTROL         "Configuring application specific setttings",IDC_EDITING_APP,
+                    "Button",BS_AUTORADIOBUTTON,8,18,244,10
+
+ 
+    LTEXT           "Here you can override the default settings on a per-application basis:",
+                    IDC_STATIC,8,35,244,20
+		    
+    LISTBOX         IDC_LIST_APPS,8,48,244,108,WS_TABSTOP | WS_VSCROLL		    
+		    
+    PUSHBUTTON	    "Add new application...",IDC_ADD_APPDEFAULT,170,155,82,14
+    PUSHBUTTON	    "Remove",IDC_REMOVE_APPDEFAULT,130,155,37,14
+		    
 END
 
 IDD_X11DRVCFG DIALOG DISCARDABLE  0, 0, 260, 250
@@ -65,9 +77,9 @@ BEGIN
     LTEXT	    "Screen color depth: ",IDC_STATIC,8,10,60,30
     COMBOBOX	    IDC_SCREEN_DEPTH,70,8,180,70,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
 
-    CONTROL	    "Can DirectX programs prevent the mouse leaving their window?",IDC_DX_MOUSE_GRAB,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,35,242,8
-    CONTROL	    "Enable desktop double buffering",IDC_DOUBLE_BUFFER,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,45,242,8
-    CONTROL	    "UseTakeFocus (FIXME)",IDC_USE_TAKE_FOCUS,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,55,242,8
+    CONTROL	    "Can DirectX programs prevent the mouse leaving their window?",IDC_DX_MOUSE_GRAB,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,35,230,8
+    CONTROL	    "Enable desktop double buffering",IDC_DOUBLE_BUFFER,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,45,230,8
+    CONTROL	    "UseTakeFocus (FIXME)",IDC_USE_TAKE_FOCUS,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,55,230,8
     
     GROUPBOX        " Window settings ",IDC_STATIC,8,25,244,120
 

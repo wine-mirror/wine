@@ -35,35 +35,37 @@
 WINE_DEFAULT_DEBUG_CHANNEL(winecfg);
 
 #define RES_MAXLEN 5 /* the maximum number of characters in a screen dimension. 5 digits should be plenty, what kind of crazy person runs their screen >10,000 pixels across? */
+#define section (appSettings == EDITING_GLOBAL ? "x11drv" : (getSectionForApp("x11drv")))
 
 int updatingUI;
 
-void updateGUIForDesktopMode(HWND hDlg) {
+void updateGUIForDesktopMode(HWND dialog) {
     WINE_TRACE("\n");
 
     updatingUI = TRUE;
     
     /* do we have desktop mode enabled? */
     if (doesConfigValueExist("x11drv", "Desktop") == S_OK) {
-	CheckDlgButton(hDlg, IDC_ENABLE_DESKTOP, BST_CHECKED);
+	CheckDlgButton(dialog, IDC_ENABLE_DESKTOP, BST_CHECKED);
 	/* enable the controls */
-	EnableWindow(GetDlgItem(hDlg, IDC_DESKTOP_WIDTH), 1);
-	EnableWindow(GetDlgItem(hDlg, IDC_DESKTOP_HEIGHT), 1);
-	EnableWindow(GetDlgItem(hDlg, IDC_DESKTOP_SIZE), 1);
-	EnableWindow(GetDlgItem(hDlg, IDC_DESKTOP_BY), 1);
-	SetWindowText(GetDlgItem(hDlg, IDC_DESKTOP_WIDTH), "640");
-	SetWindowText(GetDlgItem(hDlg, IDC_DESKTOP_HEIGHT), "480");	
+	enable(IDC_DESKTOP_WIDTH);
+	enable(IDC_DESKTOP_HEIGHT);
+	enable(IDC_DESKTOP_SIZE);
+	enable(IDC_DESKTOP_BY);
+	
+	SetWindowText(GetDlgItem(dialog, IDC_DESKTOP_WIDTH), "640");
+	SetWindowText(GetDlgItem(dialog, IDC_DESKTOP_HEIGHT), "480");	
     }
     else {
-	CheckDlgButton(hDlg, IDC_ENABLE_DESKTOP, BST_UNCHECKED);
+	CheckDlgButton(dialog, IDC_ENABLE_DESKTOP, BST_UNCHECKED);
 	/* disable the controls */
-	EnableWindow(GetDlgItem(hDlg, IDC_DESKTOP_WIDTH), 0);
-	EnableWindow(GetDlgItem(hDlg, IDC_DESKTOP_HEIGHT), 0);
-	EnableWindow(GetDlgItem(hDlg, IDC_DESKTOP_SIZE), 0);
-	EnableWindow(GetDlgItem(hDlg, IDC_DESKTOP_BY), 0);
+	disable(IDC_DESKTOP_WIDTH);
+	disable(IDC_DESKTOP_HEIGHT);
+	disable(IDC_DESKTOP_SIZE);
+	disable(IDC_DESKTOP_BY);
 
-	SetWindowText(GetDlgItem(hDlg, IDC_DESKTOP_WIDTH), "");
-	SetWindowText(GetDlgItem(hDlg, IDC_DESKTOP_HEIGHT), "");
+	SetWindowText(GetDlgItem(dialog, IDC_DESKTOP_WIDTH), "");
+	SetWindowText(GetDlgItem(dialog, IDC_DESKTOP_HEIGHT), "");
     }
 
     updatingUI = FALSE;
