@@ -2,6 +2,7 @@
  * SHFileOperation
  *
  * Copyright 2000 Juergen Schmied
+ * Copyright 2002 Andriy Palamarchuk
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -163,6 +164,28 @@ BOOL WINAPI Win32DeleteFile(LPSTR fName)
 	return TRUE;
 }
 
+/**************************************************************************
+ *	SHELL_FileNamesMatch()
+ *
+ * Accepts two \0 delimited lists of the file names. Checks whether number of
+ * files in the both lists is the same.
+ */
+BOOL SHELL_FileNamesMatch(LPCSTR pszFiles1, LPCSTR pszFiles2)
+{
+    while ((pszFiles1[strlen(pszFiles1) + 1] != '\0') &&
+           (pszFiles2[strlen(pszFiles2) + 1] != '\0'))
+    {
+        pszFiles1 += strlen(pszFiles1) + 1;
+        pszFiles2 += strlen(pszFiles2) + 1;
+    }
+
+    return
+        ((pszFiles1[strlen(pszFiles1) + 1] == '\0') &&
+         (pszFiles2[strlen(pszFiles2) + 1] == '\0')) ||
+        ((pszFiles1[strlen(pszFiles1) + 1] != '\0') &&
+         (pszFiles2[strlen(pszFiles2) + 1] != '\0'));
+}
+
 /*************************************************************************
  * SHFileOperationA				[SHELL32.@]
  *
@@ -188,7 +211,9 @@ DWORD WINAPI SHFileOperationA (LPSHFILEOPSTRUCTA lpFileOp)
                 lpFileOp->fFlags & FOF_NOERRORUI ? "FOF_NOERRORUI " : "",
                 lpFileOp->fFlags & 0xf800 ? "MORE-UNKNOWN-Flags" : "");
 	switch(lpFileOp->wFunc) {
-	case FO_COPY: {
+	case FO_COPY:
+        case FO_MOVE:
+        {
                 /* establish when pTo is interpreted as the name of the destination file
                  * or the directory where the Fromfile should be copied to.
                  * This depends on:
@@ -207,16 +232,40 @@ DWORD WINAPI SHFileOperationA (LPSHFILEOPSTRUCTA lpFileOp)
                  */
                 int multifrom = pFrom[strlen(pFrom) + 1] != '\0';
                 int destisdir = PathIsDirectoryA( pTo );
-                int copytodir = 0;
-		TRACE("File Copy:\n");
+                int todir = 0;
+
+                if (lpFileOp->wFunc == FO_COPY)
+                    TRACE("File Copy:\n");
+                else
+                    TRACE("File Move:\n");
+
                 if( destisdir ) {
                     if ( !((lpFileOp->fFlags & FOF_MULTIDESTFILES) && !multifrom))
-                        copytodir = 1;
+                        todir = 1;
                 } else {
                     if ( !(lpFileOp->fFlags & FOF_MULTIDESTFILES) && multifrom)
-                        copytodir = 1;
+                        todir = 1;
                 }
-                if ( copytodir ) {
+
+                if ((pTo[strlen(pTo) + 1] != '\0') &&
+                    !(lpFileOp->fFlags & FOF_MULTIDESTFILES))
+                {
+                    WARN("Attempt to use multiple file names as a destination "
+                         "without specifying FOF_MULTIDESTFILES\n");
+                    return 1;
+                }
+
+                if ((lpFileOp->fFlags & FOF_MULTIDESTFILES) &&
+                    !SHELL_FileNamesMatch(pTo, pFrom))
+                {
+                    WARN("Attempt to use multiple file names as a destination "
+                         "with mismatching number of files in the source and "
+                         "destination lists\n");
+                    return 1;
+                }
+
+                if ( todir ) {
+                    char szTempFrom[MAX_PATH];
                     char *fromfile;
                     int lenPTo;
                     if ( ! destisdir) {
@@ -225,17 +274,71 @@ DWORD WINAPI SHFileOperationA (LPSHFILEOPSTRUCTA lpFileOp)
                     }
                     lenPTo = strlen(pTo);
                     while(1) {
+		        HANDLE hFind;
+		        WIN32_FIND_DATAA wfd;
+
                         if(!pFrom[0]) break;
-                        fromfile = PathFindFileNameA( pFrom);
-                        pTempTo = HeapAlloc(GetProcessHeap(), 0, lenPTo + strlen(fromfile) + 2);
-                        if (pTempTo) {
-                            strcpy(pTempTo,pTo);
-                            if(lenPTo && pTo[lenPTo] != '\\')
-                                strcat(pTempTo,"\\");
-                            strcat(pTempTo,fromfile);
-                            TRACE("   From='%s' To='%s'\n", pFrom, pTempTo);
-                            CopyFileA(pFrom, pTempTo, FALSE);
-                            HeapFree(GetProcessHeap(), 0, pTempTo);
+                        TRACE("   From Pattern='%s'\n", pFrom);
+			if(INVALID_HANDLE_VALUE != (hFind = FindFirstFileA(pFrom, &wfd)))
+			{
+			  do
+			  {
+			    if(strcasecmp(wfd.cFileName, ".") && strcasecmp(wfd.cFileName, ".."))
+			    {
+			      strcpy(szTempFrom, pFrom);
+
+                              pTempTo = HeapAlloc(GetProcessHeap(), 0,
+                                                  lenPTo + strlen(wfd.cFileName) + 5);
+                              if (pTempTo) {
+                                  strcpy(pTempTo,pTo);
+                                  PathAddBackslashA(pTempTo);
+                                  strcat(pTempTo,wfd.cFileName);
+
+                                  fromfile = PathFindFileNameA(szTempFrom);
+                                  fromfile[0] = '\0';
+                                  PathAddBackslashA(szTempFrom);
+                                  strcat(szTempFrom, wfd.cFileName);
+                                  TRACE("   From='%s' To='%s'\n", szTempFrom, pTempTo);
+                                  if(lpFileOp->wFunc == FO_COPY)
+                                  {
+                                      if(FILE_ATTRIBUTE_DIRECTORY & wfd.dwFileAttributes)
+                                      {
+                                          /* copy recursively */
+                                          if(!(lpFileOp->fFlags & FOF_FILESONLY))
+                                          {
+                                              SHFILEOPSTRUCTA shfo;
+
+                                              SHCreateDirectory(NULL,pTempTo);
+                                              PathAddBackslashA(szTempFrom);
+                                              strcat(szTempFrom, "*.*");
+                                              szTempFrom[strlen(szTempFrom) + 1] = '\0';
+                                              pTempTo[strlen(pTempTo) + 1] = '\0';
+                                              memcpy(&shfo, lpFileOp, sizeof(shfo));
+                                              shfo.pFrom = szTempFrom;
+                                              shfo.pTo = pTempTo;
+                                              SHFileOperationA(&shfo);
+
+                                              szTempFrom[strlen(szTempFrom) - 4] = '\0';
+                                          }
+                                      }
+                                      else
+                                          CopyFileA(szTempFrom, pTempTo, FALSE);
+                                  }
+                                  else
+                                  {
+                                      /* move file/directory */
+                                      MoveFileA(szTempFrom, pTempTo);
+                                  }
+                                  HeapFree(GetProcessHeap(), 0, pTempTo);
+                              }
+			    }
+			  } while(FindNextFileA(hFind, &wfd));
+			  FindClose(hFind);
+                        }
+                        else
+                        {
+                            /* can't find file with specified name */
+                            break;
                         }
                         pFrom += strlen(pFrom) + 1;
                     }
@@ -254,7 +357,10 @@ DWORD WINAPI SHFileOperationA (LPSHFILEOPSTRUCTA lpFileOp)
                                 SHCreateDirectory(NULL,pTempTo);
                                 HeapFree(GetProcessHeap(), 0, pTempTo);
                             }
-                            CopyFileA(pFrom, pTo, FALSE);
+                            if (lpFileOp->wFunc == FO_COPY)
+                                CopyFileA(pFrom, pTo, FALSE);
+                            else
+                                MoveFileA(pFrom, pTo);
 
                             pFrom += strlen(pFrom) + 1;
                             pTo += strlen(pTo) + 1;
