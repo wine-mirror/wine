@@ -3615,8 +3615,10 @@ static BOOL EDIT_EM_Undo(WND *wnd, EDITSTATE *es)
 
 	EDIT_EM_SetSel(wnd, es, es->undo_position, es->undo_position + es->undo_insert_count, FALSE);
 	EDIT_EM_EmptyUndoBuffer(es);
-	EDIT_EM_ReplaceSel(wnd, es, TRUE, utext, TRUE);
+	EDIT_EM_ReplaceSel(wnd, es, TRUE, utext, FALSE);
 	EDIT_EM_SetSel(wnd, es, es->undo_position, es->undo_position + es->undo_insert_count, FALSE);
+        /* send the notification after the selection start and end are set */
+        EDIT_NOTIFY_PARENT(es, EN_CHANGE, "EN_CHANGE");
 	EDIT_EM_ScrollCaret(wnd, es);
 	HeapFree(GetProcessHeap(), 0, utext);
 
@@ -3824,13 +3826,15 @@ static LRESULT EDIT_WM_Create(WND *wnd, EDITSTATE *es, LPCWSTR name)
         EDIT_EM_EmptyUndoBuffer(es);
 
        if (name && *name) {
-	   EDIT_EM_ReplaceSel(wnd, es, FALSE, name, TRUE);
+	   EDIT_EM_ReplaceSel(wnd, es, FALSE, name, FALSE);
 	   /* if we insert text to the editline, the text scrolls out
             * of the window, as the caret is placed after the insert
             * pos normally; thus we reset es->selection... to 0 and
             * update caret
             */
 	   es->selection_start = es->selection_end = 0;
+           /* send the notification after the selection start and end are set */
+           EDIT_NOTIFY_PARENT(es, EN_CHANGE, "EN_CHANGE");
 	   EDIT_EM_ScrollCaret(wnd, es);
        }
        /* force scroll info update */
@@ -4666,23 +4670,23 @@ static void EDIT_WM_SetText(WND *wnd, EDITSTATE *es, LPARAM lParam, BOOL unicode
 	EDIT_EM_SetSel(wnd, es, 0, (UINT)-1, FALSE);
 	if (text) {
 		TRACE("%s\n", debugstr_w(text));
-		/* edit control doesn't send notification on WM_SETTEXT
-		 * if it is multiline, or it is part of combobox
-		 */
-		EDIT_EM_ReplaceSel(wnd, es, FALSE, text, !((es->style & ES_MULTILINE) || es->hwndListBox));
+		EDIT_EM_ReplaceSel(wnd, es, FALSE, text, FALSE);
 		if(!unicode)
 		    HeapFree(GetProcessHeap(), 0, text);
 	} else {
 		static const WCHAR empty_stringW[] = {0};
 		TRACE("<NULL>\n");
-		/* edit control doesn't send notification on WM_SETTEXT
-		 * if it is multiline, or it is part of combobox
-		 */
-		EDIT_EM_ReplaceSel(wnd, es, FALSE, empty_stringW, !((es->style & ES_MULTILINE) || es->hwndListBox));
+		EDIT_EM_ReplaceSel(wnd, es, FALSE, empty_stringW, FALSE);
 	}
 	es->x_offset = 0;
 	es->flags &= ~EF_MODIFIED;
 	EDIT_EM_SetSel(wnd, es, 0, 0, FALSE);
+        /* Send the notification after the selection start and end have been set
+         * edit control doesn't send notification on WM_SETTEXT
+         * if it is multiline, or it is part of combobox
+         */
+	if( !((es->style & ES_MULTILINE) || es->hwndListBox))
+	    EDIT_NOTIFY_PARENT(es, EN_CHANGE, "EN_CHANGE");
 	EDIT_EM_ScrollCaret(wnd, es);
 }
 
