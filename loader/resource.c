@@ -945,43 +945,24 @@ INT WINAPI LoadStringA( HINSTANCE instance, UINT resource_id,
                             LPSTR buffer, INT buflen )
 {
     INT    retval;
-    INT    wbuflen;
-    INT    abuflen;
-    LPWSTR wbuf = NULL;
-    LPSTR  abuf = NULL;
+    LPWSTR wbuf;
 
-    if ( buffer != NULL && buflen > 0 )
-	*buffer = 0;
+    TRACE("instance = %04x, id = %04x, buffer = %08x, "
+          "length = %d\n", instance, (int)resource_id, (int) buffer, buflen);
 
-    wbuflen = LoadStringW(instance,resource_id,NULL,0);
-    if ( !wbuflen )
+    if(buffer == NULL) /* asked size of string */
+	return LoadStringW(instance, resource_id, NULL, 0);
+    
+    wbuf = HeapAlloc(GetProcessHeap(), 0, buflen * sizeof(WCHAR));
+    if(!wbuf)
 	return 0;
-    wbuflen ++;
 
-    retval = 0;
-    wbuf = HeapAlloc( GetProcessHeap(), 0, wbuflen * sizeof(WCHAR) );
-    wbuflen = LoadStringW(instance,resource_id,wbuf,wbuflen);
-    if ( wbuflen > 0 )
+    retval = LoadStringW(instance, resource_id, wbuf, buflen);
+    if(retval != 0)
     {
-	abuflen = WideCharToMultiByte(CP_ACP,0,wbuf,wbuflen,NULL,0,NULL,NULL);
-	if ( abuflen > 0 )
-	{
-	    if ( buffer == NULL || buflen == 0 )
-		retval = abuflen;
-	    else
-	    {
-		abuf = HeapAlloc( GetProcessHeap(), 0, abuflen * sizeof(CHAR) );
-		abuflen = WideCharToMultiByte(CP_ACP,0,wbuf,wbuflen,abuf,abuflen,NULL,NULL);
-		if ( abuflen > 0 )
-		{
-		    abuflen = min(abuflen,buflen - 1);
-		    memcpy( buffer, abuf, abuflen );
-		    buffer[abuflen] = 0;
-		    retval = abuflen;
-		}
-		HeapFree( GetProcessHeap(), 0, abuf );
-	    }
-	}
+	retval = WideCharToMultiByte(CP_ACP, 0, wbuf, retval, buffer, buflen - 1, NULL, NULL);
+	buffer[retval] = 0;
+	TRACE("%s loaded !\n", debugstr_a(buffer));
     }
     HeapFree( GetProcessHeap(), 0, wbuf );
 
