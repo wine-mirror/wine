@@ -654,6 +654,8 @@ static int ctl2_alloc_importfile(
     return offset;
 }
 
+static void add_structure_typeinfo(msft_typelib_t *typelib, type_t *structure);
+static void add_interface_typeinfo(msft_typelib_t *typelib, type_t *interface);
 
 /****************************************************************************
  *	encode_type
@@ -856,10 +858,22 @@ static int encode_type(
     case VT_USERDEFINED:
       {
         int typeinfo_offset;
-        chat("encode_type: VT_USERDEFINED - type %p name = %s idx %d\n", type, type->name, type->typelib_idx);
+        chat("encode_type: VT_USERDEFINED - type %p name = %s type->type %d idx %d\n", type,
+             type->name, type->type, type->typelib_idx);
 
-        if(type->typelib_idx == -1)
-            error("encode_type: trying to ref not added type\n");
+        if(type->typelib_idx == -1) {
+            chat("encode_type: trying to ref not added type\n");
+            switch(type->type) {
+            case RPC_FC_STRUCT:
+                add_structure_typeinfo(typelib, type);
+                break;
+            case RPC_FC_IP:
+                add_interface_typeinfo(typelib, type);
+                break;
+            default:
+                error("encode_type: VT_USERDEFINED - unhandled type %d\n", type->type);
+            }
+        }
 
         typeinfo_offset = typelib->typelib_typeinfo_offsets[type->typelib_idx];
 	for (typeoffset = 0; typeoffset < typelib->typelib_segdir[MSFT_SEG_TYPEDESC].length; typeoffset += 8) {
@@ -1488,44 +1502,16 @@ static HRESULT add_var_desc(msft_typeinfo_t *typeinfo, UINT index, var_t* var)
     return S_OK;
 }
 
-
-static msft_typeinfo_t *create_msft_typeinfo(msft_typelib_t *typelib, typelib_entry_t *entry, int idx)
+static msft_typeinfo_t *create_msft_typeinfo(msft_typelib_t *typelib, enum type_kind kind,
+                                             char *name, attr_t *attr, int idx)
 {
     msft_typeinfo_t *msft_typeinfo;
     int nameoffset;
     int typeinfo_offset;
     MSFT_TypeInfoBase *typeinfo;
-    char *name;
     MSFT_GuidEntry guidentry;
-    attr_t *attr;
 
-    switch(entry->kind) {
-    case TKIND_INTERFACE:
-        name = entry->u.interface->name;
-        attr = entry->u.interface->attrs;
-        entry->u.interface->typelib_idx = idx;
-        break;
-    case TKIND_MODULE:
-        name = entry->u.module->name;
-        attr = entry->u.module->attrs;
-        break;
-    case TKIND_COCLASS:
-        name = entry->u.class->name;
-        attr = entry->u.class->attrs;
-        break;
-    case TKIND_RECORD:
-        name = entry->u.structure->name;
-        attr = entry->u.structure->attrs;
-        entry->u.structure->typelib_idx = idx;
-        chat("type = %p\n", entry->u.structure);
-        break;
-    default:
-        error("create_msft_typeinfo: unhandled type %d\n", entry->kind);
-        return NULL;
-    }
-
-
-    chat("Constructing msft_typeinfo for name %s kind %d\n", name, entry->kind);
+    chat("create_msft_typeinfo: name %s kind %d\n", name, kind);
 
     msft_typeinfo = xmalloc(sizeof(*msft_typeinfo));
 
@@ -1540,36 +1526,8 @@ static msft_typeinfo_t *create_msft_typeinfo(msft_typelib_t *typelib, typelib_en
 
     msft_typeinfo->typeinfo = typeinfo;
 
-    typeinfo->typekind |= entry->kind | 0x220;
+    typeinfo->typekind |= kind | 0x220;
     set_alignment(msft_typeinfo, 4);
-
-    switch (entry->kind) {
-    case TKIND_ENUM:
-    case TKIND_INTERFACE:
-    case TKIND_DISPATCH:
-    case TKIND_COCLASS:
-	typeinfo->size = 4;
-	break;
-
-    case TKIND_RECORD:
-    case TKIND_UNION:
-	typeinfo->size = 0;
-	break;
-
-    case TKIND_MODULE:
-	typeinfo->size = 2;
-	break;
-
-    case TKIND_ALIAS:
-	typeinfo->size = -0x75;
-	break;
-
-    default:
-	error("%s unrecognized typekind %d\n", name, entry->kind);
-	typeinfo->size = 0xdeadbeef;
-	break;
-    }
-
 
     for( ; attr; attr = NEXT_LINK(attr)) {
         switch(attr->type) {
@@ -1631,6 +1589,62 @@ static msft_typeinfo_t *create_msft_typeinfo(msft_typelib_t *typelib, typelib_en
 
 
     return msft_typeinfo;
+}
+
+
+static void add_interface_typeinfo(msft_typelib_t *typelib, type_t *interface)
+{
+    int idx = 0;
+    func_t *cur = interface->funcs;
+    msft_typeinfo_t *msft_typeinfo;
+
+    interface->typelib_idx = typelib->typelib_header.nrtypeinfos;
+    msft_typeinfo = create_msft_typeinfo(typelib, TKIND_INTERFACE, interface->name, interface->attrs,
+                                         typelib->typelib_header.nrtypeinfos);
+    msft_typeinfo->typeinfo->size = 4;
+
+    while(NEXT_LINK(cur)) cur = NEXT_LINK(cur);
+    while(cur) {
+        if(add_func_desc(msft_typeinfo, cur, idx) == S_OK)
+            idx++;
+        cur = PREV_LINK(cur);
+    }
+}
+
+static void add_structure_typeinfo(msft_typelib_t *typelib, type_t *structure)
+{
+    int idx = 0;
+    var_t *cur = structure->fields;
+    msft_typeinfo_t *msft_typeinfo;
+
+    structure->typelib_idx = typelib->typelib_header.nrtypeinfos;
+    msft_typeinfo = create_msft_typeinfo(typelib, TKIND_RECORD, structure->name, structure->attrs,
+                                         typelib->typelib_header.nrtypeinfos);
+    msft_typeinfo->typeinfo->size = 0;
+
+    while(NEXT_LINK(cur)) cur = NEXT_LINK(cur);
+    while(cur) {
+        add_var_desc(msft_typeinfo, idx, cur);
+        idx++;
+        cur = PREV_LINK(cur);
+    }
+}
+
+static void add_entry(msft_typelib_t *typelib, typelib_entry_t *entry)
+{
+    switch(entry->kind) {
+    case TKIND_INTERFACE:
+        add_interface_typeinfo(typelib, entry->u.interface);
+        break;
+
+    case TKIND_RECORD:
+        add_structure_typeinfo(typelib, entry->u.structure);
+        break;
+
+    default:
+        error("add_entry: unhandled type %d\n", entry->kind);
+        break;
+    }
 }
 
 
@@ -1904,13 +1918,10 @@ static int save_all_changes(msft_typelib_t *typelib)
     return retval;
 }
 
-
-
-
 int create_msft_typelib(typelib_t *typelib)
 {
     msft_typelib_t *msft;
-    int failed = 0, typelib_idx;
+    int failed = 0;
     typelib_entry_t *entry;
     time_t cur_time;
     unsigned int version = 5 << 24 | 1 << 16 | 164; /* 5.01.0164 */
@@ -1959,43 +1970,12 @@ int create_msft_typelib(typelib_t *typelib)
     set_custdata(msft, &midl_time_guid, VT_UI4, &cur_time, &msft->typelib_header.CustomDataOffset);
     set_custdata(msft, &midl_version_guid, VT_UI4, &version, &msft->typelib_header.CustomDataOffset);
 
-    typelib_idx = 0;
     for(entry = typelib->entry; NEXT_LINK(entry); entry = NEXT_LINK(entry))
         ;
-    for( ; entry; entry = PREV_LINK(entry)) {
-        msft_typeinfo_t *msft_typeinfo = create_msft_typeinfo(msft, entry, typelib_idx);
-        switch(entry->kind) {
-        case TKIND_INTERFACE:
-          {
-            int idx = 0;
-            func_t *cur = entry->u.interface->funcs;
-            while(NEXT_LINK(cur)) cur = NEXT_LINK(cur);
-            while(cur) {
-                if(add_func_desc(msft_typeinfo, cur, idx) == S_OK)
-                    idx++;
-                cur = PREV_LINK(cur);
-            }
-            break;
-          }
-        case TKIND_RECORD:
-          {
-            int idx = 0;
-            var_t *cur = entry->u.structure->fields;
-            while(NEXT_LINK(cur)) cur = NEXT_LINK(cur);
-            while(cur) {
-                add_var_desc(msft_typeinfo, idx, cur);
-                idx++;
-                cur = PREV_LINK(cur);
-            }
-            break;
-          }
-                
-        default:
-            error("create_msft_typelib: unhandled type %d\n", entry->kind);
-            break;
-        }
-        typelib_idx++;
-    }
+
+    for( ; entry; entry = PREV_LINK(entry))
+        add_entry(msft, entry);
+
     save_all_changes(msft);
     return 1;
 }
