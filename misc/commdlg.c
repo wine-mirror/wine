@@ -34,7 +34,7 @@ static const char defaultfilter[]=" \0\0";
 /***********************************************************************
  * 				FileDlg_Init			[internal]
  */
-static BOOL32 FileDlg_Init()
+static BOOL32 FileDlg_Init(void)
 {
     static BOOL32 initialized = 0;
     
@@ -2286,7 +2286,7 @@ static void CC_SwitchToFullSize(HWND16 hDlg,COLORREF result,LPRECT16 lprect)
  EnableWindow32(GetDlgItem32(hDlg,0x2c8),TRUE);
 
  if (lprect)
-  SetWindowPos32(hDlg,NULL,0,0,lprect->right-lprect->left,
+  SetWindowPos32(hDlg,0,0,0,lprect->right-lprect->left,
    lprect->bottom-lprect->top, SWP_NOMOVE|SWP_NOZORDER);
 
  ShowWindow32(GetDlgItem32(hDlg,0x2c6),SW_SHOW);
@@ -2447,7 +2447,7 @@ static LONG CC_WMInitDialog(HWND16 hDlg, WPARAM16 wParam, LPARAM lParam)
       ScreenToClient16(hDlg,&point);
       GetClientRect16(hDlg,&rect);
       point.x+=GetSystemMetrics32(SM_CXDLGFRAME);
-      SetWindowPos32(hDlg,NULL,0,0,point.x,res,SWP_NOMOVE|SWP_NOZORDER);
+      SetWindowPos32(hDlg,0,0,0,point.x,res,SWP_NOMOVE|SWP_NOZORDER);
 
       ShowWindow32(GetDlgItem32(hDlg,0x2c6),SW_HIDE);
       ShowWindow32(GetDlgItem32(hDlg,0x2c5),SW_HIDE);
@@ -3565,7 +3565,7 @@ LRESULT WINAPI FormatCharDlgProc16(HWND16 hDlg, UINT16 message, WPARAM16 wParam,
 			 FIXME(commdlg, "current logfont back to caller\n");
                         break;
     }
-  WINPROC_UnmapMsg16To32A(uMsg32, wParam32, lParam, res);    
+  WINPROC_UnmapMsg16To32A(hDlg,uMsg32, wParam32, lParam, res);    
   return res;
 }
 

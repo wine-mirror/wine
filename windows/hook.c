@@ -95,7 +95,7 @@ static void HOOK_Map16To32Common(INT32 id, INT32 code, WPARAM32 *pwParam,
             if (bA) WINPROC_MapMsg16To32A( lpcwp16->message, lpcwp16->wParam, 
                                            &lpcwp32->message, &lpcwp32->wParam,
                                            &lpcwp32->lParam );
-            else WINPROC_MapMsg16To32W( lpcwp16->message, lpcwp16->wParam, 
+            else WINPROC_MapMsg16To32W( lpcwp16->hwnd,lpcwp16->message, lpcwp16->wParam, 
                                         &lpcwp32->message, &lpcwp32->wParam,
                                         &lpcwp32->lParam );
 	    *plParam = (LPARAM)lpcwp32;
@@ -266,9 +266,9 @@ static void HOOK_UnMap16To32Common(INT32 id, INT32 code, WPARAM32 wParamOrig,
 	case WH_CALLWNDPROC:
 	{
             LPCWPSTRUCT32   lpcwp32 = (LPCWPSTRUCT32)lParam;
-            if (bA) WINPROC_UnmapMsg16To32A( lpcwp32->message, lpcwp32->wParam,
+            if (bA) WINPROC_UnmapMsg16To32A( lpcwp32->hwnd,lpcwp32->message, lpcwp32->wParam,
                                              lpcwp32->lParam, 0 );
-            else WINPROC_UnmapMsg16To32W( lpcwp32->message, lpcwp32->wParam,
+            else WINPROC_UnmapMsg16To32W( lpcwp32->hwnd,lpcwp32->message, lpcwp32->wParam,
                                           lpcwp32->lParam, 0 );
 	    HeapFree( SystemHeap, 0, lpcwp32 );
             break;
@@ -582,9 +582,9 @@ static void HOOK_UnMap32To16Common(INT32 id, INT32 code, WPARAM32 wParamOrig,
 	  LPCWPSTRUCT32   lpcwp32 = (LPCWPSTRUCT32)lParamOrig;
 	  MSGPARAM16	  mp16 = { lpcwp16->wParam, lpcwp16->lParam, 0 };
 
-          if (bA) WINPROC_UnmapMsg32ATo16( lpcwp32->message, lpcwp32->wParam,
+          if (bA) WINPROC_UnmapMsg32ATo16( lpcwp32->hwnd,lpcwp32->message, lpcwp32->wParam,
                                            lpcwp32->lParam, &mp16 );
-          else WINPROC_UnmapMsg32WTo16( lpcwp32->message, lpcwp32->wParam,
+          else WINPROC_UnmapMsg32WTo16( lpcwp32->hwnd,lpcwp32->message, lpcwp32->wParam,
                                         lpcwp32->lParam, &mp16 );
 	  SEGPTR_FREE( PTR_SEG_TO_LIN(lParam) );
           break;
