@@ -420,7 +420,6 @@ PDB *PROCESS_Create( NE_MODULE *pModule, LPCSTR cmd_line, LPCSTR env,
     THDB *thdb = NULL;
     PDB *parent = PROCESS_Current();
     PDB *pdb = PROCESS_CreatePDB( parent, inherit );
-    TDB *pTask;
 
     if (!pdb) return NULL;
     info->hThread = info->hProcess = INVALID_HANDLE_VALUE;
@@ -452,8 +451,9 @@ PDB *PROCESS_Create( NE_MODULE *pModule, LPCSTR cmd_line, LPCSTR env,
         size = PE_HEADER(pModule->module32)->OptionalHeader.SizeOfStackReserve;
     else
         size = 0;
-    if (!(thdb = THREAD_Create( pdb, size, FALSE, &server_thandle, &server_phandle,
-                                NULL, NULL ))) goto error;
+    if (!(thdb = THREAD_Create( pdb, size, hInstance == 0, 
+                                &server_thandle, &server_phandle, NULL, NULL ))) 
+        goto error;
     if ((info->hThread = HANDLE_Alloc( parent, &thdb->header, THREAD_ALL_ACCESS,
                                        FALSE, server_thandle )) == INVALID_HANDLE_VALUE)
         goto error;
@@ -480,8 +480,8 @@ PDB *PROCESS_Create( NE_MODULE *pModule, LPCSTR cmd_line, LPCSTR env,
     if (startup->dwFlags & STARTF_USESHOWWINDOW)
         cmdShow = startup->wShowWindow;
 
-    pdb->task = TASK_Create( thdb, pModule, hInstance, hPrevInstance, cmdShow);
-    if (!pdb->task) goto error;
+    if ( !TASK_Create( thdb, pModule, hInstance, hPrevInstance, cmdShow) )
+        goto error;
 
 
     /* Map system DLLs into this process (from initial process) */

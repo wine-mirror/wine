@@ -259,9 +259,6 @@ static void TASK_CallToStart(void)
 	if (PE_HEADER(pModule->module32)->OptionalHeader.Subsystem==IMAGE_SUBSYSTEM_WINDOWS_CUI)
 		AllocConsole();
 
-        if (pModule->heap_size)
-            LocalInit16( pTask->hInstance, 0, pModule->heap_size );
-
         MODULE_InitializeDLLs( 0, DLL_PROCESS_ATTACH, (LPVOID)-1 );
         TRACE(relay, "(entryproc=%p)\n", entry );
 
@@ -336,8 +333,8 @@ static void TASK_CallToStart(void)
  *       any real problems with that, since we operated merely on a private
  *       TDB structure that is not yet linked into the task list.
  */
-HTASK16 TASK_Create( THDB *thdb, NE_MODULE *pModule, HINSTANCE16 hInstance,
-                     HINSTANCE16 hPrevInstance, UINT16 cmdShow)
+BOOL TASK_Create( THDB *thdb, NE_MODULE *pModule, HINSTANCE16 hInstance,
+                  HINSTANCE16 hPrevInstance, UINT16 cmdShow)
 {
     HTASK16 hTask;
     TDB *pTask, *pInitialTask;
@@ -354,7 +351,7 @@ HTASK16 TASK_Create( THDB *thdb, NE_MODULE *pModule, HINSTANCE16 hInstance,
 
     hTask = GLOBAL_Alloc( GMEM_FIXED | GMEM_ZEROINIT, sizeof(TDB),
                           pModule->self, FALSE, FALSE, FALSE );
-    if (!hTask) return 0;
+    if (!hTask) return FALSE;
     pTask = (TDB *)GlobalLock16( hTask );
 
     /* Fill the task structure */
@@ -369,7 +366,7 @@ HTASK16 TASK_Create( THDB *thdb, NE_MODULE *pModule, HINSTANCE16 hInstance,
     	pTask->flags 	|= TDBF_WINOLDAP;
 
     pTask->version       = pModule->expected_version;
-    pTask->hInstance     = hInstance;
+    pTask->hInstance     = hInstance? hInstance : pModule->self;
     pTask->hPrevInstance = hPrevInstance;
     pTask->hModule       = pModule->self;
     pTask->hParent       = GetCurrentTask();
@@ -445,16 +442,23 @@ HTASK16 TASK_Create( THDB *thdb, NE_MODULE *pModule, HINSTANCE16 hInstance,
     if ( pInitialTask )
         pTask->userhandler = pInitialTask->userhandler;
 
+    /* If we have a DGROUP/hInstance, use it for 16-bit stack */
+ 
+    if ( hInstance )
+    {
+        if (!(sp = pModule->sp))
+            sp = pSegTable[pModule->ss-1].minsize + pModule->stack_size;
+        sp &= ~1;  sp -= sizeof(STACK16FRAME);
+        pTask->thdb->cur_stack = PTR_SEG_OFF_TO_SEGPTR( hInstance, sp );
+    }
+
     /* Create the 16-bit stack frame */
 
-    if (!(sp = pModule->sp))
-        sp = pSegTable[pModule->ss-1].minsize + pModule->stack_size;
-    sp &= ~1;  sp -= 2*sizeof(STACK16FRAME);
-    pTask->thdb->cur_stack = PTR_SEG_OFF_TO_SEGPTR( pTask->hInstance, sp );
+    pTask->thdb->cur_stack -= sizeof(STACK16FRAME);
     frame16 = (STACK16FRAME *)PTR_SEG_TO_LIN( pTask->thdb->cur_stack );
-    frame16->ebp = sp + (int)&((STACK16FRAME *)0)->bp;
+    frame16->ebp = OFFSETOF( pTask->thdb->cur_stack ) + (int)&((STACK16FRAME *)0)->bp;
     frame16->bp = LOWORD(frame16->ebp);
-    frame16->ds = frame16->es = pTask->hInstance;
+    frame16->ds = frame16->es = hInstance;
     frame16->fs = 0;
     frame16->entry_point = 0;
     frame16->entry_cs = 0;
@@ -474,11 +478,14 @@ HTASK16 TASK_Create( THDB *thdb, NE_MODULE *pModule, HINSTANCE16 hInstance,
     frame32->retaddr = (DWORD)TASK_CallToStart;
     /* The remaining fields will be initialized in TASK_Reschedule */
 
-
+    /* Enter task handle into thread and process */
+ 
+    pTask->thdb->teb.htask16 = pTask->thdb->process->task = hTask;
+ 
     TRACE(task, "module='%s' cmdline='%s' task=%04x\n",
           name, cmd_line, hTask );
 
-    return hTask;
+    return TRUE;
 }
 
 /***********************************************************************

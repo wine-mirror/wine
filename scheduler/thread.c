@@ -226,7 +226,7 @@ THDB *THREAD_CreateInitialThread( PDB *pdb )
 
     /* Now proceed with normal initialization */
 
-    if (!THREAD_InitTHDB( &initial_thdb, 0, FALSE, NULL, NULL )) return NULL;
+    if (!THREAD_InitTHDB( &initial_thdb, 0, TRUE, NULL, NULL )) return NULL;
     return &initial_thdb;
 }
 
@@ -244,7 +244,7 @@ THDB *THREAD_Create( PDB *pdb, DWORD stack_size, BOOL alloc_stack16,
     thdb->header.refcount = 1;
     thdb->process         = pdb;
     thdb->teb.except      = (void *)-1;
-    thdb->teb.htask16     = 0; /* FIXME */
+    thdb->teb.htask16     = pdb->task;
     thdb->teb.self        = &thdb->teb;
     thdb->teb.flags       = (pdb->flags & PDB32_WIN16_PROC)? 0 : TEBF_WIN32;
     thdb->teb.tls_ptr     = thdb->tls_array;

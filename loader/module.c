@@ -12,6 +12,7 @@
 #include <unistd.h>
 #include "wine/winuser16.h"
 #include "wine/winbase16.h"
+#include "windef.h"
 #include "winerror.h"
 #include "class.h"
 #include "file.h"
@@ -28,8 +29,6 @@
 #include "task.h"
 #include "debug.h"
 #include "callback.h"
-
-extern BOOL THREAD_InitDone;
 
 
 /*************************************************************************
@@ -208,11 +207,11 @@ HMODULE MODULE_CreateDummyModule( const OFSTRUCT *ofs, LPCSTR modName )
     pModule->count            = 1;
     pModule->next             = 0;
     pModule->flags            = 0;
-    pModule->dgroup           = 1;
+    pModule->dgroup           = 0;
     pModule->ss               = 1;
     pModule->cs               = 2;
-    pModule->heap_size        = 0xe000;
-    pModule->stack_size       = 0x1000;
+    pModule->heap_size        = 0;
+    pModule->stack_size       = 0;
     pModule->seg_count        = 2;
     pModule->modref_count     = 0;
     pModule->nrname_size      = 0;
@@ -226,7 +225,7 @@ HMODULE MODULE_CreateDummyModule( const OFSTRUCT *ofs, LPCSTR modName )
     ((OFSTRUCT *)(pModule+1))->cBytes = of_size - 1;
 
     pSegment = (SEGTABLEENTRY*)((char*)(pModule + 1) + of_size);
-    pModule->seg_table = pModule->dgroup_entry = (int)pSegment - (int)pModule;
+    pModule->seg_table = (int)pSegment - (int)pModule;
     /* Data segment */
     pSegment->size    = 0;
     pSegment->flags   = NE_SEGFLAGS_DATA;
@@ -402,110 +401,316 @@ HMODULE MODULE_FindModule(
     return 0;
 }
 
-
-
-/**********************************************************************
- *	    NE_CreateProcess
+/***********************************************************************
+ *           MODULE_GetBinaryType
+ *
+ * The GetBinaryType function determines whether a file is executable
+ * or not and if it is it returns what type of executable it is.
+ * The type of executable is a property that determines in which
+ * subsystem an executable file runs under.
+ *
+ * Binary types returned:
+ * SCS_32BIT_BINARY: A Win32 based application
+ * SCS_DOS_BINARY: An MS-Dos based application
+ * SCS_WOW_BINARY: A Win16 based application
+ * SCS_PIF_BINARY: A PIF file that executes an MS-Dos based app
+ * SCS_POSIX_BINARY: A POSIX based application ( Not implemented )
+ * SCS_OS216_BINARY: A 16bit OS/2 based application ( Not implemented )
+ *
+ * Returns TRUE if the file is an executable in which case
+ * the value pointed by lpBinaryType is set.
+ * Returns FALSE if the file is not an executable or if the function fails.
+ *
+ * To do so it opens the file and reads in the header information
+ * if the extended header information is not presend it will
+ * assume that that the file is a DOS executable.
+ * If the extended header information is present it will
+ * determine if the file is an 16 or 32 bit Windows executable
+ * by check the flags in the header.
+ *
+ * Note that .COM and .PIF files are only recognized by their
+ * file name extension; but Windows does it the same way ...
  */
-static HINSTANCE16 NE_CreateProcess( LPCSTR name, LPCSTR cmd_line, LPCSTR env, 
-                                     BOOL inherit, LPSTARTUPINFOA startup, 
-                                     LPPROCESS_INFORMATION info )
+static BOOL MODULE_GetBinaryType( HFILE hfile, OFSTRUCT *ofs, 
+                                  LPDWORD lpBinaryType )
 {
-    HINSTANCE16 hInstance, hPrevInstance;
-    NE_MODULE *pModule;
+    IMAGE_DOS_HEADER mz_header;
+    char magic[4], *ptr;
 
-    /* Load module */
-
-    hInstance = NE_LoadModule( name, &hPrevInstance, TRUE, FALSE );
-    if (hInstance < 32) return hInstance;
-
-    if (   !(pModule = NE_GetPtr(hInstance)) 
-        ||  (pModule->flags & NE_FFLAGS_LIBMODULE))
+    /* Seek to the start of the file and read the DOS header information.
+     */
+    if ( _llseek( hfile, 0, SEEK_SET ) >= 0  &&
+         _lread( hfile, &mz_header, sizeof(mz_header) ) == sizeof(mz_header) )
     {
-        /* FIXME: cleanup */
-        return 11;
+        /* Now that we have the header check the e_magic field
+         * to see if this is a dos image.
+         */
+        if ( mz_header.e_magic == IMAGE_DOS_SIGNATURE )
+        {
+            BOOL lfanewValid = FALSE;
+            /* We do have a DOS image so we will now try to seek into
+             * the file by the amount indicated by the field
+             * "Offset to extended header" and read in the
+             * "magic" field information at that location.
+             * This will tell us if there is more header information
+             * to read or not.
+             */
+            /* But before we do we will make sure that header
+             * structure encompasses the "Offset to extended header"
+             * field.
+             */
+            if ( (mz_header.e_cparhdr<<4) >= sizeof(IMAGE_DOS_HEADER) )
+                if ( ( mz_header.e_crlc == 0 && mz_header.e_lfarlc == 0 ) ||
+                     ( mz_header.e_lfarlc >= sizeof(IMAGE_DOS_HEADER) ) )
+                    if ( mz_header.e_lfanew >= sizeof(IMAGE_DOS_HEADER) &&
+                         _llseek( hfile, mz_header.e_lfanew, SEEK_SET ) >= 0 &&
+                         _lread( hfile, magic, sizeof(magic) ) == sizeof(magic) )
+                        lfanewValid = TRUE;
+
+            if ( !lfanewValid )
+            {
+                /* If we cannot read this "extended header" we will
+                 * assume that we have a simple DOS executable.
+                 */
+                *lpBinaryType = SCS_DOS_BINARY;
+                return TRUE;
+            }
+            else
+            {
+                /* Reading the magic field succeeded so
+                 * we will try to determine what type it is.
+                 */
+                if ( *(DWORD*)magic      == IMAGE_NT_SIGNATURE )
+                {
+                    /* This is an NT signature.
+                     */
+                    *lpBinaryType = SCS_32BIT_BINARY;
+                    return TRUE;
+                }
+                else if ( *(WORD*)magic == IMAGE_OS2_SIGNATURE )
+                {
+                    /* The IMAGE_OS2_SIGNATURE indicates that the
+                     * "extended header is a Windows executable (NE)
+                     * header.      This is a bit misleading, but it is
+                     * documented in the SDK. ( for more details see
+                     * the neexe.h file )
+                     */
+                     *lpBinaryType = SCS_WOW_BINARY;
+                     return TRUE;
+                }
+                else
+                {
+                    /* Unknown extended header, so abort.
+                     */
+                    return FALSE;
+                }
+            }
+        }
     }
 
-    /* Create a task for this instance */
-
-    pModule->flags |= NE_FFLAGS_GUI;  /* FIXME: is this necessary? */
-
-    PROCESS_Create( pModule, cmd_line, env, hInstance,
-                    hPrevInstance, inherit, startup, info );
-
-    return hInstance;
-}
-
-
-/**********************************************************************
- *	    LoadModule16    (KERNEL.45)
- */
-HINSTANCE16 WINAPI LoadModule16( LPCSTR name, LPVOID paramBlock )
-{
-    LOADPARAMS16 *params;
-    LPSTR cmd_line, new_cmd_line;
-    LPCVOID env = NULL;
-    STARTUPINFOA startup;
-    PROCESS_INFORMATION info;
-    HINSTANCE16 hInstance, hPrevInstance;
-    NE_MODULE *pModule;
-    PDB *pdb;
-
-    /* Load module */
-
-    if (!paramBlock || (paramBlock == (LPVOID)-1))
-        return LoadLibrary16( name );
-
-    hInstance = NE_LoadModule( name, &hPrevInstance, FALSE, FALSE );
-    if (   hInstance < 32 || !(pModule = NE_GetPtr(hInstance))
-        || (pModule->flags & NE_FFLAGS_LIBMODULE)) 
-        return hInstance;
-
-    /* Create a task for this instance */
-
-    pModule->flags |= NE_FFLAGS_GUI;  /* FIXME: is this necessary? */
-
-    params = (LOADPARAMS16 *)paramBlock;
-    cmd_line = (LPSTR)PTR_SEG_TO_LIN( params->cmdLine );
-    if (!cmd_line) cmd_line = "";
-    else if (*cmd_line) cmd_line++;  /* skip the length byte */
-
-    if (!(new_cmd_line = HeapAlloc( GetProcessHeap(), 0,
-                                    strlen(cmd_line)+strlen(name)+2 )))
-        return 0;
-    strcpy( new_cmd_line, name );
-    strcat( new_cmd_line, " " );
-    strcat( new_cmd_line, cmd_line );
-
-    if (params->hEnvironment) env = GlobalLock16( params->hEnvironment );
-
-    memset( &info, '\0', sizeof(info) );
-    memset( &startup, '\0', sizeof(startup) );
-    startup.cb = sizeof(startup);
-    if (params->showCmd)
+    /* If we get here, we don't even have a correct MZ header.
+     * Try to check the file extension for known types ...
+     */
+    ptr = strrchr( ofs->szPathName, '.' );
+    if ( ptr && !strchr( ptr, '\\' ) && !strchr( ptr, '/' ) )
     {
-        startup.dwFlags = STARTF_USESHOWWINDOW;
-        startup.wShowWindow = ((UINT16 *)PTR_SEG_TO_LIN(params->showCmd))[1];
+        if ( !lstrcmpiA( ptr, ".COM" ) )
+        {
+            *lpBinaryType = SCS_DOS_BINARY;
+            return TRUE;
+        }
+
+        if ( !lstrcmpiA( ptr, ".PIF" ) )
+        {
+            *lpBinaryType = SCS_PIF_BINARY;
+            return TRUE;
+        }
     }
 
-    pdb = PROCESS_Create( pModule, new_cmd_line, env, 
-                          hInstance, hPrevInstance, TRUE, &startup, &info );
+    return FALSE;
+}
 
-    CloseHandle( info.hThread );
-    CloseHandle( info.hProcess );
+/***********************************************************************
+ *             GetBinaryTypeA                     [KERNEL32.280]
+ */
+BOOL WINAPI GetBinaryTypeA( LPCSTR lpApplicationName, LPDWORD lpBinaryType )
+{
+    BOOL ret = FALSE;
+    HFILE hfile;
+    OFSTRUCT ofs;
 
-    if (params->hEnvironment) GlobalUnlock16( params->hEnvironment );
-    HeapFree( GetProcessHeap(), 0, new_cmd_line );
+    TRACE( win32, "%s\n", lpApplicationName );
 
-    /* Start task */
+    /* Sanity check.
+     */
+    if ( lpApplicationName == NULL || lpBinaryType == NULL )
+        return FALSE;
 
-    if (pdb) TASK_StartTask( pdb->task );
+    /* Open the file indicated by lpApplicationName for reading.
+     */
+    if ( (hfile = OpenFile( lpApplicationName, &ofs, OF_READ )) == HFILE_ERROR )
+        return FALSE;
 
-    return hInstance;
+    /* Check binary type
+     */
+    ret = MODULE_GetBinaryType( hfile, &ofs, lpBinaryType );
+
+    /* Close the file.
+     */
+    CloseHandle( hfile );
+
+    return ret;
+}
+
+/***********************************************************************
+ *             GetBinaryTypeW                      [KERNEL32.281]
+ */
+BOOL WINAPI GetBinaryTypeW( LPCWSTR lpApplicationName, LPDWORD lpBinaryType )
+{
+    BOOL ret = FALSE;
+    LPSTR strNew = NULL;
+
+    TRACE( win32, "%s\n", debugstr_w(lpApplicationName) );
+
+    /* Sanity check.
+     */
+    if ( lpApplicationName == NULL || lpBinaryType == NULL )
+        return FALSE;
+
+    /* Convert the wide string to a ascii string.
+     */
+    strNew = HEAP_strdupWtoA( GetProcessHeap(), 0, lpApplicationName );
+
+    if ( strNew != NULL )
+    {
+        ret = GetBinaryTypeA( strNew, lpBinaryType );
+
+        /* Free the allocated string.
+         */
+        HeapFree( GetProcessHeap(), 0, strNew );
+    }
+
+    return ret;
 }
 
 /**********************************************************************
- *	    LoadModule32    (KERNEL32.499)
+ *	    MODULE_CreateUnixProcess
+ */
+static BOOL MODULE_CreateUnixProcess( LPCSTR filename, LPCSTR lpCmdLine,
+                                      LPSTARTUPINFOA lpStartupInfo,
+                                      LPPROCESS_INFORMATION lpProcessInfo,
+                                      BOOL useWine )
+{
+    DOS_FULL_NAME full_name;
+    const char *unixfilename = filename;
+    const char *argv[256], **argptr;
+    BOOL iconic = FALSE;
+
+    /* Get Unix file name and iconic flag */
+
+    if ( lpStartupInfo->dwFlags & STARTF_USESHOWWINDOW )
+        if (    lpStartupInfo->wShowWindow == SW_SHOWMINIMIZED
+             || lpStartupInfo->wShowWindow == SW_SHOWMINNOACTIVE )
+            iconic = TRUE;
+
+    if (    strchr(filename, '/') 
+         || strchr(filename, ':') 
+         || strchr(filename, '\\') )
+    {
+        if ( DOSFS_GetFullName( filename, TRUE, &full_name ) )
+            unixfilename = full_name.long_name;
+    }
+
+    if ( !unixfilename )
+    {
+        SetLastError( ERROR_FILE_NOT_FOUND );
+        return FALSE;
+    }
+
+    /* Build argument list */
+
+    argptr = argv;
+    if ( !useWine )
+    {
+        char *p = strdup(lpCmdLine);
+        *argptr++ = unixfilename;
+        if (iconic) *argptr++ = "-iconic";
+        while (1)
+        {
+            while (*p && (*p == ' ' || *p == '\t')) *p++ = '\0';
+            if (!*p) break;
+            *argptr++ = p;
+            while (*p && *p != ' ' && *p != '\t') p++;
+        }
+    }
+    else
+    {
+        *argptr++ = "wine";
+        if (iconic) *argptr++ = "-iconic";
+        *argptr++ = lpCmdLine;
+    }
+    *argptr++ = 0;
+
+    /* Fork and execute */
+
+    if ( !fork() )
+    {
+        /* Note: don't use Wine routines here, as this process
+                 has not been correctly initialized! */
+
+        execvp( argv[0], (char**)argv );
+
+        /* Failed ! */
+        if ( useWine )
+            fprintf( stderr, "CreateProcess: can't exec 'wine %s'\n", 
+                             lpCmdLine );
+        exit( 1 );
+    }
+
+    /* Fake success return value */
+
+    memset( lpProcessInfo, '\0', sizeof( *lpProcessInfo ) );
+    lpProcessInfo->hProcess = INVALID_HANDLE_VALUE;
+    lpProcessInfo->hThread  = INVALID_HANDLE_VALUE;
+
+    SetLastError( ERROR_SUCCESS );
+    return TRUE;
+}
+
+/***********************************************************************
+ *           WinExec16   (KERNEL.166)
+ */
+HINSTANCE16 WINAPI WinExec16( LPCSTR lpCmdLine, UINT16 nCmdShow )
+{
+    return WinExec( lpCmdLine, nCmdShow );
+}
+
+/***********************************************************************
+ *           WinExec   (KERNEL32.566)
+ */
+HINSTANCE WINAPI WinExec( LPCSTR lpCmdLine, UINT nCmdShow )
+{
+    LOADPARAMS params;
+    UINT16 paramCmdShow[2];
+
+    if (!lpCmdLine)
+        return 2;  /* File not found */
+
+    /* Set up LOADPARAMS buffer for LoadModule */
+
+    memset( &params, '\0', sizeof(params) );
+    params.lpCmdLine    = (LPSTR)lpCmdLine;
+    params.lpCmdShow    = paramCmdShow;
+    params.lpCmdShow[0] = 2;
+    params.lpCmdShow[1] = nCmdShow;
+
+    /* Now load the executable file */
+
+    return LoadModule( NULL, &params );
+}
+
+/**********************************************************************
+ *	    LoadModule    (KERNEL32.499)
  */
 HINSTANCE WINAPI LoadModule( LPCSTR name, LPVOID paramBlock ) 
 {
@@ -521,10 +726,16 @@ HINSTANCE WINAPI LoadModule( LPCSTR name, LPVOID paramBlock )
     startup.dwFlags = STARTF_USESHOWWINDOW;
     startup.wShowWindow = params->lpCmdShow? params->lpCmdShow[1] : 0;
 
-    if (!CreateProcessA( name, params->lpCmdLine,
-                           NULL, NULL, FALSE, 0, params->lpEnvAddress,
-                           NULL, &startup, &info ))
-        return GetLastError();  /* guaranteed to be < 32 */
+    if ( !CreateProcessA( name, params->lpCmdLine,
+                          NULL, NULL, FALSE, 0, params->lpEnvAddress,
+                          NULL, &startup, &info ) )
+    {
+        hInstance = GetLastError();
+        if ( hInstance < 32 ) return hInstance;
+
+        FIXME( module, "Strange error set by CreateProcess: %d\n", hInstance );
+        return 11;
+    }
     
     /* Get 16-bit hInstance/hTask from process */
     pdb = PROCESS_IdToPDB( info.dwProcessId );
@@ -539,19 +750,21 @@ HINSTANCE WINAPI LoadModule( LPCSTR name, LPVOID paramBlock )
 }
 
 /**********************************************************************
- *       CreateProcess32A          (KERNEL32.171)
+ *       CreateProcessA          (KERNEL32.171)
  */
 BOOL WINAPI CreateProcessA( LPCSTR lpApplicationName, LPSTR lpCommandLine, 
-                                LPSECURITY_ATTRIBUTES lpProcessAttributes,
-                                LPSECURITY_ATTRIBUTES lpThreadAttributes,
-                                BOOL bInheritHandles, DWORD dwCreationFlags,
-                                LPVOID lpEnvironment, LPCSTR lpCurrentDirectory,
-                                LPSTARTUPINFOA lpStartupInfo,
-                                LPPROCESS_INFORMATION lpProcessInfo )
+                            LPSECURITY_ATTRIBUTES lpProcessAttributes,
+                            LPSECURITY_ATTRIBUTES lpThreadAttributes,
+                            BOOL bInheritHandles, DWORD dwCreationFlags,
+                            LPVOID lpEnvironment, LPCSTR lpCurrentDirectory,
+                            LPSTARTUPINFOA lpStartupInfo,
+                            LPPROCESS_INFORMATION lpProcessInfo )
 {
-    HINSTANCE16 hInstance;
+    BOOL retv = FALSE;
+    HFILE hFile;
+    OFSTRUCT ofs;
+    DWORD type;
     LPCSTR cmdline;
-    PDB *pdb;
     char name[256];
 
     /* Get name and command line */
@@ -667,35 +880,91 @@ BOOL WINAPI CreateProcessA( LPCSTR lpApplicationName, LPSTR lpCommandLine,
         FIXME(module, "(%s,...): STARTF_USEHOTKEY ignored\n", name);
 
 
-    /* Try NE module */
-    hInstance = NE_CreateProcess( name, cmdline, lpEnvironment, bInheritHandles,
-                                  lpStartupInfo, lpProcessInfo );
+    /* When in WineLib, always fork new Unix process */
 
-    /* Try PE module */
-    if (hInstance == 21)
-        hInstance = PE_CreateProcess( name, cmdline, lpEnvironment, bInheritHandles,
-                                      lpStartupInfo, lpProcessInfo );
+    if ( __winelib )
+        return MODULE_CreateUnixProcess( name, cmdline, 
+                                         lpStartupInfo, lpProcessInfo, TRUE );
 
-    /* Try DOS module */
-    if (hInstance == 11)
-        hInstance = MZ_CreateProcess( name, cmdline, lpEnvironment, bInheritHandles,
-                                      lpStartupInfo, lpProcessInfo );
+    /* Check for special case: second instance of NE module */
 
-    if (hInstance < 32)
+    lstrcpynA( ofs.szPathName, name, sizeof( ofs.szPathName ) );
+    retv = NE_CreateProcess( HFILE_ERROR, &ofs, cmdline, lpEnvironment, 
+                             bInheritHandles, lpStartupInfo, lpProcessInfo );
+
+    /* Load file and create process */
+
+    if ( !retv )
     {
-        SetLastError( hInstance );
-        return FALSE;
+        /* Open file and determine executable type */
+
+        if ( (hFile = OpenFile( name, &ofs, OF_READ )) == HFILE_ERROR )
+        {
+            SetLastError( ERROR_FILE_NOT_FOUND );
+            return FALSE;
+        }
+
+        if ( !MODULE_GetBinaryType( hFile, &ofs, &type ) )
+        {
+            CloseHandle( hFile );
+
+            /* FIXME: Try Unix executable only when appropriate! */
+            if ( MODULE_CreateUnixProcess( name, cmdline, 
+                                           lpStartupInfo, lpProcessInfo, FALSE ) )
+                return TRUE;
+
+            SetLastError( ERROR_BAD_FORMAT );
+            return FALSE;
+        }
+
+
+        /* Create process */
+
+        switch ( type )
+        {
+        case SCS_32BIT_BINARY:
+            retv = PE_CreateProcess( hFile, &ofs, cmdline, lpEnvironment, 
+                                     bInheritHandles, lpStartupInfo, lpProcessInfo );
+            break;
+    
+        case SCS_DOS_BINARY:
+            retv = MZ_CreateProcess( hFile, &ofs, cmdline, lpEnvironment, 
+                                     bInheritHandles, lpStartupInfo, lpProcessInfo );
+            break;
+
+        case SCS_WOW_BINARY:
+            retv = NE_CreateProcess( hFile, &ofs, cmdline, lpEnvironment, 
+                                     bInheritHandles, lpStartupInfo, lpProcessInfo );
+            break;
+
+        case SCS_PIF_BINARY:
+        case SCS_POSIX_BINARY:
+        case SCS_OS216_BINARY:
+            FIXME( module, "Unsupported executable type: %ld\n", type );
+            /* fall through */
+    
+        default:
+            SetLastError( ERROR_BAD_FORMAT );
+            retv = FALSE;
+            break;
+        }
+
+        CloseHandle( hFile );
     }
 
     /* Get hTask from process and start the task */
-    pdb = PROCESS_IdToPDB( lpProcessInfo->dwProcessId );
-    if (pdb) TASK_StartTask( pdb->task );
 
-    return TRUE;
+    if ( retv )
+    {
+        PDB *pdb = PROCESS_IdToPDB( lpProcessInfo->dwProcessId );
+        if (pdb) TASK_StartTask( pdb->task );
+    }
+
+    return retv;
 }
 
 /**********************************************************************
- *       CreateProcess32W          (KERNEL32.172)
+ *       CreateProcessW          (KERNEL32.172)
  * NOTES
  *  lpReserved is not converted
  */
@@ -894,163 +1163,6 @@ HINSTANCE WINAPI PrivateLoadLibrary(LPCSTR libname)
 void WINAPI PrivateFreeLibrary(HINSTANCE handle)
 {
 	FreeLibrary16((HINSTANCE16)handle);
-}
-
-
-/***********************************************************************
- *           WinExec16   (KERNEL.166)
- */
-HINSTANCE16 WINAPI WinExec16( LPCSTR lpCmdLine, UINT16 nCmdShow )
-{
-    return WinExec( lpCmdLine, nCmdShow );
-}
-
-
-/***********************************************************************
- *           WinExec32   (KERNEL32.566)
- */
-HINSTANCE WINAPI WinExec( LPCSTR lpCmdLine, UINT nCmdShow )
-{
-    HINSTANCE handle = 2;
-    char *p, filename[256];
-    int  spacelimit = 0, exhausted = 0;
-    LOADPARAMS params;
-    UINT16 paramCmdShow[2];
-
-    if (!lpCmdLine)
-        return 2;  /* File not found */
-
-    /* Set up LOADPARAMS32 buffer for LoadModule32 */
-
-    memset( &params, '\0', sizeof(params) );
-    params.lpCmdLine    = (LPSTR)lpCmdLine;
-    params.lpCmdShow    = paramCmdShow;
-    params.lpCmdShow[0] = 2;
-    params.lpCmdShow[1] = nCmdShow;
-
-
-    /* Keep trying to load a file by trying different filenames; e.g.,
-       for the cmdline "abcd efg hij", try "abcd" with args "efg hij",
-       then "abcd efg" with arg "hij", and finally "abcd efg hij" with
-       no args */
-
-    while(!exhausted && handle == 2) {
-	int spacecount = 0;
-
-	/* Build the filename and command-line */
-
-	lstrcpynA(filename, lpCmdLine,
-		    sizeof(filename) - 4 /* for extension */);
-
-	/* Keep grabbing characters until end-of-string, tab, or until the
-	   number of spaces is greater than the spacelimit */
-
-	for (p = filename; ; p++) {
-	    if(*p == ' ') {
-		++spacecount;
-		if(spacecount > spacelimit) {
-		    ++spacelimit;
-		    break;
-		}
-	    }
-
-	    if(*p == '\0' || *p == '\t') {
-		exhausted = 1;
-		break;
-	    }
-	}
-
-	*p = '\0';
-
-	/* Now load the executable file */
-
-	if (!__winelib)
-	{
-            handle = LoadModule( filename, &params );
-	    if (handle == 2)  /* file not found */
-	    {
-		/* Check that the original file name did not have a suffix */
-		p = strrchr(filename, '.');
-		/* if there is a '.', check if either \ OR / follow */
-		if (!p || strchr(p, '/') || strchr(p, '\\'))
-		{
-		    p = filename + strlen(filename);
-		    strcpy( p, ".exe" );
-                    handle = LoadModule( filename, &params );
-                    *p = '\0';  /* Remove extension */
-		}
-	    }
-	}
-	else
-	    handle = 2; /* file not found */
-
-	if (handle < 32)
-	{
-	    /* Try to start it as a unix program */
-	    if (!fork())
-	    {
-		/* Child process */
-		DOS_FULL_NAME full_name;
-		const char *unixfilename = NULL;
-		const char *argv[256], **argptr;
-		int iconic = (nCmdShow == SW_SHOWMINIMIZED ||
-			      nCmdShow == SW_SHOWMINNOACTIVE);
-
-		THREAD_InitDone = FALSE; /* we didn't init this process */
-		/* get unixfilename */
-		if (strchr(filename, '/') ||
-		    strchr(filename, ':') ||
-		    strchr(filename, '\\'))
-		{
-		    if (DOSFS_GetFullName( filename, TRUE, &full_name ))
-			unixfilename = full_name.long_name;
-		}
-		else unixfilename = filename;
-
-		if (unixfilename)
-		{
-		    /* build argv */
-		    argptr = argv;
-		    if (iconic) *argptr++ = "-iconic";
-		    *argptr++ = unixfilename;
-		    p = strdup(lpCmdLine);
-		    while (1)
-		    {
-			while (*p && (*p == ' ' || *p == '\t')) *p++ = '\0';
-			if (!*p) break;
-			*argptr++ = p;
-			while (*p && *p != ' ' && *p != '\t') p++;
-		    }
-		    *argptr++ = 0;
-
-		    /* Execute */
-		    execvp(argv[0], (char**)argv);
-		}
-
-		/* Failed ! */
-
-		if (__winelib)
-		{
-		    /* build argv */
-		    argptr = argv;
-		    *argptr++ = "wine";
-		    if (iconic) *argptr++ = "-iconic";
-		    *argptr++ = lpCmdLine;
-		    *argptr++ = 0;
-
-		    /* Execute */
-		    execvp(argv[0] , (char**)argv);
-
-		    /* Failed ! */
-		    MSG("WinExec: can't exec 'wine %s'\n",
-			    lpCmdLine);
-		}
-		exit(1);
-	    }
-	}
-    } /* while (!exhausted && handle < 32) */
-
-    return handle;
 }
 
 
