@@ -258,7 +258,11 @@ static DWORD SHNotifyCreateDirectoryW(LPCWSTR path, LPSECURITY_ATTRIBUTES sec)
 	     implementation does create directories with wildcard characters
 	     without objection!! Once this is fixed, this here can go away. */
 	  SetLastError(ERROR_INVALID_NAME);
+#ifdef W98_FO_FUNCTION /* W98 */
+	  return ERROR_FILE_NOT_FOUND;
+#else
 	  return ERROR_INVALID_NAME;
+#endif
 	}
 
 	if (CreateDirectoryW(path, sec))
@@ -412,6 +416,19 @@ static DWORD SHNotifyMoveFileW(LPCWSTR src, LPCWSTR dest, BOOL bRename)
 	BOOL ret;
 
 	TRACE("(%s %s %s)\n", debugstr_w(src), debugstr_w(dest), bRename ? "renameIfExists" : "");
+
+	if (StrPBrkW(dest, wWildcardChars))
+	{
+	  /* FIXME: This test is currently necessary since our MoveFile
+	     implementation does create files with wildcard characters
+	     without objection!! Once this is fixed, this here can go away. */
+	  SetLastError(ERROR_INVALID_NAME);
+#ifdef W98_FO_FUNCTION /* W98 */
+	  return ERROR_FILE_NOT_FOUND;
+#else
+	  return ERROR_INVALID_NAME;
+#endif
+	}
 
 	ret = MoveFileW(src, dest);
 	if (!ret)
@@ -946,16 +963,11 @@ DWORD WINAPI SHFileOperationW(LPSHFILEOPSTRUCTW lpFileOp)
 	    if (FO_RENAME == FuncSwitch)
 	    {
                 /* temporary only for FO_RENAME */
-/* ???	      b_Mask = (NULL != strrbrk(pFrom,"*?")); */
                 if (b_MultiTo || b_MultiFrom || (b_Mask && !b_ToInvalidTail))
                 {
-                    /* no work, only RC=0 */
-/* ???	        nFileOp.fAnyOperationsAborted = TRUE; */
-/*#define W98_FO_RENEME */
-#ifdef W98_FO_RENEME
-                    goto shfileop_normal;
+#ifndef W98_FO_FUNCTION
+                    retCode = ERROR_GEN_FAILURE;  /* W2K ERROR_GEN_FAILURE, W98 returns no error */
 #endif
-                    retCode = 0x1;      /* 1 value unknown, W98 returns no error */
                     goto shfileop_error;
                 }
 	    }

@@ -21,6 +21,7 @@
 #include <stdarg.h>
 #include <stdio.h>
  
+#define WINE_NOWINSOCK
 #include "windef.h"
 #include "winbase.h"
 #include "wtypes.h"
@@ -153,6 +154,7 @@ void test_rename()
     SHFILEOPSTRUCTA shfo, shfo2;
     CHAR from[MAX_PATH];
     CHAR to[MAX_PATH];
+    DWORD retval;
 
     shfo.hwnd = NULL;
     shfo.wFunc = FO_RENAME;
@@ -175,7 +177,8 @@ void test_rename()
 
     set_curr_dir_path(from, "test1.txt\0test2.txt\0test4.txt\0");
     set_curr_dir_path(to, "test6.txt\0test7.txt\0test8.txt\0");
-    ok(SHFileOperationA(&shfo), "Can't rename many files");
+    retval = SHFileOperationA(&shfo); /* W98 returns 0, W2K and newer returns ERROR_GEN_FAILURE, both do nothing */
+    ok(!retval || retval == ERROR_GEN_FAILURE, "Can't rename many files, retval = %lx", retval);
     ok(file_exists(".\\test1.txt"), "The file is not renamed - many files are specified ");
 
     memcpy(&shfo2, &shfo, sizeof(SHFILEOPSTRUCTA));
@@ -183,14 +186,15 @@ void test_rename()
 
     set_curr_dir_path(from, "test1.txt\0test2.txt\0test4.txt\0");
     set_curr_dir_path(to, "test6.txt\0test7.txt\0test8.txt\0");
-    ok(SHFileOperationA(&shfo2), "Can't rename many files");
+    retval = SHFileOperationA(&shfo2); /* W98 returns 0, W2K and newer returns ERROR_GEN_FAILURE, both do nothing */
+    ok(!retval || retval == ERROR_GEN_FAILURE, "Can't rename many files, retval = %lx", retval);
     ok(file_exists(".\\test1.txt"), "The file is not renamed - many files are specified ");
 
     set_curr_dir_path(from, "test1.txt\0");
     set_curr_dir_path(to, "test6.txt\0");
     ok(!SHFileOperationA(&shfo), "Rename file");
     ok(!file_exists(".\\test1.txt"), "The file is renamed");
-    ok(file_exists(".\\test6.txt"), "The file is renamed ");
+    ok(file_exists(".\\test6.txt"), "The file is renamed");
     set_curr_dir_path(from, "test6.txt\0");
     set_curr_dir_path(to, "test1.txt\0");
     ok(!SHFileOperationA(&shfo), "Rename file back");
