@@ -580,11 +580,6 @@ typedef HANDLE *PHANDLE;
 #define DL_reg(context)      (*(BYTE*)&EDX_reg(context))
 #define DH_reg(context)      (*((BYTE*)&EDX_reg(context)+1))
                             
-#define IP_reg(context)      (*(WORD*)&EIP_reg(context))
-#define SP_reg(context)      (*(WORD*)&ESP_reg(context))
-                            
-#define FL_reg(context)      (*(WORD*)&EFL_reg(context))
-
 #define SET_CFLAG(context)   (EFL_reg(context) |= 0x0001)
 #define RESET_CFLAG(context) (EFL_reg(context) &= ~0x0001)
 #define SET_ZFLAG(context)   (EFL_reg(context) |= 0x0040)

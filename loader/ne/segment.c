@@ -660,8 +660,8 @@ static BOOL NE_InitDLL( TDB* pTask, NE_MODULE *pModule )
 
 
     pModule->cs = 0;  /* Don't initialize it twice */
-    TRACE_(dll)("Calling LibMain, cs:ip=%04lx:%04x ds=%04lx di=%04x cx=%04x\n", 
-                 CS_reg(&context), IP_reg(&context), DS_reg(&context),
+    TRACE_(dll)("Calling LibMain, cs:ip=%04lx:%04lx ds=%04lx di=%04x cx=%04x\n", 
+                 CS_reg(&context), EIP_reg(&context), DS_reg(&context),
                  DI_reg(&context), CX_reg(&context) );
     Callbacks->CallRegisterShortProc( &context, 0 );
     return TRUE;
@@ -693,7 +693,7 @@ static void NE_CallDllEntryPoint( NE_MODULE *pModule, DWORD dwReason )
     ES_reg(&context) = ds;   /* who knows ... */
 
     CS_reg(&context) = HIWORD(entryPoint);
-    IP_reg(&context) = LOWORD(entryPoint);
+    EIP_reg(&context) = LOWORD(entryPoint);
     EBP_reg(&context) =  OFFSETOF( NtCurrentTeb()->cur_stack )
                          + (WORD)&((STACK16FRAME*)0)->bp;
 
@@ -704,8 +704,8 @@ static void NE_CallDllEntryPoint( NE_MODULE *pModule, DWORD dwReason )
     *(DWORD *)(stack - 14) = 0;             /* dwReserved1 */
     *(WORD *) (stack - 16) = 0;             /* wReserved2 */
 
-    TRACE_(dll)("Calling DllEntryPoint, cs:ip=%04lx:%04x\n",
-          CS_reg(&context), IP_reg(&context));
+    TRACE_(dll)("Calling DllEntryPoint, cs:ip=%04lx:%04lx\n",
+          CS_reg(&context), EIP_reg(&context));
 
     Callbacks->CallRegisterShortProc( &context, 16 );
 }

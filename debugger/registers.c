@@ -31,22 +31,22 @@ void DEBUG_SetRegister( enum debug_regs reg, int val )
         case REG_EFL: EFL_reg(&DEBUG_context) = val; break;
         case REG_EIP: EIP_reg(&DEBUG_context) = val; break;
         case REG_ESP: ESP_reg(&DEBUG_context) = val; break;
-        case REG_AX:  AX_reg(&DEBUG_context)  = val; break;
-        case REG_BX:  BX_reg(&DEBUG_context)  = val; break;
-        case REG_CX:  CX_reg(&DEBUG_context)  = val; break;
-        case REG_DX:  DX_reg(&DEBUG_context)  = val; break;
-        case REG_SI:  SI_reg(&DEBUG_context)  = val; break;
-        case REG_DI:  DI_reg(&DEBUG_context)  = val; break;
-        case REG_BP:  BP_reg(&DEBUG_context)  = val; break;
-        case REG_FL:  FL_reg(&DEBUG_context)  = val; break;
-        case REG_IP:  IP_reg(&DEBUG_context)  = val; break;
-        case REG_SP:  SP_reg(&DEBUG_context)  = val; break;
         case REG_CS:  CS_reg(&DEBUG_context)  = val; break;
         case REG_DS:  DS_reg(&DEBUG_context)  = val; break;
         case REG_ES:  ES_reg(&DEBUG_context)  = val; break;
         case REG_SS:  SS_reg(&DEBUG_context)  = val; break;
         case REG_FS:  FS_reg(&DEBUG_context)  = val; break;
         case REG_GS:  GS_reg(&DEBUG_context)  = val; break;
+        case REG_AX:  SET_LOWORD(EAX_reg(&DEBUG_context),val); break;
+        case REG_BX:  SET_LOWORD(EBX_reg(&DEBUG_context),val); break;
+        case REG_CX:  SET_LOWORD(ECX_reg(&DEBUG_context),val); break;
+        case REG_DX:  SET_LOWORD(EDX_reg(&DEBUG_context),val); break;
+        case REG_SI:  SET_LOWORD(ESI_reg(&DEBUG_context),val); break;
+        case REG_DI:  SET_LOWORD(EDI_reg(&DEBUG_context),val); break;
+        case REG_BP:  SET_LOWORD(EBP_reg(&DEBUG_context),val); break;
+        case REG_FL:  SET_LOWORD(EFL_reg(&DEBUG_context),val); break;
+        case REG_IP:  SET_LOWORD(EIP_reg(&DEBUG_context),val); break;
+        case REG_SP:  SET_LOWORD(ESP_reg(&DEBUG_context),val); break;
     }
 }
 
@@ -105,22 +105,22 @@ int DEBUG_GetRegister( enum debug_regs reg )
         case REG_EFL: return EFL_reg(&DEBUG_context);
         case REG_EIP: return EIP_reg(&DEBUG_context);
         case REG_ESP: return ESP_reg(&DEBUG_context);
-        case REG_AX:  return AX_reg(&DEBUG_context);
-        case REG_BX:  return BX_reg(&DEBUG_context);
-        case REG_CX:  return CX_reg(&DEBUG_context);
-        case REG_DX:  return DX_reg(&DEBUG_context);
-        case REG_SI:  return SI_reg(&DEBUG_context);
-        case REG_DI:  return DI_reg(&DEBUG_context);
-        case REG_BP:  return BP_reg(&DEBUG_context);
-        case REG_FL:  return FL_reg(&DEBUG_context);
-        case REG_IP:  return IP_reg(&DEBUG_context);
-        case REG_SP:  return SP_reg(&DEBUG_context);
         case REG_CS:  return CS_reg(&DEBUG_context);
         case REG_DS:  return DS_reg(&DEBUG_context);
         case REG_ES:  return ES_reg(&DEBUG_context);
         case REG_SS:  return SS_reg(&DEBUG_context);
         case REG_FS:  return FS_reg(&DEBUG_context);
         case REG_GS:  return GS_reg(&DEBUG_context);
+        case REG_AX:  return LOWORD(EAX_reg(&DEBUG_context));
+        case REG_BX:  return LOWORD(EBX_reg(&DEBUG_context));
+        case REG_CX:  return LOWORD(ECX_reg(&DEBUG_context));
+        case REG_DX:  return LOWORD(EDX_reg(&DEBUG_context));
+        case REG_SI:  return LOWORD(ESI_reg(&DEBUG_context));
+        case REG_DI:  return LOWORD(EDI_reg(&DEBUG_context));
+        case REG_BP:  return LOWORD(EBP_reg(&DEBUG_context));
+        case REG_FL:  return LOWORD(EFL_reg(&DEBUG_context));
+        case REG_IP:  return LOWORD(EIP_reg(&DEBUG_context));
+        case REG_SP:  return LOWORD(ESP_reg(&DEBUG_context));
     }
     return 0;  /* should not happen */
 }
@@ -199,9 +199,9 @@ void DEBUG_InfoRegisters(void)
     if (dbg_mode == 16)
     {
         fprintf( stderr,"\n IP:%04x SP:%04x BP:%04x FLAGS:%04x(%s)\n",
-                 IP_reg(&DEBUG_context), SP_reg(&DEBUG_context),
-                 BP_reg(&DEBUG_context), FL_reg(&DEBUG_context),
-		 DEBUG_Flags(FL_reg(&DEBUG_context), flag));
+                 LOWORD(EIP_reg(&DEBUG_context)), LOWORD(ESP_reg(&DEBUG_context)),
+                 LOWORD(EBP_reg(&DEBUG_context)), LOWORD(EFL_reg(&DEBUG_context)),
+		 DEBUG_Flags(LOWORD(EFL_reg(&DEBUG_context)), flag));
 	fprintf( stderr," AX:%04x BX:%04x CX:%04x DX:%04x SI:%04x DI:%04x\n",
                  AX_reg(&DEBUG_context), BX_reg(&DEBUG_context),
                  CX_reg(&DEBUG_context), DX_reg(&DEBUG_context),

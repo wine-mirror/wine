@@ -211,7 +211,7 @@ static void DEBUG_DoBackTrace(int noisy)
         is16 = FALSE;
     } else {
         frames[0].cs = addr.seg = cs;
-        frames[0].eip = addr.off = IP_reg(&DEBUG_context);
+        frames[0].eip = addr.off = LOWORD(EIP_reg(&DEBUG_context));
         if (noisy)
           frames[0].frame = DEBUG_PrintAddress( &addr, 16, TRUE );
         else

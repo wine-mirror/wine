@@ -520,9 +520,9 @@ void WINAPI ASPI_DOS_func(CONTEXT86 *context)
 	ASPI_SendASPICommand(ptrSRB, ASPI_DOS);
 
 	/* simulate a normal RETF sequence as required by DPMI CallRMProcFar */
-	IP_reg(context) = *(stack++);
-	CS_reg(context) = *(stack++);
-	SP_reg(context) += 2*sizeof(WORD);
+	EIP_reg(context) = *(stack++);
+	CS_reg(context)  = *(stack++);
+	ESP_reg(context) += 2*sizeof(WORD);
 }
 
 

@@ -132,9 +132,9 @@ static void do_lret(CONTEXT86*ctx)
 {
   WORD *stack = CTX_SEG_OFF_TO_LIN(ctx, SS_reg(ctx), ESP_reg(ctx));
 
-  IP_reg(ctx) = *(stack++);
-  CS_reg(ctx) = *(stack++);
-  SP_reg(ctx) += 2*sizeof(WORD);
+  EIP_reg(ctx) = *(stack++);
+  CS_reg(ctx)  = *(stack++);
+  ESP_reg(ctx) += 2*sizeof(WORD);
 }
 
 static void do_strategy(CONTEXT86*ctx, int id, int extra)
@@ -522,17 +522,17 @@ static void DOSDEV_DoReq(void*req, DWORD dev)
   memset(&ctx, 0, sizeof(ctx));
 
   /* ES:BX points to request for strategy routine */
-  ES_reg(&ctx) = HIWORD(DOS_LOLSeg);
-  BX_reg(&ctx) = ALLDEV_OFS;
+  ES_reg(&ctx)  = HIWORD(DOS_LOLSeg);
+  EBX_reg(&ctx) = ALLDEV_OFS;
 
   /* call strategy routine */
   CS_reg(&ctx) = SELECTOROF(dev);
-  IP_reg(&ctx) = dhdr->strategy;
+  EIP_reg(&ctx) = dhdr->strategy;
   DPMI_CallRMProc(&ctx, 0, 0, 0);
 
   /* call interrupt routine */
   CS_reg(&ctx) = SELECTOROF(dev);
-  IP_reg(&ctx) = dhdr->interrupt;
+  EIP_reg(&ctx) = dhdr->interrupt;
   DPMI_CallRMProc(&ctx, 0, 0, 0);
 
   /* completed, copy request back */

@@ -173,9 +173,9 @@ static void INT_SetRealModeContext( REALMODECALL *call, CONTEXT86 *context )
     call->esi = ESI_reg(context);
     call->edi = EDI_reg(context);
     call->ebp = EBP_reg(context);
-    call->fl  = FL_reg(context);
-    call->ip  = IP_reg(context);
-    call->sp  = SP_reg(context);
+    call->fl  = LOWORD(EFL_reg(context));
+    call->ip  = LOWORD(EIP_reg(context));
+    call->sp  = LOWORD(ESP_reg(context));
     call->cs  = CS_reg(context);
     call->ds  = DS_reg(context);
     call->es  = ES_reg(context);
@@ -277,7 +277,7 @@ int DPMI_CallRMProc( CONTEXT86 *context, LPWORD stack, int args, int iret )
                  EAX_reg(context), EBX_reg(context), ECX_reg(context), EDX_reg(context) );
     TRACE("ESI=%08lx EDI=%08lx ES=%04lx DS=%04lx CS:IP=%04lx:%04x, %d WORD arguments, %s\n",
                  ESI_reg(context), EDI_reg(context), ES_reg(context), DS_reg(context),
-                 CS_reg(context), IP_reg(context), args, iret?"IRET":"FAR" );
+                 CS_reg(context), LOWORD(EIP_reg(context)), args, iret?"IRET":"FAR" );
 
 callrmproc_again:
 
@@ -286,23 +286,23 @@ callrmproc_again:
     code = CTX_SEG_OFF_TO_LIN(context, CS_reg(context), EIP_reg(context));
     switch (*code) {
     case 0xe9: /* JMP NEAR */
-      IP_reg(context) += 3 + *(WORD *)(code+1);
+      EIP_reg(context) += 3 + *(WORD *)(code+1);
       /* yeah, I know these gotos don't look good... */
       goto callrmproc_again;
     case 0xea: /* JMP FAR */
-      IP_reg(context) = *(WORD *)(code+1);
+      EIP_reg(context) = *(WORD *)(code+1);
       CS_reg(context) = *(WORD *)(code+3);
       /* ...but since the label is there anyway... */
       goto callrmproc_again;
     case 0xeb: /* JMP SHORT */
-      IP_reg(context) += 2 + *(signed char *)(code+1);
+      EIP_reg(context) += 2 + *(signed char *)(code+1);
       /* ...because of other gotos below, so... */
       goto callrmproc_again;
     }
 
 /* shortcut for chaining to internal interrupt handlers */
     if ((CS_reg(context) == 0xF000) && iret) {
-        return INT_RealModeInterrupt( IP_reg(context)/4, context);
+        return INT_RealModeInterrupt( LOWORD(EIP_reg(context))/4, context);
     }
 
 /* shortcut for RMCBs */
@@ -324,7 +324,7 @@ callrmproc_again:
         if (!SS_reg(context)) {
             alloc = 1; /* allocate default stack */
             stack16 = addr = DOSMEM_GetBlock( pModule->self, 64, (UINT16 *)&(SS_reg(context)) );
-            SP_reg(context) = 64-2;
+            ESP_reg(context) = 64-2;
             stack16 += 32-1;
             if (!addr) {
                 ERR("could not allocate default stack\n");
@@ -333,7 +333,7 @@ callrmproc_again:
         } else {
             stack16 = CTX_SEG_OFF_TO_LIN(context, SS_reg(context), ESP_reg(context));
         }
-        SP_reg(context) -= (args + (iret?1:0)) * sizeof(WORD);
+        ESP_reg(context) -= (args + (iret?1:0)) * sizeof(WORD);
 #else
     if (!already) {
         stack16 = (LPWORD) CURRENT_STACK16;
@@ -343,14 +343,14 @@ callrmproc_again:
         /* push flags if iret */
         if (iret) {
             stack16--; args++;
-            *stack16 = FL_reg(context);
+            *stack16 = LOWORD(EFL_reg(context));
         }
 #ifdef MZ_SUPPORTED
         /* push return address (return to interrupt wrapper) */
         *(--stack16) = DPMI_wrap_seg;
         *(--stack16) = 0;
         /* adjust stack */
-        SP_reg(context) -= 2*sizeof(WORD);
+        ESP_reg(context) -= 2*sizeof(WORD);
 #endif
         already = 1;
     }
@@ -360,7 +360,7 @@ callrmproc_again:
         DPMI_CallRMCBProc(context, CurrRMCB, pModule->lpDosTask?pModule->lpDosTask->dpmi_flag:0);
         /* check if we returned to where we thought we would */
         if ((CS_reg(context) != DPMI_wrap_seg) ||
-            (IP_reg(context) != 0)) {
+            (LOWORD(EIP_reg(context)) != 0)) {
             /* we need to continue at different address in real-mode space,
                so we need to set it all up for real mode again */
             goto callrmproc_again;
@@ -370,12 +370,12 @@ callrmproc_again:
 #if 0 /* this was probably unnecessary */
         /* push call address */
         *(--stack16) = CS_reg(context);
-        *(--stack16) = IP_reg(context);
+        *(--stack16) = LOWORD(EIP_reg(context));
         /* adjust stack */
-        SP_reg(context) -= 2*sizeof(WORD);
+        ESP_reg(context) -= 2*sizeof(WORD);
         /* set initial CS:IP to the wrapper's "lret" */
         CS_reg(context) = DPMI_wrap_seg;
-        IP_reg(context) = 2;
+        EIP_reg(context) = 2;
 #endif
         TRACE("entering real mode...\n");
         DOSVM_Enter( context );
@@ -386,7 +386,7 @@ callrmproc_again:
         seg_addr = PTR_SEG_OFF_TO_SEGPTR( sel, 0 );
 
         CS_reg(context) = HIWORD(seg_addr);
-        IP_reg(context) = LOWORD(seg_addr);
+        EIP_reg(context) = LOWORD(seg_addr);
         EBP_reg(context) = OFFSETOF( NtCurrentTeb()->cur_stack )
                                    + (WORD)&((STACK16FRAME*)0)->bp;
         Callbacks->CallRegisterShortProc(context, args*sizeof(WORD));
@@ -452,7 +452,7 @@ static void CallRMProc( CONTEXT86 *context, int iret )
 	return;
     }
     INT_GetRealModeContext(p, &context16);
-    DPMI_CallRMProc( &context16, ((LPWORD)PTR_SEG_OFF_TO_LIN(SS_reg(context), SP_reg(context)))+3,
+    DPMI_CallRMProc( &context16, ((LPWORD)PTR_SEG_OFF_TO_LIN(SS_reg(context), LOWORD(ESP_reg(context))))+3,
                      CX_reg(context), iret );
     INT_SetRealModeContext(p, &context16);
 }
@@ -519,12 +519,12 @@ static void AllocRMCB( CONTEXT86 *context )
 	NewRMCB->proc_sel = DS_reg(context);
 	NewRMCB->regs_ofs = DI_reg(context);
 	NewRMCB->regs_sel = ES_reg(context);
-	CX_reg(context) = HIWORD(NewRMCB->address);
-	DX_reg(context) = LOWORD(NewRMCB->address);
+	SET_LOWORD( ECX_reg(context), HIWORD(NewRMCB->address) );
+	SET_LOWORD( EDX_reg(context), LOWORD(NewRMCB->address) );
     }
     else
     {
-	AX_reg(context) = 0x8015; /* callback unavailable */
+	SET_LOWORD( EAX_reg(context), 0x8015 ); /* callback unavailable */
 	SET_CFLAG(context);
     }
 }
@@ -575,7 +575,7 @@ static void FreeRMCB( CONTEXT86 *context )
           CX_reg(context), DX_reg(context));
 
     if (DPMI_FreeRMCB(MAKELONG(DX_reg(context), CX_reg(context)))) {
-	AX_reg(context) = 0x8024; /* invalid callback address */
+	SET_LOWORD( EAX_reg(context), 0x8024 ); /* invalid callback address */
 	SET_CFLAG(context);
     }
 }
@@ -621,8 +621,8 @@ static void StartPM( CONTEXT86 *context, LPDOSTASK lpDosTask )
     pm_ctx = *context;
     CS_reg(&pm_ctx) = lpDosTask->dpmi_sel;
 /* our mode switch wrapper expects the new CS in DX, and the new SS in AX */
-    AX_reg(&pm_ctx) = ss;
-    DX_reg(&pm_ctx) = cs;
+    EAX_reg(&pm_ctx) = ss;
+    EDX_reg(&pm_ctx) = cs;
     DS_reg(&pm_ctx) = ds;
     ES_reg(&pm_ctx) = es;
     FS_reg(&pm_ctx) = 0;
@@ -775,10 +775,10 @@ void WINAPI INT_Int31Handler( CONTEXT86 *context )
     {
     case 0x0000:  /* Allocate LDT descriptors */
     	TRACE("allocate LDT descriptors (%d)\n",CX_reg(context));
-        if (!(AX_reg(context) = AllocSelectorArray16( CX_reg(context) )))
+        if (!(EAX_reg(context) = AllocSelectorArray16( CX_reg(context) )))
         {
     	    TRACE("failed\n");
-            AX_reg(context) = 0x8011;  /* descriptor unavailable */
+            EAX_reg(context) = 0x8011;  /* descriptor unavailable */
             SET_CFLAG(context);
         }
 	TRACE("success, array starts at 0x%04x\n",AX_reg(context));
@@ -788,7 +788,7 @@ void WINAPI INT_Int31Handler( CONTEXT86 *context )
     	TRACE("free LDT descriptor (0x%04x)\n",BX_reg(context));
         if (FreeSelector16( BX_reg(context) ))
         {
-            AX_reg(context) = 0x8022;  /* invalid selector */
+            EAX_reg(context) = 0x8022;  /* invalid selector */
             SET_CFLAG(context);
         }
         else
@@ -818,36 +818,35 @@ void WINAPI INT_Int31Handler( CONTEXT86 *context )
             case 0xe000: entryPoint = 190; break;  /* __E000H */
             case 0xf000: entryPoint = 194; break;  /* __F000H */
             default:
-	    	AX_reg(context) = DOSMEM_AllocSelector(BX_reg(context));
+	    	EAX_reg(context) = DOSMEM_AllocSelector(BX_reg(context));
                 break;
             }
             if (entryPoint) 
-                AX_reg(context) = LOWORD(NE_GetEntryPoint( 
-                                                 GetModuleHandle16( "KERNEL" ),
-                                                 entryPoint ));
+                EAX_reg(context) = LOWORD(NE_GetEntryPoint( GetModuleHandle16( "KERNEL" ),
+                                                            entryPoint ));
         }
         break;
 
     case 0x0003:  /* Get next selector increment */
     	TRACE("get selector increment (__AHINCR)\n");
-        AX_reg(context) = __AHINCR;
+        EAX_reg(context) = __AHINCR;
         break;
 
     case 0x0004:  /* Lock selector (not supported) */
     	FIXME("lock selector not supported\n");
-        AX_reg(context) = 0;  /* FIXME: is this a correct return value? */
+        EAX_reg(context) = 0;  /* FIXME: is this a correct return value? */
         break;
 
     case 0x0005:  /* Unlock selector (not supported) */
     	FIXME("unlock selector not supported\n");
-        AX_reg(context) = 0;  /* FIXME: is this a correct return value? */
+        EAX_reg(context) = 0;  /* FIXME: is this a correct return value? */
         break;
 
     case 0x0006:  /* Get selector base address */
     	TRACE("get selector base address (0x%04x)\n",BX_reg(context));
         if (!(dw = GetSelectorBase( BX_reg(context) )))
         {
-            AX_reg(context) = 0x8022;  /* invalid selector */
+            EAX_reg(context) = 0x8022;  /* invalid selector */
             SET_CFLAG(context);
         }
         else

@@ -174,11 +174,11 @@ void WINAPI HandleParamError( CONTEXT86 *context )
 		   to error handler (location at [bp-2]) */
 
 		WORD *stack = PTR_SEG_OFF_TO_LIN( SS_reg( context ), 
-						  BP_reg( context ));
-		SP_reg( context ) = BP_reg( context ) - 2;
-		BP_reg( context ) = stack[0] & 0xfffe;
+						  LOWORD(EBP_reg( context )) );
+		ESP_reg( context ) = LOWORD(EBP_reg( context )) - 2;
+		EBP_reg( context ) = stack[0] & 0xfffe;
 
-		IP_reg( context ) = stack[-1];
+		EIP_reg( context ) = stack[-1];
 
 		EAX_reg( context ) = ECX_reg( context ) = EDX_reg( context ) = 0;
 		ES_reg( context) = 0;

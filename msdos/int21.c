@@ -1130,7 +1130,7 @@ void WINAPI DOS3Call( CONTEXT86 *context )
             if (scan) {
                 /* return pending scancode */
                 AL_reg(context) = scan;
-                FL_reg(context) &= ~0x40; /* clear ZF */
+                EFL_reg(context) &= ~0x40; /* clear ZF */
                 scan = 0;
             } else {
                 char ascii;
@@ -1138,13 +1138,13 @@ void WINAPI DOS3Call( CONTEXT86 *context )
                     CONSOLE_GetKeystroke(&scan,&ascii);
                     /* return ASCII code */
                     AL_reg(context) = ascii;
-                    FL_reg(context) &= ~0x40; /* clear ZF */
+                    EFL_reg(context) &= ~0x40; /* clear ZF */
                     /* return scan code on next call only if ascii==0 */
                     if (ascii) scan = 0;
                 } else {
                     /* nothing pending, clear everything */
                     AL_reg(context) = 0;
-                    FL_reg(context) |= 0x40; /* set ZF */
+                    EFL_reg(context) |= 0x40; /* set ZF */
                     scan = 0; /* just in case */
                 }
             }

@@ -59,14 +59,14 @@ static void MouseRelay(LPDOSTASK lpDosTask,CONTEXT86 *context,void *mdata)
   MCALLDATA *data = (MCALLDATA *)mdata;
   CONTEXT86 ctx = *context;
 
-  AX_reg(&ctx) = data->mask;
-  BX_reg(&ctx) = data->but;
-  CX_reg(&ctx) = data->x;
-  DX_reg(&ctx) = data->y;
-  SI_reg(&ctx) = data->mx;
-  DI_reg(&ctx) = data->my;
-  CS_reg(&ctx) = SELECTOROF(data->proc);
-  IP_reg(&ctx) = OFFSETOF(data->proc);
+  EAX_reg(&ctx) = data->mask;
+  EBX_reg(&ctx) = data->but;
+  ECX_reg(&ctx) = data->x;
+  EDX_reg(&ctx) = data->y;
+  ESI_reg(&ctx) = data->mx;
+  EDI_reg(&ctx) = data->my;
+  CS_reg(&ctx)  = SELECTOROF(data->proc);
+  EIP_reg(&ctx) = OFFSETOF(data->proc);
   free(data);
   DPMI_CallRMProc(&ctx, NULL, 0, 0);
 }
