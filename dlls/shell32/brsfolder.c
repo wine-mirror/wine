@@ -231,16 +231,18 @@ static void FillTreeView(IShellFolder * lpsf, LPITEMIDLIST  pidl, HTREEITEM hPar
 	    {
 	        hr = IShellFolder_BindToObject(lpsf,pidlTemp,NULL,&IID_IShellFolder,(LPVOID*)&pSFChild);
 	        if (SUCCEEDED(hr))
+                {
 	            hr = IShellFolder_EnumObjects(pSFChild, hwnd, BrowseFlagsToSHCONTF(lpBrowseInfo->ulFlags), &pEnumIL);
-	        if (SUCCEEDED(hr))
-	        {
-	            if ((IEnumIDList_Skip(pEnumIL, 1) != S_OK) || FAILED(IEnumIDList_Reset(pEnumIL)))
-	            {
-	                IEnumIDList_Release(pEnumIL);
-	                pEnumIL = NULL;
-	            }
-	        }
-	        IShellFolder_Release(pSFChild);
+                    if (SUCCEEDED(hr))
+                    {
+                        if ((IEnumIDList_Skip(pEnumIL, 1) != S_OK) || FAILED(IEnumIDList_Reset(pEnumIL)))
+                        {
+                            IEnumIDList_Release(pEnumIL);
+                            pEnumIL = NULL;
+                        }
+                    }
+                    IShellFolder_Release(pSFChild);
+                }
 	    }
 
 	    if (!(hPrev = InsertTreeViewItem(lpsf, pidlTemp, pidl, pEnumIL, hParent)))
