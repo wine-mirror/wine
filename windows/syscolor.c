@@ -118,7 +118,6 @@ void SYSCOLOR_Init(void)
     char buffer[100];
     BOOL bOk = FALSE, bNoReg = FALSE;
     HKEY  hKey;
-    DWORD dwDataSize = 32;
 
     p = (TWEAK_WineLook == WIN31_LOOK) ? DefSysColors : DefSysColors95;
 
@@ -134,9 +133,12 @@ void SYSCOLOR_Init(void)
 
 	/* first try, registry */
 	if (!bNoReg)
-	  if (!(RegQueryValueExA(hKey, (LPSTR)(p[i*2]), 0, 0, (LPBYTE) &buffer[0], &dwDataSize)))
-	    if (sscanf( buffer, "%d %d %d", &r, &g, &b ) == 3) 
-	      bOk = TRUE;
+        {
+          DWORD dwDataSize = sizeof(buffer);
+          if (!(RegQueryValueExA(hKey,(LPSTR)p[i*2], 0, 0, buffer, &dwDataSize)))
+            if (sscanf( buffer, "%d %d %d", &r, &g, &b ) == 3) 
+              bOk = TRUE;
+        }
 
 	/* second try, win.ini */
 	if (!bOk)
