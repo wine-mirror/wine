@@ -1576,7 +1576,7 @@ TOOLBAR_ChangeBitmap (HWND hwnd, WPARAM wParam, LPARAM lParam)
     btnPtr = &infoPtr->buttons[nIndex];
     btnPtr->iBitmap = LOWORD(lParam);
 
-    RedrawWindow(hwnd,&btnPtr->rect,0,RDW_ERASE|RDW_INVALIDATE);
+    InvalidateRect(hwnd, &btnPtr->rect, TRUE);
 
     return TRUE;
 }
@@ -1619,9 +1619,8 @@ TOOLBAR_CheckButton (HWND hwnd, WPARAM wParam, LPARAM lParam)
     if( bChecked != LOWORD(lParam) )
     {
 	if (nOldIndex != -1)
-            RedrawWindow(hwnd,&infoPtr->buttons[nOldIndex].rect,(HRGN)NULL,
-            RDW_ERASE|RDW_INVALIDATE);
-        RedrawWindow(hwnd,&btnPtr->rect,0,RDW_ERASE|RDW_INVALIDATE|RDW_UPDATENOW);
+            InvalidateRect(hwnd, &infoPtr->buttons[nOldIndex].rect, TRUE);
+        InvalidateRect(hwnd, &btnPtr->rect, TRUE);
     }
 
     /* FIXME: Send a WM_NOTIFY?? */
@@ -1758,9 +1757,8 @@ TOOLBAR_EnableButton (HWND hwnd, WPARAM wParam, LPARAM lParam)
     }
 
     /* redraw the button only if the state of the button changed */
-    if(bState != (btnPtr->fsState & TBSTATE_ENABLED)) {	
-            RedrawWindow(hwnd,&btnPtr->rect,0,RDW_ERASE|RDW_INVALIDATE|RDW_UPDATENOW);
-    }
+    if(bState != (btnPtr->fsState & TBSTATE_ENABLED))
+        InvalidateRect(hwnd, &btnPtr->rect, TRUE);            
 
     return TRUE;
 }
@@ -2249,8 +2247,7 @@ TOOLBAR_Indeterminate (HWND hwnd, WPARAM wParam, LPARAM lParam)
     else
 	btnPtr->fsState |= TBSTATE_INDETERMINATE;
 
-    RedrawWindow(hwnd,&btnPtr->rect,0,
-                 RDW_ERASE|RDW_INVALIDATE|RDW_UPDATENOW);
+    InvalidateRect(hwnd, &btnPtr->rect, TRUE);
 
     return TRUE;
 }
@@ -2524,8 +2521,7 @@ TOOLBAR_PressButton (HWND hwnd, WPARAM wParam, LPARAM lParam)
     else
 	btnPtr->fsState |= TBSTATE_PRESSED;
 
-    RedrawWindow(hwnd,&btnPtr->rect,0,
-                 RDW_ERASE|RDW_INVALIDATE|RDW_UPDATENOW);
+    InvalidateRect(hwnd, &btnPtr->rect, TRUE);
 
     return TRUE;
 }
@@ -3002,8 +2998,7 @@ TOOLBAR_SetState (HWND hwnd, WPARAM wParam, LPARAM lParam)
     btnPtr = &infoPtr->buttons[nIndex];
     btnPtr->fsState = LOWORD(lParam);
 
-    RedrawWindow(hwnd,&btnPtr->rect,0,
-                 RDW_ERASE|RDW_INVALIDATE|RDW_UPDATENOW);
+    InvalidateRect(hwnd, &btnPtr->rect, TRUE);
 
     return TRUE;
 }
@@ -3023,13 +3018,10 @@ TOOLBAR_SetStyle (HWND hwnd, WPARAM wParam, LPARAM lParam)
     btnPtr = &infoPtr->buttons[nIndex];
     btnPtr->fsStyle = LOWORD(lParam);
 
-    RedrawWindow(hwnd,&btnPtr->rect,0,
-                 RDW_ERASE|RDW_INVALIDATE|RDW_UPDATENOW);
+    InvalidateRect(hwnd, &btnPtr->rect, TRUE);
 
     if (infoPtr->hwndToolTip) {
-
 	FIXME("change tool tip!\n");
-
     }
 
     return TRUE;
@@ -3219,8 +3211,7 @@ TOOLBAR_LButtonDblClk (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
 	btnPtr->fsState |= TBSTATE_PRESSED;
 
-        RedrawWindow(hwnd,&btnPtr->rect,0,
-                     RDW_ERASE|RDW_INVALIDATE|RDW_UPDATENOW);
+        InvalidateRect(hwnd, &btnPtr->rect, TRUE);
     }
     else if (GetWindowLongA (hwnd, GWL_STYLE) & CCS_ADJUSTABLE)
 	TOOLBAR_Customize (hwnd);
@@ -3271,8 +3262,7 @@ TOOLBAR_LButtonDown (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	btnPtr->fsState |= TBSTATE_PRESSED;
         btnPtr->bHot = FALSE;
 
-        RedrawWindow(hwnd,&btnPtr->rect,0,
-                     RDW_ERASE|RDW_INVALIDATE|RDW_UPDATENOW);
+        InvalidateRect(hwnd, &btnPtr->rect, TRUE);
     }
 
     return 0;
@@ -3330,10 +3320,9 @@ TOOLBAR_LButtonUp (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	    bSendMessage = FALSE;
 
 	if (nOldIndex != -1)
-            RedrawWindow(hwnd,&infoPtr->buttons[nOldIndex].rect,0,
-                         RDW_ERASE|RDW_INVALIDATE|RDW_UPDATENOW);
-        RedrawWindow(hwnd,&btnPtr->rect,0,
-                     RDW_ERASE|RDW_INVALIDATE|RDW_UPDATENOW);
+            InvalidateRect(hwnd, &infoPtr->buttons[nOldIndex].rect, TRUE); 
+        
+        InvalidateRect(hwnd, &btnPtr->rect, TRUE);
 
 	if (bSendMessage) {
 	    SendMessageA (GetParent(hwnd), WM_COMMAND,
@@ -3462,23 +3451,18 @@ TOOLBAR_MouseMove (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
             /* only enabled buttons show hot effect */            
             if(infoPtr->buttons[nHit].fsState & TBSTATE_ENABLED)
-            {
-                RedrawWindow(hwnd,&btnPtr->rect,0,
-                         RDW_ERASE|RDW_INVALIDATE|RDW_UPDATENOW);
-            }
+                InvalidateRect(hwnd, &btnPtr->rect, TRUE);
 	}
 
     if (infoPtr->bCaptured) {
 	    btnPtr = &infoPtr->buttons[infoPtr->nButtonDown];
 	    if (infoPtr->nOldHit == infoPtr->nButtonDown) {
 		btnPtr->fsState &= ~TBSTATE_PRESSED;
-                RedrawWindow(hwnd,&btnPtr->rect,0,
-                             RDW_ERASE|RDW_INVALIDATE|RDW_UPDATENOW);
+                InvalidateRect(hwnd, &btnPtr->rect, TRUE);
 	    }
 	    else if (nHit == infoPtr->nButtonDown) {
 		btnPtr->fsState |= TBSTATE_PRESSED;
-                RedrawWindow(hwnd,&btnPtr->rect,0,
-                             RDW_ERASE|RDW_INVALIDATE|RDW_UPDATENOW);
+                InvalidateRect(hwnd, &btnPtr->rect, TRUE);
 	    }
 	}
 	infoPtr->nOldHit = nHit;
