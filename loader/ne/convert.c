@@ -436,12 +436,3 @@ HGLOBAL16 NE_LoadPEResource( NE_MODULE *pModule, WORD type, LPVOID bits, DWORD s
     return handle;
 }
 
-/**********************************************************************
- *	    NE_FreePEResource
- */
-BOOL16 NE_FreePEResource( NE_MODULE *pModule, HGLOBAL16 handle )
-{
-    GlobalFree16( handle );
-    return 0;
-}
-

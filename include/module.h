@@ -193,7 +193,6 @@ extern HINSTANCE16 NE_CreateInstance( NE_MODULE *pModule, HINSTANCE16 *prev,
 
 /* loader/ne/convert.c */
 HGLOBAL16 NE_LoadPEResource( NE_MODULE *pModule, WORD type, LPVOID bits, DWORD size );
-BOOL16 NE_FreePEResource( NE_MODULE *pModule, HGLOBAL16 handle );
 
 /* if1632/builtin.c */
 extern BOOL BUILTIN_Init(void);
