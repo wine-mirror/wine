@@ -55,6 +55,8 @@
 WINE_DEFAULT_DEBUG_CHANNEL(wave);
 
 
+#define FAKE_CHARPTR(s)	((char *)(unsigned long)(s))
+
 #if defined(HAVE_ALSA) && ((SND_LIB_MAJOR == 0 && SND_LIB_MINOR >= 9) || SND_LIB_MAJOR >= 1)
 
 /* internal ALSALIB functions */
@@ -408,12 +410,11 @@ LONG ALSA_WaveInit(void)
     snd_pcm_info_t *            info;
     snd_pcm_hw_params_t *       hw_params;
     WINE_WAVEOUT*	        wwo;
-    char			device[] = "hw";
 
     wwo = &WOutDev[0];
 
     /* FIXME: use better values */
-    wwo->device = device;
+    wwo->device = FAKE_CHARPTR("hw");
     wwo->caps.wMid = 0x0002;
     wwo->caps.wPid = 0x0104;
     strcpy(wwo->caps.szPname, "SB16 Wave Out");
