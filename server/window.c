@@ -111,21 +111,37 @@ inline static struct window *get_window( user_handle_t handle )
     return ret;
 }
 
-/* link a window into the tree (or unlink it if the new parent is NULL)  */
-static void link_window( struct window *win, struct window *parent, struct window *previous )
+/* change the parent of a window (or unlink the window if the new parent is NULL) */
+static int set_parent_window( struct window *win, struct window *parent )
 {
+    struct window *ptr;
+
+    /* make sure parent is not a child of window */
+    for (ptr = parent; ptr; ptr = ptr->parent)
+    {
+        if (ptr == win)
+        {
+            set_error( STATUS_INVALID_PARAMETER );
+            return 0;
+        }
+    }
+
     list_remove( &win->entry );  /* unlink it from the previous location */
 
     if (parent)
     {
         win->parent = parent;
-        if (previous) list_add_after( &previous->entry, &win->entry );
-        else list_add_head( &parent->children, &win->entry );
+        list_add_head( &parent->children, &win->entry );
+
+        /* if parent belongs to a different thread, attach the two threads */
+        if (parent->thread && parent->thread != win->thread)
+            attach_thread_input( win->thread, parent->thread );
     }
     else  /* move it to parent unlinked list */
     {
         list_add_head( &win->parent->unlinked, &win->entry );
     }
+    return 1;
 }
 
 /* get next window in Z-order list */
@@ -1094,7 +1110,12 @@ static void set_window_pos( struct window *win, struct window *previous,
     win->window_rect  = *window_rect;
     win->visible_rect = *visible_rect;
     win->client_rect  = *client_rect;
-    if (!(swp_flags & SWP_NOZORDER)) link_window( win, win->parent, previous );
+    if (!(swp_flags & SWP_NOZORDER) && win->parent)
+    {
+        list_remove( &win->entry );  /* unlink it from the previous location */
+        if (previous) list_add_after( &previous->entry, &win->entry );
+        else list_add_head( &win->parent->children, &win->entry );
+    }
     if (swp_flags & SWP_SHOWWINDOW) win->style |= WS_VISIBLE;
     else if (swp_flags & SWP_HIDEWINDOW) win->style &= ~WS_VISIBLE;
 
@@ -1198,10 +1219,10 @@ DECL_HANDLER(create_window)
 }
 
 
-/* link a window into the tree */
-DECL_HANDLER(link_window)
+/* set the parent of a window */
+DECL_HANDLER(set_parent)
 {
-    struct window *win, *parent = NULL, *previous = NULL;
+    struct window *win, *parent = NULL;
 
     if (!(win = get_window( req->handle ))) return;
     if (req->parent && !(parent = get_window( req->parent ))) return;
@@ -1211,26 +1232,9 @@ DECL_HANDLER(link_window)
         set_error( STATUS_INVALID_PARAMETER );
         return;
     }
+    reply->old_parent  = win->parent->handle;
     reply->full_parent = parent ? parent->handle : 0;
-    if (parent && req->previous)
-    {
-        if (req->previous == (user_handle_t)1)  /* special case: HWND_BOTTOM */
-        {
-            previous = get_last_child( parent );
-            if (previous == win) return;  /* nothing to do */
-        }
-        else
-        {
-            if (!(previous = get_window( req->previous ))) return;
-            /* previous must be a child of parent, and not win itself */
-            if (previous->parent != parent || previous == win)
-            {
-                set_error( STATUS_INVALID_PARAMETER );
-                return;
-            }
-        }
-    }
-    link_window( win, parent, previous );
+    set_parent_window( win, parent );
 }
 
 

@@ -77,8 +77,6 @@ extern WND *WIN_GetPtr( HWND hwnd );
 extern HWND WIN_Handle32( HWND16 hwnd16 );
 extern HWND WIN_IsCurrentProcess( HWND hwnd );
 extern HWND WIN_IsCurrentThread( HWND hwnd );
-extern void WIN_LinkWindow( HWND hwnd, HWND parent, HWND hwndInsertAfter );
-extern void WIN_UnlinkWindow( HWND hwnd );
 extern HWND WIN_SetOwner( HWND hwnd, HWND owner );
 extern ULONG WIN_SetStyle( HWND hwnd, ULONG set_bits, ULONG clear_bits );
 extern BOOL WIN_GetRectangles( HWND hwnd, RECT *rectWindow, RECT *rectClient );

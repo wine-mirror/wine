@@ -395,52 +395,6 @@ HWND WIN_Handle32( HWND16 hwnd16 )
 
 
 /***********************************************************************
- *           WIN_UnlinkWindow
- *
- * Remove a window from the siblings linked list.
- */
-void WIN_UnlinkWindow( HWND hwnd )
-{
-    WIN_LinkWindow( hwnd, 0, 0 );
-}
-
-
-/***********************************************************************
- *           WIN_LinkWindow
- *
- * Insert a window into the siblings linked list.
- * The window is inserted after the specified window, which can also
- * be specified as HWND_TOP or HWND_BOTTOM.
- * If parent is 0, window is unlinked from the tree.
- */
-void WIN_LinkWindow( HWND hwnd, HWND parent, HWND hwndInsertAfter )
-{
-    WND *wndPtr = WIN_GetPtr( hwnd );
-
-    if (!wndPtr || wndPtr == WND_DESKTOP) return;
-    if (wndPtr == WND_OTHER_PROCESS)
-    {
-        if (IsWindow(hwnd)) ERR(" cannot link other process window %p\n", hwnd );
-        return;
-    }
-
-    SERVER_START_REQ( link_window )
-    {
-        req->handle   = hwnd;
-        req->parent   = parent;
-        req->previous = hwndInsertAfter;
-        if (!wine_server_call( req ))
-        {
-            if (reply->full_parent) wndPtr->parent = reply->full_parent;
-        }
-
-    }
-    SERVER_END_REQ;
-    WIN_ReleasePtr( wndPtr );
-}
-
-
-/***********************************************************************
  *           WIN_SetOwner
  *
  * Change the owner of a window.
@@ -584,12 +538,6 @@ LRESULT WIN_DestroyWindow( HWND hwnd )
 
     TRACE("%p\n", hwnd );
 
-    if (!(hwnd = WIN_IsCurrentThread( hwnd )))
-    {
-        ERR( "window doesn't belong to current thread\n" );
-        return 0;
-    }
-
     /* free child windows */
     if ((list = WIN_ListChildren( hwnd )))
     {
@@ -603,7 +551,13 @@ LRESULT WIN_DestroyWindow( HWND hwnd )
     }
 
     /* Unlink now so we won't bother with the children later on */
-    WIN_UnlinkWindow( hwnd );
+    SERVER_START_REQ( set_parent )
+    {
+        req->handle = hwnd;
+        req->parent = 0;
+        wine_server_call( req );
+    }
+    SERVER_END_REQ;
 
     /*
      * Send the WM_NCDESTROY to the window being destroyed.
@@ -2556,9 +2510,7 @@ HWND WINAPI GetAncestor( HWND hwnd, UINT type )
  */
 HWND WINAPI SetParent( HWND hwnd, HWND parent )
 {
-    WND *wndPtr;
-    HWND retvalue, full_handle;
-    BOOL was_visible;
+    HWND full_handle;
 
     if (is_broadcast(hwnd) || is_broadcast(parent))
     {
@@ -2585,43 +2537,10 @@ HWND WINAPI SetParent( HWND hwnd, HWND parent )
     if (!(full_handle = WIN_IsCurrentThread( hwnd )))
         return (HWND)SendMessageW( hwnd, WM_WINE_SETPARENT, (WPARAM)parent, 0 );
 
-    hwnd = full_handle;
-
     if (USER_Driver.pSetParent)
-        return USER_Driver.pSetParent( hwnd, parent );
+        return USER_Driver.pSetParent( full_handle, parent );
 
-    /* Windows hides the window first, then shows it again
-     * including the WM_SHOWWINDOW messages and all */
-    was_visible = ShowWindow( hwnd, SW_HIDE );
-
-    if (!IsWindow( parent )) return 0;
-    if (!(wndPtr = WIN_GetPtr(hwnd)) || wndPtr == WND_OTHER_PROCESS || wndPtr == WND_DESKTOP) return 0;
-
-    retvalue = wndPtr->parent;  /* old parent */
-    if (parent != retvalue)
-    {
-        WIN_LinkWindow( hwnd, parent, HWND_TOP );
-
-        if (parent != GetDesktopWindow()) /* a child window */
-        {
-            if (!(wndPtr->dwStyle & WS_CHILD))
-            {
-                HMENU menu = (HMENU)SetWindowLongPtrW( hwnd, GWLP_ID, 0 );
-                if (menu) DestroyMenu( menu );
-            }
-        }
-    }
-    WIN_ReleasePtr( wndPtr );
-
-    /* SetParent additionally needs to make hwnd the topmost window
-       in the x-order and send the expected WM_WINDOWPOSCHANGING and
-       WM_WINDOWPOSCHANGED notification messages.
-    */
-    SetWindowPos( hwnd, HWND_TOPMOST, 0, 0, 0, 0,
-                  SWP_NOACTIVATE | SWP_NOMOVE | SWP_NOSIZE | (was_visible ? SWP_SHOWWINDOW : 0) );
-    /* FIXME: a WM_MOVE is also generated (in the DefWindowProc handler
-     * for WM_WINDOWPOSCHANGED) in Windows, should probably remove SWP_NOMOVE */
-    return retvalue;
+    return 0;
 }
 
 

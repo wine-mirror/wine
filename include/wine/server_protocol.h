@@ -2435,21 +2435,6 @@ struct create_window_reply
 
 
 
-struct link_window_request
-{
-    struct request_header __header;
-    user_handle_t  handle;
-    user_handle_t  parent;
-    user_handle_t  previous;
-};
-struct link_window_reply
-{
-    struct reply_header __header;
-    user_handle_t  full_parent;
-};
-
-
-
 struct destroy_window_request
 {
     struct request_header __header;
@@ -2524,6 +2509,21 @@ struct set_window_info_reply
 #define SET_WIN_INSTANCE  0x08
 #define SET_WIN_USERDATA  0x10
 #define SET_WIN_EXTRA     0x20
+
+
+
+struct set_parent_request
+{
+    struct request_header __header;
+    user_handle_t  handle;
+    user_handle_t  parent;
+};
+struct set_parent_reply
+{
+    struct reply_header __header;
+    user_handle_t  old_parent;
+    user_handle_t  full_parent;
+};
 
 
 
@@ -3380,11 +3380,11 @@ enum request
     REQ_disconnect_named_pipe,
     REQ_get_named_pipe_info,
     REQ_create_window,
-    REQ_link_window,
     REQ_destroy_window,
     REQ_set_window_owner,
     REQ_get_window_info,
     REQ_set_window_info,
+    REQ_set_parent,
     REQ_get_window_parents,
     REQ_get_window_children,
     REQ_get_window_children_from_point,
@@ -3572,11 +3572,11 @@ union generic_request
     struct disconnect_named_pipe_request disconnect_named_pipe_request;
     struct get_named_pipe_info_request get_named_pipe_info_request;
     struct create_window_request create_window_request;
-    struct link_window_request link_window_request;
     struct destroy_window_request destroy_window_request;
     struct set_window_owner_request set_window_owner_request;
     struct get_window_info_request get_window_info_request;
     struct set_window_info_request set_window_info_request;
+    struct set_parent_request set_parent_request;
     struct get_window_parents_request get_window_parents_request;
     struct get_window_children_request get_window_children_request;
     struct get_window_children_from_point_request get_window_children_from_point_request;
@@ -3762,11 +3762,11 @@ union generic_reply
     struct disconnect_named_pipe_reply disconnect_named_pipe_reply;
     struct get_named_pipe_info_reply get_named_pipe_info_reply;
     struct create_window_reply create_window_reply;
-    struct link_window_reply link_window_reply;
     struct destroy_window_reply destroy_window_reply;
     struct set_window_owner_reply set_window_owner_reply;
     struct get_window_info_reply get_window_info_reply;
     struct set_window_info_reply set_window_info_reply;
+    struct set_parent_reply set_parent_reply;
     struct get_window_parents_reply get_window_parents_reply;
     struct get_window_children_reply get_window_children_reply;
     struct get_window_children_from_point_reply get_window_children_from_point_reply;
@@ -3812,6 +3812,6 @@ union generic_reply
     struct duplicate_token_reply duplicate_token_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 163
+#define SERVER_PROTOCOL_VERSION 164
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

@@ -39,8 +39,9 @@
 #include "winuser.h"
 #include "wine/unicode.h"
 
-#include "wine/debug.h"
 #include "x11drv.h"
+#include "wine/debug.h"
+#include "wine/server.h"
 #include "win.h"
 #include "winpos.h"
 #include "mwm.h"
@@ -1003,11 +1004,7 @@ BOOL X11DRV_CreateWindow( HWND hwnd, CREATESTRUCTA *cs, BOOL unicode )
     else
         ret = (SendMessageA( hwnd, WM_CREATE, 0, (LPARAM)cs ) != -1);
 
-    if (!ret)
-    {
-        WIN_UnlinkWindow( hwnd );
-        return FALSE;
-    }
+    if (!ret) return FALSE;
 
     NotifyWinEvent(EVENT_OBJECT_CREATE, hwnd, OBJID_WINDOW, 0);
 
@@ -1127,22 +1124,37 @@ XIC X11DRV_get_ic( HWND hwnd )
 HWND X11DRV_SetParent( HWND hwnd, HWND parent )
 {
     Display *display = thread_display();
-    HWND old_parent;
+    WND *wndPtr;
+    BOOL ret;
+    HWND old_parent = 0;
 
     /* Windows hides the window first, then shows it again
      * including the WM_SHOWWINDOW messages and all */
     BOOL was_visible = ShowWindow( hwnd, SW_HIDE );
 
-    if (!IsWindow( parent )) return 0;
+    wndPtr = WIN_GetPtr( hwnd );
+    if (!wndPtr || wndPtr == WND_OTHER_PROCESS || wndPtr == WND_DESKTOP) return 0;
 
-    old_parent = GetAncestor( hwnd, GA_PARENT );
+    SERVER_START_REQ( set_parent )
+    {
+        req->handle = hwnd;
+        req->parent = parent;
+        if ((ret = !wine_server_call( req )))
+        {
+            old_parent = reply->old_parent;
+            wndPtr->parent = parent = reply->full_parent;
+        }
+
+    }
+    SERVER_END_REQ;
+    WIN_ReleasePtr( wndPtr );
+    if (!ret) return 0;
+
     if (parent != old_parent)
     {
-        struct x11drv_win_data *data;
+        struct x11drv_win_data *data = X11DRV_get_win_data( hwnd );
 
-        if (!(data = X11DRV_get_win_data( hwnd ))) return 0;
-
-        WIN_LinkWindow( hwnd, parent, HWND_TOP );
+        if (!data) return 0;
 
         if (parent != GetDesktopWindow()) /* a child window */
         {

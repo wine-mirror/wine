@@ -1718,16 +1718,6 @@ enum message_type
 @END
 
 
-/* Link a window into the tree */
-@REQ(link_window)
-    user_handle_t  handle;      /* handle to the window */
-    user_handle_t  parent;      /* handle to the parent */
-    user_handle_t  previous;    /* previous child in Z-order */
-@REPLY
-    user_handle_t  full_parent; /* full handle of new parent */
-@END
-
-
 /* Destroy a window */
 @REQ(destroy_window)
     user_handle_t  handle;      /* handle to the window */
@@ -1782,6 +1772,16 @@ enum message_type
 #define SET_WIN_INSTANCE  0x08
 #define SET_WIN_USERDATA  0x10
 #define SET_WIN_EXTRA     0x20
+
+
+/* Set the parent of a window */
+@REQ(set_parent)
+    user_handle_t  handle;      /* handle to the window */
+    user_handle_t  parent;      /* handle to the parent */
+@REPLY
+    user_handle_t  old_parent;  /* old parent window */
+    user_handle_t  full_parent; /* full handle of new parent */
+@END
 
 
 /* Get a list of the window parents, up to the root of the tree */
