@@ -119,7 +119,8 @@ void     WINAPI        IDirect3DTexture8Impl_PreLoad(LPDIRECT3DTEXTURE8 iface) {
 	checkGLcall("glBindTexture");
 	TRACE("Texture %p (level %d) given name %d\n", This->surfaces[i], i, This->surfaces[i]->textureName);
 	/* No need to walk through all mip-map levels, since already all assigned */
-	i = This->levels;
+        i = This->levels;
+
       } else {
 	if (i == 0) {
 	  if (This->surfaces[i]->textureName == 0) {
@@ -130,18 +131,20 @@ void     WINAPI        IDirect3DTexture8Impl_PreLoad(LPDIRECT3DTEXTURE8 iface) {
 	  
 	  glBindTexture(GL_TEXTURE_2D, This->surfaces[i]->textureName);
 	  checkGLcall("glBindTexture");
-	  
-	  TRACE("Setting GL_TEXTURE_MAX_LEVEL to %d\n", This->levels - 1);   
-	  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, This->levels - 1);
-	  checkGLcall("glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, This->levels)");
-	  
 	}
-
 	IDirect3DSurface8Impl_LoadTexture((LPDIRECT3DSURFACE8) This->surfaces[i], GL_TEXTURE_2D, i); 
-	/* Removed glTexParameterf now TextureStageStates are initialized at startup */
-	This->Dirty = FALSE;
       }
     }
+
+    /* No longer dirty */
+    This->Dirty = FALSE;
+
+    /* Always need to reset the number of mipmap levels when rebinding as it is
+       a property of the active texture unit, and another texture may have set it
+       to a different value                                                       */
+    TRACE("Setting GL_TEXTURE_MAX_LEVEL to %d\n", This->levels - 1);   
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, This->levels - 1);
+    checkGLcall("glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, This->levels)");
 
     LEAVE_GL();
 
